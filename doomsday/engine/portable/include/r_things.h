@@ -190,6 +190,8 @@ extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
 void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);
+void            R_GetMaterialInfo(int ofTypeId, materialtype_t type,
+                                  materialinfo_t* info);
 float           R_VisualRadius(struct mobj_s *mo);
 float           R_GetBobOffset(struct mobj_s *mo);
 float           R_MovementYaw(float momx, float momy);

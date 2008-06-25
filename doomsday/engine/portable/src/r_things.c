@@ -307,9 +307,10 @@ void R_InitSpriteDefs(void)
 
 void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
 {
-    spritedef_t        *sprDef;
-    spriteframe_t      *sprFrame;
-    spritetex_t        *sprTex;
+    spritedef_t*        sprDef;
+    spriteframe_t*      sprFrame;
+    spritetex_t*        sprTex;
+    material_t*         mat;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -326,16 +327,17 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     }
 
     sprFrame = &sprDef->spriteFrames[frame];
-    sprTex = spriteTextures[sprFrame->mats[0]->ofTypeID];
+    mat = sprFrame->mats[0];
+    sprTex = spriteTextures[mat->ofTypeID];
 
     info->numFrames = sprDef->numFrames;
-    info->idx = sprFrame->mats[0]->ofTypeID;
+    info->idx = mat->ofTypeID;
     info->realLump = sprTex->lump;
     info->flip = sprFrame->flip[0];
-    info->offset = sprTex->info.offsetX;
-    info->topOffset = sprTex->info.offsetY;
-    info->width = sprTex->info.width;
-    info->height = sprTex->info.height;
+    info->offset = sprTex->offX;
+    info->topOffset = sprTex->offY;
+    info->width = mat->width;
+    info->height = mat->height;
 }
 
 void R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info)
@@ -349,6 +351,31 @@ void R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info)
     info->height = SHORT(patch->height);
     info->topOffset = SHORT(patch->topOffset);
     info->offset = SHORT(patch->leftOffset);
+}
+
+/**
+ * Populate 'info' with information about the requested material.
+ *
+ * @param ofTypeId      Index of material.
+ * @param type          Type of material.
+ * @param info          Ptr to info to be populated.
+ */
+void R_GetMaterialInfo(int ofTypeId, materialtype_t type,
+                       materialinfo_t* info)
+{
+    material_t*         mat;
+
+    if(!info)
+        Con_Error("R_GetMaterialInfo: Info paramater invalid.");
+
+    if(NULL == (mat = R_GetMaterial(ofTypeId, type)))
+        Con_Error("R_GetMaterialInfo: Invalid material (id=%i, type=%i).",
+                  ofTypeId, (int) type);
+
+    info->ofTypeID = mat->ofTypeID;
+    info->type = mat->type;
+    info->width = (int) mat->width;
+    info->height = (int) mat->height;
 }
 
 /**
@@ -380,7 +407,6 @@ void R_InitSprites(void)
     // Free all previous sprite memory.
     Z_FreeTags(PU_SPRITE, PU_SPRITE);
     R_InitSpriteDefs();
-    R_InitSpriteTextures();
 }
 
 /**
@@ -560,21 +586,21 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
  */
 void R_ProjectSprite(mobj_t *mo)
 {
-    sector_t           *sect = mo->subsector->sector;
+    sector_t*           sect = mo->subsector->sector;
     float               thangle = 0;
     float               pos[2];
-    spritedef_t        *sprDef;
-    spriteframe_t      *sprFrame = NULL;
-    spritetex_t        *sprTex;
+    spritedef_t*        sprDef;
+    spriteframe_t*      sprFrame = NULL;
     int                 i;
     unsigned            rot;
     boolean             flip;
-    vissprite_t        *vis;
+    vissprite_t*        vis;
     angle_t             ang;
     boolean             align;
-    modeldef_t         *mf = NULL, *nextmf = NULL;
+    modeldef_t*         mf = NULL, *nextmf = NULL;
     float               interp = 0, distance;
-    material_t         *mat;
+    material_t*         mat;
+    spritetex_t*        sprTex;
 
     if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
        mo->state == NULL || mo->state == states)
@@ -634,7 +660,6 @@ void R_ProjectSprite(mobj_t *mo)
         mat = sprFrame->mats[0];
         flip = (boolean) sprFrame->flip[0];
     }
-
     sprTex = spriteTextures[mat->ofTypeID];
 
     // Align to the view plane?
@@ -654,8 +679,8 @@ void R_ProjectSprite(mobj_t *mo)
             float               center[2], v1[2], v2[2];
             float               width, offset;
 
-            width = (float) sprTex->info.width;
-            offset = (float) sprTex->info.offsetX - (width / 2);
+            width = (float) mat->width;
+            offset = (float) sprTex->offX - (width / 2);
 
             // Project a line segment relative to the view in 2D, then check
             // if not entirely clipped away in the 360 degree angle clipper.
@@ -732,7 +757,7 @@ void R_ProjectSprite(mobj_t *mo)
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, vis);
 
     vis->data.mo.gzt =
-        vis->center[VZ] + ((float) sprTex->info.offsetY);
+        vis->center[VZ] + ((float) sprTex->offY);
 
     vis->data.mo.viewAligned = align;
     vis->data.mo.stateFullBright =

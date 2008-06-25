@@ -151,11 +151,6 @@ extern          "C" {
         DD_NEAREST_MIPMAP_LINEAR,
         DD_LINEAR_MIPMAP_LINEAR,
 
-        // Music devices
-        DD_MUSIC_NONE = 0,
-        DD_MUSIC_MIDI,
-        DD_MUSIC_CDROM,
-
         // Integer values for Set/Get
         DD_FIRST_VALUE = -1,
         DD_NETGAME,
@@ -178,8 +173,6 @@ extern          "C" {
         DD_SFX_VOLUME,
         DD_MUSIC_VOLUME,
         DD_MOUSE_INVERSE_Y,
-
-        DD_QUERY_RESULT,
         DD_FULLBRIGHT,             // Render everything fullbright?
         DD_CCMD_RETURN,
         DD_GAME_READY,
@@ -262,12 +255,6 @@ extern          "C" {
         DD_DEF_FINALE,
         DD_GAME_NAME,              // (eg jDoom, jHeretic...)
         DD_GAME_DMUAPI_VER,        // Version of the DMU API the game is using.
-
-        // Queries
-        DD_TEXTURE_HEIGHT_QUERY = 0x2000,
-        DD_NET_QUERY,
-        DD_SERVER_DATA_QUERY,
-        DD_MODEM_DATA_QUERY,
 
         // Non-integer/special values for Set/Get
         DD_SKYMASKMATERIAL_NAME = 0x4000,
@@ -975,7 +962,9 @@ enum {
     DGL_MODULATE_ADD_COMBINE = 0x500C,
     DGL_MODULATE_TEXTURE = 0x500D,
     DGL_TEXTURE_COMPRESSION = 0x500F,
-    DGL_VSYNC = 0x5011,
+    DGL_TEXTURE_NON_POWER_OF_TWO = 0x5011,
+    DGL_VSYNC = 0x5012,
+    DGL_MULTISAMPLE = 0x5014,
 
     // Blending functions
     DGL_ZERO = 0x6000,
@@ -1090,6 +1079,12 @@ typedef enum materialtype_e {
         int             height;
         int             numFrames; // Number of frames the sprite has.
     } spriteinfo_t;
+
+    typedef struct {
+        int             ofTypeID;
+        materialtype_t  type;
+        int             width, height;
+    } materialinfo_t;
 
     typedef struct {
         int             spriteNum;
@@ -1256,9 +1251,7 @@ typedef struct ticcmd_s {
         DDPE_ARRIVAL,              // A player has arrived.
         DDPE_EXIT,                 // A player has exited the game.
         DDPE_CHAT_MESSAGE,         // A player has sent a chat message.
-        DDPE_DATA_CHANGE,          // The data for this player has been changed.
-        DDPE_WRITE_COMMANDS,
-        DDPE_READ_COMMANDS
+        DDPE_DATA_CHANGE           // The data for this player has been changed.
     };
 
     // World events (handled by clients)

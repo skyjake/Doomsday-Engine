@@ -417,7 +417,6 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
         float               surfTexW, surfTexH, patternW, patternH;
         int                 skip[2];
         uint                i;
-        texinfo_t*          texinfo;
         vertex_t*           v[2];
         float               delta[2];
         const ded_decor_t*  def;
@@ -438,10 +437,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                     }
                     else
                     {
-                        texinfo_t          *texinfo;
-
-                        GL_GetMaterialInfo2(suf->material, true, &texinfo);
-                        offsetY = -texinfo->height + (top - bottom);
+                        offsetY = -suf->material->current->height + (top - bottom);
                     }
                 }
                 else // Its a bottom section.
@@ -456,10 +452,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             {
                 if(line->flags & DDLF_DONTPEGBOTTOM)
                 {
-                    texinfo_t          *texinfo;
-
-                    GL_GetMaterialInfo2(suf->material, true, &texinfo);
-                    offsetY = -texinfo->height + (top - bottom);
+                    offsetY = -suf->material->current->height + (top - bottom);
                 }
                 else
                 {
@@ -487,10 +480,8 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
             lh = top - bottom;
 
             // Setup the global texture info variables.
-            GL_GetMaterialInfo2(suf->material, true, &texinfo);
-
-            surfTexW = texinfo->width;
-            surfTexH = texinfo->height;
+            surfTexW = suf->material->current->width;
+            surfTexH = suf->material->current->height;
 
             // Generate a number of models.
             for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)

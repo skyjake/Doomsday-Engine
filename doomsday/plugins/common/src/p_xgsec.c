@@ -724,27 +724,22 @@ int FindPrevOf(int *list, int num, int h)
     return idx;
 }
 
-int XS_GetTexH(int tex)
-{
-    Set(DD_TEXTURE_HEIGHT_QUERY, tex);
-    return Get(DD_QUERY_RESULT);
-}
-
 /**
  * Really an XL_* function!
  *
- * @param part              1=mid, 2=top, 3=bottom.
+ * @param part          1=mid, 2=top, 3=bottom.
  *
- * @return                  @c MAXINT if not height n/a.
+ * @return              @c MAXINT if not height n/a.
  */
-int XS_TextureHeight(linedef_t *line, int part)
+int XS_TextureHeight(linedef_t* line, int part)
 {
-    sidedef_t     *side;
-    int         snum = 0;
-    int         minfloor = 0, maxfloor = 0, maxceil = 0;
-    sector_t   *front = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    sector_t   *back = P_GetPtrp(line, DMU_BACK_SECTOR);
-    boolean     twosided = front && back;
+    sidedef_t*          side;
+    int                 snum = 0;
+    int                 minfloor = 0, maxfloor = 0, maxceil = 0;
+    sector_t*           front = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    sector_t*           back = P_GetPtrp(line, DMU_BACK_SECTOR);
+    boolean             twosided = front && back;
+    materialinfo_t      info;
 
     if(part != LWS_MID && !twosided)
         return DDMAXINT;
@@ -792,32 +787,40 @@ int XS_TextureHeight(linedef_t *line, int part)
         side = P_GetPtrp(line, DMU_SIDEDEF1);
 
     // Which section of the wall?
-    if(part == LWS_UPPER)
+    switch(part)
     {
-        int texid = P_GetIntp(side, DMU_TOP_MATERIAL);
+    case LWS_UPPER:
+    {
+        int             mat = P_GetIntp(side, DMU_TOP_MATERIAL);
 
-        if(!texid)
+        if(!mat)
             return DDMAXINT;
 
-        return maxceil - XS_GetTexH(texid);
+        R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+        return maxceil - info.height;
     }
-    else if(part == LWS_MID)
+    case LWS_MID:
     {
-        int texid = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
+        int             mat = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
 
-        if(!texid)
+        if(!mat)
             return DDMAXINT;
 
-        return maxfloor + XS_GetTexH(texid);
+        R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+        return maxfloor + info.height;
     }
-    else if(part == LWS_LOWER)
+    case LWS_LOWER:
     {
-        int texid = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+        int             mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
 
-        if(!texid)
+        if(!mat)
             return DDMAXINT;
 
-        return minfloor + XS_GetTexH(texid);
+        R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+        return minfloor + info.height;
+    }
+    default:
+        Con_Error("XS_TextureHeight: Invalid wall section %d.", part);
     }
 
     return DDMAXINT;

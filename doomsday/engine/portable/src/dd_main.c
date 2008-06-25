@@ -131,8 +131,6 @@ filename_t bindingsConfigFileName;
 filename_t defsFileName, topDefsFileName;
 filename_t ddBasePath = "";     // Doomsday root directory is at...?
 
-int     queryResult = 0;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static char *wadFiles[MAXWADFILES];
@@ -800,32 +798,6 @@ void DD_UpdateEngineState(void)
     //R_UpdateAllSurfaces(true);
 }
 
-/**
- * Queries are a (poor) way to extend the API without adding new functions.
- */
-void DD_CheckQuery(int query, int parm)
-{
-    switch(query)
-    {
-    case DD_TEXTURE_HEIGHT_QUERY:
-        queryResult = textures[parm]->info.height;
-        break;
-#if 0
-    // Unused
-    case DD_NET_QUERY:
-        switch (parm)
-        {
-        case DD_PROTOCOL:
-            queryResult = (int) N_GetProtocolName();
-            break;
-        }
-        break;
-#endif
-    default:
-        break;
-    }
-}
-
 /* *INDENT-OFF* */
 ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&netGame, 0},
@@ -848,7 +820,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&sfxVolume, &sfxVolume},
     {&musVolume, &musVolume},
     {0, 0}, //{&mouseInverseY, &mouseInverseY},
-    {&queryResult, 0},
     {&levelFullBright, &levelFullBright},
     {&CmdReturnValue, 0},
     {&gameReady, &gameReady},
@@ -884,7 +855,7 @@ int DD_GetInteger(int ddvalue)
         switch(ddvalue)
         {
         case DD_DYNLIGHT_TEXTURE:
-            return (int) GL_PrepareLSTexture(LST_DYNAMIC, NULL);
+            return (int) GL_PrepareLSTexture(LST_DYNAMIC);
 
         case DD_MAP_MUSIC:
         {
@@ -929,7 +900,6 @@ void DD_SetInteger(int ddvalue, int parm)
 {
     if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
     {
-        DD_CheckQuery(ddvalue, parm);
         // How about some special values?
         return;
     }

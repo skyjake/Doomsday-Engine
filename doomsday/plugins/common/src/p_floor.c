@@ -476,15 +476,16 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
     {
         sidedef_t          *side;
         int                 mat;
+        materialinfo_t      info;
 
         side = P_GetPtrp(li, DMU_SIDEDEF0);
         mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
         if(mat >= 0)
         {
-            Set(DD_TEXTURE_HEIGHT_QUERY, mat);
-            if(Get(DD_QUERY_RESULT) < params->minSize)
+            R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+            if(info.height < params->minSize)
             {
-                params->minSize = Get(DD_QUERY_RESULT);
+                params->minSize = info.height;
                 params->foundLine = li;
             }
         }
@@ -493,11 +494,10 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
         if(mat >= 0)
         {
-            Set(DD_TEXTURE_HEIGHT_QUERY, mat);
-
-            if(Get(DD_QUERY_RESULT) < params->minSize)
+            R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+            if(info.height < params->minSize)
             {
-                params->minSize = Get(DD_QUERY_RESULT);
+                params->minSize = info.height;
                 params->foundLine = li;
             }
         }

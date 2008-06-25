@@ -404,6 +404,7 @@ extern          "C" {
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
     void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);
+    void            R_GetMaterialInfo(int ofTypeId, materialtype_t type, materialinfo_t* info);
 
     int             R_CheckMaterialNumForName(const char *name, materialtype_t type);
     const char     *R_MaterialNameForNum(int num, materialtype_t type);
@@ -467,7 +468,7 @@ extern          "C" {
 
     // Renderer.
     void            Rend_Reset(void);
-    void            Rend_SkyParams(int layer, int parm, float value);
+    void            Rend_SkyParams(int layer, int param, void* data);
 
     // Graphics.
     void            GL_UseFog(int yes);
