@@ -111,19 +111,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
-    DI_EAST,
-    DI_NORTHEAST,
-    DI_NORTH,
-    DI_NORTHWEST,
-    DI_WEST,
-    DI_SOUTHWEST,
-    DI_SOUTH,
-    DI_SOUTHEAST,
-    DI_NODIR,
-    NUMDIRS
-} dirtype_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -658,7 +645,7 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // Turn towards movement direction if not there yet.
-    if(actor->moveDir < 8)
+    if(actor->moveDir < DI_NODIR)
     {
         actor->angle &= (7 << 29);
         delta = actor->angle - (actor->moveDir << 29);
@@ -1824,7 +1811,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
     }
 
     // Turn towards movement direction if not there yet.
-    if(actor->moveDir < 8)
+    if(actor->moveDir < DI_NODIR)
     {
         actor->angle &= (7 << 29);
         delta = actor->angle - (actor->moveDir << 29);
@@ -1993,7 +1980,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
     }
 
     // Turn towards movement direction if not there yet.
-    if(actor->moveDir < 8)
+    if(actor->moveDir < DI_NODIR)
     {
         actor->angle &= (7 << 29);
         delta = actor->angle - (actor->moveDir << 29);
@@ -4019,7 +4006,7 @@ void C_DECL A_FastChase(mobj_t *mo)
     }
 
     // Turn towards movement direction if not there yet.
-    if(mo->moveDir < 8)
+    if(mo->moveDir < DI_NODIR)
     {
         mo->angle &= (7 << 29);
         delta = mo->angle - (mo->moveDir << 29);

@@ -55,19 +55,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum dirtype_s {
-    DI_EAST,
-    DI_NORTHEAST,
-    DI_NORTH,
-    DI_NORTHWEST,
-    DI_WEST,
-    DI_SOUTHWEST,
-    DI_SOUTH,
-    DI_SOUTHEAST,
-    DI_NODIR,
-    NUMDIRS
-} dirtype_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -217,7 +204,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
     if(actor->moveDir == DI_NODIR)
         return false;
 
-    if((unsigned) actor->moveDir >= 8)
+    if((unsigned) actor->moveDir >= DI_NODIR)
         Con_Error("Weird actor->moveDir!");
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][MX];
@@ -740,7 +727,7 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // Turn towards movement direction if not there yet.
-    if(actor->moveDir < 8)
+    if(actor->moveDir < DI_NODIR)
     {
         actor->angle &= (7 << 29);
         delta = actor->angle - (actor->moveDir << 29);
@@ -1316,9 +1303,9 @@ void C_DECL A_VileTarget(mobj_t *actor)
     A_Fire(fog);
 }
 
-void C_DECL A_VileAttack(mobj_t *actor)
+void C_DECL A_VileAttack(mobj_t* actor)
 {
-    mobj_t             *fire;
+    mobj_t*             fire;
     uint                an;
 
     if(!actor->target)
@@ -1331,7 +1318,8 @@ void C_DECL A_VileAttack(mobj_t *actor)
 
     S_StartSound(SFX_BAREXP, actor);
     P_DamageMobj(actor->target, actor, actor, 20);
-    actor->target->mom[MZ] = 1000 / actor->target->info->mass;
+    actor->target->mom[MZ] =
+        FIX2FLT(1000 * FRACUNIT / actor->target->info->mass);
 
     an = actor->angle >> ANGLETOFINESHIFT;
     fire = actor->tracer;
@@ -1339,9 +1327,9 @@ void C_DECL A_VileAttack(mobj_t *actor)
     if(!fire)
         return;
 
-    // Move the fire between the vile and the player.
-    fire->pos[VX] = actor->target->pos[VX] - (24 * FIX2FLT(finecosine[an]));
-    fire->pos[VY] = actor->target->pos[VY] - (24 * FIX2FLT(finesine[an]));
+    // Move the fire between the Vile and the player.
+    fire->pos[VX] = actor->target->pos[VX] - 24 * FIX2FLT(finecosine[an]);
+    fire->pos[VY] = actor->target->pos[VY] - 24 * FIX2FLT(finesine[an]);
     P_RadiusAttack(fire, actor, 70, 69);
 }
 
