@@ -72,76 +72,77 @@ extern mobj_t *tmThing;
  */
 static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
 {
-    mobj_t *mo = tmThing;
-    fixed_t dist;
-    sector_t *frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR);
-    sector_t *backsec = P_GetPtrp(ld, DMU_BACK_SECTOR);
-    fixed_t ffloor;
-    fixed_t bfloor;
-    fixed_t dx = P_GetFixedp(ld, DMU_DX);
-    fixed_t dy = P_GetFixedp(ld, DMU_DY);
-
-    ffloor = P_GetFixedp(frontsec, DMU_FLOOR_HEIGHT);
-    bfloor = P_GetFixedp(backsec, DMU_FLOOR_HEIGHT);
+    mobj_t             *mo = tmThing;
+    float               dist;
+    sector_t           *frontsec, *backsec;
+    float               ffloor, bfloor;
+    float               dx, dy;
 
     if(tmThing->player)
-        return true;            // skip players!
+        return true; // Skip players!
 
-    dist =                      // lever arm
-        +(dx >> FRACBITS) * (mo->pos[VY] >> FRACBITS) -
-        (dy >> FRACBITS) * (mo->pos[VX] >> FRACBITS) -
-        (dx >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX0),
-                                        DMU_Y) >> FRACBITS) +
-        (dy >> FRACBITS) * (P_GetFixedp(P_GetPtrp(ld, DMU_VERTEX0),
-                                        DMU_X) >> FRACBITS);
+    frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR);
+    backsec = P_GetPtrp(ld, DMU_BACK_SECTOR);
 
-    if((dist < 0 && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||
+    if(!frontsec || !backsec)
+        return true; // Shouldn't ever happen.
+
+    ffloor = P_GetFloatp(frontsec, DMU_FLOOR_HEIGHT);
+    bfloor = P_GetFloatp(backsec, DMU_FLOOR_HEIGHT);
+    dx = P_GetFloatp(ld, DMU_DX);
+    dy = P_GetFloatp(ld, DMU_DY);
+
+    // Lever-arm:
+    dist =
+        +dx * mo->pos[VY] -
+        dy * mo->pos[VX] -
+        dx * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX0), DMU_Y)) +
+        dy * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX0), DMU_X));
+
+    if((dist < 0  && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||
        (dist >= 0 && bfloor < mo->pos[VZ] && ffloor >= mo->pos[VZ]))
     {
         // At this point, we know that the object straddles a two-sided
         // linedef, and that the object's center of mass is above-ground.
-
-        fixed_t x = abs(dx), y = abs(dy);
+        float               x = fabs(dx), y = fabs(dy);
 
         if(y > x)
         {
-            fixed_t t = x;
-
+            float       tmp = x;
             x = y;
-            y = t;
+            y = tmp;
         }
 
-        y = finesine[(tantoangle[FixedDiv(y, x) >> DBITS] +
-                      ANG90) >> ANGLETOFINESHIFT];
+        y = FIX2FLT(finesine[(tantoangle[FLT2FIX(y / x) >> DBITS] +
+                             ANG90) >> ANGLETOFINESHIFT]);
 
-        // Momentum is proportional to distance between the
-        // object's center of mass and the pivot linedef.
-        //
-        // It is scaled by 2^(OVERDRIVE - gear). When gear is
-        // increased, the momentum gradually decreases to 0 for
-        // the same amount of pseudotorque, so that oscillations
-        // are prevented, yet it has a chance to reach equilibrium.
+        /**
+         * Momentum is proportional to distance between the object's center
+         * of mass and the pivot linedef.
+         *
+         * It is scaled by 2^(OVERDRIVE - gear). When gear is increased, the
+         * momentum gradually decreases to 0 for the same amount of
+         * pseudotorque, so that oscillations are prevented, yet it has a
+         * chance to reach equilibrium.
+         */
 
         if(mo->gear < OVERDRIVE)
-            dist = FixedDiv(FixedMul(dist, y << -(mo->gear - OVERDRIVE)), x);
+            dist = (dist * FIX2FLT(FLT2FIX(y) << -(mo->gear - OVERDRIVE))) / x;
         else
-            dist = FixedDiv(FixedMul(dist, y >> +(mo->gear - OVERDRIVE)), x);
+            dist = (dist * FIX2FLT(FLT2FIX(y) >> +(mo->gear - OVERDRIVE))) / x;
 
         // Apply momentum away from the pivot linedef.
+        x = dy * dist;
+        y = dx * dist;
 
-        x = FixedMul(dy, dist);
-        y = FixedMul(dx, dist);
-
-        // Avoid moving too fast all of a sudden (step into "overdrive")
-
-        dist = FixedMul(x, x) + FixedMul(y, y);
-
-        while(dist > FRACUNIT * 4 && mo->gear < MAXGEAR)
+        // Avoid moving too fast all of a sudden (step into "overdrive").
+        dist = (x * x) + (y * y);
+        while(dist > 4 && mo->gear < MAXGEAR)
         {
             ++mo->gear;
-            x >>= 1;
-            y >>= 1;
-            dist >>= 1;
+            x /= 2;
+            y /= 2;
+            dist /= 2;
         }
 
         mo->mom[MX] -= x;
@@ -151,44 +152,43 @@ static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
     return true;
 }
 
-/*
+/**
  * Applies "torque" to objects, based on all contacted linedefs.
- * killough $dropoff_fix
  */
 void P_ApplyTorque(mobj_t *mo)
 {
-    // Remember the current state, for gear-change
-    int     flags = mo->intFlags;
+    int                 flags = mo->intFlags;
 
-    // 2003-4-16 (jk): corpse sliding anomalies, made configurable
+    // Corpse sliding anomalies, made configurable.
     if(!cfg.slidingCorpses)
         return;
 
     tmThing = mo;
 
-    // Use VALIDCOUNT to prevent checking the same line twice
+    // Use VALIDCOUNT to prevent checking the same line twice.
     VALIDCOUNT++;
 
     P_MobjLinesIterator(mo, PIT_ApplyTorque, 0);
 
-    // If any momentum, mark object as 'falling' using engine-internal flags
-    if(mo->mom[MX] | mo->mom[MY])
+    // If any momentum, mark object as 'falling' using engine-internal
+    // flags.
+    if(mo->mom[MX] != 0 || mo->mom[MY] != 0)
         mo->intFlags |= MIF_FALLING;
     else
         // Clear the engine-internal flag indicating falling object.
         mo->intFlags &= ~MIF_FALLING;
 
-    // If the object has been moving, step up the gear.
-    // This helps reach equilibrium and avoid oscillations.
-    //
-    // Doom has no concept of potential energy, much less
-    // of rotation, so we have to creatively simulate these
-    // systems somehow :)
+    /**
+     * If the object has been moving, step up the gear. This helps reach
+     * equilibrium and avoid oscillations.
+     *
+     * DOOM has no concept of potential energy, much less of rotation, so we
+     * have to creatively simulate these systems somehow :)
+     */
 
-    // If not falling for a while, reset it to full strength
+    // If not falling for a while, reset it to full strength.
     if(!((mo->intFlags | flags) & MIF_FALLING))
         mo->gear = 0;
-    else if(mo->gear < MAXGEAR)
-        // Else if not at max gear, move up a gear
+    else if(mo->gear < MAXGEAR) // Else if not at max gear, move up a gear.
         mo->gear++;
 }
