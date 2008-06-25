@@ -216,6 +216,7 @@ static void SV_ReadMobj(void)
     mo->mom[MZ] = mom[MZ];
     mo->valid = valid;
     mo->type = type;
+    mo->moveDir = DI_NODIR;
 
     /**
      * Continue reading the mobj data.
