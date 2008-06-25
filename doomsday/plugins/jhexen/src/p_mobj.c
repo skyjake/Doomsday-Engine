@@ -1220,6 +1220,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     mo->damage = info->damage;
     mo->health = info->spawnHealth *
         (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->moveDir = DI_NODIR;
 
     if(gameSkill != SM_NIGHTMARE)
     {

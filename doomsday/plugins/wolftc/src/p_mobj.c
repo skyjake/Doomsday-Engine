@@ -845,9 +845,9 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     mo->flags2 = info->flags2;
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
-
     mo->health = info->spawnHealth
                    * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->moveDir = DI_NODIR;
 
     P_SetDoomsdayFlags(mo);
 
