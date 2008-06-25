@@ -57,6 +57,7 @@
 
 // Misc macros.
 #define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
+#define INRANGEOF(x, y, r)  ((x) >= (y) - (r) && (x) <= (y) + (r))
 
 extern game_import_t gi;
 extern game_export_t gx;

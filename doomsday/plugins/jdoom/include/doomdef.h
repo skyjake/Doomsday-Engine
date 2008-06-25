@@ -72,6 +72,7 @@ extern game_export_t gx;
 
 // Misc macros.
 #define CLAMP(v, min, max)  (v < min? v=min : v > max? v=max : v)
+#define INRANGEOF(x, y, r)  ((x) >= (y) - (r) && (x) <= (y) + (r))
 
 /**
  * Game mode handling - identify IWAD version to handle IWAD dependant
