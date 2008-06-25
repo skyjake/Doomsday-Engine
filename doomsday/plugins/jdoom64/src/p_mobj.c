@@ -54,6 +54,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define VANISHTICS          (2*TICSPERSEC)
+#define SPAWNFADETICS       (1*TICSPERSEC)
 
 #define MAX_BOB_OFFSET      (8)
 
@@ -837,20 +838,18 @@ void P_MobjThinker(mobj_t *mobj)
     }
 
     // jd64 >
-    // kaiser fade monsters upon spawning
-    // DJS - FIXME? Should this be using corpsetics?
+    // Fade monsters upon spawning.
     if(mobj->intFlags & MIF_FADE)
     {
-        mobj->translucency = 255;
-
-        if(++mobj->corpseTics > TICSPERSEC)
+        if(++mobj->spawnFadeTics < SPAWNFADETICS)
         {
-            mobj->translucency = 0;
+            mobj->translucency = MINMAX_OF(0, 255 -
+                255 * mobj->spawnFadeTics / SPAWNFADETICS, 255);
         }
-        else if(mobj->corpseTics < TICSPERSEC + VANISHTICS)
+        else
         {
-            mobj->translucency =
-                ((mobj->corpseTics - TICSPERSEC) * -255) / VANISHTICS;
+            mobj->intFlags &= ~MIF_FADE;
+            mobj->translucency = 0;
         }
     }
     // < d64tc
@@ -913,6 +912,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     mo->damage = info->damage;
     mo->health =
         info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->moveDir = DI_NODIR;
 
     // Let the engine know about solid objects.
     P_SetDoomsdayFlags(mo);
@@ -1061,9 +1061,10 @@ void P_CheckRespawnQueue(void) // jd64
         memcpy(&mo->spawnSpot, sobj, sizeof(mo->spawnSpot));
 
         // jd64 >
+        mo->translucency = 255;
+        mo->spawnFadeTics = 0;
         mo->intFlags |= MIF_FADE;
         S_StartSound(SFX_ITMBK, mo);
-        mo->translucency = 255;
         // < d64tc
     }
 

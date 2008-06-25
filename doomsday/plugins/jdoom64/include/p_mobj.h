@@ -283,11 +283,22 @@ typedef struct spawnspot_s {
  * end mobj flags
  */
 
-
-// killough $dropoff_fix
 // For torque simulation:
-#define OVERDRIVE 6
-#define MAXGEAR (OVERDRIVE+16)
+#define OVERDRIVE           6
+#define MAXGEAR             (OVERDRIVE+16)
+
+typedef enum dirtype_s {
+    DI_EAST,
+    DI_NORTHEAST,
+    DI_NORTH,
+    DI_NORTHWEST,
+    DI_WEST,
+    DI_SOUTHWEST,
+    DI_SOUTH,
+    DI_SOUTHEAST,
+    DI_NODIR,
+    NUMDIRS
+} dirtype_t;
 
 // Map Object definition.
 typedef struct mobj_s {
@@ -334,6 +345,7 @@ typedef struct mobj_s {
 
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
+    int             spawnFadeTics;
 } mobj_t;
 
 typedef struct polyobj_s {

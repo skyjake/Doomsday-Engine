@@ -325,6 +325,7 @@ static boolean fadeSpawn(thinker_t* th, void* context)
         if(mo)
         {
             mo->translucency = 255;
+            mo->spawnFadeTics = 0;
             mo->intFlags |= MIF_FADE;
             mo->angle = origin->angle;
 
