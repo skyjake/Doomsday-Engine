@@ -691,11 +691,6 @@ void CP_CvarButton(ui_object_t *ob)
     cvar_t     *var = Con_GetVariable(cb->cvarname);
 
     strcpy(ob->text, cb->active ? cb->yes : cb->no);
-    if(!strcmp(cb->cvarname, "rend-tex-filter-raw"))
-    {
-        GL_TextureFilterMode(DD_RAWSCREENS, cb->active);
-        return;
-    }
 
     if(!var)
         return;
