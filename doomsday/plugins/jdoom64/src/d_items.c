@@ -139,7 +139,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      S_PLASMA,
      0,            // ready sound
      S_PLASMA1,
-     S_PLASMAFLASH1
+     S_PLASMASHOCK1
     }
    },
    {
