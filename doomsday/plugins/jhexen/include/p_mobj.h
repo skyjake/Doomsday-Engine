@@ -183,6 +183,19 @@ typedef struct {
 
 #define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
 
+typedef enum dirtype_s {
+    DI_EAST,
+    DI_NORTHEAST,
+    DI_NORTH,
+    DI_NORTHWEST,
+    DI_WEST,
+    DI_SOUTHWEST,
+    DI_SOUTH,
+    DI_SOUTHEAST,
+    DI_NODIR,
+    NUMDIRS
+} dirtype_t;
+
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
     DD_BASE_MOBJ_ELEMENTS()

@@ -165,6 +165,19 @@ typedef struct spawnspot_s {
 #define OVERDRIVE           6
 #define MAXGEAR             (OVERDRIVE+16)
 
+typedef enum dirtype_s {
+    DI_EAST,
+    DI_NORTHEAST,
+    DI_NORTH,
+    DI_NORTHWEST,
+    DI_WEST,
+    DI_SOUTHWEST,
+    DI_SOUTH,
+    DI_SOUTHEAST,
+    DI_NODIR,
+    NUMDIRS
+} dirtype_t;
+
 // Map Object definition.
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
