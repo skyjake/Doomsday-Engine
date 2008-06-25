@@ -338,7 +338,7 @@ void R_GetSharpView(viewer_t *view, player_t *player)
          */
         angle_t             pitch = LOOKDIR2DEG(view->pitch) / 360 * ANGLE_MAX;
         angle_t             angle = view->angle;
-        float               distance = 90 >> FRACBITS;
+        float               distance = 90;
 
         angle = view->angle >> ANGLETOFINESHIFT;
         pitch >>= ANGLETOFINESHIFT;
