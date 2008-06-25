@@ -70,8 +70,6 @@
 #define MESSAGETICS             (4 * TICSPERSEC)
 #define CAMERA_FRICTION_THRESHOLD (.4f)
 
-#define INRANGEOF(x, y, r)      ((x) >= (y) - (r) && (x) <= (y) + (r))
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
