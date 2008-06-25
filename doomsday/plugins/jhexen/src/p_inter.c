@@ -1819,7 +1819,8 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         if(!target->info->mass)
             Con_Error("P_DamageMobj: No target->info->mass!\n");
 
-        thrust = damage * (1.0f/8) * 150 / target->info->mass;
+        thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
+
         // Make fall forwards sometimes.
         if((damage < 40) && (damage > target->health) &&
            (target->pos[VZ] - inflictor->pos[VZ] > 64) && (P_Random() & 1))

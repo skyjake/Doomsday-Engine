@@ -1251,7 +1251,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
                                 target->pos[VX], target->pos[VY]);
 
-        thrust = FIX2FLT(damage * (1.0f/8) * 150 / target->info->mass);
+        thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
         // Make fall forwards sometimes.
         if((damage < 40) && (damage > target->health) &&

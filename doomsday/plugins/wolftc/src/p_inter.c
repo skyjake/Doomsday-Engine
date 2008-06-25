@@ -1202,18 +1202,18 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     if(player && gameskill == SM_BABY)
         damage >>= 1;           // take half damage in trainer mode
 
-    // use the cvar damage multiplier netMobDamageModifier
-    // only if the inflictor is not a player
-    if(inflictor && !inflictor->player && (!source || (source && !source->player)))
+    // Use the cvar damage multiplier netMobDamageModifier only if the
+    // inflictor is not a player.
+    if(inflictor && !inflictor->player &&
+       (!source || (source && !source->player)))
     {
-        //damage = (int) ((float) damage * netMobDamageModifier);
+        // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
             damage *= cfg.netMobDamageModifier;
     }
 
-    // Some close combat weapons should not
-    // inflict thrust and push the victim out of reach,
-    // thus kick away unless using the chainsaw.
+    // Some close combat weapons should not inflict thrust and push the
+    // victim out of reach, thus kick away unless using the chainsaw.
     if(inflictor && !(target->flags & MF_NOCLIP) &&
        (!source || !source->player ||
         source->player->readyWeapon != WT_EIGHTH) &&
@@ -1223,19 +1223,19 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
                             target->pos[VX], target->pos[VY]);
 
-        thrust = damage * (1.0f/8) * 100 / target->info->mass;
+        thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
-        // make fall forwards sometimes
+        // make fall forwards sometimes.
         if(damage < 40 && damage > target->health &&
-           target->pos[VZ] - inflictor->pos[VZ] > 64 * FRACUNIT && (P_Random() & 1))
+           target->pos[VZ] - inflictor->pos[VZ] > 64 && (P_Random() & 1))
         {
             ang += ANG180;
             thrust *= 4;
         }
 
         ang >>= ANGLETOFINESHIFT;
-        target->mom[MX] += FixedMul(thrust, finecosine[ang]);
-        target->mom[MY] += FixedMul(thrust, finesine[ang]);
+        target->mom[MX] += thrust * FIX2FLT(finecosine[ang]);
+        target->mom[MY] += thrust * FIX2FLT(finesine[ang]);
         if(target->dPlayer)
         {
             // Only fix momentum. Otherwise clients will find it difficult
@@ -1243,7 +1243,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             target->dPlayer->flags |= DDPF_FIXMOM;
         }
 
-        // killough $dropoff_fix: thrust objects hanging off ledges
+        // $dropoff_fix: thrust objects hanging off ledges.
         if(target->intFlags & MIF_FALLING && target->gear >= MAXGEAR)
             target->gear = 0;
     }
