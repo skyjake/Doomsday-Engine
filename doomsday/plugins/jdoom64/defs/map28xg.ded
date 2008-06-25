@@ -157,7 +157,7 @@ Count = 1;
 Time = 1;
 Act tag = 1;
 Act sound = "itmbk";
-Sp0 = "spawnmobj BITCH -2752 0 0 0";
+Sp0 = "spawnmobj RECT -2752 0 0 0";
 }
 
 Line Type {
