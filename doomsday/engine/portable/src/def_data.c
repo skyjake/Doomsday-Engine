@@ -86,7 +86,8 @@ void DED_DelEntry(int index, void **ptr, ded_count_t *cnt, size_t elemSize)
 
 void DED_DelArray(void **ptr, ded_count_t *cnt)
 {
-    M_Free(*ptr);
+    if(*ptr)
+        M_Free(*ptr);
     *ptr = 0;
     cnt->num = cnt->max = 0;
 }
