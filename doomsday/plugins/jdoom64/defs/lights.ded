@@ -8,27 +8,19 @@ SkipIf -nodefaultfx;
 # The default properties of all light-emitting objects are determined
 # automatically by the engine.
 
-# The blue health bottles should be lit a bit more brightly.
-Light { State = "BON1"; Size = 0.5; }
-* Light { State = "BON1A"; }
-* Light { State = "BON1B"; }
-* Light { State = "BON1C"; }
-* Light { State = "BON1D"; }
-* Light { State = "BON1E"; }
-
 Light {
   State = "COLU";
   Size = 0.6;
 }
 
 Light {
-  State = "PLASBALL"
-  Flags = nohalo
+  State = "PLASBALL";
+  Flags = nohalo;
 }
 
 Light {
-  State = "PLASBALL2"
-  Flags = nohalo
+  State = "PLASBALL2";
+  Flags = nohalo;
 }
 
 Include "decorlights.ded"
