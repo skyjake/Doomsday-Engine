@@ -229,9 +229,9 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
 #undef FIXYTOSCREENY
 }
 
-void R_CachePatch(dpatch_t *dp, char *name)
+void R_CachePatch(dpatch_t* dp, const char* name)
 {
-    lumppatch_t        *patch;
+    lumppatch_t*        patch;
 
     if(IS_DEDICATED)
         return;

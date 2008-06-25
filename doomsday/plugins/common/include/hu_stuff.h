@@ -60,8 +60,17 @@ typedef enum border_e {
 extern dpatch_t huFont[HU_FONTSIZE];
 extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
-// Name graphics of each level (centered)
-extern dpatch_t *levelNamePatches;
+// Name graphics of each level.
+extern dpatch_t* levelNamePatches;
+// Name graphics of each skill mode.
+#if __JDOOM__ || __JDOOM64__
+extern dpatch_t skillModeNames[NUM_SKILL_MODES];
+extern dpatch_t m_pause; // Paused graphic.
+#endif
+// Name graphics of each episode.
+#if __JDOOM__ || __WOLFTC__
+extern dpatch_t *episodeNamePatches;
+#endif
 
 extern boolean messageNoEcho;
 extern int typeInTime;
@@ -80,7 +89,7 @@ void            Hu_Ticker(void);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                         int lump, char *altstring, boolean builtin, int halign);
+                         dpatch_t* patch, char *altstring, boolean builtin, int halign);
 
 void        WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont,
                              float defRed, float defGreen, float defBlue,

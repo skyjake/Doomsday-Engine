@@ -105,11 +105,11 @@ typedef enum {
 typedef struct {
     menuitemtype_t  type;
     int             flags;
-    char            *text;
-    void            (*func) (int option, void *data);
+    char*           text;
+    void          (*func) (int option, void *data);
     int             option;
-    char           *lumpname;
-    void           *data;
+    dpatch_t*       patch;
+    void*           data;
 } menuitem_t;
 
 // Menu flags

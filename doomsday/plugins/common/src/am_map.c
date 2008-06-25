@@ -3134,7 +3134,7 @@ static void setupGLStateForMap(void)
             float               x, y, w, h, spacing, scale, iconAlpha;
             spriteinfo_t        sprInfo;
             int                 artifactSprites[NUMARTIFACTS] = {
-                SPR_POW1, SPR_POW2, SPR_POW3
+                SPR_ART1, SPR_ART2, SPR_ART3
             };
 
             iconAlpha = map->alpha;
@@ -3225,7 +3225,7 @@ static void drawLevelName(void)
     char               *lname;
     automap_t          *map = &automaps[mapviewplayer];
     automapwindow_t    *win = &map->window;
-    int                 lumpNum = -1;
+    dpatch_t*           patch = NULL;
 #if __JDOOM__ || __JDOOM64__
     int                 mapNum;
 #endif
@@ -3237,14 +3237,14 @@ static void drawLevelName(void)
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
         mapNum = gameMap -1;
-        lumpNum = levelNamePatches[mapNum].lump;
+        patch = &levelNamePatches[mapNum];
 #elif __JDOOM__
         if(gameMode == commercial)
             mapNum = gameMap -1;
         else
             mapNum = ((gameEpisode -1) * 9) + gameMap -1;
 
-        lumpNum = levelNamePatches[mapNum].lump;
+        patch = &levelNamePatches[mapNum];
 #endif
 
         DGL_MatrixMode(DGL_PROJECTION);
@@ -3280,8 +3280,8 @@ static void drawLevelName(void)
 
         Draw_BeginZoom(.4f, x, y);
         y -= 24; // border
-        WI_DrawPatch(x, y, 1, 1, 1, map->alpha, lumpNum,
-                     lname, false, ALIGN_CENTER);
+        WI_DrawPatch(x, y, 1, 1, 1, map->alpha, patch, lname, false,
+                     ALIGN_CENTER);
         Draw_EndZoom();
 
         DGL_MatrixMode(DGL_PROJECTION);

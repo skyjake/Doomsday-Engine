@@ -399,15 +399,39 @@ static int quickload;
 #define READTHISID          (3)
 #endif
 
+#if __JDOOM__ || __JDOOM64__
+static dpatch_t m_doom;
+static dpatch_t m_newg;
+static dpatch_t m_skill;
+static dpatch_t m_episod;
+static dpatch_t m_ngame;
+static dpatch_t m_option;
+static dpatch_t m_loadg;
+static dpatch_t m_saveg;
+static dpatch_t m_rdthis;
+static dpatch_t m_quitg;
+static dpatch_t m_optttl;
+# if __JDOOM__
+static dpatch_t credit;
+static dpatch_t help;
+static dpatch_t help1;
+static dpatch_t help2;
+# endif
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+static dpatch_t m_htic;
+#endif
+
 menuitem_t MainItems[] = {
 #if __JDOOM__
-    {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0, "M_NGAME"},
+    {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0, &m_ngame},
     {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0},
-    {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS, "M_OPTION" },
-    {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0, "M_LOADG"},
-    {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0, "M_SAVEG"},
-    {ITT_EFUNC, 0, "{case}Read This!", M_ReadThis, 0, "M_RDTHIS"},
-    {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0, "M_QUITG"}
+    {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS, &m_option},
+    {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0, &m_loadg},
+    {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0, &m_saveg},
+    {ITT_EFUNC, 0, "{case}Read This!", M_ReadThis, 0, &m_rdthis},
+    {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0, &m_quitg}
 #elif __JDOOM64__
     {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0},
     {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0},
@@ -537,10 +561,10 @@ menu_t EpiDef = {
 #elif __JDOOM__
 menuitem_t EpisodeItems[] = {
     // Text defs TXT_EPISODE1..4.
-    {ITT_EFUNC, 0, "K", M_Episode, 0, "M_EPI1" },
-    {ITT_EFUNC, 0, "T", M_Episode, 1, "M_EPI2" },
-    {ITT_EFUNC, 0, "I", M_Episode, 2, "M_EPI3" },
-    {ITT_EFUNC, 0, "T", M_Episode, 3, "M_EPI4" }
+    {ITT_EFUNC, 0, "K", M_Episode, 0},
+    {ITT_EFUNC, 0, "T", M_Episode, 1},
+    {ITT_EFUNC, 0, "I", M_Episode, 2},
+    {ITT_EFUNC, 0, "T", M_Episode, 3}
 };
 
 menu_t  EpiDef = {
@@ -579,15 +603,15 @@ static menu_t FilesMenu = {
 #endif
 
 static menuitem_t LoadItems[] = {
-    {ITT_EFUNC, 0, "1", M_LoadSelect, 0, ""},
-    {ITT_EFUNC, 0, "2", M_LoadSelect, 1, ""},
-    {ITT_EFUNC, 0, "3", M_LoadSelect, 2, ""},
-    {ITT_EFUNC, 0, "4", M_LoadSelect, 3, ""},
-    {ITT_EFUNC, 0, "5", M_LoadSelect, 4, ""},
-    {ITT_EFUNC, 0, "6", M_LoadSelect, 5, ""},
+    {ITT_EFUNC, 0, "1", M_LoadSelect, 0},
+    {ITT_EFUNC, 0, "2", M_LoadSelect, 1},
+    {ITT_EFUNC, 0, "3", M_LoadSelect, 2},
+    {ITT_EFUNC, 0, "4", M_LoadSelect, 3},
+    {ITT_EFUNC, 0, "5", M_LoadSelect, 4},
+    {ITT_EFUNC, 0, "6", M_LoadSelect, 5},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {ITT_EFUNC, 0, "7", M_LoadSelect, 6, ""},
-    {ITT_EFUNC, 0, "8", M_LoadSelect, 7, ""}
+    {ITT_EFUNC, 0, "7", M_LoadSelect, 6},
+    {ITT_EFUNC, 0, "8", M_LoadSelect, 7}
 #endif
 };
 
@@ -609,15 +633,15 @@ static menu_t LoadDef = {
 };
 
 static menuitem_t SaveItems[] = {
-    {ITT_EFUNC, 0, "1", M_SaveSelect, 0, ""},
-    {ITT_EFUNC, 0, "2", M_SaveSelect, 1, ""},
-    {ITT_EFUNC, 0, "3", M_SaveSelect, 2, ""},
-    {ITT_EFUNC, 0, "4", M_SaveSelect, 3, ""},
-    {ITT_EFUNC, 0, "5", M_SaveSelect, 4, ""},
-    {ITT_EFUNC, 0, "6", M_SaveSelect, 5, ""},
+    {ITT_EFUNC, 0, "1", M_SaveSelect, 0},
+    {ITT_EFUNC, 0, "2", M_SaveSelect, 1},
+    {ITT_EFUNC, 0, "3", M_SaveSelect, 2},
+    {ITT_EFUNC, 0, "4", M_SaveSelect, 3},
+    {ITT_EFUNC, 0, "5", M_SaveSelect, 4},
+    {ITT_EFUNC, 0, "6", M_SaveSelect, 5},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {ITT_EFUNC, 0, "7", M_SaveSelect, 6, ""},
-    {ITT_EFUNC, 0, "8", M_SaveSelect, 7, ""}
+    {ITT_EFUNC, 0, "7", M_SaveSelect, 6},
+    {ITT_EFUNC, 0, "8", M_SaveSelect, 7}
 #endif
 };
 
@@ -704,10 +728,10 @@ static menu_t SkillDef = {
 };
 #elif __JDOOM64__
 static menuitem_t SkillItems[] = {
-    {ITT_EFUNC, 0, "I", M_ChooseSkill, 0, "M_JKILL"},
-    {ITT_EFUNC, 0, "H", M_ChooseSkill, 1, "M_ROUGH"},
-    {ITT_EFUNC, 0, "H", M_ChooseSkill, 2, "M_HURT"},
-    {ITT_EFUNC, 0, "U", M_ChooseSkill, 3, "M_ULTRA"},
+    {ITT_EFUNC, 0, "I", M_ChooseSkill, 0, &skillModeNames[0]},
+    {ITT_EFUNC, 0, "H", M_ChooseSkill, 1, &skillModeNames[1]},
+    {ITT_EFUNC, 0, "H", M_ChooseSkill, 2, &skillModeNames[2]},
+    {ITT_EFUNC, 0, "U", M_ChooseSkill, 3, &skillModeNames[3]},
 };
 static menu_t SkillDef = {
     0,
@@ -724,11 +748,11 @@ static menu_t SkillDef = {
 #else __JDOOM__
 static menuitem_t SkillItems[] = {
     // Text defs TXT_SKILL1..5.
-    {ITT_EFUNC, 0, "I", M_ChooseSkill, 0, "M_JKILL"},
-    {ITT_EFUNC, 0, "H", M_ChooseSkill, 1, "M_ROUGH"},
-    {ITT_EFUNC, 0, "H", M_ChooseSkill, 2, "M_HURT"},
-    {ITT_EFUNC, 0, "U", M_ChooseSkill, 3, "M_ULTRA"},
-    {ITT_EFUNC, MIF_NOTALTTXT, "N", M_ChooseSkill, 4, "M_NMARE"}
+    {ITT_EFUNC, 0, "I", M_ChooseSkill, 0, &skillModeNames[0]},
+    {ITT_EFUNC, 0, "H", M_ChooseSkill, 1, &skillModeNames[1]},
+    {ITT_EFUNC, 0, "H", M_ChooseSkill, 2, &skillModeNames[2]},
+    {ITT_EFUNC, 0, "U", M_ChooseSkill, 3, &skillModeNames[3]},
+    {ITT_EFUNC, MIF_NOTALTTXT, "N", M_ChooseSkill, 4, &skillModeNames[4]}
 };
 
 static menu_t SkillDef = {
@@ -1072,7 +1096,7 @@ static menuitem_t GameplayItems[] = {
     {ITT_EFUNC, 0, "MONSTERS CAN GET STUCK IN DOORS :", M_ToggleVar, 0, NULL,
         "game-monsters-stuckindoors"},
     {ITT_EFUNC, 0, "SOME OBJECTS NEVER HANG OVER LEDGES :", M_ToggleVar, 0, NULL,
-        "game-objects-hangoverledges"},
+        "game-objects-neverhangoverledges"},
     {ITT_EFUNC, 0, "OBJECTS FALL UNDER OWN WEIGHT :", M_ToggleVar, 0, NULL,
         "game-objects-falloff"},
     {ITT_EFUNC, 0, "CORPSES SLIDE DOWN STAIRS :", M_ToggleVar, 0, NULL,
@@ -1281,6 +1305,34 @@ void M_LoadData(void)
         R_CachePatch(&cursorst[i], buffer);
     }
 
+#if __JDOOM__ || __JDOOM64__
+    R_CachePatch(&m_doom, "M_DOOM");
+    R_CachePatch(&m_newg, "M_NEWG");
+    R_CachePatch(&m_skill, "M_SKILL");
+    R_CachePatch(&m_episod, "M_EPISOD");
+    R_CachePatch(&m_ngame, "M_NGAME");
+    R_CachePatch(&m_option, "M_OPTION");
+    R_CachePatch(&m_loadg, "M_LOADG");
+    R_CachePatch(&m_saveg, "M_SAVEG");
+    R_CachePatch(&m_rdthis, "M_RDTHIS");
+    R_CachePatch(&m_quitg, "M_QUITG");
+    R_CachePatch(&m_optttl, "M_OPTTTL");
+# if __JDOOM__
+    if(gameMode == retail || gameMode == commercial)
+        R_CachePatch(&credit, "CREDIT");
+    if(gameMode == commercial)
+        R_CachePatch(&help, "HELP");
+    if(gameMode == shareware || gameMode == registered || gameMode == retail)
+        R_CachePatch(&help1, "HELP1");
+    if(gameMode == shareware || gameMode == registered)
+        R_CachePatch(&help2, "HELP2");
+# endif
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    R_CachePatch(&m_htic, "M_HTIC");
+#endif
+
     if(!menuFogData.texture && !Get(DD_NOVIDEO))
     {
         menuFogData.texture =
@@ -1351,6 +1403,8 @@ void Hu_MenuInit(void)
         w = M_StringWidth(EpisodeItems[i].text, EpiDef.font);
         if(w > maxw)
             maxw = w;
+
+        EpisodeItems[i].patch = &episodeNamePatches[i];
     }
     // Center the episodes menu appropriately.
     EpiDef.x = 160 - maxw / 2 + 12;
@@ -1411,7 +1465,7 @@ void Hu_MenuInit(void)
         item = &MainItems[READTHISID];
         item->func = M_QuitDOOM;
         item->text = "{case}Quit Game";
-        item->lumpname = "M_QUITG";
+        item->patch = &m_quitg;
         MainDef.itemCount = 6;
         MainDef.y = 64 + 8;
         SkillDef.prevMenu = MENU_MAIN;
@@ -1429,7 +1483,7 @@ void Hu_MenuInit(void)
         item = &MainItems[READTHISID];
         item->func = M_ReadThis;
         item->text = "{case}Read This!";
-        item->lumpname = "M_RDTHIS";
+        item->patch = &m_rdthis;
         MainDef.itemCount = 7;
         MainDef.y = 64;
         break;
@@ -1502,6 +1556,8 @@ void Hu_MenuTicker(timespan_t time)
     if(!M_RunTrigger(&fixed, time))
         return;
 
+    typeInTime++;
+
     // Check if there has been a response to a message
     if(messageToPrint)
     {
@@ -1567,8 +1623,6 @@ void Hu_MenuTicker(timespan_t time)
                     240 + 240 * sin(fog->layers[i].posAngle / 180 * PI);
             }
         }
-
-        typeInTime++;
 
         // Fade in/out the widget background filter
         if(widgetEdit)
@@ -1907,15 +1961,12 @@ void Hu_MenuDrawer(void)
 #if __JDOOM__ || __JDOOM64__
             }
 #endif
-            if(currentMenu->items[i].lumpname)
+            if(currentMenu->items[i].patch)
             {
-                if(currentMenu->items[i].lumpname[0])
-                {
-                    WI_DrawPatch(pos[VX], pos[VY], r, g, b, menuAlpha,
-                                W_GetNumForName(currentMenu->items[i].lumpname),
-                                (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL :
-                                 currentMenu->items[i].text, true, ALIGN_LEFT);
-                }
+                WI_DrawPatch(pos[VX], pos[VY], r, g, b, menuAlpha,
+                             currentMenu->items[i].patch,
+                             (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL :
+                             currentMenu->items[i].text, true, ALIGN_LEFT);
             }
             else if(currentMenu->items[i].text)
             {
@@ -2540,19 +2591,19 @@ void M_DrawMainMenu(void)
     frame = (menuTime / 5) % 7;
 
     DGL_Color4f( 1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(88, 0, W_GetNumForName("M_HTIC"));
+    GL_DrawPatch_CS(88, 0, m_htic.lump);
     GL_DrawPatch_CS(37, 80, SkullBaseLump + (frame + 2) % 7);
     GL_DrawPatch_CS(278, 80, SkullBaseLump + frame);
 
 #elif __JHERETIC__
-    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, W_GetNumForName("M_HTIC"),
-                 NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
+                 ALIGN_LEFT);
 
     DGL_Color4f( 1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
     GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_DOOM"),
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom,
                  NULL, false, ALIGN_LEFT);
 #elif __JSTRIFE__
     menu_t     *menu = &MainDef;
@@ -2618,7 +2669,7 @@ void M_DrawEpisode(void)
     M_DrawTitle("WHICH EPISODE?", 4);
 #elif __JDOOM__
     WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 W_GetNumForName("M_EPISOD"), "{case}Which Episode{scaley=1.25,y=-3}?",
+                 &m_episod, "{case}Which Episode{scaley=1.25,y=-3}?",
                  true, ALIGN_LEFT);
 #endif
 }
@@ -2633,9 +2684,9 @@ void M_DrawSkillMenu(void)
 #elif __JDOOM__ || __JDOOM64__
     menu_t *menu = &SkillDef;
     WI_DrawPatch(96, 14, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 W_GetNumForName("M_NEWG"), "{case}NEW GAME", true, ALIGN_LEFT);
+                 &m_newg, "{case}NEW GAME", true, ALIGN_LEFT);
     WI_DrawPatch(54, 38, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 W_GetNumForName("M_SKILL"), "{case}Choose Skill Level:", true,
+                 &m_skill, "{case}Choose Skill Level:", true,
                  ALIGN_LEFT);
 #endif
 }
@@ -2685,7 +2736,7 @@ void M_DrawLoad(void)
     M_DrawTitle("LOAD GAME", 4);
 #else
     WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 W_GetNumForName("M_LOADG"), "{case}LOAD GAME", true, ALIGN_LEFT);
+                 &m_loadg, "{case}LOAD GAME", true, ALIGN_LEFT);
 #endif
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
@@ -2708,7 +2759,7 @@ void M_DrawSave(void)
     M_DrawTitle("SAVE GAME", 4);
 #else
     WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 W_GetNumForName("M_SAVEG"), "{case}SAVE GAME", true, ALIGN_LEFT);
+                 &m_saveg, "{case}SAVE GAME", true, ALIGN_LEFT);
 #endif
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
@@ -2899,15 +2950,13 @@ void M_DrawReadThis1(void)
     switch(gameMode)
     {
     case commercial:
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("HELP"), NULL,
-                     false, ALIGN_LEFT);
+        WI_DrawPatch(0, 0, 1, 1, 1, 1, &help, NULL, false, ALIGN_LEFT);
         break;
 
     case shareware:
     case registered:
     case retail:
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("HELP1"), NULL,
-                     false, ALIGN_LEFT);
+        WI_DrawPatch(0, 0, 1, 1, 1, 1, &help1, NULL, false, ALIGN_LEFT);
         break;
 
     default:
@@ -2927,13 +2976,11 @@ void M_DrawReadThis2(void)
     case retail:
     case commercial:
         // This hack keeps us from having to change menus.
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("CREDIT"), NULL,
-                     false, ALIGN_LEFT);
+        WI_DrawPatch(0, 0, 1, 1, 1, 1, &credit, NULL, false, ALIGN_LEFT);
         break;
     case shareware:
     case registered:
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("HELP2"), NULL,
-                     false, ALIGN_LEFT);
+        WI_DrawPatch(0, 0, 1, 1, 1, 1, &help2, NULL, false, ALIGN_LEFT);
         break;
     default:
         break;
@@ -2955,20 +3002,20 @@ void M_DrawReadThis3(void)
 void M_DrawOptions(void)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, W_GetNumForName("M_HTIC"),
-                 NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
+                 ALIGN_LEFT);
 
     M_DrawTitle("OPTIONS", 56);
 #else
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_DOOM"),
-                 NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom, NULL, false,
+                 ALIGN_LEFT);
 # if __JDOOM64__
     WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
                  menuAlpha, 0, "{case}OPTIONS",
                  true, ALIGN_CENTER);
 #else
     WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
-                 menuAlpha, W_GetNumForName("M_OPTTTL"), "{case}OPTIONS",
+                 menuAlpha, &m_optttl, "{case}OPTIONS",
                  true, ALIGN_CENTER);
 # endif
 #endif

@@ -97,8 +97,16 @@ dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 int typeInTime = 0;
 
 #if __JDOOM__ || __JDOOM64__
- // Name graphics of each level (centered)
-dpatch_t *levelNamePatches;
+// Name graphics of each level.
+dpatch_t *levelNamePatches = NULL;
+// Name graphics of each skill mode.
+dpatch_t skillModeNames[NUM_SKILL_MODES];
+dpatch_t m_pause; // Paused graphic.
+#endif
+
+#if __JDOOM__ || __WOLFTC__
+// Name graphics of each episode.
+dpatch_t *episodeNamePatches = NULL;
 #endif
 
 boolean huShowAllFrags = false;
@@ -143,6 +151,26 @@ void Hu_LoadData(void)
 
 #if __JDOOM__ || __JDOOM64__
     char                name[9];
+    static const char*  skillModePatchNames[] =
+    {
+        "M_JKILL",
+        "M_ROUGH",
+        "M_HURT",
+        "M_ULTRA",
+# if __JDOOM__
+        "M_NMARE"
+# endif
+    };
+#endif
+
+#if __JDOOM__ || __WOLFTC__
+    static const char*  episodePatchNames[] =
+    {
+        "M_EPI1",
+        "M_EPI2",
+        "M_EPI3",
+        "M_EPI4"
+    };
 #endif
 
     // Load the border patches
@@ -178,9 +206,17 @@ void Hu_LoadData(void)
             memcpy(&huFontB[0 + i], &huFontB[4], sizeof(dpatch_t));
         }
     }
+
+    for(i = 0; i < NUM_SKILL_MODES; ++i)
+    {
+        R_CachePatch(&skillModeNames[i], skillModePatchNames[i]);
+    }
+
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
 
-    // load the map name patches
+    R_CachePatch(&m_pause, "M_PAUSE");
+
+    // Load the map name patches.
 # if __JDOOM64__
     {
         int NUMCMAPS = 32;
@@ -215,6 +251,10 @@ void Hu_LoadData(void)
                 R_CachePatch(&levelNamePatches[(j* 9)+i], name);
             }
         }
+
+        episodeNamePatches = Z_Malloc(sizeof(dpatch_t) * 4, PU_STATIC, 0);
+        for(i = 0; i < 4; ++i)
+            R_CachePatch(&episodeNamePatches[i], episodePatchNames[i]);
     }
 # endif
 #elif __JSTRIFE__
@@ -1252,19 +1292,22 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                  int lump, char *altstring, boolean builtin, int halign)
+                  dpatch_t* patch, char *altstring, boolean builtin,
+                  int halign)
 {
-    char    def[80], *string;
-    int patchString = 0;
-    int posx = x;
-    lumppatch_t *patch;
+    char                def[80], *string;
+    int                 patchString = 0;
+    int                 posx = x;
 
     if(IS_DEDICATED)
         return;
 
+    if(!patch)
+        return;
+
     if(altstring && !builtin)
     {   // We have already determined a string to replace this with.
-        if(W_IsFromIWAD(lump))
+        if(W_IsFromIWAD(patch->lump))
         {
             WI_DrawParamText(x, y, altstring, huFontB, r, g, b, a, false,
                              true, halign);
@@ -1273,15 +1316,15 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     }
     else if(cfg.usePatchReplacement)
     {   // We might be able to replace the patch with a string
-        if(lump <= 0)
+        if(!patch)
             return;
 
         strcpy(def, "Patch Replacement|");
-        strcat(def, W_LumpName(lump));
+        strcat(def, W_LumpName(patch->lump));
 
         patchString = Def_Get(DD_DEF_VALUE, def, &string);
 
-        if(W_IsFromIWAD(lump))
+        if(W_IsFromIWAD(patch->lump))
         {
             // A user replacement?
             if(patchString)
@@ -1301,19 +1344,17 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
         }
     }
 
-    if(lump <= 0)
+    if(!patch)
         return;
-
-    patch = (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
 
     // No replacement possible/wanted - use the original patch.
     if(halign == ALIGN_CENTER)
-        posx -= SHORT(patch->width) /2;
+        posx -= patch->width /2;
     else if(halign == ALIGN_RIGHT)
-        posx -= SHORT(patch->width);
+        posx -= patch->width;
 
     DGL_Color4f(1, 1, 1, a);
-    GL_DrawPatch_CS(posx, y, lump);
+    GL_DrawPatch_CS(posx, y, patch->lump);
 }
 
 /**

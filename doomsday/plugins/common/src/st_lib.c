@@ -65,7 +65,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int sttminus_i;
+dpatch_t huMinus;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -73,7 +73,7 @@ int sttminus_i;
 
 void STlib_init(void)
 {
-    sttminus_i = W_GetNumForName(MINUSPATCH);
+    R_CachePatch(&huMinus, MINUSPATCH);
 }
 
 void STlib_initNum(st_number_t* n, int x, int y, dpatch_t* pl, int* num,
@@ -120,21 +120,21 @@ void STlib_drawNum(st_number_t* n, boolean refresh)
 
     // In the special case of 0, you draw 0.
     if(!num)
-        WI_DrawPatch(x - w, n->y, 1, 1, 1, *n->alpha, n->p[0].lump,
+        WI_DrawPatch(x - w, n->y, 1, 1, 1, *n->alpha, &n->p[0],
                      NULL, false, ALIGN_LEFT);
 
     // Draw the number.
     while(num && numdigits--)
     {
         x -= w;
-        WI_DrawPatch(x, n->y, 1, 1, 1, *n->alpha, n->p[num % 10].lump,
+        WI_DrawPatch(x, n->y, 1, 1, 1, *n->alpha, &n->p[num % 10],
                      NULL, false, ALIGN_LEFT);
         num /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(neg)
-        WI_DrawPatch(x - 8, n->y, 1, 1, 1, *n->alpha, sttminus_i,
+        WI_DrawPatch(x - 8, n->y, 1, 1, 1, *n->alpha, &huMinus,
                      NULL, false, ALIGN_LEFT);
 }
 
@@ -154,7 +154,7 @@ void STlib_initPercent(st_percent_t* p, int x, int y, dpatch_t* pl, int* num,
 void STlib_updatePercent(st_percent_t* per, int refresh)
 {
     if(refresh && *per->n.on)
-        WI_DrawPatch(per->n.x, per->n.y, 1, 1, 1, *per->n.alpha, per->p->lump,
+        WI_DrawPatch(per->n.x, per->n.y, 1, 1, 1, *per->n.alpha, per->p,
                      NULL, false, ALIGN_LEFT);
 
     STlib_updateNum(&per->n, refresh);
@@ -178,7 +178,7 @@ void STlib_updateMultIcon(st_multicon_t* mi, boolean refresh)
        *mi->iconNum != -1)
     {
         WI_DrawPatch(mi->x, mi->y, 1, 1, 1, *mi->alpha,
-                     mi->p[*mi->iconNum].lump, NULL, false, ALIGN_LEFT);
+                     &mi->p[*mi->iconNum], NULL, false, ALIGN_LEFT);
         mi->oldIconNum = *mi->iconNum;
     }
 }
@@ -200,8 +200,7 @@ void STlib_updateBinIcon(st_binicon_t* bi, boolean refresh)
 {
     if(*bi->on && (bi->oldval != *bi->val || refresh))
     {
-
-        WI_DrawPatch(bi->x, bi->y, 1, 1, 1, *bi->alpha, bi->p->lump,
+        WI_DrawPatch(bi->x, bi->y, 1, 1, 1, *bi->alpha, bi->p,
                      NULL, false, ALIGN_LEFT);
         bi->oldval = *bi->val;
     }

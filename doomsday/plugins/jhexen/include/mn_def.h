@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -115,11 +115,11 @@ typedef enum {
 typedef struct {
     menuitemtype_t  type;
     int             flags;
-    char            *text;
-    void            (*func) (int option, void *data);
+    char*           text;
+    void          (*func) (int option, void *data);
     int             option;
-    char           *lumpname;
-    void           *data;
+    dpatch_t*       patch;
+    void*           data;
 } menuitem_t;
 
 // Menu flags

@@ -185,13 +185,13 @@ void WI_drawLF(void)
 
     // Draw <LevelName>
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 levelNamePatches[mapnum].lump, lname, false, ALIGN_CENTER);
+                 &levelNamePatches[mapnum], lname, false, ALIGN_CENTER);
 
     // Draw "Finished!"
     y += (5 * levelNamePatches[mapnum].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 finished.lump, NULL, false, ALIGN_CENTER);
+                 &finished, NULL, false, ALIGN_CENTER);
 }
 
 /**
@@ -221,14 +221,14 @@ void WI_drawEL(void)
     }
 
     // Draw "Entering"
-    WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1, entering.lump,
+    WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1, &entering,
                  NULL, false, ALIGN_CENTER);
 
     // Draw level.
     y += (5 * levelNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 levelNamePatches[((gameEpisode -1) * 9) + wbs->next].lump,
+                 &levelNamePatches[((gameEpisode -1) * 9) + wbs->next],
                  lname, false, ALIGN_CENTER);
 }
 
@@ -291,13 +291,13 @@ int WI_drawNum(int x, int y, int n, int digits)
     while(digits--)
     {
         x -= fontwidth;
-        WI_DrawPatch(x, y, 1, 1, 1, 1, num[n % 10].lump, NULL, false, ALIGN_LEFT);
+        WI_DrawPatch(x, y, 1, 1, 1, 1, &num[n % 10], NULL, false, ALIGN_LEFT);
         n /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(neg)
-        WI_DrawPatch(x -= 8, y, 1, 1, 1, 1, minus.lump, NULL, false, ALIGN_LEFT);
+        WI_DrawPatch(x -= 8, y, 1, 1, 1, 1, &minus, NULL, false, ALIGN_LEFT);
 
     return x;
 }
@@ -307,7 +307,7 @@ void WI_drawPercent(int x, int y, int p)
     if(p < 0)
         return;
 
-    WI_DrawPatch(x, y, 1, 1, 1, 1, percent.lump, NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(x, y, 1, 1, 1, 1, &percent, NULL, false, ALIGN_LEFT);
     WI_drawNum(x, y, p, -1);
 }
 
@@ -331,7 +331,7 @@ void WI_drawTime(int x, int y, int t)
             div *= 60;
 
             if(div == 60 || t / div)
-                WI_DrawPatch(x, y, 1, 1, 1, 1, colon.lump, NULL, false,
+                WI_DrawPatch(x, y, 1, 1, 1, 1, &colon, NULL, false,
                              ALIGN_LEFT);
 
         } while(t / div);
@@ -339,7 +339,7 @@ void WI_drawTime(int x, int y, int t)
     else
     {
         // "sucks"
-        WI_DrawPatch(x - sucks.width, y, 1, 1, 1, 1, sucks.lump,
+        WI_DrawPatch(x - sucks.width, y, 1, 1, 1, 1, &sucks,
                      NULL, false, ALIGN_LEFT);
     }
 }
@@ -500,12 +500,12 @@ void WI_drawDeathmatchStats(void)
 
     // Draw stat titles (top line).
     WI_DrawPatch(DM_TOTALSX - total.width / 2,
-                 DM_MATRIXY - WI_SPACINGY + 10, 1, 1, 1, 1, total.lump, NULL,
+                 DM_MATRIXY - WI_SPACINGY + 10, 1, 1, 1, 1, &total, NULL,
                  false, ALIGN_LEFT);
 
-    WI_DrawPatch(DM_KILLERSX, DM_KILLERSY, 1, 1, 1, 1, killers.lump, NULL,
+    WI_DrawPatch(DM_KILLERSX, DM_KILLERSY, 1, 1, 1, 1, &killers, NULL,
                  false, ALIGN_LEFT);
-    WI_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, 1, 1, 1, 1, victims.lump, NULL,
+    WI_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, 1, 1, 1, 1, &victims, NULL,
                  false, ALIGN_LEFT);
 
     // Draw P?
@@ -517,19 +517,19 @@ void WI_drawDeathmatchStats(void)
         if(teamInfo[i].members)
         {
             WI_DrawPatch(x - p[i].width / 2, DM_MATRIXY - WI_SPACINGY,
-                         1, 1, 1, 1, p[i].lump, NULL, false, ALIGN_LEFT);
+                         1, 1, 1, 1, &p[i], NULL, false, ALIGN_LEFT);
 
             WI_DrawPatch(DM_MATRIXX - p[i].width / 2, y, 1, 1, 1, 1,
-                         p[i].lump, NULL, false, ALIGN_LEFT);
+                         &p[i], NULL, false, ALIGN_LEFT);
 
             if(i == myTeam)
             {
                 WI_DrawPatch(x - p[i].width / 2,
-                             DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1, bstar.lump,
+                             DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1, &bstar,
                              NULL, false, ALIGN_LEFT);
 
                 WI_DrawPatch(DM_MATRIXX - p[i].width / 2, y, 1, 1, 1, 1,
-                             star.lump, NULL, false, ALIGN_LEFT);
+                             &star, NULL, false, ALIGN_LEFT);
             }
 
             // If more than 1 member, show the member count.
@@ -548,10 +548,10 @@ void WI_drawDeathmatchStats(void)
         else
         {
             WI_DrawPatch(x - bp[i].width / 2, DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1,
-                         bp[i].lump, NULL, false, ALIGN_LEFT);
+                         &bp[i], NULL, false, ALIGN_LEFT);
 
             WI_DrawPatch(DM_MATRIXX - bp[i].width / 2, y, 1, 1, 1, 1,
-                         bp[i].lump, NULL, false, ALIGN_LEFT);
+                         &bp[i], NULL, false, ALIGN_LEFT);
         }
 
         x += DM_SPACINGX;
@@ -752,17 +752,17 @@ void WI_drawNetgameStats(void)
 
     // Draw stat titles (top line).
     WI_DrawPatch(NG_STATSX + NG_SPACINGX - kills.width, NG_STATSY,
-                 1, 1, 1, 1, kills.lump, NULL, false, ALIGN_LEFT);
+                 1, 1, 1, 1, &kills, NULL, false, ALIGN_LEFT);
 
     WI_DrawPatch(NG_STATSX + 2 * NG_SPACINGX - items.width, NG_STATSY,
-                 1, 1, 1, 1, items.lump, NULL, false, ALIGN_LEFT);
+                 1, 1, 1, 1, &items, NULL, false, ALIGN_LEFT);
 
     WI_DrawPatch(NG_STATSX + 3 * NG_SPACINGX - secret.width, NG_STATSY,
-                 1, 1, 1, 1, secret.lump, NULL, false, ALIGN_LEFT);
+                 1, 1, 1, 1, &secret, NULL, false, ALIGN_LEFT);
 
     if(doFrags)
         WI_DrawPatch(NG_STATSX + 4 * NG_SPACINGX - frags.width,
-                     1, 1, 1, 1, NG_STATSY, frags.lump, NULL, false, ALIGN_LEFT);
+                     1, 1, 1, 1, NG_STATSY, &frags, NULL, false, ALIGN_LEFT);
 
     // Draw stats.
     y = NG_STATSY + kills.height;
@@ -773,7 +773,7 @@ void WI_drawNetgameStats(void)
             continue;
 
         x = NG_STATSX;
-        WI_DrawPatch(x - p[i].width, y, 1, 1, 1, 1, p[i].lump, NULL,
+        WI_DrawPatch(x - p[i].width, y, 1, 1, 1, 1, &p[i], NULL,
                      false, ALIGN_LEFT);
         // If more than 1 member, show the member count.
         if(teamInfo[i].members > 1)
@@ -786,7 +786,7 @@ void WI_drawNetgameStats(void)
         }
 
         if(i == myTeam)
-            WI_DrawPatch(x - p[i].width, y, 1, 1, 1, 1, star.lump, NULL,
+            WI_DrawPatch(x - p[i].width, y, 1, 1, 1, 1, &star, NULL,
                          false, ALIGN_LEFT);
 
         x += NG_SPACINGX;
@@ -933,25 +933,25 @@ void WI_drawStats(void)
 
     WI_drawLF();
 
-    WI_DrawPatch(SP_STATSX, SP_STATSY, 1, 1, 1, 1, kills.lump, NULL,
+    WI_DrawPatch(SP_STATSX, SP_STATSY, 1, 1, 1, 1, &kills, NULL,
                  false, ALIGN_LEFT);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cntKills[0]);
 
-    WI_DrawPatch(SP_STATSX, SP_STATSY + lh, 1, 1, 1, 1, items.lump, NULL,
+    WI_DrawPatch(SP_STATSX, SP_STATSY + lh, 1, 1, 1, 1, &items, NULL,
                  false, ALIGN_LEFT);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cntItems[0]);
 
-    WI_DrawPatch(SP_STATSX, SP_STATSY + 2 * lh, 1, 1, 1, 1, sp_secret.lump,
+    WI_DrawPatch(SP_STATSX, SP_STATSY + 2 * lh, 1, 1, 1, 1, &sp_secret,
                  NULL, false, ALIGN_LEFT);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
 
-    WI_DrawPatch(SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, time.lump, NULL, false,
+    WI_DrawPatch(SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, &time, NULL, false,
                  ALIGN_LEFT);
     WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cntTime);
 
     if(wbs->parTime != -1)
     {
-        WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, par.lump,
+        WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, &par,
                      NULL, false, ALIGN_LEFT);
         WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar);
     }

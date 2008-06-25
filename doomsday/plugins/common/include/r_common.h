@@ -54,7 +54,7 @@ boolean         R_IsFullScreenViewWindow(void);
 boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
 
 void            R_PrecachePSprites(void);
-void            R_CachePatch(dpatch_t *dp, char *name);
+void            R_CachePatch(dpatch_t* dp, const char* name);
 
 void            R_GetGammaMessageStrings(void);
 void            R_CycleGammaLevel(void);

@@ -235,8 +235,8 @@ void G_Display(void)
             if(P_ToXSectorOfSubsector(vplayer->plr->mo->subsector)->special == 200)
             {
                 special200 = true;
-                Rend_SkyParams(0, DD_DISABLE, 0);
-                Rend_SkyParams(1, DD_ENABLE, 0);
+                Rend_SkyParams(0, DD_DISABLE, NULL);
+                Rend_SkyParams(1, DD_ENABLE, NULL);
             }
 
             // How about a bit of quake?
@@ -258,8 +258,8 @@ void G_Display(void)
 
             if(special200)
             {
-                Rend_SkyParams(0, DD_ENABLE, 0);
-                Rend_SkyParams(1, DD_DISABLE, 0);
+                Rend_SkyParams(0, DD_ENABLE, NULL);
+                Rend_SkyParams(1, DD_DISABLE, NULL);
             }
 
             if(!iscam)

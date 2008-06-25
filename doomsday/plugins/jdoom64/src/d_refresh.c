@@ -186,7 +186,7 @@ void R_DrawLevelTitle(void)
 
     if(lname)
     {
-        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, levelNamePatches[mapnum].lump,
+        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, &levelNamePatches[mapnum],
                      lname, false, ALIGN_CENTER);
         y += 14;                //9;
     }
@@ -315,7 +315,7 @@ void D_Display(void)
         //    ay = viewwindowy + 4;
 
         WI_DrawPatch(SCREENWIDTH /2, ay, 1, 1, 1, 1,
-                     W_GetNumForName("M_PAUSE"), NULL, false, ALIGN_CENTER);
+                     &m_pause, NULL, false, ALIGN_CENTER);
     }
 }
 
@@ -432,7 +432,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     if(P_IsCamera(mo))
         mo->ddFlags |= DDMF_DONTDRAW;
 
-    if(mo->flags & MF_CORPSE && cfg.corpseTime && mo->corpseTics == -1)
+    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpseTics == -1)
         mo->ddFlags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.

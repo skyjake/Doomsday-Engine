@@ -185,7 +185,7 @@ void R_DrawLevelTitle(void)
     if(lname)
     {
         WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha,
-                     levelNamePatches[mapnum].lump, lname, false,
+                     &levelNamePatches[mapnum], lname, false,
                      ALIGN_CENTER);
         y += 14;
     }
@@ -377,8 +377,8 @@ void D_Display2(void)
     // Draw pause pic (but not if InFine active).
     if(paused && !fiActive)
     {
-        WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, W_GetNumForName("M_PAUSE"),
-                     NULL, false, ALIGN_CENTER);
+        WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, &m_pause, NULL, false,
+                     ALIGN_CENTER);
     }
 
     // InFine is drawn whenever active.
