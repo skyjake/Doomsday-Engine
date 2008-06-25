@@ -1153,6 +1153,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
 #if !__JHEXEN__
     fellDown = false;
 #endif
+
 #if __JHEXEN__
     if(!P_CheckPosition2f(thing, x, y))
 #else
@@ -1189,7 +1190,9 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
         {   // Doesn't fit.
             goto pushline;
         }
+
         floatOk = true;
+
         if(!(thing->flags & MF_TELEPORT) &&
            tmCeilingZ - thing->pos[VZ] < thing->height &&
            thing->type != MT_LIGHTNING_CEILING && !(thing->flags2 & MF2_FLY))
@@ -1198,24 +1201,34 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
         }
 #else
         // Possibly allow escape if otherwise stuck.
-        if(tmCeilingZ - tmFloorZ < thing->height || // Doesn't fit.
-           // Mobj must lower to fit.
-           (floatOk = true, !(thing->flags & MF_TELEPORT) &&
-            !(thing->flags2 & MF2_FLY) &&
-            tmCeilingZ - thing->pos[VZ] < thing->height) ||
-           // Too big a step up.
-           (!(thing->flags & MF_TELEPORT) &&
-            !(thing->flags2 & MF2_FLY) &&
+        boolean             ret = tmUnstuck &&
+            !(ceilingLine && untouched(ceilingLine)) &&
+            !(floorLine && untouched(floorLine));
+
+        if(tmCeilingZ - tmFloorZ < thing->height)
+            return ret; // Doesn't fit.
+
+        // Mobj must lower to fit.
+        floatOk = true;
+        if(!(thing->flags & MF_TELEPORT) && !(thing->flags2 & MF2_FLY) &&
+           tmCeilingZ - thing->pos[VZ] < thing->height)
+            return ret;
+
+        // Too big a step up.
+        if(!(thing->flags & MF_TELEPORT) &&
+            !(thing->flags2 & MF2_FLY)
 # if __JHERETIC__
-            thing->type != MT_MNTRFX2 && // The Minotaur floor fire (MT_MNTRFX2) can step up any amount
+            && thing->type != MT_MNTRFX2 // The Minotaur floor fire (MT_MNTRFX2) can step up any amount
 # endif
-            tmFloorZ - thing->pos[VZ] > 24))
+            )
         {
+            if(tmFloorZ - thing->pos[VZ] > 24)
+            {
 # if __JHERETIC__
-            CheckMissileImpact(thing);
+                CheckMissileImpact(thing);
 # endif
-            return tmUnstuck && !(ceilingLine && untouched(ceilingLine)) &&
-                !(floorLine && untouched(floorLine));
+                return ret;
+            }
         }
 # if __JHERETIC__
         if((thing->flags & MF_MISSILE) && tmFloorZ > thing->pos[VZ])
@@ -1265,30 +1278,42 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
             return false;
         }
 #else
-        // Allow certain objects to drop off.
-        // Prevent monsters from getting stuck hanging off ledges.
-        // Allow dropoffs in controlled circumstances.
-        // Improve symmetry of clipping on stairs.
+        /**
+         * Allow certain objects to drop off.
+         * Prevent monsters from getting stuck hanging off ledges.
+         * Allow dropoffs in controlled circumstances.
+         * Improve symmetry of clipping on stairs.
+         */
         if(!(thing->flags & (MF_DROPOFF | MF_FLOAT)))
         {
             // Dropoff height limit.
             if(cfg.avoidDropoffs)
             {
                 if(tmFloorZ - tmDropoffZ > 24)
-                    return false;
+                    return false; // Don't stand over dropoff.
             }
             else
             {
+                float                   floorZ = tmFloorZ;
+
+                if(thing->onMobj)
+                {
+                    // Thing is stood on something so use our z position
+                    // as the floor.
+                    floorZ = (thing->pos[VZ] > tmFloorZ ?
+                        thing->pos[VZ] : tmFloorZ);
+                }
+
                 if(!dropoff)
                 {
-                   if(thing->floorZ - tmFloorZ > 24 ||
+                   if(thing->floorZ - floorZ > 24 ||
                       thing->dropOffZ - tmDropoffZ > 24)
                       return false;
                 }
                 else
                 {   // Set fellDown if drop > 24.
                     fellDown = !(thing->flags & MF_NOGRAVITY) &&
-                        thing->pos[VZ] - tmFloorZ > 24;
+                        thing->pos[VZ] - floorZ > 24;
                 }
             }
         }
@@ -1328,17 +1353,22 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
     // The move is ok, so link the thing into its new position.
     P_MobjUnsetPosition(thing);
 
-    memcpy(oldpos, thing->pos, sizeof(oldpos));
+    oldpos[VX] = thing->pos[VX];
+    oldpos[VY] = thing->pos[VY];
+    oldpos[VZ] = thing->pos[VZ];
+
     thing->floorZ = tmFloorZ;
     thing->ceilingZ = tmCeilingZ;
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+    thing->dropOffZ = tmDropoffZ; // $dropoff_fix: keep track of dropoffs.
+#endif
 #if __JHEXEN__
     thing->floorPic = tmFloorPic;
-#else
-    // $dropoff_fix: keep track of dropoffs.
-    thing->dropOffZ = tmDropoffZ;
 #endif
+
     thing->pos[VX] = x;
     thing->pos[VY] = y;
+
     P_MobjSetPosition(thing);
 
     if(thing->flags2 & MF2_FLOORCLIP)
@@ -1970,7 +2000,9 @@ boolean PIT_RadiusAttack(mobj_t *thing, void *data)
     if(thing->type == MT_SPIDER)
         return true;
 # endif
-#else
+#endif
+
+#if __JHEXEN__
     if(!damageSource && thing == bombSource) // Don't damage the source of the explosion.
         return true;
 #endif
@@ -2162,18 +2194,17 @@ static boolean P_ThingHeightClip(mobj_t *thing)
     if(P_IsCamera(thing))
         return false; // Don't height clip cameras.
 
-    onfloor = (thing->pos[VZ] == thing->floorZ);
+    onfloor = (thing->pos[VZ] == thing->floorZ)? true : false;
     P_CheckPosition3fv(thing, thing->pos);
-
-    // What about stranding a monster partially off an edge?
 
     thing->floorZ = tmFloorZ;
     thing->ceilingZ = tmCeilingZ;
+#if !__JHEXEN__
+    thing->dropOffZ = tmDropoffZ; // $dropoff_fix: remember dropoffs.
+#endif
+
 #if __JHEXEN__
     thing->floorPic = tmFloorPic;
-#else
-    // $dropoff_fix: remember dropoffs.
-    thing->dropOffZ = tmDropoffZ;
 #endif
 
     if(onfloor)
@@ -2188,8 +2219,7 @@ static boolean P_ThingHeightClip(mobj_t *thing)
         // Walking monsters rise and fall with the floor.
         thing->pos[VZ] = thing->floorZ;
 
-        // killough $dropoff_fix:
-        // Possibly upset balance of objects hanging off ledges.
+        // $dropoff_fix: Possibly upset balance of objects hanging off ledges.
         if((thing->intFlags & MIF_FALLING) && thing->gear >= MAXGEAR)
             thing->gear = 0;
 #endif
@@ -2201,10 +2231,10 @@ static boolean P_ThingHeightClip(mobj_t *thing)
             thing->pos[VZ] = thing->ceilingZ - thing->height;
     }
 
-    if((thing->ceilingZ - thing->floorZ) >= thing->height)
+    if(thing->ceilingZ - thing->floorZ >= thing->height)
         return true;
-    else
-        return false;
+
+    return false;
 }
 
 /**
@@ -2232,15 +2262,13 @@ static void P_HitSlideLine(linedef_t *ld)
 
     side = P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], ld);
 
-    lineangle =
-        R_PointToAngle2(0, 0, P_GetFloatp(ld, DMU_DX), P_GetFloatp(ld, DMU_DY));
-
+    lineangle = R_PointToAngle2(0, 0, P_GetFloatp(ld, DMU_DX),
+                                      P_GetFloatp(ld, DMU_DY));
     if(side == 1)
         lineangle += ANG180;
+    moveangle = R_PointToAngle2(0, 0, tmMove[MX], tmMove[MY]) + 10;
 
-    moveangle = R_PointToAngle2(0, 0, tmMove[MX], tmMove[MY]);
     deltaangle = moveangle - lineangle;
-
     if(deltaangle > ANG180)
         deltaangle += ANG180;
 
@@ -2318,145 +2346,148 @@ boolean PTR_SlideTraverse(intercept_t *in)
  */
 void P_SlideMove(mobj_t *mo)
 {
-    int                 hitcount;
-    float               leadpos[3], trailpos[3], newPos[3];
+    int                 hitcount = 3;
 
     slideMo = mo;
-    hitcount = 0;
 
-  retry:
-    if(++hitcount == 3)
-        goto stairstep; // Don't loop forever.
-
-    // Trace along the three leading corners.
-    memcpy(leadpos, mo->pos, sizeof(leadpos));
-    memcpy(trailpos, mo->pos, sizeof(trailpos));
-    if(mo->mom[MX] > 0)
+    do
     {
-        leadpos[VX] += mo->radius;
-        trailpos[VX] -= mo->radius;
-    }
-    else
-    {
-        leadpos[VX] -= mo->radius;
-        trailpos[VX] += mo->radius;
-    }
+        float               leadpos[3], trailpos[3], newPos[3];
 
-    if(mo->mom[MY] > 0)
-    {
-        leadpos[VY] += mo->radius;
-        trailpos[VY] -= mo->radius;
-    }
-    else
-    {
-        leadpos[VY] -= mo->radius;
-        trailpos[VY] += mo->radius;
-    }
+        if(!--hitcount == 3)
+            goto stairstep; // Don't loop forever.
 
-    bestSlideFrac = 1;
+        // Trace along the three leading corners.
+        leadpos[VX] = trailpos[VX] = mo->pos[VX];
+        leadpos[VY] = trailpos[VY] = mo->pos[VY];
+        leadpos[VZ] = trailpos[VZ] = mo->pos[VZ];
 
-    P_PathTraverse(leadpos[VX], leadpos[VY],
-                   leadpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
-                   PT_ADDLINES, PTR_SlideTraverse);
-    P_PathTraverse(trailpos[VX], leadpos[VY],
-                   trailpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
-                   PT_ADDLINES, PTR_SlideTraverse);
-    P_PathTraverse(leadpos[VX], trailpos[VY],
-                   leadpos[VX] + mo->mom[MX], trailpos[VY] + mo->mom[MY],
-                   PT_ADDLINES, PTR_SlideTraverse);
-
-    // Move up to the wall.
-    if(bestSlideFrac == 1)
-    {
-        // The move must have hit the middle, so stairstep.
-      stairstep:
-        // $dropoff_fix
-#if __JHEXEN__
-        if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->mom[MY]))
+        if(mo->mom[MX] > 0)
         {
-            if(P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY]))
-            {
-                // If not set to zero, the mobj will appear stuttering against
-                // the blocking surface/thing.
-                mo->mom[MY] = 0;
-            }
-            else
-            {
-                // If not set to zero, the mobj will appear stuttering against
-                // the blocking surface/thing.
-                mo->mom[MX] = mo->mom[MY] = 0;
-            }
+            leadpos[VX] += mo->radius;
+            trailpos[VX] -= mo->radius;
         }
-#else
-        if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->mom[MY], true, true))
-        {
-            if(P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY], true, true))
-            {
-                // If not set to zero, the mobj will appear stuttering against
-                // the blocking surface/thing.
-                mo->mom[MY] = 0;
-            }
-            else
-            {
-                // If not set to zero, the mobj will appear stuttering against
-                // the blocking surface/thing.
-                mo->mom[MX] = mo->mom[MY] = 0;
-            }
-        }
-#endif
         else
         {
-            // If not set to zero, the mobj will appear stuttering against
-            // the blocking surface/thing.
-            mo->mom[MX] = 0;
+            leadpos[VX] -= mo->radius;
+            trailpos[VX] += mo->radius;
         }
-        return;
-    }
 
-    // Fudge a bit to make sure it doesn't hit.
-    bestSlideFrac -= (1.0f / 32);
-    if(bestSlideFrac > 0)
-    {
-        newPos[VX] = mo->mom[MX] * bestSlideFrac;
-        newPos[VY] = mo->mom[MY] * bestSlideFrac;
-        newPos[VZ] = DDMAXFLOAT; // Just initialize with *something*.
+        if(mo->mom[MY] > 0)
+        {
+            leadpos[VY] += mo->radius;
+            trailpos[VY] -= mo->radius;
+        }
+        else
+        {
+            leadpos[VY] -= mo->radius;
+            trailpos[VY] += mo->radius;
+        }
 
-        // $dropoff_fix
-#if __JHEXEN__
-        if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY]))
-            goto stairstep;
-#else
-        if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY],
-                      true, true))
-            goto stairstep;
-#endif
-    }
-
-    // Now continue along the wall.
-    // First calculate remainder.
-    bestSlideFrac = 1 - (bestSlideFrac + (1.0f / 32));
-    if(bestSlideFrac > 1)
         bestSlideFrac = 1;
-    if(bestSlideFrac <= 0)
-        return;
 
-    tmMove[MX] = mo->mom[MX] * bestSlideFrac;
-    tmMove[MY] = mo->mom[MY] * bestSlideFrac;
+        P_PathTraverse(leadpos[VX], leadpos[VY],
+                       leadpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
+                       PT_ADDLINES, PTR_SlideTraverse);
+        P_PathTraverse(trailpos[VX], leadpos[VY],
+                       trailpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
+                       PT_ADDLINES, PTR_SlideTraverse);
+        P_PathTraverse(leadpos[VX], trailpos[VY],
+                       leadpos[VX] + mo->mom[MX], trailpos[VY] + mo->mom[MY],
+                       PT_ADDLINES, PTR_SlideTraverse);
 
-    P_HitSlideLine(bestSlideLine); // Clip the move.
-
-    mo->mom[MX] = tmMove[MX];
-    mo->mom[MY] = tmMove[MY];
-
-    // $dropoff_fix
+        // Move up to the wall.
+        if(bestSlideFrac == 1)
+        {
+            // The move must have hit the middle, so stairstep.
+          stairstep:
+            // $dropoff_fix
 #if __JHEXEN__
-    if(!P_TryMove(mo, mo->pos[VX] + tmMove[MX], mo->pos[VY] + tmMove[MY]))
+            if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->mom[MY]))
+            {
+                if(P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY]))
+                {
+                    // If not set to zero, the mobj will appear stuttering against
+                    // the blocking surface/thing.
+                    mo->mom[MY] = 0;
+                }
+                else
+                {
+                    // If not set to zero, the mobj will appear stuttering against
+                    // the blocking surface/thing.
+                    mo->mom[MX] = mo->mom[MY] = 0;
+                }
+            }
 #else
-    if(!P_TryMove(mo, mo->pos[VX] + tmMove[MX], mo->pos[VY] + tmMove[MY], true, true))
+            if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->mom[MY], true, true))
+            {
+                if(P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY], true, true))
+                {
+                    // If not set to zero, the mobj will appear stuttering against
+                    // the blocking surface/thing.
+                    mo->mom[MY] = 0;
+                }
+                else
+                {
+                    // If not set to zero, the mobj will appear stuttering against
+                    // the blocking surface/thing.
+                    mo->mom[MX] = mo->mom[MY] = 0;
+                }
+            }
 #endif
-    {
-        goto retry;
-    }
+            else
+            {
+                // If not set to zero, the mobj will appear stuttering against
+                // the blocking surface/thing.
+                mo->mom[MX] = 0;
+            }
+
+            break;
+        }
+
+        // Fudge a bit to make sure it doesn't hit.
+        bestSlideFrac -= (1.0f / 32);
+        if(bestSlideFrac > 0)
+        {
+            newPos[VX] = mo->mom[MX] * bestSlideFrac;
+            newPos[VY] = mo->mom[MY] * bestSlideFrac;
+            newPos[VZ] = DDMAXFLOAT; // Just initialize with *something*.
+
+            // $dropoff_fix: Allow objects to drop off ledges
+#if __JHEXEN__
+            if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY]))
+                goto stairstep;
+#else
+            if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY],
+                          true, true))
+                goto stairstep;
+#endif
+        }
+
+        // Now continue along the wall.
+        // First calculate remainder.
+        bestSlideFrac = 1 - (bestSlideFrac + (1.0f / 32));
+        if(bestSlideFrac > 1)
+            bestSlideFrac = 1;
+        if(bestSlideFrac <= 0)
+            break;
+
+        tmMove[MX] = mo->mom[MX] * bestSlideFrac;
+        tmMove[MY] = mo->mom[MY] * bestSlideFrac;
+
+        P_HitSlideLine(bestSlideLine); // Clip the move.
+
+        mo->mom[MX] = tmMove[MX];
+        mo->mom[MY] = tmMove[MY];
+
+    // $dropoff_fix: Allow objects to drop off ledges:
+#if __JHEXEN__
+    } while(!P_TryMove(mo, mo->pos[VX] + tmMove[MX],
+                           mo->pos[VY] + tmMove[MY]));
+#else
+    } while(!P_TryMove(mo, mo->pos[VX] + tmMove[MX],
+                           mo->pos[VY] + tmMove[MY], true, true));
+#endif
 }
 
 /**
@@ -2539,7 +2570,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
         return true; // Keep checking...
 
     noFit = true;
-    if(crushChange && !(levelTime & 3))
+    if(crushChange > 0 && !(levelTime & 3))
     {
         P_DamageMobj(thing, NULL, NULL, 10);
 #if __JDOOM__ || __JDOOM64__
