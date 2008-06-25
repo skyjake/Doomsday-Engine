@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ void B_DestroyCommandBindingList(evbinding_t* listRoot)
  */
 static evbinding_t* B_AllocCommandBinding(void)
 {
-    evbinding_t* eb = calloc(sizeof(evbinding_t), 1);
+    evbinding_t*        eb = M_Calloc(sizeof(evbinding_t));
     eb->bid = B_NewIdentifier();
     return eb;
 }
@@ -83,7 +83,7 @@ static evbinding_t* B_AllocCommandBinding(void)
  */
 static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
 {
-    eb->conds = realloc(eb->conds, ++eb->numConds * sizeof(statecondition_t));
+    eb->conds = M_Realloc(eb->conds, ++eb->numConds * sizeof(statecondition_t));
     memset(&eb->conds[eb->numConds - 1], 0, sizeof(statecondition_t));
     return &eb->conds[eb->numConds - 1];
 }
@@ -252,15 +252,16 @@ parseEnded:
 /**
  * Creates a new event-command binding.
  *
- * @param bindsList  List of bindings where the binding will be added.
- * @param desc     Descriptor of the event.
- * @param command  Command that will be executed by the binding.
+ * @param bindsList     List of bindings where the binding will be added.
+ * @param desc          Descriptor of the event.
+ * @param command       Command that will be executed by the binding.
  *
- * @return  New binding, or @c NULL if there was an error.
+ * @return              New binding, or @c NULL if there was an error.
  */
-evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc, const char* command)
+evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc,
+                                 const char* command)
 {
-    evbinding_t* eb = B_AllocCommandBinding();
+    evbinding_t*        eb = B_AllocCommandBinding();
 
     // Parse the description of the event.
     if(!B_ParseEventDescriptor(eb, desc))
@@ -289,6 +290,9 @@ evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc, const
  */
 void B_DestroyCommandBinding(evbinding_t* eb)
 {
+    if(!eb)
+        return;
+
     assert(eb->bid != 0);
 
     // Unlink first, if linked.
@@ -298,9 +302,12 @@ void B_DestroyCommandBinding(evbinding_t* eb)
         eb->next->prev = eb->prev;
     }
 
-    free(eb->command);
-    free(eb->conds);
-    free(eb);
+    if(eb->command)
+        M_Free(eb->command);
+    if(eb->conds)
+        M_Free(eb->conds);
+
+    M_Free(eb);
 }
 
 /**

@@ -104,7 +104,7 @@ typedef struct doubleclick_s {
 typedef struct controlcounter_s {
     int     control;
     short   impulseCounts[DDMAXPLAYERS];
-    doubleclick_t doubleClicks[DDMAXPLAYERS];    
+    doubleclick_t doubleClicks[DDMAXPLAYERS];
 } controlcounter_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -156,7 +156,7 @@ void P_ControlRegister(void)
     C_CMD("listcontrols",   "",     ListPlayerControls);
     C_CMD("impulse",        NULL,   Impulse);
     C_CMD("resetctlaccum",  "",     ClearControlAccumulation);
-    
+
     C_VAR_INT("input-doubleclick-threshold", &doubleClickThresholdMilliseconds, 0, 0, 2000);
 }
 
@@ -172,7 +172,7 @@ void P_NewPlayerControl(int id, controltype_t type, const char *name, const char
     pc->bindClassName = strdup(bindClass);
     // Also allocate the impulse and double-click counters.
     controlCounts[pc - playerControls] = M_Calloc(sizeof(controlcounter_t));
-}
+    }
 
 playercontrol_t* P_PlayerControlById(int id)
 {
@@ -210,19 +210,24 @@ playercontrol_t* P_PlayerControlByName(const char* name)
 
 void P_ControlShutdown(void)
 {
-    int     i;
+    int             i;
 
-    for(i = 0; i < playerControlCount; ++i)
+    if(playerControls)
     {
-        free(playerControls[i].name);
-        free(playerControls[i].bindClassName);
+        for(i = 0; i < playerControlCount; ++i)
+        {
+            M_Free(playerControls[i].name);
+            M_Free(playerControls[i].bindClassName);
         M_Free(controlCounts[i]);
+        }
+        playerControlCount = 0;
+        M_Free(playerControls);
     }
-    playerControlCount = 0;
-    M_Free(playerControls);
     playerControls = 0;
-    M_Free(controlCounts);
-    controlCounts = 0;
+
+    if(impulseCounts)
+        M_Free(impulseCounts);
+    impulseCounts = 0;
 }
 
 /**
@@ -236,7 +241,7 @@ void P_ControlShutdown(void)
 void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 {
     doubleclickstate_t newState = DBCS_NONE;
-    uint nowTime = 0; 
+    uint nowTime = 0;
     doubleclick_t* db = 0;
 
     if(!controlCounts || !controlCounts[control])
@@ -253,7 +258,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         db->previousClickState = DBCS_NONE;
         return;
     }
-    
+
     if(pos > .5)
     {
         newState = DBCS_POSITIVE;
@@ -274,19 +279,19 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     {
         return;
     }
-    
+
     // We have an activation!
     nowTime = Sys_GetRealTime();
-    
-    if(newState == db->previousClickState && 
+
+    if(newState == db->previousClickState &&
        nowTime - db->previousClickTime < doubleClickThresholdMilliseconds)
     {
         db->triggered = true;
-        
+
         Con_Message("P_MaintainControlDoubleClicks: Triggered plr %i, ctl %i, state %i - threshold %i\n",
             playerNum, control, newState, nowTime - db->previousClickTime);
     }
-    
+
     db->previousClickTime = nowTime;
     db->previousClickState = newState;
     db->lastState = newState;
@@ -317,7 +322,7 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     // P_ConsoleToLocal() is called here.
     binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
     B_EvaluateDeviceBindingList(binds, pos, relativeOffset, bc);
-    
+
     // Mark for double-clicks.
     P_MaintainControlDoubleClicks(playerNum, P_PlayerControlIndexForId(control), *pos);
 }
@@ -351,17 +356,17 @@ int P_GetControlDoubleClick(int playerNum, int control)
     playercontrol_t* pc = P_PlayerControlById(control);
     doubleclick_t *doubleClick = 0;
     int triggered = false;
-    
+
     if(!pc || playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return 0;
-    
+
     if(controlCounts[pc - playerControls])
     {
         doubleClick = &controlCounts[pc - playerControls]->doubleClicks[playerNum];
         if(doubleClick->triggered)
         {
             triggered = true;
-            doubleClick->triggered = false;    
+            doubleClick->triggered = false;
         }
     }
     return triggered;
@@ -376,17 +381,18 @@ void P_Impulse(int playerNum, int control)
     // Check that this is really an impulse control.
     if(pc->type != CTLT_IMPULSE)
     {
-        Con_Message("P_Impulse: Control '%s' is not an impulse control.\n", pc->name);
+        Con_Message("P_Impulse: Control '%s' is not an impulse control.\n",
+                    pc->name);
         return;
     }
 
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return;
-        
+
     control = pc - playerControls;
 
     controlCounts[control]->impulseCounts[playerNum]++;
-    
+
     // Mark for double clicks.
     P_MaintainControlDoubleClicks(playerNum, control, 1);
     P_MaintainControlDoubleClicks(playerNum, control, 0);
@@ -404,7 +410,7 @@ void P_ImpulseByName(int playerNum, const char* control)
 void P_ControlTicker(timespan_t time)
 {
     // Check for triggered double-clicks, and generate the appropriate impulses.
-        
+
 }
 
 D_CMD(ClearControlAccumulation)
