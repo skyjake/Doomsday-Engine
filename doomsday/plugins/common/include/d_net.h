@@ -201,6 +201,8 @@ boolean         D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *sourc
 int             D_NetWorldEvent(int type, int tic, void *data);
 void            D_HandlePacket(int fromplayer, int type, void *data,
                                size_t length);
+void*           D_NetWriteCommands(int numCommands, void* data);
+void*           D_NetReadCommands(size_t pktLength, void* data);
 void            D_NetConsoleRegistration(void);
 void            D_NetMessage(char *msg);
 void            D_NetMessageNoSound(char *msg);

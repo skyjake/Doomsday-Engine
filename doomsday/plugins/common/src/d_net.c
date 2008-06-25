@@ -252,23 +252,21 @@ int D_NetDisconnect(int before)
     return true;
 }
 
+void* D_NetWriteCommands(int numCommands, void* data)
+{
+    // It's time to send ticcmds to the server.
+    // 'plrNumber' contains the number of commands.
+    return NetCl_WriteCommands(data, numCommands);
+}
+void* D_NetReadCommands(size_t pktLength, void* data)
+{
+    // Read ticcmds sent by a client.
+    // 'plrNumber' is the length of the packet.
+    return NetSv_ReadCommands(data, pktLength);
+}
+
 long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 {
-    //// \kludge o preserve the ABI, these are done through player events.
-    //// (They are, sort of.)
-    if(peType == DDPE_WRITE_COMMANDS)
-    {
-        // It's time to send ticcmds to the server.
-        // 'plrNumber' contains the number of commands.
-        return (long int) NetCl_WriteCommands(data, plrNumber);
-    }
-    else if(peType == DDPE_READ_COMMANDS)
-    {
-        // Read ticcmds sent by a client.
-        // 'plrNumber' is the length of the packet.
-        return (long int) NetSv_ReadCommands(data, plrNumber);
-    }
-
     // If this isn't a netgame, we won't react.
     if(!IS_NETGAME)
         return true;
@@ -335,6 +333,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         D_NetMessageEx(msgBuff, (cfg.chatBeep? true : false));
         cfg.echoMsg = oldecho;
     }
+
     return true;
 }
 

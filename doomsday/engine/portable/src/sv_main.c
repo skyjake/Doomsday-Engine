@@ -609,10 +609,8 @@ void Sv_GetPackets(void)
 
             // Unpack the commands in the packet. Since the game defines the
             // ticcmd_t structure, it is the only one who can do this.
-            unpacked =
-                (byte *) gx.NetPlayerEvent((int) netBuffer.length,
-                                           DDPE_READ_COMMANDS,
-                                           (void*) netBuffer.msg.data);
+            unpacked = gx.NetReadCommands(netBuffer.length,
+                                          (void*) netBuffer.msg.data);
 
             // The first two bytes contain the number of commands.
             num = *(ushort *) unpacked;

@@ -80,6 +80,8 @@ typedef struct {
     int           (*NetWorldEvent) (int type, int parm, void *data);
     void          (*HandlePacket) (int fromplayer, int type, void *data,
                                    size_t length);
+    void         *(*NetWriteCommands) (int numCommands, void* data);
+    void         *(*NetReadCommands) (size_t pktLength, void* data);
 
     // Tickers.
     void          (*Ticker) (timespan_t ticLength);

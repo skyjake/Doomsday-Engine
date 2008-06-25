@@ -367,7 +367,7 @@ void Net_SendCommands(void)
          * packed commands.
          */
 
-        msg = (byte *) gx.NetPlayerEvent(1, DDPE_WRITE_COMMANDS, cmd);
+        msg = gx.NetWriteCommands(1, cmd);
 
         Msg_Begin(PCL_COMMANDS);
         Msg_Write(msg + 2, *(ushort *) msg);
