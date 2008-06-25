@@ -372,12 +372,12 @@ void ST_doFullscreenStuff(void)
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
-        SPR_ROCK
+        SPR_RCKT
     };
 
     player_t           *plr = &players[DISPLAYPLAYER];
     char                buf[20];
-    int                 w, h, pos = 0, spr,i;
+    int                 w, h, pos = 0, oldPos = 0, spr,i;
     int                 h_width = 320 / cfg.hudScale;
     int                 h_height = 200 / cfg.hudScale;
     float               textalpha =
@@ -418,33 +418,62 @@ void ST_doFullscreenStuff(void)
         M_WriteText2(HUDBORDERX + pos - (M_StringWidth(buf, huFontB)/2),
                      h_height - HUDBORDERY, buf, huFontB,
                      cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+
+        oldPos = pos;
+        pos = HUDBORDERX * 2 + M_StringWidth(buf, huFontB);
     }
+
+    // Keys  | use a bit of extra scale.
+    if(cfg.hudShown[HUD_KEYS])
+    {
+Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
+        for(i = 0; i < 3; ++i)
+        {
+            spr = 0;
+            if(plr->
+               keys[i == 0 ? KT_REDCARD : i ==
+                     1 ? KT_YELLOWCARD : KT_BLUECARD])
+                spr = i == 0 ? SPR_RKEY : i == 1 ? SPR_YKEY : SPR_BKEY;
+            if(plr->
+               keys[i == 0 ? KT_REDSKULL : i ==
+                     1 ? KT_YELLOWSKULL : KT_BLUESKULL])
+                spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
+            if(spr)
+            {
+                ST_drawHUDSprite(spr, pos, h_height - 2,
+                                 HOT_BLEFT, 1, iconalpha, false);
+                ST_HUDSpriteSize(spr, &w, &h);
+                pos += w + 2;
+            }
+        }
+Draw_EndZoom();
+    }
+    pos = oldPos;
 
     // jd64 > Laser artifacts
     if(cfg.hudShown[HUD_POWER])
     {
         if(plr->artifacts[it_laserpw1])
         {
-            spr = SPR_POW1;
+            spr = SPR_ART1;
             ST_HUDSpriteSize(spr, &w, &h);
-            pos -= w/2;
-            ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 44,
+            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 44,
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
         if(plr->artifacts[it_laserpw2])
         {
-            spr = SPR_POW2;
+            spr = SPR_ART2;
             ST_HUDSpriteSize(spr, &w, &h);
-            ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 84,
+            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 84,
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
         if(plr->artifacts[it_laserpw3])
         {
-            spr = SPR_POW3;
+            spr = SPR_ART3;
             ST_HUDSpriteSize(spr, &w, &h);
-            ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 124,
+            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 124,
                              HOT_BLEFT, 1, iconalpha, false);
         }
     }
@@ -483,33 +512,6 @@ void ST_doFullscreenStuff(void)
                      h_height - HUDBORDERY,
                      buf, huFontB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
                      textalpha);
-        pos = h_width * 0.25;
-    }
-
-    // Keys  | use a bit of extra scale.
-    if(cfg.hudShown[HUD_KEYS])
-    {
-Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
-        for(i = 0; i < 3; ++i)
-        {
-            spr = 0;
-            if(plr->
-               keys[i == 0 ? KT_REDCARD : i ==
-                     1 ? KT_YELLOWCARD : KT_BLUECARD])
-                spr = i == 0 ? SPR_RKEY : i == 1 ? SPR_YKEY : SPR_BKEY;
-            if(plr->
-               keys[i == 0 ? KT_REDSKULL : i ==
-                     1 ? KT_YELLOWSKULL : KT_BLUESKULL])
-                spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
-            if(spr)
-            {
-                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BLEFT, 1,
-                                 iconalpha, false);
-                ST_HUDSpriteSize(spr, &w, &h);
-                pos -= w + 2;
-            }
-        }
-Draw_EndZoom();
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
