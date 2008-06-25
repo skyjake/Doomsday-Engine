@@ -300,10 +300,6 @@ void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 void C_DECL A_CheckReload(player_t *player, pspdef_t *psp)
 {
     P_CheckAmmo(player);
-#if 0
-    if(player->ammo[AT_SHELL] < 2)
-        P_SetPsprite(player, ps_weapon, S_DSNR1);
-#endif
 }
 
 /**
@@ -373,17 +369,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
 
-    // jd64 >
-    if(player->readyWeapon == WT_SIXTH)
-    {
-        P_SetPsprite(player, ps_flash, S_PLASMASHOCK1);
-    }
-    else
-    {
-        P_SetPsprite(player, ps_flash, S_NULL);
-    }
-    // < d64tc
-
+    P_SetPsprite(player, ps_flash, S_NULL);
     psp->pos[VY] -= RAISESPEED;
 
     if(psp->pos[VY] > WEAPONTOP)
@@ -398,6 +384,12 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     newstate = weaponInfo[player->readyWeapon][player->class].mode[0].readyState;
 
     P_SetPsprite(player, ps_weapon, newstate);
+}
+
+void C_DECL A_PlasmaShock(player_t* pl, pspdef_t* psp)
+{
+    S_StartSound(SFX_PSIDL, pl->plr->mo);
+    P_SetPsprite(pl, ps_flash, S_PLASMASHOCK1);
 }
 
 void C_DECL A_GunFlash(player_t *player, pspdef_t *psp)
@@ -524,7 +516,7 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t *psp)
                  weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
 
-    P_SetPsprite(player, ps_flash, S_NULL); // jd64 wha?
+    //P_SetPsprite(player, ps_flash, S_NULL); // jd64 wha?
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -536,30 +528,13 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t *psp)
 /**
  * d64tc
  */
-void C_DECL A_DrawPlasmaTube(player_t *player, pspdef_t *psp)
-{
-    P_SetPsprite(player, ps_flash, S_PLASMASHOCK1);
-}
-
-/**
- * d64tc
- */
-void C_DECL A_PlasmaBuzz(player_t *player)
-{
-    S_StartSound(SFX_PSIDL, player->plr->mo);
-}
-
-/**
- * d64tc
- */
 void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
 {
     mobj_t             *pmo;
     short               laserPower;
 
     P_SetPsprite(player, ps_flash,
-                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState + psp->state -
-                 &states[S_UNKF1]);
+                 weaponInfo[player->readyWeapon][player->class].mode[0].flashState);
 
     if(IS_CLIENT)
         return;
@@ -786,12 +761,6 @@ void C_DECL A_LoadShotgun2(player_t *player, pspdef_t *psp)
     S_StartSound(SFX_DBLOAD, player->plr->mo);
 }
 
-void C_DECL A_CloseShotgun2(player_t *player, pspdef_t * psp)
-{
-    S_StartSound(SFX_DBCLS, player->plr->mo);
-    A_ReFire(player, psp);
-}
-
 void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
 {
     S_StartSound(SFX_PISTOL, player->plr->mo);
@@ -808,7 +777,7 @@ void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    psp->pos[VX] = (float) ((P_Random() & 8) - 2); // jd64
+    psp->pos[VY] = WEAPONTOP + FIX2FLT((P_Random() & 8) - 2); // jd64
 
     P_BulletSlope(player->plr->mo);
 
