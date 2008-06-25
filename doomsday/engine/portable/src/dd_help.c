@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * dd_help.c: Help Text Strings
+ * dd_help.c: Help Text Strings.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -36,19 +36,19 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_STRINGS 16
+#define MAX_STRINGS             16
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct helpstring_s {
-    int     type;
-    char   *text;
+    int             type;
+    char*           text;
 } helpstring_t;
 
 typedef struct helpnode_s {
     struct helpnode_s *prev, *next;
-    char   *id;
-    helpstring_t str[MAX_STRINGS];
+    char*           id;
+    helpstring_t    str[MAX_STRINGS];
 } helpnode_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -82,7 +82,7 @@ void DH_Register(void)
  */
 static helpnode_t* DH_NewNode(void)
 {
-    helpnode_t *n = M_Calloc(sizeof(*n));
+    helpnode_t*         n = M_Calloc(sizeof(*n));
 
     n->next = &helpRoot;
     n->prev = helpRoot.prev;
@@ -95,14 +95,18 @@ static helpnode_t* DH_NewNode(void)
  *
  * @param   node        Ptr to the node to be destroyed.
  */
-static void DH_DeleteNode(helpnode_t * node)
+static void DH_DeleteNode(helpnode_t* node)
 {
-    int     i;
+    int                 i;
+
+    if(!node)
+        return;
 
     node->prev->next = node->next;
     node->next->prev = node->prev;
     // Free all memory associated with the node.
-    M_Free(node->id);
+    if(node->id)
+        M_Free(node->id);
 
     for(i = 0; i < MAX_STRINGS; ++i)
         M_Free(node->str[i].text);
@@ -117,12 +121,12 @@ static void DH_DeleteNode(helpnode_t * node)
  *
  * @return              Non-zero if the file was read successfully.
  */
-static int DH_ReadStrings(char *fileName)
+static int DH_ReadStrings(char* fileName)
 {
-    DFILE  *file = F_Open(fileName, "rt");
-    char    line[2048], *ptr, *eol, *end;
-    helpnode_t *node = NULL;
-    int     count = 0, length;
+    DFILE*              file = F_Open(fileName, "rt");
+    char                line[2048], *ptr, *eol, *end;
+    helpnode_t*         node = NULL;
+    int                 count = 0, length;
 
     if(!file)
     {
@@ -139,9 +143,9 @@ static int DH_ReadStrings(char *fileName)
         // Where does the line begin?
         ptr = M_SkipWhite(line);
         if(!*ptr)
-            continue;           // An empty line.
+            continue; // An empty line.
 
-        eol = ptr + strlen(ptr);    // End of line.
+        eol = ptr + strlen(ptr); // End of line.
         // A new node?
         if(*ptr == '[')
         {
@@ -153,12 +157,12 @@ static int DH_ReadStrings(char *fileName)
             node->id = M_Calloc(end - ptr);
             strncpy(node->id, ptr + 1, end - ptr - 1);
         }
-        else if(node && (end = strchr(ptr, '=')))   // It must be a key?
+        else if(node && (end = strchr(ptr, '='))) // It must be a key?
         {
-            helpstring_t *hst = node->str + count;
+            helpstring_t*           hst = node->str + count;
 
             if(count == MAX_STRINGS)
-                continue;       // No more room.
+                continue; // No more room.
 
             count++;
             // The type of the string.
@@ -187,7 +191,7 @@ static int DH_ReadStrings(char *fileName)
                         M_ReadLine(line, sizeof(line), file);
                         ptr = M_SkipWhite(line);
                     }
-                    else        // \ is not the last char on the line.
+                    else // \ is not the last char on the line.
                     {
                         ptr++;
                         if(*ptr == '\\')
@@ -224,10 +228,10 @@ static int DH_ReadStrings(char *fileName)
  *
  * @return              Ptr to helpnode if matched ELSE @c NULL,.
  */
-void* DH_Find(const char *id)
+void* DH_Find(const char* id)
 {
-    helpnode_t     *n;
-    size_t          length;
+    helpnode_t*         n;
+    size_t              length;
 
     if(!helpInited)
         return NULL;
@@ -263,10 +267,10 @@ void* DH_Find(const char *id)
  *                      invalid helpnode ptr OR the help string database has
  *                      not beeen initialized yet.
  */
-char* DH_GetString(void *foundNode, int type)
+char* DH_GetString(void* foundNode, int type)
 {
-    helpnode_t *n = foundNode;
-    int     i;
+    helpnode_t*         n = foundNode;
+    int                 i;
 
     if(!n || !helpInited || type < 0 || type > NUM_HELPSTRING_TYPES)
         return NULL;
@@ -284,7 +288,7 @@ char* DH_GetString(void *foundNode, int type)
  */
 void DD_InitHelp(void)
 {
-    char    helpFileName[256];
+    char                helpFileName[256];
 
     if(helpInited)
         return;
