@@ -56,6 +56,7 @@ dgl_state_ext_t DGL_state_ext;
 
 #ifdef WIN32
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 
 PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTextureARB;
 PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
@@ -81,7 +82,7 @@ static PROC wglGetExtString;
  *                  and Tom McReynolds in the book "Advanced Graphics
  *                  Programming Using OpenGL" ISBN: 1-55860-659-9.
  */
-static boolean queryExtension(const char *name, const GLubyte  *extensions)
+boolean DGL_QueryExtension(const char* name, const GLubyte* extensions)
 {
     const GLubyte  *start;
     GLubyte        *c, *terminator;
@@ -128,11 +129,11 @@ static int query(const char *ext, int *var)
             const GLubyte* extensions =
             ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC());
 
-            result = (queryExtension(ext, extensions)? 1 : 0);
+            result = (DGL_QueryExtension(ext, extensions)? 1 : 0);
         }
 #endif
         if(!result)
-            result = (queryExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
+            result = (DGL_QueryExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
 
         if(var)
             *var = result;
@@ -141,6 +142,27 @@ static int query(const char *ext, int *var)
     return result;
 }
 
+#ifdef WIN32
+void DGL_InitWGLExtensions(void)
+{
+    wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
+
+    if(query("WGL_EXT_swap_control", &DGL_state_ext.wglSwapIntervalEXT))
+    {
+        GETPROC(wglSwapIntervalEXT);
+    }
+
+    if(query("WGL_ARB_multisample", NULL))
+    {
+        GETPROC(wglChoosePixelFormatARB);
+        if(wglChoosePixelFormatARB)
+        {
+            DGL_state_ext.wglMultisampleARB = 1;
+        }
+    }
+}
+#endif
+
 /**
  * Pre: A rendering context must be aquired and made current before this is
  * called.
@@ -148,10 +170,6 @@ static int query(const char *ext, int *var)
 void DGL_InitExtensions(void)
 {
     GLint           iVal;
-
-#ifdef WIN32
-    wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
-#endif
 
     if(query("GL_EXT_compiled_vertex_array", &DGL_state_ext.lockArray))
     {
@@ -164,13 +182,8 @@ void DGL_InitExtensions(void)
     query("GL_EXT_paletted_texture", &DGL_state.palExtAvailable);
     query("GL_EXT_shared_texture_palette", &DGL_state.sharedPalExtAvailable);
     query("GL_EXT_texture_filter_anisotropic", &DGL_state_ext.aniso);
-
-#ifdef WIN32
-    if(query("WGL_EXT_swap_control", &DGL_state_ext.wglSwapIntervalEXT))
-    {
-        GETPROC(wglSwapIntervalEXT);
-    }
-#endif
+    if(!ArgExists("-notexnonpow2"))
+       query("GL_ARB_texture_non_power_of_two", &DGL_state.textureNonPow2);
 
     // EXT_blend_subtract
     if(query("GL_EXT_blend_subtract", &DGL_state_ext.blendSub))
@@ -239,7 +252,7 @@ void printExtensions(const GLubyte* extensions)
     token = strtok(extbuf, " ");
     while(token)
     {
-        Con_Message("      "); // Indent.
+        Con_Message("    "); // Indent.
         if(verbose)
         {
             // Show full names.

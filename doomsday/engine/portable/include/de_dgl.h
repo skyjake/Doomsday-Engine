@@ -85,6 +85,10 @@ typedef struct dgl_state_s {
     boolean     useFog;
     float       nearClip, farClip;
     float       currentLineWidth;
+    int         textureNonPow2;
+#if WIN32
+    int         multisampleFormat;
+#endif
 } dgl_state_t;
 
 typedef struct rgba_s {
@@ -109,6 +113,7 @@ typedef struct dgl_state_ext_s {
     int         lockArray;
 #if WIN32
     int         wglSwapIntervalEXT;
+    int         wglMultisampleARB;
 #endif
 } dgl_state_ext_t;
 
@@ -120,6 +125,7 @@ extern dgl_state_ext_t DGL_state_ext;
 
 #ifdef WIN32
 extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
@@ -143,6 +149,10 @@ boolean         DGL_Init(void);
 void            DGL_Shutdown(void);
 
 void            DGL_InitExtensions(void);
+boolean         DGL_QueryExtension(const char* name, const GLubyte* extensions);
+#ifdef WIN32
+void            DGL_InitWGLExtensions(void);
+#endif
 void            DGL_PrintExtensions(void);
 
 void            DGL_Show(void);

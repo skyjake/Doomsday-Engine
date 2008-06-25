@@ -32,7 +32,8 @@
 #include "gl_texmanager.h"
 
 boolean         GL_OptimalSize(int width, int height, int *optWidth,
-                               int *optHeight, boolean noStretch);
+                               int *optHeight, boolean noStretch,
+                               boolean isMipMapped);
 void            GL_ConvertBuffer(int width, int height, int informat,
                                  int outformat, byte *in, byte *out,
                                  byte *palette, boolean gamma);
@@ -43,7 +44,8 @@ void            GL_DownMipmap32(byte *in, int width, int height, int comps);
 void            GL_ConvertToAlpha(image_t *image, boolean makeWhite);
 void            GL_ConvertToLuminance(image_t *image);
 void            GL_CalcLuminance(int pnum, byte *buffer, int width,
-                                 int height, int pixelsize);
+                                 int height, int pixelsize, float* brightX,
+                                 float* brightY, rgbcol_t* color);
 byte*           GL_ApplyColorKeying(byte *buf, unsigned int pixelSize,
                                     unsigned int width, unsigned int height);
 int             GL_ValidTexHeight2(int width, int height);
@@ -56,8 +58,9 @@ void            GL_PalIdxToRGB(int idx, float* rgba);
 void            averageColorIdx(rgbcol_t col, byte *data, int w, int h,
                                 byte *palette, boolean hasAlpha);
 void            averageColorRGB(rgbcol_t col, byte *data, int w, int h);
-int             LineAverageRGB(byte *imgdata, int width, int height, int line,
-                               byte *rgb, byte *palette, boolean hasAlpha);
+int             lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h, int line,
+                                    byte* palette, boolean hasAlpha);
+int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h, int line);
 void            ColorOutlines(byte *buffer, int width, int height);
 int             DrawRealPatch(byte *buffer, int texwidth, int texheight,
                               lumppatch_t *patch, int origx, int origy,

@@ -37,10 +37,14 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_dgl.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define RGB18(r, g, b) ((r)+((g)<<6)+((b)<<12))
+
+#define MINTEXWIDTH             8
+#define MINTEXHEIGHT            8
 
 // TYPES -------------------------------------------------------------------
 
@@ -422,26 +426,26 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
  * Determine the optimal size for a texture. Usually the dimensions are
  * scaled upwards to the next power of two.
  *
- * @param true          If @c noStretch == true, and the stretching
- *                      can be skipped.
+ * @param noStretch         If @c true, the stretching can be skipped.
+ * @param isMipMapped       If @c true, we will require mipmaps (this has
+ *                          an affect on the optimal size).
  */
 boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
-                       boolean noStretch)
+                       boolean noStretch, boolean isMipMapped)
 {
-    if(noStretch)
+    if(DGL_GetInteger(DGL_TEXTURE_NON_POWER_OF_TWO) && !isMipMapped)
+    {
+        *optWidth = width;
+        *optHeight = height;
+    }
+    else if(noStretch)
     {
         *optWidth = M_CeilPow2(width);
         *optHeight = M_CeilPow2(height);
 
         // MaxTexSize may prevent using noStretch.
-        if(*optWidth > glMaxTexSize)
+        if(*optWidth > glMaxTexSize || *optHeight > glMaxTexSize)
         {
-            *optWidth = glMaxTexSize;
-            noStretch = false;
-        }
-        if(*optHeight > glMaxTexSize)
-        {
-            *optHeight = glMaxTexSize;
             noStretch = false;
         }
     }
@@ -479,14 +483,21 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
         *optWidth = glMaxTexSize;
     if(*optHeight > glMaxTexSize)
         *optHeight = glMaxTexSize;
+
+    // Some GL drivers seem to have problems with VERY small textures.
+    if(*optWidth < MINTEXWIDTH)
+        *optWidth = MINTEXWIDTH;
+    if(*optHeight < MINTEXHEIGHT)
+        *optHeight = MINTEXHEIGHT;
+
     if(ratioLimit)
     {
-        if(*optWidth > *optHeight)  // Wide texture.
+        if(*optWidth > *optHeight) // Wide texture.
         {
             if(*optHeight < *optWidth / ratioLimit)
                 *optHeight = *optWidth / ratioLimit;
         }
-        else                    // Tall texture.
+        else // Tall texture.
         {
             if(*optWidth < *optHeight / ratioLimit)
                 *optWidth = *optHeight / ratioLimit;
@@ -732,30 +743,7 @@ int LineAverageRGB(byte *imgdata, int width, int height, int line,
     // We're going to make it!
     for(c = 0; c < 3; ++c)
         rgb[c] = (byte) (integerRGB[c] / count);
-    return 1;                   // Successful.
-}
-
-/**
- * The imgdata must have alpha info, too.
- */
-void ImageAverageRGB(byte *imgdata, int width, int height, byte *rgb,
-                     byte *palette)
-{
-    int         i, c, integerRGB[3] = { 0, 0, 0 }, count = 0;
-
-    for(i = 0; i < height; ++i)
-    {
-        if(LineAverageRGB(imgdata, width, height, i, rgb, palette, true))
-        {
-            count++;
-            for(c = 0; c < 3; ++c)
-                integerRGB[c] += rgb[c];
-        }
-    }
-
-    if(count)                   // If there were pixels...
-        for(c = 0; c < 3; ++c)
-            rgb[c] = integerRGB[c] / count;
+    return 1; // Successful.
 }
 
 /**
@@ -881,8 +869,9 @@ void averageColorIdx(rgbcol_t col, byte *data, int w, int h, byte *palette,
             b += rgb[2] / 255.f;
         }
     }
+    // All transparent? Sorry...
     if(!count)
-        return; // Line added by GMJ 22/07/01
+        return;
 
     col[0] = r / count;
     col[1] = g / count;
@@ -890,6 +879,67 @@ void averageColorIdx(rgbcol_t col, byte *data, int w, int h, byte *palette,
 
     // Make it glow (average colors are used with flares and dynlights).
     amplify(col);
+}
+
+int lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h, int line,
+                        byte* palette, boolean hasAlpha)
+{
+    int             i;
+    uint            count;
+    const int       numpels = w * h;
+    byte*           start = data + w * line;
+    byte*           alphaStart = data + numpels + w * line, rgb[3];
+    float           r, g, b;
+
+    // First clear them.
+    for(i = 0; i < 3; ++i)
+        col[i] = 0;
+
+    r = g = b = count = 0;
+    for(i = 0; i < w; ++i)
+    {
+        if(!hasAlpha || alphaStart[i])
+        {
+            count++;
+            // Ignore the gamma level.
+            memcpy(rgb, palette + 3 * start[i], 3);
+            r += rgb[0] / 255.f;
+            g += rgb[1] / 255.f;
+            b += rgb[2] / 255.f;
+        }
+    }
+    // All transparent? Sorry...
+    if(!count)
+        return 0;
+
+    col[0] = r / count;
+    col[1] = g / count;
+    col[2] = b / count;
+
+    return 1; // Successful.
+}
+
+int lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h, int line)
+{
+    int             i;
+    float           culmul[3];
+
+    for(i = 0; i < 3; ++i)
+        culmul[i] = 0;
+
+    *data += 3 * w * line;
+    for(i = 0; i < w; ++i)
+    {
+        culmul[CR] += (*data++) / 255.f;
+        culmul[CG] += (*data++) / 255.f;
+        culmul[CB] += (*data++) / 255.f;
+    }
+
+    col[CR] = culmul[CR] / w;
+    col[CG] = culmul[CG] / w;
+    col[CB] = culmul[CB] / w;
+
+    return 1; // Successful.
 }
 
 void averageColorRGB(rgbcol_t col, byte *data, int w, int h)
@@ -981,7 +1031,8 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
 void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
-                      int pixelSize)
+                      int pixelSize, float* brightX, float* brightY,
+                      rgbcol_t* color)
 {
     byte               *palette = (pixelSize == 1? GL_GetPalette() : NULL);
     spritetex_t        *sprTex = spriteTextures[pnum];
@@ -989,7 +1040,6 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     byte                rgb[3], *src, *alphaSrc = NULL;
     int                 limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
     int                 avgCnt = 0, lowCnt = 0;
-    rgbcol_t           *sprCol = &sprTex->color;
     float               average[3], lowAvg[3];
     int                 region[4];
 
@@ -1012,7 +1062,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         src += pixelSize * width * region[2];
         alphaSrc += width * region[2];
     }
-    sprTex->flareX = sprTex->flareY = 0;
+    (*brightX) = (*brightY) = 0;
 
     for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
     {
@@ -1051,8 +1101,8 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
             {
                 // This pixel will participate in calculating the average
                 // center point.
-                sprTex->flareX += x;
-                sprTex->flareY += y;
+                (*brightX) += x;
+                (*brightY) += y;
                 posCnt++;
             }
 
@@ -1084,17 +1134,17 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 
     if(!posCnt)
     {
-        sprTex->flareX = region[0] + ((region[1] - region[0]) / 2.0f);
-        sprTex->flareY = region[2] + ((region[3] - region[2]) / 2.0f);
+        (*brightX) = region[0] + ((region[1] - region[0]) / 2.0f);
+        (*brightY) = region[2] + ((region[3] - region[2]) / 2.0f);
     }
     else
     {
         // Get the average.
-        sprTex->flareX /= posCnt;
-        sprTex->flareY /= posCnt;
+        (*brightX) /= posCnt;
+        (*brightY) /= posCnt;
         // Add the origin offset.
-        sprTex->flareX += region[0];
-        sprTex->flareY += region[2];
+        (*brightX) += region[0];
+        (*brightY) += region[2];
     }
 
     // The color.
@@ -1104,20 +1154,20 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         {
             // Doesn't the thing have any pixels??? Use white light.
             for(c = 0; c < 3; ++c)
-                (*sprCol)[c] = 1;
+                (*color)[c] = 1;
         }
         else
         {
             // Low-intensity color average.
             for(c = 0; c < 3; ++c)
-                (*sprCol)[c] = lowAvg[c] / lowCnt;
+                (*color)[c] = lowAvg[c] / lowCnt;
         }
     }
     else
     {
         // High-intensity color average.
         for(c = 0; c < 3; ++c)
-            (*sprCol)[c] = average[c] / avgCnt;
+            (*color)[c] = average[c] / avgCnt;
     }
 
 #ifdef _DEBUG
@@ -1129,15 +1179,15 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
                           W_CacheLumpNum(sprTex->lump, PU_GETNAME),
                           width, height, pixelSize,
                           region[0], region[1], region[2], region[3],
-                          sprTex->flareX, sprTex->flareY,
+                          (*brightX), (*brightY),
                           (posCnt? "(average)" : "(center)"),
-                          (*sprCol)[0], (*sprCol)[1], (*sprCol)[2],
+                          (*color)[0], (*color)[1], (*color)[2],
                           (avgCnt? "(hi-intensity avg)" :
                            lowCnt? "(low-intensity avg)" : "(white light)"));
 #endif
 
     // Amplify color.
-    amplify(*sprCol);
+    amplify(*color);
     // How about the size of the light source?
     sprTex->lumSize = (2 * cnt + avgCnt) / 3.0f / 70.0f;
     if(sprTex->lumSize > 1)

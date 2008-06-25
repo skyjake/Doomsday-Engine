@@ -645,13 +645,22 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
         }
 
         if(ok)
-        {   // Request a matching (or similar) pixel format.
-            pixForm = ChoosePixelFormat(hDC, &pfd);
-            if(!pixForm)
+        {
+            // Choose a suitable pixel format.
+            // If multisampling is available, make use of it.
+            if(DGL_state_ext.wglMultisampleARB)
             {
-                Sys_CriticalMessage("DD_CreateWindow: Choosing of pixel format failed.");
-                pixForm = -1;
-                ok = false;
+                pixForm = DGL_state.multisampleFormat;
+            }
+            else
+            {   // Request a matching (or similar) pixel format.
+                pixForm = ChoosePixelFormat(hDC, &pfd);
+                if(!pixForm)
+                {
+                    Sys_CriticalMessage("DD_CreateWindow: Choosing of pixel format failed.");
+                    pixForm = -1;
+                    ok = false;
+                }
             }
         }
 

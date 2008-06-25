@@ -345,7 +345,8 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
 		return false;
 
 	// Check that the texture dimensions are valid.
-	if(width != M_CeilPow2(width) || height != M_CeilPow2(height))
+    if(!DGL_state.textureNonPow2 &&
+       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
 		return false;
 
 	if(width > DGL_state.maxTexSize || height > DGL_state.maxTexSize)

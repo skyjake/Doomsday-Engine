@@ -77,10 +77,13 @@ void activeTexture(const GLenum texture)
 
 static void checkExtensions(void)
 {
+    DGL_InitExtensions();
+#ifdef WIN32
+    DGL_InitWGLExtensions();
+#endif
+
     // Get the maximum texture size.
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &DGL_state.maxTexSize);
-
-    DGL_InitExtensions();
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &DGL_state.maxTexUnits);
 #ifndef USE_MULTITEXTURE
@@ -157,7 +160,206 @@ static void printDGLConfiguration(void)
     Con_Message("  Texture Compression: %s\n", yesNo[DGL_state_texture.useCompr? 1:0]);
     Con_Message("  Variable Texture Anisotropy: %s\n", yesNo[DGL_state.useAnisotropic? 1:0]);
     Con_Message("  Utilized Texture Units: %i\n", DGL_state.maxTexUnits);
+#ifdef WIN32
+    Con_Message("  Multisampling: %s", yesNo[DGL_state_ext.wglMultisampleARB? 1:0]);
+    if(DGL_state_ext.wglMultisampleARB)
+        Con_Message(" (%i)\n", DGL_state.multisampleFormat);
+#endif
 }
+
+#ifdef WIN32
+static void testMultisampling(HDC hDC)
+{
+    int             pixelFormat;
+    int             valid;
+    uint            numFormats;
+    float           fAttributes[] = {0,0};
+
+    /**
+     * These Attributes Are The Bits We Want To Test For In Our Sample
+     * Everything Is Pretty Standard, The Only One We Want To
+     * Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
+     * These Two Are Going To Do The Main Testing For Whether Or Not
+     * We Support Multisampling On This Hardware.
+     */
+    int iAttributes[] =
+    {
+        WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
+        WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
+        WGL_COLOR_BITS_ARB,24,
+        WGL_ALPHA_BITS_ARB,8,
+        WGL_DEPTH_BITS_ARB,16,
+        WGL_STENCIL_BITS_ARB,0,
+        WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
+        WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
+        WGL_SAMPLES_ARB,4,
+        0,0
+    };
+
+    // First We Check To See If We Can Get A Pixel Format For 4 Samples
+    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+
+    // If We Returned True, And Our Format Count Is Greater Than 1
+    if(valid && numFormats >= 1)
+    {
+        DGL_state_ext.wglMultisampleARB = 1;
+        DGL_state.multisampleFormat = pixelFormat;
+    }
+    else
+    {
+        // Our Pixel Format With 4 Samples Failed, Test For 2 Samples
+        iAttributes[19] = 2;
+        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+        if(valid && numFormats >= 1)
+        {
+            DGL_state_ext.wglMultisampleARB = 1;
+            DGL_state.multisampleFormat = pixelFormat;
+        }
+    }
+}
+
+static void createDummyWindow(application_t* app)
+{
+    HWND                hWnd = NULL;
+    HGLRC               hGLRC = NULL;
+    boolean             ok = true;
+    int                 bpp = 32;
+
+    // Create the window.
+    hWnd = CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, "dummy",
+                          (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
+                          CW_USEDEFAULT, CW_USEDEFAULT,
+                          CW_USEDEFAULT, CW_USEDEFAULT,
+                          NULL, NULL,
+                          app->hInstance, NULL);
+    if(hWnd)
+    {   // Initialize.
+        PIXELFORMATDESCRIPTOR pfd;
+        int         pixForm = 0;
+        HDC         hDC = NULL;
+
+        // Setup the pixel format descriptor.
+        ZeroMemory(&pfd, sizeof(pfd));
+        pfd.nSize = sizeof(pfd);
+        pfd.nVersion = 1;
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.iLayerType = PFD_MAIN_PLANE;
+#ifndef DRMESA
+        pfd.dwFlags =
+            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.cColorBits = 32;
+        pfd.cDepthBits = 16;
+#else /* Double Buffer, no alpha */
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+            PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+        pfd.cColorBits = 24;
+        pfd.cRedBits = 8;
+        pfd.cGreenBits = 8;
+        pfd.cGreenShift = 8;
+        pfd.cBlueBits = 8;
+        pfd.cBlueShift = 16;
+        pfd.cDepthBits = 16;
+        pfd.cStencilBits = 8;
+#endif
+
+        if(ok)
+        {
+            // Acquire a device context handle.
+            hDC = GetDC(hWnd);
+            if(!hDC)
+            {
+                Sys_CriticalMessage("DD_CreateWindow: Failed acquiring device context handle.");
+                hDC = NULL;
+                ok = false;
+            }
+        }
+
+        if(ok)
+        {   // Request a matching (or similar) pixel format.
+            pixForm = ChoosePixelFormat(hDC, &pfd);
+            if(!pixForm)
+            {
+                Sys_CriticalMessage("DD_CreateWindow: Choosing of pixel format failed.");
+                pixForm = -1;
+                ok = false;
+            }
+        }
+
+        if(ok)
+        {   // Make sure that the driver is hardware-accelerated.
+            DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
+            if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
+            {
+                Sys_CriticalMessage("DD_CreateWindow: GL driver not accelerated!\n"
+                                    "Use the -allowsoftware option to bypass this.");
+                ok = false;
+            }
+        }
+
+        if(ok)
+        {   // Set the pixel format for the device context. Can only be done once
+            // (unless we release the context and acquire another).
+            if(!SetPixelFormat(hDC, pixForm, &pfd))
+            {
+                Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel "
+                                    "format failed.");
+            }
+        }
+
+        // Create the OpenGL rendering context.
+        if(ok)
+        {
+            if(!(hGLRC = wglCreateContext(hDC)))
+            {
+                Sys_CriticalMessage("createContext: Creation of rendering context "
+                                    "failed.");
+                ok = false;
+            }
+            // Make the context current.
+            else if(!wglMakeCurrent(hDC, hGLRC))
+            {
+                Sys_CriticalMessage("createContext: Couldn't make the rendering "
+                                    "context current.");
+                ok = false;
+            }
+        }
+
+        if(ok)
+        {
+#define GETPROC(x)   x = (void*)wglGetProcAddress(#x)
+
+            PROC            getExtString = wglGetProcAddress("wglGetExtensionsStringARB");
+            const GLubyte* extensions =
+            ((const GLubyte*(__stdcall*)(HDC))getExtString)(hDC);
+
+            if(DGL_QueryExtension("WGL_ARB_multisample", extensions))
+            {
+                GETPROC(wglChoosePixelFormatARB);
+                if(wglChoosePixelFormatARB)
+                    testMultisampling(hDC);
+            }
+
+#undef GETPROC
+        }
+
+        // We've now finished with the device context.
+        if(hDC)
+            ReleaseDC(hWnd, hDC);
+    }
+
+    // Delete the window's rendering context if one has been acquired.
+    if(hGLRC)
+    {
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hGLRC);
+    }
+
+    // Destroy the window and release the handle.
+    if(hWnd)
+        DestroyWindow(hWnd);
+}
+#endif
 
 boolean DGL_PreInit(void)
 {
@@ -170,6 +372,12 @@ boolean DGL_PreInit(void)
     memset(&DGL_state, 0, sizeof(DGL_state));
     memset(&DGL_state_ext, 0, sizeof(DGL_state_ext));
     memset(&DGL_state_texture, 0, sizeof(DGL_state_texture));
+
+#ifdef WIN32
+    // We want to be able to use multisampling if available so lets create a
+    // dummy window and see what pixel formats we have.
+    createDummyWindow(&app);
+#endif
 
     DGL_state_texture.dumpTextures =
         (ArgCheck("-dumptextures")? true : false);
@@ -470,11 +678,23 @@ boolean DGL_GetIntegerv(int name, int *v)
         glGetIntegerv(GL_TEXTURE_BINDING_2D, (GLint*) v);
         break;
 
+    case DGL_TEXTURE_NON_POWER_OF_TWO:
+        *v = DGL_state.textureNonPow2;
+        break;
+
     case DGL_VSYNC:
 #if WIN32
         *v = DGL_state_ext.wglSwapIntervalEXT? DGL_state.useVSync : -1;
 #else
         *v = 1;
+#endif
+        break;
+
+    case DGL_MULTISAMPLE:
+#if WIN32
+        *v = DGL_state_ext.wglMultisampleARB? DGL_state.multisampleFormat : -1;
+#else
+        *v = -1;
 #endif
         break;
 
@@ -785,6 +1005,12 @@ int DGL_Enable(int cap)
 #endif
         break;
 
+    case DGL_MULTISAMPLE:
+#if WIN32
+        glEnable(GL_MULTISAMPLE_ARB);
+#endif
+        break;
+
     default:
         return 0;
     }
@@ -824,6 +1050,12 @@ void DGL_Disable(int cap)
             wglSwapIntervalEXT(0);
             DGL_state.useVSync = false;
         }
+#endif
+        break;
+
+    case DGL_MULTISAMPLE:
+#if WIN32
+        glDisable(GL_MULTISAMPLE_ARB);
 #endif
         break;
 
