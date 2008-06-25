@@ -132,7 +132,7 @@ Values {
       Down = "PLASMADOWN";
       Ready = "PLASMA";
       Atk = "PLASMA1";
-      Flash = "PLASMAFLASH1";
+      Flash = "PLASMASHOCK1";
     };
     6 {
       Type = "cell";

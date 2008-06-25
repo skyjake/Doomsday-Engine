@@ -3,11 +3,7 @@
 # Order of definitions is very important here!
 # Only add new States and Things *after* the existing definitions.
 
-Header { Version = 5; }
-
-# WTF? FIXME!!
-Flag { ID = "mf_fade"; Value = 0x16000000; }
-# end FIXME
+Header { Version = 6; }
 
 Flag { ID = "mf_special"; Value = 0x1; }
 Flag { ID = "mf_solid"; Value = 0x2; }
@@ -89,6 +85,84 @@ Thing {
 }
 
 Thing {
+  ID = "EMARINEL";
+  DoomEd number = 64;
+  Spawn state = "EMARP_STND";
+  See state = "EMARP_RUN1";
+  Pain state = "EMARP_PAIN";
+  Melee state = "NULL";
+  Missile state = "EMARP_ATK1";
+  Death state = "PLAY_XDIE1";
+  Xdeath state = "PLAY_XDIE1";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "plpain";
+  Death sound = "pldeth";
+  Active sound = "None";
+  Pain chance = 170;
+  Spawn health = 30;
+  Speed = 30;
+  Radius = 25;
+  Height = 56;
+  Mass = 100;
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
+}
+
+Thing {
+  ID = "EMARINEP";
+  DoomEd number = 235;
+  Spawn state = "EMARP_STND";
+  See state = "EMARP_RUN1";
+  Pain state = "EMARP_PAIN";
+  Melee state = "NULL";
+  Missile state = "EMARP_ATKB1";
+  Death state = "PLAY_DIE1";
+  Xdeath state = "PLAY_XDIE1";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "plpain";
+  Death sound = "pldeth";
+  Active sound = "None";
+  Pain chance = 170;
+  Spawn health = 9999;
+  Speed = 30;
+  Radius = 25;
+  Height = 56;
+  Mass = 100;
+  Flags = solid | shootable | countkill;
+  Flags2 = slide | passmobj | telestomp;
+}
+
+Thing {
+  ID = "EMARINES";
+  DoomEd number = 65;
+  Spawn state = "EMARP_STND";
+  See state = "EMARP_RUN1";
+  Pain state = "EMARP_PAIN";
+  Melee state = "NULL";
+  Missile state = "EMARP_ATK1";
+  Death state = "PLAY_XDIE1";
+  Xdeath state = "PLAY_XDIE1";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "plpain";
+  Death sound = "pldeth";
+  Active sound = "None";
+  Pain chance = 170;
+  Spawn health = 30;
+  Speed = 30;
+  Radius = 25;
+  Height = 56;
+  Mass = 100;
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp;
+}
+
+Thing {
   ID = "POSSESSED";
   Name = "Zombieman";
   DoomEd number = 3004;
@@ -139,32 +213,6 @@ Thing {
   Speed = 8;
   Radius = 31;
   Height = 72;
-  Mass = 100;
-  Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
-}
-
-Thing {
-  ID = "EMARINEL";
-  DoomEd number = 64;
-  Spawn state = "EMARP_STND";
-  See state = "EMARP_RUN1";
-  Pain state = "EMARL_PAIN";
-  Melee state = "NULL";
-  Missile state = "EMARL_ATK1";
-  Death state = "PLAY_DIE1";
-  Xdeath state = "PLAY_XDIE1";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "plpain";
-  Death sound = "pldeth";
-  Active sound = "None";
-  Pain chance = 170;
-  Spawn health = 30;
-  Speed = 30;
-  Radius = 25;
-  Height = 56;
   Mass = 100;
   Flags = solid | shootable | countkill;
   Flags2 = passmobj | telestomp;
@@ -278,32 +326,6 @@ Thing {
 }
 
 Thing {
-  ID = "EMARINES";
-  DoomEd number = 65;
-  Spawn state = "EMARP_STND";
-  See state = "EMARP_RUN1";
-  Pain state = "EMARS_PAIN";
-  Melee state = "NULL";
-  Missile state = "EMARS_ATK1";
-  Death state = "PLAY_DIE1";
-  Xdeath state = "PLAY_XDIE1";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "plpain";
-  Death sound = "pldeth";
-  Active sound = "None";
-  Pain chance = 170;
-  Spawn health = 30;
-  Speed = 30;
-  Radius = 25;
-  Height = 56;
-  Mass = 100;
-  Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
-}
-
-Thing {
   ID = "TROOP";
   Name = "Imp";
   DoomEd number = 3001;
@@ -364,11 +386,11 @@ Thing {
   Name = "Spectre";
   DoomEd number = 58;
   Spawn state = "SARG_STND";
-  See state = "SARG_RUN1";
-  Pain state = "SARG_PAIN";
-  Melee state = "SARG_ATK1";
+  See state = "SHAD_RUN";
+  Pain state = "SHAD_PAIN";
+  Melee state = "SHAD_ATK";
   Missile state = "NULL";
-  Death state = "SARG_DIE1";
+  Death state = "SHAD_DIE";
   Xdeath state = "NULL";
   Raise state = "NULL";
   See sound = "sgtsit";
@@ -532,7 +554,7 @@ Thing {
   Name = "Arachnotron";
   DoomEd number = 68;
   Spawn state = "BSPI_STND";
-  See state = "BSPI_SIGHT";
+  See state = "BSPI_SEE";
   Pain state = "BSPI_PAIN";
   Melee state = "NULL";
   Missile state = "BSPI_ATK1";
@@ -584,11 +606,39 @@ Thing {
 }
 
 Thing {
+  ID = "DCYBORG";
+  Name = "DCyberdemon";
+  DoomEd number = 16;
+  Spawn state = "DCYBER_STND";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "DCYBER_ATK1";
+  Death state = "NULL";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "cybsit";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "None";
+  Active sound = "dmact";
+  Reaction time = 8;
+  Pain chance = 20;
+  Spawn health = 4000;
+  Speed = 0;
+  Radius = 40;
+  Height = 110;
+  Mass = 1000;
+  Flags = solid | shootable | countkill;
+  Flags2 = passmobj | telestomp | boss;
+}
+
+Thing {
   ID = "PAIN";
   Name = "Pain Elemental";
   DoomEd number = 71;
   Spawn state = "PAIN_STND";
-  See state = "PAIN_RUN1";
+  See state = "PAIN_SEE";
   Pain state = "PAIN_PAIN";
   Melee state = "NULL";
   Missile state = "PAIN_ATK1";
@@ -644,7 +694,7 @@ Thing {
   Pain state = "NULL";
   Melee state = "NULL";
   Missile state = "NULL";
-  Death state = "BEXP";
+  Death state = "BAR2";
   Xdeath state = "NULL";
   Raise state = "NULL";
   See sound = "None";
@@ -691,12 +741,12 @@ Thing {
 Thing {
   ID = "HEADSHOT";
   DoomEd number = -1;
-  Spawn state = "RBALL1";
+  Spawn state = "BAL3";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
   Missile state = "NULL";
-  Death state = "RBALLX1";
+  Death state = "BAL3EXP";
   Xdeath state = "NULL";
   Raise state = "NULL";
   See sound = "firsht";
@@ -706,11 +756,11 @@ Thing {
   Active sound = "None";
   Reaction time = 8;
   Spawn health = 1000;
-  Speed = 10;
-  Radius = 6;
+  Speed = 18;
+  Radius = 11;
   Height = 8;
   Mass = 100;
-  Damage = 5;
+  Damage = 10;
   Flags = noblockmap | missile | dropoff | nogravity;
   Flags2 = noteleport;
 }
@@ -1531,7 +1581,7 @@ Thing {
 Thing {
   ID = "MISC18";
   DoomEd number = 2010;
-  Spawn state = "ROCK";
+  Spawn state = "RCKT";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
@@ -1796,7 +1846,7 @@ Thing {
 Thing {
   ID = "MISC28";
   DoomEd number = 2004;
-  Spawn state = "PLAS";
+  Spawn state = "PLSM";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
@@ -2285,7 +2335,7 @@ Thing {
 Thing {
   ID = "MISC49";
   DoomEd number = 34;
-  Spawn state = "CANDLESTIK";
+  Spawn state = "CANDLE";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
@@ -3092,7 +3142,7 @@ Thing {
 Thing {
   ID = "LASERGUN";
   DoomEd number = 2009;
-  Spawn state = "LGUN1";
+  Spawn state = "LSRG";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
@@ -3170,7 +3220,7 @@ Thing {
 Thing {
   ID = "LPOWERUP1";
   DoomEd number = 4000;
-  Spawn state = "POW10";
+  Spawn state = "ART1";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
@@ -3194,7 +3244,7 @@ Thing {
 Thing {
   ID = "LPOWERUP2";
   DoomEd number = 4001;
-  Spawn state = "POW20";
+  Spawn state = "ART2";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
@@ -3218,7 +3268,7 @@ Thing {
 Thing {
   ID = "LPOWERUP3";
   DoomEd number = 4002;
-  Spawn state = "POW30";
+  Spawn state = "ART3";
   See state = "NULL";
   Pain state = "NULL";
   Melee state = "NULL";
@@ -3267,14 +3317,14 @@ Thing {
 }
 
 Thing {
-  ID = "BITCH";
+  ID = "RECT";
   DoomEd number = 5000;
-  Spawn state = "MOTH_STND";
-  See state = "MOTH_RUN1";
-  Pain state = "MOTH_PAIN";
+  Spawn state = "RECT_STND";
+  See state = "RECT_RUN1";
+  Pain state = "RECT_PAIN";
   Melee state = "NULL";
-  Missile state = "MOTH_ATK1";
-  Death state = "MOTH_DIE1";
+  Missile state = "RECT_ATK1";
+  Death state = "RECT_DIE1";
   Xdeath state = "NULL";
   Raise state = "NULL";
   See sound = "mthsit";
@@ -3363,39 +3413,13 @@ Thing {
   Active sound = "None";
   Reaction time = 8;
   Spawn health = 1000;
-  Speed = 50;
-  Radius = 6;
+  Speed = 16;
+  Radius = 13;
   Height = 8;
   Mass = 100;
-  Damage = 1;
+  Damage = 4;
   Flags = noblockmap | missile | dropoff | nogravity;
   Flags2 = passmobj | cannotpush;
-}
-
-Thing {
-  ID = "EMARINEP";
-  DoomEd number = 235;
-  Spawn state = "EMARP_STND";
-  See state = "EMARP_RUN1";
-  Pain state = "EMARP_PAIN";
-  Melee state = "NULL";
-  Missile state = "EMARP_ATK1";
-  Death state = "PLAY_DIE1";
-  Xdeath state = "PLAY_XDIE1";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "None";
-  Pain sound = "plpain";
-  Death sound = "pldeth";
-  Active sound = "None";
-  Pain chance = 170;
-  Spawn health = 9999;
-  Speed = 30;
-  Radius = 25;
-  Height = 56;
-  Mass = 100;
-  Flags = solid | shootable | countkill;
-  Flags2 = slide | passmobj | telestomp;
 }
 
 Thing {
@@ -4900,11 +4924,11 @@ Thing {
   Name = "Fake Spectre";
   DoomEd number = 224;
   Spawn state = "SARG_STND";
-  See state = "SARG_RUN1";
-  Pain state = "SARG_PAIN";
-  Melee state = "SARG_ATK1";
+  See state = "SHAD_RUN";
+  Pain state = "SHAD_PAIN";
+  Melee state = "SHAD_ATK";
   Missile state = "NULL";
-  Death state = "SARG_DIE1";
+  Death state = "SHAD_DIE";
   Xdeath state = "NULL";
   Raise state = "NULL";
   See sound = "sgtsit";
@@ -5212,7 +5236,7 @@ Thing {
   Name = "Fake Pain Elemental";
   DoomEd number = 230;
   Spawn state = "PAIN_STND";
-  See state = "PAIN_RUN1";
+  See state = "PAIN_SEE";
   Pain state = "PAIN_PAIN";
   Melee state = "NULL";
   Missile state = "PAIN_ATK1";
@@ -5289,7 +5313,7 @@ Thing {
   Name = "Fake Arachnotron";
   DoomEd number = 234;
   Spawn state = "BSPI_STND";
-  See state = "BSPI_SIGHT";
+  See state = "BSPI_SEE";
   Pain state = "BSPI_PAIN";
   Melee state = "NULL";
   Missile state = "BSPI_ATK1";
@@ -5350,1621 +5374,10 @@ State {
 
 State {
   ID = "LIGHTDONE";
-  Sprite = "SHTG";
+  Sprite = "SHT1";
   Frame = 4;
   Tics = 0;
   Action = "A_Light0";
-  Next state = "NULL";
-}
-
-State {
-  ID = "PUNCH";
-  Sprite = "PUNG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "PUNCH";
-}
-
-State {
-  ID = "PUNCHDOWN";
-  Sprite = "PUNG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "PUNCHDOWN";
-}
-
-State {
-  ID = "PUNCHUP";
-  Sprite = "PUNG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "PUNCHUP";
-}
-
-State {
-  ID = "PUNCH1";
-  Sprite = "PUNG";
-  Frame = 1;
-  Tics = 4;
-  Next state = "PUNCH2";
-}
-
-State {
-  ID = "PUNCH2";
-  Sprite = "PUNG";
-  Frame = 2;
-  Tics = 4;
-  Action = "A_Punch";
-  Next state = "PUNCH3";
-}
-
-State {
-  ID = "PUNCH3";
-  Sprite = "PUNG";
-  Frame = 3;
-  Tics = 5;
-  Next state = "PUNCH4";
-}
-
-State {
-  ID = "PUNCH4";
-  Sprite = "PUNG";
-  Frame = 2;
-  Tics = 4;
-  Next state = "PUNCH5";
-}
-
-State {
-  ID = "PUNCH5";
-  Sprite = "PUNG";
-  Frame = 1;
-  Tics = 5;
-  Action = "A_ReFire";
-  Next state = "PUNCH";
-}
-
-State {
-  ID = "PISTOL";
-  Sprite = "PISG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "PISTOL";
-}
-
-State {
-  ID = "PISTOLDOWN";
-  Sprite = "PISG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "PISTOLDOWN";
-}
-
-State {
-  ID = "PISTOLUP";
-  Sprite = "PISG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "PISTOLUP";
-}
-
-State {
-  ID = "PISTOL1";
-  Sprite = "PISG";
-  Frame = 0;
-  Tics = 4;
-  Next state = "PISTOL2";
-}
-
-State {
-  ID = "PISTOL2";
-  Sprite = "PISG";
-  Frame = 1;
-  Tics = 4;
-  Action = "A_FirePistol";
-  Next state = "PISTOL3";
-}
-
-State {
-  ID = "PISTOL3";
-  Sprite = "PISG";
-  Frame = 2;
-  Tics = 3;
-  Next state = "PISTOL4";
-}
-
-State {
-  ID = "PISTOL4";
-  Sprite = "PISG";
-  Frame = 1;
-  Tics = 4;
-  Action = "A_ReFire";
-  Next state = "PISTOL";
-}
-
-State {
-  ID = "PISTOLFLASH";
-  Sprite = "PISF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light1";
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "SGUN";
-  Sprite = "SHTG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "SGUN";
-}
-
-State {
-  ID = "SGUNDOWN";
-  Sprite = "SHTG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "SGUNDOWN";
-}
-
-State {
-  ID = "SGUNUP";
-  Sprite = "SHTG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "SGUNUP";
-}
-
-State {
-  ID = "SGUN1";
-  Sprite = "SHTG";
-  Frame = 0;
-  Tics = 3;
-  Next state = "SGUN2";
-}
-
-State {
-  ID = "SGUN2";
-  Sprite = "SHTG";
-  Frame = 0;
-  Tics = 7;
-  Action = "A_FireShotgun";
-  Next state = "SGUN3";
-}
-
-State {
-  ID = "SGUN3";
-  Sprite = "SHTG";
-  Frame = 3;
-  Tics = 11;
-  Next state = "SGUN6";
-}
-
-State {
-  ID = "SGUN4";
-  Sprite = "SHTG";
-  Frame = 2;
-  Tics = 5;
-  Next state = "SGUN5";
-}
-
-State {
-  ID = "SGUN5";
-  Sprite = "SHTG";
-  Frame = 3;
-  Tics = 5;
-  Next state = "SGUN6";
-}
-
-State {
-  ID = "SGUN6";
-  Sprite = "SHTG";
-  Frame = 2;
-  Tics = 6;
-  Next state = "SGUN7";
-}
-
-State {
-  ID = "SGUN7";
-  Sprite = "SHTG";
-  Frame = 1;
-  Tics = 6;
-  Next state = "SGUN8";
-}
-
-State {
-  ID = "SGUN8";
-  Sprite = "SHTG";
-  Frame = 0;
-  Tics = 2;
-  Next state = "SGUN9";
-}
-
-State {
-  ID = "SGUN9";
-  Sprite = "SHTG";
-  Frame = 0;
-  Tics = 2;
-  Action = "A_ReFire";
-  Next state = "SGUN";
-}
-
-State {
-  ID = "SGUNFLASH1";
-  Sprite = "SHTF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light1";
-  Next state = "SGUNFLASH2";
-}
-
-State {
-  ID = "SGUNFLASH2";
-  Sprite = "SHTF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_Light2";
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "DSGUN";
-  Sprite = "SHT2";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "DSGUN";
-}
-
-State {
-  ID = "DSGUNDOWN";
-  Sprite = "SHT2";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "DSGUNDOWN";
-}
-
-State {
-  ID = "DSGUNUP";
-  Sprite = "SHT2";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "DSGUNUP";
-}
-
-State {
-  ID = "DSGUN1";
-  Sprite = "SHT2";
-  Frame = 0;
-  Tics = 3;
-  Next state = "DSGUN2";
-}
-
-State {
-  ID = "DSGUN2";
-  Sprite = "SHT2";
-  Frame = 0;
-  Tics = 7;
-  Action = "A_FireShotgun2";
-  Next state = "DSGUN3";
-}
-
-State {
-  ID = "DSGUN3";
-  Sprite = "SHT2";
-  Frame = 1;
-  Tics = 7;
-  Next state = "DSGUN4";
-}
-
-State {
-  ID = "DSGUN4";
-  Sprite = "SHT2";
-  Frame = 2;
-  Tics = 22;
-  Action = "A_CheckReload";
-  Next state = "DSGUN5";
-}
-
-State {
-  ID = "DSGUN5";
-  Sprite = "SHT2";
-  Frame = 3;
-  Tics = 7;
-  Action = "A_OpenShotgun2";
-  Next state = "DSGUN9";
-}
-
-State {
-  ID = "DSGUN6";
-  Sprite = "SHT2";
-  Frame = 4;
-  Tics = 28;
-  Next state = "DSGUN7";
-}
-
-State {
-  ID = "DSGUN7";
-  Sprite = "SHT2";
-  Frame = 5;
-  Tics = 7;
-  Action = "A_LoadShotgun2";
-  Next state = "DSGUN8";
-}
-
-State {
-  ID = "DSGUN8";
-  Sprite = "SHT2";
-  Frame = 6;
-  Tics = 6;
-  Next state = "DSGUN9";
-}
-
-State {
-  ID = "DSGUN9";
-  Sprite = "SHT2";
-  Frame = 7;
-  Tics = 6;
-  Action = "A_CloseShotgun2";
-  Next state = "DSGUN10";
-}
-
-State {
-  ID = "DSGUN10";
-  Sprite = "SHT2";
-  Frame = 0;
-  Tics = 5;
-  Action = "A_ReFire";
-  Next state = "DSGUN";
-}
-
-State {
-  ID = "DSNR1";
-  Sprite = "SHT2";
-  Frame = 1;
-  Tics = 7;
-  Next state = "DSNR2";
-}
-
-State {
-  ID = "DSNR2";
-  Sprite = "SHT2";
-  Frame = 0;
-  Tics = 3;
-  Next state = "DSGUNDOWN";
-}
-
-State {
-  ID = "DSGUNFLASH1";
-  Sprite = "SHT2";
-  Frame = 8;
-  Flags = fullbright;
-  Tics = 5;
-  Action = "A_Light1";
-  Next state = "DSGUNFLASH2";
-}
-
-State {
-  ID = "DSGUNFLASH2";
-  Sprite = "SHT2";
-  Frame = 9;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light2";
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "CHAIN";
-  Sprite = "CHGG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "CHAIN";
-}
-
-State {
-  ID = "CHAINDOWN";
-  Sprite = "CHGG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "CHAINDOWN";
-}
-
-State {
-  ID = "CHAINUP";
-  Sprite = "CHGG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "CHAINUP";
-}
-
-State {
-  ID = "CHAIN1";
-  Sprite = "CHGG";
-  Frame = 0;
-  Tics = 4;
-  Action = "A_FireCGun";
-  Next state = "CHAIN2";
-}
-
-State {
-  ID = "CHAIN2";
-  Sprite = "CHGG";
-  Frame = 1;
-  Tics = 4;
-  Action = "A_FireCGun";
-  Next state = "CHAIN3";
-}
-
-State {
-  ID = "CHAIN3";
-  Sprite = "CHGG";
-  Frame = 1;
-  Tics = 0;
-  Action = "A_ReFire";
-  Next state = "CHAIN";
-}
-
-State {
-  ID = "CHAINFLASH1";
-  Sprite = "CHGF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "CHAINFLASH2";
-  Sprite = "CHGF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "MISSILE";
-  Sprite = "MISG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "MISSILE";
-}
-
-State {
-  ID = "MISSILEDOWN";
-  Sprite = "MISG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "MISSILEDOWN";
-}
-
-State {
-  ID = "MISSILEUP";
-  Sprite = "MISG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "MISSILEUP";
-}
-
-State {
-  ID = "MISSILE1";
-  Sprite = "MISG";
-  Frame = 1;
-  Tics = 8;
-  Action = "A_GunFlash";
-  Next state = "MISSILE2";
-}
-
-State {
-  ID = "MISSILE2";
-  Sprite = "MISG";
-  Frame = 1;
-  Tics = 12;
-  Action = "A_FireMissile";
-  Next state = "MISSILE3";
-}
-
-State {
-  ID = "MISSILE3";
-  Sprite = "MISG";
-  Frame = 1;
-  Tics = 0;
-  Action = "A_ReFire";
-  Next state = "MISSILE";
-}
-
-State {
-  ID = "MISSILEFLASH1";
-  Sprite = "MISF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_Light1";
-  Next state = "MISSILEFLASH2";
-}
-
-State {
-  ID = "MISSILEFLASH2";
-  Sprite = "MISF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "MISSILEFLASH3";
-}
-
-State {
-  ID = "MISSILEFLASH3";
-  Sprite = "MISF";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light2";
-  Next state = "MISSILEFLASH4";
-}
-
-State {
-  ID = "MISSILEFLASH4";
-  Sprite = "MISF";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light2";
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "SAW";
-  Sprite = "SAWG";
-  Frame = 2;
-  Tics = 4;
-  Action = "A_WeaponReady";
-  Next state = "SAWB";
-}
-
-State {
-  ID = "SAWB";
-  Sprite = "SAWG";
-  Frame = 3;
-  Tics = 4;
-  Action = "A_WeaponReady";
-  Next state = "SAW";
-}
-
-State {
-  ID = "SAWDOWN";
-  Sprite = "SAWG";
-  Frame = 2;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "SAWDOWN";
-}
-
-State {
-  ID = "SAWUP";
-  Sprite = "SAWG";
-  Frame = 2;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "SAWUP";
-}
-
-State {
-  ID = "SAW1";
-  Sprite = "SAWG";
-  Frame = 0;
-  Tics = 2;
-  Action = "A_Saw";
-  Next state = "SAW2";
-}
-
-State {
-  ID = "SAW2";
-  Sprite = "SAWG";
-  Frame = 1;
-  Tics = 2;
-  Action = "A_Saw";
-  Next state = "SAW3";
-}
-
-State {
-  ID = "SAW3";
-  Sprite = "SAWG";
-  Frame = 1;
-  Tics = 0;
-  Action = "A_ReFire";
-  Next state = "SAW";
-}
-
-State {
-  ID = "PLASMA";
-  Sprite = "PLSG";
-  Frame = 4;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "PLASMA";
-}
-
-State {
-  ID = "PLASMADOWN";
-  Sprite = "PLSF";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "PLASMADOWN";
-}
-
-State {
-  ID = "PLASMAUP";
-  Sprite = "PLSF";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "PLASMAUP";
-}
-
-State {
-  ID = "PLASMA1";
-  Sprite = "PLSG";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 2;
-  Action = "A_FirePlasma";
-  Next state = "PLASMA2";
-}
-
-State {
-  ID = "PLASMA2";
-  Sprite = "PLSG";
-  Frame = 1;
-  Tics = 20;
-  Action = "A_ReFire";
-  Next state = "PLASMA";
-}
-
-State {
-  ID = "PLASMASHOCK1";
-  Sprite = "PLSD";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_PlasmaBuzz";
-  Next state = "PLASMASHOCK2";
-}
-
-State {
-  ID = "PLASMASHOCK2";
-  Sprite = "PLSD";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "PLASMASHOCK3";
-}
-
-State {
-  ID = "PLASMASHOCK3";
-  Sprite = "PLSD";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PLASMASHOCK1";
-}
-
-State {
-  ID = "PLASMASHOCK4";
-  Sprite = "PLSD";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PLASMASHOCK1";
-}
-
-State {
-  ID = "PLASMAFLASH1";
-  Sprite = "PLSF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light1";
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "PLASMAFLASH2";
-  Sprite = "PLSF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light1";
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "BFG";
-  Sprite = "BFGG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_WeaponReady";
-  Next state = "BFG";
-}
-
-State {
-  ID = "BFGDOWN";
-  Sprite = "BFGG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "BFGDOWN";
-}
-
-State {
-  ID = "BFGUP";
-  Sprite = "BFGG";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "BFGUP";
-}
-
-State {
-  ID = "BFG1";
-  Sprite = "BFGG";
-  Frame = 0;
-  Tics = 20;
-  Action = "A_BFGsound";
-  Next state = "BFG2";
-}
-
-State {
-  ID = "BFG2";
-  Sprite = "BFGG";
-  Frame = 1;
-  Tics = 10;
-  Action = "A_GunFlash";
-  Next state = "BFG3";
-}
-
-State {
-  ID = "BFG3";
-  Sprite = "BFGG";
-  Frame = 1;
-  Tics = 5;
-  Action = "A_FireBFG";
-  Next state = "BFG4";
-}
-
-State {
-  ID = "BFG4";
-  Sprite = "BFGG";
-  Frame = 1;
-  Tics = 20;
-  Action = "A_ReFire";
-  Next state = "BFG";
-}
-
-State {
-  ID = "BFGFLASH1";
-  Sprite = "BFGF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Action = "A_Light1";
-  Next state = "BFGFLASH2";
-}
-
-State {
-  ID = "BFGFLASH2";
-  Sprite = "BFGF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light2";
-  Next state = "BFGFLASH3";
-}
-
-State {
-  ID = "BFGFLASH3";
-  Sprite = "BFGF";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_Light2";
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "UNKF";
-  Sprite = "UNKF";
-  Frame = 0;
-  Tics = 2;
-  Action = "A_WeaponReady";
-  Next state = "UNKF";
-}
-
-State {
-  ID = "UNKFDOWN";
-  Sprite = "UNKF";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Lower";
-  Next state = "UNKFDOWN";
-}
-
-State {
-  ID = "UNKFUP";
-  Sprite = "UNKF";
-  Frame = 0;
-  Tics = 1;
-  Action = "A_Raise";
-  Next state = "UNKFUP";
-}
-
-State {
-  ID = "UNKF1";
-  Sprite = "UNKF";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_FireSingleLaser";
-  Next state = "UNKF2";
-}
-
-State {
-  ID = "UNKF2";
-  Sprite = "UNKF";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_ReFire";
-  Next state = "UNKF";
-}
-
-State {
-  ID = "UNKFLASH1";
-  Sprite = "HTUF";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "LIGHTDONE";
-}
-
-State {
-  ID = "BLOOD1";
-  Sprite = "BLUD";
-  Frame = 3;
-  Tics = 8;
-  Next state = "BLOOD2";
-}
-
-State {
-  ID = "BLOOD2";
-  Sprite = "BLUD";
-  Frame = 2;
-  Tics = 8;
-  Next state = "BLOOD3";
-}
-
-State {
-  ID = "BLOOD3";
-  Sprite = "BLUD";
-  Frame = 1;
-  Tics = 8;
-  Next state = "BLOOD4";
-}
-
-State {
-  ID = "BLOOD4";
-  Sprite = "BLUD";
-  Frame = 0;
-  Tics = 8;
-  Next state = "NULL";
-}
-
-State {
-  ID = "PUFF1";
-  Sprite = "PUFF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PUFF2";
-}
-
-State {
-  ID = "PUFF2";
-  Sprite = "PUFF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PUFF3";
-}
-
-State {
-  ID = "PUFF3";
-  Sprite = "PUFF";
-  Frame = 2;
-  Tics = 4;
-  Next state = "PUFF4";
-}
-
-State {
-  ID = "PUFF4";
-  Sprite = "PUFF";
-  Frame = 3;
-  Tics = 4;
-  Next state = "PUFF5";
-}
-
-State {
-  ID = "PUFF5";
-  Sprite = "PUFF";
-  Frame = 4;
-  Tics = 4;
-  Next state = "PUFF6";
-}
-
-State {
-  ID = "PUFF6";
-  Sprite = "PUFF";
-  Frame = 5;
-  Tics = 4;
-  Next state = "NULL";
-}
-
-State {
-  ID = "TBALL1";
-  Sprite = "BAL1";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "TBALL2";
-}
-
-State {
-  ID = "TBALL2";
-  Sprite = "BAL1";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "TBALL3";
-}
-
-State {
-  ID = "TBALL3";
-  Sprite = "BAL1";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "TBALL1";
-}
-
-State {
-  ID = "TBALLX1";
-  Sprite = "BAL1";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "TBALLX2";
-}
-
-State {
-  ID = "TBALLX2";
-  Sprite = "BAL1";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "TBALLX3";
-}
-
-State {
-  ID = "TBALLX3";
-  Sprite = "BAL1";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "TBALLX4";
-}
-
-State {
-  ID = "TBALLX4";
-  Sprite = "BAL1";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "TBALLX5";
-}
-
-State {
-  ID = "TBALLX5";
-  Sprite = "BAL1";
-  Frame = 7;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "TBALLX6";
-}
-
-State {
-  ID = "TBALLX6";
-  Sprite = "BAL1";
-  Frame = 8;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "NULL";
-}
-
-State {
-  ID = "RBALL1";
-  Sprite = "BAL2";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "RBALL2";
-}
-
-State {
-  ID = "RBALL2";
-  Sprite = "BAL2";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "RBALL3";
-}
-
-State {
-  ID = "RBALL3";
-  Sprite = "BAL2";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "RBALL1";
-}
-
-State {
-  ID = "RBALLX1";
-  Sprite = "BAL2";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "RBALLX2";
-}
-
-State {
-  ID = "RBALLX2";
-  Sprite = "BAL2";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "RBALLX3";
-}
-
-State {
-  ID = "RBALLX3";
-  Sprite = "BAL2";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "RBALLX4";
-}
-
-State {
-  ID = "RBALLX4";
-  Sprite = "BAL2";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "RBALLX5";
-}
-
-State {
-  ID = "RBALLX5";
-  Sprite = "BAL2";
-  Frame = 7;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "NULL";
-}
-
-State {
-  ID = "PLASBALL";
-  Sprite = "PLSS";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "PLASBALL2";
-}
-
-State {
-  ID = "PLASBALL2";
-  Sprite = "PLSS";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "PLASBALL";
-}
-
-State {
-  ID = "PLASEXP";
-  Sprite = "PLSE";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PLASEXP2";
-}
-
-State {
-  ID = "PLASEXP2";
-  Sprite = "PLSE";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PLASEXP3";
-}
-
-State {
-  ID = "PLASEXP3";
-  Sprite = "PLSE";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PLASEXP4";
-}
-
-State {
-  ID = "PLASEXP4";
-  Sprite = "PLSE";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PLASEXP5";
-}
-
-State {
-  ID = "PLASEXP5";
-  Sprite = "PLSE";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "PLASEXP6";
-}
-
-State {
-  ID = "PLASEXP6";
-  Sprite = "PLSE";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "NULL";
-}
-
-State {
-  ID = "ROCKET";
-  Sprite = "MISL";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "ROCKET2";
-}
-
-State {
-  ID = "ROCKET2";
-  Sprite = "MISL";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 1;
-  Action = "A_Rocketpuff";
-  Next state = "ROCKET";
-}
-
-State {
-  ID = "BFGSHOT";
-  Sprite = "BFS1";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BFGSHOT2";
-}
-
-State {
-  ID = "BFGSHOT2";
-  Sprite = "BFS1";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BFGSHOT";
-}
-
-State {
-  ID = "BFGLAND";
-  Sprite = "BFE1";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 8;
-  Next state = "BFGLAND2";
-}
-
-State {
-  ID = "BFGLAND2";
-  Sprite = "BFE1";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 8;
-  Next state = "BFGLAND3";
-}
-
-State {
-  ID = "BFGLAND3";
-  Sprite = "BFE1";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 8;
-  Action = "A_BFGSpray";
-  Next state = "BFGLAND4";
-}
-
-State {
-  ID = "BFGLAND4";
-  Sprite = "BFE1";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 8;
-  Next state = "BFGLAND5";
-}
-
-State {
-  ID = "BFGLAND5";
-  Sprite = "BFE1";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 8;
-  Next state = "BFGLAND6";
-}
-
-State {
-  ID = "BFGLAND6";
-  Sprite = "BFE1";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 8;
-  Next state = "NULL";
-}
-
-State {
-  ID = "BFGEXP";
-  Sprite = "BFE2";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BFGEXP2";
-}
-
-State {
-  ID = "BFGEXP2";
-  Sprite = "BFE2";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BFGEXP3";
-}
-
-State {
-  ID = "BFGEXP3";
-  Sprite = "BFE2";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BFGEXP4";
-}
-
-State {
-  ID = "BFGEXP4";
-  Sprite = "BFE2";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BFGEXP5";
-}
-
-State {
-  ID = "BFGEXP5";
-  Sprite = "BFE2";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BFGEXP6";
-}
-
-State {
-  ID = "BFGEXP6";
-  Sprite = "BFE2";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "NULL";
-}
-
-State {
-  ID = "EXPLODE0";
-  Sprite = "MISL";
-  Frame = 1;
-  Flags = fullbright;
-  Next state = "EXPLODE1";
-}
-
-State {
-  ID = "EXPLODE1";
-  Sprite = "MISL";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 8;
-  Action = "A_Explode";
-  Next state = "EXPLODE2";
-}
-
-State {
-  ID = "EXPLODE2";
-  Sprite = "MISL";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "EXPLODE3";
-}
-
-State {
-  ID = "EXPLODE3";
-  Sprite = "MISL";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "EXPLODE4";
-}
-
-State {
-  ID = "EXPLODE4";
-  Sprite = "MISL";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "EXPLODE5";
-}
-
-State {
-  ID = "EXPLODE5";
-  Sprite = "MISL";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "NULL";
-}
-
-State {
-  ID = "TFOG";
-  Sprite = "TFOG";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG01";
-}
-
-State {
-  ID = "TFOG01";
-  Sprite = "TFOG";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG3";
-}
-
-State {
-  ID = "TFOG02";
-  Sprite = "TFOG";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG2";
-}
-
-State {
-  ID = "TFOG2";
-  Sprite = "TFOG";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG3";
-}
-
-State {
-  ID = "TFOG3";
-  Sprite = "TFOG";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG4";
-}
-
-State {
-  ID = "TFOG4";
-  Sprite = "TFOG";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG5";
-}
-
-State {
-  ID = "TFOG5";
-  Sprite = "TFOG";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG6";
-}
-
-State {
-  ID = "TFOG6";
-  Sprite = "TFOG";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG7";
-}
-
-State {
-  ID = "TFOG7";
-  Sprite = "TFOG";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG8";
-}
-
-State {
-  ID = "TFOG8";
-  Sprite = "TFOG";
-  Frame = 7;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG9";
-}
-
-State {
-  ID = "TFOG9";
-  Sprite = "TFOG";
-  Frame = 8;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG10";
-}
-
-State {
-  ID = "TFOG10";
-  Sprite = "TFOG";
-  Frame = 9;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG11";
-}
-
-State {
-  ID = "TFOG11";
-  Sprite = "TFOG";
-  Frame = 10;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG12";
-}
-
-State {
-  ID = "TFOG12";
-  Sprite = "TFOG";
-  Frame = 11;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG13";
-}
-
-State {
-  ID = "TFOG13";
-  Sprite = "TFOG";
-  Frame = 12;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG14";
-}
-
-State {
-  ID = "TFOG14";
-  Sprite = "TFOG";
-  Frame = 13;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "TFOG15";
-}
-
-State {
-  ID = "TFOG15";
-  Sprite = "TFOG";
-  Frame = 14;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "NULL";
-}
-
-State {
-  ID = "IFOG";
-  Sprite = "IFOG";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "IFOG01";
-}
-
-State {
-  ID = "IFOG01";
-  Sprite = "IFOG";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "IFOG02";
-}
-
-State {
-  ID = "IFOG02";
-  Sprite = "IFOG";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "IFOG2";
-}
-
-State {
-  ID = "IFOG2";
-  Sprite = "IFOG";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "IFOG3";
-}
-
-State {
-  ID = "IFOG3";
-  Sprite = "IFOG";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "IFOG4";
-}
-
-State {
-  ID = "IFOG4";
-  Sprite = "IFOG";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "IFOG5";
-}
-
-State {
-  ID = "IFOG5";
-  Sprite = "IFOG";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 6;
   Next state = "NULL";
 }
 
@@ -7022,7 +5435,7 @@ State {
   Frame = 5;
   Flags = fullbright;
   Tics = 6;
-  Next state = "PLAY_ATK1";
+  Next state = "PLAY";
 }
 
 State {
@@ -7055,7 +5468,7 @@ State {
   Sprite = "PLAY";
   Frame = 8;
   Tics = 10;
-  Action = "A_PlayerScream";
+  Action = "A_Scream";
   Next state = "PLAY_DIE3";
 }
 
@@ -7064,7 +5477,6 @@ State {
   Sprite = "PLAY";
   Frame = 9;
   Tics = 10;
-  Action = "A_Fall";
   Next state = "PLAY_DIE4";
 }
 
@@ -7088,14 +5500,6 @@ State {
   ID = "PLAY_DIE6";
   Sprite = "PLAY";
   Frame = 12;
-  Tics = 10;
-  Next state = "PLAY_DIE7";
-}
-
-State {
-  ID = "PLAY_DIE7";
-  Sprite = "PLAY";
-  Frame = 13;
   Tics = -1;
   Next state = "NULL";
 }
@@ -7103,7 +5507,7 @@ State {
 State {
   ID = "PLAY_XDIE1";
   Sprite = "PLAY";
-  Frame = 14;
+  Frame = 13;
   Tics = 5;
   Next state = "PLAY_XDIE2";
 }
@@ -7111,7 +5515,7 @@ State {
 State {
   ID = "PLAY_XDIE2";
   Sprite = "PLAY";
-  Frame = 15;
+  Frame = 14;
   Tics = 5;
   Action = "A_XScream";
   Next state = "PLAY_XDIE3";
@@ -7120,16 +5524,15 @@ State {
 State {
   ID = "PLAY_XDIE3";
   Sprite = "PLAY";
-  Frame = 16;
+  Frame = 15;
   Tics = 5;
-  Action = "A_Fall";
   Next state = "PLAY_XDIE4";
 }
 
 State {
   ID = "PLAY_XDIE4";
   Sprite = "PLAY";
-  Frame = 17;
+  Frame = 16;
   Tics = 5;
   Next state = "PLAY_XDIE5";
 }
@@ -7137,7 +5540,7 @@ State {
 State {
   ID = "PLAY_XDIE5";
   Sprite = "PLAY";
-  Frame = 18;
+  Frame = 17;
   Tics = 5;
   Next state = "PLAY_XDIE6";
 }
@@ -7145,7 +5548,7 @@ State {
 State {
   ID = "PLAY_XDIE6";
   Sprite = "PLAY";
-  Frame = 19;
+  Frame = 18;
   Tics = 5;
   Next state = "PLAY_XDIE7";
 }
@@ -7153,7 +5556,7 @@ State {
 State {
   ID = "PLAY_XDIE7";
   Sprite = "PLAY";
-  Frame = 20;
+  Frame = 19;
   Tics = 5;
   Next state = "PLAY_XDIE8";
 }
@@ -7161,7 +5564,7 @@ State {
 State {
   ID = "PLAY_XDIE8";
   Sprite = "PLAY";
-  Frame = 21;
+  Frame = 20;
   Tics = 5;
   Next state = "PLAY_XDIE9";
 }
@@ -7169,962 +5572,406 @@ State {
 State {
   ID = "PLAY_XDIE9";
   Sprite = "PLAY";
-  Frame = 22;
+  Frame = 21;
   Tics = -1;
   Next state = "NULL";
 }
 
 State {
-  ID = "POSS_STND";
-  Sprite = "POSS";
-  Frame = 0;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "POSS_STND2";
-}
-
-State {
-  ID = "POSS_STND2";
-  Sprite = "POSS";
-  Frame = 1;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "POSS_STND";
-}
-
-State {
-  ID = "POSS_RUN1";
-  Sprite = "POSS";
-  Frame = 0;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN2";
-}
-
-State {
-  ID = "POSS_RUN2";
-  Sprite = "POSS";
-  Frame = 0;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN3";
-}
-
-State {
-  ID = "POSS_RUN3";
-  Sprite = "POSS";
-  Frame = 1;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN4";
-}
-
-State {
-  ID = "POSS_RUN4";
-  Sprite = "POSS";
-  Frame = 1;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN5";
-}
-
-State {
-  ID = "POSS_RUN5";
-  Sprite = "POSS";
-  Frame = 2;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN6";
-}
-
-State {
-  ID = "POSS_RUN6";
-  Sprite = "POSS";
-  Frame = 2;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN7";
-}
-
-State {
-  ID = "POSS_RUN7";
-  Sprite = "POSS";
-  Frame = 3;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN8";
-}
-
-State {
-  ID = "POSS_RUN8";
-  Sprite = "POSS";
-  Frame = 3;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "POSS_RUN1";
-}
-
-State {
-  ID = "POSS_ATK1";
-  Sprite = "POSS";
+  ID = "EMARP_STND";
+  Sprite = "PLAY";
   Frame = 4;
   Tics = 10;
-  Action = "A_FaceTarget";
-  Next state = "POSS_ATK2";
+  Action = "A_Look";
+  Next state = "EMARP_STND2";
 }
 
 State {
-  ID = "POSS_ATK2";
-  Sprite = "POSS";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 8;
+  ID = "EMARP_RUN1";
+  Sprite = "PLAY";
+  Frame = 0;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "EMARP_RUN2";
+}
+
+State {
+  ID = "EMARP_RUN2";
+  Sprite = "PLAY";
+  Frame = 1;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "EMARP_RUN3";
+}
+
+State {
+  ID = "EMARP_RUN3";
+  Sprite = "PLAY";
+  Frame = 2;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "EMARP_RUN4";
+}
+
+State {
+  ID = "EMARP_RUN4";
+  Sprite = "PLAY";
+  Frame = 3;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "EMARP_RUN1";
+}
+
+State {
+  ID = "EMARP_ATK1";
+  Sprite = "PLAY";
+  Frame = 4;
+  Tics = 4;
   Action = "A_PosAttack";
-  Next state = "POSS_ATK3";
+  Next state = "EMARP_ATK2";
 }
 
 State {
-  ID = "POSS_ATK3";
-  Sprite = "POSS";
+  ID = "EMARP_ATK2";
+  Sprite = "PLAY";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_PosAttack";
+  Next state = "EMARP_ATK3";
+}
+
+State {
+  ID = "EMARP_ATK3";
+  Sprite = "PLAY";
+  Frame = 4;
+  Tics = 4;
+  Action = "A_PosAttack";
+  Next state = "EMARP_ATK4";
+}
+
+State {
+  ID = "EMARP_ATK4";
+  Sprite = "PLAY";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_PosAttack";
+  Next state = "EMARP_ATK5";
+}
+
+State {
+  ID = "EMARP_ATK5";
+  Sprite = "PLAY";
+  Frame = 4;
+  Tics = 4;
+  Action = "A_PosAttack";
+  Next state = "EMARP_ATK5";
+}
+
+State {
+  ID = "EMARP_ATK6";
+  Sprite = "PLAY";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_PosAttack";
+  Next state = "EMARP_RUN1";
+}
+
+State {
+  ID = "EMARP_PAIN";
+  Sprite = "PLAY";
+  Frame = 6;
+  Tics = 4;
+  Next state = "EMARP_PAIN2";
+}
+
+State {
+  ID = "EMARP_PAIN2";
+  Sprite = "PLAY";
+  Frame = 6;
+  Tics = 4;
+  Action = "A_Pain";
+  Next state = "EMARP_RUN1";
+}
+
+State {
+  ID = "EMARP_ATKB1";
+  Sprite = "PLAY";
+  Frame = 4;
+  Tics = 4;
+  Action = "A_EMarineAttack2";
+  Next state = "EMARP_ATKB2";
+}
+
+State {
+  ID = "EMARP_ATKB2";
+  Sprite = "PLAY";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_EMarineAttack2";
+  Next state = "EMARP_ATKB3";
+}
+
+State {
+  ID = "EMARP_ATKB3";
+  Sprite = "PLAY";
+  Frame = 4;
+  Tics = 4;
+  Action = "A_EMarineAttack2";
+  Next state = "EMARP_ATKB4";
+}
+
+State {
+  ID = "EMARP_ATKB4";
+  Sprite = "PLAY";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_EMarineAttack2";
+  Next state = "EMARP_ATKB5";
+}
+
+State {
+  ID = "EMARP_ATKB5";
+  Sprite = "PLAY";
+  Frame = 4;
+  Tics = 4;
+  Action = "A_EMarineAttack2";
+  Next state = "EMARP_ATKB6";
+}
+
+State {
+  ID = "EMARP_ATKB6";
+  Sprite = "PLAY";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_EMarineAttack2";
+  Next state = "EMARP_RUN1";
+}
+
+State {
+  ID = "SARG_STND";
+  Sprite = "SARG";
+  Frame = 1;
+  Tics = 8;
+  Action = "A_Look";
+  Next state = "SARG_STND2";
+}
+
+State {
+  ID = "SARG_STND2";
+  Sprite = "SARG";
+  Frame = 3;
+  Tics = 8;
+  Action = "A_Look";
+  Next state = "SARG_STND";
+}
+
+State {
+  ID = "SARG_RUN1";
+  Sprite = "SARG";
+  Frame = 0;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN2";
+}
+
+State {
+  ID = "SARG_RUN2";
+  Sprite = "SARG";
+  Frame = 0;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN3";
+}
+
+State {
+  ID = "SARG_RUN3";
+  Sprite = "SARG";
+  Frame = 1;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN4";
+}
+
+State {
+  ID = "SARG_RUN4";
+  Sprite = "SARG";
+  Frame = 1;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN5";
+}
+
+State {
+  ID = "SARG_RUN5";
+  Sprite = "SARG";
+  Frame = 2;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN6";
+}
+
+State {
+  ID = "SARG_RUN6";
+  Sprite = "SARG";
+  Frame = 2;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN7";
+}
+
+State {
+  ID = "SARG_RUN7";
+  Sprite = "SARG";
+  Frame = 3;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN8";
+}
+
+State {
+  ID = "SARG_RUN8";
+  Sprite = "SARG";
+  Frame = 3;
+  Tics = 2;
+  Action = "A_Chase";
+  Next state = "SARG_RUN1";
+}
+
+State {
+  ID = "SARG_ATK1";
+  Sprite = "SARG";
   Frame = 4;
   Tics = 8;
-  Next state = "POSS_RUN1";
-}
-
-State {
-  ID = "POSS_PAIN";
-  Sprite = "POSS";
-  Frame = 6;
-  Tics = 3;
-  Next state = "POSS_PAIN2";
-}
-
-State {
-  ID = "POSS_PAIN2";
-  Sprite = "POSS";
-  Frame = 6;
-  Tics = 3;
-  Action = "A_Pain";
-  Next state = "POSS_RUN1";
-}
-
-State {
-  ID = "POSS_DIE1";
-  Sprite = "POSS";
-  Frame = 7;
-  Tics = 5;
-  Next state = "POSS_DIE2";
-}
-
-State {
-  ID = "POSS_DIE2";
-  Sprite = "POSS";
-  Frame = 8;
-  Tics = 5;
-  Action = "A_Scream";
-  Next state = "POSS_DIE3";
-}
-
-State {
-  ID = "POSS_DIE3";
-  Sprite = "POSS";
-  Frame = 9;
-  Tics = 5;
-  Action = "A_Fall";
-  Next state = "POSS_DIE4";
-}
-
-State {
-  ID = "POSS_DIE4";
-  Sprite = "POSS";
-  Frame = 10;
-  Tics = 5;
-  Action = "A_PossSpecial";
-  Next state = "POSS_DIE5";
-}
-
-State {
-  ID = "POSS_DIE5";
-  Sprite = "POSS";
-  Frame = 11;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "POSS_XDIE1";
-  Sprite = "POSS";
-  Frame = 12;
-  Tics = 5;
-  Next state = "POSS_XDIE2";
-}
-
-State {
-  ID = "POSS_XDIE2";
-  Sprite = "POSS";
-  Frame = 13;
-  Tics = 5;
-  Action = "A_XScream";
-  Next state = "POSS_XDIE3";
-}
-
-State {
-  ID = "POSS_XDIE3";
-  Sprite = "POSS";
-  Frame = 14;
-  Tics = 5;
-  Action = "A_Fall";
-  Next state = "POSS_XDIE4";
-}
-
-State {
-  ID = "POSS_XDIE4";
-  Sprite = "POSS";
-  Frame = 15;
-  Tics = 5;
-  Next state = "POSS_XDIE5";
-}
-
-State {
-  ID = "POSS_XDIE5";
-  Sprite = "POSS";
-  Frame = 16;
-  Tics = 5;
-  Next state = "POSS_XDIE6";
-}
-
-State {
-  ID = "POSS_XDIE6";
-  Sprite = "POSS";
-  Frame = 17;
-  Tics = 5;
-  Next state = "POSS_XDIE7";
-}
-
-State {
-  ID = "POSS_XDIE7";
-  Sprite = "POSS";
-  Frame = 18;
-  Tics = 5;
-  Next state = "POSS_XDIE8";
-}
-
-State {
-  ID = "POSS_XDIE8";
-  Sprite = "POSS";
-  Frame = 19;
-  Tics = 5;
-  Action = "A_PossSpecial";
-  Next state = "POSS_XDIE9";
-}
-
-State {
-  ID = "POSS_XDIE9";
-  Sprite = "POSS";
-  Frame = 20;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "SPOS_STND";
-  Sprite = "SPOS";
-  Frame = 0;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "SPOS_STND2";
-}
-
-State {
-  ID = "SPOS_STND2";
-  Sprite = "SPOS";
-  Frame = 1;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "SPOS_STND";
-}
-
-State {
-  ID = "SPOS_RUN1";
-  Sprite = "SPOS";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN2";
-}
-
-State {
-  ID = "SPOS_RUN2";
-  Sprite = "SPOS";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN3";
-}
-
-State {
-  ID = "SPOS_RUN3";
-  Sprite = "SPOS";
-  Frame = 1;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN4";
-}
-
-State {
-  ID = "SPOS_RUN4";
-  Sprite = "SPOS";
-  Frame = 1;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN5";
-}
-
-State {
-  ID = "SPOS_RUN5";
-  Sprite = "SPOS";
-  Frame = 2;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN6";
-}
-
-State {
-  ID = "SPOS_RUN6";
-  Sprite = "SPOS";
-  Frame = 2;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN7";
-}
-
-State {
-  ID = "SPOS_RUN7";
-  Sprite = "SPOS";
-  Frame = 3;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN8";
-}
-
-State {
-  ID = "SPOS_RUN8";
-  Sprite = "SPOS";
-  Frame = 3;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SPOS_RUN1";
-}
-
-State {
-  ID = "SPOS_ATK1";
-  Sprite = "SPOS";
-  Frame = 4;
-  Tics = 10;
   Action = "A_FaceTarget";
-  Next state = "SPOS_ATK2";
+  Next state = "SARG_ATK2";
 }
 
 State {
-  ID = "SPOS_ATK2";
-  Sprite = "SPOS";
+  ID = "SARG_ATK2";
+  Sprite = "SARG";
   Frame = 5;
-  Flags = fullbright;
-  Tics = 10;
-  Action = "A_SPosAttack";
-  Next state = "SPOS_ATK3";
+  Tics = 8;
+  Action = "A_FaceTarget";
+  Next state = "SARG_ATK3";
 }
 
 State {
-  ID = "SPOS_ATK3";
-  Sprite = "SPOS";
-  Frame = 4;
-  Tics = 10;
-  Next state = "SPOS_RUN1";
-}
-
-State {
-  ID = "SPOS_PAIN";
-  Sprite = "SPOS";
+  ID = "SARG_ATK3";
+  Sprite = "SARG";
   Frame = 6;
-  Tics = 3;
-  Next state = "SPOS_PAIN2";
+  Tics = 8;
+  Action = "A_SargAttack";
+  Next state = "SARG_RUN1";
 }
 
 State {
-  ID = "SPOS_PAIN2";
-  Sprite = "SPOS";
-  Frame = 6;
-  Tics = 3;
-  Action = "A_Pain";
-  Next state = "SPOS_RUN1";
-}
-
-State {
-  ID = "SPOS_DIE1";
-  Sprite = "SPOS";
+  ID = "SARG_PAIN";
+  Sprite = "SARG";
   Frame = 7;
-  Tics = 5;
-  Next state = "SPOS_DIE2";
-}
-
-State {
-  ID = "SPOS_DIE2";
-  Sprite = "SPOS";
-  Frame = 8;
-  Tics = 5;
-  Action = "A_Scream";
-  Next state = "SPOS_DIE3";
-}
-
-State {
-  ID = "SPOS_DIE3";
-  Sprite = "SPOS";
-  Frame = 9;
-  Tics = 5;
-  Action = "A_Fall";
-  Next state = "SPOS_DIE4";
-}
-
-State {
-  ID = "SPOS_DIE4";
-  Sprite = "SPOS";
-  Frame = 10;
-  Tics = 5;
-  Action = "A_SposSpecial";
-  Next state = "SPOS_DIE5";
-}
-
-State {
-  ID = "SPOS_DIE5";
-  Sprite = "SPOS";
-  Frame = 11;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "SPOS_XDIE1";
-  Sprite = "SPOS";
-  Frame = 12;
-  Tics = 5;
-  Next state = "SPOS_XDIE2";
-}
-
-State {
-  ID = "SPOS_XDIE2";
-  Sprite = "SPOS";
-  Frame = 13;
-  Tics = 5;
-  Action = "A_XScream";
-  Next state = "SPOS_XDIE3";
-}
-
-State {
-  ID = "SPOS_XDIE3";
-  Sprite = "SPOS";
-  Frame = 14;
-  Tics = 5;
-  Action = "A_Fall";
-  Next state = "SPOS_XDIE4";
-}
-
-State {
-  ID = "SPOS_XDIE4";
-  Sprite = "SPOS";
-  Frame = 15;
-  Tics = 5;
-  Next state = "SPOS_XDIE5";
-}
-
-State {
-  ID = "SPOS_XDIE5";
-  Sprite = "SPOS";
-  Frame = 16;
-  Tics = 5;
-  Next state = "SPOS_XDIE6";
-}
-
-State {
-  ID = "SPOS_XDIE6";
-  Sprite = "SPOS";
-  Frame = 17;
-  Tics = 5;
-  Next state = "SPOS_XDIE7";
-}
-
-State {
-  ID = "SPOS_XDIE7";
-  Sprite = "SPOS";
-  Frame = 18;
-  Tics = 5;
-  Next state = "SPOS_XDIE8";
-}
-
-State {
-  ID = "SPOS_XDIE8";
-  Sprite = "SPOS";
-  Frame = 19;
-  Tics = 5;
-  Action = "A_SposSpecial";
-  Next state = "SPOS_XDIE9";
-}
-
-State {
-  ID = "SPOS_XDIE9";
-  Sprite = "SPOS";
-  Frame = 20;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "SMOKE1";
-  Sprite = "PUFF";
-  Frame = 1;
-  Tics = 4;
-  Next state = "SMOKE2";
-}
-
-State {
-  ID = "SMOKE2";
-  Sprite = "PUFF";
-  Frame = 2;
-  Tics = 4;
-  Next state = "SMOKE3";
-}
-
-State {
-  ID = "SMOKE3";
-  Sprite = "PUFF";
-  Frame = 1;
-  Tics = 4;
-  Next state = "SMOKE4";
-}
-
-State {
-  ID = "SMOKE4";
-  Sprite = "PUFF";
-  Frame = 2;
-  Tics = 4;
-  Next state = "SMOKE5";
-}
-
-State {
-  ID = "SMOKE5";
-  Sprite = "PUFF";
-  Frame = 3;
-  Tics = 4;
-  Next state = "NULL";
-}
-
-State {
-  ID = "SKEL_STND";
-  Sprite = "SKEL";
-  Frame = 0;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "SKEL_STND2";
-}
-
-State {
-  ID = "SKEL_STND2";
-  Sprite = "SKEL";
-  Frame = 1;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "SKEL_STND";
-}
-
-State {
-  ID = "SKEL_RUN1";
-  Sprite = "SKEL";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN2";
-}
-
-State {
-  ID = "SKEL_RUN2";
-  Sprite = "SKEL";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN3";
-}
-
-State {
-  ID = "SKEL_RUN3";
-  Sprite = "SKEL";
-  Frame = 1;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN4";
-}
-
-State {
-  ID = "SKEL_RUN4";
-  Sprite = "SKEL";
-  Frame = 1;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN5";
-}
-
-State {
-  ID = "SKEL_RUN5";
-  Sprite = "SKEL";
-  Frame = 2;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN6";
-}
-
-State {
-  ID = "SKEL_RUN6";
-  Sprite = "SKEL";
-  Frame = 2;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN7";
-}
-
-State {
-  ID = "SKEL_RUN7";
-  Sprite = "SKEL";
-  Frame = 3;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN8";
-}
-
-State {
-  ID = "SKEL_RUN8";
-  Sprite = "SKEL";
-  Frame = 3;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN1";
-}
-
-State {
-  ID = "SKEL_RUN9";
-  Sprite = "SKEL";
-  Frame = 4;
   Tics = 2;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN10";
+  Next state = "SARG_PAIN2";
 }
 
 State {
-  ID = "SKEL_RUN10";
-  Sprite = "SKEL";
-  Frame = 4;
-  Tics = 2;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN11";
-}
-
-State {
-  ID = "SKEL_RUN11";
-  Sprite = "SKEL";
-  Frame = 5;
-  Tics = 2;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN12";
-}
-
-State {
-  ID = "SKEL_RUN12";
-  Sprite = "SKEL";
-  Frame = 5;
-  Tics = 2;
-  Action = "A_Chase";
-  Next state = "SKEL_RUN1";
-}
-
-State {
-  ID = "SKEL_FIST1";
-  Sprite = "SKEL";
-  Frame = 6;
-  Tics = 0;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_FIST2";
-}
-
-State {
-  ID = "SKEL_FIST2";
-  Sprite = "SKEL";
-  Frame = 6;
-  Tics = 6;
-  Action = "A_SkelWhoosh";
-  Next state = "SKEL_FIST3";
-}
-
-State {
-  ID = "SKEL_FIST3";
-  Sprite = "SKEL";
+  ID = "SARG_PAIN2";
+  Sprite = "SARG";
   Frame = 7;
-  Tics = 6;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_FIST4";
-}
-
-State {
-  ID = "SKEL_FIST4";
-  Sprite = "SKEL";
-  Frame = 8;
-  Tics = 6;
-  Action = "A_SkelFist";
-  Next state = "SKEL_RUN1";
-}
-
-State {
-  ID = "SKEL_MISS1";
-  Sprite = "SKEL";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_MISS2";
-}
-
-State {
-  ID = "SKEL_MISS2";
-  Sprite = "SKEL";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_MISS3";
-}
-
-State {
-  ID = "SKEL_MISS3";
-  Sprite = "SKEL";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_HeadAttack";
-  Next state = "SKEL_MISS4";
-}
-
-State {
-  ID = "SKEL_MISS4";
-  Sprite = "SKEL";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_MISS5";
-}
-
-State {
-  ID = "SKEL_MISS5";
-  Sprite = "SKEL";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_MISS6";
-}
-
-State {
-  ID = "SKEL_MISS6";
-  Sprite = "SKEL";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_HeadAttack";
-  Next state = "SKEL_MISS7";
-}
-
-State {
-  ID = "SKEL_MISS7";
-  Sprite = "SKEL";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_MISS7";
-}
-
-State {
-  ID = "SKEL_MISS7";
-  Sprite = "SKEL";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "SKEL_MISS8";
-}
-
-State {
-  ID = "SKEL_MISS8";
-  Sprite = "SKEL";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_HeadAttack";
-  Next state = "SKEL_RUN1";
-}
-
-State {
-  ID = "SKEL_PAIN";
-  Sprite = "SKEL";
-  Frame = 7;
-  Tics = 3;
-  Next state = "SKEL_PAIN2";
-}
-
-State {
-  ID = "SKEL_PAIN2";
-  Sprite = "SKEL";
-  Frame = 7;
-  Tics = 3;
+  Tics = 2;
   Action = "A_Pain";
-  Next state = "SKEL_PAIN3";
+  Next state = "SARG_RUN1";
 }
 
 State {
-  ID = "SKEL_PAIN3";
-  Sprite = "SKEL";
-  Frame = 7;
-  Tics = 6;
-  Action = "A_Pain";
-  Next state = "SKEL_RUN1";
-}
-
-State {
-  ID = "SKEL_DIE1";
-  Sprite = "SKEL";
+  ID = "SARG_DIE1";
+  Sprite = "SARG";
   Frame = 8;
   Tics = 8;
-  Next state = "SKEL_DIE2";
+  Next state = "SARG_DIE2";
 }
 
 State {
-  ID = "SKEL_DIE2";
-  Sprite = "SKEL";
+  ID = "SARG_DIE2";
+  Sprite = "SARG";
   Frame = 9;
   Tics = 8;
   Action = "A_Scream";
-  Next state = "SKEL_DIE3";
+  Next state = "SARG_DIE3";
 }
 
 State {
-  ID = "SKEL_DIE3";
-  Sprite = "SKEL";
+  ID = "SARG_DIE3";
+  Sprite = "SARG";
   Frame = 10;
-  Tics = 8;
-  Next state = "SKEL_DIE4";
+  Tics = 4;
+  Next state = "SARG_DIE4";
 }
 
 State {
-  ID = "SKEL_DIE4";
-  Sprite = "SKEL";
+  ID = "SARG_DIE4";
+  Sprite = "SARG";
   Frame = 11;
-  Tics = 8;
-  Next state = "SKEL_DIE5";
+  Tics = 4;
+  Action = "A_SargSpecial";
+  Next state = "SARG_DIE5";
 }
 
 State {
-  ID = "SKEL_DIE5";
-  Sprite = "SKEL";
+  ID = "SARG_DIE5";
+  Sprite = "SARG";
   Frame = 12;
-  Tics = 8;
+  Tics = 4;
   Action = "A_Fall";
-  Next state = "SKEL_DIE6";
+  Next state = "SARG_DIE6";
 }
 
 State {
-  ID = "SKEL_DIE6";
-  Sprite = "SKEL";
+  ID = "SARG_DIE6";
+  Sprite = "SARG";
   Frame = 13;
   Tics = -1;
   Next state = "NULL";
 }
 
 State {
-  ID = "FATSHOT1";
-  Sprite = "MANF";
+  ID = "SHAD_RUN";
+  Sprite = "SARG";
   Frame = 0;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "FATSHOT2";
+  Tics = 1;
+  Action = "A_ShadowsAction1";
+  Next state = "SARG_RUN1";
 }
 
 State {
-  ID = "FATSHOT2";
-  Sprite = "MANF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 3;
-  Next state = "FATSHOT3";
-}
-
-State {
-  ID = "FATSHOT3";
-  Sprite = "MANF";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "FATSHOT1";
-}
-
-State {
-  ID = "FATSHOTX1";
-  Sprite = "MANF";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 8;
-  Next state = "FATSHOTX2";
-}
-
-State {
-  ID = "FATSHOTX2";
-  Sprite = "MANF";
+  ID = "SHAD_ATK";
+  Sprite = "SARG";
   Frame = 4;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "FATSHOTX3";
+  Tics = 1;
+  Action = "A_ShadowsAction1";
+  Next state = "SARG_ATK1";
 }
 
 State {
-  ID = "FATSHOTX3";
-  Sprite = "MANF";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "FATSHOTX4";
-}
-
-State {
-  ID = "FATSHOTX4";
-  Sprite = "MANF";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "FATSHOTX5";
-}
-
-State {
-  ID = "FATSHOTX5";
-  Sprite = "MANF";
+  ID = "SHAD_PAIN";
+  Sprite = "SARG";
   Frame = 7;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "FATSHOTX6";
+  Tics = 1;
+  Action = "A_ShadowsAction1";
+  Next state = "SARG_PAIN";
 }
 
 State {
-  ID = "FATSHOTX6";
-  Sprite = "MANF";
+  ID = "SHAD_DIE";
+  Sprite = "SARG";
   Frame = 8;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "NULL";
+  Tics = 1;
+  Action = "A_ShadowsAction2";
+  Next state = "SARG_DIE1";
 }
 
 State {
@@ -8256,7 +6103,7 @@ State {
 State {
   ID = "FATT_ATK1";
   Sprite = "FATT";
-  Frame = 6;
+  Frame = 7;
   Tics = 20;
   Action = "A_FatRaise";
   Next state = "FATT_ATK2";
@@ -8265,7 +6112,7 @@ State {
 State {
   ID = "FATT_ATK2";
   Sprite = "FATT";
-  Frame = 7;
+  Frame = 6;
   Flags = fullbright;
   Tics = 10;
   Action = "A_FatAttack1";
@@ -8275,7 +6122,7 @@ State {
 State {
   ID = "FATT_ATK3";
   Sprite = "FATT";
-  Frame = 6;
+  Frame = 7;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "FATT_ATK4";
@@ -8285,8 +6132,9 @@ State {
   ID = "FATT_ATK4";
   Sprite = "FATT";
   Frame = 6;
+  Flags = fullbright;
   Tics = 5;
-  Action = "A_FaceTarget";
+  Action = "A_FatAttack2";
   Next state = "FATT_ATK5";
 }
 
@@ -8294,9 +6142,8 @@ State {
   ID = "FATT_ATK5";
   Sprite = "FATT";
   Frame = 7;
-  Flags = fullbright;
   Tics = 10;
-  Action = "A_FatAttack2";
+  Action = "A_FaceTarget";
   Next state = "FATT_ATK6";
 }
 
@@ -8304,43 +6151,16 @@ State {
   ID = "FATT_ATK6";
   Sprite = "FATT";
   Frame = 6;
+  Flags = fullbright;
   Tics = 5;
-  Action = "A_FaceTarget";
+  Action = "A_FatAttack3";
   Next state = "FATT_ATK7";
 }
 
 State {
   ID = "FATT_ATK7";
   Sprite = "FATT";
-  Frame = 6;
-  Tics = 5;
-  Action = "A_FaceTarget";
-  Next state = "FATT_ATK8";
-}
-
-State {
-  ID = "FATT_ATK8";
-  Sprite = "FATT";
   Frame = 7;
-  Flags = fullbright;
-  Tics = 10;
-  Action = "A_FatAttack3";
-  Next state = "FATT_ATK9";
-}
-
-State {
-  ID = "FATT_ATK9";
-  Sprite = "FATT";
-  Frame = 6;
-  Tics = 5;
-  Action = "A_FaceTarget";
-  Next state = "FATT_ATK10";
-}
-
-State {
-  ID = "FATT_ATK10";
-  Sprite = "FATT";
-  Frame = 6;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "FATT_RUN1";
@@ -8349,7 +6169,7 @@ State {
 State {
   ID = "FATT_PAIN";
   Sprite = "FATT";
-  Frame = 9;
+  Frame = 8;
   Tics = 3;
   Next state = "FATT_PAIN2";
 }
@@ -8357,7 +6177,7 @@ State {
 State {
   ID = "FATT_PAIN2";
   Sprite = "FATT";
-  Frame = 9;
+  Frame = 8;
   Tics = 3;
   Action = "A_Pain";
   Next state = "FATT_RUN1";
@@ -8366,7 +6186,7 @@ State {
 State {
   ID = "FATT_DIE1";
   Sprite = "FATT";
-  Frame = 10;
+  Frame = 9;
   Tics = 6;
   Next state = "FATT_DIE2";
 }
@@ -8374,7 +6194,7 @@ State {
 State {
   ID = "FATT_DIE2";
   Sprite = "FATT";
-  Frame = 11;
+  Frame = 10;
   Tics = 6;
   Action = "A_Scream";
   Next state = "FATT_DIE3";
@@ -8383,16 +6203,16 @@ State {
 State {
   ID = "FATT_DIE3";
   Sprite = "FATT";
-  Frame = 12;
+  Frame = 11;
   Tics = 6;
-  Action = "A_Fall";
+  Action = "A_FattSpecial";
   Next state = "FATT_DIE4";
 }
 
 State {
   ID = "FATT_DIE4";
   Sprite = "FATT";
-  Frame = 13;
+  Frame = 12;
   Tics = 6;
   Next state = "FATT_DIE5";
 }
@@ -8400,51 +6220,519 @@ State {
 State {
   ID = "FATT_DIE5";
   Sprite = "FATT";
-  Frame = 14;
+  Frame = 13;
   Tics = 6;
-  Action = "A_FattSpecial";
+  Action = "A_Fall";
   Next state = "FATT_DIE6";
 }
 
 State {
   ID = "FATT_DIE6";
   Sprite = "FATT";
-  Frame = 15;
+  Frame = 14;
   Tics = -1;
-  Action = "A_BossDeath";
   Next state = "NULL";
 }
 
 State {
-  ID = "FATT_DIE7";
-  Sprite = "FATT";
-  Frame = 16;
-  Tics = 6;
-  Next state = "FATT_DIE8";
+  ID = "POSS_STND";
+  Sprite = "POSS";
+  Frame = 0;
+  Tics = 10;
+  Action = "A_Look";
+  Next state = "POSS_STND2";
 }
 
 State {
-  ID = "FATT_DIE8";
-  Sprite = "FATT";
-  Frame = 17;
-  Tics = 6;
-  Next state = "FATT_DIE9";
+  ID = "POSS_STND2";
+  Sprite = "POSS";
+  Frame = 1;
+  Tics = 10;
+  Action = "A_Look";
+  Next state = "POSS_STND";
 }
 
 State {
-  ID = "FATT_DIE9";
-  Sprite = "FATT";
-  Frame = 18;
-  Tics = 6;
-  Next state = "FATT_DIE10";
+  ID = "POSS_RUN1";
+  Sprite = "POSS";
+  Frame = 0;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN2";
 }
 
 State {
-  ID = "FATT_DIE10";
-  Sprite = "FATT";
-  Frame = 19;
+  ID = "POSS_RUN2";
+  Sprite = "POSS";
+  Frame = 0;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN3";
+}
+
+State {
+  ID = "POSS_RUN3";
+  Sprite = "POSS";
+  Frame = 1;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN4";
+}
+
+State {
+  ID = "POSS_RUN4";
+  Sprite = "POSS";
+  Frame = 1;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN5";
+}
+
+State {
+  ID = "POSS_RUN5";
+  Sprite = "POSS";
+  Frame = 2;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN6";
+}
+
+State {
+  ID = "POSS_RUN6";
+  Sprite = "POSS";
+  Frame = 2;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN7";
+}
+
+State {
+  ID = "POSS_RUN7";
+  Sprite = "POSS";
+  Frame = 3;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN8";
+}
+
+State {
+  ID = "POSS_RUN8";
+  Sprite = "POSS";
+  Frame = 3;
+  Tics = 4;
+  Action = "A_Chase";
+  Next state = "POSS_RUN1";
+}
+
+State {
+  ID = "POSS_ATK1";
+  Sprite = "POSS";
+  Frame = 4;
+  Tics = 10;
+  Action = "A_FaceTarget";
+  Next state = "POSS_ATK2";
+}
+
+State {
+  ID = "POSS_ATK2";
+  Sprite = "POSS";
+  Frame = 5;
+  Tics = 8;
+  Action = "A_PosAttack";
+  Next state = "POSS_ATK3";
+}
+
+State {
+  ID = "POSS_ATK3";
+  Sprite = "POSS";
+  Frame = 4;
+  Tics = 8;
+  Next state = "POSS_RUN1";
+}
+
+State {
+  ID = "POSS_PAIN";
+  Sprite = "POSS";
+  Frame = 6;
+  Tics = 3;
+  Next state = "POSS_PAIN2";
+}
+
+State {
+  ID = "POSS_PAIN2";
+  Sprite = "POSS";
+  Frame = 6;
+  Tics = 3;
+  Action = "A_Pain";
+  Next state = "POSS_RUN1";
+}
+
+State {
+  ID = "POSS_DIE1";
+  Sprite = "POSS";
+  Frame = 7;
+  Tics = 5;
+  Next state = "POSS_DIE2";
+}
+
+State {
+  ID = "POSS_DIE2";
+  Sprite = "POSS";
+  Frame = 8;
+  Tics = 5;
+  Action = "A_Scream";
+  Next state = "POSS_DIE3";
+}
+
+State {
+  ID = "POSS_DIE3";
+  Sprite = "POSS";
+  Frame = 9;
+  Tics = 5;
+  Action = "A_PossSpecial";
+  Next state = "POSS_DIE4";
+}
+
+State {
+  ID = "POSS_DIE4";
+  Sprite = "POSS";
+  Frame = 10;
+  Tics = 5;
+  Action = "A_Fall";
+  Next state = "POSS_DIE5";
+}
+
+State {
+  ID = "POSS_DIE5";
+  Sprite = "POSS";
+  Frame = 11;
   Tics = -1;
-  Action = "A_BossDeath";
+  Next state = "NULL";
+}
+
+State {
+  ID = "POSS_XDIE1";
+  Sprite = "POSS";
+  Frame = 12;
+  Tics = 5;
+  Next state = "POSS_XDIE2";
+}
+
+State {
+  ID = "POSS_XDIE2";
+  Sprite = "POSS";
+  Frame = 13;
+  Tics = 5;
+  Action = "A_XScream";
+  Next state = "POSS_XDIE3";
+}
+
+State {
+  ID = "POSS_XDIE3";
+  Sprite = "POSS";
+  Frame = 14;
+  Tics = 5;
+  Action = "A_PossSpecial";
+  Next state = "POSS_XDIE4";
+}
+
+State {
+  ID = "POSS_XDIE4";
+  Sprite = "POSS";
+  Frame = 15;
+  Tics = 5;
+  Next state = "POSS_XDIE5";
+}
+
+State {
+  ID = "POSS_XDIE5";
+  Sprite = "POSS";
+  Frame = 16;
+  Tics = 5;
+  Next state = "POSS_XDIE6";
+}
+
+State {
+  ID = "POSS_XDIE6";
+  Sprite = "POSS";
+  Frame = 17;
+  Tics = 5;
+  Next state = "POSS_XDIE7";
+}
+
+State {
+  ID = "POSS_XDIE7";
+  Sprite = "POSS";
+  Frame = 18;
+  Tics = 5;
+  Next state = "POSS_XDIE8";
+}
+
+State {
+  ID = "POSS_XDIE8";
+  Sprite = "POSS";
+  Frame = 19;
+  Tics = 5;
+  Action = "A_Fall";
+  Next state = "POSS_XDIE9";
+}
+
+State {
+  ID = "POSS_XDIE9";
+  Sprite = "POSS";
+  Frame = 20;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "SPOS_STND";
+  Sprite = "SPOS";
+  Frame = 0;
+  Tics = 10;
+  Action = "A_Look";
+  Next state = "SPOS_STND2";
+}
+
+State {
+  ID = "SPOS_STND2";
+  Sprite = "SPOS";
+  Frame = 1;
+  Tics = 10;
+  Action = "A_Look";
+  Next state = "SPOS_STND";
+}
+
+State {
+  ID = "SPOS_RUN1";
+  Sprite = "SPOS";
+  Frame = 0;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN2";
+}
+
+State {
+  ID = "SPOS_RUN2";
+  Sprite = "SPOS";
+  Frame = 0;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN3";
+}
+
+State {
+  ID = "SPOS_RUN3";
+  Sprite = "SPOS";
+  Frame = 1;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN4";
+}
+
+State {
+  ID = "SPOS_RUN4";
+  Sprite = "SPOS";
+  Frame = 1;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN5";
+}
+
+State {
+  ID = "SPOS_RUN5";
+  Sprite = "SPOS";
+  Frame = 2;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN6";
+}
+
+State {
+  ID = "SPOS_RUN6";
+  Sprite = "SPOS";
+  Frame = 2;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN7";
+}
+
+State {
+  ID = "SPOS_RUN7";
+  Sprite = "SPOS";
+  Frame = 3;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN8";
+}
+
+State {
+  ID = "SPOS_RUN8";
+  Sprite = "SPOS";
+  Frame = 3;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "SPOS_RUN1";
+}
+
+State {
+  ID = "SPOS_ATK1";
+  Sprite = "SPOS";
+  Frame = 4;
+  Tics = 10;
+  Action = "A_FaceTarget";
+  Next state = "SPOS_ATK2";
+}
+
+State {
+  ID = "SPOS_ATK2";
+  Sprite = "SPOS";
+  Frame = 5;
+  Tics = 10;
+  Action = "A_SPosAttack";
+  Next state = "SPOS_ATK3";
+}
+
+State {
+  ID = "SPOS_ATK3";
+  Sprite = "SPOS";
+  Frame = 4;
+  Tics = 10;
+  Next state = "SPOS_RUN1";
+}
+
+State {
+  ID = "SPOS_PAIN";
+  Sprite = "SPOS";
+  Frame = 6;
+  Tics = 3;
+  Next state = "SPOS_PAIN2";
+}
+
+State {
+  ID = "SPOS_PAIN2";
+  Sprite = "SPOS";
+  Frame = 6;
+  Tics = 3;
+  Action = "A_Pain";
+  Next state = "SPOS_RUN1";
+}
+
+State {
+  ID = "SPOS_DIE1";
+  Sprite = "SPOS";
+  Frame = 7;
+  Tics = 5;
+  Next state = "SPOS_DIE2";
+}
+
+State {
+  ID = "SPOS_DIE2";
+  Sprite = "SPOS";
+  Frame = 8;
+  Tics = 5;
+  Action = "A_Scream";
+  Next state = "SPOS_DIE3";
+}
+
+State {
+  ID = "SPOS_DIE3";
+  Sprite = "SPOS";
+  Frame = 9;
+  Tics = 5;
+  Action = "A_SposSpecial";
+  Next state = "SPOS_DIE4";
+}
+
+State {
+  ID = "SPOS_DIE4";
+  Sprite = "SPOS";
+  Frame = 10;
+  Tics = 5;
+  Action = "A_Fall";
+  Next state = "SPOS_DIE5";
+}
+
+State {
+  ID = "SPOS_DIE5";
+  Sprite = "SPOS";
+  Frame = 11;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "SPOS_XDIE1";
+  Sprite = "SPOS";
+  Frame = 12;
+  Tics = 5;
+  Next state = "SPOS_XDIE2";
+}
+
+State {
+  ID = "SPOS_XDIE2";
+  Sprite = "SPOS";
+  Frame = 13;
+  Tics = 5;
+  Action = "A_XScream";
+  Next state = "SPOS_XDIE3";
+}
+
+State {
+  ID = "SPOS_XDIE3";
+  Sprite = "SPOS";
+  Frame = 14;
+  Tics = 5;
+  Action = "A_SposSpecial";
+  Next state = "SPOS_XDIE4";
+}
+
+State {
+  ID = "SPOS_XDIE4";
+  Sprite = "SPOS";
+  Frame = 15;
+  Tics = 5;
+  Next state = "SPOS_XDIE5";
+}
+
+State {
+  ID = "SPOS_XDIE5";
+  Sprite = "SPOS";
+  Frame = 16;
+  Tics = 5;
+  Next state = "SPOS_XDIE6";
+}
+
+State {
+  ID = "SPOS_XDIE6";
+  Sprite = "SPOS";
+  Frame = 17;
+  Tics = 5;
+  Next state = "SPOS_XDIE7";
+}
+
+State {
+  ID = "SPOS_XDIE7";
+  Sprite = "SPOS";
+  Frame = 18;
+  Tics = 5;
+  Next state = "SPOS_XDIE8";
+}
+
+State {
+  ID = "SPOS_XDIE8";
+  Sprite = "SPOS";
+  Frame = 19;
+  Tics = 5;
+  Action = "A_Fall";
+  Next state = "SPOS_XDIE9";
+}
+
+State {
+  ID = "SPOS_XDIE9";
+  Sprite = "SPOS";
+  Frame = 20;
+  Tics = -1;
   Next state = "NULL";
 }
 
@@ -8539,36 +6827,9 @@ State {
 }
 
 State {
-  ID = "TROO_ATK1";
-  Sprite = "TROO";
-  Frame = 4;
-  Tics = 8;
-  Action = "A_FaceTarget";
-  Next state = "TROO_ATK2";
-}
-
-State {
-  ID = "TROO_ATK2";
-  Sprite = "TROO";
-  Frame = 5;
-  Tics = 8;
-  Action = "A_FaceTarget";
-  Next state = "TROO_ATK3";
-}
-
-State {
-  ID = "TROO_ATK3";
-  Sprite = "TROO";
-  Frame = 6;
-  Tics = 6;
-  Action = "A_TroopAttack";
-  Next state = "TROO_RUN1";
-}
-
-State {
   ID = "TROO_MEL1";
   Sprite = "TROO";
-  Frame = 7;
+  Frame = 4;
   Tics = 8;
   Action = "A_FaceTarget";
   Next state = "TROO_MEL2";
@@ -8577,7 +6838,7 @@ State {
 State {
   ID = "TROO_MEL2";
   Sprite = "TROO";
-  Frame = 8;
+  Frame = 5;
   Tics = 8;
   Action = "A_FaceTarget";
   Next state = "TROO_MEL3";
@@ -8586,16 +6847,43 @@ State {
 State {
   ID = "TROO_MEL3";
   Sprite = "TROO";
-  Frame = 9;
+  Frame = 6;
   Tics = 6;
   Action = "A_TroopClaw";
   Next state = "TROO_RUN1";
 }
 
 State {
-  ID = "TROO_PAIN";
+  ID = "TROO_ATK1";
+  Sprite = "TROO";
+  Frame = 8;
+  Tics = 8;
+  Action = "A_FaceTarget";
+  Next state = "TROO_ATK2";
+}
+
+State {
+  ID = "TROO_ATK2";
+  Sprite = "TROO";
+  Frame = 9;
+  Tics = 8;
+  Action = "A_FaceTarget";
+  Next state = "TROO_ATK3";
+}
+
+State {
+  ID = "TROO_ATK3";
   Sprite = "TROO";
   Frame = 10;
+  Tics = 6;
+  Action = "A_TroopAttack";
+  Next state = "TROO_RUN1";
+}
+
+State {
+  ID = "TROO_PAIN";
+  Sprite = "TROO";
+  Frame = 7;
   Tics = 2;
   Next state = "TROO_PAIN2";
 }
@@ -8603,7 +6891,7 @@ State {
 State {
   ID = "TROO_PAIN2";
   Sprite = "TROO";
-  Frame = 10;
+  Frame = 7;
   Tics = 2;
   Action = "A_Pain";
   Next state = "TROO_RUN1";
@@ -8682,7 +6970,7 @@ State {
   Sprite = "TROO";
   Frame = 19;
   Tics = 5;
-  Action = "A_Fall";
+  Action = "A_TrooSpecial";
   Next state = "TROO_XDIE5";
 }
 
@@ -8707,7 +6995,7 @@ State {
   Sprite = "TROO";
   Frame = 22;
   Tics = 5;
-  Action = "A_TrooSpecial";
+  Action = "A_Fall";
   Next state = "TROO_XDIE8";
 }
 
@@ -8810,63 +7098,9 @@ State {
 }
 
 State {
-  ID = "NTRO_ATK1";
-  Sprite = "NTRO";
-  Frame = 4;
-  Tics = 6;
-  Action = "A_FaceTarget";
-  Next state = "NTRO_ATK2";
-}
-
-State {
-  ID = "NTRO_ATK2";
-  Sprite = "NTRO";
-  Frame = 5;
-  Tics = 6;
-  Action = "A_FaceTarget";
-  Next state = "NTRO_ATK3";
-}
-
-State {
-  ID = "NTRO_ATK3";
-  Sprite = "NTRO";
-  Frame = 6;
-  Tics = 4;
-  Action = "A_NtroopAttack";
-  Next state = "NTRO_ATK4";
-}
-
-State {
-  ID = "NTRO_ATK4";
-  Sprite = "NTRO";
-  Frame = 7;
-  Tics = 6;
-  Action = "A_FaceTarget";
-  Next state = "NTRO_ATK5";
-}
-
-State {
-  ID = "NTRO_ATK5";
-  Sprite = "NTRO";
-  Frame = 8;
-  Tics = 6;
-  Action = "A_FaceTarget";
-  Next state = "NTRO_ATK6";
-}
-
-State {
-  ID = "NTRO_ATK6";
-  Sprite = "NTRO";
-  Frame = 9;
-  Tics = 4;
-  Action = "A_NtroopAttack";
-  Next state = "NTRO_RUN1";
-}
-
-State {
   ID = "NTRO_MEL1";
   Sprite = "NTRO";
-  Frame = 7;
+  Frame = 4;
   Tics = 8;
   Action = "A_FaceTarget";
   Next state = "NTRO_MEL2";
@@ -8875,7 +7109,7 @@ State {
 State {
   ID = "NTRO_MEL2";
   Sprite = "NTRO";
-  Frame = 8;
+  Frame = 5;
   Tics = 8;
   Action = "A_FaceTarget";
   Next state = "NTRO_MEL3";
@@ -8884,16 +7118,43 @@ State {
 State {
   ID = "NTRO_MEL3";
   Sprite = "NTRO";
-  Frame = 9;
+  Frame = 6;
   Tics = 6;
   Action = "A_TroopClaw";
   Next state = "NTRO_RUN1";
 }
 
 State {
-  ID = "NTRO_PAIN";
+  ID = "NTRO_ATK1";
+  Sprite = "NTRO";
+  Frame = 8;
+  Tics = 8;
+  Action = "A_FaceTarget";
+  Next state = "NTRO_ATK2";
+}
+
+State {
+  ID = "NTRO_ATK2";
+  Sprite = "NTRO";
+  Frame = 9;
+  Tics = 8;
+  Action = "A_FaceTarget";
+  Next state = "NTRO_ATK3";
+}
+
+State {
+  ID = "NTRO_ATK3";
   Sprite = "NTRO";
   Frame = 10;
+  Tics = 6;
+  Action = "A_TroopAttack";
+  Next state = "NTRO_RUN1";
+}
+
+State {
+  ID = "NTRO_PAIN";
+  Sprite = "NTRO";
+  Frame = 7;
   Tics = 2;
   Next state = "NTRO_PAIN2";
 }
@@ -8901,7 +7162,7 @@ State {
 State {
   ID = "NTRO_PAIN2";
   Sprite = "NTRO";
-  Frame = 10;
+  Frame = 7;
   Tics = 2;
   Action = "A_Pain";
   Next state = "NTRO_RUN1";
@@ -8929,7 +7190,7 @@ State {
   Sprite = "NTRO";
   Frame = 13;
   Tics = 6;
-  Action = "A_NtroSpecial";
+  Action = "A_TrooSpecial";
   Next state = "NTRO_DIE4";
 }
 
@@ -8980,7 +7241,7 @@ State {
   Sprite = "NTRO";
   Frame = 19;
   Tics = 5;
-  Action = "A_Fall";
+  Action = "A_TrooSpecial";
   Next state = "NTRO_XDIE5";
 }
 
@@ -9005,6 +7266,7 @@ State {
   Sprite = "NTRO";
   Frame = 22;
   Tics = 5;
+  Action = "A_Fall";
   Next state = "NTRO_XDIE8";
 }
 
@@ -9017,195 +7279,10 @@ State {
 }
 
 State {
-  ID = "SARG_STND";
-  Sprite = "SARG";
-  Frame = 0;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "SARG_STND2";
-}
-
-State {
-  ID = "SARG_STND2";
-  Sprite = "SARG";
-  Frame = 1;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "SARG_STND";
-}
-
-State {
-  ID = "SARG_RUN1";
-  Sprite = "SARG";
-  Frame = 0;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN2";
-}
-
-State {
-  ID = "SARG_RUN2";
-  Sprite = "SARG";
-  Frame = 0;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN3";
-}
-
-State {
-  ID = "SARG_RUN3";
-  Sprite = "SARG";
-  Frame = 1;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN4";
-}
-
-State {
-  ID = "SARG_RUN4";
-  Sprite = "SARG";
-  Frame = 1;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN5";
-}
-
-State {
-  ID = "SARG_RUN5";
-  Sprite = "SARG";
-  Frame = 2;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN6";
-}
-
-State {
-  ID = "SARG_RUN6";
-  Sprite = "SARG";
-  Frame = 2;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN7";
-}
-
-State {
-  ID = "SARG_RUN7";
-  Sprite = "SARG";
-  Frame = 3;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN8";
-}
-
-State {
-  ID = "SARG_RUN8";
-  Sprite = "SARG";
-  Frame = 3;
-  Tics = 5;
-  Action = "A_Chase";
-  Next state = "SARG_RUN1";
-}
-
-State {
-  ID = "SARG_ATK1";
-  Sprite = "SARG";
-  Frame = 4;
-  Tics = 8;
-  Action = "A_FaceTarget";
-  Next state = "SARG_ATK2";
-}
-
-State {
-  ID = "SARG_ATK2";
-  Sprite = "SARG";
-  Frame = 5;
-  Tics = 8;
-  Action = "A_FaceTarget";
-  Next state = "SARG_ATK3";
-}
-
-State {
-  ID = "SARG_ATK3";
-  Sprite = "SARG";
-  Frame = 6;
-  Tics = 8;
-  Action = "A_SargAttack";
-  Next state = "SARG_RUN1";
-}
-
-State {
-  ID = "SARG_PAIN";
-  Sprite = "SARG";
-  Frame = 7;
-  Tics = 2;
-  Next state = "SARG_PAIN2";
-}
-
-State {
-  ID = "SARG_PAIN2";
-  Sprite = "SARG";
-  Frame = 7;
-  Tics = 2;
-  Action = "A_Pain";
-  Next state = "SARG_RUN1";
-}
-
-State {
-  ID = "SARG_DIE1";
-  Sprite = "SARG";
-  Frame = 8;
-  Tics = 8;
-  Next state = "SARG_DIE2";
-}
-
-State {
-  ID = "SARG_DIE2";
-  Sprite = "SARG";
-  Frame = 9;
-  Tics = 8;
-  Action = "A_Scream";
-  Next state = "SARG_DIE3";
-}
-
-State {
-  ID = "SARG_DIE3";
-  Sprite = "SARG";
-  Frame = 10;
-  Tics = 4;
-  Next state = "SARG_DIE4";
-}
-
-State {
-  ID = "SARG_DIE4";
-  Sprite = "SARG";
-  Frame = 11;
-  Tics = 4;
-  Action = "A_Fall";
-  Next state = "SARG_DIE5";
-}
-
-State {
-  ID = "SARG_DIE5";
-  Sprite = "SARG";
-  Frame = 12;
-  Tics = 4;
-  Action = "A_SargSpecial";
-  Next state = "SARG_DIE6";
-}
-
-State {
-  ID = "SARG_DIE6";
-  Sprite = "SARG";
-  Frame = 13;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
   ID = "HEAD_STND";
   Sprite = "HEAD";
   Frame = 0;
-  Tics = 10;
+  Tics = 15;
   Action = "A_Look";
   Next state = "HEAD_STND2";
 }
@@ -9214,7 +7291,25 @@ State {
   ID = "HEAD_STND2";
   Sprite = "HEAD";
   Frame = 1;
-  Tics = 10;
+  Tics = 15;
+  Action = "A_Look";
+  Next state = "HEAD_STND3";
+}
+
+State {
+  ID = "HEAD_STND3";
+  Sprite = "HEAD";
+  Frame = 2;
+  Tics = 15;
+  Action = "A_Look";
+  Next state = "HEAD_STND4";
+}
+
+State {
+  ID = "HEAD_STND4";
+  Sprite = "HEAD";
+  Frame = 3;
+  Tics = 15;
   Action = "A_Look";
   Next state = "HEAD_STND";
 }
@@ -9295,7 +7390,6 @@ State {
   ID = "HEAD_ATK1";
   Sprite = "HEAD";
   Frame = 4;
-  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "HEAD_ATK2";
@@ -9305,7 +7399,6 @@ State {
   ID = "HEAD_ATK2";
   Sprite = "HEAD";
   Frame = 5;
-  Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
   Next state = "HEAD_ATK3";
@@ -9315,8 +7408,16 @@ State {
   ID = "HEAD_ATK3";
   Sprite = "HEAD";
   Frame = 6;
-  Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
+  Action = "A_FaceTarget";
+  Next state = "HEAD_ATK4";
+}
+
+State {
+  ID = "HEAD_ATK4";
+  Sprite = "HEAD";
+  Frame = 6;
+  Tics = 0;
   Action = "A_HeadAttack";
   Next state = "HEAD_RUN1";
 }
@@ -9324,7 +7425,7 @@ State {
 State {
   ID = "HEAD_PAIN";
   Sprite = "HEAD";
-  Frame = 7;
+  Frame = 1;
   Tics = 3;
   Next state = "HEAD_PAIN2";
 }
@@ -9332,7 +7433,7 @@ State {
 State {
   ID = "HEAD_PAIN2";
   Sprite = "HEAD";
-  Frame = 7;
+  Frame = 1;
   Tics = 3;
   Action = "A_Pain";
   Next state = "HEAD_PAIN3";
@@ -9341,7 +7442,7 @@ State {
 State {
   ID = "HEAD_PAIN3";
   Sprite = "HEAD";
-  Frame = 7;
+  Frame = 1;
   Tics = 6;
   Next state = "HEAD_RUN1";
 }
@@ -9349,7 +7450,7 @@ State {
 State {
   ID = "HEAD_DIE1";
   Sprite = "HEAD";
-  Frame = 8;
+  Frame = 7;
   Tics = 8;
   Next state = "HEAD_DIE2";
 }
@@ -9357,7 +7458,7 @@ State {
 State {
   ID = "HEAD_DIE2";
   Sprite = "HEAD";
-  Frame = 9;
+  Frame = 8;
   Tics = 8;
   Action = "A_Scream";
   Next state = "HEAD_DIE3";
@@ -9366,7 +7467,7 @@ State {
 State {
   ID = "HEAD_DIE3";
   Sprite = "HEAD";
-  Frame = 10;
+  Frame = 9;
   Tics = 8;
   Next state = "HEAD_DIE4";
 }
@@ -9374,7 +7475,7 @@ State {
 State {
   ID = "HEAD_DIE4";
   Sprite = "HEAD";
-  Frame = 11;
+  Frame = 10;
   Tics = 8;
   Action = "A_HeadSpecial";
   Next state = "HEAD_DIE5";
@@ -9383,7 +7484,7 @@ State {
 State {
   ID = "HEAD_DIE5";
   Sprite = "HEAD";
-  Frame = 12;
+  Frame = 11;
   Tics = 8;
   Action = "A_Fall";
   Next state = "HEAD_DIE6";
@@ -9392,80 +7493,8 @@ State {
 State {
   ID = "HEAD_DIE6";
   Sprite = "HEAD";
-  Frame = 13;
+  Frame = 12;
   Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "BRBALL1";
-  Sprite = "BAL7";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BRBALL2";
-}
-
-State {
-  ID = "BRBALL2";
-  Sprite = "BAL7";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 4;
-  Next state = "BRBALL1";
-}
-
-State {
-  ID = "BRBALLX1";
-  Sprite = "BAL7";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "BRBALLX2";
-}
-
-State {
-  ID = "BRBALLX2";
-  Sprite = "BAL7";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "BRBALLX3";
-}
-
-State {
-  ID = "BRBALLX3";
-  Sprite = "BAL7";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "BRBALLX4";
-}
-
-State {
-  ID = "BRBALLX4";
-  Sprite = "BAL7";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "BRBALLX5";
-}
-
-State {
-  ID = "BRBALLX5";
-  Sprite = "BAL7";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "BRBALLX6";
-}
-
-State {
-  ID = "BRBALLX6";
-  Sprite = "BAL7";
-  Frame = 7;
-  Flags = fullbright;
-  Tics = 6;
   Next state = "NULL";
 }
 
@@ -9582,14 +7611,14 @@ State {
   Sprite = "BOSS";
   Frame = 6;
   Tics = 8;
-  Action = "A_BruisredAttack";
+  Action = "A_BruisAttack";
   Next state = "BOSS_RUN1";
 }
 
 State {
   ID = "BOSS_PAIN";
   Sprite = "BOSS";
-  Frame = 13;
+  Frame = 7;
   Tics = 2;
   Next state = "BOSS_PAIN2";
 }
@@ -9597,7 +7626,7 @@ State {
 State {
   ID = "BOSS_PAIN2";
   Sprite = "BOSS";
-  Frame = 13;
+  Frame = 7;
   Tics = 2;
   Action = "A_Pain";
   Next state = "BOSS_RUN1";
@@ -9606,7 +7635,7 @@ State {
 State {
   ID = "BOSS_DIE1";
   Sprite = "BOSS";
-  Frame = 7;
+  Frame = 8;
   Tics = 8;
   Next state = "BOSS_DIE2";
 }
@@ -9614,7 +7643,7 @@ State {
 State {
   ID = "BOSS_DIE2";
   Sprite = "BOSS";
-  Frame = 8;
+  Frame = 9;
   Tics = 8;
   Action = "A_Scream";
   Next state = "BOSS_DIE3";
@@ -9623,7 +7652,7 @@ State {
 State {
   ID = "BOSS_DIE3";
   Sprite = "BOSS";
-  Frame = 9;
+  Frame = 10;
   Tics = 8;
   Next state = "BOSS_DIE4";
 }
@@ -9631,36 +7660,26 @@ State {
 State {
   ID = "BOSS_DIE4";
   Sprite = "BOSS";
-  Frame = 10;
+  Frame = 11;
   Tics = 8;
-  Action = "A_Fall";
+  Action = "A_BossSpecial";
   Next state = "BOSS_DIE5";
 }
 
 State {
   ID = "BOSS_DIE5";
   Sprite = "BOSS";
-  Frame = 11;
+  Frame = 12;
   Tics = 8;
-  Action = "A_BossSpecial";
+  Action = "A_Fall";
   Next state = "BOSS_DIE6";
 }
 
 State {
   ID = "BOSS_DIE6";
   Sprite = "BOSS";
-  Frame = 12;
-  Tics = -1;
-  Action = "A_BossDeath";
-  Next state = "NULL";
-}
-
-State {
-  ID = "BOSS_DIE7";
-  Sprite = "BOSS";
   Frame = 13;
   Tics = -1;
-  Action = "A_BossDeath";
   Next state = "NULL";
 }
 
@@ -9784,7 +7803,7 @@ State {
 State {
   ID = "BOS2_PAIN";
   Sprite = "BOS2";
-  Frame = 13;
+  Frame = 7;
   Tics = 2;
   Next state = "BOS2_PAIN2";
 }
@@ -9792,7 +7811,7 @@ State {
 State {
   ID = "BOS2_PAIN2";
   Sprite = "BOS2";
-  Frame = 13;
+  Frame = 7;
   Tics = 2;
   Action = "A_Pain";
   Next state = "BOS2_RUN1";
@@ -9801,7 +7820,7 @@ State {
 State {
   ID = "BOS2_DIE1";
   Sprite = "BOS2";
-  Frame = 7;
+  Frame = 8;
   Tics = 8;
   Next state = "BOS2_DIE2";
 }
@@ -9809,7 +7828,7 @@ State {
 State {
   ID = "BOS2_DIE2";
   Sprite = "BOS2";
-  Frame = 8;
+  Frame = 9;
   Tics = 8;
   Action = "A_Scream";
   Next state = "BOS2_DIE3";
@@ -9818,7 +7837,7 @@ State {
 State {
   ID = "BOS2_DIE3";
   Sprite = "BOS2";
-  Frame = 9;
+  Frame = 10;
   Tics = 8;
   Next state = "BOS2_DIE4";
 }
@@ -9826,31 +7845,23 @@ State {
 State {
   ID = "BOS2_DIE4";
   Sprite = "BOS2";
-  Frame = 10;
+  Frame = 11;
   Tics = 8;
-  Action = "A_Fall";
+  Action = "A_BossSpecial";
   Next state = "BOS2_DIE5";
 }
 
 State {
   ID = "BOS2_DIE5";
   Sprite = "BOS2";
-  Frame = 11;
+  Frame = 12;
   Tics = 8;
-  Action = "A_Bos2Special";
+  Action = "A_Fall";
   Next state = "BOS2_DIE6";
 }
 
 State {
   ID = "BOS2_DIE6";
-  Sprite = "BOS2";
-  Frame = 12;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "BOS2_DIE7";
   Sprite = "BOS2";
   Frame = 13;
   Tics = -1;
@@ -9861,7 +7872,6 @@ State {
   ID = "SKULL_STND";
   Sprite = "SKUL";
   Frame = 0;
-  Flags = fullbright;
   Tics = 5;
   Action = "A_Look";
   Next state = "SKULL_STND2";
@@ -9871,7 +7881,6 @@ State {
   ID = "SKULL_STND2";
   Sprite = "SKUL";
   Frame = 1;
-  Flags = fullbright;
   Tics = 5;
   Action = "A_Look";
   Next state = "SKULL_STND3";
@@ -9881,7 +7890,6 @@ State {
   ID = "SKULL_STND3";
   Sprite = "SKUL";
   Frame = 2;
-  Flags = fullbright;
   Tics = 5;
   Action = "A_Look";
   Next state = "SKULL_STND";
@@ -9891,8 +7899,7 @@ State {
   ID = "SKULL_RUN1";
   Sprite = "SKUL";
   Frame = 0;
-  Flags = fullbright;
-  Tics = 5;
+  Tics = 3;
   Action = "A_Chase";
   Next state = "SKULL_RUN2";
 }
@@ -9901,8 +7908,7 @@ State {
   ID = "SKULL_RUN2";
   Sprite = "SKUL";
   Frame = 1;
-  Flags = fullbright;
-  Tics = 5;
+  Tics = 3;
   Action = "A_Chase";
   Next state = "SKULL_RUN3";
 }
@@ -9911,8 +7917,7 @@ State {
   ID = "SKULL_RUN3";
   Sprite = "SKUL";
   Frame = 2;
-  Flags = fullbright;
-  Tics = 5;
+  Tics = 3;
   Action = "A_Chase";
   Next state = "SKULL_RUN1";
 }
@@ -9921,8 +7926,7 @@ State {
   ID = "SKULL_ATK1";
   Sprite = "SKUL";
   Frame = 3;
-  Flags = fullbright;
-  Tics = 5;
+  Tics = 6;
   Action = "A_FaceTarget";
   Next state = "SKULL_ATK2";
 }
@@ -9931,7 +7935,6 @@ State {
   ID = "SKULL_ATK2";
   Sprite = "SKUL";
   Frame = 4;
-  Flags = fullbright;
   Tics = 4;
   Action = "A_SkullAttack";
   Next state = "SKULL_ATK3";
@@ -9941,7 +7944,6 @@ State {
   ID = "SKULL_ATK3";
   Sprite = "SKUL";
   Frame = 3;
-  Flags = fullbright;
   Tics = 4;
   Next state = "SKULL_ATK4";
 }
@@ -9950,7 +7952,6 @@ State {
   ID = "SKULL_ATK4";
   Sprite = "SKUL";
   Frame = 4;
-  Flags = fullbright;
   Tics = 4;
   Next state = "SKULL_ATK3";
 }
@@ -9959,7 +7960,6 @@ State {
   ID = "SKULL_PAIN";
   Sprite = "SKUL";
   Frame = 5;
-  Flags = fullbright;
   Tics = 3;
   Next state = "SKULL_PAIN2";
 }
@@ -9968,7 +7968,6 @@ State {
   ID = "SKULL_PAIN2";
   Sprite = "SKUL";
   Frame = 5;
-  Flags = fullbright;
   Tics = 3;
   Action = "A_Pain";
   Next state = "SKULL_RUN1";
@@ -9979,7 +7978,7 @@ State {
   Sprite = "SKUL";
   Frame = 6;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Next state = "SKULL_DIE2";
 }
 
@@ -9988,7 +7987,7 @@ State {
   Sprite = "SKUL";
   Frame = 7;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Action = "A_Scream";
   Next state = "SKULL_DIE3";
 }
@@ -9998,7 +7997,7 @@ State {
   Sprite = "SKUL";
   Frame = 8;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Next state = "SKULL_DIE4";
 }
 
@@ -10007,7 +8006,7 @@ State {
   Sprite = "SKUL";
   Frame = 9;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Action = "A_Fall";
   Next state = "SKULL_DIE5";
 }
@@ -10017,7 +8016,8 @@ State {
   Sprite = "SKUL";
   Frame = 10;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 4;
+  Action = "A_SkulSpecial";
   Next state = "SKULL_DIE6";
 }
 
@@ -10026,8 +8026,7 @@ State {
   Sprite = "SKUL";
   Frame = 11;
   Flags = fullbright;
-  Tics = 6;
-  Action = "A_SkulSpecial";
+  Tics = 3;
   Next state = "SKULL_DIE7";
 }
 
@@ -10036,7 +8035,7 @@ State {
   Sprite = "SKUL";
   Frame = 12;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 2;
   Next state = "SKULL_DIE8";
 }
 
@@ -10045,7 +8044,7 @@ State {
   Sprite = "SKUL";
   Frame = 13;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 2;
   Next state = "SKULL_DIE9";
 }
 
@@ -10054,7 +8053,7 @@ State {
   Sprite = "SKUL";
   Frame = 14;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 1;
   Next state = "SKULL_DIE10";
 }
 
@@ -10063,7 +8062,7 @@ State {
   Sprite = "SKUL";
   Frame = 15;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 1;
   Next state = "NULL";
 }
 
@@ -10086,7 +8085,7 @@ State {
 }
 
 State {
-  ID = "BSPI_SIGHT";
+  ID = "BSPI_SEE";
   Sprite = "BSPI";
   Frame = 0;
   Tics = 20;
@@ -10152,7 +8151,7 @@ State {
   Sprite = "BSPI";
   Frame = 3;
   Tics = 3;
-  Action = "A_BabyMetal";
+  Action = "A_Chase";
   Next state = "BSPI_RUN8";
 }
 
@@ -10166,48 +8165,11 @@ State {
 }
 
 State {
-  ID = "BSPI_RUN9";
-  Sprite = "BSPI";
-  Frame = 4;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "BSPI_RUN10";
-}
-
-State {
-  ID = "BSPI_RUN10";
-  Sprite = "BSPI";
-  Frame = 4;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "BSPI_RUN11";
-}
-
-State {
-  ID = "BSPI_RUN11";
-  Sprite = "BSPI";
-  Frame = 5;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "BSPI_RUN12";
-}
-
-State {
-  ID = "BSPI_RUN12";
-  Sprite = "BSPI";
-  Frame = 5;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "BSPI_RUN1";
-}
-
-State {
   ID = "BSPI_ATK1";
   Sprite = "BSPI";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 20;
-  Action = "A_FaceTarget";
+  Frame = 0;
+  Tics = 15;
+  Action = "A_BspiFaceTarget";
   Next state = "BSPI_ATK2";
 }
 
@@ -10216,7 +8178,7 @@ State {
   Sprite = "BSPI";
   Frame = 4;
   Flags = fullbright;
-  Tics = 4;
+  Tics = 6;
   Action = "A_BspiAttack";
   Next state = "BSPI_ATK3";
 }
@@ -10226,89 +8188,9 @@ State {
   Sprite = "BSPI";
   Frame = 4;
   Flags = fullbright;
-  Tics = 4;
-  Action = "A_FaceTarget";
-  Next state = "BSPI_ATK4";
-}
-
-State {
-  ID = "BSPI_ATK4";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
   Tics = 1;
-  Action = "A_BspiAttack";
-  Next state = "BSPI_ATK5";
-}
-
-State {
-  ID = "BSPI_ATK5";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_FaceTarget";
-  Next state = "BSPI_ATK6";
-}
-
-State {
-  ID = "BSPI_ATK6";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 1;
-  Action = "A_BspiAttack";
-  Next state = "BSPI_ATK7";
-}
-
-State {
-  ID = "BSPI_ATK7";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_FaceTarget";
-  Next state = "BSPI_ATK8";
-}
-
-State {
-  ID = "BSPI_ATK8";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 1;
-  Action = "A_BspiAttack";
-  Next state = "BSPI_ATK9";
-}
-
-State {
-  ID = "BSPI_ATK9";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
-  Action = "A_FaceTarget";
-  Next state = "BSPI_ATK10";
-}
-
-State {
-  ID = "BSPI_ATK10";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 1;
-  Action = "A_BspiAttack";
-  Next state = "BSPI_ATK11";
-}
-
-State {
-  ID = "BSPI_ATK11";
-  Sprite = "BSPI";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 4;
   Action = "A_SpidRefire";
-  Next state = "BSPI_ATK1";
+  Next state = "BSPI_ATK2";
 }
 
 State {
@@ -10316,7 +8198,6 @@ State {
   Sprite = "BSPI";
   Frame = 5;
   Tics = 3;
-  Action = "A_FaceTarget";
   Next state = "BSPI_PAIN2";
 }
 
@@ -10343,7 +8224,7 @@ State {
   Sprite = "BSPI";
   Frame = 7;
   Tics = 7;
-  Action = "A_Fall";
+  Action = "A_BabySpecial";
   Next state = "BSPI_DIE3";
 }
 
@@ -10368,7 +8249,7 @@ State {
   Sprite = "BSPI";
   Frame = 10;
   Tics = 7;
-  Action = "A_BabySpecial";
+  Action = "A_Fall";
   Next state = "BSPI_DIE6";
 }
 
@@ -10377,104 +8258,13 @@ State {
   Sprite = "BSPI";
   Frame = 11;
   Tics = -1;
-  Action = "A_BossDeath";
-  Next state = "NULL";
-}
-
-State {
-  ID = "BSPI_DIE7";
-  Sprite = "BSPI";
-  Frame = 11;
-  Tics = -1;
-  Action = "A_BossDeath";
-  Next state = "NULL";
-}
-
-State {
-  ID = "ARACH_PLAZ";
-  Sprite = "APLS";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "ARACH_PLAZ2";
-}
-
-State {
-  ID = "ARACH_PLAZ2";
-  Sprite = "APLS";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "ARACH_PLAZ";
-}
-
-State {
-  ID = "ARACH_PLEX";
-  Sprite = "APBX";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "ARACH_PLEX2";
-}
-
-State {
-  ID = "ARACH_PLEX2";
-  Sprite = "APBX";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "ARACH_PLEX3";
-}
-
-State {
-  ID = "ARACH_PLEX3";
-  Sprite = "APBX";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "ARACH_PLEX4";
-}
-
-State {
-  ID = "ARACH_PLEX4";
-  Sprite = "APBX";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "ARACH_PLEX5";
-}
-
-State {
-  ID = "ARACH_PLEX5";
-  Sprite = "APBX";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "ARACH_PLEX6";
-}
-
-State {
-  ID = "ARACH_PLEX6";
-  Sprite = "APBX";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 5;
   Next state = "NULL";
 }
 
 State {
   ID = "CYBER_STND";
   Sprite = "CYBR";
-  Frame = 0;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "CYBER_STND2";
-}
-
-State {
-  ID = "CYBER_STND2";
-  Sprite = "CYBR";
-  Frame = 1;
+  Frame = 5;
   Tics = 10;
   Action = "A_Look";
   Next state = "CYBER_STND";
@@ -10484,7 +8274,7 @@ State {
   ID = "CYBER_RUN1";
   Sprite = "CYBR";
   Frame = 0;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Hoof";
   Next state = "CYBER_RUN2";
 }
@@ -10493,7 +8283,7 @@ State {
   ID = "CYBER_RUN2";
   Sprite = "CYBR";
   Frame = 0;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Chase";
   Next state = "CYBER_RUN3";
 }
@@ -10502,7 +8292,7 @@ State {
   ID = "CYBER_RUN3";
   Sprite = "CYBR";
   Frame = 1;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Chase";
   Next state = "CYBER_RUN4";
 }
@@ -10511,7 +8301,7 @@ State {
   ID = "CYBER_RUN4";
   Sprite = "CYBR";
   Frame = 1;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Chase";
   Next state = "CYBER_RUN5";
 }
@@ -10520,7 +8310,7 @@ State {
   ID = "CYBER_RUN5";
   Sprite = "CYBR";
   Frame = 2;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Chase";
   Next state = "CYBER_RUN6";
 }
@@ -10529,7 +8319,7 @@ State {
   ID = "CYBER_RUN6";
   Sprite = "CYBR";
   Frame = 2;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Chase";
   Next state = "CYBER_RUN7";
 }
@@ -10538,7 +8328,7 @@ State {
   ID = "CYBER_RUN7";
   Sprite = "CYBR";
   Frame = 3;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Metal";
   Next state = "CYBER_RUN8";
 }
@@ -10547,7 +8337,7 @@ State {
   ID = "CYBER_RUN8";
   Sprite = "CYBR";
   Frame = 3;
-  Tics = 3;
+  Tics = 4;
   Action = "A_Chase";
   Next state = "CYBER_RUN1";
 }
@@ -10556,6 +8346,7 @@ State {
   ID = "CYBER_ATK1";
   Sprite = "CYBR";
   Frame = 4;
+  Flags = fullbright;
   Tics = 6;
   Action = "A_FaceTarget";
   Next state = "CYBER_ATK2";
@@ -10565,7 +8356,6 @@ State {
   ID = "CYBER_ATK2";
   Sprite = "CYBR";
   Frame = 5;
-  Flags = fullbright;
   Tics = 12;
   Action = "A_CyberAttack";
   Next state = "CYBER_ATK3";
@@ -10575,6 +8365,7 @@ State {
   ID = "CYBER_ATK3";
   Sprite = "CYBR";
   Frame = 4;
+  Flags = fullbright;
   Tics = 12;
   Action = "A_FaceTarget";
   Next state = "CYBER_ATK4";
@@ -10584,7 +8375,6 @@ State {
   ID = "CYBER_ATK4";
   Sprite = "CYBR";
   Frame = 5;
-  Flags = fullbright;
   Tics = 12;
   Action = "A_CyberAttack";
   Next state = "CYBER_ATK5";
@@ -10594,6 +8384,7 @@ State {
   ID = "CYBER_ATK5";
   Sprite = "CYBR";
   Frame = 4;
+  Flags = fullbright;
   Tics = 12;
   Action = "A_FaceTarget";
   Next state = "CYBER_ATK6";
@@ -10603,7 +8394,6 @@ State {
   ID = "CYBER_ATK6";
   Sprite = "CYBR";
   Frame = 5;
-  Flags = fullbright;
   Tics = 12;
   Action = "A_CyberAttack";
   Next state = "CYBER_RUN1";
@@ -10621,58 +8411,57 @@ State {
 State {
   ID = "CYBER_DIE1";
   Sprite = "CYBR";
-  Frame = 7;
-  Tics = 10;
-  Action = "A_Scream";
+  Frame = 6;
+  Tics = 30;
+  Action = "A_CyberDeath";
   Next state = "CYBER_DIE2";
 }
 
 State {
   ID = "CYBER_DIE2";
   Sprite = "CYBR";
-  Frame = 8;
-  Tics = 5;
-  Action = "A_BossExplode";
+  Frame = 7;
+  Tics = 8;
   Next state = "CYBER_DIE2";
 }
 
 State {
   ID = "CYBER_DIE3";
   Sprite = "CYBR";
-  Frame = 9;
-  Tics = 10;
+  Frame = 8;
+  Tics = 7;
   Next state = "CYBER_DIE4";
 }
 
 State {
   ID = "CYBER_DIE4";
   Sprite = "CYBR";
-  Frame = 10;
-  Tics = 8;
+  Frame = 9;
+  Tics = 6;
   Next state = "CYBER_DIE5";
 }
 
 State {
   ID = "CYBER_DIE5";
   Sprite = "CYBR";
-  Frame = 11;
-  Tics = 6;
+  Frame = 10;
+  Tics = 5;
   Next state = "CYBER_DIE6";
 }
 
 State {
   ID = "CYBER_DIE6";
   Sprite = "CYBR";
-  Frame = 12;
+  Frame = 11;
   Tics = 4;
-  Action = "A_Fall";
+  Action = "A_CybrSpecial";
   Next state = "CYBER_DIE7";
 }
 
 State {
   ID = "CYBER_DIE7";
   Sprite = "CYBR";
-  Frame = 13;
+  Frame = 12;
   Tics = 4;
   Next state = "CYBER_DIE8";
 }
@@ -10680,90 +8469,64 @@ State {
 State {
   ID = "CYBER_DIE8";
   Sprite = "CYBR";
-  Frame = 14;
+  Frame = 13;
   Tics = 4;
+  Action = "A_Fall";
   Next state = "CYBER_DIE9";
 }
 
 State {
   ID = "CYBER_DIE9";
   Sprite = "CYBR";
-  Frame = 15;
-  Tics = 30;
-  Action = "A_CybrSpecial";
-  Next state = "CYBER_DIE10";
+  Frame = 14;
+  Tics = -1;
+  Next state = "NULL";
 }
 
 State {
-  ID = "CYBER_DIE10";
+  ID = "DCYBER_STND";
   Sprite = "CYBR";
-  Frame = 15;
-  Tics = -1;
-  Action = "A_BossDeath";
-  Next state = "NULL";
+  Frame = 5;
+  Tics = 1;
+  Action = "A_TargetCamera";
+  Next state = "DCYBER_STND2";
+}
+
+State {
+  ID = "DCYBER_ATK1";
+  Sprite = "CYBR";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 18;
+  Action = "A_CyberAttack";
+  Next state = "DCYBER_ATK2";
+}
+
+State {
+  ID = "DCYBER_ATK2";
+  Sprite = "CYBR";
+  Frame = 5;
+  Tics = 18;
+  Action = "A_FaceTarget";
+  Next state = "DCYBER_ATK1";
 }
 
 State {
   ID = "PAIN_STND";
   Sprite = "PAIN";
   Frame = 0;
-  Tics = 10;
+  Tics = 5;
   Action = "A_Look";
   Next state = "PAIN_STND";
 }
 
 State {
-  ID = "PAIN_RUN1";
+  ID = "PAIN_SEE";
   Sprite = "PAIN";
   Frame = 0;
   Tics = 3;
   Action = "A_Chase";
-  Next state = "PAIN_RUN2";
-}
-
-State {
-  ID = "PAIN_RUN2";
-  Sprite = "PAIN";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "PAIN_RUN3";
-}
-
-State {
-  ID = "PAIN_RUN3";
-  Sprite = "PAIN";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "PAIN_RUN4";
-}
-
-State {
-  ID = "PAIN_RUN4";
-  Sprite = "PAIN";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "PAIN_RUN5";
-}
-
-State {
-  ID = "PAIN_RUN5";
-  Sprite = "PAIN";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "PAIN_RUN6";
-}
-
-State {
-  ID = "PAIN_RUN6";
-  Sprite = "PAIN";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "PAIN_RUN1";
+  Next state = "PAIN_SEE";
 }
 
 State {
@@ -10779,17 +8542,17 @@ State {
 State {
   ID = "PAIN_ATK2";
   Sprite = "PAIN";
-  Frame = 2;
+  Frame = 1;
   Flags = fullbright;
   Tics = 5;
-  Action = "A_PainAttack";
-  Next state = "PAIN_RUN1";
+  Action = "A_FaceTarget";
+  Next state = "PAIN_ATK3";
 }
 
 State {
   ID = "PAIN_ATK3";
   Sprite = "PAIN";
-  Frame = 1;
+  Frame = 2;
   Flags = fullbright;
   Tics = 5;
   Action = "A_FaceTarget";
@@ -10801,9 +8564,9 @@ State {
   Sprite = "PAIN";
   Frame = 2;
   Flags = fullbright;
-  Tics = 2;
+  Tics = 0;
   Action = "A_PainAttack";
-  Next state = "PAIN_RUN1";
+  Next state = "PAIN_SEE";
 }
 
 State {
@@ -10820,7 +8583,7 @@ State {
   Frame = 3;
   Tics = 6;
   Action = "A_Pain";
-  Next state = "PAIN_RUN1";
+  Next state = "PAIN_SEE";
 }
 
 State {
@@ -10828,7 +8591,7 @@ State {
   Sprite = "PAIN";
   Frame = 4;
   Flags = fullbright;
-  Tics = 4;
+  Tics = 8;
   Next state = "PAIN_DIE2";
 }
 
@@ -10837,7 +8600,7 @@ State {
   Sprite = "PAIN";
   Frame = 5;
   Flags = fullbright;
-  Tics = 4;
+  Tics = 8;
   Action = "A_Scream";
   Next state = "PAIN_DIE3";
 }
@@ -10847,7 +8610,8 @@ State {
   Sprite = "PAIN";
   Frame = 6;
   Flags = fullbright;
-  Tics = 4;
+  Tics = 8;
+  Action = "A_PainSpecial";
   Next state = "PAIN_DIE4";
 }
 
@@ -10856,7 +8620,8 @@ State {
   Sprite = "PAIN";
   Frame = 7;
   Flags = fullbright;
-  Tics = 4;
+  Tics = 8;
+  Action = "A_PainDie";
   Next state = "PAIN_DIE5";
 }
 
@@ -10865,7 +8630,7 @@ State {
   Sprite = "PAIN";
   Frame = 8;
   Flags = fullbright;
-  Tics = 4;
+  Tics = 8;
   Action = "A_PainDie";
   Next state = "PAIN_DIE6";
 }
@@ -10875,8 +8640,8 @@ State {
   Sprite = "PAIN";
   Frame = 9;
   Flags = fullbright;
-  Tics = 4;
-  Action = "A_PainSpecial";
+  Tics = 8;
+  Action = "A_PainDie";
   Next state = "PAIN_DIE7";
 }
 
@@ -10885,7 +8650,7 @@ State {
   Sprite = "PAIN";
   Frame = 10;
   Flags = fullbright;
-  Tics = 5;
+  Tics = 8;
   Next state = "PAIN_DIE8";
 }
 
@@ -10894,391 +8659,570 @@ State {
   Sprite = "PAIN";
   Frame = 11;
   Flags = fullbright;
-  Tics = 5;
+  Tics = 8;
   Next state = "NULL";
 }
 
 State {
-  ID = "MOTH_STND";
-  Sprite = "MOTH";
+  ID = "RECT_STND";
+  Sprite = "RECT";
   Frame = 0;
-  Tics = 10;
+  Tics = 8;
   Action = "A_Look";
-  Next state = "MOTH_STND2";
+  Next state = "RECT_STND2";
 }
 
 State {
-  ID = "MOTH_STND2";
-  Sprite = "MOTH";
+  ID = "RECT_STND2";
+  Sprite = "RECT";
   Frame = 1;
-  Tics = 10;
+  Tics = 8;
   Action = "A_Look";
-  Next state = "MOTH_STND3";
+  Next state = "RECT_STND3";
 }
 
 State {
-  ID = "MOTH_STND3";
-  Sprite = "MOTH";
+  ID = "RECT_STND3";
+  Sprite = "RECT";
   Frame = 2;
-  Tics = 10;
+  Tics = 8;
   Action = "A_Look";
-  Next state = "MOTH_STND4";
+  Next state = "RECT_STND4";
 }
 
 State {
-  ID = "MOTH_STND4";
-  Sprite = "MOTH";
+  ID = "RECT_STND4";
+  Sprite = "RECT";
   Frame = 3;
-  Tics = 10;
+  Tics = 8;
   Action = "A_Look";
-  Next state = "MOTH_STND";
+  Next state = "RECT_STND";
 }
 
 State {
-  ID = "MOTH_RUN1";
-  Sprite = "MOTH";
+  ID = "RECT_RUN1";
+  Sprite = "RECT";
   Frame = 0;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN2";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN2";
 }
 
 State {
-  ID = "MOTH_RUN2";
-  Sprite = "MOTH";
+  ID = "RECT_RUN2";
+  Sprite = "RECT";
   Frame = 0;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN3";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN3";
 }
 
 State {
-  ID = "MOTH_RUN3";
-  Sprite = "MOTH";
+  ID = "RECT_RUN3";
+  Sprite = "RECT";
+  Frame = 0;
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN4";
+}
+
+State {
+  ID = "RECT_RUN4";
+  Sprite = "RECT";
   Frame = 1;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN4";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN5";
 }
 
 State {
-  ID = "MOTH_RUN4";
-  Sprite = "MOTH";
+  ID = "RECT_RUN5";
+  Sprite = "RECT";
   Frame = 1;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN5";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN6";
 }
 
 State {
-  ID = "MOTH_RUN5";
-  Sprite = "MOTH";
+  ID = "RECT_RUN6";
+  Sprite = "RECT";
+  Frame = 1;
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN7";
+}
+
+State {
+  ID = "RECT_RUN7";
+  Sprite = "RECT";
   Frame = 2;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN6";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN8";
 }
 
 State {
-  ID = "MOTH_RUN6";
-  Sprite = "MOTH";
+  ID = "RECT_RUN8";
+  Sprite = "RECT";
   Frame = 2;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN7";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN9";
 }
 
 State {
-  ID = "MOTH_RUN7";
-  Sprite = "MOTH";
+  ID = "RECT_RUN9";
+  Sprite = "RECT";
+  Frame = 2;
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN10";
+}
+
+State {
+  ID = "RECT_RUN10";
+  Sprite = "RECT";
   Frame = 3;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN8";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN11";
 }
 
 State {
-  ID = "MOTH_RUN8";
-  Sprite = "MOTH";
+  ID = "RECT_RUN11";
+  Sprite = "RECT";
   Frame = 3;
-  Tics = 4;
-  Action = "A_Chase";
-  Next state = "MOTH_RUN1";
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN12";
 }
 
 State {
-  ID = "MOTH_ATK1";
-  Sprite = "MOTH";
+  ID = "RECT_RUN12";
+  Sprite = "RECT";
+  Frame = 3;
+  Tics = 3;
+  Action = "A_RectChase";
+  Next state = "RECT_RUN1";
+}
+
+State {
+  ID = "RECT_ATK1";
+  Sprite = "RECT";
   Frame = 4;
   Tics = 12;
   Action = "A_FaceTarget";
-  Next state = "MOTH_ATK2";
+  Next state = "RECT_ATK2";
 }
 
 State {
-  ID = "MOTH_ATK2";
-  Sprite = "MOTH";
+  ID = "RECT_ATK2";
+  Sprite = "RECT";
   Frame = 6;
   Tics = 12;
   Action = "A_MotherFloorFire";
-  Next state = "MOTH_ATK3";
+  Next state = "RECT_ATK3";
 }
 
 State {
-  ID = "MOTH_ATK3";
-  Sprite = "MOTH";
+  ID = "RECT_ATK3";
+  Sprite = "RECT";
   Frame = 4;
   Tics = 12;
   Action = "A_FaceTarget";
-  Next state = "MOTH_ATK4";
+  Next state = "RECT_ATK4";
 }
 
 State {
-  ID = "MOTH_ATK4";
-  Sprite = "MOTH";
+  ID = "RECT_ATK4";
+  Sprite = "RECT";
   Frame = 5;
   Tics = 12;
   Action = "A_MotherMissle";
-  Next state = "MOTH_ATK5";
+  Next state = "RECT_ATK5";
 }
 
 State {
-  ID = "MOTH_ATK5";
-  Sprite = "MOTH";
+  ID = "RECT_ATK5";
+  Sprite = "RECT";
   Frame = 4;
   Tics = 12;
   Action = "A_SpidRefire";
-  Next state = "MOTH_ATK2";
+  Next state = "RECT_ATK2";
 }
 
 State {
-  ID = "MOTH_PAIN";
-  Sprite = "MOTH";
+  ID = "RECT_PAIN";
+  Sprite = "RECT";
   Frame = 7;
-  Tics = 4;
-  Next state = "MOTH_PAIN2";
-}
-
-State {
-  ID = "MOTH_PAIN2";
-  Sprite = "MOTH";
-  Frame = 7;
-  Tics = 4;
+  Tics = 18;
   Action = "A_Pain";
-  Next state = "MOTH_RUN1";
+  Next state = "RECT_ATK1";
 }
 
 State {
-  ID = "MOTH_DIE1";
-  Sprite = "MOTH";
+  ID = "RECT_DIE1";
+  Sprite = "RECT";
   Frame = 8;
-  Tics = 4;
-  Action = "A_Scream";
-  Next state = "MOTH_DIE2";
+  Tics = 60;
+  Action = "A_RectSpecial";
+  Next state = "RECT_DIE2";
 }
 
 State {
-  ID = "MOTH_DIE2";
-  Sprite = "MOTH";
+  ID = "RECT_DIE2";
+  Sprite = "RECT";
   Frame = 9;
-  Tics = 5;
-  Action = "A_BossExplode";
-  Next state = "MOTH_DIE2";
+  Tics = 8;
+  Next state = "RECT_DIE2";
 }
 
 State {
-  ID = "MOTH_DIE3";
-  Sprite = "MOTH";
+  ID = "RECT_DIE3";
+  Sprite = "RECT";
   Frame = 10;
-  Tics = 4;
-  Next state = "MOTH_DIE4";
+  Tics = 8;
+  Next state = "RECT_DIE4";
 }
 
 State {
-  ID = "MOTH_DIE4";
-  Sprite = "MOTH";
+  ID = "RECT_DIE4";
+  Sprite = "RECT";
   Frame = 11;
-  Tics = 4;
-  Action = "A_Fall";
-  Next state = "MOTH_DIE5";
+  Tics = 5;
+  Next state = "RECT_DIE5";
 }
 
 State {
-  ID = "MOTH_DIE5";
-  Sprite = "MOTH";
+  ID = "RECT_DIE5";
+  Sprite = "RECT";
   Frame = 12;
   Tics = 4;
-  Next state = "MOTH_DIE6";
+  Next state = "RECT_DIE6";
 }
 
 State {
-  ID = "MOTH_DIE6";
-  Sprite = "MOTH";
+  ID = "RECT_DIE6";
+  Sprite = "RECT";
   Frame = 13;
-  Tics = 4;
-  Action = "A_BitchSpecial";
-  Next state = "MOTH_DIE7";
+  Tics = 3;
+  Action = "A_Fall";
+  Next state = "RECT_DIE7";
 }
 
 State {
-  ID = "MOTH_DIE7";
-  Sprite = "MOTH";
+  ID = "RECT_DIE7";
+  Sprite = "RECT";
   Frame = 14;
-  Tics = 4;
-  Action = "A_BossDeath";
+  Tics = 2;
   Next state = "NULL";
 }
 
 State {
-  ID = "EMARP_STND";
-  Sprite = "PLAY";
+  ID = "BAL3";
+  Sprite = "BAL3";
   Frame = 0;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "EMARP_STND2";
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "BAL32";
 }
 
 State {
-  ID = "EMARP_STND2";
-  Sprite = "PLAY";
+  ID = "BAL32";
+  Sprite = "BAL3";
   Frame = 1;
-  Tics = 10;
-  Action = "A_Look";
-  Next state = "EMARP_STND";
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "BAL33";
 }
 
 State {
-  ID = "EMARP_RUN1";
-  Sprite = "PLAY";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN2";
-}
-
-State {
-  ID = "EMARP_RUN2";
-  Sprite = "PLAY";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN3";
-}
-
-State {
-  ID = "EMARP_RUN3";
-  Sprite = "PLAY";
-  Frame = 1;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN4";
-}
-
-State {
-  ID = "EMARP_RUN4";
-  Sprite = "PLAY";
-  Frame = 1;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN5";
-}
-
-State {
-  ID = "EMARP_RUN5";
-  Sprite = "PLAY";
+  ID = "BAL33";
+  Sprite = "BAL3";
   Frame = 2;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN6";
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "BAL3";
 }
 
 State {
-  ID = "EMARP_RUN6";
-  Sprite = "PLAY";
-  Frame = 2;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN7";
-}
-
-State {
-  ID = "EMARP_RUN7";
-  Sprite = "PLAY";
+  ID = "BAL3EXP";
+  Sprite = "BAL3";
   Frame = 3;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN8";
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "BAL3EXP2";
 }
 
 State {
-  ID = "EMARP_RUN8";
-  Sprite = "PLAY";
-  Frame = 3;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "EMARP_RUN1";
-}
-
-State {
-  ID = "EMARP_ATK1";
-  Sprite = "PLAY";
+  ID = "BAL3EXP2";
+  Sprite = "BAL3";
   Frame = 4;
-  Tics = 10;
-  Action = "A_FaceTarget";
-  Next state = "EMARP_ATK2";
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "BAL3EXP3";
 }
 
 State {
-  ID = "EMARP_ATK2";
-  Sprite = "PLAY";
+  ID = "BAL3EXP3";
+  Sprite = "BAL3";
   Frame = 5;
   Flags = fullbright;
-  Tics = 8;
-  Action = "A_PosAttack";
-  Next state = "EMARP_ATK3";
+  Tics = 2;
+  Next state = "BAL3EXP4";
 }
 
 State {
-  ID = "EMARP_ATK3";
-  Sprite = "PLAY";
-  Frame = 4;
+  ID = "BAL3EXP4";
+  Sprite = "BAL3";
+  Frame = 6;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "BAL3EXP5";
+}
+
+State {
+  ID = "BAL3EXP5";
+  Sprite = "BAL3";
+  Frame = 7;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "BAL3EXP6";
+}
+
+State {
+  ID = "BAL3EXP6";
+  Sprite = "BAL3";
+  Frame = 8;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "NULL";
+}
+
+State {
+  ID = "BRBALL1";
+  Sprite = "BAL7";
+  Frame = 0;
+  Flags = fullbright;
   Tics = 4;
-  Next state = "EMARP_ATK4";
+  Next state = "BRBALL2";
 }
 
 State {
-  ID = "EMARP_ATK4";
-  Sprite = "PLAY";
+  ID = "BRBALL2";
+  Sprite = "BAL7";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "BRBALL1";
+}
+
+State {
+  ID = "BRBALLX1";
+  Sprite = "BAL7";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "BRBALLX2";
+}
+
+State {
+  ID = "BRBALLX2";
+  Sprite = "BAL7";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "BRBALLX3";
+}
+
+State {
+  ID = "BRBALLX3";
+  Sprite = "BAL7";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "BRBALLX4";
+}
+
+State {
+  ID = "BRBALLX4";
+  Sprite = "BAL7";
   Frame = 5;
   Flags = fullbright;
-  Tics = 8;
-  Action = "A_PosAttack";
-  Next state = "EMARP_ATK5";
+  Tics = 6;
+  Next state = "BRBALLX5";
 }
 
 State {
-  ID = "EMARP_ATK5";
-  Sprite = "PLAY";
+  ID = "BRBALLX5";
+  Sprite = "BAL7";
+  Frame = 6;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "BRBALLX6";
+}
+
+State {
+  ID = "BRBALLX6";
+  Sprite = "BAL7";
+  Frame = 7;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "NULL";
+}
+
+State {
+  ID = "ARACH_PLAZ";
+  Sprite = "APLS";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "ARACH_PLAZ2";
+}
+
+State {
+  ID = "ARACH_PLAZ2";
+  Sprite = "APLS";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "ARACH_PLAZ";
+}
+
+State {
+  ID = "ARACH_PLEX";
+  Sprite = "APLS";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "ARACH_PLEX2";
+}
+
+State {
+  ID = "ARACH_PLEX2";
+  Sprite = "APLS";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "ARACH_PLEX3";
+}
+
+State {
+  ID = "ARACH_PLEX3";
+  Sprite = "APLS";
   Frame = 4;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "ARACH_PLEX4";
+}
+
+State {
+  ID = "ARACH_PLEX4";
+  Sprite = "APLS";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "ARACH_PLEX5";
+}
+
+State {
+  ID = "ARACH_PLEX5";
+  Sprite = "APLS";
+  Frame = 6;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "ARACH_PLEX6";
+}
+
+State {
+  ID = "ARACH_PLEX6";
+  Sprite = "APLS";
+  Frame = 7;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "NULL";
+}
+
+State {
+  ID = "FATSHOT1";
+  Sprite = "MANF";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "FATSHOT2";
+}
+
+State {
+  ID = "FATSHOT2";
+  Sprite = "MANF";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "FATSHOT3";
+}
+
+State {
+  ID = "FATSHOT3";
+  Sprite = "MANF";
+  Frame = 2;
+  Flags = fullbright;
   Tics = 4;
-  Next state = "EMARP_RUN1";
+  Next state = "FATSHOT1";
 }
 
 State {
-  ID = "EMARP_PAIN";
-  Sprite = "PLAY";
-  Frame = 6;
-  Tics = 3;
-  Next state = "EMARP_PAIN2";
+  ID = "FATSHOTX1";
+  Sprite = "MANF";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 8;
+  Next state = "FATSHOTX2";
 }
 
 State {
-  ID = "EMARP_PAIN2";
-  Sprite = "PLAY";
+  ID = "FATSHOTX2";
+  Sprite = "MANF";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "FATSHOTX3";
+}
+
+State {
+  ID = "FATSHOTX3";
+  Sprite = "MANF";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "FATSHOTX4";
+}
+
+State {
+  ID = "FATSHOTX4";
+  Sprite = "MANF";
   Frame = 6;
-  Tics = 3;
-  Action = "A_Pain";
-  Next state = "EMARP_RUN1";
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "FATSHOTX5";
+}
+
+State {
+  ID = "FATSHOTX5";
+  Sprite = "MANF";
+  Frame = 7;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "FATSHOTX6";
+}
+
+State {
+  ID = "FATSHOTX6";
+  Sprite = "MANF";
+  Frame = 8;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "NULL";
 }
 
 State {
@@ -11354,9 +9298,685 @@ State {
 }
 
 State {
+  ID = "DART";
+  Sprite = "DART";
+  Frame = 0;
+  Flags = fullbright | noautolight;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "MPUFF1";
+  Sprite = "MPUF";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "MPUFF2";
+}
+
+State {
+  ID = "MPUFF2";
+  Sprite = "MPUF";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "MPUFF3";
+}
+
+State {
+  ID = "MPUFF3";
+  Sprite = "MPUF";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "MPUFF4";
+}
+
+State {
+  ID = "MPUFF4";
+  Sprite = "MPUF";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "MPUFF5";
+}
+
+State {
+  ID = "MPUFF5";
+  Sprite = "MPUF";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "NULL";
+}
+
+State {
+  ID = "RPUFF1";
+  Sprite = "SMOK";
+  Frame = 0;
+  Tics = 2;
+  Next state = "RPUFF2";
+}
+
+State {
+  ID = "RPUFF2";
+  Sprite = "SMOK";
+  Frame = 1;
+  Tics = 2;
+  Next state = "RPUFF3";
+}
+
+State {
+  ID = "RPUFF3";
+  Sprite = "SMOK";
+  Frame = 2;
+  Tics = 2;
+  Next state = "RPUFF4";
+}
+
+State {
+  ID = "RPUFF4";
+  Sprite = "SMOK";
+  Frame = 3;
+  Tics = 2;
+  Next state = "RPUFF5";
+}
+
+State {
+  ID = "RPUFF5";
+  Sprite = "SMOK";
+  Frame = 4;
+  Tics = 2;
+  Next state = "NULL";
+}
+
+State {
+  ID = "SMOKE1";
+  Sprite = "PUFF";
+  Frame = 1;
+  Tics = 4;
+  Next state = "SMOKE2";
+}
+
+State {
+  ID = "SMOKE2";
+  Sprite = "PUFF";
+  Frame = 2;
+  Tics = 4;
+  Next state = "SMOKE3";
+}
+
+State {
+  ID = "SMOKE3";
+  Sprite = "PUFF";
+  Frame = 1;
+  Tics = 4;
+  Next state = "SMOKE4";
+}
+
+State {
+  ID = "SMOKE4";
+  Sprite = "PUFF";
+  Frame = 2;
+  Tics = 4;
+  Next state = "SMOKE5";
+}
+
+State {
+  ID = "SMOKE5";
+  Sprite = "PUFF";
+  Frame = 3;
+  Tics = 4;
+  Next state = "NULL";
+}
+
+State {
+  ID = "PUFF1";
+  Sprite = "PUFF";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "PUFF2";
+}
+
+State {
+  ID = "PUFF2";
+  Sprite = "PUFF";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "PUFF3";
+}
+
+State {
+  ID = "PUFF3";
+  Sprite = "PUFF";
+  Frame = 2;
+  Tics = 3;
+  Next state = "PUFF4";
+}
+
+State {
+  ID = "PUFF4";
+  Sprite = "PUFF";
+  Frame = 3;
+  Tics = 3;
+  Next state = "PUFF5";
+}
+
+State {
+  ID = "PUFF5";
+  Sprite = "PUFF";
+  Frame = 4;
+  Tics = 3;
+  Next state = "PUFF6";
+}
+
+State {
+  ID = "PUFF6";
+  Sprite = "PUFF";
+  Frame = 5;
+  Tics = 3;
+  Next state = "NULL";
+}
+
+State {
+  ID = "BLOOD1";
+  Sprite = "BLUD";
+  Frame = 0;
+  Tics = 6;
+  Next state = "BLOOD2";
+}
+
+State {
+  ID = "BLOOD2";
+  Sprite = "BLUD";
+  Frame = 1;
+  Tics = 6;
+  Next state = "BLOOD3";
+}
+
+State {
+  ID = "BLOOD3";
+  Sprite = "BLUD";
+  Frame = 2;
+  Tics = 6;
+  Next state = "BLOOD4";
+}
+
+State {
+  ID = "BLOOD4";
+  Sprite = "BLUD";
+  Frame = 3;
+  Tics = 6;
+  Next state = "NULL";
+}
+
+State {
+  ID = "TBALL1";
+  Sprite = "BAL1";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "TBALL2";
+}
+
+State {
+  ID = "TBALL2";
+  Sprite = "BAL1";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "TBALL3";
+}
+
+State {
+  ID = "TBALL3";
+  Sprite = "BAL1";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "TBALL1";
+}
+
+State {
+  ID = "TBALLX1";
+  Sprite = "BAL1";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "TBALLX2";
+}
+
+State {
+  ID = "TBALLX2";
+  Sprite = "BAL1";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "TBALLX3";
+}
+
+State {
+  ID = "TBALLX3";
+  Sprite = "BAL1";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "TBALLX4";
+}
+
+State {
+  ID = "TBALLX4";
+  Sprite = "BAL1";
+  Frame = 6;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "TBALLX5";
+}
+
+State {
+  ID = "TBALLX5";
+  Sprite = "BAL1";
+  Frame = 7;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "TBALLX6";
+}
+
+State {
+  ID = "TBALLX6";
+  Sprite = "BAL1";
+  Frame = 8;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "NULL";
+}
+
+State {
+  ID = "PLASBALL";
+  Sprite = "PLSS";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "PLASBALL2";
+}
+
+State {
+  ID = "PLASBALL2";
+  Sprite = "PLSS";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "PLASBALL";
+}
+
+State {
+  ID = "PLASEXP";
+  Sprite = "PLSE";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "PLASEXP2";
+}
+
+State {
+  ID = "PLASEXP2";
+  Sprite = "PLSE";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "PLASEXP3";
+}
+
+State {
+  ID = "PLASEXP3";
+  Sprite = "PLSE";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "PLASEXP4";
+}
+
+State {
+  ID = "PLASEXP4";
+  Sprite = "PLSE";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "PLASEXP5";
+}
+
+State {
+  ID = "PLASEXP5";
+  Sprite = "PLSE";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "PLASEXP6";
+}
+
+State {
+  ID = "PLASEXP6";
+  Sprite = "PLSE";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "NULL";
+}
+
+State {
+  ID = "ROCKET";
+  Sprite = "MISL";
+  Frame = 0;
+  Tics = 2;
+  Next state = "ROCKET2";
+}
+
+State {
+  ID = "ROCKET2";
+  Sprite = "MISL";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Rocketpuff";
+  Next state = "ROCKET";
+}
+
+State {
+  ID = "BFGSHOT";
+  Sprite = "BFS1";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "BFGSHOT2";
+}
+
+State {
+  ID = "BFGSHOT2";
+  Sprite = "BFS1";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "BFGSHOT";
+}
+
+State {
+  ID = "BFGLAND";
+  Sprite = "BFE1";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 8;
+  Next state = "BFGLAND2";
+}
+
+State {
+  ID = "BFGLAND2";
+  Sprite = "BFE1";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 8;
+  Next state = "BFGLAND3";
+}
+
+State {
+  ID = "BFGLAND3";
+  Sprite = "BFE1";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 8;
+  Action = "A_BFGSpray";
+  Next state = "BFGLAND4";
+}
+
+State {
+  ID = "BFGLAND4";
+  Sprite = "BFE1";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 8;
+  Next state = "BFGLAND5";
+}
+
+State {
+  ID = "BFGLAND5";
+  Sprite = "BFE1";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 8;
+  Next state = "BFGLAND6";
+}
+
+State {
+  ID = "BFGLAND6";
+  Sprite = "BFE1";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 8;
+  Next state = "NULL";
+}
+
+State {
+  ID = "BFGEXP";
+  Sprite = "BFE2";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "BFGEXP2";
+}
+
+State {
+  ID = "BFGEXP2";
+  Sprite = "BFE2";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "BFGEXP3";
+}
+
+State {
+  ID = "BFGEXP3";
+  Sprite = "BFE2";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "BFGEXP4";
+}
+
+State {
+  ID = "BFGEXP4";
+  Sprite = "BFE2";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "BFGEXP5";
+}
+
+State {
+  ID = "BFGEXP5";
+  Sprite = "BFE2";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "BFGEXP6";
+}
+
+State {
+  ID = "BFGEXP6";
+  Sprite = "BFE2";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 2;
+  Next state = "NULL";
+}
+
+State {
+  ID = "EXPLODE0";
+  Sprite = "MISL";
+  Frame = 0;
+  Flags = fullbright;
+  Next state = "EXPLODE1";
+}
+
+State {
+  ID = "EXPLODE1";
+  Sprite = "MISL";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 8;
+  Action = "A_Explode";
+  Next state = "EXPLODE2";
+}
+
+State {
+  ID = "EXPLODE2";
+  Sprite = "MISL";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "EXPLODE3";
+}
+
+State {
+  ID = "EXPLODE3";
+  Sprite = "MISL";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "EXPLODE4";
+}
+
+State {
+  ID = "EXPLODE4";
+  Sprite = "MISL";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "EXPLODE5";
+}
+
+State {
+  ID = "EXPLODE5";
+  Sprite = "MISL";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "NULL";
+}
+
+State {
+  ID = "TFOG";
+  Sprite = "TFOG";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG2";
+}
+
+State {
+  ID = "TFOG2";
+  Sprite = "TFOG";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG3";
+}
+
+State {
+  ID = "TFOG3";
+  Sprite = "TFOG";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG4";
+}
+
+State {
+  ID = "TFOG4";
+  Sprite = "TFOG";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG5";
+}
+
+State {
+  ID = "TFOG5";
+  Sprite = "TFOG";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG6";
+}
+
+State {
+  ID = "TFOG6";
+  Sprite = "TFOG";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG7";
+}
+
+State {
+  ID = "TFOG7";
+  Sprite = "TFOG";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG8";
+}
+
+State {
+  ID = "TFOG8";
+  Sprite = "TFOG";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG9";
+}
+
+State {
+  ID = "TFOG9";
+  Sprite = "TFOG";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG10";
+}
+
+State {
+  ID = "TFOG10";
+  Sprite = "TFOG";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG11";
+}
+
+State {
+  ID = "TFOG11";
+  Sprite = "TFOG";
+  Frame = 6;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "TFOG12";
+}
+
+State {
+  ID = "TFOG12";
+  Sprite = "TFOG";
+  Frame = 7;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "NULL";
+}
+
+State {
   ID = "ARM1";
   Sprite = "ARM1";
   Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "ARM1A";
 }
@@ -11366,7 +9986,7 @@ State {
   Sprite = "ARM1";
   Frame = 1;
   Flags = fullbright;
-  Tics = 7;
+  Tics = 6;
   Next state = "ARM1";
 }
 
@@ -11374,6 +9994,7 @@ State {
   ID = "ARM2";
   Sprite = "ARM2";
   Frame = 0;
+  Flags = fullbright;
   Tics = 6;
   Next state = "ARM2A";
 }
@@ -11388,108 +10009,10 @@ State {
 }
 
 State {
-  ID = "BAR1";
-  Sprite = "BAR1";
-  Frame = 0;
-  Tics = 6;
-  Next state = "BAR2";
-}
-
-State {
-  ID = "BAR2";
-  Sprite = "BAR1";
-  Frame = 1;
-  Tics = 6;
-  Next state = "BAR1";
-}
-
-State {
-  ID = "BEXP";
-  Sprite = "BEXP";
-  Frame = 0;
-  Tics = 5;
-  Next state = "BEXP2";
-}
-
-State {
-  ID = "BEXP2";
-  Sprite = "BEXP";
-  Frame = 1;
-  Tics = 5;
-  Action = "A_Scream";
-  Next state = "BEXP3";
-}
-
-State {
-  ID = "BEXP3";
-  Sprite = "BEXP";
-  Frame = 2;
-  Tics = 5;
-  Next state = "BEXP4";
-}
-
-State {
-  ID = "BEXP4";
-  Sprite = "BEXP";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "BEXP5";
-}
-
-State {
-  ID = "BEXP5";
-  Sprite = "BEXP";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 5;
-  Action = "A_Explode";
-  Next state = "BEXP6";
-}
-
-State {
-  ID = "BEXP6";
-  Sprite = "BEXP";
-  Frame = 5;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "BEXP7";
-}
-
-State {
-  ID = "BEXP7";
-  Sprite = "BEXP";
-  Frame = 6;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "BEXP8";
-}
-
-State {
-  ID = "BEXP8";
-  Sprite = "BEXP";
-  Frame = 7;
-  Flags = fullbright;
-  Tics = 5;
-  Next state = "BEXP9";
-}
-
-State {
-  ID = "BEXP9";
-  Sprite = "BEXP";
-  Frame = 8;
-  Flags = fullbright;
-  Tics = 5;
-  Action = "A_BossDeath";
-  Next state = "NULL";
-}
-
-State {
   ID = "BON1";
   Sprite = "BON1";
   Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
+  Tics = 3;
   Next state = "BON1A";
 }
 
@@ -11497,8 +10020,7 @@ State {
   ID = "BON1A";
   Sprite = "BON1";
   Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
+  Tics = 3;
   Next state = "BON1B";
 }
 
@@ -11506,8 +10028,7 @@ State {
   ID = "BON1B";
   Sprite = "BON1";
   Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
+  Tics = 3;
   Next state = "BON1C";
 }
 
@@ -11515,26 +10036,7 @@ State {
   ID = "BON1C";
   Sprite = "BON1";
   Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "BON1D";
-}
-
-State {
-  ID = "BON1D";
-  Sprite = "BON1";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "BON1E";
-}
-
-State {
-  ID = "BON1E";
-  Sprite = "BON1";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
+  Tics = 3;
   Next state = "BON1";
 }
 
@@ -11590,16 +10092,16 @@ State {
   ID = "BKEY";
   Sprite = "BKEY";
   Frame = 0;
-  Tics = 10;
+  Tics = 5;
   Next state = "BKEY2";
 }
 
 State {
   ID = "BKEY2";
   Sprite = "BKEY";
-  Frame = 1;
+  Frame = 0;
   Flags = fullbright;
-  Tics = 10;
+  Tics = 5;
   Next state = "BKEY";
 }
 
@@ -11607,16 +10109,16 @@ State {
   ID = "RKEY";
   Sprite = "RKEY";
   Frame = 0;
-  Tics = 10;
+  Tics = 5;
   Next state = "RKEY2";
 }
 
 State {
   ID = "RKEY2";
   Sprite = "RKEY";
-  Frame = 1;
+  Frame = 0;
   Flags = fullbright;
-  Tics = 10;
+  Tics = 5;
   Next state = "RKEY";
 }
 
@@ -11624,68 +10126,284 @@ State {
   ID = "YKEY";
   Sprite = "YKEY";
   Frame = 0;
-  Tics = 10;
+  Tics = 5;
   Next state = "YKEY2";
 }
 
 State {
   ID = "YKEY2";
   Sprite = "YKEY";
-  Frame = 1;
+  Frame = 0;
   Flags = fullbright;
-  Tics = 10;
+  Tics = 5;
   Next state = "YKEY";
-}
-
-State {
-  ID = "BSKULL";
-  Sprite = "BSKU";
-  Frame = 0;
-  Tics = 10;
-  Next state = "BSKULL2";
-}
-
-State {
-  ID = "BSKULL2";
-  Sprite = "BSKU";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 10;
-  Next state = "BSKULL";
-}
-
-State {
-  ID = "RSKULL";
-  Sprite = "RSKU";
-  Frame = 0;
-  Tics = 10;
-  Next state = "RSKULL2";
-}
-
-State {
-  ID = "RSKULL2";
-  Sprite = "RSKU";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 10;
-  Next state = "RSKULL";
 }
 
 State {
   ID = "YSKULL";
   Sprite = "YSKU";
   Frame = 0;
-  Tics = 10;
+  Tics = 5;
   Next state = "YSKULL2";
 }
 
 State {
   ID = "YSKULL2";
   Sprite = "YSKU";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 5;
+  Next state = "YSKULL";
+}
+
+State {
+  ID = "RSKULL";
+  Sprite = "RSKU";
+  Frame = 0;
+  Tics = 5;
+  Next state = "RSKULL2";
+}
+
+State {
+  ID = "RSKULL2";
+  Sprite = "RSKU";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 5;
+  Next state = "RSKULL";
+}
+
+State {
+  ID = "BSKULL";
+  Sprite = "BSKU";
+  Frame = 0;
+  Tics = 5;
+  Next state = "BSKULL2";
+}
+
+State {
+  ID = "BSKULL2";
+  Sprite = "BSKU";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 5;
+  Next state = "BSKULL";
+}
+
+State {
+  ID = "ART1";
+  Sprite = "ART1";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART12";
+}
+
+State {
+  ID = "ART12";
+  Sprite = "ART1";
   Frame = 1;
   Flags = fullbright;
-  Tics = 10;
-  Next state = "YSKULL";
+  Tics = 4;
+  Next state = "ART13";
+}
+
+State {
+  ID = "ART13";
+  Sprite = "ART1";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART14";
+}
+
+State {
+  ID = "ART14";
+  Sprite = "ART1";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART15";
+}
+
+State {
+  ID = "ART15";
+  Sprite = "ART1";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART16";
+}
+
+State {
+  ID = "ART16";
+  Sprite = "ART1";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART17";
+}
+
+State {
+  ID = "ART17";
+  Sprite = "ART1";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART18";
+}
+
+State {
+  ID = "ART18";
+  Sprite = "ART1";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART1";
+}
+
+State {
+  ID = "ART2";
+  Sprite = "ART2";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART22";
+}
+
+State {
+  ID = "ART22";
+  Sprite = "ART2";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART23";
+}
+
+State {
+  ID = "ART23";
+  Sprite = "ART2";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART24";
+}
+
+State {
+  ID = "ART24";
+  Sprite = "ART2";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART25";
+}
+
+State {
+  ID = "ART25";
+  Sprite = "ART2";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART26";
+}
+
+State {
+  ID = "ART26";
+  Sprite = "ART2";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART27";
+}
+
+State {
+  ID = "ART27";
+  Sprite = "ART2";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART28";
+}
+
+State {
+  ID = "ART28";
+  Sprite = "ART2";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART2";
+}
+
+State {
+  ID = "ART3";
+  Sprite = "ART3";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART32";
+}
+
+State {
+  ID = "ART32";
+  Sprite = "ART3";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART33";
+}
+
+State {
+  ID = "ART33";
+  Sprite = "ART3";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART34";
+}
+
+State {
+  ID = "ART34";
+  Sprite = "ART3";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART35";
+}
+
+State {
+  ID = "ART35";
+  Sprite = "ART3";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART36";
+}
+
+State {
+  ID = "ART36";
+  Sprite = "ART3";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART37";
+}
+
+State {
+  ID = "ART37";
+  Sprite = "ART3";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART38";
+}
+
+State {
+  ID = "ART38";
+  Sprite = "ART3";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "ART3";
 }
 
 State {
@@ -11791,6 +10509,24 @@ State {
   Frame = 3;
   Flags = fullbright;
   Tics = 6;
+  Next state = "PINV5";
+}
+
+State {
+  ID = "PINV5";
+  Sprite = "PINV";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "PINV6";
+}
+
+State {
+  ID = "PINV6";
+  Sprite = "PINV";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 6;
   Next state = "PINV";
 }
 
@@ -11798,6 +10534,7 @@ State {
   ID = "PSTR";
   Sprite = "PSTR";
   Frame = 0;
+  Flags = fullbright | noautolight;
   Tics = -1;
   Next state = "NULL";
 }
@@ -11806,7 +10543,8 @@ State {
   ID = "PINS";
   Sprite = "PINS";
   Frame = 0;
-  Tics = 6;
+  Flags = fullbright;
+  Tics = 2;
   Next state = "PINS2";
 }
 
@@ -11814,7 +10552,8 @@ State {
   ID = "PINS2";
   Sprite = "PINS";
   Frame = 1;
-  Tics = 6;
+  Flags = fullbright;
+  Tics = 3;
   Next state = "PINS3";
 }
 
@@ -11822,7 +10561,8 @@ State {
   ID = "PINS3";
   Sprite = "PINS";
   Frame = 2;
-  Tics = 6;
+  Flags = fullbright;
+  Tics = 2;
   Next state = "PINS4";
 }
 
@@ -11830,44 +10570,27 @@ State {
   ID = "PINS4";
   Sprite = "PINS";
   Frame = 3;
-  Tics = 6;
-  Next state = "PINS";
-}
-
-State {
-  ID = "MEGA";
-  Sprite = "MEGA";
-  Frame = 0;
   Flags = fullbright;
-  Tics = 6;
-  Next state = "MEGA2";
+  Tics = 1;
+  Next state = "PINS5";
 }
 
 State {
-  ID = "MEGA2";
-  Sprite = "MEGA";
+  ID = "PINS5";
+  Sprite = "PINS";
   Frame = 1;
   Flags = fullbright;
-  Tics = 6;
-  Next state = "MEGA3";
+  Tics = 2;
+  Next state = "PINS6";
 }
 
 State {
-  ID = "MEGA3";
-  Sprite = "MEGA";
+  ID = "PINS6";
+  Sprite = "PINS";
   Frame = 2;
   Flags = fullbright;
-  Tics = 6;
-  Next state = "MEGA4";
-}
-
-State {
-  ID = "MEGA4";
-  Sprite = "MEGA";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "MEGA";
+  Tics = 1;
+  Next state = "PINS";
 }
 
 State {
@@ -11875,7 +10598,7 @@ State {
   Sprite = "SUIT";
   Frame = 0;
   Flags = fullbright;
-  Tics = 2;
+  Tics = 4;
   Next state = "SUIT2";
 }
 
@@ -11884,7 +10607,7 @@ State {
   Sprite = "SUIT";
   Frame = 1;
   Flags = fullbright;
-  Tics = 2;
+  Tics = 4;
   Next state = "SUIT";
 }
 
@@ -11893,7 +10616,7 @@ State {
   Sprite = "PMAP";
   Frame = 0;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Next state = "PMAP2";
 }
 
@@ -11902,7 +10625,7 @@ State {
   Sprite = "PMAP";
   Frame = 1;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Next state = "PMAP3";
 }
 
@@ -11911,7 +10634,7 @@ State {
   Sprite = "PMAP";
   Frame = 2;
   Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Next state = "PMAP4";
 }
 
@@ -11920,25 +10643,7 @@ State {
   Sprite = "PMAP";
   Frame = 3;
   Flags = fullbright;
-  Tics = 6;
-  Next state = "PMAP5";
-}
-
-State {
-  ID = "PMAP5";
-  Sprite = "PMAP";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "PMAP6";
-}
-
-State {
-  ID = "PMAP6";
-  Sprite = "PMAP";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
+  Tics = 5;
   Next state = "PMAP";
 }
 
@@ -11946,7 +10651,8 @@ State {
   ID = "PVIS";
   Sprite = "PVIS";
   Frame = 0;
-  Tics = 6;
+  Flags = fullbright | noautolight;
+  Tics = 3;
   Next state = "PVIS2";
 }
 
@@ -11954,8 +10660,62 @@ State {
   ID = "PVIS2";
   Sprite = "PVIS";
   Frame = 1;
-  Tics = 6;
+  Tics = 3;
   Next state = "PVIS";
+}
+
+State {
+  ID = "MEGA";
+  Sprite = "MEGA";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "MEGA2";
+}
+
+State {
+  ID = "MEGA2";
+  Sprite = "MEGA";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "MEGA3";
+}
+
+State {
+  ID = "MEGA3";
+  Sprite = "MEGA";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "MEGA4";
+}
+
+State {
+  ID = "MEGA4";
+  Sprite = "MEGA";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "MEGA5";
+}
+
+State {
+  ID = "MEGA5";
+  Sprite = "MEGA";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "MEGA6";
+}
+
+State {
+  ID = "MEGA6";
+  Sprite = "MEGA";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "MEGA";
 }
 
 State {
@@ -11975,8 +10735,8 @@ State {
 }
 
 State {
-  ID = "ROCK";
-  Sprite = "ROCK";
+  ID = "RCKT";
+  Sprite = "RCKT";
   Frame = 0;
   Tics = -1;
   Next state = "NULL";
@@ -12039,16 +10799,16 @@ State {
 }
 
 State {
-  ID = "MGUN";
-  Sprite = "MGUN";
+  ID = "CSAW";
+  Sprite = "CSAW";
   Frame = 0;
   Tics = -1;
   Next state = "NULL";
 }
 
 State {
-  ID = "CSAW";
-  Sprite = "CSAW";
+  ID = "MGUN";
+  Sprite = "MGUN";
   Frame = 0;
   Tics = -1;
   Next state = "NULL";
@@ -12063,8 +10823,8 @@ State {
 }
 
 State {
-  ID = "PLAS";
-  Sprite = "PLAS";
+  ID = "PLSM";
+  Sprite = "PLSM";
   Frame = 0;
   Tics = -1;
   Next state = "NULL";
@@ -12087,18 +10847,898 @@ State {
 }
 
 State {
-  ID = "COLU";
-  Sprite = "COLU";
+  ID = "LSRG";
+  Sprite = "LSRG";
   Frame = 0;
-  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
 
 State {
-  ID = "DART";
-  Sprite = "DART";
+  ID = "CANDLE";
+  Sprite = "CAND";
   Frame = 0;
+  Tics = 2;
+  Next state = "CANDLE2";
+}
+
+State {
+  ID = "CANDLE2";
+  Sprite = "CAND";
+  Frame = 1;
+  Tics = 2;
+  Next state = "CANDLE";
+}
+
+State {
+  ID = "BAR1";
+  Sprite = "BAR1";
+  Frame = 0;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "BAR2";
+  Sprite = "BAR1";
+  Frame = 1;
+  Tics = 5;
+  Next state = "BAR3";
+}
+
+State {
+  ID = "BAR3";
+  Sprite = "BAR1";
+  Frame = 2;
+  Tics = 5;
+  Next state = "BAR4";
+}
+
+State {
+  ID = "BAR4";
+  Sprite = "BAR1";
+  Frame = 3;
+  Tics = 5;
+  Next state = "BAR5";
+}
+
+State {
+  ID = "BAR5";
+  Sprite = "BAR1";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 5;
+  Action = "A_BarrelExplode";
+  Next state = "NULL";
+}
+
+State {
+  ID = "SAW";
+  Sprite = "SAWG";
+  Frame = 0;
+  Tics = 4;
+  Action = "A_WeaponReady";
+  Next state = "SAWB";
+}
+
+State {
+  ID = "SAWB";
+  Sprite = "SAWG";
+  Frame = 1;
+  Tics = 4;
+  Action = "A_WeaponReady";
+  Next state = "SAW";
+}
+
+State {
+  ID = "SAWDOWN";
+  Sprite = "SAWG";
+  Frame = 1;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "SAWDOWN";
+}
+
+State {
+  ID = "SAWUP";
+  Sprite = "SAWG";
+  Frame = 1;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "SAWUP";
+}
+
+State {
+  ID = "SAW1";
+  Sprite = "SAWG";
+  Frame = 2;
+  Tics = 2;
+  Action = "A_Saw";
+  Next state = "SAW2";
+}
+
+State {
+  ID = "SAW2";
+  Sprite = "SAWG";
+  Frame = 3;
+  Tics = 2;
+  Action = "A_Saw";
+  Next state = "SAW3";
+}
+
+State {
+  ID = "SAW3";
+  Sprite = "SAWG";
+  Frame = 3;
+  Tics = 0;
+  Action = "A_ReFire";
+  Next state = "SAW";
+}
+
+State {
+  ID = "PUNCH";
+  Sprite = "PUNG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "PUNCH";
+}
+
+State {
+  ID = "PUNCHDOWN";
+  Sprite = "PUNG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "PUNCHDOWN";
+}
+
+State {
+  ID = "PUNCHUP";
+  Sprite = "PUNG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "PUNCHUP";
+}
+
+State {
+  ID = "PUNCH1";
+  Sprite = "PUNG";
+  Frame = 1;
+  Tics = 4;
+  Next state = "PUNCH2";
+}
+
+State {
+  ID = "PUNCH2";
+  Sprite = "PUNG";
+  Frame = 2;
+  Tics = 4;
+  Action = "A_Punch";
+  Next state = "PUNCH3";
+}
+
+State {
+  ID = "PUNCH3";
+  Sprite = "PUNG";
+  Frame = 3;
+  Tics = 5;
+  Next state = "PUNCH4";
+}
+
+State {
+  ID = "PUNCH4";
+  Sprite = "PUNG";
+  Frame = 2;
+  Tics = 4;
+  Next state = "PUNCH5";
+}
+
+State {
+  ID = "PUNCH5";
+  Sprite = "PUNG";
+  Frame = 1;
+  Tics = 5;
+  Action = "A_ReFire";
+  Next state = "PUNCH";
+}
+
+State {
+  ID = "PISTOL";
+  Sprite = "PISG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "PISTOL";
+}
+
+State {
+  ID = "PISTOLDOWN";
+  Sprite = "PISG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "PISTOLDOWN";
+}
+
+State {
+  ID = "PISTOLUP";
+  Sprite = "PISG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "PISTOLUP";
+}
+
+State {
+  ID = "PISTOL1";
+  Sprite = "PISG";
+  Frame = 0;
+  Tics = 2;
+  Next state = "PISTOL2";
+}
+
+State {
+  ID = "PISTOL2";
+  Sprite = "PISG";
+  Frame = 1;
+  Tics = 1;
+  Action = "A_FirePistol";
+  Next state = "PISTOL3";
+}
+
+State {
+  ID = "PISTOL3";
+  Sprite = "PISG";
+  Frame = 2;
+  Tics = 5;
+  Next state = "PISTOL4";
+}
+
+State {
+  ID = "PISTOL4";
+  Sprite = "PISG";
+  Frame = 1;
+  Tics = 5;
+  Next state = "PISTOL5";
+}
+
+State {
+  ID = "PISTOL5";
+  Sprite = "PISG";
+  Frame = 1;
+  Tics = 1;
+  Action = "A_ReFire";
+  Next state = "PISTOL";
+}
+
+State {
+  ID = "PISTOLFLASH";
+  Sprite = "PISG";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 3;
+  Action = "A_Light1";
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "SGUN";
+  Sprite = "SHT1";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "SGUN";
+}
+
+State {
+  ID = "SGUNDOWN";
+  Sprite = "SHT1";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "SGUNDOWN";
+}
+
+State {
+  ID = "SGUNUP";
+  Sprite = "SHT1";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "SGUNUP";
+}
+
+State {
+  ID = "SGUN1";
+  Sprite = "SHT1";
+  Frame = 0;
+  Tics = 2;
+  Next state = "SGUN2";
+}
+
+State {
+  ID = "SGUN2";
+  Sprite = "SHT1";
+  Frame = 0;
+  Tics = 4;
+  Action = "A_FireShotgun";
+  Next state = "SGUN3";
+}
+
+State {
+  ID = "SGUN3";
+  Sprite = "SHT1";
+  Frame = 1;
+  Tics = 18;
+  Next state = "SGUN6";
+}
+
+State {
+  ID = "SGUN4";
+  Sprite = "SHT1";
+  Frame = 2;
+  Tics = 5;
+  Next state = "SGUN5";
+}
+
+State {
+  ID = "SGUN5";
+  Sprite = "SHT1";
+  Frame = 0;
+  Tics = 3;
+  Next state = "SGUN6";
+}
+
+State {
+  ID = "SGUN6";
+  Sprite = "SHT1";
+  Frame = 0;
+  Tics = 7;
+  Action = "A_ReFire";
+  Next state = "SGUN";
+}
+
+State {
+  ID = "SGUNFLASH1";
+  Sprite = "SHT1";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_Light1";
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "DSGUN";
+  Sprite = "SHT2";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "DSGUN";
+}
+
+State {
+  ID = "DSGUNDOWN";
+  Sprite = "SHT2";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "DSGUNDOWN";
+}
+
+State {
+  ID = "DSGUNUP";
+  Sprite = "SHT2";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "DSGUNUP";
+}
+
+State {
+  ID = "DSGUN1";
+  Sprite = "SHT2";
+  Frame = 0;
+  Tics = 1;
+  Next state = "DSGUN2";
+}
+
+State {
+  ID = "DSGUN2";
+  Sprite = "SHT2";
+  Frame = 0;
+  Tics = 4;
+  Action = "A_FireShotgun2";
+  Next state = "DSGUN3";
+}
+
+State {
+  ID = "DSGUN3";
+  Sprite = "SHT2";
+  Frame = 1;
+  Tics = 7;
+  Next state = "DSGUN4";
+}
+
+State {
+  ID = "DSGUN4";
+  Sprite = "SHT2";
+  Frame = 1;
+  Tics = 5;
+  Action = "A_CheckReload";
+  Next state = "DSGUN5";
+}
+
+State {
+  ID = "DSGUN5";
+  Sprite = "SHT2";
+  Frame = 1;
+  Tics = 5;
+  Next state = "DSGUN6";
+}
+
+State {
+  ID = "DSGUN6";
+  Sprite = "SHT2";
+  Frame = 1;
+  Tics = 5;
+  Next state = "DSGUN7";
+}
+
+State {
+  ID = "DSGUN7";
+  Sprite = "SHT2";
+  Frame = 1;
+  Tics = 5;
+  Next state = "DSGUN8";
+}
+
+State {
+  ID = "DSGUN8";
+  Sprite = "SHT2";
+  Frame = 1;
+  Tics = 5;
+  Action = "A_OpenShotgun2";
+  Next state = "DSGUN9";
+}
+
+State {
+  ID = "DSGUN9";
+  Sprite = "SHT2";
+  Frame = 2;
+  Tics = 4;
+  Action = "A_LoadShotgun2";
+  Next state = "DSGUN10";
+}
+
+State {
+  ID = "DSGUN10";
+  Sprite = "SHT2";
+  Frame = 0;
+  Tics = 5;
+  Action = "A_ReFire";
+  Next state = "DSGUN";
+}
+
+State {
+  ID = "DSGUNFLASH1";
+  Sprite = "SHT2";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_Light1";
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "CHAIN";
+  Sprite = "CHGG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "CHAIN";
+}
+
+State {
+  ID = "CHAINDOWN";
+  Sprite = "CHGG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "CHAINDOWN";
+}
+
+State {
+  ID = "CHAINUP";
+  Sprite = "CHGG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "CHAINUP";
+}
+
+State {
+  ID = "CHAIN1";
+  Sprite = "CHGG";
+  Frame = 0;
+  Tics = 3;
+  Action = "A_FireCGun";
+  Next state = "CHAIN2";
+}
+
+State {
+  ID = "CHAIN2";
+  Sprite = "CHGG";
+  Frame = 1;
+  Tics = 3;
+  Action = "A_FireCGun";
+  Next state = "CHAIN3";
+}
+
+State {
+  ID = "CHAIN3";
+  Sprite = "CHGG";
+  Frame = 1;
+  Tics = 0;
+  Action = "A_ReFire";
+  Next state = "CHAIN";
+}
+
+State {
+  ID = "CHAINFLASH1";
+  Sprite = "CHGG";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 3;
+  Action = "A_Light1";
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "CHAINFLASH2";
+  Sprite = "CHGG";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 3;
+  Action = "A_Light2";
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "MISSILE";
+  Sprite = "ROCK";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "MISSILE";
+}
+
+State {
+  ID = "MISSILEDOWN";
+  Sprite = "ROCK";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "MISSILEDOWN";
+}
+
+State {
+  ID = "MISSILEUP";
+  Sprite = "ROCK";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "MISSILEUP";
+}
+
+State {
+  ID = "MISSILE1";
+  Sprite = "ROCK";
+  Frame = 1;
+  Tics = 8;
+  Action = "A_GunFlash";
+  Next state = "MISSILE2";
+}
+
+State {
+  ID = "MISSILE2";
+  Sprite = "ROCK";
+  Frame = 1;
+  Tics = 10;
+  Action = "A_FireMissile";
+  Next state = "MISSILE3";
+}
+
+State {
+  ID = "MISSILE3";
+  Sprite = "ROCK";
+  Frame = 1;
+  Tics = 0;
+  Action = "A_ReFire";
+  Next state = "MISSILE";
+}
+
+State {
+  ID = "MISSILEFLASH1";
+  Sprite = "ROCK";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 3;
+  Action = "A_Light1";
+  Next state = "MISSILEFLASH2";
+}
+
+State {
+  ID = "MISSILEFLASH2";
+  Sprite = "ROCK";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 4;
+  Next state = "MISSILEFLASH3";
+}
+
+State {
+  ID = "MISSILEFLASH3";
+  Sprite = "ROCK";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_Light2";
+  Next state = "MISSILEFLASH4";
+}
+
+State {
+  ID = "MISSILEFLASH4";
+  Sprite = "ROCK";
+  Frame = 5;
+  Flags = fullbright;
+  Tics = 4;
+  Action = "A_Light2";
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "PLASMA";
+  Sprite = "PLAS";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "PLASMA";
+}
+
+State {
+  ID = "PLASMADOWN";
+  Sprite = "PLAS";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "PLASMADOWN";
+}
+
+State {
+  ID = "PLASMAUP";
+  Sprite = "PLAS";
+  Frame = 0;
+  Tics = 0;
+  Action = "A_PlasmaShock";
+  Next state = "PLASMAUP2";
+}
+
+State {
+  ID = "PLASMAUP2";
+  Sprite = "PLAS";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "PLASMAUP2";
+}
+
+State {
+  ID = "PLASMA1";
+  Sprite = "PLAS";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 2;
+  Action = "A_FirePlasma";
+  Next state = "PLASMA2";
+}
+
+State {
+  ID = "PLASMA2";
+  Sprite = "PLAS";
+  Frame = 0;
+  Tics = 2;
+  Action = "A_PlasmaShock";
+  Next state = "PLASMA3";
+}
+
+State {
+  ID = "PLASMA3";
+  Sprite = "PLAS";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_ReFire";
+  Next state = "PLASMA";
+}
+
+State {
+  ID = "PLASMASHOCK1";
+  Sprite = "PLAS";
+  Frame = 1;
+  Tics = 2;
+  Next state = "PLASMASHOCK2";
+}
+
+State {
+  ID = "PLASMASHOCK2";
+  Sprite = "PLAS";
+  Frame = 2;
+  Tics = 2;
+  Next state = "PLASMASHOCK3";
+}
+
+State {
+  ID = "PLASMASHOCK3";
+  Sprite = "PLAS";
+  Frame = 3;
+  Tics = 2;
+  Next state = "PLASMASHOCK1";
+}
+
+State {
+  ID = "BFG";
+  Sprite = "BFGG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_WeaponReady";
+  Next state = "BFG";
+}
+
+State {
+  ID = "BFGDOWN";
+  Sprite = "BFGG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "BFGDOWN";
+}
+
+State {
+  ID = "BFGUP";
+  Sprite = "BFGG";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "BFGUP";
+}
+
+State {
+  ID = "BFG1";
+  Sprite = "BFGG";
+  Frame = 0;
+  Tics = 20;
+  Action = "A_BFGsound";
+  Next state = "BFG2";
+}
+
+State {
+  ID = "BFG2";
+  Sprite = "BFGG";
+  Frame = 1;
+  Tics = 10;
+  Action = "A_GunFlash";
+  Next state = "BFG3";
+}
+
+State {
+  ID = "BFG3";
+  Sprite = "BFGG";
+  Frame = 1;
+  Tics = 10;
+  Action = "A_FireBFG";
+  Next state = "BFG4";
+}
+
+State {
+  ID = "BFG4";
+  Sprite = "BFGG";
+  Frame = 1;
+  Tics = 20;
+  Action = "A_ReFire";
+  Next state = "BFG";
+}
+
+State {
+  ID = "BFGFLASH1";
+  Sprite = "BFGG";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 8;
+  Action = "A_Light1";
+  Next state = "BFGFLASH2";
+}
+
+State {
+  ID = "BFGFLASH2";
+  Sprite = "BFGG";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 5;
+  Action = "A_Light2";
+  Next state = "BFGFLASH3";
+}
+
+State {
+  ID = "BFGFLASH3";
+  Sprite = "BFGG";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 3;
+  Action = "A_Light2";
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "UNKF";
+  Sprite = "LASR";
+  Frame = 0;
+  Tics = 2;
+  Action = "A_WeaponReady";
+  Next state = "UNKF";
+}
+
+State {
+  ID = "UNKFDOWN";
+  Sprite = "LASR";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Lower";
+  Next state = "UNKFDOWN";
+}
+
+State {
+  ID = "UNKFUP";
+  Sprite = "LASR";
+  Frame = 0;
+  Tics = 1;
+  Action = "A_Raise";
+  Next state = "UNKFUP";
+}
+
+State {
+  ID = "UNKF1";
+  Sprite = "LASR";
+  Frame = 0;
+  Tics = 8;
+  Action = "A_FireSingleLaser";
+  Next state = "UNKF2";
+}
+
+State {
+  ID = "UNKF2";
+  Sprite = "LASR";
+  Frame = 0;
+  Tics = 3;
+  Action = "A_ReFire";
+  Next state = "UNKF";
+}
+
+State {
+  ID = "UNKFLASH1";
+  Sprite = "LASR";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 3;
+  Next state = "LIGHTDONE";
+}
+
+State {
+  ID = "COLU";
+  Sprite = "COLU";
+  Frame = 0;
+  Flags = fullbright;
   Tics = -1;
   Next state = "NULL";
 }
@@ -12301,24 +11941,6 @@ State {
   Frame = 0;
   Tics = -1;
   Next state = "NULL";
-}
-
-State {
-  ID = "CANDLESTIK";
-  Sprite = "CAND";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "CANDLESTIK2";
-}
-
-State {
-  ID = "CANDLESTIK2";
-  Sprite = "CAND";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "CANDLESTIK";
 }
 
 State {
@@ -13056,60 +12678,6 @@ State {
 }
 
 State {
-  ID = "RPUFF1";
-  Sprite = "SMOK";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "RPUFF2";
-}
-
-State {
-  ID = "RPUFF2";
-  Sprite = "SMOK";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "RPUFF3";
-}
-
-State {
-  ID = "RPUFF3";
-  Sprite = "SMOK";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "RPUFF4";
-}
-
-State {
-  ID = "RPUFF4";
-  Sprite = "SMOK";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "RPUFF5";
-}
-
-State {
-  ID = "RPUFF5";
-  Sprite = "SMOK";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "NULL";
-}
-
-State {
-  ID = "LGUN1";
-  Sprite = "LGUN";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
   ID = "LAZR1";
   Sprite = "LAZR";
   Frame = 0;
@@ -13229,222 +12797,6 @@ State {
 }
 
 State {
-  ID = "POW10";
-  Sprite = "POW1";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW11";
-}
-
-State {
-  ID = "POW11";
-  Sprite = "POW1";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW12";
-}
-
-State {
-  ID = "POW12";
-  Sprite = "POW1";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW13";
-}
-
-State {
-  ID = "POW13";
-  Sprite = "POW1";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW14";
-}
-
-State {
-  ID = "POW14";
-  Sprite = "POW1";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW15";
-}
-
-State {
-  ID = "POW15";
-  Sprite = "POW1";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW16";
-}
-
-State {
-  ID = "POW16";
-  Sprite = "POW1";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW17";
-}
-
-State {
-  ID = "POW17";
-  Sprite = "POW1";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW10";
-}
-
-State {
-  ID = "POW20";
-  Sprite = "POW2";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW21";
-}
-
-State {
-  ID = "POW21";
-  Sprite = "POW2";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW22";
-}
-
-State {
-  ID = "POW22";
-  Sprite = "POW2";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW23";
-}
-
-State {
-  ID = "POW23";
-  Sprite = "POW2";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW24";
-}
-
-State {
-  ID = "POW24";
-  Sprite = "POW2";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW25";
-}
-
-State {
-  ID = "POW25";
-  Sprite = "POW2";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW26";
-}
-
-State {
-  ID = "POW26";
-  Sprite = "POW2";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW27";
-}
-
-State {
-  ID = "POW27";
-  Sprite = "POW2";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW20";
-}
-
-State {
-  ID = "POW30";
-  Sprite = "POW3";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW31";
-}
-
-State {
-  ID = "POW31";
-  Sprite = "POW3";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW32";
-}
-
-State {
-  ID = "POW32";
-  Sprite = "POW3";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW33";
-}
-
-State {
-  ID = "POW33";
-  Sprite = "POW3";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW34";
-}
-
-State {
-  ID = "POW34";
-  Sprite = "POW3";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW35";
-}
-
-State {
-  ID = "POW35";
-  Sprite = "POW3";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW36";
-}
-
-State {
-  ID = "POW36";
-  Sprite = "POW3";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW37";
-}
-
-State {
-  ID = "POW37";
-  Sprite = "POW3";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "POW30";
-}
-
-State {
   ID = "LAZRW1";
   Sprite = "LAZR";
   Frame = 0;
@@ -13468,7 +12820,7 @@ State {
   Frame = 0;
   Flags = fullbright;
   Tics = 2;
-  Action = "A_BitchTracerPuff";
+  Action = "A_RectTracerPuff";
   Next state = "RTRACER2";
 }
 
@@ -13478,7 +12830,7 @@ State {
   Frame = 1;
   Flags = fullbright;
   Tics = 2;
-  Action = "A_BitchTracerPuff";
+  Action = "A_RectTracerPuff";
   Next state = "RTRACER1";
 }
 
@@ -13490,51 +12842,6 @@ State {
   Tics = 6;
   Action = "A_MotherBallExplode";
   Next state = "BRNRBALLX2";
-}
-
-State {
-  ID = "MPUFF1";
-  Sprite = "MPUF";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "MPUFF2";
-}
-
-State {
-  ID = "MPUFF2";
-  Sprite = "MPUF";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "MPUFF3";
-}
-
-State {
-  ID = "MPUFF3";
-  Sprite = "MPUF";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "MPUFF4";
-}
-
-State {
-  ID = "MPUFF4";
-  Sprite = "MPUF";
-  Frame = 3;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "MPUFF5";
-}
-
-State {
-  ID = "MPUFF5";
-  Sprite = "MPUF";
-  Frame = 4;
-  Flags = fullbright;
-  Tics = 2;
-  Next state = "NULL";
 }
 
 State {
@@ -13892,8 +13199,71 @@ State {
 }
 
 State {
+  ID = "IFOG";
+  Sprite = "IFOG";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "IFOG01";
+}
+
+State {
+  ID = "IFOG01";
+  Sprite = "IFOG";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "IFOG02";
+}
+
+State {
+  ID = "IFOG02";
+  Sprite = "IFOG";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "IFOG2";
+}
+
+State {
+  ID = "IFOG2";
+  Sprite = "IFOG";
+  Frame = 1;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "IFOG3";
+}
+
+State {
+  ID = "IFOG3";
+  Sprite = "IFOG";
+  Frame = 2;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "IFOG4";
+}
+
+State {
+  ID = "IFOG4";
+  Sprite = "IFOG";
+  Frame = 3;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "IFOG5";
+}
+
+State {
+  ID = "IFOG5";
+  Sprite = "IFOG";
+  Frame = 4;
+  Flags = fullbright;
+  Tics = 6;
+  Next state = "NULL";
+}
+
+State {
   ID = "SMALL_WHITE_LIGHT";
-  Sprite = "APBX";
+  Sprite = "APLS";
   Frame = 4;
   Tics = -1;
   Next state = "NULL";
