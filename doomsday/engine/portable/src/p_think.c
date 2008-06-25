@@ -115,7 +115,7 @@ boolean P_IterateThinkers(think_t type,
     thinker_t*          th, *next;
 
     th = thinkerCap.next;
-    while(th != &thinkerCap)
+    while(th != &thinkerCap && th)
     {
 #ifdef FAKE_MEMORY_ZONE
         assert(th->next != NULL);
