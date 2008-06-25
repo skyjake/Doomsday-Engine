@@ -68,19 +68,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum dirtype_s {
-    DI_EAST,
-    DI_NORTHEAST,
-    DI_NORTH,
-    DI_NORTHWEST,
-    DI_WEST,
-    DI_SOUTHWEST,
-    DI_SOUTH,
-    DI_SOUTHEAST,
-    DI_NODIR,
-    NUMDIRS
-} dirtype_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -215,7 +202,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
     if(actor->moveDir == DI_NODIR)
         return false;
 
-    if((unsigned) actor->moveDir >= 8)
+    if((unsigned) actor->moveDir >= DI_NODIR)
         Con_Error("Weird actor->moveDir!");
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][MX];
@@ -587,14 +574,66 @@ static boolean countMobjOfType(thinker_t* th, void* context)
 /**
  * kaiser - Used for special stuff. works only per monster!!!
  */
-void C_DECL A_BitchSpecial(mobj_t* mo)
+void C_DECL A_RectSpecial(mobj_t* actor)
 {
     countmobjoftypeparams_t params;
+    int                 sound;
+    mobj_t*             mo;
+    float               pos[3];
 
-    A_Fall(mo);
+    switch(actor->info->deathSound)
+    {
+    case 0:
+        return;
+
+    case SFX_PODTH1:
+    case SFX_PODTH2:
+    case SFX_PODTH3:
+        sound = SFX_PODTH1 + P_Random() % 3;
+        break;
+
+    case SFX_BGDTH1:
+    case SFX_BGDTH2:
+        sound = SFX_BGDTH1 + P_Random() % 2;
+        break;
+
+    default:
+        sound = actor->info->deathSound;
+        break;
+    }
+
+    // Check for bosses.
+    if(actor->type == MT_CYBORG || actor->type == MT_BITCH)
+    {
+        // Full volume.
+        S_StartSound(sound | DDSF_NO_ATTENUATION, NULL);
+        actor->reactionTime += 30;  // jd64
+    }
+    else
+        S_StartSound(sound, actor);
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += FIX2FLT((P_Random() - 128) << 11);
+    pos[VY] += FIX2FLT((P_Random() - 128) << 11);
+    pos[VZ] += actor->height / 2;
+
+    mo = P_SpawnMobj3fv(MT_KABOOM, pos);
+    if(mo)
+    {
+        S_StartSound(SFX_BAREXP, mo);
+        mo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
+        mo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
+        mo->target = actor;
+    }
+
+    actor->reactionTime--;
+    if(actor->reactionTime <= 0)
+    {
+        P_MobjChangeState(actor, actor->info->deathState + 2);
+    }
 
     // Check if there are no more Bitches left in the map.
-    params.type = mo->type;
+    params.type = actor->type;
     params.count = 0;
     P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
@@ -671,30 +710,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
     {
         linedef_t*          dummyLine = P_AllocDummyLine();
 
-        P_ToXLine(dummyLine)->tag = 4446;
-        EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
-        P_FreeDummyLine(dummyLine);
-    }
-}
-
-/**
- * kaiser - used for special stuff. works only per monster!!!
- */
-void C_DECL A_NtroSpecial(mobj_t* mo)
-{
-    countmobjoftypeparams_t params;
-
-    A_Fall(mo);
-
-    params.type = mo->type;
-    params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
-    {
-        linedef_t*          dummyLine = P_AllocDummyLine();
-
-        P_ToXLine(dummyLine)->tag = 4447;
+        P_ToXLine(dummyLine)->tag = (mo->type == MT_TROOP? 4446 : 4447);
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
@@ -977,6 +993,29 @@ void C_DECL A_Look(mobj_t *actor)
 }
 
 /**
+ * Used by the demo cyborg to select the camera as a target on spawn.
+ */
+void C_DECL A_TargetCamera(mobj_t* actor)
+{
+    int                 i;
+    player_t*           player;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player = &players[i];
+
+        if(!player->plr->inGame || !player->plr->mo)
+            continue;
+
+        actor->target = player->plr->mo;
+        return;
+    }
+
+    // Should never get here.
+    Con_Error("A_TargetCamera: Could not find suitable target!");
+}
+
+/**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
 void C_DECL A_Chase(mobj_t *actor)
@@ -1010,7 +1049,7 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // Turn towards movement direction if not there yet.
-    if(actor->moveDir < 8)
+    if(actor->moveDir < DI_NODIR)
     {
         actor->angle &= (7 << 29);
         delta = actor->angle - (actor->moveDir << 29);
@@ -1090,6 +1129,11 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 }
 
+void C_DECL A_RectChase(mobj_t* actor)
+{
+    A_Chase(actor);
+}
+
 void C_DECL A_FaceTarget(mobj_t *actor)
 {
     if(!actor->target)
@@ -1103,6 +1147,11 @@ void C_DECL A_FaceTarget(mobj_t *actor)
 
     if(actor->target->flags & MF_SHADOW)
         actor->angle += (P_Random() - P_Random()) << 21;
+}
+
+void C_DECL A_BspiFaceTarget(mobj_t* actor)
+{
+    A_FaceTarget(actor);
 }
 
 void C_DECL A_PosAttack(mobj_t *actor)
@@ -1145,6 +1194,11 @@ void C_DECL A_SPosAttack(mobj_t *actor)
 
         P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
     }
+}
+
+void C_DECL A_EMarineAttack2(mobj_t* actor)
+{
+    // STUB: What is this meant to do?
 }
 
 void C_DECL A_SpidRefire(mobj_t *actor)
@@ -1221,13 +1275,20 @@ void C_DECL A_BspiAttack(mobj_t *actor)
  */
 void C_DECL A_TroopAttack(mobj_t *actor)
 {
+    mobjtype_t          missileType;
+
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
 
     // Launch a missile.
-    P_SpawnMissile(MT_TROOPSHOT, actor, actor->target);
+    if(actor->type == MT_TROOP)
+        missileType = MT_TROOPSHOT;
+    else
+        missileType = MT_NTROSHOT;
+
+    P_SpawnMissile(missileType, actor, actor->target);
 }
 
 /**
@@ -1248,17 +1309,6 @@ void C_DECL A_TroopClaw(mobj_t *actor)
         P_DamageMobj(actor->target, actor, actor, damage);
         return;
     }
-}
-
-void C_DECL A_NtroopAttack(mobj_t *actor)
-{
-    if(!actor->target)
-        return;
-
-    A_FaceTarget(actor);
-
-    // Launch a missile.
-    P_SpawnMissile(MT_NTROSHOT, actor, actor->target);
 }
 
 /**
@@ -1393,7 +1443,7 @@ void C_DECL A_MotherBallExplode(mobj_t *spread)
 /**
  * d64tc: Spawns a smoke sprite during the missle attack.
  */
-void C_DECL A_BitchTracerPuff(mobj_t *smoke)
+void C_DECL A_RectTracerPuff(mobj_t *smoke)
 {
     if(!smoke)
         return;
@@ -1414,6 +1464,16 @@ void C_DECL A_SargAttack(mobj_t *actor)
         damage = ((P_Random() % 10) + 1) * 4;
         P_DamageMobj(actor->target, actor, actor, damage);
     }
+}
+
+void C_DECL A_ShadowsAction1(mobj_t* actor)
+{
+    // STUB: What is this meant to do?
+}
+
+void C_DECL A_ShadowsAction2(mobj_t* actor)
+{
+    // STUB: What is this meant to do?
 }
 
 void C_DECL A_HeadAttack(mobj_t *actor)
@@ -1468,6 +1528,7 @@ void C_DECL A_CyberAttack(mobj_t *actor)
 void C_DECL A_BruisAttack(mobj_t *actor)
 {
     int                 damage;
+    mobjtype_t          missileType;
 
     if(!actor->target)
         return;
@@ -1481,29 +1542,12 @@ void C_DECL A_BruisAttack(mobj_t *actor)
     }
 
     // Launch a missile.
-    P_SpawnMissile(MT_BRUISERSHOT, actor, actor->target);
-}
+    if(actor->type == MT_BRUISER)
+        missileType = MT_BRUISERSHOTRED;
+    else
+        missileType = MT_BRUISERSHOT;
 
-/**
- * d64tc Special Bruiser shot for Baron.
- */
-void C_DECL A_BruisredAttack(mobj_t *actor)
-{
-    int                 damage;
-
-    if(!actor->target)
-        return;
-
-    if(checkMeleeRange(actor))
-    {
-        S_StartSound(SFX_CLAW, actor);
-        damage = (P_Random() % 8 + 1) * 10;
-        P_DamageMobj(actor->target, actor, actor, damage);
-        return;
-    }
-
-    // Launch a missile.
-    P_SpawnMissile(MT_BRUISERSHOTRED, actor, actor->target);
+    P_SpawnMissile(missileType, actor, actor->target);
 }
 
 void C_DECL A_SkelMissile(mobj_t *actor)
@@ -1806,12 +1850,20 @@ void C_DECL A_PainAttack(mobj_t *actor)
     A_PainShootSkull(actor, actor->angle + ANG90);
 }
 
-void C_DECL A_PainDie(mobj_t *actor)
+void C_DECL A_PainDie(mobj_t* actor)
 {
+    angle_t                 an;
+
     A_Fall(actor);
-    A_PainShootSkull(actor, actor->angle + ANG90);
-    A_PainShootSkull(actor, actor->angle + ANG180);
-    A_PainShootSkull(actor, actor->angle + ANG270);
+
+    switch(P_Random() % 3)
+    {
+    case 0: an = ANG90; break;
+    case 1: an = ANG180; break;
+    case 2: an = ANG270; break;
+    }
+
+    A_PainShootSkull(actor, actor->angle + an);
 }
 
 /**
@@ -1855,6 +1907,20 @@ void C_DECL A_Scream(mobj_t *actor)
 {
     int                 sound;
 
+    if(actor->player)
+    {
+        sound = SFX_PLDETH; // Default death sound.
+
+        if(actor->health < -50)
+        {
+            // If the player dies less with less than -50% without gibbing.
+            sound = SFX_PDIEHI;
+        }
+
+        S_StartSound(sound, actor);
+        return;
+    }
+
     switch(actor->info->deathSound)
     {
     case 0:
@@ -1877,7 +1943,7 @@ void C_DECL A_Scream(mobj_t *actor)
     }
 
     // Check for bosses.
-    if(actor->type == MT_CYBORG || actor->type == MT_BITCH)
+    if(actor->type == MT_BITCH)
     {
         // Full volume.
         S_StartSound(sound | DDSF_NO_ATTENUATION, NULL);
@@ -1890,10 +1956,13 @@ void C_DECL A_Scream(mobj_t *actor)
 /**
  * d64tc
  */
-void C_DECL A_BossExplode(mobj_t *actor)
+void C_DECL A_CyberDeath(mobj_t *actor)
 {
+    int                 i;
     mobj_t             *mo;
     float               pos[3];
+    linedef_t*          dummyLine;
+    countmobjoftypeparams_t params;
 
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += FIX2FLT((P_Random() - 128) << 11);
@@ -1913,6 +1982,47 @@ void C_DECL A_BossExplode(mobj_t *actor)
     if(actor->reactionTime <= 0)
     {
         P_MobjChangeState(actor, actor->info->deathState + 2);
+    }
+
+    S_StartSound(actor->info->deathSound | DDSF_NO_ATTENUATION, NULL);
+
+    // Has the boss already been killed?
+    if(bossKilled)
+        return;
+
+    if((gameMap != 32) && (gameMap != 33) && (gameMap != 35))
+        return;
+
+    // Make sure there is a player alive for victory.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame && players[i].health > 0)
+            break;
+
+    if(i == MAXPLAYERS)
+        return; // No one left alive, so do not end game.
+
+    // Scan the remaining thinkers to see if all bosses are dead.
+    params.type = mo->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+
+    if(params.count)
+    {   // Other boss not dead.
+        return;
+    }
+
+    if(gameMap == 32 || gameMap == 33)
+    {
+        dummyLine = P_AllocDummyLine();
+        P_ToXLine(dummyLine)->tag = 666;
+        EV_DoDoor(dummyLine, DT_BLAZERAISE);
+
+        P_FreeDummyLine(dummyLine);
+        return;
+    }
+    else if(gameMap == 35)
+    {
+        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
     }
 }
 
@@ -1960,6 +2070,50 @@ void C_DECL A_Explode(mobj_t *mo)
     P_RadiusAttack(mo, mo->target, 128, 127);
 }
 
+void C_DECL A_BarrelExplode(mobj_t* actor)
+{
+    int                 i;
+    linedef_t*          dummyLine;
+    countmobjoftypeparams_t params;
+
+    S_StartSound(actor->info->deathSound, actor);
+    P_RadiusAttack(actor, actor->target, 128, 127);
+
+    // Has the boss already been killed?
+    if(bossKilled)
+        return;
+
+    if(gameMap != 1)
+        return;
+
+    if(actor->type != MT_BARREL)
+        return;
+
+    // Make sure there is a player alive for victory.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame && players[i].health > 0)
+            break;
+
+    if(i == MAXPLAYERS)
+        return; // No one left alive, so do not end game.
+
+    // Scan the remaining thinkers to see if all bosses are dead.
+    params.type = actor->type;
+    params.count = 0;
+    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+
+    if(params.count)
+    {   // Other boss not dead.
+        return;
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_ToXLine(dummyLine)->tag = 666;
+    EV_DoDoor(dummyLine, DT_BLAZERAISE);
+
+    P_FreeDummyLine(dummyLine);
+}
+
 /**
  * Possibly trigger special effects if on first boss level
  *
@@ -1969,19 +2123,16 @@ void C_DECL A_Explode(mobj_t *mo)
 void C_DECL A_BossDeath(mobj_t* mo)
 {
     int                 i;
-    linedef_t*          dummyLine;
     countmobjoftypeparams_t params;
 
     // Has the boss already been killed?
     if(bossKilled)
         return;
 
-    if((gameMap != 1) && (gameMap != 30) && (gameMap != 32) &&
-       (gameMap != 33) && (gameMap != 35))
+    if(gameMap != 30)
         return;
 
-    if((mo->type != MT_BITCH) && (mo->type != MT_CYBORG) &&
-       (mo->type != MT_BARREL) && (mo->type != MT_FATSO))
+    if(mo->type != MT_BITCH)
         return;
 
     // Make sure there is a player alive for victory.
@@ -2002,49 +2153,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return;
     }
 
-    if(gameMap == 1)
-    {
-        if(mo->type == MT_BARREL)
-        {
-            dummyLine = P_AllocDummyLine();
-            P_ToXLine(dummyLine)->tag = 666;
-            EV_DoDoor(dummyLine, DT_BLAZERAISE);
-
-            P_FreeDummyLine(dummyLine);
-            return;
-        }
-    }
-    else if(gameMap == 30)
-    {
-        if(mo->type == MT_BITCH)
-        {
-            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
-        }
-    }
-    else if(gameMap == 32 || gameMap == 33)
-    {
-        if(mo->type == MT_CYBORG)
-        {
-            dummyLine = P_AllocDummyLine();
-            P_ToXLine(dummyLine)->tag = 666;
-            EV_DoDoor(dummyLine, DT_BLAZERAISE);
-
-            P_FreeDummyLine(dummyLine);
-            return;
-        }
-
-        if(mo->type == MT_FATSO)
-        {
-            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
-        }
-    }
-    else if(gameMap == 35)
-    {
-        if(mo->type == MT_CYBORG)
-        {
-            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
-        }
-    }
+    G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -2075,17 +2184,4 @@ void C_DECL A_BabyMetal(mobj_t *mo)
 {
     S_StartSound(SFX_BSPWLK, mo);
     A_Chase(mo);
-}
-
-void C_DECL A_PlayerScream(mobj_t *mo)
-{
-    int                 sound = SFX_PLDETH; // Default death sound.
-
-    if((gameMode == commercial) && (mo->health < -50))
-    {
-        // If the player dies less with less than -50% without gibbing.
-        sound = SFX_PDIEHI;
-    }
-
-    S_StartSound(sound, mo);
 }
