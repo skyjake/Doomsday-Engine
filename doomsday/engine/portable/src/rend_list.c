@@ -391,15 +391,15 @@ void RL_SelectTexCoordArray(int unit, int index)
     DGL_Arrays(NULL, NULL, numTexUnits, coords, 0);
 }
 
-void RL_Bind(DGLuint texture)
+void RL_Bind(DGLuint texture, int magMode)
 {
-    DGL_Bind(renderTextures ? texture : 0);
+    GL_BindTexture(renderTextures ? texture : 0, magMode);
 }
 
-void RL_BindTo(int unit, DGLuint texture)
+void RL_BindTo(int unit, DGLuint texture, int magMode)
 {
     DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
-    DGL_Bind(renderTextures ? texture : 0);
+    GL_BindTexture(renderTextures ? texture : 0, magMode);
 }
 
 static void clearHash(listhash_t* hash)
@@ -631,7 +631,8 @@ static rendlist_t* getListFor(const rendpoly_params_t* params,
     for(dest = hash->first; dest; dest = dest->next)
     {
         if(dest->tex.id == params->tex.id &&
-           dest->tex.detail == params->tex.detail)
+           dest->tex.detail == params->tex.detail &&
+           dest->tex.magMode == params->tex.magMode)
         {
             if(!params->interTex.id && !dest->interTex.id)
             {
@@ -648,6 +649,7 @@ static rendlist_t* getListFor(const rendpoly_params_t* params,
 
             // Possibly an exact match?
             if(params->interTex.id == dest->interTex.id &&
+               params->interTex.magMode == dest->interTex.magMode &&
                params->interPos == dest->interPos &&
                params->interTex.detail == dest->interTex.detail)
             {
@@ -674,6 +676,7 @@ static rendlist_t* getListFor(const rendpoly_params_t* params,
     dest->tex.width = params->tex.width;
     dest->tex.height = params->tex.height;
     dest->tex.detail = params->tex.detail;
+    dest->tex.magMode = params->tex.magMode;
 
     if(params->interTex.id)
     {
@@ -1743,7 +1746,7 @@ static void drawPrimitives(int conditions, rendlist_t *list)
             {   // Use the correct texture and color for the light.
                 DGL_SetInteger(DGL_ACTIVE_TEXTURE,
                               conditions & DCF_SET_LIGHT_ENV0 ? 0 : 1);
-                RL_Bind(hdr->modTex);
+                RL_Bind(hdr->modTex, DGL_LINEAR);
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
                 // Make sure the light is not repeated.
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
@@ -1799,8 +1802,8 @@ if(numTexUnits < 2)
 
     RL_SelectTexUnits(2);
 
-    RL_BindTo(0, list->tex.id);
-    RL_BindTo(1, list->interTex.id);
+    RL_BindTo(0, list->tex.id, list->tex.magMode);
+    RL_BindTo(1, list->interTex.id, list->interTex.magMode);
 
     DGL_SetInteger(DGL_MODULATE_TEXTURE, modMode);
     setEnvAlpha(list->interPos);
@@ -1843,18 +1846,18 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         {
             // Normal modulation.
             RL_SelectTexUnits(1);
-            RL_Bind(list->tex.id);
+            RL_Bind(list->tex.id, list->tex.magMode);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         }
         return 0;
 
     case LM_LIGHT_MOD_TEXTURE:
         // Modulate sector light, dynamic light and regular texture.
-        RL_BindTo(1, list->tex.id);
+        RL_BindTo(1, list->tex.id, list->tex.magMode);
         return DCF_SET_LIGHT_ENV0 | DCF_JUST_ONE_LIGHT | DCF_NO_BLEND;
 
     case LM_TEXTURE_PLUS_LIGHT:
-        RL_BindTo(0, list->tex.id);
+        RL_BindTo(0, list->tex.id, list->tex.magMode);
         return DCF_SET_LIGHT_ENV1 | DCF_NO_BLEND;
 
     case LM_FIRST_LIGHT:
@@ -1881,7 +1884,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_LIGHTS:
         // The light lists only contain dynlight primitives.
-        RL_Bind(list->tex.id);
+        RL_Bind(list->tex.id, list->tex.magMode);
         // Make sure the texture is not repeated.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
 			            GL_CLAMP_TO_EDGE);
@@ -1907,7 +1910,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         }
         // No modulation at all.
         RL_SelectTexUnits(1);
-        RL_Bind(list->tex.id);
+        RL_Bind(list->tex.id, list->tex.magMode);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
         return (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
 
@@ -1919,21 +1922,21 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         {
             RL_SelectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
-            RL_BindTo(0, list->tex.id);
-            RL_BindTo(1, list->tex.detail->tex);
+            RL_BindTo(0, list->tex.id, list->tex.magMode);
+            RL_BindTo(1, list->tex.detail->tex, list->tex.magMode);
         }
         else
         {
             RL_SelectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
-            RL_Bind(list->tex.id);
+            RL_Bind(list->tex.id, list->tex.magMode);
         }
         return 0;
 
     case LM_ALL_DETAILS:
         if(!list->tex.detail)
             break;
-        RL_Bind(list->tex.detail->tex);
+        RL_Bind(list->tex.detail->tex, list->tex.magMode);
         // Render all surfaces on the list.
         return 0;
 
@@ -1945,15 +1948,15 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         {
             RL_SelectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 8);
-            RL_BindTo(0, list->tex.id);
-            RL_BindTo(1, list->tex.detail->tex);
+            RL_BindTo(0, list->tex.id, list->tex.magMode);
+            RL_BindTo(1, list->tex.detail->tex, list->tex.magMode);
         }
         else
         {
             // Normal modulation.
             RL_SelectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
-            RL_Bind(list->tex.id);
+            RL_Bind(list->tex.id, list->tex.magMode);
         }
         return 0;
 
@@ -1964,14 +1967,14 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         if(!list->tex.detail || !list->interTex.detail)
             break;
 
-        RL_BindTo(0, list->tex.detail->tex);
-        RL_BindTo(1, list->interTex.detail->tex);
+        RL_BindTo(0, list->tex.detail->tex, list->tex.magMode);
+        RL_BindTo(1, list->interTex.detail->tex, list->tex.magMode);
         setEnvAlpha(list->interPos);
         return 0;
 
     case LM_SHADOW:
         // Render all primitives.
-        RL_Bind(list->tex.id);
+        RL_Bind(list->tex.id, list->tex.magMode);
         if(!list->tex.id)
         {
             // Apply a modelview shift.
@@ -1987,7 +1990,7 @@ static int setupListState(listmode_t mode, rendlist_t *list)
 
     case LM_MASKED_SHINY:
         // The intertex holds the info for the mask texture.
-        RL_BindTo(1, list->interTex.id);
+        RL_BindTo(1, list->interTex.id, list->tex.magMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
 			            GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
@@ -1995,7 +1998,8 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         setEnvAlpha(1.0f);
     case LM_ALL_SHINY:
     case LM_SHINY:
-        RL_BindTo(mode == LM_MASKED_SHINY ? 0 : 0, list->tex.id);
+        RL_BindTo(mode == LM_MASKED_SHINY ? 0 : 0, list->tex.id,
+                  list->tex.magMode);
         // Make sure the texture is not clamped.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
 			            GL_REPEAT);

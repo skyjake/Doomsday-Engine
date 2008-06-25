@@ -53,8 +53,8 @@ void            RL_AddPoly(const rvertex_t* vertices, const rcolor_t* colors,
 void            RL_RenderAllLists(void);
 
 void            RL_SelectTexUnits(int count);
-void            RL_Bind(DGLuint texture);
-void            RL_BindTo(int unit, DGLuint texture);
+void            RL_Bind(DGLuint texture, int magMode);
+void            RL_BindTo(int unit, DGLuint texture, int magMode);
 void            RL_FloatRGB(byte* rgb, float* dest);
 
 #endif
