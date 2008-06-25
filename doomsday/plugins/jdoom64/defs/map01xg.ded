@@ -198,26 +198,25 @@ Ip11 = 2737;
 Ip12 = 2738;
 Ip13 = 2739;
 Ip14 = 2740;
-Fp1 = 0.1;
-Fp2 = 0.1;
-Fp3 = 0.1;
-Fp4 = 0.1;
-Fp5 = 0.1;
-Fp6 = 0.1;
-Fp7 = 0.1;
-Fp8 = 0.1;
-Fp9 = 0.1;
-Fp10 = 0.1;
-Fp11 = 0.1;
-Fp12 = 0.1;
-Fp13 = 0.1;
-Fp14 = 0.1;
+Fp1 = 0.0357;
+Fp2 = 0.0357;
+Fp3 = 0.0357;
+Fp4 = 0.0357;
+Fp5 = 0.0357;
+Fp6 = 0.0357;
+Fp7 = 0.0357;
+Fp8 = 0.0357;
+Fp9 = 0.0357;
+Fp10 = 0.0357;
+Fp11 = 0.0357;
+Fp12 = 0.0357;
+Fp13 = 0.0357;
+Fp14 = 0.0357;
 }
 
 Line Type {
 ID = 2727;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -231,7 +230,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2728;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -245,7 +243,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2729;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -259,7 +256,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2730;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -273,7 +269,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2731;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -287,7 +282,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2732;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -301,7 +295,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2733;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -315,7 +308,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2734;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -329,7 +321,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2735;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -343,7 +334,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2736;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -357,7 +347,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2737;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -371,7 +360,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2738;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -385,7 +373,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2739;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -399,7 +386,6 @@ Ip2 = 8999;
 Line Type {
 ID = 2740;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -435,26 +421,25 @@ Ip11 = 2751;
 Ip12 = 2752;
 Ip13 = 2753;
 Ip14 = 2754;
-Fp1 = 0.1;
-Fp2 = 0.1;
-Fp3 = 0.1;
-Fp4 = 0.1;
-Fp5 = 0.1;
-Fp6 = 0.1;
-Fp7 = 0.1;
-Fp8 = 0.1;
-Fp9 = 0.1;
-Fp10 = 0.1;
-Fp11 = 0.1;
-Fp12 = 0.1;
-Fp13 = 0.1;
-Fp14 = 0.1;
+Fp1 = 0.5714;
+Fp2 = 0.5714;
+Fp3 = 0.5714;
+Fp4 = 0.5714;
+Fp5 = 0.5714;
+Fp6 = 0.5714;
+Fp7 = 0.5714;
+Fp8 = 0.5714;
+Fp9 = 0.5714;
+Fp10 = 0.5714;
+Fp11 = 0.5714;
+Fp12 = 0.5714;
+Fp13 = 0.5714;
+Fp14 = 0.5714;
 }
 
 Line Type {
 ID = 2742;
-Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
+Comment = "map01swinglightspecial";;
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -468,7 +453,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2743;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -482,7 +466,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2744;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -496,7 +479,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2745;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -510,7 +492,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2746;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -524,7 +505,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2747;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -538,7 +518,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2748;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -552,7 +531,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2749;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -566,7 +544,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2750;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -580,7 +557,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2751;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -594,7 +570,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2752;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -608,7 +583,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2753;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -622,7 +596,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2754;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
@@ -636,7 +609,6 @@ Ip2 = 10137;
 Line Type {
 ID = 2755;
 Comment = "map01swinglightspecial";
-Flags = "ltf_player_cross";
 Flags2 = "ltf2_when_act ltf2_any";
 Class = "ltc_sector_type";
 Type = "lat_flip_timed_off";
