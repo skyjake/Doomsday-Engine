@@ -218,16 +218,14 @@ void P_ControlShutdown(void)
         {
             M_Free(playerControls[i].name);
             M_Free(playerControls[i].bindClassName);
-        M_Free(controlCounts[i]);
+            M_Free(controlCounts[i]);
         }
         playerControlCount = 0;
         M_Free(playerControls);
     }
     playerControls = 0;
-
-    if(impulseCounts)
-        M_Free(impulseCounts);
-    impulseCounts = 0;
+    M_Free(controlCounts);
+    controlCounts = 0;
 }
 
 /**
@@ -300,7 +298,6 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
 {
     float tmp;
-    int localPlayerNum;
     struct bclass_s* bc = 0;
     struct dbinding_s* binds = 0;
 
