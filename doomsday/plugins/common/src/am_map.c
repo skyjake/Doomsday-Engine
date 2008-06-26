@@ -2506,16 +2506,17 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
     }
 }
 
-int renderWallSeg(seg_t *seg, void *data)
+int renderWallSeg(void* obj, void* data)
 {
-    ssecitervars_t *vars = (ssecitervars_t*) data;
-    float       v1[2], v2[2];
-    linedef_t     *line;
-    xline_t    *xLine;
-    sector_t   *frontSector, *backSector;
-    mapobjectinfo_t *info;
-    player_t   *plr = vars->plr;
-    automap_t  *map = vars->map;
+    seg_t*          seg = (seg_t*) obj;
+    ssecitervars_t* vars = (ssecitervars_t*) data;
+    float           v1[2], v2[2];
+    linedef_t*      line;
+    xline_t*        xLine;
+    sector_t*       frontSector, *backSector;
+    mapobjectinfo_t* info;
+    player_t*       plr = vars->plr;
+    automap_t*      map = vars->map;
 
     line = P_GetPtrp(seg, DMU_LINEDEF);
     if(!line)

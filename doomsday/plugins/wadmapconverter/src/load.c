@@ -488,7 +488,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
             lineList[PolyLineCount] = 0; // Terminate.
 
             seqType = line->xArgs[2];
-            if(seqType < 0 || seqType >= SEQTYPE_NUMSEQ)
+            if(seqType >= SEQTYPE_NUMSEQ)
                 seqType = 0;
 
             if(createPolyobj(lineList, PolyLineCount, &poIdx, tag,
@@ -831,7 +831,6 @@ static boolean loadLinedefs(const byte *buf, size_t len)
                 l->sides[RIGHT] = 0;
             else
                 l->sides[RIGHT] = idx + 1;
-            idx = (short) (ptr+12);
             idx = USHORT(*((const uint16_t*) (ptr+12)));
             if(idx == 0xFFFF)
                 l->sides[LEFT] = 0;

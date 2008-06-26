@@ -745,7 +745,7 @@ static menu_t SkillDef = {
     LINEHEIGHT,
     0, 4
 };
-#else __JDOOM__
+#else
 static menuitem_t SkillItems[] = {
     // Text defs TXT_SKILL1..5.
     {ITT_EFUNC, 0, "I", M_ChooseSkill, 0, &skillModeNames[0]},

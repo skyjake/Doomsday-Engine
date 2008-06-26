@@ -62,7 +62,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int getPolyobjMirror(uint polyNum);
-static void thrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t *po);
+static void thrustMobj(struct mobj_s* mo, void* segp, void* pop);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -571,8 +571,10 @@ static int getPolyobjMirror(uint poly)
     return 0;
 }
 
-static void thrustMobj(mobj_t* mobj, seg_t* seg, polyobj_t* po)
+static void thrustMobj(struct mobj_s* mo, void* segp, void* pop)
 {
+    seg_t*              seg = (seg_t*) segp;
+    polyobj_t*          po = (polyobj_t*) pop;
     uint                thrustAn;
     float               thrustX, thrustY, force;
     polyevent_t*        pe;
@@ -581,10 +583,10 @@ static void thrustMobj(mobj_t* mobj, seg_t* seg, polyobj_t* po)
     if(IS_CLIENT)
         return;
 
-    if(P_IsCamera(mobj)) // Cameras don't interact with polyobjs.
+    if(P_IsCamera(mo)) // Cameras don't interact with polyobjs.
         return;
 
-    if(!(mobj->flags & MF_SHOOTABLE) && !mobj->player)
+    if(!(mo->flags & MF_SHOOTABLE) && !mo->player)
         return;
 
     thrustAn =
@@ -618,15 +620,15 @@ static void thrustMobj(mobj_t* mobj, seg_t* seg, polyobj_t* po)
 
     thrustX = force * FIX2FLT(finecosine[thrustAn]);
     thrustY = force * FIX2FLT(finesine[thrustAn]);
-    mobj->mom[MX] += thrustX;
-    mobj->mom[MY] += thrustY;
+    mo->mom[MX] += thrustX;
+    mo->mom[MY] += thrustY;
 
     if(po->crush)
     {
-        if(!P_CheckPosition2f(mobj, mobj->pos[VX] + thrustX,
-                              mobj->pos[VY] + thrustY))
+        if(!P_CheckPosition2f(mo, mo->pos[VX] + thrustX,
+                              mo->pos[VY] + thrustY))
         {
-            P_DamageMobj(mobj, NULL, NULL, 3);
+            P_DamageMobj(mo, NULL, NULL, 3);
         }
     }
 }

@@ -1009,7 +1009,7 @@ void C_DECL A_BatMove(mobj_t *actor)
 
     // Handle Z movement
     actor->pos[VZ] =
-        actor->target->pos[VZ] + 2 * FLOATBOBOFFSET(actor->args[0]);
+        actor->target->pos[VZ] + 2 * FLOATBOBOFFSET((int) actor->args[0]);
     actor->args[0] = (actor->args[0] + 3) & 63;
 }
 
