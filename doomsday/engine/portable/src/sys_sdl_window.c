@@ -196,6 +196,31 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     setConWindowCmdLine(1, NULL, 0, 0);
 }
 
+/**
+ * Set the command line display of the specified console window.
+ *
+ * @param idx           Console window identifier.
+ * @param text          Text string to copy.
+ * @param cursorPos     Position to set the cursor on the command line.
+ * @param flags         CLF_* flags control the appearance of the
+ *                      command line.
+ */
+void Sys_SetConWindowCmdLine(uint idx, const char *text, uint cursorPos,
+                             int flags)
+{
+    ddwindow_t     *win;
+
+    if(!winManagerInited)
+        return;
+
+    win = getWindow(idx - 1);
+
+    if(!win || win->type != WT_CONSOLE)
+        return;
+
+    setConWindowCmdLine(win, text, cursorPos, flags);
+}
+
 static void setConWindowCmdLine(uint idx, const char *text,
                                 unsigned int cursorPos, int flags)
 {
