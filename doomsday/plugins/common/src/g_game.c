@@ -535,6 +535,32 @@ gamestate_t G_GetGameState(void)
     return gameState;
 }
 
+#if _DEBUG
+static const char* getGameStateStr(gamestate_t state)
+{
+    struct statename_s {
+        gamestate_t     state;
+        const char*     name;
+    } stateNames[] =
+    {
+        {GS_LEVEL, "GS_LEVEL"},
+        {GS_INTERMISSION, "GS_INTERMISSION"},
+        {GS_FINALE, "GS_FINALE"},
+        {GS_DEMOSCREEN, "GS_DEMOSCREEN"},
+        {GS_WAITING, "GS_WAITING"},
+        {GS_INFINE, "GS_INFINE"},
+        {-1, NULL}
+    };
+    uint                i;
+
+    for(i = 0; stateNames[i].name; ++i)
+        if(stateNames[i].state == state)
+            return stateNames[i].name;
+
+    return NULL;
+}
+#endif
+
 /**
  * Change the game's state.
  *
@@ -542,6 +568,15 @@ gamestate_t G_GetGameState(void)
  */
 void G_ChangeGameState(gamestate_t state)
 {
+    if(state < 0 || state >= NUM_GAME_STATES)
+        Con_Error("G_ChangeGameState: Invalid state %i.\n", (int) state);
+
+#if _DEBUG
+    // Log gamestate changes in debug builds, with verbose.
+    VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
+                        getGameStateStr(state)));
+#endif
+
     gameState = state;
 }
 
