@@ -50,7 +50,7 @@ typedef struct {
     int         volumeMul;
     int         decayMul;
     int         dampingMul;
-} materialinfo_t;
+} materialenvinfo_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -64,7 +64,7 @@ typedef struct {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static materialinfo_t matInfo[NUM_MATERIAL_CLASSES] = {
+static materialenvinfo_t matInfo[NUM_MATERIAL_CLASSES] = {
     {"Metal",     255,     255,    25},
     {"Rock",      200,     160,    100},
     {"Wood",      80,      50,     200},
@@ -295,20 +295,7 @@ static boolean calcSSecReverb(subsector_t *ssec)
             // The texture of the seg determines its type.
             if(mat->ofTypeID >= 0)
             {
-                switch(mat->type)
-                {
-                case MAT_FLAT:
-                    mclass = flats[mat->ofTypeID]->materialClass;
-                    break;
-
-                case MAT_TEXTURE:
-                    mclass = textures[mat->ofTypeID]->materialClass;
-                    break;
-
-                default:
-                    mclass = MATCLASS_UNKNOWN;
-                    break;
-                }
+                mclass = mat->envClass;
             }
             else
             {
