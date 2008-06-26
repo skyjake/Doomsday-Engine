@@ -681,10 +681,9 @@ void FI_End(void)
         {
             // Enter the level, this was a briefing.
             G_ChangeGameState(GS_LEVEL);
+            S_LevelMusic();
             levelStartTic = GAMETIC;
             levelTime = actualLevelTime = 0;
-            // Restart the current map's song.
-            S_LevelMusic();
         }
         else if(oldMode == FIMODE_LOCAL)
         {

@@ -610,7 +610,6 @@ void G_DoLoadLevel(void)
 #endif
 
     levelStartTic = GAMETIC; // Fr time calculation.
-    G_ChangeGameState(GS_LEVEL);
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
@@ -688,7 +687,11 @@ void G_DoLoadLevel(void)
     }
 
     // Start a briefing, if there is one.
-    FI_Briefing(gameEpisode, gameMap);
+    if(!FI_Briefing(gameEpisode, gameMap))
+    {   // No briefing, start the level.
+        G_ChangeGameState(GS_LEVEL);
+        S_LevelMusic();
+    }
 }
 
 /**
@@ -1815,7 +1818,6 @@ void G_WorldDone(void)
 
 void G_DoWorldDone(void)
 {
-    G_ChangeGameState(GS_LEVEL);
 #if __JDOOM__ || __JDOOM64__
     gameMap = wmInfo.next + 1;
 #endif

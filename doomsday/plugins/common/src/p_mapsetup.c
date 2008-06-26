@@ -444,7 +444,6 @@ int P_SetupLevelWorker(void *ptr)
         R_PrecachePSprites();
     }
 
-    S_LevelMusic();
     P_FinalizeLevel();
 
     // Someone may want to do something special now that the level has been
