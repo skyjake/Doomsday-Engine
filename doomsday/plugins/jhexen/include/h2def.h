@@ -178,7 +178,8 @@ typedef enum {
     GS_FINALE,
     GS_DEMOSCREEN,
     GS_WAITING,
-    GS_INFINE
+    GS_INFINE,
+    NUM_GAME_STATES
 } gamestate_t;
 
 /**
