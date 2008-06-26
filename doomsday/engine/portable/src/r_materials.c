@@ -54,8 +54,8 @@ extern boolean levelSetup;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint    numMaterials;
-material_t **materials;
+uint numMaterials;
+material_t** materials;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -102,11 +102,11 @@ void R_MarkMaterialsForUpdating(void)
         materials[i]->flags |= MATF_CHANGED;
 }
 
-material_t *R_MaterialCreate(const char *name, int ofTypeID,
+material_t* R_MaterialCreate(const char* name, int ofTypeID,
                              materialtype_t type)
 {
     uint                i;
-    material_t         *mat;
+    material_t*         mat;
 
     if(!name)
         return NULL;
@@ -126,16 +126,25 @@ material_t *R_MaterialCreate(const char *name, int ofTypeID,
             mat->decoration = NULL;
             mat->ptcGen = NULL;
             mat->reflection = NULL;
+
+            if(mat->dgl.tex)
+            {
+                DGL_DeleteTextures(1, &mat->dgl.tex);
+                mat->dgl.tex = 0;
+            }
+            mat->envClass = S_MaterialClassForName(mat->name, mat->type);
+
             return mat; // Yep, return it.
         }
     }
 
     // A new material.
     mat = Z_Calloc(sizeof(*mat), PU_STATIC, 0);
-    strncpy(mat->name, name, sizeof(mat->name));
+    strncpy(mat->name, name, 8);
     mat->name[8] = '\0';
     mat->ofTypeID = ofTypeID;
     mat->type = type;
+    mat->envClass = S_MaterialClassForName(mat->name, mat->type);
     mat->current = mat->next = mat;
 
     /**
@@ -162,8 +171,7 @@ material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
 
         if(type == mat->type && mat->ofTypeID == ofTypeID)
         {
-            if((type == MAT_FLAT && (flats[mat->ofTypeID]->flags & TXF_NO_DRAW)) ||
-               (type == MAT_TEXTURE && (textures[mat->ofTypeID]->flags & TXF_NO_DRAW)))
+            if(mat->flags & MATF_NO_DRAW)
                return NULL;
 
             return mat;
@@ -176,57 +184,75 @@ material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
 /**
  * Deletes a texture (not for rawlumptexs' etc.).
  */
-void R_DeleteMaterialTex(int ofTypeID, materialtype_t type)
+void R_DeleteMaterialTex(material_t* mat)
 {
-    switch(type)
+    if(mat->dgl.tex)
+    {
+        DGL_DeleteTextures(1, &mat->dgl.tex);
+        mat->dgl.tex = 0;
+    }
+}
+
+/**
+ * Deletes all GL textures of materials which match the specified type.
+ *
+ * @param type          The type of material.
+ */
+void R_DeleteMaterialTextures(materialtype_t type)
+{
+    uint                i;
+
+    for(i = 0; i < numMaterials; ++i)
+        if(materials[i]->type == type)
+            R_DeleteMaterialTex(materials[i]);
+}
+
+void R_SetMaterialMinMode(int minMode)
+{
+    uint                i;
+
+    // Materials: Textures, flats and sprites.
+    for(i = 0; i < numMaterials; ++i)
+    {
+        material_t*         mat = materials[i];
+
+        if(mat->type == MAT_TEXTURE || mat->type == MAT_FLAT ||
+           mat->type == MAT_SPRITE)
+        {
+            if(mat->dgl.tex) // Is the texture loaded?
+            {
+                DGL_Bind(mat->dgl.tex);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+            }
+        }
+    }
+}
+
+static boolean isCustomMaterial(material_t* mat)
+{
+    switch(mat->type)
     {
     case MAT_TEXTURE:
-        if(ofTypeID < 0 || ofTypeID >= numTextures)
-            return;
-
-        if(textures[ofTypeID]->tex)
-        {
-            DGL_DeleteTextures(1, &textures[ofTypeID]->tex);
-            textures[ofTypeID]->tex = 0;
-        }
+        if(!R_TextureIsFromIWAD(mat->ofTypeID))
+            return true;
         break;
 
     case MAT_FLAT:
-        if(ofTypeID < 0 || ofTypeID >= numFlats)
-            return;
-
-        if(flats[ofTypeID]->tex)
-        {
-            DGL_DeleteTextures(1, &flats[ofTypeID]->tex);
-            flats[ofTypeID]->tex = 0;
-        }
-        break;
-
-    case MAT_SPRITE:
-        if(ofTypeID < 0 || ofTypeID >= numSpriteTextures)
-            return;
-
-        if(spriteTextures[ofTypeID]->tex)
-        {
-            DGL_DeleteTextures(1, &spriteTextures[ofTypeID]->tex);
-            spriteTextures[ofTypeID]->tex = 0;
-        }
+        if(!W_IsFromIWAD(flats[mat->ofTypeID]->lump))
+            return true;
         break;
 
     case MAT_DDTEX:
-        if(ofTypeID < 0 || ofTypeID >= NUM_DD_TEXTURES)
-            return;
+        return true; // Its definetely not.
 
-        if(ddTextures[ofTypeID].tex)
-        {
-            DGL_DeleteTextures(1, &ddTextures[ofTypeID].tex);
-            ddTextures[ofTypeID].tex = 0;
-        }
+    case MAT_SPRITE:
+        if(!W_IsFromIWAD(spriteTextures[mat->ofTypeID]->lump))
+            return true;
         break;
-
-    default:
-        Con_Error("R_DeleteMaterial: Unknown material type %i.", type);
     }
+
+    // This is most likely from the original game data.
+    return false;
 }
 
 /**
@@ -235,51 +261,11 @@ void R_DeleteMaterialTex(int ofTypeID, materialtype_t type)
  */
 boolean R_IsCustomMaterial(int ofTypeID, materialtype_t type)
 {
-    int                 i, lump;
-
-    switch(type)
-    {
-    case MAT_TEXTURE:
-        // First check the texture definitions.
-        lump = W_CheckNumForName("TEXTURE1");
-        if(lump >= 0 && !W_IsFromIWAD(lump))
-            return true;
-
-        lump = W_CheckNumForName("TEXTURE2");
-        if(lump >= 0 && !W_IsFromIWAD(lump))
-            return true;
-
-        // Go through the patches.
-        for(i = 0; i < textures[ofTypeID]->patchCount; ++i)
-        {
-            if(!W_IsFromIWAD(textures[ofTypeID]->patches[i].patch))
-                return true;
-        }
-        break;
-
-    case MAT_FLAT:
-        if(!W_IsFromIWAD(flats[ofTypeID]->lump))
-            return true;
-        break;
-
-    case MAT_DDTEX:
-        return true; // Its definetely not.
-
-    case MAT_SPRITE:
-        if(!W_IsFromIWAD(spriteTextures[ofTypeID]->lump))
-            return true;
-        break;
-
-    default:
-        Con_Error("R_IsCustomMaterial: Unknown material type %i.", type);
-    }
-
-    // This is most likely from the original game data.
-    return false;
+    return isCustomMaterial(R_GetMaterial(ofTypeID, type));
 }
 
-void R_SetMaterialTranslation(material_t *mat, material_t *current,
-                              material_t *next, float inter)
+void R_SetMaterialTranslation(material_t* mat, material_t* current,
+                              material_t* next, float inter)
 {
     if(!mat || !current || !next)
     {
@@ -299,78 +285,20 @@ Con_Error("R_SetMaterialTranslation: Invalid paramaters.");
  *
  * @param mat           Ptr to the material.
  * @param rgb           The dest buffer.
- *
- * @return              @c true, if the material has an average color.
  */
-boolean R_GetMaterialColor(const material_t *mat, float *rgb)
+void R_GetMaterialColor(const material_t* mat, float* rgb)
 {
-    if(!mat)
-        return false;
-
-    switch(mat->type)
+    if(mat)
     {
-    case MAT_TEXTURE:
-    {
-        texture_t          *tex = textures[mat->ofTypeID];
-        memcpy(rgb, tex->color, sizeof(float) * 3);
-        break;
+        memcpy(rgb, mat->dgl.color, sizeof(float) * 3);
     }
-    case MAT_FLAT:
-    {
-        flat_t             *flat = flats[mat->ofTypeID];
-        memcpy(rgb, flat->color, sizeof(float) * 3);
-        break;
-    }
-    default:
-#ifdef _DEBUG
-        Con_Message("R_GetMaterialColor: No avg color for material (type=%i id=%i).\n",
-                    mat->type, mat->ofTypeID);
-#endif
-        return false;
-    }
-
-    return true;
-}
-
-int R_GetMaterialFlags(material_t *mat)
-{
-    int                 ofTypeID;
-    if(!mat)
-        return 0;
-
-    switch(mat->current->type)
-    {
-    case MAT_TEXTURE:
-        ofTypeID = mat->current->ofTypeID;
-        if(ofTypeID < 0)
-            return 0;
-
-        return textures[ofTypeID]->flags;
-
-    case MAT_FLAT:
-        ofTypeID = mat->current->ofTypeID;
-        if(ofTypeID < 0)
-            return 0;
-
-        return flats[ofTypeID]->flags;
-
-    case MAT_SPRITE:
-        ofTypeID = mat->current->ofTypeID;
-        if(ofTypeID < 0)
-            return 0;
-
-        return spriteTextures[ofTypeID]->flags;
-
-    default:
-        return 0;
-    };
 }
 
 /**
  * Prepares all resources associated with the specified material including
  * all in the same animation group.
  */
-void R_PrecacheMaterial(material_t *mat)
+void R_PrecacheMaterial(material_t* mat)
 {
     if(mat->inGroup)
     {   // The material belongs in one or more animgroups.
@@ -387,7 +315,7 @@ void R_PrecacheMaterial(material_t *mat)
                 {
                     animframe_t        *frame = &groups[i].frames[k];
 
-                    GL_PrepareMaterial(frame->mat, NULL);
+                    GL_PrepareMaterial(frame->mat);
                 }
             }
         }
@@ -396,7 +324,7 @@ void R_PrecacheMaterial(material_t *mat)
     }
 
     // Just this one material.
-    GL_PrepareMaterial(mat, NULL);
+    GL_PrepareMaterial(mat);
 }
 
 /**
@@ -444,7 +372,7 @@ int R_CheckMaterialNumForName(const char* name, materialtype_t type)
 
     for(i = 0; i < numMaterials; ++i)
     {
-        material_t         *mat = materials[i];
+        material_t*         mat = materials[i];
 
         if(mat->type == type && !strncasecmp(mat->name, name, 8))
             return mat->ofTypeID;
@@ -459,7 +387,7 @@ const char *R_MaterialNameForNum(int ofTypeID, materialtype_t type)
 
     for(i = 0; i < numMaterials; ++i)
     {
-        material_t         *mat = materials[i];
+        material_t*         mat = materials[i];
 
         if(mat->type == type && mat->ofTypeID == ofTypeID)
             return mat->name;
@@ -468,7 +396,7 @@ const char *R_MaterialNameForNum(int ofTypeID, materialtype_t type)
     return NULL;
 }
 
-int R_MaterialNumForName(const char *name, materialtype_t type)
+int R_MaterialNumForName(const char* name, materialtype_t type)
 {
     int                 i;
 
@@ -478,35 +406,4 @@ int R_MaterialNumForName(const char *name, materialtype_t type)
         Con_Message("R_MaterialNumForName: %.8s type %i not found!\n",
                     name, type);
     return i;
-}
-
-unsigned int R_GetMaterialName(int ofTypeID, materialtype_t type)
-{
-    switch(type)
-    {
-    case MAT_TEXTURE:
-        if(ofTypeID < 0 || ofTypeID >= numTextures)
-            break;
-        return textures[ofTypeID]->tex;
-
-    case MAT_FLAT:
-        if(ofTypeID < 0 || ofTypeID >= numFlats)
-            break;
-        return flats[ofTypeID]->tex;
-
-    case MAT_DDTEX:
-        if(ofTypeID >= NUM_DD_TEXTURES)
-            break;
-        return ddTextures[ofTypeID].tex;
-
-    case MAT_SPRITE:
-        if(ofTypeID < 0 || ofTypeID >= numSpriteTextures)
-            break;
-        return spriteTextures[ofTypeID]->tex;
-
-    default:
-        Con_Error("R_GetMaterialName: Unknown material type %i.", type);
-    }
-
-    return 0;
 }

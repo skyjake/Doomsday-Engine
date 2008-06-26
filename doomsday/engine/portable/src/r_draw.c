@@ -60,25 +60,24 @@ enum { // A logical ordering (twice around).
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The view window.
-int     viewwidth, viewheight, viewwindowx, viewwindowy;
+int viewwidth, viewheight, viewwindowx, viewwindowy;
 
 // View border width.
-int     bwidth;
+int bwidth;
 
-// The view border graphics.
-char    borderGfx[9][9];
-
-byte   *translationTables;
+byte*   translationTables;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static char borderGfx[9][9];
 
 // CODE --------------------------------------------------------------------
 
 void R_SetBorderGfx(char *gfx[9])
 {
-    uint        i;
+    uint                    i;
 
-    for(i = 0; i < 9; i++)
+    for(i = 0; i < 9; ++i)
         if(gfx[i])
             strcpy(borderGfx[i], gfx[i]);
         else
@@ -89,7 +88,7 @@ void R_SetBorderGfx(char *gfx[9])
 
 void R_InitViewBorder(void)
 {
-    lumppatch_t    *patch = NULL;
+    lumppatch_t*            patch = NULL;
 
     // Detemine the view border width.
     if(W_CheckNumForName(borderGfx[BG_TOP]) == -1)
@@ -104,7 +103,7 @@ void R_InitViewBorder(void)
  */
 void R_DrawViewBorder(void)
 {
-    texinfo_t      *texinfo;
+    patchtex_t*         p;
 
     if(viewwidth == 320 && viewheight == 200)
         return;
@@ -122,24 +121,26 @@ void R_DrawViewBorder(void)
                         viewheight + 2 * bwidth);
 
     // The border top.
-    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
+    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_TOP]));
+    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
-                     texinfo->height, 16, texinfo->height);
+                     p->height, 16, p->height);
     // Border bottom.
-    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_BOTTOM]), &texinfo));
+    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_BOTTOM]));
+    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
-                     texinfo->height, 16, texinfo->height);
+                     p->height, 16, p->height);
 
     // Left view border.
-    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_LEFT]), &texinfo));
+    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_LEFT]));
+    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx - bwidth, viewwindowy,
-                     texinfo->width, viewheight,
-                     texinfo->width, 16);
+                     p->width, viewheight, p->width, 16);
     // Right view border.
-    DGL_Bind(curTex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_RIGHT]), &texinfo));
+    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_RIGHT]));
+    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
-                     texinfo->width, viewheight,
-                     texinfo->width, 16);
+                     p->width, viewheight, p->width, 16);
 
     GL_UsePatchOffset(false);
     GL_DrawPatch(viewwindowx - bwidth, viewwindowy - bwidth,

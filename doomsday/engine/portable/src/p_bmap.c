@@ -947,7 +947,7 @@ static boolean rendBlockSubsector(subsector_t *ssec, void *data)
             normal[VX] = -unit[VY];
             normal[VY] = unit[VX];
 
-            DGL_Bind(GL_PrepareLSTexture(LST_DYNAMIC, NULL));
+            DGL_Bind(GL_PrepareLSTexture(LST_DYNAMIC));
 
             DGL_Enable(DGL_TEXTURING);
             DGL_BlendOp(DGL_ADD);

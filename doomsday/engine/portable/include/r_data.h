@@ -35,7 +35,6 @@
 #include "m_nodepile.h"
 #include "def_data.h"
 #include "r_extres.h"
-#include "s_environ.h"
 #include "r_materials.h"
 
 // Flags for decorations.
@@ -43,60 +42,12 @@
 #define DCRF_PWAD       0x2         // Can use if from PWAD.
 #define DCRF_EXTERNAL   0x4         // Can use if from external resource.
 
-// Texture flags.
-#define TXF_NO_DRAW     0x1         // Texture should never be drawn.
-#define TXF_MASKED      0x2
-
-// Texture definition
-typedef struct {
-    int16_t         originX;
-    int16_t         originY;
-    int16_t         patch;
-    int16_t         stepDir;
-    int16_t         colorMap;
-} mappatch_t;
-
-typedef struct {
-    char            name[8];
-    int32_t         masked;
-    int16_t         width;
-    int16_t         height;
-    //void          **columnDirectory;  // OBSOLETE
-    int32_t         columnDirectoryPadding;
-    int16_t         patchCount;
-    mappatch_t      patches[1];
-} maptexture_t;
-
-// strifeformat texture definition variants
-typedef struct {
-    int16_t         originX;
-    int16_t         originY;
-    int16_t         patch;
-} strifemappatch_t;
-
-typedef struct {
-    char            name[8];
-    int32_t         unused;
-    int16_t         width;
-    int16_t         height;
-    int16_t         patchCount;
-    strifemappatch_t patches[1];
-} strifemaptexture_t;
-
-// Detail texture information.
-typedef struct detailinfo_s {
-    DGLuint         tex;
-    int             width, height;
-    float           strength;
-    float           scale;
-    float           maxDist;
-} detailinfo_t;
-
 typedef struct gltexture_s {
     DGLuint         id;
+    int             magMode;
     float           width, height;
     boolean         masked;
-    detailinfo_t*   detail;
+    struct detailinfo_s* detail;
 } gltexture_t;
 
 typedef struct glcommand_vertex_s {
@@ -187,64 +138,33 @@ typedef colorcomp_t rgbcol_t[3];
 typedef colorcomp_t rgbacol_t[4];
 
 typedef struct {
-    int             originX;       // block origin (allways UL), which has allready
-    int             originY;       // accounted  for the patch's internal origin
-    int             patch;
+    lumpnum_t       lump;
+    short           offX; // block origin (allways UL), which has allready
+    short           offY; // accounted for the patch's internal origin
 } texpatch_t;
 
-// Flags for texinfo.
-#define TXIF_MONOCHROME             0x1
-#define TXIF_UPSCALE_AND_SHARPEN    0x2
-
+// Describes a rectangular texture, which is composed of one
+// or more texpatch_t structures that arrange graphic patches.
 typedef struct {
-    short           width;
-    short           height;
-    short           offsetX;
-    short           offsetY;
-    int             modFlags;      // Possible modifier filters to apply (monochrome, scale+sharp)
-    byte            masked;        // Is the (DGL) texture masked?
-    detailinfo_t    detail;        // Detail texture information.
-} texinfo_t;
-
-// a maptexturedef_t describes a rectangular texture, which is composed of one
-// or more mappatch_t structures that arrange graphic patches
-typedef struct {
-    DGLuint         tex;           // Name of the associated DGL texture.
-    char            name[9];       // for switch changing, etc; ends in \0
-    texinfo_t       info;
-    int             flags;         // TXF_* flags.
-    rgbcol_t        color;
-    materialclass_t materialClass;  // Used for environmental sound properties.
+    char            name[9];
+    short           width, height;
     short           patchCount;
-    texpatch_t      patches[1];    // [patchcount] drawn back to front
-} texture_t;                       //   into the cached texture
-
-typedef struct {
-    DGLuint         tex;
-    texinfo_t       info;
-} ddtexture_t;
+    texpatch_t      patches[1]; // [patchcount] drawn back to front into the cached texture.
+} texturedef_t;
 
 typedef struct flat_s {
-    DGLuint         tex;            // Name of the associated DGL texture.
-    char            name[9];        // for switch changing, etc; ends in \0
-    texinfo_t       info;
-    int             flags;
-    rgbcol_t        color;
-    materialclass_t materialClass;  // Used for environmental sound properties.
     lumpnum_t       lump;
 } flat_t;
 
 typedef struct {
-    lumpnum_t       lump;          // Real lump number.
-    texinfo_t       info;
-    int             flags;
-    float           flareX;        // Offset to flare.
+    lumpnum_t       lump; // Real lump number.
+    short           offX, offY;
+    float           flareX; // Offset to flare.
     float           flareY;
+    rgbcol_t        autoLightColor;
     float           lumSize;
-    float           texCoord[2][2]; // Prepared texture coordinates.
-    DGLuint         tex;           // Name of the associated DGL texture.
-    DGLuint         hudTex;        // Name of the HUD sprite texture.
-    rgbcol_t        color;         // Average color, for lighting.
+    float           texCoord[2]; // Prepared texture coordinates.
+    DGLuint         pspriteTex;
 } spritetex_t;
 
 // Model skin.
@@ -253,32 +173,43 @@ typedef struct {
     DGLuint         tex;
 } skintex_t;
 
-// a patch is a lumppatch that has been prepared for render.
-typedef struct patch_s {
+// Patch flags.
+#define PF_MONOCHROME         0x1
+#define PF_UPSCALE_AND_SHARPEN 0x2
+
+// A patchtex is a lumppatch that has been prepared for render.
+typedef struct patchtex_s {
     lumpnum_t       lump;
     short           offX, offY;
+    short           extraOffset[2]; // Only used with upscaled and sharpened patches.
+    int             flags; // Possible modifier filters to apply (monochrome, scale+sharp)
 
     // Part 1
-    DGLuint         tex;          // Name of the associated DGL texture.
-    texinfo_t       info;
+    DGLuint         tex; // Name of the associated DGL texture.
+    short           width, height;
 
     // Part 2 (only used with textures larger than the max texture size).
     DGLuint         tex2;
-    texinfo_t       info2;
+    short           width2, height2;
 
-    struct patch_s* next;
-} patch_t;
+    struct patchtex_s* next;
+} patchtex_t;
 
 // A rawtex is a lump raw graphic that has been prepared for render.
 typedef struct rawtex_s {
     lumpnum_t       lump;
+
     // Part 1
-    DGLuint         tex;          // Name of the associated DGL texture.
-    texinfo_t       info;
+    DGLuint         tex; // Name of the associated DGL texture.
+    short           width, height;
+    byte            masked;
 
     // Part 2 (only used with textures larger than the max texture size).
     DGLuint         tex2;
-    texinfo_t       info2;
+    short           width2, height2;
+    byte            masked2;
+
+    struct rawtex_s* next;
 } rawtex_t;
 
 typedef struct animframe_s {
@@ -299,32 +230,32 @@ typedef struct animgroup_s {
 
 typedef struct {
     boolean         used;
-    float           approxDist;         // Only an approximation.
+    float           approxDist; // Only an approximation.
     struct lumobj_s* lum;
-    float           worldVector[3];     // Light direction vector (world space).
-    float           vector[3];          // Light direction vector (object space).
-    float           color[3];           // How intense the light is (0..1, RGB).
+    float           worldVector[3]; // Light direction vector (world space).
+    float           vector[3]; // Light direction vector (object space).
+    float           color[3]; // How intense the light is (0..1, RGB).
     float           offset;
-    float           lightSide, darkSide;    // Factors for world light.
+    float           lightSide, darkSide; // Factors for world light.
 } vlight_t;
 
 /**
  * Textures used in the lighting system.
  */
 typedef enum lightingtexid_e {
-    LST_DYNAMIC,                   // Round dynamic light
-    LST_GRADIENT,                  // Top-down gradient
-    LST_RADIO_CO,                  // FakeRadio closed/open corner shadow
-    LST_RADIO_CC,                  // FakeRadio closed/closed corner shadow
-    LST_RADIO_OO,                  // FakeRadio open/open shadow
-    LST_RADIO_OE,                  // FakeRadio open/edge shadow
+    LST_DYNAMIC, // Round dynamic light
+    LST_GRADIENT, // Top-down gradient
+    LST_RADIO_CO, // FakeRadio closed/open corner shadow
+    LST_RADIO_CC, // FakeRadio closed/closed corner shadow
+    LST_RADIO_OO, // FakeRadio open/open shadow
+    LST_RADIO_OE, // FakeRadio open/edge shadow
     NUM_LIGHTING_TEXTURES
 } lightingtexid_t;
 
 typedef enum flaretexid_e {
-    FXT_FLARE,                     // (flare)
-    FXT_BRFLARE,                   // (brFlare)
-    FXT_BIGFLARE,                  // (bigFlare)
+    FXT_FLARE, // (flare)
+    FXT_BRFLARE, // (brFlare)
+    FXT_BIGFLARE, // (bigFlare)
     NUM_FLARE_TEXTURES
 } flaretexid_t;
 
@@ -333,37 +264,49 @@ typedef enum flaretexid_e {
  * eg a surface with a missing tex/flat is drawn using the "missing" graphic
  */
 typedef enum ddtextureid_e {
-    DDT_UNKNOWN,          // Drawn if a texture/flat is unknown
-    DDT_MISSING,          // Drawn in place of HOMs in dev mode.
-    DDT_BBOX,             // Drawn when rendering bounding boxes
-    DDT_GRAY,             // For lighting debug.
+    DDT_UNKNOWN, // Drawn if a texture/flat is unknown
+    DDT_MISSING, // Drawn in place of HOMs in dev mode.
+    DDT_BBOX, // Drawn when rendering bounding boxes
+    DDT_GRAY, // For lighting debug.
     NUM_DD_TEXTURES
 } ddtextureid_t;
+
+typedef struct {
+    DGLuint         tex;
+} ddtexture_t;
+
+typedef struct skytexture_s {
+    int             texture;
+    DGLuint         tex; // OGL tex id.
+    float           topRGB[3]; // Averaged top line color, used for fadeout.
+
+    // For global animation:
+    boolean         inGroup; // True if belongs to some animgroup.
+    struct skytexture_s* current;
+    struct skytexture_s* next;
+    float           inter;
+} skytexture_t;
 
 extern nodeindex_t* linelinks;
 extern blockmap_t* BlockMap;
 extern blockmap_t* SSecBlockMap;
 extern linkmobj_t* blockrings;
-extern byte* rejectMatrix;      // for fast sight rejection
+extern byte* rejectMatrix; // For fast sight rejection.
 extern nodepile_t* mobjNodes, *lineNodes;
 
 extern int viewwidth, viewheight;
-extern int numTextures;
-extern texture_t** textures;
+extern int levelFullBright;
+extern int glowingTextures;
+extern byte precacheSprites, precacheSkins;
+
 extern int numFlats;
 extern flat_t** flats;
 
 extern spritetex_t** spriteTextures;
 extern int numSpriteTextures;
-extern int numDDTextures;
-extern ddtexture_t ddTextures[NUM_DD_TEXTURES];
-extern rawtex_t* rawtextures;
-extern uint numrawtextures;
+
 extern int numgroups;
 extern animgroup_t* groups;
-extern int levelFullBright;
-extern int glowingTextures;
-extern byte precacheSprites, precacheSkins;
 
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
@@ -387,7 +330,16 @@ void            R_ResetAnimGroups(void);
 boolean         R_IsInAnimGroup(int groupNum, materialtype_t type, int number);
 void            R_AnimateAnimGroups(void);
 
-void            R_InitSpriteTextures(void);
+const texturedef_t* R_GetTextureDef(int num);
+boolean         R_TextureIsFromIWAD(int num);
+
+void            R_SkyTextureDeleteTex(skytexture_t* skyTex);
+void            R_SkyTextureGetTopColor(int texIdx, float *rgb);
+
+skytexture_t*   R_GetSkyTexture(int texIdx, boolean canCreate);
+void            R_DeleteSkyTextures(void);
+void            R_DestroySkyTextures(void);
+
 int             R_NewSpriteTexture(lumpnum_t lump, material_t** mat);
 
 int             R_GetSkinTexIndex(const char* skin);
@@ -396,11 +348,13 @@ int             R_RegisterSkin(char* skin, const char* modelfn, char* fullpath);
 void            R_DeleteSkinTextures(void);
 void            R_DestroySkins(void); // Called at shutdown.
 
-patch_t*        R_FindPatch(lumpnum_t lump); // May return NULL.
-patch_t*        R_GetPatch(lumpnum_t lump); // Creates new entries.
-patch_t**       R_CollectPatches(int* count);
+patchtex_t*     R_FindPatchTex(lumpnum_t lump); // May return NULL.
+patchtex_t*     R_GetPatchTex(lumpnum_t lump); // Creates new entries.
+patchtex_t**    R_CollectPatchTexs(int* count);
+
 rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
 rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
+rawtex_t**      R_CollectRawTexs(int* count);
 
 boolean         R_IsAllowedDecoration(ded_decor_t* def, int index,
                                       boolean hasExternal);

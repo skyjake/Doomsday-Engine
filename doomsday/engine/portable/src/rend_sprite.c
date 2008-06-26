@@ -330,37 +330,59 @@ void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
     }
 }
 
-static void setupPSpriteParams(rendpspriteparams_t *params,
-                               vispsprite_t *spr)
+static void setupPSpriteParams(rendpspriteparams_t* params,
+                               vispsprite_t* spr)
 {
     float               offScaleY = weaponOffsetScaleY / 1000.0f;
-    spritetex_t        *sprTex;
-    spriteinfo_t        info;
-    ddpsprite_t        *psp = spr->psp;
+    spritetex_t*        sprTex;
+    spritedef_t*        sprDef;
+    ddpsprite_t*        psp = spr->psp;
+    int                 sprite = psp->statePtr->sprite;
+    int                 frame = psp->statePtr->frame;
+    int                 idx;
+    boolean             flip;
+    short               width, height;
+    spriteframe_t*      sprFrame;
+    material_t*         mat;
 
-    // Clear sprite info.
-    memset(&info, 0, sizeof(info));
-    R_GetSpriteInfo(psp->statePtr->sprite, psp->statePtr->frame,
-                    &info);
-    sprTex = spriteTextures[info.idx];
+#ifdef RANGECHECK
+    if((unsigned) sprite >= (unsigned) numSprites)
+        Con_Error("R_GetSpriteInfo: invalid sprite number %i.\n", sprite);
+#endif
 
-    params->pos[VX] = psp->pos[VX] - info.offset + pspOffset[VX];
-    params->pos[VY] =
-        offScaleY * psp->pos[VY] + (1 - offScaleY) * 32 - info.topOffset + pspOffset[VY];
-    params->width = sprTex->info.width;
-    params->height = sprTex->info.height;
+    sprDef = &sprites[sprite];
+#ifdef RANGECHECK
+    if(frame >= sprDef->numFrames)
+        Con_Error("setupPSpriteParams: Invalid frame number %i for sprite %i",
+                  frame, sprite);
+#endif
+
+    sprFrame = &sprDef->spriteFrames[frame];
+    mat = sprFrame->mats[0];
+    idx = mat->ofTypeID;
+    flip = sprFrame->flip[0];
+    width = mat->width;
+    height = mat->height;
+
+    sprTex = spriteTextures[idx];
+
+    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX];
+    params->pos[VY] = offScaleY * psp->pos[VY] +
+        (1 - offScaleY) * 32 - sprTex->offY + pspOffset[VY];
+    params->width = width;
+    params->height = height;
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
     params->texOffset[0] =
-        sprTex->texCoord[1][VX] - 0.4f / M_CeilPow2(params->width);
+        sprTex->texCoord[VX] - 0.4f / M_CeilPow2(params->width);
     params->texOffset[1] =
-        sprTex->texCoord[1][VY] - 0.4f / M_CeilPow2(params->height);
+        sprTex->texCoord[VY] - 0.4f / M_CeilPow2(params->height);
 
-    params->texFlip[0] = (boolean) info.flip;
+    params->texFlip[0] = flip;
     params->texFlip[1] = false;
 
-    params->lump = info.idx;
+    params->sprite = idx;
     params->ambientColor[CA] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)
@@ -423,10 +445,11 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     gl_vertex_t         quadNormals[4];
 
     if(renderTextures == 1)
-        GL_SetPSprite(params->lump);
+        GL_SetPSprite(params->sprite);
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
-        GL_BindTexture(GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL));
+        GL_BindTexture(GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX)),
+                       filterSprites? DGL_LINEAR : DGL_NEAREST);
     else
         DGL_Bind(0);
 
@@ -568,11 +591,11 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         DGL_SetInteger(DGL_MODULATE_TEXTURE, IS_MUL ? 4 : 5);
 
         // The dynamic light.
-        RL_BindTo(IS_MUL ? 0 : 1, params->modTex);
+        RL_BindTo(IS_MUL ? 0 : 1, params->modTex, DGL_LINEAR);
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, params->modColor);
 
         // The actual texture.
-        RL_BindTo(IS_MUL ? 1 : 0, params->texture);
+        RL_BindTo(IS_MUL ? 1 : 0, params->texture, glmode[texMagMode]);
 
         withDyn = true;
     }
@@ -581,7 +604,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         RL_SelectTexUnits(1);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
 
-        RL_Bind(params->texture);
+        RL_Bind(params->texture, glmode[texMagMode]);
         normal = 0;
     }
 
@@ -1032,12 +1055,14 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
         }
         else
         {   // Set the texture. No translation required.
-            GL_BindTexture(GL_PrepareMaterial(params->mat, NULL));
+            GL_BindTexture(GL_PrepareMaterial(params->mat),
+                           filterSprites? DGL_LINEAR : DGL_NEAREST);
         }
     }
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
-        GL_BindTexture(GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL));
+        GL_BindTexture(GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX)),
+                       filterSprites? DGL_LINEAR : DGL_NEAREST);
     else
         DGL_Bind(0);
 
@@ -1194,10 +1219,11 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 {
     float               top;
     spritetex_t        *sprTex = spriteTextures[spr->data.mo.mat->ofTypeID];
+    material_t*         mat = spr->data.mo.mat;
 
     // Setup params:
-    params->width = (float) sprTex->info.width;
-    params->height = sprTex->info.height;
+    params->width = mat->width;
+    params->height = mat->height;
 
     // We must find the correct positioning using the sector floor and ceiling
     // heights as an aid.
@@ -1220,7 +1246,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->center[VX] = spr->center[VX];
     params->center[VY] = spr->center[VY];
     params->center[VZ] = top - params->height / 2;
-    params->viewOffX = (float) sprTex->info.offsetX - params->width / 2;
+    params->viewOffX = (float) sprTex->offX - params->width / 2;
     params->subsector = spr->data.mo.subsector;
     params->distance = spr->distance;
     params->viewAligned = (spr->data.mo.viewAligned || alwaysAlign == 3);
@@ -1233,8 +1259,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     else
         params->tMap = 0;
     params->tClass = spr->data.mo.pClass;
-    params->matOffset[0] = sprTex->texCoord[0][0];
-    params->matOffset[1] = sprTex->texCoord[0][1];
+    params->matOffset[0] = sprTex->texCoord[0];
+    params->matOffset[1] = sprTex->texCoord[1];
     params->matFlip[0] = spr->data.mo.matFlip[0];
     params->matFlip[1] = spr->data.mo.matFlip[1];
 

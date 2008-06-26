@@ -182,6 +182,7 @@ static void processMobjShadow(mobj_t* mo)
     params.lightListIdx = 0;
     params.blendMode = BM_NORMAL;
     params.tex.id = curTex = 0;
+    params.tex.magMode = DGL_LINEAR;
 
     params.tex.detail = 0;
     params.tex.height = params.tex.width = 0;
@@ -190,7 +191,8 @@ static void processMobjShadow(mobj_t* mo)
     memset(&params.interTex, 0, sizeof(params.interTex));
 
     params.flags = RPF_SHADOW;
-    params.tex.id = curTex = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
+    params.tex.id = curTex = GL_PrepareLSTexture(LST_DYNAMIC);
+    params.tex.magMode = DGL_LINEAR;
     params.tex.width = params.tex.height = radius * 2;
     params.texOffset[VX] = -pos[VX] + radius;
     params.texOffset[VY] = -pos[VY] - radius;

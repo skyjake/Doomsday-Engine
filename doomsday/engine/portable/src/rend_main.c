@@ -299,6 +299,7 @@ static void Rend_AddShinyPoly(const rvertex_t* rvertices,
     params.flags = p->flags | RPF_SHINY;
     params.blendMode = p->ref->blendMode;
     params.tex.id = p->ref->useShiny->shinyTex;
+    params.tex.magMode = glmode[texMagMode];
     params.tex.detail = NULL;
     params.tex.masked = false;
     params.texOffset[VX] = p->texOffset[VX];
@@ -332,6 +333,7 @@ static void Rend_AddShinyPoly(const rvertex_t* rvertices,
     if(p->ref->useMask && p->ref->useMask->maskTex)
     {
         params.interTex.id = p->ref->useMask->maskTex;
+        params.interTex.magMode = glmode[texMagMode];
         params.tex.width = params.interTex.width =
             p->width * p->ref->maskWidth;
         params.tex.height = params.interTex.height =
@@ -351,8 +353,6 @@ static void Rend_AddShinyPoly(const rvertex_t* rvertices,
 
 static float polyTexBlend(gltexture_t* interTex, material_t* mat)
 {
-    texinfo_t*          texinfo;
-
     if(!mat)
         return 0;
 
@@ -367,12 +367,13 @@ static float polyTexBlend(gltexture_t* interTex, material_t* mat)
     }
 
     // Get info of the blend target.
-    interTex->id = GL_PrepareMaterial2(mat->next, &texinfo);
+    interTex->id = GL_PrepareMaterial2(mat->next);
+    interTex->magMode = glmode[texMagMode];
 
-    interTex->width = texinfo->width;
-    interTex->height = texinfo->height;
-    interTex->detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
-    interTex->masked = texinfo->masked;
+    interTex->width = mat->width;
+    interTex->height = mat->height;
+    interTex->detail = (r_detail && mat->detail.tex? &mat->detail : 0);
+    interTex->masked = mat->dgl.masked;
 
     return mat->inter;
 }
@@ -526,11 +527,10 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
 
         if(side->SW_middlematerial)
         {
-            texinfo_t          *texinfo = NULL;
+            material_t*         mat = side->SW_middlematerial->current;
 
-            GL_GetMaterialInfo2(side->SW_middlematerial, true, &texinfo);
-
-            if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
+            if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 &&
+               !mat->dgl.masked)
             {
                 float               openTop[2], gapTop[2];
                 float               openBottom[2], gapBottom[2];
@@ -542,13 +542,13 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
 
                 // Could the mid texture fill enough of this gap for us
                 // to consider it completely closed?
-                if(texinfo->height >= (openTop[0] - openBottom[0]) &&
-                   texinfo->height >= (openTop[1] - openBottom[1]))
+                if(mat->height >= (openTop[0] - openBottom[0]) &&
+                   mat->height >= (openTop[1] - openBottom[1]))
                 {
                     // Possibly. Check the placement of the mid texture.
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
-                        NULL, side->SW_middlevisoffset[VX], texinfo->height,
+                        NULL, side->SW_middlevisoffset[VX], mat->height,
                         0 != (line->flags & DDLF_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
@@ -1035,12 +1035,14 @@ static void renderSegSection2(const rvertex_t* rvertices, uint numVertices,
     params.texOffset[VY] = p->texOffset[VY];
 
     params.tex.id = curTex = p->tex.id;
+    params.tex.magMode = glmode[texMagMode];
     params.tex.detail = p->tex.detail;
     params.tex.masked = p->tex.masked;
     params.tex.height = p->tex.height;
     params.tex.width = p->tex.width;
 
     params.interTex.id = p->interTex.id;
+    params.interTex.magMode = glmode[texMagMode];
     params.interTex.detail = p->interTex.detail;
     params.interTex.masked = p->interTex.masked;
     params.interTex.height = p->interTex.height;
@@ -1169,12 +1171,14 @@ static void renderPlane2(const rvertex_t* rvertices, uint numVertices,
     params.texOffset[VY] = p->texOffset[VY];
 
     params.tex.id = curTex = p->tex.id;
+    params.tex.magMode = glmode[texMagMode];
     params.tex.detail = p->tex.detail;
     params.tex.masked = p->tex.masked;
     params.tex.height = p->tex.height;
     params.tex.width = p->tex.width;
 
     params.interTex.id = p->interTex.id;
+    params.interTex.magMode = glmode[texMagMode];
     params.interTex.detail = p->interTex.detail;
     params.interTex.masked = p->interTex.masked;
     params.interTex.height = p->interTex.height;
@@ -1220,7 +1224,6 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
     rvertex_t           rvertices[4];
     walldiv_t           divs[2];
     short               tempflags = 0;
-    texinfo_t*          texinfo = NULL;
     boolean             solidSeg = true;
 
     // Init the params.
@@ -1269,13 +1272,11 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
         // regular world polys (with a few obvious properties).
         if(devSkyMode)
         {
-            texinfo_t          *texinfo;
+            params.tex.id = GL_PrepareMaterial(skyMaskMaterial);
+            params.tex.magMode = glmode[texMagMode];
 
-            params.tex.id =
-                GL_PrepareMaterial(skyMaskMaterial, &texinfo);
-
-            params.tex.width = texinfo->width;
-            params.tex.height = texinfo->height;
+            params.tex.width = skyMaskMaterial->width;
+            params.tex.height = skyMaskMaterial->height;
             params.flags |= RPF_GLOW;
         }
         else
@@ -1292,56 +1293,67 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
         if(renderTextures == 2)
         {   // For lighting debug, render all solid surfaces using the gray texture.
             params.tex.id =
-                GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), &texinfo);
+                GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX));
+            params.tex.magMode = glmode[texMagMode];
 
             surfaceFlags = surface->flags & ~(SUF_TEXFIX);
 
             // We need the properties of the real flat/texture.
             if(surface->material)
             {
-                GL_GetMaterialInfo2(surface->material, true, &texinfo);
+                material_t*     mat = surface->material;
 
-                params.tex.width = texinfo->width;
-                params.tex.height = texinfo->height;
-                params.tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
-                params.tex.masked = texinfo->masked;
+                params.tex.width = mat->width;
+                params.tex.height = mat->height;
+                params.tex.detail =
+                    (r_detail && mat->detail.tex? &mat->detail : 0);
+                params.tex.masked = mat->dgl.masked;
 
-                if(texinfo->masked)
+                if(mat->dgl.masked)
                     surfaceFlags &= ~SUF_NO_RADIO;
             }
         }
         else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
         {   // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            params.tex.id =
-                GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), &texinfo);
-            params.tex.width = texinfo->width;
-            params.tex.height = texinfo->height;
-            params.tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
-            params.tex.masked = texinfo->masked;
+            material_t*         mat = R_GetMaterial(DDT_MISSING, MAT_DDTEX);
+
+            params.tex.id = GL_PrepareMaterial(mat);
+            params.tex.magMode = glmode[texMagMode];
+            params.tex.width = mat->width;
+            params.tex.height = mat->height;
+            params.tex.detail =
+                (r_detail && mat->detail.tex? &mat->detail : 0);
+            params.tex.masked = mat->dgl.masked;
             surfaceFlags = surface->flags;
 
-            if(texinfo->masked)
+            if(mat->dgl.masked)
                 surfaceFlags &= ~SUF_NO_RADIO;
 
+            //// \kludge
             surfaceFlags |= SUF_GLOW; // Make it stand out
+            //// <kludge
         }
         else if(surface->material)
         {
-            params.tex.id = GL_PrepareMaterial(surface->material, &texinfo);
+            material_t*         mat = surface->material;
+
+            params.tex.id = GL_PrepareMaterial(mat);
+            params.tex.magMode = glmode[texMagMode];
             surfaceFlags = surface->flags;
 
             //// \kludge >
             if(surface->material->type == MAT_DDTEX)
                 surfaceFlags = SUF_GLOW; // Make it stand out.
-             ///// <kludge
+            ///// <kludge
 
-            params.tex.width = texinfo->width;
-            params.tex.height = texinfo->height;
-            params.tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
-            params.tex.masked = texinfo->masked;
+            params.tex.width = mat->width;
+            params.tex.height = mat->height;
+            params.tex.detail =
+                (r_detail && mat->detail.tex? &mat->detail : 0);
+            params.tex.masked = mat->dgl.masked;
 
-            if(texinfo->masked)
+            if(mat->dgl.masked)
                 surfaceFlags &= ~SUF_NO_RADIO;
         }
 
@@ -1358,7 +1370,7 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
                 params.blendMode = surface->blendMode;
 
             // If alpha, masked or blended we'll render as a vissprite.
-            if(alpha < 1 || texinfo->masked || surface->blendMode > 0)
+            if(alpha < 1 || params.tex.masked || surface->blendMode > 0)
             {
                 params.flags = RPF_MASKED;
                 solidSeg = false;
@@ -1371,7 +1383,7 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
 
         if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
             tempflags |= RPF2_SHADOW;
-        if(solidSeg && surface->material && !texinfo->masked)
+        if(solidSeg && surface->material && !params.tex.masked)
             tempflags |= RPF2_SHINY;
         if(surfaceFlags & SUF_GLOW)
             tempflags |= RPF2_GLOW;
@@ -1702,16 +1714,9 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
     if(side->SW_middlesurface.frameFlags & SUFINF_PVIS)
     {
         surface_t*          surface = &side->SW_middlesurface;
-        texinfo_t*          texinfo = NULL;
         float               texOffset[2];
         float               top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
         boolean             softSurface = false;
-
-        // We need the properties of the real flat/texture.
-        if(surface->material)
-        {
-            GL_GetMaterialInfo2(surface->material, true, &texinfo);
-        }
 
         if(ldef->L_backsector == ldef->L_frontsector)
         {
@@ -1726,7 +1731,8 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
 
         if(Rend_MidTexturePos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
-            &texOffset[VY], surface->visOffset[VY], texinfo->height,
+           &texOffset[VY], surface->visOffset[VY],
+           surface->material->current->height,
             (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false))
         {
             // Can we make this a soft surface?
@@ -1914,13 +1920,12 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     if(devSkyMode)
     {
         size_t              i;
-        texinfo_t          *texinfo;
 
-        params.tex.id = curTex =
-            GL_PrepareMaterial(skyMaskMaterial, &texinfo);
+        params.tex.id = curTex = GL_PrepareMaterial(skyMaskMaterial);
+        params.tex.magMode = glmode[texMagMode];
+        params.tex.width = skyMaskMaterial->width;
+        params.tex.height = skyMaskMaterial->height;
 
-        params.tex.width = texinfo->width;
-        params.tex.height = texinfo->height;
         params.flags &= ~RPF_SKY_MASK;
         params.flags |= RPF_GLOW;
 
@@ -2167,7 +2172,6 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
     if(!(M_DotProduct(vec, surface->normal) < 0))
     {
         short               tempflags = 0;
-        texinfo_t*          texInfo;
         renderplane_params_t params;
         uint                numVertices = subsector->numVertices;
         rvertex_t*          rvertices;
@@ -2178,21 +2182,9 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
         memset(&params, 0, sizeof(params));
 
         params.type = RP_FLAT;
-        params.flags = 0;
-        params.texOffset[VX] = params.texOffset[VY] = 0;
-        params.interPos = 0;
-        params.lightListIdx = 0;
         params.blendMode = BM_NORMAL;
         params.mapObject = subsector;
         params.elmIdx = plane->planeID;
-
-        params.tex.id = curTex = 0;
-
-        params.tex.detail = 0;
-        params.tex.height = params.tex.width = 0;
-        params.tex.masked = 0;
-
-        memset(&params.interTex, 0, sizeof(params.interTex));
 
         // Check for sky.
         if(R_IsSkySurface(surface))
@@ -2207,16 +2199,12 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
             // regular world polys (with a few obvious properties).
             if(devSkyMode)
             {
-                texinfo_t          *texinfo;
-
                 params.tex.id = curTex =
-                    GL_PrepareMaterial(skyMaskMaterial, &texinfo);
+                    GL_PrepareMaterial(skyMaskMaterial);
+                params.tex.magMode = glmode[texMagMode];
+                params.tex.width = skyMaskMaterial->width;
+                params.tex.height = skyMaskMaterial->height;
 
-                params.tex.width = texinfo->width;
-                params.tex.height = texinfo->height;
-                params.tex.detail = 0;
-                params.texOffset[VX] = params.texOffset[VY] = 0;
-                params.lightListIdx = 0;
                 params.flags &= ~RPF_SKY_MASK;
                 params.flags |= RPF_GLOW;
             }
@@ -2229,56 +2217,65 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
             if(renderTextures == 2)
             {   // For lighting debug, render all solid surfaces using the gray texture.
                 params.tex.id =
-                    GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), &texInfo);
+                    GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX));
+                params.tex.magMode = glmode[texMagMode];
 
                 surfaceFlags = surface->flags & ~(SUF_TEXFIX);
 
                 // We need the properties of the real flat/texture.
                 if(surface->material)
                 {
-                    GL_GetMaterialInfo2(surface->material, true, &texInfo);
+                    material_t*     mat = surface->material;
 
-                    params.tex.width = texInfo->width;
-                    params.tex.height = texInfo->height;
-                    params.tex.detail = (r_detail && texInfo->detail.tex? &texInfo->detail : 0);
-                    params.tex.masked = texInfo->masked;
+                    params.tex.width = mat->width;
+                    params.tex.height = mat->height;
+                    params.tex.detail =
+                        (r_detail && mat->detail.tex? &mat->detail : 0);
+                    params.tex.masked = mat->dgl.masked;
 
-                    if(texInfo->masked)
+                    if(mat->dgl.masked)
                         surfaceFlags &= ~SUF_NO_RADIO;
                 }
             }
             else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
             {   // For debug, render the "missing" texture instead of the texture
                 // chosen for surfaces to fix the HOMs.
-                params.tex.id =
-                    GL_PrepareMaterial(R_GetMaterial(DDT_MISSING, MAT_DDTEX), &texInfo);
+                material_t*         mat = R_GetMaterial(DDT_MISSING, MAT_DDTEX);
+
+                params.tex.id = GL_PrepareMaterial(mat);
+                params.tex.magMode = glmode[texMagMode];
                 surfaceFlags = surface->flags;
 
-                params.tex.width = texInfo->width;
-                params.tex.height = texInfo->height;
-                params.tex.detail = (r_detail && texInfo->detail.tex? &texInfo->detail : 0);
-                params.tex.masked = texInfo->masked;
+                params.tex.width = mat->width;
+                params.tex.height = mat->height;
+                params.tex.detail =
+                    (r_detail && mat->detail.tex? &mat->detail : 0);
+                params.tex.masked = mat->dgl.masked;
 
-                if(texInfo->masked)
+                if(mat->dgl.masked)
                     surfaceFlags &= ~SUF_NO_RADIO;
                 surfaceFlags |= SUF_GLOW; // Make it stand out
             }
             else if(surface->material)
             {
-                params.tex.id = GL_PrepareMaterial(surface->material, &texInfo);
+                material_t*         mat = surface->material;
+
+                params.tex.id = GL_PrepareMaterial(mat);
+                params.tex.magMode = glmode[texMagMode];
                 surfaceFlags = surface->flags;
 
                 //// \kludge >
-                if(surface->material->type == MAT_DDTEX)
+                if(mat->type == MAT_DDTEX)
                     surfaceFlags = SUF_GLOW; // Make it stand out.
                  ///// <kludge
 
-                params.tex.width = texInfo->width;
-                params.tex.height = texInfo->height;
-                params.tex.detail = (r_detail && texInfo->detail.tex? &texInfo->detail : 0);
-                params.tex.masked = texInfo->masked;
+                params.tex.width = mat->width;
+                params.tex.height = mat->height;
+                params.tex.detail =
+                    (r_detail && mat->detail.tex? &mat->detail : 0);
+                params.tex.masked = mat->dgl.masked;
 
-                if(texInfo->masked)
+                if(mat->dgl.masked)
                     surfaceFlags &= ~SUF_NO_RADIO;
             }
 
@@ -2287,7 +2284,7 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
             params.texOffset[VY] =
                 sector->SP_plane(plane->planeID)->PS_visoffset[VY];
 
-            if(surface->material && !texInfo->masked)
+            if(surface->material && !params.tex.masked)
                 tempflags |= RPF2_SHINY;
             if(surfaceFlags & SUF_GLOW)
                 tempflags |= RPF2_GLOW;
@@ -2516,6 +2513,8 @@ void Rend_RenderMap(void)
     // Set to true if dynlights are inited for this frame.
     loInited = false;
 
+    DGL_Enable(DGL_MULTISAMPLE);
+
     // This is all the clearing we'll do.
     if(firstFrameAfterLoad || freezeRLs || P_IsInVoid(viewPlayer))
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2591,6 +2590,8 @@ void Rend_RenderMap(void)
     // Draw the Shadow Bias Editor's draw that identifies the current
     // light.
     SBE_DrawCursor();
+
+    DGL_Disable(DGL_MULTISAMPLE);
 }
 
 /**
@@ -2904,7 +2905,7 @@ static void Rend_RenderBoundingBoxes(void)
     DGL_Enable(DGL_TEXTURING);
     glDisable(GL_CULL_FACE);
 
-    DGL_Bind(GL_PrepareMaterial(R_GetMaterial(DDT_BBOX, MAT_DDTEX), NULL));
+    DGL_Bind(GL_PrepareMaterial(R_GetMaterial(DDT_BBOX, MAT_DDTEX)));
     GL_BlendMode(BM_ADD);
 
     // For every sector

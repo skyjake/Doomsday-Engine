@@ -95,14 +95,14 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
 
     if(isTwoPart)
     {
-        tcb = raw->info.height / 256.0f;
+        tcb = raw->height / 256.0f;
     }
     else
     {
         // Bottom texture coordinate.
         tcb = 1;
     }
-    pixelBorder = raw->info.width * theWindow->width / 320;
+    pixelBorder = raw->width * theWindow->width / 320;
 
     // The first part is rendered in any case.
     DGL_Begin(DGL_QUADS);
@@ -157,29 +157,29 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
     float               x = posX;
     float               y = posY;
     float               w, h;
-    texinfo_t          *texInfo;
+    patchtex_t*         p = R_GetPatchTex(lump);
 
     // Set the texture.
-    DGL_Bind(curTex = GL_PreparePatch(lump, &texInfo));
+    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
 
-    w = (float) texInfo->width;
-    h = (float) texInfo->height;
+    w = (float) p->width;
+    h = (float) p->height;
+
     if(usePatchOffset)
     {
-        patch_t *p = R_GetPatch(lump);
-        x += (int) p->offX;
-        y += (int) p->offY;
+        x += (float) p->offX;
+        y += (float) p->offY;
     }
 
-    if(texInfo->offsetX)
+    if(p->extraOffset[VX])
     {
         // This offset is used only for the extra borders in the
         // "upscaled and sharpened" patches, so we can tweak the values
         // to our liking a bit more.
-        x += texInfo->offsetX * .75f;
-        y += texInfo->offsetY * .75f;
-        w -= fabs(texInfo->offsetX) / 2;
-        h -= fabs(texInfo->offsetY) / 2;
+        x += p->extraOffset[VX] * .75f;
+        y += p->extraOffset[VY] * .75f;
+        w -= fabs(p->extraOffset[VX]) / 2;
+        h -= fabs(p->extraOffset[VY]) / 2;
     }
 
     DGL_Begin(DGL_QUADS);
@@ -194,12 +194,12 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
     DGL_End();
 
     // Is there a second part?
-    if(GL_GetPatchOtherPart(lump, &texInfo))
+    if(GL_GetPatchOtherPart(lump))
     {
-        x += (int) texInfo->width;
+        x += (float) p->width2;
 
-        GL_BindTexture(GL_GetPatchOtherPart(lump, &texInfo));
-        w = (float) texInfo->width;
+        GL_BindTexture(GL_GetPatchOtherPart(lump), glmode[texMagMode]);
+        w = (float) p->width2;
 
         DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0);

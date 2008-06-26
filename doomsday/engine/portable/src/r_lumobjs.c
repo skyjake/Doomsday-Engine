@@ -386,13 +386,16 @@ void LO_AddLuminous(mobj_t *mo)
             mat = sprFrame->mats[0];
         }
 
+        // Get the current globaly animated material.
+        mat = mat->current;
+
         if(mat->type != MAT_SPRITE)
         {
             return; // Very strange...
         }
 
         // This'll ensure we have up-to-date information about the texture.
-        GL_PrepareMaterial(mat, NULL);
+        GL_PrepareMaterial(mat);
         sprTex = spriteTextures[mat->ofTypeID];
 
         // Let's see what our light should look like.
@@ -401,7 +404,8 @@ void LO_AddLuminous(mobj_t *mo)
         cf.yOffset = sprTex->flareY;
 
         // X offset to the flare position.
-        xOff = cf.xOffset - (float) sprTex->info.width / 2.0f;
+        xOff = (cf.xOffset - (float) mat->width / 2) -
+            (sprTex->offX - (float) mat->width / 2);
 
         // Does the mobj have an active light definition?
         if(mo->state)
@@ -428,12 +432,12 @@ void LO_AddLuminous(mobj_t *mo)
             }
         }
 
-        center = sprTex->info.offsetY - mo->floorClip -
+        center = spriteTextures[mat->ofTypeID]->offY - mo->floorClip -
             R_GetBobOffset(mo) - cf.yOffset;
 
         // Will the sprite be allowed to go inside the floor?
-        mul = mo->pos[VZ] + sprTex->info.offsetY -
-            (float) sprTex->info.height -
+        mul = mo->pos[VZ] + spriteTextures[mat->ofTypeID]->offY -
+            (float) mat->height -
                 mo->subsector->sector->SP_floorheight;
         if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
         {
@@ -464,17 +468,16 @@ void LO_AddLuminous(mobj_t *mo)
             radius *= mul;
         }
 
+        // If any of the color components are != 0, use the def's color.
         if(def && (def->color[0] || def->color[1] || def->color[2]))
         {
-            // If any of the color components are != 0, use the
-            // definition's color.
             for(i = 0; i < 3; ++i)
                 rgb[i] = def->color[i];
         }
         else
-        {
-            // Use the sprite's (amplified) color.
-            GL_GetSpriteColorf(mat->ofTypeID, rgb);
+        {   // Use the auto-calculated color.
+            for(i = 0; i < 3; ++i)
+                rgb[i] = sprTex->autoLightColor[i];
         }
 
         // This'll allow a halo to be rendered. If the light is hidden from
@@ -527,7 +530,7 @@ void LO_AddLuminous(mobj_t *mo)
             // Use the same default light texture for all directions.
             LUM_OMNI(l)->tex = LUM_OMNI(l)->ceilTex =
                 LUM_OMNI(l)->floorTex =
-                GL_PrepareLSTexture(LST_DYNAMIC, NULL);
+                GL_PrepareLSTexture(LST_DYNAMIC);
         }
     }
 }
@@ -908,7 +911,7 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
         l->color[CB] = pln->glowRGB[CB];
 
         LUM_PLANE(l)->intensity = pln->glow;
-        LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT, NULL);
+        LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
 
         // Plane lights don't spread, so just link the lum to its own ssec.
         LOIT_LinkObjToSubSector(l->subsector, l);

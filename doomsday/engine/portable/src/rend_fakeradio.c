@@ -644,7 +644,8 @@ static void renderShadowSeg(const rvertex_t* rvertices,
         params.flags |= RPF_HORIZONTAL;
     params.blendMode = BM_NORMAL;
 
-    params.tex.id = curTex = GL_PrepareLSTexture(p->texture, NULL);
+    params.tex.id = curTex = GL_PrepareLSTexture(p->texture);
+    params.tex.magMode = DGL_LINEAR;
     params.tex.detail = NULL;
     params.tex.width = p->texWidth;
     params.tex.height = p->texHeight;
@@ -1321,22 +1322,10 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     wind = (V2_Distance(inner[1], vtx1->V_pos) >
             V2_Distance(inner[0], vtx0->V_pos)? 1 : 0);
 
+    memset(&params, 0, sizeof(params));
     // Initialize the rendpoly.
     params.type = RP_FLAT;
-
-    params.flags = 0;
-    params.texOffset[VX] = params.texOffset[VY] = 0;
-    params.interPos = 0;
-    params.lightListIdx = 0;
     params.blendMode = BM_NORMAL;
-
-    params.tex.id = curTex = 0;
-
-    params.tex.detail = 0;
-    params.tex.height = params.tex.width = 0;
-    params.tex.masked = 0;
-
-    memset(&params.interTex, 0, sizeof(params.interTex));
     if(!renderWireframe)
         params.flags = RPF_SHADOW;
 

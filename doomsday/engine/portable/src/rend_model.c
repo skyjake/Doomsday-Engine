@@ -759,7 +759,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        skinTexture = GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX), NULL);
+        skinTexture = GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX));
     }
     else
     {
@@ -792,7 +792,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         {
             RL_SelectTexUnits(1);
             GL_BlendMode(blending);
-            RL_Bind(skinTexture);
+            RL_Bind(skinTexture, glmode[texMagMode]);
 
             Mod_RenderCommands(RC_COMMAND_COORDS,
                                mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -818,8 +818,8 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
                 // the primary texture.
                 RL_SelectTexUnits(2);
                 DGL_SetInteger(DGL_MODULATE_TEXTURE, 11);
-                RL_BindTo(1, shinyTexture);
-                RL_BindTo(0, skinTexture);
+                RL_BindTo(1, shinyTexture, glmode[texMagMode]);
+                RL_BindTo(0, skinTexture, glmode[texMagMode]);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -832,7 +832,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
             {
                 // Empty spots will get shine, too.
                 RL_SelectTexUnits(1);
-                RL_Bind(shinyTexture);
+                RL_Bind(shinyTexture, glmode[texMagMode]);
                 Mod_RenderCommands(RC_OTHER_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
@@ -847,12 +847,12 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         RL_SelectTexUnits(2);
         // Tex1*Color + Tex2RGB*ConstRGB
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 10);
-        RL_BindTo(1, shinyTexture);
+        RL_BindTo(1, shinyTexture, glmode[texMagMode]);
         // Multiply by shininess.
         for(c = 0; c < 3; ++c)
             color[c] *= color[3];
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-        RL_BindTo(0, skinTexture);
+        RL_BindTo(0, skinTexture, glmode[texMagMode]);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
                            /*numVerts,*/ modelVertices, modelColors,

@@ -30,26 +30,50 @@
 #define __DOOMSDAY_REFRESH_MATERIALS_H__
 
 #include "def_data.h"
+#include "s_environ.h"
+
+// Detail texture information.
+typedef struct detailinfo_s {
+    DGLuint         tex;
+    int             width, height;
+    float           strength;
+    float           scale;
+    float           maxDist;
+} detailinfo_t;
 
 // Material flags:
-#define MATF_GLOW               0x1 // Glowing material.
+#define MATF_NO_DRAW            0x1 // Material should never be drawn.
+#define MATF_GLOW               0x2 // Glowing material.
 #define MATF_CHANGED            0x8 // Needs update.
 
 typedef struct material_s {
+// Material def:
     char            name[9];
     int             ofTypeID;
     materialtype_t  type;
-    byte            flags;
+    byte            flags; // MATF_* flags
+    short           width, height; // Defined width + height (note, DGL tex may not be the same!)
 
-    // Associated enhancements/attachments to be used with surfaces:
-    ded_decor_t *decoration;
-    ded_reflection_t *reflection;
-    ded_ptcgen_t *ptcGen;
+// Misc:
+    materialclass_t envClass; // Used for environmental sound properties.
 
-    // For global animation:
+// DGL texture + detailinfo:
+    struct {
+        DGLuint         tex; // Name of the associated DGL texture.
+        byte            masked;
+        float           color[3]; // Average color (for lighting).
+    } dgl;
+    detailinfo_t    detail; // Detail texture information.
+
+// Associated enhancements/attachments to be used with surfaces:
+    ded_decor_t* decoration;
+    ded_reflection_t* reflection;
+    ded_ptcgen_t* ptcGen;
+
+// For global animation:
     boolean         inGroup; // True if belongs to some animgroup.
-    struct material_s *current;
-    struct material_s *next;
+    struct material_s* current;
+    struct material_s* next;
     float           inter;
 } material_t;
 
@@ -59,31 +83,28 @@ void            R_InitMaterials(void);
 void            R_ShutdownMaterials(void);
 void            R_MarkMaterialsForUpdating(void);
 
-material_t     *R_MaterialCreate(const char *name, int ofTypeID, materialtype_t type);
-material_t     *R_GetMaterial(int ofTypeID, materialtype_t type);
+material_t*     R_MaterialCreate(const char* name, int ofTypeID, materialtype_t type);
+material_t*     R_GetMaterial(int ofTypeID, materialtype_t type);
 
 boolean         R_IsCustomMaterial(int ofTypeID, materialtype_t type);
 
-int             R_GetMaterialFlags(material_t *material);
-boolean         R_GetMaterialColor(const material_t *material, float *rgb);
+void            R_PrecacheMaterial(material_t* mat);
 
-void            R_PrecacheMaterial(material_t *mat);
-
-// Returns the real DGL texture, if such exists
-unsigned int    R_GetMaterialName(int ofTypeID, materialtype_t type);
+void            R_GetMaterialColor(const material_t* mat, float* rgb);
 ded_reflection_t* R_GetMaterialReflection(material_t* mat);
 const ded_decor_t* R_GetMaterialDecoration(const material_t* mat);
 const ded_ptcgen_t* P_GetMaterialPtcGen(const material_t* mat);
 
-// Not for sprites, etc.
-void            R_DeleteMaterialTex(int ofTypeID, materialtype_t type);
+void            R_DeleteMaterialTex(material_t* mat);
+void            R_DeleteMaterialTextures(materialtype_t type);
+void            R_SetMaterialMinMode(int minMode);
 
 // Return values are the original IDs.
-int             R_CheckMaterialNumForName(const char *name, materialtype_t type);
-int             R_MaterialNumForName(const char *name, materialtype_t type);
+int             R_CheckMaterialNumForName(const char* name, materialtype_t type);
+int             R_MaterialNumForName(const char* name, materialtype_t type);
 const char     *R_MaterialNameForNum(int ofTypeID, materialtype_t type);
-void            R_SetMaterialTranslation(material_t *mat,
-                                         material_t *current,
-                                         material_t *next, float inter);
+void            R_SetMaterialTranslation(material_t* mat,
+                                         material_t* current,
+                                         material_t* next, float inter);
 
 #endif

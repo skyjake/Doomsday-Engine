@@ -64,7 +64,7 @@ typedef struct rendpspriteparams_s {
 
 // Appearance
     // Texture:
-    int             lump;
+    int             sprite;
     float           texOffset[2];
     boolean         texFlip[2]; // {X, Y} Flip along the specified axis.
 

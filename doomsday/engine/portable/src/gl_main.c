@@ -637,6 +637,7 @@ void GL_InitRefresh(boolean loadLightMaps, boolean loadFlares)
 void GL_ShutdownRefresh(void)
 {
     GL_ShutdownTextureManager();
+    R_DestroySkyTextures();
     R_DestroySkins();
 }
 
@@ -831,6 +832,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 
         // Delete all textures.
         GL_ShutdownTextureManager();
+        R_DestroySkyTextures();
         GL_ShutdownFont();
     }
     else

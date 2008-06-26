@@ -878,17 +878,18 @@ static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 
 static void R_ScaleModelToSprite(modeldef_t *mf, int sprite, int frame)
 {
-    spritedef_t        *spr = sprites + sprite;
-    int                 idx, off;
+    int                 off;
+    spritedef_t*        spr = &sprites[sprite];
+    material_t*         mat;
 
     if(!spr->numFrames || spr->spriteFrames == NULL)
         return;
 
-    idx = spr->spriteFrames[frame].mats[0]->ofTypeID;
-    off = spriteTextures[idx]->info.offsetY - spriteTextures[idx]->info.height;
+    mat = spr->spriteFrames[frame].mats[0];
+    off = spriteTextures[mat->ofTypeID]->offY - mat->height;
     if(off < 0)
         off = 0;
-    R_ScaleModel(mf, spriteTextures[idx]->info.height, off);
+    R_ScaleModel(mf, mat->height, off);
 }
 
 static float R_GetModelVisualRadius(modeldef_t *mf)
@@ -1350,11 +1351,13 @@ void R_PrecacheModelSkins(modeldef_t *modef)
             st = R_GetSkinTexByIndex(mdl->skins[k].id);
             if(st)
             {
-                GL_BindTexture(GL_PrepareSkin(st, mdl->allowTexComp));
+                GL_BindTexture(GL_PrepareSkin(st, mdl->allowTexComp),
+                               glmode[texMagMode]);
             }
         }
 
-        GL_BindTexture(GL_PrepareShinySkin(R_GetSkinTexByIndex(modef->sub[sub].shinySkin)));
+        GL_BindTexture(GL_PrepareShinySkin(R_GetSkinTexByIndex(modef->sub[sub].shinySkin)),
+                       glmode[texMagMode]);
     }
 }
 

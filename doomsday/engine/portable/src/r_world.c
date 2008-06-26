@@ -1120,26 +1120,33 @@ void R_SetupFogDefaults(void)
 
 void R_SetupSky(ded_mapinfo_t *mapinfo)
 {
-    int         i, k;
-    int         skyTex;
+    int                 i, k;
+    int                 skyTex;
+    int                 ival = 0;
+    float               fval = 0;
 
     if(!mapinfo)
     {   // Go with the defaults.
-        Rend_SkyParams(DD_SKY, DD_HEIGHT, .666667f);
-        Rend_SkyParams(DD_SKY, DD_HORIZON, 0);
-        Rend_SkyParams(0, DD_ENABLE, 0);
-        Rend_SkyParams(0, DD_MATERIAL, R_MaterialNumForName("SKY1", MAT_TEXTURE));
-        Rend_SkyParams(0, DD_MASK, DD_NO);
-        Rend_SkyParams(0, DD_OFFSET, 0);
-        Rend_SkyParams(1, DD_DISABLE, 0);
+
+        fval = .666667f;
+        Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
+        Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
+        Rend_SkyParams(0, DD_ENABLE, NULL);
+        ival = R_MaterialNumForName("SKY1", MAT_TEXTURE);
+        Rend_SkyParams(0, DD_MATERIAL, &ival);
+        ival = DD_NO;
+        Rend_SkyParams(0, DD_MASK, &ival);
+        fval = 0;
+        Rend_SkyParams(0, DD_OFFSET, &fval);
+        Rend_SkyParams(1, DD_DISABLE, NULL);
 
         // There is no sky color.
         noSkyColorGiven = true;
         return;
     }
 
-    Rend_SkyParams(DD_SKY, DD_HEIGHT, mapinfo->skyHeight);
-    Rend_SkyParams(DD_SKY, DD_HORIZON, mapinfo->horizonOffset);
+    Rend_SkyParams(DD_SKY, DD_HEIGHT, &mapinfo->skyHeight);
+    Rend_SkyParams(DD_SKY, DD_HORIZON, &mapinfo->horizonOffset);
     for(i = 0; i < 2; ++i)
     {
         k = mapinfo->skyLayers[i].flags;
@@ -1153,16 +1160,17 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
                 skyTex = R_MaterialNumForName("SKY1", MAT_TEXTURE);
             }
 
-            Rend_SkyParams(i, DD_ENABLE, 0);
-            Rend_SkyParams(i, DD_MATERIAL, skyTex);
-            Rend_SkyParams(i, DD_MASK, k & SLF_MASKED ? DD_YES : DD_NO);
-            Rend_SkyParams(i, DD_OFFSET, mapinfo->skyLayers[i].offset);
+            Rend_SkyParams(i, DD_ENABLE, NULL);
+            Rend_SkyParams(i, DD_MATERIAL, &skyTex);
+            ival = ((k & SLF_MASKED)? DD_YES : DD_NO);
+            Rend_SkyParams(i, DD_MASK, &ival);
+            Rend_SkyParams(i, DD_OFFSET, &mapinfo->skyLayers[i].offset);
             Rend_SkyParams(i, DD_COLOR_LIMIT,
-                           mapinfo->skyLayers[i].colorLimit);
+                           &mapinfo->skyLayers[i].colorLimit);
         }
         else
         {
-            Rend_SkyParams(i, DD_DISABLE, 0);
+            Rend_SkyParams(i, DD_DISABLE, NULL);
         }
     }
 
@@ -1984,10 +1992,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         if((plane->surface.flags & SUF_GLOW) ||
            (plane->PS_material && (plane->PS_material->flags & MATF_GLOW)))
         {
-            if(R_GetMaterialColor(plane->PS_material, plane->glowRGB))
-            {
-                hasGlow = true;
-            }
+            R_GetMaterialColor(plane->PS_material, plane->glowRGB);
+            hasGlow = true;
         }
 
         if(hasGlow)
