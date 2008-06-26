@@ -1214,37 +1214,44 @@ void C_DECL A_SorcererRise(mobj_t *actor)
     mo->target = actor->target;
 }
 
-void P_DSparilTeleport(mobj_t *actor)
+void P_DSparilTeleport(mobj_t* actor)
 {
-    int         i;
-    float       x, y;
-    float       prevpos[3];
-    mobj_t     *mo;
-
     // No spots?
-    if(!bossSpotCount)
-        return;
-
-    i = P_Random();
-    do
+    if(bossSpotCount > 0)
     {
-        i++;
-        x = bossSpots[i % bossSpotCount].pos[VX];
-        y = bossSpots[i % bossSpotCount].pos[VY];
-    } while(P_ApproxDistance(actor->pos[VX] - x, actor->pos[VY] - y) < 128);
+        int                 i, tries;
+        spawnspot_t*        dest;
 
-    memcpy(prevpos, actor->pos, sizeof(prevpos));
+        i = P_Random();
+        tries = bossSpotCount;
 
-    if(P_TeleportMove(actor, x, y, false))
-    {
-        mo = P_SpawnMobj3fv(MT_SOR2TELEFADE, prevpos);
-        S_StartSound(SFX_TELEPT, mo);
+        do
+        {
+            dest = &bossSpots[++i % bossSpotCount];
+            if(P_ApproxDistance(actor->pos[VX] - dest->pos[VX],
+                                actor->pos[VY] - dest->pos[VY]) >= 128)
+            {   // A suitable teleport destination is available.
+                float               prevpos[3];
 
-        P_MobjChangeState(actor, S_SOR2_TELE1);
-        S_StartSound(SFX_TELEPT, actor);
-        actor->pos[VZ] = actor->floorZ;
-        actor->angle = bossSpots[i % bossSpotCount].angle;
-        actor->mom[MX] = actor->mom[MY] = actor->mom[MZ] = 0;
+                memcpy(prevpos, actor->pos, sizeof(prevpos));
+
+                if(P_TeleportMove(actor, dest->pos[VX], dest->pos[VY], false))
+                {
+                    mobj_t*             mo;
+
+                    mo = P_SpawnMobj3fv(MT_SOR2TELEFADE, prevpos);
+                    S_StartSound(SFX_TELEPT, mo);
+
+                    P_MobjChangeState(actor, S_SOR2_TELE1);
+                    actor->pos[VZ] = actor->floorZ;
+                    actor->angle = dest->angle;
+                    actor->mom[MX] = actor->mom[MY] = actor->mom[MZ] = 0;
+                    S_StartSound(SFX_TELEPT, actor);
+                }
+
+                return;
+            }
+        } while(tries-- > 0); // Don't stay here forever.
     }
 }
 
