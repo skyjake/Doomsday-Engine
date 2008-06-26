@@ -32,37 +32,36 @@
 // Sky hemispheres.
 #define SKYHEMI_UPPER       0x1
 #define SKYHEMI_LOWER       0x2
-#define SKYHEMI_JUST_CAP    0x4    // Just draw the top or bottom cap.
-#define SKYHEMI_FADEOUT_BG  0x8    // Draw the fadeout bg when drawing the cap.
+#define SKYHEMI_JUST_CAP    0x4 // Just draw the top or bottom cap.
+#define SKYHEMI_FADEOUT_BG  0x8 // Draw the fadeout bg when drawing the cap.
 
 typedef struct {
-    float           rgb[3];        // The RGB values.
-    short           set, use;      // Is this set? Should be used?
-    float           limit;         // .3 by default.
+    float           rgb[3]; // The RGB values.
+    short           set, use; // Is this set? Should be used?
+    float           limit; // .3 by default.
 } fadeout_t;
 
 // Sky layer flags.
-#define SLF_ENABLED     0x1        // Layer enabled.
-#define SLF_MASKED      0x2        // Mask the layer texture.
+#define SLF_ENABLED         0x1 // Layer enabled.
+#define SLF_MASKED          0x2 // Mask the layer texture.
 
 typedef struct {
     int             flags;
-    int             texture;       // Not the OpenGL texture.
+    int             texture; // Not the OpenGL texture.
     float           offset;
     fadeout_t       fadeout;
 } skylayer_t;
 
 extern int      skyDetail;
 
-// Initialization
+// Initialization:
 void            Rend_SkyRegister(void);
 
 // Functions:
 void            Rend_InitSky(void);
 void            Rend_ShutdownSky(void);
 void            Rend_SkyDetail(int quarterDivs, int rows);
-void            Rend_SkyParams(int layer, int parm, float value);
-void            Rend_SetSkyTexture(int layer, int texture);
+void            Rend_SkyParams(int layer, int param, void* data);
 void            Rend_RenderSky(int hemis);
 
 #endif

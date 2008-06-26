@@ -183,12 +183,12 @@ static void SkyVertex(int r, int c)
     if(!yflip)                  // Flipped Y is for the lower hemisphere.
     {
         DGL_TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
-                      skyTexOff / skyTexWidth, r / (float) skyRows);
+                       skyTexOff / skyTexWidth, r / (float) skyRows);
     }
     else
     {
         DGL_TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
-                      skyTexOff / skyTexWidth, (skyRows - r) / (float) skyRows);
+                       skyTexOff / skyTexWidth, (skyRows - r) / (float) skyRows);
     }
 
     // Also the color.
@@ -305,7 +305,7 @@ static void setupFadeout(skylayer_t *slayer)
 {
     int                 i;
 
-    GL_GetSkyTopColor(slayer->texture, slayer->fadeout.rgb);
+    R_SkyTextureGetTopColor(slayer->texture, slayer->fadeout.rgb);
 
     // Determine if it should be used.
     for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
@@ -320,7 +320,7 @@ static void setupFadeout(skylayer_t *slayer)
 void Rend_RenderSkyHemisphere(int whichHemi)
 {
     int                 i, resetup;
-    skylayer_t         *slayer;
+    skylayer_t*         slayer;
 
     // The current fadeout is the first layer's fadeout.
     currentFO = &skyLayers[firstLayer].fadeout;
@@ -335,33 +335,38 @@ void Rend_RenderSkyHemisphere(int whichHemi)
     {
         if(slayer->flags & SLF_ENABLED)
         {
-            texinfo_t          *texinfo;
-            material_t         *mat;
+            skytexture_t*       skyTex;
 
             resetup = false;
 
-            if(slayer->texture == -1)
+            if(!slayer->texture)
                 Con_Error("Rend_RenderSkyHemisphere: Sky layer "
                           "without a texture!\n");
+
+            skyTex = R_GetSkyTexture(slayer->texture, true);
+            skyTex = skyTex->current;
+            assert(skyTex);
 
             // See if we have to re-setup the fadeout.
             // This happens if the texture is for some reason deleted
             // (forced texture reload, for example).
-            if(NULL == (mat = R_GetMaterial(slayer->texture, MAT_TEXTURE)))
+            if(!skyTex->tex)
                 resetup = true;
 
             // The texture is actually loaded when an update is done.
-            DGL_Bind(renderTextures ?
-                     GL_PrepareSky(mat->current,
-                                  (slayer->flags & SLF_MASKED ? true : false), &texinfo) : 0);
+            GL_BindTexture(renderTextures ?
+                           GL_PrepareSky(skyTex, (slayer->flags & SLF_MASKED ? true : false)) : 0,
+                           glmode[texMagMode]);
 
             if(resetup)
                 setupFadeout(slayer);
 
             if(renderTextures)
             {
-                skyTexWidth = texinfo->width;
-                skyTexHeight = texinfo->height;
+                const texturedef_t* texDef = R_GetTextureDef(skyTex->texture);
+
+                skyTexWidth = texDef->width;
+                skyTexHeight = texDef->height;
             }
             else
                 skyTexWidth = skyTexHeight = 64;
@@ -428,15 +433,16 @@ void Rend_InitSky(void)
     int                 i;
 
     firstLayer = 0;
-    //maxSideAngle = (float) PI/3;
 
     Rend_SkyDetail(skyDetail, skyRows);
 
     // Initialize the layers.
     for(i = 0; i < MAXSKYLAYERS; ++i)
     {
-        skyLayers[i].texture = -1;  // No texture.
-        skyLayers[i].fadeout.limit = .3f;
+        skylayer_t*         slayer = &skyLayers[i];
+
+        slayer->texture = 0; // No texture.
+        slayer->fadeout.limit = .3f;
     }
 }
 
@@ -501,9 +507,9 @@ static void updateLayerStats(void)
     }
 }
 
-static void internalSkyParams(skylayer_t *slayer, int parm, float value)
+static void internalSkyParams(skylayer_t* slayer, int param, void* data)
 {
-    switch(parm)
+    switch(param)
     {
     case DD_ENABLE:
         slayer->flags |= SLF_ENABLED;
@@ -516,44 +522,45 @@ static void internalSkyParams(skylayer_t *slayer, int parm, float value)
         break;
 
     case DD_MASK:
-        if(value == DD_YES)
+        if(*((int*)data) == DD_YES)
         {
             // Invalidate the loaded texture, if necessary.
             if(!(slayer->flags & SLF_MASKED))
-                R_DeleteMaterialTex(slayer->texture, MAT_TEXTURE);
+                R_SkyTextureDeleteTex(R_GetSkyTexture(slayer->texture, false));
             slayer->flags |= SLF_MASKED;
         }
         else
         {
             // Invalidate the loaded texture, if necessary.
             if(slayer->flags & SLF_MASKED)
-                R_DeleteMaterialTex(slayer->texture, MAT_TEXTURE);
+                R_SkyTextureDeleteTex(R_GetSkyTexture(slayer->texture, false));
             slayer->flags &= ~SLF_MASKED;
         }
         break;
 
     case DD_MATERIAL:
-        slayer->texture = (int) value;
-        GL_PrepareSky(R_GetMaterial(slayer->texture, MAT_TEXTURE)->current,
-                      slayer->flags & SLF_MASKED ? true : false, NULL);
+        slayer->texture = *((int*) data);
+        GL_PrepareSky(R_GetSkyTexture(slayer->texture, true)->current,
+                      ((slayer->flags & SLF_MASKED)? true : false));
         setupFadeout(slayer);
         break;
 
     case DD_OFFSET:
-        slayer->offset = value;
+        slayer->offset = *((float*) data);
         break;
 
     case DD_COLOR_LIMIT:
-        slayer->fadeout.limit = value;
+        slayer->fadeout.limit = *((float*) data);
         setupFadeout(slayer);
         break;
 
     default:
-        Con_Error("R_SkyParams: Bad parameter (%d).\n", parm);
+        Con_Error("R_SkyParams: Bad parameter (%d).\n", param);
+        break;
     }
 }
 
-void Rend_SkyParams(int layer, int parm, float value)
+void Rend_SkyParams(int layer, int param, void* data)
 {
     int                 i;
 
@@ -562,37 +569,37 @@ void Rend_SkyParams(int layer, int parm, float value)
 
     if(layer == DD_SKY) // The whole sky?
     {
-        switch (parm)
+        switch(param)
         {
         case DD_COLUMNS:
-            Rend_SkyDetail((int) value, skyRows);
+            Rend_SkyDetail(*((int*) data), skyRows);
             break;
 
         case DD_ROWS:
-            Rend_SkyDetail(skyDetail, (int) value);
+            Rend_SkyDetail(skyDetail, *((int*) data));
             break;
 
         case DD_HEIGHT:
-            maxSideAngle = PI / 2 * value;
+            maxSideAngle = PI / 2 * *((float*) data);
             // Recalculate the vertices.
             Rend_SkyDetail(skyDetail, skyRows);
             break;
 
         case DD_HORIZON:        // horizon offset angle
-            horizonOffset = PI / 2 * value;
+            horizonOffset = PI / 2 * *((float*) data);
             // Recalculate the vertices.
             Rend_SkyDetail(skyDetail, skyRows);
             break;
 
         default:
             // Operate on all layers.
-            for(i = 0; i < MAXSKYLAYERS; i++)
-                internalSkyParams(skyLayers + i, parm, value);
+            for(i = 0; i < MAXSKYLAYERS; ++i)
+                internalSkyParams(&skyLayers[i], param, data);
         }
     }
     // This is for a specific layer.
     else if(layer >= 0 && layer < MAXSKYLAYERS)
-        internalSkyParams(skyLayers + layer, parm, value);
+        internalSkyParams(&skyLayers[layer], param, data);
 }
 
 D_CMD(SkyDetail)

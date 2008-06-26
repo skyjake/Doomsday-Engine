@@ -127,6 +127,9 @@ void P_InitLava(void)
 
 void P_InitSky(int map)
 {
+    int                 ival;
+    float               fval;
+
     Sky1Texture = P_GetMapSky1Texture(map);
     Sky2Texture = P_GetMapSky2Texture(map);
     Sky1ScrollDelta = P_GetMapSky1ScrollDelta(map);
@@ -136,30 +139,39 @@ void P_InitSky(int map)
     DoubleSky = P_GetMapDoubleSky(map);
 
     // First disable all sky layers.
-    Rend_SkyParams(DD_SKY, DD_DISABLE, 0);
+    Rend_SkyParams(DD_SKY, DD_DISABLE, NULL);
 
     // Sky2 is layer zero and Sky1 is layer one.
-    Rend_SkyParams(0, DD_OFFSET, 0);
-    Rend_SkyParams(1, DD_OFFSET, 0);
+    fval = 0;
+    Rend_SkyParams(0, DD_OFFSET, &fval);
+    Rend_SkyParams(1, DD_OFFSET, &fval);
     if(DoubleSky)
     {
-        Rend_SkyParams(0, DD_ENABLE, 0);
-        Rend_SkyParams(0, DD_MASK, DD_NO);
-        Rend_SkyParams(0, DD_MATERIAL, Sky2Texture);
+        Rend_SkyParams(0, DD_ENABLE, NULL);
+        ival = DD_NO;
+        Rend_SkyParams(0, DD_MASK, &ival);
+        ival = Sky2Texture;
+        Rend_SkyParams(0, DD_MATERIAL, &ival);
 
-        Rend_SkyParams(1, DD_ENABLE, 0);
-        Rend_SkyParams(1, DD_MASK, DD_YES);
-        Rend_SkyParams(1, DD_MATERIAL, Sky1Texture);
+        Rend_SkyParams(1, DD_ENABLE, NULL);
+        ival = DD_YES;
+        Rend_SkyParams(1, DD_MASK, &ival);
+        ival = Sky1Texture;
+        Rend_SkyParams(1, DD_MATERIAL, &ival);
     }
     else
     {
-        Rend_SkyParams(0, DD_ENABLE, 0);
-        Rend_SkyParams(0, DD_MASK, DD_NO);
-        Rend_SkyParams(0, DD_MATERIAL, Sky1Texture);
+        Rend_SkyParams(0, DD_ENABLE, NULL);
+        ival = DD_NO;
+        Rend_SkyParams(0, DD_MASK, &ival);
+        ival = Sky1Texture;
+        Rend_SkyParams(0, DD_MATERIAL, &ival);
 
-        Rend_SkyParams(1, DD_DISABLE, 0);
-        Rend_SkyParams(1, DD_MASK, DD_NO);
-        Rend_SkyParams(1, DD_MATERIAL, Sky2Texture);
+        Rend_SkyParams(1, DD_DISABLE, NULL);
+        ival = DD_NO;
+        Rend_SkyParams(1, DD_MASK, &ival);
+        ival = Sky2Texture;
+        Rend_SkyParams(1, DD_MATERIAL, &ival);
     }
 }
 
@@ -1124,8 +1136,8 @@ void P_AnimateSurfaces(void)
     // Update sky column offsets
     Sky1ColumnOffset += Sky1ScrollDelta;
     Sky2ColumnOffset += Sky2ScrollDelta;
-    Rend_SkyParams(1, DD_OFFSET, Sky1ColumnOffset);
-    Rend_SkyParams(0, DD_OFFSET, Sky2ColumnOffset);
+    Rend_SkyParams(1, DD_OFFSET, &Sky1ColumnOffset);
+    Rend_SkyParams(0, DD_OFFSET, &Sky2ColumnOffset);
 
     if(LevelHasLightning)
     {
@@ -1185,8 +1197,8 @@ static void P_LightningFlash(void)
                 }
             }
 
-            Rend_SkyParams(1, DD_DISABLE, 0);
-            Rend_SkyParams(0, DD_ENABLE, 0);
+            Rend_SkyParams(1, DD_DISABLE, NULL);
+            Rend_SkyParams(0, DD_ENABLE, NULL);
         }
         return;
     }
@@ -1241,8 +1253,8 @@ static void P_LightningFlash(void)
         mobj_t *crashorigin = NULL;
 
         // Set the alternate (lightning) sky.
-        Rend_SkyParams(0, DD_DISABLE, 0);
-        Rend_SkyParams(1, DD_ENABLE, 0);
+        Rend_SkyParams(0, DD_DISABLE, NULL);
+        Rend_SkyParams(1, DD_ENABLE, NULL);
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.
