@@ -25,6 +25,7 @@
 			CharacterSet="2"
 			ManagedExtensions="0"
 			WholeProgramOptimization="0"
+			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -116,6 +117,7 @@
 			CharacterSet="2"
 			ManagedExtensions="0"
 			WholeProgramOptimization="0"
+			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"

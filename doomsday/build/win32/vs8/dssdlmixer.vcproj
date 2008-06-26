@@ -24,6 +24,7 @@
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
+			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -118,6 +119,7 @@
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
+			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
