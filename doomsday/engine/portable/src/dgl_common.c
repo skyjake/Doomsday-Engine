@@ -157,6 +157,7 @@ static void printDGLConfiguration(void)
 
     Con_Message("DGL Configuration:\n");
 
+    Con_Message("  NPOT Textures: %s\n", yesNo[DGL_state.textureNonPow2? 1:0]);
     Con_Message("  Texture Compression: %s\n", yesNo[DGL_state_texture.useCompr? 1:0]);
     Con_Message("  Variable Texture Anisotropy: %s\n", yesNo[DGL_state.useAnisotropic? 1:0]);
     Con_Message("  Utilized Texture Units: %i\n", DGL_state.maxTexUnits);
