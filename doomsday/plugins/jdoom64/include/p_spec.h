@@ -43,6 +43,22 @@
 
 #include "d_player.h"
 
+// Any floor type >= FLOOR_LIQUID will floorclip mobjs.
+typedef enum {
+    FLOOR_SOLID,
+    FLOOR_LIQUID,
+    FLOOR_WATER,
+    FLOOR_LAVA,
+    FLOOR_SLUDGE,
+    FLOOR_BLOOD,
+    FLOOR_SLIME,
+    NUM_TERRAIN_TYPES
+} terraintype_t;
+
+void            P_InitTerrainTypes(void);
+terraintype_t   P_GetTerrainType(sector_t* sec, int plane);
+terraintype_t   P_MaterialToTerrainType(materialnum_t num);
+
 // Base plane ids.
 enum {
     PLN_FLOOR,
@@ -56,7 +72,6 @@ enum {
 
 // at game start
 void            P_InitPicAnims(void);
-void            P_InitTerrainTypes(void);
 
 // at map load
 void            P_SpawnSpecials(void);
@@ -65,9 +80,6 @@ void            P_SpawnSpecials(void);
 void            P_UpdateSpecials(void);
 void            P_ThunderSector(void); // jd64
 
-// when needed
-int             P_GetTerrainType(sector_t* sec, int plane);
-int             P_FlatToTerrainType(int flatid);
 boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                                int activationType);
 

@@ -70,18 +70,6 @@
 // GMJ 02/02/02
 #define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seeState)
 
-// Any floor type >= FLOOR_LIQUID will floorclip mobjs.
-enum {
-    FLOOR_SOLID,
-    FLOOR_LIQUID,
-    FLOOR_WATER,
-    FLOOR_LAVA,
-    FLOOR_SLUDGE,
-    FLOOR_BLOOD,
-    FLOOR_SLIME,
-    NUM_TERRAINTYPES
-};
-
 /**
  * (Re)Spawn flags:
  */
@@ -379,7 +367,7 @@ mobj_t     *P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
 
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 void        P_MobjThinker(mobj_t* mo);
-int         P_MobjGetFloorType(mobj_t* mo);
+int         P_MobjGetFloorTerrainType(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 void        P_SetDoomsdayFlags(mobj_t* mo);
 void        P_HitFloor(mobj_t* mo);
