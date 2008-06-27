@@ -263,11 +263,6 @@ static void destroyEditableVertexes(editmap_t *map)
 
 static void destroyMap(void)
 {
-    map->gameObjData.numObjs = 0;
-    map->gameObjData.objs = NULL;
-    map->gameObjData.db.numTables = 0;
-    map->gameObjData.db.tables = NULL;
-
     destroyEditableVertexes(map);
 
     // These should already be gone:
@@ -634,6 +629,11 @@ boolean MPE_Begin(const char *name)
         return true; // Already been here.
 
     MPE_FreeUnclosedSectorList();
+
+    // Init the gameObj lists, and value db.
+    map->gameObjData.db.numTables = 0;
+    map->gameObjData.db.tables = NULL;
+    map->gameObjData.objLists = NULL;
 
     destroyMap();
 

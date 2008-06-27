@@ -906,24 +906,28 @@ static void* getPtrToDBElm(valuedb_t *db, valuetype_t type, uint elmIdx)
  */
 void P_DestroyGameMapObjDB(gameobjdata_t *moData)
 {
-    uint                i;
+    uint                i, j;
 
-    if(moData->objs)
+    if(moData->objLists)
     {
-        for(i = 0; i < moData->numObjs; ++i)
+        for(i = 0; i < numGameMapObjDefs; ++i)
         {
-            gamemapobj_t       *gmo = moData->objs[i];
+            gamemapobjlist_t*       objList = &moData->objLists[i];
 
-            if(gmo->props)
-                M_Free(gmo->props);
+            for(j = 0; j < objList->num; ++j)
+            {
+                gamemapobj_t       *gmo = objList->objs[j];
 
-            M_Free(gmo);
+                if(gmo->props)
+                    M_Free(gmo->props);
+
+                M_Free(gmo);
+            }
         }
 
-        M_Free(moData->objs);
+        M_Free(moData->objLists);
     }
-    moData->objs = NULL;
-    moData->numObjs = 0;
+    moData->objLists = NULL;
 
     if(moData->db.tables)
     {
@@ -945,40 +949,69 @@ void P_DestroyGameMapObjDB(gameobjdata_t *moData)
 
 static uint countGameMapObjs(gameobjdata_t *moData, int identifier)
 {
-    uint                i, n;
-
-    if(!moData)
-        return 0;
-
-    for(i = 0, n = 0; i < moData->numObjs; ++i)
+    if(moData)
     {
-        gamemapobj_t       *gmo = moData->objs[i];
+        uint                i;
 
-        if(gmo->def->identifier == identifier)
-            n++;
+        for(i = 0; i < numGameMapObjDefs; ++i)
+        {
+            gamemapobjlist_t*   objList = &moData->objLists[i];
+
+            if(objList->def->identifier == identifier)
+                return objList->num;
+        }
     }
 
-    return n;
+    return 0;
 }
 
 uint P_CountGameMapObjs(int identifier)
 {
-    gamemap_t          *map = P_GetCurrentMap();
+    gamemap_t*          map = P_GetCurrentMap();
 
     return countGameMapObjs(&map->gameObjData, identifier);
+}
+
+static gamemapobjlist_t* getMapObjList(gameobjdata_t* moData,
+                                       gamemapobjdef_t* def)
+{
+    uint                i;
+
+    for(i = 0; i < numGameMapObjDefs; ++i)
+        if(moData->objLists[i].def == def)
+            return &moData->objLists[i];
+
+    return NULL;
 }
 
 gamemapobj_t* P_GetGameMapObj(gameobjdata_t *moData, gamemapobjdef_t *def,
                               uint elmIdx, boolean canCreate)
 {
     uint                i;
-    gamemapobj_t       *gmo;
+    gamemapobj_t*       gmo;
+    gamemapobjlist_t*   objList;
+
+    if(!moData->objLists)
+    {   // We haven't yet created the lists.
+        moData->objLists = M_Malloc(sizeof(*objList) * numGameMapObjDefs);
+        for(i = 0; i < numGameMapObjDefs; ++i)
+        {
+            objList = &moData->objLists[i];
+
+            objList->def = &gameMapObjDefs[i];
+            objList->objs = NULL;
+            objList->num = 0;
+        }
+    }
+
+    objList = getMapObjList(moData, def);
+    assert(objList);
 
     // Have we already created this gmo?
-    for(i = 0; i < moData->numObjs; ++i)
+    for(i = 0; i < objList->num; ++i)
     {
-        gmo = moData->objs[i];
-        if(gmo->def == def && gmo->elmIdx == elmIdx)
+        gmo = objList->objs[i];
+        if(gmo->elmIdx == elmIdx)
             return gmo; // Yep, return it.
     }
 
@@ -986,11 +1019,10 @@ gamemapobj_t* P_GetGameMapObj(gameobjdata_t *moData, gamemapobjdef_t *def,
         return NULL;
 
     // It is a new gamemapobj.
-    moData->objs =
-        M_Realloc(moData->objs, ++moData->numObjs * sizeof(*moData->objs));
+    objList->objs =
+        M_Realloc(objList->objs, ++objList->num * sizeof(*objList->objs));
 
-    gmo = moData->objs[moData->numObjs - 1] = M_Malloc(sizeof(*gmo));
-    gmo->def = def;
+    gmo = objList->objs[objList->num - 1] = M_Malloc(sizeof(*gmo));
     gmo->elmIdx = elmIdx;
     gmo->numProps = 0;
     gmo->props = NULL;

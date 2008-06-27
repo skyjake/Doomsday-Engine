@@ -131,27 +131,31 @@ typedef struct {
 } customproperty_t;
 
 typedef struct {
-    gamemapobjdef_t    *def;
     uint                elmIdx;
     uint                numProps;
-    customproperty_t   *props;
+    customproperty_t*   props;
 } gamemapobj_t;
+
+typedef struct {
+    uint                num;
+    gamemapobjdef_t*    def;
+    gamemapobj_t**      objs;
+} gamemapobjlist_t;
 
 // Map value databases.
 typedef struct {
     valuetype_t         type;
     uint                numElms;
-    void               *data;
+    void*               data;
 } valuetable_t;
 
 typedef struct {
     uint                numTables;
-    valuetable_t      **tables;
+    valuetable_t**      tables;
 } valuedb_t;
 
 typedef struct {
-    uint                numObjs;
-    gamemapobj_t      **objs;
+    gamemapobjlist_t*   objLists;
     valuedb_t           db;
 } gameobjdata_t;
 
