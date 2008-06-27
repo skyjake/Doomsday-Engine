@@ -125,8 +125,8 @@ typedef enum {
 // The flags that are not included when a player is not the viewpoint.
 #define PDF_NONCAMERA_EXCLUDE   0x70de
 
-#define SDF_FLOORPIC            0x00000001
-#define SDF_CEILINGPIC          0x00000002
+#define SDF_FLOOR_MATERIAL      0x00000001
+#define SDF_CEILING_MATERIAL    0x00000002
 #define SDF_LIGHT               0x00000004
 #define SDF_FLOOR_TARGET        0x00000008
 #define SDF_FLOOR_SPEED         0x00000010
@@ -156,9 +156,9 @@ typedef enum {
 #define SDF_FLOOR_GLOW          0x10000000
 #define SDF_CEIL_GLOW           0x20000000
 
-#define SIDF_TOPTEX             0x0001
-#define SIDF_MIDTEX             0x0002
-#define SIDF_BOTTOMTEX          0x0004
+#define SIDF_TOP_MATERIAL       0x0001
+#define SIDF_MID_MATERIAL       0x0002
+#define SIDF_BOTTOM_MATERIAL    0x0004
 #define SIDF_LINE_FLAGS         0x0008
 #define SIDF_TOP_COLOR_RED      0x0010
 #define SIDF_TOP_COLOR_GREEN    0x0020

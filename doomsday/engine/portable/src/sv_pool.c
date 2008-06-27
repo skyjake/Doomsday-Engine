@@ -708,12 +708,12 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
         r->planes[PLN_FLOOR].surface.material.texture != s->SP_floormaterial->ofTypeID) ||
        (!s->SP_floormaterial &&
         r->planes[PLN_FLOOR].surface.material.texture != 0))
-        df |= SDF_FLOORPIC;
+        df |= SDF_FLOOR_MATERIAL;
     if((s->SP_ceilmaterial &&
         r->planes[PLN_CEILING].surface.material.texture != s->SP_ceilmaterial->ofTypeID) ||
        (!s->SP_ceilmaterial &&
         r->planes[PLN_CEILING].surface.material.texture != 0))
-       df |= SDF_CEILINGPIC;
+       df |= SDF_CEILING_MATERIAL;
     if(r->lightLevel != s->lightLevel)
         df |= SDF_LIGHT;
     if(r->rgb[0] != s->rgb[0])
@@ -853,7 +853,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
         if(r->top.material.texture != s->SW_topmaterial->ofTypeID &&
 	       !(s->SW_topflags & SUF_TEXFIX))
         {
-            df |= SIDF_TOPTEX;
+            df |= SIDF_TOP_MATERIAL;
             if(doUpdate)
                 r->top.material.texture = s->SW_topmaterial->ofTypeID;
         }
@@ -863,7 +863,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
         if(r->top.material.texture != 0 &&
            !(s->SW_topflags & SUF_TEXFIX))
         {
-            df |= SIDF_TOPTEX;
+            df |= SIDF_TOP_MATERIAL;
             if(doUpdate)
                 r->top.material.texture = 0;
         }
@@ -874,7 +874,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
         if(r->middle.material.texture != s->SW_middlematerial->ofTypeID &&
            !(s->SW_middleflags & SUF_TEXFIX))
         {
-            df |= SIDF_MIDTEX;
+            df |= SIDF_MID_MATERIAL;
             if(doUpdate)
                 r->middle.material.texture = s->SW_middlematerial->ofTypeID;
         }
@@ -884,7 +884,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
         if(r->middle.material.texture != 0 &&
            !(s->SW_middleflags & SUF_TEXFIX))
         {
-            df |= SIDF_MIDTEX;
+            df |= SIDF_MID_MATERIAL;
             if(doUpdate)
                 r->middle.material.texture = 0;
         }
@@ -895,7 +895,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
         if(r->bottom.material.texture != s->SW_bottommaterial->ofTypeID &&
            !(s->SW_bottomflags & SUF_TEXFIX))
         {
-            df |= SIDF_BOTTOMTEX;
+            df |= SIDF_BOTTOM_MATERIAL;
             if(doUpdate)
                 r->bottom.material.texture = s->SW_bottommaterial->ofTypeID;
         }
@@ -905,7 +905,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
         if(r->bottom.material.texture != 0 &&
            !(s->SW_bottomflags & SUF_TEXFIX))
         {
-            df |= SIDF_BOTTOMTEX;
+            df |= SIDF_BOTTOM_MATERIAL;
             if(doUpdate)
                 r->bottom.material.texture = 0;
         }
@@ -1406,10 +1406,10 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         const dt_sector_t *s = &((const sectordelta_t *) src)->sector;
         dt_sector_t *d = &((sectordelta_t *) dest)->sector;
 
-        if(sf & SDF_FLOORPIC)
+        if(sf & SDF_FLOOR_MATERIAL)
             d->planes[PLN_FLOOR].surface.material.texture =
                 s->planes[PLN_FLOOR].surface.material.texture;
-        if(sf & SDF_CEILINGPIC)
+        if(sf & SDF_CEILING_MATERIAL)
             d->planes[PLN_CEILING].surface.material.texture =
                 s->planes[PLN_CEILING].surface.material.texture;
         if(sf & SDF_LIGHT)
@@ -1477,11 +1477,11 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         const dt_side_t *s = &((const sidedelta_t *) src)->side;
         dt_side_t *d = &((sidedelta_t *) dest)->side;
 
-        if(sf & SIDF_TOPTEX)
+        if(sf & SIDF_TOP_MATERIAL)
             d->top.material.texture = s->top.material.texture;
-        if(sf & SIDF_MIDTEX)
+        if(sf & SIDF_MID_MATERIAL)
             d->middle.material.texture = s->middle.material.texture;
-        if(sf & SIDF_BOTTOMTEX)
+        if(sf & SIDF_BOTTOM_MATERIAL)
             d->bottom.material.texture = s->bottom.material.texture;
         if(sf & SIDF_LINE_FLAGS)
             d->lineFlags = s->lineFlags;

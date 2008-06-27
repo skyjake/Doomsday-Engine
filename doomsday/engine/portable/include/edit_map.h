@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,17 +56,14 @@ boolean         MPE_End(void);
 uint            MPE_VertexCreate(float x, float y);
 boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
 uint            MPE_SidedefCreate(uint sector, short flags,
-                                  int topMaterial,
-                                  materialtype_t topMaterialType,
+                                  materialnum_t topMaterial,
                                   float topOffsetX, float topOffsetY, float topRed,
                                   float topGreen, float topBlue,
-                                  int middleMaterial,
-                                  materialtype_t middleMaterialType,
+                                  materialnum_t middleMaterial,
                                   float middleOffsetX, float middleOffsetY,
                                   float middleRed, float middleGreen,
                                   float middleBlue, float middleAlpha,
-                                  int bottomMaterial,
-                                  materialtype_t bottomMaterialType,
+                                  materialnum_t bottomMaterial,
                                   float bottomOffsetX, float bottomOffsetY,
                                   float bottomRed, float bottomGreen,
                                   float bottomBlue);
@@ -74,7 +71,7 @@ uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSid
                                   int flags);
 uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
 uint            MPE_PlaneCreate(uint sector, float height,
-                                int material, materialtype_t materialType,
+                                materialnum_t material,
                                 float matOffsetX, float matOffsetY,
                                 float r, float g, float b, float a,
                                 float normalX, float normalY, float normalZ);

@@ -597,42 +597,6 @@ void P_FreeBadTexList(void)
 }
 
 /**
- * Checks texture *name to see if it is a valid name.
- * Or decompose it into a colormap reference, color value etc...
- *
- * Returns the id of the texture else -1. If we are currently doing level
- * setup and the name isn't valid - add the name to the "bad textures" list
- * so it can be presented to the user (in P_CheckMap()) instead of loads of
- * duplicate missing texture messages from Doomsday.
- *
- * @param planeTex      @c true == 'name' comes from a map data field
- *                      intended for plane textures (Flats).
- */
-int P_CheckTexture(char *name, boolean planeTex, int dataType,
-                   unsigned int element, int property)
-{
-    int         id;
-
-    id = R_MaterialNumForName(name, (planeTex? MAT_FLAT : MAT_TEXTURE));
-
-    // At this point we don't know WHAT it is.
-    // Perhaps the game knows what to do?
-    if(id == -1 && gx.HandleMapDataPropertyValue)
-        id = gx.HandleMapDataPropertyValue(element, dataType, property,
-                                           DDVT_FLAT_INDEX, name);
-
-    // Hmm, must be a bad texture name then...?
-    // During level setup we collect this info so we can
-    // present it to the user latter on.
-    if(levelSetup && id == -1)
-    {
-        P_RegisterUnknownTexture(name, planeTex);
-    }
-
-    return id;
-}
-
-/**
  * Look up a mapobj definition.
  *
  * @param identifer     If objName is @c NULL, compare using this unique identifier.

@@ -471,12 +471,12 @@ if(num >= numSectors)
         sec = &dummy;
     }
 
-    if(df & SDF_FLOORPIC)
+    if(df & SDF_FLOOR_MATERIAL)
         Surface_SetMaterial(&sec->SP_floorsurface,
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
-    if(df & SDF_CEILINGPIC)
+            R_GetMaterialByNum(Msg_ReadPackedShort()));
+    if(df & SDF_CEILING_MATERIAL)
         Surface_SetMaterial(&sec->SP_ceilsurface,
-            R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
+            R_GetMaterialByNum(Msg_ReadPackedShort()));
     if(df & SDF_LIGHT)
         sec->lightLevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
@@ -629,7 +629,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
     unsigned short      num;
 
-    int                 df, toptexture = 0, midtexture = 0, bottomtexture = 0;
+    int                 df, topMat = 0, midMat = 0, botMat = 0;
     int                 blendmode = 0;
     byte                lineFlags = 0, sideFlags = 0;
     float               toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
@@ -650,12 +650,12 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         df = Msg_ReadPackedLong();
     }
 
-    if(df & SIDF_TOPTEX)
-        toptexture = Msg_ReadPackedShort();
-    if(df & SIDF_MIDTEX)
-        midtexture = Msg_ReadPackedShort();
-    if(df & SIDF_BOTTOMTEX)
-        bottomtexture = Msg_ReadPackedShort();
+    if(df & SIDF_TOP_MATERIAL)
+        topMat = Msg_ReadPackedShort();
+    if(df & SIDF_MID_MATERIAL)
+        midMat = Msg_ReadPackedShort();
+    if(df & SIDF_BOTTOM_MATERIAL)
+        botMat = Msg_ReadPackedShort();
     if(df & SIDF_LINE_FLAGS)
         lineFlags = Msg_ReadByte();
 
@@ -702,15 +702,15 @@ if(num >= numSideDefs)
 
     sid = SIDE_PTR(num);
 
-    if(df & SIDF_TOPTEX)
+    if(df & SIDF_TOP_MATERIAL)
         Surface_SetMaterial(&sid->SW_topsurface,
-                             R_GetMaterial(toptexture, MAT_TEXTURE));
-    if(df & SIDF_MIDTEX)
+                            R_GetMaterialByNum(topMat));
+    if(df & SIDF_MID_MATERIAL)
         Surface_SetMaterial(&sid->SW_middlesurface,
-                             R_GetMaterial(midtexture, MAT_TEXTURE));
-    if(df & SIDF_BOTTOMTEX)
+                            R_GetMaterialByNum(midMat));
+    if(df & SIDF_BOTTOM_MATERIAL)
         Surface_SetMaterial(&sid->SW_bottomsurface,
-                             R_GetMaterial(bottomtexture, MAT_TEXTURE));
+                            R_GetMaterialByNum(botMat));
 
     if(df & SIDF_TOP_COLOR_RED)
         Surface_SetColorR(&sid->SW_topsurface, toprgb[CR]);

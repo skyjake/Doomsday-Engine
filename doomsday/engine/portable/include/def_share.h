@@ -130,11 +130,12 @@ typedef struct {
 	int             tickerInterval;
 	int             actSound, deactSound;
 	int             evChain, actChain, deactChain;
-	int             wallSection, actTex, deactTex;
+	int             wallSection;
+    materialnum_t   actMaterial, deactMaterial;
     int             actLineType, deactLineType;
 	char           *actMsg, *deactMsg;
-	float           texMoveAngle;
-	float           texMoveSpeed;
+	float           materialMoveAngle;
+	float           materialMoveSpeed;
 	int             iparm[DDLT_MAX_PARAMS];
 	float           fparm[DDLT_MAX_PARAMS];
 	char           *sparm[DDLT_MAX_SPARAMS];
@@ -154,8 +155,8 @@ typedef struct {
 	int             count[DDLT_MAX_CHAINS];
 	int             ambientSound;
 	float           soundInterval[2];	// min,max
-	float           texMoveAngle[2];	// floor, ceil
-	float           texMoveSpeed[2];	// floor, ceil
+	float           materialMoveAngle[2];	// floor, ceil
+	float           materialMoveSpeed[2];	// floor, ceil
 	float           windAngle;
 	float           windSpeed;
 	float           verticalWind;

@@ -82,29 +82,39 @@ extern uint numMaterials;
 void            R_InitMaterials(void);
 void            R_ShutdownMaterials(void);
 void            R_MarkMaterialsForUpdating(void);
-
-material_t*     R_MaterialCreate(const char* name, int ofTypeID, materialtype_t type);
-material_t*     R_GetMaterial(int ofTypeID, materialtype_t type);
-
-boolean         R_IsCustomMaterial(int ofTypeID, materialtype_t type);
-
-void            R_PrecacheMaterial(material_t* mat);
-
-void            R_GetMaterialColor(const material_t* mat, float* rgb);
-ded_reflection_t* R_GetMaterialReflection(material_t* mat);
-const ded_decor_t* R_GetMaterialDecoration(const material_t* mat);
-const ded_ptcgen_t* P_GetMaterialPtcGen(const material_t* mat);
-
-void            R_DeleteMaterialTex(material_t* mat);
 void            R_DeleteMaterialTextures(materialtype_t type);
-void            R_SetMaterialMinMode(int minMode);
+void            R_SetAllMaterialsMinMode(int minMode);
 
-// Return values are the original IDs.
-int             R_CheckMaterialNumForName(const char* name, materialtype_t type);
-int             R_MaterialNumForName(const char* name, materialtype_t type);
-const char     *R_MaterialNameForNum(int ofTypeID, materialtype_t type);
-void            R_SetMaterialTranslation(material_t* mat,
+// Lookup:
+material_t*     R_GetMaterial(int ofTypeID, materialtype_t type);
+material_t*     R_GetMaterialByNum(materialnum_t num);
+materialnum_t   R_GetMaterialNum(const material_t* mat);
+
+// Lookup (public):
+materialnum_t   R_MaterialCheckNumForName(const char* name, materialtype_t type);
+materialnum_t   R_MaterialNumForName(const char* name, materialtype_t type);
+const char*     R_MaterialNameForNum(materialnum_t num);
+
+// Creation:
+material_t*     R_MaterialCreate(const char* name, int ofTypeID, materialtype_t type);
+
+// Set/Get:
+void            R_MaterialSetMinMode(material_t* mat, int minMode);
+void            R_MaterialSetTranslation(material_t* mat,
                                          material_t* current,
                                          material_t* next, float inter);
+
+boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
+void            R_MaterialGetColor(material_t* mat, float* rgb);
+ded_reflection_t* R_MaterialGetReflection(material_t* mat);
+const ded_decor_t* R_MaterialGetDecoration(material_t* mat);
+const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat);
+
+// Misc:
+boolean         R_MaterialIsCustom(materialnum_t num);
+boolean         R_MaterialIsCustom2(const material_t* mat);
+
+void            R_MaterialPrecache(material_t* mat);
+void            R_MaterialDeleteTex(material_t* mat);
 
 #endif

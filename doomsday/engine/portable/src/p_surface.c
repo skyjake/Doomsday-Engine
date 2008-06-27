@@ -57,7 +57,7 @@
  * @param mat           Ptr to the material to change to.
  * @return              @c true, if changed successfully.
  */
-boolean Surface_SetMaterial(surface_t *suf, struct material_s *mat)
+boolean Surface_SetMaterial(surface_t* suf, struct material_s* mat)
 {
     if(!suf || !mat)
         return false;
@@ -84,7 +84,7 @@ boolean Surface_SetMaterial(surface_t *suf, struct material_s *mat)
  *
  * @return              @c true, if the change was made successfully.
  */
-boolean Surface_SetMaterialOffsetX(surface_t *suf, float x)
+boolean Surface_SetMaterialOffsetX(surface_t* suf, float x)
 {
     if(!suf)
         return false;
@@ -108,7 +108,7 @@ boolean Surface_SetMaterialOffsetX(surface_t *suf, float x)
  *
  * @return              @c true, if the change was made successfully.
  */
-boolean Surface_SetMaterialOffsetY(surface_t *suf, float y)
+boolean Surface_SetMaterialOffsetY(surface_t* suf, float y)
 {
     if(!suf)
         return false;
@@ -133,7 +133,7 @@ boolean Surface_SetMaterialOffsetY(surface_t *suf, float y)
  *
  * @return              @c true, if the change was made successfully.
  */
-boolean Surface_SetMaterialOffsetXY(surface_t *suf, float x, float y)
+boolean Surface_SetMaterialOffsetXY(surface_t* suf, float x, float y)
 {
     if(!suf)
         return false;
@@ -153,7 +153,7 @@ boolean Surface_SetMaterialOffsetXY(surface_t *suf, float x, float y)
 /**
  * Update the surface, red color component.
  */
-boolean Surface_SetColorR(surface_t *suf, float r)
+boolean Surface_SetColorR(surface_t* suf, float r)
 {
     if(!suf)
         return false;
@@ -174,7 +174,7 @@ boolean Surface_SetColorR(surface_t *suf, float r)
 /**
  * Update the surface, green color component.
  */
-boolean Surface_SetColorG(surface_t *suf, float g)
+boolean Surface_SetColorG(surface_t* suf, float g)
 {
     if(!suf)
         return false;
@@ -195,7 +195,7 @@ boolean Surface_SetColorG(surface_t *suf, float g)
 /**
  * Update the surface, blue color component.
  */
-boolean Surface_SetColorB(surface_t *suf, float b)
+boolean Surface_SetColorB(surface_t* suf, float b)
 {
     if(!suf)
         return false;
@@ -216,7 +216,7 @@ boolean Surface_SetColorB(surface_t *suf, float b)
 /**
  * Update the surface, alpha.
  */
-boolean Surface_SetColorA(surface_t *suf, float a)
+boolean Surface_SetColorA(surface_t* suf, float a)
 {
     if(!suf)
         return false;
@@ -237,8 +237,8 @@ boolean Surface_SetColorA(surface_t *suf, float a)
 /**
  * Update the surface, color.
  */
-boolean Surface_SetColorRGBA(surface_t *suf, float r, float g, float b,
-                              float a)
+boolean Surface_SetColorRGBA(surface_t* suf, float r, float g, float b,
+                             float a)
 {
     if(!suf)
         return false;
@@ -266,7 +266,7 @@ boolean Surface_SetColorRGBA(surface_t *suf, float r, float g, float b,
 /**
  * Update the surface, blendmode.
  */
-boolean Surface_SetBlendMode(surface_t *suf, blendmode_t blendMode)
+boolean Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode)
 {
     if(!suf)
         return false;
@@ -281,7 +281,7 @@ boolean Surface_SetBlendMode(surface_t *suf, blendmode_t blendMode)
 /**
  * Mark the surface as requiring a full update. Called during engine-reset.
  */
-void Surface_Update(surface_t *suf)
+void Surface_Update(surface_t* suf)
 {
     if(!suf)
         return;
@@ -292,7 +292,7 @@ void Surface_Update(surface_t *suf)
 /**
  * Update the surface, property is selected by DMU_* name.
  */
-boolean Surface_SetProperty(surface_t *suf, const setargs_t *args)
+boolean Surface_SetProperty(surface_t* suf, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -344,10 +344,10 @@ boolean Surface_SetProperty(surface_t *suf, const setargs_t *args)
         break;
     case DMU_MATERIAL:
         {
-        short           texture;
-        DMU_SetValue(DMT_MATERIAL, &texture, args, 0);
+        materialnum_t   mat;
+        DMU_SetValue(DMT_MATERIAL, &mat, args, 0);
 
-        Surface_SetMaterial(suf, R_GetMaterial(texture, MAT_TEXTURE));
+        Surface_SetMaterial(suf, R_GetMaterialByNum(mat));
         }
         break;
     case DMU_MATERIAL_OFFSET_X:
@@ -389,11 +389,11 @@ boolean Surface_GetProperty(const surface_t *suf, setargs_t *args)
     {
     case DMU_MATERIAL:
         {
-        short ofTypeID = (suf->material? suf->material->ofTypeID : 0);
+        materialnum_t mat = R_GetMaterialNum(suf->material);
 
         if(suf->flags & SUF_TEXFIX)
-            ofTypeID = 0;
-        DMU_GetValue(DMT_MATERIAL, &ofTypeID, args, 0);
+            mat = 0;
+        DMU_GetValue(DMT_MATERIAL, &mat, args, 0);
         break;
         }
     case DMU_MATERIAL_OFFSET_X:

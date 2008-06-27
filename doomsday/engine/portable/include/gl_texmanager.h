@@ -136,15 +136,15 @@ DGLuint         GL_PreparePatch(lumpnum_t lump);
 DGLuint         GL_PrepareRawTex(lumpnum_t lump, boolean part2);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare);
-unsigned int    GL_PreparePSprite(int pnum);
+unsigned int    GL_PreparePSprite(materialnum_t num);
 byte           *GL_GetPalette(void);
 byte           *GL_GetPal18to8(void);
 
-void            GL_SetMaterial(int idx, materialtype_t type);
+void            GL_SetMaterial(materialnum_t num);
 
 unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
-void            GL_SetPSprite(int pnum);
-void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
+void            GL_SetPSprite(materialnum_t num);
+void            GL_SetTranslatedSprite(materialnum_t num, int tmap, int tclass);
 void            GL_NewSplitTex(lumpnum_t lump, DGLuint part2name);
 void            GL_SetNoTexture(void);
 void            GL_UpdateTexParams(int mipmode);

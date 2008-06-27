@@ -331,12 +331,12 @@ extern          "C" {
         int             actLineType;
         int             deactLineType;
         ded_flags_t     wallSection;
-        ded_stringid_t  actTex;
-        ded_stringid_t  deactTex;
+        ded_stringid_t  actMaterial;
+        ded_stringid_t  deactMaterial;
         char            actMsg[128];
         char            deactMsg[128];
-        float           texMoveAngle;
-        float           texMoveSpeed;
+        float           materialMoveAngle;
+        float           materialMoveSpeed;
         int             iparm[20];
         char            iparmStr[20][64];
         float           fparm[20];
@@ -356,8 +356,8 @@ extern          "C" {
         int             count[5];
         ded_soundid_t   ambientSound;
         float           soundInterval[2]; // min,max
-        float           texMoveAngle[2]; // floor, ceil
-        float           texMoveSpeed[2]; // floor, ceil
+        float           materialMoveAngle[2]; // floor, ceil
+        float           materialMoveSpeed[2]; // floor, ceil
         float           windAngle;
         float           windSpeed;
         float           verticalWind;
@@ -416,9 +416,8 @@ extern          "C" {
     typedef struct ded_ptcgen_s {
         struct ded_ptcgen_s *stateNext; // List of generators for a state.
         ded_stateid_t   state; // Triggered by this state (if mobj-gen).
-        ded_string_t    surface; // Texture or flat name.
-        int             isTexture; // True, if particle generator for a wall.
-        int             surfaceIndex; // Texture or flat index.
+        ded_string_t    materialName; // Texture or flat name.
+        materialtype_t  materialType;
         ded_mobjid_t    type; // Triggered by this type of mobjs.
         ded_mobjid_t    type2; // Also triggered by this type.
         int             typeNum;
@@ -484,19 +483,17 @@ extern          "C" {
 #define DED_DECOR_NUM_MODELS    8
 
     typedef struct ded_decor_s {
-        ded_string_t    surface; // Texture or flat name.
-        int             isTexture; // True, if decoration for a wall.
+        ded_string_t    materialName; // Texture or flat name.
+        materialtype_t  materialType;
         int             glow;
         ded_flags_t     flags;
-        int             surfaceIndex; // Flat or texture index.
         ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
         ded_decormodel_t models[DED_DECOR_NUM_MODELS];
     } ded_decor_t;
 
     typedef struct ded_reflection_s {
-        ded_string_t    surface; // Texture or flat name.
-        int             isTexture; // True, if reflection for a wall.
-        int             surfaceIndex; // Texture or flat index.
+        ded_string_t    materialName; // Texture or flat name.
+        materialtype_t  materialType;
         blendmode_t     blendMode; // Blend mode flags (bm_*).
         float           shininess;
         float           minColor[3];

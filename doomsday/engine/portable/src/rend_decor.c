@@ -424,7 +424,7 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
 
         R_ClearSurfaceDecorations(suf);
 
-        def = R_GetMaterialDecoration(suf->material);
+        def = R_MaterialGetDecoration(suf->material);
         if(def)
         {
             if(line->L_backside)
@@ -746,7 +746,7 @@ static void decoratePlane(const sector_t *sec, plane_t *pln,
 
         R_ClearSurfaceDecorations(suf);
 
-        def = R_GetMaterialDecoration(pln->PS_material);
+        def = R_MaterialGetDecoration(pln->PS_material);
         if(def)
         {
             // Generate a number of models.

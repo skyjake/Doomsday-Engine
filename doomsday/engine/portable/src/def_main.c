@@ -393,7 +393,7 @@ acfnptr_t Def_GetActionPtr(char *name)
     return 0;
 }
 
-ded_mapinfo_t *Def_GetMapInfo(const char *mapID)
+ded_mapinfo_t* Def_GetMapInfo(const char* mapID)
 {
     int                 i;
 
@@ -407,18 +407,22 @@ ded_mapinfo_t *Def_GetMapInfo(const char *mapID)
     return 0;
 }
 
-ded_decor_t *Def_GetDecoration(int number, boolean is_texture, boolean has_ext)
+ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
 {
-    ded_decor_t        *def;
+    ded_decor_t*        def;
     int                 i;
 
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i;
         i >= 0; i--, def--)
     {
-        if(!def->isTexture == !is_texture && number == def->surfaceIndex)
+        material_t*         defMat =
+            R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
+                                                    def->materialType));
+
+        if(mat == defMat)
         {
             // Is this suitable?
-            if(R_IsAllowedDecoration(def, number, has_ext))
+            if(R_IsAllowedDecoration(def, mat, hasExt))
                 return def;
         }
     }
@@ -432,29 +436,32 @@ ded_decor_t *Def_GetDecoration(int number, boolean is_texture, boolean has_ext)
  * patch overrides the texture that the reflection was meant to be
  * used with, nothing is done to react to the situation.
  */
-ded_reflection_t *Def_GetReflection(int number, boolean is_texture)
+ded_reflection_t* Def_GetReflection(struct material_s* mat)
 {
-    ded_reflection_t   *ref;
+    ded_reflection_t*   def;
     int                 i;
 
-    for(i = defs.count.reflections.num - 1, ref = defs.reflections + i;
-        i >= 0; --i, --ref)
+    for(i = defs.count.reflections.num - 1, def = defs.reflections + i;
+        i >= 0; --i, --def)
     {
-        if(!ref->isTexture == !is_texture && number == ref->surfaceIndex)
+        material_t*         defMat =
+            R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
+                                                    def->materialType));
+        if(mat == defMat)
         {
             // It would be great to have a unified system that would
             // determine whether effects such as decorations and
             // reflections are allowed for a certain resource...
-            return ref;
+            return def;
         }
     }
 
     return 0;
 }
 
-ded_xgclass_t *Def_GetXGClass(char *name)
+ded_xgclass_t* Def_GetXGClass(const char* name)
 {
-    ded_xgclass_t      *def;
+    ded_xgclass_t*      def;
     int                 i;
 
     if(!name || !name[0])
@@ -470,7 +477,7 @@ ded_xgclass_t *Def_GetXGClass(char *name)
     return 0;
 }
 
-int Def_GetFlagValue(char *flag)
+int Def_GetFlagValue(const char* flag)
 {
     int                 i;
 
@@ -487,7 +494,7 @@ int Def_GetFlagValue(char *flag)
  * Returns a ptr to the text string of the first flag it
  * finds that matches the criteria, else NULL.
  */
-char *Def_GetFlagTextByPrefixVal(char *prefix, int val)
+const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
 {
     int                 i;
 
@@ -499,7 +506,7 @@ char *Def_GetFlagTextByPrefixVal(char *prefix, int val)
     return NULL;
 }
 
-int Def_EvalFlags(char *ptr)
+int Def_EvalFlags(char* ptr)
 {
     int                 value = 0, len;
     char                buf[64];
@@ -516,7 +523,7 @@ int Def_EvalFlags(char *ptr)
     return value;
 }
 
-int Def_GetTextNumForName(char *name)
+int Def_GetTextNumForName(const char* name)
 {
     int                 i;
 
@@ -696,6 +703,24 @@ int Def_GetIntValue(char *val, int *returned_val)
     return false;
 }
 
+static void readDefs(void)
+{
+    int                 i;
+    float               starttime = Sys_GetSeconds();
+
+    for(i = 0; dedFiles[i]; ++i)
+    {
+        Con_Message("Reading definition file: %s\n", M_PrettyPath(dedFiles[i]));
+        Def_ReadProcessDED(dedFiles[i]);
+    }
+
+    // Read definitions from WAD files.
+    Def_ReadLumpDefs();
+
+    VERBOSE(Con_Message("Def_ReadDefs: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - starttime));
+}
+
 /**
  * Reads the specified definition files, and creates the sprite name,
  * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
@@ -721,14 +746,8 @@ void Def_Read(void)
     // Reset file IDs so previously seen files can be processed again.
     M_ResetFileIDs();
 
-    for(i = 0; dedFiles[i]; ++i)
-    {
-        Con_Message("Reading definition file: %s\n", M_PrettyPath(dedFiles[i]));
-        Def_ReadProcessDED(dedFiles[i]);
-    }
-
-    // Read definitions from WAD files.
-    Def_ReadLumpDefs();
+    // Read all definitions, files and lumps.
+    readDefs();
 
     // Any definition hooks?
     Plug_DoHook(HOOK_DEFS, 0, &defs);
@@ -736,6 +755,8 @@ void Def_Read(void)
     // Check that enough defs were found.
     if(!defs.count.states.num || !defs.count.mobjs.num)
         Con_Error("DD_ReadDefs: No state or mobj definitions found!\n");
+
+    Con_Message("Definitions:\n");
 
     // Sprite names.
     DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames),
@@ -934,12 +955,6 @@ void Def_Read(void)
         ded_ptcgen_t       *pg = &defs.ptcGens[i];
         int                 st = Def_GetStateNum(pg->state);
 
-        if(pg->surface[0])
-            pg->surfaceIndex =
-                R_CheckMaterialNumForName(pg->surface, MAT_FLAT);
-        else
-            pg->surfaceIndex = -1;
-
         pg->typeNum = Def_GetMobjNum(pg->type);
         pg->type2Num = Def_GetMobjNum(pg->type2);
         pg->damageNum = Def_GetMobjNum(pg->damage);
@@ -1067,31 +1082,18 @@ void Def_PostInit(void)
     for(i = 0; i < defs.count.details.num; ++i)
     {
         details[i].wallTexture =
-            R_CheckMaterialNumForName(defs.details[i].wall, MAT_TEXTURE);
+            R_MaterialCheckNumForName(defs.details[i].wall, MAT_TEXTURE);
         details[i].flatTexture =
-            R_CheckMaterialNumForName(defs.details[i].flat, MAT_FLAT);
+            R_MaterialCheckNumForName(defs.details[i].flat, MAT_FLAT);
         details[i].detailLump =
             W_CheckNumForName(defs.details[i].detailLump.path);
         details[i].glTex = 0; // Not loaded.
-    }
-
-    // Surface decorations.
-    for(i = 0; i < defs.count.decorations.num; ++i)
-    {
-        ded_decor_t *decor = defs.decorations + i;
-
-        decor->surfaceIndex =
-            R_CheckMaterialNumForName(decor->surface,
-                                      (decor->isTexture? MAT_TEXTURE : MAT_FLAT));
     }
 
     // Surface reflections.
     for(i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t *ref = defs.reflections + i;
-
-        ref->surfaceIndex =
-            R_CheckMaterialNumForName(ref->surface, (ref->isTexture? MAT_TEXTURE : MAT_FLAT));
 
         // Initialize the pointers to handle textures.
         ref->shinyTex = ref->maskTex = 0;
@@ -1284,12 +1286,12 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     l->actLineType = def->actLineType;
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
-    l->actTex = Friendly(R_CheckMaterialNumForName(def->actTex, MAT_TEXTURE));
-    l->deactTex = Friendly(R_CheckMaterialNumForName(def->deactTex, MAT_TEXTURE));
+    l->actMaterial = R_MaterialCheckNumForName(def->actMaterial, MAT_TEXTURE);
+    l->deactMaterial = R_MaterialCheckNumForName(def->deactMaterial, MAT_TEXTURE);
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
-    l->texMoveAngle = def->texMoveAngle;
-    l->texMoveSpeed = def->texMoveSpeed;
+    l->materialMoveAngle = def->materialMoveAngle;
+    l->materialMoveSpeed = def->materialMoveSpeed;
     memcpy(l->iparm, def->iparm, sizeof(int) * 20);
     memcpy(l->fparm, def->fparm, sizeof(int) * 20);
     LOOPi(5) l->sparm[i] = def->sparm[i];
@@ -1313,13 +1315,13 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                 l->iparm[k] = -1;
             else
                 l->iparm[k] =
-                    Friendly(R_CheckMaterialNumForName(def->iparmStr[k], MAT_FLAT));
+                    R_MaterialCheckNumForName(def->iparmStr[k], MAT_TEXTURE);
         }
         else if(a & MAP_FLAT)
         {
             if(def->iparmStr[k][0])
                 l->iparm[k] =
-                    Friendly(R_CheckMaterialNumForName(def->iparmStr[k], MAT_FLAT));
+                    R_MaterialCheckNumForName(def->iparmStr[k], MAT_FLAT);
         }
         else if(a & MAP_MUS)
         {
@@ -1366,8 +1368,8 @@ void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
     LOOPi(2)
     {
         s->soundInterval[i] = def->soundInterval[i];
-        s->texMoveAngle[i] = def->texMoveAngle[i];
-        s->texMoveSpeed[i] = def->texMoveSpeed[i];
+        s->materialMoveAngle[i] = def->materialMoveAngle[i];
+        s->materialMoveSpeed[i] = def->materialMoveSpeed[i];
     }
     s->windAngle = def->windAngle;
     s->windSpeed = def->windSpeed;

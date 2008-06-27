@@ -1497,7 +1497,7 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
         if(tempflags & RPF2_SHINY)
         {
             ded_reflection_t* ref =
-                R_GetMaterialReflection(surface->material);
+                R_MaterialGetReflection(surface->material);
 
             // Make sure the texture has been loaded.
             if(GL_LoadReflectionMap(ref))
@@ -2332,7 +2332,7 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
         if((tempflags & RPF2_SHINY) && !R_IsSkySurface(surface))
         {
             ded_reflection_t*   ref =
-                R_GetMaterialReflection(surface->material);
+                R_MaterialGetReflection(surface->material);
 
             // Make sure the texture has been loaded.
             if(GL_LoadReflectionMap(ref))

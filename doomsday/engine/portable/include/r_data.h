@@ -327,7 +327,7 @@ void            R_PrecachePatch(lumpnum_t lump);
 void            R_DestroyAnimGroups(void);
 void            R_InitAnimGroup(ded_group_t* def);
 void            R_ResetAnimGroups(void);
-boolean         R_IsInAnimGroup(int groupNum, materialtype_t type, int number);
+boolean         R_IsInAnimGroup(int groupNum, const material_t* mat);
 void            R_AnimateAnimGroups(void);
 
 const texturedef_t* R_GetTextureDef(int num);
@@ -356,7 +356,7 @@ rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
 rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
 rawtex_t**      R_CollectRawTexs(int* count);
 
-boolean         R_IsAllowedDecoration(ded_decor_t* def, int index,
+boolean         R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
                                       boolean hasExternal);
 boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 void            R_GenerateDecorMap(ded_decor_t* def);

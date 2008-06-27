@@ -1153,7 +1153,7 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
         if(k & SLF_ENABLED)
         {
             skyTex = R_MaterialNumForName(mapinfo->skyLayers[i].texture, MAT_TEXTURE);
-            if(skyTex == -1)
+            if(!skyTex)
             {
                 Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
                             mapinfo->skyLayers[i].texture);
@@ -1992,7 +1992,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         if((plane->surface.flags & SUF_GLOW) ||
            (plane->PS_material && (plane->PS_material->flags & MATF_GLOW)))
         {
-            R_GetMaterialColor(plane->PS_material, plane->glowRGB);
+            R_MaterialGetColor(plane->PS_material, plane->glowRGB);
             hasGlow = true;
         }
 

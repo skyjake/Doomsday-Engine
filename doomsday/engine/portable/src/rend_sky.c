@@ -539,7 +539,7 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
         break;
 
     case DD_MATERIAL:
-        slayer->texture = *((int*) data);
+        slayer->texture = R_GetMaterialByNum(*((int*) data))->ofTypeID;
         GL_PrepareSky(R_GetSkyTexture(slayer->texture, true)->current,
                       ((slayer->flags & SLF_MASKED)? true : false));
         setupFadeout(slayer);

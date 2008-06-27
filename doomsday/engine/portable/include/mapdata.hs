@@ -123,7 +123,7 @@ struct subsector
 end
 
 public
-#define DMT_MATERIAL DDVT_SHORT
+#define DMT_MATERIAL DDVT_INT
 end
 
 internal

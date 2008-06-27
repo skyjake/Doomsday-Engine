@@ -443,6 +443,7 @@ int DD_Main(void)
 static int DD_StartupWorker(void *parm)
 {
     int                 p = 0;
+    float               starttime;
 
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
@@ -539,12 +540,15 @@ static int DD_StartupWorker(void *parm)
     HandleArgs(1);              // Only the WADs.
 
     Con_Message("W_Init: Init WADfiles.\n");
+    starttime = Sys_GetSeconds();
 
     // Add real files from the Auto directory to the wadFiles list.
     DD_AddAutoData(false);
 
     W_InitMultipleFiles(wadFiles);
     F_InitDirec();
+    VERBOSE(Con_Message("W_Init: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - starttime));
 
     Con_SetProgress(75);
 
@@ -1127,7 +1131,7 @@ void DD_SetVariable(int ddvalue, void *parm)
 
         case DD_SKYMASKMATERIAL_NAME:
             {
-            int             mat;
+            materialnum_t   mat;
             char            name[9];
             size_t          len;
 
@@ -1137,8 +1141,8 @@ void DD_SetVariable(int ddvalue, void *parm)
             strncpy(name, parm, len);
             name[len] = '\0';
 
-            if((mat = R_MaterialNumForName(name, MAT_FLAT)) != -1)
-                skyMaskMaterial = R_GetMaterial(mat, MAT_FLAT);
+            if((mat = R_MaterialNumForName(name, MAT_FLAT)))
+                skyMaskMaterial = R_GetMaterialByNum(mat);
             }
             return;
 

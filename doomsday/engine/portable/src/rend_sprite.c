@@ -382,7 +382,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
 
-    params->sprite = idx;
+    params->mat = mat;
     params->ambientColor[CA] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)
@@ -445,7 +445,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     gl_vertex_t         quadNormals[4];
 
     if(renderTextures == 1)
-        GL_SetPSprite(params->sprite);
+        GL_SetPSprite(R_GetMaterialNum(params->mat));
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
         GL_BindTexture(GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX)),

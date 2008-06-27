@@ -1418,13 +1418,13 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_FLT("Mask height", ref->maskHeight)
                 if(ISLABEL("Texture"))
                 {
-                    READSTR(ref->surface)
-                    ref->isTexture = true;
+                    READSTR(ref->materialName)
+                    ref->materialType = MAT_TEXTURE;
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(ref->surface)
-                    ref->isTexture = false;
+                    READSTR(ref->materialName)
+                    ref->materialType = MAT_FLAT;
                 }
                 else RV_END
                 CHECKSC;
@@ -1459,8 +1459,8 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("State", gen->state)
                 if(ISLABEL("Flat"))
                 {
-                    READSTR(gen->surface)
-                    gen->isTexture = false;
+                    READSTR(gen->materialName)
+                    gen->materialType = MAT_FLAT;
                 }
                 else
                 RV_STR("Mobj", gen->type)
@@ -1600,13 +1600,13 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_FLAGS("Flags", decor->flags, "dcf_")
                 if(ISLABEL("Texture"))
                 {
-                    READSTR(decor->surface)
-                    decor->isTexture = true;
+                    READSTR(decor->materialName)
+                    decor->materialType = MAT_TEXTURE;
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(decor->surface)
-                    decor->isTexture = false;
+                    READSTR(decor->materialName)
+                    decor->materialType = MAT_FLAT;
                 }
                 else if(ISLABEL("Glow"))
                 {
@@ -1841,14 +1841,18 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_INT("Act chain", l->actChain)
                 RV_INT("Deact chain", l->deactChain)
                 RV_FLAGS("Wall section", l->wallSection, "lws_")
-                RV_STR("Act texture", l->actTex)
-                RV_STR("Deact texture", l->deactTex)
+                RV_STR("Act texture", l->actMaterial)
+                RV_STR("Act material", l->actMaterial) // Alias
+                RV_STR("Deact texture", l->deactMaterial)
+                RV_STR("Deact material", l->deactMaterial) // Alias
                 RV_INT("Act type", l->actLineType)
                 RV_INT("Deact type", l->deactLineType)
                 RV_STR("Act message", l->actMsg)
                 RV_STR("Deact message", l->deactMsg)
-                RV_FLT("Texmove angle", l->texMoveAngle)
-                RV_FLT("Texmove speed", l->texMoveSpeed)
+                RV_FLT("Texmove angle", l->materialMoveAngle)
+                RV_FLT("Materialmove angle", l->materialMoveAngle) // Alias
+                RV_FLT("Texmove speed", l->materialMoveSpeed)
+                RV_FLT("Materialmove speed", l->materialMoveSpeed) // Alias
                 RV_STR_INT("Ip0", l->iparmStr[0], l->iparm[0])
                 RV_STR_INT("Ip1", l->iparmStr[1], l->iparm[1])
                 RV_STR_INT("Ip2", l->iparmStr[2], l->iparm[2])
@@ -1998,10 +2002,14 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_STR("Ambient sound", sec->ambientSound)
                 RV_FLT("Ambient min interval", sec->soundInterval[0])
                 RV_FLT("Ambient max interval", sec->soundInterval[1])
-                RV_FLT("Floor texmove angle", sec->texMoveAngle[0])
-                RV_FLT("Ceiling texmove angle", sec->texMoveAngle[1])
-                RV_FLT("Floor texmove speed", sec->texMoveSpeed[0])
-                RV_FLT("Ceiling texmove speed", sec->texMoveSpeed[1])
+                RV_FLT("Floor texmove angle", sec->materialMoveAngle[0])
+                RV_FLT("Floor materialmove angle", sec->materialMoveAngle[0]) // Alias
+                RV_FLT("Ceiling texmove angle", sec->materialMoveAngle[1])
+                RV_FLT("Ceiling materialmove angle", sec->materialMoveAngle[1]) // Alias
+                RV_FLT("Floor texmove speed", sec->materialMoveSpeed[0])
+                RV_FLT("Floor materialmove speed", sec->materialMoveSpeed[0]) // Alias
+                RV_FLT("Ceiling texmove speed", sec->materialMoveSpeed[1])
+                RV_FLT("Ceiling materialmove speed", sec->materialMoveSpeed[1]) // Alias
                 RV_FLT("Wind angle", sec->windAngle)
                 RV_FLT("Wind speed", sec->windSpeed)
                 RV_FLT("Vertical wind", sec->verticalWind)

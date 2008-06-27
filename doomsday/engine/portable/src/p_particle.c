@@ -1194,7 +1194,7 @@ void P_CheckPtcPlanes(void)
 
             if(mat && mat->type == MAT_FLAT)
             {
-                const ded_ptcgen_t*     def = P_GetMaterialPtcGen(mat);
+                const ded_ptcgen_t*     def = R_MaterialGetPtcGen(mat);
 
                 if(!def)
                     continue;

@@ -81,12 +81,12 @@ int Cl_ReadSectorDelta(void)
     // Flags.
     df = Msg_ReadPackedShort();
 
-    if(df & SDF_FLOORPIC)
+    if(df & SDF_FLOOR_MATERIAL)
         Surface_SetMaterial(&sec->SP_floorsurface,
-                             R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
-    if(df & SDF_CEILINGPIC)
+                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    if(df & SDF_CEILING_MATERIAL)
         Surface_SetMaterial(&sec->SP_ceilsurface,
-                             R_GetMaterial(Msg_ReadPackedShort(), MAT_FLAT));
+                             R_GetMaterialByNum(Msg_ReadPackedShort()));
     if(df & SDF_LIGHT)
         sec->lightLevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_TARGET)
@@ -190,15 +190,15 @@ int Cl_ReadSideDelta(void)
     // Flags.
     df = Msg_ReadByte();
 
-    if(df & SIDF_TOPTEX)
+    if(df & SIDF_TOP_MATERIAL)
         Surface_SetMaterial(&sid->SW_topsurface,
-                             R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE));
-    if(df & SIDF_MIDTEX)
+                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    if(df & SIDF_MID_MATERIAL)
         Surface_SetMaterial(&sid->SW_middlesurface,
-                             R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE));
-    if(df & SIDF_BOTTOMTEX)
+                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    if(df & SIDF_BOTTOM_MATERIAL)
         Surface_SetMaterial(&sid->SW_bottomsurface,
-                             R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE));
+                             R_GetMaterialByNum(Msg_ReadPackedShort()));
 
     if(df & SIDF_LINE_FLAGS)
     {

@@ -42,7 +42,7 @@ typedef struct setargs_s {
     fixed_t        *fixedValues;
     float          *floatValues;
     angle_t        *angleValues;
-    void         **ptrValues;
+    void          **ptrValues;
 } setargs_t;
 
 void        P_InitMapUpdate(void);

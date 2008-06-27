@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,22 +107,13 @@ static materialdict_t *materialDict;
 static void addMaterialToDict(materialdict_t *dict, material_t *mat)
 {
     int                 c;
-    char                name[9];
     dictentry_t *e;
-
-    // Get the name of the material.
-    if(R_MaterialNameForNum(mat->ofTypeID, mat->type))
-        strncpy(name, R_MaterialNameForNum(mat->ofTypeID, mat->type), 8);
-    else
-        strncpy(name, BADTEXNAME, 8);
-
-    name[8] = 0;
 
     // Has this already been registered?
     for(c = 0; c < dict->count; c++)
     {
         if(dict->table[c].type == mat->type &&
-           !stricmp(dict->table[c].name, name))
+           !stricmp(dict->table[c].name, mat->name))
         {   // Yes. skip it...
             return;
         }
@@ -131,7 +122,7 @@ static void addMaterialToDict(materialdict_t *dict, material_t *mat)
     e = &dict->table[dict->count];
     dict->count++;
 
-    strncpy(e->name, name, 8);
+    strncpy(e->name, mat->name, 8);
     e->name[8] = '\0';
     e->type = mat->type;
 }
@@ -162,14 +153,13 @@ static void initMaterialDict(const gamemap_t *map, materialdict_t *dict)
     }
 }
 
-static uint searchMaterialDict(materialdict_t *dict,
-                               const char *name, materialtype_t type)
+static uint searchMaterialDict(materialdict_t *dict, const material_t* mat)
 {
     int                 i;
 
     for(i = 0; i < dict->count; i++)
-        if(dict->table[i].type == type &&
-           !stricmp(dict->table[i].name, name))
+        if(dict->table[i].type == mat->type &&
+           !stricmp(dict->table[i].name, mat->name))
             return i;
 
     // Not found?!!!
@@ -179,17 +169,9 @@ static uint searchMaterialDict(materialdict_t *dict,
 /**
  * @return              The archive number of the given texture.
  */
-static uint getMaterialDictID(materialdict_t *dict, material_t *mat)
+static uint getMaterialDictID(materialdict_t *dict, const material_t* mat)
 {
-    char            name[9];
-
-    if(R_MaterialNameForNum(mat->ofTypeID, mat->type))
-        strncpy(name, R_MaterialNameForNum(mat->ofTypeID, mat->type), 8);
-    else
-        strncpy(name, BADTEXNAME, 8);
-    name[8] = 0;
-
-    return searchMaterialDict(dict, name, mat->type);
+    return searchMaterialDict(dict, mat);
 }
 
 static material_t* lookupMaterialFromDict(materialdict_t *dict, int idx)
@@ -199,7 +181,7 @@ static material_t* lookupMaterialFromDict(materialdict_t *dict, int idx)
     if(!strncmp(e->name, BADTEXNAME, 8))
         return NULL;
 
-    return R_GetMaterial(R_MaterialNumForName(e->name, e->type), e->type);
+    return R_GetMaterialByNum(R_MaterialNumForName(e->name, e->type));
 }
 
 static boolean openMapFile(char *path, boolean write)

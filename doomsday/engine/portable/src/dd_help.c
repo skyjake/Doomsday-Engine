@@ -289,9 +289,12 @@ char* DH_GetString(void* foundNode, int type)
 void DD_InitHelp(void)
 {
     char                helpFileName[256];
+    float               starttime;
 
     if(helpInited)
-        return;
+        return; // Already inited.
+
+    starttime = Sys_GetSeconds();
 
     // Init the links.
     helpRoot.next = helpRoot.prev = &helpRoot;
@@ -308,6 +311,9 @@ void DD_InitHelp(void)
 
     // Help is now available.
     helpInited = true;
+
+    VERBOSE(Con_Message("DD_InitHelp: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - starttime));
 }
 
 /**

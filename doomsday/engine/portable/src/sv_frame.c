@@ -472,9 +472,9 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     // Flags.
     Msg_WritePackedLong(df);
 
-    if(df & SDF_FLOORPIC)
+    if(df & SDF_FLOOR_MATERIAL)
         Msg_WritePackedShort(d->planes[PLN_FLOOR].surface.material.texture);
-    if(df & SDF_CEILINGPIC)
+    if(df & SDF_CEILING_MATERIAL)
         Msg_WritePackedShort(d->planes[PLN_CEILING].surface.material.texture);
     if(df & SDF_LIGHT)
     {
@@ -567,11 +567,11 @@ void Sv_WriteSideDelta(const void *deltaPtr)
     // Flags.
     Msg_WritePackedLong(df);
 
-    if(df & SIDF_TOPTEX)
+    if(df & SIDF_TOP_MATERIAL)
         Msg_WritePackedShort(d->top.material.texture);
-    if(df & SIDF_MIDTEX)
+    if(df & SIDF_MID_MATERIAL)
         Msg_WritePackedShort(d->middle.material.texture);
-    if(df & SIDF_BOTTOMTEX)
+    if(df & SIDF_BOTTOM_MATERIAL)
         Msg_WritePackedShort(d->bottom.material.texture);
 
     if(df & SIDF_LINE_FLAGS)

@@ -1281,8 +1281,7 @@ static unsigned int prepareFlat2(material_t* mat, byte* result)
         int                 lump = flats[mat->ofTypeID]->lump;
 
         // Try to load a high resolution version of this flat.
-        if((loadExtAlways || highResWithPWAD ||
-            !R_IsCustomMaterial(mat->ofTypeID, MAT_FLAT)) &&
+        if((loadExtAlways || highResWithPWAD || !R_MaterialIsCustom2(mat)) &&
            (flatptr = GL_LoadHighResFlat(&image, mat->name)) != NULL)
         {
             RGBData = true;
@@ -1810,8 +1809,7 @@ static DGLuint prepareTexture2(material_t* mat, byte* result)
         boolean             alphaChannel = false, RGBData = false;
 
         // Try to load a high resolution version of this texture.
-        if((loadExtAlways || highResWithPWAD ||
-            !R_IsCustomMaterial(mat->ofTypeID, MAT_TEXTURE)) &&
+        if((loadExtAlways || highResWithPWAD || !R_MaterialIsCustom2(mat)) &&
            GL_LoadHighResTexture(&image, mat->name) != NULL)
         {
             // High resolution texture loaded.
@@ -1986,7 +1984,7 @@ transspr_t *GL_NewTranslatedSprite(int pnum, unsigned char *table)
 
 transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
 {
-    int     i;
+    int                 i;
 
     for(i = 0; i < numTransSprites; ++i)
         if(transSprites[i]->patch == pnum && transSprites[i]->table == table)
@@ -1998,10 +1996,9 @@ transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
  * Uploads the sprite in the buffer and sets the appropriate texture
  * parameters.
  */
-unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
-                                    boolean isPsprite)
+unsigned int GL_PrepareSpriteBuffer(image_t* image, boolean isPsprite)
 {
-    unsigned int texture = 0;
+    unsigned int        texture;
 
     if(image->pixelSize == 1 && fillOutlines)
         ColorOutlines(image->pixels, image->width, image->height);
@@ -2016,13 +2013,21 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
     return texture;
 }
 
-unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
+unsigned int GL_PrepareTranslatedSprite(materialnum_t num, int tmap,
+                                        int tclass)
 {
-    unsigned char *table =
+    unsigned char*      table =
         translationTables - 256 + tclass * ((8 - 1) * 256) + tmap * 256;
-    transspr_t *tspr = GL_GetTranslatedSprite(pnum, table);
-    image_t image;
+    int                 pnum;
+    material_t*         mat = R_GetMaterialByNum(num);
+    transspr_t*         tspr;
+    image_t             image;
 
+    if(!mat)
+        return 0;
+
+    pnum = mat->ofTypeID;
+    tspr = GL_GetTranslatedSprite(pnum, table);
     if(!tspr)
     {
         filename_t resource, fileName;
@@ -2060,7 +2065,7 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
         }
 
         tspr = GL_NewTranslatedSprite(pnum, table);
-        tspr->tex = GL_PrepareSpriteBuffer(pnum, &image, false);
+        tspr->tex = GL_PrepareSpriteBuffer(&image, false);
         // Determine coordinates for the texture.
         GL_SetTexCoords(spriteTextures[pnum]->texCoord, image.width,
                         image.height);
@@ -2140,7 +2145,7 @@ static DGLuint prepareSprite(material_t* mat)
                          &sprTex->flareX, &sprTex->flareY,
                          &sprTex->autoLightColor);
 
-        mat->dgl.tex = GL_PrepareSpriteBuffer(pnum, &image, false);
+        mat->dgl.tex = GL_PrepareSpriteBuffer(&image, false);
         mat->dgl.masked = 1;
         // Determine coordinates for the texture.
         GL_SetTexCoords(sprTex->texCoord, image.width, image.height);
@@ -2151,16 +2156,17 @@ static DGLuint prepareSprite(material_t* mat)
     return mat->dgl.tex;
 }
 
-unsigned int GL_PreparePSprite(int pnum)
+unsigned int GL_PreparePSprite(materialnum_t num)
 {
     DGLuint*            texture;
     int                 lumpNum;
     spritetex_t*        sprTex;
+    material_t*         mat = R_GetMaterialByNum(num);
 
-    if(pnum < 0 || pnum >= numSpriteTextures)
+    if(!mat || mat->type != MAT_SPRITE)
         return 0;
 
-    sprTex = spriteTextures[pnum];
+    sprTex = spriteTextures[mat->ofTypeID];
     lumpNum = sprTex->lump;
 
     // Normal sprites and HUD sprites are stored separately.
@@ -2201,7 +2207,7 @@ unsigned int GL_PreparePSprite(int pnum)
                           0, 0, false, 0, false);
         }
 
-        *texture = GL_PrepareSpriteBuffer(pnum, &image, true);
+        *texture = GL_PrepareSpriteBuffer(&image, true);
         // Determine coordinates for the texture.
         GL_SetTexCoords(sprTex->texCoord, image.width, image.height);
         GL_DestroyImage(&image);
@@ -2225,15 +2231,15 @@ void GL_DeleteHUDSprite(int idx)
     }
 }
 
-void GL_SetPSprite(int pnum)
+void GL_SetPSprite(materialnum_t num)
 {
-    GL_BindTexture(GL_PreparePSprite(pnum),
+    GL_BindTexture(GL_PreparePSprite(num),
                    filterSprites? DGL_LINEAR : DGL_NEAREST);
 }
 
-void GL_SetTranslatedSprite(int pnum, int tmap, int tclass)
+void GL_SetTranslatedSprite(materialnum_t num, int tmap, int tclass)
 {
-    GL_BindTexture(GL_PrepareTranslatedSprite(pnum, tmap, tclass),
+    GL_BindTexture(GL_PrepareTranslatedSprite(num, tmap, tclass),
                    filterSprites? DGL_LINEAR : DGL_NEAREST);
 }
 
@@ -2895,7 +2901,7 @@ void GL_SetTextureParams(int minMode, int gameTex, int uiTex)
 
     if(gameTex)
     {
-        R_SetMaterialMinMode(minMode);
+        R_SetAllMaterialsMinMode(minMode);
 
         // Translated sprites.
         for(i = 0; i < numTransSprites; ++i)
@@ -3140,8 +3146,7 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
 
             if(result)
             {   // We need to update the assocated enhancements.
-                ded_decor_t        *def =
-                    Def_GetDecoration(mat->ofTypeID, false, result == 2);
+                ded_decor_t*        def = Def_GetDecoration(mat, result == 2);
 
                 mat->flags &= ~MATF_GLOW;
                 if(def)
@@ -3154,22 +3159,25 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
                 }
 
                 // Get the surface reflection for this.
-                mat->reflection = Def_GetReflection(mat->ofTypeID, false);
+                mat->reflection = Def_GetReflection(mat);
 
                 // Get the particle generator definition for this.
                 {
-                ded_ptcgen_t       *def;
+                ded_ptcgen_t*       def;
                 int                 i, g;
                 boolean             found = false;
 
                 // The generator will be determined now.
                 for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
                 {
+                    material_t         *defMat =
+                        R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
+                                                                def->materialType));
+
                     if(def->flags & PGF_GROUP)
                     {
                         // This generator is triggered by all the materials in
                         // the animation group.
-                        material_t         *defMat = R_GetMaterial(def->surfaceIndex, (def->isTexture? MAT_TEXTURE : MAT_FLAT));
 
                         // We only need to search if we know both the real used flat
                         // and the flat of this definition belong in an animgroup.
@@ -3181,8 +3189,8 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
                                 if(groups[g].flags & AGF_PRECACHE)
                                     continue;
 
-                                if(R_IsInAnimGroup(groups[g].id, (def->isTexture? MAT_TEXTURE : MAT_FLAT), def->surfaceIndex) &&
-                                    R_IsInAnimGroup(groups[g].id, mat->type, mat->ofTypeID))
+                                if(R_IsInAnimGroup(groups[g].id, defMat) &&
+                                    R_IsInAnimGroup(groups[g].id, mat))
                                 {
                                     // Both are in this group! This def will do.
                                     mat->ptcGen = def;
@@ -3192,8 +3200,7 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
                         }
                     }
 
-                    if(mat->type == (def->isTexture? MAT_TEXTURE : MAT_FLAT) &&
-                       def->surfaceIndex == mat->ofTypeID)
+                    if(mat == defMat)
                     {
                         mat->ptcGen = def;
                         found = true;
@@ -3211,8 +3218,7 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
 
             if(result)
             {   // We need to update the associated enhancements.
-                ded_decor_t        *def =
-                    Def_GetDecoration(mat->ofTypeID, true, result == 2);
+                ded_decor_t        *def = Def_GetDecoration(mat, result == 2);
 
                 mat->flags &= ~MATF_GLOW;
                 if(def)
@@ -3224,8 +3230,8 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
                         def->flags |= MATF_GLOW;
                 }
 
-                // Get the reflection for this surface.
-                mat->reflection = Def_GetReflection(mat->ofTypeID, true);
+                // Get the surface reflection for this surface.
+                mat->reflection = Def_GetReflection(mat);
             }
             break;
 
@@ -3247,9 +3253,9 @@ DGLuint GL_PrepareMaterial(struct material_s* mat)
     return GL_PrepareMaterial2(mat->current);
 }
 
-void GL_SetMaterial(int idx, materialtype_t type)
+void GL_SetMaterial(materialnum_t num)
 {
-    material_t*         mat = R_GetMaterial(idx, type);
+    material_t*         mat = R_GetMaterialByNum(num);
 
     if(mat)
     {

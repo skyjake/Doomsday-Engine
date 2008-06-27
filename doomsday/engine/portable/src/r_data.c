@@ -583,31 +583,24 @@ animgroup_t *R_GetAnimGroup(int number)
 /**
  * This function is exported and accessible from DLLs.
  */
-void R_AddToAnimGroup(int groupNum, const char *name, materialtype_t type,
-                      int tics, int randomTics)
+void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
+                      int randomTics)
 {
     animgroup_t        *group;
     animframe_t        *frame;
-    int                 number;
     material_t         *mat;
-
-    if(!name || !name[0])
-        return;
 
     group = R_GetAnimGroup(groupNum);
     if(!group)
         Con_Error("R_AddToAnimGroup: Unknown anim group %i.", groupNum);
 
-    number = R_CheckMaterialNumForName(name, type);
-
-    if(number < 0)
+    mat = R_GetMaterialByNum(num);
+    if(!mat)
     {
-        Con_Message("R_AddToAnimGroup: No type %i material named '%s'.",
-                    (int) type, name);
+        Con_Message("R_AddToAnimGroup: Invalid material num '%i'.", num);
         return;
     }
 
-    mat = R_GetMaterial(number, type);
     // Mark the material as being in an animgroup.
     mat->inGroup = true;
 
@@ -623,11 +616,10 @@ void R_AddToAnimGroup(int groupNum, const char *name, materialtype_t type,
     frame->random = randomTics;
 }
 
-boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
+boolean R_IsInAnimGroup(int groupNum, const material_t* mat)
 {
     int                 i;
     animgroup_t        *group = R_GetAnimGroup(groupNum);
-    material_t         *mat = R_GetMaterial(number, type);
 
     if(!group)
         return false;
@@ -649,17 +641,17 @@ boolean R_IsInAnimGroup(int groupNum, materialtype_t type, int number)
  */
 void R_InitAnimGroup(ded_group_t *def)
 {
-    int                 i, ofTypeIDX;
-    int                 groupNumber = -1;
+    int                 i, groupNumber = -1;
+    materialnum_t       num;
 
     for(i = 0; i < def->count.num; ++i)
     {
         ded_group_member_t *gm = &def->members[i];
 
-        ofTypeIDX =
-            R_CheckMaterialNumForName(gm->name, (materialtype_t) gm->type);
+        num =
+            R_MaterialCheckNumForName(gm->name, (materialtype_t) gm->type);
 
-        if(ofTypeIDX < 0)
+        if(!num)
             continue;
 
         // Only create a group when the first texture is found.
@@ -669,8 +661,7 @@ void R_InitAnimGroup(ded_group_t *def)
             groupNumber = R_CreateAnimGroup(def->flags);
         }
 
-        R_AddToAnimGroup(groupNumber, gm->name, gm->type,
-                         gm->tics, gm->randomTics);
+        R_AddToAnimGroup(groupNumber, num, gm->tics, gm->randomTics);
     }
 }
 
@@ -842,8 +833,8 @@ typedef struct {
     size_t              offset, maxoff, maxoff2, totalPatches;
     int                 numtextures1, numtextures2;
     int*                directory;
-    char                buf[64];
     void*               storage;
+    float               starttime = Sys_GetSeconds();
 
     // Load the patch names from the PNAMES lump.
     {
@@ -880,7 +871,7 @@ typedef struct {
     }
     numTextureDefs = numtextures1 + numtextures2;
 
-    sprintf(buf, "R_Init: Initializing %i textures...", numTextureDefs);
+    Con_Message("R_ReadTextureDefs: Found %i textures.\n", numTextureDefs);
 
     textureDefs = Z_Malloc(numTextureDefs * sizeof(*textureDefs),
                            PU_REFRESHTEX, 0);
@@ -901,7 +892,7 @@ typedef struct {
 
         offset = LONG(*directory);
         if(offset > maxoff)
-            Con_Error("R_InitTextures: Bad texture directory");
+            Con_Error("R_ReadTextureDefs: Bad texture directory");
 
         if(gameDataFormat == 0)
         {   // DOOM format.
@@ -919,7 +910,7 @@ typedef struct {
                     strncpy(patchName, name_p + SHORT(mpatch->patch) * 8, 8);
                     patchName[8] = 0;
 
-                    Con_Error("R_InitTextures: Missing patch \"%s\" in texture %s",
+                    Con_Error("R_ReadTextureDefs: Missing patch \"%s\" in texture %s",
                               patchName, mtexture->name);
                 }
         }
@@ -939,7 +930,7 @@ typedef struct {
                     strncpy(patchName, name_p + SHORT(mpatch->patch) * 8, 8);
                     patchName[8] = 0;
 
-                    Con_Error("R_InitTextures: Missing patch \"%s\" in texture %s",
+                    Con_Error("R_ReadTextureDefs: Missing patch \"%s\" in texture %s",
                               patchName, smtexture->name);
                 }
         }
@@ -1019,6 +1010,9 @@ typedef struct {
         Z_Free(maptex2);
 
     M_Free(patchlookup);
+
+    VERBOSE(Con_Message("R_ReadTextureDefs: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - starttime));
 }
 
 /**
@@ -1147,6 +1141,7 @@ void R_InitFlats(void)
 {
     int                 i;
     boolean             inFlatBlock;
+    float               starttime = Sys_GetSeconds();
 
     numFlats = 0;
 
@@ -1173,6 +1168,9 @@ void R_InitFlats(void)
 
         R_NewFlat(i);
     }
+
+    VERBOSE(Con_Message("R_InitFlats: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - starttime));
 }
 
 /**
@@ -1454,7 +1452,8 @@ boolean R_IsValidLightDecoration(const ded_decorlight_t *lightDef)
  * @return              @c true, if the given decoration works under the
  *                      specified circumstances.
  */
-boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
+boolean R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
+                              boolean hasExternal)
 {
     if(hasExternal)
     {
@@ -1462,7 +1461,7 @@ boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
     }
 
     // Is it probably an original texture?
-    if(!R_IsCustomMaterial(index, (def->isTexture? MAT_TEXTURE : MAT_FLAT)))
+    if(!R_MaterialIsCustom2(mat))
         return !(def->flags & DCRF_NO_IWAD);
 
     return (def->flags & DCRF_PWAD) != 0;
@@ -1586,7 +1585,7 @@ void R_PrecacheLevel(void)
 
     i = 0;
     while(i < numMaterials && matPresent[i])
-        R_PrecacheMaterial(matPresent[i++]);
+        R_MaterialPrecache(matPresent[i++]);
 
     // We are done with list of used materials.
     M_Free(matPresent);
@@ -1653,7 +1652,7 @@ void R_AnimateAnimGroups(void)
                 next =
                     group->frames[(group->index + k + 1) % group->count].mat;
 
-                R_SetMaterialTranslation(real, current, next, 0);
+                R_MaterialSetTranslation(real, current, next, 0);
 
                 // Just animate the first in the sequence?
                 if(group->flags & AGF_FIRST_ONLY)

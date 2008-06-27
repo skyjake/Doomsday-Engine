@@ -160,27 +160,11 @@ static void installSpriteLump(lumpnum_t lump, uint frame, uint rotation,
     sprTemp[frame].flip[rotation] = (byte) flipped;
 }
 
-/**
- * Pass a null terminated list of sprite names (4 chars exactly) to be used
- * Builds the sprite rotation matrixes to account for horizontally flipped
- * sprites.  Will report an error if the lumps are inconsistant.
- *
- * Sprite lump names are 4 characters for the actor, a letter for the frame,
- * and a number for the rotation, A sprite that is flippable will have an
- * additional letter/number appended.  The rotation character can be 0 to
- * signify no rotations.
- */
-void R_InitSpriteDefs(void)
+static void initSpriteDefs(void)
 {
     int                 i, l, intname, frame, rotation;
     boolean             inSpriteBlock;
-
-    numSpriteTextures = 0;
-    numSprites = countSprNames.num;
-
-    // Check that some sprites are defined.
-    if(!numSprites)
-        return;
+    float               starttime = Sys_GetSeconds();
 
     sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_SPRITE, NULL);
 
@@ -303,6 +287,30 @@ void R_InitSpriteDefs(void)
         // The possible model frames are initialized elsewhere.
         //sprites[i].modeldef = -1;
     }
+
+    VERBOSE(Con_Message("R_InitSpriteDefs: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - starttime));
+}
+
+/**
+ * Builds the sprite rotation matrixes to account for horizontally flipped
+ * sprites.  Will report an error if the lumps are inconsistant.
+ *
+ * Sprite lump names are 4 characters for the actor, a letter for the frame,
+ * and a number for the rotation, A sprite that is flippable will have an
+ * additional letter/number appended.  The rotation character can be 0 to
+ * signify no rotations.
+ */
+void R_InitSpriteDefs(void)
+{
+    numSpriteTextures = 0;
+    numSprites = countSprNames.num;
+
+    // Check that some sprites are defined.
+    if(!numSprites)
+        return;
+
+    initSpriteDefs();
 }
 
 void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
@@ -331,7 +339,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     sprTex = spriteTextures[mat->ofTypeID];
 
     info->numFrames = sprDef->numFrames;
-    info->idx = mat->ofTypeID;
+    info->matIdx = R_GetMaterialNum(mat);
     info->realLump = sprTex->lump;
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
@@ -351,31 +359,6 @@ void R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info)
     info->height = SHORT(patch->height);
     info->topOffset = SHORT(patch->topOffset);
     info->offset = SHORT(patch->leftOffset);
-}
-
-/**
- * Populate 'info' with information about the requested material.
- *
- * @param ofTypeId      Index of material.
- * @param type          Type of material.
- * @param info          Ptr to info to be populated.
- */
-void R_GetMaterialInfo(int ofTypeId, materialtype_t type,
-                       materialinfo_t* info)
-{
-    material_t*         mat;
-
-    if(!info)
-        Con_Error("R_GetMaterialInfo: Info paramater invalid.");
-
-    if(NULL == (mat = R_GetMaterial(ofTypeId, type)))
-        Con_Error("R_GetMaterialInfo: Invalid material (id=%i, type=%i).",
-                  ofTypeId, (int) type);
-
-    info->ofTypeID = mat->ofTypeID;
-    info->type = mat->type;
-    info->width = (int) mat->width;
-    info->height = (int) mat->height;
 }
 
 /**

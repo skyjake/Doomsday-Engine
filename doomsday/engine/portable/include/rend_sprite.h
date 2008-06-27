@@ -43,7 +43,7 @@ typedef struct rendspriteparams_s {
     blendmode_t     blendMode;
 
     // Material:
-    material_t     *mat;
+    material_t*     mat;
     int             tMap, tClass;
     float           matOffset[2];
     boolean         matFlip[2]; // {X, Y} Flip along the specified axis.
@@ -51,10 +51,10 @@ typedef struct rendspriteparams_s {
     // Lighting/color:
     float           ambientColor[4];
     uint            numLights;
-    vlight_t       *lights;
+    vlight_t*       lights;
 
 // Misc
-    struct subsector_s *subsector;
+    struct subsector_s* subsector;
 } rendspriteparams_t;
 
 typedef struct rendpspriteparams_s {
@@ -64,14 +64,14 @@ typedef struct rendpspriteparams_s {
 
 // Appearance
     // Texture:
-    int             sprite;
+    material_t*     mat;
     float           texOffset[2];
     boolean         texFlip[2]; // {X, Y} Flip along the specified axis.
 
     // Lighting/color:
     float           ambientColor[4];
     uint            numLights;
-    vlight_t       *lights;
+    vlight_t*       lights;
 } rendpspriteparams_t;
 
 extern int      spriteLight;
