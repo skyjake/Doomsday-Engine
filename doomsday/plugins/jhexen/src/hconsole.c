@@ -91,18 +91,18 @@ DEFCC(CCmdMovePlane);
 DEFCC(CCmdScreenShot);
 DEFCC(CCmdViewSize);
 DEFCC(CCmdHexenFont);
+DEFCC(CCmdConBackground);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     consoleFlat = 0;
+materialnum_t consoleBG = 0;
 float   consoleZoom = 1;
 
 // Console variables.
 cvar_t  gameCVars[] = {
 // Console
-    {"con-flat", CVF_NO_MAX, CVT_INT, &consoleFlat, 0, 0},
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
@@ -192,6 +192,7 @@ ccmd_t  gameCCmds[] = {
     {"where",       "",     CCmdCheatWhere},
 
     {"hexenfont",   "",     CCmdHexenFont},
+    {"conbg",       "s",    CCmdConBackground},
 
     // $infine
     {"startinf",    "s",    CCmdStartInFine},
@@ -241,9 +242,9 @@ void G_ConsoleRegistration(void)
  */
 void G_ConsoleBg(int *width, int *height)
 {
-    if(consoleFlat)
+    if(consoleBG)
     {
-        GL_SetMaterial(consoleFlat, MAT_FLAT);
+        GL_SetMaterial(consoleBG);
         *width = (int) (64 * consoleZoom);
         *height = (int) (64 * consoleZoom);
     }
@@ -341,5 +342,18 @@ DEFCC(CCmdHexenFont)
     cfont.getWidth = ConTextWidth;
     cfont.filterText = ConTextFilter;
     Con_SetFont(&cfont);
+    return true;
+}
+
+/**
+ * Configure the console background.
+ */
+DEFCC(CCmdConBackground)
+{
+    materialnum_t       num;
+
+    if((num = R_MaterialCheckNumForName(argv[1], MAT_FLAT)) != 0)
+        consoleBG = num;
+
     return true;
 }

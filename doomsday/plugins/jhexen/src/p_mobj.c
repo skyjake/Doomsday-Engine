@@ -368,7 +368,7 @@ float P_MobjGetFriction(mobj_t *mo)
     {
         return FRICTION_FLY;
     }
-    else if(P_MobjGetFloorType(mo) == FLOOR_ICE)
+    else if(P_MobjGetFloorTerrainType(mo) == FLOOR_ICE)
     {
         return FRICTION_LOW;
     }
@@ -835,7 +835,7 @@ void P_MobjMoveZ(mobj_t *mo)
                                 break;
                             }
                     }
-                    else if((P_MobjGetFloorType(mo) < FLOOR_LIQUID) &&
+                    else if((P_MobjGetFloorTerrainType(mo) < FLOOR_LIQUID) &&
                             (!mo->player->morphTics))
                     {
                         S_StartSound(SFX_PLAYER_LAND, mo);
@@ -1263,7 +1263,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     }
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_MobjGetFloorType(mo) >= FLOOR_LIQUID &&
+       P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
         mo->floorClip = 10;
@@ -1667,7 +1667,7 @@ void P_CreateTIDList(void)
     TIDList[count] = 0;
 }
 
-void P_MobjInsertIntoTIDList(mobj_t *mobj, int tid)
+void P_MobjInsertIntoTIDList(mobj_t* mobj, int tid)
 {
     int                 i, index;
 
@@ -1697,9 +1697,9 @@ void P_MobjInsertIntoTIDList(mobj_t *mobj, int tid)
     TIDMobj[index] = mobj;
 }
 
-void P_MobjRemoveFromTIDList(mobj_t *mobj)
+void P_MobjRemoveFromTIDList(mobj_t* mobj)
 {
-    int         i;
+    int                 i;
 
     if(!mobj->tid)
         return;
@@ -1718,9 +1718,9 @@ void P_MobjRemoveFromTIDList(mobj_t *mobj)
     mobj->tid = 0;
 }
 
-mobj_t *P_FindMobjFromTID(int tid, int *searchPosition)
+mobj_t* P_FindMobjFromTID(int tid, int* searchPosition)
 {
-    int         i;
+    int                 i;
 
     for(i = *searchPosition + 1; TIDList[i] != 0; ++i)
     {
@@ -1737,7 +1737,7 @@ mobj_t *P_FindMobjFromTID(int tid, int *searchPosition)
 
 void P_SpawnPuff(float x, float y, float z)
 {
-    mobj_t     *puff;
+    mobj_t*             puff;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
     puff = P_SpawnMobj3f(PuffType, x, y, z);
@@ -1767,9 +1767,9 @@ void P_SpawnPuff(float x, float y, float z)
     puffSpawned = puff;
 }
 
-void P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator)
+void P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator)
 {
-    mobj_t     *mo;
+    mobj_t*             mo;
 
     mo = P_SpawnMobj3f(MT_BLOODSPLATTER, x, y, z);
 
@@ -1779,9 +1779,9 @@ void P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator)
     mo->mom[MZ] = 3;
 }
 
-void P_SpawnBloodSplatter2(float x, float y, float z, mobj_t *originator)
+void P_SpawnBloodSplatter2(float x, float y, float z, mobj_t* originator)
 {
-    mobj_t     *mo;
+    mobj_t*             mo;
 
     mo = P_SpawnMobj3f(MT_AXEBLOOD,
                        x + FIX2FLT((P_Random() - 128) << 11),
@@ -1790,10 +1790,10 @@ void P_SpawnBloodSplatter2(float x, float y, float z, mobj_t *originator)
     mo->target = originator;
 }
 
-void P_RipperBlood(mobj_t *mo)
+void P_RipperBlood(mobj_t* mo)
 {
-    mobj_t     *th;
-    float       pos[3];
+    mobj_t*             th;
+    float               pos[3];
 
     pos[VX] = mo->pos[VX];
     pos[VY] = mo->pos[VY];
@@ -1809,22 +1809,22 @@ void P_RipperBlood(mobj_t *mo)
     th->tics += P_Random() & 3;
 }
 
-int P_MobjGetFloorType(mobj_t *thing)
+terraintype_t P_MobjGetFloorTerrainType(mobj_t* mo)
 {
-    if(thing->floorPic && !IS_CLIENT)
+    if(mo->floorMaterial && !IS_CLIENT)
     {
-        return P_FlatToTerrainType(thing->floorPic);
+        return P_MaterialToTerrainType(mo->floorMaterial);
     }
     else
     {
-        return P_GetTerrainType(P_GetPtrp(thing->subsector, DMU_SECTOR), PLN_FLOOR);
+        return P_GetTerrainType(P_GetPtrp(mo->subsector, DMU_SECTOR), PLN_FLOOR);
     }
 }
 
 int P_HitFloor(mobj_t *thing)
 {
-    mobj_t     *mo;
-    int         smallsplash = false;
+    mobj_t*             mo;
+    int                 smallsplash = false;
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {   // Don't splash if landing on the edge above water/lava/etc....
@@ -1850,7 +1850,7 @@ int P_HitFloor(mobj_t *thing)
     if(thing->info->mass < 10)
         smallsplash = true;
 
-    switch(P_MobjGetFloorType(thing))
+    switch(P_MobjGetFloorTerrainType(thing))
     {
     case FLOOR_WATER:
         if(smallsplash)

@@ -39,9 +39,6 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
- *
- *\attention  2006-09-16 - We should be able to use jDoom version of this as
- * a base for replacement. - Yagisan
  */
 
 /**
@@ -57,13 +54,27 @@
 
 #define MO_TELEPORTMAN          14
 
-extern int *TerrainTypes;
+// Any floor type >= FLOOR_LIQUID will floorclip sprites.
+typedef enum {
+    FLOOR_SOLID,
+    FLOOR_ICE,
+    FLOOR_LIQUID,
+    FLOOR_WATER,
+    FLOOR_LAVA,
+    FLOOR_SLUDGE,
+    NUM_TERRAIN_TYPES
+} terraintype_t;
+
+extern terraintype_t* TerrainTypes;
 
 void        P_InitTerrainTypes(void);
+terraintype_t P_GetTerrainType(sector_t* sec, int plane);
+terraintype_t P_MaterialToTerrainType(materialnum_t num);
+
+
 void        P_InitLava(void);
 
 void        P_SpawnSpecials(void);
-
 void        P_UpdateSpecials(void);
 
 boolean     P_ExecuteLineSpecial(int special, byte *args, linedef_t *line,
@@ -71,11 +82,8 @@ boolean     P_ExecuteLineSpecial(int special, byte *args, linedef_t *line,
 boolean     P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                            int activationType);
 
-int         P_GetTerrainType(sector_t* sec, int plane);
-int         P_FlatToTerrainType(int flatlumpnum);
-
 void        P_PlayerInSpecialSector(player_t *plr);
-void        P_PlayerOnSpecialFlat(player_t *plr, int floorType);
+void        P_PlayerOnSpecialFloor(player_t *plr, int floorType);
 
 void        P_AnimateSurfaces(void);
 void        P_InitPicAnims(void);

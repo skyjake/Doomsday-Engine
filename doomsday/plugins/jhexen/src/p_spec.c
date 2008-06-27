@@ -87,10 +87,10 @@ extern boolean DoubleSky;
 
 mobj_t  LavaInflictor;
 
-int    *TerrainTypes = 0;
+terraintype_t* TerrainTypes = 0;
 struct terraindef_s {
-    char   *name;
-    int     type;
+    char*           name;
+    terraintype_t   type;
 } TerrainTypeDefs[] =
 {
     {"X_005", FLOOR_WATER},
@@ -100,12 +100,12 @@ struct terraindef_s {
     {"END", -1}
 };
 
-int     Sky1Texture;
-int     Sky2Texture;
-float   Sky1ColumnOffset;
-float   Sky2ColumnOffset;
-float   Sky1ScrollDelta;
-float   Sky2ScrollDelta;
+materialnum_t Sky1Material;
+materialnum_t Sky2Material;
+float Sky1ColumnOffset;
+float Sky2ColumnOffset;
+float Sky1ScrollDelta;
+float Sky2ScrollDelta;
 boolean DoubleSky;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -130,8 +130,8 @@ void P_InitSky(int map)
     int                 ival;
     float               fval;
 
-    Sky1Texture = P_GetMapSky1Texture(map);
-    Sky2Texture = P_GetMapSky2Texture(map);
+    Sky1Material = P_GetMapSky1Material(map);
+    Sky2Material = P_GetMapSky2Material(map);
     Sky1ScrollDelta = P_GetMapSky1ScrollDelta(map);
     Sky2ScrollDelta = P_GetMapSky2ScrollDelta(map);
     Sky1ColumnOffset = 0;
@@ -150,36 +150,33 @@ void P_InitSky(int map)
         Rend_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
-        ival = Sky2Texture;
-        Rend_SkyParams(0, DD_MATERIAL, &ival);
+        Rend_SkyParams(0, DD_MATERIAL, &Sky2Material);
 
         Rend_SkyParams(1, DD_ENABLE, NULL);
         ival = DD_YES;
         Rend_SkyParams(1, DD_MASK, &ival);
-        ival = Sky1Texture;
-        Rend_SkyParams(1, DD_MATERIAL, &ival);
+        Rend_SkyParams(1, DD_MATERIAL, &Sky1Material);
     }
     else
     {
         Rend_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
-        ival = Sky1Texture;
-        Rend_SkyParams(0, DD_MATERIAL, &ival);
+        Rend_SkyParams(0, DD_MATERIAL, &Sky1Material);
 
         Rend_SkyParams(1, DD_DISABLE, NULL);
         ival = DD_NO;
         Rend_SkyParams(1, DD_MASK, &ival);
-        ival = Sky2Texture;
-        Rend_SkyParams(1, DD_MATERIAL, &ival);
+        Rend_SkyParams(1, DD_MATERIAL, &Sky2Material);
     }
 }
 
 void P_InitTerrainTypes(void)
 {
-    int     i;
-    int     lump;
-    int     size = Get(DD_NUMLUMPS) * sizeof(int);
+    int                 i, size;
+    materialnum_t       num;
+
+    size = Get(DD_NUMLUMPS) * sizeof(int);
 
     // Free if there already is memory allocated.
     if(TerrainTypes)
@@ -190,23 +187,23 @@ void P_InitTerrainTypes(void)
 
     for(i = 0; TerrainTypeDefs[i].type != -1; ++i)
     {
-        lump = W_CheckNumForName(TerrainTypeDefs[i].name);
-        if(lump != -1)
+        num = R_MaterialCheckNumForName(TerrainTypeDefs[i].name, MAT_FLAT);
+        if(num)
         {
-            TerrainTypes[lump] = TerrainTypeDefs[i].type;
+            TerrainTypes[num] = TerrainTypeDefs[i].type;
         }
     }
 }
 
 /**
- * Return the terrain type of the specified flat.
+ * Return the terrain type of the specified material.
  *
- * @param flatlumpnum   The flat lump number to check.
+ * @param num           The material to check.
  */
-int P_FlatToTerrainType(int flatlumpnum)
+terraintype_t P_MaterialToTerrainType(materialnum_t num)
 {
-    if(flatlumpnum != -1)
-        return TerrainTypes[flatlumpnum];
+    if(num)
+        return TerrainTypes[num];
     else
         return FLOOR_SOLID;
 }
@@ -214,24 +211,25 @@ int P_FlatToTerrainType(int flatlumpnum)
 /**
  * Returns the terrain type of the specified sector, plane.
  *
- * @param sec       The sector to check.
- * @param plane     The plane id to check.
+ * @param sec           The sector to check.
+ * @param plane         The plane id to check.
  */
-int P_GetTerrainType(sector_t* sec, int plane)
+terraintype_t P_GetTerrainType(sector_t* sec, int plane)
 {
-    int flatnum = P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
+    materialnum_t       num =
+        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
 
-    if(flatnum != -1)
-        return TerrainTypes[flatnum];
+    if(num)
+        return TerrainTypes[num];
     else
         return FLOOR_SOLID;
 }
 
-boolean EV_SectorSoundChange(byte *args)
+boolean EV_SectorSoundChange(byte* args)
 {
-    boolean     rtn = false;
-    sector_t   *sec = NULL;
-    iterlist_t *list;
+    boolean             rtn = false;
+    sector_t*           sec = NULL;
+    iterlist_t*         list;
 
     if(!args[0])
         return false;
@@ -731,7 +729,7 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
        buttonSuccess)
     {
-        P_ChangeSwitchTexture(line, repeat);
+        P_ChangeSwitchMaterial(line, repeat);
     }
 
     return true;
@@ -846,10 +844,10 @@ void P_PlayerInSpecialSector(player_t *player)
     }
 }
 
-void P_PlayerOnSpecialFlat(player_t *player, int floorType)
+void P_PlayerOnSpecialFloor(player_t *player, int floorType)
 {
-    if(player->plr->mo->pos[VZ]
-       > P_GetFloatp(player->plr->mo->subsector, DMU_FLOOR_HEIGHT))
+    if(player->plr->mo->pos[VZ] >
+       P_GetFloatp(player->plr->mo->subsector, DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }
@@ -887,15 +885,15 @@ void P_UpdateSpecials(void)
                 switch(button->section)
                 {
                 case LS_TOP:
-                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->texture);
+                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->material);
                     break;
 
                 case LS_MIDDLE:
-                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->texture);
+                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->material);
                     break;
 
                 case LS_BOTTOM:
-                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->texture);
+                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->material);
                     break;
 
                 default:
@@ -905,7 +903,7 @@ void P_UpdateSpecials(void)
 
                 button->line = NULL;
                 button->section = 0;
-                button->texture = 0;
+                button->material = 0;
                 button->soundOrg = NULL;
             }
         }

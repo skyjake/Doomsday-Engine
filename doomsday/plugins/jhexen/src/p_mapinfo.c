@@ -68,8 +68,8 @@ typedef struct mapinfo_s {
     short           nextMap;
     short           cdTrack;
     char            name[32];
-    short           sky1Texture;
-    short           sky2Texture;
+    materialnum_t   sky1Material;
+    materialnum_t   sky2Material;
     float           sky1ScrollDelta;
     float           sky2ScrollDelta;
     boolean         doubleSky;
@@ -184,9 +184,9 @@ void P_InitMapInfo(void)
     info->warpTrans = 0;
     info->nextMap = 1;          // Always go to map 1 if not specified
     info->cdTrack = 1;
-    info->sky1Texture =
+    info->sky1Material =
         R_MaterialNumForName(shareware ? "SKY2" : DEFAULT_SKY_NAME, MAT_TEXTURE);
-    info->sky2Texture = info->sky1Texture;
+    info->sky2Material = info->sky1Material;
     info->sky1ScrollDelta = 0;
     info->sky2ScrollDelta = 0;
     info->doubleSky = false;
@@ -263,7 +263,7 @@ void P_InitMapInfo(void)
 
             case MCMD_SKY1:
                 SC_MustGetString();
-                info->sky1Texture =
+                info->sky1Material =
                     R_MaterialNumForName(sc_String, MAT_TEXTURE);
                 SC_MustGetNumber();
                 info->sky1ScrollDelta = (float) sc_Number / 256;
@@ -271,7 +271,7 @@ void P_InitMapInfo(void)
 
             case MCMD_SKY2:
                 SC_MustGetString();
-                info->sky2Texture =
+                info->sky2Material =
                     R_MaterialNumForName(sc_String, MAT_TEXTURE);
                 SC_MustGetNumber();
                 info->sky2ScrollDelta = (float) sc_Number / 256;
@@ -440,27 +440,27 @@ int P_GetMapNextMap(int map)
 }
 
 /**
- * Retrieve the sky1 texture id of the given map.
+ * Retrieve the sky1 material num of the given map.
  *
  * @param map           The map (logical number) to be queried.
  *
- * @return              The sky1 texture id of the map.
+ * @return              The sky1 material num of the map.
  */
-int P_GetMapSky1Texture(int map)
+materialnum_t P_GetMapSky1Material(int map)
 {
-    return (int) MapInfo[qualifyMap(map)].sky1Texture;
+    return MapInfo[qualifyMap(map)].sky1Material;
 }
 
 /**
- * Retrieve the sky2 texture id of the given map.
+ * Retrieve the sky2 material num of the given map.
  *
  * @param map           The map (logical number) to be queried.
  *
- * @return              The sky2 texture id of the map.
+ * @return              The sky2 material num of the map.
  */
-int P_GetMapSky2Texture(int map)
+materialnum_t P_GetMapSky2Material(int map)
 {
-    return (int) MapInfo[qualifyMap(map)].sky2Texture;
+    return MapInfo[qualifyMap(map)].sky2Material;
 }
 
 /**

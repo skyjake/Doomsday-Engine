@@ -201,37 +201,37 @@ typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
 
     // Hexen-specific data:
-    struct player_s *player;       // only valid if type == MT_PLAYER
+    struct player_s *player; // Only valid if type == MT_PLAYER
 
-    int             floorPic;      // contacted sec floorpic
-    mobjinfo_t     *info;          // &mobjInfo[mobj->type]
-    int             damage;        // For missiles
+    materialnum_t   floorMaterial; // Contacted floor material.
+    mobjinfo_t     *info; // &mobjInfo[mobj->type]
+    int             damage; // For missiles
     int             flags;
-    int             flags2;        // Heretic flags
+    int             flags2; // Heretic flags
     int             flags3;
-    int             special1;      // Special info
-    int             special2;      // Special info
+    int             special1; // Special info
+    int             special2; // Special info
     int             health;
-    int             moveDir;       // 0-7
-    int             moveCount;     // when 0, select a new dir
-    struct mobj_s  *target;        // thing being chased/attacked (or NULL)
-    // also the originator for missiles
-    // used by player to freeze a bit after
-    // teleporting
-    int             threshold;     // if > 0, the target will be chased
-    // no matter what (even if shot)
-    int             lastLook;      // player number last looked for
-    short           tid;           // thing identifier
-    byte            special;       // special
-    byte            args[5];       // special arguments
-    int             turnTime;      // $visangle-facetarget
-    int             alpha;         // $mobjalpha
+    int             moveDir; // 0-7
+    int             moveCount; // When 0, select a new dir
+    struct mobj_s  *target; // Thing being chased/attacked (or NULL)
+                            // also the originator for missiles
+                            // used by player to freeze a bit after
+                            // teleporting
+    int             threshold; // if > 0, the target will be chased
+                               // no matter what (even if shot)
+    int             lastLook; // player number last looked for
+    short           tid; // thing identifier
+    byte            special; // special
+    byte            args[5]; // special arguments
+    int             turnTime; // $visangle-facetarget
+    int             alpha; // $mobjalpha
 
     // Thing being chased/attacked for tracers.
-    struct mobj_s  *tracer;
+    struct mobj_s*  tracer;
 
     // Used by lightning zap
-    struct mobj_s  *lastEnemy;
+    struct mobj_s*  lastEnemy;
 } mobj_t;
 
 typedef struct polyobj_s {
@@ -239,7 +239,7 @@ typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
 
     // Hexen-specific data:
-    void*               specialData;    /* Pointer a thinker, if the poly is moving. */
+    void*           specialData; /* Pointer a thinker, if the poly is moving. */
 } polyobj_t;
 
 extern spawnspot_t* things;

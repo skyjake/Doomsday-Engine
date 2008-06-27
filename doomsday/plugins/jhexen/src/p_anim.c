@@ -98,12 +98,12 @@ typedef struct animdef_s {
  */
 void P_InitPicAnims(void)
 {
-    int         base;
-    boolean     ignore;
-    boolean     done;
-    int         groupNumber = 0, picBase = 0;
-    materialtype_t type = MAT_FLAT;
-    const char *name;
+    int                 base;
+    boolean             ignore;
+    boolean             done;
+    int                 groupNumber = 0;
+    materialnum_t       numBase = 0, num = 0;
+    materialtype_t      type = MAT_FLAT;
 
     SC_Open(ANIM_SCRIPT_NAME);
     while(SC_GetString())
@@ -123,15 +123,14 @@ void P_InitPicAnims(void)
         SC_MustGetString(); // Name
 
         ignore = false;
-        if(R_CheckMaterialNumForName(sc_String, type) == -1)
+        if(!R_MaterialCheckNumForName(sc_String, type))
         {
             ignore = true;
         }
         else
         {
-            picBase = R_MaterialNumForName(sc_String, type);
-            groupNumber =
-                R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
+            numBase = R_MaterialNumForName(sc_String, type);
+            groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
         }
 
         done = false;
@@ -144,7 +143,7 @@ void P_InitPicAnims(void)
                     SC_MustGetNumber();
                     if(ignore == false)
                     {
-                        name = R_MaterialNameForNum(picBase + sc_Number - 1, type);
+                        num = numBase + sc_Number - 1;
                     }
 
                     SC_MustGetString();
@@ -153,7 +152,7 @@ void P_InitPicAnims(void)
                         SC_MustGetNumber();
                         if(ignore == false)
                         {
-                            R_AddToAnimGroup(groupNumber, name, type, sc_Number, 0);
+                            R_AddToAnimGroup(groupNumber, num, sc_Number, 0);
                         }
                     }
                     else if(SC_Compare(SCI_RAND))
@@ -163,8 +162,7 @@ void P_InitPicAnims(void)
                         SC_MustGetNumber();
                         if(ignore == false)
                         {
-                            R_AddToAnimGroup(groupNumber, name, type, base,
-                                             sc_Number - base);
+                            R_AddToAnimGroup(groupNumber, num, base, sc_Number - base);
                         }
                     }
                     else

@@ -2164,7 +2164,7 @@ void C_DECL A_SerpentHeadCheck(mobj_t *actor)
 {
     if(actor->pos[VZ] <= actor->floorZ)
     {
-        if(P_MobjGetFloorType(actor) >= FLOOR_LIQUID)
+        if(P_MobjGetFloorTerrainType(actor) >= FLOOR_LIQUID)
         {
             P_HitFloor(actor);
             P_MobjChangeState(actor, S_NULL);
@@ -4177,23 +4177,26 @@ void C_DECL A_FreezeDeath(mobj_t *mo)
     }
 }
 
-void C_DECL A_IceSetTics(mobj_t *mo)
+void C_DECL A_IceSetTics(mobj_t* mo)
 {
-    int         floor;
-
     mo->tics = 70 + (P_Random() & 63);
-    floor = P_MobjGetFloorType(mo);
-    if(floor == FLOOR_LAVA)
+
+    switch(P_MobjGetFloorTerrainType(mo))
     {
+    case FLOOR_LAVA:
         mo->tics /= 4;
-    }
-    else if(floor == FLOOR_ICE)
-    {
+        break;
+
+    case FLOOR_ICE:
         mo->tics *= 2;
+        break;
+
+    default:
+        break;
     }
 }
 
-void C_DECL A_IceCheckHeadDone(mobj_t *mo)
+void C_DECL A_IceCheckHeadDone(mobj_t* mo)
 {
     if(mo->special2 == 666)
     {

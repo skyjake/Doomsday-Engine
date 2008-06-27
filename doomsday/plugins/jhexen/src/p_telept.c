@@ -236,7 +236,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
     {
         if(mo->pos[VZ] ==
            P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT) &&
-           P_MobjGetFloorType(mo) >= FLOOR_LIQUID)
+           P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID)
         {
             mo->floorClip = 10;
         }
@@ -259,15 +259,15 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
 
     P_MobjClearSRVO(mo);
 
-    // Update the floor pic.
-    mo->floorPic = tmFloorPic;
+    // Update the floor material.
+    mo->floorMaterial = tmFloorMaterial;
     return true;
 }
 
-boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
+boolean EV_Teleport(int tid, mobj_t* thing, boolean fog)
 {
     int             i, count, searcher;
-    mobj_t         *mo = 0;
+    mobj_t*         mo = 0;
 
     if(!thing)
         return false;
@@ -297,7 +297,7 @@ boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void P_ArtiTele(player_t *player)
+void P_ArtiTele(player_t* player)
 {
     int             i, selections;
     float           destPos[3];

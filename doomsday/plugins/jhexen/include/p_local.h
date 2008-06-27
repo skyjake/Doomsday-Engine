@@ -115,16 +115,6 @@ void        P_ArtiTeleportOther(player_t *plr);
 void        ResetBlasted(mobj_t *mo);
 boolean     P_UndoPlayerMorph(player_t *plr);
 
-// Any floor type >= FLOOR_LIQUID will floorclip sprites.
-enum {
-    FLOOR_SOLID,
-    FLOOR_ICE,
-    FLOOR_LIQUID,
-    FLOOR_WATER,
-    FLOOR_LAVA,
-    FLOOR_SLUDGE
-};
-
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
 #define FRICTION_HIGH       (0.5f)
@@ -189,7 +179,7 @@ mobj_t     *P_FindMobjFromTID(int tid, int *searchPosition);
 boolean     P_CheckMissileSpawn(mobj_t *mo);
 float       P_MobjGetFriction(mobj_t *mo);
 void        P_RipperBlood(mobj_t *mo);
-int         P_MobjGetFloorType(mobj_t *mo);
+int         P_MobjGetFloorTerrainType(mobj_t* mo);
 int         P_HitFloor(mobj_t *mo);
 
 // Spawn spots.

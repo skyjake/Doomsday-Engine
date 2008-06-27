@@ -1257,11 +1257,12 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    int                 tag, flat;
+    int                 tag;
+    materialnum_t       mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
-    flat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1270,7 +1271,7 @@ static int CmdChangeFloor(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
+            P_SetIntp(sec, DMU_FLOOR_MATERIAL, mat);
         }
     }
 
@@ -1279,12 +1280,13 @@ static int CmdChangeFloor(void)
 
 static int CmdChangeFloorDirect(void)
 {
-    int                 tag, flat;
+    int                 tag;
+    materialnum_t       mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    flat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1292,7 +1294,7 @@ static int CmdChangeFloorDirect(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_FLOOR_MATERIAL, flat);
+            P_SetIntp(sec, DMU_FLOOR_MATERIAL, mat);
         }
     }
 
@@ -1301,11 +1303,12 @@ static int CmdChangeFloorDirect(void)
 
 static int CmdChangeCeiling(void)
 {
-    int                 tag, flat;
+    int                 tag;
+    materialnum_t       mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
-    flat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1314,7 +1317,7 @@ static int CmdChangeCeiling(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
+            P_SetIntp(sec, DMU_CEILING_MATERIAL, mat);
         }
     }
 
@@ -1323,12 +1326,13 @@ static int CmdChangeCeiling(void)
 
 static int CmdChangeCeilingDirect(void)
 {
-    int                 tag, flat;
+    int                 tag;
+    materialnum_t       mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    flat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1336,7 +1340,7 @@ static int CmdChangeCeilingDirect(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_CEILING_MATERIAL, flat);
+            P_SetIntp(sec, DMU_CEILING_MATERIAL, mat);
         }
     }
 
@@ -1665,11 +1669,12 @@ static int CmdSoundSequence(void)
 
 static int CmdSetLineTexture(void)
 {
-    int                 lineTag, side, position, texture;
+    int                 lineTag, side, position;
+    materialnum_t       mat;
     linedef_t*          line;
     iterlist_t*         list;
 
-    texture = R_MaterialNumForName(GetACString(Pop()), MAT_TEXTURE);
+    mat = R_MaterialNumForName(GetACString(Pop()), MAT_TEXTURE);
     position = Pop();
     side = Pop();
     lineTag = Pop();
@@ -1685,15 +1690,15 @@ static int CmdSetLineTexture(void)
 
             if(position == TEXTURE_MIDDLE)
             {
-                P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, texture);
+                P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, mat);
             }
             else if(position == TEXTURE_BOTTOM)
             {
-                P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, texture);
+                P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, mat);
             }
             else
             {                       // TEXTURE_TOP
-                P_SetIntp(sdef, DMU_TOP_MATERIAL, texture);
+                P_SetIntp(sdef, DMU_TOP_MATERIAL, mat);
             }
         }
     }
