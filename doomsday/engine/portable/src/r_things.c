@@ -339,7 +339,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     sprTex = spriteTextures[mat->ofTypeID];
 
     info->numFrames = sprDef->numFrames;
-    info->matIdx = R_GetMaterialNum(mat);
+    info->materialNum = R_GetMaterialNum(mat);
     info->realLump = sprTex->lump;
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;

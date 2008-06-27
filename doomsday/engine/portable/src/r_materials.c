@@ -487,8 +487,7 @@ boolean R_MaterialGetInfo(materialnum_t num, materialinfo_t* info)
     if(!(mat = R_GetMaterialByNum(num)))
         return false;
 
-    info->ofTypeID = mat->ofTypeID;
-    info->matIdx = num;
+    info->num = num;
     info->type = mat->type;
     info->width = (int) mat->width;
     info->height = (int) mat->height;

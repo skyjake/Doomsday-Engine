@@ -1049,53 +1049,47 @@ typedef enum materialtype_e {
     MAT_DDTEX
 } materialtype_t;
 
-    typedef struct lumppatch_s {
-        short           width; // bounding box size
-        short           height;
-        short           leftOffset; // pixels to the left of origin
-        short           topOffset; // pixels below the origin
-        int             columnOfs[8]; // only [width] used
-        // the [0] is &columnofs[width]
-    } lumppatch_t;
+typedef struct lumppatch_s {
+    short           width; // bounding box size
+    short           height;
+    short           leftOffset; // pixels to the left of origin
+    short           topOffset; // pixels below the origin
+    int             columnOfs[8]; // only [width] used
+    // the [0] is &columnofs[width]
+} lumppatch_t;
 
-    typedef struct {
-        int             lump; // Lump number.
-        int             realLump; // Real lump number.
-        int             flip;
-        int             offset;
-        int             topOffset;
-        int             width;
-        int             height;
-        int             numFrames; // Number of frames the sprite has.
-    } patchinfo_t;
+typedef struct {
+    int             lump; // Lump number.
+    int             realLump; // Real lump number.
+    int             flip;
+    int             offset;
+    int             topOffset;
+    int             width;
+    int             height;
+    int             numFrames; // Number of frames the sprite has.
+} patchinfo_t;
 
-    typedef struct {
-        materialnum_t   matIdx;
-        int             realLump; // Real lump number.
-        int             flip;
-        int             offset;
-        int             topOffset;
-        int             width;
-        int             height;
-        int             numFrames; // Number of frames the sprite has.
-    } spriteinfo_t;
+typedef struct {
+    materialnum_t   materialNum;
+    int             realLump; // Real lump number.
+    int             flip;
+    int             offset;
+    int             topOffset;
+    int             width;
+    int             height;
+    int             numFrames; // Number of frames the sprite has.
+} spriteinfo_t;
 
-    typedef struct {
-        int             ofTypeID;
-        materialnum_t   matIdx;
-        materialtype_t  type;
-        int             width, height;
-    } materialinfo_t;
-
-    typedef struct {
-        int             spriteNum;
-        char           *modelName;
-    } spritereplacement_t;
+typedef struct {
+    materialnum_t   num;
+    materialtype_t  type;
+    int             width, height;
+} materialinfo_t;
 
 // Animation group flags.
-#define AGF_SMOOTH      0x1
-#define AGF_FIRST_ONLY  0x2
-#define AGF_PRECACHE    0x4000      // Group is just for precaching.
+#define AGF_SMOOTH          0x1
+#define AGF_FIRST_ONLY      0x2
+#define AGF_PRECACHE        0x4000 // Group is just for precaching.
 
     //------------------------------------------------------------------------
     //

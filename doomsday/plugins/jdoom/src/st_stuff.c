@@ -989,7 +989,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
         break;
     }
 
-    GL_SetPSprite(sprInfo.matIdx);
+    GL_SetPSprite(sprInfo.materialNum);
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.

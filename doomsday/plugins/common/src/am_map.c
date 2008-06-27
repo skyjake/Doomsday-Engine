@@ -3149,7 +3149,7 @@ static void setupGLStateForMap(void)
                 if(plr->artifacts[i])
                 {
                     R_GetSpriteInfo(artifactSprites[i], 0, &sprInfo);
-                    GL_SetPSprite(sprInfo.matIdx);
+                    GL_SetPSprite(sprInfo.materialNum);
 
                     scale = win->height / (sprInfo.height * num);
                     x = win->width - sprInfo.width * scale;
