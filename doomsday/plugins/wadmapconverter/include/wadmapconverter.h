@@ -45,7 +45,7 @@ enum { VX, VY, VZ };
 typedef struct materialref_s {
     char            name[9];
     boolean         isFlat;
-    int             ddNum;
+    materialnum_t   num;
 } materialref_t;
 
 typedef struct mside_s {
