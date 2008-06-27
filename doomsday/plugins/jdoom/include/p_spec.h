@@ -42,6 +42,22 @@
 
 #include "d_player.h"
 
+// Any floor type >= FLOOR_LIQUID will floorclip sprites
+typedef enum {
+    FLOOR_SOLID,
+    FLOOR_LIQUID,
+    FLOOR_WATER,
+    FLOOR_LAVA,
+    FLOOR_SLUDGE,
+    FLOOR_BLOOD,
+    FLOOR_SLIME,
+    NUM_TERRAIN_TYPES
+} terraintype_t;
+
+void            P_InitTerrainTypes(void);
+int             P_GetTerrainType(sector_t* sec, int plane);
+int             P_GetTerrainTypeForMaterial(materialnum_t num);
+
 // End-level timer (-TIMER option)
 extern boolean  levelTimer;
 extern int      levelTimeCount;
@@ -51,7 +67,6 @@ extern int      levelTimeCount;
 
 // at game start
 void            P_InitPicAnims(void);
-void            P_InitTerrainTypes(void);
 
 // at map load
 void            P_SpawnSpecials(void);
@@ -59,9 +74,6 @@ void            P_SpawnSpecials(void);
 // every tic
 void            P_UpdateSpecials(void);
 
-// when needed
-int             P_GetTerrainType(sector_t* sec, int plane);
-int             P_FlatToTerrainType(int flatid);
 boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                                int activationType);
 

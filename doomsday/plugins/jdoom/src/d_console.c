@@ -70,6 +70,7 @@ DEFCC(CCmdPrintPlayerCoords);
 DEFCC(CCmdScreenShot);
 DEFCC(CCmdViewSize);
 DEFCC(CCmdDoomFont);
+DEFCC(CCmdConBackground);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -77,13 +78,12 @@ DEFCC(CCmdDoomFont);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     consoleFlat = 0;
+materialnum_t consoleBG = 0;
 float   consoleZoom = 1;
 
 // Console variables.
 cvar_t  gameCVars[] = {
 // Console
-    {"con-flat", CVF_NO_MAX, CVT_INT, &consoleFlat, 0, 0},
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
@@ -214,6 +214,7 @@ ccmd_t  gameCCmds[] = {
     {"where",       "",     CCmdCheatWhere},
 
     {"doomfont",    "",     CCmdDoomFont},
+    {"conbg",       "s",    CCmdConBackground},
 
     // $infine
     {"startinf",    "s",    CCmdStartInFine},
@@ -255,9 +256,9 @@ void G_ConsoleRegistration(void)
  */
 void D_ConsoleBg(int *width, int *height)
 {
-    if(consoleFlat)
+    if(consoleBG)
     {
-        GL_SetMaterial(consoleFlat, MAT_FLAT);
+        GL_SetMaterial(consoleBG);
         *width = (int) (64 * consoleZoom);
         *height = (int) (64 * consoleZoom);
     }
@@ -350,5 +351,18 @@ DEFCC(CCmdDoomFont)
     cfont.filterText = ConTextFilter;
 
     Con_SetFont(&cfont);
+    return true;
+}
+
+/**
+ * Configure the console background.
+ */
+DEFCC(CCmdConBackground)
+{
+    materialnum_t       num;
+
+    if((num = R_MaterialCheckNumForName(argv[1], MAT_FLAT)) != 0)
+        consoleBG = num;
+
     return true;
 }

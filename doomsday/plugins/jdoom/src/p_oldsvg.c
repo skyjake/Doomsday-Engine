@@ -530,7 +530,8 @@ typedef struct {
 
     floor->state = (int) SV_ReadLong();
     floor->newSpecial = SV_ReadLong();
-    floor->texture = SV_ReadShort();
+    floor->material =
+        R_MaterialNumForName(W_LumpName(SV_ReadShort()), MAT_FLAT);
     floor->floorDestHeight = FIX2FLT(SV_ReadLong());
     floor->speed = FIX2FLT(SV_ReadLong());
 

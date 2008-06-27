@@ -85,18 +85,6 @@
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-// Any floor type >= FLOOR_LIQUID will floorclip sprites
-enum {
-    FLOOR_SOLID,
-    FLOOR_LIQUID,
-    FLOOR_WATER,
-    FLOOR_LAVA,
-    FLOOR_SLUDGE,
-    FLOOR_BLOOD,
-    FLOOR_SLIME,
-    NUM_TERRAINTYPES
-};
-
 extern float turboMul;
 extern int maxHealth, healthLimit, godModeHealth;
 extern int soulSphereHealth, soulSphereLimit, megaSphereHealth;
@@ -122,7 +110,7 @@ mobj_t     *P_SpawnTeleFog(float x, float y);
 void        P_MobjRemove(mobj_t* mo, boolean noRespawn);
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 void        P_MobjThinker(mobj_t* mo);
-int         P_MobjGetFloorType(mobj_t* mo);
+int         P_MobjGetFloorTerrainType(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 
 void        P_SetDoomsdayFlags(mobj_t* mo);

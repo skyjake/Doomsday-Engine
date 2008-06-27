@@ -165,7 +165,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         {
             if(mo->pos[VZ] ==
                P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT) &&
-               P_MobjGetFloorType(mo) >= FLOOR_LIQUID)
+               P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID)
             {
                 mo->floorClip = 10;
             }
