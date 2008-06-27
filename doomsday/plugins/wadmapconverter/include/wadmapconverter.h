@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,15 +44,14 @@ enum { VX, VY, VZ };
 
 typedef struct materialref_s {
     char            name[9];
-    boolean         isFlat;
-    materialnum_t   num;
+    materialnum_t   num; // Doomsday's unique identifier for this.
 } materialref_t;
 
 typedef struct mside_s {
     int16_t         offset[2];
-    uint            topMaterial;
-    uint            bottomMaterial;
-    uint            middleMaterial;
+    const materialref_t* topMaterial;
+    const materialref_t* bottomMaterial;
+    const materialref_t* middleMaterial;
     uint            sector;
 } mside_t;
 
@@ -82,8 +81,8 @@ typedef struct msector_s {
     int16_t         lightLevel;
     int16_t         type;
     int16_t         tag;
-    uint            floorMaterial;
-    uint            ceilMaterial;
+    const materialref_t* floorMaterial;
+    const materialref_t* ceilMaterial;
 } msector_t;
 
 typedef struct mthing_s {
@@ -117,7 +116,6 @@ typedef struct map_s {
     uint            numSides;
     uint            numPolyobjs;
     uint            numThings;
-    uint            numMaterials;
 
     float*          vertexes; // Array of vertex coords [v0 X, vo Y, v1 X, v1 Y...]
     msector_t*      sectors;
@@ -126,7 +124,10 @@ typedef struct map_s {
     mthing_t*       things;
     mpolyobj_t**    polyobjs;
 
-    materialref_t** materials;
+    size_t          numFlats;
+    materialref_t** flats;
+    size_t          numTextures;
+    materialref_t** textures;
 
     boolean         hexenFormat;
 

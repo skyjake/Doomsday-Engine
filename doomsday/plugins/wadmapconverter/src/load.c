@@ -94,36 +94,113 @@ static int16_t PolyStart[2];
 
 // CODE --------------------------------------------------------------------
 
-static uint registerMaterial(const char *name, boolean isFlat)
+static int C_DECL compareMaterialNames(const void* a, const void* b)
 {
-    uint                i;
-    materialref_t      *m;
+    return stricmp((*(materialref_t**)a)->name, (*(materialref_t**)b)->name);
+}
 
-    // Check if this material has already been registered.
-    for(i = 0; i < map->numMaterials; ++i)
+static const materialref_t* getMaterial(const char* name,
+                                        const materialref_t*** list,
+                                        size_t size)
+{
+    int                 result;
+    size_t              bottomIdx, topIdx, pivot;
+    const materialref_t* m;
+    boolean             isDone;
+
+    if(size == 0)
+        return NULL;
+
+    bottomIdx = 0;
+    topIdx = size-1;
+    m = NULL;
+    isDone = false;
+    while(bottomIdx <= topIdx && !isDone)
     {
-        m = map->materials[i];
+        pivot = bottomIdx + (topIdx - bottomIdx)/2;
 
-        if(m->isFlat == isFlat &&
-           !strnicmp(name, map->materials[i]->name, 8))
-        {   // Already registered.
-            return i;
+        result = stricmp((*list)[pivot]->name, name);
+        if(result == 0)
+        {   // Found.
+            m = (*list)[pivot];
+            isDone = true;
+        }
+        else
+        {
+            if(result > 0)
+            {
+                if(pivot == 0)
+                {   // Not present.
+                    isDone = true;
+                }
+                else
+                    topIdx = pivot - 1;
+            }
+            else
+                bottomIdx = pivot + 1;
         }
     }
 
-    /**
-     * A new material.
-     */
-    m = malloc(sizeof(*m));
-    memcpy(m->name, name, 8);
-    m->name[8] = '\0';
-    m->isFlat = isFlat;
-    m->num = R_MaterialCheckNumForName(m->name, (isFlat? MAT_FLAT : MAT_TEXTURE));
+    return m;
+}
 
-    // Add it to the list of known materials.
-    map->materials = realloc(map->materials, sizeof(m) * ++map->numMaterials);
-    map->materials[map->numMaterials-1] = m;
-    return map->numMaterials-1; // 0-based index.
+const materialref_t* GetMaterial(const char* name, boolean isFlat)
+{
+    return getMaterial(name, isFlat? &map->flats : &map->textures,
+                       isFlat? map->numFlats : map->numTextures);
+}
+
+static void addMaterialToList(materialref_t* m, materialref_t*** list,
+                              size_t* size)
+{
+    size_t              i, n;
+
+    // Enlarge the list.
+    (*list) = realloc((*list), sizeof(m) * ++(*size));
+
+    // Find insertion point.
+    n = 0;
+    for(i = 0; i < (*size) - 1; ++i)
+        if(compareMaterialNames(&(*list)[i], &m) > 0)
+        {
+            n = i;
+            break;
+        }
+
+    // Shift the rest over.
+    if((*size) > 1)
+        memmove(&(*list)[n+1], &(*list)[n], sizeof(m) * ((*size)-1-n));
+
+    // Insert the new element.
+    (*list)[n] = m;
+}
+
+const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
+{
+    const materialref_t* m;
+
+    // Check if this material has already been registered.
+    if((m = GetMaterial(name, isFlat)) != NULL)
+    {
+        return m; // Already registered.
+    }
+    else
+    {
+        materialref_t*      m;
+        /**
+         * A new material.
+         */
+        m = malloc(sizeof(*m));
+        memcpy(m->name, name, 8);
+        m->name[8] = '\0';
+        m->num = R_MaterialCheckNumForName(m->name, (isFlat? MAT_FLAT : MAT_TEXTURE));
+
+        // Add it to the list of known materials.
+        addMaterialToList(m, isFlat? &map->flats : &map->textures,
+                          isFlat? &map->numFlats : &map->numTextures);
+
+        return m;
+    }
 }
 
 /**
@@ -725,17 +802,29 @@ static void freeMapData(void)
     }
     map->polyobjs = NULL;
 
-    if(map->materials)
+    if(map->textures)
     {
-        uint                i;
-        for(i = 0; i < map->numMaterials; ++i)
+        size_t              i;
+        for(i = 0; i < map->numTextures; ++i)
         {
-            materialref_t      *m = map->materials[i];
+            materialref_t      *m = map->textures[i];
             free(m);
         }
-        free(map->materials);
+        free(map->textures);
     }
-    map->materials = NULL;
+    map->textures = NULL;
+
+    if(map->flats)
+    {
+        size_t              i;
+        for(i = 0; i < map->numFlats; ++i)
+        {
+            materialref_t      *m = map->flats[i];
+            free(m);
+        }
+        free(map->flats);
+    }
+    map->flats = NULL;
 }
 
 static boolean loadVertexes(const byte *buf, size_t len)
@@ -862,13 +951,13 @@ static boolean loadSidedefs(const byte *buf, size_t len)
         s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
         memcpy(name, ptr+4, 8);
         name[8] = '\0';
-        s->topMaterial = registerMaterial(name, false);
+        s->topMaterial = RegisterMaterial(name, false);
         memcpy(name, ptr+12, 8);
         name[8] = '\0';
-        s->bottomMaterial = registerMaterial(name, false);
+        s->bottomMaterial = RegisterMaterial(name, false);
         memcpy(name, ptr+20, 8);
         name[8] = '\0';
-        s->middleMaterial = registerMaterial(name, false);
+        s->middleMaterial = RegisterMaterial(name, false);
         idx = USHORT(*((const uint16_t*) (ptr+28)));
         if(idx == 0xFFFF)
             s->sector = 0;
@@ -898,10 +987,10 @@ static boolean loadSectors(const byte *buf, size_t len)
         s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
         memcpy(name, ptr+4, 8);
         name[8] = '\0';
-        s->floorMaterial = registerMaterial(name, true);
+        s->floorMaterial = RegisterMaterial(name, true);
         memcpy(name, ptr+12, 8);
         name[8] = '\0';
-        s->ceilMaterial = registerMaterial(name, true);
+        s->ceilMaterial = RegisterMaterial(name, true);
         s->lightLevel = SHORT(*((const int16_t*) (ptr+20)));
         s->type = SHORT(*((const int16_t*) (ptr+22)));
         s->tag = SHORT(*((const int16_t*) (ptr+24)));
@@ -1059,10 +1148,10 @@ boolean TransferMap(void)
             MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1);
 
         MPE_PlaneCreate(sectorIDX, sec->floorHeight,
-                        map->materials[sec->floorMaterial]->num,
+                        sec->floorMaterial->num,
                         0, 0, 1, 1, 1, 1, 0, 0, 1);
         MPE_PlaneCreate(sectorIDX, sec->ceilHeight,
-                        map->materials[sec->ceilMaterial]->num,
+                        sec->ceilMaterial->num,
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
 
         MPE_GameObjProperty("XSector", i, "Tag", DDVT_SHORT, &sec->tag);
@@ -1081,11 +1170,11 @@ boolean TransferMap(void)
         {
             frontIdx =
                 MPE_SidedefCreate(front->sector, 0,
-                                  map->materials[front->topMaterial]->num,
+                                  front->topMaterial->num,
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
-                                  map->materials[front->middleMaterial]->num,
+                                  front->middleMaterial->num,
                                   front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                  map->materials[front->bottomMaterial]->num,
+                                  front->bottomMaterial->num,
                                   front->offset[VX], front->offset[VY], 1, 1, 1);
         }
 
@@ -1094,11 +1183,11 @@ boolean TransferMap(void)
         {
             backIdx =
                 MPE_SidedefCreate(back->sector, 0,
-                                  map->materials[back->topMaterial]->num,
+                                  back->topMaterial->num,
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
-                                  map->materials[back->middleMaterial]->num,
+                                  back->middleMaterial->num,
                                   back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                  map->materials[back->bottomMaterial]->num,
+                                  back->bottomMaterial->num,
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 
