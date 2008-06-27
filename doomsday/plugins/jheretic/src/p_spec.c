@@ -124,13 +124,13 @@ mobj_t  LavaInflictor; // From the HERETIC source (To be moved!)
  */
 void P_InitPicAnims(void)
 {
-    int         i, j;
-    int         groupNum;
-    int         startFrame, endFrame, ticsPerFrame;
-    int         numFrames;
-    int         lump = W_CheckNumForName("ANIMATED");
-    const char *name;
-    animdef_t  *animdefs;
+    int                 i;
+    int                 groupNum;
+    int                 ticsPerFrame;
+    int                 numFrames;
+    int                 lump = W_CheckNumForName("ANIMATED");
+    materialnum_t       startFrame, endFrame, n;
+    animdef_t*          animdefs;
 
     // Has a custom ANIMATED lump been loaded?
     if(lump > 0)
@@ -145,7 +145,7 @@ void P_InitPicAnims(void)
             materialtype_t type =
                 (animdefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
 
-            if(R_CheckMaterialNumForName(animdefs[i].startname, type) == -1)
+            if(!R_MaterialCheckNumForName(animdefs[i].startname, type))
                 continue;
 
             endFrame = R_MaterialNumForName(animdefs[i].endname, type);
@@ -158,7 +158,7 @@ void P_InitPicAnims(void)
                 Con_Error("P_InitPicAnims: bad cycle from %s to %s",
                          animdefs[i].startname, animdefs[i].endname);
 
-            if(startFrame != -1 && endFrame != -1)
+            if(startFrame && endFrame)
             {
                 // We have a valid animation.
                 // Create a new animation group for it.
@@ -177,21 +177,13 @@ void P_InitPicAnims(void)
                 // Add all frames from start to end to the group.
                 if(endFrame > startFrame)
                 {
-                    for(j = startFrame; j <= endFrame; j++)
-                    {
-                        name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
-                                 W_LumpName(j));
-                        R_AddToAnimGroup(groupNum, name, type, ticsPerFrame, 0);
-                    }
+                    for(n = startFrame; n <= endFrame; n++)
+                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
                 }
                 else
                 {
-                    for(j = endFrame; j >= startFrame; j--)
-                    {
-                        name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
-                                 W_LumpName(j));
-                        R_AddToAnimGroup(groupNum, name, type, ticsPerFrame, 0);
-                    }
+                    for(n = endFrame; n >= startFrame; n--)
+                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
                 }
             }
         }
@@ -739,19 +731,19 @@ static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
     case 24:
         // RAISE FLOOR
         EV_DoFloor(line, FT_RAISEFLOOR);
-        P_ChangeSwitchTexture(line, 0);
+        P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 46:
         // OPEN DOOR
         EV_DoDoor(line, DT_OPEN);
-        P_ChangeSwitchTexture(line, 1);
+        P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 47:
         // RAISE FLOOR NEAR AND CHANGE
         EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0);
-        P_ChangeSwitchTexture(line, 0);
+        P_ChangeSwitchMaterial(line, 0);
         break;
 
     default:
@@ -921,15 +913,15 @@ void P_UpdateSpecials(void)
                 switch(button->section)
                 {
                 case LS_TOP:
-                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->texture);
+                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->material);
                     break;
 
                 case LS_MIDDLE:
-                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->texture);
+                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->material);
                     break;
 
                 case LS_BOTTOM:
-                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->texture);
+                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->material);
                     break;
 
                 default:
@@ -942,7 +934,7 @@ void P_UpdateSpecials(void)
 
                 button->line = NULL;
                 button->section = 0;
-                button->texture = 0;
+                button->material = 0;
                 button->soundOrg = NULL;
             }
         }
@@ -1271,10 +1263,10 @@ int    *AmbientSfx[] = {
     AmbSndSeq10                 // FastFootsteps
 };
 
-int    *TerrainTypes;
+terraintype_t* TerrainTypes;
 struct terraindef_s {
-    char   *name;
-    int     type;
+    char*           name;
+    terraintype_t   type;
 } TerrainTypeDefs[] =
 {
     {"FLTWAWA1", FLOOR_WATER},
@@ -1296,34 +1288,39 @@ void P_InitLava(void)
     LavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
+/**
+ * \bug This routine originated from jHeretic, we need to rewrite it!
+ */
 void P_InitTerrainTypes(void)
 {
-    int     i;
-    int     id;
-    int     size;
+    int                 i, size;
+    materialnum_t       num;
 
     size = Get(DD_NUMLUMPS) * sizeof(int);
     TerrainTypes = Z_Malloc(size, PU_STATIC, 0);
     memset(TerrainTypes, 0, size);
-    for(i = 0; TerrainTypeDefs[i].type != -1; i++)
+    for(i = 0; TerrainTypeDefs[i].type != -1; ++i)
     {
-        id = R_CheckMaterialNumForName(TerrainTypeDefs[i].name, MAT_FLAT);
-        if(id != -1)
+        num = R_MaterialCheckNumForName(TerrainTypeDefs[i].name, MAT_FLAT);
+        if(num != 0)
         {
-            TerrainTypes[id] = TerrainTypeDefs[i].type;
+            TerrainTypes[num] = TerrainTypeDefs[i].type;
         }
     }
 }
 
 /**
- * Return the terrain type of the specified flat.
+ * Look up the terrain type for the specified material.
  *
- * @param flatid   The flat id number to check.
+ * @param num           The material number to check.
+ *
+ * @return              Terrain type of the material if known,
+ *                      else @c FLOOR_SOLID.
  */
-int P_FlatToTerrainType(int flatid)
+terraintype_t P_GetTerrainTypeForMaterial(materialnum_t num)
 {
-    if(flatid != -1)
-        return TerrainTypes[flatid];
+    if(num)
+        return TerrainTypes[num];
     else
         return FLOOR_SOLID;
 }
@@ -1331,15 +1328,16 @@ int P_FlatToTerrainType(int flatid)
 /**
  * Returns the terrain type of the specified sector, plane.
  *
- * @param sec       The sector to check.
- * @param plane     The plane id to check.
+ * @param sec           The sector to check.
+ * @param plane         The plane id to check.
  */
-int P_GetTerrainType(sector_t* sec, int plane)
+terraintype_t P_GetTerrainType(sector_t* sec, int plane)
 {
-    int flatid = P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
+    materialnum_t       num =
+        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
 
-    if(flatid != -1)
-        return TerrainTypes[flatid];
+    if(num)
+        return TerrainTypes[num];
     else
         return FLOOR_SOLID;
 }
@@ -1537,19 +1535,19 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
     // SWITCHES
     case 7: // Switch_Build_Stairs (8 pixel steps)
         if(EV_BuildStairs(line, build8))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
 
         break;
 
     case 107: // Switch_Build_Stairs_16 (16 pixel steps)
         if(EV_BuildStairs(line, build16))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
 
         break;
 
     case 9: // Change Donut.
         if(EV_DoDonut(line))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 11: // Exit level.
@@ -1557,62 +1555,62 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
             break;
 
         G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
-        P_ChangeSwitchTexture(line, 0);
+        P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 14: // Raise Floor 32 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 15: // Raise Floor 24 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 18: // Raise Floor to next highest floor.
         if(EV_DoFloor(line, FT_RAISEFLOORTONEAREST))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 20: // Raise Plat next highest floor and change texture.
         if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 21: // PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 0))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 23: // Lower Floor to Lowest.
         if(EV_DoFloor(line, FT_LOWERTOLOWEST))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 29: // Raise Door.
         if(EV_DoDoor(line, DT_NORMAL))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 41: // Lower Ceiling to Floor.
         if(EV_DoCeiling(line, CT_LOWERTOFLOOR))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 71: // Turbo Lower Floor.
         if(EV_DoFloor(line, FT_LOWERTURBO))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 49: // Lower Ceiling And Crush.
         if(EV_DoCeiling(line, CT_LOWERANDCRUSH))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 50: // Close Door.
         if(EV_DoDoor(line, DT_CLOSE))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 51: // Secret EXIT.
@@ -1620,98 +1618,98 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
             break;
 
         G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
-        P_ChangeSwitchTexture(line, 0);
+        P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 55: // Raise Floor Crush.
         if(EV_DoFloor(line, FT_RAISEFLOORCRUSH))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 101: // Raise Floor.
         if(EV_DoFloor(line, FT_RAISEFLOOR))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 102: // Lower Floor to Surrounding floor height.
         if(EV_DoFloor(line, FT_LOWER))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     case 103: // Open Door.
         if(EV_DoDoor(line, DT_OPEN))
-            P_ChangeSwitchTexture(line, 0);
+            P_ChangeSwitchMaterial(line, 0);
         break;
 
     // BUTTONS
     case 42: // Close Door.
         if(EV_DoDoor(line, DT_CLOSE))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 43: // Lower Ceiling to Floor.
         if(EV_DoCeiling(line, CT_LOWERTOFLOOR))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 45: // Lower Floor to Surrounding floor height.
         if(EV_DoFloor(line, FT_LOWER))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 60: // Lower Floor to Lowest.
         if(EV_DoFloor(line, FT_LOWERTOLOWEST))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 61: // Open Door.
         if(EV_DoDoor(line, DT_OPEN))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 62: // PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 1))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 63: // Raise Door.
         if(EV_DoDoor(line, DT_NORMAL))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 64: // Raise Floor to ceiling.
         if(EV_DoFloor(line, FT_RAISEFLOOR))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 66: // Raise Floor 24 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 67: // Raise Floor 32 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 65: // Raise Floor Crush.
         if(EV_DoFloor(line, FT_RAISEFLOORCRUSH))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 68: // Raise Plat to next highest floor and change texture.
         if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 69: // Raise Floor to next highest floor.
         if(EV_DoFloor(line, FT_RAISEFLOORTONEAREST))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     case 70: // Turbo Lower Floor.
         if(EV_DoFloor(line, FT_LOWERTURBO))
-            P_ChangeSwitchTexture(line, 1);
+            P_ChangeSwitchMaterial(line, 1);
         break;
 
     default:

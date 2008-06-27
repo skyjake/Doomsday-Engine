@@ -1111,7 +1111,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     }
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_MobjGetFloorType(mo) >= FLOOR_LIQUID &&
+       P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
         mo->floorClip = 10;
@@ -1496,7 +1496,7 @@ void P_RipperBlood(mobj_t *mo)
     th->tics += P_Random() & 3;
 }
 
-int P_MobjGetFloorType(mobj_t *thing)
+int P_MobjGetFloorTerrainType(mobj_t *thing)
 {
     return P_GetTerrainType(P_GetPtrp(thing->subsector, DMU_SECTOR), PLN_FLOOR);
 }
@@ -1527,7 +1527,7 @@ int P_HitFloor(mobj_t *thing)
         break;
     }
 
-    switch(P_MobjGetFloorType(thing))
+    switch(P_MobjGetFloorTerrainType(thing))
     {
     case FLOOR_WATER:
         mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX], thing->pos[VY], ONFLOORZ);

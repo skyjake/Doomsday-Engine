@@ -85,18 +85,18 @@ DEFCC(CCmdPrintPlayerCoords);
 DEFCC(CCmdScreenShot);
 DEFCC(CCmdViewSize);
 DEFCC(CCmdHereticFont);
+DEFCC(CCmdConBackground);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     consoleFlat = 0;
+materialnum_t consoleBG = 0;
 float   consoleZoom = 1;
 
 // Console variables.
 cvar_t  gameCVars[] = {
 // Console
-    {"con-flat", CVF_NO_MAX, CVT_INT, &consoleFlat, 0, 0},
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
@@ -193,38 +193,39 @@ ccmd_t gameCCmds[] = {
     {"viewsize",   "s",     CCmdViewSize},
 
     // $cheats
-    {"cheat",      "s",     CCmdCheat},
-    {"god",        "",      CCmdCheatGod},
-    {"noclip",     "",      CCmdCheatClip},
-    {"warp",       NULL,    CCmdCheatWarp},
-    {"reveal",     "i",     CCmdCheatReveal},
-    {"give",       NULL,    CCmdCheatGive},
-    {"kill",       "",      CCmdCheatMassacre},
-    {"exitlevel",  "",      CCmdCheatExitLevel},
-    {"suicide",    "",      CCmdCheatSuicide},
-    {"where",      "",      CCmdCheatWhere},
+    {"cheat",       "s",    CCmdCheat},
+    {"god",         "",     CCmdCheatGod},
+    {"noclip",      "",     CCmdCheatClip},
+    {"warp",        NULL,   CCmdCheatWarp},
+    {"reveal",      "i",    CCmdCheatReveal},
+    {"give",        NULL,   CCmdCheatGive},
+    {"kill",        "",     CCmdCheatMassacre},
+    {"exitlevel",   "",     CCmdCheatExitLevel},
+    {"suicide",     "",     CCmdCheatSuicide},
+    {"where",       "",     CCmdCheatWhere},
 
-    {"hereticfont","",      CCmdHereticFont},
+    {"hereticfont", "",     CCmdHereticFont},
+    {"conbg",       "s",    CCmdConBackground},
 
     // $infine
-    {"startinf",   "s",     CCmdStartInFine},
-    {"stopinf",    "",      CCmdStopInFine},
-    {"stopfinale", "",      CCmdStopInFine},
+    {"startinf",    "s",    CCmdStartInFine},
+    {"stopinf",     "",     CCmdStopInFine},
+    {"stopfinale",  "",     CCmdStopInFine},
 
-    {"spawnmobj",  NULL,    CCmdSpawnMobj},
-    {"coord",      "",      CCmdPrintPlayerCoords},
+    {"spawnmobj",   NULL,   CCmdSpawnMobj},
+    {"coord",       "",     CCmdPrintPlayerCoords},
 
     // $democam
-    {"makelocp",   "i",     CCmdMakeLocal},
-    {"makecam",    "i",     CCmdSetCamera},
-    {"setlock",    NULL,    CCmdSetViewLock},
-    {"lockmode",   "i",     CCmdSetViewLock},
-    {"viewmode",   NULL,    CCmdSetViewMode},
+    {"makelocp",    "i",    CCmdMakeLocal},
+    {"makecam",     "i",    CCmdSetCamera},
+    {"setlock",     NULL,   CCmdSetViewLock},
+    {"lockmode",    "i",    CCmdSetViewLock},
+    {"viewmode",    NULL,   CCmdSetViewMode},
 
     // Heretic specific
-    {"invleft",    NULL,    CCmdInventory},
-    {"invright",   NULL,    CCmdInventory},
-    {"chicken",    "",      CCmdCheatPig},
+    {"invleft",     NULL,   CCmdInventory},
+    {"invright",    NULL,   CCmdInventory},
+    {"chicken",     "",     CCmdCheatPig},
     {NULL}
 };
 
@@ -251,9 +252,9 @@ void G_ConsoleRegistration(void)
  */
 void H_ConsoleBg(int *width, int *height)
 {
-    if(consoleFlat)
+    if(consoleBG)
     {
-        GL_SetMaterial(consoleFlat, MAT_FLAT);
+        GL_SetMaterial(consoleBG);
         *width = (int) (64 * consoleZoom);
         *height = (int) (64 * consoleZoom);
     }
@@ -351,5 +352,18 @@ DEFCC(CCmdHereticFont)
     cfont.getWidth = ConTextWidth;
     cfont.filterText = ConTextFilter;
     Con_SetFont(&cfont);
+    return true;
+}
+
+/**
+ * Configure the console background.
+ */
+DEFCC(CCmdConBackground)
+{
+    materialnum_t       num;
+
+    if((num = R_MaterialCheckNumForName(argv[1], MAT_FLAT)) != 0)
+        consoleBG = num;
+
     return true;
 }

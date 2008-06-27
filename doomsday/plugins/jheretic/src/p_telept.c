@@ -158,7 +158,7 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
     {
         if(thing->pos[VZ] ==
             P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-           P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
+           P_MobjGetFloorTerrainType(thing) >= FLOOR_LIQUID)
         {
             thing->floorClip = 10;
         }
