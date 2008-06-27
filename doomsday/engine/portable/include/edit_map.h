@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,15 +36,17 @@
 typedef struct editmap_s {
     char            name[9];
     uint            numVertexes;
-    vertex_t      **vertexes;
+    vertex_t**      vertexes;
     uint            numLineDefs;
-    linedef_t     **lineDefs;
+    linedef_t**     lineDefs;
     uint            numSideDefs;
-    sidedef_t     **sideDefs;
+    sidedef_t**     sideDefs;
     uint            numSectors;
-    sector_t      **sectors;
+    sector_t**      sectors;
     uint            numPolyObjs;
-    polyobj_t     **polyObjs;
+    polyobj_t**     polyObjs;
+
+    uint*           sideDefRefs; // Used to track sidedef reference counts.
 
     // The following is for game-specific map object data.
     gameobjdata_t   gameObjData;

@@ -114,6 +114,10 @@ static sidedef_t *createSide(void)
     map->sideDefs[map->numSideDefs-1] = side;
     map->sideDefs[map->numSideDefs] = NULL;
 
+    map->sideDefRefs =
+        M_Realloc(map->sideDefRefs, sizeof(*map->sideDefRefs) * (map->numSideDefs + 1));
+    map->sideDefRefs[map->numSideDefs-1] = 0;
+
     side->buildData.index = map->numSideDefs; // 1-based index, 0 = NIL.
     return side;
 }
@@ -195,8 +199,10 @@ static void destroyEditableSideDefs(editmap_t *map)
         }
 
         M_Free(map->sideDefs);
+        M_Free(map->sideDefRefs);
     }
     map->sideDefs = NULL;
+    map->sideDefRefs = NULL;
     map->numSideDefs = 0;
 }
 
@@ -1804,37 +1810,15 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
         return 0;
 
     // First, ensure that the side indices are unique.
+    if(frontSide && map->sideDefRefs[frontSide - 1])
+        return 0; // Already in use.
+    if(backSide && map->sideDefRefs[backSide - 1])
+        return 0; // Already in use.
+
     if(frontSide > 0)
         front = map->sideDefs[frontSide - 1];
     if(backSide > 0)
         back = map->sideDefs[backSide - 1];
-
-    if(front || back)
-    {
-        uint                i;
-        for(i = 0; i < map->numLineDefs; ++i)
-        {
-            linedef_t*          other = map->lineDefs[i];
-
-            if(other->L_frontside)
-            {
-                if((front && front == other->L_frontside) ||
-                   (back && back == other->L_frontside))
-                {
-                    return 0;
-                }
-            }
-
-            if(other->L_backside)
-            {
-                if((front && front == other->L_backside) ||
-                   (back && back == other->L_backside))
-                {
-                    return 0;
-                }
-            }
-        }
-    }
 
     l = createLine();
     l->L_v1 = map->vertexes[v1 - 1];
@@ -1884,6 +1868,13 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
     l->L_frontside = front;
     l->L_backside = back;
+
+    // Remember the number of unique references.
+    if(l->L_frontside)
+        map->sideDefRefs[l->L_frontside->buildData.index - 1]++;
+
+    if(l->L_backside)
+        map->sideDefRefs[l->L_backside->buildData.index - 1]++;
 
     l->inFlags = 0;
     if(front && back)
