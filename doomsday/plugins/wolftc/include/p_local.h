@@ -139,7 +139,7 @@ mobj_t     *P_SpawnTeleFog(float x, float y);
 
 boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 void        P_MobjThinker(mobj_t *mobj);
-int         P_MobjGetFloorType(mobj_t *thing);
+int         P_MobjGetFloorTerrainType(mobj_t *thing);
 void        P_RipperBlood(mobj_t *mo);
 void        P_SetDoomsdayFlags(mobj_t *mo);
 void        P_HitFloor(mobj_t *mo);

@@ -135,7 +135,7 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
             {
                 if(thing->pos[VZ] ==
                     P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-                   P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
+                   P_MobjGetFloorTerrainType(thing) >= FLOOR_LIQUID)
                 {
                     thing->floorClip = 10;
                 }
