@@ -118,6 +118,7 @@ typedef int				fixed_t;
 typedef unsigned int	angle_t;
 typedef int				spritenum_t;
 typedef int             lumpnum_t;
+typedef uint32_t        materialnum_t;
 typedef uint32_t        ident_t;
 typedef unsigned short	nodeindex_t;
 typedef unsigned short	thid_t;

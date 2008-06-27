@@ -167,17 +167,14 @@ extern          "C" {
     uint            MPE_VertexCreate(float x, float y);
     boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
     uint            MPE_SidedefCreate(uint sector, short flags,
-                                      int topMaterial,
-                                      materialtype_t topMaterialType,
+                                      materialnum_t topMaterial,
                                       float topOffsetX, float topOffsetY, float topRed,
                                       float topGreen, float topBlue,
-                                      int middleMaterial,
-                                      materialtype_t middleMaterialType,
+                                      materialnum_t middleMaterial,
                                       float middleOffsetX, float middleOffsetY,
                                       float middleRed, float middleGreen,
                                       float middleBlue, float middleAlpha,
-                                      int bottomMaterial,
-                                      materialtype_t bottomMaterialType,
+                                      materialnum_t bottomMaterial,
                                       float bottomOffsetX, float bottomOffsetY,
                                       float bottomRed, float bottomGreen,
                                       float bottomBlue);
@@ -185,7 +182,7 @@ extern          "C" {
                                       uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
     uint            MPE_PlaneCreate(uint sector, float height,
-                                    int material, materialtype_t materialType,
+                                    materialnum_t num,
                                     float matOffsetX, float matOffsetY,
                                     float r, float g, float b, float a,
                                     float normalX, float normalY, float normalZ);
@@ -404,16 +401,15 @@ extern          "C" {
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
     void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);
-    void            R_GetMaterialInfo(int ofTypeId, materialtype_t type, materialinfo_t* info);
 
-    int             R_CheckMaterialNumForName(const char *name, materialtype_t type);
-    const char     *R_MaterialNameForNum(int num, materialtype_t type);
-    int             R_MaterialNumForName(const char *name, materialtype_t type);
-    int             R_SetMaterialTranslation(int originalID, materialtype_t type, int translate_to);
-    boolean         R_IsCustomMaterial(int texture, materialtype_t type);
+    materialnum_t   R_MaterialCheckNumForName(const char* name, materialtype_t type);
+    materialnum_t   R_MaterialNumForName(const char* name, materialtype_t type);
+    const char     *R_MaterialNameForNum(materialnum_t num);
+    boolean         R_MaterialIsCustom(materialnum_t num);
+    boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
+
     int             R_CreateAnimGroup(int flags);
-    void            R_AddToAnimGroup(int groupNum, const char *name, materialtype_t type,
-                                     int tics, int randomTics);
+    void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
 
     angle_t         R_PointToAngle2(float x1, float y1, float x2,
                                     float y2);
@@ -482,9 +478,9 @@ extern          "C" {
     void            GL_PalIdxToRGB(int idx, float* rgb);
     void            GL_SetNoTexture(void);
     void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
-    void            GL_SetPSprite(int pnum);
-    void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
-    void            GL_SetMaterial(int idx, materialtype_t type);
+    void            GL_SetPSprite(materialnum_t mat);
+    void            GL_SetTranslatedSprite(materialnum_t mat, int tmap, int tclass);
+    void            GL_SetMaterial(materialnum_t mat);
     unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
     unsigned int    GL_LoadGraphics(const char *name, int mode);
 

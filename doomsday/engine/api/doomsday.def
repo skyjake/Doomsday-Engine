@@ -15,6 +15,7 @@ NAME            "DOOMSDAY"
 ; 95 formerly R_FlatNumForName
 ; 96 formerly R_CheckTextureNumForName
 ; 98 formerly R_TextureNameForNum
+; 99 formerly R_MaterialSetTranslation
 ; 100 formerly R_SetTextureTranslation
 ; 106 formerly DD_GetDGLProcAddress
 ; 107 formerly GL_DoUpdate
@@ -306,12 +307,11 @@ EXPORTS
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
-    R_GetMaterialInfo			@427 NONAME
-    R_IsCustomMaterial          @349 NONAME
-    R_CheckMaterialNumForName   @336 NONAME
+    R_MaterialGetInfo			@427 NONAME
+    R_MaterialIsCustom          @349 NONAME
+    R_MaterialCheckNumForName   @336 NONAME
     R_MaterialNameForNum        @337 NONAME
     R_MaterialNumForName        @97 NONAME
-    R_SetMaterialTranslation    @99 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
     R_CreateAnimGroup           @241 NONAME

@@ -1070,7 +1070,7 @@ typedef enum materialtype_e {
     } patchinfo_t;
 
     typedef struct {
-        int             idx; // Sprite index number.
+        materialnum_t   matIdx;
         int             realLump; // Real lump number.
         int             flip;
         int             offset;
@@ -1082,6 +1082,7 @@ typedef enum materialtype_e {
 
     typedef struct {
         int             ofTypeID;
+        materialnum_t   matIdx;
         materialtype_t  type;
         int             width, height;
     } materialinfo_t;
