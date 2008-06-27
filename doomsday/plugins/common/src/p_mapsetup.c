@@ -576,9 +576,8 @@ static void P_FinalizeLevel(void)
     // visible due to texture repeating and interpolation.
     {
     uint                i, k;
-    int                 materialID = R_MaterialNumForName("NUKE24", MAT_TEXTURE);
-    int                 bottomTex;
-    int                 midTex;
+    materialnum_t       mat = R_MaterialNumForName("NUKE24", MAT_TEXTURE);
+    int                 bottomMat, midMat;
     float               yoff;
     sidedef_t          *sidedef;
     linedef_t          *line;
@@ -593,10 +592,10 @@ static void P_FinalizeLevel(void)
 
             if(sidedef)
             {
-                bottomTex = P_GetIntp(sidedef, DMU_BOTTOM_MATERIAL);
-                midTex = P_GetIntp(sidedef, DMU_MIDDLE_MATERIAL);
+                bottomMat = P_GetIntp(sidedef, DMU_BOTTOM_MATERIAL);
+                midMat = P_GetIntp(sidedef, DMU_MIDDLE_MATERIAL);
 
-                if(bottomTex == materialID && midTex == 0)
+                if(bottomMat == mat && midMat == 0)
                 {
                     yoff = P_GetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y);
                     P_SetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);

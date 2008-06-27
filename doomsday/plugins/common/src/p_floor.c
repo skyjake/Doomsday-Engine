@@ -424,9 +424,7 @@ void T_MoveFloor(floor_t* floor)
             {
             case FT_RAISEDONUT:
                 xsec->special = floor->newSpecial;
-
-                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
-                          floor->texture);
+                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
                 break;
 
             default:
@@ -439,9 +437,7 @@ void T_MoveFloor(floor_t* floor)
             {
             case FT_LOWERANDCHANGE:
                 xsec->special = floor->newSpecial;
-
-                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
-                          floor->texture);
+                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
                 break;
 
             default:
@@ -475,14 +471,14 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
     if(frontSec && backSec)
     {
         sidedef_t          *side;
-        int                 mat;
+        materialnum_t       mat;
         materialinfo_t      info;
 
         side = P_GetPtrp(li, DMU_SIDEDEF0);
         mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
-        if(mat >= 0)
+        if(mat)
         {
-            R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+            R_MaterialGetInfo(mat, &info);
             if(info.height < params->minSize)
             {
                 params->minSize = info.height;
@@ -492,9 +488,9 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 
         side = P_GetPtrp(li, DMU_SIDEDEF1);
         mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
-        if(mat >= 0)
+        if(mat)
         {
-            R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+            R_MaterialGetInfo(mat, &info);
             if(info.height < params->minSize)
             {
                 params->minSize = info.height;
@@ -874,7 +870,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             sector_t               *otherSec =
                 P_FindSectorSurroundingLowestFloor(sec, &floor->floorDestHeight);
 
-            floor->texture = P_GetIntp(otherSec, DMU_FLOOR_MATERIAL);
+            floor->material = P_GetIntp(otherSec, DMU_FLOOR_MATERIAL);
             floor->newSpecial = P_ToXSector(otherSec)->special;
             }
             break;
@@ -1313,7 +1309,7 @@ int EV_DoDonut(linedef_t *line)
             floor->state = FS_UP;
             floor->sector = outer;
             floor->speed = FLOORSPEED * .5;
-            floor->texture = P_GetIntp(inner, DMU_FLOOR_MATERIAL);
+            floor->material = P_GetIntp(inner, DMU_FLOOR_MATERIAL);
             floor->newSpecial = 0;
             floor->floorDestHeight = destHeight;
 

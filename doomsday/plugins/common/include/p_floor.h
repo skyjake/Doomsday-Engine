@@ -94,7 +94,7 @@ typedef struct {
     sector_t*       sector;
     floorstate_e    state;
     int             newSpecial;
-    short           texture;
+    materialnum_t   material;
     float           floorDestHeight;
     float           speed;
 #if __JHEXEN__

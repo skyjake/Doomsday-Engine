@@ -193,7 +193,7 @@ typedef enum gamearchivesegment_e {
     ASEG_SOUNDS,            //jhexen only
     ASEG_MISC,              //jhexen only
     ASEG_END,
-    ASEG_TEX_ARCHIVE,
+    ASEG_MATERIAL_ARCHIVE,
     ASEG_MAP_HEADER2,       //jhexen only
     ASEG_PLAYER_HEADER
 } gamearchivesegment_t;
@@ -1349,7 +1349,7 @@ static void SV_ReadPlayer(player_t *p)
 }
 
 #if __JHEXEN__
-# define MOBJ_SAVEVERSION 5
+# define MOBJ_SAVEVERSION 6
 #else
 # define MOBJ_SAVEVERSION 7
 #endif
@@ -1371,6 +1371,7 @@ static void SV_WriteMobj(mobj_t *original)
     // 4: Added long 'tracer'
     // 4: Added long 'lastenemy'
     // 5: Added flags3
+    // 6: Floor material saved as archivenum
     //
     // JDOOM || JHERETIC || WOLFTC || JDOOM64
     // 4: Added byte 'translucency'
@@ -1409,7 +1410,7 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->frame);
 
 # if __JHEXEN__
-    SV_WriteLong(mo->floorPic);
+    SV_WriteLong(SV_MaterialArchiveNum(mo->floorMaterial));
 #else
     // The closest interval over all contacted Sectors.
     SV_WriteLong(FLT2FIX(mo->floorZ));
@@ -1741,7 +1742,11 @@ static int SV_ReadMobj(thinker_t *th)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
 
 #if __JHEXEN__
-    mo->floorPic = SV_ReadLong();
+    if(ver >= 6)
+        mo->floorMaterial = SV_GetArchiveMaterial(SV_ReadLong());
+    else
+        mo->floorMaterial =
+            R_MaterialNumForName(W_LumpName(SV_ReadLong()), MAT_FLAT);
 #else
     // The closest interval over all contacted Sectors.
     mo->floorZ = FIX2FLT(SV_ReadLong());
@@ -2089,8 +2094,8 @@ static void SV_WriteSector(sector_t *sec)
     byte        lightlevel = (byte) (255.f * P_GetFloatp(sec, DMU_LIGHT_LEVEL));
     short       floorheight = (short) P_GetIntp(sec, DMU_FLOOR_HEIGHT);
     short       ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
-    int         floorpic = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
-    int         ceilingpic = P_GetIntp(sec, DMU_CEILING_MATERIAL);
+    materialnum_t floorMaterial = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
+    materialnum_t ceilingMaterial = P_GetIntp(sec, DMU_CEILING_MATERIAL);
     xsector_t  *xsec = P_ToXSector(sec);
     float       rgb[3];
 
@@ -2114,8 +2119,8 @@ static void SV_WriteSector(sector_t *sec)
 
     SV_WriteShort(floorheight);
     SV_WriteShort(ceilingheight);
-    SV_WriteShort(SV_MaterialArchiveNum(floorpic, MAT_FLAT));
-    SV_WriteShort(SV_MaterialArchiveNum(ceilingpic, MAT_FLAT));
+    SV_WriteShort(SV_MaterialArchiveNum(floorMaterial));
+    SV_WriteShort(SV_MaterialArchiveNum(ceilingMaterial));
 #if __JHEXEN__
     SV_WriteShort((short) lightlevel);
 #else
@@ -2171,13 +2176,12 @@ static void SV_WriteSector(sector_t *sec)
  */
 static void SV_ReadSector(sector_t *sec)
 {
-    int         i, ver = 1;
-    int         type = 0;
-    int         floorTexID;
-    int         ceilingTexID;
-    byte        rgb[3], lightlevel;
-    xsector_t  *xsec = P_ToXSector(sec);
-    int         fh, ch;
+    int                 i, ver = 1;
+    int                 type = 0;
+    materialnum_t       floorMaterial, ceilingMaterial;
+    byte                rgb[3], lightlevel;
+    xsector_t*          xsec = P_ToXSector(sec);
+    int                 fh, ch;
 
     // A type byte?
 #if __JHEXEN__
@@ -2214,28 +2218,28 @@ static void SV_ReadSector(sector_t *sec)
     P_SetIntp(sec, DMU_CEILING_SPEED, 0);
 #endif
 
-    floorTexID = SV_ReadShort();
-    ceilingTexID = SV_ReadShort();
-
 #if !__JHEXEN__
     if(hdr.version == 1)
-    {
-        // The flat numbers are the actual lump numbers.
-        int     firstflat = W_CheckNumForName("F_START") + 1;
+    {   // The flat numbers are the actual lump numbers.
+        int             firstflat = W_CheckNumForName("F_START") + 1;
 
-        floorTexID += firstflat;
-        ceilingTexID += firstflat;
+        floorMaterial =
+            R_MaterialNumForName(W_LumpName(SV_ReadShort() + firstflat),
+                                 MAT_FLAT);
+        ceilingMaterial =
+            R_MaterialNumForName(W_LumpName(SV_ReadShort() + firstflat),
+                                 MAT_FLAT);
     }
     else if(hdr.version >= 4)
 #endif
     {
         // The flat numbers are actually archive numbers.
-        floorTexID = SV_GetArchiveMaterial(floorTexID, MAT_FLAT);
-        ceilingTexID = SV_GetArchiveMaterial(ceilingTexID, MAT_FLAT);
+        floorMaterial = SV_GetArchiveMaterial(SV_ReadShort());
+        ceilingMaterial = SV_GetArchiveMaterial(SV_ReadShort());
     }
 
-    P_SetIntp(sec, DMU_FLOOR_MATERIAL, floorTexID);
-    P_SetIntp(sec, DMU_CEILING_MATERIAL, ceilingTexID);
+    P_SetIntp(sec, DMU_FLOOR_MATERIAL, floorMaterial);
+    P_SetIntp(sec, DMU_CEILING_MATERIAL, ceilingMaterial);
 
 #if __JHEXEN__
     lightlevel = (byte) SV_ReadShort();
@@ -2304,13 +2308,13 @@ static void SV_ReadSector(sector_t *sec)
     xsec->soundTarget = 0;
 }
 
-static void SV_WriteLine(linedef_t *li)
+static void SV_WriteLine(linedef_t* li)
 {
-    uint        i, j;
-    int         texid;
-    float       rgba[4];
-    lineclass_t type;
-    xline_t    *xli = P_ToXLine(li);
+    uint                i, j;
+    materialnum_t       mat;
+    float               rgba[4];
+    lineclass_t         type;
+    xline_t*            xli = P_ToXLine(li);
 
 #if !__JHEXEN__
     if(xli->xg)
@@ -2357,14 +2361,14 @@ static void SV_WriteLine(linedef_t *li)
         SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_X));
         SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
 
-        texid = P_GetIntp(si, DMU_TOP_MATERIAL);
-        SV_WriteShort(SV_MaterialArchiveNum(texid, MAT_TEXTURE));
+        mat = P_GetIntp(si, DMU_TOP_MATERIAL);
+        SV_WriteShort(SV_MaterialArchiveNum(mat));
 
-        texid = P_GetIntp(si, DMU_BOTTOM_MATERIAL);
-        SV_WriteShort(SV_MaterialArchiveNum(texid, MAT_TEXTURE));
+        mat = P_GetIntp(si, DMU_BOTTOM_MATERIAL);
+        SV_WriteShort(SV_MaterialArchiveNum(mat));
 
-        texid = P_GetIntp(si, DMU_MIDDLE_MATERIAL);
-        SV_WriteShort(SV_MaterialArchiveNum(texid, MAT_TEXTURE));
+        mat = P_GetIntp(si, DMU_MIDDLE_MATERIAL);
+        SV_WriteShort(SV_MaterialArchiveNum(mat));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(j = 0; j < 3; ++j)
@@ -2397,14 +2401,12 @@ static void SV_WriteLine(linedef_t *li)
  */
 static void SV_ReadLine(linedef_t *li)
 {
-    int         i, j;
-    lineclass_t type;
-    int         ver;
-    int         topTexID;
-    int         bottomTexID;
-    int         middleTexID;
-    short       flags;
-    xline_t    *xli = P_ToXLine(li);
+    int                 i, j;
+    lineclass_t         type;
+    int                 ver;
+    materialnum_t       topMaterial, bottomMaterial, middleMaterial;
+    short               flags;
+    xline_t*            xli = P_ToXLine(li);
 
     // A type byte?
 #if __JHEXEN__
@@ -2491,23 +2493,19 @@ static void SV_ReadLine(linedef_t *li)
             P_SetFloatpv(si, DMU_BOTTOM_MATERIAL_OFFSET_XY, offset);
         }
 
-        topTexID = SV_ReadShort();
-        bottomTexID = SV_ReadShort();
-        middleTexID = SV_ReadShort();
-
 #if !__JHEXEN__
         if(hdr.version >= 4)
 #endif
         {
             // The texture numbers are archive numbers.
-            topTexID = SV_GetArchiveMaterial(topTexID, MAT_TEXTURE);
-            bottomTexID = SV_GetArchiveMaterial(bottomTexID, MAT_TEXTURE);
-            middleTexID = SV_GetArchiveMaterial(middleTexID, MAT_TEXTURE);
+            topMaterial = SV_GetArchiveMaterial(SV_ReadShort());
+            bottomMaterial = SV_GetArchiveMaterial(SV_ReadShort());
+            middleMaterial = SV_GetArchiveMaterial(SV_ReadShort());
         }
 
-        P_SetIntp(si, DMU_TOP_MATERIAL, topTexID);
-        P_SetIntp(si, DMU_BOTTOM_MATERIAL, bottomTexID);
-        P_SetIntp(si, DMU_MIDDLE_MATERIAL, middleTexID);
+        P_SetIntp(si, DMU_TOP_MATERIAL, topMaterial);
+        P_SetIntp(si, DMU_BOTTOM_MATERIAL, bottomMaterial);
+        P_SetIntp(si, DMU_MIDDLE_MATERIAL, middleMaterial);
 
         // Ver2 includes surface colours
         if(ver >= 2)
@@ -2581,10 +2579,10 @@ static int SV_ReadPolyObj(polyobj_t* po)
  */
 static void P_ArchiveWorld(void)
 {
-    uint        i;
+    uint                i;
 
-    SV_BeginSegment(ASEG_TEX_ARCHIVE);
-    SV_WriteTextureArchive();
+    SV_BeginSegment(ASEG_MATERIAL_ARCHIVE);
+    SV_WriteMaterialArchive();
 
     SV_BeginSegment(ASEG_WORLD);
     for(i = 0; i < numsectors; ++i)
@@ -2603,15 +2601,23 @@ static void P_ArchiveWorld(void)
 
 static void P_UnArchiveWorld(void)
 {
-    uint        i;
+    uint                i;
+    int                 matArchiveVer = 0;
 
-    AssertSegment(ASEG_TEX_ARCHIVE);
+    AssertSegment(ASEG_MATERIAL_ARCHIVE);
+
+#if __JHEXEN__
+    if(saveVersion >= 6)
+#else
+    if(hdr.version >= 6)
+#endif
+        matArchiveVer = 1;
 
     // Load texturearchive?
 #if !__JHEXEN__
     if(hdr.version >= 4)
 #endif
-        SV_ReadTextureArchive();
+        SV_ReadMaterialArchive(matArchiveVer);
 
     AssertSegment(ASEG_WORLD);
     // Load sectors.
@@ -2831,7 +2837,7 @@ static int SV_ReadDoor(door_t *door)
 
 static void SV_WriteFloor(floor_t *floor)
 {
-    SV_WriteByte(1); // Write a version byte.
+    SV_WriteByte(2); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
     // is present as we ALWAYS add one when loading.
@@ -2845,7 +2851,7 @@ static void SV_WriteFloor(floor_t *floor)
     SV_WriteLong((int) floor->state);
     SV_WriteLong(floor->newSpecial);
 
-    SV_WriteShort(floor->texture);
+    SV_WriteShort(SV_MaterialArchiveNum(floor->material));
 
     SV_WriteShort((int) floor->floorDestHeight);
     SV_WriteLong(FLT2FIX(floor->speed));
@@ -2862,9 +2868,9 @@ static void SV_WriteFloor(floor_t *floor)
 #endif
 }
 
-static int SV_ReadFloor(floor_t *floor)
+static int SV_ReadFloor(floor_t* floor)
 {
-    sector_t *sector;
+    sector_t*           sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2872,7 +2878,7 @@ static int SV_ReadFloor(floor_t *floor)
     if(hdr.version >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
+        byte                ver = SV_ReadByte(); // version byte.
 
         floor->type = (floortype_e) SV_ReadByte();
 
@@ -2888,7 +2894,11 @@ static int SV_ReadFloor(floor_t *floor)
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
 
-        floor->texture = SV_ReadShort();
+        if(ver >= 2)
+            floor->material = SV_GetArchiveMaterial(SV_ReadShort());
+        else
+            floor->material =
+                R_MaterialNumForName(W_LumpName(SV_ReadShort()), MAT_FLAT);
 
         floor->floorDestHeight = (float) SV_ReadShort();
         floor->speed = FIX2FLT(SV_ReadLong());
@@ -2933,7 +2943,8 @@ static int SV_ReadFloor(floor_t *floor)
 #endif
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
-        floor->texture = SV_ReadShort();
+        floor->material =
+            R_MaterialNumForName(W_LumpName(SV_ReadShort()), MAT_FLAT);
 
         floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->speed = FIX2FLT((fixed_t) SV_ReadLong());
@@ -4360,7 +4371,7 @@ static void P_ArchiveMap(boolean savePlayers)
     numSoundTargets = 0;
 #endif
 
-    SV_InitTextureArchives();
+    SV_InitMaterialArchives();
 
     P_ArchiveWorld();
     P_ArchiveThinkers(savePlayers);

@@ -36,7 +36,7 @@ extern float attackRange;
 extern boolean  floatOk;
 extern float tmFloorZ;
 extern float tmCeilingZ;
-extern int tmFloorPic;
+extern materialnum_t tmFloorMaterial;
 
 extern linedef_t *ceilingLine;
 extern linedef_t *blockLine;
@@ -51,9 +51,9 @@ extern mobj_t *blockingMobj;
 extern float tmBBox[];
 extern boolean fellDown;
 
-boolean         P_CheckPosition2f(mobj_t *thing, float x, float y);
-boolean         P_CheckPosition3f(mobj_t *thing, float x, float y, float z);
-boolean         P_CheckPosition3fv(mobj_t *thing, const float pos[3]);
+boolean         P_CheckPosition2f(mobj_t* thing, float x, float y);
+boolean         P_CheckPosition3f(mobj_t* thing, float x, float y, float z);
+boolean         P_CheckPosition3fv(mobj_t* thing, const float pos[3]);
 
 #if __JHEXEN__
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance,

@@ -119,8 +119,8 @@ enum
     LTC_DISABLE_IF_ACTIVE,
     LTC_ENABLE_IF_ACTIVE,
     LTC_EXPLODE, // Explodes the activator.
-    LTC_PLANE_TEXTURE,
-    LTC_WALL_TEXTURE,
+    LTC_PLANE_MATERIAL,
+    LTC_WALL_MATERIAL,
     LTC_COMMAND,
     LTC_SOUND, // Play a sector sound.
     LTC_MIMIC_SECTOR,

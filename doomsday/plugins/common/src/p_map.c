@@ -105,7 +105,9 @@ boolean floatOk;
 
 float tmFloorZ;
 float tmCeilingZ;
-int tmFloorPic;
+#if __JHEXEN__
+materialnum_t tmFloorMaterial;
+#endif
 
 boolean fellDown; // $dropoff_fix
 
@@ -266,7 +268,9 @@ boolean P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp)
     // point. Any contacted lines the step closer together will adjust them.
     tmFloorZ = tmDropoffZ = P_GetFloatp(newsubsec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newsubsec, DMU_CEILING_HEIGHT);
-    tmFloorPic = P_GetIntp(newsubsec, DMU_FLOOR_MATERIAL);
+#if __JHEXEN__
+    tmFloorMaterial = P_GetIntp(newsubsec, DMU_FLOOR_MATERIAL);
+#endif
 
     VALIDCOUNT++;
     P_EmptyIterList(spechit);
@@ -1075,7 +1079,9 @@ boolean P_CheckPosition3f(mobj_t *thing, float x, float y, float z)
     // Any contacted lines the step closer together will adjust them.
     tmFloorZ = tmDropoffZ = P_GetFloatp(newsec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newsec, DMU_CEILING_HEIGHT);
-    tmFloorPic = P_GetIntp(newsec, DMU_FLOOR_MATERIAL);
+#if __JHEXEN__
+    tmFloorMaterial = P_GetIntp(newsec, DMU_FLOOR_MATERIAL);
+#endif
 
     VALIDCOUNT++;
     P_EmptyIterList(spechit);
@@ -1332,7 +1338,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
 #if __JHEXEN__
         // Must stay within a sector of a certain floor type?
         if((thing->flags2 & MF2_CANTLEAVEFLOORPIC) &&
-           (tmFloorPic != P_GetIntp(thing->subsector, DMU_FLOOR_MATERIAL) ||
+           (tmFloorMaterial != P_GetIntp(thing->subsector, DMU_FLOOR_MATERIAL) ||
             tmFloorZ - thing->pos[VZ] != 0))
         {
             return false;
@@ -1363,7 +1369,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
     thing->dropOffZ = tmDropoffZ; // $dropoff_fix: keep track of dropoffs.
 #endif
 #if __JHEXEN__
-    thing->floorPic = tmFloorPic;
+    thing->floorMaterial = tmFloorMaterial;
 #endif
 
     thing->pos[VX] = x;
@@ -1374,7 +1380,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
     if(thing->flags2 & MF2_FLOORCLIP)
     {
         if(thing->pos[VZ] == P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-           P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
+           P_MobjGetFloorTerrainType(thing) >= FLOOR_LIQUID)
         {
             thing->floorClip = 10;
         }
@@ -2204,7 +2210,7 @@ static boolean P_ThingHeightClip(mobj_t *thing)
 #endif
 
 #if __JHEXEN__
-    thing->floorPic = tmFloorPic;
+    thing->floorMaterial = tmFloorMaterial;
 #endif
 
     if(onfloor)
@@ -2764,7 +2770,7 @@ mobj_t *P_CheckOnMobj(mobj_t *thing)
 
     tmFloorZ = tmDropoffZ = P_GetFloatp(newsubsec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newsubsec, DMU_CEILING_HEIGHT);
-    tmFloorPic = P_GetIntp(newsubsec, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = P_GetIntp(newsubsec, DMU_FLOOR_MATERIAL);
 
     VALIDCOUNT++;
     P_EmptyIterList(spechit);

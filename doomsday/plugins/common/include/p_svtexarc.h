@@ -23,18 +23,18 @@
  */
 
 /**
- * p_svtexarc.c: Archived texture names (save games).
+ * p_svtexarc.c: Archived material names (save games).
  */
 
-#ifndef __DD_SAVEGAME_TEXTURE_ARCHIVE_H__
-#define __DD_SAVEGAME_TEXTURE_ARCHIVE_H__
+#ifndef __DD_SAVEGAME_MATERIAL_ARCHIVE_H__
+#define __DD_SAVEGAME_MATERIAL_ARCHIVE_H__
 
-void            SV_InitTextureArchives(void);
+void            SV_InitMaterialArchives(void);
 
-unsigned short  SV_MaterialArchiveNum(int materialID, materialtype_t type);
-int             SV_GetArchiveMaterial(int archiveID, materialtype_t type);
+unsigned short  SV_MaterialArchiveNum(materialnum_t num);
+materialnum_t   SV_GetArchiveMaterial(int archiveID);
 
-void            SV_WriteTextureArchive(void);
-void            SV_ReadTextureArchive(void);
+void            SV_WriteMaterialArchive(void);
+void            SV_ReadMaterialArchive(int version);
 
 #endif

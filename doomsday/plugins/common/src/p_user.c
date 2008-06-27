@@ -265,13 +265,13 @@ void P_Thrust(player_t *player, angle_t angle, float move)
         plrmo->mom[MY] += move * FIX2FLT(finesine[an]);
     }
 #if __JHERETIC__
-    else if(P_ToXSector(sector)->special == 15)    // Friction_Low
+    else if(P_ToXSector(sector)->special == 15) // Friction_Low
     {
         plrmo->mom[MX] += (move / 4) * FIX2FLT(finecosine[an]);
         plrmo->mom[MY] += (move / 4) * FIX2FLT(finesine[an]);
     }
 #elif __JHEXEN__
-    else if(P_MobjGetFloorType(plrmo) == FLOOR_ICE)   // Friction_Low
+    else if(P_MobjGetFloorTerrainType(plrmo) == FLOOR_ICE) // Friction_Low
     {
         plrmo->mom[MX] += (move / 2) * FIX2FLT(finecosine[an]);
         plrmo->mom[MY] += (move / 2) * FIX2FLT(finesine[an]);
@@ -951,12 +951,12 @@ void P_ClientSideThink(void)
     // Set CONSOLEPLAYER thrust multiplier.
     if(mo->pos[VZ] > mo->floorZ)      // Airborne?
     {
-        float       mul = (mo->ddFlags & DDMF_FLY) ? 1 : 0;
+        float               mul = (mo->ddFlags & DDMF_FLY) ? 1 : 0;
         DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
     else
-    {   float       mul =
-            ((P_MobjGetFloorType(mo) == FLOOR_ICE) ? (1.0f / 2) : 1);
+    {   float               mul =
+            ((P_MobjGetFloorTerrainType(mo) == FLOOR_ICE) ? (1.0f / 2) : 1);
         DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
 #else
@@ -1216,9 +1216,9 @@ void P_PlayerThinkSpecial(player_t *player)
         P_PlayerInSpecialSector(player);
 
 #if __JHEXEN__
-    if((floorType = P_MobjGetFloorType(player->plr->mo)) != FLOOR_SOLID)
+    if((floorType = P_MobjGetFloorTerrainType(player->plr->mo)) != FLOOR_SOLID)
     {
-        P_PlayerOnSpecialFlat(player, floorType);
+        P_PlayerOnSpecialFloor(player, floorType);
     }
 #endif
 }

@@ -175,7 +175,7 @@ switchlist_t switchInfo[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int *switchlist;
+static materialnum_t* switchlist;
 static int max_numswitches;
 static int numswitches;
 
@@ -204,12 +204,12 @@ void P_InitSwitchList(void)
         if(!switchInfo[i].soundID)
             break;
 
-        switchlist[index++] = R_CheckMaterialNumForName(switchInfo[i].name1, MAT_TEXTURE);
-        switchlist[index++] = R_CheckMaterialNumForName(switchInfo[i].name2, MAT_TEXTURE);
+        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name1, MAT_TEXTURE);
+        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name2, MAT_TEXTURE);
     }
 
     numswitches = index / 2;
-    switchlist[index] = -1;
+    switchlist[index] = 0;
 }
 #else
 
@@ -287,7 +287,7 @@ void P_InitSwitchList(void)
     }
 
     numswitches = index / 2;
-    switchlist[index] = -1;
+    switchlist[index] = 0;
 }
 #endif
 
@@ -298,9 +298,9 @@ void P_InitSwitchList(void)
  * the button, the texture number of the button, and the time the button is
  * to remain active in gametics.
  */
-void P_StartButton(linedef_t *line, linesection_t section, int texture, int time)
+void P_StartButton(linedef_t *line, linesection_t section, materialnum_t mat, int time)
 {
-    button_t *button;
+    button_t*           button;
 
     // See if button is already pressed
     for(button = buttonlist; button; button = button->next)
@@ -315,7 +315,7 @@ void P_StartButton(linedef_t *line, linesection_t section, int texture, int time
         {
             button->line = line;
             button->section = section;
-            button->texture = texture;
+            button->material = mat;
             button->timer = time;
             button->soundOrg =
                 P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
@@ -326,7 +326,7 @@ void P_StartButton(linedef_t *line, linesection_t section, int texture, int time
     button = malloc(sizeof(button_t));
     button->line = line;
     button->section = section;
-    button->texture = texture;
+    button->material = mat;
     button->timer = time;
     button->soundOrg =
         P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
@@ -343,24 +343,24 @@ void P_StartButton(linedef_t *line, linesection_t section, int texture, int time
  * Function that changes wall texture.
  * Tell it if switch is ok to use again (1=yes, it's a button).
  */
-void P_ChangeSwitchTexture(linedef_t *line, int useAgain)
+void P_ChangeSwitchMaterial(linedef_t *line, int useAgain)
 {
-    int         i;
-    int         texTop, texMid, texBot;
+    int                 i;
+    materialnum_t       texTop, texMid, texBot;
 #if !__JHEXEN__
-    int         sound;
+    int                 sound;
 #endif
-    sidedef_t     *sdef = P_GetPtrp(line, DMU_SIDEDEF0);
-    sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    sidedef_t*          sdef = P_GetPtrp(line, DMU_SIDEDEF0);
+    sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
 #if !__JHEXEN__
     if(!useAgain)
         P_ToXLine(line)->special = 0;
 #endif
 
-    texTop = P_GetIntp(sdef, DMU_TOP_MATERIAL);
-    texMid = P_GetIntp(sdef, DMU_MIDDLE_MATERIAL);
-    texBot = P_GetIntp(sdef, DMU_BOTTOM_MATERIAL);
+    texTop = (materialnum_t) P_GetIntp(sdef, DMU_TOP_MATERIAL);
+    texMid = (materialnum_t) P_GetIntp(sdef, DMU_MIDDLE_MATERIAL);
+    texBot = (materialnum_t) P_GetIntp(sdef, DMU_BOTTOM_MATERIAL);
 
 #if !__JHEXEN__
 # if __JHERETIC__ || __WOLFTC__

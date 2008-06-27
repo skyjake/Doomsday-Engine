@@ -161,7 +161,7 @@ typedef struct fistate_s {
     fitext_t       *waitingText;
     fipic_t        *waitingPic;
     fihandler_t     keyHandlers[MAX_HANDLERS];
-    int             bgFlat;
+    materialnum_t   bgMaterial;
     fivalue_t       bgColor[4];
     fivalue_t       imgColor[4];
     fivalue_t       imgOffset[2];
@@ -182,7 +182,8 @@ int     FI_TextObjectLength(fitext_t *tex);
 void    FIC_Do(void);
 void    FIC_End(void);
 void    FIC_BGFlat(void);
-void    FIC_NoBGFlat(void);
+void    FIC_BGTexture(void);
+void    FIC_NoBGMaterial(void);
 void    FIC_Wait(void);
 void    FIC_WaitText(void);
 void    FIC_WaitAnim(void);
@@ -306,7 +307,9 @@ static ficmd_t fiCommands[] = {
     {"color", 3, FIC_Color},    // color (red) (green) (blue)
     {"coloralpha", 4, FIC_ColorAlpha},  // coloralpha (r) (g) (b) (a)
     {"flat", 1, FIC_BGFlat},    // flat (flat-id)
-    {"noflat", 0, FIC_NoBGFlat},
+    {"texture", 1, FIC_BGTexture}, // texture (texture-id)
+    {"noflat", 0, FIC_NoBGMaterial},
+    {"notexture", 0, FIC_NoBGMaterial},
     {"offx", 1, FIC_OffsetX},   // offx (x)
     {"offy", 1, FIC_OffsetY},   // offy (y)
     {"filter", 4, FIC_Filter},  // filter (r) (g) (b) (a)
@@ -425,7 +428,7 @@ void FI_ClearState(void)
     fi->skipping = false;
     fi->wait = 0; // Not waiting for anything.
     fi->inTime = 0; // Interpolation is off.
-    fi->bgFlat = -1; // No background flat.
+    fi->bgMaterial = 0; // No background flat.
     fi->paused = false;
     fi->gotoSkip = false;
     fi->skipNext = false;
@@ -1702,10 +1705,10 @@ void FI_Drawer(void)
         return;
 
     // Draw the background.
-    if(fi->bgFlat >= 0)
+    if(fi->bgMaterial > 0)
     {
         FI_UseColor(fi->bgColor, 4);
-        GL_SetMaterial(fi->bgFlat, MAT_FLAT);
+        GL_SetMaterial(fi->bgMaterial);
         GL_DrawRectTiled(0, 0, 320, 200, 64, 64);
     }
     else
@@ -1861,12 +1864,17 @@ void FIC_End(void)
 
 void FIC_BGFlat(void)
 {
-    fi->bgFlat = R_CheckMaterialNumForName(FI_GetToken(), MAT_FLAT);
+    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MAT_FLAT);
 }
 
-void FIC_NoBGFlat(void)
+void FIC_BGTexture(void)
 {
-    fi->bgFlat = -1;
+    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MAT_TEXTURE);
+}
+
+void FIC_NoBGMaterial(void)
+{
+    fi->bgMaterial = 0;
 }
 
 void FIC_InTime(void)

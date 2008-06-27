@@ -92,12 +92,12 @@
         : reftype == SPREF_NEXT_HIGHEST_CEILING? "NEXT HIGHEST CEILING" \
         : reftype == SPREF_NEXT_LOWEST_FLOOR? "NEXT LOWEST FLOOR" \
         : reftype == SPREF_NEXT_LOWEST_CEILING? "NEXT LOWEST CEILING" \
-        : reftype == SPREF_MIN_BOTTOM_TEXTURE? "MIN BOTTOM TEXTURE" \
-        : reftype == SPREF_MIN_MID_TEXTURE? "MIN MIDDLE TEXTURE" \
-        : reftype == SPREF_MIN_TOP_TEXTURE? "MIN TOP TEXTURE" \
-        : reftype == SPREF_MAX_BOTTOM_TEXTURE? "MAX BOTTOM TEXTURE" \
-        : reftype == SPREF_MAX_MID_TEXTURE? "MAX MIDDLE TEXTURE" \
-        : reftype == SPREF_MAX_TOP_TEXTURE? "MAX TOP TEXTURE" \
+        : reftype == SPREF_MIN_BOTTOM_MATERIAL? "MIN BOTTOM MATERIAL" \
+        : reftype == SPREF_MIN_MID_MATERIAL? "MIN MIDDLE MATERIAL" \
+        : reftype == SPREF_MIN_TOP_MATERIAL? "MIN TOP MATERIAL" \
+        : reftype == SPREF_MAX_BOTTOM_MATERIAL? "MAX BOTTOM MATERIAL" \
+        : reftype == SPREF_MAX_MID_MATERIAL? "MAX MIDDLE MATERIAL" \
+        : reftype == SPREF_MAX_TOP_MATERIAL? "MAX TOP MATERIAL" \
         : reftype == SPREF_SECTOR_TAGGED_FLOOR? "SECTOR TAGGED FLOOR" \
         : reftype == SPREF_LINE_TAGGED_FLOOR? "LINE TAGGED FLOOR" \
         : reftype == SPREF_TAGGED_FLOOR? "TAGGED FLOOR" \
@@ -336,7 +336,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
                 info->ceilMul, info->ceilOff);
 
         // Derive texmove angle from first act-tagged line?
-        if((info->flags & STF_ACT_TAG_TEXMOVE) ||
+        if((info->flags & STF_ACT_TAG_MATERIALMOVE) ||
            (info->flags & STF_ACT_TAG_WIND))
         {
             angle_t angle = 0;
@@ -347,9 +347,9 @@ void XS_SetSectorType(struct sector_s* sec, int special)
                              NULL, XLTrav_LineAngle);
 
             // Convert to degrees.
-            if(info->flags & STF_ACT_TAG_TEXMOVE)
+            if(info->flags & STF_ACT_TAG_MATERIALMOVE)
             {
-                info->texMoveAngle[0] = info->texMoveAngle[1] =
+                info->materialMoveAngle[0] = info->materialMoveAngle[1] =
                     angle / (float) ANGLE_MAX *360;
             }
 
@@ -541,10 +541,10 @@ void XS_PlaneMover(xgplanemover_t *mover)
         XS_MoverStopped(mover, true);
 
         // The move is done. Do end stuff.
-        if(mover->setFlat > 0)
+        if(mover->setMaterial)
         {
-            XS_ChangePlaneTexture(mover->sector, mover->ceiling,
-                                  mover->setFlat, NULL);
+            XS_ChangePlaneMaterial(mover->sector, mover->ceiling,
+                                   mover->setMaterial, NULL);
         }
 
         if(mover->setSectorType >= 0)
@@ -626,11 +626,11 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
     return mover;
 }
 
-void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex,
-                           float *rgb)
+void XS_ChangePlaneMaterial(sector_t *sector, boolean ceiling,
+                            materialnum_t mat, float *rgb)
 {
-    XG_Dev("XS_ChangePlaneTexture: Sector %i, %s, texture %i",
-           P_ToIndex(sector), (ceiling ? "ceiling" : "floor"), tex);
+    XG_Dev("XS_ChangePlaneMaterial: Sector %i, %s, texture %i",
+           P_ToIndex(sector), (ceiling ? "ceiling" : "floor"), mat);
     if(rgb)
         XG_Dev("red %g, green %g, blue %g", rgb[0], rgb[1], rgb[2]);
 
@@ -639,23 +639,23 @@ void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex,
         if(rgb)
             P_SetFloatpv(sector, DMU_CEILING_COLOR, rgb);
 
-        if(tex)
-            P_SetIntp(sector, DMU_CEILING_MATERIAL, tex);
+        if(mat)
+            P_SetIntp(sector, DMU_CEILING_MATERIAL, mat);
     }
     else
     {
         if(rgb)
             P_SetFloatpv(sector, DMU_FLOOR_COLOR, rgb);
 
-        if(tex)
-            P_SetIntp(sector, DMU_FLOOR_MATERIAL, tex);
+        if(mat)
+            P_SetIntp(sector, DMU_FLOOR_MATERIAL, mat);
     }
 }
 
 uint FindMaxOf(int *list, uint num)
 {
-    uint        i, idx = 0;
-    int         max = list[0];
+    uint            i, idx = 0;
+    int             max = list[0];
 
     for(i = 1; i < num; ++i)
     {
@@ -791,32 +791,32 @@ int XS_TextureHeight(linedef_t* line, int part)
     {
     case LWS_UPPER:
     {
-        int             mat = P_GetIntp(side, DMU_TOP_MATERIAL);
+        materialnum_t   mat = P_GetIntp(side, DMU_TOP_MATERIAL);
 
         if(!mat)
             return DDMAXINT;
 
-        R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+        R_MaterialGetInfo(mat, &info);
         return maxceil - info.height;
     }
     case LWS_MID:
     {
-        int             mat = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
+        materialnum_t   mat = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
 
         if(!mat)
             return DDMAXINT;
 
-        R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+        R_MaterialGetInfo(mat, &info);
         return maxfloor + info.height;
     }
     case LWS_LOWER:
     {
-        int             mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+        materialnum_t   mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
 
         if(!mat)
             return DDMAXINT;
 
-        R_GetMaterialInfo(mat, MAT_TEXTURE, &info);
+        R_MaterialGetInfo(mat, &info);
         return minfloor + info.height;
     }
     default:
@@ -940,13 +940,13 @@ typedef struct findsectorextremaltextureheightparams_s {
     byte                flags;
     int                 part;
     float               val;
-} findsectorextremaltextureheightparams_t;
+} findsectorextremalmaterialheightparams_t;
 
-int findSectorExtremalTextureHeight(void *ptr, void *context)
+int findSectorExtremalMaterialHeight(void *ptr, void *context)
 {
     linedef_t          *li = (linedef_t*) ptr;
-    findsectorextremaltextureheightparams_t *params =
-        (findsectorextremaltextureheightparams_t*) context;
+    findsectorextremalmaterialheightparams_t *params =
+        (findsectorextremalmaterialheightparams_t*) context;
     float               height;
 
     // The heights are in real world coordinates.
@@ -965,23 +965,25 @@ int findSectorExtremalTextureHeight(void *ptr, void *context)
     return 1; // Continue iteration.
 }
 
-boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
-                    uint *refdata, float *height, int *pic,
-                    sector_t **planeSector)
+boolean XS_GetPlane(linedef_t* actline, sector_t* sector, int ref,
+                    uint* refdata, float* height, materialnum_t* mat,
+                    sector_t** planeSector)
 {
-    int                 otherMat;
+    materialnum_t       otherMat;
     float               otherHeight;
-    sector_t           *otherSec;
-    sector_t           *iter;
-    xline_t            *xline;
+    sector_t*           otherSec, *iter;
+    xline_t*            xline;
     char                buff[50];
 
     if(refdata)
         sprintf(buff, " : %i", *refdata);
 
-    XG_Dev("XS_GetPlane: Line %i, sector %i, ref (%s(%i)%s)",
-           actline ? P_ToIndex(actline) : -1, P_ToIndex(sector),
-           SPREFTYPESTR(ref), ref, refdata? buff : "" );
+    if(xgDev)
+    {
+        XG_Dev("XS_GetPlane: Line %i, sector %i, ref (%s(%i)%s)",
+               actline ? P_ToIndex(actline) : -1, P_ToIndex(sector),
+               SPREFTYPESTR(ref), ref, refdata? buff : "" );
+    }
 
     if(ref == SPREF_NONE || ref == SPREF_SPECIAL)
     {
@@ -992,8 +994,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     // Init the values to the current sector's floor.
     if(height)
         *height = P_GetFloatp(sector, DMU_FLOOR_HEIGHT);
-    if(pic)
-        *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
+    if(mat)
+        *mat = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
     if(planeSector)
         *planeSector = sector;
 
@@ -1089,22 +1091,23 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         {
             if(height)
                 *height = P_GetFloatp(iter, DMU_FLOOR_HEIGHT);
-            if(pic)
-                *pic = P_GetIntp(iter, DMU_FLOOR_MATERIAL);
+            if(mat)
+                *mat = P_GetIntp(iter, DMU_FLOOR_MATERIAL);
         }
         else
         {
             if(height)
                 *height = P_GetFloatp(iter, DMU_CEILING_HEIGHT);
-            if(pic)
-                *pic = P_GetIntp(iter, DMU_CEILING_MATERIAL);
+            if(mat)
+                *mat = P_GetIntp(iter, DMU_CEILING_MATERIAL);
         }
+
         return true;
     }
 
     if(ref == SPREF_MY_FLOOR)
     {
-        sector_t *frontsector;
+        sector_t*       frontsector;
 
         if(!actline)
             return false;
@@ -1117,8 +1120,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         // Actline's front floor.
         if(height)
             *height = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
-        if(pic)
-            *pic = P_GetIntp(frontsector, DMU_FLOOR_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(frontsector, DMU_FLOOR_MATERIAL);
         if(planeSector)
             *planeSector = frontsector;
         return true;
@@ -1126,7 +1129,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
 
     if(ref == SPREF_BACK_FLOOR)
     {
-        sector_t *backsector;
+        sector_t*       backsector;
 
         if(!actline)
             return false;
@@ -1139,16 +1142,17 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         // Actline's back floor.
         if(height)
             *height = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
-        if(pic)
-            *pic = P_GetIntp(backsector, DMU_FLOOR_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(backsector, DMU_FLOOR_MATERIAL);
         if(planeSector)
             *planeSector = backsector;
+
         return true;
     }
 
     if(ref == SPREF_MY_CEILING)
     {
-        sector_t *frontsector;
+        sector_t*       frontsector;
 
         if(!actline)
             return false;
@@ -1161,8 +1165,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         // Actline's front ceiling.
         if(height)
             *height = P_GetFloatp(frontsector, DMU_CEILING_HEIGHT);
-        if(pic)
-            *pic = P_GetIntp(frontsector, DMU_CEILING_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(frontsector, DMU_CEILING_MATERIAL);
         if(planeSector)
             *planeSector = frontsector;
         return true;
@@ -1170,7 +1174,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
 
     if(ref == SPREF_BACK_CEILING)
     {
-        sector_t *backsector;
+        sector_t*       backsector;
 
         if(!actline)
             return false;
@@ -1183,8 +1187,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         // Actline's back ceiling.
         if(height)
             *height = P_GetFloatp(backsector, DMU_CEILING_HEIGHT);
-        if(pic)
-            *pic = P_GetIntp(backsector, DMU_CEILING_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(backsector, DMU_CEILING_MATERIAL);
         if(planeSector)
             *planeSector = backsector;
         return true;
@@ -1194,8 +1198,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     {
         if(height)
             *height = P_ToXSector(sector)->SP_floororigheight;
-        if(pic)
-            *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
         return true;
     }
 
@@ -1203,8 +1207,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     {
         if(height)
             *height = P_ToXSector(sector)->SP_ceilorigheight;
-        if(pic)
-            *pic = P_GetIntp(sector, DMU_CEILING_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(sector, DMU_CEILING_MATERIAL);
         return true;
     }
 
@@ -1212,8 +1216,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     {
         if(height)
             *height = P_GetFloatp(sector, DMU_FLOOR_HEIGHT);
-        if(pic)
-            *pic = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(sector, DMU_FLOOR_MATERIAL);
         return true;
     }
 
@@ -1221,27 +1225,27 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     {
         if(height)
             *height = P_GetFloatp(sector, DMU_CEILING_HEIGHT);
-        if(pic)
-            *pic = P_GetIntp(sector, DMU_CEILING_MATERIAL);
+        if(mat)
+            *mat = P_GetIntp(sector, DMU_CEILING_MATERIAL);
         return true;
     }
 
     // Texture height targets?
-    if(ref >= SPREF_MIN_BOTTOM_TEXTURE && ref <= SPREF_MAX_TOP_TEXTURE)
+    if(ref >= SPREF_MIN_BOTTOM_MATERIAL && ref <= SPREF_MAX_TOP_MATERIAL)
     {
         int                 part;
         boolean             findMin;
-        findsectorextremaltextureheightparams_t params;
+        findsectorextremalmaterialheightparams_t params;
 
         // Which part of the wall are we looking at?
-        if(ref == SPREF_MIN_MID_TEXTURE || ref == SPREF_MAX_MID_TEXTURE)
+        if(ref == SPREF_MIN_MID_MATERIAL || ref == SPREF_MAX_MID_MATERIAL)
             part = LWS_MID;
-        else if(ref == SPREF_MIN_TOP_TEXTURE || ref == SPREF_MAX_TOP_TEXTURE)
+        else if(ref == SPREF_MIN_TOP_MATERIAL || ref == SPREF_MAX_TOP_MATERIAL)
             part = LWS_UPPER;
         else // Then it's the bottom.
             part = LWS_LOWER;
 
-        if(ref >= SPREF_MIN_BOTTOM_TEXTURE && ref <= SPREF_MIN_TOP_TEXTURE)
+        if(ref >= SPREF_MIN_BOTTOM_MATERIAL && ref <= SPREF_MIN_TOP_MATERIAL)
             findMin = true;
         else
             findMin = false;
@@ -1251,7 +1255,7 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
         params.flags = (findMin? FSETHF_MIN : 0);
         params.val = (findMin? DDMAXFLOAT : DDMINFLOAT);
         P_Iteratep(sector, DMU_LINEDEF, &params,
-                   findSectorExtremalTextureHeight);
+                   findSectorExtremalMaterialHeight);
         if(height)
             *height = params.val;
 
@@ -1327,8 +1331,8 @@ boolean XS_GetPlane(linedef_t *actline, sector_t *sector, int ref,
     // Set the values.
     if(height)
         *height = otherHeight;
-    if(pic)
-        *pic = otherMat;
+    if(mat)
+        *mat = otherMat;
     if(planeSector)
         *planeSector = otherSec;
 
@@ -1366,12 +1370,13 @@ void XS_InitMovePlane(linedef_t *line)
 int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
                             void *context2, mobj_t *activator)
 {
-    linedef_t     *line = (linedef_t *) context;
-    linetype_t *info = (linetype_t *) context2;
-    xgplanemover_t *mover;
-    int         flat, st;
-    xline_t     *xline = P_ToXLine(line);
-    boolean     playsound;
+    linedef_t*      line = (linedef_t *) context;
+    linetype_t*     info = (linetype_t *) context2;
+    xgplanemover_t* mover;
+    int             st;
+    materialnum_t   mat;
+    xline_t*        xline = P_ToXLine(line);
+    boolean         playsound;
 
     playsound = xline->xg->idata;
 
@@ -1384,10 +1389,10 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     // i4: start sound
     // i5: end sound
     // i6: move sound
-    // i7: start texture origin (uses same ids as i2)
-    // i8: start texture index (used with PMD_ZERO).
-    // i9: end texture origin (uses same ids as i2)
-    // i10: end texture (used with PMD_ZERO)
+    // i7: start material origin (uses same ids as i2)
+    // i8: start material index (used with PMD_ZERO).
+    // i9: end material origin (uses same ids as i2)
+    // i10: end material (used with PMD_ZERO)
     // i11 + i12: (plane ref) start sector type
     // i13 + i14: (plane ref) end sector type
     // f0: move speed (units per tic).
@@ -1417,11 +1422,11 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
 
     // Change texture at end?
     if(info->iparm[9] == SPREF_NONE || info->iparm[9] == SPREF_SPECIAL)
-        mover->setFlat = info->iparm[10];
+        mover->setMaterial = info->iparm[10];
     else
     {
-        if(!XS_GetPlane(line, sector, info->iparm[9], NULL, 0, &mover->setFlat, 0))
-            XG_Dev("  Couldn't find suitable texture to set when move ends!");
+        if(!XS_GetPlane(line, sector, info->iparm[9], NULL, 0, &mover->setMaterial, 0))
+            XG_Dev("  Couldn't find suitable material to set when move ends!");
     }
 
     // Init timer.
@@ -1446,14 +1451,14 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
 
     // Change texture at start?
     if(info->iparm[7] == SPREF_NONE || info->iparm[7] == SPREF_SPECIAL)
-        flat = info->iparm[8];
+        mat = info->iparm[8];
     else
     {
-        if(!XS_GetPlane(line, sector, info->iparm[7], NULL, 0, &flat, 0))
-            XG_Dev("  Couldn't find suitable texture to set when move starts!");
+        if(!XS_GetPlane(line, sector, info->iparm[7], NULL, 0, &mat, 0))
+            XG_Dev("  Couldn't find suitable material to set when move starts!");
     }
-    if(flat > 0)
-        XS_ChangePlaneTexture(sector, ceiling, flat, NULL);
+    if(mat > 0)
+        XS_ChangePlaneMaterial(sector, ceiling, mat, NULL);
 
     // Should we play no more sounds?
     if(info->iparm[3] & PMF_ONE_SOUND_ONLY)
@@ -1883,28 +1888,28 @@ int C_DECL XSTrav_SectorSound(struct sector_s *sec, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling,
-                               void *context, void *context2,
-                               mobj_t *activator)
+int C_DECL XSTrav_PlaneMaterial(struct sector_s *sec, boolean ceiling,
+                                void *context, void *context2,
+                                mobj_t *activator)
 {
-    linedef_t     *line = (linedef_t *) context;
-    linetype_t *info = context2;
-    int         pic;
-    float       rgb[3];
+    linedef_t*      line = (linedef_t *) context;
+    linetype_t*     info = context2;
+    materialnum_t   mat;
+    float           rgb[3];
 
-    // i2: (spref) texture origin
+    // i2: (spref) material origin
     // i3: texture number (flat), used with SPREF_NONE
     // i4: red
     // i5: green
     // i6: blue
     if(info->iparm[2] == SPREF_NONE)
     {
-        pic = info->iparm[3];
+        mat = info->iparm[3];
     }
     else
     {
-        if(!XS_GetPlane(line, sec, info->iparm[2], NULL, 0, &pic, 0))
-            XG_Dev("XSTrav_PlaneTexture: Sector %i, couldn't find suitable texture!",
+        if(!XS_GetPlane(line, sec, info->iparm[2], NULL, 0, &mat, 0))
+            XG_Dev("XSTrav_PlaneMaterial: Sector %i, couldn't find suitable material!",
                    P_ToIndex(sec));
     }
 
@@ -1916,7 +1921,7 @@ int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling,
     CLAMP(rgb[2], 0, 1);
 
     // Set the texture.
-    XS_ChangePlaneTexture(sec, ceiling, pic, rgb);
+    XS_ChangePlaneMaterial(sec, ceiling, mat, rgb);
 
     return true;
 }
@@ -2264,7 +2269,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
         {
             if(thing->pos[VZ] ==
                P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-               P_MobjGetFloorType(thing) >= FLOOR_LIQUID)
+               P_MobjGetFloorTerrainType(thing) >= FLOOR_LIQUID)
             {
                 thing->floorClip = 10;
             }
@@ -2947,27 +2952,27 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
     }
 
     // Floor Texture movement
-    if(xg->info.texMoveSpeed[0] != 0)
+    if(xg->info.materialMoveSpeed[0] != 0)
     {
-        ang = PI * xg->info.texMoveAngle[0] / 180;
+        ang = PI * xg->info.materialMoveAngle[0] / 180;
         // Get current values
         P_GetFloatpv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
         // Apply the offsets
-        floorOffset[VX] -= cos(ang) * xg->info.texMoveSpeed[0];
-        floorOffset[VY] -= sin(ang) * xg->info.texMoveSpeed[0];
+        floorOffset[VX] -= cos(ang) * xg->info.materialMoveSpeed[0];
+        floorOffset[VY] -= sin(ang) * xg->info.materialMoveSpeed[0];
         // Set the results
         P_SetFloatpv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
     }
 
     // Ceiling Texture movement
-    if(xg->info.texMoveSpeed[1] != 0)
+    if(xg->info.materialMoveSpeed[1] != 0)
     {
-        ang = PI * xg->info.texMoveAngle[1] / 180;
+        ang = PI * xg->info.materialMoveAngle[1] / 180;
         // Get current values
         P_GetFloatpv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
         // Apply the offsets
-        ceilOffset[VX] -= cos(ang) * xg->info.texMoveSpeed[1];
-        ceilOffset[VY] -= sin(ang) * xg->info.texMoveSpeed[1];
+        ceilOffset[VX] -= cos(ang) * xg->info.materialMoveSpeed[1];
+        ceilOffset[VY] -= sin(ang) * xg->info.materialMoveSpeed[1];
         // Set the results
         P_SetFloatpv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
     }

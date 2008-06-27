@@ -54,33 +54,33 @@ enum {
 };
 
 // Sector Type flags.
-#define STF_GRAVITY         0x00000001  // Use custom gravity gravity.
-#define STF_FRICTION        0x00000002  // Use custom friction.
+#define STF_GRAVITY         0x00000001 // Use custom gravity gravity.
+#define STF_FRICTION        0x00000002 // Use custom friction.
 #define STF_CRUSH           0x00000004
-#define STF_PLAYER_WIND     0x00000008  // Wind affects players.
+#define STF_PLAYER_WIND     0x00000008 // Wind affects players.
 #define STF_OTHER_WIND      0x00000010
 #define STF_MONSTER_WIND    0x00000020
 #define STF_MISSILE_WIND    0x00000040
-#define STF_ANY_WIND        0x00000018  // Player + nonplayer.
-#define STF_ACT_TAG_TEXMOVE 0x00000080  // Texmove from act tagged line.
+#define STF_ANY_WIND        0x00000018 // Player + nonplayer.
+#define STF_ACT_TAG_MATERIALMOVE 0x00000080 // Materialmove from act tagged line.
 #define STF_ACT_TAG_WIND    0x00000100
-#define STF_FLOOR_WIND      0x00000200  // Wind only when touching the floor.
+#define STF_FLOOR_WIND      0x00000200 // Wind only when touching the floor.
 #define STF_CEILING_WIND    0x00000400
 
 // Sector Chain Event flags.
-#define SCEF_PLAYER_A       0x00000001  // Activate for players.
-#define SCEF_OTHER_A        0x00000002  // Act. for non-players.
-#define SCEF_MONSTER_A      0x00000004  // Countkills.
-#define SCEF_MISSILE_A      0x00000008  // Missiles.
-#define SCEF_ANY_A          0x00000010  // All mobjs.
-#define SCEF_TICKER_A       0x00000020  // Activate by ticker.
+#define SCEF_PLAYER_A       0x00000001 // Activate for players.
+#define SCEF_OTHER_A        0x00000002 // Act. for non-players.
+#define SCEF_MONSTER_A      0x00000004 // Countkills.
+#define SCEF_MISSILE_A      0x00000008 // Missiles.
+#define SCEF_ANY_A          0x00000010 // All mobjs.
+#define SCEF_TICKER_A       0x00000020 // Activate by ticker.
 
-#define SCEF_PLAYER_D       0x00000040  // Deactivate for players.
-#define SCEF_OTHER_D        0x00000080  // Deact. for non-players.
-#define SCEF_MONSTER_D      0x00000100  // Countkills.
-#define SCEF_MISSILE_D      0x00000200  // Missiles.
-#define SCEF_ANY_D          0x00000400  // All mobjs.
-#define SCEF_TICKER_D       0x00000800  // Deactivate by ticker.
+#define SCEF_PLAYER_D       0x00000040 // Deactivate for players.
+#define SCEF_OTHER_D        0x00000080 // Deact. for non-players.
+#define SCEF_MONSTER_D      0x00000100 // Countkills.
+#define SCEF_MISSILE_D      0x00000200 // Missiles.
+#define SCEF_ANY_D          0x00000400 // All mobjs.
+#define SCEF_TICKER_D       0x00000800 // Deactivate by ticker.
 
 // Plane mover flags.
 #define PMF_CRUSH                   0x1 // Crush things inside.
@@ -94,16 +94,16 @@ enum {
 #define PMF_ACTIVATE_WHEN_DONE      0x8
 #define PMF_DEACTIVATE_WHEN_DONE    0x10
 
-#define PMF_OTHER_FOLLOWS           0x20    // Other plane follows.
-#define PMF_WAIT                    0x40    // Wait until timer counts to 0.
-#define PMF_SET_ORIGINAL            0x80    // Set origfloor/ceil.
+#define PMF_OTHER_FOLLOWS           0x20 // Other plane follows.
+#define PMF_WAIT                    0x40 // Wait until timer counts to 0.
+#define PMF_SET_ORIGINAL            0x80 // Set origfloor/ceil.
 
 // Only play sound for one sector.
 #define PMF_ONE_SOUND_ONLY          0x100
 
 typedef struct function_s {
-    struct function_s *link;       // Linked to another func?
-    char           *func;
+    struct function_s* link; // Linked to another func?
+    char*           func;
     int             flags;
     int             pos;
     int             repeat;
@@ -135,17 +135,17 @@ typedef struct {
 typedef struct {
     thinker_t       thinker;
 
-    struct sector_s *sector;
+    struct sector_s* sector;
     boolean         ceiling; // True if operates on the ceiling.
 
     int             flags;
-    struct linedef_s  *origin;
+    struct linedef_s* origin;
 
     float           destination;
     float           speed; // Signed.
     float           crushSpeed; // Signed (speed to use when crushing).
 
-    int             setFlat; // Set flat when move done.
+    materialnum_t   setMaterial; // Set material when move done.
     int             setSectorType; // Sector type to set when move done
     // (-1 if no change).
     int             startSound; // Played after waiting.
@@ -170,8 +170,8 @@ int C_DECL      XSTrav_SectorType(struct sector_s *sec, boolean ceiling,
                                   void *context, void *context2, struct mobj_s *activator);
 int C_DECL      XSTrav_SectorLight(struct sector_s *sector, boolean ceiling,
                                    void *context, void *context2, struct mobj_s *activator);
-int C_DECL      XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling,
-                                    void *context, void *context2, struct mobj_s *activator);
+int C_DECL      XSTrav_PlaneMaterial(struct sector_s *sec, boolean ceiling,
+                                     void *context, void *context2, struct mobj_s *activator);
 void            XS_InitStairBuilder(struct linedef_s *line);
 int C_DECL      XSTrav_BuildStairs(struct sector_s *sector, boolean ceiling,
                                    void *context, void *context2, struct mobj_s *activator);
@@ -182,8 +182,8 @@ int C_DECL      XSTrav_MimicSector(struct sector_s *sector, boolean ceiling,
 int C_DECL      XSTrav_Teleport(struct sector_s *sector, boolean ceiling,
                                    void *context, void *context2, struct mobj_s *activator);
 void            XS_SetSectorType(struct sector_s *sec, int special);
-void            XS_ChangePlaneTexture(struct sector_s *sector, boolean ceiling,
-                                      int tex, float *rgb);
+void            XS_ChangePlaneMaterial(struct sector_s *sector, boolean ceiling,
+                                       materialnum_t mat, float *rgb);
 xgplanemover_t *XS_GetPlaneMover(struct sector_s *sector, boolean ceiling);
 void            XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
 

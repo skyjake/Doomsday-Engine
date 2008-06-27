@@ -46,7 +46,7 @@ void            XG_Ticker(void);
 // Updates XG state during engine reset.
 void            XG_Update(void);
 
-void            XG_WriteTypes(FILE * file);
+//void            XG_WriteTypes(FILE * file);
 void            XG_ReadTypes(void);
 
 linetype_t     *XG_GetLumpLine(int id);

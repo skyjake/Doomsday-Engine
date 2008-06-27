@@ -60,6 +60,7 @@
 #include "p_mapsetup.h"
 #include "p_saveg.h"
 #include "p_xg.h"
+#include "p_svtexarc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -226,12 +227,11 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     uint        i;
     xgplanemover_t *mov = (xgplanemover_t *) th;
 
-    SV_WriteByte(1); // Version.
+    SV_WriteByte(3); // Version.
 
     SV_WriteLong(P_ToIndex(mov->sector));
     SV_WriteByte(mov->ceiling);
     SV_WriteLong(mov->flags);
-
 
     i = P_ToIndex(mov->origin);
     if(i >= numlines)  // Is it a real line?
@@ -244,7 +244,7 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     SV_WriteLong(FLT2FIX(mov->destination));
     SV_WriteLong(FLT2FIX(mov->speed));
     SV_WriteLong(FLT2FIX(mov->crushSpeed));
-    SV_WriteLong(mov->setFlat);
+    SV_WriteLong(SV_MaterialArchiveNum(mov->setMaterial));
     SV_WriteLong(mov->setSectorType);
     SV_WriteLong(mov->startSound);
     SV_WriteLong(mov->endSound);
@@ -259,9 +259,10 @@ void SV_WriteXGPlaneMover(thinker_t *th)
  */
 int SV_ReadXGPlaneMover(xgplanemover_t* mov)
 {
-    int                 i;
+    int                 i, num;
+    byte                ver;
 
-    SV_ReadByte(); // Version.
+    ver = SV_ReadByte(); // Version.
 
     mov->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
@@ -275,7 +276,11 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     mov->destination = FIX2FLT(SV_ReadLong());
     mov->speed = FIX2FLT(SV_ReadLong());
     mov->crushSpeed = FIX2FLT(SV_ReadLong());
-    mov->setFlat = SV_ReadLong();
+    num = SV_ReadLong();
+    if(ver >= 3)
+        mov->setMaterial = SV_GetArchiveMaterial(num);
+    else
+        mov->setMaterial = R_MaterialNumForName(W_LumpName(num), MAT_FLAT);
     mov->setSectorType = SV_ReadLong();
     mov->startSound = SV_ReadLong();
     mov->endSound = SV_ReadLong();

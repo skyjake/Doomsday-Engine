@@ -146,8 +146,9 @@ boolean         G_ValidateMap(int *episode, int *map);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    XL_ChangeTexture(linedef_t *line, int sidenum, int section, int texture,
-                         blendmode_t blend, byte rgba[4], int flags);
+void    XL_ChangeMaterial(linedef_t *line, int sidenum, int section,
+                          int material, blendmode_t blend,
+                          byte rgba[4], int flags);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -165,7 +166,7 @@ int C_DECL XLTrav_LineCount();
 int C_DECL XLTrav_EndLevel();
 int C_DECL XLTrav_DisableLine();
 int C_DECL XLTrav_EnableLine();
-int C_DECL XLTrav_ChangeWallTexture();
+int C_DECL XLTrav_ChangeWallMaterial();
 int C_DECL XLTrav_LineTeleport();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -317,15 +318,15 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Target Num", "", -1} }},                // ip1:
 
     { XLTrav_EnableLine, NULL, TRAV_LINES, 0, 1, 0, "Enable Line",
-      // Enables the referenced line(s) if active
+      // Enables the referenced line(s) if active.
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to enable
         {XGPF_INT, "Target Num", "", -1} }},                // ip1:
 
     { XL_DoExplode, NULL, TRAV_NONE, 0, 1, 0, "Explode" },
-      // Explodes the activator (no params)
+      // Explodes the activator (no params).
 
-    { XSTrav_PlaneTexture, NULL, TRAV_PLANES, 0, 1, 0, "Plane Texture",
-      // Change the texture and/or surface color of a plane
+    { XSTrav_PlaneMaterial, NULL, TRAV_PLANES, 0, 1, 0, "Plane Texture",
+      // Change the material and/or surface color of a plane.
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0 : (plane ref) plane(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1 : ref data
         {XGPF_INT, "Texture Ref", "spref_", 2},             // ip2 : Texture ref
@@ -334,8 +335,8 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Green Delta", "", -1},                  // ip5 : "" (green)
         {XGPF_INT, "Blue Delta", "", -1} }},                // ip6 : "" (blue)
 
-    { XLTrav_ChangeWallTexture, NULL, TRAV_LINES, 0, 1, 0, "Wall Texture",
-      // Changes texture(s) on the referenced line(s).
+    { XLTrav_ChangeWallMaterial, NULL, TRAV_LINES, 0, 1, 0, "Wall Texture",
+      // Changes material(s) on the referenced line(s).
       // Changes surface colour(s), alpha, mid textue blendmode and sidedef flags
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
@@ -1350,41 +1351,43 @@ int C_DECL XL_DoCommand(linedef_t *line, boolean dummy, void *context,
 // Following classes require traversal hence "Trav_"
 //
 
-int C_DECL XLTrav_ChangeLineType(linedef_t *line, boolean dummy, void *context,
-                          void *context2, mobj_t *activator)
+int C_DECL XLTrav_ChangeLineType(linedef_t* line, boolean dummy,
+                                 void* context, void* context2,
+                                 mobj_t* activator)
 {
-    linetype_t *info = context2;
+    linetype_t*     info = context2;
 
     XL_SetLineType(line, info->iparm[2]);
     return true;    // Keep looking.
 }
 
-int C_DECL XLTrav_ChangeWallTexture(linedef_t *line, boolean dummy, void *context,
-                             void *context2, mobj_t *activator)
+int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
+                                     void* context, void *context2,
+                                     mobj_t* activator)
 {
-    linetype_t *info = context2;
-    sidedef_t     *side;
-    blendmode_t blend = BM_NORMAL;
-    byte        rgba[4];
-    int         texture = 0;
+    linetype_t*     info = context2;
+    sidedef_t*      side;
+    blendmode_t     blend = BM_NORMAL;
+    byte            rgba[4];
+    int             material = 0;
 
     // i2: sidenum
-    // i3: top texture (zero if no change)
-    // i4: mid texture (zero if no change, -1 to remove)
-    // i5: bottom texture (zero if no change)
+    // i3: top material (zero if no change)
+    // i4: mid material (zero if no change, -1 to remove)
+    // i5: bottom material (zero if no change)
     // i6: (true/false) set midtexture even if previously zero
     // i7: sdf_* flags
-    // i8: mid texture blendmode
-    // i9: top texture red
-    // i10: top texture green
-    // i11: top texture blue
-    // i12: mid texture red
-    // i13: mid texture green
-    // i14: mid texture blue
-    // i15: mid texture alpha
-    // i16: bottom texture red
-    // i17: bottom texture green
-    // i18: bottom texture blue
+    // i8: mid blendmode
+    // i9: top red
+    // i10: top green
+    // i11: top blue
+    // i12: mid red
+    // i13: mid green
+    // i14: mid blue
+    // i15: mid alpha
+    // i16: bottom red
+    // i17: bottom green
+    // i18: bottom blue
 
     // Is there a sidedef?
     if(info->iparm[2])
@@ -1407,8 +1410,8 @@ int C_DECL XLTrav_ChangeWallTexture(linedef_t *line, boolean dummy, void *contex
     rgba[0] = info->iparm[9];
     rgba[1] = info->iparm[10];
     rgba[2] = info->iparm[11];
-    XL_ChangeTexture(line, info->iparm[2], LWS_UPPER, info->iparm[3],
-                     blend, rgba, info->iparm[7]);
+    XL_ChangeMaterial(line, info->iparm[2], LWS_UPPER, info->iparm[3],
+                      blend, rgba, info->iparm[7]);
 
     rgba[0] = info->iparm[12];
     rgba[1] = info->iparm[13];
@@ -1419,19 +1422,19 @@ int C_DECL XLTrav_ChangeWallTexture(linedef_t *line, boolean dummy, void *contex
                           info->iparm[6]))
     {
         if(!P_GetPtrp(line, DMU_BACK_SECTOR) && info->iparm[4] == -1)
-            texture = 0;
+            material = 0;
         else
-            texture = info->iparm[4];
+            material = info->iparm[4];
     }
 
-    XL_ChangeTexture(line, info->iparm[2], LWS_MID, texture,
-                     info->iparm[8], rgba, info->iparm[7]);
+    XL_ChangeMaterial(line, info->iparm[2], LWS_MID, material,
+                      info->iparm[8], rgba, info->iparm[7]);
 
     rgba[0] = info->iparm[16];
     rgba[1] = info->iparm[17];
     rgba[2] = info->iparm[18];
-    XL_ChangeTexture(line, info->iparm[2], LWS_LOWER, info->iparm[5],
-                     blend, rgba, info->iparm[7]);
+    XL_ChangeMaterial(line, info->iparm[2], LWS_LOWER, info->iparm[5],
+                      blend, rgba, info->iparm[7]);
 
     return true;
 }
@@ -1656,7 +1659,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
     // Feet clipped?
     if(mobj->flags2 & MF2_FLOORCLIP)
     {
-        if(P_MobjGetFloorType(mobj) >= FLOOR_LIQUID &&
+        if(P_MobjGetFloorTerrainType(mobj) >= FLOOR_LIQUID &&
            mobj->pos[VZ] ==
            P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
         {
@@ -1806,21 +1809,21 @@ boolean XL_CheckMobjGone(thinker_t* th, void* context)
 
 boolean XL_SwitchSwap(sidedef_t *side, int section)
 {
-    const char   *name;
-    char        buf[10];
-    int         texid = 0;
-    boolean     makeChange = false;
+    const char*         name;
+    char                buf[10];
+    materialnum_t       material = 0;
+    boolean             makeChange = false;
 
     if(!side)
         return false;
 
     // Which section of the wall are we checking?
     if(section == LWS_UPPER)
-        name = R_MaterialNameForNum(P_GetIntp(side, DMU_TOP_MATERIAL), MAT_TEXTURE);
+        name = R_MaterialNameForNum(P_GetIntp(side, DMU_TOP_MATERIAL));
     else if(section == LWS_MID)
-        name = R_MaterialNameForNum(P_GetIntp(side, DMU_MIDDLE_MATERIAL), MAT_TEXTURE);
+        name = R_MaterialNameForNum(P_GetIntp(side, DMU_MIDDLE_MATERIAL));
     else if(section == LWS_LOWER)
-        name = R_MaterialNameForNum(P_GetIntp(side, DMU_BOTTOM_MATERIAL), MAT_TEXTURE);
+        name = R_MaterialNameForNum(P_GetIntp(side, DMU_BOTTOM_MATERIAL));
     else
         return false;
 
@@ -1835,22 +1838,22 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
     //// checking.
     if(!stricmp(buf, "SW1ON"))
     {
-        texid = R_MaterialNumForName("SW1OFF", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW1OFF", MAT_TEXTURE);
         makeChange = true;
     }
     if(!stricmp(buf, "SW1OFF"))
     {
-        texid = R_MaterialNumForName("SW1ON", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW1ON", MAT_TEXTURE);
         makeChange = true;
     }
     if(!stricmp(buf, "SW2ON"))
     {
-        texid = R_MaterialNumForName("SW2OFF", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW2OFF", MAT_TEXTURE);
         makeChange = true;
     }
     if(!stricmp(buf, "SW2OFF"))
     {
-        texid = R_MaterialNumForName("SW2ON", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW2ON", MAT_TEXTURE);
         makeChange = true;
     }
 #endif
@@ -1858,13 +1861,13 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
     if(!strnicmp(buf, "SW1", 3))
     {
         buf[2] = '2';
-        texid = R_MaterialNumForName(buf, MAT_TEXTURE);
+        material = R_MaterialNumForName(buf, MAT_TEXTURE);
         makeChange = true;
     }
     if(!strnicmp(buf, "SW2", 3))
     {
         buf[2] = '1';
-        texid = R_MaterialNumForName(buf, MAT_TEXTURE);
+        material = R_MaterialNumForName(buf, MAT_TEXTURE);
         makeChange = true;
     }
 
@@ -1874,11 +1877,11 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
         // Which section of the wall are we working on?
         // Make the change.
         if(section == LWS_UPPER)
-            P_SetIntp(side, DMU_TOP_MATERIAL, texid);
+            P_SetIntp(side, DMU_TOP_MATERIAL, material);
         else if(section == LWS_MID)
-            P_SetIntp(side, DMU_MIDDLE_MATERIAL, texid);
+            P_SetIntp(side, DMU_MIDDLE_MATERIAL, material);
         else if(section == LWS_LOWER)
-            P_SetIntp(side, DMU_BOTTOM_MATERIAL, texid);
+            P_SetIntp(side, DMU_BOTTOM_MATERIAL, material);
         else
             return false;
 
@@ -1909,22 +1912,24 @@ void XL_SwapSwitchTextures(linedef_t *line, int snum)
 }
 
 /**
- * Changes texture of the given line.
+ * Changes material of the given line.
  */
-void XL_ChangeTexture(linedef_t *line, int sidenum, int section, int texture,
-                      blendmode_t blendmode, byte rgba[4], int flags)
+void XL_ChangeMaterial(linedef_t *line, int sidenum, int section,
+                       int material, blendmode_t blendmode,
+                       byte rgba[4], int flags)
 {
-    int         i;
-    int         currentFlags;
-    sidedef_t     *side = P_GetPtrp(line, sidenum? DMU_SIDEDEF1:DMU_SIDEDEF0);
+    int                 i;
+    int                 currentFlags;
+    sidedef_t*          side =
+        P_GetPtrp(line, sidenum? DMU_SIDEDEF1:DMU_SIDEDEF0);
 
     if(!side)
         return;
 
     // Clamping is not necessary since the rgba array has already a byte type.
 
-    XG_Dev("XL_ChangeTexture: Line %i, side %i, section %i, texture %i",
-           P_ToIndex(line), sidenum, section, texture);
+    XG_Dev("XL_ChangeMaterial: Line %i, side %i, section %i, material %i",
+           P_ToIndex(line), sidenum, section, material);
     XG_Dev("  red %i, green %i, blue %i, alpha %i, blendmode %i",
            rgba[0], rgba[1], rgba[2], rgba[3], blendmode);
 
@@ -1932,10 +1937,10 @@ void XL_ChangeTexture(linedef_t *line, int sidenum, int section, int texture,
     if(section == LWS_MID)
     {
         // Are we removing the middle texture?
-        if(texture == -1)
+        if(material == -1)
             P_SetIntp(side, DMU_MIDDLE_MATERIAL, 0);
-        else if(texture)
-            P_SetIntp(side, DMU_MIDDLE_MATERIAL, texture);
+        else if(material)
+            P_SetIntp(side, DMU_MIDDLE_MATERIAL, material);
 
         // Are we changing the blendmode?
         if(blendmode)
@@ -1948,8 +1953,8 @@ void XL_ChangeTexture(linedef_t *line, int sidenum, int section, int texture,
     }
     else if(section == LWS_UPPER)
     {
-        if(texture)
-            P_SetIntp(side, DMU_TOP_MATERIAL, texture);
+        if(material)
+            P_SetIntp(side, DMU_TOP_MATERIAL, material);
 
         for(i = 0; i < 3; ++i)
             if(rgba[i])
@@ -1957,8 +1962,8 @@ void XL_ChangeTexture(linedef_t *line, int sidenum, int section, int texture,
     }
     else if(section == LWS_LOWER)
     {
-        if(texture)
-            P_SetIntp(side, DMU_BOTTOM_MATERIAL, texture);
+        if(material)
+            P_SetIntp(side, DMU_BOTTOM_MATERIAL, material);
 
         for(i = 0; i < 3; ++i)
             if(rgba[i])
@@ -2116,8 +2121,9 @@ void XL_ActivateLine(boolean activating, linetype_t *info, linedef_t *line,
             S_StartSound(info->actSound, (mobj_t *) soundorg);
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->actTex)
-            XL_ChangeTexture(line, sidenum, info->wallSection, info->actTex, BM_NORMAL, rgba, 0); //// \fixme XL_ChangeTexture(line, sidenum, info->wallSection, info->actTex, BM_NORMAL, rgba, 0);
+        if(info->wallSection && info->actMaterial)
+            XL_ChangeMaterial(line, sidenum, info->wallSection,
+                              info->actMaterial, BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
         if(info->actLineType)
@@ -2132,9 +2138,9 @@ void XL_ActivateLine(boolean activating, linetype_t *info, linedef_t *line,
             S_StartSound(info->deactSound, (mobj_t *) soundorg);
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->deactTex)
-            XL_ChangeTexture(line, sidenum, info->wallSection,
-                             info->deactTex, BM_NORMAL, rgba, 0); //// \fixme info->deactTex, BM_NORMAL, rgba, 0);
+        if(info->wallSection && info->deactMaterial)
+            XL_ChangeMaterial(line, sidenum, info->wallSection,
+                              info->deactMaterial, BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
         if(info->deactLineType)
@@ -2664,18 +2670,16 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
         }
     }
 
-    if(info->texMoveSpeed)
+    if(info->materialMoveSpeed)
     {
         // The texture should be moved. Calculate the offsets.
-        float       current[2]; // The current offset.
-        sidedef_t     *side;
-
-        angle_t ang =
-            ((angle_t) (ANGLE_MAX * (info->texMoveAngle / 360))) >>
+        float               current[2]; // The current offset.
+        sidedef_t*          side;
+        float               spd = info->materialMoveSpeed;
+        float               offset[2];
+        angle_t             ang =
+            ((angle_t) (ANGLE_MAX * (info->materialMoveAngle / 360))) >>
             ANGLETOFINESHIFT;
-
-        float       spd = info->texMoveSpeed;
-        float       offset[2];
 
         offset[VX] = -(FIX2FLT(finecosine[ang]) * spd);
         offset[VY] = FIX2FLT(finesine[ang]) * spd;

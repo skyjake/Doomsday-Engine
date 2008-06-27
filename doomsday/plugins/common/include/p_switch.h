@@ -41,11 +41,10 @@ typedef enum linesection_e{
 typedef struct button_s {
     linedef_t*      line;
     linesection_t   section;
-    int             texture;
+    materialnum_t   material;
     int             timer;
     mobj_t*         soundOrg;
-
-    struct button_s *next;
+    struct button_s* next;
 } button_t;
 
 /**
@@ -70,7 +69,7 @@ extern button_t *buttonlist;
 void            P_InitSwitchList(void);
 
 void            P_FreeButtons(void);
-void            P_ChangeSwitchTexture(linedef_t* line, int useAgain);
+void            P_ChangeSwitchMaterial(linedef_t* line, int useAgain);
 boolean         P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side);
 
 #endif

@@ -205,6 +205,7 @@ static void ReadString(char **str)
     (*str)[len] = 0;
 }
 
+#if 0 // No longer supported.
 void XG_WriteTypes(FILE *f)
 {
     int                 i, k;
@@ -252,12 +253,12 @@ void XG_WriteTypes(FILE *f)
         WriteShort(line.actChain);
         WriteShort(line.deactChain);
         WriteByte(line.wallSection);
-        WriteShort(line.actTex);
-        WriteShort(line.deactTex);
+        WriteShort(line.actMaterial);
+        WriteShort(line.deactMaterial);
         WriteString(line.actMsg);
         WriteString(line.deactMsg);
-        WriteFloat(line.texMoveAngle);
-        WriteFloat(line.texMoveSpeed);
+        WriteFloat(line.materialMoveAngle);
+        WriteFloat(line.materialMoveSpeed);
         for(k = 0; k < DDLT_MAX_PARAMS; ++k)
             WriteLong(line.iparm[k]);
         for(k = 0; k < DDLT_MAX_PARAMS; ++k)
@@ -299,10 +300,10 @@ void XG_WriteTypes(FILE *f)
         WriteShort(sec.ambientSound);
         WriteFloat(sec.soundInterval[0]);
         WriteFloat(sec.soundInterval[1]);
-        WriteFloat(sec.texMoveAngle[0]);
-        WriteFloat(sec.texMoveAngle[1]);
-        WriteFloat(sec.texMoveSpeed[0]);
-        WriteFloat(sec.texMoveSpeed[1]);
+        WriteFloat(sec.materialMoveAngle[0]);
+        WriteFloat(sec.materialMoveAngle[1]);
+        WriteFloat(sec.materialMoveSpeed[0]);
+        WriteFloat(sec.materialMoveSpeed[1]);
         WriteFloat(sec.windAngle);
         WriteFloat(sec.windSpeed);
         WriteFloat(sec.verticalWind);
@@ -339,6 +340,7 @@ void XG_WriteTypes(FILE *f)
     WriteShort(linecount);
     WriteShort(sectorcount);
 }
+#endif
 
 void XG_ReadXGLump(char *name)
 {
@@ -397,12 +399,12 @@ void XG_ReadXGLump(char *name)
             li->actChain = ReadShort();
             li->deactChain = ReadShort();
             li->wallSection = ReadByte();
-            li->actTex = ReadShort();
-            li->deactTex = ReadShort();
+            li->actMaterial = /* \fixme Convert texture idx to material idx */ ReadShort();
+            li->deactMaterial = /* \fixme Convert texture idx to material idx */ ReadShort();
             ReadString(&li->actMsg);
             ReadString(&li->deactMsg);
-            li->texMoveAngle = ReadFloat();
-            li->texMoveSpeed = ReadFloat();
+            li->materialMoveAngle = ReadFloat();
+            li->materialMoveSpeed = ReadFloat();
             for(i = 0; i < DDLT_MAX_PARAMS; ++i)
                 li->iparm[i] = ReadLong();
             for(i = 0; i < DDLT_MAX_PARAMS; ++i)
@@ -435,10 +437,10 @@ void XG_ReadXGLump(char *name)
             sec->ambientSound = ReadShort();
             sec->soundInterval[0] = ReadFloat();
             sec->soundInterval[1] = ReadFloat();
-            sec->texMoveAngle[0] = ReadFloat();
-            sec->texMoveAngle[1] = ReadFloat();
-            sec->texMoveSpeed[0] = ReadFloat();
-            sec->texMoveSpeed[1] = ReadFloat();
+            sec->materialMoveAngle[0] = ReadFloat();
+            sec->materialMoveAngle[1] = ReadFloat();
+            sec->materialMoveSpeed[0] = ReadFloat();
+            sec->materialMoveSpeed[1] = ReadFloat();
             sec->windAngle = ReadFloat();
             sec->windSpeed = ReadFloat();
             sec->verticalWind = ReadFloat();
