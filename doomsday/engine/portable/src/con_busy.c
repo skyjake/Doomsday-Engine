@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -54,10 +54,10 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void     Con_BusyLoop(void);
-static void     Con_BusyDrawer(void);
-static void     Con_BusyLoadTextures(void);
-static void     Con_BusyDeleteTextures(void);
+static void Con_BusyLoop(void);
+static void Con_BusyDrawer(void);
+static void Con_BusyLoadTextures(void);
+static void Con_BusyDeleteTextures(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -65,34 +65,34 @@ static void     Con_BusyDeleteTextures(void);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean  busyInited;
-static int      busyMode;
+static boolean busyInited;
+static int busyMode;
 static thread_t busyThread;
 static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
 static volatile const char* busyError = NULL;
-static int      busyFont = 0;
-static int      busyFontHgt;        // Height of the font.
-static mutex_t  busy_Mutex;         // To prevent Data races in the busy thread.
+static int busyFont = 0;
+static int busyFontHgt; // Height of the font.
+static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
-static DGLuint  texLoading[2];
-static DGLuint  texScreenshot;      // Captured screenshot of the latest frame.
+static DGLuint texLoading[2];
+static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
 // CODE --------------------------------------------------------------------
 
 /**
  * Busy mode.
  *
- * @param flags  Busy mode flags (see BUSYF_PROGRESS_BAR and others).
- * @param worker  Worker thread that does processing while in busy mode.
- * @param workerData  Data context for the worker thread.
+ * @param flags          Busy mode flags (see BUSYF_PROGRESS_BAR and others).
+ * @param worker        Worker thread that does processing while in busy mode.
+ * @param workerData    Data context for the worker thread.
  *
  * @return              Return value of the worker.
  */
 int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
 {
-    int result = 0;
+    int                 result = 0;
 
     if(!busyInited)
     {
@@ -175,7 +175,7 @@ boolean Con_IsBusy(void)
 
 static void Con_BusyLoadTextures(void)
 {
-    image_t image;
+    image_t             image;
 
     if(isDedicated)
         return;
@@ -208,7 +208,7 @@ static void Con_BusyLoadTextures(void)
 
     if(busyMode & BUSYF_CONSOLE_OUTPUT)
     {
-        const char* fontName;
+        const char*         fontName;
 
         if(!(theWindow->width > 640))
             fontName = "normal12";
@@ -248,10 +248,10 @@ static void Con_BusyDeleteTextures(void)
  */
 void Con_AcquireScreenshotTexture(void)
 {
-    int         oldMaxTexSize = glMaxTexSize;
-    byte       *frame;
+    int                 oldMaxTexSize = glMaxTexSize;
+    byte*               frame;
 #ifdef _DEBUG
-    timespan_t startTime;
+    timespan_t          startTime;
 #endif
 
     if(texScreenshot)
@@ -291,14 +291,10 @@ void Con_ReleaseScreenshotTexture(void)
  */
 static void Con_BusyLoop(void)
 {
-    boolean     canDraw = false;
-    boolean     canUpload = !(isDedicated || (busyMode & BUSYF_NO_UPLOADS));
-    timespan_t startTime = Sys_GetRealSeconds();
-
-    if(!isDedicated)
-    {
-        canDraw = true; // Wouldn't be here otherwise...
-    }
+    boolean             canDraw = !isDedicated;
+    boolean             canUpload =
+        !(isDedicated || (busyMode & BUSYF_NO_UPLOADS));
+    timespan_t          startTime = Sys_GetRealSeconds();
 
     if(canDraw)
     {
@@ -314,16 +310,14 @@ static void Con_BusyLoop(void)
 
     while(!busyDoneCopy || (canUpload && GL_GetDeferredCount() > 0))
     {
-
         Sys_Lock(busy_Mutex);
         busyDoneCopy = busyDone;
         Sys_Unlock(busy_Mutex);
 
         Sys_Sleep(20);
 
-        // Make sure that any deferred content gets uploaded.
         if(canUpload)
-        {
+        {   // Make sure that any deferred content gets uploaded.
             GL_UploadDeferredContent(15);
         }
 
@@ -334,7 +328,6 @@ static void Con_BusyLoop(void)
         if(canDraw)
             Con_BusyDrawer();
     }
-
 
     if(canDraw)
     {
@@ -382,12 +375,10 @@ static void Con_DrawScreenshotBackground(float x, float y, float width,
  */
 static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 {
-    float       col[4] = {
-         1.f, 1.f, 1.f, .2f
-    };
-    int         i = 0;
-    int         edgeCount = 0;
-    int         backW, backH;
+    float               col[4] = {1.f, 1.f, 1.f, .2f};
+    int                 i = 0;
+    int                 edgeCount = 0;
+    int                 backW, backH;
 
     backW = backH = (radius * 2);
 
@@ -438,7 +429,9 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     // Vertices along the edge.
     for(i = 0; i <= edgeCount; ++i)
     {
-        float angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
+        float               angle = 2 * PI * pos *
+            (i / (float)edgeCount) + PI/2;
+
         DGL_TexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
         DGL_Vertex2f(x + cos(angle)*radius, y + sin(angle)*radius);
     }
@@ -451,14 +444,14 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 #define LINE_COUNT 4
 
 /**
- * @return  Number of new lines since the old ones.
+ * @return              Number of new lines since the old ones.
  */
 static int GetBufLines(cbuffer_t* buffer, cbline_t const **oldLines)
 {
-    cbline_t const * bufLines[LINE_COUNT + 1];
-    int         count;
-    int         newCount = 0;
-    int         i, k;
+    cbline_t const*     bufLines[LINE_COUNT + 1];
+    int                 count;
+    int                 newCount = 0;
+    int                 i, k;
 
     count = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, bufLines);
     for(i = 0; i < count; ++i)
@@ -485,21 +478,21 @@ lineIsNotNew:;
 
 /**
  * Draws a number of console output to the bottom of the screen.
- * FIXME: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be
- *        good some day. -jk
+ * \fixme: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be
+ *         good some day. -jk
  */
 void Con_BusyDrawConsoleOutput(void)
 {
-    cbuffer_t  *buffer;
-    static cbline_t const *visibleBusyLines[2 * LINE_COUNT];
-    static float scroll = 0;
-    static float scrollStartTime = 0;
-    static float scrollEndTime = 0;
-    static double lastNewTime = 0;
-    static double timeSinceLastNew = 0;
-    double      nowTime = 0;
-    float       y, topY;
-    uint        i, newCount;
+    cbuffer_t*          buffer;
+    static cbline_t const* visibleBusyLines[2 * LINE_COUNT];
+    static float        scroll = 0;
+    static float        scrollStartTime = 0;
+    static float        scrollEndTime = 0;
+    static double       lastNewTime = 0;
+    static double       timeSinceLastNew = 0;
+    double              nowTime = 0;
+    float               y, topY;
+    uint                i, newCount;
 
     buffer = Con_GetConsoleBuffer();
     newCount = GetBufLines(buffer, visibleBusyLines);
@@ -517,7 +510,9 @@ void Con_BusyDrawConsoleOutput(void)
         }
         else
         {
-            double interval = MIN_OF(timeSinceLastNew/2, 1.3);
+            double              interval =
+                MIN_OF(timeSinceLastNew/2, 1.3);
+
             // Begin new scroll.
             scroll = newCount;
             scrollStartTime = nowTime;
@@ -554,8 +549,8 @@ void Con_BusyDrawConsoleOutput(void)
 
     for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
     {
-        float color = 1;//lineAlpha[i];
-        const cbline_t *line = visibleBusyLines[i];
+        float               color = 1;//lineAlpha[i];
+        const cbline_t*     line = visibleBusyLines[i];
 
         if(!line)
             continue;
@@ -584,7 +579,7 @@ void Con_BusyDrawConsoleOutput(void)
  */
 static void Con_BusyDrawer(void)
 {
-    float       pos = 0;
+    float               pos = 0;
 
     Con_DrawScreenshotBackground(0, 0, theWindow->width, theWindow->height);
 
