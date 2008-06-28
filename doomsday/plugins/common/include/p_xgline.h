@@ -58,7 +58,6 @@
 // class dofuncs use it to determine when a REAL activator isn't present
 #define XLE_FUNC    0x100
 
-
 // Time conversion.
 #define FLT2TIC(x)  ( (int) ((x)*35) )
 #define TIC2FLT(x)  ( (x)/35.0f )
@@ -323,6 +322,11 @@ enum                              // Line.data references
 #define CHSF_DEACTIVATE_WHEN_DONE   0x1
 #define CHSF_LOOP                   0x2
 
+typedef struct {
+    thinker_t       thinker;
+    linedef_t*      line;
+} xlthinker_t;
+
 // State data for each line.
 typedef struct {
     linetype_t      info;          // Type definition.
@@ -343,17 +347,15 @@ extern struct xgclass_s xgClasses[];
 // Used as the activator if there is no real activator.
 extern struct mobj_s dummything;
 
-// Initialize extended lines for the map.
-void            XL_Init(void);
-
 // Register the XG classnames for XGdev
 void            XG_Register(void);
 
-// Think for each extended line.
-void            XL_Ticker(void);
-
+// Initialize extended lines for the map.
+void            XL_Init(void);
 // Called when reseting engine state.
 void            XL_Update(void);
+
+void            XL_Thinker(xlthinker_t* xl);
 
 void            XL_SetLineType(struct linedef_s *line, int id);
 

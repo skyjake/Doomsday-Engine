@@ -284,6 +284,29 @@ int C_DECL XLTrav_LineAngle(linedef_t* line, boolean dummy, void* context,
     return false; // Stop looking after first hit.
 }
 
+boolean findXSThinker(thinker_t* th, void* context)
+{
+    xsthinker_t*        xs = (xsthinker_t*) th;
+
+    if(xs->sector == (sector_t*) context)
+        return false; // Stop iteration, we've found it.
+
+    return true; // Continue iteration.
+}
+
+boolean destroyXSThinker(thinker_t* th, void* context)
+{
+    xsthinker_t*        xs = (xsthinker_t*) th;
+
+    if(xs->sector == (sector_t*) context)
+    {
+        P_ThinkerRemove(&xs->thinker);
+        return false; // Stop iteration, we're done.
+    }
+
+    return true; // Continue iteration.
+}
+
 void XS_SetSectorType(struct sector_s* sec, int special)
 {
     int                 i;
@@ -358,11 +381,23 @@ void XS_SetSectorType(struct sector_s* sec, int special)
                 info->windAngle = angle / (float) ANGLE_MAX *360;
             }
         }
+
+        // If there is not already an xsthinker for this sector, create one.
+        if(P_IterateThinkers(XS_Thinker, findXSThinker, sec))
+        {   // Not created one yet.
+            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_LEVSPEC, 0);
+
+            xs->thinker.function = XS_Thinker;
+            P_ThinkerAdd(&xs->thinker);
+        }
     }
     else
     {
         XG_Dev("XS_SetSectorType: Sector %i, NORMAL TYPE %i", P_ToIndex(sec),
                special);
+
+        // If there is an xsthinker for this, destroy it.
+        P_IterateThinkers(XS_Thinker, destroyXSThinker, sec);
 
         // Free previously allocated XG data.
         if(xsec->xg)
@@ -2837,25 +2872,20 @@ void XS_ConstrainPlaneOffset(float *offset)
 }
 
 /**
- * Called for Extended Generalized sectors.
+ * XG sectors get to think.
  */
-void XS_Think(uint idx)
+void XS_Thinker(xsthinker_t* xs)
 {
-    int         i;
-    float       ang;
-    float       floorOffset[2], ceilOffset[2];
-    sector_t   *sector;
-    xsector_t  *xsector = P_GetXSector(idx);
-    xgsector_t *xg;
-    sectortype_t *info;
+    int                 i;
+    float               ang;
+    float               floorOffset[2], ceilOffset[2];
+    sector_t*           sector = xs->sector;
+    xsector_t*          xsector = P_ToXSector(sector);
+    xgsector_t*         xg;
+    sectortype_t*       info;
 
     if(!xsector)
-    {
-#if _DEBUG
-Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
-#endif
-        return; // Not an xsector? Perhaps we were passed a dummy index??
-    }
+        return; // Not an xsector? Most perculiar...
 
     xg = xsector->xg;
     if(!xg)
@@ -2864,7 +2894,6 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
     if(xg->disabled)
         return; // This sector is disabled.
 
-    sector = P_ToPtr(DMU_SECTOR, idx);
     info = &xg->info;
 
     if(!IS_CLIENT)
@@ -2984,16 +3013,6 @@ Con_Message("XS_Think: Index (%i) not xsector!\n", idx);
 
         params.sec = sector;
         P_IterateThinkers(P_MobjThinker, XSTrav_Wind, &params);
-    }
-}
-
-void XS_Ticker(void)
-{
-    uint        i;
-
-    for(i = 0; i < numsectors; ++i)
-    {
-        XS_Think(i);
     }
 }
 

@@ -451,13 +451,7 @@ void XG_Init(void)
 
 void XG_Ticker(void)
 {
-    XS_Ticker(); // Think for sectors.
-
-    // Clients rely on the server, they don't do XG themselves.
-    if(IS_CLIENT)
-        return;
-
-    XL_Ticker(); // Think for lines.
+    // Nothing to do.
 }
 
 /**
@@ -607,6 +601,16 @@ float XG_RandomPercentFloat(float value, int percent)
     return value * (1 + i);
 }
 
+boolean findXLThinker(thinker_t* th, void* context)
+{
+    xlthinker_t*        xl = (xlthinker_t*) th;
+
+    if(xl->line == (linedef_t*) context)
+        return false; // Stop iteration, we've found it.
+
+    return true; // Continue iteration.
+}
+
 /**
  * Looks for line type definition and sets the line type if one is found.
  */
@@ -635,6 +639,14 @@ void XL_SetLineType(linedef_t *line, int id)
         XG_Dev("XL_SetLineType: Line %i (%s), ID %i.", P_ToIndex(line),
                xgClasses[xline->xg->info.lineClass].className, id);
 
+        // If there is not already an xlthinker for this line, create one.
+        if(P_IterateThinkers(XL_Thinker, findXLThinker, line))
+        {   // Not created one yet.
+            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_LEVSPEC, 0);
+
+            xl->thinker.function = XL_Thinker;
+            P_ThinkerAdd(&xl->thinker);
+        }
     }
     else if(id)
     {
@@ -2142,7 +2154,7 @@ void XL_ActivateLine(boolean activating, linetype_t *info, linedef_t *line,
             XL_ChangeMaterial(line, sidenum, info->wallSection,
                               info->deactMaterial, BM_NORMAL, rgba, 0);
 
-        // Change the class of the line if asked to
+        // Change the class of the line if asked to.
         if(info->deactLineType)
             XL_SetLineType(line, info->deactLineType);
     }
@@ -2547,23 +2559,22 @@ void XL_DoChain(linedef_t *line, int chain, boolean activating,
 }
 
 /**
- * Called once a tic for each 'real' line on the map (i.e. not dummys).
+ * XG lines get to think.
  */
-void XL_Think(uint idx)
+void XL_Thinker(xlthinker_t* xl)
 {
-    float       levtime;
-    linedef_t     *line = NULL;
-    xline_t    *xline = P_GetXLine(idx);
-    xgline_t   *xg;
-    linetype_t *info;
+    float           levtime;
+    linedef_t*      line = xl->line;
+    xline_t*        xline = P_ToXLine(line);
+    xgline_t*       xg;
+    linetype_t*     info;
+
+    // Clients rely on the server, they don't do XG themselves.
+    if(IS_CLIENT)
+        return;
 
     if(!xline)
-    {
-#if _DEBUG
-Con_Message("XL_Think: Index (%i) not xline!\n", idx);
-#endif
-        return; // Not an xline? Perhaps we were passed a dummy index??
-    }
+        return; // Not an xline? Most perculiar...
 
     xg = xline->xg;
     if(!xg)
@@ -2572,7 +2583,6 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
     if(xg->disabled)
         return; // Disabled, do nothing.
 
-    line = P_ToPtr(DMU_LINEDEF, idx);
     info = &xg->info;
     levtime = TIC2FLT(levelTime);
 
@@ -2618,7 +2628,8 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
         // If the counter goes to zero, it's time to execute the chain.
         if(xg->chTimer < 0)
         {
-            XG_Dev("XL_ChainSequenceThink: Line %i, executing...", idx);
+            XG_Dev("XL_ChainSequenceThink: Line %i, executing...",
+                   P_ToIndex(line));
 
             // Are there any more chains?
             if(xg->chIdx < DDLT_MAX_PARAMS && info->iparm[xg->chIdx])
@@ -2694,7 +2705,7 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
 	     */
 
         // Front side.
-        side = P_GetPtr(DMU_LINEDEF, idx, DMU_SIDEDEF0);
+        side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(side)
         {
             P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
@@ -2714,7 +2725,7 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
         }
 
         // Back side.
-        side = P_GetPtr(DMU_LINEDEF, idx, DMU_SIDEDEF1);
+        side = P_GetPtrp(line, DMU_SIDEDEF1);
         if(side)
         {
             P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
@@ -2732,19 +2743,6 @@ Con_Message("XL_Think: Index (%i) not xline!\n", idx);
             current[VY] += offset[VY];
             P_SetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
         }
-    }
-}
-
-/**
- * Think for each extended line.
- */
-void XL_Ticker(void)
-{
-    uint        i;
-
-    for(i = 0; i < numlines; ++i)
-    {
-        XL_Think(i);
     }
 }
 

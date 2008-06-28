@@ -123,6 +123,11 @@ enum {
 };
 
 typedef struct {
+    thinker_t       thinker;
+    sector_t*       sector;
+} xsthinker_t;
+
+typedef struct {
     boolean         disabled;
     function_t      rgb[3]; // Don't move the functions around in the struct.
     function_t      plane[2];
@@ -156,8 +161,9 @@ typedef struct {
 } xgplanemover_t;
 
 void            XS_Init(void);
-void            XS_Ticker(void);
 void            XS_Update(void);
+
+void            XS_Thinker(xsthinker_t* xs);
 
 float           XS_Gravity(struct sector_s *sector);
 float           XS_Friction(struct sector_s *sector);
