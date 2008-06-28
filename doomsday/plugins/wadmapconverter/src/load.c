@@ -672,7 +672,7 @@ static void findPolyobjs(void)
 {
     uint                i;
 
-    Con_Message("WadMapConverter::findPolyobjs: Processing...\n");
+    VERBOSE(Con_Message("WadMapConverter::findPolyobjs: Processing...\n"));
 
     for(i = 0; i < map->numThings; ++i)
     {
@@ -833,7 +833,7 @@ static boolean loadVertexes(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
-    Con_Message("WadMapConverter::loadVertexes: Processing...\n");
+    VERBOSE(Con_Message("WadMapConverter::loadVertexes: Processing...\n"));
 
     elmSize = SIZEOF_VERTEX;
     num = len / elmSize;
@@ -852,7 +852,7 @@ static boolean loadLinedefs(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
-    Con_Message("WadMapConverter::loadLinedefs: Processing...\n");
+    VERBOSE(Con_Message("WadMapConverter::loadLinedefs: Processing...\n"));
 
     elmSize =
         (map->hexenFormat? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
@@ -937,7 +937,7 @@ static boolean loadSidedefs(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
-    Con_Message("WadMapConverter::loadSidedefs: Processing...\n");
+    VERBOSE(Con_Message("WadMapConverter::loadSidedefs: Processing...\n"));
 
     elmSize = SIZEOF_SIDEDEF;
     num = len / elmSize;
@@ -974,7 +974,7 @@ static boolean loadSectors(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
-    Con_Message("WadMapConverter::loadSectors: Processing...\n");
+    VERBOSE(Con_Message("WadMapConverter::loadSectors: Processing...\n"));
 
     elmSize = SIZEOF_SECTOR;
     num = len / elmSize;
@@ -1005,7 +1005,7 @@ static boolean loadThings(const byte *buf, size_t len)
     size_t              elmSize;
     const byte         *ptr;
 
-    Con_Message("WadMapConverter::loadThings: Processing...\n");
+    VERBOSE(Con_Message("WadMapConverter::loadThings: Processing...\n"));
 
     elmSize = (map->hexenFormat? SIZEOF_XTHING : SIZEOF_THING);
     num = len / elmSize;
