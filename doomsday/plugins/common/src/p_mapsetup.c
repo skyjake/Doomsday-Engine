@@ -475,7 +475,7 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
 
     // \todo Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             P_SetupLevelWorker, &param);
+             "Loading map...", P_SetupLevelWorker, &param);
 
     R_SetupLevel(DDSLM_AFTER_BUSY, 0);
 

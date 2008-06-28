@@ -4712,7 +4712,7 @@ boolean SV_SaveGame(char *filename, char *description)
 
     // \todo Use progress bar mode and update progress during the setup.
     result = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                      SV_SaveGameWorker, &param);
+                      "Saving game...", SV_SaveGameWorker, &param);
 
     if(result == SV_INVALIDFILENAME)
     {
