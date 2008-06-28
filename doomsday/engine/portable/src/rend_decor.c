@@ -361,9 +361,14 @@ boolean R_IsValidModelDecoration(const ded_decormodel_t *modelDef)
     return ((modelDef && modelDef->id && modelDef->id[0])? true : false);
 }
 
-static void projectSurfaceDecorations(const surface_t *suf, float maxDist)
+/**
+ * @return              As this can also be used with iterators, will always
+ *                      return @c true.
+ */
+boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
 {
     uint                i;
+    float               maxDist = *((float*) context);
 
     for(i = 0; i < suf->numDecorations; ++i)
     {
@@ -373,17 +378,19 @@ static void projectSurfaceDecorations(const surface_t *suf, float maxDist)
         {
         case DT_LIGHT:
             if(!R_IsValidLightDecoration(DEC_LIGHT(d)->def))
-                return;
+                return true;
             break;
 
         case DT_MODEL:
             if(!R_IsValidModelDecoration(DEC_MODEL(d)->def))
-                return;
+                return true;
             break;
         }
 
         createSurfaceDecoration(suf, d, maxDist);
     }
+
+    return true;
 }
 
 /**
@@ -483,6 +490,7 @@ static void updateSideSectionDecorations(sidedef_t *side,
     }
 
     R_ClearSurfaceDecorations(suf);
+    R_SurfaceListRemove(decoratedSurfaceList, suf);
 
     // Is this a valid section?
     if(visible && suf->material && bottom < top && line->length > 0)
@@ -615,6 +623,7 @@ static void updateSideSectionDecorations(sidedef_t *side,
                             DEC_MODEL(d)->def = modelDef;
                             DEC_MODEL(d)->pitch = pitch;
                             DEC_MODEL(d)->yaw = yaw;
+                            R_SurfaceListAdd(decoratedSurfaceList, suf);
                         }
                     }
                 }
@@ -669,6 +678,7 @@ static void updateSideSectionDecorations(sidedef_t *side,
                             d->subsector = subsector;
 
                             DEC_LIGHT(d)->def = lightDef;
+                            R_SurfaceListAdd(decoratedSurfaceList, suf);
                         }
                     }
                 }
@@ -692,6 +702,7 @@ static void updatePlaneDecorations(plane_t* pln)
     const ded_decor_t*  def;
 
     R_ClearSurfaceDecorations(suf);
+    R_SurfaceListRemove(decoratedSurfaceList, suf);
 
     def = R_MaterialGetDecoration(pln->PS_material);
     if(def)
@@ -762,6 +773,8 @@ static void updatePlaneDecorations(plane_t* pln)
                         DEC_MODEL(d)->mf = mf;
                         DEC_MODEL(d)->pitch = pitch;
                         DEC_MODEL(d)->yaw = yaw;
+
+                        R_SurfaceListAdd(decoratedSurfaceList, suf);
                     }
                 }
             }
@@ -821,6 +834,8 @@ static void updatePlaneDecorations(plane_t* pln)
                         d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
 
                         DEC_LIGHT(d)->def = lightDef;
+
+                        R_SurfaceListAdd(decoratedSurfaceList, suf);
                     }
                 }
             }
@@ -882,25 +897,9 @@ void Rend_InitDecorationsForFrame(void)
     // This only needs to be done if decorations have been enabled.
     if(useDecorations)
     {
-        uint                i, j;
-
         Rend_UpdateSurfaceDecorations(); // temporary.
 
-        // Process all sidedefs.
-        for(i = 0; i < numSideDefs; ++i)
-        {
-            projectSurfaceDecorations(&sideDefs[i].SW_topsurface,
-                                      decorMaxDist);
-            projectSurfaceDecorations(&sideDefs[i].SW_bottomsurface,
-                                      decorMaxDist);
-            projectSurfaceDecorations(&sideDefs[i].SW_middlesurface,
-                                      decorMaxDist);
-        }
-
-        // Process all planes.
-        for(i = 0; i < numSectors; ++i)
-            for(j = 0; j < sectors[i].planeCount; ++j)
-                projectSurfaceDecorations(&sectors[i].SP_planesurface(j),
-                                          decorMaxDist);
+        R_SurfaceListIterate(decoratedSurfaceList,
+                             R_ProjectSurfaceDecorations, &decorMaxDist);
     }
 }

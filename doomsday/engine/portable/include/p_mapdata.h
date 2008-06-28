@@ -99,10 +99,15 @@ typedef struct watchedplanelist_s {
     struct plane_s** list;
 } watchedplanelist_t;
 
-typedef struct watchedsurfacelist_s {
-    uint            num, maxNum;
-    struct surface_s** list;
-} watchedsurfacelist_t;
+typedef struct surfacelistnode_s {
+    void*           data;
+    struct surfacelistnode_s* next;
+} surfacelistnode_t;
+
+typedef struct surfacelist_s {
+    uint            num;
+    surfacelistnode_t* head;
+} surfacelist_t;
 
 typedef void* blockmap_t;
 
@@ -185,7 +190,8 @@ extern uint     numSideDefs;
 extern sidedef_t  *sideDefs;
 
 extern watchedplanelist_t *watchedPlaneList;
-extern watchedsurfacelist_t *watchedSurfaceList;
+extern surfacelist_t *movingSurfaceList;
+extern surfacelist_t *decoratedSurfaceList;
 
 extern float    mapGravity;
 
@@ -224,7 +230,8 @@ typedef struct gamemap_s {
     linkpolyobj_t **polyBlockMap;
 
     watchedplanelist_t watchedPlaneList;
-    watchedsurfacelist_t watchedSurfaceList;
+    surfacelist_t movingSurfaceList;
+    surfacelist_t decoratedSurfaceList;
 
     blockmap_t *blockMap;
     blockmap_t *ssecBlockMap;

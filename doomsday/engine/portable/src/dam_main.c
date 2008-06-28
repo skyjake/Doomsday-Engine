@@ -520,7 +520,8 @@ boolean DAM_AttemptMapLoad(const char* mapID)
 
             // Init the watched object lists.
             memset(&map->watchedPlaneList, 0, sizeof(map->watchedPlaneList));
-            memset(&map->watchedSurfaceList, 0, sizeof(map->watchedSurfaceList));
+            memset(&map->movingSurfaceList, 0, sizeof(map->movingSurfaceList));
+            memset(&map->decoratedSurfaceList, 0, sizeof(map->decoratedSurfaceList));
 
             strncpy(map->levelID, dam->identifier, 8);
             strncpy(map->uniqueID, P_GenerateUniqueMapID(dam->identifier),

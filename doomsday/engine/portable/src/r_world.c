@@ -81,60 +81,111 @@ static boolean noSkyColorGiven;
 static float skyColorRGB[4], balancedRGB[4];
 static float skyColorBalance;
 
+static surfacelistnode_t* unusedSurfaceListNodes = NULL;
+
 // CODE --------------------------------------------------------------------
 
-void R_AddWatchedSurface(watchedsurfacelist_t *wsl, surface_t *suf)
+/**
+ * Allocate a new surface list node.
+ */
+static surfacelistnode_t* allocListNode(void)
 {
-    uint                i;
-
-    if(!wsl || !suf)
-        return;
-
-    // Check whether we are already tracking this surface.
-    for(i = 0; i < wsl->num; ++i)
-        if(wsl->list[i] == suf)
-            return; // Yes we are.
-
-    wsl->num++;
-
-    // Only allocate memory when it's needed.
-    if(wsl->num > wsl->maxNum)
-    {
-        wsl->maxNum *= 2;
-
-        // The first time, allocate 8 watched surface nodes.
-        if(!wsl->maxNum)
-            wsl->maxNum = 8;
-
-        wsl->list =
-            Z_Realloc(wsl->list, sizeof(surface_t*) * (wsl->maxNum + 1),
-                      PU_LEVEL);
-    }
-
-    // Add the surface to the list.
-    wsl->list[wsl->num-1] = suf;
-    wsl->list[wsl->num] = NULL; // Terminate.
+    surfacelistnode_t*      node = Z_Calloc(sizeof(*node), PU_STATIC, 0);
+    return node;
 }
 
-boolean R_RemoveWatchedSurface(watchedsurfacelist_t *wsl,
-                               const surface_t *suf)
+/**
+ * Free all memory acquired for the given surface list node.
+ */
+static void freeListNode(surfacelistnode_t* node)
 {
-    uint            i;
+    if(node)
+        Z_Free(node);
+}
 
-    if(!wsl || !suf)
+surfacelistnode_t* R_SurfaceListNodeCreate(void)
+{
+    surfacelistnode_t*      node;
+
+    // Is there a free node in the unused list?
+    if(unusedSurfaceListNodes)
+    {
+        node = unusedSurfaceListNodes;
+        unusedSurfaceListNodes = node->next;
+    }
+    else
+    {
+        node = allocListNode();
+    }
+
+    node->data = NULL;
+    node->next = NULL;
+
+    return node;
+}
+
+void R_SurfaceListNodeDestroy(surfacelistnode_t* node)
+{
+    // Move it to the list of unused nodes.
+    node->data = NULL;
+    node->next = unusedSurfaceListNodes;
+    unusedSurfaceListNodes = node;
+}
+
+/**
+ * Adds the surface to the given surface list.
+ *
+ * @param sl            The surface list to add the surface to.
+ * @param suf           The surface to add to the list.
+ */
+void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
+{
+    surfacelistnode_t*  node;
+
+    if(!sl || !suf)
+        return;
+
+    // Check whether this surface is already in the list.
+    node = sl->head;
+    while(node)
+    {
+        if((surface_t*) node->data == suf)
+            return; // Yep.
+        node = node->next;
+    }
+
+    // Not found, add it to the list.
+    node = R_SurfaceListNodeCreate();
+    node->data = suf;
+    node->next = sl->head;
+
+    sl->head = node;
+    sl->num++;
+}
+
+boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t *suf)
+{
+    surfacelistnode_t*  last, *n;
+
+    if(!sl || !suf)
         return false;
 
-    for(i = 0; i < wsl->num; ++i)
+    last = sl->head;
+    if(last)
     {
-        if(wsl->list[i] == suf)
+        n = last->next;
+        while(n)
         {
-            if(i == wsl->num - 1)
-                wsl->list[i] = NULL;
-            else
-                memmove(&wsl->list[i], &wsl->list[i+1],
-                        sizeof(surface_t*) * (wsl->num - 1 - i));
-            wsl->num--;
-            return true;
+            if((surface_t*) n->data == suf)
+            {
+                last->next = n->next;
+                R_SurfaceListNodeDestroy(n);
+                sl->num--;
+                return true;
+            }
+
+            last = n;
+            n = n->next;
         }
     }
 
@@ -142,107 +193,131 @@ boolean R_RemoveWatchedSurface(watchedsurfacelist_t *wsl,
 }
 
 /**
+ * Iterate the list of surfaces making a callback for each.
+ *
+ * @param sl            The surface list to iterate.
+ * @param callback      The callback to make. Iteration will continue
+ *                      until a callback returns a zero value.
+ * @param context       Is passed to the callback function.
+ */
+boolean R_SurfaceListIterate(surfacelist_t* sl,
+                             boolean (*callback) (surface_t* suf, void*),
+                             void* context)
+{
+    boolean             result = true;
+    surfacelistnode_t*  n, *np;
+
+    n = sl->head;
+    while(n)
+    {
+        np = n->next;
+        if((result = callback((surface_t*) n->data, context)) == 0)
+            break;
+        n = np;
+    }
+
+    return result;
+}
+
+boolean updateMovingSurface(surface_t* suf, void* context)
+{
+    // X Offset
+    suf->oldOffset[0][0] = suf->oldOffset[1][0];
+    suf->oldOffset[1][0] = suf->offset[0];
+    if(suf->oldOffset[0][0] != suf->oldOffset[1][0])
+        if(fabs(suf->oldOffset[0][0] - suf->oldOffset[1][0]) >=
+           MAX_SMOOTH_MATERIAL_MOVE)
+        {
+            // Too fast: make an instantaneous jump.
+            suf->oldOffset[0][0] = suf->oldOffset[1][0];
+        }
+
+    // Y Offset
+    suf->oldOffset[0][1] = suf->oldOffset[1][1];
+    suf->oldOffset[1][1] = suf->offset[1];
+    if(suf->oldOffset[0][1] != suf->oldOffset[1][1])
+        if(fabs(suf->oldOffset[0][1] - suf->oldOffset[1][1]) >=
+           MAX_SMOOTH_MATERIAL_MOVE)
+        {
+            // Too fast: make an instantaneous jump.
+            suf->oldOffset[0][1] = suf->oldOffset[1][1];
+        }
+
+    return true;
+}
+
+/**
  * $smoothmatoffset: Roll the surface material offset tracker buffers.
  */
-void R_UpdateWatchedSurfaces(watchedsurfacelist_t *wsl)
+void R_UpdateMovingSurfaces(void)
 {
-    uint                i;
-
-    if(!wsl)
+    if(!movingSurfaceList)
         return;
 
-    for(i = 0; i < wsl->num; ++i)
-    {
-        surface_t          *suf = wsl->list[i];
+    R_SurfaceListIterate(movingSurfaceList, updateMovingSurface, NULL);
+}
 
-        // X Offset
-        suf->oldOffset[0][0] = suf->oldOffset[1][0];
-        suf->oldOffset[1][0] = suf->offset[0];
-        if(suf->oldOffset[0][0] != suf->oldOffset[1][0])
-            if(fabs(suf->oldOffset[0][0] - suf->oldOffset[1][0]) >=
-               MAX_SMOOTH_MATERIAL_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                suf->oldOffset[0][0] = suf->oldOffset[1][0];
-            }
+boolean resetMovingSurface(surface_t* suf, void* context)
+{
+    // X Offset.
+    suf->visOffsetDelta[0] = 0;
+    suf->oldOffset[0][0] = suf->oldOffset[1][0] = suf->offset[0];
 
-        // Y Offset
-        suf->oldOffset[0][1] = suf->oldOffset[1][1];
-        suf->oldOffset[1][1] = suf->offset[1];
-        if(suf->oldOffset[0][1] != suf->oldOffset[1][1])
-            if(fabs(suf->oldOffset[0][1] - suf->oldOffset[1][1]) >=
-               MAX_SMOOTH_MATERIAL_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                suf->oldOffset[0][1] = suf->oldOffset[1][1];
-            }
-    }
+    // X Offset.
+    suf->visOffsetDelta[1] = 0;
+    suf->oldOffset[0][1] = suf->oldOffset[1][1] = suf->offset[1];
+
+    Surface_Update(suf);
+    R_SurfaceListRemove(movingSurfaceList, suf);
+
+    return true;
+}
+
+boolean interpMovingSurface(surface_t* suf, void* context)
+{
+    // X Offset.
+    suf->visOffsetDelta[0] =
+        suf->oldOffset[0][0] * (1 - frameTimePos) +
+                suf->offset[0] * frameTimePos - suf->offset[0];
+
+    // Y Offset.
+    suf->visOffsetDelta[1] =
+        suf->oldOffset[0][1] * (1 - frameTimePos) +
+                suf->offset[1] * frameTimePos - suf->offset[1];
+
+    // Visible material offset.
+    suf->visOffset[0] = suf->offset[0] + suf->visOffsetDelta[0];
+    suf->visOffset[1] = suf->offset[1] + suf->visOffsetDelta[1];
+
+    Surface_Update(suf);
+
+    // Has this material reached its destination?
+    if(suf->visOffset[0] == suf->offset[0] &&
+       suf->visOffset[1] == suf->offset[1])
+        R_SurfaceListRemove(movingSurfaceList, suf);
+
+    return true;
 }
 
 /**
  * $smoothmatoffset: interpolate the visual offset.
  */
-void R_InterpolateWatchedSurfaces(watchedsurfacelist_t *wsl,
-                                  boolean resetNextViewer)
+void R_InterpolateMovingSurfaces(boolean resetNextViewer)
 {
-    uint                i;
-    surface_t          *suf;
-
-    if(!wsl)
+    if(!movingSurfaceList)
         return;
 
     if(resetNextViewer)
     {
         // Reset the material offset trackers.
-        for(i = 0; i < wsl->num; ++i)
-        {
-            suf = wsl->list[i];
-
-            // X Offset.
-            suf->visOffsetDelta[0] = 0;
-            suf->oldOffset[0][0] = suf->oldOffset[1][0] = suf->offset[0];
-
-            // X Offset.
-            suf->visOffsetDelta[1] = 0;
-            suf->oldOffset[0][1] = suf->oldOffset[1][1] = suf->offset[1];
-
-            Surface_Update(suf);
-
-            if(R_RemoveWatchedSurface(wsl, suf))
-                i = (i > 0? i-1 : 0);
-        }
+        R_SurfaceListIterate(movingSurfaceList, resetMovingSurface, NULL);
     }
     // While the game is paused there is no need to calculate any
     // visual material offsets.
     else //if(!clientPaused)
     {
         // Set the visible material offsets.
-        for(i = 0; i < wsl->num; ++i)
-        {
-            suf = wsl->list[i];
-
-            // X Offset.
-            suf->visOffsetDelta[0] =
-                suf->oldOffset[0][0] * (1 - frameTimePos) +
-                        suf->offset[0] * frameTimePos - suf->offset[0];
-
-            // Y Offset.
-            suf->visOffsetDelta[1] =
-                suf->oldOffset[0][1] * (1 - frameTimePos) +
-                        suf->offset[1] * frameTimePos - suf->offset[1];
-
-            // Visible material offset.
-            suf->visOffset[0] = suf->offset[0] + suf->visOffsetDelta[0];
-            suf->visOffset[1] = suf->offset[1] + suf->visOffsetDelta[1];
-
-            Surface_Update(suf);
-
-            // Has this material reached its destination?
-            if(suf->visOffset[0] == suf->offset[0] &&
-               suf->visOffset[1] == suf->offset[1])
-                if(R_RemoveWatchedSurface(wsl, suf))
-                    i = (i > 0? i-1 : 0);
-        }
+        R_SurfaceListIterate(movingSurfaceList, interpMovingSurface, NULL);
     }
 }
 
@@ -574,8 +649,10 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
 
     // If this plane is currently being watched, remove it.
     R_RemoveWatchedPlane(watchedPlaneList, plane);
-    // If this plane's surafce is currently being watched, remove it.
-    R_RemoveWatchedSurface(watchedSurfaceList, &plane->surface);
+    // If this plane's surface is in the moving list, remove it.
+    R_SurfaceListRemove(movingSurfaceList, &plane->surface);
+    // If this plane's surface if in the deocrated list, remove it.
+    R_SurfaceListRemove(decoratedSurfaceList, &plane->surface);
 
     // Destroy the subplanes.
     for(i = 0; i < plane->sector->ssectorCount; ++i)

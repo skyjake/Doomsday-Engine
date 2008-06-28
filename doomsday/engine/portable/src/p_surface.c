@@ -95,7 +95,7 @@ boolean Surface_SetMaterialOffsetX(surface_t* suf, float x)
     suf->offset[VX] = x;
     suf->flags |= SUF_UPDATE_DECORATIONS;
     if(!levelSetup)
-        R_AddWatchedSurface(watchedSurfaceList, suf);
+        R_SurfaceListAdd(movingSurfaceList, suf);
 
     return true;
 }
@@ -119,7 +119,7 @@ boolean Surface_SetMaterialOffsetY(surface_t* suf, float y)
     suf->offset[VY] = y;
     suf->flags |= SUF_UPDATE_DECORATIONS;
     if(!levelSetup)
-        R_AddWatchedSurface(watchedSurfaceList, suf);
+        R_SurfaceListAdd(movingSurfaceList, suf);
 
     return true;
 }
@@ -145,7 +145,7 @@ boolean Surface_SetMaterialOffsetXY(surface_t* suf, float x, float y)
     suf->offset[VY] = y;
     suf->flags |= SUF_UPDATE_DECORATIONS;
     if(!levelSetup)
-        R_AddWatchedSurface(watchedSurfaceList, suf);
+        R_SurfaceListAdd(movingSurfaceList, suf);
 
     return true;
 }

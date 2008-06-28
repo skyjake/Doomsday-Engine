@@ -85,14 +85,17 @@ void            R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
 void            R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln);
 boolean         R_RemoveWatchedPlane(watchedplanelist_t *wpl,
                                      const plane_t *pln);
-void            R_UpdateWatchedSurfaces(watchedsurfacelist_t *wsl);
-void            R_InterpolateWatchedSurfaces(watchedsurfacelist_t *wsl,
-                                             boolean resetNextViewer);
-void            R_AddWatchedSurface(watchedsurfacelist_t *wsl, surface_t *suf);
-boolean         R_RemoveWatchedSurface(watchedsurfacelist_t *wsl,
-                                       const surface_t *suf);
-void            R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln);
 
+void            R_UpdateMovingSurfaces(void);
+void            R_InterpolateMovingSurfaces(boolean resetNextViewer);
+
+void            R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf);
+boolean         R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf);
+boolean         R_SurfaceListIterate(surfacelist_t* sl,
+                                     boolean (*callback) (surface_t* suf, void*),
+                                     void* context);
+
+void            R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln);
 boolean         R_IsGlowingPlane(const plane_t *pln);
 
 lineowner_t    *R_GetVtxLineOwner(const vertex_t *vtx, const linedef_t *line);
