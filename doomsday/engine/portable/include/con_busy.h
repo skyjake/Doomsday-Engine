@@ -31,7 +31,8 @@
 
 typedef int     (C_DECL *busyworkerfunc_t) (void* parm);
 
-int         Con_Busy(int flags, busyworkerfunc_t worker, void *workerData);
+int         Con_Busy(int flags, const char* taskName,
+                     busyworkerfunc_t worker, void *workerData);
 boolean     Con_IsBusy(void);
 void        Con_BusyWorkerEnd(void);
 void        Con_BusyWorkerError(const char* message);

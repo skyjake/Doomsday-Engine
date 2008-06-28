@@ -391,7 +391,8 @@ int DD_Main(void)
     // Enter busy mode until startup complete.
     Con_InitProgress(200);
     Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR
-             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), DD_StartupWorker, NULL);
+             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Starting up...",
+             DD_StartupWorker, NULL);
 
     // Engine initialization is complete. Now finish up with the GL.
     if(!isDedicated)
@@ -402,7 +403,7 @@ int DD_Main(void)
 
     // Do deferred uploads.
     Con_Busy(BUSYF_PROGRESS_BAR | BUSYF_STARTUP | BUSYF_ACTIVITY
-             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), DD_StartupWorker2, NULL);
+             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), NULL, DD_StartupWorker2, NULL);
 
     // Client connection command.
     if(ArgCheckWith("-connect", 1))

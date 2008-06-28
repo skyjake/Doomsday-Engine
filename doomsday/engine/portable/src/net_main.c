@@ -1398,7 +1398,7 @@ D_CMD(Connect)
     }
 
     return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                    Net_ConnectWorker, &param);
+                    NULL, Net_ConnectWorker, &param);
 }
 
 /**

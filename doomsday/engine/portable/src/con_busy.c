@@ -67,6 +67,7 @@ static void Con_BusyDeleteTextures(void);
 
 static boolean busyInited;
 static int busyMode;
+static char* busyTaskName;
 static thread_t busyThread;
 static timespan_t busyTime;
 static volatile boolean busyDone;
@@ -84,13 +85,15 @@ static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 /**
  * Busy mode.
  *
- * @param flags          Busy mode flags (see BUSYF_PROGRESS_BAR and others).
+ * @param flags         Busy mode flags (see BUSYF_PROGRESS_BAR and others).
+ * @param taskName      Optional task name (drawn with the progress bar).
  * @param worker        Worker thread that does processing while in busy mode.
  * @param workerData    Data context for the worker thread.
  *
  * @return              Return value of the worker.
  */
-int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
+int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
+             void *workerData)
 {
     int                 result = 0;
 
@@ -107,6 +110,13 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
     busyMode = flags;
     Sys_Lock(busy_Mutex);
     busyDone = false;
+    if(taskName && taskName[0])
+    {   // Take a copy of the task name.
+        size_t              len = strlen(taskName);
+
+        busyTaskName = M_Calloc(len);
+        snprintf(busyTaskName, len, "%s", taskName);
+    }
     Sys_Unlock(busy_Mutex);
 
     // Load any textures needed in this mode.
@@ -123,6 +133,9 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
 
     // Free resources.
     Con_BusyDeleteTextures();
+    if(busyTaskName)
+        M_Free(busyTaskName);
+    busyTaskName = NULL;
 
     if(busyError)
     {
@@ -206,7 +219,7 @@ static void Con_BusyLoadTextures(void)
         }
     }
 
-    if(busyMode & BUSYF_CONSOLE_OUTPUT)
+    if((busyMode & BUSYF_CONSOLE_OUTPUT) || busyTaskName)
     {
         const char*         fontName;
 
@@ -439,6 +452,13 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PopMatrix();
+
+    // Draw the task name.
+    if(busyTaskName)
+    {
+        DGL_Color4f(1.f, 1.f, 1.f, .66f);
+        FR_TextOut(busyTaskName, x+radius, y - busyFontHgt/2);
+    }
 }
 
 #define LINE_COUNT 4

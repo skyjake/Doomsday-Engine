@@ -114,7 +114,8 @@ extern          "C" {
     void            Z_CheckHeap(void);
 
     // Console.
-    int             Con_Busy(int flags, int (*workerFunc)(void*), void *workerData);
+    int             Con_Busy(int flags, const char* taskName,
+                             int (*workerFunc)(void*), void *workerData);
     void            Con_BusyWorkerEnd(void);
     boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
