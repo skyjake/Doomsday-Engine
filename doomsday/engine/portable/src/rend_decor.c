@@ -404,13 +404,88 @@ static void getDecorationSkipPattern(const int patternSkip[2], int *skip)
 }
 
 /**
- * Generate decorations for the specified section of a line.
+ * Generate decorations for the specified section of a sidedef.
  */
-static void decorateLineSection(const linedef_t *line, sidedef_t *side,
-                                surface_t *suf, float top,
-                                float bottom, const float maxDist)
+static void updateSideSectionDecorations(sidedef_t *side,
+                                         segsection_t section)
 {
-    if(suf->flags & SUF_UPDATE_DECORATIONS)
+    linedef_t*          line = side->segs[0]->lineDef;
+    float               bottom, top;
+    sector_t*           highSector, *lowSector;
+    float               frontCeil, frontFloor, backCeil, backFloor;
+    boolean             visible = false;
+    surface_t*          suf;
+
+    frontCeil  = line->L_frontsector->SP_ceilvisheight;
+    frontFloor = line->L_frontsector->SP_floorvisheight;
+
+    if(line->L_backside)
+    {
+        backCeil  = line->L_backsector->SP_ceilvisheight;
+        backFloor = line->L_backsector->SP_floorvisheight;
+    }
+
+    switch(section)
+    {
+    case SEG_MIDDLE:
+        suf = &side->SW_middlesurface;
+        bottom = frontFloor;
+        top = frontCeil;
+        visible = true;
+        break;
+
+    case SEG_TOP:
+        suf = &side->SW_topsurface;
+        // Is the top section visible on either side?
+        if(line->L_frontside && line->L_backside && backCeil != frontCeil &&
+           (!R_IsSkySurface(&line->L_backsector->SP_ceilsurface) ||
+            !R_IsSkySurface(&line->L_frontsector->SP_ceilsurface)))
+        {
+            if(frontCeil > backCeil)
+            {
+                highSector = line->L_frontsector;
+                lowSector  = line->L_backsector;
+            }
+            else
+            {
+                lowSector  = line->L_frontsector;
+                highSector = line->L_backsector;
+            }
+
+            bottom = lowSector->SP_ceilvisheight;
+            top = highSector->SP_ceilvisheight;
+            visible = true;
+        }
+        break;
+
+    case SEG_BOTTOM:
+        suf = &side->SW_bottomsurface;
+        if(line->L_frontside && line->L_backside && backFloor != frontFloor &&
+           (!R_IsSkySurface(&line->L_backsector->SP_floorsurface) ||
+            !R_IsSkySurface(&line->L_frontsector->SP_floorsurface)))
+        {
+            if(frontFloor > backFloor)
+            {
+                highSector = line->L_frontsector;
+                lowSector  = line->L_backsector;
+            }
+            else
+            {
+                lowSector  = line->L_frontsector;
+                highSector = line->L_backsector;
+            }
+
+            bottom = lowSector->SP_ceilvisheight;
+            top = highSector->SP_floorvisheight;
+            visible = true;
+        }
+        break;
+    }
+
+    R_ClearSurfaceDecorations(suf);
+
+    // Is this a valid section?
+    if(visible && suf->material && bottom < top && line->length > 0)
     {
         float               lh, s, t; // Horizontal and vertical offset.
         float               posBase[2], pos[3];
@@ -419,12 +494,9 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
         uint                i;
         vertex_t*           v[2];
         float               delta[2];
-        const ded_decor_t*  def;
         float               offsetY;
+        const ded_decor_t*  def = R_MaterialGetDecoration(suf->material);
 
-        R_ClearSurfaceDecorations(suf);
-
-        def = R_MaterialGetDecoration(suf->material);
         if(def)
         {
             if(line->L_backside)
@@ -602,297 +674,201 @@ static void decorateLineSection(const linedef_t *line, sidedef_t *side,
                 }
             }
         }
-
-        suf->flags &= ~SUF_UPDATE_DECORATIONS;
     }
 
-    projectSurfaceDecorations(suf, maxDist);
-}
-
-/**
- * @return              The side that faces the sector (if any).
- */
-static sidedef_t *getSectorSide(const linedef_t *line, sector_t *sector)
-{
-    sidedef_t          *side = line->L_frontside;
-
-    // Swap if that wasn't the right one.
-    if(side->sector != sector)
-        return line->L_backside;
-
-    return side;
-}
-
-static void decorateLine(const linedef_t *line, const float maxDist)
-{
-    sidedef_t          *side;
-    sector_t           *highSector, *lowSector;
-    float               frontCeil, frontFloor, backCeil, backFloor;
-    surface_t          *suf;
-
-    frontCeil  = line->L_frontsector->SP_ceilvisheight;
-    frontFloor = line->L_frontsector->SP_floorvisheight;
-
-    // Do we have a double-sided line?
-    if(line->L_backside)
-    {
-        backCeil  = line->L_backsector->SP_ceilvisheight;
-        backFloor = line->L_backsector->SP_floorvisheight;
-
-        // Is there a top section visible on either side?
-        if(backCeil != frontCeil &&
-           (!R_IsSkySurface(&line->L_backsector->SP_ceilsurface) ||
-            !R_IsSkySurface(&line->L_frontsector->SP_ceilsurface)))
-        {
-            if(frontCeil > backCeil)
-            {
-                highSector = line->L_frontsector;
-                lowSector  = line->L_backsector;
-            }
-            else
-            {
-                lowSector  = line->L_frontsector;
-                highSector = line->L_backsector;
-            }
-
-            // Figure out the right side.
-            side = getSectorSide(line, highSector);
-            suf = &side->SW_topsurface;
-
-            if(suf->material)
-            {
-                float               bottom = lowSector->SP_ceilvisheight;
-                float               top = highSector->SP_ceilvisheight;
-
-                // Is this a valid section?
-                if(bottom < top && line->length > 0)
-                {
-                    decorateLineSection(line, side, suf, top, bottom,
-                                        maxDist);
-                }
-            }
-        }
-
-        // Is there a bottom section visible?
-        if(backFloor != frontFloor &&
-           (!R_IsSkySurface(&line->L_backsector->SP_floorsurface) ||
-            !R_IsSkySurface(&line->L_frontsector->SP_floorsurface)))
-        {
-            if(frontFloor > backFloor)
-            {
-                highSector = line->L_frontsector;
-                lowSector  = line->L_backsector;
-            }
-            else
-            {
-                lowSector  = line->L_frontsector;
-                highSector = line->L_backsector;
-            }
-
-            // Figure out the right side.
-            side = getSectorSide(line, lowSector);
-            suf = &side->SW_bottomsurface;
-
-            if(suf->material)
-            {
-                float               bottom = lowSector->SP_ceilvisheight;
-                float               top = highSector->SP_floorvisheight;
-
-                // Is this a valid section?
-                if(bottom < top && line->length > 0)
-                {
-
-                    decorateLineSection(line, side, suf, top, bottom,
-                                        maxDist);
-                }
-            }
-        }
-    }
-    else
-    {
-        // This is a single-sided line. We only need to worry about the
-        // middle texture.
-        side = line->L_side(line->L_frontside? FRONT:BACK);
-        suf = &side->SW_middlesurface;
-
-        if(suf->material)
-        {
-            float               bottom = frontFloor;
-            float               top = frontCeil;
-
-            // Is this a valid section?
-            if(bottom < top && line->length > 0)
-            {
-                decorateLineSection(line, side, suf, top, bottom, maxDist);
-            }
-        }
-    }
+    suf->flags &= ~SUF_UPDATE_DECORATIONS;
 }
 
 /**
  * Generate decorations for a plane.
  */
-static void decoratePlane(const sector_t *sec, plane_t *pln,
-                          const float maxDist)
+static void updatePlaneDecorations(plane_t* pln)
 {
     uint                i;
-    surface_t          *suf = &pln->surface;
+    sector_t*           sec = pln->sector;
+    surface_t*          suf = &pln->surface;
+    float               pos[3], tileSize = 64;
+    int                 skip[2];
+    const ded_decor_t*  def;
 
-    if(suf->flags & SUF_UPDATE_DECORATIONS)
+    R_ClearSurfaceDecorations(suf);
+
+    def = R_MaterialGetDecoration(pln->PS_material);
+    if(def)
     {
-        float               pos[3], tileSize = 64;
-        int                 skip[2];
-        const ded_decor_t*  def;
-
-        R_ClearSurfaceDecorations(suf);
-
-        def = R_MaterialGetDecoration(pln->PS_material);
-        if(def)
+        // Generate a number of models.
+        for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)
         {
-            // Generate a number of models.
-            for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)
+            const ded_decormodel_t* modelDef = &def->models[i];
+            modeldef_t*         mf;
+            float               pitch, yaw;
+
+            if(!R_IsValidModelDecoration(modelDef))
+                break;
+
+            if((mf = R_CheckIDModelFor(modelDef->id)) == NULL)
+                break;
+
+            yaw = 90 + R_MovementYaw(suf->normal[VX],
+                                     suf->normal[VY]);
+            pitch = R_MovementPitch(suf->normal[VX], suf->normal[VY],
+                                    suf->normal[VZ]);
+
+            // Skip must be at least one.
+            getDecorationSkipPattern(modelDef->patternSkip, skip);
+
+            pos[VY] =
+                (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_visoffset[VY] -
+                modelDef->pos[VY] - modelDef->patternOffset[VY] * tileSize;
+
+            while(pos[VY] > sec->bBox[BOXBOTTOM])
+                pos[VY] -= tileSize * skip[VY];
+
+            for(; pos[VY] < sec->bBox[BOXTOP]; pos[VY] += tileSize * skip[VY])
             {
-                const ded_decormodel_t* modelDef = &def->models[i];
-                modeldef_t*         mf;
-                float               pitch, yaw;
+                if(pos[VY] < sec->bBox[BOXBOTTOM])
+                    continue;
 
-                if(!R_IsValidModelDecoration(modelDef))
-                    break;
+                pos[VX] =
+                    (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_visoffset[VX] +
+                    modelDef->pos[VX] - modelDef->patternOffset[VX] * tileSize;
 
-                if((mf = R_CheckIDModelFor(modelDef->id)) == NULL)
-                    break;
+                while(pos[VX] > sec->bBox[BOXLEFT])
+                    pos[VX] -= tileSize * skip[VX];
 
-                yaw = 90 + R_MovementYaw(suf->normal[VX],
-                                         suf->normal[VY]);
-                pitch = R_MovementPitch(suf->normal[VX], suf->normal[VY],
-                                        suf->normal[VZ]);
-
-                // Skip must be at least one.
-                getDecorationSkipPattern(modelDef->patternSkip, skip);
-
-                pos[VY] =
-                    (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_visoffset[VY] -
-                    modelDef->pos[VY] - modelDef->patternOffset[VY] * tileSize;
-
-                while(pos[VY] > sec->bBox[BOXBOTTOM])
-                    pos[VY] -= tileSize * skip[VY];
-
-                for(; pos[VY] < sec->bBox[BOXTOP]; pos[VY] += tileSize * skip[VY])
+                for(; pos[VX] < sec->bBox[BOXRIGHT];
+                    pos[VX] += tileSize * skip[VX])
                 {
-                    if(pos[VY] < sec->bBox[BOXBOTTOM])
+                    surfacedecor_t         *d;
+
+                    if(pos[VX] < sec->bBox[BOXLEFT])
                         continue;
 
-                    pos[VX] =
-                        (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_visoffset[VX] +
-                        modelDef->pos[VX] - modelDef->patternOffset[VX] * tileSize;
-
-                    while(pos[VX] > sec->bBox[BOXLEFT])
-                        pos[VX] -= tileSize * skip[VX];
-
-                    for(; pos[VX] < sec->bBox[BOXRIGHT];
-                        pos[VX] += tileSize * skip[VX])
-                    {
-                        surfacedecor_t         *d;
-
-                        if(pos[VX] < sec->bBox[BOXLEFT])
-                            continue;
-
-                        // The point must be inside the correct sector.
-                        if(!R_IsPointInSector(pos[VX], pos[VY], sec))
-                            continue;
-
-                        pos[VZ] =
-                            pln->visHeight + modelDef->elevation * suf->normal[VZ];
-
-                        if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf)))
-                        {
-                            d->pos[VX] = pos[VX];
-                            d->pos[VY] = pos[VY];
-                            d->pos[VZ] = pos[VZ];
-                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
-
-                            DEC_MODEL(d)->def = modelDef;
-                            DEC_MODEL(d)->mf = mf;
-                            DEC_MODEL(d)->pitch = pitch;
-                            DEC_MODEL(d)->yaw = yaw;
-                        }
-                    }
-                }
-            }
-
-            // Generate a number of lights.
-            for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-            {
-                const ded_decorlight_t* lightDef = &def->lights[i];
-
-                // No more?
-                if(!R_IsValidLightDecoration(lightDef))
-                    break;
-
-                // Skip must be at least one.
-                getDecorationSkipPattern(lightDef->patternSkip, skip);
-
-                pos[VY] =
-                    (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_visoffset[VY] -
-                    lightDef->pos[VY] - lightDef->patternOffset[VY] * tileSize;
-
-                while(pos[VY] > sec->bBox[BOXBOTTOM])
-                    pos[VY] -= tileSize * skip[VY];
-
-                for(; pos[VY] < sec->bBox[BOXTOP]; pos[VY] += tileSize * skip[VY])
-                {
-                    if(pos[VY] < sec->bBox[BOXBOTTOM])
+                    // The point must be inside the correct sector.
+                    if(!R_IsPointInSector(pos[VX], pos[VY], sec))
                         continue;
 
-                    pos[VX] =
-                        (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_visoffset[VX] +
-                        lightDef->pos[VX] - lightDef->patternOffset[VX] * tileSize;
+                    pos[VZ] =
+                        pln->visHeight + modelDef->elevation * suf->normal[VZ];
 
-                    while(pos[VX] > sec->bBox[BOXLEFT])
-                        pos[VX] -= tileSize * skip[VX];
-
-                    for(; pos[VX] < sec->bBox[BOXRIGHT];
-                        pos[VX] += tileSize * skip[VX])
+                    if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf)))
                     {
-                        surfacedecor_t         *d;
+                        d->pos[VX] = pos[VX];
+                        d->pos[VY] = pos[VY];
+                        d->pos[VZ] = pos[VZ];
+                        d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
 
-                        if(pos[VX] < sec->bBox[BOXLEFT])
-                            continue;
-
-                        // The point must be inside the correct sector.
-                        if(!R_IsPointInSector(pos[VX], pos[VY], sec))
-                            continue;
-
-                        pos[VZ] =
-                            pln->visHeight + lightDef->elevation * suf->normal[VZ];
-
-                        if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf)))
-                        {
-                            d->pos[VX] = pos[VX];
-                            d->pos[VY] = pos[VY];
-                            d->pos[VZ] = pos[VZ];
-                            d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
-
-                            DEC_LIGHT(d)->def = lightDef;
-                        }
+                        DEC_MODEL(d)->def = modelDef;
+                        DEC_MODEL(d)->mf = mf;
+                        DEC_MODEL(d)->pitch = pitch;
+                        DEC_MODEL(d)->yaw = yaw;
                     }
                 }
             }
         }
 
-        suf->flags &= ~SUF_UPDATE_DECORATIONS;
+        // Generate a number of lights.
+        for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        {
+            const ded_decorlight_t* lightDef = &def->lights[i];
+
+            // No more?
+            if(!R_IsValidLightDecoration(lightDef))
+                break;
+
+            // Skip must be at least one.
+            getDecorationSkipPattern(lightDef->patternSkip, skip);
+
+            pos[VY] =
+                (int) (sec->bBox[BOXBOTTOM] / tileSize) * tileSize - pln->PS_visoffset[VY] -
+                lightDef->pos[VY] - lightDef->patternOffset[VY] * tileSize;
+
+            while(pos[VY] > sec->bBox[BOXBOTTOM])
+                pos[VY] -= tileSize * skip[VY];
+
+            for(; pos[VY] < sec->bBox[BOXTOP]; pos[VY] += tileSize * skip[VY])
+            {
+                if(pos[VY] < sec->bBox[BOXBOTTOM])
+                    continue;
+
+                pos[VX] =
+                    (int) (sec->bBox[BOXLEFT] / tileSize) * tileSize - pln->PS_visoffset[VX] +
+                    lightDef->pos[VX] - lightDef->patternOffset[VX] * tileSize;
+
+                while(pos[VX] > sec->bBox[BOXLEFT])
+                    pos[VX] -= tileSize * skip[VX];
+
+                for(; pos[VX] < sec->bBox[BOXRIGHT];
+                    pos[VX] += tileSize * skip[VX])
+                {
+                    surfacedecor_t         *d;
+
+                    if(pos[VX] < sec->bBox[BOXLEFT])
+                        continue;
+
+                    // The point must be inside the correct sector.
+                    if(!R_IsPointInSector(pos[VX], pos[VY], sec))
+                        continue;
+
+                    pos[VZ] =
+                        pln->visHeight + lightDef->elevation * suf->normal[VZ];
+
+                    if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf)))
+                    {
+                        d->pos[VX] = pos[VX];
+                        d->pos[VY] = pos[VY];
+                        d->pos[VZ] = pos[VZ];
+                        d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+
+                        DEC_LIGHT(d)->def = lightDef;
+                    }
+                }
+            }
+        }
     }
 
-    projectSurfaceDecorations(suf, maxDist);
+    suf->flags &= ~SUF_UPDATE_DECORATIONS;
 }
 
-static void decorateSector(const sector_t *sec, const float maxDist)
+void Rend_UpdateSurfaceDecorations(void)
 {
-    uint                i;
-
-    for(i = 0; i < sec->planeCount; ++i)
+    // This only needs to be done if decorations have been enabled.
+    if(useDecorations)
     {
-        decoratePlane(sec, sec->SP_plane(i), maxDist);
+        uint                i;
+
+        // Process all sidedefs.
+        for(i = 0; i < numSideDefs; ++i)
+        {
+            sidedef_t*          side = &sideDefs[i];
+            surface_t*          suf;
+
+            suf = &side->SW_middlesurface;
+            if(suf->flags & SUF_UPDATE_DECORATIONS)
+                updateSideSectionDecorations(side, SEG_MIDDLE);
+
+            suf = &side->SW_topsurface;
+            if(suf->flags & SUF_UPDATE_DECORATIONS)
+                updateSideSectionDecorations(side, SEG_TOP);
+
+            suf = &side->SW_bottomsurface;
+            if(suf->flags & SUF_UPDATE_DECORATIONS)
+                updateSideSectionDecorations(side, SEG_BOTTOM);
+        }
+
+        // Process all planes.
+        for(i = 0; i < numSectors; ++i)
+        {
+            uint                j;
+            sector_t*           sec = &sectors[i];
+
+            for(j = 0; j < sec->planeCount; ++j)
+            {
+                plane_t*            pln = sec->SP_plane(j);
+                if(pln->surface.flags & SUF_UPDATE_DECORATIONS)
+                    updatePlaneDecorations(pln);
+            }
+        }
     }
 }
 
@@ -906,16 +882,25 @@ void Rend_InitDecorationsForFrame(void)
     // This only needs to be done if decorations have been enabled.
     if(useDecorations)
     {
-        uint                i;
+        uint                i, j;
 
-        // Process all lines. This could also be done during sectors,
-        // but validCount would need to be used to prevent duplicate
-        // processing.
-        for(i = 0; i < numLineDefs; ++i)
-            decorateLine(&lineDefs[i], decorMaxDist);
+        Rend_UpdateSurfaceDecorations(); // temporary.
+
+        // Process all sidedefs.
+        for(i = 0; i < numSideDefs; ++i)
+        {
+            projectSurfaceDecorations(&sideDefs[i].SW_topsurface,
+                                      decorMaxDist);
+            projectSurfaceDecorations(&sideDefs[i].SW_bottomsurface,
+                                      decorMaxDist);
+            projectSurfaceDecorations(&sideDefs[i].SW_middlesurface,
+                                      decorMaxDist);
+        }
 
         // Process all planes.
         for(i = 0; i < numSectors; ++i)
-            decorateSector(&sectors[i], decorMaxDist);
+            for(j = 0; j < sectors[i].planeCount; ++j)
+                projectSurfaceDecorations(&sectors[i].SP_planesurface(j),
+                                          decorMaxDist);
     }
 }
