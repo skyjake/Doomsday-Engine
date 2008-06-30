@@ -1171,19 +1171,19 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     }
 
 #ifdef _DEBUG
-    Con_Message("GL_CalcLuminance: Proc \"%s\"\n"
-                          "  width %dpx, height %dpx, bits %d\n"
-                          "  cell region X[%d, %d] Y[%d, %d]\n"
-                          "  flare X= %g Y=%g %s\n"
-                          "  flare RGB[%g, %g, %g] %s\n",
-                          W_CacheLumpNum(sprTex->lump, PU_GETNAME),
-                          width, height, pixelSize,
-                          region[0], region[1], region[2], region[3],
-                          (*brightX), (*brightY),
-                          (posCnt? "(average)" : "(center)"),
-                          (*color)[0], (*color)[1], (*color)[2],
-                          (avgCnt? "(hi-intensity avg)" :
-                           lowCnt? "(low-intensity avg)" : "(white light)"));
+    VERBOSE(Con_Message("GL_CalcLuminance: Proc \"%s\"\n"
+                        "  width %dpx, height %dpx, bits %d\n"
+                        "  cell region X[%d, %d] Y[%d, %d]\n"
+                        "  flare X= %g Y=%g %s\n"
+                        "  flare RGB[%g, %g, %g] %s\n",
+                        W_CacheLumpNum(sprTex->lump, PU_GETNAME),
+                        width, height, pixelSize,
+                        region[0], region[1], region[2], region[3],
+                        (*brightX), (*brightY),
+                        (posCnt? "(average)" : "(center)"),
+                        (*color)[0], (*color)[1], (*color)[2],
+                        (avgCnt? "(hi-intensity avg)" :
+                         lowCnt? "(low-intensity avg)" : "(white light)")));
 #endif
 
     // Amplify color.
