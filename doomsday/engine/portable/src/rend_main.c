@@ -1266,7 +1266,7 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
     params.backSec = seg->SG_backsector;
 
     // Fill in the remaining params data.
-    if(skyMask || !surface->material || R_IsSkySurface(surface))
+    if(skyMask || R_IsSkySurface(surface))
     {
         // In devSkyMode mode we render all polys destined for the skymask as
         // regular world polys (with a few obvious properties).
@@ -1313,7 +1313,8 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
                     surfaceFlags &= ~SUF_NO_RADIO;
             }
         }
-        else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
+        else if(!surface->material ||
+                ((surface->flags & SUF_TEXFIX) && devNoTexFix))
         {   // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
             material_t*         mat = R_GetMaterial(DDT_MISSING, MAT_DDTEX);
@@ -1334,7 +1335,7 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
             surfaceFlags |= SUF_GLOW; // Make it stand out
             //// <kludge
         }
-        else if(surface->material)
+        else
         {
             material_t*         mat = surface->material;
 
@@ -1355,6 +1356,8 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
 
             if(mat->dgl.masked)
                 surfaceFlags &= ~SUF_NO_RADIO;
+
+            tempflags |= RPF2_BLEND;
         }
 
         // Calculate texture coordinates.
@@ -1521,7 +1524,7 @@ static boolean renderSegSection(seg_t* seg, segsection_t section,
     if(bottom >= top)
         return true;
 
-    if(surface->material && surface->material->ofTypeID != 0)
+    if(!(surface->material && (surface->material->flags & MATF_NO_DRAW)))
     {
         visible = true;
     }
@@ -1650,7 +1653,7 @@ static boolean Rend_RenderSSWallSeg(seg_t* seg, subsector_t* ssec)
         renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
                          offset[VX], offset[VY],
                          /*temp >*/ frontsec, /*< temp*/
-                         false, true, side->flags);
+                         false, false, side->flags);
     }
 
     if(P_IsInVoid(viewPlayer))
@@ -2148,7 +2151,7 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
     surface = &polySector->planes[planeID]->surface;
 
     // Must have a visible surface.
-    if(!surface->material)
+    if(surface->material && (surface->material->flags & MATF_NO_DRAW))
         return;
 
     plane = polySector->planes[planeID];
@@ -2237,7 +2240,8 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
                         surfaceFlags &= ~SUF_NO_RADIO;
                 }
             }
-            else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
+            else if(!surface->material ||
+                    ((surface->flags & SUF_TEXFIX) && devNoTexFix))
             {   // For debug, render the "missing" texture instead of the texture
                 // chosen for surfaces to fix the HOMs.
                 material_t*         mat = R_GetMaterial(DDT_MISSING, MAT_DDTEX);
@@ -2256,7 +2260,7 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
                     surfaceFlags &= ~SUF_NO_RADIO;
                 surfaceFlags |= SUF_GLOW; // Make it stand out
             }
-            else if(surface->material)
+            else
             {
                 material_t*         mat = surface->material;
 
