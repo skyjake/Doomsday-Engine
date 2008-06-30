@@ -76,7 +76,6 @@ D_CMD(ListInputDevices);
 boolean ignoreInput = false;
 
 int     mouseFilter = 1;        // Filtering on by default.
-boolean allowMouseMod = true; // can mouse data be modified?
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
@@ -112,6 +111,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 static repeater_t keyReps[MAX_DOWNKEYS];
 //static int oldJoyBState = 0;
 static float oldPOV = IJOY_POV_CENTER;
+static boolean uiMouseMode = false; // Can mouse data be modified?
 
 // CODE --------------------------------------------------------------------
 
@@ -141,8 +141,8 @@ void DD_RegisterInput(void)
  */
 static void I_DeviceAllocKeys(inputdev_t *dev, uint count)
 {
-	dev->numKeys = count;
-	dev->keys = M_Calloc(count * sizeof(inputdevkey_t));
+    dev->numKeys = count;
+    dev->keys = M_Calloc(count * sizeof(inputdevkey_t));
 }
 
 static void I_DeviceAllocHats(inputdev_t *dev, uint count)
@@ -156,22 +156,22 @@ static void I_DeviceAllocHats(inputdev_t *dev, uint count)
  */
 static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint type)
 {
-	inputdevaxis_t *axis;
+    inputdevaxis_t *axis;
 
-	dev->axes = M_Realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
+    dev->axes = M_Realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
 
-	axis = &dev->axes[dev->numAxes - 1];
-	memset(axis, 0, sizeof(*axis));
-	strcpy(axis->name, name);
+    axis = &dev->axes[dev->numAxes - 1];
+    memset(axis, 0, sizeof(*axis));
+    strcpy(axis->name, name);
 
-	axis->type = type;
+    axis->type = type;
 
-	// Set reasonable defaults. The user's settings will be restored
-	// later.
-	axis->scale = 1;
-	axis->deadZone = 0;
+    // Set reasonable defaults. The user's settings will be restored
+    // later.
+    axis->scale = 1;
+    axis->deadZone = 0;
 
-	return axis;
+    return axis;
 }
 
 /**
@@ -183,22 +183,22 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
 void I_InitVirtualInputDevices(void)
 {
     int         i;
-	inputdev_t *dev;
+    inputdev_t *dev;
     inputdevaxis_t *axis;
 
-	memset(inputDevices, 0, sizeof(inputDevices));
+    memset(inputDevices, 0, sizeof(inputDevices));
 
-	// The keyboard is always assumed to be present.
-	// DDKEYs are used as key indices.
-	dev = &inputDevices[IDEV_KEYBOARD];
-	dev->flags = ID_ACTIVE;
-	strcpy(dev->name, "key");
-	I_DeviceAllocKeys(dev, 256);
+    // The keyboard is always assumed to be present.
+    // DDKEYs are used as key indices.
+    dev = &inputDevices[IDEV_KEYBOARD];
+    dev->flags = ID_ACTIVE;
+    strcpy(dev->name, "key");
+    I_DeviceAllocKeys(dev, 256);
 
-	// The mouse may not be active.
-	dev = &inputDevices[IDEV_MOUSE];
-	strcpy(dev->name, "mouse");
-	I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
+    // The mouse may not be active.
+    dev = &inputDevices[IDEV_MOUSE];
+    strcpy(dev->name, "mouse");
+    I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
 
     // The first five mouse buttons have symbolic names.
     dev->keys[0].name = "left";
@@ -207,22 +207,22 @@ void I_InitVirtualInputDevices(void)
     dev->keys[3].name = "wheelup";
     dev->keys[4].name = "wheeldown";
 
-	// The mouse wheel is translated to keys, so there is no need to
-	// create an axis for it.
-	axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
+    // The mouse wheel is translated to keys, so there is no need to
+    // create an axis for it.
+    axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
     axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
-	axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
+    axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
     axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
 
-	if(I_MousePresent())
-		dev->flags = ID_ACTIVE;
+    if(I_MousePresent())
+        dev->flags = ID_ACTIVE;
 
     // TODO: Add support for several joysticks.
-	dev = &inputDevices[IDEV_JOY1];
-	strcpy(dev->name, "joy");
-	I_DeviceAllocKeys(dev, IJOY_MAXBUTTONS);
+    dev = &inputDevices[IDEV_JOY1];
+    strcpy(dev->name, "joy");
+    I_DeviceAllocKeys(dev, IJOY_MAXBUTTONS);
     for(i = 0; i < IJOY_MAXAXES; ++i)
     {
         char name[32];
@@ -245,9 +245,9 @@ void I_InitVirtualInputDevices(void)
         dev->hats[i].pos = -1; // centered
     }
 
-	// The joystick may not be active.
-	if(I_JoystickPresent())
-		dev->flags = ID_ACTIVE;
+    // The joystick may not be active.
+    if(I_JoystickPresent())
+        dev->flags = ID_ACTIVE;
 }
 
 /**
@@ -255,12 +255,12 @@ void I_InitVirtualInputDevices(void)
  */
 void I_ShutdownInputDevices(void)
 {
-	uint                i;
-	inputdev_t*         dev;
+    uint                i;
+    inputdev_t*         dev;
 
-	for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-	{
-		dev = &inputDevices[i];
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        dev = &inputDevices[i];
 
         if(dev->keys)
             M_Free(dev->keys);
@@ -273,7 +273,7 @@ void I_ShutdownInputDevices(void)
         if(dev->hats)
             M_Free(dev->hats);
         dev->hats = 0;
-	}
+    }
 }
 
 /**
@@ -291,9 +291,9 @@ inputdev_t *I_GetDevice(uint ident, boolean ifactive)
     if(ifactive)
     {
         if(dev->flags & ID_ACTIVE)
-		    return dev;
-	    else
-		    return NULL;
+            return dev;
+        else
+            return NULL;
     }
 
     return dev;
@@ -309,31 +309,31 @@ inputdev_t *I_GetDevice(uint ident, boolean ifactive)
  */
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
 {
-	uint        i;
+    uint        i;
     inputdev_t *dev = NULL;
     boolean     found;
 
-	i = 0;
+    i = 0;
     found = false;
     while(i < NUM_INPUT_DEVICES && !found)
-	{
-		if(!stricmp(inputDevices[i].name, name))
+    {
+        if(!stricmp(inputDevices[i].name, name))
         {
-			dev = &inputDevices[i];
+            dev = &inputDevices[i];
             found = true;
         }
         else
             i++;
-	}
+    }
 
     if(dev)
     {
         if(ifactive)
         {
             if(dev->flags & ID_ACTIVE)
-		        return dev;
-	        else
-		        return NULL;
+                return dev;
+            else
+                return NULL;
         }
     }
 
@@ -367,14 +367,14 @@ inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id)
  */
 int I_GetAxisByName(inputdev_t *device, const char *name)
 {
-	uint         i;
+    uint         i;
 
-	for(i = 0; i < device->numAxes; ++i)
-	{
-		if(!stricmp(device->axes[i].name, name))
-			return i;
-	}
-	return -1;
+    for(i = 0; i < device->numAxes; ++i)
+    {
+        if(!stricmp(device->axes[i].name, name))
+            return i;
+    }
+    return -1;
 }
 
 int I_GetKeyByName(inputdev_t* device, const char* name)
@@ -397,24 +397,24 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
  */
 boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 {
-	char        name[30], *ptr;
+    char        name[30], *ptr;
     inputdev_t *device;
 
-	ptr = strchr(str, '-');
-	if(!ptr)
+    ptr = strchr(str, '-');
+    if(!ptr)
         return false;
 
-	// The name of the device.
-	memset(name, 0, sizeof(name));
-	strncpy(name, str, ptr - str);
-	device = I_GetDeviceByName(name, false);
+    // The name of the device.
+    memset(name, 0, sizeof(name));
+    strncpy(name, str, ptr - str);
+    device = I_GetDeviceByName(name, false);
     if(device == NULL)
         return false;
     if(*deviceID)
         *deviceID = device - inputDevices;
 
     // The axis name.
-	if(*axis)
+    if(*axis)
     {
         uint    a = I_GetAxisByName(device, ptr + 1);
         if((*axis = a) == 0)
@@ -423,41 +423,41 @@ boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
         *axis = a - 1; // Axis indices are base 1.
     }
 
-	return true;
+    return true;
 }
 
 float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
 {
     float pos = rawPos;
-	inputdevaxis_t *a = &dev->axes[axis];
+    inputdevaxis_t *a = &dev->axes[axis];
 
-	// Disabled axes are always zero.
-	if(a->flags & IDA_DISABLED)
-	{
-		return 0;
-	}
+    // Disabled axes are always zero.
+    if(a->flags & IDA_DISABLED)
+    {
+        return 0;
+    }
 
     // Apply scaling, deadzone and clamping.
-	pos *= a->scale;
-	if(a->type == IDAT_STICK) // Pointer axes are not dead-zoned or clamped.
-	{
-		if(fabs(pos) <= a->deadZone)
-		{
-			pos = 0;
-		}
+    pos *= a->scale;
+    if(a->type == IDAT_STICK) // Pointer axes are not dead-zoned or clamped.
+    {
+        if(fabs(pos) <= a->deadZone)
+        {
+            pos = 0;
+        }
         else
         {
-            pos -= a->deadZone * SIGN_OF(pos);	// Remove the dead zone.
-            pos *= 1.0f/(1.0f - a->deadZone);		// Normalize.
+            pos -= a->deadZone * SIGN_OF(pos);  // Remove the dead zone.
+            pos *= 1.0f/(1.0f - a->deadZone);       // Normalize.
             pos = MINMAX_OF(-1.0f, pos, 1.0f);
         }
-	}
+    }
 
-	if(a->flags & IDA_INVERT)
-	{
-		// Invert the axis position.
-		pos = -pos;
-	}
+    if(a->flags & IDA_INVERT)
+    {
+        // Invert the axis position.
+        pos = -pos;
+    }
 
     return pos;
 }
@@ -467,7 +467,7 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
  */
 static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLength)
 {
-	inputdevaxis_t *a = &dev->axes[axis];
+    inputdevaxis_t *a = &dev->axes[axis];
     float oldRealPos = a->realPosition;
     float transformed = I_TransformAxis(dev, axis, pos);
 
@@ -481,14 +481,14 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
     }
 
     if(a->filter > 0)
-	{
+    {
         pos = a->realPosition;
-	}
-	else
-	{
-		// This is the new axis position.
-		pos = a->realPosition;
-	}
+    }
+    else
+    {
+        // This is the new axis position.
+        pos = a->realPosition;
+    }
 
     if(a->type == IDAT_STICK)
         a->position = pos; //a->realPosition;
@@ -507,7 +507,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
  */
 void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 {
-	inputdev_t *dev;
+    inputdev_t *dev;
 
     if((dev = I_GetDevice(ev->device, true)) == NULL)
         return;
@@ -672,7 +672,7 @@ static void despatchEvents(timespan_t ticLength)
             continue;
 
         // Update the state of the input device tracking table.
-		I_TrackInput(ddev, ticLength);
+        I_TrackInput(ddev, ticLength);
 
         // Copy the essentials into a cutdown version for the game.
         // Ensure the format stays the same for future compatibility!
@@ -948,6 +948,14 @@ float I_FilterMouse(float pos, float* accumulation, float ticLength)
 }
 
 /**
+ * Change between normal and UI mousing modes.
+ */
+void I_SetUIMouseMode(boolean on)
+{
+    uiMouseMode = on;
+}
+
+/**
  * Checks the current mouse state (axis, buttons and wheel).
  * Generates events and mickeys and posts them.
  */
@@ -1000,7 +1008,7 @@ void DD_ReadMouse(timespan_t ticLength)
 
     // Mouse axis data may be modified if not in UI mode.
 /*
-    if(allowMouseMod)
+    if(uiMouseMode)
     {
         if(mouseDisableX)
             xpos = 0;
@@ -1010,7 +1018,7 @@ void DD_ReadMouse(timespan_t ticLength)
             ypos = -ypos;
     }
     */
-    if(!allowMouseMod) // In UI mode.
+    if(uiMouseMode)
     {
         // Scale the movement depending on screen resolution.
         xpos *= MAX_OF(1, theWindow->width / 800.0f);
@@ -1169,7 +1177,7 @@ D_CMD(AxisPrintConfig)
     if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
     {
         Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-		return false;
+        return false;
     }
 
     device = I_GetDevice(deviceID, false);
@@ -1188,7 +1196,7 @@ D_CMD(AxisChangeOption)
     if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
     {
         Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-		return false;
+        return false;
     }
 
     device = I_GetDevice(deviceID, false);
@@ -1221,7 +1229,7 @@ D_CMD(AxisChangeValue)
     if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
     {
         Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-		return false;
+        return false;
     }
 
     device = I_GetDevice(deviceID, false);
@@ -1250,13 +1258,13 @@ D_CMD(AxisChangeValue)
  */
 D_CMD(ListInputDevices)
 {
-	uint        i, j;
-	inputdev_t *dev;
+    uint        i, j;
+    inputdev_t *dev;
 
     Con_Printf("Input Devices:\n");
-	for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-	{
-		dev = &inputDevices[i];
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        dev = &inputDevices[i];
         if(!dev->name || !(dev->flags & ID_ACTIVE))
             continue;
 

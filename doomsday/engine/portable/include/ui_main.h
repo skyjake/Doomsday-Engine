@@ -190,7 +190,7 @@ void            UI_Register(void);
 
 // Functions.
 void            UI_Init(boolean halttime, boolean tckui, boolean tckframe,
-                        boolean drwgame, boolean mousemod, boolean noescape);
+                        boolean drwgame, boolean noescape);
 void            UI_End(void);
 boolean         UI_IsActive(void);
 ui_page_t      *UI_CurrentPage(void);

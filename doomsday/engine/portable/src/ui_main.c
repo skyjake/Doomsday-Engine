@@ -85,7 +85,6 @@ extern boolean stopTime;
 extern boolean tickUI;
 extern boolean tickFrame;
 extern boolean drawGame;
-extern boolean allowMouseMod;
 // extern boolean dialogActive;
 // extern boolean dialogInput;
 
@@ -146,7 +145,7 @@ void UI_Register(void)
  * Called when entering a ui page
  */
 void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
-             boolean mousemod, boolean noescape)
+             boolean noescape)
 {
     if(uiActive)
         return;
@@ -161,7 +160,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     tickUI = tckui;
     tickFrame = tckframe;
     uiDrawGame = drawGame = drwgame;
-    allowMouseMod = mousemod;
+    I_SetUIMouseMode(true);
 
     // Setup state.
     GL_InitVarFont();
@@ -171,10 +170,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     uiFontHgt = FR_TextHeight("W");
 
     // Should the mouse cursor be visible?
-    if(!mousemod)
-        uiShowMouse = !ArgExists("-nomouse");
-    else
-        uiShowMouse = false;
+    uiShowMouse = !ArgExists("-nomouse");
 
     // Allow use of the escape key to exit the ui?
     allowEscape = !noescape;
@@ -210,7 +206,7 @@ void UI_End(void)
     stopTime = false;
     tickUI = false;
     drawGame = true;
-    allowMouseMod = true;
+    I_SetUIMouseMode(false);
 
     // Inform everybody that the shift key was (possibly) released while
     // the UI was eating all the input events.

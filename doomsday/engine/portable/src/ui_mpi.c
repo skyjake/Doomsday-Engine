@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * ui_mpi.c: Multiplayer Setup Interface
  */
 
@@ -293,7 +293,7 @@ void MPIUpdateServerInfo(ui_object_t *ob)
         MPIClearServerInfo();
         return;
     }
-    
+
     if(retrieving)
         return;
 
@@ -667,7 +667,7 @@ void DD_NetSetup(int serverMode)
     //sprintf(str_ipport, "%.10i", nptIPPort);
     //lst_protocol.selection = nptActive;
 
-    UI_Init(true, true, false, false, false, false);
+    UI_Init(true, true, false, false, false);
     UI_SetPage(serverMode ? &page_server : &page_client);
 
     CP_InitCvarSliders(ob_server);

@@ -135,7 +135,7 @@ typedef struct inputdevhat_s {
 } inputdevhat_t;
 
 // Input device flags.
-#define ID_ACTIVE 0x1		// The input device is active.
+#define ID_ACTIVE 0x1       // The input device is active.
 
 typedef struct inputdev_s {
     char    name[20];       // Symbolic name of the device.
@@ -180,6 +180,7 @@ int         I_GetAxisByName(inputdev_t *device, const char *name);
 int         I_GetKeyByName(inputdev_t* device, const char* name);
 float       I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 boolean     I_IsDeviceKeyDown(uint ident, uint code);
+void        I_SetUIMouseMode(boolean on);
 void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
 
 #endif
