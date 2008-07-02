@@ -274,6 +274,7 @@ extern          "C" {
         DD_WINDOW_HEIGHT,
         DD_WINDOW_HANDLE,
         DD_DYNLIGHT_TEXTURE,
+        DD_GAME_EXPORTS,
         DD_SECTOR_COUNT,
         DD_LINE_COUNT,
         DD_SIDE_COUNT,
@@ -490,10 +491,10 @@ extern          "C" {
     // Control classes.
     typedef enum
     {
-	    CC_AXIS,
-	    CC_TOGGLE,
-	    CC_IMPULSE,
-	    NUM_CONTROL_CLASSES
+        CC_AXIS,
+        CC_TOGGLE,
+        CC_IMPULSE,
+        NUM_CONTROL_CLASSES
     } ctlclass_t;
 
     //------------------------------------------------------------------------
@@ -1233,12 +1234,12 @@ typedef struct {
  * maybe commit suicide.
  */
 typedef struct ticcmd_s {
-	char		forwardMove;		// *2048 for real move
-	char		sideMove;			// *2048 for real move
-	char		upMove;				// *2048 for real move
-	unsigned short angle;			// <<16 for angle (view angle)
-	short		pitch;				// View pitch
-	short		actions;			// On/off action flags
+    char        forwardMove;        // *2048 for real move
+    char        sideMove;           // *2048 for real move
+    char        upMove;             // *2048 for real move
+    unsigned short angle;           // <<16 for angle (view angle)
+    short       pitch;              // View pitch
+    short       actions;            // On/off action flags
 } ticcmd_t;
 
     // Network Player Events

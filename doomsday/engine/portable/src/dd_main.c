@@ -193,7 +193,7 @@ void DD_AddIWAD(const char *path)
 static void AddToWadList(char *list)
 {
     size_t          len = strlen(list);
-    char	       *buffer = M_Malloc(len + 1), *token;
+    char           *buffer = M_Malloc(len + 1), *token;
 
     strcpy(buffer, list);
     token = strtok(buffer, ATWSEPS);
@@ -923,6 +923,9 @@ void* DD_GetVariable(int ddvalue)
         // How about some specials?
         switch(ddvalue)
         {
+        case DD_GAME_EXPORTS:
+            return &gx;
+
         case DD_SKYMASKMATERIAL_NUM:
             if(skyMaskMaterial)
                 return &skyMaskMaterial->ofTypeID;
