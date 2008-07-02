@@ -142,7 +142,7 @@ typedef enum {
 typedef struct surfacedecor_s {
     float               pos[3]; // World coordinates of the decoration.
     decortype_t         type;
-    subsector_t*		subsector;
+    subsector_t*        subsector;
     union surfacedecor_data_u {
         struct surfacedecor_light_s {
             const struct ded_decorlight_s* def;
@@ -275,6 +275,7 @@ typedef struct msector_s {
 
     // Suppress superfluous mini warnings.
     int         warnedFacing;
+    int         refCount;
 } msector_t;
 
 typedef struct sector_s {
@@ -406,12 +407,12 @@ typedef struct sidedef_s {
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)?
-#define LINE_SELFREF(l)			((l)->L_frontside && (l)->L_backside && \
-								 (l)->L_frontsector == (l)->L_backsector)
+#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+                                 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_TWOSIDED				0x1 // Line has valid front and back sectors.
-#define LF_POLYOBJ				0x2 // Line is part of a polyobject.
+#define LF_TWOSIDED             0x1 // Line has valid front and back sectors.
+#define LF_POLYOBJ              0x2 // Line is part of a polyobject.
 
 #define MLF_TWOSIDED            0x1 // Line is marked two-sided.
 #define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).
@@ -460,8 +461,8 @@ typedef struct linedef_s {
  * An infinite line of the form point + direction vectors.
  */
 typedef struct partition_s {
-	float				x, y;
-	float				dX, dY;
+    float               x, y;
+    float               dX, dY;
 } partition_t;
 
 typedef struct node_s {

@@ -293,6 +293,7 @@ typedef struct msector_s {
 
     // Suppress superfluous mini warnings.
     int         warnedFacing;
+    int			refCount;
 } msector_t;
 end
 

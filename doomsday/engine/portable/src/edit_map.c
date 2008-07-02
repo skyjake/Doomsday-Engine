@@ -338,7 +338,7 @@ static __inline void addIndexBit(uint index, uint *bitfield)
 }
 #endif
 
-static void pruneLinedefs(editmap_t *src)
+static void findEquivalentVertexes(editmap_t *src)
 {
     uint            i, newNum;
 
@@ -362,32 +362,14 @@ static void pruneLinedefs(editmap_t *src)
             l->v[1]->buildData.refCount++;
         }
 
-        // Remove zero length lines.
-        if(l->buildData.mlFlags & MLF_ZEROLENGTH)
-        {
-            l->v[0]->buildData.refCount--;
-            l->v[1]->buildData.refCount--;
-
-            M_Free(src->lineDefs[i]);
-            src->lineDefs[i] = NULL;
-            continue;
-        }
-
-        l->buildData.index = newNum;
+        l->buildData.index = newNum + 1;
         src->lineDefs[newNum++] = src->lineDefs[i];
-    }
-
-    if(newNum < src->numLineDefs)
-    {
-        VERBOSE(Con_Message("  Pruned %d zero-length linedefs\n",
-                            src->numLineDefs - newNum));
-        src->numLineDefs = newNum;
     }
 }
 
 static void pruneVertices(editmap_t *map)
 {
-    uint            i, newNum, unused = 0;
+    uint                i, newNum, unused = 0;
 
     // Scan all vertices.
     for(i = 0, newNum = 0; i < map->numVertexes; ++i)
@@ -482,49 +464,39 @@ static void pruneUnusedSidedefs(void)
 }
 #endif
 
-#if 0 // Currently unused.
-static void pruneUnusedSectors(void)
+static void pruneUnusedSectors(editmap_t* map)
 {
-    int         i, newNum;
-    size_t      bitfieldSize;
-    uint       *indexBitfield = 0;
+    uint                i, newNum;
 
-    bitfieldSize = 4 * (numSectors + 7) / 8;
-    indexBitfield = M_Calloc(bitfieldSize);
-
-    for(i = 0; i < numSidedefs; ++i)
+    for(i = 0; i < map->numSideDefs; ++i)
     {
-        sidedef_t *s = levSidedefs[i];
+        sidedef_t*          s = map->sideDefs[i];
 
         if(s->sector)
-            addIndexBit(s->sector->buildData.index, indexBitfield);
+            s->sector->buildData.refCount++;
     }
 
     // Scan all sectors.
-    for(i = 0, newNum = 0; i < numSectors; ++i)
+    for(i = 0, newNum = 0; i < map->numSectors; ++i)
     {
-        sector_t *s = levSectors[i];
+        sector_t*           s = map->sectors[i];
 
-        if(!hasIndexBit(s->buildData.index, indexBitfield))
+        if(s->buildData.refCount == 0)
         {
             M_Free(s);
             continue;
         }
 
-        s->buildData.index = newNum;
-        levSectors[newNum++] = s;
+        s->buildData.index = newNum + 1;
+        map->sectors[newNum++] = s;
     }
 
-    M_Free(indexBitfield);
-
-    if(newNum < numSectors)
+    if(newNum < map->numSectors)
     {
-        VERBOSE(Con_Message("  Pruned %d unused sectors\n",
-                            numSectors - newNum));
-        numSectors = newNum;
+        Con_Message("  Pruned %d unused sectors\n", map->numSectors - newNum);
+        map->numSectors = newNum;
     }
 }
-#endif
 
 /**
  * \note Order here is critical!
@@ -534,8 +506,7 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
     if(!editMapInited)
         return;
 
-    //if(flags & PRUNE_LINEDEFS)
-    //    pruneLinedefs(map);
+    findEquivalentVertexes(map);
 
     if(flags & PRUNE_VERTEXES)
         pruneVertices(map);
@@ -543,8 +514,8 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
     //if(flags & PRUNE_SIDEDEFS)
     //    pruneUnusedSidedefs();
 
-    //if(flags & PRUNE_SECTORS)
-    //    pruneUnusedSectors();
+    if(flags & PRUNE_SECTORS)
+        pruneUnusedSectors(map);
 }
 
 /**
@@ -599,10 +570,9 @@ void MPE_PrintUnclosedSectorList(void)
     {
         usecrecord_t       *usec = &unclosedSectors[i];
 
-        VERBOSE(
         Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
                     usec->sec->buildData.index, usec->nearPos[VX],
-                    usec->nearPos[VY]));
+                    usec->nearPos[VY]);
     }
 }
 
