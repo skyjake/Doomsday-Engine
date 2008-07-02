@@ -82,6 +82,17 @@ static int screenWidth, screenHeight, screenBPP;
 
 // CODE --------------------------------------------------------------------
 
+static __inline ddwindow_t *getWindow(uint idx)
+{
+    if(!winManagerInited)
+        return NULL; // Window manager is not initialized.
+    
+    if(idx != 0)
+        return NULL;
+    
+    return &mainWindow;
+}
+
 #if defined(UNIX)
 static void setAttrib(int flags)
 {
@@ -218,7 +229,7 @@ void Sys_SetConWindowCmdLine(uint idx, const char *text, uint cursorPos,
     if(!win || win->type != WT_CONSOLE)
         return;
 
-    setConWindowCmdLine(win, text, cursorPos, flags);
+    setConWindowCmdLine(idx, text, cursorPos, flags);
 }
 
 static void setConWindowCmdLine(uint idx, const char *text,
@@ -296,17 +307,6 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
     screenBPP = info->vfmt->BitsPerPixel;
 
     return true;
-}
-
-static __inline ddwindow_t *getWindow(uint idx)
-{
-    if(!winManagerInited)
-        return NULL; // Window manager is not initialized.
-
-    if(idx != 0)
-        return NULL;
-
-    return &mainWindow;
 }
 
 /**
