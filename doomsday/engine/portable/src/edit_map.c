@@ -406,7 +406,7 @@ static void pruneVertices(editmap_t *map)
             continue;
         }
 
-        v->buildData.index = newNum;
+        v->buildData.index = newNum + 1;
         map->vertexes[newNum++] = v;
     }
 
@@ -414,14 +414,11 @@ static void pruneVertices(editmap_t *map)
     {
         int         dupNum = map->numVertexes - newNum - unused;
 
-        if(verbose >= 1)
-        {
-            if(unused > 0)
-                Con_Message("  Pruned %d unused vertices.\n", unused);
+        if(unused > 0)
+            Con_Message("  Pruned %d unused vertices.\n", unused);
 
-            if(dupNum > 0)
-                Con_Message("  Pruned %d duplicate vertices\n", dupNum);
-        }
+        if(dupNum > 0)
+            Con_Message("  Pruned %d duplicate vertices\n", dupNum);
 
         map->numVertexes = newNum;
     }
@@ -537,8 +534,8 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
     if(!editMapInited)
         return;
 
-    if(flags & PRUNE_LINEDEFS)
-        pruneLinedefs(map);
+    //if(flags & PRUNE_LINEDEFS)
+    //    pruneLinedefs(map);
 
     if(flags & PRUNE_VERTEXES)
         pruneVertices(map);
@@ -1511,7 +1508,7 @@ boolean MPE_End(void)
      * pruning unused sectors etc, etc...
      */
     MPE_DetectDuplicateVertices(map);
-    //MPE_PruneRedundantMapData(map, PRUNE_ALL);
+    MPE_PruneRedundantMapData(map, PRUNE_ALL);
 
     /**
      * Harden most of the map data so that we can construct some of the more
@@ -1794,6 +1791,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 {
     linedef_t*          l;
     sidedef_t*          front = NULL, *back = NULL;
+    vertex_t*           vtx1, *vtx2;
+    float               length, dx, dy;
 
     if(!editMapInited)
         return 0;
@@ -1815,18 +1814,30 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     if(backSide && map->sideDefRefs[backSide - 1])
         return 0; // Already in use.
 
+    // Next, check the length is not zero.
+    vtx1 = map->vertexes[v1 - 1];
+    vtx2 = map->vertexes[v2 - 1];
+    dx = vtx2->V_pos[VX] - vtx1->V_pos[VX];
+    dy = vtx2->V_pos[VY] - vtx1->V_pos[VY];
+    length = P_AccurateDistance(dx, dy);
+    if(!(length > 0))
+        return 0;
+
     if(frontSide > 0)
         front = map->sideDefs[frontSide - 1];
     if(backSide > 0)
         back = map->sideDefs[backSide - 1];
 
     l = createLine();
-    l->L_v1 = map->vertexes[v1 - 1];
-    l->L_v2 = map->vertexes[v2 - 1];
+    l->L_v1 = vtx1;
+    l->L_v2 = vtx2;
 
-    l->dX = l->L_v2pos[VX] - l->L_v1pos[VX];
-    l->dY = l->L_v2pos[VY] - l->L_v1pos[VY];
-    l->length = P_AccurateDistance(l->dX, l->dY);
+    l->L_v1->buildData.refCount++;
+    l->L_v2->buildData.refCount++;
+
+    l->dX = dx;
+    l->dY = dy;
+    l->length = length;
 
     l->angle =
         bamsAtan2((int) (l->L_v2pos[VY] - l->L_v1pos[VY]),
@@ -1960,13 +1971,20 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
     uint                i;
     polyobj_t          *po;
 
-    if(!editMapInited)
+    if(!editMapInited || !lineCount || !lines)
         return 0;
 
-    // First check that all the line indices are valid.
+    // First check that all the line indices are valid and that they arn't
+    // already part of another polyobj.
     for(i = 0; i < lineCount; ++i)
     {
+        linedef_t             *line;
+
         if(lines[i] == 0 || lines[i] > map->numLineDefs)
+            return 0;
+
+        line = map->lineDefs[lines[i] - 1];
+        if(line->inFlags & LF_POLYOBJ)
             return 0;
     }
 
