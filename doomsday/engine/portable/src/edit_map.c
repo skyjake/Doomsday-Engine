@@ -114,10 +114,6 @@ static sidedef_t *createSide(void)
     map->sideDefs[map->numSideDefs-1] = side;
     map->sideDefs[map->numSideDefs] = NULL;
 
-    map->sideDefRefs =
-        M_Realloc(map->sideDefRefs, sizeof(*map->sideDefRefs) * (map->numSideDefs + 1));
-    map->sideDefRefs[map->numSideDefs-1] = 0;
-
     side->buildData.index = map->numSideDefs; // 1-based index, 0 = NIL.
     return side;
 }
@@ -199,10 +195,8 @@ static void destroyEditableSideDefs(editmap_t *map)
         }
 
         M_Free(map->sideDefs);
-        M_Free(map->sideDefRefs);
     }
     map->sideDefs = NULL;
-    map->sideDefRefs = NULL;
     map->numSideDefs = 0;
 }
 
@@ -406,33 +400,15 @@ static void pruneVertices(editmap_t *map)
     }
 }
 
-#if 0 // Currently unused.
-static void pruneUnusedSidedefs(void)
+static void pruneUnusedSidedefs(editmap_t* map)
 {
-    int         i, newNum, unused = 0;
-    size_t      bitfieldSize;
-    uint       *indexBitfield = 0;
+    uint                i, newNum, unused = 0;
 
-    bitfieldSize = 4 * (numSidedefs + 7) / 8;
-    indexBitfield = M_Calloc(bitfieldSize);
-
-    for(i = 0; i < numLinedefs; ++i)
+    for(i = 0, newNum = 0; i < map->numSideDefs; ++i)
     {
-        linedef_t         *l = levLinedefs[i];
+        sidedef_t*          s = map->sideDefs[i];
 
-        if(l->sideDefs[FRONT])
-            addIndexBit(l->sideDefs[FRONT]->buildData.index, indexBitfield);
-
-        if(l->sideDefs[BACK])
-            addIndexBit(l->sideDefs[BACK]->buildData.index, indexBitfield);
-    }
-
-    // Scan all sidedefs.
-    for(i = 0, newNum = 0; i < numSidedefs; ++i)
-    {
-        sidedef_t *s = levSidedefs[i];
-
-        if(!hasIndexBit(s->buildData.index, indexBitfield))
+        if(s->buildData.refCount == 0)
         {
             unused++;
 
@@ -440,29 +416,23 @@ static void pruneUnusedSidedefs(void)
             continue;
         }
 
-        s->buildData.index = newNum;
-        levSidedefs[newNum++] = s;
+        s->buildData.index = newNum + 1;
+        map->sideDefs[newNum++] = s;
     }
 
-    M_Free(indexBitfield);
-
-    if(newNum < numSidedefs)
+    if(newNum < map->numSideDefs)
     {
-        int         dupNum = numSidedefs - newNum - unused;
+        int                 dupNum = map->numSideDefs - newNum - unused;
 
-        if(verbose >= 1)
-        {
-            if(unused > 0)
-                Con_Message("  Pruned %d unused sidedefs\n", unused);
+        if(unused > 0)
+            Con_Message("  Pruned %d unused sidedefs\n", unused);
 
-            if(dupNum > 0)
-                Con_Message("  Pruned %d duplicate sidedefs\n", dupNum);
-        }
+        if(dupNum > 0)
+            Con_Message("  Pruned %d duplicate sidedefs\n", dupNum);
 
-        numSidedefs = newNum;
+        map->numSideDefs = newNum;
     }
 }
-#endif
 
 static void pruneUnusedSectors(editmap_t* map)
 {
@@ -511,8 +481,8 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
     if(flags & PRUNE_VERTEXES)
         pruneVertices(map);
 
-    //if(flags & PRUNE_SIDEDEFS)
-    //    pruneUnusedSidedefs();
+    if(flags & PRUNE_SIDEDEFS)
+        pruneUnusedSidedefs(map);
 
     if(flags & PRUNE_SECTORS)
         pruneUnusedSectors(map);
@@ -1779,9 +1749,9 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
         return 0;
 
     // First, ensure that the side indices are unique.
-    if(frontSide && map->sideDefRefs[frontSide - 1])
+    if(frontSide && map->sideDefs[frontSide - 1]->buildData.refCount)
         return 0; // Already in use.
-    if(backSide && map->sideDefRefs[backSide - 1])
+    if(backSide && map->sideDefs[backSide - 1]->buildData.refCount)
         return 0; // Already in use.
 
     // Next, check the length is not zero.
@@ -1852,10 +1822,10 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
     // Remember the number of unique references.
     if(l->L_frontside)
-        map->sideDefRefs[l->L_frontside->buildData.index - 1]++;
+        l->L_frontside->buildData.refCount++;
 
     if(l->L_backside)
-        map->sideDefRefs[l->L_backside->buildData.index - 1]++;
+        l->L_backside->buildData.refCount++;
 
     l->inFlags = 0;
     if(front && back)

@@ -46,8 +46,6 @@ typedef struct editmap_s {
     uint            numPolyObjs;
     polyobj_t**     polyObjs;
 
-    uint*           sideDefRefs; // Used to track sidedef reference counts.
-
     // The following is for game-specific map object data.
     gameobjdata_t   gameObjData;
 } editmap_t;
