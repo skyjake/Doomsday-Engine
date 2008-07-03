@@ -284,10 +284,38 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     if(newState == db->previousClickState &&
        nowTime - db->previousClickTime < doubleClickThresholdMilliseconds)
     {
+        ddevent_t event;
+        ddstring_t* symbolicName = Str_New();
+        
         db->triggered = true;
 
-        Con_Message("P_MaintainControlDoubleClicks: Triggered plr %i, ctl %i, state %i - threshold %i\n",
-            playerNum, control, newState, nowTime - db->previousClickTime);
+        switch(newState)
+        {
+            case DBCS_POSITIVE:
+                Str_Append(symbolicName, "control-doubleclick-positive-");
+                break;
+                
+            case DBCS_NEGATIVE:
+                Str_Append(symbolicName, "control-doubleclick-negative-");
+                break;
+        }
+        
+        // Compose the name of the symbolic event.
+        Str_Append(symbolicName, playerControls[control].name);
+
+        VERBOSE( Con_Message("P_MaintainControlDoubleClicks: Triggered plr %i, ctl %i, "
+                             "state %i - threshold %i (%s)\n",
+                             playerNum, control, newState, nowTime - db->previousClickTime, 
+                             Str_Text(symbolicName)) );
+        
+        event.device = 0;
+        event.type = E_SYMBOLIC;
+        event.symbolic.id = playerNum;
+        event.symbolic.name = Str_Text(symbolicName);
+        
+        DD_PostEvent(&event);
+        
+        Str_Delete(symbolicName);
     }
 
     db->previousClickTime = nowTime;
@@ -467,13 +495,14 @@ D_CMD(Impulse)
 
     if(argc < 2 || argc > 3)
     {
-        Con_Printf("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-number)\n",
+        Con_Printf("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-ordinal)\n",
                    argv[0], argv[0]);
         return true;
     }
     if(argc == 3)
     {
-        playerNum = strtoul(argv[2], NULL, 10);
+        // Convert the local player number to an actual player console.
+        playerNum = P_LocalToConsole(strtoul(argv[2], NULL, 10));
     }
     P_ImpulseByName(playerNum, argv[1]);
     return true;

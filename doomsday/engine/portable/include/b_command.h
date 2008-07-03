@@ -42,6 +42,7 @@ typedef struct evbinding_s {
     int         id;                 // Identifier.
     ebstate_t   state;
     float       pos;
+    char*       symbolicName;       // Name of a symbolic event.
 
     // Additional conditions.
     int         numConds;

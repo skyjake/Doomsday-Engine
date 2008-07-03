@@ -167,6 +167,12 @@ void Str_Append(ddstring_t *ds, const char *append_text)
     ds->length += incoming;
 }
 
+void Str_AppendChar(ddstring_t* ds, char ch)
+{
+    char str[2] = { ch, 0 };
+    Str_Append(ds, str);
+}
+
 /**
  * Append formated text.
  */

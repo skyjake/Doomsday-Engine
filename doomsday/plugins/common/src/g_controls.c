@@ -269,6 +269,8 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol look key-pgdown-staged",
         "bindevent key-end-down {impulse lookcenter}",
         "bindevent key-slash {impulse jump}",
+        
+        "bindevent sym-control-doubleclick-positive-walk {impulse use %p}",
 
         // Weapon keys:
         "bindevent key-1 {impulse weapon1}",

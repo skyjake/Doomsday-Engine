@@ -139,6 +139,7 @@ void Sys_Shutdown(void)
     S_Shutdown();
     Sys_ShutdownMixer();
     GL_Shutdown();
+    DD_ClearEvents();
     I_ShutdownInputDevices();
     I_Shutdown();
 }

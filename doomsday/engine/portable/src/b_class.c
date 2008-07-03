@@ -132,6 +132,9 @@ void B_UpdateDeviceStateAssociations(void)
                 if(!dev->hats[eb->id].bClass)
                     dev->hats[eb->id].bClass = bc;
                 break;
+                    
+            case E_SYMBOLIC:
+                break;
 
             default:
                 Con_Error("B_UpdateDeviceStateAssociations: Invalid value, "

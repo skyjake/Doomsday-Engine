@@ -111,6 +111,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 static repeater_t keyReps[MAX_DOWNKEYS];
 //static int oldJoyBState = 0;
 static float oldPOV = IJOY_POV_CENTER;
+static char* eventStrings[MAXEVENTS];
 static boolean uiMouseMode = false; // Can mouse data be modified?
 
 // CODE --------------------------------------------------------------------
@@ -624,12 +625,40 @@ void DD_InitInput(void)
     }
 }
 
+const char* DD_AllocEventString(const char* str)
+{
+    static int eventStringRover = 0;
+    const char* returnValue = 0;
+    
+    free(eventStrings[eventStringRover]);
+    returnValue = eventStrings[eventStringRover] = strdup(str);
+    
+    if(++eventStringRover >= MAXEVENTS)
+    {
+        eventStringRover = 0;
+    }    
+    return returnValue;
+}
+
+void DD_ClearEventStrings(void)
+{
+    int i;
+    
+    for(i = 0; i < MAXEVENTS; ++i)
+    {
+        free(eventStrings[i]);        
+        eventStrings[i] = 0;
+    }    
+}
+
 /**
  * Clear the input event queue.
  */
 void DD_ClearEvents(void)
 {
     eventhead = eventtail;
+    
+    DD_ClearEventStrings();
 }
 
 /**
@@ -637,7 +666,15 @@ void DD_ClearEvents(void)
  */
 void DD_PostEvent(ddevent_t *ev)
 {
-    events[eventhead++] = *ev;
+    events[eventhead] = *ev;
+    
+    if(ev->type == E_SYMBOLIC)
+    {
+        // Allocate a throw-away string from our buffer.
+        events[eventhead].symbolic.name = DD_AllocEventString(ev->symbolic.name);
+    }
+    
+    eventhead++;
     eventhead &= MAXEVENTS - 1;
 }
 

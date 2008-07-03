@@ -436,9 +436,12 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
     inputdev_t* dev = I_GetDevice(device, false);
     const char* name;
 
-    // Name of the device.
-    Str_Append(str, dev->name);
-    Str_Append(str, "-");
+    if(type != E_SYMBOLIC)
+    {
+        // Name of the device.
+        Str_Append(str, dev->name);
+        Str_Append(str, "-");
+    }
 
     switch(type)
     {
@@ -465,6 +468,10 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
 
     case E_ANGLE:
         Str_Appendf(str, "hat%i", id + 1);
+        break;
+            
+    case E_SYMBOLIC:
+        Str_Append(str, "sym");
         break;
 
     default:

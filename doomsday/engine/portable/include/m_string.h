@@ -52,6 +52,7 @@ void            Str_Clear(ddstring_t *ds);
 void            Str_Reserve(ddstring_t *ds, size_t length);
 void            Str_Set(ddstring_t *ds, const char *text);
 void            Str_Append(ddstring_t *ds, const char *append_text);
+void            Str_AppendChar(ddstring_t* ds, char ch);
 void            Str_Appendf(ddstring_t * ds, const char *format, ...) PRINTF_F(2,3);
 void            Str_PartAppend(ddstring_t *dest, const char *src, int start,
 							   size_t count);

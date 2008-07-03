@@ -48,7 +48,8 @@ enum
 typedef enum ddeventtype_e {
     E_TOGGLE,               // Two-state device
     E_AXIS,                 // Axis position
-    E_ANGLE                 // Hat angle
+    E_ANGLE,                // Hat angle
+    E_SYMBOLIC              // Symbolic event
 } ddeventtype_t;
 
 typedef enum ddeevent_togglestate_e {
@@ -66,7 +67,7 @@ typedef enum ddevent_axistype_e {
 // only need-to-know metadata is sent down the games' responder chain.
 typedef struct ddevent_s {
     uint            device; // e.g. IDEV_KEYBOARD
-    ddeventtype_t   type;   // E_TOGGLE, E_AXIS, or E_ANGLE
+    ddeventtype_t   type;   // E_TOGGLE, E_AXIS, E_ANGLE, or E_SYMBOLIC
     union {
         struct {
             int             id;         // Button/key index number
@@ -81,6 +82,10 @@ typedef struct ddevent_s {
             int             id;         // Angle index number
             float           pos;        // Angle, or negative if centered
         } angle;
+        struct {
+            int             id;         // Console that originated the event.
+            const char*     name;       // Symbolic name of the event.
+        } symbolic;
     };
 } ddevent_t;
 

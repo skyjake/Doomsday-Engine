@@ -71,7 +71,7 @@ void B_DestroyCommandBindingList(evbinding_t* listRoot)
  */
 static evbinding_t* B_AllocCommandBinding(void)
 {
-    evbinding_t*        eb = M_Calloc(sizeof(evbinding_t));
+    evbinding_t* eb = M_Calloc(sizeof(evbinding_t));
     eb->bid = B_NewIdentifier();
     return eb;
 }
@@ -180,6 +180,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
                 goto parseEnded;
             }
         }
+    }
+    else if(!Str_CompareIgnoreCase(str, "sym"))
+    {
+        // It must be a symbolic event.
+        eb->type = E_SYMBOLIC;
+        eb->device = 0;
+        eb->symbolicName = strdup(desc); 
+        desc = NULL;
     }
     else
     {
@@ -306,8 +314,78 @@ void B_DestroyCommandBinding(evbinding_t* eb)
         M_Free(eb->command);
     if(eb->conds)
         M_Free(eb->conds);
+    free(eb->symbolicName);
 
     M_Free(eb);
+}
+
+/**
+ * Substitute placeholders in a command string. Placeholders consist of two characters,
+ * the first being a %. Use %% to output a plain % character.
+ *
+ * - <code>%i</code>: id member of the event
+ * - <code>%p</code>: (symbolic events only) local player number
+ *
+ * @param command  Original command string with the placeholders.
+ * @param event    Event data.
+ * @param eb       Binding data.
+ * @param out      String with placeholders replaced.
+ */
+void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* eb, ddstring_t* out)
+{
+    const char* ptr = command;
+    
+    for(; *ptr; ptr++)
+    {
+        if(*ptr == '%')
+        {
+            // Escape.
+            ptr++;
+            
+            // Must have another character in the placeholder.
+            if(!*ptr) break;
+            
+            if(*ptr == 'i')
+            {
+                int id = 0;
+                switch(event->type)
+                {
+                    case E_TOGGLE:
+                        id = event->toggle.id;
+                        break;
+                        
+                    case E_AXIS:
+                        id = event->axis.id;
+                        break;
+                        
+                    case E_ANGLE:
+                        id = event->angle.id;
+                        break;
+                        
+                    case E_SYMBOLIC:
+                        id = event->symbolic.id;
+                        break;
+                }
+                Str_Appendf(out, "%i", id);
+            }
+            else if(*ptr == 'p')
+            {
+                int id = 0;
+                if(event->type == E_SYMBOLIC)
+                {
+                    id = P_ConsoleToLocal(event->symbolic.id);                    
+                }
+                Str_Appendf(out, "%i", id);
+            }
+            else if(*ptr == '%')
+            {
+                Str_AppendChar(out, *ptr);                
+            }
+            continue;
+        }
+        
+        Str_AppendChar(out, *ptr);
+    }
 }
 
 /**
@@ -325,15 +403,19 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
 {
     int         i;
     inputdev_t* dev;
+    ddstring_t  command;
 
     if(eb->device != event->device || eb->type != event->type)
         return false;
 
-    dev = I_GetDevice(eb->device, true);
-    if(!dev)
+    if(event->type != E_SYMBOLIC)
     {
-        // The device is not active, there is no way this could get executed.
-        return false;
+        dev = I_GetDevice(eb->device, true);
+        if(!dev)
+        {
+            // The device is not active, there is no way this could get executed.
+            return false;
+        }
     }
 
     switch(event->type)
@@ -393,13 +475,17 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
         if(eb->id != event->angle.id)
             return false;
         if(eventClass && dev->hats[eb->id].bClass != eventClass)
-
             return false; // Shadowed by a more important active class.
         // Is the position as required?
         if(event->angle.pos != eb->pos)
             return false;
         break;
 
+    case E_SYMBOLIC:
+        if(strcmp(event->symbolic.name, eb->symbolicName))
+            return false;
+        break;
+            
     default:
         return false;
     }
@@ -410,9 +496,16 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
         if(!B_CheckCondition(&eb->conds[i]))
             return false;
     }
+    
+    // Substitute parameters in the command.
+    Str_Init(&command);
+    Str_Reserve(&command, strlen(eb->command));
+    B_SubstituteInCommand(eb->command, event, eb, &command);
 
     // Do the command.
-    Con_Executef(CMDS_BIND, false, eb->command);
+    Con_Executef(CMDS_BIND, false, Str_Text(&command));
+
+    Str_Free(&command);
     return true;
 }
 
@@ -438,6 +531,10 @@ void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
     else if(eb->type == E_ANGLE)
     {
         B_AppendAnglePositionToString(eb->pos, str);
+    }
+    else if(eb->type == E_SYMBOLIC)
+    {
+        Str_Appendf(str, "-%s", eb->symbolicName);
     }
 
     // Append any state conditions.
