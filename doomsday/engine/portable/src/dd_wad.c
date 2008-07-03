@@ -474,6 +474,14 @@ void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
 
     for(i = 0; i < rec->numLumps; ++i, flump++)
     {
+        // The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
+        // TODO: Ensure that this doesn't break other IWADs. The 0x80-0xff range isn't
+        // normally used in lump names, right??
+        for(to = 0; to < 8; to++)
+        {
+            flump->name[to] = flump->name[to] & 0x7f;            
+        }
+        
         if(inside == LGT_NONE)
         {
             // We are currently not inside any group.
