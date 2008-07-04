@@ -65,8 +65,8 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1,
                          const pvec2_t line2, float dist2, pvec2_t point,
                          pvec2_t lp)
 {
-    float       len1, len2, plen;
-    vec2_t      origin = { 0, 0 }, norm1, norm2;
+    float               len1, len2;
+    vec2_t              origin = { 0, 0 }, norm1, norm2;
 
     // Length of both lines.
     len1 = V2_Length(line1);
@@ -76,6 +76,14 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1,
     V2_Set(norm1, -line1[VY] / len1 * dist1, line1[VX] / len1 * dist1);
     V2_Set(norm2, line2[VY] / len2 * dist2, -line2[VX] / len2 * dist2);
 
+    // Do we need to calculate the extended points, too?  Check that
+    // the extension does not bleed too badly outside the legal shadow
+    // area.
+    if(lp)
+    {
+        V2_Set(lp, line2[VX] / len2 * dist2, line2[VY] / len2 * dist2);
+    }
+
     // Are the lines parallel?  If so, they won't connect at any
     // point, and it will be impossible to determine a corner point.
     if(V2_IsParallel(line1, line2))
@@ -83,8 +91,6 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1,
         // Just use a normal as the point.
         if(point)
             V2_Copy(point, norm1);
-        if(lp)
-            V2_Copy(lp, norm1);
         return;
     }
 
@@ -92,19 +98,6 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1,
     // corner point.
     if(point)
         V2_Intersection(norm1, line1, norm2, line2, point);
-
-    // Do we need to calculate the extended point, too?  Check that
-    // the extension does not bleed too badly outside the legal shadow
-    // area.
-    if(lp)
-    {
-        V2_Intersection(origin, line2, norm2, line1, lp);
-        plen = V2_Length(lp);
-        if(plen > 0 && plen > len2)
-        {
-            V2_Scale(lp, len2 / plen);
-        }
-    }
 }
 
 /**
@@ -295,7 +288,7 @@ void R_InitSectorShadows(void)
 
                 vtx0 = line->L_v(j);
                 vtx1 = line->L_v(j^1);
-                vo0 = line->L_vo(j);
+                vo0 = line->L_vo(j)->LO_next;
                 vo1 = line->L_vo(j^1)->LO_prev;
 
                 // Use the extended points, they are wider than inoffsets.

@@ -47,6 +47,7 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_dgl.h"
 
 #include "m_vector.h"
 
@@ -1391,7 +1392,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     float               open, sideOpen[2], vec[3];
     float               fz, bz, bhz, plnHeight;
     sector_t*           front, *back;
-    linedef_t*          line, *neighbors[2];
+    linedef_t*          line;
     surface_t*          suf;
     shadowlink_t*       link;
     vec2_t              inner[2], outer[2];
@@ -1461,25 +1462,21 @@ static void radioSubsectorEdges(const subsector_t* subsector)
         line = link->lineDef;
         side = link->side;
 
-        // Find the neighbors of this edge.
-        for(i = 0; i < 2; ++i)
-        {
-            neighbors[i] =
-                R_FindLineNeighbor(line->L_sector(side), line,
-                                   line->L_vo(side^i), i, NULL);
-        }
-
         for(pln = 0; pln < subsector->sector->planeCount; ++pln)
         {
+            plane_t*                plane;
+
             if(!doPlane[pln])
                 continue;
+
+            plane = line->L_sector(side)->SP_plane(pln);
 
             // Determine the openness of the line. If this edge is open,
             // there won't be a shadow at all. Open neighbours cause some
             // changes in the polygon corner vertices (placement, colour).
 
             suf = &subsector->sector->planes[pln]->surface;
-            plnHeight = line->L_sector(side)->SP_planevisheight(pln);
+            plnHeight = plane->visHeight;
             vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
@@ -1522,44 +1519,62 @@ static void radioSubsectorEdges(const subsector_t* subsector)
             if(open >= 1)
                 continue;
 
-            // Determine the inner shadow corners.
+            // Find the neighbors of this edge and determine their 'openness'.
+            sideOpen[0] = sideOpen[1] = 0;
             for(i = 0; i < 2; ++i)
             {
-                float           pos;
-                linedef_t      *neighbor = neighbors[i];
-                lineowner_t    *vo;
+                lineowner_t*        vo;
+                linedef_t*          neighbor;
 
-                if(neighbor && neighbor->L_backside)
+                vo = line->L_vo(side^i)->link[i^1];
+                neighbor = vo->lineDef;
+
+                if(!(neighbor == line || !neighbor->L_backside))
                 {
-                    uint            side2 =
-                        (neighbor->L_frontsector != line->L_sector(side));
+                    sector_t*           othersec;
+                    byte                otherSide;
 
-                    front = neighbor->L_sector(side2);
-                    back  = neighbor->L_sector(side2 ^ 1);
-                    setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
+                    otherSide = (line->L_v(i^side) == neighbor->L_v1? i : i^1);
+                    othersec = neighbor->L_sector(otherSide);
 
-                    hack = radioEdgeHackType(neighbor, front, back, side2, pln, fz, bz);
-                    if(hack)
-                        sideOpen[i] = hack - 1;
+                    // Exclude 'special' neighbors which we pretend to be solid.
+                    if(LINE_SELFREF(neighbor) ||
+                       ((R_IsSkySurface(&othersec->SP_planesurface(pln)) ||
+                         R_IsSkySurface(&othersec->SP_planesurface(PLN_CEILING))) &&
+                        othersec->SP_floorvisheight >= othersec->SP_ceilvisheight))
+                    {
+                        sideOpen[i] = 1;
+                    }
                     else
-                        sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
+                    {   // Its a normal neighbor.
+                        if(neighbor->L_sector(otherSide) != line->L_sector(side) &&
+                           !((plane->type == PLN_FLOOR &&
+                                  othersec->SP_ceilvisheight <= plane->visHeight) ||
+                             (plane->type == PLN_CEILING &&
+                                  othersec->SP_floorheight >= plane->visHeight)))
+                        {
+                            front = line->L_sector(side);
+                            back  = neighbor->L_sector(otherSide);
+
+                            setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
+                            sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
+                        }
+                    }
+                }
+
+                if(sideOpen[i] < 1)
+                {
+                    vo = line->L_vo(i^side);
+                    if(i)
+                        vo = vo->LO_prev;
+
+                    V2_Sum(inner[i], line->L_vpos(i^side),
+                           vo->shadowOffsets.inner);
                 }
                 else
-                    sideOpen[i] = 0;
-
-                pos = sideOpen[i];
-
-                vo = line->L_vo(i^side);
-                if(i)
-                    vo = vo->LO_prev;
-
-                if(pos <= 1) // Nearly closed.
                 {
-                    V2_Sum(inner[i], line->L_vpos(i^side), vo->shadowOffsets.inner);
-                }
-                else // Fully, unquestionably open.
-                {
-                    V2_Sum(inner[i], line->L_vpos(i^side), vo->shadowOffsets.extended);
+                    V2_Sum(inner[i], line->L_vpos(i^side),
+                           vo->shadowOffsets.extended);
                 }
             }
 
@@ -1580,3 +1595,101 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
 
 END_PROF( PROF_RADIO_SUBSECTOR );
 }
+
+#if _DEBUG
+static void drawPoint(float pos[3], float radius, const float color[4])
+{
+    int                 i;
+    float               viewPos[3], viewToCenter[3], finalPos[3], scale,
+                        leftOff[3], rightOff[3], radX, radY;
+
+    viewPos[VX] = vx;
+    viewPos[VY] = vy;
+    viewPos[VZ] = vz;
+
+    // viewSideVec is to the left.
+    for(i = 0; i < 3; ++i)
+    {
+        leftOff[i] = viewUpVec[i] + viewSideVec[i];
+        rightOff[i] = viewUpVec[i] - viewSideVec[i];
+
+        viewToCenter[i] = pos[i] - viewPos[i];
+    }
+
+    scale = M_DotProduct(viewToCenter, viewFrontVec) /
+                M_DotProduct(viewFrontVec, viewFrontVec);
+
+    finalPos[VX] = pos[VX];
+    finalPos[VY] = pos[VZ];
+    finalPos[VZ] = pos[VY];
+
+    // The final radius.
+    radX = radius * 1;
+    radY = radX / 1.2f;
+
+    DGL_Color4fv(color);
+
+    DGL_Begin(DGL_QUADS);
+    DGL_TexCoord2f(0, 0);
+    DGL_Vertex3f(finalPos[VX] + radX * leftOff[VX],
+                 finalPos[VY] + radY * leftOff[VY],
+                 finalPos[VZ] + radX * leftOff[VZ]);
+    DGL_TexCoord2f(1, 0);
+    DGL_Vertex3f(finalPos[VX] + radX * rightOff[VX],
+                 finalPos[VY] + radY * rightOff[VY],
+                 finalPos[VZ] + radX * rightOff[VZ]);
+    DGL_TexCoord2f(1, 1);
+    DGL_Vertex3f(finalPos[VX] - radX * leftOff[VX],
+                 finalPos[VY] - radY * leftOff[VY],
+                 finalPos[VZ] - radX * leftOff[VZ]);
+    DGL_TexCoord2f(0, 1);
+    DGL_Vertex3f(finalPos[VX] - radX * rightOff[VX],
+                 finalPos[VY] - radY * rightOff[VY],
+                 finalPos[VZ] - radX * rightOff[VZ]);
+    DGL_End();
+}
+
+/**
+ * Render the shadow poly vertices, for debug.
+ */
+void Rend_DrawShadowOffsetVerts(void)
+{
+    static const float  red[4] = { 1.f, .2f, .2f, 1.f};
+    static const float  yellow[4] = {.7f, .7f, .2f, 1.f};
+
+    uint                i, j, k;
+    float               pos[3];
+
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
+
+    GL_BindTexture(GL_PrepareLSTexture(LST_DYNAMIC), DGL_LINEAR);
+
+    for(i = 0; i < numLineDefs; ++i)
+    {
+        linedef_t*          line = &lineDefs[i];
+
+        for(k = 0; k < 2; ++k)
+        {
+            vertex_t*           vtx = line->L_v(k);
+            lineowner_t*        vo = vtx->lineOwners;
+
+            for(j = 0; j < vtx->numLineOwners; ++j)
+            {
+                pos[VZ] = vo->lineDef->L_frontsector->SP_floorvisheight;
+
+                V2_Sum(pos, vtx->V_pos, vo->shadowOffsets.extended);
+                drawPoint(pos, 1.f, yellow);
+
+                V2_Sum(pos, vtx->V_pos, vo->shadowOffsets.inner);
+                drawPoint(pos, 1.f, red);
+
+                vo = vo->LO_next;
+            }
+        }
+    }
+
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+}
+#endif
