@@ -389,6 +389,7 @@ internal
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
     int         index;
+    int			refCount;
 } msidedef_t;
 end
 
