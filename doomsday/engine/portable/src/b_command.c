@@ -30,6 +30,7 @@
 
 #include "de_base.h"
 #include "de_misc.h"
+#include "de_play.h"
 #include "b_main.h"
 #include "b_command.h"
 
@@ -186,7 +187,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         // It must be a symbolic event.
         eb->type = E_SYMBOLIC;
         eb->device = 0;
-        eb->symbolicName = strdup(desc); 
+        eb->symbolicName = strdup(desc);
         desc = NULL;
     }
     else
@@ -334,17 +335,17 @@ void B_DestroyCommandBinding(evbinding_t* eb)
 void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* eb, ddstring_t* out)
 {
     const char* ptr = command;
-    
+
     for(; *ptr; ptr++)
     {
         if(*ptr == '%')
         {
             // Escape.
             ptr++;
-            
+
             // Must have another character in the placeholder.
             if(!*ptr) break;
-            
+
             if(*ptr == 'i')
             {
                 int id = 0;
@@ -353,15 +354,15 @@ void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* e
                     case E_TOGGLE:
                         id = event->toggle.id;
                         break;
-                        
+
                     case E_AXIS:
                         id = event->axis.id;
                         break;
-                        
+
                     case E_ANGLE:
                         id = event->angle.id;
                         break;
-                        
+
                     case E_SYMBOLIC:
                         id = event->symbolic.id;
                         break;
@@ -373,17 +374,17 @@ void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* e
                 int id = 0;
                 if(event->type == E_SYMBOLIC)
                 {
-                    id = P_ConsoleToLocal(event->symbolic.id);                    
+                    id = P_ConsoleToLocal(event->symbolic.id);
                 }
                 Str_Appendf(out, "%i", id);
             }
             else if(*ptr == '%')
             {
-                Str_AppendChar(out, *ptr);                
+                Str_AppendChar(out, *ptr);
             }
             continue;
         }
-        
+
         Str_AppendChar(out, *ptr);
     }
 }
@@ -485,7 +486,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
         if(strcmp(event->symbolic.name, eb->symbolicName))
             return false;
         break;
-            
+
     default:
         return false;
     }
@@ -496,7 +497,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
         if(!B_CheckCondition(&eb->conds[i]))
             return false;
     }
-    
+
     // Substitute parameters in the command.
     Str_Init(&command);
     Str_Reserve(&command, strlen(eb->command));
