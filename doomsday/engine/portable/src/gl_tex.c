@@ -1147,6 +1147,10 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         (*brightY) += region[2];
     }
 
+    // Center on the middle of the brightest pixel.
+    (*brightX) += .5f;
+    (*brightY) += .5f;
+
     // The color.
     if(!avgCnt)
     {
