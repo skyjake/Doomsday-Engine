@@ -265,7 +265,7 @@ material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
  */
 material_t* R_GetMaterialByNum(materialnum_t num)
 {
-    if(num == 0 || num <= numMaterials)
+    if(num != 0 && num <= numMaterials)
         return materials[num - 1]; // 1-based index.
 
     return NULL;
@@ -356,7 +356,7 @@ materialnum_t R_MaterialNumForName(const char* name, materialtype_t type)
  */
 const char *R_MaterialNameForNum(materialnum_t num)
 {
-    if(num <= numMaterials)
+    if(num != 0 && num <= numMaterials)
         return materials[num-1]->name;
 
     return NULL;
