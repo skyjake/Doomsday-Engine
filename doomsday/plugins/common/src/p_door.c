@@ -445,6 +445,37 @@ int EV_DoDoor(linedef_t *line, doortype_e type)
 }
 #endif
 
+static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
+{
+    char                buf[160], *in, tmp[2];
+
+    buf[0] = 0;
+    tmp[1] = 0;
+
+    // Get the message template.
+    in = GET_TXT(msgTxt);
+
+    for(; *in; in++)
+    {
+        if(in[0] == '%')
+        {
+            if(in[1] == '1')
+            {
+                strcat(buf, GET_TXT(TXT_KEY1 + keyNum));
+                in++;
+                continue;
+            }
+
+            if(in[1] == '%')
+                in++;
+        }
+        tmp[0] = *in;
+        strcat(buf, tmp);
+    }
+
+    P_SetMessage(p, buf, false);
+}
+
 /**
  * Checks whether the given linedef is a locked door.
  * If locked and the player IS ABLE to open it, return @c true.
@@ -466,7 +497,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     case 133:
         if(!p->keys[KT_BLUECARD] && !p->keys[KT_BLUESKULL])
         {
-            P_SetMessage(p, PD_BLUEO, false);
+            sendNeedKeyMessage(p, PD_BLUEO, 0);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -476,7 +507,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     case 135:
         if(!p->keys[KT_REDCARD] && !p->keys[KT_REDSKULL])
         {
-            P_SetMessage(p, PD_REDO, false);
+            sendNeedKeyMessage(p, PD_REDO, 2);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -486,7 +517,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     case 137:
         if(!p->keys[KT_YELLOWCARD] && !p->keys[KT_YELLOWSKULL])
         {
-            P_SetMessage(p, PD_YELLOWO, false);
+            sendNeedKeyMessage(p, PD_YELLOWO, 1);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -526,37 +557,6 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
 #endif
 
     return true;
-}
-
-static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
-{
-    char                buf[160], *in, tmp[2];
-
-    buf[0] = 0;
-    tmp[1] = 0;
-
-    // Get the message template.
-    in = GET_TXT(msgTxt);
-
-    for(; *in; in++)
-    {
-        if(in[0] == '%')
-        {
-            if(in[1] == '1')
-            {
-                strcat(buf, GET_TXT(TXT_KEY1 + keyNum));
-                in++;
-                continue;
-            }
-
-            if(in[1] == '%')
-                in++;
-        }
-        tmp[0] = *in;
-        strcat(buf, tmp);
-    }
-
-    P_SetMessage(p, buf, false);
 }
 
 /**
