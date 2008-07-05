@@ -332,32 +332,32 @@ Text {
 
 Text {
   ID = "PD_BLUEO";
-  Text = "You need a blue key to activate this object";
+  Text = "You need a %1 to activate this object";
 }
 
 Text {
   ID = "PD_REDO";
-  Text = "You need a red key to activate this object";
+  Text = "You need a %1 to activate this object";
 }
 
 Text {
   ID = "PD_YELLOWO";
-  Text = "You need a yellow key to activate this object";
+  Text = "You need a %1 to activate this object";
 }
 
 Text {
   ID = "PD_BLUEK";
-  Text = "You need a blue key to open this door";
+  Text = "You need a %1 to open this door";
 }
 
 Text {
   ID = "PD_REDK";
-  Text = "You need a red key to open this door";
+  Text = "You need a %1 to open this door";
 }
 
 Text {
   ID = "PD_YELLOWK";
-  Text = "You need a yellow key to open this door";
+  Text = "You need a %1 to open this door";
 }
 
 Text {
@@ -1944,3 +1944,32 @@ Text {
   Text = "Nightmare!";
 }
 
+Text {
+  ID = "KEY1";
+  Text = "Blue Keycard";
+}
+
+Text {
+  ID = "KEY2";
+  Text = "Yellow Keycard";
+}
+
+Text {
+  ID = "KEY3";
+  Text = "Red Keycard";
+}
+
+Text {
+  ID = "KEY4";
+  Text = "Blue Skull Key";
+}
+
+Text {
+  ID = "KEY5";
+  Text = "Yellow Skull Key";
+}
+
+Text {
+  ID = "KEY6";
+  Text = "Red Skull Key";
+}

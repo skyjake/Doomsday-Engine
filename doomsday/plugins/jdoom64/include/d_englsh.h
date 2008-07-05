@@ -163,8 +163,15 @@
 #define AMSTR_MARKEDSPOT    GET_TXT(TXT_AMSTR_MARKEDSPOT)
 #define AMSTR_MARKSCLEARED  GET_TXT(TXT_AMSTR_MARKSCLEARED)
 
+// Key names:
+#define KEY1                GET_TXT(TXT_KEY1)
+#define KEY2                GET_TXT(TXT_KEY2)
+#define KEY3                GET_TXT(TXT_KEY3)
+#define KEY4                GET_TXT(TXT_KEY4)
+#define KEY5                GET_TXT(TXT_KEY5)
+#define KEY6                GET_TXT(TXT_KEY6)
+
 // Weapon names:
-#define WEAPON0             GET_TXT(TXT_WEAPON0)
 #define WEAPON1             GET_TXT(TXT_WEAPON1)
 #define WEAPON2             GET_TXT(TXT_WEAPON2)
 #define WEAPON3             GET_TXT(TXT_WEAPON3)
@@ -173,7 +180,8 @@
 #define WEAPON6             GET_TXT(TXT_WEAPON6)
 #define WEAPON7             GET_TXT(TXT_WEAPON7)
 #define WEAPON8             GET_TXT(TXT_WEAPON8)
-#define WEAPON9             GET_TXT(TXT_WEAPON9) // jd64
+#define WEAPON9             GET_TXT(TXT_WEAPON9)
+#define WEAPON10            GET_TXT(TXT_WEAPON10) // jd64
 
 #define STSTR_MUS           GET_TXT(TXT_STSTR_MUS)
 #define STSTR_NOMUS         GET_TXT(TXT_STSTR_NOMUS)

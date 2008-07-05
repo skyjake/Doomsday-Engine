@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,14 +85,12 @@
 //
 //---------------------------------------------------------------------------
 
-// Keys
-
+// Pickup Key messages:
 #define TXT_GOTBLUEKEY GET_TXT(TXT_TXT_GOTBLUEKEY)
 #define TXT_GOTYELLOWKEY GET_TXT(TXT_TXT_GOTYELLOWKEY)
 #define TXT_GOTGREENKEY GET_TXT(TXT_TXT_GOTGREENKEY)
 
 // Artifacts
-
 #define TXT_ARTIHEALTH GET_TXT(TXT_TXT_ARTIHEALTH)
 #define TXT_ARTIFLY GET_TXT(TXT_TXT_ARTIFLY)
 #define TXT_ARTIINVULNERABILITY GET_TXT(TXT_TXT_ARTIINVULNERABILITY)
@@ -127,14 +125,18 @@
 #define TXT_AMMOPHOENIXROD1 GET_TXT(TXT_TXT_AMMOPHOENIXROD1)
 #define TXT_AMMOPHOENIXROD2 GET_TXT(TXT_TXT_AMMOPHOENIXROD2)
 
-// Weapons
+// Key names:
+#define KEY1                GET_TXT(TXT_KEY1)
+#define KEY2                GET_TXT(TXT_KEY2)
+#define KEY3                GET_TXT(TXT_KEY3)
 
-#define TXT_WPNMACE GET_TXT(TXT_TXT_WPNMACE)
-#define TXT_WPNCROSSBOW GET_TXT(TXT_TXT_WPNCROSSBOW)
-#define TXT_WPNBLASTER GET_TXT(TXT_TXT_WPNBLASTER)
-#define TXT_WPNSKULLROD GET_TXT(TXT_TXT_WPNSKULLROD)
-#define TXT_WPNPHOENIXROD GET_TXT(TXT_TXT_WPNPHOENIXROD)
-#define TXT_WPNGAUNTLETS GET_TXT(TXT_TXT_WPNGAUNTLETS)
+// Weapon names:
+#define TXT_WPNMACE         GET_TXT(TXT_TXT_WPNMACE)
+#define TXT_WPNCROSSBOW     GET_TXT(TXT_TXT_WPNCROSSBOW)
+#define TXT_WPNBLASTER      GET_TXT(TXT_TXT_WPNBLASTER)
+#define TXT_WPNSKULLROD     GET_TXT(TXT_TXT_WPNSKULLROD)
+#define TXT_WPNPHOENIXROD   GET_TXT(TXT_TXT_WPNPHOENIXROD)
+#define TXT_WPNGAUNTLETS    GET_TXT(TXT_TXT_WPNGAUNTLETS)
 
 //---------------------------------------------------------------------------
 //

@@ -3111,14 +3111,14 @@ void M_DrawWeaponMenu(void)
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
 #if __JDOOM__ || __JDOOM64__
-        M_WriteMenuText(menu, 4+i, GET_TXT(TXT_WEAPON0 + cfg.weaponOrder[i]));
+        M_WriteMenuText(menu, 4+i, GET_TXT(TXT_WEAPON1 + cfg.weaponOrder[i]));
 #elif __JHERETIC__
         /**
          * \fixme We should allow different weapon preferences per player
          * class. However, since the only other class in jHeretic is the
          * chicken which has only 1 weapon anyway -we'll just show the
          * names of the player's weapons for now.
-	     */
+         */
         M_WriteMenuText(menu, 4+i, GET_TXT(TXT_TXT_WPNSTAFF + cfg.weaponOrder[i]));
 #elif __JHEXEN__
         /**

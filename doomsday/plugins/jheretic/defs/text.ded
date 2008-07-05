@@ -464,17 +464,17 @@ Text {
 
 Text {
   ID = "TXT_NEEDBLUEKEY";
-  Text = "YOU NEED A BLUE KEY TO OPEN THIS DOOR";
+  Text = "YOU NEED A %1 TO OPEN THIS DOOR";
 }
 
 Text {
   ID = "TXT_NEEDGREENKEY";
-  Text = "YOU NEED A GREEN KEY TO OPEN THIS DOOR";
+  Text = "YOU NEED A %1 TO OPEN THIS DOOR";
 }
 
 Text {
   ID = "TXT_NEEDYELLOWKEY";
-  Text = "YOU NEED A YELLOW KEY TO OPEN THIS DOOR";
+  Text = "YOU NEED A %1 TO OPEN THIS DOOR";
 }
 
 Text {
@@ -812,4 +812,19 @@ Text {
 Text {
   ID = "AMSTR_ROTATEOFF";
   Text = "Rotate mode OFF";
+}
+
+Text {
+  ID = "KEY1";
+  Text = "Yellow Key";
+}
+
+Text {
+  ID = "KEY2";
+  Text = "Green Key";
+}
+
+Text {
+  ID = "KEY3";
+  Text = "Blue Key";
 }

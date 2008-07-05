@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -331,17 +331,24 @@
 #define AMSTR_MARKEDSPOT GET_TXT(TXT_AMSTR_MARKEDSPOT)
 #define AMSTR_MARKSCLEARED GET_TXT(TXT_AMSTR_MARKSCLEARED)
 
-// Weapon names
+// Key names:
+#define KEY1                GET_TXT(TXT_KEY1)
+#define KEY2                GET_TXT(TXT_KEY2)
+#define KEY3                GET_TXT(TXT_KEY3)
+#define KEY4                GET_TXT(TXT_KEY4)
+#define KEY5                GET_TXT(TXT_KEY5)
+#define KEY6                GET_TXT(TXT_KEY6)
 
-#define WEAPON0 GET_TXT(TXT_WEAPON0)
-#define WEAPON1 GET_TXT(TXT_WEAPON1)
-#define WEAPON2 GET_TXT(TXT_WEAPON2)
-#define WEAPON3 GET_TXT(TXT_WEAPON3)
-#define WEAPON4 GET_TXT(TXT_WEAPON4)
-#define WEAPON5 GET_TXT(TXT_WEAPON5)
-#define WEAPON6 GET_TXT(TXT_WEAPON6)
-#define WEAPON7 GET_TXT(TXT_WEAPON7)
-#define WEAPON8 GET_TXT(TXT_WEAPON8)
+// Weapon names:
+#define WEAPON1             GET_TXT(TXT_WEAPON1)
+#define WEAPON2             GET_TXT(TXT_WEAPON2)
+#define WEAPON3             GET_TXT(TXT_WEAPON3)
+#define WEAPON4             GET_TXT(TXT_WEAPON4)
+#define WEAPON5             GET_TXT(TXT_WEAPON5)
+#define WEAPON6             GET_TXT(TXT_WEAPON6)
+#define WEAPON7             GET_TXT(TXT_WEAPON7)
+#define WEAPON8             GET_TXT(TXT_WEAPON8)
+#define WEAPON9             GET_TXT(TXT_WEAPON9)
 
 //
 //  ST_stuff.C

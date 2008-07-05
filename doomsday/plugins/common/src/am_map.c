@@ -461,10 +461,10 @@ static int their_colors[] = {
 };
 #elif __JHERETIC__
 static int their_colors[] = {
-    KEY3,
-    KEY2,
+    KEY3_COLOR,
+    KEY2_COLOR,
     BLOODRED,
-    KEY1
+    KEY1_COLOR
 };
 #else
 static int their_colors[] = {
@@ -2844,16 +2844,16 @@ static int getKeyColorForMobjType(int type)
     } keyColors[] =
     {
 #if __JDOOM__ || __JDOOM64__
-        {MT_MISC4, KEY1},
-        {MT_MISC5, KEY2},
-        {MT_MISC6, KEY3},
-        {MT_MISC7, KEY4},
-        {MT_MISC8, KEY5},
-        {MT_MISC9, KEY6},
+        {MT_MISC4, KEY1_COLOR},
+        {MT_MISC5, KEY2_COLOR},
+        {MT_MISC6, KEY3_COLOR},
+        {MT_MISC7, KEY4_COLOR},
+        {MT_MISC8, KEY5_COLOR},
+        {MT_MISC9, KEY6_COLOR},
 #elif __JHERETIC__
-        {MT_CKEY, KEY1},
-        {MT_BKYY, KEY2},
-        {MT_AKYY, KEY3},
+        {MT_CKEY, KEY1_COLOR},
+        {MT_BKYY, KEY2_COLOR},
+        {MT_AKYY, KEY3_COLOR},
 #endif
         {-1, -1} // Terminate.
     };

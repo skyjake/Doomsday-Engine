@@ -528,6 +528,37 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     return true;
 }
 
+static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
+{
+    char                buf[160], *in, tmp[2];
+
+    buf[0] = 0;
+    tmp[1] = 0;
+
+    // Get the message template.
+    in = GET_TXT(msgTxt);
+
+    for(; *in; in++)
+    {
+        if(in[0] == '%')
+        {
+            if(in[1] == '1')
+            {
+                strcat(buf, GET_TXT(TXT_KEY1 + keyNum));
+                in++;
+                continue;
+            }
+
+            if(in[1] == '%')
+                in++;
+        }
+        tmp[0] = *in;
+        strcat(buf, tmp);
+    }
+
+    P_SetMessage(p, buf, false);
+}
+
 /**
  * Checks whether the given linedef is a locked manual door.
  * If locked and the player IS ABLE to open it, return @c true.
@@ -539,9 +570,13 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
 {
     xline_t*            xline = P_ToXLine(line);
     player_t*           p;
+    int                 keyNum = -1;
+    textenum_t          msgTxt = 0;
+    sfxenum_t           sfxNum = 0;
 
     if(!mo || !xline)
         return false;
+
     p = mo->player;
 
 #if !__JHEXEN__
@@ -559,16 +594,16 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
 # if __JHERETIC__
         if(!p->keys[KT_BLUE])
         {
-            P_SetMessage(p, TXT_NEEDBLUEKEY, false);
-            S_ConsoleSound(SFX_DOORLOCKED, NULL, p - players);
-            return false;
+            msgTxt = TXT_TXT_NEEDBLUEKEY;
+            keyNum = 2;
+            sfxNum = SFX_DOORLOCKED;
         }
 # else
         if(!p->keys[KT_BLUECARD] && !p->keys[KT_BLUESKULL])
         {
-            P_SetMessage(p, PD_BLUEK, false);
-            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
-            return false;
+            msgTxt = TXT_PD_BLUEK;
+            keyNum = 0;
+            sfxNum = SFX_DOORLOCKED;
         }
 # endif
         break;
@@ -585,16 +620,16 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
 # if __JHERETIC__
         if(!p->keys[KT_YELLOW])
         {
-            P_SetMessage(p, TXT_NEEDYELLOWKEY, false);
-            S_ConsoleSound(SFX_DOORLOCKED, NULL, p - players);
-            return false;
+            msgTxt = TXT_TXT_NEEDYELLOWKEY;
+            keyNum = 0;
+            sfxNum = SFX_DOORLOCKED;
         }
 # else
         if(!p->keys[KT_YELLOWCARD] && !p->keys[KT_YELLOWSKULL])
         {
-            P_SetMessage(p, PD_YELLOWK, false);
-            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
-            return false;
+            msgTxt = TXT_PD_YELLOWK;
+            keyNum = 1;
+            sfxNum = SFX_DOORLOCKED;
         }
 # endif
         break;
@@ -611,17 +646,17 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
         // Green lock
         if(!p->keys[KT_GREEN])
         {
-            P_SetMessage(p, TXT_NEEDGREENKEY, false);
-            S_ConsoleSound(SFX_DOORLOCKED, NULL, p - players);
-            return false;
+            msgTxt = TXT_TXT_NEEDGREENKEY;
+            keyNum = 1;
+            sfxNum = SFX_DOORLOCKED;
         }
 # else
         // Red lock
         if(!p->keys[KT_REDCARD] && !p->keys[KT_REDSKULL])
         {
-            P_SetMessage(p, PD_REDK, false);
-            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
-            return false;
+            msgTxt = TXT_PD_REDK;
+            keyNum = 2;
+            sfxNum = SFX_DOORLOCKED;
         }
 # endif
         break;
@@ -630,6 +665,13 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
         break;
     }
 #endif
+
+    if(keyNum != -1)
+    {   // A key is required.
+        sendNeedKeyMessage(p, msgTxt, keyNum);
+        S_StartSound(sfxNum, p->plr->mo);
+        return false;
+    }
 
     return true;
 }

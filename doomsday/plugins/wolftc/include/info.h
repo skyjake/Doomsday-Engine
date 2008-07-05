@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -6685,20 +6686,26 @@ typedef enum {
     TXT_KILLMSG_STOMP,
     TXT_AMSTR_ROTATEON,
     TXT_AMSTR_ROTATEOFF,
-    TXT_WEAPON0,
     TXT_WEAPON1,
     TXT_WEAPON2,
-    TXT_WEAPON3,                    // 340
-    TXT_WEAPON4,
+    TXT_WEAPON3,
+    TXT_WEAPON4,                    // 340
     TXT_WEAPON5,
     TXT_WEAPON6,
     TXT_WEAPON7,
     TXT_WEAPON8,
+    TXT_WEAPON9,
     TXT_SKILL1,
     TXT_SKILL2,
     TXT_SKILL3,
     TXT_SKILL4,
     TXT_SKILL5,                     // 350
+    TXT_KEY1,
+    TXT_KEY2,
+    TXT_KEY3,
+    TXT_KEY4,
+    TXT_KEY5,
+    TXT_KEY6,
     NUMTEXT
 } textenum_t;
 

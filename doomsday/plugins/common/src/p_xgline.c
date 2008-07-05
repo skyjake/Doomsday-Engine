@@ -2163,40 +2163,41 @@ void XL_ActivateLine(boolean activating, linetype_t *info, linedef_t *line,
 /**
  * XL_CheckKeys
  */
-boolean XL_CheckKeys(mobj_t *mo, int flags2)
+boolean XL_CheckKeys(mobj_t* mo, int flags2, boolean doMsg, boolean doSfx)
 {
-    player_t *act = mo->player;
-
+    player_t*           act = mo->player;
 #if __JDOOM__ || __JDOOM64__
-    int     num = 6;
-    char   *keystr[] = {
-        "BLUE KEYCARD", "YELLOW KEYCARD", "RED KEYCARD",
-        "BLUE SKULL KEY", "YELLOW SKULL KEY", "RED SKULL KEY"
-    };
-    int    *keys = (int *) act->keys;
-    int     badsound = SFX_OOF;
+    int                 num = 6;
+    int*                keys = (int *) act->keys;
+    int                 badsound = SFX_OOF;
 #elif __JHERETIC__
-    int     num = 3;
-    char   *keystr[] = { "YELLOW KEY", "GREEN KEY", "BLUE KEY" };
-    boolean *keys = act->keys;
-    int     badsound = SFX_PLROOF;
+    int                 num = 3;
+    boolean*            keys = act->keys;
+    int                 badsound = SFX_PLROOF;
 #elif __JSTRIFE__
 //// \fixme FIXME!!!
-    int     num = 3;
-    char   *keystr[] = { "YELLOW KEY", "GREEN KEY", "BLUE KEY" };
-    int    *keys = (int *) act->keys;
-    int     badsound = SFX_NONE;
+    int                 num = 3;
+    int*                keys = (int *) act->keys;
+    int                 badsound = SFX_NONE;
 #endif
-    int     i;
+    int                 i;
 
     for(i = 0; i < num; ++i)
     {
         if((flags2 & LTF2_KEY(i)) && !keys[i])
         {   // This key is missing!
-            // Show a message.
-            sprintf(msgbuf, "YOU NEED A %s.", keystr[i]);
-            XL_Message(mo, msgbuf, false);
-            S_ConsoleSound(badsound, mo, act - players);
+
+            // Show a message?
+            if(doMsg)
+            {
+                sprintf(msgbuf, "YOU NEED A %s.", GET_TXT(TXT_KEY1 + i));
+                XL_Message(mo, msgbuf, false);
+            }
+
+            // Play a sound?
+            if(doSfx)
+                S_ConsoleSound(badsound, mo, act - players);
+
             return false;
         }
     }
@@ -2466,7 +2467,8 @@ int XL_LineEvent(int evtype, int linetype, linedef_t *line, int sidenum,
         }
 
         // Check that all the flagged keys are present.
-        if(!XL_CheckKeys(activator_thing, info->flags2))
+        if(!XL_CheckKeys(activator_thing, info->flags2, true,
+                         (evtype == XLE_USE? true : false)))
         {
             XG_Dev("  Line %i: ABORTING EVENT due to missing key", P_ToIndex(line));
             return false;        // Keys missing!
@@ -2699,10 +2701,10 @@ void XL_Thinker(xlthinker_t* xl)
          * Apply to both sides of the line.
          * These are group offsets. All surfaces on a given side are moved
          * using the same texmove speed/angle.
-	     *
-	     * \todo Implement per-surface texture movement also which would
+         *
+         * \todo Implement per-surface texture movement also which would
          * be added to each independantly.
-	     */
+         */
 
         // Front side.
         side = P_GetPtrp(line, DMU_SIDEDEF0);

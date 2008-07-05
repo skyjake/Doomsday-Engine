@@ -89,12 +89,12 @@
 #define BACKGROUND      BLACK
 
 // Keys for Baby Mode
-#define KEY1   197      //  Blue Key
-#define KEY2   (256-5*16)   //  Red Key
-#define KEY3   (256-32+7)   //  Yellow Key
-#define KEY4   (256-32+7)   //  Yellow Skull
-#define KEY5   (256-5*16)   //  Red Skull
-#define KEY6   197      //  Blue Skull
+#define KEY1_COLOR   197      //  Blue Key
+#define KEY2_COLOR   (256-5*16)   //  Red Key
+#define KEY3_COLOR   (256-32+7)   //  Yellow Key
+#define KEY4_COLOR   (256-32+7)   //  Yellow Skull
+#define KEY5_COLOR   (256-5*16)   //  Red Skull
+#define KEY6_COLOR   197      //  Blue Skull
 
 #define BORDERGRAPHIC "brdr_b"
 
@@ -164,9 +164,9 @@
 #define BORDEROFFSET 4
 
 // Keys for Baby Mode
-#define KEY1   144  // HERETIC - Green Key
-#define KEY2   197  // HERETIC - Yellow Key
-#define KEY3   220  // HERETIC - Blue Key
+#define KEY1_COLOR   144  // HERETIC - Green Key
+#define KEY2_COLOR   197  // HERETIC - Yellow Key
+#define KEY3_COLOR   220  // HERETIC - Blue Key
 
 #define BORDERGRAPHIC "bordb"
 
