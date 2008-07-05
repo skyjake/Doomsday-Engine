@@ -44,6 +44,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
@@ -445,6 +447,7 @@ int EV_DoDoor(linedef_t *line, doortype_e type)
 }
 #endif
 
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ ||__WOLFTC__
 static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
 {
     char                buf[160], *in, tmp[2];
@@ -475,6 +478,7 @@ static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
 
     P_SetMessage(p, buf, false);
 }
+#endif
 
 /**
  * Checks whether the given linedef is a locked door.
@@ -497,7 +501,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     case 133:
         if(!p->keys[KT_BLUECARD] && !p->keys[KT_BLUESKULL])
         {
-            sendNeedKeyMessage(p, PD_BLUEO, 0);
+            sendNeedKeyMessage(p, TXT_PD_BLUEO, 0);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -507,7 +511,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     case 135:
         if(!p->keys[KT_REDCARD] && !p->keys[KT_REDSKULL])
         {
-            sendNeedKeyMessage(p, PD_REDO, 2);
+            sendNeedKeyMessage(p, TXT_PD_REDO, 2);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -517,7 +521,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     case 137:
         if(!p->keys[KT_YELLOWCARD] && !p->keys[KT_YELLOWSKULL])
         {
-            sendNeedKeyMessage(p, PD_YELLOWO, 1);
+            sendNeedKeyMessage(p, TXT_PD_YELLOWO, 1);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -664,7 +668,6 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
     default:
         break;
     }
-#endif
 
     if(keyNum != -1)
     {   // A key is required.
@@ -672,6 +675,7 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
         S_StartSound(sfxNum, p->plr->mo);
         return false;
     }
+#endif
 
     return true;
 }
