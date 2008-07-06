@@ -309,29 +309,6 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
     M_Free(hits);
 }
 
-/**
- * Checks if the index is in the bitfield.
- */
-#if 0 // Currently unused.
-static __inline boolean hasIndexBit(uint index, uint *bitfield)
-{
-    // Assume 32-bit uint.
-    return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
-}
-#endif
-
-/**
- * Sets the index in the bitfield.
- * Count is incremented when a zero bit is changed to one.
- */
-#if 0 // Currently unused.
-static __inline void addIndexBit(uint index, uint *bitfield)
-{
-    // Assume 32-bit uint.
-    bitfield[index >> 5] |= (1 << (index & 0x1f));
-}
-#endif
-
 static void findEquivalentVertexes(editmap_t *src)
 {
     uint            i, newNum;
@@ -361,7 +338,36 @@ static void findEquivalentVertexes(editmap_t *src)
     }
 }
 
-static void pruneVertices(editmap_t *map)
+static void pruneLinedefs(editmap_t* map)
+{
+    uint                i, newNum, unused = 0;
+
+    for(i = 0, newNum = 0; i < map->numLineDefs; ++i)
+    {
+        linedef_t*          l = map->lineDefs[i];
+
+        if(!l->L_frontside && !l->L_backside)
+        {
+            unused++;
+
+            M_Free(l);
+            continue;
+        }
+
+        l->buildData.index = newNum + 1;
+        map->lineDefs[newNum++] = l;
+    }
+
+    if(newNum < map->numLineDefs)
+    {
+        if(unused > 0)
+            Con_Message("  Pruned %d unused linedefs\n", unused);
+
+        map->numLineDefs = newNum;
+    }
+}
+
+static void pruneVertices(editmap_t* map)
 {
     uint                i, newNum, unused = 0;
 
@@ -477,6 +483,9 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
         return;
 
     findEquivalentVertexes(map);
+
+    if(flags & PRUNE_LINEDEFS)
+        pruneLinedefs(map);
 
     if(flags & PRUNE_VERTEXES)
         pruneVertices(map);

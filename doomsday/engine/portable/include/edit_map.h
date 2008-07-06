@@ -84,10 +84,11 @@ boolean         MPE_GameObjProperty(const char *objName, uint idx,
 
 // Non-public (temporary)
 // Flags for MPE_PruneRedundantMapData().
-#define PRUNE_VERTEXES      0x1
-#define PRUNE_SIDEDEFS      0x2
-#define PRUNE_SECTORS       0x4
-#define PRUNE_ALL           (PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
+#define PRUNE_LINEDEFS      0x1
+#define PRUNE_VERTEXES      0x2
+#define PRUNE_SIDEDEFS      0x4
+#define PRUNE_SECTORS       0x8
+#define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
 
 void            MPE_PruneRedundantMapData(editmap_t *map, int flags);
 
