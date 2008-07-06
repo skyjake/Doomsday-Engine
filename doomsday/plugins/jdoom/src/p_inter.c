@@ -725,7 +725,8 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 {
     mobjtype_t          item;
-    mobj_t             *mo;
+    mobj_t*             mo;
+    unsigned int        an;
     angle_t             angle;
 
     if(!target)
@@ -821,11 +822,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     // Don't drop at the exact same place, causes Z flickering with
     // 3D sprites.
-    angle = M_Random() << (24 - ANGLETOFINESHIFT);
+    angle = P_Random() << 24;
+    an = angle >> ANGLETOFINESHIFT;
     mo = P_SpawnMobj3f(item,
-                       target->pos[VX] + 3 * FIX2FLT(finecosine[angle]),
-                       target->pos[VY] + 3 * FIX2FLT(finesine[angle]),
-                       ONFLOORZ);
+                       target->pos[VX] + 3 * FIX2FLT(finecosine[an]),
+                       target->pos[VY] + 3 * FIX2FLT(finesine[an]),
+                       ONFLOORZ, angle);
     mo->flags |= MF_DROPPED; // Special versions of items.
 }
 

@@ -353,15 +353,18 @@ void        P_ExplodeMissile(mobj_t *mo);
 float       P_MobjGetFriction(mobj_t *mo);
 mobj_t     *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
 
-mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
-mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
+mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
+                          angle_t angle);
+mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle);
 
-void        P_SpawnPuff(float x, float y, float z);
-mobj_t     *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z);
-void        P_SpawnBlood(float x, float y, float z, int damage);
+void        P_SpawnPuff(float x, float y, float z, angle_t angle);
+mobj_t     *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
+                              angle_t angle);
+void        P_SpawnBlood(float x, float y, float z, int damage,
+                         angle_t angle);
 mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
 void        P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source);
-mobj_t     *P_SpawnTeleFog(float x, float y);
+mobj_t     *P_SpawnTeleFog(float x, float y, angle_t angle);
 mobj_t     *P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
                                  mobj_t *source, mobj_t *dest); // jd64
 

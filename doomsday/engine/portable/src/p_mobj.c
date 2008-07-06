@@ -142,6 +142,7 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
     mo->pos[VY] = y;
     mo->pos[VZ] = z;
     mo->angle = angle;
+    mo->visAngle = mo->angle >> 16; // "angle-servo"; smooth actor turning.
     mo->radius = radius;
     mo->height = height;
     mo->ddFlags = ddflags;

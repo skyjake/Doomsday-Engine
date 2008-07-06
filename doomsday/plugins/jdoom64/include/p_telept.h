@@ -43,8 +43,6 @@
 #define MO_TELEPORTMAN          (14)
 #define TELEFOGHEIGHT           (0)
 
-mobj_t         *P_SpawnTeleFog(float x, float y);
-
 int             EV_Teleport(linedef_t *line, int side, mobj_t *thing,
                             boolean spawnFog);
 int             EV_FadeSpawn(linedef_t *line, mobj_t *thing);

@@ -854,7 +854,8 @@ void G_Ticker(timespan_t ticLength)
                 if(!IS_CLIENT)
                 {
                     P_SpawnTeleFog(plr->plr->mo->pos[VX],
-                                   plr->plr->mo->pos[VY]);
+                                   plr->plr->mo->pos[VY],
+                                   plr->plr->mo->angle + ANG180);
                 }
 
                 // Let's get rid of the mobj.

@@ -1640,7 +1640,7 @@ static int CmdAmbientSound(void)
         mobj = P_SpawnMobj3f(plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
                              plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
                              plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
-                             MT_CAMERA); // A camera's a good temporary source.
+                             MT_CAMERA, 0); // A camera's a good temporary source.
         mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
 

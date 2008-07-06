@@ -2205,6 +2205,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
         float           oldpos[3];
         float           thfloorz, thceilz;
         float           aboveFloor, fogDelta = 0;
+        angle_t         oldAngle;
 
         XG_Dev("XSTrav_Teleport: Sector %i, %s, %s%s", P_ToIndex(sector),
                 info->iparm[2]? "No Flash":"", info->iparm[3]? "Play Sound":"Silent",
@@ -2217,6 +2218,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
         }
 
         memcpy(oldpos, thing->pos, sizeof(thing->pos));
+        oldAngle = thing->angle;
         thfloorz = P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT);
         thceilz  = P_GetFloatp(thing->subsector, DMU_CEILING_HEIGHT);
         aboveFloor = thing->pos[VZ] - thfloorz;
@@ -2275,7 +2277,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
             fogDelta = ((thing->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
 #endif
             flash = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
-                                  oldpos[VZ] + fogDelta);
+                                  oldpos[VZ] + fogDelta, oldAngle + ANG180);
             // Play a sound?
             if(info->iparm[3])
                 S_StartSound(info->iparm[3], flash);
@@ -2290,7 +2292,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
             flash = P_SpawnMobj3f(MT_TFOG,
                                   mo->pos[VX] + 20 * FIX2FLT(finecosine[an]),
                                   mo->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                  mo->pos[VZ] + fogDelta);
+                                  mo->pos[VZ] + fogDelta, mo->angle);
             // Play a sound?
             if(info->iparm[3])
                 S_StartSound(info->iparm[3], flash);

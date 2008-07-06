@@ -151,24 +151,26 @@ void P_TeleportOther(mobj_t *victim)
     }
 }
 
-mobj_t *P_SpawnTeleFog(float x, float y)
+mobj_t *P_SpawnTeleFog(float x, float y, angle_t angle)
 {
-    float       fheight;
+    float               fheight;
 
     fheight = P_GetFloatp(R_PointInSubsector(x, y), DMU_FLOOR_HEIGHT);
 
-    return P_SpawnMobj3f(MT_TFOG, x, y, fheight + TELEFOGHEIGHT);
+    return P_SpawnMobj3f(MT_TFOG, x, y, fheight + TELEFOGHEIGHT, angle);
 }
 
 boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
                    boolean useFog)
 {
-    float       oldpos[3], aboveFloor, fogDelta;
-    player_t   *player;
-    unsigned    an;
-    mobj_t     *fog;
+    float               oldpos[3], aboveFloor, fogDelta;
+    player_t*           player;
+    unsigned int        an;
+    angle_t             oldAngle;
+    mobj_t*             fog;
 
     memcpy(oldpos, mo->pos, sizeof(oldpos));
+    oldAngle = mo->angle;
 
     aboveFloor = mo->pos[VZ] - mo->floorZ;
     if(!P_TeleportMove(mo, x, y, false))
@@ -214,7 +216,8 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
     if(useFog)
     {
         fogDelta = FIX2FLT(mo->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT);
-        fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta);
+        fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
+                            oldpos[VZ] + fogDelta, oldAngle + ANG180);
 
         S_StartSound(SFX_TELEPORT, fog);
 
@@ -222,7 +225,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
         fog = P_SpawnMobj3f(MT_TFOG,
                             x + 20 * FIX2FLT(finecosine[an]),
                             y + 20 * FIX2FLT(finesine[an]),
-                            mo->pos[VZ] + fogDelta);
+                            mo->pos[VZ] + fogDelta, angle + ANG180);
         S_StartSound(SFX_TELEPORT, fog);
 
         if(mo->player && !mo->player->powers[PT_SPEED])

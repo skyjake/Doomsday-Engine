@@ -98,15 +98,6 @@ void        P_MovePsprites(player_t *plr);
 void        P_DropWeapon(player_t *plr);
 void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
 
-mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
-mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
-
-mobj_t     *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z);
-mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
-void        P_SpawnPuff(float x, float y, float z);
-void        P_SpawnBlood(float x, float y, float z, int damage);
-mobj_t     *P_SpawnTeleFog(float x, float y);
-
 void        P_MobjRemove(mobj_t* mo, boolean noRespawn);
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 void        P_MobjThinker(mobj_t* mo);

@@ -329,10 +329,10 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                  * Problem, since the ammo has not been given yet (could
                  * be an object that gives several ammo types eg backpack)
                  * we can't test for this with what we know!
-		         *
+                 *
                  * This routine should be called AFTER the new ammo has
                  * been given. Somewhat complex logic to decipher first...
-		         */
+                 */
 
                 if(cfg.ammoAutoSwitch == 2)
                 {   // Always change weapon mode.
@@ -813,7 +813,8 @@ DEFCC(CCmdSpawnMobj)
 {
     mobjtype_t          type;
     float               pos[3];
-    mobj_t             *mo;
+    mobj_t*             mo;
+    angle_t             angle;
 
     if(argc != 5 && argc != 6)
     {
@@ -855,13 +856,15 @@ DEFCC(CCmdSpawnMobj)
                         DMU_FLOOR_HEIGHT);
     }
 
-    mo = P_SpawnMobj3fv(type, pos);
+    if(argc == 6)
+        angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
+    else
+        angle = 0;
+
+    mo = P_SpawnMobj3fv(type, pos, angle);
     if(mo)
     {
-        if(argc == 6)
-        {
-            mo->angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
-        }
+
 
 #if __JDOOM64__
         // jd64 > kaiser - another cheesy hack!!!

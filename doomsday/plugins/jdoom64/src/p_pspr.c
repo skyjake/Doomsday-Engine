@@ -827,7 +827,8 @@ void C_DECL A_BFGSpray(mobj_t *mo)
 
         P_SpawnMobj3f(MT_EXTRABFG,
                       lineTarget->pos[VX], lineTarget->pos[VY],
-                      lineTarget->pos[VZ] + lineTarget->height / 4);
+                      lineTarget->pos[VZ] + lineTarget->height / 4,
+                      angle + ANG180);
 
         damage = 0;
         for(j = 0; j < 15; ++j)

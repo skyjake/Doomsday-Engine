@@ -150,16 +150,6 @@ boolean         P_UndoPlayerMorph(player_t *player);
 extern mobjtype_t puffType;
 extern mobj_t  *missileMobj;
 
-mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
-mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
-
-void        P_SpawnPuff(float x, float y, float z);
-void        P_SpawnBlood(float x, float y, float z, int damage);
-mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
-mobj_t     *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
-                                angle_t angle, float momz);
-mobj_t     *P_SpawnTeleFog(float x, float y);
-
 boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
 void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);

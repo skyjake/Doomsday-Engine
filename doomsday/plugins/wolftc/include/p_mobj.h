@@ -255,4 +255,16 @@ extern spawnspot_t* things;
 void        P_RespawnEnqueue(spawnspot_t *spot);
 void        P_CheckRespawnQueue(void);
 
+mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
+                          angle_t angle);
+mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle);
+
+void        P_SpawnPuff(float x, float y, float z, angle_t angle);
+mobj_t*     P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
+                              angle_t angle);
+void        P_SpawnBlood(float x, float y, float z, int damage,
+                         angle_t angle);
+mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
+
 #endif

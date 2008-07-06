@@ -1308,7 +1308,6 @@ void C_DECL A_FireGoldWandPL2(player_t *player, pspdef_t *psp)
 void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
 {
     mobj_t             *pmo, *ball;
-    angle_t             angle;
     uint                an;
 
     if(!P_CheckAmmo(player))
@@ -1320,15 +1319,14 @@ void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
 
     pmo = player->plr->mo;
     ball = P_SpawnMobj3f(MT_MACEFX2, pmo->pos[VX], pmo->pos[VY],
-                         pmo->pos[VZ] - pmo->floorClip + 28);
+                         pmo->pos[VZ] - pmo->floorClip + 28,
+                         pmo->angle);
     ball->mom[MZ] =
         2 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 5));
-    angle = pmo->angle;
     ball->target = pmo;
-    ball->angle = angle;
     ball->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
-    an = angle >> ANGLETOFINESHIFT;
 
+    an = ball->angle >> ANGLETOFINESHIFT;
     ball->mom[MX] = (pmo->mom[MX] / 2) +
         ball->info->speed * FIX2FLT(finecosine[an]);
     ball->mom[MY] = (pmo->mom[MY] / 2) +
@@ -1417,7 +1415,6 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
 void C_DECL A_MaceBallImpact2(mobj_t *ball)
 {
     mobj_t             *tiny;
-    angle_t             angle;
     uint                an;
 
     if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball) != FLOOR_SOLID)
@@ -1437,11 +1434,9 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
         P_MobjChangeState(ball, ball->info->spawnState);
 
-        tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos);
-        angle = ball->angle + ANG90;
+        tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos, ball->angle + ANG90);
         tiny->target = ball->target;
-        tiny->angle = angle;
-        an = angle >> ANGLETOFINESHIFT;
+        an = tiny->angle >> ANGLETOFINESHIFT;
         tiny->mom[MX] = (ball->mom[MX] / 2) +
             ((ball->mom[MZ] - 1) * FIX2FLT(finecosine[an]));
         tiny->mom[MY] = (ball->mom[MY] / 2) +
@@ -1449,11 +1444,9 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
         tiny->mom[MZ] = ball->mom[MZ];
         P_CheckMissileSpawn(tiny);
 
-        tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos);
-        angle = ball->angle - ANG90;
+        tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos, ball->angle - ANG90);
         tiny->target = ball->target;
-        tiny->angle = angle;
-        an = angle >> ANGLETOFINESHIFT;
+        an = tiny->angle >> ANGLETOFINESHIFT;
         tiny->mom[MX] = (ball->mom[MX] / 2) +
             ((ball->mom[MZ] - 1) * FIX2FLT(finecosine[an]));
         tiny->mom[MY] = (ball->mom[MY] / 2) +
@@ -1565,11 +1558,10 @@ void C_DECL A_SpawnRippers(mobj_t *actor)
 
     for(i = 0; i < 8; ++i)
     {
-        ripper = P_SpawnMobj3fv(MT_RIPPER, actor->pos);
-
         angle = i * ANG45;
+
+        ripper = P_SpawnMobj3fv(MT_RIPPER, actor->pos, angle);
         ripper->target = actor->target;
-        ripper->angle = angle;
         an = angle >> ANGLETOFINESHIFT;
         ripper->mom[MX] = ripper->info->speed * FIX2FLT(finecosine[an]);
         ripper->mom[MY] = ripper->info->speed * FIX2FLT(finesine[an]);
@@ -1614,7 +1606,7 @@ void C_DECL A_BoltSpark(mobj_t *bolt)
 
     if(P_Random() > 50)
     {
-        spark = P_SpawnMobj3fv(MT_CRBOWFX4, bolt->pos);
+        spark = P_SpawnMobj3fv(MT_CRBOWFX4, bolt->pos, P_Random() << 24);
         spark->pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
         spark->pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
     }
@@ -1767,7 +1759,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
     pos[VY] = actor->pos[VY] + ((P_Random() & 127) - 64);
 
     mo = P_SpawnMobj3f(MT_RAINPLR1 + actor->special2,
-                       pos[VX], pos[VY], ONCEILINGZ);
+                       pos[VX], pos[VY], ONCEILINGZ, P_Random() << 24);
 
     mo->flags |= MF_BRIGHTSHADOW;
     mo->target = actor->target;
@@ -1818,22 +1810,18 @@ void C_DECL A_FirePhoenixPL1(player_t *player, pspdef_t *psp)
 void C_DECL A_PhoenixPuff(mobj_t *actor)
 {
     mobj_t             *puff;
-    angle_t             angle;
     uint                an;
 
     P_SeekerMissile(actor, ANGLE_1 * 5, ANGLE_1 * 10);
 
-    puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos);
-    angle = actor->angle + ANG90;
-    an = angle >> ANGLETOFINESHIFT;
-
+    puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos, actor->angle + ANG90);
+    an = puff->angle >> ANGLETOFINESHIFT;
     puff->mom[MX] = 1.3 * FIX2FLT(finecosine[an]);
     puff->mom[MY] = 1.3 * FIX2FLT(finesine[an]);
     puff->mom[MZ] = 0;
 
-    puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos);
-    angle = actor->angle - ANG90;
-    an = angle >> ANGLETOFINESHIFT;
+    puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos, actor->angle - ANG90);
+    an = puff->angle >> ANGLETOFINESHIFT;
 
     puff->mom[MX] = 1.3 * FIX2FLT(finecosine[an]);
     puff->mom[MY] = 1.3 * FIX2FLT(finesine[an]);
@@ -1876,10 +1864,9 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
 
     slope = sin(LOOKDIR2RAD(player->plr->lookDir)) / 1.2;
 
-    mo = P_SpawnMobj3fv(MT_PHOENIXFX2, pos);
+    mo = P_SpawnMobj3fv(MT_PHOENIXFX2, pos, angle);
     mo->target = pmo;
-    mo->angle = angle;
-    an = angle >> ANGLETOFINESHIFT;
+    an = mo->angle >> ANGLETOFINESHIFT;
     mo->mom[MX] = pmo->mom[MX] + mo->info->speed * FIX2FLT(finecosine[an]);
     mo->mom[MY] = pmo->mom[MY] + mo->info->speed * FIX2FLT(finesine[an]);
     mo->mom[MZ] = mo->info->speed * slope;

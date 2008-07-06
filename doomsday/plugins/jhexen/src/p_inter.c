@@ -1425,12 +1425,12 @@ boolean P_MorphPlayer(player_t *player)
     oldFlags2 = pmo->flags2;
     P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
-    fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
+    fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
+                        angle + ANG180);
     S_StartSound(SFX_TELEPORT, fog);
 
-    beastMo = P_SpawnMobj3fv(MT_PIGPLAYER, pos);
+    beastMo = P_SpawnMobj3fv(MT_PIGPLAYER, pos, angle);
     beastMo->special1 = player->readyWeapon;
-    beastMo->angle = angle;
     beastMo->player = player;
     beastMo->dPlayer = player->plr;
 
@@ -1451,10 +1451,11 @@ boolean P_MorphPlayer(player_t *player)
 
 boolean P_MorphMonster(mobj_t *actor)
 {
-    mobj_t         *master, *monster, *fog;
+    mobj_t*         master, *monster, *fog;
     mobjtype_t      moType;
     float           pos[3];
     mobj_t          oldMonster;
+    angle_t         oldAngle;
 
     if(actor->player)
         return (false);
@@ -1482,18 +1483,19 @@ boolean P_MorphMonster(mobj_t *actor)
     pos[VX] = actor->pos[VX];
     pos[VY] = actor->pos[VY];
     pos[VZ] = actor->pos[VZ];
+    oldAngle = actor->angle;
     P_MobjRemoveFromTIDList(actor);
     P_MobjChangeState(actor, S_FREETARGMOBJ);
 
-    fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT);
+    fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
+                        oldAngle + ANG180);
     S_StartSound(SFX_TELEPORT, fog);
 
-    monster = P_SpawnMobj3fv(MT_PIG, pos);
+    monster = P_SpawnMobj3fv(MT_PIG, pos, oldMonster.angle);
     monster->special2 = moType;
     monster->special1 = MORPHTICS + P_Random();
     monster->flags |= (oldMonster.flags & MF_SHADOW);
     monster->target = oldMonster.target;
-    monster->angle = oldMonster.angle;
     monster->tid = oldMonster.tid;
     monster->special = oldMonster.special;
     P_MobjInsertIntoTIDList(monster, oldMonster.tid);

@@ -518,7 +518,8 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                     P_DamageMobj(thing, tmThing, tmThing->target, damage);
                     if(P_Random() < 128)
                     {
-                        P_SpawnMobj3fv(MT_HOLY_PUFF, tmThing->pos);
+                        P_SpawnMobj3fv(MT_HOLY_PUFF, tmThing->pos,
+                                       P_Random() << 24);
                         S_StartSound(SFX_SPIRIT_ATTACK, tmThing);
                         if((thing->flags & MF_COUNTKILL) && P_Random() < 128 &&
                            !S_IsPlaying(SFX_PUPPYBEAT, thing))
@@ -1625,7 +1626,7 @@ boolean PTR_ShootTraverse(intercept_t *in)
         }
 
         // Spawn bullet puffs.
-        P_SpawnPuff(pos[VX], pos[VY], pos[VZ]);
+        P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
 
 #if !__JHEXEN__
         if(lineWasHit && xline->special)
@@ -1688,19 +1689,23 @@ if(lineWasHit)
     // Spawn bullet puffs or blood spots, depending on target type.
 #if __JHERETIC__
     if(puffType == MT_BLASTERPUFF1)
-    {
-        // Make blaster big puff.
-        mobj_t *mo = P_SpawnMobj3fv(MT_BLASTERPUFF2, pos);
+    {   // Make blaster big puff.
+        mobj_t*             mo =
+            P_SpawnMobj3fv(MT_BLASTERPUFF2, pos, P_Random() << 24);
+
         S_StartSound(SFX_BLSHIT, mo);
     }
     else
-        P_SpawnPuff(pos[VX], pos[VY], pos[VZ]);
+        P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
 #elif __JHEXEN__
-    P_SpawnPuff(pos[VX], pos[VY], pos[VZ]);
+    P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
 #endif
 
     if(lineAttackDamage)
     {
+        angle_t         attackAngle =
+            R_PointToAngle2(shootThing->pos[VX], shootThing->pos[VY],
+                            pos[VX], pos[VY]);
 #if __JHEXEN__
         if(!(in->d.mo->flags2 & MF2_INVULNERABLE))
 #endif
@@ -1708,7 +1713,8 @@ if(lineWasHit)
             if(!(in->d.mo->flags & MF_NOBLOOD))
             {
 #if __JDOOM__ || __JDOOM64__
-                P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage);
+                P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage,
+                             attackAngle + ANG180);
 #elif __JHEXEN__
                 if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
                 {
@@ -1721,7 +1727,7 @@ if(lineWasHit)
             }
 #if __JDOOM__ || __JDOOM64__
             else
-                P_SpawnPuff(pos[VX], pos[VY], pos[VZ]);
+                P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
 #endif
         }
 
@@ -1974,7 +1980,8 @@ void P_LineAttack(mobj_t *t1, angle_t angle, float distance, float slope,
             break;
 
         case MT_FLAMEPUFF:
-            P_SpawnPuff(targetPos[VX], targetPos[VY], shootZ + (slope * distance));
+            P_SpawnPuff(targetPos[VX], targetPos[VY],
+                        shootZ + (slope * distance), P_Random() << 24);
             break;
 
         default:
@@ -2588,7 +2595,8 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
         {
             // Spray blood in a random direction.
             mo = P_SpawnMobj3f(MT_BLOOD, thing->pos[VX], thing->pos[VY],
-                               thing->pos[VZ] + (thing->height /2));
+                               thing->pos[VZ] + (thing->height /2),
+                               P_Random() << 24);
 
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 12);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 12);

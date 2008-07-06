@@ -773,8 +773,10 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
 void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 {
-    mobjtype_t      item;
-    mobj_t         *mo;
+    mobjtype_t          item;
+    mobj_t*             mo;
+    unsigned int        an;
+    angle_t             angle;
 
     if(!target) // nothing to kill
         return;
@@ -864,11 +866,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     // Don't drop at the exact same place, causes Z flickering with
     // 3D sprites.
+    angle = P_Random() << 24;
+    an = angle >> ANGLETOFINESHIFT;
     mo = P_SpawnMobj3f(item,
-                       target->pos[VX] + FIX2FLT((M_Random() - M_Random()) << 12),
-                       target->pos[VY] + FIX2FLT((M_Random() - M_Random()) << 12),
-                       ONFLOORZ);
-
+                       target->pos[VX] + 3 * FIX2FLT(finecosine[an]),
+                       target->pos[VY] + 3 * FIX2FLT(finesine[an]),
+                       ONFLOORZ, angle);
     mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
@@ -936,7 +939,7 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         *       would most likely simply return without doing anything at all.
         * \todo SHOULD this be fixed? Or is something implemented elsewhere
         *       which does what this was attempting to do?
-	*/
+    */
         int         damage;
         player_t   *player;
 

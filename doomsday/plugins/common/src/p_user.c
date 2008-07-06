@@ -704,12 +704,13 @@ void P_MorphThink(player_t *player)
  */
 boolean P_UndoPlayerMorph(player_t *player)
 {
-    mobj_t     *fog = 0, *mo = 0, *pmo = 0;
-    float       pos[3];
-    angle_t     angle;
-    int         playerNum;
-    weapontype_t weapon;
-    int         oldFlags, oldFlags2, oldBeast;
+    mobj_t*             fog = 0, *mo = 0, *pmo = 0;
+    float               pos[3];
+    unsigned int        an;
+    angle_t             angle;
+    int                 playerNum;
+    weapontype_t        weapon;
+    int                 oldFlags, oldFlags2, oldBeast;
 
 # if __JHEXEN__
     player->update |= PSF_MORPH_TIME | PSF_POWERS | PSF_HEALTH;
@@ -731,17 +732,17 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
-    mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjType, pos);
+    mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjType,
+                        pos, angle);
 # else
-    mo = P_SpawnMobj3fv(MT_PLAYER, pos);
+    mo = P_SpawnMobj3fv(MT_PLAYER, pos, angle);
 # endif
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
         P_MobjRemove(mo, false);
-        mo = P_SpawnMobj3fv(oldBeast, pos);
+        mo = P_SpawnMobj3fv(oldBeast, pos, angle);
 
-        mo->angle = angle;
         mo->health = player->health;
         mo->special1 = weapon;
         mo->player = player;
@@ -770,7 +771,6 @@ boolean P_UndoPlayerMorph(player_t *player)
         mo->flags |= playerNum << MF_TRANSSHIFT;
     }
 
-    mo->angle = angle;
     mo->player = player;
     mo->dPlayer = player->plr;
     mo->reactionTime = 18;
@@ -792,14 +792,13 @@ boolean P_UndoPlayerMorph(player_t *player)
 # else
     player->class = cfg.playerClass[playerNum];
 # endif
-    angle >>= ANGLETOFINESHIFT;
+    an = angle >> ANGLETOFINESHIFT;
 // REWRITE ME - I MATCH HEXEN UNTIL HERE
 
-    fog =
-        P_SpawnMobj3f(MT_TFOG,
-                      pos[VX] + 20 * FIX2FLT(finecosine[angle]),
-                      pos[VY] + 20 * FIX2FLT(finesine[angle]),
-                      pos[VZ] + TELEFOGHEIGHT);
+    fog = P_SpawnMobj3f(MT_TFOG,
+                        pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                        pos[VY] + 20 * FIX2FLT(finesine[an]),
+                        pos[VZ] + TELEFOGHEIGHT, angle + ANG180);
 # if __JHERETIC__
     S_StartSound(SFX_TELEPT, fog);
 # else
@@ -1102,10 +1101,10 @@ void P_PlayerThinkMove(player_t *player)
             mobj_t     *speedMo;
             int         playerNum;
 
-            speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos);
+            speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos,
+                                     plrmo->angle);
             if(speedMo)
             {
-                speedMo->angle = plrmo->angle;
                 playerNum = P_GetPlayerNum(player);
 
                 if(player->class == PCLASS_FIGHTER)

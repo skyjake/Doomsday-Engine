@@ -305,7 +305,8 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
         uint        an = mthing->angle >> ANGLETOFINESHIFT;
 
         mo = P_SpawnTeleFog(pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                            pos[VY] + 20 * FIX2FLT(finesine[an]));
+                            pos[VY] + 20 * FIX2FLT(finesine[an]),
+                            mthing->angle + ANG180);
 
         // Don't start sound on first frame.
         if(players[CONSOLEPLAYER].plr->viewZ != 1)
@@ -445,7 +446,8 @@ void P_SpawnThings(void)
         {
             spot = P_Random() % maceSpotCount;
             P_SpawnMobj3f(MT_WMACE,
-                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY], ONFLOORZ);
+                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY],
+                          ONFLOORZ, maceSpots[spot].angle);
         }
     }
 #endif
@@ -510,7 +512,7 @@ void P_SpawnPlayers(void)
             /**
              *\fixme Spawn all unused player starts. This will create 'zombies'.
              * Also in netgames?
-	         */
+             */
             for(i = 0; i < numPlayerStarts; ++i)
             {
                 if(players[0].startSpot != i && playerStarts[i].type == 1)

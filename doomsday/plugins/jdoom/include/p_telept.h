@@ -36,7 +36,6 @@
 
 #define TELEFOGHEIGHT           0
 
-mobj_t         *P_SpawnTeleFog(float x, float y);
-int             EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog);
-
+int             EV_Teleport(linedef_t* line, int side, mobj_t* mo,
+                            boolean spawnFog);
 #endif

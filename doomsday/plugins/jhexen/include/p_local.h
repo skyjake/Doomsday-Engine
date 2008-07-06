@@ -136,27 +136,6 @@ extern mobjtype_t PuffType;
 extern mobj_t *MissileMobj;
 extern float *FloatBobOffset;
 
-mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z);
-mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3]);
-
-void        P_SpawnPuff(float x, float y, float z);
-void        P_SpawnBlood(float x, float y, float z, int damage);
-mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
-mobj_t     *P_SpawnMissileXYZ(mobjtype_t type, float x, float y, float z,
-                               mobj_t *source, mobj_t *dest);
-mobj_t     *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
-                                 angle_t angle, float momZ);
-mobj_t     *P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t *source,
-                                     angle_t angle, float momZ, float speed);
-mobj_t     *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source);
-mobj_t     *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
-mobj_t     *P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
-                            mobj_t *source, angle_t angle);
-mobj_t     *P_SpawnTeleFog(float x, float y);
-mobj_t     *P_SpawnKoraxMissile(mobjtype_t type, float x, float y, float z,
-                                 mobj_t *source, mobj_t *dest);
-void        P_SpawnDirt(mobj_t *actor, float radius);
-
 void        P_Thrust(player_t *plr, angle_t angle, float move);
 void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
 int         P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);

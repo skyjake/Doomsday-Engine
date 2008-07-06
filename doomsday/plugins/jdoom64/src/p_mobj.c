@@ -375,7 +375,7 @@ void P_RipperBlood(mobj_t *mo)
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
     pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
 
-    th = P_SpawnMobj3fv(MT_BLOOD, pos);
+    th = P_SpawnMobj3fv(MT_BLOOD, pos, P_Random() << 24);
     th->flags |= MF_NOGRAVITY;
     th->mom[MX] /= 2;
     th->mom[MY] /= 2;
@@ -663,13 +663,15 @@ void P_NightmareRespawn(mobj_t* mobj)
 
     // Spawn a teleport fog at old spot.
     mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY],
-                       P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT));
+                       P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT),
+                       mobj->angle + ANG180);
     S_StartSound(SFX_TELEPT, mo);
 
     // Spawn a teleport fog at the new spot.
     ss = R_PointInSubsector(pos[VX], pos[VY]);
     mo = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
-                       P_GetFloatp(ss, DMU_FLOOR_HEIGHT));
+                       P_GetFloatp(ss, DMU_FLOOR_HEIGHT),
+                       mobj->spawnSpot.angle);
     S_StartSound(SFX_TELEPT, mo);
 
     if(mobj->info->flags & MF_SPAWNCEILING)
@@ -678,9 +680,8 @@ void P_NightmareRespawn(mobj_t* mobj)
         pos[VZ] = ONFLOORZ;
 
     // Inherit attributes from deceased one.
-    mo = P_SpawnMobj3fv(mobj->type, pos);
+    mo = P_SpawnMobj3fv(mobj->type, pos, mobj->spawnSpot.angle);
     memcpy(&mo->spawnSpot, &mobj->spawnSpot, sizeof(mo->spawnSpot));
-    mo->angle = mobj->spawnSpot.angle;
 
     if(mobj->spawnSpot.flags & MTF_DEAF)
         mo->flags |= MF_AMBUSH;
@@ -896,13 +897,14 @@ void P_MobjThinker(mobj_t *mobj)
 /**
  * Spawns a mobj of "type" at the specified position.
  */
-mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
+mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
+                      angle_t angle)
 {
     mobj_t             *mo;
     mobjinfo_t         *info = &mobjInfo[type];
     float               space;
 
-    mo = P_MobjCreate(P_MobjThinker, x, y, z, 0, info->radius, info->height,
+    mo = P_MobjCreate(P_MobjThinker, x, y, z, angle, info->radius, info->height,
                       0);
     mo->type = type;
     mo->info = info;
@@ -967,9 +969,9 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
     return mo;
 }
 
-mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3])
+mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle)
 {
-    return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ]);
+    return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle);
 }
 
 /**
@@ -1043,8 +1045,7 @@ void P_CheckRespawnQueue(void) // jd64
 
     if(sobj->flags & MTF_RESPAWN) // jd64 (no test originally)
     {
-        mo = P_SpawnMobj3fv(i, pos);
-        mo->angle = sobj->angle;
+        mo = P_SpawnMobj3fv(i, pos, sobj->angle);
 
         if(mo->flags2 & MF2_FLOORCLIP &&
            P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
@@ -1118,7 +1119,8 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
         pos[VX] = pos[VY] = pos[VZ] = 0;
     }
 
-    mobj = P_SpawnMobj3fv(MT_PLAYER, pos);
+    /* $unifiedangles */
+    mobj = P_SpawnMobj3fv(MT_PLAYER, pos, (spot? spot->angle : 0));
 
     // With clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
@@ -1133,7 +1135,6 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
 
-    mobj->angle = (spot? spot->angle : 0); /* $unifiedangles */
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     mobj->player = p;
@@ -1296,7 +1297,7 @@ void P_SpawnMapThing(spawnspot_t *th)
         pos[VZ] = ONCEILINGZ;
     // < d64tc
 
-    mobj = P_SpawnMobj3fv(i, pos);
+    mobj = P_SpawnMobj3fv(i, pos, th->angle);
     if(mobj->flags2 & MF2_FLOATBOB)
     {   // Seed random starting index for bobbing motion.
         mobj->health = P_Random();
@@ -1316,7 +1317,6 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
     // < d64tc
 
-    mobj->angle = th->angle;
     if(mobj->tics > 0)
         mobj->tics = 1 + (P_Random() % mobj->tics);
     if(mobj->flags & MF_COUNTKILL)
@@ -1324,7 +1324,6 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(mobj->flags & MF_COUNTITEM)
         totalItems++;
 
-    mobj->visAngle = mobj->angle >> 16; // "angle-servo"; smooth actor turning
     if(th->flags & MTF_DEAF)
         mobj->flags |= MF_AMBUSH;
 
@@ -1337,7 +1336,8 @@ void P_SpawnMapThing(spawnspot_t *th)
     mobj->spawnSpot.flags = th->flags;
 }
 
-mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z)
+mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
+                          angle_t angle)
 {
     mobj_t             *th;
 
@@ -1347,7 +1347,7 @@ mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z)
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
 
-    th = P_SpawnMobj3f(type, x, y, z);
+    th = P_SpawnMobj3f(type, x, y, z, angle);
     th->mom[MZ] = 1;
     th->tics -= P_Random() & 3;
 
@@ -1358,21 +1358,22 @@ mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z)
     return th;
 }
 
-void P_SpawnPuff(float x, float y, float z)
+void P_SpawnPuff(float x, float y, float z, angle_t angle)
 {
-    mobj_t             *th = P_SpawnCustomPuff(MT_PUFF, x, y, z);
+    mobj_t*             th =
+        P_SpawnCustomPuff(MT_PUFF, x, y, z, angle);
 
     // Don't make punches spark on the wall.
     if(th && attackRange == MELEERANGE)
         P_MobjChangeState(th, S_PUFF3);
 }
 
-void P_SpawnBlood(float x, float y, float z, int damage)
+void P_SpawnBlood(float x, float y, float z, int damage, angle_t angle)
 {
     mobj_t             *th;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    th = P_SpawnMobj3f(MT_BLOOD, x, y, z);
+    th = P_SpawnMobj3f(MT_BLOOD, x, y, z, angle);
     th->mom[MZ] = 2;
     th->tics -= P_Random() & 3;
 
@@ -1426,19 +1427,16 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
     pos[VZ] += 4 * 8;
     pos[VZ] -= source->floorClip;
 
-    th = P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ]);
-
-    if(th->info->seeSound)
-        S_StartSound(th->info->seeSound, th);
-
     an = R_PointToAngle2(pos[VX], pos[VY], dest->pos[VX], dest->pos[VY]);
-
     // Fuzzy player.
     if(dest->flags & MF_SHADOW)
         an += (P_Random() - P_Random()) << 20;
 
+    th = P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], an);
+    if(th->info->seeSound)
+        S_StartSound(th->info->seeSound, th);
+
     th->target = source; // Where it came from.
-    th->angle = an;
     an >>= ANGLETOFINESHIFT;
     th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
@@ -1508,13 +1506,12 @@ void P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     pos[VZ] += 4 * 8;
     pos[VZ] -= source->floorClip;
 
-    th = P_SpawnMobj3fv(type, pos);
+    th = P_SpawnMobj3fv(type, pos, angle);
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
 
     th->target = source;
-    th->angle = angle;
     an = angle >> ANGLETOFINESHIFT;
     th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
@@ -1580,10 +1577,9 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t sourceAngle)
     pos[VZ] += cfg.plrViewHeight - 24 +
         FIX2FLT(((int) source->player->plr->lookDir) / 173);
 
-    th = P_SpawnMobj3fv(type, pos);
+    th = P_SpawnMobj3fv(type, pos, angle);
 
     th->target = source;
-    th->angle = angle;
     an = angle >> ANGLETOFINESHIFT;
     th->mom[MX] = movfactor * th->info->speed * FIX2FLT(finecosine[an]);
     th->mom[MY] = movfactor * th->info->speed * FIX2FLT(finesine[an]);
@@ -1608,21 +1604,19 @@ mobj_t *P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
     float               dist;
 
     z -= source->floorClip;
-    th = P_SpawnMobj3f(type, x, y, z);
 
-    if(th->info->seeSound)
-        S_StartSound(th->info->seeSound, th);
-
-    th->target = source; // Originator
     angle = R_PointToAngle2(x, y, dest->pos[VX], dest->pos[VY]);
-
     if(dest->flags & MF_SHADOW) // Invisible target
     {
         angle += (P_Random() - P_Random()) << 21;
     }
 
-    th->angle = angle;
+    th = P_SpawnMobj3f(type, x, y, z, angle);
 
+    if(th->info->seeSound)
+        S_StartSound(th->info->seeSound, th);
+
+    th->target = source; // Originator
     an = angle >> ANGLETOFINESHIFT;
     th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);

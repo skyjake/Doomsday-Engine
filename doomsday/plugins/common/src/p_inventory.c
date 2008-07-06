@@ -37,10 +37,10 @@
  * p_inventory.c: Common code for the player's inventory.
  *
  * \note The visual representation of the inventory is handled separately,
- * 		 in the HUD code.
+ *       in the HUD code.
  * \bug This file currently contains the various "do" functions for the
- *		artifacts which are Raven code. They should be moved out of here and
- *		interfaced through a callback interface.
+ *      artifacts which are Raven code. They should be moved out of here and
+ *      interfaced through a callback interface.
  */
 
 #if __JHERETIC__ || __JHEXEN__
@@ -440,7 +440,8 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         mo = P_SpawnMobj3f(MT_FIREBOMB,
                            player->plr->mo->pos[VX] + 24 * FIX2FLT(finecosine[angle]),
                            player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
-                           player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 15);
+                           player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 15,
+                           player->plr->mo->angle);
         mo->target = player->plr->mo;
         break;
 # endif
@@ -495,7 +496,8 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             mo = P_SpawnMobj3f(MT_POISONBAG,
                                player->plr->mo->pos[VX] + 16 * FIX2FLT(finecosine[angle]),
                                player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
-                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 8);
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 8,
+                               angle);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -506,7 +508,8 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             mo = P_SpawnMobj3f(MT_FIREBOMB,
                                player->plr->mo->pos[VX] + 16 * FIX2FLT(finecosine[angle]),
                                player->plr->mo->pos[VY] + 24 * FIX2FLT(finesine[angle]),
-                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 8);
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 8,
+                               angle);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -517,11 +520,10 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             mo = P_SpawnMobj3f(MT_THROWINGBOMB,
                                player->plr->mo->pos[VX],
                                player->plr->mo->pos[VY],
-                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 35);
+                               player->plr->mo->pos[VZ] - player->plr->mo->floorClip + 35,
+                               player->plr->mo->angle + (((P_Random() & 7) - 4) << 24));
             if(mo)
             {
-                mo->angle =
-                    player->plr->mo->angle + (((P_Random() & 7) - 4) << 24);
                 mo->mom[MZ] =
                     4 +
                     FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
