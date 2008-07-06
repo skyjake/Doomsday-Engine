@@ -781,11 +781,10 @@ void R_ProjectSprite(mobj_t *mo)
         else
         {
             if(useSRVOAngle && !netGame && !playback)
-                vis->data.mo.yaw = (float) (mo->visAngle << 16);
+                vis->data.mo.yaw = (mo->visAngle << 16) /
+                    (float) ANGLE_MAX * 360 - 90;
             else
-                vis->data.mo.yaw = (float) mo->angle;
-
-            vis->data.mo.yaw /= (float) ANGLE_MAX * -360;
+                vis->data.mo.yaw = mo->angle / (float) ANGLE_MAX * 360 - 90;
         }
 
         // How about a unique offset?
