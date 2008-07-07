@@ -993,6 +993,9 @@ IF (APPLE)
 
         # Copy PK3s.
         COMMAND cp doomsday.pk3 ${BUNDLE}/Contents/Resources/
+        COMMAND mkdir -p ${BUNDLE}/Contents/Resources/Data/
+        COMMAND mkdir -p ${BUNDLE}/Contents/Resources/Data/Graphics/
+        COMMAND cp ${CMAKE_SOURCE_DIR}/engine/data/graphics/loading{1,2}.png ${BUNDLE}/Contents/Resources/Data/Graphics/
         COMMAND cp jdoom.pk3 jDoom.bundle/Contents/Resources/
         COMMAND cp jheretic.pk3 jHeretic.bundle/Contents/Resources/
         COMMAND cp jhexen.pk3 jHexen.bundle/Contents/Resources/
