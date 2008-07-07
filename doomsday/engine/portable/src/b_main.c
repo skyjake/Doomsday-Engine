@@ -385,6 +385,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     ddstring_t* str = 0;
     const char* ptr = 0;
     playercontrol_t* control = 0;
+    boolean justCreated = false;
 
     if(isDedicated)
         return NULL;
@@ -420,11 +421,18 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     VERBOSE( Con_Message("B_BindControl: Control '%s' in class '%s' of local player %i to be "
                          "bound to '%s'.\n", control->name, bc->name, localNum, device) );
 
-    conBin = B_GetControlBinding(bc, control->id);
+    if((conBin = B_FindControlBinding(bc, control->id)) == NULL)
+    {
+        justCreated = true;
+        conBin = B_GetControlBinding(bc, control->id);
+    }
     if(!(devBin = B_NewDeviceBinding(&conBin->deviceBinds[localNum], device)))
     {
         // Failure in the parsing.
-        B_DestroyControlBinding(conBin);
+        if(justCreated)
+        {
+            B_DestroyControlBinding(conBin);
+        }
         conBin = 0;
         goto finished;
     }

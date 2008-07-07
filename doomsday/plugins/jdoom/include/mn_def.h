@@ -97,6 +97,7 @@ typedef enum {
     MENU_GAMESETUP,
     MENU_PLAYERSETUP,
     MENU_WEAPONSETUP,
+    MENU_CONTROLS,
     MENU_NONE
 } menutype_t;
 

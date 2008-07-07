@@ -142,9 +142,9 @@ extern          "C" {
     // Console: Bindings.
     void            B_FormEventString(char *buff, evtype_t type, evstate_t state,
                                       int data1);
-    int             B_BindingsForCommand(char *command, char *buffer,
-                                         unsigned int classID,
-                                         boolean allClasses);
+    int             B_BindingsForCommand(const char *cmd, char *buf, int bufSize);
+    int             B_BindingsForControl(int localPlayer, const char *controlName, int inverse, 
+                                         char *buf, int bufSize);
     void            DD_AddBindClass(struct bindclass_s *);
     boolean         DD_SetBindClass(unsigned int classID, int type);
 

@@ -338,20 +338,29 @@ controlbinding_t* B_NewControlBinding(bclass_t* bc)
     return conBin;
 }
 
-controlbinding_t* B_GetControlBinding(bclass_t* bc, int control)
+controlbinding_t* B_FindControlBinding(bclass_t* bc, int control)
 {
     controlbinding_t*   i;
-
+    
     for(i = bc->controlBinds.next; i != &bc->controlBinds; i = i->next)
     {
         if(i->control == control)
             return i;
     }
+    return NULL;
+}
+    
+controlbinding_t* B_GetControlBinding(bclass_t* bc, int control)
+{
+    controlbinding_t* b = B_FindControlBinding(bc, control);
 
-    // Create a new one.
-    i = B_NewControlBinding(bc);
-    i->control = control;
-    return i;
+    if(!b)
+    {
+        // Create a new one.
+        b = B_NewControlBinding(bc);
+        b->control = control;
+    }
+    return b;
 }
 
 void B_DestroyControlBinding(controlbinding_t* conBin)
@@ -460,6 +469,122 @@ boolean B_TryEvent(ddevent_t* event)
     return false;
 }
 
+/**
+ * Looks through the bindings to find the ones that are bound to the 
+ * specified command. The result is a space-separated list of bindings
+ * such as (idnum is the binding ID number):
+ *
+ * <tt>idnum@@game:key-space-down idnum@@game:key-e-down</tt>
+ *
+ * @param cmd      Command to look for.
+ * @param buf      Output buffer for the result.
+ * @param bufSize  Size of output buffer.
+ *
+ * @return Number of bindings found for the command.
+ */
+int B_BindingsForCommand(const char *cmd, char *buf, int bufSize)
+{
+    ddstring_t          result;
+    ddstring_t          str;
+    bclass_t*           bc;
+    int                 i;
+    int                 numFound = 0;
+    
+    Str_Init(&result);
+    Str_Init(&str);
+    
+    for(i = 0; i < bindClassCount; ++i)
+    {
+        evbinding_t* e;
+        bc = bindClasses[i];
+        for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
+        {        
+            if(strcmp(e->command, cmd))
+                continue;
+            // It's here!
+            if(numFound)
+            {
+                Str_Append(&result, " ");
+            }
+            numFound++;
+            B_EventBindingToString(e, &str);
+            Str_Appendf(&result, "%i@%s:%s", e->id, bc->name, Str_Text(&str));
+        }
+    }
+
+    // Copy the result to the return buffer.
+    memset(buf, 0, bufSize);
+    strncpy(buf, Str_Text(&result), bufSize - 1);
+        
+    Str_Free(&result);
+    Str_Free(&str);
+    return numFound;
+}
+
+/**
+ * Looks through the bindings to find the ones that are bound to the 
+ * specified control. The result is a space-separated list of bindings.
+ *
+ * @param localPlayer  Number of the local player (first one always 0).
+ * @param controlName  Name of the player control.
+ * @param inverse      One of BFCI_*.
+ * @param buf          Output buffer for the result.
+ * @param bufSize      Size of output buffer.
+ *
+ * @return Number of bindings found for the command.
+ */
+int B_BindingsForControl(int localPlayer, const char *controlName, int inverse, char *buf, int bufSize)
+{
+    ddstring_t          result;
+    ddstring_t          str;
+    bclass_t*           bc;
+    int                 i;
+    int                 numFound = 0;
+    
+    if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
+        return 0;
+    
+    Str_Init(&result);
+    Str_Init(&str);
+    
+    for(i = 0; i < bindClassCount; ++i)
+    {
+        controlbinding_t*   c;
+        dbinding_t*         d;
+        bc = bindClasses[i];
+        for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
+        {
+            const char* name = P_PlayerControlById(c->control)->name;
+            if(strcmp(name, controlName))
+                continue; // Wrong control.
+            for(d = c->deviceBinds[localPlayer].next; d != &c->deviceBinds[localPlayer]; d = d->next)
+            {
+                if(inverse == BFCI_BOTH || 
+                   (inverse == BFCI_ONLY_NON_INVERSE && !(d->flags & CBDF_INVERSE)) ||
+                   (inverse == BFCI_ONLY_INVERSE && (d->flags & CBDF_INVERSE)))
+                {
+                    // It's here!
+                    if(numFound)
+                    {
+                        Str_Append(&result, " ");
+                    }
+                    numFound++;
+                    B_DeviceBindingToString(d, &str);
+                    Str_Appendf(&result, "%i@%s:%s", d->id, bc->name, Str_Text(&str));
+                }
+            }                
+        }
+    }
+    
+    // Copy the result to the return buffer.
+    memset(buf, 0, bufSize);
+    strncpy(buf, Str_Text(&result), bufSize - 1);
+    
+    Str_Free(&result);
+    Str_Free(&str);
+    return numFound;
+}
+
 void B_PrintClasses(void)
 {
     int                 i;
@@ -565,7 +690,8 @@ void B_WriteClassToFile(const bclass_t* bc, FILE* file)
             for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
             {
                 B_DeviceBindingToString(d, str);
-                fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1, controlName, Str_Text(str));
+                fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1, controlName, 
+                        Str_Text(str));
             }
         }
     }

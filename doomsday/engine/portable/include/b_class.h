@@ -62,6 +62,7 @@ int             B_GetClassPos(bclass_t* bc);
 void            B_ReorderClass(bclass_t* bc, int pos);
 void            B_ClearClass(bclass_t* bc);
 void            B_DestroyClass(bclass_t* bc);
+controlbinding_t* B_FindControlBinding(bclass_t* bc, int control);
 controlbinding_t* B_GetControlBinding(bclass_t* bc, int control);
 void            B_DestroyControlBinding(controlbinding_t* conBin);
 void            B_InitControlBindingList(controlbinding_t* listRoot);

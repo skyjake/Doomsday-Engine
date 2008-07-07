@@ -108,6 +108,7 @@ typedef struct menufogdata_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void Ed_MakeCursorVisible(void);
+void M_InitControlsMenu(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -202,6 +203,7 @@ void M_DrawBackgroundBox(int x, int y, int w, int h,
 
 extern editfield_t *ActiveEdit;
 extern char *weaponNames[];
+extern menu_t ControlsDef;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -344,7 +346,7 @@ int menusnds[] = {
 
 static boolean  menuActive;
 
-static float    menuAlpha = 0; // Alpha level for the entire menu.
+float           menuAlpha = 0; // Alpha level for the entire menu.
 static float    menuTargetAlpha = 0; // Target alpha for the entire UI.
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -772,12 +774,12 @@ static menu_t SkillDef = {
 static menuitem_t OptionsItems[] = {
     {ITT_EFUNC, 0, "end game", M_EndGame, 0},
     {ITT_EFUNC, 0, "control panel", M_OpenDCP, 0},
+    {ITT_SETMENU, 0, "controls...", NULL, MENU_CONTROLS},
     {ITT_SETMENU, 0, "gameplay...", NULL, MENU_GAMEPLAY},
     {ITT_SETMENU, 0, "hud...", NULL, MENU_HUD},
     {ITT_SETMENU, 0, "automap...", NULL, MENU_MAP},
     {ITT_SETMENU, 0, "weapons...", NULL, MENU_WEAPONSETUP},
     {ITT_SETMENU, 0, "sound...", NULL, MENU_OPTIONS2},
-    {ITT_EFUNC,   0, "controls", M_OpenDCP, 3},
     {ITT_SETMENU, 0, "mouse options", M_OpenDCP, 2},
     {ITT_SETMENU, 0, "joystick options", M_OpenDCP, 2}
 };
@@ -1181,6 +1183,7 @@ menu_t* menulist[] = {
     &GameSetupMenu,
     &PlayerSetupMenu,
     &WeaponDef,
+    &ControlsDef,
     NULL
 };
 
@@ -1511,6 +1514,8 @@ void Hu_MenuInit(void)
         EpiDef.y = 50 - ITEM_HEIGHT;
     }
 #endif
+    
+    M_InitControlsMenu();
 }
 
 /**

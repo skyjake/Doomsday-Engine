@@ -1152,6 +1152,13 @@ typedef struct {
         int             flags;
     } bindclass_t;
 
+    /// Argument type for B_BindingsForControl().
+    typedef enum bfcinverse_e {
+        BFCI_BOTH,
+        BFCI_ONLY_NON_INVERSE,
+        BFCI_ONLY_INVERSE
+    } bfcinverse_t;
+    
     // Console command.
     typedef struct ccmd_s {
         const char     *name;

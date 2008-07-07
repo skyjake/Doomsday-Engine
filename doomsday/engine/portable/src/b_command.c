@@ -545,4 +545,3 @@ void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
         B_AppendConditionToString(&eb->conds[i], str);
     }
 }
-

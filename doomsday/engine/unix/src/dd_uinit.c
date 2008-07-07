@@ -119,6 +119,8 @@ static void determineGlobalPaths(application_t *app)
 
     Dir_MakeAbsolute(ddBasePath);
     Dir_ValidDir(ddBasePath);
+
+    printf("determineGlobalPaths: Base path = %s\n", ddBasePath);
 }
 
 static boolean loadGamePlugin(application_t *app, const char *libPath)
