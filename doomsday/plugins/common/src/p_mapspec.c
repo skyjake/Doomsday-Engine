@@ -184,20 +184,18 @@ iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
  */
 sector_t *P_GetNextSector(linedef_t *line, sector_t *sec)
 {
-    sector_t           *frontSec, *backSec;
+    sector_t           *frontSec;
 
     if(!sec || !line)
         return NULL;
 
     frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    backSec= P_GetPtrp(line, DMU_BACK_SECTOR);
 
-
-    if(!frontSec || !backSec)
+    if(!frontSec)
         return NULL;
 
     if(frontSec == sec)
-        return backSec;
+        return P_GetPtrp(line, DMU_BACK_SECTOR);
 
     return frontSec;
 }
