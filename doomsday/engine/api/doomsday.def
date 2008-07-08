@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 427 <--
+; --> 429 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -112,6 +112,10 @@ EXPORTS
     Con_Error                   @42 NONAME
     Con_Busy                    @330 NONAME
     Con_BusyWorkerEnd           @331 NONAME
+
+; Console: Bindings.
+    B_BindingsForCommand		@428 NONAME
+    B_BindingsForControl        @429 NONAME
 
 ; System.
 ;   Sys_TicksPerSecond          @46 NONAME
