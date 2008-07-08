@@ -336,6 +336,26 @@ void M_DrawJoyMouseBinding(const char* axis, int* x, int y, const char* name, bo
     *x += width*SMALL_SCALE + BIND_GAP;
 }
 
+static const char* findInString(const char* str, const char* token, int n)
+{
+    int tokenLen = strlen(token);
+    const char* at = strstr(str, token);
+    
+    if(!at) 
+    {
+        // Not there at all.
+        return NULL;        
+    }
+    
+    if(at - str <= n - tokenLen)
+    {
+        return at;
+    }
+    
+    // Past the end.
+    return NULL;
+}
+
 void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
 {
     const char* ptr = strchr(bindings, ':'), *end, *end2;
@@ -363,9 +383,9 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
         else
             end = end2;
 
-        if(!strnstr(ptr, "-repeat", end - ptr))
+        if(!findInString(ptr, "-repeat", end - ptr))
         {        
-            isInverse = (strnstr(ptr, "-inverse", end - ptr) != NULL);
+            isInverse = (findInString(ptr, "-inverse", end - ptr) != NULL);
             
             if(!strncmp(ptr, "key", 3))
             {
