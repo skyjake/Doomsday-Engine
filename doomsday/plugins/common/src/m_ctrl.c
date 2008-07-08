@@ -161,7 +161,18 @@ static controlconfig_t controlConfig[] =
     { "attack/fire", 0, "attack" },
     { "next weapon", 0, 0, "impulse nextweapon" },
     { "previous weapon", 0, 0, "impulse prevweapon" },
-    // TODO: Game-specific.
+    
+#if __JDOOM__
+    //{ (const char*) TXT_TXT_ARTIINVULNERABILITY, 0, 0, "impulse invulnerability" },
+    
+#endif
+    
+#if __JHEXEN__
+    { "weapon 1", 0, 0, "impulse weapon1" },
+    { "weapon 2", 0, 0, "impulse weapon2" },
+    { "weapon 3", 0, 0, "impulse weapon3" },
+    { "weapon 4", 0, 0, "impulse weapon4" },
+#endif
     
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     { },
@@ -174,35 +185,31 @@ static controlconfig_t controlConfig[] =
 #endif
 
 #ifdef __JHERETIC__
-/*
- {"cantdie",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 215     {"invisib",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 216     {"health",      CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 217     {"sphealth",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 219     {"torch",       CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 220     {"firebomb",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 221     {"egg",         CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 222     {"flyarti",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
- 223     {"teleport",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0}, */
-    { "tome of power", 0, 0, "impulse tome" },
+    { (const char*) TXT_TXT_ARTIINVULNERABILITY, 0, 0, "impulse invulnerability" },
+    { (const char*) TXT_TXT_ARTIINVISIBILITY, 0, 0, "impulse invisibility" },
+    { (const char*) TXT_TXT_ARTIHEALTH, 0, 0, "impulse health" },
+    { (const char*) TXT_TXT_ARTISUPERHEALTH, 0, 0, "impulse superhealth" },
+    { (const char*) TXT_TXT_ARTITOMEOFPOWER, 0, 0, "impulse tome" },
+    { (const char*) TXT_TXT_ARTITORCH, 0, 0, "impulse torch" },
+    { (const char*) TXT_TXT_ARTIFIREBOMB, 0, 0, "impulse firebomb" },
+    { (const char*) TXT_TXT_ARTIEGG, 0, 0, "impulse egg" },
+    { (const char*) TXT_TXT_ARTIFLY, 0, 0, "impulse fly" },
+    { (const char*) TXT_TXT_ARTITELEPORT, 0, 0, "impulse teleport" },
 #endif
     
 #ifdef __JHEXEN__
-/*
- {"torch",       CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
-    224     {"health",      CLF_ACTION,     DDBC_NORMAL,    '\\', 0, 0},
-    225     {"mystic",      CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
-    226     {"krater",      CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
-    227     {"spdboots",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
-    228     {"blast",       CLF_ACTION,     DDBC_NORMAL,    '9', 0, 0},
-    229     {"teleport",    CLF_ACTION,     DDBC_NORMAL,    '8', 0, 0},
-    230     {"teleothr",    CLF_ACTION,     DDBC_NORMAL,    '7', 0, 0},
-    231     {"poison",      CLF_ACTION,     DDBC_NORMAL,    '0', 0, 0},
-    232     {"cantdie",     CLF_ACTION,     DDBC_NORMAL,    '5', 0, 0},
-    233     {"servant",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
-    234     {"egg",         CLF_ACTION,     DDBC_NORMAL,    '6', 0, 0},
-    235 
-*/
+    { (const char*) TXT_TXT_ARTITORCH, 0, 0, "impulse torch" },
+    { (const char*) TXT_TXT_ARTIHEALTH, 0, 0, "impulse health" },
+    { (const char*) TXT_TXT_ARTISUPERHEALTH, 0, 0, "impulse mysticurn" },
+    { (const char*) TXT_TXT_ARTIBOOSTMANA, 0, 0, "impulse krater" },
+    { (const char*) TXT_TXT_ARTISPEED, 0, 0, "impulse speedboots" },
+    { (const char*) TXT_TXT_ARTIBLASTRADIUS, 0, 0, "impulse blast" },
+    { (const char*) TXT_TXT_ARTITELEPORT, 0, 0, "impulse teleport" },
+    { (const char*) TXT_TXT_ARTITELEPORTOTHER, 0, 0, "impulse teleportother" },
+    { (const char*) TXT_TXT_ARTIPOISONBAG, 0, 0, "impulse poisonbag" },
+    { (const char*) TXT_TXT_ARTIINVULNERABILITY, 0, 0, "impulse invulnerability" },
+    { (const char*) TXT_TXT_ARTISUMMON, 0, 0, "impulse darkservant" },
+    { (const char*) TXT_TXT_ARTIEGG, 0, 0, "impulse egg" },
 #endif
     
     { },
@@ -312,7 +319,14 @@ void M_InitControlsMenu(void)
         controlconfig_t* cc = &controlConfig[i];
         menuitem_t* item = &ControlsItems[i];
 
-        item->text = (char*) cc->itemText;
+        if(cc->itemText && ((int) cc->itemText < NUMTEXT))
+        {
+            item->text = GET_TXT((int)cc->itemText);
+        }
+        else
+        {
+            item->text = (char*) cc->itemText;
+        }
 
         // Inert items.
         if(!cc->itemText)
