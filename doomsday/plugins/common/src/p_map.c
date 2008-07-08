@@ -2063,7 +2063,7 @@ boolean PIT_RadiusAttack(mobj_t *thing, void *data)
  */
 #if __JHEXEN__
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance,
-                    boolean damageSource)
+                    boolean canDamageSource)
 #else
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
 #endif
@@ -2090,7 +2090,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
         bombSource = source;
 
 #if __JHEXEN__
-    damageSource = damageSource;
+    damageSource = canDamageSource;
 #endif
 
     P_MobjsBoxIterator(box, PIT_RadiusAttack, 0);
