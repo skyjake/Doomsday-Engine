@@ -38,7 +38,7 @@
 // Basics.
 #include "tables.h"
 
-// We need the thinker_t stuff.
+#include "p_terraintype.h"
 #include "d_think.h"
 #include "info.h"
 
@@ -370,7 +370,7 @@ mobj_t     *P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
 
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 void        P_MobjThinker(mobj_t* mo);
-int         P_MobjGetFloorTerrainType(mobj_t* mo);
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 void        P_SetDoomsdayFlags(mobj_t* mo);
 void        P_HitFloor(mobj_t* mo);

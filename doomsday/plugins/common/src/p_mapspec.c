@@ -48,6 +48,7 @@
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
+#include "p_terraintype.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -696,4 +697,18 @@ void P_RecursiveSound(struct mobj_s *soundTarget, sector_t *sec,
     params.soundBlocks = soundBlocks;
     params.soundTarget = soundTarget;
     P_Iteratep(sec, DMU_LINEDEF, &params, spreadSoundToNeighbors);
+}
+
+/**
+ * Returns the material type of the specified sector, plane.
+ *
+ * @param sec           The sector to check.
+ * @param plane         The plane id to check.
+ */
+const terraintype_t* P_GetPlaneMaterialType(sector_t* sec, int plane)
+{
+    materialnum_t       num =
+        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
+
+    return P_TerrainTypeForMaterial(num);
 }

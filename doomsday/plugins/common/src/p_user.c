@@ -243,13 +243,10 @@ static int newTorchDelta[MAXPLAYERS];
  */
 void P_Thrust(player_t *player, angle_t angle, float move)
 {
-    mobj_t     *plrmo = player->plr->mo;
-    uint        an = angle >> ANGLETOFINESHIFT;
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    sector_t   *sector = P_GetPtrp(plrmo->subsector, DMU_SECTOR);
-#endif
+    mobj_t*             mo = player->plr->mo;
+    uint                an = angle >> ANGLETOFINESHIFT;
 
-    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= plrmo->floorZ))
+    if(player->powers[PT_FLIGHT] && !(mo->pos[VZ] <= mo->floorZ))
     {
         /*float xmul=1, ymul=1;
 
@@ -261,32 +258,44 @@ void P_Thrust(player_t *player, angle_t angle, float move)
            mo->mom[MZ] += sin(ang) * move;
            } */
 
-        plrmo->mom[MX] += move * FIX2FLT(finecosine[an]);
-        plrmo->mom[MY] += move * FIX2FLT(finesine[an]);
+        mo->mom[MX] += move * FIX2FLT(finecosine[an]);
+        mo->mom[MY] += move * FIX2FLT(finesine[an]);
     }
-#if __JHERETIC__
-    else if(P_ToXSector(sector)->special == 15) // Friction_Low
-    {
-        plrmo->mom[MX] += (move / 4) * FIX2FLT(finecosine[an]);
-        plrmo->mom[MY] += (move / 4) * FIX2FLT(finesine[an]);
-    }
-#elif __JHEXEN__
-    else if(P_MobjGetFloorTerrainType(plrmo) == FLOOR_ICE) // Friction_Low
-    {
-        plrmo->mom[MX] += (move / 2) * FIX2FLT(finecosine[an]);
-        plrmo->mom[MY] += (move / 2) * FIX2FLT(finesine[an]);
-    }
-#endif
     else
     {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        float       mul = XS_ThrustMul(sector);
+        sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+        float               mul;
+#endif
+#if __JHEXEN__
+        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+#endif
 
+#if __JHERETIC__
+        if(P_ToXSector(sec)->special == 15) // Friction_Low
+        {
+            mo->mom[MX] += (move / 4) * FIX2FLT(finecosine[an]);
+            mo->mom[MY] += (move / 4) * FIX2FLT(finesine[an]);
+            return;
+        }
+
+#elif __JHEXEN__
+        if(tt->flags & TTF_FRICTION_LOW)
+        {
+            mo->mom[MX] += (move / 2) * FIX2FLT(finecosine[an]);
+            mo->mom[MY] += (move / 2) * FIX2FLT(finesine[an]);
+            return;
+        }
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+        mul = XS_ThrustMul(sec);
         if(mul != 1)
             move *= mul;
 #endif
-        plrmo->mom[MX] += move * FIX2FLT(finecosine[an]);
-        plrmo->mom[MY] += move * FIX2FLT(finesine[an]);
+
+        mo->mom[MX] += move * FIX2FLT(finecosine[an]);
+        mo->mom[MY] += move * FIX2FLT(finesine[an]);
     }
 }
 
@@ -954,8 +963,10 @@ void P_ClientSideThink(void)
         DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
     else
-    {   float               mul =
-            ((P_MobjGetFloorTerrainType(mo) == FLOOR_ICE) ? (1.0f / 2) : 1);
+    {   const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+        float               mul =
+            ((tt->flags & TTF_FRICTION_LOW) ? (1.0f / 2) : 1);
+
         DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
 #else
@@ -1207,18 +1218,11 @@ void P_PlayerThinkView(player_t *player)
 
 void P_PlayerThinkSpecial(player_t *player)
 {
-#if __JHEXEN__
-    int                 floorType;
-#endif
-
     if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
 
 #if __JHEXEN__
-    if((floorType = P_MobjGetFloorTerrainType(player->plr->mo)) != FLOOR_SOLID)
-    {
-        P_PlayerOnSpecialFloor(player, floorType);
-    }
+    P_PlayerOnSpecialFloor(player);
 #endif
 }
 

@@ -1371,7 +1371,7 @@ static void SV_WriteMobj(mobj_t *original)
     // 4: Added long 'tracer'
     // 4: Added long 'lastenemy'
     // 5: Added flags3
-    // 6: Floor material saved as archivenum
+    // 6: Floor material removed.
     //
     // JDOOM || JHERETIC || WOLFTC || JDOOM64
     // 4: Added byte 'translucency'
@@ -1409,9 +1409,7 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->sprite); // Used to find patch_t and flip value.
     SV_WriteLong(mo->frame);
 
-# if __JHEXEN__
-    SV_WriteLong(SV_MaterialArchiveNum(mo->floorMaterial));
-#else
+#if !__JHEXEN__
     // The closest interval over all contacted Sectors.
     SV_WriteLong(FLT2FIX(mo->floorZ));
     SV_WriteLong(FLT2FIX(mo->ceilingZ));
@@ -1742,11 +1740,8 @@ static int SV_ReadMobj(thinker_t *th)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
 
 #if __JHEXEN__
-    if(ver >= 6)
-        mo->floorMaterial = SV_GetArchiveMaterial(SV_ReadLong());
-    else
-        mo->floorMaterial =
-            R_MaterialNumForName(W_LumpName(SV_ReadLong()), MAT_FLAT);
+    if(ver < 6)
+        SV_ReadLong(); // Used to be floorflat.
 #else
     // The closest interval over all contacted Sectors.
     mo->floorZ = FIX2FLT(SV_ReadLong());

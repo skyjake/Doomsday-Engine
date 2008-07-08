@@ -34,6 +34,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "p_terraintype.h"
 #include "h_think.h"
 #include "info.h"
 
@@ -250,6 +251,7 @@ mobj_t*     P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
                                 angle_t angle, float momz);
 mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
 
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t *thing);
 float       P_MobjGetFriction(mobj_t *mo);
 
 #endif

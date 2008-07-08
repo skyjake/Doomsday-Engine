@@ -88,75 +88,9 @@ static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-//// \bug From jHeretic, replace!
-int    *TerrainTypes;
-struct {
-    char   *name;
-    int     type;
-} TerrainTypeDefs[] =
-{
-    {"FWATER1", FLOOR_WATER},
-    {"LAVA1",   FLOOR_LAVA},
-    {"BLOOD1",  FLOOR_BLOOD},
-    {"NUKAGE1", FLOOR_SLIME},
-    {"SLIME01", FLOOR_SLUDGE},
-    {"END",     -1}
-};
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-/**
- * \bug This routine originated from jHeretic, we need to rewrite it!
- */
-void P_InitTerrainTypes(void)
-{
-    int     i;
-    int     lump;
-    int     size;
-
-    size = Get(DD_NUMLUMPS) * sizeof(int);
-    TerrainTypes = Z_Malloc(size, PU_STATIC, 0);
-    memset(TerrainTypes, 0, size);
-    for(i = 0; TerrainTypeDefs[i].type != -1; i++)
-    {
-        lump = W_CheckNumForName(TerrainTypeDefs[i].name);
-        if(lump != -1)
-        {
-            TerrainTypes[lump] = TerrainTypeDefs[i].type;
-        }
-    }
-}
-
-/*
- * Return the terrain type of the specified flat.
- *
- * @param flatlumpnum   The flat lump number to check.
- */
-int P_FlatToTerrainType(int flatlumpnum)
-{
-    if(flatlumpnum != -1)
-        return TerrainTypes[flatlumpnum];
-    else
-        return FLOOR_SOLID;
-}
-
-/*
- * Returns the terrain type of the specified sector, plane.
- *
- * @param sec       The sector to check.
- * @param plane     The plane id to check.
- */
-int P_GetTerrainType(sector_t* sec, int plane)
-{
-    int flatnum = P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
-
-    if(flatnum != -1)
-        return TerrainTypes[flatnum];
-    else
-        return FLOOR_SOLID;
-}
 
 /* From PrBoom:
  * Load the table of animation definitions, checking for existence of

@@ -108,12 +108,19 @@ static mobj_t *TIDMobj[MAX_TID_COUNT];
 
 // CODE --------------------------------------------------------------------
 
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
+{
+    sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+
+    return P_GetPlaneMaterialType(sec, PLN_FLOOR);
+}
+
 /**
  * @return              @c true if the mobj is still present.
  */
 boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
 {
-    state_t    *st;
+    state_t*            st;
 
     if(state == S_NULL)
     {   // Remove mobj.
@@ -185,7 +192,9 @@ void P_ExplodeMissile(mobj_t *mo)
 
 void P_FloorBounceMissile(mobj_t *mo)
 {
-    if(P_HitFloor(mo) >= FLOOR_LIQUID)
+    boolean             shouldSplash = P_HitFloor(mo);
+
+    if(shouldSplash)
     {
         switch(mo->type)
         {
@@ -368,9 +377,12 @@ float P_MobjGetFriction(mobj_t *mo)
     {
         return FRICTION_FLY;
     }
-    else if(P_MobjGetFloorTerrainType(mo) == FLOOR_ICE)
+    else
     {
-        return FRICTION_LOW;
+        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
+        if(tt->flags & TTF_FRICTION_LOW)
+            return FRICTION_LOW;
     }
 
     return FRICTION_NORMAL;
@@ -835,10 +847,13 @@ void P_MobjMoveZ(mobj_t *mo)
                                 break;
                             }
                     }
-                    else if((P_MobjGetFloorTerrainType(mo) < FLOOR_LIQUID) &&
-                            (!mo->player->morphTics))
+                    else if(!mo->player->morphTics)
                     {
-                        S_StartSound(SFX_PLAYER_LAND, mo);
+                        const terraintype_t* tt =
+                            P_MobjGetFloorTerrainType(mo);
+
+                        if(!(tt->flags & TTF_NONSOLID))
+                            S_StartSound(SFX_PLAYER_LAND, mo);
                     }
 
                     if(!cfg.useMLook && cfg.lookSpring)
@@ -1260,15 +1275,15 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         mo->pos[VZ] += mo->floorZ; // Artifact z passed in as height
     }
 
+    mo->floorClip = 0;
+
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
-       mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
-        mo->floorClip = 10;
-    }
-    else
-    {
-        mo->floorClip = 0;
+        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
+        if(tt->flags & TTF_FLOORCLIP)
+            mo->floorClip = 10;
     }
 
     return mo;
@@ -1806,26 +1821,15 @@ void P_RipperBlood(mobj_t* mo)
     th->tics += P_Random() & 3;
 }
 
-terraintype_t P_MobjGetFloorTerrainType(mobj_t* mo)
-{
-    if(mo->floorMaterial && !IS_CLIENT)
-    {
-        return P_MaterialToTerrainType(mo->floorMaterial);
-    }
-    else
-    {
-        return P_GetTerrainType(P_GetPtrp(mo->subsector, DMU_SECTOR), PLN_FLOOR);
-    }
-}
-
-int P_HitFloor(mobj_t *thing)
+boolean P_HitFloor(mobj_t *thing)
 {
     mobj_t*             mo;
     int                 smallsplash = false;
+    const terraintype_t* tt;
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {   // Don't splash if landing on the edge above water/lava/etc....
-        return FLOOR_SOLID;
+        return false;
     }
 
     // Things that don't splash go here
@@ -1835,11 +1839,11 @@ int P_HitFloor(mobj_t *thing)
     case MT_LEAF2:
     case MT_SPLASH:
     case MT_SLUDGECHUNK:
-        return FLOOR_SOLID;
+        return false;
 
     default:
         if(P_IsCamera(thing))
-            return FLOOR_SOLID;
+            return false;
         break;
     }
 
@@ -1847,9 +1851,9 @@ int P_HitFloor(mobj_t *thing)
     if(thing->info->mass < 10)
         smallsplash = true;
 
-    switch(P_MobjGetFloorTerrainType(thing))
+    tt = P_MobjGetFloorTerrainType(thing);
+    if(tt->flags & TTF_SPAWN_SPLASHES)
     {
-    case FLOOR_WATER:
         if(smallsplash)
         {
             mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX],
@@ -1876,9 +1880,10 @@ int P_HitFloor(mobj_t *thing)
                 P_NoiseAlert(thing, thing);
             S_StartSound(SFX_WATER_SPLASH, mo);
         }
-        return FLOOR_WATER;
-
-    case FLOOR_LAVA:
+        return true;
+    }
+    else if(tt->flags & TTF_SPAWN_SMOKE)
+    {
         if(smallsplash)
         {
             mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX],
@@ -1903,9 +1908,10 @@ int P_HitFloor(mobj_t *thing)
         {
             P_DamageMobj(thing, &LavaInflictor, NULL, 5);
         }
-        return FLOOR_LAVA;
-
-    case FLOOR_SLUDGE:
+        return true;
+    }
+    else if(tt->flags & TTF_SPAWN_SLUDGE)
+    {
         if(smallsplash)
         {
             mo = P_SpawnMobj3f(MT_SLUDGESPLASH, thing->pos[VX],
@@ -1930,10 +1936,10 @@ int P_HitFloor(mobj_t *thing)
         }
 
         S_StartSound(SFX_SLUDGE_GLOOP, mo);
-        return FLOOR_SLUDGE;
+        return true;
     }
 
-    return FLOOR_SOLID;
+    return false;
 }
 
 void ResetBlasted(mobj_t *mo)

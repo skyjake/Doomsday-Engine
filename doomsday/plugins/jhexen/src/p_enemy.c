@@ -2174,7 +2174,9 @@ void C_DECL A_SerpentHeadCheck(mobj_t *actor)
 {
     if(actor->pos[VZ] <= actor->floorZ)
     {
-        if(P_MobjGetFloorTerrainType(actor) >= FLOOR_LIQUID)
+        const terraintype_t* tt = P_MobjGetFloorTerrainType(actor);
+
+        if(tt->flags & TTF_NONSOLID)
         {
             P_HitFloor(actor);
             P_MobjChangeState(actor, S_NULL);
@@ -4193,20 +4195,17 @@ void C_DECL A_FreezeDeath(mobj_t *mo)
 
 void C_DECL A_IceSetTics(mobj_t* mo)
 {
+    const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
     mo->tics = 70 + (P_Random() & 63);
 
-    switch(P_MobjGetFloorTerrainType(mo))
+    if(tt->flags & TTF_FRICTION_LOW)
     {
-    case FLOOR_LAVA:
-        mo->tics /= 4;
-        break;
-
-    case FLOOR_ICE:
         mo->tics *= 2;
-        break;
-
-    default:
-        break;
+    }
+    else if(tt->flags & TTF_FRICTION_HIGH)
+    {
+        mo->tics /= 4;
     }
 }
 

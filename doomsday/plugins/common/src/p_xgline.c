@@ -70,6 +70,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "p_mapspec.h"
+#include "p_terraintype.h"
 #include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1671,15 +1672,16 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
     // Feet clipped?
     if(mobj->flags2 & MF2_FLOORCLIP)
     {
-        if(P_MobjGetFloorTerrainType(mobj) >= FLOOR_LIQUID &&
-           mobj->pos[VZ] ==
-           P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
+        mobj->floorClip = 0;
+
+        if(mobj->pos[VZ] == P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
         {
-            mobj->floorClip = 10;
-        }
-        else
-        {
-            mobj->floorClip = 0;
+            const terraintype_t* tt = P_MobjGetFloorTerrainType(mobj);
+
+            if(tt->flags & TTF_FLOORCLIP)
+            {
+                mobj->floorClip = 10;
+            }
         }
     }
 

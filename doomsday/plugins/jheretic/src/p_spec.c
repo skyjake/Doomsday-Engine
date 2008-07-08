@@ -1263,20 +1263,6 @@ int    *AmbientSfx[] = {
     AmbSndSeq10                 // FastFootsteps
 };
 
-terraintype_t* TerrainTypes;
-struct terraindef_s {
-    char*           name;
-    terraintype_t   type;
-} TerrainTypeDefs[] =
-{
-    {"FLTWAWA1", FLOOR_WATER},
-    {"FLTFLWW1", FLOOR_WATER},
-    {"FLTLAVA1", FLOOR_LAVA},
-    {"FLATHUH1", FLOOR_LAVA},
-    {"FLTSLUD1", FLOOR_SLUDGE},
-    {"END", -1}
-};
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -1286,60 +1272,6 @@ void P_InitLava(void)
     memset(&LavaInflictor, 0, sizeof(mobj_t));
     LavaInflictor.type = MT_PHOENIXFX2;
     LavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
-}
-
-/**
- * \bug This routine originated from jHeretic, we need to rewrite it!
- */
-void P_InitTerrainTypes(void)
-{
-    int                 i, size;
-    materialnum_t       num;
-
-    size = Get(DD_NUMLUMPS) * sizeof(int);
-    TerrainTypes = Z_Malloc(size, PU_STATIC, 0);
-    memset(TerrainTypes, 0, size);
-    for(i = 0; TerrainTypeDefs[i].type != -1; ++i)
-    {
-        num = R_MaterialCheckNumForName(TerrainTypeDefs[i].name, MAT_FLAT);
-        if(num != 0)
-        {
-            TerrainTypes[num] = TerrainTypeDefs[i].type;
-        }
-    }
-}
-
-/**
- * Look up the terrain type for the specified material.
- *
- * @param num           The material number to check.
- *
- * @return              Terrain type of the material if known,
- *                      else @c FLOOR_SOLID.
- */
-terraintype_t P_GetTerrainTypeForMaterial(materialnum_t num)
-{
-    if(num)
-        return TerrainTypes[num];
-    else
-        return FLOOR_SOLID;
-}
-
-/**
- * Returns the terrain type of the specified sector, plane.
- *
- * @param sec           The sector to check.
- * @param plane         The plane id to check.
- */
-terraintype_t P_GetTerrainType(sector_t* sec, int plane)
-{
-    materialnum_t       num =
-        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
-
-    if(num)
-        return TerrainTypes[num];
-    else
-        return FLOOR_SOLID;
 }
 
 /**

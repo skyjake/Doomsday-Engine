@@ -221,7 +221,6 @@ void G_Display(void)
             int                 viewAngleOffset =
                 ANGLE_MAX * -G_GetLookOffset(DISPLAYPLAYER);
 
-            R_HandleSectorSpecials();
             // Set flags for the renderer.
             if(IS_CLIENT)
             {

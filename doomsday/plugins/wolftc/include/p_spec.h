@@ -55,8 +55,6 @@ extern int      levelTimeCount;
 
 // at game start
 void            P_InitPicAnims(void);
-void            P_InitTerrainTypes(void);
-
 // at map load
 void            P_SpawnSpecials(void);
 
@@ -64,8 +62,6 @@ void            P_SpawnSpecials(void);
 void            P_UpdateSpecials(void);
 
 // when needed
-int             P_GetTerrainType(sector_t* sec, int plane);
-int             P_FlatToTerrainType(int flatlumpnum);
 boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                                int activationType);
 

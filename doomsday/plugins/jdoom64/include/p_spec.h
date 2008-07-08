@@ -43,22 +43,6 @@
 
 #include "d_player.h"
 
-// Any floor type >= FLOOR_LIQUID will floorclip mobjs.
-typedef enum {
-    FLOOR_SOLID,
-    FLOOR_LIQUID,
-    FLOOR_WATER,
-    FLOOR_LAVA,
-    FLOOR_SLUDGE,
-    FLOOR_BLOOD,
-    FLOOR_SLIME,
-    NUM_TERRAIN_TYPES
-} terraintype_t;
-
-void            P_InitTerrainTypes(void);
-terraintype_t   P_GetTerrainType(sector_t* sec, int plane);
-terraintype_t   P_MaterialToTerrainType(materialnum_t num);
-
 // Base plane ids.
 enum {
     PLN_FLOOR,

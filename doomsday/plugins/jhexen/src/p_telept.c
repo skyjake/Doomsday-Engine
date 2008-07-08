@@ -237,15 +237,16 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
 
     if(mo->flags2 & MF2_FLOORCLIP)
     {
-        if(mo->pos[VZ] ==
-           P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT) &&
-           P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID)
+        mo->floorClip = 0;
+
+        if(mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
         {
-            mo->floorClip = 10;
-        }
-        else
-        {
-            mo->floorClip = 0;
+            const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
+            if(tt->flags & TTF_FLOORCLIP)
+            {
+                mo->floorClip = 10;
+            }
         }
     }
 
@@ -262,8 +263,6 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
 
     P_MobjClearSRVO(mo);
 
-    // Update the floor material.
-    mo->floorMaterial = tmFloorMaterial;
     return true;
 }
 

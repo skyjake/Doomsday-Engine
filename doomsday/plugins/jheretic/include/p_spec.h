@@ -47,22 +47,6 @@
 #include "h_player.h"
 #include "r_data.h"
 
-// Any floor type >= FLOOR_LIQUID will floorclip sprites
-typedef enum {
-    FLOOR_SOLID,
-    FLOOR_LIQUID,
-    FLOOR_WATER,
-    FLOOR_LAVA,
-    FLOOR_SLUDGE,
-    NUM_TERRAIN_TYPES
-} terraintype_t;
-
-extern terraintype_t* TerrainTypes;
-
-void            P_InitTerrainTypes(void);
-terraintype_t   P_GetTerrainType(sector_t* sec, int plane);
-terraintype_t   P_GetTerrainTypeForMaterial(materialnum_t num);
-
 //      Define values for map objects
 #define MO_TELEPORTMAN          14
 

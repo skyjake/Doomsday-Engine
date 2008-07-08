@@ -64,6 +64,7 @@
 #include "g_common.h"
 #include "dmu_lib.h"
 #include "p_mapspec.h"
+#include "p_terraintype.h"
 #include "p_tick.h"
 #include "p_actor.h"
 
@@ -1369,9 +1370,6 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
     thing->dropOffZ = tmDropoffZ; // $dropoff_fix: keep track of dropoffs.
 #endif
-#if __JHEXEN__
-    thing->floorMaterial = tmFloorMaterial;
-#endif
 
     thing->pos[VX] = x;
     thing->pos[VY] = y;
@@ -1380,14 +1378,16 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
 
     if(thing->flags2 & MF2_FLOORCLIP)
     {
-        if(thing->pos[VZ] == P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-           P_MobjGetFloorTerrainType(thing) >= FLOOR_LIQUID)
+        thing->floorClip = 0;
+
+        if(thing->pos[VZ] == P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
         {
-            thing->floorClip = 10;
-        }
-        else
-        {
-            thing->floorClip = 0;
+            const terraintype_t* tt = P_MobjGetFloorTerrainType(thing);
+
+            if(tt->flags & TTF_FLOORCLIP)
+            {
+                thing->floorClip = 10;
+            }
         }
     }
 
@@ -2214,10 +2214,6 @@ static boolean P_ThingHeightClip(mobj_t *thing)
     thing->ceilingZ = tmCeilingZ;
 #if !__JHEXEN__
     thing->dropOffZ = tmDropoffZ; // $dropoff_fix: remember dropoffs.
-#endif
-
-#if __JHEXEN__
-    thing->floorMaterial = tmFloorMaterial;
 #endif
 
     if(onfloor)

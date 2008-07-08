@@ -35,6 +35,7 @@
 #endif
 
 #include "d_think.h"
+#include "p_terraintype.h"
 #include "doomdata.h"
 #include "info.h"
 #include "tables.h"
@@ -250,6 +251,7 @@ void        P_SpawnBlood(float x, float y, float z, int damage,
                          angle_t angle);
 mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
 
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 float       P_MobjGetFriction(mobj_t *mo);
 
 #endif

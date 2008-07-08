@@ -61,6 +61,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "p_tick.h"
+#include "p_terraintype.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1389,7 +1390,7 @@ void C_DECL A_MacePL1Check(mobj_t *ball)
 
 void C_DECL A_MaceBallImpact(mobj_t *ball)
 {
-    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball) != FLOOR_SOLID)
+    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball))
     {   // Landed in some sort of liquid.
         P_MobjRemove(ball, true);
         return;
@@ -1417,7 +1418,7 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
     mobj_t             *tiny;
     uint                an;
 
-    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball) != FLOOR_SOLID)
+    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball))
     {   // Landed in some sort of liquid.
         P_MobjRemove(ball, true);
         return;
@@ -1486,7 +1487,7 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
     angle_t             angle;
     boolean             newAngle;
 
-    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball) != FLOOR_SOLID)
+    if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball))
     {   // Landed in some sort of liquid.
         P_MobjRemove(ball, true);
         return;

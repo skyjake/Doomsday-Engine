@@ -86,78 +86,9 @@ static void shootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-//// \bug From jHeretic, replace!
-int *TerrainTypes;
-struct terraindef_s {
-    char   *name;
-    int     type;
-} TerrainTypeDefs[] =
-{
-    {"FWATER1", FLOOR_WATER},
-    {"LAVA1",   FLOOR_LAVA},
-    {"BLOOD1",  FLOOR_BLOOD},
-    {"NUKAGE1", FLOOR_SLIME},
-    {"SLIME01", FLOOR_SLUDGE},
-    {"END",     -1}
-};
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-/**
- * \bug This routine originated from jHeretic, we need to rewrite it!
- */
-void P_InitTerrainTypes(void)
-{
-    int                 i, size;
-    materialnum_t       num;
-
-    size = Get(DD_NUMLUMPS) * sizeof(int);
-    TerrainTypes = Z_Malloc(size, PU_STATIC, 0);
-    memset(TerrainTypes, 0, size);
-    for(i = 0; TerrainTypeDefs[i].type != -1; ++i)
-    {
-        num = R_MaterialCheckNumForName(TerrainTypeDefs[i].name, MAT_FLAT);
-        if(num != 0)
-        {
-            TerrainTypes[num] = TerrainTypeDefs[i].type;
-        }
-    }
-}
-
-/**
- * Look up the terrain type for the specified material.
- *
- * @param num           The material number to check.
- *
- * @return              Terrain type of the material if known,
- *                      else @c FLOOR_SOLID.
- */
-int P_GetTerrainTypeForMaterial(materialnum_t num)
-{
-    if(num)
-        return TerrainTypes[num];
-    else
-        return FLOOR_SOLID;
-}
-
-/**
- * Returns the terrain type of the specified sector, plane.
- *
- * @param sec           The sector to check.
- * @param plane         The plane id to check.
- */
-int P_GetTerrainType(sector_t* sec, int plane)
-{
-    materialnum_t       num =
-        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
-
-    if(num)
-        return TerrainTypes[num];
-    else
-        return FLOOR_SOLID;
-}
 
 /**
  * From PrBoom:

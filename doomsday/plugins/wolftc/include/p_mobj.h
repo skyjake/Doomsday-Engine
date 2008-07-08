@@ -34,24 +34,11 @@
 #  error "Using WolfTC headers without __WOLFTC__"
 #endif
 
-// Basics.
 #include "tables.h"
-
-// We need the thinker_t stuff.
+#include "p_terraintype.h"
 #include "d_think.h"
-
-// We need the WAD data structure for Map things,
-// from the THINGS lump.
 #include "doomdata.h"
-
-// States are tied to finite states are
-//  tied to animation frames.
-// Needs precompiled tables/data structures.
 #include "info.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
 
 /**
  * (Re)Spawn flags:
@@ -266,5 +253,7 @@ void        P_SpawnBlood(float x, float y, float z, int damage,
                          angle_t angle);
 mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
 mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
+
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 
 #endif

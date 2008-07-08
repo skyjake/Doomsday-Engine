@@ -99,21 +99,6 @@ extern int      soulSphereHealth, soulSphereLimit, megaspherehealth;
 extern int      armorpoints[4];    // Green, blue, IDFA and IDKFA points.
 extern int      armorclass[4];     // Green and blue classes.
 
-//
-// P_MOBJ
-//
-// Any floor type >= FLOOR_LIQUID will floorclip sprites
-enum {
-    FLOOR_SOLID,
-    FLOOR_LIQUID,
-    FLOOR_WATER,
-    FLOOR_LAVA,
-    FLOOR_SLUDGE,
-    FLOOR_BLOOD,
-    FLOOR_SLIME,
-    NUM_TERRAINTYPES
-};
-
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
 
@@ -129,7 +114,6 @@ extern int iquetail;
 
 boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 void        P_MobjThinker(mobj_t *mobj);
-int         P_MobjGetFloorTerrainType(mobj_t *thing);
 void        P_RipperBlood(mobj_t *mo);
 void        P_SetDoomsdayFlags(mobj_t *mo);
 void        P_HitFloor(mobj_t *mo);

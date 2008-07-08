@@ -60,6 +60,7 @@
 #include "p_actor.h"
 #include "p_spec.h"
 #include "d_net.h"
+#include "p_terraintype.h"
 
 #define STARTREDPALS        1
 #define STARTBONUSPALS      9
@@ -159,7 +160,7 @@ mobj_t     *P_FindMobjFromTID(int tid, int *searchPosition);
 boolean     P_CheckMissileSpawn(mobj_t *mo);
 float       P_MobjGetFriction(mobj_t *mo);
 void        P_RipperBlood(mobj_t *mo);
-terraintype_t P_MobjGetFloorTerrainType(mobj_t* mo);
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 int         P_HitFloor(mobj_t *mo);
 
 // Spawn spots.

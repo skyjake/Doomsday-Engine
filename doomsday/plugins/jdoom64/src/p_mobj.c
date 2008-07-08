@@ -46,6 +46,7 @@
 #include "hu_stuff.h"
 #include "g_common.h"
 #include "p_map.h"
+#include "p_terraintype.h"
 #include "p_player.h"
 #include "p_tick.h"
 #include "p_actor.h"
@@ -87,12 +88,19 @@ static int itemRespawnQueueTail;
 
 // CODE --------------------------------------------------------------------
 
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
+{
+    sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+
+    return P_GetPlaneMaterialType(sec, PLN_FLOOR);
+}
+
 /**
  * @return              @c true, if the mobj is still present.
  */
-boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
+boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 {
-    state_t            *st;
+    state_t*            st;
 
     do
     {
@@ -381,11 +389,6 @@ void P_RipperBlood(mobj_t *mo)
     th->mom[MY] /= 2;
 
     th->tics += P_Random() & 3;
-}
-
-int P_MobjGetFloorTerrainType(mobj_t *thing)
-{
-    return P_GetTerrainType(P_GetPtrp(thing->subsector, DMU_SECTOR), PLN_FLOOR);
 }
 
 void P_HitFloor(mobj_t *mo)
@@ -955,15 +958,17 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         }
     }
 
+    mo->floorClip = 0;
+
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
-        mo->floorClip = 10;
-    }
-    else
-    {
-        mo->floorClip = 0;
+        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
+        if(tt->flags & TTF_FLOORCLIP)
+        {
+            mo->floorClip = 10;
+        }
     }
 
     return mo;
@@ -1046,16 +1051,17 @@ void P_CheckRespawnQueue(void) // jd64
     if(sobj->flags & MTF_RESPAWN) // jd64 (no test originally)
     {
         mo = P_SpawnMobj3fv(i, pos, sobj->angle);
+        mo->floorClip = 0;
 
         if(mo->flags2 & MF2_FLOORCLIP &&
-           P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
            mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
         {
-            mo->floorClip = 10;
-        }
-        else
-        {
-            mo->floorClip = 0;
+            const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
+            if(tt->flags & TTF_FLOORCLIP)
+            {
+                mo->floorClip = 10;
+            }
         }
 
         // Copy spawn attributes to the new mobj.

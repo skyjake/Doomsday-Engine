@@ -56,6 +56,7 @@
 #include "p_user.h"
 #include "d_net.h"
 #include "p_map.h"
+#include "p_terraintype.h"
 #include "g_common.h"
 #include "p_start.h"
 #include "p_actor.h"

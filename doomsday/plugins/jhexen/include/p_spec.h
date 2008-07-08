@@ -54,24 +54,6 @@
 
 #define MO_TELEPORTMAN          14
 
-// Any floor type >= FLOOR_LIQUID will floorclip sprites.
-typedef enum {
-    FLOOR_SOLID,
-    FLOOR_ICE,
-    FLOOR_LIQUID,
-    FLOOR_WATER,
-    FLOOR_LAVA,
-    FLOOR_SLUDGE,
-    NUM_TERRAIN_TYPES
-} terraintype_t;
-
-extern terraintype_t* TerrainTypes;
-
-void        P_InitTerrainTypes(void);
-terraintype_t P_GetTerrainType(sector_t* sec, int plane);
-terraintype_t P_MaterialToTerrainType(materialnum_t num);
-
-
 void        P_InitLava(void);
 
 void        P_SpawnSpecials(void);
@@ -83,13 +65,12 @@ boolean     P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
                            int activationType);
 
 void        P_PlayerInSpecialSector(player_t *plr);
-void        P_PlayerOnSpecialFloor(player_t *plr, int floorType);
+void        P_PlayerOnSpecialFloor(player_t *plr);
 
 void        P_AnimateSurfaces(void);
 void        P_InitPicAnims(void);
 void        P_InitLightning(void);
 void        P_ForceLightning(void);
-void        R_HandleSectorSpecials(void);
 
 typedef enum {
     ok,

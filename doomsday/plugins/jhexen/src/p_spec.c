@@ -87,19 +87,6 @@ extern boolean DoubleSky;
 
 mobj_t  LavaInflictor;
 
-terraintype_t* TerrainTypes = 0;
-struct terraindef_s {
-    char*           name;
-    terraintype_t   type;
-} TerrainTypeDefs[] =
-{
-    {"X_005", FLOOR_WATER},
-    {"X_001", FLOOR_LAVA},
-    {"X_009", FLOOR_SLUDGE},
-    {"F_033", FLOOR_ICE},
-    {"END", -1}
-};
-
 materialnum_t Sky1Material;
 materialnum_t Sky2Material;
 float Sky1ColumnOffset;
@@ -169,60 +156,6 @@ void P_InitSky(int map)
         Rend_SkyParams(1, DD_MASK, &ival);
         Rend_SkyParams(1, DD_MATERIAL, &Sky2Material);
     }
-}
-
-void P_InitTerrainTypes(void)
-{
-    int                 i, size;
-    materialnum_t       num;
-
-    size = Get(DD_NUMLUMPS) * sizeof(int);
-
-    // Free if there already is memory allocated.
-    if(TerrainTypes)
-        Z_Free(TerrainTypes);
-
-    TerrainTypes = Z_Malloc(size, PU_STATIC, 0);
-    memset(TerrainTypes, 0, size);
-
-    for(i = 0; TerrainTypeDefs[i].type != -1; ++i)
-    {
-        num = R_MaterialCheckNumForName(TerrainTypeDefs[i].name, MAT_FLAT);
-        if(num)
-        {
-            TerrainTypes[num] = TerrainTypeDefs[i].type;
-        }
-    }
-}
-
-/**
- * Return the terrain type of the specified material.
- *
- * @param num           The material to check.
- */
-terraintype_t P_MaterialToTerrainType(materialnum_t num)
-{
-    if(num)
-        return TerrainTypes[num];
-    else
-        return FLOOR_SOLID;
-}
-
-/**
- * Returns the terrain type of the specified sector, plane.
- *
- * @param sec           The sector to check.
- * @param plane         The plane id to check.
- */
-terraintype_t P_GetTerrainType(sector_t* sec, int plane)
-{
-    materialnum_t       num =
-        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
-
-    if(num)
-        return TerrainTypes[num];
-    else
-        return FLOOR_SOLID;
 }
 
 boolean EV_SectorSoundChange(byte* args)
@@ -844,26 +777,23 @@ void P_PlayerInSpecialSector(player_t *player)
     }
 }
 
-void P_PlayerOnSpecialFloor(player_t *player, int floorType)
+void P_PlayerOnSpecialFloor(player_t* player)
 {
+    const terraintype_t* tt = P_MobjGetFloorTerrainType(player->plr->mo);
+
+    if(!(tt->flags & TTF_DAMAGING))
+        return;
+
     if(player->plr->mo->pos[VZ] >
        P_GetFloatp(player->plr->mo->subsector, DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }
 
-    switch(floorType)
+    if(!(levelTime & 31))
     {
-    case FLOOR_LAVA:
-        if(!(levelTime & 31))
-        {
-            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 10);
-            S_StartSound(SFX_LAVA_SIZZLE, player->plr->mo);
-        }
-        break;
-
-    default:
-        break;
+        P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 10);
+        S_StartSound(SFX_LAVA_SIZZLE, player->plr->mo);
     }
 }
 
@@ -1001,126 +931,133 @@ void P_SpawnSpecials(void)
     P_FreeButtons();
 }
 
-void R_HandleSectorSpecials(void)
+void P_AnimateSurfaces(void)
 {
-    uint        i;
-    int         scrollOffset = levelTime >> 1 & 63;
+#define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
 
+    uint                i;
+    linedef_t*          line;
+
+    // Update scrolling plane materials.
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t* sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
+        xsector_t*          sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
+        float               texOff[2];
 
         switch(sect->special)
-        {                       // Handle scrolling flats
+        {
         case 201:
         case 202:
         case 203:               // Scroll_North_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
-                       (63 - scrollOffset) << (sect->special - 201));
+            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
+            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 201);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
             break;
 
         case 204:
         case 205:
         case 206:               // Scroll_East_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
-                       (63 - scrollOffset) << (sect->special - 204));
+            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
+            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 204);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
             break;
 
         case 207:
         case 208:
         case 209:               // Scroll_South_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
-                       scrollOffset << (sect->special - 207));
+            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
+            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 207);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
             break;
 
         case 210:
         case 211:
         case 212:               // Scroll_West_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
-                       scrollOffset << (sect->special - 210));
+            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
+            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 210);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
             break;
 
         case 213:
         case 214:
         case 215:               // Scroll_NorthWest_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
-                       scrollOffset << (sect->special - 213));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
-                       (63 - scrollOffset) << (sect->special - 213));
+            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
+            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
+            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
+            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             break;
 
         case 216:
         case 217:
         case 218:               // Scroll_NorthEast_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
-                       (63 - scrollOffset) << (sect->special - 216));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
-                       (63 - scrollOffset) << (sect->special - 216));
+            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
+            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
+            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
+            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             break;
 
         case 219:
         case 220:
         case 221:               // Scroll_SouthEast_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
-                       (63 - scrollOffset) << (sect->special - 219));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
-                       scrollOffset << (sect->special - 219));
+            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
+            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
+            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
+            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             break;
 
         case 222:
         case 223:
         case 224:               // Scroll_SouthWest_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X,
-                       scrollOffset << (sect->special - 222));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y,
-                       scrollOffset << (sect->special - 222));
+            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
+            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
+            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
+            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             break;
 
         default:
+            // DJS - Is this really necessary every tic?
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, 0);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, 0);
             break;
         }
     }
-}
 
-void P_AnimateSurfaces(void)
-{
-    int         i;
-    linedef_t     *line;
-
-    // Update scrolling textures
+    // Update scrolling wall materials.
     if(P_IterListSize(linespecials))
     {
         P_IterListResetIterator(linespecials, false);
         while((line = P_IterListIterator(linespecials)) != NULL)
         {
-            sidedef_t* side = 0;
-            fixed_t texOff[2];
+            sidedef_t*          side = 0;
+            fixed_t             texOff[2];
+            xline_t*            xline = P_ToXLine(line);
 
             side = P_GetPtrp(line, DMU_SIDEDEF0);
-            for(i =0; i < 3; ++i)
+            for(i = 0; i < 3; ++i)
             {
-
                 P_GetFixedpv(side,
                              (i==0? DMU_TOP_MATERIAL_OFFSET_XY :
                               i==1? DMU_MIDDLE_MATERIAL_OFFSET_XY :
                               DMU_BOTTOM_MATERIAL_OFFSET_XY), texOff);
 
-                switch (P_ToXLine(line)->special)
+                switch(xline->special)
                 {
-                case 100:               // Scroll_Texture_Left
-                    texOff[0] += P_ToXLine(line)->arg1 << 10;
+                case 100: // Scroll_Texture_Left
+                    texOff[0] += xline->arg1 << 10;
                     break;
-                case 101:               // Scroll_Texture_Right
-                    texOff[0] -= P_ToXLine(line)->arg1 << 10;
+                case 101: // Scroll_Texture_Right
+                    texOff[0] -= xline->arg1 << 10;
                     break;
-                case 102:               // Scroll_Texture_Up
-                    texOff[1] += P_ToXLine(line)->arg1 << 10;
+                case 102: // Scroll_Texture_Up
+                    texOff[1] += xline->arg1 << 10;
                     break;
-                case 103:               // Scroll_Texture_Down
-                    texOff[1] -= P_ToXLine(line)->arg1 << 10;
+                case 103: // Scroll_Texture_Down
+                    texOff[1] -= xline->arg1 << 10;
                     break;
+                default:
+                    Con_Error("P_AnimateSurfaces: Invalid line special %i for "
+                              "material scroller on linedef %ui.",
+                              xline->special, P_ToIndex(line));
                 }
 
                 P_SetFixedpv(side,
@@ -1148,6 +1085,8 @@ void P_AnimateSurfaces(void)
             NextLightningFlash--;
         }
     }
+
+#undef PLANE_MATERIAL_SCROLLUNIT
 }
 
 static void P_LightningFlash(void)

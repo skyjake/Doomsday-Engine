@@ -35,6 +35,7 @@
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_map.h"
+#include "p_terraintype.h"
 #include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
@@ -133,15 +134,18 @@ int EV_Teleport(linedef_t *line, int side, mobj_t *thing)
             thing->angle = m->angle;
             if(thing->flags2 & MF2_FLOORCLIP)
             {
+                thing->floorClip = 0;
+
                 if(thing->pos[VZ] ==
-                    P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT) &&
-                   P_MobjGetFloorTerrainType(thing) >= FLOOR_LIQUID)
+                   P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
                 {
-                    thing->floorClip = 10;
-                }
-                else
-                {
-                    thing->floorClip = 0;
+                    const terraintype_t* tt =
+                        P_MobjGetFloorTerrainType(thing);
+
+                    if(tt->flags & TTF_FLOORCLIP)
+                    {
+                        thing->floorClip = 10;
+                    }
                 }
             }
             thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;

@@ -44,6 +44,7 @@
 #include "hu_stuff.h"
 #include "g_common.h"
 #include "p_map.h"
+#include "p_terraintype.h"
 #include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
@@ -89,6 +90,18 @@ int     iquehead;
 int     iquetail;
 
 // CODE --------------------------------------------------------------------
+
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
+{
+    if(mo->floorMaterial && !IS_CLIENT)
+    {
+        return P_TerrainTypeForMaterial(mo->floorMaterial);
+    }
+    else
+    {
+        return P_GetPlaneMaterialType(P_GetPtrp(mo->subsector, DMU_SECTOR), PLN_FLOOR);
+    }
+}
 
 /**
  * @return              @c true, if the mobj is still present.
@@ -386,11 +399,6 @@ void P_RipperBlood(mobj_t *mo)
     th->mom[MX] = mo->mom[MX] / 2;
     th->mom[MY] = mo->mom[MY] / 2;
     th->tics += P_Random() & 3;
-}
-
-int P_MobjGetFloorTerrainType(mobj_t *thing)
-{
-    return P_GetTerrainType(P_GetPtrp(thing->subsector, DMU_SECTOR), PLN_FLOOR);
 }
 
 void P_HitFloor(mobj_t *mo)
@@ -885,15 +893,17 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z)
         }
     }
 
+    mo->floorClip = 0;
+
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
-        mo->floorClip = 10;
-    }
-    else
-    {
-        mo->floorClip = 0;
+        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
+        if(tt->flags & TTF_FLOORCLIP)
+        {
+            mo->floorClip = 10;
+        }
     }
 
     return mo;
@@ -967,15 +977,17 @@ void P_CheckRespawnQueue(void)
     mo = P_SpawnMobj3fv(i, pos);
     mo->angle = sobj->angle;
 
+    mo->floorClip = 0;
+
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       P_MobjGetFloorTerrainType(mo) >= FLOOR_LIQUID &&
        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
     {
-        mo->floorClip = 10;
-    }
-    else
-    {
-        mo->floorClip = 0;
+        const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
+
+        if(tt->flags & TTF_FLOORCLIP)
+        {
+            mo->floorClip = 10;
+        }
     }
 
     // Copy spawn attributes to the new mobj.
@@ -1183,7 +1195,7 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     pos[VX] = (float) th->pos[VX];
-    pos[VY] = (float) th->[VY];
+    pos[VY] = (float) th->pos[VY];
 
     if(mobjInfo[i].flags & MF_SPAWNCEILING)
         pos[VZ] = ONCEILINGZ;

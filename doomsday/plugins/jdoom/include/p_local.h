@@ -38,6 +38,7 @@
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_xg.h"
+#include "p_terraintype.h"
 
 // Palette indices.
 // For damage/bonus red-/gold-shifts
@@ -101,7 +102,6 @@ void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
 void        P_MobjRemove(mobj_t* mo, boolean noRespawn);
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 void        P_MobjThinker(mobj_t* mo);
-int         P_MobjGetFloorTerrainType(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 
 void        P_SetDoomsdayFlags(mobj_t* mo);
