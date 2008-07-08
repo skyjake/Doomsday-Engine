@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,18 +22,20 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * Common controls menu
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#if  __DOOM64TC__
-#  include "doom64tc.h"
-#elif __WOLFTC__
+#include <string.h>
+
+#if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
 #  include "jdoom.h"
+#elif __JDOOM64__
+#  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
@@ -81,7 +83,7 @@ extern int      menusnds[];
 
 static menuitem_t* ControlsItems;
 
-#ifdef __JDOOM__
+#if __JDOOM__ || __JDOOM64__
 menu_t ControlsDef = {
     MNF_NOHOTKEYS,
     32, 40,
@@ -147,36 +149,36 @@ static controlconfig_t controlConfig[] =
     { "fall to ground", 0, 0, "impulse falldown" },
     { "speed", 0, "speed" },
     { "strafe", 0, "strafe" },
-    
-    { },
-    
+
+    { NULL },
+
     { "looking" },
     { "look up", 0, "look", 0, CCF_STAGED | CCF_INVERSE },
     { "look down", 0, "look", 0, CCF_STAGED | CCF_NON_INVERSE },
     { "look center", 0, 0, "impulse lookcenter" },
 
-    { },
+    { NULL },
 
     { "weapons" },
     { "attack/fire", 0, "attack" },
     { "next weapon", 0, 0, "impulse nextweapon" },
     { "previous weapon", 0, 0, "impulse prevweapon" },
-    
+
 #if __JDOOM__
     //{ (const char*) TXT_TXT_ARTIINVULNERABILITY, 0, 0, "impulse invulnerability" },
-    
+
 #endif
-    
+
 #if __JHEXEN__
     { "weapon 1", 0, 0, "impulse weapon1" },
     { "weapon 2", 0, 0, "impulse weapon2" },
     { "weapon 3", 0, 0, "impulse weapon3" },
     { "weapon 4", 0, 0, "impulse weapon4" },
 #endif
-    
+
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    { },
-    
+    { NULL },
+
     { "inventory" },
     { "move left", 0, 0, "invleft" },
     { "move right", 0, 0, "invright" },
@@ -196,7 +198,7 @@ static controlconfig_t controlConfig[] =
     { (const char*) TXT_TXT_ARTIFLY, 0, 0, "impulse fly" },
     { (const char*) TXT_TXT_ARTITELEPORT, 0, 0, "impulse teleport" },
 #endif
-    
+
 #ifdef __JHEXEN__
     { (const char*) TXT_TXT_ARTITORCH, 0, 0, "impulse torch" },
     { (const char*) TXT_TXT_ARTIHEALTH, 0, 0, "impulse health" },
@@ -211,8 +213,8 @@ static controlconfig_t controlConfig[] =
     { (const char*) TXT_TXT_ARTISUMMON, 0, 0, "impulse darkservant" },
     { (const char*) TXT_TXT_ARTIEGG, 0, 0, "impulse egg" },
 #endif
-    
-    { },
+
+    { NULL },
 
     { "chat" },
     { "begin chat", 0, 0, "beginchat" },
@@ -234,8 +236,8 @@ static controlconfig_t controlConfig[] =
     { "send macro 9", "chat", 0, "chatsendmacro 8" },
     { "send macro 10", "chat", 0, "chatsendmacro 9" },
     { "backspace", "chat", 0, "chatdelete" },
-    
-    { },
+
+    { NULL },
 
     { "map" },
     { "show/hide map", 0, 0, "automap" },
@@ -251,14 +253,14 @@ static controlconfig_t controlConfig[] =
     { "add mark", 0, 0, "addmark" },
     { "clear marks", 0, 0, "clearmarks" },
 
-    { },
+    { NULL },
 
     { "hud" },
     { "show/hide hud", 0, 0, "showhud" },
     { "smaller view", 0, 0, "viewsize -" },
     { "larger view", 0, 0, "viewsize +" },
 
-    { },
+    { NULL },
 
     { "menu shortcuts" },
     { "pause game", 0, 0, "pause" },
@@ -275,8 +277,8 @@ static controlconfig_t controlConfig[] =
     { "toggle messages", 0, 0, "togglemsgs" },
     { "gamma correction", 0, 0, "togglegamma" },
     { "screenshot", 0, 0, "screenshot" },
-    
-    { },
+
+    { NULL },
 
     { "menu" },
     { "show/hide menu", 0, 0, "menu" },
@@ -287,12 +289,12 @@ static controlconfig_t controlConfig[] =
     { "move right", "menu", 0, "menuright", CCF_REPEAT },
     { "select", "menu", 0, "menuselect", CCF_REPEAT },
 
-    { },
+    { NULL },
 
     { "on-screen questions" },
     { "answer yes", "message", 0, "messageyes" },
-    { "answer no", "message", 0, "messageno" },    
-    { "cancel", "message", 0, "messagecancel" },    
+    { "answer no", "message", 0, "messageno" },
+    { "cancel", "message", 0, "messagecancel" },
 };
 
 // CODE --------------------------------------------------------------------
@@ -300,7 +302,7 @@ static controlconfig_t controlConfig[] =
 static void M_EFuncControlConfig(int option, void *data)
 {
     controlconfig_t* cc = data;
-    
+
     //grabbing = controls + option;
 }
 
@@ -308,12 +310,12 @@ void M_InitControlsMenu(void)
 {
     int count = sizeof(controlConfig) / sizeof(controlConfig[0]);
     int i;
-    
+
     VERBOSE( Con_Message("M_InitControlsMenu: Creating controls items.\n") );
 
     // Allocate the menu items array.
     ControlsItems = Z_Calloc(sizeof(menuitem_t) * count, PU_STATIC, 0);
-    
+
     for(i = 0; i < count; ++i)
     {
         controlconfig_t* cc = &controlConfig[i];
@@ -325,7 +327,7 @@ void M_InitControlsMenu(void)
         }
         else
         {
-            item->text = (char*) cc->itemText;
+        item->text = (char*) cc->itemText;
         }
 
         // Inert items.
@@ -337,14 +339,14 @@ void M_InitControlsMenu(void)
         {
             item->type = ITT_INERT;
         }
-        else 
+        else
         {
             item->type = ITT_EFUNC;
             item->func = M_EFuncControlConfig;
             item->data = cc;
         }
     }
-    
+
     ControlsDef.items = ControlsItems;
     ControlsDef.itemCount = count;
 }
@@ -369,13 +371,13 @@ static void M_DrawSmallText(int x, int y, const char* text)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    
+
     DGL_Translatef(x, y + height/2, 0);
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-x, -y - height/2, 0);
-    
+
     M_WriteText2(x, y, text, huFontA, 1, 1, 1, menuAlpha);
-    
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
@@ -384,16 +386,16 @@ void M_DrawKeyBinding(int* x, int y, const char* name)
 {
     int width = M_StringWidth(name, huFontA);
     int height = M_StringHeight(name, huFontA);
-    
+
     // TODO: Maybe some graphics here?
     GL_SetNoTexture();
-    GL_DrawRect(*x, y, width*SMALL_SCALE + 2, height, 
+    GL_DrawRect(*x, y, width*SMALL_SCALE + 2, height,
 #if __JHERETIC__
                 0, .5f, 0,
 #elif __JHEXEN__
                 .5f, 0, 0,
 #else
-                0, 0, 0, 
+                0, 0, 0,
 #endif
                 menuAlpha*.6f);
 
@@ -404,17 +406,17 @@ void M_DrawKeyBinding(int* x, int y, const char* name)
 
 void M_DrawJoyMouseBinding(const char* axis, int* x, int y, const char* name, boolean isInverse)
 {
-    int width; 
+    int width;
     int height;
     char temp[256];
-    
+
     sprintf(temp, "%s%c%s", axis, isInverse? '-' : '+', name);
 
     width = M_StringWidth(temp, huFontA);
     height = M_StringHeight(temp, huFontA);
 
     M_DrawSmallText(*x, y, temp);
-    
+
     *x += width*SMALL_SCALE + BIND_GAP;
 }
 
@@ -422,18 +424,18 @@ static const char* findInString(const char* str, const char* token, int n)
 {
     int tokenLen = strlen(token);
     const char* at = strstr(str, token);
-    
-    if(!at) 
+
+    if(!at)
     {
         // Not there at all.
-        return NULL;        
+        return NULL;
     }
-    
+
     if(at - str <= n - tokenLen)
     {
         return at;
     }
-    
+
     // Past the end.
     return NULL;
 }
@@ -443,16 +445,16 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
     const char* ptr = strchr(bindings, ':'), *end, *end2;
     char buf[80], *b;
     boolean isInverse;
-    
+
     memset(buf, 0, sizeof(buf));
-    
+
     while(ptr)
     {
         ptr++;
         end = strchr(ptr, '-');
         if(!end) return;
-        
-        end++;        
+
+        end++;
         b = buf;
         while(*end && *end != ' ' && *end != '-' && *end != '+')
         {
@@ -460,15 +462,15 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
         }
         *b = 0;
         end2 = strchr(end, ' ');
-        if(!end2) 
+        if(!end2)
             end = end + strlen(end); // Then point to the end.
         else
             end = end2;
 
         if(!findInString(ptr, "-repeat", end - ptr))
-        {        
+        {
             isInverse = (findInString(ptr, "-inverse", end - ptr) != NULL);
-            
+
             if(!strncmp(ptr, "key", 3))
             {
                 if((cc->flags & CCF_INVERSE) && isInverse ||
@@ -478,7 +480,7 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
                     M_DrawKeyBinding(&x, y, buf);
                 }
             }
-            else 
+            else
             {
                 if(!(cc->flags & (CCF_INVERSE | CCF_NON_INVERSE)) || (cc->flags & CCF_INVERSE))
                 {
@@ -494,10 +496,10 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
                 }
             }
         }
-        
+
         ptr = end;
         while(*ptr == ' ') ptr++;
-        
+
         ptr = strchr(ptr, ':');
     }
 }
@@ -514,7 +516,7 @@ void M_DrawControlsMenu(void)
     const menu_t *menu = &ControlsDef;
     const menuitem_t *item = menu->items + menu->firstItem;
 
-#if __JDOOM__
+#if __JDOOM__ || __JDOOM64__
     M_DrawTitle("CONTROLS", menu->y - 28);
     sprintf(buf, "PAGE %i/%i", menu->firstItem / menu->numVisItems + 1,
             menu->itemCount / menu->numVisItems + 1);
@@ -535,32 +537,32 @@ void M_DrawControlsMenu(void)
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");
-    M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2, 
-                 100 + (95/cfg.menuScale) - M_StringHeight(buf, huFontA), buf, huFontA, 
+    M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2,
+                 100 + (95/cfg.menuScale) - M_StringHeight(buf, huFontA), buf, huFontA,
 #if __JDOOM__
                  1, .7f, .3f,
 #else
-                 1, 1, 1, 
+                 1, 1, 1,
 #endif
                  menuAlpha);
-    
+
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)
     {
         controlconfig_t* cc = item->data;
-        
+
         if(item->type != ITT_EFUNC)
             continue;
-       
+
         if(cc->controlName)
         {
-            if(!B_BindingsForControl(0, cc->controlName, 
+            if(!B_BindingsForControl(0, cc->controlName,
                                      /*cc->flags & CCF_NON_INVERSE? BFCI_ONLY_NON_INVERSE :
                                      cc->flags & CCF_INVERSE? BFCI_ONLY_INVERSE :*/
                                      BFCI_BOTH, buf, sizeof(buf)))
             {
-                
-            }   
+
+            }
         }
         else
         {
@@ -569,7 +571,7 @@ void M_DrawControlsMenu(void)
         /*
         memset(prbuff, 0, sizeof(prbuff));
         strncpy(prbuff, buf, sizeof(prbuff) - 1);*/
-        
+
         /*
         if(ctrl->flags & CLF_ACTION)
             sprintf(controlCmd, "+%s", ctrl->command);
