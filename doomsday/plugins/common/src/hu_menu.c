@@ -1908,6 +1908,22 @@ void Hu_MenuDrawer(void)
 
     if(!menuActive && !(menuAlpha > 0) && !(menuFogData.alpha > 0))
         goto end_draw_menu;
+    
+    if(allowScaling && currentMenu->unscaled.numVisItems)
+    {
+        currentMenu->numVisItems = currentMenu->unscaled.numVisItems / cfg.menuScale;
+        currentMenu->y = 110 - (110 - currentMenu->unscaled.y) / cfg.menuScale;
+        
+        if(currentMenu->firstItem && currentMenu->firstItem < currentMenu->numVisItems)
+        {
+            // Make sure all pages are divided correctly.
+            currentMenu->firstItem = 0;
+        }
+        if(itemOn - currentMenu->firstItem >= currentMenu->numVisItems)
+        {
+            itemOn = currentMenu->firstItem + currentMenu->numVisItems - 1;
+        }
+    }
 
     if(currentMenu->drawFunc)
         currentMenu->drawFunc(); // Call Draw routine.

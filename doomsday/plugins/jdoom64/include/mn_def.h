@@ -36,6 +36,7 @@
 
 #include "hu_stuff.h"
 #include "r_defs.h"
+#include "m_defs.h"
 
 // Macros
 
@@ -73,16 +74,6 @@ typedef struct {
 } editfield_t;
 
 typedef enum {
-    ITT_EMPTY,
-    ITT_EFUNC,
-    ITT_LRFUNC,
-    ITT_SETMENU,
-    ITT_INERT,
-    ITT_NAVLEFT,
-    ITT_NAVRIGHT
-} menuitemtype_t;
-
-typedef enum {
     MENU_MAIN,
     MENU_SKILL,
     MENU_OPTIONS,
@@ -99,40 +90,6 @@ typedef enum {
     MENU_CONTROLS,
     MENU_NONE
 } menutype_t;
-
-// Menu item flags
-#define MIF_NOTALTTXT           0x01 // Don't use alt text instead of lump.
-
-typedef struct {
-    menuitemtype_t  type;
-    int             flags;
-    char*           text;
-    void          (*func) (int option, void *data);
-    int             option;
-    dpatch_t*       patch;
-    void*           data;
-} menuitem_t;
-
-// Menu flags
-#define MNF_NOHOTKEYS           0x00000001 // Hotkeys are disabled.
-#define MNF_NOSCALE             0x00000002 // Menu wont be scaled (e.g. readthis).
-
-typedef struct {
-    int             flags;
-    int             x;
-    int             y;
-    void            (*drawFunc) (void);
-    int             itemCount;
-    const menuitem_t *items;
-    int             lastOn;
-    menutype_t      prevMenu;
-    dpatch_t       *font; // Font for menu items.
-    float          *color;
-    char           *background;     // Background lump name for this menu (if any).
-    int             itemHeight;
-    // For multipage menus.
-    int             firstItem, numVisItems;
-} menu_t;
 
 extern int      menuTime;
 extern boolean  shiftdown;

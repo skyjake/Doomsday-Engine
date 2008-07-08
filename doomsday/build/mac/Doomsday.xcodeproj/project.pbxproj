@@ -1394,6 +1394,7 @@
 		B098FA690DF7101B005F04FC /* st_stuff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = st_stuff.c; sourceTree = "<group>"; };
 		B098FA6A0DF7101B005F04FC /* tables.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tables.c; sourceTree = "<group>"; };
 		B098FA6B0DF7101B005F04FC /* wi_stuff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wi_stuff.c; sourceTree = "<group>"; };
+		B0A277F90E23562E00B715E3 /* m_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = m_defs.h; path = ../../plugins/common/include/m_defs.h; sourceTree = SOURCE_ROOT; };
 		B0A8094D06F1F45D007AEB2E /* Read Me.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = "Read Me.rtf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -2899,6 +2900,7 @@
 		B098F80D0DF71019005F04FC /* include */ = {
 			isa = PBXGroup;
 			children = (
+				B0A277F90E23562E00B715E3 /* m_defs.h */,
 				B098F80E0DF71019005F04FC /* acfnlink.h */,
 				B098F80F0DF71019005F04FC /* d_api.h */,
 				B098F8100DF71019005F04FC /* d_config.h */,

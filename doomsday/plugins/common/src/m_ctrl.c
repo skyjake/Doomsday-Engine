@@ -92,7 +92,7 @@ menu_t ControlsDef = {
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
-    0, 17
+    0, 17, { 17, 40 }
 };
 #endif
 
@@ -107,7 +107,7 @@ menu_t ControlsDef = {
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
-    0, 15
+    0, 15, { 15, 26 }
 };
 #endif
 
@@ -122,7 +122,7 @@ menu_t ControlsDef = {
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
-    0, 16
+    0, 16, { 16, 21 }
 };
 #endif
 
@@ -148,10 +148,14 @@ static controlconfig_t controlConfig[] =
     { "speed", 0, "speed" },
     { "strafe", 0, "strafe" },
     
+    { },
+    
     { "looking" },
     { "look up", 0, "look", 0, CCF_STAGED | CCF_INVERSE },
     { "look down", 0, "look", 0, CCF_STAGED | CCF_NON_INVERSE },
     { "look center", 0, 0, "impulse lookcenter" },
+
+    { },
 
     { "weapons" },
     { "attack/fire", 0, "attack" },
@@ -159,8 +163,50 @@ static controlconfig_t controlConfig[] =
     { "previous weapon", 0, 0, "impulse prevweapon" },
     // TODO: Game-specific.
     
-    // TODO: Inventory.
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+    { },
     
+    { "inventory" },
+    { "move left", 0, 0, "invleft" },
+    { "move right", 0, 0, "invright" },
+    { "use artifact", 0, 0, "impulse useartifact" },
+    { "panic!", 0, 0, "impulse panic" },
+#endif
+
+#ifdef __JHERETIC__
+/*
+ {"cantdie",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 215     {"invisib",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 216     {"health",      CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 217     {"sphealth",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 219     {"torch",       CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 220     {"firebomb",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 221     {"egg",         CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 222     {"flyarti",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+ 223     {"teleport",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0}, */
+    { "tome of power", 0, 0, "impulse tome" },
+#endif
+    
+#ifdef __JHEXEN__
+/*
+ {"torch",       CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+    224     {"health",      CLF_ACTION,     DDBC_NORMAL,    '\\', 0, 0},
+    225     {"mystic",      CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+    226     {"krater",      CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+    227     {"spdboots",    CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+    228     {"blast",       CLF_ACTION,     DDBC_NORMAL,    '9', 0, 0},
+    229     {"teleport",    CLF_ACTION,     DDBC_NORMAL,    '8', 0, 0},
+    230     {"teleothr",    CLF_ACTION,     DDBC_NORMAL,    '7', 0, 0},
+    231     {"poison",      CLF_ACTION,     DDBC_NORMAL,    '0', 0, 0},
+    232     {"cantdie",     CLF_ACTION,     DDBC_NORMAL,    '5', 0, 0},
+    233     {"servant",     CLF_ACTION,     DDBC_NORMAL,    0, 0, 0},
+    234     {"egg",         CLF_ACTION,     DDBC_NORMAL,    '6', 0, 0},
+    235 
+*/
+#endif
+    
+    { },
+
     { "chat" },
     { "begin chat", 0, 0, "beginchat" },
     { "begin chat (p1)", 0, 0, "beginchat 0" },
@@ -182,6 +228,8 @@ static controlconfig_t controlConfig[] =
     { "send macro 10", "chat", 0, "chatsendmacro 9" },
     { "backspace", "chat", 0, "chatdelete" },
     
+    { },
+
     { "map" },
     { "show/hide map", 0, 0, "automap" },
     { "zoom in", 0, "mapzoom", 0, CCF_NON_INVERSE },
@@ -196,10 +244,14 @@ static controlconfig_t controlConfig[] =
     { "add mark", 0, 0, "addmark" },
     { "clear marks", 0, 0, "clearmarks" },
 
+    { },
+
     { "hud" },
     { "show/hide hud", 0, 0, "showhud" },
     { "smaller view", 0, 0, "viewsize -" },
     { "larger view", 0, 0, "viewsize +" },
+
+    { },
 
     { "menu shortcuts" },
     { "pause game", 0, 0, "pause" },
@@ -217,6 +269,8 @@ static controlconfig_t controlConfig[] =
     { "gamma correction", 0, 0, "togglegamma" },
     { "screenshot", 0, 0, "screenshot" },
     
+    { },
+
     { "menu" },
     { "show/hide menu", 0, 0, "menu" },
     { "previous menu", "menu", 0, "menucancel" },
@@ -225,6 +279,8 @@ static controlconfig_t controlConfig[] =
     { "move left", "menu", 0, "menuleft", CCF_REPEAT },
     { "move right", "menu", 0, "menuright", CCF_REPEAT },
     { "select", "menu", 0, "menuselect", CCF_REPEAT },
+
+    { },
 
     { "on-screen questions" },
     { "answer yes", "message", 0, "messageyes" },
@@ -259,7 +315,11 @@ void M_InitControlsMenu(void)
         item->text = (char*) cc->itemText;
 
         // Inert items.
-        if(!cc->controlName && !cc->command)
+        if(!cc->itemText)
+        {
+            item->type = ITT_EMPTY;
+        }
+        else if(!cc->controlName && !cc->command)
         {
             item->type = ITT_INERT;
         }
@@ -313,7 +373,15 @@ void M_DrawKeyBinding(int* x, int y, const char* name)
     
     // TODO: Maybe some graphics here?
     GL_SetNoTexture();
-    GL_DrawRect(*x, y, width*SMALL_SCALE + 2, height, 0, 0, 0, menuAlpha*.6f);
+    GL_DrawRect(*x, y, width*SMALL_SCALE + 2, height, 
+#if __JHERETIC__
+                0, .5f, 0,
+#elif __JHEXEN__
+                .5f, 0, 0,
+#else
+                0, 0, 0, 
+#endif
+                menuAlpha*.6f);
 
     M_DrawSmallText(*x + 1, y, name);
 
@@ -439,7 +507,7 @@ void M_DrawControlsMenu(void)
     M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
                  huFontA, 1, .7f, .3f, menuAlpha);
 #else
-    M_WriteText2(120, 2, "CONTROLS", huFontB, cfg.menuColor[0],
+    M_WriteText2(120, 100 - 98/cfg.menuScale, "CONTROLS", huFontB, cfg.menuColor[0],
                  cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
@@ -454,7 +522,7 @@ void M_DrawControlsMenu(void)
 
     strcpy(buf, "Select to assign new, [Del] to clear");
     M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2, 
-                 195 - M_StringHeight(buf, huFontA), buf, huFontA, 
+                 100 + (95/cfg.menuScale) - M_StringHeight(buf, huFontA), buf, huFontA, 
 #if __JDOOM__
                  1, .7f, .3f,
 #else
