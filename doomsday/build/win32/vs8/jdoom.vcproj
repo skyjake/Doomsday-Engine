@@ -282,6 +282,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\m_defs.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_actor.h"
 				>
 			</File>
@@ -339,6 +343,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\include\p_switch.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\p_terraintype.h"
 				>
 			</File>
 			<File
@@ -446,6 +454,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\m_ctrl.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\m_fixed.c"
 				>
 			</File>
@@ -511,6 +523,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\p_switch.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\p_terraintype.c"
 				>
 			</File>
 			<File

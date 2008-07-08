@@ -29,6 +29,7 @@
  ./../../plugins/common/src/p_start.c
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_switch.c
+ ./../../plugins/common/src/p_terraintype.c
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_view.c

@@ -15,6 +15,7 @@
  ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_inventory.c
  ./../../plugins/common/src/p_switch.c
+ ./../../plugins/common/src/p_terraintype.c
  ./../../plugins/common/src/p_mapspec.c
  ./../../plugins/common/src/p_plat.c
  ./../../plugins/common/src/p_iterlist.c

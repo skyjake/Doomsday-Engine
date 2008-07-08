@@ -18,6 +18,7 @@
  ./../../plugins/common/src/p_mapsetup.c
  ./../../plugins/common/src/p_mapspec.c
  ./../../plugins/common/src/p_saveg.c
+ ./../../plugins/common/src/p_terraintype.c
  ./../../plugins/common/src/p_plat.c
  ./../../plugins/common/src/p_iterlist.c
  ./../../plugins/common/src/p_map.c
