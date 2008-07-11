@@ -26,6 +26,9 @@
  * p_player.h: Common playsim routines relating to players.
  */
 
+#ifndef __COMMON_PLAYER_H__
+#define __COMMON_PLAYER_H__
+
 #if __WOLFTC__
 #  include "wolftc.h"
 #elif __JDOOM__
@@ -46,6 +49,7 @@ int         P_GetPlayerCheats(player_t *player);
 weapontype_t P_PlayerFindWeapon(player_t *player, boolean next);
 weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                                  ammotype_t ammo, boolean force);
+boolean     P_CheckAmmo(player_t* plr);
 void        P_ShotAmmo(player_t *player);
 
 void        P_PlayerThink(player_t *player, timespan_t ticLength);
@@ -58,3 +62,4 @@ void        P_SetYellowMessage(player_t *pl, char *msg, boolean noHide);
 
 boolean     P_IsCamera(mobj_t *mo);
 void        P_PlayerThinkCamera(player_t *player);
+#endif

@@ -491,56 +491,6 @@ void P_BringUpWeapon(player_t *plr)
     P_SetPsprite(plr, ps_weapon, newState);
 }
 
-/**
- * Checks if there is enough ammo to shoot with the current weapon. If not,
- * a weapon change event is dispatched (which may or may not do anything
- * depending on the player's config).
- *
- * @return              @c true, if there is enough mana to shoot.
- */
-boolean P_CheckAmmo(player_t *plr)
-{
-    ammotype_t  i;
-    int         count;
-    boolean     good;
-
-    //// \kludge Work around the multiple firing modes problems.
-    //// We need to split the weapon firing routines and implement them as
-    //// new fire modes.
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
-        return true;
-    // < KLUDGE
-
-    // Check we have enough of ALL ammo types used by this weapon.
-    good = true;
-
-    for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
-    {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[i])
-            continue; // Weapon does not take this type of ammo.
-
-        // Minimal amount for one shot varies.
-        count = weaponInfo[plr->readyWeapon][plr->class].mode[0].perShot[i];
-
-        // Return if current ammunition sufficient.
-        if(plr->ammo[i] < count)
-        {
-            good = false;
-        }
-    }
-    if(good)
-        return true;
-
-    // Out of ammo, pick a weapon to change to.
-    P_MaybeChangeWeapon(plr, WT_NOCHANGE, AT_NOAMMO, false);
-
-    // Now set appropriate weapon overlay.
-    if(player->pendingWeapon != WT_NOCHANGE)
-        P_SetPsprite(plr, ps_weapon, weaponInfo[plr->readyWeapon][plr->class].mode[0].downState);
-
-    return false;
-}
-
 void P_FireWeapon(player_t *plr)
 {
     statenum_t attackState;

@@ -363,6 +363,70 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 }
 
 /**
+ * Checks if the player has enough ammo to fire their readied weapon.
+ * If not, a weapon change is instigated.
+ *
+ * @return              @c true, if there is enough ammo to fire.
+ */
+boolean P_CheckAmmo(player_t* plr)
+{
+    int                 count, fireMode;
+    boolean             good;
+    ammotype_t          i;
+    weaponinfo_t*       wInfo;
+
+    wInfo = &weaponInfo[plr->readyWeapon][plr->class];
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__ || __WOLFTC__
+    fireMode = 0;
+#endif
+#if __JHERETIC__
+    // If deathmatch always use firemode two ammo requirements.
+    if(plr->powers[PT_WEAPONLEVEL2] && !deathmatch)
+        fireMode = 1;
+    else
+        fireMode = 0;
+#endif
+
+#if __JHEXEN__
+    //// \kludge Work around the multiple firing modes problems.
+    //// We need to split the weapon firing routines and implement them as
+    //// new fire modes.
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
+        return true;
+    // < KLUDGE
+#endif
+
+    // Check we have enough of ALL ammo types used by this weapon.
+    good = true;
+    for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
+    {
+        if(!wInfo->mode[fireMode].ammoType[i])
+            continue; // Weapon does not take this type of ammo.
+
+        // Minimal amount for one shot varies.
+        count = wInfo->mode[fireMode].perShot[i];
+
+        // Return if current ammunition sufficient.
+        if(plr->ammo[i] < count)
+        {
+            good = false;
+        }
+    }
+
+    if(good)
+        return true;
+
+    // Out of ammo, pick a weapon to change to.
+    P_MaybeChangeWeapon(plr, WT_NOCHANGE, AT_NOAMMO, false);
+
+    // Now set appropriate weapon overlay.
+    if(plr->pendingWeapon != WT_NOCHANGE)
+        P_SetPsprite(plr, ps_weapon, wInfo->mode[fireMode].downState);
+
+    return false;
+}
+
+/**
  * Return the next weapon for the given player. Can return the existing
  * weapon if no other valid choices. Preferences are NOT user selectable.
  *

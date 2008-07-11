@@ -155,47 +155,6 @@ void P_BringUpWeapon(player_t *player)
     P_SetPsprite(player, ps_weapon, wminfo->upState);
 }
 
-/**
- * Checks if the player has enough ammo to fire their readied weapon.
- * If not, a weapon change is instigated.
- *
- * @return              @c true, if there is enough ammo to fire.
- */
-boolean P_CheckAmmo(player_t *player)
-{
-    ammotype_t          i;
-    int                 count;
-    boolean             good;
-
-    // Check we have enough of ALL ammo types used by this weapon.
-    good = true;
-    for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
-    {
-        if(!weaponInfo[player->readyWeapon][player->class].mode[0].ammoType[i])
-            continue; // Weapon does not take this type of ammo.
-
-        // Minimal amount for one shot varies.
-        count = weaponInfo[player->readyWeapon][player->class].mode[0].perShot[i];
-
-        // Return if current ammunition sufficient.
-        if(player->ammo[i] < count)
-        {
-            good = false;
-        }
-    }
-    if(good)
-        return true;
-
-    // Out of ammo, pick a weapon to change to.
-    P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
-
-    // Now set appropriate weapon overlay.
-    if(player->pendingWeapon != WT_NOCHANGE)
-        P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].downState);
-
-    return false;
-}
-
 void P_FireWeapon(player_t *player)
 {
     statenum_t          newstate;
