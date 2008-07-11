@@ -623,7 +623,6 @@ extern          "C" {
     // Sent to the game when various map update events occur.
     enum /* do not change the numerical values of the constants */
     {
-        DMUSC_SECTOR_ISBENIGN,
         DMUSC_LINE_FIRSTRENDERED
     };
 
@@ -1158,7 +1157,7 @@ typedef struct {
         BFCI_ONLY_NON_INVERSE,
         BFCI_ONLY_INVERSE
     } bfcinverse_t;
-    
+
     // Console command.
     typedef struct ccmd_s {
         const char     *name;

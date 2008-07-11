@@ -108,7 +108,7 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
              * In this context Doomsday expects either -1 (a bad texture name)
              * Or the id of a wall texture it should set to this section.
              * \todo Add code to determine what to do.
-	         */
+             */
             break;
 
         default:
@@ -127,11 +127,6 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
  * These status reports inform us of what Doomsday is doing to a particular
  * map data object (at any time) that we might want to react to.
  *
- * For example, during post processing of map data during level load - if
- * Doomsday encounters a sector with 0 lines it will send us a "benign sector"
- * report. In jDoom we respond to this by making sure we remove the sector's
- * special tag to prevent wayward line specials from misbehaving.
- *
  * If we arn't interested in the report - we should simply return true and
  * take no further action.
  *
@@ -144,15 +139,6 @@ int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
 {
     switch(code)
     {
-    case DMUSC_SECTOR_ISBENIGN:
-        /**
-         * A benign sector is one which has zero lines.
-         * Zero it's tag to prevent it from being selected while searching
-         * for sectors to act on (eg XG and the "built-in" line specials).
-         */
-        xsectors[id].tag = 0;
-        break;
-
     case DMUSC_LINE_FIRSTRENDERED:
         /**
          * Called the first time the given line is rendered.
