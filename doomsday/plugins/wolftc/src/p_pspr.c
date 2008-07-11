@@ -188,7 +188,8 @@ boolean P_CheckAmmo(player_t *player)
     P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
-    P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].downState);
+    if(player->pendingWeapon != WT_NOCHANGE)
+        P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].downState);
 
     return false;
 }
@@ -397,6 +398,8 @@ void C_DECL A_Punch(player_t *player, pspdef_t * psp)
     int         damage;
     float       slope;
 
+    P_ShotAmmo(player);
+    player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
 
@@ -428,6 +431,8 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
     int         damage;
     float       slope;
 
+    P_ShotAmmo(player);
+    player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
 
@@ -913,6 +918,8 @@ void C_DECL A_Knife(player_t *player, pspdef_t *psp)
     int         damage;
     float       slope;
 
+    P_ShotAmmo(player);
+    player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
 
@@ -1719,10 +1726,15 @@ void C_DECL A_FireCMissile2(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireCMissile2NA(player_t *player, pspdef_t * psp)
 {
+    P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
                  weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
+
+    player->update |= PSF_AMMO;
+    if(IS_CLIENT)
+        return;
 
     P_SpawnMissile(MT_CATAPMISSILE2, player->plr->mo, NULL);
 }
@@ -1733,10 +1745,13 @@ void C_DECL A_FireCMissile2NA(player_t *player, pspdef_t * psp)
 //
 void C_DECL A_FireCMissile3(player_t *player, pspdef_t * psp)
 {
-
+    P_ShotAmmo(player);
     P_SetPsprite(player, ps_flash,
                  weaponInfo[player->readyWeapon][player->class].mode[0].flashState +
                  (P_Random() & 1));
+    player->update |= PSF_AMMO;
+    if(IS_CLIENT)
+        return;
 
     P_SpawnMissile(MT_CATAPMISSILE2, player->plr->mo, NULL);
 }

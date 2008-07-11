@@ -169,7 +169,7 @@ boolean P_CheckAmmo(player_t *player)
 
     // Check we have enough of ALL ammo types used by this weapon.
     good = true;
-    for(i=0; i < NUM_AMMO_TYPES && good; ++i)
+    for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
     {
         if(!weaponInfo[player->readyWeapon][player->class].mode[0].ammoType[i])
             continue; // Weapon does not take this type of ammo.
@@ -191,7 +191,8 @@ boolean P_CheckAmmo(player_t *player)
     P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
-    P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].downState);
+    if(player->pendingWeapon != WT_NOCHANGE)
+        P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].downState);
 
     return false;
 }
@@ -402,6 +403,8 @@ void C_DECL A_Punch(player_t *player, pspdef_t *psp)
     int                 damage;
     float               slope;
 
+    P_ShotAmmo(player);
+    player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
 
@@ -435,6 +438,8 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
     int                 damage;
     float               slope;
 
+    P_ShotAmmo(player);
+    player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
 

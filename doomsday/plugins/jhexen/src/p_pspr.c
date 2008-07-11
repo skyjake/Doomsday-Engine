@@ -535,8 +535,9 @@ boolean P_CheckAmmo(player_t *plr)
     P_MaybeChangeWeapon(plr, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
-    P_SetPsprite(plr, ps_weapon,
-                 weaponInfo[plr->readyWeapon][plr->class].mode[0].downState);
+    if(player->pendingWeapon != WT_NOCHANGE)
+        P_SetPsprite(plr, ps_weapon, weaponInfo[plr->readyWeapon][plr->class].mode[0].downState);
+
     return false;
 }
 

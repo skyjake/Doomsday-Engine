@@ -680,7 +680,7 @@ void GetDefState(char *def, int *val)
 /**
  *Initialize weapon info, maxammo and clipammo.
  */
-void P_InitWeaponInfo()
+void P_InitWeaponInfo(void)
 {
 #define WPINF "Weapon Info|"
 
@@ -817,8 +817,9 @@ boolean P_CheckAmmo(player_t *player)
     // Out of ammo, pick a weapon to change to.
     P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
-    P_SetPsprite(player, ps_weapon,
-                 weaponInfo[player->readyWeapon][player->class].mode[lvl].downState);
+    if(player->pendingWeapon != WT_NOCHANGE)
+        P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[lvl].downState);
+
     return false;
 }
 
@@ -1124,6 +1125,7 @@ void C_DECL A_BeakAttackPL1(player_t *player, pspdef_t *psp)
     int                 damage;
     float               slope;
 
+    P_ShotAmmo(player);
     damage = 1 + (P_Random() & 3);
     angle = player->plr->mo->angle;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
@@ -1149,6 +1151,7 @@ void C_DECL A_BeakAttackPL2(player_t *player, pspdef_t *psp)
     int                 damage;
     float               slope;
 
+    P_ShotAmmo(player);
     damage = HITDICE(4);
     angle = player->plr->mo->angle;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
@@ -1174,6 +1177,7 @@ void C_DECL A_StaffAttackPL1(player_t *player, pspdef_t *psp)
     int                 damage;
     float               slope;
 
+    P_ShotAmmo(player);
     damage = 5 + (P_Random() & 15);
     angle = player->plr->mo->angle;
     angle += (P_Random() - P_Random()) << 18;
@@ -1197,6 +1201,7 @@ void C_DECL A_StaffAttackPL2(player_t *player, pspdef_t *psp)
     int                 damage;
     float               slope;
 
+    P_ShotAmmo(player);
     damage = 18 + (P_Random() & 63);
     angle = player->plr->mo->angle;
     angle += (P_Random() - P_Random()) << 18;
@@ -1621,7 +1626,6 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
         return;
 
     P_ShotAmmo(player);
-
     if(IS_CLIENT)
         return;
 
@@ -1640,7 +1644,6 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
 void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
 {
     P_ShotAmmo(player);
-
     if(IS_CLIENT)
         return;
 
@@ -1901,6 +1904,7 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t *psp)
     int                 damage, randVal;
     float               slope, dist;
 
+    P_ShotAmmo(player);
     psp->pos[VX] = ((P_Random() & 3) - 2);
     psp->pos[VY] = WEAPONTOP + (P_Random() & 3);
     angle = player->plr->mo->angle;
