@@ -1564,20 +1564,6 @@ boolean MPE_End(void)
         gx.SetupForMapData(DMU_SECTOR, gamemap->numSectors);
     }
 
-    for(i = 0; i < gamemap->numSectors; ++i)
-    {
-        sector_t           *sec = &gamemap->sectors[i];
-
-        if(!(sec->lineDefCount > 0))
-        {   // Its a "benign" sector.
-            // Send the game a status report (we don't need to do anything).
-            if(gx.HandleMapObjectStatusReport)
-                gx.HandleMapObjectStatusReport(DMUSC_SECTOR_ISBENIGN,
-                                               sec - gamemap->sectors,
-                                               DMU_SECTOR, NULL);
-        }
-    }
-
     /**
      * Are we caching this map?
      */
