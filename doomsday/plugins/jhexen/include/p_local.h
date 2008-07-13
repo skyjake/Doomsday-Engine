@@ -161,7 +161,7 @@ boolean     P_CheckMissileSpawn(mobj_t *mo);
 float       P_MobjGetFriction(mobj_t *mo);
 void        P_RipperBlood(mobj_t *mo);
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
-int         P_HitFloor(mobj_t *mo);
+boolean     P_HitFloor(mobj_t *mo);
 
 // Spawn spots.
 void        P_SpawnMapThing(spawnspot_t *spot);
