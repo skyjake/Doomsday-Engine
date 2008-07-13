@@ -66,6 +66,8 @@ typedef struct controlconfig_s {
     const char* controlName;
     const char* command;
     int flags;
+    // Automatically set:
+    menuitem_t* item;
 } controlconfig_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -85,7 +87,7 @@ static menuitem_t* ControlsItems;
 
 #if __JDOOM__ || __JDOOM64__
 menu_t ControlsDef = {
-    MNF_NOHOTKEYS,
+    MNF_NOHOTKEYS | MNF_DELETEFUNC,
     32, 40,
     M_DrawControlsMenu,
     0, NULL,
@@ -100,7 +102,7 @@ menu_t ControlsDef = {
 
 #ifdef __JHERETIC__
 menu_t ControlsDef = {
-    MNF_NOHOTKEYS,
+    MNF_NOHOTKEYS | MNF_DELETEFUNC,
     32, 26,
     M_DrawControlsMenu,
     0, NULL,
@@ -115,7 +117,7 @@ menu_t ControlsDef = {
 
 #ifdef __JHEXEN__
 menu_t ControlsDef = {
-    MNF_NOHOTKEYS,
+    MNF_NOHOTKEYS | MNF_DELETEFUNC,
     32, 21,
     M_DrawControlsMenu,
     0, NULL,
@@ -164,9 +166,26 @@ static controlconfig_t controlConfig[] =
     { "next weapon", 0, 0, "impulse nextweapon" },
     { "previous weapon", 0, 0, "impulse prevweapon" },
 
-#if __JDOOM__
-    //{ (const char*) TXT_TXT_ARTIINVULNERABILITY, 0, 0, "impulse invulnerability" },
+#if __JDOOM__ || __JDOOM64__
+    { "fist/chainsaw", 0, 0, "impulse weapon1" },
+    { "chainsaw/fist", 0, 0, "impulse weapon8" },
+    { "pistol", 0, 0, "impulse weapon2" },
+    { "shotgun/super sg", 0, 0, "impulse weapon3" },
+    { "super sg/shotgun", 0, 0, "impulse weapon9" },
+    { "chaingun", 0, 0, "impulse weapon4" }, 
+    { "rocket launcher", 0, 0, "impulse weapon5" }, 
+    { "plasma rifle", 0, 0, "impulse weapon6" }, 
+    { "bfg 9000", 0, 0, "impulse weapon7" }, 
+#endif
 
+#if __JHERETIC__
+    { "staff/gauntlets", 0, 0, "impulse weapon1" },
+    { "elvenwand", 0, 0, "impulse weapon2" },
+    { "crossbow", 0, 0, "impulse weapon3" },
+    { "dragon claw", 0, 0, "impulse weapon4" },
+    { "hellstaff", 0, 0, "impulse weapon5" },
+    { "phoenix rod", 0, 0, "impulse weapon6" },
+    { "firemace", 0, 0, "impulse weapon7" },
 #endif
 
 #if __JHEXEN__
@@ -217,26 +236,37 @@ static controlconfig_t controlConfig[] =
     { NULL },
 
     { "chat" },
-    { "begin chat", 0, 0, "beginchat" },
-    { "begin chat (p1)", 0, 0, "beginchat 0" },
-    { "begin chat (p2)", 0, 0, "beginchat 1" },
-    { "begin chat (p3)", 0, 0, "beginchat 2" },
-    { "begin chat (p4)", 0, 0, "beginchat 3" },
-    { "message refresh", 0, 0, "msgrefresh" },
+    { "open chat", 0, 0, "beginchat" },
+
+#if __JDOOM__ || __JDOOM64__
+    { "green chat", 0, 0, "beginchat 0" },
+    { "indigo chat", 0, 0, "beginchat 1" },
+    { "brown chat", 0, 0, "beginchat 2" },
+    { "red chat", 0, 0, "beginchat 3" },
+#endif
+   
+#if __JHERETIC__
+    { "green chat", 0, 0, "beginchat 0" },
+    { "yellow chat", 0, 0, "beginchat 1" },
+    { "red chat", 0, 0, "beginchat 2" },
+    { "blue chat", 0, 0, "beginchat 3" },
+#endif
+    
     { "send message", "chat", 0, "chatcomplete" },
     { "cancel message", "chat", 0, "chatcancel" },
-    { "send macro 1", "chat", 0, "chatsendmacro 0" },
-    { "send macro 2", "chat", 0, "chatsendmacro 1" },
-    { "send macro 3", "chat", 0, "chatsendmacro 2" },
-    { "send macro 4", "chat", 0, "chatsendmacro 3" },
-    { "send macro 5", "chat", 0, "chatsendmacro 4" },
-    { "send macro 6", "chat", 0, "chatsendmacro 5" },
-    { "send macro 7", "chat", 0, "chatsendmacro 6" },
-    { "send macro 8", "chat", 0, "chatsendmacro 7" },
-    { "send macro 9", "chat", 0, "chatsendmacro 8" },
-    { "send macro 10", "chat", 0, "chatsendmacro 9" },
+    { "macro 1", "chat", 0, "chatsendmacro 0" },
+    { "macro 2", "chat", 0, "chatsendmacro 1" },
+    { "macro 3", "chat", 0, "chatsendmacro 2" },
+    { "macro 4", "chat", 0, "chatsendmacro 3" },
+    { "macro 5", "chat", 0, "chatsendmacro 4" },
+    { "macro 6", "chat", 0, "chatsendmacro 5" },
+    { "macro 7", "chat", 0, "chatsendmacro 6" },
+    { "macro 8", "chat", 0, "chatsendmacro 7" },
+    { "macro 9", "chat", 0, "chatsendmacro 8" },
+    { "macro 10", "chat", 0, "chatsendmacro 9" },
     { "backspace", "chat", 0, "chatdelete" },
-
+    { "message refresh", 0, 0, "msgrefresh" },
+    
     { NULL },
 
     { "map" },
@@ -248,10 +278,10 @@ static controlconfig_t controlConfig[] =
     { "pan right", 0, "mappanx", 0, CCF_NON_INVERSE },
     { "pan up", 0, "mappany", 0, CCF_NON_INVERSE },
     { "pan down", 0, "mappany", 0, CCF_INVERSE },
-    { "toggle follow", 0, 0, "follow" },
-    { "toggle rotation", 0, 0, "rotate" },
-    { "add mark", 0, 0, "addmark" },
-    { "clear marks", 0, 0, "clearmarks" },
+    { "toggle follow", "map", 0, "follow" },
+    { "toggle rotation", "map", 0, "rotate" },
+    { "add mark", "map", 0, "addmark" },
+    { "clear marks", "map", 0, "clearmarks" },
 
     { NULL },
 
@@ -262,13 +292,12 @@ static controlconfig_t controlConfig[] =
 
     { NULL },
 
-    { "menu shortcuts" },
+    { "shortcuts" },
     { "pause game", 0, 0, "pause" },
-    { "end game", 0, 0, "endgame" },
-    { "quit", 0, 0, "quit" },
 #if !__JDOOM64__
     { "help screen", 0, 0, "helpscreen" },
 #endif
+    { "end game", 0, 0, "endgame" },
     { "save game", 0, 0, "savegame" },
     { "load game", 0, 0, "loadgame" },
     { "quick save", 0, 0, "quicksave" },
@@ -277,6 +306,7 @@ static controlconfig_t controlConfig[] =
     { "toggle messages", 0, 0, "togglemsgs" },
     { "gamma correction", 0, 0, "togglegamma" },
     { "screenshot", 0, 0, "screenshot" },
+    { "quit", 0, 0, "quit" },
 
     { NULL },
 
@@ -303,7 +333,20 @@ static void M_EFuncControlConfig(int option, void *data)
 {
     controlconfig_t* cc = data;
 
-    //grabbing = controls + option;
+    if(option == -1)
+    {
+        // TODO: Delete!
+        //Con_Message("Delete requested %s\n", cc->itemText);
+                
+    }
+    else
+    {
+        // Start grabbing for this control.
+        //Con_Message("Grabbing %s\n", cc->item->text);
+
+        grabbing = cc;
+        DD_SetInteger(DD_SYMBOLIC_ECHO, true);
+    }
 }
 
 void M_InitControlsMenu(void)
@@ -320,6 +363,8 @@ void M_InitControlsMenu(void)
     {
         controlconfig_t* cc = &controlConfig[i];
         menuitem_t* item = &ControlsItems[i];
+        
+        cc->item = item;
 
         if(cc->itemText && ((int) cc->itemText < NUMTEXT))
         {
@@ -327,7 +372,7 @@ void M_InitControlsMenu(void)
         }
         else
         {
-        item->text = (char*) cc->itemText;
+            item->text = (char*) cc->itemText;
         }
 
         // Inert items.
@@ -349,20 +394,6 @@ void M_InitControlsMenu(void)
 
     ControlsDef.items = ControlsItems;
     ControlsDef.itemCount = count;
-}
-
-/*
- * spacecat
- */
-void spacecat(char *str, const char *catstr)
-{
-    if(str[0])
-        strcat(str, " ");
-
-    if(!stricmp(catstr, "smcln"))
-        catstr = ";";
-
-    strcat(str, catstr);
 }
 
 static void M_DrawSmallText(int x, int y, const char* text)
@@ -556,13 +587,7 @@ void M_DrawControlsMenu(void)
 
         if(cc->controlName)
         {
-            if(!B_BindingsForControl(0, cc->controlName,
-                                     /*cc->flags & CCF_NON_INVERSE? BFCI_ONLY_NON_INVERSE :
-                                     cc->flags & CCF_INVERSE? BFCI_ONLY_INVERSE :*/
-                                     BFCI_BOTH, buf, sizeof(buf)))
-            {
-
-            }
+            B_BindingsForControl(0, cc->controlName, buf, sizeof(buf));
         }
         else
         {
@@ -623,47 +648,119 @@ void M_DrawControlsMenu(void)
     }
 }
 
-/*
- *  findtoken
- */
-int findtoken(char *string, char *token, char *delim)
+void M_ControlGrabDrawer(void)
 {
-    char   *ptr = strtok(string, delim);
+    const char* text;
+    
+    if(!grabbing) return;
+    
+    GL_SetNoTexture();
+    GL_DrawRect(0, 0, 320, 200, 0, 0, 0, .7f);
 
-    while(ptr)
-    {
-        if(!stricmp(ptr, token))
-            return true;
-        ptr = strtok(NULL, delim);
-    }
-    return false;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    
+    DGL_Translatef(160, 100, 0);
+    DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
+    DGL_Translatef(-160, -100, 0);
+    
+    text = "press key or move controller for";
+    M_WriteText2(160 - M_StringWidth(text, huFontA)/2, 98 - M_StringHeight(text, huFontA), 
+                 text, huFontA, .75f, .75f, .75f, 1);
+    M_WriteText2(160 - M_StringWidth(grabbing->item->text, huFontB)/2, 
+                 102, grabbing->item->text, huFontB, 1, 1, 1, 1);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
-/*
- *  D_PrivilegedResponder
- */
-int D_PrivilegedResponder(event_t *event)
+int M_ControlsPrivilegedResponder(event_t *event)
 {
-    char    cmd[256], buff[256], evname[80];
-
     // We're interested in key or button down events.
-    if(grabbing && event->state == EVS_DOWN &&
-       (event->type == EV_KEY || event->type == EV_MOUSE_BUTTON ||
-        event->type == EV_JOY_BUTTON || event->type == EV_POV))
+    if(grabbing && event->type == EV_SYMBOLIC)
     {
-        // We'll grab this event.
-        boolean del = false;
+        char cmd[512];
+        const char* symbol = 0;
+        const char* bindClass = "game";
 
-        // Check for a cancel.
-        if(event->type == EV_KEY)
+        if(sizeof(const char*) == sizeof(event->data1)) // 32-bit
         {
-            if(event->data1 == DDKEY_ESCAPE)
-            {
-                grabbing = 0;
-                return true;
-            }
+            symbol = (const char*) event->data1;
+        }
+        else // 64-bit
+        {
+            symbol = (const char*)(((int64_t)event->data1) | (((int64_t)event->data2)) << 32);            
         }
 
+        if(strncmp(symbol, "echo-", 5))
+        {
+            return false;
+        }
+        if(!strncmp(symbol, "echo-key-", 9) && strcmp(symbol + strlen(symbol) - 5, "-down"))
+        {
+           return false;
+        }
+        
+        //Con_Message("got %s\n", symbol);
+        
+        if(grabbing->bindClass)
+        {
+            bindClass = grabbing->bindClass;
+        }
+        
+        if(grabbing->command)
+        {
+            sprintf(cmd, "bindevent {%s:%s} {%s}", bindClass, &symbol[5], grabbing->command);
+            
+            // Check for repeats.
+            if(grabbing->flags & CCF_REPEAT)
+            {
+                const char* downPtr = 0;
+                char temp[256];
+                downPtr = strstr(symbol + 5, "-down");
+                if(downPtr)
+                {
+                    char temp2[256];
+                    memset(temp2, 0, sizeof(temp2));
+                    strncpy(temp2, symbol + 5, downPtr - symbol - 5);
+                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindClass, temp2, 
+                            grabbing->command);
+                    strcat(cmd, temp);
+                }
+            }
+        }
+        else if(grabbing->controlName)
+        {
+            // Have to exclude the state part.
+            boolean inv = (grabbing->flags & CCF_INVERSE) != 0;
+            char temp3[256];
+            const char *end = strchr(symbol + 5, '-');
+            end = strchr(end + 1, '-');
+
+            if(!end)
+            {
+                Con_Error("what! %s\n", symbol);
+            }
+            
+            memset(temp3, 0, sizeof(temp3));
+            strncpy(temp3, symbol + 5, end - symbol - 5);
+
+            // Check for inverse.
+            if(!strncmp(end, "-neg", 4))
+            {
+                inv = !inv;
+            }
+            if(inv)
+            {
+                strcat(temp3, "-inverse");
+            }
+            
+            sprintf(cmd, "bindcontrol {%s} {%s}", grabbing->controlName, temp3);
+        }                
+        
+        Con_Message("bind command: %s\n", cmd);
+        DD_Execute(true, cmd);
+        
         /*
         // We shall issue a silent console command, but first we need
         // a textual representation of the event.
@@ -692,20 +789,12 @@ int D_PrivilegedResponder(event_t *event)
 
         DD_Execute(false, cmd);
          */
+
         // We've finished the grab.
         grabbing = 0;
+        DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(menusnds[5], NULL);
-
         return true;
     }
-    /*
-    // Process the screen shot key right away.
-    if(devparm && event->type == EV_KEY && event->data1 == DDKEY_F1)
-    {
-        if(event->state == EVS_DOWN)
-            G_ScreenShot();
-        // All F1 events are eaten.
-        return true;
-    }*/
     return false;
 }

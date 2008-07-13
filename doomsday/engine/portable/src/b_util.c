@@ -498,13 +498,13 @@ void B_AppendToggleStateToString(ebstate_t state, ddstring_t* str)
 void B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str)
 {
     if(state == EBAXIS_WITHIN)
-        Str_Appendf(str, "-within %g", pos);
+        Str_Appendf(str, "-within%g", pos);
     else if(state == EBAXIS_BEYOND)
-        Str_Appendf(str, "-beyond %g", pos);
+        Str_Appendf(str, "-beyond%g", pos);
     else if(state == EBAXIS_BEYOND_POSITIVE)
-        Str_Appendf(str, "-pos %g", pos);
+        Str_Appendf(str, "-pos%g", pos);
     else
-        Str_Appendf(str, "-neg %g", pos);
+        Str_Appendf(str, "-neg%g", pos);
 }
 
 void B_AppendAnglePositionToString(float pos, ddstring_t* str)
@@ -542,5 +542,40 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
     if(cond->negate)
     {
         Str_Append(str, "-not");
+    }
+}
+
+/**
+ * @param str  The event in textual format is appended here.
+ */
+void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)
+{
+    B_AppendDeviceDescToString(ev->device, ev->type, 
+                               ev->type == E_TOGGLE? ev->toggle.id :
+                               ev->type == E_AXIS? ev->axis.id :
+                               ev->type == E_ANGLE? ev->angle.id :
+                               ev->type == E_SYMBOLIC? ev->symbolic.id :
+                               0, str);
+    
+    switch(ev->type)
+    {
+        case E_TOGGLE:
+            B_AppendToggleStateToString(ev->toggle.state == ETOG_DOWN? EBTOG_DOWN :
+                                        ev->toggle.state == ETOG_UP? EBTOG_UP :
+                                        EBTOG_REPEAT, str);
+            break;
+            
+        case E_AXIS:
+            B_AppendAxisPositionToString(ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE :
+                                         EBAXIS_BEYOND_NEGATIVE, ev->axis.pos, str);
+            break;
+            
+        case E_ANGLE:
+            B_AppendAnglePositionToString(ev->angle.pos, str);
+            break;
+            
+        case E_SYMBOLIC:
+            Str_Appendf(str, "-%s", ev->symbolic.name);
+            break;
     }
 }

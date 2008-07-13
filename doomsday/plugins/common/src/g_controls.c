@@ -104,6 +104,8 @@ typedef enum joyaxis_e {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+int M_ControlsPrivilegedResponder(event_t *event); // m_ctrl.c
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 DEFCC( CCmdDefaultGameBinds );
@@ -387,6 +389,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent menu:key-right menuright",
         "bindevent menu:key-right-repeat menuright",
         "bindevent menu:key-return menuselect",
+        "bindevent menu:key-delete menudelete",
 
         "bindevent message:key-y messageyes",
         "bindevent message:key-n messageno",
@@ -1269,6 +1272,11 @@ void G_ResetLookOffset(int pnum)
 
 int G_PrivilegedResponder(event_t *event)
 {
+    if(M_ControlsPrivilegedResponder(event))
+    {
+        return true;
+    }
+    
     // Process the screen shot key right away.
     if(devParm && event->type == EV_KEY && event->data1 == DDKEY_F1)
     {

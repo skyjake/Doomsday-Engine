@@ -109,6 +109,7 @@ typedef struct menufogdata_s {
 
 extern void Ed_MakeCursorVisible(void);
 void M_InitControlsMenu(void);
+void M_ControlGrabDrawer(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -1263,6 +1264,7 @@ ccmd_t  menuCCmds[] = {
     {"menuleft",    "", CCmdMenuAction},
     {"menuright",   "", CCmdMenuAction},
     {"menuselect",  "", CCmdMenuAction},
+    {"menudelete",  "", CCmdMenuAction},
     {"menucancel",  "", CCmdMenuAction},
     {"helpscreen",  "", CCmdMenuAction},
     {"savegame",    "", CCmdMenuAction},
@@ -2059,6 +2061,8 @@ void Hu_MenuDrawer(void)
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
+
+    M_ControlGrabDrawer();
 }
 
 /**
@@ -2236,6 +2240,17 @@ void Hu_MenuCommand(menucommand_e cmd)
                 }
                 break;
 
+            case MCMD_DELETE:
+                if(menu->flags & MNF_DELETEFUNC)
+                {
+                    if(item->func)
+                    {
+                        item->func(-1, item->data);
+                        S_LocalSound(menusnds[2], NULL);
+                    }
+                }
+                break;
+                    
             case MCMD_SELECT:
                 if(item->type == ITT_SETMENU)
                 {
@@ -4050,6 +4065,17 @@ DEFCC(CCmdMenuAction)
 
             default:
                 break;
+            }
+            return true;
+        }
+        else if(!stricmp(argv[0], "menudelete"))
+        {
+            if(messageToPrint)
+                return true;
+
+            if(!mode)
+            {
+                Hu_MenuCommand(MCMD_DELETE);
             }
             return true;
         }

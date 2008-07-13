@@ -94,6 +94,7 @@ bindclass_t *bindClasses = NULL;
 uint numBindClasses = 0;
 static uint maxBindClasses = 0;
  */
+int     symbolicEchoMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -775,6 +776,23 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
  */
 boolean B_Responder(ddevent_t *ev)
 {
+    if(symbolicEchoMode && ev->type != E_SYMBOLIC)
+    {
+        // Make an echo.
+        ddstring_t name;
+        ddevent_t echo;
+        Str_Init(&name);
+        Str_Set(&name, "echo-");
+        B_AppendEventToString(ev, &name);
+        echo.type = E_SYMBOLIC;
+        echo.symbolic.id = 0;
+        echo.symbolic.name = Str_Text(&name);
+        VERBOSE( Con_Message("B_Responder: Symbolic echo: %s\n", echo.symbolic.name) );
+        DD_PostEvent(&echo);
+        Str_Free(&name);
+        return true;
+    }
+    
     return B_TryEvent(ev);
 
     /*

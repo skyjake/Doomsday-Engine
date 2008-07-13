@@ -527,13 +527,12 @@ int B_BindingsForCommand(const char *cmd, char *buf, int bufSize)
  *
  * @param localPlayer  Number of the local player (first one always 0).
  * @param controlName  Name of the player control.
- * @param inverse      One of BFCI_*.
  * @param buf          Output buffer for the result.
  * @param bufSize      Size of output buffer.
  *
  * @return Number of bindings found for the command.
  */
-int B_BindingsForControl(int localPlayer, const char *controlName, int inverse, char *buf, int bufSize)
+int B_BindingsForControl(int localPlayer, const char *controlName, char *buf, int bufSize)
 {
     ddstring_t          result;
     ddstring_t          str;
@@ -559,19 +558,14 @@ int B_BindingsForControl(int localPlayer, const char *controlName, int inverse, 
                 continue; // Wrong control.
             for(d = c->deviceBinds[localPlayer].next; d != &c->deviceBinds[localPlayer]; d = d->next)
             {
-                if(inverse == BFCI_BOTH || 
-                   (inverse == BFCI_ONLY_NON_INVERSE && !(d->flags & CBDF_INVERSE)) ||
-                   (inverse == BFCI_ONLY_INVERSE && (d->flags & CBDF_INVERSE)))
+                // It's here!
+                if(numFound)
                 {
-                    // It's here!
-                    if(numFound)
-                    {
-                        Str_Append(&result, " ");
-                    }
-                    numFound++;
-                    B_DeviceBindingToString(d, &str);
-                    Str_Appendf(&result, "%i@%s:%s", d->id, bc->name, Str_Text(&str));
+                    Str_Append(&result, " ");
                 }
+                numFound++;
+                B_DeviceBindingToString(d, &str);
+                Str_Appendf(&result, "%i@%s:%s", d->id, bc->name, Str_Text(&str));
             }                
         }
     }

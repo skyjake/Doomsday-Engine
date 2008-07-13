@@ -51,7 +51,8 @@ typedef enum menucommand_e {
     MCMD_NAV_RIGHT,
     MCMD_NAV_DOWN,
     MCMD_NAV_UP,
-    MCMD_SELECT // Execute whatever action is attaced to the current item.
+    MCMD_SELECT, // Execute whatever action is attaced to the current item.
+    MCMD_DELETE
 } menucommand_e;
 
 extern int messageResponse;

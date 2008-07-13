@@ -194,6 +194,7 @@ extern          "C" {
         DD_GAME_DATA_FORMAT,
         DD_GAME_DRAW_HUD_HINT,        // Doomsday advises not to draw the HUD
         DD_UPSCALE_AND_SHARPEN_PATCHES,
+        DD_SYMBOLIC_ECHO,
         DD_LAST_VALUE,
 
         // General constants (not to be used with Get/Set).
@@ -462,6 +463,7 @@ extern          "C" {
         EV_JOY_SLIDER,             // Joystick sliders
         EV_JOY_BUTTON,
         EV_POV,
+        EV_SYMBOLIC,               // Symbol text pointed to by data1+data2
         NUM_EVENT_TYPES
     } evtype_t;
 
@@ -1150,13 +1152,6 @@ typedef struct {
         int             active;
         int             flags;
     } bindclass_t;
-
-    /// Argument type for B_BindingsForControl().
-    typedef enum bfcinverse_e {
-        BFCI_BOTH,
-        BFCI_ONLY_NON_INVERSE,
-        BFCI_ONLY_INVERSE
-    } bfcinverse_t;
 
     // Console command.
     typedef struct ccmd_s {

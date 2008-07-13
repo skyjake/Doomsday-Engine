@@ -110,6 +110,7 @@ extern int gotFrame;
 extern int monochrome;
 extern int gameDataFormat;
 extern int gameDrawHUD;
+extern int symbolicEchoMode;
 
 extern material_t *skyMaskMaterial;
 
@@ -845,7 +846,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&monochrome, &monochrome},
     {&gameDataFormat, &gameDataFormat},
     {&gameDrawHUD, 0},
-    {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches}
+    {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
+    {&symbolicEchoMode, &symbolicEchoMode}
 };
 /* *INDENT-ON* */
 

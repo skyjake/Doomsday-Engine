@@ -698,7 +698,7 @@ static ddevent_t *DD_GetEvent(void)
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void despatchEvents(timespan_t ticLength)
+static void dispatchEvents(timespan_t ticLength)
 {
     ddevent_t *ddev;
     event_t     ev;
@@ -717,59 +717,68 @@ static void despatchEvents(timespan_t ticLength)
         // FIXME: This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
         //
         memset(&ev, 0, sizeof(ev));
-        switch(ddev->device)
+        if(ddev->type == E_SYMBOLIC)
         {
-        case IDEV_KEYBOARD:
-            ev.type = EV_KEY;
-            if(ddev->type == E_TOGGLE)
+            ev.type = EV_SYMBOLIC;
+            ev.data1 = ((int64_t) ddev->symbolic.name) & 0xffffffff; // low dword
+            ev.data2 = ((int64_t) ddev->symbolic.name) >> 32; // high dword
+        }
+        else
+        {
+            switch(ddev->device)
             {
-                ev.state = ( ddev->toggle.state == ETOG_UP? EVS_UP :
-                             ddev->toggle.state == ETOG_DOWN? EVS_DOWN :
-                             EVS_REPEAT );
-                ev.data1 = ddev->toggle.id;
-            }
-            break;
-
-        case IDEV_MOUSE:
-            if(ddev->type == E_AXIS)
-                ev.type = EV_MOUSE_AXIS;
-            else if(ddev->type == E_TOGGLE)
-                ev.type = EV_MOUSE_BUTTON;
-            break;
-
-        case IDEV_JOY1:
-        case IDEV_JOY2:
-        case IDEV_JOY3:
-        case IDEV_JOY4:
-            if(ddev->type == E_AXIS)
-            {
-                int* data = &ev.data1;
-                ev.type = EV_JOY_AXIS;
-                ev.state = 0;
-                if(ddev->axis.id >= 0 && ddev->axis.id < 6)
+            case IDEV_KEYBOARD:
+                ev.type = EV_KEY;
+                if(ddev->type == E_TOGGLE)
                 {
-                    data[ddev->axis.id] = ddev->axis.pos;
+                    ev.state = ( ddev->toggle.state == ETOG_UP? EVS_UP :
+                                 ddev->toggle.state == ETOG_DOWN? EVS_DOWN :
+                                 EVS_REPEAT );
+                    ev.data1 = ddev->toggle.id;
                 }
-                /// @todo  The other dataN's must contain up-to-date information
-                /// as well. Read them from the current joystick status.
-            }
-            else if(ddev->type == E_TOGGLE)
-            {
-                ev.type = EV_JOY_BUTTON;
-                ev.state = ( ddev->toggle.state == ETOG_UP? EVS_UP :
-                             ddev->toggle.state == ETOG_DOWN? EVS_DOWN :
-                             EVS_REPEAT );
-                ev.data1 = ddev->toggle.id;
-            }
-            else if(ddev->type == E_ANGLE)
-                ev.type = EV_POV;
-            break;
+                break;
 
-        default:
+            case IDEV_MOUSE:
+                if(ddev->type == E_AXIS)
+                    ev.type = EV_MOUSE_AXIS;
+                else if(ddev->type == E_TOGGLE)
+                    ev.type = EV_MOUSE_BUTTON;
+                break;
+
+            case IDEV_JOY1:
+            case IDEV_JOY2:
+            case IDEV_JOY3:
+            case IDEV_JOY4:
+                if(ddev->type == E_AXIS)
+                {
+                    int* data = &ev.data1;
+                    ev.type = EV_JOY_AXIS;
+                    ev.state = 0;
+                    if(ddev->axis.id >= 0 && ddev->axis.id < 6)
+                    {
+                        data[ddev->axis.id] = ddev->axis.pos;
+                    }
+                    /// @todo  The other dataN's must contain up-to-date information
+                    /// as well. Read them from the current joystick status.
+                }
+                else if(ddev->type == E_TOGGLE)
+                {
+                    ev.type = EV_JOY_BUTTON;
+                    ev.state = ( ddev->toggle.state == ETOG_UP? EVS_UP :
+                                 ddev->toggle.state == ETOG_DOWN? EVS_DOWN :
+                                 EVS_REPEAT );
+                    ev.data1 = ddev->toggle.id;
+                }
+                else if(ddev->type == E_ANGLE)
+                    ev.type = EV_POV;
+                break;
+
+            default:
 #if _DEBUG
-Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
+                Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 #endif
-            break;
+                break;
+            }
         }
 
         // Does the special responder use this event?
@@ -825,7 +834,7 @@ void DD_ProcessEvents(timespan_t ticLength)
     postEvents(ticLength);
 
     // Despatch all accumulated events down the responder chain.
-    despatchEvents(ticLength);
+    dispatchEvents(ticLength);
 }
 
 /**

@@ -58,6 +58,7 @@ typedef struct {
 // Menu flags
 #define MNF_NOHOTKEYS           0x00000001 // Hotkeys are disabled.
 #define MNF_NOSCALE             0x00000002 // Menu wont be scaled (e.g. readthis).
+#define MNF_DELETEFUNC          0x00000004 // MCMD_DELETE causes a call to item's func
 
 typedef struct unscaledmenustate_s {
     int             numVisItems;
