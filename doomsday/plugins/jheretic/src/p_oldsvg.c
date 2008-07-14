@@ -107,18 +107,18 @@ static short SV_v13_ReadShort(void)
     return *(short *) (save_p - 2);
 }
 
-static void SV_v13_Read(void *data, int len)
+static void SV_v13_Read(void* data, int len)
 {
     if(data)
         memcpy(data, save_p, len);
     save_p += len;
 }
 
-static void SV_v13_ReadPlayer(player_t *pl)
+static void SV_v13_ReadPlayer(player_t* pl)
 {
-    int         i;
-    byte        temp[12];
-    ddplayer_t *ddpl = pl->plr;
+    int             i;
+    byte            temp[12];
+    ddplayer_t*     ddpl = pl->plr;
 
     SV_v13_ReadLong(); // mo
     pl->playerState = SV_v13_ReadLong();
@@ -134,34 +134,68 @@ static void SV_v13_ReadPlayer(player_t *pl)
     pl->armorPoints = SV_v13_ReadLong();
     pl->armorType = SV_v13_ReadLong();
 
-    //// \fixme Assumes inventory size.
-    SV_v13_Read(pl->inventory, 4 * 2 * 14);
+    memset(pl->inventory, 0, sizeof(pl->inventory));
+    for(i = 0; i < 14; ++i)
+    {
+        pl->inventory[i].type = SV_v13_ReadLong();
+        pl->inventory[i].count = SV_v13_ReadLong();
+    }
 
     pl->readyArtifact = SV_v13_ReadLong();
     pl->artifactCount = SV_v13_ReadLong();
     pl->inventorySlotNum = SV_v13_ReadLong();
 
-    //// \fixme Assumes powers size.
-    SV_v13_Read(pl->powers, 4 * 9);
+    memset(pl->powers, 0, sizeof(pl->powers));
+    pl->powers[PT_INVULNERABILITY] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_INVISIBILITY] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_ALLMAP] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_INFRARED] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_WEAPONLEVEL2] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_FLIGHT] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_SHIELD] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_HEALTH2] = (SV_v13_ReadLong()? true : false);
 
-    //// \fixme Assumes keys size.
-    SV_v13_Read(pl->keys, 4 * 3);
+    memset(pl->keys, 0, sizeof(pl->keys));
+    pl->keys[KT_YELLOW] = (SV_v13_ReadLong()? true : false);
+    pl->keys[KT_GREEN] = (SV_v13_ReadLong()? true : false);
+    pl->keys[KT_BLUE] = (SV_v13_ReadLong()? true : false);
 
     pl->backpack = SV_v13_ReadLong();
 
-    //// \fixme Assumes frags size.
-    SV_v13_Read(pl->frags, 4 * 4);
+    memset(pl->frags, 0, sizeof(pl->frags));
+    pl->frags[0] = SV_v13_ReadLong();
+    pl->frags[1] = SV_v13_ReadLong();
+    pl->frags[2] = SV_v13_ReadLong();
+    pl->frags[3] = SV_v13_ReadLong();
+
     pl->readyWeapon = SV_v13_ReadLong();
     pl->pendingWeapon = SV_v13_ReadLong();
 
-    //// \fixme Assumes owned weapon size.
-    SV_v13_Read(pl->weaponOwned, 4 * 9);
+    // Owned weapons.
+    memset(pl->weapons, 0, sizeof(pl->weapons));
+    pl->weapons[WT_FIRST].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_SECOND].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_THIRD].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_FOURTH].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_FIFTH].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_SIXTH].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_SEVENTH].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_EIGHTH].owned = (SV_v13_ReadLong()? true : false);
 
-    //// \fixme Assumes ammo size.
-    SV_v13_Read(pl->ammo, 4 * 6);
+    memset(pl->ammo, 0, sizeof(pl->ammo));
+    pl->ammo[AT_CRYSTAL].owned = SV_v13_ReadLong();
+    pl->ammo[AT_ARROW].owned = SV_v13_ReadLong();
+    pl->ammo[AT_ORB].owned = SV_v13_ReadLong();
+    pl->ammo[AT_RUNE].owned = SV_v13_ReadLong();
+    pl->ammo[AT_FIREORB].owned = SV_v13_ReadLong();
+    pl->ammo[AT_MSPHERE].owned = SV_v13_ReadLong();
+    pl->ammo[AT_CRYSTAL].max = SV_v13_ReadLong();
+    pl->ammo[AT_ARROW].max = SV_v13_ReadLong();
+    pl->ammo[AT_ORB].max = SV_v13_ReadLong();
+    pl->ammo[AT_RUNE].max = SV_v13_ReadLong();
+    pl->ammo[AT_FIREORB].max = SV_v13_ReadLong();
+    pl->ammo[AT_MSPHERE].max = SV_v13_ReadLong();
 
-    //// \fixme Assumes maxammo size.
-    SV_v13_Read(pl->maxAmmo, 4 * 6);
     pl->attackDown = SV_v13_ReadLong();
     pl->useDown = SV_v13_ReadLong();
     pl->cheats = SV_v13_ReadLong();
@@ -406,8 +440,8 @@ void P_v13_UnArchiveThinkers(void)
 {
 typedef enum
 {
-	TC_END,
-	TC_MOBJ
+    TC_END,
+    TC_MOBJ
 } thinkerclass_t;
 
     byte                tclass;
@@ -439,15 +473,15 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 {
 /* Original Heretic format:
 typedef struct {
-	thinker_t	thinker;        // was 12 bytes
-	ceilingtype_e	type;           // was 32bit int
-	sector_t	*sector;
-	fixed_t		bottomheight, topheight;
-	fixed_t		speed;
-	boolean		crush;
-	int			direction;		// 1 = up, 0 = waiting, -1 = down
-	int			tag;			// ID
-	int			olddirection;
+    thinker_t   thinker;        // was 12 bytes
+    ceilingtype_e   type;           // was 32bit int
+    sector_t    *sector;
+    fixed_t     bottomheight, topheight;
+    fixed_t     speed;
+    boolean     crush;
+    int         direction;      // 1 = up, 0 = waiting, -1 = down
+    int         tag;            // ID
+    int         olddirection;
 } v13_ceiling_t;
 */
     byte temp[SIZEOF_V13_THINKER_T];
@@ -483,15 +517,15 @@ static int SV_ReadDoor(door_t *door)
 {
 /* Original Heretic format:
 typedef struct {
-	thinker_t	thinker;        // was 12 bytes
-	doortype_e	type;           // was 32bit int
-	sector_t	*sector;
-	fixed_t		topheight;
-	fixed_t		speed;
-	int			direction;		// 1 = up, 0 = waiting at top, -1 = down
-	int			topwait;		// tics to wait at the top
-								// (keep in case a door going down is reset)
-	int			topcountdown;	// when it reaches 0, start going down
+    thinker_t   thinker;        // was 12 bytes
+    doortype_e  type;           // was 32bit int
+    sector_t    *sector;
+    fixed_t     topheight;
+    fixed_t     speed;
+    int         direction;      // 1 = up, 0 = waiting at top, -1 = down
+    int         topwait;        // tics to wait at the top
+                                // (keep in case a door going down is reset)
+    int         topcountdown;   // when it reaches 0, start going down
 } v13_vldoor_t;
 */
     // Padding at the start (an old thinker_t struct)
@@ -521,15 +555,15 @@ static int SV_ReadFloor(floor_t *floor)
 {
 /* Original Heretic format:
 typedef struct {
-	thinker_t	thinker;        // was 12 bytes
-	floortype_e		type;           // was 32bit int
-	boolean		crush;
-	sector_t	*sector;
-	int			direction;
-	int			newspecial;
-	short		texture;
-	fixed_t		floordestheight;
-	fixed_t		speed;
+    thinker_t   thinker;        // was 12 bytes
+    floortype_e     type;           // was 32bit int
+    boolean     crush;
+    sector_t    *sector;
+    int         direction;
+    int         newspecial;
+    short       texture;
+    fixed_t     floordestheight;
+    fixed_t     speed;
 } v13_floormove_t;
 */
     // Padding at the start (an old thinker_t struct)
@@ -561,18 +595,18 @@ static int SV_ReadPlat(plat_t *plat)
 {
 /* Original Heretic format:
 typedef struct {
-	thinker_t	thinker;        // was 12 bytes
-	sector_t	*sector;
-	fixed_t		speed;
-	fixed_t		low;
-	fixed_t		high;
-	int			wait;
-	int			count;
-	platstate_e		status;         // was 32bit int
-	platstate_e		oldStatus;      // was 32bit int
-	boolean		crush;
-	int			tag;
-	plattype_e	type;           // was 32bit int
+    thinker_t   thinker;        // was 12 bytes
+    sector_t    *sector;
+    fixed_t     speed;
+    fixed_t     low;
+    fixed_t     high;
+    int         wait;
+    int         count;
+    platstate_e     status;         // was 32bit int
+    platstate_e     oldStatus;      // was 32bit int
+    boolean     crush;
+    int         tag;
+    plattype_e  type;           // was 32bit int
 } v13_plat_t;
 */
     byte temp[SIZEOF_V13_THINKER_T];
@@ -608,13 +642,13 @@ static int SV_ReadFlash(lightflash_t *flash)
 {
 /* Original Heretic format:
 typedef struct {
-	thinker_t	thinker;        // was 12 bytes
-	sector_t	*sector;
-	int			count;
-	int			maxLight;
-	int			minLight;
-	int			maxTime;
-	int			minTime;
+    thinker_t   thinker;        // was 12 bytes
+    sector_t    *sector;
+    int         count;
+    int         maxLight;
+    int         minLight;
+    int         maxTime;
+    int         minTime;
 } v13_lightflash_t;
 */
     // Padding at the start (an old thinker_t struct)
@@ -640,13 +674,13 @@ static int SV_ReadStrobe(strobe_t *strobe)
 {
 /* Original Heretic format:
 typedef struct {
-	thinker_t	thinker;        // was 12 bytes
-	sector_t	*sector;
-	int			count;
-	int			minLight;
-	int			maxLight;
-	int			darkTime;
-	int			brightTime;
+    thinker_t   thinker;        // was 12 bytes
+    sector_t    *sector;
+    int         count;
+    int         minLight;
+    int         maxLight;
+    int         darkTime;
+    int         brightTime;
 } v13_strobe_t;
 */
     // Padding at the start (an old thinker_t struct)
@@ -672,11 +706,11 @@ static int SV_ReadGlow(glow_t *glow)
 {
 /* Original Heretic format:
 typedef struct {
-	thinker_t	thinker;        // was 12 bytes
-	sector_t	*sector;
-	int			minLight;
-	int			maxLight;
-	int			direction;
+    thinker_t   thinker;        // was 12 bytes
+    sector_t    *sector;
+    int         minLight;
+    int         maxLight;
+    int         direction;
 } v13_glow_t;
 */
     // Padding at the start (an old thinker_t struct)

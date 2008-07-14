@@ -1477,7 +1477,7 @@ void P_PlayerThinkWeapons(player_t *player)
         }
 #endif // __JHERETIC__
 
-        if(player->weaponOwned[newweapon] && newweapon != player->readyWeapon)
+        if(player->weapons[newweapon].owned && newweapon != player->readyWeapon)
         {
             if(weaponInfo[newweapon][player->class].mode[0].gameModeBits
                & gameModeBits)
@@ -1591,7 +1591,8 @@ void P_PlayerThinkPowers(player_t *player)
                && (player->pSprites[ps_weapon].state != &states[S_PHOENIXUP]))
             {
                 P_SetPsprite(player, ps_weapon, S_PHOENIXREADY);
-                player->ammo[AT_FIREORB] -= USE_PHRD_AMMO_2;
+                player->ammo[AT_FIREORB].owned = MAX_OF(0,
+                    player->ammo[AT_FIREORB].owned - USE_PHRD_AMMO_2);
                 player->refire = 0;
                 player->update |= PSF_AMMO;
             }

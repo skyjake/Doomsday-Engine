@@ -208,6 +208,4 @@ typedef struct jdoom_config_s {
 
 extern game_config_t cfg;
 
-int             GetDefInt(char *def, int *returned_value);
-
 #endif

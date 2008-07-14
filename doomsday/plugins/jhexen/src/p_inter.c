@@ -122,24 +122,24 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
     if(ammo < 0 || ammo > NUM_AMMO_TYPES)
         Con_Error("P_GiveMana: bad type %i", ammo);
 
-    if(plr->ammo[ammo] == MAX_MANA)
+    if(!(plr->ammo[ammo].owned < MAX_MANA))
         return false;
 
     if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
     {   // Extra mana in baby mode and nightmare mode.
         num += num / 2;
     }
-    prevMana = plr->ammo[ammo];
+    prevMana = plr->ammo[ammo].owned;
 
     // We are about to receive some more ammo. Does the plr want to
     // change weapon automatically?
     P_MaybeChangeWeapon(plr, WT_NOCHANGE, ammo, false);
 
-    plr->ammo[ammo] += num;
+    if(plr->ammo[ammo].owned + num > MAX_MANA)
+        plr->ammo[ammo].owned = MAX_MANA;
+    else
+        plr->ammo[ammo].owned += num;
     plr->update |= PSF_AMMO;
-
-    if(plr->ammo[ammo] > MAX_MANA)
-        plr->ammo[ammo] = MAX_MANA;
 
     //// \fixme - DJS: This shouldn't be actioned from here.
     if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
@@ -188,12 +188,12 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
     }
     else if(IS_NETGAME && !deathmatch)
     {   // Cooperative net-game.
-        if(plr->weaponOwned[weaponType])
+        if(plr->weapons[weaponType].owned)
         {
             return;
         }
 
-        plr->weaponOwned[weaponType] = true;
+        plr->weapons[weaponType].owned = true;
         plr->update |= PSF_OWNED_WEAPONS;
         if(weaponType == WT_SECOND)
         {
@@ -221,14 +221,14 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
             gaveMana = P_GiveMana(plr, AT_GREENMANA, 25);
         }
 
-        if(plr->weaponOwned[weaponType])
+        if(plr->weapons[weaponType].owned)
         {
             gaveWeapon = false;
         }
         else
         {
             gaveWeapon = true;
-            plr->weaponOwned[weaponType] = true;
+            plr->weapons[weaponType].owned = true;
             plr->update |= PSF_OWNED_WEAPONS;
 
             // Should we change weapon automatically?
@@ -374,7 +374,7 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
         if(plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
         {
             gaveWeapon = true;
-            plr->weaponOwned[WT_FOURTH] = true;
+            plr->weapons[WT_FOURTH].owned = true;
             plr->pendingWeapon = WT_FOURTH;
             plr->update |= PSF_WEAPONS | PSF_OWNED_WEAPONS;
         }

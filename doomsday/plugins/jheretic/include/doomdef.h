@@ -248,7 +248,7 @@ typedef enum {
     PT_INVISIBILITY,
     PT_ALLMAP,
     PT_INFRARED,
-    PT_WEAPONLEVEL2,
+    PT_WEAPONLEVEL2, // Temporarily boost all owned weapons to level 2.
     PT_FLIGHT,
     PT_SHIELD,
     PT_HEALTH2,

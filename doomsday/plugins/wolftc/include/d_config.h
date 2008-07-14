@@ -203,9 +203,4 @@ typedef struct wolftc_config_s {
 
 extern game_config_t cfg;
 
-// Other variables.
-extern int      screenblocks;
-
-int             GetDefInt(char *def, int *returned_value);
-
 #endif

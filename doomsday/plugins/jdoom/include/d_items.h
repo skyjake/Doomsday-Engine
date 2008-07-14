@@ -38,18 +38,19 @@
 #define WEAPON_INFO(weaponnum, pclass, fmode) (&weaponInfo[weaponnum][pclass].mode[fmode])
 
 typedef struct {
-    int             gameModeBits;       // Game modes, weapon is available in.
-    int             ammoType[NUM_AMMO_TYPES];  // required ammo types.
-    int             perShot[NUM_AMMO_TYPES];   // Ammo used per shot of each type.
-    boolean         autoFire;           // (True)= fire when raised if fire held.
+    int             gameModeBits; // Game modes, weapon is available in.
+
+    int             ammoType[NUM_AMMO_TYPES]; // required ammo types.
+    int             perShot[NUM_AMMO_TYPES]; // Ammo used per shot of each type.
+    boolean         autoFire; // (True)= fire when raised if fire held.
     int             upState;
-    int             raiseSound;         // Sound played when weapon is raised.
+    int             raiseSound; // Sound played when weapon is raised.
     int             downState;
     int             readyState;
-    int             readySound;         // Sound played WHILE weapon is readyied
+    int             readySound; // Sound played WHILE weapon is readyied
     int             attackState;
     int             flashState;
-    int             staticSwitch;      // Weapon is not lowered during switch.
+    int             staticSwitch; // Weapon is not lowered during switch.
 } weaponmodeinfo_t;
 
 // Weapon info: sprite frames, ammunition use.
@@ -59,6 +60,7 @@ typedef struct {
 
 extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
+void            P_InitAmmoInfo(void);
 void            P_InitWeaponInfo(void);
 void            P_InitPlayerValues(struct player_s *p);
 

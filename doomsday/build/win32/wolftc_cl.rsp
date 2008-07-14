@@ -37,9 +37,10 @@
  ./../../plugins/common/src/am_rendlist.c
  ./../../plugins/common/src/r_common.c
  ./../../plugins/common/src/m_fixed.c
- ./../../plugins/common/src/g_update.c
- ./../../plugins/common/src/g_game.c
+ ./../../plugins/common/src/g_defs.c
  ./../../plugins/common/src/g_controls.c
+ ./../../plugins/common/src/g_game.c
+ ./../../plugins/common/src/g_update.c
  ./../../plugins/wolftc/src/p_telept.c
  ./../../plugins/wolftc/src/g_ctrl.c
  ./../../plugins/wolftc/src/d_api.c

@@ -386,14 +386,14 @@ void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
     {
         plyr->update |= PSF_OWNED_WEAPONS;
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-            plyr->weaponOwned[i] = true;
+            plyr->weapons[i].owned = true;
     }
 
     if(ammo)
     {
         plyr->update |= PSF_AMMO;
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
-            plyr->ammo[i] = plyr->maxAmmo[i];
+            plyr->ammo[i].owned = plyr->ammo[i].max;
     }
 
     if(cards)
@@ -486,7 +486,7 @@ boolean Cht_PowerUpFunc(player_t *plyr, int i)
 
 void Cht_ChoppersFunc(player_t *plyr)
 {
-    plyr->weaponOwned[WT_EIGHTH] = true;
+    plyr->weapons[WT_EIGHTH].owned = true;
     plyr->powers[PT_INVULNERABILITY] = true;
 }
 
@@ -738,7 +738,7 @@ DEFCC(CCmdCheatGive)
                 if(idx >= 0 && idx < NUM_AMMO_TYPES)
                 {   // Give one specific ammo type.
                     plyr->update |= PSF_AMMO;
-                    plyr->ammo[idx] = plyr->maxAmmo[idx];
+                    plyr->ammo[idx].owned = plyr->ammo[idx].max;
                     giveAll = false;
                     i++;
                 }

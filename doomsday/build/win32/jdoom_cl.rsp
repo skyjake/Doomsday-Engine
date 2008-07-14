@@ -58,8 +58,9 @@
  ./../../plugins/jdoom/src/m_random.c
  ./../../plugins/common/src/m_fixed.c
  ./../../plugins/jdoom/src/m_cheat.c
- ./../../plugins/common/src/g_update.c
- ./../../plugins/common/src/g_game.c
+ ./../../plugins/common/src/g_defs.c
  ./../../plugins/common/src/g_controls.c
+ ./../../plugins/common/src/g_game.c
+ ./../../plugins/common/src/g_update.c
  ./../../plugins/jdoom/src/d_items.c
  ./../../plugins/jdoom/src/acfnlink.c

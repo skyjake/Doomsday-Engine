@@ -86,9 +86,9 @@ typedef enum {
 } cheat_t;
 
 typedef struct player_s {
-    ddplayer_t     *plr;           // Pointer to the engine's player data.
+    ddplayer_t*     plr; // Pointer to the engine's player data.
     playerstate_t   playerState;
-    playerclass_t   class;         // player class type
+    playerclass_t   class; // Player class.
     playerbrain_t   brain;
 
     // bounded/scaled total momentum
@@ -107,21 +107,23 @@ typedef struct player_s {
     boolean         backpack;
 
     signed int      frags[MAXPLAYERS];
+
     weapontype_t    readyWeapon;
+    weapontype_t    pendingWeapon; // Is wp_nochange if not changing.
 
-    // Is wp_nochange if not changing.
-    weapontype_t    pendingWeapon;
-
-    boolean         weaponOwned[NUM_WEAPON_TYPES];
-    int             ammo[NUM_AMMO_TYPES];
-    int             maxAmmo[NUM_AMMO_TYPES];
+    struct playerweapon_s {
+        boolean         owned;
+    } weapons[NUM_WEAPON_TYPES];
+    struct playerammo_s {
+        int             owned;
+        int             max;
+    } ammo[NUM_AMMO_TYPES];
 
     // true if button down last tic
     int             attackDown;
     int             useDown;
 
-    // Bit flags, for cheats and debug.
-    // See cheat_t, above.
+    // Bit flags, for cheats and debug, see cheat_t, above.
     int             cheats;
 
     // Refired shots are less accurate.
@@ -137,10 +139,9 @@ typedef struct player_s {
     int             bonusCount;
 
     // Who did damage (NULL for floors/ceilings).
-    mobj_t         *attacker;
+    mobj_t*         attacker;
 
-    // Player skin colorshift,
-    //  0-3 for which color to draw player.
+    // Player skin colorshift, 0-3 for which color to draw player.
     int             colorMap;
 
     // Overlay view sprites (gun, etc).
@@ -177,8 +178,8 @@ typedef struct player_s {
 
     int             morphTics; // player is a chicken if > 0.
     int             chickenPeck; // chicken peck countdown.
-    mobj_t         *rain1; // Active rain maker 1.
-    mobj_t         *rain2; // Active rain maker 2.
+    mobj_t*         rain1; // Active rain maker 1.
+    mobj_t*         rain2; // Active rain maker 2.
 } player_t;
 
 #endif

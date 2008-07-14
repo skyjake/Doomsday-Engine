@@ -743,20 +743,19 @@ void ST_updateWidgets(void)
         plr->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 
     // mana A
-    manaACount = plr->ammo[0];
+    manaACount = plr->ammo[AT_BLUEMANA].owned;
 
     // mana B
-    manaBCount = plr->ammo[1];
+    manaBCount = plr->ammo[AT_GREENMANA].owned;
 
     st_manaAicon = st_manaBicon = st_manaAvial = st_manaBvial = -1;
 
     // Mana
-    if(plr->ammo[0] == 0)              // Draw Dim Mana icon
-        st_manaAicon = 0;
+    if(!(plr->ammo[AT_BLUEMANA].owned > 0))
+        st_manaAicon = 0; // Draw dim Mana icon.
 
-    if(plr->ammo[1] == 0)              // Draw Dim Mana icon
-        st_manaBicon = 0;
-
+    if(!(plr->ammo[AT_GREENMANA].owned > 0))
+        st_manaBicon = 0; // Draw dim Mana icon.
 
     // Update mana graphics based upon mana count weapon type
     if(plr->readyWeapon == WT_FIRST)
@@ -1771,11 +1770,11 @@ void ST_drawWidgets(boolean refresh)
             // Draw the mana bars
             GL_SetNoTexture();
             GL_DrawRect(95, 165, 3,
-                        22 - (22 * plyr->ammo[0]) / MAX_MANA, 0, 0, 0,
-                        statusbarCounterAlpha);
+                        22 - (22 * plyr->ammo[AT_BLUEMANA].owned) / MAX_MANA,
+                        0, 0, 0, statusbarCounterAlpha);
             GL_DrawRect(103, 165, 3,
-                        22 - (22 * plyr->ammo[1]) / MAX_MANA, 0, 0, 0,
-                        statusbarCounterAlpha);
+                        22 - (22 * plyr->ammo[AT_GREENMANA].owned) / MAX_MANA,
+                        0, 0, 0, statusbarCounterAlpha);
         }
         else
         {
@@ -1932,7 +1931,7 @@ void ST_doFullscreenStuff(void)
         int     ypos = cfg.hudShown[HUD_MANA] == 2 ? 152 : 2;
 
         for(i = 0; i < 2; i++)
-            if(plyr->ammo[i] == 0)
+            if(!(plyr->ammo[i].owned > 0))
                 patches[i] = dim[i];
         if(plyr->readyWeapon == WT_FIRST)
         {
@@ -1961,7 +1960,8 @@ void ST_doFullscreenStuff(void)
         for(i = 0; i < 2; i++)
         {
             GL_DrawPatchLitAlpha(2, ypos + i * 13, 1, iconalpha, patches[i]);
-            DrINumber(plyr->ammo[i], 18, ypos + i * 13, 1, 1, 1, textalpha);
+            DrINumber(plyr->ammo[i].owned, 18, ypos + i * 13,
+                      1, 1, 1, textalpha);
         }
         Draw_EndZoom();
     }

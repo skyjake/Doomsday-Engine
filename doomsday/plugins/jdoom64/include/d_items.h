@@ -59,8 +59,8 @@ typedef struct {
 
 extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
+void            P_InitAmmoInfo(void);
 void            P_InitWeaponInfo(void);
 void            P_InitPlayerValues(struct player_s *p);
-int             GetDefInt(char *def, int *returnVal);
 
 #endif

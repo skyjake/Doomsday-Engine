@@ -559,7 +559,7 @@ boolean Cht_Responder(event_t *ev)
 static boolean canCheat(void)
 {
     extern boolean netCheatParm;
-    
+
     if(IS_NETGAME && !IS_CLIENT && netSvAllowCheats)
         return true;
 
@@ -684,12 +684,12 @@ static void CheatWeaponsFunc(player_t *player, cheat_t *cheat)
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        player->weaponOwned[i] = true;
+        player->weapons[i].owned = true;
     }
 
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        player->ammo[i] = MAX_MANA;
+        player->ammo[i].owned = MAX_MANA;
     }
 
     P_SetMessage(player, TXT_CHEATWEAPONS, false);
@@ -839,7 +839,7 @@ static void CheatIDKFAFunc(player_t *player, cheat_t *cheat)
 
     for(i = 1; i < 8; ++i)
     {
-        player->weaponOwned[i] = false;
+        player->weapons[i].owned = false;
     }
 
     player->pendingWeapon = WT_FIRST;
@@ -1146,7 +1146,7 @@ DEFCC(CCmdCheatGive)
                 if(idx >= 0 && idx < NUM_WEAPON_TYPES)
                 {   // Give one specific weapon.
                     plyr->update |= PSF_OWNED_WEAPONS;
-                    plyr->weaponOwned[idx] = true;
+                    plyr->weapons[idx].owned = true;
                     giveAll = false;
                     i++;
                 }

@@ -172,8 +172,10 @@ typedef struct playerheader_s {
     int             numWeapons;
     int             numAmmoTypes;
     int             numPSprites;
-#if __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__
     int             numInvSlots;
+#endif
+#if __JHEXEN__
     int             numArmorTypes;
 #endif
 #if __JDOOM64__
@@ -1057,7 +1059,10 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->health);
 
 #if __JHEXEN__
-    SV_Write(p->armorPoints, GetPlayerHeader()->numArmorTypes * 4);
+    for(i = 0; i < GetPlayerHeader()->numArmorTypes; ++i)
+    {
+        SV_WriteLong(p->armorPoints[i]);
+    }
 #else
     SV_WriteLong(p->armorPoints);
     SV_WriteLong(p->armorType);
@@ -1074,35 +1079,54 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->inventorySlotNum);
 #endif
 
-    SV_Write(p->powers, GetPlayerHeader()->numPowers * 4);
+    for(i = 0; i < GetPlayerHeader()->numPowers; ++i)
+    {
+        SV_WriteLong(p->powers[i]);
+    }
 
 #if __JHEXEN__
     SV_WriteLong(p->keys);
 #else
-    SV_Write(p->keys, GetPlayerHeader()->numKeys * 4);
+    for(i = 0; i < GetPlayerHeader()->numKeys; ++i)
+    {
+        SV_WriteLong(p->keys[i]);
+    }
 #endif
 
 #if __JHEXEN__
     SV_WriteLong(p->pieces);
 #else
 # if __JDOOM64__
-    SV_Write(p->artifacts, GetPlayerHeader()->numArtifacts * 4);
+    for(i = 0; i < GetPlayerHeader()->numArtifacts; ++i)
+    {
+        SV_WriteLong(p->artifacts[i]);
+    }
 # endif
 
     SV_WriteLong(p->backpack);
 #endif
 
-    SV_Write(p->frags, GetPlayerHeader()->numFrags * 4);
+    for(i = 0; i < GetPlayerHeader()->numFrags; ++i)
+    {
+        SV_WriteLong(p->frags[i]);
+    }
 
     SV_WriteLong(p->readyWeapon);
 #if !__JHEXEN__
     SV_WriteLong(p->pendingWeapon);
 #endif
-    SV_Write(p->weaponOwned, GetPlayerHeader()->numWeapons * 4);
-    SV_Write(p->ammo, GetPlayerHeader()->numAmmoTypes * 4);
+    for(i = 0; i < GetPlayerHeader()->numWeapons; ++i)
+    {
+        SV_WriteLong(p->weapons[i].owned);
+    }
+
+    for(i = 0; i < GetPlayerHeader()->numAmmoTypes; ++i)
+    {
+        SV_WriteLong(p->ammo[i].owned);
 #if !__JHEXEN__
-    SV_Write(p->maxAmmo, GetPlayerHeader()->numAmmoTypes * 4);
+        SV_WriteLong(p->ammo[i].max);
 #endif
+    }
 
     SV_WriteLong(p->attackDown);
     SV_WriteLong(p->useDown);
@@ -1142,8 +1166,12 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->flyHeight);
 #endif
 
-#ifdef __JHERETIC__
-    SV_Write(p->inventory, 4 * 2 * 14);
+#if __JHERETIC__
+    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
+    {
+        SV_WriteLong(p->inventory[i].type);
+        SV_WriteLong(p->inventory[i].count);
+    }
     SV_WriteLong(p->readyArtifact);
     SV_WriteLong(p->artifactCount);
     SV_WriteLong(p->inventorySlotNum);
@@ -1203,7 +1231,10 @@ static void SV_ReadPlayer(player_t *p)
     p->health = SV_ReadLong();
 
 #if __JHEXEN__
-    SV_Read(p->armorPoints, GetPlayerHeader()->numArmorTypes * 4);
+    for(i = 0; i < GetPlayerHeader()->numArmorTypes; ++i)
+    {
+        p->armorPoints[i] = SV_ReadLong();
+    }
 #else
     p->armorPoints = SV_ReadLong();
     p->armorType = SV_ReadLong();
@@ -1220,24 +1251,36 @@ static void SV_ReadPlayer(player_t *p)
     p->inventorySlotNum = SV_ReadLong();
 #endif
 
-    SV_Read(p->powers, GetPlayerHeader()->numPowers * 4);
+    for(i = 0; i < GetPlayerHeader()->numPowers; ++i)
+    {
+        p->powers[i] = SV_ReadLong();
+    }
 
 #if __JHEXEN__
     p->keys = SV_ReadLong();
 #else
-    SV_Read(p->keys, GetPlayerHeader()->numKeys * 4);
+    for(i = 0; i < GetPlayerHeader()->numKeys; ++i)
+    {
+        p->keys[i] = SV_ReadLong();
+    }
 #endif
 
 #if __JHEXEN__
     p->pieces = SV_ReadLong();
 #else
 # if __JDOOM64__
-    SV_Read(p->artifacts, GetPlayerHeader()->numArtifacts * 4);
+    for(i = 0; i < GetPlayerHeader()->numArtifacts; ++i)
+    {
+        p->artifacts[i] = SV_ReadLong();
+    }
 # endif
     p->backpack = SV_ReadLong();
 #endif
 
-    SV_Read(p->frags, GetPlayerHeader()->numFrags * 4);
+    for(i = 0; i < GetPlayerHeader()->numFrags; ++i)
+    {
+        p->frags[i] = SV_ReadLong();
+    }
 
 #if __JHEXEN__
     p->pendingWeapon = p->readyWeapon = SV_ReadLong();
@@ -1246,12 +1289,19 @@ static void SV_ReadPlayer(player_t *p)
     p->pendingWeapon = SV_ReadLong();
 #endif
 
-    SV_Read(p->weaponOwned, GetPlayerHeader()->numWeapons * 4);
-    SV_Read(p->ammo, GetPlayerHeader()->numAmmoTypes * 4);
+    for(i = 0; i < GetPlayerHeader()->numWeapons; ++i)
+    {
+        p->weapons[i].owned = (SV_ReadLong()? true : false);
+    }
+
+    for(i = 0; i < GetPlayerHeader()->numAmmoTypes; ++i)
+    {
+        p->ammo[i].owned = SV_ReadLong();
 
 #if !__JHEXEN__
-    SV_Read(p->maxAmmo, GetPlayerHeader()->numAmmoTypes * 4);
+        p->ammo[i].max = SV_ReadLong();
 #endif
+    }
 
     p->attackDown = SV_ReadLong();
     p->useDown = SV_ReadLong();
@@ -1308,7 +1358,11 @@ static void SV_ReadPlayer(player_t *p)
         /*p->messageTics =*/ SV_ReadLong();
 
     p->flyHeight = SV_ReadLong();
-    SV_Read(p->inventory, 4 * 2 * 14);
+    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
+    {
+        p->inventory[i].type = SV_ReadLong();
+        p->inventory[i].count = SV_ReadLong();
+    }
     p->readyArtifact = SV_ReadLong();
     p->artifactCount = SV_ReadLong();
     p->inventorySlotNum = SV_ReadLong();
@@ -1916,7 +1970,7 @@ static void P_ArchivePlayerHeader(void)
     playerheader_t *ph = &playerHeader;
 
     SV_BeginSegment(ASEG_PLAYER_HEADER);
-    SV_WriteByte(1); // version byte
+    SV_WriteByte(2); // version byte
 
     ph->numPowers = NUM_POWER_TYPES;
     ph->numKeys = NUM_KEY_TYPES;
@@ -1924,8 +1978,10 @@ static void P_ArchivePlayerHeader(void)
     ph->numWeapons = NUM_WEAPON_TYPES;
     ph->numAmmoTypes = NUM_AMMO_TYPES;
     ph->numPSprites = NUMPSPRITES;
-#if __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__
     ph->numInvSlots = NUMINVENTORYSLOTS;
+#endif
+#if __JHEXEN__
     ph->numArmorTypes = NUMARMOR;
 #endif
 #if __JDOOM64__
@@ -1938,8 +1994,10 @@ static void P_ArchivePlayerHeader(void)
     SV_WriteLong(ph->numWeapons);
     SV_WriteLong(ph->numAmmoTypes);
     SV_WriteLong(ph->numPSprites);
-#if __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__
     SV_WriteLong(ph->numInvSlots);
+#endif
+#if __JHEXEN__
     SV_WriteLong(ph->numArmorTypes);
 #endif
 #if __JDOOM64__
@@ -1962,7 +2020,7 @@ static void P_UnArchivePlayerHeader(void)
         int     ver;
 
         AssertSegment(ASEG_PLAYER_HEADER);
-        ver = SV_ReadByte(); // Unused atm
+        ver = SV_ReadByte();
 
         playerHeader.numPowers = SV_ReadLong();
         playerHeader.numKeys = SV_ReadLong();
@@ -1970,6 +2028,12 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numWeapons = SV_ReadLong();
         playerHeader.numAmmoTypes = SV_ReadLong();
         playerHeader.numPSprites = SV_ReadLong();
+#if __JHERETIC__
+        if(ver >= 2)
+            playerHeader.numInvSlots = SV_ReadLong();
+        else
+            playerHeader.numInvSlots = NUMINVENTORYSLOTS;
+#endif
 #if __JHEXEN__
         playerHeader.numInvSlots = SV_ReadLong();
         playerHeader.numArmorTypes = SV_ReadLong();
@@ -2001,6 +2065,7 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numKeys = 3;
         playerHeader.numFrags = 4; // ?
         playerHeader.numWeapons = 8;
+        playerHeader.numInvSlots = 14;
         playerHeader.numAmmoTypes = 6;
         playerHeader.numPSprites = 2;
 #endif
@@ -5185,7 +5250,7 @@ void SV_MapTeleport(int map, int position)
     mobj_t     *targetPlayerMobj;
     boolean     rClass;
     boolean     playerWasReborn;
-    boolean     oldWeaponowned[NUM_WEAPON_TYPES];
+    boolean     oldWeaponOwned[NUM_WEAPON_TYPES];
     int         oldKeys = 0;
     int         oldPieces = 0;
     int         bestWeapon;
@@ -5276,7 +5341,7 @@ void SV_MapTeleport(int map, int position)
                 oldPieces = players[i].pieces;
                 for(j = 0; j < NUM_WEAPON_TYPES; j++)
                 {
-                    oldWeaponowned[j] = players[i].weaponOwned[j];
+                    oldWeaponOwned[j] = players[i].weapons[j].owned;
                 }
             }
         }
@@ -5298,22 +5363,22 @@ void SV_MapTeleport(int map, int position)
             players[i].pieces = oldPieces;
             for(bestWeapon = 0, j = 0; j < NUM_WEAPON_TYPES; ++j)
             {
-                if(oldWeaponowned[j])
+                if(oldWeaponOwned[j])
                 {
                     bestWeapon = j;
-                    players[i].weaponOwned[j] = true;
+                    players[i].weapons[j].owned = true;
                 }
             }
-            players[i].ammo[AT_BLUEMANA] = 25;
-            players[i].ammo[AT_GREENMANA] = 25;
+            players[i].ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
+            players[i].ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
             if(bestWeapon)
-            {                   // Bring up the best weapon
+            {   // Bring up the best weapon
                 players[i].pendingWeapon = bestWeapon;
             }
         }
 
         if(targetPlayerMobj == NULL)
-        {                       // The poor sap
+        {   // The poor sap.
             targetPlayerMobj = players[i].plr->mo;
         }
     }

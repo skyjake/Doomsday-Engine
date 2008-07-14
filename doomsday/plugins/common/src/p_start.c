@@ -61,6 +61,7 @@
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_switch.h"
+#include "g_defs.h"
 
 // MACROS ------------------------------------------------------------------
 

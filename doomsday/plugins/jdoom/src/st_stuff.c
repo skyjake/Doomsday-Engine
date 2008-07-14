@@ -96,9 +96,9 @@
 #define ST_MUCHPAIN         (20)
 
 // AMMO number pos.
-#define ST_AMMOWIDTH        (3)
-#define ST_AMMOX            (44)
-#define ST_AMMOY            (171)
+#define ST_CURRENTAMMOWIDTH (3)
+#define ST_CURRENTAMMOX     (44)
+#define ST_CURRENTAMMOY     (171)
 
 // HEALTH number pos.
 #define ST_HEALTHWIDTH      (3)
@@ -135,36 +135,21 @@
 #define ST_KEY2X            (239)
 #define ST_KEY2Y            (191)
 
-// Ammunition counter.
-#define ST_AMMO0WIDTH       (3)
-#define ST_AMMO0HEIGHT      (6)
-#define ST_AMMO0X           (288)
-#define ST_AMMO0Y           (173)
-#define ST_AMMO1WIDTH       (ST_AMMO0WIDTH)
-#define ST_AMMO1X           (288)
-#define ST_AMMO1Y           (179)
-#define ST_AMMO2WIDTH       (ST_AMMO0WIDTH)
-#define ST_AMMO2X           (288)
-#define ST_AMMO2Y           (191)
-#define ST_AMMO3WIDTH       (ST_AMMO0WIDTH)
-#define ST_AMMO3X           (288)
-#define ST_AMMO3Y           (185)
+// Ready Ammunition counter.
+#define ST_READYAMMOWIDTH   (3)
+#define ST_READYAMMOX       (44)
+#define ST_READYAMMOY       (171)
 
-// Indicate maximum ammunition.
-// Only needed because backpack exists.
-#define ST_MAXAMMO0WIDTH    (3)
-#define ST_MAXAMMO0HEIGHT   (5)
-#define ST_MAXAMMO0X        (314)
-#define ST_MAXAMMO0Y        (173)
-#define ST_MAXAMMO1WIDTH    (ST_MAXAMMO0WIDTH)
-#define ST_MAXAMMO1X        (314)
-#define ST_MAXAMMO1Y        (179)
-#define ST_MAXAMMO2WIDTH    (ST_MAXAMMO0WIDTH)
-#define ST_MAXAMMO2X        (314)
-#define ST_MAXAMMO2Y        (191)
-#define ST_MAXAMMO3WIDTH    (ST_MAXAMMO0WIDTH)
-#define ST_MAXAMMO3X        (314)
-#define ST_MAXAMMO3Y        (185)
+// Ammo counters.
+#define ST_AMMOWIDTH        (3)
+#define ST_AMMOHEIGHT       (6)
+#define ST_AMMOX            (288)
+#define ST_AMMOY            (173)
+
+#define ST_MAXAMMOWIDTH     (3)
+#define ST_MAXAMMOHEIGHT    (6)
+#define ST_MAXAMMOX         (314)
+#define ST_MAXAMMOY         (173)
 
 // Pistol.
 #define ST_WEAPON0X         (110)
@@ -323,10 +308,10 @@ static st_multicon_t wKeyBoxes[3];
 static st_percent_t wArmor;
 
 // Ammo widgets.
-static st_number_t wAmmo[4];
+static st_number_t wAmmo[NUM_AMMO_TYPES];
 
 // Max ammo widgets.
-static st_number_t wMaxAmmo[4];
+static st_number_t wMaxAmmo[NUM_AMMO_TYPES];
 
 // CVARs for the HUD/Statusbar:
 cvar_t sthudCVars[] =
@@ -571,10 +556,10 @@ void ST_updateFaceWidget(void)
 
             for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                if(oldWeaponsOwned[i] != plyr->weaponOwned[i])
+                if(oldWeaponsOwned[i] != plyr->weapons[i].owned)
                 {
                     doEvilGrin = true;
-                    oldWeaponsOwned[i] = plyr->weaponOwned[i];
+                    oldWeaponsOwned[i] = plyr->weapons[i].owned;
                 }
             }
 
@@ -746,7 +731,7 @@ void ST_updateWidgets(void)
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon
-        wReadyWeapon.num = &plr->ammo[ammoType];
+        wReadyWeapon.num = &plr->ammo[ammoType].owned;
         found = true;
     }
     if(!found) // Weapon takes no ammo at all.
@@ -1346,7 +1331,7 @@ void ST_initData(void)
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        oldWeaponsOwned[i] = plyr->weaponOwned[i];
+        oldWeaponsOwned[i] = plyr->weapons[i].owned;
     }
 
     for(i = 0; i < 3; ++i)
@@ -1363,8 +1348,8 @@ void ST_createWidgets(void)
 {
     static int          largeAmmo = 1994;    // means "n/a"
     static ammotype_t   ammoType;
-
-    int                 i;
+    int*                ptr = &largeAmmo;
+    int                 i, offsetY;
     boolean             found;
     player_t           *plyr = &players[CONSOLEPLAYER];
 
@@ -1376,24 +1361,13 @@ void ST_createWidgets(void)
         if(!weaponInfo[plyr->readyWeapon][plyr->class].mode[0].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
-        STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, tallNum, &plyr->ammo[ammoType],
-                      &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
+        ptr = &plyr->ammo[ammoType].owned;
         found = true;
     }
-    if(!found) // Weapon requires no ammo at all.
-    {
-        // DOOM.EXE returns an address beyond plyr->ammo[NUM_AMMO_TYPES]
-        // if weaponInfo[plyr->readyWeapon].ammo == am_noammo
-        // ...obviously a bug.
 
-        //STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, tallNum,
-        //              &plyr->ammo[weaponInfo[plyr->readyWeapon].ammo],
-        //              &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
-
-
-        STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, tallNum, &largeAmmo,
-                      &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
-    }
+    STlib_initNum(&wReadyWeapon, ST_READYAMMOX, ST_READYAMMOY, tallNum,
+                  ptr, &statusbarActive, ST_READYAMMOWIDTH,
+                  &statusbarCounterAlpha);
 
     // Last weapon type.
     wReadyWeapon.data = plyr->readyWeapon;
@@ -1408,8 +1382,8 @@ void ST_createWidgets(void)
     {
         STlib_initMultIcon(&wArms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
                            ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i],
-                           (int *) &plyr->weaponOwned[i + 1], &statusbarArmsOn,
-                           &statusbarCounterAlpha);
+                           (int *) &plyr->weapons[i + 1].owned,
+                           &statusbarArmsOn, &statusbarCounterAlpha);
     }
 
     // Frags sum.
@@ -1435,35 +1409,17 @@ void ST_createWidgets(void)
     STlib_initMultIcon(&wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, keys, &keyBoxes[2],
                        &statusbarActive, &statusbarCounterAlpha);
 
-    // Ammo count (all four kinds).
-    STlib_initNum(&wAmmo[0], ST_AMMO0X, ST_AMMO0Y, shortNum, &plyr->ammo[0],
-                  &statusbarActive, ST_AMMO0WIDTH, &statusbarCounterAlpha);
+    // Ammo count and max (all four kinds).
+    for(i = 0, offsetY = 0; i < NUM_AMMO_TYPES; ++i, offsetY += ST_AMMOHEIGHT)
+    {
+        STlib_initNum(&wAmmo[i], ST_AMMOX, ST_AMMOY + offsetY, shortNum,
+                      &plyr->ammo[i].owned, &statusbarActive, ST_AMMOWIDTH,
+                      &statusbarCounterAlpha);
 
-    STlib_initNum(&wAmmo[1], ST_AMMO1X, ST_AMMO1Y, shortNum, &plyr->ammo[1],
-                  &statusbarActive, ST_AMMO1WIDTH, &statusbarCounterAlpha);
-
-    STlib_initNum(&wAmmo[2], ST_AMMO2X, ST_AMMO2Y, shortNum, &plyr->ammo[2],
-                  &statusbarActive, ST_AMMO2WIDTH, &statusbarCounterAlpha);
-
-    STlib_initNum(&wAmmo[3], ST_AMMO3X, ST_AMMO3Y, shortNum, &plyr->ammo[3],
-                  &statusbarActive, ST_AMMO3WIDTH, &statusbarCounterAlpha);
-
-    // Max ammo count (all four kinds).
-    STlib_initNum(&wMaxAmmo[0], ST_MAXAMMO0X, ST_MAXAMMO0Y, shortNum,
-                  &plyr->maxAmmo[0], &statusbarActive, ST_MAXAMMO0WIDTH,
-                  &statusbarCounterAlpha);
-
-    STlib_initNum(&wMaxAmmo[1], ST_MAXAMMO1X, ST_MAXAMMO1Y, shortNum,
-                  &plyr->maxAmmo[1], &statusbarActive, ST_MAXAMMO1WIDTH,
-                  &statusbarCounterAlpha);
-
-    STlib_initNum(&wMaxAmmo[2], ST_MAXAMMO2X, ST_MAXAMMO2Y, shortNum,
-                  &plyr->maxAmmo[2], &statusbarActive, ST_MAXAMMO2WIDTH,
-                  &statusbarCounterAlpha);
-
-    STlib_initNum(&wMaxAmmo[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, shortNum,
-                  &plyr->maxAmmo[3], &statusbarActive, ST_MAXAMMO3WIDTH,
-                  &statusbarCounterAlpha);
+        STlib_initNum(&wMaxAmmo[i], ST_MAXAMMOX, ST_MAXAMMOY + offsetY,
+                      shortNum, &plyr->ammo[i].max, &statusbarActive,
+                      ST_MAXAMMOWIDTH, &statusbarCounterAlpha);
+    }
 }
 
 void ST_Start(void)

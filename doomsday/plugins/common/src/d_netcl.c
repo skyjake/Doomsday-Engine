@@ -301,11 +301,11 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
             val = (k & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weaponOwned[i] == false &&
+            if(val == true && pl->weapons[i].owned == false &&
                pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-            pl->weaponOwned[i] = val;
+            pl->weapons[i].owned = val;
         }
     }
 
@@ -530,11 +530,11 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             val = (b & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weaponOwned[i] == false &&
+            if(val == true && pl->weapons[i].owned == false &&
                pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
-            pl->weaponOwned[i] = val;
+            pl->weapons[i].owned = val;
         }
     }
 
@@ -548,11 +548,10 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             int val = NetCl_ReadShort();
 #endif
             // Maybe unhide the HUD?
-            if(val > pl->ammo[i] && pl == &players[CONSOLEPLAYER])
+            if(val > pl->ammo[i].owned && pl == &players[CONSOLEPLAYER])
                 ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
-            pl->ammo[i] = val;
-
+            pl->ammo[i].owned = val;
         }
     }
 
@@ -560,7 +559,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; i++)
-            pl->maxAmmo[i] = NetCl_ReadShort();
+            pl->ammo[i].max = NetCl_ReadShort();
 #endif
     }
 

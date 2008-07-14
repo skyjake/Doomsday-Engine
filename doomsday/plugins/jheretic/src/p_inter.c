@@ -108,7 +108,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     if(ammo < 0 || ammo > NUM_AMMO_TYPES)
         Con_Error("P_GiveAmmo: bad type %i", ammo);
 
-    if(player->ammo[ammo] == player->maxAmmo[ammo])
+    if(!(player->ammo[ammo].owned < player->ammo[ammo].max))
         return false;
 
     if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
@@ -120,11 +120,11 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     // change weapon automatically?
     P_MaybeChangeWeapon(player, WT_NOCHANGE, ammo, false);
 
-    player->ammo[ammo] += num;
+    if(player->ammo[ammo].owned + num > player->ammo[ammo].max)
+        player->ammo[ammo].owned = player->ammo[ammo].max;
+    else
+        player->ammo[ammo].owned += num;
     player->update |= PSF_AMMO;
-
-    if(player->ammo[ammo] > player->maxAmmo[ammo])
-        player->ammo[ammo] = player->maxAmmo[ammo];
 
     // Maybe unhide the HUD?
     if(player == &players[CONSOLEPLAYER])
@@ -146,11 +146,11 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
     if(IS_NETGAME && !deathmatch)
     {
         // Leave placed weapons forever on net games.
-        if(player->weaponOwned[weapon])
+        if(player->weapons[weapon].owned)
             return false;
 
         player->bonusCount += BONUSADD;
-        player->weaponOwned[weapon] = true;
+        player->weapons[weapon].owned = true;
         player->update |= PSF_OWNED_WEAPONS;
 
         // Give some of each of the ammo types used by this weapon.
@@ -185,12 +185,12 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
                 gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
-        if(player->weaponOwned[weapon])
+        if(player->weapons[weapon].owned)
             gaveWeapon = false;
         else
         {
             gaveWeapon = true;
-            player->weaponOwned[weapon] = true;
+            player->weapons[weapon].owned = true;
             player->update |= PSF_OWNED_WEAPONS;
 
             // Should we change weapon automatically?
@@ -467,7 +467,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         {
             for(i = 0; i < NUM_AMMO_TYPES; ++i)
             {
-                player->maxAmmo[i] *= 2;
+                player->ammo[i].max *= 2;
             }
             player->backpack = true;
         }

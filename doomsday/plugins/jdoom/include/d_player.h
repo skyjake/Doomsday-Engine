@@ -33,124 +33,82 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// The player data structure depends on a number
-// of other structs: items (internal inventory),
-// animation states (closely tied to the sprites
-// used to represent them, unfortunately).
 #include "d_items.h"
 #include "p_pspr.h"
-
-// In addition, the player is just a special
-// case of the generic moving object/actor.
 #include "p_mobj.h"
-
 #include "g_controls.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
 
 //
 // Player states.
 //
 typedef enum {
-    // Playing or camping.
-    PST_LIVE,
-    // Dead on the ground, view follows killer.
-    PST_DEAD,
-    // Ready to restart/respawn???
-    PST_REBORN
+    PST_LIVE, // Playing or camping.
+    PST_DEAD, // Dead on the ground, view follows killer.
+    PST_REBORN // Ready to restart/respawn???
 } playerstate_t;
 
 //
 // Player internal flags, for cheats and debug.
 //
 typedef enum {
-    // No clipping, walk through barriers.
-    CF_NOCLIP = 1,
-    // No damage, no health loss.
-    CF_GODMODE = 2,
-    // Not really a cheat, just a debug aid.
-    CF_NOMOMENTUM = 4
+    CF_NOCLIP = 0x1, // No clipping, walk through barriers.
+    CF_GODMODE = 0x2, // No damage, no health loss.
+    CF_NOMOMENTUM = 0x4 // Not really a cheat, just a debug aid.
 } cheat_t;
 
 typedef struct player_s {
-    ddplayer_t     *plr;           // Pointer to the engine's player data.
+    ddplayer_t*     plr; // Pointer to the engine's player data.
     playerstate_t   playerState;
-    playerclass_t   class;         // player class type
+    playerclass_t   class; // Player class type.
     playerbrain_t   brain;
 
-    // Bounded/scaled total momentum.
-    float           bob;
-
-    // This is only used between levels,
-    // mo->health is used during levels.
-    int             health;
+    float           bob; // Bounded/scaled total momentum.
+    int             health; // This is only used between levels, mo->health is used during levels.
     int             armorPoints;
-    // Armor type is 0-2.
-    int             armorType;
-
-    // Power ups. invinc and invis are tic counters.
-    int             powers[NUM_POWER_TYPES];
+    int             armorType; // Armor type is 0-2.
+    int             powers[NUM_POWER_TYPES]; // Power ups. invinc and invis are tic counters.
     boolean         keys[NUM_KEY_TYPES];
     boolean         backpack;
-
     int             frags[MAXPLAYERS];
     weapontype_t    readyWeapon;
+    weapontype_t    pendingWeapon; // Is wp_nochange if not changing.
+    struct playerweapon_s {
+        boolean         owned;
+    } weapons[NUM_WEAPON_TYPES];
+    struct playerammo_s {
+        int             owned;
+        int             max;
+    } ammo[NUM_AMMO_TYPES];
 
-    // Is wp_nochange if not changing.
-    weapontype_t    pendingWeapon;
-
-    boolean         weaponOwned[NUM_WEAPON_TYPES];
-    int             ammo[NUM_AMMO_TYPES];
-    int             maxAmmo[NUM_AMMO_TYPES];
-
-    // True if button down last tic.
-    int             attackDown;
+    int             attackDown; // True if button down last tic.
     int             useDown;
 
-    // Bit flags, for cheats and debug.
-    // See cheat_t, above.
-    int             cheats;
+    int             cheats; // Bit flags, for cheats and debug, see cheat_t, above.
+    int             refire; // Refired shots are less accurate.
 
-    // Refired shots are less accurate.
-    int             refire;
-
-    // For intermission stats.
+    // For intermission stats:
     int             killCount;
     int             itemCount;
     int             secretCount;
 
-    // For screen flashing (red or bright).
+    // For screen flashing (red or bright):
     int             damageCount;
     int             bonusCount;
 
-    // Who did damage (NULL for floors/ceilings).
-    mobj_t         *attacker;
-
-    // Player skin colorshift,
-    //  0-3 for which color to draw player.
-    int             colorMap;
-
-    // Overlay view sprites (gun, etc).
-    pspdef_t        pSprites[NUMPSPRITES];
-
-    // True if secret level has been done.
-    boolean         didSecret;
-
-    // The player's view pitch is centering back to zero.
-    boolean         centering;
+    mobj_t*         attacker; // Who did damage (NULL for floors/ceilings).
+    int             colorMap; // Player skin colorshift, 0-3 for which color to draw player.
+    pspdef_t        pSprites[NUMPSPRITES]; // Overlay view sprites (gun, etc).
+    boolean         didSecret; // True if secret level has been done.
+    boolean         centering; // The player's view pitch is centering back to zero.
 
     // The player can jump if this counter is zero.
     int             jumpTics;
-
+    int             flyHeight;
     int             update, startSpot;
 
-    // Target view to a mobj (NULL=disabled).
+    // Target view to a mobj (NULL=disabled):
     mobj_t*         viewLock; // $democam
     int             lockFull;
-
-    int             flyHeight;
 } player_t;
 
 //

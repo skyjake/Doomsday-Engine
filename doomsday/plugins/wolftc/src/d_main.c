@@ -529,7 +529,10 @@ void G_PostInit(void)
     // Common post init routine
     G_CommonPostInit();
 
-    // Initialize weapon info using definitions.
+    // Initialize ammo info.
+    P_InitAmmoInfo();
+
+    // Initialize weapon info.
     P_InitWeaponInfo();
 
     // Print a game mode banner with rulers.

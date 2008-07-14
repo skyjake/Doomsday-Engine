@@ -475,7 +475,7 @@ void P_BringUpWeapon(player_t *plr)
 
     newState = wminfo->upState;
     if(plr->class == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
-       plr->ammo[AT_BLUEMANA])
+       plr->ammo[AT_BLUEMANA].owned > 0)
     {
         newState = S_FAXEUP_G;
     }
@@ -501,7 +501,7 @@ void P_FireWeapon(player_t *plr)
     // Psprite state.
     P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->attackState);
     if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
-       plr->ammo[AT_BLUEMANA] > 0)
+       plr->ammo[AT_BLUEMANA].owned > 0)
     {   // Glowing axe.
         attackState = S_FAXEATK_G1;
     }
@@ -663,7 +663,7 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
 
     psp->pos[VY] = WEAPONTOP;
     if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
-       plr->ammo[AT_BLUEMANA])
+       plr->ammo[AT_BLUEMANA].owned > 0)
     {
         P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
     }
@@ -782,7 +782,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
     }
 
   hammerdone:
-    if(plr->ammo[AT_GREENMANA] <
+    if(plr->ammo[AT_GREENMANA].owned <
        weaponInfo[plr->readyWeapon][plr->class].mode[0].perShot[AT_GREENMANA])
     {   // Don't spawn a hammer if the plr doesn't have enough mana.
         mo->special1 = false;
@@ -1257,7 +1257,7 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
 
     damage = 40 + (P_Random() & 15) + (P_Random() & 7);
     power = 0;
-    if(plr->ammo[AT_BLUEMANA] > 0)
+    if(plr->ammo[AT_BLUEMANA].owned > 0)
     {
         damage /= 2;
         power = 6;
@@ -1314,7 +1314,7 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     if(useMana == 2)
     {
         P_ShotAmmo(plr);
-        if(plr->ammo[AT_BLUEMANA] <= 0)
+        if(!(plr->ammo[AT_BLUEMANA].owned > 0))
             P_SetPsprite(plr, ps_weapon, S_FAXEATK_5);
     }
 }

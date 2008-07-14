@@ -66,16 +66,15 @@ typedef enum {
 #define CF_NOMOMENTUM       (4) // Not really a cheat, just a debug aid.
 
 typedef struct player_s {
-    ddplayer_t     *plr;           // Pointer to the engine's player data.
+    ddplayer_t*     plr; // Pointer to the engine's player data.
     playerstate_t   playerState;
-    playerclass_t   class;         // player class type
+    playerclass_t   class; // player class type
     playerbrain_t   brain;
 
     // Bounded/scaled total momentum.
     float           bob;
 
-    // This is only used between levels,
-    // mo->health is used during levels.
+    // This is only used between levels, mo->health is used during levels.
     int             health;
     int             armorPoints;
     // Armor type is 0-2.
@@ -92,16 +91,19 @@ typedef struct player_s {
     // Is wp_nochange if not changing.
     weapontype_t    pendingWeapon;
 
-    boolean         weaponOwned[NUM_WEAPON_TYPES];
-    int             ammo[NUM_AMMO_TYPES];
-    int             maxAmmo[NUM_AMMO_TYPES];
+    struct playerweapon_s {
+        boolean         owned;
+    } weapons[NUM_WEAPON_TYPES];
+    struct playerammo_s {
+        int             owned;
+        int             max;
+    } ammo[NUM_AMMO_TYPES];
 
     // True if button down last tic.
     int             attackDown;
     int             useDown;
 
-    // Bit flags, for cheats and debug.
-    // See cheat_t, above.
+    // Bit flags, for cheats and debug. See cheat_t, above.
     int             cheats;
 
     // Refired shots are less accurate.
@@ -117,10 +119,9 @@ typedef struct player_s {
     int             bonusCount;
 
     // Who did damage (NULL for floors/ceilings).
-    mobj_t         *attacker;
+    mobj_t*         attacker;
 
-    // Player skin colorshift,
-    //  0-3 for which color to draw player.
+    // Player skin colorshift, 0-3 for which color to draw player.
     int             colorMap;
 
     // Overlay view sprites (gun, etc).
@@ -143,7 +144,7 @@ typedef struct player_s {
 
     int             flyHeight;
 
-    int             artifacts[NUMARTIFACTS]; // jd64
+    laserpw_t       artifacts[NUMARTIFACTS]; // jd64
 } player_t;
 
 #endif

@@ -97,9 +97,13 @@ typedef struct player_s {
     // Is wp_nochange if not changing.
     weapontype_t    pendingWeapon;
 
-    boolean         weaponOwned[NUM_WEAPON_TYPES];
-    int             ammo[NUM_AMMO_TYPES];
-    int             maxAmmo[NUM_AMMO_TYPES];
+    struct playerweapon_s {
+        boolean         owned;
+    } weapons[NUM_WEAPON_TYPES];
+    struct playerammo_s {
+        int             owned;
+        int             max;
+    } ammo[NUM_AMMO_TYPES];
 
     // True if button down last tic.
     int             attackDown;
@@ -122,7 +126,7 @@ typedef struct player_s {
     int             bonusCount;
 
     // Who did damage (NULL for floors/ceilings).
-    mobj_t         *attacker;
+    mobj_t*         attacker;
 
     // Player skin colorshift,
     //  0-3 for which color to draw player.

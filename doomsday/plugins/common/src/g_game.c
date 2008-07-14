@@ -797,7 +797,7 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
 
     // owned weapons
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-        gsvWeapons[i] = pl->weaponOwned[i];
+        gsvWeapons[i] = pl->weapons[i].owned;
 
 #if __JHEXEN__
     // weapon pieces
@@ -806,9 +806,9 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
     gsvWPieces[2] = (pl->pieces & WPIECE3)? 1 : 0;
     gsvWPieces[3] = (pl->pieces == 7)? 1 : 0;
 #endif
-    // current ammo amounts
+    // Current ammo amounts.
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
-        gsvAmmo[i] = pl->ammo[i];
+        gsvAmmo[i] = pl->ammo[i].owned;
 
 #if __JHERETIC__ || __JHEXEN__
     // artifacts
@@ -1233,21 +1233,21 @@ void G_PlayerReborn(int player)
 
 #if __JDOOM__ || __JDOOM64__
     p->readyWeapon = p->pendingWeapon = WT_SECOND;
-    p->weaponOwned[WT_FIRST] = true;
-    p->weaponOwned[WT_SECOND] = true;
+    p->weapons[WT_FIRST].owned = true;
+    p->weapons[WT_SECOND].owned = true;
 
     // Initalize the player's ammo counts.
     memset(p->ammo, 0, sizeof(p->ammo));
-    p->ammo[AT_CLIP] = 50;
+    p->ammo[AT_CLIP].owned = 50;
 
     // See if the Values specify anything.
     P_InitPlayerValues(p);
 
 #elif __JHERETIC__
     p->readyWeapon = p->pendingWeapon = WT_SECOND;
-    p->weaponOwned[WT_FIRST] = true;
-    p->weaponOwned[WT_SECOND] = true;
-    p->ammo[AT_CRYSTAL] = 50;
+    p->weapons[WT_FIRST].owned = true;
+    p->weapons[WT_SECOND].owned = true;
+    p->ammo[AT_CRYSTAL].owned = 50;
 
     if(gameMap == 9 || secret)
     {
@@ -1256,14 +1256,14 @@ void G_PlayerReborn(int player)
 
 #else
     p->readyWeapon = p->pendingWeapon = WT_FIRST;
-    p->weaponOwned[WT_FIRST] = true;
+    p->weapons[WT_FIRST].owned = true;
     localQuakeHappening[player] = false;
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Reset maxammo.
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
-        p->maxAmmo[i] = maxAmmo[i];
+        p->ammo[i].max = maxAmmo[i];
 #endif
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -1305,7 +1305,7 @@ void G_DoReborn(int playernum)
 {
 #if __JHEXEN__ || __JSTRIFE__
     int             i;
-    boolean         oldWeaponowned[NUM_WEAPON_TYPES];
+    boolean         oldWeaponOwned[NUM_WEAPON_TYPES];
     int             oldKeys, oldPieces, bestWeapon;
 #endif
     boolean         foundSpot;
@@ -1372,7 +1372,7 @@ void G_DoReborn(int playernum)
         oldKeys = p->keys;
         oldPieces = p->pieces;
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-            oldWeaponowned[i] = p->weaponOwned[i];
+            oldWeaponOwned[i] = p->weapons[i].owned;
 #endif
 
         // Try to spawn at the assigned spot.
@@ -1432,15 +1432,15 @@ void G_DoReborn(int playernum)
         p->pieces = oldPieces;
         for(bestWeapon = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
-            if(oldWeaponowned[i])
+            if(oldWeaponOwned[i])
             {
                 bestWeapon = i;
-                p->weaponOwned[i] = true;
+                p->weapons[i].owned = true;
             }
         }
 
-        p->ammo[AT_BLUEMANA] = 25;
-        p->ammo[AT_GREENMANA] = 25;
+        p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
+        p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
         if(bestWeapon)
         {   // Bring up the best weapon.
             p->pendingWeapon = bestWeapon;

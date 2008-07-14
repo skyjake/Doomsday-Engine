@@ -644,40 +644,6 @@ float bulletSlope;
 // CODE --------------------------------------------------------------------
 
 /**
- * Return the default for a value (retrieved from Doomsday)
- */
-int GetDefInt(char *def, int *returned_value)
-{
-    char               *data;
-    int                 val;
-
-    // Get the value.
-    if(!Def_Get(DD_DEF_VALUE, def, &data))
-        return 0; // No such value...
-
-    // Convert to integer.
-    val = strtol(data, 0, 0);
-    if(returned_value)
-        *returned_value = val;
-
-    return val;
-}
-
-void GetDefState(char *def, int *val)
-{
-    char               *data;
-
-    // Get the value.
-    if(!Def_Get(DD_DEF_VALUE, def, &data))
-        return;
-
-    // Get the state number.
-    *val = Def_Get(DD_DEF_STATE, data, 0);
-    if(*val < 0)
-        *val = 0;
-}
-
-/**
  *Initialize weapon info, maxammo and clipammo.
  */
 void P_InitWeaponInfo(void)
@@ -698,6 +664,8 @@ void P_InitWeaponInfo(void)
         sprintf(buf, WPINF "%i|2|Static", i);
         weaponInfo[i][pclass].mode[1].staticSwitch = GetDefInt(buf, 0);
     }
+
+#undef WPINF
 }
 
 void P_SetPsprite(player_t *player, int position, statenum_t stnum)

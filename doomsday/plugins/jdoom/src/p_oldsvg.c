@@ -72,12 +72,12 @@ extern void SV_UpdateReadMobjFlags(mobj_t *mo, int ver);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static byte   *savePtr;
-static byte   *saveBuffer;
+static byte* savePtr;
+static byte* saveBuffer;
 
 // CODE --------------------------------------------------------------------
 
-static void SV_Read(void *data, int len)
+static void SV_Read(void* data, int len)
 {
     if(data)
         memcpy(data, savePtr, len);
@@ -96,13 +96,13 @@ static int SV_ReadLong(void)
     return *(int *) (savePtr - 4);
 }
 
-static void SV_ReadPlayer(player_t *pl)
+static void SV_ReadPlayer(player_t* pl)
 {
-    int                 temp[3];
+    int             i;
 
     SV_ReadLong();
     pl->playerState = SV_ReadLong();
-    SV_Read(temp, 8);
+    SV_Read(NULL, 8);
     pl->plr->viewZ = FIX2FLT(SV_ReadLong());
     pl->plr->viewHeight = FIX2FLT(SV_ReadLong());
     pl->plr->viewHeightDelta = FIX2FLT(SV_ReadLong());
@@ -112,23 +112,58 @@ static void SV_ReadPlayer(player_t *pl)
     pl->armorPoints = SV_ReadLong();
     pl->armorType = SV_ReadLong();
 
-    SV_Read(pl->powers, 6 * 4);
-    SV_Read(pl->keys, 6 * 4);
+    memset(pl->powers, 0, sizeof(pl->powers));
+    pl->powers[PT_INVULNERABILITY] = (SV_ReadLong()? true : false);
+    pl->powers[PT_STRENGTH] = (SV_ReadLong()? true : false);
+    pl->powers[PT_INVISIBILITY] = (SV_ReadLong()? true : false);
+    pl->powers[PT_IRONFEET] = (SV_ReadLong()? true : false);
+    pl->powers[PT_ALLMAP] = (SV_ReadLong()? true : false);
+    pl->powers[PT_INFRARED] = (SV_ReadLong()? true : false);
+
+    memset(pl->keys, 0, sizeof(pl->keys));
+    pl->keys[KT_BLUECARD] = (SV_ReadLong()? true : false);
+    pl->keys[KT_YELLOWCARD] = (SV_ReadLong()? true : false);
+    pl->keys[KT_REDCARD] = (SV_ReadLong()? true : false);
+    pl->keys[KT_BLUESKULL] = (SV_ReadLong()? true : false);
+    pl->keys[KT_YELLOWSKULL] = (SV_ReadLong()? true : false);
+    pl->keys[KT_REDSKULL] = (SV_ReadLong()? true : false);
+
     pl->backpack = SV_ReadLong();
 
-    SV_Read(pl->frags, 4 * 4);
+    memset(pl->frags, 0, sizeof(pl->frags));
+    pl->frags[0] = SV_ReadLong();
+    pl->frags[1] = SV_ReadLong();
+    pl->frags[2] = SV_ReadLong();
+    pl->frags[3] = SV_ReadLong();
+
     pl->readyWeapon = SV_ReadLong();
     pl->pendingWeapon = SV_ReadLong();
 
-    SV_Read(pl->weaponOwned, 9 * 4);
-    SV_Read(pl->ammo, 4 * 4);
-    SV_Read(pl->maxAmmo, 4 * 4);
+    memset(pl->weapons, 0, sizeof(pl->weapons));
+    pl->weapons[WT_FIRST].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_SECOND].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_THIRD].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_FOURTH].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_FIFTH].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_SIXTH].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_SEVENTH].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_EIGHTH].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_NINETH].owned = (SV_ReadLong()? true : false);
+
+    memset(pl->ammo, 0, sizeof(pl->ammo));
+    pl->ammo[AT_CLIP].owned = SV_ReadLong();
+    pl->ammo[AT_SHELL].owned = SV_ReadLong();
+    pl->ammo[AT_CELL].owned = SV_ReadLong();
+    pl->ammo[AT_MISSILE].owned = SV_ReadLong();
+    pl->ammo[AT_CLIP].max = SV_ReadLong();
+    pl->ammo[AT_SHELL].max = SV_ReadLong();
+    pl->ammo[AT_CELL].max = SV_ReadLong();
+    pl->ammo[AT_MISSILE].max = SV_ReadLong();
 
     pl->attackDown = SV_ReadLong();
     pl->useDown = SV_ReadLong();
 
     pl->cheats = SV_ReadLong();
-
     pl->refire = SV_ReadLong();
 
     pl->killCount = SV_ReadLong();
@@ -145,8 +180,15 @@ static void SV_ReadPlayer(player_t *pl)
     pl->plr->extraLight = SV_ReadLong();
     pl->plr->fixedColorMap = SV_ReadLong();
     pl->colorMap = SV_ReadLong();
-    SV_Read(pl->pSprites, 2 * sizeof(pspdef_t));
+    for(i = 0; i < 2; ++i)
+    {
+        pspdef_t       *psp = &pl->pSprites[i];
 
+        psp->state = (state_t*) SV_ReadLong();
+        psp->pos[VX] = SV_ReadLong();
+        psp->pos[VY] = SV_ReadLong();
+        psp->tics = SV_ReadLong();
+    }
     pl->didSecret = SV_ReadLong();
 }
 
@@ -506,14 +548,14 @@ static int SV_ReadFloor(floor_t *floor)
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
-    floortype_e	type; // was 32bit int
-    boolean	crush;
+    floortype_e type; // was 32bit int
+    boolean crush;
     sector_t *sector;
-    int		direction;
-    int		newspecial;
-    short	texture;
-    fixed_t	floordestheight;
-    fixed_t	speed;
+    int     direction;
+    int     newspecial;
+    short   texture;
+    fixed_t floordestheight;
+    fixed_t speed;
 } v19_floormove_t;
 */
     // Padding at the start (an old thinker_t struct)

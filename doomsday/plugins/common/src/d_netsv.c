@@ -961,7 +961,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
     {
         // This supports up to 16 weapons.
         for(fl = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
-            if(pl->weaponOwned[i])
+            if(pl->weapons[i].owned)
                 fl |= 1 << i;
         WRITE_SHORT(ptr, fl);
     }
@@ -1105,7 +1105,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     if(flags & PSF_OWNED_WEAPONS)
     {
         for(k = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
-            if(pl->weaponOwned[i])
+            if(pl->weapons[i].owned)
                 k |= 1 << i;
         *ptr++ = k;
     }
@@ -1114,9 +1114,9 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     {
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
 #if __JHEXEN__ || __JSTRIFE__
-            *ptr++ = pl->ammo[i];
+            *ptr++ = pl->ammo[i].owned;
 #else
-            WRITE_SHORT(ptr, pl->ammo[i]);
+            WRITE_SHORT(ptr, pl->ammo[i].owned);
 #endif
     }
 
@@ -1124,7 +1124,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
-            WRITE_SHORT(ptr, pl->maxAmmo[i]);
+            WRITE_SHORT(ptr, pl->ammo[i].max);
 #endif
     }
 

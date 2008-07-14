@@ -498,10 +498,10 @@ void ST_updateWidgets(void)
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon.
-        wReadyWeapon.num = &plr->ammo[ammoType];
+        wReadyWeapon.num = &plr->ammo[ammoType].owned;
 
-        if(oldAmmoIconIdx != plr->ammo[ammoType] || oldReadyWeapon != plr->readyWeapon)
-            currentAmmoIconIdx = plr->readyWeapon - 1;
+        if(oldReadyWeapon != plr->readyWeapon)
+            currentAmmoIconIdx = (int) ammoType;
 
         found = true;
     }
@@ -580,8 +580,9 @@ void ST_createWidgets(void)
         if(!weaponInfo[plyr->readyWeapon][plyr->class].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
-        STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers, &plyr->ammo[ammoType],
-                      &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
+        STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
+                      &plyr->ammo[ammoType].owned, &statusbarActive,
+                      ST_AMMOWIDTH, &statusbarCounterAlpha);
 
         found = true;
     }
@@ -1172,7 +1173,8 @@ void ST_doFullscreenStuff(void)
                 Draw_BeginZoom(cfg.hudScale, 2, 2);
                 GL_DrawPatchLitAlpha(-1, 0, 1, iconAlpha,
                                      W_GetNumForName(ammoPic[plyr->readyWeapon - 1]));
-                drawINumber(plyr->ammo[ammoType], 18, 2, 1, 1, 1, textAlpha);
+                drawINumber(plyr->ammo[ammoType].owned, 18, 2,
+                            1, 1, 1, textAlpha);
 
                 Draw_EndZoom();
                 break;

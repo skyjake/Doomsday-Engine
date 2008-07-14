@@ -183,71 +183,43 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static const char* ammoTypeNames[NUM_AMMO_TYPES] =
+    {"clip", "shell", "cell", "misl"};
+
 // CODE --------------------------------------------------------------------
 
 /**
- * @return              The default for a value (retrieved from Doomsday).
+ * Initialize ammo info.
  */
-int GetDefInt(char* def, int* returned_value)
+void P_InitAmmoInfo(void)
 {
-    char*               data;
-    int                 val;
+    uint                i;
+    char                buf[20];
 
-    // Get the value.
-    if(!Def_Get(DD_DEF_VALUE, def, &data))
-        return 0; // No such value.
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
+        // Max ammo.
+        sprintf(buf, "Player|Max ammo|%s", ammoTypeNames[i]);
+        GetDefInt(buf, &maxAmmo[i]);
 
-    // Convert to integer.
-    val = strtol(data, 0, 0);
-    if(returned_value)
-        *returned_value = val;
-
-    return val;
-}
-
-void GetDefState(char* def, int* val)
-{
-    char*               data;
-
-    // Get the value.
-    if(!Def_Get(DD_DEF_VALUE, def, &data))
-        return;
-
-    // Get the state number.
-    *val = Def_Get(DD_DEF_STATE, data, 0);
-    if(*val < 0)
-        *val = 0;
+        // Clip ammo.
+        sprintf(buf, "Player|Clip ammo|%s", ammoTypeNames[i]);
+        GetDefInt(buf, &clipAmmo[i]);
+    }
 }
 
 /**
- *Initialize weapon info, maxammo and clipammo.
+ * Initialize weapon info.
  */
-void P_InitWeaponInfo()
+void P_InitWeaponInfo(void)
 {
-#define PLMAX "Player|Max ammo|"
-#define PLCLP "Player|Clip ammo|"
-#define WPINF "Weapon Info|"
+#define WPINF               "Weapon Info|"
 
     int                 i;
     int                 pclass = PCLASS_PLAYER;
     ammotype_t          k;
     char                buf[80];
     char*               data;
-    char*               ammoTypes[NUM_AMMO_TYPES] = {
-        "clip", "shell", "cell", "misl"
-    };
-
-    // Max ammo.
-    GetDefInt(PLMAX "Clip", &maxAmmo[AT_CLIP]);
-    GetDefInt(PLMAX "Shell", &maxAmmo[AT_SHELL]);
-    GetDefInt(PLMAX "Cell", &maxAmmo[AT_CELL]);
-    GetDefInt(PLMAX "Misl", &maxAmmo[AT_MISSILE]);
-
-    // Clip ammo.
-    GetDefInt(PLCLP "Clip", &clipAmmo[AT_CLIP]);
-    GetDefInt(PLCLP "Shell", &clipAmmo[AT_SHELL]);
-    GetDefInt(PLCLP "Cell", &clipAmmo[AT_CELL]);
-    GetDefInt(PLCLP "Misl", &clipAmmo[AT_MISSILE]);
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
@@ -268,7 +240,7 @@ void P_InitWeaponInfo()
             {
                 for(k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
-                    if(!stricmp(data, ammoTypes[k]))
+                    if(!stricmp(data, ammoTypeNames[k]))
                     {
                         weaponInfo[i][pclass].mode[0].ammoType[k] = true;
 
@@ -294,24 +266,28 @@ void P_InitWeaponInfo()
         sprintf(buf, WPINF "%i|Static", i);
         weaponInfo[i][pclass].mode[0].staticSwitch = GetDefInt(buf, 0);
     }
+
+#undef WPINF
 }
 
 void P_InitPlayerValues(player_t *p)
 {
-#define PLINA "Player|Init ammo|"
-    int     i;
-    char    buf[20];
+    int                 i;
+    char                buf[20];
 
     GetDefInt("Player|Health", &p->health);
     GetDefInt("Player|Weapon", (int *) &p->readyWeapon);
     p->pendingWeapon = p->readyWeapon;
-    for(i = 0; i < NUM_WEAPON_TYPES; i++)
+
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         sprintf(buf, "Weapon Info|%i|Owned", i);
-        GetDefInt(buf, (int *) &p->weaponOwned[i]);
+        GetDefInt(buf, (int *) &p->weapons[i].owned);
     }
-    GetDefInt(PLINA "Clip", &p->ammo[AT_CLIP]);
-    GetDefInt(PLINA "Shell", &p->ammo[AT_SHELL]);
-    GetDefInt(PLINA "Cell", &p->ammo[AT_CELL]);
-    GetDefInt(PLINA "Misl", &p->ammo[AT_MISSILE]);
+
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
+        sprintf(buf, "Player|Init ammo|%s", ammoTypeNames[i]);
+        GetDefInt(buf, &p->ammo[i].owned);
+    }
 }

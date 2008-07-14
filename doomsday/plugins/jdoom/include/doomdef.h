@@ -202,7 +202,7 @@ typedef enum {
     WT_NOCHANGE
 } weapontype_t;
 
-#define NUMWEAPLEVELS       1 // DOOM weapons have 1 power level.
+#define NUMWEAPLEVELS       2 // DOOM weapons have 1 power level.
 
 // Ammunition types defined.
 typedef enum {

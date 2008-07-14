@@ -255,6 +255,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\g_defs.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\g_update.h"
 				>
 			</File>
@@ -420,6 +424,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\g_controls.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\g_defs.c"
 				>
 			</File>
 			<File

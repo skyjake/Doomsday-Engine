@@ -44,6 +44,7 @@
 #include "p_mapspec.h"
 #include "p_switch.h"
 #include "am_map.h"
+#include "g_defs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -394,7 +395,10 @@ void G_PostInit(void)
     // Common post init routine.
     G_CommonPostInit();
 
-    // Initialize weapon info using definitions.
+    // Initialize ammo info.
+    P_InitAmmoInfo();
+
+    // Initialize weapon info.
     P_InitWeaponInfo();
 
     // Print a game mode banner with rulers.

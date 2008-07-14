@@ -87,26 +87,22 @@ typedef enum {
 } cheat_t;
 #endif
 
-    // No clipping, walk through barriers.
-#define CF_NOCLIP 1
-    // No damage, no health loss.
-#define CF_GODMODE 2
-    // Not really a cheat, just a debug aid.
-#define CF_NOMOMENTUM 4
+#define CF_NOCLIP           (1) // No clipping, walk through barriers.
+#define CF_GODMODE          (2) // No damage, no health loss.
+#define CF_NOMOMENTUM       (4) // Not really a cheat, just a debug aid.
 
 // Extended player information, Hexen specific.
 typedef struct player_s {
-    ddplayer_t     *plr;           // Pointer to the engine's player data.
+    ddplayer_t*     plr; // Pointer to the engine's player data.
     playerstate_t   playerState;
-    playerclass_t   class;         // player class type
+    playerclass_t   class; // Player class type.
     playerbrain_t   brain;
 
-    fixed_t         bob;           // bounded/scaled total momentum
+    fixed_t         bob; // Bounded/scaled total momentum.
 
     int             flyHeight;
     boolean         centering;
-    int             health;        // only used between levels, mo->health
-    // is used during levels
+    int             health; // Only used between levels, mo->health is used during levels.
     int             armorPoints[NUMARMOR];
 
     inventory_t     inventory[NUMINVENTORYSLOTS];
@@ -117,28 +113,32 @@ typedef struct player_s {
     int             inventorySlotNum;
     int             powers[NUM_POWER_TYPES];
     int             keys;
-    int             pieces; // Fourth Weapon pieces
+    int             pieces; // Fourth Weapon pieces.
     weapontype_t    readyWeapon;
-    weapontype_t    pendingWeapon; // wp_nochange if not changing
-    boolean         weaponOwned[NUM_WEAPON_TYPES];
-    int             ammo[NUM_AMMO_TYPES]; // mana
-    int             attackDown, useDown; // true if button down last tic
-    int             cheats; // bit flags
-    signed int      frags[MAXPLAYERS]; // kills of other players
+    weapontype_t    pendingWeapon; // wp_nochange if not changing.
+    struct playerweapon_s {
+        boolean         owned;
+    } weapons[NUM_WEAPON_TYPES];
+    struct playerammo_s {
+        int             owned;
+    } ammo[NUM_AMMO_TYPES]; // Mana.
+    int             attackDown, useDown; // true if button down last tic.
+    int             cheats; // Bit flags.
+    signed int      frags[MAXPLAYERS]; // Kills of other players.
 
-    int             refire; // refired shots are less accurate
+    int             refire; // Refired shots are less accurate.
 
-    int             killCount, itemCount, secretCount; // for intermission
+    int             killCount, itemCount, secretCount; // For intermission.
 
-    int             damageCount, bonusCount; // for screen flashing
-    int             poisonCount; // screen flash for poison damage
-    mobj_t         *poisoner; // NULL for non-player mobjs
-    mobj_t         *attacker; // who did damage (NULL for floors)
-    int             colorMap; // 0-3 for which color to draw player
-    pspdef_t        pSprites[NUMPSPRITES];  // view sprites (gun, etc)
-    int             morphTics; // player is a pig if > 0
-    uint            jumpTics; // delay the next jump for a moment
-    unsigned int    worldTimer; // total time the player's been playing
+    int             damageCount, bonusCount; // For screen flashing.
+    int             poisonCount; // Screen flash for poison damage.
+    mobj_t*         poisoner; // NULL for non-player mobjs.
+    mobj_t*         attacker; // Who did damage (NULL for floors).
+    int             colorMap; // 0-3 for which color to draw player.
+    pspdef_t        pSprites[NUMPSPRITES];  // view sprites (gun, etc).
+    int             morphTics; // Player is a pig if > 0.
+    uint            jumpTics; // Delay the next jump for a moment.
+    unsigned int    worldTimer; // Total time the player's been playing.
     int             update, startSpot;
     // Target view to a mobj (NULL=disabled).
     mobj_t*         viewLock; // $democam

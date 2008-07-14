@@ -137,31 +137,27 @@ int P_GetPlayerCheats(player_t *player)
 void P_ShotAmmo(player_t *player)
 {
     ammotype_t          i;
-    int                 lvl;
-    weaponinfo_t       *win = &weaponInfo[player->readyWeapon][player->class];
+    int                 fireMode;
+    weaponinfo_t*       wInfo =
+        &weaponInfo[player->readyWeapon][player->class];
 
 #if __JHERETIC__
-    lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
+    if(deathmatch)
+        fireMode = 0; // In deathmatch always use mode zero.
+    else
+        fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 #else
-    lvl = 0;
+    fireMode = 0;
 #endif
 
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        if(!win->mode[lvl].ammoType[i])
-            continue;   // Weapon does not take this ammo.
-
-#if __JHERETIC__
-        if(deathmatch && lvl == 1)
-            // In deathmatch always use level zero ammo requirements
-            player->ammo[i] -= win->mode[0].perShot[i];
-        else
-#endif
-            player->ammo[i] -= win->mode[lvl].perShot[i];
+        if(!wInfo->mode[fireMode].ammoType[i])
+            continue; // Weapon does not take this ammo.
 
         // Don't let it fall below zero.
-        if(player->ammo[i] < 0)
-            player->ammo[i] = 0;
+        player->ammo[i].owned = MAX_OF(0,
+            player->ammo[i].owned - wInfo->mode[fireMode].perShot[i]);
     }
 }
 
@@ -225,7 +221,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                 continue;
 
             // Does the player actually own this candidate?
-            if(!player->weaponOwned[candidate])
+            if(!player->weapons[candidate].owned)
                 continue;
 
             // Is there sufficent ammo for the candidate weapon?
@@ -238,13 +234,13 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
                 if(deathmatch &&
-                   player->ammo[ammotype] < winf->mode[0].perShot[ammotype])
+                   player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
                 {   // Not enough ammo of this type. Candidate is NOT good.
                     good = false;
                 }
                 else
 #endif
-                if(player->ammo[ammotype] < winf->mode[lvl].perShot[ammotype])
+                if(player->ammo[ammotype].owned < winf->mode[lvl].perShot[ammotype])
                 {   // Not enough ammo of this type. Candidate is NOT good.
                     good = false;
                 }
@@ -301,7 +297,8 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
     else if(ammo != AT_NOAMMO) // Player is about to be given some ammo.
     {
-        if((!player->ammo[ammo] && cfg.ammoAutoSwitch != 0) || force)
+        if((!(player->ammo[ammo].owned > 0) && cfg.ammoAutoSwitch != 0) ||
+           force)
         {   // We were down to zero, so select a new weapon.
 
             // Iterate the weapon order array and see if the player owns a
@@ -317,7 +314,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue;
 
                 // Does the player actually own this candidate?
-                if(!player->weaponOwned[candidate])
+                if(!player->weapons[candidate].owned)
                     continue;
 
                 // Does the weapon use this type of ammo?
@@ -370,7 +367,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
  */
 boolean P_CheckAmmo(player_t* plr)
 {
-    int                 count, fireMode;
+    int                 fireMode;
     boolean             good;
     ammotype_t          i;
     weaponinfo_t*       wInfo;
@@ -404,11 +401,8 @@ boolean P_CheckAmmo(player_t* plr)
             continue; // Weapon does not take this type of ammo.
 
         // Minimal amount for one shot varies.
-        count = wInfo->mode[fireMode].perShot[i];
-
-        // Return if current ammunition sufficient.
-        if(plr->ammo[i] < count)
-        {
+        if(plr->ammo[i].owned < wInfo->mode[fireMode].perShot[i])
+        {   // Insufficent ammo to fire this weapon.
             good = false;
         }
     }
@@ -505,7 +499,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 
         // Available in this game mode? And a valid weapon?
         if((weaponInfo[w][player->class].mode[lvl].
-            gameModeBits & gameModeBits) && player->weaponOwned[w])
+            gameModeBits & gameModeBits) && player->weapons[w].owned)
             break;
     }
 

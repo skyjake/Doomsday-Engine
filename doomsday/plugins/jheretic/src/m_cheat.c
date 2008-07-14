@@ -507,19 +507,19 @@ static void cheatWeaponsFunc(player_t *player, cheatseq_t *cheat)
     {
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            player->maxAmmo[i] *= 2;
+            player->ammo[i].max *= 2;
         }
         player->backpack = true;
     }
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         if(weaponInfo[i][0].mode[0].gameModeBits & gameModeBits)
-            player->weaponOwned[i] = true;
+            player->weapons[i].owned = true;
     }
 
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        player->ammo[i] = player->maxAmmo[i];
+        player->ammo[i].owned = player->ammo[i].max;
     }
     P_SetMessage(player, TXT_CHEATWEAPONS, false);
 }
@@ -690,9 +690,9 @@ static void cheatIDKFAFunc(player_t *player, cheatseq_t * cheat)
     {
         return;
     }
-    for(i = 1; i < 8; i++)
+    for(i = 1; i < NUM_WEAPON_TYPES; ++i)
     {
-        player->weaponOwned[i] = false;
+        player->weapons[i].owned = false;
     }
     player->pendingWeapon = WT_FIRST;
     P_SetMessage(player, TXT_CHEATIDKFA, false);
