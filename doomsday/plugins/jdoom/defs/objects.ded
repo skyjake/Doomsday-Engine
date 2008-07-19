@@ -10390,8 +10390,9 @@ State {
 State {
   ID = "ARM1A";
   Sprite = "ARM1";
-  Frame = 32769;
+  Frame = 1;
   Tics = 7;
+  Flags = fullbright | noautolight;
   Next state = "ARM1";
 }
 
@@ -10406,8 +10407,9 @@ State {
 State {
   ID = "ARM2A";
   Sprite = "ARM2";
-  Frame = 32769;
+  Frame = 1;
   Tics = 6;
+  Flags = fullbright | noautolight;
   Next state = "ARM2";
 }
 
