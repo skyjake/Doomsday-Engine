@@ -432,13 +432,10 @@ static boolean C_DECL clockwiseLeaf(binarytree_t *tree, void *data)
         for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
             total++;
 
-        leaf->hEdgeCount = total;
-
         // Ensure the sort buffer is large enough.
         prepareHEdgeSortBuffer(total);
 
-        clockwiseOrder(&leaf->hEdges, leaf->hEdgeCount, midPoint[VX],
-                       midPoint[VY]);
+        clockwiseOrder(&leaf->hEdges, total, midPoint[VX], midPoint[VY]);
         renumberLeafHEdges(leaf, data);
 
         // Do some sanity checks.
@@ -531,7 +528,6 @@ bspleafdata_t *BSPLeaf_Create(void)
 {
     bspleafdata_t       *leaf = allocBSPLeaf();
 
-    leaf->hEdgeCount = 0;
     leaf->hEdges = NULL;
 
     return leaf;

@@ -274,14 +274,23 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
 {
     seg_t**             segp;
     boolean             found;
+    size_t              hEdgeCount;
+    hedge_t*            hEdge;
+
+    hEdge = src->hEdges;
+    hEdgeCount = 0;
+    do
+    {
+        hEdgeCount++;
+    } while((hEdge = hEdge->next) != NULL);
 
     dest->header.type = DMU_SUBSECTOR;
-    dest->segCount = (uint) src->hEdgeCount;
+    dest->segCount = (uint) hEdgeCount;
     dest->shadows = NULL;
     dest->vertices = NULL;
     dest->group = 0;
 
-    hardenSSecSegList(map, dest, src->hEdges, src->hEdgeCount);
+    hardenSSecSegList(map, dest, src->hEdges, hEdgeCount);
 
     // Determine which sector this subsector belongs to.
     segp = dest->segs;
