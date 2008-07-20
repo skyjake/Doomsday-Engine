@@ -1876,47 +1876,47 @@ Text {
 }
 
 Text {
-  ID = "WEAPON0";
+  ID = "WEAPON1";
   Text = "Fist";
 }
 
 Text {
-  ID = "WEAPON1";
+  ID = "WEAPON2";
   Text = "Pistol";
 }
 
 Text {
-  ID = "WEAPON2";
+  ID = "WEAPON3";
   Text = "Shotgun";
 }
 
 Text {
-  ID = "WEAPON3";
+  ID = "WEAPON4";
   Text = "Chaingun";
 }
 
 Text {
-  ID = "WEAPON4";
+  ID = "WEAPON5";
   Text = "Rocket Launcher";
 }
 
 Text {
-  ID = "WEAPON5";
+  ID = "WEAPON6";
   Text = "Plasma Rifle";
 }
 
 Text {
-  ID = "WEAPON6";
-  Text = "BFG";
-}
-
-Text {
   ID = "WEAPON7";
-  Text = "Chainsaw";
+  Text = "BFG 9000";
 }
 
 Text {
   ID = "WEAPON8";
+  Text = "Chainsaw";
+}
+
+Text {
+  ID = "WEAPON9";
   Text = "Super Shotgun";
 }
 
