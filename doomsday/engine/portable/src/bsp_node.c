@@ -80,7 +80,7 @@ static hedge_t **hEdgeSortBuf;
 
 static __inline int pointOnHEdgeSide(double x, double y, const hedge_t *part)
 {
-    return P_PointOnLineSide2(x, y, part->pDX, part->pDY, part->pPerp,
+    return P_PointOnLinedefSide2(x, y, part->pDX, part->pDY, part->pPerp,
                               part->pLength, DIST_EPSILON);
 }
 

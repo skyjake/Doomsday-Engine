@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -46,9 +47,14 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dynnode_s {
-	struct dynnode_s *next, *nextUsed;
+    struct dynnode_s* next, *nextUsed;
     dynlight_t      dyn;
 } dynnode_t;
+
+typedef struct dynlist_s {
+    boolean         sortBrightestFirst;
+    dynnode_t*      head;
+} dynlist_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -60,21 +66,22 @@ typedef struct dynnode_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     useDynLights = true, dlBlend = 0;
-float   dlFactor = 0.7f;        // was 0.6f
-int     useWallGlow = true;
-float   glowHeightFactor = 3; // glow height as a multiplier
-int     glowHeightMax = 100; // 100 is the default (0-1024)
-float   glowFogBright = .15f;
+int useDynLights = true, dlBlend = 0;
+float dlFactor = .7f;
+float dlFogBright = .15f;
+
+int useWallGlow = true;
+float glowHeightFactor = 3; // Glow height as a multiplier.
+int glowHeightMax = 100; // 100 is the default (0-1024).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Dynlight nodes.
-static dynnode_t *dynFirst, *dynCursor;
+static dynnode_t* dynFirst, *dynCursor;
 
 // Surface light link lists.
 static uint numDynlightLinkLists = 0, dynlightLinkListCursor = 0;
-static dynnode_t **dynlightLinkLists;
+static dynlist_t* dynlightLinkLists;
 
 // CODE --------------------------------------------------------------------
 
@@ -85,16 +92,26 @@ void DL_Register(void)
     C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
     C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
     C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
-    C_VAR_FLOAT("rend-glow-fog-bright", &glowFogBright, 0, 0, 1);
 
     C_VAR_INT("rend-light", &useDynLights, 0, 0, 1);
     C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 2);
-
     C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-fog-bright", &dlFogBright, 0, 0, 1);
     C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
+
     C_VAR_INT("rend-mobj-light-auto", &useMobjAutoLights, 0, 0, 1);
     LO_Register();
     Rend_DecorRegister();
+}
+
+/**
+ * Initialize the dynlight system in preparation for rendering view(s) of the
+ * game world. Called by R_InitLevel().
+ */
+void DL_InitForMap(void)
+{
+    dynlightLinkLists = NULL;
+    numDynlightLinkLists = 0, dynlightLinkListCursor = 0;
 }
 
 /**
@@ -109,12 +126,44 @@ void DL_InitForNewFrame(void)
     // Clear the surface light link lists.
     dynlightLinkListCursor = 0;
     if(numDynlightLinkLists)
-        memset(dynlightLinkLists, 0, numDynlightLinkLists * sizeof(dynnode_t*));
+        memset(dynlightLinkLists, 0, numDynlightLinkLists * sizeof(dynlist_t));
 }
 
-static dynnode_t *newDynNode(void)
+/**
+ * Create a new dynlight list.
+ *
+ * @param sortBrightestFirst Nodes in the list will be auto-sorted when
+ *                      added by the brightness of the associated dynlight
+ *                      in descending order.
+ * @return              Identifier for the new list.
+ */
+static uint newDynlightList(boolean sortBrightestFirst)
 {
-	dynnode_t	       *node;
+    dynlist_t*          list;
+
+    // Ran out of light link lists?
+    if(++dynlightLinkListCursor >= numDynlightLinkLists)
+    {
+        uint                newNum = numDynlightLinkLists * 2;
+
+        if(!newNum)
+            newNum = 2;
+
+        dynlightLinkLists =
+            Z_Realloc(dynlightLinkLists, newNum * sizeof(dynlist_t), PU_LEVEL);
+        numDynlightLinkLists = newNum;
+    }
+
+    list = &dynlightLinkLists[dynlightLinkListCursor-1];
+    list->head = NULL;
+    list->sortBrightestFirst = sortBrightestFirst;
+
+    return dynlightLinkListCursor - 1;
+}
+
+static dynnode_t* newDynNode(void)
+{
+    dynnode_t*          node;
 
     // Have we run out of nodes?
     if(dynCursor == NULL)
@@ -132,17 +181,17 @@ static dynnode_t *newDynNode(void)
     }
 
     node->next = NULL;
-	return node;
+    return node;
 }
 
 /**
  * Returns a new dynlight node. If the list of unused nodes is empty,
  * a new node is created.
  */
-static dynnode_t *newDynLight(float *s, float *t)
+static dynnode_t* newDynLight(float* s, float* t)
 {
-	dynnode_t	       *node = newDynNode();
-    dynlight_t	       *dyn = &node->dyn;
+    dynnode_t*          node = newDynNode();
+    dynlight_t*         dyn = &node->dyn;
 
     if(s)
     {
@@ -158,27 +207,17 @@ static dynnode_t *newDynLight(float *s, float *t)
     return node;
 }
 
-/**
- * Link the given dynlight node to list.
- */
-static void __inline linkDynNode(dynnode_t *node, dynnode_t **list, uint index)
+static void linkDynNodeToList(dynnode_t* node, uint listIndex)
 {
-    node->next = list[index];
-    list[index] = node;
-}
+    dynlist_t*          list = &dynlightLinkLists[listIndex];
 
-static void linkToSurfaceLightList(dynnode_t *node, uint listIndex,
-                                   boolean sortBrightestFirst)
-{
-    dynnode_t         **list = &dynlightLinkLists[listIndex];
-
-    if(sortBrightestFirst && *list)
+    if(list->sortBrightestFirst && list->head)
     {
-        float           light =
-            (node->dyn.color[0] + node->dyn.color[1] + node->dyn.color[2]) / 3;
-        dynnode_t      *last, *iter;
+        float               light = (node->dyn.color[0] +
+            node->dyn.color[1] + node->dyn.color[2]) / 3;
+        dynnode_t*          last, *iter;
 
-        last = iter = *list;
+        last = iter = list->head;
         do
         {
             // Is this brighter than the one being added?
@@ -197,8 +236,8 @@ static void linkToSurfaceLightList(dynnode_t *node, uint listIndex,
         } while(iter);
     }
 
-    node->next = *list;
-    *list = node;
+    node->next = list->head;
+    list->head = node;
 }
 
 /**
@@ -209,7 +248,7 @@ static void linkToSurfaceLightList(dynnode_t *node, uint listIndex,
  * @param lum           Ptr to the lumobj from which the color will be used.
  * @param light         The light value to be used in the calculation.
  */
-static void calcDynLightColor(float *outRGB, const lumobj_t *lum, float light)
+static void calcDynLightColor(float* outRGB, const float* inRGB, float light)
 {
     uint                i;
 
@@ -219,26 +258,16 @@ static void calcDynLightColor(float *outRGB, const lumobj_t *lum, float light)
         light = 1;
     light *= dlFactor;
 
-    // If fog is enabled, make the light dimmer.
-    // \fixme This should be a cvar.
+    // In fog, additive blending is used. The normal fog color
+    // is way too bright.
     if(usingFog)
-        light *= .5f; // Would be too much.
+        light *= dlFogBright; // Would be too much.
 
     // Multiply with the light color.
     for(i = 0; i < 3; ++i)
     {
-        outRGB[i] = light * lum->color[i];
+        outRGB[i] = light * inRGB[i];
     }
-}
-
-/**
- * Initialize the dynlight system in preparation for rendering view(s) of the
- * game world. Called by R_InitLevel().
- */
-void DL_InitForMap(void)
-{
-    dynlightLinkLists = NULL;
-    numDynlightLinkLists = 0, dynlightLinkListCursor = 0;
 }
 
 /**
@@ -251,20 +280,14 @@ void DL_InitForMap(void)
  *
  * @return              Ptr to the projected light, ELSE @c NULL.
  */
-static dynnode_t *projectPlaneGlowOnSegSection(const lumobj_t *lum, float bottom,
-                                               float top)
+static dynnode_t* projectPlaneGlowOnSegSection(const lumobj_t* lum,
+                                               float bottom, float top)
 {
-    uint                i;
     float               glowHeight;
-    dynlight_t         *dyn;
-    dynnode_t          *node;
     float               s[2], t[2];
 
     if(bottom >= top)
         return NULL; // No height.
-
-    if(!LUM_PLANE(lum)->tex)
-        return NULL;
 
     glowHeight =
         (MAX_GLOWHEIGHT * LUM_PLANE(lum)->intensity) * glowHeightFactor;
@@ -281,260 +304,207 @@ static dynnode_t *projectPlaneGlowOnSegSection(const lumobj_t *lum, float bottom
     {   // Light is cast downwards.
         t[1] = t[0] = (lum->pos[VZ] - top) / glowHeight;
         t[1]+= (top - bottom) / glowHeight;
-
-        if(t[0] > 1 || t[1] < 0)
-            return NULL;
     }
     else
     {   // Light is cast upwards.
         t[0] = t[1] = (bottom - lum->pos[VZ]) / glowHeight;
         t[0]+= (top - bottom) / glowHeight;
-
-        if(t[1] > 1 || t[0] < 0)
-            return NULL;
     }
+
+    if(!(t[0] <= 1 || t[1] >= 0))
+        return NULL; // Is above/below on the Y axis.
 
     // The horizontal direction is easy.
     s[0] = 0;
     s[1] = 1;
 
-    node = newDynLight(s, t);
-    dyn = &node->dyn;
-    dyn->texture = LUM_PLANE(lum)->tex;
-
-    for(i = 0; i < 3; ++i)
-    {
-        dyn->color[i] = lum->color[i] * dlFactor;
-
-        // In fog, additive blending is used. The normal fog color
-        // is way too bright.
-        if(usingFog)
-            dyn->color[i] *= glowFogBright;
-    }
-
-    return node;
+    return newDynLight(s, t);
 }
 
 /**
- * Project the given omnilight onto the specified seg. If it would be lit, a new
- * dynlight node will be created and returned.
+ * Given a normalized normal, construct up and right vectors, oriented to
+ * the original normal. Note all vectors and normals are in world-space.
  *
- * @param lum           Ptr to the lumobj lighting the seg.
- * @param seg           Ptr to the seg being lit.
- * @param bottom        Z height (bottom) of the section being lit.
- * @param top           Z height (top) of the section being lit.
- *
- * @return              Ptr to the projected light, ELSE @c NULL.
+ * @param up            The up vector will be written back here.
+ * @param right         The right vector will be written back here.
+ * @param normal        Normal to construct vectors for.
  */
-static dynnode_t *projectOmniLightOnSegSection(const lumobj_t *lum, seg_t *seg,
-                                               float bottom, float top)
+static void buildUpRight(pvec3_t up, pvec3_t right, const pvec3_t normal)
 {
-    float               s[2], t[2];
-    float               dist, pntLight[2];
-    dynlight_t         *dyn;
-    dynnode_t          *node;
-    float               lumRGB[3], lightVal;
-    float               radius, radiusX2;
+    const vec3_t rotm[3] = {
+        {0.f, 0.f, 1.f},
+        {0.f, 0.f, 1.f},
+        {0.f, 0.f, 1.f}
+    };
+    int                 axis = VX;
+    vec3_t              fn;
 
-    if(!LUM_OMNI(lum)->tex)
-        return NULL;
+    V3_Set(fn, fabsf(normal[VX]), fabsf(normal[VY]), fabsf(normal[VZ]));
 
-    radius = LUM_OMNI(lum)->radius / DYN_ASPECT;
-    radiusX2 = 2 * radius;
+    if(fn[VY] > fn[axis])
+        axis = VY;
+    if(fn[VZ] > fn[axis])
+        axis = VZ;
 
-    if(bottom >= top || radiusX2 == 0)
-        return NULL;
+    if(fabsf(fn[VX] - 1.0f) < FLT_EPSILON ||
+       fabsf(fn[VY] - 1.0f) < FLT_EPSILON ||
+       fabsf(fn[VZ] - 1.0f) < FLT_EPSILON)
+    {   // We must build the right vector manually.
+        if(axis == VX && normal[VX] > 0.f)
+        {
+            V3_Set(right, 0.f, 1.f, 0.f);
+        }
+        else if(axis == VX)
+        {
+            V3_Set(right, 0.f, -1.f, 0.f);
+        }
 
-    // Clip to the valid z height range first.
-    t[0] = (lum->pos[VZ] + LUM_OMNI(lum)->zOff + radius - top) / radiusX2;
-    t[1] = t[0] + (top - bottom) / radiusX2;
+        if(axis == VY && normal[VY] > 0.f)
+        {
+            V3_Set(right, -1.f, 0.f, 0.f);
+        }
+        else if(axis == VY)
+        {
+            V3_Set(right, 1.f, 0.f, 0.f);
+        }
 
-    if(!(t[0] < 1 && t[1] > 0))
-        return NULL;
+        if(axis == VZ)
+        {
+            V3_Set(right, 1.f, 0.f, 0.f);
+        }
+    }
+    else
+    {   // Can use a cross product of the surface normal.
+        V3_CrossProduct(right, (const pvec3_t) rotm[axis], normal);
+        V3_Normalize(right);
+    }
 
-    pntLight[VX] = lum->pos[VX];
-    pntLight[VY] = lum->pos[VY];
+    V3_CrossProduct(up, right, normal);
+    V3_Normalize(up);
+}
 
-    // Calculate 2D distance between seg and light source.
-    dist = ((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) -
-            (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]))
-            / seg->length;
+/**
+ * Generate texcoords on surface centered on point.
+ *
+ * @param point         Point on surface around which texture is centered.
+ * @param scale         Scale multiplier for texture.
+ * @param s             Texture s coords written back here.
+ * @param t             Texture t coords written back here.
+ * @param v1            Top left vertex of the surface being projected on.
+ * @param v2            Bottom right vertex of the surface being projected on.
+ * @param normal        Normal of the surface being projected on.
+ *
+ * @return              @c true, if the generated coords are within bounds.
+ */
+static boolean genTexCoords(const pvec3_t point, float scale,
+                            pvec2_t s, pvec2_t t, const pvec3_t v1,
+                            const pvec3_t v2, const pvec3_t normal)
+{
+    vec3_t              vToPoint, right, up;
 
-    // Is it close enough and on the right side?
-    if(dist < 0 || dist > LUM_OMNI(lum)->radius)
-        return NULL; // Nope.
+    buildUpRight(up, right, normal);
+    V3_Subtract(vToPoint, v1, point);
+    s[0] = V3_DotProduct(vToPoint, right) * scale + .5f;
+    t[0] = V3_DotProduct(vToPoint, up) * scale + .5f;
 
-    lightVal = LUM_FACTOR(dist, LUM_OMNI(lum)->radius);
-
-    if(lightVal < .05f)
-        return NULL; // Too dim to see.
-
-    // Do a scalar projection for the offset.
-    s[0] = (-((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v1pos[VY] - seg->SG_v2pos[VY]) -
-              (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]))
-              / seg->length +
-               LUM_OMNI(lum)->radius) / (2 * LUM_OMNI(lum)->radius);
-
-    s[1] = s[0] + seg->length / (2 * LUM_OMNI(lum)->radius);
+    V3_Subtract(vToPoint, v2, point);
+    s[1] = V3_DotProduct(vToPoint, right) * scale + .5f;
+    t[1] = V3_DotProduct(vToPoint, up) * scale + .5f;
 
     // Would the light be visible?
-    if(s[0] >= 1 || s[1] <= 0)
-        return NULL;  // Is left/right of the seg on the X/Y plane.
+    if(!(s[0] <= 1 || s[1] >= 0))
+        return false; // Is right/left on the X axis.
 
-    calcDynLightColor(lumRGB, lum, lightVal);
+    if(!(t[0] <= 1 || t[1] >= 0))
+        return false; // Is above/below on the Y axis.
 
-    node = newDynLight(s, t);
-    dyn = &node->dyn;
-    memcpy(dyn->color, lumRGB, sizeof(float) * 3);
-    dyn->texture = LUM_OMNI(lum)->tex;
-
-    return node;
+    return true;
 }
 
-/**
- * Process the given lumobj to maybe add a dynamic light for the plane.
- *
- * @param lum           Ptr to the lumobj on which the dynlight will be based.
- */
-static dynnode_t *projectOmniLightOnSubSectorPlane(const lumobj_t *lum,
-                                                   float normal[3],
-                                                   float height)
-{
-    DGLuint             lightTex;
-    float               diff, lightStrength, srcRadius;
-    float               s[2], t[2];
-    float               pos[3];
-
-    pos[VX] = lum->pos[VX];
-    pos[VY] = lum->pos[VY];
-    pos[VZ] = lum->pos[VZ];
-
-    // Center the Z.
-    pos[VZ] += LUM_OMNI(lum)->zOff;
-    srcRadius = LUM_OMNI(lum)->radius / 4;
-    if(srcRadius == 0)
-        srcRadius = 1;
-
-    // Determine on which side of the plane the light is.
-    lightTex = 0;
-    lightStrength = 0;
-
-    if(normal[VZ] > 0)
-    {
-        if((lightTex = LUM_OMNI(lum)->floorTex) != 0)
-        {
-            if(pos[VZ] > height)
-                lightStrength = 1;
-            else if(pos[VZ] > height - srcRadius)
-                lightStrength = 1 - (height - pos[VZ]) / srcRadius;
-        }
-    }
-    else
-    {
-        if((lightTex = LUM_OMNI(lum)->ceilTex) != 0)
-        {
-            if(pos[VZ] < height)
-                lightStrength = 1;
-            else if(pos[VZ] < height + srcRadius)
-                lightStrength = 1 - (pos[VZ] - height) / srcRadius;
-        }
-    }
-
-    // Is there light in this direction? Is it strong enough?
-    if(!lightTex || !lightStrength)
-        return NULL;
-
-    // Check that the height difference is tolerable.
-    if(normal[VZ] > 0)
-        diff = pos[VZ] - height;
-    else
-        diff = height - pos[VZ];
-
-    // Clamp it.
-    if(diff < 0)
-        diff = 0;
-
-    if(diff < LUM_OMNI(lum)->radius)
-    {
-        float               lightVal =
-            LUM_FACTOR(diff, LUM_OMNI(lum)->radius);
-
-        if(lightVal >= .05f)
-        {
-            dynlight_t         *dyn;
-            dynnode_t          *node;
-
-            // Calculate dynlight position. It may still be outside
-            // the bounding box the subsector.
-            s[0] = -pos[VX] + LUM_OMNI(lum)->radius;
-            t[0] = pos[VY] + LUM_OMNI(lum)->radius;
-            s[1] = t[1] = 1.0f / (2 * LUM_OMNI(lum)->radius);
-
-            // A dynamic light will be generated.
-            node = newDynLight(s, t);
-            dyn = &node->dyn;
-            dyn->texture = lightTex;
-
-            calcDynLightColor(dyn->color, lum, lightVal * lightStrength);
-            return node;
-        }
-    }
-
-    return NULL;
-}
-
-static uint newDynlightList(void)
-{
-    // Ran out of light link lists?
-    if(++dynlightLinkListCursor >= numDynlightLinkLists)
-    {
-        uint                i;
-        uint                newNum = numDynlightLinkLists * 2;
-        dynnode_t         **newList;
-
-        if(!newNum)
-            newNum = 2;
-
-        newList = Z_Calloc(newNum * sizeof(dynnode_t*), PU_LEVEL, 0);
-
-        // Copy existing links.
-        for(i = 0; i < dynlightLinkListCursor - 1; ++i)
-        {
-            newList[i] = dynlightLinkLists[i];
-        }
-
-        if(dynlightLinkLists)
-            Z_Free(dynlightLinkLists);
-        dynlightLinkLists = newList;
-        numDynlightLinkLists = newNum;
-    }
-
-    return dynlightLinkListCursor - 1;
-}
-
-typedef struct seglumobjiterparams_s {
-    seg_t          *seg;
-    float           bottom, top;
+typedef struct surfacelumobjiterparams_s {
+    vec3_t          v1, v2;
+    vec3_t          normal;
     boolean         sortBrightestFirst;
     boolean         haveList;
     uint            listIdx;
-} seglumobjiterparams_t;
+    boolean         isPlane;
+    byte            useTex; /* For omni lights:
+                               @c 0 = side tex, @c 1 = floortex, @c 2 = ceiltex. */
+} surfacelumobjiterparams_t;
 
-boolean DLIT_SegLumobjContacts(void *ptr, void *data)
+boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
 {
-    lumobj_t           *lum = (lumobj_t*) ptr;
-    dynnode_t          *node = NULL;
-    seglumobjiterparams_t *params = data;
+    lumobj_t*           lum = (lumobj_t*) ptr;
+    dynnode_t*          node = NULL;
+    surfacelumobjiterparams_t* params = data;
+    DGLuint             tex = 0;
+    float               lightBrightness = 1;
+    float*              lightRGB;
+
+    if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
+        return true; // Continue iteration.
 
     switch(lum->type)
     {
     case LT_OMNI:
-        node = projectOmniLightOnSegSection(lum, params->seg,
-                                            params->bottom, params->top);
+        switch(params->useTex)
+        {
+        case 0:
+        default: tex = LUM_OMNI(lum)->tex; break;
+        case 1: tex = LUM_OMNI(lum)->floorTex; break;
+        case 2: tex = LUM_OMNI(lum)->ceilTex; break;
+        }
+
+        lightRGB = LUM_OMNI(lum)->color;
+
+        if(tex)
+        {
+            vec3_t              lumCenter, vToLum;
+
+            V3_Set(lumCenter, lum->pos[VX], lum->pos[VY],
+                   lum->pos[VZ] + LUM_OMNI(lum)->zOff);
+
+            // On the right side?
+            V3_Subtract(vToLum, params->v1, lumCenter);
+            if(V3_DotProduct(vToLum, params->normal) < 0.f)
+            {
+                float               dist;
+                vec3_t              point;
+
+                // Calculate 3D distance between surface and lumobj.
+                V3_ClosestPointOnPlane(point, params->normal, params->v1, lumCenter);
+                dist = V3_Distance(point, lumCenter);
+                if(dist > 0 && dist <= LUM_OMNI(lum)->radius)
+                {
+                    lightBrightness = LUM_FACTOR(dist, LUM_OMNI(lum)->radius);
+
+                    if(lightBrightness >= .05f)
+                    {
+                        vec2_t              s, t;
+                        float               scale =
+                            1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
+
+                        if(genTexCoords(point, scale, s, t, params->v1,
+                                        params->v2, params->normal))
+                        {
+                            node = newDynLight(s, t);
+                        }
+                    }
+                }
+            }
+        }
         break;
 
     case LT_PLANE:
-        node = projectPlaneGlowOnSegSection(lum, params->bottom, params->top);
+        if(!params->isPlane) // Plannar glows don't currently affect planes.
+            tex = LUM_PLANE(lum)->tex;
+
+        if(tex)
+        {
+            lightRGB = LUM_PLANE(lum)->color;
+
+            node = projectPlaneGlowOnSegSection(lum, params->v2[VZ], params->v1[VZ]);
+        }
         break;
 
     default:
@@ -544,26 +514,46 @@ boolean DLIT_SegLumobjContacts(void *ptr, void *data)
     }
 
     if(node)
-    {   // Got a list for this surface yet?
+    {
+        dynlight_t*         dyn = &node->dyn;
+
+        dyn->texture = tex;
+        calcDynLightColor(dyn->color, lightRGB, lightBrightness);
+
+        // Got a list for this surface yet?
         if(!params->haveList)
         {
-            params->listIdx = newDynlightList();
+            params->listIdx =
+                newDynlightList(params->sortBrightestFirst);
             params->haveList = true;
         }
 
-        linkToSurfaceLightList(node, params->listIdx, params->sortBrightestFirst);
+        linkDynNodeToList(node, params->listIdx);
     }
 
     return true; // Continue iteration.
 }
 
+static uint processSubSector(subsector_t* ssec, surfacelumobjiterparams_t* params)
+{
+    // Process each lumobj contacting the subsector.
+    LO_IterateSubsectorContacts(ssec, DLIT_SurfaceLumobjContacts, params);
+
+    // Did we generate a light list?
+    if(params->haveList)
+        return params->listIdx + 1;
+
+    return 0; // Nope.
+}
+
 /**
  * Process dynamic lights for the specified seg.
  */
-uint DL_ProcessSegSection(seg_t *seg, float bottom, float top,
+uint DL_ProcessSegSection(seg_t* seg, float bottom, float top,
                           boolean sortBrightestFirst)
 {
-    seglumobjiterparams_t params;
+    sidedef_t*          side;
+    surfacelumobjiterparams_t params;
 
     if(!useDynLights && !useWallGlow)
         return 0; // Disabled.
@@ -571,76 +561,26 @@ uint DL_ProcessSegSection(seg_t *seg, float bottom, float top,
     if(!seg || !seg->subsector)
         return 0;
 
-    params.bottom = bottom;
-    params.top = top;
-    params.seg = seg;
+    side = SEG_SIDEDEF(seg);
+
+    V3_Set(params.v1, seg->SG_v1pos[VX], seg->SG_v1pos[VY], top);
+    V3_Set(params.v2, seg->SG_v2pos[VX], seg->SG_v2pos[VY], bottom);
+    params.normal[VX] = side->SW_middlenormal[VX];
+    params.normal[VY] = side->SW_middlenormal[VY];
+    params.normal[VZ] = side->SW_middlenormal[VZ];
     params.sortBrightestFirst = sortBrightestFirst;
     params.haveList = false;
     params.listIdx = 0;
+    params.useTex = 0;
+    params.isPlane = false;
 
-    // Process each lumobj contacting the subsector.
-    LO_IterateSubsectorContacts(seg->subsector, DLIT_SegLumobjContacts,
-                                (void*) &params);
-
-    // Did we generate a light list?
-    if(params.haveList)
-        return params.listIdx + 1;
-
-    return 0; // Nope.
+    return processSubSector(seg->subsector, &params);
 }
 
-typedef struct planelumobjiterparams_s {
-    float           normal[3];
-    float           height;
-    boolean         sortBrightestFirst;
-    boolean         haveList;
-    uint            listIdx;
-} planelumobjiterparams_t;
-
-boolean DLIT_PlaneLumobjContacts(void *ptr, void *data)
+uint DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane)
 {
-    lumobj_t           *lum = (lumobj_t*) ptr;
-    planelumobjiterparams_t *params = data;
-    dynnode_t          *node = NULL;
-
-    switch(lum->type)
-    {
-    case LT_OMNI:
-        node = projectOmniLightOnSubSectorPlane(lum, params->normal,
-                                                params->height);
-        break;
-
-    case LT_PLANE: // Planar lights don't affect planes currently.
-        node = NULL;
-        break;
-
-    default:
-        Con_Error("DLIT_PlaneLumobjContacts: Invalid value, lum->type = %i.",
-                  (int) lum->type);
-        break;
-    }
-
-    if(node)
-    {
-        // Got a list for this surface yet?
-        if(!params->haveList)
-        {
-            params->listIdx = newDynlightList();
-            params->haveList = true;
-        }
-
-        // Link to this plane's list.
-        linkToSurfaceLightList(node, params->listIdx, params->sortBrightestFirst);
-    }
-
-    return true; // Continue iteration.
-}
-
-uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
-{
-    sector_t           *linkSec;
-    float               height;
-    boolean             isLit;
+    plane_t*            pln;
+    surfacelumobjiterparams_t params;
 
     if(!useDynLights && !useWallGlow)
         return 0; // Disabled.
@@ -648,49 +588,35 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
     if(!ssec)
         return 0;
 
-    // Sanity check.
-    assert(plane < ssec->sector->planeCount);
+    assert(plane < ssec->sector->planeCount); // Sanity check.
 
-    linkSec = R_GetLinkedSector(ssec, plane);
-    if(R_IsSkySurface(&linkSec->SP_planesurface(plane)))
-        return 0;
+    pln = R_GetLinkedSector(ssec, plane)->SP_plane(plane);
 
-    // View height might prevent us from seeing the light.
-    isLit = true;
-    height = linkSec->SP_planevisheight(plane);
-    if(linkSec->SP_plane(plane)->PS_normal[VZ] > 0)
+    if(pln->type == PLN_FLOOR)
     {
-        if(vy < height)
-            isLit = false;
+        V3_Set(params.v1, ssec->bBox[0].pos[VX], ssec->bBox[1].pos[VY],
+               pln->visHeight);
+        V3_Set(params.v2, ssec->bBox[1].pos[VX], ssec->bBox[0].pos[VY],
+               pln->visHeight);
     }
     else
     {
-        if(vy > height)
-            isLit = false;
+        V3_Set(params.v1, ssec->bBox[0].pos[VX], ssec->bBox[0].pos[VY],
+               pln->visHeight);
+        V3_Set(params.v2, ssec->bBox[1].pos[VX], ssec->bBox[1].pos[VY],
+               pln->visHeight);
     }
 
-    if(isLit)
-    {
-        planelumobjiterparams_t params;
+    params.normal[VX] = pln->PS_normal[VX];
+    params.normal[VY] = pln->PS_normal[VY];
+    params.normal[VZ] = pln->PS_normal[VZ];
+    params.sortBrightestFirst = false;
+    params.haveList = false;
+    params.listIdx = 0;
+    params.useTex = (pln->type == PLN_CEILING? 2 : 1);
+    params.isPlane = true;
 
-        params.normal[VX] = linkSec->SP_plane(plane)->PS_normal[VX];
-        params.normal[VY] = linkSec->SP_plane(plane)->PS_normal[VY];
-        params.normal[VZ] = linkSec->SP_plane(plane)->PS_normal[VZ];
-        params.height = height;
-        params.sortBrightestFirst = false;
-        params.haveList = false;
-        params.listIdx = 0;
-
-        // Process each lumobj contacting the subsector.
-        LO_IterateSubsectorContacts(ssec, DLIT_PlaneLumobjContacts,
-                                    (void*) &params);
-
-        // Did we generate a light list?
-        if(params.haveList)
-            return params.listIdx + 1;
-    }
-
-    return 0; // Nope.
+    return processSubSector(ssec, &params);
 }
 
 /**
@@ -702,17 +628,17 @@ uint DL_ProcessSubSectorPlane(subsector_t *ssec, uint plane)
  *
  * @return              @c true, iff every callback returns @c true.
  */
-boolean DL_ListIterator(uint listIdx, void *data,
-                        boolean (*func) (const dynlight_t *, void *data))
+boolean DL_ListIterator(uint listIdx, void* data,
+                        boolean (*func) (const dynlight_t*, void*))
 {
-    dynnode_t          *node;
+    dynnode_t*          node;
     boolean             retVal, isDone;
 
     if(listIdx == 0 || listIdx > numDynlightLinkLists)
         return true;
     listIdx--;
 
-    node = dynlightLinkLists[listIdx];
+    node = dynlightLinkLists[listIdx].head;
     retVal = true;
     isDone = false;
     while(node && !isDone)

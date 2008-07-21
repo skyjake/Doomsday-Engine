@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * m_vector.h: Vector Math
  */
 
@@ -48,22 +48,22 @@ void            V2_Scale(pvec2_t vector, float scalar);
 void            V2_Rotate(pvec2_t vec, float radians);
 void            V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2);
 void            V2_Subtract(pvec2_t dest, const pvec2_t src1,
-							const pvec2_t src2);
+                            const pvec2_t src2);
 float           V2_DotProduct(const pvec2_t a, const pvec2_t b);
 float           V2_ScalarProject(const pvec2_t a, const pvec2_t b);
 void            V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b);
 boolean         V2_IsParallel(const pvec2_t a, const pvec2_t b);
 boolean         V2_IsZero(const pvec2_t vec);
 float           V2_Intersection(const pvec2_t p1, const pvec2_t delta1,
-								const pvec2_t p2, const pvec2_t delta2,
-								pvec2_t point);
+                                const pvec2_t p2, const pvec2_t delta2,
+                                pvec2_t point);
 float           V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
-							 const pvec2_t d, pvec2_t point);
+                             const pvec2_t d, pvec2_t point);
 boolean         V2_Intercept2(const pvec2_t a, const pvec2_t b,
-							  const pvec2_t c, const pvec2_t d, pvec2_t point,
-							  float *abFrac, float *cdFrac);
+                              const pvec2_t c, const pvec2_t d, pvec2_t point,
+                              float *abFrac, float *cdFrac);
 void            V2_Lerp(pvec2_t dest, const pvec2_t a, const pvec2_t b,
-						float c);
+                        float c);
 void            V2_InitBox(arvec2_t box, const pvec2_t point);
 void            V2_AddToBox(arvec2_t box, const pvec2_t point);
 
@@ -88,6 +88,7 @@ float           V3_ClosestPointOnPlane(pvec3_t dest,
                                        const pvec3_t planeNormal,
                                        const pvec3_t planePoint,
                                        const pvec3_t arbPoint);
+int             V3_MajorAxis(const pvec3_t vec);
 boolean         V3_IsZero(const pvec3_t vec);
 void            V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b,
                         float c);

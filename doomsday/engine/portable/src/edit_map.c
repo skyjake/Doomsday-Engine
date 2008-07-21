@@ -27,6 +27,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
 #include "de_play.h"
 #include "de_bsp.h"
@@ -965,6 +967,10 @@ static void updateSSecMidPoint(subsector_t *sub)
 
     sub->midPoint.pos[VX] /= sub->segCount; // num vertices.
     sub->midPoint.pos[VY] /= sub->segCount;
+
+    // Calculate the worldwide grid offset.
+    sub->worldGridOffset[VX] = fmod(sub->bBox[0].pos[VX], 64);
+    sub->worldGridOffset[VY] = fmod(sub->bBox[1].pos[VY], 64);
 }
 
 static void prepareSubSectors(gamemap_t *map)

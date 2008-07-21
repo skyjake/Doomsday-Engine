@@ -32,45 +32,49 @@
 // Lumobj Flags.
 #define LUMF_USED           0x1
 #define LUMF_RENDERED       0x2
-#define LUMF_CLIPPED        0x4     // Hidden by world geometry.
-#define LUMF_NOHALO         0x100
-#define LUMF_DONTTURNHALO   0x200
+#define LUMF_CLIPPED        0x4 // Hidden by world geometry.
+
+// lumobj, omni flags
+#define LUMOF_NOHALO        0x1
+#define LUMOF_DONTTURNHALO  0x2
 
 // Lumobject types.
 typedef enum {
-    LT_OMNI,                        // Omni (spherical) light.
-    LT_PLANE                        // Planar light.
+    LT_OMNI, // Omni (spherical) light.
+    LT_PLANE, // Planar light.
 } lumtype_t;
 
 // Helper macros for accessing lum data.
 #define LUM_OMNI(x)         (&((x)->data.omni))
 #define LUM_PLANE(x)        (&((x)->data.plane))
 
-typedef struct lumobj_s {           // For dynamic lighting.
+typedef struct lumobj_s {
     lumtype_t       type;
-    int             flags;          // LUMF_* flags.
-    float           pos[3];         // Center of the light.
-    float           color[3];
+    int             flags; // LUMF_* flags.
+    float           pos[3]; // Center of the obj.
     float           distanceToViewer;
     subsector_t    *subsector;
 
     union lumobj_data_u {
         struct lumobj_omni_s {
-            int             radius;         // Radius for this omnilight source.
-            float           zOff;           // Offset to center from pos[VZ].
-            DGLuint         tex;            // Lightmap texture.
-            DGLuint         floorTex, ceilTex;  // Lightmaps for floor/ceil.
+            int             flags; // LUMOF_* flags.
+            float           color[3];
+            int             radius; // Radius for this omnilight source.
+            float           zOff; // Offset to center from pos[VZ].
+            DGLuint         tex; // Lightmap texture.
+            DGLuint         floorTex, ceilTex; // Lightmaps for floor/ceil.
 
         // For flares (halos).
             int             flareSize;
             byte            haloFactor;
             float           xOff;
-            DGLuint         flareTex;       // Flaremap if flareCustom ELSE (flaretexName id.
-                                            // Zero = automatical)
-            boolean         flareCustom;    // True id flareTex is a custom flare graphic
-            float           flareMul;       // Flare brightness factor.
+            DGLuint         flareTex; // Flaremap if flareCustom ELSE (flaretexName id.
+                                      // Zero = automatical)
+            boolean         flareCustom; // True id flareTex is a custom flare graphic
+            float           flareMul; // Flare brightness factor.
         } omni;
         struct lumobj_plane_s {
+            float           color[3];
             float           intensity;
             DGLuint         tex;
             float           normal[3];
@@ -117,5 +121,7 @@ boolean         LO_LumobjsRadiusIterator(subsector_t *subsector, float x, float 
 void            LO_ClipInSubsector(uint ssecidx);
 void            LO_ClipBySight(uint ssecidx);
 
+#if _DEBUG
 void            LO_DrawLumobjs(void);
+#endif
 #endif

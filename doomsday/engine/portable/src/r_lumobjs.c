@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_dgl.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -60,8 +61,8 @@ typedef struct {
 } lightconfig_t;
 
 typedef struct lumlink_s {
-    struct lumlink_s *next;         // Next in the same DL block, or NULL.
-    struct lumlink_s *ssNext;       // Next in the same subsector, or NULL.
+    struct lumlink_s* next; // Next in the same DL block, or NULL.
+    struct lumlink_s* ssNext; // Next in the same subsector, or NULL.
 
     lumobj_t        lum;
 } lumlink_t;
@@ -69,14 +70,14 @@ typedef struct lumlink_s {
 typedef struct contactfinder_data_s {
     vec2_t          box[2];
     boolean         didSpread;
-    lumobj_t       *lum;
+    lumobj_t*       lum;
     int             firstValid;
 } contactfinder_data_t;
 
 typedef struct objcontact_s {
-    struct objcontact_s *next;  // Next in the subsector.
-    struct objcontact_s *nextUsed;  // Next used contact.
-    void           *data;
+    struct objcontact_s* next; // Next in the subsector.
+    struct objcontact_s* nextUsed; // Next used contact.
+    void*           data;
 } objcontact_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -92,37 +93,37 @@ extern int useBias;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean loInited = false;
-uint    loMaxLumobjs = 0;
+uint loMaxLumobjs = 0;
 
-int     loMaxRadius = 256;         // Dynamic lights maximum radius.
-float   loRadiusFactor = 3;
-int     loMinRadForBias = 136; // Lights smaller than this will NEVER
+int loMaxRadius = 256; // Dynamic lights maximum radius.
+float loRadiusFactor = 3;
+int loMinRadForBias = 136; // Lights smaller than this will NEVER
                                // be converted to BIAS sources.
 
-int     useMobjAutoLights = true; // Enable automaticaly calculated lights
-                                  // attached to mobjs.
-byte    rendInfoLums = false;
+int useMobjAutoLights = true; // Enable automaticaly calculated lights
+                              // attached to mobjs.
+byte rendInfoLums = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static lumlink_t *luminousList = NULL;
+static lumlink_t* luminousList = NULL;
 static uint numLuminous = 0, maxLuminous = 0;
 
-static lumlink_t **loBlockLinks = 0;
+static lumlink_t** loBlockLinks = 0;
 static fixed_t loBlockOrig[3];
-static int loBlockWidth, loBlockHeight;    // In 128 blocks.
+static int loBlockWidth, loBlockHeight; // In 128 blocks.
 
-static lumlink_t **loSubLinks = 0;
+static lumlink_t** loSubLinks = 0;
 
 // A frameCount for each block. Used to prevent multiple processing of
 // a block during one frame.
-static int *spreadBlocks;
+static int* spreadBlocks;
 
 // List of unused and used obj-subsector contacts.
-static objcontact_t *contFirst, *contCursor;
+static objcontact_t* contFirst, *contCursor;
 
 // List of obj contacts for each subsector.
-static objcontact_t **subContacts;
+static objcontact_t** subContacts;
 
 // CODE --------------------------------------------------------------------
 
@@ -142,14 +143,14 @@ void LO_Register(void)
 /**
  * Link the given objcontact node to list.
  */
-static __inline void linkContact(objcontact_t *con, objcontact_t **list,
+static __inline void linkContact(objcontact_t* con, objcontact_t** list,
                                  uint index)
 {
     con->next = list[index];
     list[index] = con;
 }
 
-static void linkObjToSubSector(objcontact_t *node, uint index)
+static void linkObjToSubSector(objcontact_t* node, uint index)
 {
     linkContact(node, &subContacts[index], 0);
 }
@@ -162,9 +163,9 @@ static void linkObjToSubSector(objcontact_t *node, uint index)
  *
  * @return              Ptr to the new objcontact.
  */
-static objcontact_t *newContact(void *data)
+static objcontact_t* newContact(void* data)
 {
-    objcontact_t       *con;
+    objcontact_t*       con;
 
     if(contCursor == NULL)
     {
@@ -189,14 +190,14 @@ static objcontact_t *newContact(void *data)
  *
  * @return              Ptr to the lumnode at the given index.
  */
-static __inline lumlink_t *getLumNode(uint idx)
+static __inline lumlink_t* getLumNode(uint idx)
 {
     return &luminousList[idx];
 }
 
 void LO_InitForMap(void)
 {
-    gamemap_t          *map = P_GetCurrentMap();
+    gamemap_t*          map = P_GetCurrentMap();
     float               min[3], max[3];
 
     // First initialize the subsector links (root pointers).
@@ -288,7 +289,7 @@ uint LO_GetNumLuminous(void)
  */
 uint LO_NewLuminous(lumtype_t type)
 {
-    lumlink_t          *node, *newList;
+    lumlink_t*          node, *newList;
 
     numLuminous++;
 
@@ -329,7 +330,7 @@ uint LO_NewLuminous(lumtype_t type)
  *
  * @return              Ptr to the lumobj with the given 1-based index.
  */
-lumobj_t *LO_GetLuminous(uint idx)
+lumobj_t* LO_GetLuminous(uint idx)
 {
     if(!(idx == 0 || idx > numLuminous))
         return &getLumNode(idx - 1)->lum;
@@ -343,7 +344,7 @@ lumobj_t *LO_GetLuminous(uint idx)
  *
  * @param mo            Ptr to the mobj to register.
  */
-void LO_AddLuminous(mobj_t *mo)
+void LO_AddLuminous(mobj_t* mo)
 {
     mo->light = 0;
 
@@ -356,13 +357,13 @@ void LO_AddLuminous(mobj_t *mo)
         int                 flags = 0;
         int                 radius, flareSize;
         float               rgb[3];
-        lumobj_t           *l;
+        lumobj_t*           l;
         lightconfig_t       cf;
-        ded_light_t        *def = 0;
-        spritedef_t        *sprDef;
-        spriteframe_t      *sprFrame;
-        spritetex_t        *sprTex;
-        material_t         *mat;
+        ded_light_t*        def = 0;
+        spritedef_t*        sprDef;
+        spriteframe_t*      sprFrame;
+        spritetex_t*        sprTex;
+        material_t*         mat;
 
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
@@ -485,8 +486,7 @@ void LO_AddLuminous(mobj_t *mo)
         mo->light = LO_NewLuminous(LT_OMNI);
 
         l = LO_GetLuminous(mo->light);
-        l->flags = flags;
-        l->flags |= LUMF_CLIPPED;
+        l->flags = LUMF_CLIPPED;
         l->pos[VX] = mo->pos[VX];
         l->pos[VY] = mo->pos[VY];
         l->pos[VZ] = mo->pos[VZ];
@@ -497,6 +497,7 @@ void LO_AddLuminous(mobj_t *mo)
                               mo->pos[VZ] - viewZ);
 
         l->subsector = mo->subsector;
+        LUM_OMNI(l)->flags = flags;
         LUM_OMNI(l)->haloFactor = mo->haloFactor;
         LUM_OMNI(l)->zOff = center;
         LUM_OMNI(l)->xOff = xOff;
@@ -509,7 +510,7 @@ void LO_AddLuminous(mobj_t *mo)
         LUM_OMNI(l)->flareMul = 1;
         LUM_OMNI(l)->flareSize = flareSize;
         for(i = 0; i < 3; ++i)
-            l->color[i] = rgb[i];
+            LUM_OMNI(l)->color[i] = rgb[i];
 
         if(def)
         {
@@ -518,7 +519,7 @@ void LO_AddLuminous(mobj_t *mo)
             LUM_OMNI(l)->floorTex = def->down.tex;
 
             if(def->flare.disabled)
-                l->flags |= LUMF_NOHALO;
+                LUM_OMNI(l)->flags |= LUMOF_NOHALO;
             else
             {
                 LUM_OMNI(l)->flareCustom = def->flare.custom;
@@ -529,15 +530,14 @@ void LO_AddLuminous(mobj_t *mo)
         {
             // Use the same default light texture for all directions.
             LUM_OMNI(l)->tex = LUM_OMNI(l)->ceilTex =
-                LUM_OMNI(l)->floorTex =
-                GL_PrepareLSTexture(LST_DYNAMIC);
+                LUM_OMNI(l)->floorTex = GL_PrepareLSTexture(LST_DYNAMIC);
         }
     }
 }
 
-boolean LOIT_LinkObjToSubSector(subsector_t *subsector, void *data)
+boolean LOIT_LinkObjToSubSector(subsector_t* subsector, void* data)
 {
-    objcontact_t       *con = newContact(data);
+    objcontact_t*       con = newContact(data);
 
     // Link it to the contact list for this subsector.
     linkObjToSubSector(con, GET_SUBSECTOR_IDX(subsector));
@@ -554,7 +554,7 @@ boolean LOIT_LinkObjToSubSector(subsector_t *subsector, void *data)
  * @param box           Subsectors within this bounding box will be processed.
  * @param sector        Ptr to the sector to check for contacts.
  */
-static void contactSector(lumobj_t *lum, const arvec2_t box, sector_t *sector)
+static void contactSector(lumobj_t* lum, const arvec2_t box, sector_t* sector)
 {
     P_SubsectorsBoxIteratorv(box, sector, LOIT_LinkObjToSubSector, lum);
 }
@@ -569,17 +569,17 @@ static void contactSector(lumobj_t *lum, const arvec2_t box, sector_t *sector)
  * @return              @c true, because this function is also used as an
  *                      iterator.
  */
-boolean LOIT_ContactFinder(linedef_t *line, void *data)
+boolean LOIT_ContactFinder(linedef_t* line, void* data)
 {
-    contactfinder_data_t *light = data;
-    sector_t           *source, *dest;
+    contactfinder_data_t* light = data;
+    sector_t*           source, *dest;
     float               distance;
-    vertex_t           *vtx;
-    lumobj_t           *l;
+    vertex_t*           vtx;
+    lumobj_t*           l;
 
-    if(light->lum->type != LT_OMNI)
-        return true; // Only interested in omni lights.
     l = light->lum;
+    if(l->type != LT_OMNI)
+        return true; // Only interested in omni lights.
 
     if(!line->L_backside || !line->L_frontside ||
        line->L_frontsector == line->L_backsector)
@@ -678,7 +678,7 @@ boolean LOIT_ContactFinder(linedef_t *line, void *data)
  *
  * @param lum           Ptr to lumobj to find subsector contacts for.
  */
-static void findContacts(lumobj_t *lum)
+static void findContacts(lumobj_t* lum)
 {
     int                 firstValid;
     contactfinder_data_t light;
@@ -687,12 +687,12 @@ static void findContacts(lumobj_t *lum)
     static uint         numSpreads = 0, numFinds = 0;
 
     if(lum->type != LT_OMNI)
-        return; // Only omni lights spread.
+        return; // Only omni lights and decals spread.
 
     firstValid = ++validCount;
 
-    // Use a slightly smaller radius than what the light really is.
-    radius = LUM_OMNI(lum)->radius * 0.9f;
+    // Use a slightly smaller radius than what the lumobj really is.
+    radius = LUM_OMNI(lum)->radius * .9f;
 
     // Do the sector spread. Begin from the light's own sector.
     lum->subsector->sector->validCount = validCount;
@@ -708,7 +708,7 @@ static void findContacts(lumobj_t *lum)
 
     numFinds++;
 
-    // We'll keep doing this until the light has spreaded everywhere
+    // We'll keep doing this until the lumobj has spreaded everywhere
     // inside the bounding box.
     do
     {
@@ -739,11 +739,11 @@ if(!((numFinds + 1) % 1000))
  *
  * @param subsector Ptr to the subsector to spread the lumobj contacts of.
  */
-static void spreadLumobjsInSubSector(subsector_t *subsector)
+static void spreadLumobjsInSubSector(subsector_t* subsector)
 {
     int                 xl, xh, yl, yh, x, y;
-    int                *count;
-    lumlink_t          *iter;
+    int*                count;
+    lumlink_t*          iter;
 
     xl = X_TO_DLBX(FLT2FIX(subsector->bBox[0].pos[VX] - loMaxRadius));
     xh = X_TO_DLBX(FLT2FIX(subsector->bBox[1].pos[VX] + loMaxRadius));
@@ -782,10 +782,10 @@ static void spreadLumobjsInSubSector(subsector_t *subsector)
 /**
  * Used to sort lumobjs by distance from viewpoint.
  */
-static int C_DECL lumobjSorter(const void *e1, const void *e2)
+static int C_DECL lumobjSorter(const void* e1, const void* e2)
 {
-    lumobj_t           *lum1 = &getLumNode(*(const ushort *) e1)->lum;
-    lumobj_t           *lum2 = &getLumNode(*(const ushort *) e2)->lum;
+    lumobj_t*           lum1 = &getLumNode(*(const ushort *) e1)->lum;
+    lumobj_t*           lum2 = &getLumNode(*(const ushort *) e2)->lum;
 
     if(lum1->distanceToViewer > lum2->distanceToViewer)
         return 1;
@@ -802,11 +802,11 @@ static int C_DECL lumobjSorter(const void *e1, const void *e2)
  */
 static void linkLuminous(void)
 {
-#define MAX_LUMS 8192           // Normally 100-200, heavy: 1000
+#define MAX_LUMS        (8192) // Normally 100-200, heavy: 1000
 
     int                 bx, by;
     uint                i,  num = numLuminous;
-    lumlink_t         **root, *node;
+    lumlink_t**         root, *node;
     ushort              order[MAX_LUMS];
 
     // Should the proper order be determined?
@@ -853,7 +853,7 @@ static void linkLuminous(void)
  *
  * @param ssec          Ptr to the subsector to process.
  */
-void LO_InitForSubsector(subsector_t *ssec)
+void LO_InitForSubsector(subsector_t* ssec)
 {
     if(!useDynLights && !useWallGlow)
         return; // Disabled.
@@ -868,10 +868,10 @@ void LO_InitForSubsector(subsector_t *ssec)
  *
  * @param ssec          Ptr to the subsector to process.
  */
-static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
+static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
 {
     uint                g;
-    plane_t            *glowPlanes[2], *pln;
+    plane_t*            glowPlanes[2], *pln;
 
     glowPlanes[PLN_FLOOR] = R_GetLinkedSector(ssec, PLN_FLOOR)->planes[PLN_FLOOR];
     glowPlanes[PLN_CEILING] = R_GetLinkedSector(ssec, PLN_CEILING)->planes[PLN_CEILING];
@@ -890,7 +890,7 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
         light = LO_NewLuminous(LT_PLANE);
 
         l = LO_GetLuminous(light);
-        l->flags = LUMF_NOHALO | LUMF_CLIPPED;
+        l->flags = LUMF_CLIPPED;
         l->pos[VX] = ssec->midPoint.pos[VX];
         l->pos[VY] = ssec->midPoint.pos[VY];
         l->pos[VZ] = pln->visHeight;
@@ -906,9 +906,9 @@ static void createGlowLightPerPlaneForSubSector(subsector_t *ssec)
                               l->pos[VZ] - viewZ);
 
         l->subsector = ssec;
-        l->color[CR] = pln->glowRGB[CR];
-        l->color[CG] = pln->glowRGB[CG];
-        l->color[CB] = pln->glowRGB[CB];
+        LUM_PLANE(l)->color[CR] = pln->glowRGB[CR];
+        LUM_PLANE(l)->color[CG] = pln->glowRGB[CG];
+        LUM_PLANE(l)->color[CB] = pln->glowRGB[CB];
 
         LUM_PLANE(l)->intensity = pln->glow;
         LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
@@ -944,7 +944,7 @@ END_PROF( PROF_DYN_INIT_DEL );
 void LO_AddLuminousMobjs(void)
 {
     uint                i;
-    sector_t           *seciter;
+    sector_t*           seciter;
 
     if(!useDynLights && !useWallGlow)
         return;
@@ -991,11 +991,11 @@ BEGIN_PROF( PROF_DYN_INIT_LINK );
 END_PROF( PROF_DYN_INIT_LINK );
 }
 
-boolean LO_IterateSubsectorContacts(subsector_t *ssec,
-                                    boolean (*func) (void *, void *),
-                                    void *data)
+boolean LO_IterateSubsectorContacts(subsector_t* ssec,
+                                    boolean (*func) (void*, void*),
+                                    void* data)
 {
-    objcontact_t       *con;
+    objcontact_t*       con;
 
     for(con = subContacts[GET_SUBSECTOR_IDX(ssec)]; con; con = con->next)
     {
@@ -1009,14 +1009,14 @@ boolean LO_IterateSubsectorContacts(subsector_t *ssec,
 typedef struct lumobjiterparams_s {
     float           origin[2];
     float           radius;
-    void           *data;
-    boolean       (*func) (lumobj_t *, float, void *data);
+    void*           data;
+    boolean       (*func) (lumobj_t*, float, void* data);
 } lumobjiterparams_t;
 
-boolean LOIT_RadiusLumobjs(void *ptr, void *data)
+boolean LOIT_RadiusLumobjs(void* ptr, void* data)
 {
-    lumobj_t       *lum = (lumobj_t*) ptr;
-    lumobjiterparams_t *params = data;
+    lumobj_t*       lum = (lumobj_t*) ptr;
+    lumobjiterparams_t* params = data;
     float           dist =
         P_ApproxDistance(lum->pos[VX] - params->origin[VX],
                          lum->pos[VY] - params->origin[VY]);
@@ -1039,9 +1039,9 @@ boolean LOIT_RadiusLumobjs(void *ptr, void *data)
  *
  * @return              @c true, iff every callback returns @c true, else @c false.
  */
-boolean LO_LumobjsRadiusIterator(subsector_t *ssec, float x, float y,
-                                 float radius, void *data,
-                                 boolean (*func) (lumobj_t *, float, void *data))
+boolean LO_LumobjsRadiusIterator(subsector_t* ssec, float x, float y,
+                                 float radius, void* data,
+                                 boolean (*func) (lumobj_t*, float, void*))
 {
     lumobjiterparams_t  params;
 
@@ -1059,18 +1059,18 @@ boolean LO_LumobjsRadiusIterator(subsector_t *ssec, float x, float y,
 }
 
 /**
- * Clip lights by subsector.
+ * Clip lumobjs by subsector.
  *
  * @param ssecidx       Subsector index in which lights will be clipped.
  */
 void LO_ClipInSubsector(uint ssecidx)
 {
-    lumlink_t          *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
+    lumlink_t*          lumi; // Lum Iterator, or 'snow' in Finnish. :-)
 
     // Determine which dynamic light sources in the subsector get clipped.
     for(lumi = loSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
     {
-        lumobj_t           *lobj = &lumi->lum;
+        lumobj_t*           lobj = &lumi->lum;
 
         if(lobj->type != LT_OMNI)
             continue; // Only interested in omnilights.
@@ -1081,43 +1081,44 @@ void LO_ClipInSubsector(uint ssecidx)
         // LO_AddLuminous!
         if(!C_IsPointVisible(lobj->pos[VX], lobj->pos[VY],
                              lobj->pos[VZ] + LUM_OMNI(lobj)->zOff))
-            lobj->flags |= LUMF_CLIPPED;    // Won't have a halo.
+            lobj->flags |= LUMF_CLIPPED; // Won't have a halo.
     }
 }
 
 /**
- * In the situation where a subsector contains both dynamic lights and
- * a polyobj, the lights must be clipped more carefully.  Here we
- * check if the line of sight intersects any of the polyobj segs that
- * face the camera.
+ * In the situation where a subsector contains both lumobjs and a polyobj,
+ * the lumobjs must be clipped more carefully. Here we check if the line of
+ * sight intersects any of the polyobj segs that face the camera.
  *
- * @param ssecidx       Subsector index in which lights will be clipped.
+ * @param ssecidx       Subsector index in which lumobjs will be clipped.
  */
 void LO_ClipBySight(uint ssecidx)
 {
     uint                num;
     vec2_t              eye;
-    subsector_t        *ssec = SUBSECTOR_PTR(ssecidx);
-    lumlink_t          *lumi;
+    subsector_t*        ssec = SUBSECTOR_PTR(ssecidx);
+    lumlink_t*          lumi;
 
     // Only checks the polyobj.
-    if(ssec->polyObj == NULL) return;
+    if(ssec->polyObj == NULL)
+        return;
 
     V2_Set(eye, vx, vz);
 
     num = ssec->polyObj->numSegs;
     for(lumi = loSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
     {
-        lumobj_t           *lobj = &lumi->lum;
+        lumobj_t*           lobj = &lumi->lum;
 
         if(!(lobj->flags & LUMF_CLIPPED))
         {
             uint                i;
+
             // We need to figure out if any of the polyobj's segments lies
-            // between the viewpoint and the light source.
+            // between the viewpoint and the lumobj.
             for(i = 0; i < num; ++i)
             {
-                seg_t              *seg = ssec->polyObj->segs[i];
+                seg_t*              seg = ssec->polyObj->segs[i];
 
                 // Ignore segs facing the wrong way.
                 if(seg->frameFlags & SEGINF_FACINGFRONT)
@@ -1136,3 +1137,108 @@ void LO_ClipBySight(uint ssecidx)
         }
     }
 }
+
+#if _DEBUG
+void LO_DrawLumobjs(void)
+{
+    static const float  black[4] = { 0, 0, 0, 0 };
+    static const float  white[4] = { 1, 1, 1, 1 };
+    float               color[4];
+    uint                i;
+
+    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    for(i = 0; i < numLuminous; ++i)
+    {
+        lumobj_t*           lum = &luminousList[i].lum;
+        vec3_t              lumCenter;
+
+        if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
+            continue;
+
+        V3_Copy(lumCenter, lum->pos);
+        if(lum->type == LT_OMNI)
+            lumCenter[VZ] += LUM_OMNI(lum)->zOff;
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+
+        DGL_Translatef(lumCenter[VX], lumCenter[VZ], lumCenter[VY]);
+
+        switch(lum->type)
+        {
+        case LT_OMNI:
+            {
+            float               scale = LUM_OMNI(lum)->radius;
+
+            color[CR] = LUM_OMNI(lum)->color[CR];
+            color[CG] = LUM_OMNI(lum)->color[CG];
+            color[CB] = LUM_OMNI(lum)->color[CB];
+            color[CA] = 1;
+
+            DGL_Begin(DGL_LINES);
+            {
+                DGL_Color4fv(black);
+                DGL_Vertex3f(-scale, 0, 0);
+                DGL_Color4fv(color);
+                DGL_Vertex3f(0, 0, 0);
+                DGL_Vertex3f(0, 0, 0);
+                DGL_Color4fv(black);
+                DGL_Vertex3f(scale, 0, 0);
+
+                DGL_Vertex3f(0, -scale, 0);
+                DGL_Color4fv(color);
+                DGL_Vertex3f(0, 0, 0);
+                DGL_Vertex3f(0, 0, 0);
+                DGL_Color4fv(black);
+                DGL_Vertex3f(0, scale, 0);
+
+                DGL_Vertex3f(0, 0, -scale);
+                DGL_Color4fv(color);
+                DGL_Vertex3f(0, 0, 0);
+                DGL_Vertex3f(0, 0, 0);
+                DGL_Color4fv(black);
+                DGL_Vertex3f(0, 0, scale);
+            }
+            DGL_End();
+            break;
+            }
+
+        case LT_PLANE:
+            {
+            float               scale = LUM_PLANE(lum)->intensity * 10;
+
+            color[CR] = LUM_PLANE(lum)->color[CR];
+            color[CG] = LUM_PLANE(lum)->color[CG];
+            color[CB] = LUM_PLANE(lum)->color[CB];
+            color[CA] = 1;
+
+            DGL_Begin(DGL_LINES);
+            {
+                DGL_Color4fv(black);
+                DGL_Vertex3f(scale * LUM_PLANE(lum)->normal[VX],
+                             scale * LUM_PLANE(lum)->normal[VZ],
+                             scale * LUM_PLANE(lum)->normal[VY]);
+                DGL_Color4fv(color);
+                DGL_Vertex3f(0, 0, 0);
+
+            }
+            DGL_End();
+            break;
+            }
+
+        default:
+            break;
+        }
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+    }
+
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    DGL_Enable(DGL_TEXTURING);
+}
+#endif

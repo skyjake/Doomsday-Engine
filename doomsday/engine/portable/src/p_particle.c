@@ -507,10 +507,10 @@ static void P_NewParticle(ptcgen_t *gen)
         /**
          * Choosing the XY spot is a bit more difficult.
          * But we must be fast and only sufficiently accurate.
-	     *
+         *
          * \fixme Nothing prevents spawning on the wrong side (or inside)
          * of one-sided walls (large diagonal subsectors!).
-	     */
+         */
         box = gen->sector->bBox;
         for(i = 0; i < 5; ++i)  // Try a couple of times (max).
         {
@@ -631,8 +631,8 @@ boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
     }
 
     // Movement must cross the line.
-    if(P_PointOnLineSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
-       P_PointOnLineSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
+    if(P_PointOnLinedefSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
+       P_PointOnLinedefSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
         return true;
 
     // We are possibly hitting something here.

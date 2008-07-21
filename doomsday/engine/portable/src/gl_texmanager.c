@@ -286,15 +286,15 @@ static void LoadPalette(void)
     int                 i, c;
     byte               *playPal;
     byte                palData[256 * 3];
-	double	            invGamma;
+    double              invGamma;
 
     palLump = W_GetNumForName(PALLUMPNAME);
     playPal = GL_GetPalette();
 
     // Clamp to a sane range.
-	invGamma = 1.0f - MINMAX_OF(0, texGamma, 1);
-	for(i = 0; i < 256; ++i)
-		gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
+    invGamma = 1.0f - MINMAX_OF(0, texGamma, 1);
+    for(i = 0; i < 256; ++i)
+        gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
 
     // Prepare the color table.
     for(i = 0; i < 256; ++i)
@@ -3170,9 +3170,14 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
                 // The generator will be determined now.
                 for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
                 {
-                    material_t         *defMat =
-                        R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
-                                                                def->materialType));
+                    material_t*         defMat;
+
+                    if(!(def->materialName && def->materialName[0]))
+                        continue;
+
+                    defMat = R_GetMaterialByNum(
+                        R_MaterialNumForName(def->materialName,
+                                             def->materialType));
 
                     if(def->flags & PGF_GROUP)
                     {
@@ -3218,7 +3223,8 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
 
             if(result)
             {   // We need to update the associated enhancements.
-                ded_decor_t        *def = Def_GetDecoration(mat, result == 2);
+                ded_decor_t*            def =
+                    Def_GetDecoration(mat, result == 2);
 
                 mat->flags &= ~MATF_GLOW;
                 if(def)

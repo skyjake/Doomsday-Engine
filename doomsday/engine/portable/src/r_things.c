@@ -987,12 +987,15 @@ static void glowLightSetup(vlight_t *light)
 /**
  * Iterator for processing light sources around a vissprite.
  */
-boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
+boolean visSpriteLightIterator(lumobj_t* lum, float xyDist, void *data)
 {
     float               dist;
     float               glowHeight;
     boolean             addLight = false;
-    vlightiterparams_t *params = (vlightiterparams_t*) data;
+    vlightiterparams_t* params = (vlightiterparams_t*) data;
+
+    if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
+        return true; // Continue iteration.
 
     // Is the light close enough to make the list?
     switch(lum->type)
@@ -1011,7 +1014,8 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
 
     case LT_PLANE:
         if(LUM_PLANE(lum)->intensity &&
-           (lum->color[0] > 0 || lum->color[1] > 0|| lum->color[2] > 0))
+           (LUM_PLANE(lum)->color[0] > 0 || LUM_PLANE(lum)->color[1] > 0 ||
+            LUM_PLANE(lum)->color[2] > 0))
         {
             // Floor glow
             glowHeight =
@@ -1084,8 +1088,9 @@ boolean visSpriteLightIterator(lumobj_t *lum, float xyDist, void *data)
                 light->worldVector[VZ] = -LUM_PLANE(lum)->normal[VZ];
 
                 dist = 1 - dist / glowHeight;
-                scaleFloatRGB(light->color, lum->color, dist);
-                R_ScaleAmbientRGB(params->ambientColor, lum->color, dist / 3);
+                scaleFloatRGB(light->color, LUM_PLANE(lum)->color, dist);
+                R_ScaleAmbientRGB(params->ambientColor,
+                                  LUM_PLANE(lum)->color, dist / 3);
                 break;
 
             default:
@@ -1208,7 +1213,7 @@ void R_CollectAffectingLights(const collectaffectinglights_params_t *params,
                 light->vector[c] = (params->center[c] - lightCenter[c]) /
                                         light->approxDist;
                 // ...and the color of the light.
-                light->color[c] = l->color[c] * intensity;
+                light->color[c] = LUM_OMNI(l)->color[c] * intensity;
             }
         }
         else

@@ -47,8 +47,8 @@ float           P_ApproxDistance3(float dx, float dy, float dz);
 void            P_LineUnitVector(linedef_t *line, float *unitvec);
 float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
-int             P_PointOnLineSide(float x, float y, linedef_t *line);
-int             P_PointOnLineSide2(double pointX, double pointY,
+int             P_PointOnLinedefSide(float x, float y, linedef_t *line);
+int             P_PointOnLinedefSide2(double pointX, double pointY,
                                    double lineDX, double lineDY,
                                    double linePerp, double lineLength,
                                    double epsilon);
@@ -62,7 +62,7 @@ int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
 void            P_MakeDivline(linedef_t *li, divline_t *dl);
 int             P_PointOnDivlineSide(float x, float y, divline_t *line);
 float           P_InterceptVector(divline_t *v2, divline_t *v1);
-int             P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline);
+int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);
 float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
                                        fdivline_t *fdiv, fvertex_t *inter);
 void            P_LineOpening(linedef_t *linedef);

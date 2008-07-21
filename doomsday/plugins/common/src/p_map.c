@@ -336,8 +336,8 @@ boolean PIT_CrossLine(linedef_t *ld, void *data)
              tmBBox[BOXTOP]    < bbox[BOXBOTTOM] ||
              tmBBox[BOXBOTTOM] > bbox[BOXTOP]))
         {
-            if(P_PointOnLineSide(startPos[VX], startPos[VY], ld) !=
-               P_PointOnLineSide(endPos[VX], endPos[VY], ld))
+            if(P_PointOnLinedefSide(startPos[VX], startPos[VY], ld) !=
+               P_PointOnLinedefSide(endPos[VX], endPos[VY], ld))
                 // Line blocks trajectory.
                 return false;
         }
@@ -1399,8 +1399,8 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
             // See if the line was crossed.
             if(P_ToXLine(ld)->special)
             {
-                side = P_PointOnLineSide(thing->pos[VX], thing->pos[VY], ld);
-                oldside = P_PointOnLineSide(oldpos[VX], oldpos[VY], ld);
+                side = P_PointOnLinedefSide(thing->pos[VX], thing->pos[VY], ld);
+                oldside = P_PointOnLinedefSide(oldpos[VX], oldpos[VY], ld);
                 if(side != oldside)
                 {
 #if __JHEXEN__
@@ -1439,7 +1439,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
         while((ld = P_IterListIterator(spechit)) != NULL)
         {
             // See if the line was crossed.
-            side = P_PointOnLineSide(thing->pos[VX], thing->pos[VY], ld);
+            side = P_PointOnLinedefSide(thing->pos[VX], thing->pos[VY], ld);
             CheckForPushSpecial(ld, side, thing);
         }
     }
@@ -1464,7 +1464,7 @@ boolean P_TryMove(mobj_t *thing, float x, float y, boolean dropoff,
     {
         // Move not possible, see if the thing hit a line and send a Hit
         // event to it.
-        XL_HitLine(tmHitLine, P_PointOnLineSide(thing->pos[VX], thing->pos[VY], tmHitLine),
+        XL_HitLine(tmHitLine, P_PointOnLinedefSide(thing->pos[VX], thing->pos[VY], tmHitLine),
                    thing);
     }
 
@@ -2133,7 +2133,7 @@ boolean PTR_UseTraverse(intercept_t* in)
     }
 
     side = 0;
-    if(1 == P_PointOnLineSide(useThing->pos[VX], useThing->pos[VY],
+    if(1 == P_PointOnLinedefSide(useThing->pos[VX], useThing->pos[VY],
                               in->d.lineDef))
         side = 1;
 
@@ -2269,7 +2269,7 @@ static void P_HitSlideLine(linedef_t *ld)
         return;
     }
 
-    side = P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], ld);
+    side = P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], ld);
 
     lineangle = R_PointToAngle2(0, 0, P_GetFloatp(ld, DMU_DX),
                                       P_GetFloatp(ld, DMU_DY));
@@ -2307,7 +2307,7 @@ boolean PTR_SlideTraverse(intercept_t *in)
 
     if(!frontSec || !backSec)
     {
-        if(P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], li))
+        if(P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], li))
             return true; // Don't hit the back side.
 
         goto isblocking;
@@ -2906,7 +2906,7 @@ boolean PTR_BounceTraverse(intercept_t *in)
 
     if(!frontSec || !backSec)
     {
-        if(P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], li))
+        if(P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], li))
             return true; // Don't hit the back side.
         goto bounceblocking;
     }
@@ -2962,7 +2962,7 @@ void P_BounceWall(mobj_t *mo)
     if(!bestSlideLine)
         return; // We don't want to crash.
 
-    side = P_PointOnLineSide(mo->pos[VX], mo->pos[VY], bestSlideLine);
+    side = P_PointOnLinedefSide(mo->pos[VX], mo->pos[VY], bestSlideLine);
     lineangle = R_PointToAngle2(0, 0,
                                 P_GetFloatp(bestSlideLine, DMU_DX),
                                 P_GetFloatp(bestSlideLine, DMU_DY));
@@ -3028,7 +3028,7 @@ boolean PTR_PuzzleItemTraverse(intercept_t *in)
             return true; // Continue searching...
         }
 
-        if(P_PointOnLineSide(puzzleItemUser->pos[VX],
+        if(P_PointOnLinedefSide(puzzleItemUser->pos[VX],
                              puzzleItemUser->pos[VY], in->d.lineDef) == 1)
             return false; // Don't use back sides.
 

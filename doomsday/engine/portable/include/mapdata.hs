@@ -107,19 +107,21 @@ end
 
 struct subsector
     UINT    uint        segCount
-    PTR     seg_s**     segs        // [segcount] size.
-    PTR     polyobj_s*  polyObj     // NULL, if there is no polyobj.
+    PTR     seg_s**     segs // [segcount] size.
+    PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
     PTR     sector_s*   sector
     -       uint        inSectorID
     -       int         flags
     -       int         validCount
     -       uint        group
     -       uint[NUM_REVERB_DATA] reverb
-    -       fvertex_t   bBox[2]     // Min and max points.
-    -       fvertex_t   midPoint    // Center of vertices.
+    -       fvertex_t   bBox[2] // Min and max points.
+    -       float[2]    worldGridOffset // Offset to align the top left of the bBox to the world grid.
+    -       fvertex_t   midPoint // Center of vertices.
     -       ushort      numVertices
-    -       fvertex_s** vertices    // [numvertices] size
+    -       fvertex_s** vertices // [numvertices] size
     -       shadowlink_s* shadows
+
 end
 
 public

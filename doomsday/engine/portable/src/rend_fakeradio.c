@@ -651,6 +651,17 @@ static void renderShadowSeg(const rvertex_t* rvertices,
     params.tex.width = p->texWidth;
     params.tex.height = p->texHeight;
     params.tex.masked = false;
+
+    // Top left.
+    params.texOrigin[0][VX] = rvertices[1].pos[VX];
+    params.texOrigin[0][VY] = rvertices[1].pos[VY];
+    params.texOrigin[0][VZ] = rvertices[1].pos[VZ];
+
+    // Bottom right.
+    params.texOrigin[1][VX] = rvertices[2].pos[VX];
+    params.texOrigin[1][VY] = rvertices[2].pos[VY];
+    params.texOrigin[1][VZ] = rvertices[2].pos[VZ];
+
     params.texOffset[VX] = p->texOffset[VX];
     params.texOffset[VY] = p->texOffset[VY];
 

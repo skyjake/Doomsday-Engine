@@ -612,7 +612,7 @@ static void wallMomSlide(linedef_t *ld)
         return;
     }
 
-    side = P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], ld);
+    side = P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], ld);
     lineangle = R_PointToAngle2(0, 0, ld->dX, ld->dY);
 
     if(side == 1)
@@ -644,7 +644,7 @@ static boolean slideTraverse(intercept_t *in)
 
     if(!(li->inFlags & LF_TWOSIDED))
     {
-        if(P_PointOnLineSide(slideMo->pos[VX],
+        if(P_PointOnLinedefSide(slideMo->pos[VX],
                              slideMo->pos[VY], li))
         {   // The back side.
             return true; // Continue iteration.

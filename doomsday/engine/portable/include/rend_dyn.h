@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,9 +32,9 @@
 #include "p_object.h"
 #include "rend_list.h"
 
-#define DYN_ASPECT          1.1f    // 1.2f is just too round for Doom.
+#define DYN_ASPECT          (1.1f) // 1.2f is just too round for Doom.
 
-#define MAX_GLOWHEIGHT      1024.0f // Absolute max glow height
+#define MAX_GLOWHEIGHT      (1024.0f) // Absolute max glow height.
 
 /**
  * The data of a projected dynamic light is stored in this structure.
@@ -47,11 +47,10 @@ typedef struct dynlight_s {
     DGLuint         texture;
 } dynlight_t;
 
-extern int      useDynLights, dlBlend;
-extern float    dlFactor;
-extern int      useWallGlow, glowHeightMax;
-extern float    glowHeightFactor;
-extern float    glowFogBright;
+extern int useDynLights, dlBlend;
+extern float dlFactor, dlFogBright;
+extern int useWallGlow, glowHeightMax;
+extern float glowHeightFactor;
 
 // Initialization
 void            DL_Register(void);
@@ -61,12 +60,12 @@ void            DL_InitForMap(void);
 void            DL_InitForNewFrame(void);
 
 // Action.
-uint            DL_ProcessSegSection(seg_t *seg, float bottom, float top,
+uint            DL_ProcessSegSection(seg_t* seg, float bottom, float top,
                                      boolean sortBrightestFirst);
-uint            DL_ProcessSubSectorPlane(subsector_t *subsector, uint plane);
+uint            DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane);
 
 // Helpers.
-boolean         DL_ListIterator(uint listIdx, void *data,
-                                boolean (*func) (const dynlight_t *, void *data));
+boolean         DL_ListIterator(uint listIdx, void* data,
+                                boolean (*func) (const dynlight_t*, void*));
 
 #endif

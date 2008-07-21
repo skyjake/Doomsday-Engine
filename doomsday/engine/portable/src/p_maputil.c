@@ -163,31 +163,11 @@ float P_MobjPointDistancef(mobj_t* start, mobj_t* end, float* fixpoint)
 }
 
 /**
- * Determines on which side of dline the point is. Returns true if the
- * point is on the line or on the right side.
+ * Lines start, end and fdiv must intersect.
  */
 #ifdef _MSC_VER
 #  pragma optimize("g", off)
 #endif
-int P_FloatPointOnLineSide(fvertex_t* pnt, fdivline_t* dline)
-{
-    /*
-       (AY-CY)(BX-AX)-(AX-CX)(BY-AY)
-       s = -----------------------------
-       L**2
-
-       If s<0      C is left of AB (you can just check the numerator)
-       If s>0      C is right of AB
-       If s=0      C is on AB
-     */
-    // We'll return false if the point c is on the left side.
-    return ((dline->pos[VY] - pnt->pos[VY]) * dline->dX -
-            (dline->pos[VX] - pnt->pos[VX]) * dline->dY >= 0);
-}
-
-/**
- * Lines start, end and fdiv must intersect.
- */
 float P_FloatInterceptVertex(fvertex_t* start, fvertex_t* end,
                              fdivline_t* fdiv, fvertex_t* inter)
 {
@@ -213,20 +193,47 @@ float P_FloatInterceptVertex(fvertex_t* start, fvertex_t* end,
     inter->pos[VY] = ay + r * (by - ay);
     return r;
 }
+
+/**
+ * @return              Non-zero if the point is on the right side of the
+ *                      specified line.
+ */
+int P_PointOnLineSide(float x, float y, float lX, float lY, float lDX,
+                      float lDY)
+{
+    /*
+       (AY-CY)(BX-AX)-(AX-CX)(BY-AY)
+       s = -----------------------------
+       L**2
+
+       If s<0      C is left of AB (you can just check the numerator)
+       If s>0      C is right of AB
+       If s=0      C is on AB
+     */
+    return ((lY - y) * lDX - (lX - x) * lDY >= 0);
+}
 #ifdef _MSC_VER
 #  pragma optimize("", on)
 #endif
 
 /**
- * Returns 0 or 1
+ * Determines on which side of dline the point is. Returns true if the
+ * point is on the line or on the right side.
  */
-int P_PointOnLineSide(float x, float y, linedef_t* line)
+int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
 {
-    vertex_t*           vtx1 = line->L_v1;
+    return P_PointOnLineSide(pnt->pos[VX], pnt->pos[VY], dline->pos[VX],
+                             dline->pos[VY], dline->dX, dline->dY);
+}
 
-    return  !line->dX? x <= vtx1->V_pos[VX]? line->dY > 0 : line->dY <
-        0 : !line->dY? y <= vtx1->V_pos[VY]? line->dX < 0 : line->dX >
-        0 : (y - vtx1->V_pos[VY]) * line->dX >= line->dY * (x - vtx1->V_pos[VX]);
+/**
+ * @return              Non-zero if the point is on the right side of the
+ *                      specified line.
+ */
+int P_PointOnLinedefSide(float x, float y, linedef_t* line)
+{
+    return P_PointOnLineSide(x, y, line->L_v1pos[VX], line->L_v1pos[VY],
+                             line->dX, line->dY);
 }
 
 /**
@@ -243,7 +250,7 @@ int P_PointOnLineSide(float x, float y, linedef_t* line)
  *                      @c  0= intersects.
  *                      @c >0= on right side.
  */
-int P_PointOnLineSide2(double pointX, double pointY, double lineDX,
+int P_PointOnLinedefSide2(double pointX, double pointY, double lineDX,
                        double lineDY, double linePerp, double lineLength,
                        double epsilon)
 {
@@ -309,13 +316,13 @@ int P_BoxOnLineSide3(const int bbox[4], double lineSX, double lineSY,
     }
     else if(lineDX * lineDY > 0)
     {   // Positive slope.
-        p1 = P_PointOnLineSide2(x1, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
-        p2 = P_PointOnLineSide2(x2, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
+        p1 = P_PointOnLinedefSide2(x1, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
+        p2 = P_PointOnLinedefSide2(x2, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
     }
     else
     {   // Negative slope.
-        p1 = P_PointOnLineSide2(x1, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
-        p2 = P_PointOnLineSide2(x2, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
+        p1 = P_PointOnLinedefSide2(x1, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
+        p2 = P_PointOnLinedefSide2(x2, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
     }
 
     if(p1 == p2)
@@ -352,12 +359,12 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
                 (p = xh < lx) ? p ^ (ld->dY < 0) : -1;
     }
     case ST_POSITIVE:
-        return P_PointOnLineSide(xh, yl, ld) ==
-                (p = P_PointOnLineSide(xl, yh, ld)) ? p : -1;
+        return P_PointOnLinedefSide(xh, yl, ld) ==
+                (p = P_PointOnLinedefSide(xl, yh, ld)) ? p : -1;
 
     case ST_NEGATIVE:
-        return (P_PointOnLineSide(xl, yl, ld)) ==
-                (p = P_PointOnLineSide(xh, yh, ld)) ? p : -1;
+        return (P_PointOnLinedefSide(xl, yl, ld)) ==
+                (p = P_PointOnLinedefSide(xh, yh, ld)) ? p : -1;
     }
 }
 
@@ -1057,9 +1064,9 @@ boolean PIT_AddLineIntercepts(linedef_t* ld, void* data)
     }
     else
     {
-        s[0] = P_PointOnLineSide(FIX2FLT(traceLOS.pos[VX]),
+        s[0] = P_PointOnLinedefSide(FIX2FLT(traceLOS.pos[VX]),
                                  FIX2FLT(traceLOS.pos[VY]), ld);
-        s[1] = P_PointOnLineSide(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
+        s[1] = P_PointOnLinedefSide(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
                                  FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), ld);
     }
 

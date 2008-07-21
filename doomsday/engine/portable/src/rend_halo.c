@@ -175,7 +175,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         return false;
     }
 
-    if((lum->flags & LUMF_NOHALO) || lum->distanceToViewer <= 0 ||
+    if((LUM_OMNI(lum)->flags & LUMOF_NOHALO) || lum->distanceToViewer <= 0 ||
        (haloFadeMax && lum->distanceToViewer > haloFadeMax))
         return false;
 
@@ -198,7 +198,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         leftOff[i] = viewUpVec[i] + viewSideVec[i];
         rightOff[i] = viewUpVec[i] - viewSideVec[i];
         // Convert the color to floating point.
-        color[i] = lum->color[i];
+        color[i] = LUM_OMNI(lum)->color[i];
     }
 
     // Setup the proper DGL state.
@@ -238,7 +238,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
     {
         // Now halopos is a normalized version of the mirror vector.
         // Both vectors are on the view plane.
-        if(!(lum->flags & LUMF_DONTTURNHALO))
+        if(!(LUM_OMNI(lum)->flags & LUMOF_DONTTURNHALO))
         {
             turnAngle = M_DotProduct(haloPos, viewUpVec);
             if(turnAngle > 1)
@@ -394,7 +394,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         // take a hint... (or then something's changing the wrapping
         // mode inadvertently)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-					    GL_CLAMP_TO_EDGE);
+                        GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
                         GL_CLAMP_TO_EDGE);
 

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -127,10 +127,11 @@ void V2_Scale(pvec2_t vec, float scalar)
  */
 void V2_Rotate(pvec2_t vec, float radians)
 {
-    const float c = cos(radians);
-    const float s = sin(radians);
-    float x = c * vec[VX] - s * vec[VY];
-    float y = s * vec[VX] + c * vec[VY];
+    const float         c = cos(radians);
+    const float         s = sin(radians);
+    float               x = c * vec[VX] - s * vec[VY];
+    float               y = s * vec[VX] + c * vec[VY];
+
     vec[VX] = x;
     vec[VY] = y;
 }
@@ -166,8 +167,8 @@ float V2_DotProduct(const pvec2_t a, const pvec2_t b)
  */
 float V2_ScalarProject(const pvec2_t a, const pvec2_t b)
 {
-    float   dot;
-    float   len = V2_Length(b);
+    float               dot;
+    float               len = V2_Length(b);
 
     if(len == 0)
         return 0;
@@ -182,7 +183,7 @@ float V2_ScalarProject(const pvec2_t a, const pvec2_t b)
  */
 void V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b)
 {
-    float   div = V2_DotProduct(b, b);
+    float               div = V2_DotProduct(b, b);
 
     if(div == 0)
     {
@@ -194,13 +195,15 @@ void V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b)
 }
 
 /**
- * @return          @c true, if the two vectors are parallel.
+ * @return              @c true, if the two vectors are parallel.
  */
 boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
 {
-    float   aLen = V2_Length(a);
-    float   bLen = V2_Length(b);
-    float   dot;
+#define EPSILON .9999f
+
+    float               aLen = V2_Length(a);
+    float               bLen = V2_Length(b);
+    float               dot;
 
     // Both must be non-zero vectors.
     if(aLen == 0 || bLen == 0)
@@ -209,12 +212,13 @@ boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
     dot = V2_DotProduct(a, b) / aLen / bLen;
 
     // If it's close enough, we'll consider them parallel.
-#define EPSILON .9999f
     return dot > EPSILON || dot < -EPSILON;
+
+#undef EPSILON
 }
 
 /**
- * @return          @c true, if the vector is a zero vector.
+ * @return              @c true, if the vector is a zero vector.
  */
 boolean V2_IsZero(const pvec2_t vec)
 {
@@ -225,7 +229,7 @@ boolean V2_IsZero(const pvec2_t vec)
  * Determine where the two lines cross each other.  Notice that the
  * lines are defined with a point and a vector.
  *
- * @return          A scaling factor for the first line.
+ * @return              A scaling factor for the first line.
  */
 float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
                       const pvec2_t delta2, pvec2_t point)
@@ -236,12 +240,13 @@ float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
      *     (XB-XA)(YD-YC)-(YB-YA)(XD-XC)
      */
 
-    float   r, div = delta1[VX] * delta2[VY] - delta1[VY] * delta2[VX];
-    int     i;
+    float               r, div;
+    int                 i;
+
+    div = delta1[VX] * delta2[VY] - delta1[VY] * delta2[VX];
 
     if(div == 0)
-    {
-        // Special case: lines are parallel.
+    {   // Special case: lines are parallel.
         r = 0;
     }
     else
@@ -273,7 +278,7 @@ float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
 float V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
                    const pvec2_t d, pvec2_t point)
 {
-    vec2_t  ab, cd;
+    vec2_t              ab, cd;
 
     ab[0] = b[VX] - a[VX];
     ab[1] = b[VY] - a[VY];
@@ -284,13 +289,13 @@ float V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
 }
 
 /**
- * @return          @c true, if the two lines intercept.
+ * @return              @c true, if the two lines intercept.
  */
 boolean V2_Intercept2(const pvec2_t a, const pvec2_t b, const pvec2_t c,
                       const pvec2_t d, pvec2_t point, float *abFrac,
                       float *cdFrac)
 {
-    float   ab, cd;
+    float               ab, cd;
 
     ab = V2_Intercept(a, b, c, d, point);
     cd = V2_Intercept(c, d, a, b, NULL);
@@ -308,7 +313,7 @@ boolean V2_Intercept2(const pvec2_t a, const pvec2_t b, const pvec2_t c,
  */
 void V2_Lerp(pvec2_t dest, const pvec2_t a, const pvec2_t b, float c)
 {
-    uint    i;
+    uint                i;
 
     for(i = 0; i < 2; ++i)
     {
@@ -371,7 +376,7 @@ float V3_Length(const pvec3_t vec)
  */
 float V3_Distance(const pvec3_t a, const pvec3_t b)
 {
-    vec3_t  vec;
+    vec3_t              vec;
 
     V3_Subtract(vec, b, a);
     return V3_Length(vec);
@@ -380,11 +385,11 @@ float V3_Distance(const pvec3_t a, const pvec3_t b)
 /**
  * Normalize a 3-dimensional vector.
  *
- * @return          The length of the vector.
+ * @return              The length of the vector.
  */
 float V3_Normalize(pvec3_t vec)
 {
-    float   len = V3_Length(vec);
+    float               len = V3_Length(vec);
 
     if(len != 0)
     {
@@ -446,9 +451,9 @@ float V3_DotProduct(const pvec3_t a, const pvec3_t b)
 /**
  * Calculate the cross product of two vectors.
  *
- * @param dest      Result will be written back here.
- * @param src1      First vector.
- * @param src2      Second vector.
+ * @param dest          Result will be written back here.
+ * @param src1          First vector.
+ * @param src2          Second vector.
  */
 void V3_CrossProduct(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
 {
@@ -460,15 +465,15 @@ void V3_CrossProduct(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
 /**
  * Cross product of two vectors composed of three points.
  *
- * @param dest      Result will be written back here.
- * @param v1        First vector.
- * @param v2        Second vector.
- * @param v3        Third vector.
+ * @param dest          Result will be written back here.
+ * @param v1            First vector.
+ * @param v2            Second vector.
+ * @param v3            Third vector.
  */
 void V3_PointCrossProduct(pvec3_t dest, const pvec3_t v1, const pvec3_t v2,
                           const pvec3_t v3)
 {
-    vec3_t      a, b;
+    vec3_t              a, b;
 
     V3_Subtract(a, v2, v1);
     V3_Subtract(b, v3, v1);
@@ -486,13 +491,12 @@ void V3_PointCrossProduct(pvec3_t dest, const pvec3_t v1, const pvec3_t v2,
  * @return              Distance from the closest point on the plane to the
  *                      specified arbitary point.
  */
-float V3_ClosestPointOnPlane(pvec3_t dest,
-                             const pvec3_t planeNormal,
+float V3_ClosestPointOnPlane(pvec3_t dest, const pvec3_t planeNormal,
                              const pvec3_t planePoint,
                              const pvec3_t arbPoint)
 {
-    vec3_t      pvec;
-    float       distance;
+    vec3_t              pvec;
+    float               distance;
 
     V3_Subtract(pvec, arbPoint, planePoint);
     distance = V3_DotProduct(planeNormal, pvec);
@@ -505,7 +509,25 @@ float V3_ClosestPointOnPlane(pvec3_t dest,
 }
 
 /**
- * @return          @c true, if the vector is a zero vector.
+ * Determine which axis of the given vector is the major.
+ */
+int V3_MajorAxis(const pvec3_t vec)
+{
+    int                 axis = VX;
+    vec3_t              fn;
+
+    V3_Set(fn, fabsf(vec[VX]), fabsf(vec[VY]), fabsf(vec[VZ]));
+
+    if(fn[VY] > fn[axis])
+        axis = VY;
+    if(fn[VZ] > fn[axis])
+        axis = VZ;
+
+    return axis;
+}
+
+/**
+ * @return              @c true, if the vector is a zero vector.
  */
 boolean V3_IsZero(const pvec3_t vec)
 {
@@ -517,7 +539,7 @@ boolean V3_IsZero(const pvec3_t vec)
  */
 void V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b, float c)
 {
-    uint    i;
+    uint                i;
 
     for(i = 0; i < 3; ++i)
     {

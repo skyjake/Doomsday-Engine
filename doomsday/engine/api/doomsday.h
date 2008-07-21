@@ -143,7 +143,7 @@ extern          "C" {
     void            B_FormEventString(char *buff, evtype_t type, evstate_t state,
                                       int data1);
     int             B_BindingsForCommand(const char *cmd, char *buf, int bufSize);
-    int             B_BindingsForControl(int localPlayer, const char *controlName, char *buf, 
+    int             B_BindingsForControl(int localPlayer, const char *controlName, char *buf,
                                          int bufSize);
     void            DD_AddBindClass(struct bindclass_s *);
     boolean         DD_SetBindClass(unsigned int classID, int type);
@@ -209,7 +209,7 @@ extern          "C" {
     float           P_AccurateDistance(float dx, float dy);
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
-    int             P_PointOnLineSide(float x, float y,
+    int             P_PointOnLinedefSide(float x, float y,
                                       struct linedef_s *line);
     int             P_BoxOnLineSide(float *tmbox, struct linedef_s *ld);
     void            P_MakeDivline(struct linedef_s *li, divline_t *dl);

@@ -91,7 +91,7 @@ typedef struct walldiv_s {
 
 typedef struct rendpoly_wall_s {
     float           length;
-    walldiv_t       divs[2];       // For wall segments (two vertices).
+    walldiv_t       divs[2]; // For wall segments (two vertices).
 } rendpoly_wall_t;
 
 // rendpoly_params_t is only for convenience; the data written in the rendering
@@ -99,15 +99,16 @@ typedef struct rendpoly_wall_s {
 typedef struct rendpoly_params_s {
     boolean         isWall;
     rendpolytype_t  type;
-    short           flags;          // RPF_*.
-    float           texOffset[2];   // Texture coordinates for left/top
-                                    // (in real texcoords).
+    short           flags; // RPF_*.
+    float           texOrigin[2][3]; // Used in texture coordinate calculation.
+    float           texOffset[2]; // Texture coordinates for left/top
+                                  // (in real texcoords).
     gltexture_t     tex;
     gltexture_t     interTex;
-    float           interPos;       // Blending strength (0..1).
-    uint            lightListIdx;   // List of lights that affect this poly.
-    blendmode_t     blendMode;      // Primitive-specific blending mode.
-    rendpoly_wall_t* wall;          // Wall specific data if any.
+    float           interPos; // Blending strength (0..1).
+    uint            lightListIdx; // List of lights that affect this poly.
+    blendmode_t     blendMode; // Primitive-specific blending mode.
+    rendpoly_wall_t* wall; // Wall specific data if any.
 } rendpoly_params_t;
 
 // This is the dummy mobj_t used for blockring roots.

@@ -82,7 +82,7 @@ END_PROF_TIMERS()
 #define DCF_SET_LIGHT_ENV           (DCF_SET_LIGHT_ENV0 | DCF_SET_LIGHT_ENV1)
 #define DCF_JUST_ONE_LIGHT          0x00000010
 #define DCF_MANY_LIGHTS             0x00000020
-#define DCF_SET_BLEND_MODE          0x00000040 // primitive-specific blending
+#define DCF_SET_BLEND_MODE          0x00000040 // Primitive-specific blending.
 #define DCF_SKIP                    0x80000000
 
 // TYPES -------------------------------------------------------------------
@@ -114,19 +114,19 @@ typedef enum listmode_e {
 
 // Types of rendering primitives.
 typedef enum primtype_e {
-    PT_TRIANGLE_STRIP,               // Used for most stuff.
+    PT_TRIANGLE_STRIP, // Used for most stuff.
     PT_FAN,
     PT_DOUBLE_FAN,
 } primtype_t;
 
 // Texture coordinate array indices.
 enum {
-    TCA_MAIN,                   // Main texture.
-    TCA_BLEND,                  // Blendtarget texture.
-    TCA_DETAIL,                 // Detail texture coordinates.
-    TCA_BLEND_DETAIL,           // Blendtarget's detail texture coordinates.
-    TCA_LIGHT,                  // Glow texture coordinates.
-    //TCA_SHINY,                  // Shiny surface coordinates.
+    TCA_MAIN, // Main texture.
+    TCA_BLEND, // Blendtarget texture.
+    TCA_DETAIL, // Detail texture coordinates.
+    TCA_BLEND_DETAIL, // Blendtarget's detail texture coordinates.
+    TCA_LIGHT, // Glow texture coordinates.
+    //TCA_SHINY, // Shiny surface coordinates.
     NUM_TEXCOORD_ARRAYS
 };
 
@@ -157,7 +157,7 @@ typedef struct primhdr_s {
     // All indices in the range indices[0]...indices[n] are used by this
     // primitive (some are shared).
     ushort          numIndices;
-    uint           *indices;
+    uint*           indices;
 
     // First index of the other fan in a Double Fan.
     ushort          beginOther;
@@ -201,8 +201,8 @@ typedef struct {
     const rvertex_t* rvertices;
     const rendpoly_params_t* polyParams;
     primhdr_t*      hdr;
-    DGLuint         lastDynTexture;
-    rendlist_t*     lastDynList;
+    DGLuint         lastTexture;
+    rendlist_t*     lastList;
 } dynlightiterparams_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -331,7 +331,7 @@ static void addMaskedPoly(const rvertex_t* rvertices,
             params->tex.height;
     vis->data.wall.blendMode = params->blendMode;
 
-    // \fixme Semitransparent masked polys arn't lit atm
+    //// \fixme Semitransparent masked polys arn't lit atm
     if(!(params->flags & RPF_GLOW) && params->lightListIdx && numTexUnits > 1 &&
        envModAdd && !(rcolors[0].rgba[CA] < 1))
     {
@@ -428,7 +428,7 @@ static void clearVertices(void)
 
 static void destroyVertices(void)
 {
-    int     i;
+    uint                i;
 
     numVertices = maxVertices = 0;
     M_Free(vertices);
@@ -494,7 +494,7 @@ static void destroyList(rendlist_t* rl)
 
 static void deleteHash(listhash_t* hash)
 {
-    int                 i;
+    uint                i;
     rendlist_t*         list, *next;
 
     for(i = 0; i < RL_HASH_SIZE; ++i)
@@ -558,7 +558,7 @@ static void rewindList(rendlist_t* rl)
 
 static void rewindHash(listhash_t* hash)
 {
-    int                 i;
+    uint                i;
     rendlist_t*         list;
 
     for(i = 0; i < RL_HASH_SIZE; ++i)
@@ -687,13 +687,13 @@ static rendlist_t* getListFor(const rendpoly_params_t* params,
     return dest;
 }
 
-static rendlist_t* getLightListFor(DGLuint texture)
+static rendlist_t* getListInHashFor(DGLuint texture, listhash_t* lHash)
 {
     listhash_t*         hash;
     rendlist_t*         dest;
 
     // Find/create a list in the hash.
-    hash = &dynHash[texture % RL_HASH_SIZE];
+    hash = &lHash[texture % RL_HASH_SIZE];
     for(dest = hash->first; dest; dest = dest->next)
     {
         if(dest->tex.id == texture)
@@ -794,8 +794,7 @@ static void allocateIndices(rendlist_t* list, uint numIndices)
     list->last->indices = indices;
 }
 
-static void quadTexCoords(gl_texcoord_t* tc,
-                          const rvertex_t* rvertices,
+static void quadTexCoords(gl_texcoord_t* tc, const rvertex_t* rverts,
                           const rendpoly_params_t* params,
                           const gltexture_t* tex)
 {
@@ -813,12 +812,12 @@ static void quadTexCoords(gl_texcoord_t* tc,
         if(params->flags & RPF_HORIZONTAL)
         {
             // Special horizontal coordinates for wall shadows.
-            tc[0].st[0] = params->texOffset[VY] / height;
-            tc[2].st[0] = params->texOffset[VY] / height;
-            tc[0].st[1] = params->texOffset[VX] / width;
-            tc[1].st[1] = params->texOffset[VX] / width;
-            tc[1].st[0] = tc[0].st[0] + (rvertices[1].pos[VZ] - rvertices[0].pos[VZ]) / height;
-            tc[3].st[0] = tc[0].st[0] + (rvertices[3].pos[VZ] - rvertices[2].pos[VZ]) / height;
+            tc[0].st[0] = tc[2].st[0] =
+                rverts[0].pos[VX] - params->texOrigin[0][VX] + params->texOffset[VY] / height;
+            tc[0].st[1] = tc[1].st[1] =
+                rverts[0].pos[VY] - params->texOrigin[0][VY] + params->texOffset[VX] / width;
+            tc[1].st[0] = tc[0].st[0] + (rverts[1].pos[VZ] - params->texOrigin[0][VZ]) / height;
+            tc[3].st[0] = tc[0].st[0] + (rverts[3].pos[VZ] - params->texOrigin[0][VZ]) / height;
             tc[3].st[1] = tc[0].st[1] + params->wall->length / width;
             tc[2].st[1] = tc[0].st[1] + params->wall->length / width;
             return;
@@ -826,17 +825,19 @@ static void quadTexCoords(gl_texcoord_t* tc,
     }
     else
     {
-        // Normally the texture's width and height are considered
-        // constant inside a rendering list.
+        // Normally the texture's width and height are considered constant
+        // inside a rendering list.
         width = tex->width;
         height = tex->height;
     }
 
-    tc[0].st[0] = tc[1].st[0] = params->texOffset[VX] / width;
-    tc[3].st[1] = tc[1].st[1] = params->texOffset[VY] / height;
+    tc[0].st[0] = tc[1].st[0] =
+        rverts[0].pos[VX] - params->texOrigin[0][VX] + params->texOffset[VX] / width;
+    tc[3].st[1] = tc[1].st[1] =
+        rverts[0].pos[VY] - params->texOrigin[0][VY] + params->texOffset[VY] / height;
     tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + params->wall->length / width;
-    tc[2].st[1] = tc[3].st[1] + (rvertices[1].pos[VZ] - rvertices[0].pos[VZ]) / height;
-    tc[0].st[1] = tc[3].st[1] + (rvertices[3].pos[VZ] - rvertices[2].pos[VZ]) / height;
+    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / height;
+    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / height;
 }
 
 static float shinyVertical(float dy, float dx)
@@ -910,8 +911,10 @@ static void quadDetailTexCoords(gl_texcoord_t* tc,
 {
     float               mul = tex->detail->scale * detailScale;
 
-    tc[1].st[0] = tc[0].st[0] = params->texOffset[VX] / tex->detail->width;
-    tc[1].st[1] = tc[3].st[1] = params->texOffset[VY] / tex->detail->height;
+    tc[1].st[0] = tc[0].st[0] =
+        rvertices[0].pos[VX] - params->texOrigin[0][VX] + params->texOffset[VX] / tex->detail->width;
+    tc[1].st[1] = tc[3].st[1] =
+        rvertices[0].pos[VY] - params->texOrigin[0][VY] + params->texOffset[VY] / tex->detail->height;
     tc[3].st[0] = tc[2].st[0] =
         (tc[1].st[0] + params->wall->length / tex->detail->width) * mul;
     tc[2].st[1] =
@@ -976,15 +979,14 @@ static void quadLightCoords(gl_texcoord_t* tc, const float s[2],
     tc[2].st[1] = tc[0].st[1] = t[1];
 }
 
-static void flatShinyTexCoords(gl_texcoord_t* tc, const float xy[2],
-                               float height)
+static void flatShinyTexCoords(gl_texcoord_t* tc, const float xyz[3])
 {
     vec2_t              view, start;
     float               distance;
     float               offset;
 
     // View vector.
-    V2_Set(view, vx - xy[VX], vz - xy[VY]);
+    V2_Set(view, vx - xyz[VX], vz - xyz[VY]);
 
     distance = V2_Normalize(view);
     if(distance < 10)
@@ -997,11 +999,11 @@ static void flatShinyTexCoords(gl_texcoord_t* tc, const float xy[2],
     // Offset from the normal view plane.
     V2_Set(start, vx, vz);
 
-    offset = ((start[VY] - xy[VY]) * sin(.4f)/*viewFrontVec[VX]*/ -
-              (start[VX] - xy[VX]) * cos(.4f)/*viewFrontVec[VZ]*/);
+    offset = ((start[VY] - xyz[VY]) * sin(.4f)/*viewFrontVec[VX]*/ -
+              (start[VX] - xyz[VX]) * cos(.4f)/*viewFrontVec[VZ]*/);
 
     tc->st[0] = ((shinyVertical(offset, distance) - .5f) * 2) + .5f;
-    tc->st[1] = shinyVertical(vy - height, distance);
+    tc->st[1] = shinyVertical(vy - xyz[VZ], distance);
 }
 
 static void flatDetailTexCoords(gl_texcoord_t* tc, const float xy[2],
@@ -1314,6 +1316,7 @@ static void writeFlat(primhdr_t* hdr, const rendlist_t* list, uint base,
     {
         const rvertex_t*    vtx = &rvertices[i];
         const rcolor_t*     rcolor = &rcolors[i];
+        float               xyz[3];
 
         // Coordinates.
         v = &vertices[base + i];
@@ -1326,6 +1329,10 @@ static void writeFlat(primhdr_t* hdr, const rendlist_t* list, uint base,
             continue;
         }
 
+        xyz[VX] = vtx->pos[VX] - params->texOrigin[0][VX];
+        xyz[VY] = vtx->pos[VY] - params->texOrigin[0][VY];
+        xyz[VZ] = vtx->pos[VZ] - params->texOrigin[0][VZ];
+
         // Primary texture coordinates.
         if(list->tex.id)
         {
@@ -1333,52 +1340,59 @@ static void writeFlat(primhdr_t* hdr, const rendlist_t* list, uint base,
             if(!(params->flags & RPF_SHINY))
             {   // Normal texture coordinates.
                 tc->st[0] =
-                    (vtx->pos[VX] + params->texOffset[VX]) /
+                    (xyz[VX] + params->texOffset[VX]) /
                     ((params->flags & RPF_SHADOW) ? params->tex.width :
                      list->tex.width);
                 tc->st[1] =
-                    (-vtx->pos[VY] - params->texOffset[VY]) /
+                    (-xyz[VY] - params->texOffset[VY]) /
                     ((params->flags & RPF_SHADOW) ? params->tex.height :
                      list->tex.height);
             }
             else
             {   // Calculate shiny coordinates.
-                flatShinyTexCoords(tc, vtx->pos, vtx->pos[VZ]);
+                flatShinyTexCoords(tc, xyz);
             }
         }
 
         // Detail texture coordinates.
         if(list->tex.detail)
         {
-            flatDetailTexCoords(&texCoords[TCA_DETAIL][base + i], vtx->pos,
+            flatDetailTexCoords(&texCoords[TCA_DETAIL][base + i], xyz,
                                 params, &list->tex);
         }
 
         if(list->interTex.detail)
         {
             flatDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base + i],
-                                vtx->pos, params, &list->interTex);
+                                xyz, params, &list->interTex);
         }
 
         // Light coordinates.
         if(list->last->numLights > 0 && IS_MTEX_LIGHTS)
         {
+            float               width, height;
+
             tc = &texCoords[TCA_LIGHT][base + i];
-            tc->st[0] =  (vtx->pos[VX] + list->last->modTexTC[0][0]) *
-                list->last->modTexTC[0][1];
-            tc->st[1] = (-vtx->pos[VY] + list->last->modTexTC[1][0]) *
-                list->last->modTexTC[1][1];
+
+            width = params->texOrigin[1][VX] - params->texOrigin[0][VX];
+            height = params->texOrigin[1][VY] - params->texOrigin[0][VY];
+
+            tc->st[0] = ((params->texOrigin[1][VX] - vtx->pos[VX]) / width * list->last->modTexTC[0][0]) +
+                ((vtx->pos[VX] - params->texOrigin[0][VX]) / width * list->last->modTexTC[0][1]);
+            tc->st[1] = ((params->texOrigin[1][VY] - vtx->pos[VY]) / height * list->last->modTexTC[1][0]) +
+                ((vtx->pos[VY] - params->texOrigin[0][VY]) / height * list->last->modTexTC[1][1]);
         }
 
         // Blend texture coordinates.
         if(list->interTex.id)
         {
             tc = &texCoords[TCA_BLEND][base + i];
-            tc->st[0] = (vtx->pos[VX] + params->texOffset[VX]) /
+
+            tc->st[0] = (xyz[VX] + params->texOffset[VX]) /
                 ((params->flags & RPF_SHINY)? params->tex.width :
                  list->interTex.width);
             tc->st[1] =
-                (-vtx->pos[VY] - params->texOffset[VY]) /
+                (-xyz[VY] - params->texOffset[VY]) /
                 ((params->flags & RPF_SHINY)? params->tex.height :
                  list->interTex.height);
         }
@@ -1430,7 +1444,7 @@ static void writeDynLight(rendlist_t* list, const dynlight_t* dyn,
         // Each vertex uses the light's color.
         col = &colors[base + i];
         for(c = 0; c < 3; ++c)
-            col->rgba[c] = (byte) (255 * dyn->color[c]);
+            col->rgba[c] = (DGLubyte) (255 * MINMAX_OF(0, dyn->color[c], 1));
         col->rgba[3] = 255;
     }
 
@@ -1438,11 +1452,19 @@ static void writeDynLight(rendlist_t* list, const dynlight_t* dyn,
     tc = &texCoords[TCA_MAIN][base];
     if(params->type == RP_FLAT)
     {
+        float               width, height;
+
+        width = params->texOrigin[1][VX] - params->texOrigin[0][VX];
+        height = params->texOrigin[1][VY] - params->texOrigin[0][VY];
+
         num = prim->primSize;
         for(i = 0; i < num; ++i)
         {
-            tc[i].st[0] = (vertices[base + i].xyz[0] + dyn->s[0]) * dyn->s[1];
-            tc[i].st[1] = (-vertices[base + i].xyz[2] + dyn->t[0]) * dyn->t[1];
+            tc[i].st[0] = ((params->texOrigin[1][VX] - rvertices[i].pos[VX]) / width * dyn->s[0]) +
+                ((rvertices[i].pos[VX] - params->texOrigin[0][VX]) / width * dyn->s[1]);
+
+            tc[i].st[1] = ((params->texOrigin[1][VY] - rvertices[i].pos[VY]) / height * dyn->t[0]) +
+                ((rvertices[i].pos[VY] - params->texOrigin[0][VY]) / height * dyn->t[1]);
         }
     }
     else
@@ -1509,20 +1531,21 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
     // If multitexturing is in use, we skip the first light.
     if(!(IS_MTEX_LIGHTS && params->lastIdx == 0))
     {
-        rendlist_t*         dynList;
+        rendlist_t*         list;
 
         // If the texture is the same as the last, the list will be too.
-        if(params->lastDynTexture == dyn->texture)
+        if(params->lastTexture == dyn->texture)
         {
-            dynList = params->lastDynList;
+            list = params->lastList;
         }
         else
         {
-            dynList = params->lastDynList = getLightListFor(dyn->texture);
-            params->lastDynTexture = dyn->texture;
+            list = params->lastList =
+                getListInHashFor(dyn->texture, dynHash);
+            params->lastTexture = dyn->texture;
         }
 
-        writeDynLight(dynList, dyn, params->hdr, params->rvertices,
+        writeDynLight(list, dyn, params->hdr, params->rvertices,
                       params->polyParams);
         params->hdr->numLights++;
     }
@@ -1541,7 +1564,6 @@ void RL_AddPoly(const rvertex_t* rvertices, const rcolor_t* rcolors,
     rendlist_t*         li;
     primhdr_t*          hdr;
     boolean             useLights = false;
-    dynlightiterparams_t dlparams;
 
     if(numVertices < 3)
         return; // huh?
@@ -1560,30 +1582,30 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
     // Are lights allowed?
     if(!(params->flags & (RPF_SKY_MASK | RPF_SHADOW | RPF_SHINY)))
     {
+        if(!(params->flags & RPF_GLOW))
+            useLights = (params->lightListIdx? true : false);
+
         // In multiplicative mode, glowing surfaces are fullbright.
         // Rendering lights on them would be pointless.
-        if(!IS_MUL || !(params->flags & RPF_GLOW))
+        if(IS_MUL && useLights)
         {
             // Surfaces lit by dynamic lights may need to be rendered
             // differently than non-lit surfaces.
-            if(params->lightListIdx)
+            uint                i;
+            float               avglightlevel = 0;
+
+            // Determine the average light level of this rend poly,
+            // if too bright; do not bother with lights.
+            for(i = 0; i < numVertices; ++i)
             {
-                uint                i;
-                float               avglightlevel = 0;
-
-                // Determine the average light level of this rend poly,
-                // if too bright; do not bother with lights.
-                for(i = 0; i < numVertices; ++i)
-                {
-                    avglightlevel += rcolors[i].rgba[CR];
-                    avglightlevel += rcolors[i].rgba[CG];
-                    avglightlevel += rcolors[i].rgba[CB];
-                }
-                avglightlevel /= (float) numVertices * 3;
-
-                if(avglightlevel < 0.98f)
-                    useLights = true;
+                avglightlevel += rcolors[i].rgba[CR];
+                avglightlevel += rcolors[i].rgba[CG];
+                avglightlevel += rcolors[i].rgba[CB];
             }
+            avglightlevel /= (float) numVertices * 3;
+
+            if(avglightlevel > 0.98f)
+                useLights = false;
         }
     }
 
@@ -1664,8 +1686,10 @@ END_PROF( PROF_RL_GET_LIST );
     // it's skipped.
     if(useLights)
     {
-        dlparams.lastDynTexture = 0;
-        dlparams.lastDynList = NULL;
+        dynlightiterparams_t dlparams;
+
+        dlparams.lastTexture = 0;
+        dlparams.lastList = NULL;
         dlparams.rvertices = rvertices;
         dlparams.polyParams = params;
         dlparams.hdr = hdr;
@@ -1750,9 +1774,9 @@ static void drawPrimitives(int conditions, rendlist_t *list)
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
                 // Make sure the light is not repeated.
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-			                    GL_CLAMP_TO_EDGE);
+                                GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-			                    GL_CLAMP_TO_EDGE);
+                                GL_CLAMP_TO_EDGE);
             }
 
             if(conditions & DCF_SET_BLEND_MODE)
@@ -1887,9 +1911,9 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         RL_Bind(list->tex.id, list->tex.magMode);
         // Make sure the texture is not repeated.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-			            GL_CLAMP_TO_EDGE);
+                        GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-			            GL_CLAMP_TO_EDGE);
+                        GL_CLAMP_TO_EDGE);
         return 0;
 
     case LM_BLENDED_MOD_TEXTURE:
@@ -1992,9 +2016,9 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         // The intertex holds the info for the mask texture.
         RL_BindTo(1, list->interTex.id, list->tex.magMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-			            GL_REPEAT);
+                        GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-			            GL_REPEAT);
+                        GL_REPEAT);
         setEnvAlpha(1.0f);
     case LM_ALL_SHINY:
     case LM_SHINY:
@@ -2002,9 +2026,9 @@ static int setupListState(listmode_t mode, rendlist_t *list)
                   list->tex.magMode);
         // Make sure the texture is not clamped.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-			            GL_REPEAT);
+                        GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-			            GL_REPEAT);
+                        GL_REPEAT);
         // Render all primitives.
         if(mode == LM_ALL_SHINY)
             return DCF_SET_BLEND_MODE;
@@ -2170,6 +2194,7 @@ static void setupPassState(listmode_t mode)
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
+
         if(usingFog)
         {
             DGL_Enable(DGL_FOG);
@@ -2510,7 +2535,7 @@ BEGIN_PROF( PROF_RL_RENDER_LIGHT );
             renderLists(LM_BLENDED_FIRST_LIGHT, lists, count);
         }
     }
-    else                        // Multitexturing is not available for lights.
+    else // Multitexturing is not available for lights.
     {
         if(IS_MUL)
         {

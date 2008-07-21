@@ -861,6 +861,7 @@ typedef struct {
 
     rendpolytype_t  type;
     short           flags; // RPF_*.
+    float           texOrigin[2][3];
     float           texOffset[2]; // Texture coordinates for left/top
                                   // (in real texcoords).
     const float*    normal; // Surface normal.
@@ -898,6 +899,7 @@ typedef struct {
 typedef struct {
     rendpolytype_t  type;
     short           flags; // RPF_*.
+    float           texOrigin[2][3];
     float           texOffset[2]; // Texture coordinates for left/top
                                   // (in real texcoords).
     const float*    normal;
@@ -1030,6 +1032,16 @@ static void renderSegSection2(const rvertex_t* rvertices, uint numVertices,
         memcpy(params.wall->divs, divs, sizeof(params.wall->divs));
     else
         memset(params.wall->divs, 0, sizeof(params.wall->divs));
+
+    // Top left.
+    params.texOrigin[0][VX] = p->texOrigin[0][VX];
+    params.texOrigin[0][VY] = p->texOrigin[0][VY];
+    params.texOrigin[0][VZ] = p->texOrigin[0][VZ];
+
+    // Bottom right.
+    params.texOrigin[1][VX] = p->texOrigin[1][VX];
+    params.texOrigin[1][VY] = p->texOrigin[1][VY];
+    params.texOrigin[1][VZ] = p->texOrigin[1][VZ];
 
     params.texOffset[VX] = p->texOffset[VX];
     params.texOffset[VY] = p->texOffset[VY];
@@ -1167,6 +1179,16 @@ static void renderPlane2(const rvertex_t* rvertices, uint numVertices,
     params.isWall = false;
     params.wall = NULL;
 
+    // Top left.
+    params.texOrigin[0][VX] = p->texOrigin[0][VX];
+    params.texOrigin[0][VY] = p->texOrigin[0][VY];
+    params.texOrigin[0][VZ] = p->texOrigin[0][VZ];
+
+    // Bottom right.
+    params.texOrigin[1][VX] = p->texOrigin[1][VX];
+    params.texOrigin[1][VY] = p->texOrigin[1][VY];
+    params.texOrigin[1][VZ] = p->texOrigin[1][VZ];
+
     params.texOffset[VX] = p->texOffset[VX];
     params.texOffset[VY] = p->texOffset[VY];
 
@@ -1264,6 +1286,16 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
     params.linedefLength = &seg->lineDef->length;
     params.frontSec = seg->SG_frontsector;
     params.backSec = seg->SG_backsector;
+
+    // Top left.
+    params.texOrigin[0][VX] = rvertices[1].pos[VX];
+    params.texOrigin[0][VY] = rvertices[1].pos[VY];
+    params.texOrigin[0][VZ] = rvertices[1].pos[VZ];
+
+    // Bottom right.
+    params.texOrigin[1][VX] = rvertices[2].pos[VX];
+    params.texOrigin[1][VY] = rvertices[2].pos[VY];
+    params.texOrigin[1][VZ] = rvertices[2].pos[VZ];
 
     // Fill in the remaining params data.
     if(skyMask || R_IsSkySurface(surface))
@@ -2189,6 +2221,21 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
         params.mapObject = subsector;
         params.elmIdx = plane->planeID;
 
+        // Set the texture origin.
+        params.texOrigin[0][VX] = subsector->bBox[0].pos[VX];
+        params.texOrigin[1][VX] = subsector->bBox[1].pos[VX];
+        if(plane->type == PLN_FLOOR)
+        {
+            params.texOrigin[0][VY] = subsector->bBox[1].pos[VY];
+            params.texOrigin[1][VY] = subsector->bBox[0].pos[VY];
+        }
+        else
+        {   // Y is flipped for the ceiling.
+            params.texOrigin[0][VY] = subsector->bBox[0].pos[VY];
+            params.texOrigin[1][VY] = subsector->bBox[1].pos[VY];
+        }
+        params.texOrigin[0][VZ] = params.texOrigin[1][VZ] = height;
+
         // Check for sky.
         if(R_IsSkySurface(surface))
         {
@@ -2314,6 +2361,15 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
 
             params.alpha = surface->rgba[CA];
         }
+
+        // Add the Y offset to orient the Y flipped texture.
+        if(plane->type == PLN_CEILING)
+            params.texOffset[VY] -= subsector->bBox[1].pos[VY] -
+                subsector->bBox[0].pos[VY];
+
+        // Add the additional offset to align with the worldwide grid.
+        params.texOffset[VX] += subsector->worldGridOffset[VX];
+        params.texOffset[VY] += subsector->worldGridOffset[VY];
 
         Rend_PreparePlane(rvertices, numVertices, height, subsector,
                           !(surface->normal[VZ] > 0));
@@ -2508,6 +2564,129 @@ static void Rend_RenderNode(uint bspnum)
     }
 }
 
+static void drawNormal(vec3_t origin, vec3_t normal, float scalar)
+{
+    float               black[4] = { 0, 0, 0, 0 };
+    float               red[4] = { 1, 0, 0, 1 };
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(origin[VX], origin[VZ], origin[VY]);
+
+    DGL_Begin(DGL_LINES);
+    {
+        DGL_Color4fv(black);
+        DGL_Vertex3f(scalar * normal[VX],
+                     scalar * normal[VZ],
+                     scalar * normal[VY]);
+        DGL_Color4fv(red);
+        DGL_Vertex3f(0, 0, 0);
+
+    }
+    DGL_End();
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+}
+
+#if _DEBUG
+static void Rend_RenderNormals(void)
+{
+#define NORM_TAIL_LENGTH    (20)
+
+    uint                i;
+
+    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_CULL_FACE);
+
+    for(i = 0; i < numSegs; ++i)
+    {
+        seg_t*              seg = &segs[i];
+        sidedef_t*          side;
+        surface_t*          suf;
+        vec3_t              origin;
+        float               bottom, top;
+        float               scale = NORM_TAIL_LENGTH;
+
+        if(!seg->lineDef)
+            continue;
+
+        side = SEG_SIDEDEF(seg);
+        suf = NULL;
+
+        if(!seg->SG_frontsector || !seg->SG_backsector)
+        {
+            bottom = side->sector->SP_floorvisheight;
+            top = side->sector->SP_ceilvisheight;
+            suf = &side->SW_middlesurface;
+        }
+        else
+        {
+            // Top:
+            if(seg->SG_backsector->SP_ceilvisheight <
+               seg->SG_frontsector->SP_ceilvisheight)
+            {
+                bottom = seg->SG_backsector->SP_ceilvisheight;
+                top = seg->SG_frontsector->SP_ceilvisheight;
+                suf = &side->SW_topsurface;
+            }
+
+            if(side->SW_middlesurface.material)
+            {
+                top = seg->SG_frontsector->SP_ceilvisheight;
+                bottom = seg->SG_frontsector->SP_floorvisheight;
+                suf = &side->SW_middlesurface;
+            }
+
+            if(seg->SG_backsector->SP_floorvisheight >
+               seg->SG_frontsector->SP_floorvisheight)
+            {
+                bottom = seg->SG_frontsector->SP_floorvisheight;
+                top = seg->SG_backsector->SP_floorvisheight;
+                suf = &side->SW_bottomsurface;
+            }
+        }
+
+        if(suf)
+        {
+            V3_Set(origin,
+                   seg->SG_v1pos[VX] + (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) / 2,
+                   seg->SG_v1pos[VY] + (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / 2,
+                   bottom + (top - bottom) / 2);
+            drawNormal(origin, suf->normal, scale);
+        }
+    }
+
+    for(i = 0; i < numSSectors; ++i)
+    {
+        uint                j;
+        subsector_t*        ssec = &ssectors[i];
+
+        for(j = 0; j < ssec->sector->planeCount; ++j)
+        {
+            vec3_t              origin;
+            plane_t*            pln = ssec->sector->SP_plane(j);
+            float               scale = NORM_TAIL_LENGTH;
+
+            V3_Set(origin, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY],
+                   pln->visHeight);
+            if(pln->type == PLN_FLOOR)
+                origin[VZ] += ssec->sector->skyFix[0].offset;
+            else if(pln->type == PLN_CEILING)
+                origin[VZ] += ssec->sector->skyFix[1].offset;
+
+            drawNormal(origin, pln->PS_normal, scale);
+        }
+    }
+
+    glEnable(GL_CULL_FACE);
+    DGL_Enable(DGL_TEXTURING);
+
+#undef NORM_TAIL_LENGTH
+}
+#endif
+
 void Rend_RenderMap(void)
 {
     binangle_t          viewside;
@@ -2545,7 +2724,6 @@ void Rend_RenderMap(void)
         {
             // Clear the projected dynlight lists.
             DL_InitForNewFrame();
-
             // Clear the luminous objects.
             LO_InitForNewFrame();
         }
@@ -2553,10 +2731,11 @@ void Rend_RenderMap(void)
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();
 
-        // Maintain luminous objects.
         if(doLums)
         {
+            // Spawn omnilights for mobjs.
             LO_AddLuminousMobjs();
+            // Link the lumobjs to all contacted surfaces.
             LO_LinkLumobjs();
         }
 
@@ -2583,7 +2762,7 @@ void Rend_RenderMap(void)
 
         Rend_RenderShadows();
 
-        // Wrap up with Shadow Bias.
+        // Wrap up with Source, Bias lights.
         SB_EndFrame();
     }
     RL_RenderAllLists();
@@ -2591,7 +2770,15 @@ void Rend_RenderMap(void)
     // Draw the mobj bounding boxes.
     Rend_RenderBoundingBoxes();
 
-    // Draw the Shadow Bias Editor's draw that identifies the current
+/*#if _DEBUG
+Rend_RenderNormals();
+#endif*/
+
+/*#if _DEBUG
+LO_DrawLumobjs();
+#endif*/
+
+    // Draw the Source Bias Editor's draw that identifies the current
     // light.
     SBE_DrawCursor();
 

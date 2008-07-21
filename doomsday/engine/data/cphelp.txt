@@ -642,6 +642,9 @@ desc = Dynamic lights color blending mode: 0=normal, 1=additive, 2=no blending.
 [rend-light-bright]
 desc = Intensity factor for dynamic lights.
 
+[rend-light-fog-bright]
+desc = Brightness of dynamic lights when fog is enabled.
+
 [rend-light-num]
 desc = The maximum number of dynamic lights. 0=no limit.
 
@@ -687,8 +690,6 @@ desc = Max height of wall glow (default: 100).
 [rend-glow-scale]
 desc = A multiplier for glow height (default: 1).
 
-[rend-glow-fog-bright]
-desc = Brightness of wall glow when fog is enabled.
 
 [rend-halo]
 desc = Number of flares to draw per light.
