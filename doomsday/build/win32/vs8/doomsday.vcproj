@@ -50,7 +50,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Gs "
 				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\portable\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
-				PreprocessorDefinitions="DENG_LIBRARY_DIR=&quot;\&quot;bin\\release\&quot;&quot;;__DOOMSDAY__;ZLIB_DLL;WIN32_GAMMA;NORANGECHECKING;WIN32;NDEBUG;_WINDOWS"
+				PreprocessorDefinitions="__DOOMSDAY__;ZLIB_DLL;WIN32_GAMMA;NORANGECHECKING;WIN32;NDEBUG;_WINDOWS"
 				BasicRuntimeChecks="0"
 				AssemblerListingLocation="./Obj/Release/"
 				ObjectFile="./Obj/Release/"
