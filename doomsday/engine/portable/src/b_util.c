@@ -104,7 +104,7 @@ boolean B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos)
     else if(!strncasecmp(desc, "neg", 3) && strlen(desc) > 3)
     {
         *state = EBAXIS_BEYOND_NEGATIVE;
-        *pos = strtod(desc + 3, NULL);
+        *pos = -strtod(desc + 3, NULL);
     }
     else
     {
@@ -504,7 +504,7 @@ void B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str)
     else if(state == EBAXIS_BEYOND_POSITIVE)
         Str_Appendf(str, "-pos%g", pos);
     else
-        Str_Appendf(str, "-neg%g", pos);
+        Str_Appendf(str, "-neg%g", -pos);
 }
 
 void B_AppendAnglePositionToString(float pos, ddstring_t* str)

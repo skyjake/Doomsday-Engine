@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -781,6 +782,19 @@ boolean B_Responder(ddevent_t *ev)
         // Make an echo.
         ddstring_t name;
         ddevent_t echo;
+        
+        // Axis events need a bit of filtering.
+        if(ev->type == E_AXIS)
+        {
+            float pos = I_TransformAxis(I_GetDevice(ev->device, false), ev->axis.id, ev->axis.pos);
+            if(ev->axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f ||
+               ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .01f)
+            {
+                // Not significant enough for an echo.
+                return B_TryEvent(ev);
+            }
+        }
+        
         Str_Init(&name);
         Str_Set(&name, "echo-");
         B_AppendEventToString(ev, &name);

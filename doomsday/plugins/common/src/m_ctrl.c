@@ -332,18 +332,43 @@ static controlconfig_t controlConfig[] =
 static void M_EFuncControlConfig(int option, void *data)
 {
     controlconfig_t* cc = data;
+    char buf[1024];
+    const char *ptr;
 
     if(option == -1)
     {
-        // TODO: Delete!
-        //Con_Message("Delete requested %s\n", cc->itemText);
-                
+        if(cc->controlName)
+        {
+            B_BindingsForControl(0, cc->controlName, 
+                                 cc->flags & CCF_INVERSE? BFCI_ONLY_INVERSE :
+                                 cc->flags & CCF_NON_INVERSE? BFCI_ONLY_NON_INVERSE :
+                                 BFCI_BOTH, buf, sizeof(buf));
+        }
+        else
+        {
+            B_BindingsForCommand(cc->command, buf, sizeof(buf));
+        }
+
+        //Con_Message("Delete requested %s\n", buf);
+
+        // Delete the last binding for this control.
+        //
+        // TODO: Must use the same parsing/visibility logic as with drawing, or otherwise
+        // it won't always delete the binding you'd expect.
+        //
+        ptr = buf;
+        if((ptr = strrchr(ptr, '@')) != NULL)
+        {
+            const char *begin = ptr - 1;
+            int id;
+            while(begin > buf && isnumber(*(begin - 1))) begin--;
+            id = strtol(begin, NULL, 10);
+            DD_Executef(true, "delbind %i", id);
+        }
     }
     else
     {
         // Start grabbing for this control.
-        //Con_Message("Grabbing %s\n", cc->item->text);
-
         grabbing = cc;
         DD_SetInteger(DD_SYMBOLIC_ECHO, true);
     }
@@ -418,7 +443,6 @@ void M_DrawKeyBinding(int* x, int y, const char* name)
     int width = M_StringWidth(name, huFontA);
     int height = M_StringHeight(name, huFontA);
 
-    // TODO: Maybe some graphics here?
     GL_SetNoTexture();
     GL_DrawRect(*x, y, width*SMALL_SCALE + 2, height,
 #if __JHERETIC__
@@ -587,7 +611,7 @@ void M_DrawControlsMenu(void)
 
         if(cc->controlName)
         {
-            B_BindingsForControl(0, cc->controlName, buf, sizeof(buf));
+            B_BindingsForControl(0, cc->controlName, BFCI_BOTH, buf, sizeof(buf));
         }
         else
         {
@@ -758,7 +782,7 @@ int M_ControlsPrivilegedResponder(event_t *event)
             sprintf(cmd, "bindcontrol {%s} {%s}", grabbing->controlName, temp3);
         }                
         
-        Con_Message("bind command: %s\n", cmd);
+        VERBOSE( Con_Message("M_ControlsPrivilegedResponder: %s\n", cmd) );
         DD_Execute(true, cmd);
         
         /*
