@@ -273,6 +273,9 @@ void DD_ShutdownAll(void)
     Sys_ShutdownWindowManager();
 
     // Close the message output file.
-    fclose(outFile);
-    outFile = NULL;
+    if(outFile)
+    {
+        fclose(outFile);
+        outFile = NULL;
+    }
 }
