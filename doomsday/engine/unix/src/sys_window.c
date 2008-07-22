@@ -64,6 +64,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static __inline ddwindow_t *getWindow(uint idx);
 static boolean setDDWindow(ddwindow_t *win, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags);
 static void setConWindowCmdLine(uint idx, const char *text,

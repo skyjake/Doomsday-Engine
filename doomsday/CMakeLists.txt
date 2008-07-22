@@ -413,6 +413,11 @@ IF (UNIX)
     IF (NOT WIN32)
         ADD_DEFINITIONS ( -DUNIX)
         SET (BUILDSYSTEM UNIX)
+
+	IF (ENABLEDEBUG)
+	    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
+	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g" )
+	ENDIF (ENABLEDEBUG)
     ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
@@ -648,10 +653,10 @@ IF (UNIX)
              ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_path.c
              ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_sfxd_loader.c
              ${LZSS_SOURCES})
-        IF (NOT APPLE)
-            SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES}
-                ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_window.c)
-        ENDIF (NOT APPLE)
+        #IF (NOT APPLE)
+        #    SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES}
+        #        ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_window.c)
+        #ENDIF (NOT APPLE)
     ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
