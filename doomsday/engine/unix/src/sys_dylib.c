@@ -192,5 +192,8 @@ lt_ptr lt_dlsym(lt_dlhandle module, const char *symbolName)
 
 void lt_dlclose(lt_dlhandle module)
 {
-    dlclose(module);
+    if(module)
+    {
+	dlclose(module);
+    }
 }
