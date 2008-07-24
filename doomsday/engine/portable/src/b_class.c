@@ -263,6 +263,9 @@ void B_ActivateClass(bclass_t* bc, boolean doActivate)
     if(!bc)
         return;
 
+    VERBOSE( Con_Message("B_ActivateClass: %s class \"%s\".\n", doActivate? "Activating" :
+                         "Deactivating", bc->name) );
+    
     bc->active = doActivate;
     B_UpdateDeviceStateAssociations();
 }

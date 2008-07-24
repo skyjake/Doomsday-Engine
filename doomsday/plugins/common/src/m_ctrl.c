@@ -641,53 +641,6 @@ void M_DrawControlsMenu(void)
         {
             B_BindingsForCommand(cc->command, buf, sizeof(buf));
         }
-        /*
-        memset(prbuff, 0, sizeof(prbuff));
-        strncpy(prbuff, buf, sizeof(prbuff) - 1);*/
-
-        /*
-        if(ctrl->flags & CLF_ACTION)
-            sprintf(controlCmd, "+%s", ctrl->command);
-        else
-            strcpy(controlCmd, ctrl->command);
-        // Let's gather all the bindings for this command in all bind classes.
-        if(!B_BindingsForCommand(controlCmd, buff, 0, true))
-            strcpy(buff, "NONE");
-        */
-
-        /*
-        // Now we must interpret what the bindings string says.
-        // It may contain characters we can't print.
-        strcpy(prbuff, "");
-        token = strtok(buff, " ");
-        while(token)
-        {
-            if(token[0] == '+')
-            {
-                spacecat(prbuff, token + 1);
-            }
-            if((token[0] == '*' && !(ctrl->flags & CLF_REPEAT)) ||
-               token[0] == '-')
-            {
-                spacecat(prbuff, token);
-            }
-            token = strtok(NULL, " ");
-        }
-        strupr(prbuff);*/
-        /*
-        if(grabbing == cc)
-        {
-            // We're grabbing for this control.
-            spacecat(prbuff, "...");
-        }*/
-        /*
-#if __JHEXEN__
-        M_WriteText2(menu->x + 154, menu->y + (i * menu->itemHeight), prbuff,
-                        huFontA, 1, 0.7f, 0.3f, menuAlpha);
-#else
-        M_WriteText2(menu->x + 134, menu->y + (i * menu->itemHeight), prbuff,
-                        huFontA, 1, 1, 1, menuAlpha);
-#endif*/
 #if __JHEXEN__
         draw.x = menu->x + 154;
 #else

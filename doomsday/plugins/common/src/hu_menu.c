@@ -1432,6 +1432,7 @@ void Hu_MenuInit(void)
 
     currentMenu = &MainDef;
     menuActive = false;
+    DD_Execute(true, "deactivatebclass menu");
     menuAlpha = menuTargetAlpha = 0;
 
     menuFogData.texture = 0;
@@ -2070,6 +2071,19 @@ void Hu_MenuDrawer(void)
  */
 void Hu_MenuCommand(menucommand_e cmd)
 {
+    if(cmd == MCMD_CLOSE)
+    {
+        Hu_MenuSetAlpha(0);
+        menuFogData.targetAlpha = 0;
+        menuActive = false;
+        fadingOut = true;
+        outFade = 0;
+        
+        // Disable the menu binding class
+        DD_Execute(true, "deactivatebclass menu");
+        return;
+    }
+    
     if(!menuActive)
     {
         if(cmd == MCMD_OPEN)
@@ -2091,196 +2105,182 @@ void Hu_MenuCommand(menucommand_e cmd)
             quitAsk = 0;
 
             // Enable the menu binding class
-            DD_Executef(true, "activatebclass menu");
+            DD_Execute(true, "activatebclass menu");
         }
     }
     else
     {
-        if(cmd == MCMD_CLOSE)
-        {
-            Hu_MenuSetAlpha(0);
-            menuFogData.targetAlpha = 0;
-            menuActive = false;
-            fadingOut = true;
-            outFade = 0;
+        int             i;
+        int             firstVI, lastVI; // first and last visible item
+        int             itemCountOffset = 0;
+        const menuitem_t *item;
+        menu_t         *menu = currentMenu;
 
-            // Disable the menu binding class
-            DD_Executef(true, "deactivatebclass menu");
+        if(widgetEdit)
+        {
+            menu = &ColorWidgetMnu;
+
+            if(!rgba)
+                itemCountOffset = 1;
         }
-        else
+
+        firstVI = menu->firstItem;
+        lastVI = firstVI + menu->numVisItems - 1 - itemCountOffset;
+        if(lastVI > menu->itemCount - 1 - itemCountOffset)
+            lastVI = menu->itemCount - 1 - itemCountOffset;
+        item = &menu->items[itemOn];
+        menu->lastOn = itemOn;
+
+        switch(cmd)
         {
-            int             i;
-            int             firstVI, lastVI; // first and last visible item
-            int             itemCountOffset = 0;
-            const menuitem_t *item;
-            menu_t         *menu = currentMenu;
-
-            if(widgetEdit)
+        case MCMD_NAV_LEFT:
+            if(item->type == ITT_LRFUNC && item->func != NULL)
             {
-                menu = &ColorWidgetMnu;
-
-                if(!rgba)
-                    itemCountOffset = 1;
+                item->func(LEFT_DIR | item->option, item->data);
+                S_LocalSound(menusnds[4], NULL);
             }
-
-            firstVI = menu->firstItem;
-            lastVI = firstVI + menu->numVisItems - 1 - itemCountOffset;
-            if(lastVI > menu->itemCount - 1 - itemCountOffset)
-                lastVI = menu->itemCount - 1 - itemCountOffset;
-            item = &menu->items[itemOn];
-            menu->lastOn = itemOn;
-
-            switch(cmd)
+            else
             {
-            case MCMD_NAV_LEFT:
-                if(item->type == ITT_LRFUNC && item->func != NULL)
+                menu_nav_left:
+
+                // Let's try to change to the previous page.
+                if(menu->firstItem - menu->numVisItems >= 0)
                 {
-                    item->func(LEFT_DIR | item->option, item->data);
-                    S_LocalSound(menusnds[4], NULL);
-                }
-                else
-                {
-                    menu_nav_left:
+                    menu->firstItem -= menu->numVisItems;
+                    itemOn -= menu->numVisItems;
 
-                    // Let's try to change to the previous page.
-                    if(menu->firstItem - menu->numVisItems >= 0)
-                    {
-                        menu->firstItem -= menu->numVisItems;
-                        itemOn -= menu->numVisItems;
-
-                        // Ensure cursor points to an editable item
-                        firstVI = menu->firstItem;
-                        while(menu->items[itemOn].type == ITT_EMPTY &&
-                              (itemOn > firstVI))
-                            itemOn--;
-
-                        while(!menu->items[itemOn].type &&
-                             itemOn < menu->numVisItems)
-                            itemOn++;
-
-                        // Make a sound, too.
-                        S_LocalSound(menusnds[4], NULL);
-                    }
-                }
-                break;
-
-            case MCMD_NAV_RIGHT:
-                if(item->type == ITT_LRFUNC && item->func != NULL)
-                {
-                    item->func(RIGHT_DIR | item->option, item->data);
-                    S_LocalSound(menusnds[4], NULL);
-                }
-                else
-                {
-                    menu_nav_right:
-
-                    // Move on to the next page, if possible.
-                    if(menu->firstItem + menu->numVisItems <
-                       menu->itemCount)
-                    {
-                        menu->firstItem += menu->numVisItems;
-                        itemOn += menu->numVisItems;
-
-                        // Ensure cursor points to an editable item
-                        firstVI = menu->firstItem;
-                        while((menu->items[itemOn].type == ITT_EMPTY ||
-                               itemOn >= menu->itemCount) && itemOn > firstVI)
-                            itemOn--;
-
-                        while(menu->items[itemOn].type == ITT_EMPTY &&
-                              itemOn < menu->numVisItems)
-                            itemOn++;
-
-                        // Make a sound, too.
-                        S_LocalSound(menusnds[4], NULL);
-                    }
-                }
-                break;
-
-            case MCMD_NAV_DOWN:
-                i = 0;
-                do
-                {
-                    if(itemOn + 1 > lastVI)
-                        itemOn = firstVI;
-                    else
-                        itemOn++;
-                } while(menu->items[itemOn].type == ITT_EMPTY &&
-                        i++ < menu->itemCount);
-                menu_color = 0;
-                S_LocalSound(menusnds[3], NULL);
-                break;
-
-            case MCMD_NAV_UP:
-                i = 0;
-                do
-                {
-                    if(itemOn <= firstVI)
-                        itemOn = lastVI;
-                    else
+                    // Ensure cursor points to an editable item
+                    firstVI = menu->firstItem;
+                    while(menu->items[itemOn].type == ITT_EMPTY &&
+                          (itemOn > firstVI))
                         itemOn--;
-                } while(menu->items[itemOn].type == ITT_EMPTY &&
-                        i++ < menu->itemCount);
-                menu_color = 0;
-                S_LocalSound(menusnds[3], NULL);
-                break;
 
-            case MCMD_NAV_OUT:
-                menu->lastOn = itemOn;
-                if(menu->prevMenu == MENU_NONE)
-                {
-                    menu->lastOn = itemOn;
-                    S_LocalSound(menusnds[1], NULL);
-                    Hu_MenuCommand(MCMD_CLOSE);
+                    while(!menu->items[itemOn].type &&
+                         itemOn < menu->numVisItems)
+                        itemOn++;
+
+                    // Make a sound, too.
+                    S_LocalSound(menusnds[4], NULL);
                 }
-                else
+            }
+            break;
+
+        case MCMD_NAV_RIGHT:
+            if(item->type == ITT_LRFUNC && item->func != NULL)
+            {
+                item->func(RIGHT_DIR | item->option, item->data);
+                S_LocalSound(menusnds[4], NULL);
+            }
+            else
+            {
+                menu_nav_right:
+
+                // Move on to the next page, if possible.
+                if(menu->firstItem + menu->numVisItems <
+                   menu->itemCount)
                 {
-                    M_SetupNextMenu(menulist[menu->prevMenu]);
+                    menu->firstItem += menu->numVisItems;
+                    itemOn += menu->numVisItems;
+
+                    // Ensure cursor points to an editable item
+                    firstVI = menu->firstItem;
+                    while((menu->items[itemOn].type == ITT_EMPTY ||
+                           itemOn >= menu->itemCount) && itemOn > firstVI)
+                        itemOn--;
+
+                    while(menu->items[itemOn].type == ITT_EMPTY &&
+                          itemOn < menu->numVisItems)
+                        itemOn++;
+
+                    // Make a sound, too.
+                    S_LocalSound(menusnds[4], NULL);
+                }
+            }
+            break;
+
+        case MCMD_NAV_DOWN:
+            i = 0;
+            do
+            {
+                if(itemOn + 1 > lastVI)
+                    itemOn = firstVI;
+                else
+                    itemOn++;
+            } while(menu->items[itemOn].type == ITT_EMPTY &&
+                    i++ < menu->itemCount);
+            menu_color = 0;
+            S_LocalSound(menusnds[3], NULL);
+            break;
+
+        case MCMD_NAV_UP:
+            i = 0;
+            do
+            {
+                if(itemOn <= firstVI)
+                    itemOn = lastVI;
+                else
+                    itemOn--;
+            } while(menu->items[itemOn].type == ITT_EMPTY &&
+                    i++ < menu->itemCount);
+            menu_color = 0;
+            S_LocalSound(menusnds[3], NULL);
+            break;
+
+        case MCMD_NAV_OUT:
+            menu->lastOn = itemOn;
+            if(menu->prevMenu == MENU_NONE)
+            {
+                menu->lastOn = itemOn;
+                S_LocalSound(menusnds[1], NULL);
+                Hu_MenuCommand(MCMD_CLOSE);
+            }
+            else
+            {
+                M_SetupNextMenu(menulist[menu->prevMenu]);
+                S_LocalSound(menusnds[2], NULL);
+            }
+            break;
+
+        case MCMD_DELETE:
+            if(menu->flags & MNF_DELETEFUNC)
+            {
+                if(item->func)
+                {
+                    item->func(-1, item->data);
                     S_LocalSound(menusnds[2], NULL);
                 }
-                break;
-
-            case MCMD_DELETE:
-                if(menu->flags & MNF_DELETEFUNC)
+            }
+            break;
+                
+        case MCMD_SELECT:
+            if(item->type == ITT_SETMENU)
+            {
+                M_SetupNextMenu(menulist[item->option]);
+                S_LocalSound(menusnds[5], NULL);
+            }
+            else if(item->type == ITT_NAVLEFT)
+            {
+                goto menu_nav_left;
+            }
+            else if(item->type == ITT_NAVRIGHT)
+            {
+                goto menu_nav_right;
+            }
+            else if(item->func != NULL)
+            {
+                menu->lastOn = itemOn;
+                if(item->type == ITT_LRFUNC)
                 {
-                    if(item->func)
-                    {
-                        item->func(-1, item->data);
-                        S_LocalSound(menusnds[2], NULL);
-                    }
-                }
-                break;
-                    
-            case MCMD_SELECT:
-                if(item->type == ITT_SETMENU)
-                {
-                    M_SetupNextMenu(menulist[item->option]);
+                    item->func(RIGHT_DIR | item->option, item->data);
                     S_LocalSound(menusnds[5], NULL);
                 }
-                else if(item->type == ITT_NAVLEFT)
+                else if(item->type == ITT_EFUNC)
                 {
-                    goto menu_nav_left;
+                    item->func(item->option, item->data);
+                    S_LocalSound(menusnds[5], NULL);
                 }
-                else if(item->type == ITT_NAVRIGHT)
-                {
-                    goto menu_nav_right;
-                }
-                else if(item->func != NULL)
-                {
-                    menu->lastOn = itemOn;
-                    if(item->type == ITT_LRFUNC)
-                    {
-                        item->func(RIGHT_DIR | item->option, item->data);
-                        S_LocalSound(menusnds[5], NULL);
-                    }
-                    else if(item->type == ITT_EFUNC)
-                    {
-                        item->func(item->option, item->data);
-                        S_LocalSound(menusnds[5], NULL);
-                    }
-                }
-                break;
             }
+            break;
         }
     }
 }
