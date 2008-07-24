@@ -735,7 +735,7 @@ Floor chain flags = "scef_player_a";
 Floor chain min interval = 1;
 Floor chain max interval = 1;
 Floor chain count = -1;
-Red fn = "\"q\"";
-Green fn = "\"x\"";
-Blue fn = "\"m\"";
+Red fn = "q";
+Green fn = "x";
+Blue fn = "m";
 }

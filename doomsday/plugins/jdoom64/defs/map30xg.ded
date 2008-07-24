@@ -696,9 +696,9 @@ ID = 3209;
 Flags = "stf_tagtexmove";
 Act tag = 999;
 Floor texmove speed = 1;
-Red fn = "\"f\"";
-Green fn = "\"m\"";
-Blue fn = "\"i\"";
+Red fn = "f";
+Green fn = "m";
+Blue fn = "i";
 }
 
 Line Type {

@@ -8,9 +8,9 @@ Flags = "stf_tagtexmove stf_tagwind stf_windplayer stf_windother";
 Act tag = 999;
 Floor texmove speed = 1.8;
 Wind speed = 0.16875;
-Red fn = "\"di\"";
-Green fn = "\"bh\"";
-Blue fn = "\"af\"";
+Red fn = "di";
+Green fn = "bh";
+Blue fn = "af";
 }
 
 Sector Type {
@@ -20,9 +20,9 @@ Flags = "stf_tagtexmove stf_tagwind stf_windplayer";
 Act tag = 998;
 Floor texmove speed = 1.8;
 Wind speed = 0.16875;
-Red fn = "\"t\"";
-Green fn = "\"n\"";
-Blue fn = "\"n\"";
+Red fn = "t";
+Green fn = "n";
+Blue fn = "n";
 }
 
 Line Type {

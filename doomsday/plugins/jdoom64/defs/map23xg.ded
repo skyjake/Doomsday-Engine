@@ -465,9 +465,9 @@ Act tag = 999;
 Wind speed = 10;
 Wind angle = 270;
 Vertical wind = 15;
-Red fn = "\"t\"";
-Green fn = "\"y\"";
-Blue fn = "\"o\"";
+Red fn = "t";
+Green fn = "y";
+Blue fn = "o";
 }
 
 Line Type {

@@ -416,7 +416,7 @@ Comment = "Scroll flat w/line pointerw/outcolor/nowind";
 Flags = "stf_tagtexmove";
 Act tag = 121;
 Ceiling texmove speed = 1;
-Blue fn = "\a\"";
+Blue fn = "a";
 }
 
 Sector Type {
@@ -426,8 +426,8 @@ Flags = "stf_tagtexmove";
 Act tag = 122;
 Ceiling texmove speed = 1;
 Floor texmove speed = 1;
-Green fn = "\"a\"";
-Blue fn = "\"a\"";
+Green fn = "a";
+Blue fn = "a";
 }
 
 Sector Type {

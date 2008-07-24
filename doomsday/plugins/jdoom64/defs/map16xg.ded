@@ -90,9 +90,9 @@ Comment = "Scroll flat w/line pointermap18";
 Flags = "stf_tagtexmove";
 Act tag = 555;
 Floor texmove speed = 1;
-Red fn = "\"u\"";
-Green fn = "\"n\"";
-Blue fn = "\i\"";
+Red fn = "u";
+Green fn = "n";
+Blue fn = "i";
 }
 
 Sector Type {
@@ -103,8 +103,8 @@ Floor chain flags = "scef_player_a";
 Floor chain min interval = 1;
 Floor chain max interval = 1;
 Floor chain count = -1;
-Red fn = "\"a\"";
-Blue fn = "\a\"";
+Red fn = "a";
+Blue fn = "a";
 Flags = "stf_tagtexmove";
 Act tag = 556;
 Floor texmove speed = 1;
