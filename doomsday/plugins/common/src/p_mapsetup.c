@@ -109,8 +109,11 @@ boolean levelSetup;
 /**
  * Converts a line to an xline.
  */
-xline_t* P_ToXLine(linedef_t *line)
+xline_t* P_ToXLine(linedef_t* line)
 {
+    if(!line)
+        return NULL;
+
     // Is it a dummy?
     if(P_IsDummy(line))
     {
@@ -125,8 +128,11 @@ xline_t* P_ToXLine(linedef_t *line)
 /**
  * Converts a sector to an xsector.
  */
-xsector_t* P_ToXSector(sector_t *sector)
+xsector_t* P_ToXSector(sector_t* sector)
 {
+    if(!sector)
+        return NULL;
+
     // Is it a dummy?
     if(P_IsDummy(sector))
     {
@@ -141,9 +147,14 @@ xsector_t* P_ToXSector(sector_t *sector)
 /**
  * Given a subsector - find its parent xsector.
  */
-xsector_t* P_ToXSectorOfSubsector(subsector_t *sub)
+xsector_t* P_ToXSectorOfSubsector(subsector_t* sub)
 {
-    sector_t           *sec = P_GetPtrp(sub, DMU_SECTOR);
+    sector_t*           sec;
+
+    if(!sub)
+        return NULL;
+
+    sec = P_GetPtrp(sub, DMU_SECTOR);
 
     // Is it a dummy?
     if(P_IsDummy(sec))
