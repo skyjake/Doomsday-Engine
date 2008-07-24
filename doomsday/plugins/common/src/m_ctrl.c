@@ -57,7 +57,16 @@
 #define BIND_GAP        2
 #define SMALL_SCALE     .75f
 
+// Binding iteration flags for M_IterateBindings().
+#define MIBF_IGNORE_REPEATS 0x1
+
 // TYPES -------------------------------------------------------------------
+
+typedef enum {
+    MIBT_KEY,
+    MIBT_MOUSE,
+    MIBT_JOY
+} bindingitertype_t;
 
 /** Menu items in the Controls menu are created based on this data. */
 typedef struct controlconfig_s {
@@ -70,6 +79,11 @@ typedef struct controlconfig_s {
     menuitem_t* item;
 } controlconfig_t;
 
+typedef struct bindingdrawerdata_s {
+    int x;
+    int y;
+} bindingdrawerdata_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -77,6 +91,10 @@ typedef struct controlconfig_s {
 void M_DrawControlsMenu(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, void* data,
+                       void (*callback)(bindingitertype_t type, int bid, const char* event, 
+                                        boolean isInverse, void *data));
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -329,6 +347,12 @@ static controlconfig_t controlConfig[] =
 
 // CODE --------------------------------------------------------------------
 
+static void M_DeleteBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, 
+                            void *data)
+{
+    DD_Executef(true, "delbind %i", bid);
+}
+
 static void M_EFuncControlConfig(int option, void *data)
 {
     controlconfig_t* cc = data;
@@ -339,32 +363,13 @@ static void M_EFuncControlConfig(int option, void *data)
     {
         if(cc->controlName)
         {
-            B_BindingsForControl(0, cc->controlName, 
-                                 cc->flags & CCF_INVERSE? BFCI_ONLY_INVERSE :
-                                 cc->flags & CCF_NON_INVERSE? BFCI_ONLY_NON_INVERSE :
-                                 BFCI_BOTH, buf, sizeof(buf));
+            B_BindingsForControl(0, cc->controlName, BFCI_BOTH, buf, sizeof(buf));
         }
         else
         {
             B_BindingsForCommand(cc->command, buf, sizeof(buf));
         }
-
-        //Con_Message("Delete requested %s\n", buf);
-
-        // Delete the last binding for this control.
-        //
-        // TODO: Must use the same parsing/visibility logic as with drawing, or otherwise
-        // it won't always delete the binding you'd expect.
-        //
-        ptr = buf;
-        if((ptr = strrchr(ptr, '@')) != NULL)
-        {
-            const char *begin = ptr - 1;
-            int id;
-            while(begin > buf && isnumber(*(begin - 1))) begin--;
-            id = strtol(begin, NULL, 10);
-            DD_Executef(true, "delbind %i", id);
-        }
+        M_IterateBindings(cc, buf, 0, NULL, M_DeleteBinding);
     }
     else
     {
@@ -438,41 +443,43 @@ static void M_DrawSmallText(int x, int y, const char* text)
     DGL_PopMatrix();
 }
 
-void M_DrawKeyBinding(int* x, int y, const char* name)
+static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void *data)
 {
-    int width = M_StringWidth(name, huFontA);
-    int height = M_StringHeight(name, huFontA);
-
-    GL_SetNoTexture();
-    GL_DrawRect(*x, y, width*SMALL_SCALE + 2, height,
+    bindingdrawerdata_t *d = data;
+    int width, height;
+    
+    if(type == MIBT_KEY)
+    {
+        width = M_StringWidth(name, huFontA);
+        height = M_StringHeight(name, huFontA);
+        
+        GL_SetNoTexture();
+        GL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height,
 #if __JHERETIC__
-                0, .5f, 0,
+                    0, .5f, 0,
 #elif __JHEXEN__
-                .5f, 0, 0,
+                    .5f, 0, 0,
 #else
-                0, 0, 0,
+                    0, 0, 0,
 #endif
-                menuAlpha*.6f);
-
-    M_DrawSmallText(*x + 1, y, name);
-
-    *x += width*SMALL_SCALE + 2 + BIND_GAP;
-}
-
-void M_DrawJoyMouseBinding(const char* axis, int* x, int y, const char* name, boolean isInverse)
-{
-    int width;
-    int height;
-    char temp[256];
-
-    sprintf(temp, "%s%c%s", axis, isInverse? '-' : '+', name);
-
-    width = M_StringWidth(temp, huFontA);
-    height = M_StringHeight(temp, huFontA);
-
-    M_DrawSmallText(*x, y, temp);
-
-    *x += width*SMALL_SCALE + BIND_GAP;
+                    menuAlpha*.6f);
+        
+        M_DrawSmallText(d->x + 1, d->y, name);
+        
+        d->x += width*SMALL_SCALE + 2 + BIND_GAP;
+    }
+    else
+    {
+        char temp[256];
+        sprintf(temp, "%s%c%s", type==MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
+        
+        width = M_StringWidth(temp, huFontA);
+        height = M_StringHeight(temp, huFontA);
+        
+        M_DrawSmallText(d->x, d->y, temp);
+        
+        d->x += width*SMALL_SCALE + BIND_GAP;
+    }
 }
 
 static const char* findInString(const char* str, const char* token, int n)
@@ -495,9 +502,12 @@ static const char* findInString(const char* str, const char* token, int n)
     return NULL;
 }
 
-void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
+void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, void* data,
+                       void (*callback)(bindingitertype_t type, int bid, const char* event, 
+                                        boolean isInverse, void *data))
 {
-    const char* ptr = strchr(bindings, ':'), *end, *end2;
+    const char* ptr = strchr(bindings, ':'), *begin, *end, *end2, *k;
+    int bid;
     char buf[80], *b;
     boolean isInverse;
 
@@ -505,6 +515,19 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
 
     while(ptr)
     {
+        // Read the binding identifier.
+        for(k = ptr; k > bindings && *k != '@'; --k);
+        if(*k == '@')
+        {
+            for(begin = k - 1; begin > bindings && isdigit(*(begin - 1)); --begin);
+            bid = strtol(begin, NULL, 10);
+        }
+        else
+        {
+            // No identifier??
+            bid = 0;
+        }
+        
         ptr++;
         end = strchr(ptr, '-');
         if(!end) return;
@@ -522,7 +545,7 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
         else
             end = end2;
 
-        if(!findInString(ptr, "-repeat", end - ptr))
+        if(!(flags & MIBF_IGNORE_REPEATS) || !findInString(ptr, "-repeat", end - ptr))
         {
             isInverse = (findInString(ptr, "-inverse", end - ptr) != NULL);
 
@@ -532,7 +555,7 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
                    (cc->flags & CCF_NON_INVERSE) && !isInverse ||
                    !(cc->flags & (CCF_INVERSE | CCF_NON_INVERSE)))
                 {
-                    M_DrawKeyBinding(&x, y, buf);
+                    callback(MIBT_KEY, bid, buf, isInverse, data);
                 }
             }
             else
@@ -543,11 +566,11 @@ void M_DrawBindings(controlconfig_t* cc, int x, int y, const char* bindings)
                 }
                 if(!strncmp(ptr, "joy", 3))
                 {
-                    M_DrawJoyMouseBinding("joy", &x, y, buf, isInverse);
+                    callback(MIBT_JOY, bid, buf, isInverse, data);
                 }
                 else if(!strncmp(ptr, "mouse", 5))
                 {
-                    M_DrawJoyMouseBinding("mouse", &x, y, buf, isInverse);
+                    callback(MIBT_MOUSE, bid, buf, isInverse, data);
                 }
             }
         }
@@ -605,6 +628,7 @@ void M_DrawControlsMenu(void)
         i++, item++)
     {
         controlconfig_t* cc = item->data;
+        bindingdrawerdata_t draw;
 
         if(item->type != ITT_EFUNC)
             continue;
@@ -665,10 +689,12 @@ void M_DrawControlsMenu(void)
                         huFontA, 1, 1, 1, menuAlpha);
 #endif*/
 #if __JHEXEN__
-        M_DrawBindings(cc, menu->x + 154, menu->y + (i * menu->itemHeight), buf);
+        draw.x = menu->x + 154;
 #else
-        M_DrawBindings(cc, menu->x + 134, menu->y + (i * menu->itemHeight), buf);
+        draw.x = menu->x + 134;
 #endif
+        draw.y = menu->y + (i * menu->itemHeight);
+        M_IterateBindings(cc, buf, MIBF_IGNORE_REPEATS, &draw, M_DrawBinding);
     }
 }
 
