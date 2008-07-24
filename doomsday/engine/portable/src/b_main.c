@@ -659,7 +659,7 @@ static binding_t __inline *bindingForEvent(ddevent_t *event)
 static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
 {
     uint        i;
-	binding_t  *bnd;
+    binding_t  *bnd;
     bindcontrol_t *ctrl = NULL;
     boolean     found;
 
@@ -782,7 +782,7 @@ boolean B_Responder(ddevent_t *ev)
         // Make an echo.
         ddstring_t name;
         ddevent_t echo;
-        
+
         // Axis events need a bit of filtering.
         if(ev->type == E_AXIS)
         {
@@ -794,10 +794,11 @@ boolean B_Responder(ddevent_t *ev)
                 return B_TryEvent(ev);
             }
         }
-        
+
         Str_Init(&name);
         Str_Set(&name, "echo-");
         B_AppendEventToString(ev, &name);
+        echo.device = ev->device;
         echo.type = E_SYMBOLIC;
         echo.symbolic.id = 0;
         echo.symbolic.name = Str_Text(&name);
@@ -806,7 +807,7 @@ boolean B_Responder(ddevent_t *ev)
         Str_Free(&name);
         return true;
     }
-    
+
     return B_TryEvent(ev);
 
     /*
@@ -840,12 +841,12 @@ boolean B_Responder(ddevent_t *ev)
         {
         case IDAT_STICK: // joysticks, gamepads
             P_ControlSetAxis(P_LocalToConsole(bnd->localPlayer),
-		                     bnd->playercontrol, pos);
+                             bnd->playercontrol, pos);
             break;
 
         case IDAT_POINTER: // mouse
             P_ControlAxisDelta(P_LocalToConsole(bnd->localPlayer),
-		                       bnd->playercontrol, pos);
+                               bnd->playercontrol, pos);
             break;
 
         default:
@@ -1115,7 +1116,7 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
     if(bnd->binds[bindClass].type == BND_AXIS)
     {
         ctrl = &bnd->binds[bindClass].data.axiscontrol;
-	    ctrl->playercontrol = control;
+        ctrl->playercontrol = control;
 //#if _DEBUG
 //Con_Printf("B_Bind: (%s) axis '%s' ctrl: '%s'\n",
 //           device->name, I_GetAxisByID(device, bnd->obsolete.controlID)->name,
@@ -1317,7 +1318,7 @@ void formEventString(char *buff, uint deviceID, int controlID,
     if(isAxis)
     {
         sprintf(buff, "%s-%s", device->name,
-				device->axes[controlID].name);
+                device->axes[controlID].name);
     }
     else
     {
@@ -1962,13 +1963,13 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
 
                     if(bindClass >= 0)
                         Con_Printf("%-8s : %s%s\n", buffer,
-			                       (ctl->invert? "-" : ""),
-			                       axisName);
+                                   (ctl->invert? "-" : ""),
+                                   axisName);
                     else
                         Con_Printf("%-8s : %-8s : %s%s\n", buffer,
                                    bindClasses[j].name,
-			                       (ctl->invert? "-" : ""),
-			                       axisName);
+                                   (ctl->invert? "-" : ""),
+                                   axisName);
                     count++;
                 }
                 break;
@@ -1992,26 +1993,26 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
 D_CMD(BindAxis)
 {/*
     uint        i;
-	uint        deviceID, axis;
-	boolean     invert = false;
-	const char *name;
-	char        *ptr, ctlName[20];
-	int         local = 0;
-	binding_t  *bind;
+    uint        deviceID, axis;
+    boolean     invert = false;
+    const char *name;
+    char        *ptr, ctlName[20];
+    int         local = 0;
+    binding_t  *bind;
     uint        ctlidx, bc = 0;
     const char *axisptr = argv[2];
     const char *ctrlptr = argv[3];
     boolean     bindClassGiven = false;
     bindaxis_t *ctrl;
 
-	if(argc < 3 || argc > 4)
-	{
-		Con_Printf("Usage: %s (class) (device-axis) (control)\n", argv[0]);
+    if(argc < 3 || argc > 4)
+    {
+        Con_Printf("Usage: %s (class) (device-axis) (control)\n", argv[0]);
         Con_Printf("Binding Classes:\n");
         for(i = 0; i < numBindClasses; ++i)
             Con_Printf("  %s\n", bindClasses[i].name);
         return true;
-	}
+    }
 
     // Check for a specified binding class.
     bindClassGiven = B_GetBindClassIDbyName(argv[1], &bc);
@@ -2032,15 +2033,15 @@ D_CMD(BindAxis)
     }
 
     // Get the device and the axis.
-	if(!I_ParseDeviceAxis(axisptr, &deviceID, &axis))
-	{
-		Con_Printf("'%s' is not a valid device or device axis.\n", axisptr);
-		return false;
-	}
+    if(!I_ParseDeviceAxis(axisptr, &deviceID, &axis))
+    {
+        Con_Printf("'%s' is not a valid device or device axis.\n", axisptr);
+        return false;
+    }
 
     // If no control is given, delete the binding.
     if(argc == 3 && bindClassGiven)
-	{
+    {
         ddevent_t ev;
 
         ev.deviceID = deviceID;
@@ -2048,28 +2049,28 @@ D_CMD(BindAxis)
         ev.isAxis = true;
 
         B_Bind(&ev, NULL, -1, bc);
-		return true;
-	}
+        return true;
+    }
 
     name = ctrlptr;
-	// A minus in front of the control name means inversion.
-	if(name[0] == '-')
-	{
-		invert = true;
-		name = &name[1];
-	}
+    // A minus in front of the control name means inversion.
+    if(name[0] == '-')
+    {
+        invert = true;
+        name = &name[1];
+    }
 
-	memset(ctlName, 0, sizeof(ctlName));
-	strncpy(ctlName, name, sizeof(ctlName) - 1);
+    memset(ctlName, 0, sizeof(ctlName));
+    strncpy(ctlName, name, sizeof(ctlName) - 1);
 
-	ptr = strchr(ctlName, '/');
-	if(ptr)
-	{
-		local = strtol(ptr + 1, NULL, 10);
-		if(local < 0 || local >= DDMAXPLAYERS)
+    ptr = strchr(ctlName, '/');
+    if(ptr)
+    {
+        local = strtol(ptr + 1, NULL, 10);
+        if(local < 0 || local >= DDMAXPLAYERS)
             local = 0;
-		*ptr = 0;
-	}
+        *ptr = 0;
+    }
 
     ctlidx = P_ControlFindAxis(ctlName);
     if(ctlidx == 0)
@@ -2078,7 +2079,7 @@ D_CMD(BindAxis)
         return false;
     }
 
-	// Create the binding.
+    // Create the binding.
     {
     ddevent_t ev;
 
@@ -2089,10 +2090,10 @@ D_CMD(BindAxis)
     bind = B_Bind(&ev, NULL, ctlidx - 1, bc);
     ctrl = &bind->binds[bc].data.axiscontrol;
     ctrl->localPlayer = local;
-	ctrl->invert = invert;
+    ctrl->invert = invert;
     }
-	*/
-	return true;
+    */
+    return true;
 }
 
 /**
