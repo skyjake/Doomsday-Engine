@@ -222,8 +222,8 @@ int P_PointOnLineSide(float x, float y, float lX, float lY, float lDX,
  */
 int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
 {
-    return P_PointOnLineSide(pnt->pos[VX], pnt->pos[VY], dline->pos[VX],
-                             dline->pos[VY], dline->dX, dline->dY);
+    return !P_PointOnLineSide(pnt->pos[VX], pnt->pos[VY], dline->pos[VX],
+                              dline->pos[VY], dline->dX, dline->dY);
 }
 
 /**
@@ -232,8 +232,8 @@ int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
  */
 int P_PointOnLinedefSide(float x, float y, linedef_t* line)
 {
-    return P_PointOnLineSide(x, y, line->L_v1pos[VX], line->L_v1pos[VY],
-                             line->dX, line->dY);
+    return !P_PointOnLineSide(x, y, line->L_v1pos[VX], line->L_v1pos[VY],
+                              line->dX, line->dY);
 }
 
 /**
