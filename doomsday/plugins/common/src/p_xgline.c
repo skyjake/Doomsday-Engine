@@ -646,6 +646,7 @@ void XL_SetLineType(linedef_t *line, int id)
             xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_LEVSPEC, 0);
 
             xl->thinker.function = XL_Thinker;
+            xl->line = line;
             P_ThinkerAdd(&xl->thinker);
         }
     }
@@ -1833,13 +1834,18 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
 
     // Which section of the wall are we checking?
     if(section == LWS_UPPER)
-        name = R_MaterialNameForNum(P_GetIntp(side, DMU_TOP_MATERIAL));
+        material = P_GetIntp(side, DMU_TOP_MATERIAL);
     else if(section == LWS_MID)
-        name = R_MaterialNameForNum(P_GetIntp(side, DMU_MIDDLE_MATERIAL));
-    else if(section == LWS_LOWER)
-        name = R_MaterialNameForNum(P_GetIntp(side, DMU_BOTTOM_MATERIAL));
+        material = P_GetIntp(side, DMU_MIDDLE_MATERIAL);
     else
-        return false;
+        material = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+
+    if(!material)
+        return false; // No material on this section.
+
+    name = R_MaterialNameForNum(material);
+    if(!name)
+        return false; // Most peculiar.
 
     strncpy(buf, name, 8);
     buf[8] = 0;

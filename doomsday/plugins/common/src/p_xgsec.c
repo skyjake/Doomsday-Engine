@@ -389,6 +389,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
             xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_LEVSPEC, 0);
 
             xs->thinker.function = XS_Thinker;
+            xs->sector = sec;
             P_ThinkerAdd(&xs->thinker);
         }
     }
@@ -2608,13 +2609,7 @@ void XS_UpdateLight(sector_t *sec)
     fn = &xg->light;
     if(UPDFUNC(fn))
     {   // Changed.
-        lightlevel = fn->value / 255.f;
-
-        if(lightlevel < 0)
-            lightlevel = 0;
-        if(lightlevel > 1)
-            lightlevel = 1;
-
+        lightlevel = MINMAX_OF(0, fn->value / 255.f, 1);
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightlevel);
     }
 
@@ -2626,11 +2621,8 @@ void XS_UpdateLight(sector_t *sec)
             continue;
 
         // Changed.
-        c = fn->value / 255.f;
-        if(c < 0)
-            c = 0;
-        if(c > 1)
-            c = 1;
+        c = MINMAX_OF(0, fn->value / 255.f, 1);
+
         P_SetFloatp(sec, TO_DMU_COLOR(i), c);
     }
 }
