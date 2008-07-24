@@ -69,6 +69,8 @@ void            B_InitControlBindingList(controlbinding_t* listRoot);
 void            B_DestroyControlBindingList(controlbinding_t* listRoot);
 boolean         B_DeleteBinding(bclass_t* bc, int bid);
 boolean         B_TryEvent(ddevent_t* event);
+boolean         B_FindMatchingBinding(bclass_t* bc, evbinding_t* match1, dbinding_t* match2, 
+                                      evbinding_t** evResult, dbinding_t** dResult);
 void            B_PrintClasses(void);
 void            B_PrintAllBindings(void);
 void            B_WriteClassToFile(const bclass_t* bc, FILE* file);

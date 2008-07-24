@@ -356,6 +356,26 @@ const char* B_ParseClass(const char* desc, bclass_t** bc)
     return desc;
 }
 
+void B_DeleteMatching(bclass_t* bc, evbinding_t* eventBinding, dbinding_t* deviceBinding)
+{
+    dbinding_t *devb = NULL;
+    evbinding_t* evb = NULL;
+
+    while(B_FindMatchingBinding(bc, eventBinding, deviceBinding, &evb, &devb))
+    {
+        if(evb)
+        {
+            Con_Message("B_BindCommand: New binding overrides binding %i, deleting it.\n", evb->bid);
+            B_DeleteBinding(bc, evb->bid);
+        }
+        if(devb)
+        {
+            Con_Message("B_BindCommand: New binding overrides binding %i, deleting it.\n", devb->bid);
+            B_DeleteBinding(bc, devb->bid);
+        }
+    }
+}
+
 evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
 {
     bclass_t* bc;
@@ -373,6 +393,10 @@ evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
 
     if((b = B_NewCommandBinding(&bc->commandBinds, eventDesc, command)) != NULL)
     {
+        // TODO: In interactive binding mode, should ask the user if the replacement is ok.
+        // Now just delete the other binding.
+        B_DeleteMatching(bc, b, NULL);
+        
         B_UpdateDeviceStateAssociations();
     }
     return b;
@@ -439,6 +463,10 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         goto finished;
     }
 
+    // TODO: In interactive binding mode, should ask the user if the replacement is ok.
+    // Now just delete the other binding.
+    B_DeleteMatching(bc, NULL, devBin);
+    
     B_UpdateDeviceStateAssociations();
 
 finished:

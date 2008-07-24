@@ -588,6 +588,76 @@ int B_BindingsForControl(int localPlayer, const char *controlName, int inverse, 
     return numFound;
 }
 
+boolean B_FindMatchingBinding(bclass_t* bc, evbinding_t* match1, dbinding_t* match2, 
+                              evbinding_t** evResult, dbinding_t** dResult)
+{
+    evbinding_t*        e;
+    controlbinding_t*   c;
+    dbinding_t*         d;
+    int                 i;
+    
+    *evResult = NULL;
+    *dResult = NULL;
+    
+    for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
+    {    
+        // TODO: A bit lazy here, should also match all the conditions.
+        // Now we just consider all bindings with conditions unique...
+        if(e->numConds) continue;
+        
+        if(match1 && match1->bid != e->bid)
+        {
+            if(match1->device == e->device && match1->id == e->id && match1->type == e->type &&
+               match1->state == e->state)
+            {
+                *evResult = e;
+                return true;         
+            }
+        }
+        if(match2)
+        {
+            if(match2->device == e->device && match2->id == e->id && match2->type == e->type)
+            {
+                *evResult = e;
+                return true;
+            }
+        }
+    }
+    
+    for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
+    {
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            for(d = c->deviceBinds[i].next; d != &c->deviceBinds[i]; d = d->next)
+            {        
+                // Should also match all the conditions, now we just consider all bindings
+                // with conditions unique...
+                if(d->numConds) continue;
+
+                if(match1)
+                {
+                    if(match1->device == d->device && match1->id == d->id && match1->type == d->type)
+                    {
+                        *dResult = d;
+                        return true;
+                    }
+                }
+                if(match2 && match2->bid != d->bid)
+                {
+                    if(match2->device == d->device && match2->id == d->id && match2->type == d->type)
+                    {
+                        *dResult = d;
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Nothing found.
+    return false;
+}
+
 void B_PrintClasses(void)
 {
     int                 i;
