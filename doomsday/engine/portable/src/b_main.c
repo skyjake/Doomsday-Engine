@@ -363,15 +363,13 @@ void B_DeleteMatching(bclass_t* bc, evbinding_t* eventBinding, dbinding_t* devic
 
     while(B_FindMatchingBinding(bc, eventBinding, deviceBinding, &evb, &devb))
     {
-        if(evb)
+        // Only either evb or devb is returned as non-NULL.
+        int bid = (evb? evb->bid : (devb? devb->bid : 0));
+        if(bid)
         {
-            Con_Message("B_BindCommand: New binding overrides binding %i, deleting it.\n", evb->bid);
-            B_DeleteBinding(bc, evb->bid);
-        }
-        if(devb)
-        {
-            Con_Message("B_BindCommand: New binding overrides binding %i, deleting it.\n", devb->bid);
-            B_DeleteBinding(bc, devb->bid);
+            Con_Message("B_BindCommand: Deleting binding %i, it has been overridden by "
+                        "binding %i.\n", bid, eventBinding? eventBinding->bid : deviceBinding->bid);
+            B_DeleteBinding(bc, bid);
         }
     }
 }
