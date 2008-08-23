@@ -1638,6 +1638,23 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         RV_FLT("Distance", dm->elevation)
                         RV_IVEC("Pattern offset", dm->patternOffset, 2)
                         RV_IVEC("Pattern skip", dm->patternSkip, 2)
+                        if(ISLABEL("Levels"))
+                        {
+                            int                     b;
+
+                            FINDBEGIN;
+                            for(b = 0; b < 2; ++b)
+                            {
+                                READFLT(dm->lightLevels[b])
+                                dm->lightLevels[b] /= 255.0f;
+                                if(dm->lightLevels[b] < 0)
+                                    dm->lightLevels[b] = 0;
+                                else if(dm->lightLevels[b] > 1)
+                                    dm->lightLevels[b] = 1;
+                            }
+                            ReadToken();
+                        }
+                        else
                         RV_STR("ID", dm->id)
                         RV_FLT("Frame interval", dm->frameInterval)
                         RV_END

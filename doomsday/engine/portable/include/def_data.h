@@ -475,6 +475,7 @@ extern          "C" {
         float           elevation; // Distance from the surface.
         int             patternOffset[2];
         int             patternSkip[2];
+        float           lightLevels[2]; // Fade by sector lightlevel.
         ded_stringid_t  id;
         float           frameInterval; // Seconds per frame.
     } ded_decormodel_t;
