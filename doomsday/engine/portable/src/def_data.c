@@ -262,10 +262,10 @@ int DED_AddModel(ded_t *ded, char *spr)
     md->interRange[1] = 1;
     md->scale[0] = md->scale[1] = md->scale[2] = 1;
     // Init submodels.
-    for(i = 0; i < 4; ++i)
+    for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
     {
-        md->sub[i].shinyColor[0] = md->sub[i].shinyColor[1] =
-            md->sub[i].shinyColor[2] = 1;
+        md->sub[i].shinyColor[CR] = md->sub[i].shinyColor[CG] =
+            md->sub[i].shinyColor[CB] = 1;
         md->sub[i].shinyReact = 1.0f;
     }
     return md - ded->models;
