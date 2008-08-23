@@ -45,8 +45,8 @@
  * p_acs.h: ACS scripting system.
  */
 
-#ifndef __P_PSPR_H__
-#define __P_PSPR_H__
+#ifndef __P_ACS_H__
+#define __P_ACS_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
