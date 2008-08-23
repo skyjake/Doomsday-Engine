@@ -27,11 +27,13 @@ Light { State = "BON1"; Size = 0.5; Color { .05 .05 .85 }; }
 # Nuke-barrel's (weak) green glow.
 Light {
   State = "BAR1";
-  Flags = "lgf_nohalo";
-  Size = 0.31;
+  Flags = nohalo;
+  Color { .2 .4 .22 };
+  Size = 0.21;
   Y Offset = -6;
 }
+
 Copy Light {
   State = "BAR2";
-  Size = 0.32;
+  Size = 0.22;
 }

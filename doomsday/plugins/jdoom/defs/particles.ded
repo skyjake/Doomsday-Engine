@@ -8,36 +8,40 @@ SkipIf -nodefaultfx;
 # Rocket smoke trail.
 Generator {
   State = "ROCKET";
-  Flags = "gnf_spawn";
+  Flags = spawn;
   Center { -16 0 5 };
   Speed = .8; Speed rnd = 1;
   Spawn age = -1; Max age = 1200;
   Particles = 150;
   Spawn rate = 1.4; Spawn Rnd = 0.4;
   Vector { 0 0 0 }; Vector rnd = 1;
-  # Fire and smoke.
+
   Stage {
-    Type = "pt_point"; Flags = "ptf_bright";
+    Type = point; Flags = bright;
     Radius = 1; Color { 1 1 1 1 };
   };
+
   Stage {
-    Type = "pt_point"; Flags = "ptf_bright";
+    Type = point; Flags = bright;
     Tics = 4; Rnd = .2;
     Radius = 5; Color { 1 .95 .7 1 };
   };
+
   Stage {
-    Type = "pt_point"; Flags = "ptf_bright";
+    Type = point; Flags = bright;
     Tics = 2; Rnd = .2;
     Radius = 5; Color { 1 .7 .3 1 };
   };
+
   Stage {
-    Type = "pt_point";
+    Type = point;
     Tics = 15;
     Radius = 6; Color { .6 .6 .6 .5 };
     Resistance = 0.01;
   };
+
   Stage {
-    Type = "pt_point";
+    Type = point;
     Tics = 130;
     Radius = 22;
     Bounce = 0;
@@ -45,8 +49,9 @@ Generator {
     Gravity = 0;
     Color { 0.5 0.5 0.55 0.3 };
   };
+
   Stage { 
-    Type = "pt_point"; 
+    Type = point; 
     Radius = 30; 
     Color { 0.2 0.2 0.22 0 };
   };
@@ -284,21 +289,24 @@ Generator {
   Particles = 100;
   Spawn rate = 30;
   Spawn Rnd = 0.3;
-  Vector { 0 0 0 }; Vector rnd = 1;
+  Vector { 0 0 0 };
+  Vector rnd = 1;
+
   Stage {
-    Type = "pt_point";
-    Flags = "ptf_bright";
-    Tics = 25;
+    Type = point;
+    Flags = bright;
+    Tics = 32;
     Rnd = 0.5;
     Radius = 2;
-    Bounce = 0.3;
-    Resistance = 0.02;
+    Bounce = 0.45;
+    Resistance = 0.01;
     Gravity = 0.1;
     Color { 1 1 1 1 };
   };
+
   Stage {
-    Type = "pt_point";
-    Flags = "ptf_bright";
+    Type = point;
+    Flags = bright;
     Tics = 15;
     Rnd = 0.5;
     Radius = 1.5;
@@ -307,43 +315,48 @@ Generator {
     Gravity = 0.1;
     Color { 1 1 .5 1 };
   };
+
   Stage {
-    Type = "pt_point";
-    Tics = 7;
+    Type = point;
+    Tics = 4;
     Radius = 1.25;
     Bounce = 0.3;
     Resistance = 0.1;
     Gravity = 0.1;
     Color { 1 .1 .1 1 };
   };
+
   Stage {
-    Type = "pt_point";
-    Tics = 7;
+    Type = point;
+    Tics = 4;
     Radius = 1;
     Bounce = 0.3;
     Resistance = 0.1;
     Gravity = 0.1;
     Radius = 1;
-    Color { .7 .1 0 .7 };
+    Color { .5 .1 0 .7 };
   };
+
   Stage {
-    Type = "pt_point";
+    Type = point;
     Tics = 30;
     Radius = 10;
     Resistance = 0.2;
     Gravity = 0.01;
     Color { .3 .3 .3 .3 };
   };
+
   Stage {
-    Type = "pt_point";
+    Type = point;
     Tics = 30;
     Radius = 20;
     Resistance = 0.2;
     Gravity = 0.01;
     Color { .15 .15 .15 .15 };
   };
+
   Stage {
-    Type = "pt_point";
+    Type = point;
     Radius = 10;
   };
 }
