@@ -643,6 +643,21 @@ float bulletSlope;
 
 // CODE --------------------------------------------------------------------
 
+void R_GetWeaponBob(int player, float* x, float* y)
+{
+    if(x)
+    {
+        *x = 1 + (cfg.bobWeapon * players[player].bob) *
+            FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
+    }
+
+    if(y)
+    {
+        *y = 32 + (cfg.bobWeapon * players[player].bob) *
+            FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+    }
+}
+
 /**
  *Initialize weapon info, maxammo and clipammo.
  */
@@ -845,10 +860,9 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
     if(!player->morphTics)
     {
         // Bob the weapon based on movement speed.
-        psp->pos[VX] = *((float *)G_GetVariable(DD_PSPRITE_BOB_X));
-        psp->pos[VY] = *((float *)G_GetVariable(DD_PSPRITE_BOB_Y));
+        R_GetWeaponBob(player - players, &psp->pos[0], &psp->pos[1]);
 
-        ddpsp->offset[VX] = ddpsp->offset[VY] = 0;
+        ddpsp->offset[0] = ddpsp->offset[1] = 0;
     }
 
     // Psprite state.

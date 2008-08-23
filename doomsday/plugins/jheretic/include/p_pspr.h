@@ -41,9 +41,11 @@ typedef enum {
 } psprnum_t;
 
 typedef struct pspdef_s {
-    state_t        *state; // a NULL state means not active.
+    state_t*        state; // a NULL state means not active.
     int             tics;
     float           pos[2];
 } pspdef_t;
+
+void            R_GetWeaponBob(int player, float* x, float* y);
 
 #endif

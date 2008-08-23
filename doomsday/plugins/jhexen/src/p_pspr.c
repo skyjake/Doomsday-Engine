@@ -361,6 +361,27 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
 
 // CODE --------------------------------------------------------------------
 
+void R_GetWeaponBob(int player, float* x, float* y)
+{
+    if(x)
+    {
+        if(players[player].morphTics > 0)
+            *x = 0;
+        else
+            *x = 1 + (cfg.bobWeapon * players[player].bob) *
+                FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
+    }
+
+    if(y)
+    {
+        if(players[player].morphTics > 0)
+            *y = 0;
+        else
+            *y = 32 + (cfg.bobWeapon * players[player].bob) *
+                FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+    }
+}
+
 /**
  * Offset in state->misc1/2.
  */
@@ -586,10 +607,9 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     if(!plr->morphTics)
     {
         // Bob the weapon based on movement speed.
-        psp->pos[VX] = *((float *)G_GetVariable(DD_PSPRITE_BOB_X));
-        psp->pos[VY] = *((float *)G_GetVariable(DD_PSPRITE_BOB_Y));
+        R_GetWeaponBob(plr - players, &psp->pos[0], &psp->pos[1]);
 
-        ddpsp->offset[VX] = ddpsp->offset[VY] = 0;
+        ddpsp->offset[0] = ddpsp->offset[1] = 0;
     }
 
     // Psprite state.
@@ -599,7 +619,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
 /**
  * The player can re fire the weapon without lowering it entirely.
  */
-void C_DECL A_ReFire(player_t *plr, pspdef_t *psp)
+void C_DECL A_ReFire(player_t* plr, pspdef_t* psp)
 {
     if((plr->brain.attack) &&
        plr->pendingWeapon == WT_NOCHANGE && plr->health)

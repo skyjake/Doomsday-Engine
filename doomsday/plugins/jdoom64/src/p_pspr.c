@@ -75,6 +75,21 @@ static float bulletSlope;
 
 // CODE --------------------------------------------------------------------
 
+void R_GetWeaponBob(int player, float* x, float* y)
+{
+    if(x)
+    {
+        *x = 1 + (cfg.bobWeapon * players[player].bob) *
+            FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
+    }
+
+    if(y)
+    {
+        *y = 32 + (cfg.bobWeapon * players[player].bob) *
+            FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+    }
+}
+
 void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 {
     pspdef_t           *psp;
@@ -184,9 +199,9 @@ void P_DropWeapon(player_t *player)
  * The player can fire the weapon or change to another weapon at this time.
  * Follows after getting weapon up, or after previous attack/fire sequence.
  */
-void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
+void C_DECL A_WeaponReady(player_t* player, pspdef_t* psp)
 {
-    weaponmodeinfo_t   *wminfo;
+    weaponmodeinfo_t*   wminfo;
 
     // Enable the pspr Y offset (might be disabled in A_Lower).
     DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
@@ -230,8 +245,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
         player->attackDown = false;
 
     // Bob the weapon based on movement speed.
-    psp->pos[VX] = *((float *)G_GetVariable(DD_PSPRITE_BOB_X));
-    psp->pos[VY] = *((float *)G_GetVariable(DD_PSPRITE_BOB_Y));
+    R_GetWeaponBob(player - players, &psp->pos[0], &psp->pos[1]);
 
     // Psprite state.
     player->plr->pSprites[0].state = DDPSP_BOBBING;

@@ -82,7 +82,7 @@ int G_GetInteger(int id)
 /**
  * Get a pointer to the value of a variable. Added for 64-bit support.
  */
-void *G_GetVariable(int id)
+void* G_GetVariable(int id)
 {
     static float        bob[2];
 
@@ -113,16 +113,12 @@ void *G_GetVariable(int id)
         return xgClasses;
 
     case DD_PSPRITE_BOB_X:
-        bob[VX] = 1 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
-            FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
-
-        return &bob[VX];
+        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], NULL);
+        return &bob[0];
 
     case DD_PSPRITE_BOB_Y:
-        bob[VY] = 32 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
-            FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
-
-        return &bob[VY];
+        R_GetWeaponBob(DISPLAYPLAYER, NULL, &bob[1]);
+        return &bob[1];
 
     default:
         break;

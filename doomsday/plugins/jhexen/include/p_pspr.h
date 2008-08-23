@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +36,8 @@
  * p_pspr.h: Sprite animation.
  */
 
-#ifndef __P_PSPR__
-#define __P_PSPR__
+#ifndef __P_PSPR_H__
+#define __P_PSPR_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -50,9 +50,11 @@ typedef enum {
 } psprnum_t;
 
 typedef struct {
-    state_t        *state; // a NULL state means not active
+    state_t*        state; // @c NULL means not active.
     int             tics;
     float           pos[2];
 } pspdef_t;
+
+void            R_GetWeaponBob(int player, float* x, float* y);
 
 #endif

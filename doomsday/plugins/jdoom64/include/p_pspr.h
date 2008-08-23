@@ -45,14 +45,16 @@ typedef enum {
 } psprnum_t;
 
 typedef struct {
-    state_t        *state; // A NULL state means not active.
+    state_t*        state; // A NULL state means not active.
     int             tics;
     float           pos[2]; // [x, y]
 } pspdef_t;
 
-void            P_SetupPsprites(struct player_s *curplayer);
-void            P_MovePsprites(struct player_s *curplayer);
-void            P_DropWeapon(struct player_s *player);
-void            P_SetPsprite(struct player_s *player, int position, statenum_t stnum);
+void            P_SetupPsprites(struct player_s* curplayer);
+void            P_MovePsprites(struct player_s* curplayer);
+void            P_DropWeapon(struct player_s* player);
+void            P_SetPsprite(struct player_s* player, int position, statenum_t stnum);
+
+void            R_GetWeaponBob(int player, float* x, float* y);
 
 #endif

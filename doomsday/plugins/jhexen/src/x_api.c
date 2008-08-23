@@ -128,30 +128,12 @@ void *G_GetVariable(int id)
         return NULL;
 
     case DD_PSPRITE_BOB_X:
-        if(players[CONSOLEPLAYER].morphTics > 0)
-        {
-            bob[VX] = 0;
-        }
-        else
-        {
-            bob[VX] = 1 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
-                FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
-        }
-
-        return &bob[VX];
+        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], NULL);
+        return &bob[0];
 
     case DD_PSPRITE_BOB_Y:
-        if(players[CONSOLEPLAYER].morphTics > 0)
-        {
-            bob[VY] = 0;
-        }
-        else
-        {
-            bob[VY] = 32 + (cfg.bobWeapon * players[CONSOLEPLAYER].bob) *
-                FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
-        }
-
-        return &bob[VY];
+        R_GetWeaponBob(DISPLAYPLAYER, NULL, &bob[1]);
+        return &bob[1];
 
     default:
         break;
