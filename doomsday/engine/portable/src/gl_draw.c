@@ -159,6 +159,9 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
     float               w, h;
     patchtex_t*         p = R_GetPatchTex(lump);
 
+    if(!p)
+        return;
+
     // Set the texture.
     GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
 
