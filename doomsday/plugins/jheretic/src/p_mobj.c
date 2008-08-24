@@ -941,10 +941,6 @@ void P_MobjThinker(mobj_t *mobj)
             // We don't want it going through the floor.
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
-
-        // Old floatbob used health as index, let's still increase it as
-        // before (in case somebody wants to use it).
-        mobj->health++;
     }
     else if(mobj->pos[VZ] != mobj->floorZ || mobj->mom[MZ] != 0)
     {
@@ -1407,10 +1403,6 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     mobj = P_SpawnMobj3fv(i, pos, th->angle);
-    if(mobj->flags2 & MF2_FLOATBOB)
-    {   // Seed random starting index for bobbing motion
-        mobj->health = P_Random();
-    }
 
     if(mobj->tics > 0)
         mobj->tics = 1 + (P_Random() % mobj->tics);
