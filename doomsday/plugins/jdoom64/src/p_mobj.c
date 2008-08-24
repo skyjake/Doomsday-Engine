@@ -1452,15 +1452,16 @@ void P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
     mobj_t*             th;
     uint                an;
     angle_t             angle;
-    float               pos[3];
-    float               dist;
-    float               slope;
+    float               pos[3], dist, slope, spawnZOff;
+
+    pos[VX] = source->pos[VX];
+    pos[VY] = source->pos[VY];
+    pos[VZ] = source->pos[VZ];
 
     // See which target is to be aimed at.
     angle = source->angle;
     slope = P_AimLineAttack(source, angle, 16 * 64);
     if(!cfg.noAutoAim)
-    {
         if(!lineTarget)
         {
             angle += 1 << 26;
@@ -1479,10 +1480,14 @@ void P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
                     tan(LOOKDIR2RAD(source->dPlayer->lookDir)) / 1.2f;
             }
         }
-    }
 
-    memcpy(pos, source->pos, sizeof(pos));
-    pos[VZ] += 4 * 8;
+    if(!P_IsCamera(source->player->plr->mo))
+        spawnZOff = cfg.plrViewHeight - 9 +
+                        source->player->plr->lookDir / 173;
+    else
+        spawnZOff = 0;
+
+    pos[VZ] += spawnZOff;
     pos[VZ] -= source->floorClip;
 
     th = P_SpawnMobj3fv(type, pos, angle);
@@ -1525,9 +1530,13 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t sourceAngle)
     mobj_t             *th;
     uint                an;
     angle_t             angle;
-    float               pos[3], slope;
+    float               pos[3], slope, spawnZOff;
     float               fangle =
         LOOKDIR2RAD(source->player->plr->lookDir), movfactor = 1;
+
+    pos[VX] = source->pos[VX];
+    pos[VY] = source->pos[VY];
+    pos[VZ] = source->pos[VZ];
 
     // See which target is to be aimed at.
     angle = sourceAngle;
@@ -1551,10 +1560,14 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t sourceAngle)
         }
     }
 
-    memcpy(pos, source->pos, sizeof(pos));
+    if(!P_IsCamera(source->player->plr->mo))
+        spawnZOff = cfg.plrViewHeight - 9 +
+                        source->player->plr->lookDir / 173;
+    else
+        spawnZOff = 0;
 
-    pos[VZ] += cfg.plrViewHeight - 24 +
-        FIX2FLT(((int) source->player->plr->lookDir) / 173);
+    pos[VZ] += spawnZOff;
+    pos[VZ] -= source->floorClip;
 
     th = P_SpawnMobj3fv(type, pos, angle);
 
