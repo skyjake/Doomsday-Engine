@@ -160,9 +160,6 @@ desc = Set camera viewlock.
 [lockmode]
 desc = Set camera viewlock mode.
 inf = Params: lockmode (0-1).
-
-[showhud]
-desc = Show the HUD if hidden.
     
 [movefloor]
 desc = Move a sector's floor plane.
@@ -197,24 +194,6 @@ desc = Show last HUD message.
 [message]
 desc = Show a local game message.
 inf = Params: message (msg)\nFor example, 'message "this is a message"'.
-
-[automap]
-desc = Show automap.
-
-[follow]
-desc = Toggle Follow mode in the automap.
-
-[rotate]
-desc = Toggle Rotate mode in the automap.
-    
-[addmark]
-desc = Add a mark in the automap.
-    
-[clearmarks]
-desc = Clear all marks in the automap.
-
-[zoommax]
-desc = Zoom out to the max in the automap.
 
 #
 # CONSOLE VARIABLES - JDOOM64 SPECIFIC

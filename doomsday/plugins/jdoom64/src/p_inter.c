@@ -829,7 +829,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         P_DropWeapon(target->player);
 
         // Don't die in auto map.
-        AM_Stop(target->player - players);
+        AM_Open(target->player - players, false);
     }
 
     if(target->health < -target->info->spawnHealth &&

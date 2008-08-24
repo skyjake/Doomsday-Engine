@@ -64,8 +64,6 @@
 
 void ST_Stop(void);
 
-DEFCC(CCmdHUDShow);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -136,12 +134,6 @@ cvar_t sthudCVars[] =
     {NULL}
 };
 
-// Console commands for the HUD/Status bar
-ccmd_t  sthudCCmds[] = {
-    {"showhud",     "",     CCmdHUDShow},
-    {NULL}
-};
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -153,8 +145,6 @@ void ST_Register(void)
 
     for(i = 0; sthudCVars[i].name; ++i)
         Con_AddVariable(sthudCVars + i);
-    for(i = 0; sthudCCmds[i].name; ++i)
-        Con_AddCommand(sthudCCmds + i);
 }
 
 /**
@@ -624,13 +614,4 @@ void ST_Stop(void)
 void ST_Init(void)
 {
     ST_loadData();
-}
-
-/**
- * Console command to show the hud if hidden.
- */
-DEFCC(CCmdHUDShow)
-{
-    ST_HUDUnHide(HUE_FORCE);
-    return true;
 }
