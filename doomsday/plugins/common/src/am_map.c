@@ -288,6 +288,7 @@ typedef struct automap_s {
     uint        numSpecialLines;
 
     vectorgrapname_t vectorGraphicForPlayer;
+    int         scissorState[5];
 
 // Automap window (screen space).
     automapwindow_t window;
@@ -363,8 +364,6 @@ void    M_MapKills(int option, void *data);
 void    M_MapItems(int option, void *data);
 void    M_MapSecrets(int option, void *data);
 
-DEFCC(CCmdMapAction);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void setWindowFullScreenMode(automap_t *map, int value);
@@ -428,16 +427,6 @@ cvar_t  mapCVars[] = {
     {NULL}
 };
 
-ccmd_t  mapCCmds[] = {
-    {"automap",     "", CCmdMapAction, CMDF_NO_DEDICATED},
-    {"follow",      "", CCmdMapAction, CMDF_NO_DEDICATED},
-    {"rotate",      "", CCmdMapAction, CMDF_NO_DEDICATED},
-    {"addmark",     "", CCmdMapAction, CMDF_NO_DEDICATED},
-    {"clearmarks",  "", CCmdMapAction, CMDF_NO_DEDICATED},
-    {"zoommax",     "", CCmdMapAction, CMDF_NO_DEDICATED},
-    {NULL}
-};
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static automap_t automaps[MAXPLAYERS];
@@ -478,8 +467,6 @@ static int their_colors[] = {
     AM_PLR8_COLOR
 };
 #endif
-
-static int scissorState[5];
 
 static int scrwidth = 0;    // real screen dimensions
 static int scrheight = 0;
@@ -639,8 +626,6 @@ void AM_Register(void)
 
     for(i = 0; mapCVars[i].name; ++i)
         Con_AddVariable(&mapCVars[i]);
-    for(i = 0; mapCCmds[i].name; ++i)
-        Con_AddCommand(&mapCCmds[i]);
 
     if(!IS_DEDICATED)
         AM_ListRegister();
@@ -879,9 +864,6 @@ void AM_InitForLevel(void)
     // Setup all players' maps.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->inGame)
-            continue;
-
         map = &automaps[i];
 
         setWindowFullScreenMode(map, true);
@@ -903,7 +885,7 @@ void AM_InitForLevel(void)
             AM_SetVectorGraphic(i, AMO_THINGPLAYER, VG_CHEATARROW);
 #endif
         // If the map has been left open from the previous level; close it.
-        AM_Stop(i);
+        AM_Open(i, false);
 
         // Reset position onto the follow player.
         if(players[map->followPlayer].plr->mo)
@@ -917,9 +899,9 @@ void AM_InitForLevel(void)
 /**
  * Start the automap.
  */
-void AM_Start(int pnum)
+void AM_Open(int pnum, boolean yes)
 {
-    automap_t          *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // nothing to do.
@@ -928,59 +910,62 @@ void AM_Start(int pnum)
         return;
 
     if(G_GetGameState() != GS_LEVEL)
-        return;  // Can't start the automap if player is not in a game!
-
-    map = &automaps[pnum];
-    if(map->active == true)
-        return; // Already active.
-
-    map->active = true;
-    AM_SetGlobalAlphaTarget(pnum, 1);
-
-    if(!players[map->followPlayer].plr->inGame)
-    {   // Set viewer target to the center of the map.
-        setViewTarget(map, (bounds[1][VX] - bounds[0][VX]) / 2,
-                            (bounds[1][VY] - bounds[0][VY]) / 2);
-        setViewAngleTarget(map, 0);
-    }
-    else
-    {   // The map's target player is available.
-        mobj_t *mo = players[map->followPlayer].plr->mo;
-
-        if(!(map->panMode && !map->cfg.panResetOnOpen))
-            setViewTarget(map, mo->pos[VX], mo->pos[VY]);
-
-        if(map->panMode && map->cfg.panResetOnOpen)
-        {
-            float       angle;
-
-            /* $unifiedangles */
-            if(map->rotate)
-                angle = mo->angle / (float) ANGLE_MAX * 360 - 90;
-            else
-                angle = 0;
-            setViewAngleTarget(map, angle);
-        }
-    }
-}
-
-/**
- * Stop the automap
- */
-void AM_Stop(int pnum)
-{
-    automap_t          *map;
-
-    if(IS_DEDICATED)
-        return; // nothing to do.
-
-    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->inGame)
         return;
 
     map = &automaps[pnum];
+    if(yes)
+    {
+        if(map->active)
+            return; // Already active.
 
-    map->active = false;
-    AM_SetGlobalAlphaTarget(pnum, 0);
+        DD_Execute(true, "activatebclass map");
+        if(map->panMode)
+            DD_Execute(true, "activatebclass map-freepan");
+
+        viewActive = false;
+
+        map->active = true;
+        AM_SetGlobalAlphaTarget(pnum, 1);
+
+        if(!players[map->followPlayer].plr->inGame)
+        {   // Set viewer target to the center of the map.
+            setViewTarget(map, (bounds[1][VX] - bounds[0][VX]) / 2,
+                                (bounds[1][VY] - bounds[0][VY]) / 2);
+            setViewAngleTarget(map, 0);
+        }
+        else
+        {   // The map's target player is available.
+            mobj_t*             mo = players[map->followPlayer].plr->mo;
+
+            if(!(map->panMode && !map->cfg.panResetOnOpen))
+                setViewTarget(map, mo->pos[VX], mo->pos[VY]);
+
+            if(map->panMode && map->cfg.panResetOnOpen)
+            {
+                float               angle;
+
+                /* $unifiedangles */
+                if(map->rotate)
+                    angle = mo->angle / (float) ANGLE_MAX * 360 - 90;
+                else
+                    angle = 0;
+                setViewAngleTarget(map, angle);
+            }
+        }
+    }
+    else
+    {
+        if(!map->active)
+            return; // Already closed.
+
+        map->active = false;
+        AM_SetGlobalAlphaTarget(pnum, 0);
+
+        viewActive = true;
+
+        DD_Execute(true, "deactivatebclass map");
+        DD_Execute(true, "deactivatebclass map-freepan");
+    }
 }
 
 /**
@@ -988,7 +973,7 @@ void AM_Stop(int pnum)
  */
 float AM_MapToFrame(int pid, float val)
 {
-    automap_t          *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         Con_Error("AM_MapToFrame: Not available in dedicated mode.");
@@ -1005,7 +990,7 @@ float AM_MapToFrame(int pid, float val)
  */
 float AM_FrameToMap(int pid, float val)
 {
-    automap_t          *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         Con_Error("AM_MapToFrame: Not available in dedicated mode.");
@@ -1019,7 +1004,7 @@ float AM_FrameToMap(int pid, float val)
 
 static void setWindowTarget(automap_t *map, int x, int y, int w, int h)
 {
-    automapwindow_t    *win;
+    automapwindow_t*    win;
 
     // Are we in fullscreen mode?
     // If so, setting the window size is not allowed.
@@ -1048,7 +1033,7 @@ static void setWindowTarget(automap_t *map, int x, int y, int w, int h)
 
 void AM_SetWindowTarget(int pid, int x, int y, int w, int h)
 {
-    automap_t          *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1061,7 +1046,7 @@ void AM_SetWindowTarget(int pid, int x, int y, int w, int h)
 
 void AM_GetWindow(int pid, float *x, float *y, float *w, float *h)
 {
-    automap_t          *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         Con_Error("AM_GetWindow: Not available in dedicated mode.");
@@ -1086,7 +1071,7 @@ static void setWindowFullScreenMode(automap_t *map, int value)
 
 void AM_SetWindowFullScreenMode(int pid, int value)
 {
-    automap_t          *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1107,7 +1092,7 @@ Con_Error("AM_SetFullScreenMode: Unknown value %i.", value);
 
 boolean AM_IsMapWindowInFullScreenMode(int pid)
 {
-    automap_t          *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         Con_Error("AM_IsMapWindowInFullScreenMode: Not available in dedicated mode.");
@@ -1118,7 +1103,7 @@ boolean AM_IsMapWindowInFullScreenMode(int pid)
     return map->fullScreenMode;
 }
 
-static void setViewTarget(automap_t *map, float x, float y)
+static void setViewTarget(automap_t* map, float x, float y)
 {
     // Already at this target?
     if(x == map->targetViewX && y == map->targetViewY)
@@ -1138,7 +1123,7 @@ static void setViewTarget(automap_t *map, float x, float y)
 
 void AM_SetViewTarget(int pid, float x, float y)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1149,9 +1134,9 @@ void AM_SetViewTarget(int pid, float x, float y)
     setViewTarget(map, x, y);
 }
 
-void AM_GetViewPosition(int pid, float *x, float *y)
+void AM_GetViewPosition(int pid, float* x, float* y)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         Con_Error("AM_GetViewPosition: Not available in dedicated mode.");
@@ -1169,7 +1154,7 @@ void AM_GetViewPosition(int pid, float *x, float *y)
  */
 float AM_ViewAngle(int pid)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         Con_Error("AM_ViewAngle: Not available in dedicated mode.");
@@ -1181,7 +1166,7 @@ float AM_ViewAngle(int pid)
     return map->angle;
 }
 
-static void setViewScaleTarget(automap_t *map, float scale)
+static void setViewScaleTarget(automap_t* map, float scale)
 {
     scale = MINMAX_OF(map->minScaleMTOF, scale, map->maxScaleMTOF);
 
@@ -1198,7 +1183,7 @@ static void setViewScaleTarget(automap_t *map, float scale)
 
 void AM_SetViewScaleTarget(int pid, float scale)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1209,7 +1194,7 @@ void AM_SetViewScaleTarget(int pid, float scale)
     setViewScaleTarget(map, scale);
 }
 
-static void setViewAngleTarget(automap_t *map, float angle)
+static void setViewAngleTarget(automap_t* map, float angle)
 {
     // Already at this target?
     if(angle == map->targetAngle)
@@ -1224,7 +1209,7 @@ static void setViewAngleTarget(automap_t *map, float angle)
 
 void AM_SetViewAngleTarget(int pid, float angle)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1240,7 +1225,7 @@ void AM_SetViewAngleTarget(int pid, float angle)
  */
 boolean AM_IsMapActive(int pid)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return false;
@@ -1251,14 +1236,14 @@ boolean AM_IsMapActive(int pid)
     return map->active;
 }
 
-static void setViewRotateMode(automap_t *map, boolean on)
+static void setViewRotateMode(automap_t* map, boolean on)
 {
     map->rotate = on;
 }
 
-void AM_SetViewRotateMode(int pid, boolean on)
+void AM_SetViewRotate(int pid, int offOnToggle)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1266,7 +1251,16 @@ void AM_SetViewRotateMode(int pid, boolean on)
     map = mapForPlayerId(pid);
     if(!map)
         return;
-    setViewRotateMode(map, on);
+
+    if(offOnToggle == 2)
+        cfg.automapRotate = !cfg.automapRotate;
+    else
+        cfg.automapRotate = (offOnToggle? true : false);
+
+    setViewRotateMode(map, cfg.automapRotate);
+
+    P_SetMessage(&players[pid], (map->rotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF),
+                 false);
 }
 
 /**
@@ -1278,7 +1272,7 @@ void AM_SetViewRotateMode(int pid, boolean on)
  */
 void AM_UpdateLinedef(int pid, uint lineIdx, boolean visible)
 {
-    xline_t            *xline;
+    xline_t*            xline;
 
     if(pid < 0 || pid >= MAXPLAYERS)
         return;
@@ -1290,9 +1284,9 @@ void AM_UpdateLinedef(int pid, uint lineIdx, boolean visible)
     xline->mapped[pid] = visible;
 }
 
-static void clearMarks(automap_t *map)
+static void clearMarks(automap_t* map)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < NUMMARKPOINTS; ++i)
         map->markpointsUsed[i] = false;
@@ -1304,7 +1298,7 @@ static void clearMarks(automap_t *map)
  */
 void AM_ClearMarks(int pid)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1312,15 +1306,19 @@ void AM_ClearMarks(int pid)
     map = mapForPlayerId(pid);
     if(!map)
         return;
+
     clearMarks(map);
+
+    P_SetMessage(&players[pid], AMSTR_MARKSCLEARED, false);
+    Con_Printf("All markers cleared on automap.\n");
 }
 
 /**
  * Adds a marker at the current location
  */
-static int addMark(automap_t *map, float x, float y)
+static int addMark(automap_t* map, float x, float y)
 {
-    int         num = map->markpointnum;
+    int             num = map->markpointnum;
 
     map->markpoints[num].pos[VX] = x;
     map->markpoints[num].pos[VY] = y;
@@ -1328,12 +1326,11 @@ static int addMark(automap_t *map, float x, float y)
     map->markpointsUsed[num] = true;
     map->markpointnum = (map->markpointnum + 1) % NUMMARKPOINTS;
 
-#if _DEBUG
+/*#if _DEBUG
 Con_Message("Added mark point %i to map at X=%g Y=%g\n",
-            num,
-            map->markpoints[num].pos[VX],
+            num, map->markpoints[num].pos[VX],
             map->markpoints[num].pos[VY]);
-#endif
+#endif*/
 
     return num;
 }
@@ -1343,7 +1340,9 @@ Con_Message("Added mark point %i to map at X=%g Y=%g\n",
  */
 int AM_AddMark(int pid, float x, float y)
 {
-    automap_t *map;
+    static char         buffer[20];
+    automap_t*          map;
+    int                 newMark;
 
     if(IS_DEDICATED)
         Con_Error("AM_AddMark: Not available in dedicated mode.");
@@ -1351,7 +1350,62 @@ int AM_AddMark(int pid, float x, float y)
     map = mapForPlayerId(pid);
     if(!map)
         return -1;
-    return addMark(map, x, y);
+
+    newMark = addMark(map, x, y);
+    if(newMark != -1)
+    {
+        sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, newMark);
+        P_SetMessage(&players[pid], buffer, false);
+    }
+
+    return newMark;
+}
+
+/**
+ * Toggles between active and max zoom.
+ */
+void AM_ToggleZoomMax(int pid)
+{
+    automap_t*          map;
+
+    if(IS_DEDICATED)
+        Con_Error("AM_ToggleZoomMax: Not available in dedicated mode.");
+
+    map = mapForPlayerId(pid);
+    if(!map)
+        return;
+
+    // When switching to max scale mode, store the old scale.
+    if(!map->maxScale)
+        map->priorToMaxScale = map->viewScale;
+
+    map->maxScale = !map->maxScale;
+    setViewScaleTarget(map, (map->maxScale? 0 : map->priorToMaxScale));
+
+    Con_Printf("Maximum zoom %s in automap.\n", map->maxScale? "ON":"OFF");
+}
+
+/**
+ * Toggles follow mode.
+ */
+void AM_ToggleFollow(int pid)
+{
+    automap_t*          map;
+
+    if(IS_DEDICATED)
+        Con_Error("AM_ToggleFollow: Not available in dedicated mode.");
+
+    map = mapForPlayerId(pid);
+    if(!map)
+        return;
+
+    map->panMode = !map->panMode;
+
+    // Enable/disable the pan mode binding class
+    DD_Executef(true, "%sactivatebclass map-freepan", !map->panMode? "de" : "");
+
+    P_SetMessage(&players[pid],
+                 (map->panMode ? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), false);
 }
 
 /**
@@ -1362,7 +1416,7 @@ int AM_AddMark(int pid, float x, float y)
  */
 void AM_SetGlobalAlphaTarget(int pid, float alpha)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1378,7 +1432,7 @@ void AM_SetGlobalAlphaTarget(int pid, float alpha)
  */
 float AM_GlobalAlpha(int pid)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         Con_Error("AM_GlobalAlpha: Not available in dedicated mode.");
@@ -1391,8 +1445,8 @@ float AM_GlobalAlpha(int pid)
 
 void AM_SetColor(int pid, int objectname, float r, float g, float b)
 {
-    automap_t *map;
-    mapobjectinfo_t *info;
+    automap_t*          map;
+    mapobjectinfo_t*    info;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1451,10 +1505,10 @@ void AM_SetColor(int pid, int objectname, float r, float g, float b)
     info->rgba[2] = b;
 }
 
-void AM_GetColor(int pid, int objectname, float *r, float *g, float *b)
+void AM_GetColor(int pid, int objectname, float* r, float* g, float* b)
 {
-    automap_t *map;
-    mapobjectinfo_t *info;
+    automap_t*          map;
+    mapobjectinfo_t*    info;
 
     if(IS_DEDICATED)
         Con_Error("AM_GetColor: Not available in dedicated mode.");
@@ -1512,8 +1566,8 @@ void AM_GetColor(int pid, int objectname, float *r, float *g, float *b)
 void AM_SetColorAndAlpha(int pid, int objectname, float r, float g, float b,
                          float a)
 {
-    automap_t *map;
-    mapobjectinfo_t *info;
+    automap_t*          map;
+    mapobjectinfo_t*    info;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1575,11 +1629,11 @@ void AM_SetColorAndAlpha(int pid, int objectname, float r, float g, float b,
     info->rgba[3] = a;
 }
 
-void AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
-                         float *b, float *a)
+void AM_GetColorAndAlpha(int pid, int objectname, float* r, float* g,
+                         float* b, float* a)
 {
-    automap_t *map;
-    mapobjectinfo_t *info;
+    automap_t*          map;
+    mapobjectinfo_t*    info;
 
     if(IS_DEDICATED)
         Con_Error("AM_GetColorAndAlpha: Not available in dedicated mode.");
@@ -1638,8 +1692,8 @@ void AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
 
 void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
 {
-    automap_t *map;
-    mapobjectinfo_t *info;
+    automap_t*          map;
+    mapobjectinfo_t*    info;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1686,8 +1740,8 @@ void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
 void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
                 float alpha, boolean canScale)
 {
-    automap_t *map;
-    mapobjectinfo_t *info;
+    automap_t*          map;
+    mapobjectinfo_t*    info;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1738,7 +1792,7 @@ void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
 
 void AM_SetVectorGraphic(int pid, int objectname, int vgname)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1770,9 +1824,9 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
                             glowtype_t glowType, float glowAlpha,
                             float glowWidth, boolean scaleGlowWithView)
 {
-    uint        i;
-    automap_t  *map;
-    automapspecialline_t *line, *p;
+    uint                i;
+    automap_t*          map;
+    automapspecialline_t* line, *p;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1828,7 +1882,7 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
 
 void AM_SetCheatLevel(int pid, int level)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1857,7 +1911,7 @@ void AM_SetCheatLevel(int pid, int level)
 
 void AM_IncMapCheatLevel(int pid)
 {
-    automap_t *map;
+    automap_t*          map;
 
     if(IS_DEDICATED)
         return; // Just ignore.
@@ -1884,8 +1938,8 @@ void AM_IncMapCheatLevel(int pid)
  */
 static void findMinMaxBoundaries(void)
 {
-    uint        i;
-    float       pos[2];
+    uint                i;
+    float               pos[2];
 
     bounds[0][0] = bounds[0][1] = DDMAXFLOAT;
     bounds[1][0] = bounds[1][1] = -DDMAXFLOAT;
@@ -1913,8 +1967,8 @@ static void findMinMaxBoundaries(void)
 void AM_LoadData(void)
 {
 #if !__JDOOM64__
-    int         i;
-    char        namebuf[9];
+    int                 i;
+    char                namebuf[9];
 #endif
 
     if(IS_DEDICATED)
@@ -1964,18 +2018,18 @@ void AM_UnloadData(void)
 /**
  * Animates an automap view window towards the target values.
  */
-static void mapWindowTicker(automap_t *map)
+static void mapWindowTicker(automap_t* map)
 {
-    float       newX, newY, newWidth, newHeight;
-    automapwindow_t *win;
+    float               newX, newY, newWidth, newHeight;
+    automapwindow_t*    win;
 
     if(!map)
         return; // hmm...
 
     win = &map->window;
-
     // Get the view window dimensions.
     R_GetViewWindow(&newX, &newY, &newWidth, &newHeight);
+
     // Scale to screen space.
     newX = FIXXTOSCREENX(newX);
     newY = FIXYTOSCREENY(newY);
@@ -1983,7 +2037,7 @@ static void mapWindowTicker(automap_t *map)
     newHeight = FIXYTOSCREENY(newHeight);
 
     if(newX != win->x || newY != win->y ||
-       newWidth != win->height || newHeight != win->width)
+       newWidth != win->width || newHeight != win->height)
     {
         if(map->fullScreenMode)
         {
@@ -2032,7 +2086,7 @@ static void mapWindowTicker(automap_t *map)
     }
 }
 
-static void addToBoxf(float *box, float x, float y)
+static void addToBoxf(float* box, float x, float y)
 {
     if(x < box[BOXLEFT])
         box[BOXLEFT] = x;
@@ -2047,24 +2101,32 @@ static void addToBoxf(float *box, float x, float y)
 /**
  * Called each tic for each player's automap if they are in-game.
  */
-static void mapTicker(automap_t *map)
+static void mapTicker(automap_t* map)
 {
 #define MAPALPHA_FADE_STEP .07
 
-    int         playerNum = map - automaps;
-    float       diff = 0;
-    float       width, height, scale;
-    float       panX[2], panY[2];
-    float       zoomVel;
-    float       zoomSpeed;
-    mobj_t     *mo = players[map->followPlayer].plr->mo;
+    int             playerNum;
+    float           diff = 0;
+    float           width, height, scale;
+    float           panX[2], panY[2];
+    float           zoomVel;
+    float           zoomSpeed;
+    player_t*       mapPlayer;
+    mobj_t*         mo;
+
+    if(!map)
+        return;
+
+    playerNum = map - automaps;
+    mapPlayer = &players[playerNum];
+    mo = players[map->followPlayer].plr->mo;
 
     // Check the state of the controls. Done here so that offsets don't accumulate
     // unnecessarily, as they would, if left unread.
     P_GetControlState(playerNum, CTL_MAP_PAN_X, &panX[0], &panX[1]);
     P_GetControlState(playerNum, CTL_MAP_PAN_Y, &panY[0], &panY[1]);
 
-    if(!map)
+    if(!((mapPlayer->plr->flags & DDPF_LOCAL) && mapPlayer->plr->inGame))
         return;
 
     // Move towards the target alpha level for the automap.
@@ -2180,9 +2242,9 @@ static void mapTicker(automap_t *map)
     }
     else
     {
-        float       diff;
-        float       startAngle = map->oldAngle;
-        float       endAngle = map->targetAngle;
+        float               diff;
+        float               startAngle = map->oldAngle;
+        float               endAngle = map->targetAngle;
 
         if(endAngle > startAngle)
         {
@@ -2280,9 +2342,6 @@ void AM_Ticker(void)
     // All maps get to tick if their player is in-game.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->inGame)
-            continue;
-
         mapTicker(&automaps[i]);
     }
 }
@@ -3025,8 +3084,8 @@ static void setupGLStateForMap(void)
 */
     // check for scissor box (to clip the map lines and stuff).
     // Store the old scissor state.
-    DGL_GetIntegerv(DGL_SCISSOR_TEST, scissorState);
-    DGL_GetIntegerv(DGL_SCISSOR_BOX, scissorState + 1);
+    DGL_GetIntegerv(DGL_SCISSOR_TEST, map->scissorState);
+    DGL_GetIntegerv(DGL_SCISSOR_BOX, map->scissorState + 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -3196,10 +3255,10 @@ static void setupGLStateForMap(void)
 
     // Rotate map?
     DGL_Translatef(win->x + (win->width / 2.0f),
-                  win->y + (win->height / 2.0f), 0);
+                   win->y + (win->height / 2.0f), 0);
     DGL_Rotatef(map->angle, 0, 0, 1);
     DGL_Translatef(-(win->x + (win->width / 2.0f)),
-                  -(win->y + (win->height /2.0f)), 0);
+                   -(win->y + (win->height /2.0f)), 0);
 }
 
 /**
@@ -3207,14 +3266,16 @@ static void setupGLStateForMap(void)
  */
 static void restoreGLStateFromMap(void)
 {
+    automap_t*          map = &automaps[mapviewplayer];
+
     // Return to the normal GL state.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    if(!scissorState[0])
+    if(!map->scissorState[0])
         DGL_Disable(DGL_SCISSOR_TEST);
-    DGL_Scissor(scissorState[1], scissorState[2], scissorState[3],
-               scissorState[4]);
+    DGL_Scissor(map->scissorState[1], map->scissorState[2], map->scissorState[3],
+                map->scissorState[4]);
 }
 
 /**
@@ -3292,9 +3353,9 @@ static void drawLevelName(void)
 
 static void renderVertexes(void)
 {
-    uint        i;
-    automap_t  *map = &automaps[mapviewplayer];
-    float       v[2];
+    uint                i;
+    automap_t*          map = &automaps[mapviewplayer];
+    float               v[2];
 
     for(i = 0; i < numvertexes; ++i)
     {
@@ -3314,18 +3375,22 @@ static void renderVertexes(void)
  */
 void AM_Drawer(int viewplayer)
 {
-    automap_t *map;
+    automap_t*          map;
+    player_t*           mapPlayer;
 
     if(IS_DEDICATED)
         return; // Nothing to do.
 
-    if(viewplayer < 0 || viewplayer >= MAXPLAYERS ||
-       !players[viewplayer].plr->inGame)
+    if(viewplayer < 0 || viewplayer >= MAXPLAYERS)
         return;
 
     mapviewplayer = viewplayer;
-    map = &automaps[mapviewplayer];
+    mapPlayer = &players[mapviewplayer];
 
+    if(!((mapPlayer->plr->flags & DDPF_LOCAL) && mapPlayer->plr->inGame))
+        return;
+
+    map = &automaps[mapviewplayer];
     if(!(map->alpha > 0))
         return;
 
@@ -3629,140 +3694,4 @@ void M_MapSecrets(int option, void *data)
         op = 3;
     cfg.counterCheat &= ~0x24;
     cfg.counterCheat |= ((op & 0x1) << 2) | ((op & 0x2) << 4);
-}
-
-/**
- * Handle the console commands for the automap
- */
-DEFCC(CCmdMapAction)
-{
-    static char buffer[20];
-
-    if(G_GetGameState() != GS_LEVEL)
-    {
-        Con_Printf("The automap is only available when in-game.\n");
-        return false;
-    }
-
-    if(!stricmp(argv[0], "automap")) // open/close the map.
-    {
-        automap_t   *map = &automaps[CONSOLEPLAYER];
-
-        if(map->active) // Is open, now close it.
-        {
-            viewActive = true;
-
-            // Disable the automap binding classes
-            //DD_SetBindClass(GBC_CLASS1, false);
-            //if(map->panMode)
-            //    DD_SetBindClass(GBC_CLASS2, false);
-
-            DD_Execute(true, "deactivatebclass map");
-            DD_Execute(true, "deactivatebclass map-freepan");
-
-            AM_Stop(CONSOLEPLAYER);
-        }
-        else // Is closed, now open it.
-        {
-            AM_Start(CONSOLEPLAYER);
-            // Enable/disable the automap binding classes
-            //DD_SetBindClass(GBC_CLASS1, true);
-            //if(map->panMode)
-            //    DD_SetBindClass(GBC_CLASS2, true);
-
-            DD_Execute(true, "activatebclass map");
-            if(map->panMode)
-                DD_Execute(true, "activatebclass map-freepan");
-
-            viewActive = false;
-        }
-
-        return true;
-    }
-    else if(!stricmp(argv[0], "follow"))  // follow mode toggle
-    {
-        player_t    *plr = &players[CONSOLEPLAYER];
-        automap_t   *map = &automaps[CONSOLEPLAYER];
-
-        if(map->active)
-        {
-            map->panMode = !map->panMode;
-
-            // Enable/disable the pan mode binding class
-            //DD_SetBindClass(GBC_CLASS2, map->panMode);
-            DD_Executef(true, "%sactivatebclass map-freepan", !map->panMode? "de" : "");
-
-            P_SetMessage(plr, (map->panMode ? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), false);
-            Con_Printf("Follow mode toggle.\n");
-            return true;
-        }
-    }
-    else if(!stricmp(argv[0], "rotate"))  // rotate mode toggle
-    {
-        player_t    *plr = &players[CONSOLEPLAYER];
-        automap_t   *map = &automaps[CONSOLEPLAYER];
-
-        if(map->active)
-        {
-            cfg.automapRotate = !cfg.automapRotate;
-            setViewRotateMode(map, cfg.automapRotate);
-
-            P_SetMessage(plr, (map->rotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF),
-                         false);
-            Con_Printf("Rotate mode toggle.\n");
-            return true;
-        }
-    }
-    else if(!stricmp(argv[0], "zoommax"))  // max zoom
-    {
-        player_t    *plr = &players[CONSOLEPLAYER];
-        automap_t   *map = &automaps[CONSOLEPLAYER];
-
-        if(map->active)
-        {
-            // When switching to max scale mode, store the old scale.
-            if(!map->maxScale)
-                map->priorToMaxScale = map->viewScale;
-
-            map->maxScale = !map->maxScale;
-            setViewScaleTarget(map, (map->maxScale? 0 : map->priorToMaxScale));
-
-            Con_Printf("Maximum zoom %s in automap.\n", map->maxScale? "ON":"OFF");
-            return true;
-        }
-    }
-    else if(!stricmp(argv[0], "addmark"))  // add a mark
-    {
-        player_t   *plr = &players[CONSOLEPLAYER];
-        automap_t  *map = &automaps[CONSOLEPLAYER];
-        uint        num;
-
-        if(map->active)
-        {
-            num = addMark(map, plr->plr->mo->pos[VX],
-                               plr->plr->mo->pos[VY]);
-            if(num != -1)
-            {
-                sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, num);
-                P_SetMessage(plr, buffer, false);
-            }
-            return true;
-        }
-    }
-    else if(!stricmp(argv[0], "clearmarks"))  // clear all marked points
-    {
-        player_t    *plr = &players[CONSOLEPLAYER];
-        automap_t   *map = &automaps[CONSOLEPLAYER];
-
-        if(map->active)
-        {
-            clearMarks(map);
-
-            P_SetMessage(plr, AMSTR_MARKSCLEARED, false);
-            Con_Printf("All markers cleared on automap.\n");
-            return true;
-        }
-    }
-
-    return false;
 }
