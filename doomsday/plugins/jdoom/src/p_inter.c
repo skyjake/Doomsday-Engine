@@ -329,6 +329,7 @@ boolean P_GivePower(player_t *player, int power)
     // Maybe unhide the HUD?
     if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+
     return true;
 }
 
@@ -829,33 +830,28 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
-void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damage)
-{
-    P_DamageMobj2(target, inflictor, source, damage, false);
-}
-
 /**
- * Damage a mobj (both enemies and players).
+ * Damages both enemies and players.
  *
- * Source and inflictor are the same for melee attacks.
- * Source can be NULL for slime, barrel explosions and other environmental
- * stuff.
- *
- * @param inflictor     The mobj that caused the damage (monster or missle)
- *                      can be NULL (slime, etc).
- * @param source        The mobj to target after taking damage or NULL.
+ * @param inflictor     Mobj that caused the damage creature or missile,
+ *                      can be NULL (slime, etc)
+ * @param source        Mobj to target after taking damage. Can be @c NULL
+ *                      for barrel explosions and other environmental stuff.
+ *                      Source and inflictor are the same for melee attacks.
+ * @return              Actual amount of damage done.
  */
-void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                   int damageP, boolean stomping)
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
 {
-    uint                an;
     angle_t             angle;
-    int                 saved;
-    player_t           *player;
-    float               thrust;
-    int                 temp;
-    int                 damage;
+    int                 saved, originalHealth;
+    player_t*           player;
+    int                 temp, damage;
+
+    if(!target)
+        return 0; // Wha?
+
+    originalHealth = target->health;
 
     // The actual damage (== damageP * netMobDamageModifier for any
     // non-player mobj).
@@ -864,18 +860,35 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     if(IS_NETGAME && !stomping &&
        D_NetDamageMobj(target, inflictor, source, damage))
     {   // We're done here.
-        return;
+        return 0;
     }
 
     // Clients can't harm anybody.
     if(IS_CLIENT)
-        return;
+        return 0;
 
     if(!(target->flags & MF_SHOOTABLE))
-        return; // Shouldn't happen...
+        return 0; // Shouldn't happen...
 
     if(target->health <= 0)
-        return;
+        return 0;
+
+    if(target->player)
+    {   // Player specific.
+        // Check if player-player damage is disabled.
+        if(source && source->player && source->player != target->player)
+        {
+            // Co-op damage disabled?
+            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+                return 0;
+
+            // Same color, no damage?
+            if(cfg.noTeamDamage &&
+               cfg.playerColor[target->player - players] ==
+               cfg.playerColor[source->player - players])
+                return 0;
+        }
+    }
 
     if(target->flags & MF_SKULLFLY)
     {
@@ -897,15 +910,17 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     }
 
     // Some close combat weapons should not inflict thrust and push the
-    // victim out of reach, thus kick away unless using the chainsaw.
+    // victim out of reach, thus kick away unless using a melee weapon.
     if(inflictor && !(target->flags & MF_NOCLIP) &&
        (!source || !source->player ||
         source->player->readyWeapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
-        angle =
-            R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
-                            target->pos[VX], target->pos[VY]);
+        uint                an;
+        float               thrust;
+
+        angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
+                                target->pos[VX], target->pos[VY]);
 
         thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
@@ -928,26 +943,12 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         // $dropoff_fix: thrust objects hanging off ledges.
-        if(target->intFlags & MIF_FALLING && target->gear >= MAXGEAR)
+        if((target->intFlags & MIF_FALLING) && target->gear >= MAXGEAR)
             target->gear = 0;
     }
 
     if(player)
     {   // Player specific.
-        // Check if player-player damage is disabled.
-        if(source && source->player && source->player != player)
-        {
-            // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
-                return;
-
-            // Same color, no damage?
-            if(cfg.noTeamDamage &&
-               cfg.playerColor[player - players] ==
-               cfg.playerColor[source->player - players])
-                return;
-        }
-
         // End of game hell hack.
         if(P_ToXSectorOfSubsector(target->subsector)->special == 11 &&
            damage >= target->health)
@@ -961,7 +962,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
            ((P_GetPlayerCheats(player) & CF_GODMODE) ||
             player->powers[PT_INVULNERABILITY]))
         {
-            return;
+            return 0;
         }
 
         if(player->armorType)
@@ -985,11 +986,11 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         player->health -= damage;
         if(player->health < 0)
             player->health = 0;
+
         player->update |= PSF_HEALTH;
-
         player->attacker = source;
-        player->damageCount += damage; // Add damage after armor / invuln.
 
+        player->damageCount += damage; // Add damage after armor / invuln.
         if(player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
@@ -1006,32 +1007,40 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
     // Do the damage.
     target->health -= damage;
-    if(target->health <= 0)
-    {
+    if(target->health > 0)
+    {   // Still alive, phew!
+        if((P_Random() < target->info->painChance) &&
+           !(target->flags & MF_SKULLFLY))
+        {
+            target->flags |= MF_JUSTHIT; // Fight back!
+
+            P_MobjChangeState(target, target->info->painState);
+        }
+
+        target->reactionTime = 0; // We're awake now...
+
+        if(source &&
+           ((!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) || target->type == MT_VILE) &&
+           source != target && source->type != MT_VILE)
+        {
+            // Target mobj is not intent on another mobj, so make it chase
+            // after the source of the damage.
+            target->target = source;
+            target->threshold = BASETHRESHOLD;
+
+            if(target->state == &states[target->info->spawnState] &&
+               target->info->seeState != S_NULL)
+            {
+                P_MobjChangeState(target, target->info->seeState);
+            }
+        }
+    }
+    else
+    {   // Death.
         P_KillMobj(source, target, stomping);
-        return;
     }
 
-    if((P_Random() < target->info->painChance) &&
-       !(target->flags & MF_SKULLFLY))
-    {
-        target->flags |= MF_JUSTHIT; // Fight back!
+    return originalHealth - target->health;
 
-        P_MobjChangeState(target, target->info->painState);
-    }
-
-    target->reactionTime = 0; // We're awake now...
-
-    if(source &&
-       ((!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) || target->type == MT_VILE) &&
-       source != target && source->type != MT_VILE)
-    {
-        // If not intent on another player, chase after this one.
-        target->target = source;
-        target->threshold = BASETHRESHOLD;
-
-        if(target->state == &states[target->info->spawnState] &&
-           target->info->seeState != S_NULL)
-            P_MobjChangeState(target, target->info->seeState);
-    }
+#undef BASETHRESHOLD
 }

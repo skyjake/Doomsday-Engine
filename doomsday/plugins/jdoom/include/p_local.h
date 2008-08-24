@@ -112,10 +112,8 @@ void        P_SpawnPlayer(spawnspot_t* mthing, int pnum);
 
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 
-void        P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                         int damage);
-void        P_DamageMobj2(mobj_t* target, mobj_t* inflictor,
-                          mobj_t* source, int damage, boolean stomping);
+int         P_DamageMobj(mobj_t* target, mobj_t* inflictor,
+                         mobj_t* source, int damage, boolean stomping);
 
 void        P_ExplodeMissile(mobj_t* mo);
 

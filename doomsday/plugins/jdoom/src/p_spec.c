@@ -744,7 +744,7 @@ void P_PlayerInSpecialSector(player_t *player)
         if(!player->powers[PT_IRONFEET])
         {
             if(!(levelTime & 0x1f))
-                P_DamageMobj(player->plr->mo, NULL, NULL, 10);
+                P_DamageMobj(player->plr->mo, NULL, NULL, 10, false);
         }
         break;
 
@@ -753,7 +753,7 @@ void P_PlayerInSpecialSector(player_t *player)
         if(!player->powers[PT_IRONFEET])
         {
             if(!(levelTime & 0x1f))
-                P_DamageMobj(player->plr->mo, NULL, NULL, 5);
+                P_DamageMobj(player->plr->mo, NULL, NULL, 5, false);
         }
         break;
 
@@ -764,7 +764,7 @@ void P_PlayerInSpecialSector(player_t *player)
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
             if(!(levelTime & 0x1f))
-                P_DamageMobj(player->plr->mo, NULL, NULL, 20);
+                P_DamageMobj(player->plr->mo, NULL, NULL, 20, false);
         }
         break;
 
@@ -784,7 +784,7 @@ void P_PlayerInSpecialSector(player_t *player)
         player->cheats &= ~CF_GODMODE;
 
         if(!(levelTime & 0x1f))
-            P_DamageMobj(player->plr->mo, NULL, NULL, 20);
+            P_DamageMobj(player->plr->mo, NULL, NULL, 20, false);
 
         if(player->health <= 10)
             G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
