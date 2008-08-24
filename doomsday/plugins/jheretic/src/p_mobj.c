@@ -1219,6 +1219,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->lookDir = 0;
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    p->jumpTics = 0;
     mobj->player = p;
     mobj->dPlayer = p->plr;
     mobj->health = p->health;
@@ -1676,7 +1677,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
                 }
             }
 
-        if(!(source->player->plr->flags & DDPF_CAMERA))
+        if(!P_IsCamera(source->player->plr->mo))
             spawnZOff = cfg.plrViewHeight - 9 +
                    (source->player->plr->lookDir) / 173;
     }

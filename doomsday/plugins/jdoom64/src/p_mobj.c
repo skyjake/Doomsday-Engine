@@ -695,34 +695,6 @@ void P_NightmareRespawn(mobj_t* mobj)
     P_MobjRemove(mobj, true);
 }
 
-/**
- * d64tc
- */
-void P_FloatThingy(mobj_t *actor)
-{
-    float               minz, maxz;
-
-    if(actor->threshold || (actor->flags & MF_INFLOAT))
-        return;
-
-    maxz = actor->ceilingZ - 16 - actor->height;
-    minz = actor->floorZ + 96;
-
-    if(minz > maxz)
-        minz = maxz;
-
-    if(minz < actor->pos[VZ])
-    {
-        actor->mom[MZ] -= 1;
-    }
-    else
-    {
-        actor->mom[MZ] += 1;
-    }
-
-    actor->reactionTime = (minz == actor->pos[VZ]? 4 : 0);
-}
-
 void P_MobjThinker(mobj_t *mobj)
 {
     if(mobj->ddFlags & DDMF_REMOTE)
@@ -1143,6 +1115,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    p->jumpTics = 0;
     mobj->player = p;
     mobj->dPlayer = p->plr;
     mobj->health = p->health;
@@ -1474,9 +1447,9 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 /**
  * Tries to aim at a nearby monster
  */
-void P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
+void P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
 {
-    mobj_t             *th;
+    mobj_t*             th;
     uint                an;
     angle_t             angle;
     float               pos[3];
@@ -1547,7 +1520,7 @@ void P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
  *       butchered...
  * FIXME: Make sure this still works correctly.
  */
-mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t sourceAngle)
+mobj_t* P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t sourceAngle)
 {
     mobj_t             *th;
     uint                an;

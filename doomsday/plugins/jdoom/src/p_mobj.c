@@ -1054,6 +1054,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     p->refire = 0;
     p->damageCount = 0;
     p->bonusCount = 0;
+    p->jumpTics = 0;
     p->plr->extraLight = 0;
     p->plr->fixedColorMap = 0;
     p->plr->lookDir = 0;
@@ -1348,7 +1349,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
                 }
             }
 
-        if(!(source->player->plr->flags & DDPF_CAMERA))
+        if(!P_IsCamera(source->player->plr->mo))
             spawnZOff = cfg.plrViewHeight - 9 +
                             source->player->plr->lookDir / 173;
     }
