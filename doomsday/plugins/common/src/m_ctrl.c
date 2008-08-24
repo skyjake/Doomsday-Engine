@@ -602,13 +602,14 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
 void M_DrawControlsMenu(void)
 {
     int                 i;
-    char                controlCmd[80];
-    char                buf[1024], *token;
-    const char*         bc;
+    char                buf[1024];
+#if __JHERETIC__ || __JHEXEN__
+    char*               token;
+#endif
     const menu_t*       menu = &ControlsDef;
     const menuitem_t*   item = menu->items + menu->firstItem;
 
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
     M_DrawTitle("CONTROLS", menu->y - 28);
     sprintf(buf, "PAGE %i/%i", menu->firstItem / menu->numVisItems + 1,
             menu->itemCount / menu->numVisItems + 1);
