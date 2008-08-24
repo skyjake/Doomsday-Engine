@@ -1369,6 +1369,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int playernum)
     p->plr->lookDir = 0;/* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     p->jumpTics = 0;
+    p->airCounter = 0;
     mobj->player = p;
     mobj->dPlayer = p->plr;
     mobj->health = p->health;

@@ -91,8 +91,8 @@ typedef struct player_s {
     playerclass_t   class; // Player class.
     playerbrain_t   brain;
 
-    // bounded/scaled total momentum
-    float           bob;
+    float           viewOffset[3];
+    float           bob; // bounded/scaled total momentum
 
     // This is only used between levels,
     // mo->health is used during levels.
@@ -155,7 +155,7 @@ typedef struct player_s {
 
     // The player can jump if this counter is zero.
     int             jumpTics;
-
+    int             airCounter;
     int             update, startSpot;
 
     // Target view to a mobj (NULL=disabled).

@@ -98,6 +98,7 @@ typedef struct player_s {
     playerclass_t   class; // Player class type.
     playerbrain_t   brain;
 
+    float           viewOffset[3];
     fixed_t         bob; // Bounded/scaled total momentum.
 
     int             flyHeight;
@@ -137,7 +138,8 @@ typedef struct player_s {
     int             colorMap; // 0-3 for which color to draw player.
     pspdef_t        pSprites[NUMPSPRITES];  // view sprites (gun, etc).
     int             morphTics; // Player is a pig if > 0.
-    uint            jumpTics; // Delay the next jump for a moment.
+    int             jumpTics; // Delay the next jump for a moment.
+    int             airCounter;
     unsigned int    worldTimer; // Total time the player's been playing.
     int             update, startSpot;
     // Target view to a mobj (NULL=disabled).

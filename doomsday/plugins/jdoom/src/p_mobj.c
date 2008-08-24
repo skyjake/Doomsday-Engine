@@ -1051,6 +1051,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     p->damageCount = 0;
     p->bonusCount = 0;
     p->jumpTics = 0;
+    p->airCounter = 0;
     p->plr->extraLight = 0;
     p->plr->fixedColorMap = 0;
     p->plr->lookDir = 0;

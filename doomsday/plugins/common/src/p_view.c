@@ -85,138 +85,130 @@
 /**
  * Calculate the walking / running height adjustment.
  */
-void P_CalcHeight(player_t *player)
+void P_CalcHeight(player_t* plr)
 {
-    boolean     setz = (player == &players[CONSOLEPLAYER]);
-    boolean     airborne;
-    boolean     morphed = false;
-    ddplayer_t *dplay = player->plr;
-    mobj_t     *pmo = dplay->mo;
-    float       zOffset, target, step;
-    static int aircounter = 0;
+    boolean         airborne;
+    boolean         morphed = false;
+    ddplayer_t*     ddplr = plr->plr;
+    mobj_t*         pmo = ddplr->mo;
+    float           target, step;
 
     // Regular movement bobbing (needs to be calculated for gun swing even
     // if not on ground).
-    player->bob =
+    plr->bob =
         (pmo->mom[MX] * pmo->mom[MX]) + (pmo->mom[MY] * pmo->mom[MY]);
-    player->bob /= 2;
-    if(player->bob > MAXBOB)
-        player->bob = MAXBOB;
+    plr->bob /= 2;
+    if(plr->bob > MAXBOB)
+        plr->bob = MAXBOB;
 
     // When flying, don't bob the view.
     if((pmo->flags2 & MF2_FLY) && pmo->pos[VZ] > pmo->floorZ)
     {
-        player->bob = 1.0f / 2;
+        plr->bob = 1.0f / 2;
     }
 
 #if __JHERETIC__ || __JHEXEN__
-    if(player->morphTics)
+    if(plr->morphTics)
         morphed = true;
 #endif
 
     // During demo playback the view is thought to be airborne if viewheight
     // is zero (Cl_MoveLocalPlayer).
     if(Get(DD_PLAYBACK))
-        airborne = !dplay->viewHeight;
+        airborne = !ddplr->viewHeight;
     else
         airborne = pmo->pos[VZ] > pmo->floorZ; // Truly in the air?
 
-    // Should view bobbing be done?
-    if(setz)
-    {   // Morphed players don't bob their view.
-        if(P_IsCamera(dplay->mo) /*$democam*/ ||
-           (dplay->flags & DDPF_CHASECAM) || airborne || morphed ||
-           (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
-        {
-            // Reduce the bob offset to zero.
-            target = 0;
-        }
-        else
-        {
-            angle_t angle = (FINEANGLES / 20 * levelTime) & FINEMASK;
-            target = cfg.bobView * ((player->bob / 2) * FIX2FLT(finesine[angle]));
-        }
-
-        // Do the change gradually.
-        zOffset = *((float*) DD_GetVariable(DD_VIEWZ_OFFSET));
-        if(airborne || aircounter > 0)
-            step = 4.0f - (aircounter > 0 ? aircounter * 0.2f : 3.5f);
-        else
-            step = 4.0f;
-
-        if(zOffset > target)
-        {
-            if(zOffset - target > step)
-                zOffset -= step;
-            else
-                zOffset = target;
-        }
-        else if(zOffset < target)
-        {
-            if(target - zOffset > step)
-                zOffset += step;
-            else
-                zOffset = target;
-        }
-
-        DD_SetVariable(DD_VIEWZ_OFFSET, &zOffset);
-
-        // The aircounter will soften the touchdown after a fall.
-        aircounter--;
-        if(airborne)
-            aircounter = TICSPERSEC / 2;
+    // Morphed players don't bob their view.
+    if(P_IsCamera(ddplr->mo) /*$democam*/ ||
+       (ddplr->flags & DDPF_CHASECAM) || airborne || morphed ||
+       (P_GetPlayerCheats(plr) & CF_NOMOMENTUM))
+    {
+        // Reduce the bob offset to zero.
+        target = 0;
+    }
+    else
+    {
+        angle_t angle = (FINEANGLES / 20 * levelTime) & FINEMASK;
+        target = cfg.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
     }
 
+    // Do the change gradually.
+    if(airborne || plr->airCounter > 0)
+        step = 4.0f - (plr->airCounter > 0 ? plr->airCounter * 0.2f : 3.5f);
+    else
+        step = 4.0f;
+
+    if(plr->viewOffset[VZ] > target)
+    {
+        if(plr->viewOffset[VZ] - target > step)
+            plr->viewOffset[VZ] -= step;
+        else
+            plr->viewOffset[VZ] = target;
+    }
+    else if(plr->viewOffset[VZ] < target)
+    {
+        if(target - plr->viewOffset[VZ] > step)
+            plr->viewOffset[VZ] += step;
+        else
+            plr->viewOffset[VZ] = target;
+    }
+
+    // The aircounter will soften the touchdown after a fall.
+    plr->airCounter--;
+    if(airborne)
+        plr->airCounter = TICSPERSEC / 2;
+
     // Should viewheight be moved? Not if camera or we're in demo.
-    if(!((P_GetPlayerCheats(player) & CF_NOMOMENTUM) ||
+    if(!((P_GetPlayerCheats(plr) & CF_NOMOMENTUM) ||
         P_IsCamera(pmo) /*$democam*/ || Get(DD_PLAYBACK)))
     {
         // Move viewheight.
-        if(player->playerState == PST_LIVE)
+        if(plr->playerState == PST_LIVE)
         {
-            dplay->viewHeight += dplay->viewHeightDelta;
+            ddplr->viewHeight += ddplr->viewHeightDelta;
 
-            if(dplay->viewHeight > VIEW_HEIGHT)
+            if(ddplr->viewHeight > VIEW_HEIGHT)
             {
-                dplay->viewHeight = VIEW_HEIGHT;
-                dplay->viewHeightDelta = 0;
+                ddplr->viewHeight = VIEW_HEIGHT;
+                ddplr->viewHeightDelta = 0;
             }
-            else if(dplay->viewHeight < VIEW_HEIGHT / 2.0f)
+            else if(ddplr->viewHeight < VIEW_HEIGHT / 2.0f)
             {
-                dplay->viewHeight = VIEW_HEIGHT / 2.0f;
-                if(dplay->viewHeightDelta <= 0)
-                    dplay->viewHeightDelta = 1;
+                ddplr->viewHeight = VIEW_HEIGHT / 2.0f;
+                if(ddplr->viewHeightDelta <= 0)
+                    ddplr->viewHeightDelta = 1;
             }
 
-            if(dplay->viewHeightDelta)
+            if(ddplr->viewHeightDelta)
             {
-                dplay->viewHeightDelta += 0.25f;
-                if(!dplay->viewHeightDelta)
-                    dplay->viewHeightDelta = 1;
+                ddplr->viewHeightDelta += 0.25f;
+                if(!ddplr->viewHeightDelta)
+                    ddplr->viewHeightDelta = 1;
             }
         }
     }
 
-    // Set the player's eye-level Z coordinate.
-    dplay->viewZ = pmo->pos[VZ] +
-                     (P_IsCamera(pmo)? 0 : dplay->viewHeight);
+    // Set the plr's eye-level Z coordinate.
+    ddplr->viewZ = pmo->pos[VZ] +
+                     (P_IsCamera(pmo)? 0 : ddplr->viewHeight);
 
     // During demo playback (or camera mode) the viewz will not be modified
     // any further.
     if(!(Get(DD_PLAYBACK) || P_IsCamera(pmo) ||
-       (dplay->flags & DDPF_CHASECAM)))
+       (ddplr->flags & DDPF_CHASECAM)))
     {
         if(morphed)
         {   // Chicken or pig.
-            dplay->viewZ -= 20;
+            ddplr->viewZ -= 20;
         }
 
         // Foot clipping is done for living players.
-        if(player->playerState != PST_DEAD)
+        if(plr->playerState != PST_DEAD)
         {
             if(pmo->floorClip && pmo->pos[VZ] <= pmo->floorZ)
             {
-                dplay->viewZ -= pmo->floorClip;
+                ddplr->viewZ -= pmo->floorClip;
             }
         }
     }

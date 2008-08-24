@@ -1030,11 +1030,7 @@ static void SV_WritePlayer(int playernum)
 
     // Version number. Increase when you make changes to the player data
     // segment format.
-#if __JHEXEN__
-    SV_WriteByte(2);
-#else
-    SV_WriteByte(3);
-#endif
+    SV_WriteByte(4);
 
 #if __JHEXEN__
     // Class.
@@ -1182,6 +1178,8 @@ static void SV_WritePlayer(int playernum)
 #if __JHERETIC__ || __JHEXEN__
     SV_WriteLong(p->morphTics);
 #endif
+
+    SV_WriteLong(p->airCounter);
 
 #if __JHEXEN__
     SV_WriteLong(p->jumpTics);
@@ -1374,6 +1372,8 @@ static void SV_ReadPlayer(player_t *p)
 #if __JHERETIC__ || __JHEXEN__
     p->morphTics = SV_ReadLong();
 #endif
+
+    p->airCounter = SV_ReadLong();
 
 #if __JHEXEN__
     p->jumpTics = SV_ReadLong();
