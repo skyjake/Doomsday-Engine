@@ -135,7 +135,7 @@ void IN_Start(void)
     int                 i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Stop(i);
+        AM_Open(i, false);
 
     SN_StopAllSequences();
 
@@ -169,7 +169,6 @@ void IN_Stop(void)
     NetSv_Intermission(IMF_END, 0, 0);
     intermission = false;
     unloadPics();
-    SB_state = -1;
 }
 
 /**

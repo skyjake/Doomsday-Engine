@@ -128,7 +128,6 @@
 void ST_drawWidgets(boolean refresh);
 
 // Console commands for the HUD/Statusbar
-DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -401,7 +400,6 @@ cvar_t sthudCVars[] =
 // Console commands for the HUD/Status bar
 ccmd_t  sthudCCmds[] = {
     {"sbsize",      "s",    CCmdStatusBarSize},
-    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 
@@ -2051,15 +2049,6 @@ void Draw_TeleportIcon(void)
 
     GL_DrawRawScreen(W_CheckNumForName("TRAVLPIC"), 0, 0);
     GL_DrawPatch(100, 68, W_GetNumForName("teleicon"));
-}
-
-/**
- * Console command to show the hud if hidden.
- */
-DEFCC(CCmdHUDShow)
-{
-    ST_HUDUnHide(HUE_FORCE);
-    return true;
 }
 
 /**
