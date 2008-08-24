@@ -628,7 +628,7 @@ static void thrustMobj(struct mobj_s* mo, void* segp, void* pop)
         if(!P_CheckPosition2f(mo, mo->pos[VX] + thrustX,
                               mo->pos[VY] + thrustY))
         {
-            P_DamageMobj(mo, NULL, NULL, 3);
+            P_DamageMobj(mo, NULL, NULL, 3, false);
         }
     }
 }

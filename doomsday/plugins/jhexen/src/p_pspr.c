@@ -1963,7 +1963,7 @@ void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
         if(lineTarget)
         {
             mo->flags2 |= MF2_ICEDAMAGE;
-            P_DamageMobj(lineTarget, mo, mo, damage);
+            P_DamageMobj(lineTarget, mo, mo, damage, false);
             mo->flags2 &= ~MF2_ICEDAMAGE;
             conedone = true;
             break;

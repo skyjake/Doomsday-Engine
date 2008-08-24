@@ -359,7 +359,7 @@ boolean EV_ThingDestroy(int tid)
     {
         if(mobj->flags & MF_SHOOTABLE)
         {
-            P_DamageMobj(mobj, NULL, NULL, 10000);
+            P_DamageMobj(mobj, NULL, NULL, 10000, false);
             success = true;
         }
     }
@@ -423,7 +423,7 @@ static boolean ActivateThing(mobj_t *mobj)
     case MT_ZBELL:
         if(mobj->health > 0)
         {
-            P_DamageMobj(mobj, NULL, NULL, 10); // 'ring' the bell
+            P_DamageMobj(mobj, NULL, NULL, 10, false); // 'ring' the bell
         }
         break;
 

@@ -630,7 +630,6 @@ static void CheatGodFunc(player_t *player, cheat_t *cheat)
     {
         P_SetMessage(player, TXT_CHEATGODOFF, false);
     }
-    SB_state = -1;
 }
 
 static void CheatNoClipFunc(player_t *player, cheat_t *cheat)
@@ -649,7 +648,7 @@ static void CheatNoClipFunc(player_t *player, cheat_t *cheat)
 
 void Cht_SuicideFunc(player_t *plyr)
 {
-    P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000);
+    P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000, false);
 }
 
 boolean SuicideResponse(int option, void *data)
@@ -858,7 +857,7 @@ static void CheatQuickenFunc2(player_t *player, cheat_t *cheat)
 
 static void CheatQuickenFunc3(player_t *player, cheat_t *cheat)
 {
-    P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000);
+    P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000, false);
     P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.", false);
 }
 

@@ -149,8 +149,7 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
     } // < FIXME
 
     // Maybe unhide the HUD?
-    if(plr == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_AMMO);
 
     return true;
 }
@@ -207,8 +206,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         remove = false;
 
         // Maybe unhide the HUD?
-        if(plr == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
     }
     else
     {   // Deathmatch or single player game.
@@ -236,8 +234,8 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
         }
 
         // Maybe unhide the HUD?
-        if(gaveWeapon && plr == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+        if(gaveWeapon)
+            ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
 
         if(!(gaveWeapon || gaveMana))
         {    // Player didn't need the weapon or any mana.
@@ -267,10 +265,7 @@ static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
 
     plr->bonusCount += BONUSADD;
     S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, plr - players);
-    if(plr == &players[CONSOLEPLAYER])
-    {
-        ST_doPaletteStuff(false);
-    }
+    ST_doPaletteStuff(plr - players, false);
 }
 
 static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
@@ -362,10 +357,7 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
     }
 
     plr->bonusCount += BONUSADD;
-    if(plr == &players[CONSOLEPLAYER])
-    {
-        ST_doPaletteStuff(false);
-    }
+    ST_doPaletteStuff(plr - players, false);
 
     // Check if fourth weapon assembled.
     if(checkAssembled)
@@ -423,8 +415,7 @@ boolean P_GiveBody(player_t *plr, int num)
     plr->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
-    if(plr == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_HEALTH);
 
     return true;
 }
@@ -469,8 +460,7 @@ boolean P_GiveArmor(player_t *plr, armortype_t armortype, int amount)
     }
 
     // Maybe unhide the HUD?
-    if(plr == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
@@ -487,8 +477,7 @@ int P_GiveKey(player_t *plr, keytype_t key)
     plr->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    if(plr == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_KEY);
 
     return true;
 }
@@ -566,9 +555,9 @@ boolean P_GivePower(player_t *plr, powertype_t power)
     if(retval)
     {
         // Maybe unhide the HUD?
-        if(plr == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_POWER);
     }
+
     return retval;
 }
 
@@ -788,10 +777,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
         player->bonusCount += BONUSADD;
         S_ConsoleSound(sound, NULL, player - players);
-        if(player == &players[CONSOLEPLAYER])
-        {
-            ST_doPaletteStuff(false);
-        }
+        ST_doPaletteStuff(player - players, false);
         return;
 
     // Artifacts
@@ -1043,10 +1029,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     player->bonusCount += BONUSADD;
     S_ConsoleSound(sound, NULL, player - players);
-    if(player == &players[CONSOLEPLAYER])
-    {
-        ST_doPaletteStuff(false);
-    }
+    ST_doPaletteStuff(player - players, false);
 }
 
 typedef struct {
@@ -1378,28 +1361,6 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     target->tics -= P_Random() & 3;
 }
 
-void P_MinotaurSlam(mobj_t *source, mobj_t *target)
-{
-    uint            an;
-    angle_t         angle;
-    float           thrust;
-
-    angle = R_PointToAngle2(source->pos[VX], source->pos[VY],
-                            target->pos[VX], target->pos[VY]);
-
-    an = angle >> ANGLETOFINESHIFT;
-    thrust = 16 + FIX2FLT(P_Random() << 10);
-    target->mom[MX] += thrust * FIX2FLT(finecosine[angle]);
-    target->mom[MY] += thrust * FIX2FLT(finesine[angle]);
-    P_DamageMobj(target, NULL, source, HITDICE(4));
-    if(target->player)
-    {
-        target->reactionTime = 14 + (P_Random() & 7);
-    }
-
-    source->args[0] = 0; // Stop charging.
-}
-
 /**
  * @return              @c true, if the player gets turned into a pig.
  */
@@ -1576,10 +1537,20 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
     player->plr->mo->health = player->health;
 }
 
-void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damage)
+/**
+ * Sets up all data concerning poisoning.
+ */
+void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
 {
-    P_DamageMobj2(target, inflictor, source, damage, false);
+    if((P_GetPlayerCheats(player) & CF_GODMODE) ||
+       player->powers[PT_INVULNERABILITY])
+        return;
+
+    player->poisonCount += poison;
+    player->poisoner = poisoner;
+
+    if(player->poisonCount > 100)
+        player->poisonCount = 100;
 }
 
 /**
@@ -1593,93 +1564,88 @@ void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
  * @param source            Is the mobj to target after taking damage
  *                          creature or @c NULL.
  */
-void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damageP, boolean stomping)
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
 {
     uint            an;
     angle_t         angle;
-    int             i, temp;
+    int             i, temp, originalHealth;
     float           thrust, saved, savedPercent;
-    player_t       *player;
-    mobj_t         *master;
-    // The actual damage (== damageP * netMobDamageModifier for
-    // any non-player mob).
-    int             damage = damageP;
+    player_t*       player;
+    mobj_t*         master;
+    int             damage;
 
+    if(!target)
+        return 0; // Wha?
+
+    originalHealth = target->health;
+
+    // The actual damage (== damageP * netMobDamageModifier for any
+    // non-player mobj).
+    damage = damageP;
+
+    if(IS_NETGAME && !stomping &&
+       D_NetDamageMobj(target, inflictor, source, damage))
+    {   // We're done here.
+        return 0;
+    }
+
+    // Clients can't harm anybody.
     if(IS_CLIENT)
-        return; // Clients can't harm anybody.
+        return 0;
 
     if(!(target->flags & MF_SHOOTABLE))
-        return; // Shouldn't happen.
-
-    // Use the cvar damage multiplier netMobDamageModifier only if the
-    // inflictor is not a player.
-    if(inflictor && !inflictor->player &&
-       !(inflictor->type == MT_PLAYER_FIGHTER ||
-         inflictor->type == MT_PLAYER_MAGE ||
-         inflictor->type == MT_PLAYER_CLERIC ||
-         inflictor->type == MT_PIGPLAYER) &&
-       (!source || (source && !source->player &&
-                    !(source->type == MT_PLAYER_FIGHTER ||
-                      source->type == MT_PLAYER_MAGE ||
-                      source->type == MT_PLAYER_CLERIC ||
-                      source->type == MT_PIGPLAYER))))
-    {
-        // Means inflictor->type == MT_PLAYER(CLASS)
-        //damage = (int) ((float) damage * netMobDamageModifier);
-        if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
-    }
+        return 0; // Shouldn't happen.
 
     if(target->health <= 0)
     {
-        if(inflictor && inflictor->flags2 & MF2_ICEDAMAGE)
-        {
-            return;
-        }
-        else if(target->flags & MF_ICECORPSE)
+        if(!(inflictor && (inflictor->flags2 & MF2_ICEDAMAGE)) &&
+           (target->flags & MF_ICECORPSE))
         {   // Frozen.
             target->tics = 1;
             target->mom[MX] = target->mom[MY] = 0;
         }
 
-        return;
+        return 0;
     }
 
     if((target->flags2 & MF2_INVULNERABLE) && damage < 10000)
     {   // mobj is invulnerable.
         if(target->player)
-            return; // for player, no exceptions.
+            return 0; // for player, no exceptions.
 
-        if(inflictor)
-        {
-            switch(inflictor->type)
-            {
-            // These inflictors aren't foiled by invulnerability.
-            case MT_HOLY_FX:
-            case MT_POISONCLOUD:
-            case MT_FIREBOMB:
-                break;
+        if(!inflictor)
+            return 0;
 
-            default:
-                return;
-            }
-        }
-        else
+        switch(inflictor->type)
         {
-            return;
+        // These inflictors aren't foiled by invulnerability.
+        case MT_HOLY_FX:
+        case MT_POISONCLOUD:
+        case MT_FIREBOMB:
+            break;
+
+        default:
+            return 0;
         }
     }
 
     if(target->player)
-    {
-        target->player->update |= PSF_HEALTH;
-
-        if(damage < 1000 &&
-           ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
-            target->player->powers[PT_INVULNERABILITY]))
+    {   // Player specific.
+        // Check if player-player damage is disabled.
+        if(source && source->player && source->player != target->player)
         {
-            return;
+#if 0
+            // Co-op damage disabled?
+            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+                return 0;
+
+            // Same color, no damage?
+            if(cfg.noTeamDamage &&
+               cfg.playerColor[target->player - players] ==
+               cfg.playerColor[source->player - players])
+                return 0;
+#endif
         }
     }
 
@@ -1689,13 +1655,20 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     }
 
     if(target->flags2 & MF2_DORMANT)
-        return; // Invulnerable, and won't wake up
+        return 0; // Invulnerable, and won't wake up.
 
     player = target->player;
     if(player && gameSkill == SM_BABY)
+        damage /= 2; // Take half damage in trainer mode.
+
+    // Use the cvar damage multiplier netMobDamageModifier only if the
+    // inflictor is not a player.
+    if(inflictor && !inflictor->player &&
+       (!source || (source && !source->player)))
     {
-        // Take half damage in trainer mode
-        damage /= 2;
+        // damage = (int) ((float) damage * netMobDamageModifier);
+        if(IS_NETGAME)
+            damage *= cfg.netMobDamageModifier;
     }
 
     // Special damage types.
@@ -1712,7 +1685,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             {
                 P_MorphMonster(target);
             }
-            return; // Always return.
+            return 0; // Does no actual "damage" but health IS modified.
 
         case MT_TELOTHER_FX1:
         case MT_TELOTHER_FX2:
@@ -1723,15 +1696,53 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                && (target->type != MT_SERPENTLEADER) &&
                (!(target->flags2 & MF2_BOSS)))
             {
-                P_TeleportOther(target);
+                if(target->player)
+                {
+                    if(deathmatch)
+                        P_TeleportToDeathmatchStarts(target);
+                    else
+                        P_TeleportToPlayerStarts(target);
+                }
+                else
+                {
+                    // If death action, run it upon teleport.
+                    if(target->flags & MF_COUNTKILL && target->special)
+                    {
+                        P_MobjRemoveFromTIDList(target);
+                        P_ExecuteLineSpecial(target->special, target->args, NULL, 0,
+                                             target);
+                        target->special = 0;
+                    }
+
+                    // Send all monsters to deathmatch spots.
+                    P_TeleportToDeathmatchStarts(target);
+                }
             }
-            return;
+            return 0;
 
         case MT_MINOTAUR:
             if(inflictor->flags & MF_SKULLFLY)
             {   // Slam only when in charge mode.
-                P_MinotaurSlam(inflictor, target);
-                return;
+                uint            an;
+                int             damageDone;
+                angle_t         angle;
+                float           thrust;
+
+                angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
+                                        target->pos[VX], target->pos[VY]);
+
+                an = angle >> ANGLETOFINESHIFT;
+                thrust = 16 + FIX2FLT(P_Random() << 10);
+                target->mom[MX] += thrust * FIX2FLT(finecosine[angle]);
+                target->mom[MY] += thrust * FIX2FLT(finesine[angle]);
+                damageDone = P_DamageMobj(target, NULL, inflictor, HITDICE(4), false);
+                if(target->player)
+                {
+                    target->reactionTime = 14 + (P_Random() & 7);
+                }
+
+                inflictor->args[0] = 0; // Stop charging.
+                return damageDone;
             }
             break;
 
@@ -1741,7 +1752,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             break;
 
         case MT_SHARDFX1:
-            switch (inflictor->special2)
+            switch(inflictor->special2)
             {
             case 3:
                 damage *= 8;
@@ -1784,17 +1795,20 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         case MT_POISONCLOUD:
             if(target->player)
             {
+                int                 damageDone;
+
                 if(target->player->poisonCount < 4)
                 {
-                    P_PoisonDamage(target->player, source, 15 + (P_Random() & 15), false);  // Don't play painsound
+                    damageDone = P_PoisonDamage(target->player, source, 15 + (P_Random() & 15), false);  // Don't play painsound
                     P_PoisonPlayer(target->player, source, 50);
                     S_StartSound(SFX_PLAYER_POISONCOUGH, target);
                 }
-                return;
+
+                return damageDone;
             }
             else if(!(target->flags & MF_COUNTKILL))
             {   // Only damage monsters/players with the poison cloud.
-                return;
+                return 0;
             }
             break;
 
@@ -1810,7 +1824,8 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
     }
 
-    // Push the target unless source is using the gauntlets.
+    // Some close combat weapons should not inflict thrust and push the
+    // victim out of reach, thus kick away unless using a melee weapon.
     if(inflictor && (!source || !source->player) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
@@ -1842,11 +1857,18 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
     }
 
-    //
-    // player specific
-    //
+    // Player specific.
     if(player)
     {
+        target->player->update |= PSF_HEALTH;
+
+        if(damage < 1000 &&
+           ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
+            target->player->powers[PT_INVULNERABILITY]))
+        {
+            return 0;
+        }
+
         savedPercent = FIX2FLT(
             PCLASS_INFO(player->class)->autoArmorSave + player->armorPoints[ARMOR_ARMOR] +
             player->armorPoints[ARMOR_SHIELD] +
@@ -1901,24 +1923,89 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         temp = (damage < 100 ? damage : 100);
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER]);
-            ST_HUDUnHide(HUE_ON_DAMAGE);
+        ST_HUDUnHide(player - players, HUE_ON_DAMAGE);
 
-        if(player == &players[CONSOLEPLAYER])
-        {
-            ST_doPaletteStuff(false);
-        }
+        ST_doPaletteStuff(player - players, false);
     }
 
     // How about some particles, yes?
     // Only works when both target and inflictor are real mobjs.
     P_SpawnDamageParticleGen(target, inflictor, damage);
 
-    //
-    // do the damage
-    //
+    // Do the damage.
     target->health -= damage;
-    if(target->health <= 0)
+    if(target->health > 0)
+    {   // Still alive, phew!
+        if((P_Random() < target->info->painChance) &&
+           !(target->flags & MF_SKULLFLY))
+        {
+            if(inflictor &&
+               (inflictor->type >= MT_LIGHTNING_FLOOR &&
+                inflictor->type <= MT_LIGHTNING_ZAP))
+            {
+                if(P_Random() < 96)
+                {
+                    target->flags |= MF_JUSTHIT; // fight back!
+                    P_MobjChangeState(target, target->info->painState);
+                }
+                else
+                {   // "electrocute" the target.
+    //// \fixme make fullbright for this frame -->
+                    //target->frame |= FF_FULLBRIGHT;
+    // <-- fixme
+                    if((target->flags & MF_COUNTKILL) && P_Random() < 128 &&
+                       !S_IsPlaying(SFX_PUPPYBEAT, target))
+                    {
+                        if((target->type == MT_CENTAUR) ||
+                           (target->type == MT_CENTAURLEADER) ||
+                           (target->type == MT_ETTIN))
+                        {
+                            S_StartSound(SFX_PUPPYBEAT, target);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                target->flags |= MF_JUSTHIT; // fight back!
+
+                P_MobjChangeState(target, target->info->painState);
+                if(inflictor && inflictor->type == MT_POISONCLOUD)
+                {
+                    if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
+                       !S_IsPlaying(SFX_PUPPYBEAT, target))
+                    {
+                        if((target->type == MT_CENTAUR) ||
+                           (target->type == MT_CENTAURLEADER) ||
+                           (target->type == MT_ETTIN))
+                        {
+                            S_StartSound(SFX_PUPPYBEAT, target);
+                        }
+                    }
+                }
+            }
+        }
+
+        target->reactionTime = 0; // We're awake now...
+
+        if(!target->threshold && source && !(source->flags3 & MF3_NOINFIGHT) &&
+           !(target->type == MT_BISHOP) && !(target->type == MT_MINOTAUR))
+        {
+            // Target is not intent on another, so make it chase source.
+            if(!((target->type == MT_CENTAUR && source->type == MT_CENTAURLEADER) ||
+                 (target->type == MT_CENTAURLEADER && source->type == MT_CENTAUR)))
+            {
+                target->target = source;
+                target->threshold = BASETHRESHOLD;
+                if(target->state == &states[target->info->spawnState] &&
+                   target->info->seeState != S_NULL)
+                {
+                    P_MobjChangeState(target, target->info->seeState);
+                }
+            }
+        }
+    }
+    else
     {   // Death.
         if(inflictor)
         {   // Check for special fire damage or ice damage deaths.
@@ -1958,82 +2045,14 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             // Always extreme death from fourth weapon.
             target->health = -5000;
         }
+
         P_KillMobj(source, target);
-        return;
     }
 
-    if((P_Random() < target->info->painChance) &&
-       !(target->flags & MF_SKULLFLY))
-    {
-        if(inflictor &&
-           (inflictor->type >= MT_LIGHTNING_FLOOR &&
-            inflictor->type <= MT_LIGHTNING_ZAP))
-        {
-            if(P_Random() < 96)
-            {
-                target->flags |= MF_JUSTHIT; // fight back!
-                P_MobjChangeState(target, target->info->painState);
-            }
-            else
-            {   // "electrocute" the target.
-//// \fixme make fullbright for this frame -->
-                //target->frame |= FF_FULLBRIGHT;
-// <-- fixme
-                if((target->flags & MF_COUNTKILL) && P_Random() < 128 &&
-                   !S_IsPlaying(SFX_PUPPYBEAT, target))
-                {
-                    if((target->type == MT_CENTAUR) ||
-                       (target->type == MT_CENTAURLEADER) ||
-                       (target->type == MT_ETTIN))
-                    {
-                        S_StartSound(SFX_PUPPYBEAT, target);
-                    }
-                }
-            }
-        }
-        else
-        {
-            target->flags |= MF_JUSTHIT; // fight back!
-            P_MobjChangeState(target, target->info->painState);
-            if(inflictor && inflictor->type == MT_POISONCLOUD)
-            {
-                if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
-                   !S_IsPlaying(SFX_PUPPYBEAT, target))
-                {
-                    if((target->type == MT_CENTAUR) ||
-                       (target->type == MT_CENTAURLEADER) ||
-                       (target->type == MT_ETTIN))
-                    {
-                        S_StartSound(SFX_PUPPYBEAT, target);
-                    }
-                }
-            }
-        }
-    }
-
-    target->reactionTime = 0;   // we're awake now...
-    if(!target->threshold && source && !(source->flags3 & MF3_NOINFIGHT) &&
-       !(target->type == MT_BISHOP) && !(target->type == MT_MINOTAUR))
-    {
-        // Target actor is not intent on another actor,
-        // so make him chase after source
-        if((target->type == MT_CENTAUR && source->type == MT_CENTAURLEADER) ||
-           (target->type == MT_CENTAURLEADER && source->type == MT_CENTAUR))
-        {
-            return;
-        }
-
-        target->target = source;
-        target->threshold = BASETHRESHOLD;
-        if(target->state == &states[target->info->spawnState] &&
-           target->info->seeState != S_NULL)
-        {
-            P_MobjChangeState(target, target->info->seeState);
-        }
-    }
+    return originalHealth - target->health;
 }
 
-void P_FallingDamage(player_t *player)
+int P_FallingDamage(player_t *player)
 {
     int             damage;
     float           mom, dist;
@@ -2043,8 +2062,7 @@ void P_FallingDamage(player_t *player)
 
     if(mom >= 63)
     {   // Automatic death.
-        P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
-        return;
+        return P_DamageMobj(player->plr->mo, NULL, NULL, 10000, false);
     }
 
     damage = ((dist * dist) / 10) - 24;
@@ -2055,42 +2073,27 @@ void P_FallingDamage(player_t *player)
     }
 
     S_StartSound(SFX_PLAYER_LAND, player->plr->mo);
-    P_DamageMobj(player->plr->mo, NULL, NULL, damage);
+
+    return P_DamageMobj(player->plr->mo, NULL, NULL, damage, false);
 }
 
-/**
- * Sets up all data concerning poisoning.
- */
-void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
+int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
+                   boolean playPainSound)
 {
-    if((P_GetPlayerCheats(player) & CF_GODMODE) ||
-       player->powers[PT_INVULNERABILITY])
-        return;
-
-    player->poisonCount += poison;
-    player->poisoner = poisoner;
-
-    if(player->poisonCount > 100)
-        player->poisonCount = 100;
-}
-
-/**
- * \note Similar to P_DamageMobj.
- */
-void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
-                    boolean playPainSound)
-{
-    mobj_t         *target, *inflictor;
+    int             originalHealth;
+    mobj_t*         target, *inflictor;
 
     target = player->plr->mo;
+    originalHealth = target->health;
     inflictor = source;
+
     if(target->health <= 0)
-        return; // Already dead.
+        return 0; // Already dead.
 
     if((target->flags2 & MF2_INVULNERABLE) && damage < 10000)
-        return; // mobj is invulnerable.
+        return 0; // mobj is invulnerable.
 
-    if(player && gameSkill == SM_BABY)
+    if(gameSkill == SM_BABY)
     {   // Take half damage in trainer mode
         damage /= 2;
     }
@@ -2098,7 +2101,7 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
     if(damage < 1000 &&
        ((P_GetPlayerCheats(player) & CF_GODMODE) || player->powers[PT_INVULNERABILITY]))
     {
-        return;
+        return 0;
     }
 
     if(damage >= player->health && ((gameSkill == SM_BABY) || deathmatch) &&
@@ -2108,8 +2111,7 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
     }
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER]);
-        ST_HUDUnHide(HUE_ON_DAMAGE);
+    ST_HUDUnHide(player - players, HUE_ON_DAMAGE);
 
     player->health -= damage;
     if(player->health < 0)
@@ -2118,11 +2120,16 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
     }
     player->attacker = source;
 
-    //
-    // do the damage
-    //
+    // Do the damage.
     target->health -= damage;
-    if(target->health <= 0)
+    if(target->health > 0)
+    {   // Still alive, phew!
+        if(!(levelTime & 63) && playPainSound)
+        {
+            P_MobjChangeState(target, target->info->painState);
+        }
+    }
+    else
     {   // Death
         target->special1 = damage;
         if(player && inflictor && !player->morphTics)
@@ -2140,11 +2147,7 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
         }
 
         P_KillMobj(source, target);
-        return;
     }
 
-    if(!(levelTime & 63) && playPainSound)
-    {
-        P_MobjChangeState(target, target->info->painState);
-    }
+    return originalHealth - target->health;
 }

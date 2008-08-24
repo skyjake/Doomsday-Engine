@@ -688,7 +688,7 @@ void C_DECL A_Quake(mobj_t *actor)
             {
                 if(P_Random() < 50)
                 {
-                    P_DamageMobj(victim, NULL, NULL, HITDICE(1));
+                    P_DamageMobj(victim, NULL, NULL, HITDICE(1), false);
                 }
 
                 // Thrust player around.

@@ -186,16 +186,15 @@ void        P_Validate();
 
 extern int clipmana[NUM_AMMO_TYPES];
 
-void        HUMsg_ClearMessages(player_t *plr);
 void        P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
-void        P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                         int damage);
-void        P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
-                          mobj_t *source, int damage, boolean stomping);
-void        P_FallingDamage(player_t *plr);
 void        P_PoisonPlayer(player_t *plr, mobj_t *poisoner, int poison);
-void        P_PoisonDamage(player_t *plr, mobj_t *source, int damage,
+
+int         P_DamageMobj(mobj_t *target, mobj_t *inflictor,
+                         mobj_t *source, int damage, boolean stomping);
+int         P_FallingDamage(player_t *plr);
+int         P_PoisonDamage(player_t *plr, mobj_t *source, int damage,
                            boolean playPainSound);
+
 boolean     P_GiveMana(player_t *plr, ammotype_t mana, int count);
 boolean     P_GiveArmor(player_t *plr, armortype_t armortype, int amount);
 boolean     P_GiveBody(player_t *plr, int num);

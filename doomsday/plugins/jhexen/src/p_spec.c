@@ -452,11 +452,11 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
     case 73: // Damage Mobj
         if(args[0])
         {
-            P_DamageMobj(mo, NULL, NULL, args[0]);
+            P_DamageMobj(mo, NULL, NULL, args[0], false);
         }
         else
         {   // If arg1 is zero, then guarantee a kill
-            P_DamageMobj(mo, NULL, NULL, 10000);
+            P_DamageMobj(mo, NULL, NULL, 10000, false);
         }
         success = 1;
         break;
@@ -792,7 +792,7 @@ void P_PlayerOnSpecialFloor(player_t* player)
 
     if(!(levelTime & 31))
     {
-        P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 10);
+        P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 10, false);
         S_StartSound(SFX_LAVA_SIZZLE, player->plr->mo);
     }
 }

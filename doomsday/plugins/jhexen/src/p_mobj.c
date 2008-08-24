@@ -706,7 +706,7 @@ void P_MonsterFallingDamage(mobj_t *mo)
     }
     damage = 10000; // always kill 'em.
 
-    P_DamageMobj(mo, NULL, NULL, damage);
+    P_DamageMobj(mo, NULL, NULL, damage, false);
 }
 
 void P_MobjMoveZ(mobj_t *mo)
@@ -862,7 +862,7 @@ void P_MobjMoveZ(mobj_t *mo)
             }
             else if(mo->type >= MT_POTTERY1 && mo->type <= MT_POTTERY3)
             {
-                P_DamageMobj(mo, NULL, NULL, 25);
+                P_DamageMobj(mo, NULL, NULL, 25, false);
             }
             else if(mo->flags & MF_COUNTKILL)
             {
@@ -1906,7 +1906,7 @@ boolean P_HitFloor(mobj_t *thing)
         S_StartSound(SFX_LAVA_SIZZLE, mo);
         if(thing->player && levelTime & 31)
         {
-            P_DamageMobj(thing, &LavaInflictor, NULL, 5);
+            P_DamageMobj(thing, &LavaInflictor, NULL, 5, false);
         }
         return true;
     }
