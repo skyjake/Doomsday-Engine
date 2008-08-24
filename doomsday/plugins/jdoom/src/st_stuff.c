@@ -198,7 +198,6 @@ typedef enum hotloc_e {
 
 void    ST_Stop(void);
 
-DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -358,7 +357,6 @@ cvar_t sthudCVars[] =
 // Console commands for the HUD/Status bar:
 ccmd_t  sthudCCmds[] = {
     {"sbsize",      "s",    CCmdStatusBarSize},
-    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 
@@ -1443,15 +1441,6 @@ void ST_Stop(void)
 void ST_Init(void)
 {
     ST_loadData();
-}
-
-/**
- * Console command to show the hud if hidden.
- */
-DEFCC(CCmdHUDShow)
-{
-    ST_HUDUnHide(HUE_FORCE);
-    return true;
 }
 
 /**

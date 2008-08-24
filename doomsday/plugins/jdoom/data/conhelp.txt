@@ -2,12 +2,6 @@
 # CONSOLE COMMANDS - JDOOM SPECFIC
 #
 
-[addmark]
-desc = Add a mark in the automap.
-
-[automap]
-desc = Show automap.
-
 [beginchat]
 desc = Begin chat mode.
 
@@ -27,9 +21,6 @@ desc = Send a chat macro.
 desc = Issue a cheat code using the original DOOM cheats.
 inf = Params: cheat (cheat)\nFor example, 'cheat idclev25'.
 
-[clearmarks]
-desc = Clear all marks in the automap.
-
 [coord]
 desc = Print the coordinates of the consoleplayer.
 
@@ -47,9 +38,6 @@ desc = End the game.
 
 [exitlevel]
 desc = Exit the current level.
-
-[follow]
-desc = Toggle Follow mode in the automap.
 
 [god]
 desc = God mode (cheat).
@@ -145,9 +133,6 @@ desc = Quicksave the game.
 [quit]
 desc = Quit the game and return to the OS.
 
-[rotate]
-desc = Toggle Rotate mode in the automap.
-
 [reveal]
 desc = Map cheat.
 inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things\n 4=show subsectors
@@ -175,9 +160,6 @@ desc = Set camera viewlock.
 [setmap]
 desc = Set map.
 inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
-
-[showhud]
-desc = Show the HUD if hidden.
 
 [soundmenu]
 desc = Open the sound settings menu.
