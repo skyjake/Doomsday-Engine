@@ -122,7 +122,6 @@
 void ST_drawWidgets(boolean refresh);
 
 // Console commands for the HUD/Statusbar.
-DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -331,7 +330,6 @@ cvar_t sthudCVars[] =
 // Console commands for the HUD/Status bar
 ccmd_t  sthudCCmds[] = {
     {"sbsize",      "s",    CCmdStatusBarSize},
-    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 
@@ -1569,15 +1567,6 @@ void ST_drawWidgets(boolean refresh)
             GL_DrawPatchLitAlpha(269, 159, 1, statusbarCounterAlpha,
                                  !(levelTime & 4) ? invPageRight.lump : invPageRight2.lump);
     }
-}
-
-/**
- * Console command to show the hud if hidden.
- */
-DEFCC(CCmdHUDShow)
-{
-    ST_HUDUnHide(HUE_FORCE);
-    return true;
 }
 
 /**

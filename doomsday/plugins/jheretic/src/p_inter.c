@@ -837,7 +837,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
 
         // Don't die with the automap open.
-        AM_Stop(target->player - players);
+        AM_Open(target->player - players, false);
     }
 
     if(target->health < -(target->info->spawnHealth / 2) &&

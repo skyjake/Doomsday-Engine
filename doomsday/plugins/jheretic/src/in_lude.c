@@ -186,7 +186,7 @@ void IN_Start(void)
     interTime = 0;
     oldInterTime = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Stop(i);
+        AM_Open(i, false);
 
     S_StartMusic("intr", true);
 }
