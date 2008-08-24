@@ -1250,15 +1250,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
         for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
             p->keys[i] = true;
-            if(p == &players[CONSOLEPLAYER])
-            {
-                playerKeys = 7;
-            }
         }
-    }
-    else if(p == &players[CONSOLEPLAYER])
-    {
-        playerKeys = 0;
     }
 
     if(plrnum == CONSOLEPLAYER)
