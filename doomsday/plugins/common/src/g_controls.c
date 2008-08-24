@@ -214,6 +214,9 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_WEAPON8, CTLT_IMPULSE, "weapon8", "game");
     P_NewPlayerControl(CTL_WEAPON9, CTLT_IMPULSE, "weapon9", "game");
     P_NewPlayerControl(CTL_WEAPON0, CTLT_IMPULSE, "weapon0", "game");
+#if __JDOOM64__
+    P_NewPlayerControl(CTL_WEAPON10, CTLT_IMPULSE, "weapon10", "game");
+#endif
     P_NewPlayerControl(CTL_NEXT_WEAPON, CTLT_IMPULSE, "nextweapon", "game");
     P_NewPlayerControl(CTL_PREV_WEAPON, CTLT_IMPULSE, "prevweapon", "game");
     P_NewPlayerControl(CTL_USE_ARTIFACT, CTLT_IMPULSE, "useartifact", "game");
@@ -237,9 +240,17 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_DARK_SERVANT, CTLT_IMPULSE, "darkservant", "game");
     P_NewPlayerControl(CTL_EGG, CTLT_IMPULSE, "egg", "game");
 
-    P_NewPlayerControl(CTL_MAP_ZOOM, CTLT_NUMERIC, "mapzoom", "map");
+    P_NewPlayerControl(CTL_MAP, CTLT_IMPULSE, "automap", "game");
     P_NewPlayerControl(CTL_MAP_PAN_X, CTLT_NUMERIC, "mappanx", "map-freepan");
     P_NewPlayerControl(CTL_MAP_PAN_Y, CTLT_NUMERIC, "mappany", "map-freepan");
+    P_NewPlayerControl(CTL_MAP_ZOOM, CTLT_NUMERIC, "mapzoom", "map");
+    P_NewPlayerControl(CTL_MAP_ZOOM_MAX, CTLT_IMPULSE, "zoommax", "map");
+    P_NewPlayerControl(CTL_MAP_FOLLOW, CTLT_IMPULSE, "follow", "map");
+    P_NewPlayerControl(CTL_MAP_ROTATE, CTLT_IMPULSE, "rotate", "map");
+    P_NewPlayerControl(CTL_MAP_MARK_ADD, CTLT_IMPULSE, "addmark", "map");
+    P_NewPlayerControl(CTL_MAP_MARK_CLEAR_ALL, CTLT_IMPULSE, "clearmarks", "map");
+
+    P_NewPlayerControl(CTL_HUD_SHOW, CTLT_IMPULSE, "showhud", "game");
 }
 
 DEFCC( CCmdDefaultGameBinds )
@@ -271,7 +282,8 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol look key-pgdown-staged",
         "bindevent key-end-down {impulse lookcenter}",
         "bindevent key-slash {impulse jump}",
-        
+        "bindevent key-space-down {impulse use}",
+
         "bindevent sym-control-doubleclick-positive-walk {impulse use %p}",
 
         // Weapon keys:
@@ -285,6 +297,9 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-7 {impulse weapon7}",
         "bindevent key-8 {impulse weapon8}",
         "bindevent key-9 {impulse weapon9}",
+#endif
+#ifdef __JDOOM64__
+        "bindevent key-0 {impulse weapon10}",
 #endif
 
 #ifdef __JHERETIC__
@@ -311,7 +326,6 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol turn mouse-x",
         "bindcontrol look mouse-y",
         "bindcontrol attack mouse-left",
-        "bindevent key-space-down {impulse use}",
         "bindevent mouse-right-down {impulse use}",
         "bindevent mouse-wheelup {impulse nextweapon}",
         "bindevent mouse-wheeldown {impulse prevweapon}",
@@ -326,7 +340,6 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-y {beginchat 1}",
         "bindevent key-r {beginchat 2}",
         "bindevent key-b {beginchat 3}",
-        "bindevent key-return msgrefresh",
         "bindevent chat:key-return chatcomplete",
         "bindevent chat:key-escape chatcancel",
         "bindevent chat:key-f1 {chatsendmacro 0}",
@@ -342,14 +355,14 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent chat:key-backspace chatdelete",
 
         // Map events:
-        "bindevent key-tab automap",
-        "bindevent map:key-f follow",
-        "bindevent map:key-r rotate",
+        "bindevent key-tab {impulse automap}",
+        "bindevent map:key-f {impulse follow}",
+        "bindevent map:key-r {impulse rotate}",
         "bindcontrol mapzoom key-equals",
         "bindcontrol mapzoom key-minus-inverse",
-        "bindevent map:key-0 zoommax",
-        "bindevent map:key-m addmark",
-        "bindevent map:key-c clearmarks",
+        "bindevent map:key-0 {impulse zoommax}",
+        "bindevent map:key-m {impulse addmark}",
+        "bindevent map:key-c {impulse clearmarks}",
         "bindcontrol mappany key-up",
         "bindcontrol mappany key-down-inverse",
         "bindcontrol mappanx key-right",
@@ -373,9 +386,10 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-pause pause",
         "bindevent key-p pause",
 
-        "bindevent key-h showhud",
+        "bindevent key-h {impulse showhud}",
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",
+        "bindevent key-return msgrefresh",
 
         // Menu events:
         "bindevent key-esc menu",
@@ -391,6 +405,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent menu:key-return menuselect",
         "bindevent menu:key-delete menudelete",
 
+        // On-screen messages:
         "bindevent message:key-y messageyes",
         "bindevent message:key-n messageno",
         "bindevent message:key-escape messagecancel",
@@ -1159,9 +1174,9 @@ void G_ControlReset(int player)
     {
         if(pl->plr->cmd.actions & BT_SPECIAL)
         {
-			switch(pl->plr->cmd.actions & BT_SPECIALMASK)
-			{
-			case BTS_PAUSE:
+            switch(pl->plr->cmd.actions & BT_SPECIALMASK)
+            {
+            case BTS_PAUSE:
                 paused ^= 1;
                 if(paused)
                 {
@@ -1276,7 +1291,7 @@ int G_PrivilegedResponder(event_t *event)
     {
         return true;
     }
-    
+
     // Process the screen shot key right away.
     if(devParm && event->type == EV_KEY && event->data1 == DDKEY_F1)
     {

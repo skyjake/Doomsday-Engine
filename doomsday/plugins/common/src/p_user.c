@@ -66,6 +66,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "g_common.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1526,7 +1527,41 @@ void P_PlayerThinkPsprites(player_t *player)
     P_MovePsprites(player);
 }
 
-void P_PlayerThinkPowers(player_t *player)
+void P_PlayerThinkHUD(player_t* player)
+{
+    playerbrain_t* brain = &player->brain;
+
+    if(brain->hudShow)
+        ST_HUDUnHide(player - players, HUE_FORCE);
+}
+
+void P_PlayerThinkMap(player_t* player)
+{
+    playerbrain_t* brain = &player->brain;
+
+    if(brain->mapToggle)
+        AM_Open(player - players, !AM_IsMapActive(player - players));
+
+    if(brain->mapFollow)
+        AM_ToggleFollow(player - players);
+
+    if(brain->mapRotate)
+        AM_SetViewRotate(player - players, 2); // 2 = toggle.
+
+    if(brain->mapZoomMax)
+        AM_ToggleZoomMax(player - players);
+
+    if(brain->mapMarkAdd)
+    {
+        mobj_t*         pmo = player->plr->mo;
+        AM_AddMark(player - players, pmo->pos[VX], pmo->pos[VY]);
+    }
+
+    if(brain->mapMarkClearAll)
+        AM_ClearMarks(player - players);
+}
+
+void P_PlayerThinkPowers(player_t* player)
 {
     // Counters, time dependend power ups.
 
@@ -1884,6 +1919,17 @@ void P_PlayerThinkUpdateControls(player_t* player)
     {
         brain->cycleWeapon = 0;
     }
+
+    // HUD.
+    brain->hudShow = (P_GetImpulseControlState(playerNum, CTL_HUD_SHOW) != 0);
+
+    // Automap.
+    brain->mapToggle = (P_GetImpulseControlState(playerNum, CTL_MAP) != 0);
+    brain->mapZoomMax = (P_GetImpulseControlState(playerNum, CTL_MAP_ZOOM_MAX) != 0);
+    brain->mapFollow = (P_GetImpulseControlState(playerNum, CTL_MAP_FOLLOW) != 0);
+    brain->mapRotate = (P_GetImpulseControlState(playerNum, CTL_MAP_ROTATE) != 0);
+    brain->mapMarkAdd = (P_GetImpulseControlState(playerNum, CTL_MAP_MARK_ADD) != 0);
+    brain->mapMarkClearAll = (P_GetImpulseControlState(playerNum, CTL_MAP_MARK_CLEAR_ALL) != 0);
 }
 
 /**
@@ -1929,6 +1975,8 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
         P_PlayerThinkAttackLunge(player);
     }
 
+    P_PlayerThinkHUD(player);
+
     if(P_PlayerThinkDeath(player))
         return; // I'm dead!
 
@@ -1953,4 +2001,5 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkWeapons(player);
     P_PlayerThinkPsprites(player);
     P_PlayerThinkPowers(player);
+    P_PlayerThinkMap(player);
 }

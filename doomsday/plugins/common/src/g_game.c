@@ -1614,7 +1614,7 @@ void G_DoCompleted(void)
             NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS,
                                   PSF_FRAGS | PSF_COUNTERS, true);
 
-            AM_Stop(i);
+            AM_Open(i, false);
         }
     }
 

@@ -26,15 +26,10 @@
  * am_map.h : Automap, automap menu and related code.
  */
 
-#ifndef __AMMAP_H__
-#define __AMMAP_H__
+#ifndef __AM_MAP_H__
+#define __AM_MAP_H__
 
-// Used by ST StatusBar stuff.
-#define AM_MSGHEADER (('a'<<24)+('m'<<16))
-#define AM_MSGENTERED (AM_MSGHEADER | ('e'<<8))
-#define AM_MSGEXITED (AM_MSGHEADER | ('x'<<8))
-
-#define NUMMARKPOINTS 10
+#define NUMMARKPOINTS       (10)
 
 #if __JDOOM__ || __JDOOM64__
 // For use if I do walls with outsides/insides
@@ -326,15 +321,14 @@ void    AM_InitForLevel(void); // Called at the end of a level load.
 void    AM_Ticker(void);    // Called by main loop.
 void    AM_Drawer(int viewplayer); // Called every frame to render the map (if visible).
 
-void    AM_Start(int pnum);
-void    AM_Stop(int pnum);  // Called to force the automap to quit if the level is completed while it is up.
+void    AM_Open(int pnum, boolean yes);
 
 void    AM_SetWindowTarget(int pid, int x, int y, int w, int h);
 void    AM_SetWindowFullScreenMode(int pid, int value);
 void    AM_SetViewTarget(int pid, float x, float y);
 void    AM_SetViewScaleTarget(int pid, float scale);
 void    AM_SetViewAngleTarget(int pid, float angle);
-void    AM_SetViewRotate(int pid, boolean on);
+void    AM_SetViewRotate(int pid, int offOnToggle);
 void    AM_SetGlobalAlphaTarget(int pid, float alpha);
 void    AM_SetColor(int pid, int objectname, float r, float g, float b);
 void    AM_SetColorAndAlpha(int pid, int objectname, float r, float g,
@@ -351,6 +345,8 @@ void    AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
                                float glowWidth, boolean scaleGlowWithView);
 int     AM_AddMark(int pid, float x, float y);
 void    AM_ClearMarks(int pid);
+void    AM_ToggleFollow(int pid);
+void    AM_ToggleZoomMax(int pid);
 void    AM_UpdateLinedef(int pid, uint lineIdx, boolean visible);
 void    AM_SetCheatLevel(int pid, int level);
 void    AM_IncMapCheatLevel(int pid);

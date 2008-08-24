@@ -416,7 +416,9 @@ void FI_ClearState(void)
     if(fi->mode != FIMODE_OVERLAY)
     {
         G_ChangeGameState(GS_INFINE);
-        AM_Stop(CONSOLEPLAYER);
+        // Close the automap for all local players.
+        for(i = 0; i < MAXPLAYERS; ++i)
+            AM_Open(i, false);
     }
 
     fiActive = true;
@@ -789,12 +791,16 @@ void FI_DemoEnds(void)
 {
     if(fi && fi->suspended)
     {
+        int                 i;
+
         // Restore the InFine state.
         fi->suspended = false;
         fiActive = true;
         G_ChangeGameState(GS_INFINE);
         G_SetGameAction(GA_NONE);
-        AM_Stop(CONSOLEPLAYER);
+
+        for(i = 0; i < MAXPLAYERS; ++i)
+            AM_Open(i, false);
     }
 }
 

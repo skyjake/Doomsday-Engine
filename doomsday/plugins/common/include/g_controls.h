@@ -59,6 +59,9 @@ enum {
     CTL_WEAPON7,
     CTL_WEAPON8,
     CTL_WEAPON9,
+#if __JDOOM64__
+    CTL_WEAPON10,
+#endif
     CTL_WEAPON0,
     CTL_NEXT_WEAPON,
     CTL_PREV_WEAPON,
@@ -81,9 +84,16 @@ enum {
     CTL_INVULNERABILITY,
     CTL_DARK_SERVANT,
     CTL_EGG,
-    CTL_MAP_ZOOM,
+    CTL_MAP,
     CTL_MAP_PAN_X,
-    CTL_MAP_PAN_Y
+    CTL_MAP_PAN_Y,
+    CTL_MAP_ZOOM,
+    CTL_MAP_ZOOM_MAX,
+    CTL_MAP_FOLLOW,
+    CTL_MAP_ROTATE,
+    CTL_MAP_MARK_ADD,
+    CTL_MAP_MARK_CLEAR_ALL,
+    CTL_HUD_SHOW
 };
 
 // This structure replaced ticcmd as the place where players store the intentions
@@ -101,6 +111,13 @@ typedef struct playerbrain_s {
     uint        lookCenter : 1;
     uint        fallDown : 1;
     uint        jump : 1;
+    uint        mapToggle : 1;
+    uint        mapZoomMax : 1;
+    uint        mapFollow : 1;
+    uint        mapRotate : 1;
+    uint        mapMarkAdd : 1;
+    uint        mapMarkClearAll : 1;
+    uint        hudShow : 1;
 } playerbrain_t;
 
 void        G_ControlRegister(void);

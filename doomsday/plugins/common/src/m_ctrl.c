@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
+#include <ctype.h>
 
 #if __WOLFTC__
 #  include "wolftc.h"
@@ -42,23 +43,24 @@
 #  include "jhexen.h"
 #endif
 
+#include "hu_menu.h"
 #include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define NUM_CONTROLS_ITEMS 0
+#define NUM_CONTROLS_ITEMS  (0)
 
 // Control config flags.
-#define CCF_NON_INVERSE  0x1
-#define CCF_INVERSE     0x2
-#define CCF_STAGED      0x4
-#define CCF_REPEAT      0x8
+#define CCF_NON_INVERSE     (0x1)
+#define CCF_INVERSE         (0x2)
+#define CCF_STAGED          (0x4)
+#define CCF_REPEAT          (0x8)
 
-#define BIND_GAP        2
-#define SMALL_SCALE     .75f
+#define BIND_GAP            (2)
+#define SMALL_SCALE         (.75f)
 
 // Binding iteration flags for M_IterateBindings().
-#define MIBF_IGNORE_REPEATS 0x1
+#define MIBF_IGNORE_REPEATS (0x1)
 
 // TYPES -------------------------------------------------------------------
 
@@ -70,18 +72,19 @@ typedef enum {
 
 /** Menu items in the Controls menu are created based on this data. */
 typedef struct controlconfig_s {
-    const char* itemText;
-    const char* bindClass;
-    const char* controlName;
-    const char* command;
-    int flags;
+    const char*     itemText;
+    const char*     bindClass;
+    const char*     controlName;
+    const char*     command;
+    int             flags;
+
     // Automatically set:
-    menuitem_t* item;
+    menuitem_t*     item;
 } controlconfig_t;
 
 typedef struct bindingdrawerdata_s {
-    int x;
-    int y;
+    int             x;
+    int             y;
 } bindingdrawerdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -93,13 +96,12 @@ void M_DrawControlsMenu(void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, void* data,
-                       void (*callback)(bindingitertype_t type, int bid, const char* event, 
+                       void (*callback)(bindingitertype_t type, int bid, const char* event,
                                         boolean isInverse, void *data));
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float    menuAlpha;
-extern int      menusnds[];
+extern int menusnds[];
 
 static menuitem_t* ControlsItems;
 
@@ -164,6 +166,7 @@ static controlconfig_t controlConfig[] =
     { "turn left", 0, "turn", 0, CCF_INVERSE },
     { "turn right", 0, "turn", 0, CCF_NON_INVERSE },
     { "jump", 0, 0, "impulse jump" },
+    { "use", 0, 0, "impulse use" },
     { "fly up", 0, "zfly", 0, CCF_STAGED | CCF_NON_INVERSE },
     { "fly down", 0, "zfly", 0, CCF_STAGED | CCF_INVERSE },
     { "fall to ground", 0, 0, "impulse falldown" },
@@ -190,10 +193,13 @@ static controlconfig_t controlConfig[] =
     { "pistol", 0, 0, "impulse weapon2" },
     { "shotgun/super sg", 0, 0, "impulse weapon3" },
     { "super sg/shotgun", 0, 0, "impulse weapon9" },
-    { "chaingun", 0, 0, "impulse weapon4" }, 
-    { "rocket launcher", 0, 0, "impulse weapon5" }, 
-    { "plasma rifle", 0, 0, "impulse weapon6" }, 
-    { "bfg 9000", 0, 0, "impulse weapon7" }, 
+    { "chaingun", 0, 0, "impulse weapon4" },
+    { "rocket launcher", 0, 0, "impulse weapon5" },
+    { "plasma rifle", 0, 0, "impulse weapon6" },
+    { "bfg 9000", 0, 0, "impulse weapon7" },
+#endif
+#if __JDOOM64__
+    { "unmaker", 0, 0, "impulse weapon10" },
 #endif
 
 #if __JHERETIC__
@@ -262,14 +268,14 @@ static controlconfig_t controlConfig[] =
     { "brown chat", 0, 0, "beginchat 2" },
     { "red chat", 0, 0, "beginchat 3" },
 #endif
-   
+
 #if __JHERETIC__
     { "green chat", 0, 0, "beginchat 0" },
     { "yellow chat", 0, 0, "beginchat 1" },
     { "red chat", 0, 0, "beginchat 2" },
     { "blue chat", 0, 0, "beginchat 3" },
 #endif
-    
+
     { "send message", "chat", 0, "chatcomplete" },
     { "cancel message", "chat", 0, "chatcancel" },
     { "macro 1", "chat", 0, "chatsendmacro 0" },
@@ -283,30 +289,30 @@ static controlconfig_t controlConfig[] =
     { "macro 9", "chat", 0, "chatsendmacro 8" },
     { "macro 10", "chat", 0, "chatsendmacro 9" },
     { "backspace", "chat", 0, "chatdelete" },
-    { "message refresh", 0, 0, "msgrefresh" },
-    
+
     { NULL },
 
     { "map" },
-    { "show/hide map", 0, 0, "automap" },
+    { "show/hide map", 0, 0, "impulse automap" },
     { "zoom in", 0, "mapzoom", 0, CCF_NON_INVERSE },
     { "zoom out", 0, "mapzoom", 0, CCF_INVERSE },
-    { "zoom maximum", "map", 0, "zoommax" },
+    { "zoom maximum", "map", 0, "impulse zoommax" },
     { "pan left", 0, "mappanx", 0, CCF_INVERSE },
     { "pan right", 0, "mappanx", 0, CCF_NON_INVERSE },
     { "pan up", 0, "mappany", 0, CCF_NON_INVERSE },
     { "pan down", 0, "mappany", 0, CCF_INVERSE },
-    { "toggle follow", "map", 0, "follow" },
-    { "toggle rotation", "map", 0, "rotate" },
-    { "add mark", "map", 0, "addmark" },
-    { "clear marks", "map", 0, "clearmarks" },
+    { "toggle follow", "map", 0, "impulse follow" },
+    { "toggle rotation", "map", 0, "impulse rotate" },
+    { "add mark", "map", 0, "impulse addmark" },
+    { "clear marks", "map", 0, "impulse clearmarks" },
 
     { NULL },
 
     { "hud" },
-    { "show/hide hud", 0, 0, "showhud" },
+    { "show hud", 0, 0, "impulse showhud" },
     { "smaller view", 0, 0, "viewsize -" },
     { "larger view", 0, 0, "viewsize +" },
+    { "message refresh", 0, 0, "msgrefresh" },
 
     { NULL },
 
@@ -347,17 +353,16 @@ static controlconfig_t controlConfig[] =
 
 // CODE --------------------------------------------------------------------
 
-static void M_DeleteBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, 
-                            void *data)
+static void M_DeleteBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse,
+                            void* data)
 {
     DD_Executef(true, "delbind %i", bid);
 }
 
-static void M_EFuncControlConfig(int option, void *data)
+static void M_EFuncControlConfig(int option, void* data)
 {
-    controlconfig_t* cc = data;
-    char buf[1024];
-    const char *ptr;
+    controlconfig_t*    cc = data;
+    char                buf[1024];
 
     if(option == -1)
     {
@@ -369,6 +374,7 @@ static void M_EFuncControlConfig(int option, void *data)
         {
             B_BindingsForCommand(cc->command, buf, sizeof(buf));
         }
+
         M_IterateBindings(cc, buf, 0, NULL, M_DeleteBinding);
     }
     else
@@ -381,8 +387,8 @@ static void M_EFuncControlConfig(int option, void *data)
 
 void M_InitControlsMenu(void)
 {
-    int count = sizeof(controlConfig) / sizeof(controlConfig[0]);
-    int i;
+    int                 i, count =
+        sizeof(controlConfig) / sizeof(controlConfig[0]);
 
     VERBOSE( Con_Message("M_InitControlsMenu: Creating controls items.\n") );
 
@@ -393,7 +399,7 @@ void M_InitControlsMenu(void)
     {
         controlconfig_t* cc = &controlConfig[i];
         menuitem_t* item = &ControlsItems[i];
-        
+
         cc->item = item;
 
         if(cc->itemText && ((int) cc->itemText < NUMTEXT))
@@ -428,7 +434,7 @@ void M_InitControlsMenu(void)
 
 static void M_DrawSmallText(int x, int y, const char* text)
 {
-    int height = M_StringHeight(text, huFontA);
+    int                 height = M_StringHeight(text, huFontA);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -437,7 +443,7 @@ static void M_DrawSmallText(int x, int y, const char* text)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-x, -y - height/2, 0);
 
-    M_WriteText2(x, y, text, huFontA, 1, 1, 1, menuAlpha);
+    M_WriteText2(x, y, text, huFontA, 1, 1, 1, Hu_MenuAlpha());
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -445,47 +451,50 @@ static void M_DrawSmallText(int x, int y, const char* text)
 
 static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void *data)
 {
-    bindingdrawerdata_t *d = data;
-    int width, height;
-    
+#if __JHERETIC__
+    static const float  bgRGB[] = { 0, .5f, 0 };
+#elif __JHEXEN__
+    static const float  bgRGB[] = { .5f, 0, 0 };
+#else
+    static const float  bgRGB[] = { 0, 0, 0 };
+#endif
+
+    bindingdrawerdata_t* d = data;
+    int                 width, height;
+
     if(type == MIBT_KEY)
     {
         width = M_StringWidth(name, huFontA);
         height = M_StringHeight(name, huFontA);
-        
+
         GL_SetNoTexture();
         GL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height,
-#if __JHERETIC__
-                    0, .5f, 0,
-#elif __JHEXEN__
-                    .5f, 0, 0,
-#else
-                    0, 0, 0,
-#endif
-                    menuAlpha*.6f);
-        
+                    bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
+
         M_DrawSmallText(d->x + 1, d->y, name);
-        
-        d->x += width*SMALL_SCALE + 2 + BIND_GAP;
+
+        d->x += width * SMALL_SCALE + 2 + BIND_GAP;
     }
     else
     {
-        char temp[256];
-        sprintf(temp, "%s%c%s", type==MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
-        
+        char                temp[256];
+
+        sprintf(temp, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy",
+                isInverse? '-' : '+', name);
+
         width = M_StringWidth(temp, huFontA);
         height = M_StringHeight(temp, huFontA);
-        
+
         M_DrawSmallText(d->x, d->y, temp);
-        
-        d->x += width*SMALL_SCALE + BIND_GAP;
+
+        d->x += width * SMALL_SCALE + BIND_GAP;
     }
 }
 
 static const char* findInString(const char* str, const char* token, int n)
 {
-    int tokenLen = strlen(token);
-    const char* at = strstr(str, token);
+    int                 tokenLen = strlen(token);
+    const char*         at = strstr(str, token);
 
     if(!at)
     {
@@ -503,13 +512,14 @@ static const char* findInString(const char* str, const char* token, int n)
 }
 
 void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, void* data,
-                       void (*callback)(bindingitertype_t type, int bid, const char* event, 
+                       void (*callback)(bindingitertype_t type, int bid, const char* event,
                                         boolean isInverse, void *data))
 {
-    const char* ptr = strchr(bindings, ':'), *begin, *end, *end2, *k;
-    int bid;
-    char buf[80], *b;
-    boolean isInverse;
+    const char*         ptr = strchr(bindings, ':');
+    const char*         begin, *end, *end2, *k;
+    int                 bid;
+    char                buf[80], *b;
+    boolean             isInverse;
 
     memset(buf, 0, sizeof(buf));
 
@@ -517,20 +527,22 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
     {
         // Read the binding identifier.
         for(k = ptr; k > bindings && *k != '@'; --k);
+
         if(*k == '@')
         {
             for(begin = k - 1; begin > bindings && isdigit(*(begin - 1)); --begin);
-            bid = strtol(begin, NULL, 10);
+                bid = strtol(begin, NULL, 10);
         }
         else
         {
             // No identifier??
             bid = 0;
         }
-        
+
         ptr++;
         end = strchr(ptr, '-');
-        if(!end) return;
+        if(!end)
+            return;
 
         end++;
         b = buf;
@@ -539,6 +551,7 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
             *b++ = *end++;
         }
         *b = 0;
+
         end2 = strchr(end, ' ');
         if(!end2)
             end = end + strlen(end); // Then point to the end.
@@ -576,35 +589,36 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
         }
 
         ptr = end;
-        while(*ptr == ' ') ptr++;
+        while(*ptr == ' ')
+            ptr++;
 
         ptr = strchr(ptr, ':');
     }
 }
 
-/*
+/**
  * M_DrawControlsMenu
  */
 void M_DrawControlsMenu(void)
 {
-    int     i;
-    char    controlCmd[80];
-    char    buf[1024], *token;
-    const char *bc;
-    const menu_t *menu = &ControlsDef;
-    const menuitem_t *item = menu->items + menu->firstItem;
+    int                 i;
+    char                controlCmd[80];
+    char                buf[1024], *token;
+    const char*         bc;
+    const menu_t*       menu = &ControlsDef;
+    const menuitem_t*   item = menu->items + menu->firstItem;
 
 #if __JDOOM__ || __JDOOM64__
     M_DrawTitle("CONTROLS", menu->y - 28);
     sprintf(buf, "PAGE %i/%i", menu->firstItem / menu->numVisItems + 1,
             menu->itemCount / menu->numVisItems + 1);
     M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
-                 huFontA, 1, .7f, .3f, menuAlpha);
+                 huFontA, 1, .7f, .3f, Hu_MenuAlpha());
 #else
     M_WriteText2(120, 100 - 98/cfg.menuScale, "CONTROLS", huFontB, cfg.menuColor[0],
-                 cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
+                 cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
 
-    DGL_Color4f(1, 1, 1, menuAlpha);
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
     token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
@@ -622,7 +636,7 @@ void M_DrawControlsMenu(void)
 #else
                  1, 1, 1,
 #endif
-                 menuAlpha);
+                 Hu_MenuAlpha());
 
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)
@@ -653,46 +667,47 @@ void M_DrawControlsMenu(void)
 
 void M_ControlGrabDrawer(void)
 {
-    const char* text;
-    
-    if(!grabbing) return;
-    
+    const char*         text;
+
+    if(!grabbing)
+        return;
+
     GL_SetNoTexture();
     GL_DrawRect(0, 0, 320, 200, 0, 0, 0, .7f);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    
+
     DGL_Translatef(160, 100, 0);
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-160, -100, 0);
-    
+
     text = "press key or move controller for";
-    M_WriteText2(160 - M_StringWidth(text, huFontA)/2, 98 - M_StringHeight(text, huFontA), 
+    M_WriteText2(160 - M_StringWidth(text, huFontA)/2, 98 - M_StringHeight(text, huFontA),
                  text, huFontA, .75f, .75f, .75f, 1);
-    M_WriteText2(160 - M_StringWidth(grabbing->item->text, huFontB)/2, 
+    M_WriteText2(160 - M_StringWidth(grabbing->item->text, huFontB)/2,
                  102, grabbing->item->text, huFontB, 1, 1, 1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
 
-int M_ControlsPrivilegedResponder(event_t *event)
+int M_ControlsPrivilegedResponder(event_t* ev)
 {
     // We're interested in key or button down events.
-    if(grabbing && event->type == EV_SYMBOLIC)
+    if(grabbing && ev->type == EV_SYMBOLIC)
     {
-        char cmd[512];
-        const char* symbol = 0;
-        const char* bindClass = "game";
+        char            cmd[512];
+        const char*     symbol = 0;
+        const char*     bindClass = "game";
 
-        if(sizeof(const char*) == sizeof(event->data1)) // 32-bit
+        if(sizeof(const char*) == sizeof(ev->data1)) // 32-bit
         {
-            symbol = (const char*) event->data1;
+            symbol = (const char*) ev->data1;
         }
         else // 64-bit
         {
-            symbol = (const char*)(((int64_t)event->data1) | (((int64_t)event->data2)) << 32);            
+            symbol = (const char*)(((int64_t)ev->data1) | (((int64_t)ev->data2)) << 32);
         }
 
         if(strncmp(symbol, "echo-", 5))
@@ -703,48 +718,50 @@ int M_ControlsPrivilegedResponder(event_t *event)
         {
            return false;
         }
-        
+
         //Con_Message("got %s\n", symbol);
-        
+
         if(grabbing->bindClass)
         {
             bindClass = grabbing->bindClass;
         }
-        
+
         if(grabbing->command)
         {
             sprintf(cmd, "bindevent {%s:%s} {%s}", bindClass, &symbol[5], grabbing->command);
-            
+
             // Check for repeats.
             if(grabbing->flags & CCF_REPEAT)
             {
-                const char* downPtr = 0;
-                char temp[256];
+                const char*         downPtr = 0;
+                char                temp[256];
+
                 downPtr = strstr(symbol + 5, "-down");
                 if(downPtr)
                 {
-                    char temp2[256];
+                    char                temp2[256];
+
                     memset(temp2, 0, sizeof(temp2));
                     strncpy(temp2, symbol + 5, downPtr - symbol - 5);
-                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindClass, temp2, 
+                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindClass, temp2,
                             grabbing->command);
                     strcat(cmd, temp);
                 }
             }
         }
         else if(grabbing->controlName)
-        {
-            // Have to exclude the state part.
-            boolean inv = (grabbing->flags & CCF_INVERSE) != 0;
-            char temp3[256];
-            const char *end = strchr(symbol + 5, '-');
+        {   // Have to exclude the state part.
+            boolean             inv = (grabbing->flags & CCF_INVERSE) != 0;
+            char                temp3[256];
+            const char*         end = strchr(symbol + 5, '-');
+
             end = strchr(end + 1, '-');
 
             if(!end)
             {
                 Con_Error("what! %s\n", symbol);
             }
-            
+
             memset(temp3, 0, sizeof(temp3));
             strncpy(temp3, symbol + 5, end - symbol - 5);
 
@@ -757,17 +774,17 @@ int M_ControlsPrivilegedResponder(event_t *event)
             {
                 strcat(temp3, "-inverse");
             }
-            
+
             sprintf(cmd, "bindcontrol {%s} {%s}", grabbing->controlName, temp3);
-        }                
-        
+        }
+
         VERBOSE( Con_Message("M_ControlsPrivilegedResponder: %s\n", cmd) );
         DD_Execute(true, cmd);
-        
+
         /*
         // We shall issue a silent console command, but first we need
-        // a textual representation of the event.
-        B_FormEventString(evname, event->type, event->state, event->data1);
+        // a textual representation of the ev.
+        B_FormEventString(evname, ev->type, ev->state, ev->data1);
 
         // If this binding already exists, remove it.
         sprintf(cmd, "%s%s", grabbing->flags & CLF_ACTION ? "+" : "",
@@ -799,5 +816,6 @@ int M_ControlsPrivilegedResponder(event_t *event)
         S_LocalSound(menusnds[5], NULL);
         return true;
     }
+
     return false;
 }
