@@ -3444,7 +3444,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -3468,7 +3467,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -3492,7 +3490,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
