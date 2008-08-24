@@ -47,8 +47,6 @@ boolean         P_GiveWeapon(player_t *plr, weapontype_t weapon, boolean dropped
 boolean         P_GiveArtifact(player_t *plr, laserpw_t artifact); // jd64
 
 void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
-void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                             int damage);
-void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
-                              mobj_t *source, int damage, boolean stomping);
+int             P_DamageMobj(mobj_t *target, mobj_t *inflictor,
+                             mobj_t *source, int damage, boolean stomping);
 #endif

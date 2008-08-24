@@ -249,7 +249,7 @@ boolean P_GiveArmor(player_t *player, int armortype)
     return true;
 }
 
-void P_GiveKey(player_t *player, keytype_t card)
+void P_GiveKey(player_t* player, keytype_t card)
 {
     if(player->keys[card])
         return;
@@ -266,7 +266,7 @@ void P_GiveKey(player_t *player, keytype_t card)
 /**
  * d64tc
  */
-boolean P_GiveArtifact(player_t *player, laserpw_t artifact)
+boolean P_GiveArtifact(player_t* player, laserpw_t artifact)
 {
     if(player->artifacts[artifact])
         return false;
@@ -875,12 +875,6 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
-void P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                  int damage)
-{
-    P_DamageMobj2(target, inflictor, source, damage, false);
-}
-
 /**
  * Damages both enemies and players
  * Source and inflictor are the same for melee attacks.
@@ -890,9 +884,11 @@ void P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  * @param inflictor     Mobj that caused the damage creature or missile,
  *                      can be NULL (slime, etc).
  * @param source        Mobj to target after taking damage, creature or NULL.
+ *
+ * @return              Actual amount of damage done.
  */
-void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                   int damageP, boolean stomping)
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
 {
 // Follow a player exlusively for 3 seconds.
 #define BASETHRESHOLD           (100)
@@ -900,23 +896,47 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     uint                an;
     angle_t             angle;
     int                 saved;
-    player_t           *player;
+    player_t*           player;
     float               thrust;
     int                 temp;
+    int                 originalHealth;
 
     // The actual damage (== damageP * netMobDamageModifier for any
     // non-player mobj).
     int                 damage = damageP;
 
+    if(!target)
+        return 0; // Wha?
+
+    originalHealth = target->health;
+
     // Clients can't harm anybody.
     if(IS_CLIENT)
-        return;
+        return 0;
 
     if(!(target->flags & MF_SHOOTABLE))
-        return; // Shouldn't happen...
+        return 0; // Shouldn't happen...
 
     if(target->health <= 0)
-        return;
+        return 0;
+
+    // Player specific.
+    if(target->player)
+    {
+        // Check if player-player damage is disabled.
+        if(source && source->player && source->player != target->player)
+        {
+            // Co-op damage disabled?
+            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+                return 0;
+
+            // Same color, no damage?
+            if(cfg.noTeamDamage &&
+               cfg.playerColor[target->player - players] ==
+               cfg.playerColor[source->player - players])
+                return 0;
+        }
+    }
 
     if(target->flags & MF_SKULLFLY)
     {
@@ -939,7 +959,7 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         *       would most likely simply return without doing anything at all.
         * \todo SHOULD this be fixed? Or is something implemented elsewhere
         *       which does what this was attempting to do?
-    */
+        */
         int         damage;
         player_t   *player;
 
@@ -1006,19 +1026,6 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     // Player specific.
     if(player)
     {
-        // Check if player-player damage is disabled.
-        if(source && source->player && source->player != player)
-        {
-            // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
-                return;
-            // Same color, no damage?
-            if(cfg.noTeamDamage &&
-               cfg.playerColor[player - players] ==
-               cfg.playerColor[source->player - players])
-                return;
-        }
-
         // End of game hell hack.
         if(P_ToXSectorOfSubsector(target->subsector)->special == 11 &&
            damage >= target->health)
@@ -1032,7 +1039,7 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
            ((P_GetPlayerCheats(player) & CF_GODMODE) ||
             player->powers[PT_INVULNERABILITY]))
         {
-            return;
+            return 0;
         }
 
         if(player->armorType)
@@ -1078,33 +1085,36 @@ void P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
     // Do the damage.
     target->health -= damage;
-    if(target->health <= 0)
+    if(target->health > 0)
+    {   // Still alive, phew!
+        if((P_Random() < target->info->painChance) &&
+           !(target->flags & MF_SKULLFLY))
+        {
+            target->flags |= MF_JUSTHIT; // Fight back!
+
+            P_MobjChangeState(target, target->info->painState);
+        }
+
+        target->reactionTime = 0; // We're awake now...
+
+        if(source &&
+           (!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) &&
+           source != target)
+        {
+            // If not intent on another player, chase after this one.
+            target->target = source;
+            target->threshold = BASETHRESHOLD;
+            if(target->state == &states[target->info->spawnState] &&
+               target->info->seeState != S_NULL)
+                P_MobjChangeState(target, target->info->seeState);
+        }
+    }
+    else
     {
         P_KillMobj(source, target, stomping);
-        return;
     }
 
-    if((P_Random() < target->info->painChance) &&
-       !(target->flags & MF_SKULLFLY))
-    {
-        target->flags |= MF_JUSTHIT; // Fight back!
-
-        P_MobjChangeState(target, target->info->painState);
-    }
-
-    target->reactionTime = 0; // We're awake now...
-
-    if(source &&
-       (!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) &&
-       source != target)
-    {
-        // If not intent on another player, chase after this one.
-        target->target = source;
-        target->threshold = BASETHRESHOLD;
-        if(target->state == &states[target->info->spawnState] &&
-           target->info->seeState != S_NULL)
-            P_MobjChangeState(target, target->info->seeState);
-    }
+    return originalHealth - target->health;
 
 #undef BASETHRESHOLD
 }

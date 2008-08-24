@@ -357,7 +357,7 @@ void Cht_GodFunc(player_t *plyr)
 
 void Cht_SuicideFunc(player_t *plyr)
 {
-    P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000);
+    P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000, false);
 }
 
 boolean SuicideResponse(int option, void *data)

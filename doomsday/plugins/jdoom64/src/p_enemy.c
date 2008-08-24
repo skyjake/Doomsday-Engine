@@ -527,7 +527,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
     if(mo->type == MT_SKULL ||
        ((mo->flags & MF_COUNTKILL) && mo->health > 0))
     {
-        P_DamageMobj(mo, NULL, NULL, 10000);
+        P_DamageMobj(mo, NULL, NULL, 10000, false);
         (*count)++;
     }
 
@@ -1306,7 +1306,7 @@ void C_DECL A_TroopClaw(mobj_t *actor)
     {
         S_StartSound(SFX_CLAW, actor);
         damage = (P_Random() % 8 + 1) * 3;
-        P_DamageMobj(actor->target, actor, actor, damage);
+        P_DamageMobj(actor->target, actor, actor, damage, false);
         return;
     }
 }
@@ -1460,7 +1460,7 @@ void C_DECL A_SargAttack(mobj_t *actor)
     if(checkMeleeRange(actor))
     {
         damage = ((P_Random() % 10) + 1) * 4;
-        P_DamageMobj(actor->target, actor, actor, damage);
+        P_DamageMobj(actor->target, actor, actor, damage, false);
     }
 }
 
@@ -1485,7 +1485,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
     if(checkMeleeRange(actor))
     {
         damage = (P_Random() % 6 + 1) * 10;
-        P_DamageMobj(actor->target, actor, actor, damage);
+        P_DamageMobj(actor->target, actor, actor, damage, false);
         return;
     }
 
@@ -1535,7 +1535,7 @@ void C_DECL A_BruisAttack(mobj_t *actor)
     {
         S_StartSound(SFX_CLAW, actor);
         damage = (P_Random() % 8 + 1) * 10;
-        P_DamageMobj(actor->target, actor, actor, damage);
+        P_DamageMobj(actor->target, actor, actor, damage, false);
         return;
     }
 
@@ -1656,7 +1656,7 @@ void C_DECL A_SkelFist(mobj_t *actor)
     {
         damage = ((P_Random() % 10) + 1) * 6;
         S_StartSound(SFX_SKEPCH, actor);
-        P_DamageMobj(actor->target, actor, actor, damage);
+        P_DamageMobj(actor->target, actor, actor, damage, false);
     }
 }
 
@@ -1816,7 +1816,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
            (newmobj->pos[VZ] < P_GetFloatp(sec, DMU_FLOOR_HEIGHT)))
         {
             // Kill it immediately.
-            P_DamageMobj(newmobj, actor, actor, 10000);
+            P_DamageMobj(newmobj, actor, actor, 10000, false);
             return;
         }
     }
@@ -1825,7 +1825,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     if(!P_TryMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false, false))
     {
         // Kill it immediately.
-        P_DamageMobj(newmobj, actor, actor, 10000);
+        P_DamageMobj(newmobj, actor, actor, 10000, false);
         return;
     }
 
@@ -1896,7 +1896,7 @@ void A_Rocketshootpuff(mobj_t *actor, angle_t angle)
     if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY], false, false))
     {
         // Kill it immediately.
-        P_DamageMobj(mo, actor, actor, 10000);
+        P_DamageMobj(mo, actor, actor, 10000, false);
         return;
     }
 }

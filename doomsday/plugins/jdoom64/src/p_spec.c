@@ -838,14 +838,14 @@ void P_PlayerInSpecialSector(player_t *player)
         // HELLSLIME DAMAGE
         if(!player->powers[PT_IRONFEET])
             if(!(levelTime & 0x1f))
-                P_DamageMobj(player->plr->mo, NULL, NULL, 10);
+                P_DamageMobj(player->plr->mo, NULL, NULL, 10, false);
         break;
 
     case 7:
         // NUKAGE DAMAGE
         if(!player->powers[PT_IRONFEET])
             if(!(levelTime & 0x1f))
-                P_DamageMobj(player->plr->mo, NULL, NULL, 5);
+                P_DamageMobj(player->plr->mo, NULL, NULL, 5, false);
         break;
 
     case 16:
@@ -855,7 +855,7 @@ void P_PlayerInSpecialSector(player_t *player)
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
             if(!(levelTime & 0x1f))
-                P_DamageMobj(player->plr->mo, NULL, NULL, 20);
+                P_DamageMobj(player->plr->mo, NULL, NULL, 20, false);
         }
         break;
 

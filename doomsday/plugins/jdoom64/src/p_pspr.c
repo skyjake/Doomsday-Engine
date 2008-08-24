@@ -810,7 +810,7 @@ void C_DECL A_BFGSpray(mobj_t *mo)
         for(j = 0; j < 15; ++j)
             damage += (P_Random() & 7) + 1;
 
-        P_DamageMobj(lineTarget, mo->target, mo->target, damage);
+        P_DamageMobj(lineTarget, mo->target, mo->target, damage, false);
     }
 }
 
