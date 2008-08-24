@@ -219,7 +219,7 @@ static const char* ammoTypeNames[NUM_AMMO_TYPES] =
 void P_InitAmmoInfo(void)
 {
     uint                i;
-    char                buf[20];
+    char                buf[40];
 
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
@@ -298,7 +298,7 @@ void P_InitWeaponInfo(void)
 void P_InitPlayerValues(player_t *p)
 {
     int                 i;
-    char                buf[20];
+    char                buf[40];
 
     GetDefInt("Player|Health", &p->health);
     GetDefInt("Player|Weapon", (int *) &p->readyWeapon);
