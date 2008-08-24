@@ -1053,7 +1053,7 @@ void P_MobjThinker(mobj_t *mobj)
 /**
  * Spawns a mobj of "type" at the specified position.
  */
-mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
+mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                       angle_t angle)
 {
     mobj_t             *mo;
@@ -1091,6 +1091,10 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     // Must link before setting state (ID assigned for the mo).
     P_MobjSetState(mo, info->spawnState);
+
+    if(mo->type == MT_MACEFX1 || mo->type == MT_MACEFX2 ||
+       mo->type == MT_MACEFX3)
+        mo->special3 = 1000;
 
     // Set subsector and/or block links.
     P_MobjSetPosition(mo);

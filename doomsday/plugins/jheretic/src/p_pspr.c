@@ -1336,10 +1336,10 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
         return;
     }
 
-    if(ball->health != MAGIC_JUNK && ball->pos[VZ] <= ball->floorZ &&
+    if(ball->special3 != MAGIC_JUNK && ball->pos[VZ] <= ball->floorZ &&
        ball->mom[MZ] != 0)
     {   // Bounce.
-        ball->health = MAGIC_JUNK;
+        ball->special3 = MAGIC_JUNK;
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
         ball->flags2 &= ~MF2_FLOORBOUNCE;
         P_MobjChangeState(ball, ball->info->spawnState);
@@ -1578,11 +1578,16 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
  */
 void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
 {
+    mobj_t*             mo;
+
     P_ShotAmmo(player);
     if(IS_CLIENT)
         return;
 
-    P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL);
+    mo = P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL);
+    if(mo)
+        mo->special3 = 140;
+
     // Use MissileMobj instead of the return value from
     // P_SpawnMissile because we need to give info to the mobj
     // even if it exploded immediately.
@@ -1625,19 +1630,19 @@ void C_DECL A_AddPlayerRain(mobj_t *actor)
 
     if(player->rain1 && player->rain2)
     {   // Terminate an active rain.
-        if(player->rain1->health < player->rain2->health)
+        if(player->rain1->special3 < player->rain2->special3)
         {
-            if(player->rain1->health > 16)
+            if(player->rain1->special3 > 16)
             {
-                player->rain1->health = 16;
+                player->rain1->special3 = 16;
             }
             player->rain1 = NULL;
         }
         else
         {
-            if(player->rain2->health > 16)
+            if(player->rain2->special3 > 16)
             {
-                player->rain2->health = 16;
+                player->rain2->special3 = 16;
             }
             player->rain2 = NULL;
         }
@@ -1661,7 +1666,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
     int                 playerNum;
     player_t           *player;
 
-    if(actor->health-- == 0)
+    if(actor->special3-- == 0)
     {
         P_MobjChangeState(actor, S_NULL);
         playerNum = (IS_NETGAME ? actor->special2 : 0);

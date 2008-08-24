@@ -1652,7 +1652,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
                 fire->mom[MY] = baseFire->mom[MY];
                 fire->mom[MZ] = baseFire->mom[MZ];
                 fire->damage = 0;
-                fire->health = (i + 1) * 2;
+                fire->special3 = (i + 1) * 2;
 
                 P_CheckMissileSpawn(fire);
             }
@@ -1668,7 +1668,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
             mo->tracer = target;
             mo->special1 = 60;
             mo->special2 = 50; // Timer for active sound.
-            mo->health = 20 * TICSPERSEC; // Duration.
+            mo->special3 = 20 * TICSPERSEC; // Duration.
 
             S_StartSound(SFX_HEDAT3, actor);
         }
@@ -1677,8 +1677,8 @@ void C_DECL A_HeadAttack(mobj_t *actor)
 
 void C_DECL A_WhirlwindSeek(mobj_t *actor)
 {
-    actor->health -= 3;
-    if(actor->health < 0)
+    actor->special3 -= 3;
+    if(actor->special3 < 0)
     {
         actor->mom[MX] = actor->mom[MY] = actor->mom[MZ] = 0;
         P_MobjChangeState(actor, mobjInfo[actor->type].deathState);
@@ -1723,10 +1723,10 @@ void C_DECL A_HeadIceImpact(mobj_t *ice)
 
 void C_DECL A_HeadFireGrow(mobj_t *fire)
 {
-    fire->health--;
+    fire->special3--;
     fire->pos[VZ] += 9;
 
-    if(fire->health == 0)
+    if(fire->special3 == 0)
     {
         fire->damage = fire->info->damage;
         P_MobjChangeState(fire, S_HEADFX3_4);
@@ -1862,12 +1862,12 @@ void C_DECL A_Scream(mobj_t *actor)
     }
 }
 
-void P_DropItem(mobj_t *source, mobjtype_t type, int special, int chance)
+mobj_t* P_DropItem(mobjtype_t type, mobj_t* source, int special, int chance)
 {
-    mobj_t     *mo;
+    mobj_t*             mo;
 
     if(P_Random() > chance)
-        return;
+        return NULL;
 
     mo = P_SpawnMobj3f(type, source->pos[VX], source->pos[VY],
                        source->pos[VZ] + source->height / 2, source->angle);
@@ -1877,6 +1877,8 @@ void P_DropItem(mobj_t *source, mobjtype_t type, int special, int chance)
 
     mo->flags |= MF_DROPPED;
     mo->health = special;
+
+    return mo;
 }
 
 void C_DECL A_NoBlocking(mobj_t *actor)
@@ -1890,39 +1892,39 @@ void C_DECL A_NoBlocking(mobj_t *actor)
     case MT_MUMMYLEADER:
     case MT_MUMMYGHOST:
     case MT_MUMMYLEADERGHOST:
-        P_DropItem(actor, MT_AMGWNDWIMPY, 3, 84);
+        P_DropItem(MT_AMGWNDWIMPY, actor, 3, 84);
         break;
 
     case MT_KNIGHT:
     case MT_KNIGHTGHOST:
-        P_DropItem(actor, MT_AMCBOWWIMPY, 5, 84);
+        P_DropItem(MT_AMCBOWWIMPY, actor, 5, 84);
         break;
 
     case MT_WIZARD:
-        P_DropItem(actor, MT_AMBLSRWIMPY, 10, 84);
-        P_DropItem(actor, MT_ARTITOMEOFPOWER, 0, 4);
+        P_DropItem(MT_AMBLSRWIMPY, actor, 10, 84);
+        P_DropItem(MT_ARTITOMEOFPOWER, actor, 0, 4);
         break;
 
     case MT_HEAD:
-        P_DropItem(actor, MT_AMBLSRWIMPY, 10, 84);
-        P_DropItem(actor, MT_ARTIEGG, 0, 51);
+        P_DropItem(MT_AMBLSRWIMPY, actor, 10, 84);
+        P_DropItem(MT_ARTIEGG, actor, 0, 51);
         break;
 
     case MT_BEAST:
-        P_DropItem(actor, MT_AMCBOWWIMPY, 10, 84);
+        P_DropItem(MT_AMCBOWWIMPY, actor, 10, 84);
         break;
 
     case MT_CLINK:
-        P_DropItem(actor, MT_AMSKRDWIMPY, 20, 84);
+        P_DropItem(MT_AMSKRDWIMPY, actor, 20, 84);
         break;
 
     case MT_SNAKE:
-        P_DropItem(actor, MT_AMPHRDWIMPY, 5, 84);
+        P_DropItem(MT_AMPHRDWIMPY, actor, 5, 84);
         break;
 
     case MT_MINOTAUR:
-        P_DropItem(actor, MT_ARTISUPERHEAL, 0, 51);
-        P_DropItem(actor, MT_AMPHRDWIMPY, 10, 84);
+        P_DropItem(MT_ARTISUPERHEAL, actor, 0, 51);
+        P_DropItem(MT_AMPHRDWIMPY, actor, 10, 84);
         break;
 
     default:
@@ -1930,9 +1932,9 @@ void C_DECL A_NoBlocking(mobj_t *actor)
     }
 }
 
-void C_DECL A_Explode(mobj_t *actor)
+void C_DECL A_Explode(mobj_t* actor)
 {
-    int     damage;
+    int                 damage;
 
     damage = 128;
     switch(actor->type)
@@ -2156,6 +2158,7 @@ void C_DECL A_SpawnTeleGlitter(mobj_t *actor)
                        P_Random() << 24);
 
     mo->mom[MZ] = 1.0f / 4;
+    mo->special3 = 1000;
 }
 
 void C_DECL A_SpawnTeleGlitter2(mobj_t *actor)
@@ -2169,11 +2172,12 @@ void C_DECL A_SpawnTeleGlitter2(mobj_t *actor)
                        P_Random() << 24);
 
     mo->mom[MZ] = 1.0f / 4;
+    mo->special3 = 1000;
 }
 
 void C_DECL A_AccTeleGlitter(mobj_t *actor)
 {
-    if(++actor->health > 35)
+    if(++actor->special3 > 35)
         actor->mom[MZ] += actor->mom[MZ] / 2;
 }
 

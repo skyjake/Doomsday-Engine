@@ -302,6 +302,26 @@ static void SV_v13_ReadMobj(void)
     mo->special1 = SV_v13_ReadLong();
     mo->special2 = SV_v13_ReadLong();
     mo->health = SV_v13_ReadLong();
+
+    // Fix a bunch of kludges in the original Heretic.
+    switch(mo->type)
+    {
+    case MT_MACEFX1:
+    case MT_MACEFX2:
+    case MT_MACEFX3:
+    case MT_HORNRODFX2:
+    case MT_HEADFX3:
+    case MT_WHIRLWIND:
+    case MT_TELEGLITTER:
+    case MT_TELEGLITTER2:
+        mo->special3 = mo->health;
+        mo->health = mobjInfo[mo->type].spawnHealth;
+        break;
+
+    default:
+        break;
+    }
+
     mo->moveDir = SV_v13_ReadLong();
     mo->moveCount = SV_v13_ReadLong();
     SV_v13_ReadLong();          // target

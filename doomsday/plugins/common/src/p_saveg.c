@@ -82,6 +82,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "hu_msg.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1404,6 +1405,8 @@ static void SV_ReadPlayer(player_t *p)
 
 #if __JHEXEN__
 # define MOBJ_SAVEVERSION 6
+#elif __JHEREITC__
+# define MOBJ_SAVEVERSION 8
 #else
 # define MOBJ_SAVEVERSION 7
 #endif
@@ -1438,6 +1441,9 @@ static void SV_WriteMobj(mobj_t *original)
     // 6: Added damage
     // 7: Added generator in jHeretic
     // 7: Added flags3
+    //
+    // JHERETIC
+    // 8: Added special3
     SV_WriteByte(MOBJ_SAVEVERSION);
 
 #if !__JHEXEN__
@@ -1566,6 +1572,7 @@ static void SV_WriteMobj(mobj_t *original)
 # ifdef __JHERETIC__
     SV_WriteLong(mo->special1);
     SV_WriteLong(mo->special2);
+    SV_WriteLong(mo->special3);
 # endif
 
     SV_WriteByte(mo->translucency);
@@ -1838,6 +1845,31 @@ static int SV_ReadMobj(thinker_t *th)
 #endif
 
     mo->health = SV_ReadLong();
+#if __JHERETIC__
+    if(ver < 8)
+    {
+        // Fix a bunch of kludges in the original Heretic.
+        switch(mo->type)
+        {
+        case MT_MACEFX1:
+        case MT_MACEFX2:
+        case MT_MACEFX3:
+        case MT_HORNRODFX2:
+        case MT_HEADFX3:
+        case MT_WHIRLWIND:
+        case MT_TELEGLITTER:
+        case MT_TELEGLITTER2:
+            mo->special3 = mo->health;
+            if(mo->type == MT_HORNRODFX2 && mo->special3 > 16)
+                mo->special3 = 16;
+            mo->health = mobjInfo[mo->type].spawnHealth;
+            break;
+
+        default:
+            break;
+        }
+    }
+#endif
 
     // Movement direction, movement generation (zig-zagging).
     mo->moveDir = SV_ReadLong();    // 0-7
@@ -1923,6 +1955,8 @@ static int SV_ReadMobj(thinker_t *th)
 #elif __JHERETIC__
     mo->special1 = SV_ReadLong();
     mo->special2 = SV_ReadLong();
+    if(ver >= 8)
+        mo->special3 = SV_ReadLong();
 #endif
 
 #if __JHEXEN__
@@ -1959,6 +1993,7 @@ static int SV_ReadMobj(thinker_t *th)
 
     // Restore! (unmangle)
     RestoreMobj(mo, ver);
+
     return false;
 }
 

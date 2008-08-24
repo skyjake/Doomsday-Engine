@@ -195,6 +195,7 @@ typedef struct mobj_s {
     int             flags3;
     int             special1;       // Special info
     int             special2;       // Special info
+    int             special3;       // Special info
     int             health;
     int             moveDir;        // 0-7
     int             moveCount;      // when 0, select a new dir

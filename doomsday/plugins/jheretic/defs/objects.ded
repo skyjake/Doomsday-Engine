@@ -1956,7 +1956,7 @@ Thing {
   Death sound = "ramphit";
   Active sound = "None";
   Reaction time = 8;
-  Spawn health = 140;
+  Spawn health = 1000;
   Speed = 22;
   Radius = 12;
   Height = 8;
