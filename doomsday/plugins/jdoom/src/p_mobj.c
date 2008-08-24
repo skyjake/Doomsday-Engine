@@ -204,8 +204,8 @@ void P_MobjMoveXY(mobj_t *mo)
     if(P_CameraXYMovement(mo))
         return;
 
-    if(INRANGEOF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
-       INRANGEOF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
+    if(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // The skull slammed into something.
@@ -293,8 +293,8 @@ void P_MobjMoveXY(mobj_t *mo)
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!INRANGEOF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-            !INRANGEOF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
+    } while(!INRANGE_OF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
 
     // Slow down.
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
@@ -318,8 +318,8 @@ void P_MobjMoveXY(mobj_t *mo)
            !mo->player)
         {
             // Do not stop sliding if halfway off a step with some momentum.
-            if(!INRANGEOF(mo->mom[MX], 0, DROPOFFMOMENTUM_THRESHOLD) ||
-               !INRANGEOF(mo->mom[MY], 0, DROPOFFMOMENTUM_THRESHOLD))
+            if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOMENTUM_THRESHOLD) ||
+               !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOMENTUM_THRESHOLD))
             {
                 if(mo->floorZ !=
                    P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
@@ -331,8 +331,8 @@ void P_MobjMoveXY(mobj_t *mo)
     // Stop player walking animation.
     if((!player || !(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
          player->plr->mo != mo /* $voodoodolls: Stop also. */) &&
-       INRANGEOF(mo->mom[MX], 0, STOPSPEED) &&
-       INRANGEOF(mo->mom[MY], 0, STOPSPEED))
+       INRANGE_OF(mo->mom[MX], 0, STOPSPEED) &&
+       INRANGE_OF(mo->mom[MY], 0, STOPSPEED))
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)
@@ -692,8 +692,8 @@ void P_MobjThinker(mobj_t *mobj)
 #endif
 
     // Handle X and Y momentums.
-    if(!INRANGEOF(mobj->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-       !INRANGEOF(mobj->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
+    if(!INRANGE_OF(mobj->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+       !INRANGE_OF(mobj->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
        (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
@@ -731,8 +731,8 @@ void P_MobjThinker(mobj_t *mobj)
     }
     // Non-sentient objects at rest.
     else if(!sentient(mobj) && !mobj->player &&
-            !(INRANGEOF(mobj->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
-              INRANGEOF(mobj->mom[MY], 0, NOMOMENTUM_THRESHOLD)))
+            !(INRANGE_OF(mobj->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
+              INRANGE_OF(mobj->mom[MY], 0, NOMOMENTUM_THRESHOLD)))
     {
         // Objects fall off ledges if they are hanging off. Slightly push
         // off of ledge if hanging more than halfway off.

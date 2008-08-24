@@ -514,7 +514,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetMessage(player_t *pl, char *msg, boolean noHide)
+void P_SetMessage(player_t* pl, char *msg, boolean noHide)
 {
     HUMsg_PlayerMessage(pl, msg, MESSAGETICS, noHide, false);
 
@@ -534,7 +534,7 @@ void P_SetMessage(player_t *pl, char *msg, boolean noHide)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetYellowMessage(player_t *pl, char *msg, boolean noHide)
+void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
 {
     HUMsg_PlayerMessage(pl, msg, 5 * MESSAGETICS, noHide, true);
 
@@ -607,9 +607,9 @@ int P_CameraXYMovement(mobj_t *mo)
 #endif
 
     // Friction.
-    if(!INRANGEOF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
-       !INRANGEOF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
-       !INRANGEOF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
+    if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGE_OF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGE_OF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
     {   // While moving; normal friction applies.
         mo->mom[MX] *= FRICTION_NORMAL;
         mo->mom[MY] *= FRICTION_NORMAL;
@@ -631,9 +631,9 @@ int P_CameraZMovement(mobj_t *mo)
     mo->pos[VZ] += mo->mom[MZ];
 
     // Friction.
-    if(!INRANGEOF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
-       !INRANGEOF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
-       !INRANGEOF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
+    if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGE_OF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
+       !INRANGE_OF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
     {   // While moving; normal friction applies.
         mo->mom[MZ] *= FRICTION_NORMAL;
     }

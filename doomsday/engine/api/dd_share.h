@@ -112,6 +112,7 @@ extern          "C" {
 #define MIN_OF(x, y)            ((x) < (y)? (x) : (y))
 #define MINMAX_OF(a, x, b)      ((x) < (a)? (a) : (x) > (b)? (b) : (x))
 #define SIGN_OF(x)              ((x) > 0? +1 : (x) < 0? -1 : 0)
+#define INRANGE_OF(x, y, r)     ((x) >= (y) - (r) && (x) <= (y) + (r))
 #define ROUND(x)                ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 #define ABS(x)                  ((x) >= 0 ? (x) : -(x))
 
@@ -782,11 +783,11 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     thinker_t       thinker;            /* thinker node */ \
     float           pos[3];             /* position [x,y,z] */ \
 \
-    struct mobj_s   *bNext, *bPrev;     /* links in blocks (if needed) */ \
+    struct mobj_s*  bNext, *bPrev;      /* links in blocks (if needed) */ \
     nodeindex_t     lineRoot;           /* lines to which this is linked */ \
-    struct mobj_s   *sNext, **sPrev;    /* links in sector (if needed) */ \
+    struct mobj_s*  sNext, **sPrev;     /* links in sector (if needed) */ \
 \
-    struct subsector_s *subsector;      /* subsector in which this resides */ \
+    struct subsector_s* subsector;      /* subsector in which this resides */ \
     float           mom[3];   \
     angle_t         angle;              \
     spritenum_t     sprite;             /* used to find patch_t and \
@@ -798,13 +799,13 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     float           floorClip;          /* value to use for floor clipping */ \
     int             valid;              /* if == valid, already checked */ \
     int             type;               /* mobj type */ \
-    struct state_s  *state; \
+    struct state_s* state; \
     int             tics;               /* state tic counter */ \
     float           floorZ;             /* highest contacted floor */ \
     float           ceilingZ;           /* lowest contacted ceiling */ \
     struct mobj_s*  onMobj;             /* the mobj this one is on top of. */ \
     boolean         wallHit;            /* the mobj is hitting a wall. */ \
-    struct ddplayer_s *dPlayer;         /* NULL if not a player mobj. */ \
+    struct ddplayer_s* dPlayer;         /* NULL if not a player mobj. */ \
     float           srvo[3];            /* short-range visual offset (xyz) */ \
     short           visAngle;           /* visual angle ("angle-servo") */ \
     int             selector;           /* multipurpose info */ \
@@ -840,7 +841,7 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     struct { \
         int             index; \
         unsigned int    lineCount; \
-        struct linedef_s **lineDefs; \
+        struct linedef_s** lineDefs; \
     } buildData;
 
     typedef struct ddpolyobj_base_s {
@@ -1159,7 +1160,7 @@ typedef struct {
         BFCI_ONLY_NON_INVERSE,
         BFCI_ONLY_INVERSE
     } bfcinverse_t;
-    
+
     // Console command.
     typedef struct ccmd_s {
         const char     *name;
