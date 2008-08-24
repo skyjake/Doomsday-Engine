@@ -828,7 +828,7 @@ void C_DECL A_KnightAttack(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(3));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(3), false);
         S_StartSound(SFX_KGTAT2, actor);
         return;
     }
@@ -885,7 +885,7 @@ void C_DECL A_ImpMeAttack(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, 5 + (P_Random() & 7));
+        P_DamageMobj(actor->target, actor, actor, 5 + (P_Random() & 7), false);
     }
 }
 
@@ -933,7 +933,7 @@ void C_DECL A_ImpMsAttack2(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, 5 + (P_Random() & 7));
+        P_DamageMobj(actor->target, actor, actor, 5 + (P_Random() & 7), false);
         return;
     }
 
@@ -1025,7 +1025,7 @@ void C_DECL A_ChicAttack(mobj_t *actor)
         return;
 
     if(P_CheckMeleeRange(actor))
-        P_DamageMobj(actor->target, actor, actor, 1 + (P_Random() & 1));
+        P_DamageMobj(actor->target, actor, actor, 1 + (P_Random() & 1), false);
 }
 
 void C_DECL A_ChicLook(mobj_t *actor)
@@ -1087,7 +1087,7 @@ void C_DECL A_MummyAttack(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(2));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(2), false);
         S_StartSound(SFX_MUMAT2, actor);
         return;
     }
@@ -1107,7 +1107,7 @@ void C_DECL A_MummyAttack2(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(2));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(2), false);
         return;
     }
 
@@ -1164,7 +1164,7 @@ void C_DECL A_Srcr1Attack(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(8));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(8), false);
         return;
     }
 
@@ -1285,7 +1285,7 @@ void C_DECL A_Srcr2Attack(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(20));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(20), false);
         return;
     }
 
@@ -1407,7 +1407,7 @@ void C_DECL A_MinotaurAtk1(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(4));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(4), false);
 
         if((player = actor->target->player) != NULL)
         {
@@ -1502,7 +1502,7 @@ void C_DECL A_MinotaurAtk2(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(5));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(5), false);
         return;
     }
 
@@ -1534,7 +1534,7 @@ void C_DECL A_MinotaurAtk3(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(5));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(5), false);
 
         if((player = actor->target->player) != NULL)
         {
@@ -1588,7 +1588,7 @@ void C_DECL A_BeastAttack(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(3));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(3), false);
         return;
     }
 
@@ -1617,7 +1617,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(target, actor, actor, HITDICE(6));
+        P_DamageMobj(target, actor, actor, HITDICE(6), false);
         return;
     }
 
@@ -1770,7 +1770,7 @@ void C_DECL A_ClinkAttack(mobj_t *actor)
     if(P_CheckMeleeRange(actor))
     {
         damage = ((P_Random() % 7) + 3);
-        P_DamageMobj(actor->target, actor, actor, damage);
+        P_DamageMobj(actor->target, actor, actor, damage, false);
     }
 }
 
@@ -1806,7 +1806,7 @@ void C_DECL A_WizAtk3(mobj_t *actor)
 
     if(P_CheckMeleeRange(actor))
     {
-        P_DamageMobj(actor->target, actor, actor, HITDICE(4));
+        P_DamageMobj(actor->target, actor, actor, HITDICE(4), false);
         return;
     }
 
@@ -2042,7 +2042,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
 
     if((mo->flags & MF_COUNTKILL) && mo->health > 0)
     {
-        P_DamageMobj(mo, NULL, NULL, 10000);
+        P_DamageMobj(mo, NULL, NULL, 10000, false);
         (*count)++;
     }
 

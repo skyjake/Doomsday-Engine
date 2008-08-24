@@ -158,9 +158,9 @@ menuitem_t GameSetupItems1[] = {
     {ITT_EFUNC, 0, "MONSTERS:", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
     {ITT_EFUNC, 0, "RANDOM CLASSES:", SCGameSetupFunc, 0, NULL, &cfg.netRandomClass },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
+    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
+    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0}
 };
 
@@ -168,7 +168,7 @@ menuitem_t GameSetupItems1[] = {
 
 #  if __JHERETIC__
 
-#    define NUM_GAMESETUP_ITEMS     12
+#    define NUM_GAMESETUP_ITEMS     14
 
 menuitem_t GameSetupItems1[] =  // for Heretic
 {
@@ -179,10 +179,12 @@ menuitem_t GameSetupItems1[] =  // for Heretic
     {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
     {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
     {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
+    {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
+    {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
+    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
+    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
@@ -207,9 +209,9 @@ menuitem_t GameSetupItems1[] =  // for Doom 1
     {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
     {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
+    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
+    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
@@ -229,9 +231,9 @@ menuitem_t GameSetupItems2[] =  // for Doom 2
     {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
     {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
+    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
+    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
@@ -255,9 +257,9 @@ menuitem_t GameSetupItems1[] =
     {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
     {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
     {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MOD:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MOD:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MOD:", SCGameSetupGravity, 0},
+    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
+    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
+    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
@@ -410,13 +412,15 @@ void DrawGameSetupMenu(void)
 
 # if __JDOOM__ || __JDOOM64__
     M_WriteMenuText(menu, idx++, boolText[cfg.netBFGFreeLook]);
+# endif // __JDOOM__ || __JDOOM64__
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopDamage]);
+# if __JDOOM__ || __JDOOM64__
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopWeapons]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopAnything]);
     M_WriteMenuText(menu, idx++, boolText[cfg.coopRespawnItems]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noNetBFG]);
+# endif // __JDOOM__ || __JDOOM64__
     M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
-# endif                        // __JDOOM__ || __JDOOM64__
 #elif __JHEXEN__ || __JSTRIFE__
 
     sprintf(buf, "%i", cfg.netMap);

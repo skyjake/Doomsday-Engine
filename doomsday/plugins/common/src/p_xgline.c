@@ -1261,7 +1261,7 @@ int C_DECL XL_DoDamage(linedef_t *line, boolean dummy, void *context,
         // The real amount is random.
         i = XG_RandomInt(info->iparm[0], info->iparm[1]);
         if(i > 0)
-            P_DamageMobj(activator, 0, 0, i);
+            P_DamageMobj(activator, 0, 0, i, false);
         else if(i < 0)
         {
             activator->health -= i;

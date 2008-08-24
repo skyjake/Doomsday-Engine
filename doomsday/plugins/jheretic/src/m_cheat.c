@@ -444,7 +444,7 @@ void Cht_NoClipFunc(player_t *player)
 
 void Cht_SuicideFunc(player_t *plyr)
 {
-    P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000);
+    P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000, false);
 }
 
 boolean SuicideResponse(int option, void *data)
@@ -559,7 +559,6 @@ static void cheatKeysFunc(player_t *player, cheatseq_t * cheat)
     player->keys[KT_YELLOW] = true;
     player->keys[KT_GREEN] = true;
     player->keys[KT_BLUE] = true;
-    playerKeys = 7; // Key refresh flags.
     P_SetMessage(player, TXT_CHEATKEYS, false);
 }
 
@@ -700,7 +699,7 @@ static void cheatIDKFAFunc(player_t *player, cheatseq_t * cheat)
 
 static void cheatIDDQDFunc(player_t *player, cheatseq_t *cheat)
 {
-    P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000);
+    P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000, false);
     P_SetMessage(player, TXT_CHEATIDDQD, false);
 }
 

@@ -212,7 +212,7 @@ boolean PIT_StompThing(mobj_t *mo, void *data)
     // Should we stomp anyway? unless self.
     if(mo != tmThing && stompAnyway)
     {
-        P_DamageMobj2(mo, tmThing, tmThing, 10000, true);
+        P_DamageMobj(mo, tmThing, tmThing, 10000, true);
         return true;
     }
 
@@ -231,7 +231,7 @@ boolean PIT_StompThing(mobj_t *mo, void *data)
 
     // Do stomp damage (unless self)
     if(mo != tmThing)
-        P_DamageMobj2(mo, tmThing, tmThing, 10000, true);
+        P_DamageMobj(mo, tmThing, tmThing, 10000, true);
 
     return true;
 }
@@ -516,7 +516,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                         tmThing->health -= 6;
                     }
 
-                    P_DamageMobj(thing, tmThing, tmThing->target, damage);
+                    P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
                     if(P_Random() < 128)
                     {
                         P_SpawnMobj3fv(MT_HOLY_PUFF, tmThing->pos,
@@ -549,7 +549,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
             damage = tmThing->damage;
 
         damage *= (P_Random() % 8) + 1;
-        P_DamageMobj(thing, tmThing, tmThing, damage);
+        P_DamageMobj(thing, tmThing, tmThing, damage, false);
 
         tmThing->flags &= ~MF_SKULLFLY;
         tmThing->mom[MX] = tmThing->mom[MY] = tmThing->mom[MZ] = 0;
@@ -574,10 +574,10 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
             if((thing->mom[MX] + thing->mom[MY]) > 3)
             {
                 damage = (tmThing->info->mass / 100) + 1;
-                P_DamageMobj(thing, tmThing, tmThing, damage);
+                P_DamageMobj(thing, tmThing, tmThing, damage, false);
 
                 damage = (thing->info->mass / 100) + 1;
-                P_DamageMobj(tmThing, thing, thing, damage >> 2);
+                P_DamageMobj(tmThing, thing, thing, damage >> 2, false);
             }
 
             return false;
@@ -633,11 +633,11 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                     if(thing->type == MT_CENTAUR ||
                        thing->type == MT_CENTAURLEADER)
                     {   // Lightning does more damage to centaurs.
-                        P_DamageMobj(thing, tmThing, tmThing->target, 9);
+                        P_DamageMobj(thing, tmThing, tmThing->target, 9, false);
                     }
                     else
                     {
-                        P_DamageMobj(thing, tmThing, tmThing->target, 3);
+                        P_DamageMobj(thing, tmThing, tmThing->target, 3, false);
                     }
 
                     if(!(S_IsPlaying(SFX_MAGE_LIGHTNING_ZAP, tmThing)))
@@ -719,7 +719,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
                 case MT_MAGE_BOSS:
                     break;
                 default:
-                    P_DamageMobj(thing, tmThing, tmThing->target, 10);
+                    P_DamageMobj(thing, tmThing, tmThing->target, 10, false);
                     return true;
                     break;
                 }
@@ -782,7 +782,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 
             damage *= (P_Random() & 3) + 2;
 
-            P_DamageMobj(thing, tmThing, tmThing->target, damage);
+            P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
 
             if((thing->flags2 & MF2_PUSHABLE) &&
                !(tmThing->flags2 & MF2_CANNOTPUSH))
@@ -806,7 +806,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 
         damage *= (P_Random() % 8) + 1;
 #if __JDOOM__ || __JDOOM64__
-        P_DamageMobj(thing, tmThing, tmThing->target, damage);
+        P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
 #else
         if(damage)
         {
@@ -824,7 +824,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
 # endif
                 P_SpawnBloodSplatter(tmThing->pos[VX], tmThing->pos[VY], tmThing->pos[VZ], thing);
 
-            P_DamageMobj(thing, tmThing, tmThing->target, damage);
+            P_DamageMobj(thing, tmThing, tmThing->target, damage, false);
         }
 #endif
         // Don't traverse anymore.
@@ -845,7 +845,7 @@ boolean PIT_CheckThing(mobj_t *thing, void *data)
         solid = thing->flags & MF_SOLID;
         if(tmThing->flags & MF_PICKUP)
         {
-            // can remove thing
+            // Can remove thing.
             P_TouchSpecialMobj(thing, tmThing);
         }
 
@@ -912,7 +912,7 @@ boolean PIT_CheckLine(linedef_t *ld, void *data)
     {
 #if __JHEXEN__
         if(tmThing->flags2 & MF2_BLASTED)
-            P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5);
+            P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
         CheckForPushSpecial(ld, 0, tmThing);
         return false;
 #else
@@ -947,7 +947,7 @@ boolean PIT_CheckLine(linedef_t *ld, void *data)
         {
 #if __JHEXEN__
             if(tmThing->flags2 & MF2_BLASTED)
-                P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5);
+                P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
             CheckForPushSpecial(ld, 0, tmThing);
             return false;
 #else
@@ -970,7 +970,7 @@ boolean PIT_CheckLine(linedef_t *ld, void *data)
         {
 #if __JHEXEN__
             if(tmThing->flags2 & MF2_BLASTED)
-                P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5);
+                P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
 #endif
             return false;
         }
@@ -1432,7 +1432,7 @@ static boolean P_TryMove2(mobj_t *thing, float x, float y, boolean dropoff)
     {
         if(tmThing->flags2 & MF2_BLASTED)
         {
-            P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5);
+            P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
         }
 
         P_IterListResetIterator(spechit, false);
@@ -1703,43 +1703,50 @@ if(lineWasHit)
 
     if(lineAttackDamage)
     {
+        int                 damageDone;
         angle_t         attackAngle =
             R_PointToAngle2(shootThing->pos[VX], shootThing->pos[VY],
                             pos[VX], pos[VY]);
+
+#if __JHEXEN__
+        if(PuffType == MT_FLAMEPUFF2)
+        {   // Cleric FlameStrike does fire damage.
+            damageDone = P_DamageMobj(th, &LavaInflictor, shootThing,
+                                      lineAttackDamage, false);
+        }
+        else
+#endif
+        {
+            damageDone = P_DamageMobj(th, shootThing, shootThing,
+                                      lineAttackDamage, false);
+        }
+
 #if __JHEXEN__
         if(!(in->d.mo->flags2 & MF2_INVULNERABLE))
 #endif
         {
             if(!(in->d.mo->flags & MF_NOBLOOD))
             {
+                if(damageDone > 0)
+                {   // Damage was inflicted, so shed some blood.
 #if __JDOOM__ || __JDOOM64__
-                P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage,
-                             attackAngle + ANG180);
+                    P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage,
+                                 attackAngle + ANG180);
 #elif __JHEXEN__
-                if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
-                {
-                    P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mo);
-                }
+                    if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
+                    {
+                        P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mo);
+                    }
 #else
-                if(P_Random() < 192)
-                    P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mo);
+                    if(P_Random() < 192)
+                        P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mo);
 #endif
+                }
             }
 #if __JDOOM__ || __JDOOM64__
             else
                 P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
 #endif
-        }
-
-#if __JHEXEN__
-        if(PuffType == MT_FLAMEPUFF2)
-        {   // Cleric FlameStrike does fire damage.
-            P_DamageMobj(th, &LavaInflictor, shootThing, lineAttackDamage);
-        }
-        else
-#endif
-        {
-            P_DamageMobj(th, shootThing, shootThing, lineAttackDamage);
         }
     }
 
@@ -2052,7 +2059,7 @@ boolean PIT_RadiusAttack(mobj_t *thing, void *data)
         if(thing->player)
             damage /= 4;
 #endif
-        P_DamageMobj(thing, bombSpot, bombSource, damage);
+        P_DamageMobj(thing, bombSpot, bombSource, damage, false);
     }
 
     return true;
@@ -2581,7 +2588,7 @@ boolean PIT_ChangeSector(mobj_t *thing, void *data)
     noFit = true;
     if(crushChange > 0 && !(levelTime & 3))
     {
-        P_DamageMobj(thing, NULL, NULL, 10);
+        P_DamageMobj(thing, NULL, NULL, 10, false);
 #if __JDOOM__ || __JDOOM64__
         if(!(thing->flags & MF_NOBLOOD))
 #elif __JHEXEN__
@@ -2690,7 +2697,7 @@ boolean PIT_ThrustStompThing(mobj_t *thing, void *data)
     if(thing == tsThing)
         return true; // Don't clip against self.
 
-    P_DamageMobj(thing, tsThing, tsThing, 10001);
+    P_DamageMobj(thing, tsThing, tsThing, 10001, false);
     tsThing->args[1] = 1; // Mark thrust thing as bloody.
 
     return true;

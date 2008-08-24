@@ -133,6 +133,9 @@ cvar_t  gameCVars[] = {
     {"server-game-monster-meleeattack-nomaxz", 0, CVT_BYTE,
         &cfg.netNoMaxZMonsterMeleeAttack, 0, 1},
 
+    {"server-game-coop-nodamage", 0, CVT_BYTE, &cfg.noCoopDamage, 0, 1},
+    {"server-game-noteamdamage", 0, CVT_BYTE, &cfg.noTeamDamage, 0, 1},
+
 // Player
     // Player data
     {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 4},

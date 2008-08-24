@@ -171,6 +171,7 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
     // Maybe unhide the HUD?
     if(player == &players[CONSOLEPLAYER])
         ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
+
     return true;
 }
 
@@ -402,7 +403,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         {   // Attempt to undo chicken.
             if(P_UndoPlayerMorph(player) == false)
             {   // Failed.
-                P_DamageMobj(player->plr->mo, NULL, NULL, 10000);
+                P_DamageMobj(player->plr->mo, NULL, NULL, 10000, false);
             }
             else
             {   // Succeeded.
@@ -615,7 +616,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
  * Does not bother to check the validity of the params as the only
  * caller is DEFCC(CCmdInventory) (bellow).
  */
-static boolean P_InventoryMove(player_t *plr, int dir)
+static boolean P_InventoryMove(player_t* plr, int dir)
 {
     if(!ST_IsInventoryVisible())
     {
@@ -667,7 +668,7 @@ static boolean P_InventoryMove(player_t *plr, int dir)
  */
 DEFCC(CCmdInventory)
 {
-    int         player = CONSOLEPLAYER;
+    int                 player = CONSOLEPLAYER;
 
     if(argc > 2)
     {

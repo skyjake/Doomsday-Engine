@@ -770,7 +770,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // LAVA DAMAGE WEAK
         if(!(levelTime & 15))
         {
-            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5);
+            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5, false);
             P_HitFloor(player->plr->mo);
         }
         break;
@@ -778,14 +778,14 @@ void P_PlayerInSpecialSector(player_t *player)
     case 7:
         // SLUDGE DAMAGE
         if(!(levelTime & 31))
-            P_DamageMobj(player->plr->mo, NULL, NULL, 4);
+            P_DamageMobj(player->plr->mo, NULL, NULL, 4, false);
         break;
 
     case 16:
         // LAVA DAMAGE HEAVY
         if(!(levelTime & 15))
         {
-            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 8);
+            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 8, false);
             P_HitFloor(player->plr->mo);
         }
         break;
@@ -795,7 +795,7 @@ void P_PlayerInSpecialSector(player_t *player)
         P_Thrust(player, 0, FIX2FLT(2048 * 28));
         if(!(levelTime & 15))
         {
-            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5);
+            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5, false);
             P_HitFloor(player->plr->mo);
         }
         break;

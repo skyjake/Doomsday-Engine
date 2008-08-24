@@ -123,6 +123,8 @@ typedef struct jheretic_config_s {
     int             levelTitle;
     float           menuColor[3];
     float           menuColor2[3];
+    byte            noCoopDamage;
+    byte            noTeamDamage;
     byte            respawnMonstersNightmare;
 
 

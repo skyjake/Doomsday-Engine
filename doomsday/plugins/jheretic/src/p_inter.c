@@ -159,7 +159,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
             if(!weaponInfo[weapon][player->class].mode[lvl].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
-            if(P_GiveAmmo(player, i,getWeaponAmmo[weapon]))
+            if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
                 gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
@@ -407,16 +407,16 @@ void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
     S_StartSound(SFX_RESPAWN, thing);
 }
 
-void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
+void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
 {
     thing->flags |= MF_SPECIAL;
     P_MobjChangeState(thing, thing->info->spawnState);
 }
 
-void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
+void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 {
     int                 i;
-    player_t           *player;
+    player_t*           player;
     float               delta;
     int                 sound;
     boolean             respawn;
@@ -853,55 +853,6 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     target->tics -= P_Random() & 3;
 }
 
-void P_MinotaurSlam(mobj_t *source, mobj_t *target)
-{
-    angle_t             angle;
-    uint                an;
-    float               thrust;
-
-    angle = R_PointToAngle2(source->pos[VX], source->pos[VY],
-                            target->pos[VX], target->pos[VY]);
-    an = angle >> ANGLETOFINESHIFT;
-    thrust = 16 + FIX2FLT(P_Random() << 10);
-    target->mom[MX] += thrust * FIX2FLT(finecosine[angle]);
-    target->mom[MY] += thrust * FIX2FLT(finesine[angle]);
-
-    P_DamageMobj(target, NULL, NULL, HITDICE(6));
-    if(target->player)
-    {
-        target->reactionTime = 14 + (P_Random() & 7);
-    }
-}
-
-void P_TouchWhirlwind(mobj_t *target)
-{
-    int                 randVal;
-
-    target->angle += (P_Random() - P_Random()) << 20;
-    target->mom[MX] += FIX2FLT((P_Random() - P_Random()) << 10);
-    target->mom[MY] += FIX2FLT((P_Random() - P_Random()) << 10);
-
-    if(levelTime & 16 && !(target->flags2 & MF2_BOSS))
-    {
-        randVal = P_Random();
-        if(randVal > 160)
-        {
-            randVal = 160;
-        }
-
-        target->mom[MZ] += FIX2FLT(randVal << 10);
-        if(target->mom[MZ] > 12)
-        {
-            target->mom[MZ] = 12;
-        }
-    }
-
-    if(!(levelTime & 7))
-    {
-        P_DamageMobj(target, NULL, NULL, 3);
-    }
-}
-
 /**
  * @return              @c true, if the player is morphed.
  */
@@ -1015,9 +966,9 @@ boolean P_AutoUseChaosDevice(player_t *player)
         if(player->inventory[i].type == arti_teleport)
         {
             P_InventoryUseArtifact(player, arti_teleport);
-            player->health = player->plr->mo->health =
-                (player->health + 1) / 2;
-            return (true);
+            P_DamageMobj(player->plr->mo, NULL, NULL,
+                         player->health - (player->health + 1) / 2, false);
+            return true;
         }
     }
 
@@ -1091,54 +1042,89 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
     player->plr->mo->health = player->health;
 }
 
-void P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damage)
-{
-    P_DamageMobj2(target, inflictor, source, damage, false);
-}
-
 /**
- * Damages both enemies and players
- * inflictor is the thing that caused the damage
- *        creature or missile, can be NULL (slime, etc)
- * source is the thing to target after taking damage
- *        creature or NULL
- * Source and inflictor are the same for melee attacks
- * source can be null for barrel explosions and other environmental stuff
+ * Damages both enemies and players.
+ *
+ * @param inflictor     Mobj that caused the damage creature or missile,
+ *                      can be NULL (slime, etc)
+ * @param source        Mobj to target after taking damage. Can be @c NULL
+ *                      for barrel explosions and other environmental stuff.
+ *                      Source and inflictor are the same for melee attacks.
+ * @return              Actual amount of damage done.
  */
-void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damage, boolean stomping)
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
 {
     angle_t             angle;
-    int                 saved;
-    player_t           *player;
-    float               thrust;
-    int                 temp;
+    int                 saved, originalHealth;
+    player_t*           player;
+    int                 temp, damage;
 
-    // Clients are not able to damage anything.
+    if(!target)
+        return 0; // Wha?
+
+    originalHealth = target->health;
+
+    // The actual damage (== damageP * netMobDamageModifier for any
+    // non-player mobj).
+    damage = damageP;
+
+    if(IS_NETGAME && !stomping &&
+       D_NetDamageMobj(target, inflictor, source, damage))
+    {   // We're done here.
+        return 0;
+    }
+
+    // Clients can't harm anybody.
     if(IS_CLIENT)
-        return;
+        return 0;
 
-    if(!(target->flags & MF_SHOOTABLE)) // Shouldn't happen.
-        return;
+    if(!(target->flags & MF_SHOOTABLE))
+        return 0; // Shouldn't happen...
 
     if(target->health <= 0)
-        return;
+        return 0;
+
+    if(target->player)
+    {   // Player specific.
+        // Check if player-player damage is disabled.
+        if(source && source->player && source->player != target->player)
+        {
+            // Co-op damage disabled?
+            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+                return 0;
+
+            // Same color, no damage?
+            if(cfg.noTeamDamage &&
+               cfg.playerColor[target->player - players] ==
+               cfg.playerColor[source->player - players])
+                return 0;
+        }
+    }
 
     if(target->flags & MF_SKULLFLY)
     {
         if(target->type == MT_MINOTAUR)
         {   // Minotaur is invulnerable during charge attack.
-            return;
+            return 0;
         }
+
         target->mom[MX] = target->mom[MY] = target->mom[MZ] = 0;
     }
 
     player = target->player;
-
-    // In trainer mode? then take half damage.
     if(player && gameSkill == SM_BABY)
-        damage /= 2;
+        damage /= 2; // Take half damage in trainer mode.
+
+    // Use the cvar damage multiplier netMobDamageModifier only if the
+    // inflictor is not a player.
+    if(inflictor && !inflictor->player &&
+       (!source || (source && !source->player)))
+    {
+        // damage = (int) ((float) damage * netMobDamageModifier);
+        if(IS_NETGAME)
+            damage *= cfg.netMobDamageModifier;
+    }
 
     // Special damage types.
     if(inflictor)
@@ -1154,18 +1140,60 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             {
                 P_MorphMonster(target);
             }
-            return; // Always return.
+            return 0; // Does no actual "damage" but health IS modified.
 
         case MT_WHIRLWIND:
-            P_TouchWhirlwind(target);
-            return;
+            {
+            int                 randVal;
+
+            target->angle += (P_Random() - P_Random()) << 20;
+            target->mom[MX] += FIX2FLT((P_Random() - P_Random()) << 10);
+            target->mom[MY] += FIX2FLT((P_Random() - P_Random()) << 10);
+
+            if((levelTime & 16) && !(target->flags2 & MF2_BOSS))
+            {
+                randVal = P_Random();
+                if(randVal > 160)
+                {
+                    randVal = 160;
+                }
+
+                target->mom[MZ] += FIX2FLT(randVal << 10);
+                if(target->mom[MZ] > 12)
+                {
+                    target->mom[MZ] = 12;
+                }
+            }
+
+            if(!(levelTime & 7))
+            {
+                return P_DamageMobj(target, NULL, NULL, 3, false);
+            }
+            return 0;
+            }
 
         case MT_MINOTAUR:
             if(inflictor->flags & MF_SKULLFLY)
-            {
-                // Slam only when in charge mode.
-                P_MinotaurSlam(inflictor, target);
-                return;
+            {   // Slam only when in charge mode.
+                angle_t             angle;
+                uint                an;
+                float               thrust;
+                int                 damageDone;
+
+                angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
+                                        target->pos[VX], target->pos[VY]);
+                an = angle >> ANGLETOFINESHIFT;
+                thrust = 16 + FIX2FLT(P_Random() << 10);
+                target->mom[MX] += thrust * FIX2FLT(finecosine[angle]);
+                target->mom[MY] += thrust * FIX2FLT(finesine[angle]);
+
+                damageDone = P_DamageMobj(target, NULL, NULL, HITDICE(6), false);
+                if(target->player)
+                {
+                    target->reactionTime = 14 + (P_Random() & 7);
+                }
+
+                return damageDone;
             }
             break;
 
@@ -1187,7 +1215,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                 // Does the player have a Chaos Device he can use to get
                 // him out of trouble?
                 if(P_AutoUseChaosDevice(target->player))
-                    return; // He's lucky... this time.
+                    return originalHealth - target->health; // He's lucky... this time.
             }
 
             // Something's gonna die.
@@ -1218,21 +1246,19 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         case MT_HORNRODFX2:
         case MT_PHOENIXFX1:
             if(target->type == MT_SORCERER2 && P_Random() < 96)
-            {
-                // D'Sparil teleports away.
+            {   // D'Sparil teleports away, without taking damage.
                 P_DSparilTeleport(target);
-                return;
+                return 0;
             }
             break;
 
         case MT_BLASTERFX1:
         case MT_RIPPER:
             if(target->type == MT_HEAD)
-            {
-                // Less damage to Ironlich bosses.
+            {   // Less damage to Ironlich bosses.
                 damage = P_Random() & 1;
                 if(!damage)
-                    return;
+                    return 0;
             }
             break;
 
@@ -1241,13 +1267,15 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
     }
 
-    // Push the target unless source is using the gauntlets.
+    // Some close combat weapons should not inflict thrust and push the
+    // victim out of reach, thus kick away unless using a melee weapon.
     if(inflictor && !(target->flags & MF_NOCLIP) &&
        (!source || !source->player ||
         source->player->readyWeapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
-        uint                    an;
+        uint                an;
+        float               thrust;
 
         angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
                                 target->pos[VX], target->pos[VY]);
@@ -1255,33 +1283,26 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
         // Make fall forwards sometimes.
-        if((damage < 40) && (damage > target->health) &&
-           (target->pos[VZ] - inflictor->pos[VZ] > 64) && (P_Random() & 1))
+        if(damage < 40 && damage > target->health &&
+           target->pos[VZ] - inflictor->pos[VZ] > 64 && (P_Random() & 1))
         {
             angle += ANG180;
             thrust *= 4;
         }
 
-        an = angle >> ANGLETOFINESHIFT;
-
         if(source && source->player && (source == inflictor) &&
            source->player->powers[PT_WEAPONLEVEL2] &&
            source->player->readyWeapon == WT_FIRST)
-        {
-            // Staff power level 2
-            target->mom[MX] += 10 * FIX2FLT(finecosine[an]);
-            target->mom[MY] += 10 * FIX2FLT(finesine[an]);
+        {   // Staff power level 2.
+            thrust = 10;
+
             if(!(target->flags & MF_NOGRAVITY))
-            {
                 target->mom[MZ] += 5;
-            }
-        }
-        else
-        {
-            target->mom[MX] += thrust * FIX2FLT(finecosine[an]);
-            target->mom[MY] += thrust * FIX2FLT(finesine[an]);
         }
 
+        an = angle >> ANGLETOFINESHIFT;
+        target->mom[MX] += thrust * FIX2FLT(finecosine[an]);
+        target->mom[MY] += thrust * FIX2FLT(finesine[an]);
         if(target->dPlayer)
         {
             // Only fix momentum. Otherwise clients will find it difficult
@@ -1297,34 +1318,31 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     // Player specific.
     if(player)
     {
+        // Below certain threshold, ignore damage in GOD mode, or with
+        // INVUL power.
         if(damage < 1000 &&
            ((P_GetPlayerCheats(player) & CF_GODMODE) ||
             player->powers[PT_INVULNERABILITY]))
         {
-            return;
+            return 0;
         }
 
         if(player->armorType)
         {
             if(player->armorType == 1)
-            {
                 saved = damage / 2;
-            }
             else
-            {
-                saved = (damage / 2) + (damage / 4);
-            }
+                saved = damage / 2 + damage / 4;
 
             if(player->armorPoints <= saved)
-            {
-                // Armor is used up.
+            {   // Armor is used up.
                 saved = player->armorPoints;
                 player->armorType = 0;
             }
 
             player->armorPoints -= saved;
-            damage -= saved;
             player->update |= PSF_ARMOR_POINTS;
+            damage -= saved;
         }
 
         if(damage >= player->health &&
@@ -1335,18 +1353,15 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
         player->health -= damage;
         if(player->health < 0)
-        {
             player->health = 0;
-        }
 
         player->update |= PSF_HEALTH;
         player->attacker = source;
 
         player->damageCount += damage; // Add damage after armor / invuln.
         if(player->damageCount > 100)
-        {
             player->damageCount = 100; // Teleport stomp does 10k points...
-        }
+
         temp = damage < 100 ? damage : 100;
 
         // Maybe unhide the HUD?
@@ -1360,9 +1375,36 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
     // Do the damage.
     target->health -= damage;
-    if(target->health <= 0)
-    {
-        // Death.
+    if(target->health > 0)
+    {   // Still alive, phew!
+        if((P_Random() < target->info->painChance) &&
+           !(target->flags & MF_SKULLFLY))
+        {
+            target->flags |= MF_JUSTHIT; // Fight back!
+
+            P_MobjChangeState(target, target->info->painState);
+        }
+
+        target->reactionTime = 0; // We're awake now...
+
+        if(source &&
+           !target->threshold && !(source->flags3 & MF3_NOINFIGHT) &&
+           !(target->type == MT_SORCERER2 && source->type == MT_WIZARD))
+        {
+            // Target mobj is not intent on another mobj, so make it chase
+            // after the source of the damage.
+            target->target = source;
+            target->threshold = BASETHRESHOLD;
+
+            if(target->state == &states[target->info->spawnState] &&
+               target->info->seeState != S_NULL)
+            {
+                P_MobjChangeState(target, target->info->seeState);
+            }
+        }
+    }
+    else
+    {   // Death.
         target->special1 = damage;
         if(target->type == MT_POD && source && source->type != MT_POD)
         {
@@ -1382,30 +1424,9 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         P_KillMobj(source, target);
-        return;
     }
 
-    if((P_Random() < target->info->painChance) &&
-       !(target->flags & MF_SKULLFLY))
-    {
-        // Fight back!
-        target->flags |= MF_JUSTHIT;
-        P_MobjChangeState(target, target->info->painState);
-    }
+    return originalHealth - target->health;
 
-    // We're awake now...
-    target->reactionTime = 0;
-    if(!target->threshold && source && !(source->flags3 & MF3_NOINFIGHT) &&
-       !(target->type == MT_SORCERER2 && source->type == MT_WIZARD))
-    {
-        // Target actor is not intent on another actor, so make him chase
-        // after the source of the damage.
-        target->target = source;
-        target->threshold = BASETHRESHOLD;
-        if(target->state == &states[target->info->spawnState] &&
-           target->info->seeState != S_NULL)
-        {
-            P_MobjChangeState(target, target->info->seeState);
-        }
-    }
+#undef BASETHRESHOLD
 }
