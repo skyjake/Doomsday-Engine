@@ -406,8 +406,6 @@ void            P_SetupLevel(int episode, int map, int playermask,
 
 extern boolean setsizeneeded;
 
-void            R_SetViewSize(int blocks, int detail);
-
 extern int      localQuakeHappening[MAXPLAYERS];
 
 byte            P_Random(void);

@@ -43,9 +43,9 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-void            G_Display(void);
+void            G_Display(int layer);
 void            G_Display2(void);
 
+void            R_SetViewSize(int blocks);
 void            R_SetAllDoomsdayFlags(void);
-
 #endif

@@ -48,20 +48,12 @@
 #define ST_WIDTH            (SCREENWIDTH)
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
-// States for status bar code.
-typedef enum {
-    AutomapState,
-    FirstPersonState
-} st_stateenum_t;
-
 // States for the chat code.
 typedef enum {
     StartChatState,
     WaitDestState,
     GetChatState
 } st_chatstateenum_t;
-
-extern int SB_state;
 
 // Called by startup code.
 void        ST_Register(void);
@@ -70,33 +62,28 @@ void        ST_Init(void);
 // Called by main loop.
 void        ST_Ticker(void);
 
-// Called by main loop.
-void        ST_Drawer(int fullscreenmode, boolean refresh);
-
-// Called when the console player is spawned on each level.
-void        ST_Start(void);
-void        ST_Stop(void);
+void        ST_Start(int player);
+void        ST_Stop(int player);
 
 void        ST_updateGraphics(void);
 
 // Called when it might be neccessary for the hud to unhide.
-void        ST_HUDUnHide(hueevent_t event);
+void        ST_HUDUnHide(int player, hueevent_t event);
 
 // Called to execute the change of player class.
 void        SB_ChangePlayerClass(player_t *player, int newclass);
 
 // Called in P_inter & P_enemy
-void        ST_doPaletteStuff(boolean forceChange);
+void        ST_doPaletteStuff(int player, boolean forceChange);
 
-void        SB_Init(void);
-void        SB_SetClassData(void);
-boolean     SB_Responder(event_t *event);
-void        SB_Ticker(void);
-void        SB_Drawer(int fullscreenmode, boolean refresh);
-void        ST_Inventory(boolean show);
-boolean     ST_IsInventoryVisible(void);
+void        ST_Init(void);
+boolean     ST_Responder(event_t *event);
+void        ST_Ticker(void);
+void        ST_Drawer(int player, int fullscreenmode, boolean refresh);
+void        ST_Inventory(int player, boolean show);
+boolean     ST_IsInventoryVisible(int player);
 
-void        ST_InventoryFlashCurrent(player_t *player);
-void        SB_PaletteFlash(boolean forceChange);
+void        ST_InventoryFlashCurrent(int player);
+void        ST_PaletteFlash(boolean forceChange);
 
 #endif

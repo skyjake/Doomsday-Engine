@@ -43,4 +43,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+void            P_TeleportToDeathmatchStarts(mobj_t* mo);
+void            P_TeleportToPlayerStarts(mobj_t* mo);
+
 #endif

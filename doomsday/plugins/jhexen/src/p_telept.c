@@ -126,31 +126,6 @@ void P_TeleportToDeathmatchStarts(mobj_t *victim)
     }
 }
 
-void P_TeleportOther(mobj_t *victim)
-{
-    if(victim->player)
-    {
-        if(deathmatch)
-            P_TeleportToDeathmatchStarts(victim);
-        else
-            P_TeleportToPlayerStarts(victim);
-    }
-    else
-    {
-        // If death action, run it upon teleport.
-        if(victim->flags & MF_COUNTKILL && victim->special)
-        {
-            P_MobjRemoveFromTIDList(victim);
-            P_ExecuteLineSpecial(victim->special, victim->args, NULL, 0,
-                                 victim);
-            victim->special = 0;
-        }
-
-        // Send all monsters to deathmatch spots.
-        P_TeleportToDeathmatchStarts(victim);
-    }
-}
-
 mobj_t *P_SpawnTeleFog(float x, float y, angle_t angle)
 {
     float               fheight;

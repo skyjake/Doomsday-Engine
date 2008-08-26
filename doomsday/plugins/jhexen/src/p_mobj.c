@@ -1329,7 +1329,6 @@ void P_SpawnPlayer(spawnspot_t *spot, int playernum)
         }
 
         cfg.playerClass[playernum] = p->class;
-        SB_SetClassData();
         NetSv_SendPlayerInfo(playernum, DDSP_ALL_PLAYERS);
     }
     else
@@ -1401,11 +1400,8 @@ void P_SpawnPlayer(spawnspot_t *spot, int playernum)
         p->keys = 2047;
     }
 
-    if(playernum == CONSOLEPLAYER)
-    {
-        // Wake up the status bar.
-        ST_Start();
-    }
+    // Wake up the status bar.
+    ST_Start(p - players);
 
     // Wake up the heads up text.
     HU_Start(p - players);

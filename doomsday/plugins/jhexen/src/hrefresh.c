@@ -61,6 +61,7 @@
 #include "g_common.h"
 #include "hu_menu.h"
 #include "x_hair.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -97,13 +98,18 @@ void R_InitRefresh(void)
  * Don't really change anything here, because i might be in the middle of
  * a refresh.  The change will take effect next refresh.
  */
-void R_SetViewSize(int blocks, int detail)
+void R_SetViewSize(int blocks)
 {
     setsizeneeded = true;
+
     if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
-        ST_HUDUnHide(HUE_FORCE);
+        int                 i;
+
+        for(i = 0; i < MAXPLAYERS; ++i)
+            ST_HUDUnHide(i, HUE_FORCE);
     }
+
     cfg.setBlocks = blocks;
 }
 
@@ -157,134 +163,167 @@ void R_DrawMapTitle(void)
     DGL_PopMatrix();
 }
 
-void G_Display(void)
+static void rendPlayerView(int player)
 {
-    static boolean      viewactivestate = false;
-    static boolean      menuactivestate = false;
-    static int          fullscreenmode = 0;
-    static gamestate_t  oldgamestate = -1;
+    player_t*           plr = &players[player];
+    boolean             special200 = false;
+    int                 viewAngleOffset =
+        ANGLE_MAX * -G_GetLookOffset(player);
 
-    int                 py;
-    player_t           *vplayer = &players[DISPLAYPLAYER];
-    boolean             iscam =
-        (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
-    float               x, y, w, h;
-    boolean             mapHidesView;
-
-    // $democam: can be set on every frame.
-    if(cfg.setBlocks > 10 || iscam)
+    if(IS_CLIENT)
     {
-        // Full screen.
-        R_SetViewWindowTarget(0, 0, 320, 200);
+        // Server updates mobj flags in NetSv_Ticker.
+        R_SetAllDoomsdayFlags();
+    }
+
+    // Check for the sector special 200: use sky2.
+    // I wonder where this is used?
+    if(P_ToXSectorOfSubsector(plr->plr->mo->subsector)->special == 200)
+    {
+        special200 = true;
+        Rend_SkyParams(0, DD_DISABLE, NULL);
+        Rend_SkyParams(1, DD_ENABLE, NULL);
+    }
+
+    // How about a bit of quake?
+    if(localQuakeHappening[player] && !P_IsPaused())
+    {
+        int                 intensity =
+            localQuakeHappening[player];
+
+        plr->viewOffset[VX] =
+            (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
+        plr->viewOffset[VY] =
+            (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
     }
     else
     {
-        int                 w, h;
-
-        w = cfg.setBlocks * 32;
-        h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
-        R_SetViewWindowTarget(160 - (w >> 1),
-                              (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) >> 1,
-                              w, h);
+        plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
     }
 
-    R_GetViewWindow(&x, &y, &w, &h);
-    R_ViewWindow((int) x, (int) y, (int) w, (int) h);
+    DD_SetVariable(DD_VIEWX_OFFSET, &plr->viewOffset[VX]);
+    DD_SetVariable(DD_VIEWY_OFFSET, &plr->viewOffset[VY]);
+    DD_SetVariable(DD_VIEWZ_OFFSET, &plr->viewOffset[VZ]);
 
-    switch(G_GetGameState())
+    // The view angle offset.
+    DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
+    GL_SetFilter(plr->plr->filter); // $democam
+
+    // Render the view with possible custom filters.
+    R_RenderPlayerView(player);
+
+    if(special200)
     {
-    case GS_LEVEL:
-        // Clients should be a little careful about the first frames.
-        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-            break;
+        Rend_SkyParams(0, DD_ENABLE, NULL);
+        Rend_SkyParams(1, DD_DISABLE, NULL);
+    }
+}
 
-        // Good luck trying to render the view without a viewpoint...
-        if(!vplayer->plr->mo)
-            break;
+static void rendHUD(int player)
+{
+    player_t*           plr;
 
-        if(!IS_CLIENT && levelTime < 2)
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    if(G_GetGameState() != GS_LEVEL)
+        return;
+
+    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
+        return;
+
+    plr = &players[player];
+
+    // These various HUD's will be drawn unless Doomsday advises not to
+    if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
+    {
+        // Draw HUD displays only visible when the automap is open.
+        if(AM_IsMapActive(player))
+            HU_DrawMapCounters();
+
+        // Do we need to render a full status bar at this point?
+        if(!(AM_IsMapActive(player) && cfg.automapHudDisplay == 0) &&
+           !P_IsCamera(plr->plr->mo))
         {
-            // Don't render too early; the first couple of frames
-            // might be a bit unstable -- this should be considered
-            // a bug, but since there's an easy fix...
-            break;
+            if(true == (WINDOWHEIGHT == 200))
+            {
+                // Fullscreen. Which mode?
+                ST_Drawer(player, cfg.setBlocks - 10, true);
+            }
+            else
+            {
+                ST_Drawer(player, 0, true);
+            }
         }
 
-        mapHidesView =
-            R_MapObscures(DISPLAYPLAYER, (int) x, (int) y, (int) w, (int) h);
+        HU_Drawer(player);
+    }
+}
+
+/**
+ * Draws the in-viewport display.
+ *
+ * @param layer         @c 0 = bottom layer (before the viewport border).
+ *                      @c 1 = top layer (after the viewport border).
+ */
+void G_Display(int layer)
+{
+    int                 player = DISPLAYPLAYER;
+    player_t*           plr = &players[player];
+    float               x, y, w, h;
+
+    if(layer == 0)
+    {
+        // $democam: can be set on every frame.
+        if(cfg.setBlocks > 10 || P_IsCamera(plr->plr->mo))
+        {
+            // Full screen.
+            R_SetViewWindowTarget(0, 0, 320, 200);
+        }
+        else
+        {
+            int                 w, h;
+
+            w = cfg.setBlocks * 32;
+            h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
+            R_SetViewWindowTarget(160 - (w >> 1),
+                                  (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) >> 1,
+                                  w, h);
+        }
+
+        R_GetViewWindow(&x, &y, &w, &h);
+        R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
-           !mapHidesView)
+           !R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
         {
-            boolean             special200 = false;
-            float               viewOffset[2] = {0, 0};
-            int                 viewAngleOffset =
-                ANGLE_MAX * -G_GetLookOffset(DISPLAYPLAYER);
+            if(G_GetGameState() != GS_LEVEL)
+                return;
 
-            // Set flags for the renderer.
-            if(IS_CLIENT)
-            {
-                // Server updates mobj flags in NetSv_Ticker.
-                R_SetAllDoomsdayFlags();
-            }
-            GL_SetFilter(vplayer->plr->filter); // $democam
+            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
+                return;
 
-            // Check for the sector special 200: use sky2.
-            // I wonder where this is used?
-            if(P_ToXSectorOfSubsector(vplayer->plr->mo->subsector)->special == 200)
+            if(!IS_CLIENT && levelTime < 2)
             {
-                special200 = true;
-                Rend_SkyParams(0, DD_DISABLE, NULL);
-                Rend_SkyParams(1, DD_ENABLE, NULL);
+                // Don't render too early; the first couple of frames
+                // might be a bit unstable -- this should be considered
+                // a bug, but since there's an easy fix...
+                return;
             }
 
-            // How about a bit of quake?
-            if(localQuakeHappening[DISPLAYPLAYER] && !paused)
-            {
-                int     intensity = localQuakeHappening[DISPLAYPLAYER];
+            rendPlayerView(player);
 
-                viewOffset[0] = (float) ((M_Random() % (intensity << 2)) -
-                                    (intensity << 1));
-                viewOffset[1] = (float) ((M_Random() % (intensity << 2)) -
-                                    (intensity << 1));
-            }
-            DD_SetVariable(DD_VIEWX_OFFSET, &viewOffset[0]);
-            DD_SetVariable(DD_VIEWY_OFFSET, &viewOffset[1]);
-
-            // The view angle offset.
-            DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
-            R_RenderPlayerView(DISPLAYPLAYER);
-
-            if(special200)
-            {
-                Rend_SkyParams(0, DD_ENABLE, NULL);
-                Rend_SkyParams(1, DD_DISABLE, NULL);
-            }
-
-            if(!iscam)
-                X_Drawer(); // Draw the crosshair.
+            // Crosshair.
+            if(!P_IsCamera(plr->plr->mo)) // $democam
+                X_Drawer();
         }
 
         // Draw the automap.
-        AM_Drawer(DISPLAYPLAYER);
-        break;
-
-    default:
-        break;
+        AM_Drawer(player);
     }
-
-    menuactivestate = Hu_MenuIsActive();
-    viewactivestate = viewActive;
-    oldgamestate = G_GetGameState();
-
-    if(paused && !fiActive)
+    else if(layer == 1)
     {
-        //if(AM_IsMapActive(DISPLAYPLAYER))
-            py = 4;
-        //else
-        //    py = 4; // in jDOOM this is viewwindowy + 4
-
-        GL_DrawPatch(160, py, W_GetNumForName("PAUSED"));
+        rendHUD(player);
     }
 }
 
@@ -296,46 +335,11 @@ void G_Display2(void)
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
-        if(!IS_CLIENT && levelTime < 2)
-        {
-            // Don't render too early; the first couple of frames
-            // might be a bit unstable -- this should be considered
-            // a bug, but since there's an easy fix...
-            break;
-        }
-
-        // These various HUD's will be drawn unless Doomsday advises not to.
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         {
-            // Draw HUD displays only visible when the automap is open.
-            if(AM_IsMapActive(DISPLAYPLAYER))
-                HU_DrawMapCounters();
-
             // Level information is shown for a few seconds in the
             // beginning of a level.
             R_DrawMapTitle();
-
-            // Do we need to render a full status bar at this point?
-            if(!(AM_IsMapActive(DISPLAYPLAYER) && cfg.automapHudDisplay == 0 ))
-            {
-                player_t   *vplayer = &players[DISPLAYPLAYER];
-                boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
-
-                if(!iscam)
-                {
-                    if(true == (WINDOWHEIGHT == 200))
-                    {
-                        // Fullscreen. Which mode?
-                        ST_Drawer(cfg.setBlocks - 10, true); // $democam
-                    }
-                    else
-                    {
-                        ST_Drawer(0 , true); // $democam
-                    }
-                }
-            }
-
-            HU_Drawer();
         }
         break;
 
@@ -344,13 +348,19 @@ void G_Display2(void)
         break;
 
     case GS_WAITING:
-        GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
-        DGL_Color3f(1, 1, 1);
-        MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
+        //GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
+        //DGL_Color3f(1, 1, 1);
+        //MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
         break;
 
     default:
         break;
+    }
+
+    // Draw pause pic (but not if InFine active).
+    if(paused && !fiActive)
+    {
+        GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
     }
 
     // InFine is drawn whenever active.
