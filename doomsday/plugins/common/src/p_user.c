@@ -1292,11 +1292,11 @@ void P_PlayerThinkItems(player_t *player)
         else
         {
             // If the inventory is visible, just close it (depending on cfg.chooseAndUse).
-            if(ST_IsInventoryVisible())
+            if(ST_IsInventoryVisible(player - players))
             {
                 player->readyArtifact = player->inventory[player->invPtr].type;
 
-                ST_Inventory(false); // close the inventory
+                ST_Inventory(player - players, false); // close the inventory
 
                 if(cfg.chooseAndUse)
                     arti = player->inventory[player->invPtr].type;

@@ -301,9 +301,8 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
             val = (k & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weapons[i].owned == false &&
-               pl == &players[CONSOLEPLAYER])
-                ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+            if(val == true && pl->weapons[i].owned == false)
+                ST_HUDUnHide(pl - players, HUE_ON_PICKUP_WEAPON);
 
             pl->weapons[i].owned = val;
         }
@@ -381,8 +380,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
         int health = NetCl_ReadByte();
 
-        if(health < pl->health && pl == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_DAMAGE);
+        if(health < pl->health)
+            ST_HUDUnHide(plrNum, HUE_ON_DAMAGE);
 
         pl->health = health;
         pl->plr->mo->health = pl->health;
@@ -399,7 +398,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             // Maybe unhide the HUD?
             if(ap >= pl->armorPoints[i] &&
                 pl == &players[CONSOLEPLAYER])
-                ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+                ST_HUDUnHide(plrNum, HUE_ON_PICKUP_ARMOR);
 
             pl->armorPoints[i] = ap;
         }
@@ -407,8 +406,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         ap = NetCl_ReadByte();
 
         // Maybe unhide the HUD?
-        if(ap >= pl->armorPoints && pl == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+        if(ap >= pl->armorPoints)
+            ST_HUDUnHide(plrNum, HUE_ON_PICKUP_ARMOR);
 
         pl->armorPoints = ap;
 #endif
@@ -437,8 +436,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
                 pl->artifactCount += pl->inventory[i].count;
 
                 // Maybe unhide the HUD?
-                if(pl == &players[CONSOLEPLAYER])
-                    ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
+                ST_HUDUnHide(pl - players, HUE_ON_PICKUP_INVITEM);
             }
         }
 
@@ -459,9 +457,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             byte val = ((b & (1 << i))? (NetCl_ReadByte() * 35) : 0);
 
             // Maybe unhide the HUD?
-            if(val > pl->powers[i] &&
-               pl == &players[CONSOLEPLAYER])
-                ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+            if(val > pl->powers[i])
+                ST_HUDUnHide(pl - players, HUE_ON_PICKUP_POWER);
 
             pl->powers[i + 1] = val;
         }
@@ -476,9 +473,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
                 int val = ((b & (1 << i))? (NetCl_ReadByte() * 35) : 0);
 
                 // Maybe unhide the HUD?
-                if(val > pl->powers[i] &&
-                   pl == &players[CONSOLEPLAYER])
-                    ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+                if(val > pl->powers[i])
+                    ST_HUDUnHide(plrNum, HUE_ON_PICKUP_POWER);
 
                 pl->powers[i] = val;
             }
@@ -495,8 +491,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             boolean val = (b & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val && !pl->keys[i] && pl == &players[CONSOLEPLAYER])
-                ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+            if(val && !pl->keys[i])
+                ST_HUDUnHide(plrNum, HUE_ON_PICKUP_KEY);
 
             pl->keys[i] = val;
         }
@@ -530,9 +526,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             val = (b & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(val == true && pl->weapons[i].owned == false &&
-               pl == &players[CONSOLEPLAYER])
-                ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+            if(val == true && pl->weapons[i].owned == false)
+                ST_HUDUnHide(plrNum, HUE_ON_PICKUP_WEAPON);
 
             pl->weapons[i].owned = val;
         }
@@ -548,8 +543,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             int val = NetCl_ReadShort();
 #endif
             // Maybe unhide the HUD?
-            if(val > pl->ammo[i].owned && pl == &players[CONSOLEPLAYER])
-                ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+            if(val > pl->ammo[i].owned)
+                ST_HUDUnHide(plrNum, HUE_ON_PICKUP_AMMO);
 
             pl->ammo[i].owned = val;
         }
@@ -761,11 +756,6 @@ void NetCl_UpdatePlayerInfo(byte *data)
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = NetCl_ReadByte();
     players[num].class = cfg.playerClass[num];
-    if(num == CONSOLEPLAYER)
-        SB_SetClassData();
-#endif
-#if __JDOOM__ || __JDOOM64__
-    ST_updateGraphics();
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__

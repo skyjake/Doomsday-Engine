@@ -345,10 +345,10 @@ int menusnds[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean  menuActive;
+static boolean menuActive;
 
-float           menuAlpha = 0; // Alpha level for the entire menu.
-static float    menuTargetAlpha = 0; // Target alpha for the entire UI.
+static float menuAlpha = 0; // Alpha level for the entire menu.
+static float menuTargetAlpha = 0; // Target alpha for the entire UI.
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 static int SkullBaseLump;
@@ -1517,7 +1517,7 @@ void Hu_MenuInit(void)
         EpiDef.y = 50 - ITEM_HEIGHT;
     }
 #endif
-    
+
     M_InitControlsMenu();
 }
 
@@ -1911,12 +1911,12 @@ void Hu_MenuDrawer(void)
 
     if(!menuActive && !(menuAlpha > 0) && !(menuFogData.alpha > 0))
         goto end_draw_menu;
-    
+
     if(allowScaling && currentMenu->unscaled.numVisItems)
     {
         currentMenu->numVisItems = currentMenu->unscaled.numVisItems / cfg.menuScale;
         currentMenu->y = 110 - (110 - currentMenu->unscaled.y) / cfg.menuScale;
-        
+
         if(currentMenu->firstItem && currentMenu->firstItem < currentMenu->numVisItems)
         {
             // Make sure all pages are divided correctly.
@@ -2078,12 +2078,12 @@ void Hu_MenuCommand(menucommand_e cmd)
         menuActive = false;
         fadingOut = true;
         outFade = 0;
-        
+
         // Disable the menu binding class
         DD_Execute(true, "deactivatebclass menu");
         return;
     }
-    
+
     if(!menuActive)
     {
         if(cmd == MCMD_OPEN)
@@ -2251,7 +2251,7 @@ void Hu_MenuCommand(menucommand_e cmd)
                 }
             }
             break;
-                
+
         case MCMD_SELECT:
             if(item->type == ITT_SETMENU)
             {
@@ -3458,12 +3458,16 @@ void M_SizeStatusBar(int option, void *data)
     else if(cfg.statusbarScale > 1)
         cfg.statusbarScale--;
 
-    R_SetViewSize(cfg.screenBlocks, 0);
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
+
+    R_SetViewSize(cfg.screenBlocks);
 }
 
 void M_StatusBarAlpha(int option, void *data)
 {
     M_FloatMod10(&cfg.statusbarAlpha, option);
+
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 }
 #endif
 
@@ -3639,6 +3643,7 @@ void M_HUDScale(int option, void *data)
         val--;
 
     cfg.hudScale = val / 10.0f;
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 }
 
 #if __JDOOM__ || __JDOOM64__
@@ -3808,13 +3813,8 @@ boolean M_VerifyNightmare(int option, void *data)
 void M_ChooseSkill(int option, void *data)
 {
 #if __JHEXEN__
-    extern int SB_state;
-
     cfg.playerClass[CONSOLEPLAYER] = MenuPClass;
     G_DeferredNewGame(option);
-    SB_SetClassData();
-    SB_state = -1;
-
 #else
 # if __JDOOM__ || __JSTRIFE__
     if(option == SM_NIGHTMARE)
@@ -3899,7 +3899,8 @@ void M_SizeDisplay(int option, void *data)
     {
         cfg.screenBlocks--;
     }
-    R_SetViewSize(cfg.screenBlocks, 0);
+
+    R_SetViewSize(cfg.screenBlocks);
 }
 
 void M_OpenDCP(int option, void *data)

@@ -495,13 +495,13 @@ void G_CommonPostInit(void)
     // Init the save system and create the game save directory
     SV_Init();
 
-#ifndef __JHEXEN__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
     XG_ReadTypes();
     XG_Register(); // Register XG classnames.
 #endif
 
     DD_SetVariable(DD_SKYMASKMATERIAL_NAME, SKYFLATNAME);
-    R_SetViewSize(cfg.screenBlocks, 0);
+    R_SetViewSize(cfg.screenBlocks);
 
     Con_Message("P_Init: Init Playloop state.\n");
     P_Init();
@@ -1090,8 +1090,6 @@ void G_PlayerExitMap(int player)
 
     // Misc
 #if __JHERETIC__
-    playerKeys = 0;
-
     p->rain1 = NULL;
     p->rain2 = NULL;
 #endif
@@ -1268,12 +1266,6 @@ void G_PlayerReborn(int player)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     P_InventoryResetCursor(p);
-    if(p == &players[CONSOLEPLAYER])
-    {
-#  if __JHEXEN__ || __JSTRIFE__
-        SB_state = -1; // Refresh the status bar.
-#  endif
-    }
 #endif
 
     // We'll need to update almost everything.
@@ -1836,7 +1828,6 @@ void G_DoSingleReborn(void)
 {
     G_SetGameAction(GA_NONE);
     SV_LoadGame(SV_HxGetRebornSlot());
-    SB_SetClassData();
 }
 #endif
 
@@ -1874,7 +1865,6 @@ void G_DoLoadGame(void)
     {                           // Copy the base slot to the reborn slot
         SV_HxUpdateRebornSlot();
     }
-    SB_SetClassData();
 #else
     SV_LoadGame(saveName);
 #endif

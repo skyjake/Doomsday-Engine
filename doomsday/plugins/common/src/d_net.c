@@ -175,10 +175,6 @@ int D_NetServerStarted(int before)
     randomClassParm = cfg.netRandomClass;
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-    ST_updateGraphics();
-#endif
-
     // Hexen has translated map numbers.
 #if __JHEXEN__
     netMap = P_TranslateMap(cfg.netMap);
@@ -694,10 +690,6 @@ DEFCC(CCmdSetColor)
         // bits directly.
 
         cfg.playerColor[player] = PLR_COLOR(player, cfg.netColor);
-
-#if __JDOOM__ || __JDOOM64__
-        ST_updateGraphics();
-#endif
 
         // Change the color of the mobj (translation flags).
         players[player].plr->mo->flags &= ~MF_TRANSLATION;

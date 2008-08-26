@@ -169,8 +169,7 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
     player->artifactCount++;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_INVITEM);
 
     return true;
 }
@@ -315,7 +314,7 @@ boolean P_InventoryUseArtifact(player_t *player, artitype_e arti)
                     S_ConsoleSound(SFX_PUZZLE_SUCCESS, NULL, player - players);
                 }
 # endif
-                ST_InventoryFlashCurrent(player);
+                ST_InventoryFlashCurrent(player - players);
             }
             else if(cfg.inventoryNextOnUnuse)
             {
@@ -618,13 +617,15 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
  */
 static boolean P_InventoryMove(player_t* plr, int dir)
 {
-    if(!ST_IsInventoryVisible())
+    int                 player = plr - players;
+
+    if(!ST_IsInventoryVisible(player))
     {
-        ST_Inventory(true);
+        ST_Inventory(player, true);
         return false;
     }
 
-    ST_Inventory(true); // reset the inventory auto-hide timer
+    ST_Inventory(player, true); // Reset the inventory auto-hide timer.
 
     if(dir == 0)
     {

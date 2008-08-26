@@ -821,7 +821,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
             {
                 plr->readyArtifact = plr->inventory[plr->invPtr].type;
 
-                ST_Inventory(false); // close the inventory
+                ST_Inventory(plr - players, false); // close the inventory
 
                 if(cfg.chooseAndUse)
                     cmd->arti = plr->inventory[plr->invPtr].type;
