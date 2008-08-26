@@ -49,15 +49,14 @@ void        ST_Init(void);
 void        ST_Ticker(void);
 
 // Called by main loop.
-void        ST_Drawer(int mode, boolean refresh);
+void        ST_Drawer(int player, int mode, boolean refresh);
 
 // Called when the console player is spawned on each level.
-void        ST_Start(void);
-
-void        ST_updateGraphics(void);
+void        ST_Start(int player);
+void        ST_Stop(int player);
 
 // Called when it might be neccessary for the hud to unhide.
-void        ST_HUDUnHide(hueevent_t event);
+void        ST_HUDUnHide(int player, hueevent_t event);
 
 int         R_GetFilterColor(int filter);
 

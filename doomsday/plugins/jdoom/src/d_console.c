@@ -331,7 +331,7 @@ DEFCC(CCmdViewSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks, 0);
+    R_SetViewSize(cfg.screenBlocks);
     return true;
 }
 

@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "jdoom.h"
 
@@ -84,7 +85,7 @@
 #define ST_GODFACE          (ST_NUMPAINFACES*ST_FACESTRIDE)
 #define ST_DEADFACE         (ST_GODFACE+1)
 
-#define ST_FACESX           (143)
+#define ST_FACESX           (144)
 #define ST_FACESY           (168)
 
 #define ST_EVILGRINCOUNT    (2*TICRATE)
@@ -192,11 +193,46 @@ typedef enum hotloc_e {
     HOT_BLEFT
 } hotloc_t;
 
+typedef struct {
+    boolean         stopped;
+    int             hideTics;
+    float           hideAmount;
+    float           alpha; // Fullscreen hud alpha value.
+
+    float           showBar; // Slide statusbar amount 1.0 is fully open.
+    float           statusbarCounterAlpha;
+
+    boolean         firstTime; // ST_Start() has just been called.
+    boolean         blended; // Whether to use alpha blending.
+    boolean         statusbarActive; // Whether the main status bar is active.
+    boolean         statusbarArmsOn; // !deathmatch && statusbarActive.
+    boolean         statusbarFragsOn; // !deathmatch.
+    int             currentFragsCount; // Number of frags so far in deathmatch.
+    int             keyBoxes[3]; // Holds key-type for each key box on bar.
+
+    // For status face:
+    int             oldHealth; // Used to use appopriately pained face.
+    boolean         oldWeaponsOwned[NUM_WEAPON_TYPES]; // Used for evil grin.
+    int             faceCount; // Count until face changes.
+    int             faceIndex; // Current face index, used by wFaces.
+    int             lastAttackDown;
+    int             priority;
+
+    // Widgets:
+    st_number_t     wReadyWeapon; // Ready-weapon widget.
+    st_number_t     wFrags; // In deathmatch only, summary of frags stats.
+    st_percent_t    wHealth; // Health widget.
+    st_multicon_t   wArms[6]; // Weapon ownership widgets.
+    st_multicon_t   wFaces; // Face status widget.
+    st_multicon_t   wKeyBoxes[3]; // Keycard widgets.
+    st_percent_t    wArmor; // Armor widget.
+    st_number_t     wAmmo[NUM_AMMO_TYPES]; // Ammo widgets.
+    st_number_t     wMaxAmmo[NUM_AMMO_TYPES]; // Max ammo widgets.
+} hudstate_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void    ST_Stop(void);
 
 DEFCC(CCmdStatusBarSize);
 
@@ -208,55 +244,7 @@ DEFCC(CCmdStatusBarSize);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int hudHideTics;
-static float hudHideAmount;
-
-// Side statusbar amount 1.0 is fully open.
-static float showBar = 0.0f;
-
-// Fullscreen hud alpha value.
-static float hudAlpha = 0.0f;
-
-static float statusbarCounterAlpha = 0.0f;
-
-// ST_Start() has just been called.
-static boolean firstTime;
-
-// Whether to use alpha blending.
-static boolean blended = false;
-
-// Whether the main status bar is active.
-static boolean statusbarActive;
-
-// !deathmatch && statusbarActive.
-static boolean statusbarArmsOn;
-
-// !deathmatch.
-static boolean statusbarFragsOn;
-
-// Number of frags so far in deathmatch.
-static int currentFragsCount;
-
-// Used to use appopriately pained face.
-static int oldHealth = -1;
-
-// Used for evil grin.
-static boolean oldWeaponsOwned[NUM_WEAPON_TYPES];
-
-// Count until face changes.
-static int faceCount = 0;
-
-// Current face index, used by wFaces.
-static int faceIndex = 0;
-
-// Holds key-type for each key box on bar.
-static int keyBoxes[3];
-
-// A random number per tick.
-static int randomNumber;
-
-static boolean stopped = true;
-static int currentPalette = 0;
+static hudstate_t hudStates[MAXPLAYERS];
 
 // Main bar left.
 static dpatch_t statusbar;
@@ -277,40 +265,13 @@ static dpatch_t keys[NUM_KEY_TYPES];
 static dpatch_t faces[ST_NUMFACES];
 
 // Face background.
-static dpatch_t faceBackground;
+static dpatch_t faceBackground[4];
 
  // Main bar right.
 static dpatch_t armsBackground;
 
 // Weapon ownership patches.
 static dpatch_t arms[6][2];
-
-// Ready-weapon widget.
-static st_number_t wReadyWeapon;
-
- // In deathmatch only, summary of frags stats.
-static st_number_t wFrags;
-
-// Health widget.
-static st_percent_t wHealth;
-
-// Weapon ownership widgets.
-static st_multicon_t wArms[6];
-
-// Face status widget.
-static st_multicon_t wFaces;
-
-// Keycard widgets.
-static st_multicon_t wKeyBoxes[3];
-
-// Armor widget.
-static st_percent_t wArmor;
-
-// Ammo widgets.
-static st_number_t wAmmo[NUM_AMMO_TYPES];
-
-// Max ammo widgets.
-static st_number_t wMaxAmmo[NUM_AMMO_TYPES];
 
 // CVARs for the HUD/Statusbar:
 cvar_t sthudCVars[] =
@@ -340,7 +301,6 @@ cvar_t sthudCVars[] =
 
     // HUD displays
     {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
-    {"hud-frags-all", 0, CVT_BYTE, &huShowAllFrags, 0, 1},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
@@ -375,17 +335,18 @@ void ST_Register(void)
         Con_AddCommand(sthudCCmds + i);
 }
 
-void ST_refreshBackground(void)
+static void drawStatusBarBackground(int player, float width, float height)
 {
-    int                 x, y, w, h;
+    float               x, y, w, h;
     float               cw, cw2, ch;
     float               alpha;
+    hudstate_t*         hud = &hudStates[player];
 
     GL_SetPatch(statusbar.lump, DGL_CLAMP, DGL_CLAMP);
 
-    if(blended)
+    if(hud->blended)
     {
-        alpha = cfg.statusbarAlpha - hudHideAmount;
+        alpha = cfg.statusbarAlpha - hud->hideAmount;
         // Clamp
         CLAMP(alpha, 0.0f, 1.0f);
         if(!(alpha > 0))
@@ -394,30 +355,33 @@ void ST_refreshBackground(void)
     else
         alpha = 1.0f;
 
+    DGL_Color4f(1, 1, 1, alpha);
+
     if(!(alpha < 1))
     {
-        // we can just render the full thing as normal
-        GL_DrawPatch(ST_X, ST_Y, statusbar.lump);
-
-        if(statusbarArmsOn)  // arms baground
-            GL_DrawPatch(ST_ARMSBGX, ST_ARMSBGY, armsBackground.lump);
-
-        if(IS_NETGAME) // faceback
-            GL_DrawPatch(ST_FX, ST_Y+1, faceBackground.lump);
+        // We can draw the full graphic in one go.
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0);
+            DGL_Vertex2f(0, 0);
+            DGL_TexCoord2f(1, 0);
+            DGL_Vertex2f(width, 0);
+            DGL_TexCoord2f(1, 1);
+            DGL_Vertex2f(width, height);
+            DGL_TexCoord2f(0, 1);
+            DGL_Vertex2f(0, height);
+        DGL_End();
     }
     else
     {
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
-        DGL_Color4f(1, 1, 1, alpha);
-
         DGL_Begin(DGL_QUADS);
 
         // Up to faceback if deathmatch, else ST_ARMS.
-        x = ST_X;
-        y = ST_Y;
-        w = (statusbarArmsOn ? 104 : 143);
-        h = 32;
-        cw = (float) w / ST_WIDTH;
+        x = 0;
+        y = 0;
+        w = width * (float) (hud->statusbarArmsOn ? ST_ARMSBGX : ST_FX) / ST_WIDTH;
+        h = height * (float) ST_HEIGHT / ST_HEIGHT;
+        cw = w / width;
 
         DGL_TexCoord2f(0, 0);
         DGL_Vertex2f(x, y);
@@ -430,14 +394,14 @@ void ST_refreshBackground(void)
 
         if(IS_NETGAME)
         {
-            // Awkward, 1 pixel tall strip above faceback.
-            x = ST_X + 144;
-            y = ST_Y;
-            w = 35;
-            h = 1;
-            cw = (float) (x - 1) / ST_WIDTH;
-            cw2 = (float) (x - 1 + w) / ST_WIDTH;
-            ch = (float) 1 / ST_HEIGHT;
+            // Awkward, 2 pixel tall strip above faceback.
+            x = width * (float) ST_FX / ST_WIDTH;
+            y = 0;
+            w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
+            h = height * (float) (ST_HEIGHT - 30) / ST_HEIGHT;
+            cw = x / width;
+            cw2 = (x + w) / width;
+            ch = h / height;
 
             DGL_TexCoord2f(cw, 0);
             DGL_Vertex2f(x, y);
@@ -448,22 +412,39 @@ void ST_refreshBackground(void)
             DGL_TexCoord2f(cw, ch);
             DGL_Vertex2f(x, y + h);
 
-            // After faceback.
-            x = ST_X + 178;
-            y = ST_Y;
-            w = 142;
-            h = 32;
-            cw = (float) x / ST_WIDTH;
+            // Awkward, 1 pixel tall strip bellow faceback.
+            x = width * (float) ST_FX / ST_WIDTH;
+            y = height * (float) (ST_HEIGHT - 1) / ST_HEIGHT;
+            w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
+            h = height * (float) (ST_HEIGHT - 31) / ST_HEIGHT;
+            cw = x / width;
+            cw2 = (x + w) / width;
+            ch = h / height;
 
+            DGL_TexCoord2f(cw, ch);
+            DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(cw2, ch);
+            DGL_Vertex2f(x + w, y);
+            DGL_TexCoord2f(cw2, 1);
+            DGL_Vertex2f(x + w, y + h);
+            DGL_TexCoord2f(cw, 1);
+            DGL_Vertex2f(x, y + h);
+
+            // After faceback.
+            x = width * (float) (ST_FX + (ST_WIDTH - ST_FX - 141 - 2)) / ST_WIDTH;
+            y = 0;
+            w = width * (float) (ST_WIDTH - (ST_FX + (ST_WIDTH - ST_FX - 141 - 2))) / ST_WIDTH;
+            h = height * (float) ST_HEIGHT / ST_HEIGHT;
+            cw = x / width;
         }
         else
         {
-            // (including area behind the face)
-            x = ST_X + 144;
-            y = ST_Y;
-            w = 176;
-            h = 32;
-            cw = (float) x / ST_WIDTH;
+            // Including area behind the face status indicator.
+            x = width * (float) ST_FX / ST_WIDTH;
+            y = 0;
+            w = width * (float) (ST_WIDTH - ST_FX) / ST_WIDTH;
+            h = height * (float) ST_HEIGHT / ST_HEIGHT;
+            cw = x / width;
         }
 
         DGL_TexCoord2f(cw, 0);
@@ -476,48 +457,85 @@ void ST_refreshBackground(void)
         DGL_Vertex2f(x, y + h);
 
         DGL_End();
+    }
 
-        if(statusbarArmsOn)  // arms baground
-            GL_DrawPatch_CS(ST_ARMSBGX, ST_ARMSBGY, armsBackground.lump);
+    if(!deathmatch)
+    {   // Draw the ARMS background.
+        GL_SetPatch(armsBackground.lump, DGL_CLAMP, DGL_CLAMP);
 
-        if(IS_NETGAME) // faceback
-            GL_DrawPatch_CS(ST_FX, ST_Y+1, faceBackground.lump);
+        x = width * ((float) ST_ARMSBGX - ST_X) / ST_WIDTH;
+        w = width * (float) armsBackground.width / ST_WIDTH;
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0);
+            DGL_Vertex2f(x, 0);
+            DGL_TexCoord2f(1, 0);
+            DGL_Vertex2f(x + w, 0);
+            DGL_TexCoord2f(1, 1);
+            DGL_Vertex2f(x + w, height);
+            DGL_TexCoord2f(0, 1);
+            DGL_Vertex2f(x, height);
+        DGL_End();
+    }
+
+    if(IS_NETGAME) // Faceback.
+    {
+        int             plrColor = cfg.playerColor[player];
+        dpatch_t*       patch = &faceBackground[plrColor];
+
+        GL_SetPatch(patch->lump, DGL_CLAMP, DGL_CLAMP);
+
+        x = width * (float) (ST_FX - ST_X) / ST_WIDTH;
+        y = height * (float) (ST_HEIGHT - 30) / ST_HEIGHT;
+        w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
+        h = height * (float) (ST_HEIGHT - 3) / ST_HEIGHT;
+        cw = (float) (1) / patch->width;
+        cw2 = (float) (patch->width - 1) / patch->width;
+        ch = (float) (patch->height - 1) / patch->height;
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(cw, 0);
+            DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(cw2, 0);
+            DGL_Vertex2f(x + w, y);
+            DGL_TexCoord2f(cw2, ch);
+            DGL_Vertex2f(x + w, y + h);
+            DGL_TexCoord2f(cw, ch);
+            DGL_Vertex2f(x, y + h);
+        DGL_End();
     }
 }
 
 /**
  * Unhides the current HUD display if hidden.
  *
+ * @param player        The player whoose HUD to (maybe) unhide.
  * @param event         The HUD Update Event type to check for triggering.
  */
-void ST_HUDUnHide(hueevent_t event)
+void ST_HUDUnHide(int player, hueevent_t ev)
 {
-    if(event < HUE_FORCE || event > NUMHUDUNHIDEEVENTS)
+    player_t*           plr;
+
+    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
         return;
 
-    if(event == HUE_FORCE || cfg.hudUnHide[event])
+    plr = &players[player];
+    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        return;
+
+    if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
-        hudHideTics = (cfg.hudTimer * TICSPERSEC);
-        hudHideAmount = 0;
+        hudStates[player].hideTics = (cfg.hudTimer * TICSPERSEC);
+        hudStates[player].hideAmount = 0;
     }
 }
 
-int ST_calcPainOffset(void)
+static int calcPainOffset(hudstate_t* hud)
 {
-    int                 health;
-    static int          lastCalc;
-    static int          oldHealth = -1;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    player_t*           plr = &players[hud - hudStates];
+    int                 health = (plr->health > 100 ? 100 : plr->health);
 
-    health = (plyr->health > 100 ? 100 : plyr->health);
-
-    if(health != oldHealth)
-    {
-        lastCalc = ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
-        oldHealth = health;
-    }
-
-    return lastCalc;
+    return  ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
 }
 
 /**
@@ -526,56 +544,55 @@ int ST_calcPainOffset(void)
  *
  * dead > evil grin > turned head > straight ahead
  */
-void ST_updateFaceWidget(void)
+void ST_updateFaceWidget(int player)
 {
     int                 i;
     angle_t             badGuyAngle;
     angle_t             diffAng;
-    static int          lastAttackDown = -1;
-    static int          priority = 0;
     boolean             doEvilGrin;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    player_t*           plr = &players[player];
+    hudstate_t*         hud = &hudStates[player];
 
-    if(priority < 10)
+    if(hud->priority < 10)
     {   // Player is dead.
-        if(!plyr->health)
+        if(!plr->health)
         {
-            priority = 9;
-            faceIndex = ST_DEADFACE;
-            faceCount = 1;
+            hud->priority = 9;
+            hud->faceIndex = ST_DEADFACE;
+            hud->faceCount = 1;
         }
     }
 
-    if(priority < 9)
+    if(hud->priority < 9)
     {
-        if(plyr->bonusCount)
+        if(plr->bonusCount)
         {   // Picking up a bonus.
             doEvilGrin = false;
 
             for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                if(oldWeaponsOwned[i] != plyr->weapons[i].owned)
+                if(hud->oldWeaponsOwned[i] != plr->weapons[i].owned)
                 {
                     doEvilGrin = true;
-                    oldWeaponsOwned[i] = plyr->weapons[i].owned;
+                    hud->oldWeaponsOwned[i] = plr->weapons[i].owned;
                 }
             }
 
             if(doEvilGrin)
             {   // Evil grin if just picked up weapon.
-                priority = 8;
-                faceCount = ST_EVILGRINCOUNT;
-                faceIndex = ST_calcPainOffset() + ST_EVILGRINOFFSET;
+                hud->priority = 8;
+                hud->faceCount = ST_EVILGRINCOUNT;
+                hud->faceIndex = calcPainOffset(hud) + ST_EVILGRINOFFSET;
             }
         }
     }
 
-    if(priority < 8)
+    if(hud->priority < 8)
     {
-        if(plyr->damageCount && plyr->attacker &&
-           plyr->attacker != plyr->plr->mo)
+        if(plr->damageCount && plr->attacker &&
+           plr->attacker != plr->plr->mo)
         {   // Being attacked.
-            priority = 7;
+            hud->priority = 7;
 
             // DOOM BUG
             // This test was inversed, thereby the OUCH face was NEVER used
@@ -583,143 +600,144 @@ void ST_updateFaceWidget(void)
             // to end up with MORE health than he started with.
             // Also, priority was not changed which would have resulted in a
             // frame duration of only 1 tic.
-            // if(plyr->health - oldHealth > ST_MUCHPAIN)
+            // if(plr->health - oldHealth > ST_MUCHPAIN)
 
             if((cfg.fixOuchFace?
-               (oldHealth - plyr->health) :
-               (plyr->health - oldHealth)) > ST_MUCHPAIN)
+               (hud->oldHealth - plr->health) :
+               (plr->health - hud->oldHealth)) > ST_MUCHPAIN)
             {
-                faceCount = ST_TURNCOUNT;
-                faceIndex = ST_calcPainOffset() + ST_OUCHOFFSET;
+                hud->faceCount = ST_TURNCOUNT;
+                hud->faceIndex = calcPainOffset(hud) + ST_OUCHOFFSET;
                 if(cfg.fixOuchFace)
-                    priority = 8; // Added to fix 1 tic issue.
+                    hud->priority = 8; // Added to fix 1 tic issue.
             }
             else
             {
                 badGuyAngle =
-                    R_PointToAngle2(FLT2FIX(plyr->plr->mo->pos[VX]),
-                                    FLT2FIX(plyr->plr->mo->pos[VY]),
-                                    FLT2FIX(plyr->attacker->pos[VX]),
-                                    FLT2FIX(plyr->attacker->pos[VY]));
+                    R_PointToAngle2(FLT2FIX(plr->plr->mo->pos[VX]),
+                                    FLT2FIX(plr->plr->mo->pos[VY]),
+                                    FLT2FIX(plr->attacker->pos[VX]),
+                                    FLT2FIX(plr->attacker->pos[VY]));
 
-                if(badGuyAngle > plyr->plr->mo->angle)
+                if(badGuyAngle > plr->plr->mo->angle)
                 {   // Whether right or left.
-                    diffAng = badGuyAngle - plyr->plr->mo->angle;
+                    diffAng = badGuyAngle - plr->plr->mo->angle;
                     i = diffAng > ANG180;
                 }
                 else
                 {   // Whether left or right.
-                    diffAng = plyr->plr->mo->angle - badGuyAngle;
+                    diffAng = plr->plr->mo->angle - badGuyAngle;
                     i = diffAng <= ANG180;
                 }
 
-                faceCount = ST_TURNCOUNT;
-                faceIndex = ST_calcPainOffset();
+                hud->faceCount = ST_TURNCOUNT;
+                hud->faceIndex = calcPainOffset(hud);
 
                 if(diffAng < ANG45)
                 {   // Head-on.
-                    faceIndex += ST_RAMPAGEOFFSET;
+                    hud->faceIndex += ST_RAMPAGEOFFSET;
                 }
                 else if(i)
                 {   // Turn face right.
-                    faceIndex += ST_TURNOFFSET;
+                    hud->faceIndex += ST_TURNOFFSET;
                 }
                 else
                 {   // Turn face left.
-                    faceIndex += ST_TURNOFFSET + 1;
+                    hud->faceIndex += ST_TURNOFFSET + 1;
                 }
             }
         }
     }
 
-    if(priority < 7)
+    if(hud->priority < 7)
     {   // Getting hurt because of your own damn stupidity.
-        if(plyr->damageCount)
+        if(plr->damageCount)
         {
             // DOOM BUG
             // This test was inversed, thereby the OUCH face was NEVER used
             // in normal gameplay as it requires the player recieving damage
             // to end up with MORE health than he started with.
-            // if(plyr->health - oldHealth > ST_MUCHPAIN)
+            // if(plr->health - oldHealth > ST_MUCHPAIN)
 
             if((cfg.fixOuchFace?
-               (oldHealth - plyr->health) :
-               (plyr->health - oldHealth)) > ST_MUCHPAIN)
+               (hud->oldHealth - plr->health) :
+               (plr->health - hud->oldHealth)) > ST_MUCHPAIN)
             {
-                priority = 7;
-                faceCount = ST_TURNCOUNT;
-                faceIndex = ST_calcPainOffset() + ST_OUCHOFFSET;
+                hud->priority = 7;
+                hud->faceCount = ST_TURNCOUNT;
+                hud->faceIndex = calcPainOffset(hud) + ST_OUCHOFFSET;
             }
             else
             {
-                priority = 6;
-                faceCount = ST_TURNCOUNT;
-                faceIndex = ST_calcPainOffset() + ST_RAMPAGEOFFSET;
+                hud->priority = 6;
+                hud->faceCount = ST_TURNCOUNT;
+                hud->faceIndex = calcPainOffset(hud) + ST_RAMPAGEOFFSET;
             }
         }
     }
 
-    if(priority < 6)
+    if(hud->priority < 6)
     {   // Rapid firing.
-        if(plyr->attackDown)
+        if(plr->attackDown)
         {
-            if(lastAttackDown == -1)
+            if(hud->lastAttackDown == -1)
             {
-                lastAttackDown = ST_RAMPAGEDELAY;
+                hud->lastAttackDown = ST_RAMPAGEDELAY;
             }
-            else if(!--lastAttackDown)
+            else if(!--hud->lastAttackDown)
             {
-                priority = 5;
-                faceIndex = ST_calcPainOffset() + ST_RAMPAGEOFFSET;
-                faceCount = 1;
-                lastAttackDown = 1;
+                hud->priority = 5;
+                hud->faceIndex = calcPainOffset(hud) + ST_RAMPAGEOFFSET;
+                hud->faceCount = 1;
+                hud->lastAttackDown = 1;
             }
         }
         else
         {
-            lastAttackDown = -1;
+            hud->lastAttackDown = -1;
         }
     }
 
-    if(priority < 5)
+    if(hud->priority < 5)
     {   // Invulnerability.
-        if((P_GetPlayerCheats(plyr) & CF_GODMODE) ||
-           plyr->powers[PT_INVULNERABILITY])
+        if((P_GetPlayerCheats(plr) & CF_GODMODE) ||
+           plr->powers[PT_INVULNERABILITY])
         {
-            priority = 4;
+            hud->priority = 4;
 
-            faceIndex = ST_GODFACE;
-            faceCount = 1;
+            hud->faceIndex = ST_GODFACE;
+            hud->faceCount = 1;
         }
     }
 
     // Look left or look right if the facecount has timed out.
-    if(!faceCount)
+    if(!hud->faceCount)
     {
-        faceIndex = ST_calcPainOffset() + (randomNumber % 3);
-        faceCount = ST_STRAIGHTFACECOUNT;
-        priority = 0;
+        hud->faceIndex = calcPainOffset(hud) + (M_Random() % 3);
+        hud->faceCount = ST_STRAIGHTFACECOUNT;
+        hud->priority = 0;
     }
 
-    faceCount--;
+    hud->faceCount--;
 }
 
-void ST_updateWidgets(void)
+void ST_updateWidgets(int player)
 {
     static int          largeAmmo = 1994; // Means "n/a".
 
     int                 i;
     ammotype_t          ammoType;
     boolean             found;
-    player_t           *plr = &players[CONSOLEPLAYER];
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
 
-    if(blended)
+    if(hud->blended)
     {
-        statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
-        CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+        hud->statusbarCounterAlpha = cfg.statusbarCounterAlpha - hud->hideAmount;
+        CLAMP(hud->statusbarCounterAlpha, 0.0f, 1.0f);
     }
     else
-        statusbarCounterAlpha = 1.0f;
+        hud->statusbarCounterAlpha = 1.0f;
 
     // Must redirect the pointer if the ready weapon has changed.
     found = false;
@@ -729,66 +747,74 @@ void ST_updateWidgets(void)
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon
-        wReadyWeapon.num = &plr->ammo[ammoType].owned;
+        hud->wReadyWeapon.num = &plr->ammo[ammoType].owned;
         found = true;
     }
     if(!found) // Weapon takes no ammo at all.
     {
-        wReadyWeapon.num = &largeAmmo;
+        hud->wReadyWeapon.num = &largeAmmo;
     }
 
-    wReadyWeapon.data = plr->readyWeapon;
+    hud->wReadyWeapon.data = plr->readyWeapon;
 
     // Update keycard multiple widgets.
     for(i = 0; i < 3; ++i)
     {
-        keyBoxes[i] = plr->keys[i] ? i : -1;
+        hud->keyBoxes[i] = plr->keys[i] ? i : -1;
 
         if(plr->keys[i + 3])
-            keyBoxes[i] = i + 3;
+            hud->keyBoxes[i] = i + 3;
     }
 
     // Refresh everything if this is him coming back to life.
-    ST_updateFaceWidget();
+    ST_updateFaceWidget(player);
 
     // Used by wArms[] widgets.
-    statusbarArmsOn = statusbarActive && !deathmatch;
+    hud->statusbarArmsOn = hud->statusbarActive && !deathmatch;
 
     // Used by wFrags widget.
-    statusbarFragsOn = deathmatch && statusbarActive;
-    currentFragsCount = 0;
+    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
+    hud->currentFragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->inGame)
             continue;
 
-        currentFragsCount += plr->frags[i] * (i != CONSOLEPLAYER ? 1 : -1);
+        hud->currentFragsCount += plr->frags[i] * (i != player ? 1 : -1);
     }
 }
 
 void ST_Ticker(void)
 {
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    int                 i;
 
-    if(!P_IsPaused())
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(cfg.hudTimer == 0)
+        player_t*           plr = &players[i];
+        hudstate_t*         hud = &hudStates[i];
+
+        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+            continue;
+
+        if(!P_IsPaused())
         {
-            hudHideTics = hudHideAmount = 0;
-        }
-        else
-        {
-            if(hudHideTics > 0)
-                hudHideTics--;
-            if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
-                hudHideAmount += 0.1f;
+            if(cfg.hudTimer == 0)
+            {
+                hud->hideTics = hud->hideAmount = 0;
+            }
+            else
+            {
+                if(hud->hideTics > 0)
+                    hud->hideTics--;
+                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                    hud->hideAmount += 0.1f;
+            }
+
+            ST_updateWidgets(i);
+            hud->oldHealth = plr->health;
         }
     }
-
-    randomNumber = M_Random();
-    ST_updateWidgets();
-    oldHealth = plyr->health;
 }
 
 int R_GetFilterColor(int filter)
@@ -807,22 +833,23 @@ int R_GetFilterColor(int filter)
         rgba = FMAKERGBA(0, .7, 0, .15f);
     else if(filter)
         Con_Error("R_GetFilterColor: Real strange filter number: %d.\n", filter);
+
     return rgba;
 }
 
-void ST_doPaletteStuff(void)
+void ST_doPaletteStuff(int player)
 {
     int                 palette;
     int                 cnt;
     int                 bzc;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    player_t*           plr = &players[player];
 
-    cnt = plyr->damageCount;
+    cnt = plr->damageCount;
 
-    if(plyr->powers[PT_STRENGTH])
+    if(plr->powers[PT_STRENGTH])
     {
         // slowly fade the berzerk out
-        bzc = 12 - (plyr->powers[PT_STRENGTH] >> 6);
+        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
 
         if(bzc > cnt)
             cnt = bzc;
@@ -838,9 +865,9 @@ void ST_doPaletteStuff(void)
         palette += STARTREDPALS;
     }
 
-    else if(plyr->bonusCount)
+    else if(plr->bonusCount)
     {
-        palette = (plyr->bonusCount + 7) >> 3;
+        palette = (plr->bonusCount + 7) >> 3;
 
         if(palette >= NUMBONUSPALS)
             palette = NUMBONUSPALS - 1;
@@ -848,81 +875,85 @@ void ST_doPaletteStuff(void)
         palette += STARTBONUSPALS;
     }
 
-    else if(plyr->powers[PT_IRONFEET] > 4 * 32 ||
-            plyr->powers[PT_IRONFEET] & 8)
+    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
+            plr->powers[PT_IRONFEET] & 8)
         palette = RADIATIONPAL;
     else
         palette = 0;
 
-    if(palette != currentPalette)
-    {
-        currentPalette = palette;
-        plyr->plr->filter = R_GetFilterColor(palette); // $democam
-    }
+    plr->plr->filter = R_GetFilterColor(palette); // $democam
 }
 
-void ST_drawWidgets(boolean refresh)
+static void drawWidgets(hudstate_t* hud)
 {
     int                 i;
+    int                 player = hud - hudStates;
+    boolean             refresh = true;
 
     // Used by wArms[] widgets.
-    statusbarArmsOn = statusbarActive && !deathmatch;
+    hud->statusbarArmsOn = hud->statusbarActive && !deathmatch;
 
     // Used by wFrags widget.
-    statusbarFragsOn = deathmatch && statusbarActive;
+    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
 
-    STlib_updateNum(&wReadyWeapon, refresh);
+    STlib_updateNum(&hud->wReadyWeapon, refresh);
 
     for(i = 0; i < 4; ++i)
     {
-        STlib_updateNum(&wAmmo[i], refresh);
-        STlib_updateNum(&wMaxAmmo[i], refresh);
+        STlib_updateNum(&hud->wAmmo[i], refresh);
+        STlib_updateNum(&hud->wMaxAmmo[i], refresh);
     }
 
-    STlib_updatePercent(&wHealth, refresh);
-    STlib_updatePercent(&wArmor, refresh);
+    STlib_updatePercent(&hud->wHealth, refresh);
+    STlib_updatePercent(&hud->wArmor, refresh);
 
     for(i = 0; i < 6; ++i)
-        STlib_updateMultIcon(&wArms[i], refresh);
+        STlib_updateMultIcon(&hud->wArms[i], refresh);
 
-    STlib_updateMultIcon(&wFaces, refresh);
+    STlib_updateMultIcon(&hud->wFaces, refresh);
 
     for(i = 0; i < 3; ++i)
-        STlib_updateMultIcon(&wKeyBoxes[i], refresh);
+        STlib_updateMultIcon(&hud->wKeyBoxes[i], refresh);
 
-    STlib_updateNum(&wFrags, refresh);
+    STlib_updateNum(&hud->wFrags, refresh);
 }
 
-void ST_doRefresh(void)
+void ST_doRefresh(int player)
 {
-    boolean             statusbarVisible = (cfg.statusbarScale < 20 ||
-        (cfg.statusbarScale == 20 && showBar < 1.0f));
+    hudstate_t*         hud;
+    boolean             statusbarVisible;
+    float               fscale, h;
 
-    firstTime = false;
+    if(player < 0 || player > MAXPLAYERS)
+        return;
 
-    if(statusbarVisible)
-    {
-        float               fscale = cfg.statusbarScale / 20.0f;
-        float               h = 200 * (1 - fscale);
+    hud = &hudStates[player];
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Translatef(160 - 320 * fscale / 2, h / showBar, 0);
-        DGL_Scalef(fscale, fscale, 1);
-    }
+    statusbarVisible = (cfg.statusbarScale < 20 ||
+        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
 
-    // Draw status bar background.
-    ST_refreshBackground();
+    hud->firstTime = false;
 
-    // And refresh all widgets.
-    ST_drawWidgets(true);
+    fscale = cfg.statusbarScale / 20.0f;
+    h = SCREENHEIGHT * (1 - fscale);
 
-    if(statusbarVisible)
-    {
-        // Restore the normal modelview matrix.
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-    }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef((SCREENWIDTH/2) - SCREENWIDTH * fscale / 2,
+                   h / hud->showBar, 0);
+    DGL_Scalef(fscale, fscale, 1);
+    DGL_Translatef(ST_X, ST_Y, 0);
+
+    // Draw background.
+    drawStatusBarBackground(player, ST_WIDTH, ST_HEIGHT);
+
+    DGL_Translatef(-ST_X, -ST_Y, 0);
+
+    drawWidgets(hud);
+
+    // Restore the normal modelview matrix.
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void ST_HUDSpriteSize(int sprite, int *w, int *h)
@@ -997,7 +1028,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     DGL_End();
 }
 
-void ST_doFullscreenStuff(void)
+void ST_doFullscreenStuff(int player)
 {
     static const int    ammoSprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
@@ -1006,13 +1037,14 @@ void ST_doFullscreenStuff(void)
         SPR_ROCK
     };
 
-    player_t           *plr = &players[DISPLAYPLAYER];
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
     char                buf[20];
     int                 w, h, pos = 0, spr, i;
     int                 width = 320 / cfg.hudScale;
     int                 height = 200 / cfg.hudScale;
-    float               textAlpha = hudAlpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
-    float               iconAlpha = hudAlpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
+    float               textAlpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
+    float               iconAlpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
     CLAMP(textAlpha, 0.0f, 1.0f);
     CLAMP(iconAlpha, 0.0f, 1.0f);
@@ -1025,7 +1057,7 @@ void ST_doFullscreenStuff(void)
         {
             i -= 18 * cfg.hudScale;
         }
-        sprintf(buf, "FRAGS:%i", currentFragsCount);
+        sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
         M_WriteText2(2, i, buf, huFontA, cfg.hudColor[0], cfg.hudColor[1],
                      cfg.hudColor[2], textAlpha);
     }
@@ -1055,7 +1087,7 @@ void ST_doFullscreenStuff(void)
 
         //// \todo Only supports one type of ammo per weapon.
         //// for each type of ammo this weapon takes.
-        for(ammoType=0; ammoType < NUM_AMMO_TYPES; ++ammoType)
+        for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
         {
             if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
                 continue;
@@ -1078,18 +1110,20 @@ void ST_doFullscreenStuff(void)
     // Doomguy's face | use a bit of extra scale.
     if(cfg.hudShown[HUD_FACE])
     {
-        pos = (width/2) -(faceBackground.width/2) + 6;
+        int             plrColor = cfg.playerColor[player];
+
+        pos = (width/2) -(faceBackground[plrColor].width/2) + 6;
 
         if(iconAlpha != 0.0f)
         {
 Draw_BeginZoom(0.7f, pos , height - 1);
             DGL_Color4f(1, 1, 1, iconAlpha);
             if(IS_NETGAME)
-                GL_DrawPatch_CS(pos, height - faceBackground.height + 1,
-                                faceBackground.lump);
+                GL_DrawPatch_CS(pos, height - faceBackground[plrColor].height + 1,
+                                faceBackground[plrColor].lump);
 
-            GL_DrawPatch_CS(pos, height - faceBackground.height,
-                            faces[faceIndex].lump);
+            GL_DrawPatch_CS(pos, height - faceBackground[plrColor].height,
+                            faces[hud->faceIndex].lump);
 Draw_EndZoom();
         }
     }
@@ -1172,62 +1206,74 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
-void ST_Drawer(int fullscreenMode, boolean refresh)
+void ST_Drawer(int player, int fullscreenMode, boolean refresh)
 {
-    firstTime = firstTime || refresh;
-    statusbarActive = (fullscreenMode < 2) || (AM_IsMapActive(CONSOLEPLAYER) &&
+    hudstate_t*         hud;
+    player_t*           plr;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    hud = &hudStates[player];
+
+    hud->firstTime = hud->firstTime || refresh;
+    hud->statusbarActive = (fullscreenMode < 2) || (AM_IsMapActive(player) &&
                      (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
-    ST_doPaletteStuff();
+    ST_doPaletteStuff(player);
 
     // Either slide the statusbar in or fade out the fullscreen HUD.
-    if(statusbarActive)
+    if(hud->statusbarActive)
     {
-        if(hudAlpha > 0.0f)
+        if(hud->alpha > 0.0f)
         {
-            statusbarActive = 0;
-            hudAlpha -= 0.1f;
+            hud->statusbarActive = 0;
+            hud->alpha -= 0.1f;
         }
-        else if(showBar < 1.0f)
+        else if(hud->showBar < 1.0f)
         {
-            showBar += 0.1f;
+            hud->showBar += 0.1f;
         }
     }
     else
     {
         if(fullscreenMode == 3)
         {
-            if(hudAlpha > 0.0f)
+            if(hud->alpha > 0.0f)
             {
-                hudAlpha -= 0.1f;
+                hud->alpha -= 0.1f;
                 fullscreenMode = 2;
             }
         }
         else
         {
-            if(showBar > 0.0f)
+            if(hud->showBar > 0.0f)
             {
-                showBar -= 0.1f;
-                statusbarActive = 1;
+                hud->showBar -= 0.1f;
+                hud->statusbarActive = 1;
             }
-            else if(hudAlpha < 1.0f)
+            else if(hud->alpha < 1.0f)
             {
-                hudAlpha += 0.1f;
+                hud->alpha += 0.1f;
             }
         }
     }
 
     // Always try to render statusbar with alpha in fullscreen modes.
     if(fullscreenMode)
-        blended = 1;
+        hud->blended = 1;
     else
-        blended = 0;
+        hud->blended = 0;
 
-    if(statusbarActive)
-        ST_doRefresh();
+    if(hud->statusbarActive)
+        ST_doRefresh(player);
     else if(fullscreenMode != 3)
-        ST_doFullscreenStuff();
+        ST_doFullscreenStuff(player);
 }
 
 void ST_loadGraphics(void)
@@ -1272,8 +1318,11 @@ void ST_loadGraphics(void)
     }
 
     // Face backgrounds for different color players.
-    sprintf(nameBuf, "STFB%d", CONSOLEPLAYER);
-    R_CachePatch(&faceBackground, nameBuf);
+    for(i = 0; i < 4; ++i)
+    {
+        sprintf(nameBuf, "STFB%d", i);
+        R_CachePatch(&faceBackground[i], nameBuf);
+    }
 
     // Status bar background bits.
     R_CachePatch(&statusbar, "STBAR");
@@ -1302,140 +1351,154 @@ void ST_loadGraphics(void)
     R_CachePatch(&faces[faceNum++], "STFDEAD0");
 }
 
-void ST_updateGraphics(void)
-{
-    char                nameBuf[9];
-
-    // Face backgrounds for different color players.
-    sprintf(nameBuf, "STFB%d", cfg.playerColor[CONSOLEPLAYER]);
-    R_CachePatch(&faceBackground, nameBuf);
-}
-
 void ST_loadData(void)
 {
     ST_loadGraphics();
 }
 
-void ST_initData(void)
+static void initData(hudstate_t* hud)
 {
     int                 i;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    int                 player = hud - hudStates;
+    player_t*           plr = &players[player];
 
-    firstTime = true;
-    statusbarActive = true;
-    faceIndex = 0;
-    currentPalette = -1;
-    oldHealth = -1;
+    // Ensure the HUD widget lib has been inited.
+    STlib_init();
 
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-        oldWeaponsOwned[i] = plyr->weapons[i].owned;
-    }
+    hud->firstTime = true;
+    hud->statusbarActive = true;
+    hud->stopped = true;
+    hud->faceIndex = 0;
+    hud->oldHealth = -1;
+    hud->priority = 0;
+    hud->lastAttackDown = -1;
+    hud->blended = false;
+    hud->showBar = 0.f;
+    hud->statusbarCounterAlpha = 0.f;
 
     for(i = 0; i < 3; ++i)
     {
-        keyBoxes[i] = -1;
+        hud->keyBoxes[i] = -1;
     }
 
-    STlib_init();
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
+        hud->oldWeaponsOwned[i] = plr->weapons[i].owned;
+    }
 
-    ST_HUDUnHide(HUE_FORCE);
+    ST_HUDUnHide(player, HUE_FORCE);
 }
 
-void ST_createWidgets(void)
+void ST_createWidgets(int player)
 {
-    static int          largeAmmo = 1994;    // means "n/a"
-    static ammotype_t   ammoType;
+    static int          largeAmmo = 1994; // means "n/a"
+
+    ammotype_t          ammoType;
     int*                ptr = &largeAmmo;
     int                 i, offsetY;
     boolean             found;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    player_t*           plr = &players[player];
+    hudstate_t*         hud = &hudStates[player];
 
     // Ready weapon ammo:
     //// \todo Only supports one type of ammo per weapon.
     found = false;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plyr->readyWeapon][plyr->class].mode[0].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
-        ptr = &plyr->ammo[ammoType].owned;
+        ptr = &plr->ammo[ammoType].owned;
         found = true;
     }
 
-    STlib_initNum(&wReadyWeapon, ST_READYAMMOX, ST_READYAMMOY, tallNum,
-                  ptr, &statusbarActive, ST_READYAMMOWIDTH,
-                  &statusbarCounterAlpha);
+    STlib_initNum(&hud->wReadyWeapon, ST_READYAMMOX, ST_READYAMMOY, tallNum,
+                  ptr, &hud->statusbarActive, ST_READYAMMOWIDTH,
+                  &hud->statusbarCounterAlpha);
 
     // Last weapon type.
-    wReadyWeapon.data = plyr->readyWeapon;
+    hud->wReadyWeapon.data = plr->readyWeapon;
 
     // Health percentage.
-    STlib_initPercent(&wHealth, ST_HEALTHX, ST_HEALTHY, tallNum,
-                      &plyr->health, &statusbarActive, &tallPercent,
-                      &statusbarCounterAlpha);
+    STlib_initPercent(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, tallNum,
+                      &plr->health, &hud->statusbarActive, &tallPercent,
+                      &hud->statusbarCounterAlpha);
 
     // Weapons owned.
     for(i = 0; i < 6; ++i)
     {
-        STlib_initMultIcon(&wArms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
+        STlib_initMultIcon(&hud->wArms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
                            ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i],
-                           (int *) &plyr->weapons[i + 1].owned,
-                           &statusbarArmsOn, &statusbarCounterAlpha);
+                           (int *) &plr->weapons[i + 1].owned,
+                           &hud->statusbarArmsOn, &hud->statusbarCounterAlpha);
     }
 
     // Frags sum.
-    STlib_initNum(&wFrags, ST_FRAGSX, ST_FRAGSY, tallNum, &currentFragsCount,
-                  &statusbarFragsOn, ST_FRAGSWIDTH, &statusbarCounterAlpha);
+    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, tallNum, &hud->currentFragsCount,
+                  &hud->statusbarFragsOn, ST_FRAGSWIDTH, &hud->statusbarCounterAlpha);
 
     // Faces.
-    STlib_initMultIcon(&wFaces, ST_FACESX, ST_FACESY, faces, &faceIndex,
-                       &statusbarActive, &statusbarCounterAlpha);
+    STlib_initMultIcon(&hud->wFaces, ST_FACESX, ST_FACESY, faces, &hud->faceIndex,
+                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
 
     // Armor percentage - should be colored later.
-    STlib_initPercent(&wArmor, ST_ARMORX, ST_ARMORY, tallNum,
-                      &plyr->armorPoints, &statusbarActive, &tallPercent,
-                      &statusbarCounterAlpha);
+    STlib_initPercent(&hud->wArmor, ST_ARMORX, ST_ARMORY, tallNum,
+                      &plr->armorPoints, &hud->statusbarActive, &tallPercent,
+                      &hud->statusbarCounterAlpha);
 
     // Keyboxes 0-2.
-    STlib_initMultIcon(&wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, keys, &keyBoxes[0],
-                       &statusbarActive, &statusbarCounterAlpha);
+    STlib_initMultIcon(&hud->wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, keys, &hud->keyBoxes[0],
+                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
 
-    STlib_initMultIcon(&wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, keys, &keyBoxes[1],
-                       &statusbarActive, &statusbarCounterAlpha);
+    STlib_initMultIcon(&hud->wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, keys, &hud->keyBoxes[1],
+                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
 
-    STlib_initMultIcon(&wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, keys, &keyBoxes[2],
-                       &statusbarActive, &statusbarCounterAlpha);
+    STlib_initMultIcon(&hud->wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, keys, &hud->keyBoxes[2],
+                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
 
     // Ammo count and max (all four kinds).
     for(i = 0, offsetY = 0; i < NUM_AMMO_TYPES; ++i, offsetY += ST_AMMOHEIGHT)
     {
-        STlib_initNum(&wAmmo[i], ST_AMMOX, ST_AMMOY + offsetY, shortNum,
-                      &plyr->ammo[i].owned, &statusbarActive, ST_AMMOWIDTH,
-                      &statusbarCounterAlpha);
+        STlib_initNum(&hud->wAmmo[i], ST_AMMOX, ST_AMMOY + offsetY, shortNum,
+                      &plr->ammo[i].owned, &hud->statusbarActive, ST_AMMOWIDTH,
+                      &hud->statusbarCounterAlpha);
 
-        STlib_initNum(&wMaxAmmo[i], ST_MAXAMMOX, ST_MAXAMMOY + offsetY,
-                      shortNum, &plyr->ammo[i].max, &statusbarActive,
-                      ST_MAXAMMOWIDTH, &statusbarCounterAlpha);
+        STlib_initNum(&hud->wMaxAmmo[i], ST_MAXAMMOX, ST_MAXAMMOY + offsetY,
+                      shortNum, &plr->ammo[i].max, &hud->statusbarActive,
+                      ST_MAXAMMOWIDTH, &hud->statusbarCounterAlpha);
     }
 }
 
-void ST_Start(void)
+void ST_Start(int player)
 {
-    if(!stopped)
-        ST_Stop();
+    hudstate_t*         hud;
 
-    ST_initData();
-    ST_createWidgets();
-    stopped = false;
-}
-
-void ST_Stop(void)
-{
-    if(stopped)
+    if(player < 0 || player >= MAXPLAYERS)
         return;
 
-    stopped = true;
+    hud = &hudStates[player];
+
+    if(!hud->stopped)
+        ST_Stop(player);
+
+    initData(hud);
+    ST_createWidgets(player);
+
+    hud->stopped = false;
+}
+
+void ST_Stop(int player)
+{
+    hudstate_t*         hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    hud = &hudStates[player];
+    if(hud->stopped)
+        return;
+
+    hud->stopped = true;
 }
 
 void ST_Init(void)
@@ -1463,7 +1526,7 @@ DEFCC(CCmdStatusBarSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks, 0);
-    ST_HUDUnHide(HUE_FORCE); // so the user can see the change.
+    R_SetViewSize(cfg.screenBlocks);
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // So the user can see the change.
     return true;
 }
