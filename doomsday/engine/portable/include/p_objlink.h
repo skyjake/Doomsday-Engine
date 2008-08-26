@@ -23,23 +23,35 @@
  */
 
 /**
- * rend_decor.h: Decorations
+ * r_objlink.h: Objlink management.
  */
 
-#ifndef __DOOMSDAY_RENDER_DECOR_H__
-#define __DOOMSDAY_RENDER_DECOR_H__
+#ifndef __DOOMSDAY_OBJLINK_H__
+#define __DOOMSDAY_OBJLINK_H__
 
-extern byte     useDecorations;
-extern float    decorMaxDist;  // No decorations are visible beyond this.
-extern float    decorFactor;
-extern float    decorFadeAngle;
+typedef enum {
+    OT_MOBJ,
+    OT_LUMOBJ,
+    NUM_OBJ_TYPES
+} objtype_t;
 
-void            Rend_DecorRegister(void);
+void            R_InitObjLinksForMap(void);
+void            R_ClearObjLinksForFrame(void);
 
-float           Rend_DecorSurfaceAngleHaloMul(void* p);
+void            R_ObjLinkCreate(void* obj, objtype_t type);
+void            R_LinkObjs(void);
+void            R_InitForSubsector(subsector_t* ssec);
+void            R_InitForNewFrame(void);
 
-void            Rend_InitDecorationsForFrame(void);
-void            Rend_AddLuminousDecorations(void);
-void            Rend_ProjectDecorations(void);
+typedef struct {
+    void*               obj;
+    objtype_t           type;
+} linkobjtossecparams_t;
 
+boolean         RIT_LinkObjToSubSector(subsector_t* subsector, void* params);
+boolean         RIT_ContactFinder(linedef_t* line, void* data);
+
+boolean         R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
+                                           boolean (*func) (void*, void*),
+                                           void* data);
 #endif

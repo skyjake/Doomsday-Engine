@@ -29,34 +29,6 @@
 #ifndef __DOOMSDAY_RENDER_SPRITE_H__
 #define __DOOMSDAY_RENDER_SPRITE_H__
 
-typedef struct rendspriteparams_s {
-// Position/Orientation/Scale
-    float           center[3]; // The real center point.
-    float           width, height;
-    float           viewOffX; // View-aligned offset to center point.
-    float           srvo[3]; // Short-range visual offset.
-    float           distance; // Distance from viewer.
-    boolean         viewAligned;
-
-// Appearance
-    boolean         noZWrite;
-    blendmode_t     blendMode;
-
-    // Material:
-    material_t*     mat;
-    int             tMap, tClass;
-    float           matOffset[2];
-    boolean         matFlip[2]; // {X, Y} Flip along the specified axis.
-
-    // Lighting/color:
-    float           ambientColor[4];
-    uint            numLights;
-    vlight_t*       lights;
-
-// Misc
-    struct subsector_s* subsector;
-} rendspriteparams_t;
-
 typedef struct rendpspriteparams_s {
 // Position/Orientation/Scale
     float           pos[2]; // {X, Y} Screen-space position.
@@ -74,7 +46,7 @@ typedef struct rendpspriteparams_s {
     vlight_t*       lights;
 } rendpspriteparams_t;
 
-extern int      spriteLight;
+extern int      spriteLight, useSpriteAlpha;
 extern byte     noSpriteTrans;
 
 void            Rend_SpriteRegister(void);
@@ -82,6 +54,6 @@ void            Rend_DrawMasked(void);
 void            Rend_Draw2DPlayerSprites(void);
 void            Rend_Draw3DPlayerSprites(void);
 void            Rend_SpriteTexCoord(int pnum, int x, int y);
-void            Rend_RenderSprite(const rendspriteparams_t *params);
+void            Rend_RenderSprite(const rendspriteparams_t* params);
 
 #endif

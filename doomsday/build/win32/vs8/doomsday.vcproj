@@ -579,6 +579,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\p_objlink.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\p_particle.c"
 				>
 			</File>
@@ -1667,6 +1671,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_object.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_objlink.h"
 				>
 			</File>
 			<File

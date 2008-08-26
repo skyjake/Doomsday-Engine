@@ -48,7 +48,7 @@ void            GL_Shutdown(void);
 void            GL_TotalReset(boolean doShutdown,
                               boolean loadLightMaps, boolean loadFlareMaps);
 void            GL_Init2DState(void);
-void            GL_SwitchTo3DState(boolean push_state);
+void            GL_SwitchTo3DState(boolean push_state, viewport_t* port);
 void            GL_Restore2DState(int step);
 void            GL_ProjectionMatrix(void);
 void            GL_RuntimeMode(void);

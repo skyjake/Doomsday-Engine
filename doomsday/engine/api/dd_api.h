@@ -94,7 +94,7 @@ typedef struct {
     // Refresh.
     void          (*BeginFrame) (void);
     void          (*EndFrame) (void);
-    void          (*G_Drawer) (void);
+    void          (*G_Drawer) (int layer);
     void          (*G_Drawer2) (void);
     void          (*ConsoleBackground) (int *width, int *height);
 

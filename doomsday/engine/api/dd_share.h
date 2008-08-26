@@ -768,6 +768,8 @@ extern          "C" {
 #define DDMF_LIGHTSCALESHIFT    7
 #define DDMF_LIGHTOFFSETSHIFT   12
 
+#define DDMOBJ_RADIUS_MAX       32
+
     // The high byte of the selector is not used for modeldef selecting.
     // 1110 0000 = alpha level (0: opaque => 7: transparent 7/8)
 #define DDMOBJ_SELECTOR_MASK    0x00ffffff
@@ -810,8 +812,9 @@ enum { MX, MY, MZ };               // Momentum axis indices.
     short           visAngle;           /* visual angle ("angle-servo") */ \
     int             selector;           /* multipurpose info */ \
     int             validCount;         /* used in iterating */ \
-    unsigned int    light;              /* index+1 of the lumobj/bias source, or 0 */ \
-    byte            haloFactor;         /* strength of halo */ \
+    int             addFrameCount; \
+    unsigned int    lumIdx;             /* index+1 of the lumobj/bias source, or 0 */ \
+    byte            haloFactors[DDMAXPLAYERS]; /* strengths of halo */ \
     byte            translucency;       /* default = 0 = opaque */ \
     short           visTarget;          /* -1 = mobj is becoming less visible, */ \
                                         /* 0 = no change, 2= mobj is becoming more visible */ \

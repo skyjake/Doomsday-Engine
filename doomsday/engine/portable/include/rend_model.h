@@ -29,9 +29,7 @@
 #ifndef __DOOMSDAY_RENDER_MODEL_H__
 #define __DOOMSDAY_RENDER_MODEL_H__
 
-#include "r_things.h"
-
-typedef struct modelparams_s {
+typedef struct rendmodelparams_s {
 // Animation, frame interpolation.
     struct modeldef_s *mf, *nextMF;
     float           inter;
@@ -48,7 +46,7 @@ typedef struct modelparams_s {
 
     float           extraScale;
 
-    boolean         viewAligned;
+    boolean         viewAlign;
     boolean         mirror; // If true the model will be mirrored about its Z axis (in model space).
 
 // Appearance
@@ -64,7 +62,7 @@ typedef struct modelparams_s {
     float           shinePitchOffset;
     boolean         shineTranslateWithViewerPos;
     boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
-} modelparams_t;
+} rendmodelparams_t;
 
 extern int      modelLight;
 extern int      frameInter;
@@ -73,6 +71,6 @@ extern int      modelShinyMultitex;
 extern float    rendModelLOD;
 
 void            Rend_ModelRegister(void);
-void            Rend_RenderModel(const modelparams_t *params);
+void            Rend_RenderModel(const rendmodelparams_t *params);
 
 #endif

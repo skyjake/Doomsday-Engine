@@ -43,9 +43,10 @@
 typedef struct mobj_s {
 DD_BASE_MOBJ_ELEMENTS()} mobj_t;
 
-#define MOBJ_SIZE		    gx.mobjSize
+#define MOBJ_SIZE           gx.mobjSize
 
 #define DEFAULT_FRICTION    FIX2FLT(0xe800)
+#define NOMOMENTUM_THRESHOLD    (0.000001f)
 
 extern float    tmpFloorZ, tmpCeilingZ;
 extern mobj_t  *blockingMobj;

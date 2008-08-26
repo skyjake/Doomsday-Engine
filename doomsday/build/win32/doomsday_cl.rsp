@@ -78,6 +78,7 @@
  ./../../engine/portable/src/p_data.c
  ./../../engine/portable/src/p_dmu.c
  ./../../engine/portable/src/p_linedef.c
+ ./../../engine/portable/src/p_objlink.c
  ./../../engine/portable/src/p_plane.c
  ./../../engine/portable/src/p_polyobj.c
  ./../../engine/portable/src/p_sector.c

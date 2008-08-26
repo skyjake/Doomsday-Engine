@@ -40,7 +40,6 @@ typedef struct {
 } rendsegradio_params_t;
 
 void            Rend_RadioRegister(void);
-void            Rend_RadioInitForFrame(void);
 void            Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide);
 void            Rend_RadioSegSection(const rvertex_t* rvertices,
                                      const walldiv_t* divs,

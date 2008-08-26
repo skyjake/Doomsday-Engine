@@ -103,6 +103,7 @@ typedef struct subsector_s {
     struct seg_s**      segs;          // [segcount] size.
     struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
     struct sector_s*    sector;
+    int                 addSpriteCount; // frame number of last R_AddSprites
     unsigned int        inSectorID;
     int                 flags;
     int                 validCount;
@@ -282,7 +283,6 @@ typedef struct msector_s {
 typedef struct sector_s {
     runtime_mapdata_header_t header;
     int                 frameFlags;
-    int                 addSpriteCount; // frame number of last R_AddSprites
     int                 validCount;    // if == validCount, already checked.
     int                 flags;
     skyfix_t            skyFix[2];     // floor, ceiling.

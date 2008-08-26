@@ -32,6 +32,7 @@
 #include "p_mapdata.h"
 #include "r_data.h"
 #include "r_materials.h"
+#include "rend_model.h"
 
 // Sprites are patches with a special naming convention so they can be
 // recognized by R_InitSprites.  The sprite and frame specified by a
@@ -44,22 +45,23 @@
 
 typedef struct {
     boolean         rotate; // If false use 0 for any position
-    material_t     *mats[8]; // Material to use for view angles 0-7
+    material_t*     mats[8]; // Material to use for view angles 0-7
     byte            flip[8]; // Flip (1 = flip) to use for view angles 0-7
 } spriteframe_t;
 
 typedef struct {
     int             numFrames;
-    spriteframe_t  *spriteFrames;
+    spriteframe_t*  spriteFrames;
 } spritedef_t;
 
 #define MAXVISSPRITES   8192
 
 // These constants are used as the type of vissprite_s.
 typedef enum {
+    VSPR_HIDDEN,
+    VSPR_SPRITE,
     VSPR_MASKED_WALL,
-    VSPR_MAP_OBJECT,
-    VSPR_DECORATION
+    VSPR_MODEL
 } visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
@@ -78,51 +80,52 @@ typedef struct rendmaskedwallparams_s {
     float           modColor[3];
 } rendmaskedwallparams_t;
 
+typedef struct rendspriteparams_s {
+// Position/Orientation/Scale
+    float           center[3]; // The real center point.
+    float           width, height;
+    float           viewOffX; // View-aligned offset to center point.
+    float           srvo[3]; // Short-range visual offset.
+    float           distance; // Distance from viewer.
+    boolean         viewAligned;
+
+// Appearance
+    boolean         noZWrite;
+    blendmode_t     blendMode;
+
+    // Material:
+    material_t*     mat;
+    int             tMap, tClass;
+    float           matOffset[2];
+    boolean         matFlip[2]; // [S, T] Flip along the specified axis.
+
+    // Lighting/color:
+    float           ambientColor[4];
+    uint            numLights;
+    vlight_t*       lights;
+
+// Misc
+    struct subsector_s* subsector;
+} rendspriteparams_t;
+
+#define MAX_VISSPRITE_LIGHTS    (10)
+
 // A vissprite_t is a mobj or masked wall that will be drawn during
 // a refresh.
 typedef struct vissprite_s {
-    struct vissprite_s *prev, *next;
-    visspritetype_t type;          // VSPR_* type of vissprite.
-    float           distance;      // Vissprites are sorted by distance.
+    struct vissprite_s* prev, *next;
+    visspritetype_t type; // VSPR_* type of vissprite.
+    float           distance; // Vissprites are sorted by distance.
     float           center[3];
-    struct lumobj_s *light;        // For the halo (NULL if no halo).
+    uint            lumIdx; // For the halo (NULL if no halo).
+    boolean         isDecoration;
+    vlight_t        lights[MAX_VISSPRITE_LIGHTS];
 
     // An anonymous union for the data.
     union vissprite_data_u {
-        struct vissprite_mobj_s {
-            material_t     *mat;
-            boolean         matFlip[2]; // {X, Y} Flip material?
-            subsector_t    *subsector;
-            float           gzt; // global top for silhouette clipping
-            int             flags; // for color translation and shadow draw
-            uint            id;
-            int             selector;
-            int             pClass; // player class (used in translation)
-            float           floorClip;
-            boolean         stateFullBright;
-            boolean         viewAligned;    // Align to view plane.
-            float           secFloor, secCeil;
-            float           alpha;
-            float           visOff[3]; // Last-minute offset to coords.
-            boolean         floorAdjust; // Allow moving sprite to match visible floor.
-
-            // For models:
-            struct modeldef_s *mf, *nextMF;
-            float           yaw, pitch;
-            float           pitchAngleOffset;
-            float           yawAngleOffset;
-            float           inter; // Frame interpolation, 0..1
-        } mo;
+        rendspriteparams_t sprite;
         rendmaskedwallparams_t wall;
-        struct vissprite_decormodel_s {
-            subsector_t    *subsector;
-            float           alpha;
-            struct modeldef_s *mf;
-            float           yaw, pitch;
-            float           pitchAngleOffset;
-            float           yawAngleOffset;
-            float           inter; // Frame interpolation, 0..1
-        } decormodel;
+        rendmodelparams_t model;
     } data;
 } vissprite_t;
 
@@ -133,17 +136,17 @@ typedef enum {
 
 typedef struct vispsprite_s {
     vispspritetype_t type;
-    ddpsprite_t    *psp;
+    ddpsprite_t*    psp;
     float           center[3];
 
     union vispsprite_data_u {
         struct vispsprite_sprite_s {
-            subsector_t    *subsector;
+            subsector_t*    subsector;
             float           alpha;
             boolean         isFullBright;
         } sprite;
         struct vispsprite_model_s {
-            subsector_t    *subsector;
+            subsector_t*    subsector;
             float           gzt; // global top for silhouette clipping
             int             flags; // for color translation and shadow draw
             uint            id;
@@ -157,7 +160,7 @@ typedef struct vispsprite_s {
             float           visOff[3]; // Last-minute offset to coords.
             boolean         floorAdjust; // Allow moving sprite to match visible floor.
 
-            struct modeldef_s *mf, *nextMF;
+            struct modeldef_s* mf, *nextMF;
             float           yaw, pitch;
             float           pitchAngleOffset;
             float           yawAngleOffset;
@@ -175,7 +178,7 @@ typedef struct collectaffectinglights_params_s {
     boolean         starkLight; // World light has a more pronounced effect.
 } collectaffectinglights_params_t;
 
-extern spritedef_t *sprites;
+extern spritedef_t* sprites;
 extern int      numSprites;
 extern float    pspOffset[2];
 extern int      alwaysAlign;
@@ -188,24 +191,24 @@ extern vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
 extern vissprite_t visSprSortedHead;
 extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
-void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
-void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);
-float           R_VisualRadius(struct mobj_s *mo);
-float           R_GetBobOffset(struct mobj_s *mo);
+void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
+void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
+float           R_VisualRadius(struct mobj_s* mo);
+float           R_GetBobOffset(struct mobj_s* mo);
 float           R_MovementYaw(float momx, float momy);
 float           R_MovementPitch(float momx, float momy, float momz);
-void            R_ProjectSprite(struct mobj_s *mobj);
+void            R_ProjectSprite(struct mobj_s* mobj);
 void            R_ProjectPlayerSprites(void);
 void            R_SortVisSprites(void);
-vissprite_t    *R_NewVisSprite(void);
-void            R_AddSprites(sector_t *sec);
+vissprite_t*    R_NewVisSprite(void);
+void            R_AddSprites(subsector_t* ssec);
 void            R_AddPSprites(void);
 void            R_DrawSprites(void);
 void            R_InitSprites(void);
 void            R_ClearSprites(void);
-void            R_ClipVisSprite(vissprite_t *vis, int xl, int xh);
+void            R_ClipVisSprite(vissprite_t* vis, int xl, int xh);
 
-void            R_CollectAffectingLights(const collectaffectinglights_params_t *params,
-                                         vlight_t **ptr, uint *num);
+void            R_CollectAffectingLights(const collectaffectinglights_params_t* params,
+                                         vlight_t** ptr, uint* num);
 
 #endif

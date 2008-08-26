@@ -29,11 +29,6 @@
 #ifndef __DOOMSDAY_REFRESH_LUMINOUS_H__
 #define __DOOMSDAY_REFRESH_LUMINOUS_H__
 
-// Lumobj Flags.
-#define LUMF_USED           0x1
-#define LUMF_RENDERED       0x2
-#define LUMF_CLIPPED        0x4 // Hidden by world geometry.
-
 // lumobj, omni flags
 #define LUMOF_NOHALO        0x1
 #define LUMOF_DONTTURNHALO  0x2
@@ -50,23 +45,23 @@ typedef enum {
 
 typedef struct lumobj_s {
     lumtype_t       type;
-    int             flags; // LUMF_* flags.
     float           pos[3]; // Center of the obj.
-    float           distanceToViewer;
-    subsector_t    *subsector;
+    subsector_t*    subsector;
+    float           maxDistance;
+    void*           decorSource; // decorsource_t ptr, else @c NULL.
 
     union lumobj_data_u {
         struct lumobj_omni_s {
             int             flags; // LUMOF_* flags.
             float           color[3];
-            int             radius; // Radius for this omnilight source.
+            float           radius; // Radius for this omnilight source.
             float           zOff; // Offset to center from pos[VZ].
             DGLuint         tex; // Lightmap texture.
             DGLuint         floorTex, ceilTex; // Lightmaps for floor/ceil.
 
         // For flares (halos).
             int             flareSize;
-            byte            haloFactor;
+            const byte*     haloFactors; // Ptr to array of bytes, DDMAXPLAYERS size.
             float           xOff;
             DGLuint         flareTex; // Flaremap if flareCustom ELSE (flaretexName id.
                                       // Zero = automatical)
@@ -87,7 +82,6 @@ extern boolean  loInited;
 extern uint     loMaxLumobjs;
 extern int      loMaxRadius;
 extern float    loRadiusFactor;
-extern int      loMinRadForBias;
 extern byte     rendInfoLums;
 
 extern int      useMobjAutoLights;
@@ -97,29 +91,31 @@ void            LO_Register(void);
 
 // Setup.
 void            LO_InitForMap(void);
-void            LO_Clear(void);        // 'Physically' destroy the tables.
+void            LO_Clear(void); // 'Physically' destroy the tables.
 
 // Action.
 void            LO_ClearForFrame(void);
 void            LO_InitForNewFrame(void);
 void            LO_AddLuminousMobjs(void);
-void            LO_LinkLumobjs(void);
+void            LO_BeginFrame(void);
 
-uint            LO_NewLuminous(lumtype_t type);
-lumobj_t       *LO_GetLuminous(uint idx);
+void            LO_UnlinkMobjLumobjs(cvar_t* var);
+
+uint            LO_NewLuminous(lumtype_t type, subsector_t* ssec);
+lumobj_t*       LO_GetLuminous(uint idx);
+uint            LO_ToIndex(const lumobj_t* lum);
+boolean         LO_IsClipped(uint idx, int i);
+boolean         LO_IsHidden(uint idx, int i);
+float           LO_DistanceToViewer(uint idx, int i);
 uint            LO_GetNumLuminous(void);
-void            LO_InitForSubsector(subsector_t *ssec);
 
 // Helpers.
-boolean         LO_IterateSubsectorContacts(subsector_t *ssec,
-                                            boolean (*func) (void *, void *data),
-                                            void *data);
-boolean         LO_LumobjsRadiusIterator(subsector_t *subsector, float x, float y,
-                                         float radius, void *data,
-                                         boolean (*func) (lumobj_t *, float, void *data));
+boolean         LO_LumobjsRadiusIterator(subsector_t* subsector, float x, float y,
+                                         float radius, void* data,
+                                         boolean (*func) (const lumobj_t*, float, void *data));
 
 void            LO_ClipInSubsector(uint ssecidx);
-void            LO_ClipBySight(uint ssecidx);
+void            LO_ClipInSubsectorBySight(uint ssecidx);
 
 #if _DEBUG
 void            LO_DrawLumobjs(void);

@@ -290,7 +290,7 @@ void            Net_SetAckTime(int clientNumber, uint period);
 uint            Net_GetAckTime(int clientNumber);
 uint            Net_GetAckThreshold(int clientNumber);
 
-char           *Net_GetPlayerName(int player);
+const char*     Net_GetPlayerName(int player);
 ident_t         Net_GetPlayerID(int player);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);

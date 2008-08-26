@@ -110,6 +110,7 @@ struct subsector
     PTR     seg_s**     segs // [segcount] size.
     PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
     PTR     sector_s*   sector
+    -       int         addSpriteCount // frame number of last R_AddSprites
     -       uint        inSectorID
     -       int         flags
     -       int         validCount
@@ -121,7 +122,6 @@ struct subsector
     -       ushort      numVertices
     -       fvertex_s** vertices // [numvertices] size
     -       shadowlink_s* shadows
-
 end
 
 public
@@ -301,7 +301,6 @@ end
 
 struct sector
     -       int         frameFlags
-    -       int         addSpriteCount // frame number of last R_AddSprites
     INT     int         validCount  // if == validCount, already checked.
     -       int         flags
     -       skyfix_t[2] skyFix      // floor, ceiling.

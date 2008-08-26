@@ -52,5 +52,6 @@
 #include "p_players.h"
 #include "p_control.h"
 #include "p_cmd.h"
+#include "p_objlink.h"
 
 #endif

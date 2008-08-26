@@ -29,6 +29,11 @@
 #ifndef __DOOMSDAY_REFRESH_MAIN_H__
 #define __DOOMSDAY_REFRESH_MAIN_H__
 
+typedef struct viewport_s {
+    int             console;
+    int             x, y, width, height;
+} viewport_t;
+
 extern float    viewX, viewY, viewZ;
 extern float    viewFrontVec[3], viewUpVec[3], viewSideVec[3];
 extern float    viewXOffset, viewYOffset, viewZOffset;
@@ -54,11 +59,16 @@ void            R_Register(void);
 void            R_Init(void);
 void            R_Update(void);
 void            R_Shutdown(void);
-void            R_SetupWorldFrame(void);
+void            R_BeginWorldFrame(void);
+void            R_EndWorldFrame(void);
 void            R_RenderPlayerView(int num);
 void            R_RenderPlayerViewBorder(void);
+void            R_RenderViewPorts(void);
 void            R_ResetViewer(void);
-void            R_ViewWindow(int x, int y, int w, int h);
+void            R_SetViewWindow(int x, int y, int w, int h);
 void            R_NewSharpWorld(void);
 void            R_InitSkyMap(void);
+
+void            R_SetViewGrid(int numCols, int numRows);
+void            R_SetViewWindow(int x, int y, int w, int h);
 #endif

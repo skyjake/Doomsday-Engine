@@ -81,7 +81,7 @@ boolean         M_IsStringValidFloat(const char* str);
 char*           M_LimitedStrCat(const char* str, size_t maxWidth,
                                 char separator, char* buf,
                                 size_t bufLength);
-char*           M_StrCatQuoted(char* dest, char* src);
+char*           M_StrCatQuoted(char* dest, const char* src);
 
 // Random numbers.
 byte            RNG_RandByte(void);

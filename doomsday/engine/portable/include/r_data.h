@@ -232,12 +232,11 @@ typedef struct animgroup_s {
 typedef struct {
     boolean         used;
     float           approxDist; // Only an approximation.
-    struct lumobj_s* lum;
-    float           worldVector[3]; // Light direction vector (world space).
-    float           vector[3]; // Light direction vector (object space).
+    float           vector[3]; // Light direction vector.
     float           color[3]; // How intense the light is (0..1, RGB).
     float           offset;
     float           lightSide, darkSide; // Factors for world light.
+    boolean         affectedByAmbient;
 } vlight_t;
 
 /**

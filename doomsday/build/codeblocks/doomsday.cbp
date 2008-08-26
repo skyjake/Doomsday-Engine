@@ -270,6 +270,7 @@
 		<Unit filename="..\..\engine\portable\include\p_maptypes.h" />
 		<Unit filename="..\..\engine\portable\include\p_maputil.h" />
 		<Unit filename="..\..\engine\portable\include\p_object.h" />
+		<Unit filename="..\..\engine\portable\include\p_objlink.h" />
 		<Unit filename="..\..\engine\portable\include\p_particle.h" />
 		<Unit filename="..\..\engine\portable\include\p_plane.h" />
 		<Unit filename="..\..\engine\portable\include\p_players.h" />
@@ -600,6 +601,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_mobj.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\engine\portable\src\p_objlink.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_particle.c">

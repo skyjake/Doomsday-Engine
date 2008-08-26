@@ -320,16 +320,16 @@ boolean Sys_InitWindowManager(void)
 
     Con_Message("Sys_InitWindowManager: Using X11 window management.\n");
 
-	// Initialize the SDL video subsystem, unless we're going to run in
+    // Initialize the SDL video subsystem, unless we're going to run in
     // dedicated mode.
-	if(!ArgExists("-dedicated"))
-	{
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
-		{
-			Con_Message("SDL Init Failed: %s\n", SDL_GetError());
-			return false;
-		}
-	}
+    if(!ArgExists("-dedicated"))
+    {
+        if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
+        {
+            Con_Message("SDL Init Failed: %s\n", SDL_GetError());
+            return false;
+        }
+    }
 
     memset(&mainWindow, 0, sizeof(mainWindow));
     winManagerInited = true;
@@ -717,6 +717,9 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     // which need to respond.
     if(changeWindowDimensions && window->type == WT_NORMAL)
     {
+        // Update viewport coordinates.
+        R_SetViewGrid(0, 0);
+
         if(inControlPanel) // Reactivate the panel?
             Con_Execute(CMDS_DDAY, "panel", true, false);
     }

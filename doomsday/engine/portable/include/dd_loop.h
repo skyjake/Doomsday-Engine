@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,15 +34,16 @@ extern boolean appShutdown;
 extern boolean suspendMsgPump;
 #endif
 
-extern timespan_t   sysTime, gameTime, demoTime, ddLevelTime;
-extern trigger_t    sharedFixedTrigger;
+extern int rFrameCount;
+extern timespan_t sysTime, gameTime, demoTime, ddLevelTime;
+extern trigger_t sharedFixedTrigger;
 
 void            DD_RegisterLoop(void);
 int             DD_GameLoop(void);
 void            DD_DrawAndBlit(void);
 void            DD_StartFrame(void);
 void            DD_EndFrame(void);
-float			DD_GetFrameRate(void);
-void			DD_ResetTimer(void);
+float           DD_GetFrameRate(void);
+void            DD_ResetTimer(void);
 
 #endif

@@ -143,7 +143,7 @@ extern          "C" {
     void            B_FormEventString(char *buff, evtype_t type, evstate_t state,
                                       int data1);
     int             B_BindingsForCommand(const char *cmd, char *buf, int bufSize);
-    int             B_BindingsForControl(int localPlayer, const char *controlName, int inverse, 
+    int             B_BindingsForControl(int localPlayer, const char *controlName, int inverse,
                                          char *buf, int bufSize);
     void            DD_AddBindClass(struct bindclass_s *);
     boolean         DD_SetBindClass(unsigned int classID, int type);
@@ -199,10 +199,10 @@ extern          "C" {
                                              const char *propName, valuetype_t type);
 
     // Network.
-    void            Net_SendPacket(int to_player, int type, void *data,
+    void            Net_SendPacket(int to_player, int type, void* data,
                                    int length);
-    int             Net_GetTicCmd(void *command, int player);
-    char           *Net_GetPlayerName(int player);
+    int             Net_GetTicCmd(void* command, int player);
+    const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
 
     // Play.
@@ -397,7 +397,8 @@ extern          "C" {
     void            R_PrecachePatch(lumpnum_t lump);
     void            R_PrecacheSkinsForState(int stateIndex);
     void            R_RenderPlayerView(int num);
-    void            R_ViewWindow(int x, int y, int w, int h);
+    void            R_SetViewWindow(int x, int y, int w, int h);
+    int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
     void            R_SetBorderGfx(char *lumps[9]);
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
@@ -561,7 +562,7 @@ extern          "C" {
     const char*     M_PrettyPath(const char* path);
     char           *M_SkipWhite(char *str);
     char           *M_FindWhite(char *str);
-    char           *M_StrCatQuoted(char *dest, char *src);
+    char*           M_StrCatQuoted(char *dest, const char* src);
     byte            RNG_RandByte(void);
     float           RNG_RandFloat(void);
     void            M_ClearBox(fixed_t *box);
