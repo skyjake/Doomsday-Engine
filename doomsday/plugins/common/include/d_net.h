@@ -204,8 +204,8 @@ void            D_HandlePacket(int fromplayer, int type, void *data,
 void*           D_NetWriteCommands(int numCommands, void* data);
 void*           D_NetReadCommands(size_t pktLength, void* data);
 void            D_NetConsoleRegistration(void);
-void            D_NetMessage(char *msg);
-void            D_NetMessageNoSound(char *msg);
+void            D_NetMessage(int player, const char *msg);
+void            D_NetMessageNoSound(int player, const char *msg);
 
 // Console commands.
 extern ccmd_t   netCCmds[];

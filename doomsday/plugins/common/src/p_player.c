@@ -516,7 +516,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
  */
 void P_SetMessage(player_t* pl, char *msg, boolean noHide)
 {
-    HUMsg_PlayerMessage(pl, msg, MESSAGETICS, noHide, false);
+    HUMsg_PlayerMessage(pl - players, msg, MESSAGETICS, noHide, false);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
@@ -536,7 +536,7 @@ void P_SetMessage(player_t* pl, char *msg, boolean noHide)
  */
 void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
 {
-    HUMsg_PlayerMessage(pl, msg, 5 * MESSAGETICS, noHide, true);
+    HUMsg_PlayerMessage(pl - players, msg, 5 * MESSAGETICS, noHide, true);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
@@ -579,7 +579,7 @@ void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
 boolean P_IsCamera(mobj_t *mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
-    return (mo->thinker.function && mo->player &&
+    return (mo && mo->thinker.function && mo->player &&
             (mo->player->plr->flags & DDPF_CAMERA));
 }
 

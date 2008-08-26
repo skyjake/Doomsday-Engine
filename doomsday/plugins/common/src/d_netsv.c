@@ -1474,7 +1474,7 @@ void NetSv_SendMessageEx(int plrNum, char *msg, boolean yellow)
     if(plrNum == DDSP_ALL_PLAYERS)
     {
         // Also show locally. No sound is played!
-        D_NetMessageNoSound(msg);
+        D_NetMessageNoSound(CONSOLEPLAYER, msg);
     }
 
     Net_SendPacket(plrNum | DDSP_ORDERED,

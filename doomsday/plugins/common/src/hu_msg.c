@@ -133,12 +133,12 @@ DEFCC(CCmdLocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void     HU_MsgBufAddMessage(msgbuffer_t *msgBuff, char *msg,
+static void     HU_MsgBufAddMessage(msgbuffer_t* msgBuff, char* msg,
                                     int msgtics);
-static void     HU_MsgBufDropLast(msgbuffer_t *msgBuff);
-static void     HU_MsgBufClear(msgbuffer_t *msgBuff);
-static void     HU_MsgBufDraw(msgbuffer_t *msgBuff);
-static void     HU_MsgBufTick(msgbuffer_t *msgBuff);
+static void     HU_MsgBufDropLast(msgbuffer_t* msgBuff);
+static void     HU_MsgBufClear(msgbuffer_t* msgBuff);
+static void     HU_MsgBufDraw(msgbuffer_t* msgBuff);
+static void     HU_MsgBufTick(msgbuffer_t* msgBuff);
 
 static void     closeChat(void);
 
@@ -153,7 +153,7 @@ boolean chatOn;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
-char   *player_names[4];
+char*   player_names[4];
 int     player_names_idx[] = {
     TXT_HUSTR_PLRGREEN,
     TXT_HUSTR_PLRINDIGO,
@@ -372,19 +372,20 @@ void HUMsg_Ticker(void)
     }
 }
 
-void HUMsg_Drawer(void)
+void HUMsg_Drawer(int player)
 {
     // Don't draw the messages when the level title is up.
     if(cfg.levelTitle && actualLevelTime < 6 * 35)
         return;
 
     if(cfg.msgShow)
-        HU_MsgBufDraw(&msgBuffer[CONSOLEPLAYER]);
+        HU_MsgBufDraw(&msgBuffer[player]);
 
-    HUlib_drawIText(&w_chat);
+    if(player == CONSOLEPLAYER)
+        HUlib_drawIText(&w_chat);
 }
 
-boolean HUMsg_Responder(event_t *ev)
+boolean HUMsg_Responder(event_t* ev)
 {
     boolean             eatkey = false;
     unsigned char       c;
@@ -411,10 +412,10 @@ boolean HUMsg_Responder(event_t *ev)
     return eatkey;
 }
 
-void HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
+void HUMsg_PlayerMessage(int player, char* message, int tics,
                          boolean noHide, boolean yellow)
 {
-    msgbuffer_t        *msgBuff = &msgBuffer[plr - players];
+    msgbuffer_t*        msgBuff = &msgBuffer[player];
 
     if(!message || !tics)
         return;
@@ -429,7 +430,7 @@ void HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
 
         if(yellow)
         {
-            char *format = "{r=1; g=0.7; b=0.3;}";
+            char*           format = "{r=1; g=0.7; b=0.3;}";
 
             // Alloc a new buffer.
             msgBuff->lastmessage =
@@ -455,9 +456,9 @@ void HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
     }
 }
 
-void HUMsg_ClearMessages(player_t *player)
+void HUMsg_ClearMessages(int player)
 {
-    HU_MsgBufClear(&msgBuffer[player - players]);
+    HU_MsgBufClear(&msgBuffer[player]);
 }
 
 /**
@@ -467,10 +468,10 @@ void HUMsg_ClearMessages(player_t *player)
  * @param txt           The message to be added.
  * @param tics          The length of time the message should be visible.
  */
-static void HU_MsgBufAddMessage(msgbuffer_t *buf, char *txt, int tics)
+static void HU_MsgBufAddMessage(msgbuffer_t* buf, char* txt, int tics)
 {
-    int        len;
-    message_t *msg;
+    int                 len;
+    message_t*          msg;
 
     if(!buf)
         return;
@@ -498,9 +499,9 @@ static void HU_MsgBufAddMessage(msgbuffer_t *buf, char *txt, int tics)
  *
  * @param buf           Ptr to the message buffer.
  */
-static void HU_MsgBufDropLast(msgbuffer_t *buf)
+static void HU_MsgBufDropLast(msgbuffer_t* buf)
 {
-    message_t  *msg;
+    message_t*          msg;
 
     if(!buf || buf->msgcount == 0)
         return;
@@ -519,9 +520,9 @@ static void HU_MsgBufDropLast(msgbuffer_t *buf)
  *
  * @param buf           Ptr to the message buffer to clear.
  */
-static void HU_MsgBufClear(msgbuffer_t *buf)
+static void HU_MsgBufClear(msgbuffer_t* buf)
 {
-    int        i;
+    int                 i;
 
     if(!buf)
         return;
@@ -544,7 +545,7 @@ static void HU_MsgBufClear(msgbuffer_t *buf)
  *
  * @param buf           Ptr to the message buffer to refresh.
  */
-static void HU_MsgBufRefresh(msgbuffer_t *buf)
+static void HU_MsgBufRefresh(msgbuffer_t* buf)
 {
     if(!buf)
         return;
@@ -560,9 +561,9 @@ static void HU_MsgBufRefresh(msgbuffer_t *buf)
  *
  * @param buf           Ptr to the message buffer to tick.
  */
-static void HU_MsgBufTick(msgbuffer_t *buf)
+static void HU_MsgBufTick(msgbuffer_t* buf)
 {
-    int         i;
+    int                 i;
 
     if(!buf)
         return;
@@ -603,12 +604,12 @@ static void HU_MsgBufTick(msgbuffer_t *buf)
  *
  * @param buf           Ptr to the message buffer to draw.
  */
-static void HU_MsgBufDraw(msgbuffer_t *buf)
+static void HU_MsgBufDraw(msgbuffer_t* buf)
 {
-    int         i, num, y, lh = LINEHEIGHT_A, x;
-    int         td, m, msgTics, blinkSpeed;
-    float       col[4];
-    message_t  *msg;
+    int                 i, num, y, lh = LINEHEIGHT_A, x;
+    int                 td, m, msgTics, blinkSpeed;
+    float               col[4];
+    message_t*          msg;
 
     if(!buf)
         return;
@@ -699,25 +700,42 @@ static void closeChat(void)
 /**
  * Sends a string to other player(s) as a chat message.
  */
-static void sendMessage(char *msg)
+static void sendMessage(const char* msg)
 {
-    char        buff[256];
-    int         i;
+    char                buff[256];
+    int                 i;
 
     if(chatTo == HU_BROADCAST)
     {   // Send the message to the other players explicitly,
-        strcpy(buff, "chat ");
-        M_StrCatQuoted(buff, msg);
-        DD_Execute(false, buff);
+        if(!IS_NETGAME)
+        {   // Send it locally.
+            for(i = 0; i < MAXPLAYERS; ++i)
+            {
+                D_NetMessageNoSound(i, msg);
+            }
+        }
+        else
+        {
+            strcpy(buff, "chat ");
+            M_StrCatQuoted(buff, msg);
+            DD_Execute(false, buff);
+        }
     }
     else
     {   // Send to all of the destination color.
         for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->inGame && cfg.playerColor[i] == chatTo)
             {
-                sprintf(buff, "chatNum %d ", i);
-                M_StrCatQuoted(buff, msg);
-                DD_Execute(false, buff);
+                if(!IS_NETGAME)
+                {   // Send it locally.
+                    D_NetMessageNoSound(i, msg);
+                }
+                else
+                {
+                    sprintf(buff, "chatNum %d ", i);
+                    M_StrCatQuoted(buff, msg);
+                    DD_Execute(false, buff);
+                }
             }
     }
 
@@ -745,7 +763,7 @@ static boolean sendMacro(int num)
         return false;
 
     if(num >= 0 && num < 9)
-    {   // leave chat mode and notify that it was sent
+    {   // Leave chat mode and notify that it was sent.
         if(chatOn)
             closeChat();
 
@@ -761,7 +779,7 @@ static boolean sendMacro(int num)
  */
 DEFCC(CCmdLocalMessage)
 {
-    D_NetMessageNoSound(argv[1]);
+    D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
     return true;
 }
 
@@ -771,7 +789,7 @@ DEFCC(CCmdLocalMessage)
  */
 DEFCC(CCmdMsgAction)
 {
-    int         plynum;
+    int                 plynum;
 
     if(chatOn)
     {
@@ -795,18 +813,14 @@ DEFCC(CCmdMsgAction)
 
     if(!stricmp(argv[0], "chatsendmacro"))  // send a chat macro
     {
+        int                 macroNum;
+
         if(argc < 2 || argc > 3)
         {
             Con_Message("Usage: %s (player) (macro number)\n", argv[0]);
             Con_Message("Send a chat macro to other player(s) in multiplayer.\n"
                         "If (player) is omitted, the message will be sent to all players.\n");
             return true;
-        }
-
-        if(!IS_NETGAME)
-        {
-            Con_Message("You can't chat if not in multiplayer\n");
-            return false;
         }
 
         if(argc == 3)
@@ -826,30 +840,22 @@ DEFCC(CCmdMsgAction)
         if(!chatOn) // we need to enable chat mode first...
             openChat(plynum);
 
-        if(!(sendMacro(atoi(((argc == 3)? argv[2] : argv[1])))))
+        macroNum = atoi(((argc == 3)? argv[2] : argv[1]));
+        if(!sendMacro(macroNum))
         {
-            Con_Message("invalid macro number\n");
+            Con_Message("Invalid macro number\n");
             return false;
         }
     }
     else if(!stricmp(argv[0], "msgrefresh")) // refresh the message buffer
     {
-        int         i;
-
         if(chatOn)
             return false;
 
-        for(i = 0; i < MAXPLAYERS; ++i)
-            HU_MsgBufRefresh(&msgBuffer[i]);
+        HU_MsgBufRefresh(&msgBuffer[CONSOLEPLAYER]);
     }
     else if(!stricmp(argv[0], "beginchat")) // begin chat mode
     {
-        if(!IS_NETGAME)
-        {
-            Con_Message("You can't chat if not in multiplayer\n");
-            return false;
-        }
-
         if(chatOn)
             return false;
 

@@ -42,12 +42,12 @@
 
 void        HUMsg_Register(void);
 boolean     HUMsg_Responder(event_t *ev);
-void        HUMsg_Drawer(void);
+void        HUMsg_Drawer(int player);
 void        HUMsg_Ticker(void);
 void        HUMsg_Start(void);
 void        HUMsg_Init(void);
 
-void        HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
+void        HUMsg_PlayerMessage(int player, char *message, int tics,
                                 boolean noHide, boolean yellow);
-void        HUMsg_ClearMessages(player_t *player);
+void        HUMsg_ClearMessages(int player);
 #endif

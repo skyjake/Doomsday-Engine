@@ -607,7 +607,7 @@ void G_Shutdown(void)
     uint                    i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_ClearMessages(&players[i]);
+        HUMsg_ClearMessages(i);
 
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);

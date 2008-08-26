@@ -409,7 +409,9 @@ void FI_ClearState(void)
 {
     int                 i, c;
 
-    HUMsg_ClearMessages(&players[CONSOLEPLAYER]);
+    // Clear the message queue for all local players.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        HUMsg_ClearMessages(i);
 
     // General game state.
     G_SetGameAction(GA_NONE);

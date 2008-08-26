@@ -84,7 +84,7 @@ DEFCC(CCmdSetClass);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void D_NetMessageEx(char *msg, boolean playSound);
+static void D_NetMessageEx(int player, const char* msg, boolean playSound);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -215,7 +215,7 @@ int D_NetServerClose(int before)
 #if __JHEXEN__
         randomClassParm = false;
 #endif
-        D_NetMessage("NETGAME ENDS");
+        D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
     }
     return true;
 }
@@ -298,7 +298,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
             // Print a notification.
             snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s joined the game",
                     Net_GetPlayerName(plrNumber));
-            D_NetMessage(msgBuff);
+            D_NetMessage(CONSOLEPLAYER, msgBuff);
         }
     }
     else if(peType == DDPE_EXIT)
@@ -309,7 +309,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
         // Print a notification.
         snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s left the game", Net_GetPlayerName(plrNumber));
-        D_NetMessage(msgBuff);
+        D_NetMessage(CONSOLEPLAYER, msgBuff);
 
         if(IS_SERVER)
             P_DealPlayerStarts(0);
@@ -330,7 +330,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
-        D_NetMessageEx(msgBuff, (cfg.chatBeep? true : false));
+        D_NetMessageEx(CONSOLEPLAYER, msgBuff, (cfg.chatBeep? true : false));
         cfg.echoMsg = oldecho;
     }
 
@@ -580,15 +580,26 @@ void D_ChatSound(void)
 /**
  * Show a message on screen, optionally accompanied by Chat sound effect.
  *
- * @param playSound         @c true = play the chat sound.
+ * @param player        Player number to send the message to.
+ * @param playSound     @c true = play the chat sound.
  */
-static void D_NetMessageEx(char *msg, boolean playSound)
+static void D_NetMessageEx(int player, const char* msg, boolean playSound)
 {
+    player_t*           plr;
+
+    if(player < 0 || player > MAXPLAYERS)
+        return;
+    plr = &players[player];
+
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
     snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", msg);
+
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.
     netSvAllowSendMsg = false;
-    P_SetMessage(players + CONSOLEPLAYER, msgBuff, false);
+    P_SetMessage(plr, msgBuff, false);
 
     if(playSound)
         D_ChatSound();
@@ -599,11 +610,11 @@ static void D_NetMessageEx(char *msg, boolean playSound)
 /**
  * Show message on screen and play chat sound.
  *
- * @param msg               Ptr to the message to print.
+ * @param msg           Ptr to the message to print.
  */
-void D_NetMessage(char *msg)
+void D_NetMessage(int player, const char* msg)
 {
-    D_NetMessageEx(msg, true);
+    D_NetMessageEx(player, msg, true);
 }
 
 /**
@@ -611,9 +622,9 @@ void D_NetMessage(char *msg)
  *
  * @param msg
  */
-void D_NetMessageNoSound(char *msg)
+void D_NetMessageNoSound(int player, const char* msg)
 {
-    D_NetMessageEx(msg, false);
+    D_NetMessageEx(player, msg, false);
 }
 
 /**
@@ -671,44 +682,49 @@ DEFCC(CCmdSetColor)
 #endif
 
     cfg.netColor = atoi(argv[1]);
-    if(IS_SERVER)               // Player zero?
+    if(IS_SERVER) // A local player?
     {
+        int                 player = CONSOLEPLAYER;
+
         if(IS_DEDICATED)
             return false;
 
-        // The server player, plr#0, must be treated as a special case
-        // because this is a local mobj we're dealing with. We'll change
-        // the color translation bits directly.
+        // Server players, must be treated as a special case because this is
+        // a local mobj we're dealing with. We'll change the color translation
+        // bits directly.
 
-        cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
+        cfg.playerColor[player] = PLR_COLOR(player, cfg.netColor);
+
 #if __JDOOM__ || __JDOOM64__
         ST_updateGraphics();
 #endif
+
         // Change the color of the mobj (translation flags).
-        players[0].plr->mo->flags &= ~MF_TRANSLATION;
+        players[player].plr->mo->flags &= ~MF_TRANSLATION;
 
 #if __JHEXEN__
         // Additional difficulty is caused by the fact that the Fighter's
         // colors 0 (blue) and 2 (yellow) must be swapped.
-        players[0].plr->mo->flags |=
-            (cfg.playerClass[0] ==
-             PCLASS_FIGHTER ? (cfg.playerColor[0] ==
-                               0 ? 2 : cfg.playerColor[0] ==
-                               2 ? 0 : cfg.playerColor[0]) : cfg.
-             playerColor[0]) << MF_TRANSSHIFT;
-        players[0].colorMap = cfg.playerColor[0];
+        players[player].plr->mo->flags |=
+            (cfg.playerClass[player] ==
+             PCLASS_FIGHTER ? (cfg.playerColor[player] ==
+                               0 ? 2 : cfg.playerColor[player] ==
+                               2 ? 0 : cfg.playerColor[player]) : cfg.
+             playerColor[player]) << MF_TRANSSHIFT;
+        players[player].colorMap = cfg.playerColor[player];
 #else
-        players[0].plr->mo->flags |= cfg.playerColor[0] << MF_TRANSSHIFT;
+        players[player].plr->mo->flags |= cfg.playerColor[player] << MF_TRANSSHIFT;
 #endif
 
         // Tell the clients about the change.
-        NetSv_SendPlayerInfo(0, DDSP_ALL_PLAYERS);
+        NetSv_SendPlayerInfo(player, DDSP_ALL_PLAYERS);
     }
     else
     {
         // Tell the server about the change.
         NetCl_SendPlayerInfo();
     }
+
     return true;
 }
 

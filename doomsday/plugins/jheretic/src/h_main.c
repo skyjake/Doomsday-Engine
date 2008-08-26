@@ -566,7 +566,7 @@ void G_Shutdown(void)
     HU_UnloadData();
 
     for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_ClearMessages(&players[i]);
+        HUMsg_ClearMessages(i);
 
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);

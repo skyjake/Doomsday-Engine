@@ -1121,7 +1121,7 @@ void G_PlayerExitMap(int player)
     p->poisonCount = 0;
 #endif
 
-    HUMsg_ClearMessages(p);
+    HUMsg_ClearMessages(p - players);
 }
 
 /**
