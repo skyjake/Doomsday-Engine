@@ -109,8 +109,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     player->update |= PSF_AMMO;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_AMMO);
 
     return true;
 }
@@ -154,8 +153,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+        ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
 
         S_ConsoleSound(SFX_WPNUP, NULL, player - players);
         return false;
@@ -192,8 +190,8 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         }
 
         // Maybe unhide the HUD?
-        if(gaveWeapon && player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+        if(gaveWeapon)
+            ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
 
         return (gaveWeapon || gaveAmmo);
     }
@@ -215,8 +213,7 @@ boolean P_GiveBody(player_t *player, int num)
     player->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
 
     return true;
 }
@@ -243,8 +240,7 @@ boolean P_GiveArmor(player_t *player, int armortype)
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
@@ -259,8 +255,7 @@ void P_GiveKey(player_t* player, keytype_t card)
     player->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_KEY);
 }
 
 /**
@@ -343,8 +338,7 @@ boolean P_GivePower(player_t *player, int power)
     }
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
 
     return true;
 }
@@ -421,8 +415,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         P_SetMessage(player, GOTHTHBONUS, false);
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+        ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
         break;
 
     case SPR_BON2:
@@ -436,8 +429,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         P_SetMessage(player, GOTARMBONUS, false);
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+        ST_HUDUnHide(player - players, HUE_ON_PICKUP_ARMOR);
         break;
 
     case SPR_SOUL:
@@ -450,8 +442,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = SFX_GETPOW;
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+        ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
         break;
 
     case SPR_MEGA:
@@ -465,8 +456,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         sound = SFX_GETPOW;
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+        ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
         break;
 
     // Keys. Leave for everyone.
@@ -1075,8 +1065,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         temp = damage < 100 ? damage : 100;
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER]);
-            ST_HUDUnHide(HUE_ON_DAMAGE);
+        ST_HUDUnHide(player - players, HUE_ON_DAMAGE);
     }
 
     // How about some particles, yes?

@@ -57,19 +57,17 @@ typedef enum hotloc_e {
 void    ST_Ticker(void);
 
 // Called by main loop.
-void    ST_Drawer(int fullscreenmode, boolean refresh);
+void    ST_Drawer(int player, int fullscreenmode);
 
-// Called when the console player is spawned on each level.
-void    ST_Start(void);
+void    ST_Start(int player);
+void    ST_Stop(int player);
 
 // Called by startup code.
 void    ST_Register(void);
 void    ST_Init(void);
 
-void    ST_updateGraphics(void);
-
 // Called when it might be neccessary for the hud to unhide.
-void    ST_HUDUnHide(hueevent_t event);
+void    ST_HUDUnHide(int player, hueevent_t event);
 
 int     R_GetFilterColor(int filter);
 

@@ -1149,12 +1149,8 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
             p->keys[i] = true;
     }
 
-    if(pnum == CONSOLEPLAYER)
-    {
-        // Wake up the status bar.
-        ST_Start();
-    }
-
+    // Wake up the status bar.
+    ST_Start(p - players);
     // Wake up the heads up text.
     HU_Start(p - players);
 }

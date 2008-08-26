@@ -58,11 +58,25 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct {
+    boolean         stopped;
+    int             hideTics;
+    float           hideAmount;
+    float           alpha; // Fullscreen hud alpha value.
+
+    boolean         firstTime;  // ST_Start() has just been called.
+    boolean         blended; // Whether to use alpha blending.
+    boolean         statusbarActive; // Whether the HUD is on.
+    boolean         statusbarFragsOn; // !deathmatch.
+    int             currentFragsCount; // Number of frags so far in deathmatch.
+
+    // Widgets:
+    st_number_t     wFrags; // In deathmatch only, summary of frags stats.
+} hudstate_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void ST_Stop(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -72,30 +86,10 @@ void ST_Stop(void);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// Whether the HUD is on.
-static boolean statusbarActive;
-static boolean stopped = true;
-static boolean firstTime;
-
-static int hudHideTics;
-static float hudHideAmount;
-
-// Fullscreen hud alpha value.
-static float hudalpha = 0.0f;
-// Whether to use alpha blending.
-static boolean blended = false;
-
-// Number of frags so far in deathmatch.
-static int currentFragsCount;
-static boolean statusbarFragsOn;
-
-static int currentPalette = 0;
+static hudstate_t hudStates[MAXPLAYERS];
 
 // 0-9, tall numbers.
 static dpatch_t tallnum[10];
-
-// In deathmatch only, summary of frags stats.
-static st_number_t wFrags;
 
 // CVARs for the HUD/Statusbar.
 cvar_t sthudCVars[] =
@@ -119,8 +113,6 @@ cvar_t sthudCVars[] =
 
     // HUD displays
     {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
-
-    {"hud-frags-all", 0, CVT_BYTE, &huShowAllFrags, 0, 1},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
@@ -150,58 +142,75 @@ void ST_Register(void)
 /**
  * Unhides the current HUD display if hidden.
  *
+ * @param player        The player whoose HUD to (maybe) unhide.
  * @param event         The HUD Update Event type to check for triggering.
  */
-void ST_HUDUnHide(hueevent_t event)
+void ST_HUDUnHide(int player, hueevent_t ev)
 {
-    if(event < HUE_FORCE || event > NUMHUDUNHIDEEVENTS)
+    player_t*           plr;
+
+    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
         return;
 
-    if(event == HUE_FORCE || cfg.hudUnHide[event])
+    plr = &players[player];
+    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        return;
+
+    if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
-        hudHideTics = (cfg.hudTimer * TICSPERSEC);
-        hudHideAmount = 0;
+        hudStates[player].hideTics = (cfg.hudTimer * TICSPERSEC);
+        hudStates[player].hideAmount = 0;
     }
 }
 
-void ST_updateWidgets(void)
+void ST_updateWidgets(int player)
 {
     int                 i;
-    player_t            *plr = &players[CONSOLEPLAYER];
+    player_t*           plr = &players[player];
+    hudstate_t*         hud = &hudStates[player];
 
     // Used by wFrags widget.
-    statusbarFragsOn = deathmatch && statusbarActive;
-    currentFragsCount = 0;
+    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
+    hud->currentFragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->inGame)
             continue;
 
-        currentFragsCount += plr->frags[i] * (i != CONSOLEPLAYER ? 1 : -1);
+        hud->currentFragsCount += plr->frags[i] * (i != player ? 1 : -1);
     }
 }
 
 void ST_Ticker(void)
 {
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    int                 i;
 
-    if(!P_IsPaused())
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(cfg.hudTimer == 0)
+        player_t*           plr = &players[i];
+        hudstate_t*         hud = &hudStates[i];
+
+        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+            continue;
+
+        if(!P_IsPaused())
         {
-            hudHideTics = hudHideAmount = 0;
-        }
-        else
-        {
-            if(hudHideTics > 0)
-                hudHideTics--;
-            if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
-                hudHideAmount += 0.1f;
+            if(cfg.hudTimer == 0)
+            {
+                hud->hideTics = hud->hideAmount = 0;
+            }
+            else
+            {
+                if(hud->hideTics > 0)
+                    hud->hideTics--;
+                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                    hud->hideAmount += 0.1f;
+            }
+
+            ST_updateWidgets(i);
         }
     }
-
-    ST_updateWidgets();
 }
 
 int R_GetFilterColor(int filter)
@@ -224,19 +233,19 @@ int R_GetFilterColor(int filter)
     return rgba;
 }
 
-void ST_doPaletteStuff(void)
+void ST_doPaletteStuff(int player)
 {
     int                 palette;
     int                 cnt;
     int                 bzc;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    player_t*           plr = &players[player];
 
-    cnt = plyr->damageCount;
+    cnt = plr->damageCount;
 
-    if(plyr->powers[PT_STRENGTH])
+    if(plr->powers[PT_STRENGTH])
     {
         // Slowly fade the berzerk out.
-        bzc = 12 - (plyr->powers[PT_STRENGTH] >> 6);
+        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
 
         if(bzc > cnt)
             cnt = bzc;
@@ -252,9 +261,9 @@ void ST_doPaletteStuff(void)
         palette += STARTREDPALS;
     }
 
-    else if(plyr->bonusCount)
+    else if(plr->bonusCount)
     {
-        palette = (plyr->bonusCount + 7) >> 3;
+        palette = (plr->bonusCount + 7) >> 3;
 
         if(palette >= NUMBONUSPALS)
             palette = NUMBONUSPALS - 1;
@@ -262,33 +271,35 @@ void ST_doPaletteStuff(void)
         palette += STARTBONUSPALS;
     }
 
-    else if(plyr->powers[PT_IRONFEET] > 4 * 32 ||
-            plyr->powers[PT_IRONFEET] & 8)
+    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
+            plr->powers[PT_IRONFEET] & 8)
         palette = RADIATIONPAL;
     else
         palette = 0;
 
-    if(palette != currentPalette)
-    {
-        currentPalette = palette;
-        plyr->plr->filter = R_GetFilterColor(palette); // $democam
-    }
+    plr->plr->filter = R_GetFilterColor(palette); // $democam
 }
 
-void ST_drawWidgets(boolean refresh)
+static void drawWidgets(hudstate_t* hud)
 {
     // Used by wFrags widget.
-    statusbarFragsOn = deathmatch && statusbarActive;
+    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
 
-    STlib_updateNum(&wFrags, refresh);
+    STlib_updateNum(&hud->wFrags, true);
 }
 
-void ST_doRefresh(void)
+void ST_doRefresh(int player)
 {
-    firstTime = false;
+    hudstate_t*         hud;
 
-    // And refresh all widgets.
-    ST_drawWidgets(true);
+    if(player < 0 || player > MAXPLAYERS)
+        return;
+
+    hud = &hudStates[player];
+
+    hud->firstTime = false;
+
+    drawWidgets(hud);
 }
 
 void ST_HUDSpriteSize(int sprite, int *w, int *h)
@@ -356,7 +367,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     DGL_End();
 }
 
-void ST_doFullscreenStuff(void)
+void ST_doFullscreenStuff(int player)
 {
     static const int    ammo_sprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
@@ -365,15 +376,16 @@ void ST_doFullscreenStuff(void)
         SPR_RCKT
     };
 
-    player_t           *plr = &players[DISPLAYPLAYER];
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
     char                buf[20];
     int                 w, h, pos = 0, oldPos = 0, spr,i;
     int                 h_width = 320 / cfg.hudScale;
     int                 h_height = 200 / cfg.hudScale;
     float               textalpha =
-        hudalpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
+        hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
     float               iconalpha =
-        hudalpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
+        hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
     CLAMP(textalpha, 0.0f, 1.0f);
     CLAMP(iconalpha, 0.0f, 1.0f);
@@ -386,7 +398,7 @@ void ST_doFullscreenStuff(void)
         {
             i -= 18 * cfg.hudScale;
         }
-        sprintf(buf, "FRAGS:%i", currentFragsCount);
+        sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
         M_WriteText2(HUDBORDERX, i, buf, huFontA, cfg.hudColor[0], cfg.hudColor[1],
                      cfg.hudColor[2], textalpha);
     }
@@ -508,48 +520,60 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
-void ST_Drawer(int fullscreenmode, boolean refresh)
+void ST_Drawer(int player, int fullscreenmode)
 {
-    firstTime = firstTime || refresh;
-    statusbarActive = (fullscreenmode < 2) || (AM_IsMapActive(CONSOLEPLAYER) &&
+    hudstate_t*         hud;
+    player_t*           plr;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    hud = &hudStates[player];
+
+    hud->firstTime = hud->firstTime;
+    hud->statusbarActive = (fullscreenmode < 2) || (AM_IsMapActive(player) &&
                      (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
-    ST_doPaletteStuff();
+    ST_doPaletteStuff(player);
 
     // Fade in/out the fullscreen HUD.
-    if(statusbarActive)
+    if(hud->statusbarActive)
     {
-        if(hudalpha > 0.0f)
+        if(hud->alpha > 0.0f)
         {
-            statusbarActive = 0;
-            hudalpha-=0.1f;
+            hud->statusbarActive = 0;
+            hud->alpha-=0.1f;
         }
     }
     else
     {
         if(fullscreenmode == 3)
         {
-            if(hudalpha > 0.0f)
+            if(hud->alpha > 0.0f)
             {
-                hudalpha-=0.1f;
+                hud->alpha-=0.1f;
                 fullscreenmode = 2;
             }
         }
         else
         {
-            if(hudalpha < 1.0f)
-                hudalpha+=0.1f;
+            if(hud->alpha < 1.0f)
+                hud->alpha += 0.1f;
         }
     }
 
     // Always try to render statusbar with alpha in fullscreen modes.
     if(fullscreenmode)
-        blended = 1;
+        hud->blended = 1;
     else
-        blended = 0;
+        hud->blended = 0;
 
-    ST_doFullscreenStuff();
+    ST_doFullscreenStuff(player);
 }
 
 void ST_loadGraphics(void)
@@ -565,50 +589,66 @@ void ST_loadGraphics(void)
     }
 }
 
-void ST_updateGraphics(void)
-{
-    // Nothing to do.
-}
-
 void ST_loadData(void)
 {
     ST_loadGraphics();
 }
 
-void ST_initData(void)
+static void initData(hudstate_t* hud)
 {
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    int                 player = hud - hudStates;
 
-    firstTime = true;
-    statusbarActive = true;
-    currentPalette = -1;
+    // Ensure the HUD widget lib has been inited.
     STlib_init();
 
-    ST_HUDUnHide(HUE_FORCE);
+    hud->firstTime = true;
+    hud->statusbarActive = true;
+    hud->blended = false;
+    hud->stopped = true;
+    hud->alpha = 0.f;
+
+    ST_HUDUnHide(player, HUE_FORCE);
 }
 
-void ST_createWidgets(void)
+void ST_createWidgets(int player)
 {
+    hudstate_t*         hud = &hudStates[player];
+
     // Frags sum.
-    STlib_initNum(&wFrags, ST_FRAGSX, ST_FRAGSY, tallnum, &currentFragsCount,
-                  &statusbarFragsOn, ST_FRAGSWIDTH, &hudalpha);
+    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, tallnum, &hud->currentFragsCount,
+                  &hud->statusbarFragsOn, ST_FRAGSWIDTH, &hud->alpha);
 }
 
-void ST_Start(void)
+void ST_Start(int player)
 {
-    if(!stopped)
-        ST_Stop();
+    hudstate_t*         hud;
 
-    ST_initData();
-    ST_createWidgets();
-    stopped = false;
-}
-
-void ST_Stop(void)
-{
-    if(stopped)
+    if(player < 0 || player >= MAXPLAYERS)
         return;
-    stopped = true;
+
+    hud = &hudStates[player];
+
+    if(!hud->stopped)
+        ST_Stop(player);
+
+    initData(hud);
+    ST_createWidgets(player);
+
+    hud->stopped = false;
+}
+
+void ST_Stop(int player)
+{
+    hudstate_t*         hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    hud = &hudStates[player];
+    if(hud->stopped)
+        return;
+
+    hud->stopped = true;
 }
 
 void ST_Init(void)

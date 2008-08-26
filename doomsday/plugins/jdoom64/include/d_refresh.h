@@ -36,14 +36,14 @@
 
 void            R_InitRefresh(void);
 
-void            D_Display(void);
+void            D_Display(int layer);
 void            D_Display2(void);
-void            R_SetViewSize(int blocks, int detail);
+void            R_SetViewSize(int blocks);
 
-void            R_DrawSpecialFilter(void);
+void            R_DrawSpecialFilter(int pnum);
 void            R_DrawLevelTitle(void);
 
-void            P_SetDoomsdayFlags(mobj_t *mo);
-void            R_SetAllDoomsdayFlags();
+void            P_SetDoomsdayFlags(mobj_t* mo);
+void            R_SetAllDoomsdayFlags(void);
 
 #endif
