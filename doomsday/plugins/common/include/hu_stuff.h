@@ -76,8 +76,6 @@ extern boolean messageNoEcho;
 extern int typeInTime;
 extern boolean chatOn;
 
-extern boolean huShowAllFrags;
-
 #if __JDOOM__
 // Plutonia and TNT map names.
 extern char *mapNamesPlut[32], *mapNamesTNT[32];
@@ -123,9 +121,9 @@ void        Draw_EndZoom(void);
 
 void        HU_Register(void);
 
-void        HU_Start(void);
+void        HU_Start(int player);
 void        HU_UnloadData(void);
-void        HU_Drawer(void);
+void        HU_Drawer(int player);
 char        HU_dequeueChatChar(void);
 void        HU_Erase(void);
 
@@ -133,5 +131,8 @@ void        HU_DrawMapCounters(void);
 
 void        Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
                              float texAngle, float alpha, float arg1);
+
+void        HU_ScoreBoardUnHide(int player);
+void        HU_DrawScoreBoard(int player);
 
 #endif

@@ -251,6 +251,7 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_MAP_MARK_CLEAR_ALL, CTLT_IMPULSE, "clearmarks", "map");
 
     P_NewPlayerControl(CTL_HUD_SHOW, CTLT_IMPULSE, "showhud", "game");
+    P_NewPlayerControl(CTL_SCORE_SHOW, CTLT_IMPULSE, "showscore", "game");
 }
 
 DEFCC( CCmdDefaultGameBinds )
@@ -387,6 +388,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-p pause",
 
         "bindevent key-h {impulse showhud}",
+        "bindevent key-backslash-repeat {impulse showscore}",
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",
         "bindevent key-return msgrefresh",

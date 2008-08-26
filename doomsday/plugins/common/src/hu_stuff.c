@@ -66,6 +66,7 @@
 
 #include "hu_stuff.h"
 #include "hu_msg.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -80,6 +81,23 @@
 #endif
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct {
+    boolean         active;
+    int             scoreHideTics;
+    float           scoreAlpha;
+} hudstate_t;
+
+// Column flags
+#define CF_HIDE                 0x0001
+#define CF_FIXEDWIDTH           0x0002
+
+typedef struct {
+    const char*     label;
+    int             type;
+    short           flags; // CF_* flags.
+    boolean         alignRight;
+} column_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -109,8 +127,6 @@ dpatch_t m_pause; // Paused graphic.
 dpatch_t *episodeNamePatches = NULL;
 #endif
 
-boolean huShowAllFrags = false;
-
 cvar_t hudCVars[] = {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
@@ -122,7 +138,8 @@ cvar_t hudCVars[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static dpatch_t borderPatches[8];
-static boolean hudActive = false;
+
+static hudstate_t hudStates[MAXPLAYERS];
 
 // Code -------------------------------------------------------------------
 
@@ -342,143 +359,171 @@ void HU_UnloadData(void)
 #endif
 }
 
-void HU_Stop(void)
+void HU_Stop(int player)
 {
-    hudActive = false;
+    hudstate_t*         hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    hud = &hudStates[player];
+    hud->active = false;
 }
 
-void HU_Start(void)
+void HU_Start(int player)
 {
-    if(hudActive)
-        HU_Stop();
+    hudstate_t*         hud;
 
-    HUMsg_Start();
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
 
-    hudActive = true;
+    HUMsg_Start(); // Why here?
+
+    hud = &hudStates[player];
+    if(hud->active)
+        HU_Stop(player);
+
+    hud->active = true;
 }
 
-void HU_Drawer(void)
+void HU_Drawer(int player)
 {
-    int         i, k, x, y;
-    char        buf[80];
-    player_t   *plr;
+    HUMsg_Drawer(player);
 
-    HUMsg_Drawer();
+    HU_DrawScoreBoard(player);
+}
 
-    if(huShowAllFrags)
+static void drawQuad(float x, float y, float w, float h, float s, float t,
+                     float r, float g, float b, float a)
+{
+    DGL_Color4f(r, g, b, a);
+    DGL_Begin(DGL_QUADS);
+
+    DGL_TexCoord2f(0 * s, 0);
+    DGL_Vertex2f(x, y);
+
+    DGL_TexCoord2f(1 * s, 0);
+    DGL_Vertex2f(x + w, y);
+
+    DGL_TexCoord2f(1 * s, t);
+    DGL_Vertex2f(x + w, y + h);
+
+    DGL_TexCoord2f(0 * s, t);
+    DGL_Vertex2f(x, y + h);
+
+    DGL_End();
+}
+
+void HU_DrawText(const char* str, dpatch_t* font, float x, float y,
+                 float scale, float r, float g, float b, float a,
+                 boolean alignRight)
+{
+    const char*         ch;
+    char                c;
+    float               w, h;
+    dpatch_t*           p;
+
+    if(!str || !str[0])
+        return;
+
+    if(alignRight)
     {
-        for(y = 8, i = 0; i < MAXPLAYERS; ++i)
+        ch = str;
+        for(;;)
         {
-            plr = &players[i];
-            if(!plr->plr || !plr->plr->inGame)
+            c = *ch++;
+
+            if(!c)
+                break;
+
+            c = toupper(c) - HU_FONTSTART;
+            if(c < 0 || c >= HU_FONTSIZE)
                 continue;
 
-            sprintf(buf, "%i%s", i, (i == CONSOLEPLAYER ? "=" : ":"));
+            if(!font[c].lump)
+                continue;
+            p = &font[c];
 
-            M_WriteText(0, y, buf);
-
-            x = 20;
-            for(k = 0; k < MAXPLAYERS; ++k, x += 18)
-            {
-                if(players[k].plr || !players[k].plr->inGame)
-                    continue;
-
-                sprintf(buf, "%i", plr->frags[k]);
-                M_WriteText(x, y, buf);
-            }
-
-            y += 10;
+            x -= p->width * scale;
         }
     }
-}
 
-#if __JDOOM__ || __JDOOM64__
-/**
- * Draws a sorted frags list in the lower right corner of the screen.
- */
-static void drawFragsTable(void)
-{
-#define FRAGS_DRAWN    -99999
-    int         i, k, y, inCount = 0;    // How many players in the game?
-    int         totalFrags[MAXPLAYERS];
-    int         max, choose = 0;
-    int         w = 30;
-    char       *name, tmp[40];
+    DGL_Color4f(r, g, b, a);
 
-    memset(totalFrags, 0, sizeof(totalFrags));
-    for(i = 0; i < MAXPLAYERS; ++i)
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(scale, scale, 1);
+    DGL_Translatef(-x, -y, 0);
+
+    ch = str;
+    for(;;)
     {
-        if(!players[i].plr->inGame)
+        c = *ch++;
+
+        if(!c)
+            break;
+
+        c = toupper(c) - HU_FONTSTART;
+        if(c < 0 || c >= HU_FONTSIZE)
             continue;
 
-        inCount++;
-        for(k = 0; k < MAXPLAYERS; ++k)
-            totalFrags[i] += players[i].frags[k] * (k != i ? 1 : -1);
+        if(!font[c].lump)
+            continue;
+        p = &font[c];
+
+        w = p->width;
+        h = p->height;
+
+        GL_DrawPatch_CS(x, y, p->lump);
+
+        x += w;
     }
 
-    // Start drawing from the top.
-# if __JDOOM64__
-    y = HU_TITLEY + 32 * (inCount - 1) * LINEHEIGHT_A;
-# else
-    y = HU_TITLEY + 32 * (20 - cfg.statusbarScale) / 20 - (inCount - 1) * LINEHEIGHT_A;
-#endif
-    for(i = 0; i < inCount; ++i, y += LINEHEIGHT_A)
-    {
-        // Find the largest.
-        for(max = FRAGS_DRAWN + 1, k = 0; k < MAXPLAYERS; ++k)
-        {
-            if(!players[k].plr->inGame || totalFrags[k] == FRAGS_DRAWN)
-                continue;
-
-            if(totalFrags[k] > max)
-            {
-                choose = k;
-                max = totalFrags[k];
-            }
-        }
-
-        // Draw the choice.
-        name = Net_GetPlayerName(choose);
-        switch(cfg.playerColor[choose])
-        {
-        case 0:                // green
-            DGL_Color3f(0, .8f, 0);
-            break;
-
-        case 1:                // gray
-            DGL_Color3f(.45f, .45f, .45f);
-            break;
-
-        case 2:                // brown
-            DGL_Color3f(.7f, .5f, .4f);
-            break;
-
-        case 3:                // red
-            DGL_Color3f(1, 0, 0);
-            break;
-        }
-
-        M_WriteText2(320 - w - M_StringWidth(name, huFontA) - 6, y, name,
-                     huFontA, -1, -1, -1, -1);
-        // A colon.
-        M_WriteText2(320 - w - 5, y, ":", huFontA, -1, -1, -1, -1);
-        // The frags count.
-        sprintf(tmp, "%i", totalFrags[choose]);
-        M_WriteText2(320 - w, y, tmp, huFontA, -1, -1, -1, -1);
-        // Mark to ignore in the future.
-        totalFrags[choose] = FRAGS_DRAWN;
-    }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
-#endif
 
-/**
- * Draws the deathmatch stats
- * \todo Merge with drawFragsTable()
- */
-#if __JHEXEN__
-static void drawDeathmatchStats(void)
+typedef struct {
+    int                 player, pClass, team;
+    int                 kills, suicides;
+    float               color[3];
+} scoreinfo_t;
+
+int scoreInfoCompare(const void* a, const void* b)
 {
-static const int their_colors[] = {
+    const scoreinfo_t*  infoA = (scoreinfo_t*) a;
+    const scoreinfo_t*  infoB = (scoreinfo_t*) b;
+
+    if(infoA->kills > infoB->kills)
+        return -1;
+
+    if(infoB->kills > infoA->kills)
+        return 1;
+
+    if(deathmatch)
+    {   // In deathmatch, suicides affect your place on the scoreboard.
+        if(infoA->suicides < infoB->suicides)
+            return -1;
+
+        if(infoB->suicides < infoA->suicides)
+            return 1;
+    }
+
+    return 0;
+}
+
+static void sortScoreInfo(scoreinfo_t* vec, size_t size)
+{
+    qsort(vec, size, sizeof(scoreinfo_t), scoreInfoCompare);
+}
+
+static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers,
+                           int player)
+{
+#if __JHEXEN__
+static const int plrColors[] = {
     AM_PLR1_COLOR,
     AM_PLR2_COLOR,
     AM_PLR3_COLOR,
@@ -488,81 +533,429 @@ static const int their_colors[] = {
     AM_PLR7_COLOR,
     AM_PLR8_COLOR
 };
+#else
+    static const float  green[3] = { 0.f,    .8f,  0.f   };
+    static const float  gray[3]  = {  .45f,  .45f,  .45f };
+    static const float  brown[3] = {  .7f,   .5f,   .4f  };
+    static const float  red[3]   = { 1.f,   0.f,   0.f   };
+#endif
+    int                 i, j, n, inCount;
 
-    int         i, j, k, m;
-    int         fragCount[MAXPLAYERS];
-    int         order[MAXPLAYERS];
-    char        textBuffer[80];
-    int         yPosition;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
+    memset(scoreBoard, 0, sizeof(*scoreBoard) * maxPlayers);
+    inCount = 0;
+    for(i = 0, n = 0; i < maxPlayers; ++i)
     {
-        fragCount[i] = 0;
-        order[i] = -1;
-    }
+        player_t*           plr = &players[i];
+        scoreinfo_t*        info;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame)
+        if(!plr->plr->inGame)
             continue;
 
-        for(j = 0; j < MAXPLAYERS; ++j)
-        {
-            if(players[i].plr->inGame)
-            {
-                fragCount[i] += players[i].frags[j];
-            }
-        }
+        inCount++;
+        info = &scoreBoard[n++];
+        info->player = i;
+#if __JHERETIC__
+        info->pClass = (plr->morphTics > 0? PCLASS_CHICKEN : PCLASS_PLAYER);
+#elif __JHEXEN__
+        if(plr->morphTics > 0)
+            info->pClass = PCLASS_PIG;
+        else
+            info->pClass = plr->class;
+#else
+        info->pClass = PCLASS_PLAYER;
+#endif
+        info->team = cfg.playerColor[i];
 
-        for(k = 0; k < MAXPLAYERS; ++k)
+        // Pick team color:
+#if __JHEXEN__
+        GL_PalIdxToRGB(plrColors[info->team], info->color);
+#else
+        switch(info->team)
         {
-            if(order[k] == -1)
+        case 0: memcpy(info->color, green, sizeof(float)*3); break;
+        case 1: memcpy(info->color, gray, sizeof(float)*3); break;
+        case 2: memcpy(info->color, brown, sizeof(float)*3); break;
+        case 3: memcpy(info->color, red, sizeof(float)*3); break;
+        }
+#endif
+
+        if(deathmatch)
+        {
+            for(j = 0; j < maxPlayers; ++j)
             {
-                order[k] = i;
-                break;
-            }
-            else if(fragCount[i] > fragCount[order[k]])
-            {
-                for(m = MAXPLAYERS - 1; m > k; m--)
+                if(j != i)
                 {
-                    order[m] = order[m - 1];
+                    info->kills += plr->frags[j];
                 }
-                order[k] = i;
-                break;
+                else
+                {
+#if __JHEXEN__
+                    info->suicides += -plr->frags[j];
+#else
+                    info->suicides += plr->frags[j];
+#endif
+                }
             }
-        }
-    }
-
-    yPosition = 15;
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(order[i] < 0 || !players[order[i]].plr ||
-           !players[order[i]].plr->inGame)
-        {
-            continue;
         }
         else
         {
-            float               rgb[3];
-
-            GL_PalIdxToRGB(their_colors[cfg.playerColor[order[i]]], rgb);
-            DGL_Color3fv(rgb);
-
-            memset(textBuffer, 0, 80);
-            strncpy(textBuffer, Net_GetPlayerName(order[i]), 78);
-            strcat(textBuffer, ":");
-            MN_TextFilter(textBuffer);
-
-            M_WriteText2(4, yPosition, textBuffer, huFontA, -1, -1, -1, -1);
-            j = M_StringWidth(textBuffer, huFontA);
-
-            sprintf(textBuffer, "%d", fragCount[order[i]]);
-            M_WriteText2(j + 8, yPosition, textBuffer, huFontA, -1, -1, -1, -1);
-            yPosition += 10;
+            info->kills = plr->killCount;
+            info->suicides = 0; // We don't care anyway.
         }
     }
+
+    sortScoreInfo(scoreBoard, n);
+
+    return inCount;
 }
+
+void HU_ScoreBoardUnHide(int player)
+{
+    hudstate_t*         hud;
+    player_t*           plr;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    hud = &hudStates[player];
+    hud->scoreAlpha = 1;
+    hud->scoreHideTics = 35;
+}
+
+static void drawTable(float x, float ly, float width, float height,
+                      column_t* columns, scoreinfo_t* scoreBoard,
+                      int inCount, float alpha, int player)
+{
+#define CELL_PADDING    (1)
+
+    int                 i, n, numCols, numStretchCols;
+    float               cX, cY, fixedWidth, lineHeight, fontScale, fontHeight,
+                        fontOffsetY;
+    float*              colX, *colW;
+
+    if(!columns)
+        return;
+
+    if(!(alpha > 0))
+        return;
+
+    numStretchCols = 0;
+    numCols = 0;
+    for(n = 0; columns[n].label; n++)
+    {
+        numCols++;
+
+        if(columns[n].flags & CF_HIDE)
+            continue;
+
+        if(!(columns[n].flags & CF_FIXEDWIDTH))
+            numStretchCols++;
+    }
+
+    if(!numCols)
+        return;
+
+    colX = calloc(1, sizeof(*colX) * numCols);
+    colW = calloc(1, sizeof(*colW) * numCols);
+
+    lineHeight = height / (MAXPLAYERS + 1);
+    fontHeight = M_StringHeight("AgIq^_", huFontA);
+    fontScale = (lineHeight - CELL_PADDING * 2) / fontHeight;
+    fontOffsetY = 0;
+    if(fontScale > 1)
+    {
+        fontScale = 1;
+        fontOffsetY = (lineHeight - CELL_PADDING * 2 - fontHeight) / 2;
+    }
+
+    fixedWidth = 0;
+    for(n = 0; n < numCols; ++n)
+    {
+        if(columns[n].flags & CF_HIDE)
+            continue;
+
+        if(columns[n].flags & CF_FIXEDWIDTH)
+        {
+            colW[n] = M_StringWidth(columns[n].label, huFontA) + CELL_PADDING * 2;
+            fixedWidth += colW[n];
+        }
+    }
+
+    for(n = 0; n < numCols; ++n)
+    {
+        if(columns[n].flags & CF_HIDE)
+            continue;
+
+        if(!(columns[n].flags & CF_FIXEDWIDTH))
+            colW[n] = (width - fixedWidth) / numStretchCols;
+    }
+
+    colX[0] = x;
+    for(n = 1; n < numCols; ++n)
+    {
+        if(columns[n].flags & CF_HIDE)
+            colX[n] = colX[n-1];
+        else
+            colX[n] = colX[n-1] + colW[n-1];
+    }
+
+    // Draw the table header:
+    for(n = 0; n < numCols; ++n)
+    {
+        if(columns[n].flags & CF_HIDE)
+            continue;
+
+        cX = colX[n];
+        cY = ly + fontOffsetY;
+
+        cY += CELL_PADDING;
+        if(columns[n].alignRight)
+            cX += colW[n] - CELL_PADDING;
+        else
+            cX += CELL_PADDING;
+
+        HU_DrawText(columns[n].label, huFontA, cX, cY,
+                    fontScale, 1.f, 1.f, 1.f, alpha, columns[n].alignRight);
+    }
+    ly += lineHeight;
+
+    // Draw the table from left to right, top to bottom:
+    for(i = 0; i < inCount; ++i, ly += lineHeight)
+    {
+        scoreinfo_t*        info = &scoreBoard[i];
+        const char*         name = Net_GetPlayerName(info->player);
+        char                buf[5];
+
+        if(info->player == player)
+        {   // Draw a background to make *me* stand out.
+            float               val =
+                (info->color[0] + info->color[1] + info->color[2]) / 3;
+
+            if(val < .5f)
+                val = .2f;
+            else
+                val = .8f;
+
+            DGL_Disable(DGL_TEXTURING);
+            GL_DrawRect(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
+            DGL_Enable(DGL_TEXTURING);
+        }
+
+        // Now draw the fields:
+        for(n = 0; n < numCols; ++n)
+        {
+            if(columns[n].flags & CF_HIDE)
+                continue;
+
+            cX = colX[n];
+            cY = ly;
+
+/*#if _DEBUG
+DGL_Disable(DGL_TEXTURING);
+GL_DrawRect(cX + CELL_PADDING, cY + CELL_PADDING,
+            colW[n] - CELL_PADDING * 2,
+            lineHeight - CELL_PADDING * 2,
+            1, 1, 1, .1f * alpha);
+DGL_Enable(DGL_TEXTURING);
+#endif*/
+
+            cY += CELL_PADDING;
+            if(columns[n].alignRight)
+                cX += colW[n] - CELL_PADDING;
+            else
+                cX += CELL_PADDING;
+
+            switch(columns[n].type)
+            {
+            case 0: // Class icon.
+                {
+#if __JHERETIC__ || __JHEXEN__
+                int                 spr = 0;
+# if __JHERETIC__
+                if(info->pClass == PCLASS_CHICKEN)
+                    spr = SPR_CHKN;
+# else
+                switch(info->pClass)
+                {
+                case PCLASS_FIGHTER: spr = SPR_PLAY; break;
+                case PCLASS_CLERIC:  spr = SPR_CLER; break;
+                case PCLASS_MAGE:    spr = SPR_MAGE; break;
+                case PCLASS_PIG:     spr = SPR_PIGY; break;
+                }
+# endif
+                if(spr)
+                {
+                    spriteinfo_t        sprInfo;
+                    int                 w, h, w2, h2;
+                    float               s, t, scale;
+
+                    R_GetSpriteInfo(spr, 0, &sprInfo);
+                    w = sprInfo.width;
+                    h = sprInfo.height;
+                    w2 = M_CeilPow2(w);
+                    h2 = M_CeilPow2(h);
+                    // Let's calculate texture coordinates.
+                    // To remove a possible edge artifact, move the corner a bit up/left.
+                    s = (w - 0.4f) / w2;
+                    t = (h - 0.4f) / h2;
+
+                    if(h > w)
+                        scale = (lineHeight - CELL_PADDING * 2) / h;
+                    else
+                        scale = (colW[n] - CELL_PADDING * 2) / w;
+
+                    w *= scale;
+                    h *= scale;
+
+                    // Align to center on both X+Y axes.
+                    cX += ((colW[n] - CELL_PADDING * 2) - w) / 2;
+                    cY += ((lineHeight - CELL_PADDING * 2) - h) / 2;
+
+                    GL_SetMaterial(sprInfo.materialNum);
+
+                    drawQuad(cX, cY, w, h, s, t, 1, 1, 1, alpha);
+                }
 #endif
+                break;
+                }
+
+            case 1: // Name.
+                HU_DrawText(name, huFontA, cX, cY + fontOffsetY, fontScale,
+                            info->color[0], info->color[1], info->color[2],
+                            alpha, false);
+                break;
+
+            case 2: // #Suicides.
+                sprintf(buf, "%4i", info->suicides);
+                HU_DrawText(buf, huFontA, cX, cY + fontOffsetY, fontScale,
+                            info->color[0], info->color[1], info->color[2],
+                            alpha, true);
+                break;
+
+            case 3: // #Kills.
+                sprintf(buf, "%4i", info->kills);
+                HU_DrawText(buf, huFontA, cX, cY + fontOffsetY, fontScale,
+                            info->color[0], info->color[1], info->color[2],
+                            alpha, true);
+                break;
+            }
+        }
+    }
+
+    free(colX);
+    free(colW);
+
+#undef CELL_PADDING
+}
+
+const char* P_GetGameModeName(void)
+{
+    static const char* dm = "deathmatch";
+    static const char* coop = "cooperative";
+    static const char* sp = "singleplayer";
+
+    if(IS_NETGAME)
+    {
+        if(deathmatch)
+            return dm;
+
+        return coop;
+    }
+
+    return sp;
+}
+
+static void drawMapMetaData(float x, float y, dpatch_t* font, float alpha)
+{
+    static const char*      unnamed = "unnamed";
+    const char*             lname = P_GetMapNiceName();
+
+    if(!lname)
+        lname = unnamed;
+
+    // Map name:
+    M_WriteText2(x, y + 16, "map: ", font, 1, 1, 1, alpha);
+    M_WriteText2(x += M_StringWidth("map: ", font), y + 16, lname, font,
+                 1, 1, 1, alpha);
+
+    x += 8;
+
+    // Game mode:
+    M_WriteText2(x += M_StringWidth(lname, font), y + 16, "gamemode: ", font,
+                 1, 1, 1, alpha);
+    M_WriteText2(x += M_StringWidth("gamemode: ", font), y + 16,
+                 P_GetGameModeName(), font, 1, 1, 1, alpha);
+}
+
+/**
+ * Draws a sorted frags list in the lower right corner of the screen.
+ */
+void HU_DrawScoreBoard(int player)
+{
+#define LINE_BORDER        4
+
+    column_t columns[] = {
+        {"cl", 0, CF_FIXEDWIDTH, false},
+        {"name", 1, 0, false},
+        {"suicides", 2, CF_FIXEDWIDTH, true},
+        {"frags", 3, CF_FIXEDWIDTH, true},
+        {NULL, 0, 0}
+    };
+
+    int                 x, y, width, height, inCount;
+    hudstate_t*         hud;
+    scoreinfo_t         scoreBoard[MAXPLAYERS];
+
+    if(!IS_NETGAME)
+        return;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    hud = &hudStates[player];
+
+    if(!(hud->scoreAlpha > 0))
+        return;
+
+    // Determine the dimensions of the scoreboard:
+    x = 0;
+    y = 0;
+    width = SCREENWIDTH - 32;
+    height = SCREENHEIGHT - 32;
+
+    // Build and sort the scoreboard according to game rules, type, etc.
+    inCount = buildScoreBoard(scoreBoard, MAXPLAYERS, player);
+
+    // Only display the player class column if more than one.
+    if(NUM_PLAYER_CLASSES == 1)
+        columns[0].flags |= CF_HIDE;
+
+    // Scale by HUD scale.
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(16, 16, 0);
+
+    // Draw a background around the whole thing.
+    DGL_Disable(DGL_TEXTURING);
+    GL_DrawRect(x, y, width, height, 0, 0, 0, .4f * hud->scoreAlpha);
+    DGL_Enable(DGL_TEXTURING);
+
+    // Title:
+    M_WriteText2(x + width / 2 - M_StringWidth("ranking", huFontB) / 2,
+                 y + LINE_BORDER, "ranking", huFontB, 1, 0, 0, hud->scoreAlpha);
+
+    drawMapMetaData(x, y + 16, huFontA, hud->scoreAlpha);
+
+    drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount,
+              hud->scoreAlpha, player);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+}
 
 /**
  * Draws the world time in the top right corner of the screen
@@ -622,7 +1015,7 @@ void HU_DrawMapCounters(void)
 
     plr = &players[DISPLAYPLAYER];
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
     DGL_Color3f(1, 1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -707,28 +1100,36 @@ void HU_DrawMapCounters(void)
 
     Draw_EndZoom();
 
-#if __JDOOM__ || __JDOOM64__
-    if(deathmatch)
-        drawFragsTable();
-#endif
-
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-#endif
-
-#if __JHEXEN__ || __JSTRIFE__
-    if(IS_NETGAME)
-    {
-        // Always draw deathmatch stats in a netgame, even in coop
-        drawDeathmatchStats();
-    }
 #endif
 }
 
 void Hu_Ticker(void)
 {
+    int                 i;
+
     HUMsg_Ticker();
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        hudstate_t*         hud = &hudStates[i];
+        player_t*           plr = &players[i];
+
+        if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+            continue;
+
+        if(hud->scoreHideTics > 0)
+        {
+            hud->scoreHideTics--;
+        }
+        else
+        {
+            if(hud->scoreAlpha > 0)
+                hud->scoreAlpha -= .05f;
+        }
+    }
 }
 
 int MN_FilterChar(int ch)

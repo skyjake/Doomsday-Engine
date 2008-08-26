@@ -1533,6 +1533,9 @@ void P_PlayerThinkHUD(player_t* player)
 
     if(brain->hudShow)
         ST_HUDUnHide(player - players, HUE_FORCE);
+
+    if(brain->scoreShow)
+        HU_ScoreBoardUnHide(player - players);
 }
 
 void P_PlayerThinkMap(player_t* player)
@@ -1922,6 +1925,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // HUD.
     brain->hudShow = (P_GetImpulseControlState(playerNum, CTL_HUD_SHOW) != 0);
+    brain->scoreShow = (P_GetImpulseControlState(playerNum, CTL_SCORE_SHOW) != 0);
 
     // Automap.
     brain->mapToggle = (P_GetImpulseControlState(playerNum, CTL_MAP) != 0);

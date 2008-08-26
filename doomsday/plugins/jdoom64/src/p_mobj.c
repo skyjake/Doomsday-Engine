@@ -1153,9 +1153,10 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     {
         // Wake up the status bar.
         ST_Start();
-        // Wake up the heads up text.
-        HU_Start();
     }
+
+    // Wake up the heads up text.
+    HU_Start(p - players);
 }
 
 /**

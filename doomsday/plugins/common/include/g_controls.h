@@ -93,7 +93,8 @@ enum {
     CTL_MAP_ROTATE,
     CTL_MAP_MARK_ADD,
     CTL_MAP_MARK_CLEAR_ALL,
-    CTL_HUD_SHOW
+    CTL_HUD_SHOW,
+    CTL_SCORE_SHOW
 };
 
 // This structure replaced ticcmd as the place where players store the intentions
@@ -118,6 +119,7 @@ typedef struct playerbrain_s {
     uint        mapMarkAdd : 1;
     uint        mapMarkClearAll : 1;
     uint        hudShow : 1;
+    uint        scoreShow : 1;
 } playerbrain_t;
 
 void        G_ControlRegister(void);
