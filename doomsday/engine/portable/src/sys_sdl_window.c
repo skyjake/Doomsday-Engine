@@ -86,10 +86,10 @@ static __inline ddwindow_t *getWindow(uint idx)
 {
     if(!winManagerInited)
         return NULL; // Window manager is not initialized.
-    
+
     if(idx != 0)
         return NULL;
-    
+
     return &mainWindow;
 }
 
@@ -322,24 +322,24 @@ boolean Sys_InitWindowManager(void)
 
     Con_Message("Sys_InitWindowManager: Using SDL window management.\n");
 
-	// Initialize the SDL video subsystem, unless we're going to run in
+    // Initialize the SDL video subsystem, unless we're going to run in
     // dedicated mode.
-	if(!ArgExists("-dedicated"))
-	{
+    if(!ArgExists("-dedicated"))
+    {
 /**
  * @attention Solaris has no Joystick support according to
  * https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
  */
 #ifdef SOLARIS
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO))
+        if(SDL_InitSubSystem(SDL_INIT_VIDEO))
 #else
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
+        if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
 #endif
-		{
-			Con_Message("SDL Init Failed: %s\n", SDL_GetError());
-			return false;
-		}
-	}
+        {
+            Con_Message("SDL Init Failed: %s\n", SDL_GetError());
+            return false;
+        }
+    }
 
     memset(&mainWindow, 0, sizeof(mainWindow));
     winManagerInited = true;
@@ -746,6 +746,9 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     // which need to respond.
     if(changeWindowDimensions && window->type == WT_NORMAL)
     {
+        // Update viewport coordinates.
+        R_SetViewGrid(0, 0);
+
         if(inControlPanel) // Reactivate the panel?
             Con_Execute(CMDS_DDAY, "panel", true, false);
     }

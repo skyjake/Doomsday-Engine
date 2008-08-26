@@ -207,13 +207,16 @@ boolean R_SurfaceListIterate(surfacelist_t* sl,
     boolean             result = true;
     surfacelistnode_t*  n, *np;
 
-    n = sl->head;
-    while(n)
+    if(sl)
     {
-        np = n->next;
-        if((result = callback((surface_t*) n->data, context)) == 0)
-            break;
-        n = np;
+        n = sl->head;
+        while(n)
+        {
+            np = n->next;
+            if((result = callback((surface_t*) n->data, context)) == 0)
+                break;
+            n = np;
+        }
     }
 
     return result;
@@ -2201,6 +2204,22 @@ float R_WallAngleLightLevelDelta(const linedef_t* l, byte side)
 float R_ExtraLightDelta(void)
 {
     return extraLightDelta;
+}
+
+/**
+ * @return              @c > 0, if the sector lightlevel passes the
+ *                      limit condition.
+ */
+float R_CheckSectorLight(float lightlevel, float min, float max)
+{
+    // Has a limit been set?
+    if(min == max)
+        return 1;
+
+    // Apply adaptation
+    Rend_ApplyLightAdaptation(&lightlevel);
+
+    return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
 /**

@@ -53,10 +53,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-BEGIN_PROF_TIMERS()
-  PROF_RADIO_SUBSECTOR
-END_PROF_TIMERS()
-
 #define MIN_OPEN                (.1f)
 #define EDGE_OPEN_THRESHOLD     (8) // world units (Z axis)
 
@@ -111,21 +107,6 @@ void Rend_RadioRegister(void)
 static __inline float calcShadowDarkness(float lightLevel)
 {
     return (0.6f - lightLevel * 0.4f) * rendFakeRadioDarkness;
-}
-
-void Rend_RadioInitForFrame(void)
-{
-#ifdef DD_PROFILE
-{
-    static int t;
-
-    if(++t > 40)
-    {
-        t = 0;
-        PRINT_PROF(PROF_RADIO_SUBSECTOR);
-    }
-}
-#endif
 }
 
 /**
@@ -1600,11 +1581,7 @@ void Rend_RadioSubsectorEdges(subsector_t* subsector)
     if(!rendFakeRadio || levelFullBright)
         return;
 
-BEGIN_PROF( PROF_RADIO_SUBSECTOR );
-
     radioSubsectorEdges(subsector);
-
-END_PROF( PROF_RADIO_SUBSECTOR );
 }
 
 #if _DEBUG

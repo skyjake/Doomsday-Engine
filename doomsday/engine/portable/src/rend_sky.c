@@ -111,7 +111,7 @@ void Rend_RenderSkyModels(void)
     int                 i, c;
     float               inter;
     skymodel_t         *sky;
-    modelparams_t       params;
+    rendmodelparams_t   params;
     float               pos[3];
 
     DGL_MatrixMode(DGL_MODELVIEW);

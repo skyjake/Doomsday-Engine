@@ -38,6 +38,7 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_render.h"
+#include "de_play.h"
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
@@ -93,7 +94,7 @@ void DL_Register(void)
     C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
     C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
 
-    C_VAR_INT("rend-light", &useDynLights, 0, 0, 1);
+    C_VAR_INT2("rend-light", &useDynLights, 0, 0, 1, LO_UnlinkMobjLumobjs);
     C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 2);
     C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1);
     C_VAR_FLOAT("rend-light-fog-bright", &dlFogBright, 0, 0, 1);
@@ -440,13 +441,19 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
     DGLuint             tex = 0;
     float               lightBrightness = 1;
     float*              lightRGB;
+    uint                lumIdx;
 
     if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
         return true; // Continue iteration.
 
+    lumIdx = LO_ToIndex(lum);
+
     switch(lum->type)
     {
     case LT_OMNI:
+        if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers))
+            return true;
+
         switch(params->useTex)
         {
         case 0:
@@ -477,6 +484,22 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
                 if(dist > 0 && dist <= LUM_OMNI(lum)->radius)
                 {
                     lightBrightness = LUM_FACTOR(dist, LUM_OMNI(lum)->radius);
+
+                    // If a max distance limit is set, lumobjs fade out.
+                    if(lum->maxDistance > 0)
+                    {
+                        float               distFromViewer =
+                            LO_DistanceToViewer(lumIdx, viewPlayer - ddPlayers);
+
+                        if(distFromViewer > lum->maxDistance)
+                            lightBrightness = 0;
+
+                        if(distFromViewer > .67f * lum->maxDistance)
+                        {
+                            lightBrightness *= (lum->maxDistance - distFromViewer) /
+                                (.33f * lum->maxDistance);
+                        }
+                    }
 
                     if(lightBrightness >= .05f)
                     {
@@ -537,7 +560,8 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
 static uint processSubSector(subsector_t* ssec, surfacelumobjiterparams_t* params)
 {
     // Process each lumobj contacting the subsector.
-    LO_IterateSubsectorContacts(ssec, DLIT_SurfaceLumobjContacts, params);
+    R_IterateSubsectorContacts(ssec, OT_LUMOBJ, DLIT_SurfaceLumobjContacts,
+                               params);
 
     // Did we generate a light list?
     if(params->haveList)

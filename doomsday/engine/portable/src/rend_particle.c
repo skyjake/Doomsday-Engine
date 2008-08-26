@@ -395,7 +395,7 @@ static int PG_ListVisibleParticles(void)
     return true;
 }
 
-void setupModelParamsForParticle(modelparams_t* params, particle_t* pt,
+void setupModelParamsForParticle(rendmodelparams_t* params, particle_t* pt,
                                  ptcstage_t* st, ded_ptcstage_t* dst,
                                  float* center, float dist, float size,
                                  float mark, float alpha)
@@ -663,7 +663,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         // routine.
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
-            modelparams_t           params;
+            rendmodelparams_t       params;
 
             setupModelParamsForParticle(&params, pt, st, dst, center, dist,
                                         size, mark, color[CA]);

@@ -51,15 +51,10 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
-                                          vissprite_t *spr);
-static void setupMaskedWallParamsForVisSprite(rendmaskedwallparams_t *params,
-                                              vissprite_t *spr);
-static void setupModelParamsForVisSprite(modelparams_t *params,
-                                              vissprite_t *spr);
-
 static void setupPSpriteParams(rendpspriteparams_t *params,
                                vispsprite_t *spr);
+static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
+                                          vispsprite_t* spr);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -67,15 +62,14 @@ extern boolean willRenderSprites;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     spriteLight = 4;
-float   maxSpriteAngle = 60;
+int spriteLight = 4;
+float maxSpriteAngle = 60;
 
 // If true - use the "no translucency" blending mode for sprites/masked walls
-byte    noSpriteTrans = false;
+byte noSpriteTrans = false;
+int useSpriteAlpha = 1;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int useSpriteAlpha = 1;
 
 // CODE --------------------------------------------------------------------
 
@@ -114,91 +108,6 @@ static __inline void renderQuad(gl_vertex_t *v, gl_color_t *c,
     DGL_End();
 }
 
-static void setupModelParamsForVisPSprite(modelparams_t *params,
-                                          vispsprite_t *spr)
-{
-    params->mf = spr->data.model.mf;
-    params->nextMF = spr->data.model.nextMF;
-    params->inter = spr->data.model.inter;
-    params->alwaysInterpolate = false;
-    params->id = spr->data.model.id;
-    params->selector = spr->data.model.selector;
-    params->flags = spr->data.model.flags;
-    params->center[VX] = spr->center[VX];
-    params->center[VY] = spr->center[VY];
-    params->center[VZ] = spr->center[VZ];
-    params->srvo[VX] = spr->data.model.visOff[VX];
-    params->srvo[VY] = spr->data.model.visOff[VY];
-    params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
-    params->gzt = spr->data.model.gzt;
-    params->distance = -10;
-    params->yaw = spr->data.model.yaw;
-    params->extraYawAngle = 0;
-    params->yawAngleOffset = spr->data.model.yawAngleOffset;
-    params->pitch = spr->data.model.pitch;
-    params->extraPitchAngle = 0;
-    params->pitchAngleOffset = spr->data.model.pitchAngleOffset;
-    params->extraScale = 0;
-    params->viewAligned = spr->data.model.viewAligned;
-    params->mirror = (mirrorHudModels? true : false);
-    params->shineYawOffset = -vang;
-    params->shinePitchOffset = vpitch + 90;
-    params->shineTranslateWithViewerPos = false;
-    params->shinepspriteCoordSpace = true;
-    params->ambientColor[CA] = spr->data.model.alpha;
-
-    if((levelFullBright || spr->data.model.stateFullBright) &&
-       !(spr->data.model.mf->sub[0].flags & MFF_DIM))
-    {
-        params->ambientColor[CR] = params->ambientColor[CG] =
-            params->ambientColor[CB] = 1;
-        params->lights = NULL;
-        params->numLights = 0;
-    }
-    else
-    {
-        collectaffectinglights_params_t lparams;
-
-        if(useBias)
-        {
-            LG_Evaluate(params->center, params->ambientColor);
-        }
-        else
-        {
-            float               lightLevel;
-            const float*        secColor =
-                R_GetSectorLightColor(spr->data.model.subsector->sector);
-
-            // Diminished light (with compression).
-            lightLevel = spr->data.model.subsector->sector->lightLevel;
-
-            // No need for distance attentuation.
-
-            // Add extra light.
-            lightLevel += R_ExtraLightDelta();
-
-            // The last step is to compress the resultant light value by
-            // the global lighting function.
-            Rend_ApplyLightAdaptation(&lightLevel);
-
-            // Determine the final ambientColor in effect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
-        }
-
-        Rend_ApplyTorchLight(params->ambientColor, params->distance);
-
-        lparams.starkLight = true;
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
-        lparams.subsector = spr->data.model.subsector;
-        lparams.maxLights = modelLight;
-        lparams.ambientColor = params->ambientColor;
-
-        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
-    }
-}
-
 /**
  * Fog is turned off while rendering. It's not feasible to think that the
  * fog would obstruct the player's view of his own weapon.
@@ -220,13 +129,13 @@ void Rend_Draw3DPlayerSprites(void)
 
     for(i = 0; i < DDMAXPSPRITES; ++i)
     {
-        vispsprite_t       *spr = &visPSprites[i];
+        vispsprite_t*       spr = &visPSprites[i];
 
         if(spr->type != VPSPR_MODEL)
             continue; // Not used.
 
         {
-        modelparams_t       params;
+        rendmodelparams_t   params;
         setupModelParamsForVisPSprite(&params, spr);
         Rend_RenderModel(&params);
         }
@@ -276,40 +185,32 @@ void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
                 continue;
 
             dot = DOTPROD(light->vector, normal->xyz);
-            if(light->lum)
+            dot += light->offset; // Shift a bit towards the light.
+
+            if(!light->affectedByAmbient)
+            {   // Won't be affected by ambient.
+                dest = extra;
+            }
+            else
             {
                 dest = color;
             }
-            else
-            {
-                // This is world light (won't be affected by ambient).
-                // Ability to both light and shade.
-                dest = extra;
-                dot += light->offset;   // Shift a bit towards the light.
-                if(dot > 0)
-                    dot *= light->lightSide;
-                else
-                    dot *= light->darkSide;
-            }
 
-            // No light from the wrong side.
-            if(dot <= 0)
+            // Ability to both light and shade.
+            if(dot > 0)
             {
-                // Lights with a source won't shade anything.
-                if(light->lum)
-                    continue;
-                if(dot < -1)
-                    dot = -1;
+                dot *= light->lightSide;
             }
             else
             {
-                if(dot > 1)
-                    dot = 1;
+                dot *= light->darkSide;
             }
 
-            dest[0] += dot * light->color[0];
-            dest[1] += dot * light->color[1];
-            dest[2] += dot * light->color[2];
+            dot = MINMAX_OF(-1, dot, 1);
+
+            dest[CR] += dot * light->color[CR];
+            dest[CG] += dot * light->color[CG];
+            dest[CB] += dot * light->color[CB];
         }
 
         // Check for ambient and convert to ubyte.
@@ -318,10 +219,7 @@ void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
             if(color[k] < ambient[k])
                 color[k] = ambient[k];
             color[k] += extra[k];
-            if(color[k] < 0)
-                color[k] = 0;
-            if(color[k] > 1)
-                color[k] = 1;
+            color[k] = MINMAX_OF(0, color[k], 1);
 
             // This is the final color.
             out->rgba[k] = (byte) (255 * color[k]);
@@ -556,12 +454,6 @@ void Rend_Draw2DPlayerSprites(void)
     }
 }
 
-static void setupMaskedWallParamsForVisSprite(rendmaskedwallparams_t *params,
-                                              vissprite_t *spr)
-{
-    memcpy(params, &spr->data.wall, sizeof(params));
-}
-
 /**
  * A sort of a sprite, I guess... Masked walls must be rendered sorted
  * with sprites, so no artifacts appear when sprites are seen behind
@@ -626,13 +518,13 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         {
             // The texcoords are out of the normal [0,1] range.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-			                GL_REPEAT);
+                            GL_REPEAT);
         }
         else
         {
             // Visible portion is within the actual [0,1] range.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-			                GL_CLAMP_TO_EDGE);
+                            GL_CLAMP_TO_EDGE);
         }
     }
     GL_BlendMode(params->blendMode);
@@ -730,175 +622,144 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     GL_BlendMode(BM_NORMAL);
 }
 
-static void setupModelParamsForVisSprite(modelparams_t *params,
-                                         vissprite_t *spr)
+static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
+                                          vispsprite_t* spr)
 {
-    if(!params || !spr)
-        return; // Hmm...
+    params->mf = spr->data.model.mf;
+    params->nextMF = spr->data.model.nextMF;
+    params->inter = spr->data.model.inter;
+    params->alwaysInterpolate = false;
+    params->id = spr->data.model.id;
+    params->selector = spr->data.model.selector;
+    params->flags = spr->data.model.flags;
+    params->center[VX] = spr->center[VX];
+    params->center[VY] = spr->center[VY];
+    params->center[VZ] = spr->center[VZ];
+    params->srvo[VX] = spr->data.model.visOff[VX];
+    params->srvo[VY] = spr->data.model.visOff[VY];
+    params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
+    params->gzt = spr->data.model.gzt;
+    params->distance = -10;
+    params->yaw = spr->data.model.yaw;
+    params->extraYawAngle = 0;
+    params->yawAngleOffset = spr->data.model.yawAngleOffset;
+    params->pitch = spr->data.model.pitch;
+    params->extraPitchAngle = 0;
+    params->pitchAngleOffset = spr->data.model.pitchAngleOffset;
+    params->extraScale = 0;
+    params->viewAlign = spr->data.model.viewAligned;
+    params->mirror = (mirrorHudModels? true : false);
+    params->shineYawOffset = -vang;
+    params->shinePitchOffset = vpitch + 90;
+    params->shineTranslateWithViewerPos = false;
+    params->shinepspriteCoordSpace = true;
+    params->ambientColor[CA] = spr->data.model.alpha;
 
-    if(spr->type == VSPR_MAP_OBJECT)
+    if((levelFullBright || spr->data.model.stateFullBright) &&
+       !(spr->data.model.mf->sub[0].flags & MFF_DIM))
     {
-        params->mf = spr->data.mo.mf;
-        params->nextMF = spr->data.mo.nextMF;
-        params->inter = spr->data.mo.inter;
-        params->alwaysInterpolate = false;
-        params->id = spr->data.mo.id;
-        params->selector = spr->data.mo.selector;
-        params->flags = spr->data.mo.flags;
-        params->center[VX] = spr->center[VX];
-        params->center[VY] = spr->center[VY];
-        params->center[VZ] = spr->center[VZ];
-        params->srvo[VX] = spr->data.mo.visOff[VX];
-        params->srvo[VY] = spr->data.mo.visOff[VY];
-        params->srvo[VZ] = spr->data.mo.visOff[VZ] - spr->data.mo.floorClip;
-        params->gzt = spr->data.mo.gzt;
-        params->distance = spr->distance;
-        params->yaw = spr->data.mo.yaw;
-        params->extraYawAngle = 0;
-        params->yawAngleOffset = spr->data.mo.yawAngleOffset;
-        params->pitch = spr->data.mo.pitch;
-        params->extraPitchAngle = 0;
-        params->pitchAngleOffset = spr->data.mo.pitchAngleOffset;
-        params->extraScale = 0;
-        params->viewAligned = spr->data.mo.viewAligned;
-        params->mirror = 0;
-        params->shineYawOffset = 0;
-        params->shinePitchOffset = 0;
-        params->shineTranslateWithViewerPos = false;
-        params->shinepspriteCoordSpace = false;
+        params->ambientColor[CR] = params->ambientColor[CG] =
+            params->ambientColor[CB] = 1;
+        params->lights = NULL;
+        params->numLights = 0;
+    }
+    else
+    {
+        collectaffectinglights_params_t lparams;
 
-        params->ambientColor[CA] = spr->data.mo.alpha;
-
-        if((levelFullBright || spr->data.mo.stateFullBright) &&
-            !(spr->data.mo.mf->sub[0].flags & MFF_DIM))
+        if(useBias)
         {
-            params->ambientColor[CR] = params->ambientColor[CG] =
-                params->ambientColor[CB] = 1;
-            params->lights = NULL;
-            params->numLights = 0;
+            LG_Evaluate(params->center, params->ambientColor);
         }
         else
         {
-            collectaffectinglights_params_t lparams;
+            float               lightLevel;
+            const float*        secColor =
+                R_GetSectorLightColor(spr->data.model.subsector->sector);
 
-            if(useBias)
-            {
-                LG_Evaluate(params->center, params->ambientColor);
-            }
-            else
-            {
-                subsector_t*        ssec = spr->data.mo.subsector;
-                float               lightLevel = ssec->sector->lightLevel;
-                const float*        secColor =
-                    R_GetSectorLightColor(ssec->sector);
+            // Diminished light (with compression).
+            lightLevel = spr->data.model.subsector->sector->lightLevel;
 
-                // Apply distance attenuation.
-                lightLevel = R_DistAttenuateLightLevel(spr->distance, lightLevel);
+            // No need for distance attentuation.
 
-                // Add extra light.
-                lightLevel += R_ExtraLightDelta();
+            // Add extra light.
+            lightLevel += R_ExtraLightDelta();
 
-                Rend_ApplyLightAdaptation(&lightLevel);
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
+            Rend_ApplyLightAdaptation(&lightLevel);
 
-                // Determine the final ambientColor in affect.
-                params->ambientColor[CR] = lightLevel * secColor[CR];
-                params->ambientColor[CG] = lightLevel * secColor[CG];
-                params->ambientColor[CB] = lightLevel * secColor[CB];
-            }
-
-            Rend_ApplyTorchLight(params->ambientColor, spr->distance);
-
-            lparams.starkLight = false;
-            memcpy(lparams.center, spr->center, sizeof(lparams.center));
-            lparams.subsector = spr->data.mo.subsector;
-            lparams.maxLights = modelLight;
-            lparams.ambientColor = params->ambientColor;
-
-            R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
+            // Determine the final ambientColor in effect.
+            params->ambientColor[CR] = lightLevel * secColor[CR];
+            params->ambientColor[CG] = lightLevel * secColor[CG];
+            params->ambientColor[CB] = lightLevel * secColor[CB];
         }
+
+        Rend_ApplyTorchLight(params->ambientColor, params->distance);
+
+        lparams.starkLight = true;
+        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.subsector = spr->data.model.subsector;
+        lparams.maxLights = modelLight;
+        lparams.ambientColor = params->ambientColor;
+
+        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
     }
-    else if(spr->type == VSPR_DECORATION)
+}
+
+static boolean generateHaloForVisSprite(vissprite_t* spr, boolean primary)
+{
+    lumobj_t*           lum = LO_GetLuminous(spr->lumIdx);
+    vec3_t              center;
+    float               occlusionFactor, flareMul;
+
+    if(LUM_OMNI(lum)->flags & LUMOF_NOHALO)
+        return false;
+
+    V3_Copy(center, spr->center);
+    center[VZ] += LUM_OMNI(lum)->zOff;
+
+    if(spr->type == VSPR_SPRITE)
     {
-        params->mf = spr->data.decormodel.mf;
-        params->inter = spr->data.decormodel.inter;
-        params->alwaysInterpolate = true;
-        R_SetModelFrame(params->mf, 0);
-        params->id = 0;
-        params->selector = 0;
-        params->flags = 0;
-        params->center[VX] = spr->center[VX];
-        params->center[VY] = spr->center[VY];
-        params->center[VZ] = spr->center[VZ];
-        params->srvo[VX] = params->srvo[VY] = params->srvo[VZ] = 0;
-        params->gzt = spr->center[VZ];
-        params->distance = spr->distance;
-        params->yaw = spr->data.decormodel.yaw;
-        params->extraYawAngle = 0;
-        params->yawAngleOffset = spr->data.decormodel.yawAngleOffset;
-        params->pitch = spr->data.decormodel.pitch;
-        params->extraPitchAngle = 0;
-        params->pitchAngleOffset = spr->data.decormodel.pitchAngleOffset;
-        params->extraScale = 0;
-        params->viewAligned = 0;
-        params->mirror = 0;
-        params->shineYawOffset = 0;
-        params->shinePitchOffset = 0;
-        params->shineTranslateWithViewerPos = false;
-        params->shinepspriteCoordSpace = 0;
-
-        params->ambientColor[CA] = spr->data.decormodel.alpha;
-
-        if(levelFullBright)
-        {
-            params->ambientColor[CR] = params->ambientColor[CG] =
-                params->ambientColor[CB] = 1;
-            params->lights = NULL;
-            params->numLights = 0;
-        }
-        else
-        {
-            collectaffectinglights_params_t lparams;
-
-            if(useBias)
-            {
-                // Evaluate the position in the light grid.
-                LG_Evaluate(spr->center, params->ambientColor);
-            }
-            else
-            {
-                subsector_t        *ssec = spr->data.decormodel.subsector;
-                float               lightLevel = ssec->sector->lightLevel;
-                const float*        secColor =
-                    R_GetSectorLightColor(ssec->sector);
-
-                // Wall decorations receive an additional light delta.
-                /*lightLevel += R_WallAngleLightLevelDelta(linedef, side);*/
-
-                // Apply distance attenuation.
-                lightLevel = R_DistAttenuateLightLevel(spr->distance, lightLevel);
-
-                // Add extra light.
-                lightLevel += R_ExtraLightDelta();
-
-                Rend_ApplyLightAdaptation(&lightLevel);
-
-                // Determine the final ambientColor in affect.
-                params->ambientColor[CR] = lightLevel * secColor[CR];
-                params->ambientColor[CG] = lightLevel * secColor[CG];
-                params->ambientColor[CB] = lightLevel * secColor[CB];
-            }
-
-            Rend_ApplyTorchLight(params->ambientColor, spr->distance);
-
-            lparams.starkLight = false;
-            memcpy(lparams.center, spr->center, sizeof(lparams.center));
-            lparams.subsector = spr->data.decormodel.subsector;
-            lparams.maxLights = modelLight;
-            lparams.ambientColor = params->ambientColor;
-
-            R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
-        }
+        V3_Sum(center, center, spr->data.sprite.srvo);
     }
+    else if(spr->type == VSPR_MODEL)
+    {
+        V3_Sum(center, center, spr->data.model.srvo);
+    }
+
+    flareMul = LUM_OMNI(lum)->flareMul;
+
+    /**
+     * \kludge surface decorations do not yet persist over frames,
+     * thus we do not smoothly occlude their halos. Instead, we will
+     * have to put up with them instantly appearing/disappearing.
+     */
+    if(spr->isDecoration)
+    {
+        if(LO_IsClipped(spr->lumIdx, viewPlayer - ddPlayers))
+            occlusionFactor = 0;
+        else
+            occlusionFactor = 1;
+
+        flareMul *= Rend_DecorSurfaceAngleHaloMul(lum->decorSource);
+    }
+    else
+    {
+        byte                haloFactor = (LUM_OMNI(lum)->haloFactors?
+            LUM_OMNI(lum)->haloFactors[viewPlayer - ddPlayers] : 0xff);
+
+        occlusionFactor = (haloFactor & 0x7f) / 127.0f;
+    }
+
+    return H_RenderHalo(center[VX], center[VY], center[VZ],
+                        LUM_OMNI(lum)->flareSize,
+                        LUM_OMNI(lum)->flareTex, LUM_OMNI(lum)->flareCustom,
+                        LUM_OMNI(lum)->color,
+                        LO_DistanceToViewer(spr->lumIdx, viewPlayer - ddPlayers),
+                        occlusionFactor, flareMul,
+                        LUM_OMNI(lum)->xOff, primary,
+                        (LUM_OMNI(lum)->flags & LUMOF_DONTTURNHALO));
 }
 
 /**
@@ -913,90 +774,45 @@ static void setupModelParamsForVisSprite(modelparams_t *params,
  */
 void Rend_DrawMasked(void)
 {
-    float               center[3];
     boolean             haloDrawn = false;
-    vissprite_t        *spr;
+    vissprite_t*        spr;
 
     if(!willRenderSprites)
         return;
 
     R_SortVisSprites();
+
     if(visSpriteP > visSprites)
     {
         // Draw all vissprites back to front.
         // Sprites look better with Z buffer writes turned off.
         for(spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
         {
-            if(spr->type == VSPR_MASKED_WALL)
+            switch(spr->type)
             {
-                rendmaskedwallparams_t params;
+            case VSPR_HIDDEN: // Fall through.
+            default:
+                break;
 
-                setupMaskedWallParamsForVisSprite(&params, spr);
+            case VSPR_MASKED_WALL:
+                // A masked wall is a specialized sprite.
                 Rend_RenderMaskedWall(&spr->data.wall);
-            }
-            else if(spr->type == VSPR_MAP_OBJECT)
-            {
-                // There might be a model for this sprite, let's see.
-                if(!spr->data.mo.mf && spr->data.mo.mat)
-                {   // Render an old fashioned sprite, ah the nostalgia...
-                    rendspriteparams_t  params;
+                break;
 
-                    setupSpriteParamsForVisSprite(&params, spr);
-                    Rend_RenderSprite(&params);
-                }
-                else
-                {   // It's a sprite and it has a modelframe (it's a 3D model).
-                    modelparams_t       params;
+            case VSPR_SPRITE:
+                // Render an old fashioned sprite, ah the nostalgia...
+                Rend_RenderSprite(&spr->data.sprite);
+                break;
 
-                    setupModelParamsForVisSprite(&params, spr);
-                    Rend_RenderModel(&params);
-                }
-            }
-            else if(spr->type == VSPR_DECORATION)
-            {
-                // It could be a model decoration.
-                if(spr->data.decormodel.mf)
-                {
-                    modelparams_t       params;
-
-                    setupModelParamsForVisSprite(&params, spr);
-                    Rend_RenderModel(&params);
-                }
+            case VSPR_MODEL:
+                Rend_RenderModel(&spr->data.model);
+                break;
             }
 
             // How about a halo?
-            if(spr->light)
+            if(spr->lumIdx)
             {
-                center[VX] = spr->center[VX];
-                center[VY] = spr->center[VY];
-                center[VZ] = spr->center[VZ];
-
-                if(spr->type == VSPR_MAP_OBJECT)
-                {
-                    center[VX] += spr->data.mo.visOff[VX];
-                    center[VY] += spr->data.mo.visOff[VY];
-                    center[VZ] += spr->data.mo.visOff[VZ];
-                }
-
-                /**
-                 * \kludge surface decorations do not yet persist over frames,
-                 * thus we do not smoothly occlude their halos. Instead, we will
-                 * have to put up with them instantly appearing/disappearing.
-                 */
-                if(spr->type == VSPR_DECORATION)
-                {
-                    if(spr->light->type == LT_OMNI)
-                    {
-                        if(spr->light->flags & LUMF_CLIPPED)
-                            LUM_OMNI(spr->light)->haloFactor = 0;
-                        else
-                            LUM_OMNI(spr->light)->haloFactor = 1;
-                    }
-                }
-
-                if(H_RenderHalo(center[VX], center[VY], center[VZ],
-                                spr->light, true) &&
-                   !haloDrawn)
+                if(generateHaloForVisSprite(spr, true) && !haloDrawn)
                     haloDrawn = true;
             }
         }
@@ -1010,21 +826,9 @@ void Rend_DrawMasked(void)
             for(spr = visSprSortedHead.next; spr != &visSprSortedHead;
                 spr = spr->next)
             {
-                if(spr->light)
+                if(spr->lumIdx)
                 {
-                    center[VX] = spr->center[VX];
-                    center[VY] = spr->center[VY];
-                    center[VZ] = spr->center[VZ];
-
-                    if(spr->type == VSPR_MAP_OBJECT)
-                    {
-                        center[VX] += spr->data.mo.visOff[VX];
-                        center[VY] += spr->data.mo.visOff[VY];
-                        center[VZ] += spr->data.mo.visOff[VZ];
-                    }
-
-                    H_RenderHalo(center[VX], center[VY], center[VZ],
-                                 spr->light, false);
+                    generateHaloForVisSprite(spr, false);
                 }
             }
 
@@ -1050,7 +854,7 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
         // Do we need to translate any of the colors?
         if(params->tMap)
         {   // We need to prepare a translated version of the sprite.
-            GL_SetTranslatedSprite(params->mat->ofTypeID, params->tMap,
+            GL_SetTranslatedSprite(R_GetMaterialNum(params->mat), params->tMap,
                                    params->tClass);
         }
         else
@@ -1083,8 +887,22 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     v2[VZ] = v3[VZ] = spriteCenter[VZ] + params->height / 2;
 
     // Calculate the surface normal.
-    M_PointCrossProduct(v2, v3, v1, surfaceNormal);
+    M_PointCrossProduct(v2, v1, v3, surfaceNormal);
     M_Normalize(surfaceNormal);
+
+/*
+// Draw the surface normal.
+DGL_Disable(DGL_TEXTURING);
+DGL_Begin(DGL_LINES);
+DGL_Color4f(1, 0, 0, 1);
+DGL_Vertex3f(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
+DGL_Color4f(1, 0, 0, 0);
+DGL_Vertex3f(spriteCenter[VX] + surfaceNormal[VX] * 10,
+             spriteCenter[VZ] + surfaceNormal[VZ] * 10,
+             spriteCenter[VY] + surfaceNormal[VY] * 10);
+DGL_End();
+DGL_Enable(DGL_TEXTURING);
+*/
 
     // All sprite vertices are co-plannar, so just copy the surface normal.
     // \fixme: Can we do something better here?
@@ -1212,133 +1030,4 @@ void Rend_RenderSprite(const rendspriteparams_t *params)
     // Enable Z-writing again?
     if(restoreZ)
         glDepthMask(GL_TRUE);
-}
-
-static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
-                                          vissprite_t *spr)
-{
-    float               top;
-    spritetex_t        *sprTex = spriteTextures[spr->data.mo.mat->ofTypeID];
-    material_t*         mat = spr->data.mo.mat;
-
-    // Setup params:
-    params->width = mat->width;
-    params->height = mat->height;
-
-    // We must find the correct positioning using the sector floor and ceiling
-    // heights as an aid.
-    top = spr->data.mo.gzt;
-    // Sprite fits in, adjustment possible?
-    if(params->height < spr->data.mo.secCeil - spr->data.mo.secFloor)
-    {
-        // Check top.
-        if((spr->data.mo.flags & DDMF_FITTOP) && top > spr->data.mo.secCeil)
-            top = spr->data.mo.secCeil;
-        // Check bottom.
-        if(spr->data.mo.floorAdjust &&
-           !(spr->data.mo.flags & DDMF_NOFITBOTTOM) &&
-           top - params->height < spr->data.mo.secFloor)
-            top = spr->data.mo.secFloor + params->height;
-    }
-    // Adjust by the floor clip.
-    top -= spr->data.mo.floorClip;
-
-    params->center[VX] = spr->center[VX];
-    params->center[VY] = spr->center[VY];
-    params->center[VZ] = top - params->height / 2;
-    params->viewOffX = (float) sprTex->offX - params->width / 2;
-    params->subsector = spr->data.mo.subsector;
-    params->distance = spr->distance;
-    params->viewAligned = (spr->data.mo.viewAligned || alwaysAlign == 3);
-    memcpy(params->srvo, spr->data.mo.visOff, sizeof(params->srvo));
-    params->noZWrite = noSpriteZWrite;
-
-    params->mat = spr->data.mo.mat;
-    if(spr->data.mo.flags & DDMF_TRANSLATION)
-        params->tMap = (spr->data.mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
-    else
-        params->tMap = 0;
-    params->tClass = spr->data.mo.pClass;
-    params->matOffset[0] = sprTex->texCoord[0];
-    params->matOffset[1] = sprTex->texCoord[1];
-    params->matFlip[0] = spr->data.mo.matFlip[0];
-    params->matFlip[1] = spr->data.mo.matFlip[1];
-
-    if(useSpriteAlpha)
-    {
-        if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
-            params->ambientColor[CA] = .8f; // 80 %.
-        else if(spr->data.mo.flags & DDMF_SHADOW)
-            params->ambientColor[CA] = .333f; // One third.
-        else if(spr->data.mo.flags & DDMF_ALTSHADOW)
-            params->ambientColor[CA] = .666f; // Two thirds.
-        else
-            params->ambientColor[CA] = 1;
-
-        // Sprite has a custom alpha multiplier?
-        if(spr->data.mo.alpha >= 0)
-            params->ambientColor[CA] *= spr->data.mo.alpha;
-    }
-    else
-        params->ambientColor[CA] = 1;
-
-    if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
-    {   // Additive blending.
-        params->blendMode = BM_ADD;
-    }
-    else if(noSpriteTrans && params->ambientColor[CA] >= .98f)
-    {   // Use the "no translucency" blending mode.
-        params->blendMode = BM_ZEROALPHA;
-    }
-    else
-    {
-        params->blendMode = BM_NORMAL;
-    }
-
-    if(levelFullBright || spr->data.mo.stateFullBright)
-    {
-        params->ambientColor[CR] = params->ambientColor[CG] =
-            params->ambientColor[CB] = 1;
-        params->lights = NULL;
-        params->numLights = 0;
-    }
-    else
-    {
-        collectaffectinglights_params_t lparams;
-
-        if(useBias)
-        {
-            LG_Evaluate(params->center, params->ambientColor);
-        }
-        else
-        {
-            subsector_t*        ssec = spr->data.mo.subsector;
-            float               lightLevel = ssec->sector->lightLevel;
-            const float*        secColor =
-                R_GetSectorLightColor(ssec->sector);
-
-            // Apply distance attenuation.
-            lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
-
-            // Add extra light.
-            lightLevel += R_ExtraLightDelta();
-
-            Rend_ApplyLightAdaptation(&lightLevel);
-
-            // Determine the final ambientColor in affect.
-            params->ambientColor[CR] = lightLevel * secColor[CR];
-            params->ambientColor[CG] = lightLevel * secColor[CG];
-            params->ambientColor[CB] = lightLevel * secColor[CB];
-        }
-
-        Rend_ApplyTorchLight(params->ambientColor, params->distance);
-
-        lparams.starkLight = false;
-        memcpy(lparams.center, params->center, sizeof(lparams.center));
-        lparams.maxLights = spriteLight;
-        lparams.subsector = params->subsector;
-        lparams.ambientColor = params->ambientColor;
-
-        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
-    }
 }

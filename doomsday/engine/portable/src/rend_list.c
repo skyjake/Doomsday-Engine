@@ -302,10 +302,11 @@ static void addMaskedPoly(const rvertex_t* rvertices,
     midpoint[VZ] = (rvertices[0].pos[VZ] + rvertices[3].pos[VZ]) / 2;
 
     vis->type = VSPR_MASKED_WALL;
-    vis->light = NULL;
+    vis->lumIdx = 0;
     vis->center[VX] = midpoint[VX];
     vis->center[VY] = midpoint[VY];
     vis->center[VZ] = midpoint[VZ];
+    vis->isDecoration = false;
     vis->distance = Rend_PointDist2D(midpoint);
     vis->data.wall.texture = params->tex.id;
     vis->data.wall.masked = params->tex.masked; // Store texmask status in flip.

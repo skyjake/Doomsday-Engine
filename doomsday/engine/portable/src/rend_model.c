@@ -297,40 +297,32 @@ void Mod_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
                 continue;
 
             dot = DOTPROD(light->vector, normal->xyz);
-            //dot *= 1.2f; // Looks-good factor :-).
-            if(light->lum)
+            dot += light->offset; // Shift a bit towards the light.
+
+            if(!light->affectedByAmbient)
+            {   // Won't be affected by ambient.
+                dest = extra;
+            }
+            else
             {
                 dest = color;
             }
-            else
+
+            // Ability to both light and shade.
+            if(dot > 0)
             {
-                // This is world light (won't be affected by ambient).
-                // Ability to both light and shade.
-                dest = extra;
-                dot += light->offset;   // Shift a bit towards the light.
-                if(dot > 0)
-                    dot *= light->lightSide;
-                else
-                    dot *= light->darkSide;
-            }
-            // No light from the wrong side.
-            if(dot <= 0)
-            {
-                // Lights with a source won't shade anything.
-                if(light->lum)
-                    continue;
-                if(dot < -1)
-                    dot = -1;
+                dot *= light->lightSide;
             }
             else
             {
-                if(dot > 1)
-                    dot = 1;
+                dot *= light->darkSide;
             }
 
-            dest[0] += dot * light->color[0];
-            dest[1] += dot * light->color[1];
-            dest[2] += dot * light->color[2];
+            dot = MINMAX_OF(-1, dot, 1);
+
+            dest[CR] += dot * light->color[CR];
+            dest[CG] += dot * light->color[CG];
+            dest[CB] += dot * light->color[CB];
         }
 
         // Check for ambient and convert to ubyte.
@@ -339,10 +331,7 @@ void Mod_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
             if(color[k] < ambient[k])
                 color[k] = ambient[k];
             color[k] += extra[k];
-            if(color[k] < 0)
-                color[k] = 0;
-            if(color[k] > 1)
-                color[k] = 1;
+            color[k] = MINMAX_OF(0, color[k], 1);
 
             // This is the final color.
             out->rgba[k] = (byte) (255 * color[k]);
@@ -415,7 +404,7 @@ void Mod_ShinyCoords(int count, gl_texcoord_t *coords, gl_vertex_t *normals,
 /**
  * Render a submodel from the vissprite.
  */
-static void Mod_RenderSubModel(uint number, const modelparams_t *params)
+static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 {
     modeldef_t *mf = params->mf, *mfNext = params->nextMF;
     submodeldef_t *smf = &mf->sub[number];
@@ -583,9 +572,9 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     }
 
     // Model rotation.
-    DGL_Rotatef(params->viewAligned ? params->yawAngleOffset : params->yaw,
+    DGL_Rotatef(params->viewAlign ? params->yawAngleOffset : params->yaw,
                0, 1, 0);
-    DGL_Rotatef(params->viewAligned ? params->pitchAngleOffset : params->pitch,
+    DGL_Rotatef(params->viewAlign ? params->pitchAngleOffset : params->pitch,
                0, 0, 1);
 
     // Scaling and model space offset.
@@ -701,13 +690,13 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 
         // Calculate normalized (0,1) model yaw and pitch.
         normYaw =
-            M_CycleIntoRange(((params->viewAligned ? params->yawAngleOffset :
+            M_CycleIntoRange(((params->viewAlign ? params->yawAngleOffset :
                                 params->yaw) + offset) / 360, 1);
 
         offset = params->shinePitchOffset;
 
         normPitch =
-            M_CycleIntoRange(((params->viewAligned ? params->pitchAngleOffset :
+            M_CycleIntoRange(((params->viewAlign ? params->pitchAngleOffset :
                                 params->pitch) + offset) / 360, 1);
 
         if(params->shinepspriteCoordSpace)
@@ -882,7 +871,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 /**
  * Render all the submodels of a model.
  */
-void Rend_RenderModel(const modelparams_t *params)
+void Rend_RenderModel(const rendmodelparams_t *params)
 {
     int         i;
 

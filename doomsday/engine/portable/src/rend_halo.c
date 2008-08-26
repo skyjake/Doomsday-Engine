@@ -134,7 +134,6 @@ void H_SetupState(boolean dosetup)
  * @param x         X coordinate of the center of the halo.
  * @param y         Y coordinate of the center of the halo.
  * @param z         Z coordinate of the center of the halo.
- * @param lumobj    The lumobj casting the halo.
  * @param primary   @c true = we'll draw the primary halo, otherwise the
  *                  secondary ones (which won't be clipped or occluded
  *                  by anything; they're drawn after everything else,
@@ -143,21 +142,21 @@ void H_SetupState(boolean dosetup)
  *
  * @return          @c true, if a halo was rendered.
  */
-boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
-                     boolean primary)
+boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
+                     boolean customTex, float color[3],
+                     float distanceToViewer, float occlusionFactor,
+                     float brightnessFactor, float viewXOffset,
+                     boolean primary, boolean viewRelativeRotate)
 {
-    int             i, k, tex;
+    int             i, k;
     float           viewPos[3];
     float           viewToCenter[3], mirror[3], normalViewToCenter[3];
     float           leftOff[3], rightOff[3], center[3], radius;
-    float           haloPos[3], occlusionFactor;
-    float           color[4], radX, radY, scale, turnAngle = 0;
+    float           haloPos[3];
+    float           rgba[4], radX, radY, scale, turnAngle = 0;
     float           fadeFactor = 1, secBold, secDimFactor;
     float           colorAverage, f, distanceDim;
-    flare_t        *fl;
-
-    if(lum->type != LT_OMNI)
-        return false; // Only omni lights support halos.
+    flare_t*        fl;
 
     if(!primary && haloRealistic)
     {
@@ -175,31 +174,30 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         return false;
     }
 
-    if((LUM_OMNI(lum)->flags & LUMOF_NOHALO) || lum->distanceToViewer <= 0 ||
-       (haloFadeMax && lum->distanceToViewer > haloFadeMax))
+    if(distanceToViewer <= 0 || occlusionFactor == 0 ||
+       (haloFadeMax && distanceToViewer > haloFadeMax))
         return false;
+
+    occlusionFactor = (1 + occlusionFactor) / 2;
 
     if(haloFadeMax && haloFadeMax != haloFadeMin &&
-       lum->distanceToViewer < haloFadeMax &&
-       lum->distanceToViewer >= haloFadeMin)
+       distanceToViewer < haloFadeMax && distanceToViewer >= haloFadeMin)
     {
-        fadeFactor = (lum->distanceToViewer - haloFadeMin) /
+        fadeFactor = (distanceToViewer - haloFadeMin) /
             (haloFadeMax - haloFadeMin);
     }
-
-    occlusionFactor = (LUM_OMNI(lum)->haloFactor & 0x7f) / 127.0f;
-    if(occlusionFactor == 0)
-        return false;
-    occlusionFactor = (1 + occlusionFactor) / 2;
 
     // viewSideVec is to the left.
     for(i = 0; i < 3; ++i)
     {
         leftOff[i] = viewUpVec[i] + viewSideVec[i];
         rightOff[i] = viewUpVec[i] - viewSideVec[i];
-        // Convert the color to floating point.
-        color[i] = LUM_OMNI(lum)->color[i];
     }
+
+    rgba[CR] = color[CR];
+    rgba[CG] = color[CG];
+    rgba[CB] = color[CB];
+    rgba[CA] = 1; // Real alpha is set later.
 
     // Setup the proper DGL state.
     if(primary)
@@ -207,11 +205,11 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
 
     center[VX] = x;
     center[VZ] = y;
-    center[VY] = z + LUM_OMNI(lum)->zOff;
+    center[VY] = z;
 
     // Apply the flare's X offset. (Positive is to the right.)
     for(i = 0; i < 3; i++)
-        center[i] -= LUM_OMNI(lum)->xOff * viewSideVec[i];
+        center[i] -= viewXOffset * viewSideVec[i];
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
@@ -238,7 +236,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
     {
         // Now halopos is a normalized version of the mirror vector.
         // Both vectors are on the view plane.
-        if(!(LUM_OMNI(lum)->flags & LUMOF_DONTTURNHALO))
+        if(viewRelativeRotate)
         {
             turnAngle = M_DotProduct(haloPos, viewUpVec);
             if(turnAngle > 1)
@@ -276,10 +274,10 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
     DGL_Translatef(-0.5f, -0.5f, 0);
 
     // The overall brightness of the flare.
-    colorAverage = (color[CR] + color[CG] + color[CB] + 1) / 4;
+    colorAverage = (rgba[CR] + rgba[CG] + rgba[CB] + 1) / 4;
 
     // Small flares have stronger dimming.
-    f = lum->distanceToViewer / LUM_OMNI(lum)->flareSize;
+    f = distanceToViewer / size;
     if(haloDimStart && haloDimStart < haloDimEnd && f > haloDimStart)
         distanceDim = 1 - (f - haloDimStart) / (haloDimEnd - haloDimStart);
     else
@@ -296,71 +294,66 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         if(i)
         {
             // Secondary flare dimming?
-            f = minHaloSize * LUM_OMNI(lum)->flareSize / lum->distanceToViewer;
+            f = minHaloSize * size / distanceToViewer;
             if(f > 1)
                 f = 1;
         }
-        f *= distanceDim * LUM_OMNI(lum)->flareMul;
+        f *= distanceDim * brightnessFactor;
 
-        // The color & alpha of the flare.
-        color[CA] = f * (fl->alpha * occlusionFactor * fadeFactor +
+        // The rgba & alpha of the flare.
+        rgba[CA] = f * (fl->alpha * occlusionFactor * fadeFactor +
                  colorAverage * colorAverage / 5);
 
-        radius = LUM_OMNI(lum)->flareSize * (1 - colorAverage / 3) +
-            lum->distanceToViewer / haloZMagDiv;
+        radius = size * (1 - colorAverage / 3) +
+            distanceToViewer / haloZMagDiv;
         if(radius < haloMinRadius)
             radius = haloMinRadius;
         radius *= occlusionFactor;
 
         secBold = colorAverage - 8 * (1 - secDimFactor);
 
-        color[CA] *= .8f * haloBright / 100.0f;
+        rgba[CA] *= .8f * haloBright / 100.0f;
         if(i)
         {
-            color[CA] *= secBold; // Secondary flare boldness.
+            rgba[CA] *= secBold; // Secondary flare boldness.
         }
 
-        if(color[CA] <= 0)
+        if(rgba[CA] <= 0)
             break; // Not visible.
 
         // In the realistic mode, halos are slightly dimmer.
         if(haloRealistic)
         {
-            color[CA] *= .6f;
+            rgba[CA] *= .6f;
         }
 
         if(haloRealistic)
         {
             // The 'realistic' halos just use the blurry round
             // texture unless custom.
-            if(LUM_OMNI(lum)->flareCustom)
-                tex = LUM_OMNI(lum)->flareTex;
-            else
+            if(!customTex)
                 tex = GL_PrepareLSTexture(LST_DYNAMIC);
         }
         else
         {
-            if(primary &&
-               (LUM_OMNI(lum)->flareCustom || LUM_OMNI(lum)->flareTex))
+            if(!(primary && (customTex || tex)))
             {
-                tex = LUM_OMNI(lum)->flareTex;
-            }
-            else if(LUM_OMNI(lum)->flareSize > 45 ||
-                    (colorAverage > .90 && LUM_OMNI(lum)->flareSize > 20))
-            {
-                // The "Very Bright" condition.
-                radius *= .65f;
-                if(!i)
-                    tex = GL_PrepareFlareTexture(FXT_BIGFLARE);
+                if(size > 45 || (colorAverage > .90 && size > 20))
+                {
+                    // The "Very Bright" condition.
+                    radius *= .65f;
+                    if(!i)
+                        tex = GL_PrepareFlareTexture(FXT_BIGFLARE);
+                    else
+                        tex = GL_PrepareFlareTexture(fl->texture);
+                }
                 else
-                    tex = GL_PrepareFlareTexture(fl->texture);
-            }
-            else
-            {
-                if(!i)
-                    tex = GL_PrepareLSTexture(LST_DYNAMIC);
-                else
-                    tex = GL_PrepareFlareTexture(fl->texture);
+                {
+                    if(!i)
+                        tex = GL_PrepareLSTexture(LST_DYNAMIC);
+                    else
+                        tex = GL_PrepareFlareTexture(fl->texture);
+                }
             }
         }
 
@@ -398,7 +391,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum,
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
                         GL_CLAMP_TO_EDGE);
 
-        DGL_Color4fv(color);
+        DGL_Color4fv(rgba);
 
         DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0);

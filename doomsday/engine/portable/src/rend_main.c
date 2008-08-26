@@ -1678,12 +1678,14 @@ static boolean Rend_RenderSSWallSeg(seg_t* seg, subsector_t* ssec)
         float               offset[2];
         surface_t*          surface = &side->SW_middlesurface;
 
-        offset[VX] = surface->visOffset[VX] + seg->offset;
-        offset[VY] = surface->visOffset[VY] +
-            (ldef->flags & DDLF_DONTPEGBOTTOM)? -(fceil - ffloor) : 0;
+        offset[0] = surface->visOffset[0] + seg->offset;
+        offset[1] = surface->visOffset[1];
+
+        if(ldef->flags & DDLF_DONTPEGBOTTOM)
+            offset[1] += -(fceil - ffloor);
 
         renderSegSection(seg, SEG_MIDDLE, &side->SW_middlesurface, ffloor, fceil,
-                         offset[VX], offset[VY],
+                         offset[0], offset[1],
                          /*temp >*/ frontsec, /*< temp*/
                          false, false, side->flags);
     }
@@ -2439,8 +2441,7 @@ static void Rend_RenderSubsector(uint ssecidx)
 
     Rend_MarkSegsFacingFront(ssec);
 
-    // Prepare for dynamic lighting.
-    LO_InitForSubsector(ssec);
+    R_InitForSubsector(ssec);
 
     Rend_RadioSubsectorEdges(ssec);
 
@@ -2451,16 +2452,16 @@ static void Rend_RenderSubsector(uint ssecidx)
     if(ssec->polyObj)
     {
         // Polyobjs don't obstruct, do clip lights with another algorithm.
-        LO_ClipBySight(ssecidx);
+        LO_ClipInSubsectorBySight(ssecidx);
     }
 
     // Mark the particle generators in the sector visible.
     PG_SectorIsVisible(sect);
 
-    // Sprites for this sector have to be drawn. This must be done before
+    // Sprites for this subsector have to be drawn. This must be done before
     // the segments of this subsector are added to the clipper. Otherwise
     // the sprites would get clipped by them, and that wouldn't be right.
-    R_AddSprites(sect);
+    R_AddSprites(ssec);
 
     // Draw the various skyfixes for all front facing segs in this ssec
     // (includes polyobject segs).
@@ -2710,33 +2711,21 @@ void Rend_RenderMap(void)
     if(!freezeRLs)
     {
         // Prepare for rendering.
-        RL_ClearLists();        // Clear the lists for new quads.
-        C_ClearRanges();        // Clear the clipper.
-        LO_ClearForFrame();     // Zeroes the links.
-        LG_Update();
-        SB_BeginFrame();
-        Rend_RadioInitForFrame();
-
-        // Generate surface decorations for the frame.
-        Rend_InitDecorationsForFrame();
-
-        if(doLums)
-        {
-            // Clear the projected dynlight lists.
-            DL_InitForNewFrame();
-            // Clear the luminous objects.
-            LO_InitForNewFrame();
-        }
+        RL_ClearLists(); // Clear the lists for new quads.
+        C_ClearRanges(); // Clear the clipper.
+        LO_BeginFrame();
 
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();
 
         if(doLums)
         {
-            // Spawn omnilights for mobjs.
-            LO_AddLuminousMobjs();
-            // Link the lumobjs to all contacted surfaces.
-            LO_LinkLumobjs();
+            /**
+             * Clear the projected dynlight lists. This is done here as
+             * the projections are sensitive to distance from the viewer
+             * (e.g. some may fade out when far away).
+             */
+            DL_InitForNewFrame();
         }
 
         // Add the backside clipping range (if vpitch allows).
@@ -2761,14 +2750,8 @@ void Rend_RenderMap(void)
         Rend_RenderNode(numNodes - 1);
 
         Rend_RenderShadows();
-
-        // Wrap up with Source, Bias lights.
-        SB_EndFrame();
     }
     RL_RenderAllLists();
-
-    // Draw the mobj bounding boxes.
-    Rend_RenderBoundingBoxes();
 
 /*#if _DEBUG
 Rend_RenderNormals();
@@ -2777,6 +2760,9 @@ Rend_RenderNormals();
 /*#if _DEBUG
 LO_DrawLumobjs();
 #endif*/
+
+    // Draw the mobj bounding boxes.
+    Rend_RenderBoundingBoxes();
 
     // Draw the Source Bias Editor's draw that identifies the current
     // light.
