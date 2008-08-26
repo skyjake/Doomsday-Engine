@@ -38,8 +38,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXRADIUS           32
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -579,10 +577,10 @@ static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
     params.seg = seg;
     params.po = po;
 
-    bbox[0][VX] = ld->bBox[BOXLEFT]   - MAXRADIUS;
-    bbox[0][VY] = ld->bBox[BOXBOTTOM] - MAXRADIUS;
-    bbox[1][VX] = ld->bBox[BOXRIGHT]  + MAXRADIUS;
-    bbox[1][VY] = ld->bBox[BOXTOP]    + MAXRADIUS;
+    bbox[0][VX] = ld->bBox[BOXLEFT]   - DDMOBJ_RADIUS_MAX;
+    bbox[0][VY] = ld->bBox[BOXBOTTOM] - DDMOBJ_RADIUS_MAX;
+    bbox[1][VX] = ld->bBox[BOXRIGHT]  + DDMOBJ_RADIUS_MAX;
+    bbox[1][VY] = ld->bBox[BOXTOP]    + DDMOBJ_RADIUS_MAX;
 
     P_BoxToBlockmapBlocks(BlockMap, blockBox, bbox);
     P_BlockBoxMobjsIterator(BlockMap, blockBox,

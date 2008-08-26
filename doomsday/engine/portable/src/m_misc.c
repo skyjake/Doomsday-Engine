@@ -1208,7 +1208,7 @@ const char* M_PrettyPath(const char* path)
  * Concatenates src to dest as a quoted string. " is escaped to \".
  * Returns dest.
  */
-char* M_StrCatQuoted(char* dest, char* src)
+char* M_StrCatQuoted(char* dest, const char* src)
 {
     size_t              k = strlen(dest) + 1, i;
 

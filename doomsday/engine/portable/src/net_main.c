@@ -192,17 +192,25 @@ void Net_Shutdown(void)
 }
 
 /**
- * @return          The name of the specified player.
+ * Part of the Doomsday public API.
+ *
+ * @return              The name of the specified player.
  */
-char *Net_GetPlayerName(int player)
+const char* Net_GetPlayerName(int player)
 {
     return clients[player].name;
 }
 
+/**
+ * Part of the Doomsday public API.
+ *
+ * @return              Client identifier for the specified player.
+ */
 ident_t Net_GetPlayerID(int player)
 {
     if(!clients[player].connected)
         return 0;
+
     return clients[player].id;
 }
 
@@ -346,9 +354,9 @@ void Net_SendCommands(void)
     if(isDedicated)
         return;
 
-	// Send the commands of all local players.
-	for(i = 0; i < DDMAXPLAYERS; ++i)
-	{
+    // Send the commands of all local players.
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
         if(!Net_IsLocalPlayer(i))
             continue;
 
@@ -513,9 +521,9 @@ void Net_BuildLocalCommands(timespan_t time)
         return;
 
     // Generate ticcmds for local players.
-	for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-		if(!Net_IsLocalPlayer(i))
+        if(!Net_IsLocalPlayer(i))
             continue;
 
         cmd = clients[i].lastCmd;
@@ -1150,11 +1158,14 @@ D_CMD(Chat)
         boolean     found = false;
 
         for(i = 0; i < DDMAXPLAYERS && !found; ++i)
+        {
             if(!stricmp(clients[i].name, argv[1]))
             {
                 mask = 1 << i;
                 found = true;
             }
+        }
+        break;
         }
 
     default:
@@ -1240,9 +1251,9 @@ D_CMD(SetName)
 
     // Serverplayers can update their name right away.
     if(!isClient)
-        strcpy(clients[0].name, info.name);
+        strcpy(clients[consolePlayer].name, info.name);
 
-    Net_SendPacket(DDSP_CONFIRM | (isClient ? 0 : DDSP_ALL_PLAYERS),
+    Net_SendPacket(DDSP_CONFIRM | (isClient ? consolePlayer : DDSP_ALL_PLAYERS),
                    PKT_PLAYER_INFO, &info, sizeof(info));
     return true;
 }
@@ -1299,6 +1310,9 @@ D_CMD(MakeCamera)
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
     Sv_InitPoolForClient(cp);
 
+    // Update the viewports.
+    R_SetViewGrid(0, 0);
+
     return true;
 }
 
@@ -1309,6 +1323,10 @@ D_CMD(SetConsole)
     cp = atoi(argv[1]);
     if(ddPlayers[cp].shared.inGame)
         consolePlayer = displayPlayer = cp;
+
+    // Update the viewports.
+    R_SetViewGrid(0, 0);
+
     return true;
 }
 

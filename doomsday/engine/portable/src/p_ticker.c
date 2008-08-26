@@ -57,59 +57,63 @@
 
 boolean P_MobjTicker(thinker_t* th, void* context)
 {
-    int                 i;
+    uint                i;
     mobj_t*             mo;
-    lumobj_t*           lum;
 
     if(!P_IsMobjThinker(th->function))
         return true; // Continue iteration.
 
     mo = (mobj_t*) th;
-    lum = LO_GetLuminous(mo->light);
 
-    // Set the high bit of halofactor if the light is clipped. This will
-    // make P_Ticker diminish the factor to zero. Take the first step here
-    // and now, though.
-    if(!lum || lum->flags & LUMF_CLIPPED)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(mo->haloFactor & 0x80)
+        int                 f;
+        byte*               haloFactor = &mo->haloFactors[i];
+
+        // Set the high bit of halofactor if the light is clipped. This will
+        // make P_Ticker diminish the factor to zero. Take the first step here
+        // and now, though.
+        if(mo->lumIdx == 0 || LO_IsClipped(mo->lumIdx, i))
         {
-            i = (mo->haloFactor & 0x7f); // - haloOccludeSpeed;
-            if(i < 0)
-                i = 0;
-            mo->haloFactor = i;
+            if(*haloFactor & 0x80)
+            {
+                f = (*haloFactor & 0x7f); // - haloOccludeSpeed;
+                if(f < 0)
+                    f = 0;
+                *haloFactor = f;
+            }
         }
-    }
-    else
-    {
-        if(!(mo->haloFactor & 0x80))
+        else
         {
-            i = (mo->haloFactor & 0x7f); // + haloOccludeSpeed;
-            if(i > 127)
-                i = 127;
-            mo->haloFactor = 0x80 | i;
+            if(!(*haloFactor & 0x80))
+            {
+                f = (*haloFactor & 0x7f); // + haloOccludeSpeed;
+                if(f > 127)
+                    f = 127;
+                *haloFactor = 0x80 | f;
+            }
         }
-    }
 
-    // Handle halofactor.
-    i = mo->haloFactor & 0x7f;
-    if(mo->haloFactor & 0x80)
-    {
-        // Going up.
-        i += haloOccludeSpeed;
-        if(i > 127)
-            i = 127;
-    }
-    else
-    {
-        // Going down.
-        i -= haloOccludeSpeed;
-        if(i < 0)
-            i = 0;
-    }
+        // Handle halofactor.
+        f = *haloFactor & 0x7f;
+        if(*haloFactor & 0x80)
+        {
+            // Going up.
+            f += haloOccludeSpeed;
+            if(f > 127)
+                f = 127;
+        }
+        else
+        {
+            // Going down.
+            f -= haloOccludeSpeed;
+            if(f < 0)
+                f = 0;
+        }
 
-    mo->haloFactor &= ~0x7f;
-    mo->haloFactor |= i;
+        *haloFactor &= ~0x7f;
+        *haloFactor |= f;
+    }
 
     return true; // Continue iteration.
 }

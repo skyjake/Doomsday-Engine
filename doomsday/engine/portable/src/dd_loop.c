@@ -83,12 +83,14 @@ boolean appShutdown = false; // Set to true when we should exit (normally).
 boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
 #endif
 
-int     maxFrameRate = 200;     // Zero means 'unlimited'.
+int maxFrameRate = 200; // Zero means 'unlimited'.
+// Refresh frame count (independant of the viewport-specific frameCount).
+int rFrameCount = 0;
 
 timespan_t sysTime, gameTime, demoTime, ddLevelTime;
 timespan_t frameStartTime;
 
-boolean stopTime = false;  // If true the time counters won't be incremented
+boolean stopTime = false; // If true the time counters won't be incremented
 boolean tickUI = false; // If true the UI will be tick'd
 boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
 
@@ -112,6 +114,8 @@ static boolean firstTic = true;
 void DD_RegisterLoop(void)
 {
     C_VAR_INT("refresh-rate-maximum", &maxFrameRate, 0, 35, 1000);
+    C_VAR_INT("rend-dev-framecount", &rFrameCount,
+              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
 }
 
 /**
@@ -206,20 +210,16 @@ void DD_DrawAndBlit(void)
 
     if(drawGame)
     {
+        // Interpolate the world ready for drawing view(s) of it.
+        R_BeginWorldFrame();
+
         // Set up the basic 320x200 legacy projection for the game.
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PushMatrix();
         DGL_LoadIdentity();
         DGL_Ortho(0, 0, 320, 200, -1, 1);
 
-        // Update the world ready for drawing view(s) of it.
-        R_SetupWorldFrame();
-
-        // Draw in-window game graphics.
-        gx.G_Drawer();
-
-        // Draw the view border.
-        R_RenderPlayerViewBorder();
+        R_RenderViewPorts();
 
         // Draw any over/outside view window game graphics (e.g. fullscreen
         // menus and other displays).
@@ -235,6 +235,10 @@ void DD_DrawAndBlit(void)
         // Debug information.
         Net_Drawer();
         S_Drawer();
+
+        // Finish up any tasks that must be completed after view(s) have
+        // been drawn.
+        R_EndWorldFrame();
     }
 
     if(UI_IsActive())
@@ -269,19 +273,20 @@ void DD_StartFrame(void)
 
 void DD_EndFrame(void)
 {
-    uint nowTime = Sys_GetRealTime();
-    static uint lastFpsTime = 0;
+    static uint         lastFpsTime = 0;
 
-    // Increment the frame counter.
-    frameCount++;
+    uint                nowTime = Sys_GetRealTime();
+
+    // Increment the (local) frame counter.
+    rFrameCount++;
 
     // Count the frames every other second.
     if(nowTime - 2000 >= lastFpsTime)
     {
-        fps = (frameCount - lastFrameCount) /
+        fps = (rFrameCount - lastFrameCount) /
             ((nowTime - lastFpsTime)/1000.0f);
         lastFpsTime = nowTime;
-        lastFrameCount = frameCount;
+        lastFrameCount = rFrameCount;
     }
 
     if(gx.EndFrame)

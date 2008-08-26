@@ -1154,12 +1154,12 @@ static void drawBlockInfoBox(uint vBlock[2])
 /**
  * Draw the blockmap in 2D HUD mode.
  */
-static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
-                          void (*func) (void *blockPtr, void *param,
+static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
+                          void (*func) (void* blockPtr, void* param,
                                         float r, float g, float b, float a))
 {
-    bmap_t         *bmap = (bmap_t*) blockmap;
-    void           *block;
+    bmap_t*         bmap = (bmap_t*) blockmap;
+    void*           block;
     uint            x, y, vBlock[2], vBlockBox[4];
     float           scale, radius;
     vec2_t          start, end, box[2];
@@ -1175,7 +1175,7 @@ static void blockmapDebug(blockmap_t *blockmap, mobj_t *followMobj,
     if(followMobj)
     {
         // Determine the mobj's collision blockbox.
-        radius = followMobj->radius + 64; // MAXRADIUS
+        radius = followMobj->radius + DDMOBJ_RADIUS_MAX * 2;
         V2_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
         V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
         V2_InitBox(box, start);

@@ -47,7 +47,6 @@
 // MACROS ------------------------------------------------------------------
 
 // Max. distance to move in one call to P_MobjMoveXY.
-#define MAXRADIUS       32
 #define MAXMOVE         30
 
 // Shortest possible movement step.
@@ -355,12 +354,12 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
     data.pos[VZ] = z;
     data.height = mo->height;
 
-    // The bounding box is extended by MAXRADIUS because mobj_ts are
+    // The bounding box is extended by DDMOBJ_RADIUS_MAX because mobj_ts are
     // grouped into mapblocks based on their origin point, and can overlap
-    // into adjacent blocks by up to MAXRADIUS units.
-    V2_Set(point, x - mo->radius - MAXRADIUS, y - mo->radius - MAXRADIUS);
+    // into adjacent blocks by up to DDMOBJ_RADIUS_MAX units.
+    V2_Set(point, x - mo->radius - DDMOBJ_RADIUS_MAX, y - mo->radius - DDMOBJ_RADIUS_MAX);
     V2_InitBox(data.box, point);
-    V2_Set(point, x + mo->radius + MAXRADIUS, y + mo->radius + MAXRADIUS);
+    V2_Set(point, x + mo->radius + DDMOBJ_RADIUS_MAX, y + mo->radius + DDMOBJ_RADIUS_MAX);
     V2_AddToBox(data.box, point);
 
     newsubsec = R_PointInSubsector(x, y);

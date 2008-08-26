@@ -495,6 +495,7 @@ boolean P_LoadMap(const char *mapID)
         // Init Particle Generator links.
         PG_InitForLevel();
 
+        R_InitObjLinksForMap();
         LO_InitForMap(); // Lumobj management.
         DL_InitForMap(); // Projected lumobjs (dynlights) management.
 

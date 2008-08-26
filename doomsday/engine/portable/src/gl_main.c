@@ -122,14 +122,14 @@ static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 static int fogModeDefault = 0;
 
+static viewport_t currentView;
+
 // CODE --------------------------------------------------------------------
 
 void GL_Register(void)
 {
     // Cvars
     C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1);
-    C_VAR_INT("rend-dev-frameCount", &frameCount,
-              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
     // * Render-HUD
     C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
@@ -619,6 +619,9 @@ void GL_Init(void)
     // Set the gamma in accordance with vid-gamma, vid-bright and
     // vid-contrast.
     GL_SetGamma();
+
+    // Initialize one viewport.
+    R_SetViewGrid(1, 1);
 }
 
 /**
@@ -698,7 +701,7 @@ void GL_Init2DState(void)
     glFogfv(GL_FOG_COLOR, fogColor);
 }
 
-void GL_SwitchTo3DState(boolean push_state)
+void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
 {
     if(push_state)
     {
@@ -712,6 +715,7 @@ void GL_SwitchTo3DState(boolean push_state)
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
+#if 0
     viewpx = viewwindowx * theWindow->width / 320, viewpy =
         viewwindowy * theWindow->height / 200;
     // Set the viewport.
@@ -726,6 +730,15 @@ void GL_SwitchTo3DState(boolean push_state)
         viewpw = theWindow->width;
         viewph = theWindow->height;
     }
+#endif
+
+    memcpy(&currentView, port, sizeof(currentView));
+
+    viewpx = port->x + viewwindowx / 320.0f * port->width;
+    viewpy = port->y + viewwindowy / 200.0f * port->height;
+    viewpw = port->width * viewwidth / 320.0f;
+    viewph = port->height * viewheight / 200.0f;
+    DGL_Viewport(viewpx, viewpy, viewpw, viewph);
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
@@ -738,6 +751,7 @@ void GL_Restore2DState(int step)
     case 1: // After Restore Step 1 normal player sprites are rendered.
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_LoadIdentity();
+        // FIXME: Aspect ratio when not 4:3.
         DGL_Ortho(0, 0, 320, (320 * viewheight) / viewwidth, -1, 1);
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_LoadIdentity();
@@ -748,7 +762,8 @@ void GL_Restore2DState(int step)
         break;
 
     case 2: // After Restore Step 2 nothing special happens.
-        DGL_Viewport(0, 0, theWindow->width, theWindow->height);
+        DGL_Viewport(currentView.x, currentView.y,
+                     currentView.width, currentView.height);
         break;
 
     case 3: // After Restore Step 3 we're back in 2D rendering mode.
@@ -769,7 +784,7 @@ void GL_Restore2DState(int step)
 void GL_ProjectionMatrix(void)
 {
     // We're assuming pixels are squares.
-    float   aspect = viewpw / (float) viewph;
+    float               aspect = viewpw / (float) viewph;
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_LoadIdentity();

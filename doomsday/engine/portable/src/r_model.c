@@ -302,8 +302,8 @@ static DFILE *R_OpenModelFile(char *filename)
 
 static void R_MissingModel(const char *fn)
 {
-    if(verbose)
-        Con_Printf("  %s not found.\n", fn);
+    //if(verbose)
+    Con_Printf("  %s not found.\n", fn);
 }
 
 static void R_LoadModelMD2(DFILE *file, model_t *mdl)
