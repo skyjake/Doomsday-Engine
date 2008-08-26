@@ -115,34 +115,74 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct {
+    int             inventoryTics;
+    boolean         inventory;
+    int             artifactFlash;
+
+    int             hideTics;
+    float           hideAmount;
+
+    boolean         stopped;
+    float           showBar; // Slide statusbar amount 1.0 is fully open.
+    float           alpha; // Fullscreen hud alpha value.
+
+    float           statusbarCounterAlpha;
+    boolean         firstTime; // ST_Start() has just been called.
+    boolean         statusbarActive; // Whether left-side main status bar is active.
+    int             invSlots[NUMVISINVSLOTS]; // Current inventory slot indices. 0 = none.
+    int             invSlotsCount[NUMVISINVSLOTS]; // Current inventory slot count indices. 0 = none.
+    int             currentInvIdx; // Current artifact index. 0 = none.
+    int             currentAmmoIconIdx; // Current ammo icon index.
+    boolean         keyBoxes[3]; // Holds key-type for each key box on bar.
+    int             fragsCount; // Number of frags so far in deathmatch.
+    boolean         fragsOn; // !deathmatch.
+    boolean         blended; // Whether to use alpha blending.
+
+    boolean         hitCenterFrame;
+    int             tomePlay;
+    int             healthMarker;
+    int             chainWiggle;
+
+    int             oldCurrentArtifact;
+    int             oldCurrentArtifactCount;
+    int             oldAmmoIconIdx;
+    int             oldReadyWeapon;
+    int             oldHealth;
+
+    // Widgets:
+    st_multicon_t   wCurrentArtifact; // Current artifact.
+    st_number_t     wCurrentArtifactCount; // Current artifact count.
+    st_multicon_t   wInvSlots[NUMVISINVSLOTS]; // Inventory slots.
+    st_number_t     wInvSlotsCount[NUMVISINVSLOTS]; // Inventory slot counts.
+    st_multicon_t   wCurrentAmmoIcon; // Current ammo icon.
+    st_number_t     wReadyWeapon; // Ready-weapon.
+    st_number_t     wFrags; // In deathmatch only, summary of frags stats.
+    st_number_t     wHealth; // Health.
+    st_number_t     wArmor; // Armor.
+    st_binicon_t    wKeyBoxes[3]; // Owned keys.
+} hudstate_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void ST_drawWidgets(boolean refresh);
 
 // Console commands for the HUD/Statusbar.
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void shadeChain(void);
 static void drawINumber(signed int val, int x, int y, float r, float g, float b, float a);
 static void drawBNumber(signed int val, int x, int y, float Red, float Green, float Blue, float Alpha);
-static void drawChain(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int playerKeys = 0;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int inventoryTics;
-static boolean inventory = false;
+static hudstate_t hudStates[MAXPLAYERS];
 
-static int currentPalette;
 static int fontBNumBase;
 
 // Ammo patch names:
@@ -175,69 +215,14 @@ static char artifactList[][10] = {
     {"ARTIATLP"} // Teleport.
 };
 
-static int artifactFlash;
-
-static int hudHideTics;
-static float hudHideAmount;
-
-static boolean stopped = true;
-
-// Slide statusbar amount 1.0 is fully open.
-static float showBar = 0.0f;
-
-// Fullscreen hud alpha value.
-static float hudAlpha = 0.0f;
-
-static float statusbarCounterAlpha = 0.0f;
-
-// ST_Start() has just been called.
-static boolean firstTime;
-
-// Whether left-side main status bar is active.
-static boolean statusbarActive;
-
-// Current inventory slot indices. 0 = none.
-static int invSlots[NUMVISINVSLOTS];
-
-// Current inventory slot count indices. 0 = none.
-static int invSlotsCount[NUMVISINVSLOTS];
-
-// Current artifact index. 0 = none.
-static int currentInvIdx = 0;
-
-// Current ammo icon index.
-static int currentAmmoIconIdx;
-
-// Holds key-type for each key box on bar.
-static boolean keyBoxes[3];
-
-// Number of frags so far in deathmatch.
-static int fragsCount;
-
-// !deathmatch.
-static boolean fragsOn;
-
-// Whether to use alpha blending.
-static boolean blended = false;
-
-static int healthMarker;
-static int chainWiggle;
-
-static int oldCurrentArtifact = 0;
-static int oldCurrentArtifactCount = 0;
-
-static int oldAmmoIconIdx = -1;
-
-static int oldReadyWeapon = -1;
-static int oldHealth = -1;
-
 static dpatch_t statusbar;
 static dpatch_t statusbarTopLeft;
 static dpatch_t statusbarTopRight;
 static dpatch_t chain;
 static dpatch_t statBar;
+static dpatch_t lifeBar;
 static dpatch_t invBar;
-static dpatch_t lifeGem;
+static dpatch_t lifeGems[4];
 static dpatch_t artifactSelectBox;
 static dpatch_t invPageLeft;
 static dpatch_t invPageLeft2;
@@ -251,36 +236,8 @@ static dpatch_t artifacts[16];
 static dpatch_t spinBook;
 static dpatch_t spinFly;
 static dpatch_t keys[NUM_KEY_TYPES];
-
-// Current artifact widget.
-static st_multicon_t wCurrentArtifact;
-
-// Current artifact count widget.
-static st_number_t wCurrentArtifactCount;
-
-// Inventory slot widgets.
-static st_multicon_t wInvSlots[NUMVISINVSLOTS];
-
-// Inventory slot count widgets.
-static st_number_t wInvSlotsCount[NUMVISINVSLOTS];
-
-// Current ammo icon widget.
-static st_multicon_t wCurrentAmmoIcon;
-
-// Ready-weapon widget.
-static st_number_t wReadyWeapon;
-
-// In deathmatch only, summary of frags stats.
-static st_number_t wFrags;
-
-// Health widget.
-static st_number_t wHealth;
-
-// Armor widget.
-static st_number_t wArmor;
-
-// Keycard widgets.
-static st_binicon_t wKeyBoxes[3];
+static dpatch_t godLeft;
+static dpatch_t godRight;
 
 // CVARs for the HUD/Statusbar
 cvar_t sthudCVars[] =
@@ -311,8 +268,6 @@ cvar_t sthudCVars[] =
     {"hud-tome-timer", CVF_NO_MAX, CVT_INT, &cfg.tomeCounter, 0, 0},
     {"hud-tome-sound", CVF_NO_MAX, CVT_INT, &cfg.tomeSound, 0, 0},
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
-
-    {"hud-frags-all", 0, CVT_BYTE, &huShowAllFrags, 0, 1},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
@@ -348,77 +303,208 @@ void ST_Register(void)
         Con_AddCommand(sthudCCmds + i);
 }
 
-void ST_loadGraphics(void)
+static void shadeChain(float alpha)
 {
-    int                 i;
-    char                nameBuf[9];
+    DGL_Disable(DGL_TEXTURING);
 
-    R_CachePatch(&statusbar, "BARBACK");
-    R_CachePatch(&invBar, "INVBAR");
-    R_CachePatch(&chain, "CHAIN");
+    DGL_Begin(DGL_QUADS);
+        // Left shadow.
+        DGL_Color4f(0, 0, 0, alpha);
+        DGL_Vertex2f(20, 200);
+        DGL_Vertex2f(20, 190);
+        DGL_Color4f(0, 0, 0, 0);
+        DGL_Vertex2f(35, 190);
+        DGL_Vertex2f(35, 200);
 
-    if(deathmatch)
+        // Right shadow.
+        DGL_Vertex2f(277, 200);
+        DGL_Vertex2f(277, 190);
+        DGL_Color4f(0, 0, 0, alpha);
+        DGL_Vertex2f(293, 190);
+        DGL_Vertex2f(293, 200);
+    DGL_End();
+
+    DGL_Enable(DGL_TEXTURING);
+}
+
+static void drawChain(hudstate_t* hud)
+{
+    int                 chainY;
+    float               healthPos;
+    float               gemglow;
+    int                 x, y, w, h, gemNum;
+    float               cw;
+    int                 player = hud - hudStates;
+    player_t*           plr = &players[player];
+
+    if(hud->oldHealth != hud->healthMarker)
     {
-        R_CachePatch(&statBar, "STATBAR");
+        hud->oldHealth = hud->healthMarker;
+        healthPos = hud->healthMarker;
+        if(healthPos < 0)
+        {
+            healthPos = 0;
+        }
+        if(healthPos > 100)
+        {
+            healthPos = 100;
+        }
+
+        gemglow = healthPos / 100;
+
+        chainY = 191;
+        if(hud->healthMarker != plr->plr->mo->health)
+            chainY += hud->chainWiggle;
+
+        // Draw the chain.
+        x = 21;
+        y = chainY;
+        w = 271;
+        h = 8;
+        cw = (healthPos / 118) + 0.018f;
+
+        GL_SetPatch(chain.lump, DGL_REPEAT, DGL_CLAMP);
+
+        DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
+
+        DGL_Begin(DGL_QUADS);
+
+        DGL_TexCoord2f( 0 - cw, 0);
+        DGL_Vertex2f(x, y);
+
+        DGL_TexCoord2f( 0.916f - cw, 0);
+        DGL_Vertex2f(x + w, y);
+
+        DGL_TexCoord2f( 0.916f - cw, 1);
+        DGL_Vertex2f(x + w, y + h);
+
+        DGL_TexCoord2f( 0 - cw, 1);
+        DGL_Vertex2f(x, y + h);
+
+        DGL_End();
+
+        // Draw the life gem.
+        healthPos = (healthPos * 256) / 102;
+        if(!IS_NETGAME)
+            gemNum = 2; // Always use the red gem in single player.
+        else
+            gemNum = cfg.playerColor[player];
+
+        GL_DrawPatchLitAlpha(x + healthPos, chainY, 1,
+                             hud->statusbarCounterAlpha,
+                             lifeGems[gemNum].lump);
+
+        shadeChain((hud->statusbarCounterAlpha + cfg.statusbarAlpha) /3);
+
+        // How about a glowing gem?
+        GL_BlendMode(BM_ADD);
+        DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
+
+        GL_DrawRect(x + healthPos - 11, chainY - 6, 41, 24, 1, 0, 0,
+                    gemglow - (1 - hud->statusbarCounterAlpha));
+
+        GL_BlendMode(BM_NORMAL);
+        DGL_Color4f(1, 1, 1, 1);
+    }
+}
+
+/**
+ * Draws the whole statusbar backgound.
+ * \todo There is a whole lot of constants in here. What if someone wants to
+ * replace the statusbar with new patches?
+ */
+static void drawStatusBarBackground(int player)
+{
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
+    float               alpha;
+
+    if(hud->blended)
+    {
+        alpha = cfg.statusbarAlpha - hud->hideAmount;
+        // Clamp
+        CLAMP(alpha, 0.0f, 1.0f);
+        if(!(alpha > 0))
+            return;
+    }
+    else
+        alpha = 1.0f;
+
+    if(!(alpha < 1))
+    {   // We can just render the full thing as normal.
+        // Top bits.
+        GL_DrawPatch(0, 148, statusbarTopLeft.lump);
+        GL_DrawPatch(290, 148, statusbarTopRight.lump);
+
+        // Faces.
+        GL_DrawPatch(0, 158, statusbar.lump);
+
+        if(P_GetPlayerCheats(plr) & CF_GODMODE)
+        {
+            GL_DrawPatch(16, 167, godLeft.lump);
+            GL_DrawPatch(287, 167, godRight.lump);
+        }
+
+        if(!hud->inventory)
+        {
+            if(deathmatch)
+                GL_DrawPatch(34, 160, statBar.lump);
+            else
+                GL_DrawPatch(34, 160, lifeBar.lump);
+        }
+        else
+        {
+            GL_DrawPatch(34, 160, invBar.lump);
+        }
+
+        drawChain(hud);
     }
     else
     {
-        R_CachePatch(&statBar, "LIFEBAR");
+        DGL_Color4f(1, 1, 1, alpha);
+
+        // Top bits.
+        GL_DrawPatch_CS(0, 148, statusbarTopLeft.lump);
+        GL_DrawPatch_CS(290, 148, statusbarTopRight.lump);
+
+        GL_SetPatch(statusbar.lump, DGL_REPEAT, DGL_REPEAT);
+
+        // Top border.
+        GL_DrawCutRectTiled(34, 158, 248, 2, 320, 42, 34, 0, 0, 158, 0, 0);
+
+        // Chain background.
+        GL_DrawCutRectTiled(34, 191, 248, 9, 320, 42, 34, 33, 0, 191, 16, 8);
+
+        // Faces.
+        if(P_GetPlayerCheats(plr) & CF_GODMODE)
+        {
+            // If GOD mode we need to cut windows
+            GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 16, 167, 16, 8);
+            GL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 287, 167, 16, 8);
+
+            GL_DrawPatch_CS(16, 167, W_GetNumForName("GOD1"));
+            GL_DrawPatch_CS(287, 167, W_GetNumForName("GOD2"));
+        }
+        else
+        {
+            GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 0, 158, 0, 0);
+            GL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 0, 158, 0, 0);
+        }
+
+        if(!hud->inventory)
+        {
+            if(deathmatch)
+                GL_DrawPatch_CS(34, 160, statBar.lump);
+            else
+                GL_DrawPatch_CS(34, 160, lifeBar.lump);
+        }
+        else
+        {
+            GL_DrawPatch_CS(34, 160, invBar.lump);
+        }
+
+        drawChain(hud);
     }
-    if(!IS_NETGAME)
-    {                           // single player game uses red life gem
-        R_CachePatch(&lifeGem, "LIFEGEM2");
-    }
-    else
-    {
-        sprintf(nameBuf, "LIFEGEM%d", CONSOLEPLAYER);
-        R_CachePatch(&lifeGem, nameBuf);
-    }
-
-    R_CachePatch(&statusbarTopLeft, "LTFCTOP");
-    R_CachePatch(&statusbarTopRight, "RTFCTOP");
-    R_CachePatch(&artifactSelectBox, "SELECTBOX");
-    R_CachePatch(&invPageLeft, "INVGEML1");
-    R_CachePatch(&invPageLeft2, "INVGEML2");
-    R_CachePatch(&invPageRight, "INVGEMR1");
-    R_CachePatch(&invPageRight2, "INVGEMR2");
-    R_CachePatch(&negative, "NEGNUM");
-    R_CachePatch(&spinBook, "SPINBK0");
-    R_CachePatch(&spinFly, "SPFLY0");
-
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(nameBuf, "IN%d", i);
-        R_CachePatch(&iNumbers[i], nameBuf);
-
-    }
-
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(nameBuf, "SMALLIN%d", i);
-        R_CachePatch(&sNumbers[i], nameBuf);
-    }
-
-    // Artifact icons (+5 for the use artifact flash patches).
-    for(i = 0; i < (NUMARTIFACTS + 5); ++i)
-    {
-        sprintf(nameBuf, "%s", artifactList[i]);
-        R_CachePatch(&artifacts[i], nameBuf);
-    }
-
-    // Ammo icons.
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(nameBuf, "%s", ammoPic[i]);
-        R_CachePatch(&ammoIcons[i], nameBuf);
-    }
-
-    // Key cards.
-    R_CachePatch(&keys[0], "ykeyicon");
-    R_CachePatch(&keys[1], "gkeyicon");
-    R_CachePatch(&keys[2], "bkeyicon");
-
-    fontBNumBase = W_GetNumForName("FONTB16");
 }
 
 void SB_SetClassData(void)
@@ -437,56 +523,24 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
         return;
 }
 
-void ST_loadData(void)
-{
-    currentPalette = W_GetNumForName("PLAYPAL");
-
-    ST_loadGraphics();
-}
-
-void ST_initData(void)
-{
-    int                 i;
-
-    firstTime = true;
-
-    currentInvIdx = 0;
-    currentAmmoIconIdx = 0;
-
-    statusbarActive = true;
-
-    for(i = 0; i < 3; ++i)
-    {
-        keyBoxes[i] = false;
-    }
-
-    for(i = 0; i < NUMVISINVSLOTS; ++i)
-    {
-        invSlots[i] = 0;
-        invSlotsCount[i] = 0;
-    }
-
-    STlib_init();
-    ST_HUDUnHide(HUE_FORCE);
-}
-
-void ST_updateWidgets(void)
+void ST_updateWidgets(int player)
 {
     static int          largeammo = 1994; // Means "n/a".
 
     int                 i, x;
     ammotype_t          ammoType;
     boolean             found;
-    player_t           *plr = &players[CONSOLEPLAYER];
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
     int                 lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
-    if(blended)
+    if(hud->blended)
     {
-        statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
-        CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+        hud->statusbarCounterAlpha = cfg.statusbarCounterAlpha - hud->hideAmount;
+        CLAMP(hud->statusbarCounterAlpha, 0.0f, 1.0f);
     }
     else
-        statusbarCounterAlpha = 1.0f;
+        hud->statusbarCounterAlpha = 1.0f;
 
     // Must redirect the pointer if the ready weapon has changed.
     found = false;
@@ -496,293 +550,345 @@ void ST_updateWidgets(void)
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon.
-        wReadyWeapon.num = &plr->ammo[ammoType].owned;
+        hud->wReadyWeapon.num = &plr->ammo[ammoType].owned;
 
-        if(oldReadyWeapon != plr->readyWeapon)
-            currentAmmoIconIdx = (int) ammoType;
+        if(hud->oldReadyWeapon != plr->readyWeapon)
+            hud->currentAmmoIconIdx = (int) ammoType;
 
         found = true;
     }
 
     if(!found) // Weapon takes no ammo at all.
     {
-        wReadyWeapon.num = &largeammo;
-        currentAmmoIconIdx = -1;
+        hud->wReadyWeapon.num = &largeammo;
+        hud->currentAmmoIconIdx = -1;
     }
 
-    wReadyWeapon.data = plr->readyWeapon;
+    hud->wReadyWeapon.data = plr->readyWeapon;
 
     // Update keycard multiple widgets.
     for(i = 0; i < 3; ++i)
     {
-        keyBoxes[i] = plr->keys[i] ? true : false;
+        hud->keyBoxes[i] = plr->keys[i] ? true : false;
     }
 
     // Used by wFrags widget.
-    fragsOn = deathmatch && statusbarActive;
-    fragsCount = 0;
+    hud->fragsOn = deathmatch && hud->statusbarActive;
+    hud->fragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->inGame)
             continue;
 
-        fragsCount += plr->frags[i] * (i != CONSOLEPLAYER ? 1 : -1);
+        hud->fragsCount += plr->frags[i] * (i != player ? 1 : -1);
     }
 
     // Current artifact.
-    if(artifactFlash)
+    if(hud->artifactFlash)
     {
-        currentInvIdx = 5 - artifactFlash;
-        artifactFlash--;
-        oldCurrentArtifact = -1; // So that the correct artifact fills in after the flash.
+        hud->currentInvIdx = 5 - hud->artifactFlash;
+        hud->artifactFlash--;
+        hud->oldCurrentArtifact = -1; // So that the correct artifact fills in after the flash.
     }
-    else if(oldCurrentArtifact != plr->readyArtifact ||
-            oldCurrentArtifactCount != plr->inventory[plr->invPtr].count)
+    else if(hud->oldCurrentArtifact != plr->readyArtifact ||
+            hud->oldCurrentArtifactCount != plr->inventory[plr->invPtr].count)
     {
 
         if(plr->readyArtifact > 0)
         {
-            currentInvIdx = plr->readyArtifact + 5;
+            hud->currentInvIdx = plr->readyArtifact + 5;
         }
 
-        oldCurrentArtifact = plr->readyArtifact;
-        oldCurrentArtifactCount = plr->inventory[plr->invPtr].count;
+        hud->oldCurrentArtifact = plr->readyArtifact;
+        hud->oldCurrentArtifactCount = plr->inventory[plr->invPtr].count;
     }
 
     // Update the inventory.
     x = plr->invPtr - plr->curPos;
     for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
-        invSlots[i] = plr->inventory[x + i].type +5; // Plus 5 for useartifact patches.
-        invSlotsCount[i] = plr->inventory[x + i].count;
+        hud->invSlots[i] = plr->inventory[x + i].type +5; // Plus 5 for useartifact patches.
+        hud->invSlotsCount[i] = plr->inventory[x + i].count;
     }
-}
-
-void ST_createWidgets(void)
-{
-    static int          largeammo = 1994; // Means "n/a".
-
-    int                 i;
-    ammotype_t          ammoType;
-    boolean             found;
-    int                 width, temp;
-    player_t           *plyr = &players[CONSOLEPLAYER];
-    int                 lvl = (plyr->powers[PT_WEAPONLEVEL2]? 1 : 0);
-
-    // Ready weapon ammo.
-    //// \todo Only supports one type of ammo per weapon.
-    found = false;
-    for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
-    {
-        if(!weaponInfo[plyr->readyWeapon][plyr->class].mode[lvl].ammoType[ammoType])
-            continue; // Weapon does not take this ammo.
-
-        STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
-                      &plyr->ammo[ammoType].owned, &statusbarActive,
-                      ST_AMMOWIDTH, &statusbarCounterAlpha);
-
-        found = true;
-    }
-    if(!found) // Weapon requires no ammo at all.
-    {
-        // HERETIC.EXE returns an address beyond plyr->ammo[NUM_AMMO_TYPES]
-        // if weaponInfo[plyr->readyWeapon].ammo == am_noammo
-        // ...obviously a bug.
-
-        //STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
-        //              &plyr->ammo[weaponinfo[plyr->readyWeapon].ammo],
-        //              &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
-
-        // Ready weapon ammo.
-        STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers, &largeammo,
-                      &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
-    }
-
-    // Ready weapon icon
-    STlib_initMultIcon(&wCurrentAmmoIcon, ST_AMMOICONX, ST_AMMOICONY, ammoIcons, &currentAmmoIconIdx,
-                       &statusbarActive, &statusbarCounterAlpha);
-
-    // The last weapon type.
-    wReadyWeapon.data = plyr->readyWeapon;
-
-    // Health num.
-    STlib_initNum(&wHealth, ST_HEALTHX, ST_HEALTHY, iNumbers,
-                      &plyr->health, &statusbarActive, ST_HEALTHWIDTH, &statusbarCounterAlpha);
-
-    // Armor percentage - should be colored later.
-    STlib_initNum(&wArmor, ST_ARMORX, ST_ARMORY, iNumbers,
-                      &plyr->armorPoints, &statusbarActive, ST_ARMORWIDTH, &statusbarCounterAlpha );
-
-    // Frags sum.
-    STlib_initNum(&wFrags, ST_FRAGSX, ST_FRAGSY, iNumbers, &fragsCount,
-                  &fragsOn, ST_FRAGSWIDTH, &statusbarCounterAlpha);
-
-    // KeyBoxes 0-2.
-    STlib_initBinIcon(&wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, &keys[0], &keyBoxes[0],
-                       &keyBoxes[0], 0, &statusbarCounterAlpha);
-
-    STlib_initBinIcon(&wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, &keys[1], &keyBoxes[1],
-                       &keyBoxes[1], 0, &statusbarCounterAlpha);
-
-    STlib_initBinIcon(&wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, &keys[2], &keyBoxes[2],
-                       &keyBoxes[2], 0, &statusbarCounterAlpha);
-
-    // Current artifact (stbar not inventory).
-    STlib_initMultIcon(&wCurrentArtifact, ST_ARTIFACTX, ST_ARTIFACTY, artifacts, &currentInvIdx,
-                       &statusbarActive, &statusbarCounterAlpha);
-
-    // Current artifact count.
-    STlib_initNum(&wCurrentArtifactCount, ST_ARTIFACTCX, ST_ARTIFACTCY, sNumbers,
-                      &oldCurrentArtifactCount, &statusbarActive, ST_ARTIFACTCWIDTH, &statusbarCounterAlpha);
-
-    // Inventory slots.
-    width = artifacts[5].width + 1;
-    temp = 0;
-
-    for(i = 0; i < NUMVISINVSLOTS; ++i)
-    {
-        // Inventory slot icon.
-        STlib_initMultIcon(&wInvSlots[i], ST_INVENTORYX + temp , ST_INVENTORYY, artifacts, &invSlots[i],
-                       &statusbarActive, &statusbarCounterAlpha);
-
-        // Inventory slot count.
-        STlib_initNum(&wInvSlotsCount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX, ST_INVENTORYY + ST_INVCOUNTOFFY, sNumbers,
-                      &invSlotsCount[i], &statusbarActive, ST_ARTIFACTCWIDTH, &statusbarCounterAlpha);
-
-        temp += width;
-    }
-}
-
-void ST_Start(void)
-{
-    if(!stopped)
-        ST_Stop();
-
-    ST_initData();
-    ST_createWidgets();
-    stopped = false;
-}
-
-void ST_Stop(void)
-{
-    if(stopped)
-        return;
-    stopped = true;
-}
-
-void ST_Init(void)
-{
-    ST_loadData();
-}
-
-void ST_Inventory(boolean show)
-{
-    if(show)
-    {
-        inventory = true;
-
-        inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
-        if(inventoryTics < 1)
-            inventoryTics = 1;
-
-        ST_HUDUnHide(HUE_FORCE);
-    }
-    else
-        inventory = false;
-}
-
-boolean ST_IsInventoryVisible(void)
-{
-    return inventory;
-}
-
-void ST_InventoryFlashCurrent(player_t *player)
-{
-    if(player == &players[CONSOLEPLAYER])
-        artifactFlash = 4;
 }
 
 void ST_Ticker(void)
 {
-    static int          tomePlay = 0;
+    int                 i;
 
-    int                 delta;
-    int                 curHealth;
-    player_t           *plyr = &players[CONSOLEPLAYER];
-
-    if(!P_IsPaused())
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(cfg.hudTimer == 0)
+        player_t*           plr = &players[i];
+        hudstate_t*         hud = &hudStates[i];
+
+        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+            continue;
+
+        if(!P_IsPaused())
         {
-            hudHideTics = hudHideAmount = 0;
+            int                 delta;
+            int                 curHealth;
+
+            if(cfg.hudTimer == 0)
+            {
+                hud->hideTics = hud->hideAmount = 0;
+            }
+            else
+            {
+                if(hud->hideTics > 0)
+                    hud->hideTics--;
+                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                    hud->hideAmount += 0.1f;
+            }
+
+            ST_updateWidgets(i);
+
+            if(levelTime & 1)
+            {
+                hud->chainWiggle = P_Random() & 1;
+            }
+            curHealth = plr->plr->mo->health;
+            if(curHealth < 0)
+            {
+                curHealth = 0;
+            }
+            if(curHealth < hud->healthMarker)
+            {
+                delta = (hud->healthMarker - curHealth) >> 2;
+                if(delta < 1)
+                {
+                    delta = 1;
+                }
+                else if(delta > 8)
+                {
+                    delta = 8;
+                }
+                hud->healthMarker -= delta;
+            }
+            else if(curHealth > hud->healthMarker)
+            {
+                delta = (curHealth - hud->healthMarker) >> 2;
+                if(delta < 1)
+                {
+                    delta = 1;
+                }
+                else if(delta > 8)
+                {
+                    delta = 8;
+                }
+                hud->healthMarker += delta;
+            }
+
+            // Tome of Power countdown sound.
+            if(plr->powers[PT_WEAPONLEVEL2] &&
+               plr->powers[PT_WEAPONLEVEL2] < cfg.tomeSound * 35)
+            {
+                int                 timeleft =
+                    plr->powers[PT_WEAPONLEVEL2] / 35;
+
+                if(hud->tomePlay != timeleft)
+                {
+                    hud->tomePlay = timeleft;
+                    S_LocalSound(SFX_KEYUP, NULL);
+                }
+            }
+
+            // Turn inventory off after a certain amount of time.
+            if(hud->inventory && !(--hud->inventoryTics))
+            {
+                plr->readyArtifact = plr->inventory[plr->invPtr].type;
+                hud->inventory = false;
+            }
         }
+    }
+}
+
+int R_GetFilterColor(int filter)
+{
+    int                 rgba = 0;
+
+    // We have to choose the right color and alpha.
+    if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
+        // Red?
+        rgba = FMAKERGBA(1, 0, 0, filter / 8.0);    // Full red with filter 8.
+    else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
+        // Light Yellow?
+        rgba = FMAKERGBA(1, 1, .5, (filter - STARTBONUSPALS + 1) / 16.0);
+
+    return rgba;
+}
+
+void R_SetFilter(int filter)
+{
+    GL_SetFilter(R_GetFilterColor(filter));
+}
+
+/**
+ * Sets the new palette based upon current values of player->damageCount
+ * and player->bonusCount
+ */
+void ST_doPaletteStuff(int player)
+{
+    int                 palette;
+    player_t*           plr = &players[player];
+
+    if(plr->damageCount)
+    {
+        palette = (plr->damageCount + 7) >> 3;
+        if(palette >= NUMREDPALS)
+        {
+            palette = NUMREDPALS - 1;
+        }
+        palette += STARTREDPALS;
+    }
+    else if(plr->bonusCount)
+    {
+        palette = (plr->bonusCount + 7) >> 3;
+        if(palette >= NUMBONUSPALS)
+        {
+            palette = NUMBONUSPALS - 1;
+        }
+        palette += STARTBONUSPALS;
+    }
+    else
+    {
+        palette = 0;
+    }
+
+    plr->plr->filter = R_GetFilterColor(palette);   // $democam
+}
+
+static void drawWidgets(hudstate_t* hud)
+{
+    int                 x, i;
+    int                 player = hud - hudStates;
+    player_t*           plr = &players[player];
+    boolean             refresh = true;
+
+    hud->oldHealth = -1;
+    if(!hud->inventory)
+    {
+        hud->oldCurrentArtifact = 0;
+        // Draw all the counters.
+
+        // Frags.
+        if(deathmatch)
+            STlib_updateNum(&hud->wFrags, refresh);
         else
-        {
-            if(hudHideTics > 0)
-                hudHideTics--;
-            if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
-                hudHideAmount += 0.1f;
-        }
-    }
+            STlib_updateNum(&hud->wHealth, refresh);
 
-    ST_updateWidgets();
+        // Draw armor.
+        STlib_updateNum(&hud->wArmor, refresh);
 
-    if(levelTime & 1)
-    {
-        chainWiggle = P_Random() & 1;
-    }
-    curHealth = plyr->plr->mo->health;
-    if(curHealth < 0)
-    {
-        curHealth = 0;
-    }
-    if(curHealth < healthMarker)
-    {
-        delta = (healthMarker - curHealth) >> 2;
-        if(delta < 1)
-        {
-            delta = 1;
-        }
-        else if(delta > 8)
-        {
-            delta = 8;
-        }
-        healthMarker -= delta;
-    }
-    else if(curHealth > healthMarker)
-    {
-        delta = (curHealth - healthMarker) >> 2;
-        if(delta < 1)
-        {
-            delta = 1;
-        }
-        else if(delta > 8)
-        {
-            delta = 8;
-        }
-        healthMarker += delta;
-    }
+        // Draw keys.
+        for(i = 0; i < 3; ++i)
+            STlib_updateBinIcon(&hud->wKeyBoxes[i], refresh);
 
-    // Tome of Power countdown sound.
-    if(plyr->powers[PT_WEAPONLEVEL2] &&
-       plyr->powers[PT_WEAPONLEVEL2] < cfg.tomeSound * 35)
-    {
-        int     timeleft = plyr->powers[PT_WEAPONLEVEL2] / 35;
+        STlib_updateNum(&hud->wReadyWeapon, refresh);
+        STlib_updateMultIcon(&hud->wCurrentAmmoIcon, refresh);
 
-        if(tomePlay != timeleft)
+        // Current artifact.
+        if(plr->readyArtifact > 0)
         {
-            tomePlay = timeleft;
-            S_LocalSound(SFX_KEYUP, NULL);
+            STlib_updateMultIcon(&hud->wCurrentArtifact, refresh);
+            if(!hud->artifactFlash && plr->inventory[plr->invPtr].count > 1)
+                STlib_updateNum(&hud->wCurrentArtifactCount, refresh);
         }
     }
+    else
+    {   // Draw Inventory.
+        x = plr->invPtr - plr->curPos;
 
-    // Turn inventory off after a certain amount of time.
-    if(inventory && !(--inventoryTics))
-    {
-        plyr->readyArtifact = plyr->inventory[plyr->invPtr].type;
-        inventory = false;
+        for(i = 0; i < NUMVISINVSLOTS; ++i)
+        {
+            if(plr->inventory[x + i].type != arti_none)
+            {
+                STlib_updateMultIcon(&hud->wInvSlots[i], refresh);
+
+                if(plr->inventory[x + i].count > 1)
+                    STlib_updateNum(&hud->wInvSlotsCount[i], refresh);
+            }
+        }
+
+        // Draw selector box.
+        GL_DrawPatchLitAlpha(ST_INVENTORYX + plr->curPos * 31, 189, 1,
+                             hud->statusbarCounterAlpha, artifactSelectBox.lump);
+
+        // Draw more left indicator.
+        if(x != 0)
+            GL_DrawPatchLitAlpha(38, 159, 1, hud->statusbarCounterAlpha,
+                                 !(levelTime & 4) ? invPageLeft.lump : invPageLeft2.lump);
+
+        // Draw more right indicator.
+        if(plr->inventorySlotNum - x > 7)
+            GL_DrawPatchLitAlpha(269, 159, 1, hud->statusbarCounterAlpha,
+                                 !(levelTime & 4) ? invPageRight.lump : invPageRight2.lump);
     }
+}
+
+void ST_Inventory(int player, boolean show)
+{
+    player_t*           plr;
+    hudstate_t*         hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    hud = &hudStates[player];
+
+    if(show)
+    {
+        hud->inventory = true;
+
+        hud->inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
+        if(hud->inventoryTics < 1)
+            hud->inventoryTics = 1;
+
+        ST_HUDUnHide(player, HUE_FORCE);
+    }
+    else
+    {
+        hud->inventory = false;
+    }
+}
+
+boolean ST_IsInventoryVisible(int player)
+{
+    player_t*           plr;
+    hudstate_t*         hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return false;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return false;
+
+    hud = &hudStates[player];
+
+    return hud->inventory;
+}
+
+void ST_InventoryFlashCurrent(int player)
+{
+    player_t*           plr;
+    hudstate_t*         hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    hud = &hudStates[player];
+
+    hud->artifactFlash = 4;
 }
 
 static void drawINumber(signed int val, int x, int y, float r, float g,
@@ -904,178 +1010,78 @@ static void DrSmallNumber(int val, int x, int y, float r, float g, float b,
     _DrSmallNumber(val, x, y, true, r,g,b,a);
 }
 
-static void shadeChain(void)
-{
-    float               shadea =
-        (statusbarCounterAlpha + cfg.statusbarAlpha) /3;
-
-    DGL_Disable(DGL_TEXTURING);
-    DGL_Begin(DGL_QUADS);
-
-    // The left shader.
-    DGL_Color4f(0, 0, 0, shadea);
-    DGL_Vertex2f(20, 200);
-    DGL_Vertex2f(20, 190);
-    DGL_Color4f(0, 0, 0, 0);
-    DGL_Vertex2f(35, 190);
-    DGL_Vertex2f(35, 200);
-
-    // The right shader.
-    DGL_Vertex2f(277, 200);
-    DGL_Vertex2f(277, 190);
-    DGL_Color4f(0, 0, 0, shadea);
-    DGL_Vertex2f(293, 190);
-    DGL_Vertex2f(293, 200);
-
-    DGL_End();
-    DGL_Enable(DGL_TEXTURING);
-}
-
-/**
- * Draws the whole statusbar backgound.
- * \todo There is a whole lot of constants in here. What if someone wants to
- * replace the statusbar with new patches?
- */
-void ST_refreshBackground(void)
-{
-    player_t           *pl = &players[CONSOLEPLAYER];
-    float               alpha;
-
-    if(blended)
-    {
-        alpha = cfg.statusbarAlpha - hudHideAmount;
-        // Clamp
-        CLAMP(alpha, 0.0f, 1.0f);
-        if(!(alpha > 0))
-            return;
-    }
-    else
-        alpha = 1.0f;
-
-    if(!(alpha < 1))
-    {   // We can just render the full thing as normal.
-        // Top bits.
-        GL_DrawPatch(0, 148, statusbarTopLeft.lump);
-        GL_DrawPatch(290, 148, statusbarTopRight.lump);
-
-        // Faces.
-        GL_DrawPatch(0, 158, statusbar.lump);
-
-        if(P_GetPlayerCheats(pl) & CF_GODMODE)
-        {
-            GL_DrawPatch(16, 167, W_GetNumForName("GOD1"));
-            GL_DrawPatch(287, 167, W_GetNumForName("GOD2"));
-        }
-
-        if(!inventory)
-            GL_DrawPatch(34, 160, statBar.lump);
-        else
-            GL_DrawPatch(34, 160, invBar.lump);
-
-        drawChain();
-    }
-    else
-    {
-        DGL_Color4f(1, 1, 1, alpha);
-
-        // Top bits.
-        GL_DrawPatch_CS(0, 148, statusbarTopLeft.lump);
-        GL_DrawPatch_CS(290, 148, statusbarTopRight.lump);
-
-        GL_SetPatch(statusbar.lump, DGL_REPEAT, DGL_REPEAT);
-
-        // Top border.
-        GL_DrawCutRectTiled(34, 158, 248, 2, 320, 42, 34, 0, 0, 158, 0, 0);
-
-        // Chain background.
-        GL_DrawCutRectTiled(34, 191, 248, 9, 320, 42, 34, 33, 0, 191, 16, 8);
-
-        // Faces.
-        if(P_GetPlayerCheats(pl) & CF_GODMODE)
-        {
-            // If GOD mode we need to cut windows
-            GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 16, 167, 16, 8);
-            GL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 287, 167, 16, 8);
-
-            GL_DrawPatch_CS(16, 167, W_GetNumForName("GOD1"));
-            GL_DrawPatch_CS(287, 167, W_GetNumForName("GOD2"));
-        }
-        else
-        {
-            GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 0, 158, 0, 0);
-            GL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 0, 158, 0, 0);
-        }
-
-        if(!inventory)
-            GL_DrawPatch_CS(34, 160, statBar.lump);
-        else
-            GL_DrawPatch_CS(34, 160, invBar.lump);
-
-        drawChain();
-    }
-}
-
 /**
  * Unhides the current HUD display if hidden.
  *
+ * @param player        The player whoose HUD to (maybe) unhide.
  * @param event         The HUD Update Event type to check for triggering.
  */
-void ST_HUDUnHide(hueevent_t event)
+void ST_HUDUnHide(int player, hueevent_t ev)
 {
-    if(event < HUE_FORCE || event > NUMHUDUNHIDEEVENTS)
+    player_t*           plr;
+
+    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
         return;
 
-    if(event == HUE_FORCE || cfg.hudUnHide[event])
+    plr = &players[player];
+    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        return;
+
+    if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
-        hudHideTics = (cfg.hudTimer * TICSPERSEC);
-        hudHideAmount = 0;
+        hudStates[player].hideTics = (cfg.hudTimer * TICSPERSEC);
+        hudStates[player].hideAmount = 0;
     }
 }
 
-void ST_drawIcons(void)
+static void drawIcons(int player)
 {
-    static boolean      hitCenterFrame;
-
     int                 frame;
     float               iconAlpha = cfg.hudIconAlpha;
     float               textAlpha = cfg.hudColor[3];
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
 
     Draw_BeginZoom(cfg.hudScale, 2, 2);
 
     // Flight icons
-    if(plyr->powers[PT_FLIGHT])
+    if(plr->powers[PT_FLIGHT])
     {
         int     offset = (cfg.hudShown[HUD_AMMO] && cfg.screenBlocks > 10 &&
-                          plyr->readyWeapon > 0 &&
-                          plyr->readyWeapon < 7) ? 43 : 0;
-        if(plyr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
-           !(plyr->powers[PT_FLIGHT] & 16))
+                          plr->readyWeapon > 0 &&
+                          plr->readyWeapon < 7) ? 43 : 0;
+
+        if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
+           !(plr->powers[PT_FLIGHT] & 16))
         {
             frame = (levelTime / 3) & 15;
-            if(plyr->plr->mo->flags2 & MF2_FLY)
+            if(plr->plr->mo->flags2 & MF2_FLY)
             {
-                if(hitCenterFrame && (frame != 15 && frame != 0))
+                if(hud->hitCenterFrame && (frame != 15 && frame != 0))
                 {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha, spinFly.lump + 15);
+                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
+                                         spinFly.lump + 15);
                 }
                 else
                 {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha, spinFly.lump + frame);
-                    hitCenterFrame = false;
+                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
+                                         spinFly.lump + frame);
+                    hud->hitCenterFrame = false;
                 }
             }
             else
             {
-                if(!hitCenterFrame && (frame != 15 && frame != 0))
+                if(!hud->hitCenterFrame && (frame != 15 && frame != 0))
                 {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha, spinFly.lump + frame);
-                    hitCenterFrame = false;
+                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
+                                         spinFly.lump + frame);
+                    hud->hitCenterFrame = false;
                 }
                 else
                 {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha, spinFly.lump + 15);
-                    hitCenterFrame = true;
+                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
+                                         spinFly.lump + 15);
+                    hud->hitCenterFrame = true;
                 }
             }
         }
@@ -1085,23 +1091,25 @@ void ST_drawIcons(void)
 
     Draw_BeginZoom(cfg.hudScale, 318, 2);
 
-    if(plyr->powers[PT_WEAPONLEVEL2] && !plyr->morphTics)
+    if(plr->powers[PT_WEAPONLEVEL2] && !plr->morphTics)
     {
-        if(cfg.tomeCounter || plyr->powers[PT_WEAPONLEVEL2] > BLINKTHRESHOLD
-           || !(plyr->powers[PT_WEAPONLEVEL2] & 16))
+        if(cfg.tomeCounter || plr->powers[PT_WEAPONLEVEL2] > BLINKTHRESHOLD
+           || !(plr->powers[PT_WEAPONLEVEL2] & 16))
         {
             frame = (levelTime / 3) & 15;
-            if(cfg.tomeCounter && plyr->powers[PT_WEAPONLEVEL2] < 35)
+            if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
             {
-                DGL_Color4f(1, 1, 1, plyr->powers[PT_WEAPONLEVEL2] / 35.0f);
+                DGL_Color4f(1, 1, 1, plr->powers[PT_WEAPONLEVEL2] / 35.0f);
             }
-            GL_DrawPatchLitAlpha(300, 17, 1, iconAlpha, spinBook.lump + frame);
+
+            GL_DrawPatchLitAlpha(300, 17, 1, iconAlpha,
+                                 spinBook.lump + frame);
         }
 
-        if(plyr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
+        if(plr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
         {
-            _DrSmallNumber(1 + plyr->powers[PT_WEAPONLEVEL2] / 35, 303, 30,
-                           false,1,1,1,textAlpha);
+            _DrSmallNumber(1 + plr->powers[PT_WEAPONLEVEL2] / 35, 303, 30,
+                           false, 1, 1, 1, textAlpha);
         }
     }
 
@@ -1111,12 +1119,20 @@ void ST_drawIcons(void)
 /**
  * All drawing for the statusbar starts and ends here.
  */
-void ST_doRefresh(void)
+void ST_doRefresh(int player)
 {
-    boolean             statusbarVisible =
-        (cfg.statusbarScale < 20 || (cfg.statusbarScale == 20 && showBar < 1.0f));
+    hudstate_t*         hud;
+    boolean             statusbarVisible;
 
-    firstTime = false;
+    if(player < 0 || player > MAXPLAYERS)
+        return;
+
+    hud = &hudStates[player];
+
+    statusbarVisible = (cfg.statusbarScale < 20 ||
+        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
+
+    hud->firstTime = false;
 
     if(statusbarVisible)
     {
@@ -1125,15 +1141,15 @@ void ST_doRefresh(void)
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
-        DGL_Translatef(160 - 320 * fscale / 2, h /showBar, 0);
+        DGL_Translatef(160 - 320 * fscale / 2, h / hud->showBar, 0);
         DGL_Scalef(fscale, fscale, 1);
     }
 
     // Draw status bar background.
-    ST_refreshBackground();
+    drawStatusBarBackground(player);
 
     // And refresh all widgets.
-    ST_drawWidgets(true);
+    drawWidgets(hud);
 
     if(statusbarVisible)
     {
@@ -1143,35 +1159,38 @@ void ST_doRefresh(void)
     }
 }
 
-void ST_doFullscreenStuff(void)
+void ST_doFullscreenStuff(int player)
 {
     int                 i, x, temp = 0;
-    float               textAlpha = hudAlpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
-    float               iconAlpha = hudAlpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
+    float               textAlpha =
+        hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
+    float               iconAlpha =
+        hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
     CLAMP(textAlpha, 0.0f, 1.0f);
     CLAMP(iconAlpha, 0.0f, 1.0f);
 
     if(cfg.hudShown[HUD_AMMO])
     {
-        if(plyr->readyWeapon > 0 && plyr->readyWeapon < 7)
+        if(plr->readyWeapon > 0 && plr->readyWeapon < 7)
         {
             ammotype_t          ammoType;
             int                 lvl =
-                (plyr->powers[PT_WEAPONLEVEL2]? 1 : 0);
+                (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
             //// \todo Only supports one type of ammo per weapon.
             // For each type of ammo this weapon takes.
             for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
             {
-                if(!weaponInfo[plyr->readyWeapon][plyr->class].mode[lvl].ammoType[ammoType])
+                if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
                     continue;
 
                 Draw_BeginZoom(cfg.hudScale, 2, 2);
                 GL_DrawPatchLitAlpha(-1, 0, 1, iconAlpha,
-                                     W_GetNumForName(ammoPic[plyr->readyWeapon - 1]));
-                drawINumber(plyr->ammo[ammoType].owned, 18, 2,
+                                     W_GetNumForName(ammoPic[plr->readyWeapon - 1]));
+                drawINumber(plr->ammo[ammoType].owned, 18, 2,
                             1, 1, 1, textAlpha);
 
                 Draw_EndZoom();
@@ -1183,9 +1202,9 @@ void ST_doFullscreenStuff(void)
 Draw_BeginZoom(cfg.hudScale, 2, 198);
     if(cfg.hudShown[HUD_HEALTH])
     {
-        if(plyr->plr->mo->health > 0)
+        if(plr->plr->mo->health > 0)
         {
-            drawBNumber(plyr->plr->mo->health, 2, 180,
+            drawBNumber(plr->plr->mo->health, 2, 180,
                       cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
         }
         else
@@ -1205,7 +1224,7 @@ Draw_BeginZoom(cfg.hudScale, 2, 198);
         else if(!cfg.hudShown[HUD_HEALTH] && !cfg.hudShown[HUD_KEYS])
             temp = 186;
 
-        drawINumber(plyr->armorPoints, 6, temp, 1, 1, 1, textAlpha);
+        drawINumber(plr->armorPoints, 6, temp, 1, 1, 1, textAlpha);
     }
 
     if(cfg.hudShown[HUD_KEYS])
@@ -1213,21 +1232,21 @@ Draw_BeginZoom(cfg.hudScale, 2, 198);
         x = 6;
 
         // Draw keys above health?
-        if(plyr->keys[KT_YELLOW])
+        if(plr->keys[KT_YELLOW])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1,
                                  iconAlpha, W_GetNumForName("ykeyicon"));
             x += 11;
         }
 
-        if(plyr->keys[KT_GREEN])
+        if(plr->keys[KT_GREEN])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1,
                                  iconAlpha, W_GetNumForName("gkeyicon"));
             x += 11;
         }
 
-        if(plyr->keys[KT_BLUE])
+        if(plr->keys[KT_BLUE])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1,
                                  iconAlpha, W_GetNumForName("bkeyicon"));
@@ -1242,7 +1261,7 @@ Draw_EndZoom();
         {
             if(players[i].plr->inGame)
             {
-                temp += plyr->frags[i];
+                temp += plr->frags[i];
             }
         }
 
@@ -1251,17 +1270,17 @@ Draw_BeginZoom(cfg.hudScale, 2, 198);
 Draw_EndZoom();
     }
 
-    if(!inventory)
+    if(!hud->inventory)
     {
-        if(cfg.hudShown[HUD_ARTI] && plyr->readyArtifact > 0)
+        if(cfg.hudShown[HUD_ARTI] && plr->readyArtifact > 0)
         {
 Draw_BeginZoom(cfg.hudScale, 318, 198);
 
             GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha / 2,
                                  W_GetNumForName("ARTIBOX"));
             GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha,
-                                 W_GetNumForName(artifactList[plyr->readyArtifact + 5]));  //plus 5 for useartifact flashes
-            DrSmallNumber(plyr->inventory[plyr->invPtr].count, 307, 188, 1,
+                                 W_GetNumForName(artifactList[plr->readyArtifact + 5]));  //plus 5 for useartifact flashes
+            DrSmallNumber(plr->inventory[plr->invPtr].count, 307, 188, 1,
                           1, 1, textAlpha);
 Draw_EndZoom();
         }
@@ -1274,28 +1293,37 @@ Draw_EndZoom();
 
 Draw_BeginZoom(invScale, 160, 198);
 
-        x = plyr->invPtr - plyr->curPos;
+        x = plr->invPtr - plr->curPos;
         for(i = 0; i < 7; ++i)
         {
             GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconAlpha/2, W_GetNumForName("ARTIBOX"));
-            if(plyr->inventorySlotNum > x + i &&
-               plyr->inventory[x + i].type != arti_none)
+            if(plr->inventorySlotNum > x + i &&
+               plr->inventory[x + i].type != arti_none)
             {
-                GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, i==plyr->curPos? hudAlpha : iconAlpha,
-                             W_GetNumForName(artifactList[plyr->inventory[x + i].
-                                              type +5])); //plus 5 for useartifact flashes
-                DrSmallNumber(plyr->inventory[x + i].count, 69 + i * 31, 190, 1, 1, 1, i==plyr->curPos? hudAlpha : textAlpha/2);
+                int                 lump;
+
+                // Plus 5 for useartifact flashes.
+                lump = W_GetNumForName(
+                    artifactList[plr->inventory[x + i].type + 5]);
+
+                GL_DrawPatchLitAlpha(50 + i * 31, 168, 1,
+                                     i == plr->curPos? hud->alpha : iconAlpha,
+                                     lump);
+                DrSmallNumber(plr->inventory[x + i].count, 69 + i * 31,
+                              190, 1, 1, 1,
+                              i == plr->curPos? hud->alpha : textAlpha / 2);
             }
         }
 
-        GL_DrawPatchLitAlpha(50 + plyr->curPos * 31, 197, 1, hudAlpha, artifactSelectBox.lump);
+        GL_DrawPatchLitAlpha(50 + plr->curPos * 31, 197, 1, hud->alpha,
+                             artifactSelectBox.lump);
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(38, 167, 1, iconAlpha,
                                  !(levelTime & 4)? invPageLeft.lump : invPageLeft2.lump);
         }
 
-        if(plyr->inventorySlotNum - x > 7)
+        if(plr->inventorySlotNum - x > 7)
         {
             GL_DrawPatchLitAlpha(269, 167, 1, iconAlpha,
                                  !(levelTime & 4)? invPageRight.lump : invPageRight2.lump);
@@ -1305,268 +1333,340 @@ Draw_EndZoom();
     }
 }
 
-void ST_Drawer(int fullscreenmode, boolean refresh)
+void ST_Drawer(int player, int fullscreenmode, boolean refresh)
 {
-    firstTime = firstTime || refresh;
-    statusbarActive = (fullscreenmode < 2) || ( AM_IsMapActive(CONSOLEPLAYER) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
+    hudstate_t*         hud;
+    player_t*           plr;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    hud = &hudStates[player];
+
+    hud->firstTime = hud->firstTime || refresh;
+    hud->statusbarActive = (fullscreenmode < 2) ||
+        (AM_IsMapActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
 
     // Do palette shifts
-    ST_doPaletteStuff();
+    ST_doPaletteStuff(player);
 
     // Either slide the status bar in or fade out the fullscreen hud
-    if(statusbarActive)
+    if(hud->statusbarActive)
     {
-        if(hudAlpha > 0.0f)
+        if(hud->alpha > 0.0f)
         {
-            statusbarActive = 0;
-            hudAlpha -= 0.1f;
+            hud->statusbarActive = 0;
+            hud->alpha -= 0.1f;
         }
-        else if(showBar < 1.0f)
+        else if(hud->showBar < 1.0f)
         {
-            showBar += 0.1f;
+            hud->showBar += 0.1f;
         }
     }
     else
     {
         if(fullscreenmode == 3)
         {
-            if(hudAlpha > 0.0f)
+            if(hud->alpha > 0.0f)
             {
-                hudAlpha -= 0.1f;
+                hud->alpha -= 0.1f;
                 fullscreenmode = 2;
             }
         }
         else
         {
-            if(showBar > 0.0f)
+            if(hud->showBar > 0.0f)
             {
-                showBar -= 0.1f;
-                statusbarActive = 1;
+                hud->showBar -= 0.1f;
+                hud->statusbarActive = 1;
             }
-            else if(hudAlpha < 1.0f)
+            else if(hud->alpha < 1.0f)
             {
-                hudAlpha += 0.1f;
+                hud->alpha += 0.1f;
             }
         }
     }
 
     // Always try to render statusbar with alpha in fullscreen modes
     if(fullscreenmode)
-        blended = 1;
+        hud->blended = 1;
     else
-        blended = 0;
+        hud->blended = 0;
 
-    if(statusbarActive)
+    if(hud->statusbarActive)
     {
-        ST_doRefresh();
+        ST_doRefresh(player);
     }
     else if(fullscreenmode != 3)
     {
-        ST_doFullscreenStuff();
+        ST_doFullscreenStuff(player);
     }
 
     DGL_Color4f(1, 1, 1, 1);
-    ST_drawIcons();
+    drawIcons(player);
 }
 
-int R_GetFilterColor(int filter)
+void ST_loadGraphics(void)
 {
-    int                 rgba = 0;
+    int                 i;
+    char                nameBuf[9];
 
-    // We have to choose the right color and alpha.
-    if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-        // Red?
-        rgba = FMAKERGBA(1, 0, 0, filter / 8.0);    // Full red with filter 8.
-    else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-        // Light Yellow?
-        rgba = FMAKERGBA(1, 1, .5, (filter - STARTBONUSPALS + 1) / 16.0);
-    return rgba;
+    R_CachePatch(&statusbar, "BARBACK");
+    R_CachePatch(&invBar, "INVBAR");
+    R_CachePatch(&chain, "CHAIN");
+
+    R_CachePatch(&statBar, "STATBAR");
+    R_CachePatch(&lifeBar, "LIFEBAR");
+
+    for(i = 0; i < 4; ++i)
+    {
+        sprintf(nameBuf, "LIFEGEM%d", i);
+        R_CachePatch(&lifeGems[i], nameBuf);
+    }
+
+    R_CachePatch(&godLeft, "GOD1");
+    R_CachePatch(&godRight, "GOD2");
+    R_CachePatch(&statusbarTopLeft, "LTFCTOP");
+    R_CachePatch(&statusbarTopRight, "RTFCTOP");
+    R_CachePatch(&artifactSelectBox, "SELECTBOX");
+    R_CachePatch(&invPageLeft, "INVGEML1");
+    R_CachePatch(&invPageLeft2, "INVGEML2");
+    R_CachePatch(&invPageRight, "INVGEMR1");
+    R_CachePatch(&invPageRight2, "INVGEMR2");
+    R_CachePatch(&negative, "NEGNUM");
+    R_CachePatch(&spinBook, "SPINBK0");
+    R_CachePatch(&spinFly, "SPFLY0");
+
+    for(i = 0; i < 10; ++i)
+    {
+        sprintf(nameBuf, "IN%d", i);
+        R_CachePatch(&iNumbers[i], nameBuf);
+    }
+
+    for(i = 0; i < 10; ++i)
+    {
+        sprintf(nameBuf, "SMALLIN%d", i);
+        R_CachePatch(&sNumbers[i], nameBuf);
+    }
+
+    // Artifact icons (+5 for the use artifact flash patches).
+    for(i = 0; i < (NUMARTIFACTS + 5); ++i)
+    {
+        sprintf(nameBuf, "%s", artifactList[i]);
+        R_CachePatch(&artifacts[i], nameBuf);
+    }
+
+    // Ammo icons.
+    for(i = 0; i < 10; ++i)
+    {
+        sprintf(nameBuf, "%s", ammoPic[i]);
+        R_CachePatch(&ammoIcons[i], nameBuf);
+    }
+
+    // Key cards.
+    R_CachePatch(&keys[0], "ykeyicon");
+    R_CachePatch(&keys[1], "gkeyicon");
+    R_CachePatch(&keys[2], "bkeyicon");
+
+    fontBNumBase = W_GetNumForName("FONTB16");
 }
 
-void R_SetFilter(int filter)
+void ST_loadData(void)
 {
-    GL_SetFilter(R_GetFilterColor(filter));
+    ST_loadGraphics();
 }
 
-/**
- * Sets the new palette based upon current values of player->damageCount
- * and player->bonusCount
- */
-void ST_doPaletteStuff(void)
+static void initData(hudstate_t* hud)
 {
-    static int          sb_palette = 0;
+    int                 i;
+    int                 player = hud - hudStates;
+    player_t*           plr = &players[player];
 
-    int                 palette;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    // Ensure the HUD widget lib has been inited.
+    STlib_init();
 
-    if(plyr->damageCount)
+    hud->firstTime = true;
+    hud->inventory = false;
+    hud->stopped = true;
+    hud->showBar = 0.0f;
+    hud->alpha = 0.0f;
+
+    hud->tomePlay = 0;
+    hud->statusbarCounterAlpha = 0.0f;
+    hud->currentInvIdx = 0;
+    hud->blended = false;
+    hud->oldCurrentArtifact = 0;
+    hud->oldCurrentArtifactCount = 0;
+    hud->oldAmmoIconIdx = -1;
+    hud->oldReadyWeapon = -1;
+    hud->oldHealth = -1;
+    hud->currentInvIdx = 0;
+    hud->currentAmmoIconIdx = 0;
+
+    hud->statusbarActive = true;
+
+    for(i = 0; i < 3; ++i)
     {
-        palette = (plyr->damageCount + 7) >> 3;
-        if(palette >= NUMREDPALS)
-        {
-            palette = NUMREDPALS - 1;
-        }
-        palette += STARTREDPALS;
+        hud->keyBoxes[i] = false;
     }
-    else if(plyr->bonusCount)
+
+    for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
-        palette = (plyr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-        {
-            palette = NUMBONUSPALS - 1;
-        }
-        palette += STARTBONUSPALS;
-    }
-    else
-    {
-        palette = 0;
+        hud->invSlots[i] = 0;
+        hud->invSlotsCount[i] = 0;
     }
 
-    if(palette != sb_palette)
-    {
-        sb_palette = palette;
+    ST_HUDUnHide(player, HUE_FORCE);
+}
 
-        plyr->plr->filter = R_GetFilterColor(palette);   // $democam
+void ST_createWidgets(int player)
+{
+    static int          largeammo = 1994; // Means "n/a".
+
+    int                 i;
+    ammotype_t          ammoType;
+    boolean             found;
+    int                 width, temp;
+    hudstate_t*         hud = &hudStates[player];
+    player_t*           plr = &players[player];
+    int                 lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
+
+    // Ready weapon ammo.
+    //// \todo Only supports one type of ammo per weapon.
+    found = false;
+    for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
+    {
+        if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
+            continue; // Weapon does not take this ammo.
+
+        STlib_initNum(&hud->wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
+                      &plr->ammo[ammoType].owned, &hud->statusbarActive,
+                      ST_AMMOWIDTH, &hud->statusbarCounterAlpha);
+
+        found = true;
+    }
+    if(!found) // Weapon requires no ammo at all.
+    {
+        // HERETIC.EXE returns an address beyond plr->ammo[NUM_AMMO_TYPES]
+        // if weaponInfo[plr->readyWeapon].ammo == am_noammo
+        // ...obviously a bug.
+
+        //STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
+        //              &plr->ammo[weaponinfo[plr->readyWeapon].ammo],
+        //              &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
+
+        // Ready weapon ammo.
+        STlib_initNum(&hud->wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers, &largeammo,
+                      &hud->statusbarActive, ST_AMMOWIDTH, &hud->statusbarCounterAlpha);
+    }
+
+    // Ready weapon icon
+    STlib_initMultIcon(&hud->wCurrentAmmoIcon, ST_AMMOICONX, ST_AMMOICONY,
+                       ammoIcons, &hud->currentAmmoIconIdx,
+                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
+
+    // The last weapon type.
+    hud->wReadyWeapon.data = plr->readyWeapon;
+
+    // Health num.
+    STlib_initNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, iNumbers,
+                  &plr->health, &hud->statusbarActive, ST_HEALTHWIDTH,
+                  &hud->statusbarCounterAlpha);
+
+    // Armor percentage - should be colored later.
+    STlib_initNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, iNumbers,
+                  &plr->armorPoints, &hud->statusbarActive, ST_ARMORWIDTH,
+                  &hud->statusbarCounterAlpha);
+
+    // Frags sum.
+    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, iNumbers,
+                  &hud->fragsCount, &hud->fragsOn, ST_FRAGSWIDTH,
+                  &hud->statusbarCounterAlpha);
+
+    // KeyBoxes 0-2.
+    STlib_initBinIcon(&hud->wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, &keys[0],
+                      &hud->keyBoxes[0], &hud->keyBoxes[0], 0,
+                      &hud->statusbarCounterAlpha);
+
+    STlib_initBinIcon(&hud->wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, &keys[1],
+                      &hud->keyBoxes[1], &hud->keyBoxes[1], 0,
+                      &hud->statusbarCounterAlpha);
+
+    STlib_initBinIcon(&hud->wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, &keys[2],
+                      &hud->keyBoxes[2], &hud->keyBoxes[2], 0,
+                      &hud->statusbarCounterAlpha);
+
+    // Current artifact (stbar not inventory).
+    STlib_initMultIcon(&hud->wCurrentArtifact, ST_ARTIFACTX, ST_ARTIFACTY,
+                       artifacts, &hud->currentInvIdx,
+                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
+
+    // Current artifact count.
+    STlib_initNum(&hud->wCurrentArtifactCount, ST_ARTIFACTCX, ST_ARTIFACTCY,
+                  sNumbers, &hud->oldCurrentArtifactCount,
+                  &hud->statusbarActive, ST_ARTIFACTCWIDTH,
+                  &hud->statusbarCounterAlpha);
+
+    // Inventory slots.
+    width = artifacts[5].width + 1;
+    temp = 0;
+
+    for(i = 0; i < NUMVISINVSLOTS; ++i)
+    {
+        // Inventory slot icon.
+        STlib_initMultIcon(&hud->wInvSlots[i], ST_INVENTORYX + temp,
+                           ST_INVENTORYY, artifacts, &hud->invSlots[i],
+                           &hud->statusbarActive, &hud->statusbarCounterAlpha);
+
+        // Inventory slot count.
+        STlib_initNum(&hud->wInvSlotsCount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX,
+                      ST_INVENTORYY + ST_INVCOUNTOFFY, sNumbers,
+                      &hud->invSlotsCount[i], &hud->statusbarActive,
+                      ST_ARTIFACTCWIDTH, &hud->statusbarCounterAlpha);
+
+        temp += width;
     }
 }
 
-void drawChain(void)
+void ST_Start(int player)
 {
-    int                 chainY;
-    float               healthPos;
-    float               gemglow;
-    int                 x, y, w, h;
-    float               cw;
-    player_t           *plyr = &players[DISPLAYPLAYER];
+    hudstate_t*         hud;
 
-    if(oldHealth != healthMarker)
-    {
-        oldHealth = healthMarker;
-        healthPos = healthMarker;
-        if(healthPos < 0)
-        {
-            healthPos = 0;
-        }
-        if(healthPos > 100)
-        {
-            healthPos = 100;
-        }
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
 
-        gemglow = healthPos / 100;
-        chainY =
-            (healthMarker ==
-             plyr->plr->mo->health) ? 191 : 191 + chainWiggle;
+    hud = &hudStates[player];
 
-        // draw the chain
+    if(!hud->stopped)
+        ST_Stop(player);
 
-        x = 21;
-        y = chainY;
-        w = 271;
-        h = 8;
-        cw = (healthPos / 118) + 0.018f;
+    initData(hud);
+    ST_createWidgets(player);
 
-        GL_SetPatch(chain.lump, DGL_REPEAT, DGL_CLAMP);
-
-        DGL_Color4f(1, 1, 1, statusbarCounterAlpha);
-
-        DGL_Begin(DGL_QUADS);
-
-        DGL_TexCoord2f( 0 - cw, 0);
-        DGL_Vertex2f(x, y);
-
-        DGL_TexCoord2f( 0.916f - cw, 0);
-        DGL_Vertex2f(x + w, y);
-
-        DGL_TexCoord2f( 0.916f - cw, 1);
-        DGL_Vertex2f(x + w, y + h);
-
-        DGL_TexCoord2f( 0 - cw, 1);
-        DGL_Vertex2f(x, y + h);
-
-        DGL_End();
-
-        // Draw the life gem.
-        healthPos = (healthPos * 256) / 102;
-
-        GL_DrawPatchLitAlpha( x + healthPos, chainY, 1, statusbarCounterAlpha, lifeGem.lump);
-
-        shadeChain();
-
-        // How about a glowing gem?
-        GL_BlendMode(BM_ADD);
-        DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
-
-        GL_DrawRect(x + healthPos - 11, chainY - 6, 41, 24, 1, 0, 0, gemglow - (1 - statusbarCounterAlpha));
-
-        GL_BlendMode(BM_NORMAL);
-        DGL_Color4f(1, 1, 1, 1);
-    }
+    hud->stopped = false;
 }
 
-void ST_drawWidgets(boolean refresh)
+void ST_Stop(int player)
 {
-    int                 x, i;
-    player_t           *plyr = &players[CONSOLEPLAYER];
+    hudstate_t*         hud;
 
-    oldHealth = -1;
-    if(!inventory)
-    {
-        oldCurrentArtifact = 0;
-        // Draw all the counters.
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
 
-        // Frags.
-        if(deathmatch)
-                STlib_updateNum(&wFrags, refresh);
-        else
-                STlib_updateNum(&wHealth, refresh);
+    hud = &hudStates[player];
+    if(hud->stopped)
+        return;
 
-        // Draw armor.
-        STlib_updateNum(&wArmor, refresh);
+    hud->stopped = true;
+}
 
-        // Draw keys.
-        for(i = 0; i < 3; ++i)
-            STlib_updateBinIcon(&wKeyBoxes[i], refresh);
-
-        STlib_updateNum(&wReadyWeapon, refresh);
-        STlib_updateMultIcon(&wCurrentAmmoIcon, refresh);
-
-        // Current artifact.
-        if(plyr->readyArtifact > 0)
-        {
-            STlib_updateMultIcon(&wCurrentArtifact, refresh);
-            if(!artifactFlash && plyr->inventory[plyr->invPtr].count > 1)
-                STlib_updateNum(&wCurrentArtifactCount, refresh);
-        }
-    }
-    else
-    {   // Draw Inventory.
-        x = plyr->invPtr - plyr->curPos;
-
-        for(i = 0; i < NUMVISINVSLOTS; ++i)
-        {
-            if( plyr->inventory[x + i].type != arti_none)
-            {
-                STlib_updateMultIcon(&wInvSlots[i], refresh);
-
-                if( plyr->inventory[x + i].count > 1)
-                    STlib_updateNum(&wInvSlotsCount[i], refresh);
-            }
-        }
-
-        // Draw selector box.
-        GL_DrawPatchLitAlpha(ST_INVENTORYX + plyr->curPos * 31, 189, 1,
-                             statusbarCounterAlpha, artifactSelectBox.lump);
-
-        // Draw more left indicator.
-        if(x != 0)
-            GL_DrawPatchLitAlpha(38, 159, 1, statusbarCounterAlpha,
-                                 !(levelTime & 4) ? invPageLeft.lump : invPageLeft2.lump);
-
-        // Draw more right indicator.
-        if(plyr->inventorySlotNum - x > 7)
-            GL_DrawPatchLitAlpha(269, 159, 1, statusbarCounterAlpha,
-                                 !(levelTime & 4) ? invPageRight.lump : invPageRight2.lump);
-    }
+void ST_Init(void)
+{
+    ST_loadData();
 }
 
 /**
@@ -1589,7 +1689,8 @@ DEFCC(CCmdStatusBarSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks, 0);
-    ST_HUDUnHide(HUE_FORCE); // so the user can see the change.
+    R_SetViewSize(cfg.screenBlocks);
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // so the user can see the change.
+
     return true;
 }

@@ -47,9 +47,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define viewheight          Get(DD_VIEWWINDOW_HEIGHT)
-#define SIZEFACT            (4)
-#define SIZEFACT2           (16)
+#define WINDOWHEIGHT         Get(DD_VIEWWINDOW_HEIGHT)
 
 // TYPES -------------------------------------------------------------------
 
@@ -57,24 +55,16 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    R_SetAllDoomsdayFlags(void);
+void R_SetAllDoomsdayFlags(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean finalestage;
-
-extern float lookOffset;
-
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-player_t *viewplayer;
-
-gamestate_t wipegamestate = GS_DEMOSCREEN;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -89,9 +79,9 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;
  */
 static void initTranslation(void)
 {
-    int         i;
-    byte       *translationtables = (byte *)
-                    DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    int                 i;
+    byte*               translationtables =
+        (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
 
     // Fill out the translation tables.
     for(i = 0; i < 256; ++i)
@@ -118,10 +108,10 @@ void R_InitRefresh(void)
 /**
  * Draws a special filter over the screen.
  */
-void R_DrawSpecialFilter(void)
+void R_DrawSpecialFilter(int pnum)
 {
-    float       x, y, w, h;
-    player_t   *player = &players[DISPLAYPLAYER];
+    float               x, y, w, h;
+    player_t*           player = &players[pnum];
 
     if(player->powers[PT_INVULNERABILITY] <= BLINKTHRESHOLD &&
        !(player->powers[PT_INVULNERABILITY] & 8))
@@ -145,11 +135,11 @@ void R_DrawSpecialFilter(void)
     DGL_Enable(DGL_TEXTURING);
 }
 
-void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t *font,
+void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t* font,
                       boolean center)
 {
-    int         strX;
-    char       *lname, *lauthor;
+    int                 strX;
+    char*               lname, *lauthor;
 
     lname = P_GetMapNiceName();
     if(lname)
@@ -180,104 +170,160 @@ void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t *font,
  * Do not really change anything here, because Doomsday might be in the
  * middle of a refresh. The change will take effect next refresh.
  */
-void R_SetViewSize(int blocks, int detail)
+void R_SetViewSize(int blocks)
 {
     cfg.setSizeNeeded = true;
+
     if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
-    {   // When going fullscreen, force a hud show event (to reset the timer).
-        ST_HUDUnHide(HUE_FORCE);
+    {   // Going to/from fullscreen.
+        int                 i;
+
+        // Force a hud show event (to reset the timer).
+        for(i = 0; i < MAXPLAYERS; ++i)
+            ST_HUDUnHide(i, HUE_FORCE);
     }
+
     cfg.setBlocks = blocks;
 }
 
-void H_Display(void)
+static void rendPlayerView(int player)
 {
-    static boolean viewactivestate = false;
-    static boolean menuactivestate = false;
-    static gamestate_t oldgamestate = -1;
-    player_t   *vplayer = &players[DISPLAYPLAYER];
-    boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
-    float       x, y, w, h;
-    boolean     mapHidesView;
+    player_t*           plr = &players[player];
+    int                 viewAngleOffset =
+        ANGLE_MAX * -G_GetLookOffset(player);
+    boolean             isFullBright =
+        (plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
+                       (plr->powers[PT_INVULNERABILITY] & 8);
 
-    // $democam: can be set on every frame
-    if(cfg.setBlocks > 10 || iscam)
+    if(IS_CLIENT)
     {
-        // Full screen.
-        R_SetViewWindowTarget(0, 0, 320, 200);
-    }
-    else
-    {
-        int w = cfg.setBlocks * 32;
-        int h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
-        R_SetViewWindowTarget(160 - (w / 2),
-                              (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) / 2,
-                              w, h);
+        // Server updates mobj flags in NetSv_Ticker.
+        R_SetAllDoomsdayFlags();
     }
 
-    R_GetViewWindow(&x, &y, &w, &h);
-    R_ViewWindow((int) x, (int) y, (int) w, (int) h);
+    DD_SetVariable(DD_VIEWX_OFFSET, &plr->viewOffset[VX]);
+    DD_SetVariable(DD_VIEWY_OFFSET, &plr->viewOffset[VY]);
+    DD_SetVariable(DD_VIEWZ_OFFSET, &plr->viewOffset[VZ]);
 
-    switch(G_GetGameState())
+    // The view angle offset.
+    DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
+    GL_SetFilter(plr->plr->filter); // $democam
+
+    // How about fullbright?
+    DD_SetInteger(DD_FULLBRIGHT, isFullBright);
+
+    // Render the view with possible custom filters.
+    R_RenderPlayerView(player);
+}
+
+static void rendHUD(int player)
+{
+    player_t*           plr;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    if(G_GetGameState() != GS_LEVEL)
+        return;
+
+    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
+        return;
+
+    plr = &players[player];
+
+    // These various HUD's will be drawn unless Doomsday advises not to
+    if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
     {
-    case GS_LEVEL:
-        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-            break;
+        boolean             redrawsbar = false;
 
-        if(!IS_CLIENT && levelTime < 2)
+        if((WINDOWHEIGHT != 200))
+            redrawsbar = true;
+
+        // Draw HUD displays only visible when the automap is open.
+        if(AM_IsMapActive(player))
+            HU_DrawMapCounters();
+
+        // Do we need to render a full status bar at this point?
+        if(!(AM_IsMapActive(player) && cfg.automapHudDisplay == 0) &&
+           !P_IsCamera(plr->plr->mo))
         {
-            // Don't render too early; the first couple of frames
-            // might be a bit unstable -- this should be considered
-            // a bug, but since there's an easy fix...
-            break;
+            int         viewmode =
+                ((WINDOWHEIGHT == 200)? (cfg.setBlocks - 10) : 0);
+
+            ST_Drawer(player, viewmode, redrawsbar); // $democam
         }
 
-        mapHidesView =
-            R_MapObscures(DISPLAYPLAYER, (int) x, (int) y, (int) w, (int) h);
+        HU_Drawer(player);
+    }
+}
+
+/**
+ * Draws the in-viewport display.
+ *
+ * @param layer         @c 0 = bottom layer (before the viewport border).
+ *                      @c 1 = top layer (after the viewport border).
+ */
+void H_Display(int layer)
+{
+    int                 player = DISPLAYPLAYER;
+    player_t*           plr = &players[player];
+    float               x, y, w, h;
+
+    if(layer == 0)
+    {
+        // $democam: can be set on every frame.
+        if(cfg.setBlocks > 10 || P_IsCamera(plr->plr->mo))
+        {
+            // Full screen.
+            R_SetViewWindowTarget(0, 0, 320, 200);
+        }
+        else
+        {
+            int                 w = cfg.setBlocks * 32;
+            int                 h =
+                cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
+
+            R_SetViewWindowTarget(160 - (w / 2),
+                                  (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) / 2,
+                                  w, h);
+        }
+
+        R_GetViewWindow(&x, &y, &w, &h);
+        R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
-           !mapHidesView)
-        {   // Draw the player view.
-            int         viewAngleOffset =
-                ANGLE_MAX * -G_GetLookOffset(DISPLAYPLAYER);
-            boolean     isFullbright =
-                (vplayer->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
-                               (vplayer->powers[PT_INVULNERABILITY] & 8);
+           !R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
+        {
+            if(G_GetGameState() != GS_LEVEL)
+                return;
 
-            if(IS_CLIENT)
+            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
+                return;
+
+            if(!IS_CLIENT && levelTime < 2)
             {
-                // Server updates mobj flags in NetSv_Ticker.
-                R_SetAllDoomsdayFlags();
+                // Don't render too early; the first couple of frames
+                // might be a bit unstable -- this should be considered
+                // a bug, but since there's an easy fix...
+                return;
             }
 
-            // The view angle offset.
-            DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
-            GL_SetFilter(vplayer->plr->filter);
+            rendPlayerView(player);
 
-            // How about fullbright?
-            Set(DD_FULLBRIGHT, isFullbright);
-
-            // Render the view with possible custom filters.
-            R_RenderPlayerView(DISPLAYPLAYER);
-
-            R_DrawSpecialFilter();
+            R_DrawSpecialFilter(player);
 
             // Crosshair.
-            if(!iscam)
+            if(!P_IsCamera(plr->plr->mo)) // $democam
                 X_Drawer();
         }
 
         // Draw the automap?
-        AM_Drawer(DISPLAYPLAYER);
-        break;
-
-    default:
-        break;
+        AM_Drawer(player);
     }
-
-    menuactivestate = Hu_MenuIsActive();
-    viewactivestate = viewActive;
-    oldgamestate = wipegamestate = G_GetGameState();
+    else if(layer == 1)
+    {
+        rendHUD(player);
+    }
 }
 
 void H_Display2(void)
@@ -288,23 +334,8 @@ void H_Display2(void)
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
-        if(!IS_CLIENT && levelTime < 2)
-        {
-            // Don't render too early; the first couple of frames
-            // might be a bit unstable -- this should be considered
-            // a bug, but since there's an easy fix...
-            break;
-        }
-
-        // These various HUD's will be drawn unless Doomsday advises not to.
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         {
-            boolean     redrawsbar = false;
-
-            // Draw HUD displays only visible when the automap is open.
-            if(AM_IsMapActive(DISPLAYPLAYER))
-                HU_DrawMapCounters();
-
             // Level information is shown for a few seconds in the
             // beginning of a level.
             if(cfg.levelTitle || actualLevelTime <= 6 * TICSPERSEC)
@@ -323,26 +354,6 @@ void H_Display2(void)
                 R_DrawLevelTitle(x, y, alpha, huFontB, true);
                 Draw_EndZoom();
             }
-
-            if((viewheight != 200))
-                redrawsbar = true;
-
-            // Do we need to render a full status bar at this point?
-            if(!(AM_IsMapActive(DISPLAYPLAYER) && cfg.automapHudDisplay == 0))
-            {
-                player_t   *player = &players[DISPLAYPLAYER];
-                boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
-
-                if(!iscam)
-                {
-                    int         viewmode =
-                        ((viewheight == 200)? (cfg.setBlocks - 10) : 0);
-
-                    ST_Drawer(viewmode, redrawsbar); // $democam
-                }
-            }
-
-            HU_Drawer();
         }
         break;
 
@@ -362,7 +373,7 @@ void H_Display2(void)
     // Draw pause pic (but not if InFine active).
     if(paused && !fiActive)
     {
-        GL_DrawPatch(160, 4, W_GetNumForName("PAUSED"));
+        GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
     }
 
     // InFine is drawn whenever active.

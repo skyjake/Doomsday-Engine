@@ -127,8 +127,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     player->update |= PSF_AMMO;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_AMMO);
 
     return true;
 }
@@ -167,8 +166,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, false);
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+        ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
 
         S_ConsoleSound(SFX_WPNUP, NULL, player - players);
         return false;
@@ -198,8 +196,8 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         }
 
         // Maybe unhide the HUD?
-        if(gaveWeapon && player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+        if(gaveWeapon)
+            ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
 
         return (gaveWeapon || gaveAmmo);
     }
@@ -233,8 +231,7 @@ boolean P_GiveBody(player_t *player, int num)
     player->plr->mo->health = player->health;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
 
     return true;
 }
@@ -256,8 +253,7 @@ boolean P_GiveArmor(player_t *player, int armortype)
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
@@ -267,18 +263,12 @@ void P_GiveKey(player_t *player, keytype_t key)
     if(player->keys[key])
         return;
 
-    if(player == &players[CONSOLEPLAYER])
-    {
-        playerKeys |= 1 << key;
-    }
-
     player->bonusCount = BONUSADD;
     player->keys[key] = true;
     player->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    if(player == &players[CONSOLEPLAYER])
-        ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+    ST_HUDUnHide(player - players, HUE_ON_PICKUP_KEY);
 }
 
 /**
@@ -352,8 +342,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
     if(retval)
     {
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER])
-            ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+        ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
     }
 
     return retval;
@@ -765,8 +754,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 
     player->bonusCount += BONUSADD;
 
-    if(player == &players[CONSOLEPLAYER])
-        ST_doPaletteStuff();
+    ST_doPaletteStuff(player - players);
 
     S_ConsoleSound(sound, NULL, player - players);
 }
@@ -1365,8 +1353,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         temp = damage < 100 ? damage : 100;
 
         // Maybe unhide the HUD?
-        if(player == &players[CONSOLEPLAYER]);
-            ST_HUDUnHide(HUE_ON_DAMAGE);
+        ST_HUDUnHide(player - players, HUE_ON_DAMAGE);
     }
 
     // How about some particles, yes?

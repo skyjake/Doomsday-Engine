@@ -300,9 +300,6 @@ void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);
 void       *G_GetVariable(int id);
 
-void        R_InitRefresh(void);
-void        R_SetViewSize(int blocks, int detail);
-
 // Most damage defined using HITDICE
 #define HITDICE(a)          ((1+(P_Random()&7))*a)
 

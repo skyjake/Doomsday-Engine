@@ -37,12 +37,12 @@
 #include "p_mobj.h"
 
 void            R_InitRefresh(void);
-void            H_Display(void);
+void            H_Display(int layer);
 void            H_Display2(void);
 
-void            R_SetViewSize(int blocks, int detail);
+void            R_SetViewSize(int blocks);
 
-void            R_DrawSpecialFilter(void);
+void            R_DrawSpecialFilter(int pnum);
 void            R_DrawLevelTitle(int x, int y, float alpha,
                                  dpatch_t *font, boolean center);
 
