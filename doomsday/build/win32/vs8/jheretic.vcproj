@@ -351,6 +351,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_terraintype.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_tick.h"
 				>
 			</File>
@@ -532,10 +536,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\p_terraintype.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\include\p_terraintype.h"
 				>
 			</File>
 			<File
