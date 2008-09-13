@@ -23,7 +23,7 @@
  */
 
 /**
- * Common controls menu
+ * m_ctrl.c: Common controls menu.
  */
 
 // HEADER FILES ------------------------------------------------------------

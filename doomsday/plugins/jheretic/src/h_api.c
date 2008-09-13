@@ -1,6 +1,6 @@
 /**\file
  *\section License
- * License: GPL + jHeretic/jHexen Exception
+ * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -20,17 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * In addition, as a special exception, we, the authors of deng
- * give permission to link the code of our release of deng with
- * the libjhexen and/or the libjheretic libraries (or with modified
- * versions of it that use the same license as the libjhexen or
- * libjheretic libraries), and distribute the linked executables.
- * You must obey the GNU General Public License in all respects for
- * all of the code used other than “libjhexen or libjheretic”. If
- * you modify this file, you may extend this exception to your
- * version of the file, but you are not obligated to do so. If you
- * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -147,7 +136,7 @@ void* G_GetVariable(int id)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t *GetGameAPI(game_import_t *imports)
+game_export_t* GetGameAPI(game_import_t* imports)
 {
     // Take a copy of the imports, but only copy as much data as is
     // allowed and legal.
@@ -173,7 +162,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.EndFrame = G_EndFrame;
     gx.ConsoleBackground = H_ConsoleBg;
     gx.UpdateState = G_UpdateState;
-#undef Get
+
     gx.GetInteger = G_GetInteger;
     gx.GetVariable = G_GetVariable;
 

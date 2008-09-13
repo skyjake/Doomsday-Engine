@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __NETSV_H__
-#define __NETSV_H__
+#ifndef __D_NETSV_H__
+#define __D_NETSV_H__
 
 #if __WOLFTC__
 #  include "wolftc.h"

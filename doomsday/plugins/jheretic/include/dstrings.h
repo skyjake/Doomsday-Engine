@@ -1,6 +1,6 @@
 /**\file
  *\section License
- * License: GPL + jHeretic/jHexen Exception
+ * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
@@ -20,17 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * In addition, as a special exception, we, the authors of deng
- * give permission to link the code of our release of deng with
- * the libjhexen and/or the libjheretic libraries (or with modified
- * versions of it that use the same license as the libjhexen or
- * libjheretic libraries), and distribute the linked executables.
- * You must obey the GNU General Public License in all respects for
- * all of the code used other than “libjhexen or libjheretic”. If
- * you modify this file, you may extend this exception to your
- * version of the file, but you are not obligated to do so. If you
- * do not wish to do so, delete this exception statement from your version.
  */
 
 /**
@@ -40,15 +29,7 @@
 #ifndef __HERETICSTRINGS__
 #define __HERETICSTRINGS__
 
-// DStrings.h
-
 #define GET_TXT(x)      ((*gi.text)[x].text)
-
-//---------------------------------------------------------------------------
-//
-// M_menu.c
-//
-//---------------------------------------------------------------------------
 
 #define NUM_QUITMESSAGES   0
 
@@ -78,12 +59,6 @@
 #define GAMMALVL3 GET_TXT(TXT_GAMMALVL3)
 #define GAMMALVL4 GET_TXT(TXT_GAMMALVL4)
 #define EMPTYSTRING GET_TXT(TXT_EMPTYSTRING)
-
-//---------------------------------------------------------------------------
-//
-// P_inter.c
-//
-//---------------------------------------------------------------------------
 
 // Pickup Key messages:
 #define TXT_GOTBLUEKEY GET_TXT(TXT_TXT_GOTBLUEKEY)
@@ -138,12 +113,6 @@
 #define TXT_WPNPHOENIXROD   GET_TXT(TXT_TXT_WPNPHOENIXROD)
 #define TXT_WPNGAUNTLETS    GET_TXT(TXT_TXT_WPNGAUNTLETS)
 
-//---------------------------------------------------------------------------
-//
-// SB_bar.c
-//
-//---------------------------------------------------------------------------
-
 #define TXT_CHEATGODON GET_TXT(TXT_TXT_CHEATGODON)
 #define TXT_CHEATGODOFF GET_TXT(TXT_TXT_CHEATGODOFF)
 #define TXT_CHEATNOCLIPON GET_TXT(TXT_TXT_CHEATNOCLIPON)
@@ -171,29 +140,11 @@
 #define TXT_CHEATIDDQD GET_TXT(TXT_TXT_CHEATIDDQD)
 #define TXT_CHEATIDKFA GET_TXT(TXT_TXT_CHEATIDKFA)
 
-//---------------------------------------------------------------------------
-//
-// P_doors.c
-//
-//---------------------------------------------------------------------------
-
 #define TXT_NEEDBLUEKEY GET_TXT(TXT_TXT_NEEDBLUEKEY)
 #define TXT_NEEDGREENKEY GET_TXT(TXT_TXT_NEEDGREENKEY)
 #define TXT_NEEDYELLOWKEY GET_TXT(TXT_TXT_NEEDYELLOWKEY)
 
-//---------------------------------------------------------------------------
-//
-// G_game.c
-//
-//---------------------------------------------------------------------------
-
 #define TXT_GAMESAVED GET_TXT(TXT_TXT_GAMESAVED)
-
-//---------------------------------------------------------------------------
-//
-// HU_stuff.c
-//
-//---------------------------------------------------------------------------
 
 #define HUSTR_CHATMACRO1 GET_TXT(TXT_HUSTR_CHATMACRO1)
 #define HUSTR_CHATMACRO2 GET_TXT(TXT_HUSTR_CHATMACRO2)
@@ -227,12 +178,6 @@
 #define HUSTR_KEYBROWN  'b'
 #define HUSTR_KEYRED    'r'
 
-//---------------------------------------------------------------------------
-//
-// AM_map.c
-//
-//---------------------------------------------------------------------------
-
 #define AMSTR_FOLLOWON GET_TXT(TXT_AMSTR_FOLLOWON)
 #define AMSTR_FOLLOWOFF GET_TXT(TXT_AMSTR_FOLLOWOFF)
 #define AMSTR_ROTATEON GET_TXT(TXT_AMSTR_ROTATEON)
@@ -243,12 +188,6 @@
 
 #define AMSTR_MARKEDSPOT GET_TXT(TXT_AMSTR_MARKEDSPOT)
 #define AMSTR_MARKSCLEARED GET_TXT(TXT_AMSTR_MARKSCLEARED)
-
-//---------------------------------------------------------------------------
-//
-// ST_stuff.c
-//
-//---------------------------------------------------------------------------
 
 #define STSTR_DQDON GET_TXT(TXT_STSTR_DQDON)
 #define STSTR_DQDOFF GET_TXT(TXT_STSTR_DQDOFF)
@@ -263,12 +202,6 @@
 
 #define STSTR_CHOPPERS GET_TXT(TXT_STSTR_CHOPPERS)
 #define STSTR_CLEV GET_TXT(TXT_STSTR_CLEV)
-
-//---------------------------------------------------------------------------
-//
-// F_finale.c
-//
-//---------------------------------------------------------------------------
 
 #define E1TEXT GET_TXT(TXT_E1TEXT)
 #define E2TEXT GET_TXT(TXT_E2TEXT)

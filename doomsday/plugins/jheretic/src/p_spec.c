@@ -33,8 +33,6 @@
  *
  * Events are operations triggered by using, crossing, or shooting special
  * lines, or by timed thinkers.
- *
- * 2006/01/17 DJS - Recreated using jDoom's p_spec.c as a base.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -68,7 +66,7 @@
 #pragma pack(1)
 typedef struct animdef_s {
     /* Do NOT change these members in any way */
-    signed char istexture;  //  if false, it is a flat (instead of bool)
+    signed char istexture;  // if false, it is a flat (instead of bool)
     char        endname[9];
     char        startname[9];
     int         speed;

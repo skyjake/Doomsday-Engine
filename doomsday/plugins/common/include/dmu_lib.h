@@ -87,7 +87,7 @@
 #define DMU_CEILING_MATERIAL_OFFSET_Y (DMU_CEILING_OF_SECTOR | DMU_MATERIAL_OFFSET_Y)
 #define DMU_CEILING_MATERIAL_OFFSET_XY (DMU_CEILING_OF_SECTOR | DMU_MATERIAL_OFFSET_XY)
 
-linedef_t  *P_AllocDummyLine(void);
+linedef_t*  P_AllocDummyLine(void);
 void        P_FreeDummyLine(linedef_t* line);
 
 void        P_CopyLine(linedef_t* from, linedef_t* to);
@@ -97,6 +97,6 @@ float       P_SectorLight(sector_t* sector);
 void        P_SectorSetLight(sector_t* sector, float level);
 void        P_SectorModifyLight(sector_t* sector, float value);
 void        P_SectorModifyLightx(sector_t* sector, fixed_t value);
-void       *P_SectorSoundOrigin(sector_t *sec);
+void*       P_SectorSoundOrigin(sector_t* sector);
 
 #endif

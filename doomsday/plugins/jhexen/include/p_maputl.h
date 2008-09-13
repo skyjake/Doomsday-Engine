@@ -1,6 +1,6 @@
 /**\file
  *\section License
- * License: GPL + jHeretic/jHexen Exception
+ * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>

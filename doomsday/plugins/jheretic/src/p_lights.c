@@ -27,8 +27,6 @@
 
 /**
  * p_lights.c: Per-sector lighting effects - jHeretic specific.
- *
- *  2006/01/17 DJS - Recreated using jDoom's p_lights.c as a base.
  */
 
 // HEADER FILES ------------------------------------------------------------

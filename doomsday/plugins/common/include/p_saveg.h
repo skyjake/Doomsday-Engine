@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
  * p_saveg.h: Common save game handling.
  */
 
-#ifndef __P_SAVEG__
-#define __P_SAVEG__
+#ifndef __P_SAVEG_H__
+#define __P_SAVEG_H__
 
 typedef enum thinkclass_e {
     TC_NULL = -1,

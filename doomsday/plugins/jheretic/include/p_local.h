@@ -1,52 +1,34 @@
 /**\file
  *\section License
- * License: Raven
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
- * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
- * code license; you can redistribute it and/or modify it under the terms
- * of the HERETIC / HEXEN source code license as published by Activision.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * THIS MATERIAL IS NOT MADE OR SUPPORTED BY ACTIVISION.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * WARRANTY INFORMATION.
- * This program is provided as is. Activision and it's affiliates make no
- * warranties of any kind, whether oral or written , express or implied,
- * including any warranty of merchantability, fitness for a particular
- * purpose or non-infringement, and no other representations or claims of
- * any kind shall be binding on or obligate Activision or it's affiliates.
- *
- * LICENSE CONDITIONS.
- * You shall not:
- *
- * 1) Exploit this Program or any of its parts commercially.
- * 2) Use this Program, or permit use of this Program, on more than one
- *    computer, computer terminal, or workstation at the same time.
- * 3) Make copies of this Program or any part thereof, or make copies of
- *    the materials accompanying this Program.
- * 4) Use the program, or permit use of this Program, in a network,
- *    multi-user arrangement or remote access arrangement, including any
- *    online use, except as otherwise explicitly provided by this Program.
- * 5) Sell, rent, lease or license any copies of this Program, without
- *    the express prior written consent of Activision.
- * 6) Remove, disable or circumvent any proprietary notices or labels
- *    contained on or within the Program.
- *
- * You should have received a copy of the HERETIC / HEXEN source code
- * license along with this program (Ravenlic.txt); if not:
- * http://www.ravensoft.com/
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
 /**
  * p_local.h:
  */
 
-#ifndef __P_LOCAL__
-#define __P_LOCAL__
+#ifndef __P_LOCAL_H__
+#define __P_LOCAL_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -62,8 +44,7 @@
 #include "p_xg.h"
 #include "info.h"
 
-// Palette indices.
-// For damage/bonus red-/gold-shifts
+// Palette indices, for damage/bonus red-/gold-shifts.
 #define STARTREDPALS    1
 #define STARTBONUSPALS  9
 #define NUMREDPALS      8
@@ -88,20 +69,14 @@
 #define MELEERANGE      64
 #define MISSILERANGE    (32*64)
 
-// follow a player exlusively for 3 seconds
+// Follow a player exlusively for 3 seconds.
 #define BASETHRESHOLD   100
 
-
-// GMJ 02/02/02
 #define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seeState)
 
 #define FOOTCLIPSIZEF    (10)
 
-// ***** P_TICK *****
-
 #define thinkerCap      (*gi.thinkerCap)
-
-// ***** P_PSPR *****
 
 #define FLAME_THROWER_TICS  10*35
 #define MAGIC_JUNK          1234
@@ -130,13 +105,9 @@ void            P_PostMorphWeapon(player_t *player, weapontype_t weapon);
 void            P_UpdateBeak(player_t *player, pspdef_t *psp);
 void            P_FireWeapon(player_t *player);
 
-// ***** P_USER *****
-
 void            P_ClientSideThink(void);
 void            P_Thrust(player_t *player, angle_t angle, float move);
 boolean         P_UndoPlayerMorph(player_t *player);
-
-// ***** P_MOBJ *****
 
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
@@ -168,19 +139,13 @@ void        P_ExplodeMissile(mobj_t *mo);
 void        P_SpawnMapThing(spawnspot_t *th);
 void        P_SpawnPlayer(spawnspot_t *mthing, int plrnum);
 
-// ***** P_MAPUTL *****
-
 #define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
 #define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-// ***** P_SETUP *****
-
 char           *P_GetLevelName(int episode, int map);
 char           *P_GetShortLevelName(int episode, int map);
-
-// ***** P_INTER *****
 
 extern float turboMul;
 extern int maxAmmo[NUM_AMMO_TYPES];
@@ -196,7 +161,6 @@ boolean         P_GiveBody(player_t *player, int num);
 boolean         P_GivePower(player_t *player, powertype_t power);
 boolean         P_MorphPlayer(player_t *player);
 
-// mn_menu, sb_bar
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
@@ -206,4 +170,4 @@ void            Draw_EndZoom(void);
 void            R_SetFilter(int filter);
 int             R_GetFilterColor(int filter);
 
-#endif                          // __P_LOCAL__
+#endif

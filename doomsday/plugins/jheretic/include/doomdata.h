@@ -27,8 +27,8 @@
  * doomdata.h: Thing and linedef attributes
  */
 
-#ifndef __DOOMDATA__
-#define __DOOMDATA__
+#ifndef __DOOMDATA_H__
+#define __DOOMDATA_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"

@@ -1,10 +1,10 @@
 /**\file
  *\section License
- * License: GPL + jHeretic/jHexen Exception
+ * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,24 +18,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * In addition, as a special exception, we, the authors of deng
- * give permission to link the code of our release of deng with
- * the libjhexen and/or the libjheretic libraries (or with modified
- * versions of it that use the same license as the libjhexen or
- * libjheretic libraries), and distribute the linked executables.
- * You must obey the GNU General Public License in all respects for
- * all of the code used other than “libjhexen or libjheretic”. If
- * you modify this file, you may extend this exception to your
- * version of the file, but you are not obligated to do so. If you
- * do not wish to do so, delete this exception statement from your version.
  */
 
-#define GET_TXT(x)      ((*gi.text)[x].text)
+/**
+ * textdefs.h:
+ */
 
-// MN_menu.c ---------------------------------------------------------------
+#ifndef __TEXTDEFS_H__
+#define __TEXTDEFS_H__
+
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
+#endif
+
+#define GET_TXT(x)      ((*gi.text)[x].text)
 
 #define NUM_QUITMESSAGES   0
 
@@ -62,16 +60,12 @@
 #define TXT_GAMMA_LEVEL_4 GET_TXT(TXT_TXT_GAMMA_LEVEL_4)
 #define EMPTYSTRING GET_TXT(TXT_EMPTYSTRING)
 
-// P_inter.c ---------------------------------------------------------------
-
 // Mana
-
 #define TXT_MANA_1 GET_TXT(TXT_TXT_MANA_1)
 #define TXT_MANA_2 GET_TXT(TXT_TXT_MANA_2)
 #define TXT_MANA_BOTH GET_TXT(TXT_TXT_MANA_BOTH)
 
 // Keys
-
 #define TXT_KEY_STEEL GET_TXT(TXT_TXT_KEY_STEEL)
 #define TXT_KEY_CAVE GET_TXT(TXT_TXT_KEY_CAVE)
 #define TXT_KEY_AXE GET_TXT(TXT_TXT_KEY_AXE)
@@ -85,7 +79,6 @@
 #define TXT_KEY_CASTLE GET_TXT(TXT_TXT_KEY_CASTLE)
 
 // Artifacts
-
 #define TXT_ARTIINVULNERABILITY GET_TXT(TXT_TXT_ARTIINVULNERABILITY)
 #define TXT_ARTIHEALTH GET_TXT(TXT_TXT_ARTIHEALTH)
 #define TXT_ARTISUPERHEALTH GET_TXT(TXT_TXT_ARTISUPERHEALTH)
@@ -103,7 +96,6 @@
 #define TXT_ARTIHEALINGRADIUS GET_TXT(TXT_TXT_ARTIHEALINGRADIUS)
 
 // Puzzle artifacts
-
 #define TXT_ARTIPUZZSKULL GET_TXT(TXT_TXT_ARTIPUZZSKULL)
 #define TXT_ARTIPUZZGEMBIG GET_TXT(TXT_TXT_ARTIPUZZGEMBIG)
 #define TXT_ARTIPUZZGEMRED GET_TXT(TXT_TXT_ARTIPUZZGEMRED)
@@ -121,7 +113,6 @@
 #define TXT_USEPUZZLEFAILED GET_TXT(TXT_TXT_USEPUZZLEFAILED)
 
 // Items
-
 #define TXT_ITEMHEALTH GET_TXT(TXT_TXT_ITEMHEALTH)
 #define TXT_ITEMBAGOFHOLDING GET_TXT(TXT_TXT_ITEMBAGOFHOLDING)
 #define TXT_ITEMSHIELD1 GET_TXT(TXT_TXT_ITEMSHIELD1)
@@ -133,7 +124,6 @@
 #define TXT_ARMOR4 GET_TXT(TXT_TXT_ARMOR4)
 
 // Weapons
-
 #define TXT_WEAPON_F2 GET_TXT(TXT_TXT_WEAPON_F2)
 #define TXT_WEAPON_F3 GET_TXT(TXT_TXT_WEAPON_F3)
 #define TXT_WEAPON_F4 GET_TXT(TXT_TXT_WEAPON_F4)
@@ -146,8 +136,6 @@
 #define TXT_QUIETUS_PIECE GET_TXT(TXT_TXT_QUIETUS_PIECE)
 #define TXT_WRAITHVERGE_PIECE GET_TXT(TXT_TXT_WRAITHVERGE_PIECE)
 #define TXT_BLOODSCOURGE_PIECE GET_TXT(TXT_TXT_BLOODSCOURGE_PIECE)
-
-// SB_bar.c ----------------------------------------------------------------
 
 #define TXT_CHEATGODON GET_TXT(TXT_TXT_CHEATGODON)
 #define TXT_CHEATGODOFF GET_TXT(TXT_TXT_CHEATGODOFF)
@@ -169,11 +157,7 @@
 #define TXT_CHEATBADINPUT GET_TXT(TXT_TXT_CHEATBADINPUT)
 #define TXT_CHEATNOMAP GET_TXT(TXT_TXT_CHEATNOMAP)
 
-// G_game.c ----------------------------------------------------------------
-
 #define TXT_GAMESAVED GET_TXT(TXT_TXT_GAMESAVED)
-
-// M_misc.c ----------------------------------------------------------------
 
 #define HUSTR_CHATMACRO1 GET_TXT(TXT_HUSTR_CHATMACRO1)
 #define HUSTR_CHATMACRO2 GET_TXT(TXT_HUSTR_CHATMACRO2)
@@ -186,8 +170,6 @@
 #define HUSTR_CHATMACRO9 GET_TXT(TXT_HUSTR_CHATMACRO9)
 #define HUSTR_CHATMACRO0 GET_TXT(TXT_HUSTR_CHATMACRO0)
 
-// AM_map.c ----------------------------------------------------------------
-
 #define AMSTR_FOLLOWON GET_TXT(TXT_AMSTR_FOLLOWON)
 #define AMSTR_FOLLOWOFF GET_TXT(TXT_AMSTR_FOLLOWOFF)
 #define AMSTR_ROTATEON GET_TXT(TXT_AMSTR_ROTATEON)
@@ -198,3 +180,5 @@
 
 #define AMSTR_MARKEDSPOT GET_TXT(TXT_AMSTR_MARKEDSPOT)
 #define AMSTR_MARKSCLEARED GET_TXT(TXT_AMSTR_MARKSCLEARED)
+
+#endif

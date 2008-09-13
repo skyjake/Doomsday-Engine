@@ -31,10 +31,8 @@
  *
  * Line Tag handling. Line and Sector triggers.
  *
- * Events are operations triggered by using, crossing,
- * or shooting special lines, or by timed thinkers.
- *
- *  2006/01/17 DJS - Recreated using jDoom's p_spec.h as a base.
+ * Events are operations triggered by using, crossing, or shooting
+ * special lines, or by timed thinkers.
  */
 
 #ifndef __P_SPEC_H__
@@ -47,7 +45,6 @@
 #include "h_player.h"
 #include "r_data.h"
 
-//      Define values for map objects
 #define MO_TELEPORTMAN          14
 
 // at game start
@@ -63,18 +60,14 @@ void            P_AddAmbientSfx(int sequence);
 void            P_UpdateSpecials(void);
 void            P_AmbientSound(void);
 
-boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
+boolean         P_ActivateLine(linedef_t* ld, mobj_t* mo, int side,
                                int activationType);
 
-void            P_PlayerInSpecialSector(player_t *player);
+void            P_PlayerInSpecialSector(player_t* player);
 
-void            P_PlayerInWindSector(player_t *player);
+void            P_PlayerInWindSector(player_t* player);
 
-//
-//  SPECIAL
-//
-int             EV_DoDonut(linedef_t *line);
-
+int             EV_DoDonut(linedef_t* line);
 
 typedef enum {
     ok,
@@ -83,14 +76,14 @@ typedef enum {
 } result_e;
 
 typedef enum {
-    build8,                        // slowly build by 8
-    build16                        // slowly build by 16
+    build8, // Slowly build by 8.
+    build16 // Slowly build by 16.
 } stair_e;
 
-result_e        T_MovePlane(sector_t *sector, float speed, float dest,
+result_e        T_MovePlane(sector_t* sector, float speed, float dest,
                             int crush, int floorOrCeiling, int direction);
 
-int             EV_BuildStairs(linedef_t *line, stair_e type);
+int             EV_BuildStairs(linedef_t* line, stair_e type);
 
 boolean         P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side);
 

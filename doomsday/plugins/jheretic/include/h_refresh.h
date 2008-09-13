@@ -25,8 +25,8 @@
  * h_refresh.h:
  */
 
-#ifndef __H_REFRESH_H__
-#define __H_REFRESH_H__
+#ifndef __JHERETIC_REFRESH_H__
+#define __JHERETIC_REFRESH_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -44,9 +44,9 @@ void            R_SetViewSize(int blocks);
 
 void            R_DrawSpecialFilter(int pnum);
 void            R_DrawLevelTitle(int x, int y, float alpha,
-                                 dpatch_t *font, boolean center);
+                                 dpatch_t* font, boolean center);
 
-void            P_SetDoomsdayFlags(mobj_t *mo);
+void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
 
 #endif

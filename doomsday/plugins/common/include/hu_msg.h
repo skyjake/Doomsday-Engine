@@ -23,6 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+ * hu_msg.h:
+ */
+
 #ifndef __HUD_MESSAGES_H__
 #define __HUD_MESSAGES_H__
 
@@ -41,13 +45,13 @@
 #endif
 
 void        HUMsg_Register(void);
-boolean     HUMsg_Responder(event_t *ev);
+boolean     HUMsg_Responder(event_t* ev);
 void        HUMsg_Drawer(int player);
 void        HUMsg_Ticker(void);
 void        HUMsg_Start(void);
 void        HUMsg_Init(void);
 
-void        HUMsg_PlayerMessage(int player, char *message, int tics,
+void        HUMsg_PlayerMessage(int player, char* message, int tics,
                                 boolean noHide, boolean yellow);
 void        HUMsg_ClearMessages(int player);
 #endif

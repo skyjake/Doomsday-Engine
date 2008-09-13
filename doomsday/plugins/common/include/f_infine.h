@@ -26,21 +26,21 @@
  * f_infine.h:
  */
 
-#ifndef __INFINE_H__
-#define __INFINE_H__
+#ifndef __F_INFINE_H__
+#define __F_INFINE_H__
 
 // Condition truth values (that clients can't deduce on their own).
 enum {
-	FICOND_SECRET,
-	FICOND_LEAVEHUB,
-	NUM_FICONDS
+    FICOND_SECRET,
+    FICOND_LEAVEHUB,
+    NUM_FICONDS
 };
 
 typedef enum infinemode_e {
-	FIMODE_LOCAL,
-	FIMODE_OVERLAY,
-	FIMODE_BEFORE,
-	FIMODE_AFTER
+    FIMODE_LOCAL,
+    FIMODE_OVERLAY,
+    FIMODE_BEFORE,
+    FIMODE_AFTER
 } infinemode_t;
 
 extern boolean  fiActive;

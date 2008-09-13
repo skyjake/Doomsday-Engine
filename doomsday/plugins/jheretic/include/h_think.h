@@ -31,19 +31,9 @@
  * suffers state changes of more or less violent nature.
  */
 
-#ifndef __D_THINK__
-#define __D_THINK__
+#ifndef __JHERETIC_THINK_H__
+#define __JHERETIC_THINK_H__
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-//
-// Experimental stuff.
-// To compile this as "ANSI C with classes"
-//  we will need to handle the various
-//  action functions cleanly.
-//
 typedef void    (*actionf_v) ();
 typedef void    (*actionf_p1) (void *);
 typedef void    (*actionf_p2) (void *, void *);

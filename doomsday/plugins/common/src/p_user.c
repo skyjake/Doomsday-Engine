@@ -1,38 +1,33 @@
 /**\file
  *\section License
- * License: GPL + jHeretic/jHexen Exception
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2000-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
- */
-
-/* $Id$
  *
- * This source is available for distribution and/or modification
- * only under the terms of the DOOM Source Code License as
- * published by id Software. All rights reserved.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * The source is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
- * for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
 /**
  * p_user.c : Player related stuff.
  *
  * Bobbing POV/weapon, movement, pending weapon, artifact usage...
- * Compiles for jDoom, jHeretic and jHexen.
- */
-
-/**
- * \bug  This file contains a fair amount of Raven licensed code
- *       however none is included when the build target is jDoom.
- *
- *       DJS - In the process of cleaning this up I will attempt to segregate
- *       offending code ready for rewrite or split.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -474,10 +469,9 @@ void P_MovePlayer(player_t *player)
 }
 
 /**
- * Fall on your ass when dying.
- * Decrease viewheight to floor height.
+ * Fall on your ass when dying. Decrease viewheight to floor height.
  */
-void P_DeathThink(player_t *player)
+void P_DeathThink(player_t* player)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     angle_t angle;
