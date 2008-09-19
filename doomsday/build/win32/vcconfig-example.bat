@@ -41,14 +41,6 @@ REM
 REM ---- OpenGL (GL/gl.h, GL/glext.h, GL/glu.h):
 SET GL_INC=D:\VS.NET\Vc7\Include
 
-
-REM -=- Requirements for dsA3D.dll -=-
-REM
-REM ---- Aureal A3D:
-SET A3D_INC=D:\sdk\Aureal\A3D 3.0 SDK\sdk\inc
-SET A3D_LIB=D:\sdk\Aureal\A3D 3.0 SDK\sdk\lib
-
-
 REM -=- Requirements for dsOpenAL.dll -=-
 REM
 REM ---- OpenAL:

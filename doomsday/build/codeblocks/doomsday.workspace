@@ -23,9 +23,6 @@
 		<Project filename="dpwadmapconverter.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
-		<Project filename="dsa3d.cbp">
-			<Depends filename="doomsday.cbp" />
-		</Project>
 		<Project filename="dscompat.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
