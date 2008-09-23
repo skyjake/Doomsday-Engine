@@ -208,13 +208,6 @@ iwad: Pelidatatiedosto
 iwad-selection-title: Valitse pelidatatiedosto
 memory-zone: Muistinkulutus(Mt)
 
-renderer: Renderöintikirjasto
-renderer-opengl: OpenGL
-renderer-direct3d: Microsoft Direct3D
-
-opengl-options: OpenGL
-direct3d-options: Direct3D
-
 color-depth: Värisyvyys
 color-depth-16: 16-bit
 color-depth-32: 32-bit
@@ -248,8 +241,6 @@ enable-highres-patches: Käytä ulkoisia patcheja
 
 texture-compression: Tekstuurien pakkaaminen
 disable-genmips: Poista SGIS_generate_mipmap
-
-d3d-config-dialog: Näytä D3D-asetusdialogi
 
 zbuffer-depth: Z-bufferin syvyys
 zbuffer-depth-16: 16-bit

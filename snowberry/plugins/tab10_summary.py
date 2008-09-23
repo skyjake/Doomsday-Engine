@@ -185,7 +185,7 @@ def updateSummary(profile):
     # These are displayed in another summary field or shouldn't be
     # shown at all.
     ignoredValues = ['window-size', 'window-width', 'window-height',
-                     'color-depth', 'renderer', 'run-in-window']
+                     'color-depth', 'run-in-window']
 
     for value in profile.getAllValues():
 
@@ -244,11 +244,6 @@ def updateSummary(profile):
         if value:
             summary.append(language.translate('summary-' + \
                                               value.getValue()))
-
-    # The renderer.
-    value = profile.getValue('renderer')
-    if value:
-        summary.append(language.translate(value.getValue()))
 
     systemSummary.setText(string.join(summary, '\n'))
     systemSummary.resizeToBestSize()

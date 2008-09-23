@@ -274,13 +274,6 @@ iwad: Haupt-Spieledatei
 iwad-selection-title: Wählen Sie die Haupt-Spieledatei
 memory-zone: Speicherbedarf (MB)
 
-renderer: Renderer
-renderer-opengl: OpenGL
-renderer-direct3d: Microsoft Direct3D
-
-opengl-options: OpenGL
-direct3d-options: Direct3D
-
 color-depth: Farbtiefe
 color-depth-16: 16-bit
 color-depth-32: 32-bit
@@ -306,8 +299,6 @@ enable-highres-patches: Externe Patches nutzen
 
 texture-compression: Texturkompression
 disable-genmips: SGIS_generate_mipmap abschalten
-
-d3d-config-dialog: D3D Konfigurationsdialog anzeigen
 
 zbuffer-depth: Z-Buffer Tiefe
 zbuffer-depth-16: 16-bit

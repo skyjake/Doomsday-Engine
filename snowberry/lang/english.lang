@@ -354,13 +354,6 @@ iwad: Game data file
 iwad-selection-title: Choose Game Data File
 memory-zone: Memory usage (MB)
 
-renderer: Renderer library
-renderer-opengl: OpenGL
-renderer-direct3d: Microsoft Direct3D
-
-opengl-options: OpenGL
-direct3d-options: Direct3D
-
 color-depth: Color depth
 color-depth-16: 16-bit
 color-depth-32: 32-bit
@@ -399,8 +392,6 @@ enable-highres-patches: Use external patches
 
 texture-compression: Texture compression
 disable-genmips: Disable SGIS_generate_mipmap
-
-d3d-config-dialog: Show D3D config dialog
 
 zbuffer-depth: Z-buffer depth
 zbuffer-depth-16: 16-bit
