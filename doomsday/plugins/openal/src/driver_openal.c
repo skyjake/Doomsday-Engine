@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * \bug Not 64bit clean: In function 'DS_CreateBuffer': cast to pointer from integer of different size
@@ -31,8 +31,8 @@
  * \bug Not 64bit clean: In function 'DS_Setv': cast to pointer from integer of different size
  */
 
-/*
- * driver_openal.c: OpenAL Doomsday Sfx Driver
+/**
+ * driver_openal.c: OpenAL Doomsday Sfx Driver.
  *
  * Link with openal32.lib (and doomsday.lib).
  */
@@ -65,8 +65,8 @@
 
 #define PI          3.141592654
 
-#define Src(buf)    ((ALuint)buf->ptr3d)
-#define Buf(buf)    ((ALuint)buf->ptr)
+#define SRC(buf)    ((ALuint)buf->ptr3d)
+#define BUF(buf)    ((ALuint)buf->ptr)
 
 // TYPES -------------------------------------------------------------------
 
@@ -75,28 +75,28 @@ enum { VX, VY, VZ };
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 #ifdef WIN32
-ALenum(*EAXGet) (const struct _GUID *propertySetID, ALuint property,
-                 ALuint source, ALvoid *value, ALuint size);
-ALenum(*EAXSet) (const struct _GUID *propertySetID, ALuint property,
+ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint property,
+                 ALuint source, ALvoid* value, ALuint size);
+ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint property,
                  ALuint source, ALvoid *value, ALuint size);
 #endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-int     DS_Init(void);
-void    DS_Shutdown(void);
-sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate);
-void    DS_DestroyBuffer(sfxbuffer_t *buf);
-void    DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample);
-void    DS_Reset(sfxbuffer_t *buf);
-void    DS_Play(sfxbuffer_t *buf);
-void    DS_Stop(sfxbuffer_t *buf);
-void    DS_Refresh(sfxbuffer_t *buf);
-void    DS_Event(int type);
-void    DS_Set(sfxbuffer_t *buf, int property, float value);
-void    DS_Setv(sfxbuffer_t *buf, int property, float *values);
-void    DS_Listener(int property, float value);
-void    DS_Listenerv(int property, float *values);
+int         DS_Init(void);
+void        DS_Shutdown(void);
+sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate);
+void        DS_DestroyBuffer(sfxbuffer_t* buf);
+void        DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+void        DS_Reset(sfxbuffer_t* buf);
+void        DS_Play(sfxbuffer_t* buf);
+void        DS_Stop(sfxbuffer_t* buf);
+void        DS_Refresh(sfxbuffer_t* buf);
+void        DS_Event(int type);
+void        DS_Set(sfxbuffer_t* buf, int property, float value);
+void        DS_Setv(sfxbuffer_t* buf, int property, float* values);
+void        DS_Listener(int property, float value);
+void        DS_Listenerv(int property, float* values);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -117,19 +117,19 @@ struct _GUID DSPROPSETID_EAX20_BufferProperties =
 #endif
 
 boolean initOk = false, hasEAX = false;
-int     verbose;
-float   unitsPerMeter = 1;
-float   headYaw, headPitch;     // In radians.
-ALCdevice *device = 0;
-ALCcontext *context = 0;
+int verbose;
+float unitsPerMeter = 1;
+float headYaw, headPitch; // In radians.
+ALCdevice* device = 0;
+ALCcontext* context = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-static int error(const char *what, const char *msg)
+static int error(const char* what, const char* msg)
 {
-    ALenum  code = alGetError();
+    ALenum              code = alGetError();
 
     if(code == AL_NO_ERROR)
         return false;
@@ -168,6 +168,7 @@ int DS_Init(void)
         if(!(EAXSet = alGetProcAddress("EAXSet")))
             hasEAX = false;
     }
+
     if(hasEAX && verbose)
         Con_Message("DS_Init(OpenAL): EAX 2.0 available.\n");
 #else
@@ -198,49 +199,55 @@ void DS_Shutdown(void)
     initOk = false;
 }
 
-sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate)
+sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t *buf;
-    ALuint  bufferName, sourceName;
+    sfxbuffer_t*        buf;
+    ALuint              bufName, srcName;
 
     // Create a new buffer and a new source.
-    alGenBuffers(1, &bufferName);
+    alGenBuffers(1, &bufName);
     if(error("CreateBuffer", "GenBuffers"))
-        return 0;
+        return NULL;
 
-    alGenSources(1, &sourceName);
+    alGenSources(1, &srcName);
     if(error("CreateBuffer", "GenSources"))
     {
-        alDeleteBuffers(1, &bufferName);
-        return 0;
+        alDeleteBuffers(1, &bufName);
+        return NULL;
     }
 
     // Attach the buffer to the source.
-    alSourcei(sourceName, AL_BUFFER, bufferName);
+    alSourcei(srcName, AL_BUFFER, bufName);
     error("CreateBuffer", "Source BUFFER");
 
     if(!(flags & SFXBF_3D))
     {   // 2D sounds are around the listener.
-        alSourcei(sourceName, AL_SOURCE_RELATIVE, AL_TRUE);
-        alSourcef(sourceName, AL_ROLLOFF_FACTOR, 0);
+        alSourcei(srcName, AL_SOURCE_RELATIVE, AL_TRUE);
+        alSourcef(srcName, AL_ROLLOFF_FACTOR, 0);
     }
 
     // Create the buffer object.
-    buf = Z_Malloc(sizeof(*buf), PU_STATIC, 0);
-    memset(buf, 0, sizeof(*buf));
-    buf->ptr = (void *) bufferName;
-    buf->ptr3d = (void *) sourceName;
+    buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+
+    buf->ptr = (void *) bufName;
+    buf->ptr3d = (void *) srcName;
     buf->bytes = bits / 8;
     buf->rate = rate;
     buf->flags = flags;
     buf->freq = rate; // Modified by calls to Set(SFXBP_FREQUENCY).
+
     return buf;
 }
 
-void DS_DestroyBuffer(sfxbuffer_t *buf)
+void DS_DestroyBuffer(sfxbuffer_t* buf)
 {
-    ALuint  srcName = Src(buf);
-    ALuint  bufName = Buf(buf);
+    ALuint             srcName, bufName;
+
+    if(!buf)
+        return;
+
+    srcName = SRC(buf);
+    bufName = BUF(buf);
 
     alDeleteSources(1, &srcName);
     alDeleteBuffers(1, &bufName);
@@ -248,8 +255,11 @@ void DS_DestroyBuffer(sfxbuffer_t *buf)
     Z_Free(buf);
 }
 
-void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
+void DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
+    if(!buf || !sample)
+        return;
+
     // Does the buffer already have a sample loaded?
     if(buf->sample)
     {
@@ -258,7 +268,7 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
             return; // No need to reload.
     }
 
-    alBufferData(Buf(buf),
+    alBufferData(BUF(buf),
                  sample->bytesper == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
                  sample->data, sample->size, sample->rate);
 
@@ -269,36 +279,40 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_Reset(sfxbuffer_t *buf)
+void DS_Reset(sfxbuffer_t* buf)
 {
+    if(!buf)
+        return;
+
     DS_Stop(buf);
     buf->sample = NULL;
 }
 
-void DS_Play(sfxbuffer_t *buf)
+void DS_Play(sfxbuffer_t* buf)
 {
-    ALint       i;
-    float       f;
-    ALuint      source = Src(buf), bn;
+    float               f;
+    ALuint              i, source, bn;
 
     // Playing is quite impossible without a sample.
-    if(!buf->sample)
+    if(!buf || !buf->sample)
         return;
+
+    source = SRC(buf);
 
 #if _DEBUG
 alGetSourcei(source, AL_BUFFER, &bn);
 Con_Message("Buffer = %x\n", bn);
-if(bn != Buf(buf))
+if(bn != BUF(buf))
     Con_Message("Not the same!\n");
 #endif
 
-    alSourcei(source, AL_BUFFER, Buf(buf));
+    alSourcei(source, AL_BUFFER, BUF(buf));
     alSourcei(source, AL_LOOPING, (buf->flags & SFXBF_REPEAT) != 0);
     alSourcePlay(source);
     error("Play", "SourcePlay");
 
     alGetSourcei(source, AL_BUFFER, &bn);
-    Con_Message("Buffer = %x (real = %x), isBuf:%i\n", bn, Buf(buf),
+    Con_Message("Buffer = %x (real = %x), isBuf:%i\n", bn, BUF(buf),
                 alIsBuffer(bn));
 
     alGetBufferi(bn, AL_SIZE, &i);
@@ -323,23 +337,23 @@ if(bn != Buf(buf))
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_Stop(sfxbuffer_t *buf)
+void DS_Stop(sfxbuffer_t* buf)
 {
-    if(!buf->sample)
+    if(!buf || !buf->sample)
         return;
 
-    alSourceRewind(Src(buf));
+    alSourceRewind(SRC(buf));
     buf->flags &= ~SFXBF_PLAYING;
 }
 
-void DS_Refresh(sfxbuffer_t *buf)
+void DS_Refresh(sfxbuffer_t* buf)
 {
-    ALint       state;
+    ALint               state;
 
-    if(!buf->sample)
+    if(!buf || !buf->sample)
         return;
 
-    alGetSourcei(Src(buf), AL_SOURCE_STATE, &state);
+    alGetSourcei(SRC(buf), AL_SOURCE_STATE, &state);
     if(state == AL_STOPPED)
     {
         buf->flags &= ~SFXBF_PLAYING;
@@ -357,7 +371,7 @@ void DS_Event(int type)
  * @param front         Ptr to front vector, can be @c NULL.
  * @param up            Ptr to up vector, can be @c NULL.
  */
-static void vectors(float yaw, float pitch, float *front, float *up)
+static void vectors(float yaw, float pitch, float* front, float* up)
 {
     if(!front && !up)
         return; // Nothing to do.
@@ -382,16 +396,21 @@ static void vectors(float yaw, float pitch, float *front, float *up)
  */
 static void setPan(ALuint source, float pan)
 {
-    float       pos[3];
+    float               pos[3];
 
     vectors((float) (headYaw - pan * PI / 2), headPitch, pos, 0);
     alSourcefv(source, AL_POSITION, pos);
 }
 
-void DS_Set(sfxbuffer_t *buf, int prop, float value)
+void DS_Set(sfxbuffer_t* buf, int prop, float value)
 {
-    unsigned int dw;
-    ALuint      source = Src(buf);
+    unsigned int        dw;
+    ALuint              source;
+
+    if(!buf)
+        return;
+
+    source = SRC(buf);
 
     switch(prop)
     {
@@ -429,9 +448,14 @@ void DS_Set(sfxbuffer_t *buf, int prop, float value)
     }
 }
 
-void DS_Setv(sfxbuffer_t *buf, int prop, float *values)
+void DS_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
-    ALuint      source = Src(buf);
+    ALuint              source;
+
+    if(!buf || !values)
+        return;
+
+    source = SRC(buf);
 
     switch(prop)
     {
@@ -467,9 +491,12 @@ void DS_Listener(int prop, float value)
     }
 }
 
-void DS_Listenerv(int prop, float *values)
+void DS_Listenerv(int prop, float* values)
 {
-    float       ori[6];
+    float               ori[6];
+
+    if(!values)
+        return;
 
     switch(prop)
     {
