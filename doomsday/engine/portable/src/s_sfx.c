@@ -349,10 +349,10 @@ void Sfx_GetListenerXYZ(float *pos)
  * calculations. Listener might be NULL. Sounds emitted from the listener
  * object are considered to be inside the listener's head.
  */
-void Sfx_ChannelUpdate(sfxchannel_t * ch)
+void Sfx_ChannelUpdate(sfxchannel_t* ch)
 {
-    sfxbuffer_t *buf = ch->buffer;
-    float   normdist, dist, pan, angle, vec[3];
+    sfxbuffer_t*        buf = ch->buffer;
+    float               normdist, dist, pan, angle, vec[3];
 
     if(!buf || ch->flags & SFXCF_NO_UPDATE)
         return;
@@ -896,11 +896,6 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
         driver = &sfxd_dummy;
         break;
 
-    case SFXD_A3D:
-        if(!(driver = DS_Load("A3D")))
-            return false;
-        break;
-
     case SFXD_OPENAL:
         if(!(driver = DS_Load("openal")))
             return false;
@@ -1057,16 +1052,11 @@ boolean Sfx_Init(void)
     Con_Message("Sfx_Init: Initializing ");
 
     // First let's set up the drivers. First we much choose which one we
-    // want to use. A3D is only used if the -a3d option is found.
+    // want to use.
     if(isDedicated || ArgExists("-dummy"))
     {
         Con_Message("Dummy...\n");
         ok = Sfx_InitDriver(SFXD_DUMMY);
-    }
-    else if(ArgExists("-a3d"))
-    {
-        Con_Message("A3D...\n");
-        ok = Sfx_InitDriver(SFXD_A3D);
     }
     else if(ArgExists("-oal"))
     {

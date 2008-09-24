@@ -36,32 +36,31 @@
 // Begin and end macros for Critical OPerations. They are operations
 // that can't be done while a refresh is being made. No refreshing
 // will be done between BEGIN_COP and END_COP.
-#define BEGIN_COP		Sfx_AllowRefresh(false)
-#define END_COP			Sfx_AllowRefresh(true)
+#define BEGIN_COP       Sfx_AllowRefresh(false)
+#define END_COP         Sfx_AllowRefresh(true)
 
 typedef enum {
-	SFXD_DSOUND,
-	SFXD_A3D,
-	SFXD_OPENAL,
-	SFXD_COMPATIBLE,
-	SFXD_SDL_MIXER,
-	SFXD_SDL_SOUND,
-	SFXD_DUMMY
+    SFXD_DSOUND,
+    SFXD_OPENAL,
+    SFXD_COMPATIBLE,
+    SFXD_SDL_MIXER,
+    SFXD_SDL_SOUND,
+    SFXD_DUMMY
 } sfxdriver_e;
 
 // Channel flags.
-#define SFXCF_NO_ORIGIN			0x1	// Sound is coming from a mystical emitter.
-#define SFXCF_NO_ATTENUATION	0x2	// Sound is very, very loud.
-#define SFXCF_NO_UPDATE			0x4	// Channel update is skipped.
+#define SFXCF_NO_ORIGIN         (0x1) // Sound is coming from a mystical emitter.
+#define SFXCF_NO_ATTENUATION    (0x2) // Sound is very, very loud.
+#define SFXCF_NO_UPDATE         (0x4) // Channel update is skipped.
 
 typedef struct sfxchannel_s {
-	int             flags;
-	sfxbuffer_t    *buffer;
-	mobj_t         *emitter;	   // Mobj that is emitting the sound.
-	float           pos[3];		   // Emit from here (synced with emitter).
-	float           volume;		   // Sound volume: 1.0 is max.
-	float           frequency;	   // Frequency adjustment: 1.0 is normal.
-	int             starttime;	   // When was the channel last started?
+    int             flags;
+    sfxbuffer_t*    buffer;
+    mobj_t*         emitter; // Mobj that is emitting the sound.
+    float           pos[3]; // Emit from here (synced with emitter).
+    float           volume; // Sound volume: 1.0 is max.
+    float           frequency; // Frequency adjustment: 1.0 is normal.
+    int             starttime; // When was the channel last started?
 } sfxchannel_t;
 
 extern boolean  sfx_avail;
@@ -79,10 +78,10 @@ void            Sfx_StartFrame(void);
 void            Sfx_EndFrame(void);
 void            Sfx_PurgeCache(void);
 void            Sfx_RefreshChannels(void);
-int             Sfx_StartSound(sfxsample_t * sample, float volume, float freq,
-							   mobj_t *emitter, float *fixedpos, int flags);
-int             Sfx_StopSound(int id, mobj_t *emitter);
-void            Sfx_StopSoundGroup(int group, mobj_t *emitter);
+int             Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
+                               mobj_t* emitter, float* fixedpos, int flags);
+int             Sfx_StopSound(int id, mobj_t* emitter);
+void            Sfx_StopSoundGroup(int group, mobj_t* emitter);
 int             Sfx_CountPlaying(int id);
 void            Sfx_UnloadSoundID(int id);
 

@@ -69,109 +69,110 @@ static void (*driverShutdown) (void);
 
 static void dummyVoid(void)
 {
+
 }
 
-static void *Imp(const char *fn)
+static void* Imp(const char* fn)
 {
-	return lt_dlsym(handle, fn);
+    return lt_dlsym(handle, fn);
 }
 
 void DS_UnloadExternal(void)
 {
-	driverShutdown();
-	lt_dlclose(handle);
-	handle = NULL;
+    driverShutdown();
+    lt_dlclose(handle);
+    handle = NULL;
 }
 
-sfxdriver_t *DS_ImportExternal(void)
+sfxdriver_t* DS_ImportExternal(void)
 {
-	sfxdriver_t *d = &sfxd_external;
+    sfxdriver_t*        d = &sfxd_external;
 
-	// Clear everything.
-	memset(d, 0, sizeof(*d));
+    // Clear everything.
+    memset(d, 0, sizeof(*d));
 
-	d->Init = Imp("DS_Init");
-	driverShutdown = Imp("DS_Shutdown");
-	d->Create = Imp("DS_CreateBuffer");
-	d->Destroy = Imp("DS_DestroyBuffer");
-	d->Load = Imp("DS_Load");
-	d->Reset = Imp("DS_Reset");
-	d->Play = Imp("DS_Play");
-	d->Stop = Imp("DS_Stop");
-	d->Refresh = Imp("DS_Refresh");
-	d->Event = Imp("DS_Event");
-	d->Set = Imp("DS_Set");
-	d->Setv = Imp("DS_Setv");
-	d->Listener = Imp("DS_Listener");
-	d->Listenerv = Imp("DS_Listenerv");
-	d->Getv = Imp("DS_Getv");
+    d->Init = Imp("DS_Init");
+    driverShutdown = Imp("DS_Shutdown");
+    d->Create = Imp("DS_CreateBuffer");
+    d->Destroy = Imp("DS_DestroyBuffer");
+    d->Load = Imp("DS_Load");
+    d->Reset = Imp("DS_Reset");
+    d->Play = Imp("DS_Play");
+    d->Stop = Imp("DS_Stop");
+    d->Refresh = Imp("DS_Refresh");
+    d->Event = Imp("DS_Event");
+    d->Set = Imp("DS_Set");
+    d->Setv = Imp("DS_Setv");
+    d->Listener = Imp("DS_Listener");
+    d->Listenerv = Imp("DS_Listenerv");
+    d->Getv = Imp("DS_Getv");
 
-	// The driver may also offer an Ext music interface.
-	if(Imp("DM_Ext_Init"))
-	{
-		musdriver_t *m = &musd_loaded;
-		musinterface_ext_t *i = &musd_loaded_iext;
+    // The driver may also offer an Ext music interface.
+    if(Imp("DM_Ext_Init"))
+    {
+        musdriver_t*        m = &musd_loaded;
+        musinterface_ext_t* i = &musd_loaded_iext;
 
-		m->Init = Imp("DS_Init");
-		m->Shutdown = dummyVoid;
+        m->Init = Imp("DS_Init");
+        m->Shutdown = dummyVoid;
 
-		i->gen.Init = Imp("DM_Ext_Init");
-		i->gen.Update = Imp("DM_Ext_Update");
-		i->gen.Set = Imp("DM_Ext_Set");
-		i->gen.Get = Imp("DM_Ext_Get");
-		i->gen.Pause = Imp("DM_Ext_Pause");
-		i->gen.Stop = Imp("DM_Ext_Stop");
+        i->gen.Init = Imp("DM_Ext_Init");
+        i->gen.Update = Imp("DM_Ext_Update");
+        i->gen.Set = Imp("DM_Ext_Set");
+        i->gen.Get = Imp("DM_Ext_Get");
+        i->gen.Pause = Imp("DM_Ext_Pause");
+        i->gen.Stop = Imp("DM_Ext_Stop");
 
-		i->SongBuffer = Imp("DM_Ext_SongBuffer");
-		i->PlayFile = Imp("DM_Ext_PlayFile");
-		i->PlayBuffer = Imp("DM_Ext_PlayBuffer");
-	}
+        i->SongBuffer = Imp("DM_Ext_SongBuffer");
+        i->PlayFile = Imp("DM_Ext_PlayFile");
+        i->PlayBuffer = Imp("DM_Ext_PlayBuffer");
+    }
 
-	// The driver may also offer a MUS music interface.
-	if(Imp("DM_Mus_Init"))
-	{
-		musdriver_t *m = &musd_loaded;
-		musinterface_mus_t *i = &musd_loaded_imus;
+    // The driver may also offer a MUS music interface.
+    if(Imp("DM_Mus_Init"))
+    {
+        musdriver_t*        m = &musd_loaded;
+        musinterface_mus_t* i = &musd_loaded_imus;
 
-		m->Init = Imp("DS_Init");
-		m->Shutdown = dummyVoid;
+        m->Init = Imp("DS_Init");
+        m->Shutdown = dummyVoid;
 
-		i->gen.Init = Imp("DM_Mus_Init");
-		i->gen.Update = Imp("DM_Mus_Update");
-		i->gen.Set = Imp("DM_Mus_Set");
-		i->gen.Get = Imp("DM_Mus_Get");
-		i->gen.Pause = Imp("DM_Mus_Pause");
-		i->gen.Stop = Imp("DM_Mus_Stop");
+        i->gen.Init = Imp("DM_Mus_Init");
+        i->gen.Update = Imp("DM_Mus_Update");
+        i->gen.Set = Imp("DM_Mus_Set");
+        i->gen.Get = Imp("DM_Mus_Get");
+        i->gen.Pause = Imp("DM_Mus_Pause");
+        i->gen.Stop = Imp("DM_Mus_Stop");
 
-		i->SongBuffer = Imp("DM_Mus_SongBuffer");
-		i->Play = Imp("DM_Mus_Play");
-	}
+        i->SongBuffer = Imp("DM_Mus_SongBuffer");
+        i->Play = Imp("DM_Mus_Play");
+    }
 
-	// We should free the DLL at shutdown.
-	d->Shutdown = DS_UnloadExternal;
-	return d;
+    // We should release the lib at shutdown.
+    d->Shutdown = DS_UnloadExternal;
+    return d;
 }
 
 /**
- * "A3D", "OpenAL" and "Compat" are supported.
+ * "OpenAL" and "SDL_sound" are supported.
  */
-sfxdriver_t *DS_Load(const char *name)
+sfxdriver_t* DS_Load(const char* name)
 {
-	filename_t fn;
+    filename_t          fn;
 
 #ifdef MACOSX
-	sprintf(fn, "ds%s.bundle", name);
+    sprintf(fn, "ds%s.bundle", name);
 #else
-	// Compose the name, use the prefix "ds".
-	sprintf(fn, "libds%s", name);
-	strcat(fn, ".so");
+    // Compose the name, use the prefix "ds".
+    sprintf(fn, "libds%s", name);
+    strcat(fn, ".so");
 #endif
 
-	if((handle = lt_dlopenext(fn)) == NULL)
-	{
-		Con_Message("DS_Load: Loading of %s failed.\n", fn);
-		return NULL;
-	}
+    if((handle = lt_dlopenext(fn)) == NULL)
+    {
+        Con_Message("DS_Load: Loading of %s failed.\n", fn);
+        return NULL;
+    }
 
-	return DS_ImportExternal();
+    return DS_ImportExternal();
 }

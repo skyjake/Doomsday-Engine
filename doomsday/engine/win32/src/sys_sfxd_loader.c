@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_sfxd_loader.c: Sound Driver DLL Loader (Win32)
  *
  * Loader for ds*.dll
@@ -64,7 +64,7 @@ static void (*driverShutdown) (void);
 
 // CODE --------------------------------------------------------------------
 
-static void *Imp(const char *fn)
+static void* Imp(const char* fn)
 {
     return GetProcAddress(hInstExt, fn);
 }
@@ -75,9 +75,9 @@ void DS_UnloadExternal(void)
     FreeLibrary(hInstExt);
 }
 
-sfxdriver_t *DS_ImportExternal(void)
+sfxdriver_t* DS_ImportExternal(void)
 {
-    sfxdriver_t *d = &sfxd_external;
+    sfxdriver_t*        d = &sfxd_external;
 
     // Clear everything.
     memset(d, 0, sizeof(*d));
@@ -104,9 +104,9 @@ sfxdriver_t *DS_ImportExternal(void)
     musd_external.Shutdown = Imp("DM_Shutdown");
 
     if(Imp("DM_Mus_Init"))
-    {
-        // The driver also offers a Mus music playback interface.
+    {   // The driver also offers a Mus music playback interface.
         musinterface_mus_t* m = &musd_external_imus;
+
         m->gen.Init = Imp("DM_Mus_Init");
         m->gen.Update = Imp("DM_Mus_Update");
         m->gen.Get = Imp("DM_Mus_Get");
@@ -118,9 +118,9 @@ sfxdriver_t *DS_ImportExternal(void)
     }
 
     if(Imp("DM_Ext_Init"))
-    {
-        // The driver also offers an Ext music playback interface.
+    {   // The driver also offers an Ext music playback interface.
         musinterface_ext_t* m = &musd_external_iext;
+
         m->gen.Init = Imp("DM_Ext_Init");
         m->gen.Update = Imp("DM_Ext_Update");
         m->gen.Get = Imp("DM_Ext_Get");
@@ -132,27 +132,29 @@ sfxdriver_t *DS_ImportExternal(void)
         m->SongBuffer = Imp("DM_Ext_SongBuffer");
     }
 
-    // We should free the DLL at shutdown.
+    // We should release the DLL at shutdown.
     d->Shutdown = DS_UnloadExternal;
     return d;
 }
 
 /**
- * "A3D", "OpenAL" and "Compat" are supported.
+ * "OpenAL" and "Compat" are supported.
  */
-sfxdriver_t *DS_Load(const char *name)
+sfxdriver_t* DS_Load(const char* name)
 {
-    char        fn[256];
+    char                fn[256];
 
     // Compose the name, use the prefix "ds".
     sprintf(fn, "ds%s.dll", name);
 
     // Load the DLL.
     hInstExt = LoadLibrary(fn);
-    if(!hInstExt)               // Load failed?
-    {
+    if(!hInstExt)
+    {   // Load failed.
         Con_Message("DS_Load: Loading of %s failed.\n", fn);
+
         return NULL;
     }
+
     return DS_ImportExternal();
 }
