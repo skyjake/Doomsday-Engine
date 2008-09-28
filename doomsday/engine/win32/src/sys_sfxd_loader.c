@@ -51,11 +51,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-sfxdriver_t sfxd_external;
-musdriver_t musd_external;
-musinterface_mus_t musd_external_imus;
-musinterface_ext_t musd_external_iext;
-musinterface_cd_t musd_external_icd;
+sfxdriver_t sfxdExternal;
+musdriver_t musdExternal;
+musinterface_mus_t musdExternalIMus;
+musinterface_ext_t musdExternalIExt;
+musinterface_cd_t musdExternalICD;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -77,7 +77,7 @@ void DS_UnloadExternal(void)
 
 sfxdriver_t* DS_ImportExternal(void)
 {
-    sfxdriver_t*        d = &sfxd_external;
+    sfxdriver_t*        d = &sfxdExternal;
 
     // Clear everything.
     memset(d, 0, sizeof(*d));
@@ -100,12 +100,12 @@ sfxdriver_t* DS_ImportExternal(void)
 
     // The driver may also provide music playback functionality.
     // These additional init and shutdown functions are optional.
-    musd_external.Init = Imp("DM_Init");
-    musd_external.Shutdown = Imp("DM_Shutdown");
+    musdExternal.Init = Imp("DM_Init");
+    musdExternal.Shutdown = Imp("DM_Shutdown");
 
     if(Imp("DM_Mus_Init"))
     {   // The driver also offers a Mus music playback interface.
-        musinterface_mus_t* m = &musd_external_imus;
+        musinterface_mus_t* m = &musdExternalIMus;
 
         m->gen.Init = Imp("DM_Mus_Init");
         m->gen.Update = Imp("DM_Mus_Update");
@@ -119,7 +119,7 @@ sfxdriver_t* DS_ImportExternal(void)
 
     if(Imp("DM_Ext_Init"))
     {   // The driver also offers an Ext music playback interface.
-        musinterface_ext_t* m = &musd_external_iext;
+        musinterface_ext_t* m = &musdExternalIExt;
 
         m->gen.Init = Imp("DM_Ext_Init");
         m->gen.Update = Imp("DM_Ext_Update");

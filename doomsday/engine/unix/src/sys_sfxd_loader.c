@@ -51,14 +51,14 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern musdriver_t musd_loaded;
-extern musinterface_mus_t musd_loaded_imus;
-extern musinterface_ext_t musd_loaded_iext;
-extern musinterface_cd_t musd_loaded_icd;
+extern musdriver_t musdLoaded;
+extern musinterface_mus_t musdLoadedIMus;
+extern musinterface_ext_t musdLoadedIExt;
+extern musinterface_cd_t musdLoadedICD;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-sfxdriver_t sfxd_external;
+sfxdriver_t sfxdExternal;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -86,7 +86,7 @@ void DS_UnloadExternal(void)
 
 sfxdriver_t* DS_ImportExternal(void)
 {
-    sfxdriver_t*        d = &sfxd_external;
+    sfxdriver_t*        d = &sfxdExternal;
 
     // Clear everything.
     memset(d, 0, sizeof(*d));
@@ -110,8 +110,8 @@ sfxdriver_t* DS_ImportExternal(void)
     // The driver may also offer an Ext music interface.
     if(Imp("DM_Ext_Init"))
     {
-        musdriver_t*        m = &musd_loaded;
-        musinterface_ext_t* i = &musd_loaded_iext;
+        musdriver_t*        m = &musdLoaded;
+        musinterface_ext_t* i = &musdLoadedIExt;
 
         m->Init = Imp("DS_Init");
         m->Shutdown = dummyVoid;
@@ -131,8 +131,8 @@ sfxdriver_t* DS_ImportExternal(void)
     // The driver may also offer a MUS music interface.
     if(Imp("DM_Mus_Init"))
     {
-        musdriver_t*        m = &musd_loaded;
-        musinterface_mus_t* i = &musd_loaded_imus;
+        musdriver_t*        m = &musdLoaded;
+        musinterface_mus_t* i = &musdLoadedIMus;
 
         m->Init = Imp("DS_Init");
         m->Shutdown = dummyVoid;

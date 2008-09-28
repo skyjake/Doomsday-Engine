@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_mus.h: Music Subsystem
  */
 
@@ -39,15 +40,15 @@ enum {
     MUSP_CD
 };
 
-extern int      mus_preference;
+extern int      musPreference;
 
 void            Mus_Register(void);
 boolean         Mus_Init(void);
 void            Mus_Shutdown(void);
 void            Mus_SetVolume(float vol);
-void            Mus_Pause(boolean do_pause);
+void            Mus_Pause(boolean doPause);
 void            Mus_StartFrame(void);
-int             Mus_Start(ded_music_t * def, boolean looped);
+int             Mus_Start(ded_music_t* def, boolean looped);
 void            Mus_Stop(void);
 
 #endif

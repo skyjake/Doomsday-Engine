@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,14 +52,14 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-int     DM_CDAudioInit(void);
-void    DM_CDAudioShutdown(void);
-void    DM_CDAudioUpdate(void);
-void    DM_CDAudioSet(int prop, float value);
-int     DM_CDAudioGet(int prop, void *ptr);
-void    DM_CDAudioPause(int pause);
-void    DM_CDAudioStop(void);
-int     DM_CDAudioPlay(int track, int looped);
+int DM_CDAudioInit(void);
+void DM_CDAudioShutdown(void);
+void DM_CDAudioUpdate(void);
+void DM_CDAudioSet(int prop, float value);
+int DM_CDAudioGet(int prop, void* ptr);
+void DM_CDAudioPause(int pause);
+void DM_CDAudioStop(void);
+int DM_CDAudioPlay(int track, int looped);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -94,14 +94,14 @@ static double cdStartTime, cdPauseTime, cdTrackLength;
 /**
  * Execute an MCI command string.
  *
- * @return                  @c true, if successful.
+ * @return              @c true, if successful.
  */
-static int sendMCICmd(char *returnInfo, int returnLength, const char *format,
-                      ...)
+static int sendMCICmd(char* returnInfo, int returnLength,
+                      const char *format, ...)
 {
-    char        buf[300];
-    va_list     args;
-    MCIERROR    error;
+    char                buf[300];
+    va_list             args;
+    MCIERROR            error;
 
     va_start(args, format);
     vsnprintf(buf, sizeof(buf), format, args);
@@ -111,18 +111,20 @@ static int sendMCICmd(char *returnInfo, int returnLength, const char *format,
     {
         mciGetErrorString(error, buf, 300);
         Con_Message("DM_WinCD: %s\n", buf);
+
         return false;
     }
+
     return true;
 }
 
 /**
- * @return                  Length of the track in seconds.
+ * @return              Length of the track in seconds.
  */
 static int getTrackLength(int track)
 {
-    char        lenString[80];
-    int         min, sec;
+    char                lenString[80];
+    int                 min, sec;
 
     if(!sendMCICmd(lenString, 80, "status " DEVICEID " length track %i",
                    track))
@@ -166,7 +168,7 @@ void DM_CDAudioSet(int prop, float value)
 /**
  * Retrieve the value of a CDAudio-interface property.
  */
-int DM_CDAudioGet(int prop, void *ptr)
+int DM_CDAudioGet(int prop, void* ptr)
 {
     if(!cdInited)
         return false;
@@ -174,14 +176,18 @@ int DM_CDAudioGet(int prop, void *ptr)
     switch(prop)
     {
     case MUSIP_ID:
-        strcpy(ptr, "Win/CD");
+        if(ptr)
+        {
+            strcpy(ptr, "Win/CD");
+            return true;
+        }
         break;
 
     default:
-        return false;
+        break;
     }
 
-    return true;
+    return false;
 }
 
 /**
@@ -250,7 +256,7 @@ void DM_CDAudioUpdate(void)
  */
 int DM_CDAudioPlay(int track, int looped)
 {
-    int         len;
+    int                 len;
 
     if(!cdInited)
         return false;

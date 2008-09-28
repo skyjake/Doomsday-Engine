@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,42 +45,42 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_BUFFER_LEN      65535
-#define MAX_BUFFERS         8
-#define BUFFER_ALLOC        4096    // Allocate in 4K chunks.
+#define MAX_BUFFER_LEN      (65535)
+#define MAX_BUFFERS         (8)
+#define BUFFER_ALLOC        (4096) // Allocate in 4K chunks.
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    char    ID[4];              // identifier "MUS" 0x1A
-    WORD    scoreLen;
-    WORD    scoreStart;
-    WORD    channels;           // number of primary channels
-    WORD    secondaryChannels;  // number of secondary channels
-    WORD    instrCnt;
-    WORD    dummy;
+    char        id[4]; // Identifier ("MUS" 0x1A).
+    WORD        scoreLen;
+    WORD        scoreStart;
+    WORD        channels; // Number of primary channels.
+    WORD        secondaryChannels; // Number of secondary channels.
+    WORD        instrCnt;
+    WORD        dummy;
     // The instrument list begins here.
-} MUSHeader_t;
+} musheader_t;
 
 typedef struct {
     unsigned char channel:4;
     unsigned char event:3;
     unsigned char last:1;
-} MUSEventDesc_t;
+} museventdesc_t;
 
-enum                            // MUS event types.
+enum // MUS event types.
 {
     MUS_EV_RELEASE_NOTE,
     MUS_EV_PLAY_NOTE,
     MUS_EV_PITCH_WHEEL,
-    MUS_EV_SYSTEM,              // Valueless controller.
+    MUS_EV_SYSTEM, // Valueless controller.
     MUS_EV_CONTROLLER,
-    MUS_EV_FIVE,                // ?
+    MUS_EV_FIVE, // ?
     MUS_EV_SCORE_END,
-    MUS_EV_SEVEN                // ?
+    MUS_EV_SEVEN // ?
 };
 
-enum                            // MUS controllers.
+enum // MUS controllers.
 {
     MUS_CTRL_INSTRUMENT,
     MUS_CTRL_BANK,
@@ -106,22 +106,22 @@ enum                            // MUS controllers.
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+int DM_WinInit(void);
+void DM_WinShutdown(void);
+
+// Mus Interface.
+int DM_WinMusInit(void);
+void DM_WinMusShutdown(void);
+void DM_WinMusReset();
+void DM_WinMusUpdate(void);
+void DM_WinMusSet(int prop, float value);
+int DM_WinMusGet(int prop, void* ptr);
+void DM_WinMusPause(int pause);
+void DM_WinMusStop(void);
+void* DM_WinMusSongBuffer(size_t length);
+int DM_WinMusPlay(int looped);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-int     DM_WinInit(void);
-void    DM_WinShutdown(void);
-
-        // Mus Interface.
-int     DM_WinMusInit(void);
-void    DM_WinMusShutdown(void);
-void    DM_WinMusReset();
-void    DM_WinMusUpdate(void);
-void    DM_WinMusSet(int prop, float value);
-int     DM_WinMusGet(int prop, void *ptr);
-void    DM_WinMusPause(int pause);
-void    DM_WinMusStop(void);
-void   *DM_WinMusSongBuffer(size_t length);
-int     DM_WinMusPlay(int looped);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -145,48 +145,48 @@ musinterface_mus_t musd_win_imus = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static void *song;
+static void* song;
 static size_t songSize;
 
 static MIDIHDR midiBuffers[MAX_BUFFERS];
 static LPMIDIHDR loopBuffer;
 static int registered;
-static byte *readPos;
-static int readTime;            // In ticks.
+static byte* readPos;
+static int readTime; // In ticks.
 
 static int midiAvail = false;
 static int volumeShift;
 static UINT devId;
 static HMIDISTRM midiStr;
-static int origVol;             // The original MIDI volume.
-static int playing = 0;         // The song is playing/looping.
-static byte chanVols[16];       // Last volume for each channel.
+static int origVol; // The original MIDI volume.
+static int playing = 0; // The song is playing/looping.
+static byte chanVols[16]; // Last volume for each channel.
 
 static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
-    0,                          // Not used.
-    0,                          // Bank select.
-    1,                          // Modulation.
-    7,                          // Volume.
-    10,                         // Pan.
-    11,                         // Expression.
-    91,                         // Reverb.
-    93,                         // Chorus.
-    64,                         // Sustain pedal.
-    67,                         // Soft pedal.
+    0, // Not used.
+    0, // Bank select.
+    1, // Modulation.
+    7, // Volume.
+    10, // Pan.
+    11, // Expression.
+    91, // Reverb.
+    93, // Chorus.
+    64, // Sustain pedal.
+    67, // Soft pedal.
 
     // The valueless controllers:
-    120,                        // All sounds off.
-    123,                        // All notes off.
-    126,                        // Mono.
-    127,                        // Poly.
-    121                         // Reset all controllers.
+    120, // All sounds off.
+    123, // All notes off.
+    126, // Mono.
+    127, // Poly.
+    121  // Reset all controllers.
 };
 
 // CODE --------------------------------------------------------------------
 
 int DM_WinInit(void)
 {
-    volumeShift = ArgExists("-mdvol") ? 1 : 0;  // Double music volume.
+    volumeShift = ArgExists("-mdvol") ? 1 : 0; // Double music volume.
     return true;
 }
 
@@ -195,7 +195,7 @@ void DM_WinShutdown(void)
     DM_WinMusShutdown();
 }
 
-void DM_WinMusInitSongReader(MUSHeader_t *musHdr)
+void DM_WinMusInitSongReader(musheader_t* musHdr)
 {
     readPos = (byte *) musHdr + musHdr->scoreStart;
     readTime = 0;
@@ -206,16 +206,16 @@ void DM_WinMusInitSongReader(MUSHeader_t *musHdr)
  *
  * @return              @c false, when the score ends.
  */
-int DM_WinMusGetNextEvent(MIDIEVENT *mev)
+int DM_WinMusGetNextEvent(MIDIEVENT* mev)
 {
-    MUSEventDesc_t *evDesc;
-    byte        midiStatus, midiChan, midiParm1, midiParm2;
-    int         i;
+    int                 i;
+    museventdesc_t*     evDesc;
+    byte                midiStatus, midiChan, midiParm1, midiParm2;
 
     mev->dwDeltaTime = readTime;
     readTime = 0;
 
-    evDesc = (MUSEventDesc_t *) readPos++;
+    evDesc = (museventdesc_t *) readPos++;
     midiStatus = midiChan = midiParm1 = midiParm2 = 0;
 
     // Construct the MIDI event.
@@ -223,12 +223,14 @@ int DM_WinMusGetNextEvent(MIDIEVENT *mev)
     {
     case MUS_EV_RELEASE_NOTE:
         midiStatus = 0x80;
+
         // Which note?
         midiParm1 = *readPos++;
         break;
 
     case MUS_EV_PLAY_NOTE:
         midiStatus = 0x90;
+
         // Which note?
         midiParm1 = *readPos++;
         // Is the volume there, too?
@@ -238,14 +240,18 @@ int DM_WinMusGetNextEvent(MIDIEVENT *mev)
         if((i = chanVols[evDesc->channel] << volumeShift) > 127)
             i = 127;
         midiParm2 = i;
-        //Con_Message( "time: %i note: p1:%i p2:%i\n", mev->dwDeltaTime,
-        //            midiParm1, midiParm2);
+
+/*#if _DEBUG
+Con_Message("time: %i note: p1:%i p2:%i\n", mev->dwDeltaTime, midiParm1,
+            midiParm2);
+#endif*/
         break;
 
     case MUS_EV_CONTROLLER:
         midiStatus = 0xb0;
         midiParm1 = *readPos++;
         midiParm2 = *readPos++;
+
         // The instrument control is mapped to another kind of MIDI event.
         if(midiParm1 == MUS_CTRL_INSTRUMENT)
         {
@@ -260,15 +266,21 @@ int DM_WinMusGetNextEvent(MIDIEVENT *mev)
         }
         break;
 
-        // 2 bytes, 14 bit value. 0x2000 is the center.
-        // First seven bits go to parm1, the rest to parm2.
     case MUS_EV_PITCH_WHEEL:
+        /**
+         * 2 bytes, 14 bit value. 0x2000 is the center.
+         * First seven bits go to parm1, the rest to parm2.
+         */
+
         midiStatus = 0xe0;
         i = *readPos++ << 6;
         midiParm1 = i & 0x7f;
         midiParm2 = i >> 7;
-        //Con_Message( "pitch wheel: ch %d (%x %x = %x)\n", evDesc->channel,
-        //            midiParm1, midiParm2, midiParm1 | (midiParm2 << 7));
+
+/*#if _DEBUG
+Con_Message("pitch wheel: ch %d (%x %x = %x)\n", evDesc->channel,
+            midiParm1, midiParm2, midiParm1 | (midiParm2 << 7));
+#endif*/
         break;
 
     case MUS_EV_SYSTEM:
@@ -291,8 +303,11 @@ int DM_WinMusGetNextEvent(MIDIEVENT *mev)
         midiChan = 9;
     else if(midiChan == 9)
         midiChan = 15;
-    //Con_Message("MIDI event/%d: %x %d %d\n",evDesc->channel,midiStatus,
-    //            midiParm1,midiParm2);
+
+/*#if _DEBUG
+Con_Message("MIDI event/%d: %x %d %d\n",evDesc->channel,midiStatus,
+            midiParm1,midiParm2);
+#endif*/
 
     mev->dwEvent =
         (MEVT_SHORTMSG << 24) | midiChan | midiStatus | (midiParm1 << 8) |
@@ -303,23 +318,23 @@ int DM_WinMusGetNextEvent(MIDIEVENT *mev)
         return TRUE;
 
     // Read the time delta.
-    for(readTime = 0;;)
+    readTime = 0;
+    do
     {
         midiParm1 = *readPos++;
         readTime = readTime * 128 + (midiParm1 & 0x7f);
-        if(!(midiParm1 & 0x80))
-            break;
-    }
+    } while(midiParm1 & 0x80);
+
     return TRUE;
 }
 
 LPMIDIHDR DM_WinMusGetFreeBuffer(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_BUFFERS; ++i)
     {
-        LPMIDIHDR   mh = &midiBuffers[i];
+        LPMIDIHDR           mh = &midiBuffers[i];
 
         if(mh->dwUser == FALSE)
         {
@@ -330,8 +345,8 @@ LPMIDIHDR DM_WinMusGetFreeBuffer(void)
             mh->dwBufferLength = BUFFER_ALLOC;
             mh->lpData = malloc(mh->dwBufferLength);
             mh->dwBytesRecorded = 0;
-
             mh->dwFlags = 0;
+
             return mh;
         }
     }
@@ -368,7 +383,7 @@ void DM_WinMusStreamOut(LPMIDIHDR mh)
 void CALLBACK DM_WinMusCallback(HMIDIOUT hmo, UINT uMsg, DWORD dwInstance,
                                 DWORD dwParam1, DWORD dwParam2)
 {
-    LPMIDIHDR   mh;
+    LPMIDIHDR           mh;
 
     switch(uMsg)
     {
@@ -391,17 +406,20 @@ void CALLBACK DM_WinMusCallback(HMIDIOUT hmo, UINT uMsg, DWORD dwInstance,
     }
 }
 
-void DM_WinMusPrepareBuffers(MUSHeader_t *song)
+void DM_WinMusPrepareBuffers(musheader_t* song)
 {
-    LPMIDIHDR   mh = DM_WinMusGetFreeBuffer();
-    MIDIEVENT   mev;
-    DWORD      *ptr;
+    LPMIDIHDR           mh = DM_WinMusGetFreeBuffer();
+    MIDIEVENT           mev;
+    DWORD*              ptr;
+
+    if(!song)
+        return;
 
     // First add the tempo.
     ptr = (DWORD *) mh->lpData;
     *ptr++ = 0;
     *ptr++ = 0;
-    *ptr++ = (MEVT_TEMPO << 24) | 1000000;  // One second.
+    *ptr++ = (MEVT_TEMPO << 24) | 1000000; // One second.
     mh->dwBytesRecorded = 3 * sizeof(DWORD);
 
     // Start reading the events.
@@ -419,7 +437,7 @@ void DM_WinMusPrepareBuffers(MUSHeader_t *song)
                 midiOutPrepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
                 mh = DM_WinMusGetFreeBuffer();
                 if(!mh)
-                    return;     // Oops.
+                    return; // Oops.
             }
         }
 
@@ -437,12 +455,13 @@ void DM_WinMusPrepareBuffers(MUSHeader_t *song)
 
 void DM_WinMusReleaseBuffers(void)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_BUFFERS; ++i)
+    {
         if(midiBuffers[i].dwUser)
         {
-            LPMIDIHDR mh = &midiBuffers[i];
+            LPMIDIHDR               mh = &midiBuffers[i];
 
             midiOutUnprepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
             free(mh->lpData);
@@ -450,6 +469,7 @@ void DM_WinMusReleaseBuffers(void)
             // Clear for re-use.
             memset(mh, 0, sizeof(*mh));
         }
+    }
 }
 
 void DM_WinMusUnregisterSong(void)
@@ -484,12 +504,16 @@ int DM_WinMusRegisterSong(void)
 
 void DM_WinMusReset(void)
 {
-    int         i;
+    int                 i;
 
     midiStreamStop(midiStr);
+
     // Reset channel settings.
     for(i = 0; i <= 0xf; ++i) // All channels.
+    {
         midiOutShortMsg((HMIDIOUT) midiStr, 0xe0 | i | 64 << 16); // Pitch bend.
+    }
+
     midiOutReset((HMIDIOUT) midiStr);
 }
 
@@ -506,7 +530,7 @@ void DM_WinMusStop(void)
 
 int DM_WinMusPlay(int looped)
 {
-    int         i;
+    int                 i;
 
     if(!midiAvail)
         return false;
@@ -520,11 +544,13 @@ int DM_WinMusPlay(int looped)
 
     // Stream out all buffers.
     for(i = 0; i < MAX_BUFFERS; ++i)
+    {
         if(midiBuffers[i].dwUser)
         {
             loopBuffer = &midiBuffers[i];
             midiStreamOut(midiStr, &midiBuffers[i], sizeof(midiBuffers[i]));
         }
+    }
 
     // If we aren't looping, don't bother.
     if(!looped)
@@ -545,7 +571,7 @@ void DM_WinMusPause(int setPause)
 }
 
 /**
- * @param vol               Volume level from 0 to 255.
+ * @param vol           Volume level from 0 to 255.
  */
 void DM_WinMusSetMasterVolume(int vol)
 {
@@ -558,46 +584,55 @@ void DM_WinMusSetMasterVolume(int vol)
     Sys_Mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, vol);
 
     // Straighten the volume curve.
-    vol <<= 8;                  // Make it a word.
+    vol <<= 8; // Make it a word.
     vol = (int) (255.9980469 * sqrt(vol));
+
     // Expand to a dword.
     //ret = midiOutSetVolume( (HMIDIOUT) midiStr, vol + (vol<<16));
 }
 
-void DM_WinMusSet(int property, float value)
+void DM_WinMusSet(int prop, float value)
 {
     if(!midiAvail)
         return;
 
-    switch(property)
+    switch(prop)
     {
     case MUSIP_VOLUME:
         DM_WinMusSetMasterVolume(value * 255 + 0.5);
         break;
+
+    default:
+        break;
     }
 }
 
-int DM_WinMusGet(int property, void *ptr)
+int DM_WinMusGet(int prop, void* ptr)
 {
     if(!midiAvail)
         return false;
 
-    switch(property)
+    switch(prop)
     {
     case MUSIP_ID:
-        strcpy(ptr, "Win/Mus");
+        if(ptr)
+        {
+            strcpy(ptr, "Win/Mus");
+            return true;
+        }
         break;
 
     default:
-        return false;
+        break;
     }
-    return true;
+
+    return false;
 }
 
 int DM_WinMusOpenStream(void)
 {
-    MMRESULT    mmres;
-    MIDIPROPTIMEDIV tdiv;
+    MMRESULT            mmres;
+    MIDIPROPTIMEDIV     tdiv;
 
     devId = MIDI_MAPPER;
     if((mmres =
@@ -619,6 +654,7 @@ int DM_WinMusOpenStream(void)
         Con_Message("DM_WinMusOpenStream: time format! %i\n", mmres);
         return FALSE;
     }
+
     return TRUE;
 }
 
@@ -638,19 +674,20 @@ void DM_WinMusFreeSongBuffer(void)
     songSize = 0;
 }
 
-void *DM_WinMusSongBuffer(size_t length)
+void* DM_WinMusSongBuffer(size_t length)
 {
     DM_WinMusFreeSongBuffer();
     songSize = length;
+
     return song = malloc(length);
 }
 
 /**
- * @return                  @c true, if successful.
+ * @return              @c true, if successful.
  */
 int DM_WinMusInit(void)
 {
-    int         i;
+    int                 i;
 
     if(midiAvail)
         return true; // Already initialized.

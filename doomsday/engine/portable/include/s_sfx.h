@@ -33,7 +33,7 @@
 #include "sys_sfxd.h"
 #include "de_play.h"
 
-// Begin and end macros for Critical OPerations. They are operations
+// Begin and end macros for Critical Operations. They are operations
 // that can't be done while a refresh is being made. No refreshing
 // will be done between BEGIN_COP and END_COP.
 #define BEGIN_COP       Sfx_AllowRefresh(false)
@@ -60,14 +60,14 @@ typedef struct sfxchannel_s {
     float           pos[3]; // Emit from here (synced with emitter).
     float           volume; // Sound volume: 1.0 is max.
     float           frequency; // Frequency adjustment: 1.0 is normal.
-    int             starttime; // When was the channel last started?
+    int             startTime; // When was the channel last started?
 } sfxchannel_t;
 
-extern boolean  sfx_avail;
+extern boolean  sfxAvail;
 extern float    sfxReverbStrength;
-extern int      sfx_max_cache_kb, sfx_max_cache_tics;
-extern int      sfx_bits, sfx_rate;
-extern int      sfx3D, sfx16bit, sfxSampleRate;
+extern int      sfxMaxCacheKB, sfxMaxCacheTics;
+extern int      sfxBits, sfxRate;
+extern int      sfx3D, sfx16Bit, sfxSampleRate;
 
 boolean         Sfx_Init(void);
 void            Sfx_Shutdown(void);
@@ -85,7 +85,6 @@ void            Sfx_StopSoundGroup(int group, mobj_t* emitter);
 int             Sfx_CountPlaying(int id);
 void            Sfx_UnloadSoundID(int id);
 
-//int       Sfx_IsPlaying(int id, mobj_t *emitter);
 void            Sfx_DebugInfo(void);
 
 #endif
