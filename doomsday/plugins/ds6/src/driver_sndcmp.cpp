@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,9 +50,9 @@
 
 // DirectSound(3D)Buffer Pointer
 #define DSBuf(buf)      ((LPDIRECTSOUNDBUFFER) buf->ptr)
-#define DSBuf3(buf)     ((LPDIRECTSOUND3DBUFFER) buf->ptr3d)
+#define DSBuf3(buf)     ((LPDIRECTSOUND3DBUFFER) buf->ptr3D)
 
-#define NEEDED_SUPPORT  ( KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET )
+#define NEEDED_SUPPORT  (KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET)
 
 #define PI              3.14159265
 
@@ -65,22 +65,20 @@ enum { VX, VY, VZ };
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 extern "C" {
-
 int             DS_Init(void);
 void            DS_Shutdown(void);
 sfxbuffer_t*    DS_CreateBuffer(int flags, int bits, int rate);
-void            DS_DestroyBuffer(sfxbuffer_t *buf);
-void            DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample);
-void            DS_Reset(sfxbuffer_t *buf);
-void            DS_Play(sfxbuffer_t *buf);
-void            DS_Stop(sfxbuffer_t *buf);
-void            DS_Refresh(sfxbuffer_t *buf);
+void            DS_DestroyBuffer(sfxbuffer_t* buf);
+void            DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+void            DS_Reset(sfxbuffer_t* buf);
+void            DS_Play(sfxbuffer_t* buf);
+void            DS_Stop(sfxbuffer_t* buf);
+void            DS_Refresh(sfxbuffer_t* buf);
 void            DS_Event(int type);
-void            DS_Set(sfxbuffer_t *buf, int prop, float value);
-void            DS_Setv(sfxbuffer_t *buf, int prop, float *values);
+void            DS_Set(sfxbuffer_t* buf, int prop, float value);
+void            DS_Setv(sfxbuffer_t* buf, int prop, float* values);
 void            DS_Listener(int prop, float value);
-void            DS_Listenerv(int prop, float *values);
-
+void            DS_Listenerv(int prop, float* values);
 }
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -91,30 +89,30 @@ void            DS_Listenerv(int prop, float *values);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-bool                    initOk = false;
-int                     verbose;
-HRESULT                 hr;
-LPDIRECTSOUND           dsound;
-LPDIRECTSOUNDBUFFER     primary;
+bool initOk = false;
+int verbose;
+HRESULT hr;
+LPDIRECTSOUND dsound;
+LPDIRECTSOUNDBUFFER primary;
 LPDIRECTSOUND3DLISTENER dsListener;
-LPKSPROPERTYSET         eaxListener;
-DSCAPS                  dsCaps;
+LPKSPROPERTYSET eaxListener;
+DSCAPS dsCaps;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-static void error(const char *where, const char *msg)
+static void error(const char* at, const char* msg)
 {
-    Con_Message("%s(Compat): %s [Result = 0x%x]\n", where, msg, hr);
+    Con_Message("%s(Compat): %s [Result = 0x%x]\n", at, msg, hr);
 }
 
 static int createDSBuffer(DWORD flags, int samples, int freq, int bits,
-                          int channels, LPDIRECTSOUNDBUFFER *bufAddr)
+                          int channels, LPDIRECTSOUNDBUFFER* bufAddr)
 {
-    DSBUFFERDESC    bufd;
-    WAVEFORMATEX    form;
-    DWORD           dataBytes = samples * bits/8 * channels;
+    DSBUFFERDESC        bufd;
+    WAVEFORMATEX        form;
+    DWORD               dataBytes = samples * bits/8 * channels;
 
     // Prepare the buffer description.
     memset(&bufd, 0, sizeof(bufd));
@@ -135,13 +133,15 @@ static int createDSBuffer(DWORD flags, int samples, int freq, int bits,
     return dsound->CreateSoundBuffer(&bufd, bufAddr, NULL);
 }
 
-static void freeDSBuffers(sfxbuffer_t *buf)
+static void freeDSBuffers(sfxbuffer_t* buf)
 {
     if(DSBuf3(buf))
         DSBuf3(buf)->Release();
+
     if(DSBuf(buf))
         DSBuf(buf)->Release();
-    buf->ptr = buf->ptr3d = NULL;
+
+    buf->ptr = buf->ptr3D = NULL;
 }
 
 int DS_Init(void)
@@ -212,7 +212,7 @@ int DS_Init(void)
     if(SUCCEEDED(createDSBuffer(DSBCAPS_STATIC | DSBCAPS_CTRL3D,
                                 DSBSIZE_MIN, 22050, 8, 1, &bufTemp)))
     {
-        // Now try to get the property set.
+        // Try to get the property set.
         if(SUCCEEDED(hr = bufTemp->QueryInterface(IID_IKsPropertySet,
                                                   (void**) &eaxListener)))
         {
@@ -220,9 +220,9 @@ int DS_Init(void)
 
             // Check for support.
             if(FAILED(hr = eaxListener->QuerySupport(
-                DSPROPSETID_EAX_ListenerProperties,
-                DSPROPERTY_EAXLISTENER_ENVIRONMENT,
-                &support)) ||
+                               DSPROPSETID_EAX_ListenerProperties,
+                               DSPROPERTY_EAXLISTENER_ENVIRONMENT,
+                               &support)) ||
                ((support & NEEDED_SUPPORT) != NEEDED_SUPPORT))
             {
                 error("DS_Init", "Sufficient EAX2 support not present.");
@@ -283,13 +283,14 @@ void DS_Shutdown(void)
 
 sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t *buf;
+    sfxbuffer_t* buf;
 
     // Since we don't know how long the buffer must be, we'll just create
     // an sfxbuffer_t with no DSound buffer attached. The DSound buffer
     // will be created when a sample is loaded.
 
     buf = (sfxbuffer_t*) Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+
     buf->bytes = bits/8;
     buf->rate = rate;
     buf->flags = flags;
@@ -298,25 +299,33 @@ sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-void DS_DestroyBuffer(sfxbuffer_t *buf)
+void DS_DestroyBuffer(sfxbuffer_t* buf)
 {
+    if(!buf)
+        return;
+
     freeDSBuffers(buf);
     Z_Free(buf);
 }
 
-void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
+void DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
-#define SAMPLE_SILENCE  16 // Samples to interpolate to silence.
-#define SAMPLE_ROUNDOFF 32 // The length is a multiple of this.
+#define SAMPLE_SILENCE          (16) // Samples to interpolate to silence.
+#define SAMPLE_ROUNDOFF         (32) // The length is a multiple of this.
 
     LPDIRECTSOUNDBUFFER newSound = NULL;
     LPDIRECTSOUND3DBUFFER newSound3D = NULL;
-    bool        play3d = !(buf->flags & SFXBF_3D);
-    void       *writePtr1 = NULL, *writePtr2 = NULL;
-    DWORD       writeBytes1, writeBytes2;
-    unsigned int safeNumSamples = sample->numsamples + SAMPLE_SILENCE;
-    unsigned int safeSize, i;
-    int         last, delta;
+    bool                play3D;
+    void*               writePtr1 = NULL, *writePtr2 = NULL;
+    DWORD               writeBytes1, writeBytes2;
+    unsigned int        safeNumSamples, safeSize, i;
+    int                 last, delta;
+
+    if(!buf || !sample)
+        return;
+
+    play3D = !(buf->flags & SFXBF_3D);
+    safeNumSamples = sample->numSamples + SAMPLE_SILENCE;
 
     // Does the buffer already have a sample loaded?
     if(buf->sample)
@@ -335,7 +344,7 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 Con_Message("Safelen = %i\n", safeNumSamples);
 #endif*/
     }
-    safeSize = safeNumSamples * sample->bytesper;
+    safeSize = safeNumSamples * sample->bytesPer;
 /*#if _DEBUG
 Con_Message("Safesize = %i\n", safeSize);
 #endif*/
@@ -348,7 +357,7 @@ Con_Message("Safesize = %i\n", safeSize);
     if(FAILED(hr =
            createDSBuffer(DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY |
                           DSBCAPS_STATIC |
-                          (play3d? (DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE) : DSBCAPS_CTRLPAN),
+                          (play3D? (DSBCAPS_CTRL3D | DSBCAPS_MUTE3DATMAXDISTANCE) : DSBCAPS_CTRLPAN),
                           safeNumSamples, buf->freq, buf->bytes*8, 1,
                           &newSound)))
     {
@@ -358,7 +367,7 @@ Con_Message("Safesize = %i\n", safeSize);
         return;
     }
 
-    if(play3d)
+    if(play3D)
     {
         // Query the 3D interface.
         if(FAILED(hr = newSound->QueryInterface(IID_IDirectSound3DBuffer,
@@ -373,8 +382,8 @@ Con_Message("Safesize = %i\n", safeSize);
     }
 
     // Lock and load!
-    newSound->Lock(0, 0, &writePtr1, &writeBytes1,
-        &writePtr2, &writeBytes2, DSBLOCK_ENTIREBUFFER);
+    newSound->Lock(0, 0, &writePtr1, &writeBytes1, &writePtr2, &writeBytes2,
+                   DSBLOCK_ENTIREBUFFER);
     if(writePtr2 && verbose)
         error("DS_Load", "Unexpected buffer lock behavior.");
 
@@ -388,29 +397,29 @@ Con_Message("Fill %i bytes (orig=%i).\n", safeSize - sample->size,
 
     // Interpolate to silence.
     // numSafeSamples includes at least SAMPLE_ROUNDOFF extra samples.
-    if(sample->bytesper == 1)
-        last = ((byte*)sample->data)[sample->numsamples - 1];
+    if(sample->bytesPer == 1)
+        last = ((byte*)sample->data)[sample->numSamples - 1];
     else
-        last = ((short*)sample->data)[sample->numsamples - 1];
+        last = ((short*)sample->data)[sample->numSamples - 1];
 
-    delta = (sample->bytesper==1? 0x80 - last : -last);
+    delta = (sample->bytesPer==1? 0x80 - last : -last);
 
-    for(i = 0; i < safeNumSamples - sample->numsamples; ++i)
+    for(i = 0; i < safeNumSamples - sample->numSamples; ++i)
     {
         float       pos = i/(float)SAMPLE_SILENCE;
 
         if(pos > 1)
             pos = 1;
 
-        if(sample->bytesper == 1)
+        if(sample->bytesPer == 1)
         {   // 8-bit sample.
-            ((byte*)writePtr1)[sample->numsamples + i] =
-                byte( last + delta*pos );
+            ((byte*)writePtr1)[sample->numSamples + i] =
+                (byte) (last + delta*pos);
         }
         else
         {   // 16-bit sample.
-            ((short*)writePtr1)[sample->numsamples + i] =
-                short( last + delta*pos );
+            ((short*)writePtr1)[sample->numSamples + i] =
+                (short) (last + delta*pos);
         }
     }
 
@@ -418,7 +427,7 @@ Con_Message("Fill %i bytes (orig=%i).\n", safeSize - sample->size,
     newSound->Unlock(writePtr1, writeBytes1, writePtr2, writeBytes2);
 
     buf->ptr = newSound;
-    buf->ptr3d = newSound3D;
+    buf->ptr3D = newSound3D;
     buf->sample = sample;
 
 #undef SAMPLE_SILENCE
@@ -428,43 +437,50 @@ Con_Message("Fill %i bytes (orig=%i).\n", safeSize - sample->size,
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_Reset(sfxbuffer_t *buf)
+void DS_Reset(sfxbuffer_t* buf)
 {
+    if(!buf)
+        return;
+
     DS_Stop(buf);
     buf->sample = NULL;
     freeDSBuffers(buf);
 }
 
-void DS_Play(sfxbuffer_t *buf)
+void DS_Play(sfxbuffer_t* buf)
 {
-    if(!buf->sample || !DSBuf(buf))
+    if(!buf || !buf->sample || !DSBuf(buf))
         return; // Playing is quite impossible without a sample.
 
     DSBuf(buf)->SetCurrentPosition(0);
-    DSBuf(buf)->Play(0, 0, buf->flags & SFXBF_REPEAT? DSBPLAY_LOOPING : 0);
+    DSBuf(buf)->Play(0, 0, (buf->flags & SFXBF_REPEAT)? DSBPLAY_LOOPING : 0);
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_Stop(sfxbuffer_t *buf)
+void DS_Stop(sfxbuffer_t* buf)
 {
-    if(!buf->sample || !DSBuf(buf))
+    if(!buf || !buf->sample || !DSBuf(buf))
         return; // Nothing to stop.
 
     DSBuf(buf)->Stop();
     buf->flags &= ~SFXBF_PLAYING;
 }
 
-void DS_Refresh(sfxbuffer_t *buf)
+void DS_Refresh(sfxbuffer_t* buf)
 {
-    LPDIRECTSOUNDBUFFER sound = DSBuf(buf);
-    DWORD status;
+    LPDIRECTSOUNDBUFFER sound;
+    DWORD               status;
 
+    if(!buf)
+        return;
+
+    sound = DSBuf(buf);
     if(sound)
     {
         // Has the buffer finished playing?
         sound->GetStatus(&status);
-        if(!(status & DSBSTATUS_PLAYING) && buf->flags & SFXBF_PLAYING)
+        if(!(status & DSBSTATUS_PLAYING) && (buf->flags & SFXBF_PLAYING))
         {   // It has stopped playing.
             buf->flags &= ~SFXBF_PLAYING;
         }
@@ -481,7 +497,7 @@ void DS_Event(int type)
  */
 static int volLinearToLog(float vol)
 {
-    int         dsVol;
+    int                 dsVol;
 
     if(vol <= 0)
         return DSBVOLUME_MIN;
@@ -521,10 +537,14 @@ static int panLinearToLog(float pan)
  *                      SFXBP_MAX_DISTANCE
  *                      SFXBP_RELATIVE_MODE
  */
-void DS_Set(sfxbuffer_t *buf, int prop, float value)
+void DS_Set(sfxbuffer_t* buf, int prop, float value)
 {
-    LPDIRECTSOUNDBUFFER sound = DSBuf(buf);
+    LPDIRECTSOUNDBUFFER sound;
 
+    if(!buf)
+        return;
+
+    sound = DSBuf(buf);
     if(!sound)
         return;
 
@@ -532,7 +552,7 @@ void DS_Set(sfxbuffer_t *buf, int prop, float value)
     {
     case SFXBP_VOLUME:
         {
-        long        volume;
+        long                volume;
 
         if(value <= 0)
             volume = (-1-value) * 10000;
@@ -546,7 +566,7 @@ void DS_Set(sfxbuffer_t *buf, int prop, float value)
 
     case SFXBP_FREQUENCY:
         {
-        unsigned int f = (unsigned int) (buf->rate * value);
+        unsigned int        f = (unsigned int) (buf->rate * value);
 
         // Don't set redundantly.
         if(f != buf->freq)
@@ -577,7 +597,7 @@ void DS_Set(sfxbuffer_t *buf, int prop, float value)
 
     case SFXBP_RELATIVE_MODE:
         {
-        DWORD       mode;
+        DWORD               mode;
 
         if(!DSBuf3(buf))
             return;
@@ -599,21 +619,26 @@ void DS_Set(sfxbuffer_t *buf, int prop, float value)
  *                      converted to DSound's:
  *                      +X = right, +Y = up, +Z = away.
  */
-void DS_Setv(sfxbuffer_t *buf, int prop, float *values)
+void DS_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
+    if(!buf || !values)
+        return;
+
     if(!DSBuf3(buf))
         return;
 
     switch(prop)
     {
     case SFXBP_POSITION:
-        IDirectSound3DBuffer_SetPosition(DSBuf3(buf),
-            values[VX], values[VZ], values[VY], DS3D_DEFERRED);
+        IDirectSound3DBuffer_SetPosition(DSBuf3(buf), values[VX],
+                                         values[VZ], values[VY],
+                                         DS3D_DEFERRED);
         break;
 
     case SFXBP_VELOCITY:
-        IDirectSound3DBuffer_SetVelocity(DSBuf3(buf),
-            values[VX], values[VZ], values[VY], DS3D_DEFERRED);
+        IDirectSound3DBuffer_SetVelocity(DSBuf3(buf), values[VX],
+                                         values[VZ], values[VY],
+                                         DS3D_DEFERRED);
         break;
 
     default:
@@ -637,7 +662,7 @@ static void eaxCommitDeferred(void)
  */
 static void listenerOrientation(float yaw, float pitch)
 {
-    float       front[3], up[3];
+    float               front[3], up[3];
 
     if(!dsListener)
         return;
@@ -679,8 +704,8 @@ static void eaxSetf(DWORD prop, float value)
  */
 static void eaxMuldw(DWORD prop, float mul)
 {
-    DWORD       retBytes;
-    LONG        value;
+    DWORD               retBytes;
+    LONG                value;
 
     if(!eaxListener)
         return;
@@ -700,8 +725,8 @@ static void eaxMuldw(DWORD prop, float mul)
  */
 static void eaxMulf(DWORD prop, float mul, float min, float max)
 {
-    DWORD retBytes;
-    float value;
+    DWORD               retBytes;
+    float               value;
 
     if(!eaxListener)
         return;
@@ -762,9 +787,9 @@ void DS_Listener(int prop, float value)
  * If EAX is available, set the listening environmental properties.
  * Values use SRD_* for indices.
  */
-static void listenerEnvironment(float *rev)
+static void listenerEnvironment(float* rev)
 {
-    float       val;
+    float               val;
 
     // This can only be done if EAX is available.
     if(!eaxListener)
@@ -807,7 +832,7 @@ static void listenerEnvironment(float *rev)
 /**
  * Call SFXLP_UPDATE at the end of every channel update.
  */
-void DS_Listenerv(int prop, float *values)
+void DS_Listenerv(int prop, float* values)
 {
     if(!dsListener)
         return;
@@ -815,20 +840,32 @@ void DS_Listenerv(int prop, float *values)
     switch(prop)
     {
     case SFXLP_POSITION:
+        if(!values)
+            return;
+
         dsListener->SetPosition(values[VX], values[VZ], values[VY],
                                 DS3D_DEFERRED);
         break;
 
     case SFXLP_VELOCITY:
+        if(!values)
+            return;
+
         dsListener->SetVelocity(values[VX], values[VZ], values[VY],
                                 DS3D_DEFERRED);
         break;
 
     case SFXLP_ORIENTATION:
+        if(!values)
+            return;
+
         listenerOrientation(values[VX] / 180 * PI, values[VY] / 180 * PI);
         break;
 
     case SFXLP_REVERB:
+        if(!values)
+            return;
+
         listenerEnvironment(values);
         break;
 

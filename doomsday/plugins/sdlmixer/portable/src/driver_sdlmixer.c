@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * driver_sdlmixer.c: SDL_mixer sound driver for Doomsday
  */
 
@@ -38,41 +38,41 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-int     DS_Init(void);
-void    DS_Shutdown(void);
-sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate);
-void    DS_DestroyBuffer(sfxbuffer_t *buf);
-void    DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample);
-void    DS_Reset(sfxbuffer_t *buf);
-void    DS_Play(sfxbuffer_t *buf);
-void    DS_Stop(sfxbuffer_t *buf);
-void    DS_Refresh(sfxbuffer_t *buf);
-void    DS_Event(int type);
-void    DS_Set(sfxbuffer_t *buf, int property, float value);
-void    DS_Setv(sfxbuffer_t *buf, int property, float *values);
-void    DS_Listener(int property, float value);
-void    DS_Listenerv(int property, float *values);
+int         DS_Init(void);
+void        DS_Shutdown(void);
+sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate);
+void        DS_DestroyBuffer(sfxbuffer_t* buf);
+void        DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+void        DS_Reset(sfxbuffer_t* buf);
+void        DS_Play(sfxbuffer_t* buf);
+void        DS_Stop(sfxbuffer_t* buf);
+void        DS_Refresh(sfxbuffer_t* buf);
+void        DS_Event(int type);
+void        DS_Set(sfxbuffer_t* buf, int prop, float value);
+void        DS_Setv(sfxbuffer_t* buf, int prop, float* values);
+void        DS_Listener(int prop, float value);
+void        DS_Listenerv(int prop, float* values);
 
 // The Ext music interface.
-int     DM_Ext_Init(void);
-void    DM_Ext_Update(void);
-void    DM_Ext_Set(int property, float value);
-int     DM_Ext_Get(int property, void *value);
-void    DM_Ext_Pause(int pause);
-void    DM_Ext_Stop(void);
-void   *DM_Ext_SongBuffer(int length);
-int     DM_Ext_PlayFile(const char *filename, int looped);
-int     DM_Ext_PlayBuffer(int looped);
+int         DM_Ext_Init(void);
+void        DM_Ext_Update(void);
+void        DM_Ext_Set(int prop, float value);
+int         DM_Ext_Get(int prop, void* value);
+void        DM_Ext_Pause(int pause);
+void        DM_Ext_Stop(void);
+void*       DM_Ext_SongBuffer(int length);
+int         DM_Ext_PlayFile(const char* fileName, int looped);
+int         DM_Ext_PlayBuffer(int looped);
 
 // The MUS music interface.
-int     DM_Mus_Init(void);
-void    DM_Mus_Update(void);
-void    DM_Mus_Set(int property, float value);
-int     DM_Mus_Get(int property, void *value);
-void    DM_Mus_Pause(int pause);
-void    DM_Mus_Stop(void);
-void   *DM_Mus_SongBuffer(int length);
-int     DM_Mus_Play(int looped);
+int         DM_Mus_Init(void);
+void        DM_Mus_Update(void);
+void        DM_Mus_Set(int prop, float value);
+int         DM_Mus_Get(int prop, void* value);
+void        DM_Mus_Pause(int pause);
+void        DM_Mus_Stop(void);
+void*       DM_Mus_SongBuffer(int length);
+int         DM_Mus_Play(int looped);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -91,14 +91,14 @@ static int channelCounter = 0;
 
 // CODE --------------------------------------------------------------------
 
-static void msg(const char *msg)
+static void msg(const char* msg)
 {
     Con_Message("SDLMixer: %s\n", msg);
 }
 
 void DS_Error(void)
 {
-    char        buf[500];
+    char                buf[500];
 
     sprintf(buf, "ERROR: %s", Mix_GetError());
     msg(buf);
@@ -149,20 +149,20 @@ void DS_Shutdown(void)
     sdlInitOk = false;
 }
 
-sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate)
+sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t *buf;
+    sfxbuffer_t*        buf;
 
     // Create the buffer.
-    buf = Z_Malloc(sizeof(*buf), PU_STATIC, 0);
-    memset(buf, 0, sizeof(*buf));
+    buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+
     buf->bytes = bits / 8;
     buf->rate = rate;
     buf->flags = flags;
     buf->freq = rate; // Modified by calls to Set(SFXBP_FREQUENCY).
 
-    // The cursor is used to keep track of the channel on which the
-    // sample is playing.
+    // The cursor is used to keep track of the channel on which the sample
+    // is playing.
     buf->cursor = channelCounter++;
 
     // Make sure we have enough channels allocated.
@@ -174,21 +174,25 @@ sfxbuffer_t *DS_CreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-void DS_DestroyBuffer(sfxbuffer_t *buf)
+void DS_DestroyBuffer(sfxbuffer_t* buf)
 {
     // Ugly, but works because the engine creates and destroys buffers
     // only in batches.
     channelCounter = 0;
 
-    Z_Free(buf);
+    if(buf)
+        Z_Free(buf);
 }
 
 /**
  * This is not thread-safe, but it doesn't matter because only one
  * thread will be calling it.
  */
-static char *allocLoadStorage(unsigned int size)
+static char* allocLoadStorage(unsigned int size)
 {
+    if(size == 0)
+        return NULL;
+
     if(size <= sizeof(storage))
     {
         return storage;
@@ -197,17 +201,20 @@ static char *allocLoadStorage(unsigned int size)
     return malloc(size);
 }
 
-static void freeLoadStorage(char *data)
+static void freeLoadStorage(char* data)
 {
-    if(data != storage)
+    if(data && data != storage)
     {
         free(data);
     }
 }
 
-void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
+void DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
-    char   *conv = NULL;
+    char*               conv = NULL;
+
+    if(!buf || !sample)
+        return; // Wha?
 
     // Does the buffer already have a sample loaded?
     if(buf->sample)
@@ -223,8 +230,7 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 
     conv = allocLoadStorage(8 + 4 + 8 + 16 + 8 + sample->size);
 
-    // We will transfer the sample to SDL_mixer by converting it to
-    // WAVE format.
+    // Transfer the sample to SDL_mixer by converting it to WAVE format.
     strcpy(conv, "RIFF");
     *(Uint32 *) (conv + 4) = ULONG(4 + 8 + 16 + 8 + sample->size);
     strcpy(conv + 8, "WAVE");
@@ -232,19 +238,20 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
     // Format chunk.
     strcpy(conv + 12, "fmt ");
     *(Uint32 *) (conv + 16) = ULONG(16);
-    /* WORD wFormatTag;         // Format category
-       WORD wChannels;          // Number of channels
-       uint dwSamplesPerSec;    // Sampling rate
-       uint dwAvgBytesPerSec;   // For buffer estimation
-       WORD wBlockAlign;        // Data block size
-       WORD wBitsPerSample;     // Sample size
+    /**
+     * WORD wFormatTag;         // Format category
+     * WORD wChannels;          // Number of channels
+     * uint dwSamplesPerSec;    // Sampling rate
+     * uint dwAvgBytesPerSec;   // For buffer estimation
+     * WORD wBlockAlign;        // Data block size
+     * WORD wBitsPerSample;     // Sample size
      */
     *(Uint16 *) (conv + 20) = USHORT(1);
     *(Uint16 *) (conv + 22) = USHORT(1);
     *(Uint32 *) (conv + 24) = ULONG(sample->rate);
-    *(Uint32 *) (conv + 28) = ULONG(sample->rate * sample->bytesper);
-    *(Uint16 *) (conv + 32) = USHORT(sample->bytesper);
-    *(Uint16 *) (conv + 34) = USHORT(sample->bytesper * 8);
+    *(Uint32 *) (conv + 28) = ULONG(sample->rate * sample->bytesPer);
+    *(Uint16 *) (conv + 32) = USHORT(sample->bytesPer);
+    *(Uint16 *) (conv + 34) = USHORT(sample->bytesPer * 8);
 
     // Data chunk.
     strcpy(conv + 36, "data");
@@ -265,8 +272,11 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_Reset(sfxbuffer_t *buf)
+void DS_Reset(sfxbuffer_t* buf)
 {
+    if(!buf)
+        return;
+
     DS_Stop(buf);
     buf->sample = NULL;
 
@@ -275,10 +285,10 @@ void DS_Reset(sfxbuffer_t *buf)
     buf->ptr = NULL;
 }
 
-void DS_Play(sfxbuffer_t *buf)
+void DS_Play(sfxbuffer_t* buf)
 {
     // Playing is quite impossible without a sample.
-    if(!buf->sample)
+    if(!buf || !buf->sample)
         return;
 
     // Update the volume at which the sample will be played.
@@ -291,24 +301,23 @@ void DS_Play(sfxbuffer_t *buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_Stop(sfxbuffer_t *buf)
+void DS_Stop(sfxbuffer_t* buf)
 {
-    if(!buf->sample)
+    if(!buf || !buf->sample)
         return;
 
     Mix_HaltChannel(buf->cursor);
     buf->flags &= ~SFXBF_PLAYING;
 }
 
-void DS_Refresh(sfxbuffer_t *buf)
+void DS_Refresh(sfxbuffer_t* buf)
 {
-    if(!buf->ptr || !buf->sample)
+    if(!buf || !buf->ptr || !buf->sample)
         return;
 
     // Has the buffer finished playing?
     if(!Mix_Playing(buf->cursor))
-    {
-        // It has stopped playing.
+    {   // It has stopped playing.
         buf->flags &= ~SFXBF_PLAYING;
     }
 }
@@ -318,11 +327,14 @@ void DS_Event(int type)
     // Not supported.
 }
 
-void DS_Set(sfxbuffer_t *buf, int property, float value)
+void DS_Set(sfxbuffer_t* buf, int prop, float value)
 {
-    int         right;
+    int                 right;
 
-    switch (property)
+    if(!buf)
+        return;
+
+    switch(prop)
     {
     case SFXBP_VOLUME:
         // 'written' is used for storing the volume of the channel.
@@ -340,22 +352,22 @@ void DS_Set(sfxbuffer_t *buf, int property, float value)
     }
 }
 
-void DS_Setv(sfxbuffer_t * buf, int property, float *values)
+void DS_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
     // Not supported.
 }
 
-void DS_Listener(int property, float value)
+void DS_Listener(int prop, float value)
 {
     // Not supported.
 }
 
-void SetEnvironment(float *rev)
+void SetEnvironment(float* rev)
 {
     // Not supported.
 }
 
-void DS_Listenerv(int property, float *values)
+void DS_Listenerv(int prop, float* values)
 {
     // Not supported.
 }

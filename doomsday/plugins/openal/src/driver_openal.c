@@ -65,7 +65,7 @@
 
 #define PI          3.141592654
 
-#define SRC(buf)    ((ALuint)buf->ptr3d)
+#define SRC(buf)    ((ALuint)buf->ptr3D)
 #define BUF(buf)    ((ALuint)buf->ptr)
 
 // TYPES -------------------------------------------------------------------
@@ -230,7 +230,7 @@ sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
     buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
 
     buf->ptr = (void *) bufName;
-    buf->ptr3d = (void *) srcName;
+    buf->ptr3D = (void *) srcName;
     buf->bytes = bits / 8;
     buf->rate = rate;
     buf->flags = flags;
@@ -269,7 +269,7 @@ void DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     }
 
     alBufferData(BUF(buf),
-                 sample->bytesper == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
+                 sample->bytesPer == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
                  sample->data, sample->size, sample->rate);
 
     error("Load", "BufferData");
