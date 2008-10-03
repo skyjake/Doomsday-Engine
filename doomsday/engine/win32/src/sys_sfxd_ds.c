@@ -274,7 +274,7 @@ int DS_DSoundInit(void)
         return true; // Already initialized?
 
     // Can we set the Primary Sound Format?
-    canSetPSF = !ArgExists("-nopsf"));
+    canSetPSF = !ArgExists("-nopsf");
 
     hWnd = Sys_GetWindowHandle(windowIDX);
     if(!hWnd)
@@ -1167,6 +1167,7 @@ void DS_DSoundListenerv(int prop, float* values)
         break;
 
     default:
-        DS_DSoundListener(property, 0);
+        DS_DSoundListener(prop, 0);
+        break;
     }
 }

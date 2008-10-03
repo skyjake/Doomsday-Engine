@@ -63,11 +63,11 @@ typedef struct sfxchannel_s {
     int             startTime; // When was the channel last started?
 } sfxchannel_t;
 
-extern boolean  sfxAvail;
-extern float    sfxReverbStrength;
-extern int      sfxMaxCacheKB, sfxMaxCacheTics;
-extern int      sfxBits, sfxRate;
-extern int      sfx3D, sfx16Bit, sfxSampleRate;
+extern boolean sfxAvail;
+extern float sfxReverbStrength;
+extern int sfxMaxCacheKB, sfxMaxCacheTics;
+extern int sfxBits, sfxRate;
+extern int sfx3D, sfx16Bit, sfxSampleRate;
 
 boolean         Sfx_Init(void);
 void            Sfx_Shutdown(void);

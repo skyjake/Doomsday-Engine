@@ -66,7 +66,6 @@ sfxdriver_t* driver = NULL;
 
 int sfxMaxChannels = 16;
 int sfxDedicated2D = 4;
-int sfx3D = false;
 float sfxReverbStrength = 1;
 int sfxBits = 8;
 int sfxRate = 11025;
@@ -642,7 +641,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     int                 i, count, nowTime;
     float               myPrio, lowPrio = 0, channelPrios[SFX_MAX_CHANNELS];
     boolean             haveChannelPrios = false;
-    boolean             play3D = sfx3D && (emitter || fixedpos);
+    boolean             play3D = sfx3D && (emitter || fixedPos);
 
     if(!sfxAvail || sample->id < 1 || sample->id >= defs.count.sounds.num ||
        volume <= 0)
@@ -667,7 +666,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
              * Stop the lowest priority sound of the playing instances,
              * again noting sounds that are more important than us.
              */
-            for(selch = NULL, i = 0, ch = channels; i < numChannels;
+            for(selCh = NULL, i = 0, ch = channels; i < numChannels;
                 ++i, ch++)
             {
                 if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING) &&
@@ -747,7 +746,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
 
             if(!(ch->buffer->flags & SFXBF_PLAYING))
             {   // This channel is not playing, just take it!
-                selch = ch;
+                selCh = ch;
                 break;
             }
 
