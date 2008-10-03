@@ -86,6 +86,7 @@ boolean         P_CheckSides(mobj_t* actor, float x, float y);
 #if __JHEXEN__
 boolean         P_TestMobjLocation(mobj_t *mobj);
 void            PIT_ThrustSpike(mobj_t *actor);
+boolean         P_UsePuzzleItem(player_t *player, int itemType);
 #endif
 
 #endif

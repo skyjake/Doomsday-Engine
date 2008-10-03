@@ -160,7 +160,6 @@ typedef struct player_s {
     int             invPtr;
     int             curPos;
     artitype_e      readyArtifact;
-    int             artifactCount;
     int             inventorySlotNum;
 
     int             flameCount; // For flame thrower duration.
@@ -171,4 +170,14 @@ typedef struct player_s {
     mobj_t*         rain2; // Active rain maker 2.
 } player_t;
 
+boolean         P_UseArtiFireBomb(player_t* player);
+boolean         P_UseArtiTombOfPower(player_t* player);
+boolean         P_UseArtiEgg(player_t* player);
+boolean         P_UseArtiFly(player_t* player);
+boolean         P_UseArtiTeleport(player_t* player);
+boolean         P_UseArtiTorch(player_t* player);
+boolean         P_UseArtiHealth(player_t* player);
+boolean         P_UseArtiSuperHealth(player_t* player);
+boolean         P_UseArtiInvisibility(player_t* player);
+boolean         P_UseArtiInvulnerability(player_t* player);
 #endif

@@ -261,7 +261,7 @@ void P_GiveKey(player_t* player, keytype_t card)
 /**
  * d64tc
  */
-boolean P_GiveArtifact(player_t* player, laserpw_t artifact)
+boolean P_InventoryGive(player_t* player, laserpw_t artifact)
 {
     if(player->artifacts[artifact])
         return false;
@@ -712,7 +712,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
         else
         {
-            P_GiveArtifact(player, it_laserpw1);
+            P_InventoryGive(player, it_laserpw1);
             P_SetMessage(player, GOTPOWERUP1, false);
         }
         break;
@@ -727,7 +727,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
         else
         {
-            P_GiveArtifact(player, it_laserpw2);
+            P_InventoryGive(player, it_laserpw2);
             P_SetMessage(player, GOTPOWERUP2, false);
         }
         break;
@@ -742,7 +742,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
         else
         {
-            P_GiveArtifact(player, it_laserpw3);
+            P_InventoryGive(player, it_laserpw3);
             P_SetMessage(player, GOTPOWERUP3, false);
         }
         break;

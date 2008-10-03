@@ -2106,3 +2106,468 @@ void P_MovePsprites(player_t *plr)
     plr->pSprites[ps_flash].pos[VX] = plr->pSprites[ps_weapon].pos[VX];
     plr->pSprites[ps_flash].pos[VY] = plr->pSprites[ps_weapon].pos[VY];
 }
+
+boolean P_UseArtiPoisonBag(player_t* player)
+{
+    mobj_t*         plrmo, *mo;
+    float           pos[3];
+    angle_t         angle;
+    mobjtype_t      type;
+
+    if(!player)
+        return false;
+
+    plrmo = player->plr->mo;
+
+    if(player->class == PCLASS_FIGHTER || player->class == PCLASS_PIG)
+    {
+        type = MT_THROWINGBOMB;
+        pos[VX] = plrmo->pos[VX];
+        pos[VY] = plrmo->pos[VY];
+        pos[VZ] = plrmo->pos[VZ] - plrmo->floorClip + 35;
+        angle = plrmo->angle + (((P_Random() & 7) - 4) << 24);
+    }
+    else
+    {
+        uint                an = plrmo->angle >> ANGLETOFINESHIFT;
+
+        if(player->class == PCLASS_CLERIC)
+            type = MT_POISONBAG;
+        else
+            type = MT_FIREBOMB;
+        pos[VX] = plrmo->pos[VX] + 16 * FIX2FLT(finecosine[an]);
+        pos[VY] = plrmo->pos[VY] + 24 * FIX2FLT(finesine[an]);
+        pos[VZ] = plrmo->pos[VZ] - plrmo->floorClip + 8;
+        angle = plrmo->angle;
+    }
+
+    mo = P_SpawnMobj3fv(type, pos, angle);
+    if(mo)
+    {
+        mo->target = plrmo;
+
+        if(type == MT_THROWINGBOMB)
+        {
+            mo->mom[MZ] =
+                4 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+            mo->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+
+            P_ThrustMobj(mo, mo->angle, mo->info->speed);
+
+            mo->mom[MX] += plrmo->mom[MX] / 2;
+            mo->mom[MY] += plrmo->mom[MY] / 2;
+
+            mo->tics -= P_Random() & 3;
+            P_CheckMissileSpawn(mo);
+        }
+    }
+
+    return true;
+}
+
+boolean P_UseArtiEgg(player_t* player)
+{
+    mobj_t*         plrmo;
+
+    if(!player)
+        return false;
+    plrmo = player->plr->mo;
+
+    P_SpawnPlayerMissile(MT_EGGFX, plrmo);
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 3));
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 3));
+
+    return true;
+}
+
+boolean P_UseArtiSummon(player_t* player)
+{
+    mobj_t*         plrmo, *mo;
+
+    if(!player)
+        return false;
+    plrmo = player->plr->mo;
+
+    mo = P_SpawnPlayerMissile(MT_SUMMON_FX, plrmo);
+    if(mo)
+    {
+        mo->target = plrmo;
+        mo->tracer = plrmo;
+        mo->mom[MZ] = 5;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiBoostArmor(player_t* player)
+{
+    int             i, count;
+
+    if(!player)
+        return false;
+
+    count = 0;
+    for(i = 0; i < NUMARMOR; ++i)
+    {
+        count += P_GiveArmor(player, i, 1); // 1 point per armor type.
+    }
+
+    if(!count)
+        return false;
+
+    return true;
+}
+
+boolean P_UseArtiBoostMana(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_GiveMana(player, AT_BLUEMANA, MAX_MANA))
+    {
+        if(!P_GiveMana(player, AT_GREENMANA, MAX_MANA))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        P_GiveMana(player, AT_GREENMANA, MAX_MANA);
+    }
+
+    return true;
+}
+
+boolean P_UseArtiTeleportOther(player_t* player)
+{
+    if(!player)
+        return false;
+
+    P_ArtiTeleportOther(player);
+
+    return true;
+}
+
+boolean P_UseArtiSpeed(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GivePower(player, PT_SPEED);
+}
+
+boolean P_UseArtiFly(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_GivePower(player, PT_FLIGHT))
+    {
+        return false;
+    }
+
+    if(player->plr->mo->mom[MZ] <= -35)
+    {   // Stop falling scream.
+        S_StopSound(0, player->plr->mo);
+    }
+
+    return true;
+}
+
+boolean P_UseArtiBlastRadius(player_t* player)
+{
+    if(!player)
+        return false;
+
+    P_BlastRadius(player);
+    return true;
+}
+
+boolean P_UseArtiTeleport(player_t* player)
+{
+    if(!player)
+        return false;
+
+    P_ArtiTele(player);
+    return true;
+}
+
+boolean P_UseArtiTorch(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GivePower(player, PT_INFRARED);
+}
+
+boolean P_UseArtiHealRadius(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_HealRadius(player);
+}
+
+boolean P_UseArtiHealth(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GiveBody(player, 25);
+}
+
+boolean P_UseArtiSuperHealth(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GiveBody(player, 100);
+}
+
+boolean P_UseArtiInvulnerability(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GivePower(player, PT_INVULNERABILITY);
+}
+
+boolean P_UseArtiPuzzSkull(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZSKULL))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGemBig(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBIG))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGemRed(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEMRED))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGemGreen1(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEMGREEN1))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGemGreen2(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEMGREEN2))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGemBlue1(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBLUE1))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGemBlue2(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBLUE2))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzBook1(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZBOOK1))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzBook2(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZBOOK2))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzSkull2(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZSKULL2))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzFWeapon(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZFWEAPON))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzCWeapon(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZCWEAPON))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzMWeapon(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZMWEAPON))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGear1(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR1))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGear2(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR2))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGear3(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR3))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiPuzzGear4(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR4))
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        return false;
+    }
+
+    return true;
+}

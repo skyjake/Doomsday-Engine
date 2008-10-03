@@ -35,7 +35,7 @@
 
 #include "h2def.h"
 
-#define NUMINVENTORYSLOTS   NUMARTIFACTS
+#define NUMINVENTORYSLOTS   NUM_ARTIFACT_TYPES
 
 #define WEAPON_INFO(weaponnum, pclass, fmode) ( \
     &weaponInfo[weaponnum][pclass].mode[fmode])

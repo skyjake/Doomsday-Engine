@@ -714,11 +714,11 @@ static void CheatArtifactAllFunc(player_t *player, cheat_t *cheat)
 {
     int                 i, j;
 
-    for(i = arti_none + 1; i < arti_firstpuzzitem; ++i)
+    for(i = AFT_NONE + 1; i < AFT_FIRSTPUZZITEM; ++i)
     {
         for(j = 0; j < 25; ++j)
         {
-            P_GiveArtifact(player, i, NULL);
+            P_InventoryGive(player, i);
         }
     }
 
@@ -729,9 +729,9 @@ static void CheatPuzzleFunc(player_t *player, cheat_t *cheat)
 {
     int                 i;
 
-    for(i = arti_firstpuzzitem; i < NUMARTIFACTS; i++)
+    for(i = AFT_FIRSTPUZZITEM; i < NUM_ARTIFACT_TYPES; i++)
     {
-        P_GiveArtifact(player, i, NULL);
+        P_InventoryGive(player, i);
     }
 
     P_SetMessage(player, TXT_CHEATARTIFACTS3, false);

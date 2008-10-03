@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
@@ -1968,4 +1968,152 @@ void P_MovePsprites(player_t *player)
 
     player->pSprites[ps_flash].pos[VX] = player->pSprites[ps_weapon].pos[VX];
     player->pSprites[ps_flash].pos[VY] = player->pSprites[ps_weapon].pos[VY];
+}
+
+boolean P_UseArtiFireBomb(player_t* player)
+{
+    uint            an;
+    mobj_t*         plrmo, *mo;
+
+    if(!player)
+        return false;
+
+    plrmo = player->plr->mo;
+    an = plrmo->angle >> ANGLETOFINESHIFT;
+
+    mo = P_SpawnMobj3f(MT_FIREBOMB,
+                       plrmo->pos[VX] + 24 * FIX2FLT(finecosine[an]),
+                       plrmo->pos[VY] + 24 * FIX2FLT(finesine[an]),
+                       plrmo->pos[VZ] - plrmo->floorClip + 15,
+                       plrmo->angle);
+    if(mo)
+    {
+        mo->target = player->plr->mo;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiTombOfPower(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(player->morphTics)
+    {   // Attempt to undo chicken.
+        if(P_UndoPlayerMorph(player) == false)
+        {   // Failed.
+            P_DamageMobj(player->plr->mo, NULL, NULL, 10000, false);
+        }
+        else
+        {   // Succeeded.
+            player->morphTics = 0;
+            S_StartSound(SFX_WPNUP, player->plr->mo);
+        }
+    }
+    else
+    {
+        if(!P_GivePower(player, PT_WEAPONLEVEL2))
+        {
+            return false;
+        }
+
+        if(player->readyWeapon == WT_FIRST)
+        {
+            P_SetPsprite(player, ps_weapon, S_STAFFREADY2_1);
+        }
+        else if(player->readyWeapon == WT_EIGHTH)
+        {
+            P_SetPsprite(player, ps_weapon, S_GAUNTLETREADY2_1);
+        }
+    }
+
+    return true;
+}
+
+boolean P_UseArtiEgg(player_t* player)
+{
+    mobj_t*         plrmo;
+
+    if(!player)
+        return false;
+    plrmo = player->plr->mo;
+
+# if __JHEXEN__
+    P_SpawnPlayerMissile(MT_EGGFX, plrmo);
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 3));
+    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 3));
+# else
+    P_SpawnMissile(MT_EGGFX, plrmo, NULL);
+    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 6), -12345);
+    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 6), -12345);
+    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 3), -12345);
+    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 3), -12345);
+# endif
+
+    return true;
+}
+
+boolean P_UseArtiFly(player_t* player)
+{
+    if(!player)
+        return false;
+
+    if(!P_GivePower(player, PT_FLIGHT))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_UseArtiTeleport(player_t* player)
+{
+    if(!player)
+        return false;
+
+    P_ArtiTele(player);
+    return true;
+}
+
+boolean P_UseArtiTorch(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GivePower(player, PT_INFRARED);
+}
+
+boolean P_UseArtiHealth(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GiveBody(player, 25);
+}
+
+boolean P_UseArtiSuperHealth(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GiveBody(player, 100);
+}
+
+boolean P_UseArtiInvisibility(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GivePower(player, PT_INVISIBILITY);
+}
+
+boolean P_UseArtiInvulnerability(player_t* player)
+{
+    if(!player)
+        return false;
+
+    return P_GivePower(player, PT_INVULNERABILITY);
 }

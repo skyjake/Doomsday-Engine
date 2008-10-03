@@ -38,19 +38,18 @@
 
 extern boolean useArti;
 
-boolean         P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo);
+boolean         P_InventoryGive(player_t* player, artitype_e arti);
+void            P_InventoryTake(player_t* player, int slot);
 
-void            P_InventoryResetCursor(player_t *player);
+boolean         P_InventoryUse(player_t* player, artitype_e arti);
+uint            P_InventoryCount(player_t* player, artitype_e arti);
 
-void            P_InventoryRemoveArtifact(player_t *player, int slot);
-boolean         P_InventoryUseArtifact(player_t *player, artitype_e arti);
-void            P_InventoryNextArtifact(player_t *player);
+void            P_InventoryResetCursor(player_t* player);
+void            P_InventoryNext(player_t* player);
 
 #if __JHERETIC__
-void            P_InventoryCheckReadyArtifact(player_t *player);
+void            P_InventoryCheckReadyArtifact(player_t* player);
 #endif
-
-boolean         P_UseArtifactOnPlayer(player_t *player, artitype_e arti);
 
 DEFCC(CCmdInventory);
 

@@ -180,7 +180,7 @@ typedef enum
     it_laserpw1,
     it_laserpw2,
     it_laserpw3,
-    NUMARTIFACTS
+    NUM_ARTIFACT_TYPES
 } laserpw_t;
 // < jd64
 

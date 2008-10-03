@@ -234,23 +234,23 @@ char    artifactlist[][10] = {
     {"ARTIBMAN"},               // boost mana
     {"ARTIBRAC"},               // boost armor
     {"ARTIATLP"},               // teleport
-    {"ARTISKLL"},               // arti_puzzskull
-    {"ARTIBGEM"},               // arti_puzzgembig
-    {"ARTIGEMR"},               // arti_puzzgemred
-    {"ARTIGEMG"},               // arti_puzzgemgreen1
-    {"ARTIGMG2"},               // arti_puzzgemgreen2
-    {"ARTIGEMB"},               // arti_puzzgemblue1
-    {"ARTIGMB2"},               // arti_puzzgemblue2
-    {"ARTIBOK1"},               // arti_puzzbook1
-    {"ARTIBOK2"},               // arti_puzzbook2
-    {"ARTISKL2"},               // arti_puzzskull2
-    {"ARTIFWEP"},               // arti_puzzfweapon
-    {"ARTICWEP"},               // arti_puzzcweapon
-    {"ARTIMWEP"},               // arti_puzzmweapon
-    {"ARTIGEAR"},               // arti_puzzgear1
-    {"ARTIGER2"},               // arti_puzzgear2
-    {"ARTIGER3"},               // arti_puzzgear3
-    {"ARTIGER4"},               // arti_puzzgear4
+    {"ARTISKLL"},               // AFT_PUZZSKULL
+    {"ARTIBGEM"},               // AFT_PUZZGEMBIG
+    {"ARTIGEMR"},               // AFT_PUZZGEMRED
+    {"ARTIGEMG"},               // AFT_PUZZGEMGREEN1
+    {"ARTIGMG2"},               // AFT_PUZZGEMGREEN2
+    {"ARTIGEMB"},               // AFT_PUZZGEMBLUE1
+    {"ARTIGMB2"},               // AFT_PUZZGEMBLUE2
+    {"ARTIBOK1"},               // AFT_PUZZBOOK1
+    {"ARTIBOK2"},               // AFT_PUZZBOOK2
+    {"ARTISKL2"},               // AFT_PUZZSKULL2
+    {"ARTIFWEP"},               // AFT_PUZZFWEAPON
+    {"ARTICWEP"},               // AFT_PUZZCWEAPON
+    {"ARTIMWEP"},               // AFT_PUZZMWEAPON
+    {"ARTIGEAR"},               // AFT_PUZZGEAR1
+    {"ARTIGER2"},               // AFT_PUZZGEAR2
+    {"ARTIGER3"},               // AFT_PUZZGEAR3
+    {"ARTIGER4"},               // AFT_PUZZGEAR4
 };
 
 // CVARs for the HUD/Statusbar
@@ -930,7 +930,7 @@ void ST_loadGraphics(void)
     }
 
     // Artifact icons (+5 for the use-artifact flash patches)
-    for(i = 0; i < (NUMARTIFACTS + 5); ++i)
+    for(i = 0; i < (NUM_ARTIFACT_TYPES + 5); ++i)
     {
         sprintf(namebuf, "%s", artifactlist[i]);
         R_CachePatch(&PatchARTIFACTS[i], namebuf);
@@ -1487,7 +1487,7 @@ static void drawWidgets(hudstate_t* hud)
 
         for(i = 0; i < NUMVISINVSLOTS; ++i)
         {
-            if(plr->inventory[x + i].type != arti_none)
+            if(plr->inventory[x + i].type != AFT_NONE)
             {
                 STlib_updateMultIcon(&hud->wInvSlot[i], refresh);
 
@@ -1882,7 +1882,7 @@ void ST_doFullscreenStuff(int player)
         {
             GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
             if(plr->inventorySlotNum > x + i &&
-               plr->inventory[x + i].type != arti_none)
+               plr->inventory[x + i].type != AFT_NONE)
             {
                 GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==plr->curPos? hud->alpha : iconalpha,
                              W_GetNumForName(artifactlist[plr->inventory

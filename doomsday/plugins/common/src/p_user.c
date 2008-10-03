@@ -1278,7 +1278,7 @@ void P_PlayerThinkItems(player_t *player)
     {
         if(player->brain.speed && artiSkipParm)
         {
-            if(player->inventory[player->invPtr].type != arti_none)
+            if(player->inventory[player->invPtr].type != AFT_NONE)
             {
                 arti = 0xff;
             }
@@ -1310,19 +1310,19 @@ void P_PlayerThinkItems(player_t *player)
     if(!arti && P_GetImpulseControlState(pnum, CTL_TOME_OF_POWER) &&
        !player->powers[PT_WEAPONLEVEL2])
     {
-        arti = arti_tomeofpower;
+        arti = AFT_TOMBOFPOWER;
     }
 #endif
 #if __JHEXEN__
     if(!arti && P_GetImpulseControlState(pnum, CTL_HEALTH) &&
        (player->plr->mo->health < MAXHEALTH))
     {
-        arti = arti_health;
+        arti = AFT_HEALTH;
     }
     if(!arti && P_GetImpulseControlState(pnum, CTL_INVULNERABILITY) &&
        !player->powers[PT_INVULNERABILITY])
     {
-        arti = arti_invulnerability;
+        arti = AFT_INVULNERABILITY;
     }
 #endif
 
@@ -1334,35 +1334,35 @@ void P_PlayerThinkItems(player_t *player)
             int artifact;
         } controlArtiMap[] = {
 #if __JHERETIC__
-            { CTL_INVULNERABILITY, arti_invulnerability },
-            { CTL_INVISIBILITY, arti_invisibility },
-            { CTL_HEALTH, arti_health },
-            { CTL_SUPER_HEALTH, arti_superhealth },
-            { CTL_TORCH, arti_torch },
-            { CTL_FIREBOMB, arti_firebomb },
-            { CTL_EGG, arti_egg },
-            { CTL_FLY, arti_fly },
-            { CTL_TELEPORT, arti_teleport },
-            { CTL_PANIC, NUMARTIFACTS },
+            { CTL_INVULNERABILITY, AFT_INVULNERABILITY },
+            { CTL_INVISIBILITY, AFT_INVISIBILITY },
+            { CTL_HEALTH, AFT_HEALTH },
+            { CTL_SUPER_HEALTH, AFT_SUPERHEALTH },
+            { CTL_TORCH, AFT_TORCH },
+            { CTL_FIREBOMB, AFT_FIREBOMB },
+            { CTL_EGG, AFT_EGG },
+            { CTL_FLY, AFT_FLY },
+            { CTL_TELEPORT, AFT_TELEPORT },
+            { CTL_PANIC, NUM_ARTIFACT_TYPES },
 #endif
 #if __JHEXEN__ || __JSTRIFE__
-            { CTL_INVULNERABILITY, arti_invulnerability },
-            { CTL_BLAST_RADIUS, arti_blastradius },
-            { CTL_MYSTIC_URN, arti_superhealth },
-            { CTL_TORCH, arti_torch },
-            { CTL_KRATER, arti_boostmana },
-            { CTL_SPEED_BOOTS, arti_speed },
-            { CTL_POISONBAG, arti_poisonbag },
-            { CTL_EGG, arti_egg },
-            { CTL_TELEPORT, arti_teleport },
-            { CTL_DARK_SERVANT, arti_summon },
-            { CTL_TELEPORT_OTHER, arti_teleportother },
-            { CTL_PANIC, NUMARTIFACTS },
+            { CTL_INVULNERABILITY, AFT_INVULNERABILITY },
+            { CTL_BLAST_RADIUS, AFT_BLASTRADIUS },
+            { CTL_MYSTIC_URN, AFT_SUPERHEALTH },
+            { CTL_TORCH, AFT_TORCH },
+            { CTL_KRATER, AFT_BOOSTMANA },
+            { CTL_SPEED_BOOTS, AFT_SPEED },
+            { CTL_POISONBAG, AFT_POISONBAG },
+            { CTL_EGG, AFT_EGG },
+            { CTL_TELEPORT, AFT_TELEPORT },
+            { CTL_DARK_SERVANT, AFT_SUMMON },
+            { CTL_TELEPORT_OTHER, AFT_TELEPORTOTHER },
+            { CTL_PANIC, NUM_ARTIFACT_TYPES },
 #endif
-            { 0, arti_none }              // Terminator.
+            { 0, AFT_NONE }              // Terminator.
         };
         int i;
-        for(i = 0; controlArtiMap[i].artifact != arti_none && !arti; i++)
+        for(i = 0; controlArtiMap[i].artifact != AFT_NONE && !arti; i++)
         {
             if(P_GetImpulseControlState(pnum, controlArtiMap[i].control))
             {
@@ -1375,25 +1375,25 @@ void P_PlayerThinkItems(player_t *player)
 
     if(arti)
     {   // Use an artifact
-        if(arti == NUMARTIFACTS)
+        if(arti == NUM_ARTIFACT_TYPES)
         {   // Use one of each artifact (except puzzle artifacts).
             int     i;
 # if __JHEXEN__ || __JSTRIFE__
-            for(i = arti_none + 1; i < arti_firstpuzzitem; ++i)
+            for(i = AFT_NONE + 1; i < AFT_FIRSTPUZZITEM; ++i)
 # else
-            for(i = arti_none + 1; i < NUMARTIFACTS; ++i)
+            for(i = AFT_NONE + 1; i < NUM_ARTIFACT_TYPES; ++i)
 # endif
             {
-                P_InventoryUseArtifact(player, i);
+                P_InventoryUse(player, i);
             }
         }
         else if(arti == 0xff)
         {
-            P_InventoryNextArtifact(player);
+            P_InventoryNext(player);
         }
         else
         {
-            P_InventoryUseArtifact(player, arti);
+            P_InventoryUse(player, arti);
         }
     }
 #endif
@@ -1402,7 +1402,7 @@ void P_PlayerThinkItems(player_t *player)
     if(player->brain.upMove > 0 && !player->powers[PT_FLIGHT])
     {
         // Start flying automatically.
-        P_InventoryUseArtifact(player, arti_fly);
+        P_InventoryUse(player, AFT_FLY);
     }
 #endif
 }

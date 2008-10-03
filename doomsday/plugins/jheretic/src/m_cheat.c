@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
@@ -516,7 +516,8 @@ static void cheatPowerFunc(player_t *player, cheatseq_t *cheat)
     }
     else
     {
-        P_UseArtifactOnPlayer(player, arti_tomeofpower);
+        P_InventoryGive(player, AFT_TOMBOFPOWER);
+        P_InventoryUse(player, AFT_TOMBOFPOWER);
         P_SetMessage(player, TXT_CHEATPOWERON, false);
     }
 }
@@ -593,23 +594,23 @@ static void cheatArtifact3Func(player_t *player, cheatseq_t * cheat)
     count = cheat->args[1] - '0';
     if(type == 26 && count == 0)
     {                           // All artifacts
-        for(type = arti_none + 1; type < NUMARTIFACTS; type++)
+        for(type = AFT_NONE + 1; type < NUM_ARTIFACT_TYPES; type++)
         {
-            if(gameMode == shareware && (type == arti_superhealth || type == arti_teleport))
+            if(gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
             {
                 continue;
             }
 
             for(i = 0; i < MAXARTICOUNT; i++)
             {
-                P_GiveArtifact(player, type, NULL);
+                P_InventoryGive(player, type);
             }
         }
         P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
     }
-    else if(type > arti_none && type < NUMARTIFACTS && count > 0 && count < 10)
+    else if(type > AFT_NONE && type < NUM_ARTIFACT_TYPES && count > 0 && count < 10)
     {
-        if(gameMode == shareware && (type == arti_superhealth || type == arti_teleport))
+        if(gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
         {
             P_SetMessage(player, TXT_CHEATARTIFACTSFAIL, false);
             return;
@@ -617,7 +618,7 @@ static void cheatArtifact3Func(player_t *player, cheatseq_t * cheat)
 
         for(i = 0; i < count; ++i)
         {
-            P_GiveArtifact(player, type, NULL);
+            P_InventoryGive(player, type);
         }
         P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
     }

@@ -546,7 +546,7 @@ boolean P_GivePower(player_t *plr, powertype_t power)
 static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
                               mobj_t *artifact)
 {
-    int             artifactMessages[NUMARTIFACTS] = {
+    int             artifactMessages[NUM_ARTIFACT_TYPES] = {
         0,
         TXT_TXT_ARTIINVULNERABILITY,
         TXT_TXT_ARTIHEALTH,
@@ -582,7 +582,7 @@ static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
         TXT_TXT_ARTIPUZZGEAR
     };
 
-    if(P_GiveArtifact(plr, artifactType, artifact))
+    if(P_InventoryGive(plr, artifactType))
     {
         if(artifact->special)
         {
@@ -592,7 +592,7 @@ static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
         }
 
         plr->bonusCount += BONUSADD;
-        if(artifactType < arti_firstpuzzitem)
+        if(artifactType < AFT_FIRSTPUZZITEM)
         {
             SetDormantArtifact(artifact);
             S_StartSound(SFX_PICKUP_ARTIFACT, artifact);
@@ -764,132 +764,132 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     // Artifacts
     case SPR_PTN2:
-        TryPickupArtifact(player, arti_health, special);
+        TryPickupArtifact(player, AFT_HEALTH, special);
         return;
 
     case SPR_SOAR:
-        TryPickupArtifact(player, arti_fly, special);
+        TryPickupArtifact(player, AFT_FLY, special);
         return;
 
     case SPR_INVU:
-        TryPickupArtifact(player, arti_invulnerability, special);
+        TryPickupArtifact(player, AFT_INVULNERABILITY, special);
         return;
 
     case SPR_SUMN:
-        TryPickupArtifact(player, arti_summon, special);
+        TryPickupArtifact(player, AFT_SUMMON, special);
         return;
 
     case SPR_PORK:
-        TryPickupArtifact(player, arti_egg, special);
+        TryPickupArtifact(player, AFT_EGG, special);
         return;
 
     case SPR_SPHL:
-        TryPickupArtifact(player, arti_superhealth, special);
+        TryPickupArtifact(player, AFT_SUPERHEALTH, special);
         return;
 
     case SPR_HRAD:
-        TryPickupArtifact(player, arti_healingradius, special);
+        TryPickupArtifact(player, AFT_HEALINGRADIUS, special);
         return;
 
     case SPR_TRCH:
-        TryPickupArtifact(player, arti_torch, special);
+        TryPickupArtifact(player, AFT_TORCH, special);
         return;
 
     case SPR_ATLP:
-        TryPickupArtifact(player, arti_teleport, special);
+        TryPickupArtifact(player, AFT_TELEPORT, special);
         return;
 
     case SPR_TELO:
-        TryPickupArtifact(player, arti_teleportother, special);
+        TryPickupArtifact(player, AFT_TELEPORTOTHER, special);
         return;
 
     case SPR_PSBG:
-        TryPickupArtifact(player, arti_poisonbag, special);
+        TryPickupArtifact(player, AFT_POISONBAG, special);
         return;
 
     case SPR_SPED:
-        TryPickupArtifact(player, arti_speed, special);
+        TryPickupArtifact(player, AFT_SPEED, special);
         return;
 
     case SPR_BMAN:
-        TryPickupArtifact(player, arti_boostmana, special);
+        TryPickupArtifact(player, AFT_BOOSTMANA, special);
         return;
 
     case SPR_BRAC:
-        TryPickupArtifact(player, arti_boostarmor, special);
+        TryPickupArtifact(player, AFT_BOOSTARMOR, special);
         return;
 
     case SPR_BLST:
-        TryPickupArtifact(player, arti_blastradius, special);
+        TryPickupArtifact(player, AFT_BLASTRADIUS, special);
         return;
 
     // Puzzle artifacts
     case SPR_ASKU:
-        TryPickupArtifact(player, arti_puzzskull, special);
+        TryPickupArtifact(player, AFT_PUZZSKULL, special);
         return;
 
     case SPR_ABGM:
-        TryPickupArtifact(player, arti_puzzgembig, special);
+        TryPickupArtifact(player, AFT_PUZZGEMBIG, special);
         return;
 
     case SPR_AGMR:
-        TryPickupArtifact(player, arti_puzzgemred, special);
+        TryPickupArtifact(player, AFT_PUZZGEMRED, special);
         return;
 
     case SPR_AGMG:
-        TryPickupArtifact(player, arti_puzzgemgreen1, special);
+        TryPickupArtifact(player, AFT_PUZZGEMGREEN1, special);
         return;
 
     case SPR_AGG2:
-        TryPickupArtifact(player, arti_puzzgemgreen2, special);
+        TryPickupArtifact(player, AFT_PUZZGEMGREEN2, special);
         return;
 
     case SPR_AGMB:
-        TryPickupArtifact(player, arti_puzzgemblue1, special);
+        TryPickupArtifact(player, AFT_PUZZGEMBLUE1, special);
         return;
 
     case SPR_AGB2:
-        TryPickupArtifact(player, arti_puzzgemblue2, special);
+        TryPickupArtifact(player, AFT_PUZZGEMBLUE2, special);
         return;
 
     case SPR_ABK1:
-        TryPickupArtifact(player, arti_puzzbook1, special);
+        TryPickupArtifact(player, AFT_PUZZBOOK1, special);
         return;
 
     case SPR_ABK2:
-        TryPickupArtifact(player, arti_puzzbook2, special);
+        TryPickupArtifact(player, AFT_PUZZBOOK2, special);
         return;
 
     case SPR_ASK2:
-        TryPickupArtifact(player, arti_puzzskull2, special);
+        TryPickupArtifact(player, AFT_PUZZSKULL2, special);
         return;
 
     case SPR_AFWP:
-        TryPickupArtifact(player, arti_puzzfweapon, special);
+        TryPickupArtifact(player, AFT_PUZZFWEAPON, special);
         return;
 
     case SPR_ACWP:
-        TryPickupArtifact(player, arti_puzzcweapon, special);
+        TryPickupArtifact(player, AFT_PUZZCWEAPON, special);
         return;
 
     case SPR_AMWP:
-        TryPickupArtifact(player, arti_puzzmweapon, special);
+        TryPickupArtifact(player, AFT_PUZZMWEAPON, special);
         return;
 
     case SPR_AGER:
-        TryPickupArtifact(player, arti_puzzgear1, special);
+        TryPickupArtifact(player, AFT_PUZZGEAR1, special);
         return;
 
     case SPR_AGR2:
-        TryPickupArtifact(player, arti_puzzgear2, special);
+        TryPickupArtifact(player, AFT_PUZZGEAR2, special);
         return;
 
     case SPR_AGR3:
-        TryPickupArtifact(player, arti_puzzgear3, special);
+        TryPickupArtifact(player, AFT_PUZZGEAR3, special);
         return;
 
     case SPR_AGR4:
-        TryPickupArtifact(player, arti_puzzgear4, special);
+        TryPickupArtifact(player, AFT_PUZZGEAR4, special);
         return;
 
     // Mana
@@ -1468,12 +1468,12 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
     normalCount = superCount = 0;
     for(i = 0; i < player->inventorySlotNum; ++i)
     {
-        if(player->inventory[i].type == arti_health)
+        if(player->inventory[i].type == AFT_HEALTH)
         {
             normalSlot = i;
             normalCount = player->inventory[i].count;
         }
-        else if(player->inventory[i].type == arti_superhealth)
+        else if(player->inventory[i].type == AFT_SUPERHEALTH)
         {
             superSlot = i;
             superCount = player->inventory[i].count;
@@ -1486,7 +1486,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 25;
-            P_InventoryRemoveArtifact(player, normalSlot);
+            P_InventoryTake(player, normalSlot);
         }
     }
     else if(superCount * 100 >= saveHealth)
@@ -1495,7 +1495,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; i++)
         {
             player->health += 100;
-            P_InventoryRemoveArtifact(player, superSlot);
+            P_InventoryTake(player, superSlot);
         }
     }
     else if((gameSkill == SM_BABY) &&
@@ -1506,14 +1506,14 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryRemoveArtifact(player, normalSlot);
+            P_InventoryTake(player, normalSlot);
         }
 
         count = (saveHealth + 99) / 100;
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryRemoveArtifact(player, normalSlot);
+            P_InventoryTake(player, normalSlot);
         }
     }
     player->plr->mo->health = player->health;

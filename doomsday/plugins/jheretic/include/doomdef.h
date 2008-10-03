@@ -255,18 +255,18 @@ typedef enum {
  * Artifacts (collectable, inventory items).
  */
 typedef enum {
-    arti_none,
-    arti_invulnerability,
-    arti_invisibility,
-    arti_health,
-    arti_superhealth,
-    arti_tomeofpower,
-    arti_torch,
-    arti_firebomb,
-    arti_egg,
-    arti_fly,
-    arti_teleport,
-    NUMARTIFACTS
+    AFT_NONE,
+    AFT_INVULNERABILITY,
+    AFT_INVISIBILITY,
+    AFT_HEALTH,
+    AFT_SUPERHEALTH,
+    AFT_TOMBOFPOWER,
+    AFT_TORCH,
+    AFT_FIREBOMB,
+    AFT_EGG,
+    AFT_FLY,
+    AFT_TELEPORT,
+    NUM_ARTIFACT_TYPES
 } artitype_e;
 
 #define MAXARTICOUNT        16

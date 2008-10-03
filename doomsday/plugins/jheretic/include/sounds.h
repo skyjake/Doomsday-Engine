@@ -162,7 +162,7 @@ typedef enum {
     SFX_BLSSHT,
     SFX_BLSHIT,
     SFX_CHAT,
-    SFX_ARTIUSE,
+    SFX_ARTIFACT_USE,
     SFX_GFRAG,
     SFX_WATERFL,
     SFX_WIND,

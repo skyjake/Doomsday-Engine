@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
@@ -124,7 +124,7 @@ static void SV_v13_ReadPlayer(player_t* pl)
     }
 
     pl->readyArtifact = SV_v13_ReadLong();
-    pl->artifactCount = SV_v13_ReadLong();
+    SV_v13_ReadLong(); // artifactCount
     pl->inventorySlotNum = SV_v13_ReadLong();
 
     memset(pl->powers, 0, sizeof(pl->powers));

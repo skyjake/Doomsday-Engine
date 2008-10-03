@@ -47,5 +47,4 @@ typedef struct pspdef_s {
 } pspdef_t;
 
 void            R_GetWeaponBob(int player, float* x, float* y);
-
 #endif

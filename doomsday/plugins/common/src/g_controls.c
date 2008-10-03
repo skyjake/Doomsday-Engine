@@ -797,7 +797,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     {
         if(PLAYER_ACTION(pnum, A_SPEED) && artiSkipParm)
         {
-            if(plr->inventory[plr->invPtr].type != arti_none)
+            if(plr->inventory[plr->invPtr].type != AFT_NONE)
             {
                 PLAYER_ACTION(pnum, A_USEARTIFACT) = false;
 
@@ -837,9 +837,9 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
        !plr->powers[PT_WEAPONLEVEL2])
     {
         PLAYER_ACTION(pnum, A_TOMEOFPOWER) = false;
-        cmd->arti = arti_tomeofpower;
+        cmd->arti = AFT_TOMBOFPOWER;
     }
-    for(i = 0; ArtifactHotkeys[i].artifact != arti_none && !cmd->arti; i++)
+    for(i = 0; ArtifactHotkeys[i].artifact != AFT_NONE && !cmd->arti; i++)
     {
         if(PLAYER_ACTION(pnum, ArtifactHotkeys[i].action))
         {
@@ -854,69 +854,69 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     if(PLAYER_ACTION(pnum, A_PANIC) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_PANIC) = false;    // Use one of each artifact
-        cmd->arti = NUMARTIFACTS;
+        cmd->arti = NUM_ARTIFACT_TYPES;
     }
     else if(plr->plr->mo && PLAYER_ACTION(pnum, A_HEALTH) &&
             !cmd->arti && (plr->plr->mo->health < MAXHEALTH))
     {
         PLAYER_ACTION(pnum, A_HEALTH) = false;
-        cmd->arti = arti_health;
+        cmd->arti = AFT_HEALTH;
     }
     else if(PLAYER_ACTION(pnum, A_POISONBAG) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_POISONBAG) = false;
-        cmd->arti = arti_poisonbag;
+        cmd->arti = AFT_POISONBAG;
     }
     else if(PLAYER_ACTION(pnum, A_BLASTRADIUS) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_BLASTRADIUS) = false;
-        cmd->arti = arti_blastradius;
+        cmd->arti = AFT_BLASTRADIUS;
     }
     else if(PLAYER_ACTION(pnum, A_TELEPORT) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_TELEPORT) = false;
-        cmd->arti = arti_teleport;
+        cmd->arti = AFT_TELEPORT;
     }
     else if(PLAYER_ACTION(pnum, A_TELEPORTOTHER) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_TELEPORTOTHER) = false;
-        cmd->arti = arti_teleportother;
+        cmd->arti = AFT_TELEPORTOTHER;
     }
     else if(PLAYER_ACTION(pnum, A_EGG) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_EGG) = false;
-        cmd->arti = arti_egg;
+        cmd->arti = AFT_EGG;
     }
     else if(PLAYER_ACTION(pnum, A_INVULNERABILITY) && !cmd->arti &&
             !plr->powers[PT_INVULNERABILITY])
     {
         PLAYER_ACTION(pnum, A_INVULNERABILITY) = false;
-        cmd->arti = arti_invulnerability;
+        cmd->arti = AFT_INVULNERABILITY;
     }
     else if(PLAYER_ACTION(pnum, A_MYSTICURN) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_MYSTICURN) = false;
-        cmd->arti = arti_superhealth;
+        cmd->arti = AFT_SUPERHEALTH;
     }
     else if(PLAYER_ACTION(pnum, A_TORCH) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_TORCH) = false;
-        cmd->arti = arti_torch;
+        cmd->arti = AFT_TORCH;
     }
     else if(PLAYER_ACTION(pnum, A_KRATER) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_KRATER) = false;
-        cmd->arti = arti_boostmana;
+        cmd->arti = AFT_BOOSTMANA;
     }
     else if(PLAYER_ACTION(pnum, A_SPEEDBOOTS) & !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_SPEEDBOOTS) = false;
-        cmd->arti = arti_speed;
+        cmd->arti = AFT_SPEED;
     }
     else if(PLAYER_ACTION(pnum, A_DARKSERVANT) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_DARKSERVANT) = false;
-        cmd->arti = arti_summon;
+        cmd->arti = AFT_SUMMON;
     }
 #endif
 

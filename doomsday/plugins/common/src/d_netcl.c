@@ -407,12 +407,11 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     if(flags & PSF_INVENTORY)
     {
         pl->inventorySlotNum = NetCl_ReadByte();
-        pl->artifactCount = 0;
         for(i = 0; i < NUMINVENTORYSLOTS; ++i)
         {
             if(i >= pl->inventorySlotNum)
             {
-                pl->inventory[i].type = arti_none;
+                pl->inventory[i].type = AFT_NONE;
                 pl->inventory[i].count = 0;
                 continue;
             }
@@ -420,10 +419,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             s = NetCl_ReadShort();
             pl->inventory[i].type = s & 0xff;
             pl->inventory[i].count = s >> 8;
-            if(pl->inventory[i].type != arti_none)
+            if(pl->inventory[i].type != AFT_NONE)
             {
-                pl->artifactCount += pl->inventory[i].count;
-
                 // Maybe unhide the HUD?
                 ST_HUDUnHide(pl - players, HUE_ON_PICKUP_INVITEM);
             }

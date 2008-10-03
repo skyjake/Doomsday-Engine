@@ -791,7 +791,7 @@ static void drawWidgets(hudstate_t* hud)
 
         for(i = 0; i < NUMVISINVSLOTS; ++i)
         {
-            if(plr->inventory[x + i].type != arti_none)
+            if(plr->inventory[x + i].type != AFT_NONE)
             {
                 STlib_updateMultIcon(&hud->wInvSlots[i], refresh);
 
@@ -1287,7 +1287,7 @@ Draw_BeginZoom(invScale, 160, 198);
         {
             GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconAlpha/2, W_GetNumForName("ARTIBOX"));
             if(plr->inventorySlotNum > x + i &&
-               plr->inventory[x + i].type != arti_none)
+               plr->inventory[x + i].type != AFT_NONE)
             {
                 int                 lump;
 
@@ -1443,7 +1443,7 @@ void ST_loadGraphics(void)
     }
 
     // Artifact icons (+5 for the use artifact flash patches).
-    for(i = 0; i < (NUMARTIFACTS + 5); ++i)
+    for(i = 0; i < (NUM_ARTIFACT_TYPES + 5); ++i)
     {
         sprintf(nameBuf, "%s", artifactList[i]);
         R_CachePatch(&artifacts[i], nameBuf);

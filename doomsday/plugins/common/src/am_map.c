@@ -3174,7 +3174,7 @@ static void setupGLStateForMap(void)
         int                 i, num;
 
         num = 0;
-        for(i = 0; i < NUMARTIFACTS; ++i)
+        for(i = 0; i < NUM_ARTIFACT_TYPES; ++i)
             if(plr->artifacts[i])
                 num++;
 
@@ -3182,7 +3182,7 @@ static void setupGLStateForMap(void)
         {
             float               x, y, w, h, spacing, scale, iconAlpha;
             spriteinfo_t        sprInfo;
-            int                 artifactSprites[NUMARTIFACTS] = {
+            int                 artifactSprites[NUM_ARTIFACT_TYPES] = {
                 SPR_ART1, SPR_ART2, SPR_ART3
             };
 
@@ -3192,7 +3192,7 @@ static void setupGLStateForMap(void)
             spacing = win->height / num;
             y = 0;
 
-            for(i = 0; i < NUMARTIFACTS; ++i)
+            for(i = 0; i < NUM_ARTIFACT_TYPES; ++i)
             {
                 if(plr->artifacts[i])
                 {

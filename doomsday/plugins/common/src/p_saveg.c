@@ -1017,7 +1017,7 @@ static void SV_WritePlayer(int playernum)
 
     // Version number. Increase when you make changes to the player data
     // segment format.
-    SV_WriteByte(4);
+    SV_WriteByte(5);
 
 #if __JHEXEN__
     // Class.
@@ -1059,7 +1059,6 @@ static void SV_WritePlayer(int playernum)
         SV_WriteLong(p->inventory[i].count);
     }
     SV_WriteLong(p->readyArtifact);
-    SV_WriteLong(p->artifactCount);
     SV_WriteLong(p->inventorySlotNum);
 #endif
 
@@ -1157,7 +1156,6 @@ static void SV_WritePlayer(int playernum)
         SV_WriteLong(p->inventory[i].count);
     }
     SV_WriteLong(p->readyArtifact);
-    SV_WriteLong(p->artifactCount);
     SV_WriteLong(p->inventorySlotNum);
     SV_WriteLong(p->chickenPeck);
 #endif
@@ -1233,7 +1231,10 @@ static void SV_ReadPlayer(player_t *p)
         p->inventory[i].count = SV_ReadLong();
     }
     p->readyArtifact = SV_ReadLong();
-    p->artifactCount = SV_ReadLong();
+    if(ver < 5)
+    {
+        /*p->artifactCount =*/ SV_ReadLong();
+    }
     p->inventorySlotNum = SV_ReadLong();
 #endif
 
@@ -1349,9 +1350,14 @@ static void SV_ReadPlayer(player_t *p)
         p->inventory[i].type = SV_ReadLong();
         p->inventory[i].count = SV_ReadLong();
     }
+
     p->readyArtifact = SV_ReadLong();
-    p->artifactCount = SV_ReadLong();
+    if(ver < 5)
+    {
+        /*p->artifactCount =*/ SV_ReadLong();
+    }
     p->inventorySlotNum = SV_ReadLong();
+
     p->chickenPeck = SV_ReadLong();
 # endif
 #endif
@@ -2007,7 +2013,7 @@ static void P_ArchivePlayerHeader(void)
     ph->numArmorTypes = NUMARMOR;
 #endif
 #if __JDOOM64__
-    ph->numArtifacts = NUMARTIFACTS;
+    ph->numArtifacts = NUM_ARTIFACT_TYPES;
 #endif
 
     SV_WriteLong(ph->numPowers);
@@ -5347,7 +5353,7 @@ void SV_MapTeleport(int map, int position)
             continue;
         }
         memcpy(&players[i], &playerBackup[i], sizeof(player_t));
-        HUMsg_ClearMessages(&players[i]);
+        HUMsg_ClearMessages(i);
         players[i].attacker = NULL;
         players[i].poisoner = NULL;
 

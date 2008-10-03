@@ -194,13 +194,13 @@ boolean EV_LineSearchForPuzzleItem(linedef_t *line, byte *args, mobj_t *mo)
     if(!mo || !mo->player || !line)
         return false;
 
-    arti = arti_firstpuzzitem + P_ToXLine(line)->arg1;
+    arti = AFT_FIRSTPUZZITEM + P_ToXLine(line)->arg1;
 
-    if(arti < arti_firstpuzzitem)
+    if(arti < AFT_FIRSTPUZZITEM)
         return false;
 
     // Search player's inventory for puzzle items
-    return P_InventoryUseArtifact(mo->player, arti);
+    return P_InventoryUse(mo->player, arti);
 }
 
 boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,

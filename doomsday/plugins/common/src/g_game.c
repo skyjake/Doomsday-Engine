@@ -234,7 +234,7 @@ int gsvAmmo[NUM_AMMO_TYPES];
 char *gsvMapName = NOTAMAPNAME;
 
 #if __JHERETIC__ || __JHEXEN__
-int gsvArtifacts[NUMARTIFACTS];
+int gsvArtifacts[NUM_ARTIFACT_TYPES];
 #endif
 
 #if __JHEXEN__
@@ -316,16 +316,16 @@ cvar_t gamestatusCVars[] =
    {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[KT_GREEN], 0, 0},
    {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUE], 0, 0},
    // Artifacts
-   {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0},
-   {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invisibility], 0, 0},
-   {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0},
-   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0},
-   {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_tomeofpower], 0, 0},
-   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0},
-   {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_firebomb], 0, 0},
-   {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0},
-   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0},
-   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0},
+   {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_INVULNERABILITY], 0, 0},
+   {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_INVISIBILITY], 0, 0},
+   {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_HEALTH], 0, 0},
+   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SUPERHEALTH], 0, 0},
+   {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TOMBOFPOWER], 0, 0},
+   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TORCH], 0, 0},
+   {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_FIREBOMB], 0, 0},
+   {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_EGG], 0, 0},
+   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_FLY], 0, 0},
+   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TELEPORT], 0, 0},
 #elif __JHEXEN__
    // Mana
    {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[AT_BLUEMANA], 0, 0},
@@ -353,38 +353,38 @@ cvar_t gamestatusCVars[] =
    {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0},
    {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0},
    // Artifacts
-   {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0},
-   {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0},
-   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0},
-   {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_healingradius], 0, 0},
-   {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_summon], 0, 0},
-   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0},
-   {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0},
-   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0},
-   {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_blastradius], 0, 0},
-   {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_poisonbag], 0, 0},
-   {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleportother], 0, 0},
-   {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_speed], 0, 0},
-   {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostmana], 0, 0},
-   {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostarmor], 0, 0},
-   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0},
-   {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull], 0, 0},
-   {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgembig], 0, 0},
-   {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemred], 0, 0},
-   {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen1], 0, 0},
-   {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen2], 0, 0},
-   {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue1], 0, 0},
-   {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue2], 0, 0},
-   {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook1], 0, 0},
-   {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook2], 0, 0},
-   {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull2], 0, 0},
-   {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzfweapon], 0, 0},
-   {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzcweapon], 0, 0},
-   {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzmweapon], 0, 0},
-   {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear1], 0, 0},
-   {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear2], 0, 0},
-   {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear3], 0, 0},
-   {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear4], 0, 0},
+   {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_INVULNERABILITY], 0, 0},
+   {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_HEALTH], 0, 0},
+   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SUPERHEALTH], 0, 0},
+   {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_HEALINGRADIUS], 0, 0},
+   {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SUMMON], 0, 0},
+   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TORCH], 0, 0},
+   {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_EGG], 0, 0},
+   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_FLY], 0, 0},
+   {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_BLASTRADIUS], 0, 0},
+   {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_POISONBAG], 0, 0},
+   {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TELEPORTOTHER], 0, 0},
+   {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SPEED], 0, 0},
+   {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_BOOSTMANA], 0, 0},
+   {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_BOOSTARMOR], 0, 0},
+   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TELEPORT], 0, 0},
+   {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZSKULL], 0, 0},
+   {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMBIG], 0, 0},
+   {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMRED], 0, 0},
+   {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMGREEN1], 0, 0},
+   {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMGREEN2], 0, 0},
+   {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMBLUE1], 0, 0},
+   {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMBLUE2], 0, 0},
+   {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZBOOK1], 0, 0},
+   {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZBOOK2], 0, 0},
+   {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZSKULL2], 0, 0},
+   {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZFWEAPON], 0, 0},
+   {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZCWEAPON], 0, 0},
+   {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZMWEAPON], 0, 0},
+   {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR1], 0, 0},
+   {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR2], 0, 0},
+   {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR3], 0, 0},
+   {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR4], 0, 0},
 #endif
    {NULL}
 };
@@ -1048,12 +1048,11 @@ void G_PlayerExitMap(int player)
 #endif
 
 #if __JHERETIC__
-    // Empty the player's inventory.
+    // Empty the player's inventory of excess artifacts.
     for(i = 0; i < p->inventorySlotNum; ++i)
     {
         p->inventory[i].count = 1;
     }
-    p->artifactCount = p->inventorySlotNum;
 #endif
 
     // Remember if flying
@@ -1068,7 +1067,7 @@ void G_PlayerExitMap(int player)
         p->powers[PT_FLIGHT] = 0;
 
         for(i = 0; i < MAXARTICOUNT; ++i)
-            P_InventoryUseArtifact(p, arti_fly);
+            P_InventoryUse(p, AFT_FLY);
     }
 #endif
 

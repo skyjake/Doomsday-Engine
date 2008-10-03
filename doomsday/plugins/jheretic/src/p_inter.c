@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
@@ -503,80 +503,110 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 
     // Artifacts
     case SPR_PTN2: // Arti_HealingPotion
-        if(P_GiveArtifact(player, arti_health, special))
+        if(P_InventoryGive(player, AFT_HEALTH))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTIHEALTH, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_SOAR: // Arti_Fly.
-        if(P_GiveArtifact(player, arti_fly, special))
+        if(P_InventoryGive(player, AFT_FLY))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTIFLY, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_INVU: // Arti_Invulnerability.
-        if(P_GiveArtifact(player, arti_invulnerability, special))
+        if(P_InventoryGive(player, AFT_INVULNERABILITY))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTIINVULNERABILITY, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_PWBK: // Arti_TomeOfPower.
-        if(P_GiveArtifact(player, arti_tomeofpower, special))
+        if(P_InventoryGive(player, AFT_TOMBOFPOWER))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTITOMEOFPOWER, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_INVS: // Arti_Invisibility.
-        if(P_GiveArtifact(player, arti_invisibility, special))
+        if(P_InventoryGive(player, AFT_INVISIBILITY))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTIINVISIBILITY, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_EGGC: // Arti_Egg.
-        if(P_GiveArtifact(player, arti_egg, special))
+        if(P_InventoryGive(player, AFT_EGG))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTIEGG, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_SPHL: // Arti_SuperHealth.
-        if(P_GiveArtifact(player, arti_superhealth, special))
+        if(P_InventoryGive(player, AFT_SUPERHEALTH))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTISUPERHEALTH, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_TRCH: // Arti_Torch.
-        if(P_GiveArtifact(player, arti_torch, special))
+        if(P_InventoryGive(player, AFT_TORCH))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTITORCH, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_FBMB: // Arti_FireBomb.
-        if(P_GiveArtifact(player, arti_firebomb, special))
+        if(P_InventoryGive(player, AFT_FIREBOMB))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTIFIREBOMB, false);
             P_SetDormantArtifact(special);
         }
         return;
 
     case SPR_ATLP: // Arti_Teleport.
-        if(P_GiveArtifact(player, arti_teleport, special))
+        if(P_InventoryGive(player, AFT_TELEPORT))
         {
+            if(special->flags & MF_COUNTITEM)
+                player->itemCount++;
+
             P_SetMessage(player, TXT_ARTITELEPORT, false);
             P_SetDormantArtifact(special);
         }
@@ -933,9 +963,9 @@ boolean P_AutoUseChaosDevice(player_t *player)
     //// \todo Do this in the inventory code.
     for(i = 0; i < player->inventorySlotNum; ++i)
     {
-        if(player->inventory[i].type == arti_teleport)
+        if(player->inventory[i].type == AFT_TELEPORT)
         {
-            P_InventoryUseArtifact(player, arti_teleport);
+            P_InventoryUse(player, AFT_TELEPORT);
             P_DamageMobj(player->plr->mo, NULL, NULL,
                          player->health - (player->health + 1) / 2, false);
             return true;
@@ -957,12 +987,12 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
     //// \todo Do this in the inventory code.
     for(i = 0; i < player->inventorySlotNum; ++i)
     {
-        if(player->inventory[i].type == arti_health)
+        if(player->inventory[i].type == AFT_HEALTH)
         {
             normalSlot = i;
             normalCount = player->inventory[i].count;
         }
-        else if(player->inventory[i].type == arti_superhealth)
+        else if(player->inventory[i].type == AFT_SUPERHEALTH)
         {
             superSlot = i;
             superCount = player->inventory[i].count;
@@ -976,7 +1006,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryRemoveArtifact(player, normalSlot);
+            P_InventoryTake(player, normalSlot);
         }
     }
     else if(superCount * 100 >= saveHealth)
@@ -986,7 +1016,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryRemoveArtifact(player, superSlot);
+            P_InventoryTake(player, superSlot);
         }
     }
     else if((gameSkill == SM_BABY) &&
@@ -998,14 +1028,14 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryRemoveArtifact(player, normalSlot);
+            P_InventoryTake(player, normalSlot);
         }
 
         count = (saveHealth + 99) / 100;
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryRemoveArtifact(player, normalSlot);
+            P_InventoryTake(player, normalSlot);
         }
     }
 
