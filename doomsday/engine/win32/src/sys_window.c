@@ -1212,6 +1212,9 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     // which need to respond.
     if(changeWindowDimensions && window->type == WT_NORMAL)
     {
+        // Update viewport coordinates.
+        R_SetViewGrid(0, 0);
+
         if(inControlPanel) // Reactivate the panel?
             Con_Execute(CMDS_DDAY, "panel", true, false);
     }
