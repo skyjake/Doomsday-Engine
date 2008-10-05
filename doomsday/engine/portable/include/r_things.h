@@ -101,8 +101,7 @@ typedef struct rendspriteparams_s {
 
     // Lighting/color:
     float           ambientColor[4];
-    uint            numLights;
-    vlight_t*       lights;
+    uint            vLightListIdx;
 
 // Misc
     struct subsector_s* subsector;
@@ -208,7 +207,10 @@ void            R_InitSprites(void);
 void            R_ClearSprites(void);
 void            R_ClipVisSprite(vissprite_t* vis, int xl, int xh);
 
-void            R_CollectAffectingLights(const collectaffectinglights_params_t* params,
-                                         vlight_t** ptr, uint* num);
+uint            R_CollectAffectingLights(const collectaffectinglights_params_t* params);
 
+void            VL_InitForMap(void);
+void            VL_InitForNewFrame(void);
+boolean         VL_ListIterator(uint listIdx, void* data,
+                                boolean (*func) (const vlight_t*, void*));
 #endif

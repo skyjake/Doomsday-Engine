@@ -54,8 +54,7 @@ typedef struct rendmodelparams_s {
 
     // Lighting/color:
     float           ambientColor[4];
-    uint            numLights;
-    vlight_t       *lights;
+    uint            vLightListIdx;
 
     // Shinemaping:
     float           shineYawOffset;

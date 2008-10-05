@@ -161,69 +161,78 @@ void Spr_UniformVertexColors(int count, gl_color_t *colors,
     }
 }
 
+typedef struct {
+    float               color[3], extra[3];
+    gl_vertex_t*        normal;
+} lightspriteparams_t;
+
+static boolean lightSprite(const vlight_t* vlight, void* context)
+{
+    float*              dest;
+    float               dot;
+    lightspriteparams_t* params = (lightspriteparams_t*) context;
+
+    dot = DOTPROD(vlight->vector, params->normal->xyz);
+    dot += vlight->offset; // Shift a bit towards the light.
+
+    if(!vlight->affectedByAmbient)
+    {   // Won't be affected by ambient.
+        dest = params->extra;
+    }
+    else
+    {
+        dest = params->color;
+    }
+
+    // Ability to both light and shade.
+    if(dot > 0)
+    {
+        dot *= vlight->lightSide;
+    }
+    else
+    {
+        dot *= vlight->darkSide;
+    }
+
+    dot = MINMAX_OF(-1, dot, 1);
+
+    dest[CR] += dot * vlight->color[CR];
+    dest[CG] += dot * vlight->color[CG];
+    dest[CB] += dot * vlight->color[CB];
+
+    return true; // Continue iteration.
+}
+
 /**
  * Calculate vertex lighting.
  */
 void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
-                      int numLights, const vlight_t *lights,
-                      const float* ambient)
+                      uint vLightListIdx, const float* ambient)
 {
     int                 i, k;
-    float               color[3], extra[3], *dest, dot;
-    const vlight_t*     light;
+    lightspriteparams_t params;
 
     for(i = 0; i < count; ++i, out++, normal++)
     {
         // Begin with total darkness.
-        memset(color, 0, sizeof(color));
-        memset(extra, 0, sizeof(extra));
+        params.color[CR] = params.color[CG] = params.color[CB] = 0;
+        params.extra[CR] = params.extra[CG] = params.extra[CB] = 0;
+        params.normal = normal;
 
-        // Add light from each source.
-        for(k = 0, light = lights; k < numLights; ++k, light++)
-        {
-            if(!light->used)
-                continue;
-
-            dot = DOTPROD(light->vector, normal->xyz);
-            dot += light->offset; // Shift a bit towards the light.
-
-            if(!light->affectedByAmbient)
-            {   // Won't be affected by ambient.
-                dest = extra;
-            }
-            else
-            {
-                dest = color;
-            }
-
-            // Ability to both light and shade.
-            if(dot > 0)
-            {
-                dot *= light->lightSide;
-            }
-            else
-            {
-                dot *= light->darkSide;
-            }
-
-            dot = MINMAX_OF(-1, dot, 1);
-
-            dest[CR] += dot * light->color[CR];
-            dest[CG] += dot * light->color[CG];
-            dest[CB] += dot * light->color[CB];
-        }
+        VL_ListIterator(vLightListIdx, &params, lightSprite);
 
         // Check for ambient and convert to ubyte.
         for(k = 0; k < 3; ++k)
         {
-            if(color[k] < ambient[k])
-                color[k] = ambient[k];
-            color[k] += extra[k];
-            color[k] = MINMAX_OF(0, color[k], 1);
+            if(params.color[k] < ambient[k])
+                params.color[k] = ambient[k];
+            params.color[k] += params.extra[k];
+            params.color[k] = MINMAX_OF(0, params.color[k], 1);
 
             // This is the final color.
-            out->rgba[k] = (byte) (255 * color[k]);
+            out->rgba[k] = (byte) (255 * params.color[k]);
         }
+
         out->rgba[CA] = (byte) (255 * ambient[CA]);
     }
 }
@@ -287,8 +296,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     {
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
-        params->numLights = 0;
-        params->lights = NULL;
+        params->vLightListIdx = 0;
     }
     else
     {
@@ -326,12 +334,14 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
         lparams.starkLight = false;
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
+        lparams.center[VX] = spr->center[VX];
+        lparams.center[VY] = spr->center[VY];
+        lparams.center[VZ] = spr->center[VZ];
         lparams.maxLights = spriteLight;
         lparams.subsector = spr->data.sprite.subsector;
         lparams.ambientColor = params->ambientColor;
 
-        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
+        params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 
@@ -376,14 +386,14 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         quadNormals[i].xyz[VZ] = viewFrontVec[VY];
     }
 
-    if(!params->lights)
+    if(!params->vLightListIdx)
     {   // Lit uniformly.
         Spr_UniformVertexColors(4, quadColors, params->ambientColor);
     }
     else
     {   // Lit normally.
-        Spr_VertexColors(4, quadColors, quadNormals, params->numLights,
-                         params->lights, params->ambientColor);
+        Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx,
+                         params->ambientColor);
     }
 
     {
@@ -660,8 +670,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
     {
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
-        params->lights = NULL;
-        params->numLights = 0;
+        params->vLightListIdx = 0;
     }
     else
     {
@@ -698,12 +707,14 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         lparams.starkLight = true;
-        memcpy(lparams.center, spr->center, sizeof(lparams.center));
-        lparams.subsector = spr->data.model.subsector;
+        lparams.center[VX] = spr->center[VX];
+        lparams.center[VY] = spr->center[VY];
+        lparams.center[VZ] = spr->center[VZ];
         lparams.maxLights = modelLight;
+        lparams.subsector = spr->data.model.subsector;
         lparams.ambientColor = params->ambientColor;
 
-        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
+        params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 
@@ -838,7 +849,7 @@ void Rend_DrawMasked(void)
     }
 }
 
-void Rend_RenderSprite(const rendspriteparams_t *params)
+void Rend_RenderSprite(const rendspriteparams_t* params)
 {
     int                 i;
     gl_color_t          quadColors[4];
@@ -909,14 +920,14 @@ DGL_Enable(DGL_TEXTURING);
     for(i = 0; i < 4; ++i)
         memcpy(quadNormals[i].xyz, surfaceNormal, sizeof(surfaceNormal));
 
-    if(!params->lights)
+    if(!params->vLightListIdx)
     {   // Lit uniformly.
         Spr_UniformVertexColors(4, quadColors, params->ambientColor);
     }
     else
     {   // Lit normally.
-        Spr_VertexColors(4, quadColors, quadNormals, params->numLights,
-                         params->lights, params->ambientColor);
+        Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx,
+                         params->ambientColor);
     }
 
     // Do we need to do some aligning?

@@ -2718,6 +2718,10 @@ void Rend_RenderMap(void)
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();
 
+        // Recycle the vlight lists. Currently done here as the lists are
+        // not shared by all viewports.
+        VL_InitForNewFrame();
+
         if(doLums)
         {
             /**

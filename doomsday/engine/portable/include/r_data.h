@@ -230,7 +230,6 @@ typedef struct animgroup_s {
 } animgroup_t;
 
 typedef struct {
-    boolean         used;
     float           approxDist; // Only an approximation.
     float           vector[3]; // Light direction vector.
     float           color[3]; // How intense the light is (0..1, RGB).

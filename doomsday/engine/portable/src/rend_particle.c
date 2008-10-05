@@ -454,8 +454,7 @@ void setupModelParamsForParticle(rendmodelparams_t* params, particle_t* pt,
     {
         params->ambientColor[CR] = params->ambientColor[CG] =
             params->ambientColor[CB] = 1;
-        params->lights = NULL;
-        params->numLights = 0;
+        params->vLightListIdx = 0;
     }
     else
     {
@@ -487,12 +486,14 @@ void setupModelParamsForParticle(rendmodelparams_t* params, particle_t* pt,
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         lparams.starkLight = false;
-        lparams.subsector = ssec;
-        memcpy(lparams.center, params->center, sizeof(lparams.center));
+        lparams.center[VX] = params->center[VX];
+        lparams.center[VY] = params->center[VY];
+        lparams.center[VZ] = params->center[VZ];
         lparams.maxLights = modelLight;
+        lparams.subsector = ssec;
         lparams.ambientColor = params->ambientColor;
 
-        R_CollectAffectingLights(&lparams, &params->lights, &params->numLights);
+        params->vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 

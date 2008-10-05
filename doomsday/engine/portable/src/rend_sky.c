@@ -157,8 +157,7 @@ void Rend_RenderSkyModels(void)
         {
             params.ambientColor[c] = sky->def->color[c];
         }
-        params.lights = NULL;
-        params.numLights = 0;
+        params.vLightListIdx = 0;
         params.shineTranslateWithViewerPos = true;
 
         Rend_RenderModel(&params);

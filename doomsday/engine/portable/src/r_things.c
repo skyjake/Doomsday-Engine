@@ -54,15 +54,27 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_FRAMES              128
-#define MAX_OBJECT_RADIUS       128
+#define MAX_FRAMES              (128)
+#define MAX_OBJECT_RADIUS       (128)
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct vlightnode_s {
+    struct vlightnode_s* next, *nextUsed;
+    vlight_t        vlight;
+} vlightnode_t;
+
+typedef struct vlightlist_s {
+    vlightnode_t*   head;
+    boolean         sortByDist;
+} vlightlist_t;
 
 typedef struct {
     vec3_t          pos;
     uint            numLights;
     uint            maxLights;
+    boolean         haveList;
+    uint            listIdx;
 } vlightiterparams_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -75,34 +87,41 @@ typedef struct {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float   weaponOffsetScale = 0.3183f;    // 1/Pi
-int     weaponOffsetScaleY = 1000;
-float   weaponFOVShift = 45;
-float   modelSpinSpeed = 1;
-int     alwaysAlign = 0;
-int     noSpriteZWrite = false;
-float   pspOffset[2] = {0, 0};
+float weaponOffsetScale = 0.3183f; // 1/Pi
+int weaponOffsetScaleY = 1000;
+float weaponFOVShift = 45;
+float modelSpinSpeed = 1;
+int alwaysAlign = 0;
+int noSpriteZWrite = false;
+float pspOffset[2] = {0, 0};
 // useSRVO: 1 = models only, 2 = sprites + models
-int     useSRVO = 2, useSRVOAngle = true;
-int     psp3d;
+int useSRVO = 2, useSRVOAngle = true;
+int psp3d;
 
 // Variables used to look up and range check sprites patches.
-spritedef_t *sprites = 0;
-int     numSprites;
+spritedef_t* sprites = 0;
+int numSprites;
 
 vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
 vispsprite_t visPSprites[DDMAXPSPRITES];
 
-int     maxModelDistance = 1500;
-int     levelFullBright = false;
+int maxModelDistance = 1500;
+int levelFullBright = false;
 
 vissprite_t visSprSortedHead;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// vlight nodes.
+static vlightnode_t* vLightFirst, *vLightCursor;
+
+// vlight link lists.
+static uint numVLightLinkLists = 0, vLightLinkListCursor = 0;
+static vlightlist_t* vLightLinkLists;
+
 static spriteframe_t sprTemp[MAX_FRAMES];
 static int maxFrame;
-static char *spriteName;
+static char* spriteName;
 
 static vissprite_t overflowVisSprite;
 
@@ -111,13 +130,139 @@ static const float worldLight[3] = {-.400891f, -.200445f, .601336f};
 // CODE --------------------------------------------------------------------
 
 /**
+ * Initialize the vlight system in preparation for rendering view(s) of the
+ * game world. Called by R_InitLevel().
+ */
+void VL_InitForMap(void)
+{
+    vLightLinkLists = NULL;
+    numVLightLinkLists = 0, vLightLinkListCursor = 0;
+}
+
+/**
+ * Moves all used vlight nodes to the list of unused nodes, so they can be
+ * reused.
+ */
+void VL_InitForNewFrame(void)
+{
+    // Start reusing nodes from the first one in the list.
+    vLightCursor = vLightFirst;
+
+    // Clear the mobj vlight link lists.
+    vLightLinkListCursor = 0;
+    if(numVLightLinkLists)
+        memset(vLightLinkLists, 0, numVLightLinkLists * sizeof(vlightlist_t));
+}
+
+/**
+ * Create a new vlight list.
+ *
+ * @param sortByDist    Lights in this list will be automatically sorted by
+ *                      their approximate distance from the point being lit.
+ * @return              Identifier for the new list.
+ */
+static uint newVLightList(boolean sortByDist)
+{
+    vlightlist_t*       list;
+
+    // Ran out of vlight link lists?
+    if(++vLightLinkListCursor >= numVLightLinkLists)
+    {
+        uint                newNum = numVLightLinkLists * 2;
+
+        if(!newNum)
+            newNum = 2;
+
+        vLightLinkLists =
+            Z_Realloc(vLightLinkLists, newNum * sizeof(vlightlist_t),
+                      PU_LEVEL);
+        numVLightLinkLists = newNum;
+    }
+
+    list = &vLightLinkLists[vLightLinkListCursor-1];
+    list->head = NULL;
+    list->sortByDist = sortByDist;
+
+    return vLightLinkListCursor - 1;
+}
+
+static vlightnode_t* newVLightNode(void)
+{
+    vlightnode_t*       node;
+
+    // Have we run out of nodes?
+    if(vLightCursor == NULL)
+    {
+        node = Z_Malloc(sizeof(vlightnode_t), PU_STATIC, NULL);
+
+        // Link the new node to the list.
+        node->nextUsed = vLightFirst;
+        vLightFirst = node;
+    }
+    else
+    {
+        node = vLightCursor;
+        vLightCursor = vLightCursor->nextUsed;
+    }
+
+    node->next = NULL;
+    return node;
+}
+
+/**
+ * Returns a new vlight node. If the list of unused nodes is empty, a new
+ * node is created.
+ */
+static vlightnode_t* newVLight(void)
+{
+    vlightnode_t*       node = newVLightNode();
+    vlight_t*           vlight = &node->vlight;
+
+    //// \todo move vlight setup here.
+    return node;
+}
+
+static void linkVLightNodeToList(vlightnode_t* node, uint listIndex)
+{
+    vlightlist_t*       list = &vLightLinkLists[listIndex];
+
+    if(list->sortByDist && list->head)
+    {
+        vlightnode_t*       last, *iter;
+        vlight_t*           vlight;
+
+        last = iter = list->head;
+        do
+        {
+            vlight = &node->vlight;
+
+            // Is this closer than the one being added?
+            if(node->vlight.approxDist > vlight->approxDist)
+            {
+                last = iter;
+                iter = iter->next;
+            }
+            else
+            {   // Need to insert it here.
+                node->next = last->next;
+                last->next = node;
+                return;
+            }
+        } while(iter);
+    }
+
+    node->next = list->head;
+    list->head = node;
+}
+
+/**
  * Local function for R_InitSprites.
  */
 static void installSpriteLump(lumpnum_t lump, uint frame, uint rotation,
                               boolean flipped)
 {
     int                 r;
-    material_t         *mat;
+    material_t*         mat;
     int                 idx = R_NewSpriteTexture(lump, &mat);
 
     if(frame >= 30 || rotation > 8)
@@ -159,8 +304,10 @@ static void initSpriteDefs(void)
 
     sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_SPRITE, NULL);
 
-    // Scan all the lump names for each of the names, noting the highest
-    // frame letter. Just compare 4 characters as ints.
+    /**
+     * Scan all the lump names for each of the names, noting the highest
+     * frame letter. Just compare 4 characters as ints.
+     */
     for(i = 0; i < numSprites; ++i)
     {
         spriteName = sprNames[i].name;
@@ -169,13 +316,11 @@ static void initSpriteDefs(void)
         maxFrame = -1;
         intname = *(int *) spriteName;
 
-        //
-        // scan the lumps, filling in the frames for whatever is found
-        //
+        // Scan the lumps, filling in the frames for whatever is found.
         inSpriteBlock = false;
-        for(l = 0; l < numLumps; l++)
+        for(l = 0; l < numLumps; ++l)
         {
-            char               *name = lumpInfo[l].name;
+            char*               name = lumpInfo[l].name;
 
             if(!strnicmp(name, "S_START", 7))
             {
@@ -257,26 +402,12 @@ static void initSpriteDefs(void)
             }
         }
 
-        // The model definitions might have a larger max frame for this
-        // sprite.
-        /*highframe = R_GetMaxMDefSpriteFrame(spriteName) + 1;
-        if(highframe > maxFrame)
-        {
-            maxFrame = highframe;
-            for(l = 0; l < maxFrame; ++l)
-                for(frame = 0; frame < 8; frame++)
-                    if(!sprTemp[l].mats[frame])
-                        sprTemp[l].mats[frame] = 0;
-        } */
-
         // Allocate space for the frames present and copy sprTemp to it.
         sprites[i].numFrames = maxFrame;
         sprites[i].spriteFrames =
             Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
         memcpy(sprites[i].spriteFrames, sprTemp,
                maxFrame * sizeof(spriteframe_t));
-        // The possible model frames are initialized elsewhere.
-        //sprites[i].modeldef = -1;
     }
 
     VERBOSE(Con_Message("R_InitSpriteDefs: Done in %.2f seconds.\n",
@@ -304,7 +435,7 @@ void R_InitSpriteDefs(void)
     initSpriteDefs();
 }
 
-void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
+void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 {
     spritedef_t*        sprDef;
     spriteframe_t*      sprFrame;
@@ -339,10 +470,10 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
     info->height = mat->height;
 }
 
-void R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info)
+void R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
 {
-    lumppatch_t        *patch =
-        (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
+    lumppatch_t*        patch =
+        (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
 
     memset(info, 0, sizeof(*info));
     info->lump = info->realLump = lump;
@@ -355,9 +486,9 @@ void R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info)
 /**
  * @return              Radius of the mobj as it would visually appear to be.
  */
-float R_VisualRadius(mobj_t *mo)
+float R_VisualRadius(mobj_t* mo)
 {
-    modeldef_t         *mf, *nextmf;
+    modeldef_t*         mf, *nextmf;
     spriteinfo_t        sprinfo;
 
     // If models are being used, use the model's radius.
@@ -391,7 +522,7 @@ void R_ClearSprites(void)
     visSpriteP = visSprites;
 }
 
-vissprite_t *R_NewVisSprite(void)
+vissprite_t* R_NewVisSprite(void)
 {
     vissprite_t*        spr;
 
@@ -411,18 +542,18 @@ vissprite_t *R_NewVisSprite(void)
 }
 
 /**
- * If 3D models are found for psprites, here we will create vissprites
- * for them.
+ * If 3D models are found for psprites, here we will create vissprites for
+ * them.
  */
 void R_ProjectPlayerSprites(void)
 {
     int                 i;
     float               inter;
-    modeldef_t         *mf, *nextmf;
-    ddpsprite_t        *psp;
+    modeldef_t*         mf, *nextmf;
+    ddpsprite_t*        psp;
     boolean             isFullBright = (levelFullBright != 0);
     boolean             isModel;
-    ddplayer_t         *ddpl = &viewPlayer->shared;
+    ddplayer_t*         ddpl = &viewPlayer->shared;
 
     psp3d = false;
 
@@ -446,7 +577,7 @@ void R_ProjectPlayerSprites(void)
 
     for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
-        vispsprite_t        *spr = &visPSprites[i];
+        vispsprite_t*       spr = &visPSprites[i];
 
         spr->type = VPSPR_SPRITE;
         spr->psp = psp;
@@ -458,7 +589,7 @@ void R_ProjectPlayerSprites(void)
         isModel = false;
         if(useModels)
         {   // Is there a model for this frame?
-            mobj_t      dummy;
+            mobj_t              dummy;
 
             // Setup a dummy for the call to R_CheckModelFor.
             dummy.state = psp->statePtr;
@@ -471,7 +602,6 @@ void R_ProjectPlayerSprites(void)
 
         if(isModel)
         {   // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
-
             // There are 3D psprites.
             psp3d = true;
 
@@ -577,7 +707,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           float floorClip, float top,
                                           material_t* mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
                                           float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
-                                          vlight_t* lightList, uint numLights,
+                                          uint vLightListIdx,
                                           int transMap, int transClass, subsector_t* ssec,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
                                           boolean viewAligned,
@@ -618,8 +748,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->ambientColor[CB] = ambientColorB;
     params->ambientColor[CA] = alpha;
 
-    params->lights = lightList;
-    params->numLights = numLights;
+    params->vLightListIdx = vLightListIdx;
 }
 
 void setupModelParamsForVisSprite(rendmodelparams_t *params,
@@ -627,7 +756,7 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                   float visOffX, float visOffY, float visOffZ, float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
                                   struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                   float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
-                                  vlight_t* lightList, uint numLights,
+                                  uint vLightListIdx,
                                   int id, int selector, subsector_t* ssec, int mobjDDFlags,
                                   boolean viewAlign, boolean fullBright,
                                   boolean alwaysInterpolate)
@@ -669,20 +798,18 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->ambientColor[CB] = ambientColorB;
     params->ambientColor[CA] = alpha;
 
-    params->lights = lightList;
-    params->numLights = numLights;
+    params->vLightListIdx = vLightListIdx;
 }
 
 void getLightingParams(float x, float y, float z, subsector_t* ssec,
                        float distance, boolean fullBright,
                        uint maxLights, float ambientColor[3],
-                       vlight_t** lights, uint* numLights)
+                       uint* vLightListIdx)
 {
     if(fullBright)
     {
         ambientColor[CR] = ambientColor[CG] = ambientColor[CB] = 1;
-        *lights = NULL;
-        *numLights = 0;
+        *vLightListIdx = 0;
     }
     else
     {
@@ -732,7 +859,7 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
         lparams.subsector = ssec;
         lparams.ambientColor = ambientColor;
 
-        R_CollectAffectingLights(&lparams, lights, numLights);
+        *vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 
@@ -760,8 +887,7 @@ void R_ProjectSprite(mobj_t* mo)
     vismobjzparams_t    params;
     visspritetype_t     visType = VSPR_SPRITE;
     float               ambientColor[3];
-    vlight_t*           lightList = NULL;
-    uint                numLights = 0;
+    uint                vLightListIdx = 0;
 
     if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
        mo->state == NULL || mo->state == states)
@@ -894,9 +1020,7 @@ void R_ProjectSprite(mobj_t* mo)
         align = false;
     }
 
-    //
     // Store information in a vissprite.
-    //
     vis = R_NewVisSprite();
     vis->type = visType;
     vis->center[VX] = mo->pos[VX];
@@ -908,9 +1032,11 @@ void R_ProjectSprite(mobj_t* mo)
 
     floorAdjust = (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
 
-    // The mo's Z coordinate must match the actual visible
-    // floor/ceiling height.  When using smoothing, this requires
-    // iterating through the sectors (planes) in the vicinity.
+    /**
+     * The mobj's Z coordinate must match the actual visible floor/ceiling
+     * height.  When using smoothing, this requires iterating through the
+     * sectors (planes) in the vicinity.
+     */
     validCount++;
     params.vis = vis;
     params.mo = mo;
@@ -982,11 +1108,13 @@ void R_ProjectSprite(mobj_t* mo)
             pitch = 0;
     }
 
-    // The three highest bits of the selector are used for an alpha level.
-    // 0 = opaque (alpha -1)
-    // 1 = 1/8 transparent
-    // 4 = 1/2 transparent
-    // 7 = 7/8 transparent
+    /**
+     * The three highest bits of the selector are used for an alpha level.
+     * 0 = opaque (alpha -1)
+     * 1 = 1/8 transparent
+     * 4 = 1/2 transparent
+     * 7 = 7/8 transparent
+     */
     i = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
     if(i & 0xe0)
     {
@@ -1028,7 +1156,7 @@ void R_ProjectSprite(mobj_t* mo)
     getLightingParams(vis->center[VX], vis->center[VY], vis->center[VZ],
                       mo->subsector, vis->distance, fullBright,
                       (vis->type == VSPR_MODEL? modelLight : spriteLight),
-                      ambientColor, &lightList, &numLights);
+                      ambientColor, &vLightListIdx);
 
     if(!mf && mat)
     {
@@ -1093,7 +1221,7 @@ void R_ProjectSprite(mobj_t* mo)
                                       secFloor, secCeil,
                                       floorClip, gzt, mat, matFlipS, matFlipT, blendMode,
                                       ambientColor[CR], ambientColor[CG], ambientColor[CB], finalAlpha,
-                                      lightList, numLights,
+                                      vLightListIdx,
                                       (mo->ddFlags & DDMF_TRANSLATION)? ((mo->ddFlags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT) : 0,
                                       transClass,
                                       mo->subsector,
@@ -1111,7 +1239,7 @@ void R_ProjectSprite(mobj_t* mo)
                                      visOff[VX], visOff[VY], visOff[VZ] - floorClip, gzt, yaw, 0, pitch, 0,
                                      mf, nextmf, interp,
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
-                                     lightList, numLights, mo->thinker.id, mo->selector,
+                                     vLightListIdx, mo->thinker.id, mo->selector,
                                      mo->subsector, mo->ddFlags,
                                      viewAlign,
                                      fullBright && !(mf && (mf->sub[0].flags & MFF_DIM)),
@@ -1191,7 +1319,7 @@ void R_AddSprites(subsector_t* ssec)
 void R_SortVisSprites(void)
 {
     int                 i, count;
-    vissprite_t        *ds, *best = 0;
+    vissprite_t*        ds, *best = 0;
     vissprite_t         unsorted;
     float               bestdist;
 
@@ -1211,10 +1339,7 @@ void R_SortVisSprites(void)
     (visSpriteP - 1)->next = &unsorted;
     unsorted.prev = visSpriteP - 1;
 
-    //
     // Pull the vissprites out by distance.
-    //
-
     visSprSortedHead.next = visSprSortedHead.prev = &visSprSortedHead;
 
     /**
@@ -1249,7 +1374,7 @@ void R_SortVisSprites(void)
     }
 }
 
-static void scaleFloatRGB(float *out, const float *in, float mul)
+static void scaleFloatRGB(float* out, const float* in, float mul)
 {
     memset(out, 0, sizeof(float) * 3);
     R_ScaleAmbientRGB(out, in, mul);
@@ -1258,7 +1383,7 @@ static void scaleFloatRGB(float *out, const float *in, float mul)
 /**
  * Iterator for processing light sources around a vissprite.
  */
-boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void *data)
+boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
 {
     float               dist;
     float               intensity;
@@ -1298,7 +1423,7 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void *data)
             // Don't make too small or too large glows.
             if(glowHeight > 2)
             {
-                float       delta[3];
+                float           delta[3];
 
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
@@ -1325,55 +1450,41 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void *data)
     // If the light is not close enough, skip it.
     if(addLight)
     {
-        vlight_t*           light;
-        uint                i, maxIndex = 0;
-        float               maxDist = -1;
+        vlightnode_t*       node = NULL;
 
-        // See if this light can be inserted into the list.
-        // (In most cases it should be.)
-        for(i = 1, light = lights + 1; i < params->maxLights; ++i, light++)
+        node = newVLightNode();
+
+        if(node)
         {
-            if(light->approxDist > maxDist)
-            {
-                maxDist = light->approxDist;
-                maxIndex = i;
-            }
-        }
+            vlight_t*            vlight = &node->vlight;
 
-        // Now we know the farthest light on the current list (at maxIndex).
-        if(dist < maxDist)
-        {
-            // The new light is closer. Replace the old max.
-            light = &lights[maxIndex];
-
-            light->used = true;
             switch(lum->type)
             {
             case LT_OMNI:
-                light->affectedByAmbient = true;
-                light->approxDist = dist;
-                light->lightSide = 1;
-                light->darkSide = 0;
-                light->offset = 0;
+                vlight->affectedByAmbient = true;
+                vlight->approxDist = dist;
+                vlight->lightSide = 1;
+                vlight->darkSide = 0;
+                vlight->offset = 0;
 
                 // Calculate the normalized direction vector, pointing out of
                 // the light origin.
-                light->vector[VX] = (params->pos[VX] - lum->pos[VX]) / dist;
-                light->vector[VY] = (params->pos[VY] - lum->pos[VY]) / dist;
-                light->vector[VZ] = (params->pos[VZ] - lum->pos[VZ] +
+                vlight->vector[VX] = (params->pos[VX] - lum->pos[VX]) / dist;
+                vlight->vector[VY] = (params->pos[VY] - lum->pos[VY]) / dist;
+                vlight->vector[VZ] = (params->pos[VZ] - lum->pos[VZ] +
                                         LUM_OMNI(lum)->zOff) / dist;
 
-                light->color[CR] = LUM_OMNI(lum)->color[CR] * intensity;
-                light->color[CG] = LUM_OMNI(lum)->color[CG] * intensity;
-                light->color[CB] = LUM_OMNI(lum)->color[CB] * intensity;
+                vlight->color[CR] = LUM_OMNI(lum)->color[CR] * intensity;
+                vlight->color[CG] = LUM_OMNI(lum)->color[CG] * intensity;
+                vlight->color[CB] = LUM_OMNI(lum)->color[CB] * intensity;
                 break;
 
             case LT_PLANE:
-                light->affectedByAmbient = true;
-                light->approxDist = dist;
-                light->lightSide = 1;
-                light->darkSide = 0;
-                light->offset = .3f;
+                vlight->affectedByAmbient = true;
+                vlight->approxDist = dist;
+                vlight->lightSide = 1;
+                vlight->darkSide = 0;
+                vlight->offset = .3f;
 
                 /**
                  * Calculate the normalized direction vector, pointing out of
@@ -1381,13 +1492,13 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void *data)
                  * \fixme Project the nearest point on the surface to
                  * determine the real direction vector.
                  */
-                light->vector[VX] = LUM_PLANE(lum)->normal[VX];
-                light->vector[VY] = LUM_PLANE(lum)->normal[VY];
-                light->vector[VZ] = LUM_PLANE(lum)->normal[VZ];
+                vlight->vector[VX] = LUM_PLANE(lum)->normal[VX];
+                vlight->vector[VY] = LUM_PLANE(lum)->normal[VY];
+                vlight->vector[VZ] = LUM_PLANE(lum)->normal[VZ];
 
-                light->color[CR] = LUM_PLANE(lum)->color[CR] * intensity;
-                light->color[CG] = LUM_PLANE(lum)->color[CG] * intensity;
-                light->color[CB] = LUM_PLANE(lum)->color[CB] * intensity;
+                vlight->color[CR] = LUM_PLANE(lum)->color[CR] * intensity;
+                vlight->color[CG] = LUM_PLANE(lum)->color[CG] * intensity;
+                vlight->color[CB] = LUM_PLANE(lum)->color[CB] * intensity;
                 break;
 
             default:
@@ -1396,95 +1507,127 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void *data)
                 break;
             }
 
-            if(params->numLights < maxIndex + 1)
-                params->numLights = maxIndex + 1;
+            linkVLightNodeToList(node, params->listIdx);
         }
     }
 
-    return true;
+    return true; // Continue iteration.
 }
 
-void R_CollectAffectingLights(const collectaffectinglights_params_t *params,
-                              vlight_t **ptr, uint *num)
+uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
 {
-    uint                i, numLights;
+    uint                vLightListIdx;
 
-    if(!params || !ptr || !num)
-        return;
+    if(!params)
+        return 0;
 
-    // Determine the lighting properties that affect this vissprite and find
-    // any lights close enough to contribute additional light.
-    numLights = 0;
+    // Determine the lighting properties that affect this vissprite.
+    vLightListIdx = 0;
     if(params->maxLights)
     {
-        memset(lights, 0, sizeof(lights));
+        uint                i;
+        vlightnode_t*       node = newVLightNode();
+        vlight_t*           vlight = &node->vlight;
 
         // Should always be lit with world light.
-        numLights++;
-        lights[0].used = true;
-        lights[0].affectedByAmbient = false;
+        vlight->affectedByAmbient = false;
+        vlight->approxDist = 0;
 
         for(i = 0; i < 3; ++i)
         {
-            lights->vector[i] = worldLight[i];
-            lights->color[i] = params->ambientColor[i];
+            vlight->vector[i] = worldLight[i];
+            vlight->color[i] = params->ambientColor[i];
         }
 
         if(params->starkLight)
         {
-            lights->lightSide = .35f;
-            lights->darkSide = .5f;
-            lights->offset = 0;
+            vlight->lightSide = .35f;
+            vlight->darkSide = .5f;
+            vlight->offset = 0;
         }
         else
         {
-            // World light can both light and shade. Normal objects
-            // get more shade than light (to prevent them from
-            // becoming too bright when compared to ambient light).
-            lights->lightSide = .2f;
-            lights->darkSide = .8f;
-            lights->offset = .3f;
+            /**
+             * World light can both light and shade. Normal objects get
+             * more shade than light (to prevent them from becoming too
+             * bright when compared to ambient light).
+             */
+            vlight->lightSide = .2f;
+            vlight->darkSide = .8f;
+            vlight->offset = .3f;
+        }
+
+        vLightListIdx = newVLightList(true); // Sort by distance.
+        linkVLightNodeToList(node, vLightListIdx);
+
+        // Add extra light by interpreting lumobjs into vlights.
+        if(params->maxLights > 0 && loInited && params->subsector)
+        {
+            vlightiterparams_t vars;
+
+            vars.pos[VX] = params->center[VX];
+            vars.pos[VY] = params->center[VY];
+            vars.pos[VZ] = params->center[VZ];
+            vars.numLights = 1;
+            vars.maxLights = params->maxLights;
+            vars.haveList = true;
+            vars.listIdx = vLightListIdx;
+
+            LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
+                                     params->center[VY], (float) loMaxRadius,
+                                     &vars, visSpriteLightIterator);
         }
     }
 
-    // Add extra light by interpreting lumobjs into vlights.
-    if(params->maxLights > numLights && loInited && params->subsector)
+    return vLightListIdx;
+}
+
+/**
+ * Calls func for all vlights in the given list.
+ *
+ * @param listIdx       Identifier of the list to process.
+ * @param data          Ptr to pass to the callback.
+ * @param func          Callback to make for each object.
+ *
+ * @return              @c true, iff every callback returns @c true.
+ */
+boolean VL_ListIterator(uint listIdx, void* data,
+                        boolean (*func) (const vlight_t*, void*))
+{
+    vlightnode_t*       node;
+    boolean             retVal, isDone;
+
+    if(listIdx == 0 || listIdx > numVLightLinkLists)
+        return true;
+    listIdx--;
+
+    node = vLightLinkLists[listIdx].head;
+    retVal = true;
+    isDone = false;
+    while(node && !isDone)
     {
-        vlightiterparams_t vars;
-
-        V3_Copy(vars.pos, params->center);
-        vars.numLights = 0;
-        vars.maxLights = params->maxLights;
-
-        // Find the nearest sources of light. They will be used to
-        // light the vertices. First initialize the array.
-        for(i = numLights; i < MAX_VISSPRITE_LIGHTS; ++i)
-            lights[i].approxDist = DDMAXFLOAT;
-
-        LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
-                                 params->center[VY], (float) loMaxRadius,
-                                 &vars, visSpriteLightIterator);
-
-        numLights = vars.numLights;
+        if(!func(&node->vlight, data))
+        {
+            retVal = false;
+            isDone = true;
+        }
+        else
+            node = node->next;
     }
 
-    // Don't use too many lights.
-    if(numLights > params->maxLights)
-        numLights = params->maxLights;
-
-    *ptr = lights;
-    *num = numLights;
+    return retVal;
 }
 
 /**
  * @return              The current floatbob offset for the mobj, if the mobj
  *                      is flagged for bobbing, else @c 0.
  */
-float R_GetBobOffset(mobj_t *mo)
+float R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
         return (sin(MOBJ_TO_ID(mo) + ddLevelTime / 1.8286 * 2 * PI) * 8);
     }
+
     return 0;
 }

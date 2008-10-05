@@ -271,15 +271,73 @@ void Mod_MirrorVertices(int count, gl_vertex_t *v, int axis)
         v->xyz[axis] = -v->xyz[axis];
 }
 
+typedef struct {
+    float               color[3], extra[3], rotateYaw, rotatePitch;
+    gl_vertex_t*        normal;
+    boolean             invert;
+} lightmodelvertexparams_t;
+
+static boolean lightModelVertex(const vlight_t* vlight, void* context)
+{
+    float               dot;
+    float*              dest, lightVector[3];
+    lightmodelvertexparams_t* params = (lightmodelvertexparams_t*) context;
+
+    // Take a copy of the light vector as we intend to change it.
+    lightVector[0] = vlight->vector[0];
+    lightVector[1] = vlight->vector[1];
+    lightVector[2] = vlight->vector[2];
+
+    // We must transform the light vector to model space.
+    M_RotateVector(lightVector, params->rotateYaw, params->rotatePitch);
+
+    // Quick hack: Flip light normal if model inverted.
+    if(params->invert)
+    {
+        lightVector[VX] = -lightVector[VX];
+        lightVector[VY] = -lightVector[VY];
+    }
+
+    dot = DOTPROD(lightVector, params->normal->xyz);
+    dot += vlight->offset; // Shift a bit towards the light.
+
+    if(!vlight->affectedByAmbient)
+    {   // Won't be affected by ambient.
+        dest = params->extra;
+    }
+    else
+    {
+        dest = params->color;
+    }
+
+    // Ability to both light and shade.
+    if(dot > 0)
+    {
+        dot *= vlight->lightSide;
+    }
+    else
+    {
+        dot *= vlight->darkSide;
+    }
+
+    dot = MINMAX_OF(-1, dot, 1);
+
+    dest[CR] += dot * vlight->color[CR];
+    dest[CG] += dot * vlight->color[CG];
+    dest[CB] += dot * vlight->color[CB];
+
+    return true; // Continue iteration.
+}
+
 /**
  * Calculate vertex lighting.
  */
-void Mod_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
-                      int numLights, vlight_t *lights, float ambient[4])
+void Mod_VertexColors(int count, gl_color_t* out, gl_vertex_t* normal,
+                      uint vLightListIdx, float ambient[4], boolean invert,
+                      float rotateYaw, float rotatePitch)
 {
-    int         i, k;
-    float       color[3], extra[3], *dest, dot;
-    vlight_t   *light;
+    int                 i, k;
+    lightmodelvertexparams_t params;
 
     for(i = 0; i < count; ++i, out++, normal++)
     {
@@ -287,55 +345,28 @@ void Mod_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
             continue;
 
         // Begin with total darkness.
-        memset(color, 0, sizeof(color));
-        memset(extra, 0, sizeof(extra));
+        params.color[CR] = params.color[CG] = params.color[CB] = 0;
+        params.extra[CR] = params.extra[CG] = params.extra[CB] = 0;
+        params.normal = normal;
+        params.invert = invert;
+        params.rotateYaw = rotateYaw;
+        params.rotatePitch = rotatePitch;
 
         // Add light from each source.
-        for(k = 0, light = lights; k < numLights; ++k, light++)
-        {
-            if(!light->used)
-                continue;
-
-            dot = DOTPROD(light->vector, normal->xyz);
-            dot += light->offset; // Shift a bit towards the light.
-
-            if(!light->affectedByAmbient)
-            {   // Won't be affected by ambient.
-                dest = extra;
-            }
-            else
-            {
-                dest = color;
-            }
-
-            // Ability to both light and shade.
-            if(dot > 0)
-            {
-                dot *= light->lightSide;
-            }
-            else
-            {
-                dot *= light->darkSide;
-            }
-
-            dot = MINMAX_OF(-1, dot, 1);
-
-            dest[CR] += dot * light->color[CR];
-            dest[CG] += dot * light->color[CG];
-            dest[CB] += dot * light->color[CB];
-        }
+        VL_ListIterator(vLightListIdx, &params, lightModelVertex);
 
         // Check for ambient and convert to ubyte.
         for(k = 0; k < 3; ++k)
         {
-            if(color[k] < ambient[k])
-                color[k] = ambient[k];
-            color[k] += extra[k];
-            color[k] = MINMAX_OF(0, color[k], 1);
+            if(params.color[k] < ambient[k])
+                params.color[k] = ambient[k];
+            params.color[k] += params.extra[k];
+            params.color[k] = MINMAX_OF(0, params.color[k], 1);
 
             // This is the final color.
-            out->rgba[k] = (byte) (255 * color[k]);
+            out->rgba[k] = (byte) (255 * params.color[k]);
         }
+
         out->rgba[CA] = (byte) (255 * ambient[CA]);
     }
 }
@@ -637,7 +668,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
         Mod_FullBrightVertexColors(numVerts, modelColors, alpha);
     }
-    else if(!params->lights)
+    else if(!params->vLightListIdx)
     {   // Lit uniformly.
         ambient[CR] = params->ambientColor[CR];
         ambient[CG] = params->ambientColor[CG];
@@ -647,31 +678,15 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {   // Lit normally.
-        uint            i;
-        vlight_t       *light;
-
         ambient[CR] = params->ambientColor[CR];
         ambient[CG] = params->ambientColor[CG];
         ambient[CB] = params->ambientColor[CB];
         ambient[CA] = alpha;
 
-        // We need to make some adjustments to the light vectors.
-        for(i = 0; i < params->numLights; ++i)
-        {
-            light = &params->lights[i];
-
-            // We must transform the light vector to model space.
-            M_RotateVector(light->vector, -params->yaw, -params->pitch);
-            // Quick hack: Flip light normal if model inverted.
-            if(mf->scale[VY] < 0)
-            {
-                light->vector[VX] = -light->vector[VX];
-                light->vector[VY] = -light->vector[VY];
-            }
-        }
-
         Mod_VertexColors(numVerts, modelColors, modelNormals,
-                         params->numLights, params->lights, ambient);
+                         params->vLightListIdx, ambient,
+                         mf->scale[VY] < 0? true: false,
+                         -params->yaw, -params->pitch);
     }
 
     // Calculate shiny coordinates.
