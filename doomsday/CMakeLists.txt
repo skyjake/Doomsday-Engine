@@ -79,7 +79,6 @@ OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 OPTION (BUILDDOX "Build doxygen documentation. Default OFF" OFF)
 OPTION (ENABLEMAO "Combine all source files in a module and build it at once. Default OFF" OFF)
-OPTION (ENABLEDEBUG "Turn on internal debugging features. Default OFF" OFF)
 OPTION (ENABLENETDEBUG "Turn on internal network debugging features. Default OFF" OFF)
 OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default ON" ON)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
@@ -89,7 +88,6 @@ MARK_AS_ADVANCED (BUILDJSTRIFE)
 MARK_AS_ADVANCED (BUILDWOLFTC)
 MARK_AS_ADVANCED (BUILDJDOOM64)
 MARK_AS_ADVANCED (ENABLEMAO)
-MARK_AS_ADVANCED (ENABLEDEBUG)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
 MARK_AS_ADVANCED (ENABLERANGECHECKING)
@@ -105,26 +103,6 @@ IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     MESSAGE( FATAL_ERROR
     "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
 ENDIF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
-
-IF (CMAKE_BUILD_TYPE STREQUAL Debug)
-    MESSAGE( FATAL_ERROR
-    "Build Option Not supported")
-ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
-
-IF (CMAKE_BUILD_TYPE STREQUAL Release)
-    MESSAGE( FATAL_ERROR
-    "Build Option Not supported")
-ENDIF (CMAKE_BUILD_TYPE STREQUAL Release)
-
-IF (CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
-    MESSAGE( FATAL_ERROR
-    "Build Option Not supported")
-    ENDIF (CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
-
-IF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
-    MESSAGE( FATAL_ERROR
-    "Build Option Not supported")
-ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 
 ################################################################################
 ######################## Doomsday Paths  #######################################
@@ -382,9 +360,10 @@ IF (NOT ENABLERANGECHECKING)
     ADD_DEFINITIONS (-DNORANGECHECKING)
 ENDIF (NOT ENABLERANGECHECKING)
 
-IF (ENABLEDEBUG)
+
+IF (CMAKE_BUILD_TYPE STREQUAL Debug)
     ADD_DEFINITIONS (-D_DEBUG )
-ENDIF (ENABLEDEBUG)
+ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
 
 IF (ENABLENETDEBUG)
     ADD_DEFINITIONS (-D_NETDEBUG )
@@ -413,11 +392,6 @@ IF (UNIX)
     IF (NOT WIN32)
         ADD_DEFINITIONS ( -DUNIX)
         SET (BUILDSYSTEM UNIX)
-
-	IF (ENABLEDEBUG)
-	    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
-	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g" )
-	ENDIF (ENABLEDEBUG)
     ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
