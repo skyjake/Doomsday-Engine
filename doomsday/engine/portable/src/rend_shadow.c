@@ -133,8 +133,7 @@ static void processMobjShadow(mobj_t* mo)
 
     // Calculate the strength of the shadow.
     // Simplified version, no light diminishing or range compression.
-    alpha =
-        shadowFactor * sec->lightLevel *
+    alpha = shadowFactor * sec->lightLevel *
         (1 - mo->translucency * reciprocal255);
 
     halfmoh = moh / 2;
@@ -154,7 +153,7 @@ static void processMobjShadow(mobj_t* mo)
 
     // Calculate the radius of the shadow.
     radius = R_VisualRadius(mo);
-    if(!radius)
+    if(!(radius > 0))
         return;
     if(radius > (float) shadowMaxRad)
         radius = (float) shadowMaxRad;
@@ -176,26 +175,21 @@ static void processMobjShadow(mobj_t* mo)
 
     // Prepare the poly.
     params.type = RP_FLAT;
-    params.flags = 0;
-    params.texOffset[VX] = params.texOffset[VY] = 0;
+    params.flags = RPF_SHADOW;
+    params.blendMode = BM_NORMAL;
+    params.texOffset[VX] = -pos[VX] + radius;
+    params.texOffset[VY] = -pos[VY] - radius;
+    params.texOrigin[0][VX] = params.texOrigin[0][VY] = 0;
     params.interPos = 0;
     params.lightListIdx = 0;
-    params.blendMode = BM_NORMAL;
-    params.tex.id = curTex = 0;
-    params.tex.magMode = DGL_LINEAR;
 
-    params.tex.detail = 0;
-    params.tex.height = params.tex.width = 0;
-    params.tex.masked = 0;
-
-    memset(&params.interTex, 0, sizeof(params.interTex));
-
-    params.flags = RPF_SHADOW;
     params.tex.id = curTex = GL_PrepareLSTexture(LST_DYNAMIC);
     params.tex.magMode = DGL_LINEAR;
     params.tex.width = params.tex.height = radius * 2;
-    params.texOffset[VX] = -pos[VX] + radius;
-    params.texOffset[VY] = -pos[VY] - radius;
+    params.tex.detail = 0;
+    params.tex.masked = 0;
+
+    memset(&params.interTex, 0, sizeof(params.interTex));
 
     rvertices[0].pos[VX] = pos[VX] - radius;
     rvertices[0].pos[VY] = pos[VY] + radius;
@@ -213,9 +207,7 @@ static void processMobjShadow(mobj_t* mo)
     // Shadows are black.
     for(i = 0; i < 4; ++i)
     {
-        rcolors[i].rgba[CR] =
-            rcolors[i].rgba[CG] =
-                rcolors[i].rgba[CB] = 0;
+        rcolors[i].rgba[CR] = rcolors[i].rgba[CG] = rcolors[i].rgba[CB] = 0;
         rcolors[i].rgba[CA] = alpha;
     }
 
