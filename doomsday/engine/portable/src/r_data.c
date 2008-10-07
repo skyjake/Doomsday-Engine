@@ -1527,7 +1527,7 @@ void R_PrecacheLevel(void)
     starttime = Sys_GetSeconds();
 
     // Precache all materials used on world surfaces.
-    matPresent = M_Calloc(numMaterials);
+    matPresent = M_Calloc(sizeof(material_t*) * numMaterials);
     n = 0;
 
     for(i = 0; i < numSideDefs; ++i)
