@@ -336,7 +336,7 @@ materialnum_t R_MaterialNumForName(const char* name, materialtype_t type)
     materialnum_t       result = R_MaterialCheckNumForName(name, type);
 
     // Not found.
-    if(!levelSetup) // Don't announce during level setup.
+    if(result = 0 && !levelSetup) // Don't announce during level setup.
         Con_Message("R_MaterialNumForName: %.8s type %i not found!\n",
                     name, type);
     return result;
