@@ -403,9 +403,9 @@ void M_InitControlsMenu(void)
 
         cc->item = item;
 
-        if(cc->itemText && ((int) cc->itemText < NUMTEXT))
+        if(cc->itemText && ((unsigned int) cc->itemText < NUMTEXT))
         {
-            item->text = GET_TXT((int)cc->itemText);
+            item->text = GET_TXT((unsigned int)cc->itemText);
         }
         else
         {
