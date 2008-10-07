@@ -235,7 +235,7 @@ material_t* R_MaterialCreate(const char* name, int ofTypeID,
  *
  * @return              The associated material, ELSE @c NULL.
  */
-material_t *R_GetMaterial(int ofTypeID, materialtype_t type)
+material_t* R_GetMaterial(int ofTypeID, materialtype_t type)
 {
     materialnum_t       i;
     material_t*         mat;
@@ -306,6 +306,9 @@ materialnum_t R_MaterialCheckNumForName(const char* name,
 {
     materialnum_t       i;
 
+    if(!name || !name[0])
+        return 0;
+
     for(i = 0; i < numMaterials; ++i)
     {
         material_t*         mat = materials[i];
@@ -330,21 +333,13 @@ materialnum_t R_MaterialCheckNumForName(const char* name,
  */
 materialnum_t R_MaterialNumForName(const char* name, materialtype_t type)
 {
-    materialnum_t       i;
-
-    for(i = 0; i < numMaterials; ++i)
-    {
-        material_t*         mat = materials[i];
-
-        if(mat->type == type && !strncasecmp(mat->name, name, 8))
-            return i + 1;
-    }
+    materialnum_t       result = R_MaterialCheckNumForName(name, type);
 
     // Not found.
     if(!levelSetup) // Don't announce during level setup.
         Con_Message("R_MaterialNumForName: %.8s type %i not found!\n",
                     name, type);
-    return 0;
+    return result;
 }
 
 /**
@@ -354,7 +349,7 @@ materialnum_t R_MaterialNumForName(const char* name, materialtype_t type)
  *
  * @return              The associated name.
  */
-const char *R_MaterialNameForNum(materialnum_t num)
+const char* R_MaterialNameForNum(materialnum_t num)
 {
     if(num != 0 && num <= numMaterials)
         return materials[num-1]->name;
