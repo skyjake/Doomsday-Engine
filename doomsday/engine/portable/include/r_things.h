@@ -118,7 +118,6 @@ typedef struct vissprite_s {
     float           center[3];
     uint            lumIdx; // For the halo (NULL if no halo).
     boolean         isDecoration;
-    vlight_t        lights[MAX_VISSPRITE_LIGHTS];
 
     // An anonymous union for the data.
     union vissprite_data_u {
