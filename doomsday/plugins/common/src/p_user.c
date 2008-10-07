@@ -1771,22 +1771,21 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     ddplayer_t         *plr = player->plr;
     int                 turn = 0;
     boolean             strafe = false;
-    float               vel, off;
-    int                 turnSpeed;
+    float               vel, off, turnSpeed;
     float               offsetSensitivity = 100; // \fixme Should be done engine-side, mouse sensitivity!
     classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
 
-    turnSpeed = pClassInfo->turnSpeed[0] * TICRATE;
+    turnSpeed = FIX2FLT(pClassInfo->turnSpeed[0]) * TICRATE;
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
     if(vel != 0)
     {
         // Hurry, good man!
-        turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
+        turnSpeed = FIX2FLT(pClassInfo->turnSpeed[1]) * TICRATE;
     }
 
     // Check for strafe.
