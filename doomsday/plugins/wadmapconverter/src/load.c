@@ -265,7 +265,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
          * This potentially doubles the size of blockmaps allowed
          * because DOOM originally considered the offsets as always
          * signed.
-	     */
+         */
 
         lineListOffsets = M_Malloc(sizeof(long) * numBlocks);
         n = 4;
@@ -361,11 +361,11 @@ if(idx < 0 || idx >= (long) map->numLines)
 }
 #endif
 
-int DataTypeForLumpName(const char *name)
+int DataTypeForLumpName(const char* name)
 {
     struct lumptype_s {
         lumptype_t      type;
-        const char     *name;
+        const char*     name;
     } knownLumps[] =
     {
         {ML_LABEL,      "*"},
@@ -390,10 +390,13 @@ int DataTypeForLumpName(const char *name)
     };
     lumptype_t          i;
 
-    for(i = FIRST_LUMP_TYPE; knownLumps[i].type != ML_INVALID; ++i)
+    if(name && name[0])
     {
-        if(!strncmp(knownLumps[i].name, name, 8))
-            return knownLumps[i].type;
+        for(i = FIRST_LUMP_TYPE; knownLumps[i].type != ML_INVALID; ++i)
+        {
+            if(!strncmp(knownLumps[i].name, name, 8))
+                return knownLumps[i].type;
+        }
     }
 
     return ML_INVALID;
@@ -702,7 +705,9 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
     // the format of the map data; Hexen rather than DOOM format.
     for(i = 0; i < numLumps; ++i)
     {
-        if(!strncmp(W_LumpName(lumpList[i]), "BEHAVIOR", 8))
+        const char*         lumpName = W_LumpName(lumpList[i]);
+
+        if(lumpName && !strncmp(lumpName, "BEHAVIOR", 8))
         {
             map->hexenFormat = true;
             break;
@@ -711,12 +716,13 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
 
     for(i = 0; i < numLumps; ++i)
     {
-        uint               *ptr;
+        uint*               ptr;
         size_t              elmSize; // Num of bytes.
+        const char*         lumpName = W_LumpName(lumpList[i]);
 
         // Determine the number of map data objects of each data type.
         ptr = NULL;
-        switch(DataTypeForLumpName(W_LumpName(lumpList[i])))
+        switch(DataTypeForLumpName(lumpName))
         {
         case ML_VERTEXES:
             ptr = &map->numVertexes;
