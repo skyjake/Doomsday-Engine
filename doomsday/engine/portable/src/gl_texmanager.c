@@ -167,7 +167,7 @@ void GL_TexRegister(void)
     C_VAR_FLOAT2("rend-tex-gamma", &texGamma, 0, 0, 1,
                  GL_DoUpdateTexGamma);
     C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
-               GL_DoUpdateTexParams);
+               GL_DoTexReset);
     C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
                 GL_DoTexReset);
     C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1,
