@@ -1778,14 +1778,14 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
 
-    turnSpeed = FIX2FLT(pClassInfo->turnSpeed[0]) * TICRATE;
+    turnSpeed = pClassInfo->turnSpeed[0] * TICRATE;
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
     if(vel != 0)
     {
         // Hurry, good man!
-        turnSpeed = FIX2FLT(pClassInfo->turnSpeed[1]) * TICRATE;
+        turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
     }
 
     // Check for strafe.
