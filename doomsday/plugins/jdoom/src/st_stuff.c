@@ -1391,11 +1391,29 @@ static void initData(hudstate_t* hud)
 
 void ST_createWidgets(int player)
 {
+    typedef struct {
+        float               x, y;
+    } hudelement_t;
+
     static int          largeAmmo = 1994; // means "n/a"
+    static const hudelement_t ammoPos[NUM_AMMO_TYPES] =
+    {
+        {ST_AMMOX, ST_AMMOY},
+        {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 1)},
+        {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 3)},
+        {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 2)}
+    };
+    static const hudelement_t ammoMaxPos[NUM_AMMO_TYPES] =
+    {
+        {ST_MAXAMMOX, ST_MAXAMMOY},
+        {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 1)},
+        {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 3)},
+        {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 2)}
+    };
 
     ammotype_t          ammoType;
     int*                ptr = &largeAmmo;
-    int                 i, offsetY;
+    int                 i;
     boolean             found;
     player_t*           plr = &players[player];
     hudstate_t*         hud = &hudStates[player];
@@ -1457,13 +1475,13 @@ void ST_createWidgets(int player)
                        &hud->statusbarActive, &hud->statusbarCounterAlpha);
 
     // Ammo count and max (all four kinds).
-    for(i = 0, offsetY = 0; i < NUM_AMMO_TYPES; ++i, offsetY += ST_AMMOHEIGHT)
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        STlib_initNum(&hud->wAmmo[i], ST_AMMOX, ST_AMMOY + offsetY, shortNum,
+        STlib_initNum(&hud->wAmmo[i], ammoPos[i].x, ammoPos[i].y, shortNum,
                       &plr->ammo[i].owned, &hud->statusbarActive, ST_AMMOWIDTH,
                       &hud->statusbarCounterAlpha);
 
-        STlib_initNum(&hud->wMaxAmmo[i], ST_MAXAMMOX, ST_MAXAMMOY + offsetY,
+        STlib_initNum(&hud->wMaxAmmo[i], ammoMaxPos[i].x, ammoMaxPos[i].y,
                       shortNum, &plr->ammo[i].max, &hud->statusbarActive,
                       ST_MAXAMMOWIDTH, &hud->statusbarCounterAlpha);
     }
