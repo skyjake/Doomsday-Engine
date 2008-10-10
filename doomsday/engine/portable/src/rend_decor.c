@@ -781,7 +781,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
             if(suf == &side->SW_topsurface)
             {
                 if(!(line->flags & DDLF_DONTPEGTOP))
-                    offsetT += -(frontCeil - backCeil);
+                    offsetT += frontCeil - backCeil;
             }
             else // Its a bottom section.
             {
@@ -792,7 +792,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
         else
         {
             if(line->flags & DDLF_DONTPEGBOTTOM)
-                offsetT += -(frontCeil - frontFloor);
+                offsetT += frontCeil - frontFloor;
         }
 
         if(sid)
