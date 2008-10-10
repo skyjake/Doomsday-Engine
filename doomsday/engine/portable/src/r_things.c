@@ -1464,10 +1464,10 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
 
                 // Calculate the normalized direction vector, pointing out of
                 // the light origin.
-                vlight->vector[VX] = (params->pos[VX] - lum->pos[VX]) / dist;
-                vlight->vector[VY] = (params->pos[VY] - lum->pos[VY]) / dist;
-                vlight->vector[VZ] = (params->pos[VZ] - lum->pos[VZ] +
-                                        LUM_OMNI(lum)->zOff) / dist;
+                vlight->vector[VX] = (lum->pos[VX] - params->pos[VX]) / dist;
+                vlight->vector[VY] = (lum->pos[VY] - params->pos[VY]) / dist;
+                vlight->vector[VZ] = (lum->pos[VZ] + LUM_OMNI(lum)->zOff -
+                                        params->pos[VZ]) / dist;
 
                 vlight->color[CR] = LUM_OMNI(lum)->color[CR] * intensity;
                 vlight->color[CG] = LUM_OMNI(lum)->color[CG] * intensity;
@@ -1489,7 +1489,7 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
                  */
                 vlight->vector[VX] = LUM_PLANE(lum)->normal[VX];
                 vlight->vector[VY] = LUM_PLANE(lum)->normal[VY];
-                vlight->vector[VZ] = LUM_PLANE(lum)->normal[VZ];
+                vlight->vector[VZ] = -LUM_PLANE(lum)->normal[VZ];
 
                 vlight->color[CR] = LUM_PLANE(lum)->color[CR] * intensity;
                 vlight->color[CG] = LUM_PLANE(lum)->color[CG] * intensity;
@@ -1571,7 +1571,7 @@ uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
                                  &vars, visSpriteLightIterator);
     }
 
-    return vLightListIdx;
+    return vLightListIdx + 1;
 }
 
 /**

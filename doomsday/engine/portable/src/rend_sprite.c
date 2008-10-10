@@ -855,6 +855,26 @@ void Rend_DrawMasked(void)
     }
 }
 
+#if _DEBUG
+boolean drawVLightVector(const vlight_t* light, void* context)
+{
+    float               scale = 100;
+
+    DGL_Begin(DGL_LINES);
+    {
+        DGL_Color4f(light->color[CR], light->color[CG], light->color[CB], 1);
+        DGL_Vertex3f(scale * light->vector[VX],
+                     scale * light->vector[VZ],
+                     scale * light->vector[VY]);
+        DGL_Color4f(0, 0, 0, 1);
+        DGL_Vertex3f(0, 0, 0);
+    }
+    DGL_End();
+
+    return true; // Continue iteration.
+}
+#endif
+
 void Rend_RenderSprite(const rendspriteparams_t* params)
 {
     int                 i;
@@ -935,6 +955,30 @@ DGL_Enable(DGL_TEXTURING);
         Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx,
                          spriteLight + 1, params->ambientColor);
     }
+
+/*#if _DEBUG
+    if(params->vLightListIdx)
+    {   // Draw the vlight vectors, for debug.
+        DGL_Disable(DGL_TEXTURING);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+
+        DGL_Translatef(params->center[VX], params->center[VZ],
+                       params->center[VY]);
+
+        VL_ListIterator(params->vLightListIdx, NULL, drawVLightVector);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        DGL_Enable(DGL_TEXTURING);
+    }
+#endif*/
 
     // Do we need to do some aligning?
     if(params->viewAligned || alwaysAlign >= 2)
