@@ -1149,10 +1149,6 @@ void R_ProjectSprite(mobj_t* mo)
         }
     }
 
-    getLightingParams(vis->center[VX], vis->center[VY], vis->center[VZ],
-                      mo->subsector, vis->distance, fullBright,
-                      ambientColor, &vLightListIdx);
-
     if(!mf && mat)
     {
         boolean brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW)? true : false;
@@ -1209,6 +1205,10 @@ void R_ProjectSprite(mobj_t* mo)
         // Adjust by the floor clip.
         gzt -= floorClip;
 
+        getLightingParams(vis->center[VX], vis->center[VY], gzt - mat->height / 2.0f,
+                          mo->subsector, vis->distance, fullBright,
+                          ambientColor, &vLightListIdx);
+
         setupSpriteParamsForVisSprite(&vis->data.sprite,
                                       vis->center[VX], vis->center[VY], gzt - mat->height / 2.0f,
                                       vis->distance,
@@ -1229,6 +1229,10 @@ void R_ProjectSprite(mobj_t* mo)
     }
     else
     {
+        getLightingParams(vis->center[VX], vis->center[VY], vis->center[VZ],
+                          mo->subsector, vis->distance, fullBright,
+                          ambientColor, &vLightListIdx);
+
         setupModelParamsForVisSprite(&vis->data.model,
                                      vis->center[VX], vis->center[VY], vis->center[VZ], vis->distance,
                                      visOff[VX], visOff[VY], visOff[VZ] - floorClip, gzt, yaw, 0, pitch, 0,
