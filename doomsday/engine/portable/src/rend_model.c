@@ -274,6 +274,7 @@ void Mod_MirrorVertices(int count, gl_vertex_t *v, int axis)
 typedef struct {
     float               color[3], extra[3], rotateYaw, rotatePitch;
     gl_vertex_t*        normal;
+    uint                processedLights, maxLights;
     boolean             invert;
 } lightmodelvertexparams_t;
 
@@ -326,6 +327,10 @@ static boolean lightModelVertex(const vlight_t* vlight, void* context)
     dest[CG] += dot * vlight->color[CG];
     dest[CB] += dot * vlight->color[CB];
 
+    params->processedLights++;
+    if(params->maxLights && !(params->processedLights < params->maxLights))
+        return false; // Stop iteration.
+
     return true; // Continue iteration.
 }
 
@@ -333,8 +338,8 @@ static boolean lightModelVertex(const vlight_t* vlight, void* context)
  * Calculate vertex lighting.
  */
 void Mod_VertexColors(int count, gl_color_t* out, gl_vertex_t* normal,
-                      uint vLightListIdx, float ambient[4], boolean invert,
-                      float rotateYaw, float rotatePitch)
+                      uint vLightListIdx, uint maxLights, float ambient[4],
+                      boolean invert, float rotateYaw, float rotatePitch)
 {
     int                 i, k;
     lightmodelvertexparams_t params;
@@ -347,6 +352,8 @@ void Mod_VertexColors(int count, gl_color_t* out, gl_vertex_t* normal,
         // Begin with total darkness.
         params.color[CR] = params.color[CG] = params.color[CB] = 0;
         params.extra[CR] = params.extra[CG] = params.extra[CB] = 0;
+        params.processedLights = 0;
+        params.maxLights = maxLights;
         params.normal = normal;
         params.invert = invert;
         params.rotateYaw = rotateYaw;
@@ -684,7 +691,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         ambient[CA] = alpha;
 
         Mod_VertexColors(numVerts, modelColors, modelNormals,
-                         params->vLightListIdx, ambient,
+                         params->vLightListIdx, modelLight + 1, ambient,
                          mf->scale[VY] < 0? true: false,
                          -params->yaw, -params->pitch);
     }

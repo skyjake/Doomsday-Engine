@@ -164,6 +164,7 @@ void Spr_UniformVertexColors(int count, gl_color_t *colors,
 typedef struct {
     float               color[3], extra[3];
     gl_vertex_t*        normal;
+    uint                processedLights, maxLights;
 } lightspriteparams_t;
 
 static boolean lightSprite(const vlight_t* vlight, void* context)
@@ -200,6 +201,10 @@ static boolean lightSprite(const vlight_t* vlight, void* context)
     dest[CG] += dot * vlight->color[CG];
     dest[CB] += dot * vlight->color[CB];
 
+    params->processedLights++;
+    if(params->maxLights && !(params->processedLights < params->maxLights))
+        return false; // Stop iteration.
+
     return true; // Continue iteration.
 }
 
@@ -207,7 +212,8 @@ static boolean lightSprite(const vlight_t* vlight, void* context)
  * Calculate vertex lighting.
  */
 void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
-                      uint vLightListIdx, const float* ambient)
+                      uint vLightListIdx, uint maxLights,
+                      const float* ambient)
 {
     int                 i, k;
     lightspriteparams_t params;
@@ -218,6 +224,8 @@ void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
         params.color[CR] = params.color[CG] = params.color[CB] = 0;
         params.extra[CR] = params.extra[CG] = params.extra[CB] = 0;
         params.normal = normal;
+        params.processedLights = 0;
+        params.maxLights = maxLights;
 
         VL_ListIterator(vLightListIdx, &params, lightSprite);
 
@@ -337,7 +345,6 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
         lparams.center[VX] = spr->center[VX];
         lparams.center[VY] = spr->center[VY];
         lparams.center[VZ] = spr->center[VZ];
-        lparams.maxLights = spriteLight;
         lparams.subsector = spr->data.sprite.subsector;
         lparams.ambientColor = params->ambientColor;
 
@@ -393,7 +400,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     else
     {   // Lit normally.
         Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx,
-                         params->ambientColor);
+                         spriteLight + 1, params->ambientColor);
     }
 
     {
@@ -710,7 +717,6 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
         lparams.center[VX] = spr->center[VX];
         lparams.center[VY] = spr->center[VY];
         lparams.center[VZ] = spr->center[VZ];
-        lparams.maxLights = modelLight;
         lparams.subsector = spr->data.model.subsector;
         lparams.ambientColor = params->ambientColor;
 
@@ -927,7 +933,7 @@ DGL_Enable(DGL_TEXTURING);
     else
     {   // Lit normally.
         Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx,
-                         params->ambientColor);
+                         spriteLight + 1, params->ambientColor);
     }
 
     // Do we need to do some aligning?

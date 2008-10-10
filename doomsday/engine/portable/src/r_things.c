@@ -71,8 +71,6 @@ typedef struct vlightlist_s {
 
 typedef struct {
     vec3_t          pos;
-    uint            numLights;
-    uint            maxLights;
     boolean         haveList;
     uint            listIdx;
 } vlightiterparams_t;
@@ -803,8 +801,7 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
 
 void getLightingParams(float x, float y, float z, subsector_t* ssec,
                        float distance, boolean fullBright,
-                       uint maxLights, float ambientColor[3],
-                       uint* vLightListIdx)
+                       float ambientColor[3], uint* vLightListIdx)
 {
     if(fullBright)
     {
@@ -855,7 +852,6 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
         lparams.center[VX] = x;
         lparams.center[VY] = y;
         lparams.center[VZ] = z;
-        lparams.maxLights = maxLights;
         lparams.subsector = ssec;
         lparams.ambientColor = ambientColor;
 
@@ -1155,7 +1151,6 @@ void R_ProjectSprite(mobj_t* mo)
 
     getLightingParams(vis->center[VX], vis->center[VY], vis->center[VZ],
                       mo->subsector, vis->distance, fullBright,
-                      (vis->type == VSPR_MODEL? modelLight : spriteLight),
                       ambientColor, &vLightListIdx);
 
     if(!mf && mat)
@@ -1452,7 +1447,7 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
     {
         vlightnode_t*       node = NULL;
 
-        node = newVLightNode();
+        node = newVLight();
 
         if(node)
         {
@@ -1517,66 +1512,63 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
 uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
 {
     uint                vLightListIdx;
+    uint                i;
+    vlightnode_t*       node;
+    vlight_t*           vlight;
 
     if(!params)
         return 0;
 
     // Determine the lighting properties that affect this vissprite.
     vLightListIdx = 0;
-    if(params->maxLights)
+    node = newVLight();
+    vlight = &node->vlight;
+
+    // Should always be lit with world light.
+    vlight->affectedByAmbient = false;
+    vlight->approxDist = 0;
+
+    for(i = 0; i < 3; ++i)
     {
-        uint                i;
-        vlightnode_t*       node = newVLightNode();
-        vlight_t*           vlight = &node->vlight;
+        vlight->vector[i] = worldLight[i];
+        vlight->color[i] = params->ambientColor[i];
+    }
 
-        // Should always be lit with world light.
-        vlight->affectedByAmbient = false;
-        vlight->approxDist = 0;
+    if(params->starkLight)
+    {
+        vlight->lightSide = .35f;
+        vlight->darkSide = .5f;
+        vlight->offset = 0;
+    }
+    else
+    {
+        /**
+         * World light can both light and shade. Normal objects get
+         * more shade than light (to prevent them from becoming too
+         * bright when compared to ambient light).
+         */
+        vlight->lightSide = .2f;
+        vlight->darkSide = .8f;
+        vlight->offset = .3f;
+    }
 
-        for(i = 0; i < 3; ++i)
-        {
-            vlight->vector[i] = worldLight[i];
-            vlight->color[i] = params->ambientColor[i];
-        }
+    vLightListIdx = newVLightList(true); // Sort by distance.
+    linkVLightNodeToList(node, vLightListIdx);
 
-        if(params->starkLight)
-        {
-            vlight->lightSide = .35f;
-            vlight->darkSide = .5f;
-            vlight->offset = 0;
-        }
-        else
-        {
-            /**
-             * World light can both light and shade. Normal objects get
-             * more shade than light (to prevent them from becoming too
-             * bright when compared to ambient light).
-             */
-            vlight->lightSide = .2f;
-            vlight->darkSide = .8f;
-            vlight->offset = .3f;
-        }
+    // Add extra light by interpreting lumobjs into vlights.
+    if(loInited && params->subsector)
+    {
+        vlightiterparams_t vars;
 
-        vLightListIdx = newVLightList(true); // Sort by distance.
-        linkVLightNodeToList(node, vLightListIdx);
+        vars.pos[VX] = params->center[VX];
+        vars.pos[VY] = params->center[VY];
+        vars.pos[VZ] = params->center[VZ];
+        vars.haveList = true;
+        vars.listIdx = vLightListIdx;
 
-        // Add extra light by interpreting lumobjs into vlights.
-        if(params->maxLights > 0 && loInited && params->subsector)
-        {
-            vlightiterparams_t vars;
-
-            vars.pos[VX] = params->center[VX];
-            vars.pos[VY] = params->center[VY];
-            vars.pos[VZ] = params->center[VZ];
-            vars.numLights = 1;
-            vars.maxLights = params->maxLights;
-            vars.haveList = true;
-            vars.listIdx = vLightListIdx;
-
-            LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
-                                     params->center[VY], (float) loMaxRadius,
-                                     &vars, visSpriteLightIterator);
-        }
+        LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
+                                 params->center[VY], (float) loMaxRadius,
+                                 &vars, visSpriteLightIterator);
     }
 
     return vLightListIdx;

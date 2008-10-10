@@ -171,8 +171,6 @@ typedef struct collectaffectinglights_params_s {
     float           center[3];
     float*          ambientColor;
     subsector_t*    subsector;
-
-    uint            maxLights;
     boolean         starkLight; // World light has a more pronounced effect.
 } collectaffectinglights_params_t;
 

@@ -489,7 +489,6 @@ void setupModelParamsForParticle(rendmodelparams_t* params, particle_t* pt,
         lparams.center[VX] = params->center[VX];
         lparams.center[VY] = params->center[VY];
         lparams.center[VZ] = params->center[VZ];
-        lparams.maxLights = modelLight;
         lparams.subsector = ssec;
         lparams.ambientColor = params->ambientColor;
 
