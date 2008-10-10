@@ -505,10 +505,6 @@ void G_PreInit(void)
 
     cfg.berserkAutoSwitch = true;
 
-    // Doom2 has a different border background.
-    if(gameMode == commercial)
-        borderLumps[0] = "GRNROCK";
-
     // Do the common pre init routine;
     G_CommonPreInit();
 }
@@ -522,6 +518,11 @@ void G_PostInit(void)
     int                 p;
     char                file[256];
     char                mapStr[6];
+
+    // Border background changes depending on mission.
+    if(gameMission == GM_DOOM2 || gameMission == GM_PLUT ||
+       gameMission == GM_TNT)
+        borderLumps[0] = "GRNROCK";
 
     // Common post init routine
     G_CommonPostInit();

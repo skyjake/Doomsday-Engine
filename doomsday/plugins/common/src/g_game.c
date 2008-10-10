@@ -459,7 +459,6 @@ void G_CommonPreInit(void)
     DD_SetDefsFile( DEFSFILE );
     R_SetDataPath( DATAPATH );
 
-    R_SetBorderGfx(borderLumps);
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
     G_RegisterBindClasses();
@@ -504,6 +503,7 @@ void G_CommonPostInit(void)
 
     DD_SetVariable(DD_SKYMASKMATERIAL_NAME, SKYFLATNAME);
     R_SetViewSize(cfg.screenBlocks);
+    R_SetBorderGfx(borderLumps);
 
     Con_Message("P_Init: Init Playloop state.\n");
     P_Init();
