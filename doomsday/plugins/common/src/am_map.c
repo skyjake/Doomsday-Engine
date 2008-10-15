@@ -702,7 +702,7 @@ void AM_Init(void)
         // Blue locked door, open.
         AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Blue locked door, locked.
-        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         AM_RegisterSpecialLine(i, 0, 99, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         AM_RegisterSpecialLine(i, 0, 133, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Red locked door, open.
