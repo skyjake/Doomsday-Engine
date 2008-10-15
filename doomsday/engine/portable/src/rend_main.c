@@ -696,34 +696,62 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
                     scanSec = iter->L_backsector;
 
                 if(scanSec)
-                    for(j = 0; j < scanSec->planeCount && !stopScan; ++j)
+                {
+                    if(scanSec->SP_ceilvisheight - scanSec->SP_floorvisheight > 0)
                     {
-                        plane_t            *pln = scanSec->SP_plane(j);
-
-                        if(pln->visHeight > bottomZ && pln->visHeight < topZ)
+                        for(j = 0; j < scanSec->planeCount && !stopScan; ++j)
                         {
-                            if(!checkDiv(div, pln->visHeight))
+                            plane_t            *pln = scanSec->SP_plane(j);
+
+                            if(pln->visHeight > bottomZ && pln->visHeight < topZ)
                             {
-                                div->pos[div->num++] = pln->visHeight;
+                                if(!checkDiv(div, pln->visHeight))
+                                {
+                                    div->pos[div->num++] = pln->visHeight;
+
+                                    // Have we reached the div limit?
+                                    if(div->num == RL_MAX_DIVS)
+                                        stopScan = true;
+                                }
+                            }
+
+                            if(!stopScan)
+                            {   // Clip a range bound to this height?
+                                if(pln->type == PLN_FLOOR && pln->visHeight > bottomZ)
+                                    bottomZ = pln->visHeight;
+                                else if(pln->type == PLN_CEILING && pln->visHeight < topZ)
+                                    topZ = pln->visHeight;
+
+                                // All clipped away?
+                                if(bottomZ >= topZ)
+                                    stopScan = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /**
+                         * A zero height sector is a special case. In this
+                         * instance, the potential division is at the height
+                         * of the back ceiling. This is because elsewhere
+                         * we automatically fix the case of a floor above a
+                         * ceiling by lowering the floor.
+                         */
+                        float               z = scanSec->SP_ceilvisheight;
+
+                        if(z > bottomZ && z < topZ)
+                        {
+                            if(!checkDiv(div, z))
+                            {
+                                div->pos[div->num++] = z;
 
                                 // Have we reached the div limit?
                                 if(div->num == RL_MAX_DIVS)
                                     stopScan = true;
                             }
                         }
-
-                        if(!stopScan)
-                        {   // Clip a range bound to this height?
-                            if(pln->type == PLN_FLOOR && pln->visHeight > bottomZ)
-                                bottomZ = pln->visHeight;
-                            else if(pln->type == PLN_CEILING && pln->visHeight < topZ)
-                                topZ = pln->visHeight;
-
-                            // All clipped away?
-                            if(bottomZ >= topZ)
-                                stopScan = true;
-                        }
                     }
+                }
             } while(!stopScan && ++i < 2);
 
             // Stop the scan when a single sided line is reached.
@@ -1339,9 +1367,11 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
                 params.tex.height = mat->height;
                 params.tex.detail =
                     (r_detail && mat->detail.tex? &mat->detail : 0);
-                params.tex.masked = mat->dgl.masked;
+                params.tex.masked = ((section == SEG_MIDDLE &&
+                    seg->SG_backsector && seg->SG_frontsector)?
+                        mat->dgl.masked : 0);
 
-                if(mat->dgl.masked)
+                if(params.tex.masked)
                     surfaceFlags &= ~SUF_NO_RADIO;
             }
         }
@@ -1357,10 +1387,12 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
             params.tex.height = mat->height;
             params.tex.detail =
                 (r_detail && mat->detail.tex? &mat->detail : 0);
-            params.tex.masked = mat->dgl.masked;
+            params.tex.masked = ((section == SEG_MIDDLE &&
+                seg->SG_backsector && seg->SG_frontsector)?
+                    mat->dgl.masked : 0);
             surfaceFlags = surface->flags;
 
-            if(mat->dgl.masked)
+            if(params.tex.masked)
                 surfaceFlags &= ~SUF_NO_RADIO;
 
             //// \kludge
@@ -1384,9 +1416,11 @@ static boolean doRenderSeg(seg_t* seg, segsection_t section,
             params.tex.height = mat->height;
             params.tex.detail =
                 (r_detail && mat->detail.tex? &mat->detail : 0);
-            params.tex.masked = mat->dgl.masked;
+            params.tex.masked = ((section == SEG_MIDDLE &&
+                seg->SG_backsector && seg->SG_frontsector)?
+                    mat->dgl.masked : 0);
 
-            if(mat->dgl.masked)
+            if(params.tex.masked)
                 surfaceFlags &= ~SUF_NO_RADIO;
 
             tempflags |= RPF2_BLEND;
@@ -1705,7 +1739,7 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
     sector_t*           backsec;
     sidedef_t*          backsid, *side;
     linedef_t*          ldef;
-    float               ffloor, fceil, bfloor, bceil, bsh;
+    float               ffloor, fceil, bfloor, bceil;
     boolean             backSide;
     sector_t*           frontsec, *fflinkSec, *fclinkSec;
     int                 pid = viewPlayer - ddPlayers;
@@ -1740,7 +1774,6 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
 
     bceil = backsec->SP_ceilvisheight;
     bfloor = backsec->SP_floorvisheight;
-    bsh = bceil - bfloor;
 
     // Create the wall sections.
 
@@ -1827,9 +1860,15 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
         texOffset[VX] = surface->visOffset[VX] + seg->offset;
         texOffset[VY] = surface->visOffset[VY];
 
-        if(bfloor > fceil)
+        if(bfloor > bceil)
+        {   // Can't go over the back ceiling, would induce polygon flaws.
+            texOffset[VY] += bfloor - bceil;
+            top = bceil;
+        }
+
+        if(top > fceil)
         {   // Can't go over front ceiling, would induce polygon flaws.
-            texOffset[VY] += bfloor - fceil;
+            texOffset[VY] += top - fceil;
             top = fceil;
         }
 
@@ -1865,7 +1904,7 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
             solidSeg = true;
         }
         else if((seg->frameFlags & SEGINF_BACKSECSKYFIX) ||
-                (bsh == 0 && bfloor > ffloor && bceil < fceil &&
+                (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil &&
                 (side->SW_topmaterial /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
                 (side->SW_bottommaterial)))
         {
