@@ -360,7 +360,6 @@ IF (NOT ENABLERANGECHECKING)
     ADD_DEFINITIONS (-DNORANGECHECKING)
 ENDIF (NOT ENABLERANGECHECKING)
 
-
 IF (CMAKE_BUILD_TYPE STREQUAL Debug)
     ADD_DEFINITIONS (-D_DEBUG )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
@@ -368,7 +367,6 @@ ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
 IF (ENABLENETDEBUG)
     ADD_DEFINITIONS (-D_NETDEBUG )
 ENDIF (ENABLENETDEBUG)
-
 
 IF (ENABLEPROFILE)
     ADD_DEFINITIONS (-DDD_PROFILE )
@@ -420,11 +418,6 @@ IF (APPLE)
 	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
 	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
 	
-	IF (ENABLEDEBUG)
-        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
-        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g" )
-	ENDIF (ENABLEDEBUG)
-	
 	#SET (CMAKE_LD_FLAGS "${LDFLAGS} /opt/local/lib/libpng12.a")
 	SET (BUILDSYSTEM MACOSX)
 
@@ -463,6 +456,7 @@ IF (APPLE)
 
 	ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 ENDIF (APPLE)
+
 ################################################################################
 ######################## Find Our Build Deps  ##################################
 ## Confirm we have OpenGL
