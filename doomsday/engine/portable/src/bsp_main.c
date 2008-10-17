@@ -41,6 +41,8 @@
 
 #include "p_mapdata.h"
 
+#include <math.h>
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -70,10 +72,35 @@ void BSP_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
+static void findMapLimits(gamemap_t* src, int* bbox)
+{
+    uint                i;
+
+    M_ClearBox(bbox);
+
+    for(i = 0; i < src->numLineDefs; ++i)
+    {
+        linedef_t*          l = &src->lineDefs[i];
+
+        if(!(l->buildData.mlFlags & MLF_ZEROLENGTH))
+        {
+            double              x1 = l->v[0]->buildData.pos[VX];
+            double              y1 = l->v[0]->buildData.pos[VY];
+            double              x2 = l->v[1]->buildData.pos[VX];
+            double              y2 = l->v[1]->buildData.pos[VY];
+            int                 lX = (int) floor(MIN_OF(x1, x2));
+            int                 lY = (int) floor(MIN_OF(y1, y2));
+            int                 hX = (int) ceil(MAX_OF(x1, x2));
+            int                 hY = (int) ceil(MAX_OF(y1, y2));
+
+            M_AddToBox(bbox, lX, lY);
+            M_AddToBox(bbox, hX, hY);
+        }
+    }
+}
+
 /**
  * Initially create all half-edges, one for each side of a linedef.
- *
- * \pre Blockmap must be initialized before this is called!
  *
  * @return              The list of created half-edges.
  */
@@ -85,11 +112,21 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
     int                 bw, bh;
     hedge_t*            back, *front;
     superblock_t*       block;
+    int                 mapBounds[4];
+
+    // Find maximal vertexes.
+    findMapLimits(map, mapBounds);
+
+    VERBOSE(Con_Message("Map goes from (%d,%d) to (%d,%d)\n",
+                        mapBounds[BOXLEFT], mapBounds[BOXBOTTOM],
+                        mapBounds[BOXRIGHT], mapBounds[BOXTOP]));
 
     block = BSP_SuperBlockCreate();
 
-    BSP_GetBMapBounds(&block->bbox[BOXLEFT], &block->bbox[BOXBOTTOM],
-                      &bw, &bh);
+    block->bbox[BOXLEFT]   = mapBounds[BOXLEFT]   - (mapBounds[BOXLEFT]   & 0x7);
+    block->bbox[BOXBOTTOM] = mapBounds[BOXBOTTOM] - (mapBounds[BOXBOTTOM] & 0x7);
+    bw = ((mapBounds[BOXRIGHT] - block->bbox[BOXLEFT])   / 128) + 1;
+    bh = ((mapBounds[BOXTOP]   - block->bbox[BOXBOTTOM]) / 128) + 1;
 
     block->bbox[BOXRIGHT] = block->bbox[BOXLEFT]   + 128 * M_CeilPow2(bw);
     block->bbox[BOXTOP]   = block->bbox[BOXBOTTOM] + 128 * M_CeilPow2(bh);
@@ -100,7 +137,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
 
         front = back = NULL;
 
-        // Ignore zero-length, overlapping and polyobj lines.
+        // Ignore zero-length and polyobj lines.
         if(!(line->buildData.mlFlags & MLF_ZEROLENGTH) &&
            /*!line->buildData.overlap &&*/
            !(line->buildData.mlFlags & MLF_POLYOBJ))
@@ -251,9 +288,6 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
     BSP_InitHEdgeAllocator();
 
     BSP_InitForNodeBuild(map);
-    BSP_InitAnalyzer(map);
-
-    //BSP_DetectOverlappingLines(map);
 
     // Create initial half-edges.
     hEdgeList = createInitialHEdges(map);

@@ -243,10 +243,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\bsp_analyze.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\bsp_edge.c"
 				>
 			</File>
@@ -1259,10 +1255,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\b_main.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\bsp_analyze.h"
 				>
 			</File>
 			<File

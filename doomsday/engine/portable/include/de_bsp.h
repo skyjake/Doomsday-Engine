@@ -29,7 +29,6 @@
 #define __DOOMSDAY_BSP__
 
 #include "bsp_main.h"
-#include "bsp_analyze.h"
 #include "bsp_level.h"
 #include "bsp_node.h"
 #include "bsp_edge.h"

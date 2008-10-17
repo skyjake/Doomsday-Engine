@@ -1621,6 +1621,113 @@ Con_Message("FUNNY LINE %d : end vertex %d has odd number of one-siders\n",
     }
 }
 
+#if 0 /* Currently unused. */
+/**
+ * @return              The "lowest" vertex (normally the left-most, but if
+ *                      the line is vertical, then the bottom-most).
+ *                      @c => 0 for start, 1 for end.
+ */
+static __inline int lineVertexLowest(const linedef_t* l)
+{
+    return (((int) l->v[0]->buildData.pos[VX] < (int) l->v[1]->buildData.pos[VX] ||
+             ((int) l->v[0]->buildData.pos[VX] == (int) l->v[1]->buildData.pos[VX] &&
+              (int) l->v[0]->buildData.pos[VY] < (int) l->v[1]->buildData.pos[VY]))? 0 : 1);
+}
+
+static int C_DECL lineStartCompare(const void* p1, const void* p2)
+{
+    const linedef_t*    a = (const linedef_t*) p1;
+    const linedef_t*    b = (const linedef_t*) p2;
+    vertex_t*           c, *d;
+
+    // Determine left-most vertex of each line.
+    c = (lineVertexLowest(a)? a->v[1] : a->v[0]);
+    d = (lineVertexLowest(b)? b->v[1] : b->v[0]);
+
+    if((int) c->buildData.pos[VX] != (int) d->buildData.pos[VX])
+        return (int) c->buildData.pos[VX] - (int) d->buildData.pos[VX];
+
+    return (int) c->buildData.pos[VY] - (int) d->buildData.pos[VY];
+}
+
+static int C_DECL lineEndCompare(const void* p1, const void* p2)
+{
+    const linedef_t*    a = (const linedef_t*) p1;
+    const linedef_t*    b = (const linedef_t*) p2;
+    vertex_t*           c, *d;
+
+    // Determine right-most vertex of each line.
+    c = (lineVertexLowest(a)? a->v[0] : a->v[1]);
+    d = (lineVertexLowest(b)? b->v[0] : b->v[1]);
+
+    if((int) c->buildData.pos[VX] != (int) d->buildData.pos[VX])
+        return (int) c->buildData.pos[VX] - (int) d->buildData.pos[VX];
+
+    return (int) c->buildData.pos[VY] - (int) d->buildData.pos[VY];
+}
+
+size_t numOverlaps;
+
+boolean testOverlaps(linedef_t* b, void* data)
+{
+    linedef_t*          a = (linedef_t*) data;
+
+    if(a != b)
+    {
+        if(lineStartCompare(a, b) == 0)
+            if(lineEndCompare(a, b) == 0)
+            {   // Found an overlap!
+                b->buildData.overlap =
+                    (a->buildData.overlap ? a->buildData.overlap : a);
+                numOverlaps++;
+            }
+    }
+
+    return true; // Continue iteration.
+}
+
+typedef struct {
+    blockmap_t*         blockMap;
+    uint                block[2];
+} findoverlaps_params_t;
+
+boolean findOverlapsForLinedef(linedef_t* l, void* data)
+{
+    findoverlaps_params_t* params = (findoverlaps_params_t*) data;
+
+    P_BlockmapLinesIterator(params->blockMap, params->block, testOverlaps, l);
+    return true; // Continue iteration.
+}
+
+/**
+ * \note Does not detect partially overlapping lines!
+ */
+void MPE_DetectOverlappingLines(gamemap_t* map)
+{
+    uint                x, y, bmapDimensions[2];
+    findoverlaps_params_t params;
+
+    params.blockMap = map->blockMap;
+    numOverlaps = 0;
+
+    P_GetBlockmapDimensions(map->blockMap, bmapDimensions);
+
+    for(y = 0; y < bmapDimensions[VY]; ++y)
+        for(x = 0; x < bmapDimensions[VX]; ++x)
+        {
+            params.block[VX] = x;
+            params.block[VY] = y;
+
+            P_BlockmapLinesIterator(map->blockMap, params.block,
+                                    findOverlapsForLinedef, &params);
+        }
+
+    if(numOverlaps > 0)
+        VERBOSE(Con_Message("Detected %lu overlapped linedefs\n",
+                            (unsigned long) numOverlaps));
+}
+#endif
+
 /**
  * Called to complete the map building process.
  */
