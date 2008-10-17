@@ -26,7 +26,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // 24
 //
 
-1                       24      MOVEABLE PURE   "doomsday.manifest"
+1                       24      MOVEABLE PURE   "..\\res\\doomsday.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //
