@@ -641,7 +641,7 @@ static boolean slideTraverse(intercept_t *in)
 
     li = in->d.lineDef;
 
-    if(!(li->inFlags & LF_TWOSIDED))
+    if(!li->L_frontside || !li->L_backside)
     {
         if(P_PointOnLinedefSide(slideMo->pos[VX],
                              slideMo->pos[VY], li))

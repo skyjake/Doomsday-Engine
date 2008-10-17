@@ -67,7 +67,6 @@ boolean         R_IsSkySurface(const surface_t *suf);
 
 boolean         R_SectorContainsSkySurfaces(const sector_t *sec);
 
-sector_t       *R_GetLinkedSector(subsector_t *startssec, uint plane);
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
 void            R_InitSkyFix(void);

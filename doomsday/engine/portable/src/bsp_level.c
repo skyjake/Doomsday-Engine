@@ -61,6 +61,9 @@ static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
     uint                count;
     hedge_t*            first, *other;
 
+    if(!side)
+        return;
+
     // Have we already processed this side?
     if(side->segs)
         return;
@@ -192,15 +195,15 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
             linedef_t*          ldef = seg->lineDef;
             vertex_t*           vtx = seg->lineDef->L_v(seg->side);
 
-            seg->SG_frontsector = ldef->L_side(seg->side)->sector;
+            if(ldef->L_side(seg->side))
+                seg->SG_frontsector = ldef->L_side(seg->side)->sector;
 
-            if((ldef->inFlags & LF_TWOSIDED) && ldef->L_side(seg->side ^ 1))
+            if(ldef->L_frontside && ldef->L_backside)
             {
                 seg->SG_backsector = ldef->L_side(seg->side ^ 1)->sector;
             }
             else
             {
-                ldef->inFlags &= ~LF_TWOSIDED;
                 seg->SG_backsector = 0;
             }
 
@@ -231,7 +234,7 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
 
         // Calculate the surface normals
         // Front first
-        if(seg->lineDef)
+        if(seg->lineDef && SEG_SIDEDEF(seg))
         {
             sidedef_t*          side = SEG_SIDEDEF(seg);
             surface_t*          surface = &side->SW_topsurface;
@@ -299,7 +302,7 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
     {
         seg_t*              seg = *segp;
 
-        if(!found && seg->lineDef)
+        if(!found && seg->lineDef && SEG_SIDEDEF(seg))
         {
             sidedef_t*          side = SEG_SIDEDEF(seg);
 
@@ -311,7 +314,10 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
         *segp++;
     }
 
-    assert(dest->sector);
+    if(!dest->sector)
+    {
+        Con_Message("hardenLeaf: Warning orphan subsector %p.\n", dest);
+    }
 }
 
 typedef struct {
@@ -482,7 +488,6 @@ static void hardenVertexes(gamemap_t* dest, vertex_t*** vertexes,
         destV->header.type = DMU_VERTEX;
         destV->numLineOwners = srcV->numLineOwners;
         destV->lineOwners = srcV->lineOwners;
-        destV->anchored = srcV->anchored;
 
         //// \fixme Add some rounding.
         destV->V_pos[VX] = (float) srcV->buildData.pos[VX];

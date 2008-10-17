@@ -40,7 +40,6 @@ extern int      missileBlend;
 extern boolean  usingFog;
 extern float    fogColor[4];
 extern int      rAmbient;
-extern byte     devNoLinkedSurfaces;
 
 extern float    lightModRange[255];
 

@@ -718,166 +718,6 @@ void R_ClearSurfaceDecorations(surface_t *suf)
     suf->numDecorations = 0;
 }
 
-#ifdef _MSC_VER
-#  pragma optimize("g", off)
-#endif
-
-/**
- * Called whenever the sector changes.
- *
- * This routine handles plane hacks where all of the sector's lines are
- * twosided and missing upper or lower textures.
- *
- * \note This does not support sectors with disjoint groups of lines
- *       (e.g. a sector with a "control" sector such as the forcefields in
- *       ETERNAL.WAD MAP01).
- *
- * \todo Needs updating for $nplanes.
- */
-static void R_SetSectorLinks(sector_t *sec)
-{
-    uint                i;
-    boolean             hackfloor, hackceil;
-    sector_t           *floorLinkCandidate = 0, *ceilLinkCandidate = 0;
-
-    // Must have a valid sector!
-    if(!sec || !sec->lineDefCount || (sec->flags & SECF_PERMANENTLINK))
-        return; // Can't touch permanent links.
-
-    hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
-    hackceil  = (!R_IsSkySurface(&sec->SP_ceilsurface));
-    if(!(hackfloor || hackceil))
-        return;
-
-    for(i = 0; i < sec->subsGroupCount; ++i)
-    {
-        subsector_t       **ssecp;
-        ssecgroup_t        *ssgrp;
-
-        if(!hackfloor && !hackceil)
-            break;
-
-        ssgrp = &sec->subsGroups[i];
-
-        ssecp = sec->ssectors;
-        while(*ssecp)
-        {
-            subsector_t        *ssec = *ssecp;
-
-            if(!hackfloor && !hackceil)
-                break;
-
-            // Must be in the same group.
-            if(ssec->group == i)
-            {
-                seg_t             **segp = ssec->segs;
-
-                while(*segp)
-                {
-                    seg_t              *seg = *segp;
-                    linedef_t          *lin;
-
-                    if(!hackfloor && !hackceil)
-                        break;
-
-                    lin = seg->lineDef;
-
-                    if(lin && // minisegs don't count.
-                       lin->L_frontside && lin->L_backside) // Must be twosided.
-                    {
-                        sector_t           *back;
-                        sidedef_t          *sid, *frontsid, *backsid;
-
-                        // Check the vertex line owners for both verts.
-                        // We are only interested in lines that do NOT share either vertex
-                        // with a one-sided line (ie, its not "anchored").
-                        if(lin->L_v1->anchored || lin->L_v2->anchored)
-                            return;
-
-                        // Check which way the line is facing.
-                        sid = lin->L_frontside;
-                        if(sid->sector == sec)
-                        {
-                            frontsid = sid;
-                            backsid = lin->L_backside;
-                        }
-                        else
-                        {
-                            frontsid = lin->L_backside;
-                            backsid = sid;
-                        }
-
-                        back = backsid->sector;
-                        if(back == sec)
-                            return;
-
-                        // Check that there is something on the other side.
-                        if(back->SP_ceilheight == back->SP_floorheight)
-                            return;
-
-                        // Check the conditions that prevent the invis plane.
-                        if(back->SP_floorheight == sec->SP_floorheight)
-                        {
-                            hackfloor = false;
-                        }
-                        else
-                        {
-                            if(back->SP_floorheight > sec->SP_floorheight)
-                                sid = frontsid;
-                            else
-                                sid = backsid;
-
-                            if((sid->SW_bottommaterial && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
-                               (sid->SW_middlematerial && !(sid->SW_middleflags & SUF_TEXFIX)))
-                                hackfloor = false;
-                            else
-                                floorLinkCandidate = back;
-                        }
-
-                        if(back->SP_ceilheight == sec->SP_ceilheight)
-                        {
-                            hackceil = false;
-                        }
-                        else
-                        {
-                            if(back->SP_ceilheight < sec->SP_ceilheight)
-                                sid = frontsid;
-                            else
-                                sid = backsid;
-
-                            if((sid->SW_topmaterial && !(sid->SW_topflags & SUF_TEXFIX)) ||
-                               (sid->SW_middlematerial && !(sid->SW_middleflags & SUF_TEXFIX)))
-                                hackceil = false;
-                            else
-                                ceilLinkCandidate = back;
-                        }
-                    }
-
-                    segp++;
-                }
-            }
-
-            ssecp++;
-        }
-
-        if(hackfloor)
-        {
-            if(floorLinkCandidate == sec->containSector)
-                ssgrp->linked[PLN_FLOOR] = floorLinkCandidate;
-        }
-
-        if(hackceil)
-        {
-            if(ceilLinkCandidate == sec->containSector)
-                ssgrp->linked[PLN_CEILING] = ceilLinkCandidate;
-        }
-    }
-}
-
-#ifdef _MSC_VER
-#  pragma optimize("", on)
-#endif
-
 /**
  * Initialize the skyfix. In practice all this does is to check for mobjs
  * intersecting ceilings and if so: raises the sky fix for the sector a
@@ -1337,53 +1177,57 @@ linedef_t *R_FindSolidLineNeighbor(const sector_t *sector,
     lineowner_t            *cown = own->link[!antiClockwise];
     linedef_t              *other = cown->lineDef;
     int                     side;
+    boolean                 skip = false;
 
     if(other == line)
         return NULL;
 
     if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
-    if(!other->L_frontside || !other->L_backside)
-        return other;
-
-    if(!LINE_SELFREF(other) &&
-       (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
-        other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
-        other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
-        other->L_backsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
-        other->L_backsector->SP_ceilvisheight <= other->L_backsector->SP_floorvisheight))
-        return other;
-
-    // Both front and back MUST be open by this point.
-
-    // Check for mid texture which fills the gap between floor and ceiling.
-    // We should not give away the location of false walls (secrets).
-    side = (other->L_frontsector == sector? 0 : 1);
-    if(other->sideDefs[side]->SW_middlematerial)
+    if(!(other->buildData.windowEffect && other->L_frontsector != sector))
     {
-        float oFCeil  = other->L_frontsector->SP_ceilvisheight;
-        float oFFloor = other->L_frontsector->SP_floorvisheight;
-        float oBCeil  = other->L_backsector->SP_ceilvisheight;
-        float oBFloor = other->L_backsector->SP_floorvisheight;
+        if(!other->L_frontside || !other->L_backside)
+            return other;
 
-        if((side == 0 &&
-            ((oBCeil > sector->SP_floorvisheight &&
-                  oBFloor <= sector->SP_floorvisheight) ||
-             (oBFloor < sector->SP_ceilvisheight &&
-                  oBCeil >= sector->SP_ceilvisheight) ||
-             (oBFloor < sector->SP_ceilvisheight &&
-                  oBCeil > sector->SP_floorvisheight))) ||
-           ( /* side must be 1 */
-            ((oFCeil > sector->SP_floorvisheight &&
-                  oFFloor <= sector->SP_floorvisheight) ||
-             (oFFloor < sector->SP_ceilvisheight &&
-                  oFCeil >= sector->SP_ceilvisheight) ||
-             (oFFloor < sector->SP_ceilvisheight &&
-                  oFCeil > sector->SP_floorvisheight)))  )
+        if(!LINE_SELFREF(other) &&
+           (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
+            other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
+            other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
+            other->L_backsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
+            other->L_backsector->SP_ceilvisheight <= other->L_backsector->SP_floorvisheight))
+            return other;
+
+        // Both front and back MUST be open by this point.
+
+        // Check for mid texture which fills the gap between floor and ceiling.
+        // We should not give away the location of false walls (secrets).
+        side = (other->L_frontsector == sector? 0 : 1);
+        if(other->sideDefs[side]->SW_middlematerial)
         {
+            float oFCeil  = other->L_frontsector->SP_ceilvisheight;
+            float oFFloor = other->L_frontsector->SP_floorvisheight;
+            float oBCeil  = other->L_backsector->SP_ceilvisheight;
+            float oBFloor = other->L_backsector->SP_floorvisheight;
 
-            if(!Rend_DoesMidTextureFillGap(other, side))
-                return 0;
+            if((side == 0 &&
+                ((oBCeil > sector->SP_floorvisheight &&
+                      oBFloor <= sector->SP_floorvisheight) ||
+                 (oBFloor < sector->SP_ceilvisheight &&
+                      oBCeil >= sector->SP_ceilvisheight) ||
+                 (oBFloor < sector->SP_ceilvisheight &&
+                      oBCeil > sector->SP_floorvisheight))) ||
+               ( /* side must be 1 */
+                ((oFCeil > sector->SP_floorvisheight &&
+                      oFFloor <= sector->SP_floorvisheight) ||
+                 (oFFloor < sector->SP_ceilvisheight &&
+                      oFCeil >= sector->SP_ceilvisheight) ||
+                 (oFFloor < sector->SP_ceilvisheight &&
+                      oFCeil > sector->SP_floorvisheight)))  )
+            {
+
+                if(!Rend_DoesMidTextureFillGap(other, side))
+                    return 0;
+            }
         }
     }
 
@@ -1410,7 +1254,8 @@ linedef_t *R_FindLineBackNeighbor(const sector_t *sector,
 
     if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
-    if(!other->L_backside || other->L_frontsector != other->L_backsector)
+    if(!other->L_backside || other->L_frontsector != other->L_backsector ||
+       other->buildData.windowEffect)
     {
         if(!(other->L_frontsector == sector ||
              (other->L_backside && other->L_backsector == sector)))
@@ -1456,7 +1301,7 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
     }
 
     // Can't step over non-twosided lines.
-    if(!other->L_backside || !other->L_frontside)
+    if((!other->L_backside || !other->L_frontside))
         return NULL;
 
     // Not suitable, try the next.
@@ -1618,13 +1463,16 @@ static void prepareSubsectorForBias(subsector_t* ssec)
     uint                i, j;
     seg_t**             segPtr;
 
-    for(i = 0; i < ssec->sector->planeCount; ++i)
+    if(ssec->sector)
     {
-        subplaneinfo_t*     plane =
-            &ssec->sector->planes[i]->subPlanes[ssec->inSectorID];
+        for(i = 0; i < ssec->sector->planeCount; ++i)
+        {
+            subplaneinfo_t*     plane =
+                &ssec->sector->planes[i]->subPlanes[ssec->inSectorID];
 
-        for(j = 0; j < ssec->numVertices; ++j)
-            SB_InitVertexIllum(&plane->illum[j]);
+            for(j = 0; j < ssec->numVertices; ++j)
+                SB_InitVertexIllum(&plane->illum[j]);
+        }
     }
 
     segPtr = ssec->segs;
@@ -1656,6 +1504,7 @@ void R_PrepareForBias(gamemap_t* map)
 /**
  * The test is done on subsectors.
  */
+#if 0 /* Currently unused. */
 static sector_t *getContainingSectorOf(gamemap_t* map, sector_t* sec)
 {
     uint                i;
@@ -1691,6 +1540,7 @@ static sector_t *getContainingSectorOf(gamemap_t* map, sector_t* sec)
     }
     return closest;
 }
+#endif
 
 void R_BuildSectorLinks(gamemap_t *map)
 {
@@ -1700,47 +1550,10 @@ void R_BuildSectorLinks(gamemap_t *map)
 
     for(i = 0; i < map->numSectors; ++i)
     {
-        uint                k;
-        sector_t           *other;
-        linedef_t          *lin;
         sector_t           *sec = &map->sectors[i];
-        boolean             dohack;
 
         if(!sec->lineDefCount)
             continue;
-
-        // Is this sector completely contained by another?
-        sec->containSector = getContainingSectorOf(map, sec);
-
-        dohack = true;
-        for(k = 0; k < sec->lineDefCount; ++k)
-        {
-            lin = sec->lineDefs[k];
-            if(!lin->L_frontside || !lin->L_backside ||
-                lin->L_frontsector != lin->L_backsector)
-            {
-                dohack = false;
-                break;
-            }
-        }
-
-        if(dohack)
-        {   // Link all planes permanently.
-            sec->flags |= SECF_PERMANENTLINK;
-
-            // Only floor and ceiling can be linked, not all planes inbetween.
-            for(k = 0; k < sec->subsGroupCount; ++k)
-            {
-                ssecgroup_t *ssgrp = &sec->subsGroups[k];
-                uint        p;
-
-                for(p = 0; p < sec->planeCount; ++p)
-                    ssgrp->linked[p] = sec->containSector;
-            }
-
-            Con_Printf("Linking S%i planes permanently to S%li\n", i,
-                       (long) (sec->containSector - map->sectors));
-        }
 
         // Is this sector large enough to be a dominant light source?
         if(sec->lightSource == NULL && sec->planeCount > 0 &&
@@ -1749,10 +1562,14 @@ void R_BuildSectorLinks(gamemap_t *map)
         {
             if(R_SectorContainsSkySurfaces(sec))
             {
+                uint                k;
+
                 // All sectors touching this one will be affected.
                 for(k = 0; k < sec->lineDefCount; ++k)
                 {
-                    lin = sec->lineDefs[k];
+                    linedef_t*          lin = sec->lineDefs[k];
+                    sector_t           *other;
+
                     other = lin->L_frontsector;
                     if(other == sec)
                     {
@@ -1986,17 +1803,6 @@ void R_ClearSectorFlags(void)
     }
 }
 
-sector_t *R_GetLinkedSector(subsector_t *startssec, uint plane)
-{
-    ssecgroup_t        *ssgrp =
-        &startssec->sector->subsGroups[startssec->group];
-
-    if(!devNoLinkedSurfaces && ssgrp->linked[plane])
-        return ssgrp->linked[plane];
-    else
-        return startssec->sector;
-}
-
 /**
  * Is the specified plane glowing (it glows or is a sky mask surface)?
  *
@@ -2124,19 +1930,6 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     if(updateReverb)
     {
         S_CalcSectorReverb(sec);
-    }
-
-    if(!(sec->flags & SECF_PERMANENTLINK)) // Assign new links
-    {
-        // Only floor and ceiling can be linked, not all in between.
-        for(i = 0; i < sec->subsGroupCount; ++i)
-        {
-            ssecgroup_t *ssgrp = &sec->subsGroups[i];
-
-            ssgrp->linked[PLN_FLOOR] = NULL;
-            ssgrp->linked[PLN_CEILING] = NULL;
-        }
-        R_SetSectorLinks(sec);
     }
 }
 

@@ -927,7 +927,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     M_PointCrossProduct(v2, v1, v3, surfaceNormal);
     M_Normalize(surfaceNormal);
 
-/*
+/*#if _DEBUG
 // Draw the surface normal.
 DGL_Disable(DGL_TEXTURING);
 DGL_Begin(DGL_LINES);
@@ -939,7 +939,7 @@ DGL_Vertex3f(spriteCenter[VX] + surfaceNormal[VX] * 10,
              spriteCenter[VY] + surfaceNormal[VY] * 10);
 DGL_End();
 DGL_Enable(DGL_TEXTURING);
-*/
+#endif*/
 
     // All sprite vertices are co-plannar, so just copy the surface normal.
     // \fixme: Can we do something better here?
@@ -957,27 +957,27 @@ DGL_Enable(DGL_TEXTURING);
     }
 
 /*#if _DEBUG
-    if(params->vLightListIdx)
-    {   // Draw the vlight vectors, for debug.
-        DGL_Disable(DGL_TEXTURING);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
+if(params->vLightListIdx)
+{   // Draw the vlight vectors, for debug.
+    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
-        DGL_Translatef(params->center[VX], params->center[VZ],
-                       params->center[VY]);
+    DGL_Translatef(params->center[VX], params->center[VZ],
+                   params->center[VY]);
 
-        VL_ListIterator(params->vLightListIdx, NULL, drawVLightVector);
+    VL_ListIterator(params->vLightListIdx, NULL, drawVLightVector);
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        DGL_Enable(DGL_TEXTURING);
-    }
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    DGL_Enable(DGL_TEXTURING);
+}
 #endif*/
 
     // Do we need to do some aligning?

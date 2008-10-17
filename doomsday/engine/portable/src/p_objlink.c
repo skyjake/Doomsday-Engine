@@ -310,7 +310,7 @@ boolean RIT_ContactFinder(linedef_t* line, void* data)
     float               distance;
     vertex_t*           vtx;
 
-    if(!line->L_backside || !line->L_frontside ||
+    if(!line->L_frontside || !line->L_backside ||
        line->L_frontsector == line->L_backsector)
     {
         // Line must be between two different sectors.

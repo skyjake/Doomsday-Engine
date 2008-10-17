@@ -117,7 +117,6 @@ static boolean firstsubsector; // No range checking for the first one.
 const float *sLightColor;
 
 int devNoTexFix = 0;
-byte devNoLinkedSurfaces = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -140,8 +139,6 @@ void Rend_Register(void)
                 0, 0);
     C_VAR_INT("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
-    C_VAR_BYTE("rend-dev-surface-linked", &devNoLinkedSurfaces, 0, 0, 1);
-
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, 0, 0, 2);
     C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, 0, .1f, 100);
 
@@ -585,14 +582,6 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
         for(j = 0; j < 3; ++j)
             side->sections[j].frameFlags |= SUFINF_PVIS;
 
-        // A two sided line?
-        if(line->L_frontside && line->L_backside)
-        {
-            // Check middle texture
-            if((!side->SW_middlematerial || side->SW_middlematerial->ofTypeID <= 0) || side->SW_middlergba[3] <= 0) // Check alpha
-                side->sections[SEG_MIDDLE].frameFlags &= ~SUFINF_PVIS;
-        }
-
         // Top
         if(!line->L_backside)
         {
@@ -601,6 +590,10 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
         }
         else
         {
+            // Check middle texture
+            if((!side->SW_middlematerial || side->SW_middlematerial->ofTypeID <= 0) || side->SW_middlergba[3] <= 0) // Check alpha
+                side->sections[SEG_MIDDLE].frameFlags &= ~SUFINF_PVIS;
+
             if(R_IsSkySurface(&line->L_backsector->SP_ceilsurface) &&
                R_IsSkySurface(&line->L_frontsector->SP_ceilsurface))
                side->sections[SEG_TOP].frameFlags &= ~SUFINF_PVIS;
@@ -1680,14 +1673,21 @@ static boolean Rend_RenderSSWallSeg(seg_t* seg, subsector_t* ssec)
     linedef_t*          ldef;
     float               ffloor, fceil;
     boolean             backSide;
-    sector_t*           frontsec, *fflinkSec, *fclinkSec;
-    int                 pid = viewPlayer - ddPlayers;
+    sector_t*           frontsec;
+    int                 pid;
 
     side = SEG_SIDEDEF(seg);
+    if(!side)
+    {   // A one-way window.
+        return false;
+    }
+
+    solidSeg = true;
     frontsec = side->sector;
     backSide = seg->side;
     ldef = seg->lineDef;
 
+    pid = viewPlayer - ddPlayers;
     if(!ldef->mapped[pid])
     {
         ldef->mapped[pid] = true; // This line is now seen in the map.
@@ -1699,10 +1699,8 @@ static boolean Rend_RenderSSWallSeg(seg_t* seg, subsector_t* ssec)
                                            DMU_LINEDEF, &pid);
     }
 
-    fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
-    ffloor = fflinkSec->SP_floorvisheight;
-    fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
-    fceil = fclinkSec->SP_ceilvisheight;
+    ffloor = ssec->sector->SP_floorvisheight;
+    fceil = ssec->sector->SP_ceilvisheight;
 
     // Create the wall sections.
 
@@ -1741,7 +1739,7 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
     linedef_t*          ldef;
     float               ffloor, fceil, bfloor, bceil;
     boolean             backSide;
-    sector_t*           frontsec, *fflinkSec, *fclinkSec;
+    sector_t*           frontsec;
     int                 pid = viewPlayer - ddPlayers;
 
     backsid = SEG_SIDEDEF(seg->backSeg);
@@ -1767,10 +1765,8 @@ static boolean Rend_RenderWallSeg(seg_t* seg, subsector_t* ssec)
        !side->SW_middlematerial)
        return false; // Ugh... an obvious wall seg hack. Best take no chances...
 
-    fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
-    ffloor = fflinkSec->SP_floorvisheight;
-    fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
-    fceil = fclinkSec->SP_ceilvisheight;
+    ffloor = ssec->sector->SP_floorvisheight;
+    fceil = ssec->sector->SP_ceilvisheight;
 
     bceil = backsec->SP_ceilvisheight;
     bfloor = backsec->SP_floorvisheight;
@@ -2024,7 +2020,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     {
         seg = list[j];
 
-        if(!seg->lineDef)    // "minisegs" have no linedefs.
+        if(!seg->lineDef) // "minisegs" have no linedefs.
             continue;
 
         // Let's first check which way this seg is facing.
@@ -2064,37 +2060,34 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         params.wall->length = seg->length;
 
         // Upper/lower normal skyfixes.
-        if(!((frontsec->flags & SECF_SELFREFHACK) && backsec))
+        // Floor.
+        if(frontsec->skyFix[PLN_FLOOR].offset < 0)
         {
-            // Floor.
-            if(frontsec->skyFix[PLN_FLOOR].offset < 0)
+            if(!backsec ||
+               (backsec && backsec != seg->SG_frontsector &&
+                (bfloor + backsec->skyFix[PLN_FLOOR].offset >
+                 ffloor + frontsec->skyFix[PLN_FLOOR].offset)))
             {
-                if(!backsec ||
-                   (backsec && backsec != seg->SG_frontsector &&
-                    (bfloor + backsec->skyFix[PLN_FLOOR].offset >
-                     ffloor + frontsec->skyFix[PLN_FLOOR].offset)))
-                {
-                    vTL[VZ] = vTR[VZ] = ffloor;
-                    vBL[VZ] = vBR[VZ] =
-                        ffloor + frontsec->skyFix[PLN_FLOOR].offset;
-                    RL_AddPoly(rvertices, rcolors, 4, &params);
-                }
+                vTL[VZ] = vTR[VZ] = ffloor;
+                vBL[VZ] = vBR[VZ] =
+                    ffloor + frontsec->skyFix[PLN_FLOOR].offset;
+                RL_AddPoly(rvertices, rcolors, 4, &params);
             }
+        }
 
-            // Ceiling.
-            if(frontsec->skyFix[PLN_CEILING].offset > 0)
+        // Ceiling.
+        if(frontsec->skyFix[PLN_CEILING].offset > 0)
+        {
+            if(!backsec ||
+               (backsec && backsec != seg->SG_frontsector &&
+                (bceil + backsec->skyFix[PLN_CEILING].offset <
+                 fceil + frontsec->skyFix[PLN_CEILING].offset)))
             {
-                if(!backsec ||
-                   (backsec && backsec != seg->SG_frontsector &&
-                    (bceil + backsec->skyFix[PLN_CEILING].offset <
-                     fceil + frontsec->skyFix[PLN_CEILING].offset)))
-                {
-                    vTL[VZ] = vTR[VZ] =
-                        fceil + frontsec->skyFix[PLN_CEILING].offset;
-                    vBL[VZ] = vBR[VZ] = fceil;
+                vTL[VZ] = vTR[VZ] =
+                    fceil + frontsec->skyFix[PLN_CEILING].offset;
+                vBL[VZ] = vBR[VZ] = fceil;
 
-                    RL_AddPoly(rvertices, rcolors, 4, &params);
-                }
+                RL_AddPoly(rvertices, rcolors, 4, &params);
             }
         }
 
@@ -2159,8 +2152,8 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
         seg = *ptr;
 
         // Occlusions can only happen where two sectors contact.
-        if(seg->lineDef && seg->SG_backsector &&
-           !(seg->flags & SEGF_POLYOBJ) && // Polyobjects don't occlude.
+        if(seg->lineDef &&
+           seg->SG_backsector && !(seg->flags & SEGF_POLYOBJ) && // Polyobjects don't occlude.
            (forwardFacing == ((seg->frameFlags & SEGINF_FACINGFRONT)? true : false)))
         {
             back = seg->SG_backsector;
@@ -2220,7 +2213,7 @@ static void Rend_RenderPlane(subsector_t* subsector, uint planeID)
     float               vec[3];
     plane_t*            plane;
 
-    polySector = R_GetLinkedSector(subsector, planeID);
+    polySector = subsector->sector;
     surface = &polySector->planes[planeID]->surface;
 
     // Must have a visible surface.
@@ -2451,9 +2444,17 @@ static void Rend_RenderSubsector(uint ssecidx)
     uint                i;
     subsector_t*        ssec = SUBSECTOR_PTR(ssecidx);
     seg_t*              seg, **ptr;
-    sector_t*           sect = ssec->sector;
-    float               sceil = sect->SP_ceilvisheight;
-    float               sfloor = sect->SP_floorvisheight;
+    sector_t*           sect;
+    float               sceil, sfloor;
+
+    if(!ssec->sector)
+    {   // An orphan subsector.
+        return;
+    }
+
+    sect = ssec->sector;
+    sceil = sect->SP_ceilvisheight;
+    sfloor = sect->SP_floorvisheight;
 
     if(sceil - sfloor <= 0 || ssec->segCount < 3)
     {

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 // changes to the structure of the format.
 #define DAM_VERSION             1
 
-#define MAX_ARCHIVED_MATERIALS	2048
+#define MAX_ARCHIVED_MATERIALS  2048
 #define BADTEXNAME  "DD_BADTX"  // string that will be written in the texture
                                 // archives to denote a missing texture.
 
@@ -71,14 +71,14 @@ typedef enum damsegment_e {
 } damsegment_t;
 
 typedef struct {
-	char            name[9];
+    char            name[9];
     materialtype_t  type;
 } dictentry_t;
 
 typedef struct {
     //// \todo Remove fixed limit.
-	dictentry_t     table[MAX_ARCHIVED_MATERIALS];
-	int             count;
+    dictentry_t     table[MAX_ARCHIVED_MATERIALS];
+    int             count;
 } materialdict_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -285,7 +285,6 @@ static void writeVertex(const gamemap_t *map, uint idx)
 
     writeFloat(v->V_pos[VX]);
     writeFloat(v->V_pos[VY]);
-    writeByte((v->anchored? 1 : 0));
     writeLong((long) v->numLineOwners);
 
     if(v->numLineOwners > 0)
@@ -309,7 +308,6 @@ static void readVertex(const gamemap_t *map, uint idx)
 
     v->V_pos[VX] = readFloat();
     v->V_pos[VY] = readFloat();
-    v->anchored = (readByte()? true : false);
     v->numLineOwners = (uint) readLong();
 
     if(v->numLineOwners > 0)
@@ -541,7 +539,7 @@ static void archiveSides(gamemap_t *map, boolean write)
 
 static void writeSector(const gamemap_t *map, uint idx)
 {
-    uint                i, j;
+    uint                i;
     sector_t           *s = &map->sectors[idx];
 
     writeFloat(s->lightLevel);
@@ -583,7 +581,6 @@ static void writeSector(const gamemap_t *map, uint idx)
 
     writeFloat(s->skyFix[PLN_FLOOR].offset);
     writeFloat(s->skyFix[PLN_CEILING].offset);
-    writeLong(s->containSector? ((s->containSector - map->sectors) + 1) : 0);
     writeLong(s->flags);
     writeFloat(s->bBox[BOXLEFT]);
     writeFloat(s->bBox[BOXRIGHT]);
@@ -617,20 +614,11 @@ static void writeSector(const gamemap_t *map, uint idx)
     writeLong((long) s->numReverbSSecAttributors);
     for(i = 0; i < s->numReverbSSecAttributors; ++i)
         writeLong((s->reverbSSecs[i] - map->ssectors) + 1);
-
-    // Sector subsector groups.
-    writeLong((long) s->subsGroupCount);
-    for(i = 0; i < s->subsGroupCount; ++i)
-    {
-        ssecgroup_t        *g = &s->subsGroups[i];
-        for(j = 0; j < s->planeCount; ++j)
-            writeLong((g->linked[j] - map->sectors) + 1);
-    }
 }
 
 static void readSector(const gamemap_t *map, uint idx)
 {
-    uint                i, j, numPlanes;
+    uint                i, numPlanes;
     long                secIdx;
     float               offset[2], rgba[4];
     sector_t           *s = &map->sectors[idx];
@@ -680,7 +668,6 @@ static void readSector(const gamemap_t *map, uint idx)
     s->skyFix[PLN_FLOOR].offset = readFloat();
     s->skyFix[PLN_CEILING].offset = readFloat();
     secIdx = readLong();
-    s->containSector = (secIdx == 0? NULL : &map->sectors[secIdx - 1]);
     s->flags = readLong();
     s->bBox[BOXLEFT] = readFloat();
     s->bBox[BOXRIGHT] = readFloat();
@@ -724,21 +711,6 @@ static void readSector(const gamemap_t *map, uint idx)
     for(i = 0; i < s->numReverbSSecAttributors; ++i)
         s->reverbSSecs[i] = &map->ssectors[(unsigned) readLong() - 1];
     s->reverbSSecs[i] = NULL; // Terminate.
-
-    // Subsector groups.
-    s->subsGroupCount = (uint) readLong();
-    s->subsGroups =
-        Z_Malloc(sizeof(ssecgroup_t) * s->subsGroupCount, PU_LEVEL, 0);
-    for(i = 0; i < s->subsGroupCount; ++i)
-    {
-        ssecgroup_t        *g = &s->subsGroups[i];
-
-        g->linked =
-            Z_Malloc(sizeof(sector_t*) * (s->planeCount + 1), PU_LEVEL, 0);
-        for(j = 0; j < s->planeCount; ++j)
-            g->linked[j] = &map->sectors[(unsigned) readLong() - 1];
-        g->linked[j] = NULL; // Terminate.
-    }
 }
 
 static void archiveSectors(gamemap_t *map, boolean write)
@@ -1307,11 +1279,11 @@ boolean DAM_MapRead(gamemap_t *map, filename_t path)
  */
 boolean DAM_MapIsValid(filename_t cachedMapDataFile, int markerLumpNum)
 {
-	uint                sourceTime, buildTime;
+    uint                sourceTime, buildTime;
 
-	// The source data must not be newer than the cached map data.
-	sourceTime = F_LastModified(W_LumpSourceFile(markerLumpNum));
-	buildTime = F_LastModified(cachedMapDataFile);
+    // The source data must not be newer than the cached map data.
+    sourceTime = F_LastModified(W_LumpSourceFile(markerLumpNum));
+    buildTime = F_LastModified(cachedMapDataFile);
 
     if(F_Access(cachedMapDataFile) && !(buildTime < sourceTime))
     {   // Ok, lets check the header.

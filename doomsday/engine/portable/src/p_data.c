@@ -143,11 +143,13 @@ void P_PlaneChanged(sector_t *sector, uint plane)
 
     for(i = 0; i < sector->lineDefCount; ++i)
     {
-        front = sector->lineDefs[i]->L_frontside;
-        back  = sector->lineDefs[i]->L_backside;
+        linedef_t*          li = sector->lineDefs[i];
 
-        if(!front || !front->sector || !back || !back->sector)
+        if(!li->L_frontside || !li->L_backside)
             continue;
+
+        front = li->L_frontside;
+        back  = li->L_backside;
 
         /**
          * Do as in the original Doom if the texture has not been defined -

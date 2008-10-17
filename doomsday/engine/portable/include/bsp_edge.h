@@ -117,6 +117,5 @@ hedge_t*    HEdge_Split(hedge_t* oldHEdge, double x, double y);
 void        BSP_CreateVertexEdgeTip(vertex_t* vert, double dx, double dy,
                                     hedge_t* back, hedge_t* front);
 void        BSP_DestroyVertexEdgeTip(struct edgetip_s* tip);
-void        BSP_CountEdgeTips(vertex_t* vert, uint* oneSided, uint* twoSided);
 sector_t*   BSP_VertexCheckOpen(vertex_t* vert, double dx, double dy);
 #endif

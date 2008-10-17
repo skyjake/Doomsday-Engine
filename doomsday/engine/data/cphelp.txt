@@ -615,9 +615,6 @@ desc = 1=Render player view in wireframe mode.
 [rend-dev-framecount]
 desc = Frame counter.
 
-[rend-dev-surface-linked]
-desc = 1=Disable linked surfaces for render.  
-
 [rend-dev-blockmap-debug]
 desc = Enable drawing of the blockmap debug display: 1=Linedefs, 2=Subsectors.
 

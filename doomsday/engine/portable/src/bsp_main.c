@@ -36,6 +36,7 @@
 
 #include "de_base.h"
 #include "de_bsp.h"
+#include "de_play.h"
 #include "de_misc.h"
 
 #include "p_mapdata.h"
@@ -76,14 +77,14 @@ void BSP_Register(void)
  *
  * @return              The list of created half-edges.
  */
-static superblock_t *createInitialHEdges(gamemap_t *map)
+static superblock_t* createInitialHEdges(gamemap_t* map)
 {
-    uint            startTime = Sys_GetRealTime();
+    uint                startTime = Sys_GetRealTime();
 
-    uint            i;
-    int             bw, bh;
-    hedge_t        *back, *front;
-    superblock_t   *block;
+    uint                i;
+    int                 bw, bh;
+    hedge_t*            back, *front;
+    superblock_t*       block;
 
     block = BSP_SuperBlockCreate();
 
@@ -93,15 +94,15 @@ static superblock_t *createInitialHEdges(gamemap_t *map)
     block->bbox[BOXRIGHT] = block->bbox[BOXLEFT]   + 128 * M_CeilPow2(bw);
     block->bbox[BOXTOP]   = block->bbox[BOXBOTTOM] + 128 * M_CeilPow2(bh);
 
-    // Step through linedefs and get side numbers.
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t         *line = &map->lineDefs[i];
+        linedef_t*          line = &map->lineDefs[i];
 
         front = back = NULL;
 
         // Ignore zero-length, overlapping and polyobj lines.
-        if(!(line->buildData.mlFlags & MLF_ZEROLENGTH) && !line->buildData.overlap &&
+        if(!(line->buildData.mlFlags & MLF_ZEROLENGTH) &&
+           /*!line->buildData.overlap &&*/
            !(line->buildData.mlFlags & MLF_POLYOBJ))
         {
             // Check for Humungously long lines.
@@ -229,12 +230,12 @@ static boolean C_DECL freeBSPData(binarytree_t *tree, void *data)
  * @param numVertexes   Number of vertexes in the array.
  * @return              @c true, if completed successfully.
  */
-boolean BSP_Build(gamemap_t *map, vertex_t ***vertexes, uint *numVertexes)
+boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
 {
     boolean             builtOK;
     uint                startTime;
-    superblock_t       *hEdgeList;
-    binarytree_t       *rootNode;
+    superblock_t*       hEdgeList;
+    binarytree_t*       rootNode;
 
     if(verbose >= 1)
     {
@@ -252,8 +253,7 @@ boolean BSP_Build(gamemap_t *map, vertex_t ***vertexes, uint *numVertexes)
     BSP_InitForNodeBuild(map);
     BSP_InitAnalyzer(map);
 
-    BSP_DetectOverlappingLines(map);
-    BSP_DetectWindowEffects(map);
+    //BSP_DetectOverlappingLines(map);
 
     // Create initial half-edges.
     hEdgeList = createInitialHEdges(map);

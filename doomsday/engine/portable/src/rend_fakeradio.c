@@ -274,7 +274,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
             edge->sector = scanSector;
 
             closed = false;
-            if(side == 0 && iter->L_backside != NULL)
+            if(side == 0 && iter->L_backside)
             {
                 if(scanTop)
                 {
@@ -1477,25 +1477,8 @@ static void radioSubsectorEdges(const subsector_t* subsector)
 
             if(line->L_backside)
             {
-                if(subsector->sector->subsGroups[subsector->group].linked[pln] &&
-                   !devNoLinkedSurfaces)
-                {
-                    if(side == 0)
-                    {
-                        front = line->L_sector(side);
-                        back  = line->L_backsector;
-                    }
-                    else
-                    {
-                        front = line->L_frontsector;
-                        back  = line->L_sector(side);
-                    }
-                }
-                else
-                {
-                    front = line->L_sector(side);
-                    back  = line->L_sector(side ^ 1);
-                }
+                front = line->L_sector(side);
+                back  = line->L_sector(side ^ 1);
                 setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
 
                 hack =
@@ -1521,7 +1504,13 @@ static void radioSubsectorEdges(const subsector_t* subsector)
                 vo = line->L_vo(side^i)->link[i^1];
                 neighbor = vo->lineDef;
 
-                if(!(neighbor == line || !neighbor->L_backside))
+                if(neighbor != line && !neighbor->L_backside &&
+                   neighbor->buildData.windowEffect &&
+                   neighbor->L_frontsector != subsector->sector)
+                {   // A one-way window, open side.
+                    sideOpen[i] = 1;
+                }
+                else if(!(neighbor == line || !neighbor->L_backside))
                 {
                     sector_t*           othersec;
                     byte                otherSide;

@@ -1269,8 +1269,7 @@ boolean RIT_AddSprite(void* ptr, void* data)
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
                mo->pos[VZ] <= sec->SP_ceilheight &&
-               mo->pos[VZ] >= sec->SP_floorheight &&
-               !(sec->flags & SECF_SELFREFHACK))
+               mo->pos[VZ] >= sec->SP_floorheight)
             {
                 float               visibleTop;
                 spriteinfo_t        spriteInfo;

@@ -45,7 +45,6 @@ end
 
 struct vertex
     -       uint        numLineOwners // Number of line owners.
-    -       boolean     anchored    // One or more of our line owners are one-sided.
     -       lineowner_t* lineOwners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       fvertex_t   v
     -       mvertex_t   buildData
@@ -280,14 +279,7 @@ internal
 #define SIF_LIGHT_CHANGED   0x2
 
 // Sector flags.
-#define SECF_PERMANENTLINK  0x1
-#define SECF_UNCLOSED       0x2     // An unclosed sector (some sort of fancy hack).
-#define SECF_SELFREFHACK    0x4     // A self-referencing hack sector which ISNT enclosed by the sector referenced. Bounding box for the sector.
-
-typedef struct ssecgroup_s {
-    struct sector_s**   linked;     // [sector->planeCount+1] size.
-                                    // Plane attached to another sector.
-} ssecgroup_t;
+#define SECF_UNCLOSED       0x1     // An unclosed sector (some sort of fancy hack).
 
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
@@ -316,12 +308,9 @@ struct sector
     PTR     subsector_s** ssectors // [ssectorCount+1] size.
     -       uint        numReverbSSecAttributors
     -       subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
-    -       uint        subsGroupCount
-    -       ssecgroup_t* subsGroups // [subsGroupCount+1] size.
     PTR     degenmobj_t soundOrg
     UINT    uint        planeCount
     -       plane_s**   planes      // [planeCount+1] size.
-    -       sector_s*   containSector // Sector that contains this (if any).
     -       sector_s*   lightSource // Main sky light source
     -       uint        blockCount  // Number of gridblocks in the sector.
     -       uint        changedBlockCount // Number of blocks to mark changed.
@@ -437,8 +426,7 @@ internal
 								 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_TWOSIDED				0x1 // Line has valid front and back sectors.
-#define LF_POLYOBJ				0x2 // Line is part of a polyobject.
+#define LF_POLYOBJ				0x1 // Line is part of a polyobject.
 end
 
 internal
@@ -452,7 +440,7 @@ typedef struct mlinedef_s {
     // length lines has occurred.
     int         index;
     int         mlFlags; // MLF_* flags.
-
+    
     // One-sided linedef used for a special effect (windows).
     // The value refers to the opposite sector on the back side.
     struct sector_s *windowEffect;

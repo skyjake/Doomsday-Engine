@@ -614,7 +614,7 @@ uint DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane)
 
     assert(plane < ssec->sector->planeCount); // Sanity check.
 
-    pln = R_GetLinkedSector(ssec, plane)->SP_plane(plane);
+    pln = ssec->sector->SP_plane(plane);
 
     if(pln->type == PLN_FLOOR)
     {

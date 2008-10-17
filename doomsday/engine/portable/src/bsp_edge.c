@@ -335,22 +335,6 @@ void BSP_DestroyVertexEdgeTip(edgetip_t *tip)
     }
 }
 
-void BSP_CountEdgeTips(vertex_t *vert, uint *oneSided, uint *twoSided)
-{
-    edgetip_t          *tip;
-
-    *oneSided = 0;
-    *twoSided = 0;
-
-    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
-    {
-        if(!tip->ET_edge[BACK] || !tip->ET_edge[FRONT])
-            (*oneSided) += 1;
-        else
-            (*twoSided) += 1;
-    }
-}
-
 /**
  * Check whether a line with the given delta coordinates and beginning
  * at this vertex is open. Returns a sector reference if it's open,

@@ -72,9 +72,9 @@ static vertex_t *rootVtx; // Used when sorting vertex line owners.
 
 // CODE --------------------------------------------------------------------
 
-vertex_t *createVertex(void)
+vertex_t* createVertex(void)
 {
-    vertex_t           *vtx;
+    vertex_t*               vtx;
 
     vtx = M_Calloc(sizeof(*vtx));
     vtx->header.type = DMU_VERTEX;
@@ -88,9 +88,9 @@ vertex_t *createVertex(void)
     return vtx;
 }
 
-static linedef_t *createLine(void)
+static linedef_t* createLine(void)
 {
-    linedef_t             *line;
+    linedef_t*              line;
 
     line = M_Calloc(sizeof(*line));
     line->header.type = DMU_LINEDEF;
@@ -104,9 +104,9 @@ static linedef_t *createLine(void)
     return line;
 }
 
-static sidedef_t *createSide(void)
+static sidedef_t* createSide(void)
 {
-    sidedef_t             *side;
+    sidedef_t*              side;
 
     side = M_Calloc(sizeof(*side));
     side->header.type = DMU_SIDEDEF;
@@ -740,28 +740,6 @@ static void buildSectorLineLists(gamemap_t *map)
 }
 
 /**
- * \pre Sector planes must be initialized before this is called.
- * \todo Bad design: the subgroup is the same for all planes, only the
- * linked group ptrs need to be per-plane.
- */
-static void findSectorSSecGroups(sector_t *sec)
-{
-    uint        i;
-
-    if(!sec)
-        return;
-
-    sec->subsGroupCount = 1;
-    sec->subsGroups =
-        Z_Malloc(sizeof(ssecgroup_t) * sec->subsGroupCount, PU_LEVEL, 0);
-
-    sec->subsGroups[0].linked =
-        Z_Malloc(sizeof(sector_t*) * sec->planeCount, PU_LEVEL, 0);
-    for(i = 0; i < sec->planeCount; ++i)
-        sec->subsGroups[0].linked[i] = NULL;
-}
-
-/**
  * \pre Lines in sector must be setup before this is called!
  */
 static void updateSectorBounds(sector_t *sec)
@@ -826,8 +804,6 @@ static void finishSectors(gamemap_t *map)
         uint                k;
         float               min[2], max[2];
         sector_t           *sec = &map->sectors[i];
-
-        findSectorSSecGroups(sec);
 
         updateSectorBounds(sec);
         P_GetSectorBounds(sec, min, max);
@@ -1128,10 +1104,6 @@ static void setVertexLineOwner(vertex_t *vtx, linedef_t *lineptr,
     if(!lineptr)
         return;
 
-    // If this is a one-sided line then this is an "anchored" vertex.
-    if(!(lineptr->L_frontside && lineptr->L_backside))
-        vtx->anchored = true;
-
     // Has this line already been registered with this vertex?
     if(vtx->numLineOwners != 0)
     {
@@ -1172,13 +1144,10 @@ static void setVertexLineOwner(vertex_t *vtx, linedef_t *lineptr,
  * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
-static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
-                                  uint *numVertexes)
+static void buildVertexOwnerRings(editmap_t* map)
 {
-    uint            startTime = Sys_GetRealTime();
-
-    uint            i;
-    lineowner_t    *lineOwners, *allocator;
+    uint                i;
+    lineowner_t*        lineOwners, *allocator;
 
     // We know how many vertex line owners we need (numLineDefs * 2).
     lineOwners =
@@ -1187,29 +1156,43 @@ static void buildVertexOwnerRings(gamemap_t *map, vertex_t ***vertexes,
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        uint            p;
-        linedef_t      *line = &map->lineDefs[i];
+        uint                p;
+        linedef_t*          line = map->lineDefs[i];
 
         for(p = 0; p < 2; ++p)
         {
-            vertex_t    *vtx = line->L_v(p);
+            vertex_t*           vtx = line->L_v(p);
 
             setVertexLineOwner(vtx, line, &allocator);
         }
     }
+}
+
+static void hardenVertexOwnerRings(gamemap_t* dest, editmap_t* src)
+{
+    uint                i;
 
     // Sort line owners and then finish the rings.
-    for(i = 0; i < *numVertexes; ++i)
+    for(i = 0; i < src->numVertexes; ++i)
     {
-        vertex_t       *v = (*vertexes)[i];
+        vertex_t*           v = src->vertexes[i];
 
         // Line owners:
         if(v->numLineOwners != 0)
         {
-            lineowner_t    *p, *last;
-            binangle_t      firstAngle;
+            lineowner_t*        p, *last;
+            binangle_t          firstAngle;
 
-            // Sort them so that they are ordered clockwise based on angle.
+            // Redirect the linedef links to the hardened map.
+            p = v->lineOwners;
+            while(p)
+            {
+                p->lineDef =
+                    &dest->lineDefs[p->lineDef->buildData.index - 1];
+                p = p->LO_next;
+            }
+
+            // Sort them; ordered clockwise by angle.
             rootVtx = v;
             v->lineOwners =
                 sortLineOwners(v->lineOwners, lineAngleSorter);
@@ -1266,11 +1249,6 @@ do
 */
         }
     }
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("buildVertexOwnerRings: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
@@ -1448,6 +1426,202 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
 }
 
 /**
+ * \note Algorithm:
+ * Cast a line horizontally or vertically and see what we hit (OUCH, we
+ * have to iterate over all linedefs!).
+ */
+static void testForWindowEffect(editmap_t* map, linedef_t* l)
+{
+// Smallest distance between two points before being considered equal.
+#define DIST_EPSILON        (1.0 / 128.0)
+
+    uint                i;
+    double              mX, mY, dX, dY;
+    boolean             castHoriz;
+    double              backDist = DDMAXFLOAT;
+    sector_t*           backOpen = NULL;
+    double              frontDist = DDMAXFLOAT;
+    sector_t*           frontOpen = NULL;
+    linedef_t*          frontLine = NULL, *backLine = NULL;
+
+    mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
+    mY = (l->v[0]->buildData.pos[VY] + l->v[1]->buildData.pos[VY]) / 2.0;
+
+    dX = l->v[1]->buildData.pos[VX] - l->v[0]->buildData.pos[VX];
+    dY = l->v[1]->buildData.pos[VY] - l->v[0]->buildData.pos[VY];
+
+    castHoriz = (fabs(dX) < fabs(dY)? true : false);
+
+    for(i = 0; i < map->numLineDefs; ++i)
+    {
+        linedef_t*          n = map->lineDefs[i];
+        double              dist;
+        boolean             isFront;
+        sidedef_t*          hitSide;
+        double              dX2, dY2;
+
+        if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap ||
+           (n->buildData.mlFlags & MLF_ZEROLENGTH)*/)
+            continue;
+
+        dX2 = n->v[1]->buildData.pos[VX] - n->v[0]->buildData.pos[VX];
+        dY2 = n->v[1]->buildData.pos[VY] - n->v[0]->buildData.pos[VY];
+
+        if(castHoriz)
+        {   // Horizontal.
+            if(fabs(dY2) < DIST_EPSILON)
+                continue;
+
+            if((MAX_OF(n->v[0]->buildData.pos[VY], n->v[1]->buildData.pos[VY]) < mY - DIST_EPSILON) ||
+               (MIN_OF(n->v[0]->buildData.pos[VY], n->v[1]->buildData.pos[VY]) > mY + DIST_EPSILON))
+                continue;
+
+            dist = (n->v[0]->buildData.pos[VX] +
+                (mY - n->v[0]->buildData.pos[VY]) * dX2 / dY2) - mX;
+
+            isFront = (((dY > 0) != (dist > 0)) ? true : false);
+
+            dist = fabs(dist);
+            if(dist < DIST_EPSILON)
+                continue; // Too close (overlapping lines ?)
+
+            hitSide = n->sideDefs[(dY > 0) ^ (dY2 > 0) ^ !isFront];
+        }
+        else
+        {   // Vertical.
+            if(fabs(dX2) < DIST_EPSILON)
+                continue;
+
+            if((MAX_OF(n->v[0]->buildData.pos[VX], n->v[1]->buildData.pos[VX]) < mX - DIST_EPSILON) ||
+               (MIN_OF(n->v[0]->buildData.pos[VX], n->v[1]->buildData.pos[VX]) > mX + DIST_EPSILON))
+                continue;
+
+            dist = (n->v[0]->buildData.pos[VY] +
+                (mX - n->v[0]->buildData.pos[VX]) * dY2 / dX2) - mY;
+
+            isFront = (((dX > 0) == (dist > 0)) ? true : false);
+
+            dist = fabs(dist);
+
+            hitSide = n->sideDefs[(dX > 0) ^ (dX2 > 0) ^ !isFront];
+        }
+
+        if(dist < DIST_EPSILON) // Too close (overlapping lines ?)
+            continue;
+
+        if(isFront)
+        {
+            if(dist < frontDist)
+            {
+                frontDist = dist;
+                if(hitSide)
+                    frontOpen = hitSide->sector;
+                else
+                    frontOpen = NULL;
+
+                frontLine = n;
+            }
+        }
+        else
+        {
+            if(dist < backDist)
+            {
+                backDist = dist;
+                if(hitSide)
+                    backOpen = hitSide->sector;
+                else
+                    backOpen = NULL;
+
+                backLine = n;
+            }
+        }
+    }
+
+/*#if _DEBUG
+Con_Message("back line: %d  back dist: %1.1f  back_open: %s\n",
+            (backLine? backLine->buildData.index : -1), backDist,
+            (backOpen? "OPEN" : "CLOSED"));
+Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
+            (frontLine? frontLine->buildData.index : -1), frontDist,
+            (frontOpen? "OPEN" : "CLOSED"));
+#endif*/
+
+    if(backOpen && frontOpen && l->sideDefs[FRONT]->sector == backOpen)
+    {
+        Con_Message("Linedef #%d seems to be a One-Sided Window "
+                    "(back faces sector #%d).\n", l->buildData.index,
+                    backOpen->buildData.index);
+
+        l->buildData.windowEffect = frontOpen;
+    }
+
+#undef DIST_EPSILON
+}
+
+static void countVertexLineOwners(vertex_t* vtx, uint* oneSided,
+                                  uint* twoSided)
+{
+    lineowner_t*        p;
+
+    p = vtx->lineOwners;
+    while(p)
+    {
+        if(!p->lineDef->L_frontside || !p->lineDef->L_backside)
+            (*oneSided)++;
+        else
+            (*twoSided)++;
+
+        p = p->LO_next;
+    }
+}
+
+/**
+ * \note Algorithm:
+ * Scan the linedef list looking for possible candidates, checking for an
+ * odd number of one-sided linedefs connected to a single vertex.
+ * This idea courtesy of Graham Jackson.
+ */
+void MPE_DetectWindowEffects(editmap_t* map)
+{
+    uint                i, oneSiders, twoSiders;
+
+    for(i = 0; i < map->numLineDefs; ++i)
+    {
+        linedef_t*          l = map->lineDefs[i];
+
+        if((l->L_frontside && l->L_backside) || !l->L_frontside /*||
+           (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
+           l->buildData.overlap*/)
+            continue;
+
+        oneSiders = twoSiders = 0;
+        countVertexLineOwners(l->v[0], &oneSiders, &twoSiders);
+
+        if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
+        {
+/*#if _DEBUG
+Con_Message("FUNNY LINE %d : start vertex %d has odd number of one-siders\n",
+            i, l->buildData.v[0]->index);
+#endif*/
+            testForWindowEffect(map, l);
+            continue;
+        }
+
+        oneSiders = twoSiders = 0;
+        countVertexLineOwners(l->v[1], &oneSiders, &twoSiders);
+
+        if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
+        {
+/*#if _DEBUG
+Con_Message("FUNNY LINE %d : end vertex %d has odd number of one-siders\n",
+            i, l->buildData.v[1]->index));
+#endif*/
+            testForWindowEffect(map, l);
+        }
+    }
+}
+
+/**
  * Called to complete the map building process.
  */
 boolean MPE_End(void)
@@ -1473,6 +1647,10 @@ boolean MPE_End(void)
     MPE_DetectDuplicateVertices(map);
     MPE_PruneRedundantMapData(map, PRUNE_ALL);
 
+    buildVertexOwnerRings(map);
+
+    MPE_DetectWindowEffects(map);
+
     /**
      * Harden most of the map data so that we can construct some of the more
      * intricate data structures early on (and thus make use of them during
@@ -1486,13 +1664,12 @@ boolean MPE_End(void)
     hardenLinedefs(gamemap, map);
     hardenPolyobjs(gamemap, map);
 
+    hardenVertexOwnerRings(gamemap, map);
+
     // Don't destroy the sectors (planes are linked to them).
     destroyEditableSideDefs(map);
     destroyEditableLineDefs(map);
     destroyEditablePolyObjs(map);
-
-    // Now we can build the vertex line owner rings.
-    buildVertexOwnerRings(gamemap, &map->vertexes, &map->numVertexes);
 
     /**
      * Build a blockmap for this map.
@@ -1837,8 +2014,6 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
         l->L_backside->buildData.refCount++;
 
     l->inFlags = 0;
-    if(front && back)
-        l->inFlags |= LF_TWOSIDED;
 
     // Determine the default linedef flags.
     l->flags = 0;

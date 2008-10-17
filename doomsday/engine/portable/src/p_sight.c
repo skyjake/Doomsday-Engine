@@ -62,10 +62,10 @@ static divline_t strace;
 
 // CODE --------------------------------------------------------------------
 
-boolean PTR_SightTraverse(intercept_t *in)
+boolean PTR_SightTraverse(intercept_t* in)
 {
-    linedef_t     *li;
-    float       slope;
+    linedef_t*          li;
+    float               slope;
 
     if(in == NULL)
         return true; // Something was out of bounds?
@@ -151,7 +151,7 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     uint                block[2];
     int                 stepDir[2];
     int                 count;
-    gamemap_t          *map = P_GetCurrentMap();
+    gamemap_t*          map = P_GetCurrentMap();
     vec2_t              origin, dest, min, max;
 
     V2_Set(origin, x1, y1);
@@ -367,7 +367,7 @@ boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
  * @return              @c true if a straight line between t1 and t2 is
  *                      unobstructed.
  */
-boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
+boolean P_CheckSight(mobj_t* t1, mobj_t* t2)
 {
     // If either is unlinked, they can't see each other.
     if(!t1->subsector || !t2->subsector)
@@ -377,12 +377,12 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
     if(!P_CheckReject(t1->subsector->sector, t2->subsector->sector))
         return false;
 
-    if(t2->dPlayer && t2->dPlayer->flags & DDPF_CAMERA)
+    if(t2->dPlayer && (t2->dPlayer->flags & DDPF_CAMERA))
         return false; // Cameramen don't exist!
 
     // Check precisely.
     sightStartZ = t1->pos[VZ];
-    if(!(t1->dPlayer && t1->dPlayer->flags & DDPF_CAMERA))
+    if(!(t1->dPlayer && (t1->dPlayer->flags & DDPF_CAMERA)))
         sightStartZ += t1->height + -(t1->height / 4);
 
     topSlope = t2->pos[VZ] + t2->height - sightStartZ;

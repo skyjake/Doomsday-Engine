@@ -582,7 +582,7 @@ boolean PIT_LinkToLines(linedef_t* ld, void* parm)
 
     // One sided lines will not be linked to because a mobj
     // can't legally cross one.
-    if(!(ld->L_frontside || ld->L_backside))
+    if(!ld->L_frontside || !ld->L_backside)
         return true;
 
     // No redundant nodes will be creates since this routine is

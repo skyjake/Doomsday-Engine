@@ -44,7 +44,6 @@ typedef struct mvertex_s {
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
     unsigned int        numLineOwners; // Number of line owners.
-    boolean             anchored;      // One or more of our line owners are one-sided.
     lineowner_t*        lineOwners;    // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     fvertex_t           v;
     mvertex_t           buildData;
@@ -262,14 +261,7 @@ typedef struct plane_s {
 #define SIF_LIGHT_CHANGED   0x2
 
 // Sector flags.
-#define SECF_PERMANENTLINK  0x1
-#define SECF_UNCLOSED       0x2     // An unclosed sector (some sort of fancy hack).
-#define SECF_SELFREFHACK    0x4     // A self-referencing hack sector which ISNT enclosed by the sector referenced. Bounding box for the sector.
-
-typedef struct ssecgroup_s {
-    struct sector_s**   linked;     // [sector->planeCount+1] size.
-                                    // Plane attached to another sector.
-} ssecgroup_t;
+#define SECF_UNCLOSED       0x1     // An unclosed sector (some sort of fancy hack).
 
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
@@ -298,12 +290,9 @@ typedef struct sector_s {
     struct subsector_s** ssectors;     // [ssectorCount+1] size.
     unsigned int        numReverbSSecAttributors;
     struct subsector_s** reverbSSecs;  // [numReverbSSecAttributors] size.
-    unsigned int        subsGroupCount;
-    ssecgroup_t*        subsGroups;    // [subsGroupCount+1] size.
     degenmobj_t         soundOrg;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
-    struct sector_s*    containSector; // Sector that contains this (if any).
     struct sector_s*    lightSource;   // Main sky light source
     unsigned int        blockCount;    // Number of gridblocks in the sector.
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
@@ -413,8 +402,7 @@ typedef struct sidedef_s {
                                  (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_TWOSIDED             0x1 // Line has valid front and back sectors.
-#define LF_POLYOBJ              0x2 // Line is part of a polyobject.
+#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
 
 #define MLF_TWOSIDED            0x1 // Line is marked two-sided.
 #define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).

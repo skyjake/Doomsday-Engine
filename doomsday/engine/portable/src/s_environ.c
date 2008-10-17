@@ -273,6 +273,13 @@ static boolean calcSSecReverb(subsector_t *ssec)
     materialclass_t     mclass;
     float               materials[NUM_MATERIAL_CLASSES];
 
+    if(!ssec->sector)
+    {
+        ssec->reverb[SRD_SPACE] = ssec->reverb[SRD_VOLUME] =
+            ssec->reverb[SRD_DECAY] = ssec->reverb[SRD_DAMPING] = 0;
+        return false;
+    }
+
     memset(&materials, 0, sizeof(materials));
 
     // Space is the rough volume of the subsector (bounding box).
@@ -288,7 +295,8 @@ static boolean calcSSecReverb(subsector_t *ssec)
     {
         seg_t              *seg = *ptr;
 
-        if(seg->lineDef && SEG_SIDEDEF(seg)->SW_middlematerial)
+        if(seg->lineDef && SEG_SIDEDEF(seg) &&
+           SEG_SIDEDEF(seg)->SW_middlematerial)
         {
             material_t         *mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 

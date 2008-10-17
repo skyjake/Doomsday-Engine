@@ -630,8 +630,8 @@ static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
     uint                g;
     plane_t*            glowPlanes[2], *pln;
 
-    glowPlanes[PLN_FLOOR] = R_GetLinkedSector(ssec, PLN_FLOOR)->planes[PLN_FLOOR];
-    glowPlanes[PLN_CEILING] = R_GetLinkedSector(ssec, PLN_CEILING)->planes[PLN_CEILING];
+    glowPlanes[PLN_FLOOR] = ssec->sector->planes[PLN_FLOOR];
+    glowPlanes[PLN_CEILING] = ssec->sector->planes[PLN_CEILING];
 
     //// \fixme $nplanes
     for(g = 0; g < 2; ++g)
