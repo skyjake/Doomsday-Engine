@@ -68,5 +68,6 @@ IF (APPLE)
         COMMAND mkdir -p ${BUNDLE}/Contents/Resources
         #COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/InfoPlist.strings ${BUNDLE}/Contents/Resources/English.lproj/
         COMMAND echo 'APPL????' > ${BUNDLE}/Contents/PkgInfo
+        COMMAND cp ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.pk3 ${BUNDLE}/Contents/Resources/
         )
 ENDIF (APPLE)

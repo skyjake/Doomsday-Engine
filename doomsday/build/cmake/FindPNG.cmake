@@ -15,6 +15,7 @@ INCLUDE(${CMAKE_SOURCE_DIR}/build/cmake/FindZLIB.cmake)
 IF(ZLIB_FOUND)
   FIND_PATH(PNG_PNG_INCLUDE_DIR png.h
   $ENV{LIBPNGDIR}/include
+  /sw/include
   /usr/local/include
   /usr/include
   )
@@ -47,10 +48,11 @@ IF(ZLIB_FOUND)
 ENDIF(ZLIB_FOUND)
 
 IF (APPLE)
-    SET(PNG_INCLUDE_DIR "/opt/local/include" )
+    #SET(PNG_INCLUDE_DIR "/opt/local/include" )
     SET(PNG_LIBRARIES "" )
-    SET(PNG_LIBRARY_STATIC "/opt/local/lib/libpng12.a")
+    #SET(PNG_LIBRARY_STATIC "/opt/local/lib/libpng12.a")
+	FIND_LIBRARY(PNG_LIBRARY_STATIC NAMES libpng12.a PATHS /opt/local/lib /sw/lib)
     SET(PNG_FOUND "YES")
 ENDIF (APPLE)
 
-MARK_AS_ADVANCED(PNG_PNG_INCLUDE_DIR PNG_LIBRARY )
+MARK_AS_ADVANCED(PNG_PNG_INCLUDE_DIR PNG_LIBRARY PNG_LIBRARY_STATIC )
