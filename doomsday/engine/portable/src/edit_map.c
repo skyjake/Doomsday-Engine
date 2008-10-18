@@ -4,6 +4,9 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
+ *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
+ *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -560,7 +563,7 @@ void MPE_PrintUnclosedSectorList(void)
         usecrecord_t       *usec = &unclosedSectors[i];
 
         Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
-                    usec->sec->buildData.index, usec->nearPos[VX],
+                    usec->sec->buildData.index - 1, usec->nearPos[VX],
                     usec->nearPos[VY]);
     }
 }
@@ -1549,8 +1552,8 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
     if(backOpen && frontOpen && l->sideDefs[FRONT]->sector == backOpen)
     {
         Con_Message("Linedef #%d seems to be a One-Sided Window "
-                    "(back faces sector #%d).\n", l->buildData.index,
-                    backOpen->buildData.index);
+                    "(back faces sector #%d).\n", l->buildData.index - 1,
+                    backOpen->buildData.index - 1);
 
         l->buildData.windowEffect = frontOpen;
     }
