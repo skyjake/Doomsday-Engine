@@ -84,46 +84,52 @@ void S_ParseSndInfoLump(void)
 {
     int                 i;
     char                buf[80];
+    lumpnum_t           lump = W_CheckNumForName("SNDINFO");
 
     strcpy(ArchivePath, DEFAULT_ARCHIVEPATH);
-    SC_OpenLump("SNDINFO");
-    while(SC_GetString())
+
+    if(lump != -1)
     {
-        if(*sc_String == '$')
+        SC_OpenLump(lump);
+
+        while(SC_GetString())
         {
-            if(!stricmp(sc_String, "$ARCHIVEPATH"))
+            if(*sc_String == '$')
             {
-                SC_MustGetString();
-                strcpy(ArchivePath, sc_String);
-            }
-            else if(!stricmp(sc_String, "$MAP"))
-            {
-                SC_MustGetNumber();
-                SC_MustGetString();
-                if(sc_Number)
+                if(!stricmp(sc_String, "$ARCHIVEPATH"))
                 {
-                    P_PutMapSongLump(sc_Number, sc_String);
+                    SC_MustGetString();
+                    strcpy(ArchivePath, sc_String);
                 }
-            }
-            continue;
-        }
-        else
-        {
-            i = Def_Get(DD_DEF_SOUND_BY_NAME, sc_String, 0);
-            if(i)
-            {
-                SC_MustGetString();
-                Def_Set(DD_DEF_SOUND, i, DD_LUMP,
-                        *sc_String != '?' ? sc_String : "default");
+                else if(!stricmp(sc_String, "$MAP"))
+                {
+                    SC_MustGetNumber();
+                    SC_MustGetString();
+                    if(sc_Number)
+                    {
+                        P_PutMapSongLump(sc_Number, sc_String);
+                    }
+                }
+                continue;
             }
             else
             {
-                // Read the lumpname anyway.
-                SC_MustGetString();
+                i = Def_Get(DD_DEF_SOUND_BY_NAME, sc_String, 0);
+                if(i)
+                {
+                    SC_MustGetString();
+                    Def_Set(DD_DEF_SOUND, i, DD_LUMP,
+                            *sc_String != '?' ? sc_String : "default");
+                }
+                else
+                {
+                    // Read the lumpname anyway.
+                    SC_MustGetString();
+                }
             }
         }
+        SC_Close();
     }
-    SC_Close();
 
     // All sounds left without a lumpname will use "DEFAULT".
     for(i = 0; i < Get(DD_NUMSOUNDS); ++i)

@@ -36,30 +36,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define ANIM_SCRIPT_NAME        "ANIMDEFS"
-#define MAX_ANIM_DEFS           20
-#define MAX_FRAME_DEFS          96
-#define SCI_FLAT                "flat"
-#define SCI_TEXTURE             "texture"
-#define SCI_PIC                 "pic"
-#define SCI_TICS                "tics"
-#define SCI_RAND                "rand"
-
 // TYPES -------------------------------------------------------------------
-
-typedef struct framedef_s {
-    int     index;
-    int     tics;
-} framedef_t;
-
-typedef struct animdef_s {
-    int     type;
-    int     index;
-    int     tics;
-    int     currentFrameDef;
-    int     startFrameDef;
-    int     endFrameDef;
-} animdef_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -75,95 +52,105 @@ typedef struct animdef_s {
 
 // CODE --------------------------------------------------------------------
 
+static void parseAnimGroup(materialtype_t type)
+{
+    boolean             ignore;
+    boolean             done;
+    int                 groupNumber = 0;
+    materialnum_t       numBase = 0;
+
+    if(!SC_GetString()) // Name.
+    {
+        SC_ScriptError("Missing string.");
+    }
+
+    ignore = false;
+    if(!R_MaterialCheckNumForName(sc_String, type))
+    {
+        ignore = true;
+    }
+    else
+    {
+        numBase = R_MaterialNumForName(sc_String, type);
+        groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
+    }
+
+    done = false;
+    do
+    {
+        if(SC_GetString())
+        {
+            if(SC_Compare("pic"))
+            {
+                int                 picNum, min, max = 0;
+
+                SC_MustGetNumber();
+                picNum = sc_Number;
+
+                SC_MustGetString();
+                if(SC_Compare("tics"))
+                {
+                    SC_MustGetNumber();
+                    min = sc_Number;
+                }
+                else if(SC_Compare("rand"))
+                {
+                    SC_MustGetNumber();
+                    min = sc_Number;
+                    SC_MustGetNumber();
+                    max = sc_Number;
+                }
+                else
+                {
+                    SC_ScriptError(NULL);
+                }
+
+                if(!ignore)
+                {
+                    R_AddToAnimGroup(groupNumber, numBase + picNum - 1,
+                                     min, (max > 0? max - min : 0));
+                }
+            }
+            else
+            {
+                SC_UnGet();
+                done = true;
+            }
+        }
+        else
+        {
+            done = true;
+        }
+    } while(!done);
+}
+
 /**
  * Parse an ANIMDEFS definition for flat/texture animations.
  */
 void P_InitPicAnims(void)
 {
-    int                 base;
-    boolean             ignore;
-    boolean             done;
-    int                 groupNumber = 0;
-    materialnum_t       numBase = 0, num = 0;
-    materialtype_t      type = MAT_FLAT;
+    lumpnum_t       lump = W_CheckNumForName("ANIMDEFS");
 
-    SC_Open(ANIM_SCRIPT_NAME);
-    while(SC_GetString())
+    if(lump != -1)
     {
-        if(SC_Compare(SCI_FLAT))
-        {
-            type = MAT_FLAT;
-        }
-        else if(SC_Compare(SCI_TEXTURE))
-        {
-            type = MAT_TEXTURE;
-        }
-        else
-        {
-            SC_ScriptError(NULL);
-        }
-        SC_MustGetString(); // Name
+        SC_OpenLump(lump);
 
-        ignore = false;
-        if(!R_MaterialCheckNumForName(sc_String, type))
+        while(SC_GetString())
         {
-            ignore = true;
-        }
-        else
-        {
-            numBase = R_MaterialNumForName(sc_String, type);
-            groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
-        }
-
-        done = false;
-        while(done == false)
-        {
-            if(SC_GetString())
+            if(SC_Compare("flat"))
             {
-                if(SC_Compare(SCI_PIC))
-                {
-                    SC_MustGetNumber();
-                    if(ignore == false)
-                    {
-                        num = numBase + sc_Number - 1;
-                    }
-
-                    SC_MustGetString();
-                    if(SC_Compare(SCI_TICS))
-                    {
-                        SC_MustGetNumber();
-                        if(ignore == false)
-                        {
-                            R_AddToAnimGroup(groupNumber, num, sc_Number, 0);
-                        }
-                    }
-                    else if(SC_Compare(SCI_RAND))
-                    {
-                        SC_MustGetNumber();
-                        base = sc_Number;
-                        SC_MustGetNumber();
-                        if(ignore == false)
-                        {
-                            R_AddToAnimGroup(groupNumber, num, base, sc_Number - base);
-                        }
-                    }
-                    else
-                    {
-                        SC_ScriptError(NULL);
-                    }
-                }
-                else
-                {
-                    SC_UnGet();
-                    done = true;
-                }
+                parseAnimGroup(MAT_FLAT);
+            }
+            else if(SC_Compare("texture"))
+            {
+                parseAnimGroup(MAT_TEXTURE);
             }
             else
             {
-                done = true;
+                SC_ScriptError(NULL);
             }
         }
-    }
 
-    SC_Close();
+        SC_Close();
+    }
 }
