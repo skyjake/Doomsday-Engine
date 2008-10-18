@@ -1738,8 +1738,8 @@ int C_DECL XLTrav_EndLevel(linedef_t *line, boolean dummy, void *context,
 
     if(info->iparm[1] == LREF_NONE)
     {   // (ip3) will be used to determine next level.
-        map = XL_ValidateMap(info->iparm[3], 0);
-
+        if(info->iparm[3])
+            map = XL_ValidateMap(info->iparm[3], 0);
     }
     else
     {    // We have a data reference to evaluate.
