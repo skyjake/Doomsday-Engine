@@ -418,7 +418,6 @@ IF (APPLE)
 	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
 	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
 	
-	#SET (CMAKE_LD_FLAGS "${LDFLAGS} /opt/local/lib/libpng12.a")
 	SET (BUILDSYSTEM MACOSX)
 
 	## Add needed Compiler and Linker flags for OSX
@@ -426,31 +425,31 @@ IF (APPLE)
 
 		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flat_namespace" )
 		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /opt/local/lib/libpng12.a -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 
@@ -650,6 +649,10 @@ IF (APPLE)
 	FILE(GLOB DENG_OSX_SOURCES ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m)
 	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${DENG_OSX_SOURCES})
 ENDIF (APPLE)
+
+IF (COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+ENDIF (COMMAND cmake_policy)
 
 ADD_EXECUTABLE (doomsday ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
 
