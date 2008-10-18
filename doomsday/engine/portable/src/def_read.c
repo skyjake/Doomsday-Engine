@@ -114,7 +114,8 @@
 #define RV_END          { SetError2("Unknown label.", label); retval = false; goto ded_end_read; }
 
 #define RV_XGIPARM(lab, S, I, IP) if(ISLABEL(lab)) { \
-                   if(xgClassLinks[l->lineClass].iparm[IP].flagPrefix) { \
+                   if(xgClassLinks[l->lineClass].iparm[IP].flagPrefix && \
+                      xgClassLinks[l->lineClass].iparm[IP].flagPrefix[0]) { \
                    if(!ReadFlags(&I, xgClassLinks[l->lineClass].iparm[IP].flagPrefix)) { \
                      FAILURE } } \
                    else { if(!ReadString(S,sizeof(S))) { \
