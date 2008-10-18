@@ -81,14 +81,14 @@ void P_FreeDummyLine(linedef_t* line)
  * Copies all (changeable) properties from one line to another including the
  * extended properties.
  */
-void P_CopyLine(linedef_t *from, linedef_t *to)
+void P_CopyLine(linedef_t* dest, linedef_t* src)
 {
-    int         i, sidx;
-    sidedef_t     *sidefrom, *sideto;
-    xline_t    *xfrom = P_ToXLine(from);
-    xline_t    *xto = P_ToXLine(to);
+    int                 i, sidx;
+    sidedef_t*          sidefrom, *sideto;
+    xline_t*            xsrc = P_ToXLine(src);
+    xline_t*            xdest = P_ToXLine(dest);
 
-    if(from == to)
+    if(src == dest)
         return; // no point copying self
 
     // Copy the built-in properties
@@ -96,8 +96,8 @@ void P_CopyLine(linedef_t *from, linedef_t *to)
     {
         sidx = (i==0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
 
-        sidefrom = P_GetPtrp(from, sidx);
-        sideto = P_GetPtrp(to, sidx);
+        sidefrom = P_GetPtrp(src, sidx);
+        sideto = P_GetPtrp(dest, sidx);
 
         if(!sidefrom || !sideto)
             continue;
@@ -143,18 +143,18 @@ void P_CopyLine(linedef_t *from, linedef_t *to)
 
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    xto->special = xfrom->special;
-    if(xfrom->xg && xto->xg)
-        memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
+    xdest->special = xsrc->special;
+    if(xsrc->xg && xdest->xg)
+        memcpy(xdest->xg, xsrc->xg, sizeof(*xdest->xg));
     else
-        xto->xg = NULL;
+        xdest->xg = NULL;
 #else
-    xto->special = xfrom->special;
-    xto->arg1 = xfrom->arg1;
-    xto->arg2 = xfrom->arg2;
-    xto->arg3 = xfrom->arg3;
-    xto->arg4 = xfrom->arg4;
-    xto->arg5 = xfrom->arg5;
+    xdest->special = xsrc->special;
+    xdest->arg1 = xsrc->arg1;
+    xdest->arg2 = xsrc->arg2;
+    xdest->arg3 = xsrc->arg3;
+    xdest->arg4 = xsrc->arg4;
+    xdest->arg5 = xsrc->arg5;
 #endif
 }
 
@@ -162,82 +162,82 @@ void P_CopyLine(linedef_t *from, linedef_t *to)
  * Copies all (changeable) properties from one sector to another including
  * the extended properties.
  */
-void P_CopySector(sector_t *from, sector_t *to)
+void P_CopySector(sector_t* dest, sector_t* src)
 {
-    xsector_t  *xfrom = P_ToXSector(from);
-    xsector_t  *xto = P_ToXSector(to);
+    xsector_t*          xsrc = P_ToXSector(src);
+    xsector_t*          xdest = P_ToXSector(dest);
 
-    if(from == to)
+    if(src == dest)
         return; // no point copying self.
 
     // Copy the built-in properties.
 #if 0
     // P_Copyp is not implemented in Doomsday yet.
-    P_Copyp(DMU_LIGHT_LEVEL, from, to);
-    P_Copyp(DMU_COLOR, from, to);
+    P_Copyp(DMU_LIGHT_LEVEL, src, dest);
+    P_Copyp(DMU_COLOR, src, dest);
 
-    P_Copyp(DMU_FLOOR_HEIGHT, from, to);
-    P_Copyp(DMU_FLOOR_MATERIAL, from, to);
-    P_Copyp(DMU_FLOOR_COLOR, from, to);
-    P_Copyp(DMU_FLOOR_MATERIAL_OFFSET_XY, from, to);
-    P_Copyp(DMU_FLOOR_SPEED, from, to);
-    P_Copyp(DMU_FLOOR_TARGET_HEIGHT, from, to);
+    P_Copyp(DMU_FLOOR_HEIGHT, src, dest);
+    P_Copyp(DMU_FLOOR_MATERIAL, src, dest);
+    P_Copyp(DMU_FLOOR_COLOR, src, dest);
+    P_Copyp(DMU_FLOOR_MATERIAL_OFFSET_XY, src, dest);
+    P_Copyp(DMU_FLOOR_SPEED, src, dest);
+    P_Copyp(DMU_FLOOR_TARGET_HEIGHT, src, dest);
 
-    P_Copyp(DMU_CEILING_HEIGHT, from, to);
-    P_Copyp(DMU_CEILING_MATERIAL, from, to);
-    P_Copyp(DMU_CEILING_COLOR, from, to);
-    P_Copyp(DMU_CEILING_MATERIAL_OFFSET_XY, from, to);
-    P_Copyp(DMU_CEILING_SPEED, from, to);
-    P_Copyp(DMU_CEILING_TARGET_HEIGHT, from, to);
+    P_Copyp(DMU_CEILING_HEIGHT, src, dest);
+    P_Copyp(DMU_CEILING_MATERIAL, src, dest);
+    P_Copyp(DMU_CEILING_COLOR, src, dest);
+    P_Copyp(DMU_CEILING_MATERIAL_OFFSET_XY, src, dest);
+    P_Copyp(DMU_CEILING_SPEED, src, dest);
+    P_Copyp(DMU_CEILING_TARGET_HEIGHT, src, dest);
 #else
     {
     float ftemp[4];
 
-    P_SetFloatp(to, DMU_LIGHT_LEVEL, P_GetFloatp(from, DMU_LIGHT_LEVEL));
-    P_GetFloatpv(from, DMU_COLOR, ftemp);
-    P_SetFloatpv(to, DMU_COLOR, ftemp);
+    P_SetFloatp(dest, DMU_LIGHT_LEVEL, P_GetFloatp(src, DMU_LIGHT_LEVEL));
+    P_GetFloatpv(src, DMU_COLOR, ftemp);
+    P_SetFloatpv(dest, DMU_COLOR, ftemp);
 
-    P_SetFloatp(to, DMU_FLOOR_HEIGHT, P_GetFloatp(from, DMU_FLOOR_HEIGHT));
-    P_SetIntp(to, DMU_FLOOR_MATERIAL, P_GetIntp(from, DMU_FLOOR_MATERIAL));
-    P_GetFloatpv(from, DMU_FLOOR_COLOR, ftemp);
-    P_SetFloatpv(to, DMU_FLOOR_COLOR, ftemp);
-    P_GetFloatpv(from, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
-    P_SetFloatpv(to, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
-    P_SetIntp(to, DMU_FLOOR_SPEED, P_GetIntp(from, DMU_FLOOR_SPEED));
-    P_SetFloatp(to, DMU_FLOOR_TARGET_HEIGHT, P_GetFloatp(from, DMU_FLOOR_TARGET_HEIGHT));
+    P_SetFloatp(dest, DMU_FLOOR_HEIGHT, P_GetFloatp(src, DMU_FLOOR_HEIGHT));
+    P_SetIntp(dest, DMU_FLOOR_MATERIAL, P_GetIntp(src, DMU_FLOOR_MATERIAL));
+    P_GetFloatpv(src, DMU_FLOOR_COLOR, ftemp);
+    P_SetFloatpv(dest, DMU_FLOOR_COLOR, ftemp);
+    P_GetFloatpv(src, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
+    P_SetFloatpv(dest, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
+    P_SetIntp(dest, DMU_FLOOR_SPEED, P_GetIntp(src, DMU_FLOOR_SPEED));
+    P_SetFloatp(dest, DMU_FLOOR_TARGET_HEIGHT, P_GetFloatp(src, DMU_FLOOR_TARGET_HEIGHT));
 
-    P_SetFloatp(to, DMU_CEILING_HEIGHT, P_GetFloatp(from, DMU_CEILING_HEIGHT));
-    P_SetIntp(to, DMU_CEILING_MATERIAL, P_GetIntp(from, DMU_CEILING_MATERIAL));
-    P_GetFloatpv(from, DMU_CEILING_COLOR, ftemp);
-    P_SetFloatpv(to, DMU_CEILING_COLOR, ftemp);
-    P_GetFloatpv(from, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
-    P_SetFloatpv(to, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
-    P_SetIntp(to, DMU_CEILING_SPEED, P_GetIntp(from, DMU_CEILING_SPEED));
-    P_SetFloatp(to, DMU_CEILING_TARGET_HEIGHT, P_GetFloatp(from, DMU_CEILING_TARGET_HEIGHT));
+    P_SetFloatp(dest, DMU_CEILING_HEIGHT, P_GetFloatp(src, DMU_CEILING_HEIGHT));
+    P_SetIntp(dest, DMU_CEILING_MATERIAL, P_GetIntp(src, DMU_CEILING_MATERIAL));
+    P_GetFloatpv(src, DMU_CEILING_COLOR, ftemp);
+    P_SetFloatpv(dest, DMU_CEILING_COLOR, ftemp);
+    P_GetFloatpv(src, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
+    P_SetFloatpv(dest, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
+    P_SetIntp(dest, DMU_CEILING_SPEED, P_GetIntp(src, DMU_CEILING_SPEED));
+    P_SetFloatp(dest, DMU_CEILING_TARGET_HEIGHT, P_GetFloatp(src, DMU_CEILING_TARGET_HEIGHT));
     }
 #endif
 
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    xto->special = xfrom->special;
-    xto->soundTraversed = xfrom->soundTraversed;
-    xto->soundTarget = xfrom->soundTarget;
+    xdest->special = xsrc->special;
+    xdest->soundTraversed = xsrc->soundTraversed;
+    xdest->soundTarget = xsrc->soundTarget;
 #if __JHERETIC__
-    xto->seqType = xfrom->seqType;
+    xdest->seqType = xsrc->seqType;
 #endif
-    xto->SP_floororigheight = xfrom->SP_floororigheight;
-    xto->SP_ceilorigheight = xfrom->SP_ceilorigheight;
-    xto->origLight = xfrom->origLight;
-    memcpy(xto->origRGB, xfrom->origRGB, sizeof(float) * 3);
-    if(xfrom->xg && xto->xg)
-        memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
+    xdest->SP_floororigheight = xsrc->SP_floororigheight;
+    xdest->SP_ceilorigheight = xsrc->SP_ceilorigheight;
+    xdest->origLight = xsrc->origLight;
+    memcpy(xdest->origRGB, xsrc->origRGB, sizeof(float) * 3);
+    if(xsrc->xg && xdest->xg)
+        memcpy(xdest->xg, xsrc->xg, sizeof(*xdest->xg));
     else
-        xto->xg = NULL;
+        xdest->xg = NULL;
 #else
-    xto->special = xfrom->special;
-    xto->soundTraversed = xfrom->soundTraversed;
-    xto->soundTarget = xfrom->soundTarget;
-    xto->seqType = xfrom->seqType;
+    xdest->special = xsrc->special;
+    xdest->soundTraversed = xsrc->soundTraversed;
+    xdest->soundTarget = xsrc->soundTarget;
+    xdest->seqType = xsrc->seqType;
 #endif
 }
 

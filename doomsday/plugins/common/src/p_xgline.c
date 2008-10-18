@@ -673,72 +673,77 @@ void XL_Init(void)
  * Executes the specified function on all planes that match the reference
  * (reftype).
  *
- * @return              @c true, If all callbacks return @c true.
+ * @return              @c true, iff all callbacks return @c true.
  */
-int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
-                      void *context, boolean travsectors, mobj_t *activator,
+int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
+                      void* context, boolean travsectors, mobj_t* activator,
                       int (C_DECL *func)())
 {
-    int         tag;
-    mobj_t     *mo;
-    boolean     ok, findSecTagged;
-    sector_t   *sec, *frontsector, *backsector;
-    xsector_t  *xsec;
-    char        buff[50];
+    int                 tag;
+    mobj_t*             mo;
+    boolean             ok, findSecTagged;
+    sector_t*           sec, *frontSec, *backSec;
+    xsector_t*          xsec;
 
-    if(ref)
-        sprintf(buff,": %i",ref);
+    if(xgDev)
+    {
+        char                buff[50];
 
-    XG_Dev("XL_Traverse%s: Line %i, ref (%s%s)",
-           travsectors? "Sectors":"Planes", P_ToIndex(line),
-           travsectors? LSREFTYPESTR(reftype) : LPREFTYPESTR(reftype), ref? buff: "");
+        if(ref)
+            sprintf(buff, ": %i", ref);
 
-    if(reftype == LPREF_NONE)
+        XG_Dev("XL_Traverse%s: Line %i, ref (%s%s)",
+               travsectors? "Sectors":"Planes", P_ToIndex(line),
+               travsectors? LSREFTYPESTR(refType) : LPREFTYPESTR(refType),
+               ref? buff: "");
+    }
+
+    if(refType == LPREF_NONE)
         return false; // This is not a reference!
 
-    frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    backSec = P_GetPtrp(line, DMU_BACK_SECTOR);
 
     // References to a single plane
-    if(reftype == LPREF_MY_FLOOR)
-        return func(frontsector, false, data, context, activator);
-
-    if(reftype == LPREF_BACK_FLOOR)
+    if(refType == LPREF_MY_FLOOR || refType == LPREF_MY_CEILING)
     {
-        if(backsector)
-            return func(backsector, false, data, context, activator);
-        else
-            XG_Dev("  Line %i has no back sector!", P_ToIndex(line));
+        if(frontSec)
+        {
+            return func(frontSec, refType == LPREF_MY_CEILING? true:false,
+                        data, context, activator);
+        }
+
+        XG_Dev("  Line %i has no front sector!", P_ToIndex(line));
     }
 
-    if(reftype == LPREF_MY_CEILING)
-        return func(frontsector, true, data, context, activator);
-
-    if(reftype == LPREF_BACK_CEILING)
+    if(refType == LPREF_BACK_FLOOR || refType == LPREF_BACK_CEILING)
     {
-        if(backsector)
-            return func(backsector, true, data, context, activator);
-        else
-            XG_Dev("  Line %i has no back sector!", P_ToIndex(line));
+        if(backSec)
+        {
+            return func(backSec, refType == LPREF_BACK_CEILING? true:false,
+                        data, context, activator);
+        }
+
+        XG_Dev("  Line %i has no back sector!", P_ToIndex(line));
     }
 
-    if(reftype == LPREF_INDEX_FLOOR)
+    if(refType == LPREF_INDEX_FLOOR)
         return func(P_ToPtr(DMU_SECTOR, ref), false, data, context,
                     activator);
 
-    if(reftype == LPREF_INDEX_CEILING)
+    if(refType == LPREF_INDEX_CEILING)
         return func(P_ToPtr(DMU_SECTOR, ref), true, data, context,
                     activator);
 
     // Can we use the tagged sector lists?
     findSecTagged = false;
-    if(reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
+    if(refType == LPREF_TAGGED_FLOORS || refType == LPREF_TAGGED_CEILINGS)
     {
         findSecTagged = true;
         tag = ref;
     }
-    else if(reftype == LPREF_LINE_TAGGED_FLOORS ||
-            reftype == LPREF_LINE_TAGGED_CEILINGS)
+    else if(refType == LPREF_LINE_TAGGED_FLOORS ||
+            refType == LPREF_LINE_TAGGED_CEILINGS)
     {
         findSecTagged = true;
         tag = P_ToXLine(line)->tag;
@@ -747,7 +752,7 @@ int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
     // References to multiple planes
     if(findSecTagged)
     {   // Use tagged sector lists for these (speed).
-        iterlist_t *list;
+        iterlist_t*         list;
 
         list = P_GetSectorIterListForTag(tag, false);
         if(list)
@@ -757,17 +762,17 @@ int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
             {
                 xsec = P_ToXSector(sec);
 
-                if(reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
+                if(refType == LPREF_TAGGED_FLOORS || refType == LPREF_TAGGED_CEILINGS)
                 {
-                    if(!func(sec, reftype == LPREF_TAGGED_CEILINGS, data,
+                    if(!func(sec, refType == LPREF_TAGGED_CEILINGS, data,
                              context, activator))
                         return false;
                 }
 
-                if(reftype == LPREF_LINE_TAGGED_FLOORS ||
-                   reftype == LPREF_LINE_TAGGED_CEILINGS)
+                if(refType == LPREF_LINE_TAGGED_FLOORS ||
+                   refType == LPREF_LINE_TAGGED_CEILINGS)
                 {
-                    if(!func(sec, reftype == LPREF_LINE_TAGGED_CEILINGS,
+                    if(!func(sec, refType == LPREF_LINE_TAGGED_CEILINGS,
                              data, context, activator))
                         return false;
                 }
@@ -776,33 +781,33 @@ int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
     }
     else
     {
-        uint        i;
+        uint                    i;
 
         for(i = 0; i < numsectors; ++i)
         {
             sec = P_ToPtr(DMU_SECTOR, i);
             xsec = P_ToXSector(sec);
 
-            if(reftype == LPREF_ALL_FLOORS || reftype == LPREF_ALL_CEILINGS)
+            if(refType == LPREF_ALL_FLOORS || refType == LPREF_ALL_CEILINGS)
             {
-                if(!func(sec, reftype == LPREF_ALL_CEILINGS, data,
+                if(!func(sec, refType == LPREF_ALL_CEILINGS, data,
                          context, activator))
                     return false;
             }
 
-            if((reftype == LPREF_ACT_TAGGED_FLOORS ||
-                reftype == LPREF_ACT_TAGGED_CEILINGS) && xsec->xg &&
+            if((refType == LPREF_ACT_TAGGED_FLOORS ||
+                refType == LPREF_ACT_TAGGED_CEILINGS) && xsec->xg &&
                 xsec->xg->info.actTag == ref)
             {
-                if(!func(sec, reftype == LPREF_ACT_TAGGED_CEILINGS, data,
+                if(!func(sec, refType == LPREF_ACT_TAGGED_CEILINGS, data,
                    context, activator))
                    return false;
             }
 
             // Reference all sectors with (at least) one mobj of specified
             // type inside.
-            if(reftype == LPREF_THING_EXIST_FLOORS ||
-               reftype == LPREF_THING_EXIST_CEILINGS)
+            if(refType == LPREF_THING_EXIST_FLOORS ||
+               refType == LPREF_THING_EXIST_CEILINGS)
             {
                 ok = true;
 
@@ -813,7 +818,7 @@ int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
                         XG_Dev("  Thing of type %i found in sector id %i.",
                                P_ToXLine(line)->xg->info.aparm[9], i);
 
-                        if(!func(sec, reftype == LPREF_THING_EXIST_CEILINGS,
+                        if(!func(sec, refType == LPREF_THING_EXIST_CEILINGS,
                                  data, context, activator))
                             return false;
 
@@ -824,8 +829,8 @@ int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
 
             // Reference all sectors with NONE of the specified mobj type
             // inside.
-            if(reftype == LPREF_THING_NOEXIST_FLOORS ||
-               reftype == LPREF_THING_NOEXIST_CEILINGS)
+            if(refType == LPREF_THING_NOEXIST_FLOORS ||
+               refType == LPREF_THING_NOEXIST_CEILINGS)
             {
                 ok = true;
 
@@ -842,7 +847,7 @@ int XL_TraversePlanes(linedef_t *line, int reftype, int ref, void *data,
                     XG_Dev("  No things of type %i found in sector id %i.",
                            P_ToXLine(line)->xg->info.aparm[9], i);
 
-                    if(!func(sec, reftype == LPREF_THING_NOEXIST_CEILINGS,
+                    if(!func(sec, refType == LPREF_THING_NOEXIST_CEILINGS,
                              data, context, activator))
                         return false;
                 }
@@ -1116,10 +1121,10 @@ int XL_ValidateLineRef(linedef_t *line, int reftype, void *context,
 /**
  * Executes the lines' function as defined by its class.
  */
-void XL_DoFunction(linetype_t * info, linedef_t *line, int sidenum,
-                   mobj_t *act_thing, int evtype)
+void XL_DoFunction(linetype_t* info, linedef_t *line, int sidenum,
+                   mobj_t* act_thing, int evtype)
 {
-    xgclass_t *xgClass = xgClasses + info->lineClass;
+    xgclass_t*          xgClass = &xgClasses[info->lineClass];
 
     XG_Dev("XL_DoFunction: Line %i, side %i, activator id %i, event %s",
             P_ToIndex(line), sidenum, act_thing ? act_thing->thinker.id : 0,
@@ -2026,14 +2031,14 @@ void XL_Message(mobj_t *act, char *msg, boolean global)
 /**
  * XL_ActivateLine
  */
-void XL_ActivateLine(boolean activating, linetype_t *info, linedef_t *line,
-                     int sidenum, mobj_t *data, int evtype)
+void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
+                     int sidenum, mobj_t* data, int evtype)
 {
-    byte        rgba[4] = { 0, 0, 0, 0 };
-    xgline_t   *xg;
-    sector_t   *frontsector;
-    mobj_t     *activator_thing = (mobj_t *) data;
-    degenmobj_t *soundorg = 0;
+    byte                rgba[4] = { 0, 0, 0, 0 };
+    xgline_t*           xg;
+    sector_t*           frontsector;
+    mobj_t*             activator_thing = (mobj_t *) data;
+    degenmobj_t*        soundorg = 0;
 
     xg = P_ToXLine(line)->xg;
 
@@ -2208,17 +2213,17 @@ boolean XL_CheckKeys(mobj_t* mo, int flags2, boolean doMsg, boolean doSfx)
  * Line must be extended.
  * Most conditions use AND (act method, game mode and difficult use OR).
  */
-int XL_LineEvent(int evtype, int linetype, linedef_t *line, int sidenum,
-                 void *data)
+int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
+                 void* data)
 {
-    int                     i;
-    xline_t                *xline;
-    xgline_t               *xg;
-    linetype_t             *info;
-    boolean                 active;
-    mobj_t                 *activator_thing = (mobj_t *) data;
-    player_t               *activator = 0;
-    boolean                 anyTrigger = false;
+    int                 i;
+    xline_t*            xline;
+    xgline_t*           xg;
+    linetype_t*         info;
+    boolean             active;
+    mobj_t*             activator_thing = (mobj_t *) data;
+    player_t*           activator = 0;
+    boolean             anyTrigger = false;
 
     // Clients rely on the server, they don't do XG themselves.
     if(IS_CLIENT)
@@ -2530,8 +2535,8 @@ int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
 void XL_DoChain(linedef_t *line, int chain, boolean activating,
                 mobj_t *act_thing)
 {
-    linedef_t      *dummyLine;
-    xline_t     *xdummyLine;
+    linedef_t*          dummyLine;
+    xline_t*            xdummyLine;
 
     // We'll use a dummy line for the chain.
     dummyLine = P_AllocDummyLine();
@@ -2542,7 +2547,7 @@ void XL_DoChain(linedef_t *line, int chain, boolean activating,
     XG_Dev("  (dummy line will show up as %i)", P_ToIndex(dummyLine));
 
     // Copy all properties to the dummy
-    P_CopyLine(line, dummyLine);
+    P_CopyLine(dummyLine, line);
 
     P_SetPtrp(dummyLine, DMU_SIDEDEF0, NULL);
     P_SetPtrp(dummyLine, DMU_SIDEDEF1, NULL);

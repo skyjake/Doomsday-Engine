@@ -90,8 +90,8 @@
 linedef_t*  P_AllocDummyLine(void);
 void        P_FreeDummyLine(linedef_t* line);
 
-void        P_CopyLine(linedef_t* from, linedef_t* to);
-void        P_CopySector(sector_t* from, sector_t* to);
+void        P_CopyLine(linedef_t* dest, linedef_t* src);
+void        P_CopySector(sector_t* dest, sector_t* src);
 
 float       P_SectorLight(sector_t* sector);
 void        P_SectorSetLight(sector_t* sector, float level);

@@ -2145,7 +2145,7 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling,
            P_ToIndex(sector), P_ToIndex(from));
 
     // Copy the properties of the target sector.
-    P_CopySector(from, sector);
+    P_CopySector(sector, from);
 
     P_ChangeSector(sector, false);
 
