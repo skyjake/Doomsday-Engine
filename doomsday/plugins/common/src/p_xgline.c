@@ -2567,16 +2567,17 @@ void XL_DoChain(linedef_t *line, int chain, boolean activating,
  */
 void XL_Thinker(xlthinker_t* xl)
 {
-    float           levtime;
-    linedef_t*      line = xl->line;
-    xline_t*        xline = P_ToXLine(line);
-    xgline_t*       xg;
-    linetype_t*     info;
+    float               levtime;
+    linedef_t*          line = xl->line;
+    xline_t*            xline;
+    xgline_t*           xg;
+    linetype_t*         info;
 
     // Clients rely on the server, they don't do XG themselves.
     if(IS_CLIENT)
         return;
 
+    xline = P_ToXLine(line);
     if(!xline)
         return; // Not an xline? Most perculiar...
 
