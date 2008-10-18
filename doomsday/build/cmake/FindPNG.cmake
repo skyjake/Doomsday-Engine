@@ -48,7 +48,8 @@ ENDIF(ZLIB_FOUND)
 
 IF (APPLE)
     SET(PNG_INCLUDE_DIR "/opt/local/include" )
-    SET(PNG_LIBRARIES "" ) # /opt/local/lib/libz.a )
+    SET(PNG_LIBRARIES "" )
+    SET(PNG_LIBRARY_STATIC "/opt/local/lib/libpng12.a")
     SET(PNG_FOUND "YES")
 ENDIF (APPLE)
 
