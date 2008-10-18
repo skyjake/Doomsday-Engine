@@ -2484,10 +2484,10 @@ int XF_FindNextPos(function_t *fn, int pos, boolean poke, sector_t *sec)
 /**
  * Tick the function, update value.
  */
-void XF_Ticker(function_t *fn, sector_t *sec)
+void XF_Ticker(function_t* fn, sector_t* sec)
 {
-    int         next;
-    float       inter;
+    int                 next;
+    float               inter;
 
     // Store the previous value of the function.
     fn->oldValue = fn->value;
@@ -2548,12 +2548,12 @@ void XF_Ticker(function_t *fn, sector_t *sec)
     fn->value = fn->value * fn->scale + fn->offset;
 }
 
-void XS_UpdatePlanes(sector_t *sec)
+void XS_UpdatePlanes(sector_t* sec)
 {
-    int         i;
-    xgsector_t *xg;
-    function_t *fn;
-    boolean     docrush;
+    int                 i;
+    xgsector_t*         xg;
+    function_t*         fn;
+    boolean             docrush;
 
     xg = P_ToXSector(sec)->xg;
     docrush = (xg->info.flags & STF_CRUSH) != 0;
@@ -2585,12 +2585,12 @@ void XS_UpdatePlanes(sector_t *sec)
     }
 }
 
-void XS_UpdateLight(sector_t *sec)
+void XS_UpdateLight(sector_t* sec)
 {
     int                 i;
     float               c, lightlevel;
-    xgsector_t         *xg;
-    function_t         *fn;
+    xgsector_t*         xg;
+    function_t*         fn;
 
     xg = P_ToXSector(sec)->xg;
 
@@ -3002,16 +3002,21 @@ void XS_Thinker(xsthinker_t* xs)
     }
 }
 
-float XS_Gravity(struct sector_s *sector)
+float XS_Gravity(struct sector_s* sec)
 {
-    if(!P_ToXSector(sector)->xg ||
-       !(P_ToXSector(sector)->xg->info.flags & STF_GRAVITY))
+    xsector_t*          xsec;
+
+    if(!sec)
+        return P_GetGravity(); // World gravity.
+
+    xsec = P_ToXSector(sec);
+    if(!xsec->xg || !(xsec->xg->info.flags & STF_GRAVITY))
     {
         return P_GetGravity(); // World gravity.
     }
     else
     {   // Sector-specific gravity.
-        float       gravity = P_ToXSector(sector)->xg->info.gravity;
+        float               gravity = xsec->xg->info.gravity;
 
         // Apply gravity modifier.
         if(IS_NETGAME && cfg.netGravity != -1)
