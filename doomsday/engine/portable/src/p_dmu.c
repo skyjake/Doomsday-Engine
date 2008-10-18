@@ -1699,10 +1699,14 @@ boolean P_GetBoolp(void* ptr, uint prop)
     setargs_t           args;
     boolean             returnValue = false;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_BOOL;
-    args.booleanValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_BOOL;
+        args.booleanValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
     return returnValue;
 }
 
@@ -1711,10 +1715,14 @@ byte P_GetBytep(void* ptr, uint prop)
     setargs_t           args;
     byte                returnValue = 0;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_BYTE;
-    args.byteValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_BYTE;
+        args.byteValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
     return returnValue;
 }
 
@@ -1723,10 +1731,14 @@ int P_GetIntp(void* ptr, uint prop)
     setargs_t           args;
     int                 returnValue = 0;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_INT;
-    args.intValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_INT;
+        args.intValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
     return returnValue;
 }
 
@@ -1735,10 +1747,14 @@ fixed_t P_GetFixedp(void* ptr, uint prop)
     setargs_t           args;
     fixed_t             returnValue = 0;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_FIXED;
-    args.fixedValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_FIXED;
+        args.fixedValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
     return returnValue;
 }
 
@@ -1747,10 +1763,14 @@ angle_t P_GetAnglep(void* ptr, uint prop)
     setargs_t           args;
     angle_t             returnValue = 0;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_ANGLE;
-    args.angleValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_ANGLE;
+        args.angleValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
     return returnValue;
 }
 
@@ -1759,10 +1779,14 @@ float P_GetFloatp(void* ptr, uint prop)
     setargs_t           args;
     float               returnValue = 0;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_FLOAT;
-    args.floatValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_FLOAT;
+        args.floatValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
     return returnValue;
 }
 
@@ -1771,10 +1795,14 @@ void* P_GetPtrp(void* ptr, uint prop)
     setargs_t           args;
     void               *returnValue = NULL;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_PTR;
-    args.ptrValues = &returnValue;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_PTR;
+        args.ptrValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
     return returnValue;
 }
 
@@ -1782,68 +1810,89 @@ void P_GetBoolpv(void* ptr, uint prop, boolean* params)
 {
     setargs_t           args;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_BOOL;
-    args.booleanValues = params;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_BOOL;
+        args.booleanValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
 }
 
 void P_GetBytepv(void* ptr, uint prop, byte* params)
 {
     setargs_t           args;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_BYTE;
-    args.byteValues = params;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_BYTE;
+        args.byteValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
 }
 
 void P_GetIntpv(void* ptr, uint prop, int* params)
 {
     setargs_t           args;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_INT;
-    args.intValues = params;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_INT;
+        args.intValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
 }
 
 void P_GetFixedpv(void* ptr, uint prop, fixed_t* params)
 {
     setargs_t           args;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_FIXED;
-    args.fixedValues = params;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_FIXED;
+        args.fixedValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
 }
 
 void P_GetAnglepv(void* ptr, uint prop, angle_t* params)
 {
     setargs_t           args;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_ANGLE;
-    args.angleValues = params;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_ANGLE;
+        args.angleValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
 }
 
 void P_GetFloatpv(void* ptr, uint prop, float* params)
 {
     setargs_t           args;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_FLOAT;
-    args.floatValues = params;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_FLOAT;
+        args.floatValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
 }
 
 void P_GetPtrpv(void* ptr, uint prop, void* params)
 {
     setargs_t           args;
 
-    initArgs(&args, DMU_GetType(ptr), prop);
-    args.valueType = DDVT_PTR;
-    args.ptrValues = params;
-    P_Callbackp(args.type, ptr, &args, getProperty);
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_PTR;
+        args.ptrValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
 }
