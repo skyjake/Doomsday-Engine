@@ -211,6 +211,8 @@ void GL_UploadTextureContent(texturecontent_t* content)
     }
     else
     {
+        byte       *allocatedTempBuffer = NULL;
+
         if(content->grayMipmap >= 0)
         {
             DGL_SetInteger(DGL_GRAY_MIPMAP, content->grayMipmap);
@@ -232,27 +234,31 @@ void GL_UploadTextureContent(texturecontent_t* content)
             content->format == DGL_DEPTH_COMPONENT))
         {
             int         p, total = content->width * content->height;
-            byte       *pixels = content->buffer;
+            
+            allocatedTempBuffer = M_Malloc(total * 2);
 
-            for(p = 0; p < total; ++p)
-            {
-                // Move the average color to the alpha channel, make the
-                // actual color white.
-                pixels[total + p] = pixels[p];
-                pixels[p] = 255;
-            }
+            // Move the average color to the alpha channel, make the
+            // actual color white.
+            memcpy(allocatedTempBuffer + total, content->buffer, total);
+            memset(allocatedTempBuffer, 255, total);
+
             content->format = DGL_LUMINANCE_PLUS_A8;
         }
 
         result = DGL_TexImage(content->format, content->width, content->height,
                               (content->grayMipmap >= 0? DGL_GRAY_MIPMAP :
                               (content->flags & TXCF_MIPMAP) != 0),
-                              content->buffer);
+                              allocatedTempBuffer? allocatedTempBuffer : content->buffer);
         assert(result == true);
 
         if(content->flags & TXCF_NO_COMPRESSION)
         {
             DGL_Enable(DGL_TEXTURE_COMPRESSION);
+        }
+        
+        if(allocatedTempBuffer)
+        {
+            M_Free(allocatedTempBuffer);
         }
     }
 
