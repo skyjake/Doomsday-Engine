@@ -3810,6 +3810,23 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXLegacyTarget section */
+		B0100E280EAB844D000291AF /* Make All */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = B0100E2D0EAB8477000291AF /* Build configuration list for PBXLegacyTarget "Make All" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = /Users/jaakko/Projects/deng/trunk/doomsday/mybuild;
+			dependencies = (
+			);
+			name = "Make All";
+			passBuildSettingsInEnvironment = 1;
+			productName = "Make All";
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
@@ -3820,6 +3837,7 @@
 			projectDirPath = "";
 			projectRoot = ../..;
 			targets = (
+				B0100E280EAB844D000291AF /* Make All */,
 			);
 		};
 /* End PBXProject section */
@@ -3836,6 +3854,34 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		B0100E290EAB844D000291AF /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = "Make All";
+			};
+			name = Development;
+		};
+		B0100E2A0EAB844D000291AF /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = "Make All";
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		B0100E2B0EAB844D000291AF /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "Make All";
+			};
+			name = Default;
+		};
 		B01078310856208A000BF0D8 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -3894,6 +3940,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B0100E2D0EAB8477000291AF /* Build configuration list for PBXLegacyTarget "Make All" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B0100E290EAB844D000291AF /* Development */,
+				B0100E2A0EAB844D000291AF /* Deployment */,
+				B0100E2B0EAB844D000291AF /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
 		B01078300856208A000BF0D8 /* Build configuration list for PBXProject "Doomsday" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
