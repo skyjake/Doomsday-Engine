@@ -1388,6 +1388,7 @@
 		B098FA690DF7101B005F04FC /* st_stuff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = st_stuff.c; sourceTree = "<group>"; };
 		B098FA6A0DF7101B005F04FC /* tables.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tables.c; sourceTree = "<group>"; };
 		B098FA6B0DF7101B005F04FC /* wi_stuff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wi_stuff.c; sourceTree = "<group>"; };
+		B0A1E6B10EA9C21A00D85079 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = ../../CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		B0A277F90E23562E00B715E3 /* m_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m_defs.h; sourceTree = "<group>"; };
 		B0A278A40E24A4D600B715E3 /* p_terraintype.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = p_terraintype.c; sourceTree = "<group>"; };
 		B0A278B60E24C1C900B715E3 /* p_terraintype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = p_terraintype.h; sourceTree = "<group>"; };
@@ -1398,6 +1399,7 @@
 		29B97314FDCFA39411CA2CEA /* Doomsday */ = {
 			isa = PBXGroup;
 			children = (
+				B0A1E6B10EA9C21A00D85079 /* CMakeLists.txt */,
 				B098F4580DF71015005F04FC /* engine */,
 				B098F6370DF71017005F04FC /* external */,
 				B098F66E0DF71018005F04FC /* plugins */,
