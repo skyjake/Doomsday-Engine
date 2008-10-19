@@ -359,7 +359,7 @@ void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
-
+    
     out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
@@ -601,10 +601,9 @@ void R_SetupFrame(player_t* player)
         // between the previous and current sharp positions. This
         // introduces a slight delay (max. 1/35 sec) to the movement
         // of the smoothed camera.
-
-        R_InterpolateViewer(vd->lastSharpView, &sharpView, frameTimePos,
+        R_InterpolateViewer(vd->lastSharpView, vd->lastSharpView + 1, frameTimePos,
                             &smoothView);
-
+        
         // Use the latest view angles known to us, if the interpolation flags
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
@@ -647,23 +646,25 @@ void R_SetupFrame(player_t* player)
         {
             typedef struct oldpos_s {
                 double           time;
-                float            x, y;
+                float            x, y, z;
             } oldpos_t;
 
             static oldpos_t         oldpos[DDMAXPLAYERS];
             oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
-                        "Rdx=%-10.3f Rdy=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f\n",
+                        //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
                         sysTime - old->time,
                         smoothView.pos[0] - old->x,
                         smoothView.pos[1] - old->y,
+                        smoothView.pos[2] - old->z /*,
                         smoothView.pos[0] - old->x / (sysTime - old->time),
-                        smoothView.pos[1] - old->y / (sysTime - old->time));
+                        smoothView.pos[1] - old->y / (sysTime - old->time)*/);
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
+            old->z = smoothView.pos[VZ];
             old->time = sysTime;
         }
     }

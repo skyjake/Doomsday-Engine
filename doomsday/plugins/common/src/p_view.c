@@ -142,7 +142,7 @@ void P_CalcHeight(player_t* plr)
         else
             plr->viewOffset[VZ] = target;
     }
-
+    
     // The aircounter will soften the touchdown after a fall.
     plr->airCounter--;
     if(airborne)
