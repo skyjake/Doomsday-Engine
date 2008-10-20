@@ -177,81 +177,39 @@ static void DrBNumber(signed int val, int x, int y, float Red, float Green,
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-static int fontBNumBase;
-
-static dpatch_t PatchNumH2BAR;
-static dpatch_t PatchNumH2TOP;
-static dpatch_t PatchNumLFEDGE;
-static dpatch_t PatchNumRTEDGE;
-static dpatch_t PatchNumKILLS;
-static dpatch_t PatchNumSTATBAR;
-static dpatch_t PatchNumKEYBAR;
-static dpatch_t PatchNumSELECTBOX;
-static dpatch_t PatchNumINumbers[10];
-static dpatch_t PatchNumNEGATIVE;
-static dpatch_t PatchNumSmNumbers[10];
-static dpatch_t PatchMANAAVIALS[2];
-static dpatch_t PatchMANABVIALS[2];
-static dpatch_t PatchMANAAICONS[2];
-static dpatch_t PatchMANABICONS[2];
-static dpatch_t PatchNumINVBAR;
-static dpatch_t PatchNumWEAPONSLOT[3]; // [Fighter, Cleric, Mage]
-static dpatch_t PatchNumWEAPONFULL[3]; // [Fighter, Cleric, Mage]
-static dpatch_t PatchNumLifeGem[3][8]; // [Fighter, Cleric, Mage][color]
-static dpatch_t PatchNumPIECE1[3]; // [Fighter, Cleric, Mage]
-static dpatch_t PatchNumPIECE2[3]; // [Fighter, Cleric, Mage]
-static dpatch_t PatchNumPIECE3[3]; // [Fighter, Cleric, Mage]
-static dpatch_t PatchNumCHAIN[3]; // [Fighter, Cleric, Mage]
-static dpatch_t PatchNumINVLFGEM1;
-static dpatch_t PatchNumINVLFGEM2;
-static dpatch_t PatchNumINVRTGEM1;
-static dpatch_t PatchNumINVRTGEM2;
-static dpatch_t PatchARTIFACTS[38];
-static dpatch_t SpinFlylump;
-static dpatch_t SpinMinotaurLump;
-static dpatch_t SpinSpeedLump;
-static dpatch_t SpinDefenseLump;
-
-char    artifactlist[][10] = {
-    {"USEARTIA"},               // use artifact flash
-    {"USEARTIB"},
-    {"USEARTIC"},
-    {"USEARTID"},
-    {"USEARTIE"},
-    {"ARTIBOX"},                // none
-    {"ARTIINVU"},               // invulnerability
-    {"ARTIPTN2"},               // health
-    {"ARTISPHL"},               // superhealth
-    {"ARTIHRAD"},               // healing radius
-    {"ARTISUMN"},               // summon maulator
-    {"ARTITRCH"},               // torch
-    {"ARTIPORK"},               // egg
-    {"ARTISOAR"},               // fly
-    {"ARTIBLST"},               // blast radius
-    {"ARTIPSBG"},               // poison bag
-    {"ARTITELO"},               // teleport other
-    {"ARTISPED"},               // speed
-    {"ARTIBMAN"},               // boost mana
-    {"ARTIBRAC"},               // boost armor
-    {"ARTIATLP"},               // teleport
-    {"ARTISKLL"},               // AFT_PUZZSKULL
-    {"ARTIBGEM"},               // AFT_PUZZGEMBIG
-    {"ARTIGEMR"},               // AFT_PUZZGEMRED
-    {"ARTIGEMG"},               // AFT_PUZZGEMGREEN1
-    {"ARTIGMG2"},               // AFT_PUZZGEMGREEN2
-    {"ARTIGEMB"},               // AFT_PUZZGEMBLUE1
-    {"ARTIGMB2"},               // AFT_PUZZGEMBLUE2
-    {"ARTIBOK1"},               // AFT_PUZZBOOK1
-    {"ARTIBOK2"},               // AFT_PUZZBOOK2
-    {"ARTISKL2"},               // AFT_PUZZSKULL2
-    {"ARTIFWEP"},               // AFT_PUZZFWEAPON
-    {"ARTICWEP"},               // AFT_PUZZCWEAPON
-    {"ARTIMWEP"},               // AFT_PUZZMWEAPON
-    {"ARTIGEAR"},               // AFT_PUZZGEAR1
-    {"ARTIGER2"},               // AFT_PUZZGEAR2
-    {"ARTIGER3"},               // AFT_PUZZGEAR3
-    {"ARTIGER4"},               // AFT_PUZZGEAR4
-};
+static dpatch_t dpStatusBar;
+static dpatch_t dpStatusBarTop;
+static dpatch_t dpKills;
+static dpatch_t dpStatBar;
+static dpatch_t dpKeyBar;
+static dpatch_t dpKeySlot[NUM_KEY_TYPES];
+static dpatch_t dpArmorSlot[NUMARMOR];
+static dpatch_t dpSelectBox;
+static dpatch_t dpINumbers[10];
+static dpatch_t dpNegative;
+static dpatch_t dpSmallNumbers[10];
+static dpatch_t dpManaAVials[2];
+static dpatch_t dpManaBVials[2];
+static dpatch_t dpManaAIcons[2];
+static dpatch_t dpManaBIcons[2];
+static dpatch_t dpInventoryBar;
+static dpatch_t dpWeaponSlot[3]; // [Fighter, Cleric, Mage]
+static dpatch_t dpWeaponFull[3]; // [Fighter, Cleric, Mage]
+static dpatch_t dpLifeGem[3][8]; // [Fighter, Cleric, Mage][color]
+static dpatch_t dpWeaponPiece1[3]; // [Fighter, Cleric, Mage]
+static dpatch_t dpWeaponPiece2[3]; // [Fighter, Cleric, Mage]
+static dpatch_t dpWeaponPiece3[3]; // [Fighter, Cleric, Mage]
+static dpatch_t dpChain[3]; // [Fighter, Cleric, Mage]
+static dpatch_t dpIndicatorLeft1;
+static dpatch_t dpIndicatorLeft2;
+static dpatch_t dpIndicatorRight1;
+static dpatch_t dpIndicatorRight2;
+static dpatch_t dpArtifacts[38];
+static dpatch_t dpSpinFly[16];
+static dpatch_t dpSpinMinotaur[16];
+static dpatch_t dpSpinSpeed[16];
+static dpatch_t dpSpinDefense[16];
+static dpatch_t dpTeleIcon;
 
 // CVARs for the HUD/Statusbar
 cvar_t sthudCVars[] =
@@ -340,12 +298,12 @@ static void drawAnimatedIcons(hudstate_t* hud)
                 if(hud->hitCenterFrame && (frame != 15 && frame != 0))
                 {
                     GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
-                                         SpinFlylump.lump + 15);
+                                         dpSpinFly[15].lump);
                 }
                 else
                 {
                     GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
-                                         SpinFlylump.lump + frame);
+                                         dpSpinFly[frame].lump);
                     hud->hitCenterFrame = false;
                 }
             }
@@ -354,13 +312,13 @@ static void drawAnimatedIcons(hudstate_t* hud)
                 if(!hud->hitCenterFrame && (frame != 15 && frame != 0))
                 {
                     GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
-                                         SpinFlylump.lump + frame);
+                                         dpSpinFly[frame].lump);
                     hud->hitCenterFrame = false;
                 }
                 else
                 {
                     GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
-                                         SpinFlylump.lump + 15);
+                                         dpSpinFly[15].lump);
                     hud->hitCenterFrame = true;
                 }
             }
@@ -375,7 +333,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
         {
             frame = (levelTime / 3) & 15;
             GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha,
-                                 SpinSpeedLump.lump + frame);
+                                 dpSpinSpeed[frame].lump);
         }
     }
 
@@ -391,7 +349,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
         {
             frame = (levelTime / 3) & 15;
             GL_DrawPatchLitAlpha(260, 19, 1, iconalpha,
-                                 SpinDefenseLump.lump + frame);
+                                 dpSpinDefense[frame].lump);
         }
     }
 
@@ -403,7 +361,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
         {
             frame = (levelTime / 3) & 15;
             GL_DrawPatchLitAlpha(300, 19, 1, iconalpha,
-                                 SpinMinotaurLump.lump + frame);
+                                 dpSpinMinotaur[frame].lump);
         }
     }
 
@@ -425,7 +383,7 @@ static void drawKeyBar(hudstate_t* hud)
         if(plr->keys & (1 << i))
         {
             GL_DrawPatchLitAlpha(xPosition, 163, 1, hud->statusbarCounterAlpha,
-                                 W_GetNumForName("keyslot1") + i);
+                                 dpKeySlot[i].lump);
             xPosition += 20;
         }
     }
@@ -444,18 +402,18 @@ static void drawKeyBar(hudstate_t* hud)
         if(plr->armorPoints[i] <= (PCLASS_INFO(pClass)->armorIncrement[i] >> 2))
         {
             GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, hud->statusbarCounterAlpha * 0.3,
-                             W_GetNumForName("armslot1") + i);
+                                 dpArmorSlot[i].lump);
         }
         else if(plr->armorPoints[i] <=
                 (PCLASS_INFO(pClass)->armorIncrement[i] >> 1))
         {
             GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, hud->statusbarCounterAlpha * 0.6,
-                                W_GetNumForName("armslot1") + i);
+                                 dpArmorSlot[i].lump);
         }
         else
         {
             GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, hud->statusbarCounterAlpha,
-                                 W_GetNumForName("armslot1") + i);
+                                 dpArmorSlot[i].lump);
         }
     }
 }
@@ -473,29 +431,29 @@ static void drawWeaponPieces(hudstate_t* hud)
     // Clamp
     CLAMP(alpha, 0.0f, 1.0f);
 
-    GL_DrawPatchLitAlpha(190, 162, 1, alpha, PatchNumWEAPONSLOT[pClass].lump);
+    GL_DrawPatchLitAlpha(190, 162, 1, alpha, dpWeaponSlot[pClass].lump);
 
     if(plr->pieces == 7) // All pieces
-        GL_DrawPatchLitAlpha(190, 162, 1, hud->statusbarCounterAlpha, PatchNumWEAPONFULL[pClass].lump);
+        GL_DrawPatchLitAlpha(190, 162, 1, hud->statusbarCounterAlpha, dpWeaponFull[pClass].lump);
     else
     {
         if(plr->pieces & WPIECE1)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[0],
                                  162, 1, hud->statusbarCounterAlpha,
-                                 PatchNumPIECE1[pClass].lump);
+                                 dpWeaponPiece1[pClass].lump);
         }
         if(plr->pieces & WPIECE2)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[1],
                                  162, 1, hud->statusbarCounterAlpha,
-                                 PatchNumPIECE2[pClass].lump);
+                                 dpWeaponPiece2[pClass].lump);
         }
         if(plr->pieces & WPIECE3)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[2],
                                  162, 1, hud->statusbarCounterAlpha,
-                                 PatchNumPIECE3[pClass].lump);
+                                 dpWeaponPiece3[pClass].lump);
         }
     }
 }
@@ -530,7 +488,7 @@ static void drawChain(hudstate_t* hud)
     h = 7;
     cw = (healthPos / 113) + 0.054f;
 
-    GL_SetPatch(PatchNumCHAIN[pClass].lump, DGL_REPEAT, DGL_CLAMP);
+    GL_SetPatch(dpChain[pClass].lump, DGL_REPEAT, DGL_CLAMP);
 
     DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
 
@@ -582,11 +540,11 @@ static void drawChain(hudstate_t* hud)
 
     if(!IS_NETGAME)
     {   // Always use the red life gem (the second gem).
-        gemPatch = &PatchNumLifeGem[pClass][1];
+        gemPatch = &dpLifeGem[pClass][1];
     }
     else
     {
-        gemPatch = &PatchNumLifeGem[pClass][pColor];
+        gemPatch = &dpLifeGem[pClass][pColor];
     }
 
     GL_SetPatch(gemPatch->lump, DGL_CLAMP, DGL_CLAMP);
@@ -643,36 +601,36 @@ static void drawStatusBarBackground(int player)
 
     if(!(alpha < 1))
     {
-        GL_DrawPatch(0, 134, PatchNumH2BAR.lump);
-        GL_DrawPatch(0, 134, PatchNumH2TOP.lump);
+        GL_DrawPatch(0, 134, dpStatusBar.lump);
+        GL_DrawPatch(0, 134, dpStatusBarTop.lump);
 
         if(!hud->inventory)
         {
             // Main interface
             if(!AM_IsMapActive(player))
             {
-                GL_DrawPatch(38, 162, PatchNumSTATBAR.lump);
+                GL_DrawPatch(38, 162, dpStatBar.lump);
 
                 if(plr->pieces == 7)
                 {
-                    GL_DrawPatch(190, 162, PatchNumWEAPONFULL[pClass].lump);
+                    GL_DrawPatch(190, 162, dpWeaponFull[pClass].lump);
                 }
                 else
                 {
-                    GL_DrawPatch(190, 162, PatchNumWEAPONSLOT[pClass].lump);
+                    GL_DrawPatch(190, 162, dpWeaponSlot[pClass].lump);
                 }
 
                 drawWeaponPieces(hud);
             }
             else
             {
-                GL_DrawPatch(38, 162, PatchNumKEYBAR.lump);
+                GL_DrawPatch(38, 162, dpKeyBar.lump);
                 drawKeyBar(hud);
             }
         }
         else
         {
-            GL_DrawPatch(38, 162, PatchNumINVBAR.lump);
+            GL_DrawPatch(38, 162, dpInventoryBar.lump);
         }
 
         drawChain(hud);
@@ -681,7 +639,7 @@ static void drawStatusBarBackground(int player)
     {
         DGL_Color4f(1, 1, 1, alpha);
 
-        GL_SetPatch(PatchNumH2BAR.lump, DGL_REPEAT, DGL_REPEAT);
+        GL_SetPatch(dpStatusBar.lump, DGL_REPEAT, DGL_REPEAT);
 
         DGL_Begin(DGL_QUADS);
 
@@ -762,11 +720,11 @@ static void drawStatusBarBackground(int player)
             {
                 if(deathmatch)
                 {
-                    GL_DrawPatch_CS(38, 162, PatchNumKILLS.lump);
+                    GL_DrawPatch_CS(38, 162, dpKills.lump);
                 }
 
                 // left of statbar (upto weapon puzzle display)
-                GL_SetPatch(PatchNumSTATBAR.lump, DGL_CLAMP, DGL_CLAMP);
+                GL_SetPatch(dpStatBar.lump, DGL_CLAMP, DGL_CLAMP);
                 DGL_Begin(DGL_QUADS);
 
                 x = deathmatch ? 68 : 38;
@@ -809,13 +767,13 @@ static void drawStatusBarBackground(int player)
             }
             else
             {
-                GL_DrawPatch_CS(38, 162, PatchNumKEYBAR.lump);
+                GL_DrawPatch_CS(38, 162, dpKeyBar.lump);
             }
         }
         else
         {
             // INVBAR
-            GL_SetPatch(PatchNumINVBAR.lump, DGL_CLAMP, DGL_CLAMP);
+            GL_SetPatch(dpInventoryBar.lump, DGL_CLAMP, DGL_CLAMP);
             DGL_Begin(DGL_QUADS);
 
             x = 38;
@@ -842,99 +800,160 @@ static void drawStatusBarBackground(int player)
 
 void ST_loadGraphics(void)
 {
-    int         i;
-    char        namebuf[9];
+    int                 i;
+    char                namebuf[9];
+    char                artifactlist[][9] = {
+        {"USEARTIA"}, // use artifact flash
+        {"USEARTIB"},
+        {"USEARTIC"},
+        {"USEARTID"},
+        {"USEARTIE"},
+        {"ARTIBOX"}, // none
+        {"ARTIINVU"}, // invulnerability
+        {"ARTIPTN2"}, // health
+        {"ARTISPHL"}, // superhealth
+        {"ARTIHRAD"}, // healing radius
+        {"ARTISUMN"}, // summon maulator
+        {"ARTITRCH"}, // torch
+        {"ARTIPORK"}, // egg
+        {"ARTISOAR"}, // fly
+        {"ARTIBLST"}, // blast radius
+        {"ARTIPSBG"}, // poison bag
+        {"ARTITELO"}, // teleport other
+        {"ARTISPED"}, // speed
+        {"ARTIBMAN"}, // boost mana
+        {"ARTIBRAC"}, // boost armor
+        {"ARTIATLP"}, // teleport
+        {"ARTISKLL"},
+        {"ARTIBGEM"},
+        {"ARTIGEMR"},
+        {"ARTIGEMG"},
+        {"ARTIGMG2"},
+        {"ARTIGEMB"},
+        {"ARTIGMB2"},
+        {"ARTIBOK1"},
+        {"ARTIBOK2"},
+        {"ARTISKL2"},
+        {"ARTIFWEP"},
+        {"ARTICWEP"},
+        {"ARTIMWEP"},
+        {"ARTIGEAR"},
+        {"ARTIGER2"},
+        {"ARTIGER3"},
+        {"ARTIGER4"}
+    };
 
-    fontBNumBase = W_GetNumForName("FONTB16");  // to be removed
+    R_CachePatch(&dpStatusBar, "H2BAR");
+    R_CachePatch(&dpStatusBarTop, "H2TOP");
+    R_CachePatch(&dpInventoryBar, "INVBAR");
+    R_CachePatch(&dpStatBar, "STATBAR");
+    R_CachePatch(&dpKeyBar, "KEYBAR");
+    R_CachePatch(&dpSelectBox, "SELECTBOX");
 
-    R_CachePatch(&PatchNumH2BAR, "H2BAR");
-    R_CachePatch(&PatchNumH2TOP, "H2TOP");
-    R_CachePatch(&PatchNumINVBAR, "INVBAR");
-    R_CachePatch(&PatchNumLFEDGE, "LFEDGE");
-    R_CachePatch(&PatchNumRTEDGE, "RTEDGE");
-    R_CachePatch(&PatchNumSTATBAR, "STATBAR");
-    R_CachePatch(&PatchNumKEYBAR, "KEYBAR");
-    R_CachePatch(&PatchNumSELECTBOX, "SELECTBOX");
+    R_CachePatch(&dpManaAVials[0], "MANAVL1D");
+    R_CachePatch(&dpManaBVials[0], "MANAVL2D");
+    R_CachePatch(&dpManaAVials[1], "MANAVL1");
+    R_CachePatch(&dpManaBVials[1], "MANAVL2");
 
-    R_CachePatch(&PatchMANAAVIALS[0], "MANAVL1D");
-    R_CachePatch(&PatchMANABVIALS[0], "MANAVL2D");
-    R_CachePatch(&PatchMANAAVIALS[1], "MANAVL1");
-    R_CachePatch(&PatchMANABVIALS[1], "MANAVL2");
+    R_CachePatch(&dpManaAIcons[0], "MANADIM1");
+    R_CachePatch(&dpManaBIcons[0], "MANADIM2");
+    R_CachePatch(&dpManaAIcons[1], "MANABRT1");
+    R_CachePatch(&dpManaBIcons[1], "MANABRT2");
 
-    R_CachePatch(&PatchMANAAICONS[0], "MANADIM1");
-    R_CachePatch(&PatchMANABICONS[0], "MANADIM2");
-    R_CachePatch(&PatchMANAAICONS[1], "MANABRT1");
-    R_CachePatch(&PatchMANABICONS[1], "MANABRT2");
+    R_CachePatch(&dpIndicatorLeft1, "invgeml1");
+    R_CachePatch(&dpIndicatorLeft2, "invgeml2");
+    R_CachePatch(&dpIndicatorRight1, "invgemr1");
+    R_CachePatch(&dpIndicatorRight2, "invgemr2");
+    R_CachePatch(&dpNegative, "NEGNUM");
+    R_CachePatch(&dpKills, "KILLS");
 
-    R_CachePatch(&PatchNumINVLFGEM1, "invgeml1");
-    R_CachePatch(&PatchNumINVLFGEM2, "invgeml2");
-    R_CachePatch(&PatchNumINVRTGEM1, "invgemr1");
-    R_CachePatch(&PatchNumINVRTGEM2, "invgemr2");
-    R_CachePatch(&PatchNumNEGATIVE, "NEGNUM");
-    R_CachePatch(&PatchNumKILLS, "KILLS");
-    R_CachePatch(&SpinFlylump, "SPFLY0");
-    R_CachePatch(&SpinMinotaurLump, "SPMINO0");
-    R_CachePatch(&SpinSpeedLump, "SPBOOT0");
-    R_CachePatch(&SpinDefenseLump, "SPSHLD0");
+    for(i = 0; i < NUM_KEY_TYPES; ++i)
+    {
+        sprintf(namebuf, "KEYSLOT%X", i + 1);
+        R_CachePatch(&dpKeySlot[i], namebuf);
+    }
+
+    for(i = 0; i < NUMARMOR; ++i)
+    {
+        sprintf(namebuf, "ARMSLOT", i + 1);
+        R_CachePatch(&dpArmorSlot[i], namebuf);
+    }
+
+    for(i = 0; i < 16; ++i)
+    {
+        sprintf(namebuf, "SPFLY%d", i);
+        R_CachePatch(&dpSpinFly[i], namebuf);
+
+        sprintf(namebuf, "SPMINO%d", i);
+        R_CachePatch(&dpSpinMinotaur[i], namebuf);
+
+        sprintf(namebuf, "SPBOOT%d", i);
+        R_CachePatch(&dpSpinSpeed[i], namebuf);
+
+        sprintf(namebuf, "SPSHLD%d", i);
+        R_CachePatch(&dpSpinDefense[i], namebuf);
+    }
 
     // Fighter:
-    R_CachePatch(&PatchNumPIECE1[PCLASS_FIGHTER], "wpiecef1");
-    R_CachePatch(&PatchNumPIECE2[PCLASS_FIGHTER], "wpiecef2");
-    R_CachePatch(&PatchNumPIECE3[PCLASS_FIGHTER], "wpiecef3");
-    R_CachePatch(&PatchNumCHAIN[PCLASS_FIGHTER], "chain");
-    R_CachePatch(&PatchNumWEAPONSLOT[PCLASS_FIGHTER], "wpslot0");
-    R_CachePatch(&PatchNumWEAPONFULL[PCLASS_FIGHTER], "wpfull0");
-    R_CachePatch(&PatchNumLifeGem[PCLASS_FIGHTER][0], "lifegem");
+    R_CachePatch(&dpWeaponPiece1[PCLASS_FIGHTER], "WPIECEF1");
+    R_CachePatch(&dpWeaponPiece2[PCLASS_FIGHTER], "WPIECEF2");
+    R_CachePatch(&dpWeaponPiece3[PCLASS_FIGHTER], "WPIECEF3");
+    R_CachePatch(&dpChain[PCLASS_FIGHTER], "CHAIN");
+    R_CachePatch(&dpWeaponSlot[PCLASS_FIGHTER], "WPSLOT0");
+    R_CachePatch(&dpWeaponFull[PCLASS_FIGHTER], "WPFULL0");
+    R_CachePatch(&dpLifeGem[PCLASS_FIGHTER][0], "LIFEGEM");
     for(i = 1; i < 8; ++i)
     {
-        sprintf(namebuf, "lifegmf%d", i);
-        R_CachePatch(&PatchNumLifeGem[PCLASS_FIGHTER][i], namebuf);
+        sprintf(namebuf, "LIFEGMF%d", i);
+        R_CachePatch(&dpLifeGem[PCLASS_FIGHTER][i], namebuf);
     }
 
     // Cleric:
-    R_CachePatch(&PatchNumPIECE1[PCLASS_CLERIC], "wpiecec1");
-    R_CachePatch(&PatchNumPIECE2[PCLASS_CLERIC], "wpiecec2");
-    R_CachePatch(&PatchNumPIECE3[PCLASS_CLERIC], "wpiecec3");
-    R_CachePatch(&PatchNumCHAIN[PCLASS_CLERIC], "chain2");
-    R_CachePatch(&PatchNumWEAPONSLOT[PCLASS_CLERIC], "wpslot1");
-    R_CachePatch(&PatchNumWEAPONFULL[PCLASS_CLERIC], "wpfull1");
+    R_CachePatch(&dpWeaponPiece1[PCLASS_CLERIC], "WPIECEC1");
+    R_CachePatch(&dpWeaponPiece2[PCLASS_CLERIC], "WPIECEC2");
+    R_CachePatch(&dpWeaponPiece3[PCLASS_CLERIC], "WPIECEC3");
+    R_CachePatch(&dpChain[PCLASS_CLERIC], "CHAIN2");
+    R_CachePatch(&dpWeaponSlot[PCLASS_CLERIC], "WPSLOT1");
+    R_CachePatch(&dpWeaponFull[PCLASS_CLERIC], "WPFULL1");
     for(i = 0; i < 8; ++i)
     {
-        sprintf(namebuf, "lifegmc%d", i);
-        R_CachePatch(&PatchNumLifeGem[PCLASS_CLERIC][i], namebuf);
+        sprintf(namebuf, "LIFEGMC%d", i);
+        R_CachePatch(&dpLifeGem[PCLASS_CLERIC][i], namebuf);
     }
 
     // Mage:
-    R_CachePatch(&PatchNumPIECE1[PCLASS_MAGE], "wpiecem1");
-    R_CachePatch(&PatchNumPIECE2[PCLASS_MAGE], "wpiecem2");
-    R_CachePatch(&PatchNumPIECE3[PCLASS_MAGE], "wpiecem3");
-    R_CachePatch(&PatchNumCHAIN[PCLASS_MAGE], "chain3");
-    R_CachePatch(&PatchNumWEAPONSLOT[PCLASS_MAGE], "wpslot2");
-    R_CachePatch(&PatchNumWEAPONFULL[PCLASS_MAGE], "wpfull2");
+    R_CachePatch(&dpWeaponPiece1[PCLASS_MAGE], "WPIECEM1");
+    R_CachePatch(&dpWeaponPiece2[PCLASS_MAGE], "WPIECEM2");
+    R_CachePatch(&dpWeaponPiece3[PCLASS_MAGE], "WPIECEM3");
+    R_CachePatch(&dpChain[PCLASS_MAGE], "CHAIN3");
+    R_CachePatch(&dpWeaponSlot[PCLASS_MAGE], "WPSLOT2");
+    R_CachePatch(&dpWeaponFull[PCLASS_MAGE], "WPFULL2");
     for(i = 0; i < 8; ++i)
     {
-        sprintf(namebuf, "lifegmm%d", i);
-        R_CachePatch(&PatchNumLifeGem[PCLASS_MAGE][i], namebuf);
+        sprintf(namebuf, "LIFEGMM%d", i);
+        R_CachePatch(&dpLifeGem[PCLASS_MAGE][i], namebuf);
     }
 
     for(i = 0; i < 10; ++i)
     {
         sprintf(namebuf, "IN%d", i);
-        R_CachePatch(&PatchNumINumbers[i], namebuf);
+        R_CachePatch(&dpINumbers[i], namebuf);
     }
 
     for(i = 0; i < 10; ++i)
     {
         sprintf(namebuf, "SMALLIN%d", i);
-        R_CachePatch(&PatchNumSmNumbers[i], namebuf);
+        R_CachePatch(&dpSmallNumbers[i], namebuf);
     }
 
     // Artifact icons (+5 for the use-artifact flash patches)
     for(i = 0; i < (NUM_ARTIFACT_TYPES + 5); ++i)
     {
         sprintf(namebuf, "%s", artifactlist[i]);
-        R_CachePatch(&PatchARTIFACTS[i], namebuf);
+        R_CachePatch(&dpArtifacts[i], namebuf);
     }
+
+    R_CachePatch(&dpTeleIcon, "TELEICON");
 }
 
 void ST_loadData(void)
@@ -990,69 +1009,69 @@ void ST_createWidgets(int player)
     hudstate_t*         hud = &hudStates[player];
 
     // Health num.
-    STlib_initNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, PatchNumINumbers,
+    STlib_initNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, dpINumbers,
                   &plr->health, &hud->statusbaron, ST_HEALTHWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // Frags sum.
-    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, PatchNumINumbers,
+    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, dpINumbers,
                   &hud->fragscount, &hud->fragson, ST_FRAGSWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // Armor num - should be colored later.
-    STlib_initNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, PatchNumINumbers,
+    STlib_initNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, dpINumbers,
                   &hud->armorlevel, &hud->statusbaron, ST_ARMORWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // ManaA count.
     STlib_initNum(&hud->wManaACount, ST_MANAAX, ST_MANAAY,
-                  PatchNumSmNumbers, &hud->manaACount, &hud->statusbaron,
+                  dpSmallNumbers, &hud->manaACount, &hud->statusbaron,
                   ST_MANAAWIDTH, &hud->statusbarCounterAlpha);
 
     // ManaB count.
     STlib_initNum(&hud->wManaBCount, ST_MANABX, ST_MANABY,
-                  PatchNumSmNumbers, &hud->manaBCount, &hud->statusbaron,
+                  dpSmallNumbers, &hud->manaBCount, &hud->statusbaron,
                   ST_MANABWIDTH, &hud->statusbarCounterAlpha);
 
     // Current mana A icon.
-    STlib_initMultIcon(&hud->wManaA, ST_MANAAICONX, ST_MANAAICONY, PatchMANAAICONS,
+    STlib_initMultIcon(&hud->wManaA, ST_MANAAICONX, ST_MANAAICONY, dpManaAIcons,
                        &hud->manaAicon, &hud->statusbaron, &hud->statusbarCounterAlpha);
 
     // Current mana B icon.
-    STlib_initMultIcon(&hud->wManaB, ST_MANABICONX, ST_MANABICONY, PatchMANABICONS,
+    STlib_initMultIcon(&hud->wManaB, ST_MANABICONX, ST_MANABICONY, dpManaBIcons,
                        &hud->manaBicon, &hud->statusbaron, &hud->statusbarCounterAlpha);
 
     // Current mana A vial.
-    STlib_initMultIcon(&hud->wManaAVial, ST_MANAAVIALX, ST_MANAAVIALY, PatchMANAAVIALS,
+    STlib_initMultIcon(&hud->wManaAVial, ST_MANAAVIALX, ST_MANAAVIALY, dpManaAVials,
                        &hud->manaAvial, &hud->statusbaron, &hud->statusbarCounterAlpha);
 
     // Current mana B vial.
-    STlib_initMultIcon(&hud->wManaBVial, ST_MANABVIALX, ST_MANABVIALY, PatchMANABVIALS,
+    STlib_initMultIcon(&hud->wManaBVial, ST_MANABVIALX, ST_MANABVIALY, dpManaBVials,
                        &hud->manaBvial, &hud->statusbaron, &hud->statusbarCounterAlpha);
 
     // Current artifact (stbar not inventory).
-    STlib_initMultIcon(&hud->wArti, ST_ARTIFACTX, ST_ARTIFACTY, PatchARTIFACTS,
+    STlib_initMultIcon(&hud->wArti, ST_ARTIFACTX, ST_ARTIFACTY, dpArtifacts,
                        &hud->artici, &hud->statusbaron, &hud->statusbarCounterAlpha);
 
     // Current artifact count.
-    STlib_initNum(&hud->wArtiCount, ST_ARTIFACTCX, ST_ARTIFACTCY, PatchNumSmNumbers,
+    STlib_initNum(&hud->wArtiCount, ST_ARTIFACTCX, ST_ARTIFACTCY, dpSmallNumbers,
                   &hud->oldartiCount, &hud->statusbaron, ST_ARTIFACTCWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // Inventory slots
-    width = PatchARTIFACTS[5].width + 1;
+    width = dpArtifacts[5].width + 1;
     temp = 0;
 
     for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
         // Inventory slot icon.
         STlib_initMultIcon(&hud->wInvSlot[i], ST_INVENTORYX + temp , ST_INVENTORYY,
-                           PatchARTIFACTS, &hud->invslot[i],
+                           dpArtifacts, &hud->invslot[i],
                            &hud->statusbaron, &hud->statusbarCounterAlpha);
 
         // Inventory slot counter.
         STlib_initNum(&hud->wInvSlotCount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX,
-                      ST_INVENTORYY + ST_INVCOUNTOFFY, PatchNumSmNumbers,
+                      ST_INVENTORYY + ST_INVCOUNTOFFY, dpSmallNumbers,
                       &hud->invslotcount[i], &hud->statusbaron, ST_ARTIFACTCWIDTH,
                       &hud->statusbarCounterAlpha);
 
@@ -1497,17 +1516,17 @@ static void drawWidgets(hudstate_t* hud)
         }
 
         // Draw selector box
-        GL_DrawPatch(ST_INVENTORYX + plr->curPos * 31, 163, PatchNumSELECTBOX.lump);
+        GL_DrawPatch(ST_INVENTORYX + plr->curPos * 31, 163, dpSelectBox.lump);
 
         // Draw more left indicator
         if(x != 0)
             GL_DrawPatchLitAlpha(42, 163, 1, hud->statusbarCounterAlpha,
-                                 !(levelTime & 4) ? PatchNumINVLFGEM1.lump : PatchNumINVLFGEM2.lump);
+                                 !(levelTime & 4) ? dpIndicatorLeft1.lump : dpIndicatorLeft2.lump);
 
         // Draw more right indicator
         if(plr->inventorySlotNum - x > 7)
             GL_DrawPatchLitAlpha(269, 163, 1, hud->statusbarCounterAlpha,
-                                 !(levelTime & 4) ? PatchNumINVRTGEM1.lump : PatchNumINVRTGEM2.lump);
+                                 !(levelTime & 4) ? dpIndicatorRight1.lump : dpIndicatorRight2.lump);
     }
 }
 
@@ -1537,40 +1556,49 @@ static void DrINumber(signed int val, int x, int y, float r, float g,
         }
         if(val > 9)
         {
-            GL_DrawPatch_CS(x + 8, y, PatchNumINumbers[val / 10].lump);
-            GL_DrawPatch_CS(x, y, PatchNumNEGATIVE.lump);
+            GL_DrawPatch_CS(x + 8, y, dpINumbers[val / 10].lump);
+            GL_DrawPatch_CS(x, y, dpNegative.lump);
         }
         else
         {
-            GL_DrawPatch_CS(x + 8, y, PatchNumNEGATIVE.lump);
+            GL_DrawPatch_CS(x + 8, y, dpNegative.lump);
         }
         val = val % 10;
-        GL_DrawPatch_CS(x + 16, y, PatchNumINumbers[val].lump);
+        GL_DrawPatch_CS(x + 16, y, dpINumbers[val].lump);
         return;
     }
     if(val > 99)
     {
-        GL_DrawPatch_CS(x, y, PatchNumINumbers[val / 100].lump);
+        GL_DrawPatch_CS(x, y, dpINumbers[val / 100].lump);
     }
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        GL_DrawPatch_CS(x + 8, y, PatchNumINumbers[val / 10].lump);
+        GL_DrawPatch_CS(x + 8, y, dpINumbers[val / 10].lump);
     }
     val = val % 10;
-    GL_DrawPatch_CS(x + 16, y, PatchNumINumbers[val].lump);
+    GL_DrawPatch_CS(x + 16, y, dpINumbers[val].lump);
 
+}
+
+void GL_DrawShadowedPatch2(float x, float y, float r, float g, float b,
+                           float a, lumpnum_t lump)
+{
+    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, a * .4f, lump);
+    DGL_Color4f(r, g, b, a);
+    GL_DrawPatch_CS(x, y, lump);
+    DGL_Color4f(1, 1, 1, 1);
 }
 
 /**
  * Draws a three digit number using FontB
  */
-static void DrBNumber(signed int val, int x, int y, float red, float green,
+static void DrBNumber(int val, int x, int y, float red, float green,
                       float blue, float alpha)
 {
-    lumppatch_t    *patch;
-    int         xpos;
-    int         oldval;
+    dpatch_t*           patch;
+    int                 xpos;
+    int                 oldval;
 
     // Limit to three digits.
     if(val > 999)
@@ -1584,39 +1612,28 @@ static void DrBNumber(signed int val, int x, int y, float red, float green,
     {
         val = 0;
     }
+
     if(val > 99)
     {
-        patch = W_CacheLumpNum(fontBNumBase + val / 100, PU_CACHE);
-        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
-                             alpha * .4f,
-                             fontBNumBase + val / 100);
-        DGL_Color4f(red, green, blue, alpha);
-        GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
-                             fontBNumBase + val / 100);
-        DGL_Color4f(1, 1, 1, 1);
+        patch = &huFontB['0' - HU_FONTSTART + val / 100];
+        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
+                              blue, alpha, patch->lump);
     }
+
     val = val % 100;
     xpos += 12;
     if(val > 9 || oldval > 99)
     {
-        patch = W_CacheLumpNum(fontBNumBase + val / 10, PU_CACHE);
-        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
-                             alpha * .4f,
-                             fontBNumBase + val / 10);
-        DGL_Color4f(red, green, blue, alpha);
-        GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
-                             fontBNumBase + val / 10);
-        DGL_Color4f(1, 1, 1, 1);
+        patch = &huFontB['0' - HU_FONTSTART + val / 10];
+        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
+                              blue, alpha, patch->lump);
     }
+
     val = val % 10;
     xpos += 12;
-    patch = W_CacheLumpNum(fontBNumBase + val, PU_CACHE);
-    GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
-                         alpha *.4f, fontBNumBase + val);
-    DGL_Color4f(red, green, blue, alpha);
-    GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
-                             fontBNumBase + val);
-    DGL_Color4f(1, 1, 1, 1);
+    patch = &huFontB['0' - HU_FONTSTART + val];
+    GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green, blue,
+                          alpha, patch->lump);
 }
 
 /**
@@ -1636,15 +1653,15 @@ static void DrSmallNumber(int val, int x, int y, float r, float g, float b, floa
     }
     if(val > 99)
     {
-        GL_DrawPatch_CS(x, y, PatchNumSmNumbers[val / 100].lump);
-        GL_DrawPatch_CS(x + 4, y, PatchNumSmNumbers[(val % 100) / 10].lump);
+        GL_DrawPatch_CS(x, y, dpSmallNumbers[val / 100].lump);
+        GL_DrawPatch_CS(x + 4, y, dpSmallNumbers[(val % 100) / 10].lump);
     }
     else if(val > 9)
     {
-        GL_DrawPatch_CS(x + 4, y, PatchNumSmNumbers[val / 10].lump);
+        GL_DrawPatch_CS(x + 4, y, dpSmallNumbers[val / 10].lump);
     }
     val %= 10;
-    GL_DrawPatch_CS(x + 8, y, PatchNumSmNumbers[val].lump);
+    GL_DrawPatch_CS(x + 8, y, dpSmallNumbers[val].lump);
 }
 
 #if 0 // Unused atm
@@ -1795,8 +1812,8 @@ void ST_doFullscreenStuff(int player)
 
     if(cfg.hudShown[HUD_MANA])
     {
-        int     dim[2] = { PatchMANAAICONS[0].lump, PatchMANABICONS[0].lump };
-        int     bright[2] = { PatchMANAAICONS[0].lump, PatchMANABICONS[0].lump };
+        int     dim[2] = { dpManaAIcons[0].lump, dpManaBIcons[0].lump };
+        int     bright[2] = { dpManaAIcons[0].lump, dpManaBIcons[0].lump };
         int     patches[2] = { 0, 0 };
         int     ypos = cfg.hudShown[HUD_MANA] == 2 ? 152 : 2;
 
@@ -1857,22 +1874,25 @@ void ST_doFullscreenStuff(int player)
         {
             if(plr->readyArtifact > 0)
             {
-                    Draw_BeginZoom(cfg.hudScale, 318, 198);
-                GL_DrawPatchLitAlpha(286, 170, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
+                Draw_BeginZoom(cfg.hudScale, 318, 198);
+
+                GL_DrawPatchLitAlpha(286, 170, 1, iconalpha/2,
+                                     dpArtifacts[5 + AFT_NONE].lump);
                 GL_DrawPatchLitAlpha(284, 169, 1, iconalpha,
-                         W_GetNumForName(artifactlist[plr->readyArtifact+5]));
+                                     dpArtifacts[5 + plr->readyArtifact].lump);
                 if(plr->inventory[plr->invPtr].count > 1)
                 {
                     DrSmallNumber(plr->inventory[plr->invPtr].count,
                                   302, 192, 1, 1, 1, textalpha);
                 }
-                    Draw_EndZoom();
+
+                Draw_EndZoom();
             }
         }
     }
     else
     {
-        float invScale;
+        float               invScale;
 
         invScale = MINMAX_OF(0.25f, cfg.hudScale - 0.25f, 0.8f);
 
@@ -1880,13 +1900,12 @@ void ST_doFullscreenStuff(int player)
         x = plr->invPtr - plr->curPos;
         for(i = 0; i < 7; i++)
         {
-            GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
+            GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, dpArtifacts[5 + AFT_NONE].lump);
             if(plr->inventorySlotNum > x + i &&
                plr->inventory[x + i].type != AFT_NONE)
             {
                 GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==plr->curPos? hud->alpha : iconalpha,
-                             W_GetNumForName(artifactlist[plr->inventory
-                                                       [x + i].type+5]));
+                                     dpArtifacts[5 + plr->inventory[x + i].type].lump);
 
                 if(plr->inventory[x + i].count > 1)
                 {
@@ -1895,18 +1914,18 @@ void ST_doFullscreenStuff(int player)
                 }
             }
         }
-        GL_DrawPatchLitAlpha(50 + plr->curPos * 31, 167, 1, hud->alpha,PatchNumSELECTBOX.lump);
+        GL_DrawPatchLitAlpha(50 + plr->curPos * 31, 167, 1, hud->alpha,dpSelectBox.lump);
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(40, 167, 1, iconalpha,
-                         !(levelTime & 4) ? PatchNumINVLFGEM1.lump :
-                         PatchNumINVLFGEM2.lump);
+                         !(levelTime & 4) ? dpIndicatorLeft1.lump :
+                         dpIndicatorLeft2.lump);
         }
         if(plr->inventorySlotNum - x > 7)
         {
             GL_DrawPatchLitAlpha(268, 167, 1, iconalpha,
-                         !(levelTime & 4) ? PatchNumINVRTGEM1.lump :
-                         PatchNumINVRTGEM2.lump);
+                         !(levelTime & 4) ? dpIndicatorRight1.lump :
+                         dpIndicatorRight2.lump);
         }
         Draw_EndZoom();
     }
@@ -1995,7 +2014,7 @@ void Draw_TeleportIcon(void)
         return;
 
     GL_DrawRawScreen(W_CheckNumForName("TRAVLPIC"), 0, 0);
-    GL_DrawPatch(100, 68, W_GetNumForName("teleicon"));
+    GL_DrawPatch(100, 68, dpTeleIcon.lump);
 }
 
 /**
