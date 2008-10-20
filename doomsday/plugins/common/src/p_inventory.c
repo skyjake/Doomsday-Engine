@@ -310,6 +310,7 @@ boolean P_InventoryUse(player_t* player, artitype_e arti)
 # if __JHERETIC__
         {P_UseArtiTombOfPower, SFX_ARTIFACT_USE},
 # elif __JHEXEN__
+        {P_UseArtiHealRadius, SFX_ARTIFACT_USE},
         {P_UseArtiSummon, SFX_ARTIFACT_USE},
 # endif
         {P_UseArtiTorch, SFX_ARTIFACT_USE},
