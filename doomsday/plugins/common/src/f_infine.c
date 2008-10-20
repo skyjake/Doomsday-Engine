@@ -1496,7 +1496,7 @@ int FI_GetLineWidth(char *text, boolean fontb)
 
 int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
-    int                 lump;
+    lumpnum_t           lump;
 
     ch = FI_FilterChar(ch);
 

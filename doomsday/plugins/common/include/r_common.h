@@ -31,9 +31,9 @@
 
 // A combination of patch data and its lump number.
 typedef struct dpatch_s {
-    int         width, height;
-    int         leftOffset, topOffset;
-    int         lump;
+    int             width, height;
+    int             leftOffset, topOffset;
+    lumpnum_t       lump;
 } dpatch_t;
 
 void            R_SetViewWindowTarget(int x, int y, int w, int h);

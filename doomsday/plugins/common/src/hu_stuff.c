@@ -1638,8 +1638,9 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
             w = font[c].width;
             h = font[c].height;
 
-            if(!font[c].lump){
-                // crap. a character we don't have a patch for...?!
+            if(!font[c].lump)
+            {
+                // A character we don't have a patch for...?!
                 continue;
             }
 
