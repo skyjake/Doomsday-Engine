@@ -460,11 +460,22 @@ static void drawWeaponPieces(hudstate_t* hud)
 
 static void drawChain(hudstate_t* hud)
 {
+    static int theirColors[] = {
+        157, // Blue
+        177, // Red
+        137, // Yellow
+        198, // Green
+        215, // Jade
+        32,  // White
+        106, // Hazel
+        234  // Purple
+    };
+
     int                 x, x2, y, w, w2, w3, h;
     int                 gemoffset = 36, pClass, pColor;
     float               cw, cw2;
     float               healthPos;
-    float               gemglow;
+    float               gemglow, rgba[4];
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
     dpatch_t*           gemPatch;
@@ -540,10 +551,12 @@ static void drawChain(hudstate_t* hud)
 
     if(!IS_NETGAME)
     {   // Always use the red life gem (the second gem).
+        GL_PalIdxToRGB(theirColors[1], rgba);
         gemPatch = &dpLifeGem[pClass][1];
     }
     else
     {
+        GL_PalIdxToRGB(theirColors[pColor], rgba);
         gemPatch = &dpLifeGem[pClass][pColor];
     }
 
@@ -570,7 +583,7 @@ static void drawChain(hudstate_t* hud)
     GL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    GL_DrawRect(x + healthPos + 25, y - 3, 34, 18, 1, 0, 0,
+    GL_DrawRect(x + healthPos + 25, y - 3, 34, 18, rgba[0], rgba[1], rgba[2],
                 gemglow - (1 - hud->statusbarCounterAlpha));
 
     GL_BlendMode(BM_NORMAL);
@@ -602,6 +615,15 @@ static void drawStatusBarBackground(int player)
     if(!(alpha < 1))
     {
         GL_DrawPatch(0, 134, dpStatusBar.lump);
+        /**
+         * \kludge The Hexen statusbar graphic has a chain already in the
+         * image, which shows through the modified chain patches.
+         * Mask out the chain on the statusbar by drawing a solid black
+         * rectangle over it.
+         */
+        GL_SetNoTexture();
+        GL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, 1);
+        //// \kludge end
         GL_DrawPatch(0, 134, dpStatusBarTop.lump);
 
         if(!hud->inventory)
@@ -638,8 +660,7 @@ static void drawStatusBarBackground(int player)
     else
     {
         DGL_Color4f(1, 1, 1, alpha);
-
-        GL_SetPatch(dpStatusBar.lump, DGL_REPEAT, DGL_REPEAT);
+        GL_SetPatch(dpStatusBar.lump, DGL_CLAMP, DGL_CLAMP);
 
         DGL_Begin(DGL_QUADS);
 
@@ -692,26 +713,20 @@ static void drawStatusBarBackground(int player)
         DGL_Vertex2f(x + w, y + h);
         DGL_TexCoord2f(cw, 1);
         DGL_Vertex2f(x, y + h);
-
-        // bottom (behind the chain)
-        x = 38;
-        y = 192;
-        w = 244;
-        h = 8;
-        cw = (float) 38 / ST_WIDTH;
-        cw2 = (float) (ST_WIDTH - 38) / ST_WIDTH;
-        ch = 0.87692307692307692307692307692308f;
-
-        DGL_TexCoord2f(cw, ch);
-        DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(cw2, ch);
-        DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(cw2, 1);
-        DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(cw, 1);
-        DGL_Vertex2f(x, y + h);
-
         DGL_End();
+
+        /**
+         * \kludge The Hexen statusbar graphic has a chain already in the
+         * image, which shows through the modified chain patches.
+         * Mask out the chain on the statusbar by cutting a window out and
+         * drawing a solid near-black rectangle to fill the hole.
+         */
+        GL_DrawCutRectTiled(38, 192, 244, 8, 320, 65, 38, 192-135,
+                            44, 193, 232, 7);
+        GL_SetNoTexture();
+        GL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, alpha);
+        DGL_Color4f(1, 1, 1, alpha);
+        //// \kludge end
 
         if(!hud->inventory)
         {
@@ -904,7 +919,7 @@ void ST_loadGraphics(void)
     R_CachePatch(&dpLifeGem[PCLASS_FIGHTER][0], "LIFEGEM");
     for(i = 1; i < 8; ++i)
     {
-        sprintf(namebuf, "LIFEGMF%d", i);
+        sprintf(namebuf, "LIFEGMF%d", i + 1);
         R_CachePatch(&dpLifeGem[PCLASS_FIGHTER][i], namebuf);
     }
 
@@ -1467,7 +1482,7 @@ static void drawWidgets(hudstate_t* hud)
 
             STlib_updateNum(&hud->wArmor, refresh);
 
-            if(plr->readyArtifact > 0)
+            if(plr->readyArtifact != AFT_NONE)
             {
                 STlib_updateMultIcon(&hud->wArti, refresh);
                 if(!hud->artifactFlash && plr->inventory[plr->invPtr].count > 1)
