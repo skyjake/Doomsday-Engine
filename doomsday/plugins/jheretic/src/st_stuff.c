@@ -318,83 +318,102 @@ static void shadeChain(float alpha)
 
 static void drawChain(hudstate_t* hud)
 {
+    static int theirColors[] = {
+        144, // Green.
+        197, // Yellow.
+        150, // Red.
+        220  // Blue.
+    };
     int                 chainY;
-    float               healthPos;
-    float               gemglow;
+    float               healthPos, gemXOffset, gemglow;
     int                 x, y, w, h, gemNum;
-    float               cw;
+    float               cw, rgba[4];
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
 
-    if(hud->oldHealth != hud->healthMarker)
-    {
-        hud->oldHealth = hud->healthMarker;
-        healthPos = hud->healthMarker;
-        if(healthPos < 0)
-        {
-            healthPos = 0;
-        }
-        if(healthPos > 100)
-        {
-            healthPos = 100;
-        }
+    hud->oldHealth = hud->healthMarker;
 
-        gemglow = healthPos / 100;
+    chainY = 191;
+    if(hud->healthMarker != plr->plr->mo->health)
+        chainY += hud->chainWiggle;
 
-        chainY = 191;
-        if(hud->healthMarker != plr->plr->mo->health)
-            chainY += hud->chainWiggle;
+    healthPos = MINMAX_OF(0, hud->healthMarker / 100.f, 1);
 
-        // Draw the chain.
-        x = 21;
-        y = chainY;
-        w = 271;
-        h = 8;
-        cw = (healthPos / 118) + 0.018f;
+    if(!IS_NETGAME)
+        gemNum = 2; // Always use the red gem in single player.
+    else
+        gemNum = cfg.playerColor[player];
+    gemglow = healthPos;
 
-        GL_SetPatch(chain.lump, DGL_REPEAT, DGL_CLAMP);
+    // Draw the chain.
+    x = 21;
+    y = chainY;
+    w = ST_WIDTH - 21 - 28;
+    h = 8;
+    cw = (float) w / chain.width;
 
-        DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
+    GL_SetPatch(chain.lump, DGL_REPEAT, DGL_CLAMP);
+
+    DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
+
+    gemXOffset = (w - lifeGems[gemNum].width) * healthPos;
+
+    if(gemXOffset > 0)
+    {   // Left chain section.
+        float               cw = gemXOffset / chain.width;
 
         DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(1 - cw, 0);
+            DGL_Vertex2f(x, y);
 
-        DGL_TexCoord2f( 0 - cw, 0);
-        DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(1, 0);
+            DGL_Vertex2f(x + gemXOffset, y);
 
-        DGL_TexCoord2f( 0.916f - cw, 0);
-        DGL_Vertex2f(x + w, y);
+            DGL_TexCoord2f(1, 1);
+            DGL_Vertex2f(x + gemXOffset, y + h);
 
-        DGL_TexCoord2f( 0.916f - cw, 1);
-        DGL_Vertex2f(x + w, y + h);
-
-        DGL_TexCoord2f( 0 - cw, 1);
-        DGL_Vertex2f(x, y + h);
-
+            DGL_TexCoord2f(1 - cw, 1);
+            DGL_Vertex2f(x, y + h);
         DGL_End();
-
-        // Draw the life gem.
-        healthPos = (healthPos * 256) / 102;
-        if(!IS_NETGAME)
-            gemNum = 2; // Always use the red gem in single player.
-        else
-            gemNum = cfg.playerColor[player];
-
-        GL_DrawPatchLitAlpha(x + healthPos, chainY, 1,
-                             hud->statusbarCounterAlpha,
-                             lifeGems[gemNum].lump);
-
-        shadeChain((hud->statusbarCounterAlpha + cfg.statusbarAlpha) /3);
-
-        // How about a glowing gem?
-        GL_BlendMode(BM_ADD);
-        DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
-
-        GL_DrawRect(x + healthPos - 11, chainY - 6, 41, 24, 1, 0, 0,
-                    gemglow - (1 - hud->statusbarCounterAlpha));
-
-        GL_BlendMode(BM_NORMAL);
-        DGL_Color4f(1, 1, 1, 1);
     }
+
+    if(gemXOffset + lifeGems[gemNum].width < w)
+    {   // Right chain section.
+        float               cw =
+            (w - gemXOffset - lifeGems[gemNum].width) / chain.width;
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0);
+            DGL_Vertex2f(x + gemXOffset + lifeGems[gemNum].width, y);
+
+            DGL_TexCoord2f(cw, 0);
+            DGL_Vertex2f(x + w, y);
+
+            DGL_TexCoord2f(cw, 1);
+            DGL_Vertex2f(x + w, y + h);
+
+            DGL_TexCoord2f(0, 1);
+            DGL_Vertex2f(x + gemXOffset + lifeGems[gemNum].width, y + h);
+        DGL_End();
+    }
+
+    // Draw the life gem.
+    GL_DrawPatchLitAlpha(x + gemXOffset, chainY,
+                         1, hud->statusbarCounterAlpha,
+                         lifeGems[gemNum].lump);
+
+    shadeChain((hud->statusbarCounterAlpha + cfg.statusbarAlpha) /3);
+
+    // How about a glowing gem?
+    GL_BlendMode(BM_ADD);
+    DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
+
+    GL_PalIdxToRGB(theirColors[gemNum], rgba);
+    GL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgba[0], rgba[1],
+                rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
+
+    GL_BlendMode(BM_NORMAL);
+    DGL_Color4f(1, 1, 1, 1);
 }
 
 /**
@@ -616,8 +635,7 @@ void ST_Ticker(void)
 
         if(!P_IsPaused())
         {
-            int                 delta;
-            int                 curHealth;
+            int                 delta, curHealth;
 
             if(cfg.hudTimer == 0)
             {
@@ -637,35 +655,16 @@ void ST_Ticker(void)
             {
                 hud->chainWiggle = P_Random() & 1;
             }
-            curHealth = plr->plr->mo->health;
-            if(curHealth < 0)
-            {
-                curHealth = 0;
-            }
+
+            curHealth = MAX_OF(plr->plr->mo->health, 0);
             if(curHealth < hud->healthMarker)
             {
-                delta = (hud->healthMarker - curHealth) >> 2;
-                if(delta < 1)
-                {
-                    delta = 1;
-                }
-                else if(delta > 8)
-                {
-                    delta = 8;
-                }
+                delta = MINMAX_OF(1, (hud->healthMarker - curHealth) >> 2, 4);
                 hud->healthMarker -= delta;
             }
             else if(curHealth > hud->healthMarker)
             {
-                delta = (curHealth - hud->healthMarker) >> 2;
-                if(delta < 1)
-                {
-                    delta = 1;
-                }
-                else if(delta > 8)
-                {
-                    delta = 8;
-                }
+                delta = MINMAX_OF(1, (curHealth - hud->healthMarker) >> 2, 4);
                 hud->healthMarker += delta;
             }
 
@@ -1411,11 +1410,11 @@ void ST_loadGraphics(void)
     R_CachePatch(&statBar, "STATBAR");
     R_CachePatch(&lifeBar, "LIFEBAR");
 
-    for(i = 0; i < 4; ++i)
-    {
-        sprintf(nameBuf, "LIFEGEM%d", i);
-        R_CachePatch(&lifeGems[i], nameBuf);
-    }
+    // Order of lifeGems changed to match player color index.
+    R_CachePatch(&lifeGems[0], "LIFEGEM1");
+    R_CachePatch(&lifeGems[1], "LIFEGEM3");
+    R_CachePatch(&lifeGems[2], "LIFEGEM2");
+    R_CachePatch(&lifeGems[3], "LIFEGEM0");
 
     R_CachePatch(&godLeft, "GOD1");
     R_CachePatch(&godRight, "GOD2");
