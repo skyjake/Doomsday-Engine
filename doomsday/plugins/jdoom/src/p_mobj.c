@@ -399,7 +399,6 @@ void P_HitFloor(mobj_t *mo)
 void P_MobjMoveZ(mobj_t *mo)
 {
     float               gravity, dist, delta;
-    boolean             movingDown;
 
     gravity = XS_Gravity(P_GetPtrp(mo->subsector, DMU_SECTOR));
 
@@ -491,6 +490,8 @@ void P_MobjMoveZ(mobj_t *mo)
     // The floor.
     if(mo->pos[VZ] <= mo->floorZ)
     {   // Hit the floor.
+        boolean             movingDown;
+
         // Note (id):
         //  somebody left this after the setting momz to 0,
         //  kinda useless there.
@@ -542,8 +543,6 @@ void P_MobjMoveZ(mobj_t *mo)
                 if(mo->player->health > 0)
                     S_StartSound(SFX_OOF, mo);
             }
-
-            mo->mom[MZ] = 0;
         }
 
         mo->pos[VZ] = mo->floorZ;
@@ -573,6 +572,9 @@ void P_MobjMoveZ(mobj_t *mo)
                 return;
             }
         }
+
+        if(movingDown && mo->mom[MZ] < 0)
+            mo->mom[MZ] = 0;
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
@@ -1303,11 +1305,12 @@ boolean P_CheckMissileSpawn(mobj_t *th)
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
 {
     float               pos[3];
-    mobj_t             *th = 0;
-    angle_t             an = 0;
+    mobj_t*             th = 0;
+    unsigned int        an;
+    angle_t             angle = 0;
     float               dist = 0;
     float               slope = 0;
     float               spawnZOff = 0;
@@ -1317,23 +1320,23 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
     if(source->player)
     {
         // See which target is to be aimed at.
-        an = source->angle;
-        slope = P_AimLineAttack(source, an, 16 * 64);
+        angle = source->angle;
+        slope = P_AimLineAttack(source, angle, 16 * 64);
         if(!cfg.noAutoAim)
             if(!lineTarget)
             {
-                an += 1 << 26;
-                slope = P_AimLineAttack(source, an, 16 * 64);
+                angle += 1 << 26;
+                slope = P_AimLineAttack(source, angle, 16 * 64);
 
                 if(!lineTarget)
                 {
-                    an -= 2 << 26;
-                    slope = P_AimLineAttack(source, an, 16 * 64);
+                    angle -= 2 << 26;
+                    slope = P_AimLineAttack(source, angle, 16 * 64);
                 }
 
                 if(!lineTarget)
                 {
-                    an = source->angle;
+                    angle = source->angle;
                     slope =
                         tan(LOOKDIR2RAD(source->dPlayer->lookDir)) / 1.2f;
                 }
@@ -1341,7 +1344,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 
         if(!P_IsCamera(source->player->plr->mo))
             spawnZOff = cfg.plrViewHeight - 9 +
-                            source->player->plr->lookDir / 173;
+                source->player->plr->lookDir / 173;
     }
     else
     {
@@ -1363,20 +1366,20 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 
     if(!source->player)
     {
-        an = R_PointToAngle2(pos[VX], pos[VY], dest->pos[VX], dest->pos[VY]);
+        angle = R_PointToAngle2(pos[VX], pos[VY], dest->pos[VX], dest->pos[VY]);
 
         // Fuzzy player.
         if(dest->flags & MF_SHADOW)
-            an += (P_Random() - P_Random()) << 20;
+            angle += (P_Random() - P_Random()) << 20;
     }
 
-    th = P_SpawnMobj3fv(type, pos, an);
+    th = P_SpawnMobj3fv(type, pos, angle);
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
 
     th->target = source; // Where it came from.
-    an >>= ANGLETOFINESHIFT;
+    an = angle >> ANGLETOFINESHIFT;
     th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
 

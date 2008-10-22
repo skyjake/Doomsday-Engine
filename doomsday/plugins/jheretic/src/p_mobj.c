@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
@@ -623,8 +623,8 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // The floor.
     if(mo->pos[VZ] <= mo->floorZ)
-    {
-        // hit the floor
+    {   // Hit the floor.
+        boolean             movingDown;
 
         // Note (id):
         //  somebody left this after the setting mom[MZ] to 0,
@@ -656,7 +656,7 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(mo->mom[MZ] < 0)
+        if(movingDown = (mo->mom[MZ] < 0))
         {
             if(mo->player && mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
@@ -671,12 +671,12 @@ void P_MobjMoveZ(mobj_t *mo)
                 if(mo->player->health > 0)
                     S_StartSound(SFX_PLROOF, mo);
             }
-
-            P_HitFloor(mo);
-            mo->mom[MZ] = 0;
         }
 
         mo->pos[VZ] = mo->floorZ;
+
+        if(movingDown)
+            P_HitFloor(mo);
 
         // cph 2001/05/26 -
         // See lost soul bouncing comment above. We need this here for bug
@@ -705,6 +705,10 @@ void P_MobjMoveZ(mobj_t *mo)
                 return;
             }
         }
+
+        if(movingDown && mo->mom[MZ] < 0)
+            mo->mom[MZ] = 0;
+
 #if __JHERETIC__
         if(mo->info->crashState && (mo->flags & MF_CORPSE))
         {
@@ -1599,16 +1603,17 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
  * Tries to aim at a nearby monster if source is a player. Else aim is
  * taken at dest.
  *
- * @param   source      The mobj doing the shooting.
- * @param   dest        The mobj being shot at. Can be @c NULL if source
+ * @param source        The mobj doing the shooting.
+ * @param dest          The mobj being shot at. Can be @c NULL if source
  *                      is a player.
- * @param   type        The type of mobj to be shot.
+ * @param type          The type of mobj to be shot.
+ *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
 {
     float               pos[3];
-    mobj_t             *th = 0;
+    mobj_t*             th = 0;
     unsigned int        an = 0;
     angle_t             angle = 0;
     float               dist = 0;
@@ -1620,22 +1625,22 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
     if(source->player)
     {
         // see which target is to be aimed at
-        an = source->angle;
-        slope = P_AimLineAttack(source, an, 16 * 64);
+        angle = source->angle;
+        slope = P_AimLineAttack(source, angle, 16 * 64);
         if(!cfg.noAutoAim)
             if(!lineTarget)
             {
-                an += 1 << 26;
-                slope = P_AimLineAttack(source, an, 16 * 64);
+                angle += 1 << 26;
+                slope = P_AimLineAttack(source, angle, 16 * 64);
                 if(!lineTarget)
                 {
-                    an -= 2 << 26;
-                    slope = P_AimLineAttack(source, an, 16 * 64);
+                    angle -= 2 << 26;
+                    slope = P_AimLineAttack(source, angle, 16 * 64);
                 }
 
                 if(!lineTarget)
                 {
-                    an = source->angle;
+                    angle = source->angle;
                     slope =
                         tan(LOOKDIR2RAD(source->dPlayer->lookDir)) / 1.2f;
                 }
@@ -1643,7 +1648,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 
         if(!P_IsCamera(source->player->plr->mo))
             spawnZOff = cfg.plrViewHeight - 9 +
-                   (source->player->plr->lookDir) / 173;
+                source->player->plr->lookDir / 173;
     }
     else
     {
@@ -1681,8 +1686,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
 
     if(!source->player)
     {
-        angle = R_PointToAngle2(pos[VX], pos[VY],
-                             dest->pos[VX], dest->pos[VY]);
+        angle = R_PointToAngle2(pos[VX], pos[VY], dest->pos[VX], dest->pos[VY]);
         // Fuzzy player.
         if(dest->flags & MF_SHADOW)
             angle += (P_Random() - P_Random()) << 21; // note << 20 in jDoom

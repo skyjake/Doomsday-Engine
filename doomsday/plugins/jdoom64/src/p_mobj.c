@@ -391,16 +391,14 @@ void P_RipperBlood(mobj_t *mo)
     th->tics += P_Random() & 3;
 }
 
-void P_HitFloor(mobj_t *mo)
+void P_HitFloor(mobj_t* mo)
 {
     //P_MobjSectorsIterator(mo, PIT_Splash, mo);
 }
 
-void P_MobjMoveZ(mobj_t *mo)
+void P_MobjMoveZ(mobj_t* mo)
 {
-    float               gravity;
-    float               dist;
-    float               delta;
+    float               gravity, dist, delta;
 
     gravity = XS_Gravity(P_GetPtrp(mo->subsector, DMU_SECTOR));
 
@@ -408,40 +406,37 @@ void P_MobjMoveZ(mobj_t *mo)
     if(P_CameraZMovement(mo))
         return;
 
-    // Check for smooth step up.
-    if(mo->player && mo->pos[VZ] < mo->floorZ)
+    // $voodoodolls: Check for smooth step up unless a voodoo doll.
+    if(mo->player && mo->player->plr->mo == mo &&
+       mo->pos[VZ] < mo->floorZ)
     {
         mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
-
         mo->dPlayer->viewHeightDelta =
             (cfg.plrViewHeight - mo->dPlayer->viewHeight) / 8;
     }
 
     // Adjust height.
     mo->pos[VZ] += mo->mom[MZ];
+
     if((mo->flags2 & MF2_FLY) &&
        mo->onMobj && mo->pos[VZ] > mo->onMobj->pos[VZ] + mo->onMobj->height)
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
 
-    if((mo->flags & MF_FLOAT) && mo->target && !P_IsCamera(mo->target))
+    if(!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT)) &&
+       mo->target && !P_IsCamera(mo->target))
     {
         // Float down towards target if too close.
-        if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
+        dist = P_ApproxDistance(mo->pos[VX] - mo->target->pos[VX],
+                                mo->pos[VY] - mo->target->pos[VY]);
+
+        //delta = (mo->target->pos[VZ] + (mo->height / 2)) - mo->pos[VZ];
+        delta = (mo->target->pos[VZ] + mo->target->height / 2) -
+                (mo->pos[VZ] + mo->height / 2);
+
+        // Don't go INTO the target.
+        if(!(dist < mo->radius + mo->target->radius &&
+             fabs(delta) < mo->height + mo->target->height))
         {
-            dist = P_ApproxDistance(mo->pos[VX] - mo->target->pos[VX],
-                                    mo->pos[VY] - mo->target->pos[VY]);
-
-            //delta = (mo->target->pos[VZ] + (mo->height / 2)) - mo->pos[VZ];
-            delta = (mo->target->pos[VZ] + mo->target->height / 2) -
-                    (mo->pos[VZ] + mo->height / 2);
-
-            if(dist < mo->radius + mo->target->radius &&
-               fabs(delta) < mo->height + mo->target->height)
-            {
-                // Don't go INTO the target.
-                delta = 0;
-            }
-
             if(delta < 0 && dist < -(delta * 3))
             {
                 mo->pos[VZ] -= FLOATSPEED;
@@ -474,6 +469,7 @@ void P_MobjMoveZ(mobj_t *mo)
     }
     // < d64tc
 
+    // Clip movement. Another thing?
     if(mo->onMobj && mo->pos[VZ] <= mo->onMobj->pos[VZ] + mo->onMobj->height)
     {
         if(mo->mom[MZ] < 0)
@@ -482,9 +478,8 @@ void P_MobjMoveZ(mobj_t *mo)
                !(mo->flags2 & MF2_FLY))
             {
                 // Squat down.
-                // Decrease viewheight for a moment
-                // after hitting the ground (hard),
-                // and utter appropriate sound.
+                // Decrease viewheight for a moment after hitting the ground
+                // (hard), and utter appropriate sound.
                 mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
 
                 if(mo->player->health > 0)
@@ -527,8 +522,8 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // The floor.
     if(mo->pos[VZ] <= mo->floorZ)
-    {
-        // hit the floor
+    {   // Hit the floor.
+        boolean             movingDown;
 
         // Note (id):
         //  somebody left this after the setting momz to 0,
@@ -554,45 +549,48 @@ void P_MobjMoveZ(mobj_t *mo)
         // (but not doom2)
         int correct_lost_soul_bounce = true;
 
-        if(mo->flags & MF_SKULLFLY)
+        if(correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
         {
-            // the skull slammed into something
+            // The skull slammed into something.
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(mo->mom[MZ] < 0)
+        if(movingDown = (mo->mom[MZ] < 0))
         {
-            if(mo->player && mo->mom[MZ] < -gravity * 8 &&
-               !(mo->flags2 & MF2_FLY))
+            if(mo->player && mo->player->plr->mo == mo &&
+               mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
                 // Squat down.
-                // Decrease viewheight for a moment
-                // after hitting the ground (hard),
-                // and utter appropriate sound.
+                // Decrease viewheight for a moment after hitting the ground
+                // (hard), and utter appropriate sound.
                 mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
+                mo->player->jumpTics = 10;
 
-                // Fix DOOM bug - dead players grunting when hitting the ground
-                // (e.g., after an archvile attack)
+                /**
+                 * DOOM bug:
+                 * Dead players would grunt when hitting the ground (e.g.,
+                 * after an archvile attack).
+                 */
                 if(mo->player->health > 0)
                     S_StartSound(SFX_OOF, mo);
             }
-
-            P_HitFloor(mo);
-            mo->mom[MZ] = 0;
         }
 
         mo->pos[VZ] = mo->floorZ;
 
-        // cph 2001/05/26 -
-        // See lost soul bouncing comment above. We need this here for bug
-        // compatibility with original Doom2 v1.9 - if a soul is charging and
-        // hit by a raising floor this incorrectly reverses its Y momentum.
-        //
+        if(movingDown)
+            P_HitFloor(mo);
 
-        if(!correct_lost_soul_bounce && mo->flags & MF_SKULLFLY)
+        /**
+         * See lost soul bouncing comment above. We need this here for bug
+         * compatibility with original Doom2 v1.9 - if a soul is charging
+         * and hit by a raising floor this would incorrectly reverse it's
+         * Y momentum.
+         */
+        if(!correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
             mo->mom[MZ] = -mo->mom[MZ];
 
-        if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
+        if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
             if(mo->flags2 & MF2_FLOORBOUNCE)
             {
@@ -605,6 +603,9 @@ void P_MobjMoveZ(mobj_t *mo)
                 return;
             }
         }
+
+        if(movingDown && mo->mom[MZ] < 0)
+            mo->mom[MZ] = 0;
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
@@ -622,8 +623,7 @@ void P_MobjMoveZ(mobj_t *mo)
     }
 
     if(mo->pos[VZ] + mo->height > mo->ceilingZ)
-    {
-        // Hit the ceiling.
+    {   // Hit the ceiling.
         if(mo->mom[MZ] > 0)
             mo->mom[MZ] = 0;
 
@@ -634,7 +634,7 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
+        if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
             // Don't explode against sky.
             if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) ==
