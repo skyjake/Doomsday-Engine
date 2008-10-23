@@ -46,7 +46,7 @@
 // how many inventory slots are visible
 #define NUMVISINVSLOTS 7
 
-// invslot artifact count (relative to each slot)
+// invSlot artifact count (relative to each slot)
 #define ST_INVCOUNTOFFX         30
 #define ST_INVCOUNTOFFY         22
 
@@ -109,29 +109,30 @@ typedef struct {
     float           hideAmount;
     float           alpha; // Fullscreen hud alpha value.
 
-    float           showbar; // Slide statusbar amount 1.0 is fully open.
+    float           showBar; // Slide statusbar amount 1.0 is fully open.
     float           statusbarCounterAlpha;
 
     boolean         firstTime; // ST_Start() has just been called.
     boolean         blended; // Whether to use alpha blending.
-    boolean         statusbaron; // Whether left-side main status bar is active.
-    boolean         fragson; // !deathmatch.
-    int             fragscount; // Number of frags so far in deathmatch.
+    boolean         statusbarOn; // Whether left-side main status bar is active.
+    boolean         fragsOn; // !deathmatch.
+    int             fragsCount; // Number of frags so far in deathmatch.
 
-    int             oldhealth;
     int             healthMarker;
-    int             oldarti;
-    int             oldartiCount;
+
+    int             oldHealth;
+    int             oldArti;
+    int             oldArtiCount;
 
     int             artifactFlash;
-    int             invslot[NUMVISINVSLOTS]; // Current inventory slot indices. 0 = none.
-    int             invslotcount[NUMVISINVSLOTS]; // Current inventory slot count indices. 0 = none.
-    int             armorlevel; // Current armor level.
-    int             artici; // Current artifact index. 0 = none.
-    int             manaAicon; // Current mana A icon index. 0 = none.
-    int             manaBicon; // Current mana B icon index. 0 = none.
-    int             manaAvial; // Current mana A vial index. 0 = none.
-    int             manaBvial; // Current mana B vial index. 0 = none.
+    int             invSlot[NUMVISINVSLOTS]; // Current inventory slot indices. 0 = none.
+    int             invSlotCount[NUMVISINVSLOTS]; // Current inventory slot count indices. 0 = none.
+    int             armorLevel; // Current armor level.
+    int             artiCI; // Current artifact index. 0 = none.
+    int             manaAIcon; // Current mana A icon index. 0 = none.
+    int             manaBIcon; // Current mana B icon index. 0 = none.
+    int             manaAVial; // Current mana A vial index. 0 = none.
+    int             manaBVial; // Current mana B vial index. 0 = none.
     int             manaACount;
     int             manaBCount;
 
@@ -275,7 +276,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
 {
     int             leftoff = 0;
     int             frame;
-    float           iconalpha = (hud->statusbaron? 1: hud->alpha) - (1 - cfg.hudIconAlpha);
+    float           iconalpha = (hud->statusbarOn? 1: hud->alpha) - (1 - cfg.hudIconAlpha);
     int             player = hud - hudStates;
     player_t*       plr = &players[player];
 
@@ -431,10 +432,11 @@ static void drawWeaponPieces(hudstate_t* hud)
     // Clamp
     CLAMP(alpha, 0.0f, 1.0f);
 
-    GL_DrawPatchLitAlpha(190, 162, 1, alpha, dpWeaponSlot[pClass].lump);
-
-    if(plr->pieces == 7) // All pieces
-        GL_DrawPatchLitAlpha(190, 162, 1, hud->statusbarCounterAlpha, dpWeaponFull[pClass].lump);
+    if(plr->pieces == 7)
+    {
+        GL_DrawPatchLitAlpha(190, 162, 1, hud->statusbarCounterAlpha,
+                             dpWeaponFull[pClass].lump);
+    }
     else
     {
         if(plr->pieces & WPIECE1)
@@ -443,12 +445,14 @@ static void drawWeaponPieces(hudstate_t* hud)
                                  162, 1, hud->statusbarCounterAlpha,
                                  dpWeaponPiece1[pClass].lump);
         }
+
         if(plr->pieces & WPIECE2)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[1],
                                  162, 1, hud->statusbarCounterAlpha,
                                  dpWeaponPiece2[pClass].lump);
         }
+
         if(plr->pieces & WPIECE3)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[2],
@@ -471,118 +475,95 @@ static void drawChain(hudstate_t* hud)
         234  // Purple
     };
 
-    int                 x, x2, y, w, w2, w3, h;
+    int                 x, y, w, h, cw;
     int                 gemoffset = 36, pClass, pColor;
-    float               cw, cw2;
-    float               healthPos;
+    float               healthPos, gemXOffset;
     float               gemglow, rgba[4];
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
-    dpatch_t*           gemPatch;
+
+    hud->oldHealth = hud->healthMarker;
 
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
+
+    healthPos = MINMAX_OF(0, hud->healthMarker / 100.f, 100);
 
     if(!IS_NETGAME)
         pColor = 1; // Always use the red life gem (the second gem).
     else
         pColor = cfg.playerColor[player];
 
-    healthPos = hud->healthMarker;
-    if(healthPos < 0)
-        healthPos = 0;
-    if(healthPos > 100)
-        healthPos = 100;
-
-    gemglow = healthPos / 100;
+    gemglow = healthPos;
 
     // Draw the chain.
     x = 44;
     y = 193;
-    w = 232;
+    w = ST_WIDTH - 44 - 44;
     h = 7;
-    cw = (healthPos / 113) + 0.054f;
+    cw = (float) w / dpChain[pClass].width;
 
     GL_SetPatch(dpChain[pClass].lump, DGL_REPEAT, DGL_CLAMP);
 
     DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
 
-    DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f( 0 - cw, 0);
-        DGL_Vertex2f(x, y);
+    gemXOffset = (w - dpLifeGem[pClass][pColor].width) * healthPos;
 
-        DGL_TexCoord2f( 0.948f - cw, 0);
-        DGL_Vertex2f(x + w, y);
+    if(gemXOffset > 0)
+    {   // Left chain section.
+        float               cw = gemXOffset / dpChain[pClass].width;
 
-        DGL_TexCoord2f( 0.948f - cw, 1);
-        DGL_Vertex2f(x + w, y + h);
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(1 - cw, 0);
+            DGL_Vertex2f(x, y);
 
-        DGL_TexCoord2f( 0 - cw, 1);
-        DGL_Vertex2f(x, y + h);
-    DGL_End();
+            DGL_TexCoord2f(1, 0);
+            DGL_Vertex2f(x + gemXOffset, y);
 
-    healthPos = ((healthPos * 256) / 117) - gemoffset;
+            DGL_TexCoord2f(1, 1);
+            DGL_Vertex2f(x + gemXOffset, y + h);
 
-    x = 44;
-    y = 193;
-    w2 = 86;
-    h = 7;
-    cw = 0;
-    cw2 = 1;
-
-    // calculate the size of the quad, position and tex coords
-    if(x + healthPos < x)
-    {
-        x2 = x;
-        w3 = w2 + healthPos;
-        cw = (1.0f / w2) * (w2 - w3);
-        cw2 = 1;
-    }
-    else if(x + healthPos + w2 > x + w)
-    {
-        x2 = x + healthPos;
-        w3 = w2 - ((x + healthPos + w2) - (x + w));
-        cw = 0;
-        cw2 = (1.0f / w2) * (w2 - (w2 - w3));
-    }
-    else
-    {
-        x2 = x + healthPos;
-        w3 = w2;
-        cw = 0;
-        cw2 = 1;
+            DGL_TexCoord2f(1 - cw, 1);
+            DGL_Vertex2f(x, y + h);
+        DGL_End();
     }
 
-    GL_PalIdxToRGB(theirColors[pColor], rgba);
-    gemPatch = &dpLifeGem[pClass][pColor];
+    if(gemXOffset + dpLifeGem[pClass][pColor].width < w)
+    {   // Right chain section.
+        float               cw =
+            (w - gemXOffset - dpLifeGem[pClass][pColor].width) /
+                dpChain[pClass].width;
 
-    GL_SetPatch(gemPatch->lump, DGL_CLAMP, DGL_CLAMP);
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0);
+            DGL_Vertex2f(x + gemXOffset + dpLifeGem[pClass][pColor].width, y);
+
+            DGL_TexCoord2f(cw, 0);
+            DGL_Vertex2f(x + w, y);
+
+            DGL_TexCoord2f(cw, 1);
+            DGL_Vertex2f(x + w, y + h);
+
+            DGL_TexCoord2f(0, 1);
+            DGL_Vertex2f(x + gemXOffset + dpLifeGem[pClass][pColor].width, y + h);
+        DGL_End();
+    }
 
     // Draw the life gem.
-    DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
+    GL_DrawPatchLitAlpha(x + gemXOffset, 193,
+                         1, hud->statusbarCounterAlpha,
+                         dpLifeGem[pClass][pColor].lump);
 
-    DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(cw, 0);
-        DGL_Vertex2f(x2, y);
-
-        DGL_TexCoord2f(cw2, 0);
-        DGL_Vertex2f(x2 + w3, y);
-
-        DGL_TexCoord2f(cw2, 1);
-        DGL_Vertex2f(x2 + w3, y + h);
-
-        DGL_TexCoord2f(cw, 1);
-        DGL_Vertex2f(x2, y + h);
-    DGL_End();
-
-    // how about a glowing gem?
+    // How about a glowing gem?
     GL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    GL_DrawRect(x + healthPos + 25, y - 3, 34, 18, rgba[0], rgba[1], rgba[2],
-                gemglow - (1 - hud->statusbarCounterAlpha));
+    GL_PalIdxToRGB(theirColors[pColor], rgba);
+    GL_DrawRect(x + gemXOffset + 23, 193 - 6, 41, 24, rgba[0], rgba[1],
+                rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
     GL_BlendMode(BM_NORMAL);
+    DGL_Color4f(1, 1, 1, 1);
 }
 
 static void drawStatusBarBackground(int player)
@@ -629,16 +610,12 @@ static void drawStatusBarBackground(int player)
             {
                 GL_DrawPatch(38, 162, dpStatBar.lump);
 
-                if(plr->pieces == 7)
+                if(deathmatch)
                 {
-                    GL_DrawPatch(190, 162, dpWeaponFull[pClass].lump);
-                }
-                else
-                {
-                    GL_DrawPatch(190, 162, dpWeaponSlot[pClass].lump);
+                    GL_DrawPatch_CS(38, 162, dpKills.lump);
                 }
 
-                drawWeaponPieces(hud);
+                GL_DrawPatch(190, 162, dpWeaponSlot[pClass].lump);
             }
             else
             {
@@ -650,8 +627,6 @@ static void drawStatusBarBackground(int player)
         {
             GL_DrawPatch(38, 162, dpInventoryBar.lump);
         }
-
-        drawChain(hud);
     }
     else
     {
@@ -774,7 +749,7 @@ static void drawStatusBarBackground(int player)
 
                 DGL_End();
 
-                drawWeaponPieces(hud);
+                 GL_DrawPatch_CS(190, 162, dpWeaponSlot[pClass].lump);
             }
             else
             {
@@ -804,8 +779,6 @@ static void drawStatusBarBackground(int player)
 
             DGL_End();
         }
-
-        drawChain(hud);
     }
 }
 
@@ -983,31 +956,31 @@ static void initData(hudstate_t* hud)
 
     hud->alpha = 0.0f;
     hud->stopped = true;
-    hud->showbar = 0.0f;
+    hud->showBar = 0.0f;
     hud->statusbarCounterAlpha = 0.0f;
     hud->blended = false;
-    hud->oldhealth = -1;
-    hud->oldarti = 0;
-    hud->oldartiCount = 0;
+    hud->oldHealth = -1;
+    hud->oldArti = 0;
+    hud->oldArtiCount = 0;
 
-    hud->armorlevel = 0;
-    hud->artici = 0;
-    hud->manaAicon = 0;
-    hud->manaBicon = 0;
-    hud->manaAvial = 0;
-    hud->manaBvial = 0;
+    hud->armorLevel = 0;
+    hud->artiCI = 0;
+    hud->manaAIcon = 0;
+    hud->manaBIcon = 0;
+    hud->manaAVial = 0;
+    hud->manaBVial = 0;
     hud->manaACount = 0;
     hud->manaBCount = 0;
     hud->inventory = false;
 
     hud->firstTime = true;
 
-    hud->statusbaron = true;
+    hud->statusbarOn = true;
 
     for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
-        hud->invslot[i] = 0;
-        hud->invslotcount[i] = 0;
+        hud->invSlot[i] = 0;
+        hud->invSlotCount[i] = 0;
     }
 
     ST_HUDUnHide(player, HUE_FORCE);
@@ -1021,52 +994,52 @@ void ST_createWidgets(int player)
 
     // Health num.
     STlib_initNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, dpINumbers,
-                  &plr->health, &hud->statusbaron, ST_HEALTHWIDTH,
+                  &plr->health, &hud->statusbarOn, ST_HEALTHWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // Frags sum.
     STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, dpINumbers,
-                  &hud->fragscount, &hud->fragson, ST_FRAGSWIDTH,
+                  &hud->fragsCount, &hud->fragsOn, ST_FRAGSWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // Armor num - should be colored later.
     STlib_initNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, dpINumbers,
-                  &hud->armorlevel, &hud->statusbaron, ST_ARMORWIDTH,
+                  &hud->armorLevel, &hud->statusbarOn, ST_ARMORWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // ManaA count.
     STlib_initNum(&hud->wManaACount, ST_MANAAX, ST_MANAAY,
-                  dpSmallNumbers, &hud->manaACount, &hud->statusbaron,
+                  dpSmallNumbers, &hud->manaACount, &hud->statusbarOn,
                   ST_MANAAWIDTH, &hud->statusbarCounterAlpha);
 
     // ManaB count.
     STlib_initNum(&hud->wManaBCount, ST_MANABX, ST_MANABY,
-                  dpSmallNumbers, &hud->manaBCount, &hud->statusbaron,
+                  dpSmallNumbers, &hud->manaBCount, &hud->statusbarOn,
                   ST_MANABWIDTH, &hud->statusbarCounterAlpha);
 
     // Current mana A icon.
     STlib_initMultIcon(&hud->wManaA, ST_MANAAICONX, ST_MANAAICONY, dpManaAIcons,
-                       &hud->manaAicon, &hud->statusbaron, &hud->statusbarCounterAlpha);
+                       &hud->manaAIcon, &hud->statusbarOn, &hud->statusbarCounterAlpha);
 
     // Current mana B icon.
     STlib_initMultIcon(&hud->wManaB, ST_MANABICONX, ST_MANABICONY, dpManaBIcons,
-                       &hud->manaBicon, &hud->statusbaron, &hud->statusbarCounterAlpha);
+                       &hud->manaBIcon, &hud->statusbarOn, &hud->statusbarCounterAlpha);
 
     // Current mana A vial.
     STlib_initMultIcon(&hud->wManaAVial, ST_MANAAVIALX, ST_MANAAVIALY, dpManaAVials,
-                       &hud->manaAvial, &hud->statusbaron, &hud->statusbarCounterAlpha);
+                       &hud->manaAVial, &hud->statusbarOn, &hud->statusbarCounterAlpha);
 
     // Current mana B vial.
     STlib_initMultIcon(&hud->wManaBVial, ST_MANABVIALX, ST_MANABVIALY, dpManaBVials,
-                       &hud->manaBvial, &hud->statusbaron, &hud->statusbarCounterAlpha);
+                       &hud->manaBVial, &hud->statusbarOn, &hud->statusbarCounterAlpha);
 
     // Current artifact (stbar not inventory).
     STlib_initMultIcon(&hud->wArti, ST_ARTIFACTX, ST_ARTIFACTY, dpArtifacts,
-                       &hud->artici, &hud->statusbaron, &hud->statusbarCounterAlpha);
+                       &hud->artiCI, &hud->statusbarOn, &hud->statusbarCounterAlpha);
 
     // Current artifact count.
     STlib_initNum(&hud->wArtiCount, ST_ARTIFACTCX, ST_ARTIFACTCY, dpSmallNumbers,
-                  &hud->oldartiCount, &hud->statusbaron, ST_ARTIFACTCWIDTH,
+                  &hud->oldArtiCount, &hud->statusbarOn, ST_ARTIFACTCWIDTH,
                   &hud->statusbarCounterAlpha);
 
     // Inventory slots
@@ -1077,13 +1050,13 @@ void ST_createWidgets(int player)
     {
         // Inventory slot icon.
         STlib_initMultIcon(&hud->wInvSlot[i], ST_INVENTORYX + temp , ST_INVENTORYY,
-                           dpArtifacts, &hud->invslot[i],
-                           &hud->statusbaron, &hud->statusbarCounterAlpha);
+                           dpArtifacts, &hud->invSlot[i],
+                           &hud->statusbarOn, &hud->statusbarCounterAlpha);
 
         // Inventory slot counter.
         STlib_initNum(&hud->wInvSlotCount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX,
                       ST_INVENTORYY + ST_INVCOUNTOFFY, dpSmallNumbers,
-                      &hud->invslotcount[i], &hud->statusbaron, ST_ARTIFACTCWIDTH,
+                      &hud->invSlotCount[i], &hud->statusbarOn, ST_ARTIFACTCWIDTH,
                       &hud->statusbarCounterAlpha);
 
         temp += width;
@@ -1209,38 +1182,38 @@ void ST_updateWidgets(int player)
         hud->statusbarCounterAlpha = 1.0f;
 
     // Used by w_frags widget.
-    hud->fragson = deathmatch && hud->statusbaron;
+    hud->fragsOn = deathmatch && hud->statusbarOn;
 
-    hud->fragscount = 0;
+    hud->fragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->inGame)
             continue;
 
-        hud->fragscount += plr->frags[i] * (i != player ? 1 : -1);
+        hud->fragsCount += plr->frags[i] * (i != player ? 1 : -1);
     }
 
     // Current artifact.
     if(hud->artifactFlash)
     {
-        hud->artici = 5 - hud->artifactFlash;
+        hud->artiCI = 5 - hud->artifactFlash;
         hud->artifactFlash--;
-        hud->oldarti = -1; // So that the correct artifact fills in after the flash
+        hud->oldArti = -1; // So that the correct artifact fills in after the flash
     }
-    else if(hud->oldarti != plr->readyArtifact ||
-            hud->oldartiCount != plr->inventory[plr->invPtr].count)
+    else if(hud->oldArti != plr->readyArtifact ||
+            hud->oldArtiCount != plr->inventory[plr->invPtr].count)
     {
         if(plr->readyArtifact > 0)
         {
-            hud->artici = plr->readyArtifact + 5;
+            hud->artiCI = plr->readyArtifact + 5;
         }
-        hud->oldarti = plr->readyArtifact;
-        hud->oldartiCount = plr->inventory[plr->invPtr].count;
+        hud->oldArti = plr->readyArtifact;
+        hud->oldArtiCount = plr->inventory[plr->invPtr].count;
     }
 
     // Armor
-    hud->armorlevel = FixedDiv(
+    hud->armorLevel = FixedDiv(
         PCLASS_INFO(pClass)->autoArmorSave + plr->armorPoints[ARMOR_ARMOR] +
         plr->armorPoints[ARMOR_SHIELD] +
         plr->armorPoints[ARMOR_HELMET] +
@@ -1252,63 +1225,63 @@ void ST_updateWidgets(int player)
     // mana B
     hud->manaBCount = plr->ammo[AT_GREENMANA].owned;
 
-    hud->manaAicon = hud->manaBicon = hud->manaAvial = hud->manaBvial = -1;
+    hud->manaAIcon = hud->manaBIcon = hud->manaAVial = hud->manaBVial = -1;
 
     // Mana
     if(!(plr->ammo[AT_BLUEMANA].owned > 0))
-        hud->manaAicon = 0; // Draw dim Mana icon.
+        hud->manaAIcon = 0; // Draw dim Mana icon.
 
     if(!(plr->ammo[AT_GREENMANA].owned > 0))
-        hud->manaBicon = 0; // Draw dim Mana icon.
+        hud->manaBIcon = 0; // Draw dim Mana icon.
 
     // Update mana graphics based upon mana count weapon type
     if(plr->readyWeapon == WT_FIRST)
     {
-        hud->manaAicon = 0;
-        hud->manaBicon = 0;
+        hud->manaAIcon = 0;
+        hud->manaBIcon = 0;
 
-        hud->manaAvial = 0;
-        hud->manaBvial = 0;
+        hud->manaAVial = 0;
+        hud->manaBVial = 0;
     }
     else if(plr->readyWeapon == WT_SECOND)
     {
         // If there is mana for this weapon, make it bright!
-        if(hud->manaAicon == -1)
+        if(hud->manaAIcon == -1)
         {
-            hud->manaAicon = 1;
+            hud->manaAIcon = 1;
         }
 
-        hud->manaAvial = 1;
+        hud->manaAVial = 1;
 
-        hud->manaBicon = 0;
-        hud->manaBvial = 0;
+        hud->manaBIcon = 0;
+        hud->manaBVial = 0;
     }
     else if(plr->readyWeapon == WT_THIRD)
     {
-        hud->manaAicon = 0;
-        hud->manaAvial = 0;
+        hud->manaAIcon = 0;
+        hud->manaAVial = 0;
 
         // If there is mana for this weapon, make it bright!
-        if(hud->manaBicon == -1)
+        if(hud->manaBIcon == -1)
         {
-            hud->manaBicon = 1;
+            hud->manaBIcon = 1;
         }
 
-        hud->manaBvial = 1;
+        hud->manaBVial = 1;
     }
     else
     {
-        hud->manaAvial = 1;
-        hud->manaBvial = 1;
+        hud->manaAVial = 1;
+        hud->manaBVial = 1;
 
         // If there is mana for this weapon, make it bright!
-        if(hud->manaAicon == -1)
+        if(hud->manaAIcon == -1)
         {
-            hud->manaAicon = 1;
+            hud->manaAIcon = 1;
         }
-        if(hud->manaBicon == -1)
+        if(hud->manaBIcon == -1)
         {
-            hud->manaBicon = 1;
+            hud->manaBIcon = 1;
         }
     }
 
@@ -1318,8 +1291,8 @@ void ST_updateWidgets(int player)
 
     for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
-        hud->invslot[i] = plr->inventory[x + i].type +5;  // plus 5 for useartifact patches
-        hud->invslotcount[i] = plr->inventory[x + i].count;
+        hud->invSlot[i] = plr->inventory[x + i].type +5;  // plus 5 for useartifact patches
+        hud->invSlotCount[i] = plr->inventory[x + i].count;
     }
 }
 
@@ -1354,35 +1327,15 @@ void ST_Ticker(void)
 
             ST_updateWidgets(i);
 
-            curHealth = plr->plr->mo->health;
-            if(curHealth < 0)
-            {
-                curHealth = 0;
-            }
+            curHealth = MAX_OF(plr->plr->mo->health, 0);
             if(curHealth < hud->healthMarker)
             {
-                delta = (hud->healthMarker - curHealth) >> 2;
-                if(delta < 1)
-                {
-                    delta = 1;
-                }
-                else if(delta > 6)
-                {
-                    delta = 6;
-                }
+                delta = MINMAX_OF(1, (hud->healthMarker - curHealth) >> 2, 6);
                 hud->healthMarker -= delta;
             }
             else if(curHealth > hud->healthMarker)
             {
-                delta = (curHealth - hud->healthMarker) >> 2;
-                if(delta < 1)
-                {
-                    delta = 1;
-                }
-                else if(delta > 6)
-                {
-                    delta = 6;
-                }
+                delta = MINMAX_OF(1, (curHealth - hud->healthMarker) >> 2, 6);
                 hud->healthMarker += delta;
             }
 
@@ -1465,7 +1418,7 @@ static void drawWidgets(hudstate_t* hud)
     player_t*           plr = &players[player];
     boolean             refresh = true;
 
-    hud->oldhealth = -1;
+    hud->oldHealth = -1;
     if(!hud->inventory)
     {
         if(!AM_IsMapActive(player))
@@ -1764,30 +1717,36 @@ void ST_HUDUnHide(int player, hueevent_t ev)
 void ST_doRefresh(int player)
 {
     hudstate_t*         hud;
+    boolean             statusbarVisible;
 
     if(player < 0 || player > MAXPLAYERS)
         return;
 
     hud = &hudStates[player];
 
+    statusbarVisible = (cfg.statusbarScale < 20 ||
+        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
+
     hud->firstTime = false;
 
-    if(cfg.statusbarScale < 20 || (cfg.statusbarScale == 20 && hud->showbar < 1.0f))
+    if(statusbarVisible)
     {
-        float fscale = cfg.statusbarScale / 20.0f;
-        float h = 200 * (1 - fscale);
+        float               fscale = cfg.statusbarScale / 20.0f;
+        float               h = 200 * (1 - fscale);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
-        DGL_Translatef(160 - 320 * fscale / 2, h / hud->showbar, 0);
+        DGL_Translatef(160 - 320 * fscale / 2, h / hud->showBar, 0);
         DGL_Scalef(fscale, fscale, 1);
     }
 
     drawStatusBarBackground(player);
+    if(!hud->inventory && !AM_IsMapActive(player))
+        drawWeaponPieces(hud);
+    drawChain(hud);
     drawWidgets(hud);
 
-    if(cfg.statusbarScale < 20 ||
-       (cfg.statusbarScale == 20 && hud->showbar < 1.0f))
+    if(statusbarVisible)
     {
         // Restore the normal modelview matrix.
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1957,7 +1916,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
     hud = &hudStates[player];
 
     hud->firstTime = hud->firstTime || refresh;
-    hud->statusbaron = (fullscreenmode < 2) ||
+    hud->statusbarOn = (fullscreenmode < 2) ||
                       (AM_IsMapActive(player) &&
                        (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
@@ -1965,15 +1924,15 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
     ST_doPaletteStuff(player, false);
 
     // Either slide the status bar in or fade out the fullscreen hud
-    if(hud->statusbaron)
+    if(hud->statusbarOn)
     {
         if(hud->alpha > 0.0f)
         {
-            hud->statusbaron = 0;
+            hud->statusbarOn = 0;
             hud->alpha-=0.1f;
         }
-        else if(hud->showbar < 1.0f)
-            hud->showbar += 0.1f;
+        else if(hud->showBar < 1.0f)
+            hud->showBar += 0.1f;
     }
     else
     {
@@ -1987,10 +1946,10 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         }
         else
         {
-            if(hud->showbar > 0.0f)
+            if(hud->showBar > 0.0f)
             {
-                hud->showbar -= 0.1f;
-                hud->statusbaron = 1;
+                hud->showBar -= 0.1f;
+                hud->statusbarOn = 1;
             }
             else if(hud->alpha < 1.0f)
                 hud->alpha += 0.1f;
@@ -2003,7 +1962,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
     else
         hud->blended = 0;
 
-    if(hud->statusbaron)
+    if(hud->statusbarOn)
     {
         ST_doRefresh(player);
     }
