@@ -482,7 +482,11 @@ static void drawChain(hudstate_t* hud)
 
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
-    pColor = cfg.playerColor[player];
+
+    if(!IS_NETGAME)
+        pColor = 1; // Always use the red life gem (the second gem).
+    else
+        pColor = cfg.playerColor[player];
 
     healthPos = hud->healthMarker;
     if(healthPos < 0)
@@ -549,16 +553,8 @@ static void drawChain(hudstate_t* hud)
         cw2 = 1;
     }
 
-    if(!IS_NETGAME)
-    {   // Always use the red life gem (the second gem).
-        GL_PalIdxToRGB(theirColors[1], rgba);
-        gemPatch = &dpLifeGem[pClass][1];
-    }
-    else
-    {
-        GL_PalIdxToRGB(theirColors[pColor], rgba);
-        gemPatch = &dpLifeGem[pClass][pColor];
-    }
+    GL_PalIdxToRGB(theirColors[pColor], rgba);
+    gemPatch = &dpLifeGem[pClass][pColor];
 
     GL_SetPatch(gemPatch->lump, DGL_CLAMP, DGL_CLAMP);
 
@@ -566,16 +562,16 @@ static void drawChain(hudstate_t* hud)
     DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
 
     DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f( cw, 0);
+        DGL_TexCoord2f(cw, 0);
         DGL_Vertex2f(x2, y);
 
-        DGL_TexCoord2f( cw2, 0);
+        DGL_TexCoord2f(cw2, 0);
         DGL_Vertex2f(x2 + w3, y);
 
-        DGL_TexCoord2f( cw2, 1);
+        DGL_TexCoord2f(cw2, 1);
         DGL_Vertex2f(x2 + w3, y + h);
 
-        DGL_TexCoord2f( cw, 1);
+        DGL_TexCoord2f(cw, 1);
         DGL_Vertex2f(x2, y + h);
     DGL_End();
 
@@ -932,7 +928,7 @@ void ST_loadGraphics(void)
     R_CachePatch(&dpWeaponFull[PCLASS_CLERIC], "WPFULL1");
     for(i = 0; i < 8; ++i)
     {
-        sprintf(namebuf, "LIFEGMC%d", i);
+        sprintf(namebuf, "LIFEGMC%d", i + 1);
         R_CachePatch(&dpLifeGem[PCLASS_CLERIC][i], namebuf);
     }
 
@@ -945,7 +941,7 @@ void ST_loadGraphics(void)
     R_CachePatch(&dpWeaponFull[PCLASS_MAGE], "WPFULL2");
     for(i = 0; i < 8; ++i)
     {
-        sprintf(namebuf, "LIFEGMM%d", i);
+        sprintf(namebuf, "LIFEGMM%d", i + 1);
         R_CachePatch(&dpLifeGem[PCLASS_MAGE][i], namebuf);
     }
 
