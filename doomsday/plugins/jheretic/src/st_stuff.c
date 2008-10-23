@@ -464,8 +464,6 @@ static void drawStatusBarBackground(int player)
         {
             GL_DrawPatch(34, 160, invBar.lump);
         }
-
-        drawChain(hud);
     }
     else
     {
@@ -510,8 +508,6 @@ static void drawStatusBarBackground(int player)
         {
             GL_DrawPatch_CS(34, 160, invBar.lump);
         }
-
-        drawChain(hud);
     }
 }
 
@@ -1133,10 +1129,8 @@ void ST_doRefresh(int player)
         DGL_Scalef(fscale, fscale, 1);
     }
 
-    // Draw status bar background.
     drawStatusBarBackground(player);
-
-    // And refresh all widgets.
+    drawChain(hud);
     drawWidgets(hud);
 
     if(statusbarVisible)
