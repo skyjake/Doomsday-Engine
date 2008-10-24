@@ -880,9 +880,7 @@ int DD_GetInteger(int ddvalue)
             return theWindow->height;
 
         case DD_SKYMASKMATERIAL_NUM:
-            if(skyMaskMaterial)
-                return skyMaskMaterial->ofTypeID;
-            return 0;
+            return R_GetMaterialNum(skyMaskMaterial);
 
         default:
             break;
