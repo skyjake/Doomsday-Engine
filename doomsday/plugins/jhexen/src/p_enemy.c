@@ -4194,13 +4194,13 @@ void C_DECL A_IceCheckHeadDone(mobj_t* mo)
 #  pragma optimize("g", off)
 #endif
 
-void C_DECL A_FreezeDeathChunks(mobj_t *mo)
+void C_DECL A_FreezeDeathChunks(mobj_t* mo)
 {
-    int         i;
-    mobj_t     *pmo;
-    float       pos[3];
+    int                 i;
+    mobj_t*             pmo;
+    float               pos[3];
 
-    if(mo->mom[MX] == 0 || mo->mom[MY] == 0 || mo->mom[MZ] == 0)
+    if(mo->mom[MX] != 0 || mo->mom[MY] != 0 || mo->mom[MZ] != 0)
     {
         mo->tics = 105;
         return;
@@ -4211,7 +4211,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t *mo)
     for(i = 12 + (P_Random() & 15); i >= 0; i--)
     {
         pos[VX] = mo->pos[VX];
-        pos[VY] = mo->pos[VX];
+        pos[VY] = mo->pos[VY];
         pos[VZ] = mo->pos[VZ];
 
         pos[VX] += FIX2FLT(((P_Random() - 128) * FLT2FIX(mo->radius)) >> 7);
@@ -4235,7 +4235,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t *mo)
     for(i = 12 + (P_Random() & 15); i >= 0; i--)
     {
         pos[VX] = mo->pos[VX];
-        pos[VY] = mo->pos[VX];
+        pos[VY] = mo->pos[VY];
         pos[VZ] = mo->pos[VZ];
 
         pos[VX] += FIX2FLT(((P_Random() - 128) * FLT2FIX(mo->radius)) >> 7);
