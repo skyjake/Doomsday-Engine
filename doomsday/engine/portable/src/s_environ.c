@@ -301,7 +301,7 @@ static boolean calcSSecReverb(subsector_t *ssec)
             material_t         *mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 
             // The texture of the seg determines its type.
-            if(mat->ofTypeID >= 0)
+            if(!(mat->flags & MATF_NO_DRAW))
             {
                 mclass = mat->envClass;
             }
