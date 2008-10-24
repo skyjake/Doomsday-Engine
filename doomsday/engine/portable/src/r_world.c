@@ -1809,11 +1809,11 @@ void R_ClearSectorFlags(void)
  * @return              @c true, if the specified plane is non-glowing,
  *                      i.e. not glowing or a sky.
  */
-boolean R_IsGlowingPlane(const plane_t *pln)
+boolean R_IsGlowingPlane(const plane_t* pln)
 {
-    material_t         *mat = pln->surface.material;
+    material_t*         mat = pln->surface.material;
 
-    return (!(mat && mat->ofTypeID > 0) || pln->glow > 0 ||
+    return ((mat && (mat->flags & MATF_NO_DRAW)) || pln->glow > 0 ||
             R_IsSkySurface(&pln->surface));
 }
 
@@ -1823,7 +1823,7 @@ boolean R_IsGlowingPlane(const plane_t *pln)
  * @return              @c true, if one or more surfaces in the given sector
  *                      use the special sky mask material.
  */
-boolean R_SectorContainsSkySurfaces(const sector_t *sec)
+boolean R_SectorContainsSkySurfaces(const sector_t* sec)
 {
     uint                i;
     boolean             sectorContainsSkySurfaces;
