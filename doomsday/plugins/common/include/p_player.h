@@ -54,6 +54,9 @@ void        P_ShotAmmo(player_t *player);
 
 void        P_PlayerThink(player_t *player, timespan_t ticLength);
 void        P_RaiseDeadPlayer(player_t *player);
+#if __JHEXEN__
+void        P_PlayerChangeClass(player_t* player, playerclass_t newClass);
+#endif
 
 void        P_SetMessage(player_t *pl, char *msg, boolean noHide);
 #if __JHEXEN__ || __JSTRIFE__

@@ -93,11 +93,6 @@ typedef enum cyclemode_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void    R_SetAllDoomsdayFlags();
-
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-void    SB_ChangePlayerClass(player_t *player, int newclass);
-#endif
-
 void    P_FireWeapon(player_t *player);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1187,10 +1182,10 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
                    ptr - buffer);
 }
 
-void NetSv_ChangePlayerInfo(int from, byte *data)
+void NetSv_ChangePlayerInfo(int from, byte* data)
 {
-    player_t   *pl = &players[from];
-    int         col;
+    int                 col;
+    player_t*           pl = &players[from];
 
     // Color is first.
     col = *data++;
@@ -1207,7 +1202,7 @@ void NetSv_ChangePlayerInfo(int from, byte *data)
 #if __JHEXEN__
     // The 'colormap' variable controls the setting of the color
     // translation flags when the player is (re)spawned (which will
-    // be done in SB_ChangePlayerClass).
+    // be done in P_PlayerChangeClass).
     pl->colorMap = cfg.playerColor[from];
 #else
     if(pl->plr->mo)
@@ -1218,8 +1213,8 @@ void NetSv_ChangePlayerInfo(int from, byte *data)
     }
 #endif
 
-#if __JHERETIC__ || __JHEXEN__
-    SB_ChangePlayerClass(pl, cfg.playerClass[from]);
+#if __JHEXEN__
+    P_PlayerChangeClass(pl, cfg.playerClass[from]);
 #endif
 
     // Re-deal start spots.

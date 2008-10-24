@@ -511,22 +511,6 @@ static void drawStatusBarBackground(int player)
     }
 }
 
-void SB_SetClassData(void)
-{
-    // Nothing to do
-}
-
-/**
- * Changes the class of the given player. Will not work if the player
- * is currently morphed.
- */
-void SB_ChangePlayerClass(player_t *player, int newclass)
-{
-    // Don't change if morphed.
-    if(player->morphTics)
-        return;
-}
-
 void ST_updateWidgets(int player)
 {
     static int          largeammo = 1994; // Means "n/a".

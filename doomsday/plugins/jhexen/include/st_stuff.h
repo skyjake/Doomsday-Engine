@@ -41,13 +41,6 @@
 #define ST_WIDTH            (SCREENWIDTH)
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
-// States for the chat code.
-typedef enum {
-    StartChatState,
-    WaitDestState,
-    GetChatState
-} st_chatstateenum_t;
-
 // Called by startup code.
 void        ST_Register(void);
 void        ST_Init(void);
@@ -61,18 +54,15 @@ void        ST_Stop(int player);
 void        ST_updateGraphics(void);
 
 // Called when it might be neccessary for the hud to unhide.
-void        ST_HUDUnHide(int player, hueevent_t event);
-
-// Called to execute the change of player class.
-void        SB_ChangePlayerClass(player_t *player, int newclass);
+void        ST_HUDUnHide(int player, hueevent_t ev);
 
 // Called in P_inter & P_enemy
 void        ST_doPaletteStuff(int player, boolean forceChange);
 
 void        ST_Init(void);
-boolean     ST_Responder(event_t *event);
+boolean     ST_Responder(event_t* ev);
 void        ST_Ticker(void);
-void        ST_Drawer(int player, int fullscreenmode, boolean refresh);
+void        ST_Drawer(int player, int fullscreenMode, boolean refresh);
 void        ST_Inventory(int player, boolean show);
 boolean     ST_IsInventoryVisible(int player);
 

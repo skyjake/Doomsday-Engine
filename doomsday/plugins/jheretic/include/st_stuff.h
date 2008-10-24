@@ -45,17 +45,11 @@
 void        ST_Ticker(void);
 
 // Called by main loop.
-void        ST_Drawer(int player, int fullscreenmode, boolean refresh);
+void        ST_Drawer(int player, int fullscreenMode, boolean refresh);
 
 void        ST_Start(int player);
 
 void        ST_Stop(int player);
-
-// Called when the console player->class changes.
-void        SB_SetClassData(void);
-
-// Called to execute the change of player class.
-void        SB_ChangePlayerClass(player_t *player, int newclass);
 
 // Called by startup code.
 void        ST_Register(void);
@@ -65,7 +59,7 @@ void        ST_doPaletteStuff(int player);
 void        ST_updateGraphics(void);
 
 // Called when it might be neccessary for the hud to unhide.
-void        ST_HUDUnHide(int player, hueevent_t event);
+void        ST_HUDUnHide(int player, hueevent_t ev);
 
 void        ST_Inventory(int player, boolean show);
 boolean     ST_IsInventoryVisible(int player);

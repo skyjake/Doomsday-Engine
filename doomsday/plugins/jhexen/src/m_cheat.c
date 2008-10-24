@@ -843,33 +843,19 @@ static void CheatQuickenFunc3(player_t *player, cheat_t *cheat)
     P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.", false);
 }
 
-static void CheatClassFunc1(player_t *player, cheat_t *cheat)
+static void CheatClassFunc1(player_t* player, cheat_t* cheat)
 {
-    P_SetMessage(player, "ENTER NEW PLAYER CLASS (0 - 2)", false);
+    P_SetMessage(player, "ENTER NEW PLAYER CLASS NUMBER", false);
 }
 
-static void CheatClassFunc2(player_t *player, cheat_t *cheat)
+static void CheatClassFunc2(player_t* player, cheat_t* cheat)
 {
-    int                 plrClass;
-
-    if(player->morphTics)
-    {   // Don't change class if the player is morphed.
-        return;
-    }
-
-    plrClass = cheat->args[0] - '0';
-    if(plrClass > 2 || plrClass < 0)
-    {
-        P_SetMessage(player, "INVALID PLAYER CLASS", false);
-        return;
-    }
-
-    SB_ChangePlayerClass(player, plrClass);
+    P_PlayerChangeClass(player, cheat->args[0] - '0');
 }
 
 static void CheatVersionFunc(player_t *player, cheat_t *cheat)
 {
-    P_SetMessage(player, VERSIONTEXT, false);
+    DD_Execute(false, "version");
 }
 
 static void CheatDebugFunc(player_t *player, cheat_t *cheat)

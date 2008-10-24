@@ -58,10 +58,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#if __JHERETIC__ || __JHEXEN__
-void    SB_ChangePlayerClass(player_t *player, int newclass);
-#endif
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 DEFCC(CCmdSetColor);
@@ -93,7 +89,7 @@ ccmd_t netCCmds[] = {
     {"setmap", "i", CCmdSetMap},
 #endif
 #if __JHEXEN__
-    {"setclass", "i", CCmdSetClass},
+    {"setclass", "i", CCmdSetClass, CMDF_NO_DEDICATED},
 #endif
     {"startcycle", "", CCmdMapCycle},
     {"endcycle", "", CCmdMapCycle},
@@ -715,22 +711,25 @@ DEFCC(CCmdSetColor)
 #if __JHEXEN__
 DEFCC(CCmdSetClass)
 {
-    cfg.netClass = atoi(argv[1]);
-    if(cfg.netClass > 2)
-        cfg.netClass = 2;
+    playerclass_t       newClass = atoi(argv[1]);
+
+    if(!(newClass < NUM_PLAYER_CLASSES))
+        return false;
+
+    if(newClass == PCLASS_PIG)
+        return false;
+
+    cfg.netClass = newClass;
     if(IS_CLIENT)
     {
         // Tell the server that we've changed our class.
         NetCl_SendPlayerInfo();
     }
-    else if(IS_DEDICATED)
-    {
-        return false;
-    }
     else
     {
-        SB_ChangePlayerClass(players + CONSOLEPLAYER, cfg.netClass);
+        P_PlayerChangeClass(&players[CONSOLEPLAYER], cfg.netClass);
     }
+
     return true;
 }
 #endif

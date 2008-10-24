@@ -495,6 +495,48 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
     return w;
 }
 
+#if __JHEXEN__
+/**
+ * Changes the class of the given player. Will not work if the player
+ * is currently morphed.
+ */
+void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
+{
+    int                 i;
+
+    // Don't change if morphed.
+    if(player->morphTics)
+        return;
+
+    if(newClass == PCLASS_PIG)
+        return;
+
+    player->class = newClass;
+    cfg.playerClass[player - players] = newClass;
+
+    // Take away armor.
+    for(i = 0; i < NUMARMOR; ++i)
+        player->armorPoints[i] = 0;
+    player->update |= PSF_ARMOR_POINTS;
+
+    P_PostMorphWeapon(player, WT_FIRST);
+
+    if(player->plr->mo)
+    {   // Respawn the player and destroy the old mobj.
+        mobj_t*             oldMo = player->plr->mo;
+        spawnspot_t         dummy;
+
+        // Use a dummy as the spawn point.
+        dummy.pos[VX] = oldMo->pos[VX];
+        dummy.pos[VY] = oldMo->pos[VY];
+        dummy.angle = oldMo->angle;
+
+        P_SpawnPlayer(&dummy, player - players);
+        P_MobjRemove(oldMo, true);
+    }
+}
+#endif
+
 /**
  * Send a message to the given player and maybe echos it to the console.
  *
