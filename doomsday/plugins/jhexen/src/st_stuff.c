@@ -282,7 +282,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
 
     // If the fullscreen mana is drawn, we need to move the icons on the left
     // a bit to the right.
-    if(cfg.hudShown[HUD_MANA] == 1 && cfg.screenBlocks > 10)
+    if(cfg.hudShown[HUD_MANA] == 1 && cfg.screenBlocks > 11)
         leftoff = 42;
 
     Draw_BeginZoom(cfg.hudScale, 2, 2);
