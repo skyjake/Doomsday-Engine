@@ -547,7 +547,7 @@ void P_MobjMoveZ(mobj_t* mo)
         //
         // So we need to check that this is either retail or commercial
         // (but not doom2)
-        int correct_lost_soul_bounce = true;
+        int correctLostSoulBounce = true;
 
         if(correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
         {
