@@ -1126,12 +1126,6 @@ static int R_NewFlat(lumpnum_t lump)
     {
         mat->width = 64;
         mat->height = 64;
-        /**
-         * DOOM.exe had a bug in the way textures were managed resulting
-         * in the first flat being used dually as a "NULL" texture.
-         */
-        if(mat->ofTypeID == 0)
-            mat->flags |= MATF_NO_DRAW;
     }
 
     return numFlats - 1;
