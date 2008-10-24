@@ -1528,7 +1528,6 @@ boolean PTR_ShootTraverse(intercept_t *in)
 
         // Hit a line.
       hitline:
-        lineWasHit = true;
 
         // Position a bit closer.
         frac = in->frac - (4 / attackRange);
@@ -1536,14 +1535,31 @@ boolean PTR_ShootTraverse(intercept_t *in)
         pos[VY] = tracepos[VY] + (FIX2FLT(trace->dY) * frac);
         pos[VZ] = tracepos[VZ] + (aimSlope * (frac * attackRange));
 
-        // Is it a sky hack wall? If the hitpoint is above the visible line
-        // no puff must be shown.
-        if(backSec &&
-           P_GetIntp(frontSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
-           P_GetIntp(backSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
-           (pos[VZ] > P_GetFloatp(frontSec, DMU_CEILING_HEIGHT) ||
-            pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT)))
-            return false;
+        if(backSec)
+        {
+            float               fFloor, bFloor, fCeil, bCeil;
+            boolean             skyFloor, skyCeil;
+
+            // Is it a sky hack wall? If the hitpoint is beyond the visible
+            // surface, no puff must be shown.
+            skyCeil = P_GetIntp(frontSec, DMU_CEILING_MATERIAL) ==
+                SKYMASKMATERIAL;
+            fCeil  = P_GetFloatp(frontSec, DMU_CEILING_HEIGHT);
+            bCeil  = P_GetFloatp(frontSec, DMU_CEILING_HEIGHT);
+
+            if(skyCeil &&  (pos[VZ] > fCeil  || pos[VZ] > bCeil))
+                return false;
+
+            skyFloor = P_GetIntp(backSec, DMU_CEILING_MATERIAL) ==
+                SKYMASKMATERIAL;
+            fFloor = P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT);
+            bFloor = P_GetFloatp(backSec, DMU_FLOOR_HEIGHT);
+
+            if(skyFloor && (pos[VZ] < fFloor || pos[VZ] < bFloor))
+                return false;
+        }
+
+        lineWasHit = true;
 
         // This is the subsector where the trace originates.
         originSub = R_PointInSubsector(tracepos[VX], tracepos[VY]);
