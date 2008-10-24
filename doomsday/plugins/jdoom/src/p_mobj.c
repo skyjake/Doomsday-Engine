@@ -267,24 +267,33 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                if(ceilingLine)
-                {
-                    sector_t   *backsector =
-                        P_GetPtrp(ceilingLine, DMU_BACK_SECTOR);
+                sector_t*           backSec;
 
-                    if(backsector)
+                //// kludge: Prevent missiles exploding against the sky.
+                if(ceilingLine &&
+                   (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
                     {
-                        if(P_GetIntp(backsector,
-                                     DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
-                           mo->pos[VZ] > P_GetFloatp(backsector, DMU_CEILING_HEIGHT))
-                        {
-                            // Hack to prevent missiles exploding against
-                            // the sky. Does not handle sky floors.
-                            P_MobjRemove(mo, false);
-                            return;
-                        }
+                        P_MobjRemove(mo, false);
+                        return;
                     }
                 }
+
+                if(floorLine &&
+                   (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_FLOOR_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
+                    {
+                        P_MobjRemove(mo, false);
+                        return;
+                    }
+                }
+                //// kludge end.
 
                 P_ExplodeMissile(mo);
             }

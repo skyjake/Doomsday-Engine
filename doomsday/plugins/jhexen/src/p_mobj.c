@@ -53,6 +53,7 @@
 #define BLAST_FULLSTRENGTH      255
 #define HEAL_RADIUS_DIST        255
 
+#define NOMOMENTUM_THRESHOLD    (0.000001f)
 #define STOPSPEED               (0.1f/1.6)
 
 #define SMALLSPLASHCLIP         (12);
@@ -480,6 +481,8 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
+                sector_t*           backSec;
+
                 if(mo->flags2 & MF2_FLOORBOUNCE)
                 {
                     if(blockingMobj)
@@ -586,25 +589,58 @@ void P_MobjMoveXY(mobj_t *mo)
 
 explode:
                 // Explode a missile
-                if(ceilingLine && P_GetPtrp(ceilingLine, DMU_BACK_SECTOR) &&
-                   P_GetIntp(P_GetPtrp(ceilingLine, DMU_BACK_SECTOR),
-                             DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
-                {   // Hack to prevent missiles exploding against the sky
-                    if(mo->type == MT_BLOODYSKULL)
+
+                //// kludge: Prevent missiles exploding against the sky.
+                if(ceilingLine &&
+                   (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
                     {
-                        mo->mom[MX] = mo->mom[MY] = 0;
-                        mo->mom[MZ] = -1;
+                        if(mo->type == MT_BLOODYSKULL)
+                        {
+                            mo->mom[MX] = mo->mom[MY] = 0;
+                            mo->mom[MZ] = -1;
+                        }
+                        else if(mo->type == MT_HOLY_FX)
+                        {
+                            P_ExplodeMissile(mo);
+                        }
+                        else
+                        {
+                            P_MobjRemove(mo, false);
+                        }
+
+                        return;
                     }
-                    else if(mo->type == MT_HOLY_FX)
-                    {
-                        P_ExplodeMissile(mo);
-                    }
-                    else
-                    {
-                        P_MobjRemove(mo, false);
-                    }
-                    return;
                 }
+
+                if(floorLine &&
+                   (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_FLOOR_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
+                    {
+                        if(mo->type == MT_BLOODYSKULL)
+                        {
+                            mo->mom[MX] = mo->mom[MY] = 0;
+                            mo->mom[MZ] = -1;
+                        }
+                        else if(mo->type == MT_HOLY_FX)
+                        {
+                            P_ExplodeMissile(mo);
+                        }
+                        else
+                        {
+                            P_MobjRemove(mo, false);
+                        }
+
+                        return;
+                    }
+                }
+                //// kludge end.
 
                 P_ExplodeMissile(mo);
             }
@@ -613,7 +649,8 @@ explode:
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(move[VX] != 0 || move[VY] != 0);
+    } while(!INRANGE_OF(move[MX], 0, NOMOMENTUM_THRESHOLD) ||
+            !INRANGE_OF(move[MY], 0, NOMOMENTUM_THRESHOLD));
 
     // Friction
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))

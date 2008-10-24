@@ -43,14 +43,15 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VANISHTICS          (2*TICSPERSEC)
+#define VANISHTICS              (2*TICSPERSEC)
 
-#define MAX_BOB_OFFSET      (8)
+#define MAX_BOB_OFFSET          (8)
 
-#define STOPSPEED           (1.0f/1.6/10)
-#define STANDSPEED          (1.0f/2)
+#define NOMOMENTUM_THRESHOLD    (0.000001f)
+#define STOPSPEED               (1.0f/1.6/10)
+#define STANDSPEED              (1.0f/2)
 
-#define ITEMQUEUESIZE       (128)
+#define ITEMQUEUESIZE           (128)
 
 // TYPES -------------------------------------------------------------------
 
@@ -413,15 +414,16 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {   // Explode a missile
-                if(ceilingLine)
-                {
-                    sector_t* backsector =
-                        P_GetPtrp(ceilingLine, DMU_BACK_SECTOR);
+                sector_t*           backSec;
 
-                    if(backsector &&
-                       P_GetIntp(backsector, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
+                //// kludge: Prevent missiles exploding against the sky.
+                if(ceilingLine &&
+                   (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
                     {
-                        // Hack to prevent missiles exploding against the sky
                         if(mo->type == MT_BLOODYSKULL)
                         {
                             mo->mom[MX] = mo->mom[MY] = 0;
@@ -436,6 +438,28 @@ void P_MobjMoveXY(mobj_t *mo)
                     }
                 }
 
+                if(floorLine &&
+                   (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_FLOOR_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
+                    {
+                        if(mo->type == MT_BLOODYSKULL)
+                        {
+                            mo->mom[MX] = mo->mom[MY] = 0;
+                            mo->mom[MZ] = -1;
+                        }
+                        else
+                        {
+                            P_MobjRemove(mo, false);
+                        }
+
+                        return;
+                    }
+                }
+                //// kludge end.
+
                 P_ExplodeMissile(mo);
             }
             else
@@ -443,7 +467,8 @@ void P_MobjMoveXY(mobj_t *mo)
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(mom[VX] != 0 || mom[VY] != 0);
+    } while(!INRANGE_OF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
 
     // Slow down.
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))

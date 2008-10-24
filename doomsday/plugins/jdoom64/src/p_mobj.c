@@ -54,13 +54,14 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VANISHTICS          (2*TICSPERSEC)
-#define SPAWNFADETICS       (1*TICSPERSEC)
+#define VANISHTICS              (2*TICSPERSEC)
+#define SPAWNFADETICS           (1*TICSPERSEC)
 
-#define MAX_BOB_OFFSET      (8)
+#define MAX_BOB_OFFSET          (8)
 
-#define STOPSPEED           (1.0f/1.6/10)
-#define STANDSPEED          (1.0f/2)
+#define NOMOMENTUM_THRESHOLD    (0.000001f)
+#define STOPSPEED               (1.0f/1.6/10)
+#define STANDSPEED              (1.0f/2)
 
 // Time interval for item respawning.
 #define ITEMQUEUESIZE         (128)
@@ -251,32 +252,43 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                if(ceilingLine)
-                {
-                    sector_t               *backsector =
-                        P_GetPtrp(ceilingLine, DMU_BACK_SECTOR);
+                sector_t*           backSec;
 
-                    if(backsector)
+                //// kludge: Prevent missiles exploding against the sky.
+                if(ceilingLine &&
+                   (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
                     {
-                        // Explode a missile?
-                        if(ceilingLine &&
-                           P_GetIntp(backsector, DMU_CEILING_MATERIAL) ==
-                           SKYMASKMATERIAL)
-                        {
-                            // Hack to prevent missiles exploding
-                            // against the sky.
-                            // Does not handle sky floors.
-                            P_MobjRemove(mo, false);
-                            return;
-                        }
+                        P_MobjRemove(mo, false);
+                        return;
                     }
                 }
+
+                if(floorLine &&
+                   (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                {
+                    if(P_GetIntp(backSec,
+                                 DMU_FLOOR_MATERIAL) == SKYMASKMATERIAL &&
+                       mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
+                    {
+                        P_MobjRemove(mo, false);
+                        return;
+                    }
+                }
+                //// kludge end.
+
                 P_ExplodeMissile(mo);
             }
             else
+            {
                 mo->mom[MX] = mo->mom[MY] = 0;
+            }
         }
-    } while(mom[MX] != 0 || mom[MY] != 0);
+    } while(!INRANGE_OF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
 
     // Slow down.
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))

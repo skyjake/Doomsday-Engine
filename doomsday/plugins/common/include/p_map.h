@@ -31,21 +31,20 @@
 
 extern float attackRange;
 
-// If "floatOk" true, move would be ok
-// if within "tmFloorZ - tmCeilingZ".
-extern boolean  floatOk;
+// If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
+extern boolean floatOk;
 extern float tmFloorZ;
 extern float tmCeilingZ;
 extern materialnum_t tmFloorMaterial;
 
-extern linedef_t *ceilingLine;
-extern linedef_t *blockLine;
-extern mobj_t *lineTarget; // who got hit (or NULL)
-extern mobj_t *tmThing;
+extern linedef_t* ceilingLine, *floorLine;
+extern linedef_t* blockLine;
+extern mobj_t* lineTarget; // Who got hit (or NULL).
+extern mobj_t* tmThing;
 
 #if __JHEXEN__
-extern mobj_t *puffSpawned;
-extern mobj_t *blockingMobj;
+extern mobj_t* puffSpawned;
+extern mobj_t* blockingMobj;
 #endif
 
 extern float tmBBox[];
@@ -56,27 +55,29 @@ boolean         P_CheckPosition3f(mobj_t* thing, float x, float y, float z);
 boolean         P_CheckPosition3fv(mobj_t* thing, const float pos[3]);
 
 #if __JHEXEN__
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance,
-                    boolean damageSource);
+void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance,
+                    boolean canDamageSource);
 #else
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance);
+void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance);
 #endif
 
 #if !__JHEXEN__
-boolean         P_TryMove(mobj_t *thing, float x, float y,
+boolean         P_TryMove(mobj_t* thing, float x, float y,
                           boolean dropoff, boolean slide);
 #else
-boolean         P_TryMove(mobj_t *thing, float x, float y);
+boolean         P_TryMove(mobj_t* thing, float x, float y);
 #endif
-boolean         P_TeleportMove(mobj_t *thing, float x, float y, boolean alwaysstomp);
-void            P_SlideMove(mobj_t *mo);
 
-void            P_UseLines(player_t *player);
+boolean         P_TeleportMove(mobj_t* thing, float x, float y,
+                               boolean alwaysStomp);
+void            P_SlideMove(mobj_t* mo);
 
-boolean         P_ChangeSector(sector_t *sector, boolean crunch);
+void            P_UseLines(player_t* player);
 
-float           P_AimLineAttack(mobj_t *t1, angle_t angle, float distance);
-void            P_LineAttack(mobj_t *t1, angle_t angle, float distance,
+boolean         P_ChangeSector(sector_t* sector, boolean crunch);
+
+float           P_AimLineAttack(mobj_t* t1, angle_t angle, float distance);
+void            P_LineAttack(mobj_t* t1, angle_t angle, float distance,
                              float slope, int damage);
 
 float           P_GetGravity(void);
@@ -84,9 +85,9 @@ float           P_GetGravity(void);
 boolean         P_CheckSides(mobj_t* actor, float x, float y);
 
 #if __JHEXEN__
-boolean         P_TestMobjLocation(mobj_t *mobj);
-void            PIT_ThrustSpike(mobj_t *actor);
-boolean         P_UsePuzzleItem(player_t *player, int itemType);
+boolean         P_TestMobjLocation(mobj_t* mobj);
+void            PIT_ThrustSpike(mobj_t* actor);
+boolean         P_UsePuzzleItem(player_t* player, int itemType);
 #endif
 
 #endif
