@@ -1526,6 +1526,10 @@ static void radioSubsectorEdges(const subsector_t* subsector)
                     {
                         sideOpen[i] = 1;
                     }
+                    else if(Rend_DoesMidTextureFillGap(neighbor, otherSide^1))
+                    {
+                        sideOpen[i] = 0;
+                    }
                     else
                     {   // Its a normal neighbor.
                         if(neighbor->L_sector(otherSide) != line->L_sector(side) &&
