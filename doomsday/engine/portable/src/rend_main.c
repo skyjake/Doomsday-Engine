@@ -545,7 +545,7 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
                     // Possibly. Check the placement of the mid texture.
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
-                        NULL, side->SW_middlevisoffset[VX], mat->height,
+                        NULL, side->SW_middlevisoffset[VY], mat->height,
                         0 != (line->flags & DDLF_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
@@ -591,7 +591,9 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
         else
         {
             // Check middle texture
-            if((!side->SW_middlematerial || side->SW_middlematerial->ofTypeID <= 0) || side->SW_middlergba[3] <= 0) // Check alpha
+            if((!side->SW_middlematerial ||
+                (side->SW_middlematerial->flags & MATF_NO_DRAW)) ||
+                side->SW_middlergba[3] <= 0) // Check alpha
                 side->sections[SEG_MIDDLE].frameFlags &= ~SUFINF_PVIS;
 
             if(R_IsSkySurface(&line->L_backsector->SP_ceilsurface) &&
