@@ -3233,7 +3233,7 @@ DGLuint GL_PrepareMaterial2(struct material_s* mat)
 
                     // A glowing texture?
                     if(def->glow)
-                        def->flags |= MATF_GLOW;
+                        mat->flags |= MATF_GLOW;
                 }
 
                 // Get the surface reflection for this surface.
