@@ -927,9 +927,7 @@ void* DD_GetVariable(int ddvalue)
             return &gx;
 
         case DD_SKYMASKMATERIAL_NUM:
-            if(skyMaskMaterial)
-                return &skyMaskMaterial->ofTypeID;
-            return 0;
+            return R_GetMaterialNum(skyMaskMaterial);
 
         case DD_VIEWX:
             return &viewX;
