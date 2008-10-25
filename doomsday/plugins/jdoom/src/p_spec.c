@@ -79,14 +79,53 @@ typedef struct animdef_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing);
-static void shootSpecialLine(mobj_t *thing, linedef_t *line);
+static void crossSpecialLine(linedef_t* line, int side, mobj_t* thing);
+static void shootSpecialLine(mobj_t* thing, linedef_t* line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// These arrays are treated as a hardcoded replacements for data that can be
+// loaded from a lump, so we need to use little-endian byte ordering.
+static animdef_t animsShared[] = {
+    {0, "BLOOD3",   "BLOOD1",   MACRO_LONG(8)},
+    {0, "FWATER4",  "FWATER1",  MACRO_LONG(8)},
+    {0, "LAVA4",    "LAVA1",    MACRO_LONG(8)},
+    {0, "NUKAGE3",  "NUKAGE1",  MACRO_LONG(8)},
+    {1, "BLODRIP4", "BLODRIP1", MACRO_LONG(8)},
+    {1, "FIREBLU2", "FIREBLU1", MACRO_LONG(8)},
+    {1, "FIRELAVA", "FIRELAV2", MACRO_LONG(8)},
+    {1, "FIREMAG3", "FIREMAG1", MACRO_LONG(8)},
+    {1, "FIREWALL", "FIREWALA", MACRO_LONG(8)},
+    {1, "GSTFONT3", "GSTFONT1", MACRO_LONG(8)},
+    {1, "ROCKRED3", "ROCKRED1", MACRO_LONG(8)},
+    {1, "SLADRIP3", "SLADRIP1", MACRO_LONG(8)},
+    {-1, "\0",      "\0"}
+};
+
+static animdef_t animsDoom[] = {
+    {1, "BLODGR4",  "BLODGR1",  MACRO_LONG(8)},
+    {-1, "\0",      "\0"}
+};
+
+static animdef_t animsDoom2[] = {
+    {0, "RROCK08",  "RROCK05",  MACRO_LONG(8)},
+    {0, "SLIME04",  "SLIME01",  MACRO_LONG(8)},
+    {0, "SLIME08",  "SLIME05",  MACRO_LONG(8)},
+    {0, "SLIME12",  "SLIME09",  MACRO_LONG(8)},
+    {1, "BFALL4",   "BFALL1",   MACRO_LONG(8)},
+    {1, "DBRAIN4",  "DBRAIN1",  MACRO_LONG(8)},
+    {1, "SFALL4",   "SFALL1",   MACRO_LONG(8)},
+    {-1, "\0",      "\0"}
+};
+
+static animdef_t animsDoom2Plut[] = {
+    {1, "WFALL4",   "WFALL1",   MACRO_LONG(8)},
+    {-1, "\0",      "\0"}
+};
 
 // CODE --------------------------------------------------------------------
 
@@ -110,46 +149,28 @@ static void shootSpecialLine(mobj_t *thing, linedef_t *line);
  * The standard list of switches and animations is contained in the example
  * source text file DEFSWANI.DAT also in the BOOM util distribution.
  */
-
-/**
- * DJS - We'll support this BOOM extension by reading the data and then
- *       registering the new animations into Doomsday using the animation
- *       groups feature.
- *
- *       Support for this extension should be considered depreciated.
- *       All new features should be added, accessed via DED.
- */
-void P_InitPicAnims(void)
+static void loadAnimDefs(animdef_t* animDefs)
 {
     int                 i;
-    int                 groupNum;
-    int                 ticsPerFrame;
-    int                 numFrames;
-    int                 lump = W_CheckNumForName("ANIMATED");
-    materialnum_t       startFrame, endFrame, n;
-    animdef_t          *animDefs;
 
-    // Has a custom ANIMATED lump been loaded?
-    if(lump > 0)
+    // Read structures until -1 is found
+    for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
-        Con_Message("P_InitPicAnims: \"ANIMATED\" lump found. Reading animations...\n");
+        int                 groupNum, ticsPerFrame, numFrames;
+        materialtype_t      type =
+            (animDefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
 
-        animDefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
-
-        // Read structures until -1 is found
-        for(i = 0; animDefs[i].istexture != -1 ; ++i)
+        switch(type)
         {
-            materialtype_t      type =
-                (animDefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
+        case MAT_FLAT:
+            {
+            lumpnum_t           startFrame, endFrame, n;
 
-            if(!R_MaterialCheckNumForName(animDefs[i].startname, type))
+            if((startFrame = W_CheckNumForName(animDefs[i].startname)) == -1 ||
+               (endFrame = W_CheckNumForName(animDefs[i].endname)) == -1)
                 continue;
 
-            endFrame = R_MaterialNumForName(animDefs[i].endname, type);
-            startFrame = R_MaterialNumForName(animDefs[i].startname, type);
-
             numFrames = endFrame - startFrame + 1;
-
             ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
@@ -177,6 +198,62 @@ void P_InitPicAnims(void)
                 if(endFrame > startFrame)
                 {
                     for(n = startFrame; n <= endFrame; n++)
+                    {
+                        materialnum_t       frame =
+                            R_MaterialCheckNumForName(W_LumpName(n),
+                                                      MAT_FLAT);
+
+                        if(frame != 0)
+                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
+                    }
+                }
+                else
+                {
+                    for(n = endFrame; n >= startFrame; n--)
+                    {
+                        materialnum_t       frame =
+                            R_MaterialCheckNumForName(W_LumpName(n),
+                                                      MAT_FLAT);
+
+                        if(frame != 0)
+                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
+                    }
+                }
+            }
+            break;
+            }
+        case MAT_TEXTURE:
+            {   // Same as above but for texture groups.
+            materialnum_t       startFrame, endFrame, n;
+
+            if((startFrame = R_MaterialCheckNumForName(animDefs[i].startname,
+                                                       MAT_TEXTURE)) == 0 ||
+               (endFrame = R_MaterialCheckNumForName(animDefs[i].endname,
+                                                     MAT_TEXTURE)) == 0)
+                continue;
+
+            numFrames = endFrame - startFrame + 1;
+            ticsPerFrame = LONG(animDefs[i].speed);
+
+            if(numFrames < 2)
+                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
+                          animDefs[i].startname, animDefs[i].endname);
+
+            if(startFrame && endFrame)
+            {
+                groupNum = R_CreateAnimGroup(AGF_SMOOTH);
+
+                VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
+                                    animDefs[i].startname, animDefs[i].endname,
+                                    ticsPerFrame));
+                /**
+                 * \fixme Here an assumption is made that MAT_TEXTURE type
+                 * materials are registered in the same order as they are
+                 * defined in the TEXTURE(1...) lump(s).
+                 */
+                if(endFrame > startFrame)
+                {
+                    for(n = startFrame; n <= endFrame; n++)
                         R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
                 }
                 else
@@ -185,11 +262,57 @@ void P_InitPicAnims(void)
                         R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
                 }
             }
+            break;
+            }
+        default:
+            Con_Error("loadAnimDefs: Internal Error, invalid material type %i.",
+                      (int) type);
         }
-
-        Z_Free(animDefs);
-        VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
     }
+}
+
+void P_InitPicAnims(void)
+{
+    int                 lump;
+
+    // Is there an ANIMATED lump?
+    if((lump = W_CheckNumForName("ANIMATED")) > 0)
+    {
+        animdef_t*          animDefs;
+
+        /**
+         * We'll support this BOOM extension by reading the data and then
+         * registering the new animations into Doomsday using the animation
+         * groups feature.
+         *
+         * Support for this extension should be considered depreciated.
+         * All new features should be added, accessed via DED.
+         */
+        Con_Message("P_InitPicAnims: \"ANIMATED\" lump found. "
+                    "Reading animations...\n");
+
+        animDefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
+        loadAnimDefs(animDefs);
+        Z_Free(animDefs);
+    }
+    else
+    {
+        Con_Message("P_InitPicAnims: Registering default animations...\n");
+
+        loadAnimDefs(animsShared);
+        if(gameMode == commercial)
+        {
+            loadAnimDefs(animsDoom2);
+            if(gameMission == GM_PLUT)
+                loadAnimDefs(animsDoom2Plut);
+        }
+        else
+        {
+            loadAnimDefs(animsDoom);
+        }
+    }
+
+    VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
 }
 
 boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)

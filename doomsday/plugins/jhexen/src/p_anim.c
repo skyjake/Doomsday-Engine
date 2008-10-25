@@ -57,23 +57,32 @@ static void parseAnimGroup(materialtype_t type)
     boolean             ignore;
     boolean             done;
     int                 groupNumber = 0;
-    materialnum_t       numBase = 0;
+    materialnum_t       matNumBase = 0, lumpNumBase = 0;
+
+    if(!(type == MAT_FLAT || type == MAT_TEXTURE))
+        Con_Error("parseAnimGroup: Internal Error, invalid material type %i.",
+                  (int) type);
 
     if(!SC_GetString()) // Name.
     {
         SC_ScriptError("Missing string.");
     }
 
-    ignore = false;
-    if(!R_MaterialCheckNumForName(sc_String, type))
+    ignore = true;
+    if(type == MAT_TEXTURE)
     {
-        ignore = true;
+        if((matNumBase = R_MaterialCheckNumForName(sc_String,
+                                                   MAT_TEXTURE)) != 0)
+            ignore = false;
     }
     else
     {
-        numBase = R_MaterialNumForName(sc_String, type);
-        groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
+        if((lumpNumBase = W_CheckNumForName(sc_String)) != -1)
+            ignore = false;
     }
+
+    if(!ignore)
+        groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
 
     done = false;
     do
@@ -107,8 +116,26 @@ static void parseAnimGroup(materialtype_t type)
 
                 if(!ignore)
                 {
-                    R_AddToAnimGroup(groupNumber, numBase + picNum - 1,
-                                     min, (max > 0? max - min : 0));
+                    if(type == MAT_TEXTURE)
+                    {
+                        /**
+                         * \fixme Here an assumption is made that
+                         * MAT_TEXTURE type materials are registered in the
+                         * same order as they are defined in the
+                         * TEXTURE(1...) lump(s).
+                         */
+                        R_AddToAnimGroup(groupNumber, matNumBase + picNum - 1,
+                                         min, (max > 0? max - min : 0));
+                    }
+                    else
+                    {
+                        materialnum_t       frame =
+                            R_MaterialCheckNumForName(W_LumpName(lumpNumBase + picNum - 1),
+                                                      MAT_FLAT);
+
+                        R_AddToAnimGroup(groupNumber, frame,
+                                         min, (max > 0? max - min : 0));
+                    }
                 }
             }
             else
