@@ -1531,12 +1531,12 @@ boolean PTR_ShootTraverse(intercept_t* in)
             skyCeil = P_GetIntp(frontSec, DMU_CEILING_MATERIAL) ==
                 SKYMASKMATERIAL;
             fCeil  = P_GetFloatp(frontSec, DMU_CEILING_HEIGHT);
-            bCeil  = P_GetFloatp(frontSec, DMU_CEILING_HEIGHT);
+            bCeil  = P_GetFloatp(backSec, DMU_CEILING_HEIGHT);
 
             if(skyCeil &&  (pos[VZ] > fCeil  || pos[VZ] > bCeil))
                 return false;
 
-            skyFloor = P_GetIntp(backSec, DMU_CEILING_MATERIAL) ==
+            skyFloor = P_GetIntp(backSec, DMU_FLOOR_MATERIAL) ==
                 SKYMASKMATERIAL;
             fFloor = P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT);
             bFloor = P_GetFloatp(backSec, DMU_FLOOR_HEIGHT);
