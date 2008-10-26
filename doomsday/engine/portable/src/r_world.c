@@ -473,16 +473,20 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
  * decoration origins for surfaces whose material offset is dependant upon
  * the given plane.
  */
-void R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln)
+void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
 {
-    linedef_t         **linep;
+    linedef_t**         linep;
+
+    if(!pln || !pln->sector->lineDefs)
+        return;
 
     // Mark the decor lights on the sides of this plane as requiring
     // an update.
     linep = pln->sector->lineDefs;
+
     while(*linep)
     {
-        linedef_t          *li = *linep;
+        linedef_t*          li = *linep;
 
         if(!li->L_backside)
         {
