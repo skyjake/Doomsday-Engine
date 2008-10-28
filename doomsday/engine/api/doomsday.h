@@ -68,84 +68,84 @@ extern          "C" {
 #include "dd_plugin.h"
 
     // Base.
-    void            DD_AddIWAD(const char *path);
-    void            DD_AddStartupWAD(const char *file);
-    void            DD_SetConfigFile(char *filename);
-    void            DD_SetDefsFile(char *filename);
+    void            DD_AddIWAD(const char* path);
+    void            DD_AddStartupWAD(const char* file);
+    void            DD_SetConfigFile(char* filename);
+    void            DD_SetDefsFile(char* filename);
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
-    void            DD_SetVariable(int ddvalue, void *ptr);
-    void           *DD_GetVariable(int ddvalue);
-    ddplayer_t     *DD_GetPlayer(int number);
+    void            DD_SetVariable(int ddvalue, void* ptr);
+    void*           DD_GetVariable(int ddvalue);
+    ddplayer_t*     DD_GetPlayer(int number);
 
     // Base: Definitions.
-    int             Def_Get(int type, char *id, void *out);
-    int             Def_Set(int type, int index, int value, void *ptr);
-    int             Def_EvalFlags(char *flags);
+    int             Def_Get(int type, char* id, void* out);
+    int             Def_Set(int type, int index, int value, void* ptr);
+    int             Def_EvalFlags(char* flags);
 
     // Base: Input.
     void            DD_ClearKeyRepeaters(void);
-    int             DD_GetKeyCode(const char *name);
+    int             DD_GetKeyCode(const char* name);
 
     // Base: WAD.
-    lumpnum_t       W_CheckNumForName(const char *name);
-    lumpnum_t       W_GetNumForName(const char *name);
+    lumpnum_t       W_CheckNumForName(const char* name);
+    lumpnum_t       W_GetNumForName(const char* name);
     size_t          W_LumpLength(lumpnum_t lump);
-    const char     *W_LumpName(lumpnum_t lump);
-    void            W_ReadLump(lumpnum_t lump, void *dest);
-    void            W_ReadLumpSection(lumpnum_t lump, void *dest,
+    const char*     W_LumpName(lumpnum_t lump);
+    void            W_ReadLump(lumpnum_t lump, void* dest);
+    void            W_ReadLumpSection(lumpnum_t lump, void* dest,
                                       size_t startOffset, size_t length);
-    void           *W_CacheLumpNum(lumpnum_t lump, int tag);
-    void           *W_CacheLumpName(char *name, int tag);
+    void*           W_CacheLumpNum(lumpnum_t lump, int tag);
+    void*           W_CacheLumpName(char* name, int tag);
     void            W_ChangeCacheTag(lumpnum_t lump, int tag);
-    const char     *W_LumpSourceFile(lumpnum_t lump);
+    const char*     W_LumpSourceFile(lumpnum_t lump);
     uint            W_CRCNumber(void);
     boolean         W_IsFromIWAD(lumpnum_t lump);
     lumpnum_t       W_OpenAuxiliary(const char *fileName);
 
     // Base: Zone.
-    void           *_DECALL Z_Malloc(size_t size, int tag, void *ptr);
-    void           *Z_Calloc(size_t size, int tag, void *user);
-    void           *Z_Realloc(void *ptr, size_t n, int mallocTag);
-    void           *Z_Recalloc(void *ptr, size_t n, int callocTag);
-    void _DECALL    Z_Free(void *ptr);
+    void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
+    void* _DECALL   Z_Calloc(size_t size, int tag, void* user);
+    void*           Z_Realloc(void* ptr, size_t n, int mallocTag);
+    void*           Z_Recalloc(void* ptr, size_t n, int callocTag);
+    void _DECALL    Z_Free(void* ptr);
     void            Z_FreeTags(int lowTag, int highTag);
-    void            Z_ChangeTag2(void *ptr, int tag);
+    void            Z_ChangeTag2(void* ptr, int tag);
     void            Z_CheckHeap(void);
 
     // Console.
     int             Con_Busy(int flags, const char* taskName,
-                             int (*workerFunc)(void*), void *workerData);
+                             int (*workerFunc)(void*), void* workerData);
     void            Con_BusyWorkerEnd(void);
     boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
-    void            Con_SetFont(ddfont_t *cfont);
-    void            Con_AddCommand(ccmd_t *cmd);
-    void            Con_AddVariable(cvar_t *var);
-    void            Con_AddCommandList(ccmd_t *cmdlist);
-    void            Con_AddVariableList(cvar_t *varlist);
-    cvar_t         *Con_GetVariable(char *name);
-    byte            Con_GetByte(char *name);
-    int             Con_GetInteger(char *name);
-    float           Con_GetFloat(char *name);
-    char           *Con_GetString(char *name);
-    void            Con_SetInteger(char *name, int value, byte override);
-    void            Con_SetFloat(char *name, float value, byte override);
-    void            Con_SetString(char *name, char *text, byte override);
-    void            Con_Printf(char *format, ...) PRINTF_F(1,2);
-    void            Con_FPrintf(int flags, char *format, ...) PRINTF_F(2,3);
-    int             DD_Execute(int silent, const char *command);
-    int             DD_Executef(int silent, const char *command, ...);
-    void            Con_Message(char *message, ...) PRINTF_F(1,2);
-    void            Con_Error(char *error, ...) PRINTF_F(1,2);
+    void            Con_SetFont(ddfont_t* cfont);
+    void            Con_AddCommand(ccmd_t* cmd);
+    void            Con_AddVariable(cvar_t* var);
+    void            Con_AddCommandList(ccmd_t* cmdlist);
+    void            Con_AddVariableList(cvar_t* varlist);
+    cvar_t*         Con_GetVariable(char* name);
+    byte            Con_GetByte(char* name);
+    int             Con_GetInteger(char* name);
+    float           Con_GetFloat(char* name);
+    char*           Con_GetString(char* name);
+    void            Con_SetInteger(char* name, int value, byte override);
+    void            Con_SetFloat(char* name, float value, byte override);
+    void            Con_SetString(char* name, char* text, byte override);
+    void            Con_Printf(char* format, ...) PRINTF_F(1,2);
+    void            Con_FPrintf(int flags, char* format, ...) PRINTF_F(2,3);
+    int             DD_Execute(int silent, const char* command);
+    int             DD_Executef(int silent, const char* command, ...);
+    void            Con_Message(char* message, ...) PRINTF_F(1,2);
+    void            Con_Error(char* error, ...) PRINTF_F(1,2);
 
     // Console: Bindings.
-    void            B_FormEventString(char *buff, evtype_t type, evstate_t state,
+    void            B_FormEventString(char* buff, evtype_t type, evstate_t state,
                                       int data1);
-    int             B_BindingsForCommand(const char *cmd, char *buf, int bufSize);
-    int             B_BindingsForControl(int localPlayer, const char *controlName, int inverse,
-                                         char *buf, int bufSize);
-    void            DD_AddBindClass(struct bindclass_s *);
+    int             B_BindingsForCommand(const char* cmd, char* buf, int bufSize);
+    int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse,
+                                         char* buf, int bufSize);
+    void            DD_AddBindClass(struct bindclass_s* bindClass);
     boolean         DD_SetBindClass(unsigned int classID, int type);
 
     // System.
@@ -154,19 +154,19 @@ extern          "C" {
     double          Sys_GetSeconds(void);
     uint            Sys_GetRealTime(void);
     void            Sys_Sleep(int millisecs);
-    int             Sys_CriticalMessage(char *msg);
+    int             Sys_CriticalMessage(char* msg);
     void            Sys_Quit(void);
 
     // System: Files.
-    int             F_Access(const char *path);
-    unsigned int    F_LastModified(const char *fileName);
+    int             F_Access(const char* path);
+    unsigned int    F_LastModified(const char* fileName);
 
     // Map building interface.
-    boolean         MPE_Begin(const char *name);
+    boolean         MPE_Begin(const char* name);
     boolean         MPE_End(void);
 
     uint            MPE_VertexCreate(float x, float y);
-    boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
+    boolean         MPE_VertexCreatev(size_t num, float* values, uint* indices);
     uint            MPE_SidedefCreate(uint sector, short flags,
                                       materialnum_t topMaterial,
                                       float topOffsetX, float topOffsetY, float topRed,
@@ -187,16 +187,16 @@ extern          "C" {
                                     float matOffsetX, float matOffsetY,
                                     float r, float g, float b, float a,
                                     float normalX, float normalY, float normalZ);
-    uint            MPE_PolyobjCreate(uint *lines, uint linecount,
+    uint            MPE_PolyobjCreate(uint* lines, uint linecount,
                                       int tag, int sequenceType, float anchorX, float anchorY);
-    boolean         MPE_GameObjProperty(const char *objName, uint idx,
-                                        const char *propName, valuetype_t type,
-                                        void *data);
+    boolean         MPE_GameObjProperty(const char* objName, uint idx,
+                                        const char* propName, valuetype_t type,
+                                        void* data);
 
     // Custom map object data types.
-    boolean         P_RegisterMapObj(int identifier, const char *name);
+    boolean         P_RegisterMapObj(int identifier, const char* name);
     boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier,
-                                             const char *propName, valuetype_t type);
+                                             const char* propName, valuetype_t type);
 
     // Network.
     void            Net_SendPacket(int to_player, int type, void* data,
@@ -210,51 +210,51 @@ extern          "C" {
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
     int             P_PointOnLinedefSide(float x, float y,
-                                      struct linedef_s *line);
-    int             P_BoxOnLineSide(float *tmbox, struct linedef_s *ld);
-    void            P_MakeDivline(struct linedef_s *li, divline_t *dl);
+                                      struct linedef_s* line);
+    int             P_BoxOnLineSide(float* tmbox, struct linedef_s* ld);
+    void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
     int             P_PointOnDivlineSide(float x, float y,
-                                         divline_t *line);
-    float           P_InterceptVector(divline_t *v2, divline_t *v1);
-    void            P_LineOpening(struct linedef_s *linedef);
+                                         divline_t* line);
+    float           P_InterceptVector(divline_t* v2, divline_t* v1);
+    void            P_LineOpening(struct linedef_s* linedef);
 
     // Object in bounding box iterators.
     boolean         P_MobjsBoxIterator(const float box[4],
-                                       boolean (*func) (struct mobj_s*, void *),
-                                       void *data);
+                                       boolean (*func) (struct mobj_s*, void*),
+                                       void* data);
     boolean         P_LinesBoxIterator(const float box[4],
-                                       boolean (*func) (struct linedef_s*, void *),
-                                       void *data);
+                                       boolean (*func) (struct linedef_s*, void*),
+                                       void* data);
     boolean         P_AllLinesBoxIterator(const float box[4],
-                                          boolean (*func) (struct linedef_s*, void *),
-                                          void *data);
-    boolean         P_SubsectorsBoxIterator(const float box[4], sector_t *sector,
-                                           boolean (*func) (subsector_t *, void *),
-                                           void *data);
+                                          boolean (*func) (struct linedef_s*, void*),
+                                          void* data);
+    boolean         P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
+                                           boolean (*func) (subsector_t*, void*),
+                                           void* data);
     boolean         P_PolyobjsBoxIterator(const float box[4],
-                                          boolean (*func) (struct polyobj_s *, void *),
-                                          void *data);
+                                          boolean (*func) (struct polyobj_s*, void*),
+                                          void* data);
 
     // Object type touching mobjs iterators.
-    boolean         P_LineMobjsIterator(struct linedef_s *line,
-                                        boolean (*func) (struct mobj_s *,
-                                                         void *), void *data);
+    boolean         P_LineMobjsIterator(struct linedef_s* line,
+                                        boolean (*func) (struct mobj_s*,
+                                                         void *), void* data);
     boolean         P_SectorTouchingMobjsIterator
-                        (sector_t *sector, boolean (*func) (struct mobj_s*, void*),
-                         void *data);
+                        (sector_t* sector, boolean (*func) (struct mobj_s*, void*),
+                         void* data);
 
     boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
                                    int flags,
-                                   boolean (*trav) (intercept_t *));
-    boolean         P_CheckSight(struct mobj_s *t1, struct mobj_s *t2);
+                                   boolean (*trav) (intercept_t*));
+    boolean         P_CheckSight(struct mobj_s* t1, struct mobj_s* t2);
 
     // Play: Controls.
-    void            P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
+    void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindClass);
     void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
     int             P_GetImpulseControlState(int playerNum, int control);
 
     // Play: Setup.
-    boolean         P_LoadMap(const char *mapID);
+    boolean         P_LoadMap(const char* mapID);
 
     // Play: Map Data Updates and Information Access.
     unsigned int    P_ToIndex(const void* ptr);
@@ -267,11 +267,11 @@ extern          "C" {
                                int (*callback) (void* p, void* ctx));
 
     /* dummy functions */
-    void           *P_AllocDummy(int type, void* extraData);
+    void*           P_AllocDummy(int type, void* extraData);
     void            P_FreeDummy(void* dummy);
     int             P_DummyType(void* dummy);
     boolean         P_IsDummy(void* dummy);
-    void           *P_DummyExtraData(void* dummy);
+    void*           P_DummyExtraData(void* dummy);
 
     /* index-based write functions */
     void            P_SetBool(int type, uint index, uint prop, boolean param);
@@ -350,26 +350,26 @@ extern          "C" {
     float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
 
     // Play: Misc.
-    void            P_MergeCommand(ticcmd_t *dest, ticcmd_t *src); // temporary.
-    void            P_SpawnDamageParticleGen(struct mobj_s *mo,
-                                             struct mobj_s *inflictor,
+    void            P_MergeCommand(ticcmd_t* dest, ticcmd_t* src); // temporary.
+    void            P_SpawnDamageParticleGen(struct mobj_s* mo,
+                                             struct mobj_s* inflictor,
                                              int amount);
 
     // Play: Mobjs.
     struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z,
                                  angle_t angle, float radius, float height, int ddflags);
-    void            P_MobjDestroy(struct mobj_s *mo);
-    void            P_MobjSetState(struct mobj_s *mo, int statenum);
-    void            P_MobjLink(struct mobj_s *mo, byte flags);
-    void            P_MobjUnlink(struct mobj_s *mo);
+    void            P_MobjDestroy(struct mobj_s* mo);
+    void            P_MobjSetState(struct mobj_s* mo, int statenum);
+    void            P_MobjLink(struct mobj_s* mo, byte flags);
+    void            P_MobjUnlink(struct mobj_s* mo);
 
     // Mobj linked object iterators.
-    boolean         P_MobjLinesIterator(struct mobj_s *mo,
-                                        boolean (*func) (struct linedef_s *,
-                                                          void *), void *);
-    boolean         P_MobjSectorsIterator(struct mobj_s *mo,
+    boolean         P_MobjLinesIterator(struct mobj_s* mo,
+                                        boolean (*func) (struct linedef_s*,
+                                                          void*), void*);
+    boolean         P_MobjSectorsIterator(struct mobj_s* mo,
                                           boolean (*func) (sector_t*, void*),
-                                          void *data);
+                                          void* data);
 
     // Play: Polyobjs.
     boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
@@ -391,7 +391,7 @@ extern          "C" {
 
     // Refresh.
     int             DD_GetFrameRate(void);
-    void            R_SetDataPath(const char *path);
+    void            R_SetDataPath(const char* path);
     void            R_SetupLevel(int mode, int flags);
     void            R_PrecacheLevel(void);
     void            R_PrecachePatch(lumpnum_t lump);
@@ -399,14 +399,14 @@ extern          "C" {
     void            R_RenderPlayerView(int num);
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
-    void            R_SetBorderGfx(char *lumps[9]);
+    void            R_SetBorderGfx(char* lumps[9]);
     void            R_GetSpriteInfo(int sprite, int frame,
-                                    spriteinfo_t *sprinfo);
-    void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t *info);
+                                    spriteinfo_t* sprinfo);
+    void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
 
     materialnum_t   R_MaterialCheckNumForName(const char* name, materialtype_t type);
     materialnum_t   R_MaterialNumForName(const char* name, materialtype_t type);
-    const char     *R_MaterialNameForNum(materialnum_t num);
+    const char*     R_MaterialNameForNum(materialnum_t num);
     boolean         R_MaterialIsCustom(materialnum_t num);
     boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
 
@@ -415,15 +415,15 @@ extern          "C" {
 
     angle_t         R_PointToAngle2(float x1, float y1, float x2,
                                     float y2);
-    struct subsector_s *R_PointInSubsector(float x, float y);
+    struct subsector_s* R_PointInSubsector(float x, float y);
 
     // DGL.
-    void            DGL_DeleteTextures(int num, const DGLuint *names);
+    void            DGL_DeleteTextures(int num, const DGLuint* names);
     int             DGL_Enable(int cap);
     void            DGL_Disable(int cap);
     void            DGL_EnableTexUnit(byte id);
     void            DGL_DisableTexUnit(byte id);
-    boolean         DGL_GetIntegerv(int name, int *v);
+    boolean         DGL_GetIntegerv(int name, int* v);
     int             DGL_GetInteger(int name);
     boolean         DGL_SetInteger(int name, int value);
     float           DGL_GetFloat(int name);
@@ -449,20 +449,20 @@ extern          "C" {
     void            DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
     void            DGL_Color4ubv(const DGLubyte *data);
     void            DGL_Color3f(float r, float g, float b);
-    void            DGL_Color3fv(const float *data);
+    void            DGL_Color3fv(const float* data);
     void            DGL_Color4f(float r, float g, float b, float a);
-    void            DGL_Color4fv(const float *data);
+    void            DGL_Color4fv(const float* data);
     void            DGL_TexCoord2f(float s, float t);
-    void            DGL_TexCoord2fv(const float *data);
+    void            DGL_TexCoord2fv(const float* data);
     void            DGL_MultiTexCoord2f(byte target, float s, float t);
-    void            DGL_MultiTexCoord2fv(byte target, float *data);
+    void            DGL_MultiTexCoord2fv(byte target, float* data);
     void            DGL_Vertex2f(float x, float y);
-    void            DGL_Vertex2fv(const float *data);
+    void            DGL_Vertex2fv(const float* data);
     void            DGL_Vertex3f(float x, float y, float z);
-    void            DGL_Vertex3fv(const float *data);
-    void            DGL_Vertices2ftv(int num, const gl_ft2vertex_t *data);
-    void            DGL_Vertices3ftv(int num, const gl_ft3vertex_t *data);
-    void            DGL_Vertices3fctv(int num, const gl_fct3vertex_t *data);
+    void            DGL_Vertex3fv(const float* data);
+    void            DGL_Vertices2ftv(int num, const gl_ft2vertex_t* data);
+    void            DGL_Vertices3ftv(int num, const gl_ft3vertex_t* data);
+    void            DGL_Vertices3fctv(int num, const gl_fct3vertex_t* data);
 
     // Renderer.
     void            Rend_Reset(void);
@@ -470,7 +470,7 @@ extern          "C" {
 
     // Graphics.
     void            GL_UseFog(int yes);
-    byte           *GL_GrabScreen(void);
+    byte*           GL_GrabScreen(void);
     unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels,
                                              int flags, int minFilter, int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
@@ -484,7 +484,7 @@ extern          "C" {
     void            GL_SetTranslatedSprite(materialnum_t mat, int tmap, int tclass);
     void            GL_SetMaterial(materialnum_t mat);
     unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
-    unsigned int    GL_LoadGraphics(const char *name, int mode);
+    unsigned int    GL_LoadGraphics(const char* name, int mode);
 
     // Graphics: 2D drawing.
     void            GL_DrawPatch(int x, int y, lumpnum_t lump);
@@ -508,70 +508,70 @@ extern          "C" {
                                         int cy, int cw, int ch);
 
     // Graphics: PCX.
-    int             PCX_GetSize(const char *fn, int *w, int *h);
-    void            PCX_Load(const char *fn, int buf_w, int buf_h,
-                             byte *outBuffer);
-    int             PCX_MemoryLoad(byte *imgdata, int len, int buf_w,
-                                   int buf_h, byte *outBuffer);
+    int             PCX_GetSize(const char* fn, int* w, int* h);
+    void            PCX_Load(const char* fn, int bufWidth, int bufHeight,
+                             byte* outBuffer);
+    int             PCX_MemoryLoad(byte* imgdata, int len, int bufWidth,
+                                   int bufHeight, byte* outBuffer);
 
     // Graphics: PNG.
-    byte           *PNG_Load(const char *fileName, int *width, int *height,
-                             int *pixelSize);
+    byte*           PNG_Load(const char* fileName, int* width, int* height,
+                             int* pixelSize);
 
     // Graphics: TGA.
-    int             TGA_Save24_rgb565(const char *filename, int w, int h,
-                                      unsigned short *buffer);
-    int             TGA_Save24_rgb888(const char *filename, int w, int h,
-                                      byte *buffer);
-    int             TGA_Save24_rgba8888(const char *filename, int w, int h,
-                                        byte *buffer);
-    int             TGA_Save16_rgb888(const char *filename, int w, int h,
-                                      byte *buffer);
-    int             TGA_GetSize(const char *filename, int *w, int *h);
+    int             TGA_Save24_rgb565(const char* filename, int w, int h,
+                                      unsigned short* buffer);
+    int             TGA_Save24_rgb888(const char* filename, int w, int h,
+                                      byte* buffer);
+    int             TGA_Save24_rgba8888(const char* filename, int w, int h,
+                                        byte* buffer);
+    int             TGA_Save16_rgb888(const char* filename, int w, int h,
+                                      byte* buffer);
+    int             TGA_GetSize(const char* filename, int *w, int *h);
 
     // Audio.
     void            S_LevelChange(void);
     int             S_LocalSoundAtVolumeFrom(int sound_id,
-                                             struct mobj_s *origin,
-                                             float *pos, float volume);
-    int             S_LocalSoundAtVolume(int sound_id, struct mobj_s *origin,
+                                             struct mobj_s* origin,
+                                             float* pos, float volume);
+    int             S_LocalSoundAtVolume(int soundID, struct mobj_s* origin,
                                          float volume);
-    int             S_LocalSound(int sound_id, struct mobj_s *origin);
-    int             S_LocalSoundFrom(int sound_id, float *fixedpos);
-    int             S_StartSound(int soundId, struct mobj_s *origin);
-    int             S_StartSoundEx(int soundId, struct mobj_s *origin);
-    int             S_StartSoundAtVolume(int sound_id, struct mobj_s *origin,
+    int             S_LocalSound(int soundID, struct mobj_s* origin);
+    int             S_LocalSoundFrom(int soundID, float* fixedpos);
+    int             S_StartSound(int soundId, struct mobj_s* origin);
+    int             S_StartSoundEx(int soundId, struct mobj_s* origin);
+    int             S_StartSoundAtVolume(int soundID, struct mobj_s* origin,
                                          float volume);
-    int             S_ConsoleSound(int sound_id, struct mobj_s *origin,
-                                   int target_console);
-    void            S_StopSound(int sound_id, struct mobj_s *origin);
-    int             S_IsPlaying(int sound_id, struct mobj_s *origin);
-    int             S_StartMusic(char *musicid, boolean looped);
+    int             S_ConsoleSound(int soundID, struct mobj_s* origin,
+                                   int targetConsole);
+    void            S_StopSound(int soundID, struct mobj_s* origin);
+    int             S_IsPlaying(int soundID, struct mobj_s* origin);
+    int             S_StartMusic(char* musicID, boolean looped);
     int             S_StartMusicNum(int id, boolean looped);
     void            S_StopMusic(void);
 
     // Miscellaneous.
-    size_t          M_ReadFile(const char *name, byte **buffer);
-    size_t          M_ReadFileCLib(const char *name, byte **buffer);
-    boolean         M_WriteFile(const char *name, void *source, size_t length);
-    void            M_ExtractFileBase(const char *path, char *dest);
-    void            M_GetFileExt(const char *path, char *ext);
-    boolean         M_CheckPath(const char *path);
-    int             M_FileExists(const char *file);
-    void            M_TranslatePath(const char *path, char *translated);
+    size_t          M_ReadFile(const char* name, byte** buffer);
+    size_t          M_ReadFileCLib(const char* name, byte** buffer);
+    boolean         M_WriteFile(const char* name, void* source, size_t length);
+    void            M_ExtractFileBase(const char* path, char* dest);
+    void            M_GetFileExt(const char* path, char* ext);
+    boolean         M_CheckPath(const char* path);
+    int             M_FileExists(const char* file);
+    void            M_TranslatePath(const char* path, char* translated);
     const char*     M_PrettyPath(const char* path);
-    char           *M_SkipWhite(char *str);
-    char           *M_FindWhite(char *str);
-    char*           M_StrCatQuoted(char *dest, const char* src);
+    char*           M_SkipWhite(char* str);
+    char*           M_FindWhite(char* str);
+    char*           M_StrCatQuoted(char* dest, const char* src);
     byte            RNG_RandByte(void);
     float           RNG_RandFloat(void);
-    void            M_ClearBox(fixed_t *box);
-    void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
-    int             M_ScreenShot(const char *filename, int bits);
+    void            M_ClearBox(fixed_t* box);
+    void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
+    int             M_ScreenShot(const char* filename, int bits);
     int             M_CeilPow2(int num);
 
     // MiscellaneousL: Time utilities.
-    boolean         M_RunTrigger(trigger_t *trigger, timespan_t advanceTime);
+    boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
     boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
     // Miscellaneous: Math.
@@ -579,14 +579,14 @@ extern          "C" {
     binangle_t      bamsAtan2(int y, int x);
 
     // Miscellaneous: Command line.
-    void _DECALL    ArgAbbreviate(char *longname, char *shortname);
+    void _DECALL    ArgAbbreviate(char* longname, char* shortname);
     int _DECALL     Argc(void);
     char* _DECALL   Argv(int i);
     char** _DECALL  ArgvPtr(int i);
     char* _DECALL   ArgNext(void);
-    int _DECALL     ArgCheck(char *check);
-    int _DECALL     ArgCheckWith(char *check, int num);
-    int _DECALL     ArgExists(char *check);
+    int _DECALL     ArgCheck(char* check);
+    int _DECALL     ArgCheckWith(char* check, int num);
+    int _DECALL     ArgExists(char* check);
     int _DECALL     ArgIsOption(int i);
 
 #ifdef __cplusplus
