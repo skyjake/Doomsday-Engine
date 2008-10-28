@@ -285,72 +285,104 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
     P_ToXSector(sector)->special = 0;
 }
 
-void P_SpawnLightSequence(sector_t *sector, int indexStep)
-{
-#if 0
-    int         i, seqSpecial, count;
-    float       base;
-    fixed_t     index, indexDelta;
-    sector_t   *sec, *nextSec, *tempSec;
+typedef struct {
+    int                 seqSpecial, count;
+    sector_t*           sec, *nextSec;
+} findlightsequencesectorparams_t;
 
-    seqSpecial = LIGHT_SEQUENCE; // Look for Light_Sequence, first.
-    sec = sector;
-    count = 1;
+static int findLightSequenceSector(void* p, void* context)
+{
+    linedef_t*          li = (linedef_t*) p;
+    findlightsequencesectorparams_t* params =
+        (findlightsequencesectorparams_t*) context;
+    sector_t*           tempSec = P_GetNextSector(li, params->sec);
+
+    if(tempSec)
+    {
+        if(P_ToXSector(tempSec)->special == params->seqSpecial)
+        {
+            if(params->seqSpecial == LIGHT_SEQUENCE)
+                params->seqSpecial = LIGHT_SEQUENCE_ALT;
+            else
+                params->seqSpecial = LIGHT_SEQUENCE;
+
+            params->nextSec = tempSec;
+            params->count++;
+        }
+    }
+
+    return 1; // Continue iteration.
+}
+
+typedef struct {
+    sector_t*           sec, *nextSec;
+} findlightsequencestartsectorparams_t;
+
+static int findLightSequenceStartSector(void* p, void* context)
+{
+    linedef_t*          li = (linedef_t*) p;
+    findlightsequencestartsectorparams_t* params =
+        (findlightsequencestartsectorparams_t*) context;
+    sector_t*           tempSec = P_GetNextSector(li, params->sec);
+
+    if(tempSec)
+    {
+        if(P_ToXSector(tempSec)->special == LIGHT_SEQUENCE_START)
+        {
+            params->nextSec = tempSec;
+        }
+    }
+
+    return 1; // Continue iteration.
+}
+
+void P_SpawnLightSequence(sector_t* sector, int indexStep)
+{
+    int                 count;
+
+    {
+    findlightsequencesectorparams_t params;
+
+    params.seqSpecial = LIGHT_SEQUENCE; // Look for Light_Sequence, first.
+    params.count = 1;
+    params.sec = sector;
     do
     {
-        nextSec = NULL;
-        // make sure that the search doesn't back up.
-        P_ToXSector(sec)->special = LIGHT_SEQUENCE_START;
-        for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
-        {
-            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i), sec);
-            if(!tempSec)
-                continue;
+        // Make sure that the search doesn't back up.
+        P_ToXSector(params.sec)->special = LIGHT_SEQUENCE_START;
 
-            if(P_ToXSector(tempSec)->special == seqSpecial)
-            {
-                if(seqSpecial == LIGHT_SEQUENCE)
-                {
-                    seqSpecial = LIGHT_SEQUENCE_ALT;
-                }
-                else
-                {
-                    seqSpecial = LIGHT_SEQUENCE;
-                }
-                nextSec = tempSec;
-                count++;
-            }
-        }
-        sec = nextSec;
-    } while(sec);
+        params.nextSec = NULL;
+        P_Iteratep(params.sec, DMU_LINEDEF, &params,
+                   findLightSequenceSector);
+        params.sec = params.nextSec;
+    } while(params.sec);
 
-    sec = sector;
+    count = params.count;
+    }
+
+    {
+    findlightsequencestartsectorparams_t params;
+    float               base;
+    fixed_t             index, indexDelta;
+
+    params.sec = sector;
     count *= indexStep;
     index = 0;
     indexDelta = FixedDiv(64 * FRACUNIT, count * FRACUNIT);
     base = P_SectorLight(sector);
     do
     {
-        nextSec = NULL;
-        if(P_SectorLight(sec))
+        if(P_SectorLight(params.sec))
         {
-            base = P_SectorLight(sec);
+            base = P_SectorLight(params.sec);
         }
-        P_SpawnPhasedLight(sec, base, index >> FRACBITS);
+        P_SpawnPhasedLight(params.sec, base, index >> FRACBITS);
         index += indexDelta;
 
-        for(i = 0; i < P_GetIntp(sec, DMU_LINEDEF_COUNT); ++i)
-        {
-            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINEDEF_OF_SECTOR | i), sec);
-            if(!tempSec)
-                continue;
-
-            if(P_ToXSector(tempSec)->special == LIGHT_SEQUENCE_START)
-            {
-                nextSec = tempSec;
-            }
-        }
-        sec = nextSec;
-    } while(sec);
-#endif
+        params.nextSec = NULL;
+        P_Iteratep(params.sec, DMU_LINEDEF, &params,
+                   findLightSequenceStartSector);
+        params.sec = params.nextSec;
+    } while(params.sec);
+    }
 }
