@@ -394,8 +394,29 @@ static void drawStatusBarBackground(int player, float width, float height)
 
         if(IS_NETGAME)
         {
+            // Fill in any gap left before the faceback due to small ARMS.
+            if(ST_ARMSBGX + armsBackground.width < ST_FX)
+            {
+                x = width * (float) (ST_ARMSBGX + armsBackground.width) / ST_WIDTH;
+                y = 0;
+                w = width * (float) (ST_FX - ST_ARMSBGX - armsBackground.width) / ST_WIDTH;
+                h = height * (float) (ST_HEIGHT) / ST_HEIGHT;
+                cw = x / width;
+                cw2 = (x + w) / width;
+                ch = h / height;
+
+                DGL_TexCoord2f(cw, 0);
+                DGL_Vertex2f(x, y);
+                DGL_TexCoord2f(cw2, 0);
+                DGL_Vertex2f(x + w, y);
+                DGL_TexCoord2f(cw2, ch);
+                DGL_Vertex2f(x + w, y + h);
+                DGL_TexCoord2f(cw, ch);
+                DGL_Vertex2f(x, y + h);
+            }
+
             // Awkward, 2 pixel tall strip above faceback.
-            x = width * (float) ST_FX / ST_WIDTH;
+            x = width * (float) (ST_FX) / ST_WIDTH;
             y = 0;
             w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
             h = height * (float) (ST_HEIGHT - 30) / ST_HEIGHT;
@@ -413,13 +434,13 @@ static void drawStatusBarBackground(int player, float width, float height)
             DGL_Vertex2f(x, y + h);
 
             // Awkward, 1 pixel tall strip bellow faceback.
-            x = width * (float) ST_FX / ST_WIDTH;
+            x = width * (float) (ST_FX) / ST_WIDTH;
             y = height * (float) (ST_HEIGHT - 1) / ST_HEIGHT;
             w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
             h = height * (float) (ST_HEIGHT - 31) / ST_HEIGHT;
             cw = x / width;
             cw2 = (x + w) / width;
-            ch = h / height;
+            ch = (ST_HEIGHT - 1) / height;
 
             DGL_TexCoord2f(cw, ch);
             DGL_Vertex2f(x, y);
@@ -440,9 +461,9 @@ static void drawStatusBarBackground(int player, float width, float height)
         else
         {
             // Including area behind the face status indicator.
-            x = width * (float) ST_FX / ST_WIDTH;
+            x = width * (float) (ST_ARMSBGX + armsBackground.width) / ST_WIDTH;
             y = 0;
-            w = width * (float) (ST_WIDTH - ST_FX) / ST_WIDTH;
+            w = width * (float) (ST_WIDTH - ST_ARMSBGX - armsBackground.width) / ST_WIDTH;
             h = height * (float) ST_HEIGHT / ST_HEIGHT;
             cw = x / width;
         }
