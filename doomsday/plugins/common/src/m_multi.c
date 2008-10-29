@@ -65,36 +65,36 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    DrawMultiplayerMenu(void);
-void    DrawGameSetupMenu(void);
-void    DrawPlayerSetupMenu(void);
+void            DrawMultiplayerMenu(void);
+void            DrawGameSetupMenu(void);
+void            DrawPlayerSetupMenu(void);
 
-void    SCEnterHostMenu(int option, void *data);
-void    SCEnterJoinMenu(int option, void *data);
-void    SCEnterGameSetup(int option, void *data);
-void    SCSetProtocol(int option, void *data);
-void    SCGameSetupFunc(int option, void *data);
-void    SCGameSetupEpisode(int option, void *data);
-void    SCGameSetupMission(int option, void *data);
-void    SCGameSetupSkill(int option, void *data);
-void    SCGameSetupDeathmatch(int option, void *data);
-void    SCGameSetupDamageMod(int option, void *data);
-void    SCGameSetupHealthMod(int option, void *data);
-void    SCGameSetupGravity(int option, void *data);
-void    SCOpenServer(int option, void *data);
-void    SCCloseServer(int option, void *data);
-void    SCChooseHost(int option, void *data);
-void    SCStartStopDisconnect(int option, void *data);
-void    SCEnterPlayerSetupMenu(int option, void *data);
-void    SCPlayerClass(int option, void *data);
-void    SCPlayerColor(int option, void *data);
-void    SCAcceptPlayer(int option, void *data);
+void            SCEnterHostMenu(int option, void* data);
+void            SCEnterJoinMenu(int option, void* data);
+void            SCEnterGameSetup(int option, void* data);
+void            SCSetProtocol(int option, void* data);
+void            SCGameSetupFunc(int option, void* data);
+void            SCGameSetupEpisode(int option, void* data);
+void            SCGameSetupMission(int option, void* data);
+void            SCGameSetupSkill(int option, void* data);
+void            SCGameSetupDeathmatch(int option, void* data);
+void            SCGameSetupDamageMod(int option, void* data);
+void            SCGameSetupHealthMod(int option, void* data);
+void            SCGameSetupGravity(int option, void* data);
+void            SCOpenServer(int option, void* data);
+void            SCCloseServer(int option, void* data);
+void            SCChooseHost(int option, void* data);
+void            SCStartStopDisconnect(int option, void* data);
+void            SCEnterPlayerSetupMenu(int option, void* data);
+void            SCPlayerClass(int option, void* data);
+void            SCPlayerColor(int option, void* data);
+void            SCAcceptPlayer(int option, void* data);
 
-void    ResetJoinMenuItems();
+void            ResetJoinMenuItems();
 
 // Edit fields.
-void    DrawEditField(menu_t * menu, int index, editfield_t * ef);
-void    SCEditField(int efptr, void *data);
+void            DrawEditField(menu_t* menu, int index, editfield_t* ef);
+void            SCEditField(int efptr, void* data);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -102,9 +102,9 @@ void    SCEditField(int efptr, void *data);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-editfield_t *ActiveEdit = NULL; // No active edit field by default.
+editfield_t* ActiveEdit = NULL; // No active edit field by default.
 editfield_t plrNameEd;
-int     CurrentPlrFrame = 0;
+int CurrentPlrFrame = 0;
 
 menuitem_t MultiplayerItems[] = {
     {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
@@ -123,12 +123,12 @@ menuitem_t MultiplayerClientItems[] = {
     {ITT_EFUNC, 0, "disconnect", SCEnterJoinMenu, 0 }
 };
 
-menu_t  MultiplayerMenu = {
+menu_t MultiplayerMenu = {
     0,
     116, 70,
     DrawMultiplayerMenu,
     3, MultiplayerItems,
-    0, MENU_MAIN,
+    0, MENU_NEWGAME,
     huFontA,cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -256,7 +256,7 @@ menuitem_t GameSetupItems1[] =
 
 #endif
 
-menu_t  GameSetupMenu = {
+menu_t GameSetupMenu = {
     0,
 #  if __JDOOM__ || __JDOOM64__
     90, 54,
@@ -274,8 +274,6 @@ menu_t  GameSetupMenu = {
     LINEHEIGHT_A,
     0, NUM_GAMESETUP_ITEMS
 };
-
-
 
 #if __JHEXEN__ || __JSTRIFE__
 #  define NUM_PLAYERSETUP_ITEMS 6
@@ -296,7 +294,7 @@ menuitem_t PlayerSetupItems[] = {
     {ITT_EFUNC, 0, "Accept Changes", SCAcceptPlayer, 0 }
 };
 
-menu_t  PlayerSetupMenu = {
+menu_t PlayerSetupMenu = {
     0,
     60, 52,
     DrawPlayerSetupMenu,
@@ -316,10 +314,10 @@ static int plrClass;
 
 // CODE --------------------------------------------------------------------
 
-int Executef(int silent, char *format, ...)
+int Executef(int silent, char* format, ...)
 {
-    va_list argptr;
-    char    buffer[512];
+    va_list             argptr;
+    char                buffer[512];
 
     va_start(argptr, format);
     vsnprintf(buffer, sizeof(buffer), format, argptr);
@@ -329,22 +327,22 @@ int Executef(int silent, char *format, ...)
 
 void DrANumber(int number, int x, int y)
 {
-    char    buff[40];
+    char                buff[40];
 
     sprintf(buff, "%i", number);
 
     M_WriteText2(x, y, buff, huFontA, 1, 1, 1, Hu_MenuAlpha());
 }
 
-void MN_DrCenterTextA_CS(char *text, int center_x, int y)
+void MN_DrCenterTextA_CS(char* text, int centerX, int y)
 {
-    M_WriteText2(center_x - M_StringWidth(text, huFontA) / 2, y, text,
+    M_WriteText2(centerX - M_StringWidth(text, huFontA) / 2, y, text,
                  huFontA, 1, 0, 0, Hu_MenuAlpha());
 }
 
-void MN_DrCenterTextB_CS(char *text, int center_x, int y)
+void MN_DrCenterTextB_CS(char *text, int centerX, int y)
 {
-    M_WriteText2(center_x - M_StringWidth(text, huFontB) / 2, y, text,
+    M_WriteText2(centerX - M_StringWidth(text, huFontB) / 2, y, text,
                  huFontB, 1, 0, 0, Hu_MenuAlpha());
 }
 
@@ -355,25 +353,25 @@ void DrawMultiplayerMenu(void)
 
 void DrawGameSetupMenu(void)
 {
-    char   *boolText[] = { "NO", "YES" }, buf[50];
+    char*               boolText[] = {"NO", "YES"};
 #if __JDOOM__
-    char   *skillText[] = {"BABY", "EASY", "MEDIUM", "HARD", "NIGHTMARE" };
+    char*               skillText[] = {"BABY", "EASY", "MEDIUM", "HARD", "NIGHTMARE"};
 #else
-    char   *skillText[] = {"BABY", "EASY", "MEDIUM", "HARD" };
+    char*               skillText[] = {"BABY", "EASY", "MEDIUM", "HARD"};
 #endif
 #if __JDOOM__ || __JDOOM64__
-    //char   *freeLookText[3] = { "NO", "NOT BFG", "ALL" };
-    char   *dmText[] = { "COOPERATIVE", "DEATHMATCH 1", "DEATHMATCH 2" };
+    //char*             freeLookText[3] = {"NO", "NOT BFG", "ALL"};
+    char*               dmText[] = {"COOPERATIVE", "DEATHMATCH 1", "DEATHMATCH 2"};
 #else
-    char   *dmText[] = { "NO", "YES", "YES" };
+    char*               dmText[] = {"NO", "YES", "YES"};
 #endif
-    menu_t *menu = &GameSetupMenu;
-    int     idx;
-
+    char                buf[50];
+    menu_t*             menu = &GameSetupMenu;
+    int                 idx;
 #if __JHEXEN__
-    char   *mapName = P_GetMapName(P_TranslateMap(cfg.netMap));
+    char*               mapName = P_GetMapName(P_TranslateMap(cfg.netMap));
 #elif __JSTRIFE__
-    char   *mapName = "unnamed";
+    char*               mapName = "unnamed";
 #endif
 
     M_DrawTitle("GAME SETUP", menu->y - 20);
@@ -438,31 +436,31 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, buf);
 }
 
-/*
- * Finds the power of 2 that is equal to or greater than
- * the specified number.
+/**
+ * Finds the power of 2 that is equal to or greater than the specified number.
  */
 static int CeilPow2(int num)
 {
-    int     cumul;
+    int                 cumul;
 
     for(cumul = 1; num > cumul; cumul <<= 1);
+
     return cumul;
 }
 
 void DrawPlayerSetupMenu(void)
 {
-    spriteinfo_t    sprInfo;
-    menu_t         *menu = &PlayerSetupMenu;
-    int             useColor = plrColor;
-    float           menuAlpha = Hu_MenuAlpha();
+    spriteinfo_t        sprInfo;
+    menu_t*             menu = &PlayerSetupMenu;
+    int                 useColor = plrColor;
+    float               menuAlpha = Hu_MenuAlpha();
 #if __JHEXEN__
-    int             numColors = 8;
-    static const int sprites[3] = { SPR_PLAY, SPR_CLER, SPR_MAGE };
+    int                 numColors = 8;
+    static const int sprites[3] = {SPR_PLAY, SPR_CLER, SPR_MAGE};
 #else
-    int             plrClass = 0;
-    int             numColors = 4;
-    static const int sprites[3] = { SPR_PLAY, SPR_PLAY, SPR_PLAY };
+    int                 plrClass = 0;
+    int                 numColors = 4;
+    static const int    sprites[3] = {SPR_PLAY, SPR_PLAY, SPR_PLAY};
 #endif
 
     M_DrawTitle("PLAYER SETUP", menu->y - 28);
@@ -485,6 +483,7 @@ void DrawPlayerSetupMenu(void)
             useColor = 0;
     }
 #endif
+
     if(useColor)
         GL_SetTranslatedSprite(sprInfo.materialNum, useColor, plrClass);
     else
@@ -516,7 +515,7 @@ void DrawPlayerSetupMenu(void)
 
 }
 
-void SCEnterMultiplayerMenu(int option, void *data)
+void SCEnterMultiplayerMenu(int option, void* data)
 {
     int                 count;
 
@@ -555,12 +554,12 @@ void SCEnterMultiplayerMenu(int option, void *data)
     M_SetupNextMenu(&MultiplayerMenu);
 }
 
-void SCEnterHostMenu(int option, void *data)
+void SCEnterHostMenu(int option, void* data)
 {
     SCEnterGameSetup(0, NULL);
 }
 
-void SCEnterJoinMenu(int option, void *data)
+void SCEnterJoinMenu(int option, void* data)
 {
     if(IS_NETGAME)
     {
@@ -568,10 +567,11 @@ void SCEnterJoinMenu(int option, void *data)
         Hu_MenuCommand(MCMD_CLOSE);
         return;
     }
+
     DD_Execute(false, "net setup client");
 }
 
-void SCEnterGameSetup(int option, void *data)
+void SCEnterGameSetup(int option, void* data)
 {
     // See to it that the episode and mission numbers are correct.
 #if __JDOOM64__
@@ -620,14 +620,14 @@ void SCEnterGameSetup(int option, void *data)
     M_SetupNextMenu(&GameSetupMenu);
 }
 
-void SCGameSetupFunc(int option, void *data)
+void SCGameSetupFunc(int option, void* data)
 {
-    byte   *ptr = data;
+    byte*               ptr = data;
 
     *ptr ^= 1;
 }
 
-void SCGameSetupDeathmatch(int option, void *data)
+void SCGameSetupDeathmatch(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -645,7 +645,7 @@ void SCGameSetupDeathmatch(int option, void *data)
 }
 
 #if __JDOOM__ || __JHERETIC__
-void SCGameSetupEpisode(int option, void *data)
+void SCGameSetupEpisode(int option, void* data)
 {
 # if __JDOOM__
     if(gameMode == shareware)
@@ -653,6 +653,7 @@ void SCGameSetupEpisode(int option, void *data)
         cfg.netEpisode = 1;
         return;
     }
+
     if(option == RIGHT_DIR)
     {
         if(cfg.netEpisode < (gameMode == retail ? 4 : 3))
@@ -668,6 +669,7 @@ void SCGameSetupEpisode(int option, void *data)
         cfg.netEpisode = 1;
         return;
     }
+
     if(option == RIGHT_DIR)
     {
         if(cfg.netEpisode < 6)
@@ -678,11 +680,10 @@ void SCGameSetupEpisode(int option, void *data)
         cfg.netEpisode--;
     }
 # endif
-    return;
 }
 #endif
 
-void SCGameSetupMission(int option, void *data)
+void SCGameSetupMission(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -704,10 +705,9 @@ void SCGameSetupMission(int option, void *data)
     {
         cfg.netMap--;
     }
-    return;
 }
 
-void SCGameSetupSkill(int option, void *data)
+void SCGameSetupSkill(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -718,10 +718,9 @@ void SCGameSetupSkill(int option, void *data)
     {
         cfg.netSkill--;
     }
-    return;
 }
 
-void SCOpenServer(int option, void *data)
+void SCOpenServer(int option, void* data)
 {
     if(IS_NETGAME)
     {
@@ -742,13 +741,13 @@ void SCOpenServer(int option, void *data)
     DD_Execute(false, "net setup server");
 }
 
-void SCCloseServer(int option, void *data)
+void SCCloseServer(int option, void* data)
 {
     DD_Execute(false, "net server close");
     Hu_MenuCommand(MCMD_CLOSE);
 }
 
-void SCEnterPlayerSetupMenu(int option, void *data)
+void SCEnterPlayerSetupMenu(int option, void* data)
 {
     strncpy(plrNameEd.text, *(char **) Con_GetVariable("net-name")->ptr, 255);
     plrColor = cfg.netColor;
@@ -759,7 +758,7 @@ void SCEnterPlayerSetupMenu(int option, void *data)
 }
 
 #if __JHEXEN__
-void SCPlayerClass(int option, void *data)
+void SCPlayerClass(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -771,7 +770,7 @@ void SCPlayerClass(int option, void *data)
 }
 #endif
 
-void SCPlayerColor(int option, void *data)
+void SCPlayerColor(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -787,7 +786,7 @@ void SCPlayerColor(int option, void *data)
         plrColor--;
 }
 
-void SCAcceptPlayer(int option, void *data)
+void SCAcceptPlayer(int option, void* data)
 {
     char                buf[300];
 
@@ -818,7 +817,7 @@ void SCAcceptPlayer(int option, void *data)
     M_SetupNextMenu(&MultiplayerMenu);
 }
 
-void SCGameSetupDamageMod(int option, void *data)
+void SCGameSetupDamageMod(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -829,7 +828,7 @@ void SCGameSetupDamageMod(int option, void *data)
         cfg.netMobDamageModifier--;
 }
 
-void SCGameSetupHealthMod(int option, void *data)
+void SCGameSetupHealthMod(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -840,7 +839,7 @@ void SCGameSetupHealthMod(int option, void *data)
         cfg.netMobHealthModifier--;
 }
 
-void SCGameSetupGravity(int option, void *data)
+void SCGameSetupGravity(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -851,7 +850,10 @@ void SCGameSetupGravity(int option, void *data)
         cfg.netGravity--;
 }
 
-void MN_TickerEx(void)          // The extended ticker.
+/**
+ * The extended ticker.
+ */
+void MN_TickerEx(void)
 {
     static int          frameTimer = 0;
 
@@ -865,7 +867,7 @@ void MN_TickerEx(void)          // The extended ticker.
     }
 }
 
-int Ed_VisibleSlotChars(char *text, int (*widthFunc) (const char *text, dpatch_t *font))
+int Ed_VisibleSlotChars(char* text, int (*widthFunc) (const char* text, dpatch_t* font))
 {
     char                cbuf[2] = { 0, 0 };
     int                 i, w;
@@ -901,7 +903,7 @@ void Ed_MakeCursorVisible(void)
     }
 }
 
-void DrawEditField(menu_t *menu, int index, editfield_t *ef)
+void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 {
     int                 x = menu->x;
     int                 y = menu->y + menu->itemHeight * index;
@@ -920,9 +922,9 @@ void DrawEditField(menu_t *menu, int index, editfield_t *ef)
 
 }
 
-void SCEditField(int efptr, void *data)
+void SCEditField(int efptr, void* data)
 {
-    editfield_t        *ef = data;
+    editfield_t*        ef = data;
 
     // Activate this edit field.
     ActiveEdit = ef;

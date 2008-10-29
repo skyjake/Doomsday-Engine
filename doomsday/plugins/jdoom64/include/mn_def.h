@@ -75,6 +75,7 @@ typedef struct {
 
 typedef enum {
     MENU_MAIN,
+    MENU_NEWGAME,
     MENU_SKILL,
     MENU_OPTIONS,
     MENU_OPTIONS2,

@@ -102,55 +102,55 @@ void M_ControlGrabDrawer(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void M_NewGame(int option, void *data);
-void M_Episode(int option, void *data);        // Does nothing in jHEXEN
-void M_ChooseClass(int option, void *data);    // Does something only in jHEXEN
-void M_ChooseSkill(int option, void *data);
-void M_LoadGame(int option, void *data);
-void M_SaveGame(int option, void *data);
-void M_GameFiles(int option, void *data);        // Does nothing in jDOOM
-void M_EndGame(int option, void *data);
+void M_NewGame(int option, void* data);
+void M_Episode(int option, void* data); // Does nothing in jHEXEN
+void M_ChooseClass(int option, void* data); // Does something only in jHEXEN
+void M_ChooseSkill(int option, void* data);
+void M_LoadGame(int option, void* data);
+void M_SaveGame(int option, void* data);
+void M_GameFiles(int option, void* data); // Does nothing in jDOOM
+void M_EndGame(int option, void* data);
 #if !__JDOOM64__
-void M_ReadThis(int option, void *data);
-void M_ReadThis2(int option, void *data);
+void M_ReadThis(int option, void* data);
+void M_ReadThis2(int option, void* data);
 
 # if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-void M_ReadThis3(int option, void *data);
+void M_ReadThis3(int option, void* data);
 # endif
 #endif
 
-void M_QuitDOOM(int option, void *data);
+void M_QuitDOOM(int option, void* data);
 
-void M_ToggleVar(int option, void *data);
+void M_ToggleVar(int option, void* data);
 
-void M_OpenDCP(int option, void *data);
-void M_ChangeMessages(int option, void *data);
-void M_WeaponAutoSwitch(int option, void *data);
-void M_AmmoAutoSwitch(int option, void *data);
-void M_HUDInfo(int option, void *data);
-void M_HUDScale(int option, void *data);
-void M_SfxVol(int option, void *data);
-void M_WeaponOrder(int option, void *data);
-void M_MusicVol(int option, void *data);
-void M_SizeDisplay(int option, void *data);
+void M_OpenDCP(int option, void* data);
+void M_ChangeMessages(int option, void* data);
+void M_WeaponAutoSwitch(int option, void* data);
+void M_AmmoAutoSwitch(int option, void* data);
+void M_HUDInfo(int option, void* data);
+void M_HUDScale(int option, void* data);
+void M_SfxVol(int option, void* data);
+void M_WeaponOrder(int option, void* data);
+void M_MusicVol(int option, void* data);
+void M_SizeDisplay(int option, void* data);
 #if !__JDOOM64__
-void M_SizeStatusBar(int option, void *data);
-void M_StatusBarAlpha(int option, void *data);
+void M_SizeStatusBar(int option, void* data);
+void M_StatusBarAlpha(int option, void* data);
 #endif
-void M_HUDRed(int option, void *data);
-void M_HUDGreen(int option, void *data);
-void M_HUDBlue(int option, void *data);
-void M_FinishReadThis(int option, void *data);
-void M_LoadSelect(int option, void *data);
-void M_SaveSelect(int option, void *data);
-void M_Xhair(int option, void *data);
-void M_XhairSize(int option, void *data);
+void M_HUDRed(int option, void* data);
+void M_HUDGreen(int option, void* data);
+void M_HUDBlue(int option, void* data);
+void M_FinishReadThis(int option, void* data);
+void M_LoadSelect(int option, void* data);
+void M_SaveSelect(int option, void* data);
+void M_Xhair(int option, void* data);
+void M_XhairSize(int option, void* data);
 
 #if __JDOOM__ || __JDOOM64__
-void M_XhairR(int option, void *data);
-void M_XhairG(int option, void *data);
-void M_XhairB(int option, void *data);
-void M_XhairAlpha(int option, void *data);
+void M_XhairR(int option, void* data);
+void M_XhairG(int option, void* data);
+void M_XhairB(int option, void* data);
+void M_XhairAlpha(int option, void* data);
 #endif
 
 void M_ReadSaveStrings(void);
@@ -160,10 +160,11 @@ static void M_QuickSave(void);
 static void M_QuickLoad(void);
 
 #if __JDOOM64__
-void M_WeaponRecoil(int option, void *data);
+void M_WeaponRecoil(int option, void* data);
 #endif
 
 void M_DrawMainMenu(void);
+void M_DrawNewGameMenu(void);
 void M_DrawReadThis1(void);
 void M_DrawReadThis2(void);
 
@@ -172,8 +173,8 @@ void M_DrawReadThis3(void);
 #endif
 
 void M_DrawSkillMenu(void);
-void M_DrawClassMenu(void);            // Does something only in jHEXEN
-void M_DrawEpisode(void);            // Does nothing in jHEXEN
+void M_DrawClassMenu(void); // Does something only in jHEXEN
+void M_DrawEpisode(void); // Does nothing in jHEXEN
 void M_DrawOptions(void);
 void M_DrawOptions2(void);
 void M_DrawGameplay(void);
@@ -191,14 +192,14 @@ void M_DrawBackgroundBox(int x, int y, int w, int h,
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern editfield_t *ActiveEdit;
-extern char *weaponNames[];
+extern editfield_t* ActiveEdit;
+extern char* weaponNames[];
 extern menu_t ControlsDef;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-char   *endmsg[] = {
+char* endmsg[] = {
     "ARE YOU SURE YOU WANT TO QUIT?",
     "ARE YOU SURE YOU WANT TO END THE GAME?",
     "DO YOU WANT TO QUICKSAVE THE GAME NAMED",
@@ -208,7 +209,7 @@ char   *endmsg[] = {
 
 #if __JDOOM__ || __JDOOM64__
 /// The end message strings will be initialized in Hu_MenuInit().
-char *endmsg[NUM_QUITMESSAGES + 1];
+char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
 const char* QuitEndMsg[] =
@@ -225,55 +226,55 @@ const char* QuitEndMsg[] =
 boolean inhelpscreens;
 #endif
 
-menu_t *currentMenu;
+menu_t* currentMenu;
 
 #if __JHERETIC__
 static int MenuEpisode;
 #endif
 
 // -1 = no quicksave slot picked!
-int     quickSaveSlot;
+int quickSaveSlot;
 
- // 1 = message to be printed
-int     messageToPrint;
+ // 1 = message to be printed.
+int messageToPrint;
 
 // ...and here is the message string!
-char   *messageString;
+char* messageString;
 
-int     messageResponse;
-int     messageLastMenuActive;
+int messageResponse;
+int messageLastMenuActive;
 
-// timed message = no input from user
+// Timed message = no input from user.
 boolean messageNeedsInput;
 
-boolean  (*messageRoutine) (int response, void *data);
+boolean  (*messageRoutine) (int response, void* data);
 
-char    tempstring[80];
+char tempstring[80];
 
-// old save description before edit
-char    saveOldString[SAVESTRINGSIZE];
+// Old save description before edit.
+char saveOldString[SAVESTRINGSIZE];
 
-char    savegamestrings[10][SAVESTRINGSIZE];
+char savegamestrings[10][SAVESTRINGSIZE];
 
-// we are going to be entering a savegame string
-int     saveStringEnter;
-int     saveSlot;                // which slot to save in
-int     saveCharIndex;            // which char we're editing
+// We are going to be entering a savegame string.
+int saveStringEnter;
+int saveSlot; // Which slot to save in.
+int saveCharIndex; // Which char we're editing.
 
-char    endstring[160];
+char endstring[160];
 
 #if __JDOOM__ || __JDOOM64__
-static char *yesno[3] = { "NO", "YES", "MAYBE?" };
+static char* yesno[3] = {"NO", "YES", "MAYBE?"};
 #else
-static char *yesno[2] = { "NO", "YES" };
+static char* yesno[2] = {"NO", "YES"};
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-char   *episodemsg;
-int     epi;
+char* episodemsg;
+int epi;
 #endif
 
-static char shiftTable[59] =    // Contains characters 32 to 90.
+static char shiftTable[59] = // Contains characters 32 to 90.
 {
     /* 32 */ 0, 0, 0, 0, 0, 0, 0, '"',
     /* 40 */ 0, 0, 0, 0, '<', '_', '>', '?', ')', '!',
@@ -284,18 +285,18 @@ static char shiftTable[59] =    // Contains characters 32 to 90.
     /* 90 */ 0
 };
 
-int     menu_color = 0;
-float   skull_angle = 0;
+int menu_color = 0;
+float skull_angle = 0;
 
-int     frame;    // used by any graphic animations that need to be pumped
-int     menuTime;
+int frame; // Used by any graphic animations that need to be pumped.
+int menuTime;
 
-short   itemOn;    // menu item skull is on
-short   previtemOn;    // menu item skull was last on (for restoring when leaving widget control)
-short   skullAnimCounter;    // skull animation counter
-short   whichSkull;    // which skull to draw
+short itemOn; // Menu item skull is on.
+short previtemOn; // Menu item skull was last on (for restoring when leaving widget control).
+short skullAnimCounter; // Skull animation counter.
+short whichSkull; // Which skull to draw.
 
-// Sounds played in the menu
+// Sounds played in the menu.
 int menusnds[] = {
 #if __WOLFTC__
     SFX_MENUBC,            // close menu
@@ -343,14 +344,14 @@ static float menuTargetAlpha = 0; // Target alpha for the entire UI.
 static int SkullBaseLump;
 #endif
 
-static int    cursors = NUMCURSORS;
+static int cursors = NUMCURSORS;
 dpatch_t cursorst[NUMCURSORS];
 
 #if __JHEXEN__
 static int MenuPClass;
 #endif
 
-static rgba_t widgetcolors[] = {        // ptrs to colors editable with the colour widget
+static rgba_t widgetcolors[] = { // Ptrs to colors editable with the colour widget
     { &cfg.automapL0[0], &cfg.automapL0[1], &cfg.automapL0[2], NULL },
     { &cfg.automapL1[0], &cfg.automapL1[1], &cfg.automapL1[2], NULL },
     { &cfg.automapL2[0], &cfg.automapL2[1], &cfg.automapL2[2], NULL },
@@ -359,36 +360,34 @@ static rgba_t widgetcolors[] = {        // ptrs to colors editable with the colo
     { &cfg.hudColor[0], &cfg.hudColor[1], &cfg.hudColor[2], &cfg.hudColor[3] }
 };
 
-static boolean widgetEdit = false;    // No active widget by default.
-static boolean rgba = false;        // used to swap between rgb / rgba modes for the color widget
+static boolean widgetEdit = false; // No active widget by default.
+static boolean rgba = false; // Used to swap between rgb / rgba modes for the color widget.
 
-static int editcolorindex = 0;        // The index of the widgetcolors array of the item being currently edited
+static int editcolorindex = 0; // The index of the widgetcolors array of the item being currently edited.
 
-static float currentcolor[4] = {0, 0, 0, 0};    // Used by the widget as temporay values
+static float currentcolor[4] = {0, 0, 0, 0}; // Used by the widget as temporay values.
 
 static menufogdata_t menuFogData;
 
 static float outFade = 0;
 static boolean fadingOut = false;
 static int menuDarkTicks = 15;
-static int quitAsk = 0; // set ON so menu fog is rendered with the quit message
+static int quitAsk = 0; // Set ON so menu fog is rendered with the quit message.
 #if !defined( __JHEXEN__ ) && !defined( __JHERETIC__ )
-static int quitYet = 0; // prevents multiple quit responses
+static int quitYet = 0; // Prevents multiple quit responses.
 #endif
 static int slamInTicks = 9;
 
-// used to fade out the background a little when a widget is active
+// Used to fade out the background a little when a widget is active.
 static float menu_calpha = 0;
 
-//static boolean FileMenuKeySteal;
-//static boolean slottextloaded;
 static int quicksave;
 static int quickload;
 
 #if __JDOOM__
-#define READTHISID          (5)
+#define READTHISID          (4)
 #else
-#define READTHISID          (3)
+#define READTHISID          (2)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -417,31 +416,27 @@ static dpatch_t m_htic;
 
 menuitem_t MainItems[] = {
 #if __JDOOM__
-    {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0, &m_ngame},
-    {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0},
+    {ITT_SETMENU, 0, "{case}New Game", NULL, MENU_NEWGAME, &m_ngame},
     {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS, &m_option},
     {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0, &m_loadg},
     {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0, &m_saveg},
     {ITT_EFUNC, 0, "{case}Read This!", M_ReadThis, 0, &m_rdthis},
     {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0, &m_quitg}
 #elif __JDOOM64__
-    {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0},
-    {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0},
+    {ITT_SETMENU, 0, "{case}New Game", NULL, MENU_NEWGAME},
     {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS},
     {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0},
     {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0},
     {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0}
 #elif __JSTRIFE__
-    {ITT_EFUNC, 0, "N", M_NewGame, 0, ""},
-    {ITT_EFUNC, 0, "M", SCEnterMultiplayerMenu, 0, ""},
-    {ITT_SETMENU, 0, "O", NULL, 0, MENU_OPTIONS},
-    {ITT_EFUNC, 0, "L", M_LoadGame, 0, ""},
-    {ITT_EFUNC, 0, "S", M_SaveGame, 0, ""},
-    {ITT_EFUNC, 0, "R", M_ReadThis, 0, ""},
-    {ITT_EFUNC, 0, "Q", M_QuitDOOM, 0, ""}
+    {ITT_SETMENU, 0, "N", NULL, MENU_NEWGAME},
+    {ITT_SETMENU, 0, "O", NULL, MENU_OPTIONS},
+    {ITT_EFUNC, 0, "L", M_LoadGame, 0},
+    {ITT_EFUNC, 0, "S", M_SaveGame, 0},
+    {ITT_EFUNC, 0, "R", M_ReadThis, 0},
+    {ITT_EFUNC, 0, "Q", M_QuitDOOM, 0}
 #else
-    {ITT_EFUNC, 0, "new game", M_NewGame, 0},
-    {ITT_EFUNC, 0, "multiplayer", SCEnterMultiplayerMenu, 0},
+    {ITT_SETMENU, 0, "new game", NULL, MENU_NEWGAME},
     {ITT_SETMENU, 0, "options", NULL, MENU_OPTIONS},
     {ITT_SETMENU, 0, "game files", NULL, MENU_FILES},
     {ITT_EFUNC, 0, "info", M_ReadThis, 0},
@@ -454,36 +449,47 @@ menu_t MainDef = {
     0,
     110, 50,
     M_DrawMainMenu,
-    6, MainItems,
+    5, MainItems,
     0, MENU_NONE,
     huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B,
-    0, 6
+    0, 5
 #elif __JHERETIC__
     0,
     110, 64,
     M_DrawMainMenu,
-    6, MainItems,
+    5, MainItems,
     0, MENU_NONE,
     huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B,
-    0, 6
+    0, 5
 #elif __JSTRIFE__
     0,
     97, 64,
     M_DrawMainMenu,
-    7, MainItems,
+    6, MainItems,
     0, MENU_NONE,
     huFontA,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
-    0, 7
+    0, 6
 #elif __JDOOM64__
+    0,
+    97, 64,
+    M_DrawMainMenu,
+    5, MainItems,
+    0, MENU_NONE,
+    huFontB,                    //1, 0, 0,
+    cfg.menuColor,
+    NULL,
+    LINEHEIGHT_B + 1,
+    0, 5
+#else
     0,
     97, 64,
     M_DrawMainMenu,
@@ -494,17 +500,81 @@ menu_t MainDef = {
     NULL,
     LINEHEIGHT_B + 1,
     0, 6
+#endif
+};
+
+menuitem_t NewGameItems[] = {
+#if __JDOOM__
+    {ITT_EFUNC, 0, "{case}Singleplayer", M_NewGame, 0},
+    {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0}
+#elif __JDOOM64__
+    {ITT_EFUNC, 0, "{case}Singleplayer", M_NewGame, 0},
+    {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0}
+#elif __JSTRIFE__
+    {ITT_EFUNC, 0, "S", M_NewGame, 0},
+    {ITT_EFUNC, 0, "M", SCEnterMultiplayerMenu, 0, ""}
 #else
+    {ITT_EFUNC, 0, "Singleplayer", M_NewGame, 0},
+    {ITT_EFUNC, 0, "Multiplayer", SCEnterMultiplayerMenu, 0}
+#endif
+};
+
+menu_t NewGameDef = {
+#if __JHEXEN__
+    0,
+    110, 50,
+    M_DrawNewGameMenu,
+    2, NewGameItems,
+    0, MENU_MAIN,
+    huFontB,
+    cfg.menuColor,
+    NULL,
+    LINEHEIGHT_B,
+    0, 2
+#elif __JHERETIC__
+    0,
+    110, 64,
+    M_DrawNewGameMenu,
+    2, NewGameItems,
+    0, MENU_MAIN,
+    huFontB,
+    cfg.menuColor,
+    NULL,
+    LINEHEIGHT_B,
+    0, 2
+#elif __JSTRIFE__
     0,
     97, 64,
-    M_DrawMainMenu,
-    7, MainItems,
-    0, MENU_NONE,
-    huFontB,                    //1, 0, 0,
+    M_DrawNewGameMenu,
+    2, NewGameItems,
+    0, MENU_MAIN,
+    huFontA,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
-    0, 7
+    0, 2
+#elif __JDOOM64__
+    0,
+    97, 64,
+    M_DrawNewGameMenu,
+    2, NewGameItems,
+    0, MENU_MAIN,
+    huFontB,
+    cfg.menuColor,
+    NULL,
+    LINEHEIGHT_B + 1,
+    0, 2
+#else
+    0,
+    97, 64,
+    M_DrawNewGameMenu,
+    2, NewGameItems,
+    0, MENU_MAIN,
+    huFontB,
+    cfg.menuColor,
+    NULL,
+    LINEHEIGHT_B + 1,
+    0, 2
 #endif
 };
 
@@ -520,8 +590,8 @@ menu_t ClassDef = {
     66, 66,
     M_DrawClassMenu,
     3, ClassItems,
-    0, MENU_MAIN,
-    huFontB,                    //1, 0, 0,
+    0, MENU_NEWGAME,
+    huFontB,
     cfg.menuColor,
     NULL,
     LINEHEIGHT_B + 1,
@@ -543,8 +613,8 @@ menu_t EpiDef = {
     48, 50,
     M_DrawEpisode,
     3, EpisodeItems,
-    0, MENU_MAIN,
-    huFontB,                    //1, 0, 0,
+    0, MENU_NEWGAME,
+    huFontB,
     cfg.menuColor,
     NULL,
     LINEHEIGHT + 1,
@@ -559,13 +629,13 @@ menuitem_t EpisodeItems[] = {
     {ITT_EFUNC, 0, "T", M_Episode, 3}
 };
 
-menu_t  EpiDef = {
+menu_t EpiDef = {
     0,
     48, 63,
     M_DrawEpisode,
     4, EpisodeItems,
-    0, MENU_MAIN,
-    huFontB,                    //1, 0, 0,
+    0, MENU_NEWGAME,
+    huFontB,
     cfg.menuColor,
     NULL,
     LINEHEIGHT + 1,
@@ -586,7 +656,7 @@ static menu_t FilesMenu = {
     M_DrawFilesMenu,
     2, FilesItems,
     0, MENU_MAIN,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
     NULL,
     LINEHEIGHT + 1,
@@ -668,7 +738,7 @@ static menu_t SkillDef = {
     120, 44,
     M_DrawSkillMenu,
     5, SkillItems,
-    2, MENU_MAIN,
+    2, MENU_NEWGAME,
     huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
@@ -730,7 +800,7 @@ static menu_t SkillDef = {
     48, 63,
     M_DrawSkillMenu,
     4, SkillItems,
-    2, MENU_MAIN,
+    2, MENU_NEWGAME,
     huFontB,                    //1, 0, 0,
     cfg.menuColor,
     NULL,
@@ -780,7 +850,7 @@ static menu_t OptionsDef = {
     M_DrawOptions,
     10, OptionsItems,
     0, MENU_MAIN,
-    huFontA,                    //1, 0, 0,
+    huFontA,
     cfg.menuColor2,
     NULL,
     LINEHEIGHT_A,
@@ -833,13 +903,13 @@ menuitem_t ReadItems1[] = {
     {ITT_EFUNC, 0, "", M_ReadThis2, 0}
 };
 
-menu_t  ReadDef1 = {
+menu_t ReadDef1 = {
     MNF_NOSCALE,
     280, 185,
     M_DrawReadThis1,
     1, ReadItems1,
     0, MENU_MAIN,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -854,13 +924,13 @@ menuitem_t ReadItems2[] = {
 # endif
 };
 
-menu_t  ReadDef2 = {
+menu_t ReadDef2 = {
     MNF_NOSCALE,
     330, 175,
     M_DrawReadThis2,
     1, ReadItems2,
     0, MENU_MAIN,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -872,13 +942,13 @@ menuitem_t ReadItems3[] = {
     {ITT_EFUNC, 0, "", M_FinishReadThis, 0}
 };
 
-menu_t  ReadDef3 = {
+menu_t ReadDef3 = {
     MNF_NOSCALE,
     330, 175,
     M_DrawReadThis3,
     1, ReadItems3,
     0, MENU_MAIN,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
     NULL,
     LINEHEIGHT,
@@ -1152,6 +1222,7 @@ static menu_t GameplayDef = {
 
 menu_t* menulist[] = {
     &MainDef,
+    &NewGameDef,
 #if __JHEXEN__
     &ClassDef,
 #endif
@@ -1461,9 +1532,9 @@ void Hu_MenuInit(void)
         item->func = M_QuitDOOM;
         item->text = "{case}Quit Game";
         item->patch = &m_quitg;
-        MainDef.itemCount = 6;
+        MainDef.itemCount = 5;
         MainDef.y = 64 + 8;
-        SkillDef.prevMenu = MENU_MAIN;
+        SkillDef.prevMenu = MENU_NEWGAME;
         ReadDef1.drawFunc = M_DrawReadThis1;
         ReadDef1.x = 330;
         ReadDef1.y = 165;
@@ -1479,7 +1550,7 @@ void Hu_MenuInit(void)
         item->func = M_ReadThis;
         item->text = "{case}Read This!";
         item->patch = &m_rdthis;
-        MainDef.itemCount = 7;
+        MainDef.itemCount = 6;
         MainDef.y = 64;
         break;
     case retail:
@@ -1690,7 +1761,7 @@ void Hu_MenuTicker(timespan_t time)
 #undef MENUFOGALPHA_FADE_STEP
 }
 
-void M_SetupNextMenu(menu_t *menudef)
+void M_SetupNextMenu(menu_t* menudef)
 {
     if(!menudef)
         return;
@@ -1705,13 +1776,11 @@ void M_SetupNextMenu(menu_t *menudef)
     }
     else
     {   // Select the first active item in this menu.
-        int     i;
+        int                     i;
 
-        for(i = 0; ; ++i)
+        for(i = 0; i < menudef->itemCount; ++i)
         {
-            if(menudef->items[i].type == ITT_EMPTY)
-                continue;
-            else
+            if(menudef->items[i].type != ITT_EMPTY)
                 break;
         }
 
@@ -2628,7 +2697,7 @@ void M_DrawMainMenu(void)
     GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
     GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom,
+    WI_DrawPatch(94, 7, 1, 1, 1, menuAlpha, &m_doom,
                  NULL, false, ALIGN_LEFT);
 #elif __JSTRIFE__
     menu_t     *menu = &MainDef;
@@ -2652,6 +2721,12 @@ void M_DrawMainMenu(void)
     WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
                  menuAlpha, W_GetNumForName("M_QUITG"), NULL, false, ALIGN_LEFT);
 #endif
+}
+
+void M_DrawNewGameMenu(void)
+{
+    menu_t*             menu = &NewGameDef;
+    M_DrawTitle("Choose Game Type", menu->y - 30);
 }
 
 #if __JHEXEN__
@@ -2765,7 +2840,7 @@ void M_DrawLoad(void)
 #endif
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        M_DrawSaveLoadBorder(LoadDef.x,SAVEGAME_BOX_YOFFSET + LoadDef.y +
+        M_DrawSaveLoadBorder(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y +
                              (menu->itemHeight * i));
         M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y +
                      (menu->itemHeight * i),
@@ -3032,8 +3107,6 @@ void M_DrawOptions(void)
 
     M_DrawTitle("OPTIONS", 56);
 #else
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom, NULL, false,
-                 ALIGN_LEFT);
 # if __JDOOM64__
     WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
                  menuAlpha, 0, "{case}OPTIONS",
@@ -3465,7 +3538,7 @@ void M_WGCurrentColor(int option, void *data)
     M_FloatMod10(data, option);
 }
 
-void M_NewGame(int option, void *data)
+void M_NewGame(int option, void* data)
 {
     if(IS_NETGAME)
     {
