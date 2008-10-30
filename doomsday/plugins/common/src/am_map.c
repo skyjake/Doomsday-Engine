@@ -3480,7 +3480,7 @@ menu_t MapDef = {
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
 #if __JHERETIC__
     0, 17

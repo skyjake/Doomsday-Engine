@@ -114,7 +114,7 @@ menu_t ControlsDef = {
     1, MENU_OPTIONS,
     huFontA,                    //1, 0, 0,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
     0, 17, { 17, 40 }
 };
@@ -129,7 +129,7 @@ menu_t ControlsDef = {
     1, MENU_OPTIONS,
     huFontA,                    //1, 0, 0,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
     0, 15, { 15, 26 }
 };
@@ -144,7 +144,7 @@ menu_t ControlsDef = {
     1, MENU_OPTIONS,
     huFontA,                    //1, 0, 0,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
     0, 16, { 16, 21 }
 };

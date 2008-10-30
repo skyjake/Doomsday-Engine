@@ -71,12 +71,13 @@ typedef struct {
     int             y;
     void            (*drawFunc) (void);
     int             itemCount;
-    const menuitem_t *items;
+    const menuitem_t* items;
     int             lastOn;
     int             prevMenu; // menutype_t
-    dpatch_t       *font; // Font for menu items.
-    float          *color;
-    char           *background;     // Background lump name for this menu (if any).
+    dpatch_t*       font; // Font for menu items.
+    float*          color;
+    char*           background; // Background lump name for this menu (if any).
+    boolean         backgroundIsRaw;
     int             itemHeight;
     // For multipage menus.
     int             firstItem, numVisItems;

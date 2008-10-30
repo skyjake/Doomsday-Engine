@@ -165,13 +165,6 @@ void M_WeaponRecoil(int option, void* data);
 
 void M_DrawMainMenu(void);
 void M_DrawNewGameMenu(void);
-void M_DrawReadThis1(void);
-void M_DrawReadThis2(void);
-
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-void M_DrawReadThis3(void);
-#endif
-
 void M_DrawSkillMenu(void);
 void M_DrawClassMenu(void); // Does something only in jHEXEN
 void M_DrawEpisode(void); // Does nothing in jHEXEN
@@ -221,10 +214,6 @@ const char* QuitEndMsg[] =
     "ARE YOU SURE YOU WANT TO SUICIDE?",
     NULL
 };
-
-#if !__JDOOM64__
-boolean inhelpscreens;
-#endif
 
 menu_t* currentMenu;
 
@@ -451,9 +440,9 @@ menu_t MainDef = {
     M_DrawMainMenu,
     5, MainItems,
     0, MENU_NONE,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B,
     0, 5
 #elif __JHERETIC__
@@ -462,9 +451,9 @@ menu_t MainDef = {
     M_DrawMainMenu,
     5, MainItems,
     0, MENU_NONE,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B,
     0, 5
 #elif __JSTRIFE__
@@ -473,9 +462,9 @@ menu_t MainDef = {
     M_DrawMainMenu,
     6, MainItems,
     0, MENU_NONE,
-    huFontA,                    //1, 0, 0,
+    huFontA,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B + 1,
     0, 6
 #elif __JDOOM64__
@@ -484,9 +473,9 @@ menu_t MainDef = {
     M_DrawMainMenu,
     5, MainItems,
     0, MENU_NONE,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B + 1,
     0, 5
 #else
@@ -495,9 +484,9 @@ menu_t MainDef = {
     M_DrawMainMenu,
     6, MainItems,
     0, MENU_NONE,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B + 1,
     0, 6
 #endif
@@ -528,7 +517,7 @@ menu_t NewGameDef = {
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B,
     0, 2
 #elif __JHERETIC__
@@ -539,7 +528,7 @@ menu_t NewGameDef = {
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B,
     0, 2
 #elif __JSTRIFE__
@@ -550,7 +539,7 @@ menu_t NewGameDef = {
     0, MENU_MAIN,
     huFontA,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B + 1,
     0, 2
 #elif __JDOOM64__
@@ -561,7 +550,7 @@ menu_t NewGameDef = {
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B + 1,
     0, 2
 #else
@@ -572,7 +561,7 @@ menu_t NewGameDef = {
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B + 1,
     0, 2
 #endif
@@ -593,7 +582,7 @@ menu_t ClassDef = {
     0, MENU_NEWGAME,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT_B + 1,
     0, 3
 };
@@ -616,7 +605,7 @@ menu_t EpiDef = {
     0, MENU_NEWGAME,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT + 1,
     0, 3
 };
@@ -637,7 +626,7 @@ menu_t EpiDef = {
     0, MENU_NEWGAME,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT + 1,
     0, 4
 };
@@ -658,7 +647,7 @@ static menu_t FilesMenu = {
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT + 1,
     0, 2
 };
@@ -689,7 +678,7 @@ static menu_t LoadDef = {
     0, MENU_MAIN,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A + 8,
     0, NUMSAVESLOTS
 };
@@ -719,7 +708,7 @@ static menu_t SaveDef = {
     0, MENU_MAIN,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A + 8,
     0, NUMSAVESLOTS
 };
@@ -739,9 +728,9 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_NEWGAME,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT,
     0, 5
 };
@@ -761,9 +750,9 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_CLASS,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT,
     0, 5
 };
@@ -782,9 +771,9 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_EPISODE,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT,
     0, 5
 };
@@ -801,9 +790,9 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     4, SkillItems,
     2, MENU_NEWGAME,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT,
     0, 4
 };
@@ -823,9 +812,9 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_EPISODE,
-    huFontB,                    //1, 0, 0,
+    huFontB,
     cfg.menuColor,
-    NULL,
+    NULL, false,
     LINEHEIGHT,
     0, 5
 };
@@ -852,7 +841,7 @@ static menu_t OptionsDef = {
     0, MENU_MAIN,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
     0, 10
 };
@@ -889,7 +878,7 @@ static menu_t Options2Def = {
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
 #if __JDOOM__ || __JDOOM64__
     0, 3
@@ -906,12 +895,17 @@ menuitem_t ReadItems1[] = {
 menu_t ReadDef1 = {
     MNF_NOSCALE,
     280, 185,
-    M_DrawReadThis1,
+    NULL,
     1, ReadItems1,
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    "HELP1",
+#if __JDOOM__
+    false,
+#else
+    true,
+#endif
     LINEHEIGHT,
     0, 1
 };
@@ -927,12 +921,17 @@ menuitem_t ReadItems2[] = {
 menu_t ReadDef2 = {
     MNF_NOSCALE,
     330, 175,
-    M_DrawReadThis2,
+    NULL,
     1, ReadItems2,
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    "HELP2",
+#if __JDOOM__
+    false,
+#else
+    true,
+#endif
     LINEHEIGHT,
     0, 1
 };
@@ -945,12 +944,12 @@ menuitem_t ReadItems3[] = {
 menu_t ReadDef3 = {
     MNF_NOSCALE,
     330, 175,
-    M_DrawReadThis3,
+    NULL,
     1, ReadItems3,
     0, MENU_MAIN,
     huFontB,
     cfg.menuColor,
-    NULL,
+    "CREDIT", true,
     LINEHEIGHT,
     0, 1
 };
@@ -1047,7 +1046,7 @@ static menu_t HUDDef = {
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
 #if __WOLFTC__
     0, 13
@@ -1114,7 +1113,7 @@ static menu_t WeaponDef = {
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
 #if __JDOOM64__
     0, 21
@@ -1185,7 +1184,7 @@ static menu_t GameplayDef = {
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
     0, 3
 };
@@ -1208,7 +1207,7 @@ static menu_t GameplayDef = {
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
 #if __JDOOM64__
     0, 17
@@ -1279,7 +1278,7 @@ static menu_t ColorWidgetMnu = {
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
 #if __JDOOM__ || __JDOOM64__
     0, 4
@@ -1519,9 +1518,7 @@ void Hu_MenuInit(void)
     quickSaveSlot = -1;
 
 #if __JDOOM__
-    // Here we could catch other version dependencies,
-    //  like HELP1/2, and four episodes.
-
+    // Here we catch version dependencies, like HELP1/2, and four episodes.
     switch(gameMode)
     {
     case commercial:
@@ -1535,14 +1532,16 @@ void Hu_MenuInit(void)
         MainDef.itemCount = 5;
         MainDef.y = 64 + 8;
         SkillDef.prevMenu = MENU_NEWGAME;
-        ReadDef1.drawFunc = M_DrawReadThis1;
         ReadDef1.x = 330;
         ReadDef1.y = 165;
+        ReadDef1.background = "HELP";
+        ReadDef1.backgroundIsRaw = false;
+        ReadDef2.background = "CREDIT";
+        ReadDef2.backgroundIsRaw = false;
         ReadItems1[0].func = M_FinishReadThis;
         break;
     case shareware:
-        // Episode 2 and 3 are handled,
-        //  branching to an ad screen.
+        // Episode 2 and 3 are handled, branching to an ad screen.
     case registered:
         // We need to remove the fourth episode.
         EpiDef.itemCount = 3;
@@ -1552,10 +1551,18 @@ void Hu_MenuInit(void)
         item->patch = &m_rdthis;
         MainDef.itemCount = 6;
         MainDef.y = 64;
+        ReadDef1.background = "HELP1";
+        ReadDef1.backgroundIsRaw = false;
+        ReadDef2.background = "HELP2";
+        ReadDef2.backgroundIsRaw = false;
         break;
     case retail:
         // We are fine.
         EpiDef.itemCount = 4;
+        ReadDef1.background = "HELP1";
+        ReadDef2.background = "CREDIT";
+        break;
+
     default:
         break;
     }
@@ -1796,8 +1803,8 @@ void M_SetupNextMenu(menu_t* menudef)
 }
 
 /**
- * @return          @c true, if the menu is active and there is
- *                  a background for this page.
+ * @return              @c true, if the menu is active and there is a
+ *                      background for this page.
  */
 boolean MN_CurrentMenuHasBackground(void)
 {
@@ -1813,8 +1820,8 @@ boolean MN_CurrentMenuHasBackground(void)
  */
 static void setMenuMatrix(float time)
 {
-    boolean         allowScaling = !(currentMenu->flags & MNF_NOSCALE);
-    boolean         rendMenuEffect = true;
+    boolean             allowScaling = !(currentMenu->flags & MNF_NOSCALE);
+    boolean             rendMenuEffect = true;
 
     // Use a plain 320x200 projection.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -1825,12 +1832,17 @@ static void setMenuMatrix(float time)
     // background effect.
     if(currentMenu->background)
     {
-        int         lump = W_CheckNumForName(currentMenu->background);
+        lumpnum_t           lump =
+            W_CheckNumForName(currentMenu->background);
 
         if(lump != -1)
         {
             DGL_Color4f(1, 1, 1, menuFogData.alpha);
-            GL_DrawPatch_CS(0, 0, lump);
+
+            if(currentMenu->backgroundIsRaw)
+                GL_DrawRawScreen_CS(lump, 0, 0, 1, 1);
+            else
+                GL_DrawPatch_CS(0, 0, lump);
             rendMenuEffect = false;
         }
     }
@@ -1932,9 +1944,6 @@ void Hu_MenuDrawer(void)
 
     effTime = (menuTime > menuDarkTicks? menuDarkTicks : menuTime);
     temp = .5 * effTime / (float) menuDarkTicks;
-#if !__JDOOM64__
-    inhelpscreens = false;
-#endif
 
     if(!menuActive && menuAlpha > 0.0125f)  // fading out
     {
@@ -3041,62 +3050,6 @@ void M_FinishReadThis(int option, void *data)
     option = 0;
     M_SetupNextMenu(&MainDef);
 }
-
-void M_DrawReadThis1(void)
-{
-    inhelpscreens = true;
-
-# if __JDOOM__
-    switch(gameMode)
-    {
-    case commercial:
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, &help, NULL, false, ALIGN_LEFT);
-        break;
-
-    case shareware:
-    case registered:
-    case retail:
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, &help1, NULL, false, ALIGN_LEFT);
-        break;
-
-    default:
-        break;
-    }
-# else
-    GL_DrawRawScreen(W_GetNumForName("HELP1"), 0, 0);
-# endif
-}
-
-void M_DrawReadThis2(void)
-{
-    inhelpscreens = true;
-# if __JDOOM__
-    switch(gameMode)
-    {
-    case retail:
-    case commercial:
-        // This hack keeps us from having to change menus.
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, &credit, NULL, false, ALIGN_LEFT);
-        break;
-    case shareware:
-    case registered:
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, &help2, NULL, false, ALIGN_LEFT);
-        break;
-    default:
-        break;
-    }
-# else
-    GL_DrawRawScreen(W_GetNumForName("HELP2"), 0, 0);
-# endif
-}
-
-# if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-void M_DrawReadThis3(void)
-{
-    inhelpscreens = true;
-    GL_DrawRawScreen(W_GetNumForName("CREDIT"), 0, 0);
-}
-# endif
 #endif
 
 void M_DrawOptions(void)
@@ -4047,8 +4000,15 @@ DEFCC(CCmdMenuAction)
         else if(saveStringEnter)
             mode = 3;
 #if !__JDOOM64__
-        else if(inhelpscreens)
-            mode = 4;
+        else
+        {
+            if(currentMenu == &ReadDef1 || currentMenu == &ReadDef2
+# if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+               || currentMenu == &ReadDef3
+# endif
+               )
+                mode = 4;
+        }
 #endif
 
         if(!stricmp(argv[0], "menuup"))
