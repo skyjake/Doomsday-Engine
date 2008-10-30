@@ -1164,16 +1164,13 @@ void C_DECL A_FireBlasterPL1(player_t *player, pspdef_t *psp)
 
 void C_DECL A_FireBlasterPL2(player_t* player, pspdef_t* psp)
 {
-    mobj_t*             mo;
 
     P_ShotAmmo(player);
     S_StartSoundEx(SFX_BLSSHT, player->plr->mo);
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnMissile(MT_BLASTERFX1, player->plr->mo, NULL);
-    if(mo)
-        mo->thinker.function = P_BlasterMobjThinker;
+    P_SpawnMissile(MT_BLASTERFX1, player->plr->mo, NULL);
 }
 
 void C_DECL A_FireGoldWandPL1(player_t *player, pspdef_t *psp)

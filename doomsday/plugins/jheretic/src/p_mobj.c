@@ -840,85 +840,85 @@ void P_NightmareRespawn(mobj_t *mobj)
     P_MobjRemove(mobj, true);
 }
 
-/**
- * Thinker for the ultra-fast blaster PL2 ripper-spawning missile.
- */
-void P_BlasterMobjThinker(mobj_t *mobj)
-{
-    int                 i;
-    float               frac[3];
-    float               z;
-    boolean             changexy;
-
-    // Handle movement
-    if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
-       (mobj->pos[VZ] != mobj->floorZ))
-    {
-        frac[MX] = mobj->mom[MX] / 8;
-        frac[MY] = mobj->mom[MY] / 8;
-        frac[MZ] = mobj->mom[MZ] / 8;
-
-        changexy = (frac[MX] != 0 || frac[MY] != 0);
-        for(i = 0; i < 8; ++i)
-        {
-            if(changexy)
-            {
-                if(!P_TryMove(mobj, mobj->pos[VX] + frac[MX],
-                              mobj->pos[VY] + frac[MY], false, false))
-                {   // Blocked move.
-                    P_ExplodeMissile(mobj);
-                    return;
-                }
-            }
-
-            mobj->pos[VZ] += frac[MZ];
-            if(mobj->pos[VZ] <= mobj->floorZ)
-            {   // Hit the floor.
-                mobj->pos[VZ] = mobj->floorZ;
-                P_HitFloor(mobj);
-                P_ExplodeMissile(mobj);
-                return;
-            }
-
-            if(mobj->pos[VZ] + mobj->height > mobj->ceilingZ)
-            {   // Hit the ceiling.
-                mobj->pos[VZ] = mobj->ceilingZ - mobj->height;
-                P_ExplodeMissile(mobj);
-                return;
-            }
-
-            if(changexy && (P_Random() < 64))
-            {
-                z = mobj->pos[VZ] - 8;
-                if(z < mobj->floorZ)
-                {
-                    z = mobj->floorZ;
-                }
-
-                P_SpawnMobj3f(MT_BLASTERSMOKE, mobj->pos[VX], mobj->pos[VY],
-                              z, P_Random() << 24);
-            }
-        }
-    }
-
-    // Advance the state.
-    if(mobj->tics != -1)
-    {
-        mobj->tics--;
-        while(!mobj->tics)
-        {
-            if(!P_MobjChangeState(mobj, mobj->state->nextState))
-            {   // Mobj was removed.
-                return;
-            }
-        }
-    }
-}
-
 void P_MobjThinker(mobj_t *mobj)
 {
     if(mobj->ddFlags & DDMF_REMOTE)
         return; // Remote mobjs are handled separately.
+
+    if(mobj->type == MT_BLASTERFX1)
+    {
+        int                 i;
+        float               frac[3];
+        float               z;
+        boolean             changexy;
+
+        // Handle movement
+        if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
+           (mobj->pos[VZ] != mobj->floorZ))
+        {
+            frac[MX] = mobj->mom[MX] / 8;
+            frac[MY] = mobj->mom[MY] / 8;
+            frac[MZ] = mobj->mom[MZ] / 8;
+
+            changexy = (frac[MX] != 0 || frac[MY] != 0);
+            for(i = 0; i < 8; ++i)
+            {
+                if(changexy)
+                {
+                    if(!P_TryMove(mobj, mobj->pos[VX] + frac[MX],
+                                  mobj->pos[VY] + frac[MY], false, false))
+                    {   // Blocked move.
+                        P_ExplodeMissile(mobj);
+                        return;
+                    }
+                }
+
+                mobj->pos[VZ] += frac[MZ];
+                if(mobj->pos[VZ] <= mobj->floorZ)
+                {   // Hit the floor.
+                    mobj->pos[VZ] = mobj->floorZ;
+                    P_HitFloor(mobj);
+                    P_ExplodeMissile(mobj);
+                    return;
+                }
+
+                if(mobj->pos[VZ] + mobj->height > mobj->ceilingZ)
+                {   // Hit the ceiling.
+                    mobj->pos[VZ] = mobj->ceilingZ - mobj->height;
+                    P_ExplodeMissile(mobj);
+                    return;
+                }
+
+                if(changexy && (P_Random() < 64))
+                {
+                    z = mobj->pos[VZ] - 8;
+                    if(z < mobj->floorZ)
+                    {
+                        z = mobj->floorZ;
+                    }
+
+                    P_SpawnMobj3f(MT_BLASTERSMOKE, mobj->pos[VX], mobj->pos[VY],
+                                  z, P_Random() << 24);
+                }
+            }
+        }
+
+        // Advance the state.
+        if(mobj->tics != -1)
+        {
+            mobj->tics--;
+            while(!mobj->tics)
+            {
+                if(!P_MobjChangeState(mobj, mobj->state->nextState))
+                {   // Mobj was removed.
+                    return;
+                }
+            }
+        }
+
+        return;
+    }
+
 #if __JDOOM__
     // Spectres get selector = 1.
     if(mobj->type == MT_SHADOWS)

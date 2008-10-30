@@ -110,9 +110,6 @@ void* G_GetVariable(int id)
     case DD_ACTION_LINK:
         return actionlinks;
 
-    case DD_ALT_MOBJ_THINKER:
-        return P_BlasterMobjThinker;
-
     case DD_XGFUNC_LINK:
         return xgClasses;
 
