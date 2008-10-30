@@ -225,6 +225,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
 
     // Retrieve the start owner node.
     own = R_GetVtxLineOwner(line->L_v(side^!toLeft), line);
+
     do
     {
         // Select the next line.
@@ -1472,7 +1473,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
             vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
-            if((suf->flags & SUF_NO_RADIO))
+            if((suf->flags & SUF_NO_RADIO) || !suf->material)
                 continue;
 
             if(line->L_backside)
