@@ -2271,8 +2271,8 @@ boolean MPE_GameObjProperty(const char *objName, uint idx,
     }
 
     // An unknown property.
-    Con_Message("MPE_GameObjProperty: %s has no property \"%s\".\n",
-                def->name, propName);
+    VERBOSE(Con_Message("MPE_GameObjProperty: %s has no property \"%s\".\n",
+                        def->name, propName));
 
     return false;
 }
