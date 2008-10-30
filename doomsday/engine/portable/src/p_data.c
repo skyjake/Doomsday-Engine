@@ -1108,6 +1108,9 @@ static void* getGMOPropValue(gameobjdata_t *data, int identifier,
     return NULL;
 }
 
+/**
+ * Handle some basic type conversions.
+ */
 static void setValue(void *dst, valuetype_t dstType, void *src,
                      valuetype_t srcType)
 {
@@ -1255,83 +1258,83 @@ static void setValue(void *dst, valuetype_t dstType, void *src,
 byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t          *map = P_GetCurrentMap();
-    void               *ptr;
-    byte                returnVal;
+    gamemap_t*          map = P_GetCurrentMap();
+    void*               ptr;
+    byte                returnVal = 0;
 
-    ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
-                          propIdentifier, &type);
-    // Handle some basic type conversions.
-    setValue(&returnVal, DDVT_BYTE, ptr, type);
+    if((ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
+                              propIdentifier, &type)))
+        setValue(&returnVal, DDVT_BYTE, ptr, type);
+
     return returnVal;
 }
 
 short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t          *map = P_GetCurrentMap();
-    void               *ptr;
-    short               returnVal;
+    gamemap_t*          map = P_GetCurrentMap();
+    void*               ptr;
+    short               returnVal = 0;
 
-    ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
-                          propIdentifier, &type);
-    // Handle some basic type conversions.
-    setValue(&returnVal, DDVT_SHORT, ptr, type);
+    if((ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
+                              propIdentifier, &type)))
+        setValue(&returnVal, DDVT_SHORT, ptr, type);
+
     return returnVal;
 }
 
 int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t          *map = P_GetCurrentMap();
-    void               *ptr;
-    int                 returnVal;
+    gamemap_t*          map = P_GetCurrentMap();
+    void*               ptr;
+    int                 returnVal = 0;
 
-    ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
-                          propIdentifier, &type);
-    // Handle some basic type conversions.
-    setValue(&returnVal, DDVT_INT, ptr, type);
+    if((ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
+                          propIdentifier, &type)))
+        setValue(&returnVal, DDVT_INT, ptr, type);
+
     return returnVal;
 }
 
 fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t          *map = P_GetCurrentMap();
-    void               *ptr;
-    fixed_t             returnVal;
+    gamemap_t*          map = P_GetCurrentMap();
+    void*               ptr;
+    fixed_t             returnVal = 0;
 
-    ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
-                          propIdentifier, &type);
-    // Handle some basic type conversions.
-    setValue(&returnVal, DDVT_FIXED, ptr, type);
+    if((ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
+                              propIdentifier, &type)))
+        setValue(&returnVal, DDVT_FIXED, ptr, type);
+
     return returnVal;
 }
 
 angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t          *map = P_GetCurrentMap();
-    void               *ptr;
-    angle_t             returnVal;
+    gamemap_t*          map = P_GetCurrentMap();
+    void*               ptr;
+    angle_t             returnVal = 0;
 
-    ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
-                          propIdentifier, &type);
-    // Handle some basic type conversions.
-    setValue(&returnVal, DDVT_ANGLE, ptr, type);
+    if((ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
+                              propIdentifier, &type)))
+        setValue(&returnVal, DDVT_ANGLE, ptr, type);
+
     return returnVal;
 }
 
 float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t          *map = P_GetCurrentMap();
-    void               *ptr;
-    float               returnVal;
+    gamemap_t*          map = P_GetCurrentMap();
+    void*               ptr;
+    float               returnVal = 0;
 
-    ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
-                          propIdentifier, &type);
-    // Handle some basic type conversions.
-    setValue(&returnVal, DDVT_FLOAT, ptr, type);
+    if((ptr = getGMOPropValue(&map->gameObjData, identifier, elmIdx,
+                              propIdentifier, &type)))
+        setValue(&returnVal, DDVT_FLOAT, ptr, type);
+
     return returnVal;
 }
