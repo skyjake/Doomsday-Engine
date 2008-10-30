@@ -518,9 +518,9 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
     // the location of any secret areas (false walls)).
     if(line->L_backside)
     {
-        sector_t           *front = line->L_sector(backside);
-        sector_t           *back  = line->L_sector(backside^1);
-        sidedef_t          *side  = line->L_side(backside);
+        sector_t*           front = line->L_sector(backside);
+        sector_t*           back  = line->L_sector(backside^1);
+        sidedef_t*          side  = line->L_side(backside);
 
         if(side->SW_middlematerial)
         {
@@ -529,12 +529,12 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
             if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 &&
                !mat->dgl.masked)
             {
-                float               openTop[2], gapTop[2];
-                float               openBottom[2], gapBottom[2];
+                float               openTop[2], matTop[2];
+                float               openBottom[2], matBottom[2];
 
-                openTop[0] = openTop[1] = gapTop[0] = gapTop[1] =
+                openTop[0] = openTop[1] = matTop[0] = matTop[1] =
                     MIN_OF(back->SP_ceilvisheight, front->SP_ceilvisheight);
-                openBottom[0] = openBottom[1] = gapBottom[0] = gapBottom[1] =
+                openBottom[0] = openBottom[1] = matBottom[0] = matBottom[1] =
                     MAX_OF(back->SP_floorvisheight, front->SP_floorvisheight);
 
                 // Could the mid texture fill enough of this gap for us
@@ -543,15 +543,15 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
                    mat->height >= (openTop[1] - openBottom[1]))
                 {
                     // Possibly. Check the placement of the mid texture.
-                    if(Rend_MidTexturePos
-                       (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
+                    if(Rend_MidMaterialPos
+                       (&matBottom[0], &matBottom[1], &matTop[0], &matTop[1],
                         NULL, side->SW_middlevisoffset[VY], mat->height,
                         0 != (line->flags & DDLF_DONTPEGBOTTOM)))
                     {
-                        if(openTop[0] >= gapTop[0] &&
-                           openTop[1] >= gapTop[1] &&
-                           openBottom[0] <= gapBottom[0] &&
-                           openBottom[1] <= gapBottom[1])
+                        if(matTop[0] >= openTop[0] &&
+                           matTop[1] >= openTop[1] &&
+                           matBottom[0] <= openBottom[0] &&
+                           matBottom[1] <= openBottom[1])
                             return true;
                     }
                 }
