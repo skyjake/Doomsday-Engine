@@ -213,6 +213,8 @@ rvertex_t* R_AllocRendVertices(uint num)
             {
                 ptr->inUse = false;
                 ptr->num = 0;
+                ptr->data = NULL;
+                ptr->type = 0;
                 rendPolys[i] = ptr;
             }
         }
@@ -285,6 +287,8 @@ rcolor_t* R_AllocRendColors(uint num)
             {
                 ptr->inUse = false;
                 ptr->num = 0;
+                ptr->data = NULL;
+                ptr->type = 0;
                 rendPolys[i] = ptr;
             }
         }
