@@ -1777,7 +1777,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         case MT_POISONCLOUD:
             if(target->player)
             {
-                int                 damageDone;
+                int                 damageDone = 0;
 
                 if(target->player->poisonCount < 4)
                 {
