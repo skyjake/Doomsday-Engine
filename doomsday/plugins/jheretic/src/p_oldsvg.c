@@ -46,6 +46,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+// Do NOT change this:
+#define SAVE_VERSION            130
 #define VERSIONSIZE             16
 #define SAVE_GAME_TERMINATOR    0x1d
 

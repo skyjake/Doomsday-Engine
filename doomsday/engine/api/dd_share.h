@@ -255,7 +255,8 @@ extern          "C" {
         DD_GAME_MODE,              // 16 chars max (swdoom, doom1, udoom, tnt, heretic...)
         DD_GAME_CONFIG,            // String: dm/co-op, jumping, etc.
         DD_DEF_FINALE,
-        DD_GAME_NAME,              // (eg jDoom, jHeretic...)
+        DD_GAME_NAME,              // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
+        DD_GAME_NICENAME,          // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
         DD_GAME_DMUAPI_VER,        // Version of the DMU API the game is using.
 
         // Non-integer/special values for Set/Get

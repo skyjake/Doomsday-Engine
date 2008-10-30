@@ -434,7 +434,10 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                GAMENAMETEXT " " VERSIONTEXT "\n");
+                gameMode == shareware? "Heretic Shareware Startup\n" :
+                gameMode == registered? "Heretic Registered Startup\n" :
+                gameMode == extended? "Heretic: Shadow of the Serpent Riders Startup\n" :
+                "Public Heretic\n");
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.

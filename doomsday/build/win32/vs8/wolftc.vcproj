@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -82,6 +82,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\wolftc\api\wolftc.def"
 				ProgramDatabaseFile=".\./Bin/Release/WolfTC.pdb"
 				RandomizedBaseAddress="1"
@@ -168,7 +169,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -180,6 +181,7 @@
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\wolftc\api\wolftc.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/WolfTC.pdb"
@@ -737,6 +739,14 @@
 				RelativePath="..\..\..\plugins\wolftc\include\wolftc.h"
 				>
 			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\wolftc\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -828,6 +838,36 @@
 			<File
 				RelativePath="..\..\..\plugins\wolftc\src\wi_stuff.c"
 				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath="..\..\..\plugins\wolftc\res\wolftc.ico"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\wolftc\res\wolftc.rc"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__JDOOM__; __WOLFTC__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__JDOOM__; __WOLFTC__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

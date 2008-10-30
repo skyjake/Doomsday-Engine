@@ -90,8 +90,11 @@ void *G_GetVariable(int id)
     case DD_GAME_NAME:
         return GAMENAMETEXT;
 
+    case DD_GAME_NICENAME:
+        return GAME_NICENAME;
+
     case DD_GAME_ID:
-        return GAMENAMETEXT " " VERSION_TEXT;
+        return GAMENAMETEXT " " GAME_VERSION_TEXT;
 
     case DD_GAME_MODE:
         return gameModeString;
@@ -100,11 +103,10 @@ void *G_GetVariable(int id)
         return gameConfigString;
 
     case DD_VERSION_SHORT:
-        return VERSION_TEXT;
+        return GAME_VERSION_TEXT;
 
     case DD_VERSION_LONG:
-        return VERSIONTEXT
-            "\n"GAMENAMETEXT" is based on Hexen v1.1 by Raven Software.";
+        return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
 
     case DD_ACTION_LINK:
         return actionlinks;

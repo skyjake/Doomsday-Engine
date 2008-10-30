@@ -22,14 +22,16 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+ * version.h: Version numbering, naming etc.
+ */
+
 #ifndef __JDOOM64_VERSION_H__
 #define __JDOOM64_VERSION_H__
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
-
-// JDOOM64 version
 
 #ifndef JDOOM64_VER_ID
 #  ifdef _DEBUG
@@ -39,15 +41,15 @@
 #  endif
 #endif
 
-#define GAMENAMETEXT "jdoom64"
+// Used to derive filepaths.
+#define GAMENAMETEXT        "jdoom64"
 
-// My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT "1.15."DOOMSDAY_RELEASE_NAME
-#define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("JDOOM64_VER_ID")"
+// Presented to the user in dialogs, messages etc.
+#define GAME_NICENAME       "jDoom64"
+#define GAME_DETAILS        "jDoom64 is based on jDoom-1.15."
 
-// All the versions of Doom have different savegame IDs, but
-// 500 will be the savegame base from now on.
-#define SAVE_VERSION_BASE   500
-#define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
+#define GAME_VERSION_TEXT   "0.8.1"
+#define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" JDOOM64_VER_ID ")"
+#define GAME_VERSION_NUMBER 0,8,1,0 // For WIN32 version info.
 
 #endif

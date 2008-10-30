@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
  */
 
 /**
- * version.h:
+ * version.h: Version numbering, naming etc.
  */
 
 #ifndef __JHEXEN_VERSION_H__
@@ -34,20 +34,23 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#ifndef VER_ID
-#  define VER_ID "Doomsday"
+#ifndef JHEXEN_VER_ID
+#  ifdef _DEBUG
+#    define JHEXEN_VER_ID "+D Doomsday"
+#  else
+#    define JHEXEN_VER_ID "Doomsday"
+#  endif
 #endif
 
-#define GAMENAMETEXT "jhexen"
+// Used to derive filepaths.
+#define GAMENAMETEXT        "jhexen"
 
-// Version numbering changes: 200 means JHexen v1.0.
-#define VERSION 200
-#define VERSION_TEXT "1.3."DOOMSDAY_RELEASE_NAME
+// Presented to the user in dialogs, messages etc.
+#define GAME_NICENAME       "jHexen"
+#define GAME_DETAILS        "jHexen is based on Hexen v1.1 by Raven Software."
 
-#ifdef RANGECHECK
-#  define VERSIONTEXT "Version "VERSION_TEXT" +R "__DATE__" ("VER_ID")"
-#else
-#  define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("VER_ID")"
-#endif
+#define GAME_VERSION_TEXT   "1.3.0"
+#define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" JHEXEN_VER_ID ")"
+#define GAME_VERSION_NUMBER 1,3,0,0 // For WIN32 version info.
 
 #endif

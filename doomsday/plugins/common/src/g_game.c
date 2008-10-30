@@ -440,7 +440,7 @@ void G_CommonPreInit(void)
 
     // Make sure game.dll isn't newer than Doomsday...
     if(gi.version < DOOMSDAY_VERSION)
-        Con_Error(GAMENAMETEXT " requires at least Doomsday " DOOMSDAY_VERSION_TEXT
+        Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT
                   "!\n");
 #ifdef TIC_DEBUG
     rndDebugfile = fopen("rndtrace.txt", "wt");

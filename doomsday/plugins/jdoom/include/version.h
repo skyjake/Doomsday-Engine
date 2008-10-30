@@ -34,8 +34,6 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-// DOOM version
-
 #ifndef JDOOM_VER_ID
 #  ifdef _DEBUG
 #    define JDOOM_VER_ID "+D Doomsday"
@@ -44,15 +42,15 @@
 #  endif
 #endif
 
+// Used to derive filepaths.
 #define GAMENAMETEXT        "jdoom"
 
-// My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT        "1.15."DOOMSDAY_RELEASE_NAME
-#define VERSIONTEXT         "Version "VERSION_TEXT" "__DATE__" ("JDOOM_VER_ID")"
+// Presented to the user in dialogs, messages etc.
+#define GAME_NICENAME       "jDoom"
+#define GAME_DETAILS        "jDoom is based on linuxdoom-1.10."
 
-// All the versions of Doom have different savegame IDs, but 500 will be
-// the savegame base from now on.
-#define SAVE_VERSION_BASE   500
-#define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
+#define GAME_VERSION_TEXT   "1.15.0"
+#define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" JDOOM_VER_ID ")"
+#define GAME_VERSION_NUMBER 1,15,0,0 // For WIN32 version info.
 
 #endif

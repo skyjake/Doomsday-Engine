@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,18 +18,20 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __JDOOM_VERSION_H__
-#define __JDOOM_VERSION_H__
+/**
+ * version.h: Version numbering, naming etc.
+ */
+
+#ifndef __WOLFTC_VERSION_H__
+#define __WOLFTC_VERSION_H__
 
 #ifndef __WOLFTC__
 #  error "Using WolfTC headers without __WOLFTC__"
 #endif
-
-// DOOM version
 
 #ifndef WOLFTC_VER_ID
 #  ifdef _DEBUG
@@ -39,15 +41,15 @@
 #  endif
 #endif
 
-#define GAMENAMETEXT "wolftc"
+// Used to derive filepaths.
+#define GAMENAMETEXT        "wolftc"
 
-// My my, the names of these #defines are really well chosen...
-#define VERSION_TEXT "1.15."DOOMSDAY_RELEASE_NAME
-#define VERSIONTEXT "Version "VERSION_TEXT" "__DATE__" ("WOLFTC_VER_ID")"
+// Presented to the user in dialogs, messages etc.
+#define GAME_NICENAME       "WolfTC"
+#define GAME_DETAILS        "WolfTC is based on jDoom-1.15."
 
-// All the versions of Doom have different savegame IDs, but
-// 500 will be the savegame base from now on.
-#define SAVE_VERSION_BASE   500
-#define SAVE_VERSION        (SAVE_VERSION_BASE + gamemode)
+#define GAME_VERSION_TEXT   "0.6.0"
+#define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" WOLFTC_VER_ID ")"
+#define GAME_VERSION_NUMBER 0,6,0,0 // For WIN32 version info.
 
 #endif

@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -82,6 +82,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\jdoom64\api\jdoom64.def"
 				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
 				RandomizedBaseAddress="1"
@@ -168,7 +169,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -180,6 +181,7 @@
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\jdoom64\api\jdoom64.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
@@ -729,6 +731,14 @@
 				RelativePath="..\..\..\plugins\jdoom64\include\wi_stuff.h"
 				>
 			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\jdoom64\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -828,6 +838,28 @@
 			<File
 				RelativePath="..\..\..\plugins\jdoom64\res\jdoom64.ico"
 				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jdoom64\res\jdoom64.rc"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__JDOOM64__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__JDOOM64__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

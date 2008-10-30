@@ -4,7 +4,7 @@
 	Version="9.00"
 	Name="jHexen"
 	ProjectGUID="{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
-	RootNamespace="JHexen"
+	RootNamespace="jHexen"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -18,7 +18,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\./Bin/Debug"
-			IntermediateDirectory=".\./Obj/Debug/JHexen"
+			IntermediateDirectory=".\./Obj/Debug/jHexen"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -44,7 +44,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Debug/JHexen.tlb"
+				TypeLibraryName=".\./Bin/Debug/jHexen.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -54,10 +54,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Debug/JHexen/JHexen.pch"
-				AssemblerListingLocation=".\./Obj/Debug/JHexen/"
-				ObjectFile=".\./Obj/Debug/JHexen/"
-				ProgramDataBaseFileName=".\./Obj/Debug/JHexen/"
+				PrecompiledHeaderFile=".\./Obj/Debug/jHexen/jHexen.pch"
+				AssemblerListingLocation=".\./Obj/Debug/jHexen/"
+				ObjectFile=".\./Obj/Debug/jHexen/"
+				ProgramDataBaseFileName=".\./Obj/Debug/jHexen/"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -72,7 +72,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -80,16 +80,17 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
-				OutputFile=".\./Bin/Debug/JHexen.dll"
+				OutputFile=".\./Bin/Debug/jHexen.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\./Bin/Debug/JHexen.pdb"
+				ProgramDatabaseFile=".\./Bin/Debug/jHexen.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Debug/JHexen.lib"
+				ImportLibrary=".\./Bin/Debug/jHexen.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -117,7 +118,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\./Bin/Release"
-			IntermediateDirectory=".\./Obj/Release/JHexen"
+			IntermediateDirectory=".\./Obj/Release/jHexen"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -143,7 +144,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/JHexen.tlb"
+				TypeLibraryName=".\./Bin/Release/jHexen.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -154,10 +155,10 @@
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Release/JHexen/JHexen.pch"
-				AssemblerListingLocation=".\./Obj/Release/JHexen/"
-				ObjectFile=".\./Obj/Release/JHexen/"
-				ProgramDataBaseFileName=".\./Obj/Release/JHexen/"
+				PrecompiledHeaderFile=".\./Obj/Release/jHexen/jHexen.pch"
+				AssemblerListingLocation=".\./Obj/Release/jHexen/"
+				ObjectFile=".\./Obj/Release/jHexen/"
+				ProgramDataBaseFileName=".\./Obj/Release/jHexen/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -169,7 +170,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -178,15 +179,16 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
-				OutputFile=".\./Bin/Release/JHexen.dll"
+				OutputFile=".\./Bin/Release/jHexen.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
-				ProgramDatabaseFile=".\./Bin/Release/JHexen.pdb"
+				ProgramDatabaseFile=".\./Bin/Release/jHexen.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/JHexen.lib"
+				ImportLibrary=".\./Bin/Release/jHexen.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -790,6 +792,14 @@
 				RelativePath="..\..\..\plugins\jhexen\include\xddefs.h"
 				>
 			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\jhexen\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -917,6 +927,36 @@
 			<File
 				RelativePath="..\..\..\plugins\jhexen\src\x_api.c"
 				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\res\jhexen.ico"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\jhexen\res\jhexen.rc"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__JHEXEN__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__JHEXEN__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

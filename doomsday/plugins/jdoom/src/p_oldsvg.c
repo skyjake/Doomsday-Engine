@@ -47,6 +47,11 @@
 // MACROS ------------------------------------------------------------------
 
 #define PADSAVEP()          savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
+
+// All the versions of DOOM have different savegame IDs, but 500 will be the
+// savegame base from now on.
+#define SAVE_VERSION_BASE   500
+#define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
 #define SAVESTRINGSIZE      (24)
 #define VERSIONSIZE         (16)
 
