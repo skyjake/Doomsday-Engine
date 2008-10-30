@@ -124,7 +124,6 @@ void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
 int         P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
 boolean     P_SeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax);
 void        P_MobjThinker(mobj_t *mo);
-void        P_BlasterMobjThinker(mobj_t *mo);
 boolean     P_HealRadius(player_t *plr);
 void        P_BlastRadius(player_t *plr);
 void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t *origin);

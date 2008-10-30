@@ -972,89 +972,6 @@ void P_MobjMoveZ(mobj_t *mo)
     }
 }
 
-void P_BlasterMobjThinker(mobj_t *mobj)
-{
-    int         i;
-    float       z, frac[3];
-    boolean     changexy;
-
-    // Handle movement.
-    if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
-       mobj->pos[VZ] != mobj->floorZ)
-    {
-        frac[VX] = mobj->mom[MX] / 8;
-        frac[VY] = mobj->mom[MY] / 8;
-        frac[VZ] = mobj->mom[MZ] / 8;
-        changexy = (frac[VX] != 0 || frac[VY] != 0);
-
-        for(i = 0; i < 8; ++i)
-        {
-            if(changexy)
-            {
-                if(!P_TryMove(mobj, mobj->pos[VX] + frac[VX],
-                                    mobj->pos[VY] + frac[VY]))
-                {   // Blocked move.
-                    P_ExplodeMissile(mobj);
-                    return;
-                }
-            }
-
-            mobj->pos[VZ] += frac[VZ];
-            if(mobj->pos[VZ] <= mobj->floorZ)
-            {   // Hit the floor.
-                mobj->pos[VZ] = mobj->floorZ;
-                P_HitFloor(mobj);
-                P_ExplodeMissile(mobj);
-                return;
-            }
-
-            if(mobj->pos[VZ] + mobj->height > mobj->ceilingZ)
-            {   // Hit the ceiling.
-                mobj->pos[VZ] = mobj->ceilingZ - mobj->height;
-                P_ExplodeMissile(mobj);
-                return;
-            }
-
-            if(changexy)
-            {
-                if(mobj->type == MT_MWAND_MISSILE && (P_Random() < 128))
-                {
-                    z = mobj->pos[VZ] - 8;
-                    if(z < mobj->floorZ)
-                    {
-                        z = mobj->floorZ;
-                    }
-                    P_SpawnMobj3f(MT_MWANDSMOKE, mobj->pos[VX],
-                                  mobj->pos[VY], z, P_Random() << 24);
-                }
-                else if(!--mobj->special1)
-                {
-                    mobj->special1 = 4;
-                    z = mobj->pos[VZ] - 12;
-                    if(z < mobj->floorZ)
-                    {
-                        z = mobj->floorZ;
-                    }
-
-                    P_SpawnMobj3f(MT_CFLAMEFLOOR, mobj->pos[VX],
-                                  mobj->pos[VY], z, mobj->angle);
-                }
-            }
-        }
-    }
-
-    // Advance the state.
-    if(mobj->tics != -1)
-    {
-        mobj->tics--;
-        while(!mobj->tics)
-        {
-            if(!P_MobjChangeState(mobj, mobj->state->nextState))
-                return; // Mobj was removed.
-        }
-    }
-}
-
 static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
 {
     mo->player->plr->viewHeightDelta = mo->mom[MZ] / 8;
@@ -1100,6 +1017,91 @@ void P_MobjThinker(mobj_t *mobj)
 
     if(mobj->ddFlags & DDMF_REMOTE) // Remote mobjs are handled separately.
         return;
+
+    if(mobj->type == MT_MWAND_MISSILE || mobj->type == MT_CFLAME_MISSILE)
+    {
+        int         i;
+        float       z, frac[3];
+        boolean     changexy;
+
+        // Handle movement.
+        if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
+           mobj->pos[VZ] != mobj->floorZ)
+        {
+            frac[VX] = mobj->mom[MX] / 8;
+            frac[VY] = mobj->mom[MY] / 8;
+            frac[VZ] = mobj->mom[MZ] / 8;
+            changexy = (frac[VX] != 0 || frac[VY] != 0);
+
+            for(i = 0; i < 8; ++i)
+            {
+                if(changexy)
+                {
+                    if(!P_TryMove(mobj, mobj->pos[VX] + frac[VX],
+                                        mobj->pos[VY] + frac[VY]))
+                    {   // Blocked move.
+                        P_ExplodeMissile(mobj);
+                        return;
+                    }
+                }
+
+                mobj->pos[VZ] += frac[VZ];
+                if(mobj->pos[VZ] <= mobj->floorZ)
+                {   // Hit the floor.
+                    mobj->pos[VZ] = mobj->floorZ;
+                    P_HitFloor(mobj);
+                    P_ExplodeMissile(mobj);
+                    return;
+                }
+
+                if(mobj->pos[VZ] + mobj->height > mobj->ceilingZ)
+                {   // Hit the ceiling.
+                    mobj->pos[VZ] = mobj->ceilingZ - mobj->height;
+                    P_ExplodeMissile(mobj);
+                    return;
+                }
+
+                if(changexy)
+                {
+                    if(mobj->type == MT_MWAND_MISSILE && (P_Random() < 128))
+                    {
+                        z = mobj->pos[VZ] - 8;
+                        if(z < mobj->floorZ)
+                        {
+                            z = mobj->floorZ;
+                        }
+                        P_SpawnMobj3f(MT_MWANDSMOKE, mobj->pos[VX],
+                                      mobj->pos[VY], z, P_Random() << 24);
+                    }
+                    else if(!--mobj->special1)
+                    {
+                        mobj->special1 = 4;
+                        z = mobj->pos[VZ] - 12;
+                        if(z < mobj->floorZ)
+                        {
+                            z = mobj->floorZ;
+                        }
+
+                        P_SpawnMobj3f(MT_CFLAMEFLOOR, mobj->pos[VX],
+                                      mobj->pos[VY], z, mobj->angle);
+                    }
+                }
+            }
+        }
+
+        // Advance the state.
+        if(mobj->tics != -1)
+        {
+            mobj->tics--;
+            while(!mobj->tics)
+            {
+                if(!P_MobjChangeState(mobj, mobj->state->nextState))
+                    return; // Mobj was removed.
+            }
+        }
+
+        return;
+    }
 
     // The first three bits of the selector special byte contain a
     // relative health level.

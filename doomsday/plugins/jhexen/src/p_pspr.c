@@ -856,13 +856,7 @@ void C_DECL A_FSwordFlames(mobj_t *mo)
 
 void C_DECL A_MWandAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t         *pmo;
-
-    pmo = P_SpawnPlayerMissile(MT_MWAND_MISSILE, plr->plr->mo);
-    if(pmo)
-    {
-        pmo->thinker.function = P_BlasterMobjThinker;
-    }
+    P_SpawnPlayerMissile(MT_MWAND_MISSILE, plr->plr->mo);
     S_StartSound(SFX_MAGE_WAND_FIRE, plr->plr->mo);
 }
 
@@ -1487,7 +1481,6 @@ void C_DECL A_CFlameAttack(player_t *plr, pspdef_t *psp)
     pmo = P_SpawnPlayerMissile(MT_CFLAME_MISSILE, plr->plr->mo);
     if(pmo)
     {
-        pmo->thinker.function = P_BlasterMobjThinker;
         pmo->special1 = 2;
     }
 
