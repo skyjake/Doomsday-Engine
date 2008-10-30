@@ -59,14 +59,14 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-	char            name[9];
-    materialtype_t  type;
+    char            name[9];
+    materialgroup_t group;
 } materialentry_t;
 
 typedef struct {
     //// \todo Remove fixed limit.
-	materialentry_t table[MAX_ARCHIVED_MATERIALS];
-	int             count;
+    materialentry_t table[MAX_ARCHIVED_MATERIALS];
+    int             count, version;
 } materialarchive_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -82,6 +82,8 @@ typedef struct {
 materialarchive_t matArchive;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int numFlats; // Used with older versions.
 
 // CODE --------------------------------------------------------------------
 
@@ -106,7 +108,7 @@ void SV_PrepareMaterial(materialnum_t num, materialarchive_t* arc)
     // Has this already been registered?
     for(c = 0; c < arc->count; c++)
     {
-        if(arc->table[c].type == info.type &&
+        if(arc->table[c].group == info.group &&
            !stricmp(arc->table[c].name, name))
         {
             break;// Yes, skip it...
@@ -116,7 +118,7 @@ void SV_PrepareMaterial(materialnum_t num, materialarchive_t* arc)
     if(c == arc->count)
     {
         strcpy(arc->table[arc->count++].name, name);
-        arc->table[arc->count - 1].type = info.type;
+        arc->table[arc->count - 1].group = info.group;
     }
 }
 
@@ -173,13 +175,26 @@ unsigned short SV_MaterialArchiveNum(materialnum_t num)
     return SV_SearchArchive(&matArchive, name);
 }
 
-materialnum_t SV_GetArchiveMaterial(int archivenum)
+materialnum_t SV_GetArchiveMaterial(int archivenum, int group)
 {
+    if(matArchive.version < 1 && group == 1)
+    {
+        archivenum += numFlats;
+    }
+
+    if(!(archivenum < matArchive.count))
+    {
+#if _DEBUG
+        Con_Error("SV_GetArchiveMaterial: Bad archivenum %i.", archivenum);
+#endif
+        return 0;
+    }
+
     if(!strncmp(matArchive.table[archivenum].name, BADTEXNAME, 8))
         return 0;
     else
         return R_MaterialNumForName(matArchive.table[archivenum].name,
-                                    matArchive.table[archivenum].type);
+                                    matArchive.table[archivenum].group);
     return 0;
 }
 
@@ -191,12 +206,11 @@ void SV_WriteMaterialArchive(void)
     for(i = 0; i < matArchive.count; ++i)
     {
         SV_Write(matArchive.table[i].name, 8);
-        SV_WriteByte(matArchive.table[i].type);
+        SV_WriteByte(matArchive.table[i].group);
     }
 }
 
-static void readMatArchive(materialarchive_t *arc, int version,
-                           materialtype_t defaultType)
+static void readMatArchive(materialarchive_t* arc, materialgroup_t defaultGroup)
 {
     int                 i, num;
 
@@ -205,10 +219,10 @@ static void readMatArchive(materialarchive_t *arc, int version,
     {
         SV_Read(arc->table[i].name, 8);
         arc->table[i].name[8] = 0;
-        if(version >= 1)
-            arc->table[i].type = SV_ReadByte();
+        if(arc->version >= 1)
+            arc->table[i].group = SV_ReadByte();
         else
-            arc->table[i].type = defaultType;
+            arc->table[i].group = defaultGroup;
     }
 
     arc->count += num;
@@ -217,10 +231,13 @@ static void readMatArchive(materialarchive_t *arc, int version,
 void SV_ReadMaterialArchive(int version)
 {
     matArchive.count = 0;
-    readMatArchive(&matArchive, version, MAT_FLAT);
+    matArchive.version = version;
+    readMatArchive(&matArchive, MAT_FLAT);
 
-    if(version == 0)
+    if(matArchive.version == 0)
     {   // The old format saved textures and flats in seperate blocks.
-        readMatArchive(&matArchive, version, MAT_TEXTURE);
+        numFlats = matArchive.count;
+
+        readMatArchive(&matArchive, MAT_TEXTURE);
     }
 }

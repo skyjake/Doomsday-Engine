@@ -267,7 +267,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     mov->crushSpeed = FIX2FLT(SV_ReadLong());
     num = SV_ReadLong();
     if(ver >= 3)
-        mov->setMaterial = SV_GetArchiveMaterial(num);
+        mov->setMaterial = SV_GetArchiveMaterial(num, 0);
     else
         mov->setMaterial = R_MaterialNumForName(W_LumpName(num), MAT_FLAT);
     mov->setSectorType = SV_ReadLong();

@@ -1095,9 +1095,8 @@ static void SV_WritePlayer(int playernum)
     }
 
     SV_WriteLong(p->readyWeapon);
-#if !__JHEXEN__
     SV_WriteLong(p->pendingWeapon);
-#endif
+
     for(i = 0; i < GetPlayerHeader()->numWeapons; ++i)
     {
         SV_WriteLong(p->weapons[i].owned);
@@ -1269,12 +1268,13 @@ static void SV_ReadPlayer(player_t *p)
         p->frags[i] = SV_ReadLong();
     }
 
-#if __JHEXEN__
-    p->pendingWeapon = p->readyWeapon = SV_ReadLong();
-#else
     p->readyWeapon = SV_ReadLong();
-    p->pendingWeapon = SV_ReadLong();
+#if __JHEXEN__
+    if(ver < 5)
+        p->pendingWeapon = WT_NOCHANGE;
+    else
 #endif
+        p->pendingWeapon = SV_ReadLong();
 
     for(i = 0; i < GetPlayerHeader()->numWeapons; ++i)
     {
@@ -1366,7 +1366,8 @@ static void SV_ReadPlayer(player_t *p)
     p->morphTics = SV_ReadLong();
 #endif
 
-    p->airCounter = SV_ReadLong();
+    if(ver >= 2)
+        p->airCounter = SV_ReadLong();
 
 #if __JHEXEN__
     p->jumpTics = SV_ReadLong();
@@ -2322,8 +2323,8 @@ static void SV_ReadSector(sector_t *sec)
 #endif
     {
         // The flat numbers are actually archive numbers.
-        floorMaterial = SV_GetArchiveMaterial(SV_ReadShort());
-        ceilingMaterial = SV_GetArchiveMaterial(SV_ReadShort());
+        floorMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 0);
+        ceilingMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 0);
     }
 
     P_SetIntp(sec, DMU_FLOOR_MATERIAL, floorMaterial);
@@ -2519,10 +2520,12 @@ static void SV_ReadLine(linedef_t *li)
     flags = SV_ReadShort();
     if(ver < 3 && (flags & 0x0100)) // the old ML_MAPPED flag
     {
+        uint                lineIDX = P_ToIndex(li);
+
         // Set line as having been seen by all players..
-        memset(&xli->mapped, 1, sizeof(&xli->mapped));
+        memset(xli->mapped, 0, sizeof(xli->mapped));
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_UpdateLinedef(i, P_ToIndex(li), true);
+            AM_UpdateLinedef(i, lineIDX, true);
         flags &= ~0x0100; // remove the old flag.
     }
     xli->flags = flags;
@@ -2548,14 +2551,15 @@ static void SV_ReadLine(linedef_t *li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        sidedef_t *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        sidedef_t*          si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+
         if(!si)
             continue;
 
         // Versions latter than 2 store per surface texture offsets.
         if(ver >= 2)
         {
-            float       offset[2];
+            float               offset[2];
 
             offset[VX] = (float) SV_ReadShort();
             offset[VY] = (float) SV_ReadShort();
@@ -2586,9 +2590,9 @@ static void SV_ReadLine(linedef_t *li)
 #endif
         {
             // The texture numbers are archive numbers.
-            topMaterial = SV_GetArchiveMaterial(SV_ReadShort());
-            bottomMaterial = SV_GetArchiveMaterial(SV_ReadShort());
-            middleMaterial = SV_GetArchiveMaterial(SV_ReadShort());
+            topMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
+            bottomMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
+            middleMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
         }
 
         P_SetIntp(si, DMU_TOP_MATERIAL, topMaterial);
@@ -2636,17 +2640,19 @@ static void SV_WritePolyObj(polyobj_t* po)
     SV_WriteLong(FLT2FIX(po->startSpot.pos[VY]));
 }
 
-static int SV_ReadPolyObj(polyobj_t* po)
+static int SV_ReadPolyObj(void)
 {
     int             ver;
     float           deltaX;
     float           deltaY;
     angle_t         angle;
+    polyobj_t*      po;
 
     if(saveVersion >= 3)
         ver = SV_ReadByte();
 
-    if(SV_ReadLong() != po->tag)
+    po = PO_GetPolyobj(SV_ReadLong()); // Get polyobj by tag.
+    if(!po)
         Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
 
     angle = (angle_t) SV_ReadLong();
@@ -2722,7 +2728,7 @@ static void P_UnArchiveWorld(void)
         Con_Error("UnarchivePolyobjs: Bad polyobj count");
 
     for(i = 0; i < numpolyobjs; ++i)
-        SV_ReadPolyObj(PO_GetPolyobj(i | 0x80000000));
+        SV_ReadPolyObj();
 #endif
 }
 
@@ -2983,7 +2989,7 @@ static int SV_ReadFloor(floor_t* floor)
         floor->newSpecial = SV_ReadLong();
 
         if(ver >= 2)
-            floor->material = SV_GetArchiveMaterial(SV_ReadShort());
+            floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
         else
             floor->material =
                 R_MaterialNumForName(W_LumpName(SV_ReadShort()), MAT_FLAT);
