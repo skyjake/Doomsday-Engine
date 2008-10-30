@@ -441,15 +441,12 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         if(tmThing->type == MT_BISHOP && thing->type == MT_BISHOP)
             return false; // Don't let bishops fly over other bishops.
 #endif
-        if(tmThing->pos[VZ] > thing->pos[VZ] + thing->height &&
-           !(thing->flags & MF_SPECIAL))
+
+        if(!(thing->flags & MF_SPECIAL))
         {
-            return true;
-        }
-        else if(tmThing->pos[VZ] + tmThing->height < thing->pos[VZ] &&
-                !(thing->flags & MF_SPECIAL))
-        {
-            return true; // Under thing.
+            if(tmThing->pos[VZ] > thing->pos[VZ] + thing->height ||
+               tmThing->pos[VZ] + tmThing->height < thing->pos[VZ])
+                return true; // Over/under thing.
         }
     }
 
@@ -457,6 +454,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
     if((tmThing->flags & MF_SKULLFLY) && (thing->flags & MF_SOLID))
     {
 #if __JHEXEN__
+        blockingMobj = NULL;
         if(tmThing->type == MT_MINOTAUR)
         {
             // Slamming minotaurs shouldn't move non-creatures.
@@ -818,21 +816,16 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             thing->dPlayer->flags |= DDPF_FIXMOM;
     }
 
+    solid = (thing->flags & MF_SOLID) && !(thing->flags & MF_NOCLIP) &&
+        (tmThing->flags & MF_SOLID);
+
     // Check for special pickup.
-    if(thing->flags & MF_SPECIAL)
+    if((thing->flags & MF_SPECIAL) && (tmThing->flags & MF_PICKUP))
     {
-        solid = thing->flags & MF_SOLID;
-        if(tmThing->flags & MF_PICKUP)
-        {
-            // Can remove thing.
-            P_TouchSpecialMobj(thing, tmThing);
-        }
-
-        return !solid;
+        P_TouchSpecialMobj(thing, tmThing); // Can remove thing.
     }
-
 #if !__JHEXEN__
-    if(overlap && thing->flags & MF_SOLID)
+    else if(overlap && solid)
     {
         // How are we positioned?
         if(tm[VZ] > thing->pos[VZ] + thing->height - 24)
@@ -845,11 +838,11 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
     }
 #endif
 
-    return !(thing->flags & MF_SOLID);
+    return !solid;
 }
 
 /**
- * Adjusts tmFloorZ and tmCeilingZ as lines are contacted
+ * Adjusts tmFloorZ and tmCeilingZ as lines are contacted.
  */
 boolean PIT_CheckLine(linedef_t* ld, void* data)
 {
