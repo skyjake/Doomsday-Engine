@@ -130,7 +130,7 @@ menu_t MultiplayerMenu = {
     3, MultiplayerItems,
     0, MENU_NEWGAME,
     huFontA,cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
     0, 3
 };
@@ -270,7 +270,7 @@ menu_t GameSetupMenu = {
     0, MENU_MULTIPLAYER,
     huFontA,                  //1, 0, 0,
     cfg.menuColor2,
-    NULL,
+    NULL, false,
     LINEHEIGHT_A,
     0, NUM_GAMESETUP_ITEMS
 };
@@ -300,7 +300,7 @@ menu_t PlayerSetupMenu = {
     DrawPlayerSetupMenu,
     NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
     0, MENU_MULTIPLAYER,
-    huFontB, cfg.menuColor, NULL, LINEHEIGHT_B,
+    huFontB, cfg.menuColor, NULL, false, LINEHEIGHT_B,
     0, NUM_PLAYERSETUP_ITEMS
 };
 
