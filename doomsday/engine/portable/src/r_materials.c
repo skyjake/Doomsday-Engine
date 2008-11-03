@@ -54,6 +54,12 @@ typedef struct materialbind_s {
     uint            hashNext; // 1-based index
 } materialbind_t;
 
+typedef struct mtexinstnode_s {
+    int             flags; // Texture instance (TEXF_*) flags.
+    materialtexinst_t glTex;
+    struct mtexinstnode_s* next; // Next in list of instances.
+} mtexinstnode_t;
+
 typedef struct animframe_s {
     struct material_s* mat;
     ushort          tics;
@@ -310,7 +316,19 @@ void R_ShutdownMaterials(void)
         uint                i;
 
         for(i = 0; i < numMaterialTexs; ++i)
-            Z_Free(materialTexs[i]);
+        {
+            materialtex_t*      mTex = materialTexs[i];
+            mtexinstnode_t*     node, *next;
+
+            node = (mtexinstnode_t*) mTex->instances;
+            while(node)
+            {
+                next = node->next;
+                Z_Free(node);
+                node = next;
+            }
+            Z_Free(mTex);
+        }
 
         Z_Free(materialTexs);
         materialTexs = NULL;
@@ -418,9 +436,10 @@ materialtex_t* R_MaterialTexCreate(int ofTypeID, materialtextype_t type)
     }
 
     // A new materialtex.
-    mTex = Z_Calloc(sizeof(*mTex), PU_STATIC, 0);
+    mTex = Z_Malloc(sizeof(*mTex), PU_STATIC, 0);
     mTex->type = type;
     mTex->ofTypeID = ofTypeID;
+    mTex->instances = NULL;
 
     switch(type)
     {
@@ -555,12 +574,17 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
 
 static materialtexinst_t* pickTexInstance(materialtex_t* mTex, int flags)
 {
-    if(flags & TEXF_TEX_ZEROMASK)
-        return &mTex->skyMasked.glTex;
-    if(flags & TEXF_LOAD_AS_SKY)
-        return &mTex->sky.glTex;
+    mtexinstnode_t*     node;
 
-    return &mTex->normal.glTex;
+    node = (mtexinstnode_t*) mTex->instances;
+    while(node)
+    {
+        if(node->flags == flags)
+            return &node->glTex;
+        node = node->next;
+    }
+
+    return NULL;
 }
 
 materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
@@ -570,10 +594,18 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
     {
         byte                tmpResult = 0;
         materialtex_t*      mTex = mat->tex;
-        materialtexinst_t*  texInst;
+        materialtexinst_t*  texInst, tempInst;
         detailtexinst_t*    detailInst;
 
+        // Pick the instance matching the specified flags.
         texInst = pickTexInstance(mTex, flags);
+        if(!texInst)
+        {   // No existing suitable instance.
+            // Use a temporay local instance until we are sure preparation
+            // completes successfully.
+            memset(&tempInst, 0, sizeof(materialtexinst_t));
+            texInst = &tempInst;
+        }
 
         switch(mTex->type)
         {
@@ -605,7 +637,21 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
         };
 
         if(tmpResult)
-        {   // We need to update the assocated enhancements.
+        {
+            if(texInst == &tempInst)
+            {   // We have a new instance.
+                mtexinstnode_t*         node;
+
+                // Add it to the list of intances for this materialtex.
+                node = Z_Malloc(sizeof(*node), PU_STATIC, 0);
+                node->flags = flags;
+                memcpy(&node->glTex, texInst, sizeof(materialtexinst_t));
+                node->next = (mtexinstnode_t*) mTex->instances;
+                mTex->instances = (void*) node;
+                texInst = &node->glTex;
+            }
+
+            // We need to update the assocated enhancements.
             // Material decorations.
             mat->flags &= ~MATF_GLOW;
             if((mat->decoration = Def_GetDecoration(mat, tmpResult == 2)))
@@ -975,24 +1021,19 @@ void R_MaterialSetMinMode(material_t* mat, int minMode)
     if(mat)
     {
         materialtex_t*      mTex = mat->tex;
-        materialtexinst_t*  inst;
+        mtexinstnode_t*     node;
 
-        if((inst = &mTex->normal.glTex)->tex) // Is the texture loaded?
+        node = (mtexinstnode_t*) mTex->instances;
+        while(node)
         {
-            DGL_Bind(inst->tex);
-            DGL_TexFilter(DGL_MIN_FILTER, minMode);
-        }
+            materialtexinst_t*  inst = &node->glTex;
 
-        if((inst = &mTex->sky.glTex)->tex) // Is the texture loaded?
-        {
-            DGL_Bind(inst->tex);
-            DGL_TexFilter(DGL_MIN_FILTER, minMode);
-        }
-
-        if((inst = &mTex->skyMasked.glTex)->tex) // Is the texture loaded?
-        {
-            DGL_Bind(inst->tex);
-            DGL_TexFilter(DGL_MIN_FILTER, minMode);
+            if(inst->tex) // Is the texture loaded?
+            {
+                DGL_Bind(inst->tex);
+                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+            }
+            node = node->next;
         }
     }
 }
@@ -1099,25 +1140,20 @@ void R_MaterialTexDelete(materialtex_t* mTex)
 {
     if(mTex)
     {
-        materialtexinst_t*  inst;
+        mtexinstnode_t*     node;
 
         // Delete all instances.
-        if((inst = &mTex->normal.glTex)->tex)
+        node = (mtexinstnode_t*) mTex->instances;
+        while(node)
         {
-            DGL_DeleteTextures(1, &inst->tex);
-            inst->tex = 0;
-        }
+            materialtexinst_t*  inst = &node->glTex;
 
-        if((inst = &mTex->sky.glTex)->tex)
-        {
-            DGL_DeleteTextures(1, &inst->tex);
-            inst->tex = 0;
-        }
-
-        if((inst = &mTex->skyMasked.glTex)->tex)
-        {
-            DGL_DeleteTextures(1, &inst->tex);
-            inst->tex = 0;
+            if(inst->tex) // Is the texture loaded?
+            {
+                DGL_DeleteTextures(1, &inst->tex);
+                inst->tex = 0;
+            }
+            node = node->next;
         }
     }
 }
@@ -1144,6 +1180,9 @@ boolean R_MaterialIsCustom(materialnum_t num)
  */
 void R_MaterialPrecache(material_t* mat)
 {
+    if(!mat)
+        return;
+
     if(mat->inAnimGroup)
     {   // The material belongs in one or more animgroups.
         int                 i;

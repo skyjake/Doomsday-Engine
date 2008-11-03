@@ -35,11 +35,6 @@
 #define TEXF_LOAD_AS_SKY      0x1
 #define TEXF_TEX_ZEROMASK     0x2 // Zero the alpha of loaded textures.
 
-typedef struct {
-    int             flags; // Texture instance (TEXF_*) flags.
-    materialtexinst_t glTex;
-} minst_t;
-
 typedef enum {
     MTT_FLAT,
     MTT_TEXTURE,
@@ -52,7 +47,7 @@ typedef struct materialtex_s {
     materialtextype_t type;
     int             ofTypeID;
     boolean         isFromIWAD;
-    minst_t         normal, sky, skyMasked;
+    void*           instances;
 } materialtex_t;
 
 // Material flags:
