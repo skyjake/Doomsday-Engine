@@ -48,9 +48,11 @@
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
-#define DOOMSDAY_VERSION		10900 // Don't touch; see above.
-#define DOOMSDAY_RELEASE_NAME	"svn-trunk-devel"
-#define DOOMSDAY_VERSION_TEXT	"1.9."DOOMSDAY_RELEASE_NAME
+#define DOOMSDAY_VERSION        10900 // Don't touch; see above.
+
+#define DOOMSDAY_RELEASE_NAME   "-svn-trunk-devel"
+#define DOOMSDAY_VERSION_TEXT   "1.9.0" DOOMSDAY_RELEASE_NAME
+#define DOOMSDAY_VERSION_NUMBER 1,9,0,0 // For WIN32 version info.
 #define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
 
 #endif
