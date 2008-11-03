@@ -21,9 +21,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * \bug Not 64bit clean: In function 'DD_GetInteger': cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'DD_SetInteger': cast to pointer from integer of different size
  */
 
 /**
@@ -69,34 +66,34 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXWADFILES 4096
+#define MAXWADFILES         (4096)
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct ddvalue_s {
-    int    *readPtr;
-    int    *writePtr;
+    int*            readPtr;
+    int*            writePtr;
 } ddvalue_t;
 
 typedef struct autoload_s {
-    boolean loadFiles;   // Should files be loaded right away.
-    int count;           // Number of files loaded successfully.
+    boolean         loadFiles; // Should files be loaded right away.
+    int             count; // Number of files loaded successfully.
 } autoload_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    G_CheckDemoStatus();
-void    F_Drawer(void);
-void    S_InitScript(void);
-void    Net_Drawer(void);
+void            G_CheckDemoStatus(void);
+void            F_Drawer(void);
+void            S_InitScript(void);
+void            Net_Drawer(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int DD_StartupWorker(void *parm);
-static int DD_StartupWorker2(void *parm);
-static void HandleArgs(int state);
+static int      DD_StartupWorker(void* parm);
+static int      DD_StartupWorker2(void* parm);
+static void     HandleArgs(int state);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -112,21 +109,21 @@ extern int gameDataFormat;
 extern int gameDrawHUD;
 extern int symbolicEchoMode;
 
-extern material_t *skyMaskMaterial;
+extern material_t* skyMaskMaterial;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 directory_t ddRuntimeDir, ddBinDir;
-int     verbose = 0;            // For debug messages (-verbose).
-boolean cmdfrag;                // true if a CMD_FRAG packet should be sent out
-int     isDedicated = false;
-int     maxZone = 0x2000000;    // Default zone heap. (32meg)
+int verbose = 0; // For debug messages (-verbose).
+boolean cmdfrag; // true if a CMD_FRAG packet should be sent out
+int isDedicated = false;
+int maxZone = 0x2000000; // Default zone heap. (32meg)
 boolean autoStart;
-FILE   *outFile;                // Output file for console messages.
+FILE* outFile; // Output file for console messages.
 
-char   *iwadList[64];
-char   *defaultWads = "";       /* A list of wad names, whitespace in between
-                                   (in .cfg). */
+char* iwadList[64];
+char* defaultWads = ""; // List of wad names, whitespace seperating(in .cfg).
+
 filename_t configFileName;
 filename_t bindingsConfigFileName;
 filename_t defsFileName, topDefsFileName;
@@ -143,10 +140,10 @@ static char *wadFiles[MAXWADFILES];
  */
 const char* value_Str(int val)
 {
-    static char valStr[40];
+    static char         valStr[40];
     struct val_s {
-        int val;
-        const char* str;
+        int                 val;
+        const char*         str;
     } valuetypes[] =
     {
         { DDVT_BOOL, "DDVT_BOOL" },
@@ -164,7 +161,7 @@ const char* value_Str(int val)
         { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
         { 0, NULL }
     };
-    uint            i;
+    uint                i;
 
     for(i = 0; valuetypes[i].str; ++i)
         if(valuetypes[i].val == val)
@@ -177,7 +174,7 @@ const char* value_Str(int val)
 /**
  * Adds the given IWAD to the list of default IWADs.
  */
-void DD_AddIWAD(const char *path)
+void DD_AddIWAD(const char* path)
 {
     int             i = 0;
     char            buf[256];
@@ -191,7 +188,7 @@ void DD_AddIWAD(const char *path)
 }
 
 #define ATWSEPS ",; \t"
-static void AddToWadList(char *list)
+static void AddToWadList(char* list)
 {
     size_t          len = strlen(list);
     char           *buffer = M_Malloc(len + 1), *token;
@@ -209,9 +206,9 @@ static void AddToWadList(char *list)
 /**
  * (f_forall_func_t)
  */
-static int autoDataAdder(const char *fileName, filetype_t type, void *ptr)
+static int autoDataAdder(const char *fileName, filetype_t type, void* ptr)
 {
-    autoload_t     *data = ptr;
+    autoload_t*         data = ptr;
 
     // Skip directories.
     if(type == FT_DIRECTORY)
@@ -238,46 +235,60 @@ static int autoDataAdder(const char *fileName, filetype_t type, void *ptr)
  */
 int DD_AddAutoData(boolean loadFiles)
 {
-    autoload_t      data;
-    const char     *extensions[] = {
+#define BUFFER_SIZE     (256)
+
+    autoload_t          data;
+    const char*         extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
 #ifdef UNIX
         "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
 #endif
         NULL
     };
-    char            pattern[256];
-    uint            i;
+    char                pattern[BUFFER_SIZE+1];
+    uint                i;
 
     data.loadFiles = loadFiles;
     data.count = 0;
 
     for(i = 0; extensions[i]; ++i)
     {
-        sprintf(pattern, "%sauto\\*.%s", R_GetDataPath(), extensions[i]);
+        snprintf(pattern, BUFFER_SIZE, "%sauto\\*.%s", R_GetDataPath(),
+                 extensions[i]);
+        pattern[BUFFER_SIZE] = '\0';
+
         Dir_FixSlashes(pattern);
         F_ForAll(pattern, &data, autoDataAdder);
     }
 
     return data.count;
+
+#undef BUFFER_SIZE
 }
 
-void DD_SetConfigFile(char *filename)
+void DD_SetConfigFile(filename_t file)
 {
-    strcpy(configFileName, filename);
+    strncpy(configFileName, file, FILENAME_T_MAXLEN);
+    configFileName[FILENAME_T_MAXLEN] = '\0';
+
     Dir_FixSlashes(configFileName);
-    strcpy(bindingsConfigFileName, configFileName);
-    strcpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 4,
-           "-bindings.cfg");
+
+    strncpy(bindingsConfigFileName, configFileName, FILENAME_T_MAXLEN);
+    bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
+
+    strncpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 4,
+            "-bindings.cfg", FILENAME_T_MAXLEN - strlen(bindingsConfigFileName - 4));
+    bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
 }
 
 /**
  * Set the primary DED file, which is included immediately after
  * Doomsday.ded.
  */
-void DD_SetDefsFile(char *filename)
+void DD_SetDefsFile(filename_t file)
 {
-    sprintf(topDefsFileName, "%sdefs\\%s", ddBasePath, filename);
+    snprintf(topDefsFileName, FILENAME_T_MAXLEN, "%sdefs\\%s",
+             ddBasePath, file);
     Dir_FixSlashes(topDefsFileName);
 }
 
@@ -286,10 +297,10 @@ void DD_SetDefsFile(char *filename)
  */
 void DD_DefineBuiltinVDM(void)
 {
-    filename_t      dest;
+    filename_t          dest;
 
     // Data files.
-    sprintf(dest, "%sauto", R_GetDataPath());
+    snprintf(dest, FILENAME_T_MAXLEN, "%sauto", R_GetDataPath());
     F_AddMapping("auto", dest);
 
     // Definition files.
@@ -303,7 +314,7 @@ void DD_DefineBuiltinVDM(void)
  */
 void DD_AutoLoad(void)
 {
-    int             p;
+    int                 p;
 
     /**
      * Load files from the Auto directory.  (If already loaded, won't
@@ -927,7 +938,11 @@ void* DD_GetVariable(int ddvalue)
             return &gx;
 
         case DD_SKYMASKMATERIAL_NUM:
-            return R_GetMaterialNum(skyMaskMaterial);
+            {
+            static materialnum_t num;
+            num = R_GetMaterialNum(skyMaskMaterial);
+            return &num;
+            }
 
         case DD_VIEWX:
             return &viewX;
@@ -1143,7 +1158,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             strncpy(name, parm, len);
             name[len] = '\0';
 
-            if((mat = R_MaterialNumForName(name, MAT_FLAT)))
+            if((mat = R_MaterialNumForName(name, MG_ANY)))
                 skyMaskMaterial = R_GetMaterialByNum(mat);
             }
             return;

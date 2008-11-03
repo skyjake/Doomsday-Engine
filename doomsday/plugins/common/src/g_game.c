@@ -437,6 +437,7 @@ gameaction_t G_GetGameAction(void)
 void G_CommonPreInit(void)
 {
     int                 i;
+    filename_t          file;
 
     // Make sure game.dll isn't newer than Doomsday...
     if(gi.version < DOOMSDAY_VERSION)
@@ -455,8 +456,12 @@ void G_CommonPreInit(void)
         players[i].plr->extraData = (void *) &players[i];
     }
 
-    DD_SetConfigFile( CONFIGFILE );
-    DD_SetDefsFile( DEFSFILE );
+    snprintf(file, FILENAME_T_MAXLEN, CONFIGFILE);
+    DD_SetConfigFile(file);
+
+    snprintf(file, FILENAME_T_MAXLEN, DEFSFILE);
+    DD_SetDefsFile(file);
+
     R_SetDataPath( DATAPATH );
 
     Con_SetString("map-name", NOTAMAPNAME, 1);

@@ -35,12 +35,12 @@
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
-extern int      verbose;
-extern int      maxZone;
-extern FILE    *outFile;           // Output file for console messages.
-extern int      isDedicated;
-extern char     ddBasePath[];
-extern char    *defaultWads;       // A list of wad names, whitespace in between (in .cfg).
+extern int verbose;
+extern int maxZone;
+extern FILE* outFile; // Output file for console messages.
+extern int isDedicated;
+extern char ddBasePath[];
+extern char* defaultWads; // A list of wad names, whitespace in between (in .cfg).
 extern directory_t ddRuntimeDir, ddBinDir;
 extern filename_t bindingsConfigFileName;
 
@@ -51,16 +51,16 @@ extern GETGAMEAPI GetGameAPI;
 int             DD_Main(void);
 void            DD_UpdateEngineState(void);
 void            DD_GameUpdate(int flags);
-void            DD_AddStartupWAD(const char *file);
-void            DD_AddIWAD(const char *path);
+void            DD_AddStartupWAD(const char* file);
+void            DD_AddIWAD(const char* path);
 void            DD_AutoLoad(void);
-void            DD_SetConfigFile(char *filename);
-void            DD_SetDefsFile(char *filename);
+void            DD_SetConfigFile(filename_t file);
+void            DD_SetDefsFile(filename_t file);
 int             DD_GetInteger(int ddvalue);
 void            DD_SetInteger(int ddvalue, int parm);
-void            DD_SetVariable(int ddvalue, void *ptr);
-void           *DD_GetVariable(int ddvalue);
-ddplayer_t     *DD_GetPlayer(int number);
+void            DD_SetVariable(int ddvalue, void* ptr);
+void*           DD_GetVariable(int ddvalue);
+ddplayer_t*     DD_GetPlayer(int number);
 void            DD_CheckTimeDemo(void);
 const char*     value_Str(int val);
 #endif
