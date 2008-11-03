@@ -32,13 +32,6 @@
 #include "r_data.h"
 #include "s_environ.h"
 
-typedef struct materialtexinst_s {
-    DGLuint         tex; // Name of the associated DGL texture.
-    byte            masked;
-    float           color[3]; // Average color (for lighting).
-    float           topColor[3]; // Averaged top line color, used for sky fadeouts.
-} materialtexinst_t;
-
 #define TEXF_LOAD_AS_SKY      0x1
 #define TEXF_TEX_ZEROMASK     0x2 // Zero the alpha of loaded textures.
 

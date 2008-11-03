@@ -126,15 +126,15 @@ DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 
-byte            GL_PrepareFlat(struct materialtexinst_s* inst,
+byte            GL_PrepareFlat(materialtexinst_t* inst,
                                int ofTypeID, boolean isFromIWAD);
-byte            GL_PrepareDDTexture(struct materialtexinst_s* inst,
+byte            GL_PrepareDDTexture(materialtexinst_t* inst,
                                     int ofTypeID);
-byte            GL_PrepareTexture(struct materialtexinst_s* inst,
+byte            GL_PrepareTexture(materialtexinst_t* inst,
                                   int ofTypeID, boolean isFromIWAD,
                                   boolean loadAsSky, boolean zeroMask,
                                   boolean noCompression);
-byte            GL_PrepareSprite(struct materialtexinst_s* inst,
+byte            GL_PrepareSprite(materialtexinst_t* inst,
                                  int ofTypeID, boolean isFromIWAD);
 
 DGLuint         GL_GetRawTexInfo(lumpnum_t lump, boolean part2);

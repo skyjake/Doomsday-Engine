@@ -41,6 +41,13 @@
 #define DCRF_PWAD       0x2         // Can use if from PWAD.
 #define DCRF_EXTERNAL   0x4         // Can use if from external resource.
 
+typedef struct materialtexinst_s {
+    DGLuint         tex; // Name of the associated DGL texture.
+    byte            masked;
+    float           color[3]; // Average color (for lighting).
+    float           topColor[3]; // Averaged top line color, used for sky fadeouts.
+} materialtexinst_t;
+
 // Detail texture instance.
 typedef struct detailtexinst_s {
     DGLuint         tex;
