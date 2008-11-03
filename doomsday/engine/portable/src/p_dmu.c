@@ -501,13 +501,16 @@ int P_Iteratep(void *ptr, uint prop, void* context,
         {
         case DMU_SEG:
             {
-            subsector_t        *ssec = (subsector_t*) ptr;
-            seg_t             **segPtr;
-            int                 result;
+            subsector_t*        ssec = (subsector_t*) ptr;
+            int                 result = 1;
 
-            segPtr = ssec->segs;
-            while(*segPtr && (result = callback(*segPtr, context)) != 0)
-                *segPtr++;
+            if(ssec->segs)
+            {
+                seg_t**             segPtr = ssec->segs;
+
+                while(*segPtr && (result = callback(*segPtr, context)) != 0)
+                    *segPtr++;
+            }
 
             return result;
             }
