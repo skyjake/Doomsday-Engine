@@ -726,7 +726,7 @@ void SB_BeginFrame(void)
     // Apply to all segs.
     for(i = 0; i < numSegs; ++i)
     {
-        seg_t              *seg = SEG_PTR(i);
+        seg_t*              seg = SEG_PTR(i);
 
         for(j = 0; j < 3; ++j)
             SB_TrackerApply(&seg->tracker[j], &allChanges);
@@ -745,10 +745,13 @@ void SB_BeginFrame(void)
     // Apply to all planes.
     for(i = 0; i < numSSectors; ++i)
     {
-        subsector_t        *sub = SUBSECTOR_PTR(i);
+        subsector_t*        ssec = SUBSECTOR_PTR(i);
 
-        for(j = 0; j < sub->sector->planeCount; ++j)
-            SB_MarkPlaneChanges(sub, j, &allChanges);
+        if(ssec->sector)
+        {
+            for(j = 0; j < ssec->sector->planeCount; ++j)
+                SB_MarkPlaneChanges(ssec, j, &allChanges);
+        }
     }
 }
 
