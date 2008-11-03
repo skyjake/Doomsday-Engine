@@ -1177,8 +1177,8 @@ static boolean P_HasActivePtcGen(sector_t *sector, int isCeiling)
  */
 void P_CheckPtcPlanes(void)
 {
-    uint            i, p;
-    sector_t       *sector;
+    uint                i, p;
+    sector_t*           sector;
 
     // There is no need to do this on every tic.
     if(isDedicated || SECONDS_TO_TICKS(gameTime) % 4)
@@ -1190,25 +1190,21 @@ void P_CheckPtcPlanes(void)
         for(p = 0; p < 2; ++p)
         {
             uint                plane = p;
-            material_t         *mat = sector->SP_planematerial(plane);
+            material_t*         mat = sector->SP_planematerial(plane);
+            const ded_ptcgen_t* def = R_MaterialGetPtcGen(mat);
 
-            if(mat && mat->type == MAT_FLAT)
+            if(!def)
+                continue;
+
+            if(def->flags & PGF_CEILING_SPAWN)
+                plane = 1;
+            if(def->flags & PGF_FLOOR_SPAWN)
+                plane = 0;
+
+            if(!P_HasActivePtcGen(sector, plane))
             {
-                const ded_ptcgen_t*     def = R_MaterialGetPtcGen(mat);
-
-                if(!def)
-                    continue;
-
-                if(def->flags & PGF_CEILING_SPAWN)
-                    plane = 1;
-                if(def->flags & PGF_FLOOR_SPAWN)
-                    plane = 0;
-
-                if(!P_HasActivePtcGen(sector, plane))
-                {
-                    // Spawn it!
-                    P_SpawnPlaneParticleGen(def, sector, plane);
-                }
+                // Spawn it!
+                P_SpawnPlaneParticleGen(def, sector, plane);
             }
         }
     }
