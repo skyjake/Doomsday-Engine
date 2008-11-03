@@ -361,7 +361,7 @@ DEFCC(CCmdConBackground)
 {
     materialnum_t       num;
 
-    if((num = R_MaterialCheckNumForName(argv[1], MAT_FLAT)) != 0)
+    if((num = R_MaterialCheckNumForName(argv[1], MG_FLATS)) != 0)
         consoleBG = num;
 
     return true;
