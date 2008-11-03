@@ -122,12 +122,12 @@ static void loadAnimDefs(animdef_t* animDefs)
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
         int                 groupNum, ticsPerFrame, numFrames;
-        materialtype_t      type =
-            (animDefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
+        materialgroup_t     group =
+            (animDefs[i].istexture? MG_TEXTURES : MG_FLATS);
 
-        switch(type)
+        switch(group)
         {
-        case MAT_FLAT:
+        case MG_FLATS:
             {
             lumpnum_t           startFrame, endFrame, n;
 
@@ -166,7 +166,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                     {
                         materialnum_t       frame =
                             R_MaterialCheckNumForName(W_LumpName(n),
-                                                      MAT_FLAT);
+                                                      MG_FLATS);
 
                         if(frame != 0)
                             R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
@@ -178,7 +178,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                     {
                         materialnum_t       frame =
                             R_MaterialCheckNumForName(W_LumpName(n),
-                                                      MAT_FLAT);
+                                                      MG_FLATS);
 
                         if(frame != 0)
                             R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
@@ -187,14 +187,14 @@ static void loadAnimDefs(animdef_t* animDefs)
             }
             break;
             }
-        case MAT_TEXTURE:
+        case MG_TEXTURES:
             {   // Same as above but for texture groups.
             materialnum_t       startFrame, endFrame, n;
 
             if((startFrame = R_MaterialCheckNumForName(animDefs[i].startname,
-                                                       MAT_TEXTURE)) == 0 ||
+                                                       MG_TEXTURES)) == 0 ||
                (endFrame = R_MaterialCheckNumForName(animDefs[i].endname,
-                                                     MAT_TEXTURE)) == 0)
+                                                     MG_TEXTURES)) == 0)
                 continue;
 
             numFrames = endFrame - startFrame + 1;
@@ -212,7 +212,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                                     animDefs[i].startname, animDefs[i].endname,
                                     ticsPerFrame));
                 /**
-                 * \fixme Here an assumption is made that MAT_TEXTURE type
+                 * \fixme Here an assumption is made that MG_TEXTURES type
                  * materials are registered in the same order as they are
                  * defined in the TEXTURE(1...) lump(s).
                  */
@@ -230,8 +230,8 @@ static void loadAnimDefs(animdef_t* animDefs)
             break;
             }
         default:
-            Con_Error("loadAnimDefs: Internal Error, invalid material type %i.",
-                      (int) type);
+            Con_Error("loadAnimDefs: Internal Error, invalid material group %i.",
+                      (int) group);
         }
     }
 }
