@@ -1825,6 +1825,9 @@ boolean MPE_End(void)
 
     buildSectorSSecLists(gamemap);
 
+    // Announce any issues detected with the map.
+    MPE_PrintMapErrors();
+
     // Map must be polygonized and sector->ssectors must be built before
     // this is called!
     hardenPlanes(gamemap, map);
@@ -1847,9 +1850,6 @@ boolean MPE_End(void)
     updateMapBounds(gamemap);
     S_DetermineSubSecsAffectingSectorReverb(gamemap);
     prepareSubSectors(gamemap);
-
-    // Announce any issues detected with the map.
-    MPE_PrintMapErrors();
 
     P_FreeBadTexList();
     MPE_FreeUnclosedSectorList();
