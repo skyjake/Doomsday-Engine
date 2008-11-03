@@ -566,18 +566,10 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     plane->type = PLN_MID;
     plane->planeID = sec->planeCount-1;
 
-    suf = &plane->surface;
-
-    // Setup header for DMU.
-    suf->header.type = DMU_SURFACE;
-
     // Initialize the surface.
-    suf->flags = suf->oldFlags = 0;
-    suf->decorations = NULL;
-    suf->numDecorations = 0;
-    suf->frameFlags = 0;
-    suf->normal[VX] = suf->oldNormal[VX] = 0;
-    suf->normal[VY] = suf->oldNormal[VY] = 0;
+    memset(&plane->surface, 0, sizeof(plane->surface));
+    suf = &plane->surface;
+    suf->header.type = DMU_SURFACE; // Setup header for DMU.
     suf->normal[VZ] = suf->oldNormal[VZ] = 1;
     // \todo The initial material should be the "unknown" material.
     Surface_SetMaterial(suf, NULL);
@@ -1181,7 +1173,6 @@ linedef_t *R_FindSolidLineNeighbor(const sector_t *sector,
     lineowner_t            *cown = own->link[!antiClockwise];
     linedef_t              *other = cown->lineDef;
     int                     side;
-    boolean                 skip = false;
 
     if(other == line)
         return NULL;
@@ -1883,8 +1874,16 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
            (plane->PS_material && (plane->PS_material->flags & MATF_GLOW)))
         {
             R_MaterialGetColor(plane->PS_material, plane->glowRGB);
+
+
+
+
+
+
+
             hasGlow = true;
         }
+
 
         if(hasGlow)
         {
