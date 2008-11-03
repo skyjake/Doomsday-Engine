@@ -1,24 +1,24 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Doomsday", "Doomsday.vcproj", "{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Doomsday", "doomsday.vcproj", "{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jDoom", "JDoom.vcproj", "{A36C0FB9-8186-4747-A5D9-D7B659B9F39F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jDoom", "jdoom.vcproj", "{A36C0FB9-8186-4747-A5D9-D7B659B9F39F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jHeretic", "JHeretic.vcproj", "{7D03FB13-8674-4473-BD32-83C43188B2D2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jHeretic", "jheretic.vcproj", "{7D03FB13-8674-4473-BD32-83C43188B2D2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jHexen", "JHexen.vcproj", "{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jHexen", "jhexen.vcproj", "{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpDehRead", "dpDehRead.vcproj", "{EF5A1023-13BF-475D-B978-7ED12CD9553A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpDehRead", "dpdehread.vcproj", "{EF5A1023-13BF-475D-B978-7ED12CD9553A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsCompat", "dsCompat.vcproj", "{1D7A3D67-B874-4844-BA4E-8DA934AF993C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsCompat", "dscompat.vcproj", "{1D7A3D67-B874-4844-BA4E-8DA934AF993C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsOpenAL", "dsOpenAL.vcproj", "{0324DC98-86C1-40F5-B3B0-35A057F6173C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsOpenAL", "dsopenal.vcproj", "{0324DC98-86C1-40F5-B3B0-35A057F6173C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
@@ -30,7 +30,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsSDLMixer", "dssdlmixer.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jDoom64", "jdoom64.vcproj", "{CA7A0565-5F80-4E69-A3C2-12B81FC35768}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WolfTC", "WolfTC.vcproj", "{D1EE2873-F1C3-48D3-B61F-5EDBCDF1691A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WolfTC", "wolftc.vcproj", "{D1EE2873-F1C3-48D3-B61F-5EDBCDF1691A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpExample", "dpexample.vcproj", "{DC664B00-A393-4B3C-A847-C192E29D053E}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -42,7 +42,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpWadMapConverter", "dpwadm
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpMapCreator", "dpMapCreator.vcproj", "{6FC5ABB6-4896-4B5D-856F-877C280EBC89}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpMapCreator", "dpmapcreator.vcproj", "{6FC5ABB6-4896-4B5D-856F-877C280EBC89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
