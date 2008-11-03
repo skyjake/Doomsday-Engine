@@ -232,12 +232,12 @@ void SV_ReadMaterialArchive(int version)
 {
     matArchive.count = 0;
     matArchive.version = version;
-    readMatArchive(&matArchive, MAT_FLAT);
+    readMatArchive(&matArchive, MG_FLATS);
 
     if(matArchive.version == 0)
     {   // The old format saved textures and flats in seperate blocks.
         numFlats = matArchive.count;
 
-        readMatArchive(&matArchive, MAT_TEXTURE);
+        readMatArchive(&matArchive, MG_FLATS);
     }
 }

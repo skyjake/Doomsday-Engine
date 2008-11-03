@@ -1861,12 +1861,12 @@ void FIC_End(void)
 
 void FIC_BGFlat(void)
 {
-    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MAT_FLAT);
+    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MG_FLATS);
 }
 
 void FIC_BGTexture(void)
 {
-    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MAT_TEXTURE);
+    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MG_TEXTURES);
 }
 
 void FIC_NoBGMaterial(void)

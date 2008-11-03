@@ -193,8 +193,8 @@ void P_InitSwitchList(void)
         if(!switchInfo[i].soundID)
             break;
 
-        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name1, MAT_TEXTURE);
-        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name2, MAT_TEXTURE);
+        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name1, MG_TEXTURES);
+        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name2, MG_TEXTURES);
     }
 
     numswitches = index / 2;
@@ -266,9 +266,9 @@ void P_InitSwitchList(void)
                 break;
 
             switchlist[index++] =
-                R_MaterialNumForName(sList[i].name1, MAT_TEXTURE);
+                R_MaterialNumForName(sList[i].name1, MG_TEXTURES);
             switchlist[index++] =
-                R_MaterialNumForName(sList[i].name2, MAT_TEXTURE);
+                R_MaterialNumForName(sList[i].name2, MG_TEXTURES);
             VERBOSE(Con_Message("P_InitSwitchList: ADD (\"%s\" | \"%s\" #%d)\n",
                                 sList[i].name1, sList[i].name2,
                                 SHORT(sList[i].episode)));

@@ -576,7 +576,7 @@ static void P_FinalizeLevel(void)
     // visible due to texture repeating and interpolation.
     {
     uint                i, k;
-    materialnum_t       mat = R_MaterialNumForName("NUKE24", MAT_TEXTURE);
+    materialnum_t       mat = R_MaterialNumForName("NUKE24", MG_TEXTURES);
     int                 bottomMat, midMat;
     float               yoff;
     sidedef_t          *sidedef;

@@ -35,8 +35,7 @@
 // iparm string mapping identifiers
 #define MAP_SND             0x01000000
 #define MAP_MUS             0x02000000
-#define MAP_TEX             0x04000000
-#define MAP_FLAT            0x08000000
+#define MAP_MATERIAL        0x04000000
 #define MAP_MASK            0x00ffffff
 
 enum {

@@ -210,9 +210,9 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "End Sound", "", 5 | MAP_SND},           // ip5: end sound
         {XGPF_INT, "Move Sound", "", 6 | MAP_SND},          // ip6: move sound
         {XGPF_INT, "Start Texture Ref", "spref_", 7},       // ip7: start texture origin (uses same ids as i2) (spec: use ip8 as tex num)
-        {XGPF_INT, "Start Texture Num", "", 8 | MAP_FLAT},  // ip8: data component or number/name of flat
+        {XGPF_INT, "Start Texture Num", "", 8 | MAP_MATERIAL}, // ip8: data component or number/name of flat
         {XGPF_INT, "End Texture Ref", "spref_", 9},         // ip9: end texture origin (uses same ids as i2) (spec: use ip10 as tex num)
-        {XGPF_INT, "End Texture Num", "", 10 | MAP_FLAT},   // ip10: data component or number/name of flat
+        {XGPF_INT, "End Texture Num", "", 10 | MAP_MATERIAL}, // ip10: data component or number/name of flat
         {XGPF_INT, "Start Type Ref", "lpref_", 11},         // ip11: (plane ref) start sector type (spec: use i12 as type ID)
         {XGPF_INT, "Start Type Num", "", -1},               // ip12: data component or type ID
         {XGPF_INT, "End Type Ref", "lpref_", 13},           // ip13: (plane ref) end sector type (spec: use i14 as type ID)
@@ -320,7 +320,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0 : (plane ref) plane(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1 : ref data
         {XGPF_INT, "Texture Ref", "spref_", 2},             // ip2 : Texture ref
-        {XGPF_INT, "Texture Num", "", 3 | MAP_FLAT},        // ip3 : texture number (flat), used with SPREF_NONE
+        {XGPF_INT, "Texture Num", "", 3 | MAP_MATERIAL},    // ip3 : texture number (flat), used with SPREF_NONE
         {XGPF_INT, "Red Delta", "", -1},                    // ip4 : plane surface color (red)
         {XGPF_INT, "Green Delta", "", -1},                  // ip5 : "" (green)
         {XGPF_INT, "Blue Delta", "", -1} }},                // ip6 : "" (blue)
@@ -331,9 +331,9 @@ xgclass_t xgClasses[NUMXGCLASSES] =
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Side Num", "", -1},                     // ip2: non-zero change the back side
-        {XGPF_INT, "Top Texture", "", 3 | MAP_TEX},         // ip3: top texture to change to (blank indicates no change)
-        {XGPF_INT, "Middle Texture", "", 4 | MAP_TEX},      // ip4: middle texture to change to (blank indicates no change)
-        {XGPF_INT, "Bottom Texture", "", 5 | MAP_TEX},      // ip5: bottom texture to change to (blank indicates no change)
+        {XGPF_INT, "Top Texture", "", 3 | MAP_MATERIAL},    // ip3: top texture to change to (blank indicates no change)
+        {XGPF_INT, "Middle Texture", "", 4 | MAP_MATERIAL}, // ip4: middle texture to change to (blank indicates no change)
+        {XGPF_INT, "Bottom Texture", "", 5 | MAP_MATERIAL}, // ip5: bottom texture to change to (blank indicates no change)
         {XGPF_INT, "Set Mid If None", "", -1},              // ip6: set mid texture even if previously zero
         {XGPF_INT, "Sidedef Flags", "sdf_", 7},             // ip7: (sdf_) sidedef flags (used with surface colour blending, fullbright etc)
         {XGPF_INT, "Middle Blendmode", "bm_", 8},           // ip8: (bm_) middle texture blendmode
@@ -1852,22 +1852,22 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
     //// checking.
     if(!stricmp(buf, "SW1ON"))
     {
-        material = R_MaterialNumForName("SW1OFF", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW1OFF", MG_TEXTURES);
         makeChange = true;
     }
     if(!stricmp(buf, "SW1OFF"))
     {
-        material = R_MaterialNumForName("SW1ON", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW1ON", MG_TEXTURES);
         makeChange = true;
     }
     if(!stricmp(buf, "SW2ON"))
     {
-        material = R_MaterialNumForName("SW2OFF", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW2OFF", MG_TEXTURES);
         makeChange = true;
     }
     if(!stricmp(buf, "SW2OFF"))
     {
-        material = R_MaterialNumForName("SW2ON", MAT_TEXTURE);
+        material = R_MaterialNumForName("SW2ON", MG_TEXTURES);
         makeChange = true;
     }
 #endif
@@ -1875,13 +1875,13 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
     if(!strnicmp(buf, "SW1", 3))
     {
         buf[2] = '2';
-        material = R_MaterialNumForName(buf, MAT_TEXTURE);
+        material = R_MaterialNumForName(buf, MG_TEXTURES);
         makeChange = true;
     }
     if(!strnicmp(buf, "SW2", 3))
     {
         buf[2] = '1';
-        material = R_MaterialNumForName(buf, MAT_TEXTURE);
+        material = R_MaterialNumForName(buf, MG_TEXTURES);
         makeChange = true;
     }
 

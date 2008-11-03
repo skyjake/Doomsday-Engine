@@ -193,7 +193,7 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
         m = malloc(sizeof(*m));
         memcpy(m->name, name, 8);
         m->name[8] = '\0';
-        m->num = R_MaterialCheckNumForName(m->name, (isFlat? MAT_FLAT : MAT_TEXTURE));
+        m->num = R_MaterialCheckNumForName(m->name, (isFlat? MG_FLATS : MG_TEXTURES));
 
         // Add it to the list of known materials.
         addMaterialToList(m, isFlat? &map->flats : &map->textures,
