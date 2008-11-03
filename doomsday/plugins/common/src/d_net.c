@@ -328,6 +328,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         // Server events:
         //
     case DDWE_HANDSHAKE:
+        {
         boolean             newPlayer = *((boolean*) data);
 
         // A new player is entering the game. We as a server should send him
@@ -353,6 +354,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         NetSv_SendJumpPower(parm, cfg.jumpEnabled ? cfg.jumpPower : 0);
         NetSv_Paused(paused);
         break;
+        }
 
         //
         // Client events:
