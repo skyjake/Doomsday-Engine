@@ -588,11 +588,11 @@ int FR_PrepareGDIFont(HFONT hfont)
     // Print all the characters.
     for(i = 0, x = 0, y = 0, maxh = 0; i < 256; ++i)
     {
-        jfrchar_t *fc = font->chars + i;
-        byte    ch[2];
+        jfrchar_t*      fc = font->chars + i;
+        char            ch[2];
 
         ch[0] = i;
-        ch[1] = 0;
+        ch[1] = '\0';
 
         if(x + fc->w + 1 >= bmpWidth)
         {
@@ -600,8 +600,10 @@ int FR_PrepareGDIFont(HFONT hfont)
             y += maxh + 1;
             maxh = 0;
         }
+
         if(i)
             TextOut(hdc, x + 1, y + 1, ch, 1);
+
         fc->x = x + 1;
         fc->y = y + 1;
         maxh = max(maxh, fc->h);
