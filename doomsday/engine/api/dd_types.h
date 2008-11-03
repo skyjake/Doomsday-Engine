@@ -42,7 +42,7 @@
 #endif
 
 #ifndef _MSC_VER
-#include <stdint.h>	// Not MSVC so use C99 standard header
+#include <stdint.h> // Not MSVC so use C99 standard header
 #else
 /* MSVC must define them ouselves.
 ISO C9x Integer types - not all of them though, just what we need
@@ -98,37 +98,33 @@ typedef unsigned long long   uintmax_t;
 #endif
 
 #ifndef UNIX
-typedef unsigned int	uint;
-typedef unsigned short	ushort;
-
-/*
-Splint 3.1.1 --- 03 Nov 2006
-../../api/dd_types.h:95:22: Datatype size_t declared with inconsistent type: unsigned int
-typedef unsigned int	size_t;
-*/
+typedef unsigned int    uint;
+typedef unsigned short  ushort;
 
 #else
 
-typedef uint32_t	    uint;
-typedef uint16_t	    ushort;
+typedef uint32_t        uint;
+typedef uint16_t        ushort;
 
 #endif
 
-typedef int				fixed_t;
-typedef unsigned int	angle_t;
-typedef int				spritenum_t;
+typedef int             fixed_t;
+typedef unsigned int    angle_t;
+typedef int             spritenum_t;
 typedef int             lumpnum_t;
 typedef uint32_t        materialnum_t;
 typedef uint32_t        ident_t;
-typedef unsigned short	nodeindex_t;
-typedef unsigned short	thid_t;
-typedef unsigned char	byte;
-typedef double			timespan_t;
-typedef char			filename_t[256];
+typedef unsigned short  nodeindex_t;
+typedef unsigned short  thid_t;
+typedef unsigned char   byte;
+typedef double          timespan_t;
+
+#define FILENAME_T_MAXLEN       (256)
+typedef char            filename_t[FILENAME_T_MAXLEN+1];
 
 typedef struct directory_s {
-	int             drive;
-	filename_t      path;
+    int             drive;
+    filename_t      path;
 } directory_t;
 
 typedef struct trigger_s {
@@ -137,16 +133,16 @@ typedef struct trigger_s {
 } trigger_t;
 
 #ifdef __cplusplus
-#  define boolean			int
-#else							// Plain C.
+#  define boolean           int
+#else                           // Plain C.
 #  ifndef __BYTEBOOL__
 #    define __BYTEBOOL__
 #  endif
 typedef enum ddboolean_e { false, true } ddboolean_t;
-#  define boolean			ddboolean_t
+#  define boolean           ddboolean_t
 #endif
 
-#define BAMS_BITS	16
+#define BAMS_BITS   16
 
 #if BAMS_BITS == 32
 typedef unsigned long binangle_t;
@@ -156,16 +152,16 @@ typedef unsigned short binangle_t;
 typedef unsigned char binangle_t;
 #endif
 
-#define DDMAXCHAR	((char)0x7f)
-#define DDMAXSHORT	((short)0x7fff)
-#define DDMAXINT	((int)0x7fffffff)	// max pos 32-bit int
-#define DDMAXLONG	((long)0x7fffffff)
+#define DDMAXCHAR   ((char)0x7f)
+#define DDMAXSHORT  ((short)0x7fff)
+#define DDMAXINT    ((int)0x7fffffff)   // max pos 32-bit int
+#define DDMAXLONG   ((long)0x7fffffff)
 #define DDMAXFLOAT  ((float)1E+37)
 
-#define DDMINCHAR	((char)0x80)
-#define DDMINSHORT	((short)0x8000)
-#define DDMININT 	((int)0x80000000)	// max negative 32-bit integer
-#define DDMINLONG	((long)0x80000000)
+#define DDMINCHAR   ((char)0x80)
+#define DDMINSHORT  ((short)0x8000)
+#define DDMININT    ((int)0x80000000)   // max negative 32-bit integer
+#define DDMINLONG   ((long)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
 
 // Predeclarations for map data types. The contents of these structs is

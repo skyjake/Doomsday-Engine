@@ -58,13 +58,10 @@ static thinker_t thinkerCap; // The head and tail of the thinker list.
 
 boolean P_IsMobjThinker(think_t thinker)
 {
-    think_t             altfunc;
-
     if(thinker == gx.MobjThinker)
         return true;
 
-    altfunc = gx.GetVariable(DD_ALT_MOBJ_THINKER);
-    return (altfunc && thinker == altfunc);
+    return false;
 }
 
 void P_ClearMobjIDs(void)
