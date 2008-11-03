@@ -66,7 +66,7 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1,
                          pvec2_t lp)
 {
     float               len1, len2;
-    vec2_t              origin = { 0, 0 }, norm1, norm2;
+    vec2_t              norm1, norm2;
 
     // Length of both lines.
     len1 = V2_Length(line1);
