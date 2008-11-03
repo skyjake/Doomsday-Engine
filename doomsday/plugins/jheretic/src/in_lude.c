@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
@@ -560,7 +560,7 @@ void IN_Drawer(void)
 void IN_DrawStatBack(void)
 {
     DGL_Color4f(1, 1, 1, 1);
-    GL_SetMaterial(R_MaterialNumForName("FLOOR16", MAT_FLAT));
+    GL_SetMaterial(R_MaterialNumForName("FLOOR16", MG_FLATS));
     GL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
 }
 
