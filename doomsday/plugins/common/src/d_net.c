@@ -328,19 +328,21 @@ int D_NetWorldEvent(int type, int parm, void *data)
         // Server events:
         //
     case DDWE_HANDSHAKE:
+        boolean             newPlayer = *((boolean*) data);
+
         // A new player is entering the game. We as a server should send him
         // the handshake packet(s) to update his world.
         // If 'data' is zero, this is a re-handshake that's used to
         // begin demos.
         Con_Message("D_NetWorldEvent: Sending a %shandshake to player %i.\n",
-                    data ? "" : "(re)", parm);
+                    newPlayer ? "" : "(re)", parm);
 
         // Mark new player for update.
         players[parm].update |= PSF_REBORN;
 
         // First, the game state.
         NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT |
-                            (data ? 0 : GSF_DEMO), parm);
+                            (newPlayer ? 0 : GSF_DEMO), parm);
 
         // Send info about all players to the new one.
         for(i = 0; i < MAXPLAYERS; ++i)

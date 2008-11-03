@@ -880,7 +880,7 @@ Con_Message("Sv_Handshake: plmask=%x\n", USHORT(shake.playerMask));
     }
 
     // The game DLL wants to shake hands as well?
-    gx.NetWorldEvent(DDWE_HANDSHAKE, plrNum, (void *) newPlayer);
+    gx.NetWorldEvent(DDWE_HANDSHAKE, plrNum, (void *) &newPlayer);
 
     // Propagate client information.
     for(i = 0; i < DDMAXPLAYERS; ++i)
