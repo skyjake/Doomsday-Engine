@@ -400,6 +400,12 @@ void LO_AddLuminous(mobj_t* mo)
             mat = sprFrame->mats[0];
         }
 
+#if _DEBUG
+if(!mat)
+    Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
+              (int) mo->sprite, mo->frame);
+#endif
+
         // Get the current globaly animated material.
         mat = mat->current;
 
@@ -722,7 +728,7 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
     {
         if(useDynLights)
         {
-            mobj_t             *iter;
+            mobj_t*             iter;
 
             for(iter = seciter->mobjList; iter; iter = iter->sNext)
             {
@@ -732,9 +738,10 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
 
         // If the segs of this subsector are affected by glowing planes we need
         // to create dynlights and link them.
-        if(useWallGlow)
+        if(useWallGlow && seciter->ssectors)
         {
-            subsector_t **ssec = seciter->ssectors;
+            subsector_t**       ssec = seciter->ssectors;
+
             while(*ssec)
             {
                 createGlowLightPerPlaneForSubSector(*ssec);
