@@ -428,10 +428,10 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
     static sector_t     dummy; // Used when skipping.
     static plane_t*     dummyPlaneArray[2];
-    static plane_t  dummyPlanes[2];
+    static plane_t      dummyPlanes[2];
 
     unsigned short      num;
-    sector_t           *sec;
+    sector_t*           sec;
     int                 df;
     boolean             wasChanged = false;
 
@@ -472,11 +472,26 @@ if(num >= numSectors)
     }
 
     if(df & SDF_FLOOR_MATERIAL)
-        Surface_SetMaterial(&sec->SP_floorsurface,
-            R_GetMaterialByNum(Msg_ReadPackedShort()));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side materialnum.
+         * \fixme What if client and server materialnums differ?
+         */
+        mat = R_GetMaterialByNum(Msg_ReadPackedShort());
+        Surface_SetMaterial(&sec->SP_floorsurface, mat);
+    }
     if(df & SDF_CEILING_MATERIAL)
-        Surface_SetMaterial(&sec->SP_ceilsurface,
-            R_GetMaterialByNum(Msg_ReadPackedShort()));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side materialnum.
+         * \fixme What if client and server materialnums differ?
+         */
+        mat = R_GetMaterialByNum(Msg_ReadPackedShort());
+        Surface_SetMaterial(&sec->SP_ceilsurface, mat);
+    }
+
     if(df & SDF_LIGHT)
         sec->lightLevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
@@ -703,14 +718,35 @@ if(num >= numSideDefs)
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOP_MATERIAL)
-        Surface_SetMaterial(&sid->SW_topsurface,
-                            R_GetMaterialByNum(topMat));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side materialnum.
+         * \fixme What if client and server materialnums differ?
+         */
+        mat = R_GetMaterialByNum(topMat);
+        Surface_SetMaterial(&sid->SW_topsurface, mat);
+    }
     if(df & SIDF_MID_MATERIAL)
-        Surface_SetMaterial(&sid->SW_middlesurface,
-                            R_GetMaterialByNum(midMat));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side materialnum.
+         * \fixme What if client and server materialnums differ?
+         */
+        mat = R_GetMaterialByNum(midMat);
+        Surface_SetMaterial(&sid->SW_middlesurface, mat);
+    }
     if(df & SIDF_BOTTOM_MATERIAL)
-        Surface_SetMaterial(&sid->SW_bottomsurface,
-                            R_GetMaterialByNum(botMat));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side materialnum.
+         * \fixme What if client and server materialnums differ?
+         */
+        mat = R_GetMaterialByNum(botMat);
+        Surface_SetMaterial(&sid->SW_bottomsurface, mat);
+    }
 
     if(df & SIDF_TOP_COLOR_RED)
         Surface_SetColorR(&sid->SW_topsurface, toprgb[CR]);
