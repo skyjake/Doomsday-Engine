@@ -61,16 +61,17 @@
 // CODE --------------------------------------------------------------------
 
 /**
- * Reads a sector delta from the message buffer and applies it to
- * the world. Returns false only if the end marker is found.
+ * Reads a sector delta from the message buffer and applies it to the world.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets)
+ * \note THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets).
+ *
+ * @return              @c false, iff the end marker is found.
  */
 int Cl_ReadSectorDelta(void)
 {
-    short       num = Msg_ReadPackedShort();
-    sector_t   *sec;
-    int         df;
+    short               num = Msg_ReadPackedShort();
+    sector_t*           sec;
+    int                 df;
 
     // Sector number first (0 terminates).
     if(!num)
@@ -82,11 +83,41 @@ int Cl_ReadSectorDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & SDF_FLOOR_MATERIAL)
-        Surface_SetMaterial(&sec->SP_floorsurface,
-                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    {
+        lumpnum_t           lumpNum;
+
+        // A bit convoluted; the delta is a server-side (flat) lump number.
+        if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
+        {
+            material_t*         mat = R_GetMaterialByNum(
+                R_MaterialNumForName(W_LumpName(lumpNum), MAT_FLAT));
+#if _DEBUG
+if(!mat)
+    Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
+                (int) lumpNum);
+#endif
+
+            Surface_SetMaterial(&sec->SP_floorsurface, mat);
+        }
+    }
     if(df & SDF_CEILING_MATERIAL)
-        Surface_SetMaterial(&sec->SP_ceilsurface,
-                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    {
+        lumpnum_t           lumpNum;
+
+        // A bit convoluted; the delta is a server-side (flat) lump number.
+        if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
+        {
+            material_t*         mat = R_GetMaterialByNum(
+                R_MaterialNumForName(W_LumpName(lumpNum), MAT_FLAT));
+#if _DEBUG
+if(!mat)
+    Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
+                (int) lumpNum);
+#endif
+
+            Surface_SetMaterial(&sec->SP_ceilsurface, mat);
+        }
+    }
     if(df & SDF_LIGHT)
         sec->lightLevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_TARGET)
@@ -171,15 +202,17 @@ int Cl_ReadSectorDelta(void)
 
 /**
  * Reads a side delta from the message buffer and applies it to
- * the world. Returns false only if the end marker is found.
+ * the world.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets)
+ * \note THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets).
+ *
+ * @return              @c false, iff the end marker is found.
  */
 int Cl_ReadSideDelta(void)
 {
-    short       num = Msg_ReadPackedShort(); // \fixme we support > 32768 sidedefs!
-    sidedef_t     *sid;
-    int         df;
+    short               num = Msg_ReadPackedShort(); // \fixme we support > 32768 sidedefs!
+    sidedef_t*          sid;
+    int                 df;
 
     // Side number first (0 terminates).
     if(!num)
@@ -191,19 +224,40 @@ int Cl_ReadSideDelta(void)
     df = Msg_ReadByte();
 
     if(df & SIDF_TOP_MATERIAL)
-        Surface_SetMaterial(&sid->SW_topsurface,
-                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side texture num.
+         * \fixme What if client and server texture nums differ?
+         */
+        mat = R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_topsurface, mat);
+    }
     if(df & SIDF_MID_MATERIAL)
-        Surface_SetMaterial(&sid->SW_middlesurface,
-                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side texture num.
+         * \fixme What if client and server texture nums differ?
+         */
+        mat = R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_middlesurface, mat);
+    }
     if(df & SIDF_BOTTOM_MATERIAL)
-        Surface_SetMaterial(&sid->SW_bottomsurface,
-                             R_GetMaterialByNum(Msg_ReadPackedShort()));
+    {
+        material_t*         mat;
+        /**
+         * The delta is a server-side texture num.
+         * \fixme What if client and server texture nums differ?
+         */
+        mat = R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        Surface_SetMaterial(&sid->SW_bottomsurface, mat);
+    }
 
     if(df & SIDF_LINE_FLAGS)
     {
-        byte    updatedFlags = Msg_ReadByte();
-        linedef_t *line = R_GetLineForSide(num);
+        byte                updatedFlags = Msg_ReadByte();
+        linedef_t*          line = R_GetLineForSide(num);
 
         if(line)
         {
@@ -257,16 +311,17 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
 }
 
 /**
- * Reads a poly delta from the message buffer and applies it to
- * the world. Returns false only if the end marker is found.
+ * Reads a poly delta from the message buffer and applies it to the world.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets)
+ * \note THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets).
+ *
+ * @return              @c false, iff the end marker is found.
  */
 int Cl_ReadPolyDelta(void)
 {
     int                 df;
     short               num = Msg_ReadPackedShort();
-    polyobj_t          *po;
+    polyobj_t*          po;
 
     // Check the number. A zero terminates.
     if(!num)
