@@ -511,8 +511,8 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %ul bytes, result=%i\n",
-                          size + 2, result) );
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %ul bytes, result=%ul\n",
+                          (unsigned long) (size + 2), result) );
 #endif
     if(result != size + 2)
         perror("Socket error");
@@ -1632,10 +1632,10 @@ void N_Listen(void)
                         {
                             /** \fixme Read into a buffer, execute when newline
                             * received.
-			    *
+                *
                             * Process the command; we will need to answer, or
                             * do something else.
-			    */
+                */
                             N_DoNodeCommand(i, buf, result);
                         }
                     }
