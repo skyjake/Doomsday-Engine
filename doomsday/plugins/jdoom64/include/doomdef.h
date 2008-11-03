@@ -66,9 +66,6 @@
 #define VERBOSE(code)       { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
-// Misc macros.
-#define CLAMP(v, min, max)  (v < min? v=min : v > max? v=max : v)
-
 /**
  * Game mode handling - identify IWAD version to handle IWAD dependant
  * animations, game logic etc.

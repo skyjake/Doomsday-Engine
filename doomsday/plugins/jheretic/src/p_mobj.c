@@ -343,20 +343,22 @@ float P_MobjGetFriction(mobj_t *mo)
     }
 }
 
-void P_MobjMoveXY(mobj_t *mo)
+void P_MobjMoveXY(mobj_t* mo)
 {
     float               pos[2], mom[2];
-    player_t           *player;
+    player_t*           player;
     boolean             largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
         return;
 
-    mom[VX] = mo->mom[MX] = CLAMP(mo->mom[MX], -MAXMOVE, MAXMOVE);
-    mom[VY] = mo->mom[MY] = CLAMP(mo->mom[MY], -MAXMOVE, MAXMOVE);
+    mom[MX] = MINMAX_OF(-MAXMOVE, mo->mom[MX], MAXMOVE);
+    mom[MY] = MINMAX_OF(-MAXMOVE, mo->mom[MY], MAXMOVE);
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
 
-    if(mom[VX] == 0 && mom[VY] == 0)
+    if(mom[MX] == 0 && mom[MY] == 0)
     {
         if(mo->flags & MF_SKULLFLY)
         {   // A flying mobj slammed into something.
@@ -382,23 +384,23 @@ void P_MobjMoveXY(mobj_t *mo)
 
         largeNegative = false;
         if(!cfg.moveBlock &&
-           (mom[VX] < -MAXMOVE / 2 || mom[VY] < -MAXMOVE / 2))
+           (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
         {
             // Make an exception for "north-only wallrunning".
             if(!(cfg.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
-        if(largeNegative || mom[VX] > MAXMOVE / 2 || mom[VY] > MAXMOVE / 2)
+        if(largeNegative || mom[MX] > MAXMOVE / 2 || mom[MY] > MAXMOVE / 2)
         {
-            pos[VX] = mo->pos[VX] + (mom[VX] /= 2);
-            pos[VY] = mo->pos[VY] + (mom[VY] /= 2);
+            pos[VX] = mo->pos[VX] + (mom[MX] /= 2);
+            pos[VY] = mo->pos[VY] + (mom[MY] /= 2);
         }
         else
         {
-            pos[VX] = mo->pos[VX] + mom[VX];
-            pos[VY] = mo->pos[VY] + mom[VY];
-            mom[VX] = mom[VY] = 0;
+            pos[VX] = mo->pos[VX] + mom[MX];
+            pos[VY] = mo->pos[VY] + mom[MY];
+            mom[MX] = mom[MY] = 0;
         }
 
         // If mobj was wallrunning - stop.

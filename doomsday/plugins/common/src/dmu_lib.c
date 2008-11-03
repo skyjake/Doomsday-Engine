@@ -65,7 +65,7 @@
 
 // CODE --------------------------------------------------------------------
 
-linedef_t *P_AllocDummyLine(void)
+linedef_t* P_AllocDummyLine(void)
 {
     xline_t* extra = Z_Calloc(sizeof(xline_t), PU_STATIC, 0);
     return P_AllocDummy(DMU_LINEDEF, extra);
@@ -241,33 +241,31 @@ void P_CopySector(sector_t* dest, sector_t* src)
 #endif
 }
 
-float P_SectorLight(sector_t *sector)
+float P_SectorLight(sector_t* sector)
 {
     return P_GetFloatp(sector, DMU_LIGHT_LEVEL);
 }
 
-void P_SectorSetLight(sector_t *sector, float level)
+void P_SectorSetLight(sector_t* sector, float level)
 {
     P_SetFloatp(sector, DMU_LIGHT_LEVEL, level);
 }
 
-void P_SectorModifyLight(sector_t *sector, float value)
+void P_SectorModifyLight(sector_t* sector, float value)
 {
-    float       level = P_SectorLight(sector);
-
-    level += value;
-    CLAMP(level, 0, 1);
+    float               level =
+        MINMAX_OF(0.f, P_SectorLight(sector) + value, 1.f);
 
     P_SectorSetLight(sector, level);
 }
 
-void P_SectorModifyLightx(sector_t *sector, fixed_t value)
+void P_SectorModifyLightx(sector_t* sector, fixed_t value)
 {
     P_SetFloatp(sector, DMU_LIGHT_LEVEL,
                 P_SectorLight(sector) + FIX2FLT(value) / 255.0f);
 }
 
-void *P_SectorSoundOrigin(sector_t *sec)
+void* P_SectorSoundOrigin(sector_t* sec)
 {
     return P_GetPtrp(sec, DMU_SOUND_ORIGIN);
 }

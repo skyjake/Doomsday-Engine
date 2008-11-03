@@ -1493,26 +1493,25 @@ int M_StringHeight(const char *string, dpatch_t *font)
     return h;
 }
 
-void M_LetterFlash(int x, int y, int w, int h, int bright, float red,
-                          float green, float blue, float alpha)
+void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
+                   float b, float a)
 {
-    float   fsize = 4 + bright;
-    float   fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
-    int     origColor[4];
+    float               fsize = 4 + bright, red, green, blue, alpha;
+    float               fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
+    int                 origColor[4];
 
     // Don't draw anything for very small letters.
     if(h <= 4)
         return;
 
-    CLAMP(alpha, 0.0f, 1.0f);
-
     // Don't bother with hidden letters.
-    if(alpha == 0.0f)
+    if(!(a > 0.f))
         return;
 
-    CLAMP(red, 0.0f, 1.0f);
-    CLAMP(green, 0.0f, 1.0f);
-    CLAMP(blue, 0.0f, 1.0f);
+    red   = MINMAX_OF(0.f, r, 1.f);
+    green = MINMAX_OF(0.f, g, 1.f);
+    blue  = MINMAX_OF(0.f, b, 1.f);
+    alpha = MINMAX_OF(0.f, a, 1.f);
 
     // Store original color.
     DGL_GetIntegerv(DGL_CURRENT_COLOR_RGBA, origColor);

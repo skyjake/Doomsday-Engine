@@ -389,7 +389,7 @@ void AM_AddLine(float x, float y, float x2, float y2, float width,
 
     l->type = AMLT_PALCOL;
     l->coldata.palcolor.color = color;
-    l->coldata.palcolor.alpha = CLAMP(alpha, 0.0, 1.0f);
+    l->coldata.palcolor.alpha = MINMAX_OF(.0f, alpha, 1.0f);
 }
 
 /**
@@ -420,7 +420,7 @@ void AM_AddLine4f(float x, float y, float x2, float y2, float width,
     l->coldata.f4color.rgba[0] = r;
     l->coldata.f4color.rgba[1] = g;
     l->coldata.f4color.rgba[2] = b;
-    l->coldata.f4color.rgba[3] = CLAMP(a, 0.0, 1.0f);
+    l->coldata.f4color.rgba[3] = MINMAX_OF(.0f, a, 1.0f);
 }
 
 /**

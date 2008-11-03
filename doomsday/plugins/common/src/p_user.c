@@ -420,13 +420,13 @@ void P_MovePlayer(player_t *player)
         }
 #endif
 
-        forwardMove = CLAMP(forwardMove, -maxMove, maxMove);
-        sideMove    = CLAMP(sideMove,    -maxMove, maxMove);
+        forwardMove = MINMAX_OF(-maxMove, forwardMove, maxMove);
+        sideMove    = MINMAX_OF(-maxMove, sideMove, maxMove);
 
         // Players can opt to reduce their maximum possible movement speed.
         if((int) cfg.playerMoveSpeed != 1)
         {   // A divsor has been specified, apply it.
-            float           m = CLAMP(cfg.playerMoveSpeed, 0, 1);
+            float           m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
 
             forwardMove *= m;
             sideMove    *= m;

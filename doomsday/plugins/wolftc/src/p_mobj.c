@@ -202,8 +202,10 @@ void P_MobjMoveXY(mobj_t *mo)
     if(P_CameraXYMovement(mo))
         return;
 
-    xmove = mo->mom[MX] = CLAMP(mo->mom[MX], -FLT2FIX(MAXMOVE), FLT2FIX(MAXMOVE));
-    ymove = mo->mom[MY] = CLAMP(mo->mom[MY], -FLT2FIX(MAXMOVE), FLT2FIX(MAXMOVE));
+    xmove = MINMAX_OF(-FLT2FIX(MAXMOVE), mo->mom[MX], FLT2FIX(MAXMOVE));
+    ymove = MINMAX_OF(-FLT2FIX(MAXMOVE), mo->mom[MY], FLT2FIX(MAXMOVE));
+    mo->mom[MX] = xmove;
+    mo->mom[MY] = ymove;
 
     if((xmove | ymove) == 0)
     {

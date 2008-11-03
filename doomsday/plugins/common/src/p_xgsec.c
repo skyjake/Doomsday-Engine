@@ -1939,12 +1939,9 @@ int C_DECL XSTrav_PlaneMaterial(struct sector_s *sec, boolean ceiling,
                    P_ToIndex(sec));
     }
 
-    rgb[0] = info->iparm[4] / 255.f;
-    CLAMP(rgb[0], 0, 1);
-    rgb[1] = info->iparm[5] / 255.f;
-    CLAMP(rgb[1], 0, 1);
-    rgb[2] = info->iparm[6] / 255.f;
-    CLAMP(rgb[2], 0, 1);
+    rgb[0] = MINMAX_OF(0.f, info->iparm[4] / 255.f, 1.f);
+    rgb[1] = MINMAX_OF(0.f, info->iparm[5] / 255.f, 1.f);
+    rgb[2] = MINMAX_OF(0.f, info->iparm[6] / 255.f, 1.f);
 
     // Set the texture.
     XS_ChangePlaneMaterial(sec, ceiling, mat, rgb);
@@ -1952,22 +1949,22 @@ int C_DECL XSTrav_PlaneMaterial(struct sector_s *sec, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_SectorType(struct sector_s *sec, boolean ceiling,
-                             void *context, void *context2,
-                             mobj_t *activator)
+int C_DECL XSTrav_SectorType(struct sector_s* sec, boolean ceiling,
+                             void* context, void* context2,
+                             mobj_t* activator)
 {
-    linetype_t *info = context2;
+    linetype_t*         info = context2;
 
     XS_SetSectorType(sec, info->iparm[2]);
     return true;
 }
 
-int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling,
-                              void *context, void *context2,
-                              mobj_t *activator)
+int C_DECL XSTrav_SectorLight(sector_t* sector, boolean ceiling,
+                              void* context, void* context2,
+                              mobj_t* activator)
 {
-    linedef_t          *line = (linedef_t *) context;
-    linetype_t         *info = context2;
+    linedef_t*          line = (linedef_t *) context;
+    linetype_t*         info = context2;
     int                 num, i = 0;
     float               usergb[3];
     float               lightLevel;

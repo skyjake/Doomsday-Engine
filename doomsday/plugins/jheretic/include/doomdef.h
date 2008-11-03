@@ -61,9 +61,6 @@
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
-// Misc macros.
-#define CLAMP(v, min, max) (v < min? v=min : v > max? v=max : v)
-
 extern game_import_t gi;
 extern game_export_t gx;
 

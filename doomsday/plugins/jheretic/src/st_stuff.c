@@ -430,10 +430,9 @@ static void drawStatusBarBackground(int player)
     if(hud->blended)
     {
         alpha = cfg.statusbarAlpha - hud->hideAmount;
-        // Clamp
-        CLAMP(alpha, 0.0f, 1.0f);
         if(!(alpha > 0))
             return;
+        alpha = MINMAX_OF(0.f, alpha, 1.f);
     }
     else
         alpha = 1.0f;
@@ -524,8 +523,8 @@ void ST_updateWidgets(int player)
 
     if(hud->blended)
     {
-        hud->statusbarCounterAlpha = cfg.statusbarCounterAlpha - hud->hideAmount;
-        CLAMP(hud->statusbarCounterAlpha, 0.0f, 1.0f);
+        hud->statusbarCounterAlpha =
+            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hud->hideAmount, 1.f);
     }
     else
         hud->statusbarCounterAlpha = 1.0f;
@@ -1131,12 +1130,9 @@ void ST_doFullscreenStuff(int player)
     hudstate_t*         hud = &hudStates[player];
     player_t*           plr = &players[player];
     float               textAlpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
+        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
     float               iconAlpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
-
-    CLAMP(textAlpha, 0.0f, 1.0f);
-    CLAMP(iconAlpha, 0.0f, 1.0f);
+        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
 
     if(cfg.hudShown[HUD_AMMO])
     {

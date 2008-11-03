@@ -128,12 +128,9 @@ void R_DrawSpecialFilter(void)
         DGL_Disable(DGL_TEXTURING);
         GL_BlendMode(BM_INVERSE);
 
-        r = str * 2;
-        g = str * 2 - .4;
-        b = str * 2 - .8;
-        CLAMP(r, 0, 1);
-        CLAMP(g, 0, 1);
-        CLAMP(b, 0, 1);
+        r = MINMAX_OF(0.f, str * 2, 1.f);
+        g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
+        b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
 
         R_GetViewWindow(&x, &y, &w, &h);
         GL_DrawRect(x, y, w, h, r, g, b, 1);

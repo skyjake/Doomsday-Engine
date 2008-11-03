@@ -312,16 +312,16 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
 }
 
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-                      float scale, float alpha, boolean flip)
+                      float scale, float a, boolean flip)
 {
     int                 w, h, w2, h2;
-    float               s, t;
+    float               s, t, alpha;
     spriteinfo_t        sprInfo;
 
-    CLAMP(alpha, 0.0f, 1.0f);
-    if(alpha == 0.0f)
+    if(!(a > 0.f))
         return;
 
+    alpha = MINMAX_OF(0.f, a, 1.f);
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
@@ -332,6 +332,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     {
     case HOT_BRIGHT:
         y -= h * scale;
+        // Fall through.
 
     case HOT_TRIGHT:
         x -= w * scale;
@@ -387,8 +388,8 @@ void ST_doFullscreenStuff(int player)
     float               iconalpha =
         hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
-    CLAMP(textalpha, 0.0f, 1.0f);
-    CLAMP(iconalpha, 0.0f, 1.0f);
+    textalpha = MINMAX_OF(0.f, textalpha, 1.f);
+    iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
 
     if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
     {

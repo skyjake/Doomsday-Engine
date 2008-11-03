@@ -422,18 +422,18 @@ void ST_Register(void)
 
 void ST_refreshBackground(void)
 {
-
-    int x, y, w, h;
-    float cw, cw2, ch;
-    float       alpha;
+    int                 x, y, w, h;
+    float               cw, cw2, ch;
+    float               alpha;
 
     if(st_blended)
     {
         alpha = cfg.statusbarAlpha - hudHideAmount;
-        // Clamp
-        CLAMP(alpha, 0.0f, 1.0f);
+
         if(!(alpha > 0))
             return;
+
+        alpha = MINMAX_OF(0.f, alpha, 1.f);
     }
     else
         alpha = 1.0f;
@@ -759,8 +759,8 @@ void ST_updateWidgets(void)
 
     if(st_blended)
     {
-        statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
-        CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+        statusbarCounterAlpha =
+            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hudHideAmount, 1.f);
     }
     else
         statusbarCounterAlpha = 1.0f;
@@ -999,10 +999,10 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     float               s, t;
     spriteinfo_t        sprInfo;
 
-    CLAMP(alpha, 0.0f, 1.0f);
-    if(alpha == 0.0f)
+    if(!(alpha > 0))
         return;
 
+    alpha = MINMAX_OF(0.f, alpha, 1.f);
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;

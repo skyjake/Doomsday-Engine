@@ -1098,8 +1098,8 @@ static void setViewTarget(automap_t* map, float x, float y)
     if(x == map->targetViewX && y == map->targetViewY)
         return;
 
-    x = CLAMP(x, -32768, 32768);
-    y = CLAMP(y, -32768, 32768);
+    x = MINMAX_OF(-32768, x, 32768);
+    y = MINMAX_OF(-32768, y, 32768);
 
     map->oldViewX = map->viewX;
     map->oldViewY = map->viewY;
@@ -1413,7 +1413,7 @@ void AM_SetGlobalAlphaTarget(int pid, float alpha)
     map = mapForPlayerId(pid);
     if(!map)
         return;
-    map->targetAlpha = CLAMP(alpha, 0, 1);
+    map->targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
 /**
@@ -1447,9 +1447,9 @@ void AM_SetColor(int pid, int objectname, float r, float g, float b)
     if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
         Con_Error("AM_SetColor: Unknown object %i.", objectname);
 
-    r = CLAMP(r, 0, 1);
-    g = CLAMP(g, 0, 1);
-    b = CLAMP(b, 0, 1);
+    r = MINMAX_OF(0, r, 1);
+    g = MINMAX_OF(0, g, 1);
+    b = MINMAX_OF(0, b, 1);
 
     // Check special cases first,
     if(objectname == AMO_BACKGROUND)
@@ -1568,10 +1568,10 @@ void AM_SetColorAndAlpha(int pid, int objectname, float r, float g, float b,
     if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
         Con_Error("AM_SetColorAndAlpha: Unknown object %i.", objectname);
 
-    r = CLAMP(r, 0, 1);
-    g = CLAMP(g, 0, 1);
-    b = CLAMP(b, 0, 1);
-    a = CLAMP(a, 0, 1);
+    r = MINMAX_OF(0, r, 1);
+    g = MINMAX_OF(0, g, 1);
+    b = MINMAX_OF(0, b, 1);
+    a = MINMAX_OF(0, a, 1);
 
     // Check special cases first.
     if(objectname == AMO_BACKGROUND)
@@ -1742,8 +1742,8 @@ void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
     if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
         Con_Error("AM_SetGlow: Unknown object %i.", objectname);
 
-    size = CLAMP(size, 0, 100);
-    alpha = CLAMP(alpha, 0, 1);
+    size = MINMAX_OF(0, size, 100);
+    alpha = MINMAX_OF(0, alpha, 1);
 
     switch(objectname)
     {
@@ -1858,12 +1858,12 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
     line->special = lineSpecial;
     line->sided = sided;
 
-    line->info.rgba[0] = CLAMP(r, 0, 1);
-    line->info.rgba[1] = CLAMP(g, 0, 1);
-    line->info.rgba[2] = CLAMP(b, 0, 1);
-    line->info.rgba[3] = CLAMP(a, 0, 1);
+    line->info.rgba[0] = MINMAX_OF(0, r, 1);
+    line->info.rgba[1] = MINMAX_OF(0, g, 1);
+    line->info.rgba[2] = MINMAX_OF(0, b, 1);
+    line->info.rgba[3] = MINMAX_OF(0, a, 1);
     line->info.glow = glowType;
-    line->info.glowAlpha = CLAMP(glowAlpha, 0, 1);
+    line->info.glowAlpha = MINMAX_OF(0, glowAlpha, 1);
     line->info.glowWidth = glowWidth;
     line->info.scaleWithView = scaleGlowWithView;
     line->info.blendMode = blendmode;
@@ -3186,8 +3186,7 @@ static void setupGLStateForMap(void)
                 SPR_ART1, SPR_ART2, SPR_ART3
             };
 
-            iconAlpha = map->alpha;
-            CLAMP(iconAlpha, 0.0f, 0.5f);
+            iconAlpha = MINMAX_OF(.0f, map->alpha, .5f);
 
             spacing = win->height / num;
             y = 0;

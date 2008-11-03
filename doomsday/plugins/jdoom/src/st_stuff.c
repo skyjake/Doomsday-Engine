@@ -347,10 +347,10 @@ static void drawStatusBarBackground(int player, float width, float height)
     if(hud->blended)
     {
         alpha = cfg.statusbarAlpha - hud->hideAmount;
-        // Clamp
-        CLAMP(alpha, 0.0f, 1.0f);
         if(!(alpha > 0))
             return;
+
+        alpha = MINMAX_OF(0.f, alpha, 1.f);
     }
     else
         alpha = 1.0f;
@@ -754,8 +754,8 @@ void ST_updateWidgets(int player)
 
     if(hud->blended)
     {
-        hud->statusbarCounterAlpha = cfg.statusbarCounterAlpha - hud->hideAmount;
-        CLAMP(hud->statusbarCounterAlpha, 0.0f, 1.0f);
+        hud->statusbarCounterAlpha =
+            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hud->hideAmount, 1.f);
     }
     else
         hud->statusbarCounterAlpha = 1.0f;
@@ -1000,10 +1000,10 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     float               s, t;
     spriteinfo_t        sprInfo;
 
-    CLAMP(alpha, 0.0f, 1.0f);
-    if(alpha == 0.0f)
+    if(!(alpha > 0))
         return;
 
+    alpha = MINMAX_OF(0.f, alpha, 1.f);
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
@@ -1064,11 +1064,10 @@ void ST_doFullscreenStuff(int player)
     int                 w, h, pos = 0, spr, i;
     int                 width = 320 / cfg.hudScale;
     int                 height = 200 / cfg.hudScale;
-    float               textAlpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
-    float               iconAlpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
-
-    CLAMP(textAlpha, 0.0f, 1.0f);
-    CLAMP(iconAlpha, 0.0f, 1.0f);
+    float               textAlpha =
+        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
+    float               iconAlpha =
+        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
 
     if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
     {

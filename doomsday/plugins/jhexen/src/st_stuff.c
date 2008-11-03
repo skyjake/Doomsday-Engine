@@ -428,9 +428,7 @@ static void drawWeaponPieces(hudstate_t* hud)
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
 
-    alpha = cfg.statusbarAlpha - hud->hideAmount;
-    // Clamp
-    CLAMP(alpha, 0.0f, 1.0f);
+    alpha = MINMAX_OF(0.f, cfg.statusbarAlpha - hud->hideAmount, 1.f);
 
     if(plr->pieces == 7)
     {
@@ -581,10 +579,9 @@ static void drawStatusBarBackground(int player)
     if(hud->blended)
     {
         alpha = cfg.statusbarAlpha - hud->hideAmount;
-        // Clamp
-        CLAMP(alpha, 0.0f, 1.0f);
         if(!(alpha > 0))
             return;
+        alpha = MINMAX_OF(0.f, alpha, 1.f);
     }
     else
         alpha = 1.0f;
@@ -1175,8 +1172,8 @@ void ST_updateWidgets(int player)
 
     if(hud->blended)
     {
-        hud->statusbarCounterAlpha = cfg.statusbarCounterAlpha - hud->hideAmount;
-        CLAMP(hud->statusbarCounterAlpha, 0.0f, 1.0f);
+        hud->statusbarCounterAlpha =
+            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hud->hideAmount, 1.f);
     }
     else
         hud->statusbarCounterAlpha = 1.0f;

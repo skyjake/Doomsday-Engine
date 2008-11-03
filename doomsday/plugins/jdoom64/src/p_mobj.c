@@ -180,18 +180,20 @@ float P_MobjGetFriction(mobj_t *mo)
     return XS_Friction(P_GetPtrp(mo->subsector, DMU_SECTOR));
 }
 
-void P_MobjMoveXY(mobj_t *mo)
+void P_MobjMoveXY(mobj_t* mo)
 {
     float               pos[3], mom[3];
-    player_t           *player;
+    player_t*           player;
     boolean             largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
         return;
 
-    mom[MX] = mo->mom[MX] = CLAMP(mo->mom[MX], -MAXMOVE, MAXMOVE);
-    mom[MY] = mo->mom[MY] = CLAMP(mo->mom[MY], -MAXMOVE, MAXMOVE);
+    mom[MX] = MINMAX_OF(-MAXMOVE, mo->mom[MX], MAXMOVE);
+    mom[MY] = MINMAX_OF(-MAXMOVE, mo->mom[MY], MAXMOVE);
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
 
     if(mom[MX] == 0 && mom[MY] == 0)
     {
