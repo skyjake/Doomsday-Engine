@@ -119,7 +119,7 @@ int             R_ModelFrameNumForName(int modelnum, char *fname);
 void            R_SetModelFrame(modeldef_t *modef, int frame);
 void            R_SetSpriteReplacement(int sprite, char *modelname);
 int             R_FindModelFile(const char *filename, char *outfn);
-void            R_PrecacheSkinsForMobj(struct mobj_s *mo);
+boolean         R_PrecacheSkinsForMobj(thinker_t* th, void* context);
 void            R_PrecacheModelSkins(modeldef_t *modef);
 
 #endif

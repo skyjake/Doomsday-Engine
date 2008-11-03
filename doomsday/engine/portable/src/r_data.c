@@ -79,7 +79,7 @@ extern boolean levelSetup; // we are currently setting up a level
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 byte precacheSkins = true;
-byte precacheSprites = false;
+byte precacheSprites = true;
 
 int numFlats;
 flat_t** flats;
@@ -1219,7 +1219,7 @@ void R_PrecachePatch(lumpnum_t num)
     GL_PreparePatch(num);
 }
 
-static boolean isInList(void **list, size_t len, void *elm)
+static boolean isInList(void** list, size_t len, void* elm)
 {
     size_t              n;
 
@@ -1233,15 +1233,26 @@ static boolean isInList(void **list, size_t len, void *elm)
     return false;
 }
 
-static boolean precacheResourcesForMobjs(thinker_t* th, void* context)
+boolean findSpriteOwner(thinker_t* th, void* context)
 {
-    if(P_IsMobjThinker(th->function))
+    int                 i;
+    mobj_t*             mo = (mobj_t*) th;
+    spritedef_t*        sprDef = (spritedef_t*) context;
+
+    if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
     {
-        // Precache all the skins for the mobj.
-        R_PrecacheSkinsForMobj((mobj_t *) th);
+        //// \optimize Traverses the entire state list!
+        for(i = 0; i < defs.count.states.num; ++i)
+        {
+            if(stateOwners[i] != &mobjInfo[mo->type])
+                continue;
+
+            if(&sprites[states[i].sprite] == sprDef)
+                return false; // Found an owner!
+        }
     }
 
-    return true; // Continue iteration.
+    return true; // Keep looking...
 }
 
 /**
@@ -1304,29 +1315,38 @@ void R_PrecacheLevel(void)
         }
     }
 
+    // Precache sprites?
     if(precacheSprites)
     {
         int                 i;
 
         for(i = 0; i < numSprites; ++i)
         {
-            int                 j;
             spritedef_t*        sprDef = &sprites[i];
 
-            for(j = 0; j < sprDef->numFrames; ++j)
-            {
-                int                 k;
-                spriteframe_t*      sprFrame = &sprDef->spriteFrames[j];
+            if(!P_IterateThinkers(gx.MobjThinker, findSpriteOwner, sprDef))
+            {   // This sprite is used by some state of at least one mobj.
+                int                 j;
 
-                for(k = 0; k < 8; ++k)
+                // Precache all the frames.
+                for(j = 0; j < sprDef->numFrames; ++j)
                 {
-                    mat = sprFrame->mats[k];
-                    if(mat && !isInList((void**) matPresent, n, mat))
-                        matPresent[n++] = mat;
+                    int                 k;
+                    spriteframe_t*      sprFrame = &sprDef->spriteFrames[j];
+
+                    for(k = 0; k < 8; ++k)
+                    {
+                        material_t*         mat = sprFrame->mats[k];
+
+                        if(mat && !isInList((void**) matPresent, n, mat))
+                            matPresent[n++] = mat;
+                    }
                 }
             }
         }
     }
+
+    // \fixme Precache sky materials!
 
     i = 0;
     while(i < numMaterials && matPresent[i])
@@ -1336,27 +1356,17 @@ void R_PrecacheLevel(void)
     M_Free(matPresent);
     matPresent = NULL;
 
-    // \fixme Precache sky textures!
-
-    // Precache skins?
+    // Precache model skins?
     if(useModels && precacheSkins)
     {
-        P_IterateThinkers(NULL, precacheResourcesForMobjs, NULL);
+        P_IterateThinkers(gx.MobjThinker, R_PrecacheSkinsForMobj, NULL);
     }
-
-    // Update progress.
 
     // Sky models usually have big skins.
     R_PrecacheSky();
 
-    if(verbose)
-    {
-        Con_Message("Precaching took %.2f seconds.\n",
-                    Sys_GetSeconds() - startTime);
-    }
-
-    // Done!
-    //Con_Progress(100, PBARF_SET);
+    VERBOSE(Con_Message("Precaching took %.2f seconds.\n",
+                        Sys_GetSeconds() - startTime))
 }
 
 /**
