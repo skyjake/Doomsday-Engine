@@ -225,7 +225,6 @@ static void createDummyWindow(application_t* app)
     HWND                hWnd = NULL;
     HGLRC               hGLRC = NULL;
     boolean             ok = true;
-    int                 bpp = 32;
 
     // Create the window.
     hWnd = CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, "dummy",
