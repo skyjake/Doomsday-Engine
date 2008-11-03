@@ -359,7 +359,7 @@ void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
-    
+
     out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
@@ -521,9 +521,6 @@ void R_BeginWorldFrame(void)
 
     if(!freezeRLs)
     {
-        boolean             doLums =
-            (useDynLights || haloMode || spriteLight || useDecorations);
-
         LG_Update();
         SB_BeginFrame();
         LO_ClearForFrame();
@@ -603,7 +600,7 @@ void R_SetupFrame(player_t* player)
         // of the smoothed camera.
         R_InterpolateViewer(vd->lastSharpView, vd->lastSharpView + 1, frameTimePos,
                             &smoothView);
-        
+
         // Use the latest view angles known to us, if the interpolation flags
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
