@@ -273,10 +273,10 @@ lumpnum_t W_ScanForName(char *lumpname, int startfrom)
 /**
  * Writes the correct data into a lumpinfo_t entry.
  */
-void W_FillLumpInfo(int liIndex, filelump_t *flump, filerecord_t *rec,
+void W_FillLumpInfo(int liIndex, filelump_t* flump, filerecord_t* rec,
                     int groupTag)
 {
-    lumpinfo_t         *lump = lumpInfo + liIndex;
+    lumpinfo_t*         lump = &lumpInfo[liIndex];
 
     lump->handle = rec->handle;
     lump->position = LONG(flump->filePos);
@@ -461,10 +461,10 @@ int MarkerForGroup(char *name, boolean begin)
  * previously existing flat and sprite groups. All other lumps are just
  * appended to the end of the list.
  */
-void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
+void W_InsertLumps(filelump_t* fileinfo, filerecord_t* rec)
 {
     int                 i, to, num;
-    filelump_t         *flump = fileinfo;
+    filelump_t*         flump = fileinfo;
     int                 inside = LGT_NONE; // Not inside any group.
     int                 groupFirst = 0; // First lump in the current group.
     int                 maxNumLumps = numLumps + rec->numLumps; // This must be enough.
@@ -474,14 +474,17 @@ void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
 
     for(i = 0; i < rec->numLumps; ++i, flump++)
     {
-        // The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
-        // TODO: Ensure that this doesn't break other IWADs. The 0x80-0xff range isn't
-        // normally used in lump names, right??
+        /**
+         * The Hexen demo on Mac uses the 0x80 on some lumps, maybe has
+         * significance?
+         * \todo: Ensure that this doesn't break other IWADs. The 0x80-0xff
+         * range isn't normally used in lump names, right??
+         */
         for(to = 0; to < 8; to++)
         {
-            flump->name[to] = flump->name[to] & 0x7f;            
+            flump->name[to] = flump->name[to] & 0x7f;
         }
-        
+
         if(inside == LGT_NONE)
         {
             // We are currently not inside any group.
@@ -492,14 +495,13 @@ void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
                 continue;
             }
 
-            // This lump is very ordinary. Just append it to the
-            // lumpInfo.
+            // This lump is very ordinary. Just append it to the lumpInfo.
             //rec->indices[i] = numLumps;
             W_FillLumpInfo(numLumps++, flump, rec, inside);
         }
         else
         {
-            if(MarkerForGroup(flump->name, false) == inside) // Our group ends?
+            if(MarkerForGroup(flump->name, false) == inside) // Group ends?
             {
                 // This is how many lumps we'll add.
                 num = i - groupFirst;
@@ -508,14 +510,14 @@ void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
                 to = W_ScanForName(lumpGroups[inside].end, 0);
                 if(to < 0)
                 {
-                    // There is no existing group. Include the start
-                    // and end markers in the range of lumps to add.
+                    // There is no existing group. Include the start and
+                    // end markers in the range of lumps to add.
                     groupFirst--;
                     num += 2;
                     to = numLumps;
                 }
-                W_InsertAndFillLumpRange(to, fileinfo + groupFirst, num, rec,
-                                         inside);
+                W_InsertAndFillLumpRange(to, &fileinfo[groupFirst], num,
+                                         rec, inside);
 
                 // We exit this group.
                 inside = LGT_NONE;
