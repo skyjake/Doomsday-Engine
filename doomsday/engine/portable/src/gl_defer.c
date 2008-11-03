@@ -88,7 +88,7 @@ void GL_InitDeferred(void)
 
 void GL_ShutdownDeferred(void)
 {
-    deferred_t *d;
+    deferred_t*         d;
 
     if(!deferredInited)
         return;
@@ -105,8 +105,8 @@ void GL_ShutdownDeferred(void)
 
 int GL_GetDeferredCount(void)
 {
-    int         count = 0;
-    deferred_t* i = 0;
+    int                 count = 0;
+    deferred_t*         i = 0;
 
     if(!deferredInited)
         return 0;
@@ -119,7 +119,7 @@ int GL_GetDeferredCount(void)
 
 deferred_t* GL_GetNextDeferred(void)
 {
-    deferred_t* d = NULL;
+    deferred_t*         d = NULL;
 
     if(!deferredInited)
         return NULL;
@@ -143,7 +143,7 @@ void GL_DestroyDeferred(deferred_t* d)
 
 void GL_ReserveNames(void)
 {
-    int         i;
+    int                 i;
 
     if(!deferredInited)
         return; // Just ignore.
@@ -159,7 +159,7 @@ void GL_ReserveNames(void)
 
 DGLuint GL_GetReservedName(void)
 {
-    DGLuint     name;
+    DGLuint             name;
 
     if(!deferredInited)
         Con_Error("GL_GetReserved: Deferred GL task system not initialized.");
@@ -190,7 +190,7 @@ DGLuint GL_GetReservedName(void)
 /**
  * Initializes a texture content struct with default params.
  */
-void GL_InitTextureContent(texturecontent_t *content)
+void GL_InitTextureContent(texturecontent_t* content)
 {
     memset(content, 0, sizeof(*content));
     content->minFilter = DGL_LINEAR;
@@ -203,7 +203,7 @@ void GL_InitTextureContent(texturecontent_t *content)
 
 void GL_UploadTextureContent(texturecontent_t* content)
 {
-    boolean         result = false;
+    boolean             result = false;
 
     if(content->flags & TXCF_EASY_UPLOAD)
     {
@@ -211,7 +211,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
     }
     else
     {
-        byte       *allocatedTempBuffer = NULL;
+        byte*               allocatedTempBuffer = NULL;
 
         if(content->grayMipmap >= 0)
         {
@@ -233,8 +233,8 @@ void GL_UploadTextureContent(texturecontent_t* content)
             content->format == DGL_COLOR_INDEX_8 ||
             content->format == DGL_DEPTH_COMPONENT))
         {
-            int         p, total = content->width * content->height;
-            
+            int                 total = content->width * content->height;
+
             allocatedTempBuffer = M_Malloc(total * 2);
 
             // Move the average color to the alpha channel, make the
@@ -255,7 +255,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
         {
             DGL_Enable(DGL_TEXTURE_COMPRESSION);
         }
-        
+
         if(allocatedTempBuffer)
         {
             M_Free(allocatedTempBuffer);
@@ -265,18 +265,19 @@ void GL_UploadTextureContent(texturecontent_t* content)
     DGL_TexFilter(DGL_MIN_FILTER, content->minFilter);
     DGL_TexFilter(DGL_MAG_FILTER, content->magFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-					content->wrap[0] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+                    content->wrap[0] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-					content->wrap[1] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+                    content->wrap[1] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
     DGL_TexFilter(DGL_ANISO_FILTER, DGL_GetTexAnisoMul(content->anisoFilter));
 }
 
-DGLuint GL_NewTexture(texturecontent_t *content)
+DGLuint GL_NewTexture(texturecontent_t* content)
 {
     // Calculate the size of the buffer automatically?
     if(content->bufferSize == 0)
     {
-        int             bytesPerPixel = 0;
+        int                 bytesPerPixel = 0;
+
         switch(content->format)
         {
         case DGL_LUMINANCE:
@@ -386,8 +387,8 @@ DGLuint GL_NewTextureWithParams2(gltexformat_t format, int width, int height, vo
  */
 void GL_UploadDeferredContent(uint timeOutMilliSeconds)
 {
-    deferred_t *d;
-    uint        startTime;
+    deferred_t*         d;
+    uint                startTime;
 
     if(!deferredInited)
         Con_Error("GL_UploadDeferredContent: Deferred GL task system not initialized.");
