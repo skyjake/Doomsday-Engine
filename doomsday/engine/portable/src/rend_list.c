@@ -486,8 +486,8 @@ static void destroyList(rendlist_t* rl)
 #endif
 
     rl->cursor = NULL;
-    //rl->tex.detail = NULL;
-    rl->interTex.detail = NULL;
+    //rl->tex.detail.id = 0;
+    rl->interTex.detail.id = 0;
     rl->last = NULL;
     rl->size = 0;
     rl->flags = 0;
@@ -549,8 +549,8 @@ static void rewindList(rendlist_t* rl)
     rl->cursor = rl->data;
     rl->last = NULL;
     rl->flags = 0;
-    //rl->tex.detail = NULL;
-    rl->interTex.detail = NULL;
+    //rl->tex.detail.id = 0;
+    rl->interTex.detail.id = 0;
 
     // The interpolation target must be explicitly set (in RL_AddPoly).
     memset(&rl->interTex, 0, sizeof(rl->interTex));
@@ -632,7 +632,7 @@ static rendlist_t* getListFor(const rendpoly_params_t* params,
     for(dest = hash->first; dest; dest = dest->next)
     {
         if(dest->tex.id == params->tex.id &&
-           dest->tex.detail == params->tex.detail &&
+           dest->tex.detail.id == params->tex.detail.id &&
            dest->tex.magMode == params->tex.magMode)
         {
             if(!params->interTex.id && !dest->interTex.id)
@@ -652,7 +652,7 @@ static rendlist_t* getListFor(const rendpoly_params_t* params,
             if(params->interTex.id == dest->interTex.id &&
                params->interTex.magMode == dest->interTex.magMode &&
                params->interPos == dest->interPos &&
-               params->interTex.detail == dest->interTex.detail)
+               params->interTex.detail.id == dest->interTex.detail.id)
             {
                 return dest;
             }
@@ -910,18 +910,18 @@ static void quadDetailTexCoords(gl_texcoord_t* tc,
                                 const rendpoly_params_t* params,
                                 const gltexture_t* tex)
 {
-    float               mul = tex->detail->scale * detailScale;
+    float               mul = tex->detail.scale * detailScale;
 
     tc[1].st[0] = tc[0].st[0] =
-        rvertices[0].pos[VX] - params->texOrigin[0][VX] + params->texOffset[VX] / tex->detail->width;
+        rvertices[0].pos[VX] - params->texOrigin[0][VX] + params->texOffset[VX] / tex->detail.width;
     tc[1].st[1] = tc[3].st[1] =
-        rvertices[0].pos[VY] - params->texOrigin[0][VY] + params->texOffset[VY] / tex->detail->height;
+        rvertices[0].pos[VY] - params->texOrigin[0][VY] + params->texOffset[VY] / tex->detail.height;
     tc[3].st[0] = tc[2].st[0] =
-        (tc[1].st[0] + params->wall->length / tex->detail->width) * mul;
+        (tc[1].st[0] + params->wall->length / tex->detail.width) * mul;
     tc[2].st[1] =
-        (tc[1].st[1] + (rvertices[1].pos[VZ] - rvertices[0].pos[VZ]) / tex->detail->height) * mul;
+        (tc[1].st[1] + (rvertices[1].pos[VZ] - rvertices[0].pos[VZ]) / tex->detail.height) * mul;
     tc[0].st[1] =
-        (tc[1].st[1] + (rvertices[3].pos[VZ] - rvertices[2].pos[VZ]) / tex->detail->height) * mul;
+        (tc[1].st[1] + (rvertices[3].pos[VZ] - rvertices[2].pos[VZ]) / tex->detail.height) * mul;
 
     tc[1].st[0] *= mul;
     tc[1].st[1] *= mul;
@@ -1012,12 +1012,12 @@ static void flatDetailTexCoords(gl_texcoord_t* tc, const float xy[2],
                                 const gltexture_t* tex)
 {
     tc->st[0] =
-        (xy[VX] + params->texOffset[VX]) / tex->detail->width * detailScale *
-        tex->detail->scale;
+        (xy[VX] + params->texOffset[VX]) / tex->detail.width * detailScale *
+        tex->detail.scale;
 
     tc->st[1] =
-        (-xy[VY] - params->texOffset[VY]) / tex->detail->height * detailScale *
-        tex->detail->scale;
+        (-xy[VY] - params->texOffset[VY]) / tex->detail.height * detailScale *
+        tex->detail.scale;
 }
 
 /**
@@ -1091,11 +1091,11 @@ static void writeQuad(primhdr_t* hdr, const rendlist_t* list, uint base,
                           &list->interTex);
 
         // Detail texture coordinates.
-        if(list->tex.detail)
+        if(list->tex.detail.id)
             quadDetailTexCoords(&texCoords[TCA_DETAIL][base], rvertices,
                                 params, &list->tex);
 
-        if(list->interTex.detail)
+        if(list->interTex.detail.id)
             quadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base],
                                 rvertices, params, &list->interTex);
     }
@@ -1168,13 +1168,13 @@ static void writeDivQuad(primhdr_t* hdr, const rendlist_t* list, uint base,
                           &list->interTex);
         }
 
-        if(list->tex.detail)
+        if(list->tex.detail.id)
         {
             quadDetailTexCoords(&texCoords[TCA_DETAIL][base], rvertices,
                                 params, &list->tex);
         }
 
-        if(list->interTex.detail)
+        if(list->interTex.detail.id)
         {
             quadDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base],
                                 rvertices, params, &list->interTex);
@@ -1246,13 +1246,13 @@ static void writeDivQuad(primhdr_t* hdr, const rendlist_t* list, uint base,
                 }
 
                 // Detail texture coordinates.
-                if(params->tex.detail)
+                if(params->tex.detail.id)
                 {
                     interpolateTexCoordT(texCoords[TCA_DETAIL], div, top,
                                          bottom, inter);
                 }
 
-                if(params->interTex.detail)
+                if(params->interTex.detail.id)
                 {
                     interpolateTexCoordT(texCoords[TCA_BLEND_DETAIL], div,
                                          top, bottom, inter);
@@ -1356,13 +1356,13 @@ static void writeFlat(primhdr_t* hdr, const rendlist_t* list, uint base,
         }
 
         // Detail texture coordinates.
-        if(list->tex.detail)
+        if(list->tex.detail.id)
         {
             flatDetailTexCoords(&texCoords[TCA_DETAIL][base + i], xyz,
                                 params, &list->tex);
         }
 
-        if(list->interTex.detail)
+        if(list->interTex.detail.id)
         {
             flatDetailTexCoords(&texCoords[TCA_BLEND_DETAIL][base + i],
                                 xyz, params, &list->interTex);
@@ -1943,12 +1943,12 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         // Blending is not done now.
         if(list->interTex.id)
             break;
-        if(list->tex.detail)
+        if(list->tex.detail.id)
         {
             RL_SelectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
             RL_BindTo(0, list->tex.id, list->tex.magMode);
-            RL_BindTo(1, list->tex.detail->tex, list->tex.magMode);
+            RL_BindTo(1, list->tex.detail.id, list->tex.magMode);
         }
         else
         {
@@ -1959,22 +1959,24 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         return 0;
 
     case LM_ALL_DETAILS:
-        if(!list->tex.detail)
-            break;
-        RL_Bind(list->tex.detail->tex, list->tex.magMode);
-        // Render all surfaces on the list.
-        return 0;
+        if(list->tex.detail.id)
+        {
+            RL_Bind(list->tex.detail.id, list->tex.magMode);
+            // Render all surfaces on the list.
+            return 0;
+        }
+        break;
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
         // Only unblended. Details are optional.
         if(list->interTex.id)
             break;
-        if(list->tex.detail)
+        if(list->tex.detail.id)
         {
             RL_SelectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 8);
             RL_BindTo(0, list->tex.id, list->tex.magMode);
-            RL_BindTo(1, list->tex.detail->tex, list->tex.magMode);
+            RL_BindTo(1, list->tex.detail.id, list->tex.magMode);
         }
         else
         {
@@ -1989,11 +1991,11 @@ static int setupListState(listmode_t mode, rendlist_t *list)
         // We'll only render blended primitives.
         if(!list->interTex.id)
             break;
-        if(!list->tex.detail || !list->interTex.detail)
+        if(!list->tex.detail.id || !list->interTex.detail.id)
             break;
 
-        RL_BindTo(0, list->tex.detail->tex, list->tex.magMode);
-        RL_BindTo(1, list->interTex.detail->tex, list->tex.magMode);
+        RL_BindTo(0, list->tex.detail.id, list->tex.magMode);
+        RL_BindTo(1, list->interTex.detail.id, list->tex.magMode);
         setEnvAlpha(list->interPos);
         return 0;
 

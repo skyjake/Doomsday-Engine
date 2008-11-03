@@ -254,12 +254,7 @@ typedef struct {
 } playerdelta_t;
 
 typedef struct {
-	int             texture;
-    materialtype_t  type;
-} dt_material_t;
-
-typedef struct {
-	dt_material_t   material;
+    struct material_s* material;
     float           rgba[4];       // Surface color tint
     int             blendMode;
 } dt_surface_t;

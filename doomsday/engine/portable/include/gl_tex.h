@@ -43,9 +43,10 @@ void            GL_ScaleBuffer32(byte *in, int inWidth, int inHeight,
 void            GL_DownMipmap32(byte *in, int width, int height, int comps);
 void            GL_ConvertToAlpha(image_t *image, boolean makeWhite);
 void            GL_ConvertToLuminance(image_t *image);
-void            GL_CalcLuminance(int pnum, byte *buffer, int width,
-                                 int height, int pixelsize, float* brightX,
-                                 float* brightY, rgbcol_t* color);
+void            GL_CalcLuminance(byte *buffer, int width, int height,
+                                 int pixelsize, float* brightX,
+                                 float* brightY, rgbcol_t* color,
+                                 float* lumSize);
 byte*           GL_ApplyColorKeying(byte *buf, unsigned int pixelSize,
                                     unsigned int width, unsigned int height);
 int             GL_ValidTexHeight2(int width, int height);

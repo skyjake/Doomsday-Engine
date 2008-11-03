@@ -186,8 +186,8 @@ static void processMobjShadow(mobj_t* mo)
     params.tex.id = curTex = GL_PrepareLSTexture(LST_DYNAMIC);
     params.tex.magMode = DGL_LINEAR;
     params.tex.width = params.tex.height = radius * 2;
-    params.tex.detail = 0;
     params.tex.masked = 0;
+    params.tex.detail.id = 0;
 
     memset(&params.interTex, 0, sizeof(params.interTex));
 

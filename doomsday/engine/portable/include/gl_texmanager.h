@@ -82,41 +82,41 @@ void            GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlareMa
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
-void            GL_DoTexReset(cvar_t *unused);
-void            GL_DoUpdateTexGamma(cvar_t *unused);
-void            GL_DoUpdateTexParams(cvar_t *unused);
+void            GL_DoTexReset(cvar_t* unused);
+void            GL_DoUpdateTexGamma(cvar_t* unused);
+void            GL_DoUpdateTexParams(cvar_t* unused);
 int             GL_InitPalettedTexture(void);
 void            GL_ResetLumpTexData(void);
 
 void            GL_BindTexture(DGLuint texname, int magMode);
 void            GL_TextureFilterMode(int target, int parm);
-DGLuint         GL_BindTexPatch(struct patchtex_s *p);
+DGLuint         GL_BindTexPatch(struct patchtex_s* p);
 DGLuint         GL_GetPatchOtherPart(lumpnum_t lump);
 void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps are generated.
-DGLuint         GL_BindTexRaw(struct rawtex_s *r);
+DGLuint         GL_BindTexRaw(struct rawtex_s* r);
 DGLuint         GL_GetRawOtherPart(lumpnum_t lump);
 void            GL_SetRawTex(lumpnum_t lump, int part);
 
 void            GL_LowRes(void);
-void            TranslatePatch(lumppatch_t *patch, byte *transTable);
-byte           *GL_LoadImage(image_t *img, const char *imagefn,
+void            TranslatePatch(lumppatch_t* patch, byte* transTable);
+byte*           GL_LoadImage(image_t* img, const char* imagefn,
                              boolean useModelPath);
-byte           *GL_LoadImageCK(image_t *img, const char *imagefn,
+byte*           GL_LoadImageCK(image_t* img, const char* imagefn,
                                boolean useModelPath);
-void            GL_DestroyImage(image_t *img);
-byte           *GL_LoadTexture(image_t *img, const char *name);
-DGLuint         GL_LoadGraphics(const char *name, gfxmode_t mode);
-DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
+void            GL_DestroyImage(image_t* img);
+byte*           GL_LoadTexture(image_t* img, const char* name);
+DGLuint         GL_LoadGraphics(const char* name, gfxmode_t mode);
+DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char* name,
                                  gfxmode_t mode, int useMipmap, boolean clamped,
                                  int otherFlags);
-DGLuint         GL_LoadGraphics3(const char *name, gfxmode_t mode,
+DGLuint         GL_LoadGraphics3(const char* name, gfxmode_t mode,
                                  int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);
-DGLuint         GL_LoadGraphics4(resourceclass_t resClass, const char *name,
+DGLuint         GL_LoadGraphics4(resourceclass_t resClass, const char* name,
                                  gfxmode_t mode, int useMipmap,
                                  int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);
-DGLuint         GL_UploadTexture(byte *data, int width, int height,
+DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  boolean flagAlphaChannel,
                                  boolean flagGenerateMipmaps,
                                  boolean flagRgbData,
@@ -126,10 +126,16 @@ DGLuint         GL_UploadTexture(byte *data, int width, int height,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 
-DGLuint         GL_PrepareMaterial(struct material_s* mat);
-DGLuint         GL_PrepareMaterial2(struct material_s* mat);
-
-DGLuint         GL_PrepareSky(struct skytexture_s* skyTex, boolean zeroMask);
+byte            GL_PrepareFlat(struct materialtexinst_s* inst,
+                               int ofTypeID, boolean isFromIWAD);
+byte            GL_PrepareDDTexture(struct materialtexinst_s* inst,
+                                    int ofTypeID);
+byte            GL_PrepareTexture(struct materialtexinst_s* inst,
+                                  int ofTypeID, boolean isFromIWAD,
+                                  boolean loadAsSky, boolean zeroMask,
+                                  boolean noCompression);
+byte            GL_PrepareSprite(struct materialtexinst_s* inst,
+                                 int ofTypeID, boolean isFromIWAD);
 
 DGLuint         GL_GetRawTexInfo(lumpnum_t lump, boolean part2);
 DGLuint         GL_PreparePatch(lumpnum_t lump);
@@ -137,8 +143,9 @@ DGLuint         GL_PrepareRawTex(lumpnum_t lump, boolean part2);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare);
 unsigned int    GL_PreparePSprite(materialnum_t num);
-byte           *GL_GetPalette(void);
-byte           *GL_GetPal18to8(void);
+detailtexinst_t* GL_PrepareDetailTexture(detailtex_t* dTex, float contrast);
+byte*           GL_GetPalette(void);
+byte*           GL_GetPal18to8(void);
 
 void            GL_SetMaterial(materialnum_t num);
 
@@ -151,12 +158,16 @@ void            GL_UpdateTexParams(int mipmode);
 void            GL_DeleteRawImages(void);
 void            GL_DeleteHUDSprite(int spritelump);
 
-boolean         GL_IsColorKeyed(const char *path);
+boolean         GL_IsColorKeyed(const char* path);
+
+unsigned int    GL_PrepareTranslatedSprite(materialnum_t num, int tmap,
+                                           int tclass);
+transspr_t*     GL_GetTranslatedSprite(int pnum, unsigned char* table);
 
 // Load the skin texture and prepare it for rendering.
-unsigned int    GL_PrepareSkin(skintex_t *stp, boolean allowTexComp);
-unsigned int    GL_PrepareShinySkin(skintex_t *stp);
+unsigned int    GL_PrepareSkin(skintex_t* stp, boolean allowTexComp);
+unsigned int    GL_PrepareShinySkin(skintex_t* stp);
 
 // Loads the shiny texture and the mask texture, if they aren't yet loaded.
-boolean         GL_LoadReflectionMap(ded_reflection_t *ref);
+boolean         GL_LoadReflectionMap(ded_reflection_t* ref);
 #endif

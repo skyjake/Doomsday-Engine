@@ -56,7 +56,7 @@ float           Rend_PointDist3D(const float c[3]);
 //float           Rend_SignedPointDist2D(const float c[2]);
 float           Rend_SectorLight(sector_t *sec);
 void            Rend_ApplyTorchLight(float* color, float distance);
-int             Rend_MidTexturePos(float *bottomleft, float *bottomright,
+int             Rend_MidMaterialPos(float *bottomleft, float *bottomright,
                                    float *topleft, float *topright,
                                    float *texoffy, float tcyoff, float texHeight,
                                    boolean lower_unpeg);

@@ -1048,7 +1048,7 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
         Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
         Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
         Rend_SkyParams(0, DD_ENABLE, NULL);
-        ival = R_MaterialNumForName("SKY1", MAT_TEXTURE);
+        ival = R_MaterialNumForName("SKY1", MG_TEXTURES);
         Rend_SkyParams(0, DD_MATERIAL, &ival);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
@@ -1068,12 +1068,12 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
         k = mapinfo->skyLayers[i].flags;
         if(k & SLF_ENABLED)
         {
-            skyTex = R_MaterialNumForName(mapinfo->skyLayers[i].texture, MAT_TEXTURE);
+            skyTex = R_MaterialNumForName(mapinfo->skyLayers[i].texture, MG_TEXTURES);
             if(!skyTex)
             {
                 Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
                             mapinfo->skyLayers[i].texture);
-                skyTex = R_MaterialNumForName("SKY1", MAT_TEXTURE);
+                skyTex = R_MaterialNumForName("SKY1", MG_TEXTURES);
             }
 
             Rend_SkyParams(i, DD_ENABLE, NULL);
@@ -1165,14 +1165,14 @@ linedef_t *R_FindLineNeighbor(const sector_t *sector, const linedef_t *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-linedef_t *R_FindSolidLineNeighbor(const sector_t *sector,
-                                   const linedef_t *line,
-                                   const lineowner_t *own,
-                                   boolean antiClockwise, binangle_t *diff)
+linedef_t* R_FindSolidLineNeighbor(const sector_t* sector,
+                                   const linedef_t* line,
+                                   const lineowner_t* own,
+                                   boolean antiClockwise, binangle_t* diff)
 {
-    lineowner_t            *cown = own->link[!antiClockwise];
-    linedef_t              *other = cown->lineDef;
-    int                     side;
+    lineowner_t*        cown = own->link[!antiClockwise];
+    linedef_t*          other = cown->lineDef;
+    int                 side;
 
     if(other == line)
         return NULL;
@@ -1870,20 +1870,20 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
         // Update the glow properties.
         hasGlow = false;
-        if((plane->surface.flags & SUF_GLOW) ||
-           (plane->PS_material && (plane->PS_material->flags & MATF_GLOW)))
+        if(plane->PS_material && ((plane->surface.flags & SUF_GLOW) ||
+           (plane->PS_material->flags & MATF_GLOW)))
         {
-            R_MaterialGetColor(plane->PS_material, plane->glowRGB);
+            materialtexinst_t*  texInst =
+                R_MaterialPrepare(plane->PS_material->current, 0, NULL, NULL);
 
-
-
-
-
-
-
-            hasGlow = true;
+            if(texInst)
+            {
+                plane->glowRGB[CR] = texInst->color[CR];
+                plane->glowRGB[CG] = texInst->color[CG];
+                plane->glowRGB[CB] = texInst->color[CB];
+                hasGlow = true;
+            }
         }
-
 
         if(hasGlow)
         {

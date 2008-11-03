@@ -208,13 +208,13 @@ static vlightnode_t* newVLightNode(void)
 }
 
 /**
- * Returns a new vlight node. If the list of unused nodes is empty, a new
- * node is created.
+ * @return              Ptr to a new vlight node. If the list of unused
+ *                      nodes is empty, a new node is created.
  */
 static vlightnode_t* newVLight(void)
 {
     vlightnode_t*       node = newVLightNode();
-    vlight_t*           vlight = &node->vlight;
+    //vlight_t*           vlight = &node->vlight;
 
     //// \todo move vlight setup here.
     return node;
@@ -261,7 +261,8 @@ static void installSpriteLump(lumpnum_t lump, uint frame, uint rotation,
 {
     int                 r;
     material_t*         mat;
-    int                 idx = R_NewSpriteTexture(lump, &mat);
+
+    R_NewSpriteTexture(lump, &mat);
 
     if(frame >= 30 || rotation > 8)
     {
@@ -377,7 +378,7 @@ static void initSpriteDefs(void)
             switch((int) sprTemp[frame].rotate)
             {
             case -1: // No rotations were found for that frame at all.
-                Con_Error("R_InitSprites: No patches found for %s frame %c",
+                Con_Error("R_InitSprites: No patches found for %s frame %c.",
                           spriteName, frame + 'A');
                 break;
 
@@ -385,11 +386,13 @@ static void initSpriteDefs(void)
                 break;
 
             case 1: // Must have all 8 frames.
-                for(rotation = 0; rotation < 8; rotation++)
+                for(rotation = 0; rotation < 8; ++rotation)
+                {
                     if(!sprTemp[frame].mats[rotation])
                         Con_Error("R_InitSprites: Sprite %s frame %c is "
-                                  "missing rotations", spriteName,
+                                  "missing rotations.", spriteName,
                                   frame + 'A');
+                }
                 break;
 
             default:
@@ -433,6 +436,20 @@ void R_InitSpriteDefs(void)
     initSpriteDefs();
 }
 
+material_t* R_GetMaterialForSprite(int sprite, int frame)
+{
+    spritedef_t*        sprDef;
+
+    if((unsigned) sprite >= (unsigned) numSprites)
+        return NULL;
+    sprDef = &sprites[sprite];
+
+    if(frame >= sprDef->numFrames)
+        return NULL;
+
+    return sprDef->spriteFrames[frame].mats[0];
+}
+
 void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 {
     spritedef_t*        sprDef;
@@ -456,7 +473,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     sprFrame = &sprDef->spriteFrames[frame];
     mat = sprFrame->mats[0];
-    sprTex = spriteTextures[mat->ofTypeID];
+    sprTex = spriteTextures[mat->tex->ofTypeID];
 
     info->numFrames = sprDef->numFrames;
     info->materialNum = R_GetMaterialNum(mat);
@@ -487,7 +504,7 @@ void R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
 float R_VisualRadius(mobj_t* mo)
 {
     modeldef_t*         mf, *nextmf;
-    spriteinfo_t        sprinfo;
+    material_t*         mat;
 
     // If models are being used, use the model's radius.
     if(useModels)
@@ -501,8 +518,10 @@ float R_VisualRadius(mobj_t* mo)
     }
 
     // Use the sprite frame's width.
-    R_GetSpriteInfo(mo->sprite, mo->frame, &sprinfo);
-    return sprinfo.width / 2;
+    if((mat = R_GetMaterialForSprite(mo->sprite, mo->frame)))
+        return mat->width / 2;
+
+    return mo->radius; // Fallback.
 }
 
 void R_InitSprites(void)
@@ -712,7 +731,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean brightShadow, boolean shadow, boolean altShadow,
                                           boolean fullBright)
 {
-    spritetex_t*        sprTex = spriteTextures[mat->ofTypeID];
+    spritetex_t*        sprTex = spriteTextures[mat->tex->ofTypeID];
 
     if(!params)
         return; // Wha?
@@ -945,7 +964,7 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    sprTex = spriteTextures[mat->ofTypeID];
+    sprTex = spriteTextures[mat->tex->ofTypeID];
 
     // Align to the view plane?
     if(mo->ddFlags & DDMF_VIEWALIGN)
@@ -1190,27 +1209,29 @@ void R_ProjectSprite(mobj_t* mo)
             blendMode = BM_NORMAL;
         }
 
-        // We must find the correct positioning using the sector floor and ceiling
-        // heights as an aid.
-        // Sprite fits in, adjustment possible?
+        // We must find the correct positioning using the sector floor
+        // and ceiling heights as an aid.
         if(mat->height < secCeil - secFloor)
-        {
+        {   // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
-            if(floorAdjust && fitBottom && gzt - mat->height < secFloor)
+            if(floorAdjust && fitBottom &&
+               gzt - mat->height < secFloor)
                 gzt = secFloor + mat->height;
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
-        getLightingParams(vis->center[VX], vis->center[VY], gzt - mat->height / 2.0f,
+        getLightingParams(vis->center[VX], vis->center[VY],
+                          gzt - mat->height / 2.0f,
                           mo->subsector, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
-                                      vis->center[VX], vis->center[VY], gzt - mat->height / 2.0f,
+                                      vis->center[VX], vis->center[VY],
+                                      gzt - mat->height / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
@@ -1259,23 +1280,24 @@ boolean RIT_AddSprite(void* ptr, void* data)
 
     if(mo->addFrameCount != frameCount)
     {
+        material_t*         mat;
+
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
         // sky sectors. Here we will raise the skyfix dynamically, at
         // runtime, to make sure that no sprites get clipped by the sky.
         // Only check
-        if(R_IsSkySurface(&sec->SP_ceilsurface))
+        mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        if(mat && R_IsSkySurface(&sec->SP_ceilsurface))
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
                mo->pos[VZ] <= sec->SP_ceilheight &&
                mo->pos[VZ] >= sec->SP_floorheight)
             {
                 float               visibleTop;
-                spriteinfo_t        spriteInfo;
 
-                R_GetSpriteInfo(mo->sprite, mo->frame, &spriteInfo);
-                visibleTop = mo->pos[VZ] + spriteInfo.height;
+                visibleTop = mo->pos[VZ] + mat->height;
 
                 if(visibleTop > sec->SP_ceilheight +
                    sec->skyFix[PLN_CEILING].offset)

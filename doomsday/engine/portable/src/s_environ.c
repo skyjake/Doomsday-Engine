@@ -79,29 +79,30 @@ static ownernode_t *unusedNodeList = NULL;
  * Given a texture/flat name, look up the associated material type.
  *
  * @param name          Name of the texture/flat to look up.
- * @param type          Texture type (MAT_* e.g. MAT_FLAT).
+ * @param group         Material group (MG_* e.g. MG_FLATS).
  *
  * @return              If found; material type associated to the texture,
  *                      else @c MATCLASS_UNKNOWN.
  */
-materialclass_t S_MaterialClassForName(const char *name, int type)
+materialclass_t S_MaterialClassForName(const char* name,
+                                       materialgroup_t group)
 {
-    int         i, j, count;
-    materialclass_t k;
-    ded_tenviron_t *env;
-    ded_str_t  *list;
+    int                 i, j, count;
+    materialclass_t     k;
+    ded_tenviron_t*     env;
+    ded_str_t*          list;
 
-    if(type == MAT_TEXTURE || type == MAT_FLAT)
+    if(group == MG_TEXTURES || group == MG_FLATS)
     for(i = 0, env = defs.textureEnv; i < defs.count.textureEnv.num; ++i, env++)
     {
-        switch(type)
+        switch(group)
         {
-        case MAT_TEXTURE:
+        case MG_TEXTURES:
             list = env->textures;
             count = env->texCount.num;
             break;
 
-        case MAT_FLAT:
+        case MG_FLATS:
             list = env->flats;
             count = env->flatCount.num;
             break;
@@ -125,9 +126,9 @@ materialclass_t S_MaterialClassForName(const char *name, int type)
     return MATCLASS_UNKNOWN;
 }
 
-static ownernode_t *newOwnerNode(void)
+static ownernode_t* newOwnerNode(void)
 {
-    ownernode_t *node;
+    ownernode_t*        node;
 
     if(unusedNodeList)
     {   // An existing node is available for re-use.
@@ -145,9 +146,9 @@ static ownernode_t *newOwnerNode(void)
     return node;
 }
 
-static void setSubSecSectorOwner(ownerlist_t *ownerList, subsector_t *ssec)
+static void setSubSecSectorOwner(ownerlist_t* ownerList, subsector_t* ssec)
 {
-    ownernode_t *node;
+    ownernode_t*        node;
 
     if(!ssec)
         return;
@@ -162,14 +163,14 @@ static void setSubSecSectorOwner(ownerlist_t *ownerList, subsector_t *ssec)
     ownerList->head = node;
 }
 
-static void findSSecsAffectingSector(gamemap_t *map, uint secIDX)
+static void findSSecsAffectingSector(gamemap_t* map, uint secIDX)
 {
-    uint        i;
-    subsector_t *sub;
-    ownernode_t *node, *p;
-    float       bbox[4];
-    ownerlist_t subSecOwnerList;
-    sector_t   *sec = &map->sectors[secIDX];
+    uint                i;
+    subsector_t*        sub;
+    ownernode_t*        node, *p;
+    float               bbox[4];
+    ownerlist_t         subSecOwnerList;
+    sector_t*           sec = &map->sectors[secIDX];
 
     memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
 
@@ -237,12 +238,12 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
  * two dimensions at least), they do not move and are not created/destroyed
  * once the map has been loaded; this step can be pre-processed.
  */
-void S_DetermineSubSecsAffectingSectorReverb(gamemap_t *map)
+void S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map)
 {
-    uint        startTime = Sys_GetRealTime();
+    uint                startTime = Sys_GetRealTime();
 
-    uint        i;
-    ownernode_t *node, *p;
+    uint                i;
+    ownernode_t*        node, *p;
 
     for(i = 0; i < map->numSectors; ++i)
     {
@@ -265,10 +266,10 @@ void S_DetermineSubSecsAffectingSectorReverb(gamemap_t *map)
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
-static boolean calcSSecReverb(subsector_t *ssec)
+static boolean calcSSecReverb(subsector_t* ssec)
 {
     uint                i, v;
-    seg_t             **ptr;
+    seg_t**             ptr;
     float               total = 0;
     materialclass_t     mclass;
     float               materials[NUM_MATERIAL_CLASSES];
@@ -293,12 +294,12 @@ static boolean calcSSecReverb(subsector_t *ssec)
     ptr = ssec->segs;
     while(*ptr)
     {
-        seg_t              *seg = *ptr;
+        seg_t*              seg = *ptr;
 
         if(seg->lineDef && SEG_SIDEDEF(seg) &&
            SEG_SIDEDEF(seg)->SW_middlematerial)
         {
-            material_t         *mat = SEG_SIDEDEF(seg)->SW_middlematerial;
+            material_t*         mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 
             // The texture of the seg determines its type.
             if(!(mat->flags & MATF_NO_DRAW))
@@ -371,12 +372,12 @@ Con_Message("ssec %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
  *
  * @param sec           Ptr to the sector to calculate reverb properties of.
  */
-void S_CalcSectorReverb(sector_t *sec)
+void S_CalcSectorReverb(sector_t* sec)
 {
-    uint        i;
-    subsector_t *sub;
-    float       spaceScatter;
-    uint        sectorSpace;
+    uint                i;
+    subsector_t*        sub;
+    float               spaceScatter;
+    uint                sectorSpace;
 
     if(!sec)
         return; // Wha?

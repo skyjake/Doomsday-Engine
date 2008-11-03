@@ -90,7 +90,7 @@ int Cl_ReadSectorDelta(void)
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
             material_t*         mat = R_GetMaterialByNum(
-                R_MaterialNumForName(W_LumpName(lumpNum), MAT_FLAT));
+                R_MaterialNumForName(W_LumpName(lumpNum), MG_FLATS));
 #if _DEBUG
 if(!mat)
     Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
@@ -108,7 +108,7 @@ if(!mat)
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
             material_t*         mat = R_GetMaterialByNum(
-                R_MaterialNumForName(W_LumpName(lumpNum), MAT_FLAT));
+                R_MaterialNumForName(W_LumpName(lumpNum), MG_FLATS));
 #if _DEBUG
 if(!mat)
     Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
@@ -230,7 +230,7 @@ int Cl_ReadSideDelta(void)
          * The delta is a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        mat = R_GetMaterial(Msg_ReadPackedShort(), MG_TEXTURES);
         Surface_SetMaterial(&sid->SW_topsurface, mat);
     }
     if(df & SIDF_MID_MATERIAL)
@@ -240,7 +240,7 @@ int Cl_ReadSideDelta(void)
          * The delta is a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        mat = R_GetMaterial(Msg_ReadPackedShort(), MG_TEXTURES);
         Surface_SetMaterial(&sid->SW_middlesurface, mat);
     }
     if(df & SIDF_BOTTOM_MATERIAL)
@@ -250,7 +250,7 @@ int Cl_ReadSideDelta(void)
          * The delta is a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = R_GetMaterial(Msg_ReadPackedShort(), MAT_TEXTURE);
+        mat = R_GetMaterial(Msg_ReadPackedShort(), MG_TEXTURES);
         Surface_SetMaterial(&sid->SW_bottomsurface, mat);
     }
 

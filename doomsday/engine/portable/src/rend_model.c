@@ -768,13 +768,24 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     if(renderTextures == 2)
-    {
-        // For lighting debug, render all surfaces using the gray texture.
-        skinTexture = GL_PrepareMaterial(R_GetMaterial(DDT_GRAY, MAT_DDTEX));
+    {   // For lighting debug, render all surfaces using the gray texture.
+        material_t*         mat = R_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+
+        if(mat)
+        {
+            gltexture_t         glTex;
+
+            R_MaterialPrepare(mat->current, 0, &glTex, NULL);
+            skinTexture = glTex.id;
+        }
+        else
+        {
+            skinTexture = 0;
+        }
     }
     else
     {
-        skintex_t          *st;
+        skintex_t*          st;
 
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
             useSkin = 0;

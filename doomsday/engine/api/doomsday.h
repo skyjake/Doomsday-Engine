@@ -70,8 +70,8 @@ extern          "C" {
     // Base.
     void            DD_AddIWAD(const char* path);
     void            DD_AddStartupWAD(const char* file);
-    void            DD_SetConfigFile(char* filename);
-    void            DD_SetDefsFile(char* filename);
+    void            DD_SetConfigFile(filename_t filename);
+    void            DD_SetDefsFile(filename_t file);
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
     void            DD_SetVariable(int ddvalue, void* ptr);
@@ -404,8 +404,8 @@ extern          "C" {
                                     spriteinfo_t* sprinfo);
     void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
 
-    materialnum_t   R_MaterialCheckNumForName(const char* name, materialtype_t type);
-    materialnum_t   R_MaterialNumForName(const char* name, materialtype_t type);
+    materialnum_t   R_MaterialCheckNumForName(const char* name, materialgroup_t group);
+    materialnum_t   R_MaterialNumForName(const char* name, materialgroup_t group);
     const char*     R_MaterialNameForNum(materialnum_t num);
     boolean         R_MaterialIsCustom(materialnum_t num);
     boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);

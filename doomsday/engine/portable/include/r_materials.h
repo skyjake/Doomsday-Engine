@@ -29,17 +29,38 @@
 #ifndef __DOOMSDAY_REFRESH_MATERIALS_H__
 #define __DOOMSDAY_REFRESH_MATERIALS_H__
 
-#include "def_data.h"
+#include "r_data.h"
 #include "s_environ.h"
 
-// Detail texture information.
-typedef struct detailinfo_s {
-    DGLuint         tex;
-    int             width, height;
-    float           strength;
-    float           scale;
-    float           maxDist;
-} detailinfo_t;
+typedef struct materialtexinst_s {
+    DGLuint         tex; // Name of the associated DGL texture.
+    byte            masked;
+    float           color[3]; // Average color (for lighting).
+    float           topColor[3]; // Averaged top line color, used for sky fadeouts.
+} materialtexinst_t;
+
+#define TEXF_LOAD_AS_SKY      0x1
+#define TEXF_TEX_ZEROMASK     0x2 // Zero the alpha of loaded textures.
+
+typedef struct {
+    int             flags; // Texture instance (TEXF_*) flags.
+    materialtexinst_t glTex;
+} minst_t;
+
+typedef enum {
+    MTT_FLAT,
+    MTT_TEXTURE,
+    MTT_SPRITE,
+    MTT_DDTEX,
+    NUM_MATERIALTEX_TYPES
+} materialtextype_t;
+
+typedef struct materialtex_s {
+    materialtextype_t type;
+    int             ofTypeID;
+    boolean         isFromIWAD;
+    minst_t         normal, sky, skyMasked;
+} materialtex_t;
 
 // Material flags:
 #define MATF_NO_DRAW            0x1 // Material should never be drawn.
@@ -48,22 +69,14 @@ typedef struct detailinfo_s {
 
 typedef struct material_s {
 // Material def:
-    char            name[9];
-    int             ofTypeID;
-    materialtype_t  type;
+    materialgroup_t group;
+    short           width, height; // Defined width & height of the material (not texture!).
+    materialtex_t*  tex;
     byte            flags; // MATF_* flags
-    short           width, height; // Defined width + height (note, DGL tex may not be the same!)
 
 // Misc:
     materialclass_t envClass; // Used for environmental sound properties.
-
-// DGL texture + detailinfo:
-    struct {
-        DGLuint         tex; // Name of the associated DGL texture.
-        byte            masked;
-        float           color[3]; // Average color (for lighting).
-    } dgl;
-    detailinfo_t    detail; // Detail texture information.
+    detailtex_t*    detail;
 
 // Associated enhancements/attachments to be used with surfaces:
     ded_decor_t* decoration;
@@ -71,33 +84,27 @@ typedef struct material_s {
     ded_ptcgen_t* ptcGen;
 
 // For global animation:
-    boolean         inGroup; // True if belongs to some animgroup.
+    boolean         inAnimGroup; // True if belongs to some animgroup.
     struct material_s* current;
     struct material_s* next;
     float           inter;
-} material_t;
 
-extern uint numMaterials;
+    struct material_s* globalNext; // Linear list linking all materials.
+} material_t;
 
 void            R_InitMaterials(void);
 void            R_ShutdownMaterials(void);
+materialnum_t   R_GetNumMaterials(void);
 void            R_MarkMaterialsForUpdating(void);
-void            R_DeleteMaterialTextures(materialtype_t type);
+void            R_DeleteMaterialTextures(materialgroup_t group);
 void            R_SetAllMaterialsMinMode(int minMode);
 
-// Lookup:
-material_t*     R_GetMaterial(int ofTypeID, materialtype_t type);
-material_t*     R_GetMaterialByNum(materialnum_t num);
-materialnum_t   R_GetMaterialNum(const material_t* mat);
-
-// Lookup (public):
-materialnum_t   R_MaterialCheckNumForName(const char* name, materialtype_t type);
-materialnum_t   R_MaterialNumForName(const char* name, materialtype_t type);
-const char*     R_MaterialNameForNum(materialnum_t num);
-
 // Creation:
-material_t*     R_MaterialCreate(const char* name, int ofTypeID, materialtype_t type);
-
+material_t*     R_MaterialCreate(const char* name, short width,
+                                 short height, materialtex_t* mTex,
+                                 materialgroup_t group);
+materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
+                                     gltexture_t* glTex, byte* result);
 // Set/Get:
 void            R_MaterialSetMinMode(material_t* mat, int minMode);
 void            R_MaterialSetTranslation(material_t* mat,
@@ -105,16 +112,35 @@ void            R_MaterialSetTranslation(material_t* mat,
                                          material_t* next, float inter);
 
 boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
-void            R_MaterialGetColor(material_t* mat, float* rgb);
 ded_reflection_t* R_MaterialGetReflection(material_t* mat);
 const ded_decor_t* R_MaterialGetDecoration(material_t* mat);
 const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat);
 
+// Lookup:
+material_t*     R_GetMaterial(int ofTypeID, materialgroup_t group);
+material_t*     R_GetMaterialByNum(materialnum_t num);
+materialnum_t   R_GetMaterialNum(const material_t* mat);
+
+// Lookup (public):
+materialnum_t   R_MaterialCheckNumForName(const char* name, materialgroup_t group);
+materialnum_t   R_MaterialNumForName(const char* name, materialgroup_t group);
+const char*     R_MaterialNameForNum(materialnum_t num);
+
 // Misc:
 boolean         R_MaterialIsCustom(materialnum_t num);
-boolean         R_MaterialIsCustom2(const material_t* mat);
 
 void            R_MaterialPrecache(material_t* mat);
-void            R_MaterialDeleteTex(material_t* mat);
+
+materialtex_t*  R_MaterialTexCreate(int ofTypeID, materialtextype_t type);
+void            R_MaterialTexDelete(materialtex_t* mTex);
+
+int             R_CreateAnimGroup(int flags);
+void            R_AddToAnimGroup(int animGroupNum, materialnum_t num, int tics,
+                                 int randomTics);
+boolean         R_IsInAnimGroup(int animGroupNum, materialnum_t num);
+
+void            R_AnimateAnimGroups(void);
+void            R_DestroyAnimGroups(void);
+void            R_ResetAnimGroups(void);
 
 #endif

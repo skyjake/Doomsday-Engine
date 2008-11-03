@@ -136,7 +136,7 @@ void CalculatePal18to8(byte *dest, byte *palette)
             {
                 // We must find the color index that most closely
                 // resembles this RGB combination.
-                smallestDiff = -1;
+                smallestDiff = 0;
                 for(i = 0; i < 256; ++i)
                 {
                     memcpy(palRGB, palette + 3 * i, 3);
@@ -1030,12 +1030,11 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
  * from adversely affecting the calculation.
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
-void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
-                      int pixelSize, float* brightX, float* brightY,
-                      rgbcol_t* color)
+void GL_CalcLuminance(byte *buffer, int width, int height, int pixelSize,
+                      float* brightX, float* brightY, rgbcol_t* color,
+                      float* lumSize)
 {
-    byte               *palette = (pixelSize == 1? GL_GetPalette() : NULL);
-    spritetex_t        *sprTex = spriteTextures[pnum];
+    byte*               palette = (pixelSize == 1? GL_GetPalette() : NULL);
     int                 i, k, x, y, c, cnt = 0, posCnt = 0;
     byte                rgb[3], *src, *alphaSrc = NULL;
     int                 limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
@@ -1175,12 +1174,11 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     }
 
 #ifdef _DEBUG
-    VERBOSE(Con_Message("GL_CalcLuminance: Proc \"%s\"\n"
+    VERBOSE(Con_Message("GL_CalcLuminance: "
                         "  width %dpx, height %dpx, bits %d\n"
                         "  cell region X[%d, %d] Y[%d, %d]\n"
                         "  flare X= %g Y=%g %s\n"
                         "  flare RGB[%g, %g, %g] %s\n",
-                        W_CacheLumpNum(sprTex->lump, PU_GETNAME),
                         width, height, pixelSize,
                         region[0], region[1], region[2], region[3],
                         (*brightX), (*brightY),
@@ -1192,10 +1190,9 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 
     // Amplify color.
     amplify(*color);
+
     // How about the size of the light source?
-    sprTex->lumSize = (2 * cnt + avgCnt) / 3.0f / 70.0f;
-    if(sprTex->lumSize > 1)
-        sprTex->lumSize = 1;
+    *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
 }
 
 /**

@@ -629,10 +629,10 @@ static void renderShadowSeg(const rvertex_t* rvertices,
 
     params.tex.id = curTex = GL_PrepareLSTexture(p->texture);
     params.tex.magMode = DGL_LINEAR;
-    params.tex.detail = NULL;
     params.tex.width = p->texWidth;
     params.tex.height = p->texHeight;
     params.tex.masked = false;
+    params.tex.detail.id = 0;
 
     // Top left.
     params.texOrigin[0][VX] = rvertices[1].pos[VX];
@@ -649,7 +649,7 @@ static void renderShadowSeg(const rvertex_t* rvertices,
 
     params.lightListIdx = 0;
     params.interTex.id = 0;
-    params.interTex.detail = NULL;
+    params.interTex.detail.id = 0;
     params.interPos = 0;
 
     if(rendFakeRadio != 2)

@@ -87,8 +87,8 @@ flat_t** flats;
 int numSpriteTextures;
 spritetex_t** spriteTextures;
 
-int numgroups;
-animgroup_t* groups;
+int numDetailTextures = 0;
+detailtex_t** detailTextures = NULL;
 
 // Glowing textures are always rendered fullbright.
 int glowingTextures = true;
@@ -110,9 +110,6 @@ static texturedef_t** textureDefs;
 
 static patchtexhash_t patchtexhash[PATCHTEX_HASH_SIZE];
 static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
-
-static int numSkyTextures = 0;
-static skytexture_t** skyTextures = NULL;
 
 static unsigned int numrendpolys = 0;
 static unsigned int maxrendpolys = 0;
@@ -533,260 +530,6 @@ rawtex_t* R_GetRawTex(lumpnum_t lump)
     return r;
 }
 
-/**
- * Create a new animation group. Returns the group number.
- * This function is exported and accessible from DLLs.
- */
-int R_CreateAnimGroup(int flags)
-{
-    animgroup_t        *group;
-
-    // Allocating one by one is inefficient, but it doesn't really matter.
-    groups =
-        Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_STATIC);
-
-    // Init the new group.
-    group = groups + numgroups;
-    memset(group, 0, sizeof(*group));
-
-    // The group number is (index + 1).
-    group->id = ++numgroups;
-    group->flags = flags;
-
-    return group->id;
-}
-
-/**
- * Called during engine reset to clear the existing animation groups.
- */
-void R_DestroyAnimGroups(void)
-{
-    int                 i;
-
-    if(numgroups > 0)
-    {
-        for(i = 0; i < numgroups; ++i)
-        {
-            animgroup_t    *group = &groups[i];
-            Z_Free(group->frames);
-        }
-
-        Z_Free(groups);
-        groups = NULL;
-        numgroups = 0;
-    }
-}
-
-animgroup_t *R_GetAnimGroup(int number)
-{
-    if(--number < 0 || number >= numgroups)
-        return NULL;
-    return groups + number;
-}
-
-/**
- * This function is exported and accessible from DLLs.
- */
-void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
-                      int randomTics)
-{
-    animgroup_t        *group;
-    animframe_t        *frame;
-    material_t         *mat;
-
-    group = R_GetAnimGroup(groupNum);
-    if(!group)
-        Con_Error("R_AddToAnimGroup: Unknown anim group %i.", groupNum);
-
-    mat = R_GetMaterialByNum(num);
-    if(!mat)
-    {
-        Con_Message("R_AddToAnimGroup: Invalid material num '%i'.", num);
-        return;
-    }
-
-    // Mark the material as being in an animgroup.
-    mat->inGroup = true;
-
-    // Allocate a new animframe.
-    group->frames =
-        Z_Realloc(group->frames, sizeof(animframe_t) * ++group->count,
-                  PU_STATIC);
-
-    frame = group->frames + group->count - 1;
-
-    frame->mat = mat;
-    frame->tics = tics;
-    frame->random = randomTics;
-}
-
-boolean R_IsInAnimGroup(int groupNum, const material_t* mat)
-{
-    int                 i;
-    animgroup_t        *group = R_GetAnimGroup(groupNum);
-
-    if(!group)
-        return false;
-
-    // Is it in there?
-    for(i = 0; i < group->count; ++i)
-    {
-        animframe_t        *frame = &group->frames[i];
-
-        if(frame->mat == mat)
-            return true;
-    }
-
-    return false;
-}
-
-/**
- * Initialize an entire animation using the data in the definition.
- */
-void R_InitAnimGroup(ded_group_t *def)
-{
-    int                 i, groupNumber = -1;
-    materialnum_t       num;
-
-    for(i = 0; i < def->count.num; ++i)
-    {
-        ded_group_member_t *gm = &def->members[i];
-
-        num =
-            R_MaterialCheckNumForName(gm->name, (materialtype_t) gm->type);
-
-        if(!num)
-            continue;
-
-        // Only create a group when the first texture is found.
-        if(groupNumber == -1)
-        {
-            // Create a new animation group.
-            groupNumber = R_CreateAnimGroup(def->flags);
-        }
-
-        R_AddToAnimGroup(groupNumber, num, gm->tics, gm->randomTics);
-    }
-}
-
-/**
- * All animation groups are reseted back to their original state.
- * Called when setting up a map.
- */
-void R_ResetAnimGroups(void)
-{
-    int                 i;
-    animgroup_t*        group;
-
-    for(i = 0, group = groups; i < numgroups; ++i, group++)
-    {
-        // The Precache groups are not intended for animation.
-        if((group->flags & AGF_PRECACHE) || !group->count)
-            continue;
-
-        group->timer = 0;
-        group->maxTimer = 1;
-
-        // The anim group should start from the first step using the
-        // correct timings.
-        group->index = group->count - 1;
-    }
-
-    // This'll get every group started on the first step.
-    R_AnimateAnimGroups();
-}
-
-skytexture_t* R_GetSkyTexture(int texIdx, boolean canCreate)
-{
-    int                 i;
-    skytexture_t*       skyTex;
-
-    if(texIdx < 0 || texIdx > numTextureDefs)
-        Con_Error("R_GetSkyTexture: texIdx %i out of range.", texIdx);
-
-    // Try to find an existing skytexture for this.
-    for(i = 0; i < numSkyTextures; ++i)
-    {
-        skyTex = skyTextures[i];
-
-        if(skyTex->texture == texIdx)
-            return skyTex;
-    }
-
-    if(!canCreate)
-        return NULL;
-
-    // There was no skytexture for the specified texIdx!
-    skyTex = M_Malloc(sizeof(*skyTex));
-    skyTextures =
-        M_Realloc(skyTextures, sizeof(*skyTextures) * ++numSkyTextures);
-    skyTex->texture = texIdx;
-    skyTex->tex = 0;
-    skyTex->current = skyTex;
-    skyTex->next = skyTex;
-    skyTex->inter = 0;
-    skyTex->inGroup = false;
-    skyTextures[numSkyTextures - 1] = skyTex;
-
-    return skyTex;
-}
-
-/**
- * Called at shutdown and during an engine reset.
- */
-void R_DestroySkyTextures(void)
-{
-    // Destroy all bookkeeping -- into the shredder, I say!!
-    if(skyTextures)
-    {
-        int                 i;
-
-        for(i = 0; i < numSkyTextures; ++i)
-            M_Free(skyTextures[i]);
-
-        M_Free(skyTextures);
-    }
-    skyTextures = NULL;
-    numSkyTextures = 0;
-}
-
-void R_SkyTextureDeleteTex(skytexture_t* skyTex)
-{
-    if(skyTex->tex)
-    {
-        DGL_DeleteTextures(1, &skyTex->tex);
-        skyTex->tex = 0;
-    }
-}
-
-void R_DeleteSkyTextures(void)
-{
-    int                 i;
-
-    for(i = 0; i < numSkyTextures; ++i)
-    {
-        R_SkyTextureDeleteTex(skyTextures[i]);
-    }
-}
-
-/**
- * Retrieves the sky fadeout color of the given texture.
- */
-void R_SkyTextureGetTopColor(int texIdx, float *rgb)
-{
-    skytexture_t*       skyTex = R_GetSkyTexture(texIdx, false);
-
-    if(skyTex)
-    {
-        GL_PrepareSky(skyTex, false); // Ensure we have the latest info.
-        memcpy(rgb, skyTex->topRGB, sizeof(float) * 3);
-    }
-    else
-    {   // Must be an invalid texture, default to black.
-        rgb[0] = rgb[1] = rgb[2] = 0;
-    }
-}
-
 static void readTextureDefs(void)
 {
 #pragma pack(1)
@@ -1033,25 +776,31 @@ void R_InitTextures(void)
     {
         texturedef_t*           texDef = textureDefs[i];
         material_t*             mat;
+        materialtex_t*          mTex;
+
+        mTex = R_MaterialTexCreate(i, MTT_TEXTURE);
 
         // Create a material for this texture.
-        mat = R_MaterialCreate(texDef->name, i, MAT_TEXTURE);
-        mat->width = texDef->width;
-        mat->height = texDef->height;
+        mat = R_MaterialCreate(texDef->name, texDef->width, texDef->height,
+                               mTex, MG_TEXTURES);
         /**
-         * DOOM.EXE had a bug in the way textures were managed
-         * resulting in the first texture being used dually as a
-         * "NULL" texture.
+         * DOOM.EXE had a bug in the way textures were managed resulting in
+         * the first texture being used dually as a "NULL" texture.
          */
-        if(mat->ofTypeID == 0)
+        if(i == 0)
             mat->flags |= MATF_NO_DRAW;
     }
 }
 
-const texturedef_t* R_GetTextureDef(int num)
+texturedef_t* R_GetTextureDef(int num)
 {
     if(num < 0 || num >= numTextureDefs)
+    {
+#if _DEBUG
+        Con_Error("R_GetTextureDef: Invalid def num %i.", num);
+#endif
         return NULL;
+    }
 
     return textureDefs[num];
 }
@@ -1096,6 +845,7 @@ static int R_NewFlat(lumpnum_t lump)
     int                 i;
     flat_t**            newlist, *ptr;
     material_t*         mat;
+    materialtex_t*      mTex;
 
     for(i = 0; i < numFlats; ++i)
     {
@@ -1125,12 +875,10 @@ static int R_NewFlat(lumpnum_t lump)
     ptr = flats[numFlats - 1] = Z_Calloc(sizeof(flat_t), PU_REFRESHTEX, 0);
     ptr->lump = lump;
 
+    mTex = R_MaterialTexCreate(numFlats - 1, MTT_FLAT);
+
     // Create a material for this flat.
-    if((mat = R_MaterialCreate(lumpInfo[lump].name, numFlats - 1, MAT_FLAT)))
-    {
-        mat->width = 64;
-        mat->height = 64;
-    }
+    mat = R_MaterialCreate(lumpInfo[lump].name, 64, 64, mTex, MG_FLATS);
 
     return numFlats - 1;
 }
@@ -1178,16 +926,16 @@ int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
 {
     int                 i;
     spritetex_t**       newList, *ptr;
-    material_t*         mat;
+    material_t*         mat = NULL;
+    materialtex_t*      mTex;
     lumppatch_t*        patch;
 
     // Is this lump already entered?
     for(i = 0; i < numSpriteTextures; ++i)
         if(spriteTextures[i]->lump == lump)
         {
-            mat = R_GetMaterial(i, MAT_SPRITE);
             if(matP)
-                *matP = mat;
+                *matP = R_GetMaterial(i, MG_SPRITES);
             return i;
         }
 
@@ -1204,21 +952,20 @@ int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
     ptr = spriteTextures[numSpriteTextures - 1] =
         Z_Calloc(sizeof(spritetex_t), PU_SPRITE, 0);
     ptr->lump = lump;
+    patch = (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
+    ptr->offX = SHORT(patch->leftOffset);
+    ptr->offY = SHORT(patch->topOffset);
+    ptr->width = SHORT(patch->width);
+    ptr->height = SHORT(patch->height);
+
+    mTex = R_MaterialTexCreate(numSpriteTextures - 1, MTT_SPRITE);
 
     // Create a new material for this sprite texture.
-    if((mat = R_MaterialCreate(W_LumpName(lump), numSpriteTextures - 1,
-                               MAT_SPRITE)))
-    {
-        patch = (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
-        mat->width = SHORT(patch->width);
-        mat->height = SHORT(patch->height);
+    mat = R_MaterialCreate(W_LumpName(lump), SHORT(patch->width),
+                           SHORT(patch->height), mTex, MG_SPRITES);
 
-        ptr->offX = SHORT(patch->leftOffset);
-        ptr->offY = SHORT(patch->topOffset);
-
-        if(matP)
-            *matP = mat;
-    }
+    if(matP)
+        *matP = mat;
 
     return numSpriteTextures - 1;
 }
@@ -1458,8 +1205,7 @@ boolean R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
         return (def->flags & DCRF_EXTERNAL) != 0;
     }
 
-    // Is it probably an original texture?
-    if(!R_MaterialIsCustom2(mat))
+    if(mat->tex->isFromIWAD)
         return !(def->flags & DCRF_NO_IWAD);
 
     return (def->flags & DCRF_PWAD) != 0;
@@ -1507,13 +1253,13 @@ static boolean precacheResourcesForMobjs(thinker_t* th, void* context)
  */
 void R_PrecacheLevel(void)
 {
-    uint            i, j;
-    size_t          n;
-    sector_t       *sec;
-    sidedef_t      *side;
-    material_t     *mat;
-    float           starttime;
-    material_t    **matPresent;
+    uint                i, j;
+    size_t              n;
+    sector_t*           sec;
+    sidedef_t*          side;
+    float               startTime;
+    material_t*         mat, **matPresent;
+    materialnum_t       numMaterials;
 
     // Don't precache when playing demo.
     if(isDedicated || playback)
@@ -1522,9 +1268,10 @@ void R_PrecacheLevel(void)
     // Precaching from 100 to 200.
     Con_SetProgress(100);
 
-    starttime = Sys_GetSeconds();
+    startTime = Sys_GetSeconds();
 
     // Precache all materials used on world surfaces.
+    numMaterials = R_GetNumMaterials();
     matPresent = M_Calloc(sizeof(material_t*) * numMaterials);
     n = 0;
 
@@ -1564,12 +1311,12 @@ void R_PrecacheLevel(void)
         for(i = 0; i < numSprites; ++i)
         {
             int                 j;
-            spritedef_t        *sprDef = &sprites[i];
+            spritedef_t*        sprDef = &sprites[i];
 
             for(j = 0; j < sprDef->numFrames; ++j)
             {
                 int                 k;
-                spriteframe_t      *sprFrame = &sprDef->spriteFrames[j];
+                spriteframe_t*      sprFrame = &sprDef->spriteFrames[j];
 
                 for(k = 0; k < 8; ++k)
                 {
@@ -1605,101 +1352,146 @@ void R_PrecacheLevel(void)
     if(verbose)
     {
         Con_Message("Precaching took %.2f seconds.\n",
-                    Sys_GetSeconds() - starttime);
+                    Sys_GetSeconds() - startTime);
     }
 
     // Done!
     //Con_Progress(100, PBARF_SET);
 }
 
-void R_AnimateAnimGroups(void)
+/**
+ * Initialize an entire animation using the data in the definition.
+ */
+void R_InitAnimGroup(ded_group_t* def)
 {
-    int                 i, timer, k;
-    animgroup_t        *group;
+    int                 i, groupNumber = -1;
+    materialnum_t       num;
 
-    // The animation will only progress when the game is not paused.
-    if(clientPaused)
-        return;
-
-    for(i = 0, group = groups; i < numgroups; ++i, group++)
+    for(i = 0; i < def->count.num; ++i)
     {
-        // The Precache groups are not intended for animation.
-        if((group->flags & AGF_PRECACHE) || !group->count)
+        ded_group_member_t *gm = &def->members[i];
+
+        num =
+            R_MaterialCheckNumForName(gm->name, (materialgroup_t) gm->type);
+
+        if(!num)
             continue;
 
-        if(--group->timer <= 0)
+        // Only create a group when the first texture is found.
+        if(groupNumber == -1)
         {
-            // Advance to next frame.
-            group->index = (group->index + 1) % group->count;
-            timer = (int) group->frames[group->index].tics;
-
-            if(group->frames[group->index].random)
-            {
-                timer += (int) RNG_RandByte() % (group->frames[group->index].random + 1);
-            }
-            group->timer = group->maxTimer = timer;
-
-            // Update texture/flat translations.
-            for(k = 0; k < group->count; ++k)
-            {
-                material_t         *real, *current, *next;
-
-                real = group->frames[k].mat;
-                current =
-                    group->frames[(group->index + k) % group->count].mat;
-                next =
-                    group->frames[(group->index + k + 1) % group->count].mat;
-
-                R_MaterialSetTranslation(real, current, next, 0);
-
-                // Just animate the first in the sequence?
-                if(group->flags & AGF_FIRST_ONLY)
-                    break;
-            }
+            // Create a new animation group.
+            groupNumber = R_CreateAnimGroup(def->flags);
         }
-        else
-        {
-            // Update the interpolation point of animated group members.
-            for(k = 0; k < group->count; ++k)
-            {
-                material_t         *mat = group->frames[k].mat;
 
-                if(group->flags & AGF_SMOOTH)
-                {
-                    mat->inter = 1 - group->timer / (float) group->maxTimer;
-                }
-                else
-                {
-                    mat->inter = 0;
-                }
-
-                // Just animate the first in the sequence?
-                if(group->flags & AGF_FIRST_ONLY)
-                    break;
-            }
-        }
+        R_AddToAnimGroup(groupNumber, num, gm->tics, gm->randomTics);
     }
 }
 
-/**
- * If necessary and possible, generate an RGB lightmap texture for the
- * decoration's light sources.
- */
-void R_GenerateDecorMap(ded_decor_t *def)
+void R_CreateDetailTexture(ded_detailtexture_t* def)
+{
+    detailtex_t*        dTex;
+    lumpnum_t           lump = W_CheckNumForName(def->detailLump.path);
+    const char*         external =
+        (def->isExternal? def->detailLump.path : NULL);
+
+    // Have we already created one for this?
+    if((dTex = R_GetDetailTexture(lump, external)))
+        return;
+
+    // Its a new detail texture.
+    dTex = M_Malloc(sizeof(*dTex));
+
+    // The width and height could be used for something meaningful.
+    dTex->width = dTex->height = 128;
+    dTex->scale = def->scale;
+    dTex->strength = def->strength;
+    dTex->maxDist = def->maxDist;
+    dTex->lump = lump;
+    dTex->external = external;
+    dTex->instances = NULL;
+
+    // Add it to the list.
+    detailTextures =
+        M_Realloc(detailTextures, sizeof(detailtex_t*) * ++numDetailTextures);
+    detailTextures[numDetailTextures-1] = dTex;
+}
+
+detailtex_t* R_GetDetailTexture(lumpnum_t lump, const char* external)
+{
+    int                 i;
+
+    for(i = 0; i < numDetailTextures; ++i)
+    {
+        detailtex_t*        dTex = detailTextures[i];
+
+        if(dTex->lump == lump &&
+           ((dTex->external == NULL && external == NULL) ||
+             (dTex->external && external && !stricmp(dTex->external, external))))
+            return dTex;
+    }
+
+    return NULL;
+}
+
+void R_DeleteDetailTextures(void)
 {
     int                 i, count;
 
-    for(i = 0, count = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+    count = 0;
+    for(i = 0; i < numDetailTextures; ++i)
     {
-        if(!R_IsValidLightDecoration(def->lights + i))
+        detailtex_t*        dTex = detailTextures[i];
+        detailtexinst_t*    dInst, *next;
+
+        if(!dTex->instances)
             continue;
-        count++;
+
+        dInst = dTex->instances;
+        do
+        {
+            next = dInst->next;
+            if(dInst->tex)
+            {
+                DGL_DeleteTextures(1, &dInst->tex);
+                dInst->tex = 0;
+                count++;
+            }
+            dInst = next;
+        } while(dInst);
     }
 
-#if 0
-    if(count > 1 || !def->is_texture)
+    VERBOSE(Con_Message
+            ("R_DeleteDetailTextures: %i texture instances.\n", count));
+}
+
+/**
+ * This is called at final shutdown.
+ */
+void R_DestroyDetailTextures(void)
+{
+    int                 i;
+
+    for(i = 0; i < numDetailTextures; ++i)
     {
-        def->pregen_lightmap = 10 /*dltexname */ ;
+        detailtex_t*        dTex = detailTextures[i];
+        detailtexinst_t*    dInst, *next;
+
+        if(dTex->instances)
+        {
+            dInst = dTex->instances;
+            do
+            {
+                next = dInst->next;
+                M_Free(dInst);
+                dInst = next;
+            } while(dInst);
+        }
+
+        M_Free(dTex);
     }
-#endif
+
+    M_Free(detailTextures);
+    detailTextures = NULL;
+    numDetailTextures = 0;
 }

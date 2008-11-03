@@ -55,15 +55,15 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    char   *name;               // Name of the routine.
-    void    (C_DECL * func) (); // Pointer to the function.
+    char*           name; // Name of the routine.
+    void            (C_DECL * func) (); // Pointer to the function.
 } actionlink_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    Def_ReadProcessDED(const char *filename);
+void Def_ReadProcessDED(const char* filename);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -74,24 +74,21 @@ extern filename_t topDefsFileName;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-ded_t   defs;                   // The main definitions database.
-sprname_t *sprNames;            // Sprite name list.
-state_t *states;                // State list.
-ded_light_t **stateLights;
-ded_ptcgen_t **statePtcGens;
-mobjinfo_t *mobjInfo;           // Map object info database.
-sfxinfo_t *sounds;              // Sound effect list.
+ded_t defs; // The main definitions database.
+sprname_t* sprNames; // Sprite name list.
+state_t* states; // State list.
+ded_light_t** stateLights;
+ded_ptcgen_t** statePtcGens;
+mobjinfo_t* mobjInfo; // Map object info database.
+sfxinfo_t* sounds; // Sound effect list.
 
-ddtext_t *texts;                // Text list.
-detailtex_t *details;           // Detail texture assignments.
-mobjinfo_t **stateOwners;       // A pointer for each state.
+ddtext_t* texts; // Text list.
+mobjinfo_t** stateOwners; // A pointer for each state.
 ded_count_t countSprNames;
 ded_count_t countStates;
 ded_count_t countMobjInfo;
 ded_count_t countSounds;
-
 ded_count_t countTexts;
-ded_count_t countDetails;
 ded_count_t countStateOwners;
 
 boolean firstDED;
@@ -99,11 +96,11 @@ boolean firstDED;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean defsInited = false;
-static char *dedFiles[MAX_READ];
-static mobjinfo_t *gettingFor;
+static char* dedFiles[MAX_READ];
+static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
-xgclass_t *xgClassLinks;
+xgclass_t* xgClassLinks;
 
 // CODE --------------------------------------------------------------------
 
@@ -137,14 +134,12 @@ void Def_Init(void)
     stateLights = NULL;
     sounds = NULL;
     texts = NULL;
-    details = NULL;
     stateOwners = NULL;
     DED_ZCount(&countSprNames);
     DED_ZCount(&countMobjInfo);
     DED_ZCount(&countStates);
     DED_ZCount(&countSounds);
     DED_ZCount(&countTexts);
-    DED_ZCount(&countDetails);
     DED_ZCount(&countStateOwners);
 
     // Retrieve the XG Class links from the game .dll
@@ -205,7 +200,6 @@ void Def_Destroy(void)
     DED_DelArray((void **) &mobjInfo, &countMobjInfo);
     DED_DelArray((void **) &sounds, &countSounds);
     DED_DelArray((void **) &texts, &countTexts);
-    DED_DelArray((void **) &details, &countDetails);
     DED_DelArray((void **) &stateOwners, &countStateOwners);
 
     // Destroy the state array, parallel LUTs.
@@ -409,15 +403,15 @@ ded_mapinfo_t* Def_GetMapInfo(const char* mapID)
 
 ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
 {
-    ded_decor_t*        def;
     int                 i;
+    ded_decor_t*        def;
 
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i;
         i >= 0; i--, def--)
     {
         material_t*         defMat =
             R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
-                                                    def->materialType));
+                                                    def->materialGroup));
 
         if(mat == defMat)
         {
@@ -432,21 +426,21 @@ ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
 
 /**
  * Currently reflections cannot specify any conditions when it is
- * appropriate to use them: if a high-resolution texture or a custom
- * patch overrides the texture that the reflection was meant to be
- * used with, nothing is done to react to the situation.
+ * appropriate to use them: if a high-resolution texture or a custom patch
+ * overrides the texture that the reflection was meant to be used with,
+ * nothing is done to react to the situation.
  */
 ded_reflection_t* Def_GetReflection(struct material_s* mat)
 {
-    ded_reflection_t*   def;
     int                 i;
+    ded_reflection_t*   def;
 
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i;
-        i >= 0; --i, --def)
+        i >= 0; i--, def--)
     {
         material_t*         defMat =
             R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
-                                                    def->materialType));
+                                                    def->materialGroup));
         if(mat == defMat)
         {
             // It would be great to have a unified system that would
@@ -456,7 +450,33 @@ ded_reflection_t* Def_GetReflection(struct material_s* mat)
         }
     }
 
-    return 0;
+    return NULL;
+}
+
+ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat)
+{
+    int                 i;
+    ded_detailtexture_t* def;
+
+    // Search through the assignments.
+    for(i = defs.count.details.num - 1, def = defs.details + i;
+        i >= 0; i--, def--)
+    {
+        material_t*         defMat;
+
+        defMat = R_GetMaterialByNum(
+            R_MaterialNumForName(def->texture, MG_TEXTURES));
+        if(!(defMat == mat))
+            defMat = R_GetMaterialByNum(
+                R_MaterialNumForName(def->flat, MG_FLATS));
+
+        if(defMat == mat)
+        {
+            return def;
+        }
+    }
+
+    return NULL;
 }
 
 ded_xgclass_t* Def_GetXGClass(const char* name)
@@ -1039,10 +1059,10 @@ void Def_Read(void)
 void Def_PostInit(void)
 {
     int                 i, k;
-    ded_ptcgen_t       *gen;
+    ded_ptcgen_t*       gen;
     char                name[40];
-    modeldef_t         *modef;
-    ded_ptcstage_t     *st;
+    modeldef_t*         modef;
+    ded_ptcstage_t*     st;
 
     // Particle generators: model setup.
     for(i = 0, gen = defs.ptcGens; i < defs.count.ptcGens.num; ++i, gen++)
@@ -1076,24 +1096,23 @@ void Def_PostInit(void)
     }
 
     // Detail textures.
-    DED_DelArray((void **) &details, &countDetails);
-    DED_NewEntries((void **) &details, &countDetails, sizeof(*details),
-                   defs.count.details.num);
+    R_DeleteDetailTextures();
+    R_DestroyDetailTextures();
     for(i = 0; i < defs.count.details.num; ++i)
     {
-        details[i].wallTexture =
-            R_MaterialCheckNumForName(defs.details[i].wall, MAT_TEXTURE);
-        details[i].flatTexture =
-            R_MaterialCheckNumForName(defs.details[i].flat, MAT_FLAT);
-        details[i].detailLump =
-            W_CheckNumForName(defs.details[i].detailLump.path);
-        details[i].glTex = 0; // Not loaded.
+        ded_detailtexture_t* def = &defs.details[i];
+
+        if(R_MaterialCheckNumForName(def->texture, MG_TEXTURES) ||
+           R_MaterialCheckNumForName(def->flat, MG_FLATS))
+        {
+            R_CreateDetailTexture(def);
+        }
     }
 
     // Surface reflections.
     for(i = 0; i < defs.count.reflections.num; ++i)
     {
-        ded_reflection_t *ref = defs.reflections + i;
+        ded_reflection_t* ref = &defs.reflections[i];
 
         // Initialize the pointers to handle textures.
         ref->shinyTex = ref->maskTex = 0;
@@ -1136,7 +1155,7 @@ void Def_PostInit(void)
     R_DestroyAnimGroups();
     for(i = 0; i < defs.count.groups.num; ++i)
     {
-        R_InitAnimGroup(defs.groups + i);
+        R_InitAnimGroup(&defs.groups[i]);
     }
 }
 
@@ -1286,8 +1305,8 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     l->actLineType = def->actLineType;
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
-    l->actMaterial = R_MaterialCheckNumForName(def->actMaterial, MAT_TEXTURE);
-    l->deactMaterial = R_MaterialCheckNumForName(def->deactMaterial, MAT_TEXTURE);
+    l->actMaterial = R_MaterialCheckNumForName(def->actMaterial, MG_TEXTURES);
+    l->deactMaterial = R_MaterialCheckNumForName(def->deactMaterial, MG_TEXTURES);
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
     l->materialMoveAngle = def->materialMoveAngle;
@@ -1309,19 +1328,16 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             l->iparm[k] = Friendly(Def_GetSoundNum(def->iparmStr[k]));
         }
-        else if(a & MAP_TEX)
-        {
-            if(!stricmp(def->iparmStr[k], "-1"))
-                l->iparm[k] = -1;
-            else
-                l->iparm[k] =
-                    R_MaterialCheckNumForName(def->iparmStr[k], MAT_TEXTURE);
-        }
-        else if(a & MAP_FLAT)
+        else if(a & MAP_MATERIAL)
         {
             if(def->iparmStr[k][0])
-                l->iparm[k] =
-                    R_MaterialCheckNumForName(def->iparmStr[k], MAT_FLAT);
+            {
+                if(!stricmp(def->iparmStr[k], "-1"))
+                    l->iparm[k] = -1;
+                else
+                    l->iparm[k] =
+                        R_MaterialCheckNumForName(def->iparmStr[k], MG_ANY);
+            }
         }
         else if(a & MAP_MUS)
         {

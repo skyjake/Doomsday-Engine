@@ -187,6 +187,7 @@ extern vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
 extern vissprite_t visSprSortedHead;
 extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
+material_t*     R_GetMaterialForSprite(int sprite, int frame);
 void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
 float           R_VisualRadius(struct mobj_s* mo);

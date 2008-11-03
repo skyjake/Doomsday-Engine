@@ -65,7 +65,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    Sv_SendFrame(int playerNumber);
+void            Sv_SendFrame(int playerNumber);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -73,9 +73,8 @@ void    Sv_SendFrame(int playerNumber);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     allowFrames = false;
-int     send_all_players = false;   // Obsolete
-int     frameInterval = 1;      // Skip every second frame by default (17.5fps)
+int allowFrames = false;
+int frameInterval = 1; // Skip every second frame by default (17.5fps)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -93,7 +92,7 @@ static int lastTransmitTic = 0;
  */
 void Sv_TransmitFrame(void)
 {
-    int         i, cTime, numInGame, pCount;
+    int                 i, cTime, numInGame, pCount;
 
     // Obviously clients don't transmit anything.
     if(!allowFrames || isClient)
@@ -176,7 +175,7 @@ void Sv_Shutdown(void)
 #ifdef _DEBUG
 if(totalFrameCount > 0)
 {
-    uint        i;
+    uint                i;
 
     // Byte probabilities.
     for(i = 0; i < 256; ++i)
@@ -193,12 +192,12 @@ if(totalFrameCount > 0)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteMobjDelta(const void *deltaPtr)
+void Sv_WriteMobjDelta(const void* deltaPtr)
 {
-    const mobjdelta_t *delta = deltaPtr;
-    const dt_mobj_t *d = &delta->mo;
-    int         df = delta->delta.flags;
-    byte        moreFlags = 0;
+    const mobjdelta_t*  delta = deltaPtr;
+    const dt_mobj_t*    d = &delta->mo;
+    int                 df = delta->delta.flags;
+    byte                moreFlags = 0;
 
     // Do we have fast momentum?
     if(fabs(d->mom[MX]) >= MOM_FAST_LIMIT ||
@@ -267,19 +266,22 @@ if((df & 0xffff) == 0)
     // Coordinates with three bytes.
     if(df & MDF_POS_X)
     {
-        fixed_t     vx = FLT2FIX(d->pos[VX]);
+        fixed_t             vx = FLT2FIX(d->pos[VX]);
+
         Msg_WriteShort(vx >> FRACBITS);
         Msg_WriteByte(vx >> 8);
     }
     if(df & MDF_POS_Y)
     {
-        fixed_t     vy = FLT2FIX(d->pos[VY]);
+        fixed_t             vy = FLT2FIX(d->pos[VY]);
+
         Msg_WriteShort(vy >> FRACBITS);
         Msg_WriteByte(vy >> 8);
     }
+
     if(df & MDF_POS_Z)
     {
-        fixed_t     vz = FLT2FIX(d->pos[VZ]);
+        fixed_t             vz = FLT2FIX(d->pos[VZ]);
         Msg_WriteShort(vz >> FRACBITS);
         Msg_WriteByte(vz >> 8);
     }
@@ -287,19 +289,21 @@ if((df & 0xffff) == 0)
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
-        fixed_t     mx = FLT2FIX(d->mom[MX]);
+        fixed_t             mx = FLT2FIX(d->mom[MX]);
         Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) :
                        FIXED8_8(mx));
     }
+
     if(df & MDF_MOM_Y)
     {
-        fixed_t     my = FLT2FIX(d->mom[MY]);
+        fixed_t             my = FLT2FIX(d->mom[MY]);
         Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) :
                        FIXED8_8(my));
     }
+
     if(df & MDF_MOM_Z)
     {
-        fixed_t     mz = FLT2FIX(d->mom[MZ]);
+        fixed_t             mz = FLT2FIX(d->mom[MZ]);
         Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) :
                        FIXED8_8(mz));
     }
@@ -344,13 +348,13 @@ if((df & 0xffff) == 0)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePlayerDelta(const void *deltaPtr)
+void Sv_WritePlayerDelta(const void* deltaPtr)
 {
-    const playerdelta_t *delta = deltaPtr;
-    const dt_player_t *d = &delta->player;
-    const ddpsprite_t *psp;
-    int         df = delta->delta.flags;
-    int         psdf, i, k;
+    const playerdelta_t* delta = deltaPtr;
+    const dt_player_t*  d = &delta->player;
+    const ddpsprite_t*  psp;
+    int                 df = delta->delta.flags;
+    int                 psdf, i, k;
 
     // First the player number. Upper three bits contain flags.
     Msg_WriteByte(delta->delta.id | (df >> 8));
@@ -436,12 +440,12 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSectorDelta(const void *deltaPtr)
+void Sv_WriteSectorDelta(const void* deltaPtr)
 {
-    const sectordelta_t *delta = deltaPtr;
-    const dt_sector_t *d = &delta->sector;
-    int         df = delta->delta.flags, spd;
-    byte        floorspd = 0, ceilspd = 0;
+    const sectordelta_t* delta = deltaPtr;
+    const dt_sector_t*  d = &delta->sector;
+    int                 df = delta->delta.flags, spd;
+    byte                floorspd = 0, ceilspd = 0;
 
     // Is there need to use 4.4 fixed-point speeds?
     // (7.1 is too inaccurate for very slow movement)
@@ -473,13 +477,13 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     Msg_WritePackedLong(df);
 
     if(df & SDF_FLOOR_MATERIAL)
-        Msg_WritePackedShort(d->planes[PLN_FLOOR].surface.material.texture);
+        Msg_WritePackedShort(R_GetMaterialNum(d->planes[PLN_FLOOR].surface.material));
     if(df & SDF_CEILING_MATERIAL)
-        Msg_WritePackedShort(d->planes[PLN_CEILING].surface.material.texture);
+        Msg_WritePackedShort(R_GetMaterialNum(d->planes[PLN_CEILING].surface.material));
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
-        int     lightlevel = (int) (255.0f * d->lightLevel);
+        int                 lightlevel = (int) (255.0f * d->lightLevel);
 
         lightlevel = (lightlevel < 0 ? 0 : lightlevel >
                       255 ? 255 : lightlevel);
@@ -555,11 +559,11 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSideDelta(const void *deltaPtr)
+void Sv_WriteSideDelta(const void* deltaPtr)
 {
-    const sidedelta_t *delta = deltaPtr;
-    const dt_side_t *d = &delta->side;
-    int         df = delta->delta.flags;
+    const sidedelta_t*  delta = deltaPtr;
+    const dt_side_t*    d = &delta->side;
+    int                 df = delta->delta.flags;
 
     // Side number first.
     Msg_WriteShort(delta->delta.id);
@@ -568,11 +572,11 @@ void Sv_WriteSideDelta(const void *deltaPtr)
     Msg_WritePackedLong(df);
 
     if(df & SIDF_TOP_MATERIAL)
-        Msg_WritePackedShort(d->top.material.texture);
+        Msg_WritePackedShort(R_GetMaterialNum(d->top.material));
     if(df & SIDF_MID_MATERIAL)
-        Msg_WritePackedShort(d->middle.material.texture);
+        Msg_WritePackedShort(R_GetMaterialNum(d->middle.material));
     if(df & SIDF_BOTTOM_MATERIAL)
-        Msg_WritePackedShort(d->bottom.material.texture);
+        Msg_WritePackedShort(R_GetMaterialNum(d->bottom.material));
 
     if(df & SIDF_LINE_FLAGS)
         Msg_WriteByte(d->lineFlags);
@@ -610,11 +614,11 @@ void Sv_WriteSideDelta(const void *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePolyDelta(const void *deltaPtr)
+void Sv_WritePolyDelta(const void* deltaPtr)
 {
-    const polydelta_t *delta = deltaPtr;
-    const dt_poly_t *d = &delta->po;
-    int         df = delta->delta.flags;
+    const polydelta_t*  delta = deltaPtr;
+    const dt_poly_t*    d = &delta->po;
+    int                 df = delta->delta.flags;
 
     if(d->destAngle == (unsigned) -1)
     {
@@ -650,10 +654,10 @@ void Sv_WritePolyDelta(const void *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSoundDelta(const void *deltaPtr)
+void Sv_WriteSoundDelta(const void* deltaPtr)
 {
-    const sounddelta_t *delta = deltaPtr;
-    int         df = delta->delta.flags;
+    const sounddelta_t* delta = deltaPtr;
+    int                 df = delta->delta.flags;
 
     // This is either the sound ID, emitter ID or sector index.
     Msg_WriteShort(delta->delta.id);
@@ -697,7 +701,7 @@ void Sv_WriteSoundDelta(const void *deltaPtr)
 /**
  * Write the type and possibly the set number (for Unacked deltas).
  */
-void Sv_WriteDeltaHeader(byte type, const delta_t *delta)
+void Sv_WriteDeltaHeader(byte type, const delta_t* delta)
 {
 #ifdef _DEBUG
 if(type >= NUM_DELTA_TYPES)
@@ -733,12 +737,12 @@ if(type >= NUM_DELTA_TYPES)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteDelta(const delta_t *delta)
+void Sv_WriteDelta(const delta_t* delta)
 {
-    byte        type = delta->type;
+    byte                type = delta->type;
 #ifdef _NETDEBUG
-    int         lengthOffset;
-    int         endOffset;
+    int                 lengthOffset;
+    int                 endOffset;
 #endif
 
 #ifdef _NETDEBUG
@@ -820,7 +824,7 @@ writeDeltaLength:
  */
 size_t Sv_GetMaxFrameSize(int playerNumber)
 {
-    size_t          size = MINIMUM_FRAME_SIZE +
+    size_t              size = MINIMUM_FRAME_SIZE +
         FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
     // What about the communications medium?
@@ -833,9 +837,9 @@ size_t Sv_GetMaxFrameSize(int playerNumber)
 /**
  * @return              A unique resend ID. Never returns zero.
  */
-byte Sv_GetNewResendID(pool_t *pool)
+byte Sv_GetNewResendID(pool_t* pool)
 {
-    byte            id = pool->resendDealer;
+    byte                id = pool->resendDealer;
 
     // Advance to next ID, skipping zero.
     while(!++pool->resendDealer);
@@ -849,9 +853,9 @@ byte Sv_GetNewResendID(pool_t *pool)
  */
 void Sv_SendFrame(int plrNum)
 {
-    pool_t             *pool = Sv_GetPool(plrNum);
+    pool_t*             pool = Sv_GetPool(plrNum);
     byte                oldResend;
-    delta_t            *delta;
+    delta_t*            delta;
     int                 deltaCount = 0;
     size_t              lastStart, maxFrameSize, deltaCountOffset = 0;
 #if _NETDEBUG

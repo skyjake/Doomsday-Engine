@@ -376,10 +376,10 @@ extern          "C" {
     } ded_sectortype_t;
 
     typedef struct {
-        ded_string_t    wall; // Name of a wall texture.
+        ded_string_t    texture; // Name of a texture.
         ded_string_t    flat; // Name of a flat.
         ded_path_t      detailLump; // The lump with the detail texture.
-        boolean         isExternal; // True, if detail_lump is external.
+        boolean         isExternal; // True, if detailLump is external.
         float           scale;
         float           strength;
         float           maxDist;
@@ -416,8 +416,8 @@ extern          "C" {
     typedef struct ded_ptcgen_s {
         struct ded_ptcgen_s *stateNext; // List of generators for a state.
         ded_stateid_t   state; // Triggered by this state (if mobj-gen).
-        ded_string_t    materialName; // Texture or flat name.
-        materialtype_t  materialType;
+        ded_string_t    materialName;
+        materialgroup_t materialGroup;
         ded_mobjid_t    type; // Triggered by this type of mobjs.
         ded_mobjid_t    type2; // Also triggered by this type.
         int             typeNum;
@@ -484,8 +484,8 @@ extern          "C" {
 #define DED_DECOR_NUM_MODELS    8
 
     typedef struct ded_decor_s {
-        ded_string_t    materialName; // Texture or flat name.
-        materialtype_t  materialType;
+        ded_string_t    materialName;
+        materialgroup_t materialGroup;
         int             glow;
         ded_flags_t     flags;
         ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
@@ -493,8 +493,8 @@ extern          "C" {
     } ded_decor_t;
 
     typedef struct ded_reflection_s {
-        ded_string_t    materialName; // Texture or flat name.
-        materialtype_t  materialType;
+        ded_string_t    materialName;
+        materialgroup_t materialGroup;
         blendmode_t     blendMode; // Blend mode flags (bm_*).
         float           shininess;
         float           minColor[3];

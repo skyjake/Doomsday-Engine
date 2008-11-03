@@ -242,7 +242,6 @@ extern          "C" {
         DD_DEF_SECTOR_TYPE,
         DD_PSPRITE_BOB_X,
         DD_PSPRITE_BOB_Y,
-        DD_ALT_MOBJ_THINKER,
         DD_DEF_FINALE_AFTER,
         DD_DEF_FINALE_BEFORE,
         DD_RENDER_RESTART_PRE,
@@ -1049,12 +1048,26 @@ typedef enum blendmode_e {
     BM_ALPHA_SUBTRACT
 } blendmode_t;
 
-typedef enum materialtype_e {
-    MAT_TEXTURE,
-    MAT_FLAT,
-    MAT_SPRITE,
-    MAT_DDTEX
-} materialtype_t;
+typedef enum materialgroup_e {
+    MG_ANY = -1,
+    MG_FIRST,
+    MG_TEXTURES = MG_FIRST,
+    MG_FLATS,
+    MG_SPRITES,
+    MG_DDTEXTURES,
+    NUM_MATERIAL_GROUPS
+} materialgroup_t;
+
+typedef struct {
+    materialnum_t   num;
+    int group;
+    int             width, height;
+} materialinfo_t;
+
+// Animation group flags.
+#define AGF_SMOOTH          0x1
+#define AGF_FIRST_ONLY      0x2
+#define AGF_PRECACHE        0x4000 // Group is just for precaching.
 
 typedef struct lumppatch_s {
     short           width; // bounding box size
@@ -1086,17 +1099,6 @@ typedef struct {
     int             height;
     int             numFrames; // Number of frames the sprite has.
 } spriteinfo_t;
-
-typedef struct {
-    materialnum_t   num;
-    materialtype_t  type;
-    int             width, height;
-} materialinfo_t;
-
-// Animation group flags.
-#define AGF_SMOOTH          0x1
-#define AGF_FIRST_ONLY      0x2
-#define AGF_PRECACHE        0x4000 // Group is just for precaching.
 
     //------------------------------------------------------------------------
     //

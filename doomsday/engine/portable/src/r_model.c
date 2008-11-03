@@ -876,7 +876,7 @@ static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
     mf->offset[VY] = -bottom * scale + offset;
 }
 
-static void R_ScaleModelToSprite(modeldef_t *mf, int sprite, int frame)
+static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 {
     int                 off;
     spritedef_t*        spr = &sprites[sprite];
@@ -886,9 +886,11 @@ static void R_ScaleModelToSprite(modeldef_t *mf, int sprite, int frame)
         return;
 
     mat = spr->spriteFrames[frame].mats[0];
-    off = spriteTextures[mat->ofTypeID]->offY - mat->height;
+
+    off = spriteTextures[mat->tex->ofTypeID]->offY - mat->height;
     if(off < 0)
         off = 0;
+
     R_ScaleModel(mf, mat->height, off);
 }
 
@@ -1363,8 +1365,6 @@ void R_PrecacheModelSkins(modeldef_t *modef)
 
 void R_PrecacheSkinsForState(int stateIndex)
 {
-    state_t            *st = states + stateIndex;
-
     if(stateIndex <= 0 || stateIndex >= defs.count.states.num ||
        !stateModefs[stateIndex])
         return;

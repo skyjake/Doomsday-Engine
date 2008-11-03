@@ -72,7 +72,7 @@ typedef enum damsegment_e {
 
 typedef struct {
     char            name[9];
-    materialtype_t  type;
+    materialgroup_t group;
 } dictentry_t;
 
 typedef struct {
@@ -104,15 +104,16 @@ static materialdict_t *materialDict;
  * Called for every material in the map before saving by
  * initMaterialArchives.
  */
-static void addMaterialToDict(materialdict_t *dict, material_t *mat)
+static void addMaterialToDict(materialdict_t* dict, material_t* mat)
 {
+#if 0
     int                 c;
-    dictentry_t *e;
+    dictentry_t*        e;
 
     // Has this already been registered?
     for(c = 0; c < dict->count; c++)
     {
-        if(dict->table[c].type == mat->type &&
+        if(dict->table[c].group == mat->group &&
            !stricmp(dict->table[c].name, mat->name))
         {   // Yes. skip it...
             return;
@@ -124,14 +125,15 @@ static void addMaterialToDict(materialdict_t *dict, material_t *mat)
 
     strncpy(e->name, mat->name, 8);
     e->name[8] = '\0';
-    e->type = mat->type;
+    e->group = mat->group;
+#endif
 }
 
 /**
  * Initializes the material archives (translation tables).
  * Must be called before writing the tables!
  */
-static void initMaterialDict(const gamemap_t *map, materialdict_t *dict)
+static void initMaterialDict(const gamemap_t* map, materialdict_t* dict)
 {
     uint                i, j;
 
@@ -155,13 +157,14 @@ static void initMaterialDict(const gamemap_t *map, materialdict_t *dict)
 
 static uint searchMaterialDict(materialdict_t *dict, const material_t* mat)
 {
+#if 0
     int                 i;
 
     for(i = 0; i < dict->count; i++)
-        if(dict->table[i].type == mat->type &&
+        if(dict->table[i].group == mat->group &&
            !stricmp(dict->table[i].name, mat->name))
             return i;
-
+#endif
     // Not found?!!!
     return 0;
 }
@@ -169,22 +172,22 @@ static uint searchMaterialDict(materialdict_t *dict, const material_t* mat)
 /**
  * @return              The archive number of the given texture.
  */
-static uint getMaterialDictID(materialdict_t *dict, const material_t* mat)
+static uint getMaterialDictID(materialdict_t* dict, const material_t* mat)
 {
     return searchMaterialDict(dict, mat);
 }
 
-static material_t* lookupMaterialFromDict(materialdict_t *dict, int idx)
+static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
 {
-    dictentry_t        *e = &dict->table[idx];
+    dictentry_t*        e = &dict->table[idx];
 
     if(!strncmp(e->name, BADTEXNAME, 8))
         return NULL;
 
-    return R_GetMaterialByNum(R_MaterialNumForName(e->name, e->type));
+    return R_GetMaterialByNum(R_MaterialNumForName(e->name, e->group));
 }
 
-static boolean openMapFile(char *path, boolean write)
+static boolean openMapFile(char* path, boolean write)
 {
     mapFile = NULL;
     mapFileVersion = 0;
@@ -198,7 +201,7 @@ static boolean closeMapFile(void)
     return (lzClose(mapFile)? true : false);
 }
 
-static void writeNBytes(void *data, long len)
+static void writeNBytes(void* data, long len)
 {
     lzWrite(data, len, mapFile);
 }

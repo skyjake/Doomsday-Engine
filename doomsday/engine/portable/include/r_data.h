@@ -35,19 +35,42 @@
 #include "m_nodepile.h"
 #include "def_data.h"
 #include "r_extres.h"
-#include "r_materials.h"
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1         // Don't use if from IWAD.
 #define DCRF_PWAD       0x2         // Can use if from PWAD.
 #define DCRF_EXTERNAL   0x4         // Can use if from external resource.
 
+// Detail texture instance.
+typedef struct detailtexinst_s {
+    DGLuint         tex;
+    float           contrast;
+
+    struct detailtexinst_s* next;
+} detailtexinst_t;
+
+typedef struct {
+    int             width, height;
+    float           strength;
+    float           scale;
+    float           maxDist;
+    lumpnum_t       lump;
+    const char*     external;
+    // Linked list of detail texture instances.
+    // A unique texture is generated for each (rounded) contrast level.
+    detailtexinst_t* instances;
+} detailtex_t;
+
 typedef struct gltexture_s {
     DGLuint         id;
     int             magMode;
     float           width, height;
     boolean         masked;
-    struct detailinfo_s* detail;
+    struct {
+        DGLuint         id;
+        int             width, height;
+        float           scale;
+    } detail;
 } gltexture_t;
 
 typedef struct glcommand_vertex_s {
@@ -159,14 +182,21 @@ typedef struct flat_s {
 
 typedef struct {
     lumpnum_t       lump; // Real lump number.
-    short           offX, offY;
-    float           flareX; // Offset to flare.
-    float           flareY;
+    short           width, height, offX, offY;
+    float           flareX, flareY, lumSize;
     rgbcol_t        autoLightColor;
-    float           lumSize;
     float           texCoord[2]; // Prepared texture coordinates.
     DGLuint         pspriteTex;
 } spritetex_t;
+
+// A translated sprite.
+typedef struct {
+    int             patch;
+    DGLuint         tex;
+    unsigned char*  table;
+    float           flareX, flareY, lumSize;
+    rgbcol_t        autoLightColor;
+} transspr_t;
 
 // Model skin.
 typedef struct {
@@ -213,22 +243,6 @@ typedef struct rawtex_s {
     struct rawtex_s* next;
 } rawtex_t;
 
-typedef struct animframe_s {
-    material_t*     mat;
-    ushort          tics;
-    ushort          random;
-} animframe_t;
-
-typedef struct animgroup_s {
-    int             id;
-    int             flags;
-    int             index;
-    int             maxTimer;
-    int             timer;
-    int             count;
-    animframe_t*    frames;
-} animgroup_t;
-
 typedef struct {
     float           approxDist; // Only an approximation.
     float           vector[3]; // Light direction vector.
@@ -274,18 +288,6 @@ typedef struct {
     DGLuint         tex;
 } ddtexture_t;
 
-typedef struct skytexture_s {
-    int             texture;
-    DGLuint         tex; // OGL tex id.
-    float           topRGB[3]; // Averaged top line color, used for fadeout.
-
-    // For global animation:
-    boolean         inGroup; // True if belongs to some animgroup.
-    struct skytexture_s* current;
-    struct skytexture_s* next;
-    float           inter;
-} skytexture_t;
-
 extern nodeindex_t* linelinks;
 extern blockmap_t* BlockMap;
 extern blockmap_t* SSecBlockMap;
@@ -304,8 +306,8 @@ extern flat_t** flats;
 extern spritetex_t** spriteTextures;
 extern int numSpriteTextures;
 
-extern int numgroups;
-extern animgroup_t* groups;
+extern detailtex_t** detailTextures;
+extern int numDetailTextures;
 
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
@@ -323,29 +325,23 @@ void            R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 void            R_PrecacheLevel(void);
 void            R_PrecachePatch(lumpnum_t lump);
 
-void            R_DestroyAnimGroups(void);
-void            R_InitAnimGroup(ded_group_t* def);
-void            R_ResetAnimGroups(void);
-boolean         R_IsInAnimGroup(int groupNum, const material_t* mat);
-void            R_AnimateAnimGroups(void);
-
-const texturedef_t* R_GetTextureDef(int num);
+texturedef_t*   R_GetTextureDef(int num);
 boolean         R_TextureIsFromIWAD(int num);
 
-void            R_SkyTextureDeleteTex(skytexture_t* skyTex);
-void            R_SkyTextureGetTopColor(int texIdx, float *rgb);
-
-skytexture_t*   R_GetSkyTexture(int texIdx, boolean canCreate);
-void            R_DeleteSkyTextures(void);
-void            R_DestroySkyTextures(void);
-
-int             R_NewSpriteTexture(lumpnum_t lump, material_t** mat);
+int             R_NewSpriteTexture(lumpnum_t lump, struct material_s** mat);
 
 int             R_GetSkinTexIndex(const char* skin);
 skintex_t*      R_GetSkinTexByIndex(int id);
 int             R_RegisterSkin(char* skin, const char* modelfn, char* fullpath);
 void            R_DeleteSkinTextures(void);
 void            R_DestroySkins(void); // Called at shutdown.
+
+void            R_InitAnimGroup(ded_group_t* def);
+
+void            R_CreateDetailTexture(ded_detailtexture_t* def);
+detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);
+void            R_DeleteDetailTextures(void);
+void            R_DestroyDetailTextures(void); // Called at shutdown.
 
 patchtex_t*     R_FindPatchTex(lumpnum_t lump); // May return NULL.
 patchtex_t*     R_GetPatchTex(lumpnum_t lump); // Creates new entries.
@@ -355,9 +351,8 @@ rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
 rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
 rawtex_t**      R_CollectRawTexs(int* count);
 
-boolean         R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
+boolean         R_IsAllowedDecoration(ded_decor_t* def, struct material_s* mat,
                                       boolean hasExternal);
 boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
-void            R_GenerateDecorMap(ded_decor_t* def);
 
 #endif

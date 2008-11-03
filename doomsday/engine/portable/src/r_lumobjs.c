@@ -375,8 +375,8 @@ void LO_AddLuminous(mobj_t* mo)
         ded_light_t*        def = 0;
         spritedef_t*        sprDef;
         spriteframe_t*      sprFrame;
-        spritetex_t*        sprTex;
         material_t*         mat;
+        rgbcol_t            autoLightColor;
 
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
@@ -403,23 +403,54 @@ void LO_AddLuminous(mobj_t* mo)
         // Get the current globaly animated material.
         mat = mat->current;
 
-        if(mat->type != MAT_SPRITE)
+        if(mat->tex->type != MTT_SPRITE)
         {
             return; // Very strange...
         }
 
-        // This'll ensure we have up-to-date information about the texture.
-        GL_PrepareMaterial(mat);
-        sprTex = spriteTextures[mat->ofTypeID];
-
         // Let's see what our light should look like.
-        cf.size = cf.flareSize = sprTex->lumSize;
-        cf.xOffset = sprTex->flareX;
-        cf.yOffset = sprTex->flareY;
+        if(mo->ddFlags & DDMF_TRANSLATION)
+        {
+            int                 tMap =
+                (mo->ddFlags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
+            int                 tClass =
+                (mo->ddFlags >> DDMF_CLASSTRSHIFT) & 0x3;
+            transspr_t*         tspr;
+            unsigned char*      table =
+                translationTables - 256 + tClass * ((8 - 1) * 256) +
+                    tMap * 256;
+
+            // Ensure we have up-to-date information about the texture.
+            GL_PrepareTranslatedSprite(R_GetMaterialNum(mat), tMap, tClass);
+            tspr = GL_GetTranslatedSprite(mat->tex->ofTypeID, table);
+
+            cf.size = cf.flareSize = tspr->lumSize;
+            cf.xOffset = tspr->flareX;
+            cf.yOffset = tspr->flareY;
+            autoLightColor[CR] = tspr->autoLightColor[CR];
+            autoLightColor[CG] = tspr->autoLightColor[CG];
+            autoLightColor[CB] = tspr->autoLightColor[CB];
+        }
+        else
+        {
+            spritetex_t*        sprTex;
+
+            // Ensure we have up-to-date information about the texture.
+            R_MaterialPrepare(mat->current, 0, NULL, NULL);
+            sprTex = spriteTextures[mat->tex->ofTypeID];
+
+            cf.size = cf.flareSize = sprTex->lumSize;
+            cf.xOffset = sprTex->flareX;
+            cf.yOffset = sprTex->flareY;
+            autoLightColor[CR] = sprTex->autoLightColor[CR];
+            autoLightColor[CG] = sprTex->autoLightColor[CG];
+            autoLightColor[CB] = sprTex->autoLightColor[CB];
+        }
 
         // X offset to the flare position.
         xOff = (cf.xOffset - (float) mat->width / 2) -
-            (sprTex->offX - (float) mat->width / 2);
+            (spriteTextures[mat->tex->ofTypeID]->offX -
+                (float) mat->width / 2);
 
         // Does the mobj have an active light definition?
         if(mo->state)
@@ -446,13 +477,12 @@ void LO_AddLuminous(mobj_t* mo)
             }
         }
 
-        center = spriteTextures[mat->ofTypeID]->offY - mo->floorClip -
+        center = spriteTextures[mat->tex->ofTypeID]->offY - mo->floorClip -
             R_GetBobOffset(mo) - cf.yOffset;
 
         // Will the sprite be allowed to go inside the floor?
-        mul = mo->pos[VZ] + spriteTextures[mat->ofTypeID]->offY -
-            (float) mat->height -
-                mo->subsector->sector->SP_floorheight;
+        mul = mo->pos[VZ] + spriteTextures[mat->tex->ofTypeID]->offY -
+            (float) mat->height - mo->subsector->sector->SP_floorheight;
         if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.
@@ -491,7 +521,7 @@ void LO_AddLuminous(mobj_t* mo)
         else
         {   // Use the auto-calculated color.
             for(i = 0; i < 3; ++i)
-                rgb[i] = sprTex->autoLightColor[i];
+                rgb[i] = autoLightColor[i];
         }
 
         // This'll allow a halo to be rendered. If the light is hidden from

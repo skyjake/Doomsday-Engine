@@ -59,7 +59,7 @@
 
 typedef struct reg_mobj_s {
     // Links to next and prev mobj in the register hash.
-    struct reg_mobj_s  *next, *prev;
+    struct reg_mobj_s*  next, *prev;
 
     // The tic when the mobj state was last sent.
     int                 lastTimeStateSent;
@@ -67,7 +67,7 @@ typedef struct reg_mobj_s {
 } reg_mobj_t;
 
 typedef struct mobjhash_s {
-    reg_mobj_t         *first, *last;
+    reg_mobj_t*         first, *last;
 } mobjhash_t;
 
 /**
@@ -85,9 +85,9 @@ typedef struct cregister_s {
     mobjhash_t          mobjs[REG_MOBJ_HASH_SIZE];
 
     dt_player_t         ddPlayers[DDMAXPLAYERS];
-    dt_sector_t        *sectors;
-    dt_side_t          *sideDefs;
-    dt_poly_t          *polyObjs;
+    dt_sector_t*        sectors;
+    dt_side_t*          sideDefs;
+    dt_poly_t*          polyObjs;
 } cregister_t;
 
 /**
@@ -101,12 +101,12 @@ typedef struct origin_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    Sv_RegisterWorld(cregister_t *reg, boolean isInitial);
-void    Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id);
-boolean Sv_IsVoidDelta(const void *delta);
-void    Sv_PoolQueueClear(pool_t *pool);
-void    Sv_GenerateNewDeltas(cregister_t *reg, int clientNumber,
-                             boolean doUpdate);
+void            Sv_RegisterWorld(cregister_t* reg, boolean isInitial);
+void            Sv_NewDelta(void* deltaPtr, deltatype_t type, uint id);
+boolean         Sv_IsVoidDelta(const void* delta);
+void            Sv_PoolQueueClear(pool_t* pool);
+void            Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber,
+                                     boolean doUpdate);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -132,10 +132,10 @@ static float deltaBaseScores[NUM_DELTA_TYPES];
 static dt_mobj_t dummyZeroMobj;
 
 // Origins of stuff. Calculated at the beginning of a map.
-static origin_t *sectorOrigins, *sideOrigins;
+static origin_t* sectorOrigins, *sideOrigins;
 
 // Pointer to the owner line for each side.
-static linedef_t **sideOwners;
+static linedef_t** sideOwners;
 
 // CODE --------------------------------------------------------------------
 
@@ -145,9 +145,9 @@ static linedef_t **sideOwners;
  */
 void Sv_InitPools(void)
 {
-    uint            i;
-    sector_t       *sec;
-    uint            startTime;
+    uint                i;
+    sector_t*           sec;
+    uint                startTime;
 
     // Clients don't register anything.
     if(isClient)
@@ -213,7 +213,7 @@ void Sv_InitPools(void)
     sideOrigins = Z_Malloc(sizeof(origin_t) * numSideDefs, PU_LEVEL, 0);
     for(i = 0; i < numSideDefs; ++i)
     {
-        vertex_t           *vtx;
+        vertex_t*           vtx;
 
         // The side must be owned by a line.
         if(sideOwners[i] == NULL)
@@ -265,7 +265,7 @@ void Sv_InitPoolForClient(uint clientNumber)
 /**
  * @return              Pointer to the console's delta pool.
  */
-pool_t *Sv_GetPool(uint consoleNumber)
+pool_t* Sv_GetPool(uint consoleNumber)
 {
     return &pools[consoleNumber];
 }
@@ -281,10 +281,10 @@ uint Sv_RegisterHashFunction(thid_t id)
 /**
  * @return              Pointer to the register-mobj, if it already exists.
  */
-reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
+reg_mobj_t*             Sv_RegisterFindMobj(cregister_t* reg, thid_t id)
 {
-    mobjhash_t *hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
-    reg_mobj_t *iter;
+    mobjhash_t*         hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
+    reg_mobj_t*         iter;
 
     // See if there already is a register-mobj for this id.
     for(iter = hash->first; iter; iter = iter->next)
@@ -302,10 +302,10 @@ reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
 /**
  * Adds a new reg_mobj_t to the register's mobj hash.
  */
-reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
+reg_mobj_t* Sv_RegisterAddMobj(cregister_t* reg, thid_t id)
 {
-    mobjhash_t *hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
-    reg_mobj_t *newRegMo;
+    mobjhash_t*         hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
+    reg_mobj_t*         newRegMo;
 
     // Try to find an existing register-mobj.
     if((newRegMo = Sv_RegisterFindMobj(reg, id)) != NULL)
@@ -335,9 +335,9 @@ reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
 /**
  * Removes a reg_mobj_t from the register's mobj hash.
  */
-void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
+void Sv_RegisterRemoveMobj(cregister_t* reg, reg_mobj_t* regMo)
 {
-    mobjhash_t *hash =
+    mobjhash_t*         hash =
         &reg->mobjs[Sv_RegisterHashFunction(regMo->mo.thinker.id)];
 
     // Update the first and last links.
@@ -369,7 +369,7 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
  *                      If the mobj is touching the ceiling; @c MAXINT.
  *                      Otherwise returns the Z coordinate.
  */
-float Sv_GetMaxedMobjZ(const mobj_t *mo)
+float Sv_GetMaxedMobjZ(const mobj_t* mo)
 {
     if(mo->pos[VZ] == mo->floorZ)
     {
@@ -386,7 +386,7 @@ float Sv_GetMaxedMobjZ(const mobj_t *mo)
  * Store the state of the mobj into the register-mobj.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mo)
+void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
 {
     // (dt_mobj_t <=> mobj_t)
     // Just copy the data we need.
@@ -416,7 +416,7 @@ void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mo)
  * Reset the data of the registered mobj to reasonable defaults.
  * In effect, forces a resend of the zeroed entries as deltas.
  */
-void Sv_RegisterResetMobj(dt_mobj_t *reg)
+void Sv_RegisterResetMobj(dt_mobj_t* reg)
 {
     reg->pos[VX] = 0;
     reg->pos[VY] = 0;
@@ -436,11 +436,11 @@ void Sv_RegisterResetMobj(dt_mobj_t *reg)
  * Store the state of the player into the register-player.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterPlayer(dt_player_t *reg, uint number)
+void Sv_RegisterPlayer(dt_player_t* reg, uint number)
 {
-    player_t           *plr = &ddPlayers[number];
-    ddplayer_t         *ddpl = &plr->shared;
-    client_t           *c = &clients[number];
+    player_t*           plr = &ddPlayers[number];
+    ddplayer_t*         ddpl = &plr->shared;
+    client_t*           c = &clients[number];
 
     reg->mobj = (ddpl->mo ? ddpl->mo->thinker.id : 0);
     reg->forwardMove = c->lastCmd->forwardMove;
@@ -464,11 +464,10 @@ void Sv_RegisterPlayer(dt_player_t *reg, uint number)
  * @param reg           The sector register to be initialized.
  * @param number        The world sector number to be registered.
  */
-void Sv_RegisterSector(dt_sector_t *reg, uint number)
+void Sv_RegisterSector(dt_sector_t* reg, uint number)
 {
     uint                i;
-    sector_t           *sec = SECTOR_PTR(number);
-    material_t         *mat;
+    sector_t*           sec = SECTOR_PTR(number);
 
     reg->lightLevel = sec->lightLevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
@@ -488,17 +487,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
                sizeof(reg->planes[i].surface.rgba));
 
         // Surface material.
-        mat = sec->SP_planematerial(i);
-        if(mat)
-        {
-            reg->planes[i].surface.material.texture = mat->ofTypeID;
-            reg->planes[i].surface.material.type = mat->type;
-        }
-        else
-        {
-            reg->planes[i].surface.material.texture = 0;
-            reg->planes[i].surface.material.type = 0;
-        }
+        reg->planes[i].surface.material = sec->SP_planematerial(i);
     }
 }
 
@@ -506,14 +495,14 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
  * Store the state of the side into the register-side.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterSide(dt_side_t *reg, uint number)
+void Sv_RegisterSide(dt_side_t* reg, uint number)
 {
-    sidedef_t          *side = SIDE_PTR(number);
-    linedef_t          *line = sideOwners[number];
+    sidedef_t*          side = SIDE_PTR(number);
+    linedef_t*          line = sideOwners[number];
 
-    reg->top.material.texture = (side->SW_topmaterial? side->SW_topmaterial->ofTypeID : 0);
-    reg->middle.material.texture = (side->SW_middlematerial? side->SW_middlematerial->ofTypeID : 0);
-    reg->bottom.material.texture = (side->SW_bottommaterial? side->SW_bottommaterial->ofTypeID : 0);
+    reg->top.material = side->SW_topmaterial;
+    reg->middle.material = side->SW_middlematerial;
+    reg->bottom.material = side->SW_bottommaterial;
     reg->lineFlags = (line ? line->flags & 0xff : 0);
 
     memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
@@ -527,9 +516,9 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
  * Store the state of the polyobj into the register-poly.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterPoly(dt_poly_t *reg, uint number)
+void Sv_RegisterPoly(dt_poly_t* reg, uint number)
 {
-    polyobj_t          *poly = polyObjs[number];
+    polyobj_t*          poly = polyObjs[number];
 
     reg->dest.pos[VX] = poly->dest[VX];
     reg->dest.pos[VY] = poly->dest[VY];
@@ -541,12 +530,12 @@ void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 /**
  * @return              @c true, if the result is not void.
  */
-boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
-                               mobjdelta_t *d)
+boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
+                               mobjdelta_t* d)
 {
-    int         df;
-    reg_mobj_t *regMo = NULL;
-    const dt_mobj_t *r = &dummyZeroMobj;
+    int                 df;
+    reg_mobj_t*         regMo = NULL;
+    const dt_mobj_t*    r = &dummyZeroMobj;
 
     if((regMo = Sv_RegisterFindMobj(reg, s->thinker.id)) != NULL)
     {
@@ -627,12 +616,12 @@ VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinke
 /**
  * @return              @c true, if the result is not void.
  */
-boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
-                                 playerdelta_t *d)
+boolean Sv_RegisterComparePlayer(cregister_t* reg, uint number,
+                                 playerdelta_t* d)
 {
-    const dt_player_t *r = &reg->ddPlayers[number];
-    dt_player_t *s = &d->player;
-    int         df = 0;
+    const dt_player_t*  r = &reg->ddPlayers[number];
+    dt_player_t*        s = &d->player;
+    int                 df = 0;
 
     // Init the delta with current data.
     Sv_NewDelta(d, DT_PLAYER, number);
@@ -696,23 +685,17 @@ boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
 /**
  * @return              @c true, if the result is not void.
  */
-boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
-                                 sectordelta_t *d, byte doUpdate)
+boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
+                                 sectordelta_t* d, byte doUpdate)
 {
-    dt_sector_t *r = &reg->sectors[number];
-    const sector_t *s = SECTOR_PTR(number);
-    int         df = 0;
+    dt_sector_t*        r = &reg->sectors[number];
+    const sector_t*     s = SECTOR_PTR(number);
+    int                 df = 0;
 
     // Determine which data is different.
-    if((s->SP_floormaterial &&
-        r->planes[PLN_FLOOR].surface.material.texture != s->SP_floormaterial->ofTypeID) ||
-       (!s->SP_floormaterial &&
-        r->planes[PLN_FLOOR].surface.material.texture != 0))
+    if(s->SP_floormaterial != r->planes[PLN_FLOOR].surface.material)
         df |= SDF_FLOOR_MATERIAL;
-    if((s->SP_ceilmaterial &&
-        r->planes[PLN_CEILING].surface.material.texture != s->SP_ceilmaterial->ofTypeID) ||
-       (!s->SP_ceilmaterial &&
-        r->planes[PLN_CEILING].surface.material.texture != 0))
+    if(s->SP_ceilmaterial != r->planes[PLN_CEILING].surface.material)
        df |= SDF_CEILING_MATERIAL;
     if(r->lightLevel != s->lightLevel)
         df |= SDF_LIGHT;
@@ -838,77 +821,38 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
 /**
  * @eturn               @c true, if the result is not void.
  */
-boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
+boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
                                byte doUpdate)
 {
-    const sidedef_t *s = SIDE_PTR(number);
-    const linedef_t *line = sideOwners[number];
-    dt_side_t  *r = &reg->sideDefs[number];
-    int         df = 0;
-    byte        lineFlags = (line ? line->flags & 0xff : 0);
-    byte        sideFlags = s->flags & 0xff;
+    const sidedef_t*    s = SIDE_PTR(number);
+    const linedef_t*    line = sideOwners[number];
+    dt_side_t*          r = &reg->sideDefs[number];
+    int                 df = 0;
+    byte                lineFlags = (line ? line->flags & 0xff : 0);
+    byte                sideFlags = s->flags & 0xff;
 
-    if(s->SW_topmaterial)
+    if(r->top.material != s->SW_topmaterial &&
+       !(s->SW_topflags & SUF_TEXFIX))
     {
-        if(r->top.material.texture != s->SW_topmaterial->ofTypeID &&
-	       !(s->SW_topflags & SUF_TEXFIX))
-        {
-            df |= SIDF_TOP_MATERIAL;
-            if(doUpdate)
-                r->top.material.texture = s->SW_topmaterial->ofTypeID;
-        }
-    }
-    else
-    {
-        if(r->top.material.texture != 0 &&
-           !(s->SW_topflags & SUF_TEXFIX))
-        {
-            df |= SIDF_TOP_MATERIAL;
-            if(doUpdate)
-                r->top.material.texture = 0;
-        }
+        df |= SIDF_TOP_MATERIAL;
+        if(doUpdate)
+            r->top.material = s->SW_topmaterial;
     }
 
-    if(s->SW_middlematerial)
+    if(r->middle.material != s->SW_middlematerial &&
+       !(s->SW_middleflags & SUF_TEXFIX))
     {
-        if(r->middle.material.texture != s->SW_middlematerial->ofTypeID &&
-           !(s->SW_middleflags & SUF_TEXFIX))
-        {
-            df |= SIDF_MID_MATERIAL;
-            if(doUpdate)
-                r->middle.material.texture = s->SW_middlematerial->ofTypeID;
-        }
-    }
-    else
-    {
-        if(r->middle.material.texture != 0 &&
-           !(s->SW_middleflags & SUF_TEXFIX))
-        {
-            df |= SIDF_MID_MATERIAL;
-            if(doUpdate)
-                r->middle.material.texture = 0;
-        }
+        df |= SIDF_MID_MATERIAL;
+        if(doUpdate)
+            r->middle.material = s->SW_middlematerial;
     }
 
-    if(s->SW_bottommaterial)
+    if(r->bottom.material != s->SW_bottommaterial &&
+       !(s->SW_bottomflags & SUF_TEXFIX))
     {
-        if(r->bottom.material.texture != s->SW_bottommaterial->ofTypeID &&
-           !(s->SW_bottomflags & SUF_TEXFIX))
-        {
-            df |= SIDF_BOTTOM_MATERIAL;
-            if(doUpdate)
-                r->bottom.material.texture = s->SW_bottommaterial->ofTypeID;
-        }
-    }
-    else
-    {
-        if(r->bottom.material.texture != 0 &&
-           !(s->SW_bottomflags & SUF_TEXFIX))
-        {
-            df |= SIDF_BOTTOM_MATERIAL;
-            if(doUpdate)
-                r->bottom.material.texture = 0;
-        }
+        df |= SIDF_BOTTOM_MATERIAL;
+        if(doUpdate)
+            r->bottom.material = s->SW_bottommaterial;
     }
 
     if(r->lineFlags != lineFlags)
@@ -1018,12 +962,12 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
 /**
  * @return              @c true, if the result is not void.
  */
-boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
+boolean Sv_RegisterComparePoly(cregister_t* reg, uint number,
                                polydelta_t *d)
 {
-    const dt_poly_t *r = &reg->polyObjs[number];
-    dt_poly_t *s = &d->po;
-    int         df = 0;
+    const dt_poly_t*    r = &reg->polyObjs[number];
+    dt_poly_t*          s = &d->po;
+    int                 df = 0;
 
     // Init the delta with current data.
     Sv_NewDelta(d, DT_POLY, number);
@@ -1049,7 +993,7 @@ boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
  * @return              @c true, if the mobj can be excluded from delta
  *                      processing.
  */
-boolean Sv_IsMobjIgnored(mobj_t *mo)
+boolean Sv_IsMobjIgnored(mobj_t* mo)
 {
     return (mo->ddFlags & DDMF_LOCAL) != 0;
 }
@@ -1072,7 +1016,7 @@ boolean Sv_IsPlayerIgnored(int plrNum)
  * initial register, clients wouldn't receive much info from mobjs that
  * haven't moved since the beginning.
  */
-void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
+void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
 {
     uint                i;
 
@@ -1109,10 +1053,10 @@ void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
 /**
  * Update the pool owner's info.
  */
-void Sv_UpdateOwnerInfo(pool_t *pool)
+void Sv_UpdateOwnerInfo(pool_t* pool)
 {
-    player_t           *plr = &ddPlayers[pool->owner];
-    ownerinfo_t        *info = &pool->ownerInfo;
+    player_t*           plr = &ddPlayers[pool->owner];
+    ownerinfo_t*        info = &pool->ownerInfo;
 
     memset(info, 0, sizeof(*info));
 
@@ -1121,7 +1065,7 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
 
     if(plr->shared.mo)
     {
-        mobj_t                 *mo = plr->shared.mo;
+        mobj_t*             mo = plr->shared.mo;
 
         info->pos[VX] = mo->pos[VX];
         info->pos[VY] = mo->pos[VY];
@@ -1147,9 +1091,9 @@ uint Sv_GetTimeStamp(void)
 /**
  * Initialize a new delta.
  */
-void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
+void Sv_NewDelta(void* deltaPtr, deltatype_t type, uint id)
 {
-    delta_t            *delta = deltaPtr;
+    delta_t*            delta = deltaPtr;
 
     // NOTE: This only clears the common delta_t part, not the extra data.
     memset(delta, 0, sizeof(*delta));
@@ -1163,7 +1107,7 @@ void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
 /**
  * @return              @c true, if the delta contains no information.
  */
-boolean Sv_IsVoidDelta(const void *delta)
+boolean Sv_IsVoidDelta(const void* delta)
 {
     return ((const delta_t *) delta)->flags == 0;
 }
@@ -1171,9 +1115,9 @@ boolean Sv_IsVoidDelta(const void *delta)
 /**
  * @return              @c true, if the delta is a Sound delta.
  */
-boolean Sv_IsSoundDelta(const void *delta)
+boolean Sv_IsSoundDelta(const void* delta)
 {
-    const delta_t      *d = delta;
+    const delta_t*      d = delta;
 
     return (d->type == DT_SOUND || d->type == DT_MOBJ_SOUND ||
             d->type == DT_SECTOR_SOUND || d->type == DT_POLY_SOUND);
@@ -1182,23 +1126,23 @@ boolean Sv_IsSoundDelta(const void *delta)
 /**
  * @return              @c true, if the delta is a Start Sound delta.
  */
-boolean Sv_IsStartSoundDelta(const void *delta)
+boolean Sv_IsStartSoundDelta(const void* delta)
 {
-    const sounddelta_t *d = delta;
+    const sounddelta_t* d = delta;
 
-    return Sv_IsSoundDelta(delta) && (d->delta.flags & SNDDF_VOLUME &&
-                                      d->volume > 0);
+    return Sv_IsSoundDelta(delta) &&
+        ((d->delta.flags & SNDDF_VOLUME) && d->volume > 0);
 }
 
 /**
  * @return              @c true, if the delta is Stop Sound delta.
  */
-boolean Sv_IsStopSoundDelta(const void *delta)
+boolean Sv_IsStopSoundDelta(const void* delta)
 {
-    const sounddelta_t *d = delta;
+    const sounddelta_t* d = delta;
 
-    return Sv_IsSoundDelta(delta) && (d->delta.flags & SNDDF_VOLUME &&
-                                      d->volume <= 0);
+    return Sv_IsSoundDelta(delta) &&
+        ((d->delta.flags & SNDDF_VOLUME) && d->volume <= 0);
 }
 
 /**
@@ -1207,24 +1151,24 @@ boolean Sv_IsStopSoundDelta(const void *delta)
 boolean Sv_IsNullMobjDelta(const void *delta)
 {
     return ((const delta_t *) delta)->type == DT_MOBJ &&
-        ((const delta_t *) delta)->flags & MDFC_NULL;
+        (((const delta_t *) delta)->flags & MDFC_NULL);
 }
 
 /**
  * @return              @c true, if the delta is a Create Mobj delta.
  */
-boolean Sv_IsCreateMobjDelta(const void *delta)
+boolean Sv_IsCreateMobjDelta(const void* delta)
 {
     return ((const delta_t *) delta)->type == DT_MOBJ &&
-        ((const delta_t *) delta)->flags & MDFC_CREATE;
+        (((const delta_t *) delta)->flags & MDFC_CREATE);
 }
 
 /**
  * @return              @c true, if the deltas refer to the same object.
  */
-boolean Sv_IsSameDelta(const void *delta1, const void *delta2)
+boolean Sv_IsSameDelta(const void* delta1, const void* delta2)
 {
-    const delta_t *a = delta1, *b = delta2;
+    const delta_t*      a = delta1, *b = delta2;
 
     return (a->type == b->type) && (a->id == b->id);
 }
@@ -1232,11 +1176,11 @@ boolean Sv_IsSameDelta(const void *delta1, const void *delta2)
 /**
  * Makes a copy of the delta.
  */
-void *Sv_CopyDelta(void *deltaPtr)
+void* Sv_CopyDelta(void* deltaPtr)
 {
-    void       *newDelta;
-    delta_t    *delta = deltaPtr;
-    size_t      size =
+    void*               newDelta;
+    delta_t*            delta = deltaPtr;
+    size_t              size =
         (delta->type == DT_MOBJ ? sizeof(mobjdelta_t) : delta->type ==
          DT_PLAYER ? sizeof(playerdelta_t) : delta->type ==
          DT_SECTOR ? sizeof(sectordelta_t) : delta->type ==
@@ -1267,10 +1211,10 @@ void *Sv_CopyDelta(void *deltaPtr)
  *
  * 1 and 2 must refer to the same entity!
  */
-void Sv_SubtractDelta(void *deltaPtr1, const void *deltaPtr2)
+void Sv_SubtractDelta(void* deltaPtr1, const void* deltaPtr2)
 {
-    delta_t *delta = deltaPtr1;
-    const delta_t *sub = deltaPtr2;
+    delta_t*            delta = deltaPtr1;
+    const delta_t*      sub = deltaPtr2;
 
 #ifdef _DEBUG
     if(!Sv_IsSameDelta(delta, sub))
@@ -1295,16 +1239,16 @@ void Sv_SubtractDelta(void *deltaPtr1, const void *deltaPtr2)
  * Applies the data in the source delta to the destination delta.
  * Both must be in the NEW state. Handles all types of deltas.
  */
-void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
+void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
 {
-    const delta_t *src = srcDelta;
-    delta_t *dest = destDelta;
-    int     sf = src->flags;
+    const delta_t*      src = srcDelta;
+    delta_t*            dest = destDelta;
+    int                 sf = src->flags;
 
     if(src->type == DT_MOBJ)
     {
-        const dt_mobj_t *s = &((const mobjdelta_t *) src)->mo;
-        dt_mobj_t *d = &((mobjdelta_t *) dest)->mo;
+        const dt_mobj_t*    s = &((const mobjdelta_t *) src)->mo;
+        dt_mobj_t*          d = &((mobjdelta_t *) dest)->mo;
 
         // *Always* set the player pointer.
         d->dPlayer = s->dPlayer;
@@ -1347,8 +1291,8 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
     }
     else if(src->type == DT_PLAYER)
     {
-        const dt_player_t *s = &((const playerdelta_t *) src)->player;
-        dt_player_t *d = &((playerdelta_t *) dest)->player;
+        const dt_player_t*  s = &((const playerdelta_t *) src)->player;
+        dt_player_t*        d = &((playerdelta_t *) dest)->player;
 
         if(sf & PDF_MOBJ)
             d->mobj = s->mobj;
@@ -1375,11 +1319,11 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->clPitch = s->clPitch; */ /* $unifiedangles */
         if(sf & PDF_PSPRITES)
         {
-            uint    i;
+            uint                i;
 
             for(i = 0; i < 2; ++i)
             {
-                int     off = 16 + i * 8;
+                int                 off = 16 + i * 8;
 
                 if(sf & (PSDF_STATEPTR << off))
                 {
@@ -1403,15 +1347,15 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
     }
     else if(src->type == DT_SECTOR)
     {
-        const dt_sector_t *s = &((const sectordelta_t *) src)->sector;
-        dt_sector_t *d = &((sectordelta_t *) dest)->sector;
+        const dt_sector_t*  s = &((const sectordelta_t *) src)->sector;
+        dt_sector_t*        d = &((sectordelta_t *) dest)->sector;
 
         if(sf & SDF_FLOOR_MATERIAL)
-            d->planes[PLN_FLOOR].surface.material.texture =
-                s->planes[PLN_FLOOR].surface.material.texture;
+            d->planes[PLN_FLOOR].surface.material =
+                s->planes[PLN_FLOOR].surface.material;
         if(sf & SDF_CEILING_MATERIAL)
-            d->planes[PLN_CEILING].surface.material.texture =
-                s->planes[PLN_CEILING].surface.material.texture;
+            d->planes[PLN_CEILING].surface.material =
+                s->planes[PLN_CEILING].surface.material;
         if(sf & SDF_LIGHT)
             d->lightLevel = s->lightLevel;
         if(sf & SDF_FLOOR_TARGET)
@@ -1474,15 +1418,15 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
     }
     else if(src->type == DT_SIDE)
     {
-        const dt_side_t *s = &((const sidedelta_t *) src)->side;
-        dt_side_t *d = &((sidedelta_t *) dest)->side;
+        const dt_side_t*    s = &((const sidedelta_t *) src)->side;
+        dt_side_t*          d = &((sidedelta_t *) dest)->side;
 
         if(sf & SIDF_TOP_MATERIAL)
-            d->top.material.texture = s->top.material.texture;
+            d->top.material = s->top.material;
         if(sf & SIDF_MID_MATERIAL)
-            d->middle.material.texture = s->middle.material.texture;
+            d->middle.material = s->middle.material;
         if(sf & SIDF_BOTTOM_MATERIAL)
-            d->bottom.material.texture = s->bottom.material.texture;
+            d->bottom.material = s->bottom.material;
         if(sf & SIDF_LINE_FLAGS)
             d->lineFlags = s->lineFlags;
 
@@ -1517,8 +1461,8 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
     }
     else if(src->type == DT_POLY)
     {
-        const dt_poly_t *s = &((const polydelta_t *) src)->po;
-        dt_poly_t *d = &((polydelta_t *) dest)->po;
+        const dt_poly_t*    s = &((const polydelta_t *) src)->po;
+        dt_poly_t*          d = &((polydelta_t *) dest)->po;
 
         if(sf & PODF_DEST_X)
             d->dest.pos[VX] = s->dest.pos[VX];
@@ -1533,8 +1477,8 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
     }
     else if(Sv_IsSoundDelta(src))
     {
-        const sounddelta_t *s = srcDelta;
-        sounddelta_t *d = destDelta;
+        const sounddelta_t* s = srcDelta;
+        sounddelta_t*       d = destDelta;
 
         if(sf & SNDDF_VOLUME)
             d->volume = s->volume;
@@ -1552,10 +1496,10 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
  *
  * @return              @c false, if the result of the merge is a void delta.
  */
-boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
+boolean Sv_MergeDelta(void* destDelta, const void* srcDelta)
 {
-    const delta_t *src = srcDelta;
-    delta_t *dest = destDelta;
+    const delta_t*      src = srcDelta;
+    delta_t*            dest = destDelta;
 
 #ifdef _DEBUG
     if(!Sv_IsSameDelta(src, dest))
@@ -1573,12 +1517,14 @@ boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
         // Nothing can be merged with a null mobj delta.
         return true;
     }
+
     if(Sv_IsNullMobjDelta(src))
     {
         // Null mobj deltas kill the destination.
         dest->flags = MDFC_NULL;
         return true;
     }
+
     if(Sv_IsCreateMobjDelta(dest) && Sv_IsNullMobjDelta(src))
     {
         // Applying a Null mobj delta on a Create mobj delta causes
@@ -1587,6 +1533,7 @@ boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
         dest->flags = 0;
         return false;
     }
+
     if(Sv_IsStartSoundDelta(src) || Sv_IsStopSoundDelta(src))
     {
         // Sound deltas completely override what they're being
@@ -1595,8 +1542,8 @@ boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
         // both in the same frame: first start a sound and then immediately
         // stop it? We don't want that.
 
-        sounddelta_t *destSound = destDelta;
-        const sounddelta_t *srcSound = srcDelta;
+        sounddelta_t*       destSound = destDelta;
+        const sounddelta_t* srcSound = srcDelta;
 
         // Destination becomes equal to source.
         dest->flags = src->flags;
@@ -1623,7 +1570,7 @@ boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
 /**
  * @return              The age of the delta, in milliseconds.
  */
-uint Sv_DeltaAge(const delta_t *delta)
+uint Sv_DeltaAge(const delta_t* delta)
 {
     return Sv_GetTimeStamp() - delta->timeStamp;
 }
@@ -1632,10 +1579,10 @@ uint Sv_DeltaAge(const delta_t *delta)
  * Approximate the distance to the given sector. Set 'mayBeGone' to true
  * if the mobj may have been destroyed and should not be processed.
  */
-float Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
+float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info,
                       boolean isReal)
 {
-    float       z;
+    float               z;
 
     if(isReal && !P_IsUsedMobjID(mo->thinker.id))
     {
@@ -1662,9 +1609,9 @@ float Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
 /**
  * Approximate the distance to the given sector.
  */
-float Sv_SectorDistance(int index, const ownerinfo_t *info)
+float Sv_SectorDistance(int index, const ownerinfo_t* info)
 {
-    sector_t *sector = SECTOR_PTR(index);
+    sector_t*           sector = SECTOR_PTR(index);
 
     return P_ApproxDistance3(info->pos[VX] - sectorOrigins[index].pos[VX],
                              info->pos[VY] - sectorOrigins[index].pos[VY],
@@ -1676,9 +1623,9 @@ float Sv_SectorDistance(int index, const ownerinfo_t *info)
 /**
  * @return              The distance to the origin of the delta's entity.
  */
-float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
+float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 {
-    const delta_t *delta = deltaPtr;
+    const delta_t*      delta = deltaPtr;
 
     if(delta->type == DT_MOBJ)
     {
@@ -1696,7 +1643,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     if(delta->type == DT_PLAYER)
     {
         // Use the player's actual position.
-        const mobj_t           *mo = ddPlayers[delta->id].shared.mo;
+        const mobj_t*       mo = ddPlayers[delta->id].shared.mo;
 
         if(mo)
         {
@@ -1717,7 +1664,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_POLY)
     {
-        polyobj_t              *po = polyObjs[delta->id];
+        polyobj_t*          po = polyObjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
                                 info->pos[VY] - po->startSpot.pos[VY]);
@@ -1725,7 +1672,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_MOBJ_SOUND)
     {
-        const sounddelta_t     *sound = deltaPtr;
+        const sounddelta_t* sound = deltaPtr;
 
         return Sv_MobjDistance(sound->mobj, info, true);
     }
@@ -1737,7 +1684,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        polyobj_t              *po = polyObjs[delta->id];
+        polyobj_t*          po = polyObjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
                                 info->pos[VY] - po->startSpot.pos[VY]);
@@ -1750,7 +1697,7 @@ float Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 /**
  * The hash function for the pool delta hash.
  */
-deltalink_t *Sv_PoolHash(pool_t *pool, int id)
+deltalink_t* Sv_PoolHash(pool_t* pool, int id)
 {
     return &pool->hash[(uint) id & POOL_HASH_FUNCTION_MASK];
 }
@@ -1758,10 +1705,10 @@ deltalink_t *Sv_PoolHash(pool_t *pool, int id)
 /**
  * The delta is removed from the pool's delta hash.
  */
-void Sv_RemoveDelta(pool_t *pool, void *deltaPtr)
+void Sv_RemoveDelta(pool_t* pool, void* deltaPtr)
 {
-    delta_t *delta = deltaPtr;
-    deltalink_t *hash = Sv_PoolHash(pool, delta->id);
+    delta_t*            delta = deltaPtr;
+    deltalink_t*        hash = Sv_PoolHash(pool, delta->id);
 
     // Update first and last links.
     if(hash->last == delta)
@@ -1778,6 +1725,7 @@ void Sv_RemoveDelta(pool_t *pool, void *deltaPtr)
     {
         delta->next->prev = delta->prev;
     }
+
     if(delta->prev)
     {
         delta->prev->next = delta->next;
@@ -1792,10 +1740,10 @@ void Sv_RemoveDelta(pool_t *pool, void *deltaPtr)
  */
 void Sv_DrainPool(uint clientNumber)
 {
-    pool_t             *pool = &pools[clientNumber];
-    delta_t            *delta;
-    misrecord_t        *mis;
-    void               *next = NULL;
+    pool_t*             pool = &pools[clientNumber];
+    delta_t*            delta;
+    misrecord_t*        mis;
+    void*               next = NULL;
     int                 i;
 
     // Update the number of the owner.
@@ -1837,9 +1785,9 @@ void Sv_DrainPool(uint clientNumber)
  *                      is any farther, the delta will not be sent to the
  *                      client in question.
  */
-float Sv_GetMaxSoundDistance(const sounddelta_t *delta)
+float Sv_GetMaxSoundDistance(const sounddelta_t* delta)
 {
-    float   volume = 1;
+    float               volume = 1;
 
     // Volume shortens the maximum distance (why send it if it's not
     // audible?).
@@ -1847,28 +1795,30 @@ float Sv_GetMaxSoundDistance(const sounddelta_t *delta)
     {
         volume = delta->volume;
     }
+
     if(volume <= 0)
     {
         // Silence is heard all over the world.
         return DDMAXFLOAT;
     }
+
     return volume * soundMaxDist;
 }
 
 /**
  * @return              The flags that remain after exclusion.
  */
-int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
+int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
 {
-    const delta_t      *delta = deltaPtr;
-    player_t           *plr = &ddPlayers[pool->owner];
-    mobj_t             *poolViewer = plr->shared.mo;
+    const delta_t*      delta = deltaPtr;
+    player_t*           plr = &ddPlayers[pool->owner];
+    mobj_t*             poolViewer = plr->shared.mo;
     int                 flags = delta->flags;
 
     // Can we exclude information from the delta? (for this player only)
     if(delta->type == DT_MOBJ)
     {
-        const mobjdelta_t  *mobjDelta = deltaPtr;
+        const mobjdelta_t*  mobjDelta = deltaPtr;
 
         if(poolViewer && poolViewer->thinker.id == delta->id)
         {
@@ -1955,14 +1905,12 @@ int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
  *
  * The contents of the delta must not be modified.
  */
-void Sv_AddDelta(pool_t *pool, void *deltaPtr)
+void Sv_AddDelta(pool_t* pool, void* deltaPtr)
 {
-    delta_t    *iter;
-    delta_t    *next = NULL;
-    delta_t    *existingNew = NULL;
-    delta_t    *delta = deltaPtr;
-    deltalink_t *hash = Sv_PoolHash(pool, delta->id);
-    int         flags, originalFlags;
+    delta_t*            iter, *next = NULL, *existingNew = NULL;
+    delta_t*            delta = deltaPtr;
+    deltalink_t*        hash = Sv_PoolHash(pool, delta->id);
+    int                 flags, originalFlags;
 
     // Sometimes we can exclude a part of the data, if the client has no
     // use for it.
@@ -2049,7 +1997,7 @@ void Sv_AddDelta(pool_t *pool, void *deltaPtr)
 /**
  * Add the delta to all the pools in the NULL-terminated array.
  */
-void Sv_AddDeltaToPools(void *deltaPtr, pool_t **targets)
+void Sv_AddDeltaToPools(void* deltaPtr, pool_t** targets)
 {
     for(; *targets; targets++)
     {
@@ -2060,10 +2008,10 @@ void Sv_AddDeltaToPools(void *deltaPtr, pool_t **targets)
 /**
  * All NEW deltas for the mobj are removed from the pool as obsolete.
  */
-void Sv_PoolMobjRemoved(pool_t *pool, thid_t id)
+void Sv_PoolMobjRemoved(pool_t* pool, thid_t id)
 {
-    deltalink_t *hash = Sv_PoolHash(pool, id);
-    delta_t *delta, *next = NULL;
+    deltalink_t*        hash = Sv_PoolHash(pool, id);
+    delta_t*            delta, *next = NULL;
 
     for(delta = hash->first; delta; delta = next)
     {
@@ -2089,8 +2037,8 @@ void Sv_PoolMobjRemoved(pool_t *pool, thid_t id)
  */
 void Sv_MobjRemoved(thid_t id)
 {
-    reg_mobj_t *mo = Sv_RegisterFindMobj(&worldRegister, id);
-    uint        i;
+    uint                i;
+    reg_mobj_t*         mo = Sv_RegisterFindMobj(&worldRegister, id);
 
     if(mo)
     {
@@ -2119,7 +2067,7 @@ void Sv_MobjRemoved(thid_t id)
  */
 void Sv_PlayerRemoved(uint playerNumber)
 {
-    dt_player_t *p = &worldRegister.ddPlayers[playerNumber];
+    dt_player_t*        p = &worldRegister.ddPlayers[playerNumber];
 
     memset(p, 0, sizeof(*p));
 }
@@ -2127,13 +2075,14 @@ void Sv_PlayerRemoved(uint playerNumber)
 /**
  * @return              @c true, if the pool is in the targets array.
  */
-boolean Sv_IsPoolTargeted(pool_t *pool, pool_t **targets)
+boolean Sv_IsPoolTargeted(pool_t* pool, pool_t** targets)
 {
     for(; *targets; targets++)
     {
         if(pool == *targets)
             return true;
     }
+
     return false;
 }
 
@@ -2143,9 +2092,9 @@ boolean Sv_IsPoolTargeted(pool_t *pool, pool_t **targets)
  *
  * @return              The number of pools in the list.
  */
-int Sv_GetTargetPools(pool_t **targets, int clientsMask)
+int Sv_GetTargetPools(pool_t** targets, int clientsMask)
 {
-    int         i, numTargets = 0;
+    int                 i, numTargets = 0;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -2185,12 +2134,12 @@ int Sv_GetTargetPools(pool_t **targets, int clientsMask)
  *
  * When updating, the destroyed mobjs are removed from the register.
  */
-void Sv_NewNullDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
+void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    mobjhash_t *hash;
-    reg_mobj_t *obj, *next = 0;
-    mobjdelta_t null;
-    int         i;
+    int                 i;
+    mobjhash_t*         hash;
+    reg_mobj_t*         obj, *next = 0;
+    mobjdelta_t         null;
 
     for(i = 0, hash = reg->mobjs; i < REG_MOBJ_HASH_SIZE; ++i, hash++)
     {
@@ -2282,10 +2231,10 @@ void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 /**
  * Player deltas are generated for changed player data.
  */
-void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
+void Sv_NewPlayerDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    playerdelta_t player;
-    uint        i;
+    uint                i;
+    playerdelta_t       player;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -2299,9 +2248,9 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
             // in the register. Otherwise, the clients may not receive
             // all the data they need (because of viewpoint exclusion
             // flags).
-            if(doUpdate && player.delta.flags & PDF_MOBJ)
+            if(doUpdate && (player.delta.flags & PDF_MOBJ))
             {
-                reg_mobj_t *registered =
+                reg_mobj_t*         registered =
                     Sv_RegisterFindMobj(reg, reg->ddPlayers[i].mobj);
 
                 if(registered)
@@ -2336,7 +2285,7 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
             }
 
             // Generate a FIXPOS/FIXMOM mobj delta, too?
-            if(ddPlayers[i].mo && ddPlayers[i].flags & (DDPF_FIXPOS | DDPF_FIXMOM))
+            if(ddPlayers[i].mo && (ddPlayers[i].flags & (DDPF_FIXPOS | DDPF_FIXMOM)))
             {
                 const mobj_t *mo = ddPlayers[i].mo;
                 mobjdelta_t mobj;
@@ -2365,10 +2314,10 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 /**
  * Sector deltas are generated for changed sectors.
  */
-void Sv_NewSectorDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
+void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    sectordelta_t delta;
-    uint        i;
+    uint                i;
+    sectordelta_t       delta;
 
     for(i = 0; i < numSectors; ++i)
     {
@@ -2384,12 +2333,11 @@ void Sv_NewSectorDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
  * Changes in sides (textures) are so rare that all sides need not be
  * checked on every tic.
  */
-void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
+void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    static uint numShifts = 2;
-    static uint shift = 0;
-    sidedelta_t delta;
-    uint        i, start, end;
+    static uint         numShifts = 2, shift = 0;
+    sidedelta_t         delta;
+    uint                i, start, end;
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2424,7 +2372,7 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 /**
  * Poly deltas are generated for changed polyobjs.
  */
-void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
+void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
     uint                i;
     polydelta_t         delta;
@@ -2452,18 +2400,17 @@ Con_Printf("Sv_NewPolyDeltas: Change in %i\n", i);
  * there is no need for comparing or to have a register.
  * Set 'volume' to zero to create a sound-stopping delta.
  *
- * ASSUME: No two sounds with the same ID play at the same time from the
- *         same origin.
+ * \assume: No two sounds with the same ID play at the same time from the
+ *          same origin.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
-                      polyobj_t *sourcePoly, float volume,
+void Sv_NewSoundDelta(int soundId, mobj_t* emitter, sector_t* sourceSector,
+                      polyobj_t* sourcePoly, float volume,
                       boolean isRepeating, int clientsMask)
 {
-    pool_t     *targets[DDMAXPLAYERS + 1];
-    sounddelta_t soundDelta;
-    int         type = DT_SOUND;
-    uint        id = soundId;
-    int         df = 0;
+    pool_t*             targets[DDMAXPLAYERS + 1];
+    sounddelta_t        soundDelta;
+    int                 type = DT_SOUND, df = 0;
+    uint                id = soundId;
 
     // Determine the target pools.
     Sv_GetTargetPools(targets, clientsMask);
@@ -2517,8 +2464,8 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
  */
 boolean Sv_IsFrameTarget(uint plrNum)
 {
-    player_t           *plr = &ddPlayers[plrNum];
-    ddplayer_t         *ddpl = &plr->shared;
+    player_t*           plr = &ddPlayers[plrNum];
+    ddplayer_t*         ddpl = &plr->shared;
 
     // Local players receive frames only when they're recording a demo.
     // Clients must tell us they are ready before we can begin sending.
@@ -2538,10 +2485,10 @@ boolean Sv_IsFrameTarget(uint plrNum)
  *
  * @param clientNumber  < 0 = All ingame clients should get the deltas.
  */
-void Sv_GenerateNewDeltas(cregister_t *reg, int clientNumber,
+void Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber,
                           boolean doUpdate)
 {
-    pool_t             *targets[DDMAXPLAYERS + 1], **pool;
+    pool_t*             targets[DDMAXPLAYERS + 1], **pool;
 
     // Determine the target pools.
     Sv_GetTargetPools(targets, (clientNumber < 0 ? 0xff : (1 << clientNumber)));
@@ -2589,7 +2536,7 @@ void Sv_GenerateFrameDeltas(void)
 /**
  * Clears the priority queue of the pool.
  */
-void Sv_PoolQueueClear(pool_t *pool)
+void Sv_PoolQueueClear(pool_t* pool)
 {
     pool->queueSize = 0;
 }
@@ -2597,7 +2544,7 @@ void Sv_PoolQueueClear(pool_t *pool)
 /**
  * Exchanges two elements in the queue.
  */
-void Sv_PoolQueueExchange(pool_t *pool, int index1, int index2)
+void Sv_PoolQueueExchange(pool_t* pool, int index1, int index2)
 {
     delta_t *temp = pool->queue[index1];
 
@@ -2606,17 +2553,17 @@ void Sv_PoolQueueExchange(pool_t *pool, int index1, int index2)
 }
 
 /**
- * Adds the delta to the priority queue. More memory is allocated for
- * the queue if necessary.
+ * Adds the delta to the priority queue. More memory is allocated for the
+ * queue if necessary.
  */
-void Sv_PoolQueueAdd(pool_t *pool, delta_t *delta)
+void Sv_PoolQueueAdd(pool_t* pool, delta_t* delta)
 {
-    int         i, parent;
+    int                 i, parent;
 
     // Do we need more memory?
     if(pool->allocatedSize == pool->queueSize)
     {
-        delta_t **newQueue;
+        delta_t**           newQueue;
 
         // Double the memory.
         pool->allocatedSize *= 2;
@@ -2669,11 +2616,11 @@ void Sv_PoolQueueAdd(pool_t *pool, delta_t *delta)
  *
  * @return              @c NULL, if there are no more deltas.
  */
-delta_t *Sv_PoolQueueExtract(pool_t *pool)
+delta_t* Sv_PoolQueueExtract(pool_t* pool)
 {
-    delta_t    *max;
-    int         i, left, right, big;
-    boolean     isDone;
+    delta_t*            max;
+    int                 i, left, right, big;
+    boolean             isDone;
 
     if(!pool->queueSize)
     {
@@ -2728,10 +2675,10 @@ delta_t *Sv_PoolQueueExtract(pool_t *pool)
 /**
  * Postponed deltas can't be sent yet.
  */
-boolean Sv_IsPostponedDelta(void *deltaPtr, ownerinfo_t *info)
+boolean Sv_IsPostponedDelta(void* deltaPtr, ownerinfo_t* info)
 {
-    delta_t *delta = deltaPtr;
-    uint    age = Sv_DeltaAge(delta);
+    delta_t*            delta = deltaPtr;
+    uint                age = Sv_DeltaAge(delta);
 
     if(delta->state == DELTA_UNACKED)
     {
@@ -2751,7 +2698,7 @@ boolean Sv_IsPostponedDelta(void *deltaPtr, ownerinfo_t *info)
             // have arrived. (i.e. the pool must contain no Unacked Start
             // Sound deltas for the same source.)
 
-            delta_t *iter;
+            delta_t*            iter;
 
             for(iter = Sv_PoolHash(info->pool, delta->id)->first; iter;
                 iter = iter->next)
@@ -2776,18 +2723,20 @@ Con_Printf("POSTPONE: Stop %i\n", delta->id);
 
 /**
  * Calculate a priority score for the delta. A higher score indicates
- * greater importance. Returns true if the delta should be included
- * in the queue.
+ * greater importance.
+ *
+ * @return              @c true iff the delta should be included in the
+ *                      queue.
  */
-boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
+boolean Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
 {
-    float       score, distance, size;
-    delta_t    *delta = deltaPtr;
-    int         df = delta->flags;
-    uint        age = Sv_DeltaAge(delta);
+    float               score, distance, size;
+    delta_t*            delta = deltaPtr;
+    int                 df = delta->flags;
+    uint                age = Sv_DeltaAge(delta);
 
     // The importance doubles normally in 1 second.
-    float       ageScoreDouble = 1.0f;
+    float               ageScoreDouble = 1.0f;
 
     if(Sv_IsPostponedDelta(delta, info))
     {
@@ -2800,7 +2749,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
     distance = Sv_DeltaDistance(delta, info);
     if(distance < 1)
         distance = 1;
-    distance = distance * distance; // power of two
+    distance = distance * distance; // Power of two.
 
     // What is the base score?
     score = deltaBaseScores[delta->type] / distance;
@@ -2820,7 +2769,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
     // Priority bonuses based on the contents of the delta.
     if(delta->type == DT_MOBJ)
     {
-        const mobj_t *mo = &((mobjdelta_t *) delta)->mo;
+        const mobj_t*       mo = &((mobjdelta_t *) delta)->mo;
 
         // Seeing new mobjs is interesting.
         if(df & MDFC_CREATE)
@@ -2883,13 +2832,13 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
  * The most important deltas will be included in a frame packet.
  * A pool is rated after new deltas have been generated.
  */
-void Sv_RatePool(pool_t *pool)
+void Sv_RatePool(pool_t* pool)
 {
 #ifdef _DEBUG
-    player_t           *plr = &ddPlayers[pool->owner];
-    //client_t           *client = &clients[pool->owner];
+    player_t*           plr = &ddPlayers[pool->owner];
+    //client_t*           client = &clients[pool->owner];
 #endif
-    delta_t            *delta;
+    delta_t*            delta;
     int                 i;
 
 #ifdef _DEBUG
@@ -2919,11 +2868,11 @@ void Sv_RatePool(pool_t *pool)
 /**
  * Do special things that need to be done when the delta has been acked.
  */
-void Sv_AckDelta(pool_t *pool, delta_t *delta)
+void Sv_AckDelta(pool_t* pool, delta_t* delta)
 {
     if(Sv_IsCreateMobjDelta(delta))
     {
-        mobjdelta_t        *mobjDelta = (mobjdelta_t *) delta;
+        mobjdelta_t*        mobjDelta = (mobjdelta_t *) delta;
 
         // Created missiles are put on record.
         if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
@@ -2943,10 +2892,10 @@ void Sv_AckDelta(pool_t *pool, delta_t *delta)
  */
 void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
 {
-    pool_t             *pool = &pools[clientNumber];
-    delta_t            *delta, *next = NULL;
-    boolean             ackTimeRegistered = false;
     int                 i;
+    pool_t*             pool = &pools[clientNumber];
+    delta_t*            delta, *next = NULL;
+    boolean             ackTimeRegistered = false;
 
     // Iterate through the entire hash table.
     for(i = 0; i < POOL_HASH_SIZE; ++i)
@@ -2982,8 +2931,8 @@ void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
 uint Sv_CountUnackedDeltas(uint clientNumber)
 {
     uint                i, count;
-    pool_t             *pool = Sv_GetPool(clientNumber);
-    delta_t            *delta;
+    pool_t*             pool = Sv_GetPool(clientNumber);
+    delta_t*            delta;
 
     // Iterate through the entire hash table.
     count = 0;

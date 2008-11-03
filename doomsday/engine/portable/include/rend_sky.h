@@ -47,7 +47,7 @@ typedef struct {
 
 typedef struct {
     int             flags;
-    int             texture; // Not the OpenGL texture.
+    material_t*     mat;
     float           offset;
     fadeout_t       fadeout;
 } skylayer_t;

@@ -31,20 +31,13 @@
 
 #include "def_data.h"
 
-typedef struct {
-    int             wallTexture;
-    int             flatTexture;
-    int             detailLump;
-    unsigned int    glTex;
-} detailtex_t;
-
 typedef struct sfxinfo_s {
     void*           data; // Pointer to sound data.
     int             lumpNum;
     char            lumpName[9]; // Actual lump name of the sound (full name).
     char            id[32]; // Identifier name (from the def).
     char            name[32]; // Long name.
-    struct sfxinfo_s *link; // Link to another sound.
+    struct sfxinfo_s* link; // Link to another sound.
     int             linkPitch;
     int             linkVolume;
     int             priority;
@@ -63,7 +56,6 @@ extern ded_ptcgen_t** statePtcGens;
 extern mobjinfo_t* mobjInfo; // Map object info database.
 extern sfxinfo_t* sounds; // Sound effect list.
 extern ddtext_t* texts; // Text list.
-extern detailtex_t* details; // Detail texture mappings.
 extern mobjinfo_t** stateOwners;
 extern ded_count_t countSprNames;
 extern ded_count_t countStates;
@@ -94,7 +86,8 @@ ded_mapinfo_t*  Def_GetMapInfo(const char* mapID);
 ded_light_t*    Def_GetLightDef(int spr, int frame);
 ded_decor_t*    Def_GetDecoration(struct material_s* mat, boolean hasExt);
 ded_reflection_t* Def_GetReflection(struct material_s* mat);
-int             Def_Get(int type, char* id, void *out);
+ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat);
+int             Def_Get(int type, char* id, void* out);
 boolean         Def_SameStateSequence(state_t* snew, state_t* sold);
 void            Def_LightMapLoaded(const char* id, uint texture);
 void            Def_FlareMapLoaded(const char* id, uint texture,

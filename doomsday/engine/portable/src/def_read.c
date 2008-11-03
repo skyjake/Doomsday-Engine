@@ -714,11 +714,13 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             bCopyNext = true;
             continue; // Read the next token.
         }
+
         if(ISTOKEN(";"))
         {
             // Unnecessary semicolon? Just skip it.
             continue;
         }
+
         if(ISTOKEN("SkipIf"))
         {
             boolean             expected = true;
@@ -729,6 +731,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 expected = false;
                 ReadToken();
             }
+
             if(DED_CheckCondition(token, expected))
             {
                 // Ah, we're done. Get out of here.
@@ -736,6 +739,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             CHECKSC;
         }
+
         if(ISTOKEN("Include"))
         {
             // A new include.
@@ -745,6 +749,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             DED_Include(tmp, &fileDir);
             strcpy(label, "");
         }
+
         if(ISTOKEN("IncludeIf")) // An optional include.
         {
             boolean             expected = true;
@@ -755,6 +760,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 expected = false;
                 ReadToken();
             }
+
             if(DED_CheckCondition(token, expected))
             {
                 READSTR(tmp);
@@ -770,6 +776,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("ModelPath"))
         {
             // A new model path. Append to the list.
@@ -777,6 +784,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             CHECKSC;
             R_AddModelPath(label, true);
         }
+
         if(ISTOKEN("Header"))
         {
             FINDBEGIN;
@@ -802,6 +810,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Flag"))
         {
             // A new flag.
@@ -817,6 +826,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Thing"))
         {
             // A new thing.
@@ -870,6 +880,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_mo_idx = idx;
         }
+
         if(ISTOKEN("State"))
         {
             // A new state.
@@ -902,6 +913,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_state_idx = idx;
         }
+
         if(ISTOKEN("Sprite"))
         {
             // A new sprite.
@@ -915,6 +927,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Light"))
         {
             // A new light.
@@ -967,6 +980,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_ligdef_idx = idx;
         }
+
         if(ISTOKEN("Model"))
         {
             uint                sub;
@@ -981,6 +995,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 // Should we copy the previous definition?
                 if(bCopyNext) memcpy(mdl, prevmdl, sizeof(*mdl));
             }
+
             FINDBEGIN;
             for(;;)
             {
@@ -1011,6 +1026,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     if(sub >= DED_MAX_SUB_MODELS)
                         Con_Error("DED_ReadData: Too many submodels (%s).\n",
                         mdl->state);
+
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1041,29 +1057,40 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else RV_END
                 CHECKSC;
             }
+
             // Some post-processing. No point in doing this in a fancy way,
             // the whole reader will be rewritten sooner or later...
             if(prevmdl)
             {
-                int i;
-                if(!strcmp(mdl->state, "-"))        strcpy(mdl->state,      prevmdl->state);
-                if(!strcmp(mdl->sprite.id, "-"))    strcpy(mdl->sprite.id,  prevmdl->sprite.id);
+                int                 i;
+
+                if(!strcmp(mdl->state, "-"))
+                    strcpy(mdl->state, prevmdl->state);
+                if(!strcmp(mdl->sprite.id, "-"))
+                    strcpy(mdl->sprite.id, prevmdl->sprite.id);
                 //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevmdl->group);
                 //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevmdl->flags);
+
                 for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                 {
-                    if(!strcmp(mdl->sub[i].filename.path, "-")) strcpy(mdl->sub[i].filename.path,   prevmdl->sub[i].filename.path);
-                    if(!strcmp(mdl->sub[i].frame, "-"))         strcpy(mdl->sub[i].frame,           prevmdl->sub[i].frame);
+                    if(!strcmp(mdl->sub[i].filename.path, "-"))
+                        strcpy(mdl->sub[i].filename.path, prevmdl->sub[i].filename.path);
+
+                    if(!strcmp(mdl->sub[i].frame, "-"))
+                        strcpy(mdl->sub[i].frame, prevmdl->sub[i].frame);
+
                     //if(!strcmp(mdl->sub[i].flags, "-"))           strcpy(mdl->sub[i].flags,           prevmdl->sub[i].flags);
                 }
             }
+
             prev_modef_idx = idx;
         }
+
         if(ISTOKEN("Sound"))
-        {
-            // A new sound.
+        {   // A new sound.
             idx = DED_AddSound(ded, "");
             snd = ded->sounds + idx;
+
             FINDBEGIN;
             for(;;)
             {
@@ -1085,10 +1112,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Music"))
-        {
-            // A new music.
+        {   // A new music.
             idx = DED_AddMusic(ded, "");
+
             FINDBEGIN;
             for(;;)
             {
@@ -1103,16 +1131,17 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
-        if(ISTOKEN("Map")) // Info
-        {
-            uint                    sub;
 
-            // A new map info.
+        if(ISTOKEN("Map")) // Info
+        {   // A new map info.
+            uint                sub;
+
             idx = DED_AddMapInfo(ded, "");
             mi = ded->mapInfo + idx;
             if(prev_mapinfo_idx >= 0 && bCopyNext)
             {
-                int m;
+                int                 m;
+
                 // Should we copy the previous definition?
                 memcpy(mi, ded->mapInfo + prev_mapinfo_idx, sizeof(*mi));
                 mi->execute = sdup(mi->execute);
@@ -1124,6 +1153,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_mapinfo_idx = idx;
             sub = 0;
+
             FINDBEGIN;
             for(;;)
             {
@@ -1165,13 +1195,13 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 {
                     ded_skymodel_t *sm = &mi->skyModels[sub];
                     if(sub == NUM_SKY_MODELS)
-                    {
-                        // Too many!
+                    {   // Too many!
                         SetError("Too many sky models.");
                         retval = false;
                         goto ded_end_read;
                     }
                     sub++;
+
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1193,10 +1223,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Text"))
-        {
-            // A new text.
+        {   // A new text.
             idx = DED_AddText(ded, "");
+
             FINDBEGIN;
             for(;;)
             {
@@ -1205,7 +1236,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Text"))
                 {
                     // Allocate a 'huge' buffer.
-                    char           *temp = M_Malloc(0x10000);
+                    char*           temp = M_Malloc(0x10000);
 
                     if(ReadString(temp, 0xffff))
                     {
@@ -1226,18 +1257,18 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Texture")) // Environment
-        {
-            // A new texenv.
+        {   // A new texenv.
             idx = DED_AddTextureEnv(ded, "");
+
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
                 RV_STR("ID", ded->textureEnv[idx].id)
                 if(ISLABEL("Texture"))
-                {
-                    // A new texture name.
+                {   // A new texture name.
                     tn = DED_NewEntry((void**)&ded->textureEnv[idx].textures,
                                       &ded->textureEnv[idx].texCount, sizeof(*tn));
                     FINDBEGIN;
@@ -1250,8 +1281,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     }
                 }
                 else if(ISLABEL("Flat"))
-                {
-                    // A new flat name.
+                {   // A new flat name.
                     tn = DED_NewEntry((void**)&ded->textureEnv[idx].flats,
                                       &ded->textureEnv[idx].flatCount, sizeof(*tn));
                     FINDBEGIN;
@@ -1267,10 +1297,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Values")) // String Values
         {
             depth = 0;
             rootstr = M_Calloc(1); // A null string.
+
             FINDBEGIN;
             for(;;)
             {
@@ -1282,6 +1314,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     retval = false;
                     goto ded_end_read;
                 }
+
                 if(ISTOKEN("="))
                 {
                     // Define a new string.
@@ -1358,6 +1391,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             M_Free(rootstr);
             rootstr = 0;
         }
+
         if(ISTOKEN("Detail")) // Detail Texture
         {
             idx = DED_AddDetail(ded, "");
@@ -1367,12 +1401,13 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 // Should we copy the previous definition?
                 memcpy(dtl, ded->details + prev_dtldef_idx, sizeof(*dtl));
             }
+
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("Wall", dtl->wall)
-                RV_STR("Texture", dtl->wall) // alias
+                RV_STR("Texture", dtl->texture)
+                RV_STR("Wall", dtl->texture) // Alias
                 RV_STR("Flat", dtl->flat)
                 if(ISLABEL("Lump"))
                 {
@@ -1393,6 +1428,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_dtldef_idx = idx;
         }
+
         if(ISTOKEN("Reflection")) // Surface reflection
         {
             ded_reflection_t *ref = NULL;
@@ -1420,18 +1456,19 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Texture"))
                 {
                     READSTR(ref->materialName)
-                    ref->materialType = MAT_TEXTURE;
+                    ref->materialGroup = MG_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
                     READSTR(ref->materialName)
-                    ref->materialType = MAT_FLAT;
+                    ref->materialGroup = MG_FLATS;
                 }
                 else RV_END
                 CHECKSC;
             }
             prev_refdef_idx = idx;
         }
+
         if(ISTOKEN("Generator")) // Particle Generator
         {
             int                     sub;
@@ -1461,7 +1498,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Flat"))
                 {
                     READSTR(gen->materialName)
-                    gen->materialType = MAT_FLAT;
+                    gen->materialGroup = MG_FLATS;
+                }
+                else if(ISLABEL("Texture"))
+                {
+                    READSTR(gen->materialName)
+                    gen->materialGroup = MG_TEXTURES;
                 }
                 else
                 RV_STR("Mobj", gen->type)
@@ -1536,10 +1578,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_gendef_idx = idx;
         }
+
         if(ISTOKEN("Finale") || ISTOKEN("InFine"))
         {
             idx = DED_AddFinale(ded);
             fin = ded->finales + idx;
+
             FINDBEGIN;
             for(;;)
             {
@@ -1580,6 +1624,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         if(ISTOKEN("Decoration"))
         {
             uint                    sub;
@@ -1594,6 +1639,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 memcpy(decor, ded->decorations + prev_decordef_idx,
                        sizeof(*decor));
             }
+
             FINDBEGIN;
             for(;;)
             {
@@ -1602,12 +1648,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Texture"))
                 {
                     READSTR(decor->materialName)
-                    decor->materialType = MAT_TEXTURE;
+                    decor->materialGroup = MG_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
                     READSTR(decor->materialName)
-                    decor->materialType = MAT_FLAT;
+                    decor->materialGroup = MG_FLATS;
                 }
                 else if(ISLABEL("Glow"))
                 {
@@ -1631,6 +1677,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         retval = false;
                         goto ded_end_read;
                     }
+
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1673,6 +1720,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         retval = false;
                         goto ded_end_read;
                     }
+
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1716,14 +1764,16 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_decordef_idx = idx;
         }
+
         if(ISTOKEN("Group"))
         {
-            int                     sub;
-            ded_group_t            *grp;
+            int                 sub;
+            ded_group_t*        grp;
 
             idx = DED_AddGroup(ded);
             grp = &ded->groups[idx];
             sub = 0;
+
             FINDBEGIN;
             for(;;)
             {
@@ -1731,7 +1781,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Texture") || ISLABEL("Flat") ||
                    ISLABEL("Sprite") || ISLABEL("DDTex"))
                 {
-                    ded_group_member_t *memb;
+                    ded_group_member_t* memb;
 
                     if(sub >= grp->count.num)
                     {
@@ -1741,9 +1791,9 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 
                     memb = &grp->members[sub];
                     memb->type = (
-                        ISLABEL("Texture")? MAT_TEXTURE :
-                        ISLABEL("Flat")? MAT_FLAT :
-                        ISLABEL("Sprite")? MAT_SPRITE : MAT_DDTEX);
+                        ISLABEL("Texture")? MG_TEXTURES :
+                        ISLABEL("Flat")? MG_FLATS :
+                        ISLABEL("Sprite")? MG_SPRITES : MG_DDTEXTURES);
 
                     FINDBEGIN;
                     for(;;)
@@ -1762,6 +1812,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }
+
         /*if(ISTOKEN("XGClass"))     // XG Class
         {
             // A new XG Class definition
@@ -1804,6 +1855,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 CHECKSC;
             }
         }*/
+
         if(ISTOKEN("Line"))     // Line Type
         {
             // A new line type.
@@ -1968,6 +2020,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             }
             prev_linetype_idx = idx;
         }
+
         if(ISTOKEN("Sector"))   // Sector Type
         {
             // A new sector type.
@@ -2074,15 +2127,15 @@ ded_end_read:
 /* *INDENT-ON* */
 
 /**
- * @return          @c true, if the file was successfully loaded.
+ * @return              @c true, if the file was successfully loaded.
  */
-int DED_Read(ded_t *ded, const char *sPathName)
+int DED_Read(ded_t* ded, const char* sPathName)
 {
-    DFILE          *file;
-    char           *defData;
-    size_t          len;
-    int             result;
-    char            translated[256];
+    DFILE*              file;
+    char*               defData;
+    size_t              len;
+    int                 result;
+    char                translated[256];
 
     M_TranslatePath(sPathName, translated);
 
@@ -2113,9 +2166,9 @@ int DED_Read(ded_t *ded, const char *sPathName)
 /**
  * Reads definitions from the given lump.
  */
-int DED_ReadLump(ded_t * ded, int lump)
+int DED_ReadLump(ded_t* ded, int lump)
 {
-    int     result;
+    int                 result;
 
     if(lump < 0 || lump >= numLumps)
     {
@@ -2125,5 +2178,6 @@ int DED_ReadLump(ded_t * ded, int lump)
     result = DED_ReadData(ded, W_CacheLumpNum(lump, PU_STATIC),
                           W_LumpSourceFile(lump));
     W_ChangeCacheTag(lump, PU_CACHE);
+
     return result;
 }
