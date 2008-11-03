@@ -39,59 +39,59 @@
 
 #define AUXILIARY_BASE      100000000
 
-enum // Lump Grouping Tags
-{
+// Lump Grouping Tags
+typedef enum {
     LGT_NONE = 0,
     LGT_FLATS,
     LGT_SPRITES,
     NUM_LGTAGS
-};
+} lumpgrouptag_t;
 
 typedef struct {
     char            fileName[RECORD_FILENAMELEN]; // Full filename (every '\' -> '/').
     int             numLumps; // Number of lumps.
     int             flags;
-    DFILE          *handle; // File handle.
+    DFILE*          handle; // File handle.
     char            iwad;
 } filerecord_t;
 
 typedef struct {
     char            name[9]; // End in \0.
-    DFILE          *handle;
+    DFILE*          handle;
     int             position;
     size_t          size;
     int             sent;
     char            group; // Lump grouping tag (LGT_*).
 } lumpinfo_t;
 
-extern char    *defaultWads; // A list of wad names, whitespace in between (in .cfg).
+extern char* defaultWads; // A list of wad names, whitespace in between (in .cfg).
 extern lumpinfo_t *lumpInfo;
-extern int      numLumps;
+extern int numLumps;
 
 void            DD_RegisterVFS(void);
 
-void            W_InitMultipleFiles(char **fileNames);
+void            W_InitMultipleFiles(char** fileNames);
 void            W_EndStartup(void);
-lumpnum_t       W_CheckNumForName(const char *name);
-lumpnum_t       W_GetNumForName(const char *name);
+lumpnum_t       W_CheckNumForName(const char* name);
+lumpnum_t       W_GetNumForName(const char* name);
 size_t          W_LumpLength(lumpnum_t lump);
-const char     *W_LumpName(lumpnum_t lump);
-void            W_ReadLump(lumpnum_t lump, void *dest);
-void            W_ReadLumpSection(lumpnum_t lump, void *dest,
+const char*     W_LumpName(lumpnum_t lump);
+void            W_ReadLump(lumpnum_t lump, void* dest);
+void            W_ReadLumpSection(lumpnum_t lump, void* dest,
                                   size_t startOffset, size_t length);
-void           *W_CacheLumpNum(lumpnum_t lump, int tag);
-void           *W_CacheLumpName(char *name, int tag);
-boolean         W_AddFile(const char *fileName, boolean allowDuplicate);
-boolean         W_RemoveFile(char *fileName);
+void*           W_CacheLumpNum(lumpnum_t lump, int tag);
+void*           W_CacheLumpName(char* name, int tag);
+boolean         W_AddFile(const char* fileName, boolean allowDuplicate);
+boolean         W_RemoveFile(char* fileName);
 void            W_Reset(void);
-lumpnum_t       W_OpenAuxiliary(const char *fileName);
+lumpnum_t       W_OpenAuxiliary(const char* fileName);
 void            W_ChangeCacheTag(lumpnum_t lump, int tag);
 void            W_CheckIWAD(void);
 boolean         W_IsFromIWAD(lumpnum_t lump);
-const char     *W_LumpSourceFile(lumpnum_t lump);
+const char*     W_LumpSourceFile(lumpnum_t lump);
 unsigned int    W_CRCNumberForRecord(int idx);
 unsigned int    W_CRCNumber(void);
-void            W_GetIWADFileName(char *buf, int bufSize);
-void            W_GetPWADFileNames(char *buf, int bufSize, char separator);
+void            W_GetIWADFileName(char* buf, int bufSize);
+void            W_GetPWADFileNames(char* buf, int bufSize, char separator);
 
 #endif
