@@ -219,7 +219,7 @@ static huffnode_t *Huff_QueueExtract(huffqueue_t *queue)
 
     // Heapify the heap. This is O(log n).
     i = 0;
-    while(true)
+    for(;;)
     {
         left = HEAP_LEFT(i);
         right = HEAP_RIGHT(i);
