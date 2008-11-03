@@ -1244,7 +1244,7 @@ static int CmdChangeFloor(void)
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
-    mat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(Pop()), MG_FLATS);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1268,7 +1268,7 @@ static int CmdChangeFloorDirect(void)
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    mat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MG_FLATS);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1290,7 +1290,7 @@ static int CmdChangeCeiling(void)
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
-    mat = R_MaterialNumForName(GetACString(Pop()), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(Pop()), MG_FLATS);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1314,7 +1314,7 @@ static int CmdChangeCeilingDirect(void)
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    mat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MAT_FLAT);
+    mat = R_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MG_FLATS);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1656,7 +1656,7 @@ static int CmdSetLineTexture(void)
     linedef_t*          line;
     iterlist_t*         list;
 
-    mat = R_MaterialNumForName(GetACString(Pop()), MAT_TEXTURE);
+    mat = R_MaterialNumForName(GetACString(Pop()), MG_TEXTURES);
     position = Pop();
     side = Pop();
     lineTag = Pop();

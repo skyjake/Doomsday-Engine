@@ -52,16 +52,16 @@
 
 // CODE --------------------------------------------------------------------
 
-static void parseAnimGroup(materialtype_t type)
+static void parseAnimGroup(materialgroup_t group)
 {
     boolean             ignore;
     boolean             done;
     int                 groupNumber = 0;
     materialnum_t       matNumBase = 0, lumpNumBase = 0;
 
-    if(!(type == MAT_FLAT || type == MAT_TEXTURE))
-        Con_Error("parseAnimGroup: Internal Error, invalid material type %i.",
-                  (int) type);
+    if(!(group == MG_FLATS || group == MG_TEXTURES))
+        Con_Error("parseAnimGroup: Internal Error, invalid material group %i.",
+                  (int) group);
 
     if(!SC_GetString()) // Name.
     {
@@ -69,10 +69,10 @@ static void parseAnimGroup(materialtype_t type)
     }
 
     ignore = true;
-    if(type == MAT_TEXTURE)
+    if(group == MG_TEXTURES)
     {
         if((matNumBase = R_MaterialCheckNumForName(sc_String,
-                                                   MAT_TEXTURE)) != 0)
+                                                   MG_TEXTURES)) != 0)
             ignore = false;
     }
     else
@@ -116,11 +116,11 @@ static void parseAnimGroup(materialtype_t type)
 
                 if(!ignore)
                 {
-                    if(type == MAT_TEXTURE)
+                    if(group == MG_TEXTURES)
                     {
                         /**
                          * \fixme Here an assumption is made that
-                         * MAT_TEXTURE type materials are registered in the
+                         * MG_TEXTURES type materials are registered in the
                          * same order as they are defined in the
                          * TEXTURE(1...) lump(s).
                          */
@@ -131,7 +131,7 @@ static void parseAnimGroup(materialtype_t type)
                     {
                         materialnum_t       frame =
                             R_MaterialCheckNumForName(W_LumpName(lumpNumBase + picNum - 1),
-                                                      MAT_FLAT);
+                                                      MG_FLATS);
 
                         R_AddToAnimGroup(groupNumber, frame,
                                          min, (max > 0? max - min : 0));
@@ -166,11 +166,11 @@ void P_InitPicAnims(void)
         {
             if(SC_Compare("flat"))
             {
-                parseAnimGroup(MAT_FLAT);
+                parseAnimGroup(MG_FLATS);
             }
             else if(SC_Compare("texture"))
             {
-                parseAnimGroup(MAT_TEXTURE);
+                parseAnimGroup(MG_TEXTURES);
             }
             else
             {
