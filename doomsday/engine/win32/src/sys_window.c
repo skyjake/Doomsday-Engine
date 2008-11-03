@@ -90,7 +90,7 @@ static boolean winManagerInited = false;
 static uint numWindows = 0;
 static ddwindow_t **windows = NULL;
 
-static DWORD screenWidth, screenHeight, screenBPP;
+static int screenWidth, screenHeight, screenBPP;
 
 // CODE --------------------------------------------------------------------
 
