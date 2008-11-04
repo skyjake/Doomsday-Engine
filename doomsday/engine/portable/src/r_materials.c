@@ -632,7 +632,7 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
             break;
 
         default:
-            Con_Error("R_MaterialPrepare: Internal error, invalid type $i.",
+            Con_Error("R_MaterialPrepare: Internal error, invalid type %i.",
                       (int) mTex->type);
         };
 
