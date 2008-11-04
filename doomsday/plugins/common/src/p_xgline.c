@@ -132,44 +132,44 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-boolean         G_ValidateMap(int *episode, int *map);
+boolean         G_ValidateMap(int* episode, int* map);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    XL_ChangeMaterial(linedef_t *line, int sidenum, int section,
-                          int material, blendmode_t blend,
-                          byte rgba[4], int flags);
+void            XL_ChangeMaterial(linedef_t* line, int sidenum, int section,
+                                  int material, blendmode_t blend,
+                                  byte rgba[4], int flags);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-int C_DECL XL_DoChainSequence();
-int C_DECL XL_DoDamage();
-int C_DECL XL_DoPower();
-int C_DECL XL_DoKey();
-int C_DECL XL_DoExplode();
-int C_DECL XL_DoCommand();
+int C_DECL      XL_DoChainSequence();
+int C_DECL      XL_DoDamage();
+int C_DECL      XL_DoPower();
+int C_DECL      XL_DoKey();
+int C_DECL      XL_DoExplode();
+int C_DECL      XL_DoCommand();
 
-int C_DECL XLTrav_ChangeLineType();
-int C_DECL XLTrav_Activate();
-int C_DECL XLTrav_Music();
-int C_DECL XLTrav_LineCount();
-int C_DECL XLTrav_EndLevel();
-int C_DECL XLTrav_DisableLine();
-int C_DECL XLTrav_EnableLine();
-int C_DECL XLTrav_ChangeWallMaterial();
-int C_DECL XLTrav_LineTeleport();
+int C_DECL      XLTrav_ChangeLineType();
+int C_DECL      XLTrav_Activate();
+int C_DECL      XLTrav_Music();
+int C_DECL      XLTrav_LineCount();
+int C_DECL      XLTrav_EndLevel();
+int C_DECL      XLTrav_DisableLine();
+int C_DECL      XLTrav_EnableLine();
+int C_DECL      XLTrav_ChangeWallMaterial();
+int C_DECL      XLTrav_LineTeleport();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int xgDev = 0;    // Print dev messages.
+int xgDev = 0; // Print dev messages.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static linetype_t typebuffer;
 static char msgbuf[80];
-struct mobj_s dummything;
+struct mobj_s dummyThing;
 
 /* ADD NEW XG CLASSES TO THE END - ORIGINAL INDICES MUST STAY THE SAME!!! */
 xgclass_t xgClasses[NUMXGCLASSES] =
@@ -389,7 +389,7 @@ cvar_t xgCVars[] =
     {NULL}
 };
 
-ccmd_t  xgCCmds[] =
+ccmd_t xgCCmds[] =
 {
     {"movefloor",  NULL, CCmdMovePlane},
     {"moveceil",   NULL, CCmdMovePlane},
@@ -415,7 +415,7 @@ void XG_Register(void)
 /**
  * Debug message printer.
  */
-void XG_Dev(const char *format, ...)
+void XG_Dev(const char* format, ...)
 {
     static char         buffer[2000];
     va_list             args;
@@ -461,7 +461,7 @@ void XG_Update(void)
 /**
  * Adds the given binary format line type to the generated types array
  */
-int XL_AddAutoGenType(linetype_t *newtype)
+int XL_AddAutoGenType(linetype_t* newtype)
 {
     return true;
 }
@@ -469,7 +469,7 @@ int XL_AddAutoGenType(linetype_t *newtype)
 /**
  * Converts a line ID number to a line type (BOOM support).
  */
-int XL_AutoGenType(int id, linetype_t *outptr)
+int XL_AutoGenType(int id, linetype_t* outptr)
 {
     return false; // Cos we don't work yet.
 
@@ -547,7 +547,7 @@ int XL_AutoGenType(int id, linetype_t *outptr)
 /**
  * @return              @c true, if the type is defined.
  */
-linetype_t *XL_GetType(int id)
+linetype_t* XL_GetType(int id)
 {
     linetype_t*         ptr;
     char                buff[6];
@@ -576,7 +576,7 @@ linetype_t *XL_GetType(int id)
 
 int XG_RandomInt(int min, int max)
 {
-    float           x;
+    float               x;
 
     if(max == min)
         return max;
@@ -586,7 +586,7 @@ int XG_RandomInt(int min, int max)
 
 float XG_RandomPercentFloat(float value, int percent)
 {
-    float           i = (2 * M_Random() / 255.0f - 1) * percent / 100.0f;
+    float               i = (2 * M_Random() / 255.0f - 1) * percent / 100.0f;
 
     return value * (1 + i);
 }
@@ -604,7 +604,7 @@ boolean findXLThinker(thinker_t* th, void* context)
 /**
  * Looks for line type definition and sets the line type if one is found.
  */
-void XL_SetLineType(linedef_t *line, int id)
+void XL_SetLineType(linedef_t* line, int id)
 {
     xline_t*            xline = P_ToXLine(line);
 
@@ -624,7 +624,7 @@ void XL_SetLineType(linedef_t *line, int id)
 
         // Initial active state.
         xline->xg->active = (typebuffer.flags & LTF_ACTIVE) != 0;
-        xline->xg->activator = &dummything;
+        xline->xg->activator = &dummyThing;
 
         XG_Dev("XL_SetLineType: Line %i (%s), ID %i.", P_ToIndex(line),
                xgClasses[xline->xg->info.lineClass].className, id);
@@ -651,10 +651,10 @@ void XL_SetLineType(linedef_t *line, int id)
  */
 void XL_Init(void)
 {
-    uint        i;
-    linedef_t     *line;
+    uint                i;
+    linedef_t*          line;
 
-    memset(&dummything, 0, sizeof(dummything));
+    memset(&dummyThing, 0, sizeof(dummyThing));
 
     // Clients rely on the server, they don't do XG themselves.
     if(IS_CLIENT)
@@ -865,14 +865,14 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
  * @return              @c false if 'func' returns @c false, otherwise
  *                      @c true. Stops checking when false is returned.
  */
-int XL_TraverseLines(linedef_t *line, int rtype, int ref, void *data,
-                     void *context, mobj_t * activator, int (C_DECL *func)())
+int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
+                     void* context, mobj_t* activator, int (C_DECL *func)())
 {
     uint                i;
     int                 tag;
     int                 reftype = rtype;
     char                buff[50];
-    linedef_t          *iter;
+    linedef_t*          iter;
     boolean             findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.
@@ -887,7 +887,7 @@ int XL_TraverseLines(linedef_t *line, int rtype, int ref, void *data,
            P_ToIndex(line), LREFTYPESTR(reftype), ref? buff : "");
 
     if(reftype == LREF_NONE)
-        return func(NULL, true, data, context, activator);  // Not a real reference
+        return func(NULL, true, data, context, activator); // Not a real reference
 
     // References to single lines
     if(reftype == LREF_SELF) // Traversing self is simple.
@@ -958,33 +958,34 @@ int XL_TraverseLines(linedef_t *line, int rtype, int ref, void *data,
 }
 
 /**
- * Returns the value requested by reftype from the line using data from
- * either line or context (will always be linetype_t).
+ * @return              Value as determined by the reference type from the
+ *                      specified linedef, using data from either the linedef
+*                       itself or context (will always be linetype_t).
  */
-int XL_ValidateLineRef(linedef_t *line, int reftype, void *context,
-                       char *parmname)
+int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
+                       char* parmname)
 {
-    int         answer = 0;
-    sidedef_t     *side;
+    int                 answer = 0;
+    sidedef_t*          side;
 
     switch(reftype)
     {
-    case LDREF_ID: // Line ID
+    case LDREF_ID: // Line ID.
         answer = P_ToIndex(line);
         XG_Dev("XL_ValidateLineRef: Using Line ID (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_SPECIAL: // Line Special
+    case LDREF_SPECIAL: // Line Special.
         answer = P_ToXLine(line)->special;
         XG_Dev("XL_ValidateLineRef: Using Line Special (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_TAG:    // line Tag
+    case LDREF_TAG: // Line Tag.
         answer = P_ToXLine(line)->tag;
         XG_Dev("XL_ValidateLineRef: Using Line Tag (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_ACTTAG:    // line ActTag
+    case LDREF_ACTTAG: // Line ActTag.
         if(!P_ToXLine(line)->xg)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
@@ -1001,7 +1002,7 @@ int XL_ValidateLineRef(linedef_t *line, int reftype, void *context,
         XG_Dev("XL_ValidateLineRef: Using Line ActTag (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_COUNT:    // line count
+    case LDREF_COUNT: // Line count.
         if(!P_ToXLine(line)->xg)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE NOT AN XG LINE");
@@ -1012,14 +1013,14 @@ int XL_ValidateLineRef(linedef_t *line, int reftype, void *context,
         XG_Dev("XL_ValidateLineRef: Using Line Count (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_ANGLE:    // line angle
+    case LDREF_ANGLE: // Line angle.
         answer = (R_PointToAngle2(0, 0, P_GetFloatp(line, DMU_DX),
                                   P_GetFloatp(line, DMU_DY))
                  / (float) ANGLE_MAX *360);
         XG_Dev("XL_ValidateLineRef: Using Line Angle (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_LENGTH:    // line length
+    case LDREF_LENGTH: // Line length.
         // Answer should be in map units.
         answer = P_GetFixedp(line, DMU_LENGTH) >> FRACBITS;
 
@@ -1121,22 +1122,22 @@ int XL_ValidateLineRef(linedef_t *line, int reftype, void *context,
 /**
  * Executes the lines' function as defined by its class.
  */
-void XL_DoFunction(linetype_t* info, linedef_t *line, int sidenum,
-                   mobj_t* act_thing, int evtype)
+void XL_DoFunction(linetype_t* info, linedef_t* line, int sideNum,
+                   mobj_t* actThing, int evType)
 {
     xgclass_t*          xgClass = &xgClasses[info->lineClass];
 
     XG_Dev("XL_DoFunction: Line %i, side %i, activator id %i, event %s",
-            P_ToIndex(line), sidenum, act_thing ? act_thing->thinker.id : 0,
-            EVTYPESTR(evtype));
+            P_ToIndex(line), sideNum, actThing ? actThing->thinker.id : 0,
+            EVTYPESTR(evType));
     XG_Dev("  Executing class: %s (0x%X)...", xgClass->className, info->lineClass);
 
     // Does this class only work with certain events?
     if(xgClass->evTypeFlags > 0)
     {
-        if(!(xgClass->evTypeFlags & evtype))
+        if(!(xgClass->evTypeFlags & evType))
         {
-            XG_Dev("  THIS CLASS DOES NOT SUPPORT %s EVENTS!", EVTYPESTR(evtype));
+            XG_Dev("  THIS CLASS DOES NOT SUPPORT %s EVENTS!", EVTYPESTR(evType));
             return;
         }
     }
@@ -1152,92 +1153,113 @@ void XL_DoFunction(linetype_t* info, linedef_t *line, int sidenum,
         switch(xgClass->traverse)
         {
             case TRAV_NONE: // No need for traversal, call the doFunc
-                xgClass->doFunc(line, true, line, info, act_thing);
+                xgClass->doFunc(line, true, line, info, actThing);
                 break;
             case TRAV_LINES: // Traverse lines, executing doFunc for each
                 XL_TraverseLines(line, info->iparm[xgClass->travRef],
                                  info->iparm[xgClass->travData], line,
-                                 info, act_thing, xgClass->doFunc);
+                                 info, actThing, xgClass->doFunc);
                 break;
             case TRAV_PLANES: // Traverse planes, executing doFunc for each
             case TRAV_SECTORS:
                 XL_TraversePlanes(line, info->iparm[xgClass->travRef],
                                   info->iparm[xgClass->travData], line,
                                   info, xgClass->traverse == TRAV_SECTORS? true : false,
-                                  act_thing, xgClass->doFunc);
+                                  actThing, xgClass->doFunc);
                 break;
         }
     }
 }
 
-int C_DECL XLTrav_QuickActivate(linedef_t *line, boolean dummy, void *context,
-                                void *context2, mobj_t *activator)
+int C_DECL XLTrav_QuickActivate(linedef_t* line, boolean dummy, void* context,
+                                void* context2, mobj_t* activator)
 {
-    xline_t *xline = P_ToXLine(line);
+    if(line)
+    {
+        xline_t*            xline = P_ToXLine(line);
 
-    if(!xline->xg)
-        return true;
+        if(xline->xg)
+        {
+            xline->xg->active = (context? true : false);
+            xline->xg->timer = XLTIMER_STOPPED; // Stop timer.
+        }
+    }
 
-    xline->xg->active = (context? true : false);
-    xline->xg->timer = XLTIMER_STOPPED;    // Stop timer.
-    return true;
+    return true; // Continue iteration.
 }
 
 /**
- * Returns true if the line is active.
+ * @return              @c true, if the line is active.
  */
-int C_DECL XLTrav_CheckLine(linedef_t *line, boolean dummy, void *context,
-                            void *context2, mobj_t *activator)
+int C_DECL XLTrav_CheckLine(linedef_t* line, boolean dummy, void* context,
+                            void* context2, mobj_t* activator)
 {
-    xline_t *xline = P_ToXLine(line);
+    if(line)
+    {
+        xline_t*            xline = P_ToXLine(line);
 
-    if(!xline->xg)
-        return false;    // Stop checking!
-    return (xline->xg->active == true) == (context? true : false);
+        if(!xline->xg)
+            return false; // Stop checking!
+
+        return (xline->xg->active == true) == (context? true : false);
+    }
+
+    return true; // Continue iteration.
 }
 
 /**
- * &param data  If true, the line will receive a chain event if not activate.
- *      If data=false, then ... if active.
+ * @param data          If @c true, the line will receive a chain event if
+ *                      inactive.
+ *                      If @c false, the line will receive a chain event if
+ *                      active.
  */
-int C_DECL XLTrav_SmartActivate(linedef_t *line, boolean dummy, void *context,
-                                void *context2, mobj_t *activator)
+int C_DECL XLTrav_SmartActivate(linedef_t* line, boolean dummy, void* context,
+                                void* context2, mobj_t* activator)
 {
-    xline_t *xline = P_ToXLine(line);
+    if(line)
+    {
+        xline_t*            xline = P_ToXLine(line);
 
-    if(!xline->xg)
-        return false;
+        if(xline->xg)
+        {
+            if((context? true : false) != xline->xg->active)
+                XL_LineEvent(XLE_CHAIN, 0, line, 0, context2);
+        }
+    }
 
-    if((context? true : false) != xline->xg->active)
-        XL_LineEvent(XLE_CHAIN, 0, line, 0, context2);
-    return true;
+    return true; // Continue iteration.
 }
-
 
 //
 // XG Line Type Classes which don't require traversal
 //
 
-int C_DECL XL_DoChainSequence(linedef_t *line, boolean dummy, void *context,
-                              void *context2, mobj_t *activator)
+int C_DECL XL_DoChainSequence(linedef_t* line, boolean dummy, void* context,
+                              void* context2, mobj_t* activator)
 {
-    xline_t *xline = P_ToXLine(line);
-    linetype_t *info = context2;
+    if(line)
+    {
+        xline_t*            xline = P_ToXLine(line);
 
-    if(!xline->xg)
-        return false;
+        if(xline->xg)
+        {
+            linetype_t*         info = context2;
 
-    xline->xg->chIdx = 1;        // This is the first.
-    // Start counting the first interval.
-    xline->xg->chTimer = XG_RandomPercentFloat(info->fparm[1], info->fparm[0]);
+            xline->xg->chIdx = 1; // This is the first.
+            // Start counting the first interval.
+            xline->xg->chTimer =
+                XG_RandomPercentFloat(info->fparm[1], info->fparm[0]);
+        }
+    }
+
     return true;
 }
 
-int C_DECL XL_DoDamage(linedef_t *line, boolean dummy, void *context,
-                       void *context2, mobj_t *activator)
+int C_DECL XL_DoDamage(linedef_t* line, boolean dummy, void* context,
+                       void* context2, mobj_t* activator)
 {
-    int i;
-    linetype_t *info = context2;
+    int                 i;
+    linetype_t*         info = context2;
 
     if(!activator)
     {
@@ -1270,19 +1292,20 @@ int C_DECL XL_DoDamage(linedef_t *line, boolean dummy, void *context,
             }
         }
     }
+
     return true;
 }
 
-int C_DECL XL_DoPower(linedef_t *line, boolean dummy, void *context,
-                      void *context2, mobj_t *activator)
+int C_DECL XL_DoPower(linedef_t* line, boolean dummy, void* context,
+                      void* context2, mobj_t* activator)
 {
-    player_t *player = 0;
-    linetype_t *info = context2;
+    player_t*           player = 0;
+    linetype_t*         info = context2;
 
     if(activator)
         player = activator->player;
 
-    if(!player)  // Must be a player.
+    if(!player) // Must be a player.
     {
 /*        if(evtype == XLE_FUNC)
             XG_Dev("  Sector Functions don't have activators! Use a Sector Chain instead.");
@@ -1291,6 +1314,7 @@ int C_DECL XL_DoPower(linedef_t *line, boolean dummy, void *context,
 
         return false;
     }
+
     player->armorPoints += XG_RandomInt(info->iparm[0], info->iparm[1]);
     if(player->armorPoints < info->iparm[2])
         player->armorPoints = info->iparm[2];
@@ -1300,12 +1324,12 @@ int C_DECL XL_DoPower(linedef_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XL_DoKey(linedef_t *line, boolean dummy, void *context,
-                    void *context2, mobj_t *activator)
+int C_DECL XL_DoKey(linedef_t* line, boolean dummy, void* context,
+                    void* context2, mobj_t* activator)
 {
-    int         i;
-    player_t   *player = 0;
-    linetype_t *info = context2;
+    int                 i;
+    player_t*           player = 0;
+    linetype_t*         info = context2;
 
     if(activator)
         player = activator->player;
@@ -1331,8 +1355,8 @@ int C_DECL XL_DoKey(linedef_t *line, boolean dummy, void *context,
     return true;
 }
 
-int C_DECL XL_DoExplode(linedef_t *line, boolean dummy, void *context,
-                        void *context2, mobj_t *activator)
+int C_DECL XL_DoExplode(linedef_t* line, boolean dummy, void* context,
+                        void* context2, mobj_t* activator)
 {
     if(!activator)
     {
@@ -1342,14 +1366,15 @@ int C_DECL XL_DoExplode(linedef_t *line, boolean dummy, void *context,
             XG_Dev("  No activator! Can't explode anything.");
         return false;
     }
+
     P_ExplodeMissile(activator);
     return true;
 }
 
-int C_DECL XL_DoCommand(linedef_t *line, boolean dummy, void *context,
-                        void *context2, mobj_t *activator)
+int C_DECL XL_DoCommand(linedef_t* line, boolean dummy, void* context,
+                        void* context2, mobj_t* activator)
 {
-    linetype_t *info = context2;
+    linetype_t*         info = context2;
 
     DD_Execute(true, info->sparm[0]);
     return true;
@@ -1363,10 +1388,14 @@ int C_DECL XLTrav_ChangeLineType(linedef_t* line, boolean dummy,
                                  void* context, void* context2,
                                  mobj_t* activator)
 {
-    linetype_t*     info = context2;
+    if(line)
+    {
+        linetype_t*         info = context2;
 
-    XL_SetLineType(line, info->iparm[2]);
-    return true;    // Keep looking.
+        XL_SetLineType(line, info->iparm[2]);
+    }
+
+    return true; // Keep looking.
 }
 
 int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
@@ -1378,6 +1407,9 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
     blendmode_t     blend = BM_NORMAL;
     byte            rgba[4];
     int             material = 0;
+
+    if(!line)
+        return true; // Continue iteration.
 
     // i2: sidenum
     // i3: top material (zero if no change)
@@ -1447,49 +1479,55 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
     return true;
 }
 
-int C_DECL XLTrav_Activate(linedef_t *line, boolean dummy, void *context,
-                    void *context2, mobj_t *activator)
+int C_DECL XLTrav_Activate(linedef_t* line, boolean dummy, void* context,
+                           void* context2, mobj_t* activator)
 {
-    XL_LineEvent(XLE_CHAIN, 0, line, 0, activator);
-    return true;    // Keep looking.
+    if(line)
+        XL_LineEvent(XLE_CHAIN, 0, line, 0, activator);
+
+    return true; // Keep looking.
 }
 
-int C_DECL XLTrav_LineCount(linedef_t *line, boolean dummy, void *context, void *context2,
-                     mobj_t *activator)
+int C_DECL XLTrav_LineCount(linedef_t* line, boolean dummy, void* context,
+                            void* context2, mobj_t* activator)
 {
-    xline_t *xline = P_ToXLine(line);
-    linetype_t *info = context2;
+    if(line)
+    {
+        xline_t*            xline = P_ToXLine(line);
+        linetype_t*         info = context2;
 
-    if(!xline->xg)
-        return true;            // Must have extended type.
-    if(info->iparm[2])
-        xline->xg->info.actCount = info->iparm[3];
-    else
-        xline->xg->info.actCount += info->iparm[3];
+        if(xline->xg)
+        {
+            if(info->iparm[2])
+                xline->xg->info.actCount = info->iparm[3];
+            else
+                xline->xg->info.actCount += info->iparm[3];
+        }
+    }
+
     return true;
 }
 
-int C_DECL XLTrav_Music(linedef_t *line, boolean dummy, void *context, void *context2,
-                 mobj_t *activator)
+int C_DECL XLTrav_Music(linedef_t* line, boolean dummy, void* context,
+                        void* context2, mobj_t* activator)
 {
-    int song = 0;
-    int temp = 0;
-    linetype_t *info = context2;
+    int                 song = 0;
+    int                 temp = 0;
+    linetype_t*         info = context2;
 
     if(info->iparm[2] == LREF_NONE)
-    {    // the old format, use ip0 explicitly
+    {    // The old format, use ip0 explicitly.
         song = info->iparm[0];
     }
-    else    // we might have a data reference to evaluate
+    else // We might possibly have a data reference to evaluate.
     {
-        if(info->iparm[2] == LREF_NONE)    // data (ip0) will be used to determine next level
+        if(info->iparm[2] == LREF_NONE) // (ip0) will be used to determine next level.
         {
             song = info->iparm[0];
-
         }
-        else
-        { // evaluate ip0 for a data reference
-            temp = XL_ValidateLineRef(line,info->iparm[0], context2, "Music ID");
+        else if(line)
+        { // Evaluate ip0 for a data reference.
+            temp = XL_ValidateLineRef(line, info->iparm[0], context2, "Music ID");
             if(!temp)
                 XG_Dev("XLTrav_Music: Reference data not valid. Song not changed");
             else
@@ -1497,61 +1535,64 @@ int C_DECL XLTrav_Music(linedef_t *line, boolean dummy, void *context, void *con
         }
     }
 
-    //// \fixme Add code to validate song id here
+    //// \fixme Add code to validate song id here.
 
     if(song)
     {
-        XG_Dev("XLTrav_Music: Play Music ID (%i)%s",song, info->iparm[1]? " looped.":".");
+        XG_Dev("XLTrav_Music: Play Music ID (%i)%s", song, info->iparm[1]? " looped.":".");
         S_StartMusicNum(song, info->iparm[1]);
     }
-    return false;    // only do this once!
+
+    return false; // Only do this once!
 }
 
-int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context, void *context2,
-                        mobj_t *mobj)
+int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
+                               void* context, void* context2, mobj_t* mobj)
 {
-// maximum units to move object to avoid hiccups
-#define FUDGEFACTOR 10
+// Maximum units to move object to avoid hiccups.
+#define FUDGEFACTOR         10
 
-    int         fudge = FUDGEFACTOR;
-    int         side = 0, stepdown;
-    unsigned    an;
-    mobj_t     *flash;
-    linedef_t     *line = (linedef_t *) context;
-    linetype_t *info = (linetype_t *) context2;
-    vertex_t   *newv1, *newv2;
-    vertex_t   *oldv1, *oldv2;
-    sector_t   *newfrontsector, *newbacksector;
-    float       newx, newy, newz, pos, s, c;
-    float       oldldx, oldldy, newldx, newldy;
-    angle_t     angle;
+    int                 fudge = FUDGEFACTOR;
+    int                 side = 0, stepDown;
+    unsigned int        an;
+    mobj_t*             flash;
+    linedef_t*          line = (linedef_t *) context;
+    linetype_t*         info = (linetype_t *) context2;
+    vertex_t*           newV1, *newV2, *oldV1, *oldV2;
+    sector_t*           newFrontSec, *newBackSec;
+    float               newX, newY, newZ, pos, s, c;
+    float               oldLDX, oldLDY, newLDX, newLDY;
+    angle_t             angle;
 
-    // retrieve a few properties to make this look neater.
-    oldv1 = P_GetPtrp(line, DMU_VERTEX0);
-    oldv2 = P_GetPtrp(line, DMU_VERTEX1);
-    oldldx = P_GetFloatp(line, DMU_DX);
-    oldldy = P_GetFloatp(line, DMU_DY);
-
-    newv1 = P_GetPtrp(newline, DMU_VERTEX0);
-    newv2 = P_GetPtrp(newline, DMU_VERTEX1);
-    newldx = P_GetFloatp(newline, DMU_DX);
-    newldy = P_GetFloatp(newline, DMU_DY);
-    newfrontsector = P_GetPtrp(newline, DMU_FRONT_SECTOR);
-    newbacksector = P_GetPtrp(newline, DMU_BACK_SECTOR);
-
-    // don't teleport things marked noteleport!
+    // Don't teleport things marked noteleport!
     if(mobj->flags2 & MF2_NOTELEPORT)
     {
         XG_Dev("XLTrav_LineTeleport: Activator can't be teleported (THING is unteleportable)");
         return false; // No point continuing...
     }
 
+    if(!line)
+        return true; // Continue iteration.
+
     // We shouldn't be trying to teleport to the same line
-    if(newline == line)
+    if(newLine == line)
     {
         XG_Dev("XLTrav_LineTeleport: Target == Origin. Continuing search...");
         return true; // Keep looking
     }
+
+    // Retrieve a few properties to make this look neater.
+    oldV1 = P_GetPtrp(line, DMU_VERTEX0);
+    oldV2 = P_GetPtrp(line, DMU_VERTEX1);
+    oldLDX = P_GetFloatp(line, DMU_DX);
+    oldLDY = P_GetFloatp(line, DMU_DY);
+
+    newV1 = P_GetPtrp(newLine, DMU_VERTEX0);
+    newV2 = P_GetPtrp(newLine, DMU_VERTEX1);
+    newLDX = P_GetFloatp(newLine, DMU_DX);
+    newLDY = P_GetFloatp(newLine, DMU_DY);
+    newFrontSec = P_GetPtrp(newLine, DMU_FRONT_SECTOR);
+    newBackSec = P_GetPtrp(newLine, DMU_BACK_SECTOR);
 
     // i2: 1 = Spawn Fog
     // i3: Sound = Sound to play
@@ -1573,35 +1614,35 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
     }
 
     // Get the thing's position along the source linedef
-    if(fabs(oldldx) > fabs(oldldy))
-        pos = (mobj->pos[VX] - P_GetFloatp(oldv1, DMU_X)) / oldldx;
+    if(fabs(oldLDX) > fabs(oldLDY))
+        pos = (mobj->pos[VX] - P_GetFloatp(oldV1, DMU_X)) / oldLDX;
     else
-        pos = (mobj->pos[VY] - P_GetFloatp(oldv1, DMU_Y)) / oldldy;
+        pos = (mobj->pos[VY] - P_GetFloatp(oldV1, DMU_Y)) / oldLDY;
 
     // Get the angle between the two linedefs, for rotating orientation and
     // momentum. Rotate 180 degrees, and flip the position across the exit
     // linedef, if reversed.
     angle = (info->iparm[4] ? pos = 1 - pos, 0 : ANG180) +
-             R_PointToAngle2(0, 0, newldx, newldy) -
-             R_PointToAngle2(0, 0, oldldx, oldldy);
+             R_PointToAngle2(0, 0, newLDX, newLDY) -
+             R_PointToAngle2(0, 0, oldLDX, oldLDY);
 
     // Interpolate position across the exit linedef.
-    newx = P_GetFloatp(newv2, DMU_X) - (pos * newldx);
-    newy = P_GetFloatp(newv2, DMU_Y) - (pos * newldy);
+    newX = P_GetFloatp(newV2, DMU_X) - (pos * newLDX);
+    newY = P_GetFloatp(newV2, DMU_Y) - (pos * newLDY);
 
     // Sine, cosine of angle adjustment
     s = FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]);
     c = FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]);
 
     // Whether walking towards first side of exit linedef steps down
-    if(P_GetFloatp(newfrontsector, DMU_FLOOR_HEIGHT) <
-       P_GetFloatp(newbacksector, DMU_FLOOR_HEIGHT))
-        stepdown = true;
+    if(P_GetFloatp(newFrontSec, DMU_FLOOR_HEIGHT) <
+       P_GetFloatp(newBackSec, DMU_FLOOR_HEIGHT))
+        stepDown = true;
     else
-        stepdown = false;
+        stepDown = false;
 
     // Height of thing above ground.
-    newz = mobj->pos[VZ] - mobj->floorZ;
+    newZ = mobj->pos[VZ] - mobj->floorZ;
 
     /**
      * Side to exit the linedef on positionally.
@@ -1626,20 +1667,20 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
      * step on a non-reversed teleporter.
      */
 
-    if(!info->iparm[4] || (mobj->player && stepdown))
+    if(!info->iparm[4] || (mobj->player && stepDown))
         side = 1;
 
     // Make sure we are on correct side of exit linedef.
-    while(P_PointOnLinedefSide(newx, newy, newline) != side && --fudge >= 0)
+    while(P_PointOnLinedefSide(newX, newY, newLine) != side && --fudge >= 0)
     {
-        if(fabs(newldx) > fabs(newldy))
-            newy -= FIX2FLT((newldx < 0) != side ? -1 : 1);
+        if(fabs(newLDX) > fabs(newLDY))
+            newY -= FIX2FLT((newLDX < 0) != side ? -1 : 1);
         else
-            newx += FIX2FLT((newldy < 0) != side ? -1 : 1);
+            newX += FIX2FLT((newLDY < 0) != side ? -1 : 1);
     }
 
     // Do the Teleport
-    if(!P_TeleportMove(mobj, newx, newy, (info->iparm[5] > 0? true : false)))
+    if(!P_TeleportMove(mobj, newX, newY, (info->iparm[5] > 0? true : false)))
     {
         XG_Dev("XLTrav_Teleport: Something went horribly wrong... aborting.");
         return false;
@@ -1648,21 +1689,21 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
     // Adjust z position to be same height above ground as before. Ground
     // level at the exit is measured as the higher of the two floor heights
     // at the exit linedef.
-    if(stepdown)
-        mobj->pos[VZ] = newz + P_GetFloatp(newfrontsector, DMU_FLOOR_HEIGHT);
+    if(stepDown)
+        mobj->pos[VZ] = newZ + P_GetFloatp(newFrontSec, DMU_FLOOR_HEIGHT);
     else
-        mobj->pos[VZ] = newz + P_GetFloatp(newbacksector, DMU_FLOOR_HEIGHT);
+        mobj->pos[VZ] = newZ + P_GetFloatp(newBackSec, DMU_FLOOR_HEIGHT);
 
     // Rotate mobj's orientation according to difference in linedef angles.
     mobj->angle += angle;
 
     // Update momentum of mobj crossing teleporter linedef?
-    newx = mobj->mom[MX];
-    newy = mobj->mom[MY];
+    newX = mobj->mom[MX];
+    newY = mobj->mom[MY];
 
     // Rotate mobj's momentum to come out of exit just like it entered.
-    mobj->mom[MX] = (newx * c) - (newy * s);
-    mobj->mom[MY] = (newy * c) + (newx * s);
+    mobj->mom[MX] = (newX * c) - (newY * s);
+    mobj->mom[MY] = (newY * c) + (newX * s);
 
     // Feet clipped?
     if(mobj->flags2 & MF2_FLOORCLIP)
@@ -1701,14 +1742,14 @@ int C_DECL XLTrav_LineTeleport(linedef_t *newline, boolean dummy, void *context,
         mobj->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     }
 
-    return false; // do this only once!
+    return false; // Do this only once!
 
 #undef FUDGEFACTOR
 }
 
 int XL_ValidateMap(int val, int type)
 {
-    int         episode, level = val;
+    int                 episode, level = val;
 
 #if __JDOOM__
     if(gameMode == commercial || gameMode == shareware)
@@ -1727,12 +1768,12 @@ int XL_ValidateMap(int val, int type)
     return level;
 }
 
-int C_DECL XLTrav_EndLevel(linedef_t *line, boolean dummy, void *context,
-                           void *context2, mobj_t *activator)
+int C_DECL XLTrav_EndLevel(linedef_t* line, boolean dummy, void* context,
+                           void* context2, mobj_t* activator)
 {
-    int         map = 0;
-    int         temp = 0;
-    linetype_t *info = context2;
+    int                 map = 0;
+    int                 temp = 0;
+    linetype_t*         info = context2;
 
     // Is this a secret exit?
     if(info->iparm[0] > 0)
@@ -1747,11 +1788,15 @@ int C_DECL XLTrav_EndLevel(linedef_t *line, boolean dummy, void *context,
             map = XL_ValidateMap(info->iparm[3], 0);
     }
     else
-    {    // We have a data reference to evaluate.
-        temp = XL_ValidateLineRef(line,info->iparm[3], context2, "Map Number");
-        if(temp > 0)
-            map = XL_ValidateMap(temp, info->iparm[3]);
-        else
+    {    // We might possibly have a data reference to evaluate.
+        if(line)
+        {
+            temp = XL_ValidateLineRef(line,info->iparm[3], context2, "Map Number");
+            if(temp > 0)
+                map = XL_ValidateMap(temp, info->iparm[3]);
+        }
+
+        if(map != 0)
             XG_Dev("XLTrav_EndLevel: Reference data not valid. Next level as normal");
     }
 
@@ -1765,36 +1810,49 @@ int C_DECL XLTrav_EndLevel(linedef_t *line, boolean dummy, void *context,
     return false; // Only do this once!
 }
 
-int C_DECL XLTrav_DisableLine(linedef_t *line, boolean dummy, void *context,
-                              void *context2, mobj_t *activator)
+int C_DECL XLTrav_DisableLine(linedef_t* line, boolean dummy, void* context,
+                              void* context2, mobj_t* activator)
 {
-    xline_t *origline = P_ToXLine((linedef_t*) context);
-    xline_t *xline = P_ToXLine(line);
+    if(line)
+    {
+        xline_t*            xline = P_ToXLine(line);
 
-    if(!xline->xg)
-        return true;
-    xline->xg->disabled = origline->xg->active;
+        if(xline->xg)
+        {
+            xline_t*            origLine = P_ToXLine((linedef_t*) context);
+
+            xline->xg->disabled = origLine->xg->active;
+        }
+    }
+
     return true; // Keep looking...
 }
 
-int C_DECL XLTrav_EnableLine(linedef_t *line, boolean dummy, void *context,
-                             void *context2, mobj_t *activator)
+int C_DECL XLTrav_EnableLine(linedef_t* line, boolean dummy, void* context,
+                             void* context2, mobj_t* activator)
 {
-    xline_t *origline = P_ToXLine((linedef_t*) context);
-    xline_t *xline = P_ToXLine(line);
+    if(line)
+    {
+        xline_t*            xline = P_ToXLine(line);
 
-    if(!xline->xg)
-        return true;
-    xline->xg->disabled = !origline->xg->active;
+        if(xline->xg)
+        {
+            xline_t*            origLine = P_ToXLine((linedef_t*) context);
+
+            xline->xg->disabled = !origLine->xg->active;
+        }
+    }
+
     return true; // Keep looking...
 }
 
 /**
  * Checks if the given lines are active or inactive.
- * Returns true if all are in the specified state.
+ *
+ * @return              @c true if all are in the specified state.
  */
-boolean XL_CheckLineStatus(linedef_t *line, int reftype, int ref, int active,
-                           mobj_t *activator)
+boolean XL_CheckLineStatus(linedef_t* line, int reftype, int ref, int active,
+                           mobj_t* activator)
 {
     return XL_TraverseLines(line, reftype, ref, &active, 0, activator,
                             XLTrav_CheckLine);
@@ -1816,7 +1874,7 @@ boolean XL_CheckMobjGone(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean XL_SwitchSwap(sidedef_t *side, int section)
+boolean XL_SwitchSwap(sidedef_t* side, int section)
 {
     const char*         name;
     char                buf[10];
@@ -1906,9 +1964,9 @@ boolean XL_SwitchSwap(sidedef_t *side, int section)
         return false;
 }
 
-void XL_SwapSwitchTextures(linedef_t *line, int snum)
+void XL_SwapSwitchTextures(linedef_t* line, int snum)
 {
-    sidedef_t     *side;
+    sidedef_t*          side;
 
     if(snum)
         side = P_GetPtrp(line, DMU_SIDEDEF1);
@@ -1928,9 +1986,9 @@ void XL_SwapSwitchTextures(linedef_t *line, int snum)
 /**
  * Changes material of the given line.
  */
-void XL_ChangeMaterial(linedef_t *line, int sidenum, int section,
-                       int material, blendmode_t blendmode,
-                       byte rgba[4], int flags)
+void XL_ChangeMaterial(linedef_t* line, int sidenum, int section,
+                       int material, blendmode_t blendmode, byte rgba[4],
+                       int flags)
 {
     int                 i;
     int                 currentFlags;
@@ -1991,10 +2049,10 @@ void XL_ChangeMaterial(linedef_t *line, int sidenum, int section,
     P_SetIntp(side, DMU_FLAGS, currentFlags);
 }
 
-void XL_Message(mobj_t *act, char *msg, boolean global)
+void XL_Message(mobj_t* act, char* msg, boolean global)
 {
-    player_t   *pl;
-    int         i;
+    int                 i;
+    player_t*           pl;
 
     if(!msg || !msg[0])
         return;
@@ -2086,7 +2144,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
 
     // Change the state of the line.
     xg->active = activating;
-    xg->timer = 0;        // Reset timer.
+    xg->timer = 0; // Reset timer.
 
     // Activate lines with a matching tag with Group Activation.
     if((activating && (info->flags2 & LTF2_GROUP_ACT)) ||
@@ -2209,9 +2267,10 @@ boolean XL_CheckKeys(mobj_t* mo, int flags2, boolean doMsg, boolean doSfx)
 
 /**
  * Decides if the event leads to (de)activation.
- * Returns true if the event is processed.
  * Line must be extended.
  * Most conditions use AND (act method, game mode and difficult use OR).
+ *
+ * @return              @c true, iff the event is processed.
  */
 int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
                  void* data)
@@ -2494,9 +2553,9 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_CrossLine(linedef_t *line, int sidenum, mobj_t *thing)
+int XL_CrossLine(linedef_t* line, int sidenum, mobj_t* thing)
 {
-    if(!P_ToXLine(line)->xg)
+    if(!line || !P_ToXLine(line)->xg)
         return false;
 
     return XL_LineEvent(XLE_CROSS, 0, line, sidenum, thing);
@@ -2505,9 +2564,9 @@ int XL_CrossLine(linedef_t *line, int sidenum, mobj_t *thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_UseLine(linedef_t *line, int sidenum, mobj_t *thing)
+int XL_UseLine(linedef_t* line, int sidenum, mobj_t* thing)
 {
-    if(!P_ToXLine(line)->xg)
+    if(!line || !P_ToXLine(line)->xg)
         return false;
 
     return XL_LineEvent(XLE_USE, 0, line, sidenum, thing);
@@ -2516,9 +2575,9 @@ int XL_UseLine(linedef_t *line, int sidenum, mobj_t *thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_ShootLine(linedef_t *line, int sidenum, mobj_t *thing)
+int XL_ShootLine(linedef_t* line, int sidenum, mobj_t* thing)
 {
-    if(!P_ToXLine(line)->xg)
+    if(!line || !P_ToXLine(line)->xg)
         return false;
 
     return XL_LineEvent(XLE_SHOOT, 0, line, sidenum, thing);
@@ -2526,14 +2585,14 @@ int XL_ShootLine(linedef_t *line, int sidenum, mobj_t *thing)
 
 int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
 {
-    if(!P_ToXLine(line)->xg)
+    if(!line || !P_ToXLine(line)->xg)
         return false;
 
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(linedef_t *line, int chain, boolean activating,
-                mobj_t *act_thing)
+void XL_DoChain(linedef_t* line, int chain, boolean activating,
+                mobj_t* actThing)
 {
     linedef_t*          dummyLine;
     xline_t*            xdummyLine;
@@ -2555,7 +2614,7 @@ void XL_DoChain(linedef_t *line, int chain, boolean activating,
     xdummyLine->xg->active = !activating;
 
     // Make the chain event
-    XL_LineEvent(XLE_CHAIN, chain, dummyLine, 0, act_thing);
+    XL_LineEvent(XLE_CHAIN, chain, dummyLine, 0, actThing);
 
     // Free the dummy
     Z_Free(xdummyLine->xg);
@@ -2575,6 +2634,9 @@ void XL_Thinker(xlthinker_t* xl)
 
     // Clients rely on the server, they don't do XG themselves.
     if(IS_CLIENT)
+        return;
+
+    if(!xl->line)
         return;
 
     xline = P_ToXLine(line);
@@ -2606,7 +2668,7 @@ void XL_Thinker(xlthinker_t* xl)
         if(info->flags & LTF_TICKER)
         {
             xg->tickerTimer = 0;
-            XL_LineEvent(XLE_TICKER, 0, line, 0, &dummything);
+            XL_LineEvent(XLE_TICKER, 0, line, 0, &dummyThing);
         }
 
         // How about some forced functions?
@@ -2682,7 +2744,7 @@ void XL_Thinker(xlthinker_t* xl)
                     xg->active ? "INACTIVE" : "ACTIVE");
 
             // Swap line state without any checks.
-            XL_ActivateLine(!xg->active, info, line, 0, &dummything, XLE_AUTO);
+            XL_ActivateLine(!xg->active, info, line, 0, &dummyThing, XLE_AUTO);
         }
     }
 
@@ -2758,8 +2820,8 @@ void XL_Thinker(xlthinker_t* xl)
  */
 void XL_Update(void)
 {
-    uint        i;
-    xline_t    *xline;
+    uint                i;
+    xline_t*            xline;
 
     // It's all PU_LEVEL memory, so we can just lose it.
     for(i = 0; i < numlines; ++i)

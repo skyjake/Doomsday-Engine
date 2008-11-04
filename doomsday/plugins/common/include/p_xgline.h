@@ -33,87 +33,87 @@
 #include "xgclass.h"
 
 // Line events.
-#define XLE_CHAIN   0x001
-#define XLE_CROSS   0x002
-#define XLE_USE     0x004
-#define XLE_SHOOT   0x008
-#define XLE_HIT     0x010
-#define XLE_TICKER  0x020
+#define XLE_CHAIN           0x001
+#define XLE_CROSS           0x002
+#define XLE_USE             0x004
+#define XLE_SHOOT           0x008
+#define XLE_HIT             0x010
+#define XLE_TICKER          0x020
 // These two arn't real line events
-#define XLE_AUTO    0x040
-#define XLE_FORCED  0x080
+#define XLE_AUTO            0x040
+#define XLE_FORCED          0x080
 
-// treated as XLE_CHAIN
-// class dofuncs use it to determine when a REAL activator isn't present
-#define XLE_FUNC    0x100
+// Treated as XLE_CHAIN (class "do" funcs use it to determine when a "real"
+// activator isn't present.
+#define XLE_FUNC            0x100
 
 // Time conversion.
-#define FLT2TIC(x)  ( (int) ((x)*35) )
-#define TIC2FLT(x)  ( (x)/35.0f )
+#define FLT2TIC(x)          ( (int) ((x)*35) )
+#define TIC2FLT(x)          ( (x)/35.0f )
 
 // Line type definition flags.
-#define LTF_ACTIVE          0x00000001  // Active in the beginning of a level.
+#define LTF_ACTIVE          0x00000001 // Active in the beginning of a level.
 
 // Activation method. Line is activated if any of the following
 // situations take place.
-#define LTF_PLAYER_USE_A    0x00000002  // Player uses.
-#define LTF_OTHER_USE_A     0x00000004  // Nonplayers can activate with use.
-#define LTF_PLAYER_SHOOT_A  0x00000008  // Player shoots it.
-#define LTF_OTHER_SHOOT_A   0x00000010  // Non-player thing shoots it.
-#define LTF_ANY_CROSS_A     0x00000020  // Any mobj.
-#define LTF_MONSTER_CROSS_A 0x00000040  // Flagged Countkill.
-#define LTF_PLAYER_CROSS_A  0x00000080  // Player crosses the line.
-#define LTF_MISSILE_CROSS_A 0x00000100  // Missile crosses the line.
-#define LTF_PLAYER_HIT_A    0x00000200  // Player hits the line (walks into).
-#define LTF_OTHER_HIT_A     0x00000400  // Nonplayer hits the line.
-#define LTF_MONSTER_HIT_A   0x00000800  // Monster hits the line.
-#define LTF_MISSILE_HIT_A   0x00001000  // Missile collides with the line.
-#define LTF_ANY_HIT_A       0x00002000  // Any mobj collides with the line.
+#define LTF_PLAYER_USE_A    0x00000002 // Player uses.
+#define LTF_OTHER_USE_A     0x00000004 // Nonplayers can activate with use.
+#define LTF_PLAYER_SHOOT_A  0x00000008 // Player shoots it.
+#define LTF_OTHER_SHOOT_A   0x00000010 // Non-player thing shoots it.
+#define LTF_ANY_CROSS_A     0x00000020 // Any mobj.
+#define LTF_MONSTER_CROSS_A 0x00000040 // Flagged Countkill.
+#define LTF_PLAYER_CROSS_A  0x00000080 // Player crosses the line.
+#define LTF_MISSILE_CROSS_A 0x00000100 // Missile crosses the line.
+#define LTF_PLAYER_HIT_A    0x00000200 // Player hits the line (walks into).
+#define LTF_OTHER_HIT_A     0x00000400 // Nonplayer hits the line.
+#define LTF_MONSTER_HIT_A   0x00000800 // Monster hits the line.
+#define LTF_MISSILE_HIT_A   0x00001000 // Missile collides with the line.
+#define LTF_ANY_HIT_A       0x00002000 // Any mobj collides with the line.
 
 // Deactivating by colliding with the line.
-#define LTF_PLAYER_USE_D    0x00004000  // Player uses.
-#define LTF_OTHER_USE_D     0x00008000  // Nonplayers can activate with use.
-#define LTF_PLAYER_SHOOT_D  0x00010000  // Player shoots it.
-#define LTF_OTHER_SHOOT_D   0x00020000  // Non-player thing shoots it.
-#define LTF_ANY_CROSS_D     0x00040000  // Any mobj.
-#define LTF_MONSTER_CROSS_D 0x00080000  // Flagged Countkill.
-#define LTF_PLAYER_CROSS_D  0x00100000  // Player crosses the line.
-#define LTF_MISSILE_CROSS_D 0x00200000  // Missile crosses the line.
-#define LTF_PLAYER_HIT_D    0x00400000  // Player hits the line (walks into).
-#define LTF_OTHER_HIT_D     0x00800000  // Nonplayer hits the line.
-#define LTF_MONSTER_HIT_D   0x01000000  // Monster hits the line.
-#define LTF_MISSILE_HIT_D   0x02000000  // Missile collides with the line.
-#define LTF_ANY_HIT_D       0x04000000  // Any mobj collides with the line.
+#define LTF_PLAYER_USE_D    0x00004000 // Player uses.
+#define LTF_OTHER_USE_D     0x00008000 // Nonplayers can activate with use.
+#define LTF_PLAYER_SHOOT_D  0x00010000 // Player shoots it.
+#define LTF_OTHER_SHOOT_D   0x00020000 // Non-player thing shoots it.
+#define LTF_ANY_CROSS_D     0x00040000 // Any mobj.
+#define LTF_MONSTER_CROSS_D 0x00080000 // Flagged Countkill.
+#define LTF_PLAYER_CROSS_D  0x00100000 // Player crosses the line.
+#define LTF_MISSILE_CROSS_D 0x00200000 // Missile crosses the line.
+#define LTF_PLAYER_HIT_D    0x00400000 // Player hits the line (walks into).
+#define LTF_OTHER_HIT_D     0x00800000 // Nonplayer hits the line.
+#define LTF_MONSTER_HIT_D   0x01000000 // Monster hits the line.
+#define LTF_MISSILE_HIT_D   0x02000000 // Missile collides with the line.
+#define LTF_ANY_HIT_D       0x04000000 // Any mobj collides with the line.
 
 // A+D activation methods. (A and D flags combined.)
-#define LTF_PLAYER_USE      0x00004002  // Player uses.
-#define LTF_OTHER_USE       0x00008004  // Non-player uses.
-#define LTF_PLAYER_SHOOT    0x00010008  // Player shoots it.
-#define LTF_OTHER_SHOOT     0x00020010  // Non-player thing shoots it.
-#define LTF_ANY_CROSS       0x00040020  // Any mobj.
-#define LTF_MONSTER_CROSS   0x00080040  // Flagged Countkill.
-#define LTF_PLAYER_CROSS    0x00100080  // Player crosses the line.
-#define LTF_MISSILE_CROSS   0x00200100  // Missile crosses the line.
-#define LTF_PLAYER_HIT      0x00400200  // Player hits the line (walks into).
-#define LTF_OTHER_HIT       0x00800400  // Nonplayer hits the line.
-#define LTF_MONSTER_HIT     0x01000800  // Monster hits the line.
-#define LTF_MISSILE_HIT     0x02001000  // Missile collides with the line.
-#define LTF_ANY_HIT         0x04002000  // Any mobj collides with the line.
+#define LTF_PLAYER_USE      0x00004002 // Player uses.
+#define LTF_OTHER_USE       0x00008004 // Non-player uses.
+#define LTF_PLAYER_SHOOT    0x00010008 // Player shoots it.
+#define LTF_OTHER_SHOOT     0x00020010 // Non-player thing shoots it.
+#define LTF_ANY_CROSS       0x00040020 // Any mobj.
+#define LTF_MONSTER_CROSS   0x00080040 // Flagged Countkill.
+#define LTF_PLAYER_CROSS    0x00100080 // Player crosses the line.
+#define LTF_MISSILE_CROSS   0x00200100 // Missile crosses the line.
+#define LTF_PLAYER_HIT      0x00400200 // Player hits the line (walks into).
+#define LTF_OTHER_HIT       0x00800400 // Nonplayer hits the line.
+#define LTF_MONSTER_HIT     0x01000800 // Monster hits the line.
+#define LTF_MISSILE_HIT     0x02001000 // Missile collides with the line.
+#define LTF_ANY_HIT         0x04002000 // Any mobj collides with the line.
 
 // Special activation methods/requirements.
-#define LTF_TICKER_A            0x08000000  // Activate on ticker.
-#define LTF_TICKER_D            0x10000000  // Deactivate on ticker.
-#define LTF_TICKER              0x18000000  // A+D on ticker.
-#define LTF_MOBJ_GONE           0x20000000  // a9 specifies mobj type
-#define LTF_NO_OTHER_USE_SECRET 0x40000000  // Nonplr can't use line if secret
-#define LTF_ACTIVATOR_TYPE      0x80000000  // a9 specifies mobj type
+#define LTF_TICKER_A            0x08000000 // Activate on ticker.
+#define LTF_TICKER_D            0x10000000 // Deactivate on ticker.
+#define LTF_TICKER              0x18000000 // A+D on ticker.
+#define LTF_MOBJ_GONE           0x20000000 // a9 specifies mobj type
+#define LTF_NO_OTHER_USE_SECRET 0x40000000 // Nonplr can't use line if secret
+#define LTF_ACTIVATOR_TYPE      0x80000000 // a9 specifies mobj type
 
 // When to do effect?
 #define LTF2_WHEN_ACTIVATED     0x00000001
 #define LTF2_WHEN_DEACTIVATED   0x00000002
 #define LTF2_WHEN_ACTIVE        0x00000004
 #define LTF2_WHEN_INACTIVE      0x00000008
-#define LTF2_WHEN_LAST          0x00000010  // Only do effects when count=1.
+#define LTF2_WHEN_LAST          0x00000010 // Only do effects when count=1.
 
 // Activation requirements.
 #define LTF2_KEY(n)         (1<<(5+n))
@@ -123,36 +123,36 @@
 #define LTF2_KEY4           0x00000100
 #define LTF2_KEY5           0x00000200
 #define LTF2_KEY6           0x00000400
-#define LTF2_LINE_ACTIVE    0x00000800  // line ref: a4 + a5
-#define LTF2_LINE_INACTIVE  0x00001000  // line ref: a6 + a7
-#define LTF2_COLOR          0x00002000  // a8: activator's color.
+#define LTF2_LINE_ACTIVE    0x00000800 // line ref: a4 + a5
+#define LTF2_LINE_INACTIVE  0x00001000 // line ref: a6 + a7
+#define LTF2_COLOR          0x00002000 // a8: activator's color.
 
 // Continued in flags2.
-#define LTF2_HEALTH_ABOVE   0x00004000  // a0 (activator health)
-#define LTF2_HEALTH_BELOW   0x00008000  // a1
-#define LTF2_POWER_ABOVE    0x00010000  // a2 (activator power)
-#define LTF2_POWER_BELOW    0x00020000  // a3
+#define LTF2_HEALTH_ABOVE   0x00004000 // a0 (activator health)
+#define LTF2_HEALTH_BELOW   0x00008000 // a1
+#define LTF2_POWER_ABOVE    0x00010000 // a2 (activator power)
+#define LTF2_POWER_BELOW    0x00020000 // a3
 #define LTF2_SINGLEPLAYER   0x00040000
 #define LTF2_COOPERATIVE    0x00080000
 #define LTF2_DEATHMATCH     0x00100000
-#define LTF2_ANY_MODE       0x001c0000  // Singleplayer, coop and DM combined.
+#define LTF2_ANY_MODE       0x001c0000 // Singleplayer, coop and DM combined.
 #define LTF2_EASY           0x00200000
 #define LTF2_MED            0x00400000
 #define LTF2_HARD           0x00800000
-#define LTF2_ANY_SKILL      0x00e00000  // Easy/med/hard combined.
-#define LTF2_SKILL_SHIFT    21     // 1<<this == easy
+#define LTF2_ANY_SKILL      0x00e00000 // Easy/med/hard combined.
+#define LTF2_SKILL_SHIFT    21 // 1<<this == easy
 
 // Extra features.
-#define LTF2_MULTIPLE       0x01000000  // Copy act state to tagged lines
-#define LTF2_TWOSIDED       0x02000000  // Allow use/shoot from both sides.
-#define LTF2_GLOBAL_A_MSG   0x04000000  // Actmsg to all players.
-#define LTF2_GLOBAL_D_MSG   0x08000000  // Deactmsg to all players.
-#define LTF2_GLOBAL_MSG     0x0c000000  // A+D msg to all players.
-#define LTF2_GROUP_ACT      0x10000000  // Act all tag-matching lines
-#define LTF2_GROUP_DEACT    0x20000000  // Deact all tag-matching lines
-#define LTF2_OVERRIDE_ANY    0x40000000 // Override BOOM's "Any Trigger" linedef flag
+#define LTF2_MULTIPLE       0x01000000 // Copy act state to tagged lines
+#define LTF2_TWOSIDED       0x02000000 // Allow use/shoot from both sides.
+#define LTF2_GLOBAL_A_MSG   0x04000000 // Actmsg to all players.
+#define LTF2_GLOBAL_D_MSG   0x08000000 // Deactmsg to all players.
+#define LTF2_GLOBAL_MSG     0x0c000000 // A+D msg to all players.
+#define LTF2_GROUP_ACT      0x10000000 // Act all tag-matching lines
+#define LTF2_GROUP_DEACT    0x20000000 // Deact all tag-matching lines
+#define LTF2_OVERRIDE_ANY   0x40000000 // Override BOOM's "Any Trigger" linedef flag
 
-#define LTACT_CNT_INFINITE  -1     // Activate infinite number of times.
+#define LTACT_CNT_INFINITE  -1 // Activate infinite number of times.
 
 // Sidedef flags (same as the flags in p_mapdata.h)
 #define SDF_BLENDTOPTOMID       0x1
@@ -160,7 +160,7 @@
 #define SDF_BLENDMIDTOBOTTOM    0x4
 #define SDF_BLENDBOTTOMTOMID    0x8
 
-enum                               // Activation types.
+enum // Activation types.
 {
     // When on, count to off. Can be activated when off.
     LTACT_COUNTED_OFF,
@@ -178,7 +178,7 @@ enum                               // Activation types.
     LTACT_FLIP_COUNTED_ON,
 };
 
-enum                               // Wall sections.
+enum // Wall sections.
 {
     LWS_NONE,
     LWS_MID,
@@ -186,7 +186,7 @@ enum                               // Wall sections.
     LWS_LOWER
 };
 
-enum                               // Line reference type.
+enum // Line reference type.
 {
     LREF_NONE,
     LREF_SELF,
@@ -197,7 +197,7 @@ enum                               // Line reference type.
     LREF_ALL
 };
 
-enum                               // Line -> Plane reference type.
+enum // Line -> Plane reference type.
 {
     LPREF_NONE,
 
@@ -215,7 +215,7 @@ enum                               // Line -> Plane reference type.
     LPREF_INDEX_CEILING,
     LPREF_ALL_CEILINGS,
 
-    LPREF_SPECIAL,                 // 2nd param of reference treated in a special way.
+    LPREF_SPECIAL, // 2nd param of reference treated in a special way.
     LPREF_BACK_FLOOR,
     LPREF_BACK_CEILING,
     LPREF_THING_EXIST_FLOORS,
@@ -236,7 +236,7 @@ enum                               // Line -> Plane reference type.
     LSREF_THING_NOEXIST = LPREF_THING_NOEXIST_FLOORS
 };
 
-enum                               // Sector -> Plane reference type.
+enum // Sector -> Plane reference type.
 {
     SPREF_NONE,
     SPREF_MY_FLOOR,
@@ -276,7 +276,7 @@ enum                               // Sector -> Plane reference type.
     SPREF_LINE_ACT_TAGGED_CEILING
 };
 
-enum                               // Special lightlevel sources.
+enum // Special lightlevel sources.
 {
     LIGHTREF_NONE,
     LIGHTREF_MY,                   // Actline's front sector.
@@ -289,9 +289,9 @@ enum                               // Special lightlevel sources.
     LIGHTREF_BACK                  // Actline's back sector.
 };
 
-enum                              // Line.data references
+enum // Line.data references
 {
-    LDREF_NONE,     // Not actually used atm
+    LDREF_NONE, // Not actually used atm
     LDREF_ID,
     LDREF_SPECIAL,
     LDREF_TAG,
@@ -318,23 +318,23 @@ typedef struct {
 
 // State data for each line.
 typedef struct {
-    linetype_t      info;          // Type definition.
+    linetype_t      info; // Type definition.
     boolean         active;
-    boolean         disabled;      // If true, skip all processing.
+    boolean         disabled; // If true, skip all processing.
     int             timer;
     int             tickerTimer;
-    void           *activator;
+    void*           activator;
     int             idata;
     float           fdata;
-    int             chIdx;         // Chain sequence index.
-    float           chTimer;       // Chain sequence timer.
+    int             chIdx; // Chain sequence index.
+    float           chTimer; // Chain sequence timer.
 } xgline_t;
 
 // The XG line Classes
 extern struct xgclass_s xgClasses[];
 
 // Used as the activator if there is no real activator.
-extern struct mobj_s dummything;
+extern struct mobj_s dummyThing;
 
 // Register the XG classnames for XGdev
 void            XG_Register(void);
@@ -346,35 +346,35 @@ void            XL_Update(void);
 
 void            XL_Thinker(xlthinker_t* xl);
 
-void            XL_SetLineType(struct linedef_s *line, int id);
+void            XL_SetLineType(struct linedef_s* line, int id);
 
-linetype_t     *XL_GetType(int id);
-int             XL_LineEvent(int evtype, int linetype, struct linedef_s *line,
-                             int sidenum, void *data);
-void            XL_ActivateLine(boolean activating, linetype_t * info,
-                                struct linedef_s *line, int sidenum,
-                                struct mobj_s *data, int evtype);
-int             XL_TraverseLines(struct linedef_s *line, int reftype, int ref,
-                                 void *context, void *context2, struct mobj_s *activator,
+linetype_t*     XL_GetType(int id);
+int             XL_LineEvent(int evType, int lineType, struct linedef_s* line,
+                             int sideNum, void* data);
+void            XL_ActivateLine(boolean activating, linetype_t* info,
+                                struct linedef_s* line, int sideNum,
+                                struct mobj_s* data, int evType);
+int             XL_TraverseLines(struct linedef_s* line, int reftype, int ref,
+                                 void* context, void* context2, struct mobj_s* activator,
                                  int (C_DECL *func)());
-int             XL_TraversePlanes(struct linedef_s *line, int reftype, int ref,
-                                  void *context, void *context2, boolean travsectors,
-                                  struct mobj_s *activator,
+int             XL_TraversePlanes(struct linedef_s* line, int reftype, int ref,
+                                  void* context, void* context2, boolean travSectors,
+                                  struct mobj_s* activator,
                                   int (C_DECL *func)());
 
 // Return false if the event was processed.
-int             XL_CrossLine(struct linedef_s *line, int sidenum,
-                             struct mobj_s *thing);
-int             XL_UseLine(struct linedef_s *line, int sidenum,
-                           struct mobj_s *thing);
-int             XL_ShootLine(struct linedef_s *line, int sidenum,
-                             struct mobj_s *thing);
-int             XL_HitLine(struct linedef_s *line, int sidenum,
-                           struct mobj_s *thing);
+int             XL_CrossLine(struct linedef_s* line, int sideNum,
+                             struct mobj_s* thing);
+int             XL_UseLine(struct linedef_s* line, int sideNum,
+                           struct mobj_s* thing);
+int             XL_ShootLine(struct linedef_s* line, int sideNum,
+                             struct mobj_s* thing);
+int             XL_HitLine(struct linedef_s* line, int sideNum,
+                           struct mobj_s* thing);
 
 int             XG_RandomInt(int min, int max);
 
-void            SV_WriteXGLine(struct linedef_s *li);
-void            SV_ReadXGLine(struct linedef_s *li);
+void            SV_WriteXGLine(struct linedef_s* li);
+void            SV_ReadXGLine(struct linedef_s* li);
 
 #endif
