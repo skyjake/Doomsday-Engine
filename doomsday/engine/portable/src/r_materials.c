@@ -926,7 +926,7 @@ materialnum_t R_MaterialCheckNumForName(const char* rawName,
     // In original DOOM, texture name references beginning with the
     // hypen '-' character are always treated as meaning "no reference"
     // or "invalid texture" and surfaces using them were not drawn.
-    if(!name || !name[0] || name[0] == '-')
+    if(!rawName || !rawName[0] || rawName[0] == '-')
         return 0;
 
     if(groupNum != MG_ANY && !isValidMaterialGroup(groupNum))
