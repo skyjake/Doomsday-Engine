@@ -525,8 +525,8 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
     // Prepare 'name'.
     strncpy(name, rawName, 8);
     name[8] = '\0';
-    for(n = 0; n < 8; ++n)
-        name[n] = tolower(rawName[n]);
+    for(n = 0; *rawName && n < 8; ++n, rawName++)
+        name[n] = tolower(*rawName);
     hash = hashForName(name);
 
     // Check if we've already created a material for this.
@@ -941,8 +941,8 @@ Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
     // Prepare 'name'.
     strncpy(name, rawName, 8);
     name[8] = '\0';
-    for(n = 0; n < 8; ++n)
-        name[n] = tolower(rawName[n]);
+    for(n = 0; *rawName && n < 8; ++n, rawName++)
+        name[n] = tolower(*rawName);
     hash = hashForName(name);
 
     if(groupNum == MG_ANY)
