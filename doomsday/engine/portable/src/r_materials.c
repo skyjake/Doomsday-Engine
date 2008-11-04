@@ -504,7 +504,7 @@ material_t* R_MaterialCreate(const char* rawName, short width, short height,
     // In original DOOM, texture name references beginning with the
     // hypen '-' character are always treated as meaning "no reference"
     // or "invalid texture" and surfaces using them were not drawn.
-    if(!name || !name[0] || name[0] == '-')
+    if(!rawName || !rawName[0] || rawName[0] == '-')
     {
 #if _DEBUG
 Con_Message("R_MaterialCreate: Warning, attempted to create material with "
