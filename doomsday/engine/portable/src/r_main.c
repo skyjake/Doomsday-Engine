@@ -80,34 +80,34 @@ extern byte freezeRLs;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     viewAngleOffset = 0;
-int     validCount = 1; // increment every time a check is made
-int     frameCount; // just for profiling purposes
-int     rendInfoTris = 0;
-int     useVSync = 0;
-float   viewX, viewY, viewZ;
-float   viewFrontVec[3], viewUpVec[3], viewSideVec[3];
-float   viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
+int viewAngleOffset = 0;
+int validCount = 1; // Increment every time a check is made.
+int frameCount; // Just for profiling purposes.
+int rendInfoTris = 0;
+int useVSync = 0;
+float viewX, viewY, viewZ;
+float viewFrontVec[3], viewUpVec[3], viewSideVec[3];
+float viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
 angle_t viewAngle;
-float   viewPitch;              // player->lookDir, global version
-float   viewCos, viewSin;
+float viewPitch; // Player->lookDir, global version.
+float viewCos, viewSin;
 boolean setSizeNeeded;
 
 // Precalculated math tables.
-fixed_t *fineCosine = &finesine[FINEANGLES / 4];
+fixed_t* fineCosine = &finesine[FINEANGLES / 4];
 
-int extraLight; // bumped light from gun blasts
+int extraLight; // Bumped light from gun blasts.
 float extraLightDelta;
 
-material_t *skyMaskMaterial = NULL;
+material_t* skyMaskMaterial = NULL;
 
-float   frameTimePos;           // 0...1: fractional part for sharp game tics
+float frameTimePos; // 0...1: fractional part for sharp game tics.
 
-int     loadInStartupMode = false;
+int loadInStartupMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int rendCameraSmooth = true;   // smoothed by default
+static int rendCameraSmooth = true; // Smoothed by default.
 
 static boolean resetNextViewer = true;
 
@@ -294,8 +294,8 @@ void R_Update(void)
     P_UpdateParticleGens(); // Defs might've changed.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
-        ddplayer_t         *ddpl = &plr->shared;
+        player_t*           plr = &ddPlayers[i];
+        ddplayer_t*         ddpl = &plr->shared;
 
         // States have changed, the states are unknown.
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
@@ -305,14 +305,14 @@ void R_Update(void)
     for(i = 0; i < numSectors; ++i)
     {
         uint                j;
-        sector_t           *sec = &sectors[i];
+        sector_t*           sec = &sectors[i];
 
         for(j = 0; j < sec->planeCount; ++j)
             Surface_Update(&sec->SP_planesurface(j));
     }
     for(i = 0; i < numSideDefs; ++i)
     {
-        sidedef_t          *side = &sideDefs[i];
+        sidedef_t*          side = &sideDefs[i];
 
         Surface_Update(&side->SW_topsurface);
         Surface_Update(&side->SW_middlesurface);
@@ -351,10 +351,10 @@ void R_ResetViewer(void)
     resetNextViewer = 1;
 }
 
-void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
-                         viewer_t *out)
+void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos,
+                         viewer_t* out)
 {
-    float       inv = 1 - pos;
+    float               inv = 1 - pos;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
@@ -364,7 +364,7 @@ void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
-void R_SetViewPos(viewer_t *v)
+void R_SetViewPos(viewer_t* v)
 {
     viewX = v->pos[VX];
     viewY = v->pos[VY];
@@ -377,7 +377,7 @@ void R_SetViewPos(viewer_t *v)
  * The components whose difference is too large for interpolation will be
  * snapped to the sharp values.
  */
-void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
+void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
 {
 #define MAXMOVE 32
 
@@ -397,16 +397,16 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 /**
  * Retrieve the current sharp camera position.
  */
-void R_GetSharpView(viewer_t *view, player_t *player)
+void R_GetSharpView(viewer_t* view, player_t* player)
 {
-    ddplayer_t         *ddpl;
+    ddplayer_t*         ddpl;
 
-    if(!player)
-        return; // Huh?
-    ddpl = &player->shared;
-
-    if(ddpl->mo == NULL)
+    if(!player || !player->shared.mo)
+    {
         return;
+    }
+
+    ddpl = &player->shared;
 
     /* $unifiedangles */
     view->angle = ddpl->mo->angle + viewAngleOffset;
@@ -455,7 +455,20 @@ void R_GetSharpView(viewer_t *view, player_t *player)
  */
 void R_NewSharpWorld(void)
 {
+    extern boolean firstFrameAfterLoad;
+
     int                 i;
+
+    if(firstFrameAfterLoad)
+    {
+        /**
+         * We haven't yet drawn the world. Everything *is* sharp so simply
+         * reset the viewer data.
+         * \fixme A bit of a kludge?
+         */
+        memset(viewData, 0, sizeof(viewData));
+        return;
+    }
 
     if(resetNextViewer)
         resetNextViewer = 2;
@@ -758,7 +771,7 @@ void R_RenderPlayerView(int num)
     extern int          psp3d, modelTriCount;
 
     int                 i, oldFlags = 0;
-    player_t           *player;
+    player_t*           player;
 
     if(num < 0 || num >= DDMAXPLAYERS)
         return; // Huh?
