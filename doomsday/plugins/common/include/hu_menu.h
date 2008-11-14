@@ -35,6 +35,7 @@
 typedef enum menucommand_e {
     MCMD_OPEN, // Open the menu.
     MCMD_CLOSE, // Close the menu.
+    MCMD_CLOSEFAST, // Instantly close the menu.
     MCMD_NAV_OUT, // Navigate "out" of the current menu (up a level).
     MCMD_NAV_LEFT,
     MCMD_NAV_RIGHT,

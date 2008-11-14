@@ -2138,12 +2138,22 @@ void Hu_MenuDrawer(void)
  */
 void Hu_MenuCommand(menucommand_e cmd)
 {
-    if(cmd == MCMD_CLOSE)
+    if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
     {
-        Hu_MenuSetAlpha(0);
-        menuFogData.targetAlpha = 0;
+        if(cmd == MCMD_CLOSEFAST)
+        {   // Hide the menu instantly.
+            menuAlpha = menuTargetAlpha = 0;
+            menuFogData.alpha = menuFogData.targetAlpha = 0;
+            fadingOut = false;
+        }
+        else
+        {
+            menuTargetAlpha = 0;
+            menuFogData.targetAlpha = 0;
+            fadingOut = true;
+        }
+
         menuActive = false;
-        fadingOut = true;
         outFade = 0;
 
         // Disable the menu binding class
@@ -2624,33 +2634,30 @@ void M_WriteMenuText(const menu_t *menu, int index, const char *text)
 /**
  * User wants to load this game
  */
-void M_LoadSelect(int option, void *data)
+void M_LoadSelect(int option, void* data)
 {
-    menu_t     *menu = &SaveDef;
-
+    menu_t*             menu = &SaveDef;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     char        name[256];
+#endif
 
+    menu->lastOn = option;
+    Hu_MenuCommand(MCMD_CLOSEFAST);
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     SV_GetSaveGameFileName(option, name);
     G_LoadGame(name);
 #else
     G_LoadGame(option);
 #endif
-
-    menu->lastOn = option;
-    menuFogData.alpha = menuFogData.targetAlpha = 0;
-    menuAlpha = menuTargetAlpha = 0;
-    menuActive = false;
-    fadingOut = false;
-    Hu_MenuCommand(MCMD_CLOSE);
 }
 
 /**
  * User wants to save. Start string input for Hu_MenuResponder
  */
-void M_SaveSelect(int option, void *data)
+void M_SaveSelect(int option, void* data)
 {
-    menu_t     *menu = &LoadDef;
+    menu_t*             menu = &LoadDef;
 
     // we are going to be intercepting all chars
     saveStringEnter = 1;
@@ -2918,7 +2925,7 @@ void M_DoSave(int slot)
     G_SaveGame(slot, savegamestrings[slot]);
     Hu_MenuCommand(MCMD_CLOSE);
 
-    // PICK QUICKSAVE SLOT YET?
+    // Picked a quicksave slot yet?
     if(quickSaveSlot == -2)
         quickSaveSlot = slot;
 }
@@ -2949,7 +2956,7 @@ boolean M_QuickSaveResponse(int ch, void *data)
  */
 static void M_QuickSave(void)
 {
-    player_t   *player = &players[CONSOLEPLAYER];
+    player_t*               player = &players[CONSOLEPLAYER];
 
     if(player->playerState == PST_DEAD || G_GetGameState() != GS_LEVEL ||
        Get(DD_PLAYBACK))
@@ -2985,7 +2992,7 @@ boolean M_QuickLoadResponse(int ch, void *data)
         M_LoadSelect(quickSaveSlot, NULL);
         S_LocalSound(menusnds[1], NULL);
         M_StopMessage();
-        Hu_MenuCommand(MCMD_CLOSE);
+
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -2993,8 +3000,10 @@ boolean M_QuickLoadResponse(int ch, void *data)
         M_StopMessage();
         Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
+
         return true;
     }
+
     return false;
 }
 
@@ -3608,6 +3617,7 @@ boolean M_EndGameResponse(int option, void *data)
         M_StopMessage();
         Hu_MenuCommand(MCMD_CLOSE);
         G_StartTitle();
+
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -3615,6 +3625,7 @@ boolean M_EndGameResponse(int option, void *data)
         M_StopMessage();
         Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
+
         return true;
     }
 
@@ -3802,6 +3813,9 @@ boolean M_VerifyNightmare(int option, void *data)
 #if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
     if(messageResponse == 1) // Yes
     {
+        M_StopMessage();
+        Hu_MenuCommand(MCMD_CLOSEFAST);
+
 #ifdef __JHERETIC__
         G_DeferedInitNew(SM_NIGHTMARE, MenuEpisode, 1);
 #elif __JDOOM__
@@ -3809,8 +3823,6 @@ boolean M_VerifyNightmare(int option, void *data)
 #elif __JSTRIFE__
         G_DeferredNewGame(SM_NIGHTMARE);
 #endif
-        M_StopMessage();
-        Hu_MenuCommand(MCMD_CLOSE);
         return true;
     }
     else if(messageResponse == -1 || messageResponse == -2)
@@ -3844,6 +3856,8 @@ void M_ChooseSkill(int option, void *data)
 # endif
 #endif
 
+    Hu_MenuCommand(MCMD_CLOSEFAST);
+
 #if __JHERETIC__
     G_DeferedInitNew(option, MenuEpisode, 1);
 #elif __JDOOM__
@@ -3853,12 +3867,6 @@ void M_ChooseSkill(int option, void *data)
 #elif __JSTRIFE__
     G_DeferredNewGame(option);
 #endif
-
-    menuAlpha = menuTargetAlpha = 0;
-    menuFogData.alpha = menuFogData.targetAlpha = 0;
-    menuActive = false;
-    fadingOut = false;
-    Hu_MenuCommand(MCMD_CLOSE);
 }
 
 void M_SfxVol(int option, void *data)
@@ -3932,7 +3940,7 @@ void M_OpenDCP(int option, void *data)
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
         idx = 0;
 
-    Hu_MenuCommand(MCMD_CLOSE);
+    Hu_MenuCommand(MCMD_CLOSEFAST);
     DD_Execute(true, panelNames[idx]);
 
 #undef NUM_PANEL_NAMES
@@ -4217,7 +4225,7 @@ DEFCC(CCmdMenuAction)
 
             case 4: // In helpscreens: Exit and close menu
                 M_SetupNextMenu(&MainDef);
-                Hu_MenuCommand(MCMD_CLOSE);
+                Hu_MenuCommand(MCMD_CLOSEFAST);
                 break;
             }
 
