@@ -341,6 +341,7 @@ static void drawStatusBarBackground(int player, float width, float height)
     float               cw, cw2, ch;
     float               alpha;
     hudstate_t*         hud = &hudStates[player];
+    float               armsBGX = ST_ARMSBGX - armsBackground.leftOffset;
 
     GL_SetPatch(statusbar.lump, DGL_CLAMP, DGL_CLAMP);
 
@@ -379,7 +380,7 @@ static void drawStatusBarBackground(int player, float width, float height)
         // Up to faceback if deathmatch, else ST_ARMS.
         x = 0;
         y = 0;
-        w = width * (float) (hud->statusbarArmsOn ? ST_ARMSBGX : ST_FX) / ST_WIDTH;
+        w = width * (float) (hud->statusbarArmsOn ? armsBGX : ST_FX) / ST_WIDTH;
         h = height * (float) ST_HEIGHT / ST_HEIGHT;
         cw = w / width;
 
@@ -395,11 +396,11 @@ static void drawStatusBarBackground(int player, float width, float height)
         if(IS_NETGAME)
         {
             // Fill in any gap left before the faceback due to small ARMS.
-            if(ST_ARMSBGX + armsBackground.width < ST_FX)
+            if(armsBGX + armsBackground.width < ST_FX)
             {
-                x = width * (float) (ST_ARMSBGX + armsBackground.width) / ST_WIDTH;
+                x = width * (float) (armsBGX + armsBackground.width) / ST_WIDTH;
                 y = 0;
-                w = width * (float) (ST_FX - ST_ARMSBGX - armsBackground.width) / ST_WIDTH;
+                w = width * (float) (ST_FX - armsBGX - armsBackground.width) / ST_WIDTH;
                 h = height * (float) (ST_HEIGHT) / ST_HEIGHT;
                 cw = x / width;
                 cw2 = (x + w) / width;
@@ -461,9 +462,9 @@ static void drawStatusBarBackground(int player, float width, float height)
         else
         {
             // Including area behind the face status indicator.
-            x = width * (float) (ST_ARMSBGX + armsBackground.width) / ST_WIDTH;
+            x = width * (float) (armsBGX + armsBackground.width) / ST_WIDTH;
             y = 0;
-            w = width * (float) (ST_WIDTH - ST_ARMSBGX - armsBackground.width) / ST_WIDTH;
+            w = width * (float) (ST_WIDTH - armsBGX - armsBackground.width) / ST_WIDTH;
             h = height * (float) ST_HEIGHT / ST_HEIGHT;
             cw = x / width;
         }
@@ -484,18 +485,20 @@ static void drawStatusBarBackground(int player, float width, float height)
     {   // Draw the ARMS background.
         GL_SetPatch(armsBackground.lump, DGL_CLAMP, DGL_CLAMP);
 
-        x = width * ((float) ST_ARMSBGX - ST_X) / ST_WIDTH;
-        w = width * (float) armsBackground.width / ST_WIDTH;
+        x = width * ((float) armsBGX - ST_X) / ST_WIDTH;
+        y = height * ((float) armsBackground.topOffset) / ST_HEIGHT;
+        w = width * ((float) armsBackground.width) / ST_WIDTH;
+        h = height * ((float) armsBackground.height) / ST_HEIGHT;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0);
-            DGL_Vertex2f(x, 0);
+            DGL_Vertex2f(x, y);
             DGL_TexCoord2f(1, 0);
-            DGL_Vertex2f(x + w, 0);
+            DGL_Vertex2f(x + w, y);
             DGL_TexCoord2f(1, 1);
-            DGL_Vertex2f(x + w, height);
+            DGL_Vertex2f(x + w, y + h);
             DGL_TexCoord2f(0, 1);
-            DGL_Vertex2f(x, height);
+            DGL_Vertex2f(x, y + h);
         DGL_End();
     }
 
