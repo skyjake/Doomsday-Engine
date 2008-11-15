@@ -165,6 +165,7 @@ void M_WeaponRecoil(int option, void* data);
 
 void M_DrawMainMenu(void);
 void M_DrawNewGameMenu(void);
+void M_DrawReadThis(void);
 void M_DrawSkillMenu(void);
 void M_DrawClassMenu(void); // Does something only in jHEXEN
 void M_DrawEpisode(void); // Does nothing in jHEXEN
@@ -895,7 +896,7 @@ menuitem_t ReadItems1[] = {
 menu_t ReadDef1 = {
     MNF_NOSCALE,
     280, 185,
-    NULL,
+    M_DrawReadThis,
     1, ReadItems1,
     0, MENU_MAIN,
     huFontB,
@@ -921,7 +922,7 @@ menuitem_t ReadItems2[] = {
 menu_t ReadDef2 = {
     MNF_NOSCALE,
     330, 175,
-    NULL,
+    M_DrawReadThis,
     1, ReadItems2,
     0, MENU_MAIN,
     huFontB,
@@ -944,7 +945,7 @@ menuitem_t ReadItems3[] = {
 menu_t ReadDef3 = {
     MNF_NOSCALE,
     330, 175,
-    NULL,
+    M_DrawReadThis,
     1, ReadItems3,
     0, MENU_MAIN,
     huFontB,
@@ -2743,6 +2744,14 @@ void M_DrawNewGameMenu(void)
 {
     menu_t*             menu = &NewGameDef;
     M_DrawTitle("Choose Game Type", menu->y - 30);
+}
+
+void M_DrawReadThis(void)
+{
+#if __JDOOM__
+    // The background is handled elsewhere, just draw the cursor.
+    GL_DrawPatch(298, 160, cursorst[whichSkull].lump);
+#endif
 }
 
 #if __JHEXEN__
