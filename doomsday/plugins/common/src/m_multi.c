@@ -75,7 +75,7 @@ void            SCEnterGameSetup(int option, void* data);
 void            SCSetProtocol(int option, void* data);
 void            SCGameSetupFunc(int option, void* data);
 void            SCGameSetupEpisode(int option, void* data);
-void            SCGameSetupMission(int option, void* data);
+void            SCGameSetupMap(int option, void* data);
 void            SCGameSetupSkill(int option, void* data);
 void            SCGameSetupDeathmatch(int option, void* data);
 void            SCGameSetupDamageMod(int option, void* data);
@@ -140,7 +140,7 @@ menu_t MultiplayerMenu = {
 #  define NUM_GAMESETUP_ITEMS       11
 
 menuitem_t GameSetupItems1[] = {
-    {ITT_LRFUNC, 0, "MAP:", SCGameSetupMission, 0},
+    {ITT_LRFUNC, 0, "MAP:", SCGameSetupMap, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_LRFUNC, 0, "SKILL:", SCGameSetupSkill, 0},
     {ITT_EFUNC, 0, "DEATHMATCH:", SCGameSetupFunc, 0, NULL, &cfg.netDeathmatch },
@@ -162,7 +162,7 @@ menuitem_t GameSetupItems1[] = {
 menuitem_t GameSetupItems1[] =  // for Heretic
 {
     {ITT_LRFUNC, 0, "EPISODE :", SCGameSetupEpisode, 0},
-    {ITT_LRFUNC, 0, "MISSION :", SCGameSetupMission, 0},
+    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
     {ITT_LRFUNC, 0, "DEATHMATCH :", SCGameSetupDeathmatch, 0},
     {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
@@ -184,7 +184,7 @@ menuitem_t GameSetupItems1[] =  // for Heretic
 menuitem_t GameSetupItems1[] =  // for Doom 1
 {
     {ITT_LRFUNC, 0, "EPISODE :", SCGameSetupEpisode, 0},
-    {ITT_LRFUNC, 0, "MISSION :", SCGameSetupMission, 0},
+    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
     {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
     {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
@@ -206,7 +206,7 @@ menuitem_t GameSetupItems1[] =  // for Doom 1
 
 menuitem_t GameSetupItems2[] =  // for Doom 2
 {
-    {ITT_LRFUNC, 0, "LEVEL :", SCGameSetupMission, 0},
+    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
     {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
     {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNoMonsters },
@@ -232,7 +232,7 @@ menuitem_t GameSetupItems2[] =  // for Doom 2
 
 menuitem_t GameSetupItems1[] =
 {
-    {ITT_LRFUNC, 0, "LEVEL :", SCGameSetupMission, 0},
+    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
     {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
     {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNoMonsters },
@@ -573,7 +573,7 @@ void SCEnterJoinMenu(int option, void* data)
 
 void SCEnterGameSetup(int option, void* data)
 {
-    // See to it that the episode and mission numbers are correct.
+    // See to it that the episode and map numbers are correct.
 #if __JDOOM64__
     if(cfg.netMap < 1)
         cfg.netMap = 1;
@@ -683,7 +683,7 @@ void SCGameSetupEpisode(int option, void* data)
 }
 #endif
 
-void SCGameSetupMission(int option, void* data)
+void SCGameSetupMap(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
@@ -724,7 +724,7 @@ void SCOpenServer(int option, void* data)
 {
     if(IS_NETGAME)
     {
-        // Game already running, just change level.
+        // Game already running, just change map.
 #if __JHEXEN__ || __JSTRIFE__
         Executef(false, "setmap %i", cfg.netMap);
 #elif __JDOOM64__
@@ -909,8 +909,8 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
     int                 y = menu->y + menu->itemHeight * index;
     int                 vis;
     char                buf[MAX_EDIT_LEN + 1], *text;
+    int                 width = M_StringWidth("a", huFontA) * 27;
 
-    M_DrawSaveLoadBorder(x + 11, y + 5);
     strcpy(buf, ef->text);
     strupr(buf);
     if(ActiveEdit == ef && menuTime & 0x8)
@@ -918,8 +918,9 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
     text = buf + ef->firstVisible;
     vis = Ed_VisibleSlotChars(text, M_StringWidth);
     text[vis] = 0;
-    M_WriteText2(x + 8, y + 5, text, huFontA, 1, 1, 1, Hu_MenuAlpha());
 
+    M_DrawSaveLoadBorder(x - 8, y + 2, width);
+    M_WriteText2(x, y + 3, text, huFontA, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void SCEditField(int efptr, void* data)

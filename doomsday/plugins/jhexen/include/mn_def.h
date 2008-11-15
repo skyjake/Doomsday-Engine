@@ -103,7 +103,7 @@ extern menu_t   GameSetupMenu;
 extern menu_t   PlayerSetupMenu;
 
 void        M_StartControlPanel(void);
-void        M_DrawSaveLoadBorder(int x, int y);
+void            M_DrawSaveLoadBorder(int x, int y, int width);
 void        M_WriteMenuText(const menu_t *menu, int index, const char *text);
 
 void        M_StartMessage(char *string, void *routine, boolean input);

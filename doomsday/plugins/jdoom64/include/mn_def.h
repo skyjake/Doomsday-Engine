@@ -112,7 +112,7 @@ void    DrawColorWidget();
 void    SCColorWidget(int index, void *data);
 void    M_WGCurrentColor(int option, void *data);
 
-void    M_DrawSaveLoadBorder(int x, int y);
+void            M_DrawSaveLoadBorder(int x, int y, int width);
 void    M_SetupNextMenu(menu_t *menu);
 void    M_DrawThermo(int x, int y, int thermWidth, int thermDot);
 void    MN_DrawSlider(const menu_t *menu, int item, int width, int slot);

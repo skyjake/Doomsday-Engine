@@ -242,9 +242,9 @@ boolean  (*messageRoutine) (int response, void* data);
 char tempstring[80];
 
 // Old save description before edit.
-char saveOldString[SAVESTRINGSIZE];
+char saveOldString[SAVESTRINGSIZE+1];
 
-char savegamestrings[10][SAVESTRINGSIZE];
+char savegamestrings[10][SAVESTRINGSIZE+1];
 
 // We are going to be entering a savegame string.
 int saveStringEnter;
@@ -392,6 +392,9 @@ static dpatch_t m_saveg;
 static dpatch_t m_rdthis;
 static dpatch_t m_quitg;
 static dpatch_t m_optttl;
+static dpatch_t dpLSLeft;
+static dpatch_t dpLSRight;
+static dpatch_t dpLSCntr;
 # if __JDOOM__
 static dpatch_t credit;
 static dpatch_t help;
@@ -402,6 +405,7 @@ static dpatch_t help2;
 
 #if __JHERETIC__ || __JHEXEN__
 static dpatch_t m_htic;
+static dpatch_t dpFSlot;
 #endif
 
 menuitem_t MainItems[] = {
@@ -670,7 +674,7 @@ static menuitem_t LoadItems[] = {
 static menu_t LoadDef = {
     0,
 #if __JDOOM__ || __JDOOM64__
-    80, 54,
+    80, 44,
 #else
     80, 30,
 #endif
@@ -700,7 +704,7 @@ static menuitem_t SaveItems[] = {
 static menu_t SaveDef = {
     0,
 #if __JDOOM__ || __JDOOM64__
-    80, 54,
+    80, 44,
 #else
     80, 30,
 #endif
@@ -1382,6 +1386,9 @@ void M_LoadData(void)
     R_CachePatch(&m_rdthis, "M_RDTHIS");
     R_CachePatch(&m_quitg, "M_QUITG");
     R_CachePatch(&m_optttl, "M_OPTTTL");
+    R_CachePatch(&dpLSLeft, "M_LSLEFT");
+    R_CachePatch(&dpLSRight, "M_LSRGHT");
+    R_CachePatch(&dpLSCntr, "M_LSCNTR");
 # if __JDOOM__
     if(gameMode == retail || gameMode == commercial)
         R_CachePatch(&credit, "CREDIT");
@@ -1396,6 +1403,7 @@ void M_LoadData(void)
 
 #if __JHERETIC__ || __JHEXEN__
     R_CachePatch(&m_htic, "M_HTIC");
+    R_CachePatch(&dpFSlot, "M_FSLOT");
 #endif
 
     if(!menuFogData.texture && !Get(DD_NOVIDEO))
@@ -2396,9 +2404,9 @@ boolean M_EditResponder(event_t *ev)
 
                 if(saveStringEnter)
                 {
-                    if(saveCharIndex < SAVESTRINGSIZE - 1 &&
+                    if(saveCharIndex < SAVESTRINGSIZE &&
                         M_StringWidth(savegamestrings[saveSlot], huFontA)
-                        < (SAVESTRINGSIZE - 2) * 8)
+                        < (SAVESTRINGSIZE - 1) * 8)
                     {
                         savegamestrings[saveSlot][saveCharIndex++] = ch;
                         savegamestrings[saveSlot][saveCharIndex] = 0;
@@ -2688,7 +2696,7 @@ void M_SaveSelect(int option, void* data)
     saveCharIndex = strlen(savegamestrings[option]);
 }
 
-void M_StartMessage(char *string, void *routine, boolean input)
+void M_StartMessage(char* string, void* routine, boolean input)
 {
     messageResponse = 0;
     messageLastMenuActive = menuActive;
@@ -2705,10 +2713,12 @@ void M_StartMessage(char *string, void *routine, boolean input)
 
 void M_StopMessage(void)
 {
-    menuActive = messageLastMenuActive;
     messageToPrint = 0;
 
-    // Disable the menu binding class
+    if(!messageLastMenuActive)
+        Hu_MenuCommand(MCMD_CLOSEFAST);
+
+    // Disable the message binding class
     DD_Executef(true, "deactivatebclass message");
 }
 
@@ -2872,74 +2882,88 @@ void M_ReadSaveStrings(void)
 
 void M_DrawLoad(void)
 {
-    int         i;
-    menu_t     *menu = &LoadDef;
+    int                 i;
+    menu_t*             menu = &LoadDef;
+    int                 width =
+        M_StringWidth("a", menu->font) * (SAVESTRINGSIZE - 1);
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     M_DrawTitle("LOAD GAME", 4);
 #else
-    WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
+    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  &m_loadg, "{case}LOAD GAME", true, ALIGN_LEFT);
 #endif
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        M_DrawSaveLoadBorder(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y +
-                             (menu->itemHeight * i));
-        M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y +
+        M_DrawSaveLoadBorder(LoadDef.x - 8, SAVEGAME_BOX_YOFFSET + LoadDef.y +
+                             (menu->itemHeight * i), width + 8);
+        M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 +
                      (menu->itemHeight * i),
                      savegamestrings[i], menu->font, menu->color[0], menu->color[1],
                      menu->color[2], menuAlpha);
     }
-
 }
 
 void M_DrawSave(void)
 {
-    int         i;
-    menu_t     *menu = &SaveDef;
+    int                 i;
+    menu_t*             menu = &SaveDef;
+    int                 width =
+        M_StringWidth("a", menu->font) * (SAVESTRINGSIZE - 1);
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     M_DrawTitle("SAVE GAME", 4);
 #else
-    WI_DrawPatch(72, 28, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
+    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  &m_saveg, "{case}SAVE GAME", true, ALIGN_LEFT);
 #endif
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        M_DrawSaveLoadBorder(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y +
-                             (menu->itemHeight * i));
-        M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i),
+        M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y +
+                             (menu->itemHeight * i), width + 8);
+        M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
+                     (menu->itemHeight * i),
                      savegamestrings[i], menu->font, menu->color[0], menu->color[1],
                      menu->color[2], menuAlpha);
     }
 
     if(saveStringEnter)
     {
-        i = M_StringWidth(savegamestrings[saveSlot], huFontA);
-        M_WriteText2(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y +
-                     (menu->itemHeight * saveSlot), "_", huFontA, menu->color[0],
-                     menu->color[1], menu->color[2], menuAlpha);
-    }
+        size_t              len = strlen(savegamestrings[saveSlot]);
 
+        //if(len < SAVESTRINGSIZE)
+        {
+            i = M_StringWidth(savegamestrings[saveSlot], huFontA);
+            M_WriteText2(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
+                         (menu->itemHeight * saveSlot), "_", huFontA,
+                         menu->color[0], menu->color[1], menu->color[2],
+                         menuAlpha);
+        }
+    }
 }
 
 /**
  * Draw border for the savegame description
  */
-void M_DrawSaveLoadBorder(int x, int y)
+void M_DrawSaveLoadBorder(int x, int y, int width)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    DGL_Color4f( 1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(x - 8, y - 4, W_GetNumForName("M_FSLOT"));
+    DGL_Color4f(1, 1, 1, menuAlpha);
+    GL_DrawPatch_CS(x - 8, y - 4, dpFSlot.lump);
 #else
-    DGL_Color4f( 1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(x - 8, y + 8, W_GetNumForName("M_LSLEFT"));
-    GL_DrawPatch_CS(x + 8 * 24, y + 8, W_GetNumForName("M_LSRGHT"));
+    DGL_Color4f(1, 1, 1, menuAlpha);
 
-    GL_SetPatch(W_GetNumForName("M_LSCNTR"), DGL_REPEAT, DGL_REPEAT);
-    DGL_Color4f( 1, 1, 1, menuAlpha);
-    GL_DrawRectTiled(x - 3, y - 3, 24 * 8, 14, 8, 14);
+    GL_SetPatch(dpLSLeft.lump, DGL_CLAMP, DGL_CLAMP);
+    GL_DrawRect(x, y - 3, dpLSLeft.width, dpLSLeft.height, 1, 1, 1, menuAlpha);
+    GL_SetPatch(dpLSRight.lump, DGL_CLAMP, DGL_CLAMP);
+    GL_DrawRect(x + width - dpLSRight.width, y - 3, dpLSRight.width,
+                dpLSRight.height, 1, 1, 1, menuAlpha);
+
+    GL_SetPatch(dpLSCntr.lump, DGL_REPEAT, DGL_REPEAT);
+    GL_DrawRectTiled(x + dpLSLeft.width, y - 3,
+                     width - dpLSLeft.width - dpLSRight.width,
+                     14, 8, 14);
 #endif
 }
 
@@ -2997,7 +3021,7 @@ static void M_QuickSave(void)
         Hu_MenuCommand(MCMD_OPEN);
         M_ReadSaveStrings();
         M_SetupNextMenu(&SaveDef);
-        quickSaveSlot = -2;        // means to pick a slot now
+        quickSaveSlot = -2; // Means to pick a slot now.
         return;
     }
     sprintf(tempstring, QSPROMPT, savegamestrings[quickSaveSlot]);
@@ -3751,6 +3775,7 @@ void M_SaveGame(int option, void *data)
         return;
     }
 
+    Hu_MenuCommand(MCMD_OPEN);
     M_SetupNextMenu(&SaveDef);;
     M_ReadSaveStrings();
 }
@@ -3855,7 +3880,6 @@ boolean M_VerifyNightmare(int option, void *data)
     else if(messageResponse == -1 || messageResponse == -2)
     {
         M_StopMessage();
-        Hu_MenuCommand(MCMD_CLOSE);
         S_LocalSound(menusnds[1], NULL);
         return true;
     }
@@ -4284,7 +4308,6 @@ DEFCC(CCmdMenuAction)
 #endif
         if(!stricmp(argv[0], "SaveGame"))    // F2
     {
-        Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
         //S_LocalSound(menusnds[2], NULL);
         M_SaveGame(0, NULL);
