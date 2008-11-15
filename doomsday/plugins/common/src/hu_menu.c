@@ -830,13 +830,13 @@ static menuitem_t OptionsItems[] = {
     {ITT_SETMENU, 0, "automap...", NULL, MENU_MAP},
     {ITT_SETMENU, 0, "weapons...", NULL, MENU_WEAPONSETUP},
     {ITT_SETMENU, 0, "sound...", NULL, MENU_OPTIONS2},
-    {ITT_SETMENU, 0, "mouse options", M_OpenDCP, 2},
-    {ITT_SETMENU, 0, "joystick options", M_OpenDCP, 2}
+    {ITT_EFUNC, 0, "mouse options", M_OpenDCP, 2},
+    {ITT_EFUNC, 0, "joystick options", M_OpenDCP, 2}
 };
 
 static menu_t OptionsDef = {
     0,
-    94, 84,
+    94, 63,
     M_DrawOptions,
     10, OptionsItems,
     0, MENU_MAIN,
@@ -1530,8 +1530,8 @@ void Hu_MenuInit(void)
         item->func = M_QuitDOOM;
         item->text = "{case}Quit Game";
         item->patch = &m_quitg;
-        MainDef.itemCount = 5;
-        MainDef.y = 64 + 8;
+        MainDef.itemCount--;
+        MainDef.y += 8;
         SkillDef.prevMenu = MENU_NEWGAME;
         ReadDef1.x = 330;
         ReadDef1.y = 165;
@@ -1550,7 +1550,7 @@ void Hu_MenuInit(void)
         item->func = M_ReadThis;
         item->text = "{case}Read This!";
         item->patch = &m_rdthis;
-        MainDef.itemCount = 6;
+        MainDef.itemCount--;
         MainDef.y = 64;
         ReadDef1.background = "HELP1";
         ReadDef1.backgroundIsRaw = false;
@@ -2732,7 +2732,7 @@ void M_DrawMainMenu(void)
     GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
     GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(94, 7, 1, 1, 1, menuAlpha, &m_doom,
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom,
                  NULL, false, ALIGN_LEFT);
 #elif __JSTRIFE__
     menu_t     *menu = &MainDef;
@@ -3094,14 +3094,14 @@ void M_DrawOptions(void)
     WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
                  ALIGN_LEFT);
 
-    M_DrawTitle("OPTIONS", 56);
+    M_DrawTitle("OPTIONS", 44);
 #else
 # if __JDOOM64__
-    WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
+    WI_DrawPatch(160, 44, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
                  menuAlpha, 0, "{case}OPTIONS",
                  true, ALIGN_CENTER);
 #else
-    WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
+    WI_DrawPatch(160, 44, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
                  menuAlpha, &m_optttl, "{case}OPTIONS",
                  true, ALIGN_CENTER);
 # endif
