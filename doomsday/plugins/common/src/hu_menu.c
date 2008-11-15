@@ -153,7 +153,6 @@ void M_XhairB(int option, void* data);
 void M_XhairAlpha(int option, void* data);
 #endif
 
-void M_ReadSaveStrings(void);
 void M_DoSave(int slot);
 void M_DoLoad(int slot);
 static void M_QuickSave(void);
@@ -659,15 +658,15 @@ static menu_t FilesMenu = {
 #endif
 
 static menuitem_t LoadItems[] = {
-    {ITT_EFUNC, 0, "1", M_LoadSelect, 0},
-    {ITT_EFUNC, 0, "2", M_LoadSelect, 1},
-    {ITT_EFUNC, 0, "3", M_LoadSelect, 2},
-    {ITT_EFUNC, 0, "4", M_LoadSelect, 3},
-    {ITT_EFUNC, 0, "5", M_LoadSelect, 4},
-    {ITT_EFUNC, 0, "6", M_LoadSelect, 5},
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 0},
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 1},
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 2},
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 3},
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 4},
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 5},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {ITT_EFUNC, 0, "7", M_LoadSelect, 6},
-    {ITT_EFUNC, 0, "8", M_LoadSelect, 7}
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 6},
+    {ITT_EFUNC, 0, NULL, M_LoadSelect, 7}
 #endif
 };
 
@@ -689,15 +688,15 @@ static menu_t LoadDef = {
 };
 
 static menuitem_t SaveItems[] = {
-    {ITT_EFUNC, 0, "1", M_SaveSelect, 0},
-    {ITT_EFUNC, 0, "2", M_SaveSelect, 1},
-    {ITT_EFUNC, 0, "3", M_SaveSelect, 2},
-    {ITT_EFUNC, 0, "4", M_SaveSelect, 3},
-    {ITT_EFUNC, 0, "5", M_SaveSelect, 4},
-    {ITT_EFUNC, 0, "6", M_SaveSelect, 5},
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 0},
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 1},
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 2},
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 3},
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 4},
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 5},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {ITT_EFUNC, 0, "7", M_SaveSelect, 6},
-    {ITT_EFUNC, 0, "8", M_SaveSelect, 7}
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 6},
+    {ITT_EFUNC, 0, NULL, M_SaveSelect, 7}
 #endif
 };
 
@@ -2433,8 +2432,10 @@ boolean M_EditResponder(event_t *ev)
 void M_EndAnyKeyMsg(void)
 {
     M_StopMessage();
-    Hu_MenuCommand(MCMD_CLOSE);
     S_LocalSound(menusnds[1], NULL);
+
+    if(!messageLastMenuActive)
+        Hu_MenuCommand(MCMD_CLOSEFAST);
 }
 
 /**
@@ -2494,7 +2495,7 @@ boolean Hu_MenuResponder(event_t* ev)
         lastVI = currentMenu->itemCount - 1;
     currentMenu->lastOn = itemOn;
 
-    // first letter of each item is treated as a hotkey
+    // First letter of each item is treated as a hotkey
     for(i = firstVI; i <= lastVI; ++i)
     {
         if(currentMenu->items[i].text && currentMenu->items[i].type != ITT_EMPTY)
@@ -2515,6 +2516,7 @@ boolean Hu_MenuResponder(event_t* ev)
             }
         }
     }
+
     return false;
 }
 
@@ -2854,22 +2856,36 @@ void M_DrawFilesMenu(void)
 /**
  * Read the strings from the savegame files.
  */
-void M_ReadSaveStrings(void)
+static boolean readSaveString(char* str, size_t len, filename_t fileName)
 {
-    int         i;
-    char        name[256];
+    if(!SV_GetSaveDescription(fileName, str))
+    {
+        strncpy(str, EMPTYSTRING, len);
+        return false;
+    }
+
+    return true;
+}
+
+static void updateSaveList(void)
+{
+    int                 i;
+    filename_t          fileName;
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        SV_GetSaveGameFileName(i, name);
-        if(!SV_GetSaveDescription(name, savegamestrings[i]))
+        menuitem_t*         loadSlot = &LoadItems[i];
+
+        SV_GetSaveGameFileName(i, fileName);
+
+        memset(savegamestrings[i], 0, SAVESTRINGSIZE);
+        if(readSaveString(savegamestrings[i], SAVESTRINGSIZE, fileName))
         {
-            strcpy(savegamestrings[i], EMPTYSTRING);
-            LoadItems[i].type = ITT_INERT;
+            loadSlot->type = ITT_EFUNC;
         }
         else
         {
-            LoadItems[i].type = ITT_EFUNC;
+            loadSlot->type = ITT_EMPTY;
         }
     }
 }
@@ -2884,6 +2900,7 @@ void M_DrawLoad(void)
 {
     int                 i;
     menu_t*             menu = &LoadDef;
+    float               t, r, g, b;
     int                 width =
         M_StringWidth("a", menu->font) * (SAVESTRINGSIZE - 1);
 
@@ -2893,14 +2910,26 @@ void M_DrawLoad(void)
     WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  &m_loadg, "{case}LOAD GAME", true, ALIGN_LEFT);
 #endif
+
+    if(menu_color <= 50)
+        t = menu_color / 50.0f;
+    else
+        t = (100 - menu_color) / 50.0f;
+    r = currentMenu->color[0] * t + cfg.flashColor[0] * (1 - t);
+    g = currentMenu->color[1] * t + cfg.flashColor[1] * (1 - t);
+    b = currentMenu->color[2] * t + cfg.flashColor[2] * (1 - t);
+
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         M_DrawSaveLoadBorder(LoadDef.x - 8, SAVEGAME_BOX_YOFFSET + LoadDef.y +
-                             (menu->itemHeight * i), width + 8);
+                             (menu->itemHeight * i), width + 16);
+
         M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 +
                      (menu->itemHeight * i),
-                     savegamestrings[i], menu->font, menu->color[0], menu->color[1],
-                     menu->color[2], menuAlpha);
+                     savegamestrings[i], menu->font,
+                     i == itemOn? r : menu->color[0],
+                     i == itemOn? g : menu->color[1],
+                     i == itemOn? b : menu->color[2], menuAlpha);
     }
 }
 
@@ -2908,6 +2937,7 @@ void M_DrawSave(void)
 {
     int                 i;
     menu_t*             menu = &SaveDef;
+    float               t, r, g, b;
     int                 width =
         M_StringWidth("a", menu->font) * (SAVESTRINGSIZE - 1);
 
@@ -2918,27 +2948,37 @@ void M_DrawSave(void)
                  &m_saveg, "{case}SAVE GAME", true, ALIGN_LEFT);
 #endif
 
+    if(menu_color <= 50)
+        t = menu_color / 50.0f;
+    else
+        t = (100 - menu_color) / 50.0f;
+    r = currentMenu->color[0] * t + cfg.flashColor[0] * (1 - t);
+    g = currentMenu->color[1] * t + cfg.flashColor[1] * (1 - t);
+    b = currentMenu->color[2] * t + cfg.flashColor[2] * (1 - t);
+
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y +
-                             (menu->itemHeight * i), width + 8);
+                             (menu->itemHeight * i), width + 16);
+
         M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
                      (menu->itemHeight * i),
-                     savegamestrings[i], menu->font, menu->color[0], menu->color[1],
-                     menu->color[2], menuAlpha);
+                     savegamestrings[i], menu->font,
+                     i == itemOn? r : menu->color[0],
+                     i == itemOn? g : menu->color[1],
+                     i == itemOn? b : menu->color[2], menuAlpha);
     }
 
     if(saveStringEnter)
     {
         size_t              len = strlen(savegamestrings[saveSlot]);
 
-        //if(len < SAVESTRINGSIZE)
+        if(len < SAVESTRINGSIZE)
         {
             i = M_StringWidth(savegamestrings[saveSlot], huFontA);
             M_WriteText2(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
                          (menu->itemHeight * saveSlot), "_", huFontA,
-                         menu->color[0], menu->color[1], menu->color[2],
-                         menuAlpha);
+                         r, g, b, menuAlpha);
         }
     }
 }
@@ -3019,7 +3059,7 @@ static void M_QuickSave(void)
     if(quickSaveSlot < 0)
     {
         Hu_MenuCommand(MCMD_OPEN);
-        M_ReadSaveStrings();
+        updateSaveList();
         M_SetupNextMenu(&SaveDef);
         quickSaveSlot = -2; // Means to pick a slot now.
         return;
@@ -3748,8 +3788,8 @@ void M_LoadGame(int option, void *data)
         return;
     }
 
+    updateSaveList();
     M_SetupNextMenu(&LoadDef);
-    M_ReadSaveStrings();
 }
 
 /**
@@ -3776,8 +3816,8 @@ void M_SaveGame(int option, void *data)
     }
 
     Hu_MenuCommand(MCMD_OPEN);
-    M_SetupNextMenu(&SaveDef);;
-    M_ReadSaveStrings();
+    updateSaveList();
+    M_SetupNextMenu(&SaveDef);
 }
 
 void M_ChooseClass(int option, void *data)
