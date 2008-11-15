@@ -523,6 +523,8 @@ void G_CommonPostInit(void)
 
     Con_Message("Hu_MenuInit: Init miscellaneous info.\n");
     Hu_MenuInit();
+    // From this point on, the shortcuts are always active.
+    DD_Execute(true, "activatebclass shortcut");
 
     Con_Message("AM_Init: Init automap.\n");
     AM_Init();
@@ -721,20 +723,6 @@ boolean G_Responder(event_t *ev)
     }
 
 #endif
-
-    // Any key/button down pops up menu if in demos.
-    if(G_GetGameAction() == GA_NONE && !singledemo && !Hu_MenuIsActive() &&
-       (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
-    {
-        if(ev->state == EVS_DOWN &&
-           (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
-            ev->type == EV_JOY_BUTTON))
-        {
-            Hu_MenuCommand(MCMD_OPEN);
-            return true;
-        }
-        return false;
-    }
 
     // With the menu active, none of these should respond to input events.
     if(!Hu_MenuIsActive())

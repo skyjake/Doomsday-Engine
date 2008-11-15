@@ -270,6 +270,7 @@ void B_Init(void)
     B_NewClass("map");
     B_NewClass("map-freepan");
     B_NewClass("menu");
+    B_NewClass("shortcut");
     B_AcquireKeyboard(B_NewClass("chat"), true);
     B_AcquireKeyboard(B_NewClass("message"), true);
 
@@ -394,7 +395,7 @@ evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
         // TODO: In interactive binding mode, should ask the user if the replacement is ok.
         // Now just delete the other binding.
         B_DeleteMatching(bc, b, NULL);
-        
+
         B_UpdateDeviceStateAssociations();
     }
     return b;
@@ -464,7 +465,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     // TODO: In interactive binding mode, should ask the user if the replacement is ok.
     // Now just delete the other binding.
     B_DeleteMatching(bc, NULL, devBin);
-    
+
     B_UpdateDeviceStateAssociations();
 
 finished:

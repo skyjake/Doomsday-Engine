@@ -366,18 +366,18 @@ DEFCC( CCmdDefaultGameBinds )
 
         // UI events:
 #if !__JDOOM64__
-        "bindevent key-f1 helpscreen",
+        "bindevent shortcut:key-f1 helpscreen",
 #endif
-        "bindevent key-f2 savegame",
-        "bindevent key-f3 loadgame",
-        "bindevent key-f4 soundmenu",
-        "bindevent key-f6 quicksave",
-        "bindevent key-f7 endgame",
-        "bindevent key-f8 togglemsgs",
-        "bindevent key-f9 quickload",
-        "bindevent key-f10 quit",
-        "bindevent key-f11 togglegamma",
-        "bindevent key-f12 screenshot",
+        "bindevent shortcut:key-f2 savegame",
+        "bindevent shortcut:key-f3 loadgame",
+        "bindevent shortcut:key-f4 soundmenu",
+        "bindevent shortcut:key-f6 quicksave",
+        "bindevent shortcut:key-f7 endgame",
+        "bindevent shortcut:key-f8 togglemsgs",
+        "bindevent shortcut:key-f9 quickload",
+        "bindevent shortcut:key-f10 quit",
+        "bindevent shortcut:key-f11 togglegamma",
+        "bindevent shortcut:key-f12 screenshot",
 
         "bindevent key-pause pause",
         "bindevent key-p pause",
@@ -392,6 +392,7 @@ DEFCC( CCmdDefaultGameBinds )
 
         // Menu events:
         "bindevent key-esc menu",
+        "bindevent menu:key-esc menu",
         "bindevent menu:key-backspace menucancel",
         "bindevent menu:key-up menuup",
         "bindevent menu:key-up-repeat menuup",
@@ -1264,7 +1265,7 @@ boolean G_AdjustControlState(event_t* ev)
 
 /**
  * Resets the mouse position to 0,0
- * Called e.g. when starting a new level.
+ * Called e.g. when starting a new map.
  */
 void G_ResetMousePos(void)
 {
@@ -1273,7 +1274,7 @@ void G_ResetMousePos(void)
 
 /**
  * Resets the look offsets.
- * Called e.g. when starting a new level.
+ * Called e.g. when starting a new map.
  */
 void G_ResetLookOffset(int pnum)
 {

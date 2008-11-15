@@ -1169,7 +1169,7 @@ static menuitem_t GameplayItems[] = {
         "game-player-wallrun-northonly"},
 # endif
 # if __JDOOM__ || __JDOOM64__
-    {ITT_EFUNC, 0, "ZOMBIE PLAYERS CAN EXIT LEVELS :", M_ToggleVar, 0, NULL,
+    {ITT_EFUNC, 0, "ZOMBIE PLAYERS CAN EXIT MAPS :", M_ToggleVar, 0, NULL,
         "game-zombiescanexit"},
     {ITT_EFUNC, 0, "FIX OUCH FACE :", M_ToggleVar, 0, NULL, "hud-face-ouchfix"},
 # endif
@@ -2437,15 +2437,33 @@ void M_EndAnyKeyMsg(void)
  *
  * @return              @c true, if it ate the event.
  */
-boolean Hu_MenuResponder(event_t *ev)
+boolean Hu_MenuResponder(event_t* ev)
 {
-    int         ch = -1;
-    int         i;
-    uint        cid;
-    int         firstVI, lastVI;    // first and last visible item
-    boolean     skip;
+    int                 ch = -1;
+    int                 i;
+    uint                cid;
+    int                 firstVI, lastVI;    // first and last visible item
+    boolean             skip;
 
-    if(!menuActive || widgetEdit || currentMenu->flags & MNF_NOHOTKEYS)
+    if(!menuActive)
+    {
+        // Any key/button down pops up menu if in demos.
+        if(G_GetGameAction() == GA_NONE && !singledemo &&
+           (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
+        {
+            if(ev->state == EVS_DOWN &&
+               (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
+                ev->type == EV_JOY_BUTTON))
+            {
+                Hu_MenuCommand(MCMD_OPEN);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    if(widgetEdit || (currentMenu->flags & MNF_NOHOTKEYS))
         return false;
 
     if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
