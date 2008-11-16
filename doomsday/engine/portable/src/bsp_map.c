@@ -22,7 +22,7 @@
  */
 
 /**
- * bsp_level.c:
+ * bsp_map.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -85,7 +85,7 @@ static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
     // Allocate the final side seg table.
     side->segCount = count;
     side->segs =
-        Z_Malloc(sizeof(seg_t*) * (side->segCount + 1), PU_LEVELSTATIC, 0);
+        Z_Malloc(sizeof(seg_t*) * (side->segCount + 1), PU_MAPSTATIC, 0);
 
     count = 0;
     other = first;
@@ -172,7 +172,7 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
     qsort(index, params.curIdx, sizeof(hedge_t*), hEdgeCompare);
 
     dest->numSegs = (uint) params.curIdx;
-    dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_LEVELSTATIC, 0);
+    dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_MAPSTATIC, 0);
     for(i = 0; i < dest->numSegs; ++i)
     {
         seg_t*              seg = &dest->segs[i];
@@ -260,7 +260,7 @@ static void hardenSSecSegList(gamemap_t* dest, subsector_t* ssec,
     hedge_t*            cur;
     seg_t**             segs;
 
-    segs = Z_Malloc(sizeof(seg_t*) * (segCount + 1), PU_LEVELSTATIC, 0);
+    segs = Z_Malloc(sizeof(seg_t*) * (segCount + 1), PU_MAPSTATIC, 0);
 
     for(cur = list, i = 0; cur; cur = cur->next, ++i)
         segs[i] = &dest->segs[cur->index];
@@ -419,12 +419,12 @@ static void hardenBSP(gamemap_t* dest, binarytree_t* rootNode)
     dest->numNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numNodes);
     dest->nodes =
-        Z_Calloc(dest->numNodes * sizeof(node_t), PU_LEVELSTATIC, 0);
+        Z_Calloc(dest->numNodes * sizeof(node_t), PU_MAPSTATIC, 0);
 
     dest->numSSectors = 0;
     BinaryTree_PostOrder(rootNode, countSSec, &dest->numSSectors);
     dest->ssectors =
-        Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_LEVELSTATIC, 0);
+        Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
 
     if(rootNode)
     {
@@ -478,7 +478,7 @@ static void hardenVertexes(gamemap_t* dest, vertex_t*** vertexes,
 
     dest->numVertexes = *numVertexes;
     dest->vertexes =
-        Z_Calloc(dest->numVertexes * sizeof(vertex_t), PU_LEVELSTATIC, 0);
+        Z_Calloc(dest->numVertexes * sizeof(vertex_t), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numVertexes; ++i)
     {

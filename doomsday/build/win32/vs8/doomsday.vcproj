@@ -254,7 +254,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\bsp_level.c"
+				RelativePath="..\..\..\engine\portable\src\bsp_map.c"
 				>
 			</File>
 			<File
@@ -1269,7 +1269,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\bsp_level.h"
+				RelativePath="..\..\..\engine\portable\include\bsp_map.h"
 				>
 			</File>
 			<File

@@ -174,7 +174,7 @@
 		<Unit filename="..\..\engine\portable\include\b_main.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_edge.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_intersection.h" />
-		<Unit filename="..\..\engine\portable\include\bsp_level.h" />
+		<Unit filename="..\..\engine\portable\include\bsp_map.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_main.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_node.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_superblock.h" />
@@ -362,7 +362,7 @@
 		<Unit filename="..\..\engine\portable\src\bsp_intersection.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\bsp_level.c">
+		<Unit filename="..\..\engine\portable\src\bsp_map.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\bsp_main.c">
