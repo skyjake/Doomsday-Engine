@@ -31,9 +31,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -146,16 +144,6 @@ switchlist_t switchInfo[] = {
     {"SW1TEK", "SW2TEK", MACRO_SHORT(3)},
     {"SW1MARB", "SW2MARB", MACRO_SHORT(3)},
     {"SW1SKULL", "SW2SKULL", MACRO_SHORT(3)},
-
-#  if __WOLFTC__
-    // Wolf TC switches. -- DJS: in the DOOM list?
-    {"SW1XWOLF", "SW2XWOLF", MACRO_SHORT(3)},
-    {"SW1XSDMP", "SW2XSDMP", MACRO_SHORT(3)},
-    {"SW1XISTA", "SW2XISTA", MACRO_SHORT(3)},
-    {"SW1XOMS", "SW2XOMS", MACRO_SHORT(3)},
-    {"SW1XSAEL", "SW2XSAEL", MACRO_SHORT(3)},
-    {"SW1XURAN", "SW2XURAN", MACRO_SHORT(3)},
-#  endif
 # endif
 
     {"\0", "\0", MACRO_SHORT(0)}
@@ -235,7 +223,7 @@ void P_InitSwitchList(void)
     else
         episode = 2;
 # else
-#  if __JDOOM__ || __WOLFTC__
+#  if __JDOOM__
     if(gameMode == registered || gameMode == retail)
         episode = 2;
     else if(gameMode == commercial)
@@ -352,7 +340,7 @@ void P_ChangeSwitchMaterial(linedef_t *line, int useAgain)
     texBot = (materialnum_t) P_GetIntp(sdef, DMU_BOTTOM_MATERIAL);
 
 #if !__JHEXEN__
-# if __JHERETIC__ || __WOLFTC__
+# if __JHERETIC__
     sound = SFX_SWITCH;
 # else
     sound = SFX_SWTCHN;
@@ -362,11 +350,7 @@ void P_ChangeSwitchMaterial(linedef_t *line, int useAgain)
 # if !__JHERETIC__
     if(P_ToXLine(line)->special == 11)
     {
-#  if __WOLFTC__
-        sound = SFX_WFESWI;
-#  else
         sound = SFX_SWTCHX;
-#  endif
     }
 # endif
 #endif
@@ -421,7 +405,7 @@ void P_ChangeSwitchMaterial(linedef_t *line, int useAgain)
     }
 }
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 /**
  * Called when a mobj "uses" a linedef.
  */

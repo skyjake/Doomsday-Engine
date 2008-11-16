@@ -37,9 +37,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -728,12 +726,7 @@ static void sendMessage(const char* msg)
             }
     }
 
-#if __WOLFTC__
-    if(gameMode == commercial)
-        S_LocalSound(SFX_HUDMS1, 0);
-    else
-        S_LocalSound(SFX_HUDMS2, 0);
-#elif __JDOOM__
+#if __JDOOM__
     if(gameMode == commercial)
         S_LocalSound(SFX_RADIO, 0);
     else

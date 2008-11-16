@@ -68,8 +68,8 @@ extern dpatch_t skillModeNames[NUM_SKILL_MODES];
 extern dpatch_t m_pause; // Paused graphic.
 #endif
 // Name graphics of each episode.
-#if __JDOOM__ || __WOLFTC__
-extern dpatch_t *episodeNamePatches;
+#if __JDOOM__
+extern dpatch_t* episodeNamePatches;
 #endif
 
 extern boolean messageNoEcho;

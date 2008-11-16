@@ -36,7 +36,7 @@
 
 extern boolean onground;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
 extern int maxHealth;
 extern int healthLimit;
 extern int godModeHealth;

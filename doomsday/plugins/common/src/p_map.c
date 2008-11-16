@@ -33,9 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -198,7 +196,7 @@ boolean PIT_StompThing(mobj_t* mo, void* data)
         return true;
     }
 
-#if __JDOOM64__ || __WOLFTC__
+#if __JDOOM64__
     // monsters don't stomp things
     if(!tmThing->player)
         return false;
@@ -1338,7 +1336,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 
     thing->floorZ = tmFloorZ;
     thing->ceilingZ = tmCeilingZ;
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     thing->dropOffZ = tmDropoffZ; // $dropoff_fix: keep track of dropoffs.
 #endif
 
@@ -2131,7 +2129,7 @@ boolean PTR_UseTraverse(intercept_t* in)
 
     P_ActivateLine(in->d.lineDef, useThing, side, SPAC_USE);
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Can use multiple line specials in a row with the PassThru flag.
     if(xline->flags & ML_PASSUSE)
         return true;

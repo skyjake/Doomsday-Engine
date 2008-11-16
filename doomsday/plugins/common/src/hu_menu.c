@@ -37,9 +37,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -287,15 +285,7 @@ short whichSkull; // Which skull to draw.
 
 // Sounds played in the menu.
 int menusnds[] = {
-#if __WOLFTC__
-    SFX_MENUBC,            // close menu
-    SFX_MENUBC,            // open menu
-    SFX_MENUBC,            // cancel
-    SFX_MENUMV,            // up/down
-    SFX_MENUMV,            // left/right
-    SFX_MENUSL,            // accept
-    SFX_MENUMV             // bad sound (eg can't autosave)
-#elif __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__
     SFX_DORCLS,            // close menu
     SFX_SWTCHX,            // open menu
     SFX_SWTCHN,            // cancel
@@ -1036,9 +1026,7 @@ static menu_t HUDDef = {
     64, 30,
 #endif
     M_DrawHUDMenu,
-#if __WOLFTC__
-    13, HUDItems,
-#elif __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__ || __JSTRIFE__
     23, HUDItems,
 #elif __JHERETIC__
     25, HUDItems,
@@ -1052,9 +1040,7 @@ static menu_t HUDDef = {
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
-#if __WOLFTC__
-    0, 13
-#elif __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__ || __JSTRIFE__
     0, 15        // 21
 #elif __JHERETIC__
     0, 15        // 23
@@ -3237,9 +3223,7 @@ void M_DrawGameplay(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.zombiesCanExit != 0]);
 # endif
 # if __JDOOM__
-#  if !__WOLFTC__
     M_WriteMenuText(menu, idx++, yesno[cfg.fixOuchFace != 0]);
-#  endif
 # endif
 #endif
 }
@@ -3434,9 +3418,7 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_HEALTH]]);
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_KEYS]]);
 # if __JDOOM__
-# if !__WOLFTC__
     M_WriteMenuText(menu, idx++, yesno[cfg.hudKeysCombine]);
-# endif
 # endif
     MN_DrawSlider(menu, idx++, 10, cfg.hudScale * 10 - 3 + .5f);
     MN_DrawColorBox(menu, idx++, cfg.hudColor[0], cfg.hudColor[1],
@@ -3605,7 +3587,7 @@ void M_NewGame(int option, void* data)
     M_SetupNextMenu(&EpiDef);
 #elif __JDOOM64__ || __JSTRIFE__
     M_SetupNextMenu(&SkillDef);
-#else // __JDOOM__ || __WOLFTC__
+#else // __JDOOM__
     if(gameMode == commercial)
         M_SetupNextMenu(&SkillDef);
     else
@@ -3864,7 +3846,7 @@ void M_ChooseClass(int option, void *data)
 #endif
 }
 
-#if __JDOOM__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__
 void M_Episode(int option, void *data)
 {
 #if __JHERETIC__
@@ -3899,7 +3881,7 @@ void M_Episode(int option, void *data)
 }
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
 boolean M_VerifyNightmare(int option, void *data)
 {
 #if __JDOOM__ || __JHERETIC__ || __JSTRIFE__

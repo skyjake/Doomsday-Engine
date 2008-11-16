@@ -35,9 +35,7 @@
 
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -66,12 +64,6 @@
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
 # define SFX_DOORLOCKED        (SFX_OOF)
-#elif __WOLFTC__
-# define SFX_DOORCLOSE         (SFX_WLFDRC)
-# define SFX_DOORBLAZECLOSE    (SFX_WLFPWL)
-# define SFX_DOOROPEN          (SFX_WLFDRO)
-# define SFX_DOORBLAZEOPEN     (SFX_WLFPWL)
-# define SFX_DOORLOCKED        (SFX_DORLCK)
 #elif __JDOOM__
 # define SFX_DOORCLOSE         (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_BDCLS)
@@ -127,7 +119,7 @@ void T_Door(door_t* door)
                 door->state = DS_DOWN;
                 break;
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
             case DT_BLAZERAISE:
                 door->state = DS_DOWN; // Time to go back down.
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORBLAZECLOSE);
@@ -195,7 +187,7 @@ void T_Door(door_t* door)
                 P_ThinkerRemove(&door->thinker); // Unlink and free.
                 break;
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
             case DT_BLAZERAISE:
             case DT_BLAZECLOSE:
                 xsec->specialData = NULL;
@@ -236,7 +228,7 @@ void T_Door(door_t* door)
             // the door type is blazing and not SFX_DOROPN.
             switch(door->type)
             {
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
             case DT_BLAZECLOSE:
 #endif
             case DT_CLOSE: // Do not go back up!
@@ -275,7 +267,7 @@ void T_Door(door_t* door)
                 door->topCountDown = 160;
                 break;
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
             case DT_BLAZERAISE:
 #endif
 
@@ -284,7 +276,7 @@ void T_Door(door_t* door)
                 door->topCountDown = door->topWait;
                 break;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
             case DT_BLAZEOPEN:
 #endif
             case DT_CLOSE30THENOPEN:
@@ -352,7 +344,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 
         switch(type)
         {
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         case DT_BLAZECLOSE:
             P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
             door->topHeight -= 4;
@@ -378,7 +370,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 #endif
             break;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         case DT_BLAZERAISE:
 #endif
 #if !__JHEXEN__
@@ -436,7 +428,7 @@ int EV_DoDoor(linedef_t *line, doortype_e type)
 }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ ||__WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
 {
     char                buf[160], *in, tmp[2];
@@ -483,7 +475,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     if(!p || !xline)
         return false;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     switch(xline->special)
     {
     case 99:                    // Blue Lock
@@ -672,7 +664,7 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
 /**
  * Move a locked door up/down.
  */
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
 int EV_DoLockedDoor(linedef_t *line, doortype_e type, mobj_t *thing)
 {
     if(!tryLockedDoor(line, thing->player))
@@ -715,7 +707,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
         case 26:
         case 27:
         case 28:
-# if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+# if __JDOOM__ || __JDOOM64__
         case 117:
 # endif
 # if __JDOOM64__
@@ -756,7 +748,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
 #else
     switch(xline->special)
     {
-# if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+# if __JDOOM__ || __JDOOM64__
     case 117:
     case 118:
 #  if __JDOOM64__
@@ -821,7 +813,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
         break;
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     case 117:                   // blazing door raise
 # if __JDOOM64__
     case 525: // jd64
@@ -859,7 +851,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
     return true;
 }
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 void P_SpawnDoorCloseIn30(sector_t *sec)
 {
     door_t *door;

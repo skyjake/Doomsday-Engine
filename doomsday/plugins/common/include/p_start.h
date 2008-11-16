@@ -29,7 +29,7 @@
 #ifndef __COMMON_PLAYSTART_H__
 #define __COMMON_PLAYSTART_H__
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 # include "r_defs.h"
 #else
 # include "xddefs.h"

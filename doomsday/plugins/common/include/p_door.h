@@ -43,10 +43,10 @@ typedef enum {
     DT_CLOSE,
     DT_OPEN,
     DT_RAISEIN5MINS,
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     DT_BLAZERAISE,
 #endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     DT_BLAZEOPEN,
 #endif
 #if __JDOOM64__
@@ -54,7 +54,7 @@ typedef enum {
     DT_INSTANTCLOSE, //jd64 kaiser
     DT_INSTANTRAISE, //jd64 kaiser
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     DT_BLAZECLOSE,
 #endif
     NUMDOORTYPES
@@ -82,10 +82,10 @@ int         EV_DoDoor(linedef_t* li, byte* args, doortype_e type);
 #else
 int         EV_DoDoor(linedef_t* li, doortype_e type);
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
 int         EV_DoLockedDoor(linedef_t* li, doortype_e type, mobj_t* mo);
 #endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void        P_SpawnDoorCloseIn30(sector_t* sec);
 void        P_SpawnDoorRaiseIn5Mins(sector_t* sec);
 #endif

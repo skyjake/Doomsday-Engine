@@ -34,11 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #  include "r_common.h"
 #  include "hu_stuff.h"

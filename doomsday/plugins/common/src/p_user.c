@@ -34,10 +34,7 @@
 
 #include <math.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#  include "g_common.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #  include "g_common.h"
 #elif __JDOOM64__
@@ -85,7 +82,7 @@ boolean     P_TestMobjLocation(mobj_t *mobj);
 
 boolean onground;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
 int maxHealth; // 100
 int healthLimit; // 200
 int godModeHealth; // 100
@@ -96,7 +93,7 @@ int armorPoints[4]; // Green, blue, IDFA and IDKFA points.
 int armorClass[4]; // Green, blue, IDFA and IDKFA armor classes.
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         S_PLAY,
@@ -110,11 +107,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         2048,
         {640, 1280, 320},
         24,
-# if __WOLFTC__
-        SFX_BLOCKD
-# else
         SFX_NOWAY
-# endif
     }
 };
 #elif __JHERETIC__

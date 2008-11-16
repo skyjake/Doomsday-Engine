@@ -33,9 +33,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -55,10 +53,7 @@
 
 // Sounds played by the ceilings when changing state or moving.
 // jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
-#if __WOLFTC__
-# define SFX_CEILINGMOVE        (SFX_PLTMOV)
-# define SFX_CEILINGSTOP        (SFX_PLTSTP)
-#elif __JDOOM__
+#if __JDOOM__
 # define SFX_CEILINGMOVE        (SFX_STNMOV)
 # define SFX_CEILINGSTOP        (SFX_PSTOP)
 #elif __JDOOM64__
@@ -199,7 +194,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
 #endif
             switch(ceiling->type)
             {
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
             case CT_SILENTCRUSHANDRAISE:
                 S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGSTOP);
                 ceiling->speed = CEILSPEED;
@@ -245,7 +240,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
             {
                 switch(ceiling->type)
                 {
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
                 case CT_SILENTCRUSHANDRAISE:
 #endif
                 case CT_CRUSHANDRAISE:
@@ -308,7 +303,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 
         switch(type)
         {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         case CT_CRUSHANDRAISEFAST:
             ceiling->crush = true;
             ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
@@ -327,7 +322,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
             ceiling->state = CS_DOWN;
             break;
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         case CT_SILENTCRUSHANDRAISE:
 #endif
         case CT_CRUSHANDRAISE:
@@ -460,7 +455,7 @@ int EV_DoCeiling(linedef_t *line, ceilingtype_e type)
     switch(type)
     {
     case CT_CRUSHANDRAISEFAST:
-# if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+# if __JDOOM__ || __JDOOM64__
     case CT_SILENTCRUSHANDRAISE:
 # endif
     case CT_CRUSHANDRAISE:

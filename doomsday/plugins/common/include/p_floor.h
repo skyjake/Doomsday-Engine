@@ -42,7 +42,7 @@ typedef enum {
 #if __JHEXEN__
     FT_LOWERBYVALUE,
 #endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     FT_LOWERTURBO, // Lower floor to highest surrounding floor VERY FAST.
 #endif
 #if __JDOOM64__
@@ -52,7 +52,7 @@ typedef enum {
 #endif
     FT_RAISEFLOOR, // Raise floor to lowest surrounding CEILING.
     FT_RAISEFLOORTONEAREST, // Raise floor to next highest surrounding floor.
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     FT_RAISETOTEXTURE, // Raise floor to shortest height texture around it.
     FT_LOWERANDCHANGE, // Lower floor to lowest surrounding floor and change floorpic.
     FT_RAISE24,
@@ -62,13 +62,13 @@ typedef enum {
     FT_RAISEFLOORBYVALUE,
 #endif
     FT_RAISEFLOORCRUSH,
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     FT_RAISEFLOORTURBO, // Raise to next highest floor, turbo-speed.
 #endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     FT_RAISEDONUT,
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     FT_RAISE512,
 #endif
 #if __JDOOM64__

@@ -33,9 +33,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -54,11 +52,7 @@
 
 // Sounds played by the platforms when changing state or moving.
 // jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
-#if __WOLFTC__
-# define SFX_PLATFORMSTART      (SFX_PLTSTR)
-# define SFX_PLATFORMMOVE       (SFX_PLTMOV)
-# define SFX_PLATFORMSTOP       (SFX_PLTSTP)
-#elif __JDOOM__
+#if __JDOOM__
 # define SFX_PLATFORMSTART      (SFX_PSTART)
 # define SFX_PLATFORMMOVE       (SFX_STNMOV)
 # define SFX_PLATFORMSTOP       (SFX_PSTOP)
@@ -126,7 +120,7 @@ void T_PlatRaise(plat_t* plat)
         if(!(mapTime & 31))
             S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         if(plat->type == PT_RAISEANDCHANGE ||
            plat->type == PT_RAISETONEARESTANDCHANGE)
         {

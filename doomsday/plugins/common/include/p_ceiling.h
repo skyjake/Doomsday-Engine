@@ -40,10 +40,10 @@ typedef enum {
     CT_RAISETOHIGHEST,
     CT_LOWERANDCRUSH,
     CT_CRUSHANDRAISE,
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     CT_CRUSHANDRAISEFAST,
 #endif
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     CT_SILENTCRUSHANDRAISE,
 #endif
 #if __JDOOM64__
@@ -80,7 +80,7 @@ int         EV_DoCeiling(linedef_t* line, byte* args, ceilingtype_e type);
 #else
 int         EV_DoCeiling(linedef_t* li, ceilingtype_e type);
 #endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 int         P_CeilingActivate(short tag);
 #endif
 int         P_CeilingDeactivate(short tag);

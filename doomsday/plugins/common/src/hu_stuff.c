@@ -39,9 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -59,7 +57,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 // Counter Cheat flags.
 #define CCH_KILLS               0x1
 #define CCH_ITEMS               0x2
@@ -111,13 +109,13 @@ dpatch_t skillModeNames[NUM_SKILL_MODES];
 dpatch_t m_pause; // Paused graphic.
 #endif
 
-#if __JDOOM__ || __WOLFTC__
+#if __JDOOM__
 // Name graphics of each episode.
 dpatch_t* episodeNamePatches = NULL;
 #endif
 
 cvar_t hudCVars[] = {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
     {"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
 #endif
@@ -169,7 +167,7 @@ void Hu_LoadData(void)
     };
 #endif
 
-#if __JDOOM__ || __WOLFTC__
+#if __JDOOM__
     static const char*  episodePatchNames[] =
     {
         "M_EPI1",
@@ -999,7 +997,7 @@ void HU_DrawMapCounters(void)
 
     plr = &players[DISPLAYPLAYER];
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     DGL_Color3f(1, 1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1010,7 +1008,7 @@ void HU_DrawMapCounters(void)
 
     drawWorldTimer();
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     Draw_BeginZoom(cfg.counterCheatScale, x, y);
 
     if(cfg.counterCheat)

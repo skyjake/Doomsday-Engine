@@ -33,9 +33,7 @@
 
 #include "dd_share.h"
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -362,7 +360,7 @@ boolean P_CheckAmmo(player_t* plr)
     weaponinfo_t*       wInfo;
 
     wInfo = &weaponInfo[plr->readyWeapon][plr->class];
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
     fireMode = 0;
 #endif
 #if __JHERETIC__

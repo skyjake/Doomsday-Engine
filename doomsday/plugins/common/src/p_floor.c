@@ -33,9 +33,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -56,9 +54,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __WOLFTC__
-# define SFX_FLOORMOVE          (SFX_PLTSTR)
-#elif __JHERETIC__
+#if __JHERETIC__
 # define SFX_FLOORMOVE          (SFX_DORMOV)
 #else
 # define SFX_FLOORMOVE          (SFX_STNMOV)
@@ -378,14 +374,11 @@ void T_MoveFloor(floor_t* floor)
 #if __JHEXEN__
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
 #else
-# if __WOLFTC__
-        S_SectorSound(floor->sector, SORG_FLOOR, SFX_PLTSTP);
-# else
-#   if __JHERETIC__
+#  if __JHERETIC__
         if(floor->type == FT_RAISEBUILDSTEP)
-#   endif
+#  endif
             S_SectorSound(floor->sector, SORG_FLOOR, SFX_PSTOP);
-# endif
+
 #endif
 #if __JHEXEN__
         if(floor->delayTotal)
@@ -716,7 +709,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
 #endif
             break;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         case FT_RAISEFLOORTURBO:
             floor->state = FS_UP;
             floor->sector = sec;
@@ -818,7 +811,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             xsec->special = P_ToXSector(frontsector)->special;
             break;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         case FT_RAISE512:
             floor->state = FS_UP;
             floor->sector = sec;
@@ -926,7 +919,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 typedef struct spreadsectorparams_s {
     sector_t*           baseSec;
     int                 material;
@@ -964,7 +957,7 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 int EV_BuildStairs(linedef_t* line, stair_e type)
 {
     int                 rtn = 0;
@@ -1212,7 +1205,7 @@ int EV_BuildStairs(linedef_t *line, byte *args, int direction,
 }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 typedef struct findsectorfirstneighborparams_s {
     sector_t           *baseSec;
     sector_t           *foundSec;
@@ -1246,7 +1239,7 @@ int findSectorFirstNeighbor(void *ptr, void *context)
 }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 int EV_DoDonut(linedef_t *line)
 {
     int                 rtn = 0;

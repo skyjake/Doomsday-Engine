@@ -29,9 +29,7 @@
 
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -70,7 +68,7 @@ typedef struct {
 static terraintype_t terrainTypes[] =
 {
     {"Default", 0}, // Default type (no special attributes).
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     {"Water",   TTF_NONSOLID|TTF_FLOORCLIP},
     {"Lava",    TTF_NONSOLID|TTF_FLOORCLIP},
     {"Blood",   TTF_NONSOLID|TTF_FLOORCLIP},
@@ -171,7 +169,7 @@ void P_InitTerrainTypes(void)
         const char*     ttName;
     } matTTypeDefs[] =
     {
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         {"FWATER1",  MG_FLATS, "Water"},
         {"LAVA1",    MG_FLATS, "Lava"},
         {"BLOOD1",   MG_FLATS, "Blood"},

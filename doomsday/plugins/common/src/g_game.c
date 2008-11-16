@@ -34,10 +34,7 @@
 #include <string.h>
 #include <math.h>
 
-#if __WOLFTC__
-#  include <stdlib.h>
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include <stdlib.h>
 #  include "jdoom.h"
 #elif __JDOOM64__
@@ -186,14 +183,14 @@ boolean singledemo; // Quit after playing a demo from cmdline.
 
 boolean precache = true; // If @c true, load all graphics at start.
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 int saveGameSlot;
 char saveDescription[32];
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
 mobj_t *bodyQueue[BODYQUEUESIZE];
 int bodyQueueSlot;
 #endif
@@ -501,7 +498,7 @@ void G_CommonPostInit(void)
     // Init the save system and create the game save directory
     SV_Init();
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
     XG_Register(); // Register XG classnames.
 #endif

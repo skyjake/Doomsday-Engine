@@ -28,10 +28,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#  include "g_common.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #  include "g_common.h"
 #elif __JDOOM64__

@@ -41,9 +41,7 @@
 #include <string.h>
 #include <assert.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -73,16 +71,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __WOLFTC__
-# define MY_SAVE_MAGIC         0x1A8AFF08
-# define MY_CLIENT_SAVE_MAGIC  0x2A8AFF08
-# define MY_SAVE_VERSION       6
-# define SAVESTRINGSIZE        24
-# define CONSISTENCY           0x2c
-# define SAVEGAMENAME          "WolfSav"
-# define CLIENTSAVEGAMENAME    "WolfCl"
-# define SAVEGAMEEXTENSION     "wsg"
-#elif __JDOOM__
+#if __JDOOM__
 # define MY_SAVE_MAGIC         0x1DEAD666
 # define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
 # define MY_SAVE_VERSION       6
@@ -1426,7 +1415,7 @@ static void SV_WriteMobj(mobj_t *original)
     // 5: Added flags3
     // 6: Floor material removed.
     //
-    // JDOOM || JHERETIC || WOLFTC || JDOOM64
+    // JDOOM || JHERETIC || JDOOM64
     // 4: Added byte 'translucency'
     // 5: Added byte 'vistarget'
     // 5: Added tracer in jDoom
@@ -1915,7 +1904,7 @@ static int SV_ReadMobj(thinker_t *th)
         mo->spawnSpot.flags = (int) SV_ReadShort();
     }
 
-# if __JDOOM__ || __WOLFTC__ || __JDOOM64__
+# if __JDOOM__ || __JDOOM64__
     if(ver >= 3)
 # elif __JHERETIC__
     if(ver >= 5)
@@ -4569,7 +4558,7 @@ int SV_GetSaveDescription(char *filename, char *str)
     savefile = lzOpen(filename, "rp");
     if(!savefile)
     {
-# if __JDOOM64__ || __WOLFTC__
+# if __JDOOM64__
         // We don't support the original game's save format (for obvious
         // reasons).
         return false;
@@ -5089,7 +5078,7 @@ boolean SV_LoadGame(char *filename)
     savefile = lzOpen(filename, "rp");
     if(!savefile)
     {
-# if __JDOOM64__ || __WOLFTC__
+# if __JDOOM64__
         // We don't support the original game's save format (for obvious
         // reasons).
         return false;

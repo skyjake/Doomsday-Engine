@@ -34,9 +34,7 @@
 #include <ctype.h>  // has isspace
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -508,7 +506,7 @@ static void P_ResetWorldState(void)
 {
     int                 i, parm;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     wmInfo.maxFrags = 0;
     wmInfo.parTime = -1;
 
@@ -524,7 +522,7 @@ static void P_ResetWorldState(void)
     brain.easy = 0; // Always init easy to 0.
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Clear special respawning que.
     P_EmptyRespawnQueue();
 #endif
@@ -553,7 +551,7 @@ static void P_ResetWorldState(void)
         plr->killCount = plr->secretCount = plr->itemCount = 0;
     }
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     bodyQueueSlot = 0;
 #endif
 

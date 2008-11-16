@@ -26,7 +26,7 @@
  * p_xgsec.c: Extended Generalized Sector Types.
  */
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
@@ -34,9 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"

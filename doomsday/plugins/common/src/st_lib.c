@@ -31,10 +31,7 @@
 
 #include <ctype.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#  include "hu_stuff.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #  include "hu_stuff.h"
 #elif __JDOOM64__

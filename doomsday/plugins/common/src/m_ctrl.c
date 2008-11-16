@@ -31,9 +31,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -610,7 +608,7 @@ void M_DrawControlsMenu(void)
     const menu_t*       menu = &ControlsDef;
     const menuitem_t*   item = menu->items + menu->firstItem;
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
     M_DrawTitle("CONTROLS", menu->y - 28);
     sprintf(buf, "PAGE %i/%i", menu->firstItem / menu->numVisItems + 1,
             menu->itemCount / menu->numVisItems + 1);
