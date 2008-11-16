@@ -16,11 +16,14 @@ Flag { ID = "ltc_key"; Value = 0xA; }
 Flag { ID = "ltc_music"; Value = 0xB; }
 Flag { ID = "ltc_line_count"; Value = 0xC; }
 Flag { ID = "ltc_end_level"; Value = 0xD; }
+Flag { ID = "ltc_leave_map"; Value = 0xD; } # Alias for end_level
 Flag { ID = "ltc_disable_if_active"; Value = 0xE; }
 Flag { ID = "ltc_enable_if_active"; Value = 0xF; }
 Flag { ID = "ltc_explode"; Value = 0x10; }
 Flag { ID = "ltc_plane_texture"; Value = 0x11; }
+Flag { ID = "ltc_plane_material"; Value = 0x11; } # Alias for plane_texture
 Flag { ID = "ltc_wall_texture"; Value = 0x12; }
+Flag { ID = "ltc_wall_material"; Value = 0x12; } # Alias for wall_texture
 Flag { ID = "ltc_command"; Value = 0x13; }
 Flag { ID = "ltc_sound"; Value = 0x14; }
 Flag { ID = "ltc_mimic_sector"; Value = 0x15; }
@@ -172,11 +175,17 @@ Flag { ID = "spref_next_highest_ceiling"; Value = 0xC; }
 Flag { ID = "spref_next_lowest_floor"; Value = 0xD; }
 Flag { ID = "spref_next_lowest_ceiling"; Value = 0xE; }
 Flag { ID = "spref_min_bottom_texture"; Value = 0xF; }
+Flag { ID = "spref_min_bottom_material"; Value = 0xF; } # Alias for min_bottom_texture
 Flag { ID = "spref_min_mid_texture"; Value = 0x10; }
+Flag { ID = "spref_min_mid_material"; Value = 0x10; } # Alias for min_mid_texture
 Flag { ID = "spref_min_top_texture"; Value = 0x11; }
+Flag { ID = "spref_min_top_material"; Value = 0x11; } # Alias for min_top_texture
 Flag { ID = "spref_max_bottom_texture"; Value = 0x12; }
+Flag { ID = "spref_max_bottom_material"; Value = 0x12; } # Alias for max_bottom_texture
 Flag { ID = "spref_max_mid_texture"; Value = 0x13; }
+Flag { ID = "spref_max_mid_material"; Value = 0x13; } # Alias for max_mid_texture
 Flag { ID = "spref_max_top_texture"; Value = 0x14; }
+Flag { ID = "spref_max_top_material"; Value = 0x14; } # Alias for max_top_texture
 Flag { ID = "spref_sector_tagged_floor"; Value = 0x15; }
 Flag { ID = "spref_line_tagged_floor"; Value = 0x16; }
 Flag { ID = "spref_tagged_floor"; Value = 0x17; }
