@@ -209,8 +209,6 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = __JDOOM__:=1 \
 			 __JHERETIC__:=1 \
 			 __JHEXEN__:=1 \
-			 __JSTRIFE__:=1 \
-			 __WOLFTC__:=1 \
 			 __JDOOM64__:=1 \
 			 UNIX:=1 \
 			 WIN32:=1 \

@@ -131,9 +131,9 @@ extern int totalItems;
 extern int totalSecret;
 
 // Timer, for scores.
-extern int levelStartTic; // Game tic at level start.
-extern int levelTime; // Tics in game play for par.
-extern int actualLevelTime;
+extern int mapStartTic; // Game tic at level start.
+extern int mapTime; // Tics in game play for par.
+extern int actualMapTime;
 
 // --------------------------------------
 // DEMO playback/recording related stuff.

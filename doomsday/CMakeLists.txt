@@ -1,6 +1,6 @@
 ## deng build scripts. 
-## Copyright Â© 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
-## Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
+## Copyright © 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
+## Copyright © 2007 - 2008 Daniel Swanson <danij@dengine.net>
 ##
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
@@ -70,9 +70,7 @@ SET(BUILD_SHARED_LIBS ON)
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
 OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
 OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
-OPTION (BUILDWOLFTC "Optionally build the WolfTC plugin. Default OFF" OFF)
 OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
-OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
 OPTION (BUILDWADMAPCONVERT "Optionally build the WAD Map Converter plugin. Default ON" ON)
 OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
@@ -84,8 +82,6 @@ OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default O
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
 OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
 
-MARK_AS_ADVANCED (BUILDJSTRIFE)
-MARK_AS_ADVANCED (BUILDWOLFTC)
 MARK_AS_ADVANCED (BUILDJDOOM64)
 MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
@@ -201,12 +197,6 @@ SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
 
 SET (DENG_JHEXEN_DATA ${CMAKE_CURRENT_BINARY_DIR}/jhexen.pk3 )
 SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
-
-SET (DENG_JSTRIFE_DATA ${CMAKE_CURRENT_BINARY_DIR}/jstrife.pk3 )
-SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
-
-SET (DENG_WOLFTC_DATA ${CMAKE_CURRENT_BINARY_DIR}/wolftc.pk3 )
-SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/wolftc)
 
 SET (DENG_JDOOM64_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom64.pk3 )
 SET (DENG_JDOOM64_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom64)
@@ -717,20 +707,10 @@ IF (BUILDJHEXEN)
     ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jhexen )
 ENDIF (BUILDJHEXEN)
 ################################################################################
-######################## WolfTC Game Plugin  ###################################
-IF (BUILDWOLFTC)
-    ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/wolftc )
-ENDIF (BUILDWOLFTC)
-################################################################################
 ######################## jDoom64 Game Plugin  #################################
 IF (BUILDJDOOM64)
     ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jdoom64 )
 ENDIF (BUILDJDOOM64)
-################################################################################
-######################## jStrife Game Plugin  ##################################
-IF (BUILDJSTRIFE)
-    ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
-ENDIF (BUILDJSTRIFE)
 ################################################################################
 ######################## Doxygenate All Source  ################################
 ## This target mixes all the documentation together. It's sometimes useful,
@@ -775,9 +755,7 @@ MESSAGE( STATUS "CMAKE_BINARY_DIR:             " ${CMAKE_BINARY_DIR} )
 MESSAGE( STATUS "BUILDJDOOM:                   " ${BUILDJDOOM} )
 MESSAGE( STATUS "BUILDJHERETIC:                " ${BUILDJHERETIC} )
 MESSAGE( STATUS "BUILDJHEXEN:                  " ${BUILDJHEXEN} )
-MESSAGE( STATUS "BUILDWOLFTC:                  " ${BUILDWOLFTC} )
 MESSAGE( STATUS "BUILDJDOOM64:                 " ${BUILDJDOOM64} )
-MESSAGE( STATUS "BUILDJSTRIFE:                 " ${BUILDJSTRIFE} )
 MESSAGE( STATUS "BUILDWADMAPCONVERT:           " ${BUILDWADMAPCONVERT} )
 MESSAGE( STATUS "BUILDOPENAL:                  " ${BUILDOPENAL} )
 MESSAGE( STATUS "BUILDSDLMIXER:                " ${BUILDSDLMIXER} )
@@ -793,8 +771,6 @@ MESSAGE( STATUS "DENG_ENGINE_DATA_DIR          " ${DENG_ENGINE_DATA_DIR} )
 MESSAGE( STATUS "DENG_JDOOM_DATA_DIR           " ${DENG_JDOOM_DATA_DIR} )
 MESSAGE( STATUS "DENG_JHERETIC_DATA_DIR        " ${DENG_JHERETIC_DATA_DIR} )
 MESSAGE( STATUS "DENG_JHEXEN_DATA_DIR          " ${DENG_JHEXEN_DATA_DIR} )
-MESSAGE( STATUS "DENG_JSTRIFE_DATA_DIR         " ${DENG_JSTRIFE_DATA_DIR} )
-MESSAGE( STATUS "DENG_WOLFTC_DATA_DIR          " ${DENG_WOLFTC_DATA_DIR} )
 MESSAGE( STATUS "DENG_JDOOM64_DATA_DIR         " ${DENG_JDOOM64_DATA_DIR} )
 ################################################################################
 ######################## Install Targets  ######################################
@@ -841,14 +817,6 @@ ENDIF (BUILDJHERETIC)
 IF (BUILDJHEXEN)
     INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION ${DENG_JHEXEN_DATA_DIR} )
 ENDIF (BUILDJHEXEN)
-
-IF (BUILDJSTRIFE)
-    INSTALL(FILES ${DENG_JSTRIFE_DATA} DESTINATION ${DENG_JSTRIFE_DATA_DIR} )
-ENDIF (BUILDJSTRIFE)
-
-IF (BUILDWOLFTC)
-    INSTALL(FILES ${DENG_WOLFTC_DATA} DESTINATION ${DENG_WOLFTC_DATA_DIR} )
-ENDIF (BUILDWOLFTC)
 
 IF (BUILDJDOOM64)
     INSTALL(FILES ${DENG_JDOOM64_DATA} DESTINATION ${DENG_JDOOM64_DATA_DIR} )

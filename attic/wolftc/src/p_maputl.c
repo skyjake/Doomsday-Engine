@@ -70,41 +70,36 @@ extern mobj_t *tmThing;
  * so balancing is possible.
  * killough $dropoff_fix
  */
-static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
+static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
 {
-    mobj_t             *mo = tmThing;
+    mobj_t*             mo = tmThing;
     float               dist;
-    sector_t           *frontsec, *backsec;
+    sector_t*           frontsec, *backsec;
     float               ffloor, bfloor;
-    float               dx, dy;
+    float               d1[2], vtx[2];
 
     if(tmThing->player)
         return true; // Skip players!
 
-    frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR);
-    backsec = P_GetPtrp(ld, DMU_BACK_SECTOR);
-
-    if(!frontsec || !backsec)
+    if(!(frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR)) ||
+       !(backsec = P_GetPtrp(ld, DMU_BACK_SECTOR)))
         return true; // Shouldn't ever happen.
 
     ffloor = P_GetFloatp(frontsec, DMU_FLOOR_HEIGHT);
     bfloor = P_GetFloatp(backsec, DMU_FLOOR_HEIGHT);
-    dx = P_GetFloatp(ld, DMU_DX);
-    dy = P_GetFloatp(ld, DMU_DY);
+    P_GetFloatpv(ld, DMU_DXY, d1);
+    P_GetFloatpv(P_GetPtrp(ld, DMU_VERTEX0), DMU_XY, vtx);
 
     // Lever-arm:
-    dist =
-        +dx * mo->pos[VY] -
-        dy * mo->pos[VX] -
-        dx * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX0), DMU_Y)) +
-        dy * (P_GetFloatp(P_GetPtrp(ld, DMU_VERTEX0), DMU_X));
+    dist = +d1[0] * mo->pos[VY] - d1[1] * mo->pos[VX] -
+            d1[0] * vtx[VY]    +  d1[1] * vtx[VX];
 
     if((dist < 0  && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||
        (dist >= 0 && bfloor < mo->pos[VZ] && ffloor >= mo->pos[VZ]))
     {
         // At this point, we know that the object straddles a two-sided
         // linedef, and that the object's center of mass is above-ground.
-        float               x = fabs(dx), y = fabs(dy);
+        float               x = fabs(d1[0]), y = fabs(d1[1]);
 
         if(y > x)
         {
@@ -132,8 +127,8 @@ static boolean PIT_ApplyTorque(linedef_t *ld, void *data)
             dist = (dist * FIX2FLT(FLT2FIX(y) >> +(mo->gear - OVERDRIVE))) / x;
 
         // Apply momentum away from the pivot linedef.
-        x = dy * dist;
-        y = dx * dist;
+        x = d1[1] * dist;
+        y = d1[0] * dist;
 
         // Avoid moving too fast all of a sudden (step into "overdrive").
         dist = (x * x) + (y * y);

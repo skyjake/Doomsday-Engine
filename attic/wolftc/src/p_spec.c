@@ -92,7 +92,8 @@ static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // CODE --------------------------------------------------------------------
 
-/* From PrBoom:
+/**
+ * From PrBoom:
  * Load the table of animation definitions, checking for existence of
  * the start and end of each frame. If the start doesn't exist the sequence
  * is skipped, if the last doesn't exist, BOOM exits.
@@ -111,89 +112,152 @@ static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
  * The standard list of switches and animations is contained in the example
  * source text file DEFSWANI.DAT also in the BOOM util distribution.
  */
-
-/*
- * DJS - We'll support this BOOM extension by reading the data and then
- *       registering the new animations into Doomsday using the animation
- *       groups feature.
- *
- *       Support for this extension should be considered depreciated.
- *       All new features should be added, accessed via DED.
- */
-void P_InitPicAnims(void)
+static void loadAnimDefs(animdef_t* animDefs)
 {
-    int         i, j;
-    int         groupNum;
-    int         startFrame, endFrame, ticsPerFrame;
-    int         numFrames;
-    int         lump = W_CheckNumForName("ANIMATED");
-    const char *name;
-    animdef_t  *animdefs;
+    int                 i;
 
-    // Has a custom ANIMATED lump been loaded?
-    if(lump > 0)
+    // Read structures until -1 is found
+    for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
-        Con_Message("P_InitPicAnims: \"ANIMATED\" lump found. Reading animations...\n");
+        int                 groupNum, ticsPerFrame, numFrames;
+        materialgroup_t     group =
+            (animDefs[i].istexture? MG_TEXTURES : MG_FLATS);
 
-        animdefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
-
-        // Read structures until -1 is found
-        for(i = 0; animdefs[i].istexture != -1 ; ++i)
+        switch(group)
         {
-            materialtype_t type =
-                (animdefs[i].istexture? MAT_TEXTURE : MAT_FLAT);
+        case MG_FLATS:
+            {
+            lumpnum_t           startFrame, endFrame, n;
 
-            if(R_MaterialCheckNumForName(animdefs[i].startname, type) == -1)
+            if((startFrame = W_CheckNumForName(animDefs[i].startname)) == -1 ||
+               (endFrame = W_CheckNumForName(animDefs[i].endname)) == -1)
                 continue;
 
-            endFrame = R_MaterialNumForName(animdefs[i].endname, type);
-            startFrame = R_MaterialNumForName(animdefs[i].startname, type);
-
             numFrames = endFrame - startFrame + 1;
-            ticsPerFrame = LONG(animdefs[i].speed);
+            ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
                 Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                         animdefs[i].startname, animdefs[i].endname);
+                          animDefs[i].startname, animDefs[i].endname);
 
-            if(startFrame != -1 && endFrame != -1)
-            {
-                // We have a valid animation.
+            if(startFrame && endFrame)
+            {   // We have a valid animation.
                 // Create a new animation group for it.
                 groupNum = R_CreateAnimGroup(AGF_SMOOTH);
 
-                // Doomsday's group animation needs to know the texture/flat
-                // numbers of ALL frames in the animation group so we'll have
-                // to step through the directory adding frames as we go.
-                // (DOOM only required the start/end texture/flat numbers and
-                // would animate all textures/flats inbetween).
+                /**
+                 * Doomsday's group animation needs to know the texture/flat
+                 * numbers of ALL frames in the animation group so we'll
+                 * have to step through the directory adding frames as we
+                 * go. (DOOM only required the start/end texture/flat
+                 * numbers and would animate all textures/flats inbetween).
+                 */
 
                 VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
-                                    animdefs[i].startname, animdefs[i].endname,
+                                    animDefs[i].startname, animDefs[i].endname,
                                     ticsPerFrame));
 
                 // Add all frames from start to end to the group.
                 if(endFrame > startFrame)
                 {
-                    for(j = startFrame; j <= endFrame; j++)
+                    for(n = startFrame; n <= endFrame; n++)
                     {
-                        name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
-                                 W_LumpName(j));
-                        R_AddToAnimGroup(groupNum, name, type, ticsPerFrame, 0);
+                        materialnum_t       frame =
+                            R_MaterialCheckNumForName(W_LumpName(n),
+                                                      MG_FLATS);
+
+                        if(frame != 0)
+                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
                     }
                 }
                 else
                 {
-                    for(j = endFrame; j >= startFrame; j--)
+                    for(n = endFrame; n >= startFrame; n--)
                     {
-                        name = (type == MAT_TEXTURE? R_MaterialNameForNum(j, MAT_TEXTURE) :
-                                 W_LumpName(j));
-                        R_AddToAnimGroup(groupNum, name, type, ticsPerFrame, 0);
+                        materialnum_t       frame =
+                            R_MaterialCheckNumForName(W_LumpName(n),
+                                                      MG_FLATS);
+
+                        if(frame != 0)
+                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
                     }
                 }
             }
+            break;
+            }
+        case MG_TEXTURES:
+            {   // Same as above but for texture groups.
+            materialnum_t       startFrame, endFrame, n;
+
+            if((startFrame = R_MaterialCheckNumForName(animDefs[i].startname,
+                                                       MG_TEXTURES)) == 0 ||
+               (endFrame = R_MaterialCheckNumForName(animDefs[i].endname,
+                                                     MG_TEXTURES)) == 0)
+                continue;
+
+            numFrames = endFrame - startFrame + 1;
+            ticsPerFrame = LONG(animDefs[i].speed);
+
+            if(numFrames < 2)
+                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
+                          animDefs[i].startname, animDefs[i].endname);
+
+            if(startFrame && endFrame)
+            {
+                groupNum = R_CreateAnimGroup(AGF_SMOOTH);
+
+                VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
+                                    animDefs[i].startname, animDefs[i].endname,
+                                    ticsPerFrame));
+                /**
+                 * \fixme Here an assumption is made that MG_TEXTURES type
+                 * materials are registered in the same order as they are
+                 * defined in the TEXTURE(1...) lump(s).
+                 */
+                if(endFrame > startFrame)
+                {
+                    for(n = startFrame; n <= endFrame; n++)
+                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
+                }
+                else
+                {
+                    for(n = endFrame; n >= startFrame; n--)
+                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
+                }
+            }
+            break;
+            }
+        default:
+            Con_Error("loadAnimDefs: Internal Error, invalid material type %i.",
+                      (int) type);
         }
-        Z_Free(animdefs);
+    }
+}
+
+void P_InitPicAnims(void)
+{
+    int                 lump;
+
+    // Is there an ANIMATED lump?
+    if((lump = W_CheckNumForName("ANIMATED")) > 0)
+    {
+        animdef_t*          animDefs;
+
+        /**
+         * We'll support this BOOM extension by reading the data and then
+         * registering the new animations into Doomsday using the animation
+         * groups feature.
+         *
+         * Support for this extension should be considered depreciated.
+         * All new features should be added, accessed via DED.
+         */
+        Con_Message("P_InitPicAnims: \"ANIMATED\" lump found. "
+                    "Reading animations...\n");
+
+        animDefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
+        loadAnimDefs(animDefs);
+        Z_Free(animDefs);
+
         VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
     }
 }
@@ -418,7 +482,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, false);
         break;
 
     case 53:
@@ -501,7 +565,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, true);
         break;
 
     case 125:
@@ -753,14 +817,14 @@ void P_PlayerInSpecialSector(player_t *player)
     case 5:
         // HELLSLIME DAMAGE
         if(!player->powers[PT_IRONFEET])
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 10);
         break;
 
     case 7:
         // NUKAGE DAMAGE
         if(!player->powers[PT_IRONFEET])
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 5);
         break;
 
@@ -770,7 +834,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // STROBE HURT
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 20);
         }
         break;
@@ -790,11 +854,11 @@ void P_PlayerInSpecialSector(player_t *player)
         // EXIT SUPER DAMAGE! (for E1M8 finale)
         player->cheats &= ~CF_GODMODE;
 
-        if(!(levelTime & 0x1f))
+        if(!(mapTime & 0x1f))
             P_DamageMobj(player->plr->mo, NULL, NULL, 20);
 
         if(player->health <= 10)
-            G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+            G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, false);
         break;
 
     default:
@@ -1115,7 +1179,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         }
 
         P_ChangeSwitchMaterial(line, 0);
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, false);
         break;
 
     case 14:
@@ -1197,7 +1261,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         }
 
         P_ChangeSwitchMaterial(line, 0);
-        G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, true);
         break;
 
     case 55:

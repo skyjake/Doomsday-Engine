@@ -553,482 +553,482 @@ Text {
 
 Text {
   ID = "HUSTR_1";
-  Text = "level 1: entryway";
+  Text = "map 1: entryway";
 }
 
 Text {
   ID = "HUSTR_2";
-  Text = "level 2: underhalls";
+  Text = "map 2: underhalls";
 }
 
 Text {
   ID = "HUSTR_3";
-  Text = "level 3: the gantlet";
+  Text = "map 3: the gantlet";
 }
 
 Text {
   ID = "HUSTR_4";
-  Text = "level 4: the focus";
+  Text = "map 4: the focus";
 }
 
 Text {
   ID = "HUSTR_5";
-  Text = "level 5: the waste tunnels";
+  Text = "map 5: the waste tunnels";
 }
 
 Text {
   ID = "HUSTR_6";
-  Text = "level 6: the crusher";
+  Text = "map 6: the crusher";
 }
 
 Text {
   ID = "HUSTR_7";
-  Text = "level 7: dead simple";
+  Text = "map 7: dead simple";
 }
 
 Text {
   ID = "HUSTR_8";
-  Text = "level 8: tricks and traps";
+  Text = "map 8: tricks and traps";
 }
 
 Text {
   ID = "HUSTR_9";
-  Text = "level 9: the pit";
+  Text = "map 9: the pit";
 }
 
 Text {
   ID = "HUSTR_10";
-  Text = "level 10: refueling base";
+  Text = "map 10: refueling base";
 }
 
 Text {
   ID = "HUSTR_11";
-  Text = "level 11: 'o' of destruction!";
+  Text = "map 11: 'o' of destruction!";
 }
 
 Text {
   ID = "HUSTR_12";
-  Text = "level 12: the factory";
+  Text = "map 12: the factory";
 }
 
 Text {
   ID = "HUSTR_13";
-  Text = "level 13: downtown";
+  Text = "map 13: downtown";
 }
 
 Text {
   ID = "HUSTR_14";
-  Text = "level 14: the inmost dens";
+  Text = "map 14: the inmost dens";
 }
 
 Text {
   ID = "HUSTR_15";
-  Text = "level 15: industrial zone";
+  Text = "map 15: industrial zone";
 }
 
 Text {
   ID = "HUSTR_16";
-  Text = "level 16: suburbs";
+  Text = "map 16: suburbs";
 }
 
 Text {
   ID = "HUSTR_17";
-  Text = "level 17: tenements";
+  Text = "map 17: tenements";
 }
 
 Text {
   ID = "HUSTR_18";
-  Text = "level 18: the courtyard";
+  Text = "map 18: the courtyard";
 }
 
 Text {
   ID = "HUSTR_19";
-  Text = "level 19: the citadel";
+  Text = "map 19: the citadel";
 }
 
 Text {
   ID = "HUSTR_20";
-  Text = "level 20: gotcha!";
+  Text = "map 20: gotcha!";
 }
 
 Text {
   ID = "HUSTR_21";
-  Text = "level 21: nirvana";
+  Text = "map 21: nirvana";
 }
 
 Text {
   ID = "HUSTR_22";
-  Text = "level 22: the catacombs";
+  Text = "map 22: the catacombs";
 }
 
 Text {
   ID = "HUSTR_23";
-  Text = "level 23: barrels o' fun";
+  Text = "map 23: barrels o' fun";
 }
 
 Text {
   ID = "HUSTR_24";
-  Text = "level 24: the chasm";
+  Text = "map 24: the chasm";
 }
 
 Text {
   ID = "HUSTR_25";
-  Text = "level 25: bloodfalls";
+  Text = "map 25: bloodfalls";
 }
 
 Text {
   ID = "HUSTR_26";
-  Text = "level 26: the abandoned mines";
+  Text = "map 26: the abandoned mines";
 }
 
 Text {
   ID = "HUSTR_27";
-  Text = "level 27: monster condo";
+  Text = "map 27: monster condo";
 }
 
 Text {
   ID = "HUSTR_28";
-  Text = "level 28: the spirit world";
+  Text = "map 28: the spirit world";
 }
 
 Text {
   ID = "HUSTR_29";
-  Text = "level 29: the living end";
+  Text = "map 29: the living end";
 }
 
 Text {
   ID = "HUSTR_30";
-  Text = "level 30: icon of sin";
+  Text = "map 30: icon of sin";
 }
 
 Text {
   ID = "HUSTR_31";
-  Text = "level 31: wolfenstein";
+  Text = "map 31: wolfenstein";
 }
 
 Text {
   ID = "HUSTR_32";
-  Text = "level 32: grosse";
+  Text = "map 32: grosse";
 }
 
 Text {
   ID = "PHUSTR_1";
-  Text = "Level 1: Congo";
+  Text = "map 1: Congo";
 }
 
 Text {
   ID = "PHUSTR_2";
-  Text = "Level 2: Well of Souls";
+  Text = "map 2: Well of Souls";
 }
 
 Text {
   ID = "PHUSTR_3";
-  Text = "Level 3: Aztec";
+  Text = "map 3: Aztec";
 }
 
 Text {
   ID = "PHUSTR_4";
-  Text = "Level 4: Caged";
+  Text = "map 4: Caged";
 }
 
 Text {
   ID = "PHUSTR_5";
-  Text = "Level 5: Ghost Town";
+  Text = "map 5: Ghost Town";
 }
 
 Text {
   ID = "PHUSTR_6";
-  Text = "Level 6: Baron's Lair";
+  Text = "map 6: Baron's Lair";
 }
 
 Text {
   ID = "PHUSTR_7";
-  Text = "Level 7: Caughtyard";
+  Text = "map 7: Caughtyard";
 }
 
 Text {
   ID = "PHUSTR_8";
-  Text = "Level 8: Realm";
+  Text = "map 8: Realm";
 }
 
 Text {
   ID = "PHUSTR_9";
-  Text = "Level 9: Abattoire";
+  Text = "map 9: Abattoire";
 }
 
 Text {
   ID = "PHUSTR_10";
-  Text = "Level 10: Onslaught";
+  Text = "map 10: Onslaught";
 }
 
 Text {
   ID = "PHUSTR_11";
-  Text = "Level 11: Hunted";
+  Text = "map 11: Hunted";
 }
 
 Text {
   ID = "PHUSTR_12";
-  Text = "Level 12: Speed";
+  Text = "map 12: Speed";
 }
 
 Text {
   ID = "PHUSTR_13";
-  Text = "Level 13: The Crypt";
+  Text = "map 13: The Crypt";
 }
 
 Text {
   ID = "PHUSTR_14";
-  Text = "Level 14: Genesis";
+  Text = "map 14: Genesis";
 }
 
 Text {
   ID = "PHUSTR_15";
-  Text = "Level 15: The Twilight";
+  Text = "map 15: The Twilight";
 }
 
 Text {
   ID = "PHUSTR_16";
-  Text = "Level 16: The Omen";
+  Text = "map 16: The Omen";
 }
 
 Text {
   ID = "PHUSTR_17";
-  Text = "Level 17: Compound";
+  Text = "map 17: Compound";
 }
 
 Text {
   ID = "PHUSTR_18";
-  Text = "Level 18: Neurosphere";
+  Text = "map 18: Neurosphere";
 }
 
 Text {
   ID = "PHUSTR_19";
-  Text = "Level 19: Nme";
+  Text = "map 19: Nme";
 }
 
 Text {
   ID = "PHUSTR_20";
-  Text = "Level 20: The Death Domain";
+  Text = "map 20: The Death Domain";
 }
 
 Text {
   ID = "PHUSTR_21";
-  Text = "Level 21: Slayer";
+  Text = "map 21: Slayer";
 }
 
 Text {
   ID = "PHUSTR_22";
-  Text = "Level 22: Impossible Mission";
+  Text = "map 22: Impossible Mission";
 }
 
 Text {
   ID = "PHUSTR_23";
-  Text = "Level 23: Tombstone";
+  Text = "map 23: Tombstone";
 }
 
 Text {
   ID = "PHUSTR_24";
-  Text = "Level 24: The Final Frontier";
+  Text = "map 24: The Final Frontier";
 }
 
 Text {
   ID = "PHUSTR_25";
-  Text = "Level 25: The Temple of Darkness";
+  Text = "map 25: The Temple of Darkness";
 }
 
 Text {
   ID = "PHUSTR_26";
-  Text = "Level 26: Bunker";
+  Text = "map 26: Bunker";
 }
 
 Text {
   ID = "PHUSTR_27";
-  Text = "Level 27: Anti-Christ";
+  Text = "map 27: Anti-Christ";
 }
 
 Text {
   ID = "PHUSTR_28";
-  Text = "Level 28: The Sewers";
+  Text = "map 28: The Sewers";
 }
 
 Text {
   ID = "PHUSTR_29";
-  Text = "Level 29: Odyssey of Noises";
+  Text = "map 29: Odyssey of Noises";
 }
 
 Text {
   ID = "PHUSTR_30";
-  Text = "Level 30: The Gateway of Hell";
+  Text = "map 30: The Gateway of Hell";
 }
 
 Text {
   ID = "PHUSTR_31";
-  Text = "Level 31: Cyberden";
+  Text = "map 31: Cyberden";
 }
 
 Text {
   ID = "PHUSTR_32";
-  Text = "Level 32: Go 2 It";
+  Text = "map 32: Go 2 It";
 }
 
 Text {
   ID = "THUSTR_1";
-  Text = "Level 1: System Control";
+  Text = "map 1: System Control";
 }
 
 Text {
   ID = "THUSTR_2";
-  Text = "Level 2: Human BBQ";
+  Text = "map 2: Human BBQ";
 }
 
 Text {
   ID = "THUSTR_3";
-  Text = "Level 3: Power Control";
+  Text = "map 3: Power Control";
 }
 
 Text {
   ID = "THUSTR_4";
-  Text = "Level 4: Wormhole";
+  Text = "map 4: Wormhole";
 }
 
 Text {
   ID = "THUSTR_5";
-  Text = "Level 5: Hanger";
+  Text = "map 5: Hanger";
 }
 
 Text {
   ID = "THUSTR_6";
-  Text = "Level 6: Open Season";
+  Text = "map 6: Open Season";
 }
 
 Text {
   ID = "THUSTR_7";
-  Text = "Level 7: Prison";
+  Text = "map 7: Prison";
 }
 
 Text {
   ID = "THUSTR_8";
-  Text = "Level 8: Metal";
+  Text = "map 8: Metal";
 }
 
 Text {
   ID = "THUSTR_9";
-  Text = "Level 9: Stronghold";
+  Text = "map 9: Stronghold";
 }
 
 Text {
   ID = "THUSTR_10";
-  Text = "Level 10: Redemption";
+  Text = "map 10: Redemption";
 }
 
 Text {
   ID = "THUSTR_11";
-  Text = "Level 11: Storage Facility";
+  Text = "map 11: Storage Facility";
 }
 
 Text {
   ID = "THUSTR_12";
-  Text = "Level 12: Crater";
+  Text = "map 12: Crater";
 }
 
 Text {
   ID = "THUSTR_13";
-  Text = "Level 13: Nukage Processing";
+  Text = "map 13: Nukage Processing";
 }
 
 Text {
   ID = "THUSTR_14";
-  Text = "Level 14: Steel Works";
+  Text = "map 14: Steel Works";
 }
 
 Text {
   ID = "THUSTR_15";
-  Text = "Level 15: Dead Zone";
+  Text = "map 15: Dead Zone";
 }
 
 Text {
   ID = "THUSTR_16";
-  Text = "Level 16: Deepest Reaches";
+  Text = "map 16: Deepest Reaches";
 }
 
 Text {
   ID = "THUSTR_17";
-  Text = "Level 17: Processing Area";
+  Text = "map 17: Processing Area";
 }
 
 Text {
   ID = "THUSTR_18";
-  Text = "Level 18: Mill";
+  Text = "map 18: Mill";
 }
 
 Text {
   ID = "THUSTR_19";
-  Text = "Level 19: Shipping/Respawning";
+  Text = "map 19: Shipping/Respawning";
 }
 
 Text {
   ID = "THUSTR_20";
-  Text = "Level 20: Central Processing";
+  Text = "map 20: Central Processing";
 }
 
 Text {
   ID = "THUSTR_21";
-  Text = "Level 21: Administration Center";
+  Text = "map 21: Administration Center";
 }
 
 Text {
   ID = "THUSTR_22";
-  Text = "Level 22: Habitat";
+  Text = "map 22: Habitat";
 }
 
 Text {
   ID = "THUSTR_23";
-  Text = "Level 23: Lunar Mining Project";
+  Text = "map 23: Lunar Mining Project";
 }
 
 Text {
   ID = "THUSTR_24";
-  Text = "Level 24: Quarry";
+  Text = "map 24: Quarry";
 }
 
 Text {
   ID = "THUSTR_25";
-  Text = "Level 25: Baron's Den";
+  Text = "map 25: Baron's Den";
 }
 
 Text {
   ID = "THUSTR_26";
-  Text = "Level 26: Ballistyx";
+  Text = "map 26: Ballistyx";
 }
 
 Text {
   ID = "THUSTR_27";
-  Text = "Level 27: Mount Pain";
+  Text = "map 27: Mount Pain";
 }
 
 Text {
   ID = "THUSTR_28";
-  Text = "Level 28: Heck";
+  Text = "map 28: Heck";
 }
 
 Text {
   ID = "THUSTR_29";
-  Text = "Level 29: River Styx";
+  Text = "map 29: River Styx";
 }
 
 Text {
   ID = "THUSTR_30";
-  Text = "Level 30: Last Call";
+  Text = "map 30: Last Call";
 }
 
 Text {
   ID = "THUSTR_31";
-  Text = "Level 31: Pharaoh";
+  Text = "map 31: Pharaoh";
 }
 
 Text {
   ID = "THUSTR_32";
-  Text = "Level 32: Caribbean";
+  Text = "map 32: Caribbean";
 }
 
 Text {
@@ -1218,7 +1218,7 @@ Text {
 
 Text {
   ID = "STSTR_CLEV";
-  Text = "Changing Level...";
+  Text = "Changing map...";
 }
 
 Text {
@@ -3882,7 +3882,7 @@ if you dare...";
 
 # OMS SPECIFIC SPLASH SCREENS INTROS AND ENDINGS
 
-# Before Level 1
+# Before map 1
 
 Text {
   ID = "OMSINTRO";
@@ -4098,10 +4098,10 @@ all, she was afraid of no man\n\n
 ...and so it begins...";
 }
 
-# After Level 1
+# After map 1
 
 Text {
-  ID = "OMSLEVEL11";
+  ID = "OMSMAP11";
   Text = "The rumors are true...!\n\n
 The soldiers killed during B.J.'s mission\n
 to South America have been brought back to\n
@@ -4116,7 +4116,7 @@ She continues into the catacombs...";
 }
 
 Text {
-  ID = "OMSLEVEL12";
+  ID = "OMSMAP12";
   Text = "MUTANT SOLDIER:\n
 The bodies of former soldiers brought\n
 back to life. Some may play dead to\n
@@ -4134,7 +4134,7 @@ when alerted.";
 }
 
 Text {
-  ID = "OMSLEVEL13";
+  ID = "OMSMAP13";
   Text = "MULLERS SS:\n
 Highly trained soliders who serve the\n
 sole purpose of protecting\n
@@ -4144,10 +4144,10 @@ catacombs usually, but use them for\n
 target pratice when they don't.";
 }
 
-# After Level 3
+# After map 3
 
 Text {
-  ID = "OMSLEVEL31";
+  ID = "OMSMAP31";
   Text = "Things are even worse than they\n
 initially appeared!\n\n
 A veritable army of creatures have been\n
@@ -4164,7 +4164,7 @@ probably be too late...";
 }
 
 Text {
-  ID = "OMSLEVEL32";
+  ID = "OMSMAP32";
   Text = "BIO BLASTER:\n
 A strange looking creature that appears\n
 to be half human and half octupus.\n\n
@@ -4181,10 +4181,10 @@ if alerted, they will feed opponents\n
 a steady diet of rockets.";
 }
 
-# After Level 5
+# After map 5
 
 Text {
-  ID = "OMSLEVEL51";
+  ID = "OMSMAP51";
   Text = "Things just keep getting tougher...\n\n
 But Agent Hunter knows it's not time\n
 to relax yet!\n\n
@@ -4199,7 +4199,7 @@ the draw because of a dirty gun...";
 }
 
 Text {
-  ID = "OMSLEVEL52";
+  ID = "OMSMAP52";
   Text = "MAD DOCTOR:\n
 These men have devoted their medical\n
 knowledge and scientific genius to\n
@@ -4214,10 +4214,10 @@ evil deeds and so wear protective\n
 body armor.";
 }
 
-# After Level 7
+# After map 7
 
 Text {
-  ID = "OMSLEVEL71";
+  ID = "OMSMAP71";
   Text = "It appears that the operation\n
 is much more advanced than Agent\n
 Hunter ever imagined!\n\n
@@ -4232,7 +4232,7 @@ confrontation...";
 }
 
 Text {
-  ID = "OMSLEVEL72";
+  ID = "OMSMAP72";
   Text = "BRAIN DROID:\n
 These are the brains of former\n
 humans, wired to mechanical\n
@@ -4249,10 +4249,10 @@ only a fraction of the intelligence\n
 they had prior to death.";
 }
 
-# After Level 9
+# After map 9
 
 Text {
-  ID = "OMSLEVEL91";
+  ID = "OMSMAP91";
   Text = "Jill watches in amazement as\n
 Muller is pulled right through\n
 the floor by some hideous creature\n
@@ -4266,7 +4266,7 @@ lowest reaches of the catacombs";
 }
 
 Text {
-  ID = "OMSLEVEL92";
+  ID = "OMSMAP92";
   Text = "THE RAVEN:\n
 The shaman who used his knowledge of\n
 magic and herbs to assist with the\n
@@ -4280,7 +4280,7 @@ army B.J. faced.";
 }
 
 Text {
-  ID = "OMSLEVEL93";
+  ID = "OMSMAP93";
   Text = "COLONEL MULLER:\n
 The leader of Operation: Mutant\n
 Strike.\n\n
@@ -4295,10 +4295,10 @@ He was destroyed by some unknown\n
 horror he himself created.";
 }
 
-# After Level 10
+# After map 10
 
 Text {
-  ID = "OMSLEVEL101";
+  ID = "OMSMAP101";
   Text = "With her last ounce of strength,\n
 Agent Hunter fires one last burst of\n
 bullets into the hideous Nazi\n
@@ -4310,7 +4310,7 @@ Victory!";
 }
 
 Text {
-  ID = "OMSLEVEL102";
+  ID = "OMSMAP102";
   Text = "Facing impossible odds, Jill Hunter\n
 has emerged victorious, and ended\n
 the threat of the threat of the\n
@@ -4328,7 +4328,7 @@ confronted.";
 }
 
 Text {
-  ID = "OMSLEVEL103";
+  ID = "OMSMAP103";
   Text = "Jill Hunter trusts no one with the\n
 information she discovered in the\n
 catacombs. Hence she burnt any\n
@@ -4340,7 +4340,7 @@ She refuses to take that risk.";
 }
 
 Text {
-  ID = "OMSLEVEL104";
+  ID = "OMSMAP104";
   Text = "Ultimately, Muller was destroyed by\n
 his own evil ambition, tampering with\n
 powers of nature he did not understand.\n\n
@@ -4353,7 +4353,7 @@ created.";
 }
 
 Text {
-  ID = "OMSLEVEL105";
+  ID = "OMSMAP105";
   Text = "Jill returns to her normal life,\n
 confident that the nightmare is finally\n
 over.\n\n
@@ -4368,7 +4368,7 @@ The End...";
 }
 
 Text {
-  ID = "OMSLEVEL106";
+  ID = "OMSMAP106";
   Text = "The original Wolf3d Mod,\n
 Operation: Mutant Strike, was\n
 created by:";
@@ -4577,7 +4577,7 @@ Text {
 failure is not an option...";
 }
 
-# After Level 12
+# After map 12
 
 Text {
   ID = "OMS2LEVEL121";
@@ -4629,7 +4629,7 @@ their only entertainment comes from\n
 hunting down and killing intruders.";
 }
 
-# After Level 14
+# After map 14
 
 Text {
   ID = "OMS2LEVEL141";
@@ -4688,7 +4688,7 @@ burrow underneath them, and burst\n
 through the ground to attack!";
 }
 
-# After Level 16
+# After map 16
 
 Text {
   ID = "OMS2LEVEL161";
@@ -4830,7 +4830,7 @@ They carry a pair of pistols, which\n
 they wield with an excellent aim.";
 }
 
-# After Level 18
+# After map 18
 
 Text {
   ID = "OMS2LEVEL181";
@@ -4980,7 +4980,7 @@ continues on her mission...\n\n
 }
 
 
-# After Level 20
+# After map 20
 
 Text {
   ID = "OMS2LEVEL201";
@@ -5346,7 +5346,7 @@ He was destroyed in a shootout\n
 with Agent Hunter.";
 }
 
-# After Level 21
+# After map 21
 
 Text {
   ID = "OMS2LEVEL211";
@@ -5649,7 +5649,7 @@ more maps than I have ever released.\n\n
 Some were experimental in nature, others\n
 not good enough to use yet still good\n
 enough to use later on as a basis for\n
-another level, some were too advanced\n
+another map, some were too advanced\n
 or too hard for the average player,\n
 and others were quite decent although\n
 never quite fit in with the sets\n
@@ -5775,7 +5775,7 @@ It happens for a reason. You have been\n
 warned.\n\n
 I broke some rules - sue me!  lol.\n\n
 Any rule I broke was for the greater\n
-good of the level or the set as a whole.\n\n
+good of the map or the set as a whole.\n\n
 You may find some things that you truly\n
 don't like about the gameplay.\n
 Since I cannot satisfy everyone (and I\n
@@ -5816,7 +5816,7 @@ Text {
 mutants have been introduced early and\n
 officers are introduced much later.\n
 This does cause some pain in the early\n
-levels, but in all honesty, seeing\n
+maps, but in all honesty, seeing\n
 mutants in the slime areas makes more\n
 sense to me. Since the slime areas are\n
 the dungeons beneath the castle...\n\n
@@ -5828,7 +5828,7 @@ Text {
   Text = "I used the Wolfenstein format for the\n
 intro elevators.\n\n
 In other words, you cannot enter the\n
-elevator at the beginning of the level.\n
+elevator at the beginning of the map.\n
 Shouldn't be a major issue.\n
 Par times and ceiling colours are factory\n
 set - i.e. there have been no changes.\n\n
@@ -5839,9 +5839,9 @@ game, in my not-so-humble opinion.";
 Text {
   ID = "ARCHIVE1INTRO15";
   Text = "Oh... right... par times. Let's talk about\n
-those.  In selecting these levels,\n
+those.  In selecting these maps,\n
 I made sure that the original par times\n
-could be beat. Some levels even have\n
+could be beat. Some maps even have\n
 subtle little ways to get a nice bonus\n
 if you beat the par time.\n
 I will not be offering any suggestions\n

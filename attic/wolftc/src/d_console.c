@@ -48,7 +48,7 @@ DEFCC(CCmdCheatReveal);
 DEFCC(CCmdCheatGive);
 DEFCC(CCmdCheatMassacre);
 DEFCC(CCmdCheatWhere);
-DEFCC(CCmdCheatExitLevel);
+DEFCC(CCmdCheatLeaveMap);
 DEFCC(CCmdCheatSuicide);
 
 DEFCC(CCmdMakeLocal);
@@ -89,7 +89,7 @@ cvar_t  gameCVars[] = {
 
 // View/Refresh
     {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 13},
-    {"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1},
+    {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
     {"hud-title-noidsoft", 0, CVT_BYTE, &cfg.hideAuthorIdSoft, 0, 1},
 
     {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1},
@@ -211,7 +211,7 @@ ccmd_t  gameCCmds[] = {
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
-    {"exitlevel",   "",     CCmdCheatExitLevel},
+    {"leavemap",    "",     CCmdCheatLeaveMap},
     {"suicide",     "",     CCmdCheatSuicide},
     {"where",       "",     CCmdCheatWhere},
 
@@ -262,7 +262,7 @@ void D_ConsoleBg(int *width, int *height)
 
     if(consoleFlat)
     {
-        GL_SetMaterial(consoleFlat, MAT_FLAT);
+        GL_SetMaterial(consoleFlat, MG_FLATS);
         *width = (int) (64 * consoleZoom);
         *height = (int) (64 * consoleZoom);
     }

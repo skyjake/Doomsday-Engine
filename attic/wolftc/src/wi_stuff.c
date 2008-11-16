@@ -162,7 +162,7 @@ extern dpatch_t huFont[HU_FONTSIZE];
 extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
  // Name graphics of each level (centered)
-extern dpatch_t *levelNamePatches;
+extern dpatch_t *mapNamePatches;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -399,10 +399,10 @@ void WI_drawLF(void)
 
     // draw <LevelName>
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 levelNamePatches[mapnum].lump, lname, false, ALIGN_CENTER);
+                 mapNamePatches[mapnum].lump, lname, false, ALIGN_CENTER);
 
     // draw "Finished!"
-    y += (5 * levelNamePatches[mapnum].height) / 4;
+    y += (5 * mapNamePatches[mapnum].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
                  finished.lump, NULL, false, ALIGN_CENTER);
@@ -447,10 +447,10 @@ void WI_drawEL(void)
                  NULL, false, ALIGN_CENTER);
 
     // draw level
-    y += (5 * levelNamePatches[wbs->next].height) / 4;
+    y += (5 * mapNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 levelNamePatches[((gameepisode -1) * 9) + wbs->next].lump,
+                 mapNamePatches[((gameepisode -1) * 9) + wbs->next].lump,
                  lname, false, ALIGN_CENTER);
 }
 
@@ -1628,7 +1628,7 @@ void WI_unloadData(void)
     if(gamemode == commercial)
     {
         for(i = 0; i < NUMCMAPS; i++)
-            Z_ChangeTag(levelNamePatches[i].patch, PU_CACHE);
+            Z_ChangeTag(mapNamePatches[i].patch, PU_CACHE);
     }
     else
     {
@@ -1638,7 +1638,7 @@ void WI_unloadData(void)
         Z_ChangeTag(splat.patch, PU_CACHE);
 
         for(i = 0; i < NUMMAPS; i++)
-            Z_ChangeTag(levelNamePatches[i].patch, PU_CACHE);
+            Z_ChangeTag(mapNamePatches[i].patch, PU_CACHE);
 
         if(wbs->epsd < 3)
         {

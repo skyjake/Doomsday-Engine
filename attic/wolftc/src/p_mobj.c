@@ -483,9 +483,9 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // Do some fly-bobbing.
     if(mo->player && (mo->flags2 & MF2_FLY) && mo->pos[VZ] > mo->floorZ &&
-       !mo->onMobj && (levelTime & 2))
+       !mo->onMobj && (mapTime & 2))
     {
-        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
+        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
     }
 
     // Clip movement. Another thing?
@@ -842,7 +842,7 @@ void P_MobjThinker(mobj_t *mobj)
         if(mobj->moveCount < 12 * 35)
             return;
 
-        if(levelTime & 31)
+        if(mapTime & 31)
             return;
 
         if(P_Random() > 4)
@@ -939,7 +939,7 @@ void P_RespawnEnqueue(spawnspot_t *spot)
 
     memcpy(spawnobj, spot, sizeof(*spawnobj));
 
-    itemrespawntime[iquehead] = levelTime;
+    itemrespawntime[iquehead] = mapTime;
     iquehead = (iquehead + 1) & (ITEMQUESIZE - 1);
 
     // lose one off the end?
@@ -964,7 +964,7 @@ void P_CheckRespawnQueue(void)
         return;
 
     // Wait at least 30 seconds
-    if(levelTime - itemrespawntime[iquetail] < 30 * 35)
+    if(mapTime - itemrespawntime[iquetail] < 30 * 35)
         return;
 
     // Get the attributes of the mobj from spawn parameters.

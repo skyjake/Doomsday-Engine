@@ -126,10 +126,10 @@ void P_CalcSwing(player_t *player)
      */
     mul = player->bob;
 
-    angle = (FINEANGLES / 70 * levelTime) & FINEMASK;
+    angle = (FINEANGLES / 70 * mapTime) & FINEMASK;
     swing[VX] = mul * FIX2FLT(finesine[angle]);
 
-    angle = (FINEANGLES / 70 * levelTime + FINEANGLES / 2) & FINEMASK;
+    angle = (FINEANGLES / 70 * mapTime + FINEANGLES / 2) & FINEMASK;
     swing[VY] = -(mul * FIX2FLT(finesine[angle]));
 }
 

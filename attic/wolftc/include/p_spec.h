@@ -44,12 +44,6 @@
 #include "d_player.h"
 #include "r_data.h"
 
-//
-// End-level timer (-TIMER option)
-//
-extern boolean  levelTimer;
-extern int      levelTimeCount;
-
 //      Define values for map objects
 #define MO_TELEPORTMAN          14
 

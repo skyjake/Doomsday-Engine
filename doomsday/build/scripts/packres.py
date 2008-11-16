@@ -85,14 +85,6 @@ p.add_files(
       ('plugins/jhexen/data/lumps', '#.basedata') ] )
 p.create('jhexen.pk3')
 
-# Wolftc.pk3
-p = Pack()
-p.add_files(
-    [ ('plugins/wolftc/defs', 'defs/wolftc'),
-      ('plugins/wolftc/data/conhelp.txt', 'data/wolftc/conhelp.txt'),
-      ('plugins/wolftc/data/lumps', '#.basedata') ] )
-p.create('wolftc.pk3')
-
 # jdoom64.pk3
 p = Pack()
 p.add_files(

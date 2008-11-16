@@ -157,7 +157,7 @@ boolean Cht_Responder(event_t *ev)
 {
     int         i;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return false;
 
     plyr = &players[CONSOLEPLAYER];
@@ -578,7 +578,7 @@ DEFCC(CCmdCheatNoClip)
 
 DEFCC(CCmdCheatSuicide)
 {
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
     {
         S_LocalSound(SFX_OOF, NULL);
         Con_Printf("Can only suicide when in a game!\n");
@@ -704,7 +704,7 @@ DEFCC(CCmdCheatGive)
         plyr = &players[i];
     }
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
     {
         Con_Printf("Can only \"give\" when in a game!\n");
         return true;
@@ -857,27 +857,28 @@ DEFCC(CCmdCheatMassacre)
 DEFCC(CCmdCheatWhere)
 {
     if(!can_cheat())
-        return false;           // Can't cheat!
+        return false; // Can't cheat!
     CheatDebugFunc(players + CONSOLEPLAYER, NULL);
     return true;
 }
 
-/*
- * Exit the current level and goto the intermission.
+/**
+ * Exit the current map and go to the intermission.
  */
-DEFCC(CCmdCheatExitLevel)
+DEFCC(CCmdCheatLeaveMap)
 {
     if(!can_cheat())
-        return false;           // Can't cheat!
-    if(G_GetGameState() != GS_LEVEL)
+        return false; // Can't cheat!
+
+    if(G_GetGameState() != GS_MAP)
     {
         S_LocalSound(SFX_OOF, NULL);
-        Con_Printf("Can only exit a level when in a game!\n");
+        Con_Printf("Can only exit a map when in a game!\n");
         return true;
     }
 
-    // Exit the level.
-    G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+    // Exit the map.
+    G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, false);
 
     return true;
 }

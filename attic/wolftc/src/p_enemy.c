@@ -363,20 +363,18 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
         actor->moveDir = DI_NODIR;
 }
 
-/*
+/**
  * Monsters try to move away from tall dropoffs.
  *
- * In Doom, they were never allowed to hang over dropoffs,
- * and would remain stuck if involuntarily forced over one.
- * This logic, combined with p_map.c (P_TryMove), allows
- * monsters to free themselves without making them tend to
- * hang over dropoffs.
+ * In Doom, they were never allowed to hang over dropoffs, and would remain
+ * stuck if involuntarily forced over one. This logic, combined with
+ * p_map.c::P_TryMove(), allows monsters to free themselves without making
+ * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
+static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    sector_t   *backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float      *bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
        tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
@@ -385,51 +383,52 @@ static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
        tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
        P_BoxOnLineSide(tmBBox, line) == -1)
     {
-        fixed_t     front = P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT);
-        fixed_t     back = P_GetFixedp(backsector, DMU_FLOOR_HEIGHT);
-        fixed_t     dx = P_GetFixedp(line, DMU_DX);
-        fixed_t     dy = P_GetFixedp(line, DMU_DY);
-        angle_t     angle;
+        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
+        float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
+        float               d1[2];
+        angle_t             angle;
 
-        // The monster must contact one of the two floors,
-        // and the other must be a tall drop off (more than 24).
+        P_GetFloatpv(line, DMU_DXY, &d1);
 
-        if(back == floorz && front < floorz - FRACUNIT * 24)
+        // The monster must contact one of the two floors, and the other
+        // must be a tall drop off (more than 24).
+        if(back == floorZ && front < floorZ - 24)
         {
-            angle = R_PointToAngle2(0, 0, dx, dy);  // front side drop off
+            angle = R_PointToAngle2(0, 0, d1[0], d1[1]); // front side drop off
         }
         else
         {
-            if(front == floorz && back < floorz - FRACUNIT * 24)
-                angle = R_PointToAngle2(dx, dy, 0, 0);  // back side drop off
+            if(front == floorZ && back < floorZ - 24)
+                angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // back side drop off
             else
                 return true;
         }
 
         // Move away from drop off at a standard speed.
         // Multiple contacted linedefs are cumulative (e.g. hanging over corner)
-        dropoff_deltax -= finesine[angle >> ANGLETOFINESHIFT] * 32;
-        dropoff_deltay += finecosine[angle >> ANGLETOFINESHIFT] * 32;
+        dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]) * 32;
+        dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
     return true;
 }
 
-/*
+/**
  * Driver for above
  */
-static fixed_t P_AvoidDropoff(mobj_t *actor)
+static float P_AvoidDropoff(mobj_t *actor)
 {
-    floorz = actor->pos[VZ];          // remember floor height
+    floorZ = actor->pos[VZ]; // Remember floor height.
 
-    dropoff_deltax = dropoff_deltay = 0;
+    dropoffDelta[VX] = dropoffDelta[VY] = 0;
 
     VALIDCOUNT++;
 
-    // check lines
+    // Check lines
     P_MobjLinesIterator(actor, PIT_AvoidDropoff, 0);
 
-    // Non-zero if movement prescribed
-    return dropoff_deltax | dropoff_deltay;
+    // Non-zero if movement prescribed.
+    return !(dropoffDelta[VX] == 0 || dropoffDelta[VY] == 0);
 }
 
 void P_NewChaseDir(mobj_t *actor)
@@ -529,7 +528,7 @@ int P_Massacre(void)
     thinker_t  *think;
 
     // Only massacre when in a level.
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return 0;
 
     for(think = thinkerCap.next; think != &thinkerCap; think = think->next)
@@ -1743,7 +1742,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
-    G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1816,14 +1815,14 @@ void P_SpawnBrainTargets(void)
                     brainTargets =
                         Z_Realloc(brainTargets,
                                   numBrainTargetsAlloc * sizeof(*brainTargets),
-                                  PU_LEVEL);
+                                  PU_MAP);
                 }
                 else
                 {
                     numBrainTargetsAlloc = 32;
                     brainTargets =
                         Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
-                                 PU_LEVEL, NULL);
+                                 PU_MAP, NULL);
                 }
             }
 
@@ -1889,7 +1888,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
 
 void C_DECL A_BrainDie(mobj_t *mo)
 {
-    G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameepisode, gamemap), 0, false);
 }
 
 void C_DECL A_BrainSpit(mobj_t *mo)

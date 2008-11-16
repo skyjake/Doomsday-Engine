@@ -144,14 +144,14 @@ void R_DrawSpecialFilter(void)
 /**
  * Show map name and author.
  */
-void R_DrawLevelTitle(void)
+void R_DrawMapTitle(void)
 {
     float       alpha = 1;
     int         y = 12;
     int         mapnum;
     char       *lname, *lauthor;
 
-    if(!cfg.levelTitle || actualLevelTime > 6 * 35)
+    if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
 
     // Make the text a bit smaller.
@@ -161,10 +161,10 @@ void R_DrawLevelTitle(void)
     DGL_Scalef(.7f, .7f, 1);
     DGL_Translatef(-160, -y, 0);
 
-    if(actualLevelTime < 35)
-        alpha = actualLevelTime / 35.0f;
-    if(actualLevelTime > 5 * 35)
-        alpha = 1 - (actualLevelTime - 5 * 35) / 35.0f;
+    if(actualMapTime < 35)
+        alpha = actualMapTime / 35.0f;
+    if(actualMapTime > 5 * 35)
+        alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
 
     // Get the strings from Doomsday
     lname = P_GetMapNiceName();
@@ -178,13 +178,13 @@ void R_DrawLevelTitle(void)
 
     if(lname)
     {
-        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, levelNamePatches[mapnum].lump,
+        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, mapNamePatches[mapnum].lump,
                      lname, false, ALIGN_CENTER);
         y += 14;                //9;
     }
 
     //DGL_Color4f(.5f, .5f, .5f, alpha);
-    if(lauthor && W_IsFromIWAD(levelNamePatches[mapnum].lump) &&
+    if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump) &&
        (!cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
     {
         M_WriteText3(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
@@ -241,7 +241,7 @@ void D_Display(void)
     // Do buffered drawing.
     switch(G_GetGameState())
     {
-    case GS_LEVEL:
+    case GS_MAP:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
         if(!IS_CLIENT && leveltime < 2)
@@ -302,7 +302,7 @@ void D_Display2(void)
     // Do buffered drawing.
     switch(G_GetGameState())
     {
-    case GS_LEVEL:
+    case GS_MAP:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
@@ -325,7 +325,7 @@ void D_Display2(void)
 
             // Level information is shown for a few seconds in the
             // beginning of a level.
-            R_DrawLevelTitle();
+            R_DrawMapTitle();
 
             if(WINDOWHEIGHT != 200)
                 redrawsbar = true;

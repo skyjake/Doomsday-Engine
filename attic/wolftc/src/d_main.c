@@ -117,7 +117,7 @@ boolean G_SetGameMode(gamemode_t mode)
 {
     gamemode = mode;
 
-    if(G_GetGameState() == GS_LEVEL)
+    if(G_GetGameState() == GS_MAP)
         return false;
 
     switch(mode)
@@ -424,7 +424,7 @@ void G_PreInit(void)
     cfg.netMobHealthModifier = 1;
     cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = 41;
-    cfg.levelTitle = true;
+    cfg.mapTitle = true;
     cfg.hideAuthorIdSoft = true;
     cfg.menuColor[0] = 1;
     cfg.menuColor2[0] = 1;

@@ -32,8 +32,5 @@
 		<Project filename="dssdlmixer.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
-		<Project filename="wolftc.cbp">
-			<Depends filename="doomsday.cbp" />
-		</Project>
 	</Workspace>
 </CodeBlocks_workspace_file>

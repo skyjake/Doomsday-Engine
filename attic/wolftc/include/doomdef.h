@@ -122,7 +122,7 @@ typedef enum {
 // playing, gazing at the intermission screen,
 // the game final animation, or a demo.
 typedef enum {
-    GS_LEVEL,
+    GS_MAP,
     GS_INTERMISSION,
     GS_FINALE,
     GS_DEMOSCREEN,

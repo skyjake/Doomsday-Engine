@@ -83,7 +83,7 @@ void P_SpawnFireFlicker(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flick = Z_Malloc(sizeof(*flick), PU_LEVSPEC, 0);
+    flick = Z_Malloc(sizeof(*flick), PU_MAPSPEC, 0);
 
     P_ThinkerAdd(&flick->thinker);
 
@@ -129,7 +129,7 @@ void P_SpawnLightFlash(sector_t *sector)
     // nothing special about it during gameplay
     P_ToXSector(sector)->special = 0;
 
-    flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
+    flash = Z_Malloc(sizeof(*flash), PU_MAPSPEC, 0);
 
     P_ThinkerAdd(&flash->thinker);
 
@@ -174,7 +174,7 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     strobe_t   *flash;
     float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
 
-    flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
+    flash = Z_Malloc(sizeof(*flash), PU_MAPSPEC, 0);
 
     P_ThinkerAdd(&flash->thinker);
 
@@ -328,7 +328,7 @@ void P_SpawnGlowingLight(sector_t *sector)
     float       lightlevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     glow_t     *g;
 
-    g = Z_Malloc(sizeof(*g), PU_LEVSPEC, 0);
+    g = Z_Malloc(sizeof(*g), PU_MAPSPEC, 0);
 
     P_ThinkerAdd(&g->thinker);
 
