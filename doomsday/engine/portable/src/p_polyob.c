@@ -189,7 +189,7 @@ void P_PolyobjUpdateBBox(polyobj_t* po)
 }
 
 /**
- * Called at the start of the level after all the structures needed for
+ * Called at the start of the map after all the structures needed for
  * refresh have been setup.
  */
 void PO_InitForMap(void)
@@ -210,7 +210,8 @@ void PO_InitForMap(void)
         while(*segPtr)
         {
             seg_t*              seg = *segPtr;
-            sidedef_t*          side = seg->lineDef->L_frontside;
+            sidedef_t*          side = SEG_SIDEDEF(seg);
+            surface_t*          surface = &side->SW_topsurface;
 
             side->SW_topflags |= SUF_NO_RADIO;
             side->SW_middleflags |= SUF_NO_RADIO;
@@ -219,6 +220,14 @@ void PO_InitForMap(void)
             avg.pos[VX] += seg->SG_v1pos[VX];
             avg.pos[VY] += seg->SG_v1pos[VY];
 
+            // Set the surface normal.
+            surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
+            surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
+            surface->normal[VZ] = 0;
+
+            // All surfaces of a sidedef have the same normal.
+            memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+            memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
             *segPtr++;
         }
 
@@ -396,6 +405,8 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         ++count, segList++, originalPts++, prevPts++)
     {
         seg_t*              seg = *segList;
+        sidedef_t*          side = SEG_SIDEDEF(seg);
+        surface_t*          surface = &side->SW_topsurface;
 
         vtx = seg->SG_v1;
 
@@ -405,7 +416,16 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         vtx->V_pos[VY] = originalPts->pos[VY];
 
         rotatePoint(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
-                 po->startSpot.pos[VX], po->startSpot.pos[VY]);
+                    po->startSpot.pos[VX], po->startSpot.pos[VY]);
+
+        // Now update the surface normal.
+        surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
+        surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
+        surface->normal[VZ] = 0;
+
+        // All surfaces of a sidedef have the same normal.
+        memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+        memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
     }
 
     segList = po->segs;
