@@ -37,9 +37,9 @@
 #include "r_extres.h"
 
 // Flags for decorations.
-#define DCRF_NO_IWAD    0x1         // Don't use if from IWAD.
-#define DCRF_PWAD       0x2         // Can use if from PWAD.
-#define DCRF_EXTERNAL   0x4         // Can use if from external resource.
+#define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
+#define DCRF_PWAD           0x2 // Can use if from PWAD.
+#define DCRF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct materialtexinst_s {
     DGLuint         tex; // Name of the associated DGL texture.
@@ -114,6 +114,10 @@ typedef struct rcolor_s {
     float           rgba[4];
 } rcolor_t;
 
+typedef struct rtexcoord_s {
+    float           st[2];
+} rtexcoord_t;
+
 typedef struct walldiv_s {
     unsigned int    num;
     float           pos[RL_MAX_DIVS];
@@ -179,6 +183,7 @@ typedef struct {
 typedef struct {
     char            name[9];
     short           width, height;
+    byte            flags;
     short           patchCount;
     texpatch_t      patches[1]; // [patchcount] drawn back to front into the cached texture.
 } texturedef_t;
@@ -319,8 +324,10 @@ extern int numDetailTextures;
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
 rcolor_t*       R_AllocRendColors(uint num);
+rtexcoord_t*    R_AllocRendTexCoords(uint num);
 void            R_FreeRendVertices(rvertex_t* rvertices);
 void            R_FreeRendColors(rcolor_t* rcolors);
+void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
 
 void            R_InitData(void);
@@ -329,11 +336,10 @@ void            R_ShutdownData(void);
 
 void            R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 
-void            R_PrecacheLevel(void);
+void            R_PrecacheMap(void);
 void            R_PrecachePatch(lumpnum_t lump);
 
 texturedef_t*   R_GetTextureDef(int num);
-boolean         R_TextureIsFromIWAD(int num);
 
 int             R_NewSpriteTexture(lumpnum_t lump, struct material_s** mat);
 

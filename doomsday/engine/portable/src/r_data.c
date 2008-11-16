@@ -57,9 +57,15 @@ typedef struct rawtexhash_s {
     rawtex_t*     first;
 } rawtexhash_t;
 
+typedef enum {
+    RPT_VERT,
+    RPT_COLOR,
+    RPT_TEXCOORD
+} rpolydatatype_t;
+
 typedef struct {
     boolean         inUse;
-    boolean         type; // If true, data is rcolor else rvertex.
+    rpolydatatype_t type;
     uint            num;
     void*           data;
 } rendpolydata_t;
@@ -128,9 +134,12 @@ void R_InfoRendVerticesPool(void)
 
     for(i = 0; i < numrendpolys; ++i)
     {
+        rendpolydata_t*     rp = rendPolys[i];
+
         Con_Printf("RP: %-4u %c (vtxs=%u t=%c)\n", i,
-                   (rendPolys[i]->inUse? 'Y':'N'), rendPolys[i]->num,
-                   (rendPolys[i]->type? 'c' : 'v'));
+                   (rp->inUse? 'Y':'N'), rp->num,
+                   (rp->type == RPT_VERT? 'v' :
+                    rp->type == RPT_COLOR?'c' : 't'));
     }
 }
 
@@ -141,16 +150,19 @@ void R_InitRendVerticesPool(void)
 {
     rvertex_t*          rvertices;
     rcolor_t*           rcolors;
+    rtexcoord_t*        rtexcoords;
 
     numrendpolys = maxrendpolys = 0;
     rendPolys = NULL;
 
     rvertices = R_AllocRendVertices(24);
     rcolors = R_AllocRendColors(24);
+    rtexcoords = R_AllocRendTexCoords(24);
 
     // Mark unused.
     R_FreeRendVertices(rvertices);
     R_FreeRendColors(rcolors);
+    R_FreeRendTexCoords(rtexcoords);
 }
 
 /**
@@ -168,7 +180,7 @@ rvertex_t* R_AllocRendVertices(uint num)
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
-        if(rendPolys[idx]->inUse || rendPolys[idx]->type)
+        if(rendPolys[idx]->inUse || rendPolys[idx]->type != RPT_VERT)
             continue;
 
         if(rendPolys[idx]->num >= num)
@@ -211,7 +223,7 @@ rvertex_t* R_AllocRendVertices(uint num)
                 ptr->inUse = false;
                 ptr->num = 0;
                 ptr->data = NULL;
-                ptr->type = 0;
+                ptr->type = RPT_VERT;
                 rendPolys[i] = ptr;
             }
         }
@@ -219,7 +231,7 @@ rvertex_t* R_AllocRendVertices(uint num)
     }
 
     rendPolys[idx]->inUse = true;
-    rendPolys[idx]->type = 0;
+    rendPolys[idx]->type = RPT_VERT;
     rendPolys[idx]->num = num;
     rendPolys[idx]->data =
         Z_Malloc(sizeof(rvertex_t) * num, PU_MAP, 0);
@@ -242,7 +254,7 @@ rcolor_t* R_AllocRendColors(uint num)
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
-        if(rendPolys[idx]->inUse || !rendPolys[idx]->type)
+        if(rendPolys[idx]->inUse || rendPolys[idx]->type != RPT_COLOR)
             continue;
 
         if(rendPolys[idx]->num >= num)
@@ -285,7 +297,7 @@ rcolor_t* R_AllocRendColors(uint num)
                 ptr->inUse = false;
                 ptr->num = 0;
                 ptr->data = NULL;
-                ptr->type = 0;
+                ptr->type = RPT_COLOR;
                 rendPolys[i] = ptr;
             }
         }
@@ -293,12 +305,86 @@ rcolor_t* R_AllocRendColors(uint num)
     }
 
     rendPolys[idx]->inUse = true;
-    rendPolys[idx]->type = 0;
+    rendPolys[idx]->type = RPT_COLOR;
     rendPolys[idx]->num = num;
     rendPolys[idx]->data =
         Z_Malloc(sizeof(rcolor_t) * num, PU_MAP, 0);
 
     return (rcolor_t*) rendPolys[idx]->data;
+}
+
+/**
+ * Retrieves a batch of rtexcoord_t.
+ * Possibly allocates new if necessary.
+ *
+ * @param num           The number required.
+ *
+ * @return              Ptr to array of rtexcoord_t
+ */
+rtexcoord_t* R_AllocRendTexCoords(uint num)
+{
+    unsigned int        idx;
+    boolean             found = false;
+
+    for(idx = 0; idx < maxrendpolys; ++idx)
+    {
+        if(rendPolys[idx]->inUse || rendPolys[idx]->type != RPT_TEXCOORD)
+            continue;
+
+        if(rendPolys[idx]->num >= num)
+        {
+            // Use this one.
+            rendPolys[idx]->inUse = true;
+            return (rtexcoord_t*) rendPolys[idx]->data;
+        }
+        else if(rendPolys[idx]->num == 0)
+        {
+            // There is an unused one but we haven't allocated verts yet.
+            numrendpolys++;
+            found = true;
+            break;
+        }
+    }
+
+    if(!found)
+    {
+        // We may need to allocate more.
+        if(++numrendpolys > maxrendpolys)
+        {
+            uint                i, newCount;
+            rendpolydata_t*     newPolyData, *ptr;
+
+            maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
+
+            rendPolys =
+                Z_Realloc(rendPolys, sizeof(rendpolydata_t*) * maxrendpolys,
+                          PU_MAP);
+
+            newCount = maxrendpolys - numrendpolys + 1;
+
+            newPolyData =
+                Z_Malloc(sizeof(rendpolydata_t) * newCount, PU_MAP, 0);
+
+            ptr = newPolyData;
+            for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
+            {
+                ptr->inUse = false;
+                ptr->num = 0;
+                ptr->data = NULL;
+                ptr->type = RPT_TEXCOORD;
+                rendPolys[i] = ptr;
+            }
+        }
+        idx = numrendpolys - 1;
+    }
+
+    rendPolys[idx]->inUse = true;
+    rendPolys[idx]->type = RPT_TEXCOORD;
+    rendPolys[idx]->num = num;
+    rendPolys[idx]->data =
+        Z_Malloc(sizeof(rtexcoord_t) * num, PU_MAP, 0);
+
+    return (rtexcoord_t*) rendPolys[idx]->data;
 }
 
 /**
@@ -343,6 +429,32 @@ void R_FreeRendColors(rcolor_t* rcolors)
     for(i = 0; i < numrendpolys; ++i)
     {
         if(rendPolys[i]->data == rcolors)
+        {
+            rendPolys[i]->inUse = false;
+            return;
+        }
+    }
+#if _DEBUG
+    Con_Message("R_FreeRendPoly: Dangling poly ptr!\n");
+#endif
+}
+
+/**
+ * Doesn't actually free anything. Instead, mark them as unused ready for
+ * the next time a batch of rendvertex_t is needed.
+ *
+ * @param rtexcoords    Ptr to array of rtexcoord_t to mark unused.
+ */
+void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
+{
+    uint                i;
+
+    if(!rtexcoords)
+        return;
+
+    for(i = 0; i < numrendpolys; ++i)
+    {
+        if(rendPolys[i]->data == rtexcoords)
         {
             rendPolys[i]->inUse = false;
             return;
@@ -1084,38 +1196,6 @@ texturedef_t* R_GetTextureDef(int num)
 }
 
 /**
- * Check the def for the specified texture to see whether it originates
- * from an IWAD.
- *
- * @param num           Texture def idx.
- * @return              @c true, if the texture comes from an IWAD.
- */
-boolean R_TextureIsFromIWAD(int num)
-{
-    int                 i, lump;
-    texturedef_t*       texDef;
-
-    // First check the texture definitions.
-    lump = W_CheckNumForName("TEXTURE1");
-    if(lump >= 0 && !W_IsFromIWAD(lump))
-        return false;
-
-    lump = W_CheckNumForName("TEXTURE2");
-    if(lump >= 0 && !W_IsFromIWAD(lump))
-        return false;
-
-    // Go through the patches.
-    texDef = textureDefs[num];
-    for(i = 0; i < texDef->patchCount; ++i)
-    {
-        if(!W_IsFromIWAD(texDef->patches[i].lump))
-            return false;
-    }
-
-    return true;
-}
-
-/**
  * Returns the new flat index.
  */
 static int R_NewFlat(lumpnum_t lump)
@@ -1713,6 +1793,7 @@ detailtex_t* R_GetDetailTexture(lumpnum_t lump, const char* external)
         detailtex_t*        dTex = detailTextures[i];
 
         if(dTex->lump == lump &&
+           dTex->strength == strength && dTex->maxDist == maxDist &&
            ((dTex->external == NULL && external == NULL) ||
              (dTex->external && external && !stricmp(dTex->external, external))))
             return dTex;
