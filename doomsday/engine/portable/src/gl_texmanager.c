@@ -556,17 +556,6 @@ void GL_DeleteReflectionMap(ded_reflection_t *ref)
 }
 
 /**
- * Called from GL_LoadSystemTextures.
- */
-void GL_LoadDDTextures(void)
-{
-    R_MaterialPrecache(R_GetMaterial(DDT_UNKNOWN, MG_DDTEXTURES));
-    R_MaterialPrecache(R_GetMaterial(DDT_MISSING, MG_DDTEXTURES));
-    R_MaterialPrecache(R_GetMaterial(DDT_BBOX, MG_DDTEXTURES));
-    R_MaterialPrecache(R_GetMaterial(DDT_GRAY, MG_DDTEXTURES));
-}
-
-/**
  * Prepares all the system textures (dlight, ptcgens).
  */
 void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
@@ -574,6 +563,7 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
     struct ddtexdef_s {
         char            name[9];
         int             id;
+        byte            flags; // MATF_* flags
     } static const ddtexdefs[NUM_DD_TEXTURES] =
     {
         {"DDT_UNKN", DDT_UNKNOWN},
@@ -595,10 +585,10 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
 
         mTex = R_MaterialTexCreate(ddtexdefs[i].id, MTT_DDTEX);
 
-        mat = R_MaterialCreate(ddtexdefs[i].name, 64, 64, mTex, MG_DDTEXTURES);
+        mat = R_MaterialCreate(ddtexdefs[i].name, 64, 64, 0, mTex,
+                               MG_DDTEXTURES);
     }
 
-    GL_LoadDDTextures(); // missing etc
     UI_LoadTextures();
 
     // Preload lighting system textures.
@@ -784,6 +774,27 @@ void GL_ClearTextureMemory(void)
 
     // Delete system textures.
     GL_ClearSystemTextures();
+}
+
+/**
+ * The first selected unit is active after this call.
+ */
+void GL_SelectTexUnits(int count)
+{
+    int                 i;
+
+    // Disable extra units.
+    for(i = numTexUnits - 1; i >= count; i--)
+        DGL_DisableTexUnit(i);
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits)
+            continue;
+
+        DGL_EnableTexUnit(i);
+    }
 }
 
 /**
@@ -1036,7 +1047,7 @@ static detailtexinst_t* getDetailInstance(detailtex_t* dTex, float contrast)
     detailtexinst_t*    inst;
 
     // Round off the contrast to nearest 0.1.
-    contrast = (int) ((contrast + .05) * 10) / 10.0;
+    contrast = (int) ((contrast + .05f) * 10) / 10.f;
 
     if(dTex->instances)
     {
@@ -2907,12 +2918,6 @@ void GL_DeleteRawImages(void)
     Z_Free(rawTexs);
 }
 
-void GL_TextureFilterMode(int target, int parm)
-{
-    if(target == DD_TEXTURES)
-        GL_UpdateTexParams(parm);
-}
-
 unsigned int GL_PrepareSkin(skintex_t *st, boolean allowTexComp)
 {
     if(!st)
@@ -3024,7 +3029,7 @@ void GL_SetMaterial(materialnum_t num)
     {
         gltexture_t         glTex;
 
-        R_MaterialPrepare(mat->current, 0, &glTex, NULL);
+        R_MaterialPrepare(mat->current, 0, &glTex, NULL, NULL);
         GL_BindTexture(glTex.id, glTex.magMode);
     }
 }
