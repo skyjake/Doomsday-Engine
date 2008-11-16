@@ -195,7 +195,7 @@ objblockmap_t* R_ObjBlockmapCreate(float originX, float originY, int width,
 {
     objblockmap_t*      obm;
 
-    obm = Z_Malloc(sizeof(objblockmap_t), PU_LEVELSTATIC, 0);
+    obm = Z_Malloc(sizeof(objblockmap_t), PU_MAPSTATIC, 0);
 
     // Origin has fixed-point coordinates.
     obm->origin[0] = FLT2FIX(originX);
@@ -203,7 +203,7 @@ objblockmap_t* R_ObjBlockmapCreate(float originX, float originY, int width,
     obm->width = width;
     obm->height = height;
     obm->blocks = Z_Malloc(sizeof(*obm->blocks) * obm->width * obm->height,
-                           PU_LEVELSTATIC, 0);
+                           PU_MAPSTATIC, 0);
 
     return obm;
 }
@@ -228,7 +228,7 @@ void R_InitObjLinksForMap(void)
 
     // Initialize obj -> subsector contact lists.
     subContacts =
-        Z_Calloc(sizeof(*subContacts) * numSSectors, PU_LEVELSTATIC, 0);
+        Z_Calloc(sizeof(*subContacts) * numSSectors, PU_MAPSTATIC, 0);
 }
 
 void R_ObjBlockmapClear(objblockmap_t* obm)

@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 434 <--
+; --> 436 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -161,6 +161,7 @@ EXPORTS
     P_InterceptVector           @63 NONAME
     P_LineOpening               @64 NONAME
     P_MobjsBoxIterator          @346 NONAME
+    P_LinesBoxIterator			@435 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
     P_SubsectorsBoxIterator     @345 NONAME
@@ -303,8 +304,8 @@ EXPORTS
 ; Refresh.
     DD_GetFrameRate             @88 NONAME
     R_SetDataPath               @234 NONAME
-    R_SetupLevel                @89 NONAME
-    R_PrecacheLevel             @90 NONAME
+    R_SetupMap                  @89 NONAME
+    R_PrecacheMap               @90 NONAME
     R_PrecacheSkinsForState     @240 NONAME
     R_PrecachePatch             @335 NONAME
     R_RenderPlayerView          @91 NONAME
@@ -318,6 +319,7 @@ EXPORTS
     R_MaterialCheckNumForName   @336 NONAME
     R_MaterialNameForNum        @337 NONAME
     R_MaterialNumForName        @97 NONAME
+    R_MaterialPrecache			@436 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
     R_CreateAnimGroup           @241 NONAME
@@ -421,7 +423,7 @@ EXPORTS
     TGA_GetSize                 @205 NONAME
 
 ; Audio.
-    S_LevelChange               @225 NONAME
+    S_MapChange                 @225 NONAME
     S_LocalSoundAtVolumeFrom    @221 NONAME
     S_LocalSoundAtVolume        @214 NONAME
     S_LocalSound                @215 NONAME

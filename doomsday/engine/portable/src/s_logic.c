@@ -17,19 +17,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * s_logic.c: The Logical Sound Manager
  *
  * The Logical Sound Manager. Tracks all currently playing sounds
- * in the world, regardless of whether Sfx is available or if the 
+ * in the world, regardless of whether Sfx is available or if the
  * sounds are actually audible to anyone.
  *
- * Uses PU_LEVEL, so this has to be inited for every map. 
- * (Done via S_LevelChange()).
+ * Uses PU_MAP, so this has to be inited for every map.
+ * (Done via S_MapChange()).
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -43,22 +43,22 @@
 // MACROS ------------------------------------------------------------------
 
 // The logical sounds hash table uses sound IDs as keys.
-#define LOGIC_HASH_SIZE		64
+#define LOGIC_HASH_SIZE     64
 
-#define PURGE_INTERVAL		2000	// 2 seconds
+#define PURGE_INTERVAL      2000    // 2 seconds
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct logicsound_s {
-	struct logicsound_s *next, *prev;
-	int     id;
-	mobj_t *origin;
-	uint    endTime;
-	byte    isRepeating;
+    struct logicsound_s *next, *prev;
+    int     id;
+    mobj_t *origin;
+    uint    endTime;
+    byte    isRepeating;
 } logicsound_t;
 
 typedef struct logichash_s {
-	logicsound_t *first, *last;
+    logicsound_t *first, *last;
 } logichash_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -82,8 +82,8 @@ static logichash_t logicHash[LOGIC_HASH_SIZE];
  */
 void Sfx_InitLogical(void)
 {
-	// Memory in the hash table is PU_LEVEL, so this is acceptable.
-	memset(logicHash, 0, sizeof(logicHash));
+    // Memory in the hash table is PU_MAP, so this is acceptable.
+    memset(logicHash, 0, sizeof(logicHash));
 }
 
 /*
@@ -91,7 +91,7 @@ void Sfx_InitLogical(void)
  */
 logichash_t *Sfx_LogicHash(int id)
 {
-	return &logicHash[(uint) id % LOGIC_HASH_SIZE];
+    return &logicHash[(uint) id % LOGIC_HASH_SIZE];
 }
 
 /*
@@ -99,20 +99,20 @@ logichash_t *Sfx_LogicHash(int id)
  */
 logicsound_t *Sfx_CreateLogical(int id)
 {
-	logichash_t *hash = Sfx_LogicHash(id);
-	logicsound_t *node = Z_Calloc(sizeof(logicsound_t), PU_LEVEL, 0);
+    logichash_t *hash = Sfx_LogicHash(id);
+    logicsound_t *node = Z_Calloc(sizeof(logicsound_t), PU_MAP, 0);
 
-	if(hash->last)
-	{
-		hash->last->next = node;
-		node->prev = hash->last;
-	}
-	hash->last = node;
-	if(!hash->first)
-		hash->first = node;
+    if(hash->last)
+    {
+        hash->last->next = node;
+        node->prev = hash->last;
+    }
+    hash->last = node;
+    if(!hash->first)
+        hash->first = node;
 
-	node->id = id;
-	return node;
+    node->id = id;
+    return node;
 }
 
 /*
@@ -120,89 +120,89 @@ logicsound_t *Sfx_CreateLogical(int id)
  */
 void Sfx_DestroyLogical(logicsound_t * node)
 {
-	logichash_t *hash = Sfx_LogicHash(node->id);
+    logichash_t *hash = Sfx_LogicHash(node->id);
 
-	if(hash->first == node)
-		hash->first = node->next;
-	if(hash->last == node)
-		hash->last = node->prev;
-	if(node->next)
-		node->next->prev = node->prev;
-	if(node->prev)
-		node->prev->next = node->next;
+    if(hash->first == node)
+        hash->first = node->next;
+    if(hash->last == node)
+        hash->last = node->prev;
+    if(node->next)
+        node->next->prev = node->prev;
+    if(node->prev)
+        node->prev->next = node->next;
 
 #ifdef _DEBUG
-	memset(node, 0xDD, sizeof(*node));
+    memset(node, 0xDD, sizeof(*node));
 #endif
-	Z_Free(node);
+    Z_Free(node);
 }
 
 /*
- * The sound is entered into the list of playing sounds. Called when a 
+ * The sound is entered into the list of playing sounds. Called when a
  * 'world class' sound is started, regardless of whether it's actually
  * started on the local system.
  */
 void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
 {
-	logicsound_t *node;
-	uint    length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
+    logicsound_t *node;
+    uint    length = (isRepeating ? 1 : Sfx_GetSoundLength(id));
 
-	if(!length)
-	{
-		// This is not a valid sound.
-		return;
-	}
+    if(!length)
+    {
+        // This is not a valid sound.
+        return;
+    }
 
-	id &= ~DDSF_FLAG_MASK;
-	node = Sfx_CreateLogical(id);
-	node->origin = origin;
-	node->isRepeating = isRepeating;
-	node->endTime = Sys_GetRealTime() + length;
+    id &= ~DDSF_FLAG_MASK;
+    node = Sfx_CreateLogical(id);
+    node->origin = origin;
+    node->isRepeating = isRepeating;
+    node->endTime = Sys_GetRealTime() + length;
 }
 
 /*
  * The sound is removed from the list of playing sounds. Called whenever
- * a sound is stopped, regardless of whether it was actually playing on 
+ * a sound is stopped, regardless of whether it was actually playing on
  * the local system. Returns the number of sounds stopped.
  *
  * id=0, origin=0: stop everything
  */
 int Sfx_StopLogical(int id, mobj_t *origin)
 {
-	logicsound_t *it, *next;
-	int     stopCount = 0;
-	int     i;
+    logicsound_t *it, *next;
+    int     stopCount = 0;
+    int     i;
 
-	if(id)
-	{
-		for(it = Sfx_LogicHash(id)->first; it; it = next)
-		{
-			next = it->next;
-			if(it->id == id && it->origin == origin)
-			{
-				Sfx_DestroyLogical(it);
-				stopCount++;
-			}
-		}
-	}
-	else
-	{
-		// Browse through the entire hash.
-		for(i = 0; i < LOGIC_HASH_SIZE; i++)
-		{
-			for(it = logicHash[i].first; it; it = next)
-			{
-				next = it->next;
-				if(!origin || it->origin == origin)
-				{
-					Sfx_DestroyLogical(it);
-					stopCount++;
-				}
-			}
-		}
-	}
+    if(id)
+    {
+        for(it = Sfx_LogicHash(id)->first; it; it = next)
+        {
+            next = it->next;
+            if(it->id == id && it->origin == origin)
+            {
+                Sfx_DestroyLogical(it);
+                stopCount++;
+            }
+        }
+    }
+    else
+    {
+        // Browse through the entire hash.
+        for(i = 0; i < LOGIC_HASH_SIZE; i++)
+        {
+            for(it = logicHash[i].first; it; it = next)
+            {
+                next = it->next;
+                if(!origin || it->origin == origin)
+                {
+                    Sfx_DestroyLogical(it);
+                    stopCount++;
+                }
+            }
+        }
+    }
 
-	return stopCount;
+    return stopCount;
 }
 
 /*
@@ -210,35 +210,35 @@ int Sfx_StopLogical(int id, mobj_t *origin)
  */
 void Sfx_PurgeLogical(void)
 {
-	static uint lastTime = 0;
-	uint    i, nowTime = Sys_GetRealTime();
-	logicsound_t *it, *next;
+    static uint lastTime = 0;
+    uint    i, nowTime = Sys_GetRealTime();
+    logicsound_t *it, *next;
 
-	if(nowTime - lastTime < PURGE_INTERVAL)
-	{
-		// It's too early.
-		return;
-	}
-	lastTime = nowTime;
+    if(nowTime - lastTime < PURGE_INTERVAL)
+    {
+        // It's too early.
+        return;
+    }
+    lastTime = nowTime;
 
-	// Check all sounds in the hash.
-	for(i = 0; i < LOGIC_HASH_SIZE; i++)
-	{
-		for(it = logicHash[i].first; it; it = next)
-		{
-			next = it->next;
-			/*#ifdef _DEBUG
-			   Con_Printf("LS:%i orig=%i(%p) %s\n",
-			   it->id, it->origin? it->origin->thinker.id : 0, 
-			   it->origin, it->isRepeating? "[repeat]" : "");
-			   #endif */
-			if(!it->isRepeating && it->endTime < nowTime)
-			{
-				// This has stopped.
-				Sfx_DestroyLogical(it);
-			}
-		}
-	}
+    // Check all sounds in the hash.
+    for(i = 0; i < LOGIC_HASH_SIZE; i++)
+    {
+        for(it = logicHash[i].first; it; it = next)
+        {
+            next = it->next;
+            /*#ifdef _DEBUG
+               Con_Printf("LS:%i orig=%i(%p) %s\n",
+               it->id, it->origin? it->origin->thinker.id : 0,
+               it->origin, it->isRepeating? "[repeat]" : "");
+               #endif */
+            if(!it->isRepeating && it->endTime < nowTime)
+            {
+                // This has stopped.
+                Sfx_DestroyLogical(it);
+            }
+        }
+    }
 }
 
 /*
@@ -249,39 +249,39 @@ void Sfx_PurgeLogical(void)
  */
 boolean Sfx_IsPlaying(int id, mobj_t *origin)
 {
-	uint    nowTime = Sys_GetRealTime();
-	logicsound_t *it;
-	int     i;
+    uint    nowTime = Sys_GetRealTime();
+    logicsound_t *it;
+    int     i;
 
-	if(id)
-	{
-		for(it = Sfx_LogicHash(id)->first; it; it = it->next)
-		{
-			if(it->id == id && it->origin == origin &&
-			   (it->endTime > nowTime || it->isRepeating))
-			{
-				// This one is still playing.
-				return true;
-			}
-		}
-	}
-	else if(origin)
-	{
-		// Check if the origin is playing any sound.
-		for(i = 0; i < LOGIC_HASH_SIZE; i++)
-		{
-			for(it = logicHash[i].first; it; it = it->next)
-			{
-				if(it->origin == origin &&
-				   (it->endTime > nowTime || it->isRepeating))
-				{
-					// This one is playing.
-					return true;
-				}
-			}
-		}
-	}
+    if(id)
+    {
+        for(it = Sfx_LogicHash(id)->first; it; it = it->next)
+        {
+            if(it->id == id && it->origin == origin &&
+               (it->endTime > nowTime || it->isRepeating))
+            {
+                // This one is still playing.
+                return true;
+            }
+        }
+    }
+    else if(origin)
+    {
+        // Check if the origin is playing any sound.
+        for(i = 0; i < LOGIC_HASH_SIZE; i++)
+        {
+            for(it = logicHash[i].first; it; it = it->next)
+            {
+                if(it->origin == origin &&
+                   (it->endTime > nowTime || it->isRepeating))
+                {
+                    // This one is playing.
+                    return true;
+                }
+            }
+        }
+    }
 
-	// The sound was not found.
-	return false;
+    // The sound was not found.
+    return false;
 }

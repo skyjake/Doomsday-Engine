@@ -492,10 +492,10 @@ typedef enum
 #define PU_USER9            48
 #define PU_USER10           49
 
-#define PU_LEVEL            50 // Static until map exited (may still be
+#define PU_MAP              50 // Static until map exited (may still be
                                // freed during the map, though).
-#define PU_LEVSPEC          51 // A special thinker in a map.
-#define PU_LEVELSTATIC      52 // Not freed until map exited.
+#define PU_MAPSPEC          51 // A special thinker in a map.
+#define PU_MAPSTATIC        52 // Not freed until map exited.
 
 // Tags >= 100 are purgable whenever needed.
 #define PU_PURGELEVEL       100
@@ -616,10 +616,10 @@ typedef struct ddvertexf_s {
 // SetupMap modes.
 enum
 {
-    DDSLM_AFTER_LOADING, // After loading a savegame...
-    DDSLM_FINALIZE, // After everything else is done.
-    DDSLM_INITIALIZE, // Before anything else if done.
-    DDSLM_AFTER_BUSY // After leaving busy mode, which was used during setup.
+    DDSMM_AFTER_LOADING, // After loading a savegame...
+    DDSMM_FINALIZE, // After everything else is done.
+    DDSMM_INITIALIZE, // Before anything else if done.
+    DDSMM_AFTER_BUSY // After leaving busy mode, which was used during setup.
 };
 
 enum // Sector reverb data indices.

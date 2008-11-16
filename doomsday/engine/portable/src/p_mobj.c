@@ -134,7 +134,7 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
     }
     else
     {   // No, we need to allocate another.
-        mo = Z_Calloc(MOBJ_SIZE, PU_LEVEL, NULL);
+        mo = Z_Calloc(MOBJ_SIZE, PU_MAP, NULL);
     }
 
     mo->pos[VX] = x;

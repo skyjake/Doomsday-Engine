@@ -173,7 +173,7 @@ static uint newVLightList(boolean sortByDist)
 
         vLightLinkLists =
             Z_Realloc(vLightLinkLists, newNum * sizeof(vlightlist_t),
-                      PU_LEVEL);
+                      PU_MAP);
         numVLightLinkLists = newNum;
     }
 
@@ -1088,7 +1088,7 @@ void R_ProjectSprite(mobj_t* mo)
         }
         else if(mf->sub[0].flags & MFF_SPIN)
         {
-            yaw = modelSpinSpeed * 70 * ddLevelTime + MOBJ_TO_ID(mo) % 360;
+            yaw = modelSpinSpeed * 70 * ddMapTime + MOBJ_TO_ID(mo) % 360;
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
@@ -1643,7 +1643,7 @@ float R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(mo) + ddLevelTime / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(mo) + ddMapTime / 1.8286 * 2 * PI) * 8);
     }
 
     return 0;

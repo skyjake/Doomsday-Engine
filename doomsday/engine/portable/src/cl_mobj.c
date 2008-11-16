@@ -396,7 +396,7 @@ int Cl_ReadMobjDelta(void)
         justCreated = true;
 
         // This is a new ID, allocate a new mobj.
-        cmo = Z_Malloc(sizeof(*cmo), PU_LEVEL, 0);
+        cmo = Z_Malloc(sizeof(*cmo), PU_MAP, 0);
         memset(cmo, 0, sizeof(*cmo));
         cmo->mo.ddFlags |= DDMF_REMOTE;
         Cl_LinkMobj(cmo, id);
@@ -542,8 +542,8 @@ void Cl_InitClientMobjs(void)
  */
 void Cl_DestroyClientMobjs(void)
 {
-    clmobj_t   *cmo;
-    int         i;
+    int                 i;
+    clmobj_t*           cmo;
 
     for(i = 0; i < HASH_SIZE; ++i)
     {
@@ -559,13 +559,13 @@ void Cl_DestroyClientMobjs(void)
 }
 
 /**
- * Reset the client status. Called when the level changes.
+ * Reset the client status. Called when the map changes.
  */
 void Cl_Reset(void)
 {
     Cl_ResetFrame();
 
-    // The PU_LEVEL memory was freed, so just clear the hash.
+    // The PU_MAP memory was freed, so just clear the hash.
     memset(cmHash, 0, sizeof(cmHash));
 
     // Clear player data, too, since we just lost all clmobjs.
@@ -575,11 +575,11 @@ void Cl_Reset(void)
 /**
  * The client mobj is moved linearly, with collision checking.
  */
-void Cl_MobjMove(clmobj_t *cmo)
+void Cl_MobjMove(clmobj_t* cmo)
 {
-    mobj_t     *mo = &cmo->mo;
-    boolean     collided = false;
-    float       gravity = FIX2FLT(mapGravity);
+    mobj_t*             mo = &cmo->mo;
+    boolean             collided = false;
+    float               gravity = FIX2FLT(mapGravity);
 
     // First do XY movement.
     if(mo->mom[MX] != 0 || mo->mom[MY] != 0)
@@ -786,7 +786,7 @@ if(verbose >= 2)
  */
 clmobj_t *Cl_CreateMobj(thid_t id)
 {
-    clmobj_t   *cmo = Z_Calloc(sizeof(*cmo), PU_LEVEL, 0);
+    clmobj_t   *cmo = Z_Calloc(sizeof(*cmo), PU_MAP, 0);
 
     cmo->mo.ddFlags |= DDMF_REMOTE;
     cmo->time = Sys_GetRealTime();

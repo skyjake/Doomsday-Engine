@@ -42,24 +42,24 @@
 #include "m_nodepile.h"
 #include "m_vector.h"
 
-#define GET_VERTEX_IDX(vtx)     ((vtx) - vertexes)
-#define GET_LINE_IDX(li)        ((li) - lineDefs)
-#define GET_SIDE_IDX(si)        ((si) - sideDefs)
-#define GET_SECTOR_IDX(sec)     ((sec) - sectors)
-#define GET_SUBSECTOR_IDX(sub)  ((sub) - ssectors)
-#define GET_SEG_IDX(seg)        ((seg) - segs)
-#define GET_NODE_IDX(nd)        ((nd) - nodes)
+#define GET_VERTEX_IDX(vtx) ((vtx) - vertexes)
+#define GET_LINE_IDX(li)    ((li) - lineDefs)
+#define GET_SIDE_IDX(si)    ((si) - sideDefs)
+#define GET_SECTOR_IDX(sec) ((sec) - sectors)
+#define GET_SUBSECTOR_IDX(sub) ((sub) - ssectors)
+#define GET_SEG_IDX(seg)    ((seg) - segs)
+#define GET_NODE_IDX(nd)    ((nd) - nodes)
 
 // Return the index of plane within a sector's planes array.
-#define GET_PLANE_IDX(pln)      ((pln) - (pln)->sector->planes[0])
+#define GET_PLANE_IDX(pln)  ((pln) - (pln)->sector->planes[0])
 
-#define VERTEX_PTR(i)           (&vertexes[i])
-#define SEG_PTR(i)              (&segs[i])
-#define SECTOR_PTR(i)           (&sectors[i])
-#define SUBSECTOR_PTR(i)        (&ssectors[i])
-#define NODE_PTR(i)             (&nodes[i])
-#define LINE_PTR(i)             (&lineDefs[i])
-#define SIDE_PTR(i)             (&sideDefs[i])
+#define VERTEX_PTR(i)       (&vertexes[i])
+#define SEG_PTR(i)          (&segs[i])
+#define SECTOR_PTR(i)       (&sectors[i])
+#define SUBSECTOR_PTR(i)    (&ssectors[i])
+#define NODE_PTR(i)         (&nodes[i])
+#define LINE_PTR(i)         (&lineDefs[i])
+#define SIDE_PTR(i)         (&sideDefs[i])
 
 // Node flags.
 #define NF_SUBSECTOR        0x80000000
@@ -69,7 +69,7 @@
 // an unknown map data pointer as a runtime_mapdata_header_t* and determine
 // its type. Note that this information is internal to the engine.
 typedef struct runtime_mapdata_header_s {
-    int             type;       // One of the DMU type constants.
+    int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
 
 typedef struct fvertex_s {
@@ -78,7 +78,7 @@ typedef struct fvertex_s {
 
 typedef struct shadowcorner_s {
     float           corner;
-    struct sector_s *proximity;
+    struct sector_s* proximity;
     float           pOffset;
     float           pHeight;
 } shadowcorner_t;
@@ -89,9 +89,9 @@ typedef struct edgespan_s {
 } edgespan_t;
 
 typedef struct linkpolyobj_s {
-    struct polyobj_s *polyobj;
-    struct linkpolyobj_s *prev;
-    struct linkpolyobj_s *next;
+    struct polyobj_s* polyobj;
+    struct linkpolyobj_s* prev;
+    struct linkpolyobj_s* next;
 } linkpolyobj_t;
 
 typedef struct watchedplanelist_s {
@@ -116,168 +116,168 @@ typedef void* blockmap_t;
 
 // Game-specific, map object type definitions.
 typedef struct {
-    int                 identifier;
-    char               *name;
-    valuetype_t         type;
+    int             identifier;
+    char*           name;
+    valuetype_t     type;
 } mapobjprop_t;
 
 typedef struct {
-    int                 identifier;
-    char               *name;
-    uint                numProps;
-    mapobjprop_t       *props;
+    int             identifier;
+    char*           name;
+    uint            numProps;
+    mapobjprop_t*   props;
 } gamemapobjdef_t;
 
 // Map objects.
 typedef struct {
-    uint                idx;
-    valuetype_t         type;
-    uint                valueIdx;
+    uint            idx;
+    valuetype_t     type;
+    uint            valueIdx;
 } customproperty_t;
 
 typedef struct {
-    uint                elmIdx;
-    uint                numProps;
-    customproperty_t*   props;
+    uint            elmIdx;
+    uint            numProps;
+    customproperty_t* props;
 } gamemapobj_t;
 
 typedef struct {
-    uint                num;
-    gamemapobjdef_t*    def;
-    gamemapobj_t**      objs;
+    uint            num;
+    gamemapobjdef_t* def;
+    gamemapobj_t**  objs;
 } gamemapobjlist_t;
 
 // Map value databases.
 typedef struct {
-    valuetype_t         type;
-    uint                numElms;
-    void*               data;
+    valuetype_t     type;
+    uint            numElms;
+    void*           data;
 } valuetable_t;
 
 typedef struct {
-    uint                numTables;
-    valuetable_t**      tables;
+    uint            numTables;
+    valuetable_t**  tables;
 } valuedb_t;
 
 typedef struct {
-    gamemapobjlist_t*   objLists;
-    valuedb_t           db;
+    gamemapobjlist_t* objLists;
+    valuedb_t       db;
 } gameobjdata_t;
 
-/*
+/**
  * The map data arrays are accessible globally inside the engine.
  */
-extern char     levelid[9];
-extern uint     numVertexes;
-extern vertex_t *vertexes;
+extern char mapID[9];
+extern uint numVertexes;
+extern vertex_t* vertexes;
 
-extern uint     numSegs;
-extern seg_t   *segs;
+extern uint numSegs;
+extern seg_t* segs;
 
-extern uint     numSectors;
-extern sector_t *sectors;
+extern uint numSectors;
+extern sector_t* sectors;
 
-extern uint     numSSectors;
-extern subsector_t *ssectors;
+extern uint numSSectors;
+extern subsector_t* ssectors;
 
-extern uint     numNodes;
-extern node_t  *nodes;
+extern uint numNodes;
+extern node_t* nodes;
 
-extern uint     numLineDefs;
-extern linedef_t *lineDefs;
+extern uint numLineDefs;
+extern linedef_t* lineDefs;
 
-extern uint     numSideDefs;
-extern sidedef_t  *sideDefs;
+extern uint numSideDefs;
+extern sidedef_t* sideDefs;
 
-extern watchedplanelist_t *watchedPlaneList;
-extern surfacelist_t *movingSurfaceList;
-extern surfacelist_t *decoratedSurfaceList;
+extern watchedplanelist_t* watchedPlaneList;
+extern surfacelist_t* movingSurfaceList;
+extern surfacelist_t* decoratedSurfaceList;
 
-extern float    mapGravity;
+extern float mapGravity;
 
 typedef struct gamemap_s {
-    char        levelID[9];
-    char        uniqueID[256];
+    char            mapID[9];
+    char            uniqueID[256];
 
-    float       bBox[4];
+    float           bBox[4];
 
-    uint        numVertexes;
-    vertex_t   *vertexes;
+    uint            numVertexes;
+    vertex_t*       vertexes;
 
-    uint        numSegs;
-    seg_t      *segs;
+    uint            numSegs;
+    seg_t*          segs;
 
-    uint        numSectors;
-    sector_t   *sectors;
+    uint            numSectors;
+    sector_t*       sectors;
 
-    uint        numSSectors;
-    subsector_t *ssectors;
+    uint            numSSectors;
+    subsector_t*    ssectors;
 
-    uint        numNodes;
-    node_t     *nodes;
+    uint            numNodes;
+    node_t*         nodes;
 
-    uint        numLineDefs;
-    linedef_t  *lineDefs;
+    uint            numLineDefs;
+    linedef_t*      lineDefs;
 
-    uint        numSideDefs;
-    sidedef_t  *sideDefs;
+    uint            numSideDefs;
+    sidedef_t*       sideDefs;
 
-    uint        numPolyObjs;
-    polyobj_t **polyObjs;
+    uint            numPolyObjs;
+    polyobj_t**     polyObjs;
 
-    gameobjdata_t gameObjData;
+    gameobjdata_t   gameObjData;
 
-    linkpolyobj_t **polyBlockMap;
+    linkpolyobj_t** polyBlockMap;
 
     watchedplanelist_t watchedPlaneList;
-    surfacelist_t movingSurfaceList;
-    surfacelist_t decoratedSurfaceList;
+    surfacelist_t   movingSurfaceList;
+    surfacelist_t   decoratedSurfaceList;
 
-    blockmap_t *blockMap;
-    blockmap_t *ssecBlockMap;
+    blockmap_t*     blockMap;
+    blockmap_t*     ssecBlockMap;
 
-    struct linkmobj_s *blockRings;      // for mobj rings
-    nodepile_t  mobjNodes, lineNodes;   // all kinds of wacky links.
-    nodeindex_t *lineLinks;             // indices to roots.
+    struct linkmobj_s* blockRings; // For mobj rings.
+    nodepile_t      mobjNodes, lineNodes; // All kinds of wacky links.
+    nodeindex_t*    lineLinks; // Indices to roots.
 
-    byte       *rejectMatrix;
+    byte*           rejectMatrix;
 
-    float       globalGravity;          // Gravity for the current map.
-    int         ambientLightLevel;      // Ambient lightlevel for the current map.
+    float           globalGravity; // Gravity for the current map.
+    int             ambientLightLevel; // Ambient lightlevel for the current map.
 } gamemap_t;
 
 void            P_InitData(void);
 
-gamemap_t      *P_GetCurrentMap(void);
-void            P_SetCurrentMap(gamemap_t *map);
+gamemap_t*      P_GetCurrentMap(void);
+void            P_SetCurrentMap(gamemap_t* map);
 
-const char     *P_GetMapID(gamemap_t *map);
-const char     *P_GetUniqueMapID(gamemap_t *map);
-void            P_GetMapBounds(gamemap_t *map, float *min, float *max);
-int             P_GetMapAmbientLightLevel(gamemap_t *map);
+const char*     P_GetMapID(gamemap_t* map);
+const char*     P_GetUniqueMapID(gamemap_t* map);
+void            P_GetMapBounds(gamemap_t* map, float* min, float* max);
+int             P_GetMapAmbientLightLevel(gamemap_t* map);
 
-const char     *P_GenerateUniqueMapID(const char *mapID);
+const char*     P_GenerateUniqueMapID(const char* mapID);
 
-void            P_PolyobjChanged(polyobj_t *po);
-void            P_PlaneChanged(sector_t *sector, uint plane);
-void            P_RegisterUnknownTexture(const char *name, boolean planeTex);
+void            P_PolyobjChanged(polyobj_t* po);
+void            P_PlaneChanged(sector_t* sector, uint plane);
+void            P_RegisterUnknownTexture(const char* name, boolean planeTex);
 void            P_PrintMissingTextureList(void);
 void            P_FreeBadTexList(void);
 
 void            P_InitGameMapObjDefs(void);
 void            P_ShutdownGameMapObjDefs(void);
 
-boolean         P_RegisterMapObj(int identifier, const char *name);
+boolean         P_RegisterMapObj(int identifier, const char* name);
 boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier,
-                                         const char *propName, valuetype_t type);
+                                         const char* propName, valuetype_t type);
 gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char *objName,
                                     boolean canCreate);
 
-void            P_DestroyGameMapObjDB(gameobjdata_t *moData);
-void            P_AddGameMapObjValue(gameobjdata_t *moData, gamemapobjdef_t *gmoDef,
+void            P_DestroyGameMapObjDB(gameobjdata_t* moData);
+void            P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef,
                                 uint propIdx, uint elmIdx, valuetype_t type,
-                                void *data);
-gamemapobj_t*   P_GetGameMapObj(gameobjdata_t *moData, gamemapobjdef_t *def,
+                                void* data);
+gamemapobj_t*   P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def,
                                 uint elmIdx, boolean canCreate);
 
 uint            P_CountGameMapObjs(int identifier);

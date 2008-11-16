@@ -209,7 +209,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 
         sec->reverbSSecs =
             Z_Malloc((sec->numReverbSSecAttributors + 1) * sizeof(subsector_t*),
-                     PU_LEVELSTATIC, 0);
+                     PU_MAPSTATIC, 0);
 
         for(i = 0, ptr = sec->reverbSSecs, node = subSecOwnerList.head;
             i < sec->numReverbSSecAttributors; ++i, ptr++)
@@ -233,7 +233,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 }
 
 /**
- * Called during level init to determine which subsectors affect the reverb
+ * Called during map init to determine which subsectors affect the reverb
  * properties of all sectors. Given that subsectors do not change shape (in
  * two dimensions at least), they do not move and are not created/destroyed
  * once the map has been loaded; this step can be pre-processed.

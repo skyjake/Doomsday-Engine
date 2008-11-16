@@ -320,7 +320,7 @@ static void readVertex(const gamemap_t *map, uint idx)
         v->lineOwners = NULL;
         for(i = 0; i < v->numLineOwners; ++i)
         {
-            own = Z_Malloc(sizeof(lineowner_t), PU_LEVEL, 0);
+            own = Z_Malloc(sizeof(lineowner_t), PU_MAP, 0);
             own->lineDef = &map->lineDefs[(unsigned) (readLong() - 1)];
             own->angle = (binangle_t) readLong();
 
@@ -506,7 +506,7 @@ static void readSide(const gamemap_t *map, uint idx)
     s->sector = (secIdx == 0? NULL : &map->sectors[secIdx -1]);
     s->flags = readShort();
     s->segCount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_LEVEL, 0);
+    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_MAP, 0);
     for(i = 0; i < s->segCount; ++i)
         s->segs[i] = &map->segs[(unsigned) readLong() - 1];
     s->segs[i] = NULL; // Terminate.
@@ -688,13 +688,13 @@ static void readSector(const gamemap_t *map, uint idx)
     // Lightgrid block indices.
     s->changedBlockCount = (uint) readLong();
     s->blockCount = (uint) readLong();
-    s->blocks = Z_Malloc(sizeof(short) * s->blockCount, PU_LEVEL, 0);
+    s->blocks = Z_Malloc(sizeof(short) * s->blockCount, PU_MAP, 0);
     for(i = 0; i < s->blockCount; ++i)
         s->blocks[i] = readShort();
 
     // Line list.
     s->lineDefCount = (uint) readLong();
-    s->lineDefs = Z_Malloc(sizeof(linedef_t*) * (s->lineDefCount + 1), PU_LEVEL, 0);
+    s->lineDefs = Z_Malloc(sizeof(linedef_t*) * (s->lineDefCount + 1), PU_MAP, 0);
     for(i = 0; i < s->lineDefCount; ++i)
         s->lineDefs[i] = &map->lineDefs[(unsigned) readLong() - 1];
     s->lineDefs[i] = NULL; // Terminate.
@@ -702,7 +702,7 @@ static void readSector(const gamemap_t *map, uint idx)
     // Subsector list.
     s->ssectorCount = (uint) readLong();
     s->ssectors =
-        Z_Malloc(sizeof(subsector_t*) * (s->ssectorCount + 1), PU_LEVEL, 0);
+        Z_Malloc(sizeof(subsector_t*) * (s->ssectorCount + 1), PU_MAP, 0);
     for(i = 0; i < s->ssectorCount; ++i)
         s->ssectors[i] = &map->ssectors[(unsigned) readLong() - 1];
     s->ssectors[i] = NULL; // Terminate.
@@ -710,7 +710,7 @@ static void readSector(const gamemap_t *map, uint idx)
     // Reverb subsector attributors.
     s->numReverbSSecAttributors = (uint) readLong();
     s->reverbSSecs =
-        Z_Malloc(sizeof(subsector_t*) * (s->numReverbSSecAttributors + 1), PU_LEVEL, 0);
+        Z_Malloc(sizeof(subsector_t*) * (s->numReverbSSecAttributors + 1), PU_MAP, 0);
     for(i = 0; i < s->numReverbSSecAttributors; ++i)
         s->reverbSSecs[i] = &map->ssectors[(unsigned) readLong() - 1];
     s->reverbSSecs[i] = NULL; // Terminate.
@@ -800,7 +800,7 @@ static void readSubsector(const gamemap_t *map, uint idx)
 
     // Subsector segs list.
     s->segCount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_LEVEL, 0);
+    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_MAP, 0);
     for(i = 0; i < s->segCount; ++i)
         s->segs[i] = &map->segs[(unsigned) readLong() - 1];
     s->segs[i] = NULL; // Terminate.
@@ -1064,11 +1064,11 @@ static void readPolyobj(const gamemap_t *map, uint idx)
 
     // Polyobj seg list.
     p->numSegs = (uint) readLong();
-    p->segs = Z_Malloc(sizeof(seg_t*) * (p->numSegs + 1), PU_LEVEL, 0);
+    p->segs = Z_Malloc(sizeof(seg_t*) * (p->numSegs + 1), PU_MAP, 0);
     for(i = 0; i < p->numSegs; ++i)
     {
         seg_t              *s =
-            Z_Calloc(sizeof(*s), PU_LEVEL, 0);
+            Z_Calloc(sizeof(*s), PU_MAP, 0);
 
         s->v[0] = &map->vertexes[(unsigned) readLong() - 1];
         s->v[1] = &map->vertexes[(unsigned) readLong() - 1];

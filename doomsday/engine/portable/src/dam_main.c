@@ -384,27 +384,27 @@ static uint collectMapLumps(listnode_t **headPtr, int startLump)
  */
 void DAM_GetCachedMapDir(char *dir, int mainLump)
 {
-	const char         *sourceFile = W_LumpSourceFile(mainLump);
-	filename_t          base;
-	ushort              identifier = 0;
-	int                 i;
+    const char         *sourceFile = W_LumpSourceFile(mainLump);
+    filename_t          base;
+    ushort              identifier = 0;
+    int                 i;
 
-	M_ExtractFileBase(sourceFile, base);
+    M_ExtractFileBase(sourceFile, base);
 
-	for(i = 0; sourceFile[i]; ++i)
-		identifier ^= sourceFile[i] << ((i * 3) % 11);
+    for(i = 0; sourceFile[i]; ++i)
+        identifier ^= sourceFile[i] << ((i * 3) % 11);
 
-	// The cached map directory is relative to the runtime directory.
-	sprintf(dir, "%s%s\\%s-%04X\\", mapCacheDir,
+    // The cached map directory is relative to the runtime directory.
+    sprintf(dir, "%s%s\\%s-%04X\\", mapCacheDir,
             (char*) gx.GetVariable(DD_GAME_MODE),
-			base, identifier);
+            base, identifier);
 
-	M_TranslatePath(dir, dir);
+    M_TranslatePath(dir, dir);
 }
 
 static boolean loadMap(gamemap_t **map, archivedmap_t *dam)
 {
-    *map = Z_Calloc(sizeof(gamemap_t), PU_LEVELSTATIC, 0);
+    *map = Z_Calloc(sizeof(gamemap_t), PU_MAPSTATIC, 0);
 
     if(DAM_MapRead(*map, dam->cachedMapDataFile))
         return true;
@@ -523,12 +523,12 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             memset(&map->movingSurfaceList, 0, sizeof(map->movingSurfaceList));
             memset(&map->decoratedSurfaceList, 0, sizeof(map->decoratedSurfaceList));
 
-            strncpy(map->levelID, dam->identifier, 8);
+            strncpy(map->mapID, dam->identifier, 8);
             strncpy(map->uniqueID, P_GenerateUniqueMapID(dam->identifier),
                     sizeof(map->uniqueID));
 
-            // See what mapinfo says about this level.
-            mapInfo = Def_GetMapInfo(map->levelID);
+            // See what mapinfo says about this map.
+            mapInfo = Def_GetMapInfo(map->mapID);
             if(!mapInfo)
                 mapInfo = Def_GetMapInfo("*");
 

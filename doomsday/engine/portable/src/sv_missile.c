@@ -102,7 +102,7 @@ if(!(delta->mo.ddFlags & DDMF_MISSILE))
     // Create a new record if necessary.
     if(!mis)
     {
-        mis = Z_Malloc(sizeof(misrecord_t), PU_LEVEL, 0);
+        mis = Z_Malloc(sizeof(misrecord_t), PU_MAP, 0);
         mis->id = id;
 
         // Link it in.

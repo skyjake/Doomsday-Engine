@@ -141,7 +141,7 @@ static void AddIndexBit(int x, int y, uint *bitfield, int *count)
 }
 
 /**
- * Initialize the light grid for the current level.
+ * Initialize the light grid for the current map.
  */
 void LG_Init(void)
 {
@@ -374,7 +374,7 @@ void LG_Init(void)
 
     // Allocate memory for the entire grid.
     grid = Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
-                    PU_LEVEL, NULL);
+                    PU_MAP, NULL);
 
     Con_Message("LG_Init: %i x %i grid (%lu bytes).\n",
                 lgBlockWidth, lgBlockHeight,
@@ -401,7 +401,7 @@ void LG_Init(void)
              * However if the optimization to save memory is implemented as
              * described in the comments above we WOULD still require it.
              * Therefore, for now I'm making use of it to clarify the code.
-	         */
+             */
             n = (x + y * lgBlockWidth) * numSamples;
             for(i = 0; i < numSamples; ++i)
                 blkSampleSectors[i] = ssamples[i + n];
@@ -520,7 +520,7 @@ Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
         if(sector->blockCount > 0)
         {
             sector->blocks = Z_Malloc(sizeof(unsigned short) * sector->blockCount,
-                                      PU_LEVELSTATIC, 0);
+                                      PU_MAPSTATIC, 0);
             for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
                 ++x)
             {

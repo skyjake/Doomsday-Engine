@@ -62,52 +62,52 @@ typedef struct {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean levelSetup;
+extern boolean mapSetup;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 /**
  * These map data arrays are internal to the engine.
  */
-char        levelid[9]; // Name by which the game referred to the current map.
-uint        numVertexes;
-vertex_t   *vertexes;
+char mapID[9]; // Name by which the game referred to the current map.
+uint numVertexes;
+vertex_t* vertexes;
 
-uint        numSegs;
-seg_t      *segs;
+uint numSegs;
+seg_t* segs;
 
-uint        numSectors;
-sector_t   *sectors;
+uint numSectors;
+sector_t* sectors;
 
-uint        numSSectors;
-subsector_t *ssectors;
+uint numSSectors;
+subsector_t* ssectors;
 
-uint        numNodes;
-node_t     *nodes;
+uint numNodes;
+node_t* nodes;
 
-uint        numLineDefs;
-linedef_t  *lineDefs;
+uint numLineDefs;
+linedef_t* lineDefs;
 
-uint        numSideDefs;
-sidedef_t  *sideDefs;
+uint numSideDefs;
+sidedef_t* sideDefs;
 
-watchedplanelist_t *watchedPlaneList;
-surfacelist_t *movingSurfaceList;
-surfacelist_t *decoratedSurfaceList;
+watchedplanelist_t* watchedPlaneList;
+surfacelist_t* movingSurfaceList;
+surfacelist_t* decoratedSurfaceList;
 
-blockmap_t *BlockMap;
-blockmap_t *SSecBlockMap;
-linkmobj_t *blockrings;             // for mobj rings
+blockmap_t* BlockMap;
+blockmap_t* SSecBlockMap;
+linkmobj_t* blockrings; // For mobj rings.
 
-byte       *rejectMatrix;           // for fast sight rejection
+byte* rejectMatrix; // For fast sight rejection.
 
-nodepile_t *mobjNodes, *lineNodes;  // all kinds of wacky links
+nodepile_t* mobjNodes, *lineNodes; // All kinds of wacky links.
 
-float       mapGravity;
+float mapGravity;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static gamemap_t *currentMap = NULL;
+static gamemap_t* currentMap = NULL;
 
 // Bad texture list
 static uint numBadTexNames = 0;
@@ -116,7 +116,7 @@ static badtex_t *badTexNames = NULL;
 
 // Game-specific, map object type definitions.
 static uint numGameMapObjDefs;
-static gamemapobjdef_t *gameMapObjDefs;
+static gamemapobjdef_t* gameMapObjDefs;
 
 // CODE --------------------------------------------------------------------
 
@@ -318,9 +318,9 @@ gamemap_t *P_GetCurrentMap(void)
     return currentMap;
 }
 
-void P_SetCurrentMap(gamemap_t *map)
+void P_SetCurrentMap(gamemap_t* map)
 {
-    strncpy(levelid, map->levelID, sizeof(levelid));
+    strncpy(mapID, map->mapID, sizeof(mapID));
 
     numVertexes = map->numVertexes;
     vertexes = map->vertexes;
@@ -368,18 +368,18 @@ void P_SetCurrentMap(gamemap_t *map)
  * This ID is the name of the lump tag that marks the beginning of map
  * data, e.g. "MAP03" or "E2M8".
  */
-const char *P_GetMapID(gamemap_t *map)
+const char* P_GetMapID(gamemap_t* map)
 {
     if(!map)
         return NULL;
 
-    return map->levelID;
+    return map->mapID;
 }
 
 /**
- * Return the 'unique' identifier of the map.
+ * @return              The 'unique' identifier of the map.
  */
-const char *P_GetUniqueMapID(gamemap_t *map)
+const char* P_GetUniqueMapID(gamemap_t* map)
 {
     if(!map)
         return NULL;
@@ -387,7 +387,7 @@ const char *P_GetUniqueMapID(gamemap_t *map)
     return map->uniqueID;
 }
 
-void P_GetMapBounds(gamemap_t *map, float *min, float *max)
+void P_GetMapBounds(gamemap_t* map, float* min, float* max)
 {
     min[VX] = map->bBox[BOXLEFT];
     min[VY] = map->bBox[BOXBOTTOM];
@@ -399,7 +399,7 @@ void P_GetMapBounds(gamemap_t *map, float *min, float *max)
 /**
  * Get the ambient light level of the specified map.
  */
-int P_GetMapAmbientLightLevel(gamemap_t *map)
+int P_GetMapAmbientLightLevel(gamemap_t* map)
 {
     if(!map)
         return 0;
@@ -407,7 +407,7 @@ int P_GetMapAmbientLightLevel(gamemap_t *map)
     return map->ambientLightLevel;
 }
 
-static void spawnParticleGeneratorsForMap(const char *mapID)
+static void spawnParticleGeneratorsForMap(const char* mapID)
 {
     uint                startTime = Sys_GetRealTime();
 

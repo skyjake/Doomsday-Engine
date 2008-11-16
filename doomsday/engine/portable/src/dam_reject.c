@@ -175,7 +175,7 @@ static void buildReject(gamemap_t *map)
     }
 
     rejectSize = (numSectors * numSectors + 7) / 8;
-    matrix = Z_Calloc(rejectSize, PU_LEVELSTATIC, 0);
+    matrix = Z_Calloc(rejectSize, PU_MAPSTATIC, 0);
 
     for(view = 0; view < numSectors; ++view)
         for(target = 0; target < view; ++target)

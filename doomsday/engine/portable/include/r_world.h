@@ -33,58 +33,58 @@
 
 // Used for vertex sector owners, side line owners and reverb subsectors.
 typedef struct ownernode_s {
-    void       *data;
+    void*           data;
     struct ownernode_s* next;
 } ownernode_t;
 
 typedef struct {
-    ownernode_t *head;
-    uint        count;
+    ownernode_t*    head;
+    uint            count;
 } ownerlist_t;
 
-extern int rendSkyLight;      // cvar
-extern boolean levelSetup;
+extern int rendSkyLight; // cvar
+extern boolean mapSetup;
 
 // Map Info flags.
-#define MIF_FOG             0x1    // Fog is used in the level.
-#define MIF_DRAW_SPHERE     0x2    // Always draw the sky sphere.
+#define MIF_FOG             0x1 // Fog is used in the map.
+#define MIF_DRAW_SPHERE     0x2 // Always draw the sky sphere.
 
 void            R_SetupMap(int mode, int flags);
-void            R_InitLinks(gamemap_t *map);
-void            R_PolygonizeMap(gamemap_t *map);
-void            R_PrepareForBias(gamemap_t *map);
-void            R_BuildSectorLinks(gamemap_t *map);
-void            R_SetupFog(float start, float end, float density, float *rgb);
+void            R_InitLinks(gamemap_t* map);
+void            R_PolygonizeMap(gamemap_t* map);
+void            R_PrepareForBias(gamemap_t* map);
+void            R_BuildSectorLinks(gamemap_t* map);
+void            R_SetupFog(float start, float end, float density, float* rgb);
 void            R_SetupFogDefaults(void);
-void            R_SetupSky(ded_mapinfo_t *mapInfo);
+void            R_SetupSky(ded_mapinfo_t* mapInfo);
 
-const float    *R_GetSectorLightColor(const sector_t *sector);
+const float*    R_GetSectorLightColor(const sector_t* sector);
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 float           R_WallAngleLightLevelDelta(const linedef_t* l, byte side);
 float           R_ExtraLightDelta(void);
 float           R_CheckSectorLight(float lightlevel, float min, float max);
-boolean         R_IsSkySurface(const surface_t *suf);
+boolean         R_IsSkySurface(const surface_t* suf);
 
-boolean         R_SectorContainsSkySurfaces(const sector_t *sec);
+boolean         R_SectorContainsSkySurfaces(const sector_t* sec);
 
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
 void            R_InitSkyFix(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
-void            R_OrderVertices(const linedef_t *line, const sector_t *sector,
-                                vertex_t *verts[2]);
-plane_t        *R_NewPlaneForSector(sector_t *sec);
-void            R_DestroyPlaneOfSector(uint id, sector_t *sec);
+void            R_OrderVertices(const linedef_t* line, const sector_t* sector,
+                                vertex_t* verts[2]);
+plane_t*        R_NewPlaneForSector(sector_t* sec);
+void            R_DestroyPlaneOfSector(uint id, sector_t* sec);
 
-surfacedecor_t *R_CreateSurfaceDecoration(decortype_t type, surface_t *suf);
-void            R_ClearSurfaceDecorations(surface_t *suf);
+surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t* suf);
+void            R_ClearSurfaceDecorations(surface_t* suf);
 
-void            R_UpdateWatchedPlanes(watchedplanelist_t *wpl);
-void            R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
+void            R_UpdateWatchedPlanes(watchedplanelist_t* wpl);
+void            R_InterpolateWatchedPlanes(watchedplanelist_t* wpl,
                                            boolean resetNextViewer);
-void            R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln);
-boolean         R_RemoveWatchedPlane(watchedplanelist_t *wpl,
-                                     const plane_t *pln);
+void            R_AddWatchedPlane(watchedplanelist_t* wpl, plane_t* pln);
+boolean         R_RemoveWatchedPlane(watchedplanelist_t* wpl,
+                                     const plane_t* pln);
 
 void            R_UpdateMovingSurfaces(void);
 void            R_InterpolateMovingSurfaces(boolean resetNextViewer);
@@ -95,22 +95,22 @@ boolean         R_SurfaceListIterate(surfacelist_t* sl,
                                      boolean (*callback) (surface_t* suf, void*),
                                      void* context);
 
-void            R_MarkDependantSurfacesForDecorationUpdate(plane_t *pln);
-boolean         R_IsGlowingPlane(const plane_t *pln);
+void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
+boolean         R_IsGlowingPlane(const plane_t* pln);
 
-lineowner_t    *R_GetVtxLineOwner(const vertex_t *vtx, const linedef_t *line);
-linedef_t      *R_FindLineNeighbor(const sector_t *sector,
-                                   const linedef_t *line,
-                                   const lineowner_t *own,
-                                   boolean antiClockwise, binangle_t *diff);
-linedef_t      *R_FindSolidLineNeighbor(const sector_t *sector,
-                                        const linedef_t *line,
-                                        const lineowner_t *own,
+lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const linedef_t* line);
+linedef_t*      R_FindLineNeighbor(const sector_t* sector,
+                                   const linedef_t* line,
+                                   const lineowner_t* own,
+                                   boolean antiClockwise, binangle_t* diff);
+linedef_t*      R_FindSolidLineNeighbor(const sector_t* sector,
+                                        const linedef_t* line,
+                                        const lineowner_t* own,
                                         boolean antiClockwise,
-                                        binangle_t *diff);
-linedef_t      *R_FindLineBackNeighbor(const sector_t *sector,
-                                       const linedef_t *line,
-                                       const lineowner_t *own,
+                                        binangle_t* diff);
+linedef_t*      R_FindLineBackNeighbor(const sector_t* sector,
+                                       const linedef_t* line,
+                                       const lineowner_t* own,
                                        boolean antiClockwise,
-                                       binangle_t *diff);
+                                       binangle_t* diff);
 #endif

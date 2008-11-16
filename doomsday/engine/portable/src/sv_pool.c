@@ -25,9 +25,9 @@
 /**
  * sv_pool.c: Delta Pools
  *
- * Delta Pools use PU_LEVEL, which means all the memory allocated for them
- * is deallocated when the level changes. Sv_InitPools() is called in
- * R_SetupLevel() to clear out all the old data.
+ * Delta Pools use PU_MAP, which means all the memory allocated for them
+ * is deallocated when the map changes. Sv_InitPools() is called in
+ * R_SetupMap() to clear out all the old data.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -140,7 +140,7 @@ static linedef_t** sideOwners;
 // CODE --------------------------------------------------------------------
 
 /**
- * Called once for each level, from R_SetupLevel(). Initialize the world
+ * Called once for each map, from R_SetupMap(). Initialize the world
  * register and drain all pools.
  */
 void Sv_InitPools(void)
@@ -174,7 +174,7 @@ void Sv_InitPools(void)
     deltaBaseScores[DT_SECTOR_SOUND] = 5000;
     deltaBaseScores[DT_POLY_SOUND] = 5000;
 
-    // Since the level has changed, PU_LEVEL memory has been freed.
+    // Since the map has changed, PU_MAP memory has been freed.
     // Reset all pools (set numbers are kept, though).
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -191,14 +191,14 @@ void Sv_InitPools(void)
     }
 
     // Find the owners of all sides.
-    sideOwners = Z_Malloc(sizeof(linedef_t *) * numSideDefs, PU_LEVEL, 0);
+    sideOwners = Z_Malloc(sizeof(linedef_t *) * numSideDefs, PU_MAP, 0);
     for(i = 0; i < numSideDefs; ++i)
     {
         sideOwners[i] = R_GetLineForSide(i);
     }
 
     // Origins of sectors.
-    sectorOrigins = Z_Malloc(sizeof(origin_t) * numSectors, PU_LEVEL, 0);
+    sectorOrigins = Z_Malloc(sizeof(origin_t) * numSectors, PU_MAP, 0);
     for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
@@ -210,7 +210,7 @@ void Sv_InitPools(void)
     }
 
     // Origins of sides.
-    sideOrigins = Z_Malloc(sizeof(origin_t) * numSideDefs, PU_LEVEL, 0);
+    sideOrigins = Z_Malloc(sizeof(origin_t) * numSideDefs, PU_MAP, 0);
     for(i = 0; i < numSideDefs; ++i)
     {
         vertex_t*           vtx;
@@ -314,7 +314,7 @@ reg_mobj_t* Sv_RegisterAddMobj(cregister_t* reg, thid_t id)
     }
 
     // Allocate the new register-mobj.
-    newRegMo = Z_Calloc(sizeof(reg_mobj_t), PU_LEVEL, 0);
+    newRegMo = Z_Calloc(sizeof(reg_mobj_t), PU_MAP, 0);
 
     // Link it to the end of the hash list.
     if(hash->last)
@@ -1027,14 +1027,14 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
     reg->isInitial = isInitial;
 
     // Init sectors.
-    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numSectors, PU_LEVEL, 0);
+    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numSectors, PU_MAP, 0);
     for(i = 0; i < numSectors; ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
-    reg->sideDefs = Z_Calloc(sizeof(dt_side_t) * numSideDefs, PU_LEVEL, 0);
+    reg->sideDefs = Z_Calloc(sizeof(dt_side_t) * numSideDefs, PU_MAP, 0);
     for(i = 0; i < numSideDefs; ++i)
     {
         Sv_RegisterSide(&reg->sideDefs[i], i);
@@ -1043,7 +1043,7 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
     // Init polyobjs.
     reg->polyObjs =
         (numPolyObjs ?
-         Z_Calloc(sizeof(dt_poly_t) * numPolyObjs, PU_LEVEL, 0) : NULL);
+         Z_Calloc(sizeof(dt_poly_t) * numPolyObjs, PU_MAP, 0) : NULL);
     for(i = 0; i < numPolyObjs; ++i)
     {
         Sv_RegisterPoly(&reg->polyObjs[i], i);
@@ -1198,7 +1198,7 @@ void* Sv_CopyDelta(void* deltaPtr)
         Con_Error("Sv_CopyDelta: Unknown delta type %i.\n", delta->type);
     }
 
-    newDelta = Z_Malloc(size, PU_LEVEL, 0);
+    newDelta = Z_Malloc(size, PU_MAP, 0);
     memcpy(newDelta, deltaPtr, size);
     return newDelta;
 }
@@ -2575,7 +2575,7 @@ void Sv_PoolQueueAdd(pool_t* pool, delta_t* delta)
 
         // Allocate the new queue.
         newQueue = Z_Malloc(pool->allocatedSize * sizeof(delta_t *),
-                            PU_LEVEL, 0);
+                            PU_MAP, 0);
 
         // Copy the old data.
         if(pool->queue)

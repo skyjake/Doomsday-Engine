@@ -1260,10 +1260,10 @@ void Sfx_SampleFormat(int newBits, int newRate)
 }
 
 /**
- * Must be done before the level is changed (from P_SetupLevel, via
- * S_LevelChange).
+ * Must be done before the map is changed (from P_SetupMap, via
+ * S_MapChange).
  */
-void Sfx_LevelChange(void)
+void Sfx_MapChange(void)
 {
     int                 i;
     sfxchannel_t*       ch;

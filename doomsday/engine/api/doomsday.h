@@ -392,8 +392,8 @@ extern          "C" {
     // Refresh.
     int             DD_GetFrameRate(void);
     void            R_SetDataPath(const char* path);
-    void            R_SetupLevel(int mode, int flags);
-    void            R_PrecacheLevel(void);
+    void            R_SetupMap(int mode, int flags);
+    void            R_PrecacheMap(void);
     void            R_PrecachePatch(lumpnum_t lump);
     void            R_PrecacheSkinsForState(int stateIndex);
     void            R_RenderPlayerView(int num);
@@ -409,6 +409,7 @@ extern          "C" {
     const char*     R_MaterialNameForNum(materialnum_t num);
     boolean         R_MaterialIsCustom(materialnum_t num);
     boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
+    void            R_MaterialPrecache(materialnum_t num);
 
     int             R_CreateAnimGroup(int flags);
     void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
@@ -533,7 +534,7 @@ extern          "C" {
     int             TGA_GetSize(const char* filename, int *w, int *h);
 
     // Audio.
-    void            S_LevelChange(void);
+    void            S_MapChange(void);
     int             S_LocalSoundAtVolumeFrom(int sound_id,
                                              struct mobj_s* origin,
                                              float* pos, float volume);

@@ -375,13 +375,13 @@ void W_RemoveLumpsWithHandle(DFILE *handle)
                         /*
                         if((unsigned int)Z_GetUser(lumpCache[k]) > 0x100)
                            Z_Free(lumpCache[k]);
-                        else if(Z_GetTag(lumpCache[k]) < PU_LEVEL)
-                           Z_ChangeTag(lumpCache[k], PU_LEVEL);
+                        else if(Z_GetTag(lumpCache[k]) < PU_MAP)
+                           Z_ChangeTag(lumpCache[k], PU_MAP);
                         Z_ChangeTag(lumpCache[k], PU_CACHE);
                         Z_ChangeUser(lumpCache[k], NULL);
                         */
-                        if(Z_GetTag(lumpCache[k]) < PU_LEVEL)
-                            Z_ChangeTag(lumpCache[k], PU_LEVEL);
+                        if(Z_GetTag(lumpCache[k]) < PU_MAP)
+                            Z_ChangeTag(lumpCache[k], PU_MAP);
                         // Mark the memory pointer in use, but unowned.
                         Z_ChangeUser(lumpCache[k], (void *) 0x2);
                     }

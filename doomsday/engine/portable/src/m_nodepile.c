@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 /**
  * m_nodepile.c: Specialized Node Allocation
  *
- * The 'piles' are allocated as PU_LEVEL.
+ * The 'piles' are allocated as PU_MAP.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -70,7 +70,7 @@ void NP_Init(nodepile_t *pile, int initial)
         initial = 2;
 
     size = sizeof(*pile->nodes) * initial;
-    pile->nodes = Z_Calloc(size, PU_LEVEL, 0);
+    pile->nodes = Z_Calloc(size, PU_MAP, 0);
     pile->count = initial;
     // Index #1 is the first.
     pile->pos = 1;
@@ -134,7 +134,7 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
         if(newcount > NP_MAX_NODES)
             newcount = NP_MAX_NODES;
 
-        newlist = Z_Malloc(sizeof(*newlist) * newcount, PU_LEVEL, 0);
+        newlist = Z_Malloc(sizeof(*newlist) * newcount, PU_MAP, 0);
         memcpy(newlist, pile->nodes, sizeof(*pile->nodes) * pile->count);
         memset(newlist + pile->count, 0,
                (newcount - pile->count) * sizeof(*newlist));

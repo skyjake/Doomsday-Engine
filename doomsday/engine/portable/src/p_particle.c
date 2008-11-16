@@ -108,7 +108,7 @@ static ptcgen_t *P_NewPtcGen(void)
     int         maxage = 0;
     boolean     ok = false;
     boolean     foundOldest = false;
-    ptcgen_t   *gen = Z_Malloc(sizeof(ptcgen_t), PU_LEVEL, 0);
+    ptcgen_t   *gen = Z_Malloc(sizeof(ptcgen_t), PU_MAP, 0);
 
     // Find a suitable spot in the active ptcgens list.
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
@@ -163,9 +163,9 @@ static void P_InitParticleGen(ptcgen_t *gen, const ded_ptcgen_t* def)
 
     gen->def = def;
     gen->flags = def->flags;
-    gen->ptcs = Z_Malloc(sizeof(particle_t) * gen->count, PU_LEVEL, 0);
+    gen->ptcs = Z_Malloc(sizeof(particle_t) * gen->count, PU_MAP, 0);
     gen->stages = Z_Malloc(sizeof(ptcstage_t) * def->stageCount.num,
-                           PU_LEVEL, 0);
+                           PU_MAP, 0);
 
     for(i = 0; i < def->stageCount.num; ++i)
     {
@@ -602,18 +602,15 @@ boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
  */
 static boolean manyNewParticles(thinker_t* th, void* context)
 {
-    if(P_IsMobjThinker(th->function))
-    {
-        ptcgen_t*           gen = (ptcgen_t*) context;
-        mobj_t*             mo = (mobj_t *) th;
+    ptcgen_t*           gen = (ptcgen_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-        // Type match?
-        if(mo->type == gen->type || mo->type == gen->type2)
-        {
-            // Someone might think this is a slight hack...
-            gen->source = mo;
-            P_NewParticle(gen);
-        }
+    // Type match?
+    if(mo->type == gen->type || mo->type == gen->type2)
+    {
+        // Someone might think this is a slight hack...
+        gen->source = mo;
+        P_NewParticle(gen);
     }
 
     return true; // Continue iteration.
@@ -1112,7 +1109,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
                     Cl_MobjIterator(PIT_ClientMobjParticles, gen);
                 }
 
-                P_IterateThinkers(NULL, manyNewParticles, gen);
+                P_IterateThinkers(gx.MobjThinker, manyNewParticles, gen);
 
                 // The generator has no real source.
                 gen->source = NULL;
@@ -1180,8 +1177,11 @@ void P_CheckPtcPlanes(void)
     uint                i, p;
     sector_t*           sector;
 
+    if(isDedicated || !useParticles)
+        return;
+
     // There is no need to do this on every tic.
-    if(isDedicated || SECONDS_TO_TICKS(gameTime) % 4)
+    if(SECONDS_TO_TICKS(gameTime) % 4)
         return;
 
     for(i = 0; i < numSectors; ++i)
@@ -1212,14 +1212,14 @@ void P_CheckPtcPlanes(void)
 
 /**
  * Spawns all type-triggered particle generators, regardless of whether
- * the type of mobj exists in the level or not (mobjs might be
- * dynamically created).
+ * the type of mobj exists in the map or not (mobjs might be dynamically
+ * created).
  */
 void P_SpawnTypeParticleGens(void)
 {
     int                 i;
-    ded_ptcgen_t       *def;
-    ptcgen_t           *gen;
+    ded_ptcgen_t*       def;
+    ptcgen_t*           gen;
 
     if(isDedicated || !useParticles)
         return;
@@ -1256,7 +1256,7 @@ void P_SpawnMapParticleGens(const char *mapId)
         if(!def->map[0] || stricmp(def->map, mapId))
             continue;
 
-        if(def->spawnAge > 0 && ddLevelTime > def->spawnAge)
+        if(def->spawnAge > 0 && ddMapTime > def->spawnAge)
             continue; // No longer spawning this generator.
 
         if(!(gen = P_NewPtcGen()))
@@ -1401,5 +1401,5 @@ void P_UpdateParticleGens(void)
     }
 
     // Re-spawn map generators.
-    P_SpawnMapParticleGens(levelid);
+    P_SpawnMapParticleGens(mapID);
 }

@@ -184,20 +184,20 @@ void PG_ShutdownTextures(void)
 
 void PG_InitForLevel(void)
 {
-    pgLinks = Z_Malloc(sizeof(pglink_t *) * numSectors, PU_LEVEL, 0);
+    pgLinks = Z_Malloc(sizeof(pglink_t *) * numSectors, PU_MAP, 0);
     memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
 
     // We can link 64 generators each into four sectors before
     // running out of pgLinks.
     pgMax = 4 * MAX_ACTIVE_PTCGENS;
-    pgStore = Z_Malloc(sizeof(pglink_t) * pgMax, PU_LEVEL, 0);
+    pgStore = Z_Malloc(sizeof(pglink_t) * pgMax, PU_MAP, 0);
     pgCursor = 0;
 
     memset(activePtcGens, 0, sizeof(activePtcGens));
 
     // Allocate a small ordering buffer.
     orderSize = 256;
-    order = Z_Malloc(sizeof(porder_t) * orderSize, PU_LEVEL, 0);
+    order = Z_Malloc(sizeof(porder_t) * orderSize, PU_MAP, 0);
 }
 
 /**
@@ -289,7 +289,7 @@ static void PG_CheckOrderBuffer(uint max)
 {
     while(max > orderSize)
         orderSize *= 2;
-    order = Z_Realloc(order, sizeof(*order) * orderSize, PU_LEVEL);
+    order = Z_Realloc(order, sizeof(*order) * orderSize, PU_MAP);
 }
 
 /**

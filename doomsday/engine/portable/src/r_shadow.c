@@ -274,7 +274,7 @@ void R_InitSectorShadows(void)
      *    shadow edges cross one of the subsector's edges (not parallel),
      *    link the linedef to the subsector.
      */
-    shadowLinksBlockSet = Z_BlockCreate(sizeof(shadowlink_t), 1024, PU_LEVEL);
+    shadowLinksBlockSet = Z_BlockCreate(sizeof(shadowlink_t), 1024, PU_MAP);
 
     for(i = 0; i < numLineDefs; ++i)
     {

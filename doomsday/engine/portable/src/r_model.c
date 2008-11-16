@@ -691,7 +691,7 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
         {
             offset = M_CycleIntoRange(MOBJ_TO_ID(mo), duration);
         }
-        interp = M_CycleIntoRange(ddLevelTime / duration + offset, 1);
+        interp = M_CycleIntoRange(ddMapTime / duration + offset, 1);
         worldTime = true;
     }
     else

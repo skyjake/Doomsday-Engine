@@ -101,9 +101,9 @@ void Cl_LocalCommand(void)
     ddplayer_t         *ddpl = &plr->shared;
     clplayerstate_t    *s = &clPlayerStates[consolePlayer];
 
-    if(ddLevelTime < 0.333)
+    if(ddMapTime < 0.333)
     {
-        // In the very beginning of a level, moving is not allowed.
+        // In the very beginning of a map, moving is not allowed.
         memset(cl->lastCmd, 0, TICCMD_SIZE);
         if(s->cmo)
         {
@@ -156,7 +156,7 @@ int Cl_ReadPlayerDelta(void)
          * Make sure the 'new' mobj is different than the old one; there
          * will be linking problems otherwise.
          * \fixme What causes the duplicate sending of mobj ids?
-	     */
+         */
         if(newid != s->mobjId)
         {
             s->mobjId = newid;

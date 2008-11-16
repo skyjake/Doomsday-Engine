@@ -619,7 +619,7 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
     }
 
     sec->ssectors =
-        Z_Malloc((count + 1) * sizeof(subsector_t*), PU_LEVELSTATIC, NULL);
+        Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
 
     n = 0;
     for(i = 0; i < map->numSSectors; ++i)
@@ -710,7 +710,7 @@ static void buildSectorLineLists(gamemap_t *map)
     linedef_t    **linebptr;
 
     linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(linedef_t*),
-                          PU_LEVELSTATIC, 0);
+                          PU_MAPSTATIC, 0);
     linebptr = linebuffer;
 
     for(i = 0, sec = map->sectors; i < map->numSectors; ++i, sec++)
@@ -1154,7 +1154,7 @@ static void buildVertexOwnerRings(editmap_t* map)
 
     // We know how many vertex line owners we need (numLineDefs * 2).
     lineOwners =
-        Z_Malloc(sizeof(lineowner_t) * map->numLineDefs * 2, PU_LEVELSTATIC, 0);
+        Z_Malloc(sizeof(lineowner_t) * map->numLineDefs * 2, PU_MAPSTATIC, 0);
     allocator = lineOwners;
 
     for(i = 0; i < map->numLineDefs; ++i)
@@ -1259,7 +1259,7 @@ static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
     uint                i;
 
     dest->numLineDefs = src->numLineDefs;
-    dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(linedef_t), PU_LEVELSTATIC, 0);
+    dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(linedef_t), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numLineDefs; ++i)
     {
@@ -1281,7 +1281,7 @@ static void hardenSidedefs(gamemap_t* dest, editmap_t* src)
     uint                i;
 
     dest->numSideDefs = src->numSideDefs;
-    dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(sidedef_t), PU_LEVELSTATIC, 0);
+    dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(sidedef_t), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numSideDefs; ++i)
     {
@@ -1298,7 +1298,7 @@ static void hardenSectors(gamemap_t* dest, editmap_t* src)
     uint                i;
 
     dest->numSectors = src->numSectors;
-    dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_LEVELSTATIC, 0);
+    dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numSectors; ++i)
     {
@@ -1352,7 +1352,7 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
 
     dest->numPolyObjs = src->numPolyObjs;
     dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(polyobj_t*),
-                              PU_LEVEL, 0);
+                              PU_MAP, 0);
 
     for(i = 0; i < dest->numPolyObjs; ++i)
     {
@@ -1360,7 +1360,7 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
         polyobj_t*          destP, *srcP = src->polyObjs[i];
         seg_t*              segs;
 
-        destP = Z_Calloc(POLYOBJ_SIZE, PU_LEVEL, 0);
+        destP = Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
         destP->idx = i;
         destP->crush = srcP->crush;
         destP->tag = srcP->tag;
@@ -1371,13 +1371,13 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
         destP->numSegs = srcP->buildData.lineCount;
 
         destP->originalPts =
-            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
+            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_MAP, 0);
         destP->prevPts =
-            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_LEVEL, 0);
+            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_MAP, 0);
 
         // Create a seg for each line of this polyobj.
-        segs = Z_Calloc(sizeof(seg_t) * destP->numSegs, PU_LEVEL, 0);
-        destP->segs = Z_Malloc(sizeof(seg_t*) * (destP->numSegs+1), PU_LEVEL, 0);
+        segs = Z_Calloc(sizeof(seg_t) * destP->numSegs, PU_MAP, 0);
+        destP->segs = Z_Malloc(sizeof(seg_t*) * (destP->numSegs+1), PU_MAP, 0);
         for(j = 0; j < destP->numSegs; ++j)
         {
             linedef_t*          line =
@@ -1743,7 +1743,7 @@ boolean MPE_End(void)
     if(!editMapInited)
         return false;
 
-    gamemap = Z_Calloc(sizeof(*gamemap), PU_LEVELSTATIC, 0);
+    gamemap = Z_Calloc(sizeof(*gamemap), PU_MAPSTATIC, 0);
 
     // Pass on the game map obj database. The game will want to query it
     // once we have finished constructing the map.
@@ -1868,13 +1868,13 @@ boolean MPE_End(void)
     /**
      * Are we caching this map?
      */
-    if(gamemap->levelID && gamemap->levelID[0])
+    if(gamemap->mapID && gamemap->mapID[0])
     {   // Yes, write the cached map data file.
         filename_t              cachedMapDir;
         filename_t              cachedMapDataFile;
         int                     markerLumpNum;
 
-        markerLumpNum = W_GetNumForName(gamemap->levelID);
+        markerLumpNum = W_GetNumForName(gamemap->mapID);
         DAM_GetCachedMapDir(cachedMapDir, markerLumpNum);
 
         // Ensure the destination path exists.

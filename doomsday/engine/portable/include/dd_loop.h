@@ -35,7 +35,7 @@ extern boolean suspendMsgPump;
 #endif
 
 extern int rFrameCount;
-extern timespan_t sysTime, gameTime, demoTime, ddLevelTime;
+extern timespan_t sysTime, gameTime, demoTime, ddMapTime;
 extern trigger_t sharedFixedTrigger;
 
 void            DD_RegisterLoop(void);

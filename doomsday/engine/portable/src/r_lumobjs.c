@@ -166,7 +166,7 @@ void LO_InitForMap(void)
 {
     // First initialize the subsector links (root pointers).
     subLumObjList =
-        Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_LEVELSTATIC, 0);
+        Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = NULL; // Will have already been free'd.
@@ -246,7 +246,7 @@ static lumobj_t* allocLumobj(void)
         if(!luminousBlockSet)
         {
             luminousBlockSet =
-                Z_BlockCreate(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_LEVEL);
+                Z_BlockCreate(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
         }
 
         luminousList =
@@ -442,7 +442,7 @@ if(!mat)
             spritetex_t*        sprTex;
 
             // Ensure we have up-to-date information about the texture.
-            R_MaterialPrepare(mat->current, 0, NULL, NULL);
+            R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
             sprTex = spriteTextures[mat->tex->ofTypeID];
 
             cf.size = cf.flareSize = sprTex->lumSize;

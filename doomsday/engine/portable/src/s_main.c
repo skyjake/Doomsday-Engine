@@ -124,14 +124,14 @@ void S_Shutdown(void)
 }
 
 /**
- * Must be called before the level is changed.
+ * Must be called before the map is changed.
  */
-void S_LevelChange(void)
+void S_MapChange(void)
 {
     // Stop everything in the LSM.
     Sfx_InitLogical();
 
-    Sfx_LevelChange();
+    Sfx_MapChange();
 }
 
 /**

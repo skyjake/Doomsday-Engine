@@ -208,7 +208,7 @@ int SB_ToIndex(source_t* source)
 }
 
 /**
- * Removes the specified bias light source from the level.
+ * Removes the specified bias light source from the map.
  *
  * @param which         The id of the bias light source to be deleted.
  */
@@ -234,7 +234,7 @@ void SB_Delete(int which)
 }
 
 /**
- * Removes ALL bias light sources on the level.
+ * Removes ALL bias light sources on the map.
  */
 void SB_Clear(void)
 {
@@ -247,10 +247,10 @@ void SB_Clear(void)
  * Initializes the bias lights according to the loaded Light
  * definitions.
  */
-void SB_InitForMap(const char *uniqueId)
+void SB_InitForMap(const char* uniqueID)
 {
     int                 i;
-    ded_light_t        *def;
+    ded_light_t*        def;
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -260,7 +260,7 @@ void SB_InitForMap(const char *uniqueId)
     {
         def = &defs.lights[i];
 
-        if(def->state[0] || stricmp(uniqueId, def->level))
+        if(def->state[0] || stricmp(uniqueID, def->uniqueMapID))
             continue;
 
         if(SB_NewSourceAt(def->offset[VX], def->offset[VY], def->offset[VZ],
@@ -270,7 +270,7 @@ void SB_InitForMap(const char *uniqueId)
     }
 }
 
-void SB_SetColor(float *dest, float *src)
+void SB_SetColor(float* dest, float* src)
 {
     int                 i;
     float               largest = 0;

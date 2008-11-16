@@ -1282,7 +1282,7 @@ D_CMD(MakeCamera)
        ddPlayers[cp].flags |= DDPF_CAMERA;
        ddPlayers[cp].inGame = true; // !!!
        Sv_InitPoolForClient(cp);
-       mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, 0);
+       mo = Z_Malloc(sizeof(mobj_t), PU_MAP, 0);
        memset(mo, 0, sizeof(*mo));
        mo->pos[VX] = conp->mo->pos[VX];
        mo->pos[VY] = conp->mo->pos[VY];

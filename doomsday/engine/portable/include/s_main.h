@@ -3,7 +3,6 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
@@ -48,7 +47,7 @@ extern int      sfxVolume, musVolume;
 void            S_Register(void);
 boolean         S_Init(void);
 void            S_Shutdown(void);
-void            S_LevelChange(void);
+void            S_MapChange(void);
 void            S_Reset(void);
 void            S_StartFrame(void);
 void            S_EndFrame(void);

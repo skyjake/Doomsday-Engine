@@ -170,7 +170,7 @@ static __inline int yToSSecBlockY(bmap_t* bmap, float y)
 
 static bmap_t* allocBmap(void)
 {
-    return Z_Calloc(sizeof(bmap_t), PU_LEVELSTATIC, 0);
+    return Z_Calloc(sizeof(bmap_t), PU_MAPSTATIC, 0);
 }
 
 blockmap_t* P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
@@ -189,7 +189,7 @@ blockmap_t* P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
 
     bmap->gridmap =
         M_GridmapCreate(bmap->dimensions[VX], bmap->dimensions[VY],
-                        sizeof(bmapblock_t), PU_LEVELSTATIC);
+                        sizeof(bmapblock_t), PU_MAPSTATIC);
 
     VERBOSE(Con_Message
             ("P_BlockMapCreate: w=%i h=%i\n", bmap->dimensions[VX],
@@ -304,7 +304,7 @@ void P_BuildSubsectorBlockMap(gamemap_t* map)
             }
     }
 
-    ssecLinks = Z_Malloc(totalLinks * sizeof(subsector_t*), PU_LEVEL, NULL);
+    ssecLinks = Z_Malloc(totalLinks * sizeof(subsector_t*), PU_MAP, NULL);
 
     // Create the actual links by 'hardening' the lists into arrays.
     for(y = 0; y < subMapHeight; ++y)
@@ -450,7 +450,7 @@ void P_InitMapBlockRings(gamemap_t *map)
 
     // Clear out mobj rings.
     size = sizeof(*map->blockRings) * bmapSize[VX] * bmapSize[VY];
-    map->blockRings = Z_Calloc(size, PU_LEVEL, 0);
+    map->blockRings = Z_Calloc(size, PU_MAP, 0);
 
     for(i = 0; i < bmapSize[VX] * bmapSize[VY]; ++i)
         map->blockRings[i].bNext =

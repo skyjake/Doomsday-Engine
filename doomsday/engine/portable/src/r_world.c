@@ -68,7 +68,7 @@
 int     rendSkyLight = 1;       // cvar
 
 boolean firstFrameAfterLoad;
-boolean levelSetup;
+boolean mapSetup;
 
 nodeindex_t     *linelinks;         // indices to roots
 
@@ -349,7 +349,7 @@ void R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln)
 
         wpl->list =
             Z_Realloc(wpl->list, sizeof(plane_t*) * (wpl->maxNum + 1),
-                      PU_LEVEL);
+                      PU_MAP);
     }
 
     // Add the plane to the list.
@@ -538,12 +538,12 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     //              "limit is %i per sector.\n", 2);
 
     // Allocate the new plane.
-    plane = Z_Malloc(sizeof(plane_t), PU_LEVEL, 0);
+    plane = Z_Malloc(sizeof(plane_t), PU_MAP, 0);
 
     // Resize this sector's plane list.
     sec->planes =
         Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planeCount + 1),
-                  PU_LEVEL);
+                  PU_MAP);
     // Add the new plane to the end of the list.
     sec->planes[sec->planeCount-1] = plane;
     sec->planes[sec->planeCount] = NULL; // Terminate.
@@ -580,7 +580,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     // Allocate the subplanes of this plane.
     plane->subPlanes =
         Z_Calloc(sec->ssectorCount * sizeof(subplaneinfo_t),
-                 PU_LEVEL, NULL);
+                 PU_MAP, NULL);
 
     // Count the number of vertexillum's we'll need.
     villumCount = 0;
@@ -592,7 +592,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     }
 
     // Allocate the vertexillums.
-    illums = Z_Calloc(villumCount * sizeof(*illums), PU_LEVEL, NULL);
+    illums = Z_Calloc(villumCount * sizeof(*illums), PU_MAP, NULL);
     ssecPtr = sec->ssectors;
     while(*ssecPtr)
     {
@@ -633,7 +633,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     {
         uint                n;
 
-        newList = Z_Malloc(sizeof(plane_t**) * sec->planeCount, PU_LEVEL, 0);
+        newList = Z_Malloc(sizeof(plane_t**) * sec->planeCount, PU_MAP, 0);
 
         // Copy ptrs to the planes.
         n = 0;
@@ -679,7 +679,7 @@ surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf)
 
     decorations =
         Z_Malloc(sizeof(*decorations) * (++suf->numDecorations),
-                 PU_LEVEL, 0);
+                 PU_MAP, 0);
 
     if(suf->numDecorations > 1)
     {   // Copy the existing decorations.
@@ -1319,7 +1319,7 @@ void R_InitLinks(gamemap_t *map)
     // Allocate the rings.
     starttime = Sys_GetRealTime();
     map->lineLinks =
-        Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_LEVELSTATIC, 0);
+        Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
     for(i = 0; i < map->numLineDefs; ++i)
         map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
     // How much time did we spend?
@@ -1400,7 +1400,7 @@ static void triangulateSubSector(subsector_t *ssec)
     if(!found)
         ssec->numVertices += 2;
     ssec->vertices =
-        Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1),PU_LEVEL, 0);
+        Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1),PU_MAP, 0);
 
     // We can now create the subsector fvertex array.
     // NOTE: The same polygon is used for all planes of this subsector.
@@ -1594,24 +1594,24 @@ static __inline void initSurfaceMaterialOffset(surface_t *suf)
 }
 
 /**
- * Called by the game at various points in the level setup process.
+ * Called by the game at various points in the map setup process.
  */
-void R_SetupLevel(int mode, int flags)
+void R_SetupMap(int mode, int flags)
 {
     uint        i;
 
     switch(mode)
     {
-    case DDSLM_INITIALIZE:
+    case DDSMM_INITIALIZE:
         // Switch to fast malloc mode in the zone. This is intended for large
         // numbers of mallocs with no frees in between.
         Z_EnableFastMalloc(false);
 
-        // A new level is about to be setup.
-        levelSetup = true;
+        // A new map is about to be setup.
+        mapSetup = true;
         return;
 
-    case DDSLM_AFTER_LOADING:
+    case DDSMM_AFTER_LOADING:
     {
         // Loading a game usually destroys all thinkers. Until a proper
         // savegame system handled by the engine is introduced we'll have
@@ -1655,7 +1655,7 @@ void R_SetupLevel(int mode, int flags)
         PO_InitForMap();
         return;
     }
-    case DDSLM_FINALIZE:
+    case DDSMM_FINALIZE:
     {
         gamemap_t          *map = P_GetCurrentMap();
 
@@ -1689,7 +1689,7 @@ void R_SetupLevel(int mode, int flags)
 
         for(i = 0; i < numSideDefs; ++i)
         {
-            sidedef_t          *si = SIDE_PTR(i);
+            sidedef_t*          si = SIDE_PTR(i);
 
             initSurfaceMaterialOffset(&si->SW_topsurface);
             initSurfaceMaterialOffset(&si->SW_middlesurface);
@@ -1701,20 +1701,19 @@ void R_SetupLevel(int mode, int flags)
 
         // Run any commands specified in Map Info.
         {
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+        ded_mapinfo_t*      mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
         if(mapInfo && mapInfo->execute)
             Con_Execute(CMDS_DED, mapInfo->execute, true, false);
         }
 
-        // The level setup has been completed.  Run the special level
-        // setup command, which the user may alias to do something
-        // useful.
-        if(levelid && levelid[0])
+        // The map setup has been completed. Run the special map setup
+        // command, which the user may alias to do something useful.
+        if(mapID && mapID[0])
         {
-            char    cmd[80];
+            char                cmd[80];
 
-            sprintf(cmd, "init-%s", levelid);
+            sprintf(cmd, "init-%s", mapID);
             if(Con_IsValidCommand(cmd))
             {
                 Con_Executef(CMDS_DED, false, cmd);
@@ -1753,11 +1752,11 @@ void R_SetupLevel(int mode, int flags)
             }
         }
 
-        // Reset the level tick timer.
-        ddLevelTime = 0;
+        // Reset the map tick timer.
+        ddMapTime = 0;
 
-        // We've finished setting up the level
-        levelSetup = false;
+        // We've finished setting up the map.
+        mapSetup = false;
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
@@ -1767,7 +1766,7 @@ void R_SetupLevel(int mode, int flags)
         Z_EnableFastMalloc(false);
         return;
     }
-    case DDSLM_AFTER_BUSY:
+    case DDSMM_AFTER_BUSY:
     {
         gamemap_t  *map = P_GetCurrentMap();
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
@@ -1781,7 +1780,7 @@ void R_SetupLevel(int mode, int flags)
         break;
     }
     default:
-        Con_Error("R_SetupLevel: Unknown setup mode %i", mode);
+        Con_Error("R_SetupMap: Unknown setup mode %i", mode);
     }
 }
 
@@ -1874,7 +1873,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
            (plane->PS_material->flags & MATF_GLOW)))
         {
             materialtexinst_t*  texInst =
-                R_MaterialPrepare(plane->PS_material->current, 0, NULL, NULL);
+                R_MaterialPrepare(plane->PS_material->current, 0, NULL,
+                                  NULL, NULL);
 
             if(texInst)
             {

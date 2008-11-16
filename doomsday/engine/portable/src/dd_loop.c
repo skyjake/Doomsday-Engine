@@ -66,11 +66,11 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    Net_ResetTimer(void);
+void            Net_ResetTimer(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    DD_RunTics(void);
+void            DD_RunTics(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -87,7 +87,7 @@ int maxFrameRate = 200; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
 
-timespan_t sysTime, gameTime, demoTime, ddLevelTime;
+timespan_t sysTime, gameTime, demoTime, ddMapTime;
 timespan_t frameStartTime;
 
 boolean stopTime = false; // If true the time counters won't be incremented
@@ -123,9 +123,9 @@ void DD_RegisterLoop(void)
  */
 int DD_GameLoop(void)
 {
-    int     exitCode = 0;
+    int                 exitCode = 0;
 #ifdef WIN32
-    MSG     msg;
+    MSG                 msg;
 #endif
 
     // Limit the frame rate to 35 when running in dedicated mode.
@@ -306,7 +306,7 @@ float DD_GetFrameRate(void)
  */
 void DD_Ticker(timespan_t time)
 {
-    static float realFrameTimePos = 0;
+    static float        realFrameTimePos = 0;
 
     // Demo ticker. Does stuff like smoothing of view angles.
     Net_BuildLocalCommands(time);
@@ -375,7 +375,7 @@ void DD_Ticker(timespan_t time)
     }
 }
 
-/*
+/**
  * Advance time counters.
  */
 void DD_AdvanceTime(timespan_t time)
@@ -390,15 +390,15 @@ void DD_AdvanceTime(timespan_t time)
         demoTime += time;
 
         // Leveltic is reset to zero at every map change.
-        // The level time only advances when the game is not paused.
+        // The map time only advances when the game is not paused.
         if(!clientPaused)
         {
-            ddLevelTime += time;
+            ddMapTime += time;
         }
     }
 }
 
-/*
+/**
  * Reset the game time so that on the next frame, the effect will be
  * that no time has passed.
  */
@@ -408,13 +408,13 @@ void DD_ResetTimer(void)
     Net_ResetTimer();
 }
 
-/*
+/**
  * Run at least one tic.
  */
 void DD_RunTics(void)
 {
-    double  frameTime, ticLength;
-    double  nowTime = Sys_GetSeconds();
+    double              frameTime, ticLength;
+    double              nowTime = Sys_GetSeconds();
 
     // Do a network update first.
     N_Update();

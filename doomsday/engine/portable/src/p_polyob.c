@@ -492,7 +492,7 @@ void P_PolyobjLinkToRing(polyobj_t* po, linkpolyobj_t** link)
 
     if(!(*link))
     {   // Create a new link at the current block cell.
-        *link = Z_Malloc(sizeof(linkpolyobj_t), PU_LEVEL, 0);
+        *link = Z_Malloc(sizeof(linkpolyobj_t), PU_MAP, 0);
         (*link)->next = NULL;
         (*link)->prev = NULL;
         (*link)->polyobj = po;
@@ -515,7 +515,7 @@ void P_PolyobjLinkToRing(polyobj_t* po, linkpolyobj_t** link)
     else
     {
         tempLink->next =
-            Z_Malloc(sizeof(linkpolyobj_t), PU_LEVEL, 0);
+            Z_Malloc(sizeof(linkpolyobj_t), PU_MAP, 0);
         tempLink->next->next = NULL;
         tempLink->next->prev = tempLink;
         tempLink->next->polyobj = po;
