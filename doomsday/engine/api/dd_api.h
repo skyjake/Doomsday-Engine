@@ -46,15 +46,15 @@ typedef struct game_import_s {
     // DATA
     //
     // Data arrays.
-    mobjinfo_t    **mobjInfo;
-    state_t       **states;
-    sprname_t     **sprNames;
-    ddtext_t      **text;
+    mobjinfo_t**    mobjInfo;
+    state_t**       states;
+    sprname_t**     sprNames;
+    ddtext_t**      text;
 
     // General information.
-    int            *validCount;
-    float          *topSlope;
-    float          *bottomSlope;
+    int*            validCount;
+    float*          topSlope;
+    float*          bottomSlope;
 } game_import_t;
 
 /**
@@ -76,9 +76,9 @@ typedef struct {
     int           (*NetServerStop) (int before);
     int           (*NetConnect) (int before);
     int           (*NetDisconnect) (int before);
-    long int      (*NetPlayerEvent) (int playernum, int type, void *data);
-    int           (*NetWorldEvent) (int type, int parm, void *data);
-    void          (*HandlePacket) (int fromplayer, int type, void *data,
+    long int      (*NetPlayerEvent) (int playernum, int type, void* data);
+    int           (*NetWorldEvent) (int type, int parm, void* data);
+    void          (*HandlePacket) (int fromplayer, int type, void* data,
                                    size_t length);
     void         *(*NetWriteCommands) (int numCommands, void* data);
     void         *(*NetReadCommands) (size_t pktLength, void* data);
@@ -87,20 +87,20 @@ typedef struct {
     void          (*Ticker) (timespan_t ticLength);
 
     // Responders.
-    boolean       (*PrivilegedResponder) (event_t *event);
-    boolean       (*G_Responder) (event_t *event);
-    boolean       (*FallbackResponder) (event_t *event);
+    boolean       (*PrivilegedResponder) (event_t* ev);
+    boolean       (*G_Responder) (event_t* ev);
+    boolean       (*FallbackResponder) (event_t* ev);
 
     // Refresh.
     void          (*BeginFrame) (void);
     void          (*EndFrame) (void);
     void          (*G_Drawer) (int layer);
     void          (*G_Drawer2) (void);
-    void          (*ConsoleBackground) (int *width, int *height);
+    void          (*ConsoleBackground) (int* width, int* height);
 
     // Miscellaneous.
     void          (*MobjThinker) ();
-    float         (*MobjFriction) (void *mobj); // Returns a friction factor.
+    float         (*MobjFriction) (void* mobj); // Returns a friction factor.
 
     // Main structure sizes.
     size_t          ticcmdSize; // sizeof(ticcmd_t)
@@ -112,7 +112,7 @@ typedef struct {
     // (with the number of items to be read) to allow the
     // game do any initialization it needs (eg create an
     // array of its own private data structures).
-    void          (*SetupForMapData)      (int type, uint num);
+    void          (*SetupForMapData) (int type, uint num);
 
     // This routine is called when trying to assign a value read
     // from the map data (to a property known to us) that we don't
@@ -123,15 +123,15 @@ typedef struct {
 
     // The action code returned by the game depends on the context.
     int           (*HandleMapDataPropertyValue) (uint id, int dtype, int prop,
-                                                 valuetype_t type, void *data);
+                                                 valuetype_t type, void* data);
     // Post map setup
     // The engine calls this to inform the game of any changes it is
     // making to map data object to which the game might want to
     // take further action.
     int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype,
-                                                  void *data);
+                                                  void* data);
 } game_export_t;
 
-typedef game_export_t *(*GETGAMEAPI) (game_import_t *);
+typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
 
 #endif

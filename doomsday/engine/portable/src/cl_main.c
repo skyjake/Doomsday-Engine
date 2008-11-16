@@ -200,9 +200,10 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
     Con_Printf("Cl_AnswerHandshake: myConsole:%i, gameTime:%i.\n",
                shake.yourConsole, shake.gameTime);
 
-    // Tell the game that we have arrived. The level will
-    // be changed when the game's handshake arrives (handled
-    // in the dll).
+    /**
+     * Tell the game that we have arrived. The map will be changed when the
+     * game's handshake arrives (handled in the game).
+     */
     gx.NetPlayerEvent(consolePlayer, DDPE_ARRIVAL, 0);
 
     // Prepare the client-side data.
@@ -213,9 +214,9 @@ void Cl_AnswerHandshake(handshake_packet_t *pShake)
     DD_ResetTimer();
 }
 
-void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
+void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
 {
-    player_t           *plr;
+    player_t*           plr;
     boolean             present;
 
     Con_Printf("Cl_HandlePlayerInfo: console:%i name:%s\n", info->console,

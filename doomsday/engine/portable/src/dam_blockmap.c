@@ -26,7 +26,7 @@
 /**
  * dam_blockmap.c: BlockMap generation.
  *
- * Generate valid blockmap data from the already loaded level data.
+ * Generate valid blockmap data from the already loaded map data.
  * Adapted from algorithm used in prBoom 2.2.6 -DJS
  *
  * Algorithm is order of nlines*(ncols+nrows) not nlines*ncols*nrows
@@ -98,11 +98,11 @@ static void addBlockLine(linelist_t **lists, uint *count, uint *done,
 }
 
 /**
- * Construct a blockmap from the level data.
+ * Construct a blockmap from the map data.
  *
  * This finds the intersection of each linedef with the column and row
- * lines at the left and bottom of each blockmap cell. It then
- * adds the line to all block lists touching the intersection.
+ * lines at the left and bottom of each blockmap cell. It then adds the
+ * line to all block lists touching the intersection.
  */
 blockmap_t* DAM_BuildBlockMap(vertex_t*** vertexes, uint* numVertexes,
                               linedef_t** lineDefs, uint* numLineDefs)
@@ -111,13 +111,13 @@ blockmap_t* DAM_BuildBlockMap(vertex_t*** vertexes, uint* numVertexes,
 
     uint                i;
     int                 j;
-    uint                bMapWidth, bMapHeight; // blockmap dimensions
-    vec2_t              blockSize; // size of the blocks
-    uint*               blockcount = NULL; // array of counters of line lists
-    uint*               blockdone = NULL; // array keeping track of blocks/line
-    uint                numBlocks; // number of cells = nrows*ncols
+    uint                bMapWidth, bMapHeight; // Blockmap dimensions.
+    vec2_t              blockSize; // Size of the blocks.
+    uint*               blockcount = NULL; // Array of counters of line lists.
+    uint*               blockdone = NULL; // Array keeping track of blocks/line.
+    uint                numBlocks; // Number of cells = nrows*ncols.
 
-    linelist_t**        blocklists = NULL; // array of pointers to lists of lines
+    linelist_t**        blocklists = NULL; // Array of pointers to lists of lines.
     vec2_t              bounds[2], point, dims;
     vertex_t*           vtx;
     blockmap_t*         blockmap;

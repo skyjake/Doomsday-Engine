@@ -676,15 +676,16 @@ void Con_StartupDone(void)
             sizeof(statusText) - 1);
 }
 
-/*
+/**
  * Background with the "The Doomsday Engine" text superimposed.
  *
- * @param alpha  Alpha level to use when drawing the background.
+ * @param alpha         Alpha level to use when drawing the background.
  */
 void Con_DrawStartupBackground(float alpha)
 {
-    float   mul = (startupLogo ? 1.5f : 1.0f);
-    ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
+    float               mul = (startupLogo ? 1.5f : 1.0f);
+    ui_color_t*         dark = UI_COL(UIC_BG_DARK),
+                       *light = UI_COL(UIC_BG_LIGHT);
 
     // Background gradient picture.
     DGL_Bind(startupLogo);

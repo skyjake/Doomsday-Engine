@@ -33,9 +33,9 @@
 typedef struct polyobj_s {
 DD_BASE_POLYOBJ_ELEMENTS()} polyobj_t;
 
-#define POLYOBJ_SIZE		gx.polyobjSize
+#define POLYOBJ_SIZE        gx.polyobjSize
 
-extern polyobj_t** polyObjs; // List of all poly-objects on the level.
+extern polyobj_t** polyObjs; // List of all poly-objects on the map.
 extern uint numPolyObjs;
 
 // Polyobj system.
