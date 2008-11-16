@@ -893,10 +893,6 @@ int DD_GetInteger(int ddvalue)
         return 0;
     }
 
-    // We have to separately calculate the 35 Hz ticks.
-    if(ddvalue == DD_GAMETIC)
-        return SECONDS_TO_TICKS(gameTime);
-
     if(ddValues[ddvalue].readPtr == NULL)
         return 0;
 
@@ -1076,6 +1072,13 @@ void* DD_GetVariable(int ddvalue)
             break;
         }
         return 0;
+    }
+    // We have to separately calculate the 35 Hz ticks.
+    if(ddvalue == DD_GAMETIC)
+    {
+        static timespan_t       fracTic;
+        fracTic = gameTime * TICSPERSEC;
+        return &fracTic;
     }
     if(ddvalue == DD_OPENRANGE)
         return &openrange;
