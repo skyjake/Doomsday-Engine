@@ -424,13 +424,7 @@ ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
     return 0;
 }
 
-/**
- * Currently reflections cannot specify any conditions when it is
- * appropriate to use them: if a high-resolution texture or a custom patch
- * overrides the texture that the reflection was meant to be used with,
- * nothing is done to react to the situation.
- */
-ded_reflection_t* Def_GetReflection(struct material_s* mat)
+ded_reflection_t* Def_GetReflection(struct material_s* mat, boolean hasExt)
 {
     int                 i;
     ded_reflection_t*   def;
@@ -443,17 +437,16 @@ ded_reflection_t* Def_GetReflection(struct material_s* mat)
                                                     def->materialGroup));
         if(mat == defMat)
         {
-            // It would be great to have a unified system that would
-            // determine whether effects such as decorations and
-            // reflections are allowed for a certain resource...
-            return def;
+            // Is this suitable?
+            if(R_IsAllowedReflection(def, mat, hasExt))
+                return def;
         }
     }
 
     return NULL;
 }
 
-ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat)
+ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat, boolean hasExt)
 {
     int                 i;
     ded_detailtexture_t* def;
@@ -462,17 +455,24 @@ ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat)
     for(i = defs.count.details.num - 1, def = defs.details + i;
         i >= 0; i--, def--)
     {
-        material_t*         defMat;
-
-        defMat = R_GetMaterialByNum(
-            R_MaterialNumForName(def->texture, MG_TEXTURES));
-        if(!(defMat == mat))
-            defMat = R_GetMaterialByNum(
-                R_MaterialNumForName(def->flat, MG_FLATS));
-
-        if(defMat == mat)
+        material_t*         defMat =
+            R_GetMaterialByNum(R_MaterialNumForName(def->materialName1,
+                                                    def->materialGroup1));
+        if(mat == defMat)
         {
-            return def;
+            // Is this sutiable?
+            if(R_IsAllowedDetailTex(def, mat, hasExt))
+                return def;
+        }
+
+        defMat =
+            R_GetMaterialByNum(R_MaterialNumForName(def->materialName2,
+                                                    def->materialGroup2));
+        if(mat == defMat)
+        {
+            // Is this sutiable?
+            if(R_IsAllowedDetailTex(def, mat, hasExt))
+                return def;
         }
     }
 
@@ -887,7 +887,7 @@ void Def_Read(void)
         if(k < 0)
         {
             // It's probably a bias light definition, then?
-            if(!defs.lights[i].level[0])
+            if(!defs.lights[i].uniqueMapID[0])
             {
                 Con_Message("Def_Read: Lights: Undefined state '%s'.\n",
                             defs.lights[i].state);
@@ -1102,8 +1102,15 @@ void Def_PostInit(void)
     {
         ded_detailtexture_t* def = &defs.details[i];
 
-        if(R_MaterialCheckNumForName(def->texture, MG_TEXTURES) ||
-           R_MaterialCheckNumForName(def->flat, MG_FLATS))
+        if(!strnicmp(def->materialName1, "FIRELAV2", 8) ||
+           !strnicmp(def->materialName2, "FIRELAV3", 8) ||
+           !strnicmp(def->materialName2, "FIRELAVA", 8))
+        {
+            int n = 3;
+            n++;
+        }
+        if(R_MaterialCheckNumForName(def->materialName1, def->materialGroup1) ||
+           R_MaterialCheckNumForName(def->materialName2, def->materialGroup2))
         {
             R_CreateDetailTexture(def);
         }

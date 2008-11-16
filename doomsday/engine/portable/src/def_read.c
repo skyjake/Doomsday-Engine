@@ -70,10 +70,10 @@
 
 #define READSTR(X)  if(!ReadString(X, sizeof(X))) { \
                     SetError("Syntax error in string value."); \
-                    retval = false; goto ded_end_read; }
+                    retVal = false; goto ded_end_read; }
 
 #define MISSING_SC_ERROR    SetError("Missing semicolon."); \
-                            retval = false; goto ded_end_read;
+                            retVal = false; goto ded_end_read;
 
 #define CHECKSC     if(source->version <= 5) { ReadToken(); if(!ISTOKEN(";")) { MISSING_SC_ERROR; } }
 
@@ -82,12 +82,12 @@
 
 #define ISLABEL(X)  (!stricmp(label, X))
 
-#define READLABEL   if(!ReadLabel(label)) { retval = false; goto ded_end_read; } \
+#define READLABEL   if(!ReadLabel(label)) { retVal = false; goto ded_end_read; } \
                     if(ISLABEL("}")) break;
 
-#define READLABEL_NOBREAK   if(!ReadLabel(label)) { retval = false; goto ded_end_read; }
+#define READLABEL_NOBREAK   if(!ReadLabel(label)) { retVal = false; goto ded_end_read; }
 
-#define FAILURE     retval = false; goto ded_end_read;
+#define FAILURE     retVal = false; goto ded_end_read;
 #define READBYTE(X) if(!ReadByte(&X)) { FAILURE }
 #define READINT(X)  if(!ReadInt(&X, false)) { FAILURE }
 #define READUINT(X) if(!ReadInt(&X, true)) { FAILURE }
@@ -111,7 +111,7 @@
 #define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
 #define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
-#define RV_END          { SetError2("Unknown label.", label); retval = false; goto ded_end_read; }
+#define RV_END          { SetError2("Unknown label.", label); retVal = false; goto ded_end_read; }
 
 #define RV_XGIPARM(lab, S, I, IP) if(ISLABEL(lab)) { \
                    if(xgClassLinks[l->lineClass].iparm[IP].flagPrefix && \
@@ -124,12 +124,12 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dedsource_s {
-    char   *buffer;
-    char   *pos;
-    boolean atEnd;
-    int     lineNumber;
-    const char *fileName;
-    int     version;            // v6 does not require semicolons.
+    char*           buffer;
+    char*           pos;
+    boolean         atEnd;
+    int             lineNumber;
+    const char*     fileName;
+    int             version; // v6 does not require semicolons.
 } dedsource_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -141,41 +141,42 @@ typedef struct dedsource_s {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // the actual classes are game-side
-extern xgclass_t *xgClassLinks;
+extern xgclass_t* xgClassLinks;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char    dedReadError[512];
+char dedReadError[512];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static dedsource_t sourceStack[MAX_RECUR_DEPTH];
-static dedsource_t *source;     // Points to the current source.
+static dedsource_t* source; // Points to the current source.
 
-static char    token[128];
-static char    unreadToken[128];
+static char token[128];
+static char unreadToken[128];
 
 // CODE --------------------------------------------------------------------
 
-static char *sdup(const char *str)
+static char* sdup(const char* str)
 {
-    char   *newstr;
+    char*               newstr;
 
     if(!str)
         return NULL;
+
     newstr = M_Malloc(strlen(str) + 1);
     strcpy(newstr, str);
     return newstr;
 }
 
-static void SetError(char *str)
+static void SetError(char* str)
 {
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
             str);
 }
 
-static void SetError2(char *str, char *more)
+static void SetError2(char* str, char* more)
 {
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
@@ -188,7 +189,7 @@ static void SetError2(char *str, char *more)
  */
 static int FGetC(void)
 {
-    int     ch = (unsigned char) *source->pos;
+    int                 ch = (unsigned char) *source->pos;
 
     if(ch)
         source->pos++;
@@ -198,6 +199,7 @@ static int FGetC(void)
         source->lineNumber++;
     if(ch == '\r')
         return FGetC();
+
     return ch;
 }
 
@@ -212,6 +214,7 @@ static int FUngetC(int ch)
         source->lineNumber--;
     if(source->pos > source->buffer)
         source->pos--;
+
     return ch;
 }
 
@@ -220,16 +223,17 @@ static int FUngetC(int ch)
  */
 static void SkipComment(void)
 {
-    int     ch = FGetC();
-    boolean seq = false;
+    int                 ch = FGetC();
+    boolean             seq = false;
 
     if(ch == '\n')
-        return;                 // Comment ends right away.
-    if(ch != '>')               // Single-line comment?
+        return; // Comment ends right away.
+
+    if(ch != '>') // Single-line comment?
     {
         while(FGetC() != '\n' && !source->atEnd);
     }
-    else                        // Multiline comment?
+    else // Multiline comment?
     {
         while(!source->atEnd)
         {
@@ -240,6 +244,7 @@ static void SkipComment(void)
                     break;
                 seq = false;
             }
+
             if(ch == '<')
                 seq = true;
         }
@@ -248,8 +253,8 @@ static void SkipComment(void)
 
 static int ReadToken(void)
 {
-    int     ch;
-    char   *out = token;
+    int                 ch;
+    char*               out = token;
 
     // Has a token been unread?
     if(unreadToken[0])
@@ -288,14 +293,14 @@ static int ReadToken(void)
         ch = FGetC();
         *out++ = ch;
     }
-    *(out - 1) = 0;             // End token.
+    *(out - 1) = 0; // End token.
 
     // Put the last read character back in the stream.
     FUngetC(ch);
     return true;
 }
 
-static void UnreadToken(const char *token)
+static void UnreadToken(const char* token)
 {
     // The next time ReadToken() is called, this is returned.
     strcpy(unreadToken, token);
@@ -305,13 +310,13 @@ static void UnreadToken(const char *token)
  * Current pos in the file is at the first ".
  * Does not expand escape sequences, only checks for \".
  *
- * @return          @c true, if successful.
+ * @return              @c true, if successful.
  */
-static int ReadStringEx(char *dest, int maxlen, boolean inside,
+static int ReadStringEx(char* dest, int maxlen, boolean inside,
                         boolean doubleq)
 {
-    char   *ptr = dest;
-    int     ch, esc = false, newl = false;
+    char*               ptr = dest;
+    int                 ch, esc = false, newl = false;
 
     if(!inside)
     {
@@ -319,9 +324,10 @@ static int ReadStringEx(char *dest, int maxlen, boolean inside,
         if(!ISTOKEN("\""))
             return false;
     }
+
     // Start reading the characters.
     ch = FGetC();
-    while(esc || ch != '"')     // The string-end-character.
+    while(esc || ch != '"') // The string-end-character.
     {
         if(source->atEnd)
             return false;
@@ -366,12 +372,14 @@ static int ReadStringEx(char *dest, int maxlen, boolean inside,
         // Read the next character, please.
         ch = FGetC();
     }
+
     // End the string in a null.
     *ptr = 0;
+
     return true;
 }
 
-static int ReadString(char *dest, int maxlen)
+static int ReadString(char* dest, int maxlen)
 {
     return ReadStringEx(dest, maxlen, false, false);
 }
@@ -379,9 +387,9 @@ static int ReadString(char *dest, int maxlen)
 /**
  * Read a string of (pretty much) any length.
  */
-static int ReadAnyString(char **dest)
+static int ReadAnyString(char** dest)
 {
-    char    buffer[0x20000];
+    char                buffer[0x20000];
 
     if(!ReadString(buffer, sizeof(buffer)))
         return false;
@@ -396,12 +404,13 @@ static int ReadAnyString(char **dest)
     // Make a copy.
     *dest = M_Malloc(strlen(buffer) + 1);
     strcpy(*dest, buffer);
+
     return true;
 }
 
-static int ReadNByteVector(unsigned char *dest, int max)
+static int ReadNByteVector(unsigned char* dest, int max)
 {
-    int     i;
+    int                 i;
 
     FINDBEGIN;
     for(i = 0; i < max; ++i)
@@ -416,9 +425,9 @@ static int ReadNByteVector(unsigned char *dest, int max)
 }
 
 /**
- * @return          @c true, if successful.
+ * @return              @c true, if successful.
  */
-static int ReadByte(unsigned char *dest)
+static int ReadByte(unsigned char* dest)
 {
     ReadToken();
     if(ISTOKEN(";"))
@@ -426,14 +435,15 @@ static int ReadByte(unsigned char *dest)
         SetError("Missing integer value.");
         return false;
     }
+
     *dest = strtoul(token, 0, 0);
     return true;
 }
 
 /**
- * @return          @c true, if successful.
+ * @return              @c true, if successful.
  */
-static int ReadInt(int *dest, int unsign)
+static int ReadInt(int* dest, int unsign)
 {
     ReadToken();
     if(ISTOKEN(";"))
@@ -441,14 +451,15 @@ static int ReadInt(int *dest, int unsign)
         SetError("Missing integer value.");
         return false;
     }
+
     *dest = unsign ? strtoul(token, 0, 0) : strtol(token, 0, 0);
     return true;
 }
 
 /**
- * @return          @c true, if successful.
+ * @return              @c true, if successful.
  */
-static int ReadFloat(float *dest)
+static int ReadFloat(float* dest)
 {
     ReadToken();
     if(ISTOKEN(";"))
@@ -456,13 +467,14 @@ static int ReadFloat(float *dest)
         SetError("Missing float value.");
         return false;
     }
+
     *dest = (float) strtod(token, 0);
     return true;
 }
 
-static int ReadFlags(int *dest, const char *prefix)
+static int ReadFlags(int* dest, const char* prefix)
 {
-    char    flag[1024];
+    char                flag[1024];
 
     // By default, no flags are set.
     *dest = 0;
@@ -498,16 +510,17 @@ static int ReadFlags(int *dest, const char *prefix)
         if(!ReadToken())
             break;
 
-        if(!ISTOKEN("|"))       // | is required for multiple flags.
+        if(!ISTOKEN("|")) // | is required for multiple flags.
         {
             UnreadToken(token);
             break;
         }
     }
+
     return true;
 }
 
-static int ReadBlendmode(blendmode_t *dest)
+static int ReadBlendmode(blendmode_t* dest)
 {
     char                flag[1024];
     blendmode_t         bm;
@@ -544,9 +557,9 @@ static int ReadBlendmode(blendmode_t *dest)
 }
 
 /**
- * @return          @c true, if successful.
+ * @return              @c true, if successful.
  */
-static int ReadLabel(char *label)
+static int ReadLabel(char* label)
 {
     strcpy(label, "");
     for(;;)
@@ -557,7 +570,7 @@ static int ReadLabel(char *label)
             SetError("Unexpected end of file.");
             return false;
         }
-        if(ISTOKEN("}"))        // End block.
+        if(ISTOKEN("}")) // End block.
         {
             strcpy(label, token);
             return true;
@@ -569,7 +582,7 @@ static int ReadLabel(char *label)
                 SetError("Label without value.");
                 return false;
             }
-            continue;           // Semicolons are optional in v6.
+            continue; // Semicolons are optional in v6.
         }
         if(ISTOKEN("=") || ISTOKEN("{"))
             break;
@@ -578,12 +591,13 @@ static int ReadLabel(char *label)
             strcat(label, " ");
         strcat(label, token);
     }
+
     return true;
 }
 
-static void DED_Include(char *fileName, directory_t * dir)
+static void DED_Include(char* fileName, directory_t* dir)
 {
-    char    tmp[256], path[256];
+    char                tmp[256], path[256];
 
     M_TranslatePath(fileName, tmp);
     if(!Dir_IsAbsolute(tmp))
@@ -598,7 +612,7 @@ static void DED_Include(char *fileName, directory_t * dir)
     strcpy(token, "");
 }
 
-static void DED_InitReader(char *buffer, const char *fileName)
+static void DED_InitReader(char* buffer, const char* fileName)
 {
     if(source && source - sourceStack >= MAX_RECUR_DEPTH)
     {
@@ -637,12 +651,13 @@ static void DED_CloseReader(void)
 }
 
 /**
- * Return true if the condition passes. The condition token can be a
- * command line option or a game mode.
+ * @param cond          Condition token. Can be a command line option
+ *                      or a game mode.
+ * @return              @c true if the condition passes.
  */
-static boolean DED_CheckCondition(const char *cond, boolean expected)
+static boolean DED_CheckCondition(const char* cond, boolean expected)
 {
-    boolean value = false;
+    boolean             value = false;
 
     if(cond[0] == '-')
     {
@@ -665,41 +680,38 @@ static boolean DED_CheckCondition(const char *cond, boolean expected)
  * @param buffer        The data to be read, must be null-terminated.
  * @param sourceFile    Just FYI.
  */
-/* *INDENT-OFF* */
-static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
+static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 {
-    char            dummy[128];
-    int             dummyInt;
-    int             idx, retval = true;
-    char            label[128], tmp[256];
-    ded_mobj_t     *mo;
-    int             prev_mo_idx = -1; // For "Copy".
-    ded_state_t    *st;
-    int             prev_state_idx = -1; // For "Copy"
-    ded_light_t    *lig;
-    int             prev_ligdef_idx = -1; // For "Copy".
-    ded_model_t    *mdl, *prevmdl = 0;
-    int             prev_modef_idx = -1; // For "Copy".
-    ded_sound_t    *snd;
-    ded_mapinfo_t  *mi;
-    int             prev_mapinfo_idx = -1; // For "Copy".
-    ded_str_t      *tn;
-    ded_value_t    *val;
-    ded_detailtexture_t *dtl;
-    int             prev_dtldef_idx = -1; // For "Copy".
-    ded_ptcgen_t   *gen;
-    int             prev_gendef_idx = -1; // For "Copy".
-    int             prev_decordef_idx = -1; // For "Copy".
-    int             prev_refdef_idx = -1; // For "Copy".
-    ded_finale_t   *fin;
-    ded_linetype_t *l;
-    int             prev_linetype_idx = -1; // For "Copy".
-    ded_sectortype_t *sec;
-    int             prev_sectortype_idx = -1; // For "Copy".
-    int             depth;
-    char           *rootstr = 0, *ptr;
-    int             bCopyNext = false;
-    directory_t     fileDir;
+    char                dummy[128], label[128], tmp[256];
+    int                 dummyInt, idx, retVal = true;
+    ded_mobj_t*         mo;
+    int                 prevMobjDefIdx = -1; // For "Copy".
+    ded_state_t*        st;
+    int                 prevStateDefIdx = -1; // For "Copy"
+    ded_light_t*        lig;
+    int                 prevLightDefIdx = -1; // For "Copy".
+    ded_model_t*        mdl, *prevModel = 0;
+    int                 prevModelDefIdx = -1; // For "Copy".
+    ded_sound_t*        snd;
+    ded_mapinfo_t*      mi;
+    int                 prevMapInfoDefIdx = -1; // For "Copy".
+    ded_str_t*          tn;
+    ded_value_t*        val;
+    ded_detailtexture_t* dtl;
+    int                 prevDetailDefIdx = -1; // For "Copy".
+    ded_ptcgen_t*       gen;
+    int                 prevGenDefIdx = -1; // For "Copy".
+    int                 prevDecorDefIdx = -1; // For "Copy".
+    int                 prevRefDefIdx = -1; // For "Copy".
+    ded_finale_t*       fin;
+    ded_linetype_t*     l;
+    int                 prevLineTypeDefIdx = -1; // For "Copy".
+    ded_sectortype_t*   sec;
+    int                 prevSectorTypeDefIdx = -1; // For "Copy".
+    int                 depth;
+    char*               rootStr = 0, *ptr;
+    int                 bCopyNext = 0;
+    directory_t         fileDir;
 
     // For including other files -- we must know where we are.
     Dir_FileDir(sourceFile, &fileDir);
@@ -833,10 +845,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddMobj(ded, "");
             mo = ded->mobjs + idx;
 
-            if(prev_mo_idx >= 0 && bCopyNext)
+            if(prevMobjDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(mo, ded->mobjs + prev_mo_idx, sizeof(*mo));
+                memcpy(mo, ded->mobjs + prevMobjDefIdx, sizeof(*mo));
             }
 
             FINDBEGIN;
@@ -878,7 +890,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prev_mo_idx = idx;
+            prevMobjDefIdx = idx;
         }
 
         if(ISTOKEN("State"))
@@ -887,10 +899,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddState(ded, "");
             st = ded->states + idx;
 
-            if(prev_state_idx >= 0 && bCopyNext)
+            if(prevStateDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(st, ded->states + prev_state_idx, sizeof(*st));
+                memcpy(st, ded->states + prevStateDefIdx, sizeof(*st));
             }
 
             FINDBEGIN;
@@ -911,7 +923,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prev_state_idx = idx;
+            prevStateDefIdx = idx;
         }
 
         if(ISTOKEN("Sprite"))
@@ -933,17 +945,17 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             // A new light.
             idx = DED_AddLight(ded, "");
             lig = ded->lights + idx;
-            if(prev_ligdef_idx >= 0 && bCopyNext)
+            if(prevLightDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(lig, ded->lights + prev_ligdef_idx, sizeof(*lig));
+                memcpy(lig, ded->lights + prevLightDefIdx, sizeof(*lig));
             }
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
                 RV_STR("State", lig->state)
-                RV_STR("Map", lig->level)
+                RV_STR("Map", lig->uniqueMapID)
                 RV_FLT("X Offset", lig->offset[VX])
                 RV_FLT("Y Offset", lig->offset[VY])
                 RV_VEC("Origin", lig->offset, 3)
@@ -978,7 +990,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prev_ligdef_idx = idx;
+            prevLightDefIdx = idx;
         }
 
         if(ISTOKEN("Model"))
@@ -989,11 +1001,11 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddModel(ded, "");
             mdl = ded->models + idx;
             sub = 0;
-            if(prev_modef_idx >= 0)
+            if(prevModelDefIdx >= 0)
             {
-                prevmdl = ded->models + prev_modef_idx;
+                prevModel = ded->models + prevModelDefIdx;
                 // Should we copy the previous definition?
-                if(bCopyNext) memcpy(mdl, prevmdl, sizeof(*mdl));
+                if(bCopyNext) memcpy(mdl, prevModel, sizeof(*mdl));
             }
 
             FINDBEGIN;
@@ -1060,30 +1072,30 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 
             // Some post-processing. No point in doing this in a fancy way,
             // the whole reader will be rewritten sooner or later...
-            if(prevmdl)
+            if(prevModel)
             {
                 int                 i;
 
                 if(!strcmp(mdl->state, "-"))
-                    strcpy(mdl->state, prevmdl->state);
+                    strcpy(mdl->state, prevModel->state);
                 if(!strcmp(mdl->sprite.id, "-"))
-                    strcpy(mdl->sprite.id, prevmdl->sprite.id);
-                //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevmdl->group);
-                //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevmdl->flags);
+                    strcpy(mdl->sprite.id, prevModel->sprite.id);
+                //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevModel->group);
+                //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevModel->flags);
 
                 for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                 {
                     if(!strcmp(mdl->sub[i].filename.path, "-"))
-                        strcpy(mdl->sub[i].filename.path, prevmdl->sub[i].filename.path);
+                        strcpy(mdl->sub[i].filename.path, prevModel->sub[i].filename.path);
 
                     if(!strcmp(mdl->sub[i].frame, "-"))
-                        strcpy(mdl->sub[i].frame, prevmdl->sub[i].frame);
+                        strcpy(mdl->sub[i].frame, prevModel->sub[i].frame);
 
-                    //if(!strcmp(mdl->sub[i].flags, "-"))           strcpy(mdl->sub[i].flags,           prevmdl->sub[i].flags);
+                    //if(!strcmp(mdl->sub[i].flags, "-"))           strcpy(mdl->sub[i].flags,           prevModel->sub[i].flags);
                 }
             }
 
-            prev_modef_idx = idx;
+            prevModelDefIdx = idx;
         }
 
         if(ISTOKEN("Sound"))
@@ -1138,12 +1150,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 
             idx = DED_AddMapInfo(ded, "");
             mi = ded->mapInfo + idx;
-            if(prev_mapinfo_idx >= 0 && bCopyNext)
+            if(prevMapInfoDefIdx >= 0 && bCopyNext)
             {
                 int                 m;
 
                 // Should we copy the previous definition?
-                memcpy(mi, ded->mapInfo + prev_mapinfo_idx, sizeof(*mi));
+                memcpy(mi, ded->mapInfo + prevMapInfoDefIdx, sizeof(*mi));
                 mi->execute = sdup(mi->execute);
                 for(m = 0; m < NUM_SKY_MODELS; ++m)
                 {
@@ -1151,7 +1163,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         = sdup(mi->skyModels[m].execute);
                 }
             }
-            prev_mapinfo_idx = idx;
+            prevMapInfoDefIdx = idx;
             sub = 0;
 
             FINDBEGIN;
@@ -1197,7 +1209,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     if(sub == NUM_SKY_MODELS)
                     {   // Too many!
                         SetError("Too many sky models.");
-                        retval = false;
+                        retVal = false;
                         goto ded_end_read;
                     }
                     sub++;
@@ -1249,7 +1261,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     {
                         M_Free(temp);
                         SetError("Syntax error in text value.");
-                        retval = false;
+                        retVal = false;
                         goto ded_end_read;
                     }
                 }
@@ -1301,7 +1313,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         if(ISTOKEN("Values")) // String Values
         {
             depth = 0;
-            rootstr = M_Calloc(1); // A null string.
+            rootStr = M_Calloc(1); // A null string.
 
             FINDBEGIN;
             for(;;)
@@ -1311,7 +1323,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(strchr(label, '|'))
                 {
                     SetError("Value labels can't include | characters (ASCII 124).");
-                    retval = false;
+                    retVal = false;
                     goto ded_end_read;
                 }
 
@@ -1331,25 +1343,25 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         val->text = temp;
 
                         // Compose the identifier.
-                        val->id = M_Malloc(strlen(rootstr) + strlen(label) + 1);
-                        strcpy(val->id, rootstr);
+                        val->id = M_Malloc(strlen(rootStr) + strlen(label) + 1);
+                        strcpy(val->id, rootStr);
                         strcat(val->id, label);
                     }
                     else
                     {
                         M_Free(temp);
                         SetError("Syntax error in string value.");
-                        retval = false;
+                        retVal = false;
                         goto ded_end_read;
                     }
                 }
                 else if(ISTOKEN("{"))
                 {
                     // Begin a new group.
-                    rootstr = M_Realloc(rootstr, strlen(rootstr)
+                    rootStr = M_Realloc(rootStr, strlen(rootStr)
                         + strlen(label) + 2);
-                    strcat(rootstr, label);
-                    strcat(rootstr, "|");   // The separator.
+                    strcat(rootStr, label);
+                    strcat(rootStr, "|");   // The separator.
                     // Increase group level.
                     depth++;
                     continue;
@@ -1362,54 +1374,67 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     if(!depth)
                         break;   // End root depth.
 
-                    // Decrease level and modify rootstr.
+                    // Decrease level and modify rootStr.
                     depth--;
-                    len = strlen(rootstr);
-                    rootstr[len-1] = 0; // Remove last |.
-                    ptr = strrchr(rootstr, '|');
+                    len = strlen(rootStr);
+                    rootStr[len-1] = 0; // Remove last |.
+                    ptr = strrchr(rootStr, '|');
                     if(ptr)
                     {
                         ptr[1] = 0;
-                        rootstr = M_Realloc(rootstr, strlen(rootstr) + 1);
+                        rootStr = M_Realloc(rootStr, strlen(rootStr) + 1);
                     }
                     else
                     {
                         // Back to level zero.
-                        rootstr = M_Realloc(rootstr, 1);
-                        *rootstr = 0;
+                        rootStr = M_Realloc(rootStr, 1);
+                        *rootStr = 0;
                     }
                 }
                 else
                 {
                     // Only the above characters are allowed.
                     SetError("Illegal token.");
-                    retval = false;
+                    retVal = false;
                     goto ded_end_read;
                 }
                 CHECKSC;
             }
-            M_Free(rootstr);
-            rootstr = 0;
+            M_Free(rootStr);
+            rootStr = 0;
         }
 
         if(ISTOKEN("Detail")) // Detail Texture
         {
             idx = DED_AddDetail(ded, "");
             dtl = ded->details + idx;
-            if(prev_dtldef_idx >= 0 && bCopyNext)
+            if(prevDetailDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(dtl, ded->details + prev_dtldef_idx, sizeof(*dtl));
+                memcpy(dtl, ded->details + prevDetailDefIdx, sizeof(*dtl));
             }
 
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("Texture", dtl->texture)
-                RV_STR("Wall", dtl->texture) // Alias
-                RV_STR("Flat", dtl->flat)
-                if(ISLABEL("Lump"))
+                RV_FLAGS("Flags", dtl->flags, "dtf_")
+                if(ISLABEL("Texture"))
+                {
+                    READSTR(dtl->materialName1)
+                    dtl->materialGroup1 = MG_TEXTURES;
+                }
+                else if(ISLABEL("Wall")) // Alias
+                {
+                    READSTR(dtl->materialName1)
+                    dtl->materialGroup1 = MG_TEXTURES;
+                }
+                else if(ISLABEL("Flat"))
+                {
+                    READSTR(dtl->materialName2)
+                    dtl->materialGroup2 = MG_FLATS;
+                }
+                else if(ISLABEL("Lump"))
                 {
                     READSTR(dtl->detailLump.path)
                     dtl->isExternal = false;
@@ -1426,7 +1451,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prev_dtldef_idx = idx;
+            prevDetailDefIdx = idx;
         }
 
         if(ISTOKEN("Reflection")) // Surface reflection
@@ -1436,16 +1461,17 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddReflection(ded);
             ref = &ded->reflections[idx];
 
-            if(prev_refdef_idx >= 0 && bCopyNext)
+            if(prevRefDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(ref, ded->reflections + prev_refdef_idx, sizeof(*ref));
+                memcpy(ref, ded->reflections + prevRefDefIdx, sizeof(*ref));
             }
 
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
+                RV_FLAGS("Flags", ref->flags, "rff_")
                 RV_FLT("Shininess", ref->shininess)
                 RV_VEC("Min color", ref->minColor, 3)
                 RV_BLENDMODE("Blending mode", ref->blendMode)
@@ -1466,7 +1492,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else RV_END
                 CHECKSC;
             }
-            prev_refdef_idx = idx;
+            prevRefDefIdx = idx;
         }
 
         if(ISTOKEN("Generator")) // Particle Generator
@@ -1476,17 +1502,17 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddPtcGen(ded, "");
             gen = ded->ptcGens + idx;
             sub = 0;
-            if(prev_gendef_idx >= 0 && bCopyNext)
+            if(prevGenDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(gen, ded->ptcGens + prev_gendef_idx, sizeof(*gen));
+                memcpy(gen, ded->ptcGens + prevGenDefIdx, sizeof(*gen));
 
                 // Duplicate the stages array.
-                if(ded->ptcGens[prev_gendef_idx].stages)
+                if(ded->ptcGens[prevGenDefIdx].stages)
                 {
                     gen->stages = M_Malloc(sizeof(ded_ptcstage_t) *
                                            gen->stageCount.max);
-                    memcpy(gen->stages, ded->ptcGens[prev_gendef_idx].stages,
+                    memcpy(gen->stages, ded->ptcGens[prevGenDefIdx].stages,
                            sizeof(ded_ptcstage_t) * gen->stageCount.num);
                 }
             }
@@ -1576,7 +1602,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else RV_END
                 CHECKSC;
             }
-            prev_gendef_idx = idx;
+            prevGenDefIdx = idx;
         }
 
         if(ISTOKEN("Finale") || ISTOKEN("InFine"))
@@ -1633,10 +1659,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddDecoration(ded);
             decor = &ded->decorations[idx];
             sub = 0;
-            if(prev_decordef_idx >= 0 && bCopyNext)
+            if(prevDecorDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(decor, ded->decorations + prev_decordef_idx,
+                memcpy(decor, ded->decorations + prevDecorDefIdx,
                        sizeof(*decor));
             }
 
@@ -1674,7 +1700,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     if(sub == DED_DECOR_NUM_MODELS)
                     {
                         SetError("Too many models in decoration.");
-                        retval = false;
+                        retVal = false;
                         goto ded_end_read;
                     }
 
@@ -1717,7 +1743,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     if(sub == DED_DECOR_NUM_LIGHTS)
                     {
                         SetError("Too many lights in decoration.");
-                        retval = false;
+                        retVal = false;
                         goto ded_end_read;
                     }
 
@@ -1762,7 +1788,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else RV_END
                 CHECKSC;
             }
-            prev_decordef_idx = idx;
+            prevDecorDefIdx = idx;
         }
 
         if(ISTOKEN("Group"))
@@ -1862,10 +1888,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddLineType(ded, 0);
             l = ded->lineTypes + idx;
 
-            if(prev_linetype_idx >= 0 && bCopyNext)
+            if(prevLineTypeDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(l, ded->lineTypes + prev_linetype_idx, sizeof(*l));
+                memcpy(l, ded->lineTypes + prevLineTypeDefIdx, sizeof(*l));
             }
 
             FINDBEGIN;
@@ -2018,7 +2044,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prev_linetype_idx = idx;
+            prevLineTypeDefIdx = idx;
         }
 
         if(ISTOKEN("Sector"))   // Sector Type
@@ -2027,10 +2053,10 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddSectorType(ded, 0);
             sec = ded->sectorTypes + idx;
 
-            if(prev_sectortype_idx >= 0 && bCopyNext)
+            if(prevSectorTypeDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(sec, ded->sectorTypes + prev_sectortype_idx,
+                memcpy(sec, ded->sectorTypes + prevSectorTypeDefIdx,
                        sizeof(*sec));
             }
 
@@ -2111,18 +2137,18 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prev_sectortype_idx = idx;
+            prevSectorTypeDefIdx = idx;
         }
         bCopyNext = false;
     }
 
 ded_end_read:
-    M_Free(rootstr);
+    M_Free(rootStr);
 
     // Free the source stack entry we were using.
     DED_CloseReader();
 
-    return retval;
+    return retVal;
 }
 /* *INDENT-ON* */
 

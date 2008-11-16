@@ -48,650 +48,653 @@ extern          "C" {
 
 #define DED_MAX_SUB_MODELS  8
 
-    typedef char    ded_stringid_t[DED_STRINGID_LEN + 1];
-    typedef ded_stringid_t ded_string_t;
-    typedef ded_stringid_t ded_mobjid_t;
-    typedef ded_stringid_t ded_stateid_t;
-    typedef ded_stringid_t ded_soundid_t;
-    typedef ded_stringid_t ded_musicid_t;
-    typedef ded_stringid_t ded_funcid_t;
-    typedef char    ded_func_t[DED_FUNC_LEN + 1];
-    typedef int     ded_flags_t;
-    typedef char   *ded_anystring_t;
+typedef char ded_stringid_t[DED_STRINGID_LEN + 1];
+typedef ded_stringid_t ded_string_t;
+typedef ded_stringid_t ded_mobjid_t;
+typedef ded_stringid_t ded_stateid_t;
+typedef ded_stringid_t ded_soundid_t;
+typedef ded_stringid_t ded_musicid_t;
+typedef ded_stringid_t ded_funcid_t;
+typedef char ded_func_t[DED_FUNC_LEN + 1];
+typedef int ded_flags_t;
+typedef char* ded_anystring_t;
 
-    typedef struct ded_count_s {
-        int             num, max;
-    } ded_count_t;
+typedef struct ded_count_s {
+    int             num, max;
+} ded_count_t;
 
-    typedef struct {
-        char            path[DED_PATH_LEN + 1];
-    } ded_path_t;
+typedef struct {
+    char            path[DED_PATH_LEN + 1];
+} ded_path_t;
 
-    typedef struct {
-        char            id[DED_SPRITEID_LEN + 1];
-    } ded_sprid_t;
+typedef struct {
+    char            id[DED_SPRITEID_LEN + 1];
+} ded_sprid_t;
 
-    typedef struct {
-        char            str[DED_STRINGID_LEN + 1];
-    } ded_str_t;
+typedef struct {
+    char            str[DED_STRINGID_LEN + 1];
+} ded_str_t;
 
-    typedef struct {
-        ded_flags_t     id; // ID of this property
-        ded_flags_t     flags;
-        ded_string_t    name;
-        ded_string_t    flagPrefix;
-        int             map;
-    } ded_xgclass_property_t;
+typedef struct {
+    ded_flags_t     id; // ID of this property
+    ded_flags_t     flags;
+    ded_string_t    name;
+    ded_string_t    flagPrefix;
+    int             map;
+} ded_xgclass_property_t;
 
-    typedef struct {
-        ded_stringid_t  id;
-        ded_string_t    name;
-        ded_count_t     propertiesCount;
-        ded_xgclass_property_t *properties;
-        // The rest of the properties are retrieved at runtime
-        // by querying the game for the callbacks for the
-        // classes by "name";
-        int (C_DECL *doFunc)();
-        void (*initFunc)(linedef_t *line);
-        int             traverse;
-        int             travRef;
-        int             travData;
-        int             evTypeFlags;
-    } ded_xgclass_t;
+typedef struct {
+    ded_stringid_t  id;
+    ded_string_t    name;
+    ded_count_t     propertiesCount;
+    ded_xgclass_property_t* properties;
+    // The rest of the properties are retrieved at runtime
+    // by querying the game for the callbacks for the
+    // classes by "name";
+    int (C_DECL *doFunc)();
+    void (*initFunc)(linedef_t* line);
+    int             traverse;
+    int             travRef;
+    int             travData;
+    int             evTypeFlags;
+} ded_xgclass_t;
 
-    typedef struct {
-        ded_stringid_t  id;
-        ded_string_t    text;
-        int             value;
-    } ded_flag_t;
+typedef struct {
+    ded_stringid_t  id;
+    ded_string_t    text;
+    int             value;
+} ded_flag_t;
 
-    typedef struct {
-        ded_mobjid_t    id;
-        int             doomedNum;
-        ded_string_t    name;
+typedef struct {
+    ded_mobjid_t    id;
+    int             doomedNum;
+    ded_string_t    name;
 
-        ded_stateid_t   spawnState;
-        ded_stateid_t   seeState;
-        ded_stateid_t   painState;
-        ded_stateid_t   meleeState;
-        ded_stateid_t   missileState;
-        ded_stateid_t   crashState;
-        ded_stateid_t   deathState;
-        ded_stateid_t   xDeathState;
-        ded_stateid_t   raiseState;
+    ded_stateid_t   spawnState;
+    ded_stateid_t   seeState;
+    ded_stateid_t   painState;
+    ded_stateid_t   meleeState;
+    ded_stateid_t   missileState;
+    ded_stateid_t   crashState;
+    ded_stateid_t   deathState;
+    ded_stateid_t   xDeathState;
+    ded_stateid_t   raiseState;
 
-        ded_soundid_t   seeSound;
-        ded_soundid_t   attackSound;
-        ded_soundid_t   painSound;
-        ded_soundid_t   deathSound;
-        ded_soundid_t   activeSound;
+    ded_soundid_t   seeSound;
+    ded_soundid_t   attackSound;
+    ded_soundid_t   painSound;
+    ded_soundid_t   deathSound;
+    ded_soundid_t   activeSound;
 
-        int             reactionTime;
-        int             painChance;
-        int             spawnHealth;
-        float           speed;
-        float           radius;
-        float           height;
-        int             mass;
-        int             damage;
-        ded_flags_t     flags[NUM_MOBJ_FLAGS];
-        int             misc[NUM_MOBJ_MISC];
-    } ded_mobj_t;
+    int             reactionTime;
+    int             painChance;
+    int             spawnHealth;
+    float           speed;
+    float           radius;
+    float           height;
+    int             mass;
+    int             damage;
+    ded_flags_t     flags[NUM_MOBJ_FLAGS];
+    int             misc[NUM_MOBJ_MISC];
+} ded_mobj_t;
 
-    typedef struct {
-        ded_stateid_t   id; // ID of this state.
-        ded_sprid_t     sprite;
-        ded_flags_t     flags;
-        int             frame;
-        int             tics;
-        ded_funcid_t    action;
-        ded_stateid_t   nextState;
-        int             misc[NUM_STATE_MISC];
-        ded_anystring_t execute; // Console command.
-    } ded_state_t;
+typedef struct {
+    ded_stateid_t   id; // ID of this state.
+    ded_sprid_t     sprite;
+    ded_flags_t     flags;
+    int             frame;
+    int             tics;
+    ded_funcid_t    action;
+    ded_stateid_t   nextState;
+    int             misc[NUM_STATE_MISC];
+    ded_anystring_t execute; // Console command.
+} ded_state_t;
 
-    typedef struct ded_lightmap_s {
-        ded_stringid_t  id;
-        unsigned int    tex; // Runtime
-    } ded_lightmap_t;
+typedef struct ded_lightmap_s {
+    ded_stringid_t  id;
+    unsigned int    tex; // Runtime
+} ded_lightmap_t;
 
-    typedef struct ded_flaremap_s {
-        ded_stringid_t  id;
-        unsigned int    tex; // Runtime
-        boolean         custom; // If true tex = custom flare else flaretexname
-        boolean         disabled; /* As zero = automatic and flare ids
-                                     are unsigned we need an extra flag
-                                     to indicate when id == "-" */
-    } ded_flaremap_t;
+typedef struct ded_flaremap_s {
+    ded_stringid_t  id;
+    unsigned int    tex; // Runtime
+    boolean         custom; // If true tex = custom flare else flaretexname
+    boolean         disabled; /* As zero = automatic and flare ids
+                                 are unsigned we need an extra flag
+                                 to indicate when id == "-" */
+} ded_flaremap_t;
 
-    typedef struct {
-        ded_stateid_t   state;
-        char            level[64];
-        float           offset[3]; /* Origin offset in world coords
-                                      Zero means automatic */
-        float           size; // Zero: automatic
-        float           color[3]; // Red Green Blue (0,1)
-        float           lightLevel[2]; // Min/max lightlevel for bias
-        ded_flags_t     flags;
-        ded_lightmap_t  up, down, sides;
-        ded_flaremap_t  flare;
-        float           haloRadius; // Halo radius (zero = no halo).
-    } ded_light_t;
+typedef struct {
+    ded_stateid_t   state;
+    char            uniqueMapID[64];
+    float           offset[3]; /* Origin offset in world coords
+                                  Zero means automatic */
+    float           size; // Zero: automatic
+    float           color[3]; // Red Green Blue (0,1)
+    float           lightLevel[2]; // Min/max lightlevel for bias
+    ded_flags_t     flags;
+    ded_lightmap_t  up, down, sides;
+    ded_flaremap_t  flare;
+    float           haloRadius; // Halo radius (zero = no halo).
+} ded_light_t;
 
-    typedef struct {
-        ded_path_t      filename;
-        ded_path_t      skinFilename; // Optional; override model's skin.
-        ded_string_t    frame;
-        int             frameRange;
-        ded_flags_t     flags; // ASCII string of the flags.
-        int             skin;
-        int             skinRange;
-        float           offset[3]; // Offset XYZ within model.
-        float           alpha;
-        float           parm; // Custom parameter.
-        unsigned char   selSkinBits[2]; // Mask and offset.
-        unsigned char   selSkins[8];
-        ded_string_t    shinySkin;
-        float           shiny;
-        float           shinyColor[3];
-        float           shinyReact;
-        blendmode_t     blendMode; // bm_*
-    } ded_submodel_t;
+typedef struct {
+    ded_path_t      filename;
+    ded_path_t      skinFilename; // Optional; override model's skin.
+    ded_string_t    frame;
+    int             frameRange;
+    ded_flags_t     flags; // ASCII string of the flags.
+    int             skin;
+    int             skinRange;
+    float           offset[3]; // Offset XYZ within model.
+    float           alpha;
+    float           parm; // Custom parameter.
+    unsigned char   selSkinBits[2]; // Mask and offset.
+    unsigned char   selSkins[8];
+    ded_string_t    shinySkin;
+    float           shiny;
+    float           shinyColor[3];
+    float           shinyReact;
+    blendmode_t     blendMode; // bm_*
+} ded_submodel_t;
 
-    typedef struct {
-        ded_stringid_t  id; // Optional identifier for the definition.
-        ded_stateid_t   state;
-        int             off;
-        ded_sprid_t     sprite; // Only used by autoscale.
-        int             spriteFrame; // Only used by autoscale.
-        ded_flags_t     group;
-        int             selector;
-        ded_flags_t     flags;
-        float           interMark;
-        float           interRange[2]; // 0-1 by default.
-        int             skinTics; // Tics per skin in range.
-        float           scale[3]; // Scale XYZ
-        float           resize;
-        float           offset[3]; // Offset XYZ
-        float           shadowRadius; // Radius for shadow (0=auto).
-        ded_submodel_t  sub[DED_MAX_SUB_MODELS];
-    } ded_model_t;
+typedef struct {
+    ded_stringid_t  id; // Optional identifier for the definition.
+    ded_stateid_t   state;
+    int             off;
+    ded_sprid_t     sprite; // Only used by autoscale.
+    int             spriteFrame; // Only used by autoscale.
+    ded_flags_t     group;
+    int             selector;
+    ded_flags_t     flags;
+    float           interMark;
+    float           interRange[2]; // 0-1 by default.
+    int             skinTics; // Tics per skin in range.
+    float           scale[3]; // Scale XYZ
+    float           resize;
+    float           offset[3]; // Offset XYZ
+    float           shadowRadius; // Radius for shadow (0=auto).
+    ded_submodel_t  sub[DED_MAX_SUB_MODELS];
+} ded_model_t;
 
-    typedef struct {
-        ded_soundid_t   id; // ID of this sound, refered to by others.
-        ded_string_t    lumpName; /* Actual lump name of the sound
-                                     ("DS" not included). */
-        ded_string_t    name; // A tag name for the sound.
-        ded_soundid_t   link; // Link to another sound.
-        int             linkPitch;
-        int             linkVolume;
-        int             priority; // Priority classification.
-        int             channels; // Max number of channels to occupy.
-        int             group; // Exclusion group.
-        ded_flags_t     flags; // Flags (like chg_pitch).
-        ded_path_t      ext; // External sound file (WAV).
-    } ded_sound_t;
+typedef struct {
+    ded_soundid_t   id; // ID of this sound, refered to by others.
+    ded_string_t    lumpName; /* Actual lump name of the sound
+                                 ("DS" not included). */
+    ded_string_t    name; // A tag name for the sound.
+    ded_soundid_t   link; // Link to another sound.
+    int             linkPitch;
+    int             linkVolume;
+    int             priority; // Priority classification.
+    int             channels; // Max number of channels to occupy.
+    int             group; // Exclusion group.
+    ded_flags_t     flags; // Flags (like chg_pitch).
+    ded_path_t      ext; // External sound file (WAV).
+} ded_sound_t;
 
-    typedef struct {
-        ded_musicid_t   id; // ID of this piece of music.
-        ded_string_t    lumpName; // Lump name.
-        ded_path_t      path; // External file (not a normal MUS file).
-        int             cdTrack; // 0 = no track.
-    } ded_music_t;
+typedef struct {
+    ded_musicid_t   id; // ID of this piece of music.
+    ded_string_t    lumpName; // Lump name.
+    ded_path_t      path; // External file (not a normal MUS file).
+    int             cdTrack; // 0 = no track.
+} ded_music_t;
 
-    typedef struct {
-        ded_flags_t     flags;
-        ded_string_t    texture;
-        float           offset;
-        float           colorLimit;
-    } ded_skylayer_t;
+typedef struct {
+    ded_flags_t     flags;
+    ded_string_t    texture;
+    float           offset;
+    float           colorLimit;
+} ded_skylayer_t;
 
-    typedef struct ded_skymodel_s {
-        ded_stringid_t  id;
-        int             layer; // Defaults to -1.
-        float           frameInterval; // Seconds per frame.
-        float           yaw;
-        float           yawSpeed; // Angles per second.
-        float           coordFactor[3];
-        float           rotate[2];
-        ded_anystring_t execute; // Executed on every frame change.
-        float           color[4]; // RGBA
-    } ded_skymodel_t;
+typedef struct ded_skymodel_s {
+    ded_stringid_t  id;
+    int             layer; // Defaults to -1.
+    float           frameInterval; // Seconds per frame.
+    float           yaw;
+    float           yawSpeed; // Angles per second.
+    float           coordFactor[3];
+    float           rotate[2];
+    ded_anystring_t execute; // Executed on every frame change.
+    float           color[4]; // RGBA
+} ded_skymodel_t;
 
 #define NUM_SKY_LAYERS      2
 #define NUM_SKY_MODELS      32
 
-    typedef struct ded_mapinfo_s {
-        ded_stringid_t  id; // ID of the map (e.g. E2M3 or MAP21).
-        char            name[64]; // Name of the map.
-        ded_string_t    author; // Author of the map.
-        ded_flags_t     flags; // Flags.
-        ded_musicid_t   music; // Music to play.
-        float           parTime; // Par time, in seconds.
-        float           fogColor[3]; // Fog color (RGB).
-        float           fogStart;
-        float           fogEnd;
-        float           fogDensity;
-        float           ambient; // Ambient light level.
-        float           gravity; // 1 = normal.
-        float           skyHeight;
-        float           horizonOffset;
-        float           skyColor[3]; // Color of sky-lit sectors.
-        ded_skylayer_t  skyLayers[NUM_SKY_LAYERS];
-        ded_skymodel_t  skyModels[NUM_SKY_MODELS];
-        ded_anystring_t execute;   /* Executed during map setup
-                                      (savegames, too). */
-    } ded_mapinfo_t;
+typedef struct ded_mapinfo_s {
+    ded_stringid_t  id; // ID of the map (e.g. E2M3 or MAP21).
+    char            name[64]; // Name of the map.
+    ded_string_t    author; // Author of the map.
+    ded_flags_t     flags; // Flags.
+    ded_musicid_t   music; // Music to play.
+    float           parTime; // Par time, in seconds.
+    float           fogColor[3]; // Fog color (RGB).
+    float           fogStart;
+    float           fogEnd;
+    float           fogDensity;
+    float           ambient; // Ambient light level.
+    float           gravity; // 1 = normal.
+    float           skyHeight;
+    float           horizonOffset;
+    float           skyColor[3]; // Color of sky-lit sectors.
+    ded_skylayer_t  skyLayers[NUM_SKY_LAYERS];
+    ded_skymodel_t  skyModels[NUM_SKY_MODELS];
+    ded_anystring_t execute; // Executed during map setup (savegames, too).
+} ded_mapinfo_t;
 
-    typedef struct {
-        ded_stringid_t  id;
-        char           *text;
-    } ded_text_t;
+typedef struct {
+    ded_stringid_t  id;
+    char*           text;
+} ded_text_t;
 
-    typedef struct {
-        ded_stringid_t  id;
-        ded_count_t     texCount;
-        ded_str_t      *textures;
-        ded_count_t     flatCount;
-        ded_str_t      *flats;
-    } ded_tenviron_t;
+typedef struct {
+    ded_stringid_t  id;
+    ded_count_t     texCount;
+    ded_str_t*      textures;
+    ded_count_t     flatCount;
+    ded_str_t*      flats;
+} ded_tenviron_t;
 
-    typedef struct {
-        char           *id;
-        char           *text;
-    } ded_value_t;
+typedef struct {
+    char*           id;
+    char*           text;
+} ded_value_t;
 
-    typedef struct {
-        ded_stringid_t  id;
-        ded_stringid_t  before;
-        ded_stringid_t  after;
-        char           *script;
-    } ded_finale_t;
+typedef struct {
+    ded_stringid_t  id;
+    ded_stringid_t  before;
+    ded_stringid_t  after;
+    char*           script;
+} ded_finale_t;
 
-    typedef struct {
-        int             id;
-        char            comment[64];
-        ded_flags_t     flags[3];
-        ded_flags_t     lineClass;
-        ded_flags_t     actType;
-        int             actCount;
-        float           actTime;
-        int             actTag;
-        int             aparm[9];
-        //ded_stringid_t    aparm_str[3];   // aparms 4, 6, 9
-        ded_stringid_t  aparm9;
-        float           tickerStart;
-        float           tickerEnd;
-        int             tickerInterval;
-        ded_soundid_t   actSound;
-        ded_soundid_t   deactSound;
-        int             evChain;
-        int             actChain;
-        int             deactChain;
-        int             actLineType;
-        int             deactLineType;
-        ded_flags_t     wallSection;
-        ded_stringid_t  actMaterial;
-        ded_stringid_t  deactMaterial;
-        char            actMsg[128];
-        char            deactMsg[128];
-        float           materialMoveAngle;
-        float           materialMoveSpeed;
-        int             iparm[20];
-        char            iparmStr[20][64];
-        float           fparm[20];
-        char            sparm[5][128];
-    } ded_linetype_t;
+typedef struct {
+    int             id;
+    char            comment[64];
+    ded_flags_t     flags[3];
+    ded_flags_t     lineClass;
+    ded_flags_t     actType;
+    int             actCount;
+    float           actTime;
+    int             actTag;
+    int             aparm[9];
+    //ded_stringid_t    aparm_str[3];   // aparms 4, 6, 9
+    ded_stringid_t  aparm9;
+    float           tickerStart;
+    float           tickerEnd;
+    int             tickerInterval;
+    ded_soundid_t   actSound;
+    ded_soundid_t   deactSound;
+    int             evChain;
+    int             actChain;
+    int             deactChain;
+    int             actLineType;
+    int             deactLineType;
+    ded_flags_t     wallSection;
+    ded_stringid_t  actMaterial;
+    ded_stringid_t  deactMaterial;
+    char            actMsg[128];
+    char            deactMsg[128];
+    float           materialMoveAngle;
+    float           materialMoveSpeed;
+    int             iparm[20];
+    char            iparmStr[20][64];
+    float           fparm[20];
+    char            sparm[5][128];
+} ded_linetype_t;
 
-    typedef struct {
-        int             id;
-        char            comment[64];
-        ded_flags_t     flags;
-        int             actTag;
-        int             chain[5];
-        ded_flags_t     chainFlags[5];
-        float           start[5];
-        float           end[5];
-        float           interval[5][2];
-        int             count[5];
-        ded_soundid_t   ambientSound;
-        float           soundInterval[2]; // min,max
-        float           materialMoveAngle[2]; // floor, ceil
-        float           materialMoveSpeed[2]; // floor, ceil
-        float           windAngle;
-        float           windSpeed;
-        float           verticalWind;
-        float           gravity;
-        float           friction;
-        ded_func_t      lightFunc;
-        int             lightInterval[2];
-        ded_func_t      colFunc[3]; // RGB
-        int             colInterval[3][2];
-        ded_func_t      floorFunc;
-        float           floorMul, floorOff;
-        int             floorInterval[2];
-        ded_func_t      ceilFunc;
-        float           ceilMul, ceilOff;
-        int             ceilInterval[2];
-    } ded_sectortype_t;
+typedef struct {
+    int             id;
+    char            comment[64];
+    ded_flags_t     flags;
+    int             actTag;
+    int             chain[5];
+    ded_flags_t     chainFlags[5];
+    float           start[5];
+    float           end[5];
+    float           interval[5][2];
+    int             count[5];
+    ded_soundid_t   ambientSound;
+    float           soundInterval[2]; // min,max
+    float           materialMoveAngle[2]; // floor, ceil
+    float           materialMoveSpeed[2]; // floor, ceil
+    float           windAngle;
+    float           windSpeed;
+    float           verticalWind;
+    float           gravity;
+    float           friction;
+    ded_func_t      lightFunc;
+    int             lightInterval[2];
+    ded_func_t      colFunc[3]; // RGB
+    int             colInterval[3][2];
+    ded_func_t      floorFunc;
+    float           floorMul, floorOff;
+    int             floorInterval[2];
+    ded_func_t      ceilFunc;
+    float           ceilMul, ceilOff;
+    int             ceilInterval[2];
+} ded_sectortype_t;
 
-    typedef struct {
-        ded_string_t    texture; // Name of a texture.
-        ded_string_t    flat; // Name of a flat.
-        ded_path_t      detailLump; // The lump with the detail texture.
-        boolean         isExternal; // True, if detailLump is external.
-        float           scale;
-        float           strength;
-        float           maxDist;
-    } ded_detailtexture_t;
+typedef struct {
+    ded_string_t    materialName1;
+    materialgroup_t materialGroup1;
+    ded_string_t    materialName2;
+    materialgroup_t materialGroup2;
+    ded_flags_t     flags;
+    ded_path_t      detailLump; // The lump with the detail texture.
+    boolean         isExternal; // True, if detailLump is external.
+    float           scale;
+    float           strength;
+    float           maxDist;
+} ded_detailtexture_t;
 
-    // Embedded sound information.
-    typedef struct ded_embsound_s {
-        ded_string_t    name;
-        int             id; // Figured out at runtime.
-        float           volume;
-    } ded_embsound_t;
+// Embedded sound information.
+typedef struct ded_embsound_s {
+    ded_string_t    name;
+    int             id; // Figured out at runtime.
+    float           volume;
+} ded_embsound_t;
 
-    typedef struct {
-        ded_flags_t     type;
-        int             tics;
-        float           variance; // Stage variance (time).
-        float           color[4]; // RGBA
-        float           radius;
-        float           radiusVariance;
-        ded_flags_t     flags;
-        float           bounce;
-        float           resistance; // Air resistance.
-        float           gravity;
-        float           vectorForce[3];
-        float           spin[2]; // Yaw and pitch.
-        float           spinResistance[2]; // Yaw and pitch.
-        int             model;
-        ded_string_t    frameName; // For model particles.
-        ded_string_t    endFrameName;
-        short           frame, endFrame;
-        ded_embsound_t  sound, hitSound;
-    } ded_ptcstage_t;
+typedef struct {
+    ded_flags_t     type;
+    int             tics;
+    float           variance; // Stage variance (time).
+    float           color[4]; // RGBA
+    float           radius;
+    float           radiusVariance;
+    ded_flags_t     flags;
+    float           bounce;
+    float           resistance; // Air resistance.
+    float           gravity;
+    float           vectorForce[3];
+    float           spin[2]; // Yaw and pitch.
+    float           spinResistance[2]; // Yaw and pitch.
+    int             model;
+    ded_string_t    frameName; // For model particles.
+    ded_string_t    endFrameName;
+    short           frame, endFrame;
+    ded_embsound_t  sound, hitSound;
+} ded_ptcstage_t;
 
-    typedef struct ded_ptcgen_s {
-        struct ded_ptcgen_s *stateNext; // List of generators for a state.
-        ded_stateid_t   state; // Triggered by this state (if mobj-gen).
-        ded_string_t    materialName;
-        materialgroup_t materialGroup;
-        ded_mobjid_t    type; // Triggered by this type of mobjs.
-        ded_mobjid_t    type2; // Also triggered by this type.
-        int             typeNum;
-        int             type2Num;
-        ded_mobjid_t    damage; // Triggered by mobj damage of this type.
-        int             damageNum;
-        ded_string_t    map; // Triggered by this map (or empty string).
-        ded_flags_t     flags;
-        float           speed; // Particle spawn velocity.
-        float           speedVariance; // Spawn speed variance (0-1).
-        float           vector[3]; // Particle launch vector.
-        float           vectorVariance; // Launch vector variance (0-1). 1=totally random.
-        float           initVectorVariance; // Initial launch vector variance (0-1).
-        float           center[3]; // Offset to the mobj (relat. to source).
-        int             subModel; // Model source: origin submodel #.
-        float           spawnRadius;
-        float           spawnRadiusMin; // Spawn uncertainty box.
-        float           maxDist; // Max visibility for particles.
-        int             spawnAge; // How long until spawning stops?
-        int             maxAge; // How long until generator dies?
-        int             particles; // Maximum number of particles.
-        float           spawnRate; // Particles spawned per tic.
-        float           spawnRateVariance;
-        int             preSim; // Tics to pre-simulate when spawned.
-        int             altStart;
-        float           altStartVariance; // Probability for alt start.
-        float           force; // Radial strength of the sphere force.
-        float           forceRadius; // Radius of the sphere force.
-        float           forceAxis[3]; /* Rotation axis of the sphere force
-                                          (+ speed). */
-        float           forceOrigin[3]; // Offset for the force sphere.
-        ded_ptcstage_t *stages;
-        ded_count_t     stageCount;
-    } ded_ptcgen_t;
+typedef struct ded_ptcgen_s {
+    struct ded_ptcgen_s* stateNext; // List of generators for a state.
+    ded_stateid_t   state; // Triggered by this state (if mobj-gen).
+    ded_string_t    materialName;
+    materialgroup_t materialGroup;
+    ded_mobjid_t    type; // Triggered by this type of mobjs.
+    ded_mobjid_t    type2; // Also triggered by this type.
+    int             typeNum;
+    int             type2Num;
+    ded_mobjid_t    damage; // Triggered by mobj damage of this type.
+    int             damageNum;
+    ded_string_t    map; // Triggered by this map (or empty string).
+    ded_flags_t     flags;
+    float           speed; // Particle spawn velocity.
+    float           speedVariance; // Spawn speed variance (0-1).
+    float           vector[3]; // Particle launch vector.
+    float           vectorVariance; // Launch vector variance (0-1). 1=totally random.
+    float           initVectorVariance; // Initial launch vector variance (0-1).
+    float           center[3]; // Offset to the mobj (relat. to source).
+    int             subModel; // Model source: origin submodel #.
+    float           spawnRadius;
+    float           spawnRadiusMin; // Spawn uncertainty box.
+    float           maxDist; // Max visibility for particles.
+    int             spawnAge; // How long until spawning stops?
+    int             maxAge; // How long until generator dies?
+    int             particles; // Maximum number of particles.
+    float           spawnRate; // Particles spawned per tic.
+    float           spawnRateVariance;
+    int             preSim; // Tics to pre-simulate when spawned.
+    int             altStart;
+    float           altStartVariance; // Probability for alt start.
+    float           force; // Radial strength of the sphere force.
+    float           forceRadius; // Radius of the sphere force.
+    float           forceAxis[3]; /* Rotation axis of the sphere force
+                                      (+ speed). */
+    float           forceOrigin[3]; // Offset for the force sphere.
+    ded_ptcstage_t* stages;
+    ded_count_t     stageCount;
+} ded_ptcgen_t;
 
-    typedef struct ded_decorlight_s {
-        float           pos[2]; // Coordinates on the surface.
-        float           elevation; // Distance from the surface.
-        float           color[3]; // Light color.
-        float           radius; // Dynamic light radius (-1 = no light).
-        float           haloRadius; // Halo radius (zero = no halo).
-        int             patternOffset[2];
-        int             patternSkip[2];
-        float           lightLevels[2]; // Fade by sector lightlevel.
-        int             flareTexture;
-        ded_lightmap_t  up, down, sides;
-        ded_flaremap_t  flare; // Overrides flare_texture
-    } ded_decorlight_t;
+typedef struct ded_decorlight_s {
+    float           pos[2]; // Coordinates on the surface.
+    float           elevation; // Distance from the surface.
+    float           color[3]; // Light color.
+    float           radius; // Dynamic light radius (-1 = no light).
+    float           haloRadius; // Halo radius (zero = no halo).
+    int             patternOffset[2];
+    int             patternSkip[2];
+    float           lightLevels[2]; // Fade by sector lightlevel.
+    int             flareTexture;
+    ded_lightmap_t  up, down, sides;
+    ded_flaremap_t  flare; // Overrides flare_texture
+} ded_decorlight_t;
 
-    // There is a fixed number of light decorations in each decoration.
+// There is a fixed number of light decorations in each decoration.
 #define DED_DECOR_NUM_LIGHTS    16
 
-    typedef struct ded_decormodel_s {
-        float           pos[2]; // Coordinates on the surface.
-        float           elevation; // Distance from the surface.
-        int             patternOffset[2];
-        int             patternSkip[2];
-        float           lightLevels[2]; // Fade by sector lightlevel.
-        ded_stringid_t  id;
-        float           frameInterval; // Seconds per frame.
-    } ded_decormodel_t;
+typedef struct ded_decormodel_s {
+    float           pos[2]; // Coordinates on the surface.
+    float           elevation; // Distance from the surface.
+    int             patternOffset[2];
+    int             patternSkip[2];
+    float           lightLevels[2]; // Fade by sector lightlevel.
+    ded_stringid_t  id;
+    float           frameInterval; // Seconds per frame.
+} ded_decormodel_t;
 
-    // There is a fixed number of model decorations in each decoration.
+// There is a fixed number of model decorations in each decoration.
 #define DED_DECOR_NUM_MODELS    8
 
-    typedef struct ded_decor_s {
-        ded_string_t    materialName;
-        materialgroup_t materialGroup;
-        int             glow;
-        ded_flags_t     flags;
-        ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
-        ded_decormodel_t models[DED_DECOR_NUM_MODELS];
-    } ded_decor_t;
+typedef struct ded_decor_s {
+    ded_string_t    materialName;
+    materialgroup_t materialGroup;
+    int             glow;
+    ded_flags_t     flags;
+    ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
+    ded_decormodel_t models[DED_DECOR_NUM_MODELS];
+} ded_decor_t;
 
-    typedef struct ded_reflection_s {
-        ded_string_t    materialName;
-        materialgroup_t materialGroup;
-        blendmode_t     blendMode; // Blend mode flags (bm_*).
-        float           shininess;
-        float           minColor[3];
-        ded_path_t      shinyMap;
-        ded_path_t      maskMap;
-        float           maskWidth;
-        float           maskHeight;
+typedef struct ded_reflection_s {
+    ded_string_t    materialName;
+    materialgroup_t materialGroup;
+    ded_flags_t     flags;
+    blendmode_t     blendMode; // Blend mode flags (bm_*).
+    float           shininess;
+    float           minColor[3];
+    ded_path_t      shinyMap;
+    ded_path_t      maskMap;
+    float           maskWidth;
+    float           maskHeight;
 
-        // Runtime data for handling the textures.  This is a bit
-        // convoluted.  The goal is to load each map texture only
-        // once.  The 'use' pointers point to the first
-        // ded_reflection_t that uses the same map as this one.
-        unsigned int    shinyTex;
-        unsigned int    maskTex;
-        struct ded_reflection_s *useShiny;
-        struct ded_reflection_s *useMask;
-    } ded_reflection_t;
+    // Runtime data for handling the textures.  This is a bit
+    // convoluted.  The goal is to load each map texture only
+    // once.  The 'use' pointers point to the first
+    // ded_reflection_t that uses the same map as this one.
+    unsigned int    shinyTex;
+    unsigned int    maskTex;
+    struct ded_reflection_s* useShiny;
+    struct ded_reflection_s* useMask;
+} ded_reflection_t;
 
-    typedef struct ded_group_member_s {
-        char            name[9];
-        int             type;
-        float           tics;
-        float           randomTics;
-    } ded_group_member_t;
+typedef struct ded_group_member_s {
+    char            name[9];
+    int             type;
+    float           tics;
+    float           randomTics;
+} ded_group_member_t;
 
-    typedef struct ded_group_s {
-        ded_flags_t     flags;
-        ded_count_t     count;
-        ded_group_member_t *members;
-    } ded_group_t;
+typedef struct ded_group_s {
+    ded_flags_t     flags;
+    ded_count_t     count;
+    ded_group_member_t* members;
+} ded_group_t;
 
-    // The ded_t structure encapsulates all the data one definition file
-    // can contain. This is only an internal representation of the data.
-    // An ASCII version is written and read by DED_Write() and DED_Read()
-    // routines.
+// The ded_t structure encapsulates all the data one definition file
+// can contain. This is only an internal representation of the data.
+// An ASCII version is written and read by DED_Write() and DED_Read()
+// routines.
 
-    // It is VERY important not to sort the data arrays in any way: the
-    // index numbers are important. The Game DLL must be recompiled with the
-    // new constants if the order of the array items changes.
+// It is VERY important not to sort the data arrays in any way: the
+// index numbers are important. The Game DLL must be recompiled with the
+// new constants if the order of the array items changes.
 
-    typedef struct ded_s {
-        int             version; // DED version number.
-        char            modelPath[256]; // Directories for searching MD2s.
-        ded_flags_t     modelFlags; // Default values for models.
-        float           modelScale;
-        float           modelOffset;
+typedef struct ded_s {
+    int             version; // DED version number.
+    char            modelPath[256]; // Directories for searching MD2s.
+    ded_flags_t     modelFlags; // Default values for models.
+    float           modelScale;
+    float           modelOffset;
 
-        struct ded_counts_s {
-            ded_count_t     flags;
-            ded_count_t     mobjs;
-            ded_count_t     states;
-            ded_count_t     sprites;
-            ded_count_t     lights;
-            ded_count_t     models;
-            ded_count_t     sounds;
-            ded_count_t     music;
-            ded_count_t     mapInfo;
-            ded_count_t     text;
-            ded_count_t     textureEnv;
-            ded_count_t     values;
-            ded_count_t     details;
-            ded_count_t     ptcGens;
-            ded_count_t     finales;
-            ded_count_t     decorations;
-            ded_count_t     reflections;
-            ded_count_t     groups;
-            ded_count_t     lineTypes;
-            ded_count_t     sectorTypes;
-            ded_count_t     xgClasses;
-        } count;
+    struct ded_counts_s {
+        ded_count_t     flags;
+        ded_count_t     mobjs;
+        ded_count_t     states;
+        ded_count_t     sprites;
+        ded_count_t     lights;
+        ded_count_t     models;
+        ded_count_t     sounds;
+        ded_count_t     music;
+        ded_count_t     mapInfo;
+        ded_count_t     text;
+        ded_count_t     textureEnv;
+        ded_count_t     values;
+        ded_count_t     details;
+        ded_count_t     ptcGens;
+        ded_count_t     finales;
+        ded_count_t     decorations;
+        ded_count_t     reflections;
+        ded_count_t     groups;
+        ded_count_t     lineTypes;
+        ded_count_t     sectorTypes;
+        ded_count_t     xgClasses;
+    } count;
 
-        // Flag values (for all types of data).
-        ded_flag_t     *flags;
+    // Flag values (for all types of data).
+    ded_flag_t*     flags;
 
-        // Map object information.
-        ded_mobj_t     *mobjs;
+    // Map object information.
+    ded_mobj_t*     mobjs;
 
-        // States.
-        ded_state_t    *states;
+    // States.
+    ded_state_t*    states;
 
-        // Sprites.
-        ded_sprid_t    *sprites;
+    // Sprites.
+    ded_sprid_t*    sprites;
 
-        // Lights.
-        ded_light_t    *lights;
+    // Lights.
+    ded_light_t*    lights;
 
-        // Models.
-        ded_model_t    *models;
+    // Models.
+    ded_model_t*    models;
 
-        // Sounds.
-        ded_sound_t    *sounds;
+    // Sounds.
+    ded_sound_t*    sounds;
 
-        // Music.
-        ded_music_t    *music;
+    // Music.
+    ded_music_t*    music;
 
-        // Map information.
-        ded_mapinfo_t  *mapInfo;
+    // Map information.
+    ded_mapinfo_t*  mapInfo;
 
-        // Text.
-        ded_text_t     *text;
+    // Text.
+    ded_text_t*     text;
 
-        // Aural environments for textures.
-        ded_tenviron_t *textureEnv;
+    // Aural environments for textures.
+    ded_tenviron_t* textureEnv;
 
-        // Free-from string values.
-        ded_value_t    *values;
+    // Free-from string values.
+    ded_value_t*    values;
 
-        // Detail texture assignments.
-        ded_detailtexture_t *details;
+    // Detail texture assignments.
+    ded_detailtexture_t* details;
 
-        // Particle generators.
-        ded_ptcgen_t   *ptcGens;
+    // Particle generators.
+    ded_ptcgen_t*   ptcGens;
 
-        // Finales.
-        ded_finale_t   *finales;
+    // Finales.
+    ded_finale_t*   finales;
 
-        // Decorations.
-        ded_decor_t    *decorations;
+    // Decorations.
+    ded_decor_t*    decorations;
 
-        // Reflections.
-        ded_reflection_t *reflections;
+    // Reflections.
+    ded_reflection_t* reflections;
 
-        // Texture groups.
-        ded_group_t    *groups;
+    // Texture groups.
+    ded_group_t*    groups;
 
-        // XG line types.
-        ded_linetype_t *lineTypes;
+    // XG line types.
+    ded_linetype_t* lineTypes;
 
-        // XG sector types.
-        ded_sectortype_t *sectorTypes;
+    // XG sector types.
+    ded_sectortype_t* sectorTypes;
 
-        // XG Classes
-        ded_xgclass_t   *xgClasses;
-    } ded_t;
+    // XG Classes
+    ded_xgclass_t*  xgClasses;
+} ded_t;
 
-    // Routines for managing DED files.
-    void            DED_Init(ded_t *ded);
-    void            DED_Destroy(ded_t *ded);
-    int             DED_Read(ded_t *ded, const char *sPathName);
-    int             DED_ReadLump(ded_t *ded, int lump);
+// Routines for managing DED files.
+void            DED_Init(ded_t* ded);
+void            DED_Destroy(ded_t* ded);
+int             DED_Read(ded_t* ded, const char* sPathName);
+int             DED_ReadLump(ded_t* ded, int lump);
 
-    int             DED_AddFlag(ded_t *ded, char *name, char *text, int value);
-    int             DED_AddMobj(ded_t *ded, char *idstr);
-    int             DED_AddState(ded_t *ded, char *id);
-    int             DED_AddSprite(ded_t *ded, const char *name);
-    int             DED_AddLight(ded_t *ded, const char *stateid);
-    int             DED_AddModel(ded_t *ded, char *spr);
-    int             DED_AddSound(ded_t *ded, char *id);
-    int             DED_AddMusic(ded_t *ded, char *id);
-    int             DED_AddMapInfo(ded_t *ded, char *str);
-    int             DED_AddText(ded_t *ded, char *id);
-    int             DED_AddTextureEnv(ded_t *ded, char *id);
-    int             DED_AddValue(ded_t *ded, const char *id);
-    int             DED_AddDetail(ded_t *ded, const char *lumpname);
-    int             DED_AddPtcGen(ded_t *ded, const char *state);
-    int             DED_AddPtcGenStage(ded_ptcgen_t *gen);
-    int             DED_AddFinale(ded_t *ded);
-    int             DED_AddDecoration(ded_t *ded);
-    int             DED_AddReflection(ded_t *ded);
-    int             DED_AddGroup(ded_t *ded);
-    int             DED_AddGroupMember(ded_group_t *grp);
-    int             DED_AddSectorType(ded_t *ded, int id);
-    int             DED_AddLineType(ded_t *ded, int id);
-    int             DED_AddXGClass(ded_t *ded);
-    int             DED_AddXGClassProperty(ded_xgclass_t *xgc);
+int             DED_AddFlag(ded_t* ded, char* name, char* text, int value);
+int             DED_AddMobj(ded_t* ded, char* idStr);
+int             DED_AddState(ded_t* ded, char* id);
+int             DED_AddSprite(ded_t* ded, const char* name);
+int             DED_AddLight(ded_t* ded, const char* stateID);
+int             DED_AddModel(ded_t* ded, char* spr);
+int             DED_AddSound(ded_t* ded, char* id);
+int             DED_AddMusic(ded_t* ded, char* id);
+int             DED_AddMapInfo(ded_t* ded, char* str);
+int             DED_AddText(ded_t* ded, char* id);
+int             DED_AddTextureEnv(ded_t* ded, char* id);
+int             DED_AddValue(ded_t *ded, const char* id);
+int             DED_AddDetail(ded_t* ded, const char* lumpname);
+int             DED_AddPtcGen(ded_t* ded, const char* state);
+int             DED_AddPtcGenStage(ded_ptcgen_t* gen);
+int             DED_AddFinale(ded_t* ded);
+int             DED_AddDecoration(ded_t* ded);
+int             DED_AddReflection(ded_t* ded);
+int             DED_AddGroup(ded_t* ded);
+int             DED_AddGroupMember(ded_group_t* grp);
+int             DED_AddSectorType(ded_t* ded, int id);
+int             DED_AddLineType(ded_t* ded, int id);
+int             DED_AddXGClass(ded_t* ded);
+int             DED_AddXGClassProperty(ded_xgclass_t* xgc);
 
-    void            DED_RemoveFlag(ded_t *ded, int index);
-    void            DED_RemoveMobj(ded_t *ded, int index);
-    void            DED_RemoveState(ded_t *ded, int index);
-    void            DED_RemoveSprite(ded_t *ded, int index);
-    void            DED_RemoveLight(ded_t *ded, int index);
-    void            DED_RemoveModel(ded_t *ded, int index);
-    void            DED_RemoveSound(ded_t *ded, int index);
-    void            DED_RemoveMusic(ded_t *ded, int index);
-    void            DED_RemoveMapInfo(ded_t *ded, int index);
-    void            DED_RemoveText(ded_t *ded, int index);
-    void            DED_RemoveTextureEnv(ded_t *ded, int index);
-    void            DED_RemoveValue(ded_t *ded, int index);
-    void            DED_RemoveDetail(ded_t *ded, int index);
-    void            DED_RemovePtcGen(ded_t *ded, int index);
-    void            DED_RemoveFinale(ded_t *ded, int index);
-    void            DED_RemoveDecoration(ded_t *ded, int index);
-    void            DED_RemoveReflection(ded_t *ded, int index);
-    void            DED_RemoveGroup(ded_t *ded, int index);
-    void            DED_RemoveSectorType(ded_t *ded, int index);
-    void            DED_RemoveLineType(ded_t *ded, int index);
-    void            DED_RemoveXGClass(ded_t *ded, int index);
+void            DED_RemoveFlag(ded_t* ded, int index);
+void            DED_RemoveMobj(ded_t* ded, int index);
+void            DED_RemoveState(ded_t* ded, int index);
+void            DED_RemoveSprite(ded_t* ded, int index);
+void            DED_RemoveLight(ded_t* ded, int index);
+void            DED_RemoveModel(ded_t* ded, int index);
+void            DED_RemoveSound(ded_t* ded, int index);
+void            DED_RemoveMusic(ded_t* ded, int index);
+void            DED_RemoveMapInfo(ded_t* ded, int index);
+void            DED_RemoveText(ded_t* ded, int index);
+void            DED_RemoveTextureEnv(ded_t* ded, int index);
+void            DED_RemoveValue(ded_t* ded, int index);
+void            DED_RemoveDetail(ded_t* ded, int index);
+void            DED_RemovePtcGen(ded_t* ded, int index);
+void            DED_RemoveFinale(ded_t* ded, int index);
+void            DED_RemoveDecoration(ded_t* ded, int index);
+void            DED_RemoveReflection(ded_t* ded, int index);
+void            DED_RemoveGroup(ded_t* ded, int index);
+void            DED_RemoveSectorType(ded_t* ded, int index);
+void            DED_RemoveLineType(ded_t* ded, int index);
+void            DED_RemoveXGClass(ded_t* ded, int index);
 
-    void           *DED_NewEntries(void **ptr, ded_count_t *cnt,
-                                   size_t elemSize, int count);
-    void           *DED_NewEntry(void **ptr, ded_count_t *cnt, size_t elemSize);
-    void            DED_DelEntry(int index, void **ptr, ded_count_t *cnt,
-                                 size_t elemSize);
-    void            DED_DelArray(void **ptr, ded_count_t *cnt);
-    void            DED_ZCount(ded_count_t *c);
+void*           DED_NewEntries(void** ptr, ded_count_t* cnt,
+                               size_t elemSize, int count);
+void*           DED_NewEntry(void** ptr, ded_count_t* cnt, size_t elemSize);
+void            DED_DelEntry(int index, void** ptr, ded_count_t* cnt,
+                             size_t elemSize);
+void            DED_DelArray(void** ptr, ded_count_t* cnt);
+void            DED_ZCount(ded_count_t* c);
 
-    extern char     dedReadError[];
+extern char dedReadError[];
 
 #ifdef __cplusplus
 }

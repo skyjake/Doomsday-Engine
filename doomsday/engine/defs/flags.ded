@@ -30,6 +30,32 @@ Flag { # Allow using decoration with external resources.
   ID = "dcf_ext"; Value = 0x4;
 }
 
+# Reflections
+Flag { # Reflection will not be used with IWAD resources.
+  ID = "rff_noiwad"; Value = 0x1;
+}
+
+Flag { # Allow using reflection with PWAD resources.
+  ID = "rff_pwad"; Value = 0x2;
+}
+
+Flag { # Allow using reflection with external resources.
+  ID = "rff_ext"; Value = 0x4;
+}
+
+# Details
+Flag { # DetailTex will not be used with IWAD resources.
+  ID = "dtf_noiwad"; Value = 0x1;
+}
+
+Flag { # Allow using detailtex with PWAD resources.
+  ID = "dtf_pwad"; Value = 0x2;
+}
+
+Flag { # Allow using detailtex with external resources.
+  ID = "dtf_ext"; Value = 0x4;
+}
+
 # Lights
 Flag { ID = "lgf_nohalo"; Value = 0x1; }
 Flag { ID = "lgf_dontturnhalo"; Value = 0x2; }
