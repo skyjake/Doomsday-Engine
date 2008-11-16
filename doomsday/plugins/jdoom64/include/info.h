@@ -1503,7 +1503,6 @@ typedef enum {
     TXT_C4TEXT,
     TXT_CC_ZOMBIE,
     TXT_CC_SHOTGUN,
-    TXT_CC_HEAVY,
     TXT_CC_IMP,
     TXT_CC_DEMON,
     TXT_CC_LOST,

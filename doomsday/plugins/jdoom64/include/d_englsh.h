@@ -208,7 +208,6 @@
 
 #define CC_ZOMBIE           GET_TXT(TXT_CC_ZOMBIE)
 #define CC_SHOTGUN          GET_TXT(TXT_CC_SHOTGUN)
-#define CC_HEAVY            GET_TXT(TXT_CC_HEAVY)
 #define CC_IMP              GET_TXT(TXT_CC_IMP)
 #define CC_DEMON            GET_TXT(TXT_CC_DEMON)
 #define CC_LOST             GET_TXT(TXT_CC_LOST)

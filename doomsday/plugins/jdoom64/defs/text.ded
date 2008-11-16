@@ -7,54 +7,52 @@ Header { Version = 5; }
 
 Text {
   ID = "PRESSKEY";
-  Text = "press a key.";
+  Text = "Press a key.";
 }
 
 Text {
   ID = "PRESSYN";
-  Text = "press y or n.";
+  Text = "Press Y or N.";
 }
 
 Text {
   ID = "QUITMSG";
-  Text = "are you sure you want to\nquit this great game?";
+  Text = "Are you sure you want to\nquit this great game?";
 }
 
 Text {
   ID = "LOADNET";
-  Text = "you can't load while in a net game!\n\npress a key.";
+  Text = "You can't load while in a net game!\n\nPress a key.";
 }
 
 Text {
   ID = "QLOADNET";
-  Text = "you can't quickload during a netgame!\n\npress a key.";
+  Text = "You can't quickload during a netgame!\n\nPress a key.";
 }
 
 Text {
   ID = "QSAVESPOT";
-  Text = "you haven't picked a quicksave slot yet!\n\npress a key.";
+  Text = "You haven't picked a quicksave slot yet!\n\nPress a key.";
 }
 
 Text {
   ID = "SAVEDEAD";
-  Text = "you can't save if you aren't playing!\n\npress a key.";
+  Text = "You can't save if you aren't playing!\n\nPress a key.";
 }
 
 Text {
   ID = "QSPROMPT";
-  Text = "quicksave over your game named\n\n'%s'?\n\npress y or n.";
+  Text = "Quicksave over your game named\n\n'%s'?\n\nPress Y or N.";
 }
 
 Text {
   ID = "QLPROMPT";
-  Text = "do you want to quickload the game named\n\n'%s'?\n\n
-    press y or n.";
+  Text = "Do you want to quickload the game named\n\n'%s'?\n\nPress Y or N.";
 }
 
 Text {
   ID = "NEWGAME";
-  Text = "you can't start a new game\nwhile in a network game.\n\n
-    press a key.";
+  Text = "You can't start a new game\nwhile in a network game.\n\nPress a key.";
 }
 
 Text {
@@ -69,17 +67,17 @@ Text {
 
 Text {
   ID = "NETEND";
-  Text = "you can't end a netgame!\n\npress a key.";
+  Text = "You can't end a netgame!\n\nPress a key.";
 }
 
 Text {
   ID = "ENDGAME";
-  Text = "are you sure you want to end the game?\n\npress y or n.";
+  Text = "Are you sure you want to end the game?\n\nPress Y or N.";
 }
 
 Text {
   ID = "DOSY";
-  Text = "(press y to quit)";
+  Text = "(Press Y to quit)";
 }
 
 Text {
@@ -109,7 +107,7 @@ Text {
 
 Text {
   ID = "EMPTYSTRING";
-  Text = "empty slot";
+  Text = "Empty slot";
 }
 
 Text {
@@ -264,7 +262,7 @@ Text {
 
 Text {
   ID = "GOTBFG9000";
-  Text = "You got the BFG9000!  Oh, yes.";
+  Text = "You got the BFG9000! Oh, yes.";
 }
 
 Text {
@@ -274,7 +272,7 @@ Text {
 
 Text {
   ID = "GOTCHAINSAW";
-  Text = "A chainsaw!  Find some meat!";
+  Text = "A chainsaw! Find some meat!";
 }
 
 Text {
@@ -334,7 +332,7 @@ Text {
 
 Text {
   ID = "GOTPOWERUP3";
-  Text = "It looks like some sort of Key...";
+  Text = "It looks like some sort of key...";
 }
 
 Text {
@@ -379,7 +377,7 @@ Text {
 
 Text {
   ID = "GGSAVED";
-  Text = "game saved.";
+  Text = "Game saved.";
 }
 
 Text {
@@ -389,167 +387,167 @@ Text {
 
 Text {
   ID = "HUSTR_MAP01";
-  Text = "Level 1: Staging Area";
+  Text = "Map 1: Staging Area";
 }
 
 Text {
   ID = "HUSTR_MAP02";
-  Text = "Level 2: The Terraformer";
+  Text = "Map 2: The Terraformer";
 }
 
 Text {
   ID = "HUSTR_MAP03";
-  Text = "Level 3: Main Engineering";
+  Text = "Map 3: Main Engineering";
 }
 
 Text {
   ID = "HUSTR_MAP04";
-  Text = "Level 4: Holding Area";
+  Text = "Map 4: Holding Area";
 }
 
 Text {
   ID = "HUSTR_MAP05";
-  Text = "Level 5: Tech Center";
+  Text = "Map 5: Tech Center";
 }
 
 Text {
   ID = "HUSTR_MAP06";
-  Text = "Level 6: Alpha Quadrant";
+  Text = "Map 6: Alpha Quadrant";
 }
 
 Text {
   ID = "HUSTR_MAP07";
-  Text = "Level 7: Research Lab";
+  Text = "Map 7: Research Lab";
 }
 
 Text {
   ID = "HUSTR_MAP08";
-  Text = "Level 8: Final Outpost";
+  Text = "Map 8: Final Outpost";
 }
 
 Text {
   ID = "HUSTR_MAP09";
-  Text = "Level 9: Even Simpler";
+  Text = "Map 9: Even Simpler";
 }
 
 Text {
   ID = "HUSTR_MAP10";
-  Text = "Level 10: The Bleeding";
+  Text = "Map 10: The Bleeding";
 }
 
 Text {
   ID = "HUSTR_MAP11";
-  Text = "Level 11: Terror Core";
+  Text = "Map 11: Terror Core";
 }
 
 Text {
   ID = "HUSTR_MAP12";
-  Text = "Level 12: Altar of Pain";
+  Text = "Map 12: Altar of Pain";
 }
 
 Text {
   ID = "HUSTR_MAP13";
-  Text = "Level 13: Dark Citadel";
+  Text = "Map 13: Dark Citadel";
 }
 
 Text {
   ID = "HUSTR_MAP14";
-  Text = "Level 14: Eye of the Storm";
+  Text = "Map 14: Eye of the Storm";
 }
 
 Text {
   ID = "HUSTR_MAP15";
-  Text = "Level 15: Dark Entires";
+  Text = "Map 15: Dark Entires";
 }
 
 Text {
   ID = "HUSTR_MAP16";
-  Text = "Level 16: Blood Keep";
+  Text = "Map 16: Blood Keep";
 }
 
 Text {
   ID = "HUSTR_MAP17";
-  Text = "Level 17: Watch Your Step";
+  Text = "Map 17: Watch Your Step";
 }
 
 Text {
   ID = "HUSTR_MAP18";
-  Text = "Level 18: Spawned Fear";
+  Text = "Map 18: Spawned Fear";
 }
 
 Text {
   ID = "HUSTR_MAP19";
-  Text = "Level 19: The Spiral";
+  Text = "Map 19: The Spiral";
 }
 
 Text {
   ID = "HUSTR_MAP20";
-  Text = "Level 20: Breakdown";
+  Text = "Map 20: Breakdown";
 }
 
 Text {
   ID = "HUSTR_MAP21";
-  Text = "Level 21: Pitfalls";
+  Text = "Map 21: Pitfalls";
 }
 
 Text {
   ID = "HUSTR_MAP22";
-  Text = "Level 22: Burnt Offerings";
+  Text = "Map 22: Burnt Offerings";
 }
 
 Text {
   ID = "HUSTR_MAP23";
-  Text = "Level 23: Unholy Temple";
+  Text = "Map 23: Unholy Temple";
 }
 
 Text {
   ID = "HUSTR_MAP24";
-  Text = "Level 24: No Escape";
+  Text = "Map 24: No Escape";
 }
 
 Text {
   ID = "HUSTR_MAP25";
-  Text = "Level 25: Cat And Mouse";
+  Text = "Map 25: Cat And Mouse";
 }
 
 Text {
   ID = "HUSTR_MAP26";
-  Text = "Level 26: Hardcore";
+  Text = "Map 26: Hardcore";
 }
 
 Text {
   ID = "HUSTR_MAP27";
-  Text = "Level 27: Playground";
+  Text = "Map 27: Playground";
 }
 
 Text {
   ID = "HUSTR_MAP28";
-  Text = "Level 28: The Absolution";
+  Text = "Map 28: The Absolution";
 }
 
 Text {
   ID = "HUSTR_MAP29";
-  Text = "Level 29: Outpost Omega";
+  Text = "Map 29: Outpost Omega";
 }
 
 Text {
   ID = "HUSTR_MAP30";
-  Text = "Level 30: The Lair";
+  Text = "Map 30: The Lair";
 }
 
 Text {
   ID = "HUSTR_MAP31";
-  Text = "Level 31: In The Void";
+  Text = "Map 31: In The Void";
 }
 
 Text {
   ID = "HUSTR_MAP32";
-  Text = "Level 32: Hectic";
+  Text = "Map 32: Hectic";
 }
 
 Text {
   ID = "HUSTR_MAP33";
-  Text = "Level 33: The Unknown";
+  Text = "Map 33: The Unknown";
 }
 
 Text {
@@ -689,7 +687,7 @@ Text {
 
 Text {
   ID = "STSTR_NOMUS";
-  Text = "IMPOSSIBLE SELECTION";
+  Text = "Impossible selection";
 }
 
 Text {
@@ -729,7 +727,7 @@ Text {
 
 Text {
   ID = "STSTR_BEHOLDX";
-  Text = "Power-up Toggled";
+  Text = "Power-up toggled";
 }
 
 Text {
@@ -784,67 +782,62 @@ Text {
 
 Text {
   ID = "CC_ZOMBIE";
-  Text = "ZOMBIEMAN";
+  Text = "Zombieman";
 }
 
 Text {
   ID = "CC_SHOTGUN";
-  Text = "SHOTGUN GUY";
-}
-
-Text {
-  ID = "CC_HEAVY";
-  Text = "HEAVY WEAPON DUDE";
+  Text = "Shotgun Guy";
 }
 
 Text {
   ID = "CC_IMP";
-  Text = "IMP";
+  Text = "Imp";
 }
 
 Text {
   ID = "CC_DEMON";
-  Text = "DEMON";
+  Text = "Demon";
 }
 
 Text {
   ID = "CC_LOST";
-  Text = "LOST SOUL";
+  Text = "Lost Soul";
 }
 
 Text {
   ID = "CC_CACO";
-  Text = "CACODEMON";
+  Text = "Cacodemon";
 }
 
 Text {
   ID = "CC_HELL";
-  Text = "HELL KNIGHT";
+  Text = "Hell Knight";
 }
 
 Text {
   ID = "CC_BARON";
-  Text = "BARON OF HELL";
+  Text = "Baron of Hell";
 }
 
 Text {
   ID = "CC_ARACH";
-  Text = "ARACHNOTRON";
+  Text = "Arachnotron";
 }
 
 Text {
   ID = "CC_PAIN";
-  Text = "PAIN ELEMENTAL";
+  Text = "Pain Elemental";
 }
 
 Text {
   ID = "CC_MANCU";
-  Text = "MANCUBUS";
+  Text = "Mancubus";
 }
 
 Text {
   ID = "CC_CYBER";
-  Text = "THE CYBERDEMON";
+  Text = "Cyberdemon";
 }
 
 Text {
@@ -859,130 +852,128 @@ Text {
 
 Text {
   ID = "CC_HERO";
-  Text = "OUR HERO";
+  Text = "Our hero";
 }
 
 Text {
   ID = "QUITMESSAGE1";
-  Text = "hey don't quit now, we are barely \non level 1!";
+  Text = "Hey don't quit now, we are barely \non map 1!";
 }
 
 Text {
   ID = "QUITMESSAGE2";
-  Text = "demons own your sorry ass...";
+  Text = "Demons own your sorry ass...";
 }
 
 Text {
   ID = "QUITMESSAGE3";
-  Text = "hell will come upon you...";
+  Text = "Hell will come upon you...";
 }
 
 Text {
   ID = "QUITMESSAGE4";
-  Text = "i guess you find this boring...";
+  Text = "I guess you find this boring...";
 }
 
 Text {
   ID = "QUITMESSAGE5";
-  Text = "don't think about leaving \nor else I'll send a \n
+  Text = "Don't think about leaving \nor else I'll send a \n
           Nightmare Demon after your ass...";
 }
 
 Text {
   ID = "QUITMESSAGE6";
-  Text = "fine, get out chicken shit...";
+  Text = "Fine, get out chicken shit...";
 }
 
 Text {
   ID = "QUITMESSAGE7";
-  Text = "go ahead and leave. see if i care.";
+  Text = "Go ahead and leave. See if I care.";
 }
 
 Text {
   ID = "QUITMESSAGE8";
-  Text = "quit?! we are not done with you yet!";
+  Text = "Quit?! We are not done with you yet!";
 }
 
 Text {
   ID = "QUITMESSAGE9";
-  Text = "fine, go back playing your \nstupid counterstrike games.";
+  Text = "Fine, go back playing your \nStupid Counterstrike games.";
 }
 
 Text {
   ID = "QUITMESSAGE10";
-  Text = "fine, go back playing your \nstupid ut 2003 games.";
+  Text = "Fine, go back playing your \nStupid UT 2003 games.";
 }
 
 Text {
   ID = "QUITMESSAGE11";
-  Text = "fine, go back playing your \nstupid quake 3 games.";
+  Text = "Fine, go back playing your \nStupid Quake 3 games.";
 }
 
 Text {
   ID = "QUITMESSAGE12";
-  Text = "look, bud. you leave now\nand you forfeit your body count!";
+  Text = "Look, bud. You leave now\nand you forfeit your body count!";
 }
 
 Text {
   ID = "QUITMESSAGE13";
-  Text = "just leave. when you come\nback, i'll be waiting with a bat.";
+  Text = "Just leave. When you come\nback, I'll be waiting with a bat.";
 }
 
 Text {
   ID = "QUITMESSAGE14";
-  Text = "you're lucky i don't smack\nyou for thinking about leaving.";
+  Text = "You're lucky I don't smack\nYou for thinking about leaving.";
 }
 
 Text {
   ID = "QUITMESSAGE15";
-  Text = "prescience of mind is\nno substitute for courage.";
+  Text = "Prescience of mind is\nno substitute for courage.";
 }
 
 Text {
   ID = "QUITMESSAGE16";
-  Text = "seems this is too much for you..";
+  Text = "Seems this is too much for you...";
 }
 
 Text {
   ID = "QUITMESSAGE17";
-  Text = "return as an apostate to be\neternally welcomed.";
+  Text = "Return as an apostate to be\neternally welcomed.";
 }
 
 Text {
   ID = "QUITMESSAGE18";
-  Text = "to abandon the cause\ncan only presage disaster.";
+  Text = "To abandon the cause\ncan only presage disaster.";
 }
 
 Text {
   ID = "QUITMESSAGE19";
-  Text = "quit now? you big baby...";
+  Text = "Quit now? You big baby...";
 }
 
 Text {
   ID = "QUITMESSAGE20";
-  Text = "dost the demesne win?\ndost its inhabitants prevail?\n
-    is this the end?";
+  Text = "Dost the demesne win?\nDost its inhabitants prevail?\nIs this the end?";
 }
 
 Text {
   ID = "QUITMESSAGE21";
-  Text = "your mom is the motherdemon herself...";
+  Text = "Your mom is the Motherdemon herself...";
 }
 
 Text {
   ID = "QUITMESSAGE22";
-  Text = "escape if you will, but these\n
-    dark corridors haunt you forever...";
+  Text = "Escape if you will, but these\ndark corridors haunt you forever...";
 }
 
 Text {
   ID = "JOINNET";
-  Text = "you're already in a network game!\n\npress a key.";
+  Text = "You're already in a network game!\n\nPress a key.";
 }
 
 Text {
   ID = "SAVENET";
-  Text = "you can't save while in a net game!\n\npress a key.";
+  Text = "You can't save while in a net game!\n\nPress a key.";
 }
 
 Text {
