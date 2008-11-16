@@ -81,9 +81,9 @@ void SV_WriteXGLine(linedef_t *li)
     SV_WriteByte(1);
 
     /**
-     * Remember, savegames are applied on top of an initialized level.
+     * Remember, savegames are applied on top of an initialized map.
      * No strings are saved, because they are all const strings
-     * defined either in the level's DDXGDATA lump or a DED file.
+     * defined either in the maps's DDXGDATA lump or a DED file.
      * During loading, XL_SetLineType is called with the id in the savegame.
      */
 

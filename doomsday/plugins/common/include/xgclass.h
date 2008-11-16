@@ -83,7 +83,7 @@ typedef struct xgclass_s{
 
     int             evTypeFlags; /* if > 0 the class only supports certain
                                     event types (which are flags on this var) */
-    const char     *className; // txt string id
+    const char*     className; // txt string id
     xgclassparm_t   iparm[20]; // iparms
 } xgclass_t;
 
@@ -103,7 +103,7 @@ enum
     LTC_KEY,
     LTC_MUSIC, // Change the music to play.
     LTC_LINE_COUNT, // Line activation count delta.
-    LTC_END_LEVEL,
+    LTC_LEAVE_MAP,
     LTC_DISABLE_IF_ACTIVE,
     LTC_ENABLE_IF_ACTIVE,
     LTC_EXPLODE, // Explodes the activator.
@@ -113,7 +113,7 @@ enum
     LTC_SOUND, // Play a sector sound.
     LTC_MIMIC_SECTOR,
     LTC_TELEPORT,
-    LTC_LINETELEPORT,
+    LTC_LINE_TELEPORT,
     NUMXGCLASSES
 };
 
