@@ -20,6 +20,7 @@ NAME            "DOOMSDAY"
 ; 106 formerly DD_GetDGLProcAddress
 ; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
+; 112 formerly GL_TextureFilterMode
 ; 113 formerly DGL_Color
 ; 116 formerly GL_SetSprite
 ; 118 formerly GL_SetTexture
@@ -344,10 +345,10 @@ EXPORTS
 	DGL_DeleteTextures			@403 NONAME
 	DGL_Begin					@363 NONAME
 	DGL_End						@364 NONAME
-    DGL_NewList                 @431 NONAME
-    DGL_EndList                 @432 NONAME
-    DGL_CallList                @433 NONAME
-    DGL_DeleteLists             @434 NONAME
+	DGL_NewList					@431 NONAME
+	DGL_EndList					@432 NONAME
+	DGL_CallList				@433 NONAME
+	DGL_DeleteLists				@434 NONAME
 	DGL_Translatef				@384 NONAME
 	DGL_Rotatef					@385 NONAME
 	DGL_Scalef					@386 NONAME
@@ -378,7 +379,6 @@ EXPORTS
 ; Graphics.
     GL_UseFog                   @104 NONAME
     GL_GrabScreen               @109 NONAME
-    GL_TextureFilterMode        @112 NONAME
     GL_SetPSprite				@114 NONAME
     GL_SetNoTexture             @115 NONAME
     GL_SetPatch                 @196 NONAME

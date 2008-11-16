@@ -140,32 +140,18 @@ typedef enum // Value types.
 } valuetype_t;
 
 enum {
-    // TexFilterMode targets
-    DD_TEXTURES = 0,
-    DD_RAWSCREENS,
-
-    // Filter/mipmap modes
-    DD_NEAREST = 0,
-    DD_LINEAR,
-    DD_NEAREST_MIPMAP_NEAREST,
-    DD_LINEAR_MIPMAP_NEAREST,
-    DD_NEAREST_MIPMAP_LINEAR,
-    DD_LINEAR_MIPMAP_LINEAR,
-
     // Integer values for Set/Get
     DD_FIRST_VALUE = -1,
     DD_NETGAME,
     DD_SERVER,
     DD_CLIENT,
     DD_ALLOW_FRAMES,
-    DD_GAMETIC,
     DD_VIEWWINDOW_X,
     DD_VIEWWINDOW_Y,
     DD_VIEWWINDOW_WIDTH,
     DD_VIEWWINDOW_HEIGHT,
     DD_CONSOLEPLAYER,
     DD_DISPLAYPLAYER,
-    DD_MUSIC_DEVICE,
     DD_MIPMAPPING,
     DD_SMOOTH_IMAGES,
     DD_DEFAULT_RES_X,
@@ -177,10 +163,6 @@ enum {
     DD_FULLBRIGHT, // Render everything fullbright?
     DD_CCMD_RETURN,
     DD_GAME_READY,
-    DD_OPENRANGE,
-    DD_OPENTOP,
-    DD_OPENBOTTOM,
-    DD_LOWFLOOR,
     DD_DEDICATED,
     DD_NOVIDEO,
     DD_NUMMOBJTYPES,
@@ -216,17 +198,6 @@ enum {
     DD_POST,
     DD_VERSION_SHORT,
     DD_VERSION_LONG,
-    DD_PROTOCOL,
-    DD_NUM_SERVERS,
-    DD_TCPIP_ADDRESS,
-    DD_TCPIP_PORT,
-    DD_COM_PORT,
-    DD_BAUD_RATE,
-    DD_STOP_BITS,
-    DD_PARITY,
-    DD_FLOW_CONTROL,
-    DD_MODEM,
-    DD_PHONE_NUMBER,
     DD_HORIZON,
     DD_GAME_ID,
     DD_DEF_MOBJ,

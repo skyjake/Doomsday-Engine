@@ -478,7 +478,6 @@ extern          "C" {
     unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels,
                                              int flags, int minFilter, int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
-    void            GL_TextureFilterMode(int target, int parm);
     void            GL_BlendMode(blendmode_t mode);
     void            GL_SetFilter(int filter_rgba);
     void            GL_PalIdxToRGB(int idx, float* rgb);

@@ -89,7 +89,6 @@ int             GL_InitPalettedTexture(void);
 void            GL_ResetLumpTexData(void);
 
 void            GL_BindTexture(DGLuint texname, int magMode);
-void            GL_TextureFilterMode(int target, int parm);
 DGLuint         GL_BindTexPatch(struct patchtex_s* p);
 DGLuint         GL_GetPatchOtherPart(lumpnum_t lump);
 void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps are generated.
