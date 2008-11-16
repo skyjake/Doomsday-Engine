@@ -119,10 +119,10 @@ inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=
 desc = Gives you weapons, ammo, power-ups, etc.
     
 [kill]
-desc = Kill all the monsters on the level.
+desc = Kill all the monsters on the map.
     
-[exitlevel]
-desc = Exit the current level.
+[exitmap]
+desc = Exit the current map.
     
 [suicide]
 desc = Kill yourself. What did you think?
@@ -347,8 +347,8 @@ desc = HUD messages blink for this number of tics when printed.
 [game-state]
 desc = Current game state.
 
-[game-state-level]
-desc = 1=Currently playing a level.
+[game-state-map]
+desc = 1=Currently playing a map.
 
 [game-paused]
 desc = 1=Game paused.
@@ -714,7 +714,7 @@ desc = Zoom factor for the console background.
 desc = View window size (3-13).
 
 [hud-title]
-desc = 1=Show level title and author in the beginning.
+desc = 1=Show map title and author in the beginning.
 
 [hud-title-noidsoft]
 desc = 1=Don't show map author if it's \"id Software\".
@@ -877,7 +877,7 @@ desc = 1=Only some objects can hang over tall ledges (enables DOOM bug fix).
 desc = 1=Use EXACTLY DOOM's clipping code (disables DOOM bug fix).
 
 [game-zombiescanexit]
-desc = 1=Zombie players can exit levels (disables DOOM bug fix).
+desc = 1=Zombie players can exit maps (disables DOOM bug fix).
 
 [game-player-wallrun-northonly]
 desc = 1=Players can only wallrun North (disables DOOM bug fix).
