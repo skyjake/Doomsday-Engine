@@ -107,7 +107,7 @@ enum {
 };
 
 // Game state flags.
-#define GSF_CHANGE_MAP      0x01   // Level has changed.
+#define GSF_CHANGE_MAP      0x01   // Map has changed.
 #define GSF_CAMERA_INIT     0x02   // After gamestate follows camera init.
 #define GSF_DEMO            0x04   // Only valid during demo playback.
 
