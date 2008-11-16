@@ -97,7 +97,7 @@ typedef struct spawnspot_s {
 #define MF_TELEPORT         0x00008000  // (p) Don't cross lines or look at heights on teleport.
 #define MF_MISSILE          0x00010000  // Don't hit same species, explode on block.
 
-#define MF_DROPPED          0x00020000  // (i) Dropped by a demon, not level spawned.
+#define MF_DROPPED          0x00020000  // (i) Dropped by a demon, not map spawned.
 #define MF_SHADOW           0x00040000  // Use fuzzy draw (shadow demons or spectres).
 #define MF_NOBLOOD          0x00080000  // Don't bleed when shot (use puff).
 #define MF_CORPSE           0x00100000  // (i) Don't stop moving halfway off a step.

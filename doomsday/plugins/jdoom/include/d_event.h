@@ -38,7 +38,7 @@
 
 typedef enum {
     GA_NONE,
-    GA_LOADLEVEL,
+    GA_LOADMAP,
     GA_NEWGAME,
     GA_LOADGAME,
     GA_SAVEGAME,
@@ -55,40 +55,40 @@ typedef enum {
 typedef enum
 {
     // Press "Fire".
-    //BT_ATTACK		= 1,
+    //BT_ATTACK     = 1,
     // Use button, to open doors, activate switches.
-    //BT_USE			= 2,
+    //BT_USE            = 2,
 
     // Flag: game events, not really buttons.
-    //BT_SPECIAL		= 128,
-    //BT_SPECIALMASK	= 3,
+    //BT_SPECIAL        = 128,
+    //BT_SPECIALMASK    = 3,
 
-	// Center player look angle (pitch back to zero).
-	//BT_LOOKCENTER	= 64,
+    // Center player look angle (pitch back to zero).
+    //BT_LOOKCENTER = 64,
 
     // Flag, weapon change pending.
     // If true, the next 3 bits hold weapon num.
-    //BT_CHANGE		= 4,
+    //BT_CHANGE     = 4,
     // The 3bit weapon mask and shift, convenience.
-    //BT_WEAPONMASK	= (8+16+32+64),
-    //BT_WEAPONSHIFT	= 3,
+    //BT_WEAPONMASK = (8+16+32+64),
+    //BT_WEAPONSHIFT    = 3,
 
-	//BT_JUMP			= 8,
+    //BT_JUMP           = 8,
     //BT_SPEED        = 16,
 
     // Pause the game.
-    //BTS_PAUSE		= 1,
+    //BTS_PAUSE     = 1,
     // Save the game at each console.
-    //BTS_SAVEGAME	= 2,
+    //BTS_SAVEGAME  = 2,
 
     // Savegame slot numbers
     //  occupy the second byte of buttons.
-    //BTS_SAVEMASK	= (4+8+16),
-    //BTS_SAVESHIFT 	= 2,
+    //BTS_SAVEMASK  = (4+8+16),
+    //BTS_SAVESHIFT     = 2,
 
-	// Special weapon change flags.
-	//BTS_NEXTWEAPON	= 4,
-	//BTS_PREVWEAPON	= 8,
+    // Special weapon change flags.
+    //BTS_NEXTWEAPON    = 4,
+    //BTS_PREVWEAPON    = 8,
 
 } buttoncode_t;*/
 

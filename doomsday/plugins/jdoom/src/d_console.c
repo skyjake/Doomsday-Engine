@@ -47,7 +47,7 @@ DEFCC(CCmdCheatReveal);
 DEFCC(CCmdCheatGive);
 DEFCC(CCmdCheatMassacre);
 DEFCC(CCmdCheatWhere);
-DEFCC(CCmdCheatExitLevel);
+DEFCC(CCmdCheatLeaveMap);
 DEFCC(CCmdCheatSuicide);
 
 DEFCC(CCmdMakeLocal);
@@ -88,7 +88,7 @@ cvar_t  gameCVars[] = {
 
 // View/Refresh
     {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 13},
-    {"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1},
+    {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
     {"hud-title-noidsoft", 0, CVT_BYTE, &cfg.hideAuthorIdSoft, 0, 1},
 
     {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1},
@@ -196,7 +196,7 @@ cvar_t  gameCVars[] = {
 };
 
 //  Console commands
-ccmd_t  gameCCmds[] = {
+ccmd_t gameCCmds[] = {
     {"spy",         "",     CCmdCycleSpy},
     {"screenshot",  "",     CCmdScreenShot},
     {"viewsize",    "s",    CCmdViewSize},
@@ -209,7 +209,7 @@ ccmd_t  gameCCmds[] = {
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
-    {"exitlevel",   "",     CCmdCheatExitLevel},
+    {"leavemap",    "",     CCmdCheatLeaveMap},
     {"suicide",     "",     CCmdCheatSuicide},
     {"where",       "",     CCmdCheatWhere},
 

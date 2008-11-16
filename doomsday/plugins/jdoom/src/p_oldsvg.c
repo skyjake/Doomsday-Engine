@@ -43,6 +43,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -123,6 +124,8 @@ static void SV_ReadPlayer(player_t* pl)
     pl->powers[PT_INVISIBILITY] = (SV_ReadLong()? true : false);
     pl->powers[PT_IRONFEET] = (SV_ReadLong()? true : false);
     pl->powers[PT_ALLMAP] = (SV_ReadLong()? true : false);
+    if(pl->powers[PT_ALLMAP])
+        AM_RevealMap(pl - players, true);
     pl->powers[PT_INFRARED] = (SV_ReadLong()? true : false);
 
     memset(pl->keys, 0, sizeof(pl->keys));
@@ -772,7 +775,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_ceiling:
             PADSAVEP();
-            ceiling = Z_Calloc(sizeof(*ceiling), PU_LEVSPEC, NULL);
+            ceiling = Z_Calloc(sizeof(*ceiling), PU_MAPSPEC, NULL);
 
             SV_ReadCeiling(ceiling);
 
@@ -781,7 +784,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_door:
             PADSAVEP();
-            door = Z_Calloc(sizeof(*door), PU_LEVSPEC, NULL);
+            door = Z_Calloc(sizeof(*door), PU_MAPSPEC, NULL);
 
             SV_ReadDoor(door);
 
@@ -790,7 +793,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_floor:
             PADSAVEP();
-            floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, NULL);
+            floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, NULL);
 
             SV_ReadFloor(floor);
 
@@ -799,7 +802,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_plat:
             PADSAVEP();
-            plat = Z_Calloc(sizeof(*plat), PU_LEVSPEC, NULL);
+            plat = Z_Calloc(sizeof(*plat), PU_MAPSPEC, NULL);
 
             SV_ReadPlat(plat);
 
@@ -808,7 +811,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_flash:
             PADSAVEP();
-            flash = Z_Calloc(sizeof(*flash), PU_LEVSPEC, NULL);
+            flash = Z_Calloc(sizeof(*flash), PU_MAPSPEC, NULL);
 
             SV_ReadFlash(flash);
 
@@ -817,7 +820,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_strobe:
             PADSAVEP();
-            strobe = Z_Calloc(sizeof(*strobe), PU_LEVSPEC, NULL);
+            strobe = Z_Calloc(sizeof(*strobe), PU_MAPSPEC, NULL);
 
             SV_ReadStrobe(strobe);
 
@@ -826,7 +829,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_glow:
             PADSAVEP();
-            glow = Z_Calloc(sizeof(*glow), PU_LEVSPEC, NULL);
+            glow = Z_Calloc(sizeof(*glow), PU_MAPSPEC, NULL);
 
             SV_ReadGlow(glow);
 
@@ -877,14 +880,14 @@ void SV_v19_LoadGame(char *savename)
     for(i = 0; i < 4; ++i)
         players[i].plr->inGame = *savePtr++;
 
-    // Load a base level.
+    // Load a base map.
     G_InitNew(gameSkill, gameEpisode, gameMap);
 
-    // Get the level time.
+    // Get the map time.
     a = *savePtr++;
     b = *savePtr++;
     c = *savePtr++;
-    levelTime = (a << 16) + (b << 8) + c;
+    mapTime = (a << 16) + (b << 8) + c;
 
     // Dearchive all the modifications.
     P_v19_UnArchivePlayers();
@@ -901,5 +904,5 @@ void SV_v19_LoadGame(char *savename)
     saveBuffer = NULL;
 
     // Spawn particle generators.
-    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
+    R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }

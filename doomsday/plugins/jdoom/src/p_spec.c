@@ -533,7 +533,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 53:
@@ -616,7 +616,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT.
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         break;
 
     case 125:
@@ -866,7 +866,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // HELLSLIME DAMAGE.
         if(!player->powers[PT_IRONFEET])
         {
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 10, false);
         }
         break;
@@ -875,7 +875,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // NUKAGE DAMAGE.
         if(!player->powers[PT_IRONFEET])
         {
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 5, false);
         }
         break;
@@ -886,7 +886,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // STROBE HURT
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 20, false);
         }
         break;
@@ -906,11 +906,11 @@ void P_PlayerInSpecialSector(player_t *player)
         // EXIT SUPER DAMAGE! (for E1M8 finale)
         player->cheats &= ~CF_GODMODE;
 
-        if(!(levelTime & 0x1f))
+        if(!(mapTime & 0x1f))
             P_DamageMobj(player->plr->mo, NULL, NULL, 20, false);
 
         if(player->health <= 10)
-            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+            G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;
 
     default:
@@ -1236,11 +1236,11 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         break;
 
     case 11:
-        // Exit level
+        // Exit map
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        // Prevent 'zombie players' from exiting levels.
+        // Prevent 'zombie players' from exiting maps.
         if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
             S_StartSound(SFX_NOWAY, mo);
@@ -1248,7 +1248,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         }
 
         P_ChangeSwitchMaterial(line, 0);
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 14:
@@ -1322,7 +1322,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        // Prevent 'zombie players' from exiting levels.
+        // Prevent 'zombie players' from exiting maps.
         if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
             S_StartSound(SFX_NOWAY, mo);
@@ -1330,7 +1330,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         }
 
         P_ChangeSwitchMaterial(line, 0);
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         break;
 
     case 55:

@@ -101,7 +101,7 @@ static boolean autoStart;
 
 /**
  * Attempt to change the current game mode. Can only be done when not
- * actually in a level.
+ * actually in a map.
  *
  * \todo Doesn't actually do anything yet other than set the game mode
  * global vars.
@@ -114,7 +114,7 @@ boolean G_SetGameMode(gamemode_t mode)
 {
     gameMode = mode;
 
-    if(G_GetGameState() == GS_LEVEL)
+    if(G_GetGameState() == GS_MAP)
         return false;
 
     switch(mode)
@@ -415,7 +415,7 @@ void G_PreInit(void)
     cfg.netMobHealthModifier = 1;
     cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = 41;
-    cfg.levelTitle = true;
+    cfg.mapTitle = true;
     cfg.hideAuthorIdSoft = true;
     cfg.menuColor[0] = 1;
     cfg.menuColor2[0] = 1;
@@ -595,7 +595,7 @@ void G_PostInit(void)
         int                 time;
 
         time = atoi(Argv(p + 1));
-        Con_Message("Levels will end after %d minute", time);
+        Con_Message("Maps will end after %d minute", time);
         if(time > 1)
             Con_Message("s");
         Con_Message(".\n");

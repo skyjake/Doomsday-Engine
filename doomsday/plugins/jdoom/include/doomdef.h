@@ -120,7 +120,7 @@ typedef enum {
  * gazing at the intermission screen, the game final animation, or a demo.
  */
 typedef enum gamestate_e {
-    GS_LEVEL,
+    GS_MAP,
     GS_INTERMISSION,
     GS_FINALE,
     GS_DEMOSCREEN,
@@ -252,7 +252,7 @@ enum { VX, VY, VZ }; // Vertex indices.
 #define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
 
-#define GAMETIC             (Get(DD_GAMETIC))
+#define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
 #define SKYMASKMATERIAL     (Get(DD_SKYMASKMATERIAL_NUM))
 #define SKYFLATNAME         ("F_SKY1")

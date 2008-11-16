@@ -51,7 +51,7 @@ void        ST_Ticker(void);
 // Called by main loop.
 void        ST_Drawer(int player, int mode, boolean refresh);
 
-// Called when the console player is spawned on each level.
+// Called when the console player is spawned on each map.
 void        ST_Start(int player);
 void        ST_Stop(int player);
 

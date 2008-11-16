@@ -274,7 +274,7 @@ void P_GiveBackpack(player_t *player)
     P_SetMessage(player, GOTBACKPACK, false);
 }
 
-boolean P_GivePower(player_t *player, int power)
+boolean P_GivePower(player_t* player, int power)
 {
     player->update |= PSF_POWERS;
 
@@ -321,15 +321,18 @@ boolean P_GivePower(player_t *player, int power)
         break;
     }
 
+    if(power == PT_ALLMAP)
+        AM_RevealMap(player - players, true);
+
     // Maybe unhide the HUD?
     ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
 
     return true;
 }
 
-boolean P_TakePower(player_t *player, int power)
+boolean P_TakePower(player_t* player, int power)
 {
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t*             plrmo = player->plr->mo;
 
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
@@ -347,6 +350,9 @@ boolean P_TakePower(player_t *player, int power)
 
     if(!player->powers[power])
         return false; // Dont got it.
+
+    if(power == PT_ALLMAP)
+        AM_RevealMap(player - players, false);
 
     player->powers[power] = 0;
     return true;
@@ -769,16 +775,16 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         P_DropWeapon(target->player);
 
         // Don't die with the automap open.
-        AM_Open(target->player - players, false);
+        AM_Open(target->player - players, false, false);
     }
 
     if(target->health < -target->info->spawnHealth &&
        target->info->xDeathState)
-    {
+    {   // Extreme death.
         P_MobjChangeState(target, target->info->xDeathState);
     }
     else
-    {
+    {   // Normal death.
         P_MobjChangeState(target, target->info->deathState);
     }
 

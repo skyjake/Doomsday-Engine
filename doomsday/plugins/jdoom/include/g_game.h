@@ -55,7 +55,7 @@ extern boolean paused;
 extern boolean precache;
 extern wbstartstruct_t wmInfo;
 extern int bodyQueueSlot;
-extern int levelStartTic;
+extern int mapStartTic;
 
 extern int gsvMapMusic;
 
@@ -67,7 +67,7 @@ void            G_DeathMatchSpawnPlayer(int playernum);
 
 void            G_PrintMapList(void);
 boolean         G_ValidateMap(int* episode, int* map);
-int             G_GetLevelNumber(int episode, int map);
+int             G_GetMapNumber(int episode, int map);
 
 void            G_InitNew(skillmode_t skill, int episode, int map);
 
@@ -79,7 +79,7 @@ void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
 void            G_DeferedPlayDemo(char* demo);
 
 // Can be called by the startup code or Hu_MenuResponder,
-// calls P_SetupLevel or W_EnterWorld.
+// calls P_SetupMap or W_EnterWorld.
 void            G_LoadGame(char* name);
 
 void            G_DoLoadGame(void);
@@ -93,7 +93,7 @@ void            G_DemoAborted(void);
 
 void            G_DoReborn(int playernum);
 void            G_PlayerReborn(int player);
-void            G_LeaveLevel(int map, int position, boolean secret);
+void            G_LeaveMap(int map, int position, boolean secret);
 
 void            G_WorldDone(void);
 

@@ -91,7 +91,7 @@
 typedef enum animenum_e {
     ANIM_ALWAYS,
     ANIM_RANDOM,
-    ANIM_LEVEL
+    ANIM_MAP
 } animenum_t;
 
 typedef struct point_s {
@@ -204,15 +204,15 @@ static wianim_t epsd0animinfo[] = {
 };
 
 static wianim_t epsd1animinfo[] = {
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 1},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 2},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 3},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 4},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 5},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 6},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 7},
-    {ANIM_LEVEL, TICRATE / 3, 3, {192, 144}, 8},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 8}
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 1},
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 2},
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 3},
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 4},
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 5},
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 6},
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 7},
+    {ANIM_MAP, TICRATE / 3, 3, {192, 144}, 8},
+    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 8}
 };
 
 static wianim_t epsd2animinfo[] = {
@@ -277,7 +277,7 @@ static wbstartstruct_t *wbs;
 
 static wbplayerstruct_t *plrs;  // wbs->plyr[]
 
-static dpatch_t bg; // Background (map of levels).
+static dpatch_t bg; // Background (map of maps).
 static dpatch_t yah[2]; // You Are Here.
 static dpatch_t splat; // Splat.
 static dpatch_t percent; // % graphic.
@@ -318,7 +318,7 @@ boolean WI_Responder(event_t *ev)
 }
 
 /**
- * Draws "<Levelname> Finished!"
+ * Draws "<MapName> Finished!"
  */
 void WI_drawLF(void)
 {
@@ -332,7 +332,7 @@ void WI_drawLF(void)
         mapNum = ((gameEpisode -1) * 9) + wbs->last;
 
     mapName = (char *) DD_GetVariable(DD_MAP_NAME);
-    // Skip the E#M# or Level #.
+    // Skip the E#M# or Map #.
     if(mapName)
     {
         char               *ptr = strchr(mapName, ':');
@@ -347,17 +347,17 @@ void WI_drawLF(void)
 
     // Draw <MapName>
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &levelNamePatches[mapNum], mapName, false, ALIGN_CENTER);
+                 &mapNamePatches[mapNum], mapName, false, ALIGN_CENTER);
 
     // Draw "Finished!"
-    y += (5 * levelNamePatches[mapNum].height) / 4;
+    y += (5 * mapNamePatches[mapNum].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
                  &finished, NULL, false, ALIGN_CENTER);
 }
 
 /**
- * Draws "Entering <LevelName>"
+ * Draws "Entering <MapName>"
  */
 void WI_drawEL(void)
 {
@@ -367,14 +367,14 @@ void WI_drawEL(void)
     ddmapinfo_t         minfo;
     char                lumpName[10];
 
-    mapNum = G_GetLevelNumber(gameEpisode, wbs->next);
+    mapNum = G_GetMapNumber(gameEpisode, wbs->next);
 
-    // See if there is a level name.
+    // See if there is a map name.
     P_GetMapLumpName(gameEpisode, wbs->next+1, lumpName);
     if(Def_Get(DD_DEF_MAP_INFO, lumpName, &minfo) && minfo.name)
         mapName = minfo.name;
 
-    // Skip the E#M# or Level #.
+    // Skip the E#M# or Map #.
     if(mapName)
     {
         char               *ptr = strchr(mapName, ':');
@@ -391,15 +391,15 @@ void WI_drawEL(void)
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1, &entering,
                  NULL, false, ALIGN_CENTER);
 
-    // Draw level.
-    y += (5 * levelNamePatches[wbs->next].height) / 4;
+    // Draw map.
+    y += (5 * mapNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &levelNamePatches[((gameEpisode -1) * 9) + wbs->next],
+                 &mapNamePatches[((gameEpisode -1) * 9) + wbs->next],
                  mapName, false, ALIGN_CENTER);
 }
 
-void WI_drawOnLnode(int n, dpatch_t * c)
+void WI_DrawOnMapNode(int n, dpatch_t * c)
 {
     int                 i;
     int                 left, top, right, bottom;
@@ -427,7 +427,7 @@ void WI_drawOnLnode(int n, dpatch_t * c)
     }
     else
     {
-        Con_Message("Could not place patch on level %d", n + 1);
+        Con_Message("Could not place patch on map %d", n + 1);
     }
 }
 
@@ -452,7 +452,7 @@ void WI_initAnimatedBack(void)
             a->nextTic = bcnt + 1 + (M_Random() % a->period);
         else if(a->type == ANIM_RANDOM)
             a->nextTic = bcnt + 1 + a->data2 + (M_Random() % a->data1);
-        else if(a->type == ANIM_LEVEL)
+        else if(a->type == ANIM_MAP)
             a->nextTic = bcnt + 1;
     }
 }
@@ -492,8 +492,8 @@ void WI_updateAnimatedBack(void)
                     a->nextTic = bcnt + a->period;
                 break;
 
-            case ANIM_LEVEL:
-                // gawd-awful hack for level anims
+            case ANIM_MAP:
+                // Gawd-awful hack for map anims.
                 if(!(state == ILS_SHOW_STATS && i == 7) && wbs->next == a->data1)
                 {
                     a->ctr++;
@@ -590,7 +590,7 @@ void WI_drawPercent(int x, int y, int p)
 }
 
 /**
- * Display level completion time and par, or "sucks" message if overflow.
+ * Display map completion time and par, or "sucks" message if overflow.
  */
 void WI_drawTime(int x, int y, int t)
 {
@@ -692,18 +692,18 @@ void WI_drawShowNextLoc(void)
 
         // Draw a splat on taken cities.
         for(i = 0; i <= last; ++i)
-            WI_drawOnLnode(i, &splat);
+            WI_DrawOnMapNode(i, &splat);
 
-        // Splat the secret level?
+        // Splat the secret map?
         if(wbs->didSecret)
-            WI_drawOnLnode(8, &splat);
+            WI_DrawOnMapNode(8, &splat);
 
         // Draw flashing ptr.
         if(snlPointerOn)
-            WI_drawOnLnode(wbs->next, yah);
+            WI_DrawOnMapNode(wbs->next, yah);
     }
 
-    // Draws which level you are entering..
+    // Draws which map you are entering..
     if((gameMode != commercial) || wbs->next != 30)
         WI_drawEL();
 }

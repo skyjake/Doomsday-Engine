@@ -51,10 +51,10 @@ typedef struct xsector_s {
     int             soundTraversed;
 
     // Thing that made a sound (or null)
-    struct mobj_s  *soundTarget;
+    struct mobj_s*  soundTarget;
 
     // thinker_t for reversable actions.
-    void           *specialData;
+    void*           specialData;
 
     byte            blFlags; // Used during stair building.
 
@@ -67,7 +67,7 @@ typedef struct xsector_s {
 
     float           origLight;
     float           origRGB[3];
-    xgsector_t     *xg;
+    xgsector_t*     xg;
 } xsector_t;
 
 typedef struct xline_s {
@@ -80,11 +80,11 @@ typedef struct xline_s {
     int             validCount;
 
     // Extended generalized lines.
-    xgline_t       *xg;
+    xgline_t*       xg;
 } xline_t;
 
-extern xsector_t *xsectors;
-extern xline_t *xlines;
+extern xsector_t* xsectors;
+extern xline_t* xlines;
 
 xline_t*        P_ToXLine(linedef_t* line);
 xsector_t*      P_ToXSector(sector_t* sector);

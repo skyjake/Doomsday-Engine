@@ -455,9 +455,9 @@ void P_MobjMoveZ(mobj_t* mo)
 
     // Do some fly-bobbing.
     if(mo->player && (mo->flags2 & MF2_FLY) && mo->pos[VZ] > floorZ &&
-       (levelTime & 2))
+       (mapTime & 2))
     {
-        targetZ += FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
+        targetZ += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
     }
 
     if(targetZ < floorZ)
@@ -831,7 +831,7 @@ void P_MobjThinker(mobj_t* mo)
 
         mo->moveCount++;
 
-        if(mo->moveCount >= 12 * 35 && !(levelTime & 31) &&
+        if(mo->moveCount >= 12 * 35 && !(mapTime & 31) &&
            P_Random() <= 4)
         {
             P_NightmareRespawn(mo);
@@ -930,7 +930,7 @@ void P_RespawnEnqueue(spawnspot_t *spot)
 
     memcpy(spawnobj, spot, sizeof(*spawnobj));
 
-    itemRespawnTime[itemRespawnQueueHead] = levelTime;
+    itemRespawnTime[itemRespawnQueueHead] = mapTime;
     itemRespawnQueueHead = (itemRespawnQueueHead + 1) & (ITEMQUESIZE - 1);
 
     // Lose one off the end?
@@ -957,7 +957,7 @@ void P_CheckRespawnQueue(void)
         return;
 
     // Time to respawn yet?
-    if(levelTime - itemRespawnTime[itemRespawnQueueTail] < 30 * TICSPERSEC)
+    if(mapTime - itemRespawnTime[itemRespawnQueueTail] < 30 * TICSPERSEC)
         return;
 
     // Get the attributes of the mobj from spawn parameters.
@@ -1010,8 +1010,8 @@ void P_EmptyRespawnQueue(void)
 }
 
 /**
- * Called when a player is spawned on the level.
- * Most of the player structure stays unchanged between levels.
+ * Called when a player is spawned on the map.
+ * Most of the player structure stays unchanged between maps.
  */
 void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 {

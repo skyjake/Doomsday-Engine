@@ -149,7 +149,7 @@ boolean Cht_Responder(event_t *ev)
     int                 i;
     player_t           *plr = &players[CONSOLEPLAYER];
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return false;
 
     if(gameSkill != SM_NIGHTMARE &&
@@ -466,14 +466,14 @@ boolean Cht_WarpFunc(player_t *plyr, char *buf)
     return true;
 }
 
-boolean Cht_PowerUpFunc(player_t *plyr, int i)
+boolean Cht_PowerUpFunc(player_t* plyr, int i)
 {
     plyr->update |= PSF_POWERS;
     if(!plyr->powers[i])
     {
         return P_GivePower(plyr, i);
     }
-    else if(i == PT_STRENGTH || i == PT_FLIGHT)
+    else if(i == PT_STRENGTH || i == PT_FLIGHT || i == PT_ALLMAP)
     {
         return !(P_TakePower(plyr, i));
     }
@@ -580,7 +580,7 @@ DEFCC(CCmdCheatNoClip)
 
 DEFCC(CCmdCheatSuicide)
 {
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
     {
         S_LocalSound(SFX_OOF, NULL);
         Con_Printf("Can only suicide when in a game!\n");
@@ -646,13 +646,13 @@ DEFCC(CCmdCheatReveal)
 
     // Reset them (for 'nothing'). :-)
     AM_SetCheatLevel(CONSOLEPLAYER, 0);
-    players[CONSOLEPLAYER].powers[PT_ALLMAP] = false;
+    AM_RevealMap(CONSOLEPLAYER, false);
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
     if(option == 1)
-        players[CONSOLEPLAYER].powers[PT_ALLMAP] = true;
+        AM_RevealMap(CONSOLEPLAYER, true);
     else if(option != 0)
         AM_SetCheatLevel(CONSOLEPLAYER, option -1);
 
@@ -710,7 +710,7 @@ DEFCC(CCmdCheatGive)
         plyr = &players[i];
     }
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
     {
         Con_Printf("Can only \"give\" when in a game!\n");
         return true;
@@ -870,22 +870,22 @@ DEFCC(CCmdCheatWhere)
 }
 
 /**
- * Exit the current level and goto the intermission.
+ * Exit the current map and go to the intermission.
  */
-DEFCC(CCmdCheatExitLevel)
+DEFCC(CCmdCheatLeaveMap)
 {
     if(!can_cheat())
         return false; // Can't cheat!
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
     {
         S_LocalSound(SFX_OOF, NULL);
-        Con_Printf("Can only exit a level when in a game!\n");
+        Con_Printf("Can only exit a map when in a game!\n");
         return true;
     }
 
-    // Exit the level.
-    G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+    // Exit the map.
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 
     return true;
 }
