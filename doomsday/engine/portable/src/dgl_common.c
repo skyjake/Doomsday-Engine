@@ -480,6 +480,11 @@ void initState(void)
     DGL_state.currentLineWidth = 1.5f;
     glLineWidth(DGL_state.currentLineWidth);
 
+    glEnable(GL_POINT_SMOOTH);
+    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+    DGL_state.currentPointSize = 1.5f;
+    glPointSize(DGL_state.currentPointSize);
+
     glShadeModel(GL_SMOOTH);
 #endif
 
@@ -927,6 +932,9 @@ float DGL_GetFloat(int name)
     case DGL_LINE_WIDTH:
         return DGL_state.currentLineWidth;
 
+    case DGL_POINT_SIZE:
+        return DGL_state.currentPointSize;
+
     default:
         return 0;
     }
@@ -941,6 +949,11 @@ boolean DGL_SetFloat(int name, float value)
     case DGL_LINE_WIDTH:
         DGL_state.currentLineWidth = value;
         glLineWidth(value);
+        break;
+
+    case DGL_POINT_SIZE:
+        DGL_state.currentPointSize = value;
+        glPointSize(value);
         break;
 
     default:
@@ -1011,6 +1024,14 @@ int DGL_Enable(int cap)
 #endif
         break;
 
+    case DGL_LINE_SMOOTH:
+        glEnable(GL_LINE_SMOOTH);
+        break;
+
+    case DGL_POINT_SMOOTH:
+        glEnable(GL_POINT_SMOOTH);
+        break;
+
     default:
         return 0;
     }
@@ -1057,6 +1078,14 @@ void DGL_Disable(int cap)
 #if WIN32
         glDisable(GL_MULTISAMPLE_ARB);
 #endif
+        break;
+
+    case DGL_LINE_SMOOTH:
+        glDisable(GL_LINE_SMOOTH);
+        break;
+
+    case DGL_POINT_SMOOTH:
+        glDisable(GL_POINT_SMOOTH);
         break;
 
     default:

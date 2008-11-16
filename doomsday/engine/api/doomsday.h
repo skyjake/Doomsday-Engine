@@ -441,6 +441,10 @@ extern          "C" {
     int             DGL_Bind(DGLuint texture);
     void            DGL_Begin(glprimtype_t type);
     void            DGL_End(void);
+    boolean         DGL_NewList(DGLuint list, int mode);
+    DGLuint         DGL_EndList(void);
+    void            DGL_CallList(DGLuint list);
+    void            DGL_DeleteLists(DGLuint list, int range);
     void            DGL_Translatef(float x, float y, float z);
     void            DGL_Rotatef(float angle, float x, float y, float z);
     void            DGL_Scalef(float x, float y, float z);

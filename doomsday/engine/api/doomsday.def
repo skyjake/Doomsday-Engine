@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 430 <--
+; --> 434 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -344,6 +344,10 @@ EXPORTS
 	DGL_DeleteTextures			@403 NONAME
 	DGL_Begin					@363 NONAME
 	DGL_End						@364 NONAME
+    DGL_NewList                 @431 NONAME
+    DGL_EndList                 @432 NONAME
+    DGL_CallList                @433 NONAME
+    DGL_DeleteLists             @434 NONAME
 	DGL_Translatef				@384 NONAME
 	DGL_Rotatef					@385 NONAME
 	DGL_Scalef					@386 NONAME

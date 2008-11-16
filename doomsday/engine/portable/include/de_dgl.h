@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,7 +84,7 @@ typedef struct dgl_state_s {
     int         maxTexUnits;
     boolean     useFog;
     float       nearClip, farClip;
-    float       currentLineWidth;
+    float       currentLineWidth, currentPointSize;
     int         textureNonPow2;
 #if WIN32
     int         multisampleFormat;
@@ -182,6 +182,10 @@ void            DGL_PopMatrix(void);
 void            DGL_LoadIdentity(void);
 void            DGL_Begin(glprimtype_t type);
 void            DGL_End(void);
+boolean         DGL_NewList(DGLuint list, int mode);
+DGLuint         DGL_EndList(void);
+void            DGL_CallList(DGLuint list);
+void            DGL_DeleteLists(DGLuint list, int range);
 void            DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
 void            DGL_Color3ubv(const DGLubyte *data);
 void            DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
@@ -204,7 +208,7 @@ void            DGL_Vertices3fctv(int num, const gl_fct3vertex_t *data);
 void            DGL_EnableArrays(int vertices, int colors, int coords);
 void            DGL_DisableArrays(int vertices, int colors, int coords);
 void            DGL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
-			               int lock);
+                           int lock);
 void            DGL_UnlockArrays(void);
 void            DGL_ArrayElement(int index);
 void            DGL_DrawElements(glprimtype_t type, int count, const uint *indices);
