@@ -206,7 +206,7 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
 /**
  * Attempts to load the BLOCKMAP data resource.
  *
- * If the level is too large (would overflow the size limit of
+ * If the map is too large (would overflow the size limit of
  * the BLOCKMAP lump in a WAD therefore it will have been truncated),
  * it's zero length or we are forcing a rebuild - we'll have to
  * generate the blockmap data ourselves.
