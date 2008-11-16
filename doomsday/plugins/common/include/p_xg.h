@@ -37,7 +37,7 @@ void            XG_Dev(const char *format, ...) PRINTF_F(1,2);
 // Called once, at post init.
 void            XG_ReadTypes(void);
 
-// Init both XG lines and sectors. Called for each level.
+// Init both XG lines and sectors. Called for each map.
 void            XG_Init(void);
 
 // Thinks for XG lines and sectors.
