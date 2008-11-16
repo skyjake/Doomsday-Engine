@@ -34,7 +34,7 @@
 
 #include "doomsday.h"
 
-void            S_LevelMusic(void);
+void            S_MapMusic(void);
 void            S_SectorSound(sector_t* sec, int origin, int id);
 
 #endif

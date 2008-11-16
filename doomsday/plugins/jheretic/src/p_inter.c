@@ -256,9 +256,9 @@ void P_GiveKey(player_t *player, keytype_t key)
 /**
  * @return              @c true, if power accepted.
  */
-boolean P_GivePower(player_t *player, powertype_t power)
+boolean P_GivePower(player_t* player, powertype_t power)
 {
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t*             plrmo = player->plr->mo;
     boolean             retval = false;
 
     player->update |= PSF_POWERS;
@@ -323,6 +323,9 @@ boolean P_GivePower(player_t *player, powertype_t power)
 
     if(retval)
     {
+        if(power == PT_ALLMAP)
+            AM_RevealMap(player - players, true);
+
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
     }
@@ -837,7 +840,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
 
         // Don't die with the automap open.
-        AM_Open(target->player - players, false);
+        AM_Open(target->player - players, false, false);
     }
 
     if(target->health < -(target->info->spawnHealth / 2) &&
@@ -856,9 +859,9 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 /**
  * @return              @c true, if the player is morphed.
  */
-boolean P_MorphPlayer(player_t *player)
+boolean P_MorphPlayer(player_t* player)
 {
-    mobj_t             *pmo, *fog, *chicken;
+    mobj_t*             pmo, *fog, *chicken;
     float               pos[3];
     angle_t             angle;
     int                 oldFlags2;
@@ -1150,7 +1153,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             target->mom[MX] += FIX2FLT((P_Random() - P_Random()) << 10);
             target->mom[MY] += FIX2FLT((P_Random() - P_Random()) << 10);
 
-            if((levelTime & 16) && !(target->flags2 & MF2_BOSS))
+            if((mapTime & 16) && !(target->flags2 & MF2_BOSS))
             {
                 randVal = P_Random();
                 if(randVal > 160)
@@ -1165,7 +1168,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
                 }
             }
 
-            if(!(levelTime & 7))
+            if(!(mapTime & 7))
             {
                 return P_DamageMobj(target, NULL, NULL, 3, false);
             }

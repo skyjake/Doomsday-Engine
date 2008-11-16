@@ -135,7 +135,7 @@ void R_DrawSpecialFilter(int pnum)
     DGL_Enable(DGL_TEXTURING);
 }
 
-void R_DrawLevelTitle(int x, int y, float alpha, dpatch_t* font,
+void R_DrawMapTitle(int x, int y, float alpha, dpatch_t* font,
                       boolean center)
 {
     int                 strX;
@@ -223,7 +223,7 @@ static void rendHUD(int player)
     if(player < 0 || player >= MAXPLAYERS)
         return;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return;
 
     if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
@@ -294,13 +294,13 @@ void H_Display(int layer)
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
            !R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
         {
-            if(G_GetGameState() != GS_LEVEL)
+            if(G_GetGameState() != GS_MAP)
                 return;
 
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;
 
-            if(!IS_CLIENT && levelTime < 2)
+            if(!IS_CLIENT && mapTime < 2)
             {
                 // Don't render too early; the first couple of frames
                 // might be a bit unstable -- this should be considered
@@ -330,7 +330,7 @@ void H_Display2(void)
 {
     switch(G_GetGameState())
     {
-    case GS_LEVEL:
+    case GS_MAP:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
@@ -338,20 +338,20 @@ void H_Display2(void)
         {
             // Level information is shown for a few seconds in the
             // beginning of a level.
-            if(cfg.levelTitle || actualLevelTime <= 6 * TICSPERSEC)
+            if(cfg.mapTitle || actualMapTime <= 6 * TICSPERSEC)
             {
                 int         x, y;
                 float       alpha = 1;
 
-                if(actualLevelTime < 35)
-                    alpha = actualLevelTime / 35.0f;
-                if(actualLevelTime > 5 * 35)
-                    alpha = 1 - (actualLevelTime - 5 * 35) / 35.0f;
+                if(actualMapTime < 35)
+                    alpha = actualMapTime / 35.0f;
+                if(actualMapTime > 5 * 35)
+                    alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
 
                 x = SCREENWIDTH / 2;
                 y = 13;
                 Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
-                R_DrawLevelTitle(x, y, alpha, huFontB, true);
+                R_DrawMapTitle(x, y, alpha, huFontB, true);
                 Draw_EndZoom();
             }
         }

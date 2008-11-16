@@ -43,7 +43,7 @@ enum {
     SORG_CEILING
 };
 
-void            S_LevelMusic(void);
+void            S_MapMusic(void);
 void            S_SectorSound(sector_t* sector, int origin, int soundID);
 
 #endif

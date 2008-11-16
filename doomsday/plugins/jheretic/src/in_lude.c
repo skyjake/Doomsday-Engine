@@ -168,7 +168,7 @@ void IN_Start(void)
     interTime = 0;
     oldInterTime = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(i, false);
+        AM_Open(i, false, true);
 
     S_StartMusic("intr", true);
 }
@@ -217,7 +217,7 @@ void IN_InitStats(void)
         }
     }
 
-    time = levelTime / 35;
+    time = mapTime / 35;
     hours = time / 3600;
     time -= hours * 3600;
     minutes = time / 60;
@@ -569,7 +569,7 @@ void IN_DrawOldLevel(void)
     int                 i, x;
     char               *levelname;
 
-    levelname = P_GetShortLevelName(gameEpisode, prevMap);
+    levelname = P_GetShortMapName(gameEpisode, prevMap);
 
     x = 160 - M_StringWidth(levelname, huFontB) / 2;
     M_WriteText2(x, 3, levelname, huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -618,7 +618,7 @@ void IN_DrawYAH(void)
     int                 i, x;
     char               *levelname;
 
-    levelname = P_GetShortLevelName(gameEpisode, gameMap);
+    levelname = P_GetShortMapName(gameEpisode, gameMap);
 
     x = 160 - M_StringWidth("NOW ENTERING:", huFontA) / 2;
     M_WriteText2(x, 10, "NOW ENTERING:", huFontA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
@@ -657,7 +657,7 @@ void IN_DrawSingleStats(void)
     int                 x;
     char               *levelname;
 
-    levelname = P_GetShortLevelName(gameEpisode, prevMap);
+    levelname = P_GetShortMapName(gameEpisode, prevMap);
 
     M_WriteText2(50, 65, "KILLS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_WriteText2(50, 90, "ITEMS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -742,7 +742,7 @@ void IN_DrawSingleStats(void)
         x = 160 - M_StringWidth("NOW ENTERING:", huFontA) / 2;
         M_WriteText2(x, 160, "NOW ENTERING:", huFontA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
-        levelname = P_GetShortLevelName(gameEpisode, gameMap);
+        levelname = P_GetShortMapName(gameEpisode, gameMap);
 
         x = 160 - M_StringWidth(levelname, huFontB) / 2;
         M_WriteText2(x, 170, levelname, huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -760,7 +760,7 @@ void IN_DrawCoopStats(void)
     int                 ypos;
     char               *levelname;
 
-    levelname = P_GetShortLevelName(gameEpisode, prevMap);
+    levelname = P_GetShortMapName(gameEpisode, prevMap);
 
     M_WriteText2(95, 35, "KILLS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_WriteText2(155, 35, "BONUS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);

@@ -143,8 +143,8 @@ void        P_SpawnPlayer(spawnspot_t *mthing, int plrnum);
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-char           *P_GetLevelName(int episode, int map);
-char           *P_GetShortLevelName(int episode, int map);
+char           *P_GetMapName(int episode, int map);
+char           *P_GetShortMapName(int episode, int map);
 
 extern float turboMul;
 extern int maxAmmo[NUM_AMMO_TYPES];

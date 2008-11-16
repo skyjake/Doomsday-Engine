@@ -43,6 +43,7 @@
 #include "p_door.h"
 #include "p_plat.h"
 #include "p_floor.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -133,6 +134,8 @@ static void SV_v13_ReadPlayer(player_t* pl)
     pl->powers[PT_INVULNERABILITY] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_INVISIBILITY] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_ALLMAP] = (SV_v13_ReadLong()? true : false);
+    if(pl->powers[PT_ALLMAP])
+        AM_RevealMap(pl - players, true);
     pl->powers[PT_INFRARED] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_WEAPONLEVEL2] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_FLIGHT] = (SV_v13_ReadLong()? true : false);
@@ -777,7 +780,7 @@ enum {
             return;             // end of list
 
         case tc_ceiling:
-            ceiling = Z_Calloc(sizeof(*ceiling), PU_LEVEL, NULL);
+            ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, NULL);
 
             SV_ReadCeiling(ceiling);
 
@@ -785,7 +788,7 @@ enum {
             break;
 
         case tc_door:
-            door = Z_Calloc(sizeof(*door), PU_LEVEL, NULL);
+            door = Z_Calloc(sizeof(*door), PU_MAP, NULL);
 
             SV_ReadDoor(door);
 
@@ -793,7 +796,7 @@ enum {
             break;
 
         case tc_floor:
-            floor = Z_Calloc(sizeof(*floor), PU_LEVEL, NULL);
+            floor = Z_Calloc(sizeof(*floor), PU_MAP, NULL);
 
             SV_ReadFloor(floor);
 
@@ -801,7 +804,7 @@ enum {
             break;
 
         case tc_plat:
-            plat = Z_Calloc(sizeof(*plat), PU_LEVEL, NULL);
+            plat = Z_Calloc(sizeof(*plat), PU_MAP, NULL);
 
             SV_ReadPlat(plat);
 
@@ -809,7 +812,7 @@ enum {
             break;
 
         case tc_flash:
-            flash = Z_Calloc(sizeof(*flash), PU_LEVEL, NULL);
+            flash = Z_Calloc(sizeof(*flash), PU_MAP, NULL);
 
             SV_ReadFlash(flash);
 
@@ -817,7 +820,7 @@ enum {
             break;
 
         case tc_strobe:
-            strobe = Z_Calloc(sizeof(*strobe), PU_LEVEL, NULL);
+            strobe = Z_Calloc(sizeof(*strobe), PU_MAP, NULL);
 
             SV_ReadStrobe(strobe);
 
@@ -825,7 +828,7 @@ enum {
             break;
 
         case tc_glow:
-            glow = Z_Calloc(sizeof(*glow), PU_LEVEL, NULL);
+            glow = Z_Calloc(sizeof(*glow), PU_MAP, NULL);
 
             SV_ReadGlow(glow);
 
@@ -865,14 +868,14 @@ void SV_v13_LoadGame(char *savename)
         players[i].plr->inGame = *save_p++;
     }
 
-    // Load a base level.
+    // Load a base map.
     G_InitNew(gameSkill, gameEpisode, gameMap);
 
-    // Create leveltime.
+    // Create map time.
     a = *save_p++;
     b = *save_p++;
     c = *save_p++;
-    levelTime = (a << 16) + (b << 8) + c;
+    mapTime = (a << 16) + (b << 8) + c;
 
     // De-archive all the modifications.
     P_v13_UnArchivePlayers();
@@ -886,5 +889,5 @@ void SV_v13_LoadGame(char *savename)
     Z_Free(savebuffer);
 
     // Spawn particle generators.
-    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
+    R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }

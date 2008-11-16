@@ -109,7 +109,7 @@ typedef struct jheretic_config_s {
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            secretMsg;
     int             plrViewHeight;
-    int             levelTitle;
+    int             mapTitle;
     float           menuColor[3];
     float           menuColor2[3];
     byte            noCoopDamage;

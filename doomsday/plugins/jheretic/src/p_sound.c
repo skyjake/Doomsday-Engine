@@ -53,13 +53,13 @@
 /**
  * Start the song for the current map.
  */
-void S_LevelMusic(void)
+void S_MapMusic(void)
 {
     ddmapinfo_t         info;
     char                id[10];
     int                 songID = 0;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return;
 
     sprintf(id, "E%iM%i", gameEpisode, gameMap);

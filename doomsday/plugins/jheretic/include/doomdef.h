@@ -137,7 +137,7 @@ extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
  * intermission screen, the game final animation, or a demo.
  */
 typedef enum {
-    GS_LEVEL,
+    GS_MAP,
     GS_INTERMISSION,
     GS_FINALE,
     GS_DEMOSCREEN,
@@ -323,7 +323,7 @@ void            D_QuitNetGame(void);
 // can call G_PlayerExited
 // carries out all thinking of monsters and players
 
-void            P_SetupLevel(int episode, int map, int playermask,
+void            P_SetupMap(int episode, int map, int playermask,
                              skillmode_t skill);
 // called by W_Ticker
 void            P_Init(void);

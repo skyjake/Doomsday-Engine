@@ -631,13 +631,13 @@ void R_GetWeaponBob(int player, float* x, float* y)
     if(x)
     {
         *x = 1 + (cfg.bobWeapon * players[player].bob) *
-            FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
+            FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
     if(y)
     {
         *y = 32 + (cfg.bobWeapon * players[player].bob) *
-            FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+            FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }
 
@@ -1795,7 +1795,7 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
     mo->mom[MY] = pmo->mom[MY] + mo->info->speed * FIX2FLT(finesine[an]);
     mo->mom[MZ] = mo->info->speed * slope;
 
-    if(!player->refire || !(levelTime % 38))
+    if(!player->refire || !(mapTime % 38))
     {
         S_StartSoundEx(SFX_PHOPOW, player->plr->mo);
     }

@@ -500,7 +500,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 53:
@@ -586,7 +586,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
   //case 124: // DJS - In Heretic, the secret exit is 105
     case 105:
         // Secret EXIT
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         break;
 
     // DJS - Heretic has an additional stair build special
@@ -855,7 +855,7 @@ void P_PlayerInSpecialSector(player_t *player)
     {
     case 5:
         // LAVA DAMAGE WEAK
-        if(!(levelTime & 15))
+        if(!(mapTime & 15))
         {
             P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5, false);
             P_HitFloor(player->plr->mo);
@@ -864,13 +864,13 @@ void P_PlayerInSpecialSector(player_t *player)
 
     case 7:
         // SLUDGE DAMAGE
-        if(!(levelTime & 31))
+        if(!(mapTime & 31))
             P_DamageMobj(player->plr->mo, NULL, NULL, 4, false);
         break;
 
     case 16:
         // LAVA DAMAGE HEAVY
-        if(!(levelTime & 15))
+        if(!(mapTime & 15))
         {
             P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 8, false);
             P_HitFloor(player->plr->mo);
@@ -880,7 +880,7 @@ void P_PlayerInSpecialSector(player_t *player)
     case 4:
         // LAVA DAMAGE WEAK PLUS SCROLL EAST
         P_Thrust(player, 0, FIX2FLT(2048 * 28));
-        if(!(levelTime & 15))
+        if(!(mapTime & 15))
         {
             P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5, false);
             P_HitFloor(player->plr->mo);
@@ -1429,7 +1429,7 @@ void P_InitAmbientSound(void)
 }
 
 /**
- * Called by (P_mobj):P_SpawnMapThing during (P_setup):P_SetupLevel.
+ * Called by (P_mobj):P_SpawnMapThing during (P_setup):P_SetupMap.
  */
 void P_AddAmbientSfx(int sequence)
 {
@@ -1573,7 +1573,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         P_ChangeSwitchMaterial(line, 0);
         break;
 
@@ -1636,7 +1636,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         P_ChangeSwitchMaterial(line, 0);
         break;
 

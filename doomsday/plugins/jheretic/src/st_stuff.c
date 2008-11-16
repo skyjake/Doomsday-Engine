@@ -630,7 +630,7 @@ void ST_Ticker(void)
 
             ST_updateWidgets(i);
 
-            if(levelTime & 1)
+            if(mapTime & 1)
             {
                 hud->chainWiggle = P_Random() & 1;
             }
@@ -785,12 +785,12 @@ static void drawWidgets(hudstate_t* hud)
         // Draw more left indicator.
         if(x != 0)
             GL_DrawPatchLitAlpha(38, 159, 1, hud->statusbarCounterAlpha,
-                                 !(levelTime & 4) ? invPageLeft.lump : invPageLeft2.lump);
+                                 !(mapTime & 4) ? invPageLeft.lump : invPageLeft2.lump);
 
         // Draw more right indicator.
         if(plr->inventorySlotNum - x > 7)
             GL_DrawPatchLitAlpha(269, 159, 1, hud->statusbarCounterAlpha,
-                                 !(levelTime & 4) ? invPageRight.lump : invPageRight2.lump);
+                                 !(mapTime & 4) ? invPageRight.lump : invPageRight2.lump);
     }
 }
 
@@ -1021,7 +1021,7 @@ static void drawIcons(int player)
         if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
            !(plr->powers[PT_FLIGHT] & 16))
         {
-            frame = (levelTime / 3) & 15;
+            frame = (mapTime / 3) & 15;
             if(plr->plr->mo->flags2 & MF2_FLY)
             {
                 if(hud->hitCenterFrame && (frame != 15 && frame != 0))
@@ -1063,7 +1063,7 @@ static void drawIcons(int player)
         if(cfg.tomeCounter || plr->powers[PT_WEAPONLEVEL2] > BLINKTHRESHOLD
            || !(plr->powers[PT_WEAPONLEVEL2] & 16))
         {
-            frame = (levelTime / 3) & 15;
+            frame = (mapTime / 3) & 15;
             if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
             {
                 DGL_Color4f(1, 1, 1, plr->powers[PT_WEAPONLEVEL2] / 35.0f);
@@ -1282,13 +1282,13 @@ Draw_BeginZoom(invScale, 160, 198);
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(38, 167, 1, iconAlpha,
-                                 !(levelTime & 4)? invPageLeft.lump : invPageLeft2.lump);
+                                 !(mapTime & 4)? invPageLeft.lump : invPageLeft2.lump);
         }
 
         if(plr->inventorySlotNum - x > 7)
         {
             GL_DrawPatchLitAlpha(269, 167, 1, iconAlpha,
-                                 !(levelTime & 4)? invPageRight.lump : invPageRight2.lump);
+                                 !(mapTime & 4)? invPageRight.lump : invPageRight2.lump);
         }
 
 Draw_EndZoom();
