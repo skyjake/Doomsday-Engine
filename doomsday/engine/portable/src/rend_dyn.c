@@ -151,7 +151,7 @@ static uint newDynlightList(boolean sortBrightestFirst)
             newNum = 2;
 
         dynlightLinkLists =
-            Z_Realloc(dynlightLinkLists, newNum * sizeof(dynlist_t), PU_LEVEL);
+            Z_Realloc(dynlightLinkLists, newNum * sizeof(dynlist_t), PU_MAP);
         numDynlightLinkLists = newNum;
     }
 
@@ -573,8 +573,8 @@ static uint processSubSector(subsector_t* ssec, surfacelumobjiterparams_t* param
 /**
  * Process dynamic lights for the specified seg.
  */
-uint DL_ProcessSegSection(seg_t* seg, float bottom, float top,
-                          boolean sortBrightestFirst)
+uint DL_ProcessSegSection(seg_t* seg, subsector_t* ssec, float bottom,
+                          float top, boolean sortBrightestFirst)
 {
     sidedef_t*          side;
     surfacelumobjiterparams_t params;
@@ -582,7 +582,7 @@ uint DL_ProcessSegSection(seg_t* seg, float bottom, float top,
     if(!useDynLights && !useWallGlow)
         return 0; // Disabled.
 
-    if(!seg || !seg->subsector)
+    if(!seg || !ssec)
         return 0;
 
     side = SEG_SIDEDEF(seg);
@@ -598,7 +598,7 @@ uint DL_ProcessSegSection(seg_t* seg, float bottom, float top,
     params.useTex = 0;
     params.isPlane = false;
 
-    return processSubSector(seg->subsector, &params);
+    return processSubSector(ssec, &params);
 }
 
 uint DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane)
