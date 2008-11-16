@@ -88,7 +88,7 @@ static int numFlats; // Used with older versions.
 // CODE --------------------------------------------------------------------
 
 /**
- * Called for every material in the level before saving by
+ * Called for every material in the map before saving by
  * Sv_InitTextureArchives.
  */
 void SV_PrepareMaterial(materialnum_t num, materialarchive_t* arc)
