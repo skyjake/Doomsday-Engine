@@ -74,22 +74,22 @@ void P_TurnTorchesToFaceWalls();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_ResetWorldState(void);
-static void P_FinalizeLevel(void);
-static void P_PrintMapBanner(int episode, int map);
+static void     P_ResetWorldState(void);
+static void     P_FinalizeMap(void);
+static void     P_PrintMapBanner(int episode, int map);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Our private map data structures
-xsector_t *xsectors;
-xline_t *xlines;
+xsector_t* xsectors;
+xline_t* xlines;
 
 uint numthings;
 
-// If true we are in the process of setting up a level
-boolean levelSetup;
+// If true we are in the process of setting up a map
+boolean mapSetup;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -192,7 +192,7 @@ xsector_t* P_GetXSector(uint index)
 
 /**
  * Doomsday calls this (before any data is read) for each type of map object
- * at the start of the level load process. This is to allow us (the game) to
+ * at the start of the map load process. This is to allow us (the game) to
  * do any initialization we need. For example if we maintain our own data
  * for lines (the xlines) we'll do all allocation and init here.
  *
@@ -205,14 +205,14 @@ void P_SetupForMapData(int type, uint num)
     {
     case DMU_SECTOR:
         if(num > 0)
-            xsectors = Z_Calloc(num * sizeof(xsector_t), PU_LEVEL, 0);
+            xsectors = Z_Calloc(num * sizeof(xsector_t), PU_MAP, 0);
         else
             xsectors = NULL;
         break;
 
     case DMU_LINEDEF:
         if(num > 0)
-            xlines = Z_Calloc(num * sizeof(xline_t), PU_LEVEL, 0);
+            xlines = Z_Calloc(num * sizeof(xline_t), PU_MAP, 0);
         else
             xlines = NULL;
         break;
@@ -229,7 +229,7 @@ static void P_LoadMapObjs(void)
     numthings = P_CountGameMapObjs(MO_THING);
 
     if(numthings > 0)
-        things = Z_Calloc(numthings * sizeof(spawnspot_t), PU_LEVEL, 0);
+        things = Z_Calloc(numthings * sizeof(spawnspot_t), PU_MAP, 0);
     else
         things = NULL;
 
@@ -377,43 +377,42 @@ static void interpretLinedefFlags(void)
 #undef ML_DONTPEGBOTTOM
 }
 
-typedef struct setuplevelparam_s {
-    int episode;
-    int map;
-    int playerMask; // Unused?
-    skillmode_t skill;
-} setuplevelparam_t;
+typedef struct setupmapparams_s {
+    int             episode;
+    int             map;
+    int             playerMask; // Unused?
+    skillmode_t     skill;
+} setupmapparams_t;
 
-int P_SetupLevelWorker(void *ptr)
+int P_SetupMapWorker(void* ptr)
 {
-    setuplevelparam_t  *param = ptr;
-    char                levelId[9];
+    setupmapparams_t*   param = ptr;
+    char                mapID[9];
 
     // It begins...
-    levelSetup = true;
+    mapSetup = true;
 
     // The engine manages polyobjects, so reset the count.
     DD_SetInteger(DD_POLYOBJ_COUNT, 0);
     P_ResetWorldState();
 
-    // Let the engine know that we are about to start setting up a
-    // level.
-    R_SetupLevel(DDSLM_INITIALIZE, 0);
+    // Let the engine know that we are about to start setting up a map.
+    R_SetupMap(DDSMM_INITIALIZE, 0);
 
     // Initialize The Logical Sound Manager.
-    S_LevelChange();
+    S_MapChange();
 
 #if __JHEXEN__
-    S_StartMusic("chess", true); // Waiting-for-level-load song
+    S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
 
-    Z_FreeTags(PU_LEVEL, PU_PURGELEVEL - 1);
+    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
     P_InitThinkers();
 
-    P_GetMapLumpName(param->episode, param->map, levelId);
-    if(!P_LoadMap(levelId))
+    P_GetMapLumpName(param->episode, param->map, mapID);
+    if(!P_LoadMap(mapID))
     {
-        Con_Error("P_SetupLevel: Failed loading map \"%s\".\n", levelId);
+        Con_Error("P_SetupMap: Failed loading map \"%s\".\n", mapID);
     }
 
     P_LoadMapObjs();
@@ -428,7 +427,7 @@ int P_SetupLevelWorker(void *ptr)
 #if __JHEXEN__
     Con_Message("Load ACS scripts\n");
     // \fixme Custom map data format support
-    P_LoadACScripts(W_GetNumForName(levelId) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    P_LoadACScripts(W_GetNumForName(mapID) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
 
     P_DealPlayerStarts(0);
@@ -440,20 +439,20 @@ int P_SetupLevelWorker(void *ptr)
     // Preload graphics.
     if(precache)
     {
-        R_PrecacheLevel();
+        R_PrecacheMap();
         R_PrecachePSprites();
     }
 
-    P_FinalizeLevel();
+    P_FinalizeMap();
 
-    // Someone may want to do something special now that the level has been
+    // Someone may want to do something special now that the map has been
     // fully set up.
-    R_SetupLevel(DDSLM_FINALIZE, 0);
+    R_SetupMap(DDSMM_FINALIZE, 0);
 
     P_PrintMapBanner(param->episode, param->map);
 
     // It ends.
-    levelSetup = false;
+    mapSetup = false;
 
     Con_BusyWorkerEnd();
     return 0;
@@ -462,9 +461,9 @@ int P_SetupLevelWorker(void *ptr)
 /**
  * Loads map and glnode data for the requested episode and map.
  */
-void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
+void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
 {
-    setuplevelparam_t  param;
+    setupmapparams_t  param;
 
     param.episode = episode;
     param.map = map;
@@ -475,9 +474,9 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
 
     // \todo Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             "Loading map...", P_SetupLevelWorker, &param);
+             "Loading map...", P_SetupMapWorker, &param);
 
-    R_SetupLevel(DDSLM_AFTER_BUSY, 0);
+    R_SetupMap(DDSMM_AFTER_BUSY, 0);
 
 #if __JHEXEN__
     {
@@ -503,7 +502,7 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
 }
 
 /**
- * Called during level setup when beginning to load a new map.
+ * Called during map setup when beginning to load a new map.
  */
 static void P_ResetWorldState(void)
 {
@@ -560,15 +559,15 @@ static void P_ResetWorldState(void)
 
     P_FreePlayerStarts();
 
-    levelTime = actualLevelTime = 0;
+    mapTime = actualMapTime = 0;
 }
 
 /**
- * Do any level finalization including any game-specific stuff.
+ * Do any map finalization including any game-specific stuff.
  */
-static void P_FinalizeLevel(void)
+static void P_FinalizeMap(void)
 {
-    AM_InitForLevel();
+    AM_InitForMap();
 
 #if __JDOOM__ || __JDOOM64__
     // Adjust slime lower wall textures (a hack!).
@@ -579,8 +578,8 @@ static void P_FinalizeLevel(void)
     materialnum_t       mat = R_MaterialNumForName("NUKE24", MG_TEXTURES);
     int                 bottomMat, midMat;
     float               yoff;
-    sidedef_t          *sidedef;
-    linedef_t          *line;
+    sidedef_t*          sidedef;
+    linedef_t*          line;
 
     for(i = 0; i < numlines; ++i)
     {
@@ -613,16 +612,16 @@ static void P_FinalizeLevel(void)
 #elif __JHEXEN__
     P_TurnTorchesToFaceWalls();
 
-    // Check if the level should have lightening.
+    // Check if the map should have lightening.
     P_InitLightning();
 
     SN_StopAllSequences();
 #endif
 }
 
-char *P_GetMapNiceName(void)
+char* P_GetMapNiceName(void)
 {
-    char               *lname, *ptr;
+    char*               lname, *ptr;
 
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
 

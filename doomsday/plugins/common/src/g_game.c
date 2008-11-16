@@ -130,7 +130,7 @@ void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, int episode, int map);
 void    G_DoInitNew(void);
 void    G_DoReborn(int playernum);
-void    G_DoLoadLevel(void);
+void    G_DoLoadMap(void);
 void    G_DoNewGame(void);
 void    G_DoLoadGame(void);
 void    G_DoPlayDemo(void);
@@ -179,7 +179,7 @@ boolean viewActive;
 boolean deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
 
-int levelStartTic; // Game tic at level start.
+int mapStartTic; // Game tic at map start.
 int totalKills, totalItems, totalSecret; // For intermission.
 
 boolean singledemo; // Quit after playing a demo from cmdline.
@@ -213,7 +213,7 @@ int mapHub = 0;
 #endif
 
 // vars used with game status cvars
-int gsvInLevel = 0;
+int gsvInMap = 0;
 int gsvCurrentMusic = 0;
 int gsvMapMusic = -1;
 
@@ -246,7 +246,7 @@ static gamestate_t gameState = GS_DEMOSCREEN;
 cvar_t gamestatusCVars[] =
 {
    {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
-   {"game-state-level", READONLYCVAR, CVT_INT, &gsvInLevel, 0, 0},
+   {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
    {"game-paused", READONLYCVAR, CVT_INT, &paused, 0, 0},
    {"game-skill", READONLYCVAR, CVT_INT, &gameSkill, 0, 0},
 
@@ -552,7 +552,7 @@ static const char* getGameStateStr(gamestate_t state)
         const char*     name;
     } stateNames[] =
     {
-        {GS_LEVEL, "GS_LEVEL"},
+        {GS_MAP, "GS_MAP"},
         {GS_INTERMISSION, "GS_INTERMISSION"},
         {GS_FINALE, "GS_FINALE"},
         {GS_DEMOSCREEN, "GS_DEMOSCREEN"},
@@ -609,7 +609,7 @@ void G_StartTitle(void)
     FI_Start(script, FIMODE_LOCAL);
 }
 
-void G_DoLoadLevel(void)
+void G_DoLoadMap(void)
 {
     int                 i;
     char               *lname, *ptr;
@@ -618,7 +618,7 @@ void G_DoLoadLevel(void)
     static int firstFragReset = 1;
 #endif
 
-    levelStartTic = GAMETIC; // Fr time calculation.
+    mapStartTic = (int) GAMETIC; // Fr time calculation.
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
@@ -653,7 +653,7 @@ void G_DoLoadLevel(void)
         G_ResetLookOffset(i);
     }
 
-    P_SetupLevel(gameEpisode, gameMap, 0, gameSkill);
+    P_SetupMap(gameEpisode, gameMap, 0, gameSkill);
     Set(DD_DISPLAYPLAYER, CONSOLEPLAYER); // View the guy you are playing.
     G_SetGameAction(GA_NONE);
 
@@ -669,7 +669,7 @@ void G_DoLoadLevel(void)
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
     if(lname)
     {
-        ptr = strchr(lname, ':'); // Skip the E#M# or Level #.
+        ptr = strchr(lname, ':'); // Skip the E#M# or Map #.
         if(ptr)
         {
             lname = ptr + 1;
@@ -697,9 +697,9 @@ void G_DoLoadLevel(void)
 
     // Start a briefing, if there is one.
     if(!FI_Briefing(gameEpisode, gameMap))
-    {   // No briefing, start the level.
-        G_ChangeGameState(GS_LEVEL);
-        S_LevelMusic();
+    {   // No briefing, start the map.
+        G_ChangeGameState(GS_MAP);
+        S_MapMusic();
     }
 }
 
@@ -765,7 +765,7 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
 
     gsvHealth = pl->health;
 #if !__JHEXEN__
-    // Level stats
+    // Map stats
     gsvKills = pl->killCount;
     gsvItems = pl->itemCount;
     gsvSecrets = pl->secretCount;
@@ -882,8 +882,8 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             G_DoTeleportNewMap();
             break;
 #endif
-        case GA_LOADLEVEL:
-            G_DoLoadLevel();
+        case GA_LOADMAP:
+            G_DoLoadMap();
             break;
 
         case GA_NEWGAME:
@@ -927,7 +927,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     if(!IS_CLIENT)
     {
         // Enable/disable sending of frames (delta sets) to clients.
-        Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_LEVEL);
+        Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_MAP);
 
         // Tell Doomsday when the game is paused (clients can't pause
         // the game.)
@@ -943,10 +943,10 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         // Do main actions.
         switch(G_GetGameState())
         {
-        case GS_LEVEL:
-            // Update in-level game status cvar.
-            if(oldGameState != GS_LEVEL)
-                gsvInLevel = 1;
+        case GS_MAP:
+            // Update in-map game status cvar.
+            if(oldGameState != GS_MAP)
+                gsvInMap = 1;
 
             P_DoTick();
             HU_UpdatePsprites();
@@ -975,7 +975,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             if(oldGameState != G_GetGameState())
             {
                 // Update game status cvars.
-                gsvInLevel = 0;
+                gsvInMap = 0;
                 Con_SetString("map-name", NOTAMAPNAME, 1);
                 gsvMapMusic = -1;
             }
@@ -1015,24 +1015,24 @@ void G_InitPlayer(int player)
 }
 
 /**
- * Called when a player exits a level.
+ * Called when a player leaves a map.
  *
  * Jobs include; striping keys, artifacts and powers from the player
  * and configuring other player-specific properties ready for the next
- * level.
+ * map.
  *
  * @param player        Id of the player to configure.
  */
-void G_PlayerExitMap(int player)
+void G_PlayerLeaveMap(int player)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    int         i;
+    int                 i;
 #endif
 #if __JHEXEN__ || __JSTRIFE__
-    int         flightPower;
+    int                 flightPower;
 #endif
-    player_t   *p = &players[player];
-    boolean     newCluster;
+    player_t*           p = &players[player];
+    boolean             newCluster;
 
 #if __JHEXEN__ || __JSTRIFE__
     newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
@@ -1321,8 +1321,8 @@ void G_DoReborn(int playernum)
             G_SetGameAction(GA_NEWGAME);
         }
 #else
-        // reload the level from scratch
-        G_SetGameAction(GA_LOADLEVEL);
+        // Reload the map from scratch.
+        G_SetGameAction(GA_LOADMAP);
 #endif
     }
     else
@@ -1336,7 +1336,7 @@ void G_DoReborn(int playernum)
 
         if(IS_CLIENT)
         {
-            if(G_GetGameState() == GS_LEVEL)
+            if(G_GetGameState() == GS_MAP)
             {
                 G_DummySpawnPlayer(playernum);
             }
@@ -1489,7 +1489,7 @@ void G_DoTeleportNewMap(void)
     }
 
     SV_MapTeleport(leaveMap, leavePosition);
-    G_ChangeGameState(GS_LEVEL);
+    G_ChangeGameState(GS_MAP);
     G_SetGameAction(GA_NONE);
     rebornPosition = leavePosition;
 
@@ -1499,15 +1499,15 @@ void G_DoTeleportNewMap(void)
 #endif
 
 /**
- * Leave the current level and start intermission routine.
+ * Leave the current map and start intermission routine.
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
  * hub and in DeathMatch games)
  *
- * @param map           Map id of the level we are leaving.
+ * @param map           ID of the map we are leaving.
  * @param position      Position id (maps with multiple entry/exit points).
  * @param secret        @c true = if this is a secret exit point.
  */
-void G_LeaveLevel(int map, int position, boolean secret)
+void G_LeaveMap(int map, int position, boolean secret)
 {
     if(cyclingMaps && mapCycleNoExit)
         return;
@@ -1515,7 +1515,7 @@ void G_LeaveLevel(int map, int position, boolean secret)
 #if __JHEXEN__
     if(shareware && map > 4)
     {
-        // Not possible in the 4-level demo.
+        // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
         return;
     }
@@ -1527,7 +1527,7 @@ void G_LeaveLevel(int map, int position, boolean secret)
 #else
     secretExit = secret;
   #if __JDOOM__
-      // IF NO WOLF3D LEVELS, NO SECRET EXIT!
+      // If no Wolf3D maps, no secret exit!
       if(secret && (gameMode == commercial) &&
          W_CheckNumForName("map31") < 0)
           secretExit = false;
@@ -1538,7 +1538,7 @@ void G_LeaveLevel(int map, int position, boolean secret)
 }
 
 /**
- * @return              @c true, if the game has been completed
+ * @return              @c true, if the game has been completed.
  */
 boolean G_IfVictory(void)
 {
@@ -1594,13 +1594,13 @@ void G_DoCompleted(void)
     {
         if(players[i].plr->inGame)
         {
-            G_PlayerExitMap(i); // take away cards and stuff
+            AM_Open(i, false, true);
+
+            G_PlayerLeaveMap(i); // take away cards and stuff
 
             // Update this client's stats.
             NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS,
                                   PSF_FRAGS | PSF_COUNTERS, true);
-
-            AM_Open(i, false);
         }
     }
 
@@ -1615,7 +1615,7 @@ void G_DoCompleted(void)
         gameMap = 9;
     }
     else if(gameMap == 9)
-    {   // Finished secret level.
+    {   // Finished secret map.
         gameMap = afterSecret[gameEpisode - 1];
     }
     else
@@ -1699,10 +1699,10 @@ void G_DoCompleted(void)
     else
     {
         if(secretExit)
-            wmInfo.next = 8;    // go to secret level
+            wmInfo.next = 8; // Go to secret map.
         else if(gameMap == 9)
         {
-            // returning from secret level
+            // Returning from secret map.
             switch(gameEpisode)
             {
             case 1:
@@ -1720,7 +1720,7 @@ void G_DoCompleted(void)
             }
         }
         else
-            wmInfo.next = gameMap;  // go to next level
+            wmInfo.next = gameMap; // Go to next map.
     }
 # endif
 
@@ -1742,7 +1742,7 @@ void G_DoCompleted(void)
     viewActive = false;
 
 #elif __JHERETIC__
-    // Let the clients know the next level.
+    // Let the clients know the next map.
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
 #elif __JHEXEN__ || __JSTRIFE__
     NetSv_Intermission(IMF_BEGIN, leaveMap, leavePosition);
@@ -1787,7 +1787,7 @@ void G_PrepareWIData(void)
         pStats->kills = p->killCount;
         pStats->items = p->itemCount;
         pStats->secret = p->secretCount;
-        pStats->time = levelTime;
+        pStats->time = mapTime;
         memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
 }
@@ -1808,7 +1808,7 @@ void G_DoWorldDone(void)
 #if __JDOOM__ || __JDOOM64__
     gameMap = wmInfo.next + 1;
 #endif
-    G_DoLoadLevel();
+    G_DoLoadMap();
     G_SetGameAction(GA_NONE);
     viewActive = true;
 }
@@ -2032,7 +2032,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     if(!IS_CLIENT)
     {
-        // Force players to be initialized upon first level load.
+        // Force players to be initialized upon first map load.
         for(i = 0; i < MAXPLAYERS; ++i)
         {
             player_t           *plr = &players[i];
@@ -2055,7 +2055,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     NetSv_UpdateGameConfig();
 
-    G_DoLoadLevel();
+    G_DoLoadMap();
 
 #if __JHEXEN__
     // Initialize the sky.
@@ -2064,9 +2064,9 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 }
 
 /**
- * Return the index of this level.
+ * Return the index of this map.
  */
-int G_GetLevelNumber(int episode, int map)
+int G_GetMapNumber(int episode, int map)
 {
 #if __JHEXEN__ || __JSTRIFE__
     return P_TranslateMap(map);
@@ -2252,9 +2252,9 @@ boolean G_ValidateMap(int *episode, int *map)
 }
 
 #if __JHERETIC__
-char *P_GetShortLevelName(int episode, int map)
+char* P_GetShortMapName(int episode, int map)
 {
-    char       *name = P_GetLevelName(episode, map);
+    char       *name = P_GetMapName(episode, map);
     char       *ptr;
 
     // Remove the "ExMx:" from the beginning.
@@ -2269,12 +2269,12 @@ char *P_GetShortLevelName(int episode, int map)
     return name;
 }
 
-char *P_GetLevelName(int episode, int map)
+char* P_GetMapName(int episode, int map)
 {
     char        id[10];
     ddmapinfo_t info;
 
-    // Compose the level identifier.
+    // Compose the map identifier.
     P_GetMapLumpName(episode, map, id);
 
     // Get the map info definition.

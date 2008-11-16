@@ -169,7 +169,7 @@ void G_UpdateState(int step)
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
-        S_LevelMusic();
+        S_MapMusic();
 #endif
         break;
 

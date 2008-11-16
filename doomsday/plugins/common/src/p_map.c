@@ -203,15 +203,15 @@ boolean PIT_StompThing(mobj_t* mo, void* data)
     if(!tmThing->player)
         return false;
 #elif __JDOOM__
-    // monsters don't stomp things except on boss level
+    // Monsters don't stomp things except on a boss map.
     if(!tmThing->player && gameMap != 30)
         return false;
 #endif
 
     if(!(tmThing->flags2 & MF2_TELESTOMP))
-        return false; // Not allowed to stomp things
+        return false; // Not allowed to stomp things.
 
-    // Do stomp damage (unless self)
+    // Do stomp damage (unless self).
     if(mo != tmThing)
         P_DamageMobj(mo, tmThing, tmThing, 10000, true);
 
@@ -605,7 +605,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 }
 
                 if((!thing->player && !(thing->flags2 & MF2_BOSS)) ||
-                   !(levelTime & 1))
+                   !(mapTime & 1))
                 {
                     if(thing->type == MT_CENTAUR ||
                        thing->type == MT_CENTAURLEADER)
@@ -678,7 +678,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                         lmo->tracer = thing;
                     }
 
-                    if(!(levelTime & 3))
+                    if(!(mapTime & 3))
                     {
                         lmo->health--;
                     }
@@ -878,8 +878,9 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
         checkForPushSpecial(ld, 0, tmThing);
         return false;
 #else
-        float               dx = P_GetFloatp(ld, DMU_DX);
-        float               dy = P_GetFloatp(ld, DMU_DY);
+        float               d1[2];
+
+        P_GetFloatpv(ld, DMU_DXY, d1);
 
         /**
          * $unstuck: allow player to move out of 1s wall, to prevent
@@ -895,8 +896,8 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
 
         blockLine = ld;
         return tmUnstuck && !untouched(ld) &&
-            ((tm[VX] - tmThing->pos[VX]) * dy) >
-            ((tm[VY] - tmThing->pos[VY]) * dx);
+            ((tm[VX] - tmThing->pos[VX]) * d1[1]) >
+            ((tm[VY] - tmThing->pos[VY]) * d1[0]);
 #endif
     }
 
@@ -1452,7 +1453,7 @@ boolean P_TryMove(mobj_t* thing, float x, float y, boolean dropoff,
 boolean PTR_ShootTraverse(intercept_t* in)
 {
 #if __JHEXEN__
-    extern mobj_t LavaInflictor;
+    extern mobj_t lavaInflictor;
 #endif
 
     int                 divisor;
@@ -1693,7 +1694,7 @@ if(lineWasHit)
 #if __JHEXEN__
         if(PuffType == MT_FLAMEPUFF2)
         {   // Cleric FlameStrike does fire damage.
-            damageDone = P_DamageMobj(th, &LavaInflictor, shootThing,
+            damageDone = P_DamageMobj(th, &lavaInflictor, shootThing,
                                       lineAttackDamage, false);
         }
         else
@@ -2243,7 +2244,7 @@ static void P_HitSlideLine(linedef_t* ld)
     int                 side;
     unsigned int        an;
     angle_t             lineAngle, moveAngle, deltaAngle;
-    float               moveLen, newLen;
+    float               moveLen, newLen, d1[2];
     slopetype_t         slopeType = P_GetIntp(ld, DMU_SLOPE_TYPE);
 
     if(slopeType == ST_HORIZONTAL)
@@ -2258,9 +2259,8 @@ static void P_HitSlideLine(linedef_t* ld)
     }
 
     side = P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], ld);
-
-    lineAngle = R_PointToAngle2(0, 0, P_GetFloatp(ld, DMU_DX),
-                                      P_GetFloatp(ld, DMU_DY));
+    P_GetFloatpv(ld, DMU_DXY, d1);
+    lineAngle = R_PointToAngle2(0, 0, d1[0], d1[1]);
     moveAngle = R_PointToAngle2(0, 0, tmMove[MX], tmMove[MY]) + 10;
 
     if(side == 1)
@@ -2562,7 +2562,7 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
         return true; // Keep checking...
 
     noFit = true;
-    if(crushChange > 0 && !(levelTime & 3))
+    if(crushChange > 0 && !(mapTime & 3))
     {
         P_DamageMobj(thing, NULL, NULL, 10, false);
 #if __JDOOM__ || __JDOOM64__
@@ -2815,9 +2815,9 @@ static void P_FakeZMovement(mobj_t* mo)
     }
 
     if(mo->player && (mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) &&
-       (levelTime & 2))
+       (mapTime & 2))
     {
-        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
+        mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
     }
 
     // Clip movement.
@@ -2919,7 +2919,7 @@ void P_BounceWall(mobj_t* mo)
 {
     int                 side;
     unsigned int        an;
-    float               moveLen, leadPos[3];
+    float               moveLen, leadPos[3], d1[2];
     angle_t             lineAngle, moveAngle, deltaAngle;
 
     slideMo = mo;
@@ -2948,9 +2948,8 @@ void P_BounceWall(mobj_t* mo)
         return; // We don't want to crash.
 
     side = P_PointOnLinedefSide(mo->pos[VX], mo->pos[VY], bestSlideLine);
-    lineAngle = R_PointToAngle2(0, 0,
-                                P_GetFloatp(bestSlideLine, DMU_DX),
-                                P_GetFloatp(bestSlideLine, DMU_DY));
+    P_GetFloatpv(bestSlideLine, DMU_DXY, d1);
+    lineAngle = R_PointToAngle2(0, 0, d1[0], d1[1]);
     if(side == 1)
         lineAngle += ANG180;
 

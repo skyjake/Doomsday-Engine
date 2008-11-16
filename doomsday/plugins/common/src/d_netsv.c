@@ -371,7 +371,7 @@ void NetSv_Ticker(void)
     {
         // Don't send on every tic. Also, don't send to all
         // players at the same time.
-        if((GAMETIC + i) % 10)
+        if(((int) GAMETIC + i) % 10)
             continue;
         if(!plr->plr->inGame || !plr->update)
             continue;
@@ -620,7 +620,7 @@ void NetSv_CheckCycling(void)
             }
 
             if(rules.usetime &&
-               levelTime > (rules.time * 60 - 29) * TICSPERSEC)
+               mapTime > (rules.time * 60 - 29) * TICSPERSEC)
             {
                 // Time runs out!
                 cycleMode = CYCLE_COUNTDOWN;
@@ -838,7 +838,7 @@ void NetSv_SendGameState(int flags, int to)
 
     if(IS_CLIENT)
         return;
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return;
 
     gravity = FLT2FIX(P_GetGravity());

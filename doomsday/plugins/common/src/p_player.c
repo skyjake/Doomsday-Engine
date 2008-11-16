@@ -833,7 +833,7 @@ DEFCC(CCmdMakeLocal)
     char                buf[20];
     player_t           *plr;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
     {
         Con_Printf("You must be in a game to create a local player.\n");
         return false;
@@ -868,7 +868,7 @@ DEFCC(CCmdPrintPlayerCoords)
 {
     mobj_t             *mo = players[CONSOLEPLAYER].plr->mo;
 
-    if(!mo || G_GetGameState() != GS_LEVEL)
+    if(!mo || G_GetGameState() != GS_MAP)
         return false;
 
     Con_Printf("Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
@@ -882,7 +882,7 @@ DEFCC(CCmdCycleSpy)
     //// \fixme The engine should do this.
     Con_Printf("Spying not allowed.\n");
 #if 0
-    if(G_GetGameState() == GS_LEVEL && !deathmatch)
+    if(G_GetGameState() == GS_MAP && !deathmatch)
     {   // Cycle the display player.
         do
         {

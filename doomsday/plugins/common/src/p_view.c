@@ -118,7 +118,7 @@ void P_CalcHeight(player_t* plr)
     }
     else
     {
-        angle_t angle = (FINEANGLES / 20 * levelTime) & FINEMASK;
+        angle_t angle = (FINEANGLES / 20 * mapTime) & FINEMASK;
         target = cfg.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
     }
 
@@ -142,7 +142,7 @@ void P_CalcHeight(player_t* plr)
         else
             plr->viewOffset[VZ] = target;
     }
-    
+
     // The aircounter will soften the touchdown after a fall.
     plr->airCounter--;
     if(airborne)

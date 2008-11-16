@@ -115,7 +115,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
 
         // Play a "while-moving" sound?
 #if !__JHEXEN__
-        if(!(levelTime & 7))
+        if(!(mapTime & 7))
         {
 # if __JHERETIC__
             S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
@@ -176,7 +176,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
 
         // Play a "while-moving" sound?
 #if !__JHEXEN__
-        if(!(levelTime & 7))
+        if(!(mapTime & 7))
         {
 # if __JHERETIC__
             S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
@@ -296,7 +296,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 
         // new door thinker
         rtn = 1;
-        ceiling = Z_Calloc(sizeof(*ceiling), PU_LEVSPEC, 0);
+        ceiling = Z_Calloc(sizeof(*ceiling), PU_MAPSPEC, 0);
 
         ceiling->thinker.function = T_MoveCeiling;
         P_ThinkerAdd(&ceiling->thinker);

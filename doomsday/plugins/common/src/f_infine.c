@@ -72,7 +72,7 @@
 typedef char handle_t[32];
 
 typedef struct ficmd_s {
-    char           *token;
+    char*           token;
     int             operands;
     void          (*func) (void);
     boolean         whenSkipping;
@@ -125,7 +125,7 @@ typedef struct fitext_s {
     int             pos;
     int             wait, timer;
     int             lineheight;
-    char           *text;
+    char*           text;
 } fitext_t;
 
 typedef struct fihandler_s {
@@ -134,8 +134,8 @@ typedef struct fihandler_s {
 } fihandler_t;
 
 typedef struct fistate_s {
-    char           *script; // A copy of the script.
-    char           *cp; // The command cursor.
+    char*           script; // A copy of the script.
+    char*           cp; // The command cursor.
     infinemode_t    mode;
     int             overlayGameState; // Overlay scripts run only in one gameMode.
     int             timer;
@@ -147,8 +147,8 @@ typedef struct fistate_s {
     boolean         suspended, paused, eatEvents, showMenu;
     boolean         gotoSkip, skipNext, lastSkipped;
     handle_t        gotoTarget;
-    fitext_t       *waitingText;
-    fipic_t        *waitingPic;
+    fitext_t*       waitingText;
+    fipic_t*        waitingPic;
     fihandler_t     keyHandlers[MAX_HANDLERS];
     materialnum_t   bgMaterial;
     fivalue_t       bgColor[4];
@@ -164,8 +164,8 @@ typedef struct fistate_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    FI_InitValue(fivalue_t *val, float num);
-int     FI_TextObjectLength(fitext_t *tex);
+void    FI_InitValue(fivalue_t* val, float num);
+int     FI_TextObjectLength(fitext_t* tex);
 
 // Command functions.
 void    FIC_Do(void);
@@ -381,7 +381,7 @@ static ficmd_t fiCommands[] = {
 };
 
 static fistate_t fiStateStack[STACK_SIZE];
-static fistate_t *fi;           // Pointer to the current state in the stack.
+static fistate_t* fi; // Pointer to the current state in the stack.
 static char fiToken[MAX_TOKEN_LEN];
 static fipic_t fiDummyPic;
 static fitext_t fiDummyText;
@@ -409,7 +409,7 @@ void FI_ClearState(void)
         G_ChangeGameState(GS_INFINE);
         // Close the automap for all local players.
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_Open(i, false);
+            AM_Open(i, false, true);
     }
 
     fiActive = true;
@@ -662,7 +662,7 @@ void FI_End(void)
     // If no more scripts are left, go to the next game mode.
     if(!fiActive)
     {
-        if(oldMode == FIMODE_AFTER) // A level has been completed.
+        if(oldMode == FIMODE_AFTER) // A map has been completed.
         {
             if(IS_CLIENT)
             {
@@ -675,11 +675,11 @@ void FI_End(void)
         }
         else if(oldMode == FIMODE_BEFORE)
         {
-            // Enter the level, this was a briefing.
-            G_ChangeGameState(GS_LEVEL);
-            S_LevelMusic();
-            levelStartTic = GAMETIC;
-            levelTime = actualLevelTime = 0;
+            // Enter the map, this was a briefing.
+            G_ChangeGameState(GS_MAP);
+            S_MapMusic();
+            mapStartTic = (int) GAMETIC;
+            mapTime = actualMapTime = 0;
         }
         else if(oldMode == FIMODE_LOCAL)
         {
@@ -716,7 +716,7 @@ DEFCC(CCmdStartInFine)
         return false;
     }
     // The overlay mode doesn't affect the current game mode.
-    FI_Start(script, (G_GetGameState() == GS_LEVEL? FIMODE_OVERLAY : FIMODE_LOCAL));
+    FI_Start(script, (G_GetGameState() == GS_MAP? FIMODE_OVERLAY : FIMODE_LOCAL));
     return true;
 }
 
@@ -791,13 +791,13 @@ void FI_DemoEnds(void)
         G_SetGameAction(GA_NONE);
 
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_Open(i, false);
+            AM_Open(i, false, true);
     }
 }
 
-char *FI_GetToken(void)
+char* FI_GetToken(void)
 {
-    char               *out;
+    char*               out;
 
     if(!fi)
         return NULL;
@@ -854,13 +854,13 @@ int FI_GetTics(void)
     return (int) (FI_GetFloat() * 35 + 0.5);
 }
 
-/*
+/**
  * Execute one (the next) command, advance script cursor.
  */
-void FI_Execute(char *cmd)
+void FI_Execute(char * cmd)
 {
     int                 i, k;
-    char               *oldcp;
+    char*               oldcp;
 
     // Semicolon terminates DO-blocks.
     if(!strcmp(cmd, ";"))
@@ -881,7 +881,7 @@ void FI_Execute(char *cmd)
     fiCmdExecuted = true;
 
     // Is this a command we know how to execute?
-    for(i = 0; fiCommands[i].token; i++)
+    for(i = 0; fiCommands[i].token; ++i)
     {
         if(!stricmp(cmd, fiCommands[i].token))
         {
@@ -896,7 +896,8 @@ void FI_Execute(char *cmd)
                                 fiCommands[i].token);
                     break;
                 }
-            // Should we skip this command?
+
+                // Should we skip this command?
             if((fi->skipNext && !fiCommands[i].whenCondSkipping) ||
                ((fi->skipping || fi->gotoSkip) &&
                 !fiCommands[i].whenSkipping))
@@ -932,12 +933,12 @@ void FI_Execute(char *cmd)
 }
 
 /**
- * @return          @c true, if a command was found.
- *                  @c false if there are no more commands in the script.
+ * @return              @c true, if a command was found.
+ *                      @c false if there are no more commands in the script.
  */
 int FI_ExecuteNextCommand(void)
 {
-    char           *cmd = FI_GetToken();
+    char*               cmd = FI_GetToken();
 
     if(!cmd)
         return false;
@@ -946,13 +947,13 @@ int FI_ExecuteNextCommand(void)
     return true;
 }
 
-void FI_InitValue(fivalue_t *val, float num)
+void FI_InitValue(fivalue_t* val, float num)
 {
     val->target = val->value = num;
     val->steps = 0;
 }
 
-void FI_SetValue(fivalue_t *val, float num)
+void FI_SetValue(fivalue_t* val, float num)
 {
     val->target = num;
     val->steps = fi->inTime;
@@ -960,7 +961,7 @@ void FI_SetValue(fivalue_t *val, float num)
         val->value = val->target;
 }
 
-void FI_ValueThink(fivalue_t *val)
+void FI_ValueThink(fivalue_t* val)
 {
     if(val->steps <= 0)
     {
@@ -973,7 +974,7 @@ void FI_ValueThink(fivalue_t *val)
     val->steps--;
 }
 
-void FI_ValueArrayThink(fivalue_t *val, int num)
+void FI_ValueArrayThink(fivalue_t* val, int num)
 {
     int                 i;
 
@@ -981,10 +982,10 @@ void FI_ValueArrayThink(fivalue_t *val, int num)
         FI_ValueThink(val + i);
 }
 
-fihandler_t *FI_GetHandler(int code)
+fihandler_t* FI_GetHandler(int code)
 {
     int                 i;
-    fihandler_t        *vacant = NULL;
+    fihandler_t*        vacant = NULL;
 
     for(i = 0; i < MAX_HANDLERS; ++i)
     {
@@ -1002,7 +1003,7 @@ fihandler_t *FI_GetHandler(int code)
     return vacant;
 }
 
-void FI_ClearAnimation(fipic_t *pic)
+void FI_ClearAnimation(fipic_t* pic)
 {
     // Kill the old texture.
     if(pic->flags.is_ximage)
@@ -1016,7 +1017,7 @@ void FI_ClearAnimation(fipic_t *pic)
     pic->flags.done = true;
 }
 
-int FI_GetNextSeq(fipic_t *pic)
+int FI_GetNextSeq(fipic_t* pic)
 {
     int                 i;
 
@@ -1029,7 +1030,7 @@ int FI_GetNextSeq(fipic_t *pic)
     return i;
 }
 
-fipic_t *FI_FindPic(const char *handle)
+fipic_t* FI_FindPic(const char* handle)
 {
     int                 i;
 
@@ -1048,7 +1049,7 @@ fipic_t *FI_FindPic(const char *handle)
     return NULL;
 }
 
-void FI_InitRect(fipic_t *pic)
+void FI_InitRect(fipic_t* pic)
 {
     int                 i;
 
@@ -1068,7 +1069,7 @@ void FI_InitRect(fipic_t *pic)
     }
 }
 
-fitext_t *FI_FindText(const char *handle)
+fitext_t* FI_FindText(const char* handle)
 {
     int                 i;
 
@@ -1084,10 +1085,10 @@ fitext_t *FI_FindText(const char *handle)
     return NULL;
 }
 
-fiobj_t *FI_FindObject(const char *handle)
+fiobj_t* FI_FindObject(const char* handle)
 {
-    fipic_t            *pic;
-    fitext_t           *text;
+    fipic_t*            pic;
+    fitext_t*           text;
 
     // First check all pics.
     if((pic = FI_FindPic(handle)) != NULL)
@@ -1104,10 +1105,10 @@ fiobj_t *FI_FindObject(const char *handle)
     return NULL;
 }
 
-fipic_t *FI_GetPic(const char *handle)
+fipic_t* FI_GetPic(const char* handle)
 {
     int                 i;
-    fipic_t            *unused = NULL;
+    fipic_t*            unused = NULL;
 
     for(i = 0; i < MAX_PICS; ++i)
     {
@@ -1142,10 +1143,10 @@ fipic_t *FI_GetPic(const char *handle)
     return unused;
 }
 
-fitext_t *FI_GetText(char *handle)
+fitext_t* FI_GetText(char* handle)
 {
     int                 i;
-    fitext_t           *unused = NULL;
+    fitext_t*           unused = NULL;
 
     for(i = 0; i < MAX_TEXT; ++i)
     {
@@ -1190,7 +1191,7 @@ fitext_t *FI_GetText(char *handle)
     return unused;
 }
 
-void FI_SetText(fitext_t *tex, char *str)
+void FI_SetText(fitext_t* tex, char* str)
 {
     size_t              len = strlen(str) + 1;
 
@@ -1200,7 +1201,7 @@ void FI_SetText(fitext_t *tex, char *str)
     memcpy(tex->text, str, len);
 }
 
-void FI_ObjectThink(fiobj_t *obj)
+void FI_ObjectThink(fiobj_t* obj)
 {
     FI_ValueThink(&obj->x);
     FI_ValueThink(&obj->y);
@@ -1212,8 +1213,8 @@ void FI_ObjectThink(fiobj_t *obj)
 void FI_Ticker(void)
 {
     int                 i, k, last = 0;
-    fipic_t            *pic;
-    fitext_t           *tex;
+    fipic_t*            pic;
+    fitext_t*           tex;
 
     if(!fiActive)
         return;
@@ -1237,6 +1238,7 @@ void FI_Ticker(void)
     FI_ValueArrayThink(fi->filter, 4);
     for(i = 0; i < 9; ++i)
         FI_ValueArrayThink(fi->textColor[i], 3);
+
     for(i = 0, pic = fi->pics; i < MAX_PICS; ++i, pic++)
     {
         if(!pic->object.used)
@@ -1345,7 +1347,7 @@ void FI_Ticker(void)
         FI_End();
 }
 
-void FI_SkipTo(const char *marker)
+void FI_SkipTo(const char* marker)
 {
     memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
     strncpy(fi->gotoTarget, marker, sizeof(fi->gotoTarget) - 1);
@@ -1389,10 +1391,11 @@ int FI_SkipRequest(void)
 /**
  * @return              @c true, if the event should open the menu.
  */
-boolean FI_IsMenuTrigger(event_t *ev)
+boolean FI_IsMenuTrigger(event_t* ev)
 {
     if(!fiActive)
         return false;
+
     return fi->showMenu;
 }
 
@@ -1405,7 +1408,7 @@ int FI_AteEvent(event_t *ev)
     return fi->eatEvents;
 }
 
-int FI_Responder(event_t *ev)
+int FI_Responder(event_t* ev)
 {
     int                 i;
 

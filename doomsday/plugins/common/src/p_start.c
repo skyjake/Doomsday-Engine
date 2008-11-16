@@ -177,7 +177,7 @@ int P_RegisterPlayerStart(spawnspot_t *mthing)
             numPlayerStartsMax = numPlayerStarts;
 
         playerStarts =
-            Z_Realloc(playerStarts, sizeof(spawnspot_t) * numPlayerStartsMax, PU_LEVEL);
+            Z_Realloc(playerStarts, sizeof(spawnspot_t) * numPlayerStartsMax, PU_MAP);
     }
 
     // Copy the properties of this thing
@@ -370,14 +370,14 @@ boolean P_FuzzySpawn(spawnspot_t *spot, int playernum, boolean doTeleSpark)
 void P_AddMaceSpot(spawnspot_t *spot)
 {
     maceSpots =
-        Z_Realloc(maceSpots, sizeof(*spot) * ++maceSpotCount, PU_LEVEL);
+        Z_Realloc(maceSpots, sizeof(*spot) * ++maceSpotCount, PU_MAP);
     memcpy(&maceSpots[maceSpotCount-1], spot, sizeof(*spot));
 }
 
 void P_AddBossSpot(float x, float y, angle_t angle)
 {
     bossSpots = Z_Realloc(bossSpots, sizeof(spawnspot_t) * ++bossSpotCount,
-                          PU_LEVEL);
+                          PU_MAP);
     bossSpots[bossSpotCount-1].pos[VX] = x;
     bossSpots[bossSpotCount-1].pos[VY] = y;
     bossSpots[bossSpotCount-1].angle = angle;
@@ -494,7 +494,7 @@ void P_SpawnThings(void)
 
 /**
  * Spawns all players, using the method appropriate for current game mode.
- * Called during level setup.
+ * Called during map setup.
  */
 void P_SpawnPlayers(void)
 {
@@ -667,21 +667,21 @@ typedef struct findclosestlinedefparams_s {
     float           pos[2];
     float           minRad;
     float           closestDist;
-    linedef_t      *closestLine;
+    linedef_t*      closestLine;
 } findclosestlinedefparams_t;
 
-int findClosestLinedef(void *ptr, void *context)
+int findClosestLinedef(void* ptr, void* context)
 {
-    linedef_t          *li = (linedef_t*) ptr;
+    linedef_t*          li = (linedef_t*) ptr;
     findclosestlinedefparams_t *params =
         (findclosestlinedefparams_t*) context;
 
     if(!P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        float               dist, off;
-        float               lineLen =
-            P_ApproxDistance(P_GetFloatp(li, DMU_DX),
-                             P_GetFloatp(li, DMU_DY));
+        float               dist, off, lineLen, d1[2];
+
+        P_GetFloatpv(li, DMU_DXY, d1);
+        lineLen = P_ApproxDistance(d1[0], d1[1]);
 
         dist = P_PointLineDistance(li, params->pos[VX], params->pos[VY],
                                    &off);
@@ -742,19 +742,19 @@ void P_MoveThingsOutOfWalls(void)
 
             if(params.closestLine && params.closestDist < params.minRad)
             {
-                float               dx, dy, offlen, len;
+                float               d1[2], offlen, len;
 
                 offlen = params.minRad - params.closestDist;
-                dy = -P_GetFloatp(params.closestLine, DMU_DX);
-                dx = P_GetFloatp(params.closestLine, DMU_DY);
+                P_GetFloatpv(params.closestLine, DMU_DXY, d1);
+                d1[1] = -d1[1];
 
-                len = sqrt(dx * dx + dy * dy);
-                dx *= offlen / len;
-                dy *= offlen / len;
+                len = sqrt(d1[0] * d1[0] + d1[1] * d1[1]);
+                d1[0] *= offlen / len;
+                d1[1] *= offlen / len;
 
                 P_MobjUnsetPosition(iter);
-                iter->pos[VX] += dx;
-                iter->pos[VY] += dy;
+                iter->pos[VX] += d1[0];
+                iter->pos[VY] += d1[1];
                 P_MobjSetPosition(iter);
             }
         }
@@ -800,6 +800,8 @@ void P_TurnGizmosAwayFromDoors(void)
             closestline = NULL;
             for(l = 0; l < numlines; ++l)
             {
+                float               d1[2];
+
                 li = P_ToPtr(DMU_LINEDEF, l);
 
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
@@ -813,11 +815,11 @@ void P_TurnGizmosAwayFromDoors(void)
                     xli->special != 27 && xli->special != 28))
                     continue;
 
-                linelen =
-                    P_ApproxDistance(P_GetFloatp(li, DMU_DX),
-                                     P_GetFloatp(li, DMU_DY));
+                P_GetFloatpv(li, DMU_DXY, d1);
+                linelen = P_ApproxDistance(d1[0], d1[1]);
 
-                dist = fabs(P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off));
+                dist = fabs(P_PointLineDistance(li, iter->pos[VX],
+                                                iter->pos[VY], &off));
                 if(!closestline || dist < closestdist)
                 {
                     closestdist = dist;
@@ -827,7 +829,7 @@ void P_TurnGizmosAwayFromDoors(void)
 
             if(closestline)
             {
-                vertex_t       *v0, *v1;
+                vertex_t*       v0, *v1;
                 float           v0p[2], v1p[2];
 
                 v0 = P_GetPtrp(closestline, DMU_VERTEX0);

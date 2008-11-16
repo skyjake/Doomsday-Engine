@@ -263,13 +263,14 @@ int C_DECL XLTrav_LineAngle(linedef_t* line, boolean dummy, void* context,
                             void* context2, mobj_t* activator)
 {
     sector_t*           sec = (sector_t *) context;
+    float               d1[2];
 
     if(P_GetPtrp(line, DMU_FRONT_SECTOR) != sec &&
        P_GetPtrp(line, DMU_BACK_SECTOR) != sec)
         return true; // Wrong sector, keep looking.
 
-    *(angle_t *) context2 = R_PointToAngle2(0, 0, P_GetFloatp(line, DMU_DX),
-                                            P_GetFloatp(line, DMU_DY));
+    P_GetFloatpv(line, DMU_DXY, d1);
+    *(angle_t *) context2 = R_PointToAngle2(0, 0, d1[0], d1[1]);
 
     return false; // Stop looking after first hit.
 }
@@ -313,7 +314,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
 
         // All right, do the init.
         if(!xsec->xg)
-            xsec->xg = Z_Malloc(sizeof(xgsector_t), PU_LEVEL, 0);
+            xsec->xg = Z_Malloc(sizeof(xgsector_t), PU_MAP, 0);
         memset(xsec->xg, 0, sizeof(*xsec->xg));
 
         // Get the type info.
@@ -323,7 +324,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
         xg = xsec->xg;
         info = &xsec->xg->info;
 
-        // Init timer so ambient doesn't play immediately at level start.
+        // Init timer so ambient doesn't play immediately at map start.
         xg->timer =
             XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
                          FLT2TIC(xg->info.soundInterval[1]));
@@ -375,7 +376,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
         // If there is not already an xsthinker for this sector, create one.
         if(P_IterateThinkers(XS_Thinker, findXSThinker, sec))
         {   // Not created one yet.
-            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_LEVSPEC, 0);
+            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAPSPEC, 0);
 
             xs->thinker.function = XS_Thinker;
             xs->sector = sec;
@@ -644,7 +645,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
     P_IterateThinkers(XS_PlaneMover, stopPlaneMover, &params);
 
     // Allocate a new thinker.
-    mover = Z_Calloc(sizeof(*mover), PU_LEVEL, 0);
+    mover = Z_Calloc(sizeof(*mover), PU_MAP, 0);
     mover->thinker.function = XS_PlaneMover;
     mover->sector = sec;
     mover->ceiling = ceiling;
@@ -2617,7 +2618,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
 {
     xgsector_t         *xg;
     sectortype_t       *info;
-    float               flevtime = TIC2FLT(levelTime);
+    float               flevtime = TIC2FLT(mapTime);
     linedef_t          *dummyLine;
     xline_t            *xdummyLine;
     linetype_t         *ltype;
@@ -2645,7 +2646,7 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
     // Prepare the dummy line to use for the event.
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
-    xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_LEVEL, 0);
+    xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
 
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
 
@@ -3058,7 +3059,7 @@ void XS_Update(void)
     uint        i;
     xsector_t  *xsec;
 
-    // It's all PU_LEVEL memory, so we can just lose it.
+    // It's all PU_MAP memory, so we can just lose it.
     for(i = 0; i < numsectors; ++i)
     {
         xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, i));

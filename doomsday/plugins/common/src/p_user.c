@@ -499,7 +499,7 @@ void P_DeathThink(player_t* player)
             if(player->plr->lookDir < 60)
             {
                 lookDelta = (60 - player->plr->lookDir) / 8;
-                if(lookDelta < 1 && (levelTime & 1))
+                if(lookDelta < 1 && (mapTime & 1))
                 {
                     lookDelta = 1;
                 }
@@ -935,8 +935,8 @@ void P_ClientSideThink(void)
             pl->flyHeight /= 2;
         // Do some fly-bobbing.
         if(mo->pos[VZ] > mo->floorZ && (mo->flags2 & MF2_FLY) &&
-           !mo->onMobj && (levelTime & 2))
-            mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
+           !mo->onMobj && (mapTime & 2))
+            mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
     }
 #if __JHEXEN__
     else
@@ -1101,7 +1101,7 @@ void P_PlayerThinkMove(player_t *player)
 
 #if __JHEXEN__
         plrmo = player->plr->mo;
-        if(player->powers[PT_SPEED] && !(levelTime & 1) &&
+        if(player->powers[PT_SPEED] && !(mapTime & 1) &&
            P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12)
         {
             mobj_t     *speedMo;
@@ -1534,28 +1534,29 @@ void P_PlayerThinkHUD(player_t* player)
 
 void P_PlayerThinkMap(player_t* player)
 {
-    playerbrain_t* brain = &player->brain;
+    uint                plnum = player - players;
+    playerbrain_t*      brain = &player->brain;
 
     if(brain->mapToggle)
-        AM_Open(player - players, !AM_IsMapActive(player - players));
+        AM_Open(plnum, !AM_IsMapActive(plnum), false);
 
     if(brain->mapFollow)
-        AM_ToggleFollow(player - players);
+        AM_ToggleFollow(plnum);
 
     if(brain->mapRotate)
-        AM_SetViewRotate(player - players, 2); // 2 = toggle.
+        AM_SetViewRotate(plnum, 2); // 2 = toggle.
 
     if(brain->mapZoomMax)
-        AM_ToggleZoomMax(player - players);
+        AM_ToggleZoomMax(plnum);
 
     if(brain->mapMarkAdd)
     {
         mobj_t*         pmo = player->plr->mo;
-        AM_AddMark(player - players, pmo->pos[VX], pmo->pos[VY]);
+        AM_AddMark(plnum, pmo->pos[VX], pmo->pos[VY]);
     }
 
     if(brain->mapMarkClearAll)
-        AM_ClearMarks(player - players);
+        AM_ClearMarks(plnum);
 }
 
 void P_PlayerThinkPowers(player_t* player)
@@ -1653,7 +1654,7 @@ void P_PlayerThinkPowers(player_t* player)
                 player->plr->fixedColorMap = 1;
             }
         }
-        else if(!(levelTime & 16))  /* && player == &players[CONSOLEPLAYER]) */
+        else if(!(mapTime & 16))  /* && player == &players[CONSOLEPLAYER]) */
         {
             ddplayer_t *dp = player->plr;
             int     playerNumber = player - players;
@@ -1692,7 +1693,7 @@ void P_PlayerThinkPowers(player_t* player)
     {
         if(player->class == PCLASS_CLERIC)
         {
-            if(!(levelTime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
+            if(!(mapTime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
                !(player->plr->mo->flags2 & MF2_DONTDRAW))
             {
                 player->plr->mo->flags &= ~MF_SHADOW;
@@ -1701,7 +1702,7 @@ void P_PlayerThinkPowers(player_t* player)
                     player->plr->mo->flags2 |= MF2_DONTDRAW | MF2_NONSHOOTABLE;
                 }
             }
-            if(!(levelTime & 31))
+            if(!(mapTime & 31))
             {
                 if(player->plr->mo->flags2 & MF2_DONTDRAW)
                 {
@@ -1742,7 +1743,7 @@ void P_PlayerThinkPowers(player_t* player)
         player->powers[PT_SPEED]--;
     }
 
-    if(player->poisonCount && !(levelTime & 15))
+    if(player->poisonCount && !(mapTime & 15))
     {
         player->poisonCount -= 5;
         if(player->poisonCount < 0)
@@ -1947,7 +1948,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(P_IsPaused())
         return;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
     {
         // Just check the controls in case some UI stuff is relying on them
         // (like intermission).

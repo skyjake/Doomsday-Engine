@@ -153,7 +153,7 @@ int C_DECL      XLTrav_ChangeLineType();
 int C_DECL      XLTrav_Activate();
 int C_DECL      XLTrav_Music();
 int C_DECL      XLTrav_LineCount();
-int C_DECL      XLTrav_EndLevel();
+int C_DECL      XLTrav_LeaveMap();
 int C_DECL      XLTrav_DisableLine();
 int C_DECL      XLTrav_EnableLine();
 int C_DECL      XLTrav_ChangeWallMaterial();
@@ -209,10 +209,10 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Start Sound", "", 4 | MAP_SND},         // ip4: start sound
         {XGPF_INT, "End Sound", "", 5 | MAP_SND},           // ip5: end sound
         {XGPF_INT, "Move Sound", "", 6 | MAP_SND},          // ip6: move sound
-        {XGPF_INT, "Start Texture Ref", "spref_", 7},       // ip7: start texture origin (uses same ids as i2) (spec: use ip8 as tex num)
-        {XGPF_INT, "Start Texture Num", "", 8 | MAP_MATERIAL}, // ip8: data component or number/name of flat
-        {XGPF_INT, "End Texture Ref", "spref_", 9},         // ip9: end texture origin (uses same ids as i2) (spec: use ip10 as tex num)
-        {XGPF_INT, "End Texture Num", "", 10 | MAP_MATERIAL}, // ip10: data component or number/name of flat
+        {XGPF_INT, "Start Material Ref", "spref_", 7},       // ip7: start texture origin (uses same ids as i2) (spec: use ip8 as tex num)
+        {XGPF_INT, "Start Material Num", "", 8 | MAP_MATERIAL}, // ip8: data component or number/name of flat
+        {XGPF_INT, "End Material Ref", "spref_", 9},         // ip9: end texture origin (uses same ids as i2) (spec: use ip10 as tex num)
+        {XGPF_INT, "End Material Num", "", 10 | MAP_MATERIAL}, // ip10: data component or number/name of flat
         {XGPF_INT, "Start Type Ref", "lpref_", 11},         // ip11: (plane ref) start sector type (spec: use i12 as type ID)
         {XGPF_INT, "Start Type Num", "", -1},               // ip12: data component or type ID
         {XGPF_INT, "End Type Ref", "lpref_", 13},           // ip13: (plane ref) end sector type (spec: use i14 as type ID)
@@ -222,7 +222,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
       // Moves one or more planes, incrementing their height with each move
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0: (plane ref) plane to start from
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
-        {XGPF_INT, "Spread Texture", "", -1},               // ip2: (true/false) stop when texture changes
+        {XGPF_INT, "Spread Material", "", -1},               // ip2: (true/false) stop when texture changes
         {XGPF_INT, "Spread Build", "", -1},                 // ip3: (true/false) spread build?
         {XGPF_INT, "Start Sound", "", 4 | MAP_SND},         // ip4: start build sound (doesn't wait)
         {XGPF_INT, "Step Start Sound", "", 5 | MAP_SND},    // ip5: step start sound
@@ -295,12 +295,12 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Set Absolute", "", -1},                 // ip2: non-zero makes ip3 absolute
         {XGPF_INT, "Count Delta", "", -1} }},               // ip3: count delta or absolute
 
-    { XLTrav_EndLevel, NULL, TRAV_LINES, 1, 2, 0, "End Level",
-      // Ends the current level
-       {{XGPF_INT, "Secret Exit", "", -1},                  // ip0: non-zero goto secret level
+    { XLTrav_LeaveMap, NULL, TRAV_LINES, 1, 2, 0, "Leave Map",
+      // Exits the current map
+       {{XGPF_INT, "Secret Exit", "", -1},                  // ip0: non-zero goto secret map
         {XGPF_INT, "Data Ref", "lref_", 1},                 // ip1: (line ref) line to acquire (line data ref) from
         {XGPF_INT, "Data Num", "", -1},                     // ip2:
-        {XGPF_INT, "Goto Level", "ldref_", 3} }},           // ip3: level ID or (line data ref from ip1)
+        {XGPF_INT, "Goto Map", "ldref_", 3} }},             // ip3: map ID or (line data ref from ip1)
 
     { XLTrav_DisableLine, NULL, TRAV_LINES, 0, 1, 0, "Disable Line",
       // Disables the referenced line(s) if active
@@ -315,25 +315,25 @@ xgclass_t xgClasses[NUMXGCLASSES] =
     { XL_DoExplode, NULL, TRAV_NONE, 0, 1, 0, "Explode" },
       // Explodes the activator (no params).
 
-    { XSTrav_PlaneMaterial, NULL, TRAV_PLANES, 0, 1, 0, "Plane Texture",
+    { XSTrav_PlaneMaterial, NULL, TRAV_PLANES, 0, 1, 0, "Plane Material",
       // Change the material and/or surface color of a plane.
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0 : (plane ref) plane(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1 : ref data
-        {XGPF_INT, "Texture Ref", "spref_", 2},             // ip2 : Texture ref
-        {XGPF_INT, "Texture Num", "", 3 | MAP_MATERIAL},    // ip3 : texture number (flat), used with SPREF_NONE
+        {XGPF_INT, "Material Ref", "spref_", 2},             // ip2 : Texture ref
+        {XGPF_INT, "Material Num", "", 3 | MAP_MATERIAL},    // ip3 : texture number (flat), used with SPREF_NONE
         {XGPF_INT, "Red Delta", "", -1},                    // ip4 : plane surface color (red)
         {XGPF_INT, "Green Delta", "", -1},                  // ip5 : "" (green)
         {XGPF_INT, "Blue Delta", "", -1} }},                // ip6 : "" (blue)
 
-    { XLTrav_ChangeWallMaterial, NULL, TRAV_LINES, 0, 1, 0, "Wall Texture",
+    { XLTrav_ChangeWallMaterial, NULL, TRAV_LINES, 0, 1, 0, "Wall Material",
       // Changes material(s) on the referenced line(s).
       // Changes surface colour(s), alpha, mid textue blendmode and sidedef flags
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Side Num", "", -1},                     // ip2: non-zero change the back side
-        {XGPF_INT, "Top Texture", "", 3 | MAP_MATERIAL},    // ip3: top texture to change to (blank indicates no change)
-        {XGPF_INT, "Middle Texture", "", 4 | MAP_MATERIAL}, // ip4: middle texture to change to (blank indicates no change)
-        {XGPF_INT, "Bottom Texture", "", 5 | MAP_MATERIAL}, // ip5: bottom texture to change to (blank indicates no change)
+        {XGPF_INT, "Top Material", "", 3 | MAP_MATERIAL},    // ip3: top texture to change to (blank indicates no change)
+        {XGPF_INT, "Middle Material", "", 4 | MAP_MATERIAL}, // ip4: middle texture to change to (blank indicates no change)
+        {XGPF_INT, "Bottom Material", "", 5 | MAP_MATERIAL}, // ip5: bottom texture to change to (blank indicates no change)
         {XGPF_INT, "Set Mid If None", "", -1},              // ip6: set mid texture even if previously zero
         {XGPF_INT, "Sidedef Flags", "sdf_", 7},             // ip7: (sdf_) sidedef flags (used with surface colour blending, fullbright etc)
         {XGPF_INT, "Middle Blendmode", "bm_", 8},           // ip8: (bm_) middle texture blendmode
@@ -431,7 +431,7 @@ void XG_Dev(const char* format, ...)
 }
 
 /**
- * Init XG data for the level.
+ * Init XG data for the map.
  */
 void XG_Init(void)
 {
@@ -614,7 +614,7 @@ void XL_SetLineType(linedef_t* line, int id)
 
         // Allocate memory for the line type data.
         if(!xline->xg)
-            xline->xg = Z_Malloc(sizeof(xgline_t), PU_LEVEL, 0);
+            xline->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
 
         // Init the extended line state.
         xline->xg->disabled = false;
@@ -632,7 +632,7 @@ void XL_SetLineType(linedef_t* line, int id)
         // If there is not already an xlthinker for this line, create one.
         if(P_IterateThinkers(XL_Thinker, findXLThinker, line))
         {   // Not created one yet.
-            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_LEVSPEC, 0);
+            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAPSPEC, 0);
 
             xl->thinker.function = XL_Thinker;
             xl->line = line;
@@ -1014,12 +1014,15 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
         break;
 
     case LDREF_ANGLE: // Line angle.
-        answer = (R_PointToAngle2(0, 0, P_GetFloatp(line, DMU_DX),
-                                  P_GetFloatp(line, DMU_DY))
-                 / (float) ANGLE_MAX *360);
+        {
+        float               d1[2];
+
+        P_GetFloatpv(line, DMU_DXY, d1);
+        answer = R_PointToAngle2(0, 0, d1[0], d1[1]) / (float) ANGLE_MAX *
+            360;
         XG_Dev("XL_ValidateLineRef: Using Line Angle (%i) as %s", answer, parmname);
         break;
-
+        }
     case LDREF_LENGTH: // Line length.
         // Answer should be in map units.
         answer = P_GetFixedp(line, DMU_LENGTH) >> FRACBITS;
@@ -1521,7 +1524,7 @@ int C_DECL XLTrav_Music(linedef_t* line, boolean dummy, void* context,
     }
     else // We might possibly have a data reference to evaluate.
     {
-        if(info->iparm[2] == LREF_NONE) // (ip0) will be used to determine next level.
+        if(info->iparm[2] == LREF_NONE) // (ip0) will be used to determine next map.
         {
             song = info->iparm[0];
         }
@@ -1561,7 +1564,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     vertex_t*           newV1, *newV2, *oldV1, *oldV2;
     sector_t*           newFrontSec, *newBackSec;
     float               newX, newY, newZ, pos, s, c;
-    float               oldLDX, oldLDY, newLDX, newLDY;
+    float               oldLineDelta[2], newLineDelta[2];
     angle_t             angle;
 
     // Don't teleport things marked noteleport!
@@ -1584,15 +1587,13 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Retrieve a few properties to make this look neater.
     oldV1 = P_GetPtrp(line, DMU_VERTEX0);
     oldV2 = P_GetPtrp(line, DMU_VERTEX1);
-    oldLDX = P_GetFloatp(line, DMU_DX);
-    oldLDY = P_GetFloatp(line, DMU_DY);
+    P_GetFloatpv(line, DMU_DXY, oldLineDelta);
 
     newV1 = P_GetPtrp(newLine, DMU_VERTEX0);
     newV2 = P_GetPtrp(newLine, DMU_VERTEX1);
-    newLDX = P_GetFloatp(newLine, DMU_DX);
-    newLDY = P_GetFloatp(newLine, DMU_DY);
+    P_GetFloatpv(newLine, DMU_DXY, newLineDelta);
     newFrontSec = P_GetPtrp(newLine, DMU_FRONT_SECTOR);
-    newBackSec = P_GetPtrp(newLine, DMU_BACK_SECTOR);
+    newBackSec  = P_GetPtrp(newLine, DMU_BACK_SECTOR);
 
     // i2: 1 = Spawn Fog
     // i3: Sound = Sound to play
@@ -1614,21 +1615,21 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     }
 
     // Get the thing's position along the source linedef
-    if(fabs(oldLDX) > fabs(oldLDY))
-        pos = (mobj->pos[VX] - P_GetFloatp(oldV1, DMU_X)) / oldLDX;
+    if(fabs(oldLineDelta[0]) > fabs(oldLineDelta[1]))
+        pos = (mobj->pos[VX] - P_GetFloatp(oldV1, DMU_X)) / oldLineDelta[0];
     else
-        pos = (mobj->pos[VY] - P_GetFloatp(oldV1, DMU_Y)) / oldLDY;
+        pos = (mobj->pos[VY] - P_GetFloatp(oldV1, DMU_Y)) / oldLineDelta[1];
 
     // Get the angle between the two linedefs, for rotating orientation and
     // momentum. Rotate 180 degrees, and flip the position across the exit
     // linedef, if reversed.
     angle = (info->iparm[4] ? pos = 1 - pos, 0 : ANG180) +
-             R_PointToAngle2(0, 0, newLDX, newLDY) -
-             R_PointToAngle2(0, 0, oldLDX, oldLDY);
+             R_PointToAngle2(0, 0, newLineDelta[0], newLineDelta[1]) -
+             R_PointToAngle2(0, 0, oldLineDelta[0], oldLineDelta[1]);
 
     // Interpolate position across the exit linedef.
-    newX = P_GetFloatp(newV2, DMU_X) - (pos * newLDX);
-    newY = P_GetFloatp(newV2, DMU_Y) - (pos * newLDY);
+    newX = P_GetFloatp(newV2, DMU_X) - (pos * newLineDelta[0]);
+    newY = P_GetFloatp(newV2, DMU_Y) - (pos * newLineDelta[1]);
 
     // Sine, cosine of angle adjustment
     s = FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]);
@@ -1673,10 +1674,10 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Make sure we are on correct side of exit linedef.
     while(P_PointOnLinedefSide(newX, newY, newLine) != side && --fudge >= 0)
     {
-        if(fabs(newLDX) > fabs(newLDY))
-            newY -= FIX2FLT((newLDX < 0) != side ? -1 : 1);
+        if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
+            newY -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);
         else
-            newX += FIX2FLT((newLDY < 0) != side ? -1 : 1);
+            newX += FIX2FLT((newLineDelta[1] < 0) != side ? -1 : 1);
     }
 
     // Do the Teleport
@@ -1749,7 +1750,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
 
 int XL_ValidateMap(int val, int type)
 {
-    int                 episode, level = val;
+    int                 episode, map = val;
 
 #if __JDOOM__
     if(gameMode == commercial || gameMode == shareware)
@@ -1762,14 +1763,15 @@ int XL_ValidateMap(int val, int type)
     episode = gameEpisode;
 #endif
 
-    if(!G_ValidateMap(&episode, &level))
-        XG_Dev("XLTrav_EndLevel: NOT A VALID MAP NUMBER %i (next level set to %i)",val,level);
+    if(!G_ValidateMap(&episode, &map))
+        XG_Dev("XLTrav_LeaveMap: NOT A VALID MAP NUMBER %i, "
+               "next map will be %i.", val, map);
 
-    return level;
+    return map;
 }
 
-int C_DECL XLTrav_EndLevel(linedef_t* line, boolean dummy, void* context,
-                           void* context2, mobj_t* activator)
+int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
+                          void* context2, mobj_t* activator)
 {
     int                 map = 0;
     int                 temp = 0;
@@ -1778,12 +1780,12 @@ int C_DECL XLTrav_EndLevel(linedef_t* line, boolean dummy, void* context,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         return false;
     }
 
     if(info->iparm[1] == LREF_NONE)
-    {   // (ip3) will be used to determine next level.
+    {   // (ip3) will be used to determine next map.
         if(info->iparm[3])
             map = XL_ValidateMap(info->iparm[3], 0);
     }
@@ -1791,22 +1793,24 @@ int C_DECL XLTrav_EndLevel(linedef_t* line, boolean dummy, void* context,
     {    // We might possibly have a data reference to evaluate.
         if(line)
         {
-            temp = XL_ValidateLineRef(line,info->iparm[3], context2, "Map Number");
+            temp = XL_ValidateLineRef(line,info->iparm[3], context2,
+                                      "Map Number");
             if(temp > 0)
                 map = XL_ValidateMap(temp, info->iparm[3]);
         }
 
         if(map != 0)
-            XG_Dev("XLTrav_EndLevel: Reference data not valid. Next level as normal");
+            XG_Dev("XLTrav_LeaveMap: Reference data not valid. "
+                   "Next map as normal");
     }
 
     if(map)
     {
-        XG_Dev("XLTrav_EndLevel: Next level set to %i", map);
+        XG_Dev("XLTrav_LeaveMap: Next map set to %i", map);
         nextMap = map;
     }
 
-    G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
     return false; // Only do this once!
 }
 
@@ -2600,7 +2604,7 @@ void XL_DoChain(linedef_t* line, int chain, boolean activating,
     // We'll use a dummy line for the chain.
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
-    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_LEVEL, 0);
+    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
 
     XG_Dev("XL_DoChain: Line %i, chained type %i", P_ToIndex(line), chain);
     XG_Dev("  (dummy line will show up as %i)", P_ToIndex(dummyLine));
@@ -2651,7 +2655,7 @@ void XL_Thinker(xlthinker_t* xl)
         return; // Disabled, do nothing.
 
     info = &xg->info;
-    levtime = TIC2FLT(levelTime);
+    levtime = TIC2FLT(mapTime);
 
     // Increment time.
     if(xg->timer >= 0)
@@ -2823,7 +2827,7 @@ void XL_Update(void)
     uint                i;
     xline_t*            xline;
 
-    // It's all PU_LEVEL memory, so we can just lose it.
+    // It's all PU_MAP memory, so we can just lose it.
     for(i = 0; i < numlines; ++i)
     {
         xline = P_GetXLine(i);

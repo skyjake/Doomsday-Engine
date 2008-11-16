@@ -104,8 +104,8 @@ dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 int typeInTime = 0;
 
 #if __JDOOM__ || __JDOOM64__
-// Name graphics of each level.
-dpatch_t *levelNamePatches = NULL;
+// Name graphics of each map.
+dpatch_t* mapNamePatches = NULL;
 // Name graphics of each skill mode.
 dpatch_t skillModeNames[NUM_SKILL_MODES];
 dpatch_t m_pause; // Paused graphic.
@@ -113,7 +113,7 @@ dpatch_t m_pause; // Paused graphic.
 
 #if __JDOOM__ || __WOLFTC__
 // Name graphics of each episode.
-dpatch_t *episodeNamePatches = NULL;
+dpatch_t* episodeNamePatches = NULL;
 #endif
 
 cvar_t hudCVars[] = {
@@ -183,11 +183,6 @@ void Hu_LoadData(void)
     for(i = 1; i < 9; ++i)
         R_CachePatch(&borderPatches[i-1], borderLumps[i]);
 
-    // Setup strings.
-#define INIT_STRINGS(x, x_idx) \
-    for(i = 0; i < sizeof(x_idx) / sizeof(int); ++i) \
-        x[i] = x_idx[i] == -1? "NEWLEVEL" : GET_TXT(x_idx[i]);
-
 #if __JDOOM__ || __JDOOM64__
     // load the heads-up fonts
     j = HU_FONTSTART;
@@ -226,35 +221,35 @@ void Hu_LoadData(void)
 # if __JDOOM64__
     {
         int NUMCMAPS = 32;
-        levelNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "WILV%2.2d", i);
-            R_CachePatch(&levelNamePatches[i], name);
+            R_CachePatch(&mapNamePatches[i], name);
         }
     }
 # else
     if(gameMode == commercial)
     {
         int NUMCMAPS = 32;
-        levelNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
-            R_CachePatch(&levelNamePatches[i], name);
+            R_CachePatch(&mapNamePatches[i], name);
         }
     }
     else
     {
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        levelNamePatches = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
         for(j = 0; j < 4; ++j) // Number of episodes.
         {
             for(i = 0; i < 9; ++i) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2d", (j * 10) + i);
-                R_CachePatch(&levelNamePatches[(j* 9)+i], name);
+                R_CachePatch(&mapNamePatches[(j* 9)+i], name);
             }
         }
 
@@ -343,8 +338,8 @@ void Hu_LoadData(void)
 void HU_UnloadData(void)
 {
 #if __JDOOM__ || __JDOOM64__
-    if(levelNamePatches)
-        Z_Free(levelNamePatches);
+    if(mapNamePatches)
+        Z_Free(mapNamePatches);
 #endif
 }
 

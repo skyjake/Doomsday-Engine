@@ -147,7 +147,7 @@ typedef struct saveheader_s {
     byte            deathmatch;
     byte            noMonsters;
     byte            respawnMonsters;
-    int             levelTime;
+    int             mapTime;
     byte            players[MAXPLAYERS];
     unsigned int    gameID;
 } saveheader_t;
@@ -764,7 +764,7 @@ static playerheader_t *GetPlayerHeader(void)
 
 unsigned int SV_GameID(void)
 {
-    return Sys_GetRealTime() + (levelTime << 24);
+    return Sys_GetRealTime() + (mapTime << 24);
 }
 
 void SV_Write(void *data, int len)
@@ -1241,6 +1241,8 @@ static void SV_ReadPlayer(player_t *p)
     {
         p->powers[i] = SV_ReadLong();
     }
+    if(p->powers[PT_ALLMAP])
+        AM_RevealMap(p - players, true);
 
 #if __JHEXEN__
     p->keys = SV_ReadLong();
@@ -4165,7 +4167,7 @@ static void P_UnArchiveThinkers(void)
                     else
                     {
                         th = Z_Calloc(thInfo->size,
-                                      ((thInfo->flags & TSF_SPECIAL)? PU_LEVSPEC : PU_LEVEL),
+                                      ((thInfo->flags & TSF_SPECIAL)? PU_MAPSPEC : PU_MAP),
                                       0);
                     }
 
@@ -4458,8 +4460,8 @@ static void P_ArchiveMap(boolean savePlayers)
     // Write a version byte
     SV_WriteByte(MY_SAVE_VERSION);
 
-    // Write the level timer
-    SV_WriteLong(levelTime);
+    // Write the map timer
+    SV_WriteLong(mapTime);
 #else
     // Clear the sound target count (determined while saving sectors).
     numSoundTargets = 0;
@@ -4511,8 +4513,8 @@ static void P_UnArchiveMap(void)
                   ASEG_MAP_HEADER);
     }
 
-    // Read the level timer
-    levelTime = SV_ReadLong();
+    // Read the map timer
+    mapTime = SV_ReadLong();
 #endif
 
     P_UnArchiveWorld();
@@ -4716,7 +4718,7 @@ int SV_SaveGameWorker(void *ptr)
     hdr.deathmatch = deathmatch;
     hdr.noMonsters = noMonstersParm;
     hdr.respawnMonsters = respawnMonsters;
-    hdr.levelTime = levelTime;
+    hdr.mapTime = mapTime;
     hdr.gameID = SV_GameID();
     for(i = 0; i < MAXPLAYERS; i++)
         hdr.players[i] = players[i].plr->inGame;
@@ -4925,11 +4927,11 @@ static boolean SV_LoadGame2(void)
     junkbuffer = malloc(sizeof(byte) * 64);
 
 #if !__JHEXEN__
-    // Load the level.
+    // Load the map.
     G_InitNew(gameSkill, gameEpisode, gameMap);
 
     // Set the time.
-    levelTime = hdr.levelTime;
+    mapTime = hdr.mapTime;
 
     SV_InitThingArchive(true, true);
 #endif
@@ -5081,7 +5083,7 @@ boolean SV_LoadGame(char *filename)
     M_ReadFile(fileName, &saveBuffer);
 #else
     // Make sure an opening briefing is not shown.
-    // (G_InitNew --> G_DoLoadLevel)
+    // (G_InitNew --> G_DoLoadMap)
     briefDisabled = true;
 
     savefile = lzOpen(filename, "rp");
@@ -5143,7 +5145,7 @@ void SV_SaveClient(unsigned int gameID)
     hdr.deathmatch = deathmatch;
     hdr.noMonsters = noMonstersParm;
     hdr.respawnMonsters = respawnMonsters;
-    hdr.levelTime = levelTime;
+    hdr.mapTime = mapTime;
     hdr.gameID = gameID;
     SV_Write(&hdr, sizeof(hdr));
 
@@ -5207,7 +5209,7 @@ void SV_LoadClient(unsigned int gameid)
         gameEpisode = hdr.episode;
         G_InitNew(gameSkill, gameEpisode, gameMap);
     }
-    levelTime = hdr.levelTime;
+    mapTime = hdr.mapTime;
 
     P_MobjUnsetPosition(mo);
     mo->pos[VX] = FIX2FLT(SV_ReadLong());
@@ -5234,7 +5236,7 @@ static void SV_DMLoadMap(void)
     P_UnArchiveMap();
 
     // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
+    R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }
 #endif
 
@@ -5250,7 +5252,7 @@ static void SV_HxLoadMap(void)
     // We don't want to see a briefing if we're loading a save game.
     briefDisabled = true;
 
-    // Load a base level
+    // Load a base map
     G_InitNew(gameSkill, gameEpisode, gameMap);
 
     // Create the name
@@ -5272,7 +5274,7 @@ static void SV_HxLoadMap(void)
     Z_Free(saveBuffer);
 
     // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
+    R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }
 
 void SV_MapTeleport(int map, int position)

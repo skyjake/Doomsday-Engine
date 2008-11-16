@@ -123,14 +123,14 @@ void T_PlatRaise(plat_t* plat)
 
         // Play a "while-moving" sound?
 #if __JHERETIC__
-        if(!(levelTime & 31))
+        if(!(mapTime & 31))
             S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
 #if __JDOOM__ || __JDOOM64__ || __WOLFTC__
         if(plat->type == PT_RAISEANDCHANGE ||
            plat->type == PT_RAISETONEARESTANDCHANGE)
         {
-            if(!(levelTime & 7))
+            if(!(mapTime & 7))
                 S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
         }
 #endif
@@ -218,7 +218,7 @@ void T_PlatRaise(plat_t* plat)
         {
             // Play a "while-moving" sound?
 #if __JHERETIC__
-            if(!(levelTime & 31))
+            if(!(mapTime & 31))
                 S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
         }
@@ -275,7 +275,7 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
 
         // Find lowest & highest floors around sector
         rtn = 1;
-        plat = Z_Calloc(sizeof(*plat), PU_LEVSPEC, 0);
+        plat = Z_Calloc(sizeof(*plat), PU_MAPSPEC, 0);
         plat->thinker.function = T_PlatRaise;
         P_ThinkerAdd(&plat->thinker);
 

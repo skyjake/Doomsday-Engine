@@ -60,8 +60,8 @@ typedef enum border_e {
 extern dpatch_t huFont[HU_FONTSIZE];
 extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
-// Name graphics of each level.
-extern dpatch_t* levelNamePatches;
+// Name graphics of each map.
+extern dpatch_t* mapNamePatches;
 // Name graphics of each skill mode.
 #if __JDOOM__ || __JDOOM64__
 extern dpatch_t skillModeNames[NUM_SKILL_MODES];

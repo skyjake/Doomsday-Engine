@@ -616,7 +616,7 @@ void NetCl_Intermission(byte *data)
 
     // Close any automaps left open at the end of the previous map.
     for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(i, false);
+        AM_Open(i, false, true);
 
 #if __JDOOM__ || __JDOOM64__
     if(flags & IMF_BEGIN)
@@ -702,10 +702,10 @@ void NetCl_Finale(int packetType, byte *data)
             }
         }
 
-        // Read the script into level-scope memory. It will be freed
-        // when the next level is loaded.
+        // Read the script into map-scope memory. It will be freed
+        // when the next map is loaded.
         len = strlen((char*)readbuffer);
-        script = Z_Malloc(len + 1, PU_LEVEL, 0);
+        script = Z_Malloc(len + 1, PU_MAP, 0);
         strcpy((char*)script, (char*)readbuffer);
     }
 

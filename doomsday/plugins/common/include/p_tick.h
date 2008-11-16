@@ -29,8 +29,8 @@
 #ifndef __P_TICK_H__
 #define __P_TICK_H__
 
-extern int levelTime;
-extern int actualLevelTime;
+extern int mapTime;
+extern int actualMapTime;
 extern int timerGame;
 
 void    P_RunPlayers(timespan_t ticLength);

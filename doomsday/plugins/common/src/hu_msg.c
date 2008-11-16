@@ -133,7 +133,7 @@ static void     closeChat(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int actualLevelTime;
+extern int actualMapTime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -363,8 +363,8 @@ void HUMsg_Ticker(void)
 
 void HUMsg_Drawer(int player)
 {
-    // Don't draw the messages when the level title is up.
-    if(cfg.levelTitle && actualLevelTime < 6 * 35)
+    // Don't draw the messages when the map title is up.
+    if(cfg.mapTitle && actualMapTime < 6 * 35)
         return;
 
     if(cfg.msgShow)
@@ -379,7 +379,7 @@ boolean HUMsg_Responder(event_t* ev)
     boolean             eatkey = false;
     unsigned char       c;
 
-    if(G_GetGameState() != GS_LEVEL || !chatOn)
+    if(G_GetGameState() != GS_MAP || !chatOn)
         return false;
 
     if(ev->type == EV_KEY && ev->data1 == DDKEY_RSHIFT)

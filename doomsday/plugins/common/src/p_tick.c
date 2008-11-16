@@ -63,8 +63,8 @@ void    P_ClientSideThink(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int levelTime;
-int actualLevelTime;
+int mapTime;
+int actualMapTime;
 int timerGame;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -143,17 +143,17 @@ void P_DoTick(void)
     if(paused)
         return;
 
-    actualLevelTime++;
+    actualMapTime++;
 
     if(!IS_CLIENT && timerGame && !paused)
     {
         if(!--timerGame)
         {
 #if __JHEXEN__ || __JSTRIFE__
-            G_LeaveLevel(G_GetLevelNumber(gameEpisode, P_GetMapNextMap(gameMap)),
+            G_LeaveMap(G_GetMapNumber(gameEpisode, P_GetMapNextMap(gameMap)),
                          0, false);
 #else
-            G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+            G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 #endif
         }
     }
@@ -181,5 +181,5 @@ void P_DoTick(void)
     P_ClientSideThink();
 
     // For par times, among other things.
-    levelTime++;
+    mapTime++;
 }

@@ -3049,7 +3049,7 @@ static void M_QuickSave(void)
 {
     player_t*               player = &players[CONSOLEPLAYER];
 
-    if(player->playerState == PST_DEAD || G_GetGameState() != GS_LEVEL ||
+    if(player->playerState == PST_DEAD || G_GetGameState() != GS_MAP ||
        Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);
@@ -3652,9 +3652,9 @@ boolean M_QuitResponse(int option, void *data)
             if(!quitYet)
             {
                 if(gameMode == commercial)
-                    S_LocalSound(quitsounds2[(GAMETIC >> 2) & 7], NULL);
+                    S_LocalSound(quitsounds2[((int)GAMETIC >> 2) & 7], NULL);
                 else
-                    S_LocalSound(quitsounds[(GAMETIC >> 2) & 7], NULL);
+                    S_LocalSound(quitsounds[((int)GAMETIC >> 2) & 7], NULL);
 
                 // Wait for 1.5 seconds.
                 DD_Executef(true, "after 53 quit!");
@@ -3687,7 +3687,7 @@ void M_QuitDOOM(int option, void *data)
 
 #if __JDOOM__ || __JDOOM64__
     sprintf(endstring, "%s\n\n%s",
-            endmsg[(GAMETIC % (NUM_QUITMESSAGES + 1))], DOSY);
+            endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))], DOSY);
 #else
     sprintf(endstring, "%s\n\n%s", endmsg[0], DOSY);
 #endif
@@ -3800,7 +3800,7 @@ void M_SaveGame(int option, void *data)
 {
     player_t *player = &players[CONSOLEPLAYER];
 
-    if(player->playerState == PST_DEAD || G_GetGameState() != GS_LEVEL ||
+    if(player->playerState == PST_DEAD || G_GetGameState() != GS_MAP ||
        Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);
