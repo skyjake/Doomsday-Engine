@@ -124,6 +124,10 @@ boolean Linedef_GetProperty(const linedef_t *lin, setargs_t *args)
     case DMU_DY:
         DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 0);
         break;
+    case DMU_DXY:
+        DMU_GetValue(DMT_LINEDEF_DX, &lin->dX, args, 0);
+        DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 1);
+        break;
     case DMU_LENGTH:
         DMU_GetValue(DDVT_FLOAT, &lin->length, args, 0);
         break;

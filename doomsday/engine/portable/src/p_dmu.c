@@ -112,6 +112,7 @@ const char* DMU_Str(uint prop)
         { DMU_FLAGS, "DMU_FLAGS" },
         { DMU_DX, "DMU_DX" },
         { DMU_DY, "DMU_DY" },
+        { DMU_DXY, "DMU_DXY" },
         { DMU_LENGTH, "DMU_LENGTH" },
         { DMU_SLOPE_TYPE, "DMU_SLOPE_TYPE" },
         { DMU_ANGLE, "DMU_ANGLE" },
