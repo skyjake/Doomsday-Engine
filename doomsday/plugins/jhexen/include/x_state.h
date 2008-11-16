@@ -60,9 +60,9 @@ extern boolean  viewActive;
 extern int      viewangleoffset;
 
 // Timer, for scores.
-extern int levelStartTic; // Game tic at level start.
-extern int levelTime; // Tics in game play for par.
-extern int actualLevelTime;
+extern int mapStartTic; // Game tic at map start.
+extern int mapTime; // Tics in game play for par.
+extern int actualMapTime;
 
 // Quit after playing a demo from cmdline.
 extern boolean singledemo;
@@ -83,7 +83,7 @@ extern player_t players[MAXPLAYERS];
 //
 
 
-// if true, load all graphics at level load
+// if true, load all graphics at map load
 extern boolean  precache;
 
 extern int      bodyqueslot;

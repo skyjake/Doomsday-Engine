@@ -58,40 +58,37 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void P_LightningFlash(void);
-static boolean CheckedLockedDoor(mobj_t *mo, byte lock);
+static boolean CheckedLockedDoor(mobj_t* mo, byte lock);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int Sky1Texture;
-extern boolean DoubleSky;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-mobj_t  LavaInflictor;
+mobj_t lavaInflictor;
 
-materialnum_t Sky1Material;
-materialnum_t Sky2Material;
-float Sky1ColumnOffset;
-float Sky2ColumnOffset;
-float Sky1ScrollDelta;
-float Sky2ScrollDelta;
-boolean DoubleSky;
+materialnum_t sky1Material;
+materialnum_t sky2Material;
+float sky1ColumnOffset;
+float sky2ColumnOffset;
+float sky1ScrollDelta;
+float sky2ScrollDelta;
+boolean doubleSky;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean LevelHasLightning;
-static int NextLightningFlash;
-static int LightningFlash;
-static float *LightningLightLevels;
+static boolean mapHasLightning;
+static int nextLightningFlash;
+static int lightningFlash;
+static float* lightningLightLevels;
 
 // CODE --------------------------------------------------------------------
 
 void P_InitLava(void)
 {
-    memset(&LavaInflictor, 0, sizeof(mobj_t));
+    memset(&lavaInflictor, 0, sizeof(mobj_t));
 
-    LavaInflictor.type = MT_CIRCLEFLAME;
-    LavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
+    lavaInflictor.type = MT_CIRCLEFLAME;
+    lavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
 void P_InitSky(int map)
@@ -99,13 +96,13 @@ void P_InitSky(int map)
     int                 ival;
     float               fval;
 
-    Sky1Material = P_GetMapSky1Material(map);
-    Sky2Material = P_GetMapSky2Material(map);
-    Sky1ScrollDelta = P_GetMapSky1ScrollDelta(map);
-    Sky2ScrollDelta = P_GetMapSky2ScrollDelta(map);
-    Sky1ColumnOffset = 0;
-    Sky2ColumnOffset = 0;
-    DoubleSky = P_GetMapDoubleSky(map);
+    sky1Material = P_GetMapSky1Material(map);
+    sky2Material = P_GetMapSky2Material(map);
+    sky1ScrollDelta = P_GetMapSky1ScrollDelta(map);
+    sky2ScrollDelta = P_GetMapSky2ScrollDelta(map);
+    sky1ColumnOffset = 0;
+    sky2ColumnOffset = 0;
+    doubleSky = P_GetMapDoubleSky(map);
 
     // First disable all sky layers.
     Rend_SkyParams(DD_SKY, DD_DISABLE, NULL);
@@ -114,29 +111,29 @@ void P_InitSky(int map)
     fval = 0;
     Rend_SkyParams(0, DD_OFFSET, &fval);
     Rend_SkyParams(1, DD_OFFSET, &fval);
-    if(DoubleSky)
+    if(doubleSky)
     {
         Rend_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
-        Rend_SkyParams(0, DD_MATERIAL, &Sky2Material);
+        Rend_SkyParams(0, DD_MATERIAL, &sky2Material);
 
         Rend_SkyParams(1, DD_ENABLE, NULL);
         ival = DD_YES;
         Rend_SkyParams(1, DD_MASK, &ival);
-        Rend_SkyParams(1, DD_MATERIAL, &Sky1Material);
+        Rend_SkyParams(1, DD_MATERIAL, &sky1Material);
     }
     else
     {
         Rend_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
-        Rend_SkyParams(0, DD_MATERIAL, &Sky1Material);
+        Rend_SkyParams(0, DD_MATERIAL, &sky1Material);
 
         Rend_SkyParams(1, DD_DISABLE, NULL);
         ival = DD_NO;
         Rend_SkyParams(1, DD_MASK, &ival);
-        Rend_SkyParams(1, DD_MATERIAL, &Sky2Material);
+        Rend_SkyParams(1, DD_MATERIAL, &sky2Material);
     }
 }
 
@@ -449,7 +446,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
             // Players must be alive to teleport
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
-                G_LeaveLevel(args[0], args[1], false);
+                G_LeaveMap(args[0], args[1], false);
                 success = true;
             }
         }
@@ -465,12 +462,12 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
                 if(deathmatch)
                 {
                     // Winning in deathmatch just goes back to map 1
-                    G_LeaveLevel(1, 0, false);
+                    G_LeaveMap(1, 0, false);
                 }
                 else
                 {
-                    // Passing -1, -1 to G_LeaveLevel() starts the Finale
-                    G_LeaveLevel(-1, -1, false);
+                    // Passing -1, -1 to G_LeaveMap() starts the Finale
+                    G_LeaveMap(-1, -1, false);
                 }
             }
         }
@@ -772,9 +769,9 @@ void P_PlayerOnSpecialFloor(player_t* player)
         return; // Player is not touching the floor
     }
 
-    if(!(levelTime & 31))
+    if(!(mapTime & 31))
     {
-        P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 10, false);
+        P_DamageMobj(player->plr->mo, &lavaInflictor, NULL, 10, false);
         S_StartSound(SFX_LAVA_SIZZLE, player->plr->mo);
     }
 }
@@ -1051,105 +1048,120 @@ void P_AnimateSurfaces(void)
     }
 
     // Update sky column offsets
-    Sky1ColumnOffset += Sky1ScrollDelta;
-    Sky2ColumnOffset += Sky2ScrollDelta;
-    Rend_SkyParams(1, DD_OFFSET, &Sky1ColumnOffset);
-    Rend_SkyParams(0, DD_OFFSET, &Sky2ColumnOffset);
+    sky1ColumnOffset += sky1ScrollDelta;
+    sky2ColumnOffset += sky2ScrollDelta;
+    Rend_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
+    Rend_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
 
-    if(LevelHasLightning)
+    if(mapHasLightning)
     {
-        if(!NextLightningFlash || LightningFlash)
+        if(!nextLightningFlash || lightningFlash)
         {
             P_LightningFlash();
         }
         else
         {
-            NextLightningFlash--;
+            nextLightningFlash--;
         }
     }
 
 #undef PLANE_MATERIAL_SCROLLUNIT
 }
 
+static boolean isLightningSector(sector_t* sec)
+{
+    materialnum_t           skyMaskMaterial;
+    xsector_t*              xsec = P_ToXSector(sec);
+
+    if(xsec->special == LIGHTNING_SPECIAL ||
+       xsec->special == LIGHTNING_SPECIAL2)
+        return true;
+
+    skyMaskMaterial = SKYMASKMATERIAL;
+    if(P_GetIntp(xsec, DMU_CEILING_MATERIAL) == skyMaskMaterial ||
+       P_GetIntp(xsec, DMU_FLOOR_MATERIAL) == skyMaskMaterial)
+        return true;
+
+    return false;
+}
+
 static void P_LightningFlash(void)
 {
-    uint        i;
-    sector_t   *tempSec;
-    float      *tempLight;
-    boolean     foundSec;
-    float       flashLight;
+    uint                i;
+    float*              tempLight;
+    boolean             foundSec;
+    float               flashLight;
 
-    if(LightningFlash)
+    if(lightningFlash > 0)
     {
-        LightningFlash--;
-        if(LightningFlash)
+        lightningFlash--;
+        tempLight = lightningLightLevels;
+
+        if(lightningFlash)
         {
-            tempLight = LightningLightLevels;
             for(i = 0; i < numsectors; ++i)
             {
-                tempSec = P_ToPtr(DMU_SECTOR, i);
-                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
-                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
-                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
+                sector_t*               sec = P_ToPtr(DMU_SECTOR, i);
+
+                if(isLightningSector(sec))
                 {
-                    if(*tempLight < P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - (4.0f/255.0f))
-                    {
-                        P_SetFloatp(tempSec, DMU_LIGHT_LEVEL,
-                                    P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - ((1.0f / 255.0f) * 4));
-                    }
-                    tempLight++;
+                    float               lightLevel =
+                        P_GetFloat(i, DMU_SECTOR, DMU_LIGHT_LEVEL);
+
+                    if(*tempLight < lightLevel - (4.f / 255))
+                        P_SetFloat(i, DMU_SECTOR, DMU_LIGHT_LEVEL,
+                                   lightLevel - (1.f / 255) * 4);
+
+                    *tempLight += 1.f / 255;
                 }
             }
         }
         else
-        {   // remove the alternate lightning flash special
-            tempLight = LightningLightLevels;
+        {   // Remove the alternate lightning flash special.
             for(i = 0; i < numsectors; ++i)
             {
-                tempSec = P_ToPtr(DMU_SECTOR, i);
-                if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
-                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
-                   P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
+                sector_t*               sec = P_ToPtr(DMU_SECTOR, i);
+
+                if(isLightningSector(sec))
                 {
-                    P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, *tempLight);
-                    tempLight++;
+                    P_SetFloatp(sec, DMU_LIGHT_LEVEL, *tempLight);
+                    *tempLight += 1.f / 255;
                 }
             }
 
             Rend_SkyParams(1, DD_DISABLE, NULL);
             Rend_SkyParams(0, DD_ENABLE, NULL);
         }
+
         return;
     }
 
-    LightningFlash = (P_Random() & 7) + 8;
+    lightningFlash = (P_Random() & 7) + 8;
     flashLight = (float) (200 + (P_Random() & 31)) / 255.0f;
-    tempLight = LightningLightLevels;
+    tempLight = lightningLightLevels;
     foundSec = false;
     for(i = 0; i < numsectors; ++i)
     {
-        tempSec = P_ToPtr(DMU_SECTOR, i);
-        if(P_GetIntp(tempSec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
-           P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL ||
-           P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
-        {
-            float newLevel = *tempLight = P_GetFloatp(tempSec, DMU_LIGHT_LEVEL);
+        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
 
-            if(P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL)
+        if(isLightningSector(sec))
+        {
+            xsector_t*          xsec = P_ToXSector(sec);
+            float               newLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
+
+            *tempLight = newLevel;
+
+            if(xsec->special == LIGHTNING_SPECIAL)
             {
                 newLevel += .25f;
                 if(newLevel > flashLight)
-                {
                     newLevel = flashLight;
-                }
             }
-            else if(P_ToXSector(tempSec)->special == LIGHTNING_SPECIAL2)
+            else if(xsec->special == LIGHTNING_SPECIAL2)
             {
                 newLevel += .125f;
                 if(newLevel > flashLight)
-                {
                     newLevel = flashLight;
-                }
             }
             else
             {
@@ -1157,19 +1169,18 @@ static void P_LightningFlash(void)
             }
 
             if(newLevel < *tempLight)
-            {
                 newLevel = *tempLight;
-            }
-            P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, newLevel);
-            tempLight++;
+
+            P_SetFloatp(sec, DMU_LIGHT_LEVEL, newLevel);
+            *tempLight += 1.f / 255;
             foundSec = true;
         }
     }
 
     if(foundSec)
     {
-        mobj_t *plrmo = players[DISPLAYPLAYER].plr->mo;
-        mobj_t *crashorigin = NULL;
+        mobj_t*             plrmo = players[DISPLAYPLAYER].plr->mo;
+        mobj_t*             crashOrigin = NULL;
 
         // Set the alternate (lightning) sky.
         Rend_SkyParams(0, DD_DISABLE, NULL);
@@ -1177,39 +1188,36 @@ static void P_LightningFlash(void)
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.
-        if(cfg.snd3D && plrmo)
+        if(cfg.snd3D && plrmo && !IS_NETGAME)
         {
-            // SpawnMobj calls P_Random, and we don't want that the
-            // random number generator gets out of sync.
-            //P_SaveRandom();
-            crashorigin =
+            crashOrigin =
                 P_SpawnMobj3f(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),
                               plrmo->pos[VY] + (16 * (M_Random() - 127) << FRACBITS),
                               plrmo->pos[VZ] + (4000 << FRACBITS), MT_CAMERA,
                               0);
-            //P_RestoreRandom();
-            crashorigin->tics = 5 * TICSPERSEC; // Five seconds will do.
+            crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
         }
+
         // Make it loud!
-        S_StartSound(SFX_THUNDER_CRASH | DDSF_NO_ATTENUATION, crashorigin);
+        S_StartSound(SFX_THUNDER_CRASH | DDSF_NO_ATTENUATION, crashOrigin);
     }
 
     // Calculate the next lighting flash
-    if(!NextLightningFlash)
+    if(!nextLightningFlash)
     {
         if(P_Random() < 50)
-        {                       // Immediate Quick flash
-            NextLightningFlash = (P_Random() & 15) + 16;
+        {   // Immediate Quick flash
+            nextLightningFlash = (P_Random() & 15) + 16;
         }
         else
         {
-            if(P_Random() < 128 && !(levelTime & 32))
+            if(P_Random() < 128 && !(mapTime & 32))
             {
-                NextLightningFlash = ((P_Random() & 7) + 2) * TICSPERSEC;
+                nextLightningFlash = ((P_Random() & 7) + 2) * TICSPERSEC;
             }
             else
             {
-                NextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
+                nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
             }
         }
     }
@@ -1217,31 +1225,27 @@ static void P_LightningFlash(void)
 
 void P_ForceLightning(void)
 {
-    NextLightningFlash = 0;
+    nextLightningFlash = 0;
 }
 
 void P_InitLightning(void)
 {
     uint                i, secCount;
-    sector_t           *sec;
-    xsector_t          *xsec;
 
     if(!P_GetMapLightning(gameMap))
     {
-        LevelHasLightning = false;
-        LightningFlash = 0;
+        mapHasLightning = false;
+        lightningFlash = 0;
         return;
     }
 
-    LightningFlash = 0;
+    lightningFlash = 0;
     secCount = 0;
     for(i = 0; i < numsectors; ++i)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_ToXSector(sec);
-        if(P_GetIntp(sec, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL ||
-           xsec->special == LIGHTNING_SPECIAL ||
-           xsec->special == LIGHTNING_SPECIAL2)
+        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
+
+        if(isLightningSector(sec))
         {
             secCount++;
         }
@@ -1249,14 +1253,16 @@ void P_InitLightning(void)
 
     if(secCount > 0)
     {
-        LevelHasLightning = true;
+        mapHasLightning = true;
     }
     else
     {
-        LevelHasLightning = false;
+        mapHasLightning = false;
         return;
     }
 
-    LightningLightLevels = Z_Malloc(secCount * sizeof(float), PU_LEVEL, NULL);
-    NextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;  // don't flash at level start
+    lightningLightLevels = Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
+
+    // Don't flash immediately on entering the map.
+    nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
 }

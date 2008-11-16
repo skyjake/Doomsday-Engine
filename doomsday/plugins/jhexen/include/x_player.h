@@ -76,11 +76,11 @@ typedef struct player_s {
     playerbrain_t   brain;
 
     float           viewOffset[3];
-    fixed_t         bob; // Bounded/scaled total momentum.
+    float           bob; // Bounded/scaled total momentum.
 
     int             flyHeight;
     boolean         centering;
-    int             health; // Only used between levels, mo->health is used during levels.
+    int             health; // Only used between maps, mo->health is used during.
     int             armorPoints[NUMARMOR];
 
     inventory_t     inventory[NUMINVENTORYSLOTS];

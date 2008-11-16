@@ -36,7 +36,7 @@
 
 typedef enum {
     GA_NONE,
-    GA_LOADLEVEL,
+    GA_LOADMAP,
     GA_INITNEW,
     GA_NEWGAME,
     GA_LOADGAME,

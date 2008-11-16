@@ -351,7 +351,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
             *x = 0;
         else
             *x = 1 + (cfg.bobWeapon * players[player].bob) *
-                FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
+                FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
     if(y)
@@ -360,7 +360,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
             *y = 0;
         else
             *y = 32 + (cfg.bobWeapon * players[player].bob) *
-                FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+                FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }
 
@@ -1734,7 +1734,7 @@ static void CHolySeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax)
     mo->mom[MX] = mo->info->speed * FIX2FLT(finecosine[an]);
     mo->mom[MY] = mo->info->speed * FIX2FLT(finesine[an]);
 
-    if(!(levelTime & 15) ||
+    if(!(mapTime & 15) ||
        mo->pos[VZ] > target->pos[VZ] + target->height ||
        mo->pos[VZ] + mo->height < target->pos[VZ])
     {
@@ -1807,7 +1807,7 @@ void C_DECL A_CHolySeek(mobj_t *mo)
     {
         CHolySeekerMissile(mo, mo->args[0] * ANGLE_1,
                            mo->args[0] * ANGLE_1 * 2);
-        if(!((levelTime + 7) & 15))
+        if(!((mapTime + 7) & 15))
         {
             mo->args[0] = 5 + (P_Random() / 20);
         }
@@ -2049,11 +2049,11 @@ void C_DECL A_Light0(player_t *plr, pspdef_t *psp)
 }
 
 /**
- * Called at start of level for each player.
+ * Called at start of the map for each player.
  */
 void P_SetupPsprites(player_t *plr)
 {
-    int         i;
+    int                 i;
 
 #if _DEBUG
     Con_Message("P_SetupPsprites: Player %i.\n", plr - players);

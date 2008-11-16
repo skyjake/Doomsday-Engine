@@ -293,7 +293,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
         if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
            !(plr->powers[PT_FLIGHT] & 16))
         {
-            frame = (levelTime / 3) & 15;
+            frame = (mapTime / 3) & 15;
             if(plr->plr->mo->flags2 & MF2_FLY)
             {
                 if(hud->hitCenterFrame && (frame != 15 && frame != 0))
@@ -332,7 +332,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
         if(plr->powers[PT_SPEED] > BLINKTHRESHOLD ||
            !(plr->powers[PT_SPEED] & 16))
         {
-            frame = (levelTime / 3) & 15;
+            frame = (mapTime / 3) & 15;
             GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha,
                                  dpSpinSpeed[frame].lump);
         }
@@ -348,7 +348,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
         if(plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD ||
            !(plr->powers[PT_INVULNERABILITY] & 16))
         {
-            frame = (levelTime / 3) & 15;
+            frame = (mapTime / 3) & 15;
             GL_DrawPatchLitAlpha(260, 19, 1, iconalpha,
                                  dpSpinDefense[frame].lump);
         }
@@ -360,7 +360,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
         if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD ||
            !(plr->powers[PT_MINOTAUR] & 16))
         {
-            frame = (levelTime / 3) & 15;
+            frame = (mapTime / 3) & 15;
             GL_DrawPatchLitAlpha(300, 19, 1, iconalpha,
                                  dpSpinMinotaur[frame].lump);
         }
@@ -1360,7 +1360,7 @@ void ST_doPaletteStuff(int player, boolean forceChange)
 
     plr = &players[player];
 
-    if(G_GetGameState() == GS_LEVEL)
+    if(G_GetGameState() == GS_MAP)
     {
         plr = &players[CONSOLEPLAYER];
         if(plr->poisonCount)
@@ -1482,12 +1482,12 @@ static void drawWidgets(hudstate_t* hud)
         // Draw more left indicator
         if(x != 0)
             GL_DrawPatchLitAlpha(42, 163, 1, hud->statusbarCounterAlpha,
-                                 !(levelTime & 4) ? dpIndicatorLeft1.lump : dpIndicatorLeft2.lump);
+                                 !(mapTime & 4) ? dpIndicatorLeft1.lump : dpIndicatorLeft2.lump);
 
         // Draw more right indicator
         if(plr->inventorySlotNum - x > 7)
             GL_DrawPatchLitAlpha(269, 163, 1, hud->statusbarCounterAlpha,
-                                 !(levelTime & 4) ? dpIndicatorRight1.lump : dpIndicatorRight2.lump);
+                                 !(mapTime & 4) ? dpIndicatorRight1.lump : dpIndicatorRight2.lump);
     }
 }
 
@@ -1639,7 +1639,7 @@ static void DrawSoundInfo(void)
     int         y;
     int         xPos[7] = { 1, 75, 112, 156, 200, 230, 260 };
 
-    if(leveltime & 16)
+    if(mapTime & 16)
     {
         MN_DrTextA("*** SOUND DEBUG INFO ***", xPos[0], 20);
     }
@@ -1885,13 +1885,13 @@ void ST_doFullscreenStuff(int player)
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(40, 167, 1, iconalpha,
-                         !(levelTime & 4) ? dpIndicatorLeft1.lump :
+                         !(mapTime & 4) ? dpIndicatorLeft1.lump :
                          dpIndicatorLeft2.lump);
         }
         if(plr->inventorySlotNum - x > 7)
         {
             GL_DrawPatchLitAlpha(268, 167, 1, iconalpha,
-                         !(levelTime & 4) ? dpIndicatorRight1.lump :
+                         !(mapTime & 4) ? dpIndicatorRight1.lump :
                          dpIndicatorRight2.lump);
         }
         Draw_EndZoom();

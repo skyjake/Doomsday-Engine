@@ -431,7 +431,7 @@ void C_DECL A_Summon(mobj_t *actor)
             return;
         }
 
-        memcpy((void *) mo->args, &levelTime, sizeof(levelTime));
+        memcpy((void *) mo->args, &mapTime, sizeof(mapTime));
         master = actor->tracer;
         if(master->flags & MF_CORPSE)
         {   // Master dead.

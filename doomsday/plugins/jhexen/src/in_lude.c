@@ -118,7 +118,7 @@ void IN_Start(void)
     int                 i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(i, false);
+        AM_Open(i, false, true);
 
     SN_StopAllSequences();
 

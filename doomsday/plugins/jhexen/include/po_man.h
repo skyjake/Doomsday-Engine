@@ -69,21 +69,19 @@ enum {
     PO_SPAWNCRUSH_TYPE
 };
 
-extern polyobj_t *polyobjs; // List of all poly-objects on the level.
-extern int po_NumPolyobjs;
-
 void        PO_InitForMap(void);
 boolean     PO_Busy(int polyobj);
 
-boolean     PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float startY);
+boolean     PO_FindAndCreatePolyobj(int tag, boolean crush, float startX,
+                                    float startY);
 
-void        T_PolyDoor(polydoor_t *pd);
-void        T_RotatePoly(polyevent_t *pe);
-boolean     EV_RotatePoly(linedef_t *line, byte *args, int direction,
+void        T_PolyDoor(polydoor_t* pd);
+void        T_RotatePoly(polyevent_t* pe);
+boolean     EV_RotatePoly(linedef_t* line, byte* args, int direction,
                           boolean overRide);
-void        T_MovePoly(polyevent_t *pe);
-boolean     EV_MovePoly(linedef_t *line, byte *args, boolean timesEight,
+void        T_MovePoly(polyevent_t* pe);
+boolean     EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
                         boolean overRide);
-boolean     EV_OpenPolyDoor(linedef_t *line, byte *args, podoortype_t type);
+boolean     EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type);
 
 #endif

@@ -77,7 +77,7 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern mobj_t LavaInflictor;
+extern mobj_t lavaInflictor;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -771,10 +771,10 @@ void P_MobjMoveZ(mobj_t *mo)
     }
 
     if(mo->player && (mo->flags2 & MF2_FLY) &&
-       !(mo->pos[VZ] <= mo->floorZ) && (levelTime & 2))
+       !(mo->pos[VZ] <= mo->floorZ) && (mapTime & 2))
     {
         mo->pos[VZ] +=
-            FIX2FLT(finesine[(FINEANGLES / 20 * levelTime >> 2) & FINEMASK]);
+            FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
     }
 
     // Clip movement.
@@ -1312,14 +1312,14 @@ mobj_t* P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle)
 }
 
 /**
- * Called when a player is spawned on the level. Most of the player
- * structure stays unchanged between levels.
+ * Called when a player is spawned into the map. Most of the player
+ * structure stays unchanged between maps.
  */
-void P_SpawnPlayer(spawnspot_t *spot, int playernum)
+void P_SpawnPlayer(spawnspot_t* spot, int playernum)
 {
-    player_t   *p;
-    float       pos[3];
-    mobj_t     *mobj = 0;
+    player_t*           p;
+    float               pos[3];
+    mobj_t*             mobj = 0;
 
     if(!players[playernum].plr->inGame)
         return;
@@ -1918,9 +1918,9 @@ boolean P_HitFloor(mobj_t *thing)
         }
 
         S_StartSound(SFX_LAVA_SIZZLE, mo);
-        if(thing->player && levelTime & 31)
+        if(thing->player && mapTime & 31)
         {
-            P_DamageMobj(thing, &LavaInflictor, NULL, 5, false);
+            P_DamageMobj(thing, &lavaInflictor, NULL, 5, false);
         }
         return true;
     }
@@ -2405,38 +2405,52 @@ mobj_t *P_SpawnMissileXYZ(mobjtype_t type, float x, float y, float z,
  *                      otherwise returns a mobj_t pointer to the spawned
  *                      missile.
  */
-mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle,
+mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle,
                             float momz)
 {
     unsigned int        an;
-    float               z;
+    float               pos[3], spawnZOff;
     mobj_t*             mo;
+
+    memcpy(pos, source->pos, sizeof(pos));
 
     switch(type)
     {
     case MT_MNTRFX1: // Minotaur swing attack missile
-        z = source->pos[VZ] + 40;
-        break;
-
-    case MT_MNTRFX2: // Minotaur floor fire missile
-        z = ONFLOORZ + source->floorClip;
+        spawnZOff = 40;
         break;
 
     case MT_ICEGUY_FX2: // Secondary Projectiles of the Ice Guy
-        z = source->pos[VZ] + 3;
+        spawnZOff = 3;
         break;
 
     case MT_MSTAFF_FX2:
-        z = source->pos[VZ] + 40;
+        spawnZOff = 40;
         break;
 
     default:
-        z = source->pos[VZ] + 32;
+        if(source->player)
+        {
+            if(!P_IsCamera(source->player->plr->mo))
+                spawnZOff = cfg.plrViewHeight - 9 +
+                    source->player->plr->lookDir / 173;
+        }
+        else
+        {
+            spawnZOff = 32;
+        }
         break;
     }
 
-    z -= source->floorClip;
-    mo = P_SpawnMobj3f(type, source->pos[VX], source->pos[VY], z, angle);
+    if(type == MT_MNTRFX2) // Minotaur floor fire missile
+        pos[VZ] = ONFLOORZ;
+    else
+    {
+        pos[VZ] += spawnZOff;
+        pos[VZ] -= source->floorClip;
+    }
+
+    mo = P_SpawnMobj3fv(type, pos, angle);
 
     if(mo)
     {
@@ -2533,8 +2547,9 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     }
     else
     {
-        pos[VZ] += cfg.plrViewHeight - 9 +
-                   (source->player->plr->lookDir / 173);
+        if(!P_IsCamera(source->player->plr->mo))
+            pos[VZ] += cfg.plrViewHeight - 9 +
+                (source->player->plr->lookDir / 173);
         pos[VZ] -= source->floorClip;
     }
 
@@ -2604,28 +2619,32 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
     }
 
     memcpy(pos, source->pos, sizeof(pos));
-    pos[VZ] += cfg.plrViewHeight - 9 +
-               (source->player->plr->lookDir / 173);
+    if(!P_IsCamera(source->player->plr->mo))
+        pos[VZ] += cfg.plrViewHeight - 9 +
+            (source->player->plr->lookDir / 173);
     pos[VZ] -= source->floorClip;
 
     th = P_SpawnMobj3fv(type, pos, angle);
-    th->target = source;
-    an = angle >> ANGLETOFINESHIFT;
-    th->mom[MX] = movfac * th->info->speed * FIX2FLT(finecosine[an]);
-    th->mom[MY] = movfac * th->info->speed * FIX2FLT(finesine[an]);
-    th->mom[MZ] = th->info->speed * slope;
+    if(th)
+    {
+        th->target = source;
+        an = angle >> ANGLETOFINESHIFT;
+        th->mom[MX] = movfac * th->info->speed * FIX2FLT(finecosine[an]);
+        th->mom[MY] = movfac * th->info->speed * FIX2FLT(finesine[an]);
+        th->mom[MZ] = th->info->speed * slope;
 
-    if(P_CheckMissileSpawn(th))
-        return th;
+        if(P_CheckMissileSpawn(th))
+            return th;
+    }
 
     return NULL;
 }
 
-mobj_t *P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
-                      mobj_t *source, angle_t origAngle)
+mobj_t* P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
+                      mobj_t* source, angle_t origAngle)
 {
     uint            an;
-    mobj_t         *th;
+    mobj_t*         th;
     angle_t         angle;
     float           slope, movfac = 1;
     float           fangle = LOOKDIR2RAD(source->player->plr->lookDir);
@@ -2652,7 +2671,8 @@ mobj_t *P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
         }
     }
 
-    z += 4 * 8 + FIX2FLT((source->player->plr->lookDir) / 173);
+    if(!P_IsCamera(source->player->plr->mo))
+        z += cfg.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
     z -= source->floorClip;
     th = P_SpawnMobj3f(type, x, y, z, angle);
 
@@ -2668,8 +2688,8 @@ mobj_t *P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
     return NULL;
 }
 
-mobj_t *P_SpawnKoraxMissile(mobjtype_t type, float x, float y, float z,
-                            mobj_t *source, mobj_t *dest)
+mobj_t* P_SpawnKoraxMissile(mobjtype_t type, float x, float y, float z,
+                            mobj_t* source, mobj_t* dest)
 {
     uint            an;
     mobj_t         *th;

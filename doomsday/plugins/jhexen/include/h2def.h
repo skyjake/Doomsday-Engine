@@ -73,7 +73,7 @@ extern game_export_t gx;
 // Game mode handling - identify IWAD version to handle IWAD dependend
 // animations etc.
 typedef enum {
-    shareware, // 4 level demo
+    shareware, // 4 map demo
     registered, // HEXEN registered
     extended, // DeathKings
     indetermined, // Well, no IWAD found.
@@ -81,7 +81,7 @@ typedef enum {
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_SHAREWARE        0x1 // 4 level demo
+#define GM_SHAREWARE        0x1 // 4 map demo
 #define GM_REGISTERED       0x2 // HEXEN registered
 #define GM_EXTENDED         0x4 // DeathKings
 #define GM_INDETERMINED     0x8 // Well, no IWAD found.
@@ -151,7 +151,7 @@ extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
  * intermission screen, the game final animation, or a demo.
  */
 typedef enum {
-    GS_LEVEL,
+    GS_MAP,
     GS_INTERMISSION,
     GS_FINALE,
     GS_DEMOSCREEN,
@@ -312,7 +312,7 @@ enum { VX, VY, VZ }; // Vertex indices.
 #define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
 
-#define GAMETIC             (Get(DD_GAMETIC))
+#define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
 // Uncomment, to enable all timebomb stuff.
 #define TIMEBOMB_YEAR       (95) // years since 1900
@@ -351,7 +351,7 @@ int             G_GetInteger(int id);
 void           *G_GetVariable(int id);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
-int             G_GetLevelNumber(int episode, int map);
+int             G_GetMapNumber(int episode, int map);
 void            G_InitNew(skillmode_t skill, int episode, int map);
 void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
 void            G_DeferredNewGame(skillmode_t skill);
@@ -365,7 +365,7 @@ void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
 void            G_PlayDemo(char *name);
 void            G_TimeDemo(char *name);
 void            G_TeleportNewMap(int map, int position);
-void            G_LeaveLevel(int map, int position, boolean secret);
+void            G_LeaveMap(int map, int position, boolean secret);
 void            G_StartNewGame(skillmode_t skill);
 void            G_StartNewInit(void);
 void            G_WorldDone(void);
@@ -380,7 +380,7 @@ boolean         G_Responder(event_t *ev);
 
 void            P_Init(void);
 
-void            P_SetupLevel(int episode, int map, int playermask,
+void            P_SetupMap(int episode, int map, int playermask,
                              skillmode_t skill);
 
 extern boolean setsizeneeded;

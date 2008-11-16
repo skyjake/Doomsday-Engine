@@ -1034,7 +1034,7 @@ static boolean findActiveMinotaur(thinker_t* th, void* context)
     if(mo->flags & MF_CORPSE)
         return true; // Continue iteration.
 
-    if((levelTime - *((unsigned int *) mo->args)) >= MAULATORTICS)
+    if((mapTime - *((unsigned int *) mo->args)) >= MAULATORTICS)
         return true; // Continue iteration.
 
     if(mo->tracer->player == params->master)
@@ -1175,7 +1175,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
 
         // Don't die with the automap open.
-        AM_Open(target->player - players, false);
+        AM_Open(target->player - players, false, false);
     }
     else
     {   // Target is some monster or an object.
@@ -2106,7 +2106,7 @@ int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
     target->health -= damage;
     if(target->health > 0)
     {   // Still alive, phew!
-        if(!(levelTime & 63) && playPainSound)
+        if(!(mapTime & 63) && playPainSound)
         {
             P_MobjChangeState(target, target->info->painState);
         }

@@ -35,7 +35,7 @@
 #include "doomsday.h"
 
 int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
-game_export_t  *GetGameAPI(game_import_t *imports);
+void*           G_GetVariable(int id);
+game_export_t*  GetGameAPI(game_import_t* imports);
 
 #endif

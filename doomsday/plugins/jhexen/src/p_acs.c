@@ -253,7 +253,7 @@ void P_LoadACScripts(int lump)
     acsheader_t *header;
     acsinfo_t  *info;
 
-    header = W_CacheLumpNum(lump, PU_LEVEL);
+    header = W_CacheLumpNum(lump, PU_MAP);
     ActionCodeBase = (byte *) header;
     buffer = (int *) ((byte *) header + LONG(header->infoOffset));
     ACScriptCount = LONG(*buffer++);
@@ -263,7 +263,7 @@ void P_LoadACScripts(int lump)
         return;
     }
 
-    ACSInfo = Z_Malloc(ACScriptCount * sizeof(acsinfo_t), PU_LEVEL, 0);
+    ACSInfo = Z_Malloc(ACScriptCount * sizeof(acsinfo_t), PU_MAP, 0);
     memset(ACSInfo, 0, ACScriptCount * sizeof(acsinfo_t));
     for(i = 0, info = ACSInfo; i < ACScriptCount; ++i, info++)
     {
@@ -283,7 +283,7 @@ void P_LoadACScripts(int lump)
     }
 
     ACStringCount = LONG(*buffer++);
-    ACStrings = Z_Malloc(ACStringCount * sizeof(char*), PU_LEVEL, 0);
+    ACStrings = Z_Malloc(ACStringCount * sizeof(char*), PU_MAP, 0);
     for(i = 0; i < ACStringCount; ++i)
     {
         ACStrings[i] = (char *)ActionCodeBase + LONG(*buffer++);
@@ -295,7 +295,7 @@ static void StartOpenACS(int number, int infoIndex, int *address)
 {
     acs_t*              script;
 
-    script = Z_Calloc(sizeof(*script), PU_LEVSPEC, 0);
+    script = Z_Calloc(sizeof(*script), PU_MAPSPEC, 0);
     script->number = number;
 
     // World objects are allotted 1 second for initialization
@@ -362,7 +362,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
         return false;
     }
 
-    script = Z_Calloc(sizeof(*script), PU_LEVSPEC, 0);
+    script = Z_Calloc(sizeof(*script), PU_MAPSPEC, 0);
 
     script->number = number;
     script->infoIndex = infoIndex;
@@ -1561,7 +1561,7 @@ static int CmdGameSkill(void)
 
 static int CmdTimer(void)
 {
-    Push(levelTime);
+    Push(mapTime);
     return SCRIPT_CONTINUE;
 }
 

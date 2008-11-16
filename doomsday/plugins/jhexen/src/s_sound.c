@@ -63,9 +63,9 @@ int S_GetSoundID(char *name)
 }
 
 /**
- * Starts the song of the current level.
+ * Starts the song of the current map..
  */
-void S_LevelMusic(void)
+void S_MapMusic(void)
 {
     int                 idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
     int                 cdTrack;

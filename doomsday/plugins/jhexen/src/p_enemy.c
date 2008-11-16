@@ -966,7 +966,7 @@ void C_DECL A_MinotaurRoam(mobj_t *actor)
     actor->flags &= ~MF_SHADOW; // In case pain caused him to
     actor->flags &= ~MF_ALTSHADOW; // Skip his fade in.
 
-    if((levelTime - *startTime) >= MAULATORTICS)
+    if((mapTime - *startTime) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;
@@ -1120,7 +1120,7 @@ void C_DECL A_MinotaurChase(mobj_t *actor)
     actor->flags &= ~MF_SHADOW; // In case pain caused him to.
     actor->flags &= ~MF_ALTSHADOW;  // Skip his fade in.
 
-    if((levelTime - *startTime) >= MAULATORTICS)
+    if((mapTime - *startTime) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;
@@ -1575,8 +1575,8 @@ int P_Massacre(void)
 {
     int                 count = 0;
 
-    // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_LEVEL)
+    // Only massacre when actually in a map.
+    if(G_GetGameState() == GS_MAP)
     {
         P_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -4668,7 +4668,7 @@ void C_DECL A_KSpiritSeeker(mobj_t *mo, angle_t thresh, angle_t turnMax)
     mo->mom[MX] = mo->info->speed * FIX2FLT(finecosine[an]);
     mo->mom[MY] = mo->info->speed * FIX2FLT(finesine[an]);
 
-    if(!(levelTime & 15) ||
+    if(!(mapTime & 15) ||
        (mo->pos[VZ] > target->pos[VZ] + target->info->height) ||
        (mo->pos[VZ] + mo->height < target->pos[VZ]))
     {

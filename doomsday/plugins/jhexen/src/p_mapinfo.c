@@ -134,9 +134,9 @@ static int mapCmdIDs[] = {
     MCMD_CD_TITLETRACK
 };
 
-static int cdNonLevelTracks[6]; // Non-level specific song cd track numbers
+static int cdNonMapTracks[6]; // Non-map specific song cd track numbers
 
-static char *cdSongDefIDs[] =  // Music defs that correspond the above.
+static char* cdSongDefIDs[] =  // Music defs that correspond the above.
 {
     "startup",
     "hall",
@@ -313,7 +313,7 @@ static void setSongCDTrack(int index, int track)
     int         cdTrack = track;
 
     // Set the internal array.
-    cdNonLevelTracks[index] = sc_Number;
+    cdNonMapTracks[index] = sc_Number;
 
     // Update the corresponding Doomsday definition.
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cdSongDefIDs[index], 0),
@@ -535,7 +535,7 @@ char *P_GetMapSongLump(int map)
  */
 int P_GetCDStartTrack(void)
 {
-    return cdNonLevelTracks[MCMD_CD_STARTTRACK - MCMD_CD_STARTTRACK];
+    return cdNonMapTracks[MCMD_CD_STARTTRACK - MCMD_CD_STARTTRACK];
 }
 
 /**
@@ -547,7 +547,7 @@ int P_GetCDStartTrack(void)
  */
 int P_GetCDEnd1Track(void)
 {
-    return cdNonLevelTracks[MCMD_CD_END1TRACK - MCMD_CD_STARTTRACK];
+    return cdNonMapTracks[MCMD_CD_END1TRACK - MCMD_CD_STARTTRACK];
 }
 
 /**
@@ -559,7 +559,7 @@ int P_GetCDEnd1Track(void)
  */
 int P_GetCDEnd2Track(void)
 {
-    return cdNonLevelTracks[MCMD_CD_END2TRACK - MCMD_CD_STARTTRACK];
+    return cdNonMapTracks[MCMD_CD_END2TRACK - MCMD_CD_STARTTRACK];
 }
 
 /**
@@ -571,7 +571,7 @@ int P_GetCDEnd2Track(void)
  */
 int P_GetCDEnd3Track(void)
 {
-    return cdNonLevelTracks[MCMD_CD_END3TRACK - MCMD_CD_STARTTRACK];
+    return cdNonMapTracks[MCMD_CD_END3TRACK - MCMD_CD_STARTTRACK];
 }
 
 /**
@@ -583,7 +583,7 @@ int P_GetCDEnd3Track(void)
  */
 int P_GetCDIntermissionTrack(void)
 {
-    return cdNonLevelTracks[MCMD_CD_INTERTRACK - MCMD_CD_STARTTRACK];
+    return cdNonMapTracks[MCMD_CD_INTERTRACK - MCMD_CD_STARTTRACK];
 }
 
 /**
@@ -595,5 +595,5 @@ int P_GetCDIntermissionTrack(void)
  */
 int P_GetCDTitleTrack(void)
 {
-    return cdNonLevelTracks[MCMD_CD_TITLETRACK - MCMD_CD_STARTTRACK];
+    return cdNonMapTracks[MCMD_CD_TITLETRACK - MCMD_CD_STARTTRACK];
 }

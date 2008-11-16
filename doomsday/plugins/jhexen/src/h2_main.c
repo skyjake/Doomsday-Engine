@@ -142,7 +142,7 @@ static execopt_t execOptions[] = {
 
 /**
  * Attempt to change the current game mode. Can only be done when not
- * actually in a level.
+ * actually in a map.
  *
  * \todo Doesn't actually do anything yet other than set the game mode
  *  global vars.
@@ -155,12 +155,12 @@ boolean G_SetGameMode(gamemode_t mode)
 {
     gameMode = mode;
 
-    if(G_GetGameState() == GS_LEVEL)
+    if(G_GetGameState() == GS_MAP)
         return false;
 
     switch(mode)
     {
-    case shareware: // Shareware (4-level demo)
+    case shareware: // Shareware (4-map demo)
         gameModeBits = GM_SHAREWARE;
         break;
 
@@ -268,7 +268,7 @@ void G_PreInit(void)
     cfg.netMobHealthModifier = 1;
     cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = 48;
-    cfg.levelTitle = true;
+    cfg.mapTitle = true;
     cfg.menuScale = .75f;
     cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
     cfg.menuColor[1] = defFontRGB[1];
@@ -373,7 +373,7 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gameMode == shareware? "*** Hexen 4-level Beta Demo ***\n"
+                gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
                     : "Hexen\n");
     Con_FPrintf(CBLF_RULER, "");
 

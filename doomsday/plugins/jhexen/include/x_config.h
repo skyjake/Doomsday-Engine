@@ -137,7 +137,7 @@ typedef struct {
     byte            automapPanResetOnOpen;
 
     int             messagesOn;
-    char           *chatMacros[10];
+    char*           chatMacros[10];
     byte            chatBeep;
     int             snd3D;
     float           sndReverbFactor;
@@ -145,7 +145,7 @@ typedef struct {
 
     int             dclickUse;
     int             plrViewHeight;
-    int             levelTitle;
+    int             mapTitle;
     float           menuScale;
     int             menuEffects;
     int             menuFog;
