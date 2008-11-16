@@ -152,14 +152,14 @@ void R_DrawSpecialFilter(int pnum)
 /**
  * Show map name and author.
  */
-void R_DrawLevelTitle(void)
+void R_DrawMapTitle(void)
 {
     float               alpha = 1;
     int                 y = 12;
     int                 mapnum;
     char               *lname, *lauthor;
 
-    if(!cfg.levelTitle || actualLevelTime > 6 * 35)
+    if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
 
     // Make the text a bit smaller.
@@ -169,10 +169,10 @@ void R_DrawLevelTitle(void)
     DGL_Scalef(.7f, .7f, 1);
     DGL_Translatef(-160, -y, 0);
 
-    if(actualLevelTime < 35)
-        alpha = actualLevelTime / 35.0f;
-    if(actualLevelTime > 5 * 35)
-        alpha = 1 - (actualLevelTime - 5 * 35) / 35.0f;
+    if(actualMapTime < 35)
+        alpha = actualMapTime / 35.0f;
+    if(actualMapTime > 5 * 35)
+        alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
 
     // Get the strings from Doomsday.
     lname = P_GetMapNiceName();
@@ -183,13 +183,13 @@ void R_DrawLevelTitle(void)
 
     if(lname)
     {
-        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, &levelNamePatches[mapnum],
+        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, &mapNamePatches[mapnum],
                      lname, false, ALIGN_CENTER);
         y += 14;                //9;
     }
 
     DGL_Color4f(.5f, .5f, .5f, alpha);
-    if(lauthor && W_IsFromIWAD(levelNamePatches[mapnum].lump))
+    if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump))
     {
         M_WriteText2(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
                      huFontA, -1, -1, -1, -1);
@@ -258,7 +258,7 @@ static void rendHUD(int player)
     if(player < 0 || player >= MAXPLAYERS)
         return;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return;
 
     if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
@@ -325,13 +325,13 @@ void D_Display(int layer)
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
            !R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
         {
-            if(G_GetGameState() != GS_LEVEL)
+            if(G_GetGameState() != GS_MAP)
                 return;
 
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;
 
-            if(!IS_CLIENT && levelTime < 2)
+            if(!IS_CLIENT && mapTime < 2)
             {
                 // Don't render too early; the first couple of frames
                 // might be a bit unstable -- this should be considered
@@ -361,7 +361,7 @@ void D_Display2(void)
 {
     switch(G_GetGameState())
     {
-    case GS_LEVEL:
+    case GS_MAP:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             break;
 
@@ -370,7 +370,7 @@ void D_Display2(void)
         {
             // Level information is shown for a few seconds in the
             // beginning of a level.
-            R_DrawLevelTitle();
+            R_DrawMapTitle();
         }
         break;
 

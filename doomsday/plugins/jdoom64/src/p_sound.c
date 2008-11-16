@@ -59,11 +59,11 @@ int S_GetMusicNum(int episode, int map)
 /**
  * Starts playing the music for this level
  */
-void S_LevelMusic(void)
+void S_MapMusic(void)
 {
     int                 songid;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return;
 
     // Start new music for the level.

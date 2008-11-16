@@ -41,7 +41,7 @@ void            D_Display2(void);
 void            R_SetViewSize(int blocks);
 
 void            R_DrawSpecialFilter(int pnum);
-void            R_DrawLevelTitle(void);
+void            R_DrawMapTitle(void);
 
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);

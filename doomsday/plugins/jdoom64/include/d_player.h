@@ -74,7 +74,7 @@ typedef struct player_s {
     float           viewOffset[3];
     float           bob; // Bounded/scaled total momentum.
 
-    // This is only used between levels, mo->health is used during levels.
+    // This is only used between maps, mo->health is used during maps.
     int             health;
     int             armorPoints;
     // Armor type is 0-2.
@@ -127,7 +127,7 @@ typedef struct player_s {
     // Overlay view sprites (gun, etc).
     pspdef_t        pSprites[NUMPSPRITES];
 
-    // True if secret level has been done.
+    // True if secret map has been done.
     boolean         didSecret;
 
     // The player's view pitch is centering back to zero.

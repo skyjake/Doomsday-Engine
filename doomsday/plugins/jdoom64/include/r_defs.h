@@ -36,13 +36,13 @@
 
 #include "p_xg.h"
 
-#define SP_floororigheight      planes[PLN_FLOOR].origHeight
-#define SP_ceilorigheight       planes[PLN_CEILING].origHeight
+#define SP_floororigheight  planes[PLN_FLOOR].origHeight
+#define SP_ceilorigheight   planes[PLN_CEILING].origHeight
 
 // Stair build flags.
-#define BL_BUILT        0x1
-#define BL_WAS_BUILT    0x2
-#define BL_SPREADED     0x4
+#define BL_BUILT            0x1
+#define BL_WAS_BUILT        0x2
+#define BL_SPREADED         0x4
 
 typedef struct xsector_s {
     short           special;
@@ -52,10 +52,10 @@ typedef struct xsector_s {
     int             soundTraversed;
 
     // thing that made a sound (or null)
-    struct mobj_s  *soundTarget;
+    struct mobj_s*  soundTarget;
 
     // thinker_t for reversable actions
-    void           *specialData;
+    void*           specialData;
 
     byte            blFlags; // Used during stair building.
 
@@ -68,7 +68,7 @@ typedef struct xsector_s {
 
     float           origLight;
     float           origRGB[3];
-    xgsector_t     *xg;
+    xgsector_t*     xg;
 } xsector_t;
 
 /**
@@ -107,18 +107,18 @@ typedef struct xline_s {
     int             validCount;
 
     // Extended generalized lines.
-    xgline_t       *xg;
+    xgline_t*       xg;
 
     // jDoom64 specific:
     short           useOn;
 } xline_t;
 
 // Our private map data structures.
-extern xsector_t *xsectors;
-extern xline_t *xlines;
+extern xsector_t* xsectors;
+extern xline_t* xlines;
 
-// If true we are in the process of setting up a level.
-extern boolean levelSetup;
+// If true we are in the process of setting up a map.
+extern boolean mapSetup;
 
 xline_t*        P_ToXLine(linedef_t* line);
 xsector_t*      P_ToXSector(sector_t* sector);

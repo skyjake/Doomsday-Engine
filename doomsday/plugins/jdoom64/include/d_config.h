@@ -113,7 +113,7 @@ typedef struct jdoom64_config_s {
     byte            weaponRecoil; // jd64
     byte            secretMsg;
     int             plrViewHeight;
-    byte            levelTitle;
+    byte            mapTitle;
     float           menuColor[3];
     float           menuColor2[3];
     byte            noCoopDamage;
@@ -135,7 +135,7 @@ typedef struct jdoom64_config_s {
     byte            avoidDropoffs;
     byte            moveBlock; // Dont handle large negative movement in P_TryMove.
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
-    byte            zombiesCanExit; // Zombie players can exit levels.
+    byte            zombiesCanExit; // Zombie players can exit maps.
     byte            fallOff; // Objects fall under their own weight.
 
     byte            counterCheat;

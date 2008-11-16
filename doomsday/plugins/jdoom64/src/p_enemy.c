@@ -366,10 +366,10 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
+static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t           *backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float              *bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
        tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
@@ -378,31 +378,32 @@ static boolean PIT_AvoidDropoff(linedef_t *line, void *data)
        tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
        P_BoxOnLineSide(tmBBox, line) == -1)
     {
-        sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-        float       front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
-        float       back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
-        float       dx = P_GetFloatp(line, DMU_DX);
-        float       dy = P_GetFloatp(line, DMU_DY);
-        angle_t     angle;
+        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
+        float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
+        float               d1[2];
+        angle_t             angle;
+
+        P_GetFloatpv(line, DMU_DXY, d1);
 
         // The monster must contact one of the two floors, and the other
         // must be a tall drop off (more than 24).
         if(back == floorZ && front < floorZ - 24)
         {
-            angle = R_PointToAngle2(0, 0, dx, dy); // Front side drop off.
+            angle = R_PointToAngle2(0, 0, d1[0], d1[1]); // Front side drop off.
         }
         else
         {
             if(front == floorZ && back < floorZ - 24)
-                angle = R_PointToAngle2(dx, dy, 0, 0); // Back side drop off.
+                angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
             else
                 return true;
         }
 
         // Move away from drop off at a standard speed.
         // Multiple contacted linedefs are cumulative (e.g. hanging over corner)
-        dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT] * 32);
-        dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT] * 32);
+        dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]) * 32;
+        dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
 
     return true;
@@ -539,7 +540,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_LEVEL)
+    if(G_GetGameState() == GS_MAP)
     {
         P_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -1571,7 +1572,7 @@ void C_DECL A_Tracer(mobj_t *actor)
     mobj_t             *dest;
     mobj_t             *th;
 
-    if(GAMETIC & 3)
+    if((int) GAMETIC & 3)
         return;
 
     // Spawn a puff of smoke behind the rocket.
@@ -2020,7 +2021,7 @@ void C_DECL A_CyberDeath(mobj_t *actor)
     }
     else if(gameMap == 35)
     {
-        G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
     }
 }
 
@@ -2151,7 +2152,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return;
     }
 
-    G_LeaveLevel(G_GetLevelNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)

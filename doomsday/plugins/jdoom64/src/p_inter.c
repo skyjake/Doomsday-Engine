@@ -290,7 +290,7 @@ void P_GiveBackpack(player_t *player)
     P_SetMessage(player, GOTBACKPACK, false);
 }
 
-boolean P_GivePower(player_t *player, int power)
+boolean P_GivePower(player_t* player, int power)
 {
     player->update |= PSF_POWERS;
 
@@ -337,15 +337,18 @@ boolean P_GivePower(player_t *player, int power)
         break;
     }
 
+    if(power == PT_ALLMAP)
+        AM_RevealMap(player - players, true);
+
     // Maybe unhide the HUD?
     ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
 
     return true;
 }
 
-boolean P_TakePower(player_t *player, int power)
+boolean P_TakePower(player_t* player, int power)
 {
-    mobj_t         *plrmo = player->plr->mo;
+    mobj_t*             plrmo = player->plr->mo;
 
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
@@ -705,7 +708,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_ART1: // jd64
         if(player->artifacts[it_laserpw1])
         {
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_SetMessage(player, NGOTPOWERUP1, false);
 
             return; //Don't destroy item, can be collected later by other players.
@@ -720,7 +723,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_ART2: // jd64
         if(player->artifacts[it_laserpw2])
         {
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_SetMessage(player, NGOTPOWERUP2, false);
 
             return; //Don't destroy item, can be collected later by other players.
@@ -735,7 +738,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case SPR_ART3: // jd64
         if(player->artifacts[it_laserpw3])
         {
-            if(!(levelTime & 0x1f))
+            if(!(mapTime & 0x1f))
                 P_SetMessage(player, NGOTPOWERUP3, false);
 
             return; //Don't destroy item, can be collected later by other players.
@@ -802,7 +805,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     if(target->player)
     {
-        // Count environment kills against you.
+        // Count environment kills against the player.
         if(!source)
         {
             target->player->frags[target->player - players]++;
@@ -818,27 +821,28 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         target->player->plr->flags |= DDPF_DEAD;
         P_DropWeapon(target->player);
 
-        // Don't die in auto map.
-        AM_Open(target->player - players, false);
+        // Don't die with the automap open.
+        AM_Open(target->player - players, false, false);
     }
 
     if(target->health < -target->info->spawnHealth &&
        target->info->xDeathState)
-    {
+    {   // Extreme death.
         P_MobjChangeState(target, target->info->xDeathState);
     }
     else
+    {   // Normal death.
         P_MobjChangeState(target, target->info->deathState);
+    }
+
     target->tics -= P_Random() & 3;
 
     if(target->tics < 1)
         target->tics = 1;
 
-    //  I_StartSound (&actor->r, actor->info->deathSound);
-
     // Drop stuff.
-    // This determines the kind of object spawned
-    // during the death frame of a thing.
+    // This determines the kind of object spawned during the death frame
+    // of a thing.
     switch(target->type)
     {
     case MT_POSSESSED:

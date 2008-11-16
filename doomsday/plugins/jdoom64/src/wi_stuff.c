@@ -185,10 +185,10 @@ void WI_drawLF(void)
 
     // Draw <LevelName>
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &levelNamePatches[mapnum], lname, false, ALIGN_CENTER);
+                 &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);
 
     // Draw "Finished!"
-    y += (5 * levelNamePatches[mapnum].height) / 4;
+    y += (5 * mapNamePatches[mapnum].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
                  &finished, NULL, false, ALIGN_CENTER);
@@ -206,7 +206,7 @@ void WI_drawEL(void)
     char                levid[10];
 
     P_GetMapLumpName(gameEpisode, wbs->next+1, levid);
-    mapnum = G_GetLevelNumber(gameEpisode, wbs->next);
+    mapnum = G_GetMapNumber(gameEpisode, wbs->next);
 
     // See if there is a level name.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)
@@ -225,10 +225,10 @@ void WI_drawEL(void)
                  NULL, false, ALIGN_CENTER);
 
     // Draw level.
-    y += (5 * levelNamePatches[wbs->next].height) / 4;
+    y += (5 * mapNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &levelNamePatches[((gameEpisode -1) * 9) + wbs->next],
+                 &mapNamePatches[((gameEpisode -1) * 9) + wbs->next],
                  lname, false, ALIGN_CENTER);
 }
 

@@ -80,13 +80,13 @@ void R_GetWeaponBob(int player, float* x, float* y)
     if(x)
     {
         *x = 1 + (cfg.bobWeapon * players[player].bob) *
-            FIX2FLT(finecosine[(128 * levelTime) & FINEMASK]);
+            FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
     if(y)
     {
         *y = 32 + (cfg.bobWeapon * players[player].bob) *
-            FIX2FLT(finesine[(128 * levelTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
+            FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }
 
@@ -142,10 +142,10 @@ void P_CalcSwing(player_t *player)
     // weapon is at the furthest point of its swing (left or right).
     mul = player->bob;
 
-    angle = (FINEANGLES / 70 * levelTime) & FINEMASK;
+    angle = (FINEANGLES / 70 * mapTime) & FINEMASK;
     swing[VX] = mul * FIX2FLT(finesine[angle]);
 
-    angle = (FINEANGLES / 70 * levelTime + FINEANGLES / 2) & FINEMASK;
+    angle = (FINEANGLES / 70 * mapTime + FINEANGLES / 2) & FINEMASK;
     swing[VY] = -(mul * FIX2FLT(finesine[angle]));
 }
 
