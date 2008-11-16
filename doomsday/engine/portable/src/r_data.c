@@ -72,9 +72,9 @@ typedef struct {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-int gameDataFormat; // use a game-specifc data format where applicable
+int gameDataFormat; // Use a game-specifc data format where applicable.
 
-extern boolean levelSetup; // we are currently setting up a level
+extern boolean mapSetup; // We are currently setting up a map.
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -135,7 +135,7 @@ void R_InfoRendVerticesPool(void)
 }
 
 /**
- * Called at the start of each level.
+ * Called at the start of each map.
  */
 void R_InitRendVerticesPool(void)
 {
@@ -198,12 +198,12 @@ rvertex_t* R_AllocRendVertices(uint num)
 
             rendPolys =
                 Z_Realloc(rendPolys, sizeof(rendpolydata_t*) * maxrendpolys,
-                          PU_LEVEL);
+                          PU_MAP);
 
             newCount = maxrendpolys - numrendpolys + 1;
 
             newPolyData =
-                Z_Malloc(sizeof(rendpolydata_t) * newCount, PU_LEVEL, 0);
+                Z_Malloc(sizeof(rendpolydata_t) * newCount, PU_MAP, 0);
 
             ptr = newPolyData;
             for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
@@ -219,10 +219,10 @@ rvertex_t* R_AllocRendVertices(uint num)
     }
 
     rendPolys[idx]->inUse = true;
-    rendPolys[idx]->type = false;
+    rendPolys[idx]->type = 0;
     rendPolys[idx]->num = num;
     rendPolys[idx]->data =
-        Z_Malloc(sizeof(rvertex_t) * num, PU_LEVEL, 0);
+        Z_Malloc(sizeof(rvertex_t) * num, PU_MAP, 0);
 
     return (rvertex_t*) rendPolys[idx]->data;
 }
@@ -272,12 +272,12 @@ rcolor_t* R_AllocRendColors(uint num)
 
             rendPolys =
                 Z_Realloc(rendPolys, sizeof(rendpolydata_t*) * maxrendpolys,
-                          PU_LEVEL);
+                          PU_MAP);
 
             newCount = maxrendpolys - numrendpolys + 1;
 
             newPolyData =
-                Z_Malloc(sizeof(rendpolydata_t) * newCount, PU_LEVEL, 0);
+                Z_Malloc(sizeof(rendpolydata_t) * newCount, PU_MAP, 0);
 
             ptr = newPolyData;
             for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
@@ -293,10 +293,10 @@ rcolor_t* R_AllocRendColors(uint num)
     }
 
     rendPolys[idx]->inUse = true;
-    rendPolys[idx]->type = true;
+    rendPolys[idx]->type = 0;
     rendPolys[idx]->num = num;
     rendPolys[idx]->data =
-        Z_Malloc(sizeof(rcolor_t) * num, PU_LEVEL, 0);
+        Z_Malloc(sizeof(rcolor_t) * num, PU_MAP, 0);
 
     return (rcolor_t*) rendPolys[idx]->data;
 }
@@ -530,7 +530,54 @@ rawtex_t* R_GetRawTex(lumpnum_t lump)
     return r;
 }
 
-static void readTextureDefs(void)
+static lumpnum_t* loadPatchList(lumpnum_t lump, size_t* num)
+{
+    char                name[9], *names;
+    lumpnum_t*          patchLumpList;
+    size_t              i, numPatches, lumpSize = W_LumpLength(lump);
+
+    names = M_Malloc(lumpSize);
+    W_ReadLump(lump, names);
+
+    numPatches = LONG(*((int *) names));
+    if(numPatches > (lumpSize - 4) / 8)
+    {   // Lump is truncated.
+        Con_Message("loadPatchList: Warning, lump '%s' truncated (%lu bytes, "
+                    "expected %lu).\n", lumpInfo[lump].name,
+                    (unsigned long) lumpSize,
+                    (unsigned long) (numPatches * 8 + 4));
+        numPatches = (lumpSize - 4) / 8;
+    }
+
+    patchLumpList = M_Malloc(numPatches * sizeof(*patchLumpList));
+    for(i = 0; i < numPatches; ++i)
+    {
+        memset(name, 0, sizeof(name));
+        strncpy(name, names + 4 + i * 8, 8);
+
+        patchLumpList[i] = W_CheckNumForName(name);
+        if(patchLumpList[i] == -1)
+        {
+            Con_Message("loadPatchList: Warning, missing patch '%s'.\n",
+                        name);
+        }
+    }
+
+    M_Free(names);
+
+    if(num)
+        *num = numPatches;
+
+    return patchLumpList;
+}
+
+/**
+ * Read DOOM and Strife format texture definitions from the specified lump.
+ */
+static texturedef_t** readTextureDefLump(lumpnum_t lump,
+                                         lumpnum_t* patchlookup,
+                                         size_t numPatches, boolean firstNull,
+                                         int* numDefs)
 {
 #pragma pack(1)
 typedef struct {
@@ -542,8 +589,9 @@ typedef struct {
 } mappatch_t;
 
 typedef struct {
-    char            name[8];
-    int32_t         masked;
+    byte            name[8];
+    int16_t         unused;
+    byte            scale[2]; // [x, y] Used by ZDoom, div 8.
     int16_t         width;
     int16_t         height;
     //void          **columnDirectory;  // OBSOLETE
@@ -560,8 +608,9 @@ typedef struct {
 } strifemappatch_t;
 
 typedef struct {
-    char            name[8];
-    int32_t         unused;
+    byte            name[8];
+    int16_t         unused;
+    byte            scale[2]; // [x, y] Used by ZDoom, div 8.
     int16_t         width;
     int16_t         height;
     int16_t         patchCount;
@@ -569,197 +618,270 @@ typedef struct {
 } strifemaptexture_t;
 #pragma pack()
 
-    strifemappatch_t*   smpatch;
-    mappatch_t*         mpatch;
-    texpatch_t*         patch;
-    int                 i, j;
-    int*                maptex, *maptex1, *maptex2;
-    char*               name_p;
-    lumpnum_t*          patchlookup;
-    int                 nummappatches;
-    size_t              offset, maxoff, maxoff2, totalPatches;
-    int                 numtextures1, numtextures2;
+    int                 i;
+    int*                maptex1;
+    size_t              lumpSize, offset, n, numValidPatchRefs;
     int*                directory;
     void*               storage;
-    float               starttime = Sys_GetSeconds();
+    byte*               validTexDefs;
+    short*              texDefNumPatches;
+    int                 numTexDefs, numValidTexDefs;
+    texturedef_t**      texDefs;
 
-    // Load the patch names from the PNAMES lump.
-    {
-    char                name[9], *names;
-    name[8] = 0;
-    names = W_CacheLumpName("PNAMES", PU_STATIC);
-    nummappatches = LONG(*((int *) names));
-    name_p = names + 4;
-    patchlookup = M_Malloc(nummappatches * sizeof(*patchlookup));
-    for(i = 0; i < nummappatches; ++i)
-    {
-        strncpy(name, name_p + i * 8, 8);
-        patchlookup[i] = W_CheckNumForName(name);
-    }
-    Z_Free(names);
-    }
+    lumpSize = W_LumpLength(lump);
+    maptex1 = M_Malloc(lumpSize);
+    W_ReadLump(lump, maptex1);
 
-    // Load the texture definitions from TEXTURE1/2.
-    maptex1 = W_CacheLumpName("TEXTURE1", PU_STATIC);
-    numtextures1 = LONG(*maptex1);
-    maxoff = W_LumpLength(W_GetNumForName("TEXTURE1"));
+    numTexDefs = LONG(*maptex1);
 
-    if(W_CheckNumForName("TEXTURE2") != -1)
-    {
-        maptex2 = W_CacheLumpName("TEXTURE2", PU_STATIC);
-        numtextures2 = LONG(*maptex2);
-        maxoff2 = W_LumpLength(W_GetNumForName("TEXTURE2"));
-    }
-    else
-    {
-        maptex2 = NULL;
-        numtextures2 = 0;
-        maxoff2 = 0;
-    }
-    numTextureDefs = numtextures1 + numtextures2;
+    VERBOSE(Con_Message("R_ReadTextureDefs: Processing lump '%s'...\n",
+                        lumpInfo[lump].name));
 
-    Con_Message("R_ReadTextureDefs: Found %i textures.\n", numTextureDefs);
+    validTexDefs = M_Calloc(numTexDefs * sizeof(byte));
+    texDefNumPatches = M_Calloc(numTexDefs * sizeof(*texDefNumPatches));
 
-    textureDefs = Z_Malloc(numTextureDefs * sizeof(*textureDefs),
-                           PU_REFRESHTEX, 0);
-
-    // Count total number of patch defs we'll need and check for missing
-    // patches and any other irregularities.
-    totalPatches = 0;
-    maptex = maptex1;
+    /**
+     * Pass #1
+     * Count total number of texture and patch defs we'll need and check
+     * for missing patches and any other irregularities.
+     */
+    numValidTexDefs = 0;
+    numValidPatchRefs = 0;
     directory = maptex1 + 1;
-    for(i = 0; i < numTextureDefs; ++i, directory++)
+    for(i = 0; i < numTexDefs; ++i, directory++)
     {
-        if(i == numtextures1)
-        {   // Start looking in second set of texture defs.
-            maptex = maptex2;
-            maxoff = maxoff2;
-            directory = maptex + 1;
-        }
-
         offset = LONG(*directory);
-        if(offset > maxoff)
-            Con_Error("R_ReadTextureDefs: Bad texture directory");
+        if(offset > lumpSize)
+        {
+            Con_Message("R_ReadTextureDefs: Bad offset %lu for definition "
+                        "%i in lump '%s'.\n", (unsigned long) offset, i,
+                        lumpInfo[lump].name);
+            continue;
+        }
 
         if(gameDataFormat == 0)
         {   // DOOM format.
             maptexture_t*       mtexture =
-                (maptexture_t *) ((byte *) maptex + offset);
+                (maptexture_t *) ((byte *) maptex1 + offset);
+            short               j, n, patchCount = SHORT(mtexture->patchCount);
 
-            totalPatches += SHORT(mtexture->patchCount);
+            n = 0;
+            if(patchCount > 0)
+            {
+                mappatch_t*         mpatch = &mtexture->patches[0];
 
-            mpatch = &mtexture->patches[0];
-            for(j = 0; j < SHORT(mtexture->patchCount); ++j, mpatch++)
-                if(patchlookup[SHORT(mpatch->patch)] == -1)
+                for(j = 0; j < patchCount; ++j, mpatch++)
                 {
-                    char                patchName[9];
+                    short               patchNum = SHORT(mpatch->patch);
 
-                    strncpy(patchName, name_p + SHORT(mpatch->patch) * 8, 8);
-                    patchName[8] = 0;
+                    if(patchNum < 0 || (unsigned) patchNum >= numPatches)
+                    {
+                        Con_Message("R_ReadTextureDefs: Invalid patch %i in "
+                                    "texture '%s'.", (int) patchNum,
+                                    mtexture->name);
+                        continue;
+                    }
 
-                    Con_Error("R_ReadTextureDefs: Missing patch \"%s\" in texture %s",
-                              patchName, mtexture->name);
+                    if(patchlookup[patchNum] == -1)
+                    {
+                        Con_Message("R_ReadTextureDefs: Missing patch %i in "
+                                    "texture '%s'.\n", (int) j, mtexture->name);
+                        continue;
+                    }
+
+                    n++;
                 }
+            }
+            else
+            {
+                Con_Message("R_ReadTextureDefs: Invalid patchcount %i in "
+                            "texture '%s'.\n", (int) patchCount,
+                            mtexture->name);
+            }
+
+            texDefNumPatches[i] = n;
+            numValidPatchRefs += n;
         }
         else if(gameDataFormat == 3)
         {   // Strife format.
             strifemaptexture_t* smtexture =
-                (strifemaptexture_t *) ((byte *) maptex + offset);
+                (strifemaptexture_t *) ((byte *) maptex1 + offset);
+            short               j, n, patchCount = SHORT(smtexture->patchCount);
 
-            totalPatches += SHORT(smtexture->patchCount);
-
-            smpatch = &smtexture->patches[0];
-            for(j = 0; j < SHORT(smtexture->patchCount); ++j, smpatch++)
-                if(patchlookup[SHORT(smpatch->patch)] == -1)
+            n = 0;
+            if(patchCount > 0)
+            {
+                strifemappatch_t*   smpatch = &smtexture->patches[0];
+                for(j = 0; j < patchCount; ++j, smpatch++)
                 {
-                    char                patchName[9];
+                    short               patchNum = SHORT(smpatch->patch);
 
-                    strncpy(patchName, name_p + SHORT(mpatch->patch) * 8, 8);
-                    patchName[8] = 0;
+                    if(patchNum < 0 || (unsigned) patchNum >= numPatches)
+                    {
+                        Con_Message("R_ReadTextureDefs: Invalid patch %i in "
+                                    "texture '%s'.\n", (int) patchNum,
+                                    smtexture->name);
+                        continue;
+                    }
 
-                    Con_Error("R_ReadTextureDefs: Missing patch \"%s\" in texture %s",
-                              patchName, smtexture->name);
+                    if(patchlookup[patchNum] == -1)
+                    {
+                        Con_Message("R_ReadTextureDefs: Missing patch %i in "
+                                    "texture '%s'.\n", (int) j, smtexture->name);
+                        continue;
+                    }
+
+                    n++;
                 }
+            }
+            else
+            {
+                Con_Message("R_ReadTextureDefs: Invalid patchcount %i in "
+                            "texture '%s'.\n", (int) patchCount,
+                            smtexture->name);
+            }
+
+            texDefNumPatches[i] = n;
+            numValidPatchRefs += n;
+        }
+
+        if(texDefNumPatches[i] > 0)
+        {
+            // This is a valid texture definition.
+            validTexDefs[i] = true;
+            numValidTexDefs++;
         }
     }
 
-    // Build the texturedef index.
-    storage = Z_Calloc(sizeof(texturedef_t) * numTextureDefs +
-                       sizeof(texpatch_t) * totalPatches, PU_REFRESHTEX, 0);
-    maptex = maptex1;
-    directory = maptex1 + 1;
-    for(i = 0; i < numTextureDefs; ++i, directory++)
+    if(numValidTexDefs > 0 && numValidPatchRefs > 0)
     {
-        texturedef_t*       texDef;
+        /**
+         * Pass #2
+         * There is at least one valid texture def in this lump so convert
+         * to the internal format.
+         */
 
-        if(i == numtextures1)
-        {   // Start looking in second set of texture defs.
-            maptex = maptex2;
-            directory = maptex + 1;
-        }
+        // Build the texturedef index.
+        texDefs = Z_Malloc(numValidTexDefs * sizeof(*texDefs), PU_REFRESHTEX, 0);
+        storage = Z_Calloc(sizeof(texturedef_t) * numValidTexDefs +
+                           sizeof(texpatch_t) * numValidPatchRefs, PU_REFRESHTEX, 0);
+        directory = maptex1 + 1;
+        n = 0;
+        for(i = 0; i < numTexDefs; ++i, directory++)
+        {
+            short               j;
+            texturedef_t*       texDef;
 
-        offset = LONG(*directory);
+            if(!validTexDefs[i])
+                continue;
 
-        // Read and create the texture def.
-        if(gameDataFormat == 0)
-        {   // DOOM format.
-            maptexture_t*       mtexture =
-                (maptexture_t *) ((byte *) maptex + offset);
+            offset = LONG(*directory);
 
-            texDef = storage;
-            texDef->patchCount = SHORT(mtexture->patchCount);
-            strncpy(texDef->name, mtexture->name, 8);
-            texDef->name[8] = '\0';
-            texDef->width = SHORT(mtexture->width);
-            texDef->height = SHORT(mtexture->height);
-            storage = (byte *) storage + sizeof(texturedef_t) +
-                sizeof(texpatch_t) * texDef->patchCount;
+            // Read and create the texture def.
+            if(gameDataFormat == 0)
+            {   // DOOM format.
+                texpatch_t*         patch;
+                mappatch_t*         mpatch;
+                maptexture_t*       mtexture =
+                    (maptexture_t *) ((byte *) maptex1 + offset);
 
-            mpatch = &mtexture->patches[0];
-            patch = &texDef->patches[0];
-            for(j = 0; j < texDef->patchCount; ++j, mpatch++, patch++)
-            {
-                patch->offX = SHORT(mpatch->originX);
-                patch->offY = SHORT(mpatch->originY);
-                patch->lump = patchlookup[SHORT(mpatch->patch)];
+                texDef = storage;
+                texDef->patchCount = texDefNumPatches[i];
+                strncpy(texDef->name, mtexture->name, 8);
+                strupr(texDef->name);
+                texDef->width = SHORT(mtexture->width);
+                texDef->height = SHORT(mtexture->height);
+                storage = (byte *) storage + sizeof(texturedef_t) +
+                    sizeof(texpatch_t) * texDef->patchCount;
+
+                mpatch = &mtexture->patches[0];
+                patch = &texDef->patches[0];
+                for(j = 0; j < SHORT(mtexture->patchCount); ++j, mpatch++)
+                {
+                    short               patchNum = SHORT(mpatch->patch);
+
+                    if(patchNum < 0 || (unsigned) patchNum >= numPatches ||
+                       patchlookup[patchNum] == -1)
+                        continue;
+
+                    patch->offX = SHORT(mpatch->originX);
+                    patch->offY = SHORT(mpatch->originY);
+                    patch->lump = patchlookup[patchNum];
+                    patch++;
+                }
             }
-        }
-        else if(gameDataFormat == 3)
-        {   // Strife format.
-            strifemaptexture_t* smtexture =
-                (strifemaptexture_t *) ((byte *) maptex + offset);
+            else if(gameDataFormat == 3)
+            {   // Strife format.
+                texpatch_t*         patch;
+                strifemappatch_t*   smpatch;
+                strifemaptexture_t* smtexture =
+                    (strifemaptexture_t *) ((byte *) maptex1 + offset);
 
-            texDef = storage;
-            texDef->patchCount = SHORT(smtexture->patchCount);
-            strncpy(texDef->name, smtexture->name, 8);
-            texDef->name[8] = '\0';
-            texDef->width = SHORT(smtexture->width);
-            texDef->height = SHORT(smtexture->height);
-            storage = (byte *) storage + sizeof(texturedef_t) +
-                sizeof(texpatch_t) * texDef->patchCount;
+                texDef = storage;
+                texDef->patchCount = texDefNumPatches[i];
+                strncpy(texDef->name, smtexture->name, 8);
+                strupr(texDef->name);
+                texDef->width = SHORT(smtexture->width);
+                texDef->height = SHORT(smtexture->height);
+                storage = (byte *) storage + sizeof(texturedef_t) +
+                    sizeof(texpatch_t) * texDef->patchCount;
 
-            smpatch = &smtexture->patches[0];
-            patch = &texDef->patches[0];
-            for(j = 0; j < texDef->patchCount; ++j, smpatch++, patch++)
-            {
-                patch->offX = SHORT(smpatch->originX);
-                patch->offY = SHORT(smpatch->originY);
-                patch->lump = patchlookup[SHORT(smpatch->patch)];
+                smpatch = &smtexture->patches[0];
+                patch = &texDef->patches[0];
+                for(j = 0; j < SHORT(smtexture->patchCount); ++j, smpatch++)
+                {
+                    short               patchNum = SHORT(smpatch->patch);
+
+                    if(patchNum < 0 || (unsigned) patchNum >= numPatches ||
+                       patchlookup[patchNum] == -1)
+                        continue;
+
+                    patch->offX = SHORT(smpatch->originX);
+                    patch->offY = SHORT(smpatch->originY);
+                    patch->lump = patchlookup[patchNum];
+                    patch++;
+                }
             }
-        }
 
-        // Add it to the list.
-        textureDefs[i] = texDef;
+            /**
+             * DOOM.EXE had a bug in the way textures were managed resulting in
+             * the first texture being used dually as a "NULL" texture.
+             */
+            if(firstNull && i == 0)
+                texDef->flags |= TXDF_NODRAW;
+
+            /**
+             * Is this a non-IWAD texture?
+             * At this stage we assume it is an IWAD texture definition
+             * unless one of the patches is not.
+             */
+            texDef->flags |= TXDF_IWAD;
+            j = 0;
+            while(j < texDef->patchCount && (texDef->flags & TXDF_IWAD))
+            {
+                if(!W_IsFromIWAD(texDef->patches[j].lump))
+                    texDef->flags &= ~TXDF_IWAD;
+                else
+                    j++;
+            }
+
+            // Add it to the list.
+            texDefs[n++] = texDef;
+        }
     }
 
-    Z_Free(maptex1);
-    if(maptex2)
-        Z_Free(maptex2);
+    VERBOSE(Con_Message("  Loaded %i of %i definitions.\n",
+                        numValidTexDefs, numTexDefs));
 
-    M_Free(patchlookup);
+    // Free all temporary storage.
+    M_Free(validTexDefs);
+    M_Free(texDefNumPatches);
+    M_Free(maptex1);
 
-    VERBOSE(Con_Message("R_ReadTextureDefs: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
+    if(numDefs)
+        *numDefs = numValidTexDefs;
+
+    return texDefs;
 }
 
 /**
@@ -767,9 +889,167 @@ typedef struct {
  */
 void R_InitTextures(void)
 {
-    int                     i;
+    int                 i;
+    float               startTime = Sys_GetSeconds();
+    lumpnum_t*          patchLumpList;
+    size_t              numPatches;
+    int                 count = 0, countCustom = 0, *eCount;
+    texturedef_t**      list = NULL, **listCustom = NULL, ***eList;
+    boolean             firstNull;
 
-    readTextureDefs();
+    numTextureDefs = 0;
+    textureDefs = NULL;
+
+    // Load the patch names from the PNAMES lump.
+    patchLumpList = loadPatchList(W_GetNumForName("PNAMES"), &numPatches);
+    if(!patchLumpList)
+        Con_Error("R_InitTextures: Error loading PNAMES.");
+
+    /**
+     * Many PWADs include new TEXTURE1/2 lumps including the IWAD texture
+     * definitions, with new definitions appended. In order to correctly
+     * determine whether a defined texture originates from an IWAD we must
+     * compare all definitions against those in the IWAD and if matching,
+     * they should be considered as IWAD resources, even though the texture
+     * definition does not come from an IWAD lump.
+     */
+    firstNull = true;
+    for(i = 0; i < numLumps; ++i)
+    {
+        char                name[9];
+
+        memset(name, 0, sizeof(name));
+        strncpy(name, W_LumpName(i), 8);
+        strupr(name); // Case insensitive.
+
+        if(!strncmp(name, "TEXTURE1", 8) || !strncmp(name, "TEXTURE2", 8))
+        {
+            boolean             isFromIWAD = W_IsFromIWAD(i);
+            int                 newNumTexDefs;
+            texturedef_t**      newTexDefs;
+
+            // Read in the new texture defs.
+            newTexDefs = readTextureDefLump(i, patchLumpList, numPatches,
+                                            firstNull, &newNumTexDefs);
+
+            eList = (isFromIWAD? &list : &listCustom);
+            eCount = (isFromIWAD? &count : &countCustom);
+            if(*eList)
+            {
+                int                 i;
+                size_t              n;
+                texturedef_t**      newList;
+
+                // Merge with the existing texture defs.
+                newList = Z_Malloc(sizeof(*newList) * ((*eCount) + newNumTexDefs),
+                                   PU_REFRESHTEX, 0);
+                n = 0;
+                for(i = 0; i < *eCount; ++i)
+                    newList[n++] = (*eList)[i];
+                for(i = 0; i < newNumTexDefs; ++i)
+                    newList[n++] = newTexDefs[i];
+
+                Z_Free(*eList);
+                Z_Free(newTexDefs);
+
+                *eList = newList;
+                *eCount += newNumTexDefs;
+            }
+            else
+            {
+                *eList = newTexDefs;
+                *eCount = newNumTexDefs;
+            }
+
+            // No more NULL textures.
+            firstNull = false;
+        }
+    }
+
+    if(listCustom)
+    {   // There are custom texture definitions, cross compare to the IWAD
+        // originals to see if they have been changed.
+        size_t          n;
+        texturedef_t**  newList;
+
+        i = 0;
+        while(i < count)
+        {
+            int                 j;
+            texturedef_t*       orig = list[i];
+            boolean             hasReplacement = false;
+
+            for(j = 0; j < countCustom; ++j)
+            {
+                texturedef_t*       custom = list[j];
+
+                if(!strncmp(orig->name, custom->name, 8))
+                {   // This is a newer version of an IWAD texture def.
+                    if(!(custom->flags & TXDF_IWAD))
+                        hasReplacement = true; // Uses a non-IWAD patch.
+                    else if(custom->height == orig->height &&
+                            custom->width == orig->width &&
+                            custom->patchCount == orig->patchCount)
+                    {   // Check the patches.
+                        short               k = 0;
+
+                        while(k < orig->patchCount &&
+                              (custom->flags & TXDF_IWAD))
+                        {
+                            texpatch_t*         origP = orig->patches + k;
+                            texpatch_t*         customP = custom->patches + k;
+
+                            if(origP->lump != customP->lump &&
+                               origP->offX != customP->offX &&
+                               origP->offY != customP->offY)
+                            {
+                                custom->flags &= ~TXDF_IWAD;
+                            }
+                            else
+                                k++;
+                        }
+
+                        if(!(custom->flags & TXDF_IWAD))
+                            hasReplacement = true;
+                    }
+
+                    break;
+                }
+            }
+
+            if(hasReplacement)
+            {   // Let the custom texture override the IWAD original.
+                memmove(list[i], list[i] + 1,
+                        (count - i) * sizeof(*list));
+                count--;
+            }
+            else
+                i++;
+        }
+
+        // list contains only non-replaced texture defs, merge them.
+        newList = Z_Malloc(sizeof(*newList) * (count + countCustom),
+                           PU_REFRESHTEX, 0);
+        n = 0;
+        for(i = 0; i < count; ++i)
+            newList[n++] = list[i];
+        for(i = 0; i < countCustom; ++i)
+            newList[n++] = listCustom[i];
+
+        Z_Free(list);
+        Z_Free(listCustom);
+
+        textureDefs = newList;
+        numTextureDefs = count + countCustom;
+    }
+    else
+    {
+        textureDefs = list;
+        numTextureDefs = count;
+    }
+
+    // We're finished with the patch lump list now.
+    M_Free(patchLumpList);
 
     // Create materials for the defined textures.
     for(i = 0; i < numTextureDefs; ++i)
@@ -782,14 +1062,12 @@ void R_InitTextures(void)
 
         // Create a material for this texture.
         mat = R_MaterialCreate(texDef->name, texDef->width, texDef->height,
+                               ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0),
                                mTex, MG_TEXTURES);
-        /**
-         * DOOM.EXE had a bug in the way textures were managed resulting in
-         * the first texture being used dually as a "NULL" texture.
-         */
-        if(i == 0)
-            mat->flags |= MATF_NO_DRAW;
     }
+
+    VERBOSE(Con_Message("R_InitTextures: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - startTime));
 }
 
 texturedef_t* R_GetTextureDef(int num)
@@ -878,7 +1156,7 @@ static int R_NewFlat(lumpnum_t lump)
     mTex = R_MaterialTexCreate(numFlats - 1, MTT_FLAT);
 
     // Create a material for this flat.
-    mat = R_MaterialCreate(lumpInfo[lump].name, 64, 64, mTex, MG_FLATS);
+    mat = R_MaterialCreate(lumpInfo[lump].name, 64, 64, 0, mTex, MG_FLATS);
 
     return numFlats - 1;
 }
@@ -962,7 +1240,7 @@ int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
 
     // Create a new material for this sprite texture.
     mat = R_MaterialCreate(W_LumpName(lump), SHORT(patch->width),
-                           SHORT(patch->height), mTex, MG_SPRITES);
+                           SHORT(patch->height), 0, mTex, MG_SPRITES);
 
     if(matP)
         *matP = mat;
@@ -1101,7 +1379,6 @@ void R_DestroySkins(void)
 void R_UpdateTexturesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
-    R_MarkMaterialsForUpdating();
     R_InitTextures();
     R_InitFlats();
     R_InitSkyMap();
@@ -1262,7 +1539,7 @@ boolean findSpriteOwner(thinker_t* th, void* context)
  * is placed in the GL/D3D drivers. The prepared textures are also bound
  * here once so they should be ready for use ASAP.
  */
-void R_PrecacheLevel(void)
+void R_PrecacheMap(void)
 {
     uint                i, j;
     size_t              n;
@@ -1350,7 +1627,7 @@ void R_PrecacheLevel(void)
 
     i = 0;
     while(i < numMaterials && matPresent[i])
-        R_MaterialPrecache(matPresent[i++]);
+        R_MaterialPrecache2(matPresent[i++]);
 
     // We are done with list of used materials.
     M_Free(matPresent);
