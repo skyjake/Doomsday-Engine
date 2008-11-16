@@ -52,7 +52,7 @@
 #define TIC2FLT(x)          ( (x)/35.0f )
 
 // Line type definition flags.
-#define LTF_ACTIVE          0x00000001 // Active in the beginning of a level.
+#define LTF_ACTIVE          0x00000001 // Active in the beginning of a map.
 
 // Activation method. Line is activated if any of the following
 // situations take place.
