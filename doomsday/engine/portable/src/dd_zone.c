@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 1999-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -43,10 +43,10 @@
  * are being allocated in a rapid sequence, with no frees in between (e.g.,
  * map setup).
  *
- * Block sequences. The PU_LEVELSTATIC purge tag has a special purpose.
- * It works like PU_LEVEL so that it is purged on a per level basis, but
- * blocks allocated as PU_LEVELSTATIC should not be freed at any time when the
- * map is being used. Internally, the level-static blocks are linked into
+ * Block sequences. The PU_MAPSTATIC purge tag has a special purpose.
+ * It works like PU_MAP so that it is purged on a per map basis, but
+ * blocks allocated as PU_MAPSTATIC should not be freed at any time when the
+ * map is being used. Internally, the map-static blocks are linked into
  * sequences so that Z_Malloc knows to skip all of them efficiently. This is
  * possible because no block inside the sequence could be purged by Z_Malloc
  * anyway.
@@ -55,7 +55,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
-#include <assert.h>     // Define NDEBUG in release builds.
+#include <assert.h> // Define NDEBUG in release builds.
 
 #include "de_base.h"
 #include "de_console.h"
@@ -165,19 +165,19 @@ memvolume_t *Z_Create(size_t volumeSize)
     vol->zone->size = vol->size;
 
     // Set the entire zone to one free block.
-    vol->zone->blocklist.next
-        = vol->zone->blocklist.prev
+    vol->zone->blockList.next
+        = vol->zone->blockList.prev
         = block
         = (memblock_t *) ((byte *) vol->zone + sizeof(memzone_t));
 
-    vol->zone->blocklist.user = (void *) vol->zone;
-    vol->zone->blocklist.volume = vol;
-    vol->zone->blocklist.tag = PU_STATIC;
+    vol->zone->blockList.user = (void *) vol->zone;
+    vol->zone->blockList.volume = vol;
+    vol->zone->blockList.tag = PU_STATIC;
     vol->zone->rover = block;
 
-    block->prev = block->next = &vol->zone->blocklist;
+    block->prev = block->next = &vol->zone->blockList;
     block->user = NULL;         // free block
-    block->seq_first = block->seq_last = NULL;
+    block->seqFirst = block->seqLast = NULL;
     block->size = vol->zone->size - sizeof(memzone_t);
 
     Con_Message("Z_Create: New %.1f MB memory volume.\n",
@@ -234,8 +234,8 @@ memblock_t *Z_GetBlock(void *ptr)
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blocklist.next;
-            block != &volume->zone->blocklist;
+        for(block = volume->zone->blockList.next;
+            block != &volume->zone->blockList;
             block = block->next)
         {
             if(block->area == ptr)
@@ -290,13 +290,13 @@ void Z_Free(void *ptr)
      * parts, but since PU_LEVELSTATICs aren't supposed to be freed one by
      * one, this this sufficient.
      */
-    if(block->seq_first)
+    if(block->seqFirst)
     {
-        memblock_t* first = block->seq_first;
+        memblock_t* first = block->seqFirst;
         memblock_t* iter = first;
-        while(iter->seq_first == first)
+        while(iter->seqFirst == first)
         {
-            iter->seq_first = iter->seq_last = NULL;
+            iter->seqFirst = iter->seqLast = NULL;
             iter = iter->next;
         }
     }
@@ -400,9 +400,9 @@ void *Z_Malloc(size_t size, int tag, void *user)
             // If the start is in a sequence, move it to the beginning of the
             // entire sequence. Sequences are handled as a single unpurgable entity,
             // so we can stop checking at its start.
-            if(start->seq_first)
+            if(start->seqFirst)
             {
-                start = start->seq_first;
+                start = start->seqFirst;
             }
 
             isDone = false;
@@ -414,11 +414,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
                     {
                         if(rover->tag < PU_PURGELEVEL)
                         {
-                            if(rover->seq_first)
+                            if(rover->seqFirst)
                             {
                                 // This block is part of a sequence of blocks, none of
                                 // which can be purged. Skip the entire sequence.
-                                base = rover = rover->seq_first->seq_last->next;
+                                base = rover = rover->seqFirst->seqLast->next;
                             }
                             else
                             {
@@ -478,7 +478,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                     new->prev = base;
                     new->next = base->next;
                     new->next->prev = new;
-                    new->seq_first = new->seq_last = NULL;
+                    new->seqFirst = new->seqLast = NULL;
                     base->next = new;
                     base->size = size;
                 }
@@ -505,22 +505,22 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 }
                 base->tag = tag;
 
-                if(tag == PU_LEVELSTATIC)
+                if(tag == PU_MAPSTATIC)
                 {
                     // Level-statics are linked into unpurgable sequences so they can
                     // be skipped en masse.
-                    base->seq_first = base;
-                    base->seq_last = base;
-                    if(base->prev->seq_first)
+                    base->seqFirst = base;
+                    base->seqLast = base;
+                    if(base->prev->seqFirst)
                     {
-                        base->seq_first = base->prev->seq_first;
-                        base->seq_first->seq_last = base;
+                        base->seqFirst = base->prev->seqFirst;
+                        base->seqFirst->seqLast = base;
                     }
                 }
                 else
                 {
                     // Not part of a sequence.
-                    base->seq_last = base->seq_first = NULL;
+                    base->seqLast = base->seqFirst = NULL;
                 }
 
                 // next allocation will start looking here
@@ -574,8 +574,8 @@ void Z_FreeTags(int lowTag, int highTag)
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blocklist.next;
-            block != &volume->zone->blocklist;
+        for(block = volume->zone->blockList.next;
+            block != &volume->zone->blockList;
             block = next)
         {
             next = block->next;     // Get link before freeing.
@@ -607,11 +607,11 @@ void Z_CheckHeap(void)
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        block = volume->zone->blocklist.next;
+        block = volume->zone->blockList.next;
         isDone = false;
         while(!isDone)
         {
-            if(block->next != &volume->zone->blocklist)
+            if(block->next != &volume->zone->blockList)
             {
                 if(block->size == 0)
                     Con_Error("Z_CheckHeap: zero-size block\n");
@@ -627,23 +627,23 @@ void Z_CheckHeap(void)
                     Con_Error("Z_CheckHeap: bad user pointer %p\n", block->user);
 
                 /*
-                if(block->seq_first == block)
+                if(block->seqFirst == block)
                 {
                     // This is the first.
                     printf("sequence begins at (%p): start=%p, end=%p\n", block,
-                           block->seq_first, block->seq_last);
+                           block->seqFirst, block->seqLast);
                 }
                  */
-                if(block->seq_first)
+                if(block->seqFirst)
                 {
-                    //printf("  seq member (%p): start=%p\n", block, block->seq_first);
-                    if(block->seq_first->seq_last == block)
+                    //printf("  seq member (%p): start=%p\n", block, block->seqFirst);
+                    if(block->seqFirst->seqLast == block)
                     {
-                        //printf("  -=- last member of seq %p -=-\n", block->seq_first);
+                        //printf("  -=- last member of seq %p -=-\n", block->seqFirst);
                     }
                     else
                     {
-                        if(block->next->seq_first != block->seq_first)
+                        if(block->next->seqFirst != block->seqFirst)
                         {
                             Con_Error("Z_CheckHeap: disconnected sequence\n");
                         }
@@ -767,8 +767,8 @@ size_t Z_FreeMemory(void)
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blocklist.next;
-            block != &volume->zone->blocklist;
+        for(block = volume->zone->blockList.next;
+            block != &volume->zone->blockList;
             block = block->next)
         {
             if(!block->user)
