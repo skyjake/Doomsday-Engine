@@ -4,72 +4,67 @@ Header { Version = 5; }
 
 Text {
   ID = "PRESSKEY";
-  Text = "press a key.";
+  Text = "Press a key.";
 }
 
 Text {
   ID = "PRESSYN";
-  Text = "press y or n.";
+  Text = "Press Y or N.";
 }
 
 Text {
   ID = "TXT_PAUSED";
-  Text = "PAUSED";
+  Text = "Paused";
 }
 
 Text {
   ID = "QUITMSG";
-  Text = "are you sure you want to\nquit this great game?";
+  Text = "Are you sure you want to\nquit this great game?";
 }
 
 Text {
   ID = "LOADNET";
-  Text = "you can't do load while in a net game!\n\npress a key.";
+  Text = "You can't do load while in a net game!\n\nPress a key.";
 }
 
 Text {
   ID = "QLOADNET";
-  Text = "you can't quickload during a netgame!\n\npress a key.";
+  Text = "You can't quickload during a netgame!\n\nPress a key.";
 }
 
 Text {
   ID = "QSAVESPOT";
-  Text = "you haven't picked a quicksave slot yet!\n\npress a key.";
+  Text = "You haven't picked a quicksave slot yet!\n\nPress a key.";
 }
 
 Text {
   ID = "SAVEDEAD";
-  Text = "you can't save if you aren't playing!\n\npress a key.";
+  Text = "You can't save if you aren't playing!\n\nPress a key.";
 }
 
 Text {
   ID = "QSPROMPT";
-  Text = "quicksave over your game named\n\n'%s'?\n\npress y or n.";
+  Text = "Quicksave over your game named\n\n'%s'?\n\nPress Y or N.";
 }
 
 Text {
   ID = "QLPROMPT";
-  Text = "do you want to quickload the game named\n\n'%s'?\n\n
-    press y or n.";
+  Text = "Do you want to quickload the game named\n\n'%s'?\n\nPress Y or N.";
 }
 
 Text {
   ID = "NEWGAME";
-  Text = "you can't start a new game\nwhile in a network game.\n\n
-    press a key.";
+  Text = "You can't start a new game\nwhile in a network game.\n\nPress a key.";
 }
 
 Text {
   ID = "NIGHTMARE";
-  Text = "are you sure? this skill level\nisn't even remotely fair.\n\n
-    press y or n.";
+  Text = "Are you sure? This skill level\nisn't even remotely fair.\n\nPress Y or N.";
 }
 
 Text {
   ID = "SWSTRING";
-  Text = "this is the shareware version of doom.\n\n
-    you need to order the entire trilogy.\n\n
-    press a key.";
+  Text = "This is the shareware version of DOOM.\n\nYou need to order the entire trilogy.\n\nPress a key.";
 }
 
 Text {
@@ -84,17 +79,17 @@ Text {
 
 Text {
   ID = "NETEND";
-  Text = "you can't end a netgame!\n\npress a key.";
+  Text = "You can't end a netgame!\n\nPress a key.";
 }
 
 Text {
   ID = "ENDGAME";
-  Text = "are you sure you want to end the game?\n\npress y or n.";
+  Text = "Are you sure you want to end the game?\n\nPress Y or N.";
 }
 
 Text {
   ID = "DOSY";
-  Text = "(press y to quit to dos.)";
+  Text = "(Press Y to quit to dos.)";
 }
 
 Text {
@@ -134,352 +129,352 @@ Text {
 
 Text {
   ID = "EMPTYSTRING";
-  Text = "empty slot";
+  Text = "Empty slot";
 }
 
 Text {
   ID = "TXT_GOTBLUEKEY";
-  Text = "BLUE KEY";
+  Text = "Blue Key";
 }
 
 Text {
   ID = "TXT_GOTYELLOWKEY";
-  Text = "YELLOW KEY";
+  Text = "Yellow Key";
 }
 
 Text {
   ID = "TXT_GOTGREENKEY";
-  Text = "GREEN KEY";
+  Text = "Green Key";
 }
 
 Text {
   ID = "TXT_ARTIHEALTH";
-  Text = "QUARTZ FLASK";
+  Text = "Quartz Flask";
 }
 
 Text {
   ID = "TXT_ARTIFLY";
-  Text = "WINGS OF WRATH";
+  Text = "Wings of Wrath";
 }
 
 Text {
   ID = "TXT_ARTIINVULNERABILITY";
-  Text = "RING OF INVINCIBILITY";
+  Text = "Ring of Invincibility";
 }
 
 Text {
   ID = "TXT_ARTITOMEOFPOWER";
-  Text = "TOME OF POWER";
+  Text = "Tome of Power";
 }
 
 Text {
   ID = "TXT_ARTIINVISIBILITY";
-  Text = "SHADOWSPHERE";
+  Text = "Shadowsphere";
 }
 
 Text {
   ID = "TXT_ARTIEGG";
-  Text = "MORPH OVUM";
+  Text = "Morph Ovum";
 }
 
 Text {
   ID = "TXT_ARTISUPERHEALTH";
-  Text = "MYSTIC URN";
+  Text = "Mystic Urn";
 }
 
 Text {
   ID = "TXT_ARTITORCH";
-  Text = "TORCH";
+  Text = "Torch";
 }
 
 Text {
   ID = "TXT_ARTIFIREBOMB";
-  Text = "TIME BOMB OF THE ANCIENTS";
+  Text = "Time Bomb of the Ancients";
 }
 
 Text {
   ID = "TXT_ARTITELEPORT";
-  Text = "CHAOS DEVICE";
+  Text = "Chaos Device";
 }
 
 Text {
   ID = "TXT_ITEMHEALTH";
-  Text = "CRYSTAL VIAL";
+  Text = "Crystal Vial";
 }
 
 Text {
   ID = "TXT_ITEMBAGOFHOLDING";
-  Text = "BAG OF HOLDING";
+  Text = "Bag of Holding";
 }
 
 Text {
   ID = "TXT_ITEMSHIELD1";
-  Text = "SILVER SHIELD";
+  Text = "Silver Shield";
 }
 
 Text {
   ID = "TXT_ITEMSHIELD2";
-  Text = "ENCHANTED SHIELD";
+  Text = "Enchanted Shield";
 }
 
 Text {
   ID = "TXT_ITEMSUPERMAP";
-  Text = "MAP SCROLL";
+  Text = "Map Scroll";
 }
 
 Text {
   ID = "TXT_AMMOGOLDWAND1";
-  Text = "WAND CRYSTAL";
+  Text = "Wand Crystal";
 }
 
 Text {
   ID = "TXT_AMMOGOLDWAND2";
-  Text = "CRYSTAL GEODE";
+  Text = "Crystal Geode";
 }
 
 Text {
   ID = "TXT_AMMOMACE1";
-  Text = "MACE SPHERES";
+  Text = "Mace Spheres";
 }
 
 Text {
   ID = "TXT_AMMOMACE2";
-  Text = "PILE OF MACE SPHERES";
+  Text = "Pile of Mace Spheres";
 }
 
 Text {
   ID = "TXT_AMMOCROSSBOW1";
-  Text = "ETHEREAL ARROWS";
+  Text = "Ethereal Arrows";
 }
 
 Text {
   ID = "TXT_AMMOCROSSBOW2";
-  Text = "QUIVER OF ETHEREAL ARROWS";
+  Text = "Quiver of Ethereal Arrows";
 }
 
 Text {
   ID = "TXT_AMMOBLASTER1";
-  Text = "CLAW ORB";
+  Text = "Claw Orb";
 }
 
 Text {
   ID = "TXT_AMMOBLASTER2";
-  Text = "ENERGY ORB";
+  Text = "Energy Orb";
 }
 
 Text {
   ID = "TXT_AMMOSKULLROD1";
-  Text = "LESSER RUNES";
+  Text = "Lesser Runes";
 }
 
 Text {
   ID = "TXT_AMMOSKULLROD2";
-  Text = "GREATER RUNES";
+  Text = "Greater Runes";
 }
 
 Text {
   ID = "TXT_AMMOPHOENIXROD1";
-  Text = "FLAME ORB";
+  Text = "Flame Orb";
 }
 
 Text {
   ID = "TXT_AMMOPHOENIXROD2";
-  Text = "INFERNO ORB";
+  Text = "Inferno Orb";
 }
 
 Text {
   ID = "TXT_WPNSTAFF";
-  Text = "STAFF";
+  Text = "Staff";
 }
 
 Text {
   ID = "TXT_WPNWAND";
-  Text = "CRYSTAL WAND";
+  Text = "Crystal Wand";
 }
 
 Text {
   ID = "TXT_WPNCROSSBOW";
-  Text = "ETHEREAL CROSSBOW";
+  Text = "Ethereal Crossbow";
 }
 
 Text {
   ID = "TXT_WPNBLASTER";
-  Text = "DRAGON CLAW";
+  Text = "Dragon Claw";
 }
 
 Text {
   ID = "TXT_WPNSKULLROD";
-  Text = "HELLSTAFF";
+  Text = "Hellstaff";
 }
 
 Text {
   ID = "TXT_WPNPHOENIXROD";
-  Text = "PHOENIX ROD";
+  Text = "Phoenix Rod";
 }
 
 Text {
   ID = "TXT_WPNMACE";
-  Text = "FIREMACE";
+  Text = "Firemace";
 }
 
 Text {
   ID = "TXT_WPNGAUNTLETS";
-  Text = "GAUNTLETS OF THE NECROMANCER";
+  Text = "Gauntlets of the Necromancer";
 }
 
 Text {
   ID = "TXT_WPNBEAK";
-  Text = "BEAK";
+  Text = "Beak";
 }
 
 Text {
   ID = "TXT_CHEATGODON";
-  Text = "GOD MODE ON";
+  Text = "God mode ON";
 }
 
 Text {
   ID = "TXT_CHEATGODOFF";
-  Text = "GOD MODE OFF";
+  Text = "God mode OFF";
 }
 
 Text {
   ID = "TXT_CHEATNOCLIPON";
-  Text = "NO CLIPPING ON";
+  Text = "No clipping ON";
 }
 
 Text {
   ID = "TXT_CHEATNOCLIPOFF";
-  Text = "NO CLIPPING OFF";
+  Text = "No clipping OFF";
 }
 
 Text {
   ID = "TXT_CHEATWEAPONS";
-  Text = "ALL WEAPONS";
+  Text = "All weapons";
 }
 
 Text {
   ID = "TXT_CHEATFLIGHTON";
-  Text = "FLIGHT ON";
+  Text = "Flight ON";
 }
 
 Text {
   ID = "TXT_CHEATFLIGHTOFF";
-  Text = "FLIGHT OFF";
+  Text = "Flight OFF";
 }
 
 Text {
   ID = "TXT_CHEATPOWERON";
-  Text = "POWER ON";
+  Text = "Power ON";
 }
 
 Text {
   ID = "TXT_CHEATPOWEROFF";
-  Text = "POWER OFF";
+  Text = "Power OFF";
 }
 
 Text {
   ID = "TXT_CHEATHEALTH";
-  Text = "FULL HEALTH";
+  Text = "Full Health";
 }
 
 Text {
   ID = "TXT_CHEATKEYS";
-  Text = "ALL KEYS";
+  Text = "All keys";
 }
 
 Text {
   ID = "TXT_CHEATSOUNDON";
-  Text = "SOUND DEBUG ON";
+  Text = "Sound debug ON";
 }
 
 Text {
   ID = "TXT_CHEATSOUNDOFF";
-  Text = "SOUND DEBUG OFF";
+  Text = "Sound debug OFF";
 }
 
 Text {
   ID = "TXT_CHEATTICKERON";
-  Text = "TICKER ON";
+  Text = "Ticker ON";
 }
 
 Text {
   ID = "TXT_CHEATTICKEROFF";
-  Text = "TICKER OFF";
+  Text = "Ticker OFF";
 }
 
 Text {
   ID = "TXT_CHEATARTIFACTS1";
-  Text = "CHOOSE AN ARTIFACT ( A - J )";
+  Text = "Choose an Artifact ( A - J )";
 }
 
 Text {
   ID = "TXT_CHEATARTIFACTS2";
-  Text = "HOW MANY ( 1 - 9 )";
+  Text = "How many ( 1 - 9 )";
 }
 
 Text {
   ID = "TXT_CHEATARTIFACTS3";
-  Text = "YOU GOT IT";
+  Text = "You got it";
 }
 
 Text {
   ID = "TXT_CHEATARTIFACTSFAIL";
-  Text = "BAD INPUT";
+  Text = "Bad input";
 }
 
 Text {
   ID = "TXT_CHEATWARP";
-  Text = "LEVEL WARP";
+  Text = "Map warp";
 }
 
 Text {
   ID = "TXT_CHEATSCREENSHOT";
-  Text = "SCREENSHOT";
+  Text = "Screenshot";
 }
 
 Text {
   ID = "TXT_CHEATCHICKENON";
-  Text = "CHICKEN ON";
+  Text = "Chicken ON";
 }
 
 Text {
   ID = "TXT_CHEATCHICKENOFF";
-  Text = "CHICKEN OFF";
+  Text = "Chicken OFF";
 }
 
 Text {
   ID = "TXT_CHEATMASSACRE";
-  Text = "MASSACRE";
+  Text = "Massacre";
 }
 
 Text {
   ID = "TXT_CHEATIDDQD";
-  Text = "TRYING TO CHEAT, EH?  NOW YOU DIE!";
+  Text = "Trying to cheat, eh? Now you die!";
 }
 
 Text {
   ID = "TXT_CHEATIDKFA";
-  Text = "CHEATER - YOU DON'T DESERVE WEAPONS";
+  Text = "Cheater - You don't deserve weapons";
 }
 
 Text {
   ID = "TXT_NEEDBLUEKEY";
-  Text = "YOU NEED A %1 TO OPEN THIS DOOR";
+  Text = "You need a %1 to open this door";
 }
 
 Text {
   ID = "TXT_NEEDGREENKEY";
-  Text = "YOU NEED A %1 TO OPEN THIS DOOR";
+  Text = "You need a %1 to open this door";
 }
 
 Text {
   ID = "TXT_NEEDYELLOWKEY";
-  Text = "YOU NEED A %1 TO OPEN THIS DOOR";
+  Text = "You need a %1 to open this door";
 }
 
 Text {
   ID = "TXT_GAMESAVED";
-  Text = "GAME SAVED";
+  Text = "Game saved";
 }
 
 Text {
@@ -584,12 +579,12 @@ Text {
 
 Text {
   ID = "AMSTR_FOLLOWON";
-  Text = "FOLLOW MODE ON";
+  Text = "Follow mode ON";
 }
 
 Text {
   ID = "AMSTR_FOLLOWOFF";
-  Text = "FOLLOW MODE OFF";
+  Text = "Follow mode OFF";
 }
 
 Text {
@@ -604,37 +599,37 @@ Text {
 
 Text {
   ID = "AMSTR_MARKEDSPOT";
-  Text = "Marked Spot";
+  Text = "Marked spot";
 }
 
 Text {
   ID = "AMSTR_MARKSCLEARED";
-  Text = "All Marks Cleared";
+  Text = "All marks cleared";
 }
 
 Text {
   ID = "STSTR_DQDON";
-  Text = "Degreelessness Mode On";
+  Text = "Degreelessness mode On";
 }
 
 Text {
   ID = "STSTR_DQDOFF";
-  Text = "Degreelessness Mode Off";
+  Text = "Degreelessness mode Off";
 }
 
 Text {
   ID = "STSTR_KFAADDED";
-  Text = "Very Happy Ammo Added";
+  Text = "Very Happy Ammo added";
 }
 
 Text {
   ID = "STSTR_NCON";
-  Text = "No Clipping Mode ON";
+  Text = "No clipping mode ON";
 }
 
 Text {
   ID = "STSTR_NCOFF";
-  Text = "No Clipping Mode OFF";
+  Text = "No clipping mode OFF";
 }
 
 Text {
@@ -644,7 +639,7 @@ Text {
 
 Text {
   ID = "STSTR_BEHOLDX";
-  Text = "Power-up Toggled";
+  Text = "Power-up toggled";
 }
 
 Text {
@@ -654,25 +649,25 @@ Text {
 
 Text {
   ID = "STSTR_CLEV";
-  Text = "Changing Level...";
+  Text = "Changing map...";
 }
 
 # These episode end messages are obsolete, see Finales.ded.
 Text {
   ID = "E1TEXT";
-  Text = "with the destruction of the iron\n
-    liches and their minions, the last\n
+  Text = "With the destruction of the Iron\n
+    Liches and their minions, the last\n
     of the undead are cleared from this\n
     plane of existence.\n\n
-    those creatures had to come from\n
+    Those creatures had to come from\n
     somewhere, though, and you have the\n
     sneaky suspicion that the fiery\n
-    portal of hell's maw opens onto\n
+    portal of Hell's maw opens onto\n
     their home dimension.\n\n
-    to make sure that more undead\n
+    To make sure that more undead\n
     (or even worse things) don't come\n
-    through, you'll have to seal hell's\n
-    maw from the other side. of course\n
+    through, you'll have to seal Hell's\n
+    maw from the other side. Of course\n
     this means you may get stuck in a\n
     very unfriendly world, but no one\n
     ever said being a Heretic was easy!";
@@ -681,96 +676,96 @@ Text {
 # These episode end messages are obsolete, see Finales.ded.
 Text {
   ID = "E2TEXT";
-  Text = "the mighty maulotaurs have proved\n
+  Text = "The mighty Maulotaurs have proved\n
     to be no match for you, and as\n
     their steaming corpses slide to the\n
     ground you feel a sense of grim\n
     satisfaction that they have been\n
     destroyed.\n\n
-    the gateways which they guarded\n
+    The gateways which they guarded\n
     have opened, revealing what you\n
     hope is the way home. but as you\n
     step through, mocking laughter\n
     rings in your ears.\n\n
-    was some other force controlling\n
-    the maulotaurs? could there be even\n
+    Was some other force controlling\n
+    the Maulotaurs? Could there be even\n
     more horrific beings through this\n
-    gate? the sweep of a crystal dome\n
+    gate? The sweep of a crystal dome\n
     overhead where the sky should be is\n
-    certainly not a good sign....";
+    certainly not a good sign...";
 }
 
 # These episode end messages are obsolete, see Finales.ded.
 Text {
   ID = "E3TEXT";
-  Text = "the death of d'sparil has loosed\n
+  Text = "The death of D'Sparil has loosed\n
     the magical bonds holding his\n
     creatures on this plane, their\n
     dying screams overwhelming his own\n
     cries of agony.\n\n
-    your oath of vengeance fulfilled,\n
+    Your oath of vengeance fulfilled,\n
     you enter the portal to your own\n
     world, mere moments before the dome\n
     shatters into a million pieces.\n\n
-    but if d'sparil's power is broken\n
+    But if D'Sparil's power is broken\n
     forever, why don't you feel safe?\n
-    was it that last shout just before\n
+    Was it that last shout just before\n
     his death, the one that sounded\n
-    like a curse? or a summoning? you\n
+    like a curse? Or a summoning? You\n
     can't really be sure, but it might\n
     just have been a scream.\n\n
-    then again, what about the other\n
-    serpent riders?";
+    Then again, what about the other\n
+    Serpent Riders?";
 }
 
 # These episode end messages are obsolete, see Finales.ded.
 Text {
   ID = "E4TEXT";
-  Text = "you thought you would return to your\n
-    own world after d'sparil died, but\n
+  Text = "You thought you would return to your\n
+    own world after D'Sparil died but\n
     his final act banished you to his\n
-    own plane. here you entered the\n
+    own plane. Here you entered the\n
     shattered remnants of lands\n
-    conquered by d'sparil. you defeated\n
+    conquered by D'Sparil. You defeated\n
     the last guardians of these lands,\n
     but now you stand before the gates\n
-    to d'sparil's stronghold. until this\n
+    to D'Sparil's stronghold. Until this\n
     moment you had no doubts about your\n
     ability to face anything you might\n
-    encounter, but beyond this portal\n
+    encounter but beyond this portal\n
     lies the very heart of the evil\n
-    which invaded your world. d'sparil\n
+    which invaded your world. D'Sparil\n
     might be dead, but the pit where he\n
-    was spawned remains. now you must\n
+    was spawned remains. Now you must\n
     enter that pit in the hopes of\n
-    finding a way out. and somewhere,\n
-    in the darkest corner of d'sparil's\n
+    finding a way out and somewhere,\n
+    in the darkest corner of D'Sparil's\n
     demesne, his personal bodyguards\n
-    await your arrival ...";
+    await your arrival...";
 }
 
 # These episode end messages are obsolete, see Finales.ded.
 Text {
   ID = "E5TEXT";
-  Text = "as the final maulotaur bellows his\n
+  Text = "As the final Maulotaur bellows his\n
     death-agony, you realize that you\n
     have never come so close to your own\n
-    destruction. not even the fight with\n
-    d'sparil and his disciples had been\n
-    this desperate. grimly you stare at\n
+    destruction. Not even the fight with\n
+    D'Sparil and his Disciples had been\n
+    this desperate. Grimly you stare at\n
     the gates which open before you,\n
     wondering if they lead home, or if\n
     they open onto some undreamed-of\n
-    horror. you find yourself wondering\n
+    horror. You find yourself wondering\n
     if you have the strength to go on,\n
     if nothing but death and pain await\n
-    you. but what else can you do, if\n
-    the will to fight is gone? can you\n
+    you. But what else can you do, if\n
+    the will to fight is gone? Can you\n
     force yourself to continue in the\n
-    face of such despair? do you have\n
-    the courage? you find, in the end,\n
+    face of such despair? Do you have\n
+    the courage? You find, in the end,\n
     that it is not within you to\n
-    surrender without a fight. eyes\n
+    surrender without a fight. Eyes\n
     wide, you go to meet your fate.";
 }
 
