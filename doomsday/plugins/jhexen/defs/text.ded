@@ -4,58 +4,57 @@ Header { Version = 5; }
 
 Text {
   ID = "PRESSKEY";
-  Text = "press a key.";
+  Text = "Press a key.";
 }
 
 Text {
   ID = "PRESSYN";
-  Text = "press y or n.";
+  Text = "Press Y or N.";
 }
 
 Text {
   ID = "TXT_PAUSED";
-  Text = "PAUSED";
+  Text = "Paused";
 }
 
 Text {
   ID = "QUITMSG";
-  Text = "are you sure you want to\nquit this great game?";
+  Text = "Are you sure you want to\nquit this great game?";
 }
 
 Text {
   ID = "LOADNET";
-  Text = "you can't do load while in a net game!\n\npress a key.";
+  Text = "You can't do load while in a net game!\n\nPress a key.";
 }
 
 Text {
   ID = "QLOADNET";
-  Text = "you can't quickload during a netgame!\n\npress a key.";
+  Text = "You can't quickload during a netgame!\n\nPress a key.";
 }
 
 Text {
   ID = "QSAVESPOT";
-  Text = "you haven't picked a quicksave slot yet!\n\npress a key.";
+  Text = "You haven't picked a quicksave slot yet!\n\nPress a key.";
 }
 
 Text {
   ID = "SAVEDEAD";
-  Text = "you can't save if you aren't playing!\n\npress a key.";
+  Text = "You can't save if you aren't playing!\n\nPress a key.";
 }
 
 Text {
   ID = "QSPROMPT";
-  Text = "quicksave over your game named\n\n'%s'?\n\npress y or n.";
+  Text = "Quicksave over your game named\n\n'%s'?\n\nPress Y or N.";
 }
 
 Text {
   ID = "QLPROMPT";
-  Text = "do you want to quickload the game named\n\n'%s'?\n\npress y or n.";
+  Text = "Do you want to quickload the game named\n\n'%s'?\n\nPress Y or N.";
 }
 
 Text {
   ID = "NEWGAME";
-  Text = "you can't start a new game\nwhile in a network game.\n\n
-    press a key.";
+  Text = "You can't start a new game\nwhile in a network game.\n\nPress a key.";
 }
 
 Text {
@@ -70,472 +69,472 @@ Text {
 
 Text {
   ID = "NETEND";
-  Text = "you can't end a netgame!\n\npress a key.";
+  Text = "You can't end a netgame!\n\nPress a key.";
 }
 
 Text {
   ID = "ENDGAME";
-  Text = "are you sure you want to end the game?\n\npress y or n.";
+  Text = "Are you sure you want to end the game?\n\nPress Y or N.";
 }
 
 Text {
   ID = "DOSY";
-  Text = "(press y to quit to dos.)";
+  Text = "(Press Y to quit to DOS.)";
 }
 
 Text {
   ID = "TXT_GAMMA_LEVEL_OFF";
-  Text = "GAMMA CORRECTION OFF";
+  Text = "Gamma correction OFF";
 }
 
 Text {
   ID = "TXT_GAMMA_LEVEL_1";
-  Text = "GAMMA CORRECTION LEVEL 1";
+  Text = "Gamma correction level 1";
 }
 
 Text {
   ID = "TXT_GAMMA_LEVEL_2";
-  Text = "GAMMA CORRECTION LEVEL 2";
+  Text = "Gamma correction level 2";
 }
 
 Text {
   ID = "TXT_GAMMA_LEVEL_3";
-  Text = "GAMMA CORRECTION LEVEL 3";
+  Text = "Gamma correction level 3";
 }
 
 Text {
   ID = "TXT_GAMMA_LEVEL_4";
-  Text = "GAMMA CORRECTION LEVEL 4";
+  Text = "Gamma correction level 4";
 }
 
 Text {
   ID = "EMPTYSTRING";
-  Text = "empty slot";
+  Text = "Empty slot";
 }
 
 Text {
   ID = "TXT_MANA_1";
-  Text = "BLUE MANA";
+  Text = "Blue Mana";
 }
 
 Text {
   ID = "TXT_MANA_2";
-  Text = "GREEN MANA";
+  Text = "Green Mana";
 }
 
 Text {
   ID = "TXT_MANA_BOTH";
-  Text = "COMBINED MANA";
+  Text = "Combined Mana";
 }
 
 Text {
   ID = "TXT_KEY_STEEL";
-  Text = "STEEL KEY";
+  Text = "Steel Key";
 }
 
 Text {
   ID = "TXT_KEY_CAVE";
-  Text = "CAVE KEY";
+  Text = "Cave Key";
 }
 
 Text {
   ID = "TXT_KEY_AXE";
-  Text = "AXE KEY";
+  Text = "Axe Key";
 }
 
 Text {
   ID = "TXT_KEY_FIRE";
-  Text = "FIRE KEY";
+  Text = "Fire Key";
 }
 
 Text {
   ID = "TXT_KEY_EMERALD";
-  Text = "EMERALD KEY";
+  Text = "Emerald Key";
 }
 
 Text {
   ID = "TXT_KEY_DUNGEON";
-  Text = "DUNGEON KEY";
+  Text = "Dungeon Key";
 }
 
 Text {
   ID = "TXT_KEY_SILVER";
-  Text = "SILVER KEY";
+  Text = "Silver Key";
 }
 
 Text {
   ID = "TXT_KEY_RUSTED";
-  Text = "RUSTED KEY";
+  Text = "Rusted Key";
 }
 
 Text {
   ID = "TXT_KEY_HORN";
-  Text = "HORN KEY";
+  Text = "Horn Key";
 }
 
 Text {
   ID = "TXT_KEY_SWAMP";
-  Text = "SWAMP KEY";
+  Text = "Swamp Key";
 }
 
 Text {
   ID = "TXT_KEY_CASTLE";
-  Text = "CASTLE KEY";
+  Text = "Castle Key";
 }
 
 Text {
   ID = "TXT_ARTIINVULNERABILITY";
-  Text = "ICON OF THE DEFENDER";
+  Text = "Icon of the Defender";
 }
 
 Text {
   ID = "TXT_ARTIHEALTH";
-  Text = "QUARTZ FLASK";
+  Text = "Quartz Flask";
 }
 
 Text {
   ID = "TXT_ARTISUPERHEALTH";
-  Text = "MYSTIC URN";
+  Text = "Mystic Urn";
 }
 
 Text {
   ID = "TXT_ARTISUMMON";
-  Text = "DARK SERVANT";
+  Text = "Dark Servant";
 }
 
 Text {
   ID = "TXT_ARTITORCH";
-  Text = "TORCH";
+  Text = "Torch";
 }
 
 Text {
   ID = "TXT_ARTIEGG";
-  Text = "PORKALATOR";
+  Text = "Porkalator";
 }
 
 Text {
   ID = "TXT_ARTIFLY";
-  Text = "WINGS OF WRATH";
+  Text = "Wings of Wrath";
 }
 
 Text {
   ID = "TXT_ARTITELEPORT";
-  Text = "CHAOS DEVICE";
+  Text = "Chaos Device";
 }
 
 Text {
   ID = "TXT_ARTIPOISONBAG";
-  Text = "FLECHETTE";
+  Text = "Flechette";
 }
 
 Text {
   ID = "TXT_ARTITELEPORTOTHER";
-  Text = "BANISHMENT DEVICE";
+  Text = "Banishment Device";
 }
 
 Text {
   ID = "TXT_ARTISPEED";
-  Text = "BOOTS OF SPEED";
+  Text = "Boots of Speed";
 }
 
 Text {
   ID = "TXT_ARTIBOOSTMANA";
-  Text = "KRATER OF MIGHT";
+  Text = "Krater of Might";
 }
 
 Text {
   ID = "TXT_ARTIBOOSTARMOR";
-  Text = "DRAGONSKIN BRACERS";
+  Text = "Dragonskin Bracers";
 }
 
 Text {
   ID = "TXT_ARTIBLASTRADIUS";
-  Text = "DISC OF REPULSION";
+  Text = "Disc of Repulsion";
 }
 
 Text {
   ID = "TXT_ARTIHEALINGRADIUS";
-  Text = "MYSTIC AMBIT INCANT";
+  Text = "Mystic Ambit Incant";
 }
 
 Text {
   ID = "TXT_ARTIPUZZSKULL";
-  Text = "YORICK'S SKULL";
+  Text = "Yorick's Skull";
 }
 
 Text {
   ID = "TXT_ARTIPUZZGEMBIG";
-  Text = "HEART OF D'SPARIL";
+  Text = "Heart of D'Sparil";
 }
 
 Text {
   ID = "TXT_ARTIPUZZGEMRED";
-  Text = "RUBY PLANET";
+  Text = "Ruby Planet";
 }
 
 Text {
   ID = "TXT_ARTIPUZZGEMGREEN1";
-  Text = "EMERALD PLANET";
+  Text = "Emerald Planet";
 }
 
 Text {
   ID = "TXT_ARTIPUZZGEMGREEN2";
-  Text = "EMERALD PLANET";
+  Text = "Emerald Planet";
 }
 
 Text {
   ID = "TXT_ARTIPUZZGEMBLUE1";
-  Text = "SAPPHIRE PLANET";
+  Text = "Sapphire Planet";
 }
 
 Text {
   ID = "TXT_ARTIPUZZGEMBLUE2";
-  Text = "SAPPHIRE PLANET";
+  Text = "Sapphire Planet";
 }
 
 Text {
   ID = "TXT_ARTIPUZZBOOK1";
-  Text = "DAEMON CODEX";
+  Text = "Daemon Codex";
 }
 
 Text {
   ID = "TXT_ARTIPUZZBOOK2";
-  Text = "LIBER OSCURA";
+  Text = "Liber Oscura";
 }
 
 Text {
   ID = "TXT_ARTIPUZZSKULL2";
-  Text = "FLAME MASK";
+  Text = "Flame Mask";
 }
 
 Text {
   ID = "TXT_ARTIPUZZFWEAPON";
-  Text = "GLAIVE SEAL";
+  Text = "Glaive Seal";
 }
 
 Text {
   ID = "TXT_ARTIPUZZCWEAPON";
-  Text = "HOLY RELIC";
+  Text = "Holy Relic";
 }
 
 Text {
   ID = "TXT_ARTIPUZZMWEAPON";
-  Text = "SIGIL OF THE MAGUS";
+  Text = "Sigil of the Magus";
 }
 
 Text {
   ID = "TXT_ARTIPUZZGEAR";
-  Text = "CLOCK GEAR";
+  Text = "Clock Gear";
 }
 
 Text {
   ID = "TXT_USEPUZZLEFAILED";
-  Text = "YOU CANNOT USE THIS HERE";
+  Text = "You cannot use this here";
 }
 
 Text {
   ID = "TXT_ITEMHEALTH";
-  Text = "CRYSTAL VIAL";
+  Text = "Crystal Vial";
 }
 
 Text {
   ID = "TXT_ITEMBAGOFHOLDING";
-  Text = "BAG OF HOLDING";
+  Text = "Bag of Holding";
 }
 
 Text {
   ID = "TXT_ITEMSHIELD1";
-  Text = "SILVER SHIELD";
+  Text = "Silver Shield";
 }
 
 Text {
   ID = "TXT_ITEMSHIELD2";
-  Text = "ENCHANTED SHIELD";
+  Text = "Enchanted Shield";
 }
 
 Text {
   ID = "TXT_ITEMSUPERMAP";
-  Text = "MAP SCROLL";
+  Text = "Map Scroll";
 }
 
 Text {
   ID = "TXT_ARMOR1";
-  Text = "MESH ARMOR";
+  Text = "Mesh Armor";
 }
 
 Text {
   ID = "TXT_ARMOR2";
-  Text = "FALCON SHIELD";
+  Text = "Falcon Shield";
 }
 
 Text {
   ID = "TXT_ARMOR3";
-  Text = "PLATINUM HELMET";
+  Text = "Platinum Helmet";
 }
 
 Text {
   ID = "TXT_ARMOR4";
-  Text = "AMULET OF WARDING";
+  Text = "Amulet of Warding";
 }
 
 Text {
   ID = "TXT_WEAPON_F2";
-  Text = "TIMON'S AXE";
+  Text = "Timon's Axe";
 }
 
 Text {
   ID = "TXT_WEAPON_F3";
-  Text = "HAMMER OF RETRIBUTION";
+  Text = "Hammer of Retribution";
 }
 
 Text {
   ID = "TXT_WEAPON_F4";
-  Text = "QUIETUS ASSEMBLED";
+  Text = "Quietus assembled";
 }
 
 Text {
   ID = "TXT_WEAPON_C2";
-  Text = "SERPENT STAFF";
+  Text = "Serpent Staff";
 }
 
 Text {
   ID = "TXT_WEAPON_C3";
-  Text = "FIRESTORM";
+  Text = "Firestorm";
 }
 
 Text {
   ID = "TXT_WEAPON_C4";
-  Text = "WRAITHVERGE ASSEMBLED";
+  Text = "Wraithverge assembled";
 }
 
 Text {
   ID = "TXT_WEAPON_M2";
-  Text = "FROST SHARDS";
+  Text = "Frost Shards";
 }
 
 Text {
   ID = "TXT_WEAPON_M3";
-  Text = "ARC OF DEATH";
+  Text = "Arc of Death";
 }
 
 Text {
   ID = "TXT_WEAPON_M4";
-  Text = "BLOODSCOURGE ASSEMBLED";
+  Text = "Bloodscourge assembled";
 }
 
 Text {
   ID = "TXT_QUIETUS_PIECE";
-  Text = "SEGMENT OF QUIETUS";
+  Text = "Segment of Quietus";
 }
 
 Text {
   ID = "TXT_WRAITHVERGE_PIECE";
-  Text = "SEGMENT OF WRAITHVERGE";
+  Text = "Segment of Wraithverge";
 }
 
 Text {
   ID = "TXT_BLOODSCOURGE_PIECE";
-  Text = "SEGMENT OF BLOODSCOURGE";
+  Text = "Segment of Bloodscourge";
 }
 
 Text {
   ID = "TXT_CHEATGODON";
-  Text = "GOD MODE ON";
+  Text = "God mode ON";
 }
 
 Text {
   ID = "TXT_CHEATGODOFF";
-  Text = "GOD MODE OFF";
+  Text = "God mode OFF";
 }
 
 Text {
   ID = "TXT_CHEATNOCLIPON";
-  Text = "NO CLIPPING ON";
+  Text = "No clipping ON";
 }
 
 Text {
   ID = "TXT_CHEATNOCLIPOFF";
-  Text = "NO CLIPPING OFF";
+  Text = "No clipping OFF";
 }
 
 Text {
   ID = "TXT_CHEATWEAPONS";
-  Text = "ALL WEAPONS";
+  Text = "All weapons";
 }
 
 Text {
   ID = "TXT_CHEATHEALTH";
-  Text = "FULL HEALTH";
+  Text = "Full health";
 }
 
 Text {
   ID = "TXT_CHEATKEYS";
-  Text = "ALL KEYS";
+  Text = "All keys";
 }
 
 Text {
   ID = "TXT_CHEATSOUNDON";
-  Text = "SOUND DEBUG ON";
+  Text = "Sound debug ON";
 }
 
 Text {
   ID = "TXT_CHEATSOUNDOFF";
-  Text = "SOUND DEBUG OFF";
+  Text = "Sound debug OFF";
 }
 
 Text {
   ID = "TXT_CHEATTICKERON";
-  Text = "TICKER ON";
+  Text = "Ticker ON";
 }
 
 Text {
   ID = "TXT_CHEATTICKEROFF";
-  Text = "TICKER OFF";
+  Text = "Ticker OFF";
 }
 
 Text {
   ID = "TXT_CHEATARTIFACTS3";
-  Text = "ALL ARTIFACTS";
+  Text = "All artifacts";
 }
 
 Text {
   ID = "TXT_CHEATARTIFACTSFAIL";
-  Text = "BAD INPUT";
+  Text = "Bad input";
 }
 
 Text {
   ID = "TXT_CHEATWARP";
-  Text = "LEVEL WARP";
+  Text = "Map warp";
 }
 
 Text {
   ID = "TXT_CHEATSCREENSHOT";
-  Text = "SCREENSHOT";
+  Text = "Screenshot";
 }
 
 Text {
   ID = "TXT_CHEATIDDQD";
-  Text = "TRYING TO CHEAT, EH?  NOW YOU DIE!";
+  Text = "Trying to cheat, eh? Now you die!";
 }
 
 Text {
   ID = "TXT_CHEATIDKFA";
-  Text = "CHEATER - YOU DON'T DESERVE WEAPONS";
+  Text = "Cheater - You don't deserve weapons";
 }
 
 Text {
   ID = "TXT_CHEATBADINPUT";
-  Text = "BAD INPUT";
+  Text = "Bad input";
 }
 
 Text {
   ID = "TXT_CHEATNOMAP";
-  Text = "CAN'T FIND MAP";
+  Text = "Can't find map";
 }
 
 Text {
   ID = "TXT_GAMESAVED";
-  Text = "GAME SAVED";
+  Text = "Game saved";
 }
 
 Text {
@@ -590,17 +589,17 @@ Text {
 
 Text {
   ID = "AMSTR_FOLLOWON";
-  Text = "FOLLOW MODE ON";
+  Text = "Follow mode ON";
 }
 
 Text {
   ID = "AMSTR_FOLLOWOFF";
-  Text = "FOLLOW MODE OFF";
+  Text = "Follow mode OFF";
 }
 
 Text {
   ID = "LOADMISSING";
-  Text = "YOU WEREN'T IN THE SERVER'S SAVEGAME.";
+  Text = "You weren't in the server's savegame.";
 }
 
 Text {
@@ -625,10 +624,10 @@ Text {
 
 Text {
   ID = "AMSTR_MARKEDSPOT";
-  Text = "Marked Spot";
+  Text = "Marked spot";
 }
 
 Text {
   ID = "AMSTR_MARKSCLEARED";
-  Text = "All Marks Cleared";
+  Text = "All marks cleared";
 }
