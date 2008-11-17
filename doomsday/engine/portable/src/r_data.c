@@ -1569,6 +1569,42 @@ boolean R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
 }
 
 /**
+ * @return              @c true, if the given reflection works under the
+ *                      specified circumstances.
+ */
+boolean R_IsAllowedReflection(ded_reflection_t* def, material_t* mat,
+                              boolean hasExternal)
+{
+    if(hasExternal)
+    {
+        return (def->flags & REFF_EXTERNAL) != 0;
+    }
+
+    if(mat->tex->isFromIWAD)
+        return !(def->flags & REFF_NO_IWAD);
+
+    return (def->flags & REFF_PWAD) != 0;
+}
+
+/**
+ * @return              @c true, if the given decoration works under the
+ *                      specified circumstances.
+ */
+boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
+                             boolean hasExternal)
+{
+    if(hasExternal)
+    {
+        return (def->flags & DTLF_EXTERNAL) != 0;
+    }
+
+    if(mat->tex->isFromIWAD)
+        return !(def->flags & DTLF_NO_IWAD);
+
+    return (def->flags & DTLF_PWAD) != 0;
+}
+
+/**
  * Prepares the specified patch.
  */
 void R_PrecachePatch(lumpnum_t num)
@@ -1763,7 +1799,8 @@ void R_CreateDetailTexture(ded_detailtexture_t* def)
         (def->isExternal? def->detailLump.path : NULL);
 
     // Have we already created one for this?
-    if((dTex = R_GetDetailTexture(lump, external)))
+    if((dTex = R_GetDetailTexture(lump, external, def->scale, def->strength,
+                                  def->maxDist)))
         return;
 
     // Its a new detail texture.
@@ -1771,7 +1808,7 @@ void R_CreateDetailTexture(ded_detailtexture_t* def)
 
     // The width and height could be used for something meaningful.
     dTex->width = dTex->height = 128;
-    dTex->scale = def->scale;
+    dTex->scale = (def->scale <= 0? 1 : def->scale);
     dTex->strength = def->strength;
     dTex->maxDist = def->maxDist;
     dTex->lump = lump;
@@ -1784,7 +1821,8 @@ void R_CreateDetailTexture(ded_detailtexture_t* def)
     detailTextures[numDetailTextures-1] = dTex;
 }
 
-detailtex_t* R_GetDetailTexture(lumpnum_t lump, const char* external)
+detailtex_t* R_GetDetailTexture(lumpnum_t lump, const char* external,
+                                float scale, float strength, float maxDist)
 {
     int                 i;
 
@@ -1792,7 +1830,7 @@ detailtex_t* R_GetDetailTexture(lumpnum_t lump, const char* external)
     {
         detailtex_t*        dTex = detailTextures[i];
 
-        if(dTex->lump == lump &&
+        if(dTex->lump == lump && dTex->scale == scale &&
            dTex->strength == strength && dTex->maxDist == maxDist &&
            ((dTex->external == NULL && external == NULL) ||
              (dTex->external && external && !stricmp(dTex->external, external))))

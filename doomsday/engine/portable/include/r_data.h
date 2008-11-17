@@ -36,10 +36,20 @@
 #include "def_data.h"
 #include "r_extres.h"
 
-// Flags for decorations.
+// Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
 #define DCRF_EXTERNAL       0x4 // Can use if from external resource.
+
+// Flags for material reflections.
+#define REFF_NO_IWAD        0x1 // Don't use if from IWAD.
+#define REFF_PWAD           0x2 // Can use if from PWAD.
+#define REFF_EXTERNAL       0x4 // Can use if from external resource.
+
+// Flags for material detailtexs.
+#define DTLF_NO_IWAD        0x1 // Don't use if from IWAD.
+#define DTLF_PWAD           0x2 // Can use if from PWAD.
+#define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct materialtexinst_s {
     DGLuint         tex; // Name of the associated DGL texture.
@@ -68,16 +78,15 @@ typedef struct {
     detailtexinst_t* instances;
 } detailtex_t;
 
+// Flags for gltexture_t:
+#define GLTXF_MASKED        0x00000001
+
 typedef struct gltexture_s {
     DGLuint         id;
+    int             flags; // GLTXF_* flags.
     int             magMode;
     float           width, height;
-    boolean         masked;
-    struct {
-        DGLuint         id;
-        int             width, height;
-        float           scale;
-    } detail;
+    float           scale; // Currently only used with detail textures.
 } gltexture_t;
 
 typedef struct glcommand_vertex_s {
@@ -86,25 +95,10 @@ typedef struct glcommand_vertex_s {
 } glcommand_vertex_t;
 
 #define RL_MAX_DIVS         64
-
-// Rendpoly flags.
-#define RPF_MASKED      0x0001     // Use the special list for masked textures.
-#define RPF_SKY_MASK    0x0004     // A sky mask polygon.
-#define RPF_LIGHT       0x0008     // A dynamic light.
-#define RPF_DYNLIT      0x0010     // Normal list: poly is dynamically lit.
-#define RPF_GLOW        0x0020     // Multiply original vtx colors.
-#define RPF_DETAIL      0x0040     // Render with detail (incl. vtx distances)
-#define RPF_SHADOW      0x0100
-#define RPF_HORIZONTAL  0x0200
-#define RPF_SHINY       0x0400     // Shiny surface.
-#define RPF_DONE        0x8000     // This poly has already been drawn.
-
-typedef enum {
-    RP_NONE,
-    RP_QUAD,                       // Wall segment.
-    RP_DIVQUAD,                    // Divided wall segment.
-    RP_FLAT                        // Floor or ceiling.
-} rendpolytype_t;
+typedef struct walldiv_s {
+    unsigned int    num;
+    float           pos[RL_MAX_DIVS];
+} walldiv_t;
 
 typedef struct rvertex_s {
     float           pos[3];
@@ -117,33 +111,6 @@ typedef struct rcolor_s {
 typedef struct rtexcoord_s {
     float           st[2];
 } rtexcoord_t;
-
-typedef struct walldiv_s {
-    unsigned int    num;
-    float           pos[RL_MAX_DIVS];
-} walldiv_t;
-
-typedef struct rendpoly_wall_s {
-    float           length;
-    walldiv_t       divs[2]; // For wall segments (two vertices).
-} rendpoly_wall_t;
-
-// rendpoly_params_t is only for convenience; the data written in the rendering
-// list data buffer is taken from this struct.
-typedef struct rendpoly_params_s {
-    boolean         isWall;
-    rendpolytype_t  type;
-    short           flags; // RPF_*.
-    float           texOrigin[2][3]; // Used in texture coordinate calculation.
-    float           texOffset[2]; // Texture coordinates for left/top
-                                  // (in real texcoords).
-    gltexture_t     tex;
-    gltexture_t     interTex;
-    float           interPos; // Blending strength (0..1).
-    uint            lightListIdx; // List of lights that affect this poly.
-    blendmode_t     blendMode; // Primitive-specific blending mode.
-    rendpoly_wall_t* wall; // Wall specific data if any.
-} rendpoly_params_t;
 
 // This is the dummy mobj_t used for blockring roots.
 // It has some excess information since it has to be compatible with
@@ -177,6 +144,9 @@ typedef struct {
     short           offX; // block origin (allways UL), which has allready
     short           offY; // accounted for the patch's internal origin
 } texpatch_t;
+
+#define TXDF_NODRAW         0x1 // Not to be drawn.
+#define TXDF_IWAD           0x2 // Defines an IWAD texture. Note the definition may NOT be from the IWAD.
 
 // Describes a rectangular texture, which is composed of one
 // or more texpatch_t structures that arrange graphic patches.
@@ -352,7 +322,8 @@ void            R_DestroySkins(void); // Called at shutdown.
 void            R_InitAnimGroup(ded_group_t* def);
 
 void            R_CreateDetailTexture(ded_detailtexture_t* def);
-detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);
+detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external,
+                                   float scale, float strength, float maxDist);
 void            R_DeleteDetailTextures(void);
 void            R_DestroyDetailTextures(void); // Called at shutdown.
 
@@ -366,6 +337,10 @@ rawtex_t**      R_CollectRawTexs(int* count);
 
 boolean         R_IsAllowedDecoration(ded_decor_t* def, struct material_s* mat,
                                       boolean hasExternal);
+boolean         R_IsAllowedReflection(ded_reflection_t* def, struct material_s* mat,
+                                      boolean hasExternal);
+boolean         R_IsAllowedDetailTex(ded_detailtexture_t* def, struct material_s* mat,
+                                     boolean hasExternal);
 boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 
 #endif
