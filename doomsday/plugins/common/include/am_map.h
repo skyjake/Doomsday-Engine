@@ -50,25 +50,14 @@
 #define YOURCOLORS      WHITE
 #define YOURRANGE       0
 
-# if __WOLFTC__
-#  define WALLCOLORS      GRAYS
-#  define WALLRANGE       GRAYSRANGE
-#  define TSWALLCOLORS    BROWNS
-#  define TSWALLRANGE     BROWNRANGE
-#  define CDWALLCOLORS    BROWNS
-#  define CDWALLRANGE     BROWNRANGE
-#  define THINGCOLORS     REDS
-#  define THINGRANGE      REDRANGE
-# else
-#  define WALLCOLORS      REDS
-#  define WALLRANGE       REDRANGE
-#  define TSWALLCOLORS    GRAYS
-#  define TSWALLRANGE     GRAYSRANGE
-#  define CDWALLCOLORS    YELLOWS
-#  define CDWALLRANGE     YELLOWRANGE
-#  define THINGCOLORS     GREENS
-#  define THINGRANGE      GREENRANGE
-# endif
+#define WALLCOLORS      REDS
+#define WALLRANGE       REDRANGE
+#define TSWALLCOLORS    GRAYS
+#define TSWALLRANGE     GRAYSRANGE
+#define CDWALLCOLORS    YELLOWS
+#define CDWALLRANGE     YELLOWRANGE
+#define THINGCOLORS     GREENS
+#define THINGRANGE      GREENRANGE
 
 #define SECRETWALLCOLORS WALLCOLORS
 #define SECRETWALLRANGE WALLRANGE
@@ -283,8 +272,9 @@
 
 #endif
 
-typedef enum automapobjectname_e {
-    AMO_THINGPLAYER,
+typedef enum {
+    AMO_NONE = -1,
+    AMO_THINGPLAYER = 0,
     AMO_BACKGROUND,
     AMO_UNSEENLINE,
     AMO_SINGLESIDEDLINE,
@@ -317,11 +307,11 @@ void    AM_Shutdown(void);  // Called on exit to free any allocated memory.
 void    AM_LoadData(void);
 void    AM_UnloadData(void);
 
-void    AM_InitForLevel(void); // Called at the end of a level load.
+void    AM_InitForMap(void); // Called at the end of a map load.
 void    AM_Ticker(void);    // Called by main loop.
 void    AM_Drawer(int viewplayer); // Called every frame to render the map (if visible).
 
-void    AM_Open(int pnum, boolean yes);
+void    AM_Open(int pnum, boolean yes, boolean fast);
 
 void    AM_SetWindowTarget(int pid, int x, int y, int w, int h);
 void    AM_SetWindowFullScreenMode(int pid, int value);
@@ -348,8 +338,7 @@ void    AM_ClearMarks(int pid);
 void    AM_ToggleFollow(int pid);
 void    AM_ToggleZoomMax(int pid);
 void    AM_UpdateLinedef(int pid, uint lineIdx, boolean visible);
-void    AM_SetCheatLevel(int pid, int level);
-void    AM_IncMapCheatLevel(int pid);
+void    AM_RevealMap(int pid, boolean on);
 
 // \todo Split this functionality down into logical seperate settings.
 void    AM_SetCheatLevel(int pnum, int level);
@@ -367,6 +356,6 @@ void    AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
 void    AM_GetViewPosition(int pid, float *x, float *y);
 float   AM_ViewAngle(int pid);
 
-void    M_DrawMAP(void);    // Called to render the map menu.
+void    M_DrawMAP(void); // Called to render the map menu.
 
 #endif

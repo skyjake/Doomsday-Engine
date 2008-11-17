@@ -38,22 +38,19 @@ void    AM_ListRegister(void);
 void    AM_ListInit(void);
 void    AM_ListShutdown(void);
 
-void    AM_RenderAllLists(float alpha);
+void    AM_RenderAllLists(void);
 void    AM_ClearAllLists(boolean destroy);
 
-
-void    AM_AddLine(float x, float y, float x2, float y2, float width,
-                   int color, float alpha, blendmode_t blend);
-void    AM_AddLine4f(float x, float y, float x2, float y2, float width,
-                     float r, float g, float b, float a,
-                     blendmode_t blend);
+void    AM_AddLine(float x, float y, float x2, float y2);
 void    AM_AddQuad(float x1, float y1, float x2, float y2,
                    float x3, float y3, float x4, float y4,
                    float tc1st1, float tc1st2,
                    float tc2st1, float tc2st2,
                    float tc3st1, float tc3st2,
                    float tc4st1, float tc4st2,
-                   float r, float g, float b, float a,
                    uint tex, boolean texIsPatchLumpNum, blendmode_t blend);
+
+void        AM_SelectTexUnits(int count);
+void        AM_BindTo(int unit, DGLuint texture);
 
 #endif

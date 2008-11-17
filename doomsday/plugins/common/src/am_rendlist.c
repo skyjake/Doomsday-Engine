@@ -47,9 +47,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define AMLT_PALCOL     1
-#define AMLT_RGBA       2
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct amrline_s {
@@ -57,19 +54,9 @@ typedef struct amrline_s {
     struct {
         float   pos[2];
     } a, b;
-    union {
-        struct {
-            int     color;
-            float   alpha;
-        } palcolor;
-        struct {
-            float rgba[4];
-        } f4color;
-    } coldata;
 } amrline_t;
 
 typedef struct amrquad_s {
-    float   rgba[4];
     struct {
         float   pos[2];
         float   tex[2];
@@ -238,10 +225,10 @@ static amprim_t *AM_NewPrimitive(amprimlist_t *list)
 /**
  * Link the given automap render primitive into the given list.
  *
- * @param list      Ptr to the automap render list to link the primitive to.
- * @param p         Ptr to the automap render primitive to be linked.
+ * @param list          Ptr to the automap render list to link the primitive to.
+ * @param p             Ptr to the automap render primitive to be linked.
  */
-static void AM_LinkPrimitiveToList(amprimlist_t *list, amprim_t *p)
+static void AM_LinkPrimitiveToList(amprimlist_t* list, amprim_t* p)
 {
     p->next = list->head;
     if(!list->tail)
@@ -252,23 +239,23 @@ static void AM_LinkPrimitiveToList(amprimlist_t *list, amprim_t *p)
 /**
  * Create a new automap primitive and link it into the appropriate list.
  *
- * @param type      Type of primitive required (DGL_QUADS or DGL_LINES).
- * @param tex       DGLuint texture identifier/patch lump number for quad.
+ * @param type          Type of primitive required (DGL_QUADS or DGL_LINES).
+ * @param tex           DGLuint texture identifier/patch lump number for quad.
  * @param texIsPatchLumpNum @c true = 'tex' is treated as a patch lump
- *                  number.
- * @param blend     The blendmode required for this quad.
+ *                      number.
  *
- * @return          Ptr to the new automap render primitive.
+ * @return              Ptr to the new automap render primitive.
  */
-static void *AM_AllocatePrimitive(glprimtype_t type, uint tex, boolean texIsPatchLumpNum,
-                                  blendmode_t blend, float arg1)
+static void* AM_AllocatePrimitive(glprimtype_t type, uint tex,
+                                  boolean texIsPatchLumpNum)
 {
-    amlist_t *list;
-    amprim_t   *p;
-    boolean     found;
+    amlist_t*           list;
+    amprim_t*           p;
+    boolean             found;
 
     if(!(type == DGL_QUADS || type == DGL_LINES))
-        Con_Error("AM_AllocatePrimitive: Unsupported primitive type %i.", type);
+        Con_Error("AM_AllocatePrimitive: Unsupported primitive type %i.",
+                  type);
 
     // Find a suitable primitive list (matching texture & blend & args).
     list = amListsHead;
@@ -276,8 +263,7 @@ static void *AM_AllocatePrimitive(glprimtype_t type, uint tex, boolean texIsPatc
     while(list && !found)
     {
         if(list->primlist.type == type &&
-           list->tex == tex && list->texIsPatchLumpNum == texIsPatchLumpNum &&
-           list->blend == blend && list->arg1 == arg1)
+           list->tex == tex && list->texIsPatchLumpNum == texIsPatchLumpNum)
             found = true;
         else
             list = list->next;
@@ -289,8 +275,6 @@ static void *AM_AllocatePrimitive(glprimtype_t type, uint tex, boolean texIsPatc
 
         list->tex = tex;
         list->texIsPatchLumpNum = texIsPatchLumpNum;
-        list->blend = blend;
-        list->arg1 = arg1;
         list->primlist.type = type;
         list->primlist.head = list->primlist.tail =
             list->primlist.unused = NULL;
@@ -312,14 +296,14 @@ static void *AM_AllocatePrimitive(glprimtype_t type, uint tex, boolean texIsPatc
 /**
  * Empties or destroys all primitives in the given automap render list.
  *
- * @param list      Ptr to the list to be emptied/destroyed.
- * @param destroy   If @c true, all primitives in the list will be
- *                  free'd, ELSE they'll be moved to the list's unused
- *                  store, ready for later re-use.
+ * @param list          Ptr to the list to be emptied/destroyed.
+ * @param destroy       If @c true, all primitives in the list will be
+ *                      free'd, ELSE they'll be moved to the list's unused
+ *                      store, ready for later re-use.
  */
-static void AM_DeleteList(amprimlist_t *list, boolean destroy)
+static void AM_DeleteList(amprimlist_t* list, boolean destroy)
 {
-    amprim_t *n, *np;
+    amprim_t*           n, *np;
 
     // Are we destroying the lists?
     if(destroy)
@@ -349,13 +333,13 @@ static void AM_DeleteList(amprimlist_t *list, boolean destroy)
 /**
  * Empties or destroys all primitives in ALL automap render lists.
  *
- * @param destroy   If @c true, all primitives in each list will be
- *                  free'd, ELSE they'll be moved to each list's unused
- *                  store, ready for later re-use.
+ * @param destroy       If @c true, all primitives in each list will be
+ *                      free'd, ELSE they'll be moved to each list's unused
+ *                      store, ready for later re-use.
  */
 void AM_ClearAllLists(boolean destroy)
 {
-    amlist_t *list;
+    amlist_t*           list;
 
     list = amListsHead;
     while(list)
@@ -366,61 +350,23 @@ void AM_ClearAllLists(boolean destroy)
 }
 
 /**
- * Write a line to the automap render list, color specified by palette idx.
- *
- * @param x         X coordinate of the line origin.
- * @param y         Y coordinate of the line origin.
- * @param x2        X coordinate of the line destination.
- * @param y2        Y coordinate of the line destination.
- * @param color     Palette color idx.
- * @param alpha     Alpha value of the line (opacity).
- */
-void AM_AddLine(float x, float y, float x2, float y2, float width,
-                int color, float alpha, blendmode_t blend)
-{
-    amrline_t *l;
-
-    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend, width);
-
-    l->a.pos[0] = x;
-    l->a.pos[1] = y;
-    l->b.pos[0] = x2;
-    l->b.pos[1] = y2;
-
-    l->type = AMLT_PALCOL;
-    l->coldata.palcolor.color = color;
-    l->coldata.palcolor.alpha = MINMAX_OF(.0f, alpha, 1.0f);
-}
-
-/**
  * Write a line to the automap render list, color specified by RGBA.
  *
- * @param x         X coordinate of the line origin.
- * @param y         Y coordinate of the line origin.
- * @param x2        X coordinate of the line destination.
- * @param y2        Y coordinate of the line destination.
- * @param r         Red color component of the line.
- * @param g         Green color component of the line.
- * @param b         Blue color component of the line.
- * @param a         Alpha value of the line (opacity).
+ * @param x             X coordinate of the line origin.
+ * @param y             Y coordinate of the line origin.
+ * @param x2            X coordinate of the line destination.
+ * @param y2            Y coordinate of the line destination.
  */
-void AM_AddLine4f(float x, float y, float x2, float y2, float width,
-                  float r, float g, float b, float a, blendmode_t blend)
+void AM_AddLine(float x, float y, float x2, float y2)
 {
-    amrline_t *l;
+    amrline_t*          l;
 
-    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend, width);
+    l = AM_AllocatePrimitive(DGL_LINES, 0, false);
 
     l->a.pos[0] = x;
     l->a.pos[1] = y;
     l->b.pos[0] = x2;
     l->b.pos[1] = y2;
-
-    l->type = AMLT_RGBA;
-    l->coldata.f4color.rgba[0] = r;
-    l->coldata.f4color.rgba[1] = g;
-    l->coldata.f4color.rgba[2] = b;
-    l->coldata.f4color.rgba[3] = MINMAX_OF(.0f, a, 1.0f);
 }
 
 /**
@@ -442,10 +388,6 @@ void AM_AddLine4f(float x, float y, float x2, float y2, float width,
  * @param tc3st2    Y coordinate of the bottom left vertex texture offset.
  * @param tc4st1    X coordinate of the bottom right vertex texture offset.
  * @param tc4st2    Y coordinate of the bottom right vertex texture offset.
- * @param r         Red color component of the line.
- * @param g         Green color component of the line.
- * @param b         Blue color component of the line.
- * @param a         Alpha value of the line (opacity).
  * @param tex       DGLuint texture identifier for quad OR patch lump num.
  * @param texIsPatchLumpNum  If @c true, 'tex' is a patch lump num.
  * @param blend     Blendmode used for this primitive.
@@ -456,7 +398,6 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
                 float tc2st1, float tc2st2,
                 float tc3st1, float tc3st2,
                 float tc4st1, float tc4st2,
-                float r, float g, float b, float a,
                 uint tex, boolean texIsPatchLumpNum, blendmode_t blend)
 {
     // Vertex layout.
@@ -467,12 +408,7 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
     //
     amrquad_t *q;
 
-    q = AM_AllocatePrimitive(DGL_QUADS, tex, texIsPatchLumpNum, blend, 0);
-
-    q->rgba[0] = r;
-    q->rgba[1] = g;
-    q->rgba[2] = b;
-    q->rgba[3] = a;
+    q = AM_AllocatePrimitive(DGL_QUADS, tex, texIsPatchLumpNum);
 
     // V1
     q->verts[0].pos[0] = x1;
@@ -507,351 +443,89 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
  * @param texIsPatchLumpNum   If @c true 'tex' is a patch lump num.
  * @param blend     All primitives on the list will be rendered with this
  *                  blending mode.
- * @param alpha     The alpha of primitives on the list will be rendered
- *                  using: (their alpha * alpha).
  * @param arg1      List-specific argment.
  * @param list      Ptr to the automap render list to be rendered.
  */
 void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
-                   float alpha, float arg1, amprimlist_t *list)
+                   float arg1, amprimlist_t* list)
 {
-    amprim_t   *p;
-    int         normal = 0, mask = 1;
-    int         maskID = 1;
-    float       oldLineWidth = 0;
-    boolean     withMask = false, texMatrix = false;
-
-    // Change render state for this list?
-
-    // If multitexturing is available, all primitives will be rendered using
-    // a modulation pass with the automap mask texture.
-    if(numTexUnits > 1)
+    if(list->type == DGL_QUADS)
     {
-        if(tex)
+        amprim_t*           p;
+
+        // Write commands.
+        DGL_Begin(DGL_QUADS);
+        p = list->head;
+        while(p)
         {
-            if(texIsPatchLumpNum)
-            {   /**
-                 * \fixme Can not modulate these primitives as we don't know
-                 * the GL texture name (DGLuint).
-                 * \fixme Need to store the wrap mode in the list.
-                 */
-                GL_SetPatch(tex, DGL_CLAMP, DGL_CLAMP);
-            }
-            else
-            {
-                AM_SelectTexUnits(2);
-                DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
-
-                AM_BindTo(0, tex);
-                AM_BindTo(1, amMaskTexture);
-                withMask = true;
-                texMatrix = true;
-            }
-        }
-        else
-        {
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
-            DGL_Bind(amMaskTexture);
-
-            tex = amMaskTexture;
-            maskID = 0;
-            withMask = false;
-            texMatrix = true;
-        }
-
-        DGL_Enable(DGL_TEXTURING);
-    }
-    else
-    {
-        if(tex)
-        {
-            if(texIsPatchLumpNum)
-                //// \fixme Need to store the wrap mode in the list.
-                GL_SetPatch(tex, DGL_CLAMP, DGL_CLAMP);
-            else
-                DGL_Bind(tex);
-
-            DGL_Enable(DGL_TEXTURING);
-        }
-        else
-        {
-            DGL_Disable(DGL_TEXTURING);
-        }
-    }
-
-    GL_BlendMode(blend);
-
-    if(texMatrix)
-    {
-        float       x, y, w, h, angle;
-
-        AM_GetWindow(mapviewplayer, &x, &y, &w, &h);
-        angle = AM_ViewAngle(mapviewplayer);
-
-        DGL_SetInteger(DGL_ACTIVE_TEXTURE, maskID);
-        DGL_MatrixMode(DGL_TEXTURE);
-        DGL_PushMatrix();
-        DGL_LoadIdentity();
-
-        // Scale from texture to window space.
-        DGL_Scalef(1.0f / w, 1.0f / h, 1);
-
-        // Translate to the view origin, apply map rotation.
-        DGL_Translatef(w / 2, h / 2, 0);
-        DGL_Rotatef(angle, 0, 0, 1);
-        DGL_Translatef(-(w / 2), -(h / 2), 0);
-
-        // Undo the texture to window space translation.
-        DGL_Translatef(-x, -y, 0);
-    }
-
-    // Write commands.
-    p = list->head;
-
-    // Need to adjust the line width?
-    if(list->type == DGL_LINES)
-    {
-        oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-        DGL_SetFloat(DGL_LINE_WIDTH, arg1);
-    }
-
-    if(withMask)
-    {
-        DGL_Begin(list->type);
-        switch(list->type)
-        {
-        case DGL_QUADS:
-            while(p)
-            {
-                DGL_Color4f(p->data.quad.rgba[0],
-                           p->data.quad.rgba[1],
-                           p->data.quad.rgba[2],
-                           p->data.quad.rgba[3] * alpha);
-
-                // V1
-                if(tex)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[0].tex[0],
+            // V1
+            DGL_MultiTexCoord2f(0, p->data.quad.verts[0].tex[0],
                                    p->data.quad.verts[0].tex[1]);
-                DGL_MultiTexCoord2f(mask,
-                                   p->data.quad.verts[0].pos[0],
+            DGL_MultiTexCoord2f(1, p->data.quad.verts[0].pos[0],
                                    p->data.quad.verts[0].pos[1]);
+            DGL_Vertex2f(p->data.quad.verts[0].pos[0],
+                         p->data.quad.verts[0].pos[1]);
 
-                DGL_Vertex2f(p->data.quad.verts[0].pos[0],
-                            p->data.quad.verts[0].pos[1]);
-                // V2
-                if(tex)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[1].tex[0],
+            // V2
+            DGL_MultiTexCoord2f(0, p->data.quad.verts[1].tex[0],
                                    p->data.quad.verts[1].tex[1]);
-                DGL_MultiTexCoord2f(mask,
-                                   p->data.quad.verts[1].pos[0],
+            DGL_MultiTexCoord2f(1, p->data.quad.verts[1].pos[0],
                                    p->data.quad.verts[1].pos[1]);
+            DGL_Vertex2f(p->data.quad.verts[1].pos[0],
+                         p->data.quad.verts[1].pos[1]);
 
-                DGL_Vertex2f(p->data.quad.verts[1].pos[0],
-                            p->data.quad.verts[1].pos[1]);
-                // V3
-                if(tex)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[2].tex[0],
+            // V3
+            DGL_MultiTexCoord2f(0, p->data.quad.verts[2].tex[0],
                                    p->data.quad.verts[2].tex[1]);
-                DGL_MultiTexCoord2f(mask,
-                                   p->data.quad.verts[2].pos[0],
+            DGL_MultiTexCoord2f(1, p->data.quad.verts[2].pos[0],
                                    p->data.quad.verts[2].pos[1]);
+            DGL_Vertex2f(p->data.quad.verts[2].pos[0],
+                         p->data.quad.verts[2].pos[1]);
 
-                DGL_Vertex2f(p->data.quad.verts[2].pos[0],
-                            p->data.quad.verts[2].pos[1]);
-                // V4
-                if(tex)
-                DGL_MultiTexCoord2f(normal,
-                                   p->data.quad.verts[3].tex[0],
+            // V4
+            DGL_MultiTexCoord2f(0, p->data.quad.verts[3].tex[0],
                                    p->data.quad.verts[3].tex[1]);
-                DGL_MultiTexCoord2f(mask,
-                                   p->data.quad.verts[3].pos[0],
+            DGL_MultiTexCoord2f(1, p->data.quad.verts[3].pos[0],
                                    p->data.quad.verts[3].pos[1]);
+            DGL_Vertex2f(p->data.quad.verts[3].pos[0],
+                         p->data.quad.verts[3].pos[1]);
 
-                DGL_Vertex2f(p->data.quad.verts[3].pos[0],
-                            p->data.quad.verts[3].pos[1]);
-
-                p = p->next;
-            }
-            break;
-
-        case DGL_LINES:
-            while(p)
-            {
-                if(p->data.line.type == AMLT_PALCOL)
-                {
-                    float               rgba[4];
-
-                    GL_PalIdxToRGB(p->data.line.coldata.palcolor.color, rgba);
-                    rgba[3] = MINMAX_OF(0, p->data.line.coldata.palcolor.alpha * alpha, 1);
-
-                    DGL_Color4fv(rgba);
-                }
-                else
-                {
-                    DGL_Color4f(p->data.line.coldata.f4color.rgba[0],
-                               p->data.line.coldata.f4color.rgba[1],
-                               p->data.line.coldata.f4color.rgba[2],
-                               p->data.line.coldata.f4color.rgba[3] * alpha);
-                }
-
-                if(tex)
-                    DGL_MultiTexCoord2f(normal, 0, 0);
-                DGL_MultiTexCoord2f(mask, p->data.line.a.pos[0],
-                                   p->data.line.a.pos[1]);
-                DGL_Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
-
-                if(tex)
-                    DGL_MultiTexCoord2f(normal, 1, 1);
-                DGL_MultiTexCoord2f(mask, p->data.line.b.pos[0],
-                                   p->data.line.b.pos[1]);
-                DGL_Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
-
-                p = p->next;
-            }
-            break;
-
-        default:
-            break;
+            p = p->next;
         }
-        DGL_End();
     }
-    else
+    else // DGL_LINES
     {
-        DGL_Begin(list->type);
-        switch(list->type)
+        amprim_t*           p;
+
+        // Write commands.
+        DGL_Begin(DGL_LINES);
+        p = list->head;
+        while(p)
         {
-        case DGL_QUADS:
-            while(p)
-            {
-                DGL_Color4f(p->data.quad.rgba[0],
-                           p->data.quad.rgba[1],
-                           p->data.quad.rgba[2],
-                           p->data.quad.rgba[3] * alpha);
-                // V1
-                if(tex && maskID == 0)
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[0].pos[0],
-                                        p->data.quad.verts[0].pos[1]);
-                else
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[0].tex[0],
-                                        p->data.quad.verts[0].tex[1]);
+            DGL_TexCoord2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+            DGL_Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+            DGL_TexCoord2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+            DGL_Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
 
-                DGL_Vertex2f(p->data.quad.verts[0].pos[0],
-                             p->data.quad.verts[0].pos[1]);
-                // V2
-                if(tex && maskID == 0)
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[1].pos[0],
-                                        p->data.quad.verts[1].pos[1]);
-                else
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[1].tex[0],
-                                        p->data.quad.verts[1].tex[1]);
+            p = p->next;
 
-                DGL_Vertex2f(p->data.quad.verts[1].pos[0],
-                             p->data.quad.verts[1].pos[1]);
-                // V3
-                if(tex && maskID == 0)
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[2].pos[0],
-                                        p->data.quad.verts[2].pos[1]);
-                else
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[2].tex[0],
-                                        p->data.quad.verts[2].tex[1]);
-
-                DGL_Vertex2f(p->data.quad.verts[2].pos[0],
-                             p->data.quad.verts[2].pos[1]);
-                // V4
-                if(tex && maskID == 0)
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[3].pos[0],
-                                        p->data.quad.verts[3].pos[1]);
-                else
-                    DGL_MultiTexCoord2f(normal,
-                                        p->data.quad.verts[3].tex[0],
-                                        p->data.quad.verts[3].tex[1]);
-
-                DGL_Vertex2f(p->data.quad.verts[3].pos[0],
-                             p->data.quad.verts[3].pos[1]);
-
-                p = p->next;
-            }
-            break;
-
-        case DGL_LINES:
-            while(p)
-            {
-                if(p->data.line.type == AMLT_PALCOL)
-                {
-                    float               rgba[4];
-
-                    GL_PalIdxToRGB(p->data.line.coldata.palcolor.color, rgba);
-                    rgba[3] = MINMAX_OF(0, p->data.line.coldata.palcolor.alpha * alpha, 1);
-
-                    DGL_Color4fv(rgba);
-                }
-                else
-                {
-                    DGL_Color4f(p->data.line.coldata.f4color.rgba[0],
-                                p->data.line.coldata.f4color.rgba[1],
-                                p->data.line.coldata.f4color.rgba[2],
-                                p->data.line.coldata.f4color.rgba[3] * alpha);
-                }
-
-                if(tex && maskID == 0)
-                    DGL_MultiTexCoord2f(normal, p->data.line.a.pos[0], p->data.line.a.pos[1]);
-                DGL_Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
-                if(tex && maskID == 0)
-                    DGL_MultiTexCoord2f(normal, p->data.line.b.pos[0], p->data.line.b.pos[1]);
-                DGL_Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
-
-                p = p->next;
-            }
-            break;
-
-        default:
-            break;
         }
         DGL_End();
     }
-
-    // Restore previous line width.
-    if(list->type == DGL_LINES)
-        DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
-
-    // Restore previous state.
-    if(texMatrix)
-    {
-        DGL_MatrixMode(DGL_TEXTURE);
-        DGL_PopMatrix();
-    }
-
-    AM_SelectTexUnits(1);
-    DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
-    if(!tex)
-        DGL_Enable(DGL_TEXTURING);
-
-    GL_BlendMode(BM_NORMAL);
 }
 
 /**
  * Render all primitives in all automap render lists.
  */
-void AM_RenderAllLists(float alpha)
+void AM_RenderAllLists(void)
 {
-    amlist_t *list;
+    amlist_t*               list;
 
     list = amListsHead;
     while(list)
     {
         AM_RenderList(list->tex, list->texIsPatchLumpNum, list->blend,
-                      alpha, list->arg1,
-                      &list->primlist);
+                      list->arg1, &list->primlist);
         list = list->next;
     }
 }

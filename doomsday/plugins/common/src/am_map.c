@@ -34,9 +34,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#if __WOLFTC__
-#  include "wolftc.h"
-#elif __JDOOM__
+#if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
@@ -62,55 +60,49 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define AM_LINE_WIDTH           (1.25f)
+#define AM_LINE_WIDTH       (1.25f)
 
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-//
-// The vector graphics for the automap.
-//  A line drawing of the player pointing right,
-//   starting from the middle.
-//
-
 typedef struct mpoint_s {
-    float       pos[3];
+    float               pos[3];
 } mpoint_t;
 
 typedef struct mline_s {
-    mpoint_t a, b;
+    mpoint_t            a, b;
 } vgline_t;
 
 #define R (1.0f)
 
-vgline_t         keysquare[] = {
+vgline_t keysquare[] = {
     {{0, 0}, {R / 4, -R / 2}},
     {{R / 4, -R / 2}, {R / 2, -R / 2}},
     {{R / 2, -R / 2}, {R / 2, R / 2}},
     {{R / 2, R / 2}, {R / 4, R / 2}},
-    {{R / 4, R / 2}, {0, 0}},       // handle part type thing
-    {{0, 0}, {-R, 0}},               // stem
-    {{-R, 0}, {-R, -R / 2}},       // end lockpick part
+    {{R / 4, R / 2}, {0, 0}}, // Handle part type thing.
+    {{0, 0}, {-R, 0}}, // Stem.
+    {{-R, 0}, {-R, -R / 2}}, // End lockpick part.
     {{-3 * R / 4, 0}, {-3 * R / 4, -R / 4}}
 };
 
-vgline_t         thintriangle_guy[] = {
+vgline_t thintriangle_guy[] = {
     {{-R / 2, R - R / 2}, {R, 0}}, // >
     {{R, 0}, {-R / 2, -R + R / 2}},
     {{-R / 2, -R + R / 2}, {-R / 2, R - R / 2}} // |>
 };
 
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
-vgline_t         player_arrow[] = {
-    {{-R + R / 8, 0}, {R, 0}},    // -----
-    {{R, 0}, {R - R / 2, R / 4}},    // ----->
+#if __JDOOM__ || __JDOOM64__
+vgline_t player_arrow[] = {
+    {{-R + R / 8, 0}, {R, 0}}, // -----
+    {{R, 0}, {R - R / 2, R / 4}}, // ----->
     {{R, 0}, {R - R / 2, -R / 4}},
-    {{-R + R / 8, 0}, {-R - R / 8, R / 4}},    // >---->
+    {{-R + R / 8, 0}, {-R - R / 8, R / 4}}, // >---->
     {{-R + R / 8, 0}, {-R - R / 8, -R / 4}},
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 4}},    // >>--->
+    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 4}}, // >>--->
     {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4}}
 };
 
-vgline_t         cheat_player_arrow[] = {
+vgline_t cheat_player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},    // -----
     {{R, 0}, {R - R / 2, R / 6}},    // ----->
     {{R, 0}, {R - R / 2, -R / 6}},
@@ -130,7 +122,7 @@ vgline_t         cheat_player_arrow[] = {
 };
 
 #elif __JHERETIC__
-vgline_t         player_arrow[] = {
+vgline_t player_arrow[] = {
     {{-R + R / 4, 0}, {0, 0}},       // center line.
     {{-R + R / 4, R / 8}, {R, 0}}, // blade
     {{-R + R / 4, -R / 8}, {R, 0}},
@@ -143,7 +135,7 @@ vgline_t         player_arrow[] = {
     {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
 };
 
-vgline_t         cheat_player_arrow[] = {
+vgline_t cheat_player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},       // -----
     {{R, 0}, {R - R / 2, R / 6}},  // ----->
     {{R, 0}, {R - R / 2, -R / 6}},
@@ -163,7 +155,7 @@ vgline_t         cheat_player_arrow[] = {
 };
 
 #elif __JHEXEN__
-vgline_t         player_arrow[] = {
+vgline_t player_arrow[] = {
     {{-R + R / 4, 0}, {0, 0}},       // center line.
     {{-R + R / 4, R / 8}, {R, 0}}, // blade
     {{-R + R / 4, -R / 8}, {R, 0}},
@@ -185,54 +177,51 @@ vgline_t         player_arrow[] = {
 #define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / scrwidth))
 #define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / scrheight))
 
-// translates between frame-buffer and map distances
+// Translates between frame-buffer and map distances
 #define FTOM(map, x) ((x) * (map)->scaleFTOM)
 #define MTOF(map, x) ((x) * (map)->scaleMTOF)
-
-// translates between frame-buffer and map coordinates
-#define CXMTOF(map, xpos)  ((map)->window.x + MTOF((map), (xpos) - (map)->vframe[0][VX]))
-#define CYMTOF(map, ypos)  ((map)->window.y + ((map)->window.height - MTOF((map), (ypos) - (map)->vframe[0][VY])))
 
 #define AM_MAXSPECIALLINES      32
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct mapobjectinfo_s {
-    float       rgba[4];
-    int         blendMode;
-
-    float       glowAlpha;
-    float       glowWidth;
-    boolean     glow;
-
-    boolean     scaleWithView;
+    float           rgba[4];
+    int             blendMode;
+    float           glowAlpha, glowWidth;
+    boolean         glow;
+    boolean         scaleWithView;
 } mapobjectinfo_t;
 
 typedef struct automapwindow_s {
     // Where the window currently is on screen, and the dimensions.
-    float       x, y, width, height;
+    float           x, y, width, height;
 
     // Where the window should be on screen, and the dimensions.
-    int         targetX, targetY, targetWidth, targetHeight;
+    int             targetX, targetY, targetWidth, targetHeight;
+    int             oldX, oldY, oldWidth, oldHeight;
 
-    int         oldX, oldY, oldWidth, oldHeight;
-
-    float       posTimer;
+    float           posTimer;
 } automapwindow_t;
 
-typedef struct automapcfg_s {
-    float       lineGlowScale;
-    boolean     glowingLineSpecials;
-    float       backgroundRGBA[4];
-    float       panSpeed;
-    boolean     panResetOnOpen;
-    float       zoomSpeed;
+enum {
+    MOL_LINEDEF = 0,
+    MOL_LINEDEF_TWOSIDED,
+    MOL_LINEDEF_FLOOR,
+    MOL_LINEDEF_CEILING,
+    MOL_LINEDEF_UNSEEN,
+    NUM_MAP_OBJECTLISTS
+};
 
-    mapobjectinfo_t unseenLine;
-    mapobjectinfo_t singleSidedLine;
-    mapobjectinfo_t twoSidedLine;
-    mapobjectinfo_t floorChangeLine;
-    mapobjectinfo_t ceilingChangeLine;
+typedef struct automapcfg_s {
+    float           lineGlowScale;
+    boolean         glowingLineSpecials;
+    float           backgroundRGBA[4];
+    float           panSpeed;
+    boolean         panResetOnOpen;
+    float           zoomSpeed;
+
+    mapobjectinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
 } automapcfg_t;
 
 #define AMF_REND_THINGS         0x01
@@ -243,135 +232,134 @@ typedef struct automapcfg_s {
 #define AMF_REND_LINE_NORMALS   0x20
 
 typedef struct automapspecialline_s {
-    int         special;
-    int         sided;
-    int         cheatLevel; // minimum cheat level for this special.
+    int             special;
+    int             sided;
+    int             cheatLevel; // minimum cheat level for this special.
     mapobjectinfo_t info;
 } automapspecialline_t;
 
 typedef struct automap_s {
 // State
-    int         flags;
-    boolean     active;
+    int             flags;
+    boolean         active;
 
-    boolean     fullScreenMode; // If the map is currently in fullscreen mode.
-    boolean     panMode; // If the map viewer location is currently in free pan mode.
-    boolean     rotate;
-    uint        followPlayer; // Player id of that to follow.
+    boolean         fullScreenMode; // If the map is currently in fullscreen mode.
+    boolean         panMode; // If the map viewer location is currently in free pan mode.
+    boolean         rotate;
+    uint            followPlayer; // Player id of that to follow.
 
-    boolean     maxScale; // If the map is currently in forced max zoom mode.
-    float       priorToMaxScale; // Viewer scale before entering maxScale mode.
+    boolean         maxScale; // If the map is currently in forced max zoom mode.
+    float           priorToMaxScale; // Viewer scale before entering maxScale mode.
 
     // Used by MTOF to scale from map-to-frame-buffer coords.
-    float       scaleMTOF;
+    float           scaleMTOF;
     // Used by FTOM to scale from frame-buffer-to-map coords (=1/scaleMTOF).
-    float       scaleFTOM;
+    float           scaleFTOM;
 
 // Paramaters for render.
-    float       alpha;
-    float       targetAlpha;
+    float           alpha;
+    float           targetAlpha;
 
     automapcfg_t cfg;
 
     automapspecialline_t specialLines[AM_MAXSPECIALLINES];
-    uint        numSpecialLines;
+    uint            numSpecialLines;
 
     vectorgrapname_t vectorGraphicForPlayer;
-    int         scissorState[5];
+    int             scissorState[5];
+
+// DGL Display lists.
+    DGLuint         lists[NUM_MAP_OBJECTLISTS]; // Each list contains one or more of given type of automap obj.
+    boolean         constructMap; // @c true = force a rebuild of all lists.
 
 // Automap window (screen space).
     automapwindow_t window;
 
 // Viewer location on the map.
-    float       viewTimer;
-    float       viewX, viewY; // Current.
-    float       targetViewX, targetViewY; // Should be at.
-    float       oldViewX, oldViewY; // Previous.
+    float           viewTimer;
+    float           viewX, viewY; // Current.
+    float           targetViewX, targetViewY; // Should be at.
+    float           oldViewX, oldViewY; // Previous.
     // For the parallax layer.
-    float       viewPLX, viewPLY; // Current.
+    float           viewPLX, viewPLY; // Current.
 
 // Viewer frame scale.
-    float       viewScaleTimer;
-    float       viewScale; // Current.
-    float       targetViewScale; // Should be at.
-    float       oldViewScale; // Previous.
+    float           viewScaleTimer;
+    float           viewScale; // Current.
+    float           targetViewScale; // Should be at.
+    float           oldViewScale; // Previous.
 
-    float       minScaleMTOF; // Viewer frame scale limits.
-    float       maxScaleMTOF; //
+    float           minScaleMTOF; // Viewer frame scale limits.
+    float           maxScaleMTOF; //
 
 // Viewer frame rotation.
-    float       angleTimer;
-    float       angle; // Current.
-    float       targetAngle; // Should be at.
-    float       oldAngle; // Previous.
+    float           angleTimer;
+    float           angle; // Current.
+    float           targetAngle; // Should be at.
+    float           oldAngle; // Previous.
 
 // Viewer frame coordinates on map.
-    float       vframe[2][2]; // {TL{x,y}, BR{x,y}}
+    float           vframe[2][2]; // {TL{x,y}, BR{x,y}}
 
-    float       vbbox[4]; // Clip bbox coordinates on map.
+    float           vbbox[4]; // Clip bbox coordinates on map.
 
 // Misc
-    int         cheating;
+    int             cheating;
+    boolean         revealed;
 
     // Marked map points.
-    mpoint_t    markpoints[NUMMARKPOINTS];
-    boolean     markpointsUsed[NUMMARKPOINTS];
-    int         markpointnum; // next point to be assigned.
+    mpoint_t        markpoints[NUMMARKPOINTS];
+    boolean         markpointsUsed[NUMMARKPOINTS];
+    int             markpointnum; // next point to be assigned.
 } automap_t;
 
 typedef struct vectorgrap_s {
-    uint        count;
-    vgline_t    *lines;
+    uint            count;
+    vgline_t*       lines;
 } vectorgrap_t;
 
 typedef struct automaptex_s {
-    int         width, height;
-    DGLuint     tex;
+    int             width, height;
+    DGLuint         tex;
 } automaptex_t;
 
 typedef struct {
-    player_t   *plr;
-    automap_t  *map;
+    player_t*       plr;
+    automap_t*      map;
+    int             objType;
 } ssecitervars_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    M_DrawMapMenu(void);
-
-//automap menu items
-void    M_MapPosition(int option, void *data);
-void    M_MapWidth(int option, void *data);
-void    M_MapHeight(int option, void *data);
-void    M_MapLineAlpha(int option, void *data);
-void    M_MapDoorColors(int option, void *data);
-void    M_MapDoorGlow(int option, void *data);
-void    M_MapRotate(int option, void *data);
-void    M_MapStatusbar(int option, void *data);
-void    M_MapKills(int option, void *data);
-void    M_MapItems(int option, void *data);
-void    M_MapSecrets(int option, void *data);
+// Menu routines.
+void            M_DrawMapMenu(void);
+void            M_MapPosition(int option, void* data);
+void            M_MapWidth(int option, void* data);
+void            M_MapHeight(int option, void* data);
+void            M_MapLineAlpha(int option, void* data);
+void            M_MapDoorColors(int option, void* data);
+void            M_MapDoorGlow(int option, void* data);
+void            M_MapRotate(int option, void* data);
+void            M_MapStatusbar(int option, void* data);
+void            M_MapKills(int option, void* data);
+void            M_MapItems(int option, void* data);
+void            M_MapSecrets(int option, void* data);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void setWindowFullScreenMode(automap_t *map, int value);
-static void setViewTarget(automap_t *map, float x, float y);
-static void setViewScaleTarget(automap_t *map, float scale);
-static void setViewAngleTarget(automap_t *map, float angle);
-static void setViewRotateMode(automap_t *map, boolean on);
-static void clearMarks(automap_t *map);
+static void     setWindowFullScreenMode(automap_t* map, int value);
+static void     setViewTarget(automap_t* map, float x, float y, boolean fast);
+static void     setViewScaleTarget(automap_t* map, float scale);
+static void     setViewAngleTarget(automap_t* map, float angle, boolean fast);
+static void     setViewRotateMode(automap_t* map, boolean on);
+static void     clearMarks(automap_t* map);
 
-static void findMinMaxBoundaries(void);
-static void drawLevelName(void);
-static void drawWorldTimer(void);
-#if __JDOOM__ || __JDOOM64__
-static void drawFragsTable(void);
-#elif __JHEXEN__ || __JSTRIFE__
-static void drawDeathmatchStats(void);
-#endif
-
-static void rotate2D(float *x, float *y, angle_t a);
+static void     compileObjectLists(automap_t* map);
+static void     findMinMaxBoundaries(void);
+static void     renderMapName(void);
+static void     rotate2D(float* x, float* y, angle_t a);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -385,9 +373,9 @@ extern DGLuint amMaskTexture;
 
 int mapviewplayer;
 
-cvar_t  mapCVars[] = {
+cvar_t mapCVars[] = {
     {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1},
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
 #endif
     {"map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1},
@@ -420,7 +408,7 @@ cvar_t  mapCVars[] = {
 
 static automap_t automaps[MAXPLAYERS];
 
-static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
+static vectorgrap_t* vectorGraphs[NUM_VECTOR_GRAPHS];
 
 #if __JDOOM__ || __JDOOM64__
 static int maplumpnum = 0; // if 0 no background image will be drawn
@@ -457,17 +445,17 @@ static int their_colors[] = {
 };
 #endif
 
-static int scrwidth = 0;    // real screen dimensions
+static int scrwidth = 0; // Real screen dimensions.
 static int scrheight = 0;
 
-// Map bounds
+// Map bounds.
 static float bounds[2][2]; // {TL{x,y}, BR{x,y}}
 
-static dpatch_t markerPatches[10]; // numbers used for marking by the automap (lump indices)
+static dpatch_t markerPatches[10]; // Numbers used for marking by the automap (lump indices).
 
 // CODE --------------------------------------------------------------------
 
-static automap_t __inline *mapForPlayerId(int id)
+static __inline automap_t* mapForPlayerId(int id)
 {
     if(id < 0 || id >= MAXPLAYERS)
     {
@@ -480,10 +468,10 @@ Con_Error("mapForPlayerId: Invalid player id %i.", id);
     return &automaps[id];
 }
 
-static vectorgrap_t *getVectorGraphic(uint idx)
+static vectorgrap_t* getVectorGraphic(uint idx)
 {
-    vectorgrap_t       *vg;
-    vgline_t           *lines;
+    vectorgrap_t*       vg;
+    vgline_t*           lines;
 
     if(idx > NUM_VECTOR_GRAPHS - 1)
         return NULL;
@@ -535,27 +523,30 @@ static vectorgrap_t *getVectorGraphic(uint idx)
     return vg;
 }
 
-static mapobjectinfo_t *getMapObjectInfo(automap_t *map, int objectname)
+static mapobjectinfo_t* getMapObjectInfo(automap_t* map, int objectname)
 {
+    if(objectname == AMO_NONE)
+        return NULL;
+
     if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
         Con_Error("getMapObjectInfo: Unknown object %i.", objectname);
 
     switch(objectname)
     {
     case AMO_UNSEENLINE:
-        return &map->cfg.unseenLine;
+        return &map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN];
 
     case AMO_SINGLESIDEDLINE:
-        return &map->cfg.singleSidedLine;
+        return &map->cfg.mapObjectInfo[MOL_LINEDEF];
 
     case AMO_TWOSIDEDLINE:
-        return &map->cfg.twoSidedLine;
+        return &map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED];
 
     case AMO_FLOORCHANGELINE:
-        return &map->cfg.floorChangeLine;
+        return &map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR];
 
     case AMO_CEILINGCHANGELINE:
-        return &map->cfg.ceilingChangeLine;
+        return &map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING];
 
     default:
         Con_Error("getMapObjectInfo: No info for object %i.", objectname);
@@ -564,12 +555,12 @@ static mapobjectinfo_t *getMapObjectInfo(automap_t *map, int objectname)
     return NULL;
 }
 
-static mapobjectinfo_t *getInfoForSpecialLine(automap_t *map, int special,
-                                              sector_t *frontsector,
-                                              sector_t *backsector)
+static mapobjectinfo_t* getInfoForSpecialLine(automap_t* map, int special,
+                                              sector_t* frontsector,
+                                              sector_t* backsector)
 {
     uint                i;
-    mapobjectinfo_t    *info = NULL;
+    mapobjectinfo_t*    info = NULL;
 
     if(special > 0)
     {
@@ -641,7 +632,8 @@ void AM_Init(void)
     memset(&automaps, 0, sizeof(automaps));
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        automap_t *map = &automaps[i];
+        uint                j;
+        automap_t*          map = &automaps[i];
 
         // Initialize.
         // \fixme Put these values into an array (or read from a lump?).
@@ -651,104 +643,108 @@ void AM_Init(void)
         map->window.oldY = map->window.y = 0;
         map->window.oldWidth = map->window.width = scrwidth;
         map->window.oldHeight = map->window.height = scrheight;
-        map->cfg.unseenLine.glow = NO_GLOW;
-        map->cfg.unseenLine.glowAlpha = 1;
-        map->cfg.unseenLine.glowWidth = 10;
-        map->cfg.unseenLine.blendMode = BM_NORMAL;
-        map->cfg.unseenLine.scaleWithView = false;
-        map->cfg.unseenLine.rgba[0] = 1;
-        map->cfg.unseenLine.rgba[1] = 1;
-        map->cfg.unseenLine.rgba[2] = 1;
-        map->cfg.unseenLine.rgba[3] = 1;
-        map->cfg.singleSidedLine.glow = NO_GLOW;
-        map->cfg.singleSidedLine.glowAlpha = 1;
-        map->cfg.singleSidedLine.glowWidth = 10;
-        map->cfg.singleSidedLine.blendMode = BM_NORMAL;
-        map->cfg.singleSidedLine.scaleWithView = false;
-        map->cfg.singleSidedLine.rgba[0] = 1;
-        map->cfg.singleSidedLine.rgba[1] = 1;
-        map->cfg.singleSidedLine.rgba[2] = 1;
-        map->cfg.singleSidedLine.rgba[3] = 1;
-        map->cfg.twoSidedLine.glow = NO_GLOW;
-        map->cfg.twoSidedLine.glowAlpha = 1;
-        map->cfg.twoSidedLine.glowWidth = 10;
-        map->cfg.twoSidedLine.blendMode = BM_NORMAL;
-        map->cfg.twoSidedLine.scaleWithView = false;
-        map->cfg.twoSidedLine.rgba[0] = 1;
-        map->cfg.twoSidedLine.rgba[1] = 1;
-        map->cfg.twoSidedLine.rgba[2] = 1;
-        map->cfg.twoSidedLine.rgba[3] = 1;
-        map->cfg.floorChangeLine.glow = NO_GLOW;
-        map->cfg.floorChangeLine.glowAlpha = 1;
-        map->cfg.floorChangeLine.glowWidth = 10;
-        map->cfg.floorChangeLine.blendMode = BM_NORMAL;
-        map->cfg.floorChangeLine.scaleWithView = false;
-        map->cfg.floorChangeLine.rgba[0] = 1;
-        map->cfg.floorChangeLine.rgba[1] = 1;
-        map->cfg.floorChangeLine.rgba[2] = 1;
-        map->cfg.floorChangeLine.rgba[3] = 1;
-        map->cfg.ceilingChangeLine.glow = NO_GLOW;
-        map->cfg.ceilingChangeLine.glowAlpha = 1;
-        map->cfg.ceilingChangeLine.glowWidth = 10;
-        map->cfg.ceilingChangeLine.blendMode = BM_NORMAL;
-        map->cfg.ceilingChangeLine.scaleWithView = false;
-        map->cfg.ceilingChangeLine.rgba[0] = 1;
-        map->cfg.ceilingChangeLine.rgba[1] = 1;
-        map->cfg.ceilingChangeLine.rgba[2] = 1;
-        map->cfg.ceilingChangeLine.rgba[3] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].glow = NO_GLOW;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].glowAlpha = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].glowWidth = 10;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].blendMode = BM_NORMAL;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].scaleWithView = false;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].rgba[0] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].rgba[1] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].rgba[2] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN].rgba[3] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].glow = NO_GLOW;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].glowAlpha = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].glowWidth = 10;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].blendMode = BM_NORMAL;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].scaleWithView = false;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].rgba[0] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].rgba[1] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].rgba[2] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF].rgba[3] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].glow = NO_GLOW;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].glowAlpha = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].glowWidth = 10;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].blendMode = BM_NORMAL;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].scaleWithView = false;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].rgba[0] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].rgba[1] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].rgba[2] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED].rgba[3] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].glow = NO_GLOW;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].glowAlpha = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].glowWidth = 10;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].blendMode = BM_NORMAL;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].scaleWithView = false;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].rgba[0] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].rgba[1] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].rgba[2] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR].rgba[3] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].glow = NO_GLOW;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].glowAlpha = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].glowWidth = 10;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].blendMode = BM_NORMAL;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].scaleWithView = false;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].rgba[0] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].rgba[1] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].rgba[2] = 1;
+        map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING].rgba[3] = 1;
+
+        for(j = 0; j < NUM_MAP_OBJECTLISTS; ++j)
+            map->lists[j] = 0;
+        map->constructMap = true;
 
         // Register lines we want to display in a special way.
-#if __JDOOM__ || __JDOOM64__ || __WOLFTC__
+#if __JDOOM__ || __JDOOM64__
         // Blue locked door, open.
-        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Blue locked door, locked.
-        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 99, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 133, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 99, 0, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 133, 0, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Red locked door, open.
-        AM_RegisterSpecialLine(i, 0, 33, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 33, 2, .682f, 0, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Red locked door, locked.
-        AM_RegisterSpecialLine(i, 0, 28, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 134, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 135, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 28, 2, .682f, 0, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 134, 2, .682f, 0, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 135, 2, .682f, 0, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Yellow locked door, open.
-        AM_RegisterSpecialLine(i, 0, 34, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 34, 2, .905f, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Yellow locked door, locked.
-        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 136, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 137, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 136, 2, .905f, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 137, 2, .905f, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Exit switch.
-        AM_RegisterSpecialLine(i, 1, 11, 1, 0, 1, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 1, 11, 1, 0, 1, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Exit cross line.
-        AM_RegisterSpecialLine(i, 1, 52, 2, 0, 1, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 1, 52, 2, 0, 1, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Secret Exit switch.
-        AM_RegisterSpecialLine(i, 1, 51, 1, 0, 1, 1, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 1, 51, 1, 0, 1, 1, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Secret Exit cross line.
-        AM_RegisterSpecialLine(i, 2, 124, 2, 0, 1, 1, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 2, 124, 2, 0, 1, 1, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
 #elif __JHERETIC__
         // Blue locked door.
-        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Blue switch?
-        AM_RegisterSpecialLine(i, 0, 32, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 32, 0, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Yellow locked door.
-        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Yellow switch?
-        AM_RegisterSpecialLine(i, 0, 34, 0, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 34, 0, .905f, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Green locked door.
-        AM_RegisterSpecialLine(i, 0, 28, 2, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 28, 2, 0, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Green switch?
-        AM_RegisterSpecialLine(i, 0, 33, 0, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 33, 0, 0, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
 #elif __JHEXEN__
         // A locked door (all are green).
-        AM_RegisterSpecialLine(i, 0, 13, 0, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 83, 0, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        // Intra-level teleporters (all are blue).
-        AM_RegisterSpecialLine(i, 0, 70, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 71, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        // Inter-level teleport.
-        AM_RegisterSpecialLine(i, 0, 74, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 13, 0, 0, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 83, 0, 0, .9f, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        // Intra-map teleporters (all are blue).
+        AM_RegisterSpecialLine(i, 0, 70, 2, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        AM_RegisterSpecialLine(i, 0, 71, 2, 0, 0, .776f, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
+        // Inter-map teleport.
+        AM_RegisterSpecialLine(i, 0, 74, 2, .682f, 0, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
         // Game-winning exit.
-        AM_RegisterSpecialLine(i, 0, 75, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 75, 2, .682f, 0, 0, 1, BM_NORMAL, TWOSIDED_GLOW, .75f, 5, true);
 #endif
 
         // Setup map based on player's config.
@@ -766,19 +762,19 @@ void AM_Init(void)
                             cfg.automapBack[2], cfg.automapBack[3]);
         AM_SetColorAndAlpha(i, AMO_UNSEENLINE,
                             cfg.automapL0[0], cfg.automapL0[1],
-                            cfg.automapL0[2], cfg.automapLineAlpha);
+                            cfg.automapL0[2], 1);
         AM_SetColorAndAlpha(i, AMO_SINGLESIDEDLINE,
                             cfg.automapL1[0], cfg.automapL1[1],
-                            cfg.automapL1[2], cfg.automapLineAlpha);
+                            cfg.automapL1[2], 1);
         AM_SetColorAndAlpha(i, AMO_TWOSIDEDLINE,
                             cfg.automapL0[0], cfg.automapL0[1],
-                            cfg.automapL0[2], cfg.automapLineAlpha);
+                            cfg.automapL0[2], 1);
         AM_SetColorAndAlpha(i, AMO_FLOORCHANGELINE,
                             cfg.automapL2[0], cfg.automapL2[1],
-                            cfg.automapL2[2], cfg.automapLineAlpha);
+                            cfg.automapL2[2], 1);
         AM_SetColorAndAlpha(i, AMO_CEILINGCHANGELINE,
                             cfg.automapL3[0], cfg.automapL3[1],
-                            cfg.automapL3[2], cfg.automapLineAlpha);
+                            cfg.automapL3[2], 1);
     }
 }
 
@@ -808,7 +804,7 @@ void AM_Shutdown(void)
     }
 }
 
-static void calcViewScaleFactors(automap_t *map)
+static void calcViewScaleFactors(automap_t* map)
 {
     float               a, b;
     float               maxWidth;
@@ -839,10 +835,9 @@ static void calcViewScaleFactors(automap_t *map)
 /**
  * Called during the finalization stage of map loading (after all geometry).
  */
-void AM_InitForLevel(void)
+void AM_InitForMap(void)
 {
     uint                i;
-    automap_t          *map;
 
     if(IS_DEDICATED)
         return; // nothing to do.
@@ -853,7 +848,18 @@ void AM_InitForLevel(void)
     // Setup all players' maps.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        map = &automaps[i];
+        uint                j;
+        automap_t*          map = &automaps[i];
+
+        for(j = 0; j < NUM_MAP_OBJECTLISTS; ++j)
+        {
+            if(map->lists[j])
+                DGL_DeleteLists(map->lists[j], 1);
+            map->lists[j] = 0;
+            map->constructMap = true;
+        }
+
+        map->revealed = false;
 
         setWindowFullScreenMode(map, true);
 
@@ -873,14 +879,14 @@ void AM_InitForLevel(void)
         if(!IS_NETGAME && map->cheating)
             AM_SetVectorGraphic(i, AMO_THINGPLAYER, VG_CHEATARROW);
 #endif
-        // If the map has been left open from the previous level; close it.
-        AM_Open(i, false);
+        // If the map has been left open; close it.
+        AM_Open(i, false, true);
 
         // Reset position onto the follow player.
         if(players[map->followPlayer].plr->mo)
         {
             mobj_t* mo = players[map->followPlayer].plr->mo;
-            setViewTarget(map, mo->pos[VX], mo->pos[VY]);
+            setViewTarget(map, mo->pos[VX], mo->pos[VY], true);
         }
     }
 }
@@ -888,7 +894,7 @@ void AM_InitForLevel(void)
 /**
  * Start the automap.
  */
-void AM_Open(int pnum, boolean yes)
+void AM_Open(int pnum, boolean yes, boolean fast)
 {
     automap_t*          map;
 
@@ -898,7 +904,7 @@ void AM_Open(int pnum, boolean yes)
     if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->inGame)
         return;
 
-    if(G_GetGameState() != GS_LEVEL)
+    if(G_GetGameState() != GS_MAP)
         return;
 
     map = &automaps[pnum];
@@ -914,20 +920,22 @@ void AM_Open(int pnum, boolean yes)
         viewActive = false;
 
         map->active = true;
-        AM_SetGlobalAlphaTarget(pnum, 1);
+        map->targetAlpha = 1;
+        if(fast)
+            map->alpha = 1;
 
         if(!players[map->followPlayer].plr->inGame)
         {   // Set viewer target to the center of the map.
             setViewTarget(map, (bounds[1][VX] - bounds[0][VX]) / 2,
-                                (bounds[1][VY] - bounds[0][VY]) / 2);
-            setViewAngleTarget(map, 0);
+                               (bounds[1][VY] - bounds[0][VY]) / 2, fast);
+            setViewAngleTarget(map, 0, fast);
         }
         else
         {   // The map's target player is available.
             mobj_t*             mo = players[map->followPlayer].plr->mo;
 
             if(!(map->panMode && !map->cfg.panResetOnOpen))
-                setViewTarget(map, mo->pos[VX], mo->pos[VY]);
+                setViewTarget(map, mo->pos[VX], mo->pos[VY], fast);
 
             if(map->panMode && map->cfg.panResetOnOpen)
             {
@@ -935,10 +943,10 @@ void AM_Open(int pnum, boolean yes)
 
                 /* $unifiedangles */
                 if(map->rotate)
-                    angle = mo->angle / (float) ANGLE_MAX * 360 - 90;
+                    angle = mo->angle / (float) ANGLE_MAX * -360 - 90;
                 else
                     angle = 0;
-                setViewAngleTarget(map, angle);
+                setViewAngleTarget(map, angle, fast);
             }
         }
     }
@@ -948,7 +956,9 @@ void AM_Open(int pnum, boolean yes)
             return; // Already closed.
 
         map->active = false;
-        AM_SetGlobalAlphaTarget(pnum, 0);
+        map->targetAlpha = 0;
+        if(fast)
+            map->alpha = 0;
 
         viewActive = true;
 
@@ -1092,7 +1102,7 @@ boolean AM_IsMapWindowInFullScreenMode(int pid)
     return map->fullScreenMode;
 }
 
-static void setViewTarget(automap_t* map, float x, float y)
+static void setViewTarget(automap_t* map, float x, float y, boolean fast)
 {
     // Already at this target?
     if(x == map->targetViewX && y == map->targetViewY)
@@ -1101,13 +1111,20 @@ static void setViewTarget(automap_t* map, float x, float y)
     x = MINMAX_OF(-32768, x, 32768);
     y = MINMAX_OF(-32768, y, 32768);
 
-    map->oldViewX = map->viewX;
-    map->oldViewY = map->viewY;
-    // Restart the timer.
-    map->viewTimer = 0;
-
-    map->targetViewX = x;
-    map->targetViewY = y;
+    if(fast)
+    {   // Change instantly.
+        map->viewX = map->oldViewX = map->targetViewX = x;
+        map->viewY = map->oldViewY = map->targetViewY = y;
+    }
+    else
+    {
+        map->oldViewX = map->viewX;
+        map->oldViewY = map->viewY;
+        map->targetViewX = x;
+        map->targetViewY = y;
+        // Restart the timer.
+        map->viewTimer = 0;
+    }
 }
 
 void AM_SetViewTarget(int pid, float x, float y)
@@ -1120,7 +1137,7 @@ void AM_SetViewTarget(int pid, float x, float y)
     map = mapForPlayerId(pid);
     if(!map)
         return;
-    setViewTarget(map, x, y);
+    setViewTarget(map, x, y, false);
 }
 
 void AM_GetViewPosition(int pid, float* x, float* y)
@@ -1183,17 +1200,24 @@ void AM_SetViewScaleTarget(int pid, float scale)
     setViewScaleTarget(map, scale);
 }
 
-static void setViewAngleTarget(automap_t* map, float angle)
+static void setViewAngleTarget(automap_t* map, float angle, boolean fast)
 {
     // Already at this target?
     if(angle == map->targetAngle)
         return;
 
-    map->oldAngle = map->angle;
-    // Restart the timer.
-    map->angleTimer = 0;
+    if(fast)
+    {   // Change instantly.
+        map->angle = map->oldAngle = map->targetAngle = angle;
+    }
+    else
+    {
+        map->oldAngle = map->angle;
+        map->targetAngle = angle;
 
-    map->targetAngle = angle;
+        // Restart the timer.
+        map->angleTimer = 0;
+    }
 }
 
 void AM_SetViewAngleTarget(int pid, float angle)
@@ -1206,7 +1230,7 @@ void AM_SetViewAngleTarget(int pid, float angle)
     map = mapForPlayerId(pid);
     if(!map)
         return;
-    setViewAngleTarget(map, angle);
+    setViewAngleTarget(map, angle, false);
 }
 
 /**
@@ -1261,16 +1285,41 @@ void AM_SetViewRotate(int pid, int offOnToggle)
  */
 void AM_UpdateLinedef(int pid, uint lineIdx, boolean visible)
 {
+    automap_t*          map;
     xline_t*            xline;
 
-    if(pid < 0 || pid >= MAXPLAYERS)
+    map = mapForPlayerId(pid);
+    if(!map)
         return;
 
     if(lineIdx >= numlines)
         return;
 
     xline = P_GetXLine(lineIdx);
+
+    // Will we need to rebuild one or more display lists?
+    if(xline->mapped[pid] != visible)
+        map->constructMap = true;
+
     xline->mapped[pid] = visible;
+}
+
+/**
+ * Reveal the whole map.
+ */
+void AM_RevealMap(int pid, boolean on)
+{
+    automap_t*          map;
+
+    map = mapForPlayerId(pid);
+    if(!map)
+        return;
+
+    if(map->revealed != on)
+    {
+        map->revealed = on;
+        map->constructMap = true;
+    }
 }
 
 static void clearMarks(automap_t* map)
@@ -1434,11 +1483,15 @@ float AM_GlobalAlpha(int pid)
 
 void AM_SetColor(int pid, int objectname, float r, float g, float b)
 {
+    int                 i;
     automap_t*          map;
     mapobjectinfo_t*    info;
 
     if(IS_DEDICATED)
         return; // Just ignore.
+
+    if(objectname == AMO_NONE)
+        return; // Ignore.
 
     map = mapForPlayerId(pid);
     if(!map)
@@ -1464,23 +1517,23 @@ void AM_SetColor(int pid, int objectname, float r, float g, float b)
     switch(objectname)
     {
     case AMO_UNSEENLINE:
-        info = &map->cfg.unseenLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN];
         break;
 
     case AMO_SINGLESIDEDLINE:
-        info = &map->cfg.singleSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF];
         break;
 
     case AMO_TWOSIDEDLINE:
-        info = &map->cfg.twoSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED];
         break;
 
     case AMO_FLOORCHANGELINE:
-        info = &map->cfg.floorChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR];
         break;
 
     case AMO_CEILINGCHANGELINE:
-        info = &map->cfg.ceilingChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING];
         break;
 
     default:
@@ -1492,6 +1545,10 @@ void AM_SetColor(int pid, int objectname, float r, float g, float b)
     info->rgba[0] = r;
     info->rgba[1] = g;
     info->rgba[2] = b;
+
+    // We will need to rebuild one or more display lists.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        automaps[i].constructMap = true;
 }
 
 void AM_GetColor(int pid, int objectname, float* r, float* g, float* b)
@@ -1522,23 +1579,23 @@ void AM_GetColor(int pid, int objectname, float* r, float* g, float* b)
     switch(objectname)
     {
     case AMO_UNSEENLINE:
-        info = &map->cfg.unseenLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN];
         break;
 
     case AMO_SINGLESIDEDLINE:
-        info = &map->cfg.singleSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF];
         break;
 
     case AMO_TWOSIDEDLINE:
-        info = &map->cfg.twoSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED];
         break;
 
     case AMO_FLOORCHANGELINE:
-        info = &map->cfg.floorChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR];
         break;
 
     case AMO_CEILINGCHANGELINE:
-        info = &map->cfg.ceilingChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING];
         break;
 
     default:
@@ -1555,6 +1612,7 @@ void AM_GetColor(int pid, int objectname, float* r, float* g, float* b)
 void AM_SetColorAndAlpha(int pid, int objectname, float r, float g, float b,
                          float a)
 {
+    int                 i;
     automap_t*          map;
     mapobjectinfo_t*    info;
 
@@ -1587,23 +1645,23 @@ void AM_SetColorAndAlpha(int pid, int objectname, float r, float g, float b,
     switch(objectname)
     {
     case AMO_UNSEENLINE:
-        info = &map->cfg.unseenLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN];
         break;
 
     case AMO_SINGLESIDEDLINE:
-        info = &map->cfg.singleSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF];
         break;
 
     case AMO_TWOSIDEDLINE:
-        info = &map->cfg.twoSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED];
         break;
 
     case AMO_FLOORCHANGELINE:
-        info = &map->cfg.floorChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR];
         break;
 
     case AMO_CEILINGCHANGELINE:
-        info = &map->cfg.ceilingChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING];
         break;
 
     default:
@@ -1616,6 +1674,10 @@ void AM_SetColorAndAlpha(int pid, int objectname, float r, float g, float b,
     info->rgba[1] = g;
     info->rgba[2] = b;
     info->rgba[3] = a;
+
+    // We will need to rebuild one or more display lists.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        automaps[i].constructMap = true;
 }
 
 void AM_GetColorAndAlpha(int pid, int objectname, float* r, float* g,
@@ -1648,23 +1710,23 @@ void AM_GetColorAndAlpha(int pid, int objectname, float* r, float* g,
     switch(objectname)
     {
     case AMO_UNSEENLINE:
-        info = &map->cfg.unseenLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN];
         break;
 
     case AMO_SINGLESIDEDLINE:
-        info = &map->cfg.singleSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF];
         break;
 
     case AMO_TWOSIDEDLINE:
-        info = &map->cfg.twoSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED];
         break;
 
     case AMO_FLOORCHANGELINE:
-        info = &map->cfg.floorChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR];
         break;
 
     case AMO_CEILINGCHANGELINE:
-        info = &map->cfg.ceilingChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING];
         break;
 
     default:
@@ -1681,6 +1743,7 @@ void AM_GetColorAndAlpha(int pid, int objectname, float* r, float* g,
 
 void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
 {
+    uint                i;
     automap_t*          map;
     mapobjectinfo_t*    info;
 
@@ -1698,23 +1761,23 @@ void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
     switch(objectname)
     {
     case AMO_UNSEENLINE:
-        info = &map->cfg.unseenLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN];
         break;
 
     case AMO_SINGLESIDEDLINE:
-        info = &map->cfg.singleSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF];
         break;
 
     case AMO_TWOSIDEDLINE:
-        info = &map->cfg.twoSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED];
         break;
 
     case AMO_FLOORCHANGELINE:
-        info = &map->cfg.floorChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR];
         break;
 
     case AMO_CEILINGCHANGELINE:
-        info = &map->cfg.ceilingChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING];
         break;
 
     default:
@@ -1724,11 +1787,16 @@ void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
     }
 
     info->blendMode = blendmode;
+
+    // We will need to rebuild one or more display lists.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        automaps[i].constructMap = true;
 }
 
 void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
                 float alpha, boolean canScale)
 {
+    uint                i;
     automap_t*          map;
     mapobjectinfo_t*    info;
 
@@ -1748,23 +1816,23 @@ void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
     switch(objectname)
     {
     case AMO_UNSEENLINE:
-        info = &map->cfg.unseenLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_UNSEEN];
         break;
 
     case AMO_SINGLESIDEDLINE:
-        info = &map->cfg.singleSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF];
         break;
 
     case AMO_TWOSIDEDLINE:
-        info = &map->cfg.twoSidedLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_TWOSIDED];
         break;
 
     case AMO_FLOORCHANGELINE:
-        info = &map->cfg.floorChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_FLOOR];
         break;
 
     case AMO_CEILINGCHANGELINE:
-        info = &map->cfg.ceilingChangeLine;
+        info = &map->cfg.mapObjectInfo[MOL_LINEDEF_CEILING];
         break;
 
     default:
@@ -1777,6 +1845,10 @@ void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
     info->glowAlpha = alpha;
     info->glowWidth = size;
     info->scaleWithView = canScale;
+
+    // We will need to rebuild one or more display lists.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        automaps[i].constructMap = true;
 }
 
 void AM_SetVectorGraphic(int pid, int objectname, int vgname)
@@ -1807,8 +1879,7 @@ void AM_SetVectorGraphic(int pid, int objectname, int vgname)
 }
 
 void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
-                            int sided,
-                            float r, float g, float b, float a,
+                            int sided, float r, float g, float b, float a,
                             blendmode_t blendmode,
                             glowtype_t glowType, float glowAlpha,
                             float glowWidth, boolean scaleGlowWithView)
@@ -1867,6 +1938,9 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
     line->info.glowWidth = glowWidth;
     line->info.scaleWithView = scaleGlowWithView;
     line->info.blendMode = blendmode;
+
+    // We will need to rebuild one or more display lists.
+    map->constructMap = true;
 }
 
 void AM_SetCheatLevel(int pid, int level)
@@ -1896,6 +1970,9 @@ void AM_SetCheatLevel(int pid, int level)
         map->flags |= (AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
     else
         map->flags &= ~(AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
+
+    // We will need to rebuild one or more display lists.
+    map->constructMap = true;
 }
 
 void AM_IncMapCheatLevel(int pid)
@@ -1920,6 +1997,9 @@ void AM_IncMapCheatLevel(int pid)
         map->flags |= (AMF_REND_THINGS | AMF_REND_XGLINES);
     else
         map->flags &= ~(AMF_REND_THINGS | AMF_REND_XGLINES);
+
+    // We will need to rebuild one or more display lists.
+    map->constructMap = true;
 }
 
 /**
@@ -1985,7 +2065,7 @@ void AM_LoadData(void)
                                          W_CacheLumpName("mapmask", PU_CACHE),
                                          0x8, DGL_NEAREST, DGL_LINEAR,
                                          0 /*no anisotropy*/,
-                                         DGL_CLAMP, DGL_CLAMP);
+                                         DGL_REPEAT, DGL_REPEAT);
         }
     }
 }
@@ -1996,8 +2076,29 @@ void AM_LoadData(void)
  */
 void AM_UnloadData(void)
 {
+    int                 i;
+
     if(Get(DD_NOVIDEO) || IS_DEDICATED)
         return; // Nothing to do.
+
+    // Destroy all display lists.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        uint                j;
+        player_t*           pl = &players[i];
+        automap_t*          map = &automaps[i];
+
+        if(!((pl->plr->flags & DDPF_LOCAL) && pl->plr->inGame))
+            continue;
+
+        for(j = 0; j < NUM_MAP_OBJECTLISTS; ++j)
+        {
+            if(map->lists[j])
+                DGL_DeleteLists(map->lists[j], 1);
+            map->lists[j] = 0;
+            map->constructMap = true;
+        }
+    }
 
     if(amMaskTexture)
         DGL_DeleteTextures(1, (DGLuint*) &amMaskTexture);
@@ -2094,14 +2195,11 @@ static void mapTicker(automap_t* map)
 {
 #define MAPALPHA_FADE_STEP .07
 
-    int             playerNum;
-    float           diff = 0;
-    float           width, height, scale;
-    float           panX[2], panY[2];
-    float           zoomVel;
-    float           zoomSpeed;
-    player_t*       mapPlayer;
-    mobj_t*         mo;
+    int                 playerNum;
+    float               diff = 0, width, height, scale, panX[2], panY[2],
+                        zoomVel, zoomSpeed;
+    player_t*           mapPlayer;
+    mobj_t*             mo;
 
     if(!map)
         return;
@@ -2117,6 +2215,14 @@ static void mapTicker(automap_t* map)
 
     if(!((mapPlayer->plr->flags & DDPF_LOCAL) && mapPlayer->plr->inGame))
         return;
+
+    // Freeze the lists if the map is fading out from being open or if set
+    // to frozen for debug.
+    if(map->active && (map->constructMap && !freezeMapRLs))
+    {   // Its time to rebuild the automap object display lists.
+        compileObjectLists(map);
+        map->constructMap = false;
+    }
 
     // Move towards the target alpha level for the automap.
     if(map->alpha != map->targetAlpha)
@@ -2172,20 +2278,20 @@ static void mapTicker(automap_t* map)
         V2_Rotate(xy, map->angle / 360 * 2 * PI);
 
         if(xy[VX] || xy[VY])
-            setViewTarget(map, map->viewX + xy[VX], map->viewY + xy[VY]);
+            setViewTarget(map, map->viewX + xy[VX], map->viewY + xy[VY], false);
     }
     else  // Camera follows the player
     {
         float       angle;
 
-        setViewTarget(map, mo->pos[VX], mo->pos[VY]);
+        setViewTarget(map, mo->pos[VX], mo->pos[VY], false);
 
         /* $unifiedangles */
         if(map->rotate)
             angle = mo->angle / (float) ANGLE_MAX * 360 - 90;
         else
             angle = 0;
-        setViewAngleTarget(map, angle);
+        setViewAngleTarget(map, angle, false);
     }
 
     //
@@ -2336,84 +2442,23 @@ void AM_Ticker(void)
 }
 
 /**
- * Is the given point within the viewframe of the automap?
- *
- * @return          @c true, if the point is visible.
- */
-static boolean isPointVisible(automap_t *map, float x, float y)
-{
-    // First check if the vector is completely outside the view bbox.
-    if(x < map->vbbox[BOXLEFT] || x > map->vbbox[BOXRIGHT] ||
-       y > map->vbbox[BOXTOP]  || y < map->vbbox[BOXBOTTOM])
-       return false;
-
-    // \todo The point is within the view bbox but it is not necessarily
-    // within view. Implement a more accurate test.
-    return true;
-}
-
-/**
- * Is the given vector within the viewframe of the automap?
- *
- * @return          @c true, if the vector is at least partially
- *                  visible.
- */
-static boolean isVectorVisible(automap_t *map,
-                               float x1, float y1, float x2, float y2)
-{
-    // First check if the vector is completely outside the view bbox.
-    if((x1 < map->vbbox[BOXLEFT]   && x2 < map->vbbox[BOXLEFT]) ||
-       (x1 > map->vbbox[BOXRIGHT]  && x2 > map->vbbox[BOXRIGHT]) ||
-       (y1 > map->vbbox[BOXTOP]    && y2 > map->vbbox[BOXTOP]) ||
-       (y1 < map->vbbox[BOXBOTTOM] && y2 < map->vbbox[BOXBOTTOM]))
-       return false;
-
-    /** \todo The vector is within the view bbox but it is not necessarily
-    * within view. Implement a more accurate test. Should we even bother
-    * with determining the intersection and actively clip primitives in
-    * the window?
-    */
-    return true;
-}
-
-/**
- * Draws the given line. Basic cliping is done.
- */
-static void rendLine(float x1, float y1, float x2, float y2, float width,
-                     int color, float alpha, blendmode_t blendmode)
-{
-    automap_t  *map = &automaps[mapviewplayer];
-
-    if(!isVectorVisible(map, x1, y1, x2, y2))
-        return;
-
-    AM_AddLine(CXMTOF(map, x1), CYMTOF(map, y1),
-               CXMTOF(map, x2), CYMTOF(map, y2),
-               width, color, alpha, blendmode);
-}
-
-/**
  * Draws the given line including any optional extras.
  */
-static void rendLine2(float x1, float y1, float x2, float y2, float width,
-                      float r, float g, float b, float a,
+static void rendLine2(float x1, float y1, float x2, float y2,
                       glowtype_t glowType, float glowAlpha, float glowWidth,
                       boolean glowOnly, boolean scaleGlowWithView,
                       boolean caps, blendmode_t blend, boolean drawNormal)
 {
-    float       v1[2], v2[2];
-    float       length, dx, dy;
-    float       normal[2], unit[2];
-    automap_t  *map = &automaps[mapviewplayer];
+    float               v1[2], v2[2];
+    float               length, dx, dy;
+    float               normal[2], unit[2];
+    automap_t*          map = &automaps[mapviewplayer];
 
     // Scale into map, screen space units.
-    v1[VX] = CXMTOF(map, x1);
-    v1[VY] = CYMTOF(map, y1);
-    v2[VX] = CXMTOF(map, x2);
-    v2[VY] = CYMTOF(map, y2);
-
-    if(!isVectorVisible(map, x1, y1, x2, y2))
-        return;
+    v1[VX] = x1;
+    v1[VY] = y1;
+    v2[VX] = x2;
+    v2[VY] = y2;
 
     dx = v2[VX] - v1[VX];
     dy = v2[VY] - v1[VY];
@@ -2434,7 +2479,7 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
 
         // Scale line thickness relative to zoom level?
         if(scaleGlowWithView)
-            thickness = map->cfg.lineGlowScale * map->scaleMTOF * 2.5f + 3;
+            thickness = map->cfg.lineGlowScale * 2.5f + 3;
         else
             thickness = glowWidth;
 
@@ -2455,7 +2500,7 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
                        0.5f, 0,
                        0.5f, 1,
                        0, 1,
-                       r, g, b, glowAlpha,
+                       //r, g, b, glowAlpha,
                        tex, false, blend);
         }
 
@@ -2475,7 +2520,7 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
                        0.5f, 0,
                        0.5f, 1,
                        0.5f, 1,
-                       r, g, b, glowAlpha,
+                       //r, g, b, glowAlpha,
                        tex, false, blend);
             break;
 
@@ -2490,7 +2535,7 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
                        0, 0.25f,
                        0.5f, 0.25f,
                        0.5f, 0.25f,
-                       r, g, b, glowAlpha,
+                       //r, g, b, glowAlpha,
                        tex, false, blend);
             break;
 
@@ -2505,7 +2550,7 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
                        0.75f, 0.5f,
                        0.75f, 1,
                        0.75f, 1,
-                       r, g, b, glowAlpha,
+                       //r, g, b, glowAlpha,
                        tex, false, blend);
             break;
 
@@ -2528,14 +2573,13 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
                        1, 0,
                        1, 1,
                        0.5f, 1,
-                       r, g, b, glowAlpha,
+                       //r, g, b, glowAlpha,
                        tex, false, blend);
         }
     }
 
     if(!glowOnly)
-        AM_AddLine4f(v1[VX], v1[VY], v2[VX], v2[VY], width,
-                     r, g, b, a, blend);
+        AM_AddLine(v1[VX], v1[VY], v2[VX], v2[VY]);
 
     if(drawNormal)
     {
@@ -2545,10 +2589,9 @@ static void rendLine2(float x1, float y1, float x2, float y2, float width,
 
         center[VX] = v1[VX] + (length / 2) * unit[VX];
         center[VY] = v1[VY] + (length / 2) * unit[VY];
-        AM_AddLine4f(center[VX], center[VY],
-                     center[VX] - normal[VX] * NORMTAIL_LENGTH,
-                     center[VY] - normal[VY] * NORMTAIL_LENGTH, 1,
-                     r, g, b, a, blend);
+        AM_AddLine(center[VX], center[VY],
+                   center[VX] + normal[VX] * NORMTAIL_LENGTH,
+                   center[VY] + normal[VY] * NORMTAIL_LENGTH);
 
 #undef NORMTAIL_LENGTH
     }
@@ -2581,28 +2624,6 @@ int renderWallSeg(void* obj, void* data)
     if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
         return 1; // We only want to draw twosided lines once.
 
-#if !__JHEXEN__
-#if !__JSTRIFE__
-    if(map->flags & AMF_REND_XGLINES) // Debug cheat.
-    {
-        // Show active XG lines.
-        if(xLine->xg && xLine->xg->active && (levelTime & 4))
-        {
-            P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
-            P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
-
-            rendLine2(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
-                      .8f, 0, .8f, 1,
-                      TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
-                      (map->flags & AMF_REND_LINE_NORMALS));
-
-            xLine->validCount = VALIDCOUNT;  // Mark as drawn this frame.
-            return 1; // Continue iteration.
-        }
-    }
-#endif
-#endif
-
     info = NULL;
     if((map->flags & AMF_REND_ALLLINES) ||
        xLine->mapped[mapviewplayer])
@@ -2610,8 +2631,9 @@ int renderWallSeg(void* obj, void* data)
         backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
 
         // Perhaps this is a specially colored line?
-        info = getInfoForSpecialLine(map, xLine->special,
-                                     frontSector, backSector);
+        if(getInfoForSpecialLine(map, xLine->special, frontSector,
+                                 backSector))
+            return 1; // Continue iteration.
 
         if(!info)
         {   // Perhaps a default colored line?
@@ -2641,7 +2663,7 @@ int renderWallSeg(void* obj, void* data)
             }
         }
     }
-    else if(plr->powers[PT_ALLMAP])
+    else if(map->revealed)
     {
         if(!(xLine->flags & ML_DONTDRAW))
         {
@@ -2650,13 +2672,12 @@ int renderWallSeg(void* obj, void* data)
         }
     }
 
-    if(info)
+    if(info && info == &map->cfg.mapObjectInfo[vars->objType])
     {
         P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
         P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
 
-        rendLine2(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
-                  info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
+        rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   (xLine->special && !map->cfg.glowingLineSpecials ?
                         NO_GLOW : info->glow),
                   info->glowAlpha,
@@ -2673,36 +2694,204 @@ int renderWallSeg(void* obj, void* data)
 }
 
 /**
- * Sub-routine of renderWalls().
+ * Determines visible lines, draws them.
+ *
+ * @params objType      Type of map object being drawn.
  */
-boolean drawSegsOfSubsector(subsector_t *s, void *data)
+static void renderWalls(int objType)
 {
-    return P_Iteratep(s, DMU_SEG, data, renderWallSeg);
+    uint                i;
+    player_t*           plr = &players[mapviewplayer];
+    automap_t*          map = &automaps[mapviewplayer];
+    ssecitervars_t      data;
+
+    // VALIDCOUNT is used to track which lines have been drawn this frame.
+    VALIDCOUNT++;
+
+    // Set the vars used during iteration.
+    data.plr = plr;
+    data.map = map;
+    data.objType = objType;
+
+    // Use the automap's viewframe bounding box.
+    for(i = 0; i < numsubsectors; ++i)
+    {
+        P_Iteratep(P_ToPtr(DMU_SUBSECTOR, i), DMU_SEG, &data,
+                   renderWallSeg);
+    }
+}
+
+static void renderLinedef(linedef_t* line, float r, float g, float b,
+                          float a, blendmode_t blendMode,
+                          boolean drawNormal)
+{
+    float               length = P_GetFloatp(line, DMU_LENGTH);
+
+    if(length > 0)
+    {
+        float               v1[2], v2[2];
+
+        P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
+        P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
+
+        GL_BlendMode(blendMode);
+
+        DGL_Color4f(r, g, b, a);
+
+        DGL_Begin(DGL_LINES);
+            DGL_TexCoord2f(v1[VX], v1[VY]);
+            DGL_Vertex2f(v1[VX], v1[VY]);
+
+            DGL_TexCoord2f(v2[VX], v2[VY]);
+            DGL_Vertex2f(v2[VX], v2[VY]);
+        DGL_End();
+
+        if(drawNormal)
+        {
+#define NORMTAIL_LENGTH         8
+
+            float               normal[2], unit[2], d1[2];
+
+            P_GetFloatpv(line, DMU_DXY, d1);
+
+            unit[VX] = d1[0] / length;
+            unit[VY] = d1[1] / length;
+            normal[VX] = unit[VY];
+            normal[VY] = -unit[VX];
+
+            // The center of the linedef.
+            v1[VX] += (length / 2) * unit[VX];
+            v1[VY] += (length / 2) * unit[VY];
+
+            // Outside point.
+            v2[VX] = v1[VX] + normal[VX] * NORMTAIL_LENGTH;
+            v2[VY] = v1[VY] + normal[VY] * NORMTAIL_LENGTH;
+
+            DGL_Begin(DGL_LINES);
+                DGL_TexCoord2f(v1[VX], v1[VY]);
+                DGL_Vertex2f(v1[VX], v1[VY]);
+
+                DGL_TexCoord2f(v2[VX], v2[VY]);
+                DGL_Vertex2f(v2[VX], v2[VY]);
+            DGL_End();
+#undef NORMTAIL_LENGTH
+        }
+
+        GL_BlendMode(BM_NORMAL);
+    }
 }
 
 /**
- * Sub-routine of renderWalls().
+ * Rather than draw the segs instead this will draw the linedef of which
+ * the seg is a part.
  */
+int renderPolyObjSeg(void* obj, void* data)
+{
+    seg_t*              seg = (seg_t*) obj;
+    ssecitervars_t*     vars = (ssecitervars_t*) data;
+    linedef_t*          line;
+    xline_t*            xLine;
+    mapobjectinfo_t*    info;
+    player_t*           plr = vars->plr;
+    automap_t*          map = vars->map;
+    automapobjectname_t amo;
+
+    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line)))
+        return 1;
+
+    if(xLine->validCount == VALIDCOUNT)
+        return 1; // Already processed this frame.
+
+    if((xLine->flags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
+        return 1;
+
+    amo = AMO_NONE;
+    if((map->flags & AMF_REND_ALLLINES) || xLine->mapped[mapviewplayer])
+    {
+        amo = AMO_SINGLESIDEDLINE;
+    }
+    else if(map->revealed && !(xLine->flags & ML_DONTDRAW))
+    {   // An as yet, unseen line.
+        amo = AMO_UNSEENLINE;
+    }
+
+    if((info = getMapObjectInfo(map, amo)))
+    {
+        renderLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
+                      info->rgba[3] * cfg.automapLineAlpha * map->alpha,
+                      info->blendMode,
+                      (map->flags & AMF_REND_LINE_NORMALS)? true : false);
+    }
+
+    xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
+
+    return 1; // Continue iteration.
+}
+
 boolean drawSegsOfPolyobject(polyobj_t *po, void *data)
 {
     seg_t**             segPtr;
     int                 result;
 
     segPtr = po->segs;
-    while(*segPtr && (result = renderWallSeg(*segPtr, data)) != 0)
+    while(*segPtr && (result = renderPolyObjSeg(*segPtr, data)) != 0)
         *segPtr++;
 
     return result;
 }
 
-/**
- * Determines visible lines, draws them.
- */
-static void renderWalls(void)
+static void renderPolyObjs(void)
 {
-    player_t   *plr = &players[mapviewplayer];
-    automap_t  *map = &automaps[mapviewplayer];
-    ssecitervars_t data;
+    player_t*           plr = &players[mapviewplayer];
+    automap_t*          map = &automaps[mapviewplayer];
+    ssecitervars_t      data;
+
+    // VALIDCOUNT is used to track which lines have been drawn this frame.
+    VALIDCOUNT++;
+
+    // Set the vars used during iteration.
+    data.plr = plr;
+    data.map = map;
+    data.objType = MOL_LINEDEF;
+
+    // Next, draw any polyobjects in view.
+    P_PolyobjsBoxIterator(map->vbbox, drawSegsOfPolyobject, &data);
+}
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+boolean renderXGLinedef(linedef_t* line, void* data)
+{
+    ssecitervars_t*     vars = (ssecitervars_t*) data;
+    xline_t*            xLine;
+    automap_t*          map = vars->map;
+
+    xLine = P_ToXLine(line);
+    if(!xLine || xLine->validCount == VALIDCOUNT ||
+       (xLine->flags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
+        return 1;
+
+    // Show only active XG lines.
+    if(!(xLine->xg && xLine->xg->active && (mapTime & 4)))
+        return 1;
+
+    renderLinedef(line, .8f, 0, .8f, 1, BM_ADD,
+                  (map->flags & AMF_REND_LINE_NORMALS)? true : false);
+
+    xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
+
+    return 1; // Continue iteration.
+}
+#endif
+
+static void renderXGLinedefs(void)
+{
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    player_t*           plr = &players[mapviewplayer];
+    automap_t*          map = &automaps[mapviewplayer];
+    ssecitervars_t      data;
+
+    if(!(map->flags & AMF_REND_XGLINES))
+        return;
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -2711,20 +2900,17 @@ static void renderWalls(void)
     data.plr = plr;
     data.map = map;
 
-    // Use the automap's viewframe bounding box.
-    P_SubsectorsBoxIterator(map->vbbox, NULL, drawSegsOfSubsector, &data);
-
-    // Next, draw any polyobjects in view.
-    P_PolyobjsBoxIterator(map->vbbox, drawSegsOfPolyobject, &data);
+    P_LinesBoxIterator(map->vbbox, renderXGLinedef, &data);
+#endif
 }
 
 /**
- * Rotation in 2D. Used to rotate player arrow line character.
+ * Rotation in 2D.
  */
-static void rotate2D(float *x, float *y, angle_t a)
+static void rotate2D(float* x, float* y, angle_t a)
 {
-    int         angle;
-    float       tmpx;
+    int                 angle;
+    float               tmpx;
 
     angle = a >> ANGLETOFINESHIFT;
     tmpx = (*x * FIX2FLT(finecosine[angle])) -
@@ -2736,84 +2922,63 @@ static void rotate2D(float *x, float *y, angle_t a)
     *x = tmpx;
 }
 
+static void drawLineCharacter(const vectorgrap_t* vg)
+{
+    uint                i;
+
+    DGL_Begin(DGL_LINES);
+    for(i = 0; i < vg->count; ++i)
+    {
+        vgline_t*           vgl = &vg->lines[i];
+
+        DGL_TexCoord2f(vgl->a.pos[VX], vgl->a.pos[VY]);
+          DGL_Vertex2f(vgl->a.pos[VX], vgl->a.pos[VY]);
+        DGL_TexCoord2f(vgl->b.pos[VX], vgl->b.pos[VY]);
+          DGL_Vertex2f(vgl->b.pos[VX], vgl->b.pos[VY]);
+    }
+    DGL_End();
+}
+
 /**
  * Draws a line character (eg the player arrow)
  */
-static void addLineCharacter(vectorgrap_t *vg, float x, float y, angle_t angle,
-                             float scale, int color, float alpha,
-                             blendmode_t blendmode)
+static void renderLineCharacter(vectorgrap_t* vg, float x, float y,
+                                float angle, float scale, int color,
+                                float alpha, blendmode_t blendmode)
 {
-    uint        i;
-    float       v1[2], v2[2];
+    automap_t*          map = &automaps[mapviewplayer];
+    float               oldLineWidth, rgba[4];
 
-    for(i = 0; i < vg->count; ++i)
-    {
-        v1[VX] = vg->lines[i].a.pos[VX];
-        v1[VY] = vg->lines[i].a.pos[VY];
+    GL_PalIdxToRGB(color, rgba);
+    rgba[3] = MINMAX_OF(0.f, alpha, 1.f);
 
-        v1[VX] *= scale;
-        v1[VY] *= scale;
+    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+    DGL_SetFloat(DGL_LINE_WIDTH, AM_LINE_WIDTH);
 
-        rotate2D(&v1[VX], &v1[VY], angle);
+    DGL_Color4fv(rgba);
+    GL_BlendMode(blendmode);
 
-        v1[VX] += x;
-        v1[VY] += y;
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
 
-        v2[VX] = vg->lines[i].b.pos[VX];
-        v2[VY] = vg->lines[i].b.pos[VY];
+    DGL_Translatef(x, y, 1);
+    DGL_Rotatef(angle, 0, 0, 1);
+    DGL_Scalef(scale, scale, 1);
 
-        v2[VX] *= scale;
-        v2[VY] *= scale;
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 1);
 
-        rotate2D(&v2[VX], &v2[VY], angle);
+    drawLineCharacter(vg);
 
-        v2[VX] += x;
-        v2[VY] += y;
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PopMatrix();
 
-        rendLine(v1[VX], v1[VY], v2[VX], v2[VY], AM_LINE_WIDTH,
-                 color, alpha, blendmode);
-    }
-}
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
-static void addPatchQuad(float x, float y, float w, float h,
-                         angle_t angle, uint lumpnum, float r, float g,
-                         float b, float a)
-{
-    float       pos[4][2];
-    automap_t  *map = &automaps[mapviewplayer];
-
-    pos[0][VX] = -(w / 2);
-    pos[0][VY] = h / 2;
-    rotate2D(&pos[0][VX], &pos[0][VY], angle);
-    pos[0][VX] += x;
-    pos[0][VY] += y;
-
-    pos[1][VX] = w / 2;
-    pos[1][VY] = h / 2;
-    rotate2D(&pos[1][VX], &pos[1][VY], angle);
-    pos[1][VX] += x;
-    pos[1][VY] += y;
-
-    pos[2][VX] = w / 2;
-    pos[2][VY] = -(h / 2);
-    rotate2D(&pos[2][VX], &pos[2][VY], angle);
-    pos[2][VX] += x;
-    pos[2][VY] += y;
-
-    pos[3][VX] = -(w / 2);
-    pos[3][VY] = -(h / 2);
-    rotate2D(&pos[3][VX], &pos[3][VY], angle);
-    pos[3][VX] += x;
-    pos[3][VY] += y;
-
-    AM_AddQuad(CXMTOF(map, pos[0][VX]), CYMTOF(map, pos[0][VY]),
-               CXMTOF(map, pos[1][VX]), CYMTOF(map, pos[1][VY]),
-               CXMTOF(map, pos[2][VX]), CYMTOF(map, pos[2][VY]),
-               CXMTOF(map, pos[3][VX]), CYMTOF(map, pos[3][VY]),
-               0, 0, 1, 0,
-               1, 1, 0, 1,
-               r, g, b, a,
-               lumpnum, true, BM_NORMAL);
+    // Restore previous line width.
+    DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 }
 
 /**
@@ -2821,18 +2986,18 @@ static void addPatchQuad(float x, float y, float w, float h,
  */
 static void renderPlayers(void)
 {
-    int         i;
-    float       size = PLAYERRADIUS;
-    vectorgrap_t *vg;
-    automap_t  *map = &automaps[mapviewplayer];
+    int                 i;
+    float               size = PLAYERRADIUS;
+    vectorgrap_t*       vg;
+    automap_t*          map = &automaps[mapviewplayer];
 
     vg = getVectorGraphic(map->vectorGraphicForPlayer);
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t   *p = &players[i];
-        int         color;
-        float       alpha;
-        mobj_t     *mo;
+        player_t*           p = &players[i];
+        int                 color;
+        float               alpha;
+        mobj_t*             mo;
 
         if(!p->plr->inGame)
             continue;
@@ -2850,37 +3015,11 @@ static void renderPlayers(void)
             alpha *= 0.125;
 #endif
         mo = p->plr->mo;
-        if(!isPointVisible(map, mo->pos[VX], mo->pos[VY]))
-            continue;
 
         /* $unifiedangles */
-        addLineCharacter(vg, mo->pos[VX], mo->pos[VY], mo->angle, size,
-                         color, alpha, BM_NORMAL);
-    }
-}
-
-/**
- * Draws all things on the map
- */
-static void renderThings(int color, int colorrange)
-{
-    uint        i;
-    mobj_t     *iter;
-    automap_t  *map = &automaps[mapviewplayer];
-    float       size = PLAYERRADIUS;
-    vectorgrap_t *vg = getVectorGraphic(VG_TRIANGLE);
-
-    for(i = 0; i < numsectors; ++i)
-    {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter;
-            iter = iter->sNext)
-        {
-            if(!isPointVisible(map, iter->pos[VX], iter->pos[VY]))
-                continue;
-
-            addLineCharacter(vg, iter->pos[VX], iter->pos[VY], iter->angle,
-                             size, color, cfg.automapLineAlpha, BM_NORMAL);
-        }
+        renderLineCharacter(vg, mo->pos[VX], mo->pos[VY],
+                            mo->angle / (float) ANGLE_MAX * 360, size,
+                            color, alpha * map->alpha, BM_NORMAL);
     }
 }
 
@@ -2915,24 +3054,36 @@ static int getKeyColorForMobjType(int type)
 }
 
 /**
- * If the given thinker is a mobj whose type matches that of a key, it
- * will be drawn on the automap.
+ * Draws all things on the map
  */
-static boolean drawKeys(thinker_t* th, void* context)
+static boolean renderThing(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
     automap_t*          map = &automaps[mapviewplayer];
     int                 keyColor;
 
-    if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
-    {   // This mobj is indeed a key.
-        if(isPointVisible(map, mo->pos[VX], mo->pos[VY]))
-        {
-            addLineCharacter(getVectorGraphic(VG_KEYSQUARE),
-                             mo->pos[VX], mo->pos[VY], 0,
-                             PLAYERRADIUS, keyColor,
-                             cfg.automapLineAlpha, BM_NORMAL);
+    if(map->flags & AMF_REND_KEYS)
+    {
+        // Is this a key?
+        if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
+        {   // This mobj is indeed a key.
+            /* $unifiedangles */
+            renderLineCharacter(getVectorGraphic(VG_KEYSQUARE),
+                                mo->pos[VX], mo->pos[VY],
+                                0, PLAYERRADIUS, keyColor,
+                                map->alpha * cfg.automapLineAlpha, BM_NORMAL);
+            return true; // Continue iteration.
         }
+    }
+
+    if(map->flags & AMF_REND_THINGS)
+    {   // Something else.
+        /* $unifiedangles */
+        renderLineCharacter(getVectorGraphic(VG_TRIANGLE),
+                            mo->pos[VX], mo->pos[VY],
+                            mo->angle / (float) ANGLE_MAX * 360,
+                            PLAYERRADIUS, THINGCOLORS,
+                            map->alpha * cfg.automapLineAlpha, BM_NORMAL);
     }
 
     return true; // Continue iteration.
@@ -2944,12 +3095,11 @@ static boolean drawKeys(thinker_t* th, void* context)
 static void drawMarks(void)
 {
 #if !__JDOOM64__
-    int         i;
-    float       x, y, w, h;
-    angle_t     angle;
-    automap_t  *map = &automaps[mapviewplayer];
-    player_t   *plr = &players[mapviewplayer];
-    dpatch_t   *patch;
+    int                 i;
+    float               x, y, w, h;
+    automap_t*          map = &automaps[mapviewplayer];
+    player_t*           plr = &players[mapviewplayer];
+    dpatch_t*           patch;
 
     for(i = 0; i < NUMMARKPOINTS; ++i)
     {
@@ -2957,100 +3107,40 @@ static void drawMarks(void)
         {
             patch = &markerPatches[i];
 
-            w = (float) patch->width;
-            h = (float) patch->height;
+            w = FIXXTOSCREENX(patch->width) * map->scaleFTOM;
+            h = FIXYTOSCREENY(patch->height) * map->scaleFTOM;
 
             x = map->markpoints[i].pos[VX];
             y = map->markpoints[i].pos[VY];
 
-            if(!isPointVisible(map, x, y))
-                continue;
+            GL_SetPatch(patch->lump, DGL_CLAMP, DGL_CLAMP);
+            DGL_Color4f(1, 1, 1, map->alpha);
 
-            /* $unifiedangles */
-            angle = (float) ANGLE_MAX * (map->angle / 360);
+            DGL_MatrixMode(DGL_PROJECTION);
+            DGL_PushMatrix();
+            DGL_Translatef(x, y, 0);
+            DGL_Rotatef(map->angle, 0, 0, 1);
 
-            addPatchQuad(x, y, FIXXTOSCREENX(w) * map->scaleFTOM,
-                         FIXYTOSCREENY(h) * map->scaleFTOM, angle,
-                         patch->lump, 1, 1, 1, 1);
+            DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, 0);
+                DGL_Vertex2f(-(w / 2), h / 2);
+
+                DGL_TexCoord2f(1, 0);
+                DGL_Vertex2f(w / 2, h / 2);
+
+                DGL_TexCoord2f(1, 1);
+                DGL_Vertex2f(w / 2, -(h / 2));
+
+                DGL_TexCoord2f(0, 1);
+                DGL_Vertex2f(-(w / 2), -(h / 2));
+            DGL_End();
+
+            DGL_MatrixMode(DGL_PROJECTION);
+            DGL_PopMatrix();
         }
     }
 #endif
 }
-
-/**
- * Changes the position of the automap window
- */
-#if 0
-static void setWinPos(automap_t *map)
-{
-    int         winX, winY, winW, winH;
-
-    if(!map)
-        return;
-
-    winW = (scrwidth/ 1.0f) * 1; //(cfg.automapWidth);
-    winH = (scrheight/ 1.0f) * 1; //(cfg.automapHeight);
-
-    // work out the position & dimensions of the automap when fully open
-    /*
-     * 0 = TopLeft
-     * 1 = TopCenter
-     * 2 = TopRight
-      * 3 = CenterLeft
-      * 4 = Center
-      * 5 = CenterRight
-      * 6 = BottomLeft
-      * 7 = BottomCenter
-      * 8 = BottomRight
-     */
-
-    // X Position
-    switch (4)//cfg.automapPos)
-    {
-       case 1:
-       case 4:
-       case 7:
-        winX = (scrwidth / 2) - (winW / 2);
-        break;
-
-       case 0:
-       case 3:
-       case 6:
-        winX = 0;
-        break;
-
-       case 2:
-       case 5:
-       case 8:
-        winX = (scrwidth - winW);
-        break;
-    }
-
-    // Y Position
-    switch (4)//cfg.automapPos)
-    {
-       case 0:
-       case 1:
-       case 2:
-        winY = 0;
-        break;
-
-      case 3:
-       case 4:
-       case 5:
-        winY = (scrheight/2)-(winH/2);
-        break;
-
-       case 6:
-       case 7:
-       case 8:
-        winY = (scrheight - winH);
-        break;
-    }
-
-    setWindowTarget(map, winX, winY, winW, winH);
-}
-#endif
 
 /**
  * Sets up the state for automap drawing.
@@ -3058,20 +3148,15 @@ static void setWinPos(automap_t *map)
 static void setupGLStateForMap(void)
 {
     //float extrascale = 0;
-    player_t       *plr;
-    automap_t      *map;
-    automapwindow_t *win;
+    player_t*           plr;
+    automap_t*          map;
+    automapwindow_t*    win;
 
     plr = &players[mapviewplayer];
     map = &automaps[mapviewplayer];
     win = &map->window;
 
-    // Update the window scale vars?
-/*
-    if(win->oldWidth != cfg.automapWidth || win->oldHeight != cfg.automapHeight)
-        setWinPos(map);
-*/
-    // check for scissor box (to clip the map lines and stuff).
+    // Check for scissor box (to clip the map lines and stuff).
     // Store the old scissor state.
     DGL_GetIntegerv(DGL_SCISSOR_TEST, map->scissorState);
     DGL_GetIntegerv(DGL_SCISSOR_BOX, map->scissorState + 1);
@@ -3140,31 +3225,6 @@ static void setupGLStateForMap(void)
                     map->cfg.backgroundRGBA[2],
                     map->alpha * map->cfg.backgroundRGBA[3]);
     }
-
-    // How about an outside border?
-/*    if(win->width < srcwidth || win->height < scrheight)
-    {
-        DGL_Begin(DGL_LINES);
-        DGL_Color4f(0.5f, 1, 0.5f, map->alpha - (1 - (cfg.automapLineAlpha /2)) );
-
-        if(win->height < srcwidth)
-        {
-            DGL_Vertex2f(win->x + win->width + 1, win->y - 1);
-            DGL_Vertex2f(win->x + win->width + 1, win->y + win->height + 1);
-
-            DGL_Vertex2f(win->x - 1, win->y + win->height + 1);
-            DGL_Vertex2f(win->x - 1, win->y - 1);
-        }
-        if(cfg.automapHeight != 1)
-        {
-            DGL_Vertex2f(win->x - 1, win->y - 1);
-            DGL_Vertex2f(win->X + win->width + 1, win->y - 1);
-
-            DGL_Vertex2f(win->x + win->width + 1, win->y + win->height + 1);
-            DGL_Vertex2f(win->x - 1, win->y + win->height + 1);
-        }
-        DGL_End();
-    }*/
 
 #if __JDOOM64__
     // jd64 > Laser artifacts
@@ -3240,13 +3300,6 @@ static void setupGLStateForMap(void)
     // Setup the scissor clipper.
     DGL_Scissor(win->x, win->y, win->width, win->height);
     DGL_Enable(DGL_SCISSOR_TEST);
-
-    // Rotate map?
-    DGL_Translatef(win->x + (win->width / 2.0f),
-                   win->y + (win->height / 2.0f), 0);
-    DGL_Rotatef(map->angle, 0, 0, 1);
-    DGL_Translatef(-(win->x + (win->width / 2.0f)),
-                   -(win->y + (win->height /2.0f)), 0);
 }
 
 /**
@@ -3267,14 +3320,14 @@ static void restoreGLStateFromMap(void)
 }
 
 /**
- * Draws the level name into the automap window
+ * Draws the map name into the automap window
  */
-static void drawLevelName(void)
+static void renderMapName(void)
 {
     float               x, y, otherY;
-    char               *lname;
-    automap_t          *map = &automaps[mapviewplayer];
-    automapwindow_t    *win = &map->window;
+    char*               lname;
+    automap_t*          map = &automaps[mapviewplayer];
+    automapwindow_t*    win = &map->window;
     dpatch_t*           patch = NULL;
 #if __JDOOM__ || __JDOOM64__
     int                 mapNum;
@@ -3287,14 +3340,14 @@ static void drawLevelName(void)
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
         mapNum = gameMap -1;
-        patch = &levelNamePatches[mapNum];
+        patch = &mapNamePatches[mapNum];
 #elif __JDOOM__
         if(gameMode == commercial)
             mapNum = gameMap -1;
         else
             mapNum = ((gameEpisode -1) * 9) + gameMap -1;
 
-        patch = &levelNamePatches[mapNum];
+        patch = &mapNamePatches[mapNum];
 #endif
 
         DGL_MatrixMode(DGL_PROJECTION);
@@ -3343,18 +3396,52 @@ static void renderVertexes(void)
 {
     uint                i;
     automap_t*          map = &automaps[mapviewplayer];
-    float               v[2];
+    float               v[2], oldPointSize;
 
+    DGL_Color4f(.2f, .5f, 1, map->alpha);
+
+    DGL_Enable(DGL_POINT_SMOOTH);
+    oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
+    DGL_SetFloat(DGL_POINT_SIZE, 4);
+
+    DGL_Begin(DGL_POINTS);
     for(i = 0; i < numvertexes; ++i)
     {
         P_GetFloatv(DMU_VERTEX, i, DMU_XY, v);
+        DGL_TexCoord2f(v[VX], v[VY]);
+          DGL_Vertex2f(v[VX], v[VY]);
+    }
+    DGL_End();
 
-        if(!isPointVisible(map, v[VX], v[VY]))
-            continue;
+    DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
+    DGL_Disable(DGL_POINT_SMOOTH);
+}
 
-        addPatchQuad(v[VX], v[VY], FIXXTOSCREENX(.75f) * map->scaleFTOM,
-             FIXYTOSCREENY(.75f) * map->scaleFTOM, 0,
-             0, .2f, .5f, 1, 1);
+/**
+ * Compile OpenGL commands for drawing the map objects into display lists.
+ */
+static void compileObjectLists(automap_t* map)
+{
+    uint                i;
+
+    for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
+    {
+        // Construct primitives.
+        renderWalls(i);
+
+        if(map->lists[i])
+            DGL_DeleteLists(map->lists[i], 1);
+        map->lists[i] = 0;
+
+        // Build commands and compile to a display list.
+        if(DGL_NewList(0, DGL_COMPILE))
+        {
+            AM_RenderAllLists();
+            map->lists[i] = DGL_EndList();
+        }
+
+        // We are now finished with the primitive list.
+        AM_ClearAllLists(false);
     }
 }
 
@@ -3363,8 +3450,11 @@ static void renderVertexes(void)
  */
 void AM_Drawer(int viewplayer)
 {
+    uint                i;
     automap_t*          map;
     player_t*           mapPlayer;
+    automapwindow_t*    win;
+    float               oldLineWidth;
 
     if(IS_DEDICATED)
         return; // Nothing to do.
@@ -3381,39 +3471,91 @@ void AM_Drawer(int viewplayer)
     map = &automaps[mapviewplayer];
     if(!(map->alpha > 0))
         return;
+    win = &map->window;
 
     // Setup for frame.
     setupGLStateForMap();
 
-    // Freeze the lists if the map is fading out from being open
-    // or if set to frozen for debug.
-    if(!(freezeMapRLs || !map->active))
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_Translatef(FIXXTOSCREENX(SCREENWIDTH / 2),
+                   FIXYTOSCREENY(SCREENHEIGHT / 2), 0);
+    DGL_Rotatef(map->angle, 0, 0, 1);
+    DGL_Scalef(1, -1, 1);
+    DGL_Scalef(map->scaleMTOF, map->scaleMTOF, 1);
+    DGL_Translatef(-map->viewX, -map->viewY, 0);
+
+    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+    DGL_SetFloat(DGL_LINE_WIDTH, AM_LINE_WIDTH);
+
+    if(amMaskTexture)
     {
-        AM_ClearAllLists(false);
+        DGL_Enable(DGL_TEXTURING);
+        DGL_Bind(amMaskTexture);
 
-        // Draw.
-        renderWalls();
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
 
-        if(map->flags & AMF_REND_VERTEXES)
-            renderVertexes();
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_LoadIdentity();
 
-        renderPlayers();
-
-        if(map->flags & AMF_REND_THINGS)
-            renderThings(THINGCOLORS, THINGRANGE);
-
-        if(map->flags & AMF_REND_KEYS)
-            P_IterateThinkers(P_MobjThinker, drawKeys, NULL);
-
-        // Draw any marked points.
-        drawMarks();
+        DGL_PushMatrix();
+        DGL_Scalef(1.f / FIXXTOSCREENX(SCREENWIDTH),
+                   1.f / FIXYTOSCREENY(SCREENHEIGHT), 1);
+        DGL_Translatef(FIXXTOSCREENX(SCREENWIDTH / 2),
+                       FIXYTOSCREENY(SCREENHEIGHT / 2), 0);
+        DGL_Rotatef(-map->angle, 0, 0, 1);
+        DGL_Scalef(map->scaleMTOF, map->scaleMTOF, 1);
+        DGL_Translatef(-map->viewX , -map->viewY, 0);
     }
-    AM_RenderAllLists(map->alpha);
+
+    // Draw static map geometry.
+    for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
+    {
+        if(map->lists[i])
+        {
+            mapobjectinfo_t*        info = &map->cfg.mapObjectInfo[i];
+
+            // Setup the global list state.
+            DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2],
+                        info->rgba[3] * cfg.automapLineAlpha * map->alpha);
+            GL_BlendMode(info->blendMode);
+
+            // Draw.
+            DGL_CallList(map->lists[i]);
+        }
+    }
+
+    // Restore the previous state.
+    DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
+    GL_BlendMode(BM_NORMAL);
+    DGL_Color4f(1, 1, 1, 1);
+
+    if(map->flags & AMF_REND_VERTEXES)
+        renderVertexes();
+
+    // Draw dynamic map elements:
+    renderXGLinedefs();
+    renderPolyObjs();
+
+    // Draw the map objects:
+    renderPlayers();
+    if(map->flags & (AMF_REND_THINGS|AMF_REND_KEYS))
+        P_IterateThinkers(P_MobjThinker, renderThing, NULL);
+
+    if(amMaskTexture)
+    {
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_PopMatrix();
+        DGL_Bind(0);
+    }
+
+    // Draw any marked points.
+    drawMarks();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
-    drawLevelName();
+    renderMapName();
+
     restoreGLStateFromMap();
 }
 
@@ -3422,19 +3564,6 @@ void AM_Drawer(int viewplayer)
 //-------------------------------------------------------------------------------
 
 menuitem_t MAPItems[] = {
-/*
-    {ITT_LRFUNC, 0, "window position : ",       M_MapPosition, 0 },
-    {ITT_LRFUNC, 0, "window width :       ",    M_MapWidth, 0 },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-#endif
-    {ITT_LRFUNC, 0, "window height :     ",     M_MapHeight, 0 },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-#endif
-*/
     {ITT_LRFUNC, 0, "hud display :        ",    M_MapStatusbar, 0 },
 #if !__JHEXEN__
     {ITT_LRFUNC, 0, "kills count :         ",   M_MapKills, 0 },
@@ -3493,15 +3622,16 @@ menu_t MapDef = {
  */
 void M_DrawMapMenu(void)
 {
-    float           menuAlpha;
-    const menu_t *menu = &MapDef;
-    static char *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
-    static char *yesno[2] = { "NO", "YES" };
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __WOLFTC__
-    static char *countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
+    static char*            hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
+    static char*            yesno[2] = { "NO", "YES" };
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    static char*            countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
 #endif
+    float                   menuAlpha;
+    const menu_t*           menu = &MapDef;
 
     menuAlpha = Hu_MenuAlpha();
+
     M_DrawTitle("Automap OPTIONS", menu->y - 26);
 
 #if __JDOOM__ || __JDOOM64__
@@ -3543,42 +3673,6 @@ void M_DrawMapMenu(void)
 # endif
 #endif
 }
-
-/**
- * Set automap window width
- */
-#if 0 // unused atm
-void M_MapWidth(int option, void *data)
-{
-    M_FloatMod10(&cfg.automapWidth, option);
-}
-#endif
-
-/**
- * Set automap window height
- */
-#if 0 // unused atm
-void M_MapHeight(int option, void *data)
-{
-    M_FloatMod10(&cfg.automapHeight, option);
-}
-#endif
-
-/**
- * Set map window position
- */
-#if 0 // unused atm
-void M_MapPosition(int option, void *data)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.automapPos < 8)
-            cfg.automapPos++;
-    }
-    else if(cfg.automapPos > 0)
-        cfg.automapPos--;
-}
-#endif
 
 /**
  * Set automap line alpha
