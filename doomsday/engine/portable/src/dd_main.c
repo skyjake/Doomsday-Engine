@@ -1068,26 +1068,31 @@ void* DD_GetVariable(int ddvalue)
         case DD_WINDOW_HANDLE:
             return Sys_GetWindowHandle(windowIDX);
 #endif
+
+        // We have to separately calculate the 35 Hz ticks.
+        case DD_GAMETIC:
+            {
+            static timespan_t       fracTic;
+            fracTic = gameTime * TICSPERSEC;
+            return &fracTic;
+            }
+        case DD_OPENRANGE:
+            return &openrange;
+
+        case DD_OPENTOP:
+            return &opentop;
+
+        case DD_OPENBOTTOM:
+            return &openbottom;
+
+        case DD_LOWFLOOR:
+            return &lowfloor;
+
         default:
             break;
         }
         return 0;
     }
-    // We have to separately calculate the 35 Hz ticks.
-    if(ddvalue == DD_GAMETIC)
-    {
-        static timespan_t       fracTic;
-        fracTic = gameTime * TICSPERSEC;
-        return &fracTic;
-    }
-    if(ddvalue == DD_OPENRANGE)
-        return &openrange;
-    if(ddvalue == DD_OPENTOP)
-        return &opentop;
-    if(ddvalue == DD_OPENBOTTOM)
-        return &openbottom;
-    if(ddvalue == DD_LOWFLOOR)
-        return &lowfloor;
 
     // Other values not supported.
     return ddValues[ddvalue].writePtr;
