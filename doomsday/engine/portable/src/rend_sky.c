@@ -310,7 +310,7 @@ static void setupFadeout(skylayer_t* slayer)
         flags |= TEXF_TEX_ZEROMASK;
 
     // Ensure we have up to date info on the material tex.
-    texInst = R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL);
+    texInst = R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL, NULL);
     if(texInst)
     {
         int                 i;
@@ -373,7 +373,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                 if(slayer->flags & SLF_MASKED)
                     flags |= TEXF_TEX_ZEROMASK;
 
-                R_MaterialPrepare(mat, flags, &glTex, &result);
+                R_MaterialPrepare(mat, flags, &glTex, NULL, &result);
                 curTex = glTex.id;
                 skyTexWidth = glTex.width;
                 skyTexHeight = glTex.height;
@@ -567,7 +567,7 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
             if(slayer->flags & SLF_MASKED)
                 flags |= TEXF_TEX_ZEROMASK;
 
-            R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL);
+            R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL, NULL);
         }
 
         setupFadeout(slayer);

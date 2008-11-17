@@ -363,7 +363,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_t*         mat = R_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
         gltexture_t         glTex;
 
-        R_MaterialPrepare(mat->current, 0, &glTex, NULL);
+        R_MaterialPrepare(mat->current, 0, &glTex, NULL, NULL);
         GL_BindTexture(glTex.id, glTex.magMode);
     }
     else
@@ -481,8 +481,8 @@ void Rend_Draw2DPlayerSprites(void)
  */
 void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
 {
-    boolean     withDyn = false;
-    int         normal = 0, dyn = 1;
+    boolean             withDyn = false;
+    int                 normal = 0, dyn = 1;
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
@@ -499,24 +499,27 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
             dyn = 1;
         }
 
-        RL_SelectTexUnits(2);
+        GL_SelectTexUnits(2);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, IS_MUL ? 4 : 5);
 
         // The dynamic light.
-        RL_BindTo(IS_MUL ? 0 : 1, params->modTex, DGL_LINEAR);
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 0 : 1);
+        GL_BindTexture(renderTextures ? params->modTex : 0, DGL_LINEAR);
+
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, params->modColor);
 
         // The actual texture.
-        RL_BindTo(IS_MUL ? 1 : 0, params->texture, glmode[texMagMode]);
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 1 : 0);
+        GL_BindTexture(renderTextures ? params->tex : 0, params->magMode);
 
         withDyn = true;
     }
     else
     {
-        RL_SelectTexUnits(1);
+        GL_SelectTexUnits(1);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
 
-        RL_Bind(params->texture, glmode[texMagMode]);
+        GL_BindTexture(renderTextures? params->tex : 0, params->magMode);
         normal = 0;
     }
 
@@ -600,7 +603,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         DGL_End();
 
         // Restore normal GL state.
-        RL_SelectTexUnits(1);
+        GL_SelectTexUnits(1);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         DGL_DisableArrays(true, true, 0x1);
     }
@@ -908,7 +911,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         {
             gltexture_t         glTex;
 
-            R_MaterialPrepare(mat->current, 0, &glTex, NULL);
+            R_MaterialPrepare(mat->current, 0, &glTex, NULL, NULL);
             GL_BindTexture(glTex.id, glTex.magMode);
         }
         else

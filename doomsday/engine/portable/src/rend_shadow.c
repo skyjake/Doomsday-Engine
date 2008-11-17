@@ -93,14 +93,17 @@ static void processMobjShadow(mobj_t* mo)
 
     float               moz;
     float               height, moh, halfmoh, alpha, pos[2];
-    sector_t           *sec = mo->subsector->sector;
+    sector_t*           sec = mo->subsector->sector;
     float               radius;
     uint                i;
     rvertex_t           rvertices[4];
     rcolor_t            rcolors[4];
-    rendpoly_params_t   params;
+    rtexcoord_t         rtexcoords[4];
+    rladdpoly_params_t  params;
     plane_t*            plane;
     float               distance;
+
+    memset(&params, 0, sizeof(params));
 
     // Is this too far?
     pos[VX] = mo->pos[VX];
@@ -174,35 +177,39 @@ static void processMobjShadow(mobj_t* mo)
         return;
 
     // Prepare the poly.
-    params.type = RP_FLAT;
-    params.flags = RPF_SHADOW;
-    params.blendMode = BM_NORMAL;
-    params.texOffset[VX] = -pos[VX] + radius;
-    params.texOffset[VY] = -pos[VY] - radius;
-    params.texOrigin[0][VX] = params.texOrigin[0][VY] = 0;
+    params.type = RPT_SHADOW;
     params.interPos = 0;
-    params.lightListIdx = 0;
 
-    params.tex.id = curTex = GL_PrepareLSTexture(LST_DYNAMIC);
-    params.tex.magMode = DGL_LINEAR;
-    params.tex.width = params.tex.height = radius * 2;
-    params.tex.masked = 0;
-    params.tex.detail.id = 0;
-
-    memset(&params.interTex, 0, sizeof(params.interTex));
+    TMU(&params, TMU_PRIMARY)->tex = curTex = GL_PrepareLSTexture(LST_DYNAMIC);
+    TMU(&params, TMU_PRIMARY)->magMode = DGL_LINEAR;
+    //params.tex.width = params.tex.height = radius * 2;
+    //params.tex.flags = 0;
+    //params.detailTex.id = 0;
+    //memset(&params.interTex, 0, sizeof(params.interTex));
 
     rvertices[0].pos[VX] = pos[VX] - radius;
     rvertices[0].pos[VY] = pos[VY] + radius;
     rvertices[0].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    rtexcoords[0].st[0] = 0;
+    rtexcoords[0].st[1] = 1;
+
     rvertices[1].pos[VX] = pos[VX] + radius;
     rvertices[1].pos[VY] = pos[VY] + radius;
     rvertices[1].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    rtexcoords[1].st[0] = 1;
+    rtexcoords[1].st[1] = 1;
+
     rvertices[2].pos[VX] = pos[VX] + radius;
     rvertices[2].pos[VY] = pos[VY] - radius;
     rvertices[2].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    rtexcoords[2].st[0] = 1;
+    rtexcoords[2].st[1] = 0;
+
     rvertices[3].pos[VX] = pos[VX] - radius;
     rvertices[3].pos[VY] = pos[VY] - radius;
     rvertices[3].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
+    rtexcoords[3].st[0] = 0;
+    rtexcoords[3].st[1] = 0;
 
     // Shadows are black.
     for(i = 0; i < 4; ++i)
@@ -211,7 +218,8 @@ static void processMobjShadow(mobj_t* mo)
         rcolors[i].rgba[CA] = alpha;
     }
 
-    RL_AddPoly(rvertices, rcolors, 4, &params);
+    RL_AddPoly(PT_FAN, rvertices, rtexcoords, NULL, NULL,
+               rcolors, 4, BM_NORMAL, 0, &params);
 
 #undef SHADOWZOFFSET
 }

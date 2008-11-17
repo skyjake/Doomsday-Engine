@@ -602,58 +602,101 @@ typedef struct {
     float               wallLength;
 } rendershadowseg_params_t;
 
+static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
+                          float wallLength, float texWidth, float texHeight,
+                          const float texOrigin[2][3], const float texOffset[2],
+                          boolean horizontal)
+{
+    if(horizontal)
+    {   // Special horizontal coordinates for wall shadows.
+        tc[0].st[0] = tc[2].st[0] =
+            rverts[0].pos[VX] - texOrigin[0][VX] + texOffset[VY] / texHeight;
+        tc[0].st[1] = tc[1].st[1] =
+            rverts[0].pos[VY] - texOrigin[0][VY] + texOffset[VX] / texWidth;
+        tc[1].st[0] = tc[0].st[0] + (rverts[1].pos[VZ] - texOrigin[0][VZ]) / texHeight;
+        tc[3].st[0] = tc[0].st[0] + (rverts[3].pos[VZ] - texOrigin[0][VZ]) / texHeight;
+        tc[3].st[1] = tc[0].st[1] + wallLength / texWidth;
+        tc[2].st[1] = tc[0].st[1] + wallLength / texWidth;
+        return;
+    }
+
+    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - texOrigin[0][VX] +
+        texOffset[VX] / texWidth;
+    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - texOrigin[0][VY] +
+        texOffset[VY] / texHeight;
+    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength / texWidth;
+    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texHeight;
+    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
+}
+
 static void renderShadowSeg(const rvertex_t* rvertices,
                             const walldiv_t* divs,
                             const rendershadowseg_params_t* p,
                             float shadowDark)
 {
-    rendpoly_wall_t     wall;
-    rendpoly_params_t   params;
-    rcolor_t            rcolors[4];
+    float               texOrigin[2][3];
+    rladdpoly_params_t  params;
 
-    setRendpolyColor(rcolors, 4, p->shadowMul * shadowDark);
+    memset(&params, 0, sizeof(params));
 
     // Init the quad.
-    params.type = (divs? RP_DIVQUAD : RP_QUAD);
-    params.isWall = true;
-    params.wall = &wall;
-    if(divs)
-        memcpy(&params.wall->divs, divs, sizeof(params.wall->divs));
-    else
-        memset(&params.wall->divs, 0, sizeof(params.wall->divs));
-    params.wall->length = p->wallLength;
-    params.flags = RPF_SHADOW;
-    if(p->horizontal)
-        params.flags |= RPF_HORIZONTAL;
-    params.blendMode = BM_NORMAL;
+    params.type = RPT_SHADOW;
 
-    params.tex.id = curTex = GL_PrepareLSTexture(p->texture);
-    params.tex.magMode = DGL_LINEAR;
-    params.tex.width = p->texWidth;
+    TMU(&params, TMU_PRIMARY)->tex = curTex = GL_PrepareLSTexture(p->texture);
+    TMU(&params, TMU_PRIMARY)->magMode = DGL_LINEAR;
+    /*params.tex.width = p->texWidth;
     params.tex.height = p->texHeight;
-    params.tex.masked = false;
-    params.tex.detail.id = 0;
+    params.tex.flags = 0;*/
 
     // Top left.
-    params.texOrigin[0][VX] = rvertices[1].pos[VX];
-    params.texOrigin[0][VY] = rvertices[1].pos[VY];
-    params.texOrigin[0][VZ] = rvertices[1].pos[VZ];
+    texOrigin[0][VX] = rvertices[1].pos[VX];
+    texOrigin[0][VY] = rvertices[1].pos[VY];
+    texOrigin[0][VZ] = rvertices[1].pos[VZ];
 
     // Bottom right.
-    params.texOrigin[1][VX] = rvertices[2].pos[VX];
-    params.texOrigin[1][VY] = rvertices[2].pos[VY];
-    params.texOrigin[1][VZ] = rvertices[2].pos[VZ];
-
-    params.texOffset[VX] = p->texOffset[VX];
-    params.texOffset[VY] = p->texOffset[VY];
-
-    params.lightListIdx = 0;
-    params.interTex.id = 0;
-    params.interTex.detail.id = 0;
-    params.interPos = 0;
+    texOrigin[1][VX] = rvertices[2].pos[VX];
+    texOrigin[1][VY] = rvertices[2].pos[VY];
+    texOrigin[1][VZ] = rvertices[2].pos[VZ];
 
     if(rendFakeRadio != 2)
-        RL_AddPoly(rvertices, rcolors, 4, &params);
+    {
+        if(divs)
+        {
+            uint                numVertices =
+                3 + divs[0].num + 3 + divs[1].num;
+            rtexcoord_t*        rtexcoords;
+            rcolor_t*           rcolors;
+
+            rtexcoords = R_AllocRendTexCoords(numVertices);
+            memset(rtexcoords, 0, sizeof(*rtexcoords) * numVertices);
+            rcolors = R_AllocRendColors(numVertices);
+
+            setRendpolyColor(rcolors, numVertices, p->shadowMul * shadowDark);
+
+            RL_AddPoly(PT_FAN, rvertices + 3 + divs[0].num,
+                       rtexcoords + 3 + divs[0].num, NULL, NULL,
+                       rcolors + 3 + divs[0].num, 3 + divs[1].num,
+                       BM_NORMAL, 0, &params);
+            RL_AddPoly(PT_FAN, rvertices, rtexcoords, NULL, NULL, rcolors,
+                       3 + divs[0].num, BM_NORMAL, 0, &params);
+
+            R_FreeRendTexCoords(rtexcoords);
+            R_FreeRendColors(rcolors);
+        }
+        else
+        {
+            rcolor_t            rcolors[4];
+            rtexcoord_t         rtexcoords[4];
+
+            quadTexCoords(rtexcoords, rvertices, p->wallLength, p->texWidth,
+                          p->texHeight, texOrigin, p->texOffset,
+                          p->horizontal);
+            setRendpolyColor(rcolors, 4, p->shadowMul * shadowDark);
+
+            RL_AddPoly(PT_TRIANGLE_STRIP, rvertices, rtexcoords, NULL, NULL,
+                       rcolors, 4, BM_NORMAL, 0, &params);
+        }
+    }
 }
 
 static void setTopShadowParams(rendershadowseg_params_t* p, float size,
@@ -1299,7 +1342,7 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     const uint*         idx;
     rvertex_t           rvertices[4];
     rcolor_t            rcolors[4];
-    rendpoly_params_t   params;
+    rladdpoly_params_t  params;
     float               shadowAlpha;
     vertex_t*           vtx0, *vtx1;
 
@@ -1318,10 +1361,8 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
 
     memset(&params, 0, sizeof(params));
     // Initialize the rendpoly.
-    params.type = RP_FLAT;
-    params.blendMode = BM_NORMAL;
     if(!renderWireframe)
-        params.flags = RPF_SHADOW;
+        params.type = RPT_SHADOW;
 
     idx = (normal[VZ] > 0 ? floorIndices[wind] : ceilIndices[wind]);
 
@@ -1366,7 +1407,8 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     rcolors[idx[3]].rgba[CA] = 0;
 
     if(rendFakeRadio != 2)
-        RL_AddPoly(rvertices, rcolors, 4, &params);
+        RL_AddPoly(PT_FAN, rvertices, NULL, NULL, NULL,
+                   rcolors, 4, BM_NORMAL, 0, &params);
 }
 
 /**

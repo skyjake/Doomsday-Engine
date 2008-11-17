@@ -84,7 +84,7 @@ typedef struct animgroup_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean levelSetup;
+extern boolean mapSetup;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -262,7 +262,8 @@ static void updateMaterialTex(materialtex_t* mTex)
     switch(mTex->type)
     {
     case MTT_TEXTURE:
-        mTex->isFromIWAD = R_TextureIsFromIWAD(mTex->ofTypeID);
+        mTex->isFromIWAD =
+            (R_GetTextureDef(mTex->ofTypeID)->flags & TXDF_IWAD)? true : false;
         break;
 
     case MTT_FLAT:
@@ -357,24 +358,6 @@ materialnum_t R_GetNumMaterials(void)
 }
 
 /**
- * Mark all existing materials as requiring an update. Called during a
- * renderer reset.
- */
-void R_MarkMaterialsForUpdating(void)
-{
-    if(materialsHead)
-    {
-        material_t*         mat;
-
-        mat = materialsHead;
-        do
-        {
-            mat->flags |= MATF_CHANGED;
-        } while((mat = mat->globalNext));
-    }
-}
-
-/**
  * Deletes all GL textures of materials in the specified group.
  *
  * @param group         @c MG_ANY = delete from all material groups, ELSE
@@ -444,7 +427,8 @@ materialtex_t* R_MaterialTexCreate(int ofTypeID, materialtextype_t type)
     switch(type)
     {
     case MTT_TEXTURE:
-        mTex->isFromIWAD = R_TextureIsFromIWAD(ofTypeID);
+        mTex->isFromIWAD =
+            (R_GetTextureDef(ofTypeID)->flags & TXDF_IWAD)? true : false;
         break;
 
     case MTT_FLAT:
@@ -487,13 +471,15 @@ materialtex_t* R_MaterialTexCreate(int ofTypeID, materialtextype_t type)
  * @param name          Name of the new material.
  * @param width         Width of the material (not of the texture).
  * @param height        Height of the material (not of the texture).
+ * @param flags         MATF_* material flags
  * @param mTex          Texture to use with this material.
  * @param group         MG_* material group.
  *
  * @return              The created material, ELSE @c NULL.
  */
 material_t* R_MaterialCreate(const char* rawName, short width, short height,
-                             materialtex_t* mTex, materialgroup_t groupNum)
+                             byte flags, materialtex_t* mTex,
+                             materialgroup_t groupNum)
 {
     materialnum_t       i;
     material_t*         mat;
@@ -537,7 +523,8 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
         mat = mb->mat;
 
         // Update the (possibly new) meta data.
-        mat->flags &= ~MATF_CHANGED;
+        mat->tex = mTex;
+        mat->flags = flags;
         mat->width = width;
         mat->height = height;
         mat->inAnimGroup = false;
@@ -545,7 +532,6 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
         mat->inter = 0;
         mat->decoration = NULL;
         mat->ptcGen = NULL;
-        mat->reflection = NULL;
         mat->detail = NULL;
         mat->envClass = S_MaterialClassForName(mb->name, groupNum);
 
@@ -558,6 +544,7 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
     mat->group = groupNum;
     mat->width = width;
     mat->height = height;
+    mat->flags = flags;
     mat->envClass = S_MaterialClassForName(name, groupNum);
     mat->current = mat->next = mat;
     mat->tex = mTex;
@@ -588,7 +575,8 @@ static materialtexinst_t* pickTexInstance(materialtex_t* mTex, int flags)
 }
 
 materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
-                                     gltexture_t* glTex, byte* result)
+                                     gltexture_t* glTex,
+                                     gltexture_t* glDetailTex, byte* result)
 {
     if(mat)
     {
@@ -662,26 +650,47 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
             }
 
             // Surface reflection.
-            mat->reflection = Def_GetReflection(mat);
+            {
+            ded_reflection_t*   def = Def_GetReflection(mat, tmpResult == 2);
+
+            // Make sure the shiny texture and mask has been loaded.
+            if(GL_LoadReflectionMap(def))
+            {
+                mat->shiny.tex = def->useShiny->shinyTex;
+                mat->shiny.blendMode = def->blendMode;
+                mat->shiny.shininess = def->shininess;
+                mat->shiny.minColor[CR] = def->minColor[CR];
+                mat->shiny.minColor[CG] = def->minColor[CG];
+                mat->shiny.minColor[CB] = def->minColor[CB];
+                mat->shiny.maskTex =
+                    (def->useMask? def->useMask->maskTex : 0);
+                mat->shiny.maskWidth = def->maskWidth;
+                mat->shiny.maskHeight = def->maskHeight;
+            }
+            else
+            {
+                mat->shiny.tex = 0;
+            }
+            }
 
             // Load a detail texture (if one is defined).
-            if(mat->group == MG_FLATS || mat->group == MG_TEXTURES)
             {
-                ded_detailtexture_t* def = Def_GetDetailTex(mat);
+            ded_detailtexture_t* def = Def_GetDetailTex(mat, tmpResult == 2);
 
-                if(def)
-                {
-                    lumpnum_t           lump =
-                        W_CheckNumForName(def->detailLump.path);
-                    const char*         external =
-                        (def->isExternal? def->detailLump.path : NULL);
+            if(def)
+            {
+                lumpnum_t           lump =
+                    W_CheckNumForName(def->detailLump.path);
+                const char*         external =
+                    (def->isExternal? def->detailLump.path : NULL);
 
-                    mat->detail = R_GetDetailTexture(lump, external);
-                }
-                else
-                {
-                    mat->detail = NULL;
-                }
+                mat->detail = R_GetDetailTexture(lump, external, def->scale,
+                                                 def->strength, def->maxDist);
+            }
+            else
+            {
+                mat->detail = NULL;
+            }
             }
 
             // Get the particle generator definition for this.
@@ -745,8 +754,6 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
             detailInst =
                 GL_PrepareDetailTexture(mat->detail, mat->detail->strength);
 
-
-
         if(glTex)
         {
             glTex->id = (texInst? texInst->tex : 0);
@@ -759,6 +766,7 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
 
                 glTex->width = sprTex->width;
                 glTex->height = sprTex->height;
+                glTex->scale = 1;
                 break;
                 }
 
@@ -769,16 +777,19 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
 
                 glTex->width = texDef->width;
                 glTex->height = texDef->height;
+                glTex->scale = 1;
                 break;
                 }
             case MTT_FLAT:
                 glTex->width = 64;
                 glTex->height = 64;
+                glTex->scale = 1;
                 break;
 
             case MTT_DDTEX:
                 glTex->width = 64;
                 glTex->height = 64;
+                glTex->scale = 1;
                 break;
 
             default:
@@ -791,18 +802,30 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
                 glTex->magMode = filterSprites? DGL_LINEAR : DGL_NEAREST;
             else
                 glTex->magMode = glmode[texMagMode];
-            glTex->masked = (texInst? texInst->masked : false);
 
+            glTex->flags = 0;
+            if(texInst && texInst->masked)
+                glTex->flags |= GLTXF_MASKED;
+        }
+
+        if(glDetailTex)
+        {
             if(r_detail && detailInst)
             {
-                glTex->detail.id = detailInst->tex;
-                glTex->detail.width = mat->detail->width;
-                glTex->detail.height = mat->detail->height;
-                glTex->detail.scale = mat->detail->scale;
+                glDetailTex->id = detailInst->tex;
+                glDetailTex->magMode = DGL_LINEAR;
+                glDetailTex->width = mat->detail->width;
+                glDetailTex->height = mat->detail->height;
+                glDetailTex->scale = mat->detail->scale;
+                glDetailTex->flags = 0;
             }
             else
             {
-                glTex->detail.id = 0;
+                glDetailTex->id = 0;
+                glDetailTex->magMode = DGL_LINEAR;
+                glDetailTex->width = glDetailTex->height = 0;
+                glDetailTex->scale = 1;
+                glDetailTex->flags = 0;
             }
         }
 
@@ -815,10 +838,19 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
     if(glTex)
     {
         glTex->id = 0;
-        glTex->magMode = glmode[texMagMode];
+        glTex->magMode = DGL_LINEAR;
         glTex->width = glTex->height = 64;
-        glTex->masked = false;
-        glTex->detail.id = 0;
+        glTex->scale = 1;
+        glTex->flags = 0;
+    }
+
+    if(glDetailTex)
+    {
+        glDetailTex->id = 0;
+        glDetailTex->magMode = DGL_LINEAR;
+        glDetailTex->width = glDetailTex->height = 0;
+        glDetailTex->scale = 1;
+        glDetailTex->flags = 0;
     }
 
     return NULL;
@@ -988,7 +1020,7 @@ materialnum_t R_MaterialNumForName(const char* name, materialgroup_t group)
     result = R_MaterialCheckNumForName(name, group);
 
     // Not found.
-    if(result == 0 && !levelSetup) // Don't announce during level setup.
+    if(result == 0 && !mapSetup) // Don't announce during map setup.
         Con_Message("R_MaterialNumForName: \"%.8s\" in group %i not found!\n",
                     name, group);
     return result;
@@ -1055,24 +1087,6 @@ Con_Error("R_MaterialSetTranslation: Invalid paramaters.");
 }
 
 /**
- * Retrieve the reflection definition associated with the material.
- *
- * @return              The associated reflection definition, else @c NULL.
- */
-ded_reflection_t* R_MaterialGetReflection(material_t* mat)
-{
-    if(mat)
-    {
-        // Ensure we've already prepared this material.
-        R_MaterialPrepare(mat->current, 0, NULL, NULL);
-
-        return mat->reflection;
-    }
-
-    return NULL;
-}
-
-/**
  * Retrieve the decoration definition associated with the material.
  *
  * @return              The associated decoration definition, else @c NULL.
@@ -1082,7 +1096,7 @@ const ded_decor_t* R_MaterialGetDecoration(material_t* mat)
     if(mat)
     {
         // Ensure we've already prepared this material.
-        R_MaterialPrepare(mat->current, 0, NULL, NULL);
+        R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
 
         return mat->current->decoration;
     }
@@ -1100,7 +1114,7 @@ const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat)
     if(mat)
     {
         // Ensure we've already prepared this material.
-        R_MaterialPrepare(mat->current, 0, NULL, NULL);
+        R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
 
         return mat->ptcGen;
     }
@@ -1178,7 +1192,7 @@ boolean R_MaterialIsCustom(materialnum_t num)
  * Prepares all resources associated with the specified material including
  * all in the same animation group.
  */
-void R_MaterialPrecache(material_t* mat)
+void R_MaterialPrecache2(material_t* mat)
 {
     if(!mat)
         return;
@@ -1198,7 +1212,7 @@ void R_MaterialPrecache(material_t* mat)
                 {
                     animframe_t*        frame = &groups[i].frames[k];
 
-                    R_MaterialPrepare(frame->mat->current, 0, NULL, NULL);
+                    R_MaterialPrepare(frame->mat->current, 0, NULL, NULL, NULL);
                 }
             }
         }
@@ -1207,7 +1221,15 @@ void R_MaterialPrecache(material_t* mat)
     }
 
     // Just this one material.
-    R_MaterialPrepare(mat->current, 0, NULL, NULL);
+    R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
+}
+
+/**
+ * \note Part of the Doomsday public API.
+ */
+void R_MaterialPrecache(materialnum_t num)
+{
+    R_MaterialPrecache2(R_GetMaterialByNum(num));
 }
 
 /**

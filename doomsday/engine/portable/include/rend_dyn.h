@@ -60,7 +60,8 @@ void            DL_InitForMap(void);
 void            DL_InitForNewFrame(void);
 
 // Action.
-uint            DL_ProcessSegSection(seg_t* seg, float bottom, float top,
+uint            DL_ProcessSegSection(seg_t* seg, subsector_t* ssec,
+                                     float bottom, float top,
                                      boolean sortBrightestFirst);
 uint            DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane);
 

@@ -65,7 +65,8 @@ typedef enum {
 } visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
-    int             texture;
+    DGLuint         tex;
+    int             magMode;
     boolean         masked;
     blendmode_t     blendMode; // Blendmode to be used when drawing
                                // (two sided mid textures only)

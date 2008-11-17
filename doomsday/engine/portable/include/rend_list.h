@@ -32,29 +32,86 @@
 #include "r_data.h"
 
 // Multiplicative blending for dynamic lights?
-#define IS_MUL  (dlBlend != 1 && !usingFog)
+#define IS_MUL              (dlBlend != 1 && !usingFog)
 
-extern int      renderTextures;
-extern int      renderWireframe;
-extern int      useMultiTexLights;
-extern int      useMultiTexDetails;
+// Types of rendering primitives.
+typedef enum primtype_e {
+    PT_FIRST = 0,
+    PT_TRIANGLE_STRIP = PT_FIRST, // Used for most stuff.
+    PT_FAN,
+    NUM_PRIM_TYPES
+} primtype_t;
 
-extern float    rendLightWallAngle;
-extern float    detailFactor, detailScale;
-extern int      torchAdditive;
-extern float    torchColor[];
+// Special rendpoly types.
+typedef enum {
+    RPT_NORMAL = 0,
+    RPT_SKY_MASK, // A sky mask polygon.
+    RPT_LIGHT, // A dynamic light.
+    RPT_SHADOW, // An object shadow or fakeradio edge shadow.
+    RPT_SHINY // A shiny polygon.
+} rendpolytype_t;
+
+// Helper macro for accessing texture map units.
+#define TMU(x, n)          (&((x)->texmapunits[(n)]))
+
+typedef enum {
+    TMU_PRIMARY = 0,
+    TMU_PRIMARY_DETAIL,
+    TMU_INTER,
+    TMU_INTER_DETAIL,
+    NUM_TEXMAP_UNITS
+} texmapunit_t;
+
+typedef struct rtexmapuint_s {
+    DGLuint         tex;
+    int             magMode;
+    float           scale[2], offset[2]; // For use with the texture matrix.
+} rtexmapunit_t;
+
+// rladdpoly_params_t is only for convenience; the data written in the rendering
+// list data buffer is taken from this struct.
+typedef struct rladdpoly_params_s {
+    rendpolytype_t  type;
+    rtexmapunit_t   texmapunits[NUM_TEXMAP_UNITS];
+    float           interPos; // Blending strength (0..1).
+    DGLuint         modTex;
+    float           modColor[3];
+} rladdpoly_params_t;
+
+extern int renderTextures;
+extern int renderWireframe;
+extern int useMultiTexLights;
+extern int useMultiTexDetails;
+extern float rendLightWallAngle;
+extern float detailFactor, detailScale;
+extern int torchAdditive;
+extern float torchColor[];
 
 void            RL_Register(void);
 void            RL_Init(void);
+boolean         RL_IsMTexLights(void);
+boolean         RL_IsMTexDetails(void);
+
 void            RL_ClearLists(void);
 void            RL_DeleteLists(void);
-void            RL_AddPoly(const rvertex_t* vertices, const rcolor_t* colors,
-                           uint numVertices, const rendpoly_params_t* params);
+
+void            RL_AddPoly(primtype_t type, const rvertex_t* vertices,
+                           const rtexcoord_t* rtexcoords,
+                           const rtexcoord_t* rtexcoords2,
+                           const rtexcoord_t* rtexcoords5,
+                           const rcolor_t* colors, uint numVertices,
+                           blendmode_t blendMode, boolean isLit,
+                           const rladdpoly_params_t* params);
+void            RL_AddMaskedPoly(const rvertex_t* vertices,
+                                 const rcolor_t* colors, float wallLength,
+                                 float texWidth, float texHeight,
+                                 const float texOffset[2],
+                                 blendmode_t blendMode,
+                                 uint lightListIdx, boolean glow,
+                                 boolean masked,
+                                 const rladdpoly_params_t* params);
 void            RL_RenderAllLists(void);
 
-void            RL_SelectTexUnits(int count);
-void            RL_Bind(DGLuint texture, int magMode);
-void            RL_BindTo(int unit, DGLuint texture, int magMode);
 void            RL_FloatRGB(byte* rgb, float* dest);
 
 #endif

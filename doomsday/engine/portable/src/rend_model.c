@@ -775,7 +775,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         {
             gltexture_t         glTex;
 
-            R_MaterialPrepare(mat->current, 0, &glTex, NULL);
+            R_MaterialPrepare(mat->current, 0, &glTex, NULL, NULL);
             skinTexture = glTex.id;
         }
         else
@@ -812,9 +812,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // The first pass can be skipped if it won't be visible.
         if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
         {
-            RL_SelectTexUnits(1);
+            GL_SelectTexUnits(1);
             GL_BlendMode(blending);
-            RL_Bind(skinTexture, glmode[texMagMode]);
+            GL_BindTexture(renderTextures? skinTexture : 0, glmode[texMagMode]);
 
             Mod_RenderCommands(RC_COMMAND_COORDS,
                                mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -838,23 +838,27 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             {
                 // We'll use multitexturing to clear out empty spots in
                 // the primary texture.
-                RL_SelectTexUnits(2);
+                GL_SelectTexUnits(2);
                 DGL_SetInteger(DGL_MODULATE_TEXTURE, 11);
-                RL_BindTo(1, shinyTexture, glmode[texMagMode]);
-                RL_BindTo(0, skinTexture, glmode[texMagMode]);
+
+                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+                GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+
+                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+                GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
 
-                RL_SelectTexUnits(1);
+                GL_SelectTexUnits(1);
                 DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
             }
             else
             {
                 // Empty spots will get shine, too.
-                RL_SelectTexUnits(1);
-                RL_Bind(shinyTexture, glmode[texMagMode]);
+                GL_SelectTexUnits(1);
+                GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
                 Mod_RenderCommands(RC_OTHER_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
@@ -866,21 +870,27 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // A special case: specular shininess on an opaque object.
         // Multitextured shininess with the normal blending.
         GL_BlendMode(blending);
-        RL_SelectTexUnits(2);
+        GL_SelectTexUnits(2);
+
         // Tex1*Color + Tex2RGB*ConstRGB
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 10);
-        RL_BindTo(1, shinyTexture, glmode[texMagMode]);
+
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+        GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+
         // Multiply by shininess.
         for(c = 0; c < 3; ++c)
             color[c] *= color[3];
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-        RL_BindTo(0, skinTexture, glmode[texMagMode]);
+
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+        GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
                            /*numVerts,*/ modelVertices, modelColors,
                            modelTexCoords);
 
-        RL_SelectTexUnits(1);
+        GL_SelectTexUnits(1);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
     }
 
