@@ -789,7 +789,7 @@ typedef struct {
                     if(patchNum < 0 || (unsigned) patchNum >= numPatches)
                     {
                         Con_Message("R_ReadTextureDefs: Invalid patch %i in "
-                                    "texture '%s'.", (int) patchNum,
+                                    "texture '%s'.\n", (int) patchNum,
                                     mtexture->name);
                         continue;
                     }
