@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 436 <--
+; --> 438 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -319,6 +319,8 @@ EXPORTS
     R_MaterialCheckNumForName   @336 NONAME
     R_MaterialNameForNum        @337 NONAME
     R_MaterialNumForName        @97 NONAME
+    R_MaterialCheckNumForIndex  @438 NONAME
+    R_MaterialNumForIndex       @437 NONAME
     R_MaterialPrecache			@436 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME

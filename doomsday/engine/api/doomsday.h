@@ -406,6 +406,8 @@ extern          "C" {
 
     materialnum_t   R_MaterialCheckNumForName(const char* name, materialgroup_t group);
     materialnum_t   R_MaterialNumForName(const char* name, materialgroup_t group);
+    materialnum_t   R_MaterialCheckNumForIndex(uint idx, materialgroup_t group);
+    materialnum_t   R_MaterialNumForIndex(uint idx, materialgroup_t group);
     const char*     R_MaterialNameForNum(materialnum_t num);
     boolean         R_MaterialIsCustom(materialnum_t num);
     boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);

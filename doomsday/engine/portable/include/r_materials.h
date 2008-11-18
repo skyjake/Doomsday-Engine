@@ -133,6 +133,8 @@ void            R_ResetAnimGroups(void);
 // Public Interface:
 materialnum_t   R_MaterialCheckNumForName(const char* name, materialgroup_t group);
 materialnum_t   R_MaterialNumForName(const char* name, materialgroup_t group);
+materialnum_t   R_MaterialCheckNumForIndex(uint idx, materialgroup_t group);
+materialnum_t   R_MaterialNumForIndex(uint idx, materialgroup_t group);
 const char*     R_MaterialNameForNum(materialnum_t num);
 void            R_MaterialPrecache(materialnum_t num);
 #endif

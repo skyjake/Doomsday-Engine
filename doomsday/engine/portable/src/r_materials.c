@@ -202,6 +202,32 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
     return 0; // Not found.
 }
 
+/**
+ * Given an index and material group, search the materials db for a match.
+ * \assume Caller knows what it's doing; params arn't validity checked.
+ *
+ * @param idx           Index of the texture/flat/sprite/etc to search for.
+ * @param groupNum      Specific MG_* material group NOT @c MG_ANY.
+ * @return              Unique number of the found material, else zero.
+ */
+static materialnum_t getMaterialNumForIndex(uint idx,
+                                            materialgroup_t groupNum)
+{
+    materialnum_t       i;
+
+    // Go through the candidates.
+    for(i = 0; i < numMaterialBinds; ++i)
+    {
+        materialbind_t*     mb = &materialBinds[i];
+        material_t*         mat = mb->mat;
+
+        if(mat->group == groupNum && mat->tex->ofTypeID == idx)
+            return ((mb) - materialBinds) + 1;
+    }
+
+    return 0; // Not found.
+}
+
 static void newMaterialNameBinding(material_t* mat, const char* name,
                                    uint hash)
 {
@@ -1019,10 +1045,48 @@ materialnum_t R_MaterialNumForName(const char* name, materialgroup_t group)
 
     result = R_MaterialCheckNumForName(name, group);
 
-    // Not found.
+    // Not found?
     if(result == 0 && !mapSetup) // Don't announce during map setup.
         Con_Message("R_MaterialNumForName: \"%.8s\" in group %i not found!\n",
                     name, group);
+    return result;
+}
+
+materialnum_t R_MaterialCheckNumForIndex(uint idx, materialgroup_t groupNum)
+{
+    // Caller wants a material in a specific group.
+    if(!isValidMaterialGroup(groupNum))
+    {
+#if _DEBUG
+Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
+            (int) groupNum);
+#endif
+        return 0;
+    }
+
+    return getMaterialNumForIndex(idx, groupNum);
+}
+
+/**
+ * Given a texture/flat/sprite/etc index num, search the materials db for
+ * a name-bound material.
+ * \note Part of the Doomsday public API.
+ * \note2 Sames as R_MaterialCheckNumForIndex except will log an error
+ *        message if the material being searched for is not found.
+ *
+ * @param idx           Index of the texture/flat/sprite/etc.
+ * @param group         MG_* material group.
+ *
+ * @return              Unique identifier of the found material, else zero.
+ */
+materialnum_t R_MaterialNumForIndex(uint idx, materialgroup_t group)
+{
+    materialnum_t       result = R_MaterialCheckNumForIndex(idx, group);
+
+    // Not found?
+    if(result == 0 && !mapSetup) // Don't announce during map setup.
+        Con_Message("R_MaterialNumForIndex: %u in group %i not found!\n",
+                    idx, group);
     return result;
 }
 
