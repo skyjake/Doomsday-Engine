@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 /**
- * wadmapconverter.h: Doomsday plugin for converting DOOM/Hexen/Strife maps.
+ * wadmapconverter.h: Doomsday plugin for converting DOOM-like format maps.
  *
  * The purpose of a mapconverter plugin is to transform a map into
  * Doomsday's native map format by use of the public map editing interface.
@@ -73,6 +73,13 @@ typedef struct mline_s {
     // Hexen format members:
     byte            xType;
     byte            xArgs[5];
+
+    // DOOM64 format members:
+    byte            d64drawFlags;
+    byte            d64texFlags;
+    byte            d64type;
+    byte            d64useType;
+    int16_t         d64tag;
 } mline_t;
 
 typedef struct msector_s {
@@ -83,6 +90,10 @@ typedef struct msector_s {
     int16_t         tag;
     const materialref_t* floorMaterial;
     const materialref_t* ceilMaterial;
+
+    // DOOM64 format members:
+    int16_t         d64flags;
+    uint16_t        d64colors[5];
 } msector_t;
 
 typedef struct mthing_s {
@@ -96,6 +107,10 @@ typedef struct mthing_s {
     int16_t         xSpawnZ;
     byte            xSpecial;
     byte            xArgs[5];
+
+    // DOOM64 format members:
+    int16_t         d64posZ;
+    int16_t         d64TID;
 } mthing_t;
 
 // Hexen only (at present):
@@ -108,6 +123,18 @@ typedef struct mpolyobj_s {
     int16_t         anchor[2];
 } mpolyobj_t;
 
+// DOOM64 only (at present):
+typedef struct mlight_s {
+    byte            rgb[3];
+    byte            xx[3];
+} surfacetint_t;
+
+typedef enum {
+    MF_DOOM = 0,
+    MF_HEXEN,
+    MF_DOOM64
+} mapformatid_t;
+
 typedef struct map_s {
     char            name[9];
     uint            numVertexes;
@@ -116,6 +143,7 @@ typedef struct map_s {
     uint            numSides;
     uint            numPolyobjs;
     uint            numThings;
+    uint            numLights;
 
     float*          vertexes; // Array of vertex coords [v0 X, vo Y, v1 X, v1 Y...]
     msector_t*      sectors;
@@ -123,13 +151,14 @@ typedef struct map_s {
     mside_t*        sides;
     mthing_t*       things;
     mpolyobj_t**    polyobjs;
+    surfacetint_t*  lights;
 
     size_t          numFlats;
     materialref_t** flats;
     size_t          numTextures;
     materialref_t** textures;
 
-    boolean         hexenFormat;
+    mapformatid_t   format;
 
     byte*           rejectMatrix;
     void*           blockMap;

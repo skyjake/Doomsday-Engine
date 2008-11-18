@@ -22,7 +22,7 @@
  */
 
 /**
- * wadmapconverter.c: Doomsday Plugin for converting DOOM/Hexen format maps.
+ * wadmapconverter.c: Doomsday Plugin for converting DOOM-like format maps.
  *
  * The purpose of a wadmapconverter plugin is to transform a map into
  * Doomsday's native map format by use of the public map editing interface.
@@ -90,8 +90,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         DP_Initialize();
         break;
 
-	default:
-		break;
+    default:
+        break;
     }
 
     return TRUE;
@@ -121,7 +121,12 @@ int ConvertMapHook(int hookType, int param, void *data)
         return false; // Cannot convert.
     }
 
-    // A supported format, load it in.
+    // A supported format.
+    Con_Message("WadMapConverter::Convert: %s map format.\n",
+                (map->format == MF_DOOM64? "DOOM64" :
+                 map->format == MF_HEXEN? "Hexen" : "DOOM"));
+
+    // Load it in.
     if(!LoadMap(lumpList, param))
     {
         Con_Message("WadMapConverter::Convert: Internal error, load failed.\n");

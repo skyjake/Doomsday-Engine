@@ -35,17 +35,24 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 // MACROS ------------------------------------------------------------------
 
 // Size of the map data structures in bytes in the arrived WAD format.
+#define SIZEOF_64VERTEX         (4 * 2)
 #define SIZEOF_VERTEX           (2 * 2)
+#define SIZEOF_64THING          (2 * 7)
 #define SIZEOF_XTHING           (2 * 7 + 1 * 6)
 #define SIZEOF_THING            (2 * 5)
 #define SIZEOF_XLINEDEF         (2 * 5 + 1 * 6)
+#define SIZEOF_64LINEDEF        (2 * 6 + 1 * 4)
 #define SIZEOF_LINEDEF          (2 * 7)
+#define SIZEOF_64SIDEDEF        (2 * 6)
 #define SIZEOF_SIDEDEF          (2 * 3 + 8 * 3)
+#define SIZEOF_64SECTOR         (2 * 12)
 #define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
+#define SIZEOF_LIGHT            (1 * 6)
 
 #define PO_LINE_START           1 // polyobj line start special
 #define PO_LINE_EXPLICIT        5
@@ -71,6 +78,9 @@ typedef enum lumptype_e {
     ML_BLOCKMAP,                // LUT, motion clipping, walls/grid element
     ML_BEHAVIOR,                // ACS Scripts (compiled).
     ML_SCRIPTS,                 // ACS Scripts (source).
+    ML_LIGHTS,                  // Surface color tints.
+    ML_MACROS,                  // DOOM64 format, macro scripts.
+    ML_LEAFS,                   // DOOM64 format, segs (close subsectors).
     ML_GLVERT,                  // GL vertexes
     ML_GLSEGS,                  // GL segs
     ML_GLSSECT,                 // GL subsectors
@@ -99,7 +109,7 @@ static int C_DECL compareMaterialNames(const void* a, const void* b)
     return stricmp((*(materialref_t**)a)->name, (*(materialref_t**)b)->name);
 }
 
-static const materialref_t* getMaterial(const char* name,
+static const materialref_t* getMaterial(const char* regName,
                                         const materialref_t*** list,
                                         size_t size)
 {
@@ -107,9 +117,23 @@ static const materialref_t* getMaterial(const char* name,
     size_t              bottomIdx, topIdx, pivot;
     const materialref_t* m;
     boolean             isDone;
+    char                name[9];
 
     if(size == 0)
         return NULL;
+
+    if(map->format == MF_DOOM64)
+    {
+        int                 idx = *((int*) regName);
+
+        sprintf(name, "UNK%05i", idx);
+        name[8] = '\0';
+    }
+    else
+    {
+        strncpy(name, regName, 8);
+        name[8] = '\0';
+    }
 
     bottomIdx = 0;
     topIdx = size-1;
@@ -191,9 +215,20 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
          * A new material.
          */
         m = malloc(sizeof(*m));
-        memcpy(m->name, name, 8);
-        m->name[8] = '\0';
-        m->num = R_MaterialCheckNumForName(m->name, (isFlat? MG_FLATS : MG_TEXTURES));
+        if(map->format == MF_DOOM64)
+        {
+            int                 idx = *((int*) name);
+
+            sprintf(m->name, "UNK%05i", idx);
+            m->name[8] = '\0';
+            m->num = R_MaterialCheckNumForIndex(idx, isFlat? MG_FLATS : MG_TEXTURES);
+        }
+        else
+        {
+            memcpy(m->name, name, 8);
+            m->name[8] = '\0';
+            m->num = R_MaterialCheckNumForName(m->name, (isFlat? MG_FLATS : MG_TEXTURES));
+        }
 
         // Add it to the list of known materials.
         addMaterialToList(m, isFlat? &map->flats : &map->textures,
@@ -381,6 +416,9 @@ int DataTypeForLumpName(const char* name)
         {ML_BLOCKMAP,   "BLOCKMAP"},
         {ML_BEHAVIOR,   "BEHAVIOR"},
         {ML_SCRIPTS,    "SCRIPTS"},
+        {ML_LIGHTS,     "LIGHTS"},
+        {ML_MACROS,     "MACROS"},
+        {ML_LEAFS,      "LEAFS"},
         {ML_GLVERT,     "GL_VERT"},
         {ML_GLSEGS,     "GL_SEGS"},
         {ML_GLSSECT,    "GL_SSECT"},
@@ -692,7 +730,7 @@ static void findPolyobjs(void)
 
 void AnalyzeMap(void)
 {
-    if(map->hexenFormat)
+    if(map->format == MF_HEXEN)
         findPolyobjs();
 }
 
@@ -701,15 +739,27 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
     int                 i;
     boolean             supported = false;
 
-    // Lets first check for a BEHAVIOR lump, as its prescense determines
-    // the format of the map data; Hexen rather than DOOM format.
+    // Lets first check for format specific lumps, as their prescense
+    // determines the format of the map data. Assume DOOM format by default.
+    map->format = MF_DOOM;
     for(i = 0; i < numLumps; ++i)
     {
         const char*         lumpName = W_LumpName(lumpList[i]);
 
-        if(lumpName && !strncmp(lumpName, "BEHAVIOR", 8))
+        if(!lumpName || !lumpName[0])
+            continue;
+
+        if(!strncmp(lumpName, "BEHAVIOR", 8))
         {
-            map->hexenFormat = true;
+            map->format = MF_HEXEN;
+            break;
+        }
+
+        if(!strncmp(lumpName, "MACROS", 6) ||
+           !strncmp(lumpName, "LIGHTS", 6) ||
+           !strncmp(lumpName, "LEAFS", 5))
+        {
+            map->format = MF_DOOM64;
             break;
         }
     }
@@ -726,27 +776,37 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
         {
         case ML_VERTEXES:
             ptr = &map->numVertexes;
-            elmSize = SIZEOF_VERTEX;
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX :
+                SIZEOF_VERTEX);
             break;
 
         case ML_THINGS:
             ptr = &map->numThings;
-            elmSize = (map->hexenFormat? SIZEOF_XTHING : SIZEOF_THING);
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
+                map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
             break;
 
         case ML_LINEDEFS:
             ptr = &map->numLines;
-            elmSize = (map->hexenFormat? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
+                map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
             break;
 
         case ML_SIDEDEFS:
             ptr = &map->numSides;
-            elmSize = SIZEOF_SIDEDEF;
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF :
+                SIZEOF_SIDEDEF);
             break;
 
         case ML_SECTORS:
             ptr = &map->numSectors;
-            elmSize = SIZEOF_SECTOR;
+            elmSize =
+                (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+            break;
+
+        case ML_LIGHTS:
+            ptr = &map->numLights;
+            elmSize = SIZEOF_LIGHT;
             break;
 
         default:
@@ -800,7 +860,7 @@ static void freeMapData(void)
         uint                i;
         for(i = 0; i < map->numPolyobjs; ++i)
         {
-            mpolyobj_t         *po = map->polyobjs[i];
+            mpolyobj_t*         po = map->polyobjs[i];
             free(po->lineIndices);
             free(po);
         }
@@ -808,12 +868,20 @@ static void freeMapData(void)
     }
     map->polyobjs = NULL;
 
+    if(map->lights)
+        free(map->lights);
+    map->lights = NULL;
+
+    /*if(map->macros)
+        free(map->macros);
+    map->macros = NULL;*/
+
     if(map->textures)
     {
         size_t              i;
         for(i = 0; i < map->numTextures; ++i)
         {
-            materialref_t      *m = map->textures[i];
+            materialref_t*      m = map->textures[i];
             free(m);
         }
         free(map->textures);
@@ -825,7 +893,7 @@ static void freeMapData(void)
         size_t              i;
         for(i = 0; i < map->numFlats; ++i)
         {
-            materialref_t      *m = map->flats[i];
+            materialref_t*      m = map->flats[i];
             free(m);
         }
         free(map->flats);
@@ -833,43 +901,128 @@ static void freeMapData(void)
     map->flats = NULL;
 }
 
-static boolean loadVertexes(const byte *buf, size_t len)
+static boolean loadVertexes(const byte* buf, size_t len)
 {
     uint                num, n;
     size_t              elmSize;
-    const byte         *ptr;
+    const byte*         ptr;
 
     VERBOSE(Con_Message("WadMapConverter::loadVertexes: Processing...\n"));
 
-    elmSize = SIZEOF_VERTEX;
+    elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
     num = len / elmSize;
-    for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    switch(map->format)
     {
-        map->vertexes[n * 2] = (float) SHORT(*((const int16_t*) (ptr)));
-        map->vertexes[n * 2 + 1] = (float) SHORT(*((const int16_t*) (ptr+2)));
+    default:
+    case MF_DOOM:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            map->vertexes[n * 2] = (float) SHORT(*((const int16_t*) (ptr)));
+            map->vertexes[n * 2 + 1] = (float) SHORT(*((const int16_t*) (ptr+4)));
+        }
+        break;
+
+    case MF_DOOM64:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            map->vertexes[n * 2] = FIX2FLT(LONG(*((const int32_t*) (ptr))));
+            map->vertexes[n * 2 + 1] = FIX2FLT(LONG(*((const int32_t*) (ptr+4))));
+        }
+        break;
     }
 
     return true;
 }
 
-static boolean loadLinedefs(const byte *buf, size_t len)
+static boolean loadLinedefs(const byte* buf, size_t len)
 {
     uint                num, n;
     size_t              elmSize;
-    const byte         *ptr;
+    const byte*         ptr;
 
     VERBOSE(Con_Message("WadMapConverter::loadLinedefs: Processing...\n"));
 
-    elmSize =
-        (map->hexenFormat? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+    elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
+        map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
     num = len / elmSize;
 
-    if(map->hexenFormat)
+    switch(map->format)
     {
+    default:
+    case MF_DOOM:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            int             idx;
-            mline_t        *l = &map->lines[n];
+            int                 idx;
+            mline_t*            l = &map->lines[n];
+
+            idx = USHORT(*((const uint16_t*) (ptr)));
+            if(idx == 0xFFFF)
+                l->v[0] = 0;
+            else
+                l->v[0] = idx + 1;
+            idx = USHORT(*((const uint16_t*) (ptr+2)));
+            if(idx == 0xFFFF)
+                l->v[1] = 0;
+            else
+                l->v[1] = idx + 1;
+            l->flags = SHORT(*((const int16_t*) (ptr+4)));
+            l->dType = SHORT(*((const int16_t*) (ptr+6)));
+            l->dTag = SHORT(*((const int16_t*) (ptr+8)));
+            idx = USHORT(*((const uint16_t*) (ptr+10)));
+            if(idx == 0xFFFF)
+                l->sides[RIGHT] = 0;
+            else
+                l->sides[RIGHT] = idx + 1;
+            idx = USHORT(*((const uint16_t*) (ptr+12)));
+            if(idx == 0xFFFF)
+                l->sides[LEFT] = 0;
+            else
+                l->sides[LEFT] = idx + 1;
+            l = l;
+        }
+        break;
+
+    case MF_DOOM64:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            int                 idx;
+            mline_t*            l = &map->lines[n];
+
+            idx = USHORT(*((const uint16_t*) (ptr)));
+            if(idx == 0xFFFF)
+                l->v[0] = 0;
+            else
+                l->v[0] = idx + 1;
+            idx = USHORT(*((const uint16_t*) (ptr+2)));
+            if(idx == 0xFFFF)
+                l->v[1] = 0;
+            else
+                l->v[1] = idx + 1;
+            l->flags = USHORT(*((const uint16_t*) (ptr+4)));
+            l->d64drawFlags = *((const byte*) (ptr + 6));
+            l->d64texFlags = *((const byte*) (ptr + 7));
+            l->d64type = *((const byte*) (ptr + 8));
+            l->d64useType = *((const byte*) (ptr + 9));
+            l->d64tag = SHORT(*((const int16_t*) (ptr+10)));
+            idx = USHORT(*((const uint16_t*) (ptr+12)));
+            if(idx == 0xFFFF)
+                l->sides[RIGHT] = 0;
+            else
+                l->sides[RIGHT] = idx + 1;
+            idx = USHORT(*((const uint16_t*) (ptr+14)));
+            if(idx == 0xFFFF)
+                l->sides[LEFT] = 0;
+            else
+                l->sides[LEFT] = idx + 1;
+            l = l;
+        }
+        break;
+
+    case MF_HEXEN:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            int                 idx;
+            mline_t*            l = &map->lines[n];
 
             idx = USHORT(*((const uint16_t*) (ptr)));
             if(idx == 0xFFFF)
@@ -899,128 +1052,186 @@ static boolean loadLinedefs(const byte *buf, size_t len)
             else
                 l->sides[LEFT] = idx + 1;
         }
-    }
-    else
-    {   // DOOM format.
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
-        {
-            int             idx;
-            mline_t        *l = &map->lines[n];
-
-            idx = USHORT(*((const uint16_t*) (ptr)));
-            if(idx == 0xFFFF)
-                l->v[0] = 0;
-            else
-                l->v[0] = idx + 1;
-            idx = USHORT(*((const uint16_t*) (ptr+2)));
-            if(idx == 0xFFFF)
-                l->v[1] = 0;
-            else
-                l->v[1] = idx + 1;
-            l->flags = SHORT(*((const int16_t*) (ptr+4)));
-            l->dType = SHORT(*((const int16_t*) (ptr+6)));
-            l->dTag = SHORT(*((const int16_t*) (ptr+8)));
-            idx = USHORT(*((const uint16_t*) (ptr+10)));
-            if(idx == 0xFFFF)
-                l->sides[RIGHT] = 0;
-            else
-                l->sides[RIGHT] = idx + 1;
-            idx = USHORT(*((const uint16_t*) (ptr+12)));
-            if(idx == 0xFFFF)
-                l->sides[LEFT] = 0;
-            else
-                l->sides[LEFT] = idx + 1;
-            l = l;
-        }
+        break;
     }
 
     return true;
 }
 
-static boolean loadSidedefs(const byte *buf, size_t len)
+static boolean loadSidedefs(const byte* buf, size_t len)
 {
     uint                num, n;
     size_t              elmSize;
-    const byte         *ptr;
+    const byte*         ptr;
 
     VERBOSE(Con_Message("WadMapConverter::loadSidedefs: Processing...\n"));
 
-    elmSize = SIZEOF_SIDEDEF;
+    elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
     num = len / elmSize;
-    for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
-    {
-        int                 idx;
-        char                name[9];
-        mside_t            *s = &map->sides[n];
 
-        s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
-        s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
-        memcpy(name, ptr+4, 8);
-        name[8] = '\0';
-        s->topMaterial = RegisterMaterial(name, false);
-        memcpy(name, ptr+12, 8);
-        name[8] = '\0';
-        s->bottomMaterial = RegisterMaterial(name, false);
-        memcpy(name, ptr+20, 8);
-        name[8] = '\0';
-        s->middleMaterial = RegisterMaterial(name, false);
-        idx = USHORT(*((const uint16_t*) (ptr+28)));
-        if(idx == 0xFFFF)
-            s->sector = 0;
-        else
-            s->sector = idx + 1;
+    switch(map->format)
+    {
+    default:
+    case MF_DOOM:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            int                 idx;
+            char                name[9];
+            mside_t*            s = &map->sides[n];
+
+            s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
+            s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            memcpy(name, ptr+4, 8);
+            name[8] = '\0';
+            s->topMaterial = RegisterMaterial(name, false);
+            memcpy(name, ptr+12, 8);
+            name[8] = '\0';
+            s->bottomMaterial = RegisterMaterial(name, false);
+            memcpy(name, ptr+20, 8);
+            name[8] = '\0';
+            s->middleMaterial = RegisterMaterial(name, false);
+            idx = USHORT(*((const uint16_t*) (ptr+28)));
+            if(idx == 0xFFFF)
+                s->sector = 0;
+            else
+                s->sector = idx + 1;
+        }
+        break;
+
+    case MF_DOOM64:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            int                 idx;
+            mside_t*            s = &map->sides[n];
+
+            s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
+            s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            idx = USHORT(*((const uint16_t*) (ptr+4)));
+            s->topMaterial = RegisterMaterial((const char*) &idx, false);
+            idx = USHORT(*((const uint16_t*) (ptr+6)));
+            s->bottomMaterial = RegisterMaterial((const char*) &idx, false);
+            idx = USHORT(*((const uint16_t*) (ptr+8)));
+            s->middleMaterial = RegisterMaterial((const char*) &idx, false);
+            idx = USHORT(*((const uint16_t*) (ptr+10)));
+            if(idx == 0xFFFF)
+                s->sector = 0;
+            else
+                s->sector = idx + 1;
+        }
+        break;
     }
 
     return true;
 }
 
-static boolean loadSectors(const byte *buf, size_t len)
+static boolean loadSectors(const byte* buf, size_t len)
 {
     uint                num, n;
     size_t              elmSize;
-    const byte         *ptr;
+    const byte*         ptr;
 
     VERBOSE(Con_Message("WadMapConverter::loadSectors: Processing...\n"));
 
-    elmSize = SIZEOF_SECTOR;
+    elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
     num = len / elmSize;
-    for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
-    {
-        char                name[9];
-        msector_t          *s = &map->sectors[n];
 
-        s->floorHeight = SHORT(*((const int16_t*) ptr));
-        s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
-        memcpy(name, ptr+4, 8);
-        name[8] = '\0';
-        s->floorMaterial = RegisterMaterial(name, true);
-        memcpy(name, ptr+12, 8);
-        name[8] = '\0';
-        s->ceilMaterial = RegisterMaterial(name, true);
-        s->lightLevel = SHORT(*((const int16_t*) (ptr+20)));
-        s->type = SHORT(*((const int16_t*) (ptr+22)));
-        s->tag = SHORT(*((const int16_t*) (ptr+24)));
+    switch(map->format)
+    {
+    default:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            char                name[9];
+            msector_t*          s = &map->sectors[n];
+
+            s->floorHeight = SHORT(*((const int16_t*) ptr));
+            s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
+            memcpy(name, ptr+4, 8);
+            name[8] = '\0';
+            s->floorMaterial = RegisterMaterial(name, true);
+            memcpy(name, ptr+12, 8);
+            name[8] = '\0';
+            s->ceilMaterial = RegisterMaterial(name, true);
+            s->lightLevel = SHORT(*((const int16_t*) (ptr+20)));
+            s->type = SHORT(*((const int16_t*) (ptr+22)));
+            s->tag = SHORT(*((const int16_t*) (ptr+24)));
+        }
+        break;
+
+    case MF_DOOM64:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            int                 idx;
+            msector_t*          s = &map->sectors[n];
+
+            s->floorHeight = SHORT(*((const int16_t*) ptr));
+            s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
+            idx = USHORT(*((const uint16_t*) (ptr+4)));
+            s->floorMaterial = RegisterMaterial((const char*) &idx, true);
+            idx = USHORT(*((const uint16_t*) (ptr+6)));
+            s->ceilMaterial = RegisterMaterial((const char*) &idx, true);
+            s->d64colors[0] = USHORT(*((const uint16_t*) (ptr+8)));
+            s->d64colors[1] = USHORT(*((const uint16_t*) (ptr+10)));
+            s->d64colors[2] = USHORT(*((const uint16_t*) (ptr+12)));
+            s->d64colors[3] = USHORT(*((const uint16_t*) (ptr+14)));
+            s->d64colors[4] = USHORT(*((const uint16_t*) (ptr+16)));
+            s->type = SHORT(*((const int16_t*) (ptr+18)));
+            s->tag = SHORT(*((const int16_t*) (ptr+20)));
+            s->d64flags = USHORT(*((const uint16_t*) (ptr+22)));
+            s->lightLevel = 255;
+        }
+        break;
     }
 
     return true;
 }
 
-static boolean loadThings(const byte *buf, size_t len)
+static boolean loadThings(const byte* buf, size_t len)
 {
     uint                num, n;
     size_t              elmSize;
-    const byte         *ptr;
+    const byte*         ptr;
 
     VERBOSE(Con_Message("WadMapConverter::loadThings: Processing...\n"));
 
-    elmSize = (map->hexenFormat? SIZEOF_XTHING : SIZEOF_THING);
+    elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
+        map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
     num = len / elmSize;
 
-    if(map->hexenFormat)
+    switch(map->format)
     {
+    default:
+    case MF_DOOM:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            mthing_t           *t = &map->things[n];
+            mthing_t*           t = &map->things[n];
+
+            t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
+            t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            t->angle = SHORT(*((const int16_t*) (ptr+4)));
+            t->type = SHORT(*((const int16_t*) (ptr+6)));
+            t->flags = SHORT(*((const int16_t*) (ptr+8)));
+        }
+        break;
+
+    case MF_DOOM64:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            mthing_t*           t = &map->things[n];
+
+            t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
+            t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            t->d64posZ = SHORT(*((const int16_t*) (ptr+4)));
+            t->angle = SHORT(*((const int16_t*) (ptr+6)));
+            t->type = SHORT(*((const int16_t*) (ptr+8)));
+            t->flags = SHORT(*((const int16_t*) (ptr+10)));
+            t->d64TID = SHORT(*((const int16_t*) (ptr+12)));
+        }
+        break;
+
+    case MF_HEXEN:
+        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        {
+            mthing_t*           t = &map->things[n];
 
             t->xTID = SHORT(*((const int16_t*) (ptr)));
             t->pos[VX] = SHORT(*((const int16_t*) (ptr+2)));
@@ -1036,26 +1247,38 @@ static boolean loadThings(const byte *buf, size_t len)
             t->xArgs[3] = *(ptr+18);
             t->xArgs[4] = *(ptr+19);
         }
-    }
-    else
-    {   // DOOM format.
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
-        {
-            mthing_t           *t = &map->things[n];
-
-            t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
-            t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
-            t->angle = SHORT(*((const int16_t*) (ptr+4)));
-            t->type = SHORT(*((const int16_t*) (ptr+6)));
-            t->flags = SHORT(*((const int16_t*) (ptr+8)));
-        }
+        break;
     }
 
     return true;
 }
 
-static void bufferLump(int lumpNum,
-                       byte **buf, size_t *len, size_t *oldLen)
+static boolean loadLights(const byte* buf, size_t len)
+{
+    uint                num, n;
+    size_t              elmSize;
+    const byte*         ptr;
+
+    VERBOSE(Con_Message("WadMapConverter::loadLights: Processing...\n"));
+
+    elmSize = SIZEOF_LIGHT;
+    num = len / elmSize;
+    for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    {
+        surfacetint_t*           t = &map->lights[n];
+
+        t->rgb[0] = *(ptr);
+        t->rgb[1] = *(ptr+1);
+        t->rgb[2] = *(ptr+2);
+        t->xx[0] = *(ptr+3);
+        t->xx[1] = *(ptr+4);
+        t->xx[2] = *(ptr+5);
+    }
+
+    return true;
+}
+
+static void bufferLump(int lumpNum, byte** buf, size_t* len, size_t* oldLen)
 {
     *len = W_LumpLength(lumpNum);
 
@@ -1070,10 +1293,10 @@ static void bufferLump(int lumpNum,
     W_ReadLump(lumpNum, *buf);
 }
 
-boolean LoadMap(const int *lumpList, int numLumps)
+boolean LoadMap(const int* lumpList, int numLumps)
 {
     int                 i;
-    byte               *buf = NULL;
+    byte*               buf = NULL;
     size_t              oldLen = 0;
 
     // Allocate the data structure arrays.
@@ -1082,6 +1305,8 @@ boolean LoadMap(const int *lumpList, int numLumps)
     map->sides = malloc(map->numSides * sizeof(mside_t));
     map->sectors = malloc(map->numSectors * sizeof(msector_t));
     map->things = malloc(map->numThings * sizeof(mthing_t));
+    if(map->numLights)
+        map->lights = malloc(map->numLights * sizeof(surfacetint_t));
 
     for(i = 0; i < numLumps; ++i)
     {
@@ -1114,8 +1339,23 @@ boolean LoadMap(const int *lumpList, int numLumps)
             break;
 
         case ML_THINGS:
-            bufferLump(lumpList[i], &buf, &len, &oldLen);
-            loadThings(buf, len);
+            if(map->numThings)
+            {
+                bufferLump(lumpList[i], &buf, &len, &oldLen);
+                loadThings(buf, len);
+            }
+            break;
+
+        case ML_LIGHTS:
+            if(map->numLights)
+            {
+                bufferLump(lumpList[i], &buf, &len, &oldLen);
+                loadLights(buf, len);
+            }
+            break;
+
+        case ML_MACROS:
+            //// \todo Write me!
             break;
 
         default:
@@ -1147,7 +1387,7 @@ boolean TransferMap(void)
     VERBOSE(Con_Message("WadMapConverter::Transfering sectors...\n"));
     for(i = 0; i < map->numSectors; ++i)
     {
-        msector_t          *sec = &map->sectors[i];
+        msector_t*          sec = &map->sectors[i];
         uint                sectorIDX;
 
         sectorIDX =
@@ -1162,13 +1402,23 @@ boolean TransferMap(void)
 
         MPE_GameObjProperty("XSector", i, "Tag", DDVT_SHORT, &sec->tag);
         MPE_GameObjProperty("XSector", i, "Type", DDVT_SHORT, &sec->type);
+
+        if(map->format == MF_DOOM64)
+        {
+            MPE_GameObjProperty("XSector", i, "Flags", DDVT_SHORT, &sec->d64flags);
+            MPE_GameObjProperty("XSector", i, "Color0", DDVT_SHORT, &sec->d64colors[0]);
+            MPE_GameObjProperty("XSector", i, "Color1", DDVT_SHORT, &sec->d64colors[1]);
+            MPE_GameObjProperty("XSector", i, "Color2", DDVT_SHORT, &sec->d64colors[2]);
+            MPE_GameObjProperty("XSector", i, "Color3", DDVT_SHORT, &sec->d64colors[3]);
+            MPE_GameObjProperty("XSector", i, "Color4", DDVT_SHORT, &sec->d64colors[4]);
+        }
     }
 
     VERBOSE(Con_Message("WadMapConverter::Transfering linedefs...\n"));
     for(i = 0; i < map->numLines; ++i)
     {
-        mline_t            *l = &map->lines[i];
-        mside_t            *front, *back;
+        mline_t*            l = &map->lines[i];
+        mside_t*            front, *back;
         uint                frontIdx = 0, backIdx = 0;
 
         front = (l->sides[RIGHT] != 0? &map->sides[l->sides[RIGHT]-1] : NULL);
@@ -1201,26 +1451,50 @@ boolean TransferMap(void)
 
         MPE_GameObjProperty("XLinedef", i, "Flags", DDVT_SHORT, &l->flags);
 
-        if(map->hexenFormat)
+        switch(map->format)
         {
+        default:
+        case MF_DOOM:
+            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_SHORT, &l->dType);
+            MPE_GameObjProperty("XLinedef", i, "Tag", DDVT_SHORT, &l->dTag);
+            break;
+
+        case MF_DOOM64:
+            MPE_GameObjProperty("XLinedef", i, "DrawFlags", DDVT_BYTE, &l->d64drawFlags);
+            MPE_GameObjProperty("XLinedef", i, "TexFlags", DDVT_BYTE, &l->d64texFlags);
+            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_BYTE, &l->d64type);
+            MPE_GameObjProperty("XLinedef", i, "UseType", DDVT_BYTE, &l->d64useType);
+            MPE_GameObjProperty("XLinedef", i, "Tag", DDVT_SHORT, &l->d64tag);
+            break;
+
+        case MF_HEXEN:
             MPE_GameObjProperty("XLinedef", i, "Type", DDVT_BYTE, &l->xType);
             MPE_GameObjProperty("XLinedef", i, "Arg0", DDVT_BYTE, &l->xArgs[0]);
             MPE_GameObjProperty("XLinedef", i, "Arg1", DDVT_BYTE, &l->xArgs[1]);
             MPE_GameObjProperty("XLinedef", i, "Arg2", DDVT_BYTE, &l->xArgs[2]);
             MPE_GameObjProperty("XLinedef", i, "Arg3", DDVT_BYTE, &l->xArgs[3]);
             MPE_GameObjProperty("XLinedef", i, "Arg4", DDVT_BYTE, &l->xArgs[4]);
+            break;
         }
-        else
-        {
-            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_SHORT, &l->dType);
-            MPE_GameObjProperty("XLinedef", i, "Tag", DDVT_SHORT, &l->dTag);
-        }
+    }
+
+    VERBOSE(Con_Message("WadMapConverter::Transfering lights...\n"));
+    for(i = 0; i < map->numLights; ++i)
+    {
+        surfacetint_t*           l = &map->lights[i];
+
+        MPE_GameObjProperty("Light", i, "ColorR", DDVT_BYTE, &l->rgb[0]);
+        MPE_GameObjProperty("Light", i, "ColorG", DDVT_BYTE, &l->rgb[1]);
+        MPE_GameObjProperty("Light", i, "ColorB", DDVT_BYTE, &l->rgb[2]);
+        MPE_GameObjProperty("Light", i, "XX0", DDVT_BYTE, &l->xx[0]);
+        MPE_GameObjProperty("Light", i, "XX1", DDVT_BYTE, &l->xx[1]);
+        MPE_GameObjProperty("Light", i, "XX2", DDVT_BYTE, &l->xx[2]);
     }
 
     VERBOSE(Con_Message("WadMapConverter::Transfering polyobjs...\n"));
     for(i = 0; i < map->numPolyobjs; ++i)
     {
-        mpolyobj_t         *po = map->polyobjs[i];
+        mpolyobj_t*         po = map->polyobjs[i];
         uint                j, *lineList;
 
         lineList = malloc(sizeof(uint) * po->lineCount);
@@ -1235,7 +1509,7 @@ boolean TransferMap(void)
     VERBOSE(Con_Message("WadMapConverter::Transfering things...\n"));
     for(i = 0; i < map->numThings; ++i)
     {
-        mthing_t           *th = &map->things[i];
+        mthing_t*           th = &map->things[i];
 
         MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->pos[VX]);
         MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->pos[VY]);
@@ -1243,7 +1517,12 @@ boolean TransferMap(void)
         MPE_GameObjProperty("Thing", i, "Type", DDVT_SHORT, &th->type);
         MPE_GameObjProperty("Thing", i, "Flags", DDVT_SHORT, &th->flags);
 
-        if(map->hexenFormat)
+        if(map->format == MF_DOOM64)
+        {
+            MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->d64posZ);
+            MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->d64TID);
+        }
+        else if(map->format == MF_HEXEN)
         {
             MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->xSpawnZ);
             MPE_GameObjProperty("Thing", i, "Special", DDVT_BYTE, &th->xSpecial);

@@ -104,7 +104,7 @@ void DAM_Shutdown(void)
     P_ShutdownGameMapObjDefs();
 }
 
-static int mapLumpTypeForName(const char *name)
+static int mapLumpTypeForName(const char* name)
 {
     struct maplumpinfo_s {
         int         type;
@@ -123,6 +123,9 @@ static int mapLumpTypeForName(const char *name)
         {ML_BLOCKMAP,   "BLOCKMAP"},
         {ML_BEHAVIOR,   "BEHAVIOR"},
         {ML_SCRIPTS,    "SCRIPTS"},
+        {ML_LIGHTS,     "LIGHTS"},
+        {ML_MACROS,     "MACROS"},
+        {ML_LEAFS,      "LEAFS"},
         {ML_INVALID,    NULL}
     };
 
@@ -179,9 +182,9 @@ static void freeMapLumpInfo(maplumpinfo_t *info)
 /**
  * Free a list of maplumpinfo records.
  */
-static void freeMapLumpInfoList(listnode_t *headPtr)
+static void freeMapLumpInfoList(listnode_t* headPtr)
 {
-    listnode_t         *node, *np;
+    listnode_t*         node, *np;
 
     node = headPtr;
     while(node)
@@ -201,7 +204,7 @@ static void freeMapLumpInfoList(listnode_t *headPtr)
  */
 static maplumpinfo_t* createMapLumpInfo(int lumpNum, int lumpClass)
 {
-    maplumpinfo_t      *info = allocMapLumpInfo();
+    maplumpinfo_t*      info = allocMapLumpInfo();
 
     info->lumpNum = lumpNum;
     info->lumpClass = lumpClass;
@@ -215,9 +218,9 @@ static maplumpinfo_t* createMapLumpInfo(int lumpNum, int lumpClass)
 /**
  * Link a maplumpinfo record to an archivedmap record.
  */
-static void addLumpInfoToList(listnode_t **headPtr, maplumpinfo_t *info)
+static void addLumpInfoToList(listnode_t** headPtr, maplumpinfo_t* info)
 {
-    listnode_t         *node = allocListNode();
+    listnode_t*         node = allocListNode();
 
     node->data = info;
 
@@ -321,7 +324,7 @@ static archivedmap_t* findArchivedMap(const char *mapID)
 /**
  * Add an archived map to the list of maps.
  */
-static void addArchivedMap(archivedmap_t *dam)
+static void addArchivedMap(archivedmap_t* dam)
 {
     archivedMaps =
         Z_Realloc(archivedMaps,
@@ -343,7 +346,7 @@ static void addArchivedMap(archivedmap_t *dam)
  *
  * @return              The number of collected lumps.
  */
-static uint collectMapLumps(listnode_t **headPtr, int startLump)
+static uint collectMapLumps(listnode_t** headPtr, int startLump)
 {
     int                 i;
     uint                numCollectedLumps = 0;
@@ -356,7 +359,7 @@ static uint collectMapLumps(listnode_t **headPtr, int startLump)
         for(i = startLump; i < numLumps; ++i)
         {
             int                 lumpType;
-            char               *lumpName;
+            char*           lumpName;
 
             // Lookup the lump name in our list of known map lump names.
             lumpName = W_CacheLumpNum(i, PU_GETNAME);
@@ -452,7 +455,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
     if(!dam)
     {   // We've not yet attempted to load this map.
         int                 startLump = W_CheckNumForName(mapID);
-        listnode_t         *headPtr = NULL;
+        listnode_t*         headPtr = NULL;
         filename_t          cachedMapDir;
         filename_t          cachedMapDataFile;
 
