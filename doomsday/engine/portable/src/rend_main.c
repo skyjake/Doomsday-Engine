@@ -108,6 +108,8 @@ float lightRangeCompression = 0;
 float lightModRange[255];
 int devLightModRange = 0;
 
+float rendLightDistanceAttentuation = 1024;
+
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
 DGLuint dlBBox = 0; // Display list: active-textured bbox model.
 
@@ -116,7 +118,7 @@ DGLuint dlBBox = 0; // Display list: active-textured bbox model.
 static boolean firstsubsector; // No range checking for the first one.
 
 // Current sector light color.
-const float *sLightColor;
+const float* sLightColor;
 
 int devNoTexFix = 0;
 
@@ -139,6 +141,8 @@ void Rend_Register(void)
                LG_MarkAllForUpdate);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX,
                 0, 0);
+    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation,
+                CVF_NO_MAX, 0, 0);
     C_VAR_INT("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, 0, 0, 2);

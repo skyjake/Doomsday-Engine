@@ -51,8 +51,6 @@
 // $smoothmatoffset: Maximum speed for a smoothed material offset.
 #define MAX_SMOOTH_MATERIAL_MOVE (8)
 
-#define MAX_LIGHTATTENTUATION_DISTANCE 1024
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -1955,12 +1953,12 @@ void R_UpdatePlanes(void)
  */
 float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
 {
-    if(distToViewer > 0)
+    if(distToViewer > 0 && rendLightDistanceAttentuation > 0)
     {
         float               real, minimum;
 
         real = lightLevel -
-            (distToViewer - 32) / MAX_LIGHTATTENTUATION_DISTANCE *
+            (distToViewer - 32) / rendLightDistanceAttentuation *
                 (1 - lightLevel);
 
         minimum = lightLevel * lightLevel + (lightLevel - .63f) * .5f;
