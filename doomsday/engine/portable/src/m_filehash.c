@@ -79,7 +79,7 @@ static void FH_AddDirectory(const char *path);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static hashentry_t hashTable[HASH_SIZE];
-static direcnode_t *direcFirst, *direcLast;
+static direcnode_t* direcFirst = NULL, *direcLast = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -88,32 +88,35 @@ static direcnode_t *direcFirst, *direcLast;
  */
 void FH_Clear(void)
 {
-    direcnode_t *next;
-    hashentry_t *entry;
-    hashnode_t *nextNode;
-    uint        i;
-
-    // Free the directory nodes.
-    while(direcFirst)
+    if(direcFirst)
     {
-        next = direcFirst->next;
-        M_Free(direcFirst->path);
-        M_Free(direcFirst);
-        direcFirst = next;
-    }
-    direcLast = NULL;
+        uint                i;
+        direcnode_t*        next;
+        hashentry_t*        entry;
+        hashnode_t*         nextNode;
 
-    // Free the hash table.
-    for(i = 0, entry = hashTable; i < HASH_SIZE; ++i, entry++)
-    {
-        while(entry->first)
+        // Free the directory nodes.
+        do
         {
-            nextNode = entry->first->next;
-            M_Free(entry->first->fileName);
-            M_Free(entry->first);
-            entry->first = nextNode;
+            next = direcFirst->next;
+            M_Free(direcFirst->path);
+            M_Free(direcFirst);
+            direcFirst = next;
+        } while(direcFirst);
+
+        // Free the hash table.
+        for(i = 0, entry = hashTable; i < HASH_SIZE; ++i, entry++)
+        {
+            while(entry->first)
+            {
+                nextNode = entry->first->next;
+                M_Free(entry->first->fileName);
+                M_Free(entry->first);
+                entry->first = nextNode;
+            }
         }
     }
+    direcFirst = direcLast = NULL;
 
     // Clear the entire table.
     memset(hashTable, 0, sizeof(hashTable));
