@@ -31,9 +31,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef __BIG_ENDIAN__
 #include <string.h>
-#endif
 
 #include "dd_share.h"
 
@@ -113,7 +111,6 @@ fixed_t FixedDiv(fixed_t a, fixed_t b)
     return (FixedDiv2(a, b));
 }
 
-#ifdef __BIG_ENDIAN__
 short ShortSwap(short n)
 {
     return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
@@ -135,4 +132,3 @@ float FloatSwap(float f)
     memcpy(&returnValue, &temp, 4); // Must be 4.
     return returnValue;
 }
-#endif

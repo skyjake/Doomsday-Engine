@@ -82,14 +82,18 @@ char*           strlwr(char *string);
 #   define PRINTF_F(f,v)
 #endif
 
-#ifdef __BIG_ENDIAN__
 short           ShortSwap(short);
 long            LongSwap(long);
 float           FloatSwap(float);
 
+#ifdef __BIG_ENDIAN__
 #define SHORT(x)            ShortSwap(x)
 #define LONG(x)             LongSwap(x)
 #define FLOAT(x)            FloatSwap(x)
+
+#define BIGSHORT(x)         (x)
+#define BIGLONG(x)          (x)
+#define BIGFLOAT(x)         (x)
 
 // In these, x is evaluated multiple times, so increments and decrements
 // cannot be used.
@@ -101,6 +105,11 @@ float           FloatSwap(float);
 #define SHORT(x)            (x)
 #define LONG(x)             (x)
 #define FLOAT(x)            (x)
+
+#define BIGSHORT(x)         ShortSwap(x)
+#define BIGLONG(x)          LongSwap(x)
+#define BIGFLOAT(x)         FloatSwap(x)
+
 #define MACRO_SHORT(x)      (x)
 #define MACRO_LONG(x)       (x)
 #endif
