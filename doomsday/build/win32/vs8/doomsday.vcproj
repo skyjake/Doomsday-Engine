@@ -254,11 +254,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\bsp_map.c"
+				RelativePath="..\..\..\engine\portable\src\bsp_main.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\bsp_main.c"
+				RelativePath="..\..\..\engine\portable\src\bsp_map.c"
 				>
 			</File>
 			<File
@@ -475,6 +475,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\m_binarytree.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\m_decomp64.c"
 				>
 			</File>
 			<File
@@ -1269,11 +1273,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\bsp_map.h"
+				RelativePath="..\..\..\engine\portable\include\bsp_main.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\bsp_main.h"
+				RelativePath="..\..\..\engine\portable\include\bsp_map.h"
 				>
 			</File>
 			<File
@@ -1562,6 +1566,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\m_binarytree.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\m_decomp64.h"
 				>
 			</File>
 			<File

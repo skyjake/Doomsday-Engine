@@ -243,6 +243,7 @@
 		<Unit filename="..\..\engine\portable\include\m_args.h" />
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
 		<Unit filename="..\..\engine\portable\include\m_binarytree.h" />
+		<Unit filename="..\..\engine\portable\include\m_decomp64.h" />
 		<Unit filename="..\..\engine\portable\include\m_filehash.h" />
 		<Unit filename="..\..\engine\portable\include\m_gridmap.h" />
 		<Unit filename="..\..\engine\portable\include\m_huffman.h" />
@@ -525,6 +526,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\m_binarytree.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\engine\portable\src\m_decomp64.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\m_filehash.c">

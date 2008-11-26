@@ -15,6 +15,7 @@
  ./../../plugins/common/src/m_fixed.c
  ./../../engine/portable/src/m_filehash.c
  ./../../engine/portable/src/m_bams.c
+ ./../../engine/portable/src/m_decomp64.c
  ./../../engine/portable/src/m_args.c
  ./../../engine/portable/src/m_linkedlist.c
  ./../../engine/portable/src/m_binarytree.c

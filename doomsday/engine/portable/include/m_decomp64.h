@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,26 +22,13 @@
  */
 
 /**
- * de_misc.h: Miscellaneous Services
+ * m_decomp64.h: Decompression algorithm, used with various lumps of
+ *               DOOM64 data.
  */
 
-#ifndef __DOOMSDAY_MISC__
-#define __DOOMSDAY_MISC__
+#ifndef __M_DECOMPRESS64_H__
+#define __M_DECOMPRESS64_H__
 
-#include "m_misc.h"
-#include "m_args.h"
-#include "m_bams.h"
-#include "m_vector.h"
-#include "m_string.h"
-#include "m_nodepile.h"
-#include "m_filehash.h"
-#include "m_huffman.h"
-#include "m_vector.h"
-#include "m_profiler.h"
-#include "m_md5.h"
-#include "m_linkedlist.h"
-#include "m_binarytree.h"
-#include "m_gridmap.h"
-#include "m_decomp64.h"
+void            M_Decompress64(byte* dst, const byte* src);
 
 #endif
