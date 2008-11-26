@@ -93,7 +93,11 @@ typedef struct msector_s {
 
     // DOOM64 format members:
     int16_t         d64flags;
-    uint16_t        d64colors[5];
+    uint16_t        d64floorColor;
+    uint16_t        d64ceilingColor;
+    uint16_t        d64unknownColor;
+    uint16_t        d64wallTopColor;
+    uint16_t        d64wallBottomColor;
 } msector_t;
 
 typedef struct mthing_s {
@@ -125,7 +129,7 @@ typedef struct mpolyobj_s {
 
 // DOOM64 only (at present):
 typedef struct mlight_s {
-    byte            rgb[3];
+    float           rgb[3];
     byte            xx[3];
 } surfacetint_t;
 

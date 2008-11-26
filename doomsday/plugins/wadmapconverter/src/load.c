@@ -918,7 +918,7 @@ static boolean loadVertexes(const byte* buf, size_t len)
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
             map->vertexes[n * 2] = (float) SHORT(*((const int16_t*) (ptr)));
-            map->vertexes[n * 2 + 1] = (float) SHORT(*((const int16_t*) (ptr+4)));
+            map->vertexes[n * 2 + 1] = (float) SHORT(*((const int16_t*) (ptr+2)));
         }
         break;
 
@@ -1169,11 +1169,11 @@ static boolean loadSectors(const byte* buf, size_t len)
             s->floorMaterial = RegisterMaterial((const char*) &idx, true);
             idx = USHORT(*((const uint16_t*) (ptr+6)));
             s->ceilMaterial = RegisterMaterial((const char*) &idx, true);
-            s->d64colors[0] = USHORT(*((const uint16_t*) (ptr+8)));
-            s->d64colors[1] = USHORT(*((const uint16_t*) (ptr+10)));
-            s->d64colors[2] = USHORT(*((const uint16_t*) (ptr+12)));
-            s->d64colors[3] = USHORT(*((const uint16_t*) (ptr+14)));
-            s->d64colors[4] = USHORT(*((const uint16_t*) (ptr+16)));
+            s->d64ceilingColor = USHORT(*((const uint16_t*) (ptr+8)));
+            s->d64floorColor = USHORT(*((const uint16_t*) (ptr+10)));
+            s->d64unknownColor = USHORT(*((const uint16_t*) (ptr+12)));
+            s->d64wallTopColor = USHORT(*((const uint16_t*) (ptr+14)));
+            s->d64wallBottomColor = USHORT(*((const uint16_t*) (ptr+16)));
             s->type = SHORT(*((const int16_t*) (ptr+18)));
             s->tag = SHORT(*((const int16_t*) (ptr+20)));
             s->d64flags = USHORT(*((const uint16_t*) (ptr+22)));
@@ -1267,9 +1267,9 @@ static boolean loadLights(const byte* buf, size_t len)
     {
         surfacetint_t*           t = &map->lights[n];
 
-        t->rgb[0] = *(ptr);
-        t->rgb[1] = *(ptr+1);
-        t->rgb[2] = *(ptr+2);
+        t->rgb[0] = (float) *(ptr) / 255;
+        t->rgb[1] = (float) *(ptr+1) / 255;
+        t->rgb[2] = (float) *(ptr+2) / 255;
         t->xx[0] = *(ptr+3);
         t->xx[1] = *(ptr+4);
         t->xx[2] = *(ptr+5);
@@ -1406,11 +1406,11 @@ boolean TransferMap(void)
         if(map->format == MF_DOOM64)
         {
             MPE_GameObjProperty("XSector", i, "Flags", DDVT_SHORT, &sec->d64flags);
-            MPE_GameObjProperty("XSector", i, "Color0", DDVT_SHORT, &sec->d64colors[0]);
-            MPE_GameObjProperty("XSector", i, "Color1", DDVT_SHORT, &sec->d64colors[1]);
-            MPE_GameObjProperty("XSector", i, "Color2", DDVT_SHORT, &sec->d64colors[2]);
-            MPE_GameObjProperty("XSector", i, "Color3", DDVT_SHORT, &sec->d64colors[3]);
-            MPE_GameObjProperty("XSector", i, "Color4", DDVT_SHORT, &sec->d64colors[4]);
+            MPE_GameObjProperty("XSector", i, "CeilingColor", DDVT_SHORT, &sec->d64ceilingColor);
+            MPE_GameObjProperty("XSector", i, "FloorColor", DDVT_SHORT, &sec->d64floorColor);
+            MPE_GameObjProperty("XSector", i, "UnknownColor", DDVT_SHORT, &sec->d64unknownColor);
+            MPE_GameObjProperty("XSector", i, "WallTopColor", DDVT_SHORT, &sec->d64wallTopColor);
+            MPE_GameObjProperty("XSector", i, "WallBottomColor", DDVT_SHORT, &sec->d64wallBottomColor);
         }
     }
 
@@ -1483,9 +1483,9 @@ boolean TransferMap(void)
     {
         surfacetint_t*           l = &map->lights[i];
 
-        MPE_GameObjProperty("Light", i, "ColorR", DDVT_BYTE, &l->rgb[0]);
-        MPE_GameObjProperty("Light", i, "ColorG", DDVT_BYTE, &l->rgb[1]);
-        MPE_GameObjProperty("Light", i, "ColorB", DDVT_BYTE, &l->rgb[2]);
+        MPE_GameObjProperty("Light", i, "ColorR", DDVT_FLOAT, &l->rgb[0]);
+        MPE_GameObjProperty("Light", i, "ColorG", DDVT_FLOAT, &l->rgb[1]);
+        MPE_GameObjProperty("Light", i, "ColorB", DDVT_FLOAT, &l->rgb[2]);
         MPE_GameObjProperty("Light", i, "XX0", DDVT_BYTE, &l->xx[0]);
         MPE_GameObjProperty("Light", i, "XX1", DDVT_BYTE, &l->xx[1]);
         MPE_GameObjProperty("Light", i, "XX2", DDVT_BYTE, &l->xx[2]);
