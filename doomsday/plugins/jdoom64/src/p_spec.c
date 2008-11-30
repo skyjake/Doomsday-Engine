@@ -92,6 +92,20 @@ static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// These arrays are treated as a hardcoded replacements for data that can be
+// loaded from a lump, so we need to use little-endian byte ordering.
+static animdef_t animsShared[] = {
+    {1, "CFACEC",   "CFACEA",   MACRO_LONG(4)},
+    {1, "SMONAD",   "SMONAA",   MACRO_LONG(8)},
+    {1, "SMONBD",   "SMONBA",   MACRO_LONG(2)},
+    {1, "SMONCD",   "SMONCA",   MACRO_LONG(8)},
+    {1, "SMONDD",   "SMONDA",   MACRO_LONG(4)},
+    {1, "SMONED",   "SMONEA",   MACRO_LONG(8)},
+    {1, "SPORTI",   "SPORTA",   MACRO_LONG(4)},
+    {1, "C307B",    "C307",     MACRO_LONG(8)},
+    {-1, "\0",      "\0"}
+};
+
 // CODE --------------------------------------------------------------------
 
 /**
@@ -262,6 +276,14 @@ void P_InitPicAnims(void)
 
         VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
     }
+    else
+    {
+        Con_Message("P_InitPicAnims: Registering default animations...\n");
+
+        loadAnimDefs(animsShared);
+    }
+
+    VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
 }
 
 boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
