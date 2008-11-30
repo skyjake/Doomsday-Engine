@@ -697,6 +697,9 @@ desc = View window size (3-13).
 [hud-title]
 desc = 1=Show map title and author in the beginning.
 
+[hud-title-nomidway]
+desc = 1=Don't show map author if it's \"Midway\".
+
 [view-bob-height]
 desc = Scale for viewheight bobbing.
 

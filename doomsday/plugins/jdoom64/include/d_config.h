@@ -113,7 +113,7 @@ typedef struct jdoom64_config_s {
     byte            weaponRecoil; // jd64
     byte            secretMsg;
     int             plrViewHeight;
-    byte            mapTitle;
+    byte            mapTitle, hideAuthorMidway;
     float           menuColor[3];
     float           menuColor2[3];
     byte            noCoopDamage;

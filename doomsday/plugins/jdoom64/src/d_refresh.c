@@ -189,7 +189,8 @@ void R_DrawMapTitle(void)
     }
 
     DGL_Color4f(.5f, .5f, .5f, alpha);
-    if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump))
+    if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump) &&
+       (!cfg.hideAuthorMidway || stricmp(lauthor, "Midway")))
     {
         M_WriteText2(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
                      huFontA, -1, -1, -1, -1);
