@@ -60,7 +60,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-button_t *buttonlist;
+button_t* buttonlist;
 
 #if __JHEXEN__
 switchlist_t switchInfo[] = {
@@ -85,19 +85,17 @@ switchlist_t switchInfo[] = {
     {"SW1OFF", "SW1ON", MACRO_SHORT(1)},
     {"SW2OFF", "SW2ON", MACRO_SHORT(1)},
 # elif __JDOOM64__
-    //// \fixme these are most likely wrong.
-    {"SW1BLUE", "SW2BLUE", MACRO_SHORT(1)},
-    {"SW1BRIK", "SW2BRIK", MACRO_SHORT(1)},
-    {"SW1COMM", "SW2COMM", MACRO_SHORT(1)},
-    {"SW1DIRT", "SW2DIRT", MACRO_SHORT(1)},
-    {"SW1EXIT", "SW2EXIT", MACRO_SHORT(1)},
-    {"SW1FINAL", "SW2FINAL", MACRO_SHORT(1)},
-    {"SW1GRAY1", "SW2GRAY1", MACRO_SHORT(1)},
-    {"SW1METAL", "SW2METAL", MACRO_SHORT(1)},
-    {"SW1SKIN", "SW2SKIN", MACRO_SHORT(1)},
-    {"SW1SLAD", "SW2SLAD", MACRO_SHORT(1)},
-    {"SW1STON1", "SW2STON1", MACRO_SHORT(1)},
-    {"SW1TEK", "SW2TEK", MACRO_SHORT(1)},
+    {"SWXCA", "SWXCB", MACRO_SHORT(1)},
+    {"SWXCKA", "SWXCKB", MACRO_SHORT(1)},
+    {"SWXCKLA", "SWXCKLB", MACRO_SHORT(1)},
+    {"SWXCLA", "SWXCLB", MACRO_SHORT(1)},
+    {"SWXHCA", "SWXHCB", MACRO_SHORT(1)},
+    {"SWXSAA", "SWXSAB", MACRO_SHORT(1)},
+    {"SWXSCA", "SWXSCB", MACRO_SHORT(1)},
+    {"SWXSDA", "SWXSDB", MACRO_SHORT(1)},
+    {"SWXSEA", "SWXSEB", MACRO_SHORT(1)},
+    {"SWXSFA", "SWXSFB", MACRO_SHORT(1)},
+    {"SWXSGA", "SWXSGB", MACRO_SHORT(1)},
 # elif __JDOOM__
     // Doom shareware episode 1 switches
     {"SW1BRCOM", "SW2BRCOM", MACRO_SHORT(1)},
@@ -275,7 +273,7 @@ void P_InitSwitchList(void)
  * the button, the texture number of the button, and the time the button is
  * to remain active in gametics.
  */
-void P_StartButton(linedef_t *line, linesection_t section, materialnum_t mat, int time)
+void P_StartButton(linedef_t* line, linesection_t section, materialnum_t mat, int time)
 {
     button_t*           button;
 
@@ -320,7 +318,7 @@ void P_StartButton(linedef_t *line, linesection_t section, materialnum_t mat, in
  * Function that changes wall texture.
  * Tell it if switch is ok to use again (1=yes, it's a button).
  */
-void P_ChangeSwitchMaterial(linedef_t *line, int useAgain)
+void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
 {
     int                 i;
     materialnum_t       texTop, texMid, texBot;
