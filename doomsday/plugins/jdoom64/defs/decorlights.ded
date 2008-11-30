@@ -3,31 +3,15 @@
 #
 
 #
-# Glowing flats:
-#
-Decoration {
-  Flat = "F_SUCK"
-  Glow {
-  }
-}
-
-* Decoration { Flat = "NUKAGE1" }
-* Decoration { Flat = "NUKAGE2" }
-* Decoration { Flat = "NUKAGE3" }
-* Decoration { Flat = "FTILE5A0" }
-* Decoration { Flat = "CUSTOM3" }
-* Decoration { Flat = "FTILE2CA" }
-
-#
 # Glowing textures:
 #
 Decoration {
-  Texture = "TILEC6E3";
+  Texture = "CBTRAKA";
   Glow {
   };
 }
 
-* Decoration { Texture = "TILE6667" }
-* Decoration { Texture = "TILE6EAD" }
-* Decoration { Texture = "TILEC571" }
-* Decoration { Texture = "TILEABC3" }
+* Decoration { Texture = "CRTRAKA" }
+* Decoration { Texture = "CYTRAKA" }
+* Decoration { Texture = "SEXIT" }
+* Decoration { Texture = "SEXITA" }
