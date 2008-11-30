@@ -33,7 +33,6 @@ Finale
   Before = "MAP09";
   Script {
     music "read_m"
-    flat BLANK
     wait 0.5
     textdef msg 10 10 "C1TEXT"
     waittext msg
@@ -46,7 +45,6 @@ Finale
   Before = "MAP13";
   Script {
     music "read_m"
-    flat BLANK
     wait 0.5
     textdef msg 10 10 "C2TEXT"
     waittext msg
@@ -59,7 +57,6 @@ Finale
   Before = "MAP31";
   Script {
     music "read_m"
-    flat BLANK
     wait 0.5
     textdef msg 10 10 "C3TEXT"
     waittext msg
@@ -72,7 +69,6 @@ Finale
   After = "MAP28";
   Script {
     music "read_m"
-    flat BLANK
     wait 0.5
     textdef msg 10 10 "C4TEXT"
     waittext msg
