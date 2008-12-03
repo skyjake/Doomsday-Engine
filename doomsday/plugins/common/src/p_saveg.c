@@ -2174,6 +2174,8 @@ static void SV_WriteSector(sector_t *sec)
     byte        lightlevel = (byte) (255.f * P_GetFloatp(sec, DMU_LIGHT_LEVEL));
     short       floorheight = (short) P_GetIntp(sec, DMU_FLOOR_HEIGHT);
     short       ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
+    short       floorFlags = (short) P_GetIntp(sec, DMU_FLOOR_FLAGS);
+    short       ceilingFlags = (short) P_GetIntp(sec, DMU_CEILING_FLAGS);
     materialnum_t floorMaterial = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
     materialnum_t ceilingMaterial = P_GetIntp(sec, DMU_CEILING_MATERIAL);
     xsector_t  *xsec = P_ToXSector(sec);
@@ -2195,12 +2197,15 @@ static void SV_WriteSector(sector_t *sec)
 
     // Version.
     // 2: Surface colors.
-    SV_WriteByte(2); // write a version byte.
+    // 3: Surface flags.
+    SV_WriteByte(3); // write a version byte.
 
     SV_WriteShort(floorheight);
     SV_WriteShort(ceilingheight);
     SV_WriteShort(SV_MaterialArchiveNum(floorMaterial));
     SV_WriteShort(SV_MaterialArchiveNum(ceilingMaterial));
+    SV_WriteShort(floorFlags);
+    SV_WriteShort(ceilingFlags);
 #if __JHEXEN__
     SV_WriteShort((short) lightlevel);
 #else
@@ -2288,7 +2293,11 @@ static void SV_ReadSector(sector_t *sec)
 
     P_SetIntp(sec, DMU_FLOOR_HEIGHT, fh);
     P_SetIntp(sec, DMU_CEILING_HEIGHT, ch);
-
+    if(ver >= 3)
+    {
+        P_SetIntp(sec, DMU_FLOOR_FLAGS, SV_ReadShort());
+        P_SetIntp(sec, DMU_CEILING_FLAGS, SV_ReadShort());
+    }
 #if __JHEXEN__
     // Update the "target heights" of the planes.
     P_SetIntp(sec, DMU_FLOOR_TARGET_HEIGHT, fh);
@@ -2408,6 +2417,7 @@ static void SV_WriteLine(linedef_t* li)
     // 2: Per surface texture offsets.
     // 2: Surface colors.
     // 3: "Mapped by player" values.
+    // 3: Surface flags.
     SV_WriteByte(3); // Write a version byte
 
     SV_WriteShort(xli->flags);
@@ -2440,6 +2450,10 @@ static void SV_WriteLine(linedef_t* li)
         SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_Y));
         SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_X));
         SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
+
+        SV_WriteShort(P_GetIntp(si, DMU_TOP_FLAGS));
+        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_FLAGS));
+        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
         mat = P_GetIntp(si, DMU_TOP_MATERIAL);
         SV_WriteShort(SV_MaterialArchiveNum(mat));
@@ -2574,6 +2588,13 @@ static void SV_ReadLine(linedef_t *li)
             P_SetFloatpv(si, DMU_TOP_MATERIAL_OFFSET_XY, offset);
             P_SetFloatpv(si, DMU_MIDDLE_MATERIAL_OFFSET_XY, offset);
             P_SetFloatpv(si, DMU_BOTTOM_MATERIAL_OFFSET_XY, offset);
+        }
+
+        if(ver >= 3)
+        {
+            P_SetIntp(si, DMU_TOP_FLAGS, SV_ReadShort());
+            P_SetIntp(si, DMU_MIDDLE_FLAGS, SV_ReadShort());
+            P_SetIntp(si, DMU_BOTTOM_FLAGS, SV_ReadShort());
         }
 
 #if !__JHEXEN__

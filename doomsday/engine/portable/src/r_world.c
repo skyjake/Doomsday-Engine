@@ -1867,7 +1867,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
         // Update the glow properties.
         hasGlow = false;
-        if(plane->PS_material && ((plane->surface.flags & SUF_GLOW) ||
+        if(plane->PS_material && ((plane->surface.flags & DDSUF_GLOW) ||
            (plane->PS_material->flags & MATF_GLOW)))
         {
             materialtexinst_t*  texInst =

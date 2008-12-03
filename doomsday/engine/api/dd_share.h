@@ -614,6 +614,10 @@ enum /* Do not change the numerical values of the constants! */
 #define SDF_BLENDMIDTOBOTTOM    0x0004
 #define SDF_BLENDBOTTOMTOMID    0x0008
 
+// Surface flags:
+// For use with P_Set/Get(DMU_SURFACE, n, DMU_FLAGS).
+#define DDSUF_GLOW              0x00000001 // Surface glows (fully bright).
+
 // Map Update status code constants.
 // Sent to the game when various map update events occur.
 enum /* Do NOT change the numerical values of the constants. */

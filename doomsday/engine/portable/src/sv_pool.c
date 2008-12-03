@@ -832,7 +832,7 @@ boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
     byte                sideFlags = s->flags & 0xff;
 
     if(r->top.material != s->SW_topmaterial &&
-       !(s->SW_topflags & SUF_TEXFIX))
+       !(s->SW_topinflags & SUIF_MATERIAL_FIX))
     {
         df |= SIDF_TOP_MATERIAL;
         if(doUpdate)
@@ -840,7 +840,7 @@ boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
     }
 
     if(r->middle.material != s->SW_middlematerial &&
-       !(s->SW_middleflags & SUF_TEXFIX))
+       !(s->SW_middleinflags & SUIF_MATERIAL_FIX))
     {
         df |= SIDF_MID_MATERIAL;
         if(doUpdate)
@@ -848,7 +848,7 @@ boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
     }
 
     if(r->bottom.material != s->SW_bottommaterial &&
-       !(s->SW_bottomflags & SUF_TEXFIX))
+       !(s->SW_bottominflags & SUIF_MATERIAL_FIX))
     {
         df |= SIDF_BOTTOM_MATERIAL;
         if(doUpdate)

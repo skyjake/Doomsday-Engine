@@ -213,9 +213,9 @@ void PO_InitForMap(void)
             sidedef_t*          side = SEG_SIDEDEF(seg);
             surface_t*          surface = &side->SW_topsurface;
 
-            side->SW_topflags |= SUF_NO_RADIO;
-            side->SW_middleflags |= SUF_NO_RADIO;
-            side->SW_bottomflags |= SUF_NO_RADIO;
+            side->SW_topinflags |= SUIF_NO_RADIO;
+            side->SW_middleinflags |= SUIF_NO_RADIO;
+            side->SW_bottominflags |= SUIF_NO_RADIO;
 
             avg.pos[VX] += seg->SG_v1pos[VX];
             avg.pos[VY] += seg->SG_v1pos[VY];

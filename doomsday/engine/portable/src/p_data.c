@@ -167,14 +167,14 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 if(!R_IsSkySurface(&front->sector->SP_floorsurface))
                 {
                     Surface_SetMaterial(&front->SW_bottomsurface,
-                        front->sector->SP_floormaterial);
-                    front->SW_bottomflags |= SUF_TEXFIX;
+                                        front->sector->SP_floormaterial);
+                    front->SW_bottominflags |= SUIF_MATERIAL_FIX;
                 }
 
-                if(back->SW_bottomflags & SUF_TEXFIX)
+                if(back->SW_bottominflags & SUIF_MATERIAL_FIX)
                 {
                     Surface_SetMaterial(&back->SW_bottomsurface, NULL);
-                    back->SW_bottomflags &= ~SUF_TEXFIX;
+                    back->SW_bottominflags &= ~SUIF_MATERIAL_FIX;
                 }
             }
             else if(front->sector->SP_floorheight > back->sector->SP_floorheight &&
@@ -183,14 +183,14 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 if(!R_IsSkySurface(&back->sector->SP_floorsurface))
                 {
                     Surface_SetMaterial(&back->SW_bottomsurface,
-                        back->sector->SP_floormaterial);
-                    back->SW_bottomflags |= SUF_TEXFIX;
+                                        back->sector->SP_floormaterial);
+                    back->SW_bottominflags |= SUIF_MATERIAL_FIX;
                 }
 
-                if(front->SW_bottomflags & SUF_TEXFIX)
+                if(front->SW_bottominflags & SUIF_MATERIAL_FIX)
                 {
                     Surface_SetMaterial(&front->SW_bottomsurface, NULL);
-                    front->SW_bottomflags &= ~SUF_TEXFIX;
+                    front->SW_bottominflags &= ~SUIF_MATERIAL_FIX;
                 }
             }
         }
@@ -202,26 +202,15 @@ void P_PlaneChanged(sector_t *sector, uint plane)
             {
                 if(!R_IsSkySurface(&front->sector->SP_ceilsurface))
                 {
-                    // Preference a middle texture when doing replacements as
-                    // this could be a mid tex door hack.
-                   /* if(front->SW_middlematerial->texture)
-                    {
-                        front->flags |= SDF_MIDTEXUPPER;
-                        Surface_SetMaterial(front->SW_topsurface,
-                            front->SW_middlematerial);
-                    }
-                    else*/
-                    {
-                        Surface_SetMaterial(&front->SW_topsurface,
-                            front->sector->SP_ceilmaterial);
-                    }
-                    front->SW_topflags |= SUF_TEXFIX;
+                    Surface_SetMaterial(&front->SW_topsurface,
+                                        front->sector->SP_ceilmaterial);
+                    front->SW_topinflags |= SUIF_MATERIAL_FIX;
                 }
 
-                if(back->SW_topflags & SUF_TEXFIX)
+                if(back->SW_topinflags & SUIF_MATERIAL_FIX)
                 {
                     Surface_SetMaterial(&back->SW_topsurface, NULL);
-                    back->SW_topflags &= ~SUF_TEXFIX;
+                    back->SW_topinflags &= ~SUIF_MATERIAL_FIX;
                 }
             }
             else if(front->sector->SP_ceilheight < back->sector->SP_ceilheight &&
@@ -229,26 +218,15 @@ void P_PlaneChanged(sector_t *sector, uint plane)
             {
                 if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
                 {
-                    // Preference a middle texture when doing replacements as
-                    // this could be a mid tex door hack.
-                   /* if(front->SW_middlematerial->texture)
-                    {
-                        back->flags |= SDF_MIDTEXUPPER;
-                        Surface_SetMaterial(back->SW_topsurface,
-                            back->SW_middlematerial);
-                    }
-                    else*/
-                    {
-                        Surface_SetMaterial(&back->SW_topsurface,
-                            back->sector->SP_ceilmaterial);
-                    }
-                    back->SW_topflags |= SUF_TEXFIX;
+                    Surface_SetMaterial(&back->SW_topsurface,
+                                        back->sector->SP_ceilmaterial);
+                    back->SW_topinflags |= SUIF_MATERIAL_FIX;
                 }
 
-                if(front->SW_topflags & SUF_TEXFIX)
+                if(front->SW_topinflags & SUIF_MATERIAL_FIX)
                 {
                     Surface_SetMaterial(&front->SW_topsurface, NULL);
-                    front->SW_topflags &= ~SUF_TEXFIX;
+                    front->SW_topinflags &= ~SUIF_MATERIAL_FIX;
                 }
             }
         }

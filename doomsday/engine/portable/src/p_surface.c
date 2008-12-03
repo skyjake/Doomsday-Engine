@@ -66,13 +66,14 @@ boolean Surface_SetMaterial(surface_t* suf, struct material_s* mat)
         return true;
 
     // No longer a missing texture fix?
-    if(mat && (suf->oldFlags & SUF_TEXFIX))
-        suf->flags &= ~SUF_TEXFIX;
-
-    suf->flags |= SUF_UPDATE_DECORATIONS;
-    suf->oldFlags = suf->flags;
+    if(mat && (suf->oldFlags & SUIF_MATERIAL_FIX))
+        suf->inFlags &= ~SUIF_MATERIAL_FIX;
 
     suf->material = mat;
+
+    suf->inFlags |= SUIF_UPDATE_DECORATIONS;
+    suf->oldFlags = suf->inFlags;
+
     return true;
 }
 
@@ -93,7 +94,7 @@ boolean Surface_SetMaterialOffsetX(surface_t* suf, float x)
         return true;
 
     suf->offset[VX] = x;
-    suf->flags |= SUF_UPDATE_DECORATIONS;
+    suf->inFlags |= SUIF_UPDATE_DECORATIONS;
     if(!mapSetup)
         R_SurfaceListAdd(movingSurfaceList, suf);
 
@@ -117,7 +118,7 @@ boolean Surface_SetMaterialOffsetY(surface_t* suf, float y)
         return true;
 
     suf->offset[VY] = y;
-    suf->flags |= SUF_UPDATE_DECORATIONS;
+    suf->inFlags |= SUIF_UPDATE_DECORATIONS;
     if(!mapSetup)
         R_SurfaceListAdd(movingSurfaceList, suf);
 
@@ -143,7 +144,7 @@ boolean Surface_SetMaterialOffsetXY(surface_t* suf, float x, float y)
 
     suf->offset[VX] = x;
     suf->offset[VY] = y;
-    suf->flags |= SUF_UPDATE_DECORATIONS;
+    suf->inFlags |= SUIF_UPDATE_DECORATIONS;
     if(!mapSetup)
         R_SurfaceListAdd(movingSurfaceList, suf);
 
@@ -286,7 +287,7 @@ void Surface_Update(surface_t* suf)
     if(!suf)
         return;
 
-    suf->flags |= SUF_UPDATE_DECORATIONS;
+    suf->inFlags |= SUIF_UPDATE_DECORATIONS;
 }
 
 /**
@@ -303,6 +304,11 @@ boolean Surface_SetProperty(surface_t* suf, const setargs_t* args)
         Surface_SetBlendMode(suf, blendMode);
         }
         break;
+
+    case DMU_FLAGS:
+        DMU_SetValue(DMT_SURFACE_FLAGS, &suf->flags, args, 0);
+        break;
+
     case DMU_COLOR:
         {
         float                   rgb[3];
@@ -391,7 +397,7 @@ boolean Surface_GetProperty(const surface_t *suf, setargs_t *args)
         {
         materialnum_t mat = R_GetMaterialNum(suf->material);
 
-        if(suf->flags & SUF_TEXFIX)
+        if(suf->inFlags & SUIF_MATERIAL_FIX)
             mat = 0;
         DMU_GetValue(DMT_MATERIAL, &mat, args, 0);
         break;
@@ -426,6 +432,9 @@ boolean Surface_GetProperty(const surface_t *suf, setargs_t *args)
         break;
     case DMU_BLENDMODE:
         DMU_GetValue(DMT_SURFACE_BLENDMODE, &suf->blendMode, args, 0);
+        break;
+    case DMU_FLAGS:
+        DMU_GetValue(DMT_SURFACE_FLAGS, &suf->flags, args, 0);
         break;
     default:
         Con_Error("Surface_GetProperty: No property %s.\n",

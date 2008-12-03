@@ -685,7 +685,7 @@ static void updateSurfaceDecorations(surface_t* suf, float offsetS,
         }
     }
 
-    suf->flags &= ~SUF_UPDATE_DECORATIONS;
+    suf->inFlags &= ~SUIF_UPDATE_DECORATIONS;
 }
 
 /**
@@ -825,15 +825,15 @@ void Rend_UpdateSurfaceDecorations(void)
             surface_t*          suf;
 
             suf = &side->SW_middlesurface;
-            if(suf->flags & SUF_UPDATE_DECORATIONS)
+            if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
                 updateSideSectionDecorations(side, SEG_MIDDLE);
 
             suf = &side->SW_topsurface;
-            if(suf->flags & SUF_UPDATE_DECORATIONS)
+            if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
                 updateSideSectionDecorations(side, SEG_TOP);
 
             suf = &side->SW_bottomsurface;
-            if(suf->flags & SUF_UPDATE_DECORATIONS)
+            if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
                 updateSideSectionDecorations(side, SEG_BOTTOM);
         }
 
@@ -846,7 +846,7 @@ void Rend_UpdateSurfaceDecorations(void)
             for(j = 0; j < sec->planeCount; ++j)
             {
                 plane_t*            pln = sec->SP_plane(j);
-                if(pln->surface.flags & SUF_UPDATE_DECORATIONS)
+                if(pln->surface.inFlags & SUIF_UPDATE_DECORATIONS)
                     updatePlaneDecorations(pln);
             }
         }

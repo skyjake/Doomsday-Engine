@@ -116,18 +116,15 @@ typedef struct subsector_s {
     struct shadowlink_s* shadows;
 } subsector_t;
 
-// Surface flags.
-#define SUF_TEXFIX      0x1         // Current texture is a fix replacement
-                                    // (not sent to clients, returned via DMU etc).
-#define SUF_GLOW        0x2         // Surface glows (full bright).
-#define SUF_BLEND       0x4         // Surface possibly has a blended texture.
-#define SUF_NO_RADIO    0x8         // No fakeradio for this surface.
+// Internal surface flags:
+#define SUIF_PVIS             0x0001
+#define SUIF_MATERIAL_FIX     0x0002 // Current texture is a fix replacement
+                                     // (not sent to clients, returned via DMU etc).
+#define SUIF_BLEND            0x0004 // Surface possibly has a blended texture.
+#define SUIF_NO_RADIO         0x0008 // No fakeradio for this surface.
 
-#define SUF_UPDATE_FLAG_MASK    0xff000000
-#define SUF_UPDATE_DECORATIONS  0x80000000
-
-// Surface frame flags
-#define SUFINF_PVIS     0x0001
+#define SUIF_UPDATE_FLAG_MASK 0xff00
+#define SUIF_UPDATE_DECORATIONS 0x8000
 
 // Decoration types.
 typedef enum {
@@ -169,7 +166,7 @@ typedef struct surface_s {
     float               visOffset[2];
     float               visOffsetDelta[2];
     float               rgba[4];       // Surface color tint
-    short               frameFlags;
+    short               inFlags;       // SUIF_* flags
     unsigned int        numDecorations;
     surfacedecor_t      *decorations;
 } surface_t;
@@ -311,6 +308,7 @@ typedef enum segsection_e {
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)           sections[(n)]
 #define SW_surfaceflags(n)      SW_surface(n).flags
+#define SW_surfaceinflags(n)    SW_surface(n).inFlags
 #define SW_surfacematerial(n)   SW_surface(n).material
 #define SW_surfacenormal(n)     SW_surface(n).normal
 #define SW_surfaceoffset(n)     SW_surface(n).offset
@@ -319,7 +317,8 @@ typedef enum segsection_e {
 #define SW_surfaceblendmode(n)  SW_surface(n).blendMode
 
 #define SW_middlesurface        SW_surface(SEG_MIDDLE)
-#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
+#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)0
+#define SW_middleinflags        SW_surfaceinflags(SEG_MIDDLE)
 #define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
 #define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
@@ -330,6 +329,7 @@ typedef enum segsection_e {
 
 #define SW_topsurface           SW_surface(SEG_TOP)
 #define SW_topflags             SW_surfaceflags(SEG_TOP)
+#define SW_topinflags           SW_surfaceinflags(SEG_TOP)
 #define SW_topmaterial          SW_surfacematerial(SEG_TOP)
 #define SW_topnormal            SW_surfacenormal(SEG_TOP)
 #define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
@@ -339,18 +339,13 @@ typedef enum segsection_e {
 
 #define SW_bottomsurface        SW_surface(SEG_BOTTOM)
 #define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
+#define SW_bottominflags        SW_surfaceinflags(SEG_BOTTOM)
 #define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
 #define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
 #define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
 #define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
 #define SW_bottomvisoffset      SW_surfacevisoffset(SEG_BOTTOM)
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
-
-// Sidedef flags
-#define SDF_BLENDTOPTOMID       0x01
-#define SDF_BLENDMIDTOTOP       0x02
-#define SDF_BLENDMIDTOBOTTOM    0x04
-#define SDF_BLENDBOTTOMTOMID    0x08
 
 #define FRONT                   0
 #define BACK                    1
