@@ -253,8 +253,4 @@ enum { VX, VY, VZ }; // Vertex indices.
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
 
 #define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
-
-#define SKYMASKMATERIAL     (Get(DD_SKYMASKMATERIAL_NUM))
-#define SKYFLATNAME         ("F_SKY1")
-
 #endif

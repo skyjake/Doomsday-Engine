@@ -99,8 +99,6 @@ fixed_t* fineCosine = &finesine[FINEANGLES / 4];
 int extraLight; // Bumped light from gun blasts.
 float extraLightDelta;
 
-material_t* skyMaskMaterial = NULL;
-
 float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int loadInStartupMode = false;
@@ -155,7 +153,7 @@ void R_InitSkyMap(void)
  */
 boolean R_IsSkySurface(const surface_t* suf)
 {
-    if(suf && suf->material == skyMaskMaterial)
+    if(suf && suf->material && (suf->material->flags & MATF_SKYMASK))
         return true;
 
     return false;

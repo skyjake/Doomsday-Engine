@@ -503,7 +503,25 @@ void G_CommonPostInit(void)
     XG_Register(); // Register XG classnames.
 #endif
 
-    DD_SetVariable(DD_SKYMASKMATERIAL_NAME, SKYFLATNAME);
+    // Inform the engine which materials to sky-mask.
+#if __JDOOM64__
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYA", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYB", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYC", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYD", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYE", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYF", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYG", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYH", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYI", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYJ", MG_TEXTURES), true);
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKYK", MG_TEXTURES), true);
+#elif __JHEXEN__
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKY", MG_FLATS), true);
+#else
+    R_MaterialSetSkyMask(R_MaterialNumForName("F_SKY1", MG_FLATS), true);
+#endif
+
     R_SetViewSize(cfg.screenBlocks);
     R_SetBorderGfx(borderLumps);
 

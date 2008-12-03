@@ -1207,8 +1207,22 @@ boolean R_MaterialGetInfo(materialnum_t num, materialinfo_t* info)
     info->group = mat->group;
     info->width = (int) mat->width;
     info->height = (int) mat->height;
+    info->flags = mat->flags;
 
     return true;
+}
+
+void R_MaterialSetSkyMask(materialnum_t num, boolean yes)
+{
+    material_t*         mat;
+
+    if(!(mat = R_GetMaterialByNum(num)))
+        return;
+
+    if(yes)
+        mat->flags |= MATF_SKYMASK;
+    else
+        mat->flags &= ~MATF_SKYMASK;
 }
 
 /**

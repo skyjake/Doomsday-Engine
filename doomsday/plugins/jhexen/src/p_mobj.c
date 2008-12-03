@@ -594,8 +594,11 @@ explode:
                 if(ceilingLine &&
                    (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
                 {
-                    if(P_GetIntp(backSec,
-                                 DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
+                    materialinfo_t      info;
+
+                    R_MaterialGetInfo(P_GetIntp(backSec, DMU_CEILING_MATERIAL), &info);
+
+                    if((info.flags & MATF_SKYMASK) &&
                        mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
                     {
                         if(mo->type == MT_BLOODYSKULL)
@@ -619,8 +622,11 @@ explode:
                 if(floorLine &&
                    (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
                 {
-                    if(P_GetIntp(backSec,
-                                 DMU_FLOOR_MATERIAL) == SKYMASKMATERIAL &&
+                    materialinfo_t      info;
+
+                    R_MaterialGetInfo(P_GetIntp(backSec, DMU_FLOOR_MATERIAL), &info);
+
+                    if((info.flags & MATF_SKYMASK) &&
                        mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
                     {
                         if(mo->type == MT_BLOODYSKULL)
@@ -944,10 +950,14 @@ void P_MobjMoveZ(mobj_t *mo)
 
         if(mo->flags & MF_MISSILE)
         {
+            materialinfo_t      info;
+
             if(mo->type == MT_LIGHTNING_CEILING)
                 return;
 
-            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL)
+            R_MaterialGetInfo(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL), &info);
+
+            if(info.flags & MATF_SKYMASK)
             {
                 if(mo->type == MT_BLOODYSKULL)
                 {

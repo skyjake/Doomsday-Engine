@@ -48,10 +48,6 @@
 #define DISPLAYPLAYER       Get(DD_DISPLAYPLAYER)
 
 #define GAMETIC             Get(DD_GAMETIC)
-
-#define SKYMASKMATERIAL     Get(DD_SKYMASKMATERIAL_NUM)
-#define SKYFLATNAME         "F_SKY1"
-
 #define maketic             Get(DD_MAKETIC)
 #define ticdup              1
 

@@ -109,8 +109,6 @@ extern int gameDataFormat;
 extern int gameDrawHUD;
 extern int symbolicEchoMode;
 
-extern material_t* skyMaskMaterial;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 directory_t ddRuntimeDir, ddBinDir;
@@ -884,9 +882,6 @@ int DD_GetInteger(int ddvalue)
         case DD_WINDOW_HEIGHT:
             return theWindow->height;
 
-        case DD_SKYMASKMATERIAL_NUM:
-            return R_GetMaterialNum(skyMaskMaterial);
-
         default:
             break;
         }
@@ -926,13 +921,6 @@ void* DD_GetVariable(int ddvalue)
         {
         case DD_GAME_EXPORTS:
             return &gx;
-
-        case DD_SKYMASKMATERIAL_NUM:
-            {
-            static materialnum_t num;
-            num = R_GetMaterialNum(skyMaskMaterial);
-            return &num;
-            }
 
         case DD_VIEWX:
             return &viewX;
@@ -1146,23 +1134,6 @@ void DD_SetVariable(int ddvalue, void *parm)
 
         case DD_GRAVITY:
             mapGravity = *(float*) parm;
-            return;
-
-        case DD_SKYMASKMATERIAL_NAME:
-            {
-            materialnum_t   mat;
-            char            name[9];
-            size_t          len;
-
-            len = strlen(parm);
-            if(len > 8)
-                len = 8;
-            strncpy(name, parm, len);
-            name[len] = '\0';
-
-            if((mat = R_MaterialNumForName(name, MG_ANY)))
-                skyMaskMaterial = R_GetMaterialByNum(mat);
-            }
             return;
 
         case DD_PSPRITE_OFFSET_X:

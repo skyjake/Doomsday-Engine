@@ -304,31 +304,35 @@ void Rend_SkyRenderer(int hemi)
 static void setupFadeout(skylayer_t* slayer)
 {
     int                 flags = TEXF_LOAD_AS_SKY;
-    materialtexinst_t*  texInst;
 
     if(slayer->flags & SLF_MASKED)
         flags |= TEXF_TEX_ZEROMASK;
 
     // Ensure we have up to date info on the material tex.
-    texInst = R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL, NULL);
-    if(texInst)
+    if(slayer->mat)
     {
-        int                 i;
+        materialtexinst_t*  texInst =
+            R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL, NULL);
 
-        slayer->fadeout.rgb[CR] = texInst->topColor[CR];
-        slayer->fadeout.rgb[CG] = texInst->topColor[CG];
-        slayer->fadeout.rgb[CB] = texInst->topColor[CB];
+        if(texInst)
+        {
+            int                 i;
 
-        // Determine if it should be used.
-        for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
-            if(slayer->fadeout.rgb[i] > slayer->fadeout.limit)
-            {
-                // Colored fadeout is needed.
-                slayer->fadeout.use = true;
-                break;
-            }
+            slayer->fadeout.rgb[CR] = texInst->topColor[CR];
+            slayer->fadeout.rgb[CG] = texInst->topColor[CG];
+            slayer->fadeout.rgb[CB] = texInst->topColor[CB];
 
-        return;
+            // Determine if it should be used.
+            for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
+                if(slayer->fadeout.rgb[i] > slayer->fadeout.limit)
+                {
+                    // Colored fadeout is needed.
+                    slayer->fadeout.use = true;
+                    break;
+                }
+
+            return;
+        }
     }
 
     // An invalid texture, default to black.

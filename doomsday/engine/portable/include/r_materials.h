@@ -50,10 +50,6 @@ typedef struct materialtex_s {
     void*           instances;
 } materialtex_t;
 
-// Material flags:
-#define MATF_NO_DRAW            0x1 // Material should never be drawn.
-#define MATF_GLOW               0x2 // Glowing material.
-
 typedef struct material_s {
 // Material def:
     byte            flags; // MATF_* flags
@@ -108,6 +104,7 @@ void            R_MaterialSetTranslation(material_t* mat,
 boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
 const ded_decor_t* R_MaterialGetDecoration(material_t* mat);
 const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat);
+void            R_MaterialSetSkyMask(materialnum_t num, boolean yes);
 
 // Lookup:
 material_t*     R_GetMaterial(int ofTypeID, materialgroup_t group);

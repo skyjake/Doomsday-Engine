@@ -85,12 +85,6 @@ extern player_t players[MAXPLAYERS];
 
 // if true, load all graphics at map load
 extern boolean  precache;
-
 extern int      bodyqueslot;
-
-// Needed to store the number of the dummy sky flat.
-// Used for rendering, as well as tracking projectiles etc.
-#define SKYMASKMATERIAL     Get(DD_SKYMASKMATERIAL_NUM)
-#define SKYFLATNAME         "F_SKY"
 
 #endif

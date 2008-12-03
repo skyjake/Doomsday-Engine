@@ -1516,24 +1516,22 @@ boolean PTR_ShootTraverse(intercept_t* in)
         if(backSec)
         {
             float               fFloor, bFloor, fCeil, bCeil;
-            boolean             skyFloor, skyCeil;
+            materialinfo_t      info;
 
             // Is it a sky hack wall? If the hitpoint is beyond the visible
             // surface, no puff must be shown.
-            skyCeil = P_GetIntp(frontSec, DMU_CEILING_MATERIAL) ==
-                SKYMASKMATERIAL;
+            R_MaterialGetInfo(P_GetIntp(frontSec, DMU_CEILING_MATERIAL), &info);
             fCeil  = P_GetFloatp(frontSec, DMU_CEILING_HEIGHT);
             bCeil  = P_GetFloatp(backSec, DMU_CEILING_HEIGHT);
 
-            if(skyCeil &&  (pos[VZ] > fCeil  || pos[VZ] > bCeil))
+            if((info.flags & MATF_SKYMASK) &&  (pos[VZ] > fCeil  || pos[VZ] > bCeil))
                 return false;
 
-            skyFloor = P_GetIntp(backSec, DMU_FLOOR_MATERIAL) ==
-                SKYMASKMATERIAL;
+            R_MaterialGetInfo(P_GetIntp(backSec, DMU_FLOOR_MATERIAL), &info);
             fFloor = P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT);
             bFloor = P_GetFloatp(backSec, DMU_FLOOR_HEIGHT);
 
-            if(skyFloor && (pos[VZ] < fFloor || pos[VZ] < bFloor))
+            if((info.flags & MATF_SKYMASK) && (pos[VZ] < fFloor || pos[VZ] < bFloor))
                 return false;
         }
 
@@ -1548,6 +1546,8 @@ boolean PTR_ShootTraverse(intercept_t* in)
 
         if(d[VZ] != 0)
         {
+            materialinfo_t          info;
+
             contact = R_PointInSubsector(pos[VX], pos[VY]);
             step = P_ApproxDistance3(d[VX], d[VY], d[VZ]);
             stepv[VX] = d[VX] / step;
@@ -1573,11 +1573,15 @@ boolean PTR_ShootTraverse(intercept_t* in)
             cBottom = cFloor + 4;
             divisor = 2;
 
+            R_MaterialGetInfo(P_GetIntp(contact, DMU_CEILING_MATERIAL), &info);
+
             // We must not hit a sky plane.
-            if((pos[VZ] > cTop &&
-                P_GetIntp(contact, DMU_CEILING_MATERIAL) == SKYMASKMATERIAL) ||
-               (pos[VZ] < cBottom &&
-                P_GetIntp(contact, DMU_FLOOR_MATERIAL) == SKYMASKMATERIAL))
+            if(pos[VZ] > cTop && (info.flags & MATF_SKYMASK))
+                return false;
+
+            R_MaterialGetInfo(P_GetIntp(contact, DMU_FLOOR_MATERIAL), &info);
+
+            if(pos[VZ] < cBottom && (info.flags & MATF_SKYMASK))
                 return false;
 
             // Find the approximate hitpoint by stepping back and

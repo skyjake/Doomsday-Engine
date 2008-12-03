@@ -1070,16 +1070,19 @@ void P_AnimateSurfaces(void)
 
 static boolean isLightningSector(sector_t* sec)
 {
-    materialnum_t           skyMaskMaterial;
     xsector_t*              xsec = P_ToXSector(sec);
+    materialinfo_t          info;
 
     if(xsec->special == LIGHTNING_SPECIAL ||
        xsec->special == LIGHTNING_SPECIAL2)
         return true;
 
-    skyMaskMaterial = SKYMASKMATERIAL;
-    if(P_GetIntp(xsec, DMU_CEILING_MATERIAL) == skyMaskMaterial ||
-       P_GetIntp(xsec, DMU_FLOOR_MATERIAL) == skyMaskMaterial)
+    R_MaterialGetInfo(P_GetIntp(sec, DMU_CEILING_MATERIAL), &info);
+    if(info.flags & MATF_SKYMASK)
+        return true;
+
+    R_MaterialGetInfo(P_GetIntp(sec, DMU_FLOOR_MATERIAL), &info);
+    if(info.flags & MATF_SKYMASK)
         return true;
 
     return false;
@@ -1092,7 +1095,7 @@ static void P_LightningFlash(void)
     boolean             foundSec;
     float               flashLight;
 
-    if(lightningFlash > 0)
+    if(lightningFlash)
     {
         lightningFlash--;
         tempLight = lightningLightLevels;
@@ -1106,13 +1109,13 @@ static void P_LightningFlash(void)
                 if(isLightningSector(sec))
                 {
                     float               lightLevel =
-                        P_GetFloat(i, DMU_SECTOR, DMU_LIGHT_LEVEL);
+                        P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
 
                     if(*tempLight < lightLevel - (4.f / 255))
-                        P_SetFloat(i, DMU_SECTOR, DMU_LIGHT_LEVEL,
+                        P_SetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL,
                                    lightLevel - (1.f / 255) * 4);
 
-                    *tempLight += 1.f / 255;
+                    tempLight++;
                 }
             }
         }
@@ -1125,7 +1128,7 @@ static void P_LightningFlash(void)
                 if(isLightningSector(sec))
                 {
                     P_SetFloatp(sec, DMU_LIGHT_LEVEL, *tempLight);
-                    *tempLight += 1.f / 255;
+                    tempLight++;
                 }
             }
 
@@ -1172,7 +1175,7 @@ static void P_LightningFlash(void)
                 newLevel = *tempLight;
 
             P_SetFloatp(sec, DMU_LIGHT_LEVEL, newLevel);
-            *tempLight += 1.f / 255;
+            tempLight++;
             foundSec = true;
         }
     }
@@ -1254,15 +1257,15 @@ void P_InitLightning(void)
     if(secCount > 0)
     {
         mapHasLightning = true;
+
+        lightningLightLevels =
+            Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
+
+        // Don't flash immediately on entering the map.
+        nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
     }
     else
     {
         mapHasLightning = false;
-        return;
     }
-
-    lightningLightLevels = Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
-
-    // Don't flash immediately on entering the map.
-    nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
 }

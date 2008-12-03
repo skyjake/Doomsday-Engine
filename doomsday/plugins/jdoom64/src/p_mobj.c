@@ -260,8 +260,11 @@ void P_MobjMoveXY(mobj_t* mo)
                 if(ceilingLine &&
                    (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
                 {
-                    if(P_GetIntp(backSec,
-                                 DMU_CEILING_MATERIAL) == SKYMASKMATERIAL &&
+                    materialinfo_t      info;
+
+                    R_MaterialGetInfo(P_GetIntp(backSec, DMU_CEILING_MATERIAL), &info);
+
+                    if((info.flags & MATF_SKYMASK) &&
                        mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
                     {
                         P_MobjRemove(mo, false);
@@ -272,8 +275,11 @@ void P_MobjMoveXY(mobj_t* mo)
                 if(floorLine &&
                    (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
                 {
-                    if(P_GetIntp(backSec,
-                                 DMU_FLOOR_MATERIAL) == SKYMASKMATERIAL &&
+                    materialinfo_t      info;
+
+                    R_MaterialGetInfo(P_GetIntp(backSec, DMU_FLOOR_MATERIAL), &info);
+
+                    if((info.flags & MATF_SKYMASK) &&
                        mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
                     {
                         P_MobjRemove(mo, false);
@@ -650,9 +656,12 @@ void P_MobjMoveZ(mobj_t* mo)
 
         if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
+            materialinfo_t          info;
+
+            R_MaterialGetInfo(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL), &info);
+
             // Don't explode against sky.
-            if(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL) ==
-               SKYMASKMATERIAL)
+            if((info.flags & MATF_SKYMASK))
             {
                 P_MobjRemove(mo, false);
             }

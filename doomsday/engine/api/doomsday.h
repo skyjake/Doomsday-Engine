@@ -410,7 +410,10 @@ extern          "C" {
     materialnum_t   R_MaterialNumForIndex(uint idx, materialgroup_t group);
     const char*     R_MaterialNameForNum(materialnum_t num);
     boolean         R_MaterialIsCustom(materialnum_t num);
+
     boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
+    void            R_MaterialSetSkyMask(materialnum_t num, boolean yes);
+
     void            R_MaterialPrecache(materialnum_t num);
 
     int             R_CreateAnimGroup(int flags);

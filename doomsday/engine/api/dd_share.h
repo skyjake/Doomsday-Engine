@@ -239,8 +239,6 @@ enum {
     DD_GAME_DMUAPI_VER, // Version of the DMU API the game is using.
 
     // Non-integer/special values for Set/Get
-    DD_SKYMASKMATERIAL_NAME = 0x4000,
-    DD_SKYMASKMATERIAL_NUM,
     DD_TRANSLATIONTABLES_ADDRESS,
     DD_TRACE_ADDRESS, // divline 'trace' used by PathTraverse.
     DD_SPRITE_REPLACEMENT, // Sprite <-> model replacement.
@@ -1051,10 +1049,16 @@ typedef enum materialgroup_e {
     NUM_MATERIAL_GROUPS
 } materialgroup_t;
 
+// Material flags:
+#define MATF_NO_DRAW            0x1 // Material should never be drawn.
+#define MATF_GLOW               0x2 // Glowing material.
+#define MATF_SKYMASK            0x4 // Sky-mask surfaces using this material.
+
 typedef struct {
     materialnum_t   num;
     int             group;
     int             width, height;
+    byte            flags;
 } materialinfo_t;
 
 // Animation group flags.
