@@ -57,6 +57,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+#if __JDOOM64__
+# define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -220,6 +224,104 @@ void P_SetupForMapData(int type, uint num)
     }
 }
 
+#if __JDOOM64__
+static void getSurfaceColor(uint idx, float rgba[4])
+{
+    if(!idx)
+    {
+        rgba[0] = rgba[1] = rgba[2] = rgba[3] = 1;
+    }
+    else
+    {
+        rgba[0] = P_GetGMOFloat(MO_LIGHT, idx-1, MO_COLORR);
+        rgba[1] = P_GetGMOFloat(MO_LIGHT, idx-1, MO_COLORG);
+        rgba[2] = P_GetGMOFloat(MO_LIGHT, idx-1, MO_COLORB);
+        rgba[3] = 1;
+    }
+}
+
+typedef struct applysurfacecolorparams_s {
+    sector_t*       frontSec;
+    float           topColor[4];
+    float           bottomColor[4];
+} applysurfacecolorparams_t;
+
+int applySurfaceColor(void* obj, void* context)
+{
+#define LDF_NOBLENDTOP      32
+#define LDF_NOBLENDBOTTOM   64
+#define LDF_BLEND           128
+
+#define LTF_SWAPCOLORS      4
+
+    linedef_t*          li = (linedef_t*) obj;
+    applysurfacecolorparams_t* params =
+        (applysurfacecolorparams_t*) context;
+    byte                dFlags =
+        P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
+    byte                tFlags =
+        P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
+
+    if((dFlags & LDF_BLEND) &&
+       params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
+    {
+        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF0);
+
+        if(side)
+        {
+            int                 flags;
+            float*              top, *bottom;
+
+            top = (tFlags & LTF_SWAPCOLORS)? params->bottomColor :
+                params->topColor;
+            bottom = (tFlags & LTF_SWAPCOLORS)? params->topColor :
+                params->bottomColor;
+
+            P_SetFloatpv(side, DMU_TOP_COLOR, top);
+            P_SetFloatpv(side, DMU_BOTTOM_COLOR, bottom);
+
+            flags = P_GetIntp(side, DMU_FLAGS);
+            if(!(dFlags & LDF_NOBLENDTOP))
+                flags |= SDF_BLENDTOPTOMID;
+            if(!(dFlags & LDF_NOBLENDBOTTOM))
+                flags |= SDF_BLENDBOTTOMTOMID;
+
+            P_SetIntp(side, DMU_FLAGS, flags);
+        }
+    }
+
+    if((dFlags & LDF_BLEND) &&
+       params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
+    {
+        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF1);
+
+        if(side)
+        {
+            int                 flags;
+            float*              top, *bottom;
+
+            top = /*(tFlags & LTF_SWAPCOLORS)? params->bottomColor :*/
+                params->topColor;
+            bottom = /*(tFlags & LTF_SWAPCOLORS)? params->topColor :*/
+                params->bottomColor;
+
+            P_SetFloatpv(side, DMU_TOP_COLOR, top);
+            P_SetFloatpv(side, DMU_BOTTOM_COLOR, bottom);
+
+            flags = P_GetIntp(side, DMU_FLAGS);
+            if(!(dFlags & LDF_NOBLENDTOP))
+                flags |= SDF_BLENDTOPTOMID;
+            if(!(dFlags & LDF_NOBLENDBOTTOM))
+                flags |= SDF_BLENDBOTTOMTOMID;
+
+            P_SetIntp(side, DMU_FLAGS, flags);
+        }
+    }
+
+    return 1; // Continue iteration
+}
+#endif
+
 static void P_LoadMapObjs(void)
 {
     uint                i;
@@ -233,10 +335,13 @@ static void P_LoadMapObjs(void)
 
     for(i = 0; i < numthings; ++i)
     {
-        spawnspot_t        *th = &things[i];
+        spawnspot_t*        th = &things[i];
 
         th->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
         th->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
+#if __JDOOM64__
+        th->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
+#endif
         th->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
         th->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
 
@@ -265,7 +370,7 @@ static void P_LoadMapObjs(void)
 
     for(i = 0; i < numlines; ++i)
     {
-        xline_t            *xl = &xlines[i];
+        xline_t*            xl = &xlines[i];
 
         xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS);
 #if __JHEXEN__ || __JSTRIFE__
@@ -276,17 +381,48 @@ static void P_LoadMapObjs(void)
         xl->arg4 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG3);
         xl->arg5 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG4);
 #else
+# if __JDOOM64__
+        xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_TYPE);
+# else
         xl->special = P_GetGMOShort(MO_XLINEDEF, i, MO_TYPE);
+# endif
         xl->tag = P_GetGMOShort(MO_XLINEDEF, i, MO_TAG);
 #endif
     }
 
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t          *xsec = &xsectors[i];
+        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t*          xsec = &xsectors[i];
 
         xsec->special = P_GetGMOShort(MO_XSECTOR, i, MO_TYPE);
         xsec->tag = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
+
+#if __JDOOM64__
+        {
+        applysurfacecolorparams_t params;
+        float               rgba[4];
+
+        getSurfaceColor(TOLIGHTIDX(
+            P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
+        P_SetFloatpv(sec, DMU_FLOOR_COLOR, rgba);
+
+        getSurfaceColor(TOLIGHTIDX(
+            P_GetGMOShort(MO_XSECTOR, i, MO_CEILINGCOLOR)), rgba);
+        P_SetFloatpv(sec, DMU_CEILING_COLOR, rgba);
+
+        // Now set the side surface colors.
+        params.frontSec = sec;
+        getSurfaceColor(TOLIGHTIDX(
+            P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)),
+                          params.topColor);
+        getSurfaceColor(TOLIGHTIDX(
+            P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)),
+                          params.bottomColor);
+
+        P_Iteratep(sec, DMU_LINEDEF, &params, applySurfaceColor);
+        }
+#endif
     }
 }
 
@@ -296,14 +432,17 @@ static void interpretLinedefFlags(void)
 #define ML_TWOSIDED             4 // Backside will not be present at all if not two sided.
 #define ML_DONTPEGTOP           8 // Upper texture unpegged.
 #define ML_DONTPEGBOTTOM        16 // Lower texture unpegged.
-
+#if __JDOOM64__
+# define MLT_MIRRORH             64 // Mirror textures horizontally.
+# define MLT_MIRRORV             128 // Mirror textures vertically.
+#endif
     uint                i;
 
     // Interpret the archived map linedef flags and update accordingly.
     for(i = 0; i < numlines; ++i)
     {
         int                 flags = 0;
-        xline_t            *xline = &xlines[i];
+        xline_t*            xline = &xlines[i];
 
         /**
          * Zero unused flags if ML_INVALID is set.
@@ -373,6 +512,10 @@ static void interpretLinedefFlags(void)
 #undef ML_TWOSIDED
 #undef ML_DONTPEGTOP
 #undef ML_DONTPEGBOTTOM
+#if __JDOOM64__
+# undef MLT_MIRRORH
+# undef MLT_MIRRORV
+#endif
 }
 
 typedef struct setupmapparams_s {

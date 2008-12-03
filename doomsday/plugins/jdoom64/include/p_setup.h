@@ -39,21 +39,38 @@ enum {
     MO_THING,
     MO_XLINEDEF,
     MO_XSECTOR,
+    MO_LIGHT,
     MO_X,
     MO_Y,
+    MO_Z,
+    MO_ID,
     MO_ANGLE,
     MO_TYPE,
+    MO_USETYPE,
     MO_FLAGS,
-    MO_TAG
+    MO_TAG,
+    MO_DRAWFLAGS,
+    MO_TEXFLAGS,
+    MO_COLORR,
+    MO_COLORG,
+    MO_COLORB,
+    MO_FLOORCOLOR,
+    MO_CEILINGCOLOR,
+    MO_UNKNOWNCOLOR,
+    MO_WALLTOPCOLOR,
+    MO_WALLBOTTOMCOLOR,
+    MO_XX0,
+    MO_XX1,
+    MO_XX2
 };
 
 void            P_Init(void);
 void            P_RegisterMapObjs(void);
 
 int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
-                                             valuetype_t type, void *data);
+                                             valuetype_t type, void* data);
 int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
-                                              void *data);
+                                              void* data);
 
 boolean         P_MapExists(int episode, int map);
 

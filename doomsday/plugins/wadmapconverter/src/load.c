@@ -1166,9 +1166,9 @@ static boolean loadSectors(const byte* buf, size_t len)
             s->floorHeight = SHORT(*((const int16_t*) ptr));
             s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
             idx = USHORT(*((const uint16_t*) (ptr+4)));
-            s->floorMaterial = RegisterMaterial((const char*) &idx, true);
+            s->floorMaterial = RegisterMaterial((const char*) &idx, false);
             idx = USHORT(*((const uint16_t*) (ptr+6)));
-            s->ceilMaterial = RegisterMaterial((const char*) &idx, true);
+            s->ceilMaterial = RegisterMaterial((const char*) &idx, false);
             s->d64ceilingColor = USHORT(*((const uint16_t*) (ptr+8)));
             s->d64floorColor = USHORT(*((const uint16_t*) (ptr+10)));
             s->d64unknownColor = USHORT(*((const uint16_t*) (ptr+12)));
@@ -1177,7 +1177,7 @@ static boolean loadSectors(const byte* buf, size_t len)
             s->type = SHORT(*((const int16_t*) (ptr+18)));
             s->tag = SHORT(*((const int16_t*) (ptr+20)));
             s->d64flags = USHORT(*((const uint16_t*) (ptr+22)));
-            s->lightLevel = 255;
+            s->lightLevel = 160;
         }
         break;
     }
@@ -1425,7 +1425,8 @@ boolean TransferMap(void)
         if(front)
         {
             frontIdx =
-                MPE_SidedefCreate(front->sector, 0,
+                MPE_SidedefCreate(front->sector,
+                                  (map->format == MF_DOOM64? SDF_MIDDLE_MATERIAL_TILED : 0),
                                   front->topMaterial->num,
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
                                   front->middleMaterial->num,
@@ -1438,7 +1439,8 @@ boolean TransferMap(void)
         if(back)
         {
             backIdx =
-                MPE_SidedefCreate(back->sector, 0,
+                MPE_SidedefCreate(back->sector,
+                                  (map->format == MF_DOOM64? SDF_MIDDLE_MATERIAL_TILED : 0),
                                   back->topMaterial->num,
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
                                   back->middleMaterial->num,
