@@ -99,7 +99,7 @@ static char *vertexUsage;
 
 void Rend_ModelRegister(void)
 {
-    C_VAR_INT("rend-model", &useModels, CVF_NO_MAX, 0, 1);
+    C_VAR_BYTE("rend-model", &useModels, 0, 0, 1);
     C_VAR_INT("rend-model-lights", &modelLight, 0, 0, 10);
     C_VAR_INT("rend-model-inter", &frameInter, 0, 0, 1);
     C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod,

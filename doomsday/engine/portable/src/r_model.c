@@ -69,13 +69,13 @@ float   rModelAspectMod = 1 / 1.2f; //.833334f;
 
 // The dummy is used for model zero.
 model_t dummy = { true, "Dummy-Dummy" };
-model_t *modellist[MAX_MODELS] = { &dummy };
-int     useModels = true;
+model_t* modellist[MAX_MODELS] = { &dummy };
+byte useModels = true;
 
-modeldef_t *modefs = NULL;
-int     numModelDefs;
+modeldef_t* modefs = NULL;
+int numModelDefs;
 
-float   avertexnormals[NUMVERTEXNORMALS][3] = {
+float avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
 };
 
@@ -84,7 +84,7 @@ float   avertexnormals[NUMVERTEXNORMALS][3] = {
 static ddstring_t modelPath;
 
 static int maxModelDefs;
-static modeldef_t **stateModefs;
+static modeldef_t** stateModefs;
 
 // CODE --------------------------------------------------------------------
 
