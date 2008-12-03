@@ -996,24 +996,19 @@ typedef struct {
     return texDefs;
 }
 
-/**
- * Reads in the texture defs and creates materials for them.
- */
-void R_InitTextures(void)
+static void loadTextureDefs(void)
 {
-    int                 i;
-    float               startTime = Sys_GetSeconds();
-    lumpnum_t*          patchLumpList;
+    lumpnum_t           i, pnamesLump, *patchLumpList;
     size_t              numPatches;
     int                 count = 0, countCustom = 0, *eCount;
     texturedef_t**      list = NULL, **listCustom = NULL, ***eList;
     boolean             firstNull;
 
-    numTextureDefs = 0;
-    textureDefs = NULL;
+    if((pnamesLump = W_CheckNumForName("PNAMES")) == -1)
+        return;
 
     // Load the patch names from the PNAMES lump.
-    patchLumpList = loadPatchList(W_GetNumForName("PNAMES"), &numPatches);
+    patchLumpList = loadPatchList(pnamesLump, &numPatches);
     if(!patchLumpList)
         Con_Error("R_InitTextures: Error loading PNAMES.");
 
@@ -1162,20 +1157,42 @@ void R_InitTextures(void)
 
     // We're finished with the patch lump list now.
     M_Free(patchLumpList);
+}
 
-    // Create materials for the defined textures.
-    for(i = 0; i < numTextureDefs; ++i)
+/**
+ * Reads in the texture defs and creates materials for them.
+ */
+void R_InitTextures(void)
+{
+    int                 i;
+    float               startTime = Sys_GetSeconds();
+
+    numTextureDefs = 0;
+    textureDefs = NULL;
+
+    // Load texture definitions from TEXTURE1/2 lumps.
+    loadTextureDefs();
+
+    if(numTextureDefs > 0)
     {
-        texturedef_t*           texDef = textureDefs[i];
-        material_t*             mat;
-        materialtex_t*          mTex;
+        // Create materials for the defined textures.
+        for(i = 0; i < numTextureDefs; ++i)
+        {
+            texturedef_t*           texDef = textureDefs[i];
+            material_t*             mat;
+            materialtex_t*          mTex;
 
-        mTex = R_MaterialTexCreate(i, MTT_TEXTURE);
+            mTex = R_MaterialTexCreate(i, MTT_TEXTURE);
 
-        // Create a material for this texture.
-        mat = R_MaterialCreate(texDef->name, texDef->width, texDef->height,
-                               ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0),
-                               mTex, MG_TEXTURES);
+            // Create a material for this texture.
+            mat = R_MaterialCreate(texDef->name, texDef->width, texDef->height,
+                                   ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0),
+                                   mTex, MG_TEXTURES);
+        }
+    }
+    else
+    {
+        Con_Message("R_InitTextures: Warning, no textures found.\n");
     }
 
     VERBOSE(Con_Message("R_InitTextures: Done in %.2f seconds.\n",
