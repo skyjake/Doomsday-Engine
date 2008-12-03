@@ -607,6 +607,13 @@ enum /* Do not change the numerical values of the constants! */
 #define DDLF_DONTPEGTOP         0x0002
 #define DDLF_DONTPEGBOTTOM      0x0004
 
+// Sidedef flags
+// For use with P_Set/Get(DMU_SIDEDEF, n, DMU_FLAGS).
+#define SDF_BLENDTOPTOMID       0x0001
+#define SDF_BLENDMIDTOTOP       0x0002
+#define SDF_BLENDMIDTOBOTTOM    0x0004
+#define SDF_BLENDBOTTOMTOMID    0x0008
+
 // Map Update status code constants.
 // Sent to the game when various map update events occur.
 enum /* Do NOT change the numerical values of the constants. */

@@ -154,12 +154,6 @@
 
 #define LTACT_CNT_INFINITE  -1 // Activate infinite number of times.
 
-// Sidedef flags (same as the flags in p_mapdata.h)
-#define SDF_BLENDTOPTOMID       0x1
-#define SDF_BLENDMIDTOTOP       0x2
-#define SDF_BLENDMIDTOBOTTOM    0x4
-#define SDF_BLENDBOTTOMTOMID    0x8
-
 enum // Activation types.
 {
     // When on, count to off. Can be activated when off.
