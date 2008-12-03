@@ -465,6 +465,141 @@ void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 #endif
 }
 
+void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs)
+{
+#define COPYVERT(d, s)  (d)->pos[VX] = (s)->pos[VX]; \
+    (d)->pos[VY] = (s)->pos[VY]; \
+    (d)->pos[VZ] = (s)->pos[VZ];
+
+    uint                i;
+    uint                numL = 3 + divs[0].num;
+    uint                numR = 3 + divs[1].num;
+
+    // Right fan:
+    COPYVERT(&dst[numL + 0], &src[0])
+    COPYVERT(&dst[numL + 1], &src[3]);
+    COPYVERT(&dst[numL + numR - 1], &src[2]);
+
+    for(i = 0; i < divs[1].num; ++i)
+    {
+        dst[numL + 2 + i].pos[VX] = src[2].pos[VX];
+        dst[numL + 2 + i].pos[VY] = src[2].pos[VY];
+        dst[numL + 2 + i].pos[VZ] = divs[1].pos[i];
+    }
+
+    // Left fan:
+    COPYVERT(&dst[0], &src[3]);
+    COPYVERT(&dst[1], &src[0]);
+    COPYVERT(&dst[numL - 1], &src[1]);
+
+    for(i = 0; i < divs[0].num; ++i)
+    {
+        dst[2 + i].pos[VX] = src[0].pos[VX];
+        dst[2 + i].pos[VY] = src[0].pos[VY];
+        dst[2 + i].pos[VZ] = divs[0].pos[i];
+    }
+
+#undef COPYVERT
+}
+
+void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
+                    const walldiv_t* divs, float bL, float tL, float bR,
+                    float tR)
+{
+#define COPYTEXCOORD(d, s)    (d)->st[0] = (s)->st[0]; \
+    (d)->st[1] = (s)->st[1];
+
+    uint                i;
+    uint                numL = 3 + divs[0].num;
+    uint                numR = 3 + divs[1].num;
+    float               height;
+
+    // Right fan:
+    COPYTEXCOORD(&dst[numL + 0], &src[0]);
+    COPYTEXCOORD(&dst[numL + 1], &src[3]);
+    COPYTEXCOORD(&dst[numL + numR-1], &src[2]);
+
+    height = tR - bR;
+    for(i = 0; i < divs[1].num; ++i)
+    {
+        float               inter = (divs[1].pos[i] - bR) / height;
+
+        dst[numL + 2 + i].st[0] = src[2].st[0];
+        dst[numL + 2 + i].st[1] = src[2].st[1] +
+            (src[3].st[1] - src[2].st[1]) * inter;
+    }
+
+    // Left fan:
+    COPYTEXCOORD(&dst[0], &src[3]);
+    COPYTEXCOORD(&dst[1], &src[0]);
+    COPYTEXCOORD(&dst[numL - 1], &src[1]);
+
+    height = tL - bL;
+    for(i = 0; i < divs[0].num; ++i)
+    {
+        float               inter = (divs[0].pos[i] - bL) / height;
+
+        dst[2 + i].st[0] = src[0].st[0];
+        dst[2 + i].st[1] = src[0].st[1] +
+            (src[1].st[1] - src[0].st[1]) * inter;
+    }
+
+#undef COPYTEXCOORD
+}
+
+void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
+                     const walldiv_t* divs, float bL, float tL, float bR,
+                     float tR)
+{
+#define COPYVCOLOR(d, s)    (d)->rgba[CR] = (s)->rgba[CR]; \
+    (d)->rgba[CG] = (s)->rgba[CG]; \
+    (d)->rgba[CB] = (s)->rgba[CB]; \
+    (d)->rgba[CA] = (s)->rgba[CA];
+
+    uint                i;
+    uint                numL = 3 + divs[0].num;
+    uint                numR = 3 + divs[1].num;
+    float               height;
+
+    // Right fan:
+    COPYVCOLOR(&dst[numL + 0], &src[0]);
+    COPYVCOLOR(&dst[numL + 1], &src[3]);
+    COPYVCOLOR(&dst[numL + numR-1], &src[2]);
+
+    height = tR - bR;
+    for(i = 0; i < divs[1].num; ++i)
+    {
+        uint                c;
+        float               inter = (divs[1].pos[i] - bR) / height;
+
+        for(c = 0; c < 4; ++c)
+        {
+            dst[numL + 2 + i].rgba[c] = src[2].rgba[c] +
+                (src[3].rgba[c] - src[2].rgba[c]) * inter;
+        }
+    }
+
+    // Left fan:
+    COPYVCOLOR(&dst[0], &src[3]);
+    COPYVCOLOR(&dst[1], &src[0]);
+    COPYVCOLOR(&dst[numL - 1], &src[1]);
+
+    height = tL - bL;
+    for(i = 0; i < divs[0].num; ++i)
+    {
+        uint                c;
+        float               inter = (divs[0].pos[i] - bL) / height;
+
+        for(c = 0; c < 4; ++c)
+        {
+            dst[2 + i ].rgba[c] = src[0].rgba[c] +
+                (src[1].rgba[c] - src[0].rgba[c]) * inter;
+        }
+    }
+
+#undef COPYVCOLOR
+}
+
 void R_ShutdownData(void)
 {
     R_ShutdownMaterials();

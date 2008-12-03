@@ -99,11 +99,9 @@ static void processMobjShadow(mobj_t* mo)
     rvertex_t           rvertices[4];
     rcolor_t            rcolors[4];
     rtexcoord_t         rtexcoords[4];
-    rladdpoly_params_t  params;
+    rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
     plane_t*            plane;
     float               distance;
-
-    memset(&params, 0, sizeof(params));
 
     // Is this too far?
     pos[VX] = mo->pos[VX];
@@ -177,15 +175,10 @@ static void processMobjShadow(mobj_t* mo)
         return;
 
     // Prepare the poly.
-    params.type = RPT_SHADOW;
-    params.interPos = 0;
-
-    TMU(&params, TMU_PRIMARY)->tex = curTex = GL_PrepareLSTexture(LST_DYNAMIC);
-    TMU(&params, TMU_PRIMARY)->magMode = DGL_LINEAR;
-    //params.tex.width = params.tex.height = radius * 2;
-    //params.tex.flags = 0;
-    //params.detailTex.id = 0;
-    //memset(&params.interTex, 0, sizeof(params.interTex));
+    memset(pTU, 0, sizeof(pTU));
+    pTU[TU_PRIMARY].tex = curTex = GL_PrepareLSTexture(LST_DYNAMIC);
+    pTU[TU_PRIMARY].magMode = DGL_LINEAR;
+    pTU[TU_PRIMARY].blend = 1;
 
     rvertices[0].pos[VX] = pos[VX] - radius;
     rvertices[0].pos[VY] = pos[VY] + radius;
@@ -218,8 +211,8 @@ static void processMobjShadow(mobj_t* mo)
         rcolors[i].rgba[CA] = alpha;
     }
 
-    RL_AddPoly(PT_FAN, rvertices, rtexcoords, NULL, NULL,
-               rcolors, 4, BM_NORMAL, 0, &params);
+    RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices, rtexcoords, NULL, NULL, NULL,
+               NULL, rcolors, NULL, 4, 0, 0, NULL, pTU);
 
 #undef SHADOWZOFFSET
 }

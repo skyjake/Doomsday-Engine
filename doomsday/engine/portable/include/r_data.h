@@ -145,15 +145,15 @@ typedef struct {
     short           offY; // accounted for the patch's internal origin
 } texpatch_t;
 
-#define TXDF_NODRAW         0x1 // Not to be drawn.
-#define TXDF_IWAD           0x2 // Defines an IWAD texture. Note the definition may NOT be from the IWAD.
+#define TXDF_NODRAW         0x0001 // Not to be drawn.
+#define TXDF_IWAD           0x0002 // Defines an IWAD texture. Note the definition may NOT be from the IWAD.
 
 // Describes a rectangular texture, which is composed of one
 // or more texpatch_t structures that arrange graphic patches.
 typedef struct {
     char            name[9];
     short           width, height;
-    byte            flags;
+    short           flags;
     short           patchCount;
     texpatch_t      patches[1]; // [patchcount] drawn back to front into the cached texture.
 } texturedef_t;
@@ -299,6 +299,15 @@ void            R_FreeRendVertices(rvertex_t* rvertices);
 void            R_FreeRendColors(rcolor_t* rcolors);
 void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
+
+void            R_DivVerts(rvertex_t* dst, const rvertex_t* src,
+                           const walldiv_t* divs);
+void            R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
+                                const walldiv_t* divs, float bL, float tL,
+                                float bR, float tR);
+void            R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
+                               const walldiv_t* divs, float bL, float tL,
+                               float bR, float tR);
 
 void            R_InitData(void);
 void            R_UpdateData(void);

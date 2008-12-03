@@ -602,103 +602,6 @@ typedef struct {
     float               wallLength;
 } rendershadowseg_params_t;
 
-static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
-                          float wallLength, float texWidth, float texHeight,
-                          const float texOrigin[2][3], const float texOffset[2],
-                          boolean horizontal)
-{
-    if(horizontal)
-    {   // Special horizontal coordinates for wall shadows.
-        tc[0].st[0] = tc[2].st[0] =
-            rverts[0].pos[VX] - texOrigin[0][VX] + texOffset[VY] / texHeight;
-        tc[0].st[1] = tc[1].st[1] =
-            rverts[0].pos[VY] - texOrigin[0][VY] + texOffset[VX] / texWidth;
-        tc[1].st[0] = tc[0].st[0] + (rverts[1].pos[VZ] - texOrigin[0][VZ]) / texHeight;
-        tc[3].st[0] = tc[0].st[0] + (rverts[3].pos[VZ] - texOrigin[0][VZ]) / texHeight;
-        tc[3].st[1] = tc[0].st[1] + wallLength / texWidth;
-        tc[2].st[1] = tc[0].st[1] + wallLength / texWidth;
-        return;
-    }
-
-    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - texOrigin[0][VX] +
-        texOffset[VX] / texWidth;
-    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - texOrigin[0][VY] +
-        texOffset[VY] / texHeight;
-    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength / texWidth;
-    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texHeight;
-    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
-}
-
-static void renderShadowSeg(const rvertex_t* rvertices,
-                            const walldiv_t* divs,
-                            const rendershadowseg_params_t* p,
-                            float shadowDark)
-{
-    float               texOrigin[2][3];
-    rladdpoly_params_t  params;
-
-    memset(&params, 0, sizeof(params));
-
-    // Init the quad.
-    params.type = RPT_SHADOW;
-
-    TMU(&params, TMU_PRIMARY)->tex = curTex = GL_PrepareLSTexture(p->texture);
-    TMU(&params, TMU_PRIMARY)->magMode = DGL_LINEAR;
-    /*params.tex.width = p->texWidth;
-    params.tex.height = p->texHeight;
-    params.tex.flags = 0;*/
-
-    // Top left.
-    texOrigin[0][VX] = rvertices[1].pos[VX];
-    texOrigin[0][VY] = rvertices[1].pos[VY];
-    texOrigin[0][VZ] = rvertices[1].pos[VZ];
-
-    // Bottom right.
-    texOrigin[1][VX] = rvertices[2].pos[VX];
-    texOrigin[1][VY] = rvertices[2].pos[VY];
-    texOrigin[1][VZ] = rvertices[2].pos[VZ];
-
-    if(rendFakeRadio != 2)
-    {
-        if(divs)
-        {
-            uint                numVertices =
-                3 + divs[0].num + 3 + divs[1].num;
-            rtexcoord_t*        rtexcoords;
-            rcolor_t*           rcolors;
-
-            rtexcoords = R_AllocRendTexCoords(numVertices);
-            memset(rtexcoords, 0, sizeof(*rtexcoords) * numVertices);
-            rcolors = R_AllocRendColors(numVertices);
-
-            setRendpolyColor(rcolors, numVertices, p->shadowMul * shadowDark);
-
-            RL_AddPoly(PT_FAN, rvertices + 3 + divs[0].num,
-                       rtexcoords + 3 + divs[0].num, NULL, NULL,
-                       rcolors + 3 + divs[0].num, 3 + divs[1].num,
-                       BM_NORMAL, 0, &params);
-            RL_AddPoly(PT_FAN, rvertices, rtexcoords, NULL, NULL, rcolors,
-                       3 + divs[0].num, BM_NORMAL, 0, &params);
-
-            R_FreeRendTexCoords(rtexcoords);
-            R_FreeRendColors(rcolors);
-        }
-        else
-        {
-            rcolor_t            rcolors[4];
-            rtexcoord_t         rtexcoords[4];
-
-            quadTexCoords(rtexcoords, rvertices, p->wallLength, p->texWidth,
-                          p->texHeight, texOrigin, p->texOffset,
-                          p->horizontal);
-            setRendpolyColor(rcolors, 4, p->shadowMul * shadowDark);
-
-            RL_AddPoly(PT_TRIANGLE_STRIP, rvertices, rtexcoords, NULL, NULL,
-                       rcolors, 4, BM_NORMAL, 0, &params);
-        }
-    }
-}
-
 static void setTopShadowParams(rendershadowseg_params_t* p, float size,
                                float top,
                                const float* xOffset, const float* segLength,
@@ -1113,6 +1016,123 @@ static void setSideShadowParams(rendershadowseg_params_t* p,
     }
 }
 
+static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
+                          float wallLength, float texWidth, float texHeight,
+                          const float texOrigin[2][3], const float texOffset[2],
+                          boolean horizontal)
+{
+    if(horizontal)
+    {   // Special horizontal coordinates for wall shadows.
+        tc[0].st[0] = tc[2].st[0] =
+            rverts[0].pos[VX] - texOrigin[0][VX] + texOffset[VY] / texHeight;
+        tc[0].st[1] = tc[1].st[1] =
+            rverts[0].pos[VY] - texOrigin[0][VY] + texOffset[VX] / texWidth;
+        tc[1].st[0] = tc[0].st[0] + (rverts[1].pos[VZ] - texOrigin[0][VZ]) / texHeight;
+        tc[3].st[0] = tc[0].st[0] + (rverts[3].pos[VZ] - texOrigin[0][VZ]) / texHeight;
+        tc[3].st[1] = tc[0].st[1] + wallLength / texWidth;
+        tc[2].st[1] = tc[0].st[1] + wallLength / texWidth;
+        return;
+    }
+
+    tc[0].st[0] = tc[1].st[0] = rverts[0].pos[VX] - texOrigin[0][VX] +
+        texOffset[VX] / texWidth;
+    tc[3].st[1] = tc[1].st[1] = rverts[0].pos[VY] - texOrigin[0][VY] +
+        texOffset[VY] / texHeight;
+    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength / texWidth;
+    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texHeight;
+    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
+}
+
+static void renderShadowSeg(const rvertex_t* origVertices,
+                            const walldiv_t* divs,
+                            const rendershadowseg_params_t* p,
+                            float shadowDark)
+{
+    float               texOrigin[2][3];
+    rcolor_t*           rcolors;
+    rtexcoord_t*        rtexcoords;
+    rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
+    uint                realNumVertices = 4;
+
+    if(divs)
+        realNumVertices = 3 + divs[0].num + 3 + divs[1].num;
+
+    memset(pTU, 0, sizeof(pTU));
+    pTU[TU_PRIMARY].tex = curTex = GL_PrepareLSTexture(p->texture);
+    pTU[TU_PRIMARY].magMode = DGL_LINEAR;
+    pTU[TU_PRIMARY].blend = 1;
+
+    // Top left.
+    texOrigin[0][VX] = origVertices[1].pos[VX];
+    texOrigin[0][VY] = origVertices[1].pos[VY];
+    texOrigin[0][VZ] = origVertices[1].pos[VZ];
+
+    // Bottom right.
+    texOrigin[1][VX] = origVertices[2].pos[VX];
+    texOrigin[1][VY] = origVertices[2].pos[VY];
+    texOrigin[1][VZ] = origVertices[2].pos[VZ];
+
+    // Allocate enough for the divisions too.
+    rtexcoords = R_AllocRendTexCoords(realNumVertices);
+    rcolors = R_AllocRendColors(realNumVertices);
+
+    quadTexCoords(rtexcoords, origVertices, p->wallLength, p->texWidth,
+                  p->texHeight, texOrigin, p->texOffset,
+                  p->horizontal);
+
+    setRendpolyColor(rcolors, 4, p->shadowMul * shadowDark);
+
+    if(rendFakeRadio != 2)
+    {
+        // Write multiple polys depending on rend params.
+        if(divs)
+        {
+            float               bL, tL, bR, tR;
+            rvertex_t*          rvertices;
+            rtexcoord_t         origTexCoords[4];
+            rcolor_t            origColors[4];
+
+            /**
+             * Need to swap indices around into fans set the position
+             * of the division vertices, interpolate texcoords and
+             * color.
+             */
+
+            rvertices = R_AllocRendVertices(realNumVertices);
+
+            memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+            memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
+
+            bL = origVertices[0].pos[VZ];
+            tL = origVertices[1].pos[VZ];
+            bR = origVertices[2].pos[VZ];
+            tR = origVertices[3].pos[VZ];
+
+            R_DivVerts(rvertices, origVertices, divs);
+            R_DivTexCoords(rtexcoords, origTexCoords, divs, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, divs, bL, tL, bR, tR);
+
+            RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices + 3 + divs[0].num,
+                       rtexcoords + 3 + divs[0].num, NULL, NULL, NULL, NULL,
+                       rcolors + 3 + divs[0].num, NULL, 3 + divs[1].num,
+                       0, 0, NULL, pTU);
+            RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices, rtexcoords, NULL, NULL, NULL, NULL,
+                       rcolors, NULL,
+                       3 + divs[0].num, 0, 0, NULL, pTU);
+
+            R_FreeRendVertices(rvertices);
+        }
+        else
+        {
+            RL_AddPoly(PT_TRIANGLE_STRIP, RPT_SHADOW, origVertices, rtexcoords, NULL, NULL, NULL, NULL,
+                       rcolors, NULL, 4, 0, 0, NULL, pTU);
+        }
+    }
+
+    R_FreeRendTexCoords(rtexcoords);
+    R_FreeRendColors(rcolors);
+}
+
 /**
  * Create the appropriate FakeRadio shadow polygons for the wall segment.
  */
@@ -1302,7 +1322,8 @@ static uint radioEdgeHackType(linedef_t *line, sector_t *front,
     surface_t          *surface = &line->L_side(backside)->
                              sections[isCeiling? SEG_TOP:SEG_BOTTOM];
 
-    if(fz < bz && !surface->material && !(surface->flags & SUF_TEXFIX))
+    if(fz < bz && !surface->material &&
+       !(surface->inFlags & SUIF_MATERIAL_FIX))
         return 3; // Consider it fully open.
 
     // Is the back sector closed?
@@ -1342,7 +1363,7 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     const uint*         idx;
     rvertex_t           rvertices[4];
     rcolor_t            rcolors[4];
-    rladdpoly_params_t  params;
+    rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
     float               shadowAlpha;
     vertex_t*           vtx0, *vtx1;
 
@@ -1359,10 +1380,8 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     wind = (V2_Distance(inner[1], vtx1->V_pos) >
             V2_Distance(inner[0], vtx0->V_pos)? 1 : 0);
 
-    memset(&params, 0, sizeof(params));
-    // Initialize the rendpoly.
-    if(!renderWireframe)
-        params.type = RPT_SHADOW;
+    memset(pTU, 0, sizeof(pTU));
+    pTU[TU_PRIMARY].blend = 1;
 
     idx = (normal[VZ] > 0 ? floorIndices[wind] : ceilIndices[wind]);
 
@@ -1407,8 +1426,9 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     rcolors[idx[3]].rgba[CA] = 0;
 
     if(rendFakeRadio != 2)
-        RL_AddPoly(PT_FAN, rvertices, NULL, NULL, NULL,
-                   rcolors, 4, BM_NORMAL, 0, &params);
+        RL_AddPoly(PT_FAN, (renderWireframe? RPT_NORMAL : RPT_SHADOW),
+                   rvertices, NULL, NULL, NULL, NULL, NULL,
+                   rcolors, NULL, 4, 0, 0, NULL, pTU);
 }
 
 /**
@@ -1515,7 +1535,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
             vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
-            if((suf->flags & SUF_NO_RADIO) || !suf->material)
+            if((suf->inFlags & SUIF_NO_RADIO) || !suf->material)
                 continue;
 
             if(line->L_backside)

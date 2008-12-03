@@ -41,7 +41,6 @@ extern boolean usingFog;
 extern float fogColor[4];
 extern int rAmbient;
 extern float rendLightDistanceAttentuation;
-
 extern float lightModRange[255];
 
 void            Rend_Register(void);
@@ -54,7 +53,6 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 #define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
 
 float           Rend_PointDist3D(const float c[3]);
-//float           Rend_SignedPointDist2D(const float c[2]);
 float           Rend_SectorLight(sector_t* sec);
 void            Rend_ApplyTorchLight(float* color, float distance);
 int             Rend_MidMaterialPos(float* bottomleft, float* bottomright,

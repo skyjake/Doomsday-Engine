@@ -84,8 +84,11 @@ END_PROF_TIMERS()
 #define DCF_JUST_ONE_LIGHT          0x00000010
 #define DCF_MANY_LIGHTS             0x00000020
 #define DCF_SET_BLEND_MODE          0x00000040 // Primitive-specific blending.
-#define DCF_SET_MATRIX_TEXTURE0     0x00000080
-#define DCF_SET_MATRIX_TEXTURE1     0x00000100
+#define DCF_SET_MATRIX_DTEXTURE0    0x00000080
+#define DCF_SET_MATRIX_DTEXTURE1    0x00000100
+#define DCF_SET_MATRIX_DTEXTURE     (DCF_SET_MATRIX_DTEXTURE0 | DCF_SET_MATRIX_DTEXTURE1)
+#define DCF_SET_MATRIX_TEXTURE0     0x00000200
+#define DCF_SET_MATRIX_TEXTURE1     0x00000400
 #define DCF_SET_MATRIX_TEXTURE      (DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1)
 #define DCF_SKIP                    0x80000000
 
@@ -120,9 +123,16 @@ typedef enum listmode_e {
 enum {
     TCA_MAIN, // Main texture.
     TCA_BLEND, // Blendtarget texture.
-    TCA_LIGHT, // Glow texture coordinates.
+    TCA_LIGHT, // Dynlight texture coordinates.
     NUM_TEXCOORD_ARRAYS
 };
+
+/**
+ * Primitive flags:
+ */
+#define PF_ONE_LIGHT        0x01
+#define PF_MANY_LIGHTS      0x02
+#define PF_IS_LIT           (PF_ONE_LIGHT | PF_MANY_LIGHTS)
 
 /**
  * Each primhdr begins a block of polygon data that ends up as one or
@@ -137,7 +147,6 @@ typedef struct primhdr_s {
 
     glprimtype_t    type;
     blendmode_t     blendMode; // BM_* Primitive-specific blending mode.
-    uint            primSize; // Number of vertices in the primitive.
 
     // Elements in the vertex array for this primitive.
     // The indices are always contiguous: indices[0] is the base, and
@@ -147,10 +156,11 @@ typedef struct primhdr_s {
     ushort          numIndices;
     uint*           indices;
 
-    // The number of lights affecting the primitive.
-    ushort          numLights;
+    byte            flags; // PF_* primitive flags.
 
-    // Texture matrix manipulations (not used in all lists).
+    float           ptexOffset[2], ptexScale[2];
+
+    // Detail texture matrix manipulations.
     float           texOffset[2], texScale[2];
 
     // Some primitives are modulated with an additional texture and color
@@ -160,9 +170,16 @@ typedef struct primhdr_s {
     float           modColor[3];
 } primhdr_t;
 
-// Rendering List 'has' flags.
-#define RLF_LIGHTS          0x1 // Primitives are dynamic lights.
-#define RLF_BLENDED         0x2 // List contains only texblended prims.
+// Helper macro for accessing rendlist texmap units.
+#define TU(x, n)            (&((x)->texmapunits[(n)]))
+
+// \note: Slighty different representation than that passed to RL_AddPoly.
+typedef struct rendlist_texmapunit_s {
+    DGLuint         tex;
+    int             magMode;
+    float           blend; // Blend amount.
+    blendmode_t     blendMode; // Currently used only with shiny pass.
+} rendlist_texmapunit_t;
 
 /**
  * The rendering list. When the list is resized, pointers in the primitives
@@ -170,9 +187,7 @@ typedef struct primhdr_s {
  */
 typedef struct rendlist_s {
     struct rendlist_s* next;
-    int             flags;
-    rtexmapunit_t   texmapunits[NUM_TEXMAP_UNITS];
-    float           interPos; // 0 = primary, 1 = secondary texture
+    rendlist_texmapunit_t texmapunits[NUM_TEXMAP_UNITS];
     size_t          size; // Number of bytes allocated for the data.
     byte*           data; // Data for a number of polygons (The List).
     byte*           cursor; // A pointer to data, for reading/writing.
@@ -184,9 +199,6 @@ typedef struct listhash_s {
 } listhash_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-vissprite_t* R_NewVisSprite(void);
-boolean RLIT_DynGetFirst(const dynlight_t* dyn, void* data);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -255,84 +267,6 @@ void RL_Register(void)
     // \todo Move cvars here.
 }
 
-/**
- * This doesn't create a rendering primitive but a vissprite! The vissprite
- * represents the masked poly and will be rendered during the rendering
- * of sprites. This is necessary because all masked polygons must be
- * rendered back-to-front, or there will be alpha artifacts along edges.
- */
-void RL_AddMaskedPoly(const rvertex_t* rvertices,
-                      const rcolor_t* rcolors, float wallLength,
-                      float texWidth, float texHeight,
-                      const float texOffset[2], blendmode_t blendMode,
-                      uint lightListIdx, boolean glow, boolean masked,
-                      const rladdpoly_params_t* params)
-{
-    vissprite_t*        vis = R_NewVisSprite();
-    int                 i, c;
-    float               midpoint[3];
-
-    midpoint[VX] = (rvertices[0].pos[VX] + rvertices[3].pos[VX]) / 2;
-    midpoint[VY] = (rvertices[0].pos[VY] + rvertices[3].pos[VY]) / 2;
-    midpoint[VZ] = (rvertices[0].pos[VZ] + rvertices[3].pos[VZ]) / 2;
-
-    vis->type = VSPR_MASKED_WALL;
-    vis->lumIdx = 0;
-    vis->center[VX] = midpoint[VX];
-    vis->center[VY] = midpoint[VY];
-    vis->center[VZ] = midpoint[VZ];
-    vis->isDecoration = false;
-    vis->distance = Rend_PointDist2D(midpoint);
-    vis->data.wall.tex = params->texmapunits[TMU_PRIMARY].tex;
-    vis->data.wall.magMode = params->texmapunits[TMU_PRIMARY].magMode;
-    vis->data.wall.masked = masked;
-    for(i = 0; i < 4; ++i)
-    {
-        vis->data.wall.vertices[i].pos[VX] = rvertices[i].pos[VX];
-        vis->data.wall.vertices[i].pos[VY] = rvertices[i].pos[VY];
-        vis->data.wall.vertices[i].pos[VZ] = rvertices[i].pos[VZ];
-
-        for(c = 0; c < 4; ++c)
-        {
-            vis->data.wall.vertices[i].color[c] =
-                MINMAX_OF(0, rcolors[i].rgba[c], 1);
-        }
-    }
-    vis->data.wall.texCoord[0][VX] = texOffset[VX] / texWidth;
-    vis->data.wall.texCoord[1][VX] =
-        vis->data.wall.texCoord[0][VX] + wallLength / texWidth;
-    vis->data.wall.texCoord[0][VY] = texOffset[VY] / texHeight;
-    vis->data.wall.texCoord[1][VY] =
-        vis->data.wall.texCoord[0][VY] +
-            (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / texHeight;
-    vis->data.wall.blendMode = blendMode;
-
-    //// \fixme Semitransparent masked polys arn't lit atm
-    if(!glow && lightListIdx && numTexUnits > 1 && envModAdd &&
-       !(rcolors[0].rgba[CA] < 1))
-    {
-        dynlight_t*         dyn = NULL;
-
-        /**
-         * The dynlights will have already been sorted so that the brightest
-         * and largest of them is first in the list. So grab that one.
-         */
-        DL_ListIterator(lightListIdx, &dyn, RLIT_DynGetFirst);
-
-        vis->data.wall.modTex = dyn->texture;
-        vis->data.wall.modTexCoord[0][0] = dyn->s[0];
-        vis->data.wall.modTexCoord[0][1] = dyn->s[1];
-        vis->data.wall.modTexCoord[1][0] = dyn->t[0];
-        vis->data.wall.modTexCoord[1][1] = dyn->t[1];
-        for(c = 0; c < 3; ++c)
-            vis->data.wall.modColor[c] = dyn->color[c];
-    }
-    else
-    {
-        vis->data.wall.modTex = 0;
-    }
-}
-
 void RL_SelectTexCoordArray(int unit, int index)
 {
     void*               coords[MAX_TEX_UNITS];
@@ -346,12 +280,12 @@ void RL_SelectTexCoordArray(int unit, int index)
     DGL_Arrays(NULL, NULL, numTexUnits, coords, 0);
 }
 
-static void rlBind(const rtexmapunit_t* tmu)
+static void rlBind(const rendlist_texmapunit_t* tmu)
 {
     GL_BindTexture(renderTextures ? tmu->tex : 0, tmu->magMode);
 }
 
-static void rlBindTo(int unit, const rtexmapunit_t* tmu)
+static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
 {
     DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
     GL_BindTexture(renderTextures ? tmu->tex : 0, tmu->magMode);
@@ -456,10 +390,9 @@ static void destroyList(rendlist_t* rl)
 #endif
 
     rl->cursor = NULL;
-    TMU(rl, TMU_INTER_DETAIL)->tex = 0;
+    TU(rl, TU_INTER_DETAIL)->tex = 0;
     rl->last = NULL;
     rl->size = 0;
-    rl->flags = 0;
 }
 
 static void deleteHash(listhash_t* hash)
@@ -517,12 +450,12 @@ static void rewindList(rendlist_t* rl)
 {
     rl->cursor = rl->data;
     rl->last = NULL;
-    rl->flags = 0;
 
     // The interpolation target must be explicitly set (in RL_AddPoly).
-    TMU(rl, TMU_INTER)->tex = 0;
-    TMU(rl, TMU_INTER_DETAIL)->tex = 0;
-    rl->interPos = 0;
+    TU(rl, TU_INTER)->tex = 0;
+    TU(rl, TU_INTER)->blend = 0;
+    TU(rl, TU_INTER_DETAIL)->tex = 0;
+    TU(rl, TU_INTER_DETAIL)->blend = 0;
 }
 
 static void rewindHash(listhash_t* hash)
@@ -569,34 +502,40 @@ static rendlist_t* createList(listhash_t* hash)
     return list;
 }
 
-static __inline void copyTMU(rtexmapunit_t* dest, const rtexmapunit_t* src)
+static __inline void copyTU(rendlist_texmapunit_t* lTU,
+                            const rtexmapunit_t* pTU)
 {
-    memcpy(dest, src, sizeof(rtexmapunit_t));
+    lTU->tex = pTU->tex;
+    lTU->magMode = pTU->magMode;
+    lTU->blendMode = pTU->blendMode;
+    lTU->blend = pTU->blend;
 }
 
-static __inline boolean compareTMU(const rtexmapunit_t* a,
-                                   const rtexmapunit_t* b)
+static __inline boolean compareTU(const rendlist_texmapunit_t* lTU,
+                                  const rtexmapunit_t* pTU)
 {
-    if(a->tex == b->tex && a->magMode == b->magMode)
+    if(lTU->tex == pTU->tex && lTU->magMode == pTU->magMode &&
+       lTU->blend == pTU->blend)
         return true;
 
     return false;
 }
 
-static rendlist_t* getListFor(const rladdpoly_params_t* params,
+static rendlist_t* getListFor(rendpolytype_t polyType,
+                              const rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
                               boolean useLights)
 {
     listhash_t*         hash, *table;
     rendlist_t*         dest, *convertable = NULL;
 
     // Check for specialized rendering lists first.
-    if(params->type == RPT_SKY_MASK)
+    if(polyType == RPT_SKY_MASK)
     {
         return &skyMaskList;
     }
 
     // Choose the correct hash table.
-    switch(params->type)
+    switch(polyType)
     {
     case RPT_SHINY:     table = shinyHash;  break;
     case RPT_SHADOW:    table = shadowHash; break;
@@ -607,35 +546,39 @@ static rendlist_t* getListFor(const rladdpoly_params_t* params,
     }
 
     // Find/create a list in the hash.
-    hash = &table[TMU(params, TMU_PRIMARY)->tex % RL_HASH_SIZE];
+    hash = &table[(polyType == RPT_SHINY? pTU[TU_SHINY].tex :
+                   pTU[TU_PRIMARY].tex) % RL_HASH_SIZE];
     for(dest = hash->first; dest; dest = dest->next)
     {
-        if((params->type == RPT_SHINY &&
-            compareTMU(TMU(dest, TMU_PRIMARY), TMU(params, TMU_PRIMARY))) ||
-           (params->type != RPT_SHINY &&
-            compareTMU(TMU(dest, TMU_PRIMARY), TMU(params, TMU_PRIMARY)) &&
-            compareTMU(TMU(dest, TMU_PRIMARY_DETAIL), TMU(params, TMU_PRIMARY_DETAIL))))
+        if((polyType == RPT_SHINY &&
+            compareTU(TU(dest, TU_PRIMARY), &pTU[TU_SHINY])) ||
+           (polyType != RPT_SHINY &&
+            compareTU(TU(dest, TU_PRIMARY), &pTU[TU_PRIMARY]) &&
+            compareTU(TU(dest, TU_PRIMARY_DETAIL), &pTU[TU_PRIMARY_DETAIL])))
         {
-            if(!TMU(dest, TMU_INTER)->tex && !TMU(params, TMU_INTER)->tex)
+            if(!TU(dest, TU_INTER)->tex &&
+               ((polyType == RPT_SHINY && !pTU[TU_SHINY_MASK].tex) ||
+                (polyType != RPT_SHINY && !pTU[TU_INTER].tex)))
             {
                 // This will do great.
                 return dest;
             }
 
             // Is this eligible for conversion to a blended list?
-            if(!dest->last && TMU(params, TMU_INTER)->tex && !convertable)
+            if(!dest->last && !convertable &&
+               ((polyType == RPT_SHINY && pTU[TU_SHINY_MASK].tex) ||
+                (polyType != RPT_SHINY && pTU[TU_INTER].tex)))
             {
                 // If necessary, this empty list will be selected.
                 convertable = dest;
             }
 
             // Possibly an exact match?
-            if((params->type == RPT_SHINY &&
-                compareTMU(TMU(dest, TMU_INTER), TMU(params, TMU_INTER))) ||
-               (params->type != RPT_SHINY &&
-                compareTMU(TMU(dest, TMU_INTER), TMU(params, TMU_INTER)) &&
-                compareTMU(TMU(dest, TMU_INTER_DETAIL), TMU(params, TMU_INTER_DETAIL)) &&
-                dest->interPos == params->interPos))
+            if((polyType == RPT_SHINY &&
+                compareTU(TU(dest, TU_INTER), &pTU[TU_SHINY_MASK])) ||
+               (polyType != RPT_SHINY &&
+                compareTU(TU(dest, TU_INTER), &pTU[TU_INTER]) &&
+                compareTU(TU(dest, TU_INTER_DETAIL), &pTU[TU_INTER_DETAIL])))
             {
                 return dest;
             }
@@ -645,10 +588,16 @@ static rendlist_t* getListFor(const rladdpoly_params_t* params,
     // Did we find a convertable list?
     if(convertable)
     {   // This list is currently empty.
-        copyTMU(TMU(convertable, TMU_INTER), TMU(params, TMU_INTER));
-        copyTMU(TMU(convertable, TMU_INTER_DETAIL), TMU(params, TMU_INTER_DETAIL));
+        if(polyType == RPT_SHINY)
+        {
+            copyTU(TU(convertable, TU_INTER), &pTU[TU_SHINY_MASK]);
+        }
+        else
+        {
+            copyTU(TU(convertable, TU_INTER), &pTU[TU_INTER]);
+            copyTU(TU(convertable, TU_INTER_DETAIL), &pTU[TU_INTER_DETAIL]);
+        }
 
-        convertable->interPos = params->interPos;
         return convertable;
     }
 
@@ -656,18 +605,22 @@ static rendlist_t* getListFor(const rladdpoly_params_t* params,
     dest = createList(hash);
 
     // Init the info.
-    copyTMU(TMU(dest, TMU_PRIMARY), TMU(params, TMU_PRIMARY));
-
-    if(params->type != RPT_SHINY)
-        copyTMU(TMU(dest, TMU_PRIMARY_DETAIL), TMU(params, TMU_PRIMARY_DETAIL));
-
-    if(TMU(params, TMU_INTER)->tex)
+    if(polyType == RPT_SHINY)
     {
-        copyTMU(TMU(dest, TMU_INTER), TMU(params, TMU_INTER));
-        copyTMU(TMU(dest, TMU_INTER_DETAIL), TMU(params, TMU_INTER_DETAIL));
+        copyTU(TU(dest, TU_PRIMARY), &pTU[TU_SHINY]);
+        if(pTU[TU_SHINY_MASK].tex)
+            copyTU(TU(dest, TU_INTER), &pTU[TU_SHINY_MASK]);
+    }
+    else
+    {
+        copyTU(TU(dest, TU_PRIMARY), &pTU[TU_PRIMARY]);
+        copyTU(TU(dest, TU_PRIMARY_DETAIL), &pTU[TU_PRIMARY_DETAIL]);
 
-        if(params->type != RPT_SHINY)
-            dest->interPos = params->interPos;
+        if(pTU[TU_INTER].tex)
+        {
+            copyTU(TU(dest, TU_INTER), &pTU[TU_INTER]);
+            copyTU(TU(dest, TU_INTER_DETAIL), &pTU[TU_INTER_DETAIL]);
+        }
     }
 
     return dest;
@@ -773,9 +726,9 @@ static void endWrite(rendlist_t* list)
 
 static void writePrimitive(const rendlist_t* list, uint base,
                            const rvertex_t* rvertices,
-                           const rtexcoord_t* rtexcoords,
-                           const rtexcoord_t* rtexcoords2,
-                           const rtexcoord_t* rtexcoords5,
+                           const rtexcoord_t* coords,
+                           const rtexcoord_t* coords1,
+                           const rtexcoord_t* coords2,
                            const rcolor_t* rcolors, uint numVertices,
                            rendpolytype_t type)
 {
@@ -796,20 +749,20 @@ static void writePrimitive(const rendlist_t* list, uint base,
         if(type == RPT_SKY_MASK)
             continue; // Sky masked polys need nothing more.
 
-        // Normal primary texture coordinates.
-        if(TMU(list, TMU_PRIMARY)->tex)
+        // Primary texture coordinates.
+        if(TU(list, TU_PRIMARY)->tex)
         {
-            const rtexcoord_t*  rtc = &rtexcoords[i];
+            const rtexcoord_t*  rtc = &coords[i];
             gl_texcoord_t*      tc = &texCoords[TCA_MAIN][base + i];
 
             tc->st[0] = rtc->st[0];
             tc->st[1] = rtc->st[1];
         }
 
-        // Blend texture coordinates.
-        if(TMU(list, TMU_INTER)->tex)
+        // Secondary texture coordinates.
+        if(TU(list, TU_INTER)->tex)
         {
-            const rtexcoord_t*  rtc = &rtexcoords2[i];
+            const rtexcoord_t*  rtc = &coords1[i];
             gl_texcoord_t*      tc = &texCoords[TCA_BLEND][base + i];
 
             tc->st[0] = rtc->st[0];
@@ -817,9 +770,9 @@ static void writePrimitive(const rendlist_t* list, uint base,
         }
 
         // First light texture coordinates.
-        if(list->last->numLights > 0 && IS_MTEX_LIGHTS)
+        if((list->last->flags & PF_IS_LIT) && IS_MTEX_LIGHTS)
         {
-            const rtexcoord_t*  rtc = &rtexcoords5[i];
+            const rtexcoord_t*  rtc = &coords2[i];
             gl_texcoord_t*      tc = &texCoords[TCA_LIGHT][base + i];
 
             tc->st[0] = rtc->st[0];
@@ -840,30 +793,30 @@ static void writePrimitive(const rendlist_t* list, uint base,
 }
 
 /**
- * Adds the given poly onto the correct list.
+ * Adds one or more polys the render lists depending on configuration.
  */
-void RL_AddPoly(primtype_t type, const rvertex_t* rvertices,
-                const rtexcoord_t* rtexcoords, const rtexcoord_t* rtexcoords2,
-                const rtexcoord_t* rtexcoords5, const rcolor_t* rcolors,
-                uint numVertices, blendmode_t blendMode,
-                uint numLights, const rladdpoly_params_t* params)
+static void addPoly(primtype_t type, rendpolytype_t polyType,
+                    const rvertex_t* rvertices,
+                    const rtexcoord_t* rtexcoords,
+                    const rtexcoord_t* rtexcoords1,
+                    const rtexcoord_t* rtexcoords2, const rcolor_t* rcolors,
+                    uint numVertices, blendmode_t blendMode,
+                    uint numLights,
+                    DGLuint modTex, float modColor[3],
+                    const rtexmapunit_t pTU[NUM_TEXMAP_UNITS])
 {
     uint                i, base, primSize, numIndices;
     rendlist_t*         li;
     primhdr_t*          hdr;
-
-    if(numVertices < 3)
-        return; // huh?
-
-    if(type < PT_FIRST || type >= NUM_PRIM_TYPES)
-        Con_Error("RL_AddPoly: Unknown primtype %i.", type);
+    boolean             useLights =
+        (polyType != RPT_LIGHT && numLights > 0);
 
 BEGIN_PROF( PROF_RL_ADD_POLY );
 
 BEGIN_PROF( PROF_RL_GET_LIST );
 
     // Find/create a rendering list for the polygon's texture.
-    li = getListFor(params, params->type != RPT_LIGHT? numLights : false);
+    li = getListFor(polyType, pTU, useLights);
 
 END_PROF( PROF_RL_GET_LIST );
 
@@ -875,23 +828,35 @@ END_PROF( PROF_RL_GET_LIST );
     assert(hdr);
     li->last = hdr; // This becomes the new last primitive.
 
-    hdr->primSize = primSize;
     // Primitive-specific blending mode.
-    hdr->blendMode = (params->type != RPT_LIGHT? blendMode : BM_NORMAL);
+    hdr->blendMode = blendMode;
     hdr->size = 0;
     hdr->indices = NULL;
     hdr->numIndices = 0;
-    hdr->numLights = numLights;
-    hdr->modTex = params->modTex;
-    hdr->modColor[CR] = params->modColor[CR];
-    hdr->modColor[CG] = params->modColor[CG];
-    hdr->modColor[CB] = params->modColor[CB];
-    if(TMU(params, TMU_PRIMARY_DETAIL)->tex)
+    hdr->flags = 0;
+    if(numLights > 1)
+        hdr->flags |= PF_MANY_LIGHTS;
+    else if(numLights == 1)
+        hdr->flags |= PF_ONE_LIGHT;
+    hdr->modTex = modTex;
+    hdr->modColor[CR] = modColor? modColor[CR] : 0;
+    hdr->modColor[CG] = modColor? modColor[CG] : 0;
+    hdr->modColor[CB] = modColor? modColor[CB] : 0;
+
+    if(pTU[TU_PRIMARY].tex || pTU[TU_SHINY_MASK].tex)
     {
-        hdr->texScale[0] = TMU(params, TMU_PRIMARY_DETAIL)->scale[0];
-        hdr->texScale[1] = TMU(params, TMU_PRIMARY_DETAIL)->scale[1];
-        hdr->texOffset[0] = TMU(params, TMU_PRIMARY_DETAIL)->offset[1];
-        hdr->texOffset[1] = TMU(params, TMU_PRIMARY_DETAIL)->offset[1];
+        hdr->ptexScale[0] = pTU[TU_PRIMARY].scale[0];
+        hdr->ptexScale[1] = pTU[TU_PRIMARY].scale[1];
+        hdr->ptexOffset[0] = pTU[TU_PRIMARY].offset[0];
+        hdr->ptexOffset[1] = pTU[TU_PRIMARY].offset[1];
+    }
+
+    if(pTU[TU_PRIMARY_DETAIL].tex)
+    {
+        hdr->texScale[0] = pTU[TU_PRIMARY_DETAIL].scale[0];
+        hdr->texScale[1] = pTU[TU_PRIMARY_DETAIL].scale[1];
+        hdr->texOffset[0] = pTU[TU_PRIMARY_DETAIL].offset[0];
+        hdr->texOffset[1] = pTU[TU_PRIMARY_DETAIL].offset[1];
     }
     else
     {
@@ -906,22 +871,37 @@ END_PROF( PROF_RL_GET_LIST );
     li->last->type =
         (type == PT_TRIANGLE_STRIP? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
 
-    writePrimitive(li, base, rvertices, rtexcoords, rtexcoords2,
-                   rtexcoords5, rcolors, numVertices, params->type);
+    writePrimitive(li, base, rvertices, rtexcoords, rtexcoords1,
+                   rtexcoords2, rcolors, numVertices, polyType);
     endWrite(li);
 
 END_PROF( PROF_RL_ADD_POLY );
 }
 
-void RL_FloatRGB(byte* rgb, float* dest)
+void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
+                const rvertex_t* rvertices,
+                const rtexcoord_t* rtexcoords, const rtexcoord_t* rtexcoords1,
+                const rtexcoord_t* rtexcoords2,
+                const rtexcoord_t* srtexcoords, const rtexcoord_t* srtexcoords1,
+                const rcolor_t* rcolors,
+                const rcolor_t* srcolors,
+                uint numVertices, uint numLights,
+                DGLuint modTex, float modColor[3],
+                const rtexmapunit_t pTU[NUM_TEXMAP_UNITS])
 {
-    unsigned int            i;
+    if(numVertices < 3)
+        return; // huh?
 
-    for(i = 0; i < 3; ++i)
-    {
-        dest[i] = ((float)rgb[i]) * reciprocal255;
-    }
-    dest[3] = 1;
+    if(type < PT_FIRST || type >= NUM_PRIM_TYPES)
+        Con_Error("RL_AddPoly: Unknown primtype %i.", type);
+
+    addPoly(type, polyType, rvertices, rtexcoords, rtexcoords1, rtexcoords2,
+            rcolors, numVertices, BM_NORMAL, numLights, modTex, modColor, pTU);
+
+    if(pTU[TU_SHINY].tex && polyType != RPT_SKY_MASK)
+        addPoly(type, RPT_SHINY, rvertices, srtexcoords, srtexcoords1,
+                NULL, srcolors, numVertices, pTU[TU_SHINY].blendMode,
+                0, 0, NULL, pTU);
 }
 
 /**
@@ -937,7 +917,7 @@ static void drawPrimitives(int conditions, rendlist_t* list)
     if(conditions & DCF_SKIP)
         return;
 
-    if(TMU(list, TMU_INTER)->tex)
+    if(TU(list, TU_INTER)->tex)
     {
         // Is blending allowed?
         if(conditions & DCF_NO_BLEND)
@@ -970,9 +950,11 @@ static void drawPrimitives(int conditions, rendlist_t* list)
         if(!bypass)
         {
             skip = false;
-            if((conditions & DCF_JUST_ONE_LIGHT) && hdr->numLights > 1)
+            if((conditions & DCF_JUST_ONE_LIGHT) &&
+               (hdr->flags & PF_MANY_LIGHTS))
                 skip = true;
-            else if((conditions & DCF_MANY_LIGHTS) && hdr->numLights == 1)
+            else if((conditions & DCF_MANY_LIGHTS) &&
+                    (hdr->flags & PF_ONE_LIGHT))
                 skip = true;
         }
 
@@ -991,9 +973,9 @@ static void drawPrimitives(int conditions, rendlist_t* list)
                                 GL_CLAMP_TO_EDGE);
             }
 
-            if(conditions & DCF_SET_MATRIX_TEXTURE)
+            if(conditions & DCF_SET_MATRIX_DTEXTURE)
             {   // Primitive-specific texture translation & scale.
-                if(conditions & DCF_SET_MATRIX_TEXTURE0)
+                if(conditions & DCF_SET_MATRIX_DTEXTURE0)
                 {
                     DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
                     DGL_MatrixMode(DGL_TEXTURE);
@@ -1001,13 +983,33 @@ static void drawPrimitives(int conditions, rendlist_t* list)
                     DGL_Translatef(hdr->texOffset[0], hdr->texOffset[1], 1);
                     DGL_Scalef(hdr->texScale[0], hdr->texScale[1], 1);
                 }
-                if(conditions & DCF_SET_MATRIX_TEXTURE1)
+                if(conditions & DCF_SET_MATRIX_DTEXTURE1)
                 {
                     DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
                     DGL_MatrixMode(DGL_TEXTURE);
                     DGL_LoadIdentity();
                     DGL_Translatef(hdr->texOffset[0], hdr->texOffset[1], 1);
                     DGL_Scalef(hdr->texScale[0], hdr->texScale[1], 1);
+                }
+            }
+
+            if(conditions & DCF_SET_MATRIX_TEXTURE)
+            {   // Primitive-specific texture translation & scale.
+                if(conditions & DCF_SET_MATRIX_TEXTURE0)
+                {
+                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+                    DGL_MatrixMode(DGL_TEXTURE);
+                    DGL_LoadIdentity();
+                    DGL_Translatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
+                    DGL_Scalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
+                }
+                if(conditions & DCF_SET_MATRIX_TEXTURE1)
+                {
+                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+                    DGL_MatrixMode(DGL_TEXTURE);
+                    DGL_LoadIdentity();
+                    DGL_Translatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
+                    DGL_Scalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
                 }
             }
 
@@ -1020,15 +1022,15 @@ static void drawPrimitives(int conditions, rendlist_t* list)
             DGL_DrawElements(hdr->type, hdr->numIndices, hdr->indices);
 
             // Restore the texture matrix if changed.
-            if(conditions & DCF_SET_MATRIX_TEXTURE)
+            if(conditions & (DCF_SET_MATRIX_TEXTURE|DCF_SET_MATRIX_DTEXTURE))
             {
-                if(conditions & DCF_SET_MATRIX_TEXTURE0)
+                if(conditions & (DCF_SET_MATRIX_TEXTURE0|DCF_SET_MATRIX_DTEXTURE0))
                 {
                     DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
                     DGL_MatrixMode(DGL_TEXTURE);
                     DGL_LoadIdentity();
                 }
-                if(conditions & DCF_SET_MATRIX_TEXTURE1)
+                if(conditions & (DCF_SET_MATRIX_TEXTURE1|DCF_SET_MATRIX_DTEXTURE1))
                 {
                     DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
                     DGL_MatrixMode(DGL_TEXTURE);
@@ -1060,11 +1062,11 @@ if(numTexUnits < 2)
 
     GL_SelectTexUnits(2);
 
-    rlBindTo(0, TMU(list, TMU_PRIMARY));
-    rlBindTo(1, TMU(list, TMU_INTER));
+    rlBindTo(0, TU(list, TU_PRIMARY));
+    rlBindTo(1, TU(list, TU_INTER));
 
     DGL_SetInteger(DGL_MODULATE_TEXTURE, modMode);
-    setEnvAlpha(list->interPos);
+    setEnvAlpha(TU(list, TU_INTER)->blend);
 }
 
 static void setFogStateForDetails(void)
@@ -1088,7 +1090,7 @@ static void setFogStateForDetails(void)
  */
 static int setupListState(listmode_t mode, rendlist_t* list)
 {
-    switch (mode)
+    switch(mode)
     {
     case LM_SKYMASK:
         // Render all primitives on the list without discrimination.
@@ -1096,7 +1098,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
 
     case LM_ALL: // All surfaces.
         // Should we do blending?
-        if(TMU(list, TMU_INTER)->tex)
+        if(TU(list, TU_INTER)->tex)
         {
             // Blend between two textures, modulate with primary color.
             setBlendState(list, 2);
@@ -1105,19 +1107,19 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         {
             // Normal modulation.
             GL_SelectTexUnits(1);
-            rlBind(TMU(list, TMU_PRIMARY));
+            rlBind(TU(list, TU_PRIMARY));
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         }
-        return 0;
+        return DCF_SET_MATRIX_TEXTURE0 | (TU(list, TU_INTER)->tex? DCF_SET_MATRIX_TEXTURE1 : 0);
 
     case LM_LIGHT_MOD_TEXTURE:
         // Modulate sector light, dynamic light and regular texture.
-        rlBindTo(1, TMU(list, TMU_PRIMARY));
-        return DCF_SET_LIGHT_ENV0 | DCF_JUST_ONE_LIGHT | DCF_NO_BLEND;
+        rlBindTo(1, TU(list, TU_PRIMARY));
+        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_LIGHT_ENV0 | DCF_JUST_ONE_LIGHT | DCF_NO_BLEND;
 
     case LM_TEXTURE_PLUS_LIGHT:
-        rlBindTo(0, TMU(list, TMU_PRIMARY));
-        return DCF_SET_LIGHT_ENV1 | DCF_NO_BLEND;
+        rlBindTo(0, TU(list, TU_PRIMARY));
+        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_LIGHT_ENV1 | DCF_NO_BLEND;
 
     case LM_FIRST_LIGHT:
         // Draw all primitives with more than one light
@@ -1126,16 +1128,16 @@ static int setupListState(listmode_t mode, rendlist_t* list)
 
     case LM_BLENDED:
         // Only render the blended surfaces.
-        if(!TMU(list, TMU_INTER)->tex)
+        if(!TU(list, TU_INTER)->tex)
             return DCF_SKIP;
         setBlendState(list, 2);
-        return 0;
+        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
 
     case LM_BLENDED_FIRST_LIGHT:
         // Only blended surfaces.
-        if(!TMU(list, TMU_INTER)->tex)
+        if(!TU(list, TU_INTER)->tex)
             return DCF_SKIP;
-        return DCF_SET_LIGHT_ENV0;
+        return DCF_SET_MATRIX_TEXTURE1 | DCF_SET_LIGHT_ENV0;
 
     case LM_WITHOUT_TEXTURE:
         // Only render the primitives affected by dynlights.
@@ -1143,7 +1145,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
 
     case LM_LIGHTS:
         // The light lists only contain dynlight primitives.
-        rlBind(TMU(list, TMU_PRIMARY));
+        rlBind(TU(list, TU_PRIMARY));
         // Make sure the texture is not repeated.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1151,95 +1153,95 @@ static int setupListState(listmode_t mode, rendlist_t* list)
 
     case LM_BLENDED_MOD_TEXTURE:
         // Blending required.
-        if(!TMU(list, TMU_INTER)->tex)
+        if(!TU(list, TU_INTER)->tex)
             break;
     case LM_MOD_TEXTURE:
     case LM_MOD_TEXTURE_MANY_LIGHTS:
         // Texture for surfaces with (many) dynamic lights.
         // Should we do blending?
-        if(TMU(list, TMU_INTER)->tex)
+        if(TU(list, TU_INTER)->tex)
         {
             // Mode 3 actually just disables the second texture stage,
             // which would modulate with primary color.
             setBlendState(list, 3);
             // Render all primitives.
-            return 0;
+            return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
         }
         // No modulation at all.
         GL_SelectTexUnits(1);
-        rlBind(TMU(list, TMU_PRIMARY));
+        rlBind(TU(list, TU_PRIMARY));
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
-        return (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
+        return DCF_SET_MATRIX_TEXTURE0 | (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
 
     case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         // Blending is not done now.
-        if(TMU(list, TMU_INTER)->tex)
+        if(TU(list, TU_INTER)->tex)
             break;
-        if(TMU(list, TMU_PRIMARY_DETAIL)->tex)
+        if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
             GL_SelectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
-            rlBindTo(0, TMU(list, TMU_PRIMARY));
-            rlBindTo(1, TMU(list, TMU_PRIMARY_DETAIL));
-            return DCF_SET_MATRIX_TEXTURE1;
+            rlBindTo(0, TU(list, TU_PRIMARY));
+            rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
+            return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
         }
         else
         {
             GL_SelectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
-            rlBind(TMU(list, TMU_PRIMARY));
-            return 0;
+            rlBind(TU(list, TU_PRIMARY));
+            return DCF_SET_MATRIX_TEXTURE0;
         }
         break;
 
     case LM_ALL_DETAILS:
-        if(TMU(list, TMU_PRIMARY_DETAIL)->tex)
+        if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
-            rlBind(TMU(list, TMU_PRIMARY_DETAIL));
+            rlBind(TU(list, TU_PRIMARY_DETAIL));
             // Render all surfaces on the list.
-            return DCF_SET_MATRIX_TEXTURE0;
+            return DCF_SET_MATRIX_DTEXTURE0;
         }
         break;
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
         // Only unblended. Details are optional.
-        if(TMU(list, TMU_INTER)->tex)
+        if(TU(list, TU_INTER)->tex)
             break;
-        if(TMU(list, TMU_PRIMARY_DETAIL)->tex)
+        if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
             GL_SelectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 8);
-            rlBindTo(0, TMU(list, TMU_PRIMARY));
-            rlBindTo(1, TMU(list, TMU_PRIMARY_DETAIL));
-            return DCF_SET_MATRIX_TEXTURE1;
+            rlBindTo(0, TU(list, TU_PRIMARY));
+            rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
+            return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
         }
         else
         {
             // Normal modulation.
             GL_SelectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
-            rlBind(TMU(list, TMU_PRIMARY));
-            return 0;
+            rlBind(TU(list, TU_PRIMARY));
+            return DCF_SET_MATRIX_TEXTURE0;
         }
         break;
 
     case LM_BLENDED_DETAILS:
         // We'll only render blended primitives.
-        if(!TMU(list, TMU_INTER)->tex)
+        if(!TU(list, TU_INTER)->tex)
             break;
-        if(!TMU(list, TMU_PRIMARY_DETAIL)->tex ||
-           !TMU(list, TMU_INTER_DETAIL)->tex)
+        if(!TU(list, TU_PRIMARY_DETAIL)->tex ||
+           !TU(list, TU_INTER_DETAIL)->tex)
             break;
 
-        rlBindTo(0, TMU(list, TMU_PRIMARY_DETAIL));
-        rlBindTo(1, TMU(list, TMU_INTER_DETAIL));
-        setEnvAlpha(list->interPos);
-        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
+        rlBindTo(0, TU(list, TU_PRIMARY_DETAIL));
+        rlBindTo(1, TU(list, TU_INTER_DETAIL));
+        setEnvAlpha(TU(list, TU_INTER_DETAIL)->blend);
+        return DCF_SET_MATRIX_DTEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
 
     case LM_SHADOW:
         // Render all primitives.
-        rlBind(TMU(list, TMU_PRIMARY));
-        if(!TMU(list, TMU_PRIMARY)->tex)
+        rlBind(TU(list, TU_PRIMARY));
+        if(!TU(list, TU_PRIMARY)->tex)
         {
             // Apply a modelview shift.
             DGL_MatrixMode(DGL_MODELVIEW);
@@ -1254,22 +1256,22 @@ static int setupListState(listmode_t mode, rendlist_t* list)
 
     case LM_MASKED_SHINY:
         // The intertex holds the info for the mask texture.
-        rlBindTo(1, TMU(list, TMU_INTER));
+        rlBindTo(1, TU(list, TU_INTER));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         setEnvAlpha(1.0f);
     case LM_ALL_SHINY:
     case LM_SHINY:
-        rlBindTo(0, TMU(list, TMU_PRIMARY));
+        rlBindTo(0, TU(list, TU_PRIMARY));
         // Make sure the texture is not clamped.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         // Render all primitives.
         if(mode == LM_ALL_SHINY)
             return DCF_SET_BLEND_MODE;
-        else
-            return DCF_SET_BLEND_MODE |
-                (mode == LM_MASKED_SHINY ? DCF_BLEND : DCF_NO_BLEND);
+        if(mode == LM_MASKED_SHINY)
+            return DCF_SET_BLEND_MODE | DCF_SET_MATRIX_TEXTURE1;
+        return DCF_SET_BLEND_MODE | DCF_NO_BLEND;
 
     default:
         break;
@@ -1287,7 +1289,7 @@ static void finishListState(listmode_t mode, rendlist_t* list)
         break;
 
     case LM_SHADOW:
-        if(!TMU(list, TMU_PRIMARY)->tex)
+        if(!TU(list, TU_PRIMARY)->tex)
         {
             // Restore original modelview matrix.
             DGL_MatrixMode(DGL_MODELVIEW);

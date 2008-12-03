@@ -51,32 +51,23 @@ typedef enum {
     RPT_SHINY // A shiny polygon.
 } rendpolytype_t;
 
-// Helper macro for accessing texture map units.
-#define TMU(x, n)          (&((x)->texmapunits[(n)]))
-
 typedef enum {
-    TMU_PRIMARY = 0,
-    TMU_PRIMARY_DETAIL,
-    TMU_INTER,
-    TMU_INTER_DETAIL,
+    TU_PRIMARY = 0,
+    TU_PRIMARY_DETAIL,
+    TU_INTER,
+    TU_INTER_DETAIL,
+    TU_SHINY,
+    TU_SHINY_MASK,
     NUM_TEXMAP_UNITS
 } texmapunit_t;
 
 typedef struct rtexmapuint_s {
     DGLuint         tex;
     int             magMode;
+    float           blend;
     float           scale[2], offset[2]; // For use with the texture matrix.
+    blendmode_t     blendMode; // Currently used only with shiny pass.
 } rtexmapunit_t;
-
-// rladdpoly_params_t is only for convenience; the data written in the rendering
-// list data buffer is taken from this struct.
-typedef struct rladdpoly_params_s {
-    rendpolytype_t  type;
-    rtexmapunit_t   texmapunits[NUM_TEXMAP_UNITS];
-    float           interPos; // Blending strength (0..1).
-    DGLuint         modTex;
-    float           modColor[3];
-} rladdpoly_params_t;
 
 extern int renderTextures;
 extern int renderWireframe;
@@ -95,23 +86,17 @@ boolean         RL_IsMTexDetails(void);
 void            RL_ClearLists(void);
 void            RL_DeleteLists(void);
 
-void            RL_AddPoly(primtype_t type, const rvertex_t* vertices,
+void            RL_AddPoly(primtype_t type, rendpolytype_t polyType,
+                           const rvertex_t* vertices,
                            const rtexcoord_t* rtexcoords,
+                           const rtexcoord_t* rtexcoords1,
                            const rtexcoord_t* rtexcoords2,
-                           const rtexcoord_t* rtexcoords5,
-                           const rcolor_t* colors, uint numVertices,
-                           blendmode_t blendMode, boolean isLit,
-                           const rladdpoly_params_t* params);
-void            RL_AddMaskedPoly(const rvertex_t* vertices,
-                                 const rcolor_t* colors, float wallLength,
-                                 float texWidth, float texHeight,
-                                 const float texOffset[2],
-                                 blendmode_t blendMode,
-                                 uint lightListIdx, boolean glow,
-                                 boolean masked,
-                                 const rladdpoly_params_t* params);
+                           const rtexcoord_t* srtexcoords,
+                           const rtexcoord_t* srtexcoords1,
+                           const rcolor_t* colors, const rcolor_t* scolors,
+                           uint numVertices,
+                           uint numLights, DGLuint modTex, float modColor[3],
+                           const rtexmapunit_t tu[NUM_TEXMAP_UNITS]);
 void            RL_RenderAllLists(void);
-
-void            RL_FloatRGB(byte* rgb, float* dest);
 
 #endif
