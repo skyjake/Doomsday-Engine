@@ -613,6 +613,7 @@ enum /* Do not change the numerical values of the constants! */
 #define SDF_BLENDMIDTOTOP       0x0002
 #define SDF_BLENDMIDTOBOTTOM    0x0004
 #define SDF_BLENDBOTTOMTOMID    0x0008
+#define SDF_MIDDLE_STRETCH      0x0010 // Stretch the middle surface to reach from floor to ceiling.
 
 // Surface flags:
 // For use with P_Set/Get(DMU_SURFACE, n, DMU_FLAGS).

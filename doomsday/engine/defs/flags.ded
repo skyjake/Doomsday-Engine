@@ -85,6 +85,7 @@ Flag { ID = "sdf_fade_top_mid";  Value = 0x1; }
 Flag { ID = "sdf_fade_mid_top";  Value = 0x2; }
 Flag { ID = "sdf_fade_mid_bottom";  Value = 0x4; }
 Flag { ID = "sdf_fade_bottom_mid";  Value = 0x8; }
+Flag { ID = "sdf_middle_stretch"; Value = 0x10; }
 
 # Models
 Flag { ID = "df_fullbright"; Value = 0x1; }

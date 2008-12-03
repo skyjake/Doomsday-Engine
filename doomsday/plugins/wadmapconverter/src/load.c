@@ -1426,7 +1426,7 @@ boolean TransferMap(void)
         {
             frontIdx =
                 MPE_SidedefCreate(front->sector,
-                                  (map->format == MF_DOOM64? SDF_MIDDLE_MATERIAL_TILED : 0),
+                                  (map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                   front->topMaterial->num,
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
                                   front->middleMaterial->num,
@@ -1440,7 +1440,7 @@ boolean TransferMap(void)
         {
             backIdx =
                 MPE_SidedefCreate(back->sector,
-                                  (map->format == MF_DOOM64? SDF_MIDDLE_MATERIAL_TILED : 0),
+                                  (map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                   back->topMaterial->num,
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
                                   back->middleMaterial->num,

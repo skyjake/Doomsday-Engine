@@ -417,6 +417,9 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
                 float               openTop[2], matTop[2];
                 float               openBottom[2], matBottom[2];
 
+                if(side->flags & SDF_MIDDLE_STRETCH)
+                    return true;
+
                 openTop[0] = openTop[1] = matTop[0] = matTop[1] =
                     MIN_OF(back->SP_ceilvisheight, front->SP_ceilvisheight);
                 openBottom[0] = openBottom[1] = matBottom[0] = matBottom[1] =
@@ -1651,7 +1654,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         rvertex_t           origVerts[4];
         rcolor_t            origColors[4];
         rtexcoord_t         origTexCoords[4];
-
+        
         /**
          * Need to swap indices around into fans set the position
          * of the division vertices, interpolate texcoords and
@@ -2479,7 +2482,8 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
         }
 
         mat = surface->material->current;
-        if(Rend_MidMaterialPos
+        if((side->flags & SDF_MIDDLE_STRETCH) ||
+           Rend_MidMaterialPos
            (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
            &texOffset[VY], surface->visOffset[VY], mat->height,
             (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false))
