@@ -2216,14 +2216,6 @@ static void mapTicker(automap_t* map)
     if(!((mapPlayer->plr->flags & DDPF_LOCAL) && mapPlayer->plr->inGame))
         return;
 
-    // Freeze the lists if the map is fading out from being open or if set
-    // to frozen for debug.
-    if(map->active && (map->constructMap && !freezeMapRLs))
-    {   // Its time to rebuild the automap object display lists.
-        compileObjectLists(map);
-        map->constructMap = false;
-    }
-
     // Move towards the target alpha level for the automap.
     if(map->alpha != map->targetAlpha)
     {
@@ -3450,6 +3442,8 @@ static void compileObjectLists(automap_t* map)
  */
 void AM_Drawer(int viewplayer)
 {
+    static int          updateWait = 0;
+
     uint                i;
     automap_t*          map;
     player_t*           mapPlayer;
@@ -3472,6 +3466,14 @@ void AM_Drawer(int viewplayer)
     if(!(map->alpha > 0))
         return;
     win = &map->window;
+
+    // Freeze the lists if the map is fading out from being open or if set
+    // to frozen for debug.
+    if((++updateWait % 10) && map->constructMap && !freezeMapRLs)
+    {   // Its time to rebuild the automap object display lists.
+        compileObjectLists(map);
+        map->constructMap = false;
+    }
 
     // Setup for frame.
     setupGLStateForMap();
