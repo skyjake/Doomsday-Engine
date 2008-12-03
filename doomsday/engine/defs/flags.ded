@@ -81,6 +81,11 @@ Flag { ID = "bm_mul"; Value = 5; }
 Flag { ID = "bm_invmul"; Value = 6; }
 Flag { ID = "bm_inv"; Value = 7; }
 
+Flag { ID = "sdf_fade_top_mid";  Value = 0x1; }
+Flag { ID = "sdf_fade_mid_top";  Value = 0x2; }
+Flag { ID = "sdf_fade_mid_bottom";  Value = 0x4; }
+Flag { ID = "sdf_fade_bottom_mid";  Value = 0x8; }
+
 # Models
 Flag { ID = "df_fullbright"; Value = 0x1; }
 Flag { ID = "df_shadow1"; Value = 0x2; }

@@ -227,11 +227,6 @@ Flag { ID = "ldref_middle_offsety"; Value = 0x11; }
 Flag { ID = "ldref_bottom_offsetx"; Value = 0x12; }
 Flag { ID = "ldref_bottom_offsety"; Value = 0x13; }
 
-Flag { ID = "sdf_fade_top_mid";  Value = 0x1; }
-Flag { ID = "sdf_fade_mid_top";  Value = 0x2; }
-Flag { ID = "sdf_fade_mid_bottom";  Value = 0x4; }
-Flag { ID = "sdf_fade_bottom_mid";  Value = 0x8; }
-
 Flag { ID = "chsf_done_d"; Value = 0x1; }
 Flag { ID = "chsf_loop"; Value = 0x2; }
 
