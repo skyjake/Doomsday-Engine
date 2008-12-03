@@ -621,6 +621,9 @@ desc = Enable drawing of the blockmap debug display: 1=Linedefs, 2=Subsectors.
 [rend-dev-blockmap-debug-size]
 desc = Scale multiplier for the blockmap debug display.
 
+[rend-dev-nosprite]
+desc = 1=Disable drawing of all sprites and masked walls.
+
 [rend-info-lums]
 desc = 1=Print lumobj count after rendering a frame.
 

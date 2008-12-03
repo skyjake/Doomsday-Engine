@@ -45,8 +45,9 @@ typedef struct rendpspriteparams_s {
     uint            vLightListIdx;
 } rendpspriteparams_t;
 
-extern int      spriteLight, useSpriteAlpha;
-extern byte     noSpriteTrans;
+extern int spriteLight, useSpriteAlpha;
+extern byte noSpriteTrans;
+extern byte devNoSprites;
 
 void            Rend_SpriteRegister(void);
 void            Rend_DrawMasked(void);

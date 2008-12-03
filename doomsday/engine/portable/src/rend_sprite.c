@@ -58,8 +58,6 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean willRenderSprites;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int spriteLight = 4;
@@ -68,6 +66,8 @@ float maxSpriteAngle = 60;
 // If true - use the "no translucency" blending mode for sprites/masked walls
 byte noSpriteTrans = false;
 int useSpriteAlpha = 1;
+
+byte devNoSprites = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -84,6 +84,7 @@ void Rend_SpriteRegister(void)
     C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
     C_VAR_INT("rend-sprite-noz", &noSpriteZWrite, 0, 0, 1);
     C_VAR_BYTE("rend-sprite-precache", &precacheSprites, 0, 0, 1);
+    C_VAR_BYTE("rend-dev-nosprite", &devNoSprites, CVF_NO_ARCHIVE, 0, 1);
 }
 
 static __inline void renderQuad(gl_vertex_t *v, gl_color_t *c,
@@ -800,7 +801,7 @@ void Rend_DrawMasked(void)
     boolean             haloDrawn = false;
     vissprite_t*        spr;
 
-    if(!willRenderSprites)
+    if(devNoSprites)
         return;
 
     R_SortVisSprites();
@@ -813,7 +814,6 @@ void Rend_DrawMasked(void)
         {
             switch(spr->type)
             {
-            case VSPR_HIDDEN: // Fall through.
             default:
                 break;
 
