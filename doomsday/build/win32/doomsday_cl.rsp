@@ -134,7 +134,7 @@
  ./../../engine/portable/src/sys_filein.c
  ./../../engine/portable/src/sys_direc.c
  ./../../engine/win32/src/sys_console.c
- ./../../engine/portable/src/b_class.c
+ ./../../engine/portable/src/b_context.c
  ./../../engine/portable/src/b_command.c
  ./../../engine/portable/src/b_device.c
  ./../../engine/portable/src/b_main.c

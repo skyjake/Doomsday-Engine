@@ -1424,7 +1424,7 @@ static boolean B_GetBindClassIDbyName(const char *name, uint *id)
 }
 #endif
 
-void DD_AddBindClass(bindcontext_t *newbc)
+void DD_AddBindClass(struct bindcontext_s* newbc)
 {
     /*
     uint        i, j, k;
@@ -1486,7 +1486,7 @@ boolean DD_SetBindClass(uint classID, uint type)
 {
     // Creation of user bind classes not implemented yet so there is no
     // offset.
-    return B_SetBindClass(classID, type);
+    return true;
 }
 
 /*

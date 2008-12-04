@@ -168,8 +168,8 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\include\b_class.h" />
 		<Unit filename="..\..\engine\portable\include\b_command.h" />
+		<Unit filename="..\..\engine\portable\include\b_context.h" />
 		<Unit filename="..\..\engine\portable\include\b_device.h" />
 		<Unit filename="..\..\engine\portable\include\b_main.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_edge.h" />
@@ -342,10 +342,10 @@
 		<Unit filename="..\..\engine\portable\include\ui_main.h" />
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
-		<Unit filename="..\..\engine\portable\src\b_class.c">
+		<Unit filename="..\..\engine\portable\src\b_command.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\b_command.c">
+		<Unit filename="..\..\engine\portable\src\b_context.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\b_device.c">

@@ -296,8 +296,7 @@ static void SBE_Begin(void)
     gameDrawHUD = false;
     editActive = true;
     editGrabbed = -1;
-    // Enable the biaseditor binding class
-    B_SetBindClass(DDBC_BIASEDITOR, 1);
+
     Con_Printf("Bias light editor: ON\n");
 }
 
@@ -306,8 +305,7 @@ static void SBE_End(void)
     // Advise the game it can safely draw any HUD displays again
     gameDrawHUD = true;
     editActive = false;
-    // Disable the biaseditor binding class
-    B_SetBindClass(DDBC_BIASEDITOR, 0);
+
     Con_Printf("Bias light editor: OFF\n");
 }
 
