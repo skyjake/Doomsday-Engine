@@ -216,8 +216,8 @@ static void drawMessage(void)
         }
 
         x = 160 - M_StringWidth(string, huFontA) / 2;
-        M_WriteText2(x, y, string, huFontA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1);
+        M_WriteText3(x, y, string, huFontA, cfg.menuColor2[0],
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
 
         y += huFontA[17].height;
     }
@@ -227,15 +227,15 @@ static void drawMessage(void)
     case MSG_ANYKEY:
         x = 160 - M_StringWidth(PRESSKEY, huFontA) / 2;
         y += huFontA[17].height;
-        M_WriteText2(x, y, PRESSKEY, huFontA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1);
+        M_WriteText3(x, y, PRESSKEY, huFontA, cfg.menuColor2[0],
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
         break;
 
     case MSG_YESNO:
         x = 160 - M_StringWidth(yesNoMessage, huFontA) / 2;
         y += huFontA[17].height;
-        M_WriteText2(x, y, yesNoMessage, huFontA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1);
+        M_WriteText3(x, y, yesNoMessage, huFontA, cfg.menuColor2[0],
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
         break;
 
     default:
@@ -334,6 +334,8 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
 
     if(msgType == MSG_YESNO)
         composeYesNoMessage();
+
+    typeInTime = 0;
 
     // If the console is open, close it. This message must be noticed!
     Con_Open(false);
