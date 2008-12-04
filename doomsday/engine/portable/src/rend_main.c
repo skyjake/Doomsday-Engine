@@ -1556,12 +1556,15 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         pTU[TU_INTER].tex = interTex.id;
         pTU[TU_INTER].magMode = interTex.magMode;
-        pTU[TU_INTER].scale[0] = (p->texFlipH? -1.f : 1.f) / p->blendMat->width;
-        pTU[TU_INTER].scale[1] = (p->texFlipV? -1.f : 1.f) / p->blendMat->height;
-        pTU[TU_INTER].offset[0] = p->texOffset[0] / p->blendMat->width;
-        pTU[TU_INTER].offset[1] =
-            (p->isWall? p->texOffset[1] : -p->texOffset[1]) / p->blendMat->height;
         pTU[TU_INTER].blend = interPos;
+        if(interTex.id)
+        {
+            pTU[TU_INTER].scale[0] = (p->texFlipH? -1.f : 1.f) / p->blendMat->width;
+            pTU[TU_INTER].scale[1] = (p->texFlipV? -1.f : 1.f) / p->blendMat->height;
+            pTU[TU_INTER].offset[0] = p->texOffset[0] / p->blendMat->width;
+            pTU[TU_INTER].offset[1] =
+                (p->isWall? p->texOffset[1] : -p->texOffset[1]) / p->blendMat->height;
+        }
 
         pTU[TU_INTER_DETAIL].tex = interDetailTex.id;
         pTU[TU_INTER_DETAIL].magMode = interDetailTex.magMode;
@@ -1579,12 +1582,12 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                 (p->isWall? p->texOffset[1] : -p->texOffset[1]) * scale;
         }
 
-        if(p->shinyMat)
+        pTU[TU_SHINY].tex = shinyTex.id;
+        pTU[TU_SHINY].magMode = shinyTex.magMode;
+        pTU[TU_SHINY].blend = 1;
+        if(shinyTex.id)
         {
-            pTU[TU_SHINY].tex = shinyTex.id;
-            pTU[TU_SHINY].magMode = shinyTex.magMode;
             pTU[TU_SHINY].blendMode = p->shinyMat->shiny.blendMode;
-            pTU[TU_SHINY].blend = 1;
 
             pTU[TU_SHINY_MASK].tex = shinyMaskTex.id;
             pTU[TU_SHINY_MASK].magMode = shinyMaskTex.magMode;
@@ -1654,7 +1657,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         rvertex_t           origVerts[4];
         rcolor_t            origColors[4];
         rtexcoord_t         origTexCoords[4];
-        
+
         /**
          * Need to swap indices around into fans set the position
          * of the division vertices, interpolate texcoords and
