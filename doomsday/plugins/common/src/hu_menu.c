@@ -3000,7 +3000,7 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 void M_DoSave(int slot)
 {
     G_SaveGame(slot, savegamestrings[slot]);
-    Hu_MenuCommand(MCMD_CLOSE);
+    Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // Picked a quicksave slot yet?
     if(quickSaveSlot == -2)
