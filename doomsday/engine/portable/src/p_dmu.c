@@ -929,6 +929,7 @@ static void *resolveReferences(void *obj, setargs_t *args)
         case DMU_COLOR_BLUE:
         case DMU_ALPHA:
         case DMU_BLENDMODE:
+        case DMU_FLAGS:
             ptr = &((plane_t*) ptr)->surface;
             args->type = DMU_SURFACE;
             break;
