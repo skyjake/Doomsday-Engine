@@ -235,16 +235,6 @@ inf = Params: bindevent (event-descriptor) (command)\nExamples:\n  bindevent "ke
 [bindcontrol]
 desc = Bind an input device to a player control.
 
-
-#[bind]
-#desc = Bind a console command to an event.
-
-#[bindr]
-#desc = Bind a console command to an event (keys with repeat).
-
-#[bindaxis]
-#desc = Bind a device axis to an axis control.
-
 [bledit]
 desc = Enter bias light edit mode.
 

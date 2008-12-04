@@ -70,7 +70,7 @@ D_CMD(DefaultBindings);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     symbolicEchoMode = false;
+int symbolicEchoMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -177,9 +177,9 @@ void B_Init(void)
         return;
     }
 
-    B_NewContext(DEFAULT_BINDING_CLASS_NAME);
+    B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
 
-    // Game classes.
+    // Game contexts.
     // FIXME: Obviously belong to the game, so shouldn't be here.
     B_NewContext("map");
     B_NewContext("map-freepan");
@@ -189,7 +189,7 @@ void B_Init(void)
     B_AcquireKeyboard(B_NewContext("message"), true);
 
     // Binding context for the console.
-    bc = B_NewContext(CONSOLE_BINDING_CLASS_NAME);
+    bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
     B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
@@ -220,8 +220,8 @@ void B_Init(void)
     // Bind all the defaults (of engine & game, everything).
     Con_Executef(CMDS_DDAY, false, "defaultbindings");
 
-    // Enable the classes for the initial state.
-    B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CLASS_NAME), true);
+    // Enable the contexts for the initial state.
+    B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
 }
 
 void B_BindDefaults(void)
@@ -256,7 +256,7 @@ int B_NewIdentifier(void)
     return id;
 }
 
-const char* B_ParseClass(const char* desc, bcontext_t** bc)
+const char* B_ParseContext(const char* desc, bcontext_t** bc)
 {
     ddstring_t*         str = Str_New();
 
@@ -303,10 +303,10 @@ evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
         return NULL;
 
     // The context may be included in the descriptor.
-    eventDesc = B_ParseClass(eventDesc, &bc);
+    eventDesc = B_ParseContext(eventDesc, &bc);
     if(!bc)
     {
-        bc = B_ContextByName(DEFAULT_BINDING_CLASS_NAME);
+        bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
     }
 
     if((b = B_NewCommandBinding(&bc->commandBinds, eventDesc, command)) != NULL)
@@ -364,7 +364,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     bc = B_ContextByName(control->bindContextName);
     if(!bc)
     {
-        bc = B_ContextByName(DEFAULT_BINDING_CLASS_NAME);
+        bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
     }
     VERBOSE( Con_Message("B_BindControl: Control '%s' in context '%s' of local player %i to be "
                          "bound to '%s'.\n", control->name, bc->name, localNum, device) );
@@ -1424,71 +1424,6 @@ static boolean B_GetBindClassIDbyName(const char *name, uint *id)
 }
 #endif
 
-void DD_AddBindClass(struct bindcontext_s* newbc)
-{
-    /*
-    uint        i, j, k;
-    bindcontext_t *added;
-
-    VERBOSE2(Con_Printf("DD_AddBindClass: %s.\n", newbc->name));
-
-    if(B_GetBindClassIDbyName(newbc->name, NULL))
-        Con_Error("DD_AddBindClass: Cannot register. A bind context by the "
-                  "name '%s' already exists.", newbc->name);
-
-    if(++numBindClasses > maxBindClasses)
-    {
-        // Allocate more memory.
-        maxBindClasses *= 2;
-        if(maxBindClasses < numBindClasses)
-            maxBindClasses = numBindClasses;
-
-        bindContexts = M_Realloc(bindContexts, sizeof(bindcontext_t) * maxBindClasses);
-
-        for(j = 0; j < NUM_INPUT_DEVICES; ++j)
-        {
-            devcontrolbinds_t *devBinds = &devCtrlBinds[j];
-            uint        l;
-
-            for(l = 0; l < NUM_BIND_LISTS; ++l)
-            {
-                binding_t  *bnd = devBinds->binds[l];
-                uint        num = devBinds->numBinds[l];
-
-                for(i = 0; i < num; ++i)
-                {
-                    bnd[i].binds =
-                        M_Realloc(bnd[i].binds, sizeof(bindcontrol_t) * maxBindClasses);
-                    for(k = numBindClasses - 1; k < maxBindClasses; ++k)
-                        bnd[i].binds[k].type = BND_UNUSED;
-                }
-            }
-        }
-    }
-
-    added = &bindContexts[numBindClasses - 1];
-    memcpy(added, newbc, sizeof(bindcontext_t));
-    added->id = numBindClasses - 1;
-
-    // Allocate a copy of the context name.
-    added->name = strdup(newbc->name);
-     */
-}
-
-/**
- * Enables/disables binding classes (wrapper for the game dll).
- *
- * Allows users to create their own binding classes that can be placed
- * anywhere in the bindContext stack without the dll having to keep track of
- * the classIDs.
- */
-boolean DD_SetBindClass(uint classID, uint type)
-{
-    // Creation of user bind classes not implemented yet so there is no
-    // offset.
-    return true;
-}
-
 /*
 static void queEventsForHeldControls(uint deviceID, uint classID)
 {
@@ -1707,12 +1642,13 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
 }
 */
 
+#if 0
 /**
  * Enables/disables binding classes
  * Ques extra input events as required
  */
 boolean B_SetBindClass(unsigned int classID, unsigned int type)
-{/*
+{
     uint        g;
 
     // Change the active state of the bindContext.
@@ -1745,9 +1681,11 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
 
     for(g = 0; g < NUM_INPUT_DEVICES; ++g)
         queEventsForHeldControls(g, classID);
-*/
+
     return true;
 }
+#endif
+
 /*
 static uint writeBindList(FILE *file, binding_t *list, uint num,
                           uint deviceID, uint bindContext)
@@ -1815,11 +1753,11 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
 */
 
 /**
- * Dump all the bindings to a text (cfg) file.  Outputs console commands.
+ * Dump all the bindings to a text (cfg) file. Outputs console commands.
  */
-void B_WriteToFile(FILE *file)
+void B_WriteToFile(FILE* file)
 {
-    int     i;
+    int                 i;
 
     // Start with a clean slate when restoring the bindings.
     fprintf(file, "clearbindings\n\n");
@@ -1834,9 +1772,9 @@ void B_WriteToFile(FILE *file)
  * Return the key code that corresponds the given key identifier name.
  * Part of the Doomsday public API.
  */
-int DD_GetKeyCode(const char *key)
+int DD_GetKeyCode(const char* key)
 {
-    int         code = B_KeyForShortName(key);
+    int                 code = B_KeyForShortName(key);
 
     return (code ? code : key[0]);
 }
@@ -1947,13 +1885,14 @@ static uint printBindList(char *searchKey, uint deviceID, int bindContext,
     return count;
 }*/
 
+#if 0
 /**
  * The "bindaxis" console command creates and deletes axis bindings.
  *
  * Example:  bindaxis bindcontext mouse-y (-)look/2
  */
 D_CMD(BindAxis)
-{/*
+{
     uint        i;
     uint        deviceID, axis;
     boolean     invert = false;
@@ -2054,7 +1993,7 @@ D_CMD(BindAxis)
     ctrl->localPlayer = local;
     ctrl->invert = invert;
     }
-    */
+
     return true;
 }
 
@@ -2062,7 +2001,7 @@ D_CMD(BindAxis)
  * (safe)bind(r) bindcontext +space +jump
  */
 D_CMD(Bind)
-{/*
+{
     boolean     prefixGiven = true;
     boolean     bindContextGiven = false;
     char        validEventName[16], buff[80];
@@ -2207,13 +2146,13 @@ D_CMD(Bind)
 }
 
 D_CMD(DeleteBind)
-{/*
+{
     Con_Printf("%s is not currently implemented\n", argv[0]);
-   */ return true;
+    return true;
 }
 
 D_CMD(ListBindClasses)
-{/*
+{
     uint        k;
 
     // Show the available binding classes
@@ -2222,13 +2161,12 @@ D_CMD(ListBindClasses)
     for(k = 0; k < numBindClasses; ++k)
         Con_Printf("  %s\n", bindContexts[k].name);
 
-   */ return true;
+    return true;
 }
 
 /**
  * List all control bindings for all devices (including inactive devices).
  */
-/*
 D_CMD(ListBindings)
 {
     uint        i, g, comcount, bindContext = 0;
@@ -2296,14 +2234,13 @@ D_CMD(ListBindings)
     }
     return true;
 }
-*/
 
 /**
  * Enables/disables binding classes.
  * Ques extra input events as required.
  */
 D_CMD(EnableBindContext)
-{/*
+{
     uint        i, idx = 0;
     boolean     found;
 
@@ -2340,7 +2277,7 @@ D_CMD(EnableBindContext)
 
     if(B_SetBindClass(idx, (argc == 3)? atoi(argv[2]) : 2))
         return true;
-    else
-        return false;
-*/    return true;
+
+    return false;
 }
+#endif

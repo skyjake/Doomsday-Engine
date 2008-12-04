@@ -1277,7 +1277,7 @@ void Con_Open(int yes)
         ConsoleActive = true;
         ConsoleTime = 0;
 
-        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CLASS_NAME), true);
+        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), true);
     }
     else
     {
@@ -1285,7 +1285,7 @@ void Con_Open(int yes)
         cmdCursor = 0;
         ConsoleActive = false;
 
-        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CLASS_NAME), false);
+        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), false);
     }
 }
 

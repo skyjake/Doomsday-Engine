@@ -29,28 +29,24 @@
 #ifndef __DOOMSDAY_BIND_MAIN_H__
 #define __DOOMSDAY_BIND_MAIN_H__
 
-#define DEFAULT_BINDING_CLASS_NAME  "game"
-#define CONSOLE_BINDING_CLASS_NAME  "console"
+#define DEFAULT_BINDING_CONTEXT_NAME  "game"
+#define CONSOLE_BINDING_CONTEXT_NAME  "console"
 
-void        B_Register(void);
-void        B_Init(void);
-void        B_Shutdown(void);
-boolean     B_Delete(int bid);
-boolean     B_Responder(ddevent_t *ev);
-void        B_WriteToFile(FILE *file);
+void            B_Register(void);
+void            B_Init(void);
+void            B_Shutdown(void);
+boolean         B_Delete(int bid);
+boolean         B_Responder(ddevent_t* ev);
+void            B_WriteToFile(FILE* file);
 
 struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
 struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
-struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bclass_s** bContext);
-
-void        DD_AddBindClass(struct bindcontext_s *);
-boolean     B_SetBindClass(uint classID, uint type);
-
+struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control,
+                                              struct bclass_s** bContext);
 // Utils
-// TODO: move to b_util.h
+//// \todo: move to b_util.h
 int         B_NewIdentifier(void);
-const char *B_ShortNameForKey(int ddkey);
-int         B_KeyForShortName(const char *key);
-int         DD_GetKeyCode(const char *key);
-
+const char* B_ShortNameForKey(int ddkey);
+int         B_KeyForShortName(const char* key);
+int         DD_GetKeyCode(const char* key);
 #endif

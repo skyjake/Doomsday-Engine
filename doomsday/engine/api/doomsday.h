@@ -145,8 +145,6 @@ extern          "C" {
     int             B_BindingsForCommand(const char* cmd, char* buf, int bufSize);
     int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse,
                                          char* buf, int bufSize);
-    void            DD_AddBindClass(struct bindcontext_s* bindContext);
-    boolean         DD_SetBindClass(unsigned int classID, int type);
 
     // System.
     void            Sys_TicksPerSecond(float num);
