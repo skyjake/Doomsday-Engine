@@ -1260,7 +1260,7 @@ cvar_t menuCVars[] =
     {"menu-colorb-g", 0, CVT_FLOAT, &cfg.menuColor2[1], 0, 1},
     {"menu-colorb-b", 0, CVT_FLOAT, &cfg.menuColor2[2], 0, 1},
     {"menu-glitter", 0, CVT_FLOAT, &cfg.menuGlitter, 0, 1},
-    {"menu-fog", 0, CVT_INT, &cfg.menuFog, 0, 4},
+    {"menu-fog", 0, CVT_INT, &cfg.hudFog, 0, 4},
     {"menu-shadow", 0, CVT_FLOAT, &cfg.menuShadow, 0, 1},
     {"menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 2},
     {"menu-slam", 0, CVT_BYTE, &cfg.menuSlam, 0, 1},

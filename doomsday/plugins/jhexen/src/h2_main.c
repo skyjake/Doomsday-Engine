@@ -278,7 +278,7 @@ void G_PreInit(void)
     cfg.menuColor2[1] = defFontRGB2[1];
     cfg.menuColor2[2] = defFontRGB2[2];
     cfg.menuEffects = 1;
-    cfg.menuFog = 4;
+    cfg.hudFog = 4;
     cfg.menuSlam = true;
     cfg.flashColor[0] = 1.0f;
     cfg.flashColor[1] = .5f;

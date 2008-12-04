@@ -394,7 +394,7 @@ void G_PreInit(void)
     cfg.weaponOrder[7] = WT_FIRST;      // staff \ beak
 
     cfg.menuEffects = 1;
-    cfg.menuFog = 4;
+    cfg.hudFog = 4;
 
     cfg.ringFilter = 1;
     cfg.tomeCounter = 10;

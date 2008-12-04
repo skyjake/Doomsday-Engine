@@ -84,18 +84,18 @@ typedef struct {
     boolean         alignRight;
 } column_t;
 
-typedef struct menufoglayer_s {
+typedef struct fogeffectlayer_s {
     float           texOffset[2];
     float           texAngle;
     float           posAngle;
-} menufoglayer_t;
+} fogeffectlayer_t;
 
-typedef struct menufogdata_s {
+typedef struct fogeffectdata_s {
     DGLuint         texture;
-    menufoglayer_t  layers[2];
+    fogeffectlayer_t layers[2];
     float           joinY;
     boolean         scrollDir;
-} menufogdata_t;
+} fogeffectdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -139,8 +139,8 @@ static dpatch_t borderPatches[8];
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-static boolean menuFogActive = false;
-static menufogdata_t menuFogData;
+static boolean fogEffectActive = false;
+static fogeffectdata_t fogEffectData;
 
 // Code -------------------------------------------------------------------
 
@@ -192,22 +192,22 @@ void Hu_LoadData(void)
 #endif
 
     // Intialize the background fog effect.
-    menuFogData.texture = 0;
-    menuFogData.joinY = 0.5f;
-    menuFogData.scrollDir = true;
-    menuFogData.layers[0].texOffset[VX] =
-        menuFogData.layers[0].texOffset[VY] = 0;
-    menuFogData.layers[0].texAngle = 93;
-    menuFogData.layers[0].posAngle = 35;
-    menuFogData.layers[1].texOffset[VX] =
-        menuFogData.layers[1].texOffset[VY] = 0;
-    menuFogData.layers[1].texAngle = 12;
-    menuFogData.layers[1].posAngle = 77;
+    fogEffectData.texture = 0;
+    fogEffectData.joinY = 0.5f;
+    fogEffectData.scrollDir = true;
+    fogEffectData.layers[0].texOffset[VX] =
+        fogEffectData.layers[0].texOffset[VY] = 0;
+    fogEffectData.layers[0].texAngle = 93;
+    fogEffectData.layers[0].posAngle = 35;
+    fogEffectData.layers[1].texOffset[VX] =
+        fogEffectData.layers[1].texOffset[VY] = 0;
+    fogEffectData.layers[1].texAngle = 12;
+    fogEffectData.layers[1].posAngle = 77;
 
     // Load the background fog texture.
-    if(!menuFogData.texture && !Get(DD_NOVIDEO))
+    if(!fogEffectData.texture && !Get(DD_NOVIDEO))
     {
-        menuFogData.texture =
+        fogEffectData.texture =
             GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64,
                                      W_CacheLumpName("menufog", PU_CACHE),
                                      0, DGL_NEAREST, DGL_LINEAR,
@@ -380,9 +380,9 @@ void Hu_UnloadData(void)
 
     if(!Get(DD_NOVIDEO))
     {
-        if(menuFogData.texture)
-            DGL_DeleteTextures(1, (DGLuint*) &menuFogData.texture);
-        menuFogData.texture = 0;
+        if(fogEffectData.texture)
+            DGL_DeleteTextures(1, (DGLuint*) &fogEffectData.texture);
+        fogEffectData.texture = 0;
     }
 }
 
@@ -1164,7 +1164,7 @@ void Hu_Ticker(void)
  */
 void Hu_FogEffectTicker(timespan_t time)
 {
-#define fog                 (&menuFogData)
+#define fog                 (&fogEffectData)
 #define FOGALPHA_FADE_STEP (.07f)
 
     int                 i;
@@ -1174,15 +1174,15 @@ void Hu_FogEffectTicker(timespan_t time)
     if(!M_RunTrigger(&fixed, time))
         return;
 
-    menuFogActive = Hu_IsMessageActive() ||
+    fogEffectActive = Hu_IsMessageActive() ||
         ((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) && !MN_CurrentMenuHasBackground());
 
-    if(!menuFogActive)
+    if(!fogEffectActive)
         return;
 
     for(i = 0; i < 2; ++i)
     {
-        if(cfg.menuFog == 1)
+        if(cfg.hudFog == 1)
         {
             fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
             fog->layers[i].posAngle -= MENUFOGSPEED[!i];
@@ -1203,7 +1203,7 @@ void Hu_FogEffectTicker(timespan_t time)
     }
 
     // Calculate the height of the menuFog 3 Y join
-    if(cfg.menuFog == 3)
+    if(cfg.hudFog == 3)
     {
         if(fog->scrollDir && fog->joinY > 0.46f)
             fog->joinY = fog->joinY / 1.002f;
@@ -1229,9 +1229,9 @@ int MN_FilterChar(int ch)
     return ch;
 }
 
-void MN_TextFilter(char *text)
+void MN_TextFilter(char* text)
 {
-    int         k;
+    int                 k;
 
     for(k = 0; text[k]; ++k)
     {
@@ -1242,10 +1242,10 @@ void MN_TextFilter(char *text)
 /**
  * Expected: <whitespace> = <whitespace> <float>
  */
-float WI_ParseFloat(char **str)
+float WI_ParseFloat(char** str)
 {
-    float       value;
-    char       *end;
+    float               value;
+    char*               end;
 
     *str = M_SkipWhite(*str);
     if(**str != '=')
@@ -2001,15 +2001,14 @@ void Draw_EndZoom(void)
 }
 
 /**
- * Draws a 'fancy' fullscreen fog effect. Used by the menu.
- *
- * \fixme A bit of a mess really...
+ * Draws a 'fancy' fullscreen fog effect. Used as a background to various
+ * HUD displays.
  */
 void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
                       float texAngle, float alpha, float arg1)
 {
-    const float     xscale = 2.0f;
-    const float     yscale = 1.0f;
+    const float         xscale = 2.0f;
+    const float         yscale = 1.0f;
 
     if(alpha <= 0)
         return;
@@ -2120,18 +2119,18 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
 
 static void drawFogEffect(void)
 {
-#define mfd                 (&menuFogData)
+#define mfd                 (&fogEffectData)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
     // Two layers.
-    Hu_DrawFogEffect(cfg.menuFog, mfd->texture,
+    Hu_DrawFogEffect(cfg.hudFog, mfd->texture,
                      mfd->layers[0].texOffset, mfd->layers[0].texAngle,
-                     1, menuFogData.joinY);
-    Hu_DrawFogEffect(cfg.menuFog, mfd->texture,
+                     1, fogEffectData.joinY);
+    Hu_DrawFogEffect(cfg.hudFog, mfd->texture,
                      mfd->layers[1].texOffset, mfd->layers[1].texAngle,
-                     1, menuFogData.joinY);
+                     1, fogEffectData.joinY);
 
     // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2151,7 +2150,7 @@ void Hu_Drawer(void)
         DGL_Ortho(0, 0, 320, 200, -1, 1);
 
         // Draw the fog effect?
-        if(menuFogActive)
+        if(fogEffectActive)
             drawFogEffect();
 
         if(Hu_IsMessageActive())

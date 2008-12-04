@@ -148,7 +148,7 @@ typedef struct {
     int             mapTitle;
     float           menuScale;
     int             menuEffects;
-    int             menuFog;
+    int             hudFog;
     float           menuGlitter;
     float           menuShadow;
     float           flashColor[3];

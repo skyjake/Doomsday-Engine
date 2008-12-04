@@ -86,7 +86,7 @@ typedef struct jdoom_config_s {
     byte            echoMsg;
     float           menuScale;
     int             menuEffects;
-    int             menuFog;
+    int             hudFog;
     float           menuGlitter;
     float           menuShadow;
     int             menuQuitSound;
