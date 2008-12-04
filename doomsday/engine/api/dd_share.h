@@ -618,6 +618,8 @@ enum /* Do not change the numerical values of the constants! */
 // Surface flags:
 // For use with P_Set/Get(DMU_SURFACE, n, DMU_FLAGS).
 #define DDSUF_GLOW              0x00000001 // Surface glows (fully bright).
+#define DDSUF_MATERIAL_FLIPH    0x00000002 // Surface material is flipped horizontally.
+#define DDSUF_MATERIAL_FLIPV    0x00000004 // Surface material is flipped vertically.
 
 // Map Update status code constants.
 // Sent to the game when various map update events occur.
