@@ -1668,6 +1668,7 @@ typedef enum {
     TXT_KEY4,
     TXT_KEY5,
     TXT_KEY6,
+    TXT_SAVEOUTMAP,
     NUMTEXT
 } textenum_t;
 

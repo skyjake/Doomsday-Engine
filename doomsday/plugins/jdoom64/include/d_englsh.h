@@ -45,6 +45,7 @@
 #define QLOADNET            GET_TXT(TXT_QLOADNET)
 #define QSAVESPOT           GET_TXT(TXT_QSAVESPOT)
 #define SAVEDEAD            GET_TXT(TXT_SAVEDEAD)
+#define SAVEOUTMAP          GET_TXT(TXT_SAVEOUTMAP)
 #define QSPROMPT            GET_TXT(TXT_QSPROMPT)
 #define QLPROMPT            GET_TXT(TXT_QLPROMPT)
 

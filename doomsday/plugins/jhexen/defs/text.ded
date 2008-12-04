@@ -631,3 +631,8 @@ Text {
   ID = "AMSTR_MARKSCLEARED";
   Text = "All marks cleared";
 }
+
+Text {
+  ID = "SAVEOUTMAP";
+  Text = "You can't save if you aren't in a map!\n\nPress a key.";
+}

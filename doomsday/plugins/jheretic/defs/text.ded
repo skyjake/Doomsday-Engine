@@ -823,3 +823,8 @@ Text {
   ID = "KEY3";
   Text = "Blue Key";
 }
+
+Text {
+  ID = "SAVEOUTMAP";
+  Text = "You can't save if you aren't in a map!\n\nPress a key.";
+}

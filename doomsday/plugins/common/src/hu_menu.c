@@ -3035,10 +3035,16 @@ static void M_QuickSave(void)
 {
     player_t*               player = &players[CONSOLEPLAYER];
 
-    if(player->playerState == PST_DEAD || G_GetGameState() != GS_MAP ||
+    if(player->playerState == PST_DEAD ||
        Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);
+        return;
+    }
+
+    if(G_GetGameState() != GS_MAP)
+    {
+        M_StartMessage(SAVEOUTMAP, NULL, false);
         return;
     }
 
@@ -3762,7 +3768,7 @@ void M_HUDBlue(int option, void *data)
 }
 #endif
 
-void M_LoadGame(int option, void *data)
+void M_LoadGame(int option, void* data)
 {
     if(IS_CLIENT && !Get(DD_PLAYBACK))
     {
@@ -3778,14 +3784,19 @@ void M_LoadGame(int option, void *data)
  * Called via the menu or the control bindings mechanism when the player
  * wishes to save their game.
  */
-void M_SaveGame(int option, void *data)
+void M_SaveGame(int option, void* data)
 {
-    player_t *player = &players[CONSOLEPLAYER];
+    player_t*           player = &players[CONSOLEPLAYER];
 
-    if(player->playerState == PST_DEAD || G_GetGameState() != GS_MAP ||
-       Get(DD_PLAYBACK))
+    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);
+        return;
+    }
+
+    if(G_GetGameState() != GS_MAP)
+    {
+        M_StartMessage(SAVEOUTMAP, NULL, false);
         return;
     }
 

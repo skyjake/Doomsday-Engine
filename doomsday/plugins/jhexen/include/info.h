@@ -3721,7 +3721,8 @@ typedef enum {
     TXT_AMSTR_GRIDOFF,
     TXT_AMSTR_MARKEDSPOT,
     TXT_AMSTR_MARKSCLEARED,
-    NUMTEXT                           // 150
+    TXT_SAVEOUTMAP,
+    NUMTEXT
 } textenum_t;
 
 #endif
