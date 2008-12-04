@@ -363,6 +363,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol mappanx key-left-inverse",
 
         // UI events:
+        "bindevent shortcut:key-esc menu",
 #if !__JDOOM64__
         "bindevent shortcut:key-f1 helpscreen",
 #endif
@@ -389,8 +390,6 @@ DEFCC( CCmdDefaultGameBinds )
 #endif
 
         // Menu events:
-        "bindevent key-esc menu",
-        "bindevent menu:key-esc menu",
         "bindevent menu:key-backspace menucancel",
         "bindevent menu:key-up menuup",
         "bindevent menu:key-up-repeat menuup",
