@@ -46,7 +46,7 @@
 #include "dmu_lib.h"
 #include "d_netsv.h"
 #include "d_net.h"
-#include "hu_msg.h"
+#include "hu_log.h"
 #include "p_map.h"
 #include "g_common.h"
 #include "p_actor.h"

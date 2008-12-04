@@ -39,7 +39,7 @@
 #include "m_argv.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
-#include "hu_msg.h"
+#include "hu_log.h"
 #include "p_saveg.h"
 #include "p_mapspec.h"
 #include "p_switch.h"

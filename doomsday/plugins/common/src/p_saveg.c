@@ -67,7 +67,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
-#include "hu_msg.h"
+#include "hu_log.h"
 
 // MACROS ------------------------------------------------------------------
 

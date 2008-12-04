@@ -105,7 +105,7 @@
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\hu_menu.h" />
-		<Unit filename="..\..\plugins\common\include\hu_msg.h" />
+		<Unit filename="..\..\plugins\common\include\hu_log.h" />
 		<Unit filename="..\..\plugins\common\include\hu_pspr.h" />
 		<Unit filename="..\..\plugins\common\include\hu_stuff.h" />
 		<Unit filename="..\..\plugins\common\include\m_argv.h" />
@@ -175,7 +175,7 @@
 		<Unit filename="..\..\plugins\common\src\hu_menu.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\hu_msg.c">
+		<Unit filename="..\..\plugins\common\src\hu_log.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\hu_pspr.c">

@@ -52,7 +52,7 @@
 #endif
 
 #include "hu_stuff.h"
-#include "hu_msg.h"
+#include "hu_log.h"
 #include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------

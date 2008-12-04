@@ -273,7 +273,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\hu_msg.h"
+				RelativePath="..\..\..\plugins\common\include\hu_log.h"
 				>
 			</File>
 			<File
@@ -449,11 +449,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\hu_menu.c"
+				RelativePath="..\..\..\plugins\common\src\hu_log.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\hu_msg.c"
+				RelativePath="..\..\..\plugins\common\src\hu_menu.c"
 				>
 			</File>
 			<File

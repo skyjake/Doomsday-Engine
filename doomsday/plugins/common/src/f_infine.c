@@ -44,7 +44,7 @@
 #  include "jstrife.h"
 #endif
 
-#include "hu_msg.h"
+#include "hu_log.h"
 #include "hu_stuff.h"
 #include "f_infine.h"
 #include "g_common.h"

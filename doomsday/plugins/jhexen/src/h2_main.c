@@ -38,7 +38,7 @@
 
 #include "jhexen.h"
 
-#include "hu_msg.h"
+#include "hu_log.h"
 #include "hu_menu.h"
 #include "d_net.h"
 #include "g_update.h"
