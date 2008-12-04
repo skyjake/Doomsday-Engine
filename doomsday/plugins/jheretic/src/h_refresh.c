@@ -28,12 +28,13 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
+#include <string.h>
 
 #include "jheretic.h"
 
 #include "hu_stuff.h"
 #include "hu_menu.h"
+#include "hu_msg.h"
 #include "hu_pspr.h"
 #include "am_map.h"
 #include "g_common.h"
@@ -379,15 +380,15 @@ void H_Display2(void)
     // InFine is drawn whenever active.
     FI_Drawer();
 
-    // The menu is drawn whenever active.
-    Hu_MenuDrawer();
+    // Draw HUD displays; menu, messages.
+    Hu_Drawer();
 }
 
 /**
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.
  */
-void R_SetDoomsdayFlags(mobj_t *mo)
+void R_SetDoomsdayFlags(mobj_t* mo)
 {
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
@@ -451,8 +452,8 @@ void R_SetDoomsdayFlags(mobj_t *mo)
  */
 void R_SetAllDoomsdayFlags(void)
 {
-    uint        i;
-    mobj_t     *iter;
+    uint                i;
+    mobj_t*             iter;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)

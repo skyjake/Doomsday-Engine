@@ -29,8 +29,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "jhexen.h"
@@ -42,6 +40,7 @@
 #include "am_map.h"
 #include "g_common.h"
 #include "hu_menu.h"
+#include "hu_msg.h"
 #include "x_hair.h"
 #include "p_tick.h"
 
@@ -99,7 +98,7 @@ void R_DrawMapTitle(void)
 {
     float               alpha = 1;
     int                 y = 12;
-    char               *lname, *lauthor;
+    char*               lname, *lauthor;
 
     if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
@@ -348,8 +347,8 @@ void G_Display2(void)
     // InFine is drawn whenever active.
     FI_Drawer();
 
-    // The menu is drawn whenever active.
-    Hu_MenuDrawer();
+    // Draw HUD displays; menu, messages.
+    Hu_Drawer();
 }
 
 int R_GetFilterColor(int filter)
@@ -398,9 +397,9 @@ void H2_EndFrame(void)
  */
 void R_SetAllDoomsdayFlags(void)
 {
-    uint                    i;
-    int                     Class;
-    mobj_t                 *mo;
+    uint                i;
+    int                 Class;
+    mobj_t*             mo;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)

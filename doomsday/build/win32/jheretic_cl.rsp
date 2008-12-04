@@ -40,6 +40,7 @@
  ./../../plugins/common/src/st_lib.c
  ./../../plugins/common/src/hu_lib.c
  ./../../plugins/common/src/hu_log.c
+ ./../../plugins/common/src/hu_msg.c
  ./../../plugins/common/src/am_map.c
  ./../../plugins/common/src/am_rendlist.c
  ./../../plugins/jheretic/src/g_ctrl.c

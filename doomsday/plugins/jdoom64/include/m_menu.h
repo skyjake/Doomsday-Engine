@@ -37,10 +37,6 @@
 #include "hu_stuff.h"
 
 void            M_LoadData(void);
-void            M_UnloadData(void);
-
-void            M_StartMessage(char *string, void *routine, boolean input);
-void            M_StopMessage(void);
 
 boolean         MN_CurrentMenuHasBackground(void);
 

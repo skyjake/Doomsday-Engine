@@ -12,6 +12,7 @@
  ./../../plugins/common/src/hu_lib.c
  ./../../plugins/common/src/hu_log.c
  ./../../plugins/common/src/hu_menu.c
+ ./../../plugins/common/src/hu_msg.c
  ./../../plugins/common/src/hu_pspr.c
  ./../../plugins/common/src/hu_stuff.c
  ./../../plugins/common/src/m_fixed.c

@@ -46,6 +46,7 @@
 #define QSAVESPOT           GET_TXT(TXT_QSAVESPOT)
 #define SAVEDEAD            GET_TXT(TXT_SAVEDEAD)
 #define SAVEOUTMAP          GET_TXT(TXT_SAVEOUTMAP)
+#define SAVENET             GET_TXT(TXT_SAVENET)
 #define QSPROMPT            GET_TXT(TXT_QSPROMPT)
 #define QLPROMPT            GET_TXT(TXT_QLPROMPT)
 #define NEWGAME             GET_TXT(TXT_NEWGAME)
@@ -55,6 +56,11 @@
 #define MSGON               GET_TXT(TXT_MSGON)
 #define NETEND              GET_TXT(TXT_NETEND)
 #define ENDGAME             GET_TXT(TXT_ENDGAME)
+#define ENDNOGAME           GET_TXT(TXT_ENDNOGAME)
+
+#define SUICIDEOUTMAP        GET_TXT(TXT_SUICIDEOUTMAP)
+#define SUICIDEASK          GET_TXT(TXT_SUICIDEASK)
+
 #define DOSY                GET_TXT(TXT_DOSY)
 #define DETAILHI            GET_TXT(TXT_DETAILHI)
 #define DETAILLO            GET_TXT(TXT_DETAILLO)

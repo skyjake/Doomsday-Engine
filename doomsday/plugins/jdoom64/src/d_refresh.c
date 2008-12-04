@@ -37,6 +37,7 @@
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_pspr.h"
+#include "hu_msg.h"
 #include "am_map.h"
 #include "g_common.h"
 #include "r_common.h"
@@ -50,8 +51,6 @@
 // MACROS ------------------------------------------------------------------
 
 #define WINDOWHEIGHT        (Get(DD_VIEWWINDOW_HEIGHT))
-#define SIZEFACT            (4)
-#define SIZEFACT2           (16)
 
 // TYPES -------------------------------------------------------------------
 
@@ -59,7 +58,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    R_SetAllDoomsdayFlags();
+void            R_SetAllDoomsdayFlags(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -68,8 +67,6 @@ void    R_SetAllDoomsdayFlags();
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int setdetail;
 
 // CODE --------------------------------------------------------------------
 
@@ -398,15 +395,15 @@ void D_Display2(void)
     // InFine is drawn whenever active.
     FI_Drawer();
 
-    // The menu is drawn whenever active.
-    Hu_MenuDrawer();
+    // Draw HUD displays; menu, messages.
+    Hu_Drawer();
 }
 
 /**
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.
  */
-void P_SetDoomsdayFlags(mobj_t *mo)
+void P_SetDoomsdayFlags(mobj_t* mo)
 {
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
@@ -477,7 +474,7 @@ void R_SetAllDoomsdayFlags(void)
 {
     int                 i;
     int                 count = DD_GetInteger(DD_SECTOR_COUNT);
-    mobj_t             *iter;
+    mobj_t*             iter;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < count; ++i)

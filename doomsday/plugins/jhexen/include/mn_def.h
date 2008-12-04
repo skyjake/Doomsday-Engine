@@ -106,9 +106,6 @@ void        M_StartControlPanel(void);
 void            M_DrawSaveLoadBorder(int x, int y, int width);
 void        M_WriteMenuText(const menu_t *menu, int index, const char *text);
 
-void        M_StartMessage(char *string, void *routine, boolean input);
-void        M_StopMessage(void);
-
 // Color widget.
 void        DrawColorWidget();
 void        SCColorWidget(int index, void *data);

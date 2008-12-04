@@ -38,6 +38,7 @@
 #include "am_map.h"
 #include "g_common.h"
 #include "hu_menu.h"
+#include "hu_msg.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -633,23 +634,14 @@ void Cht_SuicideFunc(player_t *plyr)
     P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000, false);
 }
 
-boolean SuicideResponse(int option, void *data)
+int Cht_SuicideResponse(msgresponse_t response, void* context)
 {
-    if(messageResponse == 1) // Yes
+    if(response == MSG_YES)
     {
-        M_StopMessage();
-        Hu_MenuCommand(MCMD_CLOSE);
         Cht_SuicideFunc(&players[CONSOLEPLAYER]);
-        return true;
-    }
-    else if(messageResponse == -1 || messageResponse == -2)
-    {
-        M_StopMessage();
-        Hu_MenuCommand(MCMD_CLOSE);
-        return true;
     }
 
-    return false;
+    return true;
 }
 
 static void CheatWeaponsFunc(player_t *player, cheat_t *cheat)
@@ -978,25 +970,22 @@ DEFCC(CCmdCheatClip)
 
 DEFCC(CCmdCheatSuicide)
 {
-    if(G_GetGameState() != GS_MAP)
+    if(G_GetGameState() == GS_MAP)
     {
-        S_LocalSound(SFX_CHAT, NULL);
-        Con_Printf("Can only suicide when in a game!\n");
-        return true;
-    }
-
-    if(IS_NETGAME)
-    {
-        NetCl_CheatRequest("suicide");
+        if(IS_NETGAME)
+        {
+            NetCl_CheatRequest("suicide");
+        }
+        else
+        {   // When not in a netgame we'll ask the player to confirm.
+            Hu_MsgStart(MSG_YESNO, SUICIDEASK, Cht_SuicideResponse, NULL);
+        }
     }
     else
     {
-        // When not in a netgame we'll ask the player to confirm.
-        Con_Open(false);
-        Hu_MenuCommand(MCMD_CLOSE);
-        M_StartMessage("Are you sure you want to suicide?\n\nPress Y or N.",
-                       SuicideResponse, true);
+        Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, NULL);
     }
+
     return true;
 }
 

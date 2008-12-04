@@ -46,11 +46,6 @@ enum {
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE         (HU_FONTEND - HU_FONTSTART + 1)
 
-#define HU_BROADCAST        (5)
-
-#define HU_TITLEX           (0)
-#define HU_TITLEY           (167 - huFont[0].height)
-
 typedef enum border_e {
     BORDERUP = 1,
     BORDERDOWN
@@ -72,9 +67,7 @@ extern dpatch_t m_pause; // Paused graphic.
 extern dpatch_t* episodeNamePatches;
 #endif
 
-extern boolean messageNoEcho;
 extern int typeInTime;
-extern boolean chatOn;
 
 #if __JDOOM__
 // Plutonia and TNT map names.
@@ -82,8 +75,9 @@ extern char *mapNamesPlut[32], *mapNamesTNT[32];
 #endif
 
 void            Hu_LoadData(void);
-
+void            Hu_Drawer(void);
 void            Hu_Ticker(void);
+void            Hu_FogEffectTicker(timespan_t time);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
@@ -122,7 +116,7 @@ void        Draw_EndZoom(void);
 void        HU_Register(void);
 
 void        HU_Start(int player);
-void        HU_UnloadData(void);
+void        Hu_UnloadData(void);
 void        HU_Drawer(int player);
 char        HU_dequeueChatChar(void);
 void        HU_Erase(void);

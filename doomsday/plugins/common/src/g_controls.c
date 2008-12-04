@@ -49,6 +49,7 @@
 #include "p_tick.h" // for P_IsPaused()
 #include "d_netsv.h"
 #include "hu_menu.h"
+#include "hu_msg.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -445,7 +446,7 @@ DEFCC( CCmdPause )
 
 void G_SetPause(boolean yes)
 {
-    if(Hu_MenuIsActive())
+    if(Hu_MenuIsActive() || Hu_IsMessageActive())
         return; // No change.
 
     if(yes)

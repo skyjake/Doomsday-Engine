@@ -528,7 +528,7 @@ void G_Shutdown(void)
 {
     uint                i;
 
-    HU_UnloadData();
+    Hu_UnloadData();
 
     for(i = 0; i < MAXPLAYERS; ++i)
         HUMsg_ClearMessages(i);

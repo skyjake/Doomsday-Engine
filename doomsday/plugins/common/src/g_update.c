@@ -172,22 +172,24 @@ void G_UpdateState(int step)
         break;
 
     case DD_RENDER_RESTART_PRE:
-        // Free the menufog texture.
-        M_UnloadData();
-        // Free the automap marker patches.
+        // Free the background fog effect texture.
+        Hu_UnloadData();
+
+        // Free the automap mask texture.
         AM_UnloadData();
         break;
 
     case DD_RENDER_RESTART_POST:
-        // Reload the menufog texture.
-        M_LoadData();
-        // Reload the automap marker patches.
+        // Reload the background fog effect texture.
+        Hu_LoadData();
+
+        // Reload the automap mask texture.
         AM_LoadData();
         break;
     }
 }
 
-static char *ScanWord(char *ptr, char *buf)
+static char* ScanWord(char* ptr, char* buf)
 {
     if(ptr)
     {

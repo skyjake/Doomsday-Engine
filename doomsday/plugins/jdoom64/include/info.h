@@ -1364,7 +1364,6 @@ typedef enum {
     TXT_MSGON,
     TXT_NETEND,
     TXT_ENDGAME,
-    TXT_DOSY,
     TXT_GAMMALVL0,
     TXT_GAMMALVL1,
     TXT_GAMMALVL2,
@@ -1586,6 +1585,9 @@ typedef enum {
     TXT_KEY5,
     TXT_KEY6,
     TXT_SAVEOUTMAP,
+    TXT_ENDNOGAME,
+    TXT_SUICIDEOUTMAP,
+    TXT_SUICIDEASK,
     NUMTEXT
 } textenum_t;
 

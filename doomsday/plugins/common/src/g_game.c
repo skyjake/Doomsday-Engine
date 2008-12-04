@@ -61,6 +61,7 @@
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_log.h"
+#include "hu_msg.h"
 #include "hu_pspr.h"
 #include "g_common.h"
 #include "g_update.h"
@@ -475,7 +476,8 @@ void G_CommonPreInit(void)
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
     HU_Register();              // For the HUD displays.
-    HUMsg_Register();           // For the message buffer/chat widget.
+    HUMsg_Register();           // For the (message) log and chat widget.
+    Hu_MsgRegister();           // For the HUD messages.
     ST_Register();              // For the hud/statusbar.
     X_Register();               // For the crosshair.
 
@@ -740,7 +742,7 @@ boolean G_Responder(event_t *ev)
 #endif
 
     // With the menu active, none of these should respond to input events.
-    if(!Hu_MenuIsActive())
+    if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
         // Try Infine.
         if(FI_Responder(ev))
@@ -840,8 +842,10 @@ void G_Ticker(timespan_t ticLength)
     int                 i;
     gameaction_t        currentAction;
 
-    // The menu always tics.
+    // Always tic:
+    Hu_FogEffectTicker(ticLength);
     Hu_MenuTicker(ticLength);
+    Hu_MsgTicker(ticLength);
 
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;

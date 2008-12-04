@@ -45,8 +45,6 @@ typedef enum menucommand_e {
     MCMD_DELETE
 } menucommand_e;
 
-extern int messageResponse;
-
 void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 

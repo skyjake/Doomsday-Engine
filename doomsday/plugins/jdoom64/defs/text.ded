@@ -12,7 +12,7 @@ Text {
 
 Text {
   ID = "PRESSYN";
-  Text = "Press Y or N.";
+  Text = "Press %1 or %2.";
 }
 
 Text {
@@ -22,37 +22,37 @@ Text {
 
 Text {
   ID = "LOADNET";
-  Text = "You can't load while in a net game!\n\nPress a key.";
+  Text = "You can't load while in a net game!";
 }
 
 Text {
   ID = "QLOADNET";
-  Text = "You can't quickload during a netgame!\n\nPress a key.";
+  Text = "You can't quickload during a netgame!";
 }
 
 Text {
   ID = "QSAVESPOT";
-  Text = "You haven't picked a quicksave slot yet!\n\nPress a key.";
+  Text = "You haven't picked a quicksave slot yet!";
 }
 
 Text {
   ID = "SAVEDEAD";
-  Text = "You can't save if you aren't playing!\n\nPress a key.";
+  Text = "You can't save if you aren't playing!";
 }
 
 Text {
   ID = "QSPROMPT";
-  Text = "Quicksave over your game named\n\n'%s'?\n\nPress Y or N.";
+  Text = "Quicksave over your game named\n\n'%s'?";
 }
 
 Text {
   ID = "QLPROMPT";
-  Text = "Do you want to quickload the game named\n\n'%s'?\n\nPress Y or N.";
+  Text = "Do you want to quickload the game named\n\n'%s'?";
 }
 
 Text {
   ID = "NEWGAME";
-  Text = "You can't start a new game\nwhile in a network game.\n\nPress a key.";
+  Text = "You can't start a new game\nwhile in a network game.";
 }
 
 Text {
@@ -67,17 +67,12 @@ Text {
 
 Text {
   ID = "NETEND";
-  Text = "You can't end a netgame!\n\nPress a key.";
+  Text = "You can't end a netgame!";
 }
 
 Text {
   ID = "ENDGAME";
-  Text = "Are you sure you want to end the game?\n\nPress Y or N.";
-}
-
-Text {
-  ID = "DOSY";
-  Text = "(Press Y to quit)";
+  Text = "Are you sure you want to end the game?";
 }
 
 Text {
@@ -968,12 +963,12 @@ Text {
 
 Text {
   ID = "JOINNET";
-  Text = "You're already in a network game!\n\nPress a key.";
+  Text = "You're already in a network game!";
 }
 
 Text {
   ID = "SAVENET";
-  Text = "You can't save while in a net game!\n\nPress a key.";
+  Text = "You can't save while in a net game!";
 }
 
 Text {
@@ -1203,5 +1198,20 @@ Text {
 
 Text {
   ID = "SAVEOUTMAP";
-  Text = "You can't save if you aren't in a map!\n\nPress a key.";
+  Text = "You can't save if you aren't in a map!";
+}
+
+Text {
+  ID = "ENDNOGAME";
+  Text = "You can't end a game that hasn't even begun!";
+}
+
+Text {
+  ID = "SUICIDEOUTMAP";
+  Text = "You can't suicide if you aren't in a map!";
+}
+
+Text {
+  ID = "SUICIDEASK";
+  Text = "Are you sure you want to suicide?";
 }

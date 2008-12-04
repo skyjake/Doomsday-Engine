@@ -70,6 +70,7 @@
 #define HU_MSGHEIGHT        1          // in lines
 
 #define HU_MSGTIMEOUT       (4*TICRATE)
+#define HU_BROADCAST        (5)
 
 #define MAX_MESSAGES        8
 #define MAX_LINELEN         140
@@ -114,7 +115,6 @@ enum {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 DEFCC(CCmdMsgAction);
-DEFCC(CCmdMsgResponse);
 DEFCC(CCmdLocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -211,7 +211,7 @@ static const char shiftXForm[] = {
     '{', '|', '}', '~', 127
 };
 
-cvar_t msgCVars[] = {
+cvar_t logCVars[] = {
     // Behaviour
     {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
     {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
@@ -249,7 +249,7 @@ cvar_t msgCVars[] = {
 };
 
 // Console commands for the chat widget and message log.
-ccmd_t msegCCmds[] = {
+ccmd_t logCCmds[] = {
     {"chatcancel",      "",     CCmdMsgAction},
     {"chatcomplete",    "",     CCmdMsgAction},
     {"chatdelete",      "",     CCmdMsgAction},
@@ -264,18 +264,17 @@ ccmd_t msegCCmds[] = {
 
 /**
  * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the opperation/look of the message buffer
- * and chat widget.
+ * Register Cvars and CCmds for the opperation/look of the (message) log.
  */
 void HUMsg_Register(void)
 {
     int                 i;
 
-    for(i = 0; msgCVars[i].name; ++i)
-        Con_AddVariable(msgCVars + i);
+    for(i = 0; logCVars[i].name; ++i)
+        Con_AddVariable(logCVars + i);
 
-    for(i = 0; msgCCmds[i].name; ++i)
-        Con_AddCommand(msgCCmds + i);
+    for(i = 0; logCCmds[i].name; ++i)
+        Con_AddCommand(logCCmds + i);
 }
 
 /**

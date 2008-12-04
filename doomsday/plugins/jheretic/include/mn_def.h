@@ -119,8 +119,6 @@ void    MN_DrawSlider(const menu_t * menu, int item, int width, int slot);
 void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
                         float b, float a);
 void    M_StartControlPanel(void);
-void    M_StartMessage(char *string, void *routine, boolean input);
-void    M_StopMessage(void);
 void    M_FloatMod10(float *variable, int option);
 
 

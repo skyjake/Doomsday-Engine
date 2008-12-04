@@ -1695,6 +1695,9 @@ typedef enum {
     TXT_KEY2,
     TXT_KEY3,
     TXT_SAVEOUTMAP,
+    TXT_ENDNOGAME,
+    TXT_SUICIDEOUTMAP,
+    TXT_SUICIDEASK,
     NUMTEXT
 } textenum_t;
 

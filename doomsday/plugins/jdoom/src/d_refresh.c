@@ -6,7 +6,7 @@
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
-
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,10 +29,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jdoom.h"
 
-#include "hu_stuff.h"
 #include "hu_menu.h"
+#include "hu_stuff.h"
 #include "hu_pspr.h"
 #include "am_map.h"
 #include "g_common.h"
@@ -401,8 +403,8 @@ void D_Display2(void)
     // InFine is drawn whenever active.
     FI_Drawer();
 
-    // The menu is drawn whenever active.
-    Hu_MenuDrawer();
+    // Draw HUD displays; menu, messages.
+    Hu_Drawer();
 }
 
 /**

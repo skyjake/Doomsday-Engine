@@ -44,6 +44,7 @@
 #include "g_controls.h"
 #include "p_player.h"
 #include "hu_menu.h"
+#include "hu_msg.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -74,7 +75,7 @@ int timerGame;
  */
 boolean P_IsPaused(void)
 {
-    return paused || (!IS_NETGAME && Hu_MenuIsActive());
+    return paused || (!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()));
 }
 
 /**
@@ -157,8 +158,8 @@ void P_DoTick(void)
     }
 
     // Pause if in menu and at least one tic has been run.
-    if(!IS_NETGAME && Hu_MenuIsActive() && !Get(DD_PLAYBACK) &&
-       players[CONSOLEPLAYER].plr->viewZ != 1)
+    if(!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()) &&
+       !Get(DD_PLAYBACK) && players[CONSOLEPLAYER].plr->viewZ != 1)
         return;
 
     P_RunThinkers();

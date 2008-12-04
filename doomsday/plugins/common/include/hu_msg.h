@@ -24,11 +24,11 @@
  */
 
 /**
- * hu_log.h:
+ * hu_msg.h: Important state change messages.
  */
 
-#ifndef __HUD_LOG_H__
-#define __HUD_LOG_H__
+#ifndef __HUD_MESSAGE_H__
+#define __HUD_MESSAGE_H__
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -42,17 +42,29 @@
 #  include "jstrife.h"
 #endif
 
-extern boolean messageNoEcho;
-extern boolean chatOn;
+typedef enum {
+    MSG_CANCEL = -1,
+    MSG_NO,
+    MSG_YES,
+    NUM_MESSAGE_RESPONSES
+} msgresponse_t;
 
-void        HUMsg_Register(void);
-boolean     HUMsg_Responder(event_t* ev);
-void        HUMsg_Drawer(int player);
-void        HUMsg_Ticker(void);
-void        HUMsg_Start(void);
-void        HUMsg_Init(void);
+typedef int     (C_DECL *msgfunc_t) (msgresponse_t response, void* context);
 
-void        HUMsg_PlayerMessage(int player, char* message, int tics,
-                                boolean noHide, boolean yellow);
-void        HUMsg_ClearMessages(int player);
+typedef enum {
+    MSG_ANYKEY,
+    MSG_YESNO,
+    NUM_MESSAGE_TYPES
+} msgtype_t;
+
+void            Hu_MsgRegister(void);
+void            Hu_MsgTicker(timespan_t time);
+boolean         Hu_MsgResponder(event_t* ev);
+void            Hu_MsgDrawer(void);
+
+boolean         Hu_IsMessageActive(void);
+
+void            Hu_MsgStart(msgtype_t type, const char* msg,
+                            msgfunc_t callback, void* context);
+
 #endif
