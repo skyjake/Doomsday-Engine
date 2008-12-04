@@ -108,7 +108,7 @@ void B_UpdateDeviceStateAssociations(void)
     {
         bc = bindContexts[i];
         // Skip inactive contexts.
-        if(!bc->active)
+        if(!(bc->flags & BCF_ACTIVE))
             continue;
 
         // Mark all event bindings in the context.
@@ -183,7 +183,7 @@ void B_UpdateDeviceStateAssociations(void)
 
         // If the context have made a broad device acquisition, mark all
         // relevant states.
-        if(bc->acquireKeyboard)
+        if(bc->flags & BCF_ACQUIRE_KEYBOARD)
         {
             inputdev_t*         dev = I_GetDevice(IDEV_KEYBOARD, false);
 
@@ -268,13 +268,17 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
                          doActivate? "Activating" : "Deactivating",
                          bc->name) );
 
-    bc->active = doActivate;
+    bc->flags &= ~BCF_ACTIVE;
+    if(doActivate)
+        bc->flags |= BCF_ACTIVE;
     B_UpdateDeviceStateAssociations();
 }
 
 void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
 {
-    bc->acquireKeyboard = doAcquire;
+    bc->flags &= ~BCF_ACQUIRE_KEYBOARD;
+    if(doAcquire)
+        bc->flags |= BCF_ACQUIRE_KEYBOARD;
     B_UpdateDeviceStateAssociations();
 }
 
@@ -460,7 +464,7 @@ boolean B_TryEvent(ddevent_t* event)
     {
         bcontext_t*           bc = bindContexts[i];
 
-        if(!bc->active)
+        if(!(bc->flags & BCF_ACTIVE))
             continue;
 
         // See if the command bindings will have it.
@@ -682,7 +686,7 @@ void B_PrintContexts(void)
     {
         bc = bindContexts[i];
         Con_Printf("[%3i] \"%s\" (%s)\n", i, bc->name,
-                   bc->active? "active" : "inactive");
+                   (bc->flags & BCF_ACTIVE)? "active" : "inactive");
     }
 }
 
@@ -703,7 +707,7 @@ void B_PrintAllBindings(void)
         bc = bindContexts[i];
 
         Con_Printf("Context \"%s\" (%s):\n", bc->name,
-                   bc->active? "active" : "inactive");
+                   (bc->flags & BCF_ACTIVE)? "active" : "inactive");
 
         // Commands.
         for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++);

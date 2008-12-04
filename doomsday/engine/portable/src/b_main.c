@@ -58,7 +58,7 @@ D_CMD(BindEventToCommand);
 D_CMD(BindControlToDevice);
 D_CMD(ListBindings);
 D_CMD(ListBindingContexts);
-D_CMD(ClearBindingContexts);
+//D_CMD(ClearBindingContexts);
 D_CMD(ClearBindings);
 D_CMD(DeleteBindingById);
 D_CMD(ActivateBindingContext);
@@ -152,16 +152,20 @@ static const keyname_t keyNames[] = {
 
 void B_Register(void)
 {
-    C_CMD("bindevent",      "ss",   BindEventToCommand);
-    C_CMD("bindcontrol",    "ss",   BindControlToDevice);
-    C_CMD("listbcontexts",  NULL,   ListBindingContexts);
-    C_CMD("listbindings",   NULL,   ListBindings);
-    C_CMD("clearbindings",  "",     ClearBindings);
-    C_CMD("clearbcontexts", "",     ClearBindingContexts);
-    C_CMD("delbind",        "i",    DeleteBindingById);
-    C_CMD("defaultbindings", "",    DefaultBindings);
-    C_CMD("activatebcontext", "s",  ActivateBindingContext);
-    C_CMD("deactivatebcontext", "s", ActivateBindingContext);
+#define PROTECTED_FLAGS     (CMDF_NO_DEDICATED|CMDF_DED|CMDF_CLIENT)
+
+    C_CMD_FLAGS("bindevent",      "ss",   BindEventToCommand, PROTECTED_FLAGS);
+    C_CMD_FLAGS("bindcontrol",    "ss",   BindControlToDevice, PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbcontexts",  NULL,   ListBindingContexts, PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbindings",   NULL,   ListBindings, PROTECTED_FLAGS);
+    C_CMD_FLAGS("clearbindings",  "",     ClearBindings, PROTECTED_FLAGS);
+    //C_CMD_FLAGS("clearbcontexts", "",     ClearBindingContexts, PROTECTED_FLAGS);
+    C_CMD_FLAGS("delbind",        "i",    DeleteBindingById, PROTECTED_FLAGS);
+    C_CMD_FLAGS("defaultbindings", "",    DefaultBindings, PROTECTED_FLAGS);
+    C_CMD_FLAGS("activatebcontext", "s",  ActivateBindingContext, PROTECTED_FLAGS);
+    C_CMD_FLAGS("deactivatebcontext", "s", ActivateBindingContext, PROTECTED_FLAGS);
+
+#undef PROTECTED_FLAGS
 }
 
 /**
@@ -190,6 +194,7 @@ void B_Init(void)
 
     // Binding context for the console.
     bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
+    bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
     B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
@@ -467,11 +472,13 @@ D_CMD(ListBindings)
     return true;
 }
 
+/*
 D_CMD(ClearBindingContexts)
 {
     B_DestroyAllContexts();
     return true;
 }
+*/
 
 D_CMD(ClearBindings)
 {
@@ -525,6 +532,14 @@ D_CMD(ActivateBindingContext)
     if(!bc)
     {
         Con_Printf("Binding context '%s' does not exist.\n", argv[1]);
+        return false;
+    }
+
+    if(bc->flags & BCF_PROTECTED)
+    {
+        Con_Message("Binding Context '%s' is protected. "
+                    "It can not be manually %s.\n", bc->name,
+                    doActivate? "activated" : "deactivated");
         return false;
     }
 

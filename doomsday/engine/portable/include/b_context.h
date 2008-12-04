@@ -41,11 +41,15 @@ typedef struct controlbinding_s {
     dbinding_t      deviceBinds[DDMAXPLAYERS]; // Separate bindings for each local player.
 } controlbinding_t;
 
+// Binding Context Flags:
+#define BCF_ACTIVE              0x01 // Context is only used when it is active.
+#define BCF_PROTECTED           0x02 // Context cannot be
+#define BCF_ACQUIRE_KEYBOARD    0x04 // Context has acquired all keyboard states, unless
+                                     // higher-priority contexts override it.
+
 typedef struct bclass_s {
     char*           name; // Name of the binding context.
-    boolean         active; // The context is only used when it is active.
-    boolean         acquireKeyboard; // Context has acquired all keyboard states, unless
-                                     // higher-priority contexts override it.
+    byte            flags;
     evbinding_t     commandBinds; // List of command bindings.
     controlbinding_t controlBinds;
 } bcontext_t;
