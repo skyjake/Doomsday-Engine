@@ -30,6 +30,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if __JDOOM__
@@ -70,14 +72,14 @@ ccmd_t msgCCmds[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean awaitingResponse = false;
-static int messageToPrint = 0; // 1 = message to be printed.
-static msgresponse_t messageResponse = MSG_CANCEL;
+static boolean awaitingResponse;
+static int messageToPrint; // 1 = message to be printed.
+static msgresponse_t messageResponse;
 
 static msgtype_t msgType;
-static msgfunc_t msgCallback = NULL;
-static const char* msgText = NULL;
-static void* msgContext = NULL;
+static msgfunc_t msgCallback;
+static char* msgText;
+static void* msgContext;
 
 static char yesNoMessage[160];
 
@@ -95,6 +97,30 @@ void Hu_MsgRegister(void)
         Con_AddCommand(msgCCmds + i);
 }
 
+/**
+ * Called during init.
+ */
+void Hu_MsgInit(void)
+{
+    awaitingResponse = false;
+    messageToPrint = 0; // 1 = message to be printed.
+    messageResponse = MSG_CANCEL;
+
+    msgCallback = NULL;
+    msgText = NULL;
+    msgContext = NULL;
+}
+
+/**
+ * Called during engine shutdown.
+ */
+void Hu_MsgShutdown(void)
+{
+    if(msgText)
+        free(msgText);
+    msgText = NULL;
+}
+
 static void stopMessage(void)
 {
 #if __JDOOM__ || __JDOOM64__
@@ -107,6 +133,10 @@ static void stopMessage(void)
 
     messageToPrint = 0;
     awaitingResponse = false;
+
+    if(msgText)
+        free(msgText);
+    msgText = NULL;
 
     S_LocalSound(SFX_ENDMESSAGE, NULL);
 
@@ -288,14 +318,19 @@ boolean Hu_IsMessageActive(void)
 void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
                  void* context)
 {
+    assert(msg);
+
     awaitingResponse = true;
     messageResponse = 0;
     messageToPrint = 1;
 
     msgType = type;
-    msgText = msg;
     msgCallback = callback;
     msgContext = context;
+
+    // Take a copy of the message string.
+    msgText = calloc(1, strlen(msg)+1);
+    strncpy(msgText, msg, strlen(msg));
 
     if(msgType == MSG_YESNO)
         composeYesNoMessage();

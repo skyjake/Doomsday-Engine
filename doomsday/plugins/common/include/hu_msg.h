@@ -58,6 +58,9 @@ typedef enum {
 } msgtype_t;
 
 void            Hu_MsgRegister(void);
+void            Hu_MsgInit(void);
+void            Hu_MsgShutdown(void);
+
 void            Hu_MsgTicker(timespan_t time);
 boolean         Hu_MsgResponder(event_t* ev);
 void            Hu_MsgDrawer(void);

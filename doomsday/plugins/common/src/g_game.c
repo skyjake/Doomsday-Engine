@@ -540,6 +540,8 @@ void G_CommonPostInit(void)
 
     Con_Message("Hu_MenuInit: Init miscellaneous info.\n");
     Hu_MenuInit();
+    Hu_MsgInit();
+
     // From this point on, the shortcuts are always active.
     DD_Execute(true, "activatebcontext shortcut");
 

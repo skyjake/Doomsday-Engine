@@ -39,6 +39,7 @@
 #include "m_argv.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
+#include "hu_msg.h"
 #include "hu_log.h"
 #include "p_saveg.h"
 #include "d_net.h"
@@ -566,6 +567,7 @@ void G_Shutdown(void)
 {
     uint                i;
 
+    Hu_MsgShutdown();
     Hu_UnloadData();
 
     for(i = 0; i < MAXPLAYERS; ++i)

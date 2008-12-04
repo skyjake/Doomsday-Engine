@@ -40,6 +40,7 @@
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_log.h"
+#include "hu_msg.h"
 #include "p_saveg.h"
 #include "p_mapspec.h"
 #include "p_switch.h"
@@ -528,6 +529,7 @@ void G_Shutdown(void)
 {
     uint                i;
 
+    Hu_MsgShutdown();
     Hu_UnloadData();
 
     for(i = 0; i < MAXPLAYERS; ++i)
