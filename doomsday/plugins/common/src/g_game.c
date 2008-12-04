@@ -539,7 +539,7 @@ void G_CommonPostInit(void)
     Con_Message("Hu_MenuInit: Init miscellaneous info.\n");
     Hu_MenuInit();
     // From this point on, the shortcuts are always active.
-    DD_Execute(true, "activatebclass shortcut");
+    DD_Execute(true, "activatebcontext shortcut");
 
     Con_Message("AM_Init: Init automap.\n");
     AM_Init();

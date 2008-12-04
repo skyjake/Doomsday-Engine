@@ -23,7 +23,7 @@
  */
 
 /**
- * b_class.c: Binding Classs
+ * b_context.c: Bindings Contexts.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,7 +33,7 @@
 #include "de_misc.h"
 
 #include "b_main.h"
-#include "b_class.h"
+#include "b_context.h"
 #include "p_control.h"
 
 #include <string.h>
@@ -54,64 +54,64 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int bindClassCount;
-static bclass_t** bindClasses;
+static int bindContextCount;
+static bcontext_t** bindContexts;
 
 // CODE --------------------------------------------------------------------
 
 /**
- * Destroy all binding classes and the bindings within the classes.
+ * Destroy all binding contexts and the bindings within the contexts.
  * Called at shutdown time.
  */
-void B_DestroyAllClasses(void)
+void B_DestroyAllContexts(void)
 {
     int                 i;
 
-    if(bindClasses)
+    if(bindContexts)
     {
-        // Do not use the global bindClassCount to control the loop; it is
-        // changed as a sideeffect of B_DestroyClass() and also, the
-        // bindClasses array itself is shifted back to idx 0 afterwards.
-        int                 numBindClasses = bindClassCount;
+        // Do not use the global bindContextCount to control the loop; it is
+        // changed as a sideeffect of B_DestroyContext() and also, the
+        // bindContexts array itself is shifted back to idx 0 afterwards.
+        int                 numBindClasses = bindContextCount;
 
         for(i = 0; i < numBindClasses; ++i)
         {
-            B_DestroyClass(bindClasses[0]);
+            B_DestroyContext(bindContexts[0]);
         }
-        M_Free(bindClasses);
+        M_Free(bindContexts);
     }
-    bindClasses = NULL;
-    bindClassCount = 0;
+    bindContexts = NULL;
+    bindContextCount = 0;
 }
 
 /**
- * Marks all device states with the highest-priority binding class to which they have
- * a connection via device bindings. This ensures that if a high-priority class is
- * using a particular device state, lower-priority classes will not be using the
- * same state for their own controls.
+ * Marks all device states with the highest-priority binding context to
+ * which they have a connection via device bindings. This ensures that if a
+ * high-priority context is using a particular device state, lower-priority
+ * contexts will not be using the same state for their own controls.
  *
- * Called automatically whenever a class is activated or deactivated.
+ * Called automatically whenever a context is activated or deactivated.
  */
 void B_UpdateDeviceStateAssociations(void)
 {
     int                 i;
     uint                k;
-    bclass_t*           bc;
+    bcontext_t*         bc;
     evbinding_t*        eb;
     controlbinding_t*   conBin;
     dbinding_t*         db;
 
-    I_ClearDeviceClassAssociations();
+    I_ClearDeviceContextAssociations();
 
-    // We need to iterate through all the device bindings in all class.
-    for(i = 0; i < bindClassCount; ++i)
+    // We need to iterate through all the device bindings in all context.
+    for(i = 0; i < bindContextCount; ++i)
     {
-        bc = bindClasses[i];
-        // Skip inactive classes.
+        bc = bindContexts[i];
+        // Skip inactive contexts.
         if(!bc->active)
             continue;
 
-        // Mark all event bindings in the class.
+        // Mark all event bindings in the context.
         for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
             inputdev_t*         dev = I_GetDevice(eb->device, false);
@@ -119,20 +119,20 @@ void B_UpdateDeviceStateAssociations(void)
             switch(eb->type)
             {
             case E_TOGGLE:
-                if(!dev->keys[eb->id].bClass)
-                    dev->keys[eb->id].bClass = bc;
+                if(!dev->keys[eb->id].bContext)
+                    dev->keys[eb->id].bContext = bc;
                 break;
 
             case E_AXIS:
-                if(!dev->axes[eb->id].bClass)
-                    dev->axes[eb->id].bClass = bc;
+                if(!dev->axes[eb->id].bContext)
+                    dev->axes[eb->id].bContext = bc;
                 break;
 
             case E_ANGLE:
-                if(!dev->hats[eb->id].bClass)
-                    dev->hats[eb->id].bClass = bc;
+                if(!dev->hats[eb->id].bContext)
+                    dev->hats[eb->id].bContext = bc;
                 break;
-                    
+
             case E_SYMBOLIC:
                 break;
 
@@ -143,7 +143,7 @@ void B_UpdateDeviceStateAssociations(void)
             }
         }
 
-        // All controls in the class.
+        // All controls in the context.
         for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds;
             conBin = conBin->next)
         {
@@ -158,18 +158,18 @@ void B_UpdateDeviceStateAssociations(void)
                     switch(db->type)
                     {
                     case CBD_TOGGLE:
-                        if(!dev->keys[db->id].bClass)
-                            dev->keys[db->id].bClass = bc;
+                        if(!dev->keys[db->id].bContext)
+                            dev->keys[db->id].bContext = bc;
                         break;
 
                     case CBD_AXIS:
-                        if(!dev->axes[db->id].bClass)
-                            dev->axes[db->id].bClass = bc;
+                        if(!dev->axes[db->id].bContext)
+                            dev->axes[db->id].bContext = bc;
                         break;
 
                     case CBD_ANGLE:
-                        if(!dev->hats[db->id].bClass)
-                            dev->hats[db->id].bClass = bc;
+                        if(!dev->hats[db->id].bContext)
+                            dev->hats[db->id].bContext = bc;
                         break;
 
                     default:
@@ -181,147 +181,149 @@ void B_UpdateDeviceStateAssociations(void)
             }
         }
 
-        // If the class have made a broad device acquisition, mark all relevant states.
+        // If the context have made a broad device acquisition, mark all
+        // relevant states.
         if(bc->acquireKeyboard)
         {
             inputdev_t*         dev = I_GetDevice(IDEV_KEYBOARD, false);
 
             for(k = 0; k < dev->numKeys; ++k)
             {
-                if(!dev->keys[k].bClass)
-                    dev->keys[k].bClass = bc;
+                if(!dev->keys[k].bContext)
+                    dev->keys[k].bContext = bc;
             }
         }
     }
 }
 
-static void B_SetClassCount(int count)
+static void B_SetContextCount(int count)
 {
-    bindClasses = M_Realloc(bindClasses, sizeof(bclass_t*) * count);
-    bindClassCount = count;
+    bindContexts = M_Realloc(bindContexts, sizeof(bcontext_t*) * count);
+    bindContextCount = count;
 }
 
-static void B_InsertClass(bclass_t* bc, int classIdx)
+static void B_InsertContext(bcontext_t* bc, int contextIdx)
 {
-    B_SetClassCount(bindClassCount + 1);
-    if(classIdx < bindClassCount - 1)
+    B_SetContextCount(bindContextCount + 1);
+    if(contextIdx < bindContextCount - 1)
     {
-        // We need to make room for this new binding class.
-        memmove(&bindClasses[classIdx + 1], &bindClasses[classIdx], sizeof(bclass_t*) *
-                (bindClassCount - 1 - classIdx));
+        // We need to make room for this new binding context.
+        memmove(&bindContexts[contextIdx + 1], &bindContexts[contextIdx],
+                sizeof(bcontext_t*) * (bindContextCount - 1 - contextIdx));
     }
-    bindClasses[classIdx] = bc;
+    bindContexts[contextIdx] = bc;
 }
 
-static void B_RemoveClass(bclass_t* bc)
+static void B_RemoveContext(bcontext_t* bc)
 {
-    int                 classIdx = B_GetClassPos(bc);
+    int                 contextIdx = B_GetContextPos(bc);
 
-    if(classIdx >= 0)
+    if(contextIdx >= 0)
     {
-        memmove(&bindClasses[classIdx], &bindClasses[classIdx + 1],
-                sizeof(bclass_t*) * (bindClassCount - 1 - classIdx));
+        memmove(&bindContexts[contextIdx], &bindContexts[contextIdx + 1],
+                sizeof(bcontext_t*) * (bindContextCount - 1 - contextIdx));
 
-        B_SetClassCount(bindClassCount - 1);
+        B_SetContextCount(bindContextCount - 1);
     }
 }
 
 /**
- * Creates a new binding class. The new class has the highest priority of all existing
- * classes, and is inactive.
+ * Creates a new binding context. The new context has the highest priority
+ * of all existing contexts, and is inactive.
  */
-bclass_t* B_NewClass(const char* name)
+bcontext_t* B_NewContext(const char* name)
 {
-    bclass_t*           bc = M_Calloc(sizeof(bclass_t));
+    bcontext_t*           bc = M_Calloc(sizeof(bcontext_t));
 
     bc->name = strdup(name);
     B_InitCommandBindingList(&bc->commandBinds);
     B_InitControlBindingList(&bc->controlBinds);
-    B_InsertClass(bc, 0);
+    B_InsertContext(bc, 0);
     return bc;
 }
 
-void B_DestroyClass(bclass_t* bc)
+void B_DestroyContext(bcontext_t* bc)
 {
     if(!bc)
         return;
 
-    B_RemoveClass(bc);
+    B_RemoveContext(bc);
     M_Free(bc->name);
-    B_ClearClass(bc);
+    B_ClearContext(bc);
     M_Free(bc);
 }
 
-void B_ClearClass(bclass_t* bc)
+void B_ClearContext(bcontext_t* bc)
 {
     B_DestroyCommandBindingList(&bc->commandBinds);
     B_DestroyControlBindingList(&bc->controlBinds);
 }
 
-void B_ActivateClass(bclass_t* bc, boolean doActivate)
+void B_ActivateContext(bcontext_t* bc, boolean doActivate)
 {
     if(!bc)
         return;
 
-    VERBOSE( Con_Message("B_ActivateClass: %s class \"%s\".\n", doActivate? "Activating" :
-                         "Deactivating", bc->name) );
-    
+    VERBOSE( Con_Message("B_ActivateContext: %s context \"%s\".\n",
+                         doActivate? "Activating" : "Deactivating",
+                         bc->name) );
+
     bc->active = doActivate;
     B_UpdateDeviceStateAssociations();
 }
 
-void B_AcquireKeyboard(bclass_t* bc, boolean doAcquire)
+void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
 {
     bc->acquireKeyboard = doAcquire;
     B_UpdateDeviceStateAssociations();
 }
 
-bclass_t* B_ClassByName(const char* name)
+bcontext_t* B_ContextByName(const char* name)
 {
     int                 i;
 
-    for(i = 0; i < bindClassCount; ++i)
+    for(i = 0; i < bindContextCount; ++i)
     {
-        if(!strcasecmp(name, bindClasses[i]->name))
-            return bindClasses[i];
+        if(!strcasecmp(name, bindContexts[i]->name))
+            return bindContexts[i];
     }
 
     return NULL;
 }
 
-bclass_t* B_ClassByPos(int pos)
+bcontext_t* B_ContextByPos(int pos)
 {
-    if(pos < 0 || pos >= bindClassCount)
+    if(pos < 0 || pos >= bindContextCount)
         return NULL;
 
-    return bindClasses[pos];
+    return bindContexts[pos];
 }
 
-int B_ClassCount(void)
+int B_ContextCount(void)
 {
-    return bindClassCount;
+    return bindContextCount;
 }
 
-int B_GetClassPos(bclass_t* bc)
+int B_GetContextPos(bcontext_t* bc)
 {
     int                 i;
 
-    for(i = 0; i < bindClassCount; ++i)
+    for(i = 0; i < bindContextCount; ++i)
     {
-        if(bindClasses[i] == bc)
+        if(bindContexts[i] == bc)
             return i;
     }
 
     return -1;
 }
 
-void B_ReorderClass(bclass_t* bc, int pos)
+void B_ReorderContext(bcontext_t* bc, int pos)
 {
-    B_RemoveClass(bc);
-    B_InsertClass(bc, pos);
+    B_RemoveContext(bc);
+    B_InsertContext(bc, pos);
 }
 
-controlbinding_t* B_NewControlBinding(bclass_t* bc)
+controlbinding_t* B_NewControlBinding(bcontext_t* bc)
 {
     int                 i;
 
@@ -341,10 +343,10 @@ controlbinding_t* B_NewControlBinding(bclass_t* bc)
     return conBin;
 }
 
-controlbinding_t* B_FindControlBinding(bclass_t* bc, int control)
+controlbinding_t* B_FindControlBinding(bcontext_t* bc, int control)
 {
     controlbinding_t*   i;
-    
+
     for(i = bc->controlBinds.next; i != &bc->controlBinds; i = i->next)
     {
         if(i->control == control)
@@ -352,8 +354,8 @@ controlbinding_t* B_FindControlBinding(bclass_t* bc, int control)
     }
     return NULL;
 }
-    
-controlbinding_t* B_GetControlBinding(bclass_t* bc, int control)
+
+controlbinding_t* B_GetControlBinding(bcontext_t* bc, int control)
 {
     controlbinding_t* b = B_FindControlBinding(bc, control);
 
@@ -406,14 +408,14 @@ void B_DestroyControlBindingList(controlbinding_t* listRoot)
 /**
  * @return  @c true, if the binding was found and deleted.
  */
-boolean B_DeleteBinding(bclass_t* bc, int bid)
+boolean B_DeleteBinding(bcontext_t* bc, int bid)
 {
     int                 i;
     evbinding_t*        eb = 0;
     controlbinding_t*   conBin = 0;
     dbinding_t*         db = 0;
 
-    // Check if it one of the command bindings.
+    // Check if it is one of the command bindings.
     for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
     {
         if(eb->bid == bid)
@@ -454,9 +456,9 @@ boolean B_TryEvent(ddevent_t* event)
     int                 i;
     evbinding_t*        eb;
 
-    for(i = 0; i < bindClassCount; ++i)
+    for(i = 0; i < bindContextCount; ++i)
     {
-        bclass_t*           bc = bindClasses[i];
+        bcontext_t*           bc = bindContexts[i];
 
         if(!bc->active)
             continue;
@@ -473,35 +475,35 @@ boolean B_TryEvent(ddevent_t* event)
 }
 
 /**
- * Looks through the bindings to find the ones that are bound to the 
+ * Looks through the bindings to find the ones that are bound to the
  * specified command. The result is a space-separated list of bindings
  * such as (idnum is the binding ID number):
  *
  * <tt>idnum@@game:key-space-down idnum@@game:key-e-down</tt>
  *
- * @param cmd      Command to look for.
- * @param buf      Output buffer for the result.
- * @param bufSize  Size of output buffer.
+ * @param cmd           Command to look for.
+ * @param buf           Output buffer for the result.
+ * @param bufSize       Size of output buffer.
  *
- * @return Number of bindings found for the command.
+ * @return              Number of bindings found for the command.
  */
-int B_BindingsForCommand(const char *cmd, char *buf, int bufSize)
+int B_BindingsForCommand(const char* cmd, char* buf, int bufSize)
 {
     ddstring_t          result;
     ddstring_t          str;
-    bclass_t*           bc;
+    bcontext_t*         bc;
     int                 i;
     int                 numFound = 0;
-    
+
     Str_Init(&result);
     Str_Init(&str);
-    
-    for(i = 0; i < bindClassCount; ++i)
+
+    for(i = 0; i < bindContextCount; ++i)
     {
         evbinding_t* e;
-        bc = bindClasses[i];
+        bc = bindContexts[i];
         for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
-        {        
+        {
             if(strcmp(e->command, cmd))
                 continue;
             // It's here!
@@ -518,51 +520,55 @@ int B_BindingsForCommand(const char *cmd, char *buf, int bufSize)
     // Copy the result to the return buffer.
     memset(buf, 0, bufSize);
     strncpy(buf, Str_Text(&result), bufSize - 1);
-        
+
     Str_Free(&result);
     Str_Free(&str);
     return numFound;
 }
 
 /**
- * Looks through the bindings to find the ones that are bound to the 
+ * Looks through the bindings to find the ones that are bound to the
  * specified control. The result is a space-separated list of bindings.
  *
- * @param localPlayer  Number of the local player (first one always 0).
- * @param controlName  Name of the player control.
- * @param inverse      One of BFCI_*.
- * @param buf          Output buffer for the result.
- * @param bufSize      Size of output buffer.
+ * @param localPlayer   Number of the local player (first one always 0).
+ * @param controlName   Name of the player control.
+ * @param inverse       One of BFCI_*.
+ * @param buf           Output buffer for the result.
+ * @param bufSize       Size of output buffer.
  *
- * @return Number of bindings found for the command.
+ * @return              Number of bindings found for the command.
  */
-int B_BindingsForControl(int localPlayer, const char *controlName, int inverse, char *buf, int bufSize)
+int B_BindingsForControl(int localPlayer, const char* controlName,
+                         int inverse, char* buf, int bufSize)
 {
     ddstring_t          result;
     ddstring_t          str;
-    bclass_t*           bc;
+    bcontext_t*         bc;
     int                 i;
     int                 numFound = 0;
-    
+
     if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
         return 0;
-    
+
     Str_Init(&result);
     Str_Init(&str);
-    
-    for(i = 0; i < bindClassCount; ++i)
+
+    for(i = 0; i < bindContextCount; ++i)
     {
         controlbinding_t*   c;
         dbinding_t*         d;
-        bc = bindClasses[i];
+
+        bc = bindContexts[i];
         for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
         {
-            const char* name = P_PlayerControlById(c->control)->name;
+            const char*         name = P_PlayerControlById(c->control)->name;
+
             if(strcmp(name, controlName))
                 continue; // Wrong control.
+
             for(d = c->deviceBinds[localPlayer].next; d != &c->deviceBinds[localPlayer]; d = d->next)
             {
-                if(inverse == BFCI_BOTH || 
+                if(inverse == BFCI_BOTH ||
                    (inverse == BFCI_ONLY_NON_INVERSE && !(d->flags & CBDF_INVERSE)) ||
                    (inverse == BFCI_ONLY_INVERSE && (d->flags & CBDF_INVERSE)))
                 {
@@ -575,76 +581,83 @@ int B_BindingsForControl(int localPlayer, const char *controlName, int inverse, 
                     B_DeviceBindingToString(d, &str);
                     Str_Appendf(&result, "%i@%s:%s", d->bid, bc->name, Str_Text(&str));
                 }
-            }                
+            }
         }
     }
-    
+
     // Copy the result to the return buffer.
     memset(buf, 0, bufSize);
     strncpy(buf, Str_Text(&result), bufSize - 1);
-    
+
     Str_Free(&result);
     Str_Free(&str);
     return numFound;
 }
 
-boolean B_FindMatchingBinding(bclass_t* bc, evbinding_t* match1, dbinding_t* match2, 
-                              evbinding_t** evResult, dbinding_t** dResult)
+boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
+                              dbinding_t* match2, evbinding_t** evResult,
+                              dbinding_t** dResult)
 {
     evbinding_t*        e;
     controlbinding_t*   c;
     dbinding_t*         d;
     int                 i;
-    
+
     *evResult = NULL;
     *dResult = NULL;
-    
+
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
-    {    
+    {
         // TODO: A bit lazy here, should also match all the conditions.
         // Now we just consider all bindings with conditions unique...
-        if(e->numConds) continue;
-        
+        if(e->numConds)
+            continue;
+
         if(match1 && match1->bid != e->bid)
         {
-            if(match1->device == e->device && match1->id == e->id && match1->type == e->type &&
-               match1->state == e->state)
+            if(match1->device == e->device && match1->id == e->id &&
+               match1->type == e->type && match1->state == e->state)
             {
                 *evResult = e;
-                return true;         
+                return true;
             }
         }
         if(match2)
         {
-            if(match2->device == e->device && match2->id == e->id && match2->type == e->type)
+            if(match2->device == e->device && match2->id == e->id &&
+               match2->type == e->type)
             {
                 *evResult = e;
                 return true;
             }
         }
     }
-    
+
     for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
     {
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
             for(d = c->deviceBinds[i].next; d != &c->deviceBinds[i]; d = d->next)
-            {        
-                // Should also match all the conditions, now we just consider all bindings
-                // with conditions unique...
-                if(d->numConds) continue;
+            {
+                // Should also match all the conditions, now we just
+                // consider all bindings with conditions unique...
+                if(d->numConds)
+                    continue;
 
                 if(match1)
                 {
-                    if(match1->device == d->device && match1->id == d->id && match1->type == d->type)
+                    if(match1->device == d->device && match1->id == d->id &&
+                       match1->type == d->type)
                     {
                         *dResult = d;
                         return true;
                     }
                 }
+
                 if(match2 && match2->bid != d->bid)
                 {
-                    if(match2->device == d->device && match2->id == d->id && match2->type == d->type)
+                    if(match2->device == d->device && match2->id == d->id &&
+                       match2->type == d->type)
                     {
                         *dResult = d;
                         return true;
@@ -653,42 +666,44 @@ boolean B_FindMatchingBinding(bclass_t* bc, evbinding_t* match1, dbinding_t* mat
             }
         }
     }
-    
+
     // Nothing found.
     return false;
 }
 
-void B_PrintClasses(void)
+void B_PrintContexts(void)
 {
     int                 i;
-    bclass_t*           bc;
+    bcontext_t*         bc;
 
-    Con_Printf("%i binding classes defined:\n", bindClassCount);
+    Con_Printf("%i binding contexts defined:\n", bindContextCount);
 
-    for(i = 0; i < bindClassCount; ++i)
+    for(i = 0; i < bindContextCount; ++i)
     {
-        bc = bindClasses[i];
-        Con_Printf("[%3i] \"%s\" (%s)\n", i, bc->name, bc->active? "active" : "inactive");
+        bc = bindContexts[i];
+        Con_Printf("[%3i] \"%s\" (%s)\n", i, bc->name,
+                   bc->active? "active" : "inactive");
     }
 }
 
 void B_PrintAllBindings(void)
 {
     int                 i, k, count;
-    bclass_t*           bc;
+    bcontext_t*         bc;
     evbinding_t*        e;
     controlbinding_t*   c;
     dbinding_t*         d;
     ddstring_t*         str = Str_New();
 
-    Con_Printf("%i binding classes defined.\n", bindClassCount);
+    Con_Printf("%i binding contexts defined.\n", bindContextCount);
 
 #define BIDFORMAT   "[%3i]"
-    for(i = 0; i < bindClassCount; ++i)
+    for(i = 0; i < bindContextCount; ++i)
     {
-        bc = bindClasses[i];
+        bc = bindContexts[i];
 
-        Con_Printf("Class \"%s\" (%s):\n", bc->name, bc->active? "active" : "inactive");
+        Con_Printf("Context \"%s\" (%s):\n", bc->name,
+                   bc->active? "active" : "inactive");
 
         // Commands.
         for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++);
@@ -699,7 +714,8 @@ void B_PrintAllBindings(void)
         for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
         {
             B_EventBindingToString(e, str);
-            Con_Printf("  "BIDFORMAT" %s : %s\n", e->bid, Str_Text(str), e->command);
+            Con_Printf("  "BIDFORMAT" %s : %s\n", e->bid, Str_Text(str),
+                       e->command);
         }
 
         // Controls.
@@ -712,7 +728,8 @@ void B_PrintAllBindings(void)
         {
             const char* controlName = P_PlayerControlById(c->control)->name;
 
-            Con_Printf("  Control \"%s\" "BIDFORMAT":\n", controlName, c->bid);
+            Con_Printf("  Control \"%s\" "BIDFORMAT":\n", controlName,
+                       c->bid);
 
             for(k = 0; k < DDMAXPLAYERS; ++k)
             {
@@ -736,7 +753,7 @@ void B_PrintAllBindings(void)
     Str_Free(str);
 }
 
-void B_WriteClassToFile(const bclass_t* bc, FILE* file)
+void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
 {
     evbinding_t*        e;
     controlbinding_t*   c;
@@ -756,15 +773,16 @@ void B_WriteClassToFile(const bclass_t* bc, FILE* file)
     // Controls.
     for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
     {
-        const char* controlName = P_PlayerControlById(c->control)->name;
+        const char*         controlName =
+            P_PlayerControlById(c->control)->name;
 
         for(k = 0; k < DDMAXPLAYERS; ++k)
         {
             for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
             {
                 B_DeviceBindingToString(d, str);
-                fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1, controlName, 
-                        Str_Text(str));
+                fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1,
+                        controlName, Str_Text(str));
             }
         }
     }

@@ -145,7 +145,7 @@ extern          "C" {
     int             B_BindingsForCommand(const char* cmd, char* buf, int bufSize);
     int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse,
                                          char* buf, int bufSize);
-    void            DD_AddBindClass(struct bindclass_s* bindClass);
+    void            DD_AddBindClass(struct bindcontext_s* bindContext);
     boolean         DD_SetBindClass(unsigned int classID, int type);
 
     // System.
@@ -249,7 +249,7 @@ extern          "C" {
     boolean         P_CheckSight(struct mobj_s* t1, struct mobj_s* t2);
 
     // Play: Controls.
-    void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindClass);
+    void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
     void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
     int             P_GetImpulseControlState(int playerNum, int control);
 

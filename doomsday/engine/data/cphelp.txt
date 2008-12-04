@@ -348,9 +348,6 @@ inf = Params: dumpkeymap (file)\nFor example, 'dumpkeymap finnish.dkm'.
 desc = Echo the parameters on separate lines.
 inf = Params: echo (cmd) ...\nFor example, 'echo "hello world"'.
 
-[enablebindclass]
-desc = Enable a binding class.
-
 [exec]
 desc = Loads and executes a file containing console commands.
 inf = Params: exec (file) ...\nFor example, 'exec "myconfig.cfg"'.

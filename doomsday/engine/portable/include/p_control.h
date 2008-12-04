@@ -30,7 +30,7 @@
 #define __DOOMSDAY_PLAYER_CONTROL_H__
 
 // Public:
-void        P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
+void        P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext);
 void        P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
 int         P_GetImpulseControlState(int playerNum, int control);
 
@@ -39,7 +39,7 @@ typedef struct playercontrol_s {
     int     id;
     controltype_t type;
     char*   name;
-    char*   bindClassName;
+    char*   bindContextName;
 } playercontrol_t;
 
 void        P_ControlRegister(void);

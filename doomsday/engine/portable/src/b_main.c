@@ -46,24 +46,9 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    int     key;                // DDKEY
-    char   *name;
+    int             key; // DDKEY
+    char*           name;
 } keyname_t;
-
-/*
-enum {
-    BL_KEYS,
-//    BL_KEYSD,
-    BL_AXES,
-//    BL_AXESD,
-    NUM_BIND_LISTS
-};
-
-typedef struct {
-    uint    numBinds[NUM_BIND_LISTS];
-    binding_t *binds[NUM_BIND_LISTS];
-} devcontrolbinds_t;
-*/
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -72,38 +57,24 @@ typedef struct {
 D_CMD(BindEventToCommand);
 D_CMD(BindControlToDevice);
 D_CMD(ListBindings);
-D_CMD(ListBindingClasses);
-D_CMD(ClearBindingClasses);
+D_CMD(ListBindingContexts);
+D_CMD(ClearBindingContexts);
 D_CMD(ClearBindings);
 D_CMD(DeleteBindingById);
-D_CMD(ActivateBindingClass);
+D_CMD(ActivateBindingContext);
 D_CMD(DefaultBindings);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-/*
-static boolean eventBuilder(char *buff, ddevent_t *ev);
-static void freeBindList(binding_t *list, uint num);
- */
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-/*
-bindclass_t *bindClasses = NULL;
-uint numBindClasses = 0;
-static uint maxBindClasses = 0;
- */
 int     symbolicEchoMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int bindingIdCounter;
-
-/*
-static devcontrolbinds_t devCtrlBinds[NUM_INPUT_DEVICES];
- */
 
 static const keyname_t keyNames[] = {
     {DDKEY_PAUSE,       "pause"},
@@ -171,68 +142,11 @@ static const keyname_t keyNames[] = {
     {DDKEY_NUMPAD8,     "pad8"},
     {DDKEY_NUMPAD9,     "pad9"},
     {DDKEY_DECIMAL,     "padcomma"},
-    {DDKEY_SUBTRACT,    "padminus"},    // not really used
-    {DDKEY_ADD,         "padplus"},    // not really used
+    {DDKEY_SUBTRACT,    "padminus"}, // not really used
+    {DDKEY_ADD,         "padplus"}, // not really used
 
-    {0, NULL}                    // The terminator
+    {0, NULL} // The terminator
 };
-
-/*
-static const char *povDirNames[] = {
-    "F", "FR", "R", "BR", "B", "BL", "L", "FL", NULL
-};
-*/
-
-//static const char evStatePrefixes[NUM_EVENT_STATES] = {'+', '-', '*'};
-
-// DJS 13/05/05
-// Binding Classes
-//       (very handy for gamepads with a limited number of buttons ;-))
-
-// Binding classes are created dynamically at runtime. During (pre)init the
-// game register the classes it NEEDS. The order of the bind Classes in the
-// array (the class stack) determines the order in which bindings are
-// checked in B_Responder(). Thus it is important that bind classes are
-// created in the correct order (game specific).
-
-// It would also be possible for users to create any additional binding
-// classes they required at runtime via console commands.
-// However that would mean a fair amount of extra book keeping, so for now
-// there are three generic classes which can be used for this purpose.
-
-// Bindings are saved with the classnames eg:
-//   bind game +w +forward
-
-// However, omission of the class name defaults the bind to class 0 (id 0)
-// and the bindings in the cfg will be updated with the missing class names
-// automatically on exit (for reading old cfg files).
-
-// When a binding class is enabled/disabled we loop through the bindings
-// looking for any that are bound to any keys/buttons being pressed at that
-// time. If any are found we que extra up events that request a command in
-// a specific binding class. Due to binding classes being ordered numericaly
-// with the rule that only the command in the highest active binding class
-// being executed we only need to check commands for bindings with a lower
-// binding class id.
-
-// A binding class may be "absolute". This means that when the class is
-// active, if there is no binding in the current class (while decending the
-// bind class stack in B_Responder()) and that class is "absolute" - all
-// classes BELOW the current will be ignored and no binding will be found
-// for the event. The event is NOT eaten and may continue on down the event
-// responder chain.
-
-/*
-bindclass_t ddBindClasses[] = {
-    {"game", DDBC_NORMAL, 1, 0},
-        // additonal classes that can be purposed by users
-        {"class1", DDBC_UCLASS1, 0, 0},
-        {"class2", DDBC_UCLASS2, 0, 0},
-        {"class3", DDBC_UCLASS3, 0, 0},
-    {"biaseditor", DDBC_BIASEDITOR, 0, 0},
-    {NULL}
-};
-*/
 
 // CODE --------------------------------------------------------------------
 
@@ -240,14 +154,14 @@ void B_Register(void)
 {
     C_CMD("bindevent",      "ss",   BindEventToCommand);
     C_CMD("bindcontrol",    "ss",   BindControlToDevice);
-    C_CMD("listbclasses",   NULL,   ListBindingClasses);
+    C_CMD("listbcontexts",  NULL,   ListBindingContexts);
     C_CMD("listbindings",   NULL,   ListBindings);
     C_CMD("clearbindings",  "",     ClearBindings);
-    C_CMD("clearbclasses",  "",     ClearBindingClasses);
+    C_CMD("clearbcontexts", "",     ClearBindingContexts);
     C_CMD("delbind",        "i",    DeleteBindingById);
     C_CMD("defaultbindings", "",    DefaultBindings);
-    C_CMD("activatebclass", "s",    ActivateBindingClass);
-    C_CMD("deactivatebclass", "s",  ActivateBindingClass);
+    C_CMD("activatebcontext", "s",  ActivateBindingContext);
+    C_CMD("deactivatebcontext", "s", ActivateBindingContext);
 }
 
 /**
@@ -255,7 +169,7 @@ void B_Register(void)
  */
 void B_Init(void)
 {
-    bclass_t* bc = 0;
+    bcontext_t*         bc = 0;
 
     if(isDedicated)
     {
@@ -263,19 +177,19 @@ void B_Init(void)
         return;
     }
 
-    B_NewClass(DEFAULT_BINDING_CLASS_NAME);
+    B_NewContext(DEFAULT_BINDING_CLASS_NAME);
 
     // Game classes.
     // FIXME: Obviously belong to the game, so shouldn't be here.
-    B_NewClass("map");
-    B_NewClass("map-freepan");
-    B_NewClass("menu");
-    B_NewClass("shortcut");
-    B_AcquireKeyboard(B_NewClass("chat"), true);
-    B_AcquireKeyboard(B_NewClass("message"), true);
+    B_NewContext("map");
+    B_NewContext("map-freepan");
+    B_NewContext("menu");
+    B_NewContext("shortcut");
+    B_AcquireKeyboard(B_NewContext("chat"), true);
+    B_AcquireKeyboard(B_NewContext("message"), true);
 
-    // Binding class for the console.
-    bc = B_NewClass(CONSOLE_BINDING_CLASS_NAME);
+    // Binding context for the console.
+    bc = B_NewContext(CONSOLE_BINDING_CLASS_NAME);
     B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
@@ -307,17 +221,16 @@ void B_Init(void)
     Con_Executef(CMDS_DDAY, false, "defaultbindings");
 
     // Enable the classes for the initial state.
-    B_ActivateClass(B_ClassByName(DEFAULT_BINDING_CLASS_NAME), true);
+    B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CLASS_NAME), true);
 }
 
 void B_BindDefaults(void)
 {
-    // Engine's highest priority class: opening control panel, opening the console.
+    // Engine's highest priority context: opening control panel, opening the console.
 
     // Console bindings (when open).
 
     // Bias editor.
-
 }
 
 /**
@@ -325,7 +238,7 @@ void B_BindDefaults(void)
  */
 void B_Shutdown(void)
 {
-    B_DestroyAllClasses();
+    B_DestroyAllContexts();
 }
 
 /**
@@ -333,39 +246,45 @@ void B_Shutdown(void)
  */
 int B_NewIdentifier(void)
 {
-    int id = 0;
+    int                 id = 0;
+
     while(!id)
     {
         id = ++bindingIdCounter;
     }
+
     return id;
 }
 
-const char* B_ParseClass(const char* desc, bclass_t** bc)
+const char* B_ParseClass(const char* desc, bcontext_t** bc)
 {
-    ddstring_t* str = Str_New();
+    ddstring_t*         str = Str_New();
 
     *bc = 0;
     if(!strchr(desc, ':'))
     {
-        // No class defined.
+        // No context defined.
         return desc;
     }
+
     desc = Str_CopyDelim(str, desc, ':');
-    *bc = B_ClassByName(Str_Text(str));
+    *bc = B_ContextByName(Str_Text(str));
     Str_Free(str);
+
     return desc;
 }
 
-void B_DeleteMatching(bclass_t* bc, evbinding_t* eventBinding, dbinding_t* deviceBinding)
+void B_DeleteMatching(bcontext_t* bc, evbinding_t* eventBinding,
+                      dbinding_t* deviceBinding)
 {
-    dbinding_t *devb = NULL;
-    evbinding_t* evb = NULL;
+    dbinding_t*         devb = NULL;
+    evbinding_t*        evb = NULL;
 
     while(B_FindMatchingBinding(bc, eventBinding, deviceBinding, &evb, &devb))
     {
         // Only either evb or devb is returned as non-NULL.
-        int bid = (evb? evb->bid : (devb? devb->bid : 0));
+        int                 bid = (evb? evb->bid : (devb? devb->bid : 0));
+
         if(bid)
         {
             Con_Message("B_BindCommand: Deleting binding %i, it has been overridden by "
@@ -377,40 +296,42 @@ void B_DeleteMatching(bclass_t* bc, evbinding_t* eventBinding, dbinding_t* devic
 
 evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
 {
-    bclass_t* bc;
-    evbinding_t *b;
+    bcontext_t*         bc;
+    evbinding_t*        b;
 
     if(isDedicated)
         return NULL;
 
-    // The class may be included in the descriptor.
+    // The context may be included in the descriptor.
     eventDesc = B_ParseClass(eventDesc, &bc);
     if(!bc)
     {
-        bc = B_ClassByName(DEFAULT_BINDING_CLASS_NAME);
+        bc = B_ContextByName(DEFAULT_BINDING_CLASS_NAME);
     }
 
     if((b = B_NewCommandBinding(&bc->commandBinds, eventDesc, command)) != NULL)
     {
-        // TODO: In interactive binding mode, should ask the user if the replacement is ok.
-        // Now just delete the other binding.
+        /**
+         * \todo: In interactive binding mode, should ask the user if the
+         * replacement is ok. For now, just delete the other binding.
+         */
         B_DeleteMatching(bc, b, NULL);
-
         B_UpdateDeviceStateAssociations();
     }
+
     return b;
 }
 
 dbinding_t* B_BindControl(const char* controlDesc, const char* device)
 {
-    bclass_t* bc = 0;
-    int localNum = 0;
-    controlbinding_t* conBin = 0;
-    dbinding_t* devBin = 0;
-    ddstring_t* str = 0;
-    const char* ptr = 0;
-    playercontrol_t* control = 0;
-    boolean justCreated = false;
+    bcontext_t*         bc = 0;
+    int                 localNum = 0;
+    controlbinding_t*   conBin = 0;
+    dbinding_t*         devBin = 0;
+    ddstring_t*         str = 0;
+    const char*         ptr = 0;
+    playercontrol_t*    control = 0;
+    boolean             justCreated = false;
 
     if(isDedicated)
         return NULL;
@@ -426,6 +347,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
             Con_Message("B_BindControl: Local player number %i is invalid.\n", localNum);
             goto finished;
         }
+
         // Skip past it.
         controlDesc = ptr;
     }
@@ -438,12 +360,13 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         Con_Message("B_BindControl: Player control \"%s\" not defined.\n", Str_Text(str));
         goto finished;
     }
-    bc = B_ClassByName(control->bindClassName);
+
+    bc = B_ContextByName(control->bindContextName);
     if(!bc)
     {
-        bc = B_ClassByName(DEFAULT_BINDING_CLASS_NAME);
+        bc = B_ContextByName(DEFAULT_BINDING_CLASS_NAME);
     }
-    VERBOSE( Con_Message("B_BindControl: Control '%s' in class '%s' of local player %i to be "
+    VERBOSE( Con_Message("B_BindControl: Control '%s' in context '%s' of local player %i to be "
                          "bound to '%s'.\n", control->name, bc->name, localNum, device) );
 
     if((conBin = B_FindControlBinding(bc, control->id)) == NULL)
@@ -451,6 +374,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         justCreated = true;
         conBin = B_GetControlBinding(bc, control->id);
     }
+
     if(!(devBin = B_NewDeviceBinding(&conBin->deviceBinds[localNum], device)))
     {
         // Failure in the parsing.
@@ -462,10 +386,11 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         goto finished;
     }
 
-    // TODO: In interactive binding mode, should ask the user if the replacement is ok.
-    // Now just delete the other binding.
+    /**
+     * \todo: In interactive binding mode, should ask the user if the
+     * replacement is ok. For now, just delete the other binding.
+     */
     B_DeleteMatching(bc, NULL, devBin);
-
     B_UpdateDeviceStateAssociations();
 
 finished:
@@ -473,18 +398,19 @@ finished:
     return devBin;
 }
 
-dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bClass)
+dbinding_t* B_GetControlDeviceBindings(int localNum, int control,
+                                       bcontext_t** bContext)
 {
-    playercontrol_t* pc;
-    bclass_t* bc;
+    playercontrol_t*    pc;
+    bcontext_t*         bc;
 
     if(localNum < 0 || localNum >= DDMAXPLAYERS)
         return NULL;
 
     pc = P_PlayerControlById(control);
-    bc = B_ClassByName(pc->bindClassName);
-    if(bClass)
-        *bClass = bc;
+    bc = B_ContextByName(pc->bindContextName);
+    if(bContext)
+        *bContext = bc;
 
     if(bc)
         return &B_GetControlBinding(bc, control)->deviceBinds[localNum];
@@ -494,39 +420,44 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bCl
 
 boolean B_Delete(int bid)
 {
-    int         i;
+    int                 i;
 
-    for(i = 0; i < B_ClassCount(); ++i)
+    for(i = 0; i < B_ContextCount(); ++i)
     {
-        if(B_DeleteBinding(B_ClassByPos(i), bid))
+        if(B_DeleteBinding(B_ContextByPos(i), bid))
             return true;
     }
+
     return false;
 }
 
 D_CMD(BindEventToCommand)
 {
-    evbinding_t* b = B_BindCommand(argv[1], argv[2]);
+    evbinding_t*        b = B_BindCommand(argv[1], argv[2]);
+
     if(b)
     {
         Con_Printf("Binding %i created.\n", b->bid);
     }
+
     return (b != NULL);
 }
 
 D_CMD(BindControlToDevice)
 {
-    dbinding_t* b = B_BindControl(argv[1], argv[2]);
+    dbinding_t*         b = B_BindControl(argv[1], argv[2]);
+
     if(b)
     {
         Con_Printf("Binding %i created.\n", b->bid);
     }
+
     return (b != NULL);
 }
 
-D_CMD(ListBindingClasses)
+D_CMD(ListBindingContexts)
 {
-    B_PrintClasses();
+    B_PrintContexts();
     return true;
 }
 
@@ -536,21 +467,23 @@ D_CMD(ListBindings)
     return true;
 }
 
-D_CMD(ClearBindingClasses)
+D_CMD(ClearBindingContexts)
 {
-    B_DestroyAllClasses();
+    B_DestroyAllContexts();
     return true;
 }
 
 D_CMD(ClearBindings)
 {
-    int         i;
+    int                 i;
 
-    for(i = 0; i < B_ClassCount(); ++i)
+    for(i = 0; i < B_ContextCount(); ++i)
     {
-        Con_Printf("Clearing binding class \"%s\"...\n", B_ClassByPos(i)->name);
-        B_ClearClass(B_ClassByPos(i));
+        Con_Printf("Clearing binding context \"%s\"...\n",
+                   B_ContextByPos(i)->name);
+        B_ClearContext(B_ContextByPos(i));
     }
+
     // We can restart the id counter, all the old bindings were destroyed.
     bindingIdCounter = 0;
     return true;
@@ -558,7 +491,7 @@ D_CMD(ClearBindings)
 
 D_CMD(DeleteBindingById)
 {
-    int bid = strtoul(argv[1], NULL, 10);
+    int                 bid = strtoul(argv[1], NULL, 10);
 
     if(B_Delete(bid))
     {
@@ -568,6 +501,7 @@ D_CMD(DeleteBindingById)
     {
         Con_Printf("Cannot delete binding %i, it was not found.\n", bid);
     }
+
     return true;
 }
 
@@ -583,17 +517,18 @@ D_CMD(DefaultBindings)
     return true;
 }
 
-D_CMD(ActivateBindingClass)
+D_CMD(ActivateBindingContext)
 {
-    boolean doActivate = !stricmp(argv[0], "activatebclass");
-    bclass_t* bc = B_ClassByName(argv[1]);
+    boolean             doActivate = !stricmp(argv[0], "activatebcontext");
+    bcontext_t*         bc = B_ContextByName(argv[1]);
 
     if(!bc)
     {
-        Con_Printf("Binding class '%s' does not exist.\n", argv[1]);
+        Con_Printf("Binding context '%s' does not exist.\n", argv[1]);
         return false;
     }
-    B_ActivateClass(bc, doActivate);
+
+    B_ActivateContext(bc, doActivate);
     return true;
 }
 
@@ -637,11 +572,11 @@ const char* EventType_Str(evtype_t type)
 }
 #endif
 
-static uint searchBindListForControlID(binding_t **list, uint num,
+static uint searchBindListForControlID(binding_t** list, uint num,
                                        int controlID)
 {
-    uint        i;
-    boolean     found;
+    uint                i;
+    boolean             found;
 
     i = 0;
     found = false;
@@ -659,16 +594,16 @@ static uint searchBindListForControlID(binding_t **list, uint num,
     return 0;
 }
 
-static binding_t __inline *bindingForEvent(ddevent_t *event)
+static binding_t __inline* bindingForEvent(ddevent_t* ev)
 {
-    uint        num, idx;
-    binding_t **list;
-    devcontrolbinds_t *devBinds = &devCtrlBinds[event->device];
+    uint                num, idx;
+    binding_t**         list;
+    devcontrolbinds_t*  devBinds = &devCtrlBinds[ev->device];
 
-    list = &devBinds->binds[event->isAxis? BL_AXES : BL_KEYS];
-    num  = devBinds->numBinds[event->isAxis? BL_AXES : BL_KEYS];
+    list = &devBinds->binds[ev->isAxis? BL_AXES : BL_KEYS];
+    num  = devBinds->numBinds[ev->isAxis? BL_AXES : BL_KEYS];
 
-    idx = searchBindListForControlID(list, num, (int) event->obsolete.controlID);
+    idx = searchBindListForControlID(list, num, (int) ev->obsolete.controlID);
     if(idx != 0)
         return &(*list)[idx-1]; // 1 based index.
 
@@ -683,12 +618,12 @@ static binding_t __inline *bindingForEvent(ddevent_t *event)
  *
  * @return              Ptr to the found bindcontrol_t ELSE @c NULL,.
  */
-static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
+static bindcontrol_t* B_GetBindControlForEvent(ddevent_t* ev)
 {
-    uint        i;
-    binding_t  *bnd;
-    bindcontrol_t *ctrl = NULL;
-    boolean     found;
+    uint                i;
+    binding_t*          bnd;
+    bindcontrol_t*      ctrl = NULL;
+    boolean             found;
 
     if(!I_GetDevice(ev->device, true))
         return NULL;
@@ -698,7 +633,7 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
         return NULL;
 
     found = false;
-    if(!ev->noclass) // Use a specific class? (active or not)
+    if(!ev->noclass) // Use a specific context? (active or not)
     {
         // \note These kind of events aren't sent via direct user input.
         // Only by "us" when we need to switch binding classes and a
@@ -728,7 +663,7 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
         boolean     done;
 
         // Loop backwards through the active binding classes, the
-        // command in the highest binding class slot that is currently
+        // command in the highest binding context slot that is currently
         // active is executed.
         i = 0;
         done = false;
@@ -736,7 +671,7 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
         {
             idx = numBindClasses - 1 - i;
 
-            if(bindClasses[idx].active == 1)
+            if(bindContexts[idx].active == 1)
             {
                 ctrl = &bnd->binds[idx];
                 switch(ctrl->type)
@@ -762,7 +697,7 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
                         // RULE: If a repeat event does not have a
                         // binding in BINDCLASS (k) we should ignore
                         // commands in all lower classes IF there is NOT
-                        // a down binding for this event in this class.
+                        // a down binding for this event in this context.
                         if(ev->data1 == EVS_REPEAT && cmd->command[EVS_DOWN])
                             done = true; // Do nothing.
                     }
@@ -777,7 +712,7 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
                 if(!done)
                 {
                     // Should we ignore commands in lower classes?
-                    if(bindClasses[idx].flags & BCF_ABSOLUTE)
+                    if(bindContexts[idx].flags & BCF_ABSOLUTE)
                         done = true;
                 }
             }
@@ -802,7 +737,7 @@ static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
  *
  * @return              @c true, If an action was executed.
  */
-boolean B_Responder(ddevent_t *ev)
+boolean B_Responder(ddevent_t* ev)
 {
     if(symbolicEchoMode && ev->type != E_SYMBOLIC)
     {
@@ -1043,12 +978,12 @@ void B_ClearBindings(boolean active, boolean defaults)
 /**
  * Binds the given event to the command. Also rebinds old bindings.
  *
- * 1) Binding to NULL without specifying a class: deletes the binding.
+ * 1) Binding to NULL without specifying a context: deletes the binding.
  *
- * 2) Bindind to NULL and specifying a class: clears the command and
+ * 2) Bindind to NULL and specifying a context: clears the command and
  *    if no more commands exist for this binding - will delete it
  */
-binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
+binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindContext)
 {
     uint        i;
     binding_t  *bnd;
@@ -1067,16 +1002,16 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
         if(!bnd)
             return NULL; // Can't remove a binding that doesn't exist.
 
-        // Clear the command in bindClass only.
+        // Clear the command in bindContext only.
         for(i = 0; i < numBindClasses; ++i)
         {
             if(bnd->binds[i].type == BND_UNUSED)
                 continue;
 
-            if(i == bindClass)
+            if(i == bindContext)
             {
                 unused = true;
-                // Implicit; axis bindings which match bindClass are unused.
+                // Implicit; axis bindings which match bindContext are unused.
 
                 // Command bindings need to be checked as each has
                 // multiple states.
@@ -1118,12 +1053,12 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
         return NULL;
     }
 
-    if(bnd->binds[bindClass].type == BND_COMMAND)
+    if(bnd->binds[bindContext].type == BND_COMMAND)
     {
         // If, changing from a command to an axis bind, free all commands
         // in all states. Else, just free the command in the state being
         // updated (if one already present).
-        com = &bnd->binds[bindClass].data.command;
+        com = &bnd->binds[bindContext].data.command;
         for(i = 0; i < NUM_EVENT_STATES; ++i)
         {
             if(!ev->isAxis && (int) i != ev->data1)
@@ -1139,10 +1074,10 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
 
     // Set the control
     device = I_GetDevice(ev->device, false);
-    bnd->binds[bindClass].type = (ev->isAxis? BND_AXIS : BND_COMMAND);
-    if(bnd->binds[bindClass].type == BND_AXIS)
+    bnd->binds[bindContext].type = (ev->isAxis? BND_AXIS : BND_COMMAND);
+    if(bnd->binds[bindContext].type == BND_AXIS)
     {
-        ctrl = &bnd->binds[bindClass].data.axiscontrol;
+        ctrl = &bnd->binds[bindContext].data.axiscontrol;
         ctrl->playercontrol = control;
 //#if _DEBUG
 //Con_Printf("B_Bind: (%s) axis '%s' ctrl: '%s'\n",
@@ -1152,7 +1087,7 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
     }
     else
     {
-        com = &bnd->binds[bindClass].data.command;
+        com = &bnd->binds[bindContext].data.command;
         com->command[ev->data1] = M_Malloc(strlen(command) + 1);
         strcpy(com->command[ev->data1], command);
 
@@ -1438,10 +1373,10 @@ void B_FormEventString(char *buff, evtype_t type, evstate_t state,
 }
 
 /**
- * Retrieve the id of the named bind class.
+ * Retrieve the id of the named bind context.
  *
- * @param           The symbolic bind class name to search for OR identifier
- *                  in the form "bdc#" where '#' = bind class id.
+ * @param           The symbolic bind context name to search for OR identifier
+ *                  in the form "bdc#" where '#' = bind context id.
  *
  * @return          @c true, if one is found.
  */
@@ -1453,14 +1388,14 @@ static boolean B_GetBindClassIDbyName(const char *name, uint *id)
     if(!name || !name[0])
         return false;
 
-    // By bindClass id first.
+    // By bindContext id first.
     if(!strnicmp(name, "bdc", 3))
     {
         uint        idx = (uint) atoi(name+3);
         i = 0;
         while(i < numBindClasses && !found)
         {
-            if(idx == bindClasses[i].id)
+            if(idx == bindContexts[i].id)
             {
                 *id = idx;
                 found = true;
@@ -1474,10 +1409,10 @@ static boolean B_GetBindClassIDbyName(const char *name, uint *id)
         i = 0;
         while(i < numBindClasses && !found)
         {
-            if(!stricmp(name, bindClasses[i].name))
+            if(!stricmp(name, bindContexts[i].name))
             {
                 if(id)
-                    *id = bindClasses[i].id;
+                    *id = bindContexts[i].id;
                 found = true;
             }
             else
@@ -1489,16 +1424,16 @@ static boolean B_GetBindClassIDbyName(const char *name, uint *id)
 }
 #endif
 
-void DD_AddBindClass(bindclass_t *newbc)
+void DD_AddBindClass(bindcontext_t *newbc)
 {
     /*
     uint        i, j, k;
-    bindclass_t *added;
+    bindcontext_t *added;
 
     VERBOSE2(Con_Printf("DD_AddBindClass: %s.\n", newbc->name));
 
     if(B_GetBindClassIDbyName(newbc->name, NULL))
-        Con_Error("DD_AddBindClass: Cannot register. A bind class by the "
+        Con_Error("DD_AddBindClass: Cannot register. A bind context by the "
                   "name '%s' already exists.", newbc->name);
 
     if(++numBindClasses > maxBindClasses)
@@ -1508,7 +1443,7 @@ void DD_AddBindClass(bindclass_t *newbc)
         if(maxBindClasses < numBindClasses)
             maxBindClasses = numBindClasses;
 
-        bindClasses = M_Realloc(bindClasses, sizeof(bindclass_t) * maxBindClasses);
+        bindContexts = M_Realloc(bindContexts, sizeof(bindcontext_t) * maxBindClasses);
 
         for(j = 0; j < NUM_INPUT_DEVICES; ++j)
         {
@@ -1531,11 +1466,11 @@ void DD_AddBindClass(bindclass_t *newbc)
         }
     }
 
-    added = &bindClasses[numBindClasses - 1];
-    memcpy(added, newbc, sizeof(bindclass_t));
+    added = &bindContexts[numBindClasses - 1];
+    memcpy(added, newbc, sizeof(bindcontext_t));
     added->id = numBindClasses - 1;
 
-    // Allocate a copy of the class name.
+    // Allocate a copy of the context name.
     added->name = strdup(newbc->name);
      */
 }
@@ -1544,7 +1479,7 @@ void DD_AddBindClass(bindclass_t *newbc)
  * Enables/disables binding classes (wrapper for the game dll).
  *
  * Allows users to create their own binding classes that can be placed
- * anywhere in the bindClass stack without the dll having to keep track of
+ * anywhere in the bindContext stack without the dll having to keep track of
  * the classIDs.
  */
 boolean DD_SetBindClass(uint classID, uint type)
@@ -1587,7 +1522,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                 com = &bind->binds[classID].data.command;
 
                 // We're only interested in bindings for down events currently
-                // being pressed that have a binding in the class being
+                // being pressed that have a binding in the context being
                 // enabled/disabled (classID)
                 if(!(com->command[EVS_DOWN] != NULL && bind->controlID >= 0 &&
                      I_IsDeviceKeyDown(deviceID, (uint) bind->controlID)))
@@ -1599,7 +1534,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
 
                 // We're only interested in bindings for axes which are
                 // currently outside their dead zone, that have a binding in the
-                // class being enabled/disabled (classID)
+                // context being enabled/disabled (classID)
                 // \fixme Actually check the zone!
                 if(!dev->axes[axis->playercontrol].position)
                     continue;
@@ -1608,7 +1543,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
 
             // Iterate all commands for this binding, count the number of
             // commands for this binding that are for currently active bind
-            // classes with a lower id than the class being enabled/disabled
+            // classes with a lower id than the context being enabled/disabled
             // (classID).
 
             count = 0;
@@ -1616,7 +1551,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
             isDone = false;
             while(k < numBindClasses && !isDone)
             {
-                if(bindClasses[k].active && bind->binds[k].type != BND_UNUSED)
+                if(bindContexts[k].active && bind->binds[k].type != BND_UNUSED)
                 {
                     boolean     ignore = false;
 
@@ -1630,14 +1565,14 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                     if(!ignore)
                     {
                         // If there is a command for this event binding in a
-                        // class that is currently active (current is k), that
-                        // has a greater id than the class being enabled/disabled
+                        // context that is currently active (current is k), that
+                        // has a greater id than the context being enabled/disabled
                         // (classID) then we don't need to que any extra events
                         // at all as that will have been done when the binding
-                        // class with the higher id was enabled. The commands in
+                        // context with the higher id was enabled. The commands in
                         // the lower classes can't have been active (for this
-                        // event), as the highest class command is ALWAYS
-                        // executed unless a specific class is requested.
+                        // event), as the highest context command is ALWAYS
+                        // executed unless a specific context is requested.
                         if(k > classID)
                         {   // Don't need to que any extra events.
                             count = 0;
@@ -1655,12 +1590,12 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
             if(count > 0)
             {
                 // We need to send either up or axis center events, specifing a
-                // bind class for all the bind classes with a lower id than the
-                // class being enabled/disabled (classID) that are also active
+                // bind context for all the bind classes with a lower id than the
+                // context being enabled/disabled (classID) that are also active
                 // (note the order does not matter).
                 for(k = 0; k < classID; ++k)
                 {
-                    if(bindClasses[k].active &&
+                    if(bindContexts[k].active &&
                        bind->binds[k].type != BND_UNUSED)
                     {
                         boolean     ignore = false;
@@ -1689,8 +1624,8 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                                 ev.data1 = EVS_UP;
                             }
 
-                            // Specify a bind class.
-                            ev.useclass = bindClasses[k].id;
+                            // Specify a bind context.
+                            ev.useclass = bindContexts[k].id;
                             ev.noclass = false;
 
                             DD_PostEvent(&ev);
@@ -1700,8 +1635,8 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
             }
 
             // Also send an up/center event for this binding if the currently
-            // active command is in the class being disabled and it has the
-            // highest id of the active bindClass commands for this binding.
+            // active command is in the context being disabled and it has the
+            // highest id of the active bindContext commands for this binding.
             k = 0;
             isDone = false;
             while(k < numBindClasses && !isDone)
@@ -1733,13 +1668,13 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                     };
 
                     if(present)
-                        if(idx > classID && bindClasses[idx].active)
+                        if(idx > classID && bindContexts[idx].active)
                         {
                             isDone = true;
                         }
                         else
                         {
-                            if(!bindClasses[idx].active)
+                            if(!bindContexts[idx].active)
                             {   // Que an up/center event for this.
                                 ddevent_t ev;
 
@@ -1756,8 +1691,8 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                                     ev.data1 = EVS_UP;
                                 }
 
-                                // Specify a bind class.
-                                ev.useclass = bindClasses[idx].id;
+                                // Specify a bind context.
+                                ev.useclass = bindContexts[idx].id;
                                 ev.noclass = false;
 
                                 DD_PostEvent(&ev);
@@ -1780,16 +1715,16 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
 {/*
     uint        g;
 
-    // Change the active state of the bindClass.
+    // Change the active state of the bindContext.
     switch(type)
     {
     case 0:  // implicitly set
     case 1:
-        bindClasses[classID].active = type? 1 : 0;
+        bindContexts[classID].active = type? 1 : 0;
         break;
 
     case 2:  // toggle
-        bindClasses[classID].active = bindClasses[classID].active? 0 : 1;
+        bindContexts[classID].active = bindContexts[classID].active? 0 : 1;
         break;
 
     default:
@@ -1797,15 +1732,15 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
     }
 
     VERBOSE2(Con_Printf("B_SetBindClass: %s %s %s.\n",
-                        bindClasses[classID].name,
+                        bindContexts[classID].name,
                         (type==2)? "TOGGLE" : "SET",
-                        bindClasses[classID].active? "ON" : "OFF"));
+                        bindContexts[classID].active? "ON" : "OFF"));
 
     // Now we need to do a check in case there are keys currently
     // being pressed that should be released if the event binding they are
-    // bound too has commands in the bind class being enabled/disabled.
+    // bound too has commands in the bind context being enabled/disabled.
     // Also, if there are any axes which are outside their dead zone and
-    // if there axis bindings in the bind class being enabled/disabled, we
+    // if there axis bindings in the bind context being enabled/disabled, we
     // need to send centering events for them.
 
     for(g = 0; g < NUM_INPUT_DEVICES; ++g)
@@ -1815,7 +1750,7 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
 }
 /*
 static uint writeBindList(FILE *file, binding_t *list, uint num,
-                          uint deviceID, uint bindClass)
+                          uint deviceID, uint bindContext)
 {
     uint        i, j, count = 0;
     binding_t  *bnd;
@@ -1824,7 +1759,7 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
 
     for(i = 0, bnd = list; i < num; ++i, bnd++)
     {
-        ctrl = &bnd->binds[bindClass];
+        ctrl = &bnd->binds[bindContext];
         switch(ctrl->type)
         {
         case BND_AXIS:
@@ -1834,7 +1769,7 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
             formEventString(buffer, deviceID, bnd->controlID, true, 0);
             // \fixme Using "after" is a hack...
             fprintf(file, "after 1 { bindaxis %s %s ",
-                    bindClasses[bindClass].name, buffer);
+                    bindContexts[bindContext].name, buffer);
             if(axis->invert)
                 fprintf(file, "-");
             fprintf(file, "%s", P_ControlGetAxisName(axis->playercontrol));
@@ -1856,7 +1791,7 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
                 if(com->command[j])
                 {
                     fprintf(file, "bind ");
-                    fprintf(file, "%s ", bindClasses[bindClass].name);
+                    fprintf(file, "%s ", bindContexts[bindContext].name);
                     fprintf(file, "%s", buffer);
                     fprintf(file, " \"");
 
@@ -1889,9 +1824,9 @@ void B_WriteToFile(FILE *file)
     // Start with a clean slate when restoring the bindings.
     fprintf(file, "clearbindings\n\n");
 
-    for(i = 0; i < B_ClassCount(); ++i)
+    for(i = 0; i < B_ContextCount(); ++i)
     {
-        B_WriteClassToFile(B_ClassByPos(i), file);
+        B_WriteContextToFile(B_ContextByPos(i), file);
     }
 }
 
@@ -1907,7 +1842,7 @@ int DD_GetKeyCode(const char *key)
 }
 
 /*
-static uint printBindList(char *searchKey, uint deviceID, int bindClass,
+static uint printBindList(char *searchKey, uint deviceID, int bindContext,
                           binding_t *list, uint num)
 {
     uint        i, j, k, count;
@@ -1938,9 +1873,9 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
 
                         // Does this event match the search pattern?
                         noMatch = false;
-                        if(bindClass >= 0)
+                        if(bindContext >= 0)
                         {
-                            if(j != (uint) bindClass)
+                            if(j != (uint) bindContext)
                                 noMatch = true;
                         }
                         if(!noMatch)
@@ -1950,12 +1885,12 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
 
                         if(!noMatch)
                         {
-                            if(bindClass >= 0)
+                            if(bindContext >= 0)
                                 Con_Printf("%-8s : %s\n", buffer,
                                            com->command[k]);
                             else
                                 Con_Printf("%-8s : %-8s : %s\n", buffer,
-                                           bindClasses[j].name,
+                                           bindContexts[j].name,
                                            com->command[k]);
                             count++;
                         }
@@ -1973,9 +1908,9 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
 
                 // Does this device control match the search pattern?
                 noMatch = false;
-                if(bindClass >= 0)
+                if(bindContext >= 0)
                 {
-                    if(j != (uint) bindClass)
+                    if(j != (uint) bindContext)
                         noMatch = true;
                 }
                 if(!noMatch)
@@ -1988,13 +1923,13 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
                     const char *axisName =
                         P_ControlGetAxisName(ctl->playercontrol);
 
-                    if(bindClass >= 0)
+                    if(bindContext >= 0)
                         Con_Printf("%-8s : %s%s\n", buffer,
                                    (ctl->invert? "-" : ""),
                                    axisName);
                     else
                         Con_Printf("%-8s : %-8s : %s%s\n", buffer,
-                                   bindClasses[j].name,
+                                   bindContexts[j].name,
                                    (ctl->invert? "-" : ""),
                                    axisName);
                     count++;
@@ -2015,7 +1950,7 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
 /**
  * The "bindaxis" console command creates and deletes axis bindings.
  *
- * Example:  bindaxis bindclass mouse-y (-)look/2
+ * Example:  bindaxis bindcontext mouse-y (-)look/2
  */
 D_CMD(BindAxis)
 {/*
@@ -2029,29 +1964,29 @@ D_CMD(BindAxis)
     uint        ctlidx, bc = 0;
     const char *axisptr = argv[2];
     const char *ctrlptr = argv[3];
-    boolean     bindClassGiven = false;
+    boolean     bindContextGiven = false;
     bindaxis_t *ctrl;
 
     if(argc < 3 || argc > 4)
     {
-        Con_Printf("Usage: %s (class) (device-axis) (control)\n", argv[0]);
+        Con_Printf("Usage: %s (context) (device-axis) (control)\n", argv[0]);
         Con_Printf("Binding Classes:\n");
         for(i = 0; i < numBindClasses; ++i)
-            Con_Printf("  %s\n", bindClasses[i].name);
+            Con_Printf("  %s\n", bindContexts[i].name);
         return true;
     }
 
-    // Check for a specified binding class.
-    bindClassGiven = B_GetBindClassIDbyName(argv[1], &bc);
+    // Check for a specified binding context.
+    bindContextGiven = B_GetBindClassIDbyName(argv[1], &bc);
 
-    if(argc == 4 && !bindClassGiven)
+    if(argc == 4 && !bindContextGiven)
     {
-        Con_Printf("'%s' is not a valid bindClass name/id.\n", argv[1]);
+        Con_Printf("'%s' is not a valid bindContext name/id.\n", argv[1]);
         return false;
     }
 
-    // Has a binding class been specified?
-    if(!bindClassGiven)
+    // Has a binding context been specified?
+    if(!bindContextGiven)
     {
         // No it hasn't! default to normal
         bc = DDBC_NORMAL;
@@ -2067,7 +2002,7 @@ D_CMD(BindAxis)
     }
 
     // If no control is given, delete the binding.
-    if(argc == 3 && bindClassGiven)
+    if(argc == 3 && bindContextGiven)
     {
         ddevent_t ev;
 
@@ -2124,12 +2059,12 @@ D_CMD(BindAxis)
 }
 
 /**
- * (safe)bind(r) bindclass +space +jump
+ * (safe)bind(r) bindcontext +space +jump
  */
 D_CMD(Bind)
 {/*
     boolean     prefixGiven = true;
-    boolean     bindClassGiven = false;
+    boolean     bindContextGiven = false;
     char        validEventName[16], buff[80];
     char        prefix = '+', *begin;
     char       *evntptr = argv[2];
@@ -2144,23 +2079,23 @@ D_CMD(Bind)
 
     if(argc < 2 || argc > 4)
     {
-        Con_Printf("Usage: %s (class) (event) (cmd)\n", argv[0]);
+        Con_Printf("Usage: %s (context) (event) (cmd)\n", argv[0]);
         Con_Printf("Binding Classes:\n");
         for(i = 0; i < numBindClasses; ++i)
-            Con_Printf("  %s\n", bindClasses[i].name);
+            Con_Printf("  %s\n", bindContexts[i].name);
 
         return true;
     }
 
-    // Check for a specified binding class
-    bindClassGiven = B_GetBindClassIDbyName(argv[1], &bc);
+    // Check for a specified binding context
+    bindContextGiven = B_GetBindClassIDbyName(argv[1], &bc);
 
-    // Has a binding class been specified?
-    if(!bindClassGiven)
+    // Has a binding context been specified?
+    if(!bindContextGiven)
     {
         if(argc == 4)
         {
-            Con_Printf("'%s' is not a valid bindClass name/id.\n", argv[1]);
+            Con_Printf("'%s' is not a valid bindContext name/id.\n", argv[1]);
             return false;
         }
 
@@ -2185,7 +2120,7 @@ D_CMD(Bind)
     else
         prefixGiven = false;
 
-    if((argc == 3 && bindClassGiven) || (argc == 2 && !bindClassGiven))
+    if((argc == 3 && bindContextGiven) || (argc == 2 && !bindContextGiven))
     {
         // We're clearing a binding.
         // If no prefix has been given event states (+,-,*) are cleared.
@@ -2206,7 +2141,7 @@ D_CMD(Bind)
         }
         return true;
     }
-    if(argc == 4 || (argc == 3 && !bindClassGiven))
+    if(argc == 4 || (argc == 3 && !bindContextGiven))
     {
         char    cprefix = cmdptr[0];
 
@@ -2251,8 +2186,8 @@ D_CMD(Bind)
     }
 
     // Now we can create a binding for it.
-    if((argc == 2 && !bindClassGiven && !prefixGiven) ||
-       (argc == 3 && bindClassGiven))
+    if((argc == 2 && !bindContextGiven && !prefixGiven) ||
+       (argc == 3 && bindContextGiven))
         B_Bind(&event, NULL, -1, bc);
     else
         B_Bind(&event, cmdptr, -1, bc);
@@ -2262,8 +2197,8 @@ D_CMD(Bind)
     {
         event.data1 = EVS_REPEAT;
 
-        if((argc == 2 && !bindClassGiven && !prefixGiven) ||
-           (argc == 3 && bindClassGiven))
+        if((argc == 2 && !bindContextGiven && !prefixGiven) ||
+           (argc == 3 && bindContextGiven))
             B_Bind(&event, NULL, -1, bc);
         else
             B_Bind(&event, cmdptr, -1, bc);
@@ -2285,7 +2220,7 @@ D_CMD(ListBindClasses)
     Con_Printf("Binding Classes:\n");
 
     for(k = 0; k < numBindClasses; ++k)
-        Con_Printf("  %s\n", bindClasses[k].name);
+        Con_Printf("  %s\n", bindContexts[k].name);
 
    */ return true;
 }
@@ -2296,7 +2231,7 @@ D_CMD(ListBindClasses)
 /*
 D_CMD(ListBindings)
 {
-    uint        i, g, comcount, bindClass = 0;
+    uint        i, g, comcount, bindContext = 0;
     char       *searchKey;
     uint       *num;
     binding_t **list;
@@ -2305,15 +2240,15 @@ D_CMD(ListBindings)
     inputdev_t *device;
     boolean     inClassOnly = false;
 
-    // Are we showing bindings in a particular class only?
+    // Are we showing bindings in a particular context only?
     searchKey = NULL;
     if(argc >= 2)
     {
         for(i = 0; i < numBindClasses; ++i)
-            if(!stricmp(argv[1], bindClasses[i].name))
+            if(!stricmp(argv[1], bindContexts[i].name))
             {
-                // Only show bindings in this class.
-                bindClass = bindClasses[i].id;
+                // Only show bindings in this context.
+                bindContext = bindContexts[i].id;
                 inClassOnly= true;
             }
 
@@ -2345,14 +2280,14 @@ D_CMD(ListBindings)
             num  = &devBinds->numBinds[l];
             totalBinds += *num;
             if(*list)
-                comcount += printBindList(searchKey, g, (inClassOnly? bindClass:-1), *list, *num);
+                comcount += printBindList(searchKey, g, (inClassOnly? bindContext:-1), *list, *num);
         }
     }
 
     if(inClassOnly)
     {
-        Con_Printf("Showing %i (%s class) commands from %i bindings.\n",
-                   comcount, bindClasses[bindClass].name, totalBinds);
+        Con_Printf("Showing %i (%s context) commands from %i bindings.\n",
+                   comcount, bindContexts[bindContext].name, totalBinds);
     }
     else
     {
@@ -2367,7 +2302,7 @@ D_CMD(ListBindings)
  * Enables/disables binding classes.
  * Ques extra input events as required.
  */
-D_CMD(EnableBindClass)
+D_CMD(EnableBindContext)
 {/*
     uint        i, idx = 0;
     boolean     found;
@@ -2375,22 +2310,22 @@ D_CMD(EnableBindClass)
     if(argc < 2 || argc > 3)
     {
         for(i = 0; i < numBindClasses; ++i)
-            Con_Printf("%d: %s is %s\n", i, bindClasses[i].name,
-                       (bindClasses[i].active)? "On" : "Off");
+            Con_Printf("%d: %s is %s\n", i, bindContexts[i].name,
+                       (bindContexts[i].active)? "On" : "Off");
 
-        Con_Printf("Usage: %s (binding class) (1=On, 0=Off (omit to toggle))\n",
+        Con_Printf("Usage: %s (binding context) (1=On, 0=Off (omit to toggle))\n",
                    argv[0]);
         return true;
     }
 
-    // Look for a binding class with a name that matches the argument.
+    // Look for a binding context with a name that matches the argument.
     i = 0;
     found = false;
     while(i < numBindClasses && !found)
     {
-        if(!(stricmp(argv[1], bindClasses[i].name)))
+        if(!(stricmp(argv[1], bindContexts[i].name)))
         {
-            idx = bindClasses[i].id;
+            idx = bindContexts[i].id;
             found = true;
         }
         else
@@ -2399,7 +2334,7 @@ D_CMD(EnableBindClass)
 
     if(!found || idx >= numBindClasses)
     {
-        Con_Printf("Not a valid binding class. Enter listbindclasses.\n");
+        Con_Printf("Not a valid binding context. Enter listbindcontextes.\n");
         return false;
     }
 

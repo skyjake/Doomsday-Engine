@@ -41,9 +41,9 @@ void        B_WriteToFile(FILE *file);
 
 struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
 struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
-struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bclass_s** bClass);
+struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bclass_s** bContext);
 
-void        DD_AddBindClass(struct bindclass_s *);
+void        DD_AddBindClass(struct bindcontext_s *);
 boolean     B_SetBindClass(uint classID, uint type);
 
 // Utils

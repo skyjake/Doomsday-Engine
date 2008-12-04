@@ -840,7 +840,7 @@ void Con_UpdateKnownWords(void)
     /*
     for(i = 0; i < numBindClasses; ++i, ++c)
     {
-        strncpy(knownWords[c].word, bindClasses[i].name, 63);
+        strncpy(knownWords[c].word, bindContexts[i].name, 63);
         knownWords[c].type = WT_BINDCLASS;
     }
      */

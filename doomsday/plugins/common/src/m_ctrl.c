@@ -71,7 +71,7 @@ typedef enum {
 /** Menu items in the Controls menu are created based on this data. */
 typedef struct controlconfig_s {
     const char*     itemText;
-    const char*     bindClass;
+    const char*     bindContext;
     const char*     controlName;
     const char*     command;
     int             flags;
@@ -699,7 +699,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
     {
         char            cmd[512];
         const char*     symbol = 0;
-        const char*     bindClass = "game";
+        const char*     bindContext = "game";
 
         if(sizeof(const char*) == sizeof(ev->data1)) // 32-bit
         {
@@ -721,14 +721,14 @@ int M_ControlsPrivilegedResponder(event_t* ev)
 
         //Con_Message("got %s\n", symbol);
 
-        if(grabbing->bindClass)
+        if(grabbing->bindContext)
         {
-            bindClass = grabbing->bindClass;
+            bindContext = grabbing->bindContext;
         }
 
         if(grabbing->command)
         {
-            sprintf(cmd, "bindevent {%s:%s} {%s}", bindClass, &symbol[5], grabbing->command);
+            sprintf(cmd, "bindevent {%s:%s} {%s}", bindContext, &symbol[5], grabbing->command);
 
             // Check for repeats.
             if(grabbing->flags & CCF_REPEAT)
@@ -743,7 +743,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
 
                     memset(temp2, 0, sizeof(temp2));
                     strncpy(temp2, symbol + 5, downPtr - symbol - 5);
-                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindClass, temp2,
+                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindContext, temp2,
                             grabbing->command);
                     strcat(cmd, temp);
                 }
@@ -793,7 +793,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
         memset(buff, 0, sizeof(buff));
 
         // Check for bindings in this class only?
-        if(B_BindingsForCommand(cmd, buff, grabbing->bindClass, false))
+        if(B_BindingsForCommand(cmd, buff, grabbing->bindContext, false))
             if(findtoken(buff, evname, " "))    // Get rid of it?
             {
                 del = true;
@@ -805,7 +805,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
 
         sprintf(cmd, "%s bdc%d %s %s",
                 grabbing->flags & CLF_REPEAT ? "bindr" : "bind",
-                grabbing->bindClass, evname + 1, buff);
+                grabbing->bindContext, evname + 1, buff);
 
         DD_Execute(false, cmd);
          */

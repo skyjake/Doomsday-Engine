@@ -667,12 +667,12 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     /*
     if(args.argc == 1)  // Possibly a control command?
     {
-		if(P_ControlExecute(args.argv[0]))
-		{
-			// It was a control command.  No further processing is
-			// necessary.
-			return true;
-		}
+        if(P_ControlExecute(args.argv[0]))
+        {
+            // It was a control command.  No further processing is
+            // necessary.
+            return true;
+        }
     }
      */
 
@@ -1277,7 +1277,7 @@ void Con_Open(int yes)
         ConsoleActive = true;
         ConsoleTime = 0;
 
-        B_ActivateClass(B_ClassByName(CONSOLE_BINDING_CLASS_NAME), true);
+        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CLASS_NAME), true);
     }
     else
     {
@@ -1285,7 +1285,7 @@ void Con_Open(int yes)
         cmdCursor = 0;
         ConsoleActive = false;
 
-        B_ActivateClass(B_ClassByName(CONSOLE_BINDING_CLASS_NAME), false);
+        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CLASS_NAME), false);
     }
 }
 

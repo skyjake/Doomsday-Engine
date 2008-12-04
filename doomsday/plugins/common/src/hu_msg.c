@@ -670,7 +670,7 @@ static void openChat(int plynum)
 
     // Enable the chat binding class
     //DD_SetBindClass(GBC_CHAT, true);
-    DD_Execute(true, "activatebclass chat");
+    DD_Execute(true, "activatebcontext chat");
 }
 
 static void closeChat(void)
@@ -680,7 +680,7 @@ static void closeChat(void)
         chatOn = false;
         // Disable the chat binding class
         //DD_SetBindClass(GBC_CHAT, false);
-        DD_Execute(true, "deactivatebclass chat");
+        DD_Execute(true, "deactivatebcontext chat");
     }
 }
 

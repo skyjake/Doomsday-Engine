@@ -23,11 +23,11 @@
  */
 
 /**
- * b_class.h: Bindings Classes
+ * b_context.h: Bindings Contexts.
  */
 
-#ifndef __DOOMSDAY_BIND_CLASS_H__
-#define __DOOMSDAY_BIND_CLASS_H__
+#ifndef __DOOMSDAY_BIND_CONTEXT_H__
+#define __DOOMSDAY_BIND_CONTEXT_H__
 
 #include "de_base.h"
 #include "b_command.h"
@@ -36,43 +36,43 @@
 typedef struct controlbinding_s {
     struct controlbinding_s* next;
     struct controlbinding_s* prev;
-    int         bid;                    // Unique identifier.
-    int         control;                // Identifier of the player control.
-    dbinding_t  deviceBinds[DDMAXPLAYERS];  // Separate bindings for each local player.
+    int             bid; // Unique identifier.
+    int             control; // Identifier of the player control.
+    dbinding_t      deviceBinds[DDMAXPLAYERS]; // Separate bindings for each local player.
 } controlbinding_t;
 
 typedef struct bclass_s {
-    char       *name;                   // Name of the binding class.
-    boolean     active;                 // The class is only used when it is active.
-    boolean     acquireKeyboard;        // Class has acquired all keyboard states, unless
-                                        // higher-priority classes override it.
-    evbinding_t commandBinds;           // List of command bindings.
+    char*           name; // Name of the binding context.
+    boolean         active; // The context is only used when it is active.
+    boolean         acquireKeyboard; // Context has acquired all keyboard states, unless
+                                     // higher-priority contexts override it.
+    evbinding_t     commandBinds; // List of command bindings.
     controlbinding_t controlBinds;
-} bclass_t;
+} bcontext_t;
 
 void            B_UpdateDeviceStateAssociations(void);
-bclass_t*       B_NewClass(const char* name);
-void            B_DestroyAllClasses(void);
-void            B_ActivateClass(bclass_t* bc, boolean doActivate);
-void            B_AcquireKeyboard(bclass_t* bc, boolean doAcquire);
-bclass_t*       B_ClassByPos(int pos);
-bclass_t*       B_ClassByName(const char* name);
-int             B_ClassCount(void);
-int             B_GetClassPos(bclass_t* bc);
-void            B_ReorderClass(bclass_t* bc, int pos);
-void            B_ClearClass(bclass_t* bc);
-void            B_DestroyClass(bclass_t* bc);
-controlbinding_t* B_FindControlBinding(bclass_t* bc, int control);
-controlbinding_t* B_GetControlBinding(bclass_t* bc, int control);
+bcontext_t*     B_NewContext(const char* name);
+void            B_DestroyAllContexts(void);
+void            B_ActivateContext(bcontext_t* bc, boolean doActivate);
+void            B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire);
+bcontext_t*     B_ContextByPos(int pos);
+bcontext_t*     B_ContextByName(const char* name);
+int             B_ContextCount(void);
+int             B_GetContextPos(bcontext_t* bc);
+void            B_ReorderContext(bcontext_t* bc, int pos);
+void            B_ClearContext(bcontext_t* bc);
+void            B_DestroyContext(bcontext_t* bc);
+controlbinding_t* B_FindControlBinding(bcontext_t* bc, int control);
+controlbinding_t* B_GetControlBinding(bcontext_t* bc, int control);
 void            B_DestroyControlBinding(controlbinding_t* conBin);
 void            B_InitControlBindingList(controlbinding_t* listRoot);
 void            B_DestroyControlBindingList(controlbinding_t* listRoot);
-boolean         B_DeleteBinding(bclass_t* bc, int bid);
+boolean         B_DeleteBinding(bcontext_t* bc, int bid);
 boolean         B_TryEvent(ddevent_t* event);
-boolean         B_FindMatchingBinding(bclass_t* bc, evbinding_t* match1, dbinding_t* match2, 
+boolean         B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1, dbinding_t* match2,
                                       evbinding_t** evResult, dbinding_t** dResult);
-void            B_PrintClasses(void);
+void            B_PrintContexts(void);
 void            B_PrintAllBindings(void);
-void            B_WriteClassToFile(const bclass_t* bc, FILE* file);
+void            B_WriteContextToFile(const bcontext_t* bc, FILE* file);
 
-#endif // __DOOMSDAY_BIND_CLASS_H__
+#endif // __DOOMSDAY_BIND_CONTEXT_H__

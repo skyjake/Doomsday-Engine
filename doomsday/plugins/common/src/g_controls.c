@@ -110,7 +110,7 @@ extern boolean sendpause;
 
 /*
 // Binding classes (for the dynamic event responder chain)
-bindclass_t BindClasses[] = {
+bindcontext_t BindClasses[] = {
     {"map",             GBC_CLASS1,     0, 0},
     {"mapfollowoff",    GBC_CLASS2,     0, 0},
     {"menu",            GBC_CLASS3,     0, BCF_ABSOLUTE},

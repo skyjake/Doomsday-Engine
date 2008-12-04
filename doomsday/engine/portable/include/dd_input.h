@@ -123,20 +123,20 @@ typedef struct inputdevaxis_s {
     int     filter;         // Filter grade.
     float   accumulation;   // Position accumulator for the filter.
     uint    time;           // Timestamp for the latest update that changed the position.
-    struct bclass_s* bClass;
+    struct bclass_s* bContext;
 } inputdevaxis_t;
 
 typedef struct inputdevkey_s {
     char    isDown;         // True/False for each key.
     uint    time;
-    struct bclass_s* bClass;
+    struct bclass_s* bContext;
     const char* name;       // Symbolic name.
 } inputdevkey_t;
 
 typedef struct inputdevhat_s {
     int     pos;            // Position of each hat, -1 if centered.
     uint    time;           // Timestamp for each hat for the latest change.
-    struct bclass_s* bClass;
+    struct bclass_s* bContext;
 } inputdevhat_t;
 
 // Input device flags.
@@ -176,7 +176,7 @@ byte        DD_ModKey(byte key);
 
 void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
-void        I_ClearDeviceClassAssociations(void);
+void        I_ClearDeviceContextAssociations(void);
 inputdev_t *I_GetDevice(uint ident, boolean ifactive);
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
 boolean     I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis);

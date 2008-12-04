@@ -45,7 +45,7 @@
 /*
 // Number of triggered impulses buffered into each player's control state
 // table.  The buffer is emptied when a ticcmd is built.
-#define MAX_IMPULSES 	8
+#define MAX_IMPULSES    8
 #define MAX_DESCRIPTOR_LENGTH 20
 
 #define SLOW_TURN_TIME  (6.0f / 35)
@@ -58,28 +58,28 @@
  */
 /*
 typedef struct controldesc_s {
-	char    name[MAX_DESCRIPTOR_LENGTH + 1];
+    char    name[MAX_DESCRIPTOR_LENGTH + 1];
 } controldesc_t;
 
 typedef struct controlclass_s {
-	uint    count;
-	controldesc_t *desc;
+    uint    count;
+    controldesc_t *desc;
 } controlclass_t;
 */
 /**
  * Each player has his own control state table.
  */
 /*typedef struct controlstate_s {
-	// The axes are updated whenever their values are needed,
-	// i.e. during the call to P_BuildCommand.
-	controlaxis_t *axes;
+    // The axes are updated whenever their values are needed,
+    // i.e. during the call to P_BuildCommand.
+    controlaxis_t *axes;
 
-	// The toggles are modified via console commands.
-	controltoggle_t *toggles;
+    // The toggles are modified via console commands.
+    controltoggle_t *toggles;
 
-	// The triggered impulses are stored into a ring buffer.
-	uint    head, tail;
-	impulse_t impulses[MAX_IMPULSES];
+    // The triggered impulses are stored into a ring buffer.
+    uint    head, tail;
+    impulse_t impulses[MAX_IMPULSES];
 } controlstate_t;
 */
 
@@ -163,13 +163,13 @@ void P_ControlRegister(void)
 /**
  * This function is exported, so that plugins can register their controls.
  */
-void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass)
+void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext)
 {
     playercontrol_t *pc = P_AllocPlayerControl();
     pc->id = id;
     pc->type = type;
     pc->name = strdup(name);
-    pc->bindClassName = strdup(bindClass);
+    pc->bindContextName = strdup(bindContext);
     // Also allocate the impulse and double-click counters.
     controlCounts[pc - playerControls] = M_Calloc(sizeof(controlcounter_t));
     }
@@ -217,7 +217,7 @@ void P_ControlShutdown(void)
         for(i = 0; i < playerControlCount; ++i)
         {
             M_Free(playerControls[i].name);
-            M_Free(playerControls[i].bindClassName);
+            M_Free(playerControls[i].bindContextName);
             M_Free(controlCounts[i]);
         }
         playerControlCount = 0;
@@ -286,7 +286,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     {
         ddevent_t event;
         ddstring_t* symbolicName = Str_New();
-        
+
         db->triggered = true;
 
         switch(newState)
@@ -294,27 +294,27 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
             case DBCS_POSITIVE:
                 Str_Append(symbolicName, "control-doubleclick-positive-");
                 break;
-                
+
             case DBCS_NEGATIVE:
                 Str_Append(symbolicName, "control-doubleclick-negative-");
                 break;
         }
-        
+
         // Compose the name of the symbolic event.
         Str_Append(symbolicName, playerControls[control].name);
 
         VERBOSE( Con_Message("P_MaintainControlDoubleClicks: Triggered plr %i, ctl %i, "
                              "state %i - threshold %i (%s)\n",
-                             playerNum, control, newState, nowTime - db->previousClickTime, 
+                             playerNum, control, newState, nowTime - db->previousClickTime,
                              Str_Text(symbolicName)) );
-        
+
         event.device = 0;
         event.type = E_SYMBOLIC;
         event.symbolic.id = playerNum;
         event.symbolic.name = Str_Text(symbolicName);
-        
+
         DD_PostEvent(&event);
-        
+
         Str_Delete(symbolicName);
     }
 
@@ -466,7 +466,7 @@ D_CMD(ListPlayerControls)
 {
     /*
     uint        i, j;
-	char        buf[MAX_DESCRIPTOR_LENGTH+1];
+    char        buf[MAX_DESCRIPTOR_LENGTH+1];
 
     Con_Message("Player Controls:\n");
     for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
@@ -479,8 +479,8 @@ D_CMD(ListPlayerControls)
                         ctlClassNames[i][cClass->count > 1]);
             for(j = 0; j < cClass->count; ++j)
             {
-		        strncpy(buf, cClass->desc[j].name, sizeof(buf) - 1);
-		        strlwr(buf);
+                strncpy(buf, cClass->desc[j].name, sizeof(buf) - 1);
+                strlwr(buf);
                 buf[strlen(cClass->desc[j].name)] = 0;
                 Con_Message("  %s\n", buf);
             }

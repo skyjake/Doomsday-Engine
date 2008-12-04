@@ -913,9 +913,9 @@ void AM_Open(int pnum, boolean yes, boolean fast)
         if(map->active)
             return; // Already active.
 
-        DD_Execute(true, "activatebclass map");
+        DD_Execute(true, "activatebcontext map");
         if(map->panMode)
-            DD_Execute(true, "activatebclass map-freepan");
+            DD_Execute(true, "activatebcontext map-freepan");
 
         viewActive = false;
 
@@ -962,8 +962,8 @@ void AM_Open(int pnum, boolean yes, boolean fast)
 
         viewActive = true;
 
-        DD_Execute(true, "deactivatebclass map");
-        DD_Execute(true, "deactivatebclass map-freepan");
+        DD_Execute(true, "deactivatebcontext map");
+        DD_Execute(true, "deactivatebcontext map-freepan");
     }
 }
 
@@ -1440,7 +1440,7 @@ void AM_ToggleFollow(int pid)
     map->panMode = !map->panMode;
 
     // Enable/disable the pan mode binding class
-    DD_Executef(true, "%sactivatebclass map-freepan", !map->panMode? "de" : "");
+    DD_Executef(true, "%sactivatebcontext map-freepan", !map->panMode? "de" : "");
 
     P_SetMessage(&players[pid],
                  (map->panMode ? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), false);

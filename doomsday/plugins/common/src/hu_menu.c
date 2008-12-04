@@ -1485,7 +1485,7 @@ void Hu_MenuInit(void)
 
     currentMenu = &MainDef;
     menuActive = false;
-    DD_Execute(true, "deactivatebclass menu");
+    DD_Execute(true, "deactivatebcontext menu");
     menuAlpha = menuTargetAlpha = 0;
 
     menuFogData.texture = 0;
@@ -2151,7 +2151,7 @@ void Hu_MenuCommand(menucommand_e cmd)
         outFade = 0;
 
         // Disable the menu binding class
-        DD_Execute(true, "deactivatebclass menu");
+        DD_Execute(true, "deactivatebcontext menu");
         return;
     }
 
@@ -2176,7 +2176,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             quitAsk = 0;
 
             // Enable the menu binding class
-            DD_Execute(true, "activatebclass menu");
+            DD_Execute(true, "activatebcontext menu");
         }
     }
     else
@@ -2696,7 +2696,7 @@ void M_StartMessage(char* string, void* routine, boolean input)
     typeInTime = 0;
 
     // Enable the message binding class
-    DD_Executef(true, "activatebclass message");
+    DD_Executef(true, "activatebcontext message");
 }
 
 void M_StopMessage(void)
@@ -2707,7 +2707,7 @@ void M_StopMessage(void)
         Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // Disable the message binding class
-    DD_Executef(true, "deactivatebclass message");
+    DD_Executef(true, "deactivatebcontext message");
 }
 
 void M_DrawMainMenu(void)

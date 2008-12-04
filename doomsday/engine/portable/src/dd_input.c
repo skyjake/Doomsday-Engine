@@ -555,7 +555,7 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
     }
 }
 
-void I_ClearDeviceClassAssociations(void)
+void I_ClearDeviceContextAssociations(void)
 {
     uint            i, j;
     inputdev_t     *dev;
@@ -566,13 +566,13 @@ void I_ClearDeviceClassAssociations(void)
 
         // Keys.
         for(j = 0; j < dev->numKeys; ++j)
-            dev->keys[j].bClass = NULL;
+            dev->keys[j].bContext = NULL;
         // Axes.
         for(j = 0; j < dev->numAxes; ++j)
-            dev->axes[j].bClass = NULL;
+            dev->axes[j].bContext = NULL;
         // Hats.
         for(j = 0; j < dev->numHats; ++j)
-            dev->hats[j].bClass = NULL;
+            dev->hats[j].bContext = NULL;
     }
 }
 
@@ -629,26 +629,26 @@ const char* DD_AllocEventString(const char* str)
 {
     static int eventStringRover = 0;
     const char* returnValue = 0;
-    
+
     free(eventStrings[eventStringRover]);
     returnValue = eventStrings[eventStringRover] = strdup(str);
-    
+
     if(++eventStringRover >= MAXEVENTS)
     {
         eventStringRover = 0;
-    }    
+    }
     return returnValue;
 }
 
 void DD_ClearEventStrings(void)
 {
     int i;
-    
+
     for(i = 0; i < MAXEVENTS; ++i)
     {
-        free(eventStrings[i]);        
+        free(eventStrings[i]);
         eventStrings[i] = 0;
-    }    
+    }
 }
 
 /**
@@ -657,7 +657,7 @@ void DD_ClearEventStrings(void)
 void DD_ClearEvents(void)
 {
     eventhead = eventtail;
-    
+
     DD_ClearEventStrings();
 }
 
@@ -667,13 +667,13 @@ void DD_ClearEvents(void)
 void DD_PostEvent(ddevent_t *ev)
 {
     events[eventhead] = *ev;
-    
+
     if(ev->type == E_SYMBOLIC)
     {
         // Allocate a throw-away string from our buffer.
         events[eventhead].symbolic.name = DD_AllocEventString(ev->symbolic.name);
     }
-    
+
     eventhead++;
     eventhead &= MAXEVENTS - 1;
 }

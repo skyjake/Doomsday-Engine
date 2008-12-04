@@ -1151,25 +1151,6 @@ typedef struct {
     void          (*filterText) (char* text); // Maybe alters text.
 } ddfont_t;
 
-// DDay's Built-in bindClasses
-enum {
-    DDBC_NORMAL,
-    DDBC_UCLASS1,
-    DDBC_UCLASS2,
-    DDBC_UCLASS3,
-    DDBC_BIASEDITOR,
-    NUM_DDBINDCLASSES
-};
-
-#define BCF_ABSOLUTE        0x00000001
-
-// Bind Class
-typedef struct bindclass_s {
-    char           *name;
-    unsigned int    id;
-    int             active;
-    int             flags;
-} bindclass_t;
 
 /// Argument type for B_BindingsForControl().
 typedef enum bfcinverse_e {

@@ -33,7 +33,7 @@
 
 #include "b_main.h"
 #include "b_device.h"
-#include "b_class.h"
+#include "b_context.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -251,7 +251,7 @@ void B_DestroyDeviceBinding(dbinding_t* cb)
     }
 }
 
-void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset, bclass_t* controlClass)
+void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset, bcontext_t* controlClass)
 {
     dbinding_t* cb;
     int         i;
@@ -296,7 +296,7 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
         switch(cb->type)
         {
         case CBD_TOGGLE:
-            if(controlClass && dev->keys[cb->id].bClass != controlClass)
+            if(controlClass && dev->keys[cb->id].bContext != controlClass)
                 continue; // Shadowed by a more important active class.
 
             devicePos = (dev->keys[cb->id].isDown? 1.0f : 0.0f);
@@ -304,7 +304,7 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
             break;
 
         case CBD_AXIS:
-            if(controlClass && dev->axes[cb->id].bClass != controlClass)
+            if(controlClass && dev->axes[cb->id].bContext != controlClass)
                 continue; // Shadowed by a more important active class.
 
             axis = &dev->axes[cb->id];
@@ -321,7 +321,7 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
             break;
 
         case CBD_ANGLE:
-            if(controlClass && dev->hats[cb->id].bClass != controlClass)
+            if(controlClass && dev->hats[cb->id].bContext != controlClass)
                 continue; // Shadowed by a more important active class.
 
             devicePos = (dev->hats[cb->id].pos == cb->angle? 1.0f : 0.0f);
