@@ -2293,11 +2293,6 @@ static void SV_ReadSector(sector_t *sec)
 
     P_SetIntp(sec, DMU_FLOOR_HEIGHT, fh);
     P_SetIntp(sec, DMU_CEILING_HEIGHT, ch);
-    if(ver >= 3)
-    {
-        P_SetIntp(sec, DMU_FLOOR_FLAGS, SV_ReadShort());
-        P_SetIntp(sec, DMU_CEILING_FLAGS, SV_ReadShort());
-    }
 #if __JHEXEN__
     // Update the "target heights" of the planes.
     P_SetIntp(sec, DMU_FLOOR_TARGET_HEIGHT, fh);
@@ -2329,6 +2324,12 @@ static void SV_ReadSector(sector_t *sec)
 
     P_SetIntp(sec, DMU_FLOOR_MATERIAL, floorMaterial);
     P_SetIntp(sec, DMU_CEILING_MATERIAL, ceilingMaterial);
+
+    if(ver >= 3)
+    {
+        P_SetIntp(sec, DMU_FLOOR_FLAGS, SV_ReadShort());
+        P_SetIntp(sec, DMU_CEILING_FLAGS, SV_ReadShort());
+    }
 
 #if __JHEXEN__
     lightlevel = (byte) SV_ReadShort();
