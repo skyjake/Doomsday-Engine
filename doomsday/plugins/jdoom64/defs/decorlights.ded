@@ -1,11 +1,21 @@
 #
 # jDoom64: Light decorations.
 #
+# The default flags allow using these only with the original textures.
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
+# resources.
+#
+# There can only be one decoration per texture/flat. Newer decorations
+# override older ones.
+#
+# One decoration can specify up to 16 lights.
+#
 
 #
 # Glowing textures:
 #
 Decoration {
+  Flags = ext;
   Texture = "CBTRAKA";
   Glow {
   };

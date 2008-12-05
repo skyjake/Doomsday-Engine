@@ -22,6 +22,7 @@ SkipIf doom2-tnt;
 # Glowing flats:
 #
 Decoration {
+  Flags = ext;
   Flat = "LAVA1";
   Glow {
   };
@@ -102,6 +103,7 @@ Copy Decoration {
 # Glowing textures:
 #
 Decoration {
+  Flags = ext;
   Texture = "FIREBLU1";
   Glow {
   };

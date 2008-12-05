@@ -35,6 +35,7 @@ Copy Decoration {
 # Glowing textures:
 #
 Decoration {
+  Flags = ext;
   Texture = "FIREBLU1";
   Glow {
   };

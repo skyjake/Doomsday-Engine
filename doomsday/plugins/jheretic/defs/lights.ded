@@ -20,6 +20,7 @@ Header { Version = 6; }
 # Glowing flats:
 #
 Decoration {
+  Flags = ext;
   Flat = "FLATHUH1";
   Glow {
   };
@@ -33,6 +34,7 @@ Decoration {
 # Glowing textures:
 #
 Decoration {
+  Flags = ext;
   Texture = "LAVAFL1";
   Glow {
   };
