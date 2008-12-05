@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-20078 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,12 +53,13 @@ typedef struct texturecontent_s {
 #define TXCF_MIPMAP                     0x2
 #define TXCF_GRAY_MIPMAP                0x4
 #define TXCF_CONVERT_8BIT_TO_ALPHA      0x8
-#define TXCF_EASY_UPLOAD                0x10
-#define TXCF_UPLOAD_ARG_ALPHACHANNEL    0x20
-#define TXCF_UPLOAD_ARG_RGBDATA         0x40
-#define TXCF_UPLOAD_ARG_NOSTRETCH       0x80
-#define TXCF_UPLOAD_ARG_NOSMARTFILTER   0x100
-#define TXCF_NEVER_DEFER                0x200
+#define TXCF_APPLY_GAMMACORRECTION      0x10
+#define TXCF_EASY_UPLOAD                0x20
+#define TXCF_UPLOAD_ARG_ALPHACHANNEL    0x40
+#define TXCF_UPLOAD_ARG_RGBDATA         0x80
+#define TXCF_UPLOAD_ARG_NOSTRETCH       0x100
+#define TXCF_UPLOAD_ARG_NOSMARTFILTER   0x200
+#define TXCF_NEVER_DEFER                0x400
 #define TXCF_GRAY_MIPMAP_LEVEL_SHIFT    24
 #define TXCF_GRAY_MIPMAP_LEVEL_MASK     0xff000000
 

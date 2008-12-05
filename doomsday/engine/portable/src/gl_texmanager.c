@@ -863,7 +863,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     boolean RGBData = ((content->flags & TXCF_UPLOAD_ARG_RGBDATA) != 0);
     boolean noStretch = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
     boolean noSmartFilter = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
-    byte   *palette = GL_GetPalette();
+    boolean applyTexGamma = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
     int     i, levelWidth, levelHeight; // width and height at the current level
     int     comps;
     byte   *buffer, *rgbaOriginal, *idxBuffer;
@@ -884,6 +884,12 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
         // The source image can be used as-is.
         freeOriginal = false;
         rgbaOriginal = data;
+        for(i = 0; i < width * height * 3; i += 3)
+        {
+            data[i] = gammaTable[data[i]];
+            data[i+1] = gammaTable[data[i+1]];
+            data[i+2] = gammaTable[data[i+2]];
+        }
     }
     else
     {
@@ -891,7 +897,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
         freeOriginal = true;
         rgbaOriginal = M_Malloc(width * height * comps);
         GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data,
-                         rgbaOriginal, palette, !load8bit);
+                         rgbaOriginal, GL_GetPalette(), !load8bit);
     }
 
     // If smart filtering is enabled, all textures are magnified 2x.
@@ -905,7 +911,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
             byte   *temp = M_Malloc(4 * width * height);
 
             GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp,
-                             palette, !load8bit);
+                             GL_GetPalette(), !load8bit);
             if(freeOriginal)
                 M_Free(rgbaOriginal);
             rgbaOriginal = temp;
@@ -993,7 +999,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
             // Convert to palette indices.
             GL_ConvertBuffer(levelWidth, levelHeight, comps,
                              alphaChannel ? 2 : 1, buffer, idxBuffer,
-                             palette, false);
+                             GL_GetPalette(), false);
 
             // Upload it.
             if(!DGL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
@@ -1241,7 +1247,8 @@ byte GL_PrepareFlat(materialtexinst_t* inst, int ofTypeID,
                              pixSize == 4, true, RGBData, false, false,
                              glmode[mipmapping], glmode[texMagMode],
                              texAniso,
-                             DGL_REPEAT, DGL_REPEAT, 0);
+                             DGL_REPEAT, DGL_REPEAT,
+                             (RGBData? TXCF_APPLY_GAMMACORRECTION : 0));
 
         // Average color for glow planes.
         if(RGBData)
@@ -2194,7 +2201,8 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                                  image.pixelSize == 4, false, true, false, false,
                                  DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                                  0 /*no anisotropy*/,
-                                 DGL_CLAMP, DGL_CLAMP, 0);
+                                 DGL_CLAMP, DGL_CLAMP,
+                                 (image.pixelSize == 4? TXCF_APPLY_GAMMACORRECTION : 0));
 
             raw->width = 320;
             raw->width2 = 0;
@@ -2267,14 +2275,16 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                                      false, rgbdata, false, false,
                                      DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                                      0 /*no anisotropy*/,
-                                     DGL_CLAMP, DGL_CLAMP, 0);
+                                     DGL_CLAMP, DGL_CLAMP,
+                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 // And the other part.
                 raw->tex2 =
                     GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
                                      DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                                      0 /*no anisotropy*/,
-                                     DGL_CLAMP, DGL_CLAMP, 0);
+                                     DGL_CLAMP, DGL_CLAMP,
+                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
                 raw->width2 = 64;
@@ -2292,7 +2302,8 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                                      false, false, rgbdata, false, false,
                                      DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                                      0 /*no anisotropy*/,
-                                     DGL_CLAMP, DGL_CLAMP, 0);
+                                     DGL_CLAMP, DGL_CLAMP,
+                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
                 raw->height = height;
@@ -2927,18 +2938,22 @@ unsigned int GL_PrepareSkin(skintex_t *st, boolean allowTexComp)
     // do anything.
     if(!st->tex)
     {
+        int                 flags = TXCF_APPLY_GAMMACORRECTION;
         image_t             image;
 
         // Load the texture.
         if(!GL_LoadImage(&image, st->path, true))
             Con_Error("GL_PrepareSkin: %s not found.\n", st->path);
 
+        if(!allowTexComp)
+            flags |= TXCF_NO_COMPRESSION;
+
         st->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              image.pixelSize == 4, true, true, false, false,
                              glmode[mipmapping], DGL_LINEAR, texAniso,
                              DGL_REPEAT, DGL_REPEAT,
-                             (!allowTexComp? TXCF_NO_COMPRESSION : 0));
+                             flags);
 
         // We don't need the image data any more.
         M_Free(image.pixels);
