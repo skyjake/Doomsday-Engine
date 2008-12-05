@@ -1115,7 +1115,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
     case LM_LIGHT_MOD_TEXTURE:
         // Modulate sector light, dynamic light and regular texture.
         rlBindTo(1, TU(list, TU_PRIMARY));
-        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_LIGHT_ENV0 | DCF_JUST_ONE_LIGHT | DCF_NO_BLEND;
+        return DCF_SET_MATRIX_TEXTURE1 | DCF_SET_LIGHT_ENV0 | DCF_JUST_ONE_LIGHT | DCF_NO_BLEND;
 
     case LM_TEXTURE_PLUS_LIGHT:
         rlBindTo(0, TU(list, TU_PRIMARY));
