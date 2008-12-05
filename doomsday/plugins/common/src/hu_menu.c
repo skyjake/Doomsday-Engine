@@ -1880,6 +1880,8 @@ void Hu_MenuCommand(menucommand_e cmd)
 {
     if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
     {
+        Hu_FogEffectSetAlphaTarget(0);
+
         if(cmd == MCMD_CLOSEFAST)
         {   // Hide the menu instantly.
             menuAlpha = menuTargetAlpha = 0;
@@ -1904,6 +1906,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
             Con_Open(false);
 
+            Hu_FogEffectSetAlphaTarget(1);
             Hu_MenuSetAlpha(1);
             menuActive = true;
             menu_color = 0;
@@ -3358,10 +3361,6 @@ int M_EndGameResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        currentMenu->lastOn = itemOn;
-        menuAlpha = menuTargetAlpha = 0;
-
-        menuActive = false;
         G_StartTitle();
         return true;
     }
@@ -3554,6 +3553,7 @@ int M_VerifyNightmare(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
+        Hu_MenuCommand(MCMD_CLOSEFAST);
 #if __JHERETIC__
         G_DeferedInitNew(SM_NIGHTMARE, MenuEpisode, 1);
 #else

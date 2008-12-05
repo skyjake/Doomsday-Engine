@@ -79,6 +79,8 @@ void            Hu_Drawer(void);
 void            Hu_Ticker(void);
 void            Hu_FogEffectTicker(timespan_t time);
 
+void            Hu_FogEffectSetAlphaTarget(float alpha);
+
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
                          dpatch_t* patch, char *altstring, boolean builtin, int halign);

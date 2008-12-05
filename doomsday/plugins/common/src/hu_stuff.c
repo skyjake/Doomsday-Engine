@@ -92,6 +92,7 @@ typedef struct fogeffectlayer_s {
 
 typedef struct fogeffectdata_s {
     DGLuint         texture;
+    float           alpha, targetAlpha;
     fogeffectlayer_t layers[2];
     float           joinY;
     boolean         scrollDir;
@@ -135,11 +136,10 @@ cvar_t hudCVars[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static dpatch_t borderPatches[8];
-
 static hudstate_t hudStates[MAXPLAYERS];
 
-static boolean fogEffectActive = false;
+static dpatch_t borderPatches[8];
+
 static fogeffectdata_t fogEffectData;
 
 // Code -------------------------------------------------------------------
@@ -193,6 +193,7 @@ void Hu_LoadData(void)
 
     // Intialize the background fog effect.
     fogEffectData.texture = 0;
+    fogEffectData.alpha = fogEffectData.targetAlpha = 0;
     fogEffectData.joinY = 0.5f;
     fogEffectData.scrollDir = true;
     fogEffectData.layers[0].texOffset[VX] =
@@ -1174,10 +1175,22 @@ void Hu_FogEffectTicker(timespan_t time)
     if(!M_RunTrigger(&fixed, time))
         return;
 
-    fogEffectActive = Hu_IsMessageActive() ||
-        ((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) && !MN_CurrentMenuHasBackground());
+    // Move towards the target alpha
+    if(fog->alpha != fog->targetAlpha)
+    {
+        float               diff = fog->targetAlpha - fog->alpha;
 
-    if(!fogEffectActive)
+        if(fabs(diff) > FOGALPHA_FADE_STEP)
+        {
+            fog->alpha += FOGALPHA_FADE_STEP * (diff > 0? 1 : -1);
+        }
+        else
+        {
+            fog->alpha = fog->targetAlpha;
+        }
+    }
+
+    if(!(fog->alpha > 0))
         return;
 
     for(i = 0; i < 2; ++i)
@@ -2010,10 +2023,7 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     const float         xscale = 2.0f;
     const float         yscale = 1.0f;
 
-    if(alpha <= 0)
-        return;
-
-    if(cfg.menuEffects > 1)
+    if(!(alpha > 0))
         return;
 
     if(effectID == 4)
@@ -2127,10 +2137,10 @@ static void drawFogEffect(void)
     // Two layers.
     Hu_DrawFogEffect(cfg.hudFog, mfd->texture,
                      mfd->layers[0].texOffset, mfd->layers[0].texAngle,
-                     1, fogEffectData.joinY);
+                     mfd->alpha, fogEffectData.joinY);
     Hu_DrawFogEffect(cfg.hudFog, mfd->texture,
                      mfd->layers[1].texOffset, mfd->layers[1].texAngle,
-                     1, fogEffectData.joinY);
+                     mfd->alpha, fogEffectData.joinY);
 
     // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2150,7 +2160,9 @@ void Hu_Drawer(void)
         DGL_Ortho(0, 0, 320, 200, -1, 1);
 
         // Draw the fog effect?
-        if(fogEffectActive)
+        if(fogEffectData.alpha > 0 && cfg.menuEffects <= 1 &&
+           !((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) &&
+              MN_CurrentMenuHasBackground()))
             drawFogEffect();
 
         if(Hu_IsMessageActive())
@@ -2161,4 +2173,9 @@ void Hu_Drawer(void)
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();
     }
+}
+
+void Hu_FogEffectSetAlphaTarget(float alpha)
+{
+    fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
