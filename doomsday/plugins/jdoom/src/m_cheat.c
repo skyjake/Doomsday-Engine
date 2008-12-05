@@ -397,7 +397,7 @@ void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
     }
 }
 
-void Cht_MusicFunc(player_t* plyr, char* buf)
+void Cht_MusicFunc(player_t* plr, char* buf)
 {
     int                 musnum = 1;
 
@@ -410,7 +410,7 @@ void Cht_MusicFunc(player_t* plyr, char* buf)
     }
     else
     {
-        P_SetMessage(plyr, STSTR_NOMUS, false);
+        P_SetMessage(plr, STSTR_NOMUS, false);
     }
 }
 

@@ -201,10 +201,6 @@ const char* QuitEndMsg[] =
 
 menu_t* currentMenu;
 
-#if __JHERETIC__
-static int MenuEpisode;
-#endif
-
 // -1 = no quicksave slot picked!
 int quickSaveSlot;
 
@@ -328,6 +324,8 @@ static float menu_calpha = 0;
 
 static int quicksave;
 static int quickload;
+
+static char notDesignedForMessage[80];
 
 #if __JDOOM__
 #define READTHISID          (4)
@@ -453,19 +451,8 @@ menu_t MainDef = {
 };
 
 menuitem_t NewGameItems[] = {
-#if __JDOOM__
-    {ITT_EFUNC, 0, "{case}Singleplayer", M_NewGame, 0},
-    {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0}
-#elif __JDOOM64__
-    {ITT_EFUNC, 0, "{case}Singleplayer", M_NewGame, 0},
-    {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0}
-#elif __JSTRIFE__
     {ITT_EFUNC, 0, "S", M_NewGame, 0},
-    {ITT_EFUNC, 0, "M", SCEnterMultiplayerMenu, 0, ""}
-#else
-    {ITT_EFUNC, 0, "Singleplayer", M_NewGame, 0},
-    {ITT_EFUNC, 0, "Multiplayer", SCEnterMultiplayerMenu, 0}
-#endif
+    {ITT_EFUNC, 0, "M", SCEnterMultiplayerMenu, 0}
 };
 
 menu_t NewGameDef = {
@@ -550,11 +537,13 @@ menu_t ClassDef = {
 
 #if __JHERETIC__
 menuitem_t EpisodeItems[] = {
-    {ITT_EFUNC, 0, "city of the damned", M_Episode, 1},
-    {ITT_EFUNC, 0, "hell's maw", M_Episode, 2},
-    {ITT_EFUNC, 0, "the dome of d'sparil", M_Episode, 3},
-    {ITT_EFUNC, 0, "the ossuary", M_Episode, 4},
-    {ITT_EFUNC, 0, "the stagnant demesne", M_Episode, 5}
+    // Text defs TXT_EPISODE1..6.
+    {ITT_EFUNC, 0, "C", M_Episode, 0},
+    {ITT_EFUNC, 0, "H", M_Episode, 1},
+    {ITT_EFUNC, 0, "D", M_Episode, 2},
+    {ITT_EFUNC, 0, "O", M_Episode, 3},
+    {ITT_EFUNC, 0, "S", M_Episode, 4},
+    {ITT_EFUNC, 0, "F", M_Episode, 5},
 };
 
 menu_t EpiDef = {
@@ -718,11 +707,11 @@ static menu_t SkillDef = {
 };
 #elif __JHERETIC__
 static menuitem_t SkillItems[] = {
-    {ITT_EFUNC, 0, "thou needet a wet-nurse", M_ChooseSkill, SM_BABY},
-    {ITT_EFUNC, 0, "yellowbellies-r-us", M_ChooseSkill, SM_EASY},
-    {ITT_EFUNC, 0, "bringest them oneth", M_ChooseSkill, SM_MEDIUM},
-    {ITT_EFUNC, 0, "thou art a smite-meister", M_ChooseSkill, SM_HARD},
-    {ITT_EFUNC, 0, "black plague possesses thee", M_ChooseSkill, SM_NIGHTMARE}
+    {ITT_EFUNC, 0, "W", M_ChooseSkill, SM_BABY},
+    {ITT_EFUNC, 0, "Y", M_ChooseSkill, SM_EASY},
+    {ITT_EFUNC, 0, "B", M_ChooseSkill, SM_MEDIUM},
+    {ITT_EFUNC, 0, "S", M_ChooseSkill, SM_HARD},
+    {ITT_EFUNC, 0, "P", M_ChooseSkill, SM_NIGHTMARE}
 };
 
 static menu_t SkillDef = {
@@ -789,8 +778,8 @@ static menuitem_t OptionsItems[] = {
     {ITT_SETMENU, 0, "automap...", NULL, MENU_MAP},
     {ITT_SETMENU, 0, "weapons...", NULL, MENU_WEAPONSETUP},
     {ITT_SETMENU, 0, "sound...", NULL, MENU_OPTIONS2},
-    {ITT_EFUNC, 0, "mouse options", M_OpenDCP, 2},
-    {ITT_EFUNC, 0, "joystick options", M_OpenDCP, 2}
+    {ITT_EFUNC, 0, "mouse...", M_OpenDCP, 2},
+    {ITT_EFUNC, 0, "joystick...", M_OpenDCP, 2}
 };
 
 static menu_t OptionsDef = {
@@ -1386,7 +1375,7 @@ void Hu_MenuInit(void)
 #endif
 #if __JHERETIC__
     // Episode names.
-    for(i = 0, maxw = 0; i < 4; ++i)
+    for(i = 0, maxw = 0; i < 6; ++i)
     {
         EpisodeItems[i].text = GET_TXT(TXT_EPISODE1 + i);
         w = M_StringWidth(EpisodeItems[i].text, EpiDef.font);
@@ -1426,6 +1415,10 @@ void Hu_MenuInit(void)
     SkillDef.x = 160 - maxw / 2 + 12;
 #endif
 
+    // Play modes.
+    NewGameItems[0].text = GET_TXT(TXT_SINGLEPLAYER);
+    NewGameItems[1].text = GET_TXT(TXT_MULTIPLAYER);
+
     currentMenu = &MainDef;
     menuActive = false;
     DD_Execute(true, "deactivatebcontext menu");
@@ -1443,9 +1436,6 @@ void Hu_MenuInit(void)
     switch(gameMode)
     {
     case commercial:
-        // This is used because DOOM 2 had only one HELP
-        //  page. I use CREDIT as second page now, but
-        //  kept this hack for educational purposes.
         item = &MainItems[READTHISID];
         item->func = M_QuitDOOM;
         item->text = "{case}Quit Game";
@@ -1466,12 +1456,6 @@ void Hu_MenuInit(void)
     case registered:
         // We need to remove the fourth episode.
         EpiDef.itemCount = 3;
-        item = &MainItems[READTHISID];
-        item->func = M_ReadThis;
-        item->text = "{case}Read This!";
-        item->patch = &m_rdthis;
-        MainDef.itemCount--;
-        MainDef.y = 64;
         ReadDef1.background = "HELP1";
         ReadDef1.backgroundIsRaw = false;
         ReadDef2.background = "HELP2";
@@ -1500,8 +1484,8 @@ void Hu_MenuInit(void)
 
 #if __JHERETIC__
     if(gameMode == extended)
-    {                            // Add episodes 4 and 5 to the menu
-        EpiDef.itemCount = EpiDef.numVisItems = 5;
+    {   // Add episodes 4, 5 and the bonus maps to the menu.
+        EpiDef.itemCount = EpiDef.numVisItems = 6;
         EpiDef.y = 50 - ITEM_HEIGHT;
     }
 #endif
@@ -2463,7 +2447,7 @@ void M_DrawMainMenu(void)
 void M_DrawNewGameMenu(void)
 {
     menu_t*             menu = &NewGameDef;
-    M_DrawTitle("Choose Game Type", menu->y - 30);
+    M_DrawTitle(GET_TXT(TXT_PICKGAMETYPE), menu->y - 30);
 }
 
 void M_DrawReadThis(void)
@@ -2472,6 +2456,35 @@ void M_DrawReadThis(void)
     // The background is handled elsewhere, just draw the cursor.
     GL_DrawPatch(298, 160, cursorst[whichSkull].lump);
 #endif
+}
+
+static void composeNotDesignedForMessage(const char* str)
+{
+    char*               buf = notDesignedForMessage, *in, tmp[2];
+
+    buf[0] = 0;
+    tmp[1] = 0;
+
+    // Get the message template.
+    in = GET_TXT(TXT_NOTDESIGNEDFOR);
+
+    for(; *in; in++)
+    {
+        if(in[0] == '%')
+        {
+            if(in[1] == '1')
+            {
+                strcat(buf, str);
+                in++;
+                continue;
+            }
+
+            if(in[1] == '%')
+                in++;
+        }
+        tmp[0] = *in;
+        strcat(buf, tmp);
+    }
 }
 
 #if __JHEXEN__
@@ -2506,13 +2519,26 @@ void M_DrawClassMenu(void)
 #if __JDOOM__ || __JHERETIC__
 void M_DrawEpisode(void)
 {
-#ifdef __JDOOM__
-    menu_t             *menu = &EpiDef;
-#endif
-
-#ifdef __JHERETIC__
+    menu_t*             menu = &EpiDef;
+    
+#if __JHERETIC__
     M_DrawTitle("WHICH EPISODE?", 4);
-#elif __JDOOM__
+
+    /**
+     * \kludge Inform the user episode 6 is designed for deathmatch only.
+     */
+    if(menu->items[itemOn].option == 5)
+    {
+        const char*         str = notDesignedForMessage;
+
+        composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));       
+
+        M_WriteText2(160 - M_StringWidth(str, huFontA) / 2,
+                     200 - M_StringHeight(str, huFontA), str, huFontA,
+                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
+                     menuAlpha);
+    }
+#else // __JDOOM__
     WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
                  &m_episod, "{case}Which Episode{scaley=1.25,y=-3}?",
                  true, ALIGN_LEFT);
@@ -3522,11 +3548,6 @@ void M_Episode(int option, void* context)
         Con_Message("ONLY AVAILABLE IN THE REGISTERED VERSION\n");
         option = 0;
     }
-    else
-    {
-        MenuEpisode = option;
-        M_SetupNextMenu(&SkillDef);
-    }
 #else
     if(gameMode == shareware && option)
     {
@@ -3541,10 +3562,10 @@ void M_Episode(int option, void* context)
         Con_Message("M_Episode: 4th episode requires Ultimate DOOM\n");
         option = 0;
     }
+#endif
 
     epi = option;
     M_SetupNextMenu(&SkillDef);
-#endif
 }
 #endif
 
@@ -3554,11 +3575,7 @@ int M_VerifyNightmare(msgresponse_t response, void* context)
     if(response == MSG_YES)
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
-#if __JHERETIC__
-        G_DeferedInitNew(SM_NIGHTMARE, MenuEpisode, 1);
-#else
         G_DeferedInitNew(SM_NIGHTMARE, epi + 1, 1);
-#endif
     }
 
     return true;
@@ -3568,6 +3585,7 @@ int M_VerifyNightmare(msgresponse_t response, void* context)
 void M_ChooseSkill(int option, void* context)
 {
 #if __JHEXEN__
+    Hu_MenuCommand(MCMD_CLOSEFAST);
     cfg.playerClass[CONSOLEPLAYER] = MenuPClass;
     G_DeferredNewGame(option);
 #else
@@ -3578,16 +3596,14 @@ void M_ChooseSkill(int option, void* context)
         return;
     }
 # endif
-#endif
 
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
-#if __JHERETIC__
-    G_DeferedInitNew(option, MenuEpisode, 1);
-#elif __JDOOM__
-    G_DeferedInitNew(option, epi + 1, 1);
-#elif __JDOOM64__
+# if __JDOOM64__
     G_DeferedInitNew(option, 1, 1);
+# else
+    G_DeferedInitNew(option, epi + 1, 1);
+# endif
 #endif
 }
 

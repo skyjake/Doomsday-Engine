@@ -1323,7 +1323,7 @@ typedef enum {
     TXT_QSAVESPOT,
     TXT_SAVEDEAD,
     TXT_QSPROMPT,
-    TXT_QLPROMPT,                   // 010
+    TXT_QLPROMPT,
     TXT_NEWGAME,
     TXT_NIGHTMARE,
     TXT_SWSTRING,
@@ -1333,7 +1333,7 @@ typedef enum {
     TXT_ENDGAME,
     TXT_DOSY,
     TXT_DETAILHI,
-    TXT_DETAILLO,                   // 020
+    TXT_DETAILLO,
     TXT_GAMMALVL0,
     TXT_GAMMALVL1,
     TXT_GAMMALVL2,
@@ -1343,7 +1343,7 @@ typedef enum {
     TXT_GOTARMOR,
     TXT_GOTMEGA,
     TXT_GOTHTHBONUS,
-    TXT_GOTARMBONUS,                // 030
+    TXT_GOTARMBONUS,
     TXT_GOTSTIM,
     TXT_GOTMEDINEED,
     TXT_GOTMEDIKIT,
@@ -1353,7 +1353,7 @@ typedef enum {
     TXT_GOTREDCARD,
     TXT_GOTBLUESKUL,
     TXT_GOTYELWSKUL,
-    TXT_GOTREDSKULL,                // 040
+    TXT_GOTREDSKULL,
     TXT_GOTINVUL,
     TXT_GOTBERSERK,
     TXT_GOTINVIS,
@@ -1363,7 +1363,7 @@ typedef enum {
     TXT_GOTMSPHERE,
     TXT_GOTCLIP,
     TXT_GOTCLIPBOX,
-    TXT_GOTROCKET,                  // 050
+    TXT_GOTROCKET,
     TXT_GOTROCKBOX,
     TXT_GOTCELL,
     TXT_GOTCELLBOX,
@@ -1373,7 +1373,7 @@ typedef enum {
     TXT_GOTBFG9000,
     TXT_GOTCHAINGUN,
     TXT_GOTCHAINSAW,
-    TXT_GOTLAUNCHER,                // 060
+    TXT_GOTLAUNCHER,
     TXT_GOTPLASMA,
     TXT_GOTSHOTGUN,
     TXT_GOTSHOTGUN2,
@@ -1383,7 +1383,7 @@ typedef enum {
     TXT_PD_BLUEK,
     TXT_PD_REDK,
     TXT_PD_YELLOWK,
-    TXT_GGSAVED,                    // 070
+    TXT_GGSAVED,
     TXT_HUSTR_MSGU,
     TXT_HUSTR_E1M1,
     TXT_HUSTR_E1M2,
@@ -1393,7 +1393,7 @@ typedef enum {
     TXT_HUSTR_E1M6,
     TXT_HUSTR_E1M7,
     TXT_HUSTR_E1M8,
-    TXT_HUSTR_E1M9,                 // 080
+    TXT_HUSTR_E1M9,
     TXT_HUSTR_E2M1,
     TXT_HUSTR_E2M2,
     TXT_HUSTR_E2M3,
@@ -1403,7 +1403,7 @@ typedef enum {
     TXT_HUSTR_E2M7,
     TXT_HUSTR_E2M8,
     TXT_HUSTR_E2M9,
-    TXT_HUSTR_E3M1,                 // 090
+    TXT_HUSTR_E3M1,
     TXT_HUSTR_E3M2,
     TXT_HUSTR_E3M3,
     TXT_HUSTR_E3M4,
@@ -1413,7 +1413,7 @@ typedef enum {
     TXT_HUSTR_E3M8,
     TXT_HUSTR_E3M9,
     TXT_HUSTR_E4M1,
-    TXT_HUSTR_E4M2,                 // 100
+    TXT_HUSTR_E4M2,
     TXT_HUSTR_E4M3,
     TXT_HUSTR_E4M4,
     TXT_HUSTR_E4M5,
@@ -1423,7 +1423,7 @@ typedef enum {
     TXT_HUSTR_E4M9,
     TXT_HUSTR_1,
     TXT_HUSTR_2,
-    TXT_HUSTR_3,                    // 110
+    TXT_HUSTR_3,
     TXT_HUSTR_4,
     TXT_HUSTR_5,
     TXT_HUSTR_6,
@@ -1433,7 +1433,7 @@ typedef enum {
     TXT_HUSTR_10,
     TXT_HUSTR_11,
     TXT_HUSTR_12,
-    TXT_HUSTR_13,                   // 120
+    TXT_HUSTR_13,
     TXT_HUSTR_14,
     TXT_HUSTR_15,
     TXT_HUSTR_16,
@@ -1443,7 +1443,7 @@ typedef enum {
     TXT_HUSTR_20,
     TXT_HUSTR_21,
     TXT_HUSTR_22,
-    TXT_HUSTR_23,                   // 130
+    TXT_HUSTR_23,
     TXT_HUSTR_24,
     TXT_HUSTR_25,
     TXT_HUSTR_26,
@@ -1453,7 +1453,7 @@ typedef enum {
     TXT_HUSTR_30,
     TXT_HUSTR_31,
     TXT_HUSTR_32,
-    TXT_PHUSTR_1,                   // 140
+    TXT_PHUSTR_1,
     TXT_PHUSTR_2,
     TXT_PHUSTR_3,
     TXT_PHUSTR_4,
@@ -1463,7 +1463,7 @@ typedef enum {
     TXT_PHUSTR_8,
     TXT_PHUSTR_9,
     TXT_PHUSTR_10,
-    TXT_PHUSTR_11,                  // 150
+    TXT_PHUSTR_11,
     TXT_PHUSTR_12,
     TXT_PHUSTR_13,
     TXT_PHUSTR_14,
@@ -1473,7 +1473,7 @@ typedef enum {
     TXT_PHUSTR_18,
     TXT_PHUSTR_19,
     TXT_PHUSTR_20,
-    TXT_PHUSTR_21,                  // 160
+    TXT_PHUSTR_21,
     TXT_PHUSTR_22,
     TXT_PHUSTR_23,
     TXT_PHUSTR_24,
@@ -1483,7 +1483,7 @@ typedef enum {
     TXT_PHUSTR_28,
     TXT_PHUSTR_29,
     TXT_PHUSTR_30,
-    TXT_PHUSTR_31,                  // 170
+    TXT_PHUSTR_31,
     TXT_PHUSTR_32,
     TXT_THUSTR_1,
     TXT_THUSTR_2,
@@ -1493,7 +1493,7 @@ typedef enum {
     TXT_THUSTR_6,
     TXT_THUSTR_7,
     TXT_THUSTR_8,
-    TXT_THUSTR_9,                   // 180
+    TXT_THUSTR_9,
     TXT_THUSTR_10,
     TXT_THUSTR_11,
     TXT_THUSTR_12,
@@ -1503,7 +1503,7 @@ typedef enum {
     TXT_THUSTR_16,
     TXT_THUSTR_17,
     TXT_THUSTR_18,
-    TXT_THUSTR_19,                  // 190
+    TXT_THUSTR_19,
     TXT_THUSTR_20,
     TXT_THUSTR_21,
     TXT_THUSTR_22,
@@ -1513,7 +1513,7 @@ typedef enum {
     TXT_THUSTR_26,
     TXT_THUSTR_27,
     TXT_THUSTR_28,
-    TXT_THUSTR_29,                  // 200
+    TXT_THUSTR_29,
     TXT_THUSTR_30,
     TXT_THUSTR_31,
     TXT_THUSTR_32,
@@ -1523,7 +1523,7 @@ typedef enum {
     TXT_HUSTR_CHATMACRO3,
     TXT_HUSTR_CHATMACRO4,
     TXT_HUSTR_CHATMACRO5,
-    TXT_HUSTR_CHATMACRO6,           // 210
+    TXT_HUSTR_CHATMACRO6,
     TXT_HUSTR_CHATMACRO7,
     TXT_HUSTR_CHATMACRO8,
     TXT_HUSTR_CHATMACRO9,
@@ -1533,7 +1533,7 @@ typedef enum {
     TXT_HUSTR_TALKTOSELF4,
     TXT_HUSTR_TALKTOSELF5,
     TXT_HUSTR_MESSAGESENT,
-    TXT_HUSTR_PLRGREEN,             // 220
+    TXT_HUSTR_PLRGREEN,
     TXT_HUSTR_PLRINDIGO,
     TXT_HUSTR_PLRBROWN,
     TXT_HUSTR_PLRRED,
@@ -1543,7 +1543,7 @@ typedef enum {
     TXT_AMSTR_GRIDOFF,
     TXT_AMSTR_MARKEDSPOT,
     TXT_AMSTR_MARKSCLEARED,
-    TXT_STSTR_MUS,                  // 230
+    TXT_STSTR_MUS,
     TXT_STSTR_NOMUS,
     TXT_STSTR_DQDON,
     TXT_STSTR_DQDOFF,
@@ -1553,7 +1553,7 @@ typedef enum {
     TXT_STSTR_NCOFF,
     TXT_STSTR_BEHOLD,
     TXT_STSTR_BEHOLDX,
-    TXT_STSTR_CHOPPERS,             // 240
+    TXT_STSTR_CHOPPERS,
     TXT_STSTR_CLEV,
     TXT_E1TEXT,
     TXT_E2TEXT,
@@ -1563,7 +1563,7 @@ typedef enum {
     TXT_C2TEXT,
     TXT_C3TEXT,
     TXT_C4TEXT,
-    TXT_C5TEXT,                     // 250
+    TXT_C5TEXT,
     TXT_C6TEXT,
     TXT_P1TEXT,
     TXT_P2TEXT,
@@ -1573,7 +1573,7 @@ typedef enum {
     TXT_P6TEXT,
     TXT_T1TEXT,
     TXT_T2TEXT,
-    TXT_T3TEXT,                     // 260
+    TXT_T3TEXT,
     TXT_T4TEXT,
     TXT_T5TEXT,
     TXT_T6TEXT,
@@ -1583,7 +1583,7 @@ typedef enum {
     TXT_CC_IMP,
     TXT_CC_DEMON,
     TXT_CC_LOST,
-    TXT_CC_CACO,                    // 270
+    TXT_CC_CACO,
     TXT_CC_HELL,
     TXT_CC_BARON,
     TXT_CC_ARACH,
@@ -1593,7 +1593,7 @@ typedef enum {
     TXT_CC_ARCH,
     TXT_CC_SPIDER,
     TXT_CC_CYBER,
-    TXT_CC_HERO,                    // 280
+    TXT_CC_HERO,
     TXT_QUITMESSAGE1,
     TXT_QUITMESSAGE2,
     TXT_QUITMESSAGE3,
@@ -1603,7 +1603,7 @@ typedef enum {
     TXT_QUITMESSAGE7,
     TXT_QUITMESSAGE8,
     TXT_QUITMESSAGE9,
-    TXT_QUITMESSAGE10,              // 290
+    TXT_QUITMESSAGE10,
     TXT_QUITMESSAGE11,
     TXT_QUITMESSAGE12,
     TXT_QUITMESSAGE13,
@@ -1613,7 +1613,7 @@ typedef enum {
     TXT_QUITMESSAGE17,
     TXT_QUITMESSAGE18,
     TXT_QUITMESSAGE19,
-    TXT_QUITMESSAGE20,              // 300
+    TXT_QUITMESSAGE20,
     TXT_QUITMESSAGE21,
     TXT_QUITMESSAGE22,
     TXT_JOINNET,
@@ -1621,7 +1621,7 @@ typedef enum {
     TXT_CLNETLOAD,
     TXT_LOADMISSING,
     TXT_FINALEFLAT_E1,
-    TXT_FINALEFLAT_E2,              // 310
+    TXT_FINALEFLAT_E2,
     TXT_FINALEFLAT_E3,
     TXT_FINALEFLAT_E4,
     TXT_FINALEFLAT_C2,
@@ -1631,7 +1631,7 @@ typedef enum {
     TXT_FINALEFLAT_C5,
     TXT_FINALEFLAT_C6,
     TXT_ASK_EPISODE,
-    TXT_EPISODE1,                   // 320
+    TXT_EPISODE1,
     TXT_EPISODE2,
     TXT_EPISODE3,
     TXT_EPISODE4,
@@ -1641,7 +1641,7 @@ typedef enum {
     TXT_KILLMSG_SHOTGUN,
     TXT_KILLMSG_CHAINGUN,
     TXT_KILLMSG_MISSILE,
-    TXT_KILLMSG_PLASMA,             // 330
+    TXT_KILLMSG_PLASMA,
     TXT_KILLMSG_BFG,
     TXT_KILLMSG_CHAINSAW,
     TXT_KILLMSG_SUPERSHOTGUN,
@@ -1651,7 +1651,7 @@ typedef enum {
     TXT_WEAPON1,
     TXT_WEAPON2,
     TXT_WEAPON3,
-    TXT_WEAPON4,                    // 340
+    TXT_WEAPON4,
     TXT_WEAPON5,
     TXT_WEAPON6,
     TXT_WEAPON7,
@@ -1661,7 +1661,7 @@ typedef enum {
     TXT_SKILL2,
     TXT_SKILL3,
     TXT_SKILL4,
-    TXT_SKILL5,                     // 350
+    TXT_SKILL5,
     TXT_KEY1,
     TXT_KEY2,
     TXT_KEY3,
@@ -1672,6 +1672,12 @@ typedef enum {
     TXT_ENDNOGAME,
     TXT_SUICIDEOUTMAP,
     TXT_SUICIDEASK,
+    TXT_PICKGAMETYPE,
+    TXT_SINGLEPLAYER,
+    TXT_MULTIPLAYER,
+    TXT_NOTDESIGNEDFOR,
+    TXT_GAMESETUP,
+    TXT_PLAYERSETUP,
     NUMTEXT
 } textenum_t;
 

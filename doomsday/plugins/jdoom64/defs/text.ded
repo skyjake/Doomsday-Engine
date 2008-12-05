@@ -1215,3 +1215,33 @@ Text {
   ID = "SUICIDEASK";
   Text = "Are you sure you want to suicide?";
 }
+
+Text {
+  ID = "PICKGAMETYPE";
+  Text = "Choose game type";
+}
+
+Text {
+  ID = "SINGLEPLAYER";
+  Text = "Singleplayer";
+}
+
+Text {
+  ID = "MULTIPLAYER";
+  Text = "Multiplayer";
+}
+
+Text {
+  ID = "NOTDESIGNEDFOR";
+  Text = "Not designed for %1.";
+}
+
+Text {
+  ID = "GAMESETUP";
+  Text = "Game Setup";
+}
+
+Text {
+  ID = "PLAYERSETUP";
+  Text = "Player Setup";
+}

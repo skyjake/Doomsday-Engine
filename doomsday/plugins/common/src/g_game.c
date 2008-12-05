@@ -2129,7 +2129,7 @@ void P_GetMapLumpName(int episode, int map, char *lumpName)
  */
 boolean P_MapExists(int episode, int map)
 {
-    char        buf[20];
+    char                buf[20];
 
     P_GetMapLumpName(episode, map, buf);
     return W_CheckNumForName(buf) >= 0;
@@ -2141,7 +2141,7 @@ boolean P_MapExists(int episode, int map)
  */
 boolean G_ValidateMap(int *episode, int *map)
 {
-    boolean     ok = true;
+    boolean             ok = true;
 
     if(*episode < 1)
     {
@@ -2275,8 +2275,8 @@ boolean G_ValidateMap(int *episode, int *map)
 #if __JHERETIC__
 char* P_GetShortMapName(int episode, int map)
 {
-    char       *name = P_GetMapName(episode, map);
-    char       *ptr;
+    char*               name = P_GetMapName(episode, map);
+    char*               ptr;
 
     // Remove the "ExMx:" from the beginning.
     ptr = strchr(name, ':');
@@ -2292,8 +2292,8 @@ char* P_GetShortMapName(int episode, int map)
 
 char* P_GetMapName(int episode, int map)
 {
-    char        id[10];
-    ddmapinfo_t info;
+    char                id[10];
+    ddmapinfo_t         info;
 
     // Compose the map identifier.
     P_GetMapLumpName(episode, map, id);
@@ -2384,7 +2384,7 @@ void G_PrintMapList(void)
     }
 #elif __JHERETIC__
     if(gameMode == extended)
-        numEpisodes = 5;
+        numEpisodes = 6;
     else if(gameMode == registered)
         numEpisodes = 3;
     else
@@ -2448,9 +2448,9 @@ void G_ScreenShot(void)
 
 void G_DoScreenShot(void)
 {
-    int         i;
-    filename_t  name;
-    char       *numPos;
+    int                 i;
+    filename_t          name;
+    char*               numPos;
 
     // Use game mode as the file name base.
     sprintf(name, "%s-", (char *) G_GetVariable(DD_GAME_MODE));

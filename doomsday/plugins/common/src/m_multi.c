@@ -346,7 +346,7 @@ void MN_DrCenterTextB_CS(char *text, int centerX, int y)
 
 void DrawMultiplayerMenu(void)
 {
-    M_DrawTitle("MULTIPLAYER", MultiplayerMenu.y - 30);
+    M_DrawTitle(GET_TXT(TXT_MULTIPLAYER), MultiplayerMenu.y - 30);
 }
 
 void DrawGameSetupMenu(void)
@@ -372,7 +372,7 @@ void DrawGameSetupMenu(void)
     char*               mapName = "unnamed";
 #endif
 
-    M_DrawTitle("GAME SETUP", menu->y - 20);
+    M_DrawTitle(GET_TXT(TXT_GAMESETUP), menu->y - 20);
 
     idx = 0;
 
@@ -461,7 +461,7 @@ void DrawPlayerSetupMenu(void)
     static const int    sprites[3] = {SPR_PLAY, SPR_PLAY, SPR_PLAY};
 #endif
 
-    M_DrawTitle("PLAYER SETUP", menu->y - 28);
+    M_DrawTitle(GET_TXT(TXT_PLAYERSETUP), menu->y - 28);
 
     DrawEditField(menu, 0, &plrNameEd);
 
@@ -670,7 +670,7 @@ void SCGameSetupEpisode(int option, void* data)
 
     if(option == RIGHT_DIR)
     {
-        if(cfg.netEpisode < 6)
+        if(cfg.netEpisode < (gameMode == extended? 6 : 3))
             cfg.netEpisode++;
     }
     else if(cfg.netEpisode > 1)
@@ -692,7 +692,7 @@ void SCGameSetupMap(int option, void* data)
         if(cfg.netMap < (gameMode == commercial ? 32 : 9))
             cfg.netMap++;
 #elif __JHERETIC__
-        if(cfg.netMap < 9)
+        if(cfg.netMap < (cfg.netEpisode == 6? 3 : 9))
             cfg.netMap++;
 #elif __JHEXEN__ || __JSTRIFE__
         if(cfg.netMap < 31)
@@ -901,10 +901,14 @@ void Ed_MakeCursorVisible(void)
     }
 }
 
+#if __JDOOM__ || __JDOOM64__
+#define EDITFIELD_BOX_YOFFSET 3
+#else
+#define EDITFIELD_BOX_YOFFSET 5
+#endif
+
 void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 {
-    int                 x = menu->x;
-    int                 y = menu->y + menu->itemHeight * index;
     int                 vis;
     char                buf[MAX_EDIT_LEN + 1], *text;
     int                 width = M_StringWidth("a", huFontA) * 27;
@@ -917,8 +921,9 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
     vis = Ed_VisibleSlotChars(text, M_StringWidth);
     text[vis] = 0;
 
-    M_DrawSaveLoadBorder(x - 8, y + 2, width);
-    M_WriteText2(x, y + 3, text, huFontA, 1, 1, 1, Hu_MenuAlpha());
+    M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
+    M_WriteText2(menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index),
+                 text, huFontA, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void SCEditField(int efptr, void* data)

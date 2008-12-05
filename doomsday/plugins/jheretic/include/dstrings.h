@@ -29,6 +29,10 @@
 #ifndef __HERETICSTRINGS__
 #define __HERETICSTRINGS__
 
+#ifndef __JHERETIC__
+#  error "Using jHeretic headers without __JHERETIC__"
+#endif
+
 #define GET_TXT(x)      ((*gi.text)[x].text)
 
 #define NUM_QUITMESSAGES   0
@@ -53,7 +57,7 @@
 #define ENDGAME             GET_TXT(TXT_ENDGAME)
 #define ENDNOGAME           GET_TXT(TXT_ENDNOGAME)
 
-#define SUICIDEOUTMAP        GET_TXT(TXT_SUICIDEOUTMAP)
+#define SUICIDEOUTMAP       GET_TXT(TXT_SUICIDEOUTMAP)
 #define SUICIDEASK          GET_TXT(TXT_SUICIDEASK)
 
 #define DOSY                GET_TXT(TXT_DOSY)
