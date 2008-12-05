@@ -79,7 +79,7 @@ Copy Map Info {
 }
 
 # The rest of the file is skipped if Heretic Shareware.
-SkipIf heretic-share
+SkipIf heretic-share;
 
 Copy Map Info {
   ID = "E2M1";
@@ -196,7 +196,7 @@ Copy Map Info {
 }
 
 # The rest of the file is skipped if not Heretic Extended.
-SkipIf Not heretic-ext
+SkipIf Not heretic-ext;
 
 Copy Map Info {
   ID = "E4M1";
