@@ -999,7 +999,7 @@ void WI_Ticker(void)
     if(bcnt == 1)
     {
         // Intermission music.
-        S_StartMusicNum(MUS_DM2INT, true);
+        S_StartMusic("dm2int", true);
     }
 
     WI_checkForAccelerate();

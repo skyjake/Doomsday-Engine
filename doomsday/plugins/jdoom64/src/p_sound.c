@@ -47,17 +47,8 @@
 
 // CODE --------------------------------------------------------------------
 
-int S_GetMusicNum(int episode, int map)
-{
-    int                 mnum;
-
-    mnum = MUS_RUNNIN + map - 1;
-
-    return mnum;
-}
-
 /**
- * Starts playing the music for this level
+ * Starts playing the music for the current map.
  */
 void S_MapMusic(void)
 {
@@ -66,20 +57,12 @@ void S_MapMusic(void)
     if(G_GetGameState() != GS_MAP)
         return;
 
-    // Start new music for the level.
-    if(Get(DD_MAP_MUSIC) == -1)
+    songid = Get(DD_MAP_MUSIC);
+    if(S_StartMusicNum(songid, true))
     {
-        songid = S_GetMusicNum(gameEpisode, gameMap);
-        S_StartMusicNum(songid, true);
+        // Set the game status cvar for the map music.
+        gsvMapMusic = songid;
     }
-    else
-    {
-        songid = Get(DD_MAP_MUSIC);
-        S_StartMusicNum(songid, true);
-    }
-
-    // Set the game status cvar for the map music.
-    gsvMapMusic = songid;
 }
 
 /**
@@ -90,9 +73,9 @@ void S_MapMusic(void)
  * @param origin        Origin of the sound (center/floor/ceiling).
  * @param id            ID number of the sound to be played.
  */
-void S_SectorSound(sector_t *sec, int origin, int id)
+void S_SectorSound(sector_t* sec, int origin, int id)
 {
-    mobj_t             *centerOrigin, *floorOrigin, *ceilingOrigin;
+    mobj_t*             centerOrigin, *floorOrigin, *ceilingOrigin;
 
     centerOrigin = (mobj_t *) P_GetPtrp(sec, DMU_SOUND_ORIGIN);
     floorOrigin = (mobj_t *) P_GetPtrp(sec, DMU_FLOOR_SOUND_ORIGIN);

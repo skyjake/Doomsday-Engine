@@ -51,40 +51,8 @@
 
 // CODE --------------------------------------------------------------------
 
-int S_GetMusicNum(int episode, int map)
-{
-    int                 mnum;
-
-    if(gameMode == commercial)
-    {
-        mnum = MUS_RUNNIN + map - 1;
-    }
-    else
-    {
-        int                 spmus[] = {
-            // Song - Who? - Where?
-            MUS_E3M4,           // American     e4m1
-            MUS_E3M2,           // Romero       e4m2
-            MUS_E3M3,           // Shawn        e4m3
-            MUS_E1M5,           // American     e4m4
-            MUS_E2M7,           // Tim          e4m5
-            MUS_E2M4,           // Romero       e4m6
-            MUS_E2M6,           // J.Anderson   e4m7 CHIRON.WAD
-            MUS_E2M5,           // Shawn        e4m8
-            MUS_E1M9            // Tim          e4m9
-        };
-
-        if(episode < 4)
-            mnum = MUS_E1M1 + (episode - 1) * 9 + map - 1;
-        else
-            mnum = spmus[map - 1];
-    }
-
-    return mnum;
-}
-
 /**
- * Starts playing the music for this map.
+ * Starts playing the music for the current map.
  */
 void S_MapMusic(void)
 {
@@ -93,20 +61,12 @@ void S_MapMusic(void)
     if(G_GetGameState() != GS_MAP)
         return;
 
-    // Start new music for the level.
-    if(Get(DD_MAP_MUSIC) == -1)
+    songid = Get(DD_MAP_MUSIC);
+    if(S_StartMusicNum(songid, true))
     {
-        songid = S_GetMusicNum(gameEpisode, gameMap);
-        S_StartMusicNum(songid, true);
+        // Set the game status cvar for the map music.
+        gsvMapMusic = songid;
     }
-    else
-    {
-        songid = Get(DD_MAP_MUSIC);
-        S_StartMusicNum(songid, true);
-    }
-
-    // Set the game status cvar for the map music.
-    gsvMapMusic = songid;
 }
 
 /**
@@ -117,9 +77,9 @@ void S_MapMusic(void)
  * @param origin        Origin of the sound (center/floor/ceiling).
  * @param id            ID number of the sound to be played.
  */
-void S_SectorSound(sector_t *sec, sectorsoundorigin_t origin, int id)
+void S_SectorSound(sector_t* sec, sectorsoundorigin_t origin, int id)
 {
-    mobj_t             *centerOrigin, *floorOrigin, *ceilingOrigin;
+    mobj_t*             centerOrigin, *floorOrigin, *ceilingOrigin;
 
     centerOrigin = (mobj_t *) P_GetPtrp(sec, DMU_SOUND_ORIGIN);
     floorOrigin = (mobj_t *) P_GetPtrp(sec, DMU_FLOOR_SOUND_ORIGIN);

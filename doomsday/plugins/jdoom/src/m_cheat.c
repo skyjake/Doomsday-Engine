@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdlib.h>
+
 #include "jdoom.h"
 
 #include "f_infine.h"
@@ -186,7 +188,6 @@ boolean Cht_Responder(event_t *ev)
             {
                 char                buf[3];
 
-                P_SetMessage(plr, STSTR_MUS, false);
                 Cht_GetParam(&cheatMus, buf);
                 Cht_MusicFunc(plr, buf);   // Might set plyr->message.
                 return true;
@@ -396,31 +397,24 @@ void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
     }
 }
 
-void Cht_MusicFunc(player_t *plyr, char *buf)
+void Cht_MusicFunc(player_t* plyr, char* buf)
 {
-    int                 off, musnum;
+    int                 musnum = 1;
 
-    if(gameMode == commercial)
+    if(buf)
+        musnum += strtol(buf, NULL, 10) - 1;
+
+    if(S_StartMusicNum(musnum, true))
     {
-        off = (buf[0] - '0') * 10 + buf[1] - '0';
-        musnum = MUS_RUNNIN + off - 1;
-        if(off < 1 || off > 35)
-            P_SetMessage(plyr, STSTR_NOMUS, false);
-        else
-            S_StartMusicNum(musnum, true);
+        P_SetMessage(plr, STSTR_MUS, false);
     }
     else
     {
-        off = (buf[0] - '1') * 9 + (buf[1] - '1');
-        musnum = MUS_E1M1 + off;
-        if(off > 31)
-            P_SetMessage(plyr, STSTR_NOMUS, false);
-        else
-            S_StartMusicNum(musnum, true);
+        P_SetMessage(plyr, STSTR_NOMUS, false);
     }
 }
 
-void Cht_NoClipFunc(player_t *plyr)
+void Cht_NoClipFunc(player_t* plyr)
 {
     plyr->cheats ^= CF_NOCLIP;
     plyr->update |= PSF_STATE;
@@ -429,7 +423,7 @@ void Cht_NoClipFunc(player_t *plyr)
                  false);
 }
 
-boolean Cht_WarpFunc(player_t *plyr, char *buf)
+boolean Cht_WarpFunc(player_t* plyr, char* buf)
 {
     int                 epsd, map;
 

@@ -30,7 +30,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "jdoom64.h"
@@ -197,7 +197,6 @@ boolean Cht_Responder(event_t *ev)
             {
                 char                buf[3];
 
-                P_SetMessage(plyr, STSTR_MUS, false);
                 Cht_GetParam(&cheat_mus, buf);
                 Cht_MusicFunc(plyr, buf); // Might set plyr->message.
             }
@@ -419,16 +418,21 @@ void Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
     }
 }
 
-void Cht_MusicFunc(player_t *plyr, char *buf)
+void Cht_MusicFunc(player_t* plyr, char* buf)
 {
-    int                 off, musnum;
+    int                 musnum = 1;
 
-    off = (buf[0] - '0') * 10 + buf[1] - '0';
-    musnum = MUS_RUNNIN + off - 1;
-    if(off < 1 || off > 35)
-        P_SetMessage(plyr, STSTR_NOMUS, false);
+    if(buf)
+        musnum += strtol(buf, NULL, 10) - 1;
+
+    if(S_StartMusicNum(musnum, true))
+    {
+        P_SetMessage(plr, STSTR_MUS, false);
+    }
     else
-        S_StartMusicNum(musnum, true);
+    {
+        P_SetMessage(plyr, STSTR_NOMUS, false);
+    }
 }
 
 void Cht_NoClipFunc(player_t *plyr)

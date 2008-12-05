@@ -74,10 +74,11 @@ void S_MapMusic(void)
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gameMap));
     cdTrack = P_GetMapCDTrack(gameMap);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
-    S_StartMusic("currentmap", true);
-
-    // set the game status cvar for the map music
-    gsvMapMusic = idx;
+    if(S_StartMusic("currentmap", true))
+    {
+        // Set the game status cvar for the map music
+        gsvMapMusic = idx;
+    }
 }
 
 void S_ParseSndInfoLump(void)

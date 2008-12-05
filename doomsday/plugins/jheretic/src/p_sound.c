@@ -55,27 +55,17 @@
  */
 void S_MapMusic(void)
 {
-    ddmapinfo_t         info;
-    char                id[10];
-    int                 songID = 0;
+    int                 songid;
 
     if(G_GetGameState() != GS_MAP)
         return;
 
-    sprintf(id, "E%iM%i", gameEpisode, gameMap);
-    if(Def_Get(DD_DEF_MAP_INFO, id, &info) && info.music >= 0)
+    songid = Get(DD_MAP_MUSIC);
+    if(S_StartMusicNum(songid, true))
     {
-        songID = info.music;
-        S_StartMusicNum(songID, true);
+        // Set the game status cvar for the map music.
+        gsvMapMusic = songid;
     }
-    else
-    {
-        songID = (gameEpisode - 1) * 9 + gameMap - 1;
-        S_StartMusicNum(songID, true);
-    }
-
-    // Set the map music game status cvar.
-    gsvMapMusic = songID;
 }
 
 /**
