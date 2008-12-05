@@ -217,8 +217,6 @@
 		<Unit filename="..\..\plugins\jheretic\include\r_defs.h" />
 		<Unit filename="..\..\plugins\jheretic\include\r_local.h" />
 		<Unit filename="..\..\plugins\jheretic\include\resource.h" />
-		<Unit filename="..\..\plugins\jheretic\include\sounds.h" />
-		<Unit filename="..\..\plugins\jheretic\include\soundst.h" />
 		<Unit filename="..\..\plugins\jheretic\include\st_stuff.h" />
 		<Unit filename="..\..\plugins\jheretic\include\tables.h" />
 		<Unit filename="..\..\plugins\jheretic\include\version.h" />

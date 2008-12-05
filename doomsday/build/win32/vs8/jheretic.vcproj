@@ -753,14 +753,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jheretic\include\sounds.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jheretic\include\soundst.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jheretic\include\st_stuff.h"
 				>
 			</File>

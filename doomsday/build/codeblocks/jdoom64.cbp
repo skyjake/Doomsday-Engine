@@ -301,7 +301,6 @@
 		<Unit filename="..\..\plugins\jdoom64\include\p_spec.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\p_telept.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\r_defs.h" />
-		<Unit filename="..\..\plugins\jdoom64\include\sndidx.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\st_stuff.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\tables.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\version.h" />

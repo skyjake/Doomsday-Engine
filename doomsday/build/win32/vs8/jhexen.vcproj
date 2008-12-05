@@ -693,6 +693,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\p_sound.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_spec.h"
 				>
 			</File>
@@ -725,23 +729,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\include\s_sound.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jhexen\include\sc_man.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\include\sn_sonix.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\include\sounds.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\include\soundst.h"
 				>
 			</File>
 			<File
@@ -893,6 +881,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\src\p_sound.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\src\p_spec.c"
 				>
 			</File>
@@ -910,10 +902,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\src\po_man.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\src\s_sound.c"
 				>
 			</File>
 			<File

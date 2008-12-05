@@ -60,7 +60,6 @@
 #include "../../jdoom/include/p_spec.h"
 #include "../../jdoom/include/p_telept.h"
 #include "../../jdoom/include/r_defs.h"
-#include "../../jdoom/include/s_sound.h"
 #include "../../jdoom/include/st_stuff.h"
 #include "../../jdoom/include/tables.h"
 #include "../../jdoom/include/wi_stuff.h"

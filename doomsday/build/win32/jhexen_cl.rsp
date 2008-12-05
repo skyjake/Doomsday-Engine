@@ -47,6 +47,7 @@
  ./../../plugins/jhexen/src/h2_main.c
  ./../../plugins/jhexen/src/p_things.c
  ./../../plugins/jhexen/src/p_telept.c
+ ./../../plugins/jhexen/src/p_sound.c
  ./../../plugins/jhexen/src/p_spec.c
  ./../../plugins/jhexen/src/p_setup.c
  ./../../plugins/jhexen/src/p_pillar.c
@@ -60,7 +61,6 @@
  ./../../plugins/jhexen/src/p_anim.c
  ./../../plugins/jhexen/src/p_acs.c
  ./../../plugins/jhexen/src/p_waggle.c
- ./../../plugins/jhexen/src/s_sound.c
  ./../../plugins/jhexen/src/m_cheat.c
  ./../../plugins/jhexen/src/tables.c
  ./../../plugins/jhexen/src/sn_sonix.c

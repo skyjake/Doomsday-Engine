@@ -740,14 +740,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom\include\s_sound.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jdoom\include\sndidx.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom\include\st_stuff.h"
 				>
 			</File>

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,18 +23,22 @@
  */
 
 /**
- * s_sound.h:
+ * p_sound.h:
  */
 
-#ifndef __S_SOUND__
-#define __S_SOUND__
+#ifndef __P_SOUND_H__
+#define __P_SOUND_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __JHEXEN__
+#  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "r_defs.h"
+#define MAX_SND_DIST        (2025)
+#define MAX_CHANNELS        (16)
 
-#include "sndidx.h"                // Sfx and music indices.
+int             S_GetSoundID(char* name);
+void            S_MapMusic(void);
+
+void            S_ParseSndInfoLump(void);
 
 #endif

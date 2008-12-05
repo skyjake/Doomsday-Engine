@@ -311,8 +311,6 @@
 		<Unit filename="..\..\plugins\jdoom\include\p_spec.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_telept.h" />
 		<Unit filename="..\..\plugins\jdoom\include\r_defs.h" />
-		<Unit filename="..\..\plugins\jdoom\include\s_sound.h" />
-		<Unit filename="..\..\plugins\jdoom\include\sndidx.h" />
 		<Unit filename="..\..\plugins\jdoom\include\st_stuff.h" />
 		<Unit filename="..\..\plugins\jdoom\include\tables.h" />
 		<Unit filename="..\..\plugins\jdoom\include\version.h" />

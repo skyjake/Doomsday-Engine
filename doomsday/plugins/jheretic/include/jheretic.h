@@ -61,7 +61,6 @@
 #include "../../jheretic/include/p_spec.h"
 #include "../../jheretic/include/p_telept.h"
 #include "../../jheretic/include/r_defs.h"
-#include "../../jheretic/include/soundst.h"
 #include "../../jheretic/include/st_stuff.h"
 #include "../../jheretic/include/tables.h"
 

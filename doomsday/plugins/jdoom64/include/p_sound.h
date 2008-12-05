@@ -34,16 +34,13 @@
 
 #include "doomsday.h"
 
-#include "sndidx.h"
-
 enum {
     SORG_CENTER,
     SORG_FLOOR,
     SORG_CEILING
 };
 
-int             S_GetMusicNum(int episode, int map);
 void            S_MapMusic(void);
-void            S_SectorSound(sector_t *sec, int origin, int id);
+void            S_SectorSound(sector_t* sec, int origin, int id);
 
 #endif

@@ -293,6 +293,7 @@
 		<Unit filename="..\..\plugins\jhexen\include\p_pillar.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_pspr.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_setup.h" />
+		<Unit filename="..\..\plugins\jhexen\include\p_sound.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_spec.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_telept.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_things.h" />
@@ -301,11 +302,7 @@
 		<Unit filename="..\..\plugins\jhexen\include\r_defs.h" />
 		<Unit filename="..\..\plugins\jhexen\include\r_local.h" />
 		<Unit filename="..\..\plugins\jhexen\include\s_sequence.h" />
-		<Unit filename="..\..\plugins\jhexen\include\s_sound.h" />
 		<Unit filename="..\..\plugins\jhexen\include\sc_man.h" />
-		<Unit filename="..\..\plugins\jhexen\include\sn_sonix.h" />
-		<Unit filename="..\..\plugins\jhexen\include\sounds.h" />
-		<Unit filename="..\..\plugins\jhexen\include\soundst.h" />
 		<Unit filename="..\..\plugins\jhexen\include\st_stuff.h" />
 		<Unit filename="..\..\plugins\jhexen\include\textdefs.h" />
 		<Unit filename="..\..\plugins\jhexen\include\version.h" />
@@ -380,6 +377,9 @@
 		<Unit filename="..\..\plugins\jhexen\src\p_setup.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\plugins\jhexen\src\p_sound.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\plugins\jhexen\src\p_spec.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -393,9 +393,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\jhexen\src\po_man.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\jhexen\src\s_sound.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\jhexen\src\sc_man.c">
