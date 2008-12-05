@@ -2029,7 +2029,7 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     if(effectID == 4)
     {
         GL_SetNoTexture();
-        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, alpha/2.5f);
+        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, MIN_OF(alpha, .5f));
         return;
     }
 
