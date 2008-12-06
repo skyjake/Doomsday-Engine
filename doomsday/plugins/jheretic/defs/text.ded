@@ -19,7 +19,7 @@ Text {
 
 Text {
   ID = "QUITMSG";
-  Text = "Are you sure you want to\nquit this great game?";
+  Text = "Are you sure you want to quit?";
 }
 
 Text {
