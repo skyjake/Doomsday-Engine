@@ -79,19 +79,19 @@ typedef struct animdef_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing);
-static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
+static void P_CrossSpecialLine(linedef_t* line, int side, mobj_t* thing);
+static void P_ShootSpecialLine(mobj_t* thing, linedef_t* line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-mobj_t  LavaInflictor; // From the HERETIC source (To be moved!)
+mobj_t LavaInflictor;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static animdef_t anims[] = {
-    {0, "FLTWAW3A", "FLTWAWA1", MACRO_LONG(8)},
+    {0, "FLTWAWA3", "FLTWAWA1", MACRO_LONG(8)},
     {0, "FLTSLUD3", "FLTSLUD1", MACRO_LONG(8)},
     {0, "FLTTELE4", "FLTTELE1", MACRO_LONG(6)},
     {0, "FLTFLWW3", "FLTFLWW1", MACRO_LONG(9)},
