@@ -187,53 +187,42 @@ static void composeYesNoMessage(void)
 
 static void drawMessage(void)
 {
-#define BUFSIZE 80
-
     int                 x, y;
-    uint                i, start;
-    char                string[BUFSIZE];
-
-    start = 0;
+    char*               p;
 
     y = 100 - M_StringHeight(msgText, huFontA) / 2;
-    while(*(msgText + start))
+    p = msgText;
+    while(*p)
     {
-        for(i = 0; i < strlen(msgText + start); ++i)
-            if(*(msgText + start + i) == '\n' || i > BUFSIZE-1)
-            {
-                memset(string, 0, BUFSIZE);
-                strncpy(string, msgText + start, MIN_OF(i, BUFSIZE));
-                string[BUFSIZE - 1] = 0;
-                start += i + 1;
-                break;
-            }
+        char*           string = p, c;
 
-        if(i == strlen(msgText + start))
-        {
-            strncpy(string, msgText + start, BUFSIZE);
-            string[BUFSIZE - 1] = 0;
-            start += i;
-        }
+        while((c = *p) && *p != '\n')
+            p++;
+
+        *p = 0;
 
         x = 160 - M_StringWidth(string, huFontA) / 2;
         M_WriteText3(x, y, string, huFontA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
-
         y += huFontA[17].height;
+
+        if((*p) = c)
+            p++;
     }
+
+    // An additional blank line between the message and response prompt.
+    y += huFontA[17].height;
 
     switch(msgType)
     {
     case MSG_ANYKEY:
         x = 160 - M_StringWidth(PRESSKEY, huFontA) / 2;
-        y += huFontA[17].height;
         M_WriteText3(x, y, PRESSKEY, huFontA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
         break;
 
     case MSG_YESNO:
         x = 160 - M_StringWidth(yesNoMessage, huFontA) / 2;
-        y += huFontA[17].height;
         M_WriteText3(x, y, yesNoMessage, huFontA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
         break;
@@ -242,8 +231,6 @@ static void drawMessage(void)
         Con_Error("drawMessage: Internal error, unknown message type %i.\n",
                   (int) msgType);
     }
-
-#undef BUFSIZE
 }
 
 /**
