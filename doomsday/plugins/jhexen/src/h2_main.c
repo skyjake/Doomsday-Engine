@@ -47,6 +47,7 @@
 #include "p_mapspec.h"
 #include "am_map.h"
 #include "p_switch.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -369,6 +370,9 @@ void G_PostInit(void)
     int                     pClass;
     char                    mapStr[6];
 
+    // Do this early as other systems need to know.
+    P_InitPlayerClassInfo();
+
     // Common post init routine.
     G_CommonPostInit();
 
@@ -396,12 +400,22 @@ void G_PostInit(void)
     pClass = PCLASS_FIGHTER;
     if((p = ArgCheck("-class")) != 0)
     {
+        classinfo_t*            pClassInfo;
+
         pClass = atoi(Argv(p + 1));
-        if(pClass > PCLASS_MAGE || pClass < PCLASS_FIGHTER)
+        if(pClass < 0 || pClass > NUM_PLAYER_CLASSES)
         {
             Con_Error("Invalid player class: %d\n", pClass);
         }
-        Con_Message("\nPlayer Class: %d\n", pClass);
+        pClassInfo = PCLASS_INFO(pClass);
+
+        if(pClassInfo->userSelectable)
+        {
+            Con_Error("Player class '%s' is not user-selectable.\n",
+                      pClassInfo->niceName);
+        }
+
+        Con_Message("\nPlayer Class: '%s'\n", pClassInfo->niceName);
     }
     cfg.playerClass[CONSOLEPLAYER] = pClass;
 

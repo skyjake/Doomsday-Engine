@@ -718,7 +718,7 @@ DEFCC(CCmdSetClass)
     if(!(newClass < NUM_PLAYER_CLASSES))
         return false;
 
-    if(newClass == PCLASS_PIG)
+    if(!PCLASS_INFO(newClass)->userSelectable)
         return false;
 
     cfg.netClass = newClass;

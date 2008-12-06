@@ -48,7 +48,7 @@ typedef enum {
 typedef struct {
     menuitemtype_t  type;
     int             flags;
-    char*           text;
+    const char*     text;
     void          (*func) (int option, void *data);
     int             option;
     dpatch_t*       patch;

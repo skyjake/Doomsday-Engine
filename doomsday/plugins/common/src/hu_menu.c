@@ -67,11 +67,6 @@
 
 #define SAVESTRINGSIZE      24
 
-// QuitDOOM messages
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-#define NUM_QUITMESSAGES  0
-#endif
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct rgba_s {
@@ -175,29 +170,10 @@ extern menu_t ControlsDef;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-char* endmsg[] = {
-    "ARE YOU SURE YOU WANT TO QUIT?",
-    "ARE YOU SURE YOU WANT TO END THE GAME?",
-    "DO YOU WANT TO QUICKSAVE THE GAME NAMED",
-    "DO YOU WANT TO QUICKLOAD THE GAME NAMED"
-};
-#endif
-
 #if __JDOOM__ || __JDOOM64__
 /// The end message strings will be initialized in Hu_MenuInit().
 char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
-
-const char* QuitEndMsg[] =
-{
-    "ARE YOU SURE YOU WANT TO QUIT?",
-    "ARE YOU SURE YOU WANT TO END THE GAME?",
-    "DO YOU WANT TO QUICKSAVE THE GAME NAMED",
-    "DO YOU WANT TO QUICKLOAD THE GAME NAMED",
-    "ARE YOU SURE YOU WANT TO SUICIDE?",
-    NULL
-};
 
 menu_t* currentMenu;
 
@@ -218,14 +194,9 @@ int saveCharIndex; // Which char we're editing.
 
 char endstring[160];
 
-#if __JDOOM__ || __JDOOM64__
-static char* yesno[3] = {"NO", "YES", "MAYBE?"};
-#else
 static char* yesno[2] = {"NO", "YES"};
-#endif
 
 #if __JDOOM__ || __JHERETIC__
-char* episodemsg;
 int epi;
 #endif
 
@@ -326,12 +297,6 @@ static int quicksave;
 static int quickload;
 
 static char notDesignedForMessage[80];
-
-#if __JDOOM__
-#define READTHISID          (4)
-#else
-#define READTHISID          (2)
-#endif
 
 #if __JDOOM__ || __JDOOM64__
 static dpatch_t m_doom;
@@ -515,69 +480,43 @@ menu_t NewGameDef = {
 };
 
 #if __JHEXEN__
-menuitem_t ClassItems[] = {
-    {ITT_EFUNC, 0, "FIGHTER", M_ChooseClass, 0},
-    {ITT_EFUNC, 0, "CLERIC", M_ChooseClass, 1},
-    {ITT_EFUNC, 0, "MAGE", M_ChooseClass, 2}
-};
+static menuitem_t* ClassItems;
 
 menu_t ClassDef = {
     0,
     66, 66,
     M_DrawClassMenu,
-    3, ClassItems,
+    0, NULL,
     0, MENU_NEWGAME,
     huFontB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
-    0, 3
+    0, 0
 };
 #endif
 
-#if __JHERETIC__
-menuitem_t EpisodeItems[] = {
-    // Text defs TXT_EPISODE1..6.
-    {ITT_EFUNC, 0, "C", M_Episode, 0},
-    {ITT_EFUNC, 0, "H", M_Episode, 1},
-    {ITT_EFUNC, 0, "D", M_Episode, 2},
-    {ITT_EFUNC, 0, "O", M_Episode, 3},
-    {ITT_EFUNC, 0, "S", M_Episode, 4},
-    {ITT_EFUNC, 0, "F", M_Episode, 5},
-};
+#if __JDOOM__ || __JHERETIC__
+static menuitem_t* EpisodeItems;
+#endif
 
+#if __JDOOM__ || __JHERETIC__
 menu_t EpiDef = {
     0,
-    48, 50,
+    48,
+# if __JDOOM__
+    63,
+# else
+    50,
+# endif
     M_DrawEpisode,
-    3, EpisodeItems,
+    0, NULL,
     0, MENU_NEWGAME,
     huFontB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT + 1,
-    0, 3
-};
-#elif __JDOOM__
-menuitem_t EpisodeItems[] = {
-    // Text defs TXT_EPISODE1..4.
-    {ITT_EFUNC, 0, "K", M_Episode, 0},
-    {ITT_EFUNC, 0, "T", M_Episode, 1},
-    {ITT_EFUNC, 0, "I", M_Episode, 2},
-    {ITT_EFUNC, 0, "T", M_Episode, 3}
-};
-
-menu_t EpiDef = {
-    0,
-    48, 63,
-    M_DrawEpisode,
-    4, EpisodeItems,
-    0, MENU_NEWGAME,
-    huFontB,
-    cfg.menuColor,
-    NULL, false,
-    LINEHEIGHT + 1,
-    0, 4
+    0, 0
 };
 #endif
 
@@ -1347,6 +1286,110 @@ void M_LoadData(void)
 #endif
 }
 
+#if __JDOOM__ || __JHERETIC__
+/**
+ * Construct the episode selection menu.
+ */
+void M_InitEpisodeMenu(void)
+{
+    int                 i, maxw, w, numEpisodes;
+
+#if __JDOOM__
+    switch(gameMode)
+    {
+    case commercial:    numEpisodes = 0; break;
+    case retail:        numEpisodes = 4; break;
+    // In shareware, episodes 2 and 3 are handled, branching to an ad screen.
+    default:            numEpisodes = 3; break;
+    }
+#else  __JHERETIC__
+    if(gameMode == extended)
+        numEpisodes = 6;
+    else
+        numEpisodes = 3;
+#endif
+
+    // Allocate the menu items array.
+    EpisodeItems = Z_Calloc(sizeof(menuitem_t) * numEpisodes, PU_STATIC, 0);
+
+    for(i = 0, maxw = 0; i < numEpisodes; ++i)
+    {
+        menuitem_t*             item = &EpisodeItems[i];
+
+        item->type = ITT_EFUNC;
+        item->func = M_Episode;
+        item->option = i;
+        item->text = GET_TXT(TXT_EPISODE1 + i);
+        w = M_StringWidth(item->text, EpiDef.font);
+        if(w > maxw)
+            maxw = w;
+# if __JDOOM__
+        item->patch = &episodeNamePatches[i];
+# endif
+    }
+
+    // Finalize setup.
+    EpiDef.items = EpisodeItems;
+    EpiDef.itemCount = numEpisodes;
+    EpiDef.numVisItems = MIN_OF(EpiDef.itemCount, 10);
+    EpiDef.x = 160 - maxw / 2 + 12; // Center the menu appropriately.
+}
+#endif
+
+#if __JHEXEN__
+/**
+ * Construct the player class selection menu.
+ */
+void M_InitPlayerClassMenu(void)
+{
+    uint                i, n, count;
+
+    // First determine the number of selectable player classes.
+    count = 0;
+    for(i = 0; i < NUM_PLAYER_CLASSES; ++i)
+    {
+        classinfo_t*        info = PCLASS_INFO(i);
+
+        if(info->userSelectable)
+            count++;
+    }
+
+    // Allocate the menu items array.
+    ClassItems = Z_Calloc(sizeof(menuitem_t) * (count + 1),
+                          PU_STATIC, 0);
+
+    // Add the selectable classes.
+    n = i = 0;
+    while(n < count)
+    {
+        classinfo_t*        info = PCLASS_INFO(i++);
+        menuitem_t*         item;
+
+        if(!info->userSelectable)
+            continue;
+
+        item = &ClassItems[n];
+        item->type = ITT_EFUNC;
+        item->func = M_ChooseClass;
+        item->option = n;
+        item->text = info->niceName;
+
+        n++;
+    }
+
+    // Add the random class option.
+    ClassItems[n].type = ITT_EFUNC;
+    ClassItems[n].func = M_ChooseClass;
+    ClassItems[n].option = -1;
+    ClassItems[n].text = GET_TXT(TXT_RANDOMPLAYERCLASS);
+
+    // Finalize setup.
+    ClassDef.items = ClassItems;
+    ClassDef.itemCount = count + 1;
+    ClassDef.numVisItems = MIN_OF(ClassDef.itemCount, 10);
+}
+#endif
+
 /**
  * Menu initialization.
  * Called during (post-engine) init and after updating game/engine state.
@@ -1362,7 +1405,6 @@ void Hu_MenuInit(void)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     int   i, w, maxw;
 #endif
-
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     R_GetGammaMessageStrings();
 #endif
@@ -1372,34 +1414,6 @@ void Hu_MenuInit(void)
     endmsg[0] = GET_TXT(TXT_QUITMSG);
     for(i = 1; i <= NUM_QUITMESSAGES; ++i)
         endmsg[i] = GET_TXT(TXT_QUITMESSAGE1 + i - 1);
-#endif
-#if __JHERETIC__
-    // Episode names.
-    for(i = 0, maxw = 0; i < 6; ++i)
-    {
-        EpisodeItems[i].text = GET_TXT(TXT_EPISODE1 + i);
-        w = M_StringWidth(EpisodeItems[i].text, EpiDef.font);
-        if(w > maxw)
-            maxw = w;
-    }
-    // Center the episodes menu appropriately.
-    EpiDef.x = 160 - maxw / 2 + 12;
-
-#elif __JDOOM__
-    // Episode names.
-    for(i = 0, maxw = 0; i < 4; ++i)
-    {
-        EpisodeItems[i].text = GET_TXT(TXT_EPISODE1 + i);
-        w = M_StringWidth(EpisodeItems[i].text, EpiDef.font);
-        if(w > maxw)
-            maxw = w;
-
-        EpisodeItems[i].patch = &episodeNamePatches[i];
-    }
-    // Center the episodes menu appropriately.
-    EpiDef.x = 160 - maxw / 2 + 12;
-    // "Choose Episode"
-    episodemsg = GET_TXT(TXT_ASK_EPISODE);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -1436,7 +1450,7 @@ void Hu_MenuInit(void)
     switch(gameMode)
     {
     case commercial:
-        item = &MainItems[READTHISID];
+        item = &MainItems[4]; // Read This!
         item->func = M_QuitDOOM;
         item->text = "{case}Quit Game";
         item->patch = &m_quitg;
@@ -1454,16 +1468,12 @@ void Hu_MenuInit(void)
     case shareware:
         // Episode 2 and 3 are handled, branching to an ad screen.
     case registered:
-        // We need to remove the fourth episode.
-        EpiDef.itemCount = 3;
         ReadDef1.background = "HELP1";
         ReadDef1.backgroundIsRaw = false;
         ReadDef2.background = "HELP2";
         ReadDef2.backgroundIsRaw = false;
         break;
     case retail:
-        // We are fine.
-        EpiDef.itemCount = 4;
         ReadDef1.background = "HELP1";
         ReadDef2.background = "CREDIT";
         break;
@@ -1473,7 +1483,7 @@ void Hu_MenuInit(void)
     }
 #else
 # if !__JDOOM64__
-    item = &MainItems[READTHISID];
+    item = &MainItems[4]; // Read This!
     item->func = M_ReadThis;
 # endif
 #endif
@@ -1482,14 +1492,12 @@ void Hu_MenuInit(void)
     SkullBaseLump = W_GetNumForName(SKULLBASELMP);
 #endif
 
-#if __JHERETIC__
-    if(gameMode == extended)
-    {   // Add episodes 4, 5 and the bonus maps to the menu.
-        EpiDef.itemCount = EpiDef.numVisItems = 6;
-        EpiDef.y = 50 - ITEM_HEIGHT;
-    }
+#if __JDOOM__ || __JHERETIC__
+    M_InitEpisodeMenu();
 #endif
-
+#if __JHEXEN__
+    M_InitPlayerClassMenu();
+#endif
     M_InitControlsMenu();
 }
 
@@ -1788,11 +1796,11 @@ void Hu_MenuDrawer(void)
             else if(currentMenu->items[i].text)
             {
                 WI_DrawParamText(pos[VX], pos[VY],
-                                currentMenu->items[i].text, currentMenu->font,
-                                r, g, b, menuAlpha,
-                                false,
-                                cfg.usePatchReplacement? true : false,
-                                ALIGN_LEFT);
+                                 currentMenu->items[i].text, currentMenu->font,
+                                 r, g, b, menuAlpha,
+                                 false,
+                                 cfg.usePatchReplacement? true : false,
+                                 ALIGN_LEFT);
             }
 
             pos[VY] += currentMenu->itemHeight;
@@ -2490,29 +2498,48 @@ static void composeNotDesignedForMessage(const char* str)
 #if __JHEXEN__
 void M_DrawClassMenu(void)
 {
-    menu_t     *menu = &ClassDef;
-    playerclass_t    class;
-    static char *boxLumpName[3] = {
+#define BG_X            (174)
+#define BG_Y            (8)
+
+    menu_t*             menu = &ClassDef;
+    playerclass_t       pClass;
+    spriteinfo_t        sprInfo;
+    int                 color;
+    static char* boxLumpName[3] = {
         "m_fbox",
         "m_cbox",
         "m_mbox"
-    };
-    static char *walkLumpName[3] = {
-        "m_fwalk1",
-        "m_cwalk1",
-        "m_mwalk1"
     };
 
     M_WriteText2(34, 24, "CHOOSE CLASS:", huFontB, menu->color[0],
                  menu->color[1], menu->color[2], menuAlpha);
 
-    class = (playerclass_t) currentMenu->items[itemOn].option;
+    pClass = (playerclass_t) menu->items[itemOn].option;
+    if(pClass < 0)
+    {   // Random class.
+        // Number of user-selectable classes.
+        pClass = (menuTime / 5) % (menu->itemCount - 1);
+    }
 
-    DGL_Color4f( 1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(174, 8, W_GetNumForName(boxLumpName[class]));
-    GL_DrawPatch_CS(174 + 24, 8 + 12,
-                    W_GetNumForName(walkLumpName[class]) +
-                    ((menuTime >> 3) & 3));
+    R_GetSpriteInfo(states[PCLASS_INFO(pClass)->normalState].sprite,
+                    ((menuTime >> 3) & 3), &sprInfo);
+
+    DGL_Color4f(1, 1, 1, menuAlpha);
+    GL_DrawPatch_CS(BG_X, BG_Y, W_GetNumForName(boxLumpName[pClass % 3]));
+
+    color = pClass == PCLASS_FIGHTER? 0 : 1;
+
+    if(color)
+        GL_SetTranslatedSprite(sprInfo.materialNum, color, pClass);
+    else
+        GL_SetMaterial(sprInfo.materialNum);
+
+    GL_DrawRect(BG_X + 56 - sprInfo.offset, BG_Y + 78 - sprInfo.topOffset,
+                M_CeilPow2(sprInfo.width), M_CeilPow2(sprInfo.height),
+                1, 1, 1, menuAlpha);
+
+#undef BG_X
+#undef BG_Y
 }
 #endif
 
@@ -2520,7 +2547,7 @@ void M_DrawClassMenu(void)
 void M_DrawEpisode(void)
 {
     menu_t*             menu = &EpiDef;
-    
+
 #if __JHERETIC__
     M_DrawTitle("WHICH EPISODE?", 4);
 
@@ -2531,7 +2558,7 @@ void M_DrawEpisode(void)
     {
         const char*         str = notDesignedForMessage;
 
-        composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));       
+        composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
 
         M_WriteText2(160 - M_StringWidth(str, huFontA) / 2,
                      200 - M_StringHeight(str, huFontA), str, huFontA,
@@ -3376,7 +3403,7 @@ void M_QuitDOOM(int option, void* context)
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
-    endString = endmsg[0];
+    endString = GET_TXT(TXT_QUITMSG);
 #endif
 
     Con_Open(false);
@@ -3505,34 +3532,43 @@ void M_ChooseClass(int option, void* context)
         return;
     }
 
-    MenuPClass = option;
+    if(option < 0)
+    {   // Random class.
+        // Number of user-selectable classes.
+        MenuPClass = (menuTime / 5) % (ClassDef.itemCount - 1);
+    }
+    else
+    {
+        MenuPClass = option;
+    }
+
     switch(MenuPClass)
     {
     case PCLASS_FIGHTER:
         SkillDef.x = 120;
-        SkillItems[0].text = "SQUIRE";
-        SkillItems[1].text = "KNIGHT";
-        SkillItems[2].text = "WARRIOR";
-        SkillItems[3].text = "BERSERKER";
-        SkillItems[4].text = "TITAN";
+        SkillItems[0].text = GET_TXT(TXT_SKILLF1);
+        SkillItems[1].text = GET_TXT(TXT_SKILLF2);
+        SkillItems[2].text = GET_TXT(TXT_SKILLF3);
+        SkillItems[3].text = GET_TXT(TXT_SKILLF4);
+        SkillItems[4].text = GET_TXT(TXT_SKILLF5);
         break;
 
     case PCLASS_CLERIC:
         SkillDef.x = 116;
-        SkillItems[0].text = "ALTAR BOY";
-        SkillItems[1].text = "ACOLYTE";
-        SkillItems[2].text = "PRIEST";
-        SkillItems[3].text = "CARDINAL";
-        SkillItems[4].text = "POPE";
+        SkillItems[0].text = GET_TXT(TXT_SKILLC1);
+        SkillItems[1].text = GET_TXT(TXT_SKILLC2);
+        SkillItems[2].text = GET_TXT(TXT_SKILLC3);
+        SkillItems[3].text = GET_TXT(TXT_SKILLC4);
+        SkillItems[4].text = GET_TXT(TXT_SKILLC5);
         break;
 
     case PCLASS_MAGE:
         SkillDef.x = 112;
-        SkillItems[0].text = "APPRENTICE";
-        SkillItems[1].text = "ENCHANTER";
-        SkillItems[2].text = "SORCERER";
-        SkillItems[3].text = "WARLOCK";
-        SkillItems[4].text = "ARCHIMAGE";
+        SkillItems[0].text = GET_TXT(TXT_SKILLM1);
+        SkillItems[1].text = GET_TXT(TXT_SKILLM2);
+        SkillItems[2].text = GET_TXT(TXT_SKILLM3);
+        SkillItems[3].text = GET_TXT(TXT_SKILLM4);
+        SkillItems[4].text = GET_TXT(TXT_SKILLM5);
         break;
     }
     M_SetupNextMenu(&SkillDef);
@@ -3545,8 +3581,9 @@ void M_Episode(int option, void* context)
 #if __JHERETIC__
     if(shareware && option > 1)
     {
-        Con_Message("ONLY AVAILABLE IN THE REGISTERED VERSION\n");
-        option = 0;
+        Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
+        M_SetupNextMenu(&ReadDef1);
+        return;
     }
 #else
     if(gameMode == shareware && option)
@@ -3554,13 +3591,6 @@ void M_Episode(int option, void* context)
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         M_SetupNextMenu(&ReadDef1);
         return;
-    }
-
-    // Yet another hack...
-    if(gameMode == registered && option > 2)
-    {
-        Con_Message("M_Episode: 4th episode requires Ultimate DOOM\n");
-        option = 0;
     }
 #endif
 
@@ -3627,7 +3657,7 @@ void M_SfxVol(int option, void* context)
 
 void M_MusicVol(int option, void* context)
 {
-    int         vol = MUSICVOLUME;
+    int                 vol = MUSICVOLUME;
 
     if(option == RIGHT_DIR)
     {
@@ -3670,10 +3700,9 @@ void M_OpenDCP(int option, void* context)
     static const char *panelNames[] = {
         "panel",
         "panel audio",
-        "panel input",
-        "panel controls"
+        "panel input"
     };
-    int         idx = option;
+    int                 idx = option;
 
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
         idx = 0;
@@ -3687,8 +3716,9 @@ void M_OpenDCP(int option, void* context)
 void MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
                      float b, float a)
 {
-    int         x = menu->x + 4;
-    int         y = menu->y + menu->itemHeight * (index - menu->firstItem) + 3;
+    int                 x = menu->x + 4;
+    int                 y =
+        menu->y + menu->itemHeight * (index - menu->firstItem) + 3;
 
     M_DrawColorBox(x, y, r, g, b, a);
 }
@@ -3696,20 +3726,20 @@ void MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
 /**
  * Draws a menu slider control
  */
-void MN_DrawSlider(const menu_t *menu, int item, int width, int slot)
+void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    int         x;
-    int         y;
+    int                 x;
+    int                 y;
 
     x = menu->x + 24;
     y = menu->y + 2 + (menu->itemHeight * (item  - menu->firstItem));
 
     M_DrawSlider(x, y, width, slot, menuAlpha);
 #else
-    int         x =0, y =0;
-    int         height = menu->itemHeight - 1;
-    float       scale = height / 13.0f;
+    int                 x =0, y =0;
+    int                 height = menu->itemHeight - 1;
+    float               scale = height / 13.0f;
 
     if(menu->items[item].text)
         x = M_StringWidth(menu->items[item].text, menu->font);
@@ -3726,11 +3756,11 @@ void MN_DrawSlider(const menu_t *menu, int item, int width, int slot)
  */
 DEFCC(CCmdMenuAction)
 {
-    int         mode = 0;
+    int                 mode = 0;
 
     if(!menuActive)
     {
-        if(!stricmp(argv[0], "menu") && !chatOn)   // Open menu
+        if(!stricmp(argv[0], "menu") && !chatOn) // Open menu.
         {
             Hu_MenuCommand(MCMD_OPEN);
             return true;
@@ -3943,7 +3973,7 @@ DEFCC(CCmdMenuAction)
 
     // Hotkey shortcuts.
 #if !__JDOOM64__
-    if(!stricmp(argv[0], "helpscreen"))    // F1
+    if(!stricmp(argv[0], "helpscreen"))
     {
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
@@ -3959,7 +3989,7 @@ DEFCC(CCmdMenuAction)
     }
     else
 #endif
-        if(!stricmp(argv[0], "SaveGame"))    // F2
+        if(!stricmp(argv[0], "SaveGame"))
     {
         menuTime = 0;
         //S_LocalSound(menusnds[2], NULL);
@@ -3972,39 +4002,39 @@ DEFCC(CCmdMenuAction)
         //S_LocalSound(menusnds[2], NULL);
         M_LoadGame(0, NULL);
     }
-    else if(!stricmp(argv[0], "SoundMenu"))    // F4
+    else if(!stricmp(argv[0], "SoundMenu"))
     {
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
         currentMenu = &Options2Def;
-        itemOn = 0;                // sfx_vol
+        itemOn = 0;
         //S_LocalSound(menusnds[2], NULL);
     }
-    else if(!stricmp(argv[0], "QuickSave"))    // F6
+    else if(!stricmp(argv[0], "QuickSave"))
     {
         S_LocalSound(menusnds[2], NULL);
         menuTime = 0;
         M_QuickSave();
     }
-    else if(!stricmp(argv[0], "EndGame"))    // F7
+    else if(!stricmp(argv[0], "EndGame"))
     {
         S_LocalSound(menusnds[2], NULL);
         menuTime = 0;
         M_EndGame(0, NULL);
     }
-    else if(!stricmp(argv[0], "ToggleMsgs"))    // F8
+    else if(!stricmp(argv[0], "ToggleMsgs"))
     {
         menuTime = 0;
         M_ChangeMessages(0, NULL);
         S_LocalSound(menusnds[2], NULL);
     }
-    else if(!stricmp(argv[0], "QuickLoad"))    // F9
+    else if(!stricmp(argv[0], "QuickLoad"))
     {
         S_LocalSound(menusnds[2], NULL);
         menuTime = 0;
         M_QuickLoad();
     }
-    else if(!stricmp(argv[0], "quit"))    // F10
+    else if(!stricmp(argv[0], "quit"))
     {
         if(IS_DEDICATED)
             DD_Execute(true, "quit!");
@@ -4015,7 +4045,7 @@ DEFCC(CCmdMenuAction)
             M_QuitDOOM(0, NULL);
         }
     }
-    else if(!stricmp(argv[0], "ToggleGamma"))    // F11
+    else if(!stricmp(argv[0], "ToggleGamma"))
     {
         R_CycleGammaLevel();
     }

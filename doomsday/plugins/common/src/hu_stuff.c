@@ -1273,25 +1273,49 @@ float WI_ParseFloat(char** str)
 /**
  * Draw a string of text controlled by parameter blocks.
  */
-void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
-                      float defRed, float defGreen, float defBlue, float defAlpha,
-                      boolean defCase, boolean defTypeIn, int halign)
+void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
+                      float defRed, float defGreen, float defBlue,
+                      float defAlpha, boolean defCase, boolean defTypeIn,
+                      int halign)
 {
-    char    temp[256], *end, *string;
-    dpatch_t  *font = defFont;
-    float   r = defRed, g = defGreen, b = defBlue, a = defAlpha;
-    float   offX = 0, offY = 0, width = 0;
-    float   scaleX = 1, scaleY = 1, angle = 0, extraScale;
-    float   cx = x, cy = y;
-    int     charCount = 0;
-    boolean typeIn = defTypeIn;
-    boolean caseScale = defCase;
-    struct {
-        float   scale, offset;
-    } caseMod[2];               // 1=upper, 0=lower
-    int     curCase = -1;
+#define SMALLBUFF_SIZE  80
 
-    int alignx = 0;
+    char                smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
+    char                temp[256], *str, *string, *end;
+    dpatch_t*           font = defFont;
+    float               r = defRed, g = defGreen, b = defBlue, a = defAlpha;
+    float               offX = 0, offY = 0, width = 0;
+    float               scaleX = 1, scaleY = 1, angle = 0, extraScale;
+    float               cx = x, cy = y;
+    int                 charCount = 0;
+    boolean             typeIn = defTypeIn;
+    boolean             caseScale = defCase;
+    struct {
+        float               scale, offset;
+    } caseMod[2]; // 1=upper, 0=lower
+    int                 curCase = -1;
+    int                 alignx = 0;
+    size_t              len;
+
+    if(!inString || !inString[0])
+        return;
+
+    len = strlen(inString);
+    if(len < SMALLBUFF_SIZE)
+    {
+        memcpy(smallBuff, inString, len);
+        smallBuff[len] = '\0';
+
+        str = smallBuff;
+    }
+    else
+    {
+        bigBuff = malloc(len+1);
+        memcpy(bigBuff, inString, len);
+        bigBuff[len+1] = '\0';
+
+        str = bigBuff;
+    }
 
     caseMod[0].scale = 1;
     caseMod[0].offset = 3;
@@ -1552,6 +1576,12 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
             DGL_PopMatrix();
         }
     }
+
+    // Free temporary storage.
+    if(bigBuff)
+        free(bigBuff);
+
+#undef SMALLBUFF_SIZE
 }
 
 /**
@@ -1791,7 +1821,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                  dpatch_t* patch, char *altstring, boolean builtin,
+                  dpatch_t* patch, const char* altstring, boolean builtin,
                   int halign)
 {
     char                def[80], *string;

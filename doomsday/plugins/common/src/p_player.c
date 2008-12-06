@@ -74,6 +74,19 @@
 // CODE --------------------------------------------------------------------
 
 /**
+ * Initialize player class info.
+ */
+#if __JHEXEN__
+void P_InitPlayerClassInfo(void)
+{
+    PCLASS_INFO(PCLASS_FIGHTER)->niceName = GET_TXT(TXT_PLAYERCLASS1);
+    PCLASS_INFO(PCLASS_CLERIC)->niceName = GET_TXT(TXT_PLAYERCLASS2);
+    PCLASS_INFO(PCLASS_MAGE)->niceName = GET_TXT(TXT_PLAYERCLASS3);
+    PCLASS_INFO(PCLASS_PIG)->niceName = GET_TXT(TXT_PLAYERCLASS4);
+}
+#endif
+
+/**
  * @param player        The player to work with.
  *
  * @return              Number of the given player.
@@ -506,7 +519,7 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
     if(player->morphTics)
         return;
 
-    if(newClass == PCLASS_PIG)
+    if(!PCLASS_INFO(newClass)->userSelectable)
         return;
 
     player->class = newClass;

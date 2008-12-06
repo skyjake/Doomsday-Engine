@@ -41,6 +41,10 @@
 #  include "jstrife.h"
 #endif
 
+#if __JHEXEN__
+void        P_InitPlayerClassInfo(void);
+#endif
+
 int         P_GetPlayerNum(player_t *player);
 int         P_GetPlayerCheats(player_t *player);
 

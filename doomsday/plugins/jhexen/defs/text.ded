@@ -681,3 +681,103 @@ Text {
   ID = "PLAYERSETUP";
   Text = "Player Setup";
 }
+
+Text {
+  ID = "RANDOMPLAYERCLASS";
+  Text = "Random";
+}
+
+Text {
+  ID = "PLAYERCLASS1";
+  Text = "Fighter";
+}
+
+Text {
+  ID = "PLAYERCLASS2";
+  Text = "Cleric";
+}
+
+Text {
+  ID = "PLAYERCLASS3";
+  Text = "Mage";
+}
+
+Text {
+  ID = "PLAYERCLASS4";
+  Text = "Pig";
+}
+
+Text {
+  ID = "SKILLF1";
+  Text = "Squire";
+}
+
+Text {
+  ID = "SKILLF2";
+  Text = "Knight";
+}
+
+Text {
+  ID = "SKILLF3";
+  Text = "Warrior";
+}
+
+Text {
+  ID = "SKILLF4";
+  Text = "Berserker";
+}
+
+Text {
+  ID = "SKILLF5";
+  Text = "Titan";
+}
+
+Text {
+  ID = "SKILLC1";
+  Text = "Altar Boy";
+}
+
+Text {
+  ID = "SKILLC2";
+  Text = "Acolyte";
+}
+
+Text {
+  ID = "SKILLC3";
+  Text = "Priest";
+}
+
+Text {
+  ID = "SKILLC4";
+  Text = "Cardinal";
+}
+
+Text {
+  ID = "SKILLC5";
+  Text = "Pope";
+}
+
+Text {
+  ID = "SKILLM1";
+  Text = "Apprentice";
+}
+
+Text {
+  ID = "SKILLM2";
+  Text = "Enchanter";
+}
+
+Text {
+  ID = "SKILLM3";
+  Text = "Sorcerer";
+}
+
+Text {
+  ID = "SKILLM4";
+  Text = "Warlock";
+}
+
+Text {
+  ID = "SKILLM5";
+  Text = "Archimage";
+}

@@ -124,6 +124,8 @@ typedef enum {
 #define PCLASS_INFO(class)  (&classInfo[class])
 
 typedef struct classinfo_s{
+    const char* niceName;
+    boolean     userSelectable;
     mobjtype_t  mobjType;
     int         normalState;
     int         runState;

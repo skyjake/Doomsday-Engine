@@ -83,12 +83,13 @@ void            Hu_FogEffectSetAlphaTarget(float alpha);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                         dpatch_t* patch, char *altstring, boolean builtin, int halign);
+                         dpatch_t* patch, const char *altstring,
+                         boolean builtin, int halign);
 
-void        WI_DrawParamText(int x, int y, char *string, dpatch_t * defFont,
-                             float defRed, float defGreen, float defBlue,
-                             float defAlpha, boolean defCase, boolean defTypeIn,
-                             int halign);
+void        WI_DrawParamText(int x, int y, const char* string,
+                             dpatch_t* defFont, float defRed, float defGreen,
+                             float defBlue, float defAlpha, boolean defCase,
+                             boolean defTypeIn, int halign);
 
 void        M_WriteText(int x, int y, const char *string);
 void        M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
