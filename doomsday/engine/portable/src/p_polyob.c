@@ -68,7 +68,7 @@ uint numPolyObjs;
 /**
  * The po_callback is called when a polyobj hits a mobj.
  */
-void PO_SetCallback(void (*func) (struct mobj_s*, void*, void*))
+void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
 {
     po_callback = func;
 }
@@ -79,7 +79,7 @@ void PO_SetCallback(void (*func) (struct mobj_s*, void*, void*))
  * @param num               If MSB is set, treat num as an index, ELSE
  *                          num is a tag that *should* match one polyobj.
  */
-polyobj_t* PO_GetPolyobj(uint num)
+polyobj_t* P_GetPolyobj(uint num)
 {
     if(num & 0x80000000)
     {
@@ -110,7 +110,7 @@ polyobj_t* PO_GetPolyobj(uint num)
  * @returns             Ptr to the polyobj that owns the degenmobj,
  *                      else @c NULL.
  */
-polyobj_t* PO_GetPolyobjForDegen(void* degenMobj)
+polyobj_t* P_GetPolyobjForDegen(void* degenMobj)
 {
     uint                i;
     polyobj_t*          po;
@@ -192,7 +192,7 @@ void P_PolyobjUpdateBBox(polyobj_t* po)
  * Called at the start of the map after all the structures needed for
  * refresh have been setup.
  */
-void PO_InitForMap(void)
+void P_MapInitPolyobjs(void)
 {
     uint                i;
 
@@ -239,7 +239,7 @@ void PO_InitForMap(void)
         {
             if(ssec->polyObj)
             {
-                Con_Message("PO_InitForMap: Warning: Multiple polyobjs in a single subsector\n"
+                Con_Message("P_MapInitPolyobjs: Warning: Multiple polyobjs in a single subsector\n"
                             "  (ssec %i, sector %i). Previous polyobj overridden.\n",
                             GET_SUBSECTOR_IDX(ssec), GET_SECTOR_IDX(ssec->sector));
             }

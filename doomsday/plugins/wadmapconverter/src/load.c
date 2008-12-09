@@ -476,7 +476,7 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     // Ensure that lineList is a closed polygon.
     if(isClosedPolygon(lineList, num) == 0)
     {   // Nope, perhaps it needs sorting?
-        Con_Error("PO_CreatePolyobj: Linelist does not form a closed polygon.");
+        Con_Error("WadMapConverter::createPolyobj: Linelist does not form a closed polygon.");
     }
 
     // Allocate the new polyobj.
@@ -568,7 +568,7 @@ static boolean iterFindPolyLines(int16_t x, int16_t y, mline_t **lineList)
 static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                                     int16_t anchorY)
 {
-#define PO_MAXPOLYLINES         32
+#define MAXPOLYLINES         32
 
     uint                i;
 
@@ -595,7 +595,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
             PolyStart[VY] = v1[VY];
             if(!iterFindPolyLines(v2[VX], v2[VY], NULL))
             {
-                Con_Error("mapConverter::spawnPolyobj: Found unclosed polyobj.\n");
+                Con_Error("WadMapConverter::findAndCreatePolyobj: Found unclosed polyobj.\n");
             }
 
             lineList = malloc((PolyLineCount+1) * sizeof(mline_t*));
@@ -624,12 +624,12 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
      * We'll try another approach...
      */
     {
-    mline_t         *polyLineList[PO_MAXPOLYLINES];
+    mline_t         *polyLineList[MAXPOLYLINES];
     uint            lineCount = 0;
     uint            j, psIndex, psIndexOld;
 
     psIndex = 0;
-    for(j = 1; j < PO_MAXPOLYLINES; ++j)
+    for(j = 1; j < MAXPOLYLINES; ++j)
     {
         psIndexOld = psIndex;
         for(i = 0; i < map->numLines; ++i)
@@ -642,7 +642,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                 if(!line->xArgs[1])
                 {
                     Con_Error
-                        ("spawnPolyobj:  Explicit line missing order number "
+                        ("WadMapConverter::findAndCreatePolyobj: Explicit line missing order number "
                          "(probably %d) in poly %d.\n",
                          j + 1, tag);
                 }
@@ -653,10 +653,10 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                     polyLineList[psIndex] = line;
                     lineCount++;
                     psIndex++;
-                    if(psIndex > PO_MAXPOLYLINES)
+                    if(psIndex > MAXPOLYLINES)
                     {
                         Con_Error
-                            ("spawnPolyobj:  psIndex > PO_MAXPOLYLINES\n");
+                            ("WadMapConverter::findAndCreatePolyobj: psIndex > MAXPOLYLINES\n");
                     }
 
                     // Clear out any special.
@@ -678,7 +678,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                    line->xArgs[0] == tag)
                 {
                     Con_Error
-                        ("spawnPolyobj:  Missing explicit line %d for poly %d\n",
+                        ("WadMapConverter::findAndCreatePolyobj: Missing explicit line %d for poly %d\n",
                          j, tag);
                 }
             }
@@ -706,7 +706,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 
     return false;
 
-#undef PO_MAXPOLYLINES
+#undef MAXPOLYLINES
 }
 
 static void findPolyobjs(void)

@@ -1649,8 +1649,7 @@ void R_SetupMap(int mode, int flags)
             initSurfaceMaterialOffset(&si->SW_bottomsurface);
         }
 
-        // We don't render fakeradio on polyobjects...
-        PO_InitForMap();
+        P_MapInitPolyobjs();
         return;
     }
     case DDSMM_FINALIZE:
@@ -1694,8 +1693,7 @@ void R_SetupMap(int mode, int flags)
             initSurfaceMaterialOffset(&si->SW_bottomsurface);
         }
 
-        // We don't render fakeradio on polyobjects...
-        PO_InitForMap();
+        P_MapInitPolyobjs();
 
         // Run any commands specified in Map Info.
         {

@@ -2664,7 +2664,7 @@ static int SV_ReadPolyObj(void)
     if(saveVersion >= 3)
         ver = SV_ReadByte();
 
-    po = PO_GetPolyobj(SV_ReadLong()); // Get polyobj by tag.
+    po = P_GetPolyobj(SV_ReadLong()); // Get polyobj by tag.
     if(!po)
         Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
 
@@ -2702,7 +2702,7 @@ static void P_ArchiveWorld(void)
     SV_BeginSegment(ASEG_POLYOBJS);
     SV_WriteLong(numpolyobjs);
     for(i = 0; i < numpolyobjs; ++i)
-        SV_WritePolyObj(PO_GetPolyobj(i | 0x80000000));
+        SV_WritePolyObj(P_GetPolyobj(i | 0x80000000));
 #endif
 }
 
@@ -4343,7 +4343,7 @@ static void P_ArchiveSounds(void)
         SV_WriteLong(node->currentSoundID);
         for(i = 0; i < numpolyobjs; ++i)
         {
-            polyobj_t*          po = PO_GetPolyobj(i | 0x80000000);
+            polyobj_t*          po = P_GetPolyobj(i | 0x80000000);
 
             if(po && node->mobj == (mobj_t*) &po->startSpot)
             {
@@ -4399,7 +4399,7 @@ static void P_UnArchiveSounds(void)
         }
         else
         {
-            polyobj_t*          po = PO_GetPolyobj(secNum | 0x80000000);
+            polyobj_t*          po = P_GetPolyobj(secNum | 0x80000000);
 
             if(po)
                 sndMobj = (mobj_t*) &po->startSpot;

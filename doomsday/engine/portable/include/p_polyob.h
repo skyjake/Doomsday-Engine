@@ -39,11 +39,11 @@ extern polyobj_t** polyObjs; // List of all poly-objects on the map.
 extern uint numPolyObjs;
 
 // Polyobj system.
-void            PO_InitForMap(void);
-void            PO_SetCallback(void (*func) (struct mobj_s*, void*, void*));
+void            P_MapInitPolyobjs(void);
+void            P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
 
-polyobj_t*      PO_GetPolyobj(uint num);
-polyobj_t*      PO_GetPolyobjForDegen(void *degenMobj);
+polyobj_t*      P_GetPolyobj(uint num);
+polyobj_t*      P_GetPolyobjForDegen(void *degenMobj);
 
 // Polyobject interface.
 boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);

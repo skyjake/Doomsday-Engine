@@ -289,17 +289,17 @@ EXPORTS
     P_PolyobjLink               @82 NONAME
     P_PolyobjUnLink             @81 NONAME
 
-    PO_GetPolyobj               @424 NONAME
-    PO_SetCallback				@83 NONAME
+    P_GetPolyobj                @424 NONAME
+    P_SetPolyobjCallback        @83 NONAME
 
 ; Play: Thinkers.
     P_ThinkerAdd                @86 NONAME
     P_ThinkerRemove             @87 NONAME
-	P_ThinkerSetStasis			@426 NONAME	
+    P_ThinkerSetStasis          @426 NONAME	
 
     P_RunThinkers               @84 NONAME
     P_InitThinkers              @85 NONAME
-    P_IterateThinkers			@425 NONAME
+    P_IterateThinkers           @425 NONAME
 
 ; Refresh.
     DD_GetFrameRate             @88 NONAME
@@ -314,7 +314,7 @@ EXPORTS
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
-    R_MaterialGetInfo			@427 NONAME
+    R_MaterialGetInfo           @427 NONAME
     R_MaterialIsCustom          @349 NONAME
     R_MaterialCheckNumForName   @336 NONAME
     R_MaterialNameForNum        @337 NONAME

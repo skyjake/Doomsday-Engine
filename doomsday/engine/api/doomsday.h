@@ -375,8 +375,8 @@ extern          "C" {
     void            P_PolyobjLink(struct polyobj_s* po);
     void            P_PolyobjUnLink(struct polyobj_s* po);
 
-    struct polyobj_s* PO_GetPolyobj(uint num);
-    void            PO_SetCallback(void (*func)(struct mobj_s*, void*, void*));
+    struct polyobj_s* P_GetPolyobj(uint num);
+    void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Thinkers.
     void            P_ThinkerAdd(thinker_t* th);
