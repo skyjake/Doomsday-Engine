@@ -244,6 +244,7 @@ void P_MapInitPolyobjs(void)
                             GET_SUBSECTOR_IDX(ssec), GET_SECTOR_IDX(ssec->sector));
             }
             ssec->polyObj = po;
+            po->subsector = ssec;
         }
 
         P_PolyobjUnLink(po);

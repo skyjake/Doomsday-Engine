@@ -824,6 +824,7 @@ typedef struct ddmobj_base_s {
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     unsigned int        idx;            /* Idx of polyobject. */ \
     int                 tag;            /* Reference tag. */ \
+    struct subsector_s* subsector;      /* subsector in which this resides */ \
     int                 validCount; \
     float               box[2][2]; \
     degenmobj_t         startSpot; \
