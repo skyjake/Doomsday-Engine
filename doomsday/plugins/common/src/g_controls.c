@@ -391,7 +391,7 @@ DEFCC( CCmdDefaultGameBinds )
 #endif
 
         // Menu events:
-        "bindevent menu:key-backspace menucancel",
+        "bindevent menu:key-backspace menuback",
         "bindevent menu:key-up menuup",
         "bindevent menu:key-up-repeat menuup",
         "bindevent menu:key-down menudown",

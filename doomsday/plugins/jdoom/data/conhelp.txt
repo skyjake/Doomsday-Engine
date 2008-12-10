@@ -72,7 +72,7 @@ inf = Params: makelocp (playernum)\nFor example, 'makelocp 1'.
 [menu]
 desc = Open/Close the menu.
 
-[menucancel]
+[menuback]
 desc = Return to the previous menu page.
 
 [menudown]

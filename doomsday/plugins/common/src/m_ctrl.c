@@ -335,12 +335,12 @@ static controlconfig_t controlConfig[] =
 
     { "menu" },
     { "show/hide menu", 0, 0, "menu" },
-    { "previous menu", "menu", 0, "menucancel" },
+    { "previous menu", "menu", 0, "menuback" },
     { "move up", "menu", 0, "menuup", CCF_REPEAT },
     { "move down", "menu", 0, "menudown", CCF_REPEAT },
     { "move left", "menu", 0, "menuleft", CCF_REPEAT },
     { "move right", "menu", 0, "menuright", CCF_REPEAT },
-    { "select", "menu", 0, "menuselect", CCF_REPEAT },
+    { "select", "menu", 0, "menuselect" },
 
     { NULL },
 
@@ -389,6 +389,7 @@ void M_InitControlsMenu(void)
     int                 i, count =
         sizeof(controlConfig) / sizeof(controlConfig[0]);
 
+
     VERBOSE( Con_Message("M_InitControlsMenu: Creating controls items.\n") );
 
     // Allocate the menu items array.
@@ -400,6 +401,7 @@ void M_InitControlsMenu(void)
         menuitem_t* item = &ControlsItems[i];
 
         cc->item = item;
+
 
         if(cc->itemText && ((unsigned int) cc->itemText < NUMTEXT))
         {

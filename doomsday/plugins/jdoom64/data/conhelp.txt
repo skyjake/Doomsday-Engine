@@ -37,7 +37,7 @@ desc = Move the menu cursor right.
 [menuselect]
 desc = Select/Accept the current menu item.
 
-[menucancel]
+[menuback]
 desc = Return to the previous menu page.
 
 [helpscreen]
