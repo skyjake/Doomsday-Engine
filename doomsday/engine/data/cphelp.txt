@@ -1056,6 +1056,9 @@ desc = Sector light range compression (brighten dark areas / darken light areas)
 [rend-dev-light-mod]
 desc = Show the light-level mod range.
 
+[rend-dev-surface-normals]
+desc = 1=Enable drawing of world surface normals, for debug.
+
 [rend-model-shiny-strength]
 desc = General strength of model shininess effects.
 

@@ -104,30 +104,31 @@ int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be dr
 
 float lightRangeCompression = 0;
 float lightModRange[255];
-int devLightModRange = 0;
+byte devLightModRange = 0;
 
 float rendLightDistanceAttentuation = 1024;
 
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
 DGLuint dlBBox = 0; // Display list: active-textured bbox model.
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static boolean firstsubsector; // No range checking for the first one.
+byte devSurfaceNormals = 0; // @c 1= Draw world surface normal tails.
+byte devNoTexFix = 0;
 
 // Current sector light color.
 const float* sLightColor;
 
-int devNoTexFix = 0;
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static boolean firstsubsector; // No range checking for the first one.
 
 // CODE --------------------------------------------------------------------
 
 void Rend_Register(void)
 {
-    C_VAR_INT("rend-dev-sky", &devSkyMode, 0, 0, 1);
+    C_VAR_INT("rend-dev-sky", &devSkyMode, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
-    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, 0, 0, 1);
+    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
     C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
     C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
@@ -141,10 +142,11 @@ void Rend_Register(void)
                 0, 0);
     C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation,
                 CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, 0, 0, 2);
-    C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, 0, .1f, 100);
+    C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 2);
+    C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
+    C_VAR_BYTE("rend-dev-surface-normals", &devSurfaceNormals, CVF_NO_ARCHIVE, 0, 1);
 
     RL_Register();
     DL_Register();
@@ -3177,12 +3179,17 @@ static void drawNormal(vec3_t origin, vec3_t normal, float scalar)
     DGL_PopMatrix();
 }
 
-#if _DEBUG
-static void Rend_RenderNormals(void)
+/**
+ * Draw the surface normals, primarily for debug.
+ */
+void Rend_RenderNormals(void)
 {
 #define NORM_TAIL_LENGTH    (20)
 
     uint                i;
+
+    if(!devSurfaceNormals)
+        return;
 
     DGL_Disable(DGL_TEXTURING);
     glDisable(GL_CULL_FACE);
@@ -3193,30 +3200,37 @@ static void Rend_RenderNormals(void)
         sidedef_t*          side;
         surface_t*          suf;
         vec3_t              origin;
-        float               bottom, top;
+        float               x, y, bottom, top;
         float               scale = NORM_TAIL_LENGTH;
 
-        if(!seg->lineDef)
+        if(!seg->lineDef || !seg->SG_frontsector ||
+           (seg->lineDef->inFlags & LF_POLYOBJ))
             continue;
 
         side = SEG_SIDEDEF(seg);
-        suf = NULL;
+        x = seg->SG_v1pos[VX] + (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) / 2;
+        y = seg->SG_v1pos[VY] + (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / 2;
 
-        if(!seg->SG_frontsector || !seg->SG_backsector)
+        if(!seg->SG_backsector)
         {
             bottom = side->sector->SP_floorvisheight;
             top = side->sector->SP_ceilvisheight;
             suf = &side->SW_middlesurface;
+
+            V3_Set(origin, x, y, bottom + (top - bottom) / 2);
+            drawNormal(origin, suf->normal, scale);
         }
         else
         {
-            // Top:
             if(seg->SG_backsector->SP_ceilvisheight <
                seg->SG_frontsector->SP_ceilvisheight)
             {
                 bottom = seg->SG_backsector->SP_ceilvisheight;
                 top = seg->SG_frontsector->SP_ceilvisheight;
                 suf = &side->SW_topsurface;
+
+                V3_Set(origin, x, y, bottom + (top - bottom) / 2);
+                drawNormal(origin, suf->normal, scale);
             }
 
             if(side->SW_middlesurface.material)
@@ -3224,6 +3238,9 @@ static void Rend_RenderNormals(void)
                 top = seg->SG_frontsector->SP_ceilvisheight;
                 bottom = seg->SG_frontsector->SP_floorvisheight;
                 suf = &side->SW_middlesurface;
+
+                V3_Set(origin, x, y, bottom + (top - bottom) / 2);
+                drawNormal(origin, suf->normal, scale);
             }
 
             if(seg->SG_backsector->SP_floorvisheight >
@@ -3232,16 +3249,10 @@ static void Rend_RenderNormals(void)
                 bottom = seg->SG_frontsector->SP_floorvisheight;
                 top = seg->SG_backsector->SP_floorvisheight;
                 suf = &side->SW_bottomsurface;
-            }
-        }
 
-        if(suf)
-        {
-            V3_Set(origin,
-                   seg->SG_v1pos[VX] + (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) / 2,
-                   seg->SG_v1pos[VY] + (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / 2,
-                   bottom + (top - bottom) / 2);
-            drawNormal(origin, suf->normal, scale);
+                V3_Set(origin, x, y, bottom + (top - bottom) / 2);
+                drawNormal(origin, suf->normal, scale);
+            }
         }
     }
 
@@ -3272,7 +3283,6 @@ static void Rend_RenderNormals(void)
 
 #undef NORM_TAIL_LENGTH
 }
-#endif
 
 void Rend_RenderMap(void)
 {
@@ -3343,9 +3353,7 @@ void Rend_RenderMap(void)
     }
     RL_RenderAllLists();
 
-/*#if _DEBUG
-Rend_RenderNormals();
-#endif*/
+    Rend_RenderNormals();
 
 /*#if _DEBUG
 LO_DrawLumobjs();
@@ -3354,8 +3362,7 @@ LO_DrawLumobjs();
     // Draw the mobj bounding boxes.
     Rend_RenderBoundingBoxes();
 
-    // Draw the Source Bias Editor's draw that identifies the current
-    // light.
+    // Draw the Source Bias Editor's draw that identifies the current light.
     SBE_DrawCursor();
 
     DGL_Disable(DGL_MULTISAMPLE);
