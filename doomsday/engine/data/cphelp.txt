@@ -1059,6 +1059,12 @@ desc = Show the light-level mod range.
 [rend-dev-surface-normals]
 desc = 1=Enable drawing of world surface normals, for debug.
 
+[rend-dev-vertex-show-indices]
+desc = 1=Enable drawing of vertex indices, for debug.
+
+[rend-dev-vertex-show-bars]
+desc = 1=Enable drawing of vertex z axis bars, for debug.
+
 [rend-model-shiny-strength]
 desc = General strength of model shininess effects.
 

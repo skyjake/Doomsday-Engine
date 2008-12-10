@@ -111,6 +111,8 @@ float rendLightDistanceAttentuation = 1024;
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
 DGLuint dlBBox = 0; // Display list: active-textured bbox model.
 
+byte devVertexIndices = 0; // @c 1= Draw world vertex indices (for debug).
+byte devVertexBars = 0; // @c 1= Draw world vertex position bars.
 byte devSurfaceNormals = 0; // @c 1= Draw world surface normal tails.
 byte devNoTexFix = 0;
 
@@ -146,6 +148,8 @@ void Rend_Register(void)
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
+    C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-surface-normals", &devSurfaceNormals, CVF_NO_ARCHIVE, 0, 1);
 
     RL_Register();
@@ -3284,6 +3288,283 @@ void Rend_RenderNormals(void)
 #undef NORM_TAIL_LENGTH
 }
 
+static void getVertexPlaneMinMax(const vertex_t* vtx, float* min, float* max)
+{
+    lineowner_t*        vo, *base;
+
+    if(!vtx || (!min && !max))
+        return; // Wha?
+
+    vo = base = vtx->lineOwners;
+
+    do
+    {
+        linedef_t*          li = vo->lineDef;
+
+        if(li->L_frontside)
+        {
+            if(min && li->L_frontsector->SP_floorvisheight < *min)
+                *min = li->L_frontsector->SP_floorvisheight;
+
+            if(max && li->L_frontsector->SP_ceilvisheight > *max)
+                *max = li->L_frontsector->SP_ceilvisheight;
+        }
+
+        if(li->L_backside)
+        {
+            if(min && li->L_backsector->SP_floorvisheight < *min)
+                *min = li->L_backsector->SP_floorvisheight;
+
+            if(max && li->L_backsector->SP_ceilvisheight > *max)
+                *max = li->L_backsector->SP_ceilvisheight;
+        }
+
+        vo = vo->LO_next;
+    } while(vo != base);
+}
+
+static void drawVertexPoint(const vertex_t* vtx, float z, float alpha)
+{
+    DGL_Begin(DGL_POINTS);
+        DGL_Color4f(.7f, .7f, .2f, alpha * 2);
+        DGL_Vertex3f(vtx->V_pos[VX], z, vtx->V_pos[VY]);
+    DGL_End();
+}
+
+static void drawVertexBar(const vertex_t* vtx, float bottom, float top,
+                          float alpha)
+{
+#define EXTEND_DIST     64
+
+    static const float  black[4] = { 0, 0, 0, 0 };
+
+    DGL_Begin(DGL_LINES);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(vtx->V_pos[VX], bottom - EXTEND_DIST, vtx->V_pos[VY]);
+        DGL_Color4f(1, 1, 1, alpha);
+        DGL_Vertex3f(vtx->V_pos[VX], bottom, vtx->V_pos[VY]);
+        DGL_Vertex3f(vtx->V_pos[VX], bottom, vtx->V_pos[VY]);
+        DGL_Vertex3f(vtx->V_pos[VX], top, vtx->V_pos[VY]);
+        DGL_Vertex3f(vtx->V_pos[VX], top, vtx->V_pos[VY]);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(vtx->V_pos[VX], top + EXTEND_DIST, vtx->V_pos[VY]);
+    DGL_End();
+
+#undef EXTEND_DIST
+}
+
+static void drawVertexIndex(const vertex_t* vtx, float z, float scale,
+                            float alpha)
+{
+    char                buf[80];
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(vtx->V_pos[VX], z, vtx->V_pos[VY]);
+    DGL_Rotatef(-vang + 180, 0, 1, 0);
+    DGL_Rotatef(vpitch, 1, 0, 0);
+    DGL_Scalef(-scale, -scale, 1);
+
+    sprintf(buf, "%i", vtx - vertexes);
+    UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+}
+
+#define MAX_VERTEX_POINT_DIST 1280
+
+static boolean drawVertex1(linedef_t* li, void* context)
+{
+    vertex_t*           vtx = li->L_v1;
+    polyobj_t*          po = context;
+    float               dist2D =
+        M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
+
+    if(dist2D < MAX_VERTEX_POINT_DIST)
+    {
+        float               alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
+
+        if(alpha > 0)
+        {
+            float               bottom = po->subsector->sector->SP_floorvisheight;
+            float               top = po->subsector->sector->SP_ceilvisheight;
+
+            DGL_Disable(DGL_TEXTURING);
+
+            if(devVertexBars)
+                drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
+
+            drawVertexPoint(vtx, bottom, alpha * 2);
+
+            DGL_Enable(DGL_TEXTURING);
+        }
+    }
+
+    if(devVertexIndices)
+    {
+        float               eye[3], pos[3], dist3D;
+
+        eye[VX] = vx;
+        eye[VY] = vz;
+        eye[VZ] = vy;
+
+        pos[VX] = vtx->V_pos[VX];
+        pos[VY] = vtx->V_pos[VY];
+        pos[VZ] = po->subsector->sector->SP_floorvisheight;
+
+        dist3D = M_Distance(pos, eye);
+
+        if(dist3D < MAX_VERTEX_POINT_DIST)
+        {
+            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->width / 2),
+                            1 - dist3D / MAX_VERTEX_POINT_DIST);
+        }
+    }
+
+    return true; // Continue iteration.
+}
+
+boolean drawPolyObjVertexes(polyobj_t* po, void* context)
+{
+    return P_PolyobjLinesIterator(po, drawVertex1, po);
+}
+
+/**
+ * Draw the various vertex debug aids.
+ */
+void Rend_Vertexes(void)
+{
+    uint                i;
+    float               oldPointSize, oldLineWidth = 1, bbox[4];
+
+    if(!devVertexBars && !devVertexIndices)
+        return;
+
+    glDisable(GL_DEPTH_TEST);
+
+    if(devVertexBars)
+    {
+        DGL_Enable(DGL_LINE_SMOOTH);
+        oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+        DGL_SetFloat(DGL_LINE_WIDTH, 2);
+        DGL_Disable(DGL_TEXTURING);
+
+        for(i = 0; i < numVertexes; ++i)
+        {
+            vertex_t*           vtx = &vertexes[i];
+            float               alpha;
+
+            if(!vtx->lineOwners)
+                continue; // Not a linedef vertex.
+            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
+                continue; // A polyobj linedef vertex.
+
+            alpha = 1 - M_ApproxDistancef(vx - vtx->V_pos[VX],
+                                          vz - vtx->V_pos[VY]) / MAX_VERTEX_POINT_DIST;
+            alpha = MIN_OF(alpha, .15f);
+
+            if(alpha > 0)
+            {
+                float               bottom, top;
+
+                bottom = DDMAXFLOAT;
+                top = DDMINFLOAT;
+                getVertexPlaneMinMax(vtx, &bottom, &top);
+
+                drawVertexBar(vtx, bottom, top, alpha);
+            }
+        }
+
+        DGL_Enable(DGL_TEXTURING);
+    }
+
+    // Always draw the vertex point nodes.
+    DGL_Enable(DGL_POINT_SMOOTH);
+    oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
+    DGL_SetFloat(DGL_POINT_SIZE, 6);
+    DGL_Disable(DGL_TEXTURING);
+
+    for(i = 0; i < numVertexes; ++i)
+    {
+        vertex_t*           vtx = &vertexes[i];
+        float               dist;
+
+        if(!vtx->lineOwners)
+            continue; // Not a linedef vertex.
+        if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
+            continue; // A polyobj linedef vertex.
+
+        dist = M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
+
+        if(dist < MAX_VERTEX_POINT_DIST)
+        {
+            float               bottom;
+
+            bottom = DDMAXFLOAT;
+            getVertexPlaneMinMax(vtx, &bottom, NULL);
+
+            drawVertexPoint(vtx, bottom, (1 - dist / MAX_VERTEX_POINT_DIST) * 2);
+        }
+    }
+
+    DGL_Enable(DGL_TEXTURING);
+
+    if(devVertexIndices)
+    {
+        float               eye[3];
+
+        eye[VX] = vx;
+        eye[VY] = vz;
+        eye[VZ] = vy;
+
+        for(i = 0; i < numVertexes; ++i)
+        {
+            vertex_t*           vtx = &vertexes[i];
+            float               pos[3], dist;
+
+            if(!vtx->lineOwners)
+                continue; // Not a linedef vertex.
+            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
+                continue; // A polyobj linedef vertex.
+
+            pos[VX] = vtx->V_pos[VX];
+            pos[VY] = vtx->V_pos[VY];
+            pos[VZ] = DDMAXFLOAT;
+            getVertexPlaneMinMax(vtx, &pos[VZ], NULL);
+
+            dist = M_Distance(pos, eye);
+
+            if(dist < MAX_VERTEX_POINT_DIST)
+            {
+                float               alpha, scale;
+
+                alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
+                scale = dist / (theWindow->width / 2);
+
+                drawVertexIndex(vtx, pos[VZ], scale, alpha);
+            }
+        }
+    }
+
+    // Next, the vertexes of all nearby polyobjs.
+    bbox[BOXLEFT]   = vx - MAX_VERTEX_POINT_DIST;
+    bbox[BOXRIGHT]  = vx + MAX_VERTEX_POINT_DIST;
+    bbox[BOXBOTTOM] = vy - MAX_VERTEX_POINT_DIST;
+    bbox[BOXTOP]    = vy + MAX_VERTEX_POINT_DIST;
+    P_PolyobjsBoxIterator(bbox, drawPolyObjVertexes, NULL);
+
+    // Restore previous state.
+    if(devVertexBars)
+    {
+        DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
+        DGL_Disable(DGL_LINE_SMOOTH);
+    }
+    DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
+    DGL_Disable(DGL_POINT_SMOOTH);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void Rend_RenderMap(void)
 {
     binangle_t          viewside;
@@ -3361,6 +3642,9 @@ LO_DrawLumobjs();
 
     // Draw the mobj bounding boxes.
     Rend_RenderBoundingBoxes();
+
+    // Draw the vertex position/indice debug aids.
+    Rend_Vertexes();
 
     // Draw the Source Bias Editor's draw that identifies the current light.
     SBE_DrawCursor();
