@@ -1715,8 +1715,8 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
                 an = angle >> ANGLETOFINESHIFT;
                 thrust = 16 + FIX2FLT(P_Random() << 10);
-                target->mom[MX] += thrust * FIX2FLT(finecosine[angle]);
-                target->mom[MY] += thrust * FIX2FLT(finesine[angle]);
+                target->mom[MX] += thrust * FIX2FLT(finecosine[an]);
+                target->mom[MY] += thrust * FIX2FLT(finesine[an]);
                 damageDone = P_DamageMobj(target, NULL, inflictor, HITDICE(4), false);
                 if(target->player)
                 {
