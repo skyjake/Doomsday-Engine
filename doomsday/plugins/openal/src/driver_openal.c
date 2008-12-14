@@ -75,9 +75,9 @@ enum { VX, VY, VZ };
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 #ifdef WIN32
-ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint property,
+ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop,
                  ALuint source, ALvoid* value, ALuint size);
-ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint property,
+ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop,
                  ALuint source, ALvoid *value, ALuint size);
 #endif
 
@@ -93,10 +93,11 @@ void        DS_Play(sfxbuffer_t* buf);
 void        DS_Stop(sfxbuffer_t* buf);
 void        DS_Refresh(sfxbuffer_t* buf);
 void        DS_Event(int type);
-void        DS_Set(sfxbuffer_t* buf, int property, float value);
-void        DS_Setv(sfxbuffer_t* buf, int property, float* values);
-void        DS_Listener(int property, float value);
-void        DS_Listenerv(int property, float* values);
+void        DS_Set(sfxbuffer_t* buf, int prop, float value);
+void        DS_Setv(sfxbuffer_t* buf, int prop, float* values);
+void        DS_Listener(int prop, float value);
+void        DS_Listenerv(int prop, float* values);
+int         DS_Getv(int prop, void* values);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -528,4 +529,10 @@ void DS_Listenerv(int prop, float* values)
         DS_Listener(prop, 0);
         break;
     }
+}
+
+int DS_Getv(int prop, void* values)
+{
+    // Stub.
+    return 0;
 }
