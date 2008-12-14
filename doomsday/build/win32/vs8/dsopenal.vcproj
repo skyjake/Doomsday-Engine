@@ -60,7 +60,7 @@
 				ProgramDataBaseFileName=".\./Obj/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				CallingConvention="2"
+				CallingConvention="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
