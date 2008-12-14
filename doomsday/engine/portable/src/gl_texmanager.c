@@ -884,12 +884,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
         // The source image can be used as-is.
         freeOriginal = false;
         rgbaOriginal = data;
-        for(i = 0; i < width * height * 3; i += 3)
-        {
-            data[i] = gammaTable[data[i]];
-            data[i+1] = gammaTable[data[i+1]];
-            data[i+2] = gammaTable[data[i+2]];
-        }
+
     }
     else
     {
@@ -898,6 +893,16 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
         rgbaOriginal = M_Malloc(width * height * comps);
         GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data,
                          rgbaOriginal, GL_GetPalette(), !load8bit);
+    }
+
+    if(applyTexGamma)
+    {
+        for(i = 0; i < width * height * comps; i += comps)
+        {
+            rgbaOriginal[i]   = gammaTable[data[i]];
+            rgbaOriginal[i+1] = gammaTable[data[i+1]];
+            rgbaOriginal[i+2] = gammaTable[data[i+2]];
+        }
     }
 
     // If smart filtering is enabled, all textures are magnified 2x.
@@ -1742,7 +1747,7 @@ byte GL_PrepareTexture(materialtexinst_t* inst, int ofTypeID,
     }
     else
     {
-        int                 i;
+        int                 i, flags = 0;
         image_t             image;
         boolean             alphaChannel = false, RGBData = false;
         texturedef_t*       texDef = R_GetTextureDef(ofTypeID);
@@ -1799,12 +1804,16 @@ byte GL_PrepareTexture(materialtexinst_t* inst, int ofTypeID,
             alphaChannel = image.isMasked;
         }
 
+        if(RGBData)
+            flags |= TXCF_APPLY_GAMMACORRECTION;
+        if(noCompression)
+            flags |= TXCF_NO_COMPRESSION;
+
         inst->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              alphaChannel, true, RGBData, false, false,
                              glmode[mipmapping], glmode[texMagMode],
-                             texAniso, DGL_REPEAT, DGL_REPEAT,
-                             noCompression? TXCF_NO_COMPRESSION : 0);
+                             texAniso, DGL_REPEAT, DGL_REPEAT, flags);
 
         // Average color for glow planes.
         if(RGBData)
