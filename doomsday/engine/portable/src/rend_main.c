@@ -3855,9 +3855,8 @@ static DGLuint constructBBox(DGLuint name, float br)
             DGL_TexCoord2f(1.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
         }
         DGL_End();
-        DGL_EndList();
 
-        return name;
+        return DGL_EndList();
     }
 
     return 0;
