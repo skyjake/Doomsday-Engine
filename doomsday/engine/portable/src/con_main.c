@@ -105,6 +105,7 @@ typedef struct execbuff_s {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(AddSub);
+D_CMD(IncDec);
 D_CMD(Alias);
 D_CMD(Clear);
 D_CMD(Echo);
@@ -196,14 +197,14 @@ static void Con_Register(void)
     C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
-    C_CMD("dec",            NULL,   AddSub);
+    C_CMD("dec",            NULL,   IncDec);
     C_CMD("echo",           "s*",   Echo);
     C_CMD("print",          "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
     C_CMD("font",           NULL,   Font);
     C_CMD("help",           "",     Help);
     C_CMD("if",             NULL,   If);
-    C_CMD("inc",            NULL,   AddSub);
+    C_CMD("inc",            NULL,   IncDec);
     C_CMD("listmobjtypes",  "",     ListMobjs);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
@@ -2053,26 +2054,79 @@ D_CMD(Echo)
     return true;
 }
 
+static boolean cvarAddSub(const char* name, float delta, boolean force)
+{
+    float               val;
+    cvar_t*             cvar = Con_GetVariable(name);
+
+    if(!cvar)
+        return false;
+
+    if(cvar->flags & CVF_READ_ONLY)
+    {
+        Con_Printf("%s (cvar) is read-only. "
+                   "It can't be changed (not even with force)\n", name);
+        return false;
+    }
+
+    val = Con_GetFloat(name) + delta;
+
+    if(!force)
+    {
+        if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
+            val = cvar->max;
+        if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
+            val = cvar->min;
+    }
+
+    Con_SetFloat(name, val, false);
+    return true;
+}
+
 /**
  * Rather messy, wouldn't you say?
  */
 D_CMD(AddSub)
 {
-    boolean force = false, incdec;
-    float   val, mod = 0;
-    cvar_t *cvar;
+    boolean             force = false;
+    float               delta = 0;
 
-    incdec = !stricmp(argv[0], "inc") || !stricmp(argv[0], "dec");
-    if(argc == 1)
+    if(argc == 2)
     {
-        Con_Printf("Usage: %s (cvar) %s(force)\n", argv[0],
-                   incdec ? "" : "(val) ");
+        Con_Printf("Usage: %s (cvar) (val) (force)\n", argv[0]);
         Con_Printf("Use force to make cvars go off limits.\n");
         return true;
     }
-    if((incdec && argc >= 3) || (!incdec && argc >= 4))
+    if(argc >= 4)
     {
-        force = !stricmp(argv[incdec ? 2 : 3], "force");
+        force = !stricmp(argv[3], "force");
+    }
+
+    delta = strtod(argv[2], NULL);
+    if(!stricmp(argv[0], "sub"))
+        delta = -delta;
+
+    return cvarAddSub(argv[1], delta, force);
+}
+
+/**
+ * Rather messy, wouldn't you say?
+ */
+D_CMD(IncDec)
+{
+    boolean             force = false;
+    float               val;
+    cvar_t*             cvar;
+
+    if(argc == 1)
+    {
+        Con_Printf("Usage: %s (cvar) (force)\n", argv[0]);
+        Con_Printf("Use force to make cvars go off limits.\n");
+        return true;
+    }
+    if(argc >= 3)
+    {
+        force = !stricmp(argv[2], "force");
     }
     cvar = Con_GetVariable(argv[1]);
     if(!cvar)
@@ -2085,17 +2139,8 @@ D_CMD(AddSub)
     }
 
     val = Con_GetFloat(argv[1]);
+    val += !stricmp(argv[0], "inc")? 1 : -1;
 
-    if(!stricmp(argv[0], "inc"))
-        mod = 1;
-    else if(!stricmp(argv[0], "dec"))
-        mod = -1;
-    else
-        mod = strtod(argv[2], NULL);
-    if(!stricmp(argv[0], "sub"))
-        mod = -mod;
-
-    val += mod;
     if(!force)
     {
         if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
@@ -2103,6 +2148,7 @@ D_CMD(AddSub)
         if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
             val = cvar->min;
     }
+
     Con_SetFloat(argv[1], val, false);
     return true;
 }
