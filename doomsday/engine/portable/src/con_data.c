@@ -264,12 +264,18 @@ char* Con_GetString(const char* name)
 
 void Con_AddVariableList(cvar_t* varlist)
 {
+    if(!varlist)
+        return;
+
     for(; varlist->name; varlist++)
         Con_AddVariable(varlist);
 }
 
 void Con_AddVariable(cvar_t* var)
 {
+    if(!var)
+        return;
+
     if(Con_GetVariable(var->name))
         Con_Error("Con_AddVariable: A CVAR by the name \"%s\" "
                   "is already registered", var->name);
@@ -296,6 +302,8 @@ cvar_t* Con_GetVariable(const char* name)
     boolean             isDone;
 
     if(numCVars == 0)
+        return NULL;
+    if(!name || !name[0])
         return NULL;
 
     bottomIdx = 0;
@@ -333,7 +341,10 @@ cvar_t* Con_GetVariable(const char* name)
 
 cvar_t* Con_GetVariableIDX(uint idx)
 {
-    return &cvars[idx];
+    if(idx < numCVars)
+        return &cvars[idx];
+
+    return NULL;
 }
 
 uint Con_CVarCount(void)
@@ -345,10 +356,15 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
 {
     char                equals = '=';
 
+    if(!var)
+        return;
+
     if(var->flags & CVF_PROTECTED || var->flags & CVF_READ_ONLY)
         equals = ':';
 
-    Con_Printf("%s", prefix);
+    if(prefix)
+        Con_Printf("%s", prefix);
+
     switch(var->type)
     {
     case CVT_NULL:
@@ -375,6 +391,9 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
 
 void Con_AddCommandList(ccmd_t* cmdlist)
 {
+    if(!cmdlist)
+        return;
+
     for(; cmdlist->name; cmdlist++)
         Con_AddCommand(cmdlist);
 }
@@ -385,6 +404,9 @@ void Con_AddCommand(ccmd_t* cmd)
     cvartype_t          params[MAX_ARGS];
     int                 minArgs, maxArgs;
     ddccmd_t*           newCmd;
+
+    if(!cmd)
+        return;
 
     if(!cmd->name)
         Con_Error("Con_AddCommand: CCmd missing a name.");
@@ -560,6 +582,9 @@ ddccmd_t* Con_GetCommand(cmdargs_t* args)
     ddccmd_t*           ccmd = NULL;
     ddccmd_t*           matchingNameCmd = NULL;
 
+    if(!args)
+        return NULL;
+
     // \todo Use a faster than O(n) linear search. Note, ccmd->name is not
     //       a unique key (ccmds can share names if params differ).
     for(i = 0; i < numCCmds; ++i)
@@ -624,6 +649,9 @@ boolean Con_IsValidCommand(const char* name)
 {
     uint                i = 0;
     boolean             found = false;
+
+    if(!name || !name[0])
+        return false;
 
     // Try the console commands first.
     while(!found && i < numCCmds)
@@ -701,6 +729,8 @@ calias_t* Con_GetAlias(const char* name)
 
     if(numCAliases == 0)
         return NULL;
+    if(!name || !name[0])
+        return NULL;
 
     bottomIdx = 0;
     topIdx = numCAliases-1;
@@ -741,6 +771,9 @@ calias_t* Con_AddAlias(const char* aName, const char* command)
 {
     calias_t*           cal;
 
+    if(!aName || !aName[0] || !command || !command[0])
+        return NULL;
+
     caliases = M_Realloc(caliases, sizeof(calias_t) * (++numCAliases));
     cal = caliases + numCAliases - 1;
 
@@ -757,7 +790,12 @@ calias_t* Con_AddAlias(const char* aName, const char* command)
 
 void Con_DeleteAlias(calias_t* cal)
 {
-    uint                idx = cal - caliases;
+    uint                idx;
+
+    if(!cal)
+        return;
+
+    idx = cal - caliases;
 
     M_Free(cal->name);
     M_Free(cal->command);
@@ -776,6 +814,9 @@ void Con_WriteAliasesToFile(FILE* file)
 {
     uint                i;
     calias_t*           cal;
+
+    if(!file)
+        return;
 
     for(i = 0, cal = caliases; i < numCAliases; ++i, cal++)
     {
@@ -836,12 +877,12 @@ void Con_UpdateKnownWords(void)
         strncpy(knownWords[c].word, caliases[i].name, 63);
         knownWords[c].type = WT_ALIAS;
     }
-    // TODO: Add binding class names to the known words.
+    // TODO: Add bind context names to the known words.
     /*
-    for(i = 0; i < numBindClasses; ++i, ++c)
+    for(i = 0; i < numBindContexts; ++i, ++c)
     {
         strncpy(knownWords[c].word, bindContexts[i].name, 63);
-        knownWords[c].type = WT_BINDCLASS;
+        knownWords[c].type = WT_BINDCONTEXT;
     }
      */
 
@@ -853,20 +894,23 @@ void Con_UpdateKnownWords(void)
  * Collect an array of knownWords which match the given word (at least
  * partially).
  *
- * NOTE: The array must be freed with M_Free.
+ * \note: The array must be freed with M_Free.
  *
- * @param word      The word to be matched.
- * @param count     The count of the number of matching words will be
- *                  written back to this location if NOT @c NULL.
+ * @param word          The word to be matched.
+ * @param count         The count of the number of matching words will be
+ *                      written back to this location if NOT @c NULL.
  *
- * @return          A NULL-terminated array of pointers to all the known
- *                  words which match (at least partially) @param word
+ * @return              A NULL-terminated array of pointers to all the known
+ *                      words which match (at least partially) @param word
  */
-knownword_t** Con_CollectKnownWordsMatchingWord(const char* word, uint *count)
+knownword_t** Con_CollectKnownWordsMatchingWord(const char* word, uint* count)
 {
     uint                i, num = 0, num2 = 0;
     size_t              wordLength;
     knownword_t**       matches;
+
+    if(!word || !word[0])
+        return NULL;
 
     wordLength = strlen(word);
 
