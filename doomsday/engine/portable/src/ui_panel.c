@@ -40,7 +40,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define NUM_CP_BUTTONS  12
+#define NUM_CP_BUTTONS  11
 #define NUMITEMS(x)     (sizeof(x)/sizeof(uidata_listitem_t))
 #define RES(x, y)       (x | (y<<16))
 #define CPID_FRAME      (UIF_ID0 | UIF_ID1)
@@ -343,19 +343,18 @@ ui_page_t page_panel;
 /* *INDENT-OFF* */
 ui_object_t ob_panel[] =
 {
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 225, 240, 55,   "Video",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[0] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 285, 240, 55,   "Audio",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[1] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 345, 240, 55,   "Input",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[2] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 405, 240, 55,   "Controls", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[3] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 465, 240, 55,   "Graphics", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[4] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 525, 210, 55,   "Lights",   UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[5] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 585, 210, 55,   "Halos",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[6] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 645, 210, 55,   "Textures", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[7] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 705, 210, 55,   "Objects",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[8] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 765, 210, 55,   "Particles", UIButton_Drawer, UIButton_Responder, 0,            CP_ChooseGroup, &panel_buttons[9] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 825, 240, 55,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[10] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 885, 240, 55,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[11] },
-    { UI_BUTTON,    0,  UIF_NEVER_FADE, 10, 945, 240, 55,   "Close Panel (Esc)", UIButton_Drawer, UIButton_Responder, 0,    CP_ClosePanel },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 210, 240, 60,   "Video",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[0] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 275, 240, 60,   "Audio",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[1] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 340, 240, 60,   "Input",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[2] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 405, 240, 60,   "Graphics", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[3] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 467, 210, 60,   "Lights",   UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[4] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 529, 210, 60,   "Halos",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[5] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 591, 210, 60,   "Textures", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[6] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 653, 210, 60,   "Objects",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[7] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 715, 210, 60,   "Particles", UIButton_Drawer, UIButton_Responder, 0,            CP_ChooseGroup, &panel_buttons[8] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 780, 240, 60,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[9] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 845, 240, 60,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[10] },
+    { UI_BUTTON,    0,  UIF_NEVER_FADE, 10, 940, 240, 60,   "Close Panel (Esc)", UIButton_Drawer, UIButton_Responder, 0,    CP_ClosePanel },
     { UI_BOX,       0,  0,              8, -20, 250, 250,   "",         CP_DrawLogo },
     { UI_BOX,       0,  CPID_FRAME,     280, 55, 720, 945,  "",         CP_DrawBorder },
 
@@ -415,11 +414,8 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 490, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait2 },
 
     { UI_META,      5 },
-    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Control Options", UIText_BrightDrawer },
-
-    { UI_META,      6 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
-    { UI_META,      6,  0,              0, -60 },
+    { UI_META,      5,  0,              0, -60 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Field Of View angle", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
     { UI_BUTTON,    0,  0,              680, 190, 70, 60,   "90",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
@@ -428,7 +424,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON,    0,  0,              905, 190, 70, 60,   "110",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
     { UI_TEXT,      0,  0,              300, 255, 0, 55,    "Mirror player weapon models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 255, 70, 55,   "rend-model-mirror-hud", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      6,  0,              0, 60 },
+    { UI_META,      5,  0,              0, 60 },
     { UI_TEXT,      0,  0,              300, 255, 0, 55,    "Sky sphere radius", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 255, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_sky_distance },
     { UI_TEXT,      0,  0,              300, 315, 0, 55,    "Always render full sky", UIText_Drawer },
@@ -446,7 +442,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 675, 0, 55,    "Radiosity shadow darkness", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 675, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fakeradio_dark },
 
-    { UI_META,      7 },
+    { UI_META,      6 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Lights", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable dynamic lights", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-light", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -460,7 +456,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 370, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_radmax },
     { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Maximum number of dynamic lights", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_max },
-    { UI_META,      7,  0,              0, -120 },
+    { UI_META,      6,  0,              0, -120 },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 610, 0, 55,    "Ambient light level", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_ambient },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 670, 0, 55,    "Light range compression", UIText_Drawer },
@@ -478,13 +474,13 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 1030, 0, 55,    "Enable decorations", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 1030, 70, 55,   "rend-light-decor", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
-    { UI_META,      8 },
+    { UI_META,      7 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Halos", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Number of flares per halo", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Use realistic halos", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "rend-halo-realistic", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      8,  0,              0,   60 },
+    { UI_META,      7,  0,              0,   60 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Halo brightness", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo_bright },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Halo size factor", UIText_Drawer },
@@ -502,7 +498,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Z magnification divisor", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo_zmagdiv },
 
-    { UI_META,      9 },
+    { UI_META,      8 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Textures", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable textures", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-tex", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -512,14 +508,14 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              880, 130, 95, 55,   "rend-model-shiny-multitex", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Smooth texture animation", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "rend-tex-anim-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      9,  0,              0, 120 },
+    { UI_META,      8,  0,              0, 120 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Mipmapping filter", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 130, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_mipmap },
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Texture quality", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_tex_quality },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Smart texture filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 70, 55,   "rend-tex-filter-smart", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      9,  0,              0,   180 },
+    { UI_META,      8,  0,              0,   180 },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Bilinear filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 95, 55,   "rend-tex-filter-sprite", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_BUTTON2,   0,  0,              780, 370, 95, 55,   "rend-tex-filter-mag", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -533,7 +529,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Detail texture contrast", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
 
-    { UI_META,      10 },
+    { UI_META,      9 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable 3D models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-model", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -562,7 +558,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 850, 0, 55,    "Smooth actor movement", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 850, 300, 115, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_smooth_move },
 
-    { UI_META,      11 },
+    { UI_META,      10 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Particles", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable particle effects", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-particle", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -575,7 +571,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Near clip distance", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_particle_visnear },
 
-    { UI_META,      12 },
+    { UI_META,      11 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Network Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Continuous screen refresh", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "net-nosleep", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -588,16 +584,16 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Frame interval tics", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
 
-    { UI_META,      13 },
+    { UI_META,      12 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display FPS counter", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-fps",  UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      13, 0,              0, 60 },
+    { UI_META,      12, 0,              0, 60 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Display Control Panel help window", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "ui-panel-help", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Display help indicators", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "ui-panel-tips", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      13, 0,              0, 180 },
+    { UI_META,      12, 0,              0, 180 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Silent console variables", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "con-var-silent", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Dump messages to Doomsday.out", UIText_Drawer },
