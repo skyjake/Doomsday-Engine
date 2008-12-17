@@ -291,8 +291,7 @@ void DS_Reset(sfxbuffer_t* buf)
 
 void DS_Play(sfxbuffer_t* buf)
 {
-    float               f;
-    ALuint              i, source, bn;
+    ALuint              source;
 
     // Playing is quite impossible without a sample.
     if(!buf || !buf->sample)
