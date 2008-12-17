@@ -300,39 +300,18 @@ void DS_Play(sfxbuffer_t* buf)
 
     source = SRC(buf);
 
-#if _DEBUG
+/*#if _DEBUG
 alGetSourcei(source, AL_BUFFER, &bn);
 Con_Message("Buffer = %x\n", bn);
 if(bn != BUF(buf))
     Con_Message("Not the same!\n");
-#endif
+#endif*/
 
     alSourcei(source, AL_BUFFER, BUF(buf));
     alSourcei(source, AL_LOOPING, (buf->flags & SFXBF_REPEAT) != 0);
     alSourcePlay(source);
     error("Play", "SourcePlay");
-
-    alGetSourcei(source, AL_BUFFER, &bn);
-    Con_Message("Buffer = %x (real = %x), isBuf:%i\n", bn, BUF(buf),
-                alIsBuffer(bn));
-
-    alGetBufferi(bn, AL_SIZE, &i);
-    Con_Message("Bufsize = %i bytes\n", i);
-
-    alGetBufferi(bn, AL_BITS, &i);
-    Con_Message("Bufbits = %i\n", i);
-
-    alGetSourcef(source, AL_GAIN, &f);
-    Con_Message("Gain = %g\n", f);
-
-    alGetSourcef(source, AL_PITCH, &f);
-    Con_Message("Pitch = %g\n", f);
-
-    alGetSourcei(source, AL_SOURCE_STATE, &i);
     error("Play", "Get state");
-    Con_Message("State = %x\n", i);
-    if(i != AL_PLAYING)
-        Con_Message("not playing...\n");
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
