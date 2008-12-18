@@ -145,12 +145,12 @@ void Cht_Init(void)
 /**
  * Responds to user input to see if a cheat sequence has been entered.
  *
- * @param ev                Ptr to the event to respond to.
+ * @param ev            Ptr to the event to respond to.
  */
-boolean Cht_Responder(event_t *ev)
+boolean Cht_Responder(event_t* ev)
 {
     int                 i;
-    player_t           *plr = &players[CONSOLEPLAYER];
+    player_t*           plr = &players[CONSOLEPLAYER];
 
     if(G_GetGameState() != GS_MAP)
         return false;
@@ -446,7 +446,7 @@ boolean Cht_WarpFunc(player_t* plyr, char* buf)
     P_SetMessage(plyr, STSTR_CLEV, false);
     G_DeferedInitNew(gameSkill, epsd, map);
 
-    // Clear the menu if open
+    // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
     briefDisabled = true;
     return true;
@@ -672,6 +672,7 @@ DEFCC(CCmdCheatGive)
         Con_Printf(" b - berserk\n");
         Con_Printf(" f - the power of flight\n");
         Con_Printf(" g - light amplification visor\n");
+        Con_Printf(" h - health\n");
         Con_Printf(" i - invulnerability\n");
         Con_Printf(" k - key cards/skulls\n");
         Con_Printf(" m - computer area map\n");
@@ -748,6 +749,11 @@ DEFCC(CCmdCheatGive)
         case 'g':
             Con_Printf("Light amplification visor given.\n");
             Cht_PowerUpFunc(plyr, PT_INFRARED);
+            break;
+
+        case 'h':
+            Con_Printf("Health given.\n");
+            P_GiveBody(plyr, maxHealth);
             break;
 
         case 'i':
