@@ -56,9 +56,9 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct cheatseq_s {
-    void          (*func) (player_t *player, struct cheatseq_s *cheat);
-    byte           *sequence;
-    byte           *pos;
+    void          (*func) (player_t* player, struct cheatseq_s* cheat);
+    byte*           sequence;
+    byte*           pos;
     int             args[2];
     int             currentArg;
 } cheatseq_t;
@@ -67,28 +67,28 @@ typedef struct cheatseq_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-boolean Cht_Responder(event_t *ev);
+boolean Cht_Responder(event_t* ev);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static boolean cheatAddKey(cheatseq_t *cheat, byte key, boolean *eat);
+static boolean cheatAddKey(cheatseq_t* cheat, byte key, boolean* eat);
 
-static void cheatGodFunc(player_t *player, cheatseq_t *cheat);
-static void cheatNoClipFunc(player_t *player, cheatseq_t *cheat);
-static void cheatWeaponsFunc(player_t *player, cheatseq_t *cheat);
-static void cheatPowerFunc(player_t *player, cheatseq_t *cheat);
-static void cheatHealthFunc(player_t *player, cheatseq_t *cheat);
-static void cheatKeysFunc(player_t *player, cheatseq_t *cheat);
-static void cheatSoundFunc(player_t *player, cheatseq_t *cheat);
-static void cheatTickerFunc(player_t *player, cheatseq_t *cheat);
-static void cheatArtifact1Func(player_t *player, cheatseq_t *cheat);
-static void cheatArtifact2Func(player_t *player, cheatseq_t *cheat);
-static void cheatArtifact3Func(player_t *player, cheatseq_t *cheat);
-static void cheatWarpFunc(player_t *player, cheatseq_t *cheat);
-static void cheatChickenFunc(player_t *player, cheatseq_t *cheat);
-static void cheatMassacreFunc(player_t *player, cheatseq_t *cheat);
-static void cheatIDKFAFunc(player_t *player, cheatseq_t *cheat);
-static void cheatIDDQDFunc(player_t *player, cheatseq_t *cheat);
+static void cheatGodFunc(player_t* player, cheatseq_t* cheat);
+static void cheatNoClipFunc(player_t* player, cheatseq_t* cheat);
+static void cheatWeaponsFunc(player_t* player, cheatseq_t* cheat);
+static void cheatPowerFunc(player_t* player, cheatseq_t* cheat);
+static void cheatHealthFunc(player_t* player, cheatseq_t* cheat);
+static void cheatKeysFunc(player_t* player, cheatseq_t* cheat);
+static void cheatSoundFunc(player_t* player, cheatseq_t* cheat);
+static void cheatTickerFunc(player_t* player, cheatseq_t* cheat);
+static void cheatArtifact1Func(player_t* player, cheatseq_t* cheat);
+static void cheatArtifact2Func(player_t* player, cheatseq_t* cheat);
+static void cheatArtifact3Func(player_t* player, cheatseq_t* cheat);
+static void cheatWarpFunc(player_t* player, cheatseq_t* cheat);
+static void cheatChickenFunc(player_t* player, cheatseq_t* cheat);
+static void cheatMassacreFunc(player_t* player, cheatseq_t* cheat);
+static void cheatIDKFAFunc(player_t* player, cheatseq_t* cheat);
+static void cheatIDDQDFunc(player_t* player, cheatseq_t* cheat);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -315,7 +315,7 @@ void Cht_Init(void)
  *
  * @return              @c true, if the caller should eat the key.
  */
-boolean Cht_Responder(event_t *ev)
+boolean Cht_Responder(event_t* ev)
 {
     int                 i;
     byte                key = ev->data1;
@@ -516,7 +516,7 @@ static void cheatPowerFunc(player_t *player, cheatseq_t *cheat)
     }
 }
 
-static void cheatHealthFunc(player_t *player, cheatseq_t * cheat)
+static void cheatHealthFunc(player_t* player, cheatseq_t* cheat)
 {
     player->update |= PSF_HEALTH;
     if(player->morphTics)
@@ -530,7 +530,7 @@ static void cheatHealthFunc(player_t *player, cheatseq_t * cheat)
     P_SetMessage(player, TXT_CHEATHEALTH, false);
 }
 
-static void cheatKeysFunc(player_t *player, cheatseq_t * cheat)
+static void cheatKeysFunc(player_t* player, cheatseq_t* cheat)
 {
     player->update |= PSF_KEYS;
     player->keys[KT_YELLOW] = true;
@@ -539,7 +539,7 @@ static void cheatKeysFunc(player_t *player, cheatseq_t * cheat)
     P_SetMessage(player, TXT_CHEATKEYS, false);
 }
 
-static void cheatSoundFunc(player_t *player, cheatseq_t * cheat)
+static void cheatSoundFunc(player_t* player, cheatseq_t* cheat)
 {
     /*  DebugSound = !DebugSound;
        if(DebugSound)
@@ -552,7 +552,7 @@ static void cheatSoundFunc(player_t *player, cheatseq_t * cheat)
        } */
 }
 
-static void cheatTickerFunc(player_t *player, cheatseq_t * cheat)
+static void cheatTickerFunc(player_t* player, cheatseq_t* cheat)
 {
      /*
        extern int DisplayTicker;
@@ -777,29 +777,50 @@ DEFCC(CCmdCheatSuicide)
 
 DEFCC(CCmdCheatGive)
 {
-    int     tellUsage = false;
-    int     target = CONSOLEPLAYER;
+    char                buf[100];
+    player_t*           plyr = &players[CONSOLEPLAYER];
+    size_t              i, stuffLen;
 
     if(IS_CLIENT)
     {
-        char    buf[100];
+        char                buf[100];
 
         if(argc != 2)
             return false;
+
         sprintf(buf, "give %s", argv[1]);
         NetCl_CheatRequest(buf);
         return true;
     }
 
     if(!canCheat())
-        return false;           // Can't cheat!
+        return false; // Can't cheat!
 
-    // Check the arguments.
+    if(argc != 2 && argc != 3)
+    {
+        Con_Printf("Usage:\n  give (stuff)\n");
+        Con_Printf("  give (stuff) (player)\n");
+        Con_Printf("Stuff consists of one or more of (type:id). "
+                   "If no id; give all of type:\n");
+        Con_Printf(" a - ammo\n");
+        Con_Printf(" f - artifacts\n");
+        Con_Printf(" h - health\n");
+        Con_Printf(" k - keys\n");
+        Con_Printf(" p - backpack full of ammo\n");
+        Con_Printf(" r - armor\n");
+        Con_Printf(" t - tomb of power\n");
+        Con_Printf(" w - weapons\n");
+        Con_Printf("Example: 'give akw' gives artifacts, keys and weapons.\n");
+        Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
+        return true;
+    }
+
     if(argc == 3)
     {
-        target = atoi(argv[2]);
-        if(target < 0 || target >= MAXPLAYERS)
+        i = atoi(argv[2]);
+        if(i < 0 || i >= MAXPLAYERS)
             return false;
+        plyr = &players[i];
     }
 
     if(G_GetGameState() != GS_MAP)
@@ -808,33 +829,159 @@ DEFCC(CCmdCheatGive)
         return true;
     }
 
-    if(!players[target].plr->inGame)
-        return true; // Can't give to a player who's not playing
+    if(!plyr->plr->inGame)
+        return true; // Can't give to a player who's not playing.
 
-    if(argc != 2 && argc != 3)
-        tellUsage = true;
-    else if(!strnicmp(argv[1], "weapons", 1))
-        cheatWeaponsFunc(players + target, NULL);
-    else if(!strnicmp(argv[1], "health", 1))
-        cheatHealthFunc(players + target, NULL);
-    else if(!strnicmp(argv[1], "keys", 1))
-        cheatKeysFunc(players + target, NULL);
-    else if(!strnicmp(argv[1], "artifacts", 1))
+    strcpy(buf, argv[1]); // Stuff is the 2nd arg.
+    strlwr(buf);
+    stuffLen = strlen(buf);
+    for(i = 0; buf[i]; ++i)
     {
-        cheatseq_t cheat;
+        switch(buf[i])
+        {
+        case 'a':
+            {
+            boolean             giveAll = true;
 
-        cheat.args[0] = 'z';
-        cheat.args[1] = '0';
-        cheatArtifact3Func(players + target, &cheat);
-    }
-    else
-        tellUsage = true;
+            if(i < stuffLen)
+            {
+                int                 idx;
 
-    if(tellUsage)
-    {
-        Con_Printf("Usage: give weapons/health/keys/artifacts\n");
-        Con_Printf("The first letter is enough, e.g. 'give h'.\n");
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_AMMO_TYPES)
+                {   // Give one specific ammo type.
+                    plyr->update |= PSF_AMMO;
+                    plyr->ammo[idx].owned = plyr->ammo[idx].max;
+                    giveAll = false;
+                    i++;
+                }
+            }
+
+            if(giveAll)
+            {
+                int                 j;
+
+                Con_Printf("All ammo given.\n");
+
+                plyr->update |= PSF_AMMO;
+                for(j = 0; j < NUM_AMMO_TYPES; ++j)
+                    plyr->ammo[j].owned = plyr->ammo[j].max;
+            }
+            break;
+            }
+
+        case 'f':
+            {
+            cheatseq_t cheat;
+
+            Con_Printf("Artifacts given.\n");
+
+            cheat.args[0] = 'z';
+            cheat.args[1] = '0';
+            cheatArtifact3Func(plyr, &cheat);
+            break;
+            }
+
+        case 'h':
+            Con_Printf("Health given.\n");
+            cheatHealthFunc(plyr, NULL);
+            break;
+
+        case 'k':
+            {
+            boolean             giveAll = true;
+
+            if(i < stuffLen)
+            {
+                int                 idx;
+
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_KEY_TYPES)
+                {   // Give one specific key.
+                    plyr->update |= PSF_KEYS;
+                    plyr->keys[idx] = true;
+                    giveAll = false;
+                    i++;
+                }
+            }
+
+            if(giveAll)
+            {
+                Con_Printf("All Keys given.\n");
+                cheatKeysFunc(plyr, NULL);
+            }
+            break;
+            }
+
+        case 'p':
+            {
+            int                 j;
+
+            Con_Printf("Ammo backpack given.\n");
+
+            if(!plyr->backpack)
+            {
+                plyr->update |= PSF_MAX_AMMO;
+
+                for(j = 0; j < NUM_AMMO_TYPES; ++j)
+                {
+                    plyr->ammo[j].max *= 2;
+                }
+                plyr->backpack = true;
+            }
+
+            plyr->update |= PSF_AMMO;
+            for(j = 0; j < NUM_AMMO_TYPES; ++j)
+                plyr->ammo[j].owned = plyr->ammo[j].max;
+            break;
+            }
+
+        case 'r':
+            Con_Printf("Full armor given.\n");
+            plyr->update |= PSF_ARMOR_POINTS;
+            plyr->armorPoints = 200;
+            plyr->armorType = 2;
+            break;
+
+        case 't':
+            cheatPowerFunc(plyr, NULL);
+            break;
+
+        case 'w':
+            {
+            boolean             giveAll = true;
+
+            if(i < stuffLen)
+            {
+                int                 idx;
+
+                idx = ((int) buf[i+1]) - 48;
+                if(idx >= 0 && idx < NUM_WEAPON_TYPES)
+                {   // Give one specific weapon.
+                    if(weaponInfo[idx][0].mode[0].gameModeBits & gameModeBits)
+                    {
+                        plyr->update |= PSF_OWNED_WEAPONS;
+                        plyr->weapons[idx].owned = true;
+                        giveAll = false;
+                    }
+                    i++;
+                }
+            }
+
+            if(giveAll)
+            {
+                Con_Printf("All weapons given.\n");
+                cheatWeaponsFunc(plyr, NULL);
+            }
+            break;
+            }
+        default:
+            // Unrecognized
+            Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            break;
+        }
     }
+
     return true;
 }
 
