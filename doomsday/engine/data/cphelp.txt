@@ -1056,7 +1056,7 @@ desc = Sector light range compression (brighten dark areas / darken light areas)
 [rend-dev-light-mod]
 desc = Show the light-level mod range.
 
-[rend-dev-surface-normals]
+[rend-dev-surface-show-normals]
 desc = 1=Enable drawing of world surface normals, for debug.
 
 [rend-dev-vertex-show-indices]

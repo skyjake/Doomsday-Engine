@@ -150,7 +150,7 @@ void Rend_Register(void)
     C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-surface-normals", &devSurfaceNormals, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-surface-show-normals", &devSurfaceNormals, CVF_NO_ARCHIVE, 0, 1);
 
     RL_Register();
     DL_Register();
