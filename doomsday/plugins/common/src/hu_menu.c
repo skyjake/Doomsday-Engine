@@ -326,6 +326,12 @@ static dpatch_t m_htic;
 static dpatch_t dpFSlot;
 #endif
 
+#if __JHERETIC__ || __JHEXEN__
+# define READTHISID      3
+#elif !__JDOOM64__
+# define READTHISID      4
+#endif
+
 menuitem_t MainItems[] = {
 #if __JDOOM__
     {ITT_SETMENU, 0, "{case}New Game", NULL, MENU_NEWGAME, &m_ngame},
@@ -340,13 +346,6 @@ menuitem_t MainItems[] = {
     {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0},
     {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0},
     {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0}
-#elif __JSTRIFE__
-    {ITT_SETMENU, 0, "N", NULL, MENU_NEWGAME},
-    {ITT_SETMENU, 0, "O", NULL, MENU_OPTIONS},
-    {ITT_EFUNC, 0, "L", M_LoadGame, 0},
-    {ITT_EFUNC, 0, "S", M_SaveGame, 0},
-    {ITT_EFUNC, 0, "R", M_ReadThis, 0},
-    {ITT_EFUNC, 0, "Q", M_QuitDOOM, 0}
 #else
     {ITT_SETMENU, 0, "new game", NULL, MENU_NEWGAME},
     {ITT_SETMENU, 0, "options", NULL, MENU_OPTIONS},
@@ -1200,7 +1199,7 @@ cvar_t menuCVars[] =
 };
 
 // Console commands for the menu
-ccmd_t  menuCCmds[] = {
+ccmd_t menuCCmds[] = {
     {"menu",        "", CCmdMenuAction},
     {"menuup",      "", CCmdMenuAction},
     {"menudown",    "", CCmdMenuAction},
@@ -1208,7 +1207,7 @@ ccmd_t  menuCCmds[] = {
     {"menuright",   "", CCmdMenuAction},
     {"menuselect",  "", CCmdMenuAction},
     {"menudelete",  "", CCmdMenuAction},
-    {"menucancel",  "", CCmdMenuAction},
+    {"menuback",    "", CCmdMenuAction},
     {"helpscreen",  "", CCmdMenuAction},
     {"savegame",    "", CCmdMenuAction},
     {"loadgame",    "", CCmdMenuAction},
@@ -1483,7 +1482,7 @@ void Hu_MenuInit(void)
     }
 #else
 # if !__JDOOM64__
-    item = &MainItems[4]; // Read This!
+    item = &MainItems[READTHISID]; // Read This!
     item->func = M_ReadThis;
 # endif
 #endif
@@ -3898,7 +3897,7 @@ DEFCC(CCmdMenuAction)
             }
             return true;
         }
-        else if(!stricmp(argv[0], "menucancel"))
+        else if(!stricmp(argv[0], "menuback"))
         {
             int         c;
 
