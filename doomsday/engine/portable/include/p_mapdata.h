@@ -88,6 +88,12 @@ typedef struct edgespan_s {
     float           shift;
 } edgespan_t;
 
+typedef struct linkmobj_s {
+    struct mobj_s* mobj;
+    struct linkmobj_s* prev;
+    struct linkmobj_s* next;
+} linkmobj_t;
+
 typedef struct linkpolyobj_s {
     struct polyobj_s* polyobj;
     struct linkpolyobj_s* prev;
@@ -236,7 +242,6 @@ typedef struct gamemap_s {
     blockmap_t*     blockMap;
     blockmap_t*     ssecBlockMap;
 
-    struct linkmobj_s* blockRings; // For mobj rings.
     nodepile_t      mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t*    lineLinks; // Indices to roots.
 

@@ -897,9 +897,17 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mobj_t             *mo;
     mobjinfo_t         *info = &mobjInfo[type];
     float               space;
+    int                 ddflags = 0;
 
-    mo = P_MobjCreate(P_MobjThinker, x, y, z, angle, info->radius, info->height,
-                      0);
+    if(info->flags & MF_SOLID)
+        ddflags |= DDMF_SOLID;
+    if(info->flags & MF_NOBLOCKMAP)
+        ddflags |= DDMF_NOBLOCKMAP;
+    if(info->flags2 & MF2_DONTDRAW)
+        ddflags |= DDMF_DONTDRAW;
+
+    mo = P_MobjCreate(P_MobjThinker, x, y, z, angle, info->radius,
+                      info->height, ddflags);
     mo->type = type;
     mo->info = info;
     mo->flags = info->flags;

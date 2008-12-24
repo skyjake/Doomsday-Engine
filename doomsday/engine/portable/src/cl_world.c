@@ -271,17 +271,17 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
         }
 }
 
-void Cl_PolyMoverThinker(polymover_t *mover)
+void Cl_PolyMoverThinker(polymover_t* mover)
 {
-    polyobj_t          *poly = mover->poly;
+    polyobj_t*          poly = mover->poly;
     float               dx, dy;
     float               dist;
 
     if(mover->move)
     {
         // How much to go?
-        dx = poly->dest[VX] - poly->startSpot.pos[VX];
-        dy = poly->dest[VY] - poly->startSpot.pos[VY];
+        dx = poly->dest[VX] - poly->pos[VX];
+        dy = poly->dest[VY] - poly->pos[VY];
         dist = P_ApproxDistance(dx, dy);
         if(dist <= poly->speed || poly->speed == 0)
         {
@@ -323,7 +323,7 @@ void Cl_PolyMoverThinker(polymover_t *mover)
         Cl_RemoveActivePoly(mover);
 }
 
-polymover_t *Cl_FindActivePoly(uint number)
+polymover_t* Cl_FindActivePoly(uint number)
 {
     uint                i;
 
@@ -333,10 +333,10 @@ polymover_t *Cl_FindActivePoly(uint number)
     return NULL;
 }
 
-polymover_t *Cl_NewPolyMover(uint number)
+polymover_t* Cl_NewPolyMover(uint number)
 {
-    polymover_t        *mover;
-    polyobj_t          *poly = polyObjs[number];
+    polymover_t*        mover;
+    polyobj_t*          poly = polyObjs[number];
 
     mover = Z_Malloc(sizeof(polymover_t), PU_MAP, 0);
     memset(mover, 0, sizeof(*mover));
@@ -349,7 +349,7 @@ polymover_t *Cl_NewPolyMover(uint number)
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    polymover_t        *mover;
+    polymover_t*        mover;
 
     // Try to find an existing mover.
     mover = Cl_FindActivePoly(number);

@@ -107,10 +107,9 @@ polyobj_t* P_GetPolyobj(uint num)
 }
 
 /**
- * @returns             Ptr to the polyobj that owns the degenmobj,
- *                      else @c NULL.
+ * @return              @c true, iff this is indeed a polyobj origin.
  */
-polyobj_t* P_GetPolyobjForDegen(void* degenMobj)
+boolean P_IsPolyobjOrigin(void* ddMobjBase)
 {
     uint                i;
     polyobj_t*          po;
@@ -119,13 +118,13 @@ polyobj_t* P_GetPolyobjForDegen(void* degenMobj)
     {
         po = polyObjs[i];
 
-        if(&po->startSpot == degenMobj)
+        if(po == ddMobjBase)
         {
-            return po;
+            return true;
         }
     }
 
-    return NULL;
+    return false;
 }
 
 static void updateSegBBox(seg_t* seg)
@@ -354,8 +353,8 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
         return false;
     }
 
-    po->startSpot.pos[VX] += x;
-    po->startSpot.pos[VY] += y;
+    po->pos[VX] += x;
+    po->pos[VY] += y;
     P_PolyobjLink(po);
 
     // A change has occured.
@@ -417,7 +416,7 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         vtx->V_pos[VY] = originalPts->pos[VY];
 
         rotatePoint(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
-                    po->startSpot.pos[VX], po->startSpot.pos[VY]);
+                    po->pos[VX], po->pos[VY]);
 
         // Now update the surface normal.
         surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;

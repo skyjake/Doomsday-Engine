@@ -112,16 +112,6 @@ typedef struct rtexcoord_s {
     float           st[2];
 } rtexcoord_t;
 
-// This is the dummy mobj_t used for blockring roots.
-// It has some excess information since it has to be compatible with
-// regular mobjs (otherwise the rings don't really work).
-// Note: the thinker and pos data could be used for something else...
-typedef struct linkmobj_s {
-    thinker_t       thinker;
-    float           pos[3];
-    struct mobj_s*  bNext, *bPrev;
-} linkmobj_t;
-
 typedef struct shadowlink_s {
     struct shadowlink_s* next;
     linedef_t*      lineDef;
@@ -273,7 +263,6 @@ typedef struct {
 extern nodeindex_t* linelinks;
 extern blockmap_t* BlockMap;
 extern blockmap_t* SSecBlockMap;
-extern linkmobj_t* blockrings;
 extern byte* rejectMatrix; // For fast sight rejection.
 extern nodepile_t* mobjNodes, *lineNodes;
 

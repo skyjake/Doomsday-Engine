@@ -205,8 +205,9 @@ static void SV_ReadMobj(void)
     float               pos[3], mom[3], radius, height, floorz, ceilingz;
     angle_t             angle;
     spritenum_t         sprite;
-    int                 frame, valid, type;
+    int                 frame, valid, type, ddflags;
     mobj_t             *mo;
+    mobjinfo_t*         info;
 
     // List: thinker links.
     SV_ReadLong();
@@ -250,12 +251,20 @@ static void SV_ReadMobj(void)
 
     valid = SV_ReadLong();
     type = SV_ReadLong();
+    info = &mobjInfo[type];
+
+    if(info->flags & MF_SOLID)
+        ddflags |= DDMF_SOLID;
+    if(info->flags & MF_NOBLOCKMAP)
+        ddflags |= DDMF_NOBLOCKMAP;
+    if(info->flags2 & MF2_DONTDRAW)
+        ddflags |= DDMF_DONTDRAW;
 
     /**
      * We now have all the information we need to create the mobj.
      */
     mo = P_MobjCreate(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
-                      radius, height, 0);
+                      radius, height, ddflags);
 
     mo->sprite = sprite;
     mo->frame = frame;
@@ -271,7 +280,6 @@ static void SV_ReadMobj(void)
     /**
      * Continue reading the mobj data.
      */
-    mo->info = &mobjInfo[mo->type];
     SV_ReadLong();              // &mobjinfo[mo->type]
 
     mo->tics = SV_ReadLong();   // state tic counter
@@ -329,7 +337,7 @@ static void SV_ReadMobj(void)
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
     P_MobjSetPosition(mo);
-    mo->info = &mobjInfo[mo->type];
+    mo->info = info;
     mo->floorZ =
         P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingZ =

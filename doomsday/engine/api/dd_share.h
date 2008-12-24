@@ -628,6 +628,16 @@ enum /* Do NOT change the numerical values of the constants. */
     DMUSC_LINE_FIRSTRENDERED
 };
 
+// All map think-able objects must use this as a base. Also used for sound
+// origin purposes for all of: mobj_t, polyobj_t, sector_t/plane_t
+#define DD_BASE_DDMOBJ_ELEMENTS() \
+    thinker_t       thinker;            /* thinker node */ \
+    float           pos[3];             /* position [x,y,z] */
+
+typedef struct ddmobj_base_s {
+    DD_BASE_DDMOBJ_ELEMENTS()
+} ddmobj_base_t;
+
 // Fixed-point vertex position. Utility struct for the game, not used by
 // the engine.
 typedef struct ddvertex_s {
@@ -657,13 +667,6 @@ enum // Sector reverb data indices.
     SRD_DAMPING,
     NUM_REVERB_DATA
 };
-
-// Each sector has a degenmobj_t in it's center and one attached to each
-// each plane for sound origin purposes.
-typedef struct {
-    thinker_t       thinker; // Not used for anything.
-    float           pos[3];
-} degenmobj_t;
 
 typedef struct {
     fixed_t         pos[2], dX, dY;
@@ -722,7 +725,7 @@ typedef boolean (*traverser_t) (intercept_t* in);
  * that a single mobj is linked simultaneously to multiple lines (which
  * is common).
  *
- * All these rings are maintained by P_(Un)LinkMobj().
+ * All these rings are maintained by P_Mobj(Un)Link().
  */
 typedef struct linknode_s {
     nodeindex_t     prev, next;
@@ -742,6 +745,7 @@ typedef struct linknode_s {
 #define DDMF_VIEWALIGN      0x00000010
 #define DDMF_FITTOP         0x00000020 // Don't let the sprite go into the ceiling.
 #define DDMF_NOFITBOTTOM    0x00000040
+#define DDMF_NOBLOCKMAP     0x00000080
 #define DDMF_LIGHTSCALE     0x00000180 // Light scale (0: full, 3: 1/4).
 #define DDMF_LIGHTOFFSET    0x0000f000 // How to offset light (along Z axis).
 #define DDMF_RESERVED       0x00030000 // Don't touch these!! (translation class).
@@ -778,76 +782,66 @@ enum { MX, MY, MZ }; // Momentum axis indices.
 
     // Base mobj_t elements. Games MUST use this as the basis for mobj_t.
 #define DD_BASE_MOBJ_ELEMENTS() \
-    thinker_t       thinker;            /* thinker node */ \
-    float           pos[3];             /* position [x,y,z] */ \
+    DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    struct mobj_s*  bNext, *bPrev;      /* links in blocks (if needed) */ \
-    nodeindex_t     lineRoot;           /* lines to which this is linked */ \
-    struct mobj_s*  sNext, **sPrev;     /* links in sector (if needed) */ \
+    nodeindex_t     lineRoot; /* lines to which this is linked */ \
+    struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    struct subsector_s* subsector;      /* subsector in which this resides */ \
-    float           mom[3];   \
-    angle_t         angle;              \
-    spritenum_t     sprite;             /* used to find patch_t and \
-                                         * flip value */ \
+    struct subsector_s* subsector; /* subsector in which this resides */ \
+    float           mom[3]; \
+    angle_t         angle; \
+    spritenum_t     sprite; /* used to find patch_t and flip value */ \
     int             frame; \
     float           radius; \
     float           height; \
-    int             ddFlags;            /* Doomsday mobj flags (DDMF_*) */ \
-    float           floorClip;          /* value to use for floor clipping */ \
-    int             valid;              /* if == valid, already checked */ \
-    int             type;               /* mobj type */ \
+    int             ddFlags; /* Doomsday mobj flags (DDMF_*) */ \
+    float           floorClip; /* value to use for floor clipping */ \
+    int             valid; /* if == valid, already checked */ \
+    int             type; /* mobj type */ \
     struct state_s* state; \
-    int             tics;               /* state tic counter */ \
-    float           floorZ;             /* highest contacted floor */ \
-    float           ceilingZ;           /* lowest contacted ceiling */ \
-    struct mobj_s*  onMobj;             /* the mobj this one is on top of. */ \
-    boolean         wallHit;            /* the mobj is hitting a wall. */ \
-    struct ddplayer_s* dPlayer;         /* NULL if not a player mobj. */ \
-    float           srvo[3];            /* short-range visual offset (xyz) */ \
-    short           visAngle;           /* visual angle ("angle-servo") */ \
-    int             selector;           /* multipurpose info */ \
-    int             validCount;         /* used in iterating */ \
+    int             tics; /* state tic counter */ \
+    float           floorZ; /* highest contacted floor */ \
+    float           ceilingZ; /* lowest contacted ceiling */ \
+    struct mobj_s*  onMobj; /* the mobj this one is on top of. */ \
+    boolean         wallHit; /* the mobj is hitting a wall. */ \
+    struct ddplayer_s* dPlayer; /* NULL if not a player mobj. */ \
+    float           srvo[3]; /* short-range visual offset (xyz) */ \
+    short           visAngle; /* visual angle ("angle-servo") */ \
+    int             selector; /* multipurpose info */ \
+    int             validCount; /* used in iterating */ \
     int             addFrameCount; \
-    unsigned int    lumIdx;             /* index+1 of the lumobj/bias source, or 0 */ \
+    unsigned int    lumIdx; /* index+1 of the lumobj/bias source, or 0 */ \
     byte            haloFactors[DDMAXPLAYERS]; /* strengths of halo */ \
-    byte            translucency;       /* default = 0 = opaque */ \
-    short           visTarget;          /* -1 = mobj is becoming less visible, */ \
-                                        /* 0 = no change, 2= mobj is becoming more visible */ \
-    int             reactionTime;       /* if not zero, freeze controls */
-
-typedef struct ddmobj_base_s {
-    DD_BASE_MOBJ_ELEMENTS()
-} ddmobj_base_t;
+    byte            translucency; /* default = 0 = opaque */ \
+    short           visTarget; /* -1 = mobj is becoming less visible, */ \
+                               /* 0 = no change, 2= mobj is becoming more visible */ \
+    int             reactionTime; /* if not zero, freeze controls */
 
     // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
 #define DD_BASE_POLYOBJ_ELEMENTS() \
-    unsigned int        idx;            /* Idx of polyobject. */ \
-    int                 tag;            /* Reference tag. */ \
-    struct subsector_s* subsector;      /* subsector in which this resides */ \
-    int                 validCount; \
-    float               box[2][2]; \
-    degenmobj_t         startSpot; \
-    float               dest[2];        /* Destination XY. */ \
-    angle_t             angle; \
-    angle_t             destAngle;      /* Destination angle. */ \
-    angle_t             angleSpeed;     /* Rotation speed. */ \
-    unsigned int        numSegs; \
-    struct seg_s**      segs; \
-    struct fvertex_s*   originalPts;    /* Used as the base for the rotations. */ \
-    struct fvertex_s*   prevPts;        /* Use to restore the old point values. */ \
-    float               speed;          /* Movement speed. */ \
-    boolean             crush;          /* Should the polyobj attempt to crush mobjs? */ \
-    int                 seqType; \
+    DD_BASE_DDMOBJ_ELEMENTS() \
+\
+    struct subsector_s* subsector; /* subsector in which this resides */ \
+    unsigned int    idx; /* Idx of polyobject. */ \
+    int             tag; /* Reference tag. */ \
+    int             validCount; \
+    float           box[2][2]; \
+    float           dest[2]; /* Destination XY. */ \
+    angle_t         angle; \
+    angle_t         destAngle; /* Destination angle. */ \
+    angle_t         angleSpeed; /* Rotation speed. */ \
+    unsigned int    numSegs; \
+    struct seg_s**  segs; \
+    struct fvertex_s* originalPts; /* Used as the base for the rotations. */ \
+    struct fvertex_s* prevPts; /* Use to restore the old point values. */ \
+    float           speed; /* Movement speed. */ \
+    boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
+    int             seqType; \
     struct { \
-        int             index; \
-        unsigned int    lineCount; \
+        int         index; \
+        unsigned int lineCount; \
         struct linedef_s** lineDefs; \
     } buildData;
-
-typedef struct ddpolyobj_base_s {
-    DD_BASE_POLYOBJ_ELEMENTS()
-} ddpolyobj_base_t;
 
 //------------------------------------------------------------------------
 //

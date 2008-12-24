@@ -416,29 +416,29 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 }
 
 /**
- * Returns a ptr to the sector which owns the given degenmobj.
+ * Returns a ptr to the sector which owns the given ddmobj_base_t.
  *
- * @param degenmobj     degenmobj to search for.
+ * @param ddMobjBase    ddmobj_base_t to search for.
  *
- * @return              Ptr to the Sector where the degenmobj resides,
+ * @return              Ptr to the Sector where the ddmobj_base_t resides,
  *                      else @c NULL.
  */
-sector_t *R_GetSectorForDegen(const void *degenmobj)
+sector_t* R_GetSectorForOrigin(const void* ddMobjBase)
 {
     uint                i, k;
-    sector_t           *sec;
+    sector_t*           sec;
 
     // Check all sectors; find where the sound is coming from.
     for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
 
-        if(degenmobj == &sec->soundOrg)
+        if(ddMobjBase == &sec->soundOrg)
             return sec;
         else
         {   // Check the planes of this sector
             for(k = 0; k < sec->planeCount; ++k)
-                if(degenmobj == &sec->planes[k]->soundOrg)
+                if(ddMobjBase == &sec->planes[k]->soundOrg)
                 {
                     return sec;
                 }

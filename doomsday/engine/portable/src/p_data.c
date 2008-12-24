@@ -97,7 +97,6 @@ surfacelist_t* decoratedSurfaceList;
 
 blockmap_t* BlockMap;
 blockmap_t* SSecBlockMap;
-linkmobj_t* blockrings; // For mobj rings.
 
 byte* rejectMatrix; // For fast sight rejection.
 
@@ -335,7 +334,6 @@ void P_SetCurrentMap(gamemap_t* map)
 
     BlockMap = map->blockMap;
     SSecBlockMap = map->ssecBlockMap;
-    blockrings = map->blockRings;
 
     mapGravity = map->globalGravity;
 

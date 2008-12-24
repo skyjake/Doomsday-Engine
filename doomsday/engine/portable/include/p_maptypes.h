@@ -190,7 +190,7 @@ typedef struct skyfix_s {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    degenmobj_t         soundOrg;      // Sound origin for plane
+    ddmobj_base_t       soundOrg;      // Sound origin for plane
     struct sector_s*    sector;        // Owner of the plane (temp)
     surface_t           surface;
     float               height;        // Current height
@@ -287,7 +287,7 @@ typedef struct sector_s {
     struct subsector_s** ssectors;     // [ssectorCount+1] size.
     unsigned int        numReverbSSecAttributors;
     struct subsector_s** reverbSSecs;  // [numReverbSSecAttributors] size.
-    degenmobj_t         soundOrg;
+    ddmobj_base_t       soundOrg;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
     struct sector_s*    lightSource;   // Main sky light source

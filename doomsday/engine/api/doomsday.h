@@ -359,7 +359,7 @@ extern          "C" {
     void            P_MobjDestroy(struct mobj_s* mo);
     void            P_MobjSetState(struct mobj_s* mo, int statenum);
     void            P_MobjLink(struct mobj_s* mo, byte flags);
-    void            P_MobjUnlink(struct mobj_s* mo);
+    int             P_MobjUnlink(struct mobj_s* mo);
 
     // Mobj linked object iterators.
     boolean         P_MobjLinesIterator(struct mobj_s* mo,

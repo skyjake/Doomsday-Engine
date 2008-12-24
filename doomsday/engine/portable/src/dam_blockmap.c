@@ -393,7 +393,7 @@ blockmap_t* DAM_BuildBlockMap(vertex_t*** vertexes, uint* numVertexes,
                 *ptr = NULL;
 
                 // Link it into the BlockMap.
-                P_BlockmapSetBlock(blockmap, x, y, lines, NULL);
+                P_BlockmapSetBlock(blockmap, x, y, lines, NULL, NULL);
             }
         }
     }

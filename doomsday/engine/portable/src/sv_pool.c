@@ -1666,8 +1666,8 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
     {
         polyobj_t*          po = polyObjs[delta->id];
 
-        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
-                                info->pos[VY] - po->startSpot.pos[VY]);
+        return P_ApproxDistance(info->pos[VX] - po->pos[VX],
+                                info->pos[VY] - po->pos[VY]);
     }
 
     if(delta->type == DT_MOBJ_SOUND)
@@ -1686,8 +1686,8 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
     {
         polyobj_t*          po = polyObjs[delta->id];
 
-        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
-                                info->pos[VY] - po->startSpot.pos[VY]);
+        return P_ApproxDistance(info->pos[VX] - po->pos[VX],
+                                info->pos[VY] - po->pos[VY]);
     }
 
     // Unknown distance.

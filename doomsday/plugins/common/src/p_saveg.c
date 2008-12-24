@@ -1619,14 +1619,7 @@ Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
 #if !__JDOOM64__
 void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 {
-#if __JHEXEN__
-    // Restore DDMF flags set only in P_SpawnMobj. R_SetAllDoomsdayFlags
-    // might not set these because it only iterates seclinked mobjs.
-    if(mo->flags & MF_SOLID)
-        mo->ddFlags |= DDMF_SOLID;
-    if(mo->flags2 & MF2_DONTDRAW)
-        mo->ddFlags |= DDMF_DONTDRAW;
-#else
+#if __JDOOM__ || __JHERETIC__
     if(ver < 6)
     {
         // mobj.flags
@@ -1634,7 +1627,6 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
         // switched values for MF_BRIGHTSHADOW <> MF_BRIGHTEXPLODE
         if((mo->flags & MF_BRIGHTEXPLODE) != (mo->flags & MF_BRIGHTSHADOW))
         {
-
             if(mo->flags & MF_BRIGHTEXPLODE) // previously MF_BRIGHTSHADOW
             {
                 mo->flags |= MF_BRIGHTSHADOW;
@@ -1811,6 +1803,13 @@ static int SV_ReadMobj(thinker_t *th)
 #else
     mo->info = &mobjInfo[mo->type];
 #endif
+
+    if(mo->info->flags & MF_SOLID)
+        mo->ddFlags |= DDMF_SOLID;
+    if(mo->info->flags & MF_NOBLOCKMAP)
+        mo->ddFlags |= DDMF_NOBLOCKMAP;
+    if(mo->info->flags2 & MF2_DONTDRAW)
+        mo->ddFlags |= DDMF_DONTDRAW;
 
     mo->tics = SV_ReadLong();   // state tic counter
     mo->state = (state_t *) SV_ReadLong();
@@ -2649,8 +2648,8 @@ static void SV_WritePolyObj(polyobj_t* po)
 
     SV_WriteLong(po->tag);
     SV_WriteLong(po->angle);
-    SV_WriteLong(FLT2FIX(po->startSpot.pos[VX]));
-    SV_WriteLong(FLT2FIX(po->startSpot.pos[VY]));
+    SV_WriteLong(FLT2FIX(po->pos[VX]));
+    SV_WriteLong(FLT2FIX(po->pos[VY]));
 }
 
 static int SV_ReadPolyObj(void)
@@ -2671,8 +2670,8 @@ static int SV_ReadPolyObj(void)
     angle = (angle_t) SV_ReadLong();
     P_PolyobjRotate(po, angle);
     po->destAngle = angle;
-    deltaX = FIX2FLT(SV_ReadLong()) - po->startSpot.pos[VX];
-    deltaY = FIX2FLT(SV_ReadLong()) - po->startSpot.pos[VY];
+    deltaX = FIX2FLT(SV_ReadLong()) - po->pos[VX];
+    deltaY = FIX2FLT(SV_ReadLong()) - po->pos[VY];
     P_PolyobjMove(po, deltaX, deltaY);
 
     //// \fixme What about speed? It isn't saved at all?
@@ -4341,13 +4340,14 @@ static void P_ArchiveSounds(void)
         SV_WriteLong(node->volume);
         SV_WriteLong(SN_GetSequenceOffset(node->sequence, node->sequencePtr));
         SV_WriteLong(node->currentSoundID);
-        for(i = 0; i < numpolyobjs; ++i)
+        if(node->mobj)
         {
-            polyobj_t*          po = P_GetPolyobj(i | 0x80000000);
-
-            if(po && node->mobj == (mobj_t*) &po->startSpot)
+            for(i = 0; i < numpolyobjs; ++i)
             {
-                break;
+                if(node->mobj == (mobj_t*) P_GetPolyobj(i | 0x80000000))
+                {
+                    break;
+                }
             }
         }
 
@@ -4399,11 +4399,12 @@ static void P_UnArchiveSounds(void)
         }
         else
         {
-            polyobj_t*          po = P_GetPolyobj(secNum | 0x80000000);
+            polyobj_t*          po;
 
-            if(po)
-                sndMobj = (mobj_t*) &po->startSpot;
+            if((po = P_GetPolyobj(secNum | 0x80000000)))
+                sndMobj = (mobj_t*) po;
         }
+
         SN_StartSequence(sndMobj, sequence);
         SN_ChangeNodeData(i, seqOffset, delayTics, volume, soundID);
         i++;

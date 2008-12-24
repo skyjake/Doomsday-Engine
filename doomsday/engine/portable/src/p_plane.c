@@ -94,7 +94,7 @@ boolean Plane_GetProperty(const plane_t *pln, setargs_t *args)
         break;
     case DMU_SOUND_ORIGIN:
     {
-        const degenmobj_t *dmo = &pln->soundOrg;
+        const ddmobj_base_t* dmo = &pln->soundOrg;
         DMU_GetValue(DMT_PLANE_SOUNDORG, &dmo, args, 0);
         break;
     }

@@ -111,7 +111,7 @@ boolean Sector_GetProperty(const sector_t *sec, setargs_t *args)
         break;
     case DMU_SOUND_ORIGIN:
     {
-        const degenmobj_t *dmo = &sec->soundOrg;
+        const ddmobj_base_t* dmo = &sec->soundOrg;
         DMU_GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
         break;
     }

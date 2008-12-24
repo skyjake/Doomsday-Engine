@@ -1365,8 +1365,8 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
         destP->crush = srcP->crush;
         destP->tag = srcP->tag;
         destP->seqType = srcP->seqType;
-        destP->startSpot.pos[VX] = srcP->startSpot.pos[VX];
-        destP->startSpot.pos[VY] = srcP->startSpot.pos[VY];
+        destP->pos[VX] = srcP->pos[VX];
+        destP->pos[VY] = srcP->pos[VY];
 
         destP->numSegs = srcP->buildData.lineCount;
 
@@ -1810,10 +1810,8 @@ boolean MPE_End(void)
 
             // The original Pts are based off the anchor Pt, and are unique
             // to each seg, not each linedef.
-            po->originalPts[n].pos[VX] =
-                seg->SG_v1pos[VX] - po->startSpot.pos[VX];
-            po->originalPts[n].pos[VY] =
-                seg->SG_v1pos[VY] - po->startSpot.pos[VY];
+            po->originalPts[n].pos[VX] = seg->SG_v1pos[VX] - po->pos[VX];
+            po->originalPts[n].pos[VY] = seg->SG_v1pos[VY] - po->pos[VY];
 
             *segPtr++;
             n++;
@@ -2237,8 +2235,8 @@ uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
     po->buildData.lineCount = lineCount;
     po->tag = tag;
     po->seqType = sequenceType;
-    po->startSpot.pos[VX] = anchorX;
-    po->startSpot.pos[VY] = anchorY;
+    po->pos[VX] = anchorX;
+    po->pos[VY] = anchorY;
 
     return po->buildData.index;
 }

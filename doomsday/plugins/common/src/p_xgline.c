@@ -2098,7 +2098,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
     xgline_t*           xg;
     sector_t*           frontsector;
     mobj_t*             activator_thing = (mobj_t *) data;
-    degenmobj_t*        soundorg = 0;
+    ddmobj_base_t*      soundOrg = 0;
 
     xg = P_ToXLine(line)->xg;
 
@@ -2122,7 +2122,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
     // Activation should happen on the front side.
     frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontsector)
-        soundorg = P_GetPtrp(frontsector, DMU_SOUND_ORIGIN);
+        soundOrg = P_GetPtrp(frontsector, DMU_SOUND_ORIGIN);
 
     // Let the line know who's activating it.
     xg->activator = data;
@@ -2192,7 +2192,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
                    (info->flags2 & LTF2_GLOBAL_A_MSG) != 0);
 
         if(info->actSound)
-            S_StartSound(info->actSound, (mobj_t *) soundorg);
+            S_StartSound(info->actSound, (mobj_t *) soundOrg);
 
         // Change the texture of the line if asked to.
         if(info->wallSection && info->actMaterial)
@@ -2209,7 +2209,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
                    (info->flags2 & LTF2_GLOBAL_D_MSG) != 0);
 
         if(info->deactSound)
-            S_StartSound(info->deactSound, (mobj_t *) soundorg);
+            S_StartSound(info->deactSound, (mobj_t *) soundOrg);
 
         // Change the texture of the line if asked to.
         if(info->wallSection && info->deactMaterial)

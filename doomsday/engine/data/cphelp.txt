@@ -603,7 +603,7 @@ desc = 1=Render player view in wireframe mode.
 desc = Frame counter.
 
 [rend-dev-blockmap-debug]
-desc = Enable drawing of the blockmap debug display: 1=Linedefs, 2=Subsectors.
+desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=Subsectors.
 
 [rend-dev-blockmap-debug-size]
 desc = Scale multiplier for the blockmap debug display.

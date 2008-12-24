@@ -1085,9 +1085,10 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         Con_Error("P_SpawnMobj: Illegal mo type %i.\n", type);
 #endif
 
-    // Let the engine know about solid objects.
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
+    if(info->flags & MF_NOBLOCKMAP)
+        ddflags |= DDMF_NOBLOCKMAP;
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 

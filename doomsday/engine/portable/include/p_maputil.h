@@ -65,9 +65,11 @@ float           P_InterceptVector(divline_t *v2, divline_t *v1);
 int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);
 float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
                                        fdivline_t *fdiv, fvertex_t *inter);
-void            P_LineOpening(linedef_t *linedef);
-void            P_MobjLink(mobj_t *mo, byte flags);
-void            P_MobjUnlink(mobj_t *mo);
+void            P_LineOpening(linedef_t* linedef);
+void            P_MobjLink(mobj_t* mo, byte flags);
+int             P_MobjUnlink(mobj_t* mo);
+boolean         P_MobjUnlinkFromRing(mobj_t* mo, linkmobj_t** list);
+void            P_MobjLinkToRing(mobj_t* mo, linkmobj_t** link);
 void            P_PointToBlock(float x, float y, uint *bx, uint *by);
 
 boolean         PIT_AddLineIntercepts(linedef_t *ld, void *data);
@@ -139,8 +141,4 @@ boolean         P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t *sector,
 
 boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
                                int flags, boolean (*trav) (intercept_t *));
-
-// Temporary!
-boolean         P_BlockRingMobjsIterator(uint x, uint y, boolean (*func) (mobj_t *, void *),
-                                          void *data);
 #endif

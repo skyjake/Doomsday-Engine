@@ -205,18 +205,18 @@ internal
 end
 
 struct plane
-    PTR     degenmobj_t soundOrg    // Sound origin for plane
-    PTR     sector_s*   sector      // Owner of the plane (temp)
+    PTR     ddmobj_base_t soundOrg // Sound origin for plane
+    PTR     sector_s*   sector // Owner of the plane (temp)
     -       surface_t   surface
-    FLOAT   float       height      // Current height
+    FLOAT   float       height // Current height
     -       float[2]    oldHeight
-    FLOAT   float       glow        // Glow amount
-    FLOAT   float[3]    glowRGB     // Glow color
-    FLOAT   float       target      // Target height
-    FLOAT   float       speed       // Move speed
-    -       float       visHeight   // Visible plane height (smoothed)
+    FLOAT   float       glow // Glow amount
+    FLOAT   float[3]    glowRGB // Glow color
+    FLOAT   float       target // Target height
+    FLOAT   float       speed // Move speed
+    -       float       visHeight // Visible plane height (smoothed)
     -       float       visHeightDelta
-    -       planetype_t type        // PLN_* type.
+    -       planetype_t type // PLN_* type.
     -       int         planeID
     -       subplaneinfo_s* subPlanes
 end
@@ -305,7 +305,7 @@ struct sector
     PTR     subsector_s** ssectors // [ssectorCount+1] size.
     -       uint        numReverbSSecAttributors
     -       subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
-    PTR     degenmobj_t soundOrg
+    PTR     ddmobj_base_t soundOrg
     UINT    uint        planeCount
     -       plane_s**   planes      // [planeCount+1] size.
     -       sector_s*   lightSource // Main sky light source

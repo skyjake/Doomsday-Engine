@@ -457,78 +457,39 @@ void P_LineOpening(linedef_t* linedef)
 }
 
 /**
- * Returns a pointer to the root linkmobj_t of the given mobj. If such
- * a block does not exist, NULL is returned. This routine is exported
- * for use in Games.
- */
-mobj_t* P_GetBlockRoot(uint blockx, uint blocky)
-{
-    gamemap_t*          map = P_GetCurrentMap();
-    uint                bmapSize[2];
-
-    P_GetBlockmapDimensions(map->blockMap, bmapSize);
-
-    // We must be in the block map range.
-    if(blockx >= bmapSize[VX] || blocky >= bmapSize[VY])
-    {
-        return NULL;
-    }
-
-    return (mobj_t *) (blockrings + (blocky * bmapSize[VX] + blockx));
-}
-
-/**
- * Same as P_GetBlockRoot, but takes world coordinates as parameters.
- */
-mobj_t* P_GetBlockRootXY(float x, float y)
-{
-    uint                blockX, blockY;
-
-    P_PointToBlock(x, y, &blockX, &blockY);
-
-    return P_GetBlockRoot(blockX, blockY);
-}
-
-/**
- * Only call if it is certain the mobj is linked to a sector!
  * Two links to update:
  * 1) The link to us from the previous node (sprev, always set) will
  *    be modified to point to the node following us.
  * 2) If there is a node following us, set its sprev pointer to point
  *    to the pointer that points back to it (our sprev, just modified).
  */
-void P_UnlinkFromSector(mobj_t* mo)
+boolean P_UnlinkFromSector(mobj_t* mo)
 {
+    if(!IS_SECTOR_LINKED(mo))
+        return false;
+
     if((*mo->sPrev = mo->sNext))
         mo->sNext->sPrev = mo->sPrev;
 
     // Not linked any more.
     mo->sNext = NULL;
     mo->sPrev = NULL;
-}
 
-/**
- * Only call if it is certain that the mobj is linked to a block!
- */
-void P_UnlinkFromBlock(mobj_t* mo)
-{
-    (mo->bNext->bPrev = mo->bPrev)->bNext = mo->bNext;
-    // Not linked any more.
-    mo->bNext = mo->bPrev = NULL;
+    return true;
 }
 
 /**
  * Unlinks the mobj from all the lines it's been linked to. Can be called
  * without checking that the list does indeed contain lines.
  */
-void P_UnlinkFromLines(mobj_t* mo)
+boolean P_UnlinkFromLines(mobj_t* mo)
 {
     linknode_t*         tn = mobjNodes->nodes;
     nodeindex_t         nix;
 
     // Try unlinking from lines.
     if(!mo->lineRoot)
-        return; // A zero index means it's not linked.
+        return false; // A zero index means it's not linked.
 
     // Unlink from each line.
     for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
@@ -545,18 +506,29 @@ void P_UnlinkFromLines(mobj_t* mo)
     // The mobj no longer has a line ring.
     NP_Dismiss(mobjNodes, mo->lineRoot);
     mo->lineRoot = 0;
+
+    return true;
 }
 
 /**
  * Unlinks a mobj from everything it has been linked to.
+ *
+ * @param mo            Ptr to the mobj to be unlinked.
+ * @return              DDLINK_* flags denoting what the mobj was unlinked
+ *                      from (in case we need to re-link).
  */
-void P_MobjUnlink(mobj_t* mo)
+int P_MobjUnlink(mobj_t* mo)
 {
-    if(IS_SECTOR_LINKED(mo))
-        P_UnlinkFromSector(mo);
-    if(IS_BLOCK_LINKED(mo))
-        P_UnlinkFromBlock(mo);
-    P_UnlinkFromLines(mo);
+    int                 links = 0;
+
+    if(P_UnlinkFromSector(mo))
+        links |= DDLINK_SECTOR;
+    if(P_BlockmapUnlinkMobj(BlockMap, mo))
+        links |= DDLINK_BLOCKMAP;
+    if(!P_UnlinkFromLines(mo))
+        links |= DDLINK_NOLINE;
+
+    return links;
 }
 
 /**
@@ -621,6 +593,67 @@ void P_LinkToLines(mobj_t* mo)
     P_AllLinesBoxIteratorv(data.box, PIT_LinkToLines, &data);
 }
 
+void P_MobjLinkToRing(mobj_t* mo, linkmobj_t** link)
+{
+    linkmobj_t*      tempLink;
+
+    if(!(*link))
+    {   // Create a new link at the current block cell.
+        *link = Z_Malloc(sizeof(linkmobj_t), PU_MAP, 0);
+        (*link)->next = NULL;
+        (*link)->prev = NULL;
+        (*link)->mobj = mo;
+        return;
+    }
+    else
+    {
+        tempLink = *link;
+        while(tempLink->next != NULL && tempLink->mobj != NULL)
+        {
+            tempLink = tempLink->next;
+        }
+    }
+
+    if(tempLink->mobj == NULL)
+    {
+        tempLink->mobj = mo;
+        return;
+    }
+    else
+    {
+        tempLink->next =
+            Z_Malloc(sizeof(linkmobj_t), PU_MAP, 0);
+        tempLink->next->next = NULL;
+        tempLink->next->prev = tempLink;
+        tempLink->next->mobj = mo;
+    }
+}
+
+/**
+ * Unlink the given mobj from the specified block ring (if indeed linked).
+ *
+ * @param mo            Ptr to the mobj to unlink.
+ * @return              @c true, iff the mobj was linked to the ring and was
+ *                      successfully unlinked.
+ */
+boolean P_MobjUnlinkFromRing(mobj_t* mo, linkmobj_t** list)
+{
+    linkmobj_t*         iter = *list;
+
+    while(iter != NULL && iter->mobj != mo)
+    {
+        iter = iter->next;
+    }
+
+    if(iter != NULL)
+    {
+        iter->mobj = NULL;
+        return true; // Mobj was unlinked.
+    }
+
+    return false; // Mobj was not linked.
+}
+
 /**
  * Links a mobj into both a block and a subsector based on it's (x,y).
  * Sets mobj->subsector properly. Calling with flags==0 only updates
@@ -629,7 +662,6 @@ void P_LinkToLines(mobj_t* mo)
 void P_MobjLink(mobj_t* mo, byte flags)
 {
     sector_t*           sec;
-    mobj_t*             root;
 
     // Link into the sector.
     mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
@@ -651,22 +683,12 @@ void P_MobjLink(mobj_t* mo, byte flags)
         *(mo->sPrev = &sec->mobjList) = mo;
     }
 
-    // Link into blockmap.
+    // Link into blockmap?
     if(flags & DDLINK_BLOCKMAP)
     {
         // Unlink from the old block, if any.
-        if(mo->bNext)
-            P_UnlinkFromBlock(mo);
-
-        // Link into the block we're currently in.
-        root = P_GetBlockRootXY(mo->pos[VX], mo->pos[VY]);
-        if(root)
-        {
-            // Only link if we're inside the blockmap.
-            mo->bPrev = root;
-            mo->bNext = root->bNext;
-            mo->bNext->bPrev = root->bNext = mo;
-        }
+        P_BlockmapUnlinkMobj(BlockMap, mo);
+        P_BlockmapLinkMobj(BlockMap, mo);
     }
 
     // Link into lines.
@@ -691,25 +713,6 @@ void P_MobjLink(mobj_t* mo, byte flags)
                               player->mo->subsector->sector))
             player->inVoid = false;
     }
-}
-
-boolean P_BlockRingMobjsIterator(uint x, uint y,
-                                 boolean (*func) (mobj_t*, void*),
-                                 void*data)
-{
-    mobj_t*             mobj, *root = P_GetBlockRoot(x, y);
-    void*               linkstore[MAXLINKED];
-    void**              end = linkstore, **it;
-
-    if(!root)
-        return true; // Not inside the blockmap.
-
-    // Gather all the mobjs in the block into the list.
-    for(mobj = root->bNext; mobj != root; mobj = mobj->bNext)
-        *end++ = mobj;
-
-    DO_LINKS(it, end);
-    return true;
 }
 
 /**
@@ -883,6 +886,37 @@ boolean P_MobjsBoxIteratorv(const arvec2_t box,
     return P_BlockBoxMobjsIterator(BlockMap, blockBox, func, data);
 }
 
+boolean P_PolyobjsBoxIterator(const float box[4],
+                              boolean (*func) (struct polyobj_s*, void*),
+                              void* data)
+{
+    vec2_t              bounds[2];
+
+    bounds[0][VX] = box[BOXLEFT];
+    bounds[0][VY] = box[BOXBOTTOM];
+    bounds[1][VX] = box[BOXRIGHT];
+    bounds[1][VY] = box[BOXTOP];
+
+    return P_PolyobjsBoxIteratorv(bounds, func, data);
+}
+
+/**
+ * The validCount flags are used to avoid checking polys that are marked in
+ * multiple mapblocks, so increment validCount before the first call, then
+ * make one or more calls to it.
+ */
+boolean P_PolyobjsBoxIteratorv(const arvec2_t box,
+                               boolean (*func) (struct polyobj_s*, void*),
+                               void* data)
+{
+    uint                blockBox[4];
+
+    // Blockcoords to check.
+    P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
+
+    return P_BlockBoxPolyobjsIterator(BlockMap, blockBox, func, data);
+}
+
 boolean P_LinesBoxIterator(const float box[4],
                            boolean (*func) (linedef_t*, void*),
                            void* data)
@@ -944,37 +978,6 @@ boolean P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t* sector,
 
     return P_BlockBoxSubsectorsIterator(SSecBlockMap, blockBox, sector,
                                         box, localValidCount, func, data);
-}
-
-boolean P_PolyobjsBoxIterator(const float box[4],
-                              boolean (*func) (struct polyobj_s*, void*),
-                              void* data)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_PolyobjsBoxIteratorv(bounds, func, data);
-}
-
-/**
- * The validCount flags are used to avoid checking polys that are marked in
- * multiple mapblocks, so increment validCount before the first call, then
- * make one or more calls to it.
- */
-boolean P_PolyobjsBoxIteratorv(const arvec2_t box,
-                               boolean (*func) (struct polyobj_s*, void*),
-                               void* data)
-{
-    uint                blockBox[4];
-
-    // Blockcoords to check.
-    P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
-
-    return P_BlockBoxPolyobjsIterator(BlockMap, blockBox, func, data);
 }
 
 boolean P_PolyobjLinesBoxIterator(const float box[4],

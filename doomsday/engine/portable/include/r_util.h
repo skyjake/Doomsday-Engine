@@ -30,18 +30,18 @@
 #define __DOOMSDAY_REFRESH_UTIL_H__
 
 int             R_PointOnSide(const float x, const float y,
-                              const partition_t *par);
+                              const partition_t* par);
 angle_t         R_PointToAngle(float x, float y);
 angle_t         R_PointToAngle2(const float x1, const float y1,
                                 const float x2, const float y2);
 float           R_PointToDist(const float x, const float y);
-linedef_t         *R_GetLineForSide(const uint sideIDX);
-subsector_t    *R_PointInSubsector(const float x, const float y);
+linedef_t*      R_GetLineForSide(const uint sideIDX);
+subsector_t*    R_PointInSubsector(const float x, const float y);
 boolean         R_IsPointInSector(const float x, const float y,
-                                  const sector_t *sector);
+                                  const sector_t* sector);
 boolean         R_IsPointInSector2(const float x, const float y,
-                                   const sector_t *sector);
-void            R_ScaleAmbientRGB(float *out, const float *in, float mul);
-sector_t*       R_GetSectorForDegen(const void *degenmobj);
+                                   const sector_t* sector);
+void            R_ScaleAmbientRGB(float* out, const float* in, float mul);
+sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
 
 #endif

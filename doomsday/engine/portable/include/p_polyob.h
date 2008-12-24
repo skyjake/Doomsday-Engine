@@ -43,7 +43,7 @@ void            P_MapInitPolyobjs(void);
 void            P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
 
 polyobj_t*      P_GetPolyobj(uint num);
-polyobj_t*      P_GetPolyobjForDegen(void *degenMobj);
+boolean         P_IsPolyobjOrigin(void* ddMobjBase);
 
 // Polyobject interface.
 boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);

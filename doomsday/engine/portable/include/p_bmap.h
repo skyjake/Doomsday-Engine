@@ -45,14 +45,16 @@ blockmap_t*     P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
 
 // Management:
 void            P_BlockmapSetBlock(blockmap_t* bmap, uint x, uint y,
-                                   linedef_t** lines, linkpolyobj_t* link);
+                                   linedef_t** lines, linkmobj_t* moLink,
+                                   linkpolyobj_t* poLink);
 void            P_SSecBlockmapSetBlock(blockmap_t* bmap, uint x, uint y,
                                        subsector_t** ssecs);
 void            P_BuildSubsectorBlockMap(gamemap_t* map);
 
+void            P_BlockmapLinkMobj(blockmap_t* bmap, mobj_t* mo);
+boolean         P_BlockmapUnlinkMobj(blockmap_t* bmap, mobj_t* mo);
 void            P_BlockmapLinkPolyobj(blockmap_t* bmap, polyobj_t* po);
 void            P_BlockmapUnlinkPolyobj(blockmap_t* bmap, polyobj_t* po);
-void            P_InitMapBlockRings(gamemap_t* map);
 
 // Utility:
 void            P_GetBlockmapBounds(blockmap_t* bmap, pvec2_t min, pvec2_t max);

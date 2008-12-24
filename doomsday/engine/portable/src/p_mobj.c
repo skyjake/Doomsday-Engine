@@ -117,10 +117,10 @@ void P_InitUnusedMobjList(void)
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
+mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
                      angle_t angle, float radius, float height, int ddflags)
 {
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     if(!function)
         Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
@@ -129,7 +129,7 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
     if(unusedMobjs)
     {
         mo = unusedMobjs;
-        unusedMobjs = unusedMobjs->bNext;
+        unusedMobjs = unusedMobjs->sNext;
         memset(mo, 0, MOBJ_SIZE);
     }
     else
@@ -158,7 +158,7 @@ mobj_t *P_MobjCreate(think_t function, float x, float y, float z,
  * \note Does not actually destroy the mobj. Instead, mobj is marked as
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
-void P_MobjDestroy(mobj_t *mo)
+void P_MobjDestroy(mobj_t* mo)
 {
     // Unlink from sector and block lists.
     P_MobjUnlink(mo);
@@ -172,21 +172,21 @@ void P_MobjDestroy(mobj_t *mo)
  * Called when a mobj is actually removed (when it's thinking turn comes around).
  * The mobj is moved to the unused list to be reused later.
  */
-void P_MobjRecycle(mobj_t *mo)
+void P_MobjRecycle(mobj_t* mo)
 {
-    // The blocknext link is used as the unused mobj list links.
-    mo->bNext = unusedMobjs;
+    // The sector next link is used as the unused mobj list links.
+    mo->sNext = unusedMobjs;
     unusedMobjs = mo;
 }
 
 /**
  * 'statenum' must be a valid state (not null!).
  */
-void P_MobjSetState(mobj_t *mobj, int statenum)
+void P_MobjSetState(mobj_t* mobj, int statenum)
 {
-    state_t            *st = states + statenum;
+    state_t*            st = states + statenum;
     boolean             spawning = (mobj->state == 0);
-    ded_ptcgen_t       *pg;
+    ded_ptcgen_t*       pg;
 
 #if _DEBUG
     if(statenum < 0 || statenum >= defs.count.states.num)
@@ -458,11 +458,7 @@ boolean P_TryMoveXYZ(mobj_t *mo, float x, float y, float z)
     }
 
     // The move is OK. First unlink.
-    if(IS_SECTOR_LINKED(mo))
-        links |= DDLINK_SECTOR;
-    if(IS_BLOCK_LINKED(mo))
-        links |= DDLINK_BLOCKMAP;
-    P_MobjUnlink(mo);
+    links = P_MobjUnlink(mo);
 
     mo->floorZ = tmpFloorZ;
     mo->ceilingZ = tmpCeilingZ;

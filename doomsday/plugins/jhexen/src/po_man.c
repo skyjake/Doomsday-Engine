@@ -54,20 +54,20 @@ static void thrustMobj(struct mobj_s* mo, void* segp, void* pop);
 
 // CODE --------------------------------------------------------------------
 
-void PO_StartSequence(polyobj_t *po, int seqBase)
+void PO_StartSequence(polyobj_t* po, int seqBase)
 {
-    SN_StartSequence((mobj_t*) &po->startSpot, seqBase + po->seqType);
+    SN_StartSequence((mobj_t*) po, seqBase + po->seqType);
 }
 
-void PO_StopSequence(polyobj_t *po)
+void PO_StopSequence(polyobj_t* po)
 {
-    SN_StopSequence((mobj_t*) &po->startSpot);
+    SN_StopSequence((mobj_t*) po);
 }
 
-void PO_SetDestination(polyobj_t *po, float dist, uint an, float speed)
+void PO_SetDestination(polyobj_t* po, float dist, uint an, float speed)
 {
-    po->dest[VX] = po->startSpot.pos[VX] + dist * FIX2FLT(finecosine[an]);
-    po->dest[VY] = po->startSpot.pos[VY] + dist * FIX2FLT(finesine[an]);
+    po->dest[VX] = po->pos[VX] + dist * FIX2FLT(finecosine[an]);
+    po->dest[VY] = po->pos[VY] + dist * FIX2FLT(finesine[an]);
     po->speed = speed;
 }
 
@@ -657,8 +657,8 @@ void PO_InitForMap(void)
         if(mt)
         {
             po->crush = ((mt->type == PO_SPAWNCRUSH_TYPE)? 1 : 0);
-            P_PolyobjMove(po, -po->startSpot.pos[VX] + mt->pos[VX],
-                              -po->startSpot.pos[VY] + mt->pos[VY]);
+            P_PolyobjMove(po, -po->pos[VX] + mt->pos[VX],
+                              -po->pos[VY] + mt->pos[VY]);
         }
         else
         {
