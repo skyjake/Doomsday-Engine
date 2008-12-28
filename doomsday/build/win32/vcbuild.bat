@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dscompat jdoom jheretic jhexen jdoom64
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dsdirectsound jdoom jheretic jhexen jdoom64
 GOTO Done
 
 
@@ -191,11 +191,11 @@ IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
 
-:: *** dsCompat.dll
-:dsCompat
-ECHO Compiling dsCompat.dll (DirectSound(3D) SoundFX driver)...
-md %OBJ_DIR%\dsCompat
-cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DSCOMPAT_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsCompat" /Fd"./%OBJ_DIR%/dsCompat" /W3 /Gd  @dscompat_cl.rsp  /link /OUT:"./%BIN_DIR%/dsCompat.dll" %LFLAGS% /DLL /DEF:"./../../plugins/ds6/api/dsCompat.def" /IMPLIB:"./%BIN_DIR%/dsCompat.lib" %LIBS% eax.lib eaxguid.lib dsound.lib dxguid.lib ./%BIN_DIR%/doomsday.lib
+:: *** dsDirectSound.dll
+:dsDirectSound
+ECHO Compiling dsDirectSound.dll (DirectSound(3D) SoundFX driver)...
+md %OBJ_DIR%\dsDirectSound
+cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DSDIRECTSOUND_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsDirectSound" /Fd"./%OBJ_DIR%/dsDirectSound" /W3 /Gd  @dsdirectsound_cl.rsp  /link /OUT:"./%BIN_DIR%/dsDirectSound.dll" %LFLAGS% /DLL /DEF:"./../../plugins/directsound/api/dsdirectsound.def" /IMPLIB:"./%BIN_DIR%/dsDirectSound.lib" %LIBS% eax.lib eaxguid.lib dsound.lib dxguid.lib ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -216,6 +216,7 @@ md %OBJ_DIR%\dpwadmapconverter
 cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpwadmapconverter" /Fd"./%OBJ_DIR%/dpwadmapconverter" /W3 /Gd  @dpwadmapconverter.rsp  /link /OUT:"./%BIN_DIR%/dpWadMapConverter.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpwadmapconverter.lib" %LIBS% ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
+
 
 :: *** jDoom.dll
 :jDoom
