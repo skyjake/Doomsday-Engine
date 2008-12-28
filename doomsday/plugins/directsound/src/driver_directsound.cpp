@@ -23,7 +23,7 @@
  */
 
 /**
- * driver_sndcmp.cpp: Maximum Compatibility Sfx Driver.
+ * driver_directsound.cpp: Win32 SFX driver for DirectSound, with EAX 2.0.
  *
  * Uses DirectSound 6.0
  * Buffers created on Load.
