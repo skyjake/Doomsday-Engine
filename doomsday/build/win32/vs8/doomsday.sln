@@ -13,7 +13,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpDehRead", "dpdehread.vcpr
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsCompat", "dscompat.vcproj", "{1D7A3D67-B874-4844-BA4E-8DA934AF993C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsDirectSound", "dsdirectsound.vcproj", "{1D7A3D67-B874-4844-BA4E-8DA934AF993C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
@@ -118,6 +118,18 @@ Global
 		{6FC5ABB6-4896-4B5D-856F-877C280EBC89}.Mesa Release|Win32.Build.0 = Release|Win32
 		{6FC5ABB6-4896-4B5D-856F-877C280EBC89}.Release|Win32.ActiveCfg = Release|Win32
 		{6FC5ABB6-4896-4B5D-856F-877C280EBC89}.Release|Win32.Build.0 = Release|Win32
+		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Debug|Win32.Build.0 = Debug|Win32
+		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Mesa Release|Win32.ActiveCfg = Release|Win32
+		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Mesa Release|Win32.Build.0 = Release|Win32
+		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Release|Win32.ActiveCfg = Release|Win32
+		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Release|Win32.Build.0 = Release|Win32
+		{7600B05C-2751-415D-BDB3-839AA7F48483}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7600B05C-2751-415D-BDB3-839AA7F48483}.Debug|Win32.Build.0 = Debug|Win32
+		{7600B05C-2751-415D-BDB3-839AA7F48483}.Mesa Release|Win32.ActiveCfg = Release|Win32
+		{7600B05C-2751-415D-BDB3-839AA7F48483}.Mesa Release|Win32.Build.0 = Release|Win32
+		{7600B05C-2751-415D-BDB3-839AA7F48483}.Release|Win32.ActiveCfg = Release|Win32
+		{7600B05C-2751-415D-BDB3-839AA7F48483}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

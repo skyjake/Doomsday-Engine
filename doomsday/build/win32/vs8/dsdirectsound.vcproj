@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="dsCompat"
+	Name="dsDirectSound"
 	ProjectGUID="{1D7A3D67-B874-4844-BA4E-8DA934AF993C}"
-	RootNamespace="dsCompat"
+	RootNamespace="dsDirectSound"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -44,17 +44,17 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Debug/dsCompat.tlb"
+				TypeLibraryName=".\./Bin/Debug/dsDirectSound.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\engine\api"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DSCOMPAT_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DSDIRECTSOUND_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Debug/dsCompat.pch"
+				PrecompiledHeaderFile=".\./Obj/Debug/dsDirectSound.pch"
 				AssemblerListingLocation=".\./Obj/Debug/"
 				ObjectFile=".\./Obj/Debug/"
 				ProgramDataBaseFileName=".\./Obj/Debug/"
@@ -78,15 +78,15 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="eax.lib eaxguid.lib dsound.lib dxguid.lib ./bin/debug/doomsday.lib"
-				OutputFile=".\./Bin/Debug/dsCompat.dll"
+				OutputFile=".\./Bin/Debug/dsDirectSound.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile="..\..\..\plugins\ds6\api\dsCompat.def"
+				ModuleDefinitionFile="..\..\..\plugins\directsound\api\dsdirectsound.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\./Bin/Debug/dsCompat.pdb"
+				ProgramDatabaseFile=".\./Bin/Debug/dsDirectSound.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Debug/dsCompat.lib"
+				ImportLibrary=".\./Bin/Debug/dsDirectSound.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -140,18 +140,18 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/dsCompat.tlb"
+				TypeLibraryName=".\./Bin/Release/dsDirectSound.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="..\..\..\engine\api"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DSCOMPAT_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DSDIRECTSOUND_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Release/dsCompat.pch"
+				PrecompiledHeaderFile=".\./Obj/Release/dsDirectSound.pch"
 				AssemblerListingLocation=".\./Obj/Release/"
 				ObjectFile=".\./Obj/Release/"
 				ProgramDataBaseFileName=".\./Obj/Release/"
@@ -174,14 +174,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="eax.lib eaxguid.lib dsound.lib dxguid.lib ./bin/release/doomsday.lib"
-				OutputFile=".\./Bin/Release/dsCompat.dll"
+				OutputFile=".\./Bin/Release/dsDirectSound.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile="..\..\..\plugins\ds6\api\dsCompat.def"
-				ProgramDatabaseFile=".\./Bin/Release/dsCompat.pdb"
+				ModuleDefinitionFile="..\..\..\plugins\directsound\api\dsdirectsound.def"
+				ProgramDatabaseFile=".\./Bin/Release/dsDirectSound.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/dsCompat.lib"
+				ImportLibrary=".\./Bin/Release/dsDirectSound.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -215,7 +215,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\..\plugins\ds6\src\driver_sndcmp.cpp"
+				RelativePath="..\..\..\plugins\directsound\src\driver_directsound.cpp"
 				>
 			</File>
 		</Filter>
@@ -230,7 +230,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\..\plugins\ds6\api\dscompat.def"
+			RelativePath="..\..\..\plugins\directsound\api\dsdirectsound.def"
 			>
 		</File>
 	</Files>
