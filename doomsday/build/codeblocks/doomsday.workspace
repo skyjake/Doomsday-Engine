@@ -23,7 +23,7 @@
 		<Project filename="dpwadmapconverter.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
-		<Project filename="dscompat.cbp">
+		<Project filename="dsdirectsound.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
 		<Project filename="dsopenal.cbp">
