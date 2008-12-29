@@ -76,6 +76,9 @@ static void* Imp(const char* fn)
 
 void Sys_ShutdownAudioDriver(void)
 {
+    if(!audioDriver)
+        return;
+
     if(audioDriver->Shutdown)
         audioDriver->Shutdown();
 
