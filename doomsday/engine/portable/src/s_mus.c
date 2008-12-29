@@ -590,9 +590,14 @@ D_CMD(PlayMusic)
         }
         else if(!stricmp(argv[1], "cd"))
         {
-            Mus_Stop();
             if(iCD)
+            {
+                Mus_Stop();
                 return iCD->Play(atoi(argv[2]), true);
+            }
+
+            Con_Printf("No CDAudio interface present.\n");
+            return false;
         }
         break;
     }
