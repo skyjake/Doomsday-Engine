@@ -340,9 +340,9 @@
 		<Unit filename="..\..\engine\portable\include\sys_master.h" />
 		<Unit filename="..\..\engine\portable\include\sys_mixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_network.h" />
-		<Unit filename="..\..\engine\portable\include\sys_sfxd_dummy.h" />
-		<Unit filename="..\..\engine\portable\include\sys_sfxd_loader.h" />
-		<Unit filename="..\..\engine\portable\include\sys_sfxd_sdlmixer.h" />
+		<Unit filename="..\..\engine\portable\include\sys_audiod_dummy.h" />
+		<Unit filename="..\..\engine\portable\include\sys_audiod_loader.h" />
+		<Unit filename="..\..\engine\portable\include\sys_audiod_sdlmixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_sock.h" />
 		<Unit filename="..\..\engine\portable\include\sys_system.h" />
 		<Unit filename="..\..\engine\portable\include\sys_timer.h" />
@@ -790,10 +790,10 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\sys_sfxd_dummy.c">
+		<Unit filename="..\..\engine\portable\src\sys_audiod_dummy.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\sys_sfxd_sdlmixer.c">
+		<Unit filename="..\..\engine\portable\src\sys_audiod_sdlmixer.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_sock.c">
@@ -857,7 +857,7 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="..\..\engine\unix\src\sys_sfxd_loader.c">
+		<Unit filename="..\..\engine\unix\src\sys_audiod_loader.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -886,7 +886,7 @@
 		<Unit filename="..\..\engine\win32\src\sys_mixer.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\win32\src\sys_sfxd_loader.c">
+		<Unit filename="..\..\engine\win32\src\sys_audiod_loader.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\win32\src\sys_window.c">

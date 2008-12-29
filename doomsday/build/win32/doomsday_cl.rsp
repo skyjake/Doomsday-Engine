@@ -118,9 +118,9 @@
  ./../../engine/portable/src/net_event.c
  ./../../engine/portable/src/net_demo.c
  ./../../engine/portable/src/net_buf.c
- ./../../engine/win32/src/sys_sfxd_loader.c
- ./../../engine/portable/src/sys_sfxd_dummy.c
- ./../../engine/portable/src/sys_sfxd_sdlmixer.c
+ ./../../engine/win32/src/sys_audiod_loader.c
+ ./../../engine/portable/src/sys_audiod_dummy.c
+ ./../../engine/portable/src/sys_audiod_sdlmixer.c
  ./../../engine/portable/src/sys_timer.c
  ./../../engine/portable/src/sys_system.c
  ./../../engine/portable/src/sys_sock.c
