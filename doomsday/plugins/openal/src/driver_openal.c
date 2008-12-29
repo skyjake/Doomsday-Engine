@@ -21,14 +21,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
- * \bug Not 64bit clean: In function 'DS_CreateBuffer': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_DestroyBuffer': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_Load': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_Play': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_Stop': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_Refresh': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_Set': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_Setv': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_CreateBuffer': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_DestroyBuffer': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_Load': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_Play': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_Stop': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_Refresh': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_Set': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_SFX_Setv': cast to pointer from integer of different size
  */
 
 /**
@@ -59,7 +59,8 @@
 #include <math.h>
 
 #include "doomsday.h"
-#include "sys_sfxd.h"
+#include "sys_audiod.h"
+#include "sys_audiod_sfx.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -85,19 +86,21 @@ ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop,
 
 int         DS_Init(void);
 void        DS_Shutdown(void);
-sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate);
-void        DS_DestroyBuffer(sfxbuffer_t* buf);
-void        DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void        DS_Reset(sfxbuffer_t* buf);
-void        DS_Play(sfxbuffer_t* buf);
-void        DS_Stop(sfxbuffer_t* buf);
-void        DS_Refresh(sfxbuffer_t* buf);
 void        DS_Event(int type);
-void        DS_Set(sfxbuffer_t* buf, int prop, float value);
-void        DS_Setv(sfxbuffer_t* buf, int prop, float* values);
-void        DS_Listener(int prop, float value);
-void        DS_Listenerv(int prop, float* values);
-int         DS_Getv(int prop, void* values);
+
+int         DS_SFX_Init(void);
+sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate);
+void        DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
+void        DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+void        DS_SFX_Reset(sfxbuffer_t* buf);
+void        DS_SFX_Play(sfxbuffer_t* buf);
+void        DS_SFX_Stop(sfxbuffer_t* buf);
+void        DS_SFX_Refresh(sfxbuffer_t* buf);
+void        DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
+void        DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
+void        DS_SFX_Listener(int prop, float value);
+void        DS_SFX_Listenerv(int prop, float* values);
+int         DS_SFX_Getv(int prop, void* values);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -200,7 +203,17 @@ void DS_Shutdown(void)
     initOk = false;
 }
 
-sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
+void DS_Event(int type)
+{
+    // Not supported.
+}
+
+int DS_SFX_Init(void)
+{
+    return true;
+}
+
+sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
     sfxbuffer_t*        buf;
     ALuint              bufName, srcName;
@@ -240,7 +253,7 @@ sfxbuffer_t* DS_CreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-void DS_DestroyBuffer(sfxbuffer_t* buf)
+void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     ALuint             srcName, bufName;
 
@@ -256,7 +269,7 @@ void DS_DestroyBuffer(sfxbuffer_t* buf)
     Z_Free(buf);
 }
 
-void DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
+void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
     if(!buf || !sample)
         return;
@@ -280,16 +293,16 @@ void DS_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_Reset(sfxbuffer_t* buf)
+void DS_SFX_Reset(sfxbuffer_t* buf)
 {
     if(!buf)
         return;
 
-    DS_Stop(buf);
+    DS_SFX_Stop(buf);
     buf->sample = NULL;
 }
 
-void DS_Play(sfxbuffer_t* buf)
+void DS_SFX_Play(sfxbuffer_t* buf)
 {
     ALuint              source;
 
@@ -316,7 +329,7 @@ if(bn != BUF(buf))
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_Stop(sfxbuffer_t* buf)
+void DS_SFX_Stop(sfxbuffer_t* buf)
 {
     if(!buf || !buf->sample)
         return;
@@ -325,7 +338,7 @@ void DS_Stop(sfxbuffer_t* buf)
     buf->flags &= ~SFXBF_PLAYING;
 }
 
-void DS_Refresh(sfxbuffer_t* buf)
+void DS_SFX_Refresh(sfxbuffer_t* buf)
 {
     ALint               state;
 
@@ -337,11 +350,6 @@ void DS_Refresh(sfxbuffer_t* buf)
     {
         buf->flags &= ~SFXBF_PLAYING;
     }
-}
-
-void DS_Event(int type)
-{
-    // Not supported.
 }
 
 /**
@@ -381,7 +389,7 @@ static void setPan(ALuint source, float pan)
     alSourcefv(source, AL_POSITION, pos);
 }
 
-void DS_Set(sfxbuffer_t* buf, int prop, float value)
+void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {
     unsigned int        dw;
     ALuint              source;
@@ -427,7 +435,7 @@ void DS_Set(sfxbuffer_t* buf, int prop, float value)
     }
 }
 
-void DS_Setv(sfxbuffer_t* buf, int prop, float* values)
+void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
     ALuint              source;
 
@@ -453,7 +461,7 @@ void DS_Setv(sfxbuffer_t* buf, int prop, float* values)
     }
 }
 
-void DS_Listener(int prop, float value)
+void DS_SFX_Listener(int prop, float value)
 {
     switch(prop)
     {
@@ -470,7 +478,7 @@ void DS_Listener(int prop, float value)
     }
 }
 
-void DS_Listenerv(int prop, float* values)
+void DS_SFX_Listenerv(int prop, float* values)
 {
     float               ori[6];
 
@@ -504,12 +512,12 @@ void DS_Listenerv(int prop, float* values)
         break;
 
     default:
-        DS_Listener(prop, 0);
+        DS_SFX_Listener(prop, 0);
         break;
     }
 }
 
-int DS_Getv(int prop, void* values)
+int DS_SFX_Getv(int prop, void* values)
 {
     // Stub.
     return 0;
