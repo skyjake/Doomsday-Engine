@@ -1,0 +1,26 @@
+LIBRARY			DSWINMM
+
+; All exports should be prefixed DS_.
+
+EXPORTS
+
+DS_Init
+DS_Shutdown
+DS_Event
+
+DM_Mus_Init
+DM_Mus_Update
+DM_Mus_Set
+DM_Mus_Get
+DM_Mus_Pause
+DM_Mus_Stop
+DM_Mus_SongBuffer
+DM_Mus_Play
+
+DM_CDAudio_Init
+DM_CDAudio_Update
+DM_CDAudio_Set
+DM_CDAudio_Get
+DM_CDAudio_Pause
+DM_CDAudio_Stop
+DM_CDAudio_Play
