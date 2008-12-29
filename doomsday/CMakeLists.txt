@@ -72,7 +72,6 @@ OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
 OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
 OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
 OPTION (BUILDWADMAPCONVERT "Optionally build the WAD Map Converter plugin. Default ON" ON)
-OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 OPTION (BUILDDOX "Build doxygen documentation. Default OFF" OFF)
@@ -225,9 +224,7 @@ FIND_PACKAGE(SDL REQUIRED)
 ##INCLUDE (${CMAKE_ROOT}/Modules/FindSDL.cmake)
 
 IF (NOT BUILDDEDICATED)
-    IF (BUILDSDLMIXER)
-        FIND_PACKAGE(SDL_mixer REQUIRED)
-    ENDIF (BUILDSDLMIXER)
+    FIND_PACKAGE(SDL_mixer REQUIRED)
 ENDIF (NOT BUILDDEDICATED)
 
 FIND_PACKAGE(SDL_net REQUIRED)
@@ -261,12 +258,6 @@ IF (NOT BUILDDEDICATED)
         FIND_PACKAGE(OpenAL REQUIRED)
     ENDIF (BUILDOPENAL)
 ENDIF (NOT BUILDDEDICATED)
-
-
-IF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
-    MESSAGE( FATAL_ERROR
-    "If not building a dedicated server, a sound plugin must be built")
-ENDIF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
 
 IF (UNIX)
     IF (NOT WIN32)
@@ -471,13 +462,11 @@ IF (SDL_FOUND STREQUAL "NO")
     ENDIF (SDL_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDL_INCLUDE_DIR})
 
-IF (BUILDSDLMIXER)
-    ## Confirm we have SDL_mixer
-    IF (SDLMIXER_FOUND STREQUAL "NO")
-        MESSAGE (FATAL_ERROR "** SDL Mixer not found. On Ubuntu install libsdl-mixer1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL_mixer-devel-1.2.7-VC6.zip.")
+## Confirm we have SDL_mixer
+IF (SDLMIXER_FOUND STREQUAL "NO")
+    MESSAGE (FATAL_ERROR "** SDL Mixer not found. On Ubuntu install libsdl-mixer1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL_mixer-devel-1.2.7-VC6.zip.")
     ENDIF (SDLMIXER_FOUND STREQUAL "NO")
-    INCLUDE_DIRECTORIES (${SDLMIXER_INCLUDE_DIR})
-ENDIF (BUILDSDLMIXER)
+INCLUDE_DIRECTORIES (${SDLMIXER_INCLUDE_DIR})
 
 ## Confirm we have SDL_net
 IF (SDLNET_FOUND STREQUAL "NO")
@@ -677,11 +666,6 @@ ENDIF (WIN32)
 ######################## Dehacked Reader Plugin  ###############################
 ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/dehread )
 ################################################################################
-######################## SDLMixer Output Plugin  ###############################
-IF (BUILDSDLMIXER)
-    ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/sdlmixer )
-ENDIF (BUILDSDLMIXER)
-################################################################################
 ######################## WAD Map Converter Plugin  #############################
 IF (BUILDWADMAPCONVERT)
     ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/wadmapconverter )
@@ -758,7 +742,6 @@ MESSAGE( STATUS "BUILDJHEXEN:                  " ${BUILDJHEXEN} )
 MESSAGE( STATUS "BUILDJDOOM64:                 " ${BUILDJDOOM64} )
 MESSAGE( STATUS "BUILDWADMAPCONVERT:           " ${BUILDWADMAPCONVERT} )
 MESSAGE( STATUS "BUILDOPENAL:                  " ${BUILDOPENAL} )
-MESSAGE( STATUS "BUILDSDLMIXER:                " ${BUILDSDLMIXER} )
 MESSAGE( STATUS "BUILDDEDICATED:               " ${BUILDDEDICATED} )
 MESSAGE( STATUS "BUILDDOX:                     " ${BUILDDOX} )
 MESSAGE( STATUS "BUILDFIXEDASM:                " ${BUILDFIXEDASM} )
