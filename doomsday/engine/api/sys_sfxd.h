@@ -23,13 +23,11 @@
  */
 
 /**
- * sys_sfxd.h: Sound Driver
- *
- * System-specific Sfx Driver.
+ * sys_sfxd.h: Audio driver - SFX interface.
  */
 
-#ifndef __DOOMSDAY_SFX_DRIVER_H__
-#define __DOOMSDAY_SFX_DRIVER_H__
+#ifndef __DOOMSDAY_AUDIO_DRIVER_SFX_H__
+#define __DOOMSDAY_AUDIO_DRIVER_SFX_H__
 
 // Sfx Buffer Flags.
 #define SFXBF_PLAYING       (0x1) // The buffer is playing.
@@ -92,9 +90,9 @@ typedef struct sfxbuffer_s {
     unsigned int    freq; // Played samples per second (real freq).
 } sfxbuffer_t;
 
-typedef struct sfxdriver_s {
+// Generic driver interface. All other interfaces are based on this.
+typedef struct sfxinterface_generic_s {
     int             (*Init) (void);
-    void            (*Shutdown) (void);
     sfxbuffer_t*    (*Create) (int flags, int bits, int rate);
     void            (*Destroy) (sfxbuffer_t* buf);
     void            (*Load) (sfxbuffer_t* buf, struct sfxsample_s* sample);
@@ -102,12 +100,15 @@ typedef struct sfxdriver_s {
     void            (*Play) (sfxbuffer_t* buf);
     void            (*Stop) (sfxbuffer_t* buf);
     void            (*Refresh) (sfxbuffer_t* buf);
-    void            (*Event) (int type);
     void            (*Set) (sfxbuffer_t* buf, int prop, float value);
     void            (*Setv) (sfxbuffer_t* buf, int prop, float* values);
     void            (*Listener) (int prop, float value);
     void            (*Listenerv) (int prop, float* values);
     int             (*Getv) (int prop, void* values);
-} sfxdriver_t;
+} sfxinterface_generic_t;
+
+typedef struct sfxinterface_sfx_s {
+    sfxinterface_generic_t gen;
+} sfxinterface_sfx_t;
 
 #endif

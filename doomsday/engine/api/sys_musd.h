@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,11 @@
  */
 
 /**
- * sys_musd.h: Music Driver
+ * sys_musd.h: Audio Driver - Music interfaces.
  */
 
-#ifndef __DOOMSDAY_MUSIC_DRIVER_H__
-#define __DOOMSDAY_MUSIC_DRIVER_H__
-
-typedef struct musdriver_s {
-    int             (*Init) (void);
-    void            (*Shutdown) (void);
-} musdriver_t;
+#ifndef __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
+#define __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
 
 // Music interface properties.
 enum {
