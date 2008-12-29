@@ -40,17 +40,6 @@
 #define BEGIN_COP       Sfx_AllowRefresh(false)
 #define END_COP         Sfx_AllowRefresh(true)
 
-typedef enum {
-    SFXD_DUMMY,
-    SFXD_SDL_MIXER,
-    SFXD_OPENAL,
-#ifdef WIN32
-    SFXD_DSOUND8,
-    SFXD_WINMM,
-    SFXD_DSOUND,
-#endif
-} sfxdriver_e;
-
 // Channel flags.
 #define SFXCF_NO_ORIGIN         (0x1) // Sound is coming from a mystical emitter.
 #define SFXCF_NO_ATTENUATION    (0x2) // Sound is very, very loud.

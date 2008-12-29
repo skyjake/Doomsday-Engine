@@ -43,6 +43,7 @@
 #include "de_defs.h"
 
 #include "r_extres.h"
+#include "sys_audio.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -59,6 +60,8 @@ D_CMD(PlaySound);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+audiodriver_t* audioDriver = NULL;
 
 int showSoundInfo = false;
 int soundMinDist = 256; // No distance attenuation this close.
@@ -92,16 +95,107 @@ void S_Register(void)
 }
 
 /**
+ * Initializes the audio driver interfaces.
+ *
+ * @return              @c true, if successful.
+ */
+boolean S_InitDriver(audiodriver_e drvid)
+{
+    Con_Printf("  Driver: ");
+
+    switch(drvid)
+    {
+    case AUDIOD_DUMMY:
+        Con_Printf("Dummy\n");
+        audioDriver = &audiod_dummy;
+        break;
+
+    case AUDIOD_SDL_MIXER:
+        Con_Printf("SDLMixer\n");
+        audioDriver = &audiod_sdlmixer;
+        break;
+
+    case AUDIOD_OPENAL:
+        Con_Printf("OpenAL\n");
+        if(!(audioDriver = Sys_LoadAudioDriver("openal")))
+            return false;
+        break;
+
+#ifdef WIN32
+    case AUDIOD_DSOUND:
+        Con_Printf("DirectSound\n");
+        if(!(audioDriver = Sys_LoadAudioDriver("directsound")))
+            return false;
+        break;
+
+    case AUDIOD_DSOUND8:
+        Con_Printf("DirectSound8\n");
+        if(!(audioDriver = Sys_LoadAudioDriver("ds8")))
+            return false;
+        break;
+
+    case AUDIOD_WINMM:
+        Con_Printf("WinMM\n");
+        if(!(audioDriver = Sys_LoadAudioDriver("winmm")))
+            return false;
+        break;
+#endif
+
+    default:
+        Con_Error("Sfx_Driver: Unknown audioDriver type %i.\n", drvid);
+    }
+
+    // Initialize the audioDriver.
+    return audioDriver->Init();
+}
+
+/**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
  *
  * @return              @c true, if there were no errors.
  */
 boolean S_Init(void)
 {
-    boolean             sfxOK, musOK;
+    boolean             ok, sfxOK, musOK;
 
     if(ArgExists("-nosound"))
         return true;
+
+    // First let's set up the drivers. First we much choose which one we
+    // want to use.
+    if(isDedicated || ArgExists("-dummy"))
+    {
+        ok = S_InitDriver(AUDIOD_DUMMY);
+    }
+    else if(ArgExists("-oal"))
+    {
+        ok = S_InitDriver(AUDIOD_OPENAL);
+    }
+#ifdef WIN32
+    else if(ArgExists("-dsound"))
+    {   // DirectSound with 3D sound support, EAX effects.
+        ok = S_InitDriver(AUDIOD_DSOUND);
+    }
+    else if(ArgExists("-ds8"))
+    {   // DirectSound 8 with 3D sound support, EAX effects.
+        ok = S_InitDriver(AUDIOD_DSOUND8);
+    }
+    else if(ArgExists("-winmm"))
+    {   // Windows Multimedia.
+        ok = S_InitDriver(AUDIOD_WINMM);
+    }
+#endif
+    else
+    {   // The default audio driver, sdl_mixer.
+        ok = S_InitDriver(AUDIOD_SDL_MIXER);
+    }
+
+    // Did we succeed?
+    if(!ok)
+    {
+        Con_Message("S_Init: Driver init failed. Sound is disabled.\n");
+        return false;
+    }
 
     // Disable random pitch changes?
     noRndPitch = ArgExists("-noRndPitch");
@@ -121,6 +215,10 @@ void S_Shutdown(void)
 {
     Sfx_Shutdown();
     Mus_Shutdown();
+
+    // Finally, close the audio driver.
+    Sys_ShutdownAudioDriver();
+    audioDriver = NULL;
 }
 
 /**

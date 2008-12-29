@@ -29,6 +29,17 @@
 #ifndef __DOOMSDAY_AUDIO_DRIVER_H__
 #define __DOOMSDAY_AUDIO_DRIVER_H__
 
+typedef enum {
+    AUDIOD_DUMMY,
+    AUDIOD_SDL_MIXER,
+    AUDIOD_OPENAL,
+#ifdef WIN32
+    AUDIOD_DSOUND8,
+    AUDIOD_WINMM,
+    AUDIOD_DSOUND,
+#endif
+} audiodriver_e;
+
 typedef struct audiodriver_s {
     int             (*Init) (void);
     void            (*Shutdown) (void);

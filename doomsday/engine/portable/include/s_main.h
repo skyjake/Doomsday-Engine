@@ -32,6 +32,7 @@
 #include "con_decl.h"
 #include "p_object.h"
 #include "def_main.h"
+#include "sys_audiod.h"
 
 #define SF_RANDOM_SHIFT     0x1    // Random frequency shift.
 #define SF_RANDOM_SHIFT2    0x2    // 2x bigger random frequency shift.
@@ -44,6 +45,8 @@ extern int      showSoundInfo;
 extern int      soundMinDist, soundMaxDist;
 extern int      sfxVolume, musVolume;
 
+extern audiodriver_t* audioDriver;
+
 void            S_Register(void);
 boolean         S_Init(void);
 void            S_Shutdown(void);
@@ -51,23 +54,23 @@ void            S_MapChange(void);
 void            S_Reset(void);
 void            S_StartFrame(void);
 void            S_EndFrame(void);
-sfxinfo_t      *S_GetSoundInfo(int sound_id, float *freq, float *volume);
-mobj_t         *S_GetListenerMobj(void);
-int             S_LocalSoundAtVolumeFrom(int sound_id, mobj_t *origin,
-                                         float *fixedpos, float volume);
-int             S_LocalSoundAtVolume(int sound_id, mobj_t *origin,
+sfxinfo_t*      S_GetSoundInfo(int sound_id, float* freq, float* volume);
+mobj_t*         S_GetListenerMobj(void);
+int             S_LocalSoundAtVolumeFrom(int sound_id, mobj_t* origin,
+                                         float* fixedpos, float volume);
+int             S_LocalSoundAtVolume(int sound_id, mobj_t* origin,
                                      float volume);
-int             S_LocalSound(int sound_id, mobj_t *origin);
-int             S_LocalSoundFrom(int sound_id, float *fixedpos);
-int             S_StartSound(int soundId, mobj_t *origin);
-int             S_StartSoundEx(int soundId, mobj_t *origin);
-int             S_StartSoundAtVolume(int sound_id, mobj_t *origin,
+int             S_LocalSound(int sound_id, mobj_t* origin);
+int             S_LocalSoundFrom(int sound_id, float* fixedpos);
+int             S_StartSound(int soundId, mobj_t* origin);
+int             S_StartSoundEx(int soundId, mobj_t* origin);
+int             S_StartSoundAtVolume(int sound_id, mobj_t* origin,
                                      float volume);
-int             S_ConsoleSound(int sound_id, mobj_t *origin,
+int             S_ConsoleSound(int sound_id, mobj_t* origin,
                                int target_console);
-void            S_StopSound(int sound_id, mobj_t *origin);
-int             S_IsPlaying(int sound_id, mobj_t *emitter);
-int             S_StartMusic(char *musicid, boolean looped);
+void            S_StopSound(int sound_id, mobj_t* origin);
+int             S_IsPlaying(int sound_id, mobj_t* emitter);
+int             S_StartMusic(char* musicid, boolean looped);
 void            S_StopMusic(void);
 void            S_Drawer(void);
 

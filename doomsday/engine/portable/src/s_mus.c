@@ -116,13 +116,31 @@ boolean Mus_Init(void)
 {
     unsigned int        i;
 
-    if(isDedicated || musAvail || ArgExists("-nomusic"))
+    if(musAvail)
+        return true; // Already initialized.
+
+    if(isDedicated || ArgExists("-nomusic"))
         return true;
 
     // Use the external music playback facilities, if available.
-    iMus = (audiodExternalIMus.gen.Init ? &audiodExternalIMus : 0);
-    iExt = (audiodExternalIExt.gen.Init ? &audiodExternalIExt : 0);
-    iCD  = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
+    if(audioDriver == &audiod_dummy)
+    {
+        iMus = NULL;
+        iExt = NULL;
+        iCD  = NULL;
+    }
+    else if(audioDriver == &audiod_sdlmixer)
+    {
+        iMus = (audiointerface_mus_t*) &audiod_sdlmixer_mus;
+        iExt = (audiointerface_ext_t*) &audiod_sdlmixer_ext;
+        iCD  = NULL;
+    }
+    else
+    {
+        iMus = (audiodExternalIMus.gen.Init ? &audiodExternalIMus : 0);
+        iExt = (audiodExternalIExt.gen.Init ? &audiodExternalIExt : 0);
+        iCD  = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
+    }
 
     // Initialize the chosen interfaces.
     for(i = 0; i < NUM_INTERFACES; ++i)

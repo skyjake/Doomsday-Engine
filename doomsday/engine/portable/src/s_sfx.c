@@ -80,11 +80,8 @@ int sfxSampleRate = 11025;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-
-static audiodriver_t* audioDriver = NULL;
-
 // The interfaces.
-static audiointerface_sfx_generic_t* iSFX;
+static audiointerface_sfx_generic_t* iSFX = NULL;
 
 static int numChannels = 0;
 static sfxchannel_t* channels;
@@ -948,70 +945,6 @@ void Sfx_EndFrame(void)
 }
 
 /**
- * Initializes the sfx audioDriver interface.
- *
- * @return              @c true, if successful.
- */
-boolean Sfx_InitDriver(sfxdriver_e drvid)
-{
-    Con_Printf("  Driver: ");
-
-    switch(drvid)
-    {
-    case SFXD_DUMMY:
-        Con_Printf("Dummy\n");
-        audioDriver = &audiod_dummy;
-        iSFX = (audiointerface_sfx_generic_t*) &audiod_dummy_sfx;
-        break;
-
-    case SFXD_SDL_MIXER:
-        Con_Printf("SDLMixer\n");
-        audioDriver = &audiod_sdlmixer;
-        iSFX = (audiointerface_sfx_generic_t*) &audiod_sdlmixer_sfx;
-        break;
-
-    case SFXD_OPENAL:
-        Con_Printf("OpenAL\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("openal")))
-            return false;
-        break;
-
-#ifdef WIN32
-    case SFXD_DSOUND:
-        Con_Printf("DirectSound\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("directsound")))
-            return false;
-        break;
-
-    case SFXD_DSOUND8:
-        Con_Printf("DirectSound8\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("ds8")))
-            return false;
-        break;
-
-    case SFXD_WINMM:
-        Con_Printf("WinMM\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("winmm")))
-            return false;
-        break;
-#endif
-
-    default:
-        Con_Error("Sfx_Driver: Unknown audioDriver type %i.\n", drvid);
-    }
-
-    if(!(drvid == SFXD_DUMMY || drvid == SFXD_SDL_MIXER))
-    {
-        // Use the external SFX playback facilities, if available.
-        iSFX = (audiodExternalISFX.gen.Init ?
-            (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
-    }
-
-    // Initialize the audioDriver.
-    return audioDriver->Init();
-}
-
-/**
  * Creates the buffers for the channels.
  *
  * @param num2D         Number of 2D the rest will be 3D.
@@ -1116,8 +1049,6 @@ void Sfx_StartRefresh(void)
  */
 boolean Sfx_Init(void)
 {
-    boolean             ok;
-
     if(sfxAvail)
         return true; // Already initialized.
 
@@ -1130,40 +1061,19 @@ boolean Sfx_Init(void)
 
     Con_Message("Sfx_Init: Initializing...\n");
 
-    // First let's set up the drivers. First we much choose which one we
-    // want to use.
-    if(isDedicated || ArgExists("-dummy"))
+    // Use the external SFX playback facilities, if available.
+    if(audioDriver == &audiod_dummy)
     {
-        ok = Sfx_InitDriver(SFXD_DUMMY);
+        iSFX = (audiointerface_sfx_generic_t*) &audiod_dummy_sfx;
     }
-    else if(ArgExists("-oal"))
+    else if(audioDriver == &audiod_sdlmixer)
     {
-        ok = Sfx_InitDriver(SFXD_OPENAL);
+        iSFX = (audiointerface_sfx_generic_t*) &audiod_sdlmixer_sfx;
     }
-#ifdef WIN32
-    else if(ArgExists("-dsound"))
-    {   // DirectSound with 3D sound support, EAX effects.
-        ok = Sfx_InitDriver(SFXD_DSOUND);
-    }
-    else if(ArgExists("-ds8"))
-    {   // DirectSound 8 with 3D sound support, EAX effects.
-        ok = Sfx_InitDriver(SFXD_DSOUND8);
-    }
-    else if(ArgExists("-winmm"))
-    {   // Windows Multimedia sound audioDriver.
-        ok = Sfx_InitDriver(SFXD_WINMM);
-    }
-#endif
     else
-    {   // The default audioDriver.
-        ok = Sfx_InitDriver(SFXD_SDL_MIXER);
-    }
-
-    // Did we succeed?
-    if(!ok)
     {
-        Con_Message("Sfx_Init: Driver init failed. Sfx is disabled.\n");
-        return false;
+        iSFX = (audiodExternalISFX.gen.Init ?
+            (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
     }
 
     // This is based on the scientific calculations that if the DOOM marine
@@ -1205,10 +1115,6 @@ void Sfx_Shutdown(void)
 
     // Destroy channels.
     Sfx_ShutdownChannels();
-
-    // Finally, close the audio driver.
-    Sys_ShutdownAudioDriver();
-    audioDriver = NULL;
 }
 
 /**
