@@ -75,7 +75,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib sdl_mixer.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
 				OutputFile="./Bin/Release/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="1"
@@ -178,7 +178,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="dxguid.lib dxerr.lib dinput8.lib dsound.lib opengl32.lib glu32.lib comctl32.lib curllib.lib sdl_net.lib sdl.lib sdl_mixer.lib zlib1.lib libpng13.lib lzss.lib wsock32.lib winmm.lib"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -414,10 +414,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\Doomsday.def"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\edit_bias.c"
 				>
 			</File>
@@ -507,6 +503,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\m_misc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\m_mus2midi.c"
 				>
 			</File>
 			<File
@@ -842,6 +842,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\sys_sfxd_sdlmixer.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\sys_sock.c"
 				>
 			</File>
@@ -877,10 +881,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\engine\win32\src\sys_cdaudio.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\engine\win32\src\sys_console.c"
 					>
 				</File>
@@ -894,32 +894,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\engine\win32\src\sys_mixer.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\win32\src\sys_musd_win.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\win32\src\sys_sfxd_ds.c"
 					>
 				</File>
 				<File
@@ -951,6 +925,26 @@
 						>
 						<Tool
 							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\mac\src\qt.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
 						/>
 					</FileConfiguration>
 				</File>
@@ -1176,30 +1170,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\engine\unix\src\sys_sfxd_loader.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\unix\src\sys_stwin.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1597,6 +1567,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\m_mus2midi.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\m_nodepile.h"
 				>
 			</File>
@@ -1893,6 +1867,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\sys_audiod.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod_sfx.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\sys_console.h"
 				>
 			</File>
@@ -1921,15 +1907,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\sys_musd.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sys_network.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\sys_sfxd.h"
 				>
 			</File>
 			<File
@@ -1938,6 +1916,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_sfxd_loader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_sfxd_sdlmixer.h"
 				>
 			</File>
 			<File
@@ -1985,18 +1967,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\engine\win32\include\resource.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\win32\include\sys_cdaudio.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\win32\include\sys_musd_win.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\win32\include\sys_sfxd_ds.h"
 					>
 				</File>
 			</Filter>
@@ -2178,6 +2148,10 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\..\engine\api\doomsday.def"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

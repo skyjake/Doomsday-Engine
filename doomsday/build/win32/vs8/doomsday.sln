@@ -23,11 +23,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsOpenAL", "dsopenal.vcproj
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsSDLMixer", "dssdlmixer.vcproj", "{C9C45D56-D51C-45C7-8509-020DE447638B}"
-	ProjectSection(ProjectDependencies) = postProject
-		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jDoom64", "jdoom64.vcproj", "{CA7A0565-5F80-4E69-A3C2-12B81FC35768}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpExample", "dpexample.vcproj", "{DC664B00-A393-4B3C-A847-C192E29D053E}"
@@ -41,6 +36,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpWadMapConverter", "dpwadm
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpMapCreator", "dpmapcreator.vcproj", "{6FC5ABB6-4896-4B5D-856F-877C280EBC89}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsWinMM", "dswinmm.vcproj", "{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,12 +91,6 @@ Global
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Mesa Release|Win32.Build.0 = Release|Win32
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Release|Win32.ActiveCfg = Release|Win32
 		{0324DC98-86C1-40F5-B3B0-35A057F6173C}.Release|Win32.Build.0 = Release|Win32
-		{C9C45D56-D51C-45C7-8509-020DE447638B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C9C45D56-D51C-45C7-8509-020DE447638B}.Debug|Win32.Build.0 = Debug|Win32
-		{C9C45D56-D51C-45C7-8509-020DE447638B}.Mesa Release|Win32.ActiveCfg = Release|Win32
-		{C9C45D56-D51C-45C7-8509-020DE447638B}.Mesa Release|Win32.Build.0 = Release|Win32
-		{C9C45D56-D51C-45C7-8509-020DE447638B}.Release|Win32.ActiveCfg = Release|Win32
-		{C9C45D56-D51C-45C7-8509-020DE447638B}.Release|Win32.Build.0 = Release|Win32
 		{CA7A0565-5F80-4E69-A3C2-12B81FC35768}.Debug|Win32.ActiveCfg = Debug|Win32
 		{CA7A0565-5F80-4E69-A3C2-12B81FC35768}.Debug|Win32.Build.0 = Debug|Win32
 		{CA7A0565-5F80-4E69-A3C2-12B81FC35768}.Mesa Release|Win32.ActiveCfg = Release|Win32
