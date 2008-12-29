@@ -31,6 +31,6 @@
 
 #include "sys_audiod.h"
 
-audiodriver_t*        Sys_LoadAudioDriver(const char* name);
-
+audiodriver_t*      Sys_LoadAudioDriver(const char* name);
+void                Sys_ShutdownAudioDriver(void);
 #endif

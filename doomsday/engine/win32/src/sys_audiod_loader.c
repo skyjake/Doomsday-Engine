@@ -155,8 +155,6 @@ static audiodriver_t* importExternal(void)
         i->Play = Imp("DM_CDAudio_Play");
     }
 
-    // We should release the lib at shutdown.
-    d->Shutdown = Sys_ShutdownAudioDriver;
     return d;
 }
 
@@ -164,9 +162,9 @@ static audiodriver_t* importExternal(void)
  * Attempt to load the specified audio driver, import the entry points and
  * add to the available audio drivers.
  *
- * @param name              Name of the driver to be loaded e.g., "openal".
- * @return                  Ptr to the audio driver interface if successful,
- *                          else @c NULL.
+ * @param name          Name of the driver to be loaded e.g., "openal".
+ * @return              Ptr to the audio driver interface if successful,
+ *                      else @c NULL.
  */
 audiodriver_t* Sys_LoadAudioDriver(const char* name)
 {

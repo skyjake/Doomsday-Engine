@@ -75,7 +75,9 @@ static void* Imp(const char* fn)
 
 void Sys_ShutdownAudioDriver(void)
 {
-    driverShutdown();
+    audiodriver_t*        d = &audiodExternal;
+
+    d->Shutdown();
     lt_dlclose(handle);
     handle = NULL;
 }
@@ -142,8 +144,6 @@ static audiodriver_t* importExternal(void)
         i->SongBuffer = Imp("DM_Ext_SongBuffer");
     }
 
-    // We should release the lib at shutdown.
-    d->Shutdown = Sys_ShutdownAudioDriver;
     return d;
 }
 
@@ -151,13 +151,13 @@ static audiodriver_t* importExternal(void)
  * Attempt to load the specified audio driver, import the entry points and
  * add to the available audio drivers.
  *
- * @param name              Name of the driver to be loaded e.g., "openal".
- * @return                  Ptr to the audio driver interface if successful,
- *                          else @c NULL.
+ * @param name          Name of the driver to be loaded e.g., "openal".
+ * @return              Ptr to the audio driver interface if successful,
+ *                      else @c NULL.
  */
 audiodriver_t* Sys_LoadAudioDriver(const char* name)
 {
-    filename_t              fn;
+    filename_t          fn;
 
 #ifdef MACOSX
     sprintf(fn, "ds%s.bundle", name);

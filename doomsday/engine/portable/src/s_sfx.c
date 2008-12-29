@@ -81,7 +81,7 @@ int sfxSampleRate = 11025;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 
-static audiodriver_t* sfxDriver = NULL;
+static audiodriver_t* audioDriver = NULL;
 
 // The interfaces.
 static audiointerface_sfx_generic_t* iSFX;
@@ -101,7 +101,7 @@ static byte refMonitor = 0;
 /**
  * This is a high-priority thread that periodically checks if the channels
  * need to be updated with more data. The thread terminates when it notices
- * that the channels have been destroyed. The Sfx sfxDriver maintains a 250ms
+ * that the channels have been destroyed. The Sfx audioDriver maintains a 250ms
  * buffer for each channel, which means the refresh must be done often
  * enough to keep them filled.
  *
@@ -827,7 +827,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
 
     /**
      * Load in the sample. Must load prior to setting properties, because
-     * the sfxDriver might actually create the real buffer only upon loading.
+     * the audioDriver might actually create the real buffer only upon loading.
      */
     iSFX->Load(selCh->buffer, sample);
 
@@ -902,8 +902,8 @@ void Sfx_StartFrame(void)
     if(!sfxAvail)
         return;
 
-    // Tell the sfxDriver that the sound frame begins.
-    sfxDriver->Event(SFXEV_BEGIN);
+    // Tell the audioDriver that the sound frame begins.
+    audioDriver->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
     if(old3DMode != sfx3D)
@@ -944,11 +944,11 @@ void Sfx_EndFrame(void)
         return;
 
     // The sound frame ends.
-    sfxDriver->Event(SFXEV_END);
+    audioDriver->Event(SFXEV_END);
 }
 
 /**
- * Initializes the sfx sfxDriver interface.
+ * Initializes the sfx audioDriver interface.
  *
  * @return              @c true, if successful.
  */
@@ -960,44 +960,44 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
     {
     case SFXD_DUMMY:
         Con_Printf("Dummy\n");
-        sfxDriver = &audiod_dummy;
+        audioDriver = &audiod_dummy;
         iSFX = (audiointerface_sfx_generic_t*) &audiod_dummy_sfx;
         break;
 
     case SFXD_SDL_MIXER:
         Con_Printf("SDLMixer\n");
-        sfxDriver = &audiod_sdlmixer;
+        audioDriver = &audiod_sdlmixer;
         iSFX = (audiointerface_sfx_generic_t*) &audiod_sdlmixer_sfx;
         break;
 
     case SFXD_OPENAL:
         Con_Printf("OpenAL\n");
-        if(!(sfxDriver = Sys_LoadAudioDriver("openal")))
+        if(!(audioDriver = Sys_LoadAudioDriver("openal")))
             return false;
         break;
 
 #ifdef WIN32
     case SFXD_DSOUND:
         Con_Printf("DirectSound\n");
-        if(!(sfxDriver = Sys_LoadAudioDriver("directsound")))
+        if(!(audioDriver = Sys_LoadAudioDriver("directsound")))
             return false;
         break;
 
     case SFXD_DSOUND8:
         Con_Printf("DirectSound8\n");
-        if(!(sfxDriver = Sys_LoadAudioDriver("ds8")))
+        if(!(audioDriver = Sys_LoadAudioDriver("ds8")))
             return false;
         break;
 
     case SFXD_WINMM:
         Con_Printf("WinMM\n");
-        if(!(sfxDriver = Sys_LoadAudioDriver("winmm")))
+        if(!(audioDriver = Sys_LoadAudioDriver("winmm")))
             return false;
         break;
 #endif
 
     default:
-        Con_Error("Sfx_Driver: Unknown sfxDriver type %i.\n", drvid);
+        Con_Error("Sfx_Driver: Unknown audioDriver type %i.\n", drvid);
     }
 
     if(!(drvid == SFXD_DUMMY || drvid == SFXD_SDL_MIXER))
@@ -1007,8 +1007,8 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
             (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
     }
 
-    // Initialize the sfxDriver.
-    return sfxDriver->Init();
+    // Initialize the audioDriver.
+    return audioDriver->Init();
 }
 
 /**
@@ -1150,12 +1150,12 @@ boolean Sfx_Init(void)
         ok = Sfx_InitDriver(SFXD_DSOUND8);
     }
     else if(ArgExists("-winmm"))
-    {   // Windows Multimedia sound sfxDriver.
+    {   // Windows Multimedia sound audioDriver.
         ok = Sfx_InitDriver(SFXD_WINMM);
     }
 #endif
     else
-    {   // The default sfxDriver.
+    {   // The default audioDriver.
         ok = Sfx_InitDriver(SFXD_SDL_MIXER);
     }
 
@@ -1172,7 +1172,7 @@ boolean Sfx_Init(void)
     iSFX->Listener(SFXLP_UNITS_PER_METER, 30);
     iSFX->Listener(SFXLP_DOPPLER, 1);
 
-    // The sfxDriver is working, let's create the channels.
+    // The audioDriver is working, let's create the channels.
     Sfx_InitChannels();
 
     // Init the sample cache.
@@ -1206,9 +1206,9 @@ void Sfx_Shutdown(void)
     // Destroy channels.
     Sfx_ShutdownChannels();
 
-    // Finally, close the sfxDriver.
-    sfxDriver->Shutdown();
-    sfxDriver = NULL;
+    // Finally, close the audio driver.
+    Sys_ShutdownAudioDriver();
+    audioDriver = NULL;
 }
 
 /**
