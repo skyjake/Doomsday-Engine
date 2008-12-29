@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_sfxd_dummy.c: Dummy Audio Driver.
+ * sys_audiod_dummy.h.c: Dummy Audio Driver.
  *
  * Used in dedicated server mode, when it's necessary to simulate
  * sound playing but not actually play anything.

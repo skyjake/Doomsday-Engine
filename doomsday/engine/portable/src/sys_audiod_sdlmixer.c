@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_sfxd_sdlmixer.h: SDL_mixer, for SFX, Ext and Mus interfaces.
+ * sys_audiod_sdlmixer.h.h: SDL_mixer, for SFX, Ext and Mus interfaces.
  */
 
 // HEADER FILES ------------------------------------------------------------

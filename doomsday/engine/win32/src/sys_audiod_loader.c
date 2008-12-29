@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_sfxd_loader.c: Sound Driver DLL Loader (Win32)
+ * sys_audiod_loader.h.c: Sound Driver DLL Loader (Win32)
  *
  * Loader for ds*.dll
  */

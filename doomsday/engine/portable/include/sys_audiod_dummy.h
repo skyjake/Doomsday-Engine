@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_sfxd_dummy.h: Dummy Music Driver.
+ * sys_audiod_dummy.h.h: Dummy Music Driver.
  *
  * Used in dedicated server mode.
  */

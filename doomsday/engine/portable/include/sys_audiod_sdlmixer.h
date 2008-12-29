@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_sfxd_sdlmixer.h: Default Audio Driver.
+ * sys_audiod_sdlmixer.h.h: Default Audio Driver.
  *
  * Uses SDL_mixer, for SFX, Ext and Mus interfaces.
  */

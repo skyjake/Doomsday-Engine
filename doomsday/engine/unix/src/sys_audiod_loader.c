@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_sfxd_loader.c: Loader for ds*.so
+ * sys_audiod_loader.h.c: Loader for ds*.so
  */
 
 // HEADER FILES ------------------------------------------------------------

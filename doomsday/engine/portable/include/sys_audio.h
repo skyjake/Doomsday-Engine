@@ -37,8 +37,8 @@
 #include "sys_audiod_sfx.h"
 #include "sys_audiod_mus.h"
 
-#include "sys_sfxd_loader.h"
-#include "sys_sfxd_dummy.h"
-#include "sys_sfxd_sdlmixer.h"
+#include "sys_audiod_loader.h"
+#include "sys_audiod_dummy.h"
+#include "sys_audiod_sdlmixer.h"
 
 #endif

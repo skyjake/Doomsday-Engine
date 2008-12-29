@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_sfxd_loader.h: Audio Driver, Loader.
+ * sys_audiod_loader.h.h: Audio Driver, Loader.
  */
 
 #ifndef __DOOMSDAY_SYSTEM_AUDIO_LOADER_H__
