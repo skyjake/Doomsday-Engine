@@ -108,7 +108,7 @@ static audiodriver_t* importExternal(void)
         i->gen.Init = Imp("DS_SFX_Init");
         i->gen.Create = Imp("DS_SFX_CreateBuffer");
         i->gen.Destroy = Imp("DS_SFX_DestroyBuffer");
-        i->gen.Load = Imp("Sys_LoadAudioDriver");
+        i->gen.Load = Imp("DS_SFX_Load");
         i->gen.Reset = Imp("DS_SFX_Reset");
         i->gen.Play = Imp("DS_SFX_Play");
         i->gen.Stop = Imp("DS_SFX_Stop");
