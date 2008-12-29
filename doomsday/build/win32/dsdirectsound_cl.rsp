@@ -1,2 +1,2 @@
- ./../../plugins/ds6/src/driver_sndcmp.cpp
+ ./../../plugins/directsound/src/driver_directsound.cpp
  
