@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dssdlmixer dsdirectsound jdoom jheretic jhexen jdoom64
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dswinmm dsdirectsound jdoom jheretic jhexen jdoom64
 GOTO Done
 
 
@@ -168,7 +168,7 @@ GOTO DONE
 :Doomsday
 CALL vcbuild.bat checkdmt
 ECHO Compiling Doomsday.exe (Engine)...
-cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% /I "%GL_INC%" %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_LIBCURL% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% %EXTERNAL%/libpng/win32/libpng13.lib %EXTERNAL%/zlib/win32/zlib1.lib %EXTERNAL%/lzss/win32/lzss.lib %EXTERNAL%/libcurl/win32/curllib.lib sdl_net.lib sdl.lib wsock32.lib dinput8.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib opengl32.lib glu32.lib kernel32.lib gdi32.lib ole32.lib user32.lib
+cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% /I "%GL_INC%" "%SDLMIXER_INC%" %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_LIBCURL% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% %EXTERNAL%/libpng/win32/libpng13.lib %EXTERNAL%/zlib/win32/zlib1.lib %EXTERNAL%/lzss/win32/lzss.lib %EXTERNAL%/libcurl/win32/curllib.lib sdl_net.lib sdl.lib SDL_mixer.lib wsock32.lib dinput8.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib opengl32.lib glu32.lib kernel32.lib gdi32.lib ole32.lib user32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -200,11 +200,11 @@ IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
 
-:: *** dsSDLMixer.dll
-:dsSDLMixer
-ECHO Compiling dsSDLMixer.dll (SDL Sound Mixing driver)...
-md %OBJ_DIR%\dsSDLMixer
-cl /O2 /Ob1 %INCS% /I "./../../plugins/sdlmixer/portable/include" /I "%SDLMIXER_INC%" %DLLDEFINES% /D "DSSDLMIXER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsSDLMixer/" /Fd"./%OBJ_DIR%/dsSDLMixer/" /W3 /Gd  @dssdlmixer_cl.rsp  /link /OUT:"./%BIN_DIR%/dsSDLMixer.dll" %LFLAGS% /DLL /DEF:"./../../plugins/sdlmixer/api/dssdlmixer.def" /IMPLIB:"./%BIN_DIR%/dsSDLMixer.lib" %LIBS% /LIBPATH:"%SDLMIXER_LIB%" SDL_mixer.lib sdl.lib ./%BIN_DIR%/doomsday.lib
+:: *** dsWinMM.dll
+:dsWinMM
+ECHO Compiling dsWinMM.dll (Windows Multimedia Mixing driver)...
+md %OBJ_DIR%\dswinmm
+cl /O2 /Ob1 %INCS% /I "./../../plugins/winmm/include" /I "%WINMM_INC%" %DLLDEFINES% /D "DSWINMM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dswinmm/" /Fd"./%OBJ_DIR%/dswinmm/" /W3 /Gd  @dswinmm_cl.rsp  /link /OUT:"./%BIN_DIR%/dswinmm.dll" %LFLAGS% /DLL /DEF:"./../../plugins/winmm/api/dswinmm.def" /IMPLIB:"./%BIN_DIR%/dswinmm.lib" %LIBS% /LIBPATH: winmm.lib ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

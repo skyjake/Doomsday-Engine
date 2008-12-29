@@ -8,12 +8,13 @@
  ./../../engine/portable/src/m_vector.c
  ./../../engine/portable/src/m_string.c
  ./../../engine/portable/src/m_nodepile.c
- ./../../engine/portable/src/m_gridmap.c
- ./../../engine/portable/src/m_misc.c
- ./../../engine/portable/src/m_md5.c
- ./../../engine/portable/src/m_huffman.c
- ./../../plugins/common/src/m_fixed.c
  ./../../engine/portable/src/m_filehash.c
+ ./../../plugins/common/src/m_fixed.c
+ ./../../engine/portable/src/m_gridmap.c
+ ./../../engine/portable/src/m_huffman.c
+ ./../../engine/portable/src/m_md5.c
+ ./../../engine/portable/src/m_misc.c
+ ./../../engine/portable/src/m_mus2midi.c
  ./../../engine/portable/src/m_bams.c
  ./../../engine/portable/src/m_decomp64.c
  ./../../engine/portable/src/m_args.c
@@ -119,10 +120,7 @@
  ./../../engine/portable/src/net_buf.c
  ./../../engine/win32/src/sys_sfxd_loader.c
  ./../../engine/portable/src/sys_sfxd_dummy.c
- ./../../engine/win32/src/sys_sfxd_ds.c
- ./../../engine/win32/src/sys_musd_win.c
- ./../../engine/win32/src/sys_musd_win.c
- ./../../engine/win32/src/sys_cdaudio.c
+ ./../../engine/portable/src/sys_sfxd_sdlmixer.c
  ./../../engine/portable/src/sys_timer.c
  ./../../engine/portable/src/sys_system.c
  ./../../engine/portable/src/sys_sock.c

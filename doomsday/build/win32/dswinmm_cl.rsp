@@ -1,0 +1,3 @@
+ ./../../plugins/winmm/src/winmm_cdaudio.c
+ ./../../plugins/winmm/src/winmm_mus.c
+ 
