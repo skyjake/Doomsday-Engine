@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_sfxd.h: Audio driver - SFX interface.
+ * sys_audiod_sfx.h: Audio driver - SFX interface.
  */
 
 #ifndef __DOOMSDAY_AUDIO_DRIVER_SFX_H__

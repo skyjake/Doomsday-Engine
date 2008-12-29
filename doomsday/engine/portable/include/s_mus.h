@@ -30,7 +30,7 @@
 #define __DOOMSDAY_SOUND_MUSIC_H__
 
 #include "con_decl.h"
-#include "sys_musd.h"
+#include "sys_audiod_mus.h"
 
 // Music preference. If multiple resources are available, this setting
 // is used to determine which one to use (mus < ext < cd).

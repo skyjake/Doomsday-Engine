@@ -29,6 +29,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#if WIN32
+# include <math.h> // for sqrt()
+#endif
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -61,25 +65,14 @@ D_CMD(StopMusic);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-#ifdef WIN32
-// Music playback functions exported from a sound driver plugin.
-extern musdriver_t musdExternal;
+// Music playback interfaces loaded from a sound driver plugin.
 extern musinterface_mus_t musdExternalIMus;
 extern musinterface_ext_t musdExternalIExt;
 extern musinterface_cd_t musdExternalICD;
-#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int musPreference = MUSP_EXT;
-
-#ifdef UNIX
-// On Unix, all sound and music interfaces are loaded dynamically.
-musdriver_t musdLoaded;
-musinterface_mus_t musdLoadedIMus;
-musinterface_ext_t musdLoadedIExt;
-musinterface_cd_t musdLoadedICD;
-#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -126,55 +119,10 @@ boolean Mus_Init(void)
     if(isDedicated || musAvail || ArgExists("-nomusic"))
         return true;
 
-#ifdef WIN32
     // Use the external music playback facilities, if available.
-    if(musdExternal.Init)
-        musdExternal.Init();
-
-    if(musdExternalIMus.gen.Init)
-    {
-        iMus = &musdExternalIMus;
-    }
-
-    if(musdExternalIExt.gen.Init)
-    {
-        iExt = &musdExternalIExt;
-    }
-
-    if(musdExternalICD.gen.Init)
-    {
-        iCD = &musdExternalICD;
-    }
-
-    // The Win driver is our fallback option.
-    if(!iMus)
-    {
-        if(musd_win.Init())
-        {
-            // Use Win's Mus interface.
-            iMus = &musd_win_imus;
-        }
-        else
-        {
-            Con_Message("Mus_Init: Failed to initialize Win driver.\n");
-        }
-    }
-
-    if(!iCD)
-    {
-        // Must rely on Windows without an Ext interface.
-        iCD = &musd_win_icd;
-    }
-#endif
-#ifdef UNIX
-    // The available interfaces have already been loaded.
-    if(musdLoaded.Init && musdLoaded.Init())
-    {
-        iMus = (musdLoadedIMus.gen.Init ? &musdLoadedIMus : 0);
-        iExt = (musdLoadedIExt.gen.Init ? &musdLoadedIExt : 0);
-        iCD = (musdLoadedICD.gen.Init ? &musdLoadedICD : 0);
-    }
-#endif
+    iMus = (musdExternalIMus.gen.Init ? &musdExternalIMus : 0);
+    iExt = (musdExternalIExt.gen.Init ? &musdExternalIExt : 0);
+    iCD  = (musdExternalICD.gen.Init  ? &musdExternalICD  : 0);
 
     // Initialize the chosen interfaces.
     for(i = 0; i < NUM_INTERFACES; ++i)
@@ -221,14 +169,6 @@ void Mus_Shutdown(void)
 
     musAvail = false;
 
-    // Shut down the drivers. They shut down their interfaces automatically.
-#ifdef WIN32
-    musd_win.Shutdown();
-#endif
-#ifdef UNIX
-    if (musdLoaded.Shutdown) musdLoaded.Shutdown();
-#endif
-
     // No more interfaces.
     iMus = 0;
     iExt = 0;
@@ -258,6 +198,22 @@ void Mus_StartFrame(void)
  */
 void Mus_SetVolume(float vol)
 {
+#if WIN32
+    int                 val;
+
+    if(!musAvail)
+        return;
+
+    // Under Win32 we need to do this via the mixer.
+    val = MINMAX_OF(0, (byte) (vol * 255 + .5f), 255);
+
+    // Straighten the volume curve.
+    val <<= 8; // Make it a word.
+    val = (int) (255.9980469 * sqrt(vol));
+
+    Sys_Mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, val);
+    Sys_Mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, val);
+#else
     unsigned int        i;
 
     if(!musAvail)
@@ -269,6 +225,7 @@ void Mus_SetVolume(float vol)
         if(*interfaces[i].ip)
             (*interfaces[i].ip)->Set(MUSIP_VOLUME, vol);
     }
+#endif
 }
 
 /**
@@ -311,12 +268,25 @@ void Mus_Stop(void)
  */
 boolean Mus_IsMUSLump(int lump)
 {
-    char                buf[8];
+    char                buf[4];
 
     W_ReadLumpSection(lump, buf, 0, 4);
 
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
     return !strncmp(buf, "MUS\x01a", 4);
+}
+
+/**
+ * @return:             @c true, if the specified lump contains a MIDI song.
+ */
+boolean Mus_IsMIDILump(int lump)
+{
+    char                buf[4];
+
+    W_ReadLumpSection(lump, buf, 0, 4);
+
+    // ASCII "MThd"
+    return !strncmp(buf, "MThd", 4);
 }
 
 /**
@@ -337,8 +307,8 @@ int Mus_GetMUS(ded_music_t* def)
     if(lump < 0)
         return false; // No such lump.
 
-    // Is this MUS data or what?
-    if(!Mus_IsMUSLump(lump))
+    // Is this MUS or MIDI data or what?
+    if(!(Mus_IsMUSLump(lump) || Mus_IsMIDILump(lump)))
         return false;
 
     ptr = iMus->SongBuffer(len = W_LumpLength(lump));

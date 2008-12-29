@@ -68,9 +68,12 @@ static MMRESULT res;
 static HMIXER mixer = NULL;
 static mixerdata_t mixCD, mixMidi;
 
+static int origVol; // The original MIDI volume.
+static int origCDVol; // The original CD-DA volume.
+
 // CODE --------------------------------------------------------------------
 
-void Sys_InitMixerLine(mixerdata_t *mix, DWORD type)
+void Sys_InitMixerLine(mixerdata_t* mix, DWORD type)
 {
     memset(mix, 0, sizeof(*mix));
     mix->line.cbStruct = sizeof(mix->line);
@@ -171,6 +174,11 @@ int Sys_InitMixer(void)
 
     // We're successful.
     initMixerOk = true;
+
+    // Get the original mixer volume settings (restored at shutdown).
+    origVol = Sys_Mixer3i(MIX_MIDI, MIX_GET, MIX_VOLUME);
+    origCDVol = Sys_Mixer3i(MIX_CDAUDIO, MIX_GET, MIX_VOLUME);
+
     return true;
 }
 
@@ -178,6 +186,11 @@ void Sys_ShutdownMixer(void)
 {
     if(!initMixerOk)
         return; // Can't uninitialize if not inited.
+
+    // Restore the original mixer volumes, if possible.
+    Sys_Mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, origVol);
+    if(origCDVol != MIX_ERROR)
+        Sys_Mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, origCDVol);
 
     mixerClose(mixer);
     mixer = NULL;

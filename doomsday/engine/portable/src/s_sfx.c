@@ -59,10 +59,13 @@ void            Sfx_SampleFormat(int newBits, int newRate);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+// SFX playback functions loaded from a sound driver plugin.
+extern audiodriver_t sfxdExternal;
+extern sfxinterface_sfx_t sfxdExternalISFX;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean sfxAvail = false;
-sfxdriver_t* driver = NULL;
 
 int sfxMaxChannels = 16;
 int sfxDedicated2D = 4;
@@ -76,6 +79,12 @@ int sfx16Bit = false;
 int sfxSampleRate = 11025;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+
+static audiodriver_t* sfxDriver = NULL;
+
+// The interfaces.
+static sfxinterface_generic_t* iSFX;
 
 static int numChannels = 0;
 static sfxchannel_t* channels;
@@ -92,7 +101,7 @@ static byte refMonitor = 0;
 /**
  * This is a high-priority thread that periodically checks if the channels
  * need to be updated with more data. The thread terminates when it notices
- * that the channels have been destroyed. The Sfx driver maintains a 250ms
+ * that the channels have been destroyed. The Sfx sfxDriver maintains a 250ms
  * buffer for each channel, which means the refresh must be done often
  * enough to keep them filled.
  *
@@ -118,7 +127,7 @@ int C_DECL Sfx_ChannelRefreshThread(void* parm)
                 if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING))
                     continue;
 
-                driver->Refresh(ch->buffer);
+                iSFX->Refresh(ch->buffer);
             }
 
             refreshing = false;
@@ -183,7 +192,7 @@ void Sfx_StopSoundGroup(int group, mobj_t* emitter)
             continue;
 
         // This channel must stop.
-        driver->Stop(ch->buffer);
+        iSFX->Stop(ch->buffer);
     }
 }
 
@@ -221,7 +230,7 @@ int Sfx_StopSound(int id, mobj_t* emitter)
         }
 
         // This channel must be stopped!
-        driver->Stop(ch->buffer);
+        iSFX->Stop(ch->buffer);
         ++stopCount;
     }
 
@@ -278,7 +287,7 @@ void Sfx_UnloadSoundID(int id)
             continue;
 
         // Stop and unload.
-        driver->Reset(ch->buffer);
+        iSFX->Reset(ch->buffer);
     }
 
     END_COP;
@@ -399,25 +408,25 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
     }
 
     // Frequency is common to both 2D and 3D sounds.
-    driver->Set(buf, SFXBP_FREQUENCY, ch->frequency);
+    iSFX->Set(buf, SFXBP_FREQUENCY, ch->frequency);
 
     if(buf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
-        driver->Set(buf, SFXBP_VOLUME, ch->volume * sfxVolume / 255.0f);
+        iSFX->Set(buf, SFXBP_VOLUME, ch->volume * sfxVolume / 255.0f);
         if(ch->emitter && ch->emitter == listener)
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
             vec[VX] = vec[VY] = vec[VZ] = 0;
-            driver->Set(buf, SFXBP_RELATIVE_MODE, true);
-            driver->Setv(buf, SFXBP_POSITION, vec);
+            iSFX->Set(buf, SFXBP_RELATIVE_MODE, true);
+            iSFX->Setv(buf, SFXBP_POSITION, vec);
         }
         else
         {
             // Use the channel's real position.
-            driver->Set(buf, SFXBP_RELATIVE_MODE, false);
-            driver->Setv(buf, SFXBP_POSITION, ch->pos);
+            iSFX->Set(buf, SFXBP_RELATIVE_MODE, false);
+            iSFX->Setv(buf, SFXBP_POSITION, ch->pos);
         }
 
         // If the sound is emitted by the listener, speed is zero.
@@ -427,13 +436,13 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             vec[VX] = ch->emitter->mom[MX] * TICSPERSEC;
             vec[VY] = ch->emitter->mom[MY] * TICSPERSEC;
             vec[VZ] = ch->emitter->mom[MZ] * TICSPERSEC;
-            driver->Setv(buf, SFXBP_VELOCITY, vec);
+            iSFX->Setv(buf, SFXBP_VELOCITY, vec);
         }
         else
         {
             // Not moving.
             vec[VX] = vec[VY] = vec[VZ] = 0;
-            driver->Setv(buf, SFXBP_VELOCITY, vec);
+            iSFX->Setv(buf, SFXBP_VELOCITY, vec);
         }
     }
     else
@@ -500,9 +509,9 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             }
         }
 
-        driver->Set(buf, SFXBP_VOLUME,
+        iSFX->Set(buf, SFXBP_VOLUME,
                     ch->volume * dist * sfxVolume / 255.0f);
-        driver->Set(buf, SFXBP_PAN, pan);
+        iSFX->Set(buf, SFXBP_PAN, pan);
     }
 }
 
@@ -522,20 +531,20 @@ void Sfx_ListenerUpdate(void)
     {
         // Position. At eye-level.
         Sfx_GetListenerXYZ(vec);
-        driver->Listenerv(SFXLP_POSITION, vec);
+        iSFX->Listenerv(SFXLP_POSITION, vec);
 
         // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
         vec[VX] = listener->angle / (float) ANGLE_MAX *360;
 
         vec[VY] =
             listener->dPlayer ? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0;
-        driver->Listenerv(SFXLP_ORIENTATION, vec);
+        iSFX->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
         vec[VX] = listener->mom[MX] * TICSPERSEC;
         vec[VY] = listener->mom[MY] * TICSPERSEC;
         vec[VZ] = listener->mom[MZ] * TICSPERSEC;
-        driver->Listenerv(SFXLP_VELOCITY, vec);
+        iSFX->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector changed?
         if(listenerSector != listener->subsector->sector)
@@ -549,12 +558,12 @@ void Sfx_ListenerUpdate(void)
                     vec[i] *= sfxReverbStrength;
             }
 
-            driver->Listenerv(SFXLP_REVERB, vec);
+            iSFX->Listenerv(SFXLP_REVERB, vec);
         }
     }
 
     // Update all listener properties.
-    driver->Listener(SFXLP_UPDATE, 0);
+    iSFX->Listener(SFXLP_UPDATE, 0);
 }
 
 void Sfx_ListenerNoReverb(void)
@@ -565,8 +574,8 @@ void Sfx_ListenerNoReverb(void)
         return;
 
     listenerSector = NULL;
-    driver->Listenerv(SFXLP_REVERB, rev);
-    driver->Listener(SFXLP_UPDATE, 0);
+    iSFX->Listenerv(SFXLP_REVERB, rev);
+    iSFX->Listener(SFXLP_UPDATE, 0);
 }
 
 /**
@@ -578,7 +587,7 @@ void Sfx_ChannelStop(sfxchannel_t* ch)
     if(!ch->buffer)
         return;
 
-    driver->Stop(ch->buffer);
+    iSFX->Stop(ch->buffer);
 }
 
 void Sfx_GetChannelPriorities(float* prios)
@@ -778,11 +787,11 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     if(selCh->buffer->rate != sample->rate ||
        selCh->buffer->bytes != sample->bytesPer)
     {
-        driver->Destroy(selCh->buffer);
+        iSFX->Destroy(selCh->buffer);
         // Create a new buffer with the correct format.
         selCh->buffer =
-            driver->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8,
-                           sample->rate);
+            iSFX->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8,
+                         sample->rate);
     }
 
     // Clear flags.
@@ -818,9 +827,9 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
 
     /**
      * Load in the sample. Must load prior to setting properties, because
-     * the driver might actually create the real buffer only upon loading.
+     * the sfxDriver might actually create the real buffer only upon loading.
      */
-    driver->Load(selCh->buffer, sample);
+    iSFX->Load(selCh->buffer, sample);
 
     // Update channel properties.
     Sfx_ChannelUpdate(selCh);
@@ -830,20 +839,20 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     {
         // Init the buffer's min/max distances.
         // This is only done once, when the sound is started (i.e. here).
-        driver->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
-                    (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
-                        soundMinDist);
+        iSFX->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
+                  (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
+                  soundMinDist);
 
-        driver->Set(selCh->buffer, SFXBP_MAX_DISTANCE,
-                    (selCh->flags & SFXCF_NO_ATTENUATION)? 20000 :
-                        soundMaxDist);
+        iSFX->Set(selCh->buffer, SFXBP_MAX_DISTANCE,
+                  (selCh->flags & SFXCF_NO_ATTENUATION)? 20000 :
+                  soundMaxDist);
     }
 
     // This'll commit all the deferred properties.
-    driver->Listener(SFXLP_UPDATE, 0);
+    iSFX->Listener(SFXLP_UPDATE, 0);
 
     // Start playing.
-    driver->Play(selCh->buffer);
+    iSFX->Play(selCh->buffer);
 
     END_COP;
 
@@ -893,8 +902,8 @@ void Sfx_StartFrame(void)
     if(!sfxAvail)
         return;
 
-    // Tell the driver that the sound frame begins.
-    driver->Event(SFXEV_BEGIN);
+    // Tell the sfxDriver that the sound frame begins.
+    sfxDriver->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
     if(old3DMode != sfx3D)
@@ -935,58 +944,71 @@ void Sfx_EndFrame(void)
         return;
 
     // The sound frame ends.
-    driver->Event(SFXEV_END);
+    sfxDriver->Event(SFXEV_END);
 }
 
 /**
- * Initializes the sfx driver interface.
+ * Initializes the sfx sfxDriver interface.
  *
  * @return              @c true, if successful.
  */
 boolean Sfx_InitDriver(sfxdriver_e drvid)
 {
+    Con_Printf("  Driver: ");
+
     switch(drvid)
     {
     case SFXD_DUMMY:
-        driver = &sfxd_dummy;
-        break;
-
-    case SFXD_OPENAL:
-        if(!(driver = DS_Load("openal")))
-            return false;
-        break;
-
-    case SFXD_COMPATIBLE:
-        if(!(driver = DS_Load("Compat")))
-            return false;
+        Con_Printf("Dummy\n");
+        sfxDriver = &sfxd_dummy;
+        iSFX = (sfxinterface_generic_t*) &sfxd_dummy_sfx;
         break;
 
     case SFXD_SDL_MIXER:
-#ifdef MACOSX
-        if(!(driver = DS_Load("SDLMixer")))
-#else
-        if(!(driver = DS_Load("sdlmixer")))
-#endif
-            return false;
+        Con_Printf("SDLMixer\n");
+        sfxDriver = &sfxd_sdlmixer;
+        iSFX = (sfxinterface_generic_t*) &sfxd_sdlmixer_sfx;
         break;
 
-    case SFXD_SDL_SOUND:
-        if(!(driver = DS_Load("sdlsound")))
+    case SFXD_OPENAL:
+        Con_Printf("OpenAL\n");
+        if(!(sfxDriver = DS_Load("openal")))
             return false;
         break;
 
 #ifdef WIN32
     case SFXD_DSOUND:
-        driver = &sfxd_dsound;
+        Con_Printf("DirectSound\n");
+        if(!(sfxDriver = DS_Load("directsound")))
+            return false;
+        break;
+
+    case SFXD_DSOUND8:
+        Con_Printf("DirectSound8\n");
+        if(!(sfxDriver = DS_Load("ds8")))
+            return false;
+        break;
+
+    case SFXD_WINMM:
+        Con_Printf("WinMM\n");
+        if(!(sfxDriver = DS_Load("winmm")))
+            return false;
         break;
 #endif
 
     default:
-        Con_Error("Sfx_Driver: Unknown driver type %i.\n", drvid);
+        Con_Error("Sfx_Driver: Unknown sfxDriver type %i.\n", drvid);
     }
 
-    // Initialize the driver.
-    return driver->Init();
+    if(!(drvid == SFXD_DUMMY || drvid == SFXD_SDL_MIXER))
+    {
+        // Use the external SFX playback facilities, if available.
+        iSFX = (sfxdExternalISFX.gen.Init ?
+            (sfxinterface_generic_t*) &sfxdExternalISFX : 0);
+    }
+
+    // Initialize the sfxDriver.
+    return sfxDriver->Init();
 }
 
 /**
@@ -1003,12 +1025,12 @@ void Sfx_CreateChannels(int num2D, int bits, int rate)
     // Change the primary buffer's format to match the channel format.
     parm[0] = bits;
     parm[1] = rate;
-    driver->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
+    iSFX->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
     // Try to create a buffer for each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
     {
-        ch->buffer = driver->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
+        ch->buffer = iSFX->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
         if(!ch->buffer)
         {
             Con_Message("Sfx_CreateChannels: Failed to create "
@@ -1031,7 +1053,7 @@ void Sfx_DestroyChannels(void)
         Sfx_ChannelStop(channels + i);
 
         if(channels[i].buffer)
-            driver->Destroy(channels[i].buffer);
+            iSFX->Destroy(channels[i].buffer);
         channels[i].buffer = NULL;
     }
     END_COP;
@@ -1106,40 +1128,34 @@ boolean Sfx_Init(void)
         return true;
     }
 
-    Con_Message("Sfx_Init: Initializing ");
+    Con_Message("Sfx_Init: Initializing...\n");
 
     // First let's set up the drivers. First we much choose which one we
     // want to use.
     if(isDedicated || ArgExists("-dummy"))
     {
-        Con_Message("Dummy...\n");
         ok = Sfx_InitDriver(SFXD_DUMMY);
     }
     else if(ArgExists("-oal"))
     {
-        Con_Message("OpenAL...\n");
         ok = Sfx_InitDriver(SFXD_OPENAL);
     }
-    else if(ArgExists("-csd"))
-    {   // Compatible Sound Driver
-        Con_Message("Compatible...\n");
-        ok = Sfx_InitDriver(SFXD_COMPATIBLE);
-    }
-    else if(ArgExists("-sdlsound"))
-    {
-        Con_Message("SDL_sound...\n");
-        ok = Sfx_InitDriver(SFXD_SDL_SOUND);
-    }
 #ifdef WIN32
-    else if(ArgExists("-ds9"))
-    {   // DirectSound 9 with 3D sound support, EAX effects.
-        Con_Message("DirectSound...\n");
+    else if(ArgExists("-dsound"))
+    {   // DirectSound with 3D sound support, EAX effects.
         ok = Sfx_InitDriver(SFXD_DSOUND);
+    }
+    else if(ArgExists("-ds8"))
+    {   // DirectSound 8 with 3D sound support, EAX effects.
+        ok = Sfx_InitDriver(SFXD_DSOUND8);
+    }
+    else if(ArgExists("-winmm"))
+    {   // Windows Multimedia sound sfxDriver.
+        ok = Sfx_InitDriver(SFXD_WINMM);
     }
 #endif
     else
-    {   // The default driver.
-        Con_Message("SDL_mixer...\n");
+    {   // The default sfxDriver.
         ok = Sfx_InitDriver(SFXD_SDL_MIXER);
     }
 
@@ -1153,10 +1169,10 @@ boolean Sfx_Init(void)
     // This is based on the scientific calculations that if the DOOM marine
     // is 56 units tall, 60 is about two meters.
     //// \fixme Derive from the viewheight.
-    driver->Listener(SFXLP_UNITS_PER_METER, 30);
-    driver->Listener(SFXLP_DOPPLER, 1);
+    iSFX->Listener(SFXLP_UNITS_PER_METER, 30);
+    iSFX->Listener(SFXLP_DOPPLER, 1);
 
-    // The driver is working, let's create the channels.
+    // The sfxDriver is working, let's create the channels.
     Sfx_InitChannels();
 
     // Init the sample cache.
@@ -1190,9 +1206,9 @@ void Sfx_Shutdown(void)
     // Destroy channels.
     Sfx_ShutdownChannels();
 
-    // Finally, close the driver.
-    driver->Shutdown();
-    driver = NULL;
+    // Finally, close the sfxDriver.
+    sfxDriver->Shutdown();
+    sfxDriver = NULL;
 }
 
 /**

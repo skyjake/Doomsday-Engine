@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,12 @@
  */
 
 /**
- * sys_cdaudio.c: Compact Disc-Digital Audio (CD-DA) aka "Redbook".
- *
- * WIN32-specific, uses the MCI interface.
+ * m_mus2midi.h: MUS to MIDI conversion
  */
 
-#ifndef __DOOMSDAY_SYSTEM_WIN32_CDAUDIO_H__
-#define __DOOMSDAY_SYSTEM_WIN32_CDAUDIO_H__
+#ifndef __DOOMSDAY_MUS2MIDI_H__
+#define __DOOMSDAY_MUS2MIDI_H__
 
-#include "sys_musd.h"
-
-extern musinterface_cd_t musd_win_icd;
+void            M_Mus2Midi(void* data, size_t length, const char* outFile);
 
 #endif

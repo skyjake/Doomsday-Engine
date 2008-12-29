@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,15 +33,12 @@
 #ifndef __DOOMSDAY_SYSTEM_AUDIO_H__
 #define __DOOMSDAY_SYSTEM_AUDIO_H__
 
-#include "sys_sfxd.h"
-#include "sys_sfxd_dummy.h"
-#include "sys_sfxd_loader.h"
-#include "sys_musd.h"
+#include "sys_audiod.h"
+#include "sys_audiod_sfx.h"
+#include "sys_audiod_mus.h"
 
-#ifdef WIN32
-#  include "sys_cdaudio.h"
-#  include "sys_sfxd_ds.h"
-#  include "sys_musd_win.h"
-#endif
+#include "sys_sfxd_loader.h"
+#include "sys_sfxd_dummy.h"
+#include "sys_sfxd_sdlmixer.h"
 
 #endif

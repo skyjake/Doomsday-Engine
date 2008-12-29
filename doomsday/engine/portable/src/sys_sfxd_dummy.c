@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_sfxd_dummy.c: Dummy Sfx Driver
+ * sys_sfxd_dummy.c: Dummy Audio Driver.
  *
  * Used in dedicated server mode, when it's necessary to simulate
  * sound playing but not actually play anything.
@@ -35,7 +35,9 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
-#include "sys_sfxd.h"
+
+#include "sys_audiod.h"
+#include "sys_audiod_sfx.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -47,18 +49,20 @@
 
 int         DS_DummyInit(void);
 void        DS_DummyShutdown(void);
-sfxbuffer_t* DS_DummyCreateBuffer(int flags, int bits, int rate);
-void        DS_DummyDestroyBuffer(sfxbuffer_t* buf);
-void        DS_DummyLoad(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void        DS_DummyReset(sfxbuffer_t* buf);
-void        DS_DummyPlay(sfxbuffer_t* buf);
-void        DS_DummyStop(sfxbuffer_t* buf);
-void        DS_DummyRefresh(sfxbuffer_t* buf);
 void        DS_DummyEvent(int type);
-void        DS_DummySet(sfxbuffer_t* buf, int prop, float value);
-void        DS_DummySetv(sfxbuffer_t* buf, int prop, float* values);
-void        DS_DummyListener(int prop, float value);
-void        DS_DummyListenerv(int prop, float* values);
+
+int         DS_Dummy_SFX_Init(void);
+sfxbuffer_t* DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate);
+void        DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf);
+void        DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+void        DS_Dummy_SFX_Reset(sfxbuffer_t* buf);
+void        DS_Dummy_SFX_Play(sfxbuffer_t* buf);
+void        DS_Dummy_SFX_Stop(sfxbuffer_t* buf);
+void        DS_Dummy_SFX_Refresh(sfxbuffer_t* buf);
+void        DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value);
+void        DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
+void        DS_Dummy_SFX_Listener(int prop, float value);
+void        DS_Dummy_SFX_Listenerv(int prop, float* values);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -66,21 +70,25 @@ void        DS_DummyListenerv(int prop, float* values);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-sfxdriver_t sfxd_dummy = {
+audiodriver_t sfxd_dummy = {
     DS_DummyInit,
     DS_DummyShutdown,
-    DS_DummyCreateBuffer,
-    DS_DummyDestroyBuffer,
-    DS_DummyLoad,
-    DS_DummyReset,
-    DS_DummyPlay,
-    DS_DummyStop,
-    DS_DummyRefresh,
-    DS_DummyEvent,
-    DS_DummySet,
-    DS_DummySetv,
-    DS_DummyListener,
-    DS_DummyListenerv
+    DS_DummyEvent
+};
+
+sfxinterface_sfx_t sfxd_dummy_sfx = {
+    DS_Dummy_SFX_Init,
+    DS_Dummy_SFX_CreateBuffer,
+    DS_Dummy_SFX_DestroyBuffer,
+    DS_Dummy_SFX_Load,
+    DS_Dummy_SFX_Reset,
+    DS_Dummy_SFX_Play,
+    DS_Dummy_SFX_Stop,
+    DS_Dummy_SFX_Refresh,
+    DS_Dummy_SFX_Set,
+    DS_Dummy_SFX_Setv,
+    DS_Dummy_SFX_Listener,
+    DS_Dummy_SFX_Listenerv
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -119,7 +127,12 @@ void DS_DummyEvent(int type)
     // Do nothing...
 }
 
-sfxbuffer_t* DS_DummyCreateBuffer(int flags, int bits, int rate)
+int DS_Dummy_SFX_Init(void)
+{
+    return inited;
+}
+
+sfxbuffer_t* DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate)
 {
     sfxbuffer_t* buf;
 
@@ -134,7 +147,7 @@ sfxbuffer_t* DS_DummyCreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-void DS_DummyDestroyBuffer(sfxbuffer_t* buf)
+void DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     if(!buf)
         return;
@@ -148,7 +161,7 @@ void DS_DummyDestroyBuffer(sfxbuffer_t* buf)
  * much sample data as fits. The pointer to sample is saved, so the caller
  * mustn't free it while the sample is loaded.
  */
-void DS_DummyLoad(sfxbuffer_t* buf, struct sfxsample_s* sample)
+void DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
     if(!buf || !sample)
         return;
@@ -162,12 +175,12 @@ void DS_DummyLoad(sfxbuffer_t* buf, struct sfxsample_s* sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_DummyReset(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Reset(sfxbuffer_t* buf)
 {
     if(!buf)
         return;
 
-    DS_DummyStop(buf);
+    DS_Dummy_SFX_Stop(buf);
     buf->sample = NULL;
     buf->flags &= ~SFXBF_RELOAD;
 }
@@ -183,7 +196,7 @@ unsigned int DS_DummyBufferLength(sfxbuffer_t* buf)
     return 1000 * buf->sample->numSamples / buf->freq;
 }
 
-void DS_DummyPlay(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Play(sfxbuffer_t* buf)
 {
     // Playing is quite impossible without a sample.
     if(!buf || !buf->sample)
@@ -191,7 +204,7 @@ void DS_DummyPlay(sfxbuffer_t* buf)
 
     // Do we need to reload?
     if(buf->flags & SFXBF_RELOAD)
-        DS_DummyLoad(buf, buf->sample);
+        DS_Dummy_SFX_Load(buf, buf->sample);
 
     // The sound starts playing now?
     if(!(buf->flags & SFXBF_PLAYING))
@@ -204,7 +217,7 @@ void DS_DummyPlay(sfxbuffer_t* buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_DummyStop(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Stop(sfxbuffer_t* buf)
 {
     if(!buf)
         return;
@@ -219,7 +232,7 @@ void DS_DummyStop(sfxbuffer_t* buf)
 /**
  * Buffer streamer. Called by the Sfx refresh thread.
  */
-void DS_DummyRefresh(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Refresh(sfxbuffer_t* buf)
 {
     // Can only be done if there is a sample and the buffer is playing.
     if(!buf || !buf->sample || !(buf->flags & SFXBF_PLAYING))
@@ -229,7 +242,7 @@ void DS_DummyRefresh(sfxbuffer_t* buf)
     if(!(buf->flags & SFXBF_REPEAT) && Sys_GetRealTime() >= buf->endTime)
     {
         // Time for the sound to stop.
-        DS_DummyStop(buf);
+        DS_Dummy_SFX_Stop(buf);
     }
 }
 
@@ -241,7 +254,7 @@ void DS_DummyRefresh(sfxbuffer_t* buf)
  *                      SFXBP_MAX_DISTANCE
  *                      SFXBP_RELATIVE_MODE
  */
-void DS_DummySet(sfxbuffer_t* buf, int prop, float value)
+void DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {
     if(!buf)
         return;
@@ -264,7 +277,7 @@ void DS_DummySet(sfxbuffer_t* buf, int prop, float value)
  * @param property      SFXBP_POSITION
  *                      SFXBP_VELOCITY
  */
-void DS_DummySetv(sfxbuffer_t* buf, int prop, float* values)
+void DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
     // Nothing to do.
 }
@@ -274,7 +287,7 @@ void DS_DummySetv(sfxbuffer_t* buf, int prop, float* values)
  *                      SFXLP_DOPPLER
  *                      SFXLP_UPDATE
  */
-void DS_DummyListener(int prop, float value)
+void DS_Dummy_SFX_Listener(int prop, float value)
 {
     // Nothing to do.
 }
@@ -290,7 +303,7 @@ void DS_DummyListenerEnvironment(float* rev)
 /**
  * Call SFXLP_UPDATE at the end of every channel update.
  */
-void DS_DummyListenerv(int prop, float* values)
+void DS_Dummy_SFX_Listenerv(int prop, float* values)
 {
     // Nothing to do.
 }

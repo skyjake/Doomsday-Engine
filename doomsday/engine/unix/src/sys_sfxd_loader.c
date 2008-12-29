@@ -36,8 +36,10 @@
 #endif
 
 #include "de_console.h"
-#include "sys_sfxd.h"
-#include "sys_musd.h"
+
+#include "sys_audiod.h"
+#include "sys_audiod_sfx.h"
+#include "sys_audiod_mus.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -51,26 +53,20 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern musdriver_t musdLoaded;
-extern musinterface_mus_t musdLoadedIMus;
-extern musinterface_ext_t musdLoadedIExt;
-extern musinterface_cd_t musdLoadedICD;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-sfxdriver_t sfxdExternal;
+audiodriver_t sfxdExternal;
+
+sfxinterface_sfx_t sfxdExternalISFX;
+musinterface_mus_t musdExternalIMus;
+musinterface_ext_t musdExternalIExt;
+musinterface_cd_t musdExternalICD;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static lt_dlhandle handle;
-static void (*driverShutdown) (void);
+static lt_dlhandle handle = NULL;
 
 // CODE --------------------------------------------------------------------
-
-static void dummyVoid(void)
-{
-
-}
 
 static void* Imp(const char* fn)
 {
@@ -84,68 +80,66 @@ void DS_UnloadExternal(void)
     handle = NULL;
 }
 
-sfxdriver_t* DS_ImportExternal(void)
+audiodriver_t* DS_ImportExternal(void)
 {
-    sfxdriver_t*        d = &sfxdExternal;
+    audiodriver_t*        d = &sfxdExternal;
 
     // Clear everything.
     memset(d, 0, sizeof(*d));
 
     d->Init = Imp("DS_Init");
-    driverShutdown = Imp("DS_Shutdown");
-    d->Create = Imp("DS_CreateBuffer");
-    d->Destroy = Imp("DS_DestroyBuffer");
-    d->Load = Imp("DS_Load");
-    d->Reset = Imp("DS_Reset");
-    d->Play = Imp("DS_Play");
-    d->Stop = Imp("DS_Stop");
-    d->Refresh = Imp("DS_Refresh");
+    d->Shutdown = Imp("DS_Shutdown");
     d->Event = Imp("DS_Event");
-    d->Set = Imp("DS_Set");
-    d->Setv = Imp("DS_Setv");
-    d->Listener = Imp("DS_Listener");
-    d->Listenerv = Imp("DS_Listenerv");
-    d->Getv = Imp("DS_Getv");
 
-    // The driver may also offer an Ext music interface.
-    if(Imp("DM_Ext_Init"))
-    {
-        musdriver_t*        m = &musdLoaded;
-        musinterface_ext_t* i = &musdLoadedIExt;
+    // The driver may provide SFX playback functionality.
+    if(Imp("DS_SFX_Init"))
+    {   // The driver offers a SFX playback interface.
+        sfxinterface_sfx_t* i = &sfxdExternalISFX;
 
-        m->Init = Imp("DS_Init");
-        m->Shutdown = dummyVoid;
+        i->gen.Init = Imp("DS_SFX_Init");
+        i->gen.Create = Imp("DS_SFX_CreateBuffer");
+        i->gen.Destroy = Imp("DS_SFX_DestroyBuffer");
+        i->gen.Load = Imp("DS_SFX_Load");
+        i->gen.Reset = Imp("DS_SFX_Reset");
+        i->gen.Play = Imp("DS_SFX_Play");
+        i->gen.Stop = Imp("DS_SFX_Stop");
+        i->gen.Refresh = Imp("DS_SFX_Refresh");
 
-        i->gen.Init = Imp("DM_Ext_Init");
-        i->gen.Update = Imp("DM_Ext_Update");
-        i->gen.Set = Imp("DM_Ext_Set");
-        i->gen.Get = Imp("DM_Ext_Get");
-        i->gen.Pause = Imp("DM_Ext_Pause");
-        i->gen.Stop = Imp("DM_Ext_Stop");
-
-        i->SongBuffer = Imp("DM_Ext_SongBuffer");
-        i->PlayFile = Imp("DM_Ext_PlayFile");
-        i->PlayBuffer = Imp("DM_Ext_PlayBuffer");
+        i->gen.Set = Imp("DS_SFX_Set");
+        i->gen.Setv = Imp("DS_SFX_Setv");
+        i->gen.Listener = Imp("DS_SFX_Listener");
+        i->gen.Listenerv = Imp("DS_SFX_Listenerv");
+        i->gen.Getv = Imp("DS_SFX_Getv");
     }
 
-    // The driver may also offer a MUS music interface.
+    // The driver may provide music playback functionality.
     if(Imp("DM_Mus_Init"))
-    {
-        musdriver_t*        m = &musdLoaded;
-        musinterface_mus_t* i = &musdLoadedIMus;
-
-        m->Init = Imp("DS_Init");
-        m->Shutdown = dummyVoid;
+    {   // The driver offers a MUS music playback interface.
+        musinterface_mus_t* i = &musdExternalIMus;
 
         i->gen.Init = Imp("DM_Mus_Init");
         i->gen.Update = Imp("DM_Mus_Update");
-        i->gen.Set = Imp("DM_Mus_Set");
         i->gen.Get = Imp("DM_Mus_Get");
+        i->gen.Set = Imp("DM_Mus_Set");
         i->gen.Pause = Imp("DM_Mus_Pause");
         i->gen.Stop = Imp("DM_Mus_Stop");
-
-        i->SongBuffer = Imp("DM_Mus_SongBuffer");
         i->Play = Imp("DM_Mus_Play");
+        i->SongBuffer = Imp("DM_Mus_SongBuffer");
+    }
+
+    if(Imp("DM_Ext_Init"))
+    {   // The driver offers an Ext music playback interface.
+        musinterface_ext_t* i = &musdExternalIExt;
+
+        i->gen.Init = Imp("DM_Ext_Init");
+        i->gen.Update = Imp("DM_Ext_Update");
+        i->gen.Get = Imp("DM_Ext_Get");
+        i->gen.Set = Imp("DM_Ext_Set");
+        i->gen.Pause = Imp("DM_Ext_Pause");
+        i->gen.Stop = Imp("DM_Ext_Stop");
+        i->PlayFile = Imp("DM_Ext_PlayFile");
+        i->PlayBuffer = Imp("DM_Ext_PlayBuffer");
+        i->SongBuffer = Imp("DM_Ext_SongBuffer");
     }
 
     // We should release the lib at shutdown.
@@ -156,7 +150,7 @@ sfxdriver_t* DS_ImportExternal(void)
 /**
  * "OpenAL" and "SDL_sound" are supported.
  */
-sfxdriver_t* DS_Load(const char* name)
+audiodriver_t* DS_SFX_Load(const char* name)
 {
     filename_t          fn;
 
@@ -170,7 +164,7 @@ sfxdriver_t* DS_Load(const char* name)
 
     if((handle = lt_dlopenext(fn)) == NULL)
     {
-        Con_Message("DS_Load: Loading of %s failed.\n", fn);
+        Con_Message("DS_SFX_Load: Loading of %s failed.\n", fn);
         return NULL;
     }
 

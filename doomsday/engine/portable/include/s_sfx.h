@@ -30,7 +30,8 @@
 #ifndef __DOOMSDAY_SOUND_SFX_H__
 #define __DOOMSDAY_SOUND_SFX_H__
 
-#include "sys_sfxd.h"
+#include "sys_audiod.h"
+#include "sys_audiod_sfx.h"
 #include "de_play.h"
 
 // Begin and end macros for Critical Operations. They are operations
@@ -40,12 +41,14 @@
 #define END_COP         Sfx_AllowRefresh(true)
 
 typedef enum {
-    SFXD_DSOUND,
-    SFXD_OPENAL,
-    SFXD_COMPATIBLE,
+    SFXD_DUMMY,
     SFXD_SDL_MIXER,
-    SFXD_SDL_SOUND,
-    SFXD_DUMMY
+    SFXD_OPENAL,
+#ifdef WIN32
+    SFXD_DSOUND8,
+    SFXD_WINMM,
+    SFXD_DSOUND,
+#endif
 } sfxdriver_e;
 
 // Channel flags.

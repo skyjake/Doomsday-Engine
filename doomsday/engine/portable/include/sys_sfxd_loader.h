@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +18,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * sys_sfxd_loader.h: Sound Driver DLL Loader
+/**
+ * sys_sfxd_loader.h: Audio Driver, Loader.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_SFX_LOADER_H__
-#define __DOOMSDAY_SYSTEM_SFX_LOADER_H__
+#ifndef __DOOMSDAY_SYSTEM_AUDIO_LOADER_H__
+#define __DOOMSDAY_SYSTEM_AUDIO_LOADER_H__
 
-#include "sys_sfxd.h"
+#include "sys_audiod.h"
 
-sfxdriver_t    *DS_Load(const char *name);
+audiodriver_t*        DS_Load(const char *name);
 
 #endif

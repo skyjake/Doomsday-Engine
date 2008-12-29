@@ -4,6 +4,8 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +19,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * sys_sfxd_ds.h: Sound Driver for DirectSound
+/**
+ * sys_sfxd_sdlmixer.h: Default Audio Driver.
+ *
+ * Uses SDL_mixer, for SFX, Ext and Mus interfaces.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_SFX_DSOUND_H__
-#define __DOOMSDAY_SYSTEM_SFX_DSOUND_H__
+#ifndef __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
+#define __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
 
-#include "sys_sfxd.h"
+#include "sys_audiod.h"
+#include "sys_audiod_sfx.h"
+#include "sys_audiod_mus.h"
 
-extern sfxdriver_t sfxd_dsound;
+extern audiodriver_t sfxd_sdlmixer;
+extern sfxinterface_sfx_t sfxd_sdlmixer_sfx;
+extern musinterface_mus_t sfxd_sdlmixer_mus;
+extern musinterface_ext_t sfxd_sdlmixer_ext;
 
 #endif

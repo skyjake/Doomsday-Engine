@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_musd.h: Audio Driver - Music interfaces.
+ * sys_audiod_mus.h: Audio Driver - Music interfaces.
  */
 
 #ifndef __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__

@@ -26,6 +26,9 @@
 		<Project filename="dsdirectsound.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
+		<Project filename="dsds9.cbp">
+			<Depends filename="doomsday.cbp" />
+		</Project>
 		<Project filename="dswinmm.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
