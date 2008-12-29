@@ -142,7 +142,7 @@ boolean S_InitDriver(audiodriver_e drvid)
 #endif
 
     default:
-        Con_Error("Sfx_Driver: Unknown audioDriver type %i.\n", drvid);
+        Con_Error("S_InitDriver: Unknown driver id %i.\n", drvid);
     }
 
     // Initialize the audioDriver.
