@@ -26,10 +26,10 @@
 		<Project filename="dsdirectsound.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
-		<Project filename="dsopenal.cbp">
+		<Project filename="dswinmm.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
-		<Project filename="dssdlmixer.cbp">
+		<Project filename="dsopenal.cbp">
 			<Depends filename="doomsday.cbp" />
 		</Project>
 	</Workspace>
