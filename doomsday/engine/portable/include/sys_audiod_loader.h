@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_audiod_loader.h.h: Audio Driver, Loader.
+ * sys_audiod_loader.h: Audio Driver, Loader.
  */
 
 #ifndef __DOOMSDAY_SYSTEM_AUDIO_LOADER_H__
@@ -31,6 +31,6 @@
 
 #include "sys_audiod.h"
 
-audiodriver_t*        DS_Load(const char *name);
+audiodriver_t*        Sys_LoadAudioDriver(const char* name);
 
 #endif

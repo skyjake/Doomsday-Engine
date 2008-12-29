@@ -60,8 +60,8 @@ void            Sfx_SampleFormat(int newBits, int newRate);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // SFX playback functions loaded from a sound driver plugin.
-extern audiodriver_t sfxdExternal;
-extern sfxinterface_sfx_t sfxdExternalISFX;
+extern audiodriver_t audiodExternal;
+extern audiointerface_sfx_t audiodExternalISFX;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -84,7 +84,7 @@ int sfxSampleRate = 11025;
 static audiodriver_t* sfxDriver = NULL;
 
 // The interfaces.
-static sfxinterface_generic_t* iSFX;
+static audiointerface_sfx_generic_t* iSFX;
 
 static int numChannels = 0;
 static sfxchannel_t* channels;
@@ -960,38 +960,38 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
     {
     case SFXD_DUMMY:
         Con_Printf("Dummy\n");
-        sfxDriver = &sfxd_dummy;
-        iSFX = (sfxinterface_generic_t*) &sfxd_dummy_sfx;
+        sfxDriver = &audiod_dummy;
+        iSFX = (audiointerface_sfx_generic_t*) &audiod_dummy_sfx;
         break;
 
     case SFXD_SDL_MIXER:
         Con_Printf("SDLMixer\n");
-        sfxDriver = &sfxd_sdlmixer;
-        iSFX = (sfxinterface_generic_t*) &sfxd_sdlmixer_sfx;
+        sfxDriver = &audiod_sdlmixer;
+        iSFX = (audiointerface_sfx_generic_t*) &audiod_sdlmixer_sfx;
         break;
 
     case SFXD_OPENAL:
         Con_Printf("OpenAL\n");
-        if(!(sfxDriver = DS_Load("openal")))
+        if(!(sfxDriver = Sys_LoadAudioDriver("openal")))
             return false;
         break;
 
 #ifdef WIN32
     case SFXD_DSOUND:
         Con_Printf("DirectSound\n");
-        if(!(sfxDriver = DS_Load("directsound")))
+        if(!(sfxDriver = Sys_LoadAudioDriver("directsound")))
             return false;
         break;
 
     case SFXD_DSOUND8:
         Con_Printf("DirectSound8\n");
-        if(!(sfxDriver = DS_Load("ds8")))
+        if(!(sfxDriver = Sys_LoadAudioDriver("ds8")))
             return false;
         break;
 
     case SFXD_WINMM:
         Con_Printf("WinMM\n");
-        if(!(sfxDriver = DS_Load("winmm")))
+        if(!(sfxDriver = Sys_LoadAudioDriver("winmm")))
             return false;
         break;
 #endif
@@ -1003,8 +1003,8 @@ boolean Sfx_InitDriver(sfxdriver_e drvid)
     if(!(drvid == SFXD_DUMMY || drvid == SFXD_SDL_MIXER))
     {
         // Use the external SFX playback facilities, if available.
-        iSFX = (sfxdExternalISFX.gen.Init ?
-            (sfxinterface_generic_t*) &sfxdExternalISFX : 0);
+        iSFX = (audiodExternalISFX.gen.Init ?
+            (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
     }
 
     // Initialize the sfxDriver.

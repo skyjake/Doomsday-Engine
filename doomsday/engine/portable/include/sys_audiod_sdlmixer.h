@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_audiod_sdlmixer.h.h: Default Audio Driver.
+ * sys_audiod_sdlmixer.h: Default Audio Driver.
  *
  * Uses SDL_mixer, for SFX, Ext and Mus interfaces.
  */
@@ -36,9 +36,9 @@
 #include "sys_audiod_sfx.h"
 #include "sys_audiod_mus.h"
 
-extern audiodriver_t sfxd_sdlmixer;
-extern sfxinterface_sfx_t sfxd_sdlmixer_sfx;
-extern musinterface_mus_t sfxd_sdlmixer_mus;
-extern musinterface_ext_t sfxd_sdlmixer_ext;
+extern audiodriver_t audiod_sdlmixer;
+extern audiointerface_sfx_t audiod_sdlmixer_sfx;
+extern audiointerface_mus_t audiod_sdlmixer_mus;
+extern audiointerface_ext_t audiod_sdlmixer_ext;
 
 #endif

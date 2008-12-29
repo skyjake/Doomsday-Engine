@@ -49,7 +49,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct interface_info_s {
-    musinterface_generic_t** ip;
+    audiointerface_music_generic_t** ip;
     const char*         name;
 } interface_info_t;
 
@@ -66,9 +66,9 @@ D_CMD(StopMusic);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // Music playback interfaces loaded from a sound driver plugin.
-extern musinterface_mus_t musdExternalIMus;
-extern musinterface_ext_t musdExternalIExt;
-extern musinterface_cd_t musdExternalICD;
+extern audiointerface_mus_t audiodExternalIMus;
+extern audiointerface_ext_t audiodExternalIExt;
+extern audiointerface_cd_t audiodExternalICD;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -81,16 +81,16 @@ static boolean musAvail = false;
 static int currentSong = -1;
 
 // The interfaces.
-static musinterface_mus_t* iMus;
-static musinterface_ext_t* iExt;
-static musinterface_cd_t* iCD;
+static audiointerface_mus_t* iMus;
+static audiointerface_ext_t* iExt;
+static audiointerface_cd_t* iCD;
 
 // The interface list. Used to access the common features of all the
 // interfaces conveniently.
 static interface_info_t interfaces[] = {
-    {(musinterface_generic_t**) &iMus, "Mus"},
-    {(musinterface_generic_t**) &iExt, "Ext"},
-    {(musinterface_generic_t**) &iCD, "CD"}
+    {(audiointerface_music_generic_t**) &iMus, "Mus"},
+    {(audiointerface_music_generic_t**) &iExt, "Ext"},
+    {(audiointerface_music_generic_t**) &iCD, "CD"}
 };
 
 // CODE --------------------------------------------------------------------
@@ -120,9 +120,9 @@ boolean Mus_Init(void)
         return true;
 
     // Use the external music playback facilities, if available.
-    iMus = (musdExternalIMus.gen.Init ? &musdExternalIMus : 0);
-    iExt = (musdExternalIExt.gen.Init ? &musdExternalIExt : 0);
-    iCD  = (musdExternalICD.gen.Init  ? &musdExternalICD  : 0);
+    iMus = (audiodExternalIMus.gen.Init ? &audiodExternalIMus : 0);
+    iExt = (audiodExternalIExt.gen.Init ? &audiodExternalIExt : 0);
+    iCD  = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
 
     // Initialize the chosen interfaces.
     for(i = 0; i < NUM_INTERFACES; ++i)

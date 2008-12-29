@@ -31,39 +31,39 @@
 
 // Music interface properties.
 enum {
-    MUSIP_ID,                      // Only for Get()ing.
+    MUSIP_ID, // Only for Get()ing.
     MUSIP_VOLUME
 };
 
 // Generic driver interface. All other interfaces are based on this.
-typedef struct musinterface_generic_s {
+typedef struct audiointerface_music_generic_s {
     int             (*Init) (void);
     void            (*Update) (void);
     void            (*Set) (int prop, float value);
     int             (*Get) (int prop, void *value);
     void            (*Pause) (int pause);
     void            (*Stop) (void);
-} musinterface_generic_t;
+} audiointerface_music_generic_t;
 
 // Driver interface for playing MUS music.
-typedef struct musinterface_mus_s {
-    musinterface_generic_t gen;
+typedef struct audiointerface_mus_s {
+    audiointerface_music_generic_t gen;
     void           *(*SongBuffer) (size_t length);
     int             (*Play) (int looped);
-} musinterface_mus_t;
+} audiointerface_mus_t;
 
 // Driver interface for playing non-MUS music.
-typedef struct musinterface_ext_s {
-    musinterface_generic_t gen;
+typedef struct audiointerface_ext_s {
+    audiointerface_music_generic_t gen;
     void           *(*SongBuffer) (size_t length);
     int             (*PlayFile) (const char *filename, int looped);
     int             (*PlayBuffer) (int looped);
-} musinterface_ext_t;
+} audiointerface_ext_t;
 
 // Driver interface for playing CD tracks.
-typedef struct musinterface_cd_s {
-    musinterface_generic_t gen;
+typedef struct audiointerface_cd_s {
+    audiointerface_music_generic_t gen;
     int             (*Play) (int track, int looped);
-} musinterface_cd_t;
+} audiointerface_cd_t;
 
 #endif

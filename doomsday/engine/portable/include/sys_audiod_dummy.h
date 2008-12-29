@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_audiod_dummy.h.h: Dummy Music Driver.
+ * sys_audiod_dummy.h: Dummy Music Driver.
  *
  * Used in dedicated server mode.
  */
@@ -34,7 +34,7 @@
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 
-extern audiodriver_t sfxd_dummy;
-extern sfxinterface_sfx_t sfxd_dummy_sfx;
+extern audiodriver_t audiod_dummy;
+extern audiointerface_sfx_t audiod_dummy_sfx;
 
 #endif

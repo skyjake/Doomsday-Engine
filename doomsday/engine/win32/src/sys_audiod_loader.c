@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_audiod_loader.h.c: Sound Driver DLL Loader (Win32)
+ * sys_audiod_loader.c: Audio Driver loader, Win32-specific.
  *
  * Loader for ds*.dll
  */
@@ -53,12 +53,12 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-audiodriver_t sfxdExternal;
+audiodriver_t audiodExternal;
 
-sfxinterface_sfx_t sfxdExternalISFX;
-musinterface_mus_t musdExternalIMus;
-musinterface_ext_t musdExternalIExt;
-musinterface_cd_t musdExternalICD;
+audiointerface_sfx_t audiodExternalISFX;
+audiointerface_mus_t audiodExternalIMus;
+audiointerface_ext_t audiodExternalIExt;
+audiointerface_cd_t audiodExternalICD;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -71,18 +71,18 @@ static void* Imp(const char* fn)
     return GetProcAddress(hInstExt, fn);
 }
 
-void DS_UnloadExternal(void)
+void Sys_ShutdownAudioDriver(void)
 {
-    audiodriver_t*        d = &sfxdExternal;
+    audiodriver_t*        d = &audiodExternal;
 
     d->Shutdown();
     FreeLibrary(hInstExt);
     hInstExt = NULL;
 }
 
-audiodriver_t* DS_ImportExternal(void)
+static audiodriver_t* importExternal(void)
 {
-    audiodriver_t*        d = &sfxdExternal;
+    audiodriver_t*        d = &audiodExternal;
 
     // Clear everything.
     memset(d, 0, sizeof(*d));
@@ -94,12 +94,12 @@ audiodriver_t* DS_ImportExternal(void)
     // The driver may provide SFX playback functionality.
     if(Imp("DS_SFX_Init"))
     {   // The driver offers a SFX playback interface.
-        sfxinterface_sfx_t* i = &sfxdExternalISFX;
+        audiointerface_sfx_t* i = &audiodExternalISFX;
 
         i->gen.Init = Imp("DS_SFX_Init");
         i->gen.Create = Imp("DS_SFX_CreateBuffer");
         i->gen.Destroy = Imp("DS_SFX_DestroyBuffer");
-        i->gen.Load = Imp("DS_SFX_Load");
+        i->gen.Load = Imp("Sys_LoadAudioDriver");
         i->gen.Reset = Imp("DS_SFX_Reset");
         i->gen.Play = Imp("DS_SFX_Play");
         i->gen.Stop = Imp("DS_SFX_Stop");
@@ -115,7 +115,7 @@ audiodriver_t* DS_ImportExternal(void)
     // The driver may provide music playback functionality.
     if(Imp("DM_Mus_Init"))
     {   // The driver also offers a MUS music playback interface.
-        musinterface_mus_t* i = &musdExternalIMus;
+        audiointerface_mus_t* i = &audiodExternalIMus;
 
         i->gen.Init = Imp("DM_Mus_Init");
         i->gen.Update = Imp("DM_Mus_Update");
@@ -129,7 +129,7 @@ audiodriver_t* DS_ImportExternal(void)
 
     if(Imp("DM_Ext_Init"))
     {   // The driver also offers an Ext music playback interface.
-        musinterface_ext_t* i = &musdExternalIExt;
+        audiointerface_ext_t* i = &audiodExternalIExt;
 
         i->gen.Init = Imp("DM_Ext_Init");
         i->gen.Update = Imp("DM_Ext_Update");
@@ -144,7 +144,7 @@ audiodriver_t* DS_ImportExternal(void)
 
     if(Imp("DM_CDAudio_Init"))
     {   // The driver also offers a CD audio (redbook) playback interface.
-        musinterface_cd_t*  i = &musdExternalICD;
+        audiointerface_cd_t*  i = &audiodExternalICD;
 
         i->gen.Init = Imp("DM_CDAudio_Init");
         i->gen.Update = Imp("DM_CDAudio_Update");
@@ -156,14 +156,19 @@ audiodriver_t* DS_ImportExternal(void)
     }
 
     // We should release the lib at shutdown.
-    d->Shutdown = DS_UnloadExternal;
+    d->Shutdown = Sys_ShutdownAudioDriver;
     return d;
 }
 
 /**
- * "OpenAL", "Compat" and "WinMM" are supported.
+ * Attempt to load the specified audio driver, import the entry points and
+ * add to the available audio drivers.
+ *
+ * @param name              Name of the driver to be loaded e.g., "openal".
+ * @return                  Ptr to the audio driver interface if successful,
+ *                          else @c NULL.
  */
-audiodriver_t* DS_Load(const char* name)
+audiodriver_t* Sys_LoadAudioDriver(const char* name)
 {
     char                fn[256];
 
@@ -174,10 +179,10 @@ audiodriver_t* DS_Load(const char* name)
     hInstExt = LoadLibrary(fn);
     if(!hInstExt)
     {   // Load failed.
-        Con_Message("DS_SFX_Load: Loading of %s failed.\n", fn);
+        Con_Message("Sys_LoadAudioDriver: Loading of %s failed.\n", fn);
 
         return NULL;
     }
 
-    return DS_ImportExternal();
+    return importExternal();
 }

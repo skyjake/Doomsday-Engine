@@ -91,7 +91,7 @@ typedef struct sfxbuffer_s {
 } sfxbuffer_t;
 
 // Generic driver interface. All other interfaces are based on this.
-typedef struct sfxinterface_generic_s {
+typedef struct audiointerface_sfx_generic_s {
     int             (*Init) (void);
     sfxbuffer_t*    (*Create) (int flags, int bits, int rate);
     void            (*Destroy) (sfxbuffer_t* buf);
@@ -105,10 +105,10 @@ typedef struct sfxinterface_generic_s {
     void            (*Listener) (int prop, float value);
     void            (*Listenerv) (int prop, float* values);
     int             (*Getv) (int prop, void* values);
-} sfxinterface_generic_t;
+} audiointerface_sfx_generic_t;
 
-typedef struct sfxinterface_sfx_s {
-    sfxinterface_generic_t gen;
-} sfxinterface_sfx_t;
+typedef struct audiointerface_sfx_s {
+    audiointerface_sfx_generic_t gen;
+} audiointerface_sfx_t;
 
 #endif

@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_audiod_sdlmixer.h.h: SDL_mixer, for SFX, Ext and Mus interfaces.
+ * sys_audiod_sdlmixer.h: SDL_mixer, for SFX, Ext and Mus interfaces.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -108,13 +108,13 @@ void ExtMus_Shutdown(void);
 
 boolean sdlInitOk = false;
 
-audiodriver_t sfxd_sdlmixer = {
+audiodriver_t audiod_sdlmixer = {
     DS_SDLMixerInit,
     DS_SDLMixerShutdown,
     DS_SDLMixerEvent
 };
 
-sfxinterface_sfx_t sfxd_sdlmixer_sfx = {
+audiointerface_sfx_t audiod_sdlmixer_sfx = {
     DS_SDLMixer_SFX_Init,
     DS_SDLMixer_SFX_CreateBuffer,
     DS_SDLMixer_SFX_DestroyBuffer,
@@ -129,7 +129,7 @@ sfxinterface_sfx_t sfxd_sdlmixer_sfx = {
     DS_SDLMixer_SFX_Listenerv
 };
 
-musinterface_mus_t sfxd_sdlmixer_mus = {
+audiointerface_mus_t audiod_sdlmixer_mus = {
     DS_SDLMixer_Mus_Init,
     DS_SDLMixer_Mus_Update,
     DS_SDLMixer_Mus_Set,
@@ -140,7 +140,7 @@ musinterface_mus_t sfxd_sdlmixer_mus = {
     DS_SDLMixer_Mus_Play
 };
 
-musinterface_ext_t sfxd_sdlmixer_ext = {
+audiointerface_ext_t audiod_sdlmixer_ext = {
     DS_SDLMixer_Ext_Init,
     DS_SDLMixer_Ext_Update,
     DS_SDLMixer_Ext_Set,

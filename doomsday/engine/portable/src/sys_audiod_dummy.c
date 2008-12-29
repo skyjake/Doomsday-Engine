@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_audiod_dummy.h.c: Dummy Audio Driver.
+ * sys_audiod_dummy.c: Dummy Audio Driver.
  *
  * Used in dedicated server mode, when it's necessary to simulate
  * sound playing but not actually play anything.
@@ -70,13 +70,13 @@ void        DS_Dummy_SFX_Listenerv(int prop, float* values);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-audiodriver_t sfxd_dummy = {
+audiodriver_t audiod_dummy = {
     DS_DummyInit,
     DS_DummyShutdown,
     DS_DummyEvent
 };
 
-sfxinterface_sfx_t sfxd_dummy_sfx = {
+audiointerface_sfx_t audiod_dummy_sfx = {
     DS_Dummy_SFX_Init,
     DS_Dummy_SFX_CreateBuffer,
     DS_Dummy_SFX_DestroyBuffer,

@@ -375,7 +375,7 @@ Con_Message("Safesize = %i\n", safeSize);
                           &newSound)))
     {
         if(verbose)
-            error("DS_SFX_Load", "Couldn't create a new buffer.");
+            error("Sys_LoadAudioDriver", "Couldn't create a new buffer.");
 
         return;
     }
@@ -387,7 +387,7 @@ Con_Message("Safesize = %i\n", safeSize);
                                                 (void**) &newSound3D)))
         {
             if(verbose)
-                error("DS_SFX_Load", "Couldn't get 3D buffer interface.");
+                error("Sys_LoadAudioDriver", "Couldn't get 3D buffer interface.");
             newSound->Release();
 
             return;
@@ -398,7 +398,7 @@ Con_Message("Safesize = %i\n", safeSize);
     newSound->Lock(0, 0, &writePtr1, &writeBytes1, &writePtr2, &writeBytes2,
                    DSBLOCK_ENTIREBUFFER);
     if(writePtr2 && verbose)
-        error("DS_SFX_Load", "Unexpected buffer lock behavior.");
+        error("Sys_LoadAudioDriver", "Unexpected buffer lock behavior.");
 
     // Copy the sample data.
     memcpy(writePtr1, sample->data, sample->size);
