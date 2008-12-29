@@ -1076,6 +1076,11 @@ boolean Sfx_Init(void)
             (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
     }
 
+    if(!iSFX)
+    {   // No interface for SFX playback.
+        return false;
+    }
+
     // This is based on the scientific calculations that if the DOOM marine
     // is 56 units tall, 60 is about two meters.
     //// \fixme Derive from the viewheight.
