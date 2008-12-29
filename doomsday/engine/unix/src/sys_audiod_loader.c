@@ -37,6 +37,7 @@
 
 #include "de_console.h"
 
+#include "s_main.h"
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 #include "sys_audiod_mus.h"
@@ -75,11 +76,14 @@ static void* Imp(const char* fn)
 
 void Sys_ShutdownAudioDriver(void)
 {
-    audiodriver_t*        d = &audiodExternal;
+    if(audioDriver->Shutdown)
+        audioDriver->Shutdown();
 
-    d->Shutdown();
-    lt_dlclose(handle);
-    handle = NULL;
+    if(audioDriver == &audiodExternal)
+    {
+        lt_dlclose(handle);
+        handle = NULL;
+    }
 }
 
 static audiodriver_t* importExternal(void)
