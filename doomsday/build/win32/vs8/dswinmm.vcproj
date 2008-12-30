@@ -46,6 +46,7 @@
 				EnableFunctionLevelLinking="true"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				CompileAs="2"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -127,7 +128,7 @@
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CallingConvention="0"
-				CompileAs="0"
+				CompileAs="2"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -186,15 +187,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\plugins\winmm\src\dswinmm.c"
+				RelativePath="..\..\..\plugins\winmm\src\cdaudio.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\winmm\src\sys_cdaudio.c"
+				RelativePath="..\..\..\plugins\winmm\src\dswinmm.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\winmm\src\sys_musd_win.c"
+				RelativePath="..\..\..\plugins\winmm\src\midisteam.cpp"
 				>
 			</File>
 		</Filter>

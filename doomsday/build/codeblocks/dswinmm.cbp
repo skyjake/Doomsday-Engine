@@ -75,9 +75,9 @@
 		</VirtualTargets>
 		<Unit filename="..\..\plugins\winmm\api\dswinmm.def" />
 		<Unit filename="..\..\plugins\winmm\include\dswinmm.h" />
-		<Unit filename="..\..\plugins\winmm\src\dswinmm.c" />
-		<Unit filename="..\..\plugins\winmm\src\dswinmm_cdaudio.c" />
-		<Unit filename="..\..\plugins\winmm\src\dswinmm_mus.c" />
+		<Unit filename="..\..\plugins\winmm\src\dswinmm.cpp" />
+		<Unit filename="..\..\plugins\winmm\src\cdaudio.cpp" />
+		<Unit filename="..\..\plugins\winmm\src\midistream.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />

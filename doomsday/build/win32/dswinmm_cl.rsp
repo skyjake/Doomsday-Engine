@@ -1,3 +1,4 @@
- ./../../plugins/winmm/src/winmm_cdaudio.c
- ./../../plugins/winmm/src/winmm_mus.c
+ ./../../plugins/winmm/src/cdaudio.cpp
+ ./../../plugins/winmm/src/midistream.cpp
+ ./../../plugins/winmm/src/dswinmm.cpp
  
