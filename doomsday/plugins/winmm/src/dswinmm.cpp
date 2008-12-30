@@ -28,6 +28,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "dswinmm.h"
+#include "midistream.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -46,6 +47,8 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initedOk = false;
+static int midiAvail = false;
+static WinMIDIStreamer* MIDIStreamer = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -74,4 +77,106 @@ void DS_Shutdown(void)
 void DS_Event(int type)
 {
     // Do nothing...
+}
+
+/**
+ * @return              @c true, if successful.
+ */
+int DM_Music_Init(void)
+{
+    if(midiAvail)
+        return true; // Already initialized.
+
+    Con_Message("DM_WinMusInit: %i MIDI-Out devices present.\n",
+                midiOutGetNumDevs());
+
+    MIDIStreamer = new WinMIDIStreamer;
+
+    // Open the midi stream.
+    if(!MIDIStreamer || !MIDIStreamer->OpenStream())
+        return false;
+
+    // Double output volume?
+    MIDIStreamer->volumeShift = ArgExists("-mdvol") ? 1 : 0;
+
+    // Now the MIDI is available.
+    Con_Message("DM_WinMusInit: MIDI initialized.\n");
+
+    return midiAvail = true;
+}
+
+void DM_Music_Shutdown(void)
+{
+    if(midiAvail)
+    {
+        delete MIDIStreamer;
+        MIDIStreamer = NULL;
+        midiAvail = false;
+    }
+}
+
+void DM_Music_Set(int prop, float value)
+{
+    // No unique properties.
+}
+
+int DM_Music_Get(int prop, void* ptr)
+{
+    switch(prop)
+    {
+    case MUSIP_ID:
+        if(ptr)
+        {
+            strcpy((char*) ptr, "Win/Mus");
+            return true;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+void DM_Music_Update(void)
+{
+    // No need to do anything. The callback handles restarting.
+}
+
+void DM_Music_Stop(void)
+{
+    if(midiAvail)
+    {
+        MIDIStreamer->Stop();
+    }
+}
+
+int DM_Music_Play(int looped)
+{
+    if(midiAvail)
+    {
+        MIDIStreamer->Play(looped);
+        return true;
+    }
+
+    return false;
+}
+
+void DM_Music_Pause(int setPause)
+{
+    if(midiAvail)
+    {
+        MIDIStreamer->Pause(setPause);
+    }
+}
+
+void* DM_Music_SongBuffer(size_t length)
+{
+    if(midiAvail)
+    {
+        return MIDIStreamer->SongBuffer(length);
+    }
+
+    return NULL;
 }
