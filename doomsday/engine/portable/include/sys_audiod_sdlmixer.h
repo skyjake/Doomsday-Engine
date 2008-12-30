@@ -38,7 +38,6 @@
 
 extern audiodriver_t audiod_sdlmixer;
 extern audiointerface_sfx_t audiod_sdlmixer_sfx;
-extern audiointerface_mus_t audiod_sdlmixer_mus;
-extern audiointerface_ext_t audiod_sdlmixer_ext;
+extern audiointerface_music_t audiod_sdlmixer_music;
 
 #endif

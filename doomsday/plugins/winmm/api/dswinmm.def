@@ -8,14 +8,14 @@ DS_Init
 DS_Shutdown
 DS_Event
 
-DM_Mus_Init
-DM_Mus_Update
-DM_Mus_Set
-DM_Mus_Get
-DM_Mus_Pause
-DM_Mus_Stop
-DM_Mus_SongBuffer
-DM_Mus_Play
+DM_Music_Init
+DM_Music_Update
+DM_Music_Set
+DM_Music_Get
+DM_Music_Pause
+DM_Music_Stop
+DM_Music_Play
+DM_Music_SongBuffer
 
 DM_CDAudio_Init
 DM_CDAudio_Update

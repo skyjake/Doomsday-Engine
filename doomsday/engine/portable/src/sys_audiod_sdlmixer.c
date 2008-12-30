@@ -51,7 +51,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BUFFERED_MUSIC_FILE     "deng-sdlmixer-buffered-song"
 #define DEFAULT_MIDI_COMMAND    "" //"timidity"
 
 // TYPES -------------------------------------------------------------------
@@ -77,30 +76,16 @@ void        DS_SDLMixer_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
 void        DS_SDLMixer_SFX_Listener(int prop, float value);
 void        DS_SDLMixer_SFX_Listenerv(int prop, float* values);
 
-// The MUS music interface.
-int         DS_SDLMixer_Mus_Init(void);
-void        DS_SDLMixer_Mus_Update(void);
-void        DS_SDLMixer_Mus_Set(int prop, float value);
-int         DS_SDLMixer_Mus_Get(int prop, void* value);
-void        DS_SDLMixer_Mus_Pause(int pause);
-void        DS_SDLMixer_Mus_Stop(void);
-void*       DS_SDLMixer_Mus_SongBuffer(size_t length);
-int         DS_SDLMixer_Mus_Play(int looped);
-
-// The Ext music interface.
-int         DS_SDLMixer_Ext_Init(void);
-void        DS_SDLMixer_Ext_Update(void);
-void        DS_SDLMixer_Ext_Set(int prop, float value);
-int         DS_SDLMixer_Ext_Get(int prop, void* value);
-void        DS_SDLMixer_Ext_Pause(int pause);
-void        DS_SDLMixer_Ext_Stop(void);
-void*       DS_SDLMixer_Ext_SongBuffer(size_t length);
-int         DS_SDLMixer_Ext_PlayFile(const char* fileName, int looped);
-int         DS_SDLMixer_Ext_PlayBuffer(int looped);
+// The music interface.
+int         DS_SDLMixer_Music_Init(void);
+void        DS_SDLMixer_Music_Update(void);
+void        DS_SDLMixer_Music_Set(int prop, float value);
+int         DS_SDLMixer_Music_Get(int prop, void* value);
+void        DS_SDLMixer_Music_Pause(int pause);
+void        DS_SDLMixer_Music_Stop(void);
+int         DS_SDLMixer_Music_PlayFile(const char* fileName, int looped);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-void ExtMus_Shutdown(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -129,27 +114,16 @@ audiointerface_sfx_t audiod_sdlmixer_sfx = {
     DS_SDLMixer_SFX_Listenerv
 };
 
-audiointerface_mus_t audiod_sdlmixer_mus = {
-    DS_SDLMixer_Mus_Init,
-    DS_SDLMixer_Mus_Update,
-    DS_SDLMixer_Mus_Set,
-    DS_SDLMixer_Mus_Get,
-    DS_SDLMixer_Mus_Pause,
-    DS_SDLMixer_Mus_Stop,
-    DS_SDLMixer_Mus_SongBuffer,
-    DS_SDLMixer_Mus_Play
-};
-
-audiointerface_ext_t audiod_sdlmixer_ext = {
-    DS_SDLMixer_Ext_Init,
-    DS_SDLMixer_Ext_Update,
-    DS_SDLMixer_Ext_Set,
-    DS_SDLMixer_Ext_Get,
-    DS_SDLMixer_Ext_Pause,
-    DS_SDLMixer_Ext_Stop,
-    DS_SDLMixer_Ext_SongBuffer,
-    DS_SDLMixer_Ext_PlayFile,
-    DS_SDLMixer_Ext_PlayBuffer
+audiointerface_music_t audiod_sdlmixer_music = {
+    DS_SDLMixer_Music_Init,
+    DS_SDLMixer_Music_Update,
+    DS_SDLMixer_Music_Set,
+    DS_SDLMixer_Music_Get,
+    DS_SDLMixer_Music_Pause,
+    DS_SDLMixer_Music_Stop,
+    NULL,
+    NULL,
+    DS_SDLMixer_Music_PlayFile,
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -216,7 +190,13 @@ void DS_SDLMixerShutdown(void)
     Mix_CloseAudio();
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
-    ExtMus_Shutdown();
+    if(song)
+        free(song);
+    if(currentMusic)
+        Mix_FreeMusic(currentMusic);
+
+    song = NULL;
+    currentMusic = NULL;
 
     sdlInitOk = false;
 }
@@ -450,29 +430,18 @@ void DS_SDLMixer_SFX_Listenerv(int prop, float* values)
     // Not supported.
 }
 
-void ExtMus_Shutdown(void)
-{
-    if(song)
-        free(song);
-    if(currentMusic)
-        Mix_FreeMusic(currentMusic);
-
-    song = NULL;
-    currentMusic = NULL;
-}
-
-int DS_SDLMixer_Ext_Init(void)
+int DS_SDLMixer_Music_Init(void)
 {
     // The music interface is available without any extra work.
     return sdlInitOk;
 }
 
-void DS_SDLMixer_Ext_Update(void)
+void DS_SDLMixer_Music_Update(void)
 {
     // Nothing to update.
 }
 
-void DS_SDLMixer_Ext_Set(int prop, float value)
+void DS_SDLMixer_Music_Set(int prop, float value)
 {
     if(!sdlInitOk)
         return;
@@ -488,7 +457,7 @@ void DS_SDLMixer_Ext_Set(int prop, float value)
     }
 }
 
-int DS_SDLMixer_Ext_Get(int prop, void* value)
+int DS_SDLMixer_Music_Get(int prop, void* value)
 {
     if(!sdlInitOk)
         return false;
@@ -496,7 +465,7 @@ int DS_SDLMixer_Ext_Get(int prop, void* value)
     switch(prop)
     {
     case MUSIP_ID:
-        strcpy(value, "SDLMixer/Ext");
+        strcpy(value, "SDLMixer/Music");
         break;
 
     default:
@@ -505,43 +474,7 @@ int DS_SDLMixer_Ext_Get(int prop, void* value)
     return true;
 }
 
-void *DS_SDLMixer_Ext_SongBuffer(size_t length)
-{
-    if(!sdlInitOk)
-        return NULL;
-
-    if(song)
-        free(song);
-    songSize = length;
-    return song = malloc(length);
-}
-
-int DS_SDLMixer_Ext_PlayBuffer(int looped)
-{
-    if(!sdlInitOk)
-        return false;
-
-    if(song)
-    {
-        // Dump the song into a temporary file where SDL_mixer can
-        // load it.
-        FILE   *tmp = fopen(BUFFERED_MUSIC_FILE, "wb");
-
-        if(tmp)
-        {
-            fwrite(song, songSize, 1, tmp);
-            fclose(tmp);
-        }
-
-        free(song);
-        song = 0;
-        songSize = 0;
-    }
-
-    return DS_SDLMixer_Ext_PlayFile(BUFFERED_MUSIC_FILE, looped);
-}
-
-void DS_SDLMixer_Ext_Pause(int pause)
+void DS_SDLMixer_Music_Pause(int pause)
 {
     if(!sdlInitOk)
         return;
@@ -552,7 +485,7 @@ void DS_SDLMixer_Ext_Pause(int pause)
         Mix_ResumeMusic();
 }
 
-void DS_SDLMixer_Ext_Stop(void)
+void DS_SDLMixer_Music_Stop(void)
 {
     if(!sdlInitOk)
         return;
@@ -560,10 +493,12 @@ void DS_SDLMixer_Ext_Stop(void)
     Mix_HaltMusic();
 }
 
-static int playFile(const char* filename, int looped)
+int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
 {
     if(!sdlInitOk)
         return false;
+
+    Mix_SetMusicCMD(NULL);
 
     // Free any previously loaded music.
     if(currentMusic)
@@ -576,75 +511,4 @@ static int playFile(const char* filename, int looped)
     }
 
     return !Mix_PlayMusic(currentMusic, looped ? -1 : 1);
-}
-
-int DS_SDLMixer_Ext_PlayFile(const char* filename, int looped)
-{
-    Mix_SetMusicCMD(NULL);
-    return playFile(filename, looped);
-}
-
-int DS_SDLMixer_Mus_Init(void)
-{
-    // No extra init needed.
-    return sdlInitOk;
-}
-
-void DS_SDLMixer_Mus_Update(void)
-{
-    // Nothing to update.
-}
-
-void DS_SDLMixer_Mus_Set(int prop, float value)
-{
-    // No MUS-specific properties exist.
-}
-
-int DS_SDLMixer_Mus_Get(int prop, void* value)
-{
-    if(!sdlInitOk)
-        return false;
-
-    switch(prop)
-    {
-    case MUSIP_ID:
-        strcpy(value, "SDLMixer/Mus");
-        break;
-
-    default:
-        return false;
-    }
-    return true;
-}
-
-void DS_SDLMixer_Mus_Pause(int pause)
-{
-    // Not needed.
-}
-
-void DS_SDLMixer_Mus_Stop(void)
-{
-    // Not needed.
-}
-
-void* DS_SDLMixer_Mus_SongBuffer(size_t length)
-{
-    return DS_SDLMixer_Ext_SongBuffer(length);
-}
-
-int DS_SDLMixer_Mus_Play(int looped)
-{
-    char*               command = getenv("DENG_MIDI_CMD");
-
-    if(command == NULL)
-        command = DEFAULT_MIDI_COMMAND;
-
-    // If the midi command is empty, use NULL instead.
-    if(command[0] == 0)
-        command = NULL;
-
-    M_Mus2Midi(song, songSize, BUFFERED_MUSIC_FILE);
-    Mix_SetMusicCMD(command);
-
-    return playFile(BUFFERED_MUSIC_FILE, looped);
 }

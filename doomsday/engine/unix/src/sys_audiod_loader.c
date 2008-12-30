@@ -59,8 +59,7 @@
 audiodriver_t audiodExternal;
 
 audiointerface_sfx_t audiodExternalISFX;
-audiointerface_mus_t audiodExternalIMus;
-audiointerface_ext_t audiodExternalIExt;
+audiointerface_music_t audiodExternalIMusic;
 audiointerface_cd_t audiodExternalICD;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -122,33 +121,32 @@ static audiodriver_t* importExternal(void)
     }
 
     // The driver may provide music playback functionality.
-    if(Imp("DM_Mus_Init"))
-    {   // The driver offers a MUS music playback interface.
-        audiointerface_mus_t* i = &audiodExternalIMus;
+    if(Imp("DM_Music_Init"))
+    {   // The driver also offers a music playback interface.
+        audiointerface_music_t* i = &audiodExternalIMusic;
 
-        i->gen.Init = Imp("DM_Mus_Init");
-        i->gen.Update = Imp("DM_Mus_Update");
-        i->gen.Get = Imp("DM_Mus_Get");
-        i->gen.Set = Imp("DM_Mus_Set");
-        i->gen.Pause = Imp("DM_Mus_Pause");
-        i->gen.Stop = Imp("DM_Mus_Stop");
-        i->Play = Imp("DM_Mus_Play");
-        i->SongBuffer = Imp("DM_Mus_SongBuffer");
+        i->gen.Init = Imp("DM_Music_Init");
+        i->gen.Update = Imp("DM_Music_Update");
+        i->gen.Get = Imp("DM_Music_Get");
+        i->gen.Set = Imp("DM_Music_Set");
+        i->gen.Pause = Imp("DM_Music_Pause");
+        i->gen.Stop = Imp("DM_Music_Stop");
+        i->SongBuffer = Imp("DM_Music_SongBuffer");
+        i->Play = Imp("DM_Music_Play");
+        i->PlayFile = Imp("DM_Music_PlayFile");
     }
 
-    if(Imp("DM_Ext_Init"))
-    {   // The driver offers an Ext music playback interface.
-        audiointerface_ext_t* i = &audiodExternalIExt;
+    if(Imp("DM_CDAudio_Init"))
+    {   // The driver also offers a CD audio (redbook) playback interface.
+        audiointerface_cd_t*  i = &audiodExternalICD;
 
-        i->gen.Init = Imp("DM_Ext_Init");
-        i->gen.Update = Imp("DM_Ext_Update");
-        i->gen.Get = Imp("DM_Ext_Get");
-        i->gen.Set = Imp("DM_Ext_Set");
-        i->gen.Pause = Imp("DM_Ext_Pause");
-        i->gen.Stop = Imp("DM_Ext_Stop");
-        i->PlayFile = Imp("DM_Ext_PlayFile");
-        i->PlayBuffer = Imp("DM_Ext_PlayBuffer");
-        i->SongBuffer = Imp("DM_Ext_SongBuffer");
+        i->gen.Init = Imp("DM_CDAudio_Init");
+        i->gen.Update = Imp("DM_CDAudio_Update");
+        i->gen.Set = Imp("DM_CDAudio_Set");
+        i->gen.Get = Imp("DM_CDAudio_Get");
+        i->gen.Pause = Imp("DM_CDAudio_Pause");
+        i->gen.Stop = Imp("DM_CDAudio_Stop");
+        i->Play = Imp("DM_CDAudio_Play");
     }
 
     return d;

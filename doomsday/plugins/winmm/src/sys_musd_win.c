@@ -101,6 +101,10 @@ enum // MUS controllers.
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static int          openStream(void);
+static void         freeSongBuffer(void);
+static void         closeStream(void);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -145,7 +149,58 @@ static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
 
 // CODE --------------------------------------------------------------------
 
-void DM_Mus_InitSongReader(musheader_t* musHdr)
+/**
+ * @return              @c true, if successful.
+ */
+int DM_Music_Init(void)
+{
+    int                 i;
+
+    if(midiAvail)
+        return true; // Already initialized.
+
+    volumeShift = ArgExists("-mdvol") ? 1 : 0; // Double music volume.
+
+    Con_Message("DM_WinMusInit: %i MIDI-Out devices present.\n",
+                midiOutGetNumDevs());
+
+    // Open the midi stream.
+    if(!openStream())
+        return false;
+
+    // Now the MIDI is available.
+    Con_Message("DM_WinMusInit: MIDI initialized.\n");
+
+    playing = false;
+    registered = FALSE;
+    // Clear the MIDI buffers.
+    memset(midiBuffers, 0, sizeof(midiBuffers));
+    // Init channel volumes.
+    for(i = 0; i < 16; ++i)
+        chanVols[i] = 64;
+
+    return midiAvail = true;
+}
+
+void DM_Music_Shutdown(void)
+{
+    if(!midiAvail)
+        return;
+
+    midiAvail = false;
+    playing = false;
+
+    freeSongBuffer();
+
+    closeStream();
+}
+
+void DM_Music_Update(void)
+{
+    // No need to do anything. The callback handles restarting.
+}
+
+static void initSongReader(musheader_t* musHdr)
 {
     readPos = (byte *) musHdr + musHdr->scoreStart;
     readTime = 0;
@@ -156,7 +211,7 @@ void DM_Mus_InitSongReader(musheader_t* musHdr)
  *
  * @return              @c false, when the score ends.
  */
-int DM_Mus_GetNextEvent(MIDIEVENT* mev)
+static int getNextEvent(MIDIEVENT* mev)
 {
     int                 i;
     museventdesc_t*     evDesc;
@@ -278,7 +333,7 @@ Con_Message("MIDI event/%d: %x %d %d\n",evDesc->channel,midiStatus,
     return TRUE;
 }
 
-LPMIDIHDR DM_Mus_GetFreeBuffer(void)
+static LPMIDIHDR getFreeBuffer(void)
 {
     int                 i;
 
@@ -309,7 +364,7 @@ LPMIDIHDR DM_Mus_GetFreeBuffer(void)
  *
  * @return              @c false, if the allocation can't be done.
  */
-int DM_Mus_AllocMoreBuffer(LPMIDIHDR mh)
+static int resizeWorkBuffer(LPMIDIHDR mh)
 {
     // Don't allocate too large buffers.
     if(mh->dwBufferLength + BUFFER_ALLOC > MAX_BUFFER_LEN)
@@ -325,13 +380,13 @@ int DM_Mus_AllocMoreBuffer(LPMIDIHDR mh)
 /**
  * The buffer is ready, prepare it and stream out.
  */
-void DM_Mus_StreamOut(LPMIDIHDR mh)
+static void beginStream(LPMIDIHDR mh)
 {
     midiStreamOut(midiStr, mh, sizeof(*mh));
 }
 
-void CALLBACK DM_Mus_Callback(HMIDIOUT hmo, UINT uMsg, DWORD dwInstance,
-                              DWORD dwParam1, DWORD dwParam2)
+void CALLBACK DM_Music_Callback(HMIDIOUT hmo, UINT uMsg, DWORD dwInstance,
+                                DWORD dwParam1, DWORD dwParam2)
 {
     LPMIDIHDR           mh;
 
@@ -347,7 +402,7 @@ void CALLBACK DM_Mus_Callback(HMIDIOUT hmo, UINT uMsg, DWORD dwInstance,
         if(mh == loopBuffer)
         {
             // Play all buffers again.
-            DM_Mus_Play(true);
+            DM_Music_Play(true);
         }
         break;
 
@@ -356,9 +411,9 @@ void CALLBACK DM_Mus_Callback(HMIDIOUT hmo, UINT uMsg, DWORD dwInstance,
     }
 }
 
-void DM_Mus_PrepareBuffers(musheader_t* song)
+static void prepareBuffers(musheader_t* song)
 {
-    LPMIDIHDR           mh = DM_Mus_GetFreeBuffer();
+    LPMIDIHDR           mh = getFreeBuffer();
     MIDIEVENT           mev;
     DWORD*              ptr;
 
@@ -373,19 +428,19 @@ void DM_Mus_PrepareBuffers(musheader_t* song)
     mh->dwBytesRecorded = 3 * sizeof(DWORD);
 
     // Start reading the events.
-    DM_Mus_InitSongReader(song);
-    while(DM_Mus_GetNextEvent(&mev))
+    initSongReader(song);
+    while(getNextEvent(&mev))
     {
         // Is the buffer getting full?
         if(mh->dwBufferLength - mh->dwBytesRecorded < 3 * sizeof(DWORD))
         {
             // Try to get more buffer.
-            if(!DM_Mus_AllocMoreBuffer(mh))
+            if(!resizeWorkBuffer(mh))
             {
                 // Not possible, buffer size has reached the limit.
                 // We need to start working on another one.
                 midiOutPrepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
-                mh = DM_Mus_GetFreeBuffer();
+                mh = getFreeBuffer();
                 if(!mh)
                     return; // Oops.
             }
@@ -403,7 +458,7 @@ void DM_Mus_PrepareBuffers(musheader_t* song)
     midiOutPrepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
 }
 
-void DM_Mus_ReleaseBuffers(void)
+static void releaseBuffers(void)
 {
     int                 i;
 
@@ -422,37 +477,37 @@ void DM_Mus_ReleaseBuffers(void)
     }
 }
 
-void DM_Mus_UnregisterSong(void)
+static void deregisterSong(void)
 {
     if(!midiAvail || !registered)
         return;
 
     // First stop the song.
-    DM_Mus_Stop();
+    DM_Music_Stop();
 
     registered = FALSE;
 
     // This is the actual unregistration.
-    DM_Mus_ReleaseBuffers();
+    releaseBuffers();
 }
 
 /**
  * The song is already loaded in the song buffer.
  */
-int DM_Mus_RegisterSong(void)
+static int registerSong(void)
 {
     if(!midiAvail)
         return false;
 
-    DM_Mus_UnregisterSong();
-    DM_Mus_PrepareBuffers(song);
+    deregisterSong();
+    prepareBuffers(song);
 
     // Now there is a registered song.
     registered = TRUE;
     return true;
 }
 
-void DM_Mus_Reset(void)
+void DM_Music_Reset(void)
 {
     int                 i;
 
@@ -467,7 +522,7 @@ void DM_Mus_Reset(void)
     midiOutReset((HMIDIOUT) midiStr);
 }
 
-void DM_Mus_Stop(void)
+void DM_Music_Stop(void)
 {
     if(!midiAvail || !playing)
         return;
@@ -475,10 +530,10 @@ void DM_Mus_Stop(void)
     playing = false;
     loopBuffer = NULL;
 
-    DM_Mus_Reset();
+    DM_Music_Reset();
 }
 
-int DM_Mus_Play(int looped)
+int DM_Music_Play(int looped)
 {
     int                 i;
 
@@ -487,10 +542,10 @@ int DM_Mus_Play(int looped)
 
     // Do we need to prepare the MIDI data?
     if(!registered)
-        DM_Mus_RegisterSong();
+        registerSong();
 
     playing = true;
-    DM_Mus_Reset();
+    DM_Music_Reset();
 
     // Stream out all buffers.
     for(i = 0; i < MAX_BUFFERS; ++i)
@@ -511,7 +566,7 @@ int DM_Mus_Play(int looped)
     return true;
 }
 
-void DM_Mus_Pause(int setPause)
+void DM_Music_Pause(int setPause)
 {
     playing = !setPause;
     if(setPause)
@@ -520,12 +575,12 @@ void DM_Mus_Pause(int setPause)
         midiStreamRestart(midiStr);
 }
 
-void DM_Mus_Set(int prop, float value)
+void DM_Music_Set(int prop, float value)
 {
     // No unique properties.
 }
 
-int DM_Mus_Get(int prop, void* ptr)
+int DM_Music_Get(int prop, void* ptr)
 {
     if(!midiAvail)
         return false;
@@ -547,14 +602,14 @@ int DM_Mus_Get(int prop, void* ptr)
     return false;
 }
 
-int DM_Mus_OpenStream(void)
+static int openStream(void)
 {
     MMRESULT            mmres;
     MIDIPROPTIMEDIV     tdiv;
 
     devId = MIDI_MAPPER;
     if((mmres =
-        midiStreamOpen(&midiStr, &devId, 1, (DWORD_PTR) DM_Mus_Callback, 0,
+        midiStreamOpen(&midiStr, &devId, 1, (DWORD_PTR) DM_Music_Callback, 0,
                        CALLBACK_FUNCTION)) != MMSYSERR_NOERROR)
     {
         Con_Message("DM_WinMusOpenStream: midiStreamOpen error %i.\n", mmres);
@@ -576,15 +631,15 @@ int DM_Mus_OpenStream(void)
     return TRUE;
 }
 
-void DM_Mus_CloseStream(void)
+static void closeStream(void)
 {
-    DM_Mus_Reset();
+    DM_Music_Reset();
     midiStreamClose(midiStr);
 }
 
-void DM_Mus_FreeSongBuffer(void)
+static void freeSongBuffer(void)
 {
-    DM_Mus_UnregisterSong();
+    deregisterSong();
 
     if(song)
         free(song);
@@ -592,61 +647,10 @@ void DM_Mus_FreeSongBuffer(void)
     songSize = 0;
 }
 
-void* DM_Mus_SongBuffer(size_t length)
+void* DM_Music_SongBuffer(size_t length)
 {
-    DM_Mus_FreeSongBuffer();
+    freeSongBuffer();
     songSize = length;
 
     return song = malloc(length);
-}
-
-/**
- * @return              @c true, if successful.
- */
-int DM_Mus_Init(void)
-{
-    int                 i;
-
-    if(midiAvail)
-        return true; // Already initialized.
-
-    volumeShift = ArgExists("-mdvol") ? 1 : 0; // Double music volume.
-
-    Con_Message("DM_WinMusInit: %i MIDI-Out devices present.\n",
-                midiOutGetNumDevs());
-
-    // Open the midi stream.
-    if(!DM_Mus_OpenStream())
-        return false;
-
-    // Now the MIDI is available.
-    Con_Message("DM_WinMusInit: MIDI initialized.\n");
-
-    playing = false;
-    registered = FALSE;
-    // Clear the MIDI buffers.
-    memset(midiBuffers, 0, sizeof(midiBuffers));
-    // Init channel volumes.
-    for(i = 0; i < 16; ++i)
-        chanVols[i] = 64;
-
-    return midiAvail = true;
-}
-
-void DM_Mus_Shutdown(void)
-{
-    if(!midiAvail)
-        return;
-
-    midiAvail = false;
-    playing = false;
-
-    DM_Mus_FreeSongBuffer();
-
-    DM_Mus_CloseStream();
-}
-
-void DM_Mus_Update(void)
-{
-    // No need to do anything. The callback handles restarting.
 }

@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_audiod_mus.h: Audio Driver - Music interfaces.
+ * sys_audiod_music.h: Audio Driver - Music interfaces.
  */
 
 #ifndef __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
@@ -45,20 +45,13 @@ typedef struct audiointerface_music_generic_s {
     void            (*Stop) (void);
 } audiointerface_music_generic_t;
 
-// Driver interface for playing MUS music.
-typedef struct audiointerface_mus_s {
+// Driver interface for playing music.
+typedef struct audiointerface_music_s {
     audiointerface_music_generic_t gen;
-    void           *(*SongBuffer) (size_t length);
+    void*           (*SongBuffer) (size_t length);
     int             (*Play) (int looped);
-} audiointerface_mus_t;
-
-// Driver interface for playing non-MUS music.
-typedef struct audiointerface_ext_s {
-    audiointerface_music_generic_t gen;
-    void           *(*SongBuffer) (size_t length);
     int             (*PlayFile) (const char *filename, int looped);
-    int             (*PlayBuffer) (int looped);
-} audiointerface_ext_t;
+} audiointerface_music_t;
 
 // Driver interface for playing CD tracks.
 typedef struct audiointerface_cd_s {

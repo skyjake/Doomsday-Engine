@@ -29,6 +29,6 @@
 #ifndef __DOOMSDAY_MUS2MIDI_H__
 #define __DOOMSDAY_MUS2MIDI_H__
 
-void            M_Mus2Midi(void* data, size_t length, const char* outFile);
+boolean             M_Mus2Midi(void* data, size_t length, const char* outFile);
 
 #endif

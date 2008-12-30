@@ -252,7 +252,7 @@ static boolean getNextEvent(midi_event_t* ev)
  * @param outFile       Name of the file the resulting MIDI data will be
  *                      written to.
  */
-void M_Mus2Midi(void* data, size_t length, const char* outFile)
+boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
 {
     FILE*               file;
     unsigned char       buffer[80];
@@ -260,10 +260,13 @@ void M_Mus2Midi(void* data, size_t length, const char* outFile)
     midi_event_t        ev;
     struct mus_header*  header;
 
+    if(!outFile || !outFile[0])
+        return false;
+
     if((file = fopen(outFile, "wb")) == NULL)
     {
-        perror("convertMusToMidi");
-        return;
+        Con_Message("M_Mus2Midi: Failed opening output file %s.\n", outFile);
+        return false;
     }
 
     // Start with the MIDI header.
@@ -361,4 +364,6 @@ void M_Mus2Midi(void* data, size_t length, const char* outFile)
     fwrite(buffer, 4, 1, file);
 
     fclose(file);
+
+    return true; // Success!
 }
