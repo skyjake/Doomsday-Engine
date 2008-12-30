@@ -594,16 +594,8 @@ SET ( DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins
 IF (UNIX)
     IF (NOT WIN32)
         INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
-        SET (DENG_ARCH_SPECIFIC_SOURCES
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/dd_uinit.c
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_console.c
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_dylib.c
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_findfile.c
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_input.c
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_mixer.c
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_path.c
-             ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_sfxd_loader.c
-             ${LZSS_SOURCES})
+	FILE (GLOB DENG_ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c )
+        SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${LZSS_SOURCES})
         #IF (NOT APPLE)
         #    SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES}
         #        ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_window.c)
@@ -640,7 +632,7 @@ ENDIF (COMMAND cmake_policy)
 
 ADD_EXECUTABLE (doomsday ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
 
-TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} ${CURL_LIBRARIES} ${OPENGL_LIBRARIES})
+TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} ${CURL_LIBRARIES} ${OPENGL_LIBRARIES})
 
 IF (UNIX)
     IF (NOT WIN32)
