@@ -794,6 +794,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\sys_audiod_dummy.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\sys_audiod_sdlmixer.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\sys_direc.c"
 				>
 			</File>
@@ -838,14 +846,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\sys_sfxd_dummy.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\sys_sfxd_sdlmixer.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\sys_sock.c"
 				>
 			</File>
@@ -881,6 +881,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\engine\win32\src\sys_audiod_loader.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\engine\win32\src\sys_console.c"
 					>
 				</File>
@@ -894,10 +898,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\engine\win32\src\sys_mixer.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\win32\src\sys_sfxd_loader.c"
 					>
 				</File>
 				<File
@@ -1029,6 +1029,30 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_audiod_loader.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
 					</FileConfiguration>
 				</File>
@@ -1165,30 +1189,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\unix\src\sys_sfxd_loader.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
 					</FileConfiguration>
 				</File>
@@ -1871,7 +1871,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\sys_audiod_dummy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_audiod_loader.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_audiod_sdlmixer.h"
 				>
 			</File>
 			<File
@@ -1908,18 +1920,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_network.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\sys_sfxd_dummy.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\sys_sfxd_loader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\sys_sfxd_sdlmixer.h"
 				>
 			</File>
 			<File
