@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_musd_win.c: Music Driver for Win32 Multimedia (winmm).
+ * midistream.cpp: Music Driver for Win32 Multimedia (winmm).
  *
  * Plays MIDI streams.
  */
@@ -348,7 +348,7 @@ static LPMIDIHDR getFreeBuffer(void)
 
             // Allocate some memory for buffer.
             mh->dwBufferLength = BUFFER_ALLOC;
-            mh->lpData = malloc(mh->dwBufferLength);
+            mh->lpData = (LPSTR) malloc(mh->dwBufferLength);
             mh->dwBytesRecorded = 0;
             mh->dwFlags = 0;
 
@@ -371,7 +371,7 @@ static int resizeWorkBuffer(LPMIDIHDR mh)
         return FALSE;
 
     mh->dwBufferLength += BUFFER_ALLOC;
-    mh->lpData = realloc(mh->lpData, mh->dwBufferLength);
+    mh->lpData = (LPSTR) realloc(mh->lpData, mh->dwBufferLength);
 
     // Allocation was successful.
     return TRUE;
@@ -500,7 +500,7 @@ static int registerSong(void)
         return false;
 
     deregisterSong();
-    prepareBuffers(song);
+    prepareBuffers((musheader_t*) song);
 
     // Now there is a registered song.
     registered = TRUE;
@@ -590,7 +590,7 @@ int DM_Music_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy(ptr, "Win/Mus");
+            strcpy((char*) ptr, "Win/Mus");
             return true;
         }
         break;

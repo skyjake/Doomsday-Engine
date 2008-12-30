@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_cdaudio.c: Compact Disc-Digital Audio (CD-DA) / "Redbook".
+ * cdaudio.cpp: Compact Disc-Digital Audio (CD-DA) / "Redbook".
  *
  * WIN32-specific, uses the MCI interface.
  */
@@ -129,7 +129,7 @@ int DM_CDAudio_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy(ptr, "Win/CD");
+            strcpy((char*) ptr, "Win/CD");
             return true;
         }
         break;

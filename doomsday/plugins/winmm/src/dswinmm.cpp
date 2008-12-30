@@ -22,7 +22,7 @@
  */
 
 /**
- * dswinmm.c: Music Driver for Win32 Multimedia (winmm).
+ * dswinmm.cpp: Music Driver for Win32 Multimedia (winmm).
  */
 
 // HEADER FILES ------------------------------------------------------------
