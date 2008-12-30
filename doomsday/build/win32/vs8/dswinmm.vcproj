@@ -195,7 +195,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\winmm\src\midisteam.cpp"
+				RelativePath="..\..\..\plugins\winmm\src\midistream.cpp"
 				>
 			</File>
 		</Filter>
@@ -206,6 +206,10 @@
 			>
 			<File
 				RelativePath="..\..\..\plugins\winmm\include\dswinmm.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\winmm\include\midistream.h"
 				>
 			</File>
 		</Filter>
