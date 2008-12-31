@@ -157,12 +157,12 @@ controlconfig_t* grabbing = 0;
 static controlconfig_t controlConfig[] =
 {
     { "movement" },
-    { "forward", 0, "walk", 0, CCF_NON_INVERSE },
-    { "backward", 0, "walk", 0, CCF_INVERSE },
-    { "strafe left", 0, "sidestep", 0, CCF_INVERSE },
-    { "strafe right", 0, "sidestep", 0, CCF_NON_INVERSE },
-    { "turn left", 0, "turn", 0, CCF_INVERSE },
-    { "turn right", 0, "turn", 0, CCF_NON_INVERSE },
+    { "forward", 0, "walk", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "backward", 0, "walk", 0, CCF_STAGED | CCF_INVERSE },
+    { "strafe left", 0, "sidestep", 0, CCF_STAGED | CCF_INVERSE },
+    { "strafe right", 0, "sidestep", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "turn left", 0, "turn", 0, CCF_STAGED | CCF_INVERSE },
+    { "turn right", 0, "turn", 0, CCF_STAGED | CCF_NON_INVERSE },
     { "jump", 0, 0, "impulse jump" },
     { "use", 0, 0, "impulse use" },
     { "fly up", 0, "zfly", 0, CCF_STAGED | CCF_NON_INVERSE },
@@ -563,13 +563,17 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
         {
             isInverse = (findInString(ptr, "-inverse", end - ptr) != NULL);
 
-            if(!strncmp(ptr, "key", 3))
+            if(!strncmp(ptr, "key", 3) || strstr(ptr, "-button") ||
+               !strncmp(ptr, "mouse-left", 10) || !strncmp(ptr, "mouse-middle", 12) ||
+               !strncmp(ptr, "mouse-right", 11))
             {
                 if((cc->flags & CCF_INVERSE) && isInverse ||
                    (cc->flags & CCF_NON_INVERSE) && !isInverse ||
                    !(cc->flags & (CCF_INVERSE | CCF_NON_INVERSE)))
                 {
-                    callback(MIBT_KEY, bid, buf, isInverse, data);
+                    callback(!strncmp(ptr, "key", 3)? MIBT_KEY :
+                             !strncmp(ptr, "mouse", 5)? MIBT_MOUSE : MIBT_JOY, bid, buf, 
+                             isInverse, data);
                 }
             }
             else
@@ -754,6 +758,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
         else if(grabbing->controlName)
         {   // Have to exclude the state part.
             boolean             inv = (grabbing->flags & CCF_INVERSE) != 0;
+            boolean             isStaged = (grabbing->flags & CCF_STAGED) != 0;
             char                temp3[256];
             const char*         end = strchr(symbol + 5, '-');
 
@@ -771,6 +776,13 @@ int M_ControlsPrivilegedResponder(event_t* ev)
             if(!strncmp(end, "-neg", 4))
             {
                 inv = !inv;
+            }
+            if(isStaged && (!strncmp(temp3, "key-", 4) || strstr(temp3, "-button") ||
+                            !strcmp(temp3, "mouse-left") || !strcmp(temp3, "mouse-middle") ||
+                            !strcmp(temp3, "mouse-right")))
+            {
+                // Staging is for keys and buttons.
+                strcat(temp3, "-staged");
             }
             if(inv)
             {
