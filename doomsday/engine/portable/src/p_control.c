@@ -172,7 +172,7 @@ void P_NewPlayerControl(int id, controltype_t type, const char *name, const char
     pc->bindContextName = strdup(bindContext);
     // Also allocate the impulse and double-click counters.
     controlCounts[pc - playerControls] = M_Calloc(sizeof(controlcounter_t));
-    }
+}
 
 playercontrol_t* P_PlayerControlById(int id)
 {
