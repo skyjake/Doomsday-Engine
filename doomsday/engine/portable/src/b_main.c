@@ -274,7 +274,7 @@ const char* B_ParseContext(const char* desc, bcontext_t** bc)
 
     desc = Str_CopyDelim(str, desc, ':');
     *bc = B_ContextByName(Str_Text(str));
-    Str_Free(str);
+    Str_Delete(str);
 
     return desc;
 }
@@ -399,7 +399,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     B_UpdateDeviceStateAssociations();
 
 finished:
-    Str_Free(str);
+    Str_Delete(str);
     return devBin;
 }
 

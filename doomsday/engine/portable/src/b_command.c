@@ -207,7 +207,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     successful = true;
 
 parseEnded:
-    Str_Free(str);
+    Str_Delete(str);
     return successful;
 }
 
@@ -254,7 +254,7 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
     successful = true;
 
 parseEnded:
-    Str_Free(str);
+    Str_Delete(str);
     return successful;
 }
 

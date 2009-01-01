@@ -169,7 +169,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
     successful = true;
 
 parseEnded:
-    Str_Free(str);
+    Str_Delete(str);
     return successful;
 }
 
@@ -207,7 +207,7 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
     successful = true;
 
 parseEnded:
-    Str_Free(str);
+    Str_Delete(str);
     return successful;
 }
 

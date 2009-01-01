@@ -754,7 +754,7 @@ void B_PrintAllBindings(void)
         }
     }
 
-    Str_Free(str);
+    Str_Delete(str);
 }
 
 void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
@@ -791,5 +791,5 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
         }
     }
 
-    Str_Free(str);
+    Str_Delete(str);
 }

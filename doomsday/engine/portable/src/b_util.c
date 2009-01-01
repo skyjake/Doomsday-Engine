@@ -372,7 +372,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     successful = true;
 
 parseEnded:
-    Str_Free(str);
+    Str_Delete(str);
     return successful;
 }
 
@@ -469,7 +469,7 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
     case E_ANGLE:
         Str_Appendf(str, "hat%i", id + 1);
         break;
-            
+
     case E_SYMBOLIC:
         Str_Append(str, "sym");
         break;
@@ -550,13 +550,13 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
  */
 void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)
 {
-    B_AppendDeviceDescToString(ev->device, ev->type, 
+    B_AppendDeviceDescToString(ev->device, ev->type,
                                ev->type == E_TOGGLE? ev->toggle.id :
                                ev->type == E_AXIS? ev->axis.id :
                                ev->type == E_ANGLE? ev->angle.id :
                                ev->type == E_SYMBOLIC? ev->symbolic.id :
                                0, str);
-    
+
     switch(ev->type)
     {
         case E_TOGGLE:
@@ -564,16 +564,16 @@ void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)
                                         ev->toggle.state == ETOG_UP? EBTOG_UP :
                                         EBTOG_REPEAT, str);
             break;
-            
+
         case E_AXIS:
             B_AppendAxisPositionToString(ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE :
                                          EBAXIS_BEYOND_NEGATIVE, ev->axis.pos, str);
             break;
-            
+
         case E_ANGLE:
             B_AppendAnglePositionToString(ev->angle.pos, str);
             break;
-            
+
         case E_SYMBOLIC:
             Str_Appendf(str, "-%s", ev->symbolic.name);
             break;
