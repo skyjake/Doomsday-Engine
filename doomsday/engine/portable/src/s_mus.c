@@ -60,6 +60,7 @@ typedef struct interface_info_s {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(PlayMusic);
+D_CMD(PauseMusic);
 D_CMD(StopMusic);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -79,6 +80,7 @@ int musPreference = MUSP_EXT;
 static boolean musAvail = false;
 
 static int currentSong = -1;
+static boolean musicPaused = false;
 
 // The interfaces.
 static audiointerface_music_t* iMusic;
@@ -101,6 +103,7 @@ void Mus_Register(void)
 
     // Ccmds
     C_CMD_FLAGS("playmusic", NULL, PlayMusic, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("pausemusic", NULL, PauseMusic, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("stopmusic", "", StopMusic, CMDF_NO_DEDICATED);
 }
 
@@ -551,7 +554,6 @@ D_CMD(PlayMusic)
         if(i < 0)
         {
             Con_Printf("Music '%s' not defined.\n", argv[1]);
-
             return false;
         }
 
@@ -613,5 +615,12 @@ D_CMD(PlayMusic)
 D_CMD(StopMusic)
 {
     Mus_Stop();
+    return true;
+}
+
+D_CMD(PauseMusic)
+{
+    musicPaused = !musicPaused;
+    Mus_Pause(musicPaused);
     return true;
 }

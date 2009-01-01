@@ -425,6 +425,9 @@ desc = Open the Doomsday Control Panel.
 [pausedemo]
 desc = Pause/resume demo recording.
 
+[pausemusic]
+desc = Pause the currently playing music track.
+
 [ping]
 desc = Ping the server (or a player if you're the server).
 
