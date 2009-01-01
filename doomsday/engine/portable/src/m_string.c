@@ -68,8 +68,8 @@ void Str_Init(ddstring_t *ds)
 }
 
 /**
- * Empty an existing string. Totally destroys it. The string is
- * considered re-initialized.
+ * Empty an existing string. After this the string is in the same
+ * state as just after being initialized.
  */
 void Str_Free(ddstring_t *ds)
 {
@@ -82,7 +82,12 @@ void Str_Free(ddstring_t *ds)
 }
 
 /**
- * Allocate a new uninitialized string.
+ * Allocate a new uninitialized string. Use Str_Delete() to destroy
+ * the returned string.
+ *
+ * @return New ddstring_t instance.
+ *
+ * @see Str_Delete
  */
 ddstring_t *Str_New(void)
 {
@@ -90,7 +95,11 @@ ddstring_t *Str_New(void)
 }
 
 /**
- * Destroy the string completely (free, too).
+ * Destroy a string allocated with Str_New(). In addition to freeing
+ * the contents of the string, it also unallocates the string instance
+ * that was created by Str_New().
+ *
+ * @param ds  String to delete (that was returned by Str_New()).
  */
 void Str_Delete(ddstring_t *ds)
 {
