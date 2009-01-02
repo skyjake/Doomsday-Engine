@@ -389,6 +389,9 @@ desc = List all console commands.
 [listfiles]
 desc = List all the loaded data files and show information about them.
 
+[listmaterials]
+desc = List all known surface materials.
+
 [listmobjtypes]
 desc = List all known mobj types.
 

@@ -138,6 +138,8 @@ void R_Register(void)
 //    C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
 
     C_CMD("viewgrid", "ii", ViewGrid);
+
+    R_MaterialsRegister();
 }
 
 void R_InitSkyMap(void)

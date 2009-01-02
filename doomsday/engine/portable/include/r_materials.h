@@ -82,6 +82,8 @@ typedef struct material_s {
     struct material_s* globalNext; // Linear list linking all materials.
 } material_t;
 
+void            R_MaterialsRegister(void);
+
 void            R_InitMaterials(void);
 void            R_ShutdownMaterials(void);
 materialnum_t   R_GetNumMaterials(void);

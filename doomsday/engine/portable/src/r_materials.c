@@ -28,6 +28,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
 #include <ctype.h> // For tolower()
 
 #include "de_base.h"
@@ -80,6 +81,8 @@ typedef struct animgroup_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(ListMaterials);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -121,6 +124,11 @@ static materialnum_t numMaterialBinds, maxMaterialBinds;
 static uint hashTable[HASH_SIZE];
 
 // CODE --------------------------------------------------------------------
+
+void R_MaterialsRegister(void)
+{
+    C_CMD("listmaterials",  NULL,     ListMaterials);
+}
 
 /**
  * Is the specified group number a valid (known) material group.
@@ -1489,4 +1497,73 @@ void R_AnimateAnimGroups(void)
             }
         }
     }
+}
+
+static void printMaterials(materialgroup_t grp)
+{
+    materialnum_t       i, numDigits;
+
+    if(!(grp < NUM_MATERIAL_GROUPS))
+        return;
+
+    if(grp == MG_ANY)
+        Con_Printf("Known Materials (IDX - Name (Group) [width, height]):\n");
+    else
+        Con_Printf("Known Materials in Group %i (IDX - Name [width, height]):\n", grp);
+
+    numDigits = floor(log10(abs(numMaterialBinds))) + 1;
+    for(i = 0; i < numMaterialBinds; ++i)
+    {
+        int                 j;
+        materialbind_t*     mb = &materialBinds[i];
+        material_t*         mat = mb->mat;
+
+        if(grp != MG_ANY && mat->group != grp)
+            continue;
+
+        Con_Printf(" %*lu - \"%s\"", numDigits, i, mb->name);
+        if(grp == MG_ANY)
+            Con_Printf(" (%i)", mat->group);
+        Con_Printf(" [%i, %i]", mat->width, mat->height);
+        Con_Printf("\n");
+
+        for(j = 0; j < numgroups; ++j)
+        {
+            if(isInAnimGroup(groups[j].id, mat))
+            {
+                int                 k;
+
+                for(k = 0; k < groups[j].count; ++k)
+                {
+                    animframe_t*        frame = &groups[j].frames[k];
+                    materialnum_t       otherIDX =
+                        getMaterialNumForIndex(frame->mat->tex->ofTypeID,
+                                               frame->mat->group) - 1;
+                    materialbind_t*     otherMB = &materialBinds[otherIDX];
+
+                    Con_Printf(" > %*lu - \"%s\"\n", numDigits, otherIDX,
+                               otherMB->name);
+                }
+            }
+        }
+    }
+}
+
+D_CMD(ListMaterials)
+{
+    materialgroup_t     grp = MG_ANY;
+
+    if(argc > 1)
+    {
+        grp = atoi(argv[1]);
+
+        if(grp < MG_FIRST || !(grp < NUM_MATERIAL_GROUPS))
+        {
+            Con_Printf("Invalid material group \"%s\".\n", argv[1]);
+            return false;
+        }
+    }
+
+    printMaterials(grp);
+    return true;
 }

@@ -1112,11 +1112,6 @@ typedef struct {
                     j++;
             }
 
-            if(!texDef->name)
-            {
-                j = 666;
-            }
-
             // Add it to the list.
             texDefs[n++] = texDef;
         }
@@ -1228,7 +1223,7 @@ static void loadTextureDefs(void)
 
             for(j = 0; j < countCustom; ++j)
             {
-                texturedef_t*       custom = list[j];
+                texturedef_t*       custom = listCustom[j];
 
                 if(!strncmp(orig->name, custom->name, 8))
                 {   // This is a newer version of an IWAD texture def.
@@ -1266,8 +1261,10 @@ static void loadTextureDefs(void)
 
             if(hasReplacement)
             {   // Let the custom texture override the IWAD original.
-                memmove(list[i], list[i + 1],
-                        (count - i) * sizeof(*list));
+                uint                n;
+
+                for(n = i + 1; n < count; ++n)
+                    list[n-1] = list[n];
                 count--;
             }
             else
