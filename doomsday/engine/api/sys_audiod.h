@@ -34,9 +34,8 @@ typedef enum {
     AUDIOD_SDL_MIXER,
     AUDIOD_OPENAL,
 #ifdef WIN32
-    AUDIOD_DSOUND8,
-    AUDIOD_WINMM,
     AUDIOD_DSOUND,
+    AUDIOD_WINMM,
 #endif
 } audiodriver_e;
 

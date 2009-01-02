@@ -128,12 +128,6 @@ boolean S_InitDriver(audiodriver_e drvid)
             return false;
         break;
 
-    case AUDIOD_DSOUND8:
-        Con_Printf("DirectSound8\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("ds8")))
-            return false;
-        break;
-
     case AUDIOD_WINMM:
         Con_Printf("WinMM\n");
         if(!(audioDriver = Sys_LoadAudioDriver("winmm")))
@@ -175,10 +169,6 @@ boolean S_Init(void)
     else if(ArgExists("-dsound"))
     {   // DirectSound with 3D sound support, EAX effects.
         ok = S_InitDriver(AUDIOD_DSOUND);
-    }
-    else if(ArgExists("-ds8"))
-    {   // DirectSound 8 with 3D sound support, EAX effects.
-        ok = S_InitDriver(AUDIOD_DSOUND8);
     }
     else if(ArgExists("-winmm"))
     {   // Windows Multimedia.
