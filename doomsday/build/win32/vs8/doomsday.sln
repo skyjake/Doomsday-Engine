@@ -42,11 +42,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsWinMM", "dswinmm.vcproj",
 		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsDS9", "dsds9.vcproj", "{7600B05C-2751-415D-BDB3-839AA7F48483}"
-	ProjectSection(ProjectDependencies) = postProject
-		{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A} = {65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -123,12 +118,6 @@ Global
 		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Mesa Release|Win32.Build.0 = Release|Win32
 		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Release|Win32.ActiveCfg = Release|Win32
 		{1E0FBD00-C82C-47DF-88FC-9EFCDD659A3F}.Release|Win32.Build.0 = Release|Win32
-		{7600B05C-2751-415D-BDB3-839AA7F48483}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7600B05C-2751-415D-BDB3-839AA7F48483}.Debug|Win32.Build.0 = Debug|Win32
-		{7600B05C-2751-415D-BDB3-839AA7F48483}.Mesa Release|Win32.ActiveCfg = Release|Win32
-		{7600B05C-2751-415D-BDB3-839AA7F48483}.Mesa Release|Win32.Build.0 = Release|Win32
-		{7600B05C-2751-415D-BDB3-839AA7F48483}.Release|Win32.ActiveCfg = Release|Win32
-		{7600B05C-2751-415D-BDB3-839AA7F48483}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
