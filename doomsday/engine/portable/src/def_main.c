@@ -905,23 +905,21 @@ void Def_Read(void)
     for(i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t*     def = &defs.materials[i];
-        materialtex_t*      mTex = NULL;
+        materialtex_t*      mTex = NULL; // No change.
+        float               width = -1, height = -1; // No change.
+        materialgroup_t     groupNum = MG_ANY; // No change.
 
-        if(def->layers[0].type == -1)
-            continue; // Unused.
+        // Sanitize so that when updating we only change what is requested.
+        if(def->width > 0)
+            width = MAX_OF(1, def->width);
+        if(def->height > 0)
+            height = MAX_OF(1, def->height);
+        if(def->layers[0].type != -1) // Not unused.
+            mTex = R_GetMaterialTex(def->layers[0].name, def->layers[0].type);
+        if(def->group != MG_ANY)
+            groupNum = def->group;
 
-        // Sanity checks:
-        if(def->width < 0)
-            def->width = -def->width;
-        def->width = MAX_OF(1, def->width);
-        if(def->height < 0)
-            def->height = -def->height;
-        def->height = MAX_OF(1, def->height);
-
-        mTex = R_GetMaterialTex(def->layers[0].name, def->layers[0].type);
-
-        R_MaterialCreate(def->name, def->width, def->height, def->flags, mTex,
-                         def->group);
+        R_MaterialCreate(def->name, width, height, def->flags, mTex, groupNum);
     }
 
     // Dynamic lights. Update the sprite numbers.

@@ -14,14 +14,13 @@
 #
 # Glowing textures:
 #
-Decoration {
-  Flags = ext;
-  Texture = "CBTRAKA";
-  Glow {
-  };
+Material {
+  Name = "CBTRAKA";
+  Group = textures;
+  Flags = glow;
 }
 
-* Decoration { Texture = "CRTRAKA" }
-* Decoration { Texture = "CYTRAKA" }
-* Decoration { Texture = "SEXIT" }
-* Decoration { Texture = "SEXITA" }
+* Material { Name = "CRTRAKA" }
+* Material { Name = "CYTRAKA" }
+* Material { Name = "SEXIT" }
+* Material { Name = "SEXITA" }

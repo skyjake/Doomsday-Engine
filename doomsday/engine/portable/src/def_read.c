@@ -995,7 +995,6 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             prevLightDefIdx = idx;
         }
 
-#if _DEBUG
         if(ISTOKEN("Material"))
         {
             uint                layer;
@@ -1048,7 +1047,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             }
             prevMaterialDefIdx = idx;
         }
-#endif
+
         if(ISTOKEN("Model"))
         {
             uint                sub;
@@ -1736,18 +1735,6 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 {
                     READSTR(decor->materialName)
                     decor->materialGroup = MG_FLATS;
-                }
-                else if(ISLABEL("Glow"))
-                {
-                    decor->glow = true;
-                    FINDBEGIN;
-                    for(;;)
-                    {
-                        READLABEL;
-                        // No paramaters yet.
-                        CHECKSC;
-                    }
-                    sub++;
                 }
                 else if(ISLABEL("Model"))
                 {

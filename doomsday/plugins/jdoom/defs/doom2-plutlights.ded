@@ -20,41 +20,39 @@ SkipIf Not doom2-plut;
 #
 # Glowing flats:
 #
-Decoration {
-  Flags = ext;
-  Flat = "LAVA1";
-  Glow {
-  };
+Material {
+  Name = "LAVA1";
+  Group = flats;
+  Flags = glow;
 }
 
-* Decoration { Flat = "LAVA2"; }
-* Decoration { Flat = "LAVA3"; }
-* Decoration { Flat = "LAVA4"; }
-* Decoration { Flat = "NUKAGE1"; }
-* Decoration { Flat = "NUKAGE2"; }
-* Decoration { Flat = "NUKAGE3"; }
-* Decoration { Flat = "FWATER1"; }
-* Decoration { Flat = "FWATER2"; }
-* Decoration { Flat = "FWATER3"; }
-* Decoration { Flat = "FWATER4"; }
+* Material { Name = "LAVA2"; }
+* Material { Name = "LAVA3"; }
+* Material { Name = "LAVA4"; }
+* Material { Name = "NUKAGE1"; }
+* Material { Name = "NUKAGE2"; }
+* Material { Name = "NUKAGE3"; }
+* Material { Name = "FWATER1"; }
+* Material { Name = "FWATER2"; }
+* Material { Name = "FWATER3"; }
+* Material { Name = "FWATER4"; }
 
 #
 # Glowing textures:
 #
-Decoration {
-  Flags = ext;
-  Texture = "FIREBLU1";
-  Glow {
-  };
+Mterial {
+  Name = "FIREBLU1";
+  Group = textures;
+  Flags = glow;
 }
 
-* Decoration { Texture = "FIREBLU2"; }
-* Decoration { Texture = "FIRELAVA"; }
-* Decoration { Texture = "FIRELAV2"; }
-* Decoration { Texture = "FIRELAV3"; }
-* Decoration { Texture = "FIREMAG1"; }
-* Decoration { Texture = "FIREMAG2"; }
-* Decoration { Texture = "FIREMAG3"; }
-* Decoration { Texture = "FIREWALL"; }
-* Decoration { Texture = "FIREWALA"; }
-* Decoration { Texture = "FIREWALB"; }
+* Material { Name = "FIREBLU2"; }
+* Material { Name = "FIRELAVA"; }
+* Material { Name = "FIRELAV2"; }
+* Material { Name = "FIRELAV3"; }
+* Material { Name = "FIREMAG1"; }
+* Material { Name = "FIREMAG2"; }
+* Material { Name = "FIREMAG3"; }
+* Material { Name = "FIREWALL"; }
+* Material { Name = "FIREWALA"; }
+* Material { Name = "FIREWALB"; }

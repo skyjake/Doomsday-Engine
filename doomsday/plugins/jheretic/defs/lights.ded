@@ -19,29 +19,27 @@ Header { Version = 6; }
 #
 # Glowing flats:
 #
-Decoration {
-  Flags = ext;
-  Flat = "FLATHUH1";
-  Glow {
-  };
+Material {
+  Name = "FLATHUH1";
+  Group = flats;
+  Flags = glow;
 }
 
-* Decoration { Flat = "FLATHUH2"; }
-* Decoration { Flat = "FLATHUH3"; }
-* Decoration { Flat = "FLATHUH4"; }
+* Material { Name = "FLATHUH2"; }
+* Material { Name = "FLATHUH3"; }
+* Material { Name = "FLATHUH4"; }
 
 #
 # Glowing textures:
 #
-Decoration {
-  Flags = ext;
-  Texture = "LAVAFL1";
-  Glow {
-  };
+Material {
+  Name = "LAVAFL1";
+  Group = textures;
+  Flags = glow;
 }
 
-* Decoration { Texture = "LAVAFL2"; }
-* Decoration { Texture = "LAVAFL3"; }
+* Material { Name = "LAVAFL2"; }
+* Material { Name = "LAVAFL3"; }
 
 Decoration {
   Texture = "GRSKULL3";

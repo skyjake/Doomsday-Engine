@@ -613,6 +613,7 @@ materialtex_t* R_GetMaterialTexByNum(int ofTypeID, materialtextype_t type)
  * @param flags         MATF_* material flags
  * @param mTex          Texture to use with this material.
  * @param group         MG_* material group.
+ *                      MG_ANY is only valid when updating an existing material.
  *
  * @return              The created material, ELSE @c NULL.
  */
@@ -620,7 +621,7 @@ material_t* R_MaterialCreate(const char* rawName, short width, short height,
                              byte flags, materialtex_t* mTex,
                              materialgroup_t groupNum)
 {
-    materialnum_t       i;
+    materialnum_t       oldMat;
     material_t*         mat;
     int                 n;
     uint                hash;
@@ -641,15 +642,6 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material with "
         return NULL;
     }
 
-    if(!isValidMaterialGroup(groupNum))
-    {
-#if _DEBUG
-Con_Message("R_MaterialCreate: Warning, attempted to create material in "
-            "unknown group '%i'.\n", (int) groupNum);
-        return NULL;
-#endif
-    }
-
     // Prepare 'name'.
     for(n = 0; *rawName && n < 8; ++n, rawName++)
         name[n] = tolower(*rawName);
@@ -657,17 +649,43 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
     hash = hashForName(name);
 
     // Check if we've already created a material for this.
-    if((i = getMaterialNumForName(name, hash, groupNum)))
+    if(groupNum == MG_ANY)
+    {   // Caller doesn't care which group. This is only valid if we can
+        // find a material by this name using a priority search order.
+        oldMat = getMaterialNumForName(name, hash, MG_SPRITES);
+        if(!oldMat)
+            oldMat = getMaterialNumForName(name, hash, MG_TEXTURES);
+        if(!oldMat)
+            oldMat = getMaterialNumForName(name, hash, MG_FLATS);
+    }
+    else
     {
-        materialbind_t*     mb = &materialBinds[i - 1];
+        if(!isValidMaterialGroup(groupNum))
+        {
+#if _DEBUG
+Con_Message("R_MaterialCreate: Warning, attempted to create material in "
+            "unknown group '%i'.\n", (int) groupNum);
+#endif
+            return NULL;
+        }
+
+        oldMat = getMaterialNumForName(name, hash, groupNum);
+    }
+
+    if(oldMat)
+    {   // We are updating an existing material.
+        materialbind_t*     mb = &materialBinds[oldMat - 1];
 
         mat = mb->mat;
 
         // Update the (possibly new) meta data.
-        mat->tex = mTex;
+        if(mTex)
+            mat->tex = mTex;
         mat->flags = flags;
-        mat->width = width;
-        mat->height = height;
+        if(width > 0)
+            mat->width = width;
+        if(height > 0)
+            mat->height = height;
         mat->inAnimGroup = false;
         mat->current = mat->next = mat;
         mat->inter = 0;
@@ -679,7 +697,19 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
         return mat; // Yep, return it.
     }
 
-    // A new material.
+    if(groupNum == MG_ANY)
+    {
+#if _DEBUG
+Con_Message("R_MaterialCreate: Warning, attempted to create material "
+            "without groupNum.\n");
+#endif
+        return NULL;
+    }
+
+    /**
+     * A new material.
+     */
+
     mat = Z_BlockNewElement(materialsBlockSet);
     memset(mat, 0, sizeof(*mat));
     mat->group = groupNum;
@@ -782,13 +812,7 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
 
             // We need to update the assocated enhancements.
             // Material decorations.
-            mat->flags &= ~MATF_GLOW;
-            if((mat->decoration = Def_GetDecoration(mat, tmpResult == 2)))
-            {
-                // A glowing material?
-                if(mat->decoration->glow)
-                    mat->flags |= MATF_GLOW;
-            }
+            mat->decoration = Def_GetDecoration(mat, tmpResult == 2);
 
             // Surface reflection.
             {

@@ -34,20 +34,19 @@ Copy Decoration {
 #
 # Glowing textures:
 #
-Decoration {
-  Flags = ext;
-  Texture = "FIREBLU1";
-  Glow {
-  };
+Material {
+  Name = "FIREBLU1";
+  Group = textures;
+  Flags = glow;
 }
 
-* Decoration { Texture = "FIREBLU2"; }
-* Decoration { Texture = "FIRELAVA"; }
-* Decoration { Texture = "FIRELAV2"; }
-* Decoration { Texture = "FIRELAV3"; }
-* Decoration { Texture = "FIREMAG1"; }
-* Decoration { Texture = "FIREMAG2"; }
-* Decoration { Texture = "FIREMAG3"; }
-* Decoration { Texture = "FIREWALL"; }
-* Decoration { Texture = "FIREWALA"; }
-* Decoration { Texture = "FIREWALB"; }
+* Material { Name = "FIREBLU2"; }
+* Material { Name = "FIRELAVA"; }
+* Material { Name = "FIRELAV2"; }
+* Material { Name = "FIRELAV3"; }
+* Material { Name = "FIREMAG1"; }
+* Material { Name = "FIREMAG2"; }
+* Material { Name = "FIREMAG3"; }
+* Material { Name = "FIREWALL"; }
+* Material { Name = "FIREWALA"; }
+* Material { Name = "FIREWALB"; }

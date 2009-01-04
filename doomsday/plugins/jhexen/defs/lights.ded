@@ -17,53 +17,51 @@ Header { Version = 6; }
 # (based on Isegrim's definitions)
 
 #
-# Glowing flats:
+# Glowing materials:
 #
-Decoration {
-  Flags = ext;
-  Flat = "X_001";
-  Glow {
-  };
+Material {
+  Name = "X_001";
+  Group = flats;
+  Flags = glow;
 }
 
-* Decoration { Flat = "X_002"; }
-* Decoration { Flat = "X_003"; }
-* Decoration { Flat = "X_004"; }
+* Material { Name = "X_002"; }
+* Material { Name = "X_003"; }
+* Material { Name = "X_004"; }
 
 #
 # Glowing textures:
 #
-Decoration {
-  Flags = ext;
-  Texture = "X_FIRE01";
-  Glow {
-  };
+Material {
+  Name = "X_FIRE01";
+  Group = textures;
+  Flags = glow;
 }
 
-* Decoration { Texture = "X_FIRE02"; }
-* Decoration { Texture = "X_FIRE03"; }
-* Decoration { Texture = "X_FIRE04"; }
-* Decoration { Texture = "X_FAC01"; }
-* Decoration { Texture = "X_FAC02"; }
-* Decoration { Texture = "X_FAC03"; }
-* Decoration { Texture = "X_FAC04"; }
-* Decoration { Texture = "X_FAC05"; }
-* Decoration { Texture = "X_FAC06"; }
-* Decoration { Texture = "X_FAC07"; }
-* Decoration { Texture = "X_FAC08"; }
-* Decoration { Texture = "X_FAC09"; }
-* Decoration { Texture = "X_FAC10"; }
-* Decoration { Texture = "X_FAC11"; }
-* Decoration { Texture = "X_FAC12"; }
-* Decoration { Texture = "TPORT1"; }
-* Decoration { Texture = "TPORT2"; }
-* Decoration { Texture = "TPORT3"; }
-* Decoration { Texture = "TPORT4"; }
-* Decoration { Texture = "TPORT5"; }
-* Decoration { Texture = "TPORT6"; }
-* Decoration { Texture = "TPORT7"; }
-* Decoration { Texture = "TPORT8"; }
-* Decoration { Texture = "TPORT9"; }
+* Material { Name = "X_FIRE02"; }
+* Material { Name = "X_FIRE03"; }
+* Material { Name = "X_FIRE04"; }
+* Material { Name = "X_FAC01"; }
+* Material { Name = "X_FAC02"; }
+* Material { Name = "X_FAC03"; }
+* Material { Name = "X_FAC04"; }
+* Material { Name = "X_FAC05"; }
+* Material { Name = "X_FAC06"; }
+* Material { Name = "X_FAC07"; }
+* Material { Name = "X_FAC08"; }
+* Material { Name = "X_FAC09"; }
+* Material { Name = "X_FAC10"; }
+* Material { Name = "X_FAC11"; }
+* Material { Name = "X_FAC12"; }
+* Material { Name = "TPORT1"; }
+* Material { Name = "TPORT2"; }
+* Material { Name = "TPORT3"; }
+* Material { Name = "TPORT4"; }
+* Material { Name = "TPORT5"; }
+* Material { Name = "TPORT6"; }
+* Material { Name = "TPORT7"; }
+* Material { Name = "TPORT8"; }
+* Material { Name = "TPORT9"; }
 
 Decoration {
   Texture = "MONK22";

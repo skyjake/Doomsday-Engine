@@ -488,7 +488,6 @@ typedef struct ded_decormodel_s {
 typedef struct ded_decor_s {
     ded_string_t    materialName;
     materialgroup_t materialGroup;
-    int             glow;
     ded_flags_t     flags;
     ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
     ded_decormodel_t models[DED_DECOR_NUM_MODELS];
