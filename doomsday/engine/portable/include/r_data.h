@@ -298,6 +298,7 @@ void            R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
                                const walldiv_t* divs, float bL, float tL,
                                float bR, float tR);
 
+void            R_UpdateTexturesAndFlats(void);
 void            R_InitTextures(void);
 void            R_InitFlats(void);
 
