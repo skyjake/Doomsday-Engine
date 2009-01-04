@@ -599,13 +599,16 @@ void G_ChangeGameState(gamestate_t state)
     if(state < 0 || state >= NUM_GAME_STATES)
         Con_Error("G_ChangeGameState: Invalid state %i.\n", (int) state);
 
+    if(gameState != state)
+    {
 #if _DEBUG
-    // Log gamestate changes in debug builds, with verbose.
-    VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
-                        getGameStateStr(state)));
+// Log gamestate changes in debug builds, with verbose.
+VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
+                    getGameStateStr(state)));
 #endif
 
-    gameState = state;
+        gameState = state;
+    }
 }
 
 /**
