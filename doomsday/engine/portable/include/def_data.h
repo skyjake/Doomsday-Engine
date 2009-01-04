@@ -529,6 +529,22 @@ typedef struct ded_group_s {
     ded_group_member_t* members;
 } ded_group_t;
 
+// There is a fixed number of layers in each material.
+#define DED_MAX_MATERIAL_LAYERS     1 //// \temp
+
+typedef struct ded_materiallayer_s {
+    ded_string_t    name; // Material tex name.
+    int             type; // Material tex type, @see materialtextype_t.
+} ded_materiallayer_t;
+
+typedef struct ded_material_s {
+    ded_string_t    name;
+    int             group;
+    ded_flags_t     flags;
+    float           width, height; // In world units.
+    ded_materiallayer_t layers[DED_MAX_MATERIAL_LAYERS];
+} ded_material_t;
+
 // The ded_t structure encapsulates all the data one definition file
 // can contain. This is only an internal representation of the data.
 // An ASCII version is written and read by DED_Write() and DED_Read()
@@ -551,6 +567,7 @@ typedef struct ded_s {
         ded_count_t     states;
         ded_count_t     sprites;
         ded_count_t     lights;
+        ded_count_t     materials;
         ded_count_t     models;
         ded_count_t     sounds;
         ded_count_t     music;
@@ -583,6 +600,9 @@ typedef struct ded_s {
 
     // Lights.
     ded_light_t*    lights;
+
+    // Materials.
+    ded_material_t* materials;
 
     // Models.
     ded_model_t*    models;
@@ -644,6 +664,7 @@ int             DED_AddMobj(ded_t* ded, char* idStr);
 int             DED_AddState(ded_t* ded, char* id);
 int             DED_AddSprite(ded_t* ded, const char* name);
 int             DED_AddLight(ded_t* ded, const char* stateID);
+int             DED_AddMaterial(ded_t* ded, const char* name);
 int             DED_AddModel(ded_t* ded, char* spr);
 int             DED_AddSound(ded_t* ded, char* id);
 int             DED_AddMusic(ded_t* ded, char* id);
@@ -669,6 +690,7 @@ void            DED_RemoveMobj(ded_t* ded, int index);
 void            DED_RemoveState(ded_t* ded, int index);
 void            DED_RemoveSprite(ded_t* ded, int index);
 void            DED_RemoveLight(ded_t* ded, int index);
+void            DED_RemoveMaterial(ded_t* ded, int index);
 void            DED_RemoveModel(ded_t* ded, int index);
 void            DED_RemoveSound(ded_t* ded, int index);
 void            DED_RemoveMusic(ded_t* ded, int index);

@@ -581,6 +581,11 @@ static int DD_StartupWorker(void *parm)
     // Now the game can identify the game mode.
     gx.UpdateState(DD_GAME_MODE);
 
+    // Get the material manager up and running.
+    R_InitMaterials();
+    R_InitTextures();
+    R_InitFlats();
+
     // Now that we've read the WADs we can initialize definitions.
     Def_Read();
 

@@ -401,6 +401,27 @@ ded_mapinfo_t* Def_GetMapInfo(const char* mapID)
     return 0;
 }
 
+ded_material_t* Def_GetMaterial(const char* name, materialgroup_t group)
+{
+    int                 i;
+
+    if(!name || !name[0])
+        return NULL;
+
+    for(i = defs.count.materials.num - 1; i >= 0; i--)
+    {
+        ded_material_t*     def = &defs.materials[i];
+
+        if(group != MG_ANY && def->group != group)
+            continue;
+
+        if(!stricmp(def->name, name))
+            return def;
+    }
+
+    return 0;
+}
+
 ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
 {
     int                 i;
@@ -880,6 +901,29 @@ void Def_Read(void)
     Def_CountMsg(countMobjInfo.num, "things");
     Def_CountMsg(defs.count.models.num, "models");
 
+    // Materials.
+    for(i = 0; i < defs.count.materials.num; ++i)
+    {
+        ded_material_t*     def = &defs.materials[i];
+        materialtex_t*      mTex = NULL;
+
+        if(def->layers[0].type == -1)
+            continue; // Unused.
+
+        // Sanity checks:
+        if(def->width < 0)
+            def->width = -def->width;
+        def->width = MAX_OF(1, def->width);
+        if(def->height < 0)
+            def->height = -def->height;
+        def->height = MAX_OF(1, def->height);
+
+        mTex = R_GetMaterialTex(def->layers[0].name, def->layers[0].type);
+
+        R_MaterialCreate(def->name, def->width, def->height, def->flags, mTex,
+                         def->group);
+    }
+
     // Dynamic lights. Update the sprite numbers.
     for(i = 0; i < defs.count.lights.num; ++i)
     {
@@ -1031,6 +1075,9 @@ void Def_Read(void)
 
     // Surface reflections.
     Def_CountMsg(defs.count.reflections.num, "surface reflections");
+
+    // Materials.
+    Def_CountMsg(defs.count.materials.num, "surface materials");
 
     // Other data:
     Def_CountMsg(defs.count.mapInfo.num, "map infos");

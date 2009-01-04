@@ -36,6 +36,7 @@
 
 #include "def_data.h"
 #include "gl_main.h"
+#include "r_materials.h"
 
 // Helper Routines -------------------------------------------------------
 
@@ -119,6 +120,8 @@ void DED_Destroy(ded_t *ded)
         M_Free(ded->sprites);
     if(ded->lights)
         M_Free(ded->lights);
+    if(ded->materials)
+        M_Free(ded->materials);
     if(ded->models)
         M_Free(ded->models);
     if(ded->sounds)
@@ -320,6 +323,31 @@ void DED_RemoveLight(ded_t *ded, int index)
 {
     DED_DelEntry(index, (void **) &ded->lights, &ded->count.lights,
                  sizeof(ded_light_t));
+}
+
+int DED_AddMaterial(ded_t* ded, const char* name)
+{
+    uint                i;
+    ded_material_t*     mat =
+        DED_NewEntry((void **) &ded->materials, &ded->count.materials,
+                     sizeof(ded_material_t));
+
+    strcpy(mat->name, name);
+    // Init layers.
+    for(i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
+    {
+        ded_materiallayer_t* ml = &mat->layers[i];
+
+        ml->type = -1; // Unused.
+    }
+
+    return mat - ded->materials;
+}
+
+void DED_RemoveMaterial(ded_t* ded, int index)
+{
+    DED_DelEntry(index, (void **) &ded->materials, &ded->count.materials,
+                 sizeof(ded_material_t));
 }
 
 int DED_AddSound(ded_t *ded, char *id)

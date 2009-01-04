@@ -142,11 +142,6 @@ void R_Register(void)
     R_MaterialsRegister();
 }
 
-void R_InitSkyMap(void)
-{
-    // Nothing to do.
-}
-
 /**
  * Will the specified surface be added to the sky mask?
  *
@@ -255,11 +250,11 @@ void R_Init(void)
     R_SetViewWindow(0, 0, 320, 200);
     R_InitSprites();
     R_InitModels();
-    R_InitSkyMap();
     R_InitTranslationTables();
     Rend_Init();
     frameCount = 0;
     R_InitViewBorder();
+
     Def_PostInit();
 }
 
@@ -281,15 +276,22 @@ void R_Update(void)
     DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
     GL_TotalReset(true, false, false);
     GL_TotalReset(false, false, false); // Bring GL back online (no lightmaps, flares yet).
+
+    R_UpdateTexturesAndFlats();
+    R_InitTextures();
+    R_InitFlats();
+
     // Re-read definitions.
     Def_Read();
+
     R_UpdateData();
     R_InitSprites(); // Fully reinitialize sprites.
-    R_InitSkyMap();
     R_UpdateTranslationTables();
+
     // Now that we've read the defs, we can load lightmaps and flares.
     GL_LoadSystemTextures(true, true);
     Def_PostInit();
+
     R_InitModels(); // Defs might've changed.
     P_UpdateParticleGens(); // Defs might've changed.
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -310,6 +312,7 @@ void R_Update(void)
         for(j = 0; j < sec->planeCount; ++j)
             Surface_Update(&sec->SP_planesurface(j));
     }
+
     for(i = 0; i < numSideDefs; ++i)
     {
         sidedef_t*          side = &sideDefs[i];

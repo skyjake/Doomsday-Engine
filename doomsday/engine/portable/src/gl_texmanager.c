@@ -583,7 +583,7 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
         material_t*         mat;
         materialtex_t*      mTex;
 
-        mTex = R_MaterialTexCreate(ddtexdefs[i].id, MTT_DDTEX);
+        mTex = R_MaterialTexCreate(ddtexdefs[i].name, ddtexdefs[i].id, MTT_DDTEX);
 
         mat = R_MaterialCreate(ddtexdefs[i].name, 64, 64, 0, mTex,
                                MG_DDTEXTURES);

@@ -61,6 +61,10 @@ typedef struct mtexinstnode_s {
     struct mtexinstnode_s* next; // Next in list of instances.
 } mtexinstnode_t;
 
+typedef struct mtex_typedata_s {
+    uint            hashTable[HASH_SIZE];
+} mtex_typedata_t;
+
 typedef struct animframe_s {
     struct material_s* mat;
     ushort          tics;
@@ -93,6 +97,7 @@ extern boolean mapSetup;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean initedOk = false;
 static uint numMaterialTexs;
 static materialtex_t** materialTexs;
 
@@ -122,6 +127,8 @@ static material_t* materialsHead; // Head of the linked list of materials.
 static materialbind_t* materialBinds;
 static materialnum_t numMaterialBinds, maxMaterialBinds;
 static uint hashTable[HASH_SIZE];
+
+static mtex_typedata_t mtexData[NUM_MATERIALTEX_TYPES];
 
 // CODE --------------------------------------------------------------------
 
@@ -326,6 +333,11 @@ static void updateMaterialTex(materialtex_t* mTex)
  */
 void R_InitMaterials(void)
 {
+    uint                i;
+
+    if(initedOk)
+        return; // Already been here.
+
     numMaterialTexs = 0;
     materialTexs = NULL;
 
@@ -336,8 +348,12 @@ void R_InitMaterials(void)
     materialBinds = NULL;
     numMaterialBinds = maxMaterialBinds = 0;
 
-    // Clear the name bind hash table.
+    // Clear the name bind hash tables.
     memset(hashTable, 0, sizeof(hashTable));
+    for(i = 0; i < NUM_MATERIALTEX_TYPES; ++i)
+        memset(mtexData[i].hashTable, 0, sizeof(mtexData[i].hashTable));
+
+    initedOk = true;
 }
 
 /**
@@ -346,6 +362,9 @@ void R_InitMaterials(void)
  */
 void R_ShutdownMaterials(void)
 {
+    if(!initedOk)
+        return;
+
     if(materialTexs)
     {
         uint                i;
@@ -382,8 +401,7 @@ void R_ShutdownMaterials(void)
     }
     numMaterialBinds = maxMaterialBinds = 0;
 
-    // Clear the name hash table.
-    memset(hashTable, 0, sizeof(hashTable));
+    initedOk = false;
 }
 
 materialnum_t R_GetNumMaterials(void)
@@ -435,10 +453,52 @@ void R_SetAllMaterialsMinMode(int minMode)
     }
 }
 
-materialtex_t* R_MaterialTexCreate(int ofTypeID, materialtextype_t type)
+/**
+ * Given a name and materialtex type, search the materialtexs db for a match.
+ * \assume Caller knows what it's doing; params arn't validity checked.
+ *
+ * @param name          Name of the materialtex to search for. Must have been
+ *                      transformed to all lower case.
+ * @param type          Specific MTT_* materialtex type.
+ * @return              Ptr to the found materialtex_t else, @c NULL.
+ */
+static materialtex_t* getMaterialTexForName(const char* name, uint hash,
+                                            materialtextype_t type)
+{
+    // Go through the candidates.
+    if(mtexData[type].hashTable[hash])
+    {
+        materialtex_t*      mTex =
+            materialTexs[mtexData[type].hashTable[hash] - 1];
+
+        for(;;)
+        {
+            if(mTex->type == type && !strncmp(mTex->name, name, 8))
+                return mTex;
+
+            if(!mTex->hashNext)
+                break;
+
+            mTex = materialTexs[mTex->hashNext - 1];
+        }
+    }
+
+    return 0; // Not found.
+}
+
+materialtex_t* R_MaterialTexCreate(const char* rawName, int ofTypeID,
+                                   materialtextype_t type)
 {
     uint                i;
     materialtex_t*      mTex;
+
+    if(!rawName || !rawName[0])
+        return NULL;
+
+#if _DEBUG
+if(type < MTT_FLAT || !(type < NUM_MATERIALTEX_TYPES))
+    Con_Error("R_MaterialTexCreate: Invalid type %i.", type);
+#endif
 
     // Check if we've already created a materialtex for this.
     for(i = 0; i < numMaterialTexs; ++i)
@@ -457,6 +517,10 @@ materialtex_t* R_MaterialTexCreate(int ofTypeID, materialtextype_t type)
     mTex->type = type;
     mTex->ofTypeID = ofTypeID;
     mTex->instances = NULL;
+    // Prepare 'name'.
+    for(i = 0; *rawName && i < 8; ++i, rawName++)
+        mTex->name[i] = tolower(*rawName);
+    mTex->name[i] = '\0';
 
     switch(type)
     {
@@ -482,6 +546,13 @@ materialtex_t* R_MaterialTexCreate(int ofTypeID, materialtextype_t type)
                   "invalid type %i.", (int) type);
     }
 
+    // We also hash the name for faster searching.
+    {
+    uint                hash = hashForName(mTex->name);
+    mTex->hashNext = mtexData[type].hashTable[hash];
+    mtexData[type].hashTable[hash] = numMaterialTexs + 1; // 1-based index.
+    }
+
     /**
      * Link the new materialtex into the list of materialtexs.
      */
@@ -494,6 +565,40 @@ materialtex_t* R_MaterialTexCreate(int ofTypeID, materialtextype_t type)
     materialTexs[numMaterialTexs - 1] = mTex;
 
     return mTex;
+}
+
+materialtex_t* R_GetMaterialTex(const char* rawName, materialtextype_t type)
+{
+    int                 n;
+    uint                hash;
+    char                name[9];
+
+    if(!rawName || !rawName[0])
+        return NULL;
+
+    // Prepare 'name'.
+    for(n = 0; *rawName && n < 8; ++n, rawName++)
+        name[n] = tolower(*rawName);
+    name[n] = '\0';
+    hash = hashForName(name);
+
+    return getMaterialTexForName(name, hash, type);
+}
+
+materialtex_t* R_GetMaterialTexByNum(int ofTypeID, materialtextype_t type)
+{
+    uint                i;
+    materialtex_t*      mTex;
+
+    for(i = 0; i < numMaterialTexs; ++i)
+    {
+        mTex = materialTexs[i];
+
+        if(mTex->type == type && mTex->ofTypeID == ofTypeID)
+            return mTex; // Yep, return it.
+    }
+
+    return NULL;
 }
 
 /**
@@ -521,6 +626,9 @@ material_t* R_MaterialCreate(const char* rawName, short width, short height,
     uint                hash;
     char                name[9];
 
+    if(!initedOk)
+        return NULL;
+
     // In original DOOM, texture name references beginning with the
     // hypen '-' character are always treated as meaning "no reference"
     // or "invalid texture" and surfaces using them were not drawn.
@@ -543,10 +651,9 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
     }
 
     // Prepare 'name'.
-    strncpy(name, rawName, 8);
-    name[8] = '\0';
     for(n = 0; *rawName && n < 8; ++n, rawName++)
         name[n] = tolower(*rawName);
+    name[n] = '\0';
     hash = hashForName(name);
 
     // Check if we've already created a material for this.
@@ -567,7 +674,7 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
         mat->decoration = NULL;
         mat->ptcGen = NULL;
         mat->detail = NULL;
-        mat->envClass = S_MaterialClassForName(mb->name, groupNum);
+        mat->envClass = MATCLASS_UNKNOWN;
 
         return mat; // Yep, return it.
     }
@@ -579,7 +686,7 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
     mat->width = width;
     mat->height = height;
     mat->flags = flags;
-    mat->envClass = S_MaterialClassForName(name, groupNum);
+    mat->envClass = MATCLASS_UNKNOWN;
     mat->current = mat->next = mat;
     mat->tex = mTex;
 
@@ -901,6 +1008,9 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
  */
 material_t* R_GetMaterial(int ofTypeID, materialgroup_t groupNum)
 {
+    if(!initedOk)
+        return NULL;
+
     if(!isValidMaterialGroup(groupNum)) // MG_ANY is considered invalid.
     {
 #if _DEBUG
@@ -939,6 +1049,9 @@ Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
  */
 material_t* R_GetMaterialByNum(materialnum_t num)
 {
+    if(!initedOk)
+        return NULL;
+
     if(num != 0 && num <= numMaterialBinds)
         return materialBinds[num - 1].mat; // 1-based index.
 
@@ -989,6 +1102,9 @@ materialnum_t R_MaterialCheckNumForName(const char* rawName,
     uint                hash;
     char                name[9];
 
+    if(!initedOk)
+        return 0;
+
     // In original DOOM, texture name references beginning with the
     // hypen '-' character are always treated as meaning "no reference"
     // or "invalid texture" and surfaces using them were not drawn.
@@ -1005,10 +1121,9 @@ Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
     }
 
     // Prepare 'name'.
-    strncpy(name, rawName, 8);
-    name[8] = '\0';
     for(n = 0; *rawName && n < 8; ++n, rawName++)
         name[n] = tolower(*rawName);
+    name[n] = '\0';
     hash = hashForName(name);
 
     if(groupNum == MG_ANY)
@@ -1045,6 +1160,9 @@ materialnum_t R_MaterialNumForName(const char* name, materialgroup_t group)
 {
     materialnum_t       result;
 
+    if(!initedOk)
+        return 0;
+
     // In original DOOM, texture name references beginning with the
     // hypen '-' character are always treated as meaning "no reference"
     // or "invalid texture" and surfaces using them were not drawn.
@@ -1062,6 +1180,9 @@ materialnum_t R_MaterialNumForName(const char* name, materialgroup_t group)
 
 materialnum_t R_MaterialCheckNumForIndex(uint idx, materialgroup_t groupNum)
 {
+    if(!initedOk)
+        return 0;
+
     // Caller wants a material in a specific group.
     if(!isValidMaterialGroup(groupNum))
     {
@@ -1091,8 +1212,8 @@ materialnum_t R_MaterialNumForIndex(uint idx, materialgroup_t group)
 {
     materialnum_t       result = R_MaterialCheckNumForIndex(idx, group);
 
-    // Not found?
-    if(result == 0 && !mapSetup) // Don't announce during map setup.
+    // Not found? Don't announce during map setup or if not yet inited.
+    if(result == 0 && (!mapSetup || !initedOk))
         Con_Message("R_MaterialNumForIndex: %u in group %i not found!\n",
                     idx, group);
     return result;
@@ -1108,6 +1229,9 @@ materialnum_t R_MaterialNumForIndex(uint idx, materialgroup_t group)
  */
 const char* R_MaterialNameForNum(materialnum_t num)
 {
+    if(!initedOk)
+        return NULL;
+
     if(num != 0 && num <= numMaterialBinds)
         return materialBinds[num-1].name;
 
@@ -1194,6 +1318,26 @@ const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat)
     return NULL;
 }
 
+materialclass_t R_MaterialGetClass(material_t* mat)
+{
+    if(mat)
+    {
+        if(mat->envClass == MATCLASS_UNKNOWN)
+        {
+            materialnum_t       matIdx = R_GetMaterialNum(mat);
+
+            S_MaterialClassForName(R_MaterialNameForNum(matIdx), mat->group);
+        }
+
+        if(!(mat->flags & MATF_NO_DRAW))
+        {
+            return mat->envClass;
+        }
+    }
+
+    return MATCLASS_UNKNOWN;
+}
+
 /**
  * Populate 'info' with information about the requested material.
  * \note Part of the Doomsday public API.
@@ -1204,6 +1348,9 @@ const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat)
 boolean R_MaterialGetInfo(materialnum_t num, materialinfo_t* info)
 {
     material_t*         mat;
+
+    if(!initedOk)
+        return false;
 
     if(!info)
         Con_Error("R_MaterialGetInfo: Info paramater invalid.");

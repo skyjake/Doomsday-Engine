@@ -44,10 +44,13 @@ typedef enum {
 } materialtextype_t;
 
 typedef struct materialtex_s {
+    char            name[9];
     materialtextype_t type;
     int             ofTypeID;
     boolean         isFromIWAD;
     void*           instances;
+
+    uint            hashNext; // 1-based index
 } materialtex_t;
 
 typedef struct material_s {
@@ -89,6 +92,8 @@ void            R_ShutdownMaterials(void);
 materialnum_t   R_GetNumMaterials(void);
 void            R_DeleteMaterialTextures(materialgroup_t group);
 void            R_SetAllMaterialsMinMode(int minMode);
+materialtex_t*  R_GetMaterialTex(const char* name, materialtextype_t type);
+materialtex_t*  R_GetMaterialTexByNum(int ofTypeID, materialtextype_t type);
 
 // Creation:
 material_t*     R_MaterialCreate(const char* name, short width,
@@ -106,6 +111,7 @@ void            R_MaterialSetTranslation(material_t* mat,
 boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
 const ded_decor_t* R_MaterialGetDecoration(material_t* mat);
 const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat);
+materialclass_t R_MaterialGetClass(material_t* mat);
 void            R_MaterialSetSkyMask(materialnum_t num, boolean yes);
 
 // Lookup:
@@ -117,7 +123,8 @@ materialnum_t   R_GetMaterialNum(const material_t* mat);
 boolean         R_MaterialIsCustom(materialnum_t num);
 void            R_MaterialPrecache2(material_t* mat);
 
-materialtex_t*  R_MaterialTexCreate(int ofTypeID, materialtextype_t type);
+materialtex_t*  R_MaterialTexCreate(const char* name, int ofTypeID,
+                                    materialtextype_t type);
 void            R_MaterialTexDelete(materialtex_t* mTex);
 
 int             R_CreateAnimGroup(int flags);

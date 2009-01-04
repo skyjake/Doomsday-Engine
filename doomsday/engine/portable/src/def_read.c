@@ -690,6 +690,8 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
     int                 prevStateDefIdx = -1; // For "Copy"
     ded_light_t*        lig;
     int                 prevLightDefIdx = -1; // For "Copy".
+    ded_material_t*     mat;
+    int                 prevMaterialDefIdx = -1; // For "Copy".
     ded_model_t*        mdl, *prevModel = 0;
     int                 prevModelDefIdx = -1; // For "Copy".
     ded_sound_t*        snd;
@@ -993,6 +995,60 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             prevLightDefIdx = idx;
         }
 
+#if _DEBUG
+        if(ISTOKEN("Material"))
+        {
+            uint                layer;
+
+            // A new material.
+            idx = DED_AddMaterial(ded, "");
+            mat = ded->materials + idx;
+            layer = 0;
+            if(prevMaterialDefIdx >= 0 && bCopyNext)
+            {
+                // Should we copy the previous definition?
+                memcpy(mat, ded->materials + prevMaterialDefIdx, sizeof(*mat));
+            }
+
+            FINDBEGIN;
+            for(;;)
+            {
+                READLABEL;
+                RV_STR("Name", mat->name)
+                RV_FLAGS("Group", mat->group, "mg_")
+                RV_FLAGS("Flags", mat->flags, "matf_")
+                RV_FLT("Width", mat->width)
+                RV_FLT("Height", mat->height)
+                if(ISLABEL("Layer"))
+                {
+                    if(layer >= DED_MAX_MATERIAL_LAYERS)
+                        Con_Error("DED_ReadData: Too many material layers "
+                                  "(%s).\n", mat->name);
+
+                    FINDBEGIN;
+                    for(;;)
+                    {
+                        READLABEL;
+                        if(ISLABEL("Texture") || ISLABEL("Flat") ||
+                           ISLABEL("Sprite") || ISLABEL("DDTex"))
+                        {
+                            mat->layers[layer].type = (
+                                ISLABEL("Texture")? MTT_TEXTURE :
+                                ISLABEL("Flat")? MTT_FLAT :
+                                ISLABEL("Sprite")? MTT_SPRITE : MTT_DDTEX);
+                            READSTR(mat->layers[layer].name);
+                        }
+                        else RV_END
+                        CHECKSC;
+                    }
+                    layer++;
+                }
+                else RV_END
+                CHECKSC;
+            }
+            prevMaterialDefIdx = idx;
+        }
+#endif
         if(ISTOKEN("Model"))
         {
             uint                sub;

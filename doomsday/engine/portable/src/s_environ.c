@@ -301,16 +301,8 @@ static boolean calcSSecReverb(subsector_t* ssec)
         {
             material_t*         mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 
-            // The texture of the seg determines its type.
-            if(!(mat->flags & MATF_NO_DRAW))
-            {
-                mclass = mat->envClass;
-            }
-            else
-            {
-                mclass = MATCLASS_UNKNOWN;
-            }
-
+            // The material determines its type.
+            mclass = R_MaterialGetClass(mat);
             total += seg->length;
             if(!(mclass >= 0 && mclass < NUM_MATERIAL_CLASSES))
                 mclass = MATCLASS_WOOD; // Assume it's wood if unknown.

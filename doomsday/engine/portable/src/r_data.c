@@ -1261,7 +1261,7 @@ static void loadTextureDefs(void)
 
             if(hasReplacement)
             {   // Let the custom texture override the IWAD original.
-                uint                n;
+                int                 n;
 
                 for(n = i + 1; n < count; ++n)
                     list[n-1] = list[n];
@@ -1319,7 +1319,7 @@ void R_InitTextures(void)
             material_t*             mat;
             materialtex_t*          mTex;
 
-            mTex = R_MaterialTexCreate(i, MTT_TEXTURE);
+            mTex = R_MaterialTexCreate(texDef->name, i, MTT_TEXTURE);
 
             // Create a material for this texture.
             mat = R_MaterialCreate(texDef->name, texDef->width, texDef->height,
@@ -1387,7 +1387,7 @@ static int R_NewFlat(lumpnum_t lump)
     ptr = flats[numFlats - 1] = Z_Calloc(sizeof(flat_t), PU_REFRESHTEX, 0);
     ptr->lump = lump;
 
-    mTex = R_MaterialTexCreate(numFlats - 1, MTT_FLAT);
+    mTex = R_MaterialTexCreate(lumpInfo[lump].name, numFlats - 1, MTT_FLAT);
 
     // Create a material for this flat.
     mat = R_MaterialCreate(lumpInfo[lump].name, 64, 64, 0, mTex, MG_FLATS);
@@ -1470,7 +1470,8 @@ int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
     ptr->width = SHORT(patch->width);
     ptr->height = SHORT(patch->height);
 
-    mTex = R_MaterialTexCreate(numSpriteTextures - 1, MTT_SPRITE);
+    mTex = R_MaterialTexCreate(W_LumpName(lump), numSpriteTextures - 1,
+                               MTT_SPRITE);
 
     // Create a new material for this sprite texture.
     mat = R_MaterialCreate(W_LumpName(lump), SHORT(patch->width),
@@ -1613,9 +1614,6 @@ void R_DestroySkins(void)
 void R_UpdateTexturesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
-    R_InitTextures();
-    R_InitFlats();
-    R_InitSkyMap();
 }
 
 void R_InitPatches(void)
@@ -1648,9 +1646,6 @@ void R_UpdateRawTexs(void)
  */
 void R_InitData(void)
 {
-    R_InitMaterials();
-    R_InitTextures();
-    R_InitFlats();
     R_InitPatches();
     R_InitRawTexs();
     Cl_InitTranslations();
@@ -1658,7 +1653,6 @@ void R_InitData(void)
 
 void R_UpdateData(void)
 {
-    R_UpdateTexturesAndFlats();
     R_UpdatePatches();
     R_UpdateRawTexs();
     Cl_InitTranslations();
