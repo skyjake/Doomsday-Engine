@@ -1,6 +1,6 @@
-## deng build scripts. 
-## Copyright © 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
-## Copyright © 2007 - 2008 Daniel Swanson <danij@dengine.net>
+## Copyright (c) 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
+## Copyright (c) 2007 - 2008 Daniel Swanson <danij@dengine.net>
+## Copyright (c) 2008 - 2009 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
 ##
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
@@ -622,7 +622,9 @@ ENDIF (WIN32)
 ## .m is Obj-C
 IF (APPLE)
 	INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/mac/include )
-	FILE(GLOB DENG_OSX_SOURCES ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m)
+	FILE (GLOB DENG_OSX_SOURCES 
+        ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m 
+        ${CMAKE_SOURCE_DIR}/engine/mac/src/*.c )
 	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${DENG_OSX_SOURCES})
 ENDIF (APPLE)
 

@@ -312,7 +312,7 @@ boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
     fwrite(buffer, 7, 1, file);
 
     header = (struct mus_header *) data;
-    readPos = (char*)data + USHORT(header->scoreStart);
+    readPos = (byte*)data + USHORT(header->scoreStart);
     readTime = 0;
     // Init channel volumes.
     for(i = 0; i < 16; ++i)

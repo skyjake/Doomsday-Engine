@@ -46,6 +46,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define BUFFERED_MUSIC_FILE      "dd-buffered-song"
+#define BUFFERED_MIDI_MUSIC_FILE "dd-buffered-song.mid"
 #define NUM_INTERFACES (sizeof(interfaces)/sizeof(interfaces[0]))
 
 // TYPES -------------------------------------------------------------------
@@ -70,6 +71,10 @@ D_CMD(StopMusic);
 // Music playback interfaces loaded from a sound driver plugin.
 extern audiointerface_music_t audiodExternalIMusic;
 extern audiointerface_cd_t audiodExternalICD;
+
+#ifdef MACOSX
+extern audiointerface_music_t audiodQuickTimeMusic;
+#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -139,6 +144,11 @@ boolean Mus_Init(void)
         iCD  = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
     }
 
+#ifdef MACOSX
+    // On the Mac, just use QuickTime for the music and be done with it.
+    iMusic = &audiodQuickTimeMusic;
+#endif
+    
     // Initialize the chosen interfaces.
     for(i = 0; i < NUM_INTERFACES; ++i)
     {
@@ -476,13 +486,14 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     byte*               lumpPtr;
 
                     // Cache the lump, convert to MIDI and output to a temp
-                    // file in the working directory.
+                    // file in the working directory. Use a filename with the .mid
+                    // extension so that the player knows the format.
                     lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
-                    M_Mus2Midi(lumpPtr, W_LumpLength(lump), BUFFERED_MUSIC_FILE);
+                    M_Mus2Midi(lumpPtr, W_LumpLength(lump), BUFFERED_MIDI_MUSIC_FILE);
                     Z_ChangeTag(lumpPtr, PU_CACHE);
 
                     // Play the newly converted MIDI file.
-                    return iMusic->PlayFile(BUFFERED_MUSIC_FILE, looped);
+                    return iMusic->PlayFile(BUFFERED_MIDI_MUSIC_FILE, looped);
                 }
 
                 if(!iMusic->Play)

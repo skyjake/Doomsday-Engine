@@ -33,11 +33,15 @@
 #include <stdint.h>
 typedef uint64_t io_user_reference_t;
 
-#include "driver.h"
+#include "doomsday.h"
+#include "sys_audiod.h"
+#include "sys_audiod_mus.h"
 #include <Carbon/Carbon.h>
 #include <QuickTime/Movies.h>
 
 // MACROS ------------------------------------------------------------------
+
+#define BUFFERED_MUSIC_FILE "_dd-qt-buffered-music-file"
 
 // TYPES -------------------------------------------------------------------
 
@@ -45,8 +49,8 @@ typedef uint64_t io_user_reference_t;
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-int DM_Ext_PlayFile(const char *filename, int looped);
-void DM_Ext_Stop(void);
+static int DM_Ext_PlayFile(const char *filename, int looped);
+static void DM_Ext_Stop(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -65,7 +69,12 @@ static short movieVolume = kFullVolume;
 
 // CODE --------------------------------------------------------------------
 
-void ExtMus_Init(void)
+static void DS_Error(void)
+{
+    Con_Message("DS_Error: Error playing music with QuickTime.\n");
+}
+
+static void ExtMus_Init(void)
 {
     if(qtInited)
         return;
@@ -78,7 +87,7 @@ void ExtMus_Init(void)
     qtInited = true;
 }
 
-void ExtMus_Shutdown(void)
+static void ExtMus_Shutdown(void)
 {
     DM_Ext_Stop();
 
@@ -95,13 +104,13 @@ void ExtMus_Shutdown(void)
     qtInited = false;
 }
 
-int DM_Ext_Init(void)
+static int DM_Ext_Init(void)
 {
     ExtMus_Init();
     return qtInited;
 }
 
-void DM_Ext_Update(void)
+static void DM_Ext_Update(void)
 {
     if(!qtInited || movie == NULL)
         return;
@@ -115,7 +124,7 @@ void DM_Ext_Update(void)
     }
 }
 
-void DM_Ext_Set(int property, float value)
+static void DM_Ext_Set(int property, float value)
 {
     if(!qtInited)
         return;
@@ -135,7 +144,7 @@ void DM_Ext_Set(int property, float value)
     }
 }
 
-int DM_Ext_Get(int property, void *value)
+static int DM_Ext_Get(int property, void *value)
 {
     if(!qtInited)
         return false;
@@ -152,7 +161,7 @@ int DM_Ext_Get(int property, void *value)
     return true;
 }
 
-void *DM_Ext_SongBuffer(int length)
+static void *DM_Ext_SongBuffer(int length)
 {
     if(!qtInited)
         return NULL;
@@ -164,7 +173,7 @@ void *DM_Ext_SongBuffer(int length)
     return song = malloc(length);
 }
 
-int DM_Ext_PlayBuffer(int looped)
+static int DM_Ext_PlayBuffer(int looped)
 {
     if(!qtInited)
         return false;
@@ -189,7 +198,7 @@ int DM_Ext_PlayBuffer(int looped)
     return DM_Ext_PlayFile(BUFFERED_MUSIC_FILE, looped);
 }
 
-void DM_Ext_Pause(int pause)
+static void DM_Ext_Pause(int pause)
 {
     if(!qtInited || movie == NULL)
         return;
@@ -200,7 +209,7 @@ void DM_Ext_Pause(int pause)
         StartMovie(movie);
 }
 
-void DM_Ext_Stop(void)
+static void DM_Ext_Stop(void)
 {
     if(!qtInited || movie == NULL)
         return;
@@ -277,28 +286,28 @@ static int playFile(const char *filename, int looped)
     return true;
 }
 
-int DM_Ext_PlayFile(const char *filename, int looped)
+static int DM_Ext_PlayFile(const char *filename, int looped)
 {
     return playFile(filename, looped);
 }
 
-int DM_Mus_Init(void)
+static int DM_Mus_Init(void)
 {
     ExtMus_Init();
     return qtInited;
 }
 
-void DM_Mus_Update(void)
+static void DM_Mus_Update(void)
 {
     // Nothing to update.
 }
 
-void DM_Mus_Set(int property, float value)
+static void DM_Mus_Set(int property, float value)
 {
     // No MUS-specific properties exist.
 }
 
-int DM_Mus_Get(int property, void *value)
+static int DM_Mus_Get(int property, void *value)
 {
     if(!qtInited)
         return false;
@@ -315,22 +324,22 @@ int DM_Mus_Get(int property, void *value)
     return true;
 }
 
-void DM_Mus_Pause(int pause)
+static void DM_Mus_Pause(int pause)
 {
     // Not needed.
 }
 
-void DM_Mus_Stop(void)
+static void DM_Mus_Stop(void)
 {
     // Not needed.
 }
 
-void *DM_Mus_SongBuffer(int length)
+static void *DM_Mus_SongBuffer(int length)
 {
     return DM_Ext_SongBuffer(length);
 }
 
-int DM_Mus_Play(int looped)
+static int DM_Mus_Play(int looped)
 {
     char fileName[256];
 
@@ -338,3 +347,17 @@ int DM_Mus_Play(int looped)
     convertMusToMidi((byte*) song, songSize, fileName);
     return playFile(fileName, looped);
 }
+
+// The audio driver struct.
+audiointerface_music_t audiodQuickTimeMusic = {
+    DM_Ext_Init,
+    DM_Ext_Update,
+    DM_Ext_Set,
+    DM_Ext_Get,
+    DM_Ext_Pause,
+    DM_Ext_Stop,
+    NULL,
+    NULL,
+    DM_Ext_PlayFile,
+};
+
