@@ -706,6 +706,8 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material "
         return NULL;
     }
 
+    assert(mTex); // Sanity check.
+
     /**
      * A new material.
      */
