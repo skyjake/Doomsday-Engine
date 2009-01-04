@@ -43,11 +43,12 @@ typedef enum infinemode_e {
     FIMODE_AFTER
 } infinemode_t;
 
-extern boolean  fiActive;
-extern boolean  briefDisabled;
+extern boolean fiActive;
+extern boolean fiCmdExecuted; // Set to true after first command.
+extern boolean briefDisabled;
 
 void            FI_Reset(void);
-void            FI_Start(char *finalescript, infinemode_t mode);
+void            FI_Start(char* finalescript, infinemode_t mode);
 void            FI_End(void);
 void            FI_SetCondition(int index, boolean value);
 int             FI_Briefing(int episode, int map);
@@ -55,9 +56,9 @@ int             FI_Debriefing(int episode, int map);
 void            FI_DemoEnds(void);
 int             FI_SkipRequest(void);
 void            FI_Ticker(void);
-int             FI_Responder(event_t *ev);
+int             FI_Responder(event_t* ev);
 void            FI_Drawer(void);
-boolean         FI_IsMenuTrigger(event_t *ev);
+boolean         FI_IsMenuTrigger(event_t* ev);
 
 DEFCC(CCmdStartInFine);
 DEFCC(CCmdStopInFine);
