@@ -2412,27 +2412,27 @@ void M_DrawMainMenu(void)
 
     frame = (menuTime / 5) % 7;
 
-    DGL_Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f(1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(88, 0, m_htic.lump);
     GL_DrawPatch_CS(37, 80, SkullBaseLump + (frame + 2) % 7);
     GL_DrawPatch_CS(278, 80, SkullBaseLump + frame);
 
 #elif __JHERETIC__
-    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
-                 ALIGN_LEFT);
+    WI_DrawPatch(SCREENWIDTH / 2 - 2, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
+                 ALIGN_CENTER);
 
-    DGL_Color4f( 1, 1, 1, menuAlpha);
+    DGL_Color4f(1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
     GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom,
-                 NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(SCREENWIDTH / 2 - 2, 2, 1, 1, 1, menuAlpha, &m_doom,
+                 NULL, false, ALIGN_CENTER);
 #elif __JSTRIFE__
     menu_t     *menu = &MainDef;
     int         yoffset = 0;
 
-    WI_DrawPatch(86, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_STRIFE"),
-                 NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(SCREENWIDTH / 2 - 2, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_STRIFE"),
+                 NULL, false, ALIGN_CENTER);
 
     WI_DrawPatch(menu->x, menu->y + yoffset, 1, 1, 1, menuAlpha,
                  W_GetNumForName("M_NGAME"), NULL, false, ALIGN_LEFT);
