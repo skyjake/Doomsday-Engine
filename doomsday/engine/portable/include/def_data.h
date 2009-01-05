@@ -288,11 +288,14 @@ typedef struct {
 } ded_text_t;
 
 typedef struct {
+    ded_str_t       name;
+    materialgroup_t group;
+} ded_materialid_t;
+
+typedef struct {
     ded_stringid_t  id;
-    ded_count_t     texCount;
-    ded_str_t*      textures;
-    ded_count_t     flatCount;
-    ded_str_t*      flats;
+    ded_count_t     count;
+    ded_materialid_t* materials;
 } ded_tenviron_t;
 
 typedef struct {

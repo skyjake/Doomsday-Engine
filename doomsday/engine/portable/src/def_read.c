@@ -697,7 +697,6 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
     ded_sound_t*        snd;
     ded_mapinfo_t*      mi;
     int                 prevMapInfoDefIdx = -1; // For "Copy".
-    ded_str_t*          tn;
     ded_value_t*        val;
     ded_detailtexture_t* dtl;
     int                 prevDetailDefIdx = -1; // For "Copy".
@@ -1332,30 +1331,24 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             FINDBEGIN;
             for(;;)
             {
+                ded_materialid_t*   mn;
+
                 READLABEL;
                 RV_STR("ID", ded->textureEnv[idx].id)
-                if(ISLABEL("Texture"))
-                {   // A new texture name.
-                    tn = DED_NewEntry((void**)&ded->textureEnv[idx].textures,
-                                      &ded->textureEnv[idx].texCount, sizeof(*tn));
+                if(ISLABEL("Texture") || ISLABEL("Flat") ||
+                   ISLABEL("Sprite") || ISLABEL("DDTex"))
+                {   // A new material name.
+                    mn = DED_NewEntry((void**)&ded->textureEnv[idx].materials,
+                                      &ded->textureEnv[idx].count, sizeof(*mn));
+                    mn->group = (ISLABEL("Texture")? MG_TEXTURES :
+                           ISLABEL("Flat")? MG_FLATS :
+                           ISLABEL("Sprite")? MG_SPRITES : MG_DDTEXTURES);
+
                     FINDBEGIN;
                     for(;;)
                     {
                         READLABEL;
-                        RV_STR("ID", tn->str)
-                        RV_END
-                        CHECKSC;
-                    }
-                }
-                else if(ISLABEL("Flat"))
-                {   // A new flat name.
-                    tn = DED_NewEntry((void**)&ded->textureEnv[idx].flats,
-                                      &ded->textureEnv[idx].flatCount, sizeof(*tn));
-                    FINDBEGIN;
-                    for(;;)
-                    {
-                        READLABEL;
-                        RV_STR("ID", tn->str)
+                        RV_STR("ID", mn->name.str)
                         RV_END
                         CHECKSC;
                     }

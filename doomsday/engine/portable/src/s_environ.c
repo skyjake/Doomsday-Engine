@@ -87,33 +87,21 @@ static ownernode_t *unusedNodeList = NULL;
 materialclass_t S_MaterialClassForName(const char* name,
                                        materialgroup_t group)
 {
-    int                 i, j, count;
-    materialclass_t     k;
+    int                 i;
     ded_tenviron_t*     env;
-    ded_str_t*          list;
 
-    if(group == MG_TEXTURES || group == MG_FLATS)
     for(i = 0, env = defs.textureEnv; i < defs.count.textureEnv.num; ++i, env++)
     {
-        switch(group)
+        int                 j;
+
+        for(j = 0; j < env->count.num; ++j)
         {
-        case MG_TEXTURES:
-            list = env->textures;
-            count = env->texCount.num;
-            break;
+            ded_materialid_t*   mid = &env->materials[j];
 
-        case MG_FLATS:
-            list = env->flats;
-            count = env->flatCount.num;
-            break;
-
-        default:
-            continue;
-        }
-
-        for(j = 0; j < count; ++j)
-            if(!stricmp(list[j].str, name))
+            if(mid->group == group && !stricmp(mid->name.str, name))
             {   // A match!
+                materialclass_t     k;
+
                 // See if we recognise the material name.
                 for(k = 0; k < NUM_MATERIAL_CLASSES; ++k)
                     if(!stricmp(env->id, matInfo[k].name))
@@ -121,6 +109,7 @@ materialclass_t S_MaterialClassForName(const char* name,
 
                 return MATCLASS_UNKNOWN;
             }
+        }
     }
 
     return MATCLASS_UNKNOWN;

@@ -144,8 +144,7 @@ void DED_Destroy(ded_t *ded)
     {
         for(i = 0; i < ded->count.textureEnv.num; ++i)
         {
-            M_Free(ded->textureEnv[i].textures);
-            M_Free(ded->textureEnv[i].flats);
+            M_Free(ded->textureEnv[i].materials);
         }
         M_Free(ded->textureEnv);
     }
@@ -438,8 +437,7 @@ int DED_AddTextureEnv(ded_t *ded, char *id)
 
 void DED_RemoveTextureEnv(ded_t *ded, int index)
 {
-    M_Free(ded->textureEnv[index].textures);
-    M_Free(ded->textureEnv[index].flats);
+    M_Free(ded->textureEnv[index].materials);
     DED_DelEntry(index, (void **) &ded->textureEnv, &ded->count.textureEnv,
                  sizeof(ded_tenviron_t));
 }
