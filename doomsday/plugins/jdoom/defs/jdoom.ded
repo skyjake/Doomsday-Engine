@@ -19,7 +19,6 @@ Include "materials.ded";
 Include "anim.ded";
 Include "audio.ded";
 Include "special.ded";
-Include "details.ded";
 Include "lights.ded";
 Include "maps.ded";
 Include "finales.ded";
