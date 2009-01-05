@@ -1922,8 +1922,7 @@ void R_InitAnimGroup(ded_group_t* def)
     {
         ded_group_member_t *gm = &def->members[i];
 
-        num =
-            R_MaterialCheckNumForName(gm->name, (materialgroup_t) gm->type);
+        num = R_MaterialCheckNumForName(gm->material.name, gm->material.group);
 
         if(!num)
             continue;

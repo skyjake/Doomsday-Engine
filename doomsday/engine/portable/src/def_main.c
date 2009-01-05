@@ -412,10 +412,10 @@ ded_material_t* Def_GetMaterial(const char* name, materialgroup_t group)
     {
         ded_material_t*     def = &defs.materials[i];
 
-        if(group != MG_ANY && def->group != group)
+        if(group != MG_ANY && def->id.group != group)
             continue;
 
-        if(!stricmp(def->name, name))
+        if(!stricmp(def->id.name, name))
             return def;
     }
 
@@ -431,8 +431,8 @@ ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
-                                                    def->materialGroup));
+            R_GetMaterialByNum(R_MaterialNumForName(def->material.name,
+                                                    def->material.group));
 
         if(mat == defMat)
         {
@@ -454,8 +454,8 @@ ded_reflection_t* Def_GetReflection(struct material_s* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->materialName,
-                                                    def->materialGroup));
+            R_GetMaterialByNum(R_MaterialNumForName(def->material.name,
+                                                    def->material.group));
         if(mat == defMat)
         {
             // Is this suitable?
@@ -477,8 +477,8 @@ ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->materialName1,
-                                                    def->materialGroup1));
+            R_GetMaterialByNum(R_MaterialNumForName(def->material1.name,
+                                                    def->material1.group));
         if(mat == defMat)
         {
             // Is this sutiable?
@@ -487,8 +487,8 @@ ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat, boolean hasExt)
         }
 
         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->materialName2,
-                                                    def->materialGroup2));
+            R_GetMaterialByNum(R_MaterialNumForName(def->material2.name,
+                                                    def->material2.group));
         if(mat == defMat)
         {
             // Is this sutiable?
@@ -916,10 +916,10 @@ void Def_Read(void)
             height = MAX_OF(1, def->height);
         if(def->layers[0].type != -1) // Not unused.
             mTex = R_GetMaterialTex(def->layers[0].name, def->layers[0].type);
-        if(def->group != MG_ANY)
-            groupNum = def->group;
+        if(def->id.group != MG_ANY)
+            groupNum = def->id.group;
 
-        R_MaterialCreate(def->name, width, height, def->flags, mTex, groupNum);
+        R_MaterialCreate(def->id.name, width, height, def->flags, mTex, groupNum);
     }
 
     // Dynamic lights. Update the sprite numbers.
@@ -1147,15 +1147,8 @@ void Def_PostInit(void)
     {
         ded_detailtexture_t* def = &defs.details[i];
 
-        if(!strnicmp(def->materialName1, "FIRELAV2", 8) ||
-           !strnicmp(def->materialName2, "FIRELAV3", 8) ||
-           !strnicmp(def->materialName2, "FIRELAVA", 8))
-        {
-            int n = 3;
-            n++;
-        }
-        if(R_MaterialCheckNumForName(def->materialName1, def->materialGroup1) ||
-           R_MaterialCheckNumForName(def->materialName2, def->materialGroup2))
+        if(R_MaterialCheckNumForName(def->material1.name, def->material1.group) ||
+           R_MaterialCheckNumForName(def->material2.name, def->material2.group))
         {
             R_CreateDetailTexture(def);
         }
@@ -1357,8 +1350,10 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     l->actLineType = def->actLineType;
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
-    l->actMaterial = R_MaterialCheckNumForName(def->actMaterial, MG_TEXTURES);
-    l->deactMaterial = R_MaterialCheckNumForName(def->deactMaterial, MG_TEXTURES);
+    l->actMaterial = R_MaterialCheckNumForName(def->actMaterial.name,
+                                               def->actMaterial.group);
+    l->deactMaterial = R_MaterialCheckNumForName(def->deactMaterial.name,
+                                                 def->deactMaterial.group);
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
     l->materialMoveAngle = def->materialMoveAngle;

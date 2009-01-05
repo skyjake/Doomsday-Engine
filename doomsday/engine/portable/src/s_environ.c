@@ -98,7 +98,7 @@ materialclass_t S_MaterialClassForName(const char* name,
         {
             ded_materialid_t*   mid = &env->materials[j];
 
-            if(mid->group == group && !stricmp(mid->name.str, name))
+            if(mid->group == group && !stricmp(mid->name, name))
             {   // A match!
                 materialclass_t     k;
 

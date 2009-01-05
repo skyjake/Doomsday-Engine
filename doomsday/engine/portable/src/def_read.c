@@ -1012,8 +1012,8 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             for(;;)
             {
                 READLABEL;
-                RV_STR("Name", mat->name)
-                RV_FLAGS("Group", mat->group, "mg_")
+                RV_STR("ID", mat->id.name)
+                RV_FLAGS("Group", ((int) mat->id.group), "mg_")
                 RV_FLAGS("Flags", mat->flags, "matf_")
                 RV_FLT("Width", mat->width)
                 RV_FLT("Height", mat->height)
@@ -1021,7 +1021,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 {
                     if(layer >= DED_MAX_MATERIAL_LAYERS)
                         Con_Error("DED_ReadData: Too many material layers "
-                                  "(%s).\n", mat->name);
+                                  "(%s).\n", mat->id.name);
 
                     FINDBEGIN;
                     for(;;)
@@ -1348,7 +1348,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        RV_STR("ID", mn->name.str)
+                        RV_STR("ID", mn->name)
                         RV_END
                         CHECKSC;
                     }
@@ -1469,18 +1469,18 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_FLAGS("Flags", dtl->flags, "dtf_")
                 if(ISLABEL("Texture"))
                 {
-                    READSTR(dtl->materialName1)
-                    dtl->materialGroup1 = MG_TEXTURES;
+                    READSTR(dtl->material1.name)
+                    dtl->material1.group = MG_TEXTURES;
                 }
                 else if(ISLABEL("Wall")) // Alias
                 {
-                    READSTR(dtl->materialName1)
-                    dtl->materialGroup1 = MG_TEXTURES;
+                    READSTR(dtl->material1.name)
+                    dtl->material1.group = MG_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(dtl->materialName2)
-                    dtl->materialGroup2 = MG_FLATS;
+                    READSTR(dtl->material2.name)
+                    dtl->material2.group = MG_FLATS;
                 }
                 else if(ISLABEL("Lump"))
                 {
@@ -1529,13 +1529,13 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_FLT("Mask height", ref->maskHeight)
                 if(ISLABEL("Texture"))
                 {
-                    READSTR(ref->materialName)
-                    ref->materialGroup = MG_TEXTURES;
+                    READSTR(ref->material.name)
+                    ref->material.group = MG_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(ref->materialName)
-                    ref->materialGroup = MG_FLATS;
+                    READSTR(ref->material.name)
+                    ref->material.group = MG_FLATS;
                 }
                 else RV_END
                 CHECKSC;
@@ -1571,13 +1571,13 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_STR("State", gen->state)
                 if(ISLABEL("Flat"))
                 {
-                    READSTR(gen->materialName)
-                    gen->materialGroup = MG_FLATS;
+                    READSTR(gen->material.name)
+                    gen->material.group = MG_FLATS;
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READSTR(gen->materialName)
-                    gen->materialGroup = MG_TEXTURES;
+                    READSTR(gen->material.name)
+                    gen->material.group = MG_TEXTURES;
                 }
                 else
                 RV_STR("Mobj", gen->type)
@@ -1721,13 +1721,13 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_FLAGS("Flags", decor->flags, "dcf_")
                 if(ISLABEL("Texture"))
                 {
-                    READSTR(decor->materialName)
-                    decor->materialGroup = MG_TEXTURES;
+                    READSTR(decor->material.name)
+                    decor->material.group = MG_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(decor->materialName)
-                    decor->materialGroup = MG_FLATS;
+                    READSTR(decor->material.name)
+                    decor->material.group = MG_FLATS;
                 }
                 else if(ISLABEL("Model"))
                 {
@@ -1852,7 +1852,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     }
 
                     memb = &grp->members[sub];
-                    memb->type = (
+                    memb->material.group = (
                         ISLABEL("Texture")? MG_TEXTURES :
                         ISLABEL("Flat")? MG_FLATS :
                         ISLABEL("Sprite")? MG_SPRITES : MG_DDTEXTURES);
@@ -1861,7 +1861,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        RV_STR("ID", memb->name)
+                        RV_STR("ID", memb->material.name)
                         RV_FLT("Tics", memb->tics)
                         RV_FLT("Random", memb->randomTics)
                         RV_END
@@ -1973,10 +1973,26 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_INT("Act chain", l->actChain)
                 RV_INT("Deact chain", l->deactChain)
                 RV_FLAGS("Wall section", l->wallSection, "lws_")
-                RV_STR("Act texture", l->actMaterial)
-                RV_STR("Act material", l->actMaterial) // Alias
-                RV_STR("Deact texture", l->deactMaterial)
-                RV_STR("Deact material", l->deactMaterial) // Alias
+                if(ISLABEL("Act texture"))
+                {
+                    READSTR(l->actMaterial.name)
+                    l->actMaterial.group = MG_TEXTURES;
+                }
+                else if(ISLABEL("Act material")) // Alias
+                {
+                    READSTR(l->actMaterial.name)
+                    l->actMaterial.group = MG_ANY;
+                }
+                else if(ISLABEL("Deact texture"))
+                {
+                    READSTR(l->deactMaterial.name)
+                    l->deactMaterial.group = MG_TEXTURES;
+                }
+                else if(ISLABEL("Deact material")) // Alias
+                {
+                    READSTR(l->deactMaterial.name)
+                    l->deactMaterial.group = MG_ANY;
+                }
                 RV_INT("Act type", l->actLineType)
                 RV_INT("Deact type", l->deactLineType)
                 RV_STR("Act message", l->actMsg)

@@ -76,6 +76,11 @@ typedef struct {
 } ded_str_t;
 
 typedef struct {
+    ded_string_t    name;
+    materialgroup_t group;
+} ded_materialid_t;
+
+typedef struct {
     ded_flags_t     id; // ID of this property
     ded_flags_t     flags;
     ded_string_t    name;
@@ -288,11 +293,6 @@ typedef struct {
 } ded_text_t;
 
 typedef struct {
-    ded_str_t       name;
-    materialgroup_t group;
-} ded_materialid_t;
-
-typedef struct {
     ded_stringid_t  id;
     ded_count_t     count;
     ded_materialid_t* materials;
@@ -333,8 +333,8 @@ typedef struct {
     int             actLineType;
     int             deactLineType;
     ded_flags_t     wallSection;
-    ded_stringid_t  actMaterial;
-    ded_stringid_t  deactMaterial;
+    ded_materialid_t actMaterial;
+    ded_materialid_t deactMaterial;
     char            actMsg[128];
     char            deactMsg[128];
     float           materialMoveAngle;
@@ -378,10 +378,8 @@ typedef struct {
 } ded_sectortype_t;
 
 typedef struct {
-    ded_string_t    materialName1;
-    materialgroup_t materialGroup1;
-    ded_string_t    materialName2;
-    materialgroup_t materialGroup2;
+    ded_materialid_t material1;
+    ded_materialid_t material2;
     ded_flags_t     flags;
     ded_path_t      detailLump; // The lump with the detail texture.
     boolean         isExternal; // True, if detailLump is external.
@@ -421,8 +419,7 @@ typedef struct {
 typedef struct ded_ptcgen_s {
     struct ded_ptcgen_s* stateNext; // List of generators for a state.
     ded_stateid_t   state; // Triggered by this state (if mobj-gen).
-    ded_string_t    materialName;
-    materialgroup_t materialGroup;
+    ded_materialid_t material;
     ded_mobjid_t    type; // Triggered by this type of mobjs.
     ded_mobjid_t    type2; // Also triggered by this type.
     int             typeNum;
@@ -489,16 +486,14 @@ typedef struct ded_decormodel_s {
 #define DED_DECOR_NUM_MODELS    8
 
 typedef struct ded_decor_s {
-    ded_string_t    materialName;
-    materialgroup_t materialGroup;
+    ded_materialid_t material;
     ded_flags_t     flags;
     ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
     ded_decormodel_t models[DED_DECOR_NUM_MODELS];
 } ded_decor_t;
 
 typedef struct ded_reflection_s {
-    ded_string_t    materialName;
-    materialgroup_t materialGroup;
+    ded_materialid_t material;
     ded_flags_t     flags;
     blendmode_t     blendMode; // Blend mode flags (bm_*).
     float           shininess;
@@ -519,8 +514,7 @@ typedef struct ded_reflection_s {
 } ded_reflection_t;
 
 typedef struct ded_group_member_s {
-    char            name[9];
-    int             type;
+    ded_materialid_t material;
     float           tics;
     float           randomTics;
 } ded_group_member_t;
@@ -540,8 +534,7 @@ typedef struct ded_materiallayer_s {
 } ded_materiallayer_t;
 
 typedef struct ded_material_s {
-    ded_string_t    name;
-    int             group;
+    ded_materialid_t id;
     ded_flags_t     flags;
     float           width, height; // In world units.
     ded_materiallayer_t layers[DED_MAX_MATERIAL_LAYERS];

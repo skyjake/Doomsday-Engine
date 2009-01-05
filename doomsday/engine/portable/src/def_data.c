@@ -331,7 +331,8 @@ int DED_AddMaterial(ded_t* ded, const char* name)
         DED_NewEntry((void **) &ded->materials, &ded->count.materials,
                      sizeof(ded_material_t));
 
-    strcpy(mat->name, name);
+    strcpy(mat->id.name, name);
+    mat->id.group = MG_ANY;
     // Init layers.
     for(i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
     {

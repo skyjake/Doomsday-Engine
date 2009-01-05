@@ -872,8 +872,8 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
                 materialnum_t       num;
                 material_t*         defMat;
 
-                if(!(num = R_MaterialNumForName(def->materialName,
-                                                def->materialGroup)))
+                if(!(num = R_MaterialNumForName(def->material.name,
+                                                def->material.group)))
                     continue;
                 defMat = materialBinds[num - 1].mat;
 

@@ -10,7 +10,7 @@ Header { Version = 6; }
 #
 
 Material {
-  Name = "F_SKY1";
+  ID = "F_SKY1";
   Group = flats;
   Flags = skymask;
 }
@@ -20,24 +20,24 @@ Material {
 #
 
 Material {
-  Name = "FLATHUH1";
+  ID = "FLATHUH1";
   Group = flats;
   Flags = glow;
 }
 
-* Material { Name = "FLATHUH2"; }
-* Material { Name = "FLATHUH3"; }
-* Material { Name = "FLATHUH4"; }
+* Material { ID = "FLATHUH2"; }
+* Material { ID = "FLATHUH3"; }
+* Material { ID = "FLATHUH4"; }
 
 #
 # Glowing textures:
 #
 
 Material {
-  Name = "LAVAFL1";
+  ID = "LAVAFL1";
   Group = textures;
   Flags = glow;
 }
 
-* Material { Name = "LAVAFL2"; }
-* Material { Name = "LAVAFL3"; }
+* Material { ID = "LAVAFL2"; }
+* Material { ID = "LAVAFL3"; }

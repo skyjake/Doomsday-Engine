@@ -10,7 +10,7 @@ Header { Version = 6; }
 #
 
 Material {
-  Name = "F_SKY1";
+  ID = "F_SKY1";
   Group = flats;
   Flags = skymask;
 }
@@ -20,39 +20,39 @@ Material {
 #
 
 Material {
-  Name = "LAVA1";
+  ID = "LAVA1";
   Group = flats;
   Flags = glow;
 }
 
-* Material { Name = "LAVA2"; }
-* Material { Name = "LAVA3"; }
-* Material { Name = "LAVA4"; }
-* Material { Name = "NUKAGE1"; }
-* Material { Name = "NUKAGE2"; }
-* Material { Name = "NUKAGE3"; }
-* Material { Name = "FWATER1"; }
-* Material { Name = "FWATER2"; }
-* Material { Name = "FWATER3"; }
-* Material { Name = "FWATER4"; }
+* Material { ID = "LAVA2"; }
+* Material { ID = "LAVA3"; }
+* Material { ID = "LAVA4"; }
+* Material { ID = "NUKAGE1"; }
+* Material { ID = "NUKAGE2"; }
+* Material { ID = "NUKAGE3"; }
+* Material { ID = "FWATER1"; }
+* Material { ID = "FWATER2"; }
+* Material { ID = "FWATER3"; }
+* Material { ID = "FWATER4"; }
 
 #
 # Glowing textures:
 #
 
 Material {
-  Name = "FIREBLU1";
+  ID = "FIREBLU1";
   Group = textures;
   Flags = glow;
 }
 
-* Material { Name = "FIREBLU2"; }
-* Material { Name = "FIRELAVA"; }
-* Material { Name = "FIRELAV2"; }
-* Material { Name = "FIRELAV3"; }
-* Material { Name = "FIREMAG1"; }
-* Material { Name = "FIREMAG2"; }
-* Material { Name = "FIREMAG3"; }
-* Material { Name = "FIREWALL"; }
-* Material { Name = "FIREWALA"; }
-* Material { Name = "FIREWALB"; }
+* Material { ID = "FIREBLU2"; }
+* Material { ID = "FIRELAVA"; }
+* Material { ID = "FIRELAV2"; }
+* Material { ID = "FIRELAV3"; }
+* Material { ID = "FIREMAG1"; }
+* Material { ID = "FIREMAG2"; }
+* Material { ID = "FIREMAG3"; }
+* Material { ID = "FIREWALL"; }
+* Material { ID = "FIREWALA"; }
+* Material { ID = "FIREWALB"; }

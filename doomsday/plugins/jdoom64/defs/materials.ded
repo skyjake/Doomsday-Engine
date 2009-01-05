@@ -10,33 +10,33 @@ Header { Version = 6; }
 #
 
 Material {
-  Name = "F_SKYA";
+  ID = "F_SKYA";
   Group = textures;
   Flags = skymask;
 }
 
-* Material { Name = "F_SKYB"; }
-* Material { Name = "F_SKYC"; }
-* Material { Name = "F_SKYD"; }
-* Material { Name = "F_SKYE"; }
-* Material { Name = "F_SKYF"; }
-* Material { Name = "F_SKYG"; }
-* Material { Name = "F_SKYH"; }
-* Material { Name = "F_SKYI"; }
-* Material { Name = "F_SKYJ"; }
-* Material { Name = "F_SKYK"; }
+* Material { ID = "F_SKYB"; }
+* Material { ID = "F_SKYC"; }
+* Material { ID = "F_SKYD"; }
+* Material { ID = "F_SKYE"; }
+* Material { ID = "F_SKYF"; }
+* Material { ID = "F_SKYG"; }
+* Material { ID = "F_SKYH"; }
+* Material { ID = "F_SKYI"; }
+* Material { ID = "F_SKYJ"; }
+* Material { ID = "F_SKYK"; }
 
 #
 # Glowing textures:
 #
 
 Material {
-  Name = "CBTRAKA";
+  ID = "CBTRAKA";
   Group = textures;
   Flags = glow;
 }
 
-* Material { Name = "CRTRAKA"; }
-* Material { Name = "CYTRAKA"; }
-* Material { Name = "SEXIT"; }
-* Material { Name = "SEXITA"; }
+* Material { ID = "CRTRAKA"; }
+* Material { ID = "CYTRAKA"; }
+* Material { ID = "SEXIT"; }
+* Material { ID = "SEXITA"; }
