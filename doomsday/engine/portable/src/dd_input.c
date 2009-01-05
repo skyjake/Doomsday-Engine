@@ -355,7 +355,7 @@ inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id)
     if(!device || id > device->numAxes - 1)
         return NULL;
 
-    return &device->axes[id];
+    return &device->axes[id-1];
 }
 
 /**
@@ -396,10 +396,10 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
  *
  * @return              @c false, if the string is invalid.
  */
-boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
+boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
 {
-    char        name[30], *ptr;
-    inputdev_t *device;
+    char                name[30], *ptr;
+    inputdev_t*         device;
 
     ptr = strchr(str, '-');
     if(!ptr)
@@ -417,11 +417,11 @@ boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
     // The axis name.
     if(*axis)
     {
-        uint    a = I_GetAxisByName(device, ptr + 1);
-        if((*axis = a) == 0)
+        int                 a = I_GetAxisByName(device, ptr + 1);
+        if((*axis = a) < 0)
             return false;
 
-        *axis = a - 1; // Axis indices are base 1.
+        *axis = a + 1; // Axis indices are base 1.
     }
 
     return true;
@@ -429,8 +429,8 @@ boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 
 float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
 {
-    float pos = rawPos;
-    inputdevaxis_t *a = &dev->axes[axis];
+    float               pos = rawPos;
+    inputdevaxis_t*     a = &dev->axes[axis];
 
     // Disabled axes are always zero.
     if(a->flags & IDA_DISABLED)
