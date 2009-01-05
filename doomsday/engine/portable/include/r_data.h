@@ -306,6 +306,7 @@ void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 
+boolean         R_UpdatePlane(struct plane_s* pln, boolean forceUpdate);
 void            R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 
 void            R_PrecacheMap(void);

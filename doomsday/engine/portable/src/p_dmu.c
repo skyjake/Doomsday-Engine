@@ -842,9 +842,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
     }
 }
 
-static void *resolveReferences(void *obj, setargs_t *args)
+static void* resolveReferences(void* obj, setargs_t* args)
 {
-    void               *ptr = obj;
+    void*               ptr = obj;
 
     // Dereference where necessary. Note the order, these cascade.
     if(args->type == DMU_SUBSECTOR)
@@ -895,6 +895,13 @@ static void *resolveReferences(void *obj, setargs_t *args)
             args->type = DMU_SIDEDEF;
         }
     }
+
+    return ptr;
+}
+
+static void* resolveSurfaceReferences(void* obj, setargs_t* args)
+{
+    void*               ptr = obj;
 
     if(args->type == DMU_SIDEDEF)
     {
@@ -952,8 +959,28 @@ static void *resolveReferences(void *obj, setargs_t *args)
  */
 static int setProperty(void* obj, void* context)
 {
-    setargs_t          *args = (setargs_t*) context;
-    void               *ptr = resolveReferences(obj, args);
+    setargs_t*          args = (setargs_t*) context;
+    void*               ptr;
+    plane_t*            updatePlane = NULL;
+    sector_t*           updateSector = NULL;
+
+    /**
+     * When setting a property, reference resolution is split into two stages,
+     * so that we can automatically respond to changes.
+     */
+    ptr = resolveReferences(obj, args);
+
+    if(args->type == DMU_SIDEDEF)
+    {
+        //// \todo Do not assume we need to update the sector.
+        updateSector = ((sidedef_t*) ptr)->sector;
+    }
+    if(args->type == DMU_PLANE)
+    {
+        updatePlane = (plane_t*) ptr;
+    }
+
+    ptr = resolveSurfaceReferences(ptr, args);
 
     switch(args->type)
     {
@@ -962,13 +989,8 @@ static int setProperty(void* obj, void* context)
         break;
 
     case DMU_PLANE:
-        {
-        plane_t* p = (plane_t*) ptr;
-        Plane_SetProperty(p, args);
-        // \todo Notify relevant subsystems of any changes.
-        R_UpdateSector(p->sector, false);
+        Plane_SetProperty(ptr, args);
         break;
-        }
 
     case DMU_VERTEX:
         Vertex_SetProperty(ptr, args);
@@ -991,13 +1013,8 @@ static int setProperty(void* obj, void* context)
         break;
 
     case DMU_SECTOR:
-        {
-        sector_t* p = (sector_t*) ptr;
-        Sector_SetProperty(p, args);
-        // \todo Notify relevant subsystems of any changes.
-        R_UpdateSector(p, false);
+        Sector_SetProperty(ptr, args);
         break;
-        }
 
     case DMU_NODE:
         Con_Error("SetProperty: Property %s is not writable in DMU_NODE.\n",
@@ -1006,6 +1023,17 @@ static int setProperty(void* obj, void* context)
 
     default:
         Con_Error("SetProperty: Type %s not writable.\n", DMU_Str(args->type));
+    }
+
+    if(updatePlane)
+    {
+        if(R_UpdatePlane(updatePlane, false))
+            updateSector = updatePlane->sector;
+    }
+
+    if(updateSector)
+    {
+        R_UpdateSector(updateSector, false);
     }
 
     return true; // Continue iteration.
@@ -1210,8 +1238,11 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
 
 static int getProperty(void* obj, void* context)
 {
-    setargs_t          *args = (setargs_t*) context;
-    void               *ptr = resolveReferences(obj, args);
+    setargs_t*          args = (setargs_t*) context;
+    void*               ptr;
+
+    ptr = resolveReferences(obj, args);
+    ptr = resolveSurfaceReferences(ptr, args);
 
     switch(args->type)
     {

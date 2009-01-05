@@ -1832,13 +1832,198 @@ boolean R_SectorContainsSkySurfaces(const sector_t* sec)
     return sectorContainsSkySurfaces;
 }
 
+void R_UpdateLinedefsOfSector(sector_t* sec)
+{
+    uint                i;
+
+    for(i = 0; i < sec->lineDefCount; ++i)
+    {
+        linedef_t*          li = sec->lineDefs[i];
+        sidedef_t*          front, *back;
+        sector_t*           frontSec, *backSec;
+
+        if(!li->L_frontside || !li->L_backside)
+            continue;
+
+        front = li->L_frontside;
+        back  = li->L_backside;
+        frontSec = front->sector;
+        backSec = back? back->sector : NULL;
+
+        /**
+         * Do as in the original Doom if the texture has not been defined -
+         * extend the floor/ceiling to fill the space (unless it is skymasked),
+         * or if there is a midtexture use that instead.
+         */
+
+        // Check for missing lowers.
+        if(frontSec->SP_floorheight < backSec->SP_floorheight &&
+           !front->SW_bottommaterial)
+        {
+            if(!R_IsSkySurface(&frontSec->SP_floorsurface))
+            {
+                Surface_SetMaterial(&front->SW_bottomsurface,
+                                    frontSec->SP_floormaterial);
+                front->SW_bottominflags |= SUIF_MATERIAL_FIX;
+            }
+
+            if(back->SW_bottominflags & SUIF_MATERIAL_FIX)
+            {
+                Surface_SetMaterial(&back->SW_bottomsurface, NULL);
+                back->SW_bottominflags &= ~SUIF_MATERIAL_FIX;
+            }
+        }
+        else if(frontSec->SP_floorheight > backSec->SP_floorheight &&
+                !back->SW_bottommaterial)
+        {
+            if(!R_IsSkySurface(&backSec->SP_floorsurface))
+            {
+                Surface_SetMaterial(&back->SW_bottomsurface,
+                                    backSec->SP_floormaterial);
+                back->SW_bottominflags |= SUIF_MATERIAL_FIX;
+            }
+
+            if(front->SW_bottominflags & SUIF_MATERIAL_FIX)
+            {
+                Surface_SetMaterial(&front->SW_bottomsurface, NULL);
+                front->SW_bottominflags &= ~SUIF_MATERIAL_FIX;
+            }
+        }
+
+        // Check for missing uppers.
+        if(frontSec->SP_ceilheight > backSec->SP_ceilheight &&
+           !front->SW_topmaterial)
+        {
+            if(!R_IsSkySurface(&frontSec->SP_ceilsurface))
+            {
+                Surface_SetMaterial(&front->SW_topsurface,
+                                    frontSec->SP_ceilmaterial);
+                front->SW_topinflags |= SUIF_MATERIAL_FIX;
+            }
+
+            if(back->SW_topinflags & SUIF_MATERIAL_FIX)
+            {
+                Surface_SetMaterial(&back->SW_topsurface, NULL);
+                back->SW_topinflags &= ~SUIF_MATERIAL_FIX;
+            }
+        }
+        else if(frontSec->SP_ceilheight < backSec->SP_ceilheight &&
+                !back->SW_topmaterial)
+        {
+            if(!R_IsSkySurface(&backSec->SP_ceilsurface))
+            {
+                Surface_SetMaterial(&back->SW_topsurface,
+                                    backSec->SP_ceilmaterial);
+                back->SW_topinflags |= SUIF_MATERIAL_FIX;
+            }
+
+            if(front->SW_topinflags & SUIF_MATERIAL_FIX)
+            {
+                Surface_SetMaterial(&front->SW_topsurface, NULL);
+                front->SW_topinflags &= ~SUIF_MATERIAL_FIX;
+            }
+        }
+    }
+}
+
+boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
+{
+    boolean             changed = false;
+    boolean             hasGlow = false;
+    sector_t*           sec = pln->sector;
+
+    // Update the glow properties.
+    hasGlow = false;
+    if(pln->PS_material && ((pln->surface.flags & DDSUF_GLOW) ||
+       (pln->PS_material->flags & MATF_GLOW)))
+    {
+        materialtexinst_t*  texInst =
+            R_MaterialPrepare(pln->PS_material->current, 0, NULL,
+                              NULL, NULL);
+
+        if(texInst)
+        {
+            pln->glowRGB[CR] = texInst->color[CR];
+            pln->glowRGB[CG] = texInst->color[CG];
+            pln->glowRGB[CB] = texInst->color[CB];
+            hasGlow = true;
+            changed = true;
+        }
+    }
+
+    if(hasGlow)
+    {
+        pln->glow = 4; // Default height factor is 4
+    }
+    else
+    {
+        pln->glowRGB[CR] = pln->glowRGB[CG] =
+            pln->glowRGB[CB] = 0;
+        pln->glow = 0;
+    }
+
+    // Geometry change?
+    if(forceUpdate || pln->height != pln->oldHeight[1])
+    {
+        uint                i;
+        subsector_t**       ssecp;
+        sidedef_t*          front = NULL, *back = NULL;
+
+        // Check if there are any camera players in this sector. If their
+        // height is now above the ceiling/below the floor they are now in
+        // the void.
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t*           plr = &ddPlayers[i];
+            ddplayer_t*         ddpl = &plr->shared;
+
+            if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->subsector)
+                continue;
+
+            //// \fixme $nplanes
+            if((ddpl->flags & DDPF_CAMERA) &&
+               ddpl->mo->subsector->sector == sec &&
+               (ddpl->mo->pos[VZ] > sec->SP_ceilheight ||
+                ddpl->mo->pos[VZ] < sec->SP_floorheight))
+            {
+                ddpl->inVoid = true;
+            }
+        }
+
+        // Update the z position of the degenmobj for this plane.
+        pln->soundOrg.pos[VZ] = pln->height;
+
+        // Inform the shadow bias of changed geometry.
+        ssecp = sec->ssectors;
+        while(*ssecp)
+        {
+            subsector_t*    ssec = *ssecp;
+            seg_t**         segp = ssec->segs;
+
+            while(*segp)
+            {
+                seg_t*          seg = *segp;
+                SB_SegHasMoved(seg);
+                *segp++;
+            }
+
+            SB_PlaneHasMoved(ssec, pln->planeID);
+            *ssecp++;
+        }
+
+        // We need the decorations updated.
+        Surface_Update(&pln->surface);
+
+        changed = true;
+    }
+
+    return changed;
+}
+
 void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 {
-    uint                i, j;
-    plane_t            *plane;
-    boolean             updateReverb = false;
-    boolean             updateDecorations = false;
-    boolean             hasGlow;
+    uint                i;
+    boolean             planeChanged = false;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
@@ -1861,73 +2046,16 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     // For each plane.
     for(i = 0; i < sec->planeCount; ++i)
     {
-        plane = sec->planes[i];
-
-        // Update the glow properties.
-        hasGlow = false;
-        if(plane->PS_material && ((plane->surface.flags & DDSUF_GLOW) ||
-           (plane->PS_material->flags & MATF_GLOW)))
+        if(R_UpdatePlane(sec->planes[i], forceUpdate))
         {
-            materialtexinst_t*  texInst =
-                R_MaterialPrepare(plane->PS_material->current, 0, NULL,
-                                  NULL, NULL);
-
-            if(texInst)
-            {
-                plane->glowRGB[CR] = texInst->color[CR];
-                plane->glowRGB[CG] = texInst->color[CG];
-                plane->glowRGB[CB] = texInst->color[CB];
-                hasGlow = true;
-            }
+            planeChanged = true;
         }
-
-        if(hasGlow)
-        {
-            plane->glow = 4; // Default height factor is 4
-        }
-        else
-        {
-            plane->glowRGB[CR] = plane->glowRGB[CG] =
-                plane->glowRGB[CB] = 0;
-            plane->glow = 0;
-        }
-
-        // Geometry change?
-        if(forceUpdate ||
-           plane->height != plane->oldHeight[1])
-        {
-            // Check if there are any camera players in this sector. If their
-            // height is now above the ceiling/below the floor they are now in
-            // the void.
-            for(j = 0; j < DDMAXPLAYERS; ++j)
-            {
-                player_t               *plr = &ddPlayers[j];
-                ddplayer_t             *ddpl = &plr->shared;
-
-                if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->subsector)
-                    continue;
-
-                //// \fixme $nplanes
-                if((ddpl->flags & DDPF_CAMERA) &&
-                   ddpl->mo->subsector->sector == sec &&
-                   (ddpl->mo->pos[VZ] > sec->SP_ceilheight ||
-                    ddpl->mo->pos[VZ] < sec->SP_floorheight))
-                {
-                    ddpl->inVoid = true;
-                }
-            }
-
-            P_PlaneChanged(sec, i);
-            updateReverb = true;
-            updateDecorations = true;
-        }
-
-        if(updateDecorations)
-            Surface_Update(&plane->surface);
     }
 
-    if(updateReverb)
+    if(planeChanged)
     {
+        sec->soundOrg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+        R_UpdateLinedefsOfSector(sec);
         S_CalcSectorReverb(sec);
     }
 }
