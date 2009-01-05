@@ -410,7 +410,6 @@ extern          "C" {
     boolean         R_MaterialIsCustom(materialnum_t num);
 
     boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
-    void            R_MaterialSetSkyMask(materialnum_t num, boolean yes);
 
     void            R_MaterialPrecache(materialnum_t num);
 

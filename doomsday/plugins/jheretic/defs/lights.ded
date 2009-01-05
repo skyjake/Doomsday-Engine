@@ -16,31 +16,6 @@ Header { Version = 6; }
 #
 # (based on Isegrim's definitions)
 
-#
-# Glowing flats:
-#
-Material {
-  Name = "FLATHUH1";
-  Group = flats;
-  Flags = glow;
-}
-
-* Material { Name = "FLATHUH2"; }
-* Material { Name = "FLATHUH3"; }
-* Material { Name = "FLATHUH4"; }
-
-#
-# Glowing textures:
-#
-Material {
-  Name = "LAVAFL1";
-  Group = textures;
-  Flags = glow;
-}
-
-* Material { Name = "LAVAFL2"; }
-* Material { Name = "LAVAFL3"; }
-
 Decoration {
   Texture = "GRSKULL3";
   Light {

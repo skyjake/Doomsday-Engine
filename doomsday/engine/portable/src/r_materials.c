@@ -1393,19 +1393,6 @@ boolean R_MaterialGetInfo(materialnum_t num, materialinfo_t* info)
     return true;
 }
 
-void R_MaterialSetSkyMask(materialnum_t num, boolean yes)
-{
-    material_t*         mat;
-
-    if(!(mat = R_GetMaterialByNum(num)))
-        return;
-
-    if(yes)
-        mat->flags |= MATF_SKYMASK;
-    else
-        mat->flags &= ~MATF_SKYMASK;
-}
-
 /**
  * Deletes a texture (not for rawlumptexs' etc.).
  */

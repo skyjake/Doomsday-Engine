@@ -10,17 +10,3 @@
 #
 # One decoration can specify up to 16 lights.
 #
-
-#
-# Glowing textures:
-#
-Material {
-  Name = "CBTRAKA";
-  Group = textures;
-  Flags = glow;
-}
-
-* Material { Name = "CRTRAKA" }
-* Material { Name = "CYTRAKA" }
-* Material { Name = "SEXIT" }
-* Material { Name = "SEXITA" }

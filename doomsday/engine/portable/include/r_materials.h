@@ -112,7 +112,6 @@ boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
 const ded_decor_t* R_MaterialGetDecoration(material_t* mat);
 const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat);
 materialclass_t R_MaterialGetClass(material_t* mat);
-void            R_MaterialSetSkyMask(materialnum_t num, boolean yes);
 
 // Lookup:
 material_t*     R_GetMaterial(int ofTypeID, materialgroup_t group);

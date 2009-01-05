@@ -15,6 +15,7 @@ Header {
 
 Include "objects.ded";
 Include "sprites.ded";
+Include "materials.ded";
 Include "anim.ded";
 Include "audio.ded";
 Include "special.ded";

@@ -1,0 +1,58 @@
+# jDoom: Material Enhancements
+#
+# Patch the Material definitions created automatically
+# by the engine, adding new effects to them.
+
+Header { Version = 6; }
+
+#
+# Skymasked flats:
+#
+
+Material {
+  Name = "F_SKY1";
+  Group = flats;
+  Flags = skymask;
+}
+
+#
+# Glowing flats:
+#
+
+Material {
+  Name = "LAVA1";
+  Group = flats;
+  Flags = glow;
+}
+
+* Material { Name = "LAVA2"; }
+* Material { Name = "LAVA3"; }
+* Material { Name = "LAVA4"; }
+* Material { Name = "NUKAGE1"; }
+* Material { Name = "NUKAGE2"; }
+* Material { Name = "NUKAGE3"; }
+* Material { Name = "FWATER1"; }
+* Material { Name = "FWATER2"; }
+* Material { Name = "FWATER3"; }
+* Material { Name = "FWATER4"; }
+
+#
+# Glowing textures:
+#
+
+Material {
+  Name = "FIREBLU1";
+  Group = textures;
+  Flags = glow;
+}
+
+* Material { Name = "FIREBLU2"; }
+* Material { Name = "FIRELAVA"; }
+* Material { Name = "FIRELAV2"; }
+* Material { Name = "FIRELAV3"; }
+* Material { Name = "FIREMAG1"; }
+* Material { Name = "FIREMAG2"; }
+* Material { Name = "FIREMAG3"; }
+* Material { Name = "FIREWALL"; }
+* Material { Name = "FIREWALA"; }
+* Material { Name = "FIREWALB"; }

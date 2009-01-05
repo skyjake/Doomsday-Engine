@@ -19,26 +19,6 @@ SkipIf doom2-tnt;
 #
 
 #
-# Glowing flats:
-#
-Material {
-  Name = "LAVA1";
-  Group = flats;
-  Flags = glow;
-}
-
-* Material { Name = "LAVA2"; }
-* Material { Name = "LAVA3"; }
-* Material { Name = "LAVA4"; }
-* Material { Name = "NUKAGE1"; }
-* Material { Name = "NUKAGE2"; }
-* Material { Name = "NUKAGE3"; }
-* Material { Name = "FWATER1"; }
-* Material { Name = "FWATER2"; }
-* Material { Name = "FWATER3"; }
-* Material { Name = "FWATER4"; }
-
-#
 # Flats:
 # (just the brightest and most obvious light sources)
 #
@@ -97,26 +77,6 @@ Copy Decoration {
 # Wall textures:
 # (many obvious light sources not included, e.g. LITE*)
 #
-
-#
-# Glowing textures:
-#
-Material {
-  Name = "FIREBLU1";
-  Group = textures;
-  Flags = glow;
-}
-
-* Material { Name = "FIREBLU2"; }
-* Material { Name = "FIRELAVA"; }
-* Material { Name = "FIRELAV2"; }
-* Material { Name = "FIRELAV3"; }
-* Material { Name = "FIREMAG1"; }
-* Material { Name = "FIREMAG2"; }
-* Material { Name = "FIREMAG3"; }
-* Material { Name = "FIREWALL"; }
-* Material { Name = "FIREWALA"; }
-* Material { Name = "FIREWALB"; }
 
 Decoration {
   Texture = "COMP2";

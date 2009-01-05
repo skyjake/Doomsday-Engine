@@ -16,53 +16,6 @@ Header { Version = 6; }
 #
 # (based on Isegrim's definitions)
 
-#
-# Glowing materials:
-#
-Material {
-  Name = "X_001";
-  Group = flats;
-  Flags = glow;
-}
-
-* Material { Name = "X_002"; }
-* Material { Name = "X_003"; }
-* Material { Name = "X_004"; }
-
-#
-# Glowing textures:
-#
-Material {
-  Name = "X_FIRE01";
-  Group = textures;
-  Flags = glow;
-}
-
-* Material { Name = "X_FIRE02"; }
-* Material { Name = "X_FIRE03"; }
-* Material { Name = "X_FIRE04"; }
-* Material { Name = "X_FAC01"; }
-* Material { Name = "X_FAC02"; }
-* Material { Name = "X_FAC03"; }
-* Material { Name = "X_FAC04"; }
-* Material { Name = "X_FAC05"; }
-* Material { Name = "X_FAC06"; }
-* Material { Name = "X_FAC07"; }
-* Material { Name = "X_FAC08"; }
-* Material { Name = "X_FAC09"; }
-* Material { Name = "X_FAC10"; }
-* Material { Name = "X_FAC11"; }
-* Material { Name = "X_FAC12"; }
-* Material { Name = "TPORT1"; }
-* Material { Name = "TPORT2"; }
-* Material { Name = "TPORT3"; }
-* Material { Name = "TPORT4"; }
-* Material { Name = "TPORT5"; }
-* Material { Name = "TPORT6"; }
-* Material { Name = "TPORT7"; }
-* Material { Name = "TPORT8"; }
-* Material { Name = "TPORT9"; }
-
 Decoration {
   Texture = "MONK22";
   Light {

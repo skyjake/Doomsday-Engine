@@ -1,0 +1,42 @@
+# jDoom64: Material Enhancements
+#
+# Patch the Material definitions created automatically
+# by the engine, adding new effects to them.
+
+Header { Version = 6; }
+
+#
+# Skymasked textures:
+#
+
+Material {
+  Name = "F_SKYA";
+  Group = textures;
+  Flags = skymask;
+}
+
+* Material { Name = "F_SKYB"; }
+* Material { Name = "F_SKYC"; }
+* Material { Name = "F_SKYD"; }
+* Material { Name = "F_SKYE"; }
+* Material { Name = "F_SKYF"; }
+* Material { Name = "F_SKYG"; }
+* Material { Name = "F_SKYH"; }
+* Material { Name = "F_SKYI"; }
+* Material { Name = "F_SKYJ"; }
+* Material { Name = "F_SKYK"; }
+
+#
+# Glowing textures:
+#
+
+Material {
+  Name = "CBTRAKA";
+  Group = textures;
+  Flags = glow;
+}
+
+* Material { Name = "CRTRAKA"; }
+* Material { Name = "CYTRAKA"; }
+* Material { Name = "SEXIT"; }
+* Material { Name = "SEXITA"; }
