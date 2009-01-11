@@ -2,6 +2,10 @@
 # CONSOLE COMMANDS - JDOOM64 SPECFIC
 #
 
+[conbg]
+desc = Console background setup.
+inf = Params: conbg (materialname)
+
 [setcolor]
 desc = Set player color.
 inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
@@ -684,9 +688,6 @@ desc = 1=Unhide the HUD when player collects a key.
 
 [menu-quitsound]
 desc = 1=Play a sound when quitting the game.
-
-[con-flat]
-desc = The number of the flat to use for the console background.
 
 [con-zoom]
 desc = Zoom factor for the console background.

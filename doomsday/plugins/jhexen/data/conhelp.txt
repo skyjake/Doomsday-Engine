@@ -2,6 +2,10 @@
 # CONSOLE COMMANDS - JHEXEN SPECFIC
 #
 
+[conbg]
+desc = Console background setup.
+inf = Params: conbg (materialname)
+
 [setcolor]
 desc = Set player color.
 inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
@@ -721,9 +725,6 @@ desc = 1=Inverse joystick look Y axis.
 
 [ctl-look-joy-delta]
 desc = 1=Joystick values => look angle delta.
-
-[con-flat]
-desc = The number of the flat to use for the console background.
 
 [con-zoom]
 desc = Zoom factor for the console background.
