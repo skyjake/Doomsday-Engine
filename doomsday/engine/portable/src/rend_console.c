@@ -447,6 +447,34 @@ static void DrawConsoleTitleBar(float closeFade)
     FR_SetFont(oldFont);
 }
 
+static void drawConsoleBackground(int x, int y, int w, int h,
+                                  float gtosMulY, float closeFade)
+{
+    int                 bgX = 64, bgY = 64;
+
+    // The console is composed of two parts: the main area background
+    // and the border.
+    DGL_Color4f(consoleLight / 100.0f, consoleLight / 100.0f,
+                consoleLight / 100.0f, closeFade * consoleAlpha / 100);
+
+    // The background.
+    if(gx.ConsoleBackground)
+        gx.ConsoleBackground(&bgX, &bgY);
+
+    // Let's make it a bit more interesting.
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+
+    DGL_Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
+    DGL_Rotatef(funnyAng * 3, 0, 0, 1);
+
+    GL_DrawRectTiled(x, y, w, h, bgX, bgY);
+
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PopMatrix();
+}
+
 /**
  * NOTE: Slightly messy...
  */
@@ -460,7 +488,6 @@ static void drawConsole(void)
     float       gtosMulY;
     char        buff[CMDLINE_SIZE + 1], temp[CMDLINE_SIZE + 1], *cmdLine;
     float       fontScaledY;
-    int         bgX = 64, bgY = 64;
     int         textOffsetY = 0;
     uint        cmdCursor;
     cbuffer_t  *buffer;
@@ -504,39 +531,25 @@ static void drawConsole(void)
         closeFade = ConsoleY / (float) ConsoleOpenY;
     }
 
-    // The console is composed of two parts: the main area background and the
-    // border.
-    DGL_Color4f(consoleLight / 100.0f, consoleLight / 100.0f,
-                consoleLight / 100.0f, closeFade * consoleAlpha / 100);
+    drawConsoleBackground(0, (int) (ConsoleY * gtosMulY + 4),
+                          theWindow->width, -theWindow->height - 4,
+                          gtosMulY, closeFade);
 
-    // The background.
-    if(gx.ConsoleBackground)
-        gx.ConsoleBackground(&bgX, &bgY);
-
-    // Let's make it a bit more interesting.
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
-    DGL_Rotatef(funnyAng * 3, 0, 0, 1);
-    GL_DrawRectTiled(0, (int) (ConsoleY * gtosMulY + 4), theWindow->width,
-                     -theWindow->height - 4, bgX, bgY);
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PopMatrix();
-
+    DGL_Disable(DGL_TEXTURING);
     // The border.
-    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 3), theWindow->width, 2, 0, 0, 0,
-                closeFade);
+    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 4), theWindow->width,
+                2, 0, 0, 0, closeFade);
 
     // Subtle shadow.
     DGL_Begin(DGL_QUADS);
-    DGL_Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
-    DGL_Vertex2f(0, (int) (ConsoleY * gtosMulY + 5));
-    DGL_Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
-    DGL_Color4f(0, 0, 0, 0);
-    DGL_Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 13));
-    DGL_Vertex2f(0, (int) (ConsoleY * gtosMulY + 13));
+        DGL_Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
+        DGL_Vertex2f(0, (int) (ConsoleY * gtosMulY + 5));
+        DGL_Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
+        DGL_Color4f(0, 0, 0, 0);
+        DGL_Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 13));
+        DGL_Vertex2f(0, (int) (ConsoleY * gtosMulY + 13));
     DGL_End();
+    DGL_Enable(DGL_TEXTURING);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
