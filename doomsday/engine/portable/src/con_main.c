@@ -1862,13 +1862,13 @@ void Con_AbnormalShutdown(const char* message)
     B_Shutdown();
 
 #ifdef WIN32
-    ChangeDisplaySettings(0, 0);    // Restore original mode, just in case.
+    ChangeDisplaySettings(0, 0); // Restore original mode, just in case.
 #endif
 
     // Be a bit more graphic.
     Sys_ShowCursor(true);
     Sys_ShowCursor(true);
-    if(message)                  // Only show if a message given.
+    if(message) // Only show if a message given.
     {
         Sys_MessageBox(message, true);
     }
@@ -1876,16 +1876,16 @@ void Con_AbnormalShutdown(const char* message)
     DD_Shutdown();
 
     // Open Doomsday.out in a text editor.
-    fflush(outFile);            // Make sure all the buffered stuff goes into the file.
-    Sys_OpenTextEditor("Doomsday.out");
+    fflush(outFile); // Make sure all the buffered stuff goes into the file.
+    Sys_OpenTextEditor("doomsday.out");
 
     // Get outta here.
     exit(1);
 }
 
-char *TrimmedFloat(float val)
+char* TrimmedFloat(float val)
 {
-    char   *ptr = trimmedFloatBuffer;
+    char*               ptr = trimmedFloatBuffer;
 
     sprintf(ptr, "%f", val);
     // Get rid of the extra zeros.

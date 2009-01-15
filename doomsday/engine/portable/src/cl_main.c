@@ -63,10 +63,10 @@ extern int gotFrame;
 
 ident_t clientID;
 boolean handshakeReceived = false;
-int     gameReady = false;
-int     serverTime;
-boolean netLoggedIn = false;    // Logged in to the server.
-int     clientPaused = false;   // Set by the server.
+int gameReady = false;
+int serverTime;
+boolean netLoggedIn = false; // Logged in to the server.
+int clientPaused = false; // Set by the server.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -74,8 +74,8 @@ int     clientPaused = false;   // Set by the server.
 
 void Cl_InitID(void)
 {
-    FILE       *file;
-    int         i;
+    int                 i;
+    FILE*               file;
 
     if((i = ArgCheckWith("-id", 1)) != 0)
     {
@@ -86,7 +86,7 @@ void Cl_InitID(void)
 
     // Read the client ID number file.
     srand(time(NULL));
-    if((file = fopen("Client.ID", "rb")) != NULL)
+    if((file = fopen("client.id", "rb")) != NULL)
     {
         fread(&clientID, sizeof(clientID), 1, file);
         clientID = ULONG(clientID);
@@ -98,7 +98,7 @@ void Cl_InitID(void)
         ULONG(Sys_GetRealTime() * rand() + (rand() & 0xfff) +
               ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24));
     // Write it to the file.
-    if((file = fopen("Client.ID", "wb")) != NULL)
+    if((file = fopen("client.id", "wb")) != NULL)
     {
         fwrite(&clientID, sizeof(clientID), 1, file);
         fclose(file);
@@ -129,7 +129,7 @@ void Cl_CleanUp(void)
  */
 void Cl_SendHello(void)
 {
-    char        buf[256];
+    char                buf[256];
 
     Msg_Begin(PCL_HELLO2);
     Msg_WriteLong(clientID);
@@ -146,10 +146,10 @@ Con_Message("Cl_SendHello: game mode = %s\n", buf);
     Net_SendBuffer(0, SPF_ORDERED);
 }
 
-void Cl_AnswerHandshake(handshake_packet_t *pShake)
+void Cl_AnswerHandshake(handshake_packet_t* pShake)
 {
-    handshake_packet_t shake;
-    int         i;
+    int                 i;
+    handshake_packet_t  shake;
 
     // Copy the data to a buffer of our own.
     memcpy(&shake, pShake, sizeof(shake));
@@ -290,7 +290,7 @@ void Cl_GetPackets(void)
                 handled = false;
             }
             if(handled)
-                continue;       // Get the next packet.
+                continue; // Get the next packet.
         }
 
         // How about the rest?
@@ -369,7 +369,7 @@ Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
 }
 
 /**
- * Client-side game ticker
+ * Client-side game ticker.
  */
 void Cl_Ticker(void)
 {
@@ -405,7 +405,7 @@ D_CMD(Login)
     Msg_Begin(PKT_LOGIN);
     // Write the password.
     if(argc == 1)
-        Msg_WriteByte(0);       // No password given!
+        Msg_WriteByte(0); // No password given!
     else
         Msg_Write(argv[1], strlen(argv[1]) + 1);
     Net_SendBuffer(0, SPF_ORDERED);
