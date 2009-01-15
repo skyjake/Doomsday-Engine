@@ -174,8 +174,8 @@ static controlconfig_t controlConfig[] =
     { NULL },
 
     { "looking" },
-    { "look up", 0, "look", 0, CCF_STAGED | CCF_INVERSE },
-    { "look down", 0, "look", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "look up", 0, "look", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "look down", 0, "look", 0, CCF_STAGED | CCF_INVERSE },
     { "look center", 0, 0, "impulse lookcenter" },
 
     { NULL },
