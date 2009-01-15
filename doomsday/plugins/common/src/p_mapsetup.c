@@ -689,9 +689,12 @@ static void P_ResetWorldState(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t       *plr = &players[i];
+        player_t*           plr = &players[i];
 
         plr->killCount = plr->secretCount = plr->itemCount = 0;
+
+        AM_SetCheatLevel(i, 0);
+        AM_RevealMap(i, false);
     }
 
 #if __JDOOM__ || __JDOOM64__
