@@ -1013,7 +1013,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", mat->id.name)
-                RV_FLAGS("Group", ((int) mat->id.group), "mg_")
+                RV_FLAGS("Group", mat->id.group, "mg_")
                 RV_FLAGS("Flags", mat->flags, "matf_")
                 RV_FLT("Width", mat->width)
                 RV_FLT("Height", mat->height)
