@@ -722,7 +722,7 @@ static menuitem_t OptionsItems[] = {
 
 static menu_t OptionsDef = {
     0,
-    94, 63,
+    112, 63,
     M_DrawOptions,
     10, OptionsItems,
     0, MENU_MAIN,
@@ -1817,19 +1817,19 @@ void Hu_MenuDrawer(void)
         {
             if(itemOn >= 0)
             {
-                menu_t* mn = (widgetEdit? &ColorWidgetMnu : currentMenu);
+                menu_t*             mn =
+                    (widgetEdit? &ColorWidgetMnu : currentMenu);
 
                 scale = mn->itemHeight / (float) LINEHEIGHT;
-                width = cursorst[whichSkull].width * scale;
-                height = cursorst[whichSkull].height * scale;
+                width = cursorst[whichSkull].width;
+                height = cursorst[whichSkull].height;
 
-                offset[VX] = mn->x;
-                offset[VX] += MENUCURSOR_OFFSET_X * scale;
+                offset[VX] = mn->x + MENUCURSOR_OFFSET_X * scale;
+                offset[VX] -= width / 2 * scale;
 
-                offset[VY] = mn->y;
-                offset[VY] += (itemOn - mn->firstItem + 1) * mn->itemHeight;
-                offset[VY] -= (float) height / 2;
-                offset[VY] += MENUCURSOR_OFFSET_Y * scale;
+                offset[VY] = mn->y + MENUCURSOR_OFFSET_Y * scale;
+                offset[VY] += (itemOn - mn->firstItem) * mn->itemHeight +
+                    mn->itemHeight / 2;
 
                 GL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP, DGL_CLAMP);
 
@@ -1837,10 +1837,9 @@ void Hu_MenuDrawer(void)
                 DGL_PushMatrix();
 
                 DGL_Translatef(offset[VX], offset[VY], 0);
-                DGL_Scalef(1, 1.0f / 1.2f, 1);
+                DGL_Scalef(scale, scale, 1);
                 if(skull_angle)
                     DGL_Rotatef(skull_angle, 0, 0, 1);
-                DGL_Scalef(1, 1.2f, 1);
 
                 GL_DrawRect(-width/2.f, -height/2.f, width, height, 1, 1, 1, menuAlpha);
 
@@ -2418,21 +2417,21 @@ void M_DrawMainMenu(void)
     GL_DrawPatch_CS(278, 80, SkullBaseLump + frame);
 
 #elif __JHERETIC__
-    WI_DrawPatch(SCREENWIDTH / 2 - 2, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
-                 ALIGN_CENTER);
+    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
+                 ALIGN_LEFT);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
     GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(SCREENWIDTH / 2 - 2, 2, 1, 1, 1, menuAlpha, &m_doom,
-                 NULL, false, ALIGN_CENTER);
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom,
+                 NULL, false, ALIGN_LEFT);
 #elif __JSTRIFE__
     menu_t     *menu = &MainDef;
     int         yoffset = 0;
 
-    WI_DrawPatch(SCREENWIDTH / 2 - 2, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_STRIFE"),
-                 NULL, false, ALIGN_CENTER);
+    WI_DrawPatch(84, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_STRIFE"),
+                 NULL, false, ALIGN_LEFT);
 
     WI_DrawPatch(menu->x, menu->y + yoffset, 1, 1, 1, menuAlpha,
                  W_GetNumForName("M_NGAME"), NULL, false, ALIGN_LEFT);
