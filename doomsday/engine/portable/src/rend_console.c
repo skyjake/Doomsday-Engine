@@ -482,7 +482,7 @@ static void drawConsole(void)
 {
     extern uint bLineOff;
 
-    int         i, k;               // Line count and buffer cursor.
+    int         k;               // Line and buffer cursor.
     float       x, y;
     float       closeFade = 1;
     float       gtosMulY;
@@ -493,8 +493,6 @@ static void drawConsole(void)
     cbuffer_t  *buffer;
     static const cbline_t **lines = NULL;
     static int bufferSize = 0;
-    int         reqLines;
-    uint        count;
 
     gtosMulY = theWindow->height / 200.0f;
 
@@ -563,75 +561,73 @@ static void drawConsole(void)
 
     // The console history log is drawn from top to bottom.
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
-    reqLines = ceil(y / fontScaledY);
-    y -= (reqLines - 1) * fontScaledY;
 
-    if(reqLines > 0)
+    if(ceil(y / fontScaledY) > 0)
     {
-        int                 firstIdx;
+        int                 firstIdx = 0;
+        uint                i, count, reqLines = ceil(y / fontScaledY);
+
+        y -= (reqLines - 1) * fontScaledY;
 
         // Need to enlarge the buffer?
-        if(reqLines > bufferSize)
+        if(reqLines > (uint) bufferSize)
         {
             lines = Z_Realloc((void*) lines, sizeof(cbline_t *) * (reqLines + 1),
                               PU_STATIC);
             bufferSize = reqLines;
         }
 
-        firstIdx = -reqLines;
+        firstIdx -= reqLines;
         if(bLineOff > reqLines)
             firstIdx -= (bLineOff - reqLines);
         if(bLineOff < reqLines)
             firstIdx -= bLineOff;
 
         count = Con_BufferGetLines(buffer, reqLines, firstIdx, lines);
-        if(count > 0)
+        for(i = 0; i < count; ++i)
         {
-            for(i = 0; i < count; i++)
-            {
-                const cbline_t*         line = lines[i];
+            const cbline_t*         line = lines[i];
 
-                if(!line)
+            if(!line)
+                continue;
+
+            if(line->flags & CBLF_RULER)
+            {
+                // Draw a ruler here, and nothing else.
+                drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
+                           theWindow->width / Cfont.sizeX);
+            }
+            else
+            {
+                if(!line->text)
                     continue;
 
-                if(line->flags & CBLF_RULER)
-                {
-                    // Draw a ruler here, and nothing else.
-                    drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
-                               theWindow->width / Cfont.sizeX);
-                }
+                memset(buff, 0, sizeof(buff));
+                strncpy(buff, line->text, 255);
+
+                if(line->flags & CBLF_CENTER)
+                    x = (theWindow->width /
+                        Cfont.sizeX - Cfont.getWidth(buff)) / 2;
                 else
+                    x = 2;
+
+                if(Cfont.filterText)
+                    Cfont.filterText(buff);
+                /*else if(consoleShadowText)
                 {
-                    if(!line->text)
-                        continue;
+                    // Draw a shadow.
+                    DGL_Color3f(0, 0, 0);
+                    Cfont.drawText(buff, x + 2, y / Cfont.sizeY + 2);
+                }*/
 
-                    memset(buff, 0, sizeof(buff));
-                    strncpy(buff, line->text, 255);
-
-                    if(line->flags & CBLF_CENTER)
-                        x = (theWindow->width /
-                            Cfont.sizeX - Cfont.getWidth(buff)) / 2;
-                    else
-                        x = 2;
-
-                    if(Cfont.filterText)
-                        Cfont.filterText(buff);
-                    /*else if(consoleShadowText)
-                    {
-                        // Draw a shadow.
-                        DGL_Color3f(0, 0, 0);
-                        Cfont.drawText(buff, x + 2, y / Cfont.sizeY + 2);
-                    }*/
-
-                    // Set the color.
-                    if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
-                        consoleSetColor(line->flags, closeFade);
-                    Cfont.drawText(buff, x, y / Cfont.sizeY);
-                }
-
-                // Move down.
-                y += fontScaledY;
+                // Set the color.
+                if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
+                    consoleSetColor(line->flags, closeFade);
+                Cfont.drawText(buff, x, y / Cfont.sizeY);
             }
+
+            // Move down.
+            y += fontScaledY;
         }
     }
 
@@ -662,15 +658,16 @@ static void drawConsole(void)
     if(!k)
         k = Cfont.getWidth(" ");
 
-    // What is the width?
-    memset(temp, 0, sizeof(temp));
-    strncpy(temp, buff, MIN_OF(250, cmdCursor) + 1);
-    i = Cfont.getWidth(temp);
-
     // Draw the cursor in the appropriate place.
     if(!Con_IsLocked())
     {
-        float           curHeight = fontScaledY / 4;
+        int                 i;
+        float               curHeight = fontScaledY / 4;
+
+        // What is the width?
+        memset(temp, 0, sizeof(temp));
+        strncpy(temp, buff, MIN_OF(250, cmdCursor) + 1);
+        i = Cfont.getWidth(temp);
 
         DGL_Disable(DGL_TEXTURING);
         GL_DrawRect(2 + i, (ConsoleY * gtosMulY - textOffsetY + curHeight) / Cfont.sizeY,
