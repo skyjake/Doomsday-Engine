@@ -318,11 +318,6 @@ typedef struct vectorgrap_s {
     vgline_t*       lines;
 } vectorgrap_t;
 
-typedef struct automaptex_s {
-    int             width, height;
-    DGLuint         tex;
-} automaptex_t;
-
 typedef struct {
     player_t*       plr;
     automap_t*      map;
@@ -410,12 +405,13 @@ static automap_t automaps[MAXPLAYERS];
 
 static vectorgrap_t* vectorGraphs[NUM_VECTOR_GRAPHS];
 
+// if -1 no background image will be drawn.
 #if __JDOOM__ || __JDOOM64__
-static int maplumpnum = 0; // if 0 no background image will be drawn
+static int autopageLumpNum = -1;
 #elif __JHERETIC__
-static int maplumpnum = 1; // if 0 no background image will be drawn
+static int autopageLumpNum = 1;
 #else
-static int maplumpnum = 1; // if 0 no background image will be drawn
+static int autopageLumpNum = 1;
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -2052,8 +2048,18 @@ void AM_LoadData(void)
     }
 #endif
 
-    if(maplumpnum != 0)
-        maplumpnum = W_GetNumForName("AUTOPAGE");
+    if(autopageLumpNum != -1)
+    {
+        if((autopageLumpNum = W_CheckNumForName("AUTOPAGE")) == -1)
+        {
+#if __JHERETIC__ || __JHEXEN__
+            Con_SetFloat("map-background-r", .55f, false);
+            Con_SetFloat("map-background-g", .45f, false);
+            Con_SetFloat("map-background-b", .35f, false);
+            Con_SetFloat("map-background-a", 1, false);
+#endif
+        }
+    }
 
     if(numTexUnits > 1)
     {   // Great, we can replicate the map fade out effect using multitexture,
@@ -3162,7 +3168,7 @@ static void setupGLStateForMap(void)
     DGL_Ortho(0, 0, scrwidth, scrheight, -1, 1);
 
     // Do we want a background texture?
-    if(maplumpnum)
+    if(autopageLumpNum != -1)
     {
         // Apply the background texture onto a parallaxing layer which
         // follows the map view target (not player).
@@ -3173,7 +3179,7 @@ static void setupGLStateForMap(void)
         DGL_LoadIdentity();
 
          // We only want the left portion.
-        GL_SetRawImage(maplumpnum, false, DGL_REPEAT, DGL_REPEAT);
+        GL_SetRawImage(autopageLumpNum, false, DGL_REPEAT, DGL_REPEAT);
 
         DGL_Color4f(map->cfg.backgroundRGBA[0],
                     map->cfg.backgroundRGBA[1],
