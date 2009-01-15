@@ -848,6 +848,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         // Delete all textures.
         GL_ShutdownTextureManager();
         GL_ShutdownFont();
+        GL_ReleaseReservedNames();
     }
     else
     {
@@ -855,6 +856,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
         // Getting back up and running.
+        GL_ReserveNames();
         GL_InitFont();
         GL_InitVarFont();
 
@@ -959,22 +961,24 @@ void GL_BlendMode(blendmode_t mode)
  */
 D_CMD(SetRes)
 {
-    return Sys_SetWindow(windowIDX, 0, 0, atoi(argv[1]), atoi(argv[2]), 0, 0,
-                        DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
-                        DDSW_NOBPP);
+    int                 width = atoi(argv[1]), height = atoi(argv[2]);
+
+    return Sys_SetWindow(windowIDX, 0, 0, width, height, 0, 0,
+                         DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
+                         DDSW_NOBPP);
 }
 
 D_CMD(ToggleFullscreen)
 {
-    boolean         fullscreen;
+    boolean             fullscreen;
 
     if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
         Con_Message("CCmd 'ToggleFullscreen': Failed acquiring window "
                     "fullscreen");
     else
         Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0,
-                     (!fullscreen? DDWF_FULLSCREEN : 0),
-                     DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
+                      (!fullscreen? DDWF_FULLSCREEN : 0),
+                      DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
     return true;
 }
 
@@ -987,7 +991,7 @@ D_CMD(UpdateGammaRamp)
 
 D_CMD(SetBPP)
 {
-    int     bpp = atoi(argv[1]);
+    int                 bpp = atoi(argv[1]);
 
     if(bpp != 16 && bpp != 32)
     {
@@ -1002,7 +1006,7 @@ D_CMD(SetBPP)
 
 D_CMD(Fog)
 {
-    int     i;
+    int                 i;
 
     if(argc == 1)
     {

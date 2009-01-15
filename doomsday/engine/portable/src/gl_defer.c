@@ -60,7 +60,6 @@ typedef struct deferred_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-void        GL_ReserveNames(void);
 deferred_t* GL_GetNextDeferred(void);
 void        GL_DestroyDeferred(deferred_t* d);
 
@@ -92,6 +91,8 @@ void GL_ShutdownDeferred(void)
 
     if(!deferredInited)
         return;
+
+    GL_ReleaseReservedNames();
 
     while((d = GL_GetNextDeferred()) != NULL)
     {
@@ -154,6 +155,18 @@ void GL_ReserveNames(void)
         reservedNames[i] = DGL_NewTexture();
     }
     reservedCount = NUM_RESERVED_NAMES;
+    Sys_Unlock(deferredMutex);
+}
+
+void GL_ReleaseReservedNames(void)
+{
+    if(!deferredInited)
+        return; // Just ignore.
+
+    Sys_Lock(deferredMutex);
+    DGL_DeleteTextures(reservedCount, reservedNames);
+    memset(reservedNames, 0, sizeof(reservedNames));
+    reservedCount = 0;
     Sys_Unlock(deferredMutex);
 }
 

@@ -74,5 +74,7 @@ DGLuint         GL_NewTextureWithParams(gltexformat_t format, int width, int hei
 DGLuint         GL_NewTextureWithParams2(gltexformat_t format, int width, int height, void* pixels,
                                          int flags, int minFilter, int magFilter, int anisoFilter,
                                          boolean wrapS, boolean wrapT);
-
+/// \todo should these be public?
+void            GL_ReserveNames(void);
+void            GL_ReleaseReservedNames(void);
 #endif
