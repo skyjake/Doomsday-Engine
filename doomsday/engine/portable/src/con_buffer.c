@@ -305,13 +305,13 @@ void Con_BufferSetMaxLineLength(cbuffer_t *buf, uint length)
 }
 
 /**
- * @param buf               Ptr to the buffer to be queried.
+ * @param buf           Ptr to the buffer to be queried.
  *
- * @return                  Number of lines currently in the buffer.
+ * @return              Number of lines currently in the buffer.
  */
-uint Con_BufferNumLines(cbuffer_t *buf)
+uint Con_BufferNumLines(cbuffer_t* buf)
 {
-    uint        num;
+    uint                num;
     if(!buf)
         return 0;
 
@@ -322,16 +322,16 @@ uint Con_BufferNumLines(cbuffer_t *buf)
     return num;
 }
 
-static cbline_t const *bufferGetLine(cbuffer_t *buf, uint idx)
+static cbline_t const* bufferGetLine(cbuffer_t* buf, uint idx)
 {
-    const cbline_t *ptr = NULL;
+    const cbline_t*     ptr = NULL;
 
     if(!(buf->numLines == 0 || idx >= buf->numLines))
     {
         if(!buf->indexGood)
         {   // Rebuild the index.
-            uint        i;
-            cbnode_t   *node;
+            uint                i;
+            cbnode_t*           node;
 
             // Do we need to enlarge the index?
             if(buf->indexSize < buf->numLines)
@@ -357,30 +357,25 @@ static cbline_t const *bufferGetLine(cbuffer_t *buf, uint idx)
     return ptr;
 }
 
-static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
-                           cbline_t const **list)
+static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
+                           cbline_t const** list)
 {
     if((long) firstIdx <= (long) buf->numLines)
     {
-        uint        i, n, idx, count = reqCount;
+        uint                i, n, idx, count = reqCount;
 
-        if(firstIdx >= 0)
+        if(firstIdx < 0)
         {
-            idx = firstIdx;
-            if(reqCount == 0 ||
-               idx + count > buf->numLines)
-                count = buf->numLines - idx;
-        }
-        else
-        {
-            if((long) buf->numLines + firstIdx < 0)
-                idx = 0;
+            long            other = -((long) firstIdx);
+            if(other > buf->numLines)
+                firstIdx = 0;
             else
-                idx = buf->numLines + firstIdx;
-            if(reqCount == 0 ||
-               idx + count > buf->numLines)
-                count = buf->numLines - idx;
+                firstIdx = buf->numLines - other;
         }
+
+        idx = firstIdx;
+        if(reqCount == 0 || idx + count > buf->numLines)
+            count = buf->numLines - idx;
 
         // Collect the ptrs.
         for(i = 0, n = idx; i < count; ++i)

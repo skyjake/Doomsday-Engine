@@ -561,12 +561,15 @@ static void drawConsole(void)
 
     DGL_Color4f(1, 1, 1, closeFade);
 
-    // The text in the console buffer will be drawn from the bottom up (!).
+    // The console history log is drawn from top to bottom.
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
     reqLines = ceil(y / fontScaledY);
+    y -= (reqLines - 1) * fontScaledY;
 
     if(reqLines > 0)
     {
+        int                 firstIdx;
+
         // Need to enlarge the buffer?
         if(reqLines > bufferSize)
         {
@@ -575,14 +578,18 @@ static void drawConsole(void)
             bufferSize = reqLines;
         }
 
-        count = Con_BufferGetLines(buffer, reqLines,
-                                   -(reqLines + (int) bLineOff),
-                                   lines);
+        firstIdx = -reqLines;
+        if(bLineOff > reqLines)
+            firstIdx -= (bLineOff - reqLines);
+        if(bLineOff < reqLines)
+            firstIdx -= bLineOff;
+
+        count = Con_BufferGetLines(buffer, reqLines, firstIdx, lines);
         if(count > 0)
         {
-            for(i = count - 1; i >= 0 && y > -fontScaledY; i--)
+            for(i = 0; i < count; i++)
             {
-                const cbline_t *line = lines[i];
+                const cbline_t*         line = lines[i];
 
                 if(!line)
                     continue;
@@ -622,8 +629,8 @@ static void drawConsole(void)
                     Cfont.drawText(buff, x, y / Cfont.sizeY);
                 }
 
-                // Move up.
-                y -= fontScaledY;
+                // Move down.
+                y += fontScaledY;
             }
         }
     }
