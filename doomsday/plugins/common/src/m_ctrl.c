@@ -572,7 +572,7 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
                    !(cc->flags & (CCF_INVERSE | CCF_NON_INVERSE)))
                 {
                     callback(!strncmp(ptr, "key", 3)? MIBT_KEY :
-                             !strncmp(ptr, "mouse", 5)? MIBT_MOUSE : MIBT_JOY, bid, buf, 
+                             !strncmp(ptr, "mouse", 5)? MIBT_MOUSE : MIBT_JOY, bid, buf,
                              isInverse, data);
                 }
             }
