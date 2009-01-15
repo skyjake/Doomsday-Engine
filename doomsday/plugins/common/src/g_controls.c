@@ -359,9 +359,13 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent map:key-m {impulse addmark}",
         "bindevent map:key-c {impulse clearmarks}",
         "bindcontrol mappany key-up",
+        "bindcontrol mappany key-w",
         "bindcontrol mappany key-down-inverse",
+        "bindcontrol mappany key-s-inverse",
         "bindcontrol mappanx key-right",
+        "bindcontrol mappanx key-d",
         "bindcontrol mappanx key-left-inverse",
+        "bindcontrol mappanx key-a-inverse",
 
         // UI events:
         "bindevent shortcut:key-esc menu",
@@ -392,15 +396,25 @@ DEFCC( CCmdDefaultGameBinds )
 
         // Menu events:
         "bindevent menu:key-backspace menuback",
+        "bindevent menu:mouse-right-down menuback",
         "bindevent menu:key-up menuup",
         "bindevent menu:key-up-repeat menuup",
+        "bindevent menu:key-w menuup",
+        "bindevent menu:key-w-repeat menuup",
         "bindevent menu:key-down menudown",
         "bindevent menu:key-down-repeat menudown",
+        "bindevent menu:key-s menudown",
+        "bindevent menu:key-s-repeat menudown",
         "bindevent menu:key-left menuleft",
         "bindevent menu:key-left-repeat menuleft",
+        "bindevent menu:key-a menuleft",
+        "bindevent menu:key-a-repeat menuleft",
         "bindevent menu:key-right menuright",
         "bindevent menu:key-right-repeat menuright",
+        "bindevent menu:key-d menuright",
+        "bindevent menu:key-d-repeat menuright",
         "bindevent menu:key-return menuselect",
+        "bindevent menu:mouse-left-down menuselect",
         "bindevent menu:key-delete menudelete",
 
         // On-screen messages:
