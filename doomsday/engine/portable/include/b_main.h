@@ -29,8 +29,9 @@
 #ifndef __DOOMSDAY_BIND_MAIN_H__
 #define __DOOMSDAY_BIND_MAIN_H__
 
-#define DEFAULT_BINDING_CONTEXT_NAME  "game"
-#define CONSOLE_BINDING_CONTEXT_NAME  "console"
+#define DEFAULT_BINDING_CONTEXT_NAME    "game"
+#define CONSOLE_BINDING_CONTEXT_NAME    "console"
+#define UI_BINDING_CONTEXT_NAME         "deui"
 
 void            B_Register(void);
 void            B_Init(void);

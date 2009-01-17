@@ -193,6 +193,34 @@ void B_UpdateDeviceStateAssociations(void)
                     dev->keys[k].bContext = bc;
             }
         }
+        
+        if(bc->flags & BCF_ACQUIRE_ALL)
+        {
+            int                 j;
+            for(j = 0; j < NUM_INPUT_DEVICES; ++j)
+            {
+                inputdev_t*         dev = I_GetDevice(j, true);
+                
+                if(!dev)
+                    continue;
+
+                for(k = 0; k < dev->numKeys; ++k)
+                {
+                    if(!dev->keys[k].bContext)
+                        dev->keys[k].bContext = bc;
+                }
+                for(k = 0; k < dev->numAxes; ++k)
+                {
+                    if(!dev->axes[k].bContext)
+                        dev->axes[k].bContext = bc;
+                }
+                for(k = 0; k < dev->numHats; ++k)
+                {
+                    if(!dev->hats[k].bContext)
+                        dev->hats[k].bContext = bc;
+                }
+            }
+        }
     }
 }
 
@@ -272,6 +300,15 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
     if(doActivate)
         bc->flags |= BCF_ACTIVE;
     B_UpdateDeviceStateAssociations();
+
+    if(bc->flags & BCF_ACQUIRE_ALL)
+    {
+        int i;
+        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+        {
+            I_DeviceReset(i);
+        }
+    }
 }
 
 void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
@@ -279,6 +316,14 @@ void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
     bc->flags &= ~BCF_ACQUIRE_KEYBOARD;
     if(doAcquire)
         bc->flags |= BCF_ACQUIRE_KEYBOARD;
+    B_UpdateDeviceStateAssociations();
+}
+
+void B_AcquireAll(bcontext_t* bc, boolean doAcquire)
+{
+    bc->flags &= ~BCF_ACQUIRE_ALL;
+    if(doAcquire)
+        bc->flags |= BCF_ACQUIRE_ALL;
     B_UpdateDeviceStateAssociations();
 }
 

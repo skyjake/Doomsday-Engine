@@ -177,6 +177,7 @@ byte        DD_ModKey(byte key);
 void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
 void        I_ClearDeviceContextAssociations(void);
+void        I_DeviceReset(uint ident);
 inputdev_t *I_GetDevice(uint ident, boolean ifactive);
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
 boolean     I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis);

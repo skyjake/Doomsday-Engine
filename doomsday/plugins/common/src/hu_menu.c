@@ -3378,7 +3378,7 @@ int M_QuitResponse(msgresponse_t response, void* context)
                     S_LocalSound(quitsounds[((int)GAMETIC >> 2) & 7], NULL);
 
                 // Wait for 1.5 seconds.
-                DD_Executef(true, "after 53 quit!");
+                DD_Executef(true, "activatebcontext deui; after 53 quit!");
                 quitYet = true;
             }
         }

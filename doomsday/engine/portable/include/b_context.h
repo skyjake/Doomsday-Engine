@@ -46,6 +46,7 @@ typedef struct controlbinding_s {
 #define BCF_PROTECTED           0x02 // Context cannot be
 #define BCF_ACQUIRE_KEYBOARD    0x04 // Context has acquired all keyboard states, unless
                                      // higher-priority contexts override it.
+#define BCF_ACQUIRE_ALL         0x08 // Context will acquire all unacquired states.
 
 typedef struct bclass_s {
     char*           name; // Name of the binding context.
@@ -59,6 +60,7 @@ bcontext_t*     B_NewContext(const char* name);
 void            B_DestroyAllContexts(void);
 void            B_ActivateContext(bcontext_t* bc, boolean doActivate);
 void            B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire);
+void            B_AcquireAll(bcontext_t* bc, boolean doAcquire);
 bcontext_t*     B_ContextByPos(int pos);
 bcontext_t*     B_ContextByName(const char* name);
 int             B_ContextCount(void);

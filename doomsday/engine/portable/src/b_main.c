@@ -196,6 +196,9 @@ void B_Init(void)
     bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
     bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
     B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
+    
+    // UI doesn't let anything past it.
+    B_AcquireAll(B_NewContext(UI_BINDING_CONTEXT_NAME), true);
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
     B_BindCommand("joy-hat-center", "print center");

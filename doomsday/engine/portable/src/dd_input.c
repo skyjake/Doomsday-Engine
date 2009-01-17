@@ -277,6 +277,21 @@ void I_ShutdownInputDevices(void)
     }
 }
 
+void I_DeviceReset(uint ident)
+{
+    inputdev_t*         dev = &inputDevices[ident];
+    int                 k;
+    
+    for(k = 0; k < dev->numAxes; ++k)
+    {
+        if(dev->axes[k].type == IDAT_POINTER)
+        {
+            // Clear the accumulation.
+            dev->axes[k].position = 0;
+        }
+    }
+}
+
 /**
  * Retrieve a pointer to the input device state by identifier.
  *

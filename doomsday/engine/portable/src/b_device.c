@@ -232,6 +232,28 @@ dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)
     return cb;
 }
 
+dbinding_t* B_FindDeviceBinding(bcontext_t* context, uint device, cbdevtype_t bindType, int id)
+{
+    controlbinding_t*   cb;
+    dbinding_t*         d;
+    int                 i;
+    
+    for(cb = context->controlBinds.next; cb != &context->controlBinds; cb = cb->next)
+    {
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            for(d = cb->deviceBinds[i].next; d != &cb->deviceBinds[i]; d = d->next)
+            {
+                if(d->device == device && d->type == bindType && d->id == id)
+                {
+                    return d;
+                }
+            }
+        }
+    }    
+    return NULL;
+}
+
 void B_DestroyDeviceBinding(dbinding_t* cb)
 {
     if(cb)
@@ -304,10 +326,21 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
             break;
 
         case CBD_AXIS:
-            if(controlClass && dev->axes[cb->id].bContext != controlClass)
-                continue; // Shadowed by a more important active class.
-
             axis = &dev->axes[cb->id];
+            if(controlClass && axis->bContext != controlClass)
+            {
+                if(!B_FindDeviceBinding(axis->bContext, cb->device, CBD_AXIS, cb->id))
+                {
+                    // The overriding context doesn't bind to the axis, though.
+                    if(axis->type == IDAT_POINTER)
+                    {
+                        // Reset the relative accumulation.
+                        axis->position = 0;
+                    }
+                }
+                continue; // Shadowed by a more important active class.
+            }
+            
             if(axis->type == IDAT_POINTER)
             {
                 deviceOffset = axis->position;

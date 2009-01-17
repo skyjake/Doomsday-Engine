@@ -151,6 +151,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
         return;
 
     uiActive = true;
+    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), true);
 
     // Restore full alpha.
     uiAlpha = uiTargetAlpha = 1.0;
@@ -187,10 +188,13 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
 void UI_End(void)
 {
     ddevent_t rel;
+    int i;
 
     if(!uiActive)
         return;
     uiActive = false;
+    
+    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
 
     // Restore full alpha.
     uiAlpha = uiTargetAlpha = 1.0;
