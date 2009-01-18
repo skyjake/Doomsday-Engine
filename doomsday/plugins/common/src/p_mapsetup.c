@@ -63,6 +63,11 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct {
+    int             gameModeBits;
+    mobjtype_t      type;
+} mobjtype_precachedata_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 #if __JHERETIC__
@@ -580,8 +585,48 @@ int P_SetupMapWorker(void* ptr)
     // Preload graphics.
     if(precache)
     {
+#if __JDOOM__
+        static const mobjtype_precachedata_t types[] = {
+            { GM_ANY,   MT_SKULL },
+            // Missiles:
+            { GM_ANY,   MT_BRUISERSHOT },
+            { GM_ANY,   MT_TROOPSHOT },
+            { GM_ANY,   MT_HEADSHOT },
+            { GM_ANY,   MT_ROCKET },
+            { GM_NOTSHAREWARE, MT_PLASMA },
+            { GM_NOTSHAREWARE, MT_BFG },
+            { GM_DOOM2, MT_ARACHPLAZ },
+            { GM_DOOM2, MT_FATSHOT },
+            // Potentially dropped weapons:
+            { GM_ANY,   MT_CLIP },
+            { GM_ANY,   MT_SHOTGUN },
+            { GM_ANY,   MT_CHAINGUN },
+            // Misc effects:
+            { GM_DOOM2, MT_FIRE },
+            { GM_ANY,   MT_TRACER },
+            { GM_ANY,   MT_SMOKE },
+            { GM_DOOM2, MT_FATSHOT },
+            { GM_ANY,   MT_BLOOD },
+            { GM_ANY,   MT_PUFF },
+            { GM_ANY,   MT_TFOG }, // Teleport FX.
+            { GM_ANY,   MT_EXTRABFG },
+            { GM_ANY,   MT_ROCKETPUFF },
+            { 0,        0}
+        };
+        uint                i;
+#endif
+
         R_PrecacheMap();
         R_PrecachePSprites();
+
+#if __JDOOM__
+        for(i = 0; types[i].type != 0; ++i)
+            if(types[i].gameModeBits & gameModeBits)
+                R_PrecacheMobjNum(types[i].type);
+
+        if(IS_NETGAME)
+            R_PrecacheMobjNum(MT_IFOG);
+#endif
     }
 
     P_FinalizeMap();
