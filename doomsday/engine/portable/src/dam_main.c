@@ -506,6 +506,8 @@ boolean DAM_AttemptMapLoad(const char* mapID)
 
         if(loadedOK)
         {
+            ded_sky_t*          skyDef = NULL;
+
             // Do any initialization/error checking work we need to do.
             // Must be called before we go any further.
             P_InitUnusedMobjList();
@@ -534,7 +536,10 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             if(!mapInfo)
                 mapInfo = Def_GetMapInfo("*");
 
-            R_SetupSky(mapInfo);
+            skyDef = Def_GetSky(mapInfo->skyID);
+            if(!skyDef)
+                skyDef = &mapInfo->sky;
+            R_SetupSky(skyDef);
 
             // Setup accordingly.
             if(mapInfo)

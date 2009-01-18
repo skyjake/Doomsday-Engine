@@ -83,6 +83,7 @@ int             Def_GetMusicNum(char* id);
 int             Def_GetSoundNum(char* id);
 int             Def_EvalFlags(char* ptr);
 ded_mapinfo_t*  Def_GetMapInfo(const char* mapID);
+ded_sky_t*      Def_GetSky(const char* id);
 ded_material_t* Def_GetMaterial(const char* name, materialgroup_t group);
 ded_light_t*    Def_GetLightDef(int spr, int frame);
 ded_decor_t*    Def_GetDecoration(material_t* mat, boolean hasExt);

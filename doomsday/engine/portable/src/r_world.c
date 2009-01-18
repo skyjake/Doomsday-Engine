@@ -864,16 +864,15 @@ void R_SetupFogDefaults(void)
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-void R_SetupSky(ded_mapinfo_t* mapinfo)
+void R_SetupSky(ded_sky_t* sky)
 {
     int                 i;
     int                 skyTex;
     int                 ival = 0;
     float               fval = 0;
 
-    if(!mapinfo)
+    if(!sky)
     {   // Go with the defaults.
-
         fval = .666667f;
         Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
         Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
@@ -891,11 +890,11 @@ void R_SetupSky(ded_mapinfo_t* mapinfo)
         return;
     }
 
-    Rend_SkyParams(DD_SKY, DD_HEIGHT, &mapinfo->skyHeight);
-    Rend_SkyParams(DD_SKY, DD_HORIZON, &mapinfo->horizonOffset);
+    Rend_SkyParams(DD_SKY, DD_HEIGHT, &sky->height);
+    Rend_SkyParams(DD_SKY, DD_HORIZON, &sky->horizonOffset);
     for(i = 0; i < 2; ++i)
     {
-        ded_skylayer_t*     layer = &mapinfo->skyLayers[i];
+        ded_skylayer_t*     layer = &sky->layers[i];
 
         if(layer->flags & SLF_ENABLED)
         {
@@ -923,26 +922,26 @@ void R_SetupSky(ded_mapinfo_t* mapinfo)
 
     // Any sky models to setup? Models will override the normal
     // sphere.
-    R_SetupSkyModels(mapinfo);
+    R_SetupSkyModels(sky);
 
     // How about the sky color?
     noSkyColorGiven = true;
     for(i = 0; i < 3; ++i)
     {
-        skyColorRGB[i] = mapinfo->skyColor[i];
-        if(mapinfo->skyColor[i] > 0)
+        skyColorRGB[i] = sky->color[i];
+        if(sky->color[i] > 0)
             noSkyColorGiven = false;
     }
 
     // Calculate a balancing factor, so the light in the non-skylit
     // sectors won't appear too bright.
-    if(mapinfo->skyColor[0] > 0 || mapinfo->skyColor[1] > 0 ||
-        mapinfo->skyColor[2] > 0)
+    if(sky->color[0] > 0 || sky->color[1] > 0 ||
+        sky->color[2] > 0)
     {
         skyColorBalance =
             (0 +
-             (mapinfo->skyColor[0] * 2 + mapinfo->skyColor[1] * 3 +
-              mapinfo->skyColor[2] * 2) / 7) / 1;
+             (sky->color[0] * 2 + sky->color[1] * 3 +
+              sky->color[2] * 2) / 7) / 1;
     }
     else
     {

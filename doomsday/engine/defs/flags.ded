@@ -78,6 +78,11 @@ Flag { # Draw the sky sphere even when models are in use.
   ID = "mif_sphere"; Value = 0x2;
 }
 
+# Sky Info
+Flag { # Draw the sky sphere even when models are in use.
+  ID = "sif_sphere"; Value = 0x1;
+}
+
 # Sky Layers
 Flag { ID = "slf_enable"; Value = 0x1; }
 Flag { ID = "slf_mask"; Value = 0x2; }

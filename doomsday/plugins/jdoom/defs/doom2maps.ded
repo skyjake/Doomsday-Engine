@@ -8,12 +8,7 @@ Map Info {
   Author = "Unknown";
   Music = "runnin";
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Map Info {
@@ -23,12 +18,7 @@ Map Info {
   Music = "runnin";
   Par time = 30;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = enable;
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Copy Map Info {
@@ -101,16 +91,14 @@ Copy Map Info {
   Par time = 210;
 }
 
-# From MAP12 onwards, the sky texture changes to SKY2.
+# From MAP12 onwards, the sky changes to SKY2.
 
 Copy Map Info {
   ID = "MAP12";
   Name = "Map 12: The Factory";
   Music = "theda2";
   Par time = 150;
-  Sky Layer 1 {
-    Texture = "SKY2";
-  };
+  Sky = "sky2";
 }
 
 Copy Map Info {
@@ -169,16 +157,14 @@ Copy Map Info {
   Par time = 150;
 }
 
-# From MAP21 onwards, the sky texture changes to SKY3
+# From MAP21 onwards, the sky changes to SKY3
 
 Copy Map Info {
   ID = "MAP21";
   Name = "Map 21: Nirvana";
   Music = "count2";
   Par time = 240;
-  Sky Layer 1 {
-    Texture = "SKY3";
-  };
+  Sky = "sky3";
 }
 
 Copy Map Info {

@@ -1,0 +1,74 @@
+# jDoom64: Skies
+
+Sky {
+  ID = "skya";
+  Height = 0.49;
+  Horizon offset = -0.105;
+  Layer 1 {
+    Flags = enable;
+    Texture = "F_SKYA";
+  };
+}
+
+Copy Sky {
+  ID = "skyb";
+  Layer 1 {
+    Texture = "F_SKYB";
+  };
+}
+
+Copy Sky {
+  ID = "skyc";
+  Layer 1 {
+    Texture = "F_SKYC";
+  };
+}
+
+Copy Sky {
+  ID = "skyd";
+  Layer 1 {
+    Texture = "F_SKYD";
+  };
+}
+
+Copy Sky {
+  ID = "skye";
+  Layer 1 {
+    Texture = "F_SKYE";
+  };
+}
+
+Copy Sky {
+  ID = "skyf";
+  Layer 1 {
+    Texture = "F_SKYF";
+  };
+}
+
+Copy Sky {
+  ID = "skyg";
+  Layer 1 {
+    Texture = "F_SKYG";
+  };
+}
+
+Copy Sky {
+  ID = "skyh";
+  Layer 1 {
+    Texture = "F_SKYH";
+  };
+}
+
+Copy Sky {
+  ID = "skyi";
+  Layer 1 {
+    Texture = "F_SKYI";
+  };
+}
+
+Copy Sky {
+  ID = "skyj";
+  Layer 1 {
+    Texture = "F_SKYJ";
+  };
+}

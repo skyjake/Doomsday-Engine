@@ -268,6 +268,16 @@ typedef struct ded_skymodel_s {
 #define NUM_SKY_LAYERS      2
 #define NUM_SKY_MODELS      32
 
+typedef struct ded_sky_s {
+    ded_stringid_t  id;
+    ded_flags_t     flags; // Flags.
+    float           height;
+    float           horizonOffset;
+    float           color[3]; // Color of sky-lit sectors.
+    ded_skylayer_t  layers[NUM_SKY_LAYERS];
+    ded_skymodel_t  models[NUM_SKY_MODELS];
+} ded_sky_t;
+
 typedef struct ded_mapinfo_s {
     ded_stringid_t  id; // ID of the map (e.g. E2M3 or MAP21).
     char            name[64]; // Name of the map.
@@ -281,11 +291,8 @@ typedef struct ded_mapinfo_s {
     float           fogDensity;
     float           ambient; // Ambient light level.
     float           gravity; // 1 = normal.
-    float           skyHeight;
-    float           horizonOffset;
-    float           skyColor[3]; // Color of sky-lit sectors.
-    ded_skylayer_t  skyLayers[NUM_SKY_LAYERS];
-    ded_skymodel_t  skyModels[NUM_SKY_MODELS];
+    ded_stringid_t  skyID; // ID of the sky definition to use with this map. If not set, use the sky data in the mapinfo.
+    ded_sky_t       sky;
     ded_anystring_t execute; // Executed during map setup (savegames, too).
 } ded_mapinfo_t;
 
@@ -561,6 +568,7 @@ typedef struct ded_s {
         ded_count_t     lights;
         ded_count_t     materials;
         ded_count_t     models;
+        ded_count_t     skies;
         ded_count_t     sounds;
         ded_count_t     music;
         ded_count_t     mapInfo;
@@ -598,6 +606,9 @@ typedef struct ded_s {
 
     // Models.
     ded_model_t*    models;
+
+    // Skies.
+    ded_sky_t*      skies;
 
     // Sounds.
     ded_sound_t*    sounds;
@@ -659,6 +670,7 @@ int             DED_AddLight(ded_t* ded, const char* stateID);
 int             DED_AddMaterial(ded_t* ded, const char* name);
 int             DED_AddMaterialLayerStage(ded_material_layer_t* ml);
 int             DED_AddModel(ded_t* ded, char* spr);
+int             DED_AddSky(ded_t* ded, char* id);
 int             DED_AddSound(ded_t* ded, char* id);
 int             DED_AddMusic(ded_t* ded, char* id);
 int             DED_AddMapInfo(ded_t* ded, char* str);
@@ -685,6 +697,7 @@ void            DED_RemoveSprite(ded_t* ded, int index);
 void            DED_RemoveLight(ded_t* ded, int index);
 void            DED_RemoveMaterial(ded_t* ded, int index);
 void            DED_RemoveModel(ded_t* ded, int index);
+void            DED_RemoveSky(ded_t* ded, int index);
 void            DED_RemoveSound(ded_t* ded, int index);
 void            DED_RemoveMusic(ded_t* ded, int index);
 void            DED_RemoveMapInfo(ded_t* ded, int index);

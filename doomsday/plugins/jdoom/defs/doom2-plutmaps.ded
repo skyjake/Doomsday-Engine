@@ -8,12 +8,7 @@ Map Info {
   Author = "Unknown";
   Music = "runnin";
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Map Info {
@@ -23,12 +18,7 @@ Map Info {
   Music = "runnin";
   Par time = 30;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = enable;
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Copy Map Info {
@@ -106,10 +96,7 @@ Copy Map Info {
   Name = "Map 12: Speed";
   Music = "theda2";
   Par time = 150;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY2";
-  };
+  Sky = "sky2";
 }
 
 Copy Map Info {
@@ -173,10 +160,7 @@ Copy Map Info {
   Name = "Map 21: Slayer";
   Music = "count2";
   Par time = 240;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY3";
-  };
+  Sky = "sky3";
 }
 
 Copy Map Info {

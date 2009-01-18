@@ -59,35 +59,35 @@ boolean alwaysDrawSphere = false;
 /**
  * The sky models are set up using the data in the definition.
  */
-void R_SetupSkyModels(ded_mapinfo_t *info)
+void R_SetupSkyModels(ded_sky_t* def)
 {
-    int         i;
-    ded_skymodel_t *def;
-    skymodel_t *sky;
+    int                 i;
+    ded_skymodel_t*     modef;
+    skymodel_t*         sm;
 
     // Clear the whole sky models data.
     memset(skyModels, 0, sizeof(skyModels));
 
     // Normally the sky sphere is not drawn if models are in use.
-    alwaysDrawSphere = (info->flags & MIF_DRAW_SPHERE) != 0;
+    alwaysDrawSphere = (def->flags & SIF_DRAW_SPHERE) != 0;
 
     // The normal sphere is used if no models will be set up.
     skyModelsInited = false;
 
-    for(i = 0, def = info->skyModels, sky = skyModels; i < NUM_SKY_MODELS;
-        ++i, def++, sky++)
+    for(i = 0, modef = def->models, sm = skyModels; i < NUM_SKY_MODELS;
+        ++i, modef++, sm++)
     {
         // Is the model ID set?
-        if((sky->model = R_CheckIDModelFor(def->id)) == NULL)
+        if((sm->model = R_CheckIDModelFor(modef->id)) == NULL)
             continue;
 
         // There is a model here.
         skyModelsInited = true;
 
-        sky->def = def;
-        sky->maxTimer = (int) (TICSPERSEC * def->frameInterval);
-        sky->yaw = def->yaw;
-        sky->frame = sky->model->sub[0].frame;
+        sm->def = modef;
+        sm->maxTimer = (int) (TICSPERSEC * modef->frameInterval);
+        sm->yaw = modef->yaw;
+        sm->frame = sm->model->sub[0].frame;
     }
 }
 

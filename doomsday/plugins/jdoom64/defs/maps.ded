@@ -4,12 +4,7 @@
 Map Info {
   ID = "*";
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -18,12 +13,7 @@ Map Info {
   Author = "Midway";
   Par time = 90;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = enable;
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -32,12 +22,7 @@ Map Info {
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYD";
-  };
+  Sky = "skyd";
 }
 
 Map Info {
@@ -46,12 +31,7 @@ Map Info {
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -60,12 +40,7 @@ Map Info {
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYD";
-  };
+  Sky = "skyd";
 }
 
 Map Info {
@@ -74,12 +49,7 @@ Map Info {
   Author = "Midway";
   Par time = 130;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYD";
-  };
+  Sky = "skyd";
 }
 
 Map Info {
@@ -88,12 +58,7 @@ Map Info {
   Author = "Midway";
   Par time = 150;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -102,12 +67,7 @@ Map Info {
   Author = "Midway";
   Par time = 240;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 
@@ -117,12 +77,7 @@ Map Info {
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -131,12 +86,7 @@ Map Info {
   Author = "Midway";
   Par time = 240;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYE";
-  };
+  Sky = "skye";
 }
 
 Map Info {
@@ -145,12 +95,7 @@ Map Info {
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYB";
-  };
+  Sky = "skyb";
 }
 
 Map Info {
@@ -159,12 +104,7 @@ Map Info {
   Author = "Midway";
   Par time = 190;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYC";
-  };
+  Sky = "skyc";
 }
 
 Map Info {
@@ -173,12 +113,7 @@ Map Info {
   Author = "Midway";
   Par time = 180;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYC";
-  };
+  Sky = "skyc";
 }
 
 Map Info {
@@ -187,12 +122,7 @@ Map Info {
   Author = "Midway";
   Par time = 160;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -201,12 +131,7 @@ Map Info {
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYC";
-  };
+  Sky = "skyc";
 }
 
 Map Info {
@@ -215,12 +140,7 @@ Map Info {
   Author = "Midway";
   Par time = 190;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYE";
-  };
+  Sky = "skye";
 }
 
 Map Info {
@@ -230,12 +150,7 @@ Map Info {
   Music = "stalks";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYB";
-  };
+  Sky = "skyb";
 }
 
 Map Info {
@@ -244,18 +159,13 @@ Map Info {
   Author = "Midway";
   Par time = 240;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Flags = "mif_fog";
   Fog color R = 1.0;
   Fog color G = 0.5;
   Fog color B = 0;
   Fog start = 400;
   Fog end = 3000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYB";
-  };
+  Sky = "skyb";
 }
 
 Map Info {
@@ -264,12 +174,7 @@ Map Info {
   Author = "Midway";
   Par time = 160;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYE";
-  };
+  Sky = "skye";
 }
 
 Map Info {
@@ -278,12 +183,7 @@ Map Info {
   Author = "Midway";
   Par time = 90;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYB";
-  };
+  Sky = "skyb";
 }
 
 Map Info {
@@ -292,12 +192,7 @@ Map Info {
   Author = "Midway";
   Par time = 180;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYE";
-  };
+  Sky = "skye";
 }
 
 Map Info {
@@ -306,12 +201,7 @@ Map Info {
   Author = "Midway";
   Par time = 180;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYC";
-  };
+  Sky = "skyc";
 }
 
 Map Info {
@@ -321,12 +211,7 @@ Map Info {
   Music = "doom";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYF";
-  };
+  Sky = "skyf";
 }
 
 Map Info {
@@ -336,12 +221,7 @@ Map Info {
   Music = "ddtblu";
   Par time = 240;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYG";
-  };
+  Sky = "skyg";
 }
 
 Map Info {
@@ -351,12 +231,7 @@ Map Info {
   Music = "theda2";
   Par time = 180;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYG";
-  };
+  Sky = "skyg";
 }
 
 Map Info {
@@ -366,18 +241,13 @@ Map Info {
   Music = "betwee";
   Par time = 90;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Flags = "mif_fog";
   Fog color R = 0;
   Fog color G = 1.0;
   Fog color B = 1.0;
   Fog start = 400;
   Fog end = 3000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -387,18 +257,13 @@ Map Info {
   Music = "theda2";
   Par time = 30;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Flags = "mif_fog";
   Fog color R = 0;
   Fog color G = 1;
   Fog color B = 1;
   Fog start = 100;
   Fog end = 2000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYH";
-  };
+  Sky = "skyh";
 }
 
 Map Info {
@@ -408,18 +273,13 @@ Map Info {
   Gravity = 1;
   Music = "messag";
   Par time = 30;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Flags = "mif_fog";
   Fog color R = 1.0;
   Fog color G = 0.5;
   Fog color B = 0;
   Fog start = 100;
   Fog end = 2000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYB";
-  };
+  Sky = "skyb";
 }
 
 Map Info {
@@ -429,12 +289,7 @@ Map Info {
   Music = "doom2";
   Par time = 400;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYF";
-  };
+  Sky = "skyf";
 }
 
 Map Info {
@@ -444,12 +299,7 @@ Map Info {
   Music = "messag";
   Par time = 190;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }
 
 Map Info {
@@ -459,12 +309,7 @@ Map Info {
   Music = "runni2";
   Par time = 160;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYI";
-  };
+  Sky = "skyi";
 }
 
 Map Info {
@@ -474,18 +319,13 @@ Map Info {
   Music = "the_da";
   Par time = 120;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
   Flags = "mif_fog";
   Fog color R = 0;
   Fog color G = 1.0;
   Fog color B = 1.0;
   Fog start = 100;
   Fog end = 2000;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYJ";
-  };
+  Sky = "skyj";
 }
 
 Map Info {
@@ -495,12 +335,7 @@ Map Info {
   Music = "betwee";
   Par time = 90;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYG";
-  };
+  Sky = "skyg";
 }
 
 Map Info {
@@ -510,10 +345,5 @@ Map Info {
   Music = "evil";
   Par time = 30;
   Gravity = 1;
-  Sky height = 0.49;
-  Horizon offset = -0.105;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "F_SKYA";
-  };
+  Sky = "skya";
 }

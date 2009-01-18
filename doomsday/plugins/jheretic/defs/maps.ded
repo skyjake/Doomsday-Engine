@@ -10,11 +10,7 @@ Map Info {
   Author = "Unknown";
   Music = "e1m1";
   Gravity = 1;
-  Sky height = 0.6;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Map Info {
@@ -23,11 +19,7 @@ Map Info {
   Author = "Raven Software";
   Music = "e1m1";
   Gravity = 1;
-  Sky height = 0.6;
-  Sky Layer 1 {
-    Flags = "slf_enable";
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Copy Map Info {
@@ -85,9 +77,7 @@ Copy Map Info {
   ID = "E2M1";
   Name = "E2M1: The Crater";
   Music = "e2m1";
-  Sky Layer 1 {
-    Texture = "SKY2";
-  };
+  Sky = "sky2";
 }
 
 Copy Map Info {
@@ -142,9 +132,7 @@ Copy Map Info {
   ID = "E3M1";
   Name = "E3M1: The Storehouse";
   Music = "e1m1";
-  Sky Layer 1 {
-    Texture = "SKY3";
-  };
+  Sky = "sky3";
 }
 
 Copy Map Info {
@@ -202,9 +190,7 @@ Copy Map Info {
   ID = "E4M1";
   Name = "E4M1: Catafalque";
   Music = "e1m6";
-  Sky Layer 1 {
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Copy Map Info {
@@ -259,9 +245,7 @@ Copy Map Info {
   ID = "E5M1";
   Name = "E5M1: Ochre Cliffs";
   Music = "e2m1";
-  Sky Layer 1 {
-    Texture = "SKY3";
-  };
+  Sky = "sky3";
 }
 
 Copy Map Info {
@@ -316,9 +300,7 @@ Copy Map Info {
   ID = "E6M1";
   Name = "E6M1: Raven's Lair";
   Music = "e3m2";
-  Sky Layer 1 {
-    Texture = "SKY1";
-  };
+  Sky = "sky1";
 }
 
 Copy Map Info {

@@ -401,6 +401,20 @@ ded_mapinfo_t* Def_GetMapInfo(const char* mapID)
     return 0;
 }
 
+ded_sky_t* Def_GetSky(const char* id)
+{
+    int                 i;
+
+    if(!id || !id[0])
+        return NULL;
+
+    for(i = 0; i < defs.count.skies.num; ++i)
+        if(!stricmp(defs.skies[i].id, id))
+            return defs.skies + i;
+
+    return NULL;
+}
+
 ded_material_t* Def_GetMaterial(const char* name, materialgroup_t group)
 {
     int                 i;
@@ -1136,8 +1150,23 @@ void Def_Read(void)
     // Materials.
     Def_CountMsg(defs.count.materials.num, "surface materials");
 
-    // Other data:
+    // Map infos.
+    for(i = 0; i < defs.count.mapInfo.num; ++i)
+    {
+        ded_mapinfo_t*      mi = &defs.mapInfo[i];
+
+        /**
+         * Historically, the map info flags field was used for sky flags,
+         * here we copy those flags to the embedded sky definition for
+         * backward-compatibility.
+         */
+        if(mi->flags & MIF_DRAW_SPHERE)
+            mi->sky.flags |= SIF_DRAW_SPHERE;
+    }
     Def_CountMsg(defs.count.mapInfo.num, "map infos");
+
+    // Other data:
+    Def_CountMsg(defs.count.skies.num, "skies");
     Def_CountMsg(defs.count.finales.num, "finales");
 
     Def_CountMsg(defs.count.lineTypes.num, "line types");

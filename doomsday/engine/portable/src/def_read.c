@@ -697,6 +697,8 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
     ded_sound_t*        snd;
     ded_mapinfo_t*      mi;
     int                 prevMapInfoDefIdx = -1; // For "Copy".
+    ded_sky_t*          sky;
+    int                 prevSkyDefIdx = -1; // For "Copy".
     ded_value_t*        val;
     ded_detailtexture_t* dtl;
     int                 prevDetailDefIdx = -1; // For "Copy".
@@ -1243,6 +1245,94 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             }
         }
 
+        if(ISTOKEN("Sky"))
+        {   // A new sky definition.
+            uint                sub;
+
+            idx = DED_AddSky(ded, "");
+            sky = ded->skies + idx;
+            if(prevSkyDefIdx >= 0 && bCopyNext)
+            {
+                int                 m;
+
+                // Should we copy the previous definition?
+                memcpy(sky, ded->skies + prevSkyDefIdx, sizeof(*sky));
+                for(m = 0; m < NUM_SKY_MODELS; ++m)
+                {
+                    sky->models[m].execute
+                        = sdup(sky->models[m].execute);
+                }
+            }
+            prevSkyDefIdx = idx;
+            sub = 0;
+
+            FINDBEGIN;
+            for(;;)
+            {
+                READLABEL;
+                RV_STR("ID", sky->id)
+                RV_FLAGS("Flags", mi->flags, "sif_")
+                RV_FLT("Height", sky->height)
+                RV_FLT("Horizon offset", sky->horizonOffset)
+                RV_VEC("Light color", sky->color, 3)
+                if(ISLABEL("Layer 1") || ISLABEL("Layer 2"))
+                {
+                    ded_skylayer_t *sl = sky->layers + atoi(label+6) - 1;
+                    FINDBEGIN;
+                    for(;;)
+                    {
+                        READLABEL;
+                        if(ISLABEL("Texture") || ISLABEL("Flat") ||
+                           ISLABEL("Sprite") || ISLABEL("System"))
+                        {
+                            sl->material.group = (
+                                ISLABEL("Texture")? MG_TEXTURES :
+                                ISLABEL("Flat")? MG_FLATS :
+                                ISLABEL("Sprite")? MG_SPRITES :
+                                MG_DDTEXTURES);
+                            READSTR(sl->material.name);
+                        }
+                        else
+                        RV_FLAGS("Flags", sl->flags, "slf_")
+                        RV_FLT("Offset", sl->offset)
+                        RV_FLT("Color limit", sl->colorLimit)
+                        RV_END
+                        CHECKSC;
+                    }
+                }
+                else if(ISLABEL("Model"))
+                {
+                    ded_skymodel_t *sm = &sky->models[sub];
+                    if(sub == NUM_SKY_MODELS)
+                    {   // Too many!
+                        SetError("Too many sky models.");
+                        retVal = false;
+                        goto ded_end_read;
+                    }
+                    sub++;
+
+                    FINDBEGIN;
+                    for(;;)
+                    {
+                        READLABEL;
+                        RV_STR("ID", sm->id)
+                        RV_INT("Layer", sm->layer)
+                        RV_FLT("Frame interval", sm->frameInterval)
+                        RV_FLT("Yaw", sm->yaw)
+                        RV_FLT("Yaw speed", sm->yawSpeed)
+                        RV_VEC("Rotate", sm->rotate, 2)
+                        RV_VEC("Offset factor", sm->coordFactor, 3)
+                        RV_VEC("Color", sm->color, 4)
+                        RV_ANYSTR("Execute", sm->execute)
+                        RV_END
+                        CHECKSC;
+                    }
+                }
+                else RV_END
+                CHECKSC;
+            }
+        }
+
         if(ISTOKEN("Map")) // Info
         {   // A new map info.
             uint                sub;
@@ -1258,8 +1348,8 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 mi->execute = sdup(mi->execute);
                 for(m = 0; m < NUM_SKY_MODELS; ++m)
                 {
-                    mi->skyModels[m].execute
-                        = sdup(mi->skyModels[m].execute);
+                    mi->sky.models[m].execute
+                        = sdup(mi->sky.models[m].execute);
                 }
             }
             prevMapInfoDefIdx = idx;
@@ -1283,13 +1373,14 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_FLT("Fog density", mi->fogDensity)
                 RV_FLT("Ambient light", mi->ambient)
                 RV_FLT("Gravity", mi->gravity)
-                RV_FLT("Sky height", mi->skyHeight)
-                RV_FLT("Horizon offset", mi->horizonOffset)
                 RV_ANYSTR("Execute", mi->execute)
-                RV_VEC("Sky light color", mi->skyColor, 3)
+                RV_STR("Sky", mi->skyID)
+                RV_FLT("Sky height", mi->sky.height)
+                RV_FLT("Horizon offset", mi->sky.horizonOffset)
+                RV_VEC("Sky light color", mi->sky.color, 3)
                 if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
                 {
-                    ded_skylayer_t *sl = mi->skyLayers + atoi(label+10) - 1;
+                    ded_skylayer_t *sl = mi->sky.layers + atoi(label+10) - 1;
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1314,7 +1405,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 }
                 else if(ISLABEL("Sky Model"))
                 {
-                    ded_skymodel_t *sm = &mi->skyModels[sub];
+                    ded_skymodel_t *sm = &mi->sky.models[sub];
                     if(sub == NUM_SKY_MODELS)
                     {   // Too many!
                         SetError("Too many sky models.");

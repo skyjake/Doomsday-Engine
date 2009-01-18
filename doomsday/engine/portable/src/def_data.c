@@ -128,6 +128,8 @@ void DED_Destroy(ded_t* ded)
         M_Free(ded->music);
     if(ded->mapInfo)
         M_Free(ded->mapInfo);
+    if(ded->skies)
+        M_Free(ded->skies);
 
     if(ded->materials)
     {
@@ -289,6 +291,32 @@ void DED_RemoveModel(ded_t *ded, int index)
                  sizeof(ded_model_t));
 }
 
+int DED_AddSky(ded_t* ded, char* id)
+{
+    int                 i;
+    ded_sky_t*          sky = DED_NewEntry((void **) &ded->skies,
+                                   &ded->count.skies, sizeof(ded_sky_t));
+
+    strcpy(sky->id, id);
+    sky->height = .666667f;
+    for(i = 0; i < NUM_SKY_MODELS; ++i)
+    {
+        sky->models[i].frameInterval = 1;
+        sky->models[i].color[0] = 1;
+        sky->models[i].color[1] = 1;
+        sky->models[i].color[2] = 1;
+        sky->models[i].color[3] = 1;
+    }
+
+    return sky - ded->skies;
+}
+
+void DED_RemoveSky(ded_t* ded, int index)
+{
+    DED_DelEntry(index, (void **) &ded->skies, &ded->count.skies,
+                 sizeof(ded_sky_t));
+}
+
 int DED_AddState(ded_t *ded, char *id)
 {
     ded_state_t *st = DED_NewEntry((void **) &ded->states,
@@ -400,16 +428,16 @@ int DED_AddMapInfo(ded_t *ded, char *str)
 
     strcpy(inf->id, str);
     inf->gravity = 1;
-    inf->skyHeight = .666667f;
     inf->parTime = -1; // unknown
 
+    inf->sky.height = .666667f;
     for(i = 0; i < NUM_SKY_MODELS; ++i)
     {
-        inf->skyModels[i].frameInterval = 1;
-        inf->skyModels[i].color[0] = 1;
-        inf->skyModels[i].color[1] = 1;
-        inf->skyModels[i].color[2] = 1;
-        inf->skyModels[i].color[3] = 1;
+        inf->sky.models[i].frameInterval = 1;
+        inf->sky.models[i].color[0] = 1;
+        inf->sky.models[i].color[1] = 1;
+        inf->sky.models[i].color[2] = 1;
+        inf->sky.models[i].color[3] = 1;
     }
 
     return inf - ded->mapInfo;

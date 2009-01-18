@@ -21,6 +21,7 @@ Include "audio.ded";
 Include "special.ded";
 Include "details.ded";
 Include "lights.ded";
+Include "skies.ded";
 Include "maps.ded";
 Include "finales.ded";
 Include "text.ded";

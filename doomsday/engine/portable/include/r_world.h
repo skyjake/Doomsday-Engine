@@ -54,6 +54,9 @@ extern skyfix_t skyFix[2]; // [floor, ceiling]
 #define MIF_FOG             0x1 // Fog is used in the map.
 #define MIF_DRAW_SPHERE     0x2 // Always draw the sky sphere.
 
+// Sky flags.
+#define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
+
 void            R_SetupMap(int mode, int flags);
 void            R_InitLinks(gamemap_t* map);
 void            R_PolygonizeMap(gamemap_t* map);
@@ -61,7 +64,7 @@ void            R_PrepareForBias(gamemap_t* map);
 void            R_BuildSectorLinks(gamemap_t* map);
 void            R_SetupFog(float start, float end, float density, float* rgb);
 void            R_SetupFogDefaults(void);
-void            R_SetupSky(ded_mapinfo_t* mapInfo);
+void            R_SetupSky(ded_sky_t* sky);
 
 const float*    R_GetSectorLightColor(const sector_t* sector);
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
