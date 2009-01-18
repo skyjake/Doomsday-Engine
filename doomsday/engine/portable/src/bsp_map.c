@@ -291,7 +291,6 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
     dest->segCount = (uint) hEdgeCount;
     dest->shadows = NULL;
     dest->vertices = NULL;
-    dest->group = 0;
 
     hardenSSecSegList(map, dest, src->hEdges, hEdgeCount);
 

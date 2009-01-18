@@ -757,7 +757,6 @@ static void writeSubsector(const gamemap_t *map, uint idx)
     writeFloat(s->midPoint.pos[VZ]);
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeLong(s->polyObj? (s->polyObj->idx + 1) : 0);
-    writeLong((long) s->group);
 
     // Subsector reverb.
     for(i = 0; i < NUM_REVERB_DATA; ++i)

@@ -113,7 +113,6 @@ struct subsector
     -       uint        inSectorID
     -       int         flags
     -       int         validCount
-    -       uint        group
     -       uint[NUM_REVERB_DATA] reverb
     -       fvertex_t   bBox[2] // Min and max points.
     -       float[2]    worldGridOffset // Offset to align the top left of the bBox to the world grid.

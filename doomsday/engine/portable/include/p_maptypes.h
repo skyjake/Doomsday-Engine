@@ -106,7 +106,6 @@ typedef struct subsector_s {
     unsigned int        inSectorID;
     int                 flags;
     int                 validCount;
-    unsigned int        group;
     unsigned int        reverb[NUM_REVERB_DATA];
     fvertex_t           bBox[2];       // Min and max points.
     float               worldGridOffset[2]; // Offset to align the top left of the bBox to the world grid.
