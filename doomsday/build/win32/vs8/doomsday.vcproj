@@ -586,6 +586,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\p_materialmanager.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\p_mobj.c"
 				>
 			</File>
@@ -667,10 +671,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\r_main.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\r_materials.c"
 				>
 			</File>
 			<File
@@ -1659,6 +1659,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\p_materialmanager.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\p_object.h"
 				>
 			</File>
@@ -1740,10 +1744,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\r_main.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\r_materials.h"
 				>
 			</File>
 			<File

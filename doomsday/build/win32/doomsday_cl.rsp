@@ -66,7 +66,6 @@
  ./../../engine/portable/src/r_data.c
  ./../../engine/portable/src/r_lgrid.c
  ./../../engine/portable/src/r_lumobjs.c
- ./../../engine/portable/src/r_materials.c
  ./../../engine/portable/src/p_bmap.c
  ./../../engine/portable/src/p_ticker.c
  ./../../engine/portable/src/p_think.c
@@ -78,6 +77,7 @@
  ./../../engine/portable/src/p_mobj.c
  ./../../engine/portable/src/p_maputil.c
  ./../../engine/portable/src/p_material.c
+ ./../../engine/portable/src/p_materialmanager.c
  ./../../engine/portable/src/p_intercept.c
  ./../../engine/portable/src/p_data.c
  ./../../engine/portable/src/p_dmu.c

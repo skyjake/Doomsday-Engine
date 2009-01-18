@@ -30,7 +30,7 @@
 
 #include "p_mapdata.h"
 #include "m_binarytree.h"
-#include "r_materials.h"
+#include "p_materialmanager.h"
 
 // Editable map.
 typedef struct editmap_s {

@@ -31,7 +31,7 @@
 
 #include "p_mapdata.h"
 #include "r_data.h"
-#include "r_materials.h"
+#include "p_materialmanager.h"
 #include "rend_model.h"
 
 // Sprites are patches with a special naming convention so they can be

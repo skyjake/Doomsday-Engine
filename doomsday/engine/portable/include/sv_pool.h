@@ -32,7 +32,7 @@
 #include "dd_share.h"
 #include "p_object.h"
 #include "r_data.h"
-#include "r_materials.h"
+#include "p_materialmanager.h"
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
