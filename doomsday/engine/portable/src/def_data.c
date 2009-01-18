@@ -106,9 +106,9 @@ void DED_Init(ded_t *ded)
     ded->version = DED_VERSION;
 }
 
-void DED_Destroy(ded_t *ded)
+void DED_Destroy(ded_t* ded)
 {
-    int     i;
+    int                     i;
 
     if(ded->flags)
         M_Free(ded->flags);
@@ -120,8 +120,6 @@ void DED_Destroy(ded_t *ded)
         M_Free(ded->sprites);
     if(ded->lights)
         M_Free(ded->lights);
-    if(ded->materials)
-        M_Free(ded->materials);
     if(ded->models)
         M_Free(ded->models);
     if(ded->sounds)
@@ -130,6 +128,18 @@ void DED_Destroy(ded_t *ded)
         M_Free(ded->music);
     if(ded->mapInfo)
         M_Free(ded->mapInfo);
+
+    if(ded->materials)
+    {
+        for(i = 0; i < ded->count.materials.num; ++i)
+        {
+            uint                j;
+
+            for(j = 0; j < DED_MAX_MATERIAL_LAYERS; ++j)
+                M_Free(ded->materials[i].layers[j].stages);
+        }
+        M_Free(ded->materials);
+    }
 
     if(ded->text)
     {
@@ -326,22 +336,23 @@ void DED_RemoveLight(ded_t *ded, int index)
 
 int DED_AddMaterial(ded_t* ded, const char* name)
 {
-    uint                i;
     ded_material_t*     mat =
         DED_NewEntry((void **) &ded->materials, &ded->count.materials,
                      sizeof(ded_material_t));
 
     strcpy(mat->id.name, name);
     mat->id.group = MG_ANY;
-    // Init layers.
-    for(i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
-    {
-        ded_materiallayer_t* ml = &mat->layers[i];
-
-        ml->type = -1; // Unused.
-    }
 
     return mat - ded->materials;
+}
+
+int DED_AddMaterialLayerStage(ded_material_layer_t* ml)
+{
+    ded_material_layer_stage_t* stage =
+        DED_NewEntry((void **) &ml->stages, &ml->stageCount, sizeof(*stage));
+
+    stage->type = -1; // Unused.
+    return stage - ml->stages;
 }
 
 void DED_RemoveMaterial(ded_t* ded, int index)

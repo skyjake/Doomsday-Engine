@@ -144,7 +144,6 @@ typedef enum // Value types.
     DDVT_LONG,
     DDVT_ULONG,
     DDVT_PTR,
-    DDVT_FLAT_INDEX,
     DDVT_BLENDMODE
 } valuetype_t;
 
@@ -263,6 +262,7 @@ enum {
     DD_SUBSECTOR_COUNT,
     DD_NODE_COUNT,
     DD_POLYOBJ_COUNT,
+    DD_MATERIAL_COUNT,
     DD_XGFUNC_LINK, // XG line classes
     DD_SHARED_FIXED_TRIGGER,
     DD_GAMETIC,
@@ -551,6 +551,7 @@ enum /* Do not change the numerical values of the constants! */
     DMU_SECTOR,
     DMU_PLANE,
     DMU_SURFACE,
+    DMU_MATERIAL,
 
     DMU_LINEDEF_BY_TAG,
     DMU_SECTOR_BY_TAG,
@@ -561,6 +562,11 @@ enum /* Do not change the numerical values of the constants! */
     DMU_X,
     DMU_Y,
     DMU_XY,
+
+    DMU_NORMAL_X,
+    DMU_NORMAL_Y,
+    DMU_NORMAL_Z,
+    DMU_NORMAL_XYZ,
 
     DMU_VERTEX0,
     DMU_VERTEX1,
@@ -578,27 +584,28 @@ enum /* Do not change the numerical values of the constants! */
     DMU_ANGLE,
     DMU_OFFSET,
 
-    DMU_MATERIAL,
-    DMU_MATERIAL_OFFSET_X,
-    DMU_MATERIAL_OFFSET_Y,
-    DMU_MATERIAL_OFFSET_XY,
+    DMU_OFFSET_X,
+    DMU_OFFSET_Y,
+    DMU_OFFSET_XY,
 
     DMU_VALID_COUNT,
     DMU_LINEDEF_COUNT,
-    DMU_COLOR,                  // RGB
-    DMU_COLOR_RED,              // red component
-    DMU_COLOR_GREEN,            // green component
-    DMU_COLOR_BLUE,             // blue component
+    DMU_COLOR, // RGB
+    DMU_COLOR_RED, // red component
+    DMU_COLOR_GREEN, // green component
+    DMU_COLOR_BLUE, // blue component
     DMU_ALPHA,
     DMU_BLENDMODE,
     DMU_LIGHT_LEVEL,
-    DMT_MOBJS,                  // pointer to start of sector mobjList
-    DMU_BOUNDING_BOX,           // float[4]
+    DMT_MOBJS, // pointer to start of sector mobjList
+    DMU_BOUNDING_BOX, // float[4]
     DMU_SOUND_ORIGIN,
+    DMU_WIDTH,
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
-    DMU_SEG_COUNT
+    DMU_SEG_COUNT,
+    DMU_GROUP
 };
 
 // Linedef flags:
@@ -667,6 +674,8 @@ enum // Sector reverb data indices.
     SRD_DAMPING,
     NUM_REVERB_DATA
 };
+
+#define DD_MAX_MATERIAL_LAYERS     1 //// \temp
 
 typedef struct {
     fixed_t         pos[2], dX, dY;
@@ -1048,6 +1057,8 @@ typedef enum blendmode_e {
     BM_ALPHA_SUBTRACT
 } blendmode_t;
 
+#define DDMAX_MATERIAL_LAYERS   1
+
 typedef enum materialgroup_e {
     MG_ANY = -1,
     MG_FIRST,
@@ -1059,16 +1070,10 @@ typedef enum materialgroup_e {
 } materialgroup_t;
 
 // Material flags:
-#define MATF_NO_DRAW            0x1 // Material should never be drawn.
-#define MATF_GLOW               0x2 // Glowing material.
-#define MATF_SKYMASK            0x4 // Sky-mask surfaces using this material.
-
-typedef struct {
-    materialnum_t   num;
-    int             group;
-    int             width, height;
-    byte            flags;
-} materialinfo_t;
+#define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).
+#define MATF_NO_DRAW            0x0002 // Material should never be drawn.
+#define MATF_GLOW               0x0004 // Glowing material.
+#define MATF_SKYMASK            0x0008 // Sky-mask surfaces using this material.
 
 // Animation group flags.
 #define AGF_SMOOTH          0x1
@@ -1096,7 +1101,7 @@ typedef struct {
 } patchinfo_t;
 
 typedef struct {
-    materialnum_t   materialNum;
+    struct material_s* material;
     int             realLump; // Real lump number.
     int             flip;
     int             offset;

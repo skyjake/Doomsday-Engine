@@ -184,7 +184,7 @@ static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
     if(!strncmp(e->name, BADTEXNAME, 8))
         return NULL;
 
-    return R_GetMaterialByNum(R_MaterialNumForName(e->name, e->group));
+    return P_ToMaterial(P_MaterialNumForName(e->name, e->group));
 }
 
 static boolean openMapFile(char* path, boolean write)
@@ -582,8 +582,6 @@ static void writeSector(const gamemap_t *map, uint idx)
         writeFloat(p->soundOrg.pos[VZ]);
     }
 
-    writeFloat(s->skyFix[PLN_FLOOR].offset);
-    writeFloat(s->skyFix[PLN_CEILING].offset);
     writeLong(s->flags);
     writeFloat(s->bBox[BOXLEFT]);
     writeFloat(s->bBox[BOXRIGHT]);
@@ -668,8 +666,6 @@ static void readSector(const gamemap_t *map, uint idx)
         p->surface.numDecorations = 0;
     }
 
-    s->skyFix[PLN_FLOOR].offset = readFloat();
-    s->skyFix[PLN_CEILING].offset = readFloat();
     secIdx = readLong();
     s->flags = readLong();
     s->bBox[BOXLEFT] = readFloat();

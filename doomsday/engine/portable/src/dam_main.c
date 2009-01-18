@@ -556,10 +556,9 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             R_InitSectorShadows();
 
             {
-            uint        startTime = Sys_GetRealTime();
+            uint                startTime = Sys_GetRealTime();
 
-            R_InitSkyFix();
-            R_SkyFix(true, true); // fix floors and ceilings.
+            R_UpdateSkyFix();
 
             // How much time did we spend?
             VERBOSE(Con_Message

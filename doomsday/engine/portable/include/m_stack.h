@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +22,26 @@
  */
 
 /**
- * s_environ.h: Environmental Sound Effects
+ * m_stack.h: A basic stack.
  */
 
-#ifndef __DOOMSDAY_SOUND_ENVIRON_H__
-#define __DOOMSDAY_SOUND_ENVIRON_H__
+#ifndef __STACK_H__
+#define __STACK_H__
 
-#include "p_mapdata.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void            S_CalcSectorReverb(sector_t* sec);
-void            S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
-material_env_class_t S_MaterialClassForName(const char *name, materialgroup_t group);
+typedef void* stack_t;
 
+stack_t*        Stack_New(void);
+void            Stack_Delete(stack_t* stack);
+
+size_t          Stack_Height(stack_t* stack);
+void            Stack_Push(stack_t* stack, void* data);
+void*           Stack_Pop(stack_t* stack);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

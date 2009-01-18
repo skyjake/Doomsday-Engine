@@ -31,147 +31,147 @@
 
 #include "dd_types.h"
 
-#define NUM_MOBJ_FLAGS	        3
-#define NUM_MOBJ_MISC	        4
-#define NUM_STATE_MISC	        3
+#define NUM_MOBJ_FLAGS          3
+#define NUM_MOBJ_MISC           4
+#define NUM_STATE_MISC          3
 
 typedef struct {
-	char            name[5];
+    char            name[5];
 } sprname_t;
 
 typedef void    (C_DECL * acfnptr_t) ();
 
 typedef struct state_s {
-	int             sprite;
-	int             flags;
-	int             frame;
-	int             tics;
-	acfnptr_t       action;
-	int             nextState;
-	int             misc[NUM_STATE_MISC];
+    int             sprite;
+    int             flags;
+    int             frame;
+    int             tics;
+    acfnptr_t       action;
+    int             nextState;
+    int             misc[NUM_STATE_MISC];
 } state_t;
 
 typedef struct {
-	int             doomedNum;
-	int             spawnState;
-	int             spawnHealth;
-	int             seeState;
-	int             seeSound;
-	int             reactionTime;
-	int             attackSound;
-	int             painState;
-	int             painChance;
-	int             painSound;
-	int             meleeState;
-	int             missileState;
-	int             crashState;
-	int             deathState;
-	int             xDeathState;
-	int             deathSound;
-	float           speed;
-	float           radius;
-	float           height;
-	int             mass;
-	int             damage;
-	int             activeSound;
-	int             flags;
-	int             flags2;
-	int             flags3;
-	int             raiseState;
-	int             misc[NUM_MOBJ_MISC];
+    int             doomedNum;
+    int             spawnState;
+    int             spawnHealth;
+    int             seeState;
+    int             seeSound;
+    int             reactionTime;
+    int             attackSound;
+    int             painState;
+    int             painChance;
+    int             painSound;
+    int             meleeState;
+    int             missileState;
+    int             crashState;
+    int             deathState;
+    int             xDeathState;
+    int             deathSound;
+    float           speed;
+    float           radius;
+    float           height;
+    int             mass;
+    int             damage;
+    int             activeSound;
+    int             flags;
+    int             flags2;
+    int             flags3;
+    int             raiseState;
+    int             misc[NUM_MOBJ_MISC];
 } mobjinfo_t;
 
 typedef struct {
-	char            lumpName[9];
-	int             lumpNum;
-	char           *extFile;
-	void           *data;
+    char            lumpName[9];
+    int             lumpNum;
+    char*           extFile;
+    void*           data;
 } musicinfo_t;
 
 typedef struct {
-	char           *text;		   // Pointer to the text (don't modify).
+    char*           text; // Pointer to the text (don't modify).
 } ddtext_t;
 
 typedef struct {
-	char           *name;
-	char           *author;
-	int             music;
-	int             flags;
-	float           ambient;
-	float           gravity;
-	float           parTime;
+    char*           name;
+    char*           author;
+    int             music;
+    int             flags;
+    float           ambient;
+    float           gravity;
+    float           parTime;
 } ddmapinfo_t;
 
 typedef struct {
-	char           *after;
-	char           *before;
-	int             game;
-	char           *script;
+    char*           after;
+    char*           before;
+    int             game;
+    char*           script;
 } ddfinale_t;
 
 typedef ddfinale_t finalescript_t;
 
-#define DDLT_MAX_APARAMS	10
-#define DDLT_MAX_PARAMS		20
-#define DDLT_MAX_SPARAMS	5
+#define DDLT_MAX_APARAMS    10
+#define DDLT_MAX_PARAMS     20
+#define DDLT_MAX_SPARAMS    5
 
 typedef struct {
-	int             id;
-	int             flags;
-	int             flags2;
-	int             flags3;
-	int             lineClass;
-	int             actType;
-	int             actCount;
-	float           actTime;
-	int             actTag;
-	int             aparm[DDLT_MAX_APARAMS];
-	float           tickerStart, tickerEnd;
-	int             tickerInterval;
-	int             actSound, deactSound;
-	int             evChain, actChain, deactChain;
-	int             wallSection;
+    int             id;
+    int             flags;
+    int             flags2;
+    int             flags3;
+    int             lineClass;
+    int             actType;
+    int             actCount;
+    float           actTime;
+    int             actTag;
+    int             aparm[DDLT_MAX_APARAMS];
+    float           tickerStart, tickerEnd;
+    int             tickerInterval;
+    int             actSound, deactSound;
+    int             evChain, actChain, deactChain;
+    int             wallSection;
     materialnum_t   actMaterial, deactMaterial;
     int             actLineType, deactLineType;
-	char           *actMsg, *deactMsg;
-	float           materialMoveAngle;
-	float           materialMoveSpeed;
-	int             iparm[DDLT_MAX_PARAMS];
-	float           fparm[DDLT_MAX_PARAMS];
-	char           *sparm[DDLT_MAX_SPARAMS];
+    char*           actMsg, *deactMsg;
+    float           materialMoveAngle;
+    float           materialMoveSpeed;
+    int             iparm[DDLT_MAX_PARAMS];
+    float           fparm[DDLT_MAX_PARAMS];
+    char*           sparm[DDLT_MAX_SPARAMS];
 } linetype_t;
 
-#define DDLT_MAX_CHAINS		5
+#define DDLT_MAX_CHAINS     5
 
 typedef struct {
-	int             id;
-	int             flags;
-	int             actTag;
-	int             chain[DDLT_MAX_CHAINS];
-	int             chainFlags[DDLT_MAX_CHAINS];
-	float           start[DDLT_MAX_CHAINS];
-	float           end[DDLT_MAX_CHAINS];
-	float           interval[DDLT_MAX_CHAINS][2];
-	int             count[DDLT_MAX_CHAINS];
-	int             ambientSound;
-	float           soundInterval[2];	// min,max
-	float           materialMoveAngle[2];	// floor, ceil
-	float           materialMoveSpeed[2];	// floor, ceil
-	float           windAngle;
-	float           windSpeed;
-	float           verticalWind;
-	float           gravity;
-	float           friction;
-	char           *lightFunc;
-	int             lightInterval[2];
-	char           *colFunc[3];	   // RGB
-	int             colInterval[3][2];
-	char           *floorFunc;
-	float           floorMul, floorOff;
-	int             floorInterval[2];
-	char           *ceilFunc;
-	float           ceilMul, ceilOff;
-	int             ceilInterval[2];
+    int             id;
+    int             flags;
+    int             actTag;
+    int             chain[DDLT_MAX_CHAINS];
+    int             chainFlags[DDLT_MAX_CHAINS];
+    float           start[DDLT_MAX_CHAINS];
+    float           end[DDLT_MAX_CHAINS];
+    float           interval[DDLT_MAX_CHAINS][2];
+    int             count[DDLT_MAX_CHAINS];
+    int             ambientSound;
+    float           soundInterval[2]; // min,max
+    float           materialMoveAngle[2]; // floor, ceil
+    float           materialMoveSpeed[2]; // floor, ceil
+    float           windAngle;
+    float           windSpeed;
+    float           verticalWind;
+    float           gravity;
+    float           friction;
+    char*           lightFunc;
+    int             lightInterval[2];
+    char*           colFunc[3]; // RGB
+    int             colInterval[3][2];
+    char*           floorFunc;
+    float           floorMul, floorOff;
+    int             floorInterval[2];
+    char*           ceilFunc;
+    float           ceilMul, ceilOff;
+    int             ceilInterval[2];
 } sectortype_t;
 
 #endif

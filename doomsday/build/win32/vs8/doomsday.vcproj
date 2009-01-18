@@ -514,6 +514,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\m_stack.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\m_string.c"
 				>
 			</File>
@@ -575,6 +579,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\p_maputil.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_material.c"
 				>
 			</File>
 			<File
@@ -1644,6 +1652,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_maputil.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_material.h"
 				>
 			</File>
 			<File

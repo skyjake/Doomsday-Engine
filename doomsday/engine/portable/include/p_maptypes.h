@@ -116,6 +116,42 @@ typedef struct subsector_s {
     struct shadowlink_s* shadows;
 } subsector_t;
 
+typedef struct materiallayer_s {
+    int             stage; // -1 => layer not in use.
+    short           tics;
+    gltextureid_t   tex;
+} material_layer_t;
+
+typedef enum {
+    MEC_UNKNOWN = -1,
+    MEC_METAL = 0,
+    MEC_ROCK,
+    MEC_WOOD,
+    MEC_CLOTH,
+    NUM_MATERIAL_ENV_CLASSES
+} material_env_class_t;
+
+typedef struct material_s {
+    runtime_mapdata_header_t header;
+    materialgroup_t     group;
+    struct ded_material_s* def;        // Can be NULL (was generated automatically).
+    short               flags;         // MATF_* flags
+    short               width;         // Defined width & height of the material (not texture!).
+    short               height;
+    material_layer_t    layers[DDMAX_MATERIAL_LAYERS];
+    unsigned int        numLayers;
+    material_env_class_t envClass;     // Used for environmental sound properties.
+    struct ded_detailtexture_s* detail;
+    struct ded_decor_s* decoration;
+    struct ded_ptcgen_s* ptcGen;
+    struct ded_reflection_s* reflection;
+    boolean             inAnimGroup;   // True if belongs to some animgroup.
+    struct material_s*  current;
+    struct material_s*  next;
+    float               inter;
+    struct material_s*  globalNext;    // Linear list linking all materials.
+} material_t;
+
 // Internal surface flags:
 #define SUIF_PVIS             0x0001
 #define SUIF_MATERIAL_FIX     0x0002 // Current texture is a fix replacement
@@ -155,9 +191,10 @@ typedef struct surfacedecor_s {
 
 typedef struct surface_s {
     runtime_mapdata_header_t header;
+    void*               owner;         // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     int                 flags;         // SUF_ flags
     int                 oldFlags;
-    struct material_s   *material;
+    material_t*         material;
     blendmode_t         blendMode;
     float               normal[3];     // Surface normal
     float               oldNormal[3];
@@ -178,15 +215,13 @@ typedef enum {
     NUM_PLANE_TYPES
 } planetype_t;
 
-typedef struct skyfix_s {
-    float offset;
-} skyfix_t;
-
 #define PS_normal               surface.normal
 #define PS_material             surface.material
 #define PS_offset               surface.offset
 #define PS_visoffset            surface.visOffset
 #define PS_rgba                 surface.rgba
+#define PS_flags                surface.flags
+#define PS_inflags              surface.inFlags
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
@@ -274,7 +309,6 @@ typedef struct sector_s {
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
     int                 flags;
-    skyfix_t            skyFix[2];     // floor, ceiling.
     float               bBox[4];       // Bounding box for the sector
     float               lightLevel;
     float               oldLightLevel;
@@ -361,6 +395,7 @@ typedef struct sidedef_s {
     surface_t           sections[3];
     unsigned int        segCount;
     struct seg_s**      segs;          // [segcount] size, segs arranged left>right
+    struct linedef_s*   line;
     struct sector_s*    sector;
     short               flags;
     msidedef_t          buildData;

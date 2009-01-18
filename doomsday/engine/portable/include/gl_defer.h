@@ -35,7 +35,7 @@
  */
 typedef struct texturecontent_s {
     DGLuint         name;
-    void           *buffer;
+    void*           buffer;
     size_t          bufferSize;
     gltexformat_t   format;
     int             width;
@@ -67,8 +67,8 @@ void            GL_InitDeferred(void);
 void            GL_ShutdownDeferred(void);
 void            GL_UploadDeferredContent(uint timeOutMilliSeconds);
 int             GL_GetDeferredCount(void);
-void            GL_InitTextureContent(texturecontent_t *content);
-DGLuint         GL_NewTexture(texturecontent_t *content);
+void            GL_InitTextureContent(texturecontent_t* content);
+DGLuint         GL_NewTexture(texturecontent_t* content, boolean* result);
 DGLuint         GL_NewTextureWithParams(gltexformat_t format, int width, int height, void* pixels,
                                         int flags);
 DGLuint         GL_NewTextureWithParams2(gltexformat_t format, int width, int height, void* pixels,

@@ -23,7 +23,7 @@
  */
 
 /**
- * r_sidedef.h: World sidedefs.
+ * p_sidedef.h: World sidedefs.
  */
 
 #ifndef __DOOMSDAY_WORLD_SIDEDEF_H__
@@ -32,7 +32,7 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Sidedef_GetProperty(const sidedef_t *sid, setargs_t *args);
-boolean         Sidedef_SetProperty(sidedef_t *sid, const setargs_t *args);
+boolean         Sidedef_GetProperty(const sidedef_t* sid, setargs_t* args);
+boolean         Sidedef_SetProperty(sidedef_t* sid, const setargs_t* args);
 
 #endif

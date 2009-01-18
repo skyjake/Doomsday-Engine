@@ -422,7 +422,7 @@ ded_material_t* Def_GetMaterial(const char* name, materialgroup_t group)
     return 0;
 }
 
-ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
+ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 {
     int                 i;
     ded_decor_t*        def;
@@ -431,7 +431,7 @@ ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->material.name,
+            P_ToMaterial(P_MaterialNumForName(def->material.name,
                                                     def->material.group));
 
         if(mat == defMat)
@@ -445,7 +445,7 @@ ded_decor_t* Def_GetDecoration(struct material_s* mat, boolean hasExt)
     return 0;
 }
 
-ded_reflection_t* Def_GetReflection(struct material_s* mat, boolean hasExt)
+ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
 {
     int                 i;
     ded_reflection_t*   def;
@@ -454,7 +454,7 @@ ded_reflection_t* Def_GetReflection(struct material_s* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->material.name,
+            P_ToMaterial(P_MaterialNumForName(def->material.name,
                                                     def->material.group));
         if(mat == defMat)
         {
@@ -467,7 +467,7 @@ ded_reflection_t* Def_GetReflection(struct material_s* mat, boolean hasExt)
     return NULL;
 }
 
-ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat, boolean hasExt)
+ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
 {
     int                 i;
     ded_detailtexture_t* def;
@@ -477,7 +477,7 @@ ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->material1.name,
+            P_ToMaterial(P_MaterialNumForName(def->material1.name,
                                                     def->material1.group));
         if(mat == defMat)
         {
@@ -487,7 +487,7 @@ ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat, boolean hasExt)
         }
 
         defMat =
-            R_GetMaterialByNum(R_MaterialNumForName(def->material2.name,
+            P_ToMaterial(P_MaterialNumForName(def->material2.name,
                                                     def->material2.group));
         if(mat == defMat)
         {
@@ -498,6 +498,51 @@ ded_detailtexture_t* Def_GetDetailTex(struct material_s* mat, boolean hasExt)
     }
 
     return NULL;
+}
+
+ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
+{
+    ded_ptcgen_t*       def;
+    int                 i;
+
+    // The generator will be determined now.
+    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    {
+        material_t*         defMat;
+
+        if(!(defMat = P_ToMaterial(
+                P_MaterialNumForName(def->material.name, def->material.group))))
+            continue;
+
+        if(def->flags & PGF_GROUP)
+        {   // Generator triggered by all materials in the (animation) group.
+            /**
+             * A search is necessary only if we know both the used material and
+             * the specified material in this definition are in *a* group.
+             */
+            if(defMat->inAnimGroup && mat->inAnimGroup)
+            {
+                int                 g, numGroups = R_NumAnimGroups();
+
+                for(g = 0; g < numGroups; ++g)
+                {
+                    if(R_IsInAnimGroup(g, defMat) && R_IsInAnimGroup(g, mat))
+                    {
+                        if(R_IsPrecacheGroup(g))
+                            continue; // Precache groups don't apply.
+
+                        // Both are in this group! This def will do.
+                        return def;
+                    }
+                }
+            }
+        }
+
+        if(mat == defMat)
+            return def;
+    }
+
+    return NULL; // Not found.
 }
 
 ded_xgclass_t* Def_GetXGClass(const char* name)
@@ -905,7 +950,7 @@ void Def_Read(void)
     for(i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t*     def = &defs.materials[i];
-        materialtex_t*      mTex = NULL; // No change.
+        const gltexture_t*  tex = NULL; // No change.
         float               width = -1, height = -1; // No change.
         materialgroup_t     groupNum = MG_ANY; // No change.
 
@@ -914,12 +959,26 @@ void Def_Read(void)
             width = MAX_OF(1, def->width);
         if(def->height > 0)
             height = MAX_OF(1, def->height);
-        if(def->layers[0].type != -1) // Not unused.
-            mTex = R_GetMaterialTex(def->layers[0].name, def->layers[0].type);
         if(def->id.group != MG_ANY)
             groupNum = def->id.group;
 
-        R_MaterialCreate(def->id.name, width, height, def->flags, mTex, groupNum);
+        if(def->layers[0].stageCount.num > 0)
+        {
+            const ded_material_layer_t* l = &def->layers[0];
+
+            if(l->stages[0].type != -1) // Not unused.
+            {
+                tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type);
+                VERBOSE( Con_Message("Def_Read: Warning, unknown %s "
+                                     "'%s' in material '%s' (layer %i "
+                                     "stage %i).\n",
+                                     GLTEXTURE_TYPE_STRING(l->stages[0].type),
+                                     l->stages[0].name, def->id.name, 0, 0) );
+            }
+        }
+
+        P_MaterialCreate(def->id.name, width, height, def->flags,
+                         tex? tex->id : 0, groupNum, def);
     }
 
     // Dynamic lights. Update the sprite numbers.
@@ -1141,59 +1200,27 @@ void Def_PostInit(void)
     }
 
     // Detail textures.
-    R_DeleteDetailTextures();
+    GL_DeleteAllTexturesForGLTextures(GLT_DETAIL);
     R_DestroyDetailTextures();
     for(i = 0; i < defs.count.details.num; ++i)
     {
-        ded_detailtexture_t* def = &defs.details[i];
-
-        if(R_MaterialCheckNumForName(def->material1.name, def->material1.group) ||
-           R_MaterialCheckNumForName(def->material2.name, def->material2.group))
-        {
-            R_CreateDetailTexture(def);
-        }
+        R_CreateDetailTexture(&defs.details[i]);
     }
 
     // Surface reflections.
+    GL_DeleteAllTexturesForGLTextures(GLT_SHINY);
+    GL_DeleteAllTexturesForGLTextures(GLT_MASK);
+    R_DestroyShinyTextures();
+    R_DestroyMaskTextures();
     for(i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
 
-        // Initialize the pointers to handle textures.
-        ref->shinyTex = ref->maskTex = 0;
-        ref->useShiny = ref->useMask = NULL;
-
         if(ref->shinyMap.path[0])
-        {
-            ref->useShiny = ref;
-
-            // Find the earliest instance of this texture.
-            for(k = 0; k < i; ++k)
-            {
-                if(!stricmp(ref->shinyMap.path,
-                            defs.reflections[k].shinyMap.path))
-                {
-                    ref->useShiny = &defs.reflections[k];
-                    break;
-                }
-            }
-        }
+            R_CreateShinyTexture(ref);
 
         if(ref->maskMap.path[0])
-        {
-            ref->useMask = ref;
-
-            // Find the earliest instance of this texture.
-            for(k = 0; k < i; ++k)
-            {
-                if(!stricmp(ref->maskMap.path,
-                            defs.reflections[k].maskMap.path))
-                {
-                    ref->useMask = &defs.reflections[k];
-                    break;
-                }
-            }
-        }
+            R_CreateMaskTexture(ref);
     }
 
     // Animation groups.
@@ -1350,9 +1377,9 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     l->actLineType = def->actLineType;
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
-    l->actMaterial = R_MaterialCheckNumForName(def->actMaterial.name,
+    l->actMaterial = P_MaterialCheckNumForName(def->actMaterial.name,
                                                def->actMaterial.group);
-    l->deactMaterial = R_MaterialCheckNumForName(def->deactMaterial.name,
+    l->deactMaterial = P_MaterialCheckNumForName(def->deactMaterial.name,
                                                  def->deactMaterial.group);
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
@@ -1383,7 +1410,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                     l->iparm[k] = -1;
                 else
                     l->iparm[k] =
-                        R_MaterialCheckNumForName(def->iparmStr[k], MG_ANY);
+                        P_MaterialCheckNumForName(def->iparmStr[k], MG_ANY);
             }
         }
         else if(a & MAP_MUS)

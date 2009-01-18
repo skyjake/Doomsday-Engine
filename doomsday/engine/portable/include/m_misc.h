@@ -122,6 +122,7 @@ int             M_WeightPow2(int num, float weight);
 float           M_CycleIntoRange(float value, float length);
 double          M_SlopeToAngle(double dx, double dy);
 double          M_Length(double x, double y);
+int             M_NumDigits(int num);
 uint            M_CRC32(byte* data, uint length);
 
 // Time utilities.

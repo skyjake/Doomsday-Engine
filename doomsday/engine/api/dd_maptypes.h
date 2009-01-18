@@ -24,10 +24,15 @@
 #define DMT_SUBSECTOR_POLYOBJ DDVT_PTR // NULL, if there is no polyobj.
 #define DMT_SUBSECTOR_SECTOR DDVT_PTR
 
-#define DMT_MATERIAL DDVT_INT
+#define DMT_MATERIAL_GROUP DDVT_INT
+#define DMT_MATERIAL_FLAGS DDVT_SHORT  // MATF_* flags
+#define DMT_MATERIAL_WIDTH DDVT_SHORT  // Defined width & height of the material (not texture!).
+#define DMT_MATERIAL_HEIGHT DDVT_SHORT
 
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
+#define DMT_SURFACE_MATERIAL DDVT_PTR
 #define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
+#define DMT_SURFACE_NORMAL DDVT_FLOAT  // Surface normal
 #define DMT_SURFACE_OFFSET DDVT_FLOAT  // [X, Y] Planar offset to surface material origin.
 #define DMT_SURFACE_RGBA DDVT_FLOAT    // Surface color tint
 
@@ -53,6 +58,7 @@
 
 #define DMT_SIDEDEF_SEGCOUNT DDVT_UINT
 #define DMT_SIDEDEF_SEGS DDVT_PTR      // [segcount] size, segs arranged left>right
+#define DMT_SIDEDEF_LINE DDVT_PTR
 #define DMT_SIDEDEF_SECTOR DDVT_PTR
 #define DMT_SIDEDEF_FLAGS DDVT_SHORT
 

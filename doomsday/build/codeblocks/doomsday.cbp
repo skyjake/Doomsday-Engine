@@ -260,6 +260,7 @@
 		<Unit filename="..\..\engine\portable\include\m_mus2midi.h" />
 		<Unit filename="..\..\engine\portable\include\m_nodepile.h" />
 		<Unit filename="..\..\engine\portable\include\m_profiler.h" />
+		<Unit filename="..\..\engine\portable\include\m_stack.h" />
 		<Unit filename="..\..\engine\portable\include\m_string.h" />
 		<Unit filename="..\..\engine\portable\include\m_vector.h" />
 		<Unit filename="..\..\engine\portable\include\mapdata.hs" />
@@ -277,6 +278,7 @@
 		<Unit filename="..\..\engine\portable\include\p_mapdata.h" />
 		<Unit filename="..\..\engine\portable\include\p_maptypes.h" />
 		<Unit filename="..\..\engine\portable\include\p_maputil.h" />
+		<Unit filename="..\..\engine\portable\include\p_material.h" />
 		<Unit filename="..\..\engine\portable\include\p_object.h" />
 		<Unit filename="..\..\engine\portable\include\p_objlink.h" />
 		<Unit filename="..\..\engine\portable\include\p_particle.h" />
@@ -564,6 +566,9 @@
 		<Unit filename="..\..\engine\portable\src\m_nodepile.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\m_stack.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\m_string.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -610,6 +615,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_maputil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\engine\portable\src\p_material.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_mobj.c">

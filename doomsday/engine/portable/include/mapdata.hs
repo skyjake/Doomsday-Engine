@@ -123,8 +123,41 @@ struct subsector
     -       shadowlink_s* shadows
 end
 
-public
-#define DMT_MATERIAL DDVT_INT
+internal
+typedef struct materiallayer_s {
+    int             stage; // -1 => layer not in use.
+    short           tics;
+    gltextureid_t   tex;
+} material_layer_t;
+
+typedef enum {
+    MEC_UNKNOWN = -1,
+    MEC_METAL = 0,
+    MEC_ROCK,
+    MEC_WOOD,
+    MEC_CLOTH,
+    NUM_MATERIAL_ENV_CLASSES
+} material_env_class_t;
+end
+
+struct material
+    INT     materialgroup_t group
+    -       ded_material_s* def // Can be NULL (was generated automatically).
+    SHORT   short           flags // MATF_* flags
+    SHORT	short           width // Defined width & height of the material (not texture!).
+    SHORT   short           height
+    -       material_layer_t layers[DDMAX_MATERIAL_LAYERS]
+    -       uint            numLayers
+    -       material_env_class_t envClass // Used for environmental sound properties.
+    -       ded_detailtexture_s* detail
+    -       ded_decor_s*    decoration
+    -       ded_ptcgen_s*   ptcGen
+    -       ded_reflection_s* reflection
+    -       boolean         inAnimGroup // True if belongs to some animgroup.
+    -       material_s*		current
+    -       material_s*		next
+    -       float           inter
+    -       material_s*		globalNext // Linear list linking all materials.
 end
 
 internal
@@ -167,17 +200,18 @@ typedef struct surfacedecor_s {
 end
 
 struct surface
-    INT     int         flags       // SUF_ flags
+    -       void*       owner // Either @c DMU_SIDEDEF, or @c DMU_PLANE
+    INT     int         flags // SUF_ flags
     -       int         oldFlags
-    -       material_s *material
+    PTR     material_t* material
     BLENDMODE blendmode_t blendMode
-    -       float[3]    normal      // Surface normal
+    FLOAT   float[3]    normal // Surface normal
     -       float[3]    oldNormal
-    FLOAT   float[2]    offset      // [X, Y] Planar offset to surface material origin.
+    FLOAT   float[2]    offset // [X, Y] Planar offset to surface material origin.
 	-		float[2][2] oldOffset
     -       float[2]    visOffset
     -       float[2]    visOffsetDelta
-    FLOAT   float[4]    rgba        // Surface color tint
+    FLOAT   float[4]    rgba // Surface color tint
     -       short       inFlags // SUIF_* flags
     -       uint        numDecorations
     -       surfacedecor_t *decorations
@@ -190,10 +224,6 @@ typedef enum {
     PLN_MID,
     NUM_PLANE_TYPES
 } planetype_t;
-
-typedef struct skyfix_s {
-    float offset;
-} skyfix_t;
 end
 
 internal
@@ -202,6 +232,8 @@ internal
 #define PS_offset               surface.offset
 #define PS_visoffset            surface.visOffset
 #define PS_rgba                 surface.rgba
+#define	PS_flags				surface.flags
+#define	PS_inflags				surface.inFlags
 end
 
 struct plane
@@ -292,7 +324,6 @@ struct sector
     -       int         frameFlags
     INT     int         validCount  // if == validCount, already checked.
     -       int         flags
-    -       skyfix_t[2] skyFix      // floor, ceiling.
     -       float[4]    bBox        // Bounding box for the sector
     FLOAT   float       lightLevel
     -       float       oldLightLevel
@@ -382,6 +413,7 @@ struct sidedef
     -       surface_t[3] sections
     UINT    uint        segCount
     PTR     seg_s**     segs        // [segcount] size, segs arranged left>right
+    PTR		linedef_s*	line
     PTR     sector_s*   sector
     SHORT   short       flags
     -       msidedef_t  buildData

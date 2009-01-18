@@ -48,6 +48,8 @@ extern          "C" {
 
 #define DED_MAX_SUB_MODELS  8
 
+#define DED_MAX_MATERIAL_LAYERS 1 //// \temp
+
 typedef char ded_stringid_t[DED_STRINGID_LEN + 1];
 typedef ded_stringid_t ded_string_t;
 typedef ded_stringid_t ded_mobjid_t;
@@ -246,7 +248,7 @@ typedef struct {
 
 typedef struct {
     ded_flags_t     flags;
-    ded_string_t    texture;
+    ded_materialid_t material;
     float           offset;
     float           colorLimit;
 } ded_skylayer_t;
@@ -377,7 +379,7 @@ typedef struct {
     int             ceilInterval[2];
 } ded_sectortype_t;
 
-typedef struct {
+typedef struct ded_detailtexture_s {
     ded_materialid_t material1;
     ded_materialid_t material2;
     ded_flags_t     flags;
@@ -502,15 +504,6 @@ typedef struct ded_reflection_s {
     ded_path_t      maskMap;
     float           maskWidth;
     float           maskHeight;
-
-    // Runtime data for handling the textures.  This is a bit
-    // convoluted.  The goal is to load each map texture only
-    // once.  The 'use' pointers point to the first
-    // ded_reflection_t that uses the same map as this one.
-    unsigned int    shinyTex;
-    unsigned int    maskTex;
-    struct ded_reflection_s* useShiny;
-    struct ded_reflection_s* useMask;
 } ded_reflection_t;
 
 typedef struct ded_group_member_s {
@@ -525,19 +518,23 @@ typedef struct ded_group_s {
     ded_group_member_t* members;
 } ded_group_t;
 
-// There is a fixed number of layers in each material.
-#define DED_MAX_MATERIAL_LAYERS     1 //// \temp
-
-typedef struct ded_materiallayer_s {
+typedef struct ded_material_layer_stage_s {
     ded_string_t    name; // Material tex name.
-    int             type; // Material tex type, @see materialtextype_t.
-} ded_materiallayer_t;
+    int             type; // Material tex type, @see gltexture_type_t.
+    int             tics;
+    float           variance; // Stage variance (time).
+} ded_material_layer_stage_t;
+
+typedef struct ded_material_layer_s {
+    ded_material_layer_stage_t* stages;
+    ded_count_t     stageCount;
+} ded_material_layer_t;
 
 typedef struct ded_material_s {
     ded_materialid_t id;
     ded_flags_t     flags;
     float           width, height; // In world units.
-    ded_materiallayer_t layers[DED_MAX_MATERIAL_LAYERS];
+    ded_material_layer_t layers[DED_MAX_MATERIAL_LAYERS];
 } ded_material_t;
 
 // The ded_t structure encapsulates all the data one definition file
@@ -660,6 +657,7 @@ int             DED_AddState(ded_t* ded, char* id);
 int             DED_AddSprite(ded_t* ded, const char* name);
 int             DED_AddLight(ded_t* ded, const char* stateID);
 int             DED_AddMaterial(ded_t* ded, const char* name);
+int             DED_AddMaterialLayerStage(ded_material_layer_t* ml);
 int             DED_AddModel(ded_t* ded, char* spr);
 int             DED_AddSound(ded_t* ded, char* id);
 int             DED_AddMusic(ded_t* ded, char* id);

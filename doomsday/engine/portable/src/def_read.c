@@ -996,16 +996,36 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Material"))
         {
-            uint                layer;
+            int                 stage = 0;
+            uint                layer = 0;
 
             // A new material.
             idx = DED_AddMaterial(ded, "");
             mat = ded->materials + idx;
-            layer = 0;
+
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
+                uint                i;
+
                 // Should we copy the previous definition?
                 memcpy(mat, ded->materials + prevMaterialDefIdx, sizeof(*mat));
+
+                // Duplicate the stage arrays.
+                for(i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
+                {
+                    ded_material_layer_t*   l =
+                        &ded->materials[prevMaterialDefIdx].layers[i];
+
+                    if(l->stages)
+                    {
+                        mat->layers[i].stages =
+                            M_Malloc(sizeof(ded_material_layer_stage_t) *
+                                               mat->layers[i].stageCount.max);
+                        memcpy(mat->layers[i].stages, l->stages,
+                               sizeof(ded_material_layer_stage_t) *
+                                   mat->layers[i].stageCount.num);
+                    }
+                }
             }
 
             FINDBEGIN;
@@ -1027,14 +1047,39 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                           ISLABEL("Sprite") || ISLABEL("DDTex"))
+                        if(ISLABEL("Stage"))
                         {
-                            mat->layers[layer].type = (
-                                ISLABEL("Texture")? MTT_TEXTURE :
-                                ISLABEL("Flat")? MTT_FLAT :
-                                ISLABEL("Sprite")? MTT_SPRITE : MTT_DDTEX);
-                            READSTR(mat->layers[layer].name);
+                            ded_material_layer_stage_t* st = NULL;
+
+                            if(stage >= mat->layers[layer].stageCount.num)
+                            {
+                                // Allocate new stage.
+                                stage = DED_AddMaterialLayerStage(&mat->layers[layer]);
+                            }
+
+                            st = &mat->layers[layer].stages[stage];
+
+                            FINDBEGIN;
+                            for(;;)
+                            {
+                                READLABEL;
+                                if(ISLABEL("Texture") || ISLABEL("Flat") ||
+                                   ISLABEL("Sprite") || ISLABEL("System"))
+                                {
+                                    st->type = (
+                                        ISLABEL("Texture")? GLT_DOOMTEXTURE :
+                                        ISLABEL("Flat")? GLT_FLAT :
+                                        ISLABEL("Sprite")? GLT_SPRITE :
+                                        GLT_SYSTEM);
+                                    READSTR(st->name);
+                                }
+                                else
+                                RV_INT("Tics", st->tics)
+                                RV_FLT("Rnd", st->variance)
+                                RV_END
+                                CHECKSC;
+                            }
+                            stage++;
                         }
                         else RV_END
                         CHECKSC;
@@ -1249,8 +1294,18 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     for(;;)
                     {
                         READLABEL;
+                        if(ISLABEL("Texture") || ISLABEL("Flat") ||
+                           ISLABEL("Sprite") || ISLABEL("System"))
+                        {
+                            sl->material.group = (
+                                ISLABEL("Texture")? MG_TEXTURES :
+                                ISLABEL("Flat")? MG_FLATS :
+                                ISLABEL("Sprite")? MG_SPRITES :
+                                MG_DDTEXTURES);
+                            READSTR(sl->material.name);
+                        }
+                        else
                         RV_FLAGS("Flags", sl->flags, "slf_")
-                        RV_STR("Texture", sl->texture)
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
                         RV_END
@@ -1336,7 +1391,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 READLABEL;
                 RV_STR("ID", ded->textureEnv[idx].id)
                 if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                   ISLABEL("Sprite") || ISLABEL("DDTex"))
+                   ISLABEL("Sprite") || ISLABEL("System"))
                 {   // A new material name.
                     mn = DED_NewEntry((void**)&ded->textureEnv[idx].materials,
                                       &ded->textureEnv[idx].count, sizeof(*mn));
@@ -1841,7 +1896,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                   ISLABEL("Sprite") || ISLABEL("DDTex"))
+                   ISLABEL("Sprite") || ISLABEL("System"))
                 {
                     ded_group_member_t* memb;
 

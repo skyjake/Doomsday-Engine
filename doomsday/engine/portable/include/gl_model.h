@@ -187,9 +187,9 @@ typedef struct {
     short           textureIndices[3];
 } dmd_triangle_t;
 
-typedef struct {
+/*typedef struct {
     short           s, t;
-} dmd_textureCoordinate_t;
+    } dmd_textureCoordinate_t;*/
 
 typedef struct {
     float           s, t;

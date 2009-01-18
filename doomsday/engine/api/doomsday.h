@@ -62,6 +62,7 @@ extern          "C" {
     typedef struct subsector_s { int type; } subsector_t;
     typedef struct sector_s { int type; } sector_t;
     typedef struct plane_s { int type; } plane_t;
+    typedef struct material_s { int type; } material_t;
 #endif
 
 #include "dd_share.h"
@@ -378,6 +379,15 @@ extern          "C" {
     struct polyobj_s* P_GetPolyobj(uint num);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
+    // Play: Materials.
+    materialnum_t   P_MaterialCheckNumForName(const char* name, materialgroup_t group);
+    materialnum_t   P_MaterialNumForName(const char* name, materialgroup_t group);
+    materialnum_t   P_MaterialCheckNumForIndex(uint idx, materialgroup_t group);
+    materialnum_t   P_MaterialNumForIndex(uint idx, materialgroup_t group);
+    const char*     P_GetMaterialName(material_t* mat);
+
+    void            P_MaterialPrecache(material_t* mat);
+
     // Play: Thinkers.
     void            P_ThinkerAdd(thinker_t* th);
     void            P_ThinkerRemove(thinker_t* th);
@@ -392,6 +402,7 @@ extern          "C" {
     void            R_SetDataPath(const char* path);
     void            R_SetupMap(int mode, int flags);
     void            R_PrecacheMap(void);
+    void            R_PrecacheMobjNum(int mobjtypeNum);
     void            R_PrecachePatch(lumpnum_t lump);
     void            R_PrecacheSkinsForState(int stateIndex);
     void            R_RenderPlayerView(int num);
@@ -401,18 +412,6 @@ extern          "C" {
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t* sprinfo);
     void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
-
-    materialnum_t   R_MaterialCheckNumForName(const char* name, materialgroup_t group);
-    materialnum_t   R_MaterialNumForName(const char* name, materialgroup_t group);
-    materialnum_t   R_MaterialCheckNumForIndex(uint idx, materialgroup_t group);
-    materialnum_t   R_MaterialNumForIndex(uint idx, materialgroup_t group);
-    const char*     R_MaterialNameForNum(materialnum_t num);
-    boolean         R_MaterialIsCustom(materialnum_t num);
-
-    boolean         R_MaterialGetInfo(materialnum_t num, materialinfo_t* info);
-
-    void            R_MaterialPrecache(materialnum_t num);
-
     int             R_CreateAnimGroup(int flags);
     void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
 
@@ -486,9 +485,9 @@ extern          "C" {
     void            GL_PalIdxToRGB(int idx, float* rgb);
     void            GL_SetNoTexture(void);
     void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
-    void            GL_SetPSprite(materialnum_t mat);
-    void            GL_SetTranslatedSprite(materialnum_t mat, int tmap, int tclass);
-    void            GL_SetMaterial(materialnum_t mat);
+    void            GL_SetPSprite(material_t* mat);
+    void            GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap);
+    void            GL_SetMaterial(material_t* mat);
     unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
     unsigned int    GL_LoadGraphics(const char* name, int mode);
 

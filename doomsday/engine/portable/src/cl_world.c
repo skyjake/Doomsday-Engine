@@ -478,7 +478,7 @@ if(num >= numSectors)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = R_GetMaterialByNum(Msg_ReadPackedShort());
+        mat = P_ToMaterial(Msg_ReadPackedShort());
         Surface_SetMaterial(&sec->SP_floorsurface, mat);
     }
     if(df & SDF_CEILING_MATERIAL)
@@ -488,7 +488,7 @@ if(num >= numSectors)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = R_GetMaterialByNum(Msg_ReadPackedShort());
+        mat = P_ToMaterial(Msg_ReadPackedShort());
         Surface_SetMaterial(&sec->SP_ceilsurface, mat);
     }
 
@@ -724,7 +724,7 @@ if(num >= numSideDefs)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = R_GetMaterialByNum(topMat);
+        mat = P_ToMaterial(topMat);
         Surface_SetMaterial(&sid->SW_topsurface, mat);
     }
     if(df & SIDF_MID_MATERIAL)
@@ -734,7 +734,7 @@ if(num >= numSideDefs)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = R_GetMaterialByNum(midMat);
+        mat = P_ToMaterial(midMat);
         Surface_SetMaterial(&sid->SW_middlesurface, mat);
     }
     if(df & SIDF_BOTTOM_MATERIAL)
@@ -744,7 +744,7 @@ if(num >= numSideDefs)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = R_GetMaterialByNum(botMat);
+        mat = P_ToMaterial(botMat);
         Surface_SetMaterial(&sid->SW_bottomsurface, mat);
     }
 

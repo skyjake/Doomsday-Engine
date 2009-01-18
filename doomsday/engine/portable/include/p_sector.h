@@ -23,7 +23,7 @@
  */
 
 /**
- * r_sector.h: World sectors.
+ * p_sector.h: World sectors.
  */
 
 #ifndef __DOOMSDAY_WORLD_SECTOR_H__

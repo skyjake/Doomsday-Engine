@@ -38,6 +38,7 @@ NAME            "DOOMSDAY"
 ; 319 formerly P_Swap
 ; 320 formerly P_Swapp
 ; 328 formerly P_RegisterCustomMapProperty
+; 349 formerly R_MaterialIsCustom
 
 EXPORTS
 ; Plugins.
@@ -115,7 +116,7 @@ EXPORTS
     Con_BusyWorkerEnd           @331 NONAME
 
 ; Console: Bindings.
-    B_BindingsForCommand		@428 NONAME
+    B_BindingsForCommand        @428 NONAME
     B_BindingsForControl        @429 NONAME
 
 ; System.
@@ -140,7 +141,7 @@ EXPORTS
     MPE_SidedefCreate           @353 NONAME
     MPE_LinedefCreate           @354 NONAME
     MPE_SectorCreate            @355 NONAME
-	MPE_PlaneCreate				@408 NONAME
+    MPE_PlaneCreate             @408 NONAME
     MPE_PolyobjCreate           @356 NONAME
     MPE_GameObjProperty         @413 NONAME
 
@@ -154,14 +155,14 @@ EXPORTS
     P_AccurateDistance          @57 NONAME
     P_ApproxDistance            @58 NONAME
     P_ApproxDistance3           @243 NONAME
-    P_PointOnLinedefSide           @59 NONAME
+    P_PointOnLinedefSide        @59 NONAME
     P_BoxOnLineSide             @60 NONAME
     P_MakeDivline               @61 NONAME
     P_PointOnDivlineSide        @62 NONAME
     P_InterceptVector           @63 NONAME
     P_LineOpening               @64 NONAME
     P_MobjsBoxIterator          @346 NONAME
-    P_LinesBoxIterator			@435 NONAME
+    P_LinesBoxIterator          @435 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
     P_SubsectorsBoxIterator     @345 NONAME
@@ -185,7 +186,7 @@ EXPORTS
     P_ToPtr                     @257 NONAME
     P_Callback                  @258 NONAME
     P_Callbackp                 @259 NONAME
-	P_Iteratep					@410 NONAME
+    P_Iteratep                  @410 NONAME
 
     ; dummy objects
     P_AllocDummy                @321 NONAME
@@ -292,6 +293,14 @@ EXPORTS
     P_GetPolyobj                @424 NONAME
     P_SetPolyobjCallback        @83 NONAME
 
+; Play: Materials.
+    P_MaterialCheckNumForName   @336 NONAME
+    P_GetMaterialName           @337 NONAME
+    P_MaterialNumForName        @97 NONAME
+    P_MaterialCheckNumForIndex  @438 NONAME
+    P_MaterialNumForIndex       @437 NONAME
+    P_MaterialPrecache          @436 NONAME
+
 ; Play: Thinkers.
     P_ThinkerAdd                @86 NONAME
     P_ThinkerRemove             @87 NONAME
@@ -306,6 +315,7 @@ EXPORTS
     R_SetDataPath               @234 NONAME
     R_SetupMap                  @89 NONAME
     R_PrecacheMap               @90 NONAME
+    R_PrecacheMobjNum           @427 NONAME
     R_PrecacheSkinsForState     @240 NONAME
     R_PrecachePatch             @335 NONAME
     R_RenderPlayerView          @91 NONAME
@@ -314,67 +324,59 @@ EXPORTS
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
-    R_MaterialGetInfo           @427 NONAME
-    R_MaterialIsCustom          @349 NONAME
-    R_MaterialCheckNumForName   @336 NONAME
-    R_MaterialNameForNum        @337 NONAME
-    R_MaterialNumForName        @97 NONAME
-    R_MaterialCheckNumForIndex  @438 NONAME
-    R_MaterialNumForIndex       @437 NONAME
-    R_MaterialPrecache			@436 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
     R_CreateAnimGroup           @241 NONAME
     R_AddToAnimGroup            @242 NONAME
 
 ; DGL.
-	DGL_Enable					@387 NONAME
-	DGL_Disable					@388 NONAME
-	DGL_EnableTexUnit			@405 NONAME
-	DGL_DisableTexUnit			@406 NONAME
-	DGL_GetIntegerv				@392 NONAME
-	DGL_GetInteger				@393 NONAME
-	DGL_SetInteger				@394 NONAME
-	DGL_GetFloat				@399 NONAME
-	DGL_SetFloat                @401 NONAME
-	DGL_BlendFunc               @389 NONAME
-	DGL_BlendOp					@407 NONAME
-	DGL_MatrixMode				@359 NONAME
-	DGL_PushMatrix				@360 NONAME
-	DGL_PopMatrix				@361 NONAME
-	DGL_LoadIdentity			@362 NONAME
-	DGL_Ortho					@390 NONAME
-	DGL_Scissor					@404 NONAME
-	DGL_Bind					@396 NONAME
-	DGL_DeleteTextures			@403 NONAME
-	DGL_Begin					@363 NONAME
-	DGL_End						@364 NONAME
-	DGL_NewList					@431 NONAME
-	DGL_EndList					@432 NONAME
-	DGL_CallList				@433 NONAME
-	DGL_DeleteLists				@434 NONAME
-	DGL_Translatef				@384 NONAME
-	DGL_Rotatef					@385 NONAME
-	DGL_Scalef					@386 NONAME
-	DGL_Color3ub				@365 NONAME
-	DGL_Color3ubv				@366 NONAME
-	DGL_Color4ub				@367 NONAME
-	DGL_Color4ubv				@368 NONAME
-	DGL_Color3f					@369 NONAME
-	DGL_Color3fv				@370 NONAME
-	DGL_Color4f					@371 NONAME
-	DGL_Color4fv				@372 NONAME
-	DGL_TexCoord2f				@373 NONAME
-	DGL_TexCoord2fv				@374 NONAME
-	DGL_MultiTexCoord2f			@375 NONAME
-	DGL_MultiTexCoord2fv		@376 NONAME
-	DGL_Vertex2f				@377 NONAME
-	DGL_Vertex2fv				@378 NONAME
-	DGL_Vertex3f				@379 NONAME
-	DGL_Vertex3fv				@380 NONAME
-	DGL_Vertices2ftv			@381 NONAME
-	DGL_Vertices3ftv			@382 NONAME
-	DGL_Vertices3fctv			@383 NONAME
+    DGL_Enable                  @387 NONAME
+    DGL_Disable                 @388 NONAME
+    DGL_EnableTexUnit           @405 NONAME
+    DGL_DisableTexUnit          @406 NONAME
+    DGL_GetIntegerv             @392 NONAME
+    DGL_GetInteger              @393 NONAME
+    DGL_SetInteger              @394 NONAME
+    DGL_GetFloat                @399 NONAME
+    DGL_SetFloat                @401 NONAME
+    DGL_BlendFunc               @389 NONAME
+    DGL_BlendOp                 @407 NONAME
+    DGL_MatrixMode              @359 NONAME
+    DGL_PushMatrix              @360 NONAME
+    DGL_PopMatrix               @361 NONAME
+    DGL_LoadIdentity            @362 NONAME
+    DGL_Ortho                   @390 NONAME
+    DGL_Scissor                 @404 NONAME
+    DGL_Bind                    @396 NONAME
+    DGL_DeleteTextures          @403 NONAME
+    DGL_Begin                   @363 NONAME
+    DGL_End                     @364 NONAME
+    DGL_NewList                 @431 NONAME
+    DGL_EndList                 @432 NONAME
+    DGL_CallList                @433 NONAME
+    DGL_DeleteLists             @434 NONAME
+    DGL_Translatef              @384 NONAME
+    DGL_Rotatef                 @385 NONAME
+    DGL_Scalef                  @386 NONAME
+    DGL_Color3ub                @365 NONAME
+    DGL_Color3ubv               @366 NONAME
+    DGL_Color4ub                @367 NONAME
+    DGL_Color4ubv               @368 NONAME
+    DGL_Color3f                 @369 NONAME
+    DGL_Color3fv                @370 NONAME
+    DGL_Color4f                 @371 NONAME
+    DGL_Color4fv                @372 NONAME
+    DGL_TexCoord2f              @373 NONAME
+    DGL_TexCoord2fv             @374 NONAME
+    DGL_MultiTexCoord2f         @375 NONAME
+    DGL_MultiTexCoord2fv        @376 NONAME
+    DGL_Vertex2f                @377 NONAME
+    DGL_Vertex2fv               @378 NONAME
+    DGL_Vertex3f                @379 NONAME
+    DGL_Vertex3fv               @380 NONAME
+    DGL_Vertices2ftv            @381 NONAME
+    DGL_Vertices3ftv            @382 NONAME
+    DGL_Vertices3fctv           @383 NONAME
 
 ; Renderer.
     Rend_Reset                  @103 NONAME
@@ -383,7 +385,7 @@ EXPORTS
 ; Graphics.
     GL_UseFog                   @104 NONAME
     GL_GrabScreen               @109 NONAME
-    GL_SetPSprite				@114 NONAME
+    GL_SetPSprite               @114 NONAME
     GL_SetNoTexture             @115 NONAME
     GL_SetPatch                 @196 NONAME
     GL_SetTranslatedSprite      @334 NONAME
@@ -449,7 +451,7 @@ EXPORTS
     M_FileExists                @139 NONAME
     M_CheckPath                 @138 NONAME
     M_TranslatePath             @140 NONAME
-    M_PrettyPath				@421 NONAME
+    M_PrettyPath                @421 NONAME
     M_SkipWhite                 @141 NONAME
     M_FindWhite                 @142 NONAME
     M_StrCatQuoted              @248 NONAME
@@ -458,7 +460,7 @@ EXPORTS
     M_ScreenShot                @210 NONAME
     M_CheckTrigger              @340 NONAME
     M_RunTrigger                @341 NONAME
-    M_CeilPow2					@422 NONAME
+    M_CeilPow2                  @422 NONAME
 
 ; Math.
     ; Binary angles.

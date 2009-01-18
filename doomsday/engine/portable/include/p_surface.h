@@ -23,7 +23,7 @@
  */
 
 /**
- * r_surface.h: World surfaces.
+ * p_surface.h: World surfaces.
  */
 
 #ifndef __DOOMSDAY_REFRESH_SURFACE_H__
@@ -32,19 +32,19 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Surface_GetProperty(const surface_t *suf, setargs_t *args);
-boolean         Surface_SetProperty(surface_t *suf, const setargs_t *args);
-void            Surface_Update(surface_t *suf);
+boolean         Surface_GetProperty(const surface_t* suf, setargs_t* args);
+boolean         Surface_SetProperty(surface_t* suf, const setargs_t* args);
+void            Surface_Update(surface_t* suf);
 
-boolean         Surface_SetMaterial(surface_t *suf, struct material_s *mat);
-boolean         Surface_SetMaterialOffsetX(surface_t *suf, float x);
-boolean         Surface_SetMaterialOffsetY(surface_t *suf, float y);
-boolean         Surface_SetMaterialOffsetXY(surface_t *suf, float x, float y);
-boolean         Surface_SetColorR(surface_t *suf, float r);
-boolean         Surface_SetColorG(surface_t *suf, float g);
-boolean         Surface_SetColorB(surface_t *suf, float b);
-boolean         Surface_SetColorA(surface_t *suf, float a);
-boolean         Surface_SetColorRGBA(surface_t *suf, float r, float g, float b, float a);
-boolean         Surface_SetBlendMode(surface_t *suf, blendmode_t blendMode);
+boolean         Surface_SetMaterial(surface_t* suf, material_t* mat);
+boolean         Surface_SetMaterialOffsetX(surface_t* suf, float x);
+boolean         Surface_SetMaterialOffsetY(surface_t* suf, float y);
+boolean         Surface_SetMaterialOffsetXY(surface_t* suf, float x, float y);
+boolean         Surface_SetColorR(surface_t* suf, float r);
+boolean         Surface_SetColorG(surface_t* suf, float g);
+boolean         Surface_SetColorB(surface_t* suf, float b);
+boolean         Surface_SetColorA(surface_t* suf, float a);
+boolean         Surface_SetColorRGBA(surface_t* suf, float r, float g, float b, float a);
+boolean         Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode);
 
 #endif

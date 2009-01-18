@@ -40,6 +40,8 @@
 #include "de_edit.h"
 #include "de_dam.h"
 
+#include "s_environ.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -120,12 +122,13 @@ static sidedef_t* createSide(void)
     map->sideDefs[map->numSideDefs] = NULL;
 
     side->buildData.index = map->numSideDefs; // 1-based index, 0 = NIL.
+    side->SW_bottomsurface.owner = (void*) side;
     return side;
 }
 
-static sector_t *createSector(void)
+static sector_t* createSector(void)
 {
-    sector_t           *sec;
+    sector_t*           sec;
 
     sec = M_Calloc(sizeof(*sec));
     sec->header.type = DMU_SECTOR;
@@ -138,9 +141,9 @@ static sector_t *createSector(void)
     return sec;
 }
 
-static polyobj_t *createPolyobj(void)
+static polyobj_t* createPolyobj(void)
 {
-    polyobj_t          *po;
+    polyobj_t*          po;
 
     po = M_Calloc(sizeof(*po));
 
@@ -152,7 +155,7 @@ static polyobj_t *createPolyobj(void)
     return po;
 }
 
-static void destroyEditablePolyObjs(editmap_t *map)
+static void destroyEditablePolyObjs(editmap_t* map)
 {
     if(map->polyObjs)
     {
@@ -1273,6 +1276,10 @@ static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
             &dest->sideDefs[srcL->L_frontside->buildData.index - 1] : NULL);
         destL->L_backside = (srcL->L_backside?
             &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
+        if(destL->L_frontside)
+            destL->L_frontside->line = destL;
+        if(destL->L_backside)
+            destL->L_backside->line = destL;
     }
 }
 
@@ -1290,6 +1297,15 @@ static void hardenSidedefs(gamemap_t* dest, editmap_t* src)
 
         memcpy(destS, srcS, sizeof(*destS));
         destS->sector = &dest->sectors[srcS->sector->buildData.index - 1];
+        destS->SW_bottomsurface.owner = destS;
+        destS->SW_middlesurface.owner = destS;
+        destS->SW_topsurface.owner = destS;
+        destS->SW_bottomsurface.visOffset[0] = destS->SW_bottomsurface.offset[0];
+        destS->SW_bottomsurface.visOffset[1] = destS->SW_bottomsurface.offset[1];
+        destS->SW_middlesurface.visOffset[0] = destS->SW_middlesurface.offset[0];
+        destS->SW_middlesurface.visOffset[1] = destS->SW_middlesurface.offset[1];
+        destS->SW_topsurface.visOffset[0] = destS->SW_topsurface.offset[0];
+        destS->SW_topsurface.visOffset[1] = destS->SW_topsurface.offset[1];
     }
 }
 
@@ -1993,15 +2009,15 @@ uint MPE_SidedefCreate(uint sector, short flags,
     s->flags = flags;
     s->sector = (sector == 0? NULL: map->sectors[sector-1]);
 
-    Surface_SetMaterial(&s->SW_topsurface, R_GetMaterialByNum(topMaterial));
+    Surface_SetMaterial(&s->SW_topsurface, P_ToMaterial(topMaterial));
     Surface_SetMaterialOffsetXY(&s->SW_topsurface, topOffsetX, topOffsetY);
     Surface_SetColorRGBA(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
 
-    Surface_SetMaterial(&s->SW_middlesurface, R_GetMaterialByNum(middleMaterial));
+    Surface_SetMaterial(&s->SW_middlesurface, P_ToMaterial(middleMaterial));
     Surface_SetMaterialOffsetXY(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
     Surface_SetColorRGBA(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
 
-    Surface_SetMaterial(&s->SW_bottomsurface, R_GetMaterialByNum(bottomMaterial));
+    Surface_SetMaterial(&s->SW_bottomsurface, P_ToMaterial(bottomMaterial));
     Surface_SetMaterialOffsetXY(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
     Surface_SetColorRGBA(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
 
@@ -2116,10 +2132,16 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
     // Remember the number of unique references.
     if(l->L_frontside)
+    {
+        l->L_frontside->line = l;
         l->L_frontside->buildData.refCount++;
+    }
 
     if(l->L_backside)
+    {
+        l->L_backside->line = l;
         l->L_backside->buildData.refCount++;
+    }
 
     l->inFlags = 0;
 
@@ -2150,7 +2172,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialnum_t material,
 
     pln = M_Calloc(sizeof(plane_t));
     pln->height = height;
-    Surface_SetMaterial(&pln->surface, R_GetMaterialByNum(material));
+    Surface_SetMaterial(&pln->surface, P_ToMaterial(material));
     Surface_SetColorRGBA(&pln->surface, r, g, b, a);
     Surface_SetMaterialOffsetXY(&pln->surface, matOffsetX, matOffsetY);
     pln->PS_normal[VX] = normalX;

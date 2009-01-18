@@ -51,16 +51,6 @@ typedef enum {
     RPT_SHINY // A shiny polygon.
 } rendpolytype_t;
 
-typedef enum {
-    TU_PRIMARY = 0,
-    TU_PRIMARY_DETAIL,
-    TU_INTER,
-    TU_INTER_DETAIL,
-    TU_SHINY,
-    TU_SHINY_MASK,
-    NUM_TEXMAP_UNITS
-} texmapunit_t;
-
 typedef struct rtexmapuint_s {
     DGLuint         tex;
     int             magMode;

@@ -155,7 +155,6 @@ const char* value_Str(int val)
         { DDVT_LONG, "DDVT_LONG" },
         { DDVT_ULONG, "DDVT_ULONG" },
         { DDVT_PTR, "DDVT_PTR" },
-        { DDVT_FLAT_INDEX, "DDVT_FLAT_INDEX" },
         { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
         { 0, NULL }
     };
@@ -581,12 +580,16 @@ static int DD_StartupWorker(void *parm)
     // Now the game can identify the game mode.
     gx.UpdateState(DD_GAME_MODE);
 
+    // Palette information will be needed for preparing textures.
+    GL_EarlyInitTextureManager();
+
     // Get the material manager up and running.
-    R_InitMaterials();
+    P_InitMaterialManager();
     R_InitTextures();
     R_InitFlats();
 
-    // Now that we've read the WADs we can initialize definitions.
+    // Now that we've generated the auto-materials we can initialize
+    // definitions.
     Def_Read();
 
 #ifdef WIN32
@@ -647,9 +650,6 @@ static int DD_StartupWorker(void *parm)
     R_Init();
 
     Con_SetProgress(199);
-
-    // Palette information will be needed for preparing textures.
-    GL_EarlyInitTextureManager();
 
     Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
@@ -974,6 +974,9 @@ void* DD_GetVariable(int ddvalue)
 
         case DD_NODE_COUNT:
             return &numNodes;
+
+        case DD_MATERIAL_COUNT:
+            return &numMaterialBinds;
 
         case DD_TRACE_ADDRESS:
             return &traceLOS;

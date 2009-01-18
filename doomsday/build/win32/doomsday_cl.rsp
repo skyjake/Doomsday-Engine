@@ -20,6 +20,7 @@
  ./../../engine/portable/src/m_args.c
  ./../../engine/portable/src/m_linkedlist.c
  ./../../engine/portable/src/m_binarytree.c
+ ./../../engine/portable/src/m_stack.c
  ./../../engine/portable/src/s_wav.c
  ./../../engine/portable/src/s_sfx.c
  ./../../engine/portable/src/s_mus.c
@@ -76,6 +77,7 @@
  ./../../engine/portable/src/p_players.c
  ./../../engine/portable/src/p_mobj.c
  ./../../engine/portable/src/p_maputil.c
+ ./../../engine/portable/src/p_material.c
  ./../../engine/portable/src/p_intercept.c
  ./../../engine/portable/src/p_data.c
  ./../../engine/portable/src/p_dmu.c

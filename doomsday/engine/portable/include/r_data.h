@@ -51,43 +51,38 @@
 #define DTLF_PWAD           0x2 // Can use if from PWAD.
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
-typedef struct materialtexinst_s {
-    DGLuint         tex; // Name of the associated DGL texture.
-    byte            masked;
-    float           color[3]; // Average color (for lighting).
-    float           topColor[3]; // Averaged top line color, used for sky fadeouts.
-} materialtexinst_t;
-
-// Detail texture instance.
-typedef struct detailtexinst_s {
-    DGLuint         tex;
-    float           contrast;
-
-    struct detailtexinst_s* next;
-} detailtexinst_t;
-
-typedef struct {
-    int             width, height;
-    float           strength;
-    float           scale;
-    float           maxDist;
+typedef struct detailtex_s {
+    gltextureid_t   id;
     lumpnum_t       lump;
     const char*     external;
-    // Linked list of detail texture instances.
-    // A unique texture is generated for each (rounded) contrast level.
-    detailtexinst_t* instances;
 } detailtex_t;
 
-// Flags for gltexture_t:
-#define GLTXF_MASKED        0x00000001
+typedef struct shinytex_s {
+    gltextureid_t   id;
+    const char*     external;
+} shinytex_t;
 
-typedef struct gltexture_s {
-    DGLuint         id;
-    int             flags; // GLTXF_* flags.
-    int             magMode;
-    float           width, height;
-    float           scale; // Currently only used with detail textures.
-} gltexture_t;
+typedef struct masktex_s {
+    gltextureid_t   id;
+    const char*     external;
+    short           width, height;
+} masktex_t;
+
+/**
+ * Texture (map) units.
+ * The Doomsday renderer virtualizes texture mapping units and addresses each
+ * unit by the following names. All units need not be used, except TU_PRIMARY is
+ * required if texturing is enabled.
+ */
+typedef enum {
+    TU_PRIMARY = 0,
+    TU_PRIMARY_DETAIL,
+    TU_INTER,
+    TU_INTER_DETAIL,
+    TU_SHINY,
+    TU_SHINY_MASK,
+    NUM_TEXMAP_UNITS
+} gltexunit_t;
 
 typedef struct glcommand_vertex_s {
     float           s, t;
@@ -146,29 +141,17 @@ typedef struct {
     short           flags;
     short           patchCount;
     texpatch_t      patches[1]; // [patchcount] drawn back to front into the cached texture.
-} texturedef_t;
+} doomtexturedef_t;
 
 typedef struct flat_s {
     lumpnum_t       lump;
+    short           width, height;
 } flat_t;
 
 typedef struct {
     lumpnum_t       lump; // Real lump number.
     short           width, height, offX, offY;
-    float           flareX, flareY, lumSize;
-    rgbcol_t        autoLightColor;
-    float           texCoord[2]; // Prepared texture coordinates.
-    DGLuint         pspriteTex;
 } spritetex_t;
-
-// A translated sprite.
-typedef struct {
-    int             patch;
-    DGLuint         tex;
-    unsigned char*  table;
-    float           flareX, flareY, lumSize;
-    rgbcol_t        autoLightColor;
-} transspr_t;
 
 // Model skin.
 typedef struct {
@@ -280,6 +263,12 @@ extern int numSpriteTextures;
 extern detailtex_t** detailTextures;
 extern int numDetailTextures;
 
+extern shinytex_t** shinyTextures;
+extern int numShinyTextures;
+
+extern masktex_t** maskTextures;
+extern int numMaskTextures;
+
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
 rcolor_t*       R_AllocRendColors(uint num);
@@ -306,15 +295,20 @@ void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 
+//boolean         R_UpdateSubSector(struct subsector_t* ssec, boolean forceUpdate);
+boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
+boolean         R_UpdateLinedef(struct linedef_s* line, boolean forceUpdate);
+boolean         R_UpdateSidedef(struct sidedef_s* side, boolean forceUpdate);
 boolean         R_UpdatePlane(struct plane_s* pln, boolean forceUpdate);
-void            R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
+boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 
 void            R_PrecacheMap(void);
+void            R_PrecacheMobjNum(int mobjtypeNum);
 void            R_PrecachePatch(lumpnum_t lump);
 
-texturedef_t*   R_GetTextureDef(int num);
+doomtexturedef_t* R_GetDoomTextureDef(int num);
 
-int             R_NewSpriteTexture(lumpnum_t lump, struct material_s** mat);
+int             R_NewSpriteTexture(lumpnum_t lump, material_t** mat);
 
 int             R_GetSkinTexIndex(const char* skin);
 skintex_t*      R_GetSkinTexByIndex(int id);
@@ -324,11 +318,17 @@ void            R_DestroySkins(void); // Called at shutdown.
 
 void            R_InitAnimGroup(ded_group_t* def);
 
-void            R_CreateDetailTexture(ded_detailtexture_t* def);
-detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external,
-                                   float scale, float strength, float maxDist);
-void            R_DeleteDetailTextures(void);
+detailtex_t*    R_CreateDetailTexture(ded_detailtexture_t* def);
+detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);
 void            R_DestroyDetailTextures(void); // Called at shutdown.
+
+shinytex_t*     R_CreateShinyTexture(ded_reflection_t* def);
+shinytex_t*     R_GetShinyTexture(const char* external);
+void            R_DestroyShinyTextures(void); // Called at shutdown.
+
+masktex_t*      R_CreateMaskTexture(ded_reflection_t* def);
+masktex_t*      R_GetMaskTexture(const char* external);
+void            R_DestroyMaskTextures(void); // Called at shutdown.
 
 patchtex_t*     R_FindPatchTex(lumpnum_t lump); // May return NULL.
 patchtex_t*     R_GetPatchTex(lumpnum_t lump); // Creates new entries.
@@ -338,11 +338,11 @@ rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
 rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
 rawtex_t**      R_CollectRawTexs(int* count);
 
-boolean         R_IsAllowedDecoration(ded_decor_t* def, struct material_s* mat,
+boolean         R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
                                       boolean hasExternal);
-boolean         R_IsAllowedReflection(ded_reflection_t* def, struct material_s* mat,
+boolean         R_IsAllowedReflection(ded_reflection_t* def, material_t* mat,
                                       boolean hasExternal);
-boolean         R_IsAllowedDetailTex(ded_detailtexture_t* def, struct material_s* mat,
+boolean         R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
                                      boolean hasExternal);
 boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 

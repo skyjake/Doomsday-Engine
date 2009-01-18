@@ -175,7 +175,8 @@ struct subsector_s;
 struct sector_s;
 struct polyblock_s;
 struct polyobj_s;
-struct surface_s;
 struct plane_s;
+struct surface_s;
+struct material_s;
 
 #endif
