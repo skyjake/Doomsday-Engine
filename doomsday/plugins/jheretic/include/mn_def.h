@@ -50,10 +50,8 @@
 #define LINEHEIGHT_A            10
 #define LINEHEIGHT_B            20
 
-#define MENUCURSOR_OFFSET_X     -22
-#define MENUCURSOR_OFFSET_Y     -1
-#define MENUCURSOR_WIDTH        22
-#define MENUCURSOR_HEIGHT       15
+#define MENUCURSOR_OFFSET_X     -2
+#define MENUCURSOR_OFFSET_Y     -2
 #define MENUCURSOR_TICSPERFRAME 8
 
 #define CURSORPREF              "M_SLCTR%d"

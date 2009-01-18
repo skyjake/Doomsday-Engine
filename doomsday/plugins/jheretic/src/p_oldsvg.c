@@ -434,9 +434,12 @@ void P_v13_UnArchiveWorld(void)
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
-            P_SetIntp(sdef, DMU_TOP_MATERIAL, *get++);
-            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, *get++);
-            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, *get++);
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,
+                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_TEXTURES)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL,
+                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_TEXTURES)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL,
+                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_TEXTURES)));
         }
     }
     save_p = (byte *) get;
@@ -596,8 +599,8 @@ typedef struct {
 
     floor->state = (int) SV_v13_ReadLong();
     floor->newSpecial = SV_v13_ReadLong();
-    floor->material =
-        R_MaterialNumForName(W_LumpName(SV_v13_ReadShort()), MG_FLATS);
+    floor->material = P_ToPtr(DMU_MATERIAL,
+        P_MaterialNumForName(W_LumpName(SV_v13_ReadShort()), MG_FLATS));
     floor->floorDestHeight = FIX2FLT(SV_v13_ReadLong());
     floor->speed = FIX2FLT(SV_v13_ReadLong());
 
