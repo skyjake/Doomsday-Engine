@@ -49,7 +49,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    materialnum_t   materialNum;
+    material_t*     material;
     uint            terrainNum;
 } materialterraintype_t;
 
@@ -94,7 +94,7 @@ static uint numMaterialTTypes = 0;
 
 // CODE --------------------------------------------------------------------
 
-static void createMaterialTerrainType(materialnum_t num, uint idx)
+static void createMaterialTerrainType(material_t* mat, uint idx)
 {
     uint                i;
     materialterraintype_t* mtt;
@@ -102,7 +102,7 @@ static void createMaterialTerrainType(materialnum_t num, uint idx)
     // If we've already assigned this material to a terrain type, override
     // the previous assignation.
     for(i = 0; i < numMaterialTTypes; ++i)
-        if(materialTTypes[i].materialNum == num)
+        if(materialTTypes[i].material == mat)
         {
             materialTTypes[i].terrainNum = idx;
             return;
@@ -115,7 +115,7 @@ static void createMaterialTerrainType(materialnum_t num, uint idx)
 
     mtt = &materialTTypes[numMaterialTTypes-1];
 
-    mtt->materialNum = num;
+    mtt->material = mat;
     mtt->terrainNum = idx - 1;
 }
 
@@ -140,17 +140,17 @@ static uint getTerrainTypeNumForName(const char* name)
     return 0;
 }
 
-static terraintype_t* getTerrainTypeForMaterial(materialnum_t num)
+static terraintype_t* getTerrainTypeForMaterial(material_t* mat)
 {
     uint                i;
 
-    if(num)
+    if(mat)
     {
         for(i = 0; i < numMaterialTTypes; ++i)
         {
             materialterraintype_t* mtt = &materialTTypes[i];
 
-            if(mtt->materialNum == num)
+            if(mtt->material == mat)
                 return &terrainTypes[mtt->terrainNum];
         }
     }
@@ -205,14 +205,15 @@ void P_InitTerrainTypes(void)
 
         if(idx)
         {
-            materialnum_t       num =
-                R_MaterialCheckNumForName(matTTypeDefs[i].matName,
-                                          matTTypeDefs[i].matGroup);
-            if(num)
+            material_t*         mat =
+                P_ToPtr(DMU_MATERIAL,
+                        P_MaterialCheckNumForName(matTTypeDefs[i].matName,
+                                                  matTTypeDefs[i].matGroup));
+            if(mat)
             {
                 Con_Message("P_InitTerrainTypes: Material '%s' linked to terrain type '%s'.\n",
                             matTTypeDefs[i].matName, matTTypeDefs[i].ttName);
-                createMaterialTerrainType(num, idx);
+                createMaterialTerrainType(mat, idx);
             }
         }
     }
@@ -223,9 +224,9 @@ void P_InitTerrainTypes(void)
  *
  * @param num           The material to check.
  */
-const terraintype_t* P_TerrainTypeForMaterial(materialnum_t num)
+const terraintype_t* P_TerrainTypeForMaterial(material_t* mat)
 {
-    const terraintype_t* tt = getTerrainTypeForMaterial(num);
+    const terraintype_t* tt = getTerrainTypeForMaterial(mat);
 
     if(tt)
         return tt; // Known, return it.

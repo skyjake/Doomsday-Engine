@@ -150,7 +150,7 @@ switchlist_t switchInfo[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static materialnum_t* switchlist;
+static material_t** switchlist;
 static int max_numswitches;
 static int numswitches;
 
@@ -179,12 +179,14 @@ void P_InitSwitchList(void)
         if(!switchInfo[i].soundID)
             break;
 
-        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name1, MG_TEXTURES);
-        switchlist[index++] = R_MaterialCheckNumForName(switchInfo[i].name2, MG_TEXTURES);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
+            P_MaterialCheckNumForName(switchInfo[i].name1, MG_TEXTURES));
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
+            P_MaterialCheckNumForName(switchInfo[i].name2, MG_TEXTURES));
     }
 
     numswitches = index / 2;
-    switchlist[index] = 0;
+    switchlist[index] = NULL;
 }
 #else
 
@@ -251,10 +253,10 @@ void P_InitSwitchList(void)
             if(!SHORT(sList[i].episode))
                 break;
 
-            switchlist[index++] =
-                R_MaterialNumForName(sList[i].name1, MG_TEXTURES);
-            switchlist[index++] =
-                R_MaterialNumForName(sList[i].name2, MG_TEXTURES);
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
+                P_MaterialNumForName(sList[i].name1, MG_TEXTURES));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
+                P_MaterialNumForName(sList[i].name2, MG_TEXTURES));
             VERBOSE(Con_Message("P_InitSwitchList: ADD (\"%s\" | \"%s\" #%d)\n",
                                 sList[i].name1, sList[i].name2,
                                 SHORT(sList[i].episode)));
@@ -262,7 +264,7 @@ void P_InitSwitchList(void)
     }
 
     numswitches = index / 2;
-    switchlist[index] = 0;
+    switchlist[index] = NULL;
 }
 #endif
 
@@ -273,7 +275,8 @@ void P_InitSwitchList(void)
  * the button, the texture number of the button, and the time the button is
  * to remain active in gametics.
  */
-void P_StartButton(linedef_t* line, linesection_t section, materialnum_t mat, int time)
+void P_StartButton(linedef_t* line, linesection_t section, material_t* mat,
+                   int time)
 {
     button_t*           button;
 
@@ -321,7 +324,7 @@ void P_StartButton(linedef_t* line, linesection_t section, materialnum_t mat, in
 void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
 {
     int                 i;
-    materialnum_t       texTop, texMid, texBot;
+    material_t*         topMaterial, *middleMaterial, *bottomMaterial;
 #if !__JHEXEN__
     int                 sound;
 #endif
@@ -333,9 +336,9 @@ void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
         P_ToXLine(line)->special = 0;
 #endif
 
-    texTop = (materialnum_t) P_GetIntp(sdef, DMU_TOP_MATERIAL);
-    texMid = (materialnum_t) P_GetIntp(sdef, DMU_MIDDLE_MATERIAL);
-    texBot = (materialnum_t) P_GetIntp(sdef, DMU_BOTTOM_MATERIAL);
+    topMaterial = P_GetPtrp(sdef, DMU_TOP_MATERIAL);
+    middleMaterial = P_GetPtrp(sdef, DMU_MIDDLE_MATERIAL);
+    bottomMaterial = P_GetPtrp(sdef, DMU_BOTTOM_MATERIAL);
 
 #if !__JHEXEN__
 # if __JHERETIC__
@@ -355,7 +358,7 @@ void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
 
     for(i = 0; i < numswitches * 2; ++i)
     {
-        if(switchlist[i] == texTop)
+        if(switchlist[i] == topMaterial)
         {
 #if __JHEXEN__
             S_StartSound(switchInfo[i / 2].soundID,
@@ -363,14 +366,14 @@ void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
 #else
             S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 #endif
-            P_SetIntp(sdef, DMU_TOP_MATERIAL, switchlist[i^1]);
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
                 P_StartButton(line, LS_TOP, switchlist[i], BUTTONTIME);
 
             return;
         }
-        else if(switchlist[i] == texMid)
+        else if(switchlist[i] == middleMaterial)
         {
 #if __JHEXEN__
             S_StartSound(switchInfo[i / 2].soundID,
@@ -378,14 +381,14 @@ void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
 #else
             S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 #endif
-            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, switchlist[i^1]);
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
                 P_StartButton(line, LS_MIDDLE, switchlist[i], BUTTONTIME);
 
             return;
         }
-        else if(switchlist[i] == texBot)
+        else if(switchlist[i] == bottomMaterial)
         {
 #if __JHEXEN__
             S_StartSound(switchInfo[i / 2].soundID,
@@ -393,7 +396,7 @@ void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
 #else
             S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
 #endif
-            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, switchlist[i^1]);
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, switchlist[i^1]);
 
             if(useAgain)
                 P_StartButton(line, LS_BOTTOM, switchlist[i], BUTTONTIME);

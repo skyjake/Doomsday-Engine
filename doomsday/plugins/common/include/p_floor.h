@@ -94,7 +94,7 @@ typedef struct {
     sector_t*       sector;
     floorstate_e    state;
     int             newSpecial;
-    materialnum_t   material;
+    material_t*     material;
     float           floorDestHeight;
     float           speed;
 #if __JHEXEN__
@@ -105,7 +105,7 @@ typedef struct {
     float           resetHeight;
     short           resetDelay;
     short           resetDelayCount;
-    byte            textureChange;
+//    byte            textureChange;
 #endif
 } floor_t;
 

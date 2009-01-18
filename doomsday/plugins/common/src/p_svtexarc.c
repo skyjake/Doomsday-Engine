@@ -89,15 +89,16 @@ static int numFlats; // Used with older versions.
  * Called for every material in the map before saving by
  * Sv_InitTextureArchives.
  */
-void SV_PrepareMaterial(materialnum_t num, materialarchive_t* arc)
+void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
 {
     int                 c;
     char                name[9];
-    materialinfo_t      info;
+    const char*         matName = P_GetMaterialName(mat);
+    materialgroup_t     matGroup = P_GetIntp(mat, DMU_GROUP);
 
     // Get the name of the material.
-    if(R_MaterialGetInfo(num, &info))
-        strncpy(name, R_MaterialNameForNum(num), 8);
+    if(matName)
+        strncpy(name, matName, 8);
     else
         strncpy(name, BADTEXNAME, 8);
 
@@ -106,7 +107,7 @@ void SV_PrepareMaterial(materialnum_t num, materialarchive_t* arc)
     // Has this already been registered?
     for(c = 0; c < arc->count; c++)
     {
-        if(arc->table[c].group == info.group &&
+        if(arc->table[c].group == matGroup &&
            !stricmp(arc->table[c].name, name))
         {
             break;// Yes, skip it...
@@ -116,7 +117,7 @@ void SV_PrepareMaterial(materialnum_t num, materialarchive_t* arc)
     if(c == arc->count)
     {
         strcpy(arc->table[arc->count++].name, name);
-        arc->table[arc->count - 1].group = info.group;
+        arc->table[arc->count - 1].group = matGroup;
     }
 }
 
@@ -133,15 +134,15 @@ void SV_InitMaterialArchives(void)
 
     for(i = 0; i < numsectors; ++i)
     {
-        SV_PrepareMaterial(P_GetInt(DMU_SECTOR, i, DMU_FLOOR_MATERIAL), &matArchive);
-        SV_PrepareMaterial(P_GetInt(DMU_SECTOR, i, DMU_CEILING_MATERIAL), &matArchive);
+        SV_PrepareMaterial(P_GetPtr(DMU_SECTOR, i, DMU_FLOOR_MATERIAL), &matArchive);
+        SV_PrepareMaterial(P_GetPtr(DMU_SECTOR, i, DMU_CEILING_MATERIAL), &matArchive);
     }
 
     for(i = 0; i < numsides; ++i)
     {
-        SV_PrepareMaterial(P_GetInt(DMU_SIDEDEF, i, DMU_MIDDLE_MATERIAL), &matArchive);
-        SV_PrepareMaterial(P_GetInt(DMU_SIDEDEF, i, DMU_TOP_MATERIAL), &matArchive);
-        SV_PrepareMaterial(P_GetInt(DMU_SIDEDEF, i, DMU_BOTTOM_MATERIAL), &matArchive);
+        SV_PrepareMaterial(P_GetPtr(DMU_SIDEDEF, i, DMU_MIDDLE_MATERIAL), &matArchive);
+        SV_PrepareMaterial(P_GetPtr(DMU_SIDEDEF, i, DMU_TOP_MATERIAL), &matArchive);
+        SV_PrepareMaterial(P_GetPtr(DMU_SIDEDEF, i, DMU_BOTTOM_MATERIAL), &matArchive);
     }
 }
 
@@ -160,12 +161,12 @@ unsigned short SV_SearchArchive(materialarchive_t *arc, char *name)
 /**
  * @return              The archive number of the given texture.
  */
-unsigned short SV_MaterialArchiveNum(materialnum_t num)
+unsigned short SV_MaterialArchiveNum(material_t* mat)
 {
     char                name[9];
 
-    if(R_MaterialNameForNum(num))
-        strncpy(name, R_MaterialNameForNum(num), 8);
+    if(P_GetMaterialName(mat))
+        strncpy(name, P_GetMaterialName(mat), 8);
     else
         strncpy(name, BADTEXNAME, 8);
     name[8] = 0;
@@ -173,7 +174,7 @@ unsigned short SV_MaterialArchiveNum(materialnum_t num)
     return SV_SearchArchive(&matArchive, name);
 }
 
-materialnum_t SV_GetArchiveMaterial(int archivenum, int group)
+material_t* SV_GetArchiveMaterial(int archivenum, int group)
 {
     if(matArchive.version < 1 && group == 1)
     {
@@ -185,15 +186,16 @@ materialnum_t SV_GetArchiveMaterial(int archivenum, int group)
 #if _DEBUG
         Con_Error("SV_GetArchiveMaterial: Bad archivenum %i.", archivenum);
 #endif
-        return 0;
+        return NULL;
     }
 
     if(!strncmp(matArchive.table[archivenum].name, BADTEXNAME, 8))
-        return 0;
+        return NULL;
     else
-        return R_MaterialNumForName(matArchive.table[archivenum].name,
-                                    matArchive.table[archivenum].group);
-    return 0;
+        return P_ToPtr(DMU_MATERIAL,
+            P_MaterialNumForName(matArchive.table[archivenum].name,
+                                 matArchive.table[archivenum].group));
+    return NULL;
 }
 
 void SV_WriteMaterialArchive(void)

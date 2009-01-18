@@ -148,7 +148,7 @@ typedef struct fistate_s {
     fitext_t*       waitingText;
     fipic_t*        waitingPic;
     fihandler_t     keyHandlers[MAX_HANDLERS];
-    materialnum_t   bgMaterial;
+    material_t*     bgMaterial;
     fivalue_t       bgColor[4];
     fivalue_t       imgColor[4];
     fivalue_t       imgOffset[2];
@@ -419,7 +419,7 @@ void FI_ClearState(void)
     fi->skipping = false;
     fi->wait = 0; // Not waiting for anything.
     fi->inTime = 0; // Interpolation is off.
-    fi->bgMaterial = 0; // No background flat.
+    fi->bgMaterial = NULL; // No background material.
     fi->paused = false;
     fi->gotoSkip = false;
     fi->skipNext = false;
@@ -1703,7 +1703,7 @@ void FI_Drawer(void)
         return;
 
     // Draw the background.
-    if(fi->bgMaterial > 0)
+    if(fi->bgMaterial)
     {
         FI_UseColor(fi->bgColor, 4);
         GL_SetMaterial(fi->bgMaterial);
@@ -1862,17 +1862,19 @@ void FIC_End(void)
 
 void FIC_BGFlat(void)
 {
-    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MG_FLATS);
+    fi->bgMaterial = P_ToPtr(DMU_MATERIAL,
+        P_MaterialCheckNumForName(FI_GetToken(), MG_FLATS));
 }
 
 void FIC_BGTexture(void)
 {
-    fi->bgMaterial = R_MaterialCheckNumForName(FI_GetToken(), MG_TEXTURES);
+    fi->bgMaterial = P_ToPtr(DMU_MATERIAL,
+        P_MaterialCheckNumForName(FI_GetToken(), MG_TEXTURES));
 }
 
 void FIC_NoBGMaterial(void)
 {
-    fi->bgMaterial = 0;
+    fi->bgMaterial = NULL;
 }
 
 void FIC_InTime(void)

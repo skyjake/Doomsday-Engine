@@ -31,8 +31,8 @@
 
 void            SV_InitMaterialArchives(void);
 
-unsigned short  SV_MaterialArchiveNum(materialnum_t num);
-materialnum_t   SV_GetArchiveMaterial(int archiveID, int group);
+unsigned short  SV_MaterialArchiveNum(material_t* mat);
+material_t*     SV_GetArchiveMaterial(int archiveID, int group);
 
 void            SV_WriteMaterialArchive(void);
 void            SV_ReadMaterialArchive(int version);

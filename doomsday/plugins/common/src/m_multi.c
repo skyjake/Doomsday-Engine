@@ -452,6 +452,7 @@ void DrawPlayerSetupMenu(void)
     menu_t*             menu = &PlayerSetupMenu;
     int                 useColor = plrColor;
     float               menuAlpha = Hu_MenuAlpha();
+    int                 tclass = 0;
 #if __JHEXEN__
     int                 numColors = 8;
     static const int sprites[3] = {SPR_PLAY, SPR_CLER, SPR_MAGE};
@@ -472,6 +473,7 @@ void DrawPlayerSetupMenu(void)
     R_GetSpriteInfo(sprites[plrClass], CurrentPlrFrame, &sprInfo);
 
 #if __JHEXEN__
+    tclass = 1;
     if(plrClass == PCLASS_FIGHTER)
     {
         // Fighter's colors are a bit different.
@@ -482,10 +484,7 @@ void DrawPlayerSetupMenu(void)
     }
 #endif
 
-    if(useColor)
-        GL_SetTranslatedSprite(sprInfo.materialNum, useColor, plrClass);
-    else
-        GL_SetMaterial(sprInfo.materialNum);
+    GL_SetTranslatedSprite(sprInfo.material, tclass, useColor);
 
     GL_DrawRect(162 - sprInfo.offset,
 #if __JDOOM__ || __JDOOM64__

@@ -331,11 +331,9 @@ void T_MoveFloor(floor_t* floor)
     if(floor->delayCount)
     {
         floor->delayCount--;
-        if(!floor->delayCount && floor->textureChange)
+        if(!floor->delayCount && floor->material)
         {
-            P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
-                      P_GetIntp(floor->sector, DMU_FLOOR_MATERIAL) +
-                      floor->textureChange);
+            P_SetPtrp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
         }
         return;
     }
@@ -393,11 +391,9 @@ void T_MoveFloor(floor_t* floor)
 #endif
         xsec->specialData = NULL;
 #if __JHEXEN__
-        if(floor->textureChange)
+        if(floor->material)
         {
-            P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL,
-                      P_GetIntp(floor->sector, DMU_FLOOR_MATERIAL) -
-                      floor->textureChange);
+            P_SetPtrp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
         }
 #else
         if(floor->state == FS_UP)
@@ -406,7 +402,7 @@ void T_MoveFloor(floor_t* floor)
             {
             case FT_RAISEDONUT:
                 xsec->special = floor->newSpecial;
-                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
+                P_SetPtrp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
                 break;
 
             default:
@@ -419,7 +415,7 @@ void T_MoveFloor(floor_t* floor)
             {
             case FT_LOWERANDCHANGE:
                 xsec->special = floor->newSpecial;
-                P_SetIntp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
+                P_SetPtrp(floor->sector, DMU_FLOOR_MATERIAL, floor->material);
                 break;
 
             default:
@@ -452,30 +448,31 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 
     if(frontSec && backSec)
     {
-        sidedef_t          *side;
-        materialnum_t       mat;
-        materialinfo_t      info;
+        sidedef_t*          side;
+        material_t*         mat;
 
         side = P_GetPtrp(li, DMU_SIDEDEF0);
-        mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+        mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(mat)
         {
-            R_MaterialGetInfo(mat, &info);
-            if(info.height < params->minSize)
+            int                 height = P_GetIntp(mat, DMU_HEIGHT);
+
+            if(height < params->minSize)
             {
-                params->minSize = info.height;
+                params->minSize = height;
                 params->foundLine = li;
             }
         }
 
         side = P_GetPtrp(li, DMU_SIDEDEF1);
-        mat = P_GetIntp(side, DMU_BOTTOM_MATERIAL);
+        mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(mat)
         {
-            R_MaterialGetInfo(mat, &info);
-            if(info.height < params->minSize)
+            int                 height = P_GetIntp(mat, DMU_HEIGHT);
+
+            if(height < params->minSize)
             {
-                params->minSize = info.height;
+                params->minSize = height;
                 params->foundLine = li;
             }
         }
@@ -852,7 +849,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             sector_t               *otherSec =
                 P_FindSectorSurroundingLowestFloor(sec, &floor->floorDestHeight);
 
-            floor->material = P_GetIntp(otherSec, DMU_FLOOR_MATERIAL);
+            floor->material = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
             floor->newSpecial = P_ToXSector(otherSec)->special;
             }
             break;
@@ -1291,7 +1288,7 @@ int EV_DoDonut(linedef_t *line)
             floor->state = FS_UP;
             floor->sector = outer;
             floor->speed = FLOORSPEED * .5;
-            floor->material = P_GetIntp(inner, DMU_FLOOR_MATERIAL);
+            floor->material = P_GetPtrp(inner, DMU_FLOOR_MATERIAL);
             floor->newSpecial = 0;
             floor->floorDestHeight = destHeight;
 

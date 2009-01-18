@@ -35,7 +35,7 @@ extern float attackRange;
 extern boolean floatOk;
 extern float tmFloorZ;
 extern float tmCeilingZ;
-extern materialnum_t tmFloorMaterial;
+extern material_t* tmFloorMaterial;
 
 extern linedef_t* ceilingLine, *floorLine;
 extern linedef_t* blockLine;

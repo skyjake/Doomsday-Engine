@@ -290,8 +290,8 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
         case PT_RAISETONEARESTANDCHANGE:
             plat->speed = PLATSPEED * .5;
 
-            P_SetIntp(sec, DMU_FLOOR_MATERIAL,
-                      P_GetIntp(frontSector, DMU_FLOOR_MATERIAL));
+            P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
+                      P_GetPtrp(frontSector, DMU_FLOOR_MATERIAL));
 
             {
             float               nextFloor;
@@ -311,8 +311,8 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
         case PT_RAISEANDCHANGE:
             plat->speed = PLATSPEED * .5;
 
-            P_SetIntp(sec, DMU_FLOOR_MATERIAL,
-                      P_GetIntp(frontSector, DMU_FLOOR_MATERIAL));
+            P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
+                      P_GetPtrp(frontSector, DMU_FLOOR_MATERIAL));
 
             plat->high = floorHeight + amount;
             plat->wait = 0;

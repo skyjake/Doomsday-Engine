@@ -41,7 +41,7 @@ typedef enum linesection_e{
 typedef struct button_s {
     linedef_t*      line;
     linesection_t   section;
-    materialnum_t   material;
+    material_t*     material;
     int             timer;
     mobj_t*         soundOrg;
     struct button_s* next;

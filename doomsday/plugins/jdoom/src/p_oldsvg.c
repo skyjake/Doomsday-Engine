@@ -377,7 +377,6 @@ void P_v19_UnArchiveWorld(void)
     uint                i, j;
     float               matOffset[2];
     short              *get;
-    int                 firstflat = W_CheckNumForName("F_START") + 1;
     sector_t           *sec;
     xsector_t          *xsec;
     linedef_t          *line;
@@ -393,8 +392,11 @@ void P_v19_UnArchiveWorld(void)
 
         P_SetFloatp(sec, DMU_FLOOR_HEIGHT, (float) (*get++));
         P_SetFloatp(sec, DMU_CEILING_HEIGHT, (float) (*get++));
-        P_SetIntp(sec, DMU_FLOOR_MATERIAL, *get++ + firstflat);
-        P_SetIntp(sec, DMU_CEILING_MATERIAL, *get++ + firstflat);
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
+                  P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_FLATS)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL,
+                  P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_FLATS)));
+
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
         /*xsec->tag =*/ *get++; // needed?
@@ -425,9 +427,12 @@ void P_v19_UnArchiveWorld(void)
             P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
             P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
 
-            P_SetIntp(sdef, DMU_TOP_MATERIAL, *get++);
-            P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, *get++);
-            P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, *get++);
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,
+                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_TEXTURES)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL,
+                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_TEXTURES)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL,
+                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MG_TEXTURES)));
         }
     }
 
@@ -588,8 +593,8 @@ typedef struct {
 
     floor->state = (int) SV_ReadLong();
     floor->newSpecial = SV_ReadLong();
-    floor->material =
-        R_MaterialNumForName(W_LumpName(SV_ReadShort()), MG_FLATS);
+    floor->material = P_ToPtr(DMU_MATERIAL,
+        P_MaterialNumForName(W_LumpName(SV_ReadShort()), MG_FLATS));
     floor->floorDestHeight = FIX2FLT(SV_ReadLong());
     floor->speed = FIX2FLT(SV_ReadLong());
 

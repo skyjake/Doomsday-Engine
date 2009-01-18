@@ -275,11 +275,10 @@ void P_MobjMoveXY(mobj_t *mo)
                 if(ceilingLine &&
                    (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
                 {
-                    materialinfo_t      info;
+                    material_t*         mat =
+                        P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
 
-                    R_MaterialGetInfo(P_GetIntp(backSec, DMU_CEILING_MATERIAL), &info);
-
-                    if((info.flags & MATF_SKYMASK) &&
+                    if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
                     {
                         P_MobjRemove(mo, false);
@@ -290,11 +289,10 @@ void P_MobjMoveXY(mobj_t *mo)
                 if(floorLine &&
                    (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
                 {
-                    materialinfo_t      info;
+                    material_t*         mat =
+                        P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
 
-                    R_MaterialGetInfo(P_GetIntp(backSec, DMU_FLOOR_MATERIAL), &info);
-
-                    if((info.flags & MATF_SKYMASK) &&
+                    if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
                     {
                         P_MobjRemove(mo, false);
@@ -573,12 +571,11 @@ void P_MobjMoveZ(mobj_t* mo)
 
         if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
-            materialinfo_t          info;
-
-            R_MaterialGetInfo(P_GetIntp(mo->subsector, DMU_FLOOR_MATERIAL), &info);
+            material_t*         mat =
+                P_GetPtrp(mo->subsector, DMU_FLOOR_MATERIAL);
 
             // Don't explode against sky.
-            if(info.flags & MATF_SKYMASK)
+            if(P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK)
             {
                 P_MobjRemove(mo, false);
             }
@@ -604,12 +601,11 @@ void P_MobjMoveZ(mobj_t* mo)
 
             if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
             {
-                materialinfo_t          info;
-
-                R_MaterialGetInfo(P_GetIntp(mo->subsector, DMU_CEILING_MATERIAL), &info);
+                material_t*         mat =
+                    P_GetPtrp(mo->subsector, DMU_CEILING_MATERIAL);
 
                 // Don't explode against sky.
-                if(info.flags & MATF_SKYMASK)
+                if(P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK)
                 {
                     P_MobjRemove(mo, false);
                 }

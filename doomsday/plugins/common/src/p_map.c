@@ -91,7 +91,7 @@ boolean floatOk;
 float tmFloorZ;
 float tmCeilingZ;
 #if __JHEXEN__
-materialnum_t tmFloorMaterial;
+material_t* tmFloorMaterial;
 #endif
 
 boolean fellDown; // $dropoff_fix
@@ -247,7 +247,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tmFloorZ = tmDropoffZ = P_GetFloatp(newSSec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newSSec, DMU_CEILING_HEIGHT);
 #if __JHEXEN__
-    tmFloorMaterial = P_GetIntp(newSSec, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 #endif
 
     VALIDCOUNT++;
@@ -1051,7 +1051,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tmFloorZ = tmDropoffZ = P_GetFloatp(newSec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newSec, DMU_CEILING_HEIGHT);
 #if __JHEXEN__
-    tmFloorMaterial = P_GetIntp(newSec, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = P_GetPtrp(newSec, DMU_FLOOR_MATERIAL);
 #endif
 
     VALIDCOUNT++;
@@ -1309,7 +1309,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 #if __JHEXEN__
         // Must stay within a sector of a certain floor type?
         if((thing->flags2 & MF2_CANTLEAVEFLOORPIC) &&
-           (tmFloorMaterial != P_GetIntp(thing->subsector, DMU_FLOOR_MATERIAL) ||
+           (tmFloorMaterial != P_GetPtrp(thing->subsector, DMU_FLOOR_MATERIAL) ||
             tmFloorZ - thing->pos[VZ] != 0))
         {
             return false;
@@ -1491,15 +1491,23 @@ boolean PTR_ShootTraverse(intercept_t* in)
 
         // Crosses a two sided line.
         P_LineOpening(li);
-
         dist = attackRange * in->frac;
-        slope = (OPENBOTTOM - tracePos[VZ]) / dist;
-        if(slope > aimSlope)
-            goto hitline;
 
-        slope = (OPENTOP - tracePos[VZ]) / dist;
-        if(slope < aimSlope)
-            goto hitline;
+        if(P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT) !=
+           P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
+        {
+            slope = (OPENBOTTOM - tracePos[VZ]) / dist;
+            if(slope > aimSlope)
+                goto hitline;
+        }
+
+        if(P_GetFloatp(frontSec, DMU_CEILING_HEIGHT) !=
+           P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
+        {
+            slope = (OPENTOP - tracePos[VZ]) / dist;
+            if(slope < aimSlope)
+                goto hitline;
+        }
 
         // Shot continues...
         return true;
@@ -1515,23 +1523,18 @@ boolean PTR_ShootTraverse(intercept_t* in)
 
         if(backSec)
         {
-            float               fFloor, bFloor, fCeil, bCeil;
-            materialinfo_t      info;
-
             // Is it a sky hack wall? If the hitpoint is beyond the visible
             // surface, no puff must be shown.
-            R_MaterialGetInfo(P_GetIntp(frontSec, DMU_CEILING_MATERIAL), &info);
-            fCeil  = P_GetFloatp(frontSec, DMU_CEILING_HEIGHT);
-            bCeil  = P_GetFloatp(backSec, DMU_CEILING_HEIGHT);
-
-            if((info.flags & MATF_SKYMASK) &&  (pos[VZ] > fCeil  || pos[VZ] > bCeil))
+            if((P_GetIntp(P_GetPtrp(frontSec, DMU_CEILING_MATERIAL),
+                            DMU_FLAGS) & MATF_SKYMASK) &&
+               (pos[VZ] > P_GetFloatp(frontSec, DMU_CEILING_HEIGHT) ||
+                pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT)))
                 return false;
 
-            R_MaterialGetInfo(P_GetIntp(backSec, DMU_FLOOR_MATERIAL), &info);
-            fFloor = P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT);
-            bFloor = P_GetFloatp(backSec, DMU_FLOOR_HEIGHT);
-
-            if((info.flags & MATF_SKYMASK) && (pos[VZ] < fFloor || pos[VZ] < bFloor))
+            if((P_GetIntp(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL),
+                            DMU_FLAGS) & MATF_SKYMASK) &&
+               (pos[VZ] < P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT) ||
+                pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT)))
                 return false;
         }
 
@@ -1546,8 +1549,6 @@ boolean PTR_ShootTraverse(intercept_t* in)
 
         if(d[VZ] != 0)
         {
-            materialinfo_t          info;
-
             contact = R_PointInSubsector(pos[VX], pos[VY]);
             step = P_ApproxDistance3(d[VX], d[VY], d[VZ]);
             stepv[VX] = d[VX] / step;
@@ -1573,15 +1574,15 @@ boolean PTR_ShootTraverse(intercept_t* in)
             cBottom = cFloor + 4;
             divisor = 2;
 
-            R_MaterialGetInfo(P_GetIntp(contact, DMU_CEILING_MATERIAL), &info);
-
             // We must not hit a sky plane.
-            if(pos[VZ] > cTop && (info.flags & MATF_SKYMASK))
+            if(pos[VZ] > cTop &&
+               (P_GetIntp(P_GetPtrp(contact, DMU_CEILING_MATERIAL),
+                            DMU_FLAGS) & MATF_SKYMASK))
                 return false;
 
-            R_MaterialGetInfo(P_GetIntp(contact, DMU_FLOOR_MATERIAL), &info);
-
-            if(pos[VZ] < cBottom && (info.flags & MATF_SKYMASK))
+            if(pos[VZ] < cBottom &&
+               (P_GetIntp(P_GetPtrp(contact, DMU_FLOOR_MATERIAL),
+                            DMU_FLAGS) & MATF_SKYMASK))
                 return false;
 
             // Find the approximate hitpoint by stepping back and
@@ -2758,7 +2759,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
 
     tmFloorZ = tmDropoffZ = P_GetFloatp(newSSec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newSSec, DMU_CEILING_HEIGHT);
-    tmFloorMaterial = P_GetIntp(newSSec, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 
     VALIDCOUNT++;
     P_EmptyIterList(spechit);

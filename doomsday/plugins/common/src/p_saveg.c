@@ -2175,9 +2175,9 @@ static void SV_WriteSector(sector_t *sec)
     short       ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
     short       floorFlags = (short) P_GetIntp(sec, DMU_FLOOR_FLAGS);
     short       ceilingFlags = (short) P_GetIntp(sec, DMU_CEILING_FLAGS);
-    materialnum_t floorMaterial = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
-    materialnum_t ceilingMaterial = P_GetIntp(sec, DMU_CEILING_MATERIAL);
-    xsector_t  *xsec = P_ToXSector(sec);
+    material_t* floorMaterial = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+    material_t* ceilingMaterial = P_GetPtrp(sec, DMU_CEILING_MATERIAL);
+    xsector_t*  xsec = P_ToXSector(sec);
     float       rgb[3];
 
 #if !__JHEXEN__
@@ -2262,7 +2262,7 @@ static void SV_ReadSector(sector_t *sec)
 {
     int                 i, ver = 1;
     int                 type = 0;
-    materialnum_t       floorMaterial, ceilingMaterial;
+    material_t*         floorMaterial, *ceilingMaterial;
     byte                rgb[3], lightlevel;
     xsector_t*          xsec = P_ToXSector(sec);
     int                 fh, ch;
@@ -2303,15 +2303,11 @@ static void SV_ReadSector(sector_t *sec)
 
 #if !__JHEXEN__
     if(hdr.version == 1)
-    {   // The flat numbers are the actual lump numbers.
-        int             firstflat = W_CheckNumForName("F_START") + 1;
-
-        floorMaterial =
-            R_MaterialNumForName(W_LumpName(SV_ReadShort() + firstflat),
-                                 MG_FLATS);
-        ceilingMaterial =
-            R_MaterialNumForName(W_LumpName(SV_ReadShort() + firstflat),
-                                 MG_FLATS);
+    {   // Flat numbers are the original flat lump indices - (lump) "F_START".
+        floorMaterial = P_ToPtr(DMU_MATERIAL,
+            P_MaterialNumForIndex(SV_ReadShort(), MG_FLATS));
+        ceilingMaterial = P_ToPtr(DMU_MATERIAL,
+            P_MaterialNumForIndex(SV_ReadShort(), MG_FLATS));
     }
     else if(hdr.version >= 4)
 #endif
@@ -2321,8 +2317,8 @@ static void SV_ReadSector(sector_t *sec)
         ceilingMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 0);
     }
 
-    P_SetIntp(sec, DMU_FLOOR_MATERIAL, floorMaterial);
-    P_SetIntp(sec, DMU_CEILING_MATERIAL, ceilingMaterial);
+    P_SetPtrp(sec, DMU_FLOOR_MATERIAL, floorMaterial);
+    P_SetPtrp(sec, DMU_CEILING_MATERIAL, ceilingMaterial);
 
     if(ver >= 3)
     {
@@ -2400,7 +2396,6 @@ static void SV_ReadSector(sector_t *sec)
 static void SV_WriteLine(linedef_t* li)
 {
     uint                i, j;
-    materialnum_t       mat;
     float               rgba[4];
     lineclass_t         type;
     xline_t*            xli = P_ToXLine(li);
@@ -2455,14 +2450,9 @@ static void SV_WriteLine(linedef_t* li)
         SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_FLAGS));
         SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
-        mat = P_GetIntp(si, DMU_TOP_MATERIAL);
-        SV_WriteShort(SV_MaterialArchiveNum(mat));
-
-        mat = P_GetIntp(si, DMU_BOTTOM_MATERIAL);
-        SV_WriteShort(SV_MaterialArchiveNum(mat));
-
-        mat = P_GetIntp(si, DMU_MIDDLE_MATERIAL);
-        SV_WriteShort(SV_MaterialArchiveNum(mat));
+        SV_WriteShort(SV_MaterialArchiveNum(P_GetPtrp(si, DMU_TOP_MATERIAL)));
+        SV_WriteShort(SV_MaterialArchiveNum(P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
+        SV_WriteShort(SV_MaterialArchiveNum(P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(j = 0; j < 3; ++j)
@@ -2498,7 +2488,7 @@ static void SV_ReadLine(linedef_t *li)
     int                 i, j;
     lineclass_t         type;
     int                 ver;
-    materialnum_t       topMaterial, bottomMaterial, middleMaterial;
+    material_t*         topMaterial, *bottomMaterial, *middleMaterial;
     short               flags;
     xline_t*            xli = P_ToXLine(li);
 
@@ -2607,9 +2597,9 @@ static void SV_ReadLine(linedef_t *li)
             middleMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
         }
 
-        P_SetIntp(si, DMU_TOP_MATERIAL, topMaterial);
-        P_SetIntp(si, DMU_BOTTOM_MATERIAL, bottomMaterial);
-        P_SetIntp(si, DMU_MIDDLE_MATERIAL, middleMaterial);
+        P_SetPtrp(si, DMU_TOP_MATERIAL, topMaterial);
+        P_SetPtrp(si, DMU_BOTTOM_MATERIAL, bottomMaterial);
+        P_SetPtrp(si, DMU_MIDDLE_MATERIAL, middleMaterial);
 
         // Ver2 includes surface colours
         if(ver >= 2)
@@ -2943,7 +2933,7 @@ static int SV_ReadDoor(door_t *door)
 
 static void SV_WriteFloor(floor_t *floor)
 {
-    SV_WriteByte(2); // Write a version byte.
+    SV_WriteByte(3); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
     // is present as we ALWAYS add one when loading.
@@ -2970,7 +2960,6 @@ static void SV_WriteFloor(floor_t *floor)
     SV_WriteLong(FLT2FIX(floor->resetHeight));
     SV_WriteShort(floor->resetDelay);
     SV_WriteShort(floor->resetDelayCount);
-    SV_WriteByte(floor->textureChange);
 #endif
 }
 
@@ -3003,8 +2992,8 @@ static int SV_ReadFloor(floor_t* floor)
         if(ver >= 2)
             floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
         else
-            floor->material =
-                R_MaterialNumForName(W_LumpName(SV_ReadShort()), MG_FLATS);
+            floor->material = P_ToPtr(DMU_MATERIAL,
+                P_MaterialNumForName(W_LumpName(SV_ReadShort()), MG_FLATS));
 
         floor->floorDestHeight = (float) SV_ReadShort();
         floor->speed = FIX2FLT(SV_ReadLong());
@@ -3017,7 +3006,7 @@ static int SV_ReadFloor(floor_t* floor)
         floor->resetHeight = FIX2FLT(SV_ReadLong());
         floor->resetDelay = SV_ReadShort();
         floor->resetDelayCount = SV_ReadShort();
-        floor->textureChange = SV_ReadByte();
+        /*floor->textureChange =*/ SV_ReadByte();
 #endif
     }
     else
@@ -3049,8 +3038,8 @@ static int SV_ReadFloor(floor_t* floor)
 #endif
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
-        floor->material =
-            R_MaterialNumForName(W_LumpName(SV_ReadShort()), MG_FLATS);
+        floor->material = P_ToPtr(DMU_MATERIAL,
+            P_MaterialNumForName(W_LumpName(SV_ReadShort()), MG_FLATS));
 
         floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->speed = FIX2FLT((fixed_t) SV_ReadLong());
@@ -3063,7 +3052,7 @@ static int SV_ReadFloor(floor_t* floor)
         floor->resetHeight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->resetDelay = SV_ReadShort();
         floor->resetDelayCount = SV_ReadShort();
-        floor->textureChange = SV_ReadByte();
+        /*floor->textureChange =*/ SV_ReadByte();
 #endif
     }
 

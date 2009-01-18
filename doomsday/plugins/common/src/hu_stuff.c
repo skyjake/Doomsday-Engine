@@ -245,12 +245,12 @@ void Hu_LoadData(void)
         }
     }
 
+    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
+
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
         R_CachePatch(&skillModeNames[i], skillModePatchNames[i]);
     }
-
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
 
     R_CachePatch(&m_pause, "M_PAUSE");
 
@@ -843,7 +843,7 @@ DGL_Enable(DGL_TEXTURING);
                     cX += ((colW[n] - CELL_PADDING * 2) - w) / 2;
                     cY += ((lineHeight - CELL_PADDING * 2) - h) / 2;
 
-                    GL_SetMaterial(sprInfo.materialNum);
+                    GL_SetMaterial(sprInfo.material);
 
                     drawQuad(cX, cY, w, h, s, t, 1, 1, 1, alpha);
                 }
@@ -1944,7 +1944,8 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
 
     if(background)
     {
-        GL_SetMaterial(R_MaterialNumForName(borderLumps[0], MG_FLATS));
+        GL_SetMaterial(P_ToPtr(DMU_MATERIAL,
+            P_MaterialNumForName(borderLumps[0], MG_FLATS)));
         GL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 

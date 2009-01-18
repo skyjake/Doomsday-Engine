@@ -117,20 +117,20 @@ void P_CopyLine(linedef_t* dest, linedef_t* src)
         float temp[4];
         float itemp[2];
 
-        P_SetIntp(sideto, DMU_TOP_MATERIAL, P_GetIntp(sidefrom, DMU_TOP_MATERIAL));
+        P_SetPtrp(sideto, DMU_TOP_MATERIAL, P_GetPtrp(sidefrom, DMU_TOP_MATERIAL));
         P_GetFloatpv(sidefrom, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
         P_GetFloatpv(sidefrom, DMU_TOP_COLOR, temp);
         P_SetFloatpv(sideto, DMU_TOP_COLOR, temp);
 
-        P_SetIntp(sideto, DMU_MIDDLE_MATERIAL, P_GetIntp(sidefrom, DMU_MIDDLE_MATERIAL));
+        P_SetPtrp(sideto, DMU_MIDDLE_MATERIAL, P_GetPtrp(sidefrom, DMU_MIDDLE_MATERIAL));
         P_GetFloatpv(sidefrom, DMU_MIDDLE_COLOR, temp);
         P_GetFloatpv(sidefrom, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_MIDDLE_COLOR, temp);
         P_SetIntp(sideto, DMU_MIDDLE_BLENDMODE, P_GetIntp(sidefrom, DMU_MIDDLE_BLENDMODE));
 
-        P_SetIntp(sideto, DMU_BOTTOM_MATERIAL, P_GetIntp(sidefrom, DMU_BOTTOM_MATERIAL));
+        P_SetPtrp(sideto, DMU_BOTTOM_MATERIAL, P_GetPtrp(sidefrom, DMU_BOTTOM_MATERIAL));
         P_GetFloatpv(sidefrom, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
         P_GetFloatpv(sidefrom, DMU_BOTTOM_COLOR, temp);

@@ -139,7 +139,7 @@ typedef struct {
     float           speed; // Signed.
     float           crushSpeed; // Signed (speed to use when crushing).
 
-    materialnum_t   setMaterial; // Set material when move done.
+    material_t*     setMaterial; // Set material when move done.
     int             setSectorType; // Sector type to set when move done
     // (-1 if no change).
     int             startSound; // Played after waiting.
@@ -178,7 +178,7 @@ int C_DECL      XSTrav_Teleport(struct sector_s *sector, boolean ceiling,
                                    void *context, void *context2, struct mobj_s *activator);
 void            XS_SetSectorType(struct sector_s *sec, int special);
 void            XS_ChangePlaneMaterial(struct sector_s *sector, boolean ceiling,
-                                       materialnum_t mat, float *rgb);
+                                       material_t* mat, float *rgb);
 xgplanemover_t *XS_GetPlaneMover(struct sector_s *sector, boolean ceiling);
 void            XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
 

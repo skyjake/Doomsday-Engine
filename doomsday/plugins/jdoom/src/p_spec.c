@@ -200,7 +200,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                     for(n = startFrame; n <= endFrame; n++)
                     {
                         materialnum_t       frame =
-                            R_MaterialCheckNumForName(W_LumpName(n),
+                            P_MaterialCheckNumForName(W_LumpName(n),
                                                       MG_FLATS);
 
                         if(frame != 0)
@@ -212,7 +212,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                     for(n = endFrame; n >= startFrame; n--)
                     {
                         materialnum_t       frame =
-                            R_MaterialCheckNumForName(W_LumpName(n),
+                            P_MaterialCheckNumForName(W_LumpName(n),
                                                       MG_FLATS);
 
                         if(frame != 0)
@@ -226,9 +226,9 @@ static void loadAnimDefs(animdef_t* animDefs)
             {   // Same as above but for texture groups.
             materialnum_t       startFrame, endFrame, n;
 
-            if((startFrame = R_MaterialCheckNumForName(animDefs[i].startname,
+            if((startFrame = P_MaterialCheckNumForName(animDefs[i].startname,
                                                        MG_TEXTURES)) == 0 ||
-               (endFrame = R_MaterialCheckNumForName(animDefs[i].endname,
+               (endFrame = P_MaterialCheckNumForName(animDefs[i].endname,
                                                      MG_TEXTURES)) == 0)
                 continue;
 
@@ -979,15 +979,15 @@ void P_UpdateSpecials(void)
                 switch(button->section)
                 {
                 case LS_TOP:
-                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->material);
+                    P_SetPtrp(sdef, DMU_TOP_MATERIAL, button->material);
                     break;
 
                 case LS_MIDDLE:
-                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->material);
+                    P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, button->material);
                     break;
 
                 case LS_BOTTOM:
-                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->material);
+                    P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, button->material);
                     break;
 
                 default:
@@ -1000,7 +1000,7 @@ void P_UpdateSpecials(void)
 
                 button->line = NULL;
                 button->section = 0;
-                button->material = 0;
+                button->material = NULL;
                 button->soundOrg = NULL;
             }
         }

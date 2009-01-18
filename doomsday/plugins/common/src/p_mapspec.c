@@ -705,8 +705,6 @@ void P_RecursiveSound(struct mobj_s *soundTarget, sector_t *sec,
  */
 const terraintype_t* P_GetPlaneMaterialType(sector_t* sec, int plane)
 {
-    materialnum_t       num =
-        P_GetIntp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL));
-
-    return P_TerrainTypeForMaterial(num);
+    return P_TerrainTypeForMaterial(
+        P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }

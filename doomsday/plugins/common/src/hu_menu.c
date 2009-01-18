@@ -2502,7 +2502,7 @@ void M_DrawClassMenu(void)
     menu_t*             menu = &ClassDef;
     playerclass_t       pClass;
     spriteinfo_t        sprInfo;
-    int                 color;
+    int                 tmap = 1;
     static char* boxLumpName[3] = {
         "m_fbox",
         "m_cbox",
@@ -2525,12 +2525,11 @@ void M_DrawClassMenu(void)
     DGL_Color4f(1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(BG_X, BG_Y, W_GetNumForName(boxLumpName[pClass % 3]));
 
-    color = pClass == PCLASS_FIGHTER? 0 : 1;
+    // Fighter's colors are a bit different.
+    if(pClass == PCLASS_FIGHTER)
+        tmap = 2;
 
-    if(color)
-        GL_SetTranslatedSprite(sprInfo.materialNum, color, pClass);
-    else
-        GL_SetMaterial(sprInfo.materialNum);
+    GL_SetTranslatedSprite(sprInfo.material, 1, tmap);
 
     GL_DrawRect(BG_X + 56 - sprInfo.offset, BG_Y + 78 - sprInfo.topOffset,
                 M_CeilPow2(sprInfo.width), M_CeilPow2(sprInfo.height),
