@@ -794,15 +794,15 @@ void P_UpdateSpecials(void)
                 switch(button->section)
                 {
                 case LS_TOP:
-                    P_SetIntp(sdef, DMU_TOP_MATERIAL, button->material);
+                    P_SetPtrp(sdef, DMU_TOP_MATERIAL, button->material);
                     break;
 
                 case LS_MIDDLE:
-                    P_SetIntp(sdef, DMU_MIDDLE_MATERIAL, button->material);
+                    P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, button->material);
                     break;
 
                 case LS_BOTTOM:
-                    P_SetIntp(sdef, DMU_BOTTOM_MATERIAL, button->material);
+                    P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, button->material);
                     break;
 
                 default:
@@ -812,7 +812,7 @@ void P_UpdateSpecials(void)
 
                 button->line = NULL;
                 button->section = 0;
-                button->material = 0;
+                button->material = NULL;
                 button->soundOrg = NULL;
             }
         }
@@ -1071,18 +1071,17 @@ void P_AnimateSurfaces(void)
 static boolean isLightningSector(sector_t* sec)
 {
     xsector_t*              xsec = P_ToXSector(sec);
-    materialinfo_t          info;
 
     if(xsec->special == LIGHTNING_SPECIAL ||
        xsec->special == LIGHTNING_SPECIAL2)
         return true;
 
-    R_MaterialGetInfo(P_GetIntp(sec, DMU_CEILING_MATERIAL), &info);
-    if(info.flags & MATF_SKYMASK)
+    if(P_GetIntp(P_GetPtrp(sec, DMU_CEILING_MATERIAL),
+                   DMU_FLAGS) & MATF_SKYMASK)
         return true;
 
-    R_MaterialGetInfo(P_GetIntp(sec, DMU_FLOOR_MATERIAL), &info);
-    if(info.flags & MATF_SKYMASK)
+    if(P_GetIntp(P_GetPtrp(sec, DMU_FLOOR_MATERIAL),
+                   DMU_FLAGS) & MATF_SKYMASK)
         return true;
 
     return false;

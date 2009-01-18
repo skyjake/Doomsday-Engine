@@ -71,7 +71,7 @@ static void parseAnimGroup(materialgroup_t group)
     ignore = true;
     if(group == MG_TEXTURES)
     {
-        if((matNumBase = R_MaterialCheckNumForName(sc_String,
+        if((matNumBase = P_MaterialCheckNumForName(sc_String,
                                                    MG_TEXTURES)) != 0)
             ignore = false;
     }
@@ -130,7 +130,7 @@ static void parseAnimGroup(materialgroup_t group)
                     else
                     {
                         materialnum_t       frame =
-                            R_MaterialCheckNumForName(W_LumpName(lumpNumBase + picNum - 1),
+                            P_MaterialCheckNumForName(W_LumpName(lumpNumBase + picNum - 1),
                                                       MG_FLATS);
 
                         R_AddToAnimGroup(groupNumber, frame,
