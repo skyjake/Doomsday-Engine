@@ -51,10 +51,8 @@
 #define LINEHEIGHT_B            15
 #define LINEHEIGHT_A            8
 
-#define MENUCURSOR_OFFSET_X     -28
-#define MENUCURSOR_OFFSET_Y     -1
-#define MENUCURSOR_WIDTH        0
-#define MENUCURSOR_HEIGHT       19
+#define MENUCURSOR_OFFSET_X     -6
+#define MENUCURSOR_OFFSET_Y     -2
 #define MENUCURSOR_TICSPERFRAME 6
 
 #define CURSORPREF              "M_SKULL%d"
