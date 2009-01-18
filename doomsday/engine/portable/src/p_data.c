@@ -370,9 +370,9 @@ boolean P_LoadMap(const char *mapID)
 
 void P_RegisterUnknownTexture(const char *name, boolean planeTex)
 {
-    uint        i;
-    char        namet[9];
-    boolean     known = false;
+    uint                i;
+    char                namet[9];
+    boolean             known = false;
 
     namet[8] = 0;
     memcpy(namet, name, 8);

@@ -377,6 +377,8 @@ void LO_AddLuminous(mobj_t* mo)
         spriteframe_t*      sprFrame;
         material_t*         mat;
         rgbcol_t            autoLightColor;
+        material_snapshot_t ms;
+        const gltexture_inst_t* texInst;
 
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
@@ -406,57 +408,25 @@ if(!mat)
               (int) mo->sprite, mo->frame);
 #endif
 
-        // Get the current globaly animated material.
-        mat = mat->current;
+        // Ensure we have up-to-date information about the material.
+        Material_Prepare(&ms, mat, true, NULL);
 
-        if(mat->tex->type != MTT_SPRITE)
-        {
-            return; // Very strange...
-        }
+        if(ms.passes[MTP_PRIMARY].texInst->tex->type != GLT_SPRITE)
+            return; // *Very* strange...
 
-        // Let's see what our light should look like.
-        if(mo->ddFlags & DDMF_TRANSLATION)
-        {
-            int                 tMap =
-                (mo->ddFlags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
-            int                 tClass =
-                (mo->ddFlags >> DDMF_CLASSTRSHIFT) & 0x3;
-            transspr_t*         tspr;
-            unsigned char*      table =
-                translationTables - 256 + tClass * ((8 - 1) * 256) +
-                    tMap * 256;
+        texInst = ms.passes[MTP_PRIMARY].texInst;
 
-            // Ensure we have up-to-date information about the texture.
-            GL_PrepareTranslatedSprite(R_GetMaterialNum(mat), tMap, tClass);
-            tspr = GL_GetTranslatedSprite(mat->tex->ofTypeID, table);
-
-            cf.size = cf.flareSize = tspr->lumSize;
-            cf.xOffset = tspr->flareX;
-            cf.yOffset = tspr->flareY;
-            autoLightColor[CR] = tspr->autoLightColor[CR];
-            autoLightColor[CG] = tspr->autoLightColor[CG];
-            autoLightColor[CB] = tspr->autoLightColor[CB];
-        }
-        else
-        {
-            spritetex_t*        sprTex;
-
-            // Ensure we have up-to-date information about the texture.
-            R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
-            sprTex = spriteTextures[mat->tex->ofTypeID];
-
-            cf.size = cf.flareSize = sprTex->lumSize;
-            cf.xOffset = sprTex->flareX;
-            cf.yOffset = sprTex->flareY;
-            autoLightColor[CR] = sprTex->autoLightColor[CR];
-            autoLightColor[CG] = sprTex->autoLightColor[CG];
-            autoLightColor[CB] = sprTex->autoLightColor[CB];
-        }
+        cf.size = cf.flareSize = texInst->data.sprite.lumSize;
+        cf.xOffset = texInst->data.sprite.flareX;
+        cf.yOffset = texInst->data.sprite.flareY;
+        autoLightColor[CR] = texInst->data.sprite.autoLightColor[CR];
+        autoLightColor[CG] = texInst->data.sprite.autoLightColor[CG];
+        autoLightColor[CB] = texInst->data.sprite.autoLightColor[CB];
 
         // X offset to the flare position.
-        xOff = (cf.xOffset - (float) mat->width / 2) -
-            (spriteTextures[mat->tex->ofTypeID]->offX -
-                (float) mat->width / 2);
+        xOff = (cf.xOffset - (float) ms.width / 2) -
+            (spriteTextures[texInst->tex->ofTypeID]->offX -
+                (float) ms.width / 2);
 
         // Does the mobj have an active light definition?
         if(mo->state)
@@ -483,12 +453,12 @@ if(!mat)
             }
         }
 
-        center = spriteTextures[mat->tex->ofTypeID]->offY - mo->floorClip -
-            R_GetBobOffset(mo) - cf.yOffset;
+        center = spriteTextures[texInst->tex->ofTypeID]->offY -
+            mo->floorClip - R_GetBobOffset(mo) - cf.yOffset;
 
         // Will the sprite be allowed to go inside the floor?
-        mul = mo->pos[VZ] + spriteTextures[mat->tex->ofTypeID]->offY -
-            (float) mat->height - mo->subsector->sector->SP_floorheight;
+        mul = mo->pos[VZ] + spriteTextures[texInst->tex->ofTypeID]->offY -
+            (float) ms.height - mo->subsector->sector->SP_floorheight;
         if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.

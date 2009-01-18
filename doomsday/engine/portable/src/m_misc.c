@@ -509,6 +509,11 @@ double M_Length(double x, double y)
     return sqrt(x * x + y * y);
 }
 
+int M_NumDigits(int value)
+{
+    return floor(log10(abs(value))) + 1;
+}
+
 /**
  * Normalize a vector.
  *

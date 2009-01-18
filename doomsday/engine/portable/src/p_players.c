@@ -30,6 +30,7 @@
 
 #include "de_base.h"
 #include "de_play.h"
+#include "de_refresh.h"
 #include "de_network.h"
 
 // MACROS ------------------------------------------------------------------
@@ -46,7 +47,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-player_t *viewPlayer;
+player_t* viewPlayer;
 player_t ddPlayers[DDMAXPLAYERS];
 int consolePlayer;
 int displayPlayer;
@@ -56,17 +57,17 @@ int displayPlayer;
 // CODE --------------------------------------------------------------------
 
 /**
- * Determine which console is used by the given local player.  Local
- * players are numbered starting from zero.
+ * Determine which console is used by the given local player. Local players
+ * are numbered starting from zero.
  */
 int P_LocalToConsole(int localPlayer)
 {
-    int         		i, count;
+    int                 i, count;
 
     for(i = 0, count = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
-        ddplayer_t         *ddpl = &plr->shared;
+        player_t*           plr = &ddPlayers[i];
+        ddplayer_t*         ddpl = &plr->shared;
 
         if(ddpl->flags & DDPF_LOCAL)
         {
@@ -80,20 +81,20 @@ int P_LocalToConsole(int localPlayer)
 }
 
 /**
- * Determine the local player number used by a particular console.
- * Local players are numbered starting from zero.
+ * Determine the local player number used by a particular console. Local
+ * players are numbered starting from zero.
  */
 int P_ConsoleToLocal(int playerNum)
 {
-    int         		i, count;
-    player_t           *plr = &ddPlayers[playerNum];
+    int                 i, count;
+    player_t*           plr = &ddPlayers[playerNum];
 
     if(!(plr->shared.flags & DDPF_LOCAL))
         return -1; // Not local at all.
 
     for(i = 0, count = 0; i < playerNum; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
+        player_t*           plr = &ddPlayers[i];
 
         if(plr->shared.flags & DDPF_LOCAL)
             count++;
@@ -105,7 +106,7 @@ int P_ConsoleToLocal(int playerNum)
 /**
  * Given a ptr to ddplayer_t, return it's logical index.
  */
-int P_GetDDPlayerIdx(ddplayer_t *ddpl)
+int P_GetDDPlayerIdx(ddplayer_t* ddpl)
 {
     if(ddpl)
     {
@@ -130,9 +131,9 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl)
  *
  * @return              @c true, If the player is thought to be in the void.
  */
-boolean P_IsInVoid(player_t *player)
+boolean P_IsInVoid(player_t* player)
 {
-    ddplayer_t         *ddpl;
+    ddplayer_t*         ddpl;
 
     if(!player)
         return false;
@@ -148,12 +149,22 @@ boolean P_IsInVoid(player_t *player)
 
         if(ddpl->mo->subsector)
         {
-            sector_t           *sec = ddpl->mo->subsector->sector;
+            sector_t*           sec = ddpl->mo->subsector->sector;
 
-            if(ddpl->mo->pos[VZ] >
-                sec->SP_ceilheight + sec->skyFix[PLN_CEILING].offset - 4 ||
-               ddpl->mo->pos[VZ] <
-                sec->SP_floorheight + sec->skyFix[PLN_FLOOR].offset + 4)
+            if(R_IsSkySurface(&sec->SP_ceilsurface))
+            {
+               if(ddpl->mo->pos[VZ] > skyFix[PLN_CEILING].height - 4)
+                   return true;
+            }
+            else if(ddpl->mo->pos[VZ] > sec->SP_ceilvisheight - 4)
+                return true;
+
+            if(R_IsSkySurface(&sec->SP_floorsurface))
+            {
+                if(ddpl->mo->pos[VZ] < skyFix[PLN_FLOOR].height + 4)
+                    return true;
+            }
+            else if(ddpl->mo->pos[VZ] < sec->SP_floorvisheight + 4)
                 return true;
         }
     }

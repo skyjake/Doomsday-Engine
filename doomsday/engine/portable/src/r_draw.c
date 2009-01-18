@@ -104,6 +104,7 @@ void R_InitViewBorder(void)
 void R_DrawViewBorder(void)
 {
     patchtex_t*         p;
+    material_t*         mat;
 
     if(viewwidth == 320 && viewheight == 200)
         return;
@@ -115,10 +116,15 @@ void R_DrawViewBorder(void)
 
     // View background.
     DGL_Color4f(1, 1, 1, 1);
-    GL_SetMaterial(R_MaterialNumForName(borderGfx[BG_BACKGROUND], MG_FLATS));
-    GL_DrawCutRectTiled(0, 0, 320, 200, 64, 64, 0, 0, viewwindowx - bwidth,
-                        viewwindowy - bwidth, viewwidth + 2 * bwidth,
-                        viewheight + 2 * bwidth);
+    mat = P_ToMaterial(P_MaterialNumForName(borderGfx[BG_BACKGROUND], MG_FLATS));
+    if(mat)
+    {
+        GL_SetMaterial(mat);
+        GL_DrawCutRectTiled(0, 0, 320, 200, mat->width, mat->height, 0, 0,
+                            viewwindowx - bwidth,
+                            viewwindowy - bwidth, viewwidth + 2 * bwidth,
+                            viewheight + 2 * bwidth);
+    }
 
     // The border top.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_TOP]));

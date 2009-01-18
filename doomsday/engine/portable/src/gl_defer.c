@@ -284,8 +284,13 @@ void GL_UploadTextureContent(texturecontent_t* content)
     DGL_TexFilter(DGL_ANISO_FILTER, DGL_GetTexAnisoMul(content->anisoFilter));
 }
 
-DGLuint GL_NewTexture(texturecontent_t* content)
+/**
+ * @return              @c true, iff this operation was deferred.
+ */
+DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
 {
+    boolean             deferred = true;
+
     // Calculate the size of the buffer automatically?
     if(content->bufferSize == 0)
     {
@@ -338,8 +343,11 @@ DGLuint GL_NewTexture(texturecontent_t* content)
         // Let's do this right away. No need to take a copy.
         GL_UploadTextureContent(content);
 #ifdef _DEBUG
-        Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! Should be precached in busy mode?\n", content->name, content->width, content->height);
+Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
+            "Should be precached in busy mode?\n", content->name,
+            content->width, content->height);
 #endif
+        deferred = false; // We haven't deferred.
     }
     else
     {
@@ -358,6 +366,9 @@ DGLuint GL_NewTexture(texturecontent_t* content)
         Sys_Unlock(deferredMutex);
     }
 
+    if(result)
+        *result = deferred;
+
     return content->name;
 }
 
@@ -372,7 +383,7 @@ DGLuint GL_NewTextureWithParams(gltexformat_t format, int width, int height, voi
     c.height = height;
     c.buffer = pixels;
     c.flags = flags;
-    return GL_NewTexture(&c);
+    return GL_NewTexture(&c, NULL);
 }
 
 DGLuint GL_NewTextureWithParams2(gltexformat_t format, int width, int height, void* pixels,
@@ -392,7 +403,7 @@ DGLuint GL_NewTextureWithParams2(gltexformat_t format, int width, int height, vo
     c.anisoFilter = anisoFilter;
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
-    return GL_NewTexture(&c);
+    return GL_NewTexture(&c, NULL);
 }
 
 /**

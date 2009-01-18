@@ -1191,7 +1191,7 @@ void P_CheckPtcPlanes(void)
         {
             uint                plane = p;
             material_t*         mat = sector->SP_planematerial(plane);
-            const ded_ptcgen_t* def = R_MaterialGetPtcGen(mat);
+            const ded_ptcgen_t* def = Material_GetPtcGen(mat);
 
             if(!def)
                 continue;

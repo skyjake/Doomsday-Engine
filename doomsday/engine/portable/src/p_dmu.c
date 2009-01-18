@@ -96,6 +96,7 @@ const char* DMU_Str(uint prop)
         { DMU_SUBSECTOR, "DMU_SUBSECTOR" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
+        { DMU_MATERIAL, "DMU_MATERIAL" },
         { DMU_LINEDEF_BY_TAG, "DMU_LINEDEF_BY_TAG" },
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
         { DMU_LINEDEF_BY_ACT_TAG, "DMU_LINEDEF_BY_ACT_TAG" },
@@ -103,6 +104,10 @@ const char* DMU_Str(uint prop)
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
         { DMU_XY, "DMU_XY" },
+        { DMU_NORMAL_X, "DMU_NORMAL_X" },
+        { DMU_NORMAL_Y, "DMU_NORMAL_Y" },
+        { DMU_NORMAL_Z, "DMU_NORMAL_Z" },
+        { DMU_NORMAL_XYZ, "DMU_NORMAL_XYZ" },
         { DMU_VERTEX0, "DMU_VERTEX0" },
         { DMU_VERTEX1, "DMU_VERTEX1" },
         { DMU_FRONT_SECTOR, "DMU_FRONT_SECTOR" },
@@ -117,10 +122,9 @@ const char* DMU_Str(uint prop)
         { DMU_SLOPE_TYPE, "DMU_SLOPE_TYPE" },
         { DMU_ANGLE, "DMU_ANGLE" },
         { DMU_OFFSET, "DMU_OFFSET" },
-        { DMU_MATERIAL, "DMU_MATERIAL" },
-        { DMU_MATERIAL_OFFSET_X, "DMU_MATERIAL_OFFSET_X" },
-        { DMU_MATERIAL_OFFSET_Y, "DMU_MATERIAL_OFFSET_Y" },
-        { DMU_MATERIAL_OFFSET_XY, "DMU_MATERIAL_OFFSET_XY" },
+        { DMU_OFFSET_X, "DMU_OFFSET_X" },
+        { DMU_OFFSET_Y, "DMU_OFFSET_Y" },
+        { DMU_OFFSET_XY, "DMU_OFFSET_XY" },
         { DMU_BLENDMODE, "DMU_BLENDMODE" },
         { DMU_VALID_COUNT, "DMU_VALID_COUNT" },
         { DMU_LINEDEF_COUNT, "DMU_LINEDEF_COUNT" },
@@ -133,10 +137,12 @@ const char* DMU_Str(uint prop)
         { DMT_MOBJS, "DMT_MOBJS" },
         { DMU_BOUNDING_BOX, "DMU_BOUNDING_BOX" },
         { DMU_SOUND_ORIGIN, "DMU_SOUND_ORIGIN" },
+        { DMU_WIDTH, "DMU_WIDTH" },
         { DMU_HEIGHT, "DMU_HEIGHT" },
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
         { DMU_SEG_COUNT, "DMU_SEG_COUNT" },
         { DMU_SPEED, "DMU_SPEED" },
+        { DMU_GROUP, "DMU_GROUP" },
         { 0, NULL }
     };
     uint                i;
@@ -175,6 +181,7 @@ static int DMU_GetType(const void* ptr)
         case DMU_SECTOR:
         case DMU_PLANE:
         case DMU_NODE:
+        case DMU_MATERIAL:
             return type;
 
         default:
@@ -388,6 +395,9 @@ uint P_ToIndex(const void* ptr)
     case DMU_PLANE:
         return GET_PLANE_IDX((plane_t*) ptr);
 
+    case DMU_MATERIAL:
+        return P_ToMaterialNum((material_t*) ptr);
+
     default:
         Con_Error("P_ToIndex: Unknown type %s.\n", DMU_Str(DMU_GetType(ptr)));
     }
@@ -426,6 +436,9 @@ void* P_ToPtr(int type, uint index)
         Con_Error("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).\n",
                   DMU_Str(type));
         break;
+
+    case DMU_MATERIAL:
+        return P_ToMaterial(index);
 
     default:
         Con_Error("P_ToPtr: unknown type %s.\n", DMU_Str(type));
@@ -588,6 +601,11 @@ int P_Callback(int type, uint index, void* context,
                   DMU_Str(type));
         break;
 
+    case DMU_MATERIAL:
+        if(index < numMaterialBinds)
+            return callback(P_ToMaterial(index), context);
+        break;
+
     case DMU_LINEDEF_BY_TAG:
     case DMU_SECTOR_BY_TAG:
     case DMU_LINEDEF_BY_ACT_TAG:
@@ -626,6 +644,7 @@ int P_Callbackp(int type, void* ptr, void* context,
     case DMU_SUBSECTOR:
     case DMU_SECTOR:
     case DMU_PLANE:
+    case DMU_MATERIAL:
         // Only do the callback if the type is the same as the object's.
         if(type == DMU_GetType(ptr))
         {
@@ -764,7 +783,7 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
                       value_Str(args->valueType));
         }
     }
-    else if(valueType == DDVT_SHORT || valueType == DDVT_FLAT_INDEX)
+    else if(valueType == DDVT_SHORT)
     {
         short* d = dst;
 
@@ -842,113 +861,6 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
     }
 }
 
-static void* resolveReferences(void* obj, setargs_t* args)
-{
-    void*               ptr = obj;
-
-    // Dereference where necessary. Note the order, these cascade.
-    if(args->type == DMU_SUBSECTOR)
-    {
-        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
-        {
-            ptr = ((subsector_t*) ptr)->sector;
-            args->type = DMU_SECTOR;
-        }
-        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
-        {
-            ptr = ((subsector_t*) ptr)->sector;
-            args->type = DMU_SECTOR;
-        }
-    }
-
-    if(args->type == DMU_SECTOR)
-    {
-        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
-        {
-            sector_t           *sec = (sector_t*) ptr;
-            ptr = sec->SP_plane(PLN_FLOOR);
-            args->type = DMU_PLANE;
-        }
-        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
-        {
-            sector_t           *sec = (sector_t*) ptr;
-            ptr = sec->SP_plane(PLN_CEILING);
-            args->type = DMU_PLANE;
-        }
-    }
-
-    if(args->type == DMU_LINEDEF)
-    {
-        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
-        {
-            ptr = ((linedef_t*) ptr)->L_frontside;
-            args->type = DMU_SIDEDEF;
-        }
-        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
-        {
-            linedef_t          *li = ((linedef_t*) ptr);
-            if(!li->L_backside)
-                Con_Error("DMU_ResolveReferences: Linedef %i has no back side.\n",
-                          P_ToIndex(li));
-
-            ptr = li->L_backside;
-            args->type = DMU_SIDEDEF;
-        }
-    }
-
-    return ptr;
-}
-
-static void* resolveSurfaceReferences(void* obj, setargs_t* args)
-{
-    void*               ptr = obj;
-
-    if(args->type == DMU_SIDEDEF)
-    {
-        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
-        {
-            ptr = &((sidedef_t*) ptr)->SW_topsurface;
-            args->type = DMU_SURFACE;
-        }
-        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
-        {
-            ptr = &((sidedef_t*) ptr)->SW_middlesurface;
-            args->type = DMU_SURFACE;
-        }
-        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
-        {
-            ptr = &((sidedef_t*) ptr)->SW_bottomsurface;
-            args->type = DMU_SURFACE;
-        }
-    }
-
-    if(args->type == DMU_PLANE)
-    {
-        switch(args->prop)
-        {
-        case DMU_MATERIAL:
-        case DMU_MATERIAL_OFFSET_X:
-        case DMU_MATERIAL_OFFSET_Y:
-        case DMU_MATERIAL_OFFSET_XY:
-        case DMU_COLOR:
-        case DMU_COLOR_RED:
-        case DMU_COLOR_GREEN:
-        case DMU_COLOR_BLUE:
-        case DMU_ALPHA:
-        case DMU_BLENDMODE:
-        case DMU_FLAGS:
-            ptr = &((plane_t*) ptr)->surface;
-            args->type = DMU_SURFACE;
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    return ptr;
-}
-
 /**
  * Only those properties that are writable by outside parties (such as games)
  * are included here. Attempting to set a non-writable property causes a
@@ -960,60 +872,189 @@ static void* resolveSurfaceReferences(void* obj, setargs_t* args)
 static int setProperty(void* obj, void* context)
 {
     setargs_t*          args = (setargs_t*) context;
-    void*               ptr;
+    sector_t*           updateSector1 = NULL, *updateSector2 = NULL;
     plane_t*            updatePlane = NULL;
-    sector_t*           updateSector = NULL;
+    linedef_t*          updateLinedef = NULL;
+    sidedef_t*          updateSidedef = NULL;
+    surface_t*          updateSurface = NULL;
+    // subsector_t*        updateSubSector = NULL;
 
     /**
-     * When setting a property, reference resolution is split into two stages,
-     * so that we can automatically respond to changes.
+     * \algorithm:
+     *
+     * When setting a property, reference resolution is done hierarchically so
+     * that we can update all owner's of the objects being manipulated should
+     * the DMU object's Set routine suggests that a change occured which other
+     * DMU objects may wish/need to respond to.
+     *
+     * 1) Collect references to all current owners of the object.
+     * 2) Pass the change delta on to the object.
+     * 3) Object responds:
+     *      @c true = update owners, ELSE @c false.
+     * 4) If num collected references > 0
+     *        recurse, Object = owners[n]
      */
-    ptr = resolveReferences(obj, args);
+
+    // Dereference where necessary. Note the order, these cascade.
+    if(args->type == DMU_SUBSECTOR)
+    {
+        // updateSubSector = (subsector_t*) obj;
+
+        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        {
+            obj = ((subsector_t*) obj)->sector;
+            args->type = DMU_SECTOR;
+        }
+        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        {
+            obj = ((subsector_t*) obj)->sector;
+            args->type = DMU_SECTOR;
+        }
+    }
+
+    if(args->type == DMU_SECTOR)
+    {
+        updateSector1 = (sector_t*) obj;
+
+        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        {
+            sector_t           *sec = (sector_t*) obj;
+            obj = sec->SP_plane(PLN_FLOOR);
+            args->type = DMU_PLANE;
+        }
+        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        {
+            sector_t           *sec = (sector_t*) obj;
+            obj = sec->SP_plane(PLN_CEILING);
+            args->type = DMU_PLANE;
+        }
+    }
+
+    if(args->type == DMU_LINEDEF)
+    {
+        updateLinedef = (linedef_t*) obj;
+
+        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
+        {
+            obj = ((linedef_t*) obj)->L_frontside;
+            args->type = DMU_SIDEDEF;
+        }
+        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
+        {
+            linedef_t          *li = ((linedef_t*) obj);
+            if(!li->L_backside)
+                Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
+                          P_ToIndex(li));
+
+            obj = li->L_backside;
+            args->type = DMU_SIDEDEF;
+        }
+    }
 
     if(args->type == DMU_SIDEDEF)
     {
-        //// \todo Do not assume we need to update the sector.
-        updateSector = ((sidedef_t*) ptr)->sector;
-    }
-    if(args->type == DMU_PLANE)
-    {
-        updatePlane = (plane_t*) ptr;
+        updateSidedef = (sidedef_t*) obj;
+
+        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
+        {
+            obj = &((sidedef_t*) obj)->SW_topsurface;
+            args->type = DMU_SURFACE;
+        }
+        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
+        {
+            obj = &((sidedef_t*) obj)->SW_middlesurface;
+            args->type = DMU_SURFACE;
+        }
+        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
+        {
+            obj = &((sidedef_t*) obj)->SW_bottomsurface;
+            args->type = DMU_SURFACE;
+        }
     }
 
-    ptr = resolveSurfaceReferences(ptr, args);
+    if(args->type == DMU_PLANE)
+    {
+        updatePlane = (plane_t*) obj;
+
+        switch(args->prop)
+        {
+        case DMU_MATERIAL:
+        case DMU_OFFSET_X:
+        case DMU_OFFSET_Y:
+        case DMU_OFFSET_XY:
+        case DMU_NORMAL_X:
+        case DMU_NORMAL_Y:
+        case DMU_NORMAL_Z:
+        case DMU_NORMAL_XYZ:
+        case DMU_COLOR:
+        case DMU_COLOR_RED:
+        case DMU_COLOR_GREEN:
+        case DMU_COLOR_BLUE:
+        case DMU_ALPHA:
+        case DMU_BLENDMODE:
+        case DMU_FLAGS:
+            obj = &((plane_t*) obj)->surface;
+            args->type = DMU_SURFACE;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    if(args->type == DMU_SURFACE)
+    {
+        updateSurface = (surface_t*) obj;
+/*
+        // Resolve implicit references to properties of the surface's material.
+        switch(args->prop)
+        {
+        case UNKNOWN1:
+            obj = &((surface_t*) obj)->material;
+            args->type = DMU_MATERIAL;
+            break;
+
+        default:
+            break;
+        }*/
+    }
 
     switch(args->type)
     {
     case DMU_SURFACE:
-        Surface_SetProperty(ptr, args);
+        Surface_SetProperty(obj, args);
         break;
 
     case DMU_PLANE:
-        Plane_SetProperty(ptr, args);
+        Plane_SetProperty(obj, args);
         break;
 
     case DMU_VERTEX:
-        Vertex_SetProperty(ptr, args);
+        Vertex_SetProperty(obj, args);
         break;
 
     case DMU_SEG:
-        Seg_SetProperty(ptr, args);
+        Seg_SetProperty(obj, args);
         break;
 
     case DMU_LINEDEF:
-        Linedef_SetProperty(ptr, args);
+        Linedef_SetProperty(obj, args);
         break;
 
     case DMU_SIDEDEF:
-        Sidedef_SetProperty(ptr, args);
+        Sidedef_SetProperty(obj, args);
         break;
 
     case DMU_SUBSECTOR:
-        Subsector_SetProperty(ptr, args);
+        Subsector_SetProperty(obj, args);
         break;
 
     case DMU_SECTOR:
-        Sector_SetProperty(ptr, args);
+        Sector_SetProperty(obj, args);
+        break;
+
+    case DMU_MATERIAL:
+        Material_SetProperty(obj, args);
         break;
 
     case DMU_NODE:
@@ -1025,16 +1066,61 @@ static int setProperty(void* obj, void* context)
         Con_Error("SetProperty: Type %s not writable.\n", DMU_Str(args->type));
     }
 
+    if(updateSurface)
+    {
+        if(R_UpdateSurface(updateSurface, false))
+        {
+            switch(DMU_GetType(updateSurface->owner))
+            {
+            case DMU_SIDEDEF:
+                updateSidedef = updateSurface->owner;
+                break;
+
+            case DMU_PLANE:
+                updatePlane = updateSurface->owner;
+                break;
+
+            default:
+                Con_Error("SetPropert: Internal error, surface owner unknown.\n");
+            }
+        }
+    }
+
+    if(updateSidedef)
+    {
+        if(R_UpdateSidedef(updateSidedef, false))
+            updateLinedef = updateSidedef->line;
+    }
+
+    if(updateLinedef)
+    {
+        if(R_UpdateLinedef(updateLinedef, false))
+        {
+            updateSector1 = updateLinedef->L_frontside->sector;
+            updateSector2 = updateLinedef->L_backside->sector;
+        }
+    }
+
     if(updatePlane)
     {
         if(R_UpdatePlane(updatePlane, false))
-            updateSector = updatePlane->sector;
+            updateSector1 = updatePlane->sector;
     }
 
-    if(updateSector)
+    if(updateSector1)
     {
-        R_UpdateSector(updateSector, false);
+        R_UpdateSector(updateSector1, false);
     }
+
+    if(updateSector2)
+    {
+        R_UpdateSector(updateSector2, false);
+    }
+
+/*  if(updateSubSector)
+    {
+        R_UpdateSubSector(updateSubSector, false);
+    } */
 
     return true; // Continue iteration.
 }
@@ -1156,7 +1242,7 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
                       value_Str(args->valueType));
         }
     }
-    else if(valueType == DDVT_SHORT || valueType == DDVT_FLAT_INDEX)
+    else if(valueType == DDVT_SHORT)
     {
         const short* s = src;
 
@@ -1172,7 +1258,6 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             args->intValues[index] = *s;
             break;
         case DDVT_FLOAT:
-            // \todo Don't allow conversion from DDVT_FLATINDEX.
             args->floatValues[index] = *s;
             break;
         case DDVT_FIXED:
@@ -1239,43 +1324,157 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
 static int getProperty(void* obj, void* context)
 {
     setargs_t*          args = (setargs_t*) context;
-    void*               ptr;
 
-    ptr = resolveReferences(obj, args);
-    ptr = resolveSurfaceReferences(ptr, args);
+    // Dereference where necessary. Note the order, these cascade.
+    if(args->type == DMU_SUBSECTOR)
+    {
+        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        {
+            obj = ((subsector_t*) obj)->sector;
+            args->type = DMU_SECTOR;
+        }
+        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        {
+            obj = ((subsector_t*) obj)->sector;
+            args->type = DMU_SECTOR;
+        }
+    }
+
+    if(args->type == DMU_SECTOR)
+    {
+        if(args->modifiers & DMU_FLOOR_OF_SECTOR)
+        {
+            sector_t           *sec = (sector_t*) obj;
+            obj = sec->SP_plane(PLN_FLOOR);
+            args->type = DMU_PLANE;
+        }
+        else if(args->modifiers & DMU_CEILING_OF_SECTOR)
+        {
+            sector_t           *sec = (sector_t*) obj;
+            obj = sec->SP_plane(PLN_CEILING);
+            args->type = DMU_PLANE;
+        }
+    }
+
+    if(args->type == DMU_LINEDEF)
+    {
+        if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
+        {
+            obj = ((linedef_t*) obj)->L_frontside;
+            args->type = DMU_SIDEDEF;
+        }
+        else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
+        {
+            linedef_t          *li = ((linedef_t*) obj);
+            if(!li->L_backside)
+                Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
+                          P_ToIndex(li));
+
+            obj = li->L_backside;
+            args->type = DMU_SIDEDEF;
+        }
+    }
+
+    if(args->type == DMU_SIDEDEF)
+    {
+        if(args->modifiers & DMU_TOP_OF_SIDEDEF)
+        {
+            obj = &((sidedef_t*) obj)->SW_topsurface;
+            args->type = DMU_SURFACE;
+        }
+        else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
+        {
+            obj = &((sidedef_t*) obj)->SW_middlesurface;
+            args->type = DMU_SURFACE;
+        }
+        else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
+        {
+            obj = &((sidedef_t*) obj)->SW_bottomsurface;
+            args->type = DMU_SURFACE;
+        }
+    }
+
+    if(args->type == DMU_PLANE)
+    {
+        switch(args->prop)
+        {
+        case DMU_MATERIAL:
+        case DMU_OFFSET_X:
+        case DMU_OFFSET_Y:
+        case DMU_OFFSET_XY:
+        case DMU_NORMAL_X:
+        case DMU_NORMAL_Y:
+        case DMU_NORMAL_Z:
+        case DMU_NORMAL_XYZ:
+        case DMU_COLOR:
+        case DMU_COLOR_RED:
+        case DMU_COLOR_GREEN:
+        case DMU_COLOR_BLUE:
+        case DMU_ALPHA:
+        case DMU_BLENDMODE:
+        case DMU_FLAGS:
+            obj = &((plane_t*) obj)->surface;
+            args->type = DMU_SURFACE;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+/*
+    if(args->type == DMU_SURFACE)
+    {
+        // Resolve implicit references to properties of the surface's material.
+        switch(args->prop)
+        {
+        case UNKNOWN1:
+            obj = &((surface_t*) obj)->material;
+            args->type = DMU_MATERIAL;
+            break;
+
+        default:
+            break;
+        }
+    }
+*/
 
     switch(args->type)
     {
     case DMU_VERTEX:
-        Vertex_GetProperty(ptr, args);
+        Vertex_GetProperty(obj, args);
         break;
 
     case DMU_SEG:
-        Seg_GetProperty(ptr, args);
+        Seg_GetProperty(obj, args);
         break;
 
     case DMU_LINEDEF:
-        Linedef_GetProperty(ptr, args);
+        Linedef_GetProperty(obj, args);
         break;
 
     case DMU_SURFACE:
-        Surface_GetProperty(ptr, args);
+        Surface_GetProperty(obj, args);
         break;
 
     case DMU_PLANE:
-        Plane_GetProperty(ptr, args);
+        Plane_GetProperty(obj, args);
         break;
 
     case DMU_SECTOR:
-        Sector_GetProperty(ptr, args);
+        Sector_GetProperty(obj, args);
         break;
 
     case DMU_SIDEDEF:
-        Sidedef_GetProperty(ptr, args);
+        Sidedef_GetProperty(obj, args);
         break;
 
     case DMU_SUBSECTOR:
-        Subsector_GetProperty(ptr, args);
+        Subsector_GetProperty(obj, args);
+        break;
+
+    case DMU_MATERIAL:
+        Material_GetProperty(obj, args);
         break;
 
     default:

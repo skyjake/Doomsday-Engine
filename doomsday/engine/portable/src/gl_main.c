@@ -642,6 +642,8 @@ void GL_ShutdownRefresh(void)
     GL_ShutdownTextureManager();
     R_DestroySkins();
     R_DestroyDetailTextures();
+    R_DestroyShinyTextures();
+    R_DestroyMaskTextures();
 }
 
 /**
@@ -846,7 +848,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 //            strcpy(oldFontName, FR_GetFont(fontIDX)->name);
 
         // Delete all textures.
-        GL_ShutdownTextureManager();
+        GL_ResetTextureManager();
         GL_ShutdownFont();
         GL_ReleaseReservedNames();
     }

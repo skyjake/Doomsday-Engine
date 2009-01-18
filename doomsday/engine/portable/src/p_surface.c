@@ -57,7 +57,7 @@
  * @param mat           Ptr to the material to change to.
  * @return              @c true, if changed successfully.
  */
-boolean Surface_SetMaterial(surface_t* suf, struct material_s* mat)
+boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
 {
     if(!suf || !mat)
         return false;
@@ -350,27 +350,27 @@ boolean Surface_SetProperty(surface_t* suf, const setargs_t* args)
         break;
     case DMU_MATERIAL:
         {
-        materialnum_t   mat;
-        DMU_SetValue(DMT_MATERIAL, &mat, args, 0);
+        material_t*     mat;
+        DMU_SetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);
 
-        Surface_SetMaterial(suf, R_GetMaterialByNum(mat));
+        Surface_SetMaterial(suf, mat);
         }
         break;
-    case DMU_MATERIAL_OFFSET_X:
+    case DMU_OFFSET_X:
         {
         float           offX;
         DMU_SetValue(DMT_SURFACE_OFFSET, &offX, args, 0);
         Surface_SetMaterialOffsetX(suf, offX);
         }
         break;
-    case DMU_MATERIAL_OFFSET_Y:
+    case DMU_OFFSET_Y:
         {
         float           offY;
         DMU_SetValue(DMT_SURFACE_OFFSET, &offY, args, 0);
         Surface_SetMaterialOffsetY(suf, offY);
         }
         break;
-    case DMU_MATERIAL_OFFSET_XY:
+    case DMU_OFFSET_XY:
         {
         float           offset[2];
         DMU_SetValue(DMT_SURFACE_OFFSET, &offset[VX], args, 0);
@@ -395,22 +395,36 @@ boolean Surface_GetProperty(const surface_t *suf, setargs_t *args)
     {
     case DMU_MATERIAL:
         {
-        materialnum_t mat = R_GetMaterialNum(suf->material);
+        material_t*     mat = suf->material;
 
         if(suf->inFlags & SUIF_MATERIAL_FIX)
-            mat = 0;
-        DMU_GetValue(DMT_MATERIAL, &mat, args, 0);
+            mat = NULL;
+        DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);
         break;
         }
-    case DMU_MATERIAL_OFFSET_X:
+    case DMU_OFFSET_X:
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VX], args, 0);
         break;
-    case DMU_MATERIAL_OFFSET_Y:
+    case DMU_OFFSET_Y:
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VY], args, 0);
         break;
-    case DMU_MATERIAL_OFFSET_XY:
+    case DMU_OFFSET_XY:
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VX], args, 0);
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VY], args, 1);
+        break;
+    case DMU_NORMAL_X:
+        DMU_GetValue(DMT_SURFACE_NORMAL, &suf->normal[VX], args, 0);
+        break;
+    case DMU_NORMAL_Y:
+        DMU_GetValue(DMT_SURFACE_NORMAL, &suf->normal[VY], args, 0);
+        break;
+    case DMU_NORMAL_Z:
+        DMU_GetValue(DMT_SURFACE_NORMAL, &suf->normal[VZ], args, 0);
+        break;
+    case DMU_NORMAL_XYZ:
+        DMU_GetValue(DMT_SURFACE_NORMAL, &suf->normal[VX], args, 0);
+        DMU_GetValue(DMT_SURFACE_NORMAL, &suf->normal[VY], args, 1);
+        DMU_GetValue(DMT_SURFACE_NORMAL, &suf->normal[VZ], args, 2);
         break;
     case DMU_COLOR:
         DMU_GetValue(DMT_SURFACE_RGBA, &suf->rgba[CR], args, 0);

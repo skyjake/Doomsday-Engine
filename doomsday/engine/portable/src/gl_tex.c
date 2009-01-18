@@ -628,7 +628,7 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, lumppatch_t *patch,
 /**
  * Translate colors in the specified patch.
  */
-void TranslatePatch(lumppatch_t *patch, byte *transTable)
+void GL_TranslatePatch(lumppatch_t *patch, byte *transTable)
 {
     int         count;
     int         col = 0;
