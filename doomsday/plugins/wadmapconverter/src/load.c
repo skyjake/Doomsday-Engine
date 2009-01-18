@@ -221,13 +221,13 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
 
             sprintf(m->name, "UNK%05i", idx);
             m->name[8] = '\0';
-            m->num = R_MaterialCheckNumForIndex(idx, isFlat? MG_FLATS : MG_TEXTURES);
+            m->num = P_MaterialCheckNumForIndex(idx, isFlat? MG_FLATS : MG_TEXTURES);
         }
         else
         {
             memcpy(m->name, name, 8);
             m->name[8] = '\0';
-            m->num = R_MaterialCheckNumForName(m->name, (isFlat? MG_FLATS : MG_TEXTURES));
+            m->num = P_MaterialCheckNumForName(m->name, (isFlat? MG_FLATS : MG_TEXTURES));
         }
 
         // Add it to the list of known materials.

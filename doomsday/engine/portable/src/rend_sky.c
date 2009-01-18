@@ -40,6 +40,7 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -303,36 +304,33 @@ void Rend_SkyRenderer(int hemi)
 
 static void setupFadeout(skylayer_t* slayer)
 {
-    int                 flags = TEXF_LOAD_AS_SKY;
-
-    if(slayer->flags & SLF_MASKED)
-        flags |= TEXF_TEX_ZEROMASK;
-
-    // Ensure we have up to date info on the material tex.
     if(slayer->mat)
     {
-        materialtexinst_t*  texInst =
-            R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL, NULL);
+        int             i;
+        material_load_params_t params;
+        material_snapshot_t ms;
 
-        if(texInst)
-        {
-            int                 i;
+        // Ensure we have up to date info on the material.
+        memset(&params, 0, sizeof(params));
+        params.flags = MLF_LOAD_AS_SKY;
+        if(slayer->flags & SLF_MASKED)
+            params.flags |= MLF_ZEROMASK;
 
-            slayer->fadeout.rgb[CR] = texInst->topColor[CR];
-            slayer->fadeout.rgb[CG] = texInst->topColor[CG];
-            slayer->fadeout.rgb[CB] = texInst->topColor[CB];
+        Material_Prepare(&ms, slayer->mat, true, &params);
+        slayer->fadeout.rgb[CR] = ms.topColor[CR];
+        slayer->fadeout.rgb[CG] = ms.topColor[CG];
+        slayer->fadeout.rgb[CB] = ms.topColor[CB];
 
-            // Determine if it should be used.
-            for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
-                if(slayer->fadeout.rgb[i] > slayer->fadeout.limit)
-                {
-                    // Colored fadeout is needed.
-                    slayer->fadeout.use = true;
-                    break;
-                }
+        // Determine if it should be used.
+        for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
+            if(slayer->fadeout.rgb[i] > slayer->fadeout.limit)
+            {
+                // Colored fadeout is needed.
+                slayer->fadeout.use = true;
+                break;
+            }
 
-            return;
-        }
+        return;
     }
 
     // An invalid texture, default to black.
@@ -359,35 +357,37 @@ void Rend_RenderSkyHemisphere(int whichHemi)
     {
         if(slayer->flags & SLF_ENABLED)
         {
-            material_t*         mat;
-            byte                result = 0;
+            byte            result = 0;
 
             if(!slayer->mat)
                 Con_Error("Rend_RenderSkyHemisphere: Sky layer "
                           "without a material!\n");
 
-            mat = slayer->mat->current;
-
             // The texture is actually loaded when an update is done.
             if(renderTextures)
             {
-                int                 flags = TEXF_LOAD_AS_SKY;
-                gltexture_t         glTex;
+                material_load_params_t params;
+                material_snapshot_t ms;
 
+                memset(&params, 0, sizeof(params));
+                params.flags = MLF_LOAD_AS_SKY;
                 if(slayer->flags & SLF_MASKED)
-                    flags |= TEXF_TEX_ZEROMASK;
+                    params.flags |= MLF_ZEROMASK;
 
-                R_MaterialPrepare(mat, flags, &glTex, NULL, &result);
-                curTex = glTex.id;
-                skyTexWidth = glTex.width;
-                skyTexHeight = glTex.height;
+                result = Material_Prepare(&ms, slayer->mat, true, &params);
+                curTex = ms.passes[MTP_PRIMARY].texInst->id;
+                skyTexWidth =
+                    GLTexture_GetWidth(ms.passes[MTP_PRIMARY].texInst->tex);
+                skyTexHeight =
+                    GLTexture_GetHeight(ms.passes[MTP_PRIMARY].texInst->tex);
 
                 if(result)
                 {   // Texture was reloaded.
                     setupFadeout(slayer);
                 }
 
-                GL_BindTexture(glTex.id, glTex.magMode);
+                GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
+                               ms.passes[MTP_PRIMARY].magMode);
             }
             else
             {
@@ -547,31 +547,39 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
         break;
 
     case DD_MASK:
+        {
+        boolean             deleteTextures = false;
         if(*((int*)data) == DD_YES)
         {
             // Invalidate the loaded texture, if necessary.
             if(slayer->mat && !(slayer->flags & SLF_MASKED))
-                R_MaterialTexDelete(slayer->mat->tex);
+                deleteTextures = true;
             slayer->flags |= SLF_MASKED;
         }
         else
         {
             // Invalidate the loaded texture, if necessary.
             if(slayer->mat && (slayer->flags & SLF_MASKED))
-                R_MaterialTexDelete(slayer->mat->tex);
+                deleteTextures = true;
             slayer->flags &= ~SLF_MASKED;
+        }
+
+        if(deleteTextures)
+            Material_DeleteTextures(slayer->mat);
         }
         break;
 
     case DD_MATERIAL:
-        if((slayer->mat = R_GetMaterialByNum(*(materialnum_t*) data)))
+        if((slayer->mat = P_ToMaterial(*(materialnum_t*) data)))
         {
-            int                 flags = TEXF_LOAD_AS_SKY;
+            material_load_params_t params;
 
+            memset(&params, 0, sizeof(params));
+            params.flags = MLF_LOAD_AS_SKY;
             if(slayer->flags & SLF_MASKED)
-                flags |= TEXF_TEX_ZEROMASK;
+                params.flags |= MLF_ZEROMASK;
 
-            R_MaterialPrepare(slayer->mat->current, flags, NULL, NULL, NULL);
+            Material_Prepare(NULL, slayer->mat, true, &params);
         }
 
         setupFadeout(slayer);

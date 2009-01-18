@@ -148,7 +148,7 @@ boolean Mus_Init(void)
     // On the Mac, just use QuickTime for the music and be done with it.
     iMusic = &audiodQuickTimeMusic;
 #endif
-    
+
     // Initialize the chosen interfaces.
     for(i = 0; i < NUM_INTERFACES; ++i)
     {
@@ -376,6 +376,9 @@ int Mus_GetExt(ded_music_t* def, char* path)
 
     if(Mus_IsMUSLump(lump))
         return false; // It's MUS!
+
+    if(!iMusic->SongBuffer)
+        return false;
 
     // Take a copy. Might be a big one (since it could be an MP3), so
     // use the standard memory allocation routines.

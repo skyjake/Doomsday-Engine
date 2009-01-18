@@ -483,14 +483,16 @@ static uint generateDecorLights(const ded_decorlight_t* def,
     vec3_t              posBase, pos;
     float               patternW, patternH;
     int                 skip[2];
+    material_t*         mat = suf->material;
 
     if(!R_IsValidLightDecoration(def))
         return 0;
 
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
-    patternW = suf->material->width * skip[0];
-    patternH = suf->material->height * skip[1];
+
+    patternW = mat->width * skip[0];
+    patternH = mat->height * skip[1];
 
     V3_Set(posBase, def->elevation * suf->normal[VX],
                     def->elevation * suf->normal[VY],
@@ -499,13 +501,13 @@ static uint generateDecorLights(const ded_decorlight_t* def,
 
     // Let's see where the top left light is.
     s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
-                         suf->material->width * def->patternOffset[0] +
+                         mat->width * def->patternOffset[0] +
                          offsetS, patternW);
     num = 0;
     for(; s < width; s += patternW)
     {
         t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
-                             suf->material->height * def->patternOffset[1] +
+                             mat->height * def->patternOffset[1] +
                              offsetT, patternH);
 
         for(; t < height; t += patternH)
@@ -554,6 +556,7 @@ static uint generateDecorModels(const ded_decormodel_t* def,
     float               s, t; // Horizontal and vertical offset.
     vec3_t              posBase, pos;
     int                 skip[2];
+    material_t*         mat = suf->material;
 
     if(!R_IsValidModelDecoration(def))
         return 0;
@@ -569,8 +572,9 @@ static uint generateDecorModels(const ded_decormodel_t* def,
 
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
-    patternW = suf->material->width * skip[0];
-    patternH = suf->material->height * skip[1];
+
+    patternW = mat->width * skip[0];
+    patternH = mat->height * skip[1];
 
     V3_Set(posBase, def->elevation * suf->normal[VX],
                     def->elevation * suf->normal[VY],
@@ -579,13 +583,13 @@ static uint generateDecorModels(const ded_decormodel_t* def,
 
     // Let's see where the top left light is.
     s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
-                         suf->material->width * def->patternOffset[0] +
+                         mat->width * def->patternOffset[0] +
                          offsetS, patternW);
     num = 0;
     for(; s < width; s += patternW)
     {
         t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
-                             suf->material->height * def->patternOffset[1] +
+                             mat->height * def->patternOffset[1] +
                              offsetT, patternH);
 
         for(; t < height; t += patternH)
@@ -646,12 +650,12 @@ static void updateSurfaceDecorations(surface_t* suf, float offsetS,
         uint                i;
         float               matW, matH, width, height;
         int                 axis = V3_MajorAxis(suf->normal);
-        const ded_decor_t*  def = R_MaterialGetDecoration(suf->material);
+        const ded_decor_t*  def = Material_GetDecoration(suf->material);
 
         if(def)
         {
-            matW = suf->material->current->width;
-            matH = suf->material->current->height;
+            matW = suf->material->width;
+            matH = suf->material->height;
             if(axis == VX || axis == VY)
             {
                 width = sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);

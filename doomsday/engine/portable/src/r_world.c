@@ -63,15 +63,15 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     rendSkyLight = 1;       // cvar
+int rendSkyLight = 1; // cvar.
+float rendLightWallAngle = 1; // Intensity of angle-based wall lighting.
 
 boolean firstFrameAfterLoad;
 boolean mapSetup;
 
-nodeindex_t     *linelinks;         // indices to roots
+nodeindex_t* linelinks; // Indices to roots.
 
-// Intensity of angle-based wall lighting.
-float   rendLightWallAngle = 1;
+skyfix_t skyFix[2];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -550,6 +550,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     plane->header.type = DMU_PLANE;
 
     // Initalize the plane.
+    plane->surface.owner = (void*) plane;
     plane->glowRGB[CR] = plane->glowRGB[CG] = plane->glowRGB[CB] = 1;
     plane->glow = 0;
     plane->sector = sec;
@@ -713,292 +714,123 @@ void R_ClearSurfaceDecorations(surface_t *suf)
 }
 
 /**
- * Initialize the skyfix. In practice all this does is to check for mobjs
- * intersecting ceilings and if so: raises the sky fix for the sector a
- * bit to accommodate them.
- */
-void R_InitSkyFix(void)
-{
-    float               f, b;
-    float              *fix;
-    uint                i;
-    mobj_t             *it;
-    sector_t           *sec;
-
-    for(i = 0; i < numSectors; ++i)
-    {
-        sec = SECTOR_PTR(i);
-
-        // Must have a sky ceiling.
-        if(!R_IsSkySurface(&sec->SP_ceilsurface))
-            continue;
-
-        fix = &sec->skyFix[PLN_CEILING].offset;
-
-        // Check that all the mobjs in the sector fit in.
-        for(it = sec->mobjList; it; it = it->sNext)
-        {
-            b = it->height;
-            f = sec->SP_ceilheight + *fix -
-                sec->SP_floorheight;
-
-            if(b > f)
-            {   // Must increase skyfix.
-                *fix += b - f;
-
-                if(verbose)
-                {
-                    Con_Printf("S%li: (mo)skyfix to %g (ceil=%g)\n",
-                               (long) GET_SECTOR_IDX(sec), *fix,
-                               sec->SP_ceilheight + *fix);
-                }
-            }
-        }
-    }
-}
-
-static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
-{
-    float               f, b;
-    float               height = 0;
-    boolean             adjusted = false;
-    float              *fix = NULL;
-    sector_t           *adjustSec = NULL;
-
-    // Both the front and back surfaces must be sky on this plane.
-    if(!R_IsSkySurface(&front->planes[pln]->surface) ||
-       !R_IsSkySurface(&back->planes[pln]->surface))
-        return false;
-
-    f = front->planes[pln]->height + front->skyFix[pln].offset;
-    b = back->planes[pln]->height + back->skyFix[pln].offset;
-
-    if(f == b)
-        return false;
-
-    if(pln == PLN_CEILING)
-    {
-        if(f < b)
-        {
-            height = b - front->planes[pln]->height;
-            fix = &front->skyFix[pln].offset;
-            adjustSec = front;
-        }
-        else if(f > b)
-        {
-            height = f - back->planes[pln]->height;
-            fix = &back->skyFix[pln].offset;
-            adjustSec = back;
-        }
-
-        if(height > *fix)
-        {   // Must increase skyfix.
-           *fix = height;
-            adjusted = true;
-        }
-    }
-    else // Its the floor.
-    {
-        if(f > b)
-        {
-            height = b - front->planes[pln]->height;
-            fix = &front->skyFix[pln].offset;
-            adjustSec = front;
-        }
-        else if(f < b)
-        {
-            height = f - back->planes[pln]->height;
-            fix = &back->skyFix[pln].offset;
-            adjustSec = back;
-        }
-
-        if(height < *fix)
-        {   // Must increase skyfix.
-           *fix = height;
-            adjusted = true;
-        }
-    }
-
-    if(verbose && adjusted)
-    {
-        Con_Printf("S%ui: skyfix to %g (%s=%g)\n",
-                   (uint) GET_SECTOR_IDX(adjustSec), *fix,
-                   (pln == PLN_CEILING? "ceil" : "floor"),
-                   adjustSec->planes[pln]->height + (*fix));
-    }
-
-    return adjusted;
-}
-
-static void spreadSkyFixForNeighbors(vertex_t *vtx, linedef_t *refLine,
-                                     boolean fixFloors, boolean fixCeilings,
-                                     boolean *adjustedFloor,
-                                     boolean *adjustedCeil)
-{
-    uint                pln;
-    lineowner_t        *base, *lOwner, *rOwner;
-    boolean             doFix[2];
-    boolean            *adjusted[2];
-
-    doFix[PLN_FLOOR]   = fixFloors;
-    doFix[PLN_CEILING] = fixCeilings;
-    adjusted[PLN_FLOOR] = adjustedFloor;
-    adjusted[PLN_CEILING] = adjustedCeil;
-
-    // Find the reference line in the owner list.
-    base = R_GetVtxLineOwner(vtx, refLine);
-
-    // Spread will begin from the next line anti-clockwise.
-    lOwner = base->LO_prev;
-
-    // Spread clockwise around this vertex from the reference plus one
-    // until we reach the reference again OR a single sided line.
-    rOwner = base->LO_next;
-    do
-    {
-        if(rOwner != lOwner)
-        {
-            for(pln = 0; pln < 2; ++pln)
-            {
-                if(!doFix[pln])
-                    continue;
-
-                if(doSkyFix(rOwner->lineDef->L_frontsector,
-                            lOwner->lineDef->L_frontsector, pln))
-                    *adjusted[pln] = true;
-
-                if(lOwner->lineDef->L_backside)
-                if(doSkyFix(rOwner->lineDef->L_frontsector,
-                            lOwner->lineDef->L_backsector, pln))
-                    *adjusted[pln] = true;
-
-                if(rOwner->lineDef->L_backside)
-                if(doSkyFix(rOwner->lineDef->L_backsector,
-                            lOwner->lineDef->L_frontsector, pln))
-                    *adjusted[pln] = true;
-
-                if(rOwner->lineDef->L_backside && lOwner->lineDef->L_backside)
-                if(doSkyFix(rOwner->lineDef->L_backsector,
-                            lOwner->lineDef->L_frontsector, pln))
-                    *adjusted[pln] = true;
-            }
-        }
-
-        if(!rOwner->lineDef->L_backside)
-            break;
-
-        rOwner = rOwner->LO_next;
-    } while(rOwner != base);
-
-    // Spread will begin from the next line clockwise.
-    rOwner = base->LO_next;
-
-    // Spread anti-clockwise around this vertex from the reference minus one
-    // until we reach the reference again OR a single sided line.
-    lOwner = base->LO_prev;
-    do
-    {
-        if(rOwner != lOwner)
-        {
-            for(pln = 0; pln < 2; ++pln)
-            {
-                if(!doFix[pln])
-                    continue;
-
-                if(doSkyFix(rOwner->lineDef->L_frontsector,
-                            lOwner->lineDef->L_frontsector, pln))
-                    *adjusted[pln] = true;
-
-                if(lOwner->lineDef->L_backside)
-                if(doSkyFix(rOwner->lineDef->L_frontsector,
-                            lOwner->lineDef->L_backsector, pln))
-                    *adjusted[pln] = true;
-
-                if(rOwner->lineDef->L_backside)
-                if(doSkyFix(rOwner->lineDef->L_backsector,
-                            lOwner->lineDef->L_frontsector, pln))
-                    *adjusted[pln] = true;
-
-                if(rOwner->lineDef->L_backside && lOwner->lineDef->L_backside)
-                if(doSkyFix(rOwner->lineDef->L_backsector,
-                            lOwner->lineDef->L_frontsector, pln))
-                    *adjusted[pln] = true;
-            }
-        }
-
-        if(!lOwner->lineDef->L_backside)
-            break;
-
-        lOwner = lOwner->LO_prev;
-    } while(lOwner != base);
-}
-
-/**
  * Fixing the sky means that for adjacent sky sectors the lower sky
  * ceiling is lifted to match the upper sky. The raising only affects
  * rendering, it has no bearing on gameplay.
  */
-void R_SkyFix(boolean fixFloors, boolean fixCeilings)
+void R_UpdateSkyFix(void)
 {
-    uint        i, pln;
-    boolean     adjusted[2], doFix[2];
+    uint                i;
 
-    if(!fixFloors && !fixCeilings)
-        return; // Why are we here?
+    skyFix[PLN_FLOOR].height = DDMAXFLOAT;
+    skyFix[PLN_CEILING].height = DDMINFLOAT;
 
-    doFix[PLN_FLOOR]   = fixFloors;
-    doFix[PLN_CEILING] = fixCeilings;
-
-    // We'll do this as long as we must to be sure all the sectors are fixed.
-    // Do both floors and ceilings at the same time.
-    do
+    // Update for sector plane heights and mobjs which intersect the ceiling.
+    for(i = 0; i < numSectors; ++i)
     {
-        adjusted[PLN_FLOOR] = adjusted[PLN_CEILING] = false;
+        sector_t*           sec = SECTOR_PTR(i);
+        mobj_t*             mo;
 
-        // We need to check all the linedefs.
-        for(i = 0; i < numLineDefs; ++i)
+        if(R_IsSkySurface(&sec->planes[PLN_CEILING]->surface))
         {
-            linedef_t          *line = LINE_PTR(i);
+            // Adjust for the plane height.
+            if(sec->SP_ceilvisheight > skyFix[PLN_CEILING].height)
+            {   // Must raise the skyfix ceiling.
+                skyFix[PLN_CEILING].height = sec->SP_ceilvisheight;
+            }
 
-            // The conditions: must have two sides.
-            if(!line->L_frontside || !line->L_backside)
-                continue;
-
-            if(line->L_frontsector != line->L_backsector)
+            // Check that all the mobjs in the sector fit in.
+            for(mo = sec->mobjList; mo; mo = mo->sNext)
             {
-                // Perform the skyfix as usual using the front and back
-                // sectors of THIS line for comparing.
-                for(pln = 0; pln < 2; ++pln)
-                {
-                    if(doFix[pln])
-                        if(doSkyFix(line->L_frontsector, line->L_backsector,
-                                    pln))
-                            adjusted[pln] = true;
+                float               extent = mo->pos[VZ] + mo->height;
+
+                if(extent > skyFix[PLN_CEILING].height)
+                {   // Must raise the skyfix ceiling.
+                    skyFix[PLN_CEILING].height = extent;
                 }
             }
-            else if(LINE_SELFREF(line))
-            {
-                // Its a selfreferencing linedef, these will ALWAYS return
-                // the same height on the front and back so we need to find
-                // the neighbouring lines either side of this and compare
-                // the front and back sectors of those instead.
-                uint                j;
-                vertex_t           *vtx[2];
+        }
 
-                vtx[0] = line->L_v1;
-                vtx[1] = line->L_v2;
-                // Walk around each vertex in each direction.
-                for(j = 0; j < 2; ++j)
-                    if(vtx[j]->numLineOwners > 1)
-                        spreadSkyFixForNeighbors(vtx[j], line,
-                                                 doFix[PLN_FLOOR],
-                                                 doFix[PLN_CEILING],
-                                                 &adjusted[PLN_FLOOR],
-                                                 &adjusted[PLN_CEILING]);
+        if(R_IsSkySurface(&sec->planes[PLN_FLOOR]->surface))
+        {
+            // Adjust for the plane height.
+            if(sec->SP_floorvisheight < skyFix[PLN_FLOOR].height)
+            {   // Must lower the skyfix floor.
+                skyFix[PLN_FLOOR].height = sec->SP_floorvisheight;
             }
         }
     }
-    while(adjusted[PLN_FLOOR] || adjusted[PLN_CEILING]);
+
+    // Update for middle textures on two sided linedefs which intersect the
+    // floor and/or ceiling of their front and/or back sectors.
+    for(i = 0; i < numLineDefs; ++i)
+    {
+        linedef_t*          li = LINE_PTR(i);
+
+        // Must be twosided.
+        if(!li->L_frontside || !li->L_backside)
+            continue;
+
+        if(li->L_frontside && li->L_frontside->SW_middlematerial)
+        {
+            sidedef_t*          si = li->L_frontside;
+
+            if(R_IsSkySurface(&li->L_frontsector->SP_ceilsurface))
+            {
+                float               top =
+                    li->L_frontsector->SP_ceilvisheight +
+                        si->SW_middlevisoffset[VY];
+
+                if(top > skyFix[PLN_CEILING].height)
+                {   // Must raise the skyfix ceiling.
+                    skyFix[PLN_CEILING].height = top;
+                }
+            }
+
+            if(R_IsSkySurface(&li->L_frontsector->SP_floorsurface))
+            {
+                float               bottom =
+                    li->L_frontsector->SP_floorvisheight +
+                        si->SW_middlevisoffset[VY] -
+                            si->SW_middlematerial->height;
+
+                if(bottom < skyFix[PLN_FLOOR].height)
+                {   // Must lower the skyfix floor.
+                    skyFix[PLN_FLOOR].height = bottom;
+                }
+            }
+        }
+
+        if(li->L_backside && li->L_backside->SW_middlematerial)
+        {
+            sidedef_t*          si = li->L_backside;
+
+            if(R_IsSkySurface(&li->L_backsector->SP_ceilsurface))
+            {
+                float               top =
+                    li->L_backsector->SP_ceilvisheight +
+                        si->SW_middlevisoffset[VY];
+
+                if(top > skyFix[PLN_CEILING].height)
+                {   // Must raise the skyfix ceiling.
+                    skyFix[PLN_CEILING].height = top;
+                }
+            }
+
+            if(R_IsSkySurface(&li->L_backsector->SP_floorsurface))
+            {
+                float               bottom =
+                    li->L_backsector->SP_floorvisheight +
+                        si->SW_middlevisoffset[VY] -
+                            si->SW_middlematerial->height;
+
+                if(bottom < skyFix[PLN_FLOOR].height)
+                {   // Must lower the skyfix floor.
+                    skyFix[PLN_FLOOR].height = bottom;
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -1032,9 +864,9 @@ void R_SetupFogDefaults(void)
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
-void R_SetupSky(ded_mapinfo_t *mapinfo)
+void R_SetupSky(ded_mapinfo_t* mapinfo)
 {
-    int                 i, k;
+    int                 i;
     int                 skyTex;
     int                 ival = 0;
     float               fval = 0;
@@ -1046,7 +878,7 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
         Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
         Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
         Rend_SkyParams(0, DD_ENABLE, NULL);
-        ival = R_MaterialNumForName("SKY1", MG_TEXTURES);
+        ival = P_MaterialNumForName("SKY1", MG_TEXTURES);
         Rend_SkyParams(0, DD_MATERIAL, &ival);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
@@ -1063,24 +895,25 @@ void R_SetupSky(ded_mapinfo_t *mapinfo)
     Rend_SkyParams(DD_SKY, DD_HORIZON, &mapinfo->horizonOffset);
     for(i = 0; i < 2; ++i)
     {
-        k = mapinfo->skyLayers[i].flags;
-        if(k & SLF_ENABLED)
+        ded_skylayer_t*     layer = &mapinfo->skyLayers[i];
+
+        if(layer->flags & SLF_ENABLED)
         {
-            skyTex = R_MaterialNumForName(mapinfo->skyLayers[i].texture, MG_TEXTURES);
+            skyTex = P_MaterialNumForName(layer->material.name,
+                                          layer->material.group);
             if(!skyTex)
             {
                 Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
-                            mapinfo->skyLayers[i].texture);
-                skyTex = R_MaterialNumForName("SKY1", MG_TEXTURES);
+                            layer->material.name);
+                skyTex = P_MaterialNumForName("SKY1", MG_TEXTURES);
             }
 
             Rend_SkyParams(i, DD_ENABLE, NULL);
             Rend_SkyParams(i, DD_MATERIAL, &skyTex);
-            ival = ((k & SLF_MASKED)? DD_YES : DD_NO);
+            ival = ((layer->flags & SLF_MASKED)? DD_YES : DD_NO);
             Rend_SkyParams(i, DD_MASK, &ival);
-            Rend_SkyParams(i, DD_OFFSET, &mapinfo->skyLayers[i].offset);
-            Rend_SkyParams(i, DD_COLOR_LIMIT,
-                           &mapinfo->skyLayers[i].colorLimit);
+            Rend_SkyParams(i, DD_OFFSET, &layer->offset);
+            Rend_SkyParams(i, DD_COLOR_LIMIT, &layer->colorLimit);
         }
         else
         {
@@ -1619,7 +1452,7 @@ void R_SetupMap(int mode, int flags)
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
 
-        R_SkyFix(true, true); // fix floors and ceilings.
+        R_UpdateSkyFix();
 
         // Set intial values of various tracked and interpolated properties
         // (lighting, smoothed planes etc).
@@ -1832,6 +1665,59 @@ boolean R_SectorContainsSkySurfaces(const sector_t* sec)
     return sectorContainsSkySurfaces;
 }
 
+/**
+ * Given a sidedef section, look at the neighbouring surfaces and pick the
+ * best choice of material used on those surfaces to be applied to "this"
+ * surface.
+ */
+static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
+{
+    material_t*         choice = NULL;
+
+    // Try the materials used on the front and back sector planes,
+    // favouring non-animated materials.
+    if(section == SEG_BOTTOM || section == SEG_TOP)
+    {
+        byte                sid = (s->line->L_frontside == s? 0 : 1);
+        sector_t*           backSec = s->line->L_sector(sid^1);
+
+        if(backSec)
+        {
+            surface_t*          backSuf = &backSec->
+                SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
+                    surface;
+
+            if(!backSuf->material->inAnimGroup && !R_IsSkySurface(backSuf))
+                choice = backSuf->material;
+        }
+
+        if(!choice)
+            choice = s->sector->
+                SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
+                    surface.material;
+    }
+
+    return choice;
+}
+
+static void updateSidedefSection(sidedef_t* s, segsection_t section)
+{
+    surface_t*          suf;
+
+    if(section == SEG_MIDDLE)
+        return; // Not applicable.
+
+    suf = &s->sections[section];
+    if(!suf->material &&
+       !R_IsSkySurface(&s->sector->
+            SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
+                surface))
+    {
+        Surface_SetMaterial(suf, chooseFixMaterial(s, section));
+        suf->inFlags |= SUIF_MATERIAL_FIX;
+    }
+}
+
 void R_UpdateLinedefsOfSector(sector_t* sec)
 {
     uint                i;
@@ -1844,11 +1730,13 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
 
         if(!li->L_frontside || !li->L_backside)
             continue;
+        if(LINE_SELFREF(li))
+            continue;
 
         front = li->L_frontside;
         back  = li->L_backside;
         frontSec = front->sector;
-        backSec = back? back->sector : NULL;
+        backSec = li->L_backside? back->sector : NULL;
 
         /**
          * Do as in the original Doom if the texture has not been defined -
@@ -1857,72 +1745,16 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
          */
 
         // Check for missing lowers.
-        if(frontSec->SP_floorheight < backSec->SP_floorheight &&
-           !front->SW_bottommaterial)
-        {
-            if(!R_IsSkySurface(&frontSec->SP_floorsurface))
-            {
-                Surface_SetMaterial(&front->SW_bottomsurface,
-                                    frontSec->SP_floormaterial);
-                front->SW_bottominflags |= SUIF_MATERIAL_FIX;
-            }
-
-            if(back->SW_bottominflags & SUIF_MATERIAL_FIX)
-            {
-                Surface_SetMaterial(&back->SW_bottomsurface, NULL);
-                back->SW_bottominflags &= ~SUIF_MATERIAL_FIX;
-            }
-        }
-        else if(frontSec->SP_floorheight > backSec->SP_floorheight &&
-                !back->SW_bottommaterial)
-        {
-            if(!R_IsSkySurface(&backSec->SP_floorsurface))
-            {
-                Surface_SetMaterial(&back->SW_bottomsurface,
-                                    backSec->SP_floormaterial);
-                back->SW_bottominflags |= SUIF_MATERIAL_FIX;
-            }
-
-            if(front->SW_bottominflags & SUIF_MATERIAL_FIX)
-            {
-                Surface_SetMaterial(&front->SW_bottomsurface, NULL);
-                front->SW_bottominflags &= ~SUIF_MATERIAL_FIX;
-            }
-        }
+        if(frontSec->SP_floorheight < backSec->SP_floorheight)
+            updateSidedefSection(front, SEG_BOTTOM);
+        else if(frontSec->SP_floorheight > backSec->SP_floorheight)
+            updateSidedefSection(back, SEG_BOTTOM);
 
         // Check for missing uppers.
-        if(frontSec->SP_ceilheight > backSec->SP_ceilheight &&
-           !front->SW_topmaterial)
-        {
-            if(!R_IsSkySurface(&frontSec->SP_ceilsurface))
-            {
-                Surface_SetMaterial(&front->SW_topsurface,
-                                    frontSec->SP_ceilmaterial);
-                front->SW_topinflags |= SUIF_MATERIAL_FIX;
-            }
-
-            if(back->SW_topinflags & SUIF_MATERIAL_FIX)
-            {
-                Surface_SetMaterial(&back->SW_topsurface, NULL);
-                back->SW_topinflags &= ~SUIF_MATERIAL_FIX;
-            }
-        }
-        else if(frontSec->SP_ceilheight < backSec->SP_ceilheight &&
-                !back->SW_topmaterial)
-        {
-            if(!R_IsSkySurface(&backSec->SP_ceilsurface))
-            {
-                Surface_SetMaterial(&back->SW_topsurface,
-                                    backSec->SP_ceilmaterial);
-                back->SW_topinflags |= SUIF_MATERIAL_FIX;
-            }
-
-            if(front->SW_topinflags & SUIF_MATERIAL_FIX)
-            {
-                Surface_SetMaterial(&front->SW_topsurface, NULL);
-                front->SW_topinflags &= ~SUIF_MATERIAL_FIX;
-            }
-        }
+        if(backSec->SP_ceilheight < frontSec->SP_ceilheight)
+            updateSidedefSection(front, SEG_TOP);
+        else if(backSec->SP_ceilheight > frontSec->SP_ceilheight)
+            updateSidedefSection(back, SEG_TOP);
     }
 }
 
@@ -1937,18 +1769,14 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     if(pln->PS_material && ((pln->surface.flags & DDSUF_GLOW) ||
        (pln->PS_material->flags & MATF_GLOW)))
     {
-        materialtexinst_t*  texInst =
-            R_MaterialPrepare(pln->PS_material->current, 0, NULL,
-                              NULL, NULL);
+        material_snapshot_t ms;
 
-        if(texInst)
-        {
-            pln->glowRGB[CR] = texInst->color[CR];
-            pln->glowRGB[CG] = texInst->color[CG];
-            pln->glowRGB[CB] = texInst->color[CB];
-            hasGlow = true;
-            changed = true;
-        }
+        Material_Prepare(&ms, pln->PS_material, true, NULL);
+        pln->glowRGB[CR] = ms.color[CR];
+        pln->glowRGB[CG] = ms.color[CG];
+        pln->glowRGB[CB] = ms.color[CB];
+        hasGlow = true;
+        changed = true;
     }
 
     if(hasGlow)
@@ -2020,10 +1848,20 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     return changed;
 }
 
-void R_UpdateSector(sector_t* sec, boolean forceUpdate)
+#if 0
+/**
+ * Stub.
+ */
+boolean R_UpdateSubSector(subsector_t* ssec, boolean forceUpdate)
+{
+    return false; // Not changed.
+}
+#endif
+
+boolean R_UpdateSector(sector_t* sec, boolean forceUpdate)
 {
     uint                i;
-    boolean             planeChanged = false;
+    boolean             changed = false, planeChanged = false;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
@@ -2037,6 +1875,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         memcpy(sec->oldRGB, sec->rgb, sizeof(sec->oldRGB));
 
         LG_SectorChanged(sec);
+
+        changed = true;
     }
     else
     {
@@ -2057,7 +1897,35 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         sec->soundOrg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
         R_UpdateLinedefsOfSector(sec);
         S_CalcSectorReverb(sec);
+
+        changed = true;
     }
+
+    return planeChanged;
+}
+
+/**
+ * Stub.
+ */
+boolean R_UpdateLinedef(linedef_t* line, boolean forceUpdate)
+{
+    return false; // Not changed.
+}
+
+/**
+ * Stub.
+ */
+boolean R_UpdateSidedef(sidedef_t* side, boolean forceUpdate)
+{
+    return false; // Not changed.
+}
+
+/**
+ * Stub.
+ */
+boolean R_UpdateSurface(surface_t* suf, boolean forceUpdate)
+{
+    return false; // Not changed.
 }
 
 /**

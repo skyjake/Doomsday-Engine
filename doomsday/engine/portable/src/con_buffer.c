@@ -367,7 +367,7 @@ static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
         if(firstIdx < 0)
         {
             long            other = -((long) firstIdx);
-            if(other > buf->numLines)
+            if(other > (long) buf->numLines)
                 firstIdx = 0;
             else
                 firstIdx = buf->numLines - other;

@@ -456,6 +456,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     spriteframe_t*      sprFrame;
     spritetex_t*        sprTex;
     material_t*         mat;
+    material_snapshot_t ms;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -473,16 +474,18 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     sprFrame = &sprDef->spriteFrames[frame];
     mat = sprFrame->mats[0];
-    sprTex = spriteTextures[mat->tex->ofTypeID];
+    Material_Prepare(&ms, mat, false, NULL);
+
+    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
 
     info->numFrames = sprDef->numFrames;
-    info->materialNum = R_GetMaterialNum(mat);
+    info->material = mat;
     info->realLump = sprTex->lump;
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
     info->topOffset = sprTex->offY;
-    info->width = mat->width;
-    info->height = mat->height;
+    info->width = ms.width;
+    info->height = ms.height;
 }
 
 void R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
@@ -504,7 +507,7 @@ void R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
 float R_VisualRadius(mobj_t* mo)
 {
     modeldef_t*         mf, *nextmf;
-    material_t*         mat;
+    material_snapshot_t ms;
 
     // If models are being used, use the model's radius.
     if(useModels)
@@ -518,10 +521,9 @@ float R_VisualRadius(mobj_t* mo)
     }
 
     // Use the sprite frame's width.
-    if((mat = R_GetMaterialForSprite(mo->sprite, mo->frame)))
-        return mat->width / 2;
-
-    return mo->radius; // Fallback.
+    Material_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame),
+                     true, NULL);
+    return ms.width / 2;
 }
 
 void R_InitSprites(void)
@@ -731,13 +733,23 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean brightShadow, boolean shadow, boolean altShadow,
                                           boolean fullBright)
 {
-    spritetex_t*        sprTex = spriteTextures[mat->tex->ofTypeID];
+    spritetex_t*        sprTex = NULL;
+    material_snapshot_t ms;
+    material_load_params_t mparams;
 
     if(!params)
         return; // Wha?
 
-    params->width = mat->width;
-    params->height = mat->height;
+    memset(&mparams, 0, sizeof(mparams));
+    mparams.tmap = transMap;
+    mparams.tclass = transClass;
+
+    Material_Prepare(&ms, mat, true, &mparams);
+
+    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
+
+    params->width = ms.width;
+    params->height = ms.height;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -746,7 +758,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) sprTex->offX - mat->width / 2.0f;
+    params->viewOffX = (float) sprTex->offX - ms.width / 2.0f;
     params->subsector = ssec;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
@@ -754,8 +766,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->mat = mat;
     params->tMap = transMap;
     params->tClass = transClass;
-    params->matOffset[0] = sprTex->texCoord[0];
-    params->matOffset[1] = sprTex->texCoord[1];
+    params->matOffset[0] = ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[0];
+    params->matOffset[1] = ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[1];
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = blendMode;
@@ -889,7 +901,7 @@ void R_ProjectSprite(mobj_t* mo)
     vec3_t              visOff;
     spritedef_t*        sprDef;
     spriteframe_t*      sprFrame = NULL;
-    int                 i, transClass;
+    int                 i, tmap = 0, tclass = 0;
     unsigned            rot;
     boolean             matFlipS, matFlipT;
     vissprite_t*        vis;
@@ -897,12 +909,14 @@ void R_ProjectSprite(mobj_t* mo)
     boolean             align, fullBright, viewAlign, floorAdjust;
     modeldef_t*         mf = NULL, *nextmf = NULL;
     float               interp = 0, distance, gzt;
-    material_t*         mat;
     spritetex_t*        sprTex;
     vismobjzparams_t    params;
     visspritetype_t     visType = VSPR_SPRITE;
     float               ambientColor[3];
     uint                vLightListIdx = 0;
+    material_t*         mat;
+    material_snapshot_t ms;
+    material_load_params_t mparams;
 
     if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
        mo->state == NULL || mo->state == states)
@@ -964,7 +978,18 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    sprTex = spriteTextures[mat->tex->ofTypeID];
+    if(mo->ddFlags & DDMF_TRANSLATION)
+        tmap = (mo->ddFlags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
+    if(mo->ddFlags & DDMF_TRANSLATION)
+        tclass = (mo->ddFlags >> DDMF_CLASSTRSHIFT) & 0x3;
+
+    memset(&mparams, 0, sizeof(mparams));
+    mparams.tmap = tmap;
+    mparams.tclass = tclass;
+
+    Material_Prepare(&ms, mat, true, &mparams);
+
+    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
 
     // Align to the view plane?
     if(mo->ddFlags & DDMF_VIEWALIGN)
@@ -985,7 +1010,7 @@ void R_ProjectSprite(mobj_t* mo)
 
             visType = VSPR_SPRITE;
 
-            width = (float) mat->width;
+            width = (float) ms.width;
             offset = (float) sprTex->offX - (width / 2);
 
             // Project a line segment relative to the view in 2D, then check
@@ -1065,11 +1090,6 @@ void R_ProjectSprite(mobj_t* mo)
 
     secFloor = mo->subsector->sector->SP_floorvisheight;
     secCeil = mo->subsector->sector->SP_ceilvisheight;
-
-    if(mo->ddFlags & DDMF_TRANSLATION)
-        transClass = (mo->ddFlags >> DDMF_CLASSTRSHIFT) & 0x3;
-    else
-        transClass = 0;
 
     // Foot clipping.
     floorClip = mo->floorClip;
@@ -1211,35 +1231,35 @@ void R_ProjectSprite(mobj_t* mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(mat->height < secCeil - secFloor)
+        if(ms.height < secCeil - secFloor)
         {   // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
             if(floorAdjust && fitBottom &&
-               gzt - mat->height < secFloor)
-                gzt = secFloor + mat->height;
+               gzt - ms.height < secFloor)
+                gzt = secFloor + ms.height;
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
         getLightingParams(vis->center[VX], vis->center[VY],
-                          gzt - mat->height / 2.0f,
+                          gzt - ms.height / 2.0f,
                           mo->subsector, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
                                       vis->center[VX], vis->center[VY],
-                                      gzt - mat->height / 2.0f,
+                                      gzt - ms.height / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
                                       floorClip, gzt, mat, matFlipS, matFlipT, blendMode,
                                       ambientColor[CR], ambientColor[CG], ambientColor[CB], finalAlpha,
                                       vLightListIdx,
-                                      (mo->ddFlags & DDMF_TRANSLATION)? ((mo->ddFlags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT) : 0,
-                                      transClass,
+                                      tmap,
+                                      tclass,
                                       mo->subsector,
                                       floorAdjust,
                                       fitTop,
@@ -1269,7 +1289,6 @@ void R_ProjectSprite(mobj_t* mo)
 
 typedef struct {
     subsector_t*        ssec;
-    boolean             raised;
 } addspriteparams_t;
 
 boolean RIT_AddSprite(void* ptr, void* data)
@@ -1285,11 +1304,11 @@ boolean RIT_AddSprite(void* ptr, void* data)
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
-        // sky sectors. Here we will raise the skyfix dynamically, at
-        // runtime, to make sure that no sprites get clipped by the sky.
+        // sky sectors. Here we will raise the skyfix dynamically, to make sure
+        // that no sprites get clipped by the sky.
         // Only check
-        mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
-        if(mat && R_IsSkySurface(&sec->SP_ceilsurface))
+        if((mat = R_GetMaterialForSprite(mo->sprite, mo->frame)) &&
+           R_IsSkySurface(&sec->SP_ceilsurface))
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
                mo->pos[VZ] <= sec->SP_ceilheight &&
@@ -1299,13 +1318,10 @@ boolean RIT_AddSprite(void* ptr, void* data)
 
                 visibleTop = mo->pos[VZ] + mat->height;
 
-                if(visibleTop > sec->SP_ceilheight +
-                   sec->skyFix[PLN_CEILING].offset)
+                if(visibleTop > skyFix[PLN_CEILING].height)
                 {
-                    // Raise sector skyfix.
-                    sec->skyFix[PLN_CEILING].offset =
-                        visibleTop - sec->SP_ceilheight + 16; // Add some leeway.
-                    params->raised = true;
+                    // Raise skyfix ceiling.
+                    skyFix[PLN_CEILING].height = visibleTop + 16; // Add some leeway.
                 }
             }
         }
@@ -1326,14 +1342,9 @@ void R_AddSprites(subsector_t* ssec)
         return; // Already added.
 
     params.ssec = ssec;
-    params.raised = false;
     R_IterateSubsectorContacts(ssec, OT_MOBJ, RIT_AddSprite, &params);
 
     ssec->addSpriteCount = frameCount;
-
-    // This'll adjust all adjacent sky ceiling fixes.
-    if(params.raised)
-        R_SkyFix(false, true);
 }
 
 void R_SortVisSprites(void)

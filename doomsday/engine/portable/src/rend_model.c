@@ -769,14 +769,14 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
     if(renderTextures == 2)
     {   // For lighting debug, render all surfaces using the gray texture.
-        material_t*         mat = R_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+        material_t*         mat = P_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
 
         if(mat)
         {
-            gltexture_t         glTex;
+            material_snapshot_t ms;
 
-            R_MaterialPrepare(mat->current, 0, &glTex, NULL, NULL);
-            skinTexture = glTex.id;
+            Material_Prepare(&ms, mat, true, NULL);
+            skinTexture = ms.passes[MTP_PRIMARY].texInst->id;
         }
         else
         {

@@ -257,7 +257,8 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     int                 frame = psp->statePtr->frame;
     boolean             flip;
     spriteframe_t*      sprFrame;
-    material_t*         mat;
+    material_load_params_t mparams;
+    material_snapshot_t ms;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -273,27 +274,31 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
 
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
-    mat = sprFrame->mats[0];
+    memset(&mparams, 0, sizeof(mparams));
+    mparams.pSprite = true;
+    Material_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
-    sprTex = spriteTextures[mat->tex->ofTypeID];
+    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
 
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX];
     params->pos[VY] = offScaleY * psp->pos[VY] +
         (1 - offScaleY) * 32 - sprTex->offY + pspOffset[VY];
-    params->width = mat->width;
-    params->height = mat->height;
+    params->width = ms.width;
+    params->height = ms.height;
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
     params->texOffset[0] =
-        sprTex->texCoord[VX] - 0.4f / M_CeilPow2(mat->width);
+        ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[VX] -
+            0.4f / M_CeilPow2(ms.width);
     params->texOffset[1] =
-        sprTex->texCoord[VY] - 0.4f / M_CeilPow2(mat->height);
+        ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[VY] -
+            0.4f / M_CeilPow2(ms.height);
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
 
-    params->mat = mat;
+    params->mat = sprFrame->mats[0];
     params->ambientColor[CA] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)
@@ -357,15 +362,16 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
 
     if(renderTextures == 1)
     {
-        GL_SetPSprite(R_GetMaterialNum(params->mat));
+        GL_SetPSprite(params->mat);
     }
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        material_t*         mat = R_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
-        gltexture_t         glTex;
+        material_t*         mat = P_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+        material_snapshot_t ms;
 
-        R_MaterialPrepare(mat->current, 0, &glTex, NULL, NULL);
-        GL_BindTexture(glTex.id, glTex.magMode);
+        Material_Prepare(&ms, mat, true, NULL);
+        GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
+                       ms.passes[MTP_PRIMARY].magMode);
     }
     else
     {
@@ -891,34 +897,37 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     float               spriteCenter[3];
     float               surfaceNormal[3];
     float               v1[3], v2[3], v3[3], v4[3];
+    material_t*         mat = NULL;
+    material_snapshot_t ms;
 
-    if(renderTextures == 1 && params->tMap)
-    {   // We need to prepare a translated version of the sprite.
-        GL_SetTranslatedSprite(R_GetMaterialNum(params->mat), params->tMap,
-                               params->tClass);
-    }
-    else
+    if(renderTextures == 1)
+        mat = params->mat;
+    else if(renderTextures == 2)
+        // For lighting debug, render all solid surfaces using the gray texture.
+        mat = P_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+
+    if(mat)
     {
-        material_t*         mat = NULL;
-
+        // Might we need a colour translation?
         if(renderTextures == 1)
-            mat = params->mat;
-        else if(renderTextures == 2)
-            // For lighting debug, render all solid surfaces using the gray texture.
-            mat = R_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+        {   // Possibly.
+            material_load_params_t mparams;
 
-        if(mat)
-        {
-            gltexture_t         glTex;
+            memset(&mparams, 0, sizeof(mparams));
+            mparams.tmap = params->tMap;
+            mparams.tclass = params->tClass;
+            mparams.pSprite = false;
 
-            R_MaterialPrepare(mat->current, 0, &glTex, NULL, NULL);
-            GL_BindTexture(glTex.id, glTex.magMode);
+            Material_Prepare(&ms, mat, true, &mparams);
         }
         else
         {
-            DGL_Bind(0);
+            Material_Prepare(&ms, mat, true, NULL);
         }
     }
+
+    GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
+                   ms.passes[MTP_PRIMARY].magMode);
 
     // Coordinates to the center of the sprite (game coords).
     spriteCenter[VX] = params->center[VX] + params->srvo[VX];

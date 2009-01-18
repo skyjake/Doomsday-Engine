@@ -1293,14 +1293,14 @@ void Con_Open(int yes)
 /**
  * @return      @c true, if the event is eaten.
  */
-boolean Con_Responder(ddevent_t *event)
+boolean Con_Responder(ddevent_t* ev)
 {
     // The console is only interested in keyboard toggle events.
-    if(!IS_KEY_TOGGLE(event))
+    if(!IS_KEY_TOGGLE(ev))
         return false;
 
     // Special console key: Shift-Escape opens the Control Panel.
-    if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(event, DDKEY_ESCAPE))
+    if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(ev, DDKEY_ESCAPE))
     {
         Con_Execute(CMDS_DDAY, "panel", true, false);
         return true;
@@ -1309,7 +1309,7 @@ boolean Con_Responder(ddevent_t *event)
     if(!ConsoleActive)
     {
         // In this case we are only interested in the activation key.
-        if(IS_TOGGLE_DOWN_ID(event, consoleActiveKey))
+        if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey))
         {
             Con_Open(true);
             return true;
@@ -1318,7 +1318,7 @@ boolean Con_Responder(ddevent_t *event)
     }
 
     // All keyups are eaten by the console.
-    if(IS_TOGGLE_UP(event))
+    if(IS_TOGGLE_UP(ev))
     {
         if(!shiftDown && conInputLock)
             conInputLock = false; // release the lock
@@ -1326,14 +1326,14 @@ boolean Con_Responder(ddevent_t *event)
     }
 
     // We only want keydown events.
-    if(!IS_KEY_PRESS(event))
+    if(!IS_KEY_PRESS(ev))
         return false;
 
     // In this case the console is active and operational.
     // Check the shutdown key.
     if(!conInputLock)
     {
-        if(event->toggle.id == consoleActiveKey)
+        if(ev->toggle.id == consoleActiveKey)
         {
             if(shiftDown) // Shift-Tilde to fullscreen and halfscreen.
                 Rend_ConsoleToggleFullscreen();
@@ -1343,7 +1343,7 @@ boolean Con_Responder(ddevent_t *event)
         }
         else
         {
-            switch(event->toggle.id)
+            switch(ev->toggle.id)
             {
             case DDKEY_ESCAPE:
                 // Hitting Escape in the console closes it.
@@ -1372,7 +1372,7 @@ boolean Con_Responder(ddevent_t *event)
         }
     }
 
-    switch(event->toggle.id)
+    switch(ev->toggle.id)
     {
     case DDKEY_UPARROW:
         if(conInputLock)
@@ -1387,7 +1387,8 @@ boolean Con_Responder(ddevent_t *event)
 
     case DDKEY_DOWNARROW:
     {
-        uint    num;
+        uint                num;
+
         if(conInputLock)
             break;
 
@@ -1401,7 +1402,7 @@ boolean Con_Responder(ddevent_t *event)
     }
     case DDKEY_PGUP:
     {
-        uint    num;
+        uint                num;
 
         if(conInputLock)
             break;
@@ -1417,6 +1418,7 @@ boolean Con_Responder(ddevent_t *event)
     case DDKEY_PGDN:
         if(conInputLock)
             break;
+
         bLineOff = MAX_OF((int)bLineOff - 3, 0);
         return true;
 
@@ -1589,7 +1591,7 @@ boolean Con_Responder(ddevent_t *event)
         if(conInputLock)
             break;
 
-        ch = event->toggle.id;
+        ch = ev->toggle.id;
         ch = DD_ModKey(ch);
         if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
             return true;

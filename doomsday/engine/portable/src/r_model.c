@@ -880,21 +880,21 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 {
     int                 off;
     spritedef_t*        spr = &sprites[sprite];
-    material_t*         mat;
+    material_snapshot_t ms;
 
     if(!spr->numFrames || spr->spriteFrames == NULL)
         return;
+    Material_Prepare(&ms, spr->spriteFrames[frame].mats[0], true, NULL);
 
-    mat = spr->spriteFrames[frame].mats[0];
-
-    off = spriteTextures[mat->tex->ofTypeID]->offY - mat->height;
+    off = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID]->offY -
+        ms.height;
     if(off < 0)
         off = 0;
 
-    R_ScaleModel(mf, mat->height, off);
+    R_ScaleModel(mf, ms.height, off);
 }
 
-static float R_GetModelVisualRadius(modeldef_t *mf)
+static float R_GetModelVisualRadius(modeldef_t* mf)
 {
     float               min[3], max[3];
 
@@ -1317,10 +1317,10 @@ void R_ShutdownModels(void)
     }
 }
 
-void R_SetModelFrame(modeldef_t *modef, int frame)
+void R_SetModelFrame(modeldef_t* modef, int frame)
 {
     int                 k;
-    model_t            *mdl;
+    model_t*            mdl;
 
     for(k = 0; k < DED_MAX_SUB_MODELS; ++k)
     {
@@ -1333,10 +1333,13 @@ void R_SetModelFrame(modeldef_t *modef, int frame)
     }
 }
 
-void R_PrecacheModelSkins(modeldef_t *modef)
+void R_PrecacheModelSkins(modeldef_t* modef)
 {
     int                 k, sub;
-    model_t            *mdl;
+    model_t*            mdl;
+
+    if(!(useModels && precacheSkins))
+        return;
 
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
@@ -1348,7 +1351,7 @@ void R_PrecacheModelSkins(modeldef_t *modef)
         // Load all skins.
         for(k = 0; k < mdl->info.numSkins; ++k)
         {
-            skintex_t          *st;
+            skintex_t*          st;
 
             st = R_GetSkinTexByIndex(mdl->skins[k].id);
             if(st)

@@ -23,12 +23,11 @@
  */
 
 /**
- * r_materials.c: Materials (texture/flat/sprite/etc abstract interface).
+ * p_materialmanager.c: Materials manager.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
 #include <ctype.h> // For tolower()
 
 #include "de_base.h"
@@ -44,7 +43,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define MATERIALS_BLOCK_ALLOC (32) // Num materials to allocate per block.
-#define HASH_SIZE           (512)
+#define MATERIALS_NAME_HASH_SIZE (512)
 
 // TYPES -------------------------------------------------------------------
 
@@ -55,32 +54,6 @@ typedef struct materialbind_s {
     uint            hashNext; // 1-based index
 } materialbind_t;
 
-typedef struct mtexinstnode_s {
-    int             flags; // Texture instance (TEXF_*) flags.
-    materialtexinst_t glTex;
-    struct mtexinstnode_s* next; // Next in list of instances.
-} mtexinstnode_t;
-
-typedef struct mtex_typedata_s {
-    uint            hashTable[HASH_SIZE];
-} mtex_typedata_t;
-
-typedef struct animframe_s {
-    struct material_s* mat;
-    ushort          tics;
-    ushort          random;
-} animframe_t;
-
-typedef struct animgroup_s {
-    int             id;
-    int             flags;
-    int             index;
-    int             maxTimer;
-    int             timer;
-    int             count;
-    animframe_t*    frames;
-} animgroup_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -89,20 +62,19 @@ D_CMD(ListMaterials);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void animateAnimGroups(void);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean mapSetup;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+materialnum_t numMaterialBinds = 0;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initedOk = false;
-static uint numMaterialTexs;
-static materialtex_t** materialTexs;
-
-static int numgroups;
-static animgroup_t* groups;
 
 /**
  * The following data structures and variables are intrinsically linked and
@@ -125,14 +97,12 @@ static zblockset_t* materialsBlockSet;
 static material_t* materialsHead; // Head of the linked list of materials.
 
 static materialbind_t* materialBinds;
-static materialnum_t numMaterialBinds, maxMaterialBinds;
-static uint hashTable[HASH_SIZE];
-
-static mtex_typedata_t mtexData[NUM_MATERIALTEX_TYPES];
+static materialnum_t maxMaterialBinds;
+static uint hashTable[MATERIALS_NAME_HASH_SIZE];
 
 // CODE --------------------------------------------------------------------
 
-void R_MaterialsRegister(void)
+void P_MaterialManagerRegister(void)
 {
     C_CMD("listmaterials",  NULL,     ListMaterials);
 }
@@ -155,7 +125,7 @@ static boolean isValidMaterialGroup(materialgroup_t groupNum)
 
 /**
  * This is a hash function. Given a material name it generates a
- * somewhat-random number between 0 and HASH_SIZE.
+ * somewhat-random number between 0 and MATERIALS_NAME_HASH_SIZE.
  *
  * @return              The generated hash index.
  */
@@ -178,7 +148,7 @@ static uint hashForName(const char* name)
         }
     }
 
-    return key % HASH_SIZE;
+    return key % MATERIALS_NAME_HASH_SIZE;
 }
 
 /**
@@ -200,7 +170,7 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
 
         for(;;)
         {
-            material_t*         mat;
+            material_t*        mat;
 
             mat = mb->mat;
 
@@ -221,12 +191,11 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
  * Given an index and material group, search the materials db for a match.
  * \assume Caller knows what it's doing; params arn't validity checked.
  *
- * @param idx           Index of the texture/flat/sprite/etc to search for.
+ * @param id            gltextureid to search for.
  * @param groupNum      Specific MG_* material group NOT @c MG_ANY.
  * @return              Unique number of the found material, else zero.
  */
-static materialnum_t getMaterialNumForIndex(uint idx,
-                                            materialgroup_t groupNum)
+static materialnum_t getMaterialNumForIndex(uint idx, materialgroup_t groupNum)
 {
     materialnum_t       i;
 
@@ -236,7 +205,8 @@ static materialnum_t getMaterialNumForIndex(uint idx,
         materialbind_t*     mb = &materialBinds[i];
         material_t*         mat = mb->mat;
 
-        if(mat->group == groupNum && mat->tex->ofTypeID == idx)
+        if(mat->group == groupNum &&
+           GL_GetGLTexture(mat->layers[0].tex)->ofTypeID == idx)
             return ((mb) - materialBinds) + 1;
     }
 
@@ -267,79 +237,13 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     hashTable[hash] = (mb - materialBinds) + 1;
 }
 
-static animgroup_t* getAnimGroup(int number)
-{
-    if(--number < 0 || number >= numgroups)
-        return NULL;
-
-    return &groups[number];
-}
-
-static boolean isInAnimGroup(int groupNum, const material_t* mat)
-{
-    int                 i;
-    animgroup_t*        group;
-
-    if(!mat)
-        return false;
-
-    if(!(group = getAnimGroup(groupNum)))
-        return false;
-
-    // Is it in there?
-    for(i = 0; i < group->count; ++i)
-    {
-        animframe_t*        frame = &group->frames[i];
-
-        if(frame->mat == mat)
-            return true;
-    }
-
-    return false;
-}
-
-static void updateMaterialTex(materialtex_t* mTex)
-{
-    switch(mTex->type)
-    {
-    case MTT_TEXTURE:
-        mTex->isFromIWAD =
-            (R_GetTextureDef(mTex->ofTypeID)->flags & TXDF_IWAD)? true : false;
-        break;
-
-    case MTT_FLAT:
-        mTex->isFromIWAD = W_IsFromIWAD(flats[mTex->ofTypeID]->lump);
-        break;
-
-    case MTT_DDTEX:
-        mTex->isFromIWAD = false; // Its definetely not.
-        break;
-
-    case MTT_SPRITE:
-        mTex->isFromIWAD =
-            W_IsFromIWAD(spriteTextures[mTex->ofTypeID]->lump);
-        break;
-
-    default:
-        Con_Error("updateMaterialTex: Internal Error, invalid type %i.",
-                  (int) mTex->type);
-    }
-
-    R_MaterialTexDelete(mTex);
-}
-
 /**
  * One time initialization of the materials list. Called during init.
  */
-void R_InitMaterials(void)
+void P_InitMaterialManager(void)
 {
-    uint                i;
-
     if(initedOk)
         return; // Already been here.
-
-    numMaterialTexs = 0;
-    materialTexs = NULL;
 
     materialsBlockSet = Z_BlockCreate(sizeof(material_t),
                                       MATERIALS_BLOCK_ALLOC, PU_STATIC);
@@ -350,8 +254,6 @@ void R_InitMaterials(void)
 
     // Clear the name bind hash tables.
     memset(hashTable, 0, sizeof(hashTable));
-    for(i = 0; i < NUM_MATERIALTEX_TYPES; ++i)
-        memset(mtexData[i].hashTable, 0, sizeof(mtexData[i].hashTable));
 
     initedOk = true;
 }
@@ -360,34 +262,10 @@ void R_InitMaterials(void)
  * Release all memory acquired for the materials list.
  * Called during shutdown.
  */
-void R_ShutdownMaterials(void)
+void P_ShutdownMaterialManager(void)
 {
     if(!initedOk)
         return;
-
-    if(materialTexs)
-    {
-        uint                i;
-
-        for(i = 0; i < numMaterialTexs; ++i)
-        {
-            materialtex_t*      mTex = materialTexs[i];
-            mtexinstnode_t*     node, *next;
-
-            node = (mtexinstnode_t*) mTex->instances;
-            while(node)
-            {
-                next = node->next;
-                Z_Free(node);
-                node = next;
-            }
-            Z_Free(mTex);
-        }
-
-        Z_Free(materialTexs);
-        materialTexs = NULL;
-        numMaterialTexs = 0;
-    }
 
     Z_BlockDestroy(materialsBlockSet);
     materialsBlockSet = NULL;
@@ -404,201 +282,128 @@ void R_ShutdownMaterials(void)
     initedOk = false;
 }
 
-materialnum_t R_GetNumMaterials(void)
-{
-    return numMaterialBinds; // Currently 1-to-1 with materials.
-}
-
 /**
- * Deletes all GL textures of materials in the specified group.
+ * Deletes all GL texture instances, linked to materials.
  *
- * @param group         @c MG_ANY = delete from all material groups, ELSE
- *                      The specific group of materials to delete.
+ * @param group         @c MG_ANY = delete everything, ELSE
+ *                      Only delete those currently in use by materials
+ *                      in the specified material group.
  */
-void R_DeleteMaterialTextures(materialgroup_t groupNum)
+void P_DeleteMaterialTextures(materialgroup_t groupNum)
 {
-    if(groupNum != MG_ANY && !isValidMaterialGroup(groupNum))
-        Con_Error("R_DeleteMaterialTextures: Internal error, "
+    if(groupNum == MG_ANY)
+    {   // Delete the lot.
+        GL_DeleteAllTexturesForGLTextures(GLT_ANY);
+        return;
+    }
+
+    if(!isValidMaterialGroup(groupNum))
+        Con_Error("P_DeleteMaterialTextures: Internal error, "
                   "invalid materialgroup '%i'.", (int) groupNum);
 
     if(materialsHead)
     {
-        material_t*         mat;
+        material_t*        mat;
 
         mat = materialsHead;
         do
         {
-            if(groupNum == MG_ANY || mat->group == groupNum)
-                R_MaterialTexDelete(mat->tex);
+            if(mat->group == groupNum)
+            {
+                uint                i;
+
+                for(i = 0; i < mat->numLayers; ++i)
+                    GL_ReleaseGLTexture(mat->layers[i].tex);
+            }
         } while((mat = mat->globalNext));
     }
 }
 
-/**
- * Updates the minification mode of ALL registered materials.
- *
- * @param minMode       The DGL minification mode to set.
- */
-void R_SetAllMaterialsMinMode(int minMode)
+static material_t* createMaterial(short width, short height, byte flags,
+                                  materialgroup_t groupNum,
+                                  ded_material_t* def, gltextureid_t tex)
 {
-    if(materialsHead)
+    uint                i;
+    material_t*         mat = Z_BlockNewElement(materialsBlockSet);
+
+    memset(mat, 0, sizeof(*mat));
+    mat->header.type = DMU_MATERIAL;
+    mat->group = groupNum;
+    mat->width = width;
+    mat->height = height;
+    mat->flags = flags;
+    mat->envClass = MEC_UNKNOWN;
+    mat->current = mat->next = mat;
+    mat->def = def;
+    mat->decoration = NULL;
+    mat->ptcGen = NULL;
+    mat->detail = NULL;
+    mat->layers[0].tex = tex;
+    mat->numLayers = 1;
+
+    // Is this a custom material?
+    mat->flags &= ~MATF_CUSTOM;
+    for(i = 0; i < mat->numLayers; ++i)
     {
-        material_t*         mat;
-
-        mat = materialsHead;
-        do
+        if(!GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
         {
-            R_MaterialSetMinMode(mat, minMode);
-        } while((mat = mat->globalNext));
-    }
-}
-
-/**
- * Given a name and materialtex type, search the materialtexs db for a match.
- * \assume Caller knows what it's doing; params arn't validity checked.
- *
- * @param name          Name of the materialtex to search for. Must have been
- *                      transformed to all lower case.
- * @param type          Specific MTT_* materialtex type.
- * @return              Ptr to the found materialtex_t else, @c NULL.
- */
-static materialtex_t* getMaterialTexForName(const char* name, uint hash,
-                                            materialtextype_t type)
-{
-    // Go through the candidates.
-    if(mtexData[type].hashTable[hash])
-    {
-        materialtex_t*      mTex =
-            materialTexs[mtexData[type].hashTable[hash] - 1];
-
-        for(;;)
-        {
-            if(mTex->type == type && !strncmp(mTex->name, name, 8))
-                return mTex;
-
-            if(!mTex->hashNext)
-                break;
-
-            mTex = materialTexs[mTex->hashNext - 1];
+            mat->flags |= MATF_CUSTOM;
+            break;
         }
     }
 
-    return 0; // Not found.
+    // Link the new material into the global list of materials.
+    mat->globalNext = materialsHead;
+    materialsHead = mat;
+
+    return mat;
 }
 
-materialtex_t* R_MaterialTexCreate(const char* rawName, int ofTypeID,
-                                   materialtextype_t type)
+static material_t* getMaterialByNum(materialnum_t num)
 {
-    uint                i;
-    materialtex_t*      mTex;
-
-    if(!rawName || !rawName[0])
-        return NULL;
-
-#if _DEBUG
-if(type < MTT_FLAT || !(type < NUM_MATERIALTEX_TYPES))
-    Con_Error("R_MaterialTexCreate: Invalid type %i.", type);
-#endif
-
-    // Check if we've already created a materialtex for this.
-    for(i = 0; i < numMaterialTexs; ++i)
-    {
-        mTex = materialTexs[i];
-
-        if(mTex->type == type && mTex->ofTypeID == ofTypeID)
-        {
-            updateMaterialTex(mTex);
-            return mTex; // Yep, return it.
-        }
-    }
-
-    // A new materialtex.
-    mTex = Z_Malloc(sizeof(*mTex), PU_STATIC, 0);
-    mTex->type = type;
-    mTex->ofTypeID = ofTypeID;
-    mTex->instances = NULL;
-    // Prepare 'name'.
-    for(i = 0; *rawName && i < 8; ++i, rawName++)
-        mTex->name[i] = tolower(*rawName);
-    mTex->name[i] = '\0';
-
-    switch(type)
-    {
-    case MTT_TEXTURE:
-        mTex->isFromIWAD =
-            (R_GetTextureDef(ofTypeID)->flags & TXDF_IWAD)? true : false;
-        break;
-
-    case MTT_FLAT:
-        mTex->isFromIWAD = W_IsFromIWAD(flats[ofTypeID]->lump);
-        break;
-
-    case MTT_DDTEX:
-        mTex->isFromIWAD = false; // Its definetely not.
-        break;
-
-    case MTT_SPRITE:
-        mTex->isFromIWAD = W_IsFromIWAD(spriteTextures[ofTypeID]->lump);
-        break;
-
-    default:
-        Con_Error("R_MaterialTexCreate: Internal Error, "
-                  "invalid type %i.", (int) type);
-    }
-
-    // We also hash the name for faster searching.
-    {
-    uint                hash = hashForName(mTex->name);
-    mTex->hashNext = mtexData[type].hashTable[hash];
-    mtexData[type].hashTable[hash] = numMaterialTexs + 1; // 1-based index.
-    }
-
-    /**
-     * Link the new materialtex into the list of materialtexs.
-     */
-
-    // Resize the existing list.
-    materialTexs =
-        Z_Realloc(materialTexs, sizeof(materialtex_t*) * ++numMaterialTexs,
-                  PU_STATIC);
-    // Add the new materialtex;
-    materialTexs[numMaterialTexs - 1] = mTex;
-
-    return mTex;
-}
-
-materialtex_t* R_GetMaterialTex(const char* rawName, materialtextype_t type)
-{
-    int                 n;
-    uint                hash;
-    char                name[9];
-
-    if(!rawName || !rawName[0])
-        return NULL;
-
-    // Prepare 'name'.
-    for(n = 0; *rawName && n < 8; ++n, rawName++)
-        name[n] = tolower(*rawName);
-    name[n] = '\0';
-    hash = hashForName(name);
-
-    return getMaterialTexForName(name, hash, type);
-}
-
-materialtex_t* R_GetMaterialTexByNum(int ofTypeID, materialtextype_t type)
-{
-    uint                i;
-    materialtex_t*      mTex;
-
-    for(i = 0; i < numMaterialTexs; ++i)
-    {
-        mTex = materialTexs[i];
-
-        if(mTex->type == type && mTex->ofTypeID == ofTypeID)
-            return mTex; // Yep, return it.
-    }
+    if(num < numMaterialBinds)
+        return materialBinds[num].mat;
 
     return NULL;
+}
+
+/**
+ * Given a unique material number return the associated material.
+ *
+ * @param num           Unique material number.
+ *
+ * @return              The associated material, ELSE @c NULL.
+ */
+material_t* P_ToMaterial(materialnum_t num)
+{
+    if(!initedOk)
+        return NULL;
+
+    if(num != 0)
+        return getMaterialByNum(num - 1); // 1-based index.
+
+    return NULL;
+}
+
+/**
+ * Retrieve the unique material number for the given material.
+ *
+ * @param mat           The material to retrieve the unique number of.
+ *
+ * @return              The associated unique number.
+ */
+materialnum_t P_ToMaterialNum(const material_t* mat)
+{
+    if(mat)
+    {
+        materialnum_t       i;
+
+        for(i = 0; i < numMaterialBinds; ++i)
+            if(materialBinds[i].mat == mat)
+                return i + 1; // 1-based index.
+    }
+
+    return 0;
 }
 
 /**
@@ -611,21 +416,21 @@ materialtex_t* R_GetMaterialTexByNum(int ofTypeID, materialtextype_t type)
  * @param width         Width of the material (not of the texture).
  * @param height        Height of the material (not of the texture).
  * @param flags         MATF_* material flags
- * @param mTex          Texture to use with this material.
+ * @param tex           Texture to use with this material.
  * @param group         MG_* material group.
  *                      MG_ANY is only valid when updating an existing material.
  *
  * @return              The created material, ELSE @c NULL.
  */
-material_t* R_MaterialCreate(const char* rawName, short width, short height,
-                             byte flags, materialtex_t* mTex,
-                             materialgroup_t groupNum)
+material_t* P_MaterialCreate(const char* rawName, short width, short height,
+                             byte flags, gltextureid_t tex,
+                             materialgroup_t groupNum, ded_material_t* def)
 {
-    materialnum_t       oldMat;
-    material_t*         mat;
     int                 n;
     uint                hash;
     char                name[9];
+    materialnum_t       oldMat;
+    material_t*         mat;
 
     if(!initedOk)
         return NULL;
@@ -636,7 +441,7 @@ material_t* R_MaterialCreate(const char* rawName, short width, short height,
     if(!rawName || !rawName[0] || rawName[0] == '-')
     {
 #if _DEBUG
-Con_Message("R_MaterialCreate: Warning, attempted to create material with "
+Con_Message("P_MaterialCreate: Warning, attempted to create material with "
             "NULL name\n.");
 #endif
         return NULL;
@@ -663,7 +468,7 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material with "
         if(!isValidMaterialGroup(groupNum))
         {
 #if _DEBUG
-Con_Message("R_MaterialCreate: Warning, attempted to create material in "
+Con_Message("P_MaterialCreate: Warning, attempted to create material in "
             "unknown group '%i'.\n", (int) groupNum);
 #endif
             return NULL;
@@ -679,8 +484,8 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
         mat = mb->mat;
 
         // Update the (possibly new) meta data.
-        if(mTex)
-            mat->tex = mTex;
+        if(tex)
+            mat->layers[0].tex = tex;
         mat->flags = flags;
         if(width > 0)
             mat->width = width;
@@ -688,11 +493,12 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
             mat->height = height;
         mat->inAnimGroup = false;
         mat->current = mat->next = mat;
+        mat->def = def;
         mat->inter = 0;
         mat->decoration = NULL;
         mat->ptcGen = NULL;
         mat->detail = NULL;
-        mat->envClass = MATCLASS_UNKNOWN;
+        mat->envClass = MEC_UNKNOWN;
 
         return mat; // Yep, return it.
     }
@@ -700,327 +506,27 @@ Con_Message("R_MaterialCreate: Warning, attempted to create material in "
     if(groupNum == MG_ANY)
     {
 #if _DEBUG
-Con_Message("R_MaterialCreate: Warning, attempted to create material "
+Con_Message("P_MaterialCreate: Warning, attempted to create material "
             "without groupNum.\n");
 #endif
         return NULL;
     }
 
-    assert(mTex); // Sanity check.
-
     /**
      * A new material.
      */
 
-    mat = Z_BlockNewElement(materialsBlockSet);
-    memset(mat, 0, sizeof(*mat));
-    mat->group = groupNum;
-    mat->width = width;
-    mat->height = height;
-    mat->flags = flags;
-    mat->envClass = MATCLASS_UNKNOWN;
-    mat->current = mat->next = mat;
-    mat->tex = mTex;
+    // Sanity checks.
+    assert(tex != 0);
+    assert(width > 0);
+    assert(height > 0);
 
-    // Link the new material into the list of materials.
-    mat->globalNext = materialsHead;
-    materialsHead = mat;
+    mat = createMaterial(width, height, flags, groupNum, def, tex);
 
     // Now create a name binding for it.
     newMaterialNameBinding(mat, name, hash);
 
     return mat;
-}
-
-static materialtexinst_t* pickTexInstance(materialtex_t* mTex, int flags)
-{
-    mtexinstnode_t*     node;
-
-    node = (mtexinstnode_t*) mTex->instances;
-    while(node)
-    {
-        if(node->flags == flags)
-            return &node->glTex;
-        node = node->next;
-    }
-
-    return NULL;
-}
-
-materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
-                                     gltexture_t* glTex,
-                                     gltexture_t* glDetailTex, byte* result)
-{
-    if(mat)
-    {
-        byte                tmpResult = 0;
-        materialtex_t*      mTex = mat->tex;
-        materialtexinst_t*  texInst, tempInst;
-        detailtexinst_t*    detailInst;
-
-        // Pick the instance matching the specified flags.
-        texInst = pickTexInstance(mTex, flags);
-        if(!texInst)
-        {   // No existing suitable instance.
-            // Use a temporay local instance until we are sure preparation
-            // completes successfully.
-            memset(&tempInst, 0, sizeof(materialtexinst_t));
-            texInst = &tempInst;
-        }
-
-        switch(mTex->type)
-        {
-        case MTT_FLAT:
-            tmpResult = GL_PrepareFlat(texInst, mTex->ofTypeID,
-                                       mTex->isFromIWAD);
-            break;
-
-        case MTT_TEXTURE:
-            tmpResult = GL_PrepareTexture(texInst, mTex->ofTypeID,
-                                          mTex->isFromIWAD,
-                                          (flags & TEXF_LOAD_AS_SKY)? true : false,
-                                          (flags & TEXF_TEX_ZEROMASK)? true : false,
-                                          (flags & TEXF_LOAD_AS_SKY)? true : false);
-            break;
-
-        case MTT_SPRITE:
-            tmpResult = GL_PrepareSprite(texInst, mTex->ofTypeID,
-                                         mTex->isFromIWAD);
-            break;
-
-        case MTT_DDTEX:
-            tmpResult = GL_PrepareDDTexture(texInst, mTex->ofTypeID);
-            break;
-
-        default:
-            Con_Error("R_MaterialPrepare: Internal error, invalid type %i.",
-                      (int) mTex->type);
-        };
-
-        if(tmpResult)
-        {
-            if(texInst == &tempInst)
-            {   // We have a new instance.
-                mtexinstnode_t*         node;
-
-                // Add it to the list of intances for this materialtex.
-                node = Z_Malloc(sizeof(*node), PU_STATIC, 0);
-                node->flags = flags;
-                memcpy(&node->glTex, texInst, sizeof(materialtexinst_t));
-                node->next = (mtexinstnode_t*) mTex->instances;
-                mTex->instances = (void*) node;
-                texInst = &node->glTex;
-            }
-
-            // We need to update the assocated enhancements.
-            // Material decorations.
-            mat->decoration = Def_GetDecoration(mat, tmpResult == 2);
-
-            // Surface reflection.
-            {
-            ded_reflection_t*   def = Def_GetReflection(mat, tmpResult == 2);
-
-            // Make sure the shiny texture and mask has been loaded.
-            if(GL_LoadReflectionMap(def))
-            {
-                mat->shiny.tex = def->useShiny->shinyTex;
-                mat->shiny.blendMode = def->blendMode;
-                mat->shiny.shininess = def->shininess;
-                mat->shiny.minColor[CR] = def->minColor[CR];
-                mat->shiny.minColor[CG] = def->minColor[CG];
-                mat->shiny.minColor[CB] = def->minColor[CB];
-                mat->shiny.maskTex =
-                    (def->useMask? def->useMask->maskTex : 0);
-                mat->shiny.maskWidth = def->maskWidth;
-                mat->shiny.maskHeight = def->maskHeight;
-            }
-            else
-            {
-                mat->shiny.tex = 0;
-            }
-            }
-
-            // Load a detail texture (if one is defined).
-            {
-            ded_detailtexture_t* def = Def_GetDetailTex(mat, tmpResult == 2);
-
-            if(def)
-            {
-                lumpnum_t           lump =
-                    W_CheckNumForName(def->detailLump.path);
-                const char*         external =
-                    (def->isExternal? def->detailLump.path : NULL);
-
-                mat->detail = R_GetDetailTexture(lump, external, def->scale,
-                                                 def->strength, def->maxDist);
-            }
-            else
-            {
-                mat->detail = NULL;
-            }
-            }
-
-            // Get the particle generator definition for this.
-            {
-            ded_ptcgen_t*       def;
-            int                 i, g;
-            boolean             found = false;
-
-            // The generator will be determined now.
-            for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
-            {
-                materialnum_t       num;
-                material_t*         defMat;
-
-                if(!(num = R_MaterialNumForName(def->material.name,
-                                                def->material.group)))
-                    continue;
-                defMat = materialBinds[num - 1].mat;
-
-                if(def->flags & PGF_GROUP)
-                {
-                    // This generator is triggered by all the materials in
-                    // the animation group.
-
-                    // We only need to search if we know both the real used
-                    // flat and the flat of this definition belong in an
-                    // animgroup.
-                    if(defMat->inAnimGroup && mat->inAnimGroup)
-                    {
-                        for(g = 0; g < numgroups; ++g)
-                        {
-                            // Precache groups don't apply.
-                            if(groups[g].flags & AGF_PRECACHE)
-                                continue;
-
-                            if(isInAnimGroup(groups[g].id, defMat) &&
-                               isInAnimGroup(groups[g].id, mat))
-                            {
-                                // Both are in this group! This def will do.
-                                mat->ptcGen = def;
-                                found = true;
-                            }
-                        }
-                    }
-                }
-
-                if(mat == defMat)
-                {
-                    mat->ptcGen = def;
-                    found = true;
-                }
-            }
-
-            if(!found)
-                mat->ptcGen = NULL;
-            }
-        }
-
-        detailInst = NULL;
-        if(r_detail && mat->detail)
-            detailInst =
-                GL_PrepareDetailTexture(mat->detail, mat->detail->strength);
-
-        if(glTex)
-        {
-            glTex->id = (texInst? texInst->tex : 0);
-            switch(mat->tex->type)
-            {
-            case MTT_SPRITE:
-                {
-                spritetex_t*        sprTex =
-                    spriteTextures[mat->tex->ofTypeID];
-
-                glTex->width = sprTex->width;
-                glTex->height = sprTex->height;
-                glTex->scale = 1;
-                break;
-                }
-
-            case MTT_TEXTURE:
-                {
-                texturedef_t*       texDef =
-                    R_GetTextureDef(mat->tex->ofTypeID);
-
-                glTex->width = texDef->width;
-                glTex->height = texDef->height;
-                glTex->scale = 1;
-                break;
-                }
-            case MTT_FLAT:
-                glTex->width = 64;
-                glTex->height = 64;
-                glTex->scale = 1;
-                break;
-
-            case MTT_DDTEX:
-                glTex->width = 64;
-                glTex->height = 64;
-                glTex->scale = 1;
-                break;
-
-            default:
-                Con_Error("R_MaterialPrepare: Internal error, "
-                          "invalid type %i.", (int) mat->tex->type);
-                break;
-            }
-
-            if(mat->tex->type == MTT_SPRITE)
-                glTex->magMode = filterSprites? DGL_LINEAR : DGL_NEAREST;
-            else
-                glTex->magMode = glmode[texMagMode];
-
-            glTex->flags = 0;
-            if(texInst && texInst->masked)
-                glTex->flags |= GLTXF_MASKED;
-        }
-
-        if(glDetailTex)
-        {
-            if(r_detail && detailInst)
-            {
-                glDetailTex->id = detailInst->tex;
-                glDetailTex->magMode = DGL_LINEAR;
-                glDetailTex->width = mat->detail->width;
-                glDetailTex->height = mat->detail->height;
-                glDetailTex->scale = mat->detail->scale;
-                glDetailTex->flags = 0;
-            }
-            else
-            {
-                glDetailTex->id = 0;
-                glDetailTex->magMode = DGL_LINEAR;
-                glDetailTex->width = glDetailTex->height = 0;
-                glDetailTex->scale = 1;
-                glDetailTex->flags = 0;
-            }
-        }
-
-        if(result)
-            (*result) = tmpResult;
-
-        return texInst;
-    }
-
-    if(glTex)
-    {
-        glTex->id = 0;
-        glTex->magMode = DGL_LINEAR;
-        glTex->width = glTex->height = 64;
-        glTex->scale = 1;
-        glTex->flags = 0;
-    }
-
-    if(glDetailTex)
-    {
-        glDetailTex->id = 0;
-        glDetailTex->magMode = DGL_LINEAR;
-        glDetailTex->width = glDetailTex->height = 0;
-        glDetailTex->scale = 1;
-        glDetailTex->flags = 0;
-    }
-
-    return NULL;
 }
 
 /**
@@ -1032,7 +538,7 @@ materialtexinst_t* R_MaterialPrepare(struct material_s* mat, int flags,
  *
  * @return              The associated material, ELSE @c NULL.
  */
-material_t* R_GetMaterial(int ofTypeID, materialgroup_t groupNum)
+material_t* P_GetMaterial(int ofTypeID, materialgroup_t groupNum)
 {
     if(!initedOk)
         return NULL;
@@ -1040,7 +546,7 @@ material_t* R_GetMaterial(int ofTypeID, materialgroup_t groupNum)
     if(!isValidMaterialGroup(groupNum)) // MG_ANY is considered invalid.
     {
 #if _DEBUG
-Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
+Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
             (int) groupNum);
 #endif
         return NULL;
@@ -1048,12 +554,13 @@ Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
 
     if(materialsHead)
     {
-        material_t*         mat;
+        material_t*        mat;
 
         mat = materialsHead;
         do
         {
-            if(groupNum == mat->group && mat->tex->ofTypeID == ofTypeID)
+            if(groupNum == mat->group &&
+               GL_GetGLTexture(mat->layers[0].tex)->ofTypeID == ofTypeID)
             {
                 if(mat->flags & MATF_NO_DRAW)
                    return NULL;
@@ -1066,43 +573,45 @@ Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
     return NULL;
 }
 
-/**
- * Given a unique material number return the associated material.
- *
- * @param num           Unique material number.
- *
- * @return              The associated material, ELSE @c NULL.
- */
-material_t* R_GetMaterialByNum(materialnum_t num)
+materialnum_t P_MaterialCheckNumForIndex(uint idx, materialgroup_t groupNum)
 {
     if(!initedOk)
-        return NULL;
+        return 0;
 
-    if(num != 0 && num <= numMaterialBinds)
-        return materialBinds[num - 1].mat; // 1-based index.
+    // Caller wants a material in a specific group.
+    if(!isValidMaterialGroup(groupNum))
+    {
+#if _DEBUG
+Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
+            (int) groupNum);
+#endif
+        return 0;
+    }
 
-    return NULL;
+    return getMaterialNumForIndex(idx, groupNum);
 }
 
 /**
- * Retrieve the unique material number for the given material.
+ * Given a texture/flat/sprite/etc index num, search the materials db for
+ * a name-bound material.
+ * \note Part of the Doomsday public API.
+ * \note2 Sames as P_MaterialCheckNumForIndex except will log an error
+ *        message if the material being searched for is not found.
  *
- * @param mat           The material to retrieve the unique number of.
+ * @param idx           Index of the texture/flat/sprite/etc.
+ * @param group         MG_* material group.
  *
- * @return              The associated unique number.
+ * @return              Unique identifier of the found material, else zero.
  */
-materialnum_t R_GetMaterialNum(const material_t* mat)
+materialnum_t P_MaterialNumForIndex(uint idx, materialgroup_t group)
 {
-    if(mat)
-    {
-        materialnum_t       i;
+    materialnum_t       result = P_MaterialCheckNumForIndex(idx, group);
 
-        for(i = 0; i < numMaterialBinds; ++i)
-            if(materialBinds[i].mat == mat)
-                return i + 1; // 1-based index.
-    }
-
-    return 0;
+    // Not found? Don't announce during map setup or if not yet inited.
+    if(result == 0 && (!mapSetup || !initedOk))
+        Con_Message("P_MaterialNumForIndex: %u in group %i not found!\n",
+                    idx, group);
+    return result;
 }
 
 /**
@@ -1121,7 +630,7 @@ materialnum_t R_GetMaterialNum(const material_t* mat)
  *
  * @return              Unique number of the found material, else zero.
  */
-materialnum_t R_MaterialCheckNumForName(const char* rawName,
+materialnum_t P_MaterialCheckNumForName(const char* rawName,
                                         materialgroup_t groupNum)
 {
     int                 n;
@@ -1140,7 +649,7 @@ materialnum_t R_MaterialCheckNumForName(const char* rawName,
     if(groupNum != MG_ANY && !isValidMaterialGroup(groupNum))
     {
 #if _DEBUG
-Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
+Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
             (int) groupNum);
 #endif
         return 0;
@@ -1174,7 +683,7 @@ Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
 /**
  * Given a name and material group, search the materials db for a match.
  * \note Part of the Doomsday public API.
- * \note2 Same as R_MaterialCheckNumForName except will log an error
+ * \note2 Same as P_MaterialCheckNumForName except will log an error
  *        message if the material being searched for is not found.
  *
  * @param name          Name of the material to search for.
@@ -1182,7 +691,7 @@ Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
  *
  * @return              Unique identifier of the found material, else zero.
  */
-materialnum_t R_MaterialNumForName(const char* name, materialgroup_t group)
+materialnum_t P_MaterialNumForName(const char* name, materialgroup_t group)
 {
     materialnum_t       result;
 
@@ -1195,53 +704,12 @@ materialnum_t R_MaterialNumForName(const char* name, materialgroup_t group)
     if(!name || !name[0] || name[0] == '-')
         return 0;
 
-    result = R_MaterialCheckNumForName(name, group);
+    result = P_MaterialCheckNumForName(name, group);
 
     // Not found?
     if(result == 0 && !mapSetup) // Don't announce during map setup.
-        Con_Message("R_MaterialNumForName: \"%.8s\" in group %i not found!\n",
+        Con_Message("P_MaterialNumForName: \"%.8s\" in group %i not found!\n",
                     name, group);
-    return result;
-}
-
-materialnum_t R_MaterialCheckNumForIndex(uint idx, materialgroup_t groupNum)
-{
-    if(!initedOk)
-        return 0;
-
-    // Caller wants a material in a specific group.
-    if(!isValidMaterialGroup(groupNum))
-    {
-#if _DEBUG
-Con_Message("R_GetMaterial: Internal error, invalid material group '%i'\n",
-            (int) groupNum);
-#endif
-        return 0;
-    }
-
-    return getMaterialNumForIndex(idx, groupNum);
-}
-
-/**
- * Given a texture/flat/sprite/etc index num, search the materials db for
- * a name-bound material.
- * \note Part of the Doomsday public API.
- * \note2 Sames as R_MaterialCheckNumForIndex except will log an error
- *        message if the material being searched for is not found.
- *
- * @param idx           Index of the texture/flat/sprite/etc.
- * @param group         MG_* material group.
- *
- * @return              Unique identifier of the found material, else zero.
- */
-materialnum_t R_MaterialNumForIndex(uint idx, materialgroup_t group)
-{
-    materialnum_t       result = R_MaterialCheckNumForIndex(idx, group);
-
-    // Not found? Don't announce during map setup or if not yet inited.
-    if(result == 0 && (!mapSetup || !initedOk))
-        Con_Message("R_MaterialNumForIndex: %u in group %i not found!\n",
-                    idx, group);
     return result;
 }
 
@@ -1249,233 +717,180 @@ materialnum_t R_MaterialNumForIndex(uint idx, materialgroup_t group)
  * Given a unique material identifier, lookup the associated name.
  * \note Part of the Doomsday public API.
  *
- * @param num           The unique identifier.
+ * @param mat           The material to lookup the name for.
  *
  * @return              The associated name.
  */
-const char* R_MaterialNameForNum(materialnum_t num)
+const char* P_GetMaterialName(material_t* mat)
 {
+    materialnum_t       num;
+
     if(!initedOk)
         return NULL;
 
-    if(num != 0 && num <= numMaterialBinds)
-        return materialBinds[num-1].name;
+    if(mat && (num = P_ToMaterialNum(mat)))
+        return materialBinds[num].name;
 
-    return NULL;
+    return "NOMAT"; // Should never happen.
 }
 
 /**
- * Sets the minification mode of the specified material.
- *
- * @param mat           The material to be updated.
- * @param minMode       The DGL minification mode to set.
- */
-void R_MaterialSetMinMode(material_t* mat, int minMode)
-{
-    if(mat)
-    {
-        materialtex_t*      mTex = mat->tex;
-        mtexinstnode_t*     node;
-
-        node = (mtexinstnode_t*) mTex->instances;
-        while(node)
-        {
-            materialtexinst_t*  inst = &node->glTex;
-
-            if(inst->tex) // Is the texture loaded?
-            {
-                DGL_Bind(inst->tex);
-                DGL_TexFilter(DGL_MIN_FILTER, minMode);
-            }
-            node = node->next;
-        }
-    }
-}
-
-void R_MaterialSetTranslation(material_t* mat, material_t* current,
-                              material_t* next, float inter)
-{
-    if(!mat || !current || !next)
-    {
-#if _DEBUG
-Con_Error("R_MaterialSetTranslation: Invalid paramaters.");
-#endif
-        return;
-    }
-
-    mat->current = current;
-    mat->next = next;
-    mat->inter = 0;
-}
-
-/**
- * Retrieve the decoration definition associated with the material.
- *
- * @return              The associated decoration definition, else @c NULL.
- */
-const ded_decor_t* R_MaterialGetDecoration(material_t* mat)
-{
-    if(mat)
-    {
-        // Ensure we've already prepared this material.
-        R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
-
-        return mat->current->decoration;
-    }
-
-    return NULL;
-}
-
-/**
- * Retrieve the ptcgen definition associated with the material.
- *
- * @return              The associated ptcgen definition, else @c NULL.
- */
-const ded_ptcgen_t* R_MaterialGetPtcGen(material_t* mat)
-{
-    if(mat)
-    {
-        // Ensure we've already prepared this material.
-        R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
-
-        return mat->ptcGen;
-    }
-
-    return NULL;
-}
-
-materialclass_t R_MaterialGetClass(material_t* mat)
-{
-    if(mat)
-    {
-        if(mat->envClass == MATCLASS_UNKNOWN)
-        {
-            materialnum_t       matIdx = R_GetMaterialNum(mat);
-
-            S_MaterialClassForName(R_MaterialNameForNum(matIdx), mat->group);
-        }
-
-        if(!(mat->flags & MATF_NO_DRAW))
-        {
-            return mat->envClass;
-        }
-    }
-
-    return MATCLASS_UNKNOWN;
-}
-
-/**
- * Populate 'info' with information about the requested material.
+ * Precache the specified material.
  * \note Part of the Doomsday public API.
  *
- * @param mat           Material num.
- * @param info          Ptr to info to be populated.
+ * @param mat           The material to be precached.
  */
-boolean R_MaterialGetInfo(materialnum_t num, materialinfo_t* info)
+void P_MaterialPrecache(material_t* mat)
 {
-    material_t*         mat;
-
     if(!initedOk)
-        return false;
+        return;
 
-    if(!info)
-        Con_Error("R_MaterialGetInfo: Info paramater invalid.");
+    Material_Precache(mat);
+}
 
-    if(!(mat = R_GetMaterialByNum(num)))
-        return false;
+/**
+ * Called every tic by P_Ticker.
+ */
+void P_MaterialManagerTicker(timespan_t time)
+{
+//    material_t*         mat;
+    static trigger_t    fixed = { 1.0 / 35, 0 };
 
-    info->num = num;
-    info->group = mat->group;
-    info->width = (int) mat->width;
-    info->height = (int) mat->height;
-    info->flags = mat->flags;
+    // The animation will only progress when the game is not paused.
+    if(clientPaused)
+        return;
 
+#if 0
+    mat = materialsHead;
+    while(mat)
+    {
+        Material_Ticker(mat, time);
+        mat = mat->globalNext;
+    }
+#endif
+
+    if(!M_RunTrigger(&fixed, time))
+        return;
+
+    animateAnimGroups();
+}
+
+static void printMaterials(materialgroup_t grp, const char* like)
+{
+    materialnum_t       i, numDigits;
+
+    if(!(grp < NUM_MATERIAL_GROUPS))
+        return;
+
+    if(grp == MG_ANY)
+        Con_Printf("Known Materials (IDX - Name (Group) [width, height]):\n");
+    else
+        Con_Printf("Known Materials in Group %i (IDX - Name [width, height]):\n", grp);
+
+    numDigits = M_NumDigits(numMaterialBinds);
+    for(i = 0; i < numMaterialBinds; ++i)
+    {
+        uint                j;
+        materialbind_t*     mb = &materialBinds[i];
+        material_t*         mat = mb->mat;
+
+        if(grp != MG_ANY && mat->group != grp)
+            continue;
+
+        if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
+            continue;
+
+        Con_Printf(" %*lu - \"%s\"", numDigits, i, mb->name);
+        if(grp == MG_ANY)
+            Con_Printf(" (%i)", mat->group);
+        Con_Printf(" [%i, %i]", mat->width, mat->height);
+
+        for(j = 0; j < mat->numLayers; ++j)
+        {
+            Con_Printf(" %i:%s", j, GL_GetGLTexture(mat->layers[j].tex)->name);
+        }
+        Con_Printf("\n");
+    }
+}
+
+D_CMD(ListMaterials)
+{
+    materialgroup_t     grp = MG_ANY;
+
+    if(argc > 1)
+    {
+        grp = atoi(argv[1]);
+        if(grp < MG_FIRST)
+        {
+            grp = MG_ANY;
+        }
+        else if(!(grp < NUM_MATERIAL_GROUPS))
+        {
+            Con_Printf("Invalid material group \"%s\".\n", argv[1]);
+            return false;
+        }
+    }
+
+    printMaterials(grp, argc > 2? argv[2] : NULL);
     return true;
 }
 
-/**
- * Deletes a texture (not for rawlumptexs' etc.).
- */
-void R_MaterialTexDelete(materialtex_t* mTex)
+// Code bellow needs re-implementing --------------------------------------
+
+typedef struct animframe_s {
+    material_t*     mat;
+    ushort          tics;
+    ushort          random;
+} animframe_t;
+
+typedef struct animgroup_s {
+    int             id;
+    int             flags;
+    int             index;
+    int             maxTimer;
+    int             timer;
+    int             count;
+    animframe_t*    frames;
+} animgroup_t;
+
+static int numgroups;
+static animgroup_t* groups;
+
+static animgroup_t* getAnimGroup(int number)
 {
-    if(mTex)
+    if(--number < 0 || number >= numgroups)
+        return NULL;
+
+    return &groups[number];
+}
+
+static boolean isInAnimGroup(animgroup_t* group, const material_t* mat)
+{
+    int                 i;
+
+    if(!mat || !group)
+        return false;
+
+    // Is it in there?
+    for(i = 0; i < group->count; ++i)
     {
-        mtexinstnode_t*     node;
+        animframe_t*        frame = &group->frames[i];
 
-        // Delete all instances.
-        node = (mtexinstnode_t*) mTex->instances;
-        while(node)
-        {
-            materialtexinst_t*  inst = &node->glTex;
-
-            if(inst->tex) // Is the texture loaded?
-            {
-                DGL_DeleteTextures(1, &inst->tex);
-                inst->tex = 0;
-            }
-            node = node->next;
-        }
-    }
-}
-
-/**
- * \note Part of the Doomsday public API.
- *
- * @return              @c true, if the texture is probably not from
- *                      the original game.
- */
-boolean R_MaterialIsCustom(materialnum_t num)
-{
-    material_t*         mat = R_GetMaterialByNum(num);
-
-    if(mat)
-        return !mat->tex->isFromIWAD;
-
-    return true; // Yes?
-}
-
-/**
- * Prepares all resources associated with the specified material including
- * all in the same animation group.
- */
-void R_MaterialPrecache2(material_t* mat)
-{
-    if(!mat)
-        return;
-
-    if(mat->inAnimGroup)
-    {   // The material belongs in one or more animgroups.
-        int                 i;
-
-        for(i = 0; i < numgroups; ++i)
-        {
-            if(isInAnimGroup(groups[i].id, mat))
-            {
-                int                 k;
-
-                // Precache this group.
-                for(k = 0; k < groups[i].count; ++k)
-                {
-                    animframe_t*        frame = &groups[i].frames[k];
-
-                    R_MaterialPrepare(frame->mat->current, 0, NULL, NULL, NULL);
-                }
-            }
-        }
-
-        return;
+        if(frame->mat == mat)
+            return true;
     }
 
-    // Just this one material.
-    R_MaterialPrepare(mat->current, 0, NULL, NULL, NULL);
+    return false;
 }
 
-/**
- * \note Part of the Doomsday public API.
- */
-void R_MaterialPrecache(materialnum_t num)
+boolean R_IsInAnimGroup(int groupNum, material_t* mat)
 {
-    R_MaterialPrecache2(R_GetMaterialByNum(num));
+    return isInAnimGroup(getAnimGroup(groupNum), mat);
+}
+
+int R_NumAnimGroups(void)
+{
+    return numgroups;
 }
 
 /**
@@ -1530,14 +945,13 @@ void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
 {
     animgroup_t*        group;
     animframe_t*        frame;
-    material_t*         mat;
+    material_t*        mat;
 
     group = getAnimGroup(groupNum);
     if(!group)
         Con_Error("R_AddToAnimGroup: Unknown anim group '%i'\n.", groupNum);
 
-    mat = R_GetMaterialByNum(num);
-    if(!mat)
+    if(!num || !(mat = getMaterialByNum(num - 1)))
     {
         Con_Message("R_AddToAnimGroup: Invalid material num '%i'\n.", num);
         return;
@@ -1558,9 +972,81 @@ void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
     frame->random = randomTics;
 }
 
-boolean R_IsInAnimGroup(int groupNum, materialnum_t num)
+boolean R_IsPrecacheGroup(int groupNum)
 {
-    return isInAnimGroup(groupNum, R_GetMaterialByNum(num));
+    animgroup_t*        group;
+
+    if(group = getAnimGroup(groupNum))
+    {
+        return (group->flags & AGF_PRECACHE)? true : false;
+    }
+
+    return false;
+}
+
+static void animateAnimGroups(void)
+{
+    int                 i, timer, k;
+    animgroup_t*        group;
+
+    for(i = 0, group = groups; i < numgroups; ++i, group++)
+    {
+        // The Precache groups are not intended for animation.
+        if((group->flags & AGF_PRECACHE) || !group->count)
+            continue;
+
+        if(--group->timer <= 0)
+        {
+            // Advance to next frame.
+            group->index = (group->index + 1) % group->count;
+            timer = (int) group->frames[group->index].tics;
+
+            if(group->frames[group->index].random)
+            {
+                timer += (int) RNG_RandByte() % (group->frames[group->index].random + 1);
+            }
+            group->timer = group->maxTimer = timer;
+
+            // Update translations.
+            for(k = 0; k < group->count; ++k)
+            {
+                material_t*            real, *current, *next;
+
+                real = group->frames[k].mat;
+                current =
+                    group->frames[(group->index + k) % group->count].mat;
+                next =
+                    group->frames[(group->index + k + 1) % group->count].mat;
+
+                Material_SetTranslation(real, current, next, 0);
+
+                // Just animate the first in the sequence?
+                if(group->flags & AGF_FIRST_ONLY)
+                    break;
+            }
+        }
+        else
+        {
+            // Update the interpolation point of animated group members.
+            for(k = 0; k < group->count; ++k)
+            {
+                material_t*            mat = group->frames[k].mat;
+
+                if(group->flags & AGF_SMOOTH)
+                {
+                    mat->inter = 1 - group->timer / (float) group->maxTimer;
+                }
+                else
+                {
+                    mat->inter = 0;
+                }
+
+                // Just animate the first in the sequence?
+                if(group->flags & AGF_FIRST_ONLY)
+                    break;
+            }
+        }
+    }
 }
 
 /**
@@ -1587,143 +1073,26 @@ void R_ResetAnimGroups(void)
     }
 
     // This'll get every group started on the first step.
-    R_AnimateAnimGroups();
+    animateAnimGroups();
 }
 
-void R_AnimateAnimGroups(void)
+void R_MaterialsPrecacheGroup(material_t* mat)
 {
-    int                 i, timer, k;
-    animgroup_t*        group;
+    int                 i;
 
-    // The animation will only progress when the game is not paused.
-    if(clientPaused)
-        return;
-
-    for(i = 0, group = groups; i < numgroups; ++i, group++)
+    for(i = 0; i < numgroups; ++i)
     {
-        // The Precache groups are not intended for animation.
-        if((group->flags & AGF_PRECACHE) || !group->count)
-            continue;
-
-        if(--group->timer <= 0)
+        if(isInAnimGroup(&groups[i], mat))
         {
-            // Advance to next frame.
-            group->index = (group->index + 1) % group->count;
-            timer = (int) group->frames[group->index].tics;
+            int                 k;
 
-            if(group->frames[group->index].random)
+            // Precache this group.
+            for(k = 0; k < groups[i].count; ++k)
             {
-                timer += (int) RNG_RandByte() % (group->frames[group->index].random + 1);
-            }
-            group->timer = group->maxTimer = timer;
+                animframe_t*        frame = &groups[i].frames[k];
 
-            // Update translations.
-            for(k = 0; k < group->count; ++k)
-            {
-                material_t*             real, *current, *next;
-
-                real = group->frames[k].mat;
-                current =
-                    group->frames[(group->index + k) % group->count].mat;
-                next =
-                    group->frames[(group->index + k + 1) % group->count].mat;
-
-                R_MaterialSetTranslation(real, current, next, 0);
-
-                // Just animate the first in the sequence?
-                if(group->flags & AGF_FIRST_ONLY)
-                    break;
-            }
-        }
-        else
-        {
-            // Update the interpolation point of animated group members.
-            for(k = 0; k < group->count; ++k)
-            {
-                material_t*             mat = group->frames[k].mat;
-
-                if(group->flags & AGF_SMOOTH)
-                {
-                    mat->inter = 1 - group->timer / (float) group->maxTimer;
-                }
-                else
-                {
-                    mat->inter = 0;
-                }
-
-                // Just animate the first in the sequence?
-                if(group->flags & AGF_FIRST_ONLY)
-                    break;
+                Material_Prepare(NULL, frame->mat, true, NULL);
             }
         }
     }
-}
-
-static void printMaterials(materialgroup_t grp)
-{
-    materialnum_t       i, numDigits;
-
-    if(!(grp < NUM_MATERIAL_GROUPS))
-        return;
-
-    if(grp == MG_ANY)
-        Con_Printf("Known Materials (IDX - Name (Group) [width, height]):\n");
-    else
-        Con_Printf("Known Materials in Group %i (IDX - Name [width, height]):\n", grp);
-
-    numDigits = floor(log10(abs(numMaterialBinds))) + 1;
-    for(i = 0; i < numMaterialBinds; ++i)
-    {
-        int                 j;
-        materialbind_t*     mb = &materialBinds[i];
-        material_t*         mat = mb->mat;
-
-        if(grp != MG_ANY && mat->group != grp)
-            continue;
-
-        Con_Printf(" %*lu - \"%s\"", numDigits, i, mb->name);
-        if(grp == MG_ANY)
-            Con_Printf(" (%i)", mat->group);
-        Con_Printf(" [%i, %i]", mat->width, mat->height);
-        Con_Printf("\n");
-
-        for(j = 0; j < numgroups; ++j)
-        {
-            if(isInAnimGroup(groups[j].id, mat))
-            {
-                int                 k;
-
-                for(k = 0; k < groups[j].count; ++k)
-                {
-                    animframe_t*        frame = &groups[j].frames[k];
-                    materialnum_t       otherIDX =
-                        getMaterialNumForIndex(frame->mat->tex->ofTypeID,
-                                               frame->mat->group) - 1;
-                    materialbind_t*     otherMB = &materialBinds[otherIDX];
-
-                    Con_Printf(" > %*lu - \"%s\"\n", numDigits, otherIDX,
-                               otherMB->name);
-                }
-            }
-        }
-    }
-}
-
-D_CMD(ListMaterials)
-{
-    materialgroup_t     grp = MG_ANY;
-
-    if(argc > 1)
-    {
-        grp = atoi(argv[1]);
-
-        if(grp < MG_FIRST || !(grp < NUM_MATERIAL_GROUPS))
-        {
-            Con_Printf("Invalid material group \"%s\".\n", argv[1]);
-            return false;
-        }
-    }
-
-    printMaterials(grp);
-    return true;
 }
