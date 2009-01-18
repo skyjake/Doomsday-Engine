@@ -80,7 +80,7 @@ DEFCC(CCmdConBackground);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-materialnum_t consoleBG = 0;
+material_t* consoleBG = NULL;
 float consoleZoom = 1;
 
 // Console variables.
@@ -352,10 +352,17 @@ DEFCC(CCmdHereticFont)
  */
 DEFCC(CCmdConBackground)
 {
-    materialnum_t       num;
+    material_t*         mat;
 
-    if((num = R_MaterialCheckNumForName(argv[1], MG_FLATS)) != 0)
-        consoleBG = num;
+    if(!stricmp(argv[1], "off") || !stricmp(argv[1], "none"))
+    {
+        consoleBG = NULL;
+        return true;
+    }
+
+    if((mat = P_ToPtr(DMU_MATERIAL,
+            P_MaterialCheckNumForName(argv[1], MG_ANY))))
+        consoleBG = mat;
 
     return true;
 }
