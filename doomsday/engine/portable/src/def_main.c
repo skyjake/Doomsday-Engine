@@ -408,7 +408,7 @@ ded_sky_t* Def_GetSky(const char* id)
     if(!id || !id[0])
         return NULL;
 
-    for(i = 0; i < defs.count.skies.num; ++i)
+    for(i = defs.count.skies.num - 1; i >= 0; i--)
         if(!stricmp(defs.skies[i].id, id))
             return defs.skies + i;
 
