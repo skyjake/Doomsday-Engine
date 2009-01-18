@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,11 +88,11 @@ void Msg_WritePackedShort(short w)
         Con_Error("Msg_WritePackedShort: Cannot write %i.\n", w);
     }
 
-	// Can the number be represented with 7 bits?
-	if(w < 0x80)
-	{
+    // Can the number be represented with 7 bits?
+    if(w < 0x80)
+    {
         Msg_WriteByte(w);
-	}
+    }
     else
     {
         Msg_WriteByte(0x80 | (w & 0x7f));
@@ -130,7 +130,7 @@ byte Msg_ReadByte(void)
 {
 #ifdef _DEBUG
     if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Msg_ReadByte: Packet read overflow!\n");
+        Con_Error("Msg_ReadByte: Packet read overflow!\n");
 #endif
     return *netBuffer.cursor++;
 }
@@ -139,7 +139,7 @@ short Msg_ReadShort(void)
 {
 #ifdef _DEBUG
     if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Msg_ReadShort: Packet read overflow!\n");
+        Con_Error("Msg_ReadShort: Packet read overflow!\n");
 #endif
     netBuffer.cursor += 2;
     return SHORT( *(short *) (netBuffer.cursor - 2) );
@@ -151,7 +151,7 @@ short Msg_ReadShort(void)
  */
 short Msg_ReadPackedShort(void)
 {
-    ushort			pack = *netBuffer.cursor++;
+    ushort          pack = *netBuffer.cursor++;
 
     if(pack & 0x80)
     {
@@ -165,7 +165,7 @@ int Msg_ReadLong(void)
 {
 #ifdef _DEBUG
     if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Msg_ReadLong: Packet read overflow!\n");
+        Con_Error("Msg_ReadLong: Packet read overflow!\n");
 #endif
     netBuffer.cursor += 4;
     return LONG( *(int *) (netBuffer.cursor - 4) );
@@ -173,15 +173,15 @@ int Msg_ReadLong(void)
 
 uint Msg_ReadPackedLong(void)
 {
-    byte			pack = 0;
-    int				pos = 0;
-    uint			value = 0;
+    byte            pack = 0;
+    int             pos = 0;
+    uint            value = 0;
 
     do
     {
 #ifdef _DEBUG
         if(Msg_Offset() >= netBuffer.length)
-			Con_Error("Msg_ReadPackedLong: Packet read overflow!\n");
+            Con_Error("Msg_ReadPackedLong: Packet read overflow!\n");
 #endif
 
         pack = *netBuffer.cursor++;
@@ -196,7 +196,7 @@ void Msg_Read(void *dest, size_t len)
 {
 #ifdef _DEBUG
     if(Msg_Offset() >= netBuffer.length)
-		Con_Error("Msg_Read: Packet read overflow!\n");
+        Con_Error("Msg_Read: Packet read overflow!\n");
 #endif
     memcpy(dest, netBuffer.cursor, len);
     netBuffer.cursor += len;

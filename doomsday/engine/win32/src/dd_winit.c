@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -231,13 +231,13 @@ static int loadAllPlugins(application_t *app)
 
 static int initTimingSystem(void)
 {
-	// Nothing to do.
+    // Nothing to do.
     return TRUE;
 }
 
 static int initPluginSystem(void)
 {
-	// Nothing to do.
+    // Nothing to do.
     return TRUE;
 }
 
@@ -286,7 +286,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         // Was a game library specified?
         if(!libName)
         {
-		    DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
+            DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
         }
         else
         {
@@ -386,7 +386,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
     case WM_SIZE:
-		if(!appShutdown)
+        if(!appShutdown)
         {
             switch(wParam)
             {
@@ -402,20 +402,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-	case WM_NCLBUTTONDOWN:
-		switch(wParam)
-		{
-		case HTMINBUTTON:
-			ShowWindow(hWnd, SW_MINIMIZE);
-			break;
+    case WM_NCLBUTTONDOWN:
+        switch(wParam)
+        {
+        case HTMINBUTTON:
+            ShowWindow(hWnd, SW_MINIMIZE);
+            break;
 
-		case HTCLOSE:
+        case HTCLOSE:
             PostQuitMessage(0);
-			return 0;
+            return 0;
 
         default:
             break;
-		}
+        }
         // Un-acquire device when entering menu or re-sizing the mouse
         // cursor again.
         //g_bActive = FALSE;
@@ -471,20 +471,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_ACTIVATE:
         if(!appShutdown)
-		{
-			if(LOWORD(wParam) == WA_ACTIVE ||
+        {
+            if(LOWORD(wParam) == WA_ACTIVE ||
                (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
-			{
-		        SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+            {
+                SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
                 DD_ClearEvents(); // For good measure.
                 ignoreInput = FALSE;
             }
-			else
-			{
-		        SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+            else
+            {
+                SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
                 ignoreInput = TRUE;
             }
-		}
+        }
         forwardMsg = FALSE;
         break;
 

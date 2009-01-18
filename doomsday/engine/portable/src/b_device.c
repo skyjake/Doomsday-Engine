@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -237,7 +237,7 @@ dbinding_t* B_FindDeviceBinding(bcontext_t* context, uint device, cbdevtype_t bi
     controlbinding_t*   cb;
     dbinding_t*         d;
     int                 i;
-    
+
     for(cb = context->controlBinds.next; cb != &context->controlBinds; cb = cb->next)
     {
         for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -250,7 +250,7 @@ dbinding_t* B_FindDeviceBinding(bcontext_t* context, uint device, cbdevtype_t bi
                 }
             }
         }
-    }    
+    }
     return NULL;
 }
 
@@ -340,7 +340,7 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
                 }
                 continue; // Shadowed by a more important active class.
             }
-            
+
             if(axis->type == IDAT_POINTER)
             {
                 deviceOffset = axis->position;

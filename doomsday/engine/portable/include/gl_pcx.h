@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,19 +31,19 @@
 
 #pragma pack(1)
 typedef struct {
-	char            manufacturer;
-	char            version;
-	char            encoding;
-	char            bits_per_pixel;
-	unsigned short  xmin, ymin, xmax, ymax;
-	unsigned short  hres, vres;
-	unsigned char   palette[48];
-	char            reserved;
-	char            color_planes;
-	unsigned short  bytes_per_line;
-	unsigned short  palette_type;
-	char            filler[58];
-	unsigned char   data;		   // unbounded
+    char            manufacturer;
+    char            version;
+    char            encoding;
+    char            bits_per_pixel;
+    unsigned short  xmin, ymin, xmax, ymax;
+    unsigned short  hres, vres;
+    unsigned char   palette[48];
+    char            reserved;
+    char            color_planes;
+    unsigned short  bytes_per_line;
+    unsigned short  palette_type;
+    char            filler[58];
+    unsigned char   data;          // unbounded
 } pcx_t;
 
 #pragma pack()
@@ -51,12 +51,12 @@ typedef struct {
 boolean         PCX_MemoryGetSize(void *imageData, int *w, int *h);
 boolean         PCX_GetSize(const char *fn, int *w, int *h);
 boolean         PCX_MemoryLoad(byte *imgdata, size_t len, int buf_w, int buf_h,
-							   byte *outBuffer);
+                               byte *outBuffer);
 byte           *PCX_MemoryAllocLoad(byte *imgdata, size_t len, int *buf_w,
-									int *buf_h, byte *outBuffer);
+                                    int *buf_h, byte *outBuffer);
 void            PCX_Load(const char *fn, int buf_w, int buf_h,
-						 byte *outBuffer);
+                         byte *outBuffer);
 byte           *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h,
-							  byte *outBuffer);
+                              byte *outBuffer);
 
 #endif

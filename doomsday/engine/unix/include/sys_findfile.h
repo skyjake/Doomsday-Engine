@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,18 +30,18 @@
 #define __DOOMSDAY_FILE_FIND_H__
 
 // File attributes.
-#define A_SUBDIR	0x1
-#define A_RDONLY	0x2
-#define A_HIDDEN	0x4
-#define A_ARCH		0x8
+#define A_SUBDIR    0x1
+#define A_RDONLY    0x2
+#define A_HIDDEN    0x4
+#define A_ARCH      0x8
 
 typedef struct finddata_s {
-	void           *finddata;
-	long            date;
-	long            time;
-	long            size;
-	char           *name;
-	long            attrib;
+    void           *finddata;
+    long            date;
+    long            time;
+    long            size;
+    char           *name;
+    long            attrib;
 } finddata_t;
 
 /*

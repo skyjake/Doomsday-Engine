@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -972,10 +972,10 @@ int printInt(void *element, void *data)
 
 static int checkError(linklist_t *list)
 {
-	int         error;
+    int         error;
 
-	if((error = List_GetError(list)) != LL_NO_ERROR)
-		printf("List error: %i!\n", error);
+    if((error = List_GetError(list)) != LL_NO_ERROR)
+        printf("List error: %i!\n", error);
     return error;
 }
 

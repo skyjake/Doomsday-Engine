@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,8 +39,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct winfinddata_s {
-	struct _finddata_t data;
-	intptr_t        handle;
+    struct _finddata_t data;
+    intptr_t        handle;
 } winfinddata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -59,45 +59,45 @@ typedef struct winfinddata_s {
 
 static void setdata(finddata_t *dta)
 {
-	winfinddata_t *fd = dta->finddata;
+    winfinddata_t *fd = dta->finddata;
 
-	dta->date = fd->data.time_write;
-	dta->time = fd->data.time_write;
-	dta->size = fd->data.size;
-	dta->name = fd->data.name;
-	dta->attrib = 0;
-	if(fd->data.attrib & _A_SUBDIR)
-		dta->attrib |= A_SUBDIR;
+    dta->date = fd->data.time_write;
+    dta->time = fd->data.time_write;
+    dta->size = fd->data.size;
+    dta->name = fd->data.name;
+    dta->attrib = 0;
+    if(fd->data.attrib & _A_SUBDIR)
+        dta->attrib |= A_SUBDIR;
 }
 
 int myfindfirst(const char *filename, finddata_t *dta)
 {
-	winfinddata_t *fd;
+    winfinddata_t *fd;
 
-	// Allocate a new private finddata struct.
-	dta->finddata = fd = calloc(1, sizeof(winfinddata_t));
+    // Allocate a new private finddata struct.
+    dta->finddata = fd = calloc(1, sizeof(winfinddata_t));
 
-	// Begin the search.
-	fd->handle = _findfirst(filename, &fd->data);
+    // Begin the search.
+    fd->handle = _findfirst(filename, &fd->data);
 
-	setdata(dta);
-	return (fd->handle == (long) (-1));
+    setdata(dta);
+    return (fd->handle == (long) (-1));
 }
 
 int myfindnext(finddata_t *dta)
 {
-	int         result;
-	winfinddata_t *fd = dta->finddata;
+    int         result;
+    winfinddata_t *fd = dta->finddata;
 
-	result = _findnext(fd->handle, &fd->data);
-	if(!result)
-		setdata(dta);
-	return result != 0;
+    result = _findnext(fd->handle, &fd->data);
+    if(!result)
+        setdata(dta);
+    return result != 0;
 }
 
 void myfindend(finddata_t *dta)
 {
-	_findclose(((winfinddata_t *) dta->finddata)->handle);
-	free(dta->finddata);
-	memset(dta, 0, sizeof(*dta));
+    _findclose(((winfinddata_t *) dta->finddata)->handle);
+    free(dta->finddata);
+    memset(dta, 0, sizeof(*dta));
 }

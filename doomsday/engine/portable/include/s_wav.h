@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,8 @@
 
 int             WAV_CheckFormat(char *data);
 void           *WAV_Load(const char *filename, int *bits, int *rate,
-						 int *samples);
+                         int *samples);
 void           *WAV_MemoryLoad(byte *data, size_t datalength, int *bits,
-							   int *rate, int *samples);
+                               int *rate, int *samples);
 
 #endif

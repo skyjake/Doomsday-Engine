@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -196,7 +196,7 @@ void B_Init(void)
     bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
     bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
     B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
-    
+
     // UI doesn't let anything past it.
     B_AcquireAll(B_NewContext(UI_BINDING_CONTEXT_NAME), true);
 /*

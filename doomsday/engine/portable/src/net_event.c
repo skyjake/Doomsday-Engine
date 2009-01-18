@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,9 +37,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MASTER_QUEUE_LEN	16
-#define NETEVENT_QUEUE_LEN	32
-#define MASTER_HEARTBEAT	120	// seconds
+#define MASTER_QUEUE_LEN    16
+#define NETEVENT_QUEUE_LEN  32
+#define MASTER_HEARTBEAT    120 // seconds
 
 // TYPES -------------------------------------------------------------------
 
@@ -71,8 +71,8 @@ static int neqHead, neqTail;
  */
 void N_MAPost(masteraction_t act)
 {
-	masterQueue[mqHead++] = act;
-	mqHead %= MASTER_QUEUE_LEN;
+    masterQueue[mqHead++] = act;
+    mqHead %= MASTER_QUEUE_LEN;
 }
 
 /**
@@ -80,11 +80,11 @@ void N_MAPost(masteraction_t act)
  */
 boolean N_MAGet(masteraction_t *act)
 {
-	// Empty queue?
-	if(mqHead == mqTail)
-		return false;
-	*act = masterQueue[mqTail];
-	return true;
+    // Empty queue?
+    if(mqHead == mqTail)
+        return false;
+    *act = masterQueue[mqTail];
+    return true;
 }
 
 /**
@@ -92,10 +92,10 @@ boolean N_MAGet(masteraction_t *act)
  */
 void N_MARemove(void)
 {
-	if(mqHead != mqTail)
-	{
-		mqTail = (mqTail + 1) % MASTER_QUEUE_LEN;
-	}
+    if(mqHead != mqTail)
+    {
+        mqTail = (mqTail + 1) % MASTER_QUEUE_LEN;
+    }
 }
 
 /**
@@ -103,7 +103,7 @@ void N_MARemove(void)
  */
 void N_MAClear(void)
 {
-	mqHead = mqTail = 0;
+    mqHead = mqTail = 0;
 }
 
 /**
@@ -111,7 +111,7 @@ void N_MAClear(void)
  */
 boolean N_MADone(void)
 {
-	return (mqHead == mqTail);
+    return (mqHead == mqTail);
 }
 
 /**
@@ -119,8 +119,8 @@ boolean N_MADone(void)
  */
 void N_NEPost(netevent_t * nev)
 {
-	netEventQueue[neqHead] = *nev;
-	neqHead = (neqHead + 1) % NETEVENT_QUEUE_LEN;
+    netEventQueue[neqHead] = *nev;
+    neqHead = (neqHead + 1) % NETEVENT_QUEUE_LEN;
 }
 
 /**
@@ -134,7 +134,7 @@ void N_NEPost(netevent_t * nev)
  */
 boolean N_NEPending(void)
 {
-	return neqHead != neqTail;
+    return neqHead != neqTail;
 }
 
 /**
@@ -144,12 +144,12 @@ boolean N_NEPending(void)
  */
 boolean N_NEGet(netevent_t *nev)
 {
-	// Empty queue?
-	if(!N_NEPending())
-		return false;
-	*nev = netEventQueue[neqTail];
-	neqTail = (neqTail + 1) % NETEVENT_QUEUE_LEN;
-	return true;
+    // Empty queue?
+    if(!N_NEPending())
+        return false;
+    *nev = netEventQueue[neqTail];
+    neqTail = (neqTail + 1) % NETEVENT_QUEUE_LEN;
+    return true;
 }
 
 /**
@@ -157,67 +157,67 @@ boolean N_NEGet(netevent_t *nev)
  */
 void N_NETicker(void)
 {
-	masteraction_t act;
-	int         i, num;
+    masteraction_t act;
+    int         i, num;
 
-	if(netGame)
-	{
-		// Update master every 2 minutes.
-		if(masterAware && N_UsingInternet() &&
-		   !(SECONDS_TO_TICKS(sysTime) % (MASTER_HEARTBEAT * TICRATE)))
-		{
-			N_MasterAnnounceServer(true);
-		}
-	}
+    if(netGame)
+    {
+        // Update master every 2 minutes.
+        if(masterAware && N_UsingInternet() &&
+           !(SECONDS_TO_TICKS(sysTime) % (MASTER_HEARTBEAT * TICRATE)))
+        {
+            N_MasterAnnounceServer(true);
+        }
+    }
 
-	// Is there a master action to worry about?
-	if(N_MAGet(&act))
-	{
-		switch(act)
-		{
-		case MAC_REQUEST:
-			// Send the request for servers.
-			N_MasterRequestList();
-			N_MARemove();
-			break;
+    // Is there a master action to worry about?
+    if(N_MAGet(&act))
+    {
+        switch(act)
+        {
+        case MAC_REQUEST:
+            // Send the request for servers.
+            N_MasterRequestList();
+            N_MARemove();
+            break;
 
-		case MAC_WAIT:
-			// Handle incoming messages.
-			if(N_MasterGet(0, 0) >= 0)
-			{
-				// The list has arrived!
-				N_MARemove();
-			}
-			break;
+        case MAC_WAIT:
+            // Handle incoming messages.
+            if(N_MasterGet(0, 0) >= 0)
+            {
+                // The list has arrived!
+                N_MARemove();
+            }
+            break;
 
-		case MAC_LIST:
-			//Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n", "Name:");
-			Net_PrintServerInfo(0, NULL);
-			num = i = N_MasterGet(0, 0);
-			while(--i >= 0)
-			{
-				serverinfo_t info;
+        case MAC_LIST:
+            //Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n", "Name:");
+            Net_PrintServerInfo(0, NULL);
+            num = i = N_MasterGet(0, 0);
+            while(--i >= 0)
+            {
+                serverinfo_t info;
 
-				N_MasterGet(i, &info);
-				/*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n",
-				 * i, info.name,
-				 * info.players, info.maxPlayers,
-				 * info.canJoin? ' ':'*', info.version, info.game,
-				 * info.address, info.port);
-				 * Con_Printf("    %s (%x) %s\n", info.map, info.data[0],
-				 * info.description); */
-				Net_PrintServerInfo(i, &info);
-			}
-			Con_Printf("%i server%s found.\n", num,
-					   num != 1 ? "s were" : " was");
-			N_MARemove();
-			break;
+                N_MasterGet(i, &info);
+                /*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n",
+                 * i, info.name,
+                 * info.players, info.maxPlayers,
+                 * info.canJoin? ' ':'*', info.version, info.game,
+                 * info.address, info.port);
+                 * Con_Printf("    %s (%x) %s\n", info.map, info.data[0],
+                 * info.description); */
+                Net_PrintServerInfo(i, &info);
+            }
+            Con_Printf("%i server%s found.\n", num,
+                       num != 1 ? "s were" : " was");
+            N_MARemove();
+            break;
 
         default:
             Con_Error("N_NETicker: Invalid value, act = %i.", (int) act);
             break;
         }
-	}
+    }
 }
 
 /**
@@ -226,44 +226,44 @@ void N_NETicker(void)
  */
 void N_Update(void)
 {
-	netevent_t  nevent;
-	char        name[256];
+    netevent_t  nevent;
+    char        name[256];
 
-	// Are there any events to process?
-	while(N_NEGet(&nevent))
-	{
-		switch(nevent.type)
-		{
-		case NE_CLIENT_ENTRY:
-			// Find out the name of the new player.
-			memset(name, 0, sizeof(name));
-			N_GetNodeName(nevent.id, name);
+    // Are there any events to process?
+    while(N_NEGet(&nevent))
+    {
+        switch(nevent.type)
+        {
+        case NE_CLIENT_ENTRY:
+            // Find out the name of the new player.
+            memset(name, 0, sizeof(name));
+            N_GetNodeName(nevent.id, name);
 
-			// Assign a console to the new player.
-			Sv_PlayerArrives(nevent.id, name);
-			break;
+            // Assign a console to the new player.
+            Sv_PlayerArrives(nevent.id, name);
+            break;
 
-		case NE_CLIENT_EXIT:
-			Sv_PlayerLeaves(nevent.id);
-			break;
+        case NE_CLIENT_EXIT:
+            Sv_PlayerLeaves(nevent.id);
+            break;
 
-		case NE_END_CONNECTION:
-			// A client receives this event when the connection is
-			// terminated.
-			if(netGame)
-			{
-				// We're still in a netGame, which means we didn't disconnect
-				// voluntarily.
-				Con_Message("N_Update: Connection was terminated.\n");
-				N_Disconnect();
-			}
-			break;
+        case NE_END_CONNECTION:
+            // A client receives this event when the connection is
+            // terminated.
+            if(netGame)
+            {
+                // We're still in a netGame, which means we didn't disconnect
+                // voluntarily.
+                Con_Message("N_Update: Connection was terminated.\n");
+                N_Disconnect();
+            }
+            break;
 
         default:
             Con_Error("N_Update: Invalid value, nevent.type = %i.", (int) nevent.type);
             break;
         }
-	}
+    }
 }
 
 /**
@@ -272,11 +272,11 @@ void N_Update(void)
  */
 void N_TerminateClient(int console)
 {
-	if(!N_IsAvailable() || !clients[console].connected || !netServerMode)
-		return;
+    if(!N_IsAvailable() || !clients[console].connected || !netServerMode)
+        return;
 
-	Con_Message("N_TerminateClient: '%s' from console %i.\n",
-				clients[console].name, console);
+    Con_Message("N_TerminateClient: '%s' from console %i.\n",
+                clients[console].name, console);
 
-	N_TerminateNode(clients[console].nodeID);
+    N_TerminateNode(clients[console].nodeID);
 }

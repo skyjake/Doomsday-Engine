@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,19 +81,19 @@ void P_BuildCommand(ticcmd_t *cmd, int playerNumber)
     memset(cmd, 0, sizeof(*cmd));
 
 #if 0
-	ddplayer_t *player = &ddPlayers[playerNumber].shared;
-	//client_t *client = clients + playerNumber;
+    ddplayer_t *player = &ddPlayers[playerNumber].shared;
+    //client_t *client = clients + playerNumber;
 
-	// Examine the state of controllers to see which controls are
-	// active.
+    // Examine the state of controllers to see which controls are
+    // active.
 
-	// The player's class affects the movement speed.
-	cmd->forwardMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "walk"));
+    // The player's class affects the movement speed.
+    cmd->forwardMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "walk"));
 
-	cmd->sideMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "sidestep"));
+    cmd->sideMove = (char) (0x10 * P_ControlGetAxis(playerNumber, "sidestep"));
 
-	// The view angles are updated elsewhere as the axis positions
-	// change.
+    // The view angles are updated elsewhere as the axis positions
+    // change.
     if(player->mo)
     {   // These will be sent to the server (or P_MovePlayer).
         cmd->angle = player->mo->angle >> 16; /* $unifiedangles */

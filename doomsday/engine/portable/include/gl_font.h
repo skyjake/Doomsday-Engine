@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,33 +30,33 @@
 #define __DGL_FONT_RENDERER_H__
 
 #ifdef WIN32
-#	ifndef WIN32_LEAN_AND_MEAN
-#		define WIN32_LEAN_AND_MEAN
-#		define NOSOUND
-#		define NOCOMM
-#		define NOHELP
-#		define NOCOLOR
-#		define NOCLIPBOARD
-#		define NOCTLMGR
-#		define NOKERNEL
-#	endif
-#	include <windows.h>
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#       define NOSOUND
+#       define NOCOMM
+#       define NOHELP
+#       define NOCOLOR
+#       define NOCLIPBOARD
+#       define NOCTLMGR
+#       define NOKERNEL
+#   endif
+#   include <windows.h>
 #endif
 
-#define MAX_CHARS	256			   // Normal 256 ANSI characters.
+#define MAX_CHARS   256            // Normal 256 ANSI characters.
 
 // Data for a character.
 typedef struct {
-	int             x, y;		   // The upper left corner of the character.
-	int             w, h;		   // The width and height.
+    int             x, y;          // The upper left corner of the character.
+    int             w, h;          // The width and height.
 } jfrchar_t;
 
 // Data for a font.
 typedef struct {
-	int             id;
-	char            name[256];
-	unsigned int    texture;	   // The name of the texture for this font.
-	int             texWidth, texHeight;
+    int             id;
+    char            name[256];
+    unsigned int    texture;       // The name of the texture for this font.
+    int             texWidth, texHeight;
     boolean         hasEmbeddedShadow;
     int             marginWidth;
     int             marginHeight;
@@ -64,7 +64,7 @@ typedef struct {
     int             glyphHeight;
     int             ascent;
     int             descent;
-	jfrchar_t       chars[MAX_CHARS];
+    jfrchar_t       chars[MAX_CHARS];
 } jfrfont_t;
 
 int             FR_Init(void);
@@ -96,4 +96,4 @@ int             FR_CustomShadowTextOut(const char *text, int x, int y,
                                        int shadowX, int shadowY,
                                        float shadowAlpha);
 
-#endif							// __OGL_FONT_RENDERER_H__
+#endif                          // __OGL_FONT_RENDERER_H__

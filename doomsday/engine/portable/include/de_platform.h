@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,9 +47,9 @@
 
 #define INTEGER64 __int64
 
-#define DIR_SEP_CHAR 	'\\'
-#define DIR_SEP_STR		"\\"
-#define DIR_WRONG_SEP_CHAR 	'/'
+#define DIR_SEP_CHAR    '\\'
+#define DIR_SEP_STR     "\\"
+#define DIR_WRONG_SEP_CHAR  '/'
 
 #define stricmp _stricmp
 #define strnicmp _strnicmp
@@ -64,7 +64,7 @@
 #define strdup _strdup
 #define spawnlp _spawnlp
 
-#endif							// WIN32
+#endif                          // WIN32
 
 /*
  * The Unix Platform
@@ -79,20 +79,20 @@ typedef unsigned int DWORD;
 /*
  * Networking.
  */
-#define INVALID_SOCKET 	(-1)
-#define SOCKET_ERROR	(-1)
+#define INVALID_SOCKET  (-1)
+#define SOCKET_ERROR    (-1)
 
 /*
  * File system routines.
  */
-#define _getdrive()		(0)
+#define _getdrive()     (0)
 #define _chdrive(x)
-#define _getcwd 		getcwd
-#define _chdir 			chdir
+#define _getcwd         getcwd
+#define _chdir          chdir
 
-#define DIR_SEP_CHAR 		'/'
-#define DIR_SEP_STR			"/"
-#define DIR_WRONG_SEP_CHAR 	'\\'
+#define DIR_SEP_CHAR        '/'
+#define DIR_SEP_STR         "/"
+#define DIR_WRONG_SEP_CHAR  '\\'
 
 #include "../../unix/include/sys_path.h"
 
@@ -101,13 +101,13 @@ typedef unsigned int DWORD;
  */
 #include "../../unix/include/sys_findfile.h"
 
-#define _A_SUBDIR 	A_SUBDIR
+#define _A_SUBDIR   A_SUBDIR
 
-#define _findfirst 	myfindfirst
-#define _findnext	myfindnext
-#define _findend	myfindend
+#define _findfirst  myfindfirst
+#define _findnext   myfindnext
+#define _findend    myfindend
 
-#endif							// UNIX
+#endif                          // UNIX
 
 // Initialization code.
 #ifdef WIN32
@@ -118,4 +118,4 @@ typedef unsigned int DWORD;
 #  endif
 #endif
 
-#endif							// __DOOMSDAY_PLATFORM__
+#endif                          // __DOOMSDAY_PLATFORM__

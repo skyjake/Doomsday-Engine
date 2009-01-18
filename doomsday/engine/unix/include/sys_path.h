@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,6 @@
 
 char           *_fullpath(char *full, const char *original, int len);
 void            _splitpath(const char *path, char *drive, char *dir,
-						   char *name, char *ext);
+                           char *name, char *ext);
 
-#endif							// __DOOMSDAY_PATHS_H__
+#endif                          // __DOOMSDAY_PATHS_H__

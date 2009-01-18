@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,8 +82,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         DP_Initialize();
         break;
 
-	default:
-		break;
+    default:
+        break;
     }
 
     return TRUE;
@@ -96,11 +96,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  * @param parm
  * @param data
  *
- * @return				Non-zero if successful.
+ * @return              Non-zero if successful.
  */
 int ExampleHook(int hookType, int parm, void *data)
 {
-	Con_Message("ExampleHook: Hook successful!");
+    Con_Message("ExampleHook: Hook successful!");
 
     return true;
 }

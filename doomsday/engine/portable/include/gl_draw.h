@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,20 +35,20 @@ void            GL_UsePatchOffset(boolean enable);
 void            GL_DrawPatch_CS(int x, int y, lumpnum_t lump);
 void            GL_DrawPatch(int x, int y, lumpnum_t lump);
 void            GL_DrawPatchLitAlpha(int x, int y, float light, float alpha,
-									 lumpnum_t lump);
+                                     lumpnum_t lump);
 void            GL_DrawFuzzPatch(int x, int y, lumpnum_t lump);
 void            GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump);
 void            GL_DrawShadowedPatch(int x, int y, lumpnum_t lump);
 void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
 void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
-									float scalex, float scaley);
+                                    float scalex, float scaley);
 void            GL_DrawLine(float x1, float y1, float x2, float y2, float r,
-							float g, float b, float a);
+                            float g, float b, float a);
 void            GL_DrawRect(float x, float y, float w, float h, float r,
-							float g, float b, float a);
+                            float g, float b, float a);
 void            GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th);
-void		    GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
-					                int txoff, int tyoff, int cx, int cy, int cw, int ch);
+void            GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
+                                    int txoff, int tyoff, int cx, int cy, int cw, int ch);
 
 // Filters:
 void            GL_SetFilter(int filterRGBA);

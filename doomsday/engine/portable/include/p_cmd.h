@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@
 #define __DOOMSDAY_PLAY_TIC_CMD_H__
 
 // Ticcmd
-#define TICCMD_SIZE		gx.ticcmdSize
-#define TICCMD_IDX(i)	((i)*TICCMD_SIZE)
+#define TICCMD_SIZE     gx.ticcmdSize
+#define TICCMD_IDX(i)   ((i)*TICCMD_SIZE)
 
 void    P_BuildCommand(ticcmd_t *cmd, int playerNumber);
 void    P_MergeCommand(ticcmd_t *dest, ticcmd_t *src);

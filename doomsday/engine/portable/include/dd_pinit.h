@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #include "dd_api.h"
 
 // Maximum allowed number of plugins.
-#define MAX_PLUGS	32
+#define MAX_PLUGS   32
 
 void            DD_ShutdownAll(void);
 int             DD_CheckArg(char *tag, char **value);
@@ -46,4 +46,4 @@ void            DD_InitCommandLine(const char *cmdLine);
 extern game_import_t gi;
 extern game_export_t gx;
 
-#endif							// __DOOMSDAY_PORTABLE_INIT_H__
+#endif                          // __DOOMSDAY_PORTABLE_INIT_H__
