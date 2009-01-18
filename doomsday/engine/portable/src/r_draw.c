@@ -116,7 +116,7 @@ void R_DrawViewBorder(void)
 
     // View background.
     DGL_Color4f(1, 1, 1, 1);
-    mat = P_ToMaterial(P_MaterialNumForName(borderGfx[BG_BACKGROUND], MG_FLATS));
+    mat = P_ToMaterial(P_MaterialNumForName(borderGfx[BG_BACKGROUND], MN_FLATS));
     if(mat)
     {
         GL_SetMaterial(mat);

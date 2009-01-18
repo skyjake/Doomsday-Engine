@@ -39,11 +39,11 @@ void            P_MaterialManagerTicker(timespan_t time);
 
 void            P_InitMaterialManager(void);
 void            P_ShutdownMaterialManager(void);
-void            P_DeleteMaterialTextures(materialgroup_t group);
+void            P_DeleteMaterialTextures(material_namespace_t mnamespace);
 
 material_t*     P_MaterialCreate(const char* name, short width,
                                  short height, byte flags, gltextureid_t tex,
-                                 materialgroup_t group, ded_material_t* def);
+                                 material_namespace_t mnamespace, ded_material_t* def);
 
 material_t*     P_ToMaterial(materialnum_t num);
 materialnum_t   P_ToMaterialNum(const material_t* mat);
@@ -51,12 +51,12 @@ materialnum_t   P_ToMaterialNum(const material_t* mat);
 // Lookup:
 const char*     P_GetMaterialName(material_t* mat);
 
-materialnum_t   P_MaterialCheckNumForName(const char* name, materialgroup_t group);
-materialnum_t   P_MaterialNumForName(const char* name, materialgroup_t group);
+materialnum_t   P_MaterialCheckNumForName(const char* name, material_namespace_t mnamespace);
+materialnum_t   P_MaterialNumForName(const char* name, material_namespace_t mnamespace);
 
-material_t*     P_GetMaterial(int ofTypeID, materialgroup_t group);
-materialnum_t   P_MaterialCheckNumForIndex(uint idx, materialgroup_t group);
-materialnum_t   P_MaterialNumForIndex(uint idx, materialgroup_t group);
+material_t*     P_GetMaterial(int ofTypeID, material_namespace_t mnamespace);
+materialnum_t   P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespace);
+materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace);
 
 void            P_MaterialPrecache(material_t* mat);
 

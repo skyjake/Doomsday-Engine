@@ -1915,25 +1915,25 @@ boolean XL_SwitchSwap(sidedef_t* side, int section)
     if(!stricmp(buf, "SW1ON"))
     {
         material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW1OFF", MG_TEXTURES));
+            P_MaterialNumForName("SW1OFF", MN_TEXTURES));
         makeChange = true;
     }
     if(!stricmp(buf, "SW1OFF"))
     {
         material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW1ON", MG_TEXTURES));
+            P_MaterialNumForName("SW1ON", MN_TEXTURES));
         makeChange = true;
     }
     if(!stricmp(buf, "SW2ON"))
     {
         material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW2OFF", MG_TEXTURES));
+            P_MaterialNumForName("SW2OFF", MN_TEXTURES));
         makeChange = true;
     }
     if(!stricmp(buf, "SW2OFF"))
     {
         material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW2ON", MG_TEXTURES));
+            P_MaterialNumForName("SW2ON", MN_TEXTURES));
         makeChange = true;
     }
 #endif
@@ -1942,14 +1942,14 @@ boolean XL_SwitchSwap(sidedef_t* side, int section)
     {
         buf[2] = '2';
         material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(buf, MG_TEXTURES));
+            P_MaterialNumForName(buf, MN_TEXTURES));
         makeChange = true;
     }
     if(!strnicmp(buf, "SW2", 3))
     {
         buf[2] = '1';
         material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(buf, MG_TEXTURES));
+            P_MaterialNumForName(buf, MN_TEXTURES));
         makeChange = true;
     }
 

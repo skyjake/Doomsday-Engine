@@ -366,7 +366,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     }
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        material_t*         mat = P_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+        material_t*         mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
         material_snapshot_t ms;
 
         Material_Prepare(&ms, mat, true, NULL);
@@ -904,7 +904,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         mat = params->mat;
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
-        mat = P_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+        mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
 
     if(mat)
     {

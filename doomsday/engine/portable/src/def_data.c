@@ -369,7 +369,7 @@ int DED_AddMaterial(ded_t* ded, const char* name)
                      sizeof(ded_material_t));
 
     strcpy(mat->id.name, name);
-    mat->id.group = MG_ANY;
+    mat->id.mnamespace = MN_ANY;
 
     return mat - ded->materials;
 }

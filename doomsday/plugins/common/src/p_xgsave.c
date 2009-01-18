@@ -268,7 +268,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
         mov->setMaterial = SV_GetArchiveMaterial(num, 0);
     else
         mov->setMaterial = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(W_LumpName(num), MG_FLATS));
+            P_MaterialNumForName(W_LumpName(num), MN_FLATS));
     mov->setSectorType = SV_ReadLong();
     mov->startSound = SV_ReadLong();
     mov->endSound = SV_ReadLong();

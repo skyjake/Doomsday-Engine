@@ -141,7 +141,7 @@ typedef enum {
 end
 
 struct material
-    INT     materialgroup_t group
+    INT     material_namespace_t mnamespace
     -       ded_material_s* def // Can be NULL (was generated automatically).
     SHORT   short           flags // MATF_* flags
     SHORT	short           width // Defined width & height of the material (not texture!).

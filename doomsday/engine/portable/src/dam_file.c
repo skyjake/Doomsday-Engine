@@ -72,7 +72,7 @@ typedef enum damsegment_e {
 
 typedef struct {
     char            name[9];
-    materialgroup_t group;
+    material_namespace_t mnamespace;
 } dictentry_t;
 
 typedef struct {
@@ -113,7 +113,7 @@ static void addMaterialToDict(materialdict_t* dict, material_t* mat)
     // Has this already been registered?
     for(c = 0; c < dict->count; c++)
     {
-        if(dict->table[c].group == mat->group &&
+        if(dict->table[c].mnamespace == mat->mnamespace &&
            !stricmp(dict->table[c].name, mat->name))
         {   // Yes. skip it...
             return;
@@ -125,7 +125,7 @@ static void addMaterialToDict(materialdict_t* dict, material_t* mat)
 
     strncpy(e->name, mat->name, 8);
     e->name[8] = '\0';
-    e->group = mat->group;
+    e->mnamespace = mat->mnamespace;
 #endif
 }
 
@@ -161,7 +161,7 @@ static uint searchMaterialDict(materialdict_t *dict, const material_t* mat)
     int                 i;
 
     for(i = 0; i < dict->count; i++)
-        if(dict->table[i].group == mat->group &&
+        if(dict->table[i].mnamespace == mat->mnamespace &&
            !stricmp(dict->table[i].name, mat->name))
             return i;
 #endif
@@ -184,7 +184,7 @@ static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
     if(!strncmp(e->name, BADTEXNAME, 8))
         return NULL;
 
-    return P_ToMaterial(P_MaterialNumForName(e->name, e->group));
+    return P_ToMaterial(P_MaterialNumForName(e->name, e->mnamespace));
 }
 
 static boolean openMapFile(char* path, boolean write)

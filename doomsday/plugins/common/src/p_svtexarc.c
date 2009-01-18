@@ -58,7 +58,7 @@
 
 typedef struct {
     char            name[9];
-    materialgroup_t group;
+    material_namespace_t mnamespace;
 } materialentry_t;
 
 typedef struct {
@@ -94,7 +94,7 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
     int                 c;
     char                name[9];
     const char*         matName = P_GetMaterialName(mat);
-    materialgroup_t     matGroup = P_GetIntp(mat, DMU_GROUP);
+    material_namespace_t     matGroup = P_GetIntp(mat, DMU_NAMESPACE);
 
     // Get the name of the material.
     if(matName)
@@ -107,7 +107,7 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
     // Has this already been registered?
     for(c = 0; c < arc->count; c++)
     {
-        if(arc->table[c].group == matGroup &&
+        if(arc->table[c].mnamespace == matGroup &&
            !stricmp(arc->table[c].name, name))
         {
             break;// Yes, skip it...
@@ -117,7 +117,7 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
     if(c == arc->count)
     {
         strcpy(arc->table[arc->count++].name, name);
-        arc->table[arc->count - 1].group = matGroup;
+        arc->table[arc->count - 1].mnamespace = matGroup;
     }
 }
 
@@ -194,7 +194,7 @@ material_t* SV_GetArchiveMaterial(int archivenum, int group)
     else
         return P_ToPtr(DMU_MATERIAL,
             P_MaterialNumForName(matArchive.table[archivenum].name,
-                                 matArchive.table[archivenum].group));
+                                 matArchive.table[archivenum].mnamespace));
     return NULL;
 }
 
@@ -206,11 +206,11 @@ void SV_WriteMaterialArchive(void)
     for(i = 0; i < matArchive.count; ++i)
     {
         SV_Write(matArchive.table[i].name, 8);
-        SV_WriteByte(matArchive.table[i].group);
+        SV_WriteByte(matArchive.table[i].mnamespace);
     }
 }
 
-static void readMatArchive(materialarchive_t* arc, materialgroup_t defaultGroup)
+static void readMatArchive(materialarchive_t* arc, material_namespace_t defaultGroup)
 {
     int                 i, num;
 
@@ -220,9 +220,9 @@ static void readMatArchive(materialarchive_t* arc, materialgroup_t defaultGroup)
         SV_Read(arc->table[i].name, 8);
         arc->table[i].name[8] = 0;
         if(arc->version >= 1)
-            arc->table[i].group = SV_ReadByte();
+            arc->table[i].mnamespace = SV_ReadByte();
         else
-            arc->table[i].group = defaultGroup;
+            arc->table[i].mnamespace = defaultGroup;
     }
 
     arc->count += num;
@@ -232,12 +232,12 @@ void SV_ReadMaterialArchive(int version)
 {
     matArchive.count = 0;
     matArchive.version = version;
-    readMatArchive(&matArchive, MG_FLATS);
+    readMatArchive(&matArchive, MN_FLATS);
 
     if(matArchive.version == 0)
     {   // The old format saved textures and flats in seperate blocks.
         numFlats = matArchive.count;
 
-        readMatArchive(&matArchive, MG_FLATS);
+        readMatArchive(&matArchive, MN_FLATS);
     }
 }

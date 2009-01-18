@@ -165,29 +165,29 @@ void P_InitTerrainTypes(void)
 {
     struct matttypedef_s {
         const char*     matName;
-        materialgroup_t matGroup;
+        material_namespace_t matGroup;
         const char*     ttName;
     } matTTypeDefs[] =
     {
 #if __JDOOM__ || __JDOOM64__
-        {"FWATER1",  MG_FLATS, "Water"},
-        {"LAVA1",    MG_FLATS, "Lava"},
-        {"BLOOD1",   MG_FLATS, "Blood"},
-        {"NUKAGE1",  MG_FLATS, "Nukage"},
-        {"SLIME01",  MG_FLATS, "Slime"},
+        {"FWATER1",  MN_FLATS, "Water"},
+        {"LAVA1",    MN_FLATS, "Lava"},
+        {"BLOOD1",   MN_FLATS, "Blood"},
+        {"NUKAGE1",  MN_FLATS, "Nukage"},
+        {"SLIME01",  MN_FLATS, "Slime"},
 #endif
 #if __JHERETIC__
-        {"FLTWAWA1", MG_FLATS, "Water"},
-        {"FLTFLWW1", MG_FLATS, "Water"},
-        {"FLTLAVA1", MG_FLATS, "Lava"},
-        {"FLATHUH1", MG_FLATS, "Lava"},
-        {"FLTSLUD1", MG_FLATS, "Sludge"},
+        {"FLTWAWA1", MN_FLATS, "Water"},
+        {"FLTFLWW1", MN_FLATS, "Water"},
+        {"FLTLAVA1", MN_FLATS, "Lava"},
+        {"FLATHUH1", MN_FLATS, "Lava"},
+        {"FLTSLUD1", MN_FLATS, "Sludge"},
 #endif
 #if __JHEXEN__
-        {"X_005",    MG_FLATS, "Water"},
-        {"X_001",    MG_FLATS, "Lava"},
-        {"X_009",    MG_FLATS, "Sludge"},
-        {"F_033",    MG_FLATS, "Ice"},
+        {"X_005",    MN_FLATS, "Water"},
+        {"X_001",    MN_FLATS, "Lava"},
+        {"X_009",    MN_FLATS, "Sludge"},
+        {"F_033",    MN_FLATS, "Ice"},
 #endif
         {NULL, 0, NULL}
     };

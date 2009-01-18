@@ -89,7 +89,7 @@ static boolean initedOk = false;
  * 4) Material name bindings are semi-independant from the materials. There
  *    may be multiple name bindings for a given material (aliases).
  *    The only requirement is that the name is unique among materials in
- *    a given material name group.
+ *    a given material mnamespace.
  * 5) Super-fast look up by public material identifier.
  * 6) Fast look up by material name (a hashing scheme is used).
  */
@@ -108,16 +108,16 @@ void P_MaterialManagerRegister(void)
 }
 
 /**
- * Is the specified group number a valid (known) material group.
+ * Is the specified id a valid (known) material namespace.
  *
- * \note The special case MG_ANY is considered invalid here as it does not
- *       relate to one specific group.
+ * \note The special case MN_ANY is considered invalid here as it does not
+ *       relate to one specific mnamespace.
  *
- * @return              @c true, iff the groupNum is valid.
+ * @return              @c true, iff the id is valid.
  */
-static boolean isValidMaterialGroup(materialgroup_t groupNum)
+static boolean isKnownMNamespace(material_namespace_t mnamespace)
 {
-    if(groupNum >= MG_FIRST && groupNum < NUM_MATERIAL_GROUPS)
+    if(mnamespace >= MN_FIRST && mnamespace < NUM_MATERIAL_NAMESPACES)
         return true;
 
     return false;
@@ -152,16 +152,16 @@ static uint hashForName(const char* name)
 }
 
 /**
- * Given a name and material group, search the materials db for a match.
+ * Given a name and namespace, search the materials db for a match.
  * \assume Caller knows what it's doing; params arn't validity checked.
  *
  * @param name          Name of the material to search for. Must have been
  *                      transformed to all lower case.
- * @param groupNum      Specific MG_* material group NOT @c MG_ANY.
+ * @param mnamespace    Specific MG_* material namespace NOT @c MN_ANY.
  * @return              Unique number of the found material, else zero.
  */
 static materialnum_t getMaterialNumForName(const char* name, uint hash,
-                                           materialgroup_t groupNum)
+                                           material_namespace_t mnamespace)
 {
     // Go through the candidates.
     if(hashTable[hash])
@@ -174,7 +174,7 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
 
             mat = mb->mat;
 
-            if(mat->group == groupNum && !strncmp(mb->name, name, 8))
+            if(mat->mnamespace == mnamespace && !strncmp(mb->name, name, 8))
                 return ((mb) - materialBinds) + 1;
 
             if(!mb->hashNext)
@@ -188,14 +188,15 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
 }
 
 /**
- * Given an index and material group, search the materials db for a match.
+ * Given an index and namespace, search the materials db for a match.
  * \assume Caller knows what it's doing; params arn't validity checked.
  *
  * @param id            gltextureid to search for.
- * @param groupNum      Specific MG_* material group NOT @c MG_ANY.
+ * @param mnamespace    Specific MG_* material namespace NOT @c MN_ANY.
  * @return              Unique number of the found material, else zero.
  */
-static materialnum_t getMaterialNumForIndex(uint idx, materialgroup_t groupNum)
+static materialnum_t getMaterialNumForIndex(uint idx,
+                                            material_namespace_t mnamespace)
 {
     materialnum_t       i;
 
@@ -205,7 +206,7 @@ static materialnum_t getMaterialNumForIndex(uint idx, materialgroup_t groupNum)
         materialbind_t*     mb = &materialBinds[i];
         material_t*         mat = mb->mat;
 
-        if(mat->group == groupNum &&
+        if(mat->mnamespace == mnamespace &&
            GL_GetGLTexture(mat->layers[0].tex)->ofTypeID == idx)
             return ((mb) - materialBinds) + 1;
     }
@@ -285,21 +286,21 @@ void P_ShutdownMaterialManager(void)
 /**
  * Deletes all GL texture instances, linked to materials.
  *
- * @param group         @c MG_ANY = delete everything, ELSE
+ * @param mnamespace    @c MN_ANY = delete everything, ELSE
  *                      Only delete those currently in use by materials
- *                      in the specified material group.
+ *                      in the specified namespace.
  */
-void P_DeleteMaterialTextures(materialgroup_t groupNum)
+void P_DeleteMaterialTextures(material_namespace_t mnamespace)
 {
-    if(groupNum == MG_ANY)
+    if(mnamespace == MN_ANY)
     {   // Delete the lot.
         GL_DeleteAllTexturesForGLTextures(GLT_ANY);
         return;
     }
 
-    if(!isValidMaterialGroup(groupNum))
+    if(!isKnownMNamespace(mnamespace))
         Con_Error("P_DeleteMaterialTextures: Internal error, "
-                  "invalid materialgroup '%i'.", (int) groupNum);
+                  "invalid materialgroup '%i'.", (int) mnamespace);
 
     if(materialsHead)
     {
@@ -308,7 +309,7 @@ void P_DeleteMaterialTextures(materialgroup_t groupNum)
         mat = materialsHead;
         do
         {
-            if(mat->group == groupNum)
+            if(mat->mnamespace == mnamespace)
             {
                 uint                i;
 
@@ -320,7 +321,7 @@ void P_DeleteMaterialTextures(materialgroup_t groupNum)
 }
 
 static material_t* createMaterial(short width, short height, byte flags,
-                                  materialgroup_t groupNum,
+                                  material_namespace_t mnamespace,
                                   ded_material_t* def, gltextureid_t tex)
 {
     uint                i;
@@ -328,7 +329,7 @@ static material_t* createMaterial(short width, short height, byte flags,
 
     memset(mat, 0, sizeof(*mat));
     mat->header.type = DMU_MATERIAL;
-    mat->group = groupNum;
+    mat->mnamespace = mnamespace;
     mat->width = width;
     mat->height = height;
     mat->flags = flags;
@@ -408,7 +409,7 @@ materialnum_t P_ToMaterialNum(const material_t* mat)
 
 /**
  * Create a new material. If there exists one by the same name and in the
- * same material group, it is returned else a new material is created.
+ * same namespace, it is returned else a new material is created.
  *
  * \note: May fail if the name is invalid.
  *
@@ -417,14 +418,15 @@ materialnum_t P_ToMaterialNum(const material_t* mat)
  * @param height        Height of the material (not of the texture).
  * @param flags         MATF_* material flags
  * @param tex           Texture to use with this material.
- * @param group         MG_* material group.
- *                      MG_ANY is only valid when updating an existing material.
+ * @param mnamespace    MG_* material namespace.
+ *                      MN_ANY is only valid when updating an existing material.
  *
  * @return              The created material, ELSE @c NULL.
  */
 material_t* P_MaterialCreate(const char* rawName, short width, short height,
                              byte flags, gltextureid_t tex,
-                             materialgroup_t groupNum, ded_material_t* def)
+                             material_namespace_t mnamespace,
+                             ded_material_t* def)
 {
     int                 n;
     uint                hash;
@@ -454,27 +456,27 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material with "
     hash = hashForName(name);
 
     // Check if we've already created a material for this.
-    if(groupNum == MG_ANY)
-    {   // Caller doesn't care which group. This is only valid if we can
-        // find a material by this name using a priority search order.
-        oldMat = getMaterialNumForName(name, hash, MG_SPRITES);
+    if(mnamespace == MN_ANY)
+    {   // Caller doesn't care which namespace. This is only valid if we
+        // can find a material by this name using a priority search order.
+        oldMat = getMaterialNumForName(name, hash, MN_SPRITES);
         if(!oldMat)
-            oldMat = getMaterialNumForName(name, hash, MG_TEXTURES);
+            oldMat = getMaterialNumForName(name, hash, MN_TEXTURES);
         if(!oldMat)
-            oldMat = getMaterialNumForName(name, hash, MG_FLATS);
+            oldMat = getMaterialNumForName(name, hash, MN_FLATS);
     }
     else
     {
-        if(!isValidMaterialGroup(groupNum))
+        if(!isKnownMNamespace(mnamespace))
         {
 #if _DEBUG
 Con_Message("P_MaterialCreate: Warning, attempted to create material in "
-            "unknown group '%i'.\n", (int) groupNum);
+            "unknown namespace '%i'.\n", (int) mnamespace);
 #endif
             return NULL;
         }
 
-        oldMat = getMaterialNumForName(name, hash, groupNum);
+        oldMat = getMaterialNumForName(name, hash, mnamespace);
     }
 
     if(oldMat)
@@ -499,15 +501,16 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material in "
         mat->ptcGen = NULL;
         mat->detail = NULL;
         mat->envClass = MEC_UNKNOWN;
+        mat->mnamespace = mnamespace;
 
         return mat; // Yep, return it.
     }
 
-    if(groupNum == MG_ANY)
+    if(mnamespace == MN_ANY)
     {
 #if _DEBUG
 Con_Message("P_MaterialCreate: Warning, attempted to create material "
-            "without groupNum.\n");
+            "without specifying a namespace.\n");
 #endif
         return NULL;
     }
@@ -521,7 +524,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material "
     assert(width > 0);
     assert(height > 0);
 
-    mat = createMaterial(width, height, flags, groupNum, def, tex);
+    mat = createMaterial(width, height, flags, mnamespace, def, tex);
 
     // Now create a name binding for it.
     newMaterialNameBinding(mat, name, hash);
@@ -530,24 +533,24 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material "
 }
 
 /**
- * Given a Texture/Flat/Sprite etc idx and a MG_* material group, search
+ * Given a Texture/Flat/Sprite etc idx and a MG_* namespace, search
  * for a matching material.
  *
  * @param ofTypeID      Texture/Flat/Sprite etc idx.
- * @param group         Specific MG_* material group (not MG_ANY).
+ * @param mnamespace    Specific MG_* namespace (not MN_ANY).
  *
  * @return              The associated material, ELSE @c NULL.
  */
-material_t* P_GetMaterial(int ofTypeID, materialgroup_t groupNum)
+material_t* P_GetMaterial(int ofTypeID, material_namespace_t mnamespace)
 {
     if(!initedOk)
         return NULL;
 
-    if(!isValidMaterialGroup(groupNum)) // MG_ANY is considered invalid.
+    if(!isKnownMNamespace(mnamespace)) // MN_ANY is considered invalid.
     {
 #if _DEBUG
-Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
-            (int) groupNum);
+Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
+            (int) mnamespace);
 #endif
         return NULL;
     }
@@ -559,7 +562,7 @@ Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
         mat = materialsHead;
         do
         {
-            if(groupNum == mat->group &&
+            if(mnamespace == mat->mnamespace &&
                GL_GetGLTexture(mat->layers[0].tex)->ofTypeID == ofTypeID)
             {
                 if(mat->flags & MATF_NO_DRAW)
@@ -573,22 +576,23 @@ Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
     return NULL;
 }
 
-materialnum_t P_MaterialCheckNumForIndex(uint idx, materialgroup_t groupNum)
+materialnum_t P_MaterialCheckNumForIndex(uint idx,
+                                         material_namespace_t mnamespace)
 {
     if(!initedOk)
         return 0;
 
-    // Caller wants a material in a specific group.
-    if(!isValidMaterialGroup(groupNum))
+    // Caller wants a material in a specific namespace.
+    if(!isKnownMNamespace(mnamespace))
     {
 #if _DEBUG
-Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
-            (int) groupNum);
+Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
+            (int) mnamespace);
 #endif
         return 0;
     }
 
-    return getMaterialNumForIndex(idx, groupNum);
+    return getMaterialNumForIndex(idx, mnamespace);
 }
 
 /**
@@ -599,39 +603,39 @@ Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
  *        message if the material being searched for is not found.
  *
  * @param idx           Index of the texture/flat/sprite/etc.
- * @param group         MG_* material group.
+ * @param mnamespace    MG_* namespace.
  *
  * @return              Unique identifier of the found material, else zero.
  */
-materialnum_t P_MaterialNumForIndex(uint idx, materialgroup_t group)
+materialnum_t P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace)
 {
-    materialnum_t       result = P_MaterialCheckNumForIndex(idx, group);
+    materialnum_t       result = P_MaterialCheckNumForIndex(idx, mnamespace);
 
     // Not found? Don't announce during map setup or if not yet inited.
     if(result == 0 && (!mapSetup || !initedOk))
-        Con_Message("P_MaterialNumForIndex: %u in group %i not found!\n",
-                    idx, group);
+        Con_Message("P_MaterialNumForIndex: %u in namespace %i not found!\n",
+                    idx, mnamespace);
     return result;
 }
 
 /**
- * Given a name and material group, search the materials db for a match.
+ * Given a name and namespace, search the materials db for a match.
  * \note Part of the Doomsday public API.
  *
  * @param name          Name of the material to search for.
- * @param groupNum      Specific MG_* material group ELSE,
- *                      @c MG_ANY = no group requirement in which case the
- *                      material is searched for among all groups using a
- *                      logic which prioritizes the material groups as
+ * @param mnamespace    Specific MG_* namespace ELSE,
+ *                      @c MN_ANY = no namespace requirement in which case
+ *                      the material is searched for among all namespaces
+ *                      using a logic which prioritizes the namespaces as
  *                      follows:
- *                      1st: MG_SPRITES
- *                      2nd: MG_TEXTURES
- *                      3rd: MG_FLATS
+ *                      1st: MN_SPRITES
+ *                      2nd: MN_TEXTURES
+ *                      3rd: MN_FLATS
  *
  * @return              Unique number of the found material, else zero.
  */
 materialnum_t P_MaterialCheckNumForName(const char* rawName,
-                                        materialgroup_t groupNum)
+                                        material_namespace_t mnamespace)
 {
     int                 n;
     uint                hash;
@@ -646,11 +650,11 @@ materialnum_t P_MaterialCheckNumForName(const char* rawName,
     if(!rawName || !rawName[0] || rawName[0] == '-')
         return 0;
 
-    if(groupNum != MG_ANY && !isValidMaterialGroup(groupNum))
+    if(mnamespace != MN_ANY && !isKnownMNamespace(mnamespace))
     {
 #if _DEBUG
-Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
-            (int) groupNum);
+Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
+            (int) mnamespace);
 #endif
         return 0;
     }
@@ -661,37 +665,38 @@ Con_Message("P_GetMaterial: Internal error, invalid material group '%i'\n",
     name[n] = '\0';
     hash = hashForName(name);
 
-    if(groupNum == MG_ANY)
-    {   // Caller doesn't care which group.
+    if(mnamespace == MN_ANY)
+    {   // Caller doesn't care which namespace.
         materialnum_t       matNum;
 
-        // Check for the material in these groups, in group priority order.
-        if((matNum = getMaterialNumForName(name, hash, MG_SPRITES)))
+        // Check for the material in these namespaces, in priority order.
+        if((matNum = getMaterialNumForName(name, hash, MN_SPRITES)))
             return matNum;
-        if((matNum = getMaterialNumForName(name, hash, MG_TEXTURES)))
+        if((matNum = getMaterialNumForName(name, hash, MN_TEXTURES)))
             return matNum;
-        if((matNum = getMaterialNumForName(name, hash, MG_FLATS)))
+        if((matNum = getMaterialNumForName(name, hash, MN_FLATS)))
             return matNum;
 
         return 0; // Not found.
     }
 
-    // Caller wants a material in a specific group.
-    return getMaterialNumForName(name, hash, groupNum);
+    // Caller wants a material in a specific namespace.
+    return getMaterialNumForName(name, hash, mnamespace);
 }
 
 /**
- * Given a name and material group, search the materials db for a match.
+ * Given a name and namespace, search the materials db for a match.
  * \note Part of the Doomsday public API.
  * \note2 Same as P_MaterialCheckNumForName except will log an error
  *        message if the material being searched for is not found.
  *
  * @param name          Name of the material to search for.
- * @param group         MG_* material group.
+ * @param mnamespace    MG_* namespace.
  *
  * @return              Unique identifier of the found material, else zero.
  */
-materialnum_t P_MaterialNumForName(const char* name, materialgroup_t group)
+materialnum_t P_MaterialNumForName(const char* name,
+                                   material_namespace_t mnamespace)
 {
     materialnum_t       result;
 
@@ -704,12 +709,12 @@ materialnum_t P_MaterialNumForName(const char* name, materialgroup_t group)
     if(!name || !name[0] || name[0] == '-')
         return 0;
 
-    result = P_MaterialCheckNumForName(name, group);
+    result = P_MaterialCheckNumForName(name, mnamespace);
 
     // Not found?
     if(result == 0 && !mapSetup) // Don't announce during map setup.
-        Con_Message("P_MaterialNumForName: \"%.8s\" in group %i not found!\n",
-                    name, group);
+        Con_Message("P_MaterialNumForName: \"%.8s\" in namespace %i not found!\n",
+                    name, mnamespace);
     return result;
 }
 
@@ -775,17 +780,18 @@ void P_MaterialManagerTicker(timespan_t time)
     animateAnimGroups();
 }
 
-static void printMaterials(materialgroup_t grp, const char* like)
+static void printMaterials(material_namespace_t mnamespace, const char* like)
 {
     materialnum_t       i, numDigits;
 
-    if(!(grp < NUM_MATERIAL_GROUPS))
+    if(!(mnamespace < NUM_MATERIAL_NAMESPACES))
         return;
 
-    if(grp == MG_ANY)
-        Con_Printf("Known Materials (IDX - Name (Group) [width, height]):\n");
+    if(mnamespace == MN_ANY)
+        Con_Printf("Known Materials (IDX - Name (Namespace) [width, height]):\n");
     else
-        Con_Printf("Known Materials in Group %i (IDX - Name [width, height]):\n", grp);
+        Con_Printf("Known Materials in Namespace %i (IDX - Name "
+                   "[width, height]):\n", mnamespace);
 
     numDigits = M_NumDigits(numMaterialBinds);
     for(i = 0; i < numMaterialBinds; ++i)
@@ -794,15 +800,15 @@ static void printMaterials(materialgroup_t grp, const char* like)
         materialbind_t*     mb = &materialBinds[i];
         material_t*         mat = mb->mat;
 
-        if(grp != MG_ANY && mat->group != grp)
+        if(mnamespace != MN_ANY && mat->mnamespace != mnamespace)
             continue;
 
         if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
             continue;
 
         Con_Printf(" %*lu - \"%s\"", numDigits, i, mb->name);
-        if(grp == MG_ANY)
-            Con_Printf(" (%i)", mat->group);
+        if(mnamespace == MN_ANY)
+            Con_Printf(" (%i)", mat->mnamespace);
         Con_Printf(" [%i, %i]", mat->width, mat->height);
 
         for(j = 0; j < mat->numLayers; ++j)
@@ -815,23 +821,23 @@ static void printMaterials(materialgroup_t grp, const char* like)
 
 D_CMD(ListMaterials)
 {
-    materialgroup_t     grp = MG_ANY;
+    material_namespace_t     mnamespace = MN_ANY;
 
     if(argc > 1)
     {
-        grp = atoi(argv[1]);
-        if(grp < MG_FIRST)
+        mnamespace = atoi(argv[1]);
+        if(mnamespace < MN_FIRST)
         {
-            grp = MG_ANY;
+            mnamespace = MN_ANY;
         }
-        else if(!(grp < NUM_MATERIAL_GROUPS))
+        else if(!(mnamespace < NUM_MATERIAL_NAMESPACES))
         {
-            Con_Printf("Invalid material group \"%s\".\n", argv[1]);
+            Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
             return false;
         }
     }
 
-    printMaterials(grp, argc > 2? argv[2] : NULL);
+    printMaterials(mnamespace, argc > 2? argv[2] : NULL);
     return true;
 }
 

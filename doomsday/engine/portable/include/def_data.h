@@ -79,7 +79,7 @@ typedef struct {
 
 typedef struct {
     ded_string_t    name;
-    materialgroup_t group;
+    material_namespace_t mnamespace;
 } ded_materialid_t;
 
 typedef struct {
@@ -643,7 +643,7 @@ typedef struct ded_s {
     // Reflections.
     ded_reflection_t* reflections;
 
-    // Texture groups.
+    // Animation/Precache groups for textures.
     ded_group_t*    groups;
 
     // XG line types.

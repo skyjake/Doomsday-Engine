@@ -133,7 +133,7 @@ typedef enum {
 
 typedef struct material_s {
     runtime_mapdata_header_t header;
-    materialgroup_t     group;
+    material_namespace_t mnamespace;
     struct ded_material_s* def;        // Can be NULL (was generated automatically).
     short               flags;         // MATF_* flags
     short               width;         // Defined width & height of the material (not texture!).

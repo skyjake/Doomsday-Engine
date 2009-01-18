@@ -2311,11 +2311,11 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                 else if(texMode == 1)
                     // For debug, render the "missing" texture instead of the texture
                     // chosen for surfaces to fix the HOMs.
-                    mat = P_GetMaterial(DDT_MISSING, MG_DDTEXTURES);
+                    mat = P_GetMaterial(DDT_MISSING, MN_SYSTEM);
                 else // texMode == 2
                     // For lighting debug, render all solid surfaces using the gray
                     // texture.
-                    mat = P_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+                    mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
 
                 // Make any necessary adjustments to the surface flags to suit the
                 // current texture mode.
@@ -3172,10 +3172,10 @@ static void Rend_RenderSubsector(uint ssecidx)
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = P_GetMaterial(DDT_MISSING, MG_DDTEXTURES);
+            mat = P_GetMaterial(DDT_MISSING, MN_SYSTEM);
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = P_GetMaterial(DDT_GRAY, MG_DDTEXTURES);
+            mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
 
         Rend_RenderPlane(ssec, plane->type, height, suf->normal, mat,
                          suf->flags, suf->inFlags, suf->rgba,
@@ -3216,7 +3216,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                 normal[VZ] = 1;
 
             Rend_RenderPlane(ssec, plane->type, plane->visHeight, normal,
-                             P_GetMaterial(DDT_GRAY, MG_DDTEXTURES),
+                             P_GetMaterial(DDT_GRAY, MN_SYSTEM),
                              suf->flags, suf->inFlags, suf->rgba,
                              suf->blendMode, suf->visOffset, false,
                              addDLights, &subPln->tracker,
@@ -3243,7 +3243,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                 normal[VZ] = 1;
 
             Rend_RenderPlane(ssec, plane->type, plane->visHeight, normal,
-                             P_GetMaterial(DDT_GRAY, MG_DDTEXTURES),
+                             P_GetMaterial(DDT_GRAY, MN_SYSTEM),
                              suf->flags, suf->inFlags, suf->rgba,
                              suf->blendMode, suf->visOffset, false,
                              addDLights, &subPln->tracker,
@@ -4104,7 +4104,7 @@ static void Rend_RenderBoundingBoxes(void)
     DGL_Enable(DGL_TEXTURING);
     glDisable(GL_CULL_FACE);
 
-    mat = P_GetMaterial(DDT_BBOX, MG_DDTEXTURES);
+    mat = P_GetMaterial(DDT_BBOX, MN_SYSTEM);
     Material_Prepare(&ms, mat, true, NULL);
 
     GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,

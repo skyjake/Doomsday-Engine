@@ -877,7 +877,7 @@ void R_SetupSky(ded_sky_t* sky)
         Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
         Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
         Rend_SkyParams(0, DD_ENABLE, NULL);
-        ival = P_MaterialNumForName("SKY1", MG_TEXTURES);
+        ival = P_MaterialNumForName("SKY1", MN_TEXTURES);
         Rend_SkyParams(0, DD_MATERIAL, &ival);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
@@ -899,12 +899,12 @@ void R_SetupSky(ded_sky_t* sky)
         if(layer->flags & SLF_ENABLED)
         {
             skyTex = P_MaterialNumForName(layer->material.name,
-                                          layer->material.group);
+                                          layer->material.mnamespace);
             if(!skyTex)
             {
                 Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
                             layer->material.name);
-                skyTex = P_MaterialNumForName("SKY1", MG_TEXTURES);
+                skyTex = P_MaterialNumForName("SKY1", MN_TEXTURES);
             }
 
             Rend_SkyParams(i, DD_ENABLE, NULL);

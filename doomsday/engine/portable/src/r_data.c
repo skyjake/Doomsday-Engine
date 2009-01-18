@@ -1331,7 +1331,7 @@ void R_InitTextures(void)
             // Create a material for this texture.
             mat = P_MaterialCreate(texDef->name, texDef->width, texDef->height,
                                    ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0),
-                                   tex->id, MG_TEXTURES, NULL);
+                                   tex->id, MN_TEXTURES, NULL);
         }
     }
     else
@@ -1400,7 +1400,7 @@ static int R_NewFlat(lumpnum_t lump)
 
     // Create a material for this flat.
     // \note that width = 64, height = 64 regardless of the flat dimensions.
-    mat = P_MaterialCreate(lumpInfo[lump].name, 64, 64, 0, tex->id, MG_FLATS, NULL);
+    mat = P_MaterialCreate(lumpInfo[lump].name, 64, 64, 0, tex->id, MN_FLATS, NULL);
 
     return numFlats - 1;
 }
@@ -1465,7 +1465,7 @@ int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
         if(spriteTextures[i]->lump == lump)
         {
             if(matP)
-                *matP = P_GetMaterial(i, MG_SPRITES);
+                *matP = P_GetMaterial(i, MN_SPRITES);
             return i;
         }
 
@@ -1493,7 +1493,7 @@ int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
 
     // Create a new material for this sprite texture.
     mat = P_MaterialCreate(W_LumpName(lump), SHORT(patch->width),
-                           SHORT(patch->height), 0, tex->id, MG_SPRITES, NULL);
+                           SHORT(patch->height), 0, tex->id, MN_SPRITES, NULL);
 
     if(matP)
         *matP = mat;
@@ -1983,7 +1983,7 @@ void R_InitAnimGroup(ded_group_t* def)
     {
         ded_group_member_t *gm = &def->members[i];
 
-        num = P_MaterialCheckNumForName(gm->material.name, gm->material.group);
+        num = P_MaterialCheckNumForName(gm->material.name, gm->material.mnamespace);
 
         if(!num)
             continue;

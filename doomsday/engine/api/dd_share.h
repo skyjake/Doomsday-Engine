@@ -605,7 +605,7 @@ enum /* Do not change the numerical values of the constants! */
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
     DMU_SEG_COUNT,
-    DMU_GROUP
+    DMU_NAMESPACE
 };
 
 // Linedef flags:
@@ -1059,15 +1059,15 @@ typedef enum blendmode_e {
 
 #define DDMAX_MATERIAL_LAYERS   1
 
-typedef enum materialgroup_e {
-    MG_ANY = -1,
-    MG_FIRST,
-    MG_TEXTURES = MG_FIRST,
-    MG_FLATS,
-    MG_SPRITES,
-    MG_DDTEXTURES,
-    NUM_MATERIAL_GROUPS
-} materialgroup_t;
+typedef enum material_namespace_e {
+    MN_ANY = -1,
+    MN_FIRST,
+    MN_TEXTURES = MN_FIRST,
+    MN_FLATS,
+    MN_SPRITES,
+    MN_SYSTEM,
+    NUM_MATERIAL_NAMESPACES
+} material_namespace_t;
 
 // Material flags:
 #define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).

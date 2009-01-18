@@ -11,7 +11,7 @@ Header { Version = 6; }
 
 Material {
   ID = "F_SKYA";
-  Group = textures;
+  Namespace = textures;
   Flags = skymask;
 }
 
@@ -32,7 +32,7 @@ Material {
 
 Material {
   ID = "CBTRAKA";
-  Group = textures;
+  Namespace = textures;
   Flags = glow;
 }
 

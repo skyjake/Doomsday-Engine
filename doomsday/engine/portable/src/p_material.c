@@ -356,7 +356,7 @@ material_env_class_t Material_GetEnvClass(material_t* mat)
     {
         if(mat->envClass == MEC_UNKNOWN)
         {
-            S_MaterialClassForName(P_GetMaterialName(mat), mat->group);
+            S_MaterialClassForName(P_GetMaterialName(mat), mat->mnamespace);
         }
 
         if(!(mat->flags & MATF_NO_DRAW))
@@ -434,8 +434,8 @@ boolean Material_GetProperty(const material_t* mat, setargs_t* args)
     case DMU_HEIGHT:
         DMU_GetValue(DMT_MATERIAL_HEIGHT, &mat->height, args, 0);
         break;
-    case DMU_GROUP:
-        DMU_GetValue(DMT_MATERIAL_GROUP, &mat->group, args, 0);
+    case DMU_NAMESPACE:
+        DMU_GetValue(DMT_MATERIAL_MNAMESPACE, &mat->mnamespace, args, 0);
         break;
     default:
         Con_Error("Sector_GetProperty: No property %s.\n",

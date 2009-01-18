@@ -11,7 +11,7 @@ Header { Version = 6; }
 
 Material {
   ID = "F_SKY";
-  Group = flats;
+  Namespace = flats;
   Flags = skymask;
 }
 
@@ -21,7 +21,7 @@ Material {
 
 Material {
   ID = "X_001";
-  Group = flats;
+  Namespace = flats;
   Flags = glow;
 }
 
@@ -35,7 +35,7 @@ Material {
 
 Material {
   ID = "X_FIRE01";
-  Group = textures;
+  Namespace = textures;
   Flags = glow;
 }
 

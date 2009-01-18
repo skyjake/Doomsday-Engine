@@ -591,7 +591,7 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
         tex = GL_CreateGLTexture(ddtexdefs[i].name, ddtexdefs[i].id, GLT_SYSTEM);
 
         mat = P_MaterialCreate(ddtexdefs[i].name, 64, 64, 0, tex->id,
-                               MG_DDTEXTURES, NULL);
+                               MN_SYSTEM, NULL);
     }
 
     UI_LoadTextures();
@@ -695,7 +695,7 @@ void GL_ClearSystemTextures(void)
         DGL_DeleteTextures(1, &flareTextures[i].tex);
     memset(flareTextures, 0, sizeof(flareTextures));
 
-    P_DeleteMaterialTextures(MG_DDTEXTURES);
+    P_DeleteMaterialTextures(MN_SYSTEM);
     UI_ClearTextures();
 
     // Delete the particle textures.

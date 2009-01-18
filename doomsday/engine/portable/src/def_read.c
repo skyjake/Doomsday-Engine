@@ -1035,7 +1035,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", mat->id.name)
-                RV_FLAGS("Group", mat->id.group, "mg_")
+                RV_FLAGS("Namespace", mat->id.mnamespace, "mn_")
                 RV_FLAGS("Flags", mat->flags, "matf_")
                 RV_FLT("Width", mat->width)
                 RV_FLT("Height", mat->height)
@@ -1285,11 +1285,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                         if(ISLABEL("Texture") || ISLABEL("Flat") ||
                            ISLABEL("Sprite") || ISLABEL("System"))
                         {
-                            sl->material.group = (
-                                ISLABEL("Texture")? MG_TEXTURES :
-                                ISLABEL("Flat")? MG_FLATS :
-                                ISLABEL("Sprite")? MG_SPRITES :
-                                MG_DDTEXTURES);
+                            sl->material.mnamespace = (
+                                ISLABEL("Texture")? MN_TEXTURES :
+                                ISLABEL("Flat")? MN_FLATS :
+                                ISLABEL("Sprite")? MN_SPRITES :
+                                MN_SYSTEM);
                             READSTR(sl->material.name);
                         }
                         else
@@ -1388,11 +1388,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                         if(ISLABEL("Texture") || ISLABEL("Flat") ||
                            ISLABEL("Sprite") || ISLABEL("System"))
                         {
-                            sl->material.group = (
-                                ISLABEL("Texture")? MG_TEXTURES :
-                                ISLABEL("Flat")? MG_FLATS :
-                                ISLABEL("Sprite")? MG_SPRITES :
-                                MG_DDTEXTURES);
+                            sl->material.mnamespace = (
+                                ISLABEL("Texture")? MN_TEXTURES :
+                                ISLABEL("Flat")? MN_FLATS :
+                                ISLABEL("Sprite")? MN_SPRITES :
+                                MN_SYSTEM);
                             READSTR(sl->material.name);
                         }
                         else
@@ -1486,9 +1486,9 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 {   // A new material name.
                     mn = DED_NewEntry((void**)&ded->textureEnv[idx].materials,
                                       &ded->textureEnv[idx].count, sizeof(*mn));
-                    mn->group = (ISLABEL("Texture")? MG_TEXTURES :
-                           ISLABEL("Flat")? MG_FLATS :
-                           ISLABEL("Sprite")? MG_SPRITES : MG_DDTEXTURES);
+                    mn->mnamespace = (ISLABEL("Texture")? MN_TEXTURES :
+                           ISLABEL("Flat")? MN_FLATS :
+                           ISLABEL("Sprite")? MN_SPRITES : MN_SYSTEM);
 
                     FINDBEGIN;
                     for(;;)
@@ -1616,17 +1616,17 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 if(ISLABEL("Texture"))
                 {
                     READSTR(dtl->material1.name)
-                    dtl->material1.group = MG_TEXTURES;
+                    dtl->material1.mnamespace = MN_TEXTURES;
                 }
                 else if(ISLABEL("Wall")) // Alias
                 {
                     READSTR(dtl->material1.name)
-                    dtl->material1.group = MG_TEXTURES;
+                    dtl->material1.mnamespace = MN_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
                     READSTR(dtl->material2.name)
-                    dtl->material2.group = MG_FLATS;
+                    dtl->material2.mnamespace = MN_FLATS;
                 }
                 else if(ISLABEL("Lump"))
                 {
@@ -1676,12 +1676,12 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 if(ISLABEL("Texture"))
                 {
                     READSTR(ref->material.name)
-                    ref->material.group = MG_TEXTURES;
+                    ref->material.mnamespace = MN_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
                     READSTR(ref->material.name)
-                    ref->material.group = MG_FLATS;
+                    ref->material.mnamespace = MN_FLATS;
                 }
                 else RV_END
                 CHECKSC;
@@ -1718,12 +1718,12 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 if(ISLABEL("Flat"))
                 {
                     READSTR(gen->material.name)
-                    gen->material.group = MG_FLATS;
+                    gen->material.mnamespace = MN_FLATS;
                 }
                 else if(ISLABEL("Texture"))
                 {
                     READSTR(gen->material.name)
-                    gen->material.group = MG_TEXTURES;
+                    gen->material.mnamespace = MN_TEXTURES;
                 }
                 else
                 RV_STR("Mobj", gen->type)
@@ -1868,12 +1868,12 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 if(ISLABEL("Texture"))
                 {
                     READSTR(decor->material.name)
-                    decor->material.group = MG_TEXTURES;
+                    decor->material.mnamespace = MN_TEXTURES;
                 }
                 else if(ISLABEL("Flat"))
                 {
                     READSTR(decor->material.name)
-                    decor->material.group = MG_FLATS;
+                    decor->material.mnamespace = MN_FLATS;
                 }
                 else if(ISLABEL("Model"))
                 {
@@ -1998,10 +1998,10 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     }
 
                     memb = &grp->members[sub];
-                    memb->material.group = (
-                        ISLABEL("Texture")? MG_TEXTURES :
-                        ISLABEL("Flat")? MG_FLATS :
-                        ISLABEL("Sprite")? MG_SPRITES : MG_DDTEXTURES);
+                    memb->material.mnamespace = (
+                        ISLABEL("Texture")? MN_TEXTURES :
+                        ISLABEL("Flat")? MN_FLATS :
+                        ISLABEL("Sprite")? MN_SPRITES : MN_SYSTEM);
 
                     FINDBEGIN;
                     for(;;)
@@ -2122,22 +2122,22 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 if(ISLABEL("Act texture"))
                 {
                     READSTR(l->actMaterial.name)
-                    l->actMaterial.group = MG_TEXTURES;
+                    l->actMaterial.mnamespace = MN_TEXTURES;
                 }
                 else if(ISLABEL("Act material")) // Alias
                 {
                     READSTR(l->actMaterial.name)
-                    l->actMaterial.group = MG_ANY;
+                    l->actMaterial.mnamespace = MN_ANY;
                 }
                 else if(ISLABEL("Deact texture"))
                 {
                     READSTR(l->deactMaterial.name)
-                    l->deactMaterial.group = MG_TEXTURES;
+                    l->deactMaterial.mnamespace = MN_TEXTURES;
                 }
                 else if(ISLABEL("Deact material")) // Alias
                 {
                     READSTR(l->deactMaterial.name)
-                    l->deactMaterial.group = MG_ANY;
+                    l->deactMaterial.mnamespace = MN_ANY;
                 }
                 RV_INT("Act type", l->actLineType)
                 RV_INT("Deact type", l->deactLineType)

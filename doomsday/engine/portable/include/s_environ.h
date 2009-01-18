@@ -33,6 +33,7 @@
 
 void            S_CalcSectorReverb(sector_t* sec);
 void            S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
-material_env_class_t S_MaterialClassForName(const char *name, materialgroup_t group);
+material_env_class_t S_MaterialClassForName(const char* name,
+                                            material_namespace_t mnamespace);
 
 #endif
