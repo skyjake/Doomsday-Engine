@@ -1930,8 +1930,8 @@ void GL_SetPSprite(material_t* mat)
 
     Material_Prepare(&ms, mat, true, &params);
 
-    GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
-                   ms.passes[MTP_PRIMARY].magMode);
+    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                   ms.units[MTU_PRIMARY].magMode);
 }
 
 void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
@@ -1944,8 +1944,8 @@ void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
     params.tclass = tclass;
 
     Material_Prepare(&ms, mat, true, &params);
-    GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
-                   ms.passes[MTP_PRIMARY].magMode);
+    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                   ms.units[MTU_PRIMARY].magMode);
 }
 
 DGLuint GL_GetPatchOtherPart(int idx)
@@ -2741,8 +2741,8 @@ void GL_SetMaterial(material_t* mat)
         return;
 
     Material_Prepare(&ms, mat, true, NULL);
-    GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
-                   ms.passes[MTP_PRIMARY].magMode);
+    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                   ms.units[MTU_PRIMARY].magMode);
 }
 
 /**

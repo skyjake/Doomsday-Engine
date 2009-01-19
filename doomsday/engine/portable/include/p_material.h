@@ -40,29 +40,29 @@ typedef struct {
     boolean         pSprite;
 } material_load_params_t;
 
-// Material texturing, pass idents:
+// Material texture unit idents:
 enum {
-    MTP_PRIMARY,
-    MTP_DETAIL,
-    MTP_REFLECTION,
-    NUM_MATERIAL_TEXTURING_PASSES
+    MTU_PRIMARY,
+    MTU_DETAIL,
+    MTU_REFLECTION,
+    MTU_REFLECTION_MASK,
+    NUM_MATERIAL_TEXTURE_UNITS
 };
 
-typedef struct material_texturepass_s {
+typedef struct material_textureunit_s {
     const struct gltexture_inst_s* texInst;
-    const struct gltexture_inst_s* maskTexInst; // Not used with all passes.
     int             magMode;
     blendmode_t     blendMode; // Currently used only with shiny pass.
     float           alpha;
     float           scale[2], offset[2]; // For use with the texture matrix.
-} material_texturepass_t;
+} material_textureunit_t;
 
 typedef struct material_snapshot_s {
     short           width, height; // In world units.
     boolean         isOpaque;
     float           color[3]; // Average color (for lighting).
     float           topColor[3]; // Averaged top line color, used for sky fadeouts.
-    material_texturepass_t passes[NUM_MATERIAL_TEXTURING_PASSES];
+    material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
 
 /**
  * \todo: the following should be removed once incorporated into the layers (above).

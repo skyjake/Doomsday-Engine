@@ -70,8 +70,8 @@ typedef struct masktex_s {
 
 /**
  * Texture (map) units.
- * The Doomsday renderer virtualizes texture mapping units and addresses each
- * unit by the following names. All units need not be used, except TU_PRIMARY is
+ * The Doomsday renderer virtualizes texture units and addresses each by the
+ * following idents. All units need not be used, except TU_PRIMARY is
  * required if texturing is enabled.
  */
 typedef enum {

@@ -278,7 +278,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     mparams.pSprite = true;
     Material_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
-    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
+    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX];
     params->pos[VY] = offScaleY * psp->pos[VY] +
@@ -289,10 +289,10 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
     params->texOffset[0] =
-        ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[VX] -
+        ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VX] -
             0.4f / M_CeilPow2(ms.width);
     params->texOffset[1] =
-        ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[VY] -
+        ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VY] -
             0.4f / M_CeilPow2(ms.height);
 
     params->texFlip[0] = flip;
@@ -370,8 +370,8 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_snapshot_t ms;
 
         Material_Prepare(&ms, mat, true, NULL);
-        GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
-                       ms.passes[MTP_PRIMARY].magMode);
+        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                       ms.units[MTU_PRIMARY].magMode);
     }
     else
     {
@@ -926,8 +926,8 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         }
     }
 
-    GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
-                   ms.passes[MTP_PRIMARY].magMode);
+    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                   ms.units[MTU_PRIMARY].magMode);
 
     // Coordinates to the center of the sprite (game coords).
     spriteCenter[VX] = params->center[VX] + params->srvo[VX];

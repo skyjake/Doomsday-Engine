@@ -1215,81 +1215,78 @@ static boolean setupPTU(rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
             }
         }
 
-        pTU[TU_PRIMARY].tex = msA.passes[MTP_PRIMARY].texInst->id;
-        pTU[TU_PRIMARY].magMode = msA.passes[MTP_PRIMARY].magMode;
-        pTU[TU_PRIMARY].scale[0] = msA.passes[MTP_PRIMARY].scale[0];
-        pTU[TU_PRIMARY].scale[1] = msA.passes[MTP_PRIMARY].scale[1];
-        pTU[TU_PRIMARY].offset[0] = msA.passes[MTP_PRIMARY].offset[0];
-        pTU[TU_PRIMARY].offset[1] = msA.passes[MTP_PRIMARY].offset[1];
-        pTU[TU_PRIMARY].blendMode = msA.passes[MTP_PRIMARY].blendMode;
-        pTU[TU_PRIMARY].blend = msA.passes[MTP_PRIMARY].alpha;
+        pTU[TU_PRIMARY].tex = msA.units[MTU_PRIMARY].texInst->id;
+        pTU[TU_PRIMARY].magMode = msA.units[MTU_PRIMARY].magMode;
+        pTU[TU_PRIMARY].scale[0] = msA.units[MTU_PRIMARY].scale[0];
+        pTU[TU_PRIMARY].scale[1] = msA.units[MTU_PRIMARY].scale[1];
+        pTU[TU_PRIMARY].offset[0] = msA.units[MTU_PRIMARY].offset[0];
+        pTU[TU_PRIMARY].offset[1] = msA.units[MTU_PRIMARY].offset[1];
+        pTU[TU_PRIMARY].blendMode = msA.units[MTU_PRIMARY].blendMode;
+        pTU[TU_PRIMARY].blend = msA.units[MTU_PRIMARY].alpha;
 
-        if(msA.passes[MTP_DETAIL].texInst)
+        if(msA.units[MTU_DETAIL].texInst)
         {
-            pTU[TU_PRIMARY_DETAIL].tex = msA.passes[MTP_DETAIL].texInst->id;
-            pTU[TU_PRIMARY_DETAIL].magMode = msA.passes[MTP_DETAIL].magMode;
-            pTU[TU_PRIMARY_DETAIL].scale[0] = msA.passes[MTP_DETAIL].scale[0];
-            pTU[TU_PRIMARY_DETAIL].scale[1] = msA.passes[MTP_DETAIL].scale[1];
-            pTU[TU_PRIMARY_DETAIL].offset[0] = msA.passes[MTP_DETAIL].offset[0];
-            pTU[TU_PRIMARY_DETAIL].offset[1] = msA.passes[MTP_DETAIL].offset[1];
-            pTU[TU_PRIMARY_DETAIL].blendMode = msA.passes[MTP_DETAIL].blendMode;
-            pTU[TU_PRIMARY_DETAIL].blend = msA.passes[MTP_DETAIL].alpha;
+            pTU[TU_PRIMARY_DETAIL].tex = msA.units[MTU_DETAIL].texInst->id;
+            pTU[TU_PRIMARY_DETAIL].magMode = msA.units[MTU_DETAIL].magMode;
+            pTU[TU_PRIMARY_DETAIL].scale[0] = msA.units[MTU_DETAIL].scale[0];
+            pTU[TU_PRIMARY_DETAIL].scale[1] = msA.units[MTU_DETAIL].scale[1];
+            pTU[TU_PRIMARY_DETAIL].offset[0] = msA.units[MTU_DETAIL].offset[0];
+            pTU[TU_PRIMARY_DETAIL].offset[1] = msA.units[MTU_DETAIL].offset[1];
+            pTU[TU_PRIMARY_DETAIL].blendMode = msA.units[MTU_DETAIL].blendMode;
+            pTU[TU_PRIMARY_DETAIL].blend = msA.units[MTU_DETAIL].alpha;
         }
 
-        if(msB.passes[MTP_PRIMARY].texInst)
+        if(msB.units[MTU_PRIMARY].texInst)
         {
-            pTU[TU_INTER].tex = msB.passes[MTP_PRIMARY].texInst->id;
-            pTU[TU_INTER].magMode = msB.passes[MTP_PRIMARY].magMode;
-            pTU[TU_INTER].scale[0] = msB.passes[MTP_PRIMARY].scale[0];
-            pTU[TU_INTER].scale[1] = msB.passes[MTP_PRIMARY].scale[1];
-            pTU[TU_INTER].offset[0] = msB.passes[MTP_PRIMARY].offset[0];
-            pTU[TU_INTER].offset[1] = msB.passes[MTP_PRIMARY].offset[1];
-            pTU[TU_INTER].blendMode = msB.passes[MTP_PRIMARY].blendMode;
-            pTU[TU_INTER].blend = msB.passes[MTP_PRIMARY].alpha;
+            pTU[TU_INTER].tex = msB.units[MTU_PRIMARY].texInst->id;
+            pTU[TU_INTER].magMode = msB.units[MTU_PRIMARY].magMode;
+            pTU[TU_INTER].scale[0] = msB.units[MTU_PRIMARY].scale[0];
+            pTU[TU_INTER].scale[1] = msB.units[MTU_PRIMARY].scale[1];
+            pTU[TU_INTER].offset[0] = msB.units[MTU_PRIMARY].offset[0];
+            pTU[TU_INTER].offset[1] = msB.units[MTU_PRIMARY].offset[1];
+            pTU[TU_INTER].blendMode = msB.units[MTU_PRIMARY].blendMode;
+            pTU[TU_INTER].blend = msB.units[MTU_PRIMARY].alpha;
 
             // Blend between the primary and inter textures.
             pTU[TU_INTER].blend = interPos;
         }
 
-        if(msB.passes[MTP_DETAIL].texInst)
+        if(msB.units[MTU_DETAIL].texInst)
         {
-            pTU[TU_INTER_DETAIL].tex = msB.passes[MTP_DETAIL].texInst->id;
-            pTU[TU_INTER_DETAIL].magMode = msB.passes[MTP_DETAIL].magMode;
-            pTU[TU_INTER_DETAIL].scale[0] = msB.passes[MTP_DETAIL].scale[0];
-            pTU[TU_INTER_DETAIL].scale[1] = msB.passes[MTP_DETAIL].scale[1];
-            pTU[TU_INTER_DETAIL].offset[0] = msB.passes[MTP_DETAIL].offset[0];
-            pTU[TU_INTER_DETAIL].offset[1] = msB.passes[MTP_DETAIL].offset[1];
-            pTU[TU_INTER_DETAIL].blendMode = msB.passes[MTP_DETAIL].blendMode;
-            pTU[TU_INTER_DETAIL].blend = msB.passes[MTP_DETAIL].alpha;
+            pTU[TU_INTER_DETAIL].tex = msB.units[MTU_DETAIL].texInst->id;
+            pTU[TU_INTER_DETAIL].magMode = msB.units[MTU_DETAIL].magMode;
+            pTU[TU_INTER_DETAIL].scale[0] = msB.units[MTU_DETAIL].scale[0];
+            pTU[TU_INTER_DETAIL].scale[1] = msB.units[MTU_DETAIL].scale[1];
+            pTU[TU_INTER_DETAIL].offset[0] = msB.units[MTU_DETAIL].offset[0];
+            pTU[TU_INTER_DETAIL].offset[1] = msB.units[MTU_DETAIL].offset[1];
+            pTU[TU_INTER_DETAIL].blendMode = msB.units[MTU_DETAIL].blendMode;
+            pTU[TU_INTER_DETAIL].blend = msB.units[MTU_DETAIL].alpha;
 
             // Blend between the primary and inter detail textures.
             pTU[TU_INTER_DETAIL].blend = interPos;
         }
 
-        if(msA.passes[MTP_REFLECTION].texInst)
+        if(msA.units[MTU_REFLECTION].texInst)
         {
-            pTU[TU_SHINY].tex = msA.passes[MTP_REFLECTION].texInst->id;
-            pTU[TU_SHINY].magMode = msA.passes[MTP_REFLECTION].magMode;
-            pTU[TU_SHINY].scale[0] = msA.passes[MTP_REFLECTION].scale[0];
-            pTU[TU_SHINY].scale[1] = msA.passes[MTP_REFLECTION].scale[1];
-            pTU[TU_SHINY].offset[0] = msA.passes[MTP_REFLECTION].offset[0];
-            pTU[TU_SHINY].offset[1] = msA.passes[MTP_REFLECTION].offset[1];
-            pTU[TU_SHINY].blendMode = msA.passes[MTP_REFLECTION].blendMode;
-            pTU[TU_SHINY].blend = msA.passes[MTP_REFLECTION].alpha;
+            pTU[TU_SHINY].tex = msA.units[MTU_REFLECTION].texInst->id;
+            pTU[TU_SHINY].magMode = msA.units[MTU_REFLECTION].magMode;
+            pTU[TU_SHINY].scale[0] = msA.units[MTU_REFLECTION].scale[0];
+            pTU[TU_SHINY].scale[1] = msA.units[MTU_REFLECTION].scale[1];
+            pTU[TU_SHINY].offset[0] = msA.units[MTU_REFLECTION].offset[0];
+            pTU[TU_SHINY].offset[1] = msA.units[MTU_REFLECTION].offset[1];
+            pTU[TU_SHINY].blendMode = msA.units[MTU_REFLECTION].blendMode;
+            pTU[TU_SHINY].blend = msA.units[MTU_REFLECTION].alpha;
 
-            if(msA.passes[MTP_REFLECTION].maskTexInst)
+            if(msA.units[MTU_REFLECTION_MASK].texInst)
             {
-                // The mask texture needs setting up manually as its not
-                // yet stored as-is in the snapshot.
-                pTU[TU_SHINY_MASK].tex = msA.passes[MTP_REFLECTION].maskTexInst->id;
-                pTU[TU_SHINY_MASK].magMode = msA.passes[MTP_PRIMARY].magMode;
-                pTU[TU_SHINY_MASK].blend = 1;
-                pTU[TU_SHINY_MASK].scale[0] = msA.width *
-                    maskTextures[msA.passes[MTP_REFLECTION].maskTexInst->tex->ofTypeID]->width;
-                pTU[TU_SHINY_MASK].scale[1] = msA.height *
-                    maskTextures[msA.passes[MTP_REFLECTION].maskTexInst->tex->ofTypeID]->height;
-                pTU[TU_SHINY_MASK].offset[0] = msA.passes[MTP_PRIMARY].offset[0];
-                pTU[TU_SHINY_MASK].offset[1] = msA.passes[MTP_PRIMARY].offset[1];
+                pTU[TU_SHINY_MASK].tex = msA.units[MTU_REFLECTION_MASK].texInst->id;
+                pTU[TU_SHINY_MASK].magMode = msA.units[MTU_REFLECTION_MASK].magMode;
+                pTU[TU_SHINY_MASK].scale[0] = msA.units[MTU_REFLECTION_MASK].scale[0];
+                pTU[TU_SHINY_MASK].scale[1] = msA.units[MTU_REFLECTION_MASK].scale[1];
+                pTU[TU_SHINY_MASK].offset[0] = msA.units[MTU_REFLECTION_MASK].offset[0];
+                pTU[TU_SHINY_MASK].offset[1] = msA.units[MTU_REFLECTION_MASK].offset[1];
+                pTU[TU_SHINY_MASK].blendMode = msA.units[MTU_REFLECTION_MASK].blendMode;
+                pTU[TU_SHINY_MASK].blend = msA.units[MTU_REFLECTION_MASK].alpha;
             }
         }
 
@@ -1299,11 +1296,11 @@ static boolean setupPTU(rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
 
         pTU[TU_PRIMARY].scale[0] *= texScale[0];
         pTU[TU_PRIMARY].scale[1] *= texScale[1];
-        pTU[TU_PRIMARY].offset[0] += texOffset[0] / mat->width;
+        pTU[TU_PRIMARY].offset[0] += texOffset[0] / msA.width;
         pTU[TU_PRIMARY].offset[1] +=
-            (isWall? texOffset[1] : -texOffset[1]) / mat->height;
+            (isWall? texOffset[1] : -texOffset[1]) / msA.height;
 
-        if(msA.passes[MTP_DETAIL].texInst)
+        if(msA.units[MTU_DETAIL].texInst)
         {
             pTU[TU_PRIMARY_DETAIL].offset[0] +=
                 texOffset[0] * pTU[TU_PRIMARY_DETAIL].scale[0];
@@ -1312,16 +1309,16 @@ static boolean setupPTU(rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
                     pTU[TU_PRIMARY_DETAIL].scale[1];
         }
 
-        if(msB.passes[MTP_PRIMARY].texInst)
+        if(msB.units[MTU_PRIMARY].texInst)
         {
             pTU[TU_INTER].scale[0] *= texScale[0];
             pTU[TU_INTER].scale[1] *= texScale[1];
-            pTU[TU_INTER].offset[0] += texOffset[0] / mat->width;
+            pTU[TU_INTER].offset[0] += texOffset[0] / msB.width;
             pTU[TU_INTER].offset[1] +=
-                (isWall? texOffset[1] : -texOffset[1]) / mat->height;
+                (isWall? texOffset[1] : -texOffset[1]) / msB.height;
         }
 
-        if(msB.passes[MTP_DETAIL].texInst)
+        if(msB.units[MTU_DETAIL].texInst)
         {
             pTU[TU_INTER_DETAIL].offset[0] +=
                 texOffset[0] * pTU[TU_INTER_DETAIL].scale[0];
@@ -1330,13 +1327,13 @@ static boolean setupPTU(rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
                     pTU[TU_INTER_DETAIL].scale[1];
         }
 
-        if(msA.passes[MTP_REFLECTION].texInst)
+        if(msA.units[MTU_REFLECTION].texInst)
         {
             pTU[TU_SHINY_MASK].scale[0] *= texScale[0];
             pTU[TU_SHINY_MASK].scale[1] *= texScale[1];
-            pTU[TU_SHINY_MASK].offset[0] += texOffset[0] / mat->width;
+            pTU[TU_SHINY_MASK].offset[0] += texOffset[0] / msA.width;
             pTU[TU_SHINY_MASK].offset[1] +=
-                (isWall? texOffset[1] : -texOffset[1]) / mat->height;
+                (isWall? texOffset[1] : -texOffset[1]) / msA.height;
         }
 
         shinyMinColor[CR] = msA.shiny.minColor[CR];
@@ -2717,14 +2714,14 @@ static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
 
     Material_Prepare(&ms, mat, true, NULL);
 
-    pTU[TU_PRIMARY].tex = ms.passes[MTP_PRIMARY].texInst->id;
-    pTU[TU_PRIMARY].magMode = ms.passes[MTP_PRIMARY].magMode;
-    pTU[TU_PRIMARY].scale[0] = ms.passes[MTP_PRIMARY].scale[0];
-    pTU[TU_PRIMARY].scale[1] = ms.passes[MTP_PRIMARY].scale[1];
-    pTU[TU_PRIMARY].offset[0] = ms.passes[MTP_PRIMARY].offset[0];
-    pTU[TU_PRIMARY].offset[1] = ms.passes[MTP_PRIMARY].offset[1];
-    pTU[TU_PRIMARY].blend = ms.passes[MTP_PRIMARY].alpha;
-    pTU[TU_PRIMARY].blendMode = ms.passes[MTP_PRIMARY].blendMode;
+    pTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].texInst->id;
+    pTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
+    pTU[TU_PRIMARY].scale[0] = ms.units[MTU_PRIMARY].scale[0];
+    pTU[TU_PRIMARY].scale[1] = ms.units[MTU_PRIMARY].scale[1];
+    pTU[TU_PRIMARY].offset[0] = ms.units[MTU_PRIMARY].offset[0];
+    pTU[TU_PRIMARY].offset[1] = ms.units[MTU_PRIMARY].offset[1];
+    pTU[TU_PRIMARY].blend = ms.units[MTU_PRIMARY].alpha;
+    pTU[TU_PRIMARY].blendMode = ms.units[MTU_PRIMARY].blendMode;
 
     curTex = pTU[TU_PRIMARY].tex;
 
@@ -4107,8 +4104,8 @@ static void Rend_RenderBoundingBoxes(void)
     mat = P_GetMaterial(DDT_BBOX, MN_SYSTEM);
     Material_Prepare(&ms, mat, true, NULL);
 
-    GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
-                   ms.passes[MTP_PRIMARY].magMode);
+    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                   ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);
 
     // For every sector

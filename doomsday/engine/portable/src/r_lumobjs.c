@@ -411,10 +411,10 @@ if(!mat)
         // Ensure we have up-to-date information about the material.
         Material_Prepare(&ms, mat, true, NULL);
 
-        if(ms.passes[MTP_PRIMARY].texInst->tex->type != GLT_SPRITE)
+        if(ms.units[MTU_PRIMARY].texInst->tex->type != GLT_SPRITE)
             return; // *Very* strange...
 
-        texInst = ms.passes[MTP_PRIMARY].texInst;
+        texInst = ms.units[MTU_PRIMARY].texInst;
 
         cf.size = cf.flareSize = texInst->data.sprite.lumSize;
         cf.xOffset = texInst->data.sprite.flareX;

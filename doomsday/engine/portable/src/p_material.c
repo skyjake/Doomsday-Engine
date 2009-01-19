@@ -94,18 +94,15 @@ void Material_Ticker(material_t* mat, timespan_t time)
 /**
  * Subroutine of Material_Prepare().
  */
-static __inline void setTexPass(material_snapshot_t* ss, int passID,
+static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
                                 blendmode_t blendMode, int magMode,
                                 const gltexture_inst_t* texInst,
                                 float sScale, float tScale,
-                                float sOffset, float tOffset,
-                                float alpha,
-                                const gltexture_inst_t* maskTexInst)
+                                float sOffset, float tOffset, float alpha)
 {
-    material_texturepass_t* mtp = &ss->passes[passID];
+    material_textureunit_t* mtp = &ss->units[unit];
 
     mtp->texInst = texInst;
-    mtp->maskTexInst = maskTexInst;
     mtp->magMode = magMode;
     mtp->blendMode = blendMode;
     mtp->alpha = alpha;
@@ -215,8 +212,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     // Reset to the default state.
     for(i = 0; i < DDMAX_MATERIAL_LAYERS; ++i)
-        setTexPass(snapshot, i, BM_NORMAL, DGL_LINEAR, NULL, 1, 1, 0, 0,
-                   0, NULL);
+        setTexUnit(snapshot, i, BM_NORMAL, DGL_LINEAR, NULL, 1, 1, 0, 0, 0);
 
     // Setup the primary texturing pass.
     if(mat->layers[0].tex)
@@ -228,8 +224,8 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
         if(tex->type == GLT_SPRITE)
             magMode = filterSprites? DGL_LINEAR : DGL_NEAREST;
 
-        setTexPass(snapshot, MTP_PRIMARY, BM_NORMAL, magMode, texInst,
-                   1.f / mat->width, 1.f / mat->height, 0, 0, 1, NULL);
+        setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst,
+                   1.f / mat->width, 1.f / mat->height, 0, 0, 1);
 
         snapshot->isOpaque = !(texInst->flags & GLTF_MASKED);
 
@@ -274,9 +270,9 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
             if(detailScale > .001f)
                 scale *= detailScale;
 
-            setTexPass(snapshot, MTP_DETAIL, BM_NORMAL,
+            setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL,
                        DGL_LINEAR, detailInst, 1.f / width * scale,
-                       1.f / height * scale, 0, 0, 1, NULL);
+                       1.f / height * scale, 0, 0, 1);
         }
 
         // Setup the reflection (aka shiny) texturing pass(es)?
@@ -288,9 +284,19 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
             snapshot->shiny.minColor[CG] = def->minColor[CG];
             snapshot->shiny.minColor[CB] = def->minColor[CB];
 
-            setTexPass(snapshot, MTP_REFLECTION, def->blendMode,
-                       DGL_LINEAR, shinyInst, 1, 1, 0, 0, def->shininess,
-                       shinyMaskInst);
+            setTexUnit(snapshot, MTU_REFLECTION, def->blendMode,
+                       DGL_LINEAR, shinyInst, 1, 1, 0, 0, def->shininess);
+
+            if(shinyMaskInst)
+                setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL,
+                           snapshot->units[MTU_PRIMARY].magMode,
+                           shinyMaskInst,
+                           snapshot->width * maskTextures[shinyMaskInst->
+                                tex->ofTypeID]->width,
+                           snapshot->height * maskTextures[shinyMaskInst->
+                                tex->ofTypeID]->height,
+                           snapshot->units[MTU_PRIMARY].offset[0],
+                           snapshot->units[MTU_PRIMARY].offset[1], 1);
         }
     }
 

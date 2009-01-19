@@ -476,7 +476,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     mat = sprFrame->mats[0];
     Material_Prepare(&ms, mat, false, NULL);
 
-    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
+    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
     info->numFrames = sprDef->numFrames;
     info->material = mat;
@@ -746,7 +746,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     Material_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
+    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
     params->width = ms.width;
     params->height = ms.height;
@@ -766,8 +766,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->mat = mat;
     params->tMap = transMap;
     params->tClass = transClass;
-    params->matOffset[0] = ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[0];
-    params->matOffset[1] = ms.passes[MTP_PRIMARY].texInst->data.sprite.texCoord[1];
+    params->matOffset[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0];
+    params->matOffset[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1];
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = blendMode;
@@ -989,7 +989,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     Material_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = spriteTextures[ms.passes[MTP_PRIMARY].texInst->tex->ofTypeID];
+    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
     // Align to the view plane?
     if(mo->ddFlags & DDMF_VIEWALIGN)

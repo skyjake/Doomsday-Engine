@@ -375,19 +375,19 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                     params.flags |= MLF_ZEROMASK;
 
                 result = Material_Prepare(&ms, slayer->mat, true, &params);
-                curTex = ms.passes[MTP_PRIMARY].texInst->id;
+                curTex = ms.units[MTU_PRIMARY].texInst->id;
                 skyTexWidth =
-                    GLTexture_GetWidth(ms.passes[MTP_PRIMARY].texInst->tex);
+                    GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
                 skyTexHeight =
-                    GLTexture_GetHeight(ms.passes[MTP_PRIMARY].texInst->tex);
+                    GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
 
                 if(result)
                 {   // Texture was reloaded.
                     setupFadeout(slayer);
                 }
 
-                GL_BindTexture(ms.passes[MTP_PRIMARY].texInst->id,
-                               ms.passes[MTP_PRIMARY].magMode);
+                GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                               ms.units[MTU_PRIMARY].magMode);
             }
             else
             {
