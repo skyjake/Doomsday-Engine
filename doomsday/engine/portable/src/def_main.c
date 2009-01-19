@@ -966,7 +966,7 @@ void Def_Read(void)
         ded_material_t*     def = &defs.materials[i];
         const gltexture_t*  tex = NULL; // No change.
         float               width = -1, height = -1; // No change.
-        material_namespace_t     groupNum = MN_ANY; // No change.
+        material_namespace_t mnamespace = MN_ANY; // No change.
 
         // Sanitize so that when updating we only change what is requested.
         if(def->width > 0)
@@ -974,7 +974,7 @@ void Def_Read(void)
         if(def->height > 0)
             height = MAX_OF(1, def->height);
         if(def->id.mnamespace != MN_ANY)
-            groupNum = def->id.mnamespace;
+            mnamespace = def->id.mnamespace;
 
         if(def->layers[0].stageCount.num > 0)
         {
@@ -992,7 +992,7 @@ void Def_Read(void)
         }
 
         P_MaterialCreate(def->id.name, width, height, def->flags,
-                         tex? tex->id : 0, groupNum, def);
+                         tex? tex->id : 0, mnamespace, def);
     }
 
     // Dynamic lights. Update the sprite numbers.
