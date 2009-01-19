@@ -536,9 +536,13 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             if(!mapInfo)
                 mapInfo = Def_GetMapInfo("*");
 
-            skyDef = Def_GetSky(mapInfo->skyID);
-            if(!skyDef)
-                skyDef = &mapInfo->sky;
+            if(mapInfo)
+            {
+                skyDef = Def_GetSky(mapInfo->skyID);
+                if(!skyDef)
+                    skyDef = &mapInfo->sky;
+            }
+
             R_SetupSky(skyDef);
 
             // Setup accordingly.
