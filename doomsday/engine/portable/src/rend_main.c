@@ -854,7 +854,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
                         float texWidth, float texHeight,
                         const float texOffset[2], blendmode_t blendMode,
                         uint lightListIdx, boolean glow, boolean masked,
-                        const rtexmapunit_t pTU[NUM_TEXMAP_UNITS])
+                        const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
 {
     vissprite_t*        vis = R_NewVisSprite();
     int                 i, c;
@@ -871,8 +871,8 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     vis->center[VZ] = midpoint[VZ];
     vis->isDecoration = false;
     vis->distance = Rend_PointDist2D(midpoint);
-    vis->data.wall.tex = pTU[TU_PRIMARY].tex;
-    vis->data.wall.magMode = pTU[TU_PRIMARY].magMode;
+    vis->data.wall.tex = rTU[TU_PRIMARY].tex;
+    vis->data.wall.magMode = rTU[TU_PRIMARY].magMode;
     vis->data.wall.masked = masked;
     for(i = 0; i < 4; ++i)
     {
@@ -1065,21 +1065,21 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
         rvertex_t*          rvertices;
         rtexcoord_t*        rtexcoords;
         rcolor_t*           rcolors;
-        rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
+        rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
 
-        memset(pTU, 0, sizeof(pTU));
+        memset(rTU, 0, sizeof(rTU));
 
         // Allocate enough for the divisions too.
         rvertices = R_AllocRendVertices(params->realNumVertices);
         rtexcoords = R_AllocRendTexCoords(params->realNumVertices);
         rcolors = R_AllocRendColors(params->realNumVertices);
 
-        pTU[TU_PRIMARY].tex = dyn->texture;
-        pTU[TU_PRIMARY].magMode = DGL_LINEAR;
+        rTU[TU_PRIMARY].tex = dyn->texture;
+        rTU[TU_PRIMARY].magMode = DGL_LINEAR;
 
-        pTU[TU_PRIMARY_DETAIL].tex = 0;
-        pTU[TU_INTER].tex = 0;
-        pTU[TU_INTER_DETAIL].tex = 0;
+        rTU[TU_PRIMARY_DETAIL].tex = 0;
+        rTU[TU_INTER].tex = 0;
+        rTU[TU_INTER_DETAIL].tex = 0;
 
         for(i = 0; i < params->numVertices; ++i)
         {
@@ -1154,23 +1154,20 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
         {
             RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices + 3 + params->divs[0].num,
                        rtexcoords + 3 + params->divs[0].num, NULL, NULL,
-                       NULL, NULL,
-                       rcolors + 3 + params->divs[0].num, NULL,
+                       rcolors + 3 + params->divs[0].num,
                        3 + params->divs[1].num, 0,
-                       0, NULL, pTU);
+                       0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
             RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices, rtexcoords, NULL, NULL,
-                       NULL, NULL, rcolors, NULL,
-                       3 + params->divs[0].num, 0,
-                       0, NULL, pTU);
+                       rcolors, 3 + params->divs[0].num, 0,
+                       0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
         }
         else
         {
             RL_AddPoly(params->isWall? PT_TRIANGLE_STRIP : PT_FAN,
                        RPT_LIGHT,
                        rvertices, rtexcoords, NULL, NULL,
-                       NULL, NULL, rcolors, NULL,
-                       params->numVertices, 0,
-                       0, NULL, pTU);
+                       rcolors, params->numVertices, 0,
+                       0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
         }
 
         R_FreeRendVertices(rvertices);
@@ -1182,168 +1179,165 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
     return true; // Continue iteration.
 }
 
-static boolean setupPTU(rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
-                        float shinyMinColor[3],
-                        boolean isWall, rendpolytype_t type,
-                        material_t* mat, float texOffset[2],
-                        float texScale[2], boolean blended)
+static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
+                          material_t* mat, boolean blended)
 {
-    memset(pTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
+    float               interPos = 0;
 
-    if(type != RPT_SKY_MASK)
+    Material_Prepare(msA, mat, true, NULL);
+
+    // Smooth Texture Animation?
+    if(blended)
     {
-        float               interPos = 0;
-        material_snapshot_t msA, msB;
-
-        memset(&msA, 0, sizeof(msA));
-        memset(&msB, 0, sizeof(msB));
-
-        Material_Prepare(&msA, mat, true, NULL);
-
-        // Smooth Texture Animation?
-        if(blended)
+        // If fog is active, inter=0 is accepted as well. Otherwise
+        // flickering may occur if the rendering passes don't match for
+        // blended and unblended surfaces.
+        if(numTexUnits > 1 && mat->current != mat->next &&
+           !(!usingFog && mat->inter < 0))
         {
-            // If fog is active, inter=0 is accepted as well. Otherwise
-            // flickering may occur if the rendering passes don't match for
-            // blended and unblended surfaces.
-            if(numTexUnits > 1 && mat->current != mat->next &&
-               !(!usingFog && mat->inter < 0))
-            {
-                // Prepare the inter texture.
-                Material_Prepare(&msB, mat->next, false, NULL);
-                interPos = mat->inter;
-            }
+            // Prepare the inter texture.
+            Material_Prepare(msB, mat->next, false, NULL);
+            interPos = mat->inter;
         }
-
-        pTU[TU_PRIMARY].tex = msA.units[MTU_PRIMARY].texInst->id;
-        pTU[TU_PRIMARY].magMode = msA.units[MTU_PRIMARY].magMode;
-        pTU[TU_PRIMARY].scale[0] = msA.units[MTU_PRIMARY].scale[0];
-        pTU[TU_PRIMARY].scale[1] = msA.units[MTU_PRIMARY].scale[1];
-        pTU[TU_PRIMARY].offset[0] = msA.units[MTU_PRIMARY].offset[0];
-        pTU[TU_PRIMARY].offset[1] = msA.units[MTU_PRIMARY].offset[1];
-        pTU[TU_PRIMARY].blendMode = msA.units[MTU_PRIMARY].blendMode;
-        pTU[TU_PRIMARY].blend = msA.units[MTU_PRIMARY].alpha;
-
-        if(msA.units[MTU_DETAIL].texInst)
-        {
-            pTU[TU_PRIMARY_DETAIL].tex = msA.units[MTU_DETAIL].texInst->id;
-            pTU[TU_PRIMARY_DETAIL].magMode = msA.units[MTU_DETAIL].magMode;
-            pTU[TU_PRIMARY_DETAIL].scale[0] = msA.units[MTU_DETAIL].scale[0];
-            pTU[TU_PRIMARY_DETAIL].scale[1] = msA.units[MTU_DETAIL].scale[1];
-            pTU[TU_PRIMARY_DETAIL].offset[0] = msA.units[MTU_DETAIL].offset[0];
-            pTU[TU_PRIMARY_DETAIL].offset[1] = msA.units[MTU_DETAIL].offset[1];
-            pTU[TU_PRIMARY_DETAIL].blendMode = msA.units[MTU_DETAIL].blendMode;
-            pTU[TU_PRIMARY_DETAIL].blend = msA.units[MTU_DETAIL].alpha;
-        }
-
-        if(msB.units[MTU_PRIMARY].texInst)
-        {
-            pTU[TU_INTER].tex = msB.units[MTU_PRIMARY].texInst->id;
-            pTU[TU_INTER].magMode = msB.units[MTU_PRIMARY].magMode;
-            pTU[TU_INTER].scale[0] = msB.units[MTU_PRIMARY].scale[0];
-            pTU[TU_INTER].scale[1] = msB.units[MTU_PRIMARY].scale[1];
-            pTU[TU_INTER].offset[0] = msB.units[MTU_PRIMARY].offset[0];
-            pTU[TU_INTER].offset[1] = msB.units[MTU_PRIMARY].offset[1];
-            pTU[TU_INTER].blendMode = msB.units[MTU_PRIMARY].blendMode;
-            pTU[TU_INTER].blend = msB.units[MTU_PRIMARY].alpha;
-
-            // Blend between the primary and inter textures.
-            pTU[TU_INTER].blend = interPos;
-        }
-
-        if(msB.units[MTU_DETAIL].texInst)
-        {
-            pTU[TU_INTER_DETAIL].tex = msB.units[MTU_DETAIL].texInst->id;
-            pTU[TU_INTER_DETAIL].magMode = msB.units[MTU_DETAIL].magMode;
-            pTU[TU_INTER_DETAIL].scale[0] = msB.units[MTU_DETAIL].scale[0];
-            pTU[TU_INTER_DETAIL].scale[1] = msB.units[MTU_DETAIL].scale[1];
-            pTU[TU_INTER_DETAIL].offset[0] = msB.units[MTU_DETAIL].offset[0];
-            pTU[TU_INTER_DETAIL].offset[1] = msB.units[MTU_DETAIL].offset[1];
-            pTU[TU_INTER_DETAIL].blendMode = msB.units[MTU_DETAIL].blendMode;
-            pTU[TU_INTER_DETAIL].blend = msB.units[MTU_DETAIL].alpha;
-
-            // Blend between the primary and inter detail textures.
-            pTU[TU_INTER_DETAIL].blend = interPos;
-        }
-
-        if(msA.units[MTU_REFLECTION].texInst)
-        {
-            pTU[TU_SHINY].tex = msA.units[MTU_REFLECTION].texInst->id;
-            pTU[TU_SHINY].magMode = msA.units[MTU_REFLECTION].magMode;
-            pTU[TU_SHINY].scale[0] = msA.units[MTU_REFLECTION].scale[0];
-            pTU[TU_SHINY].scale[1] = msA.units[MTU_REFLECTION].scale[1];
-            pTU[TU_SHINY].offset[0] = msA.units[MTU_REFLECTION].offset[0];
-            pTU[TU_SHINY].offset[1] = msA.units[MTU_REFLECTION].offset[1];
-            pTU[TU_SHINY].blendMode = msA.units[MTU_REFLECTION].blendMode;
-            pTU[TU_SHINY].blend = msA.units[MTU_REFLECTION].alpha;
-
-            if(msA.units[MTU_REFLECTION_MASK].texInst)
-            {
-                pTU[TU_SHINY_MASK].tex = msA.units[MTU_REFLECTION_MASK].texInst->id;
-                pTU[TU_SHINY_MASK].magMode = msA.units[MTU_REFLECTION_MASK].magMode;
-                pTU[TU_SHINY_MASK].scale[0] = msA.units[MTU_REFLECTION_MASK].scale[0];
-                pTU[TU_SHINY_MASK].scale[1] = msA.units[MTU_REFLECTION_MASK].scale[1];
-                pTU[TU_SHINY_MASK].offset[0] = msA.units[MTU_REFLECTION_MASK].offset[0];
-                pTU[TU_SHINY_MASK].offset[1] = msA.units[MTU_REFLECTION_MASK].offset[1];
-                pTU[TU_SHINY_MASK].blendMode = msA.units[MTU_REFLECTION_MASK].blendMode;
-                pTU[TU_SHINY_MASK].blend = msA.units[MTU_REFLECTION_MASK].alpha;
-            }
-        }
-
-        /**
-         * Next, apply primitive-specific manipulations.
-         */
-
-        pTU[TU_PRIMARY].scale[0] *= texScale[0];
-        pTU[TU_PRIMARY].scale[1] *= texScale[1];
-        pTU[TU_PRIMARY].offset[0] += texOffset[0] / msA.width;
-        pTU[TU_PRIMARY].offset[1] +=
-            (isWall? texOffset[1] : -texOffset[1]) / msA.height;
-
-        if(msA.units[MTU_DETAIL].texInst)
-        {
-            pTU[TU_PRIMARY_DETAIL].offset[0] +=
-                texOffset[0] * pTU[TU_PRIMARY_DETAIL].scale[0];
-            pTU[TU_PRIMARY_DETAIL].offset[1] +=
-                (isWall? texOffset[1] : -texOffset[1]) *
-                    pTU[TU_PRIMARY_DETAIL].scale[1];
-        }
-
-        if(msB.units[MTU_PRIMARY].texInst)
-        {
-            pTU[TU_INTER].scale[0] *= texScale[0];
-            pTU[TU_INTER].scale[1] *= texScale[1];
-            pTU[TU_INTER].offset[0] += texOffset[0] / msB.width;
-            pTU[TU_INTER].offset[1] +=
-                (isWall? texOffset[1] : -texOffset[1]) / msB.height;
-        }
-
-        if(msB.units[MTU_DETAIL].texInst)
-        {
-            pTU[TU_INTER_DETAIL].offset[0] +=
-                texOffset[0] * pTU[TU_INTER_DETAIL].scale[0];
-            pTU[TU_INTER_DETAIL].offset[1] +=
-                (isWall? texOffset[1] : -texOffset[1]) *
-                    pTU[TU_INTER_DETAIL].scale[1];
-        }
-
-        if(msA.units[MTU_REFLECTION].texInst)
-        {
-            pTU[TU_SHINY_MASK].scale[0] *= texScale[0];
-            pTU[TU_SHINY_MASK].scale[1] *= texScale[1];
-            pTU[TU_SHINY_MASK].offset[0] += texOffset[0] / msA.width;
-            pTU[TU_SHINY_MASK].offset[1] +=
-                (isWall? texOffset[1] : -texOffset[1]) / msA.height;
-        }
-
-        shinyMinColor[CR] = msA.shiny.minColor[CR];
-        shinyMinColor[CG] = msA.shiny.minColor[CG];
-        shinyMinColor[CB] = msA.shiny.minColor[CB];
-
-        return msA.isOpaque;
     }
 
-    return true; // Kind of.
+    return interPos;
+}
+
+static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                     float shinyMinColor[3],
+                     const material_snapshot_t* msA, float interPos,
+                     const material_snapshot_t* msB)
+{
+    rTU[TU_PRIMARY].tex = msA->units[MTU_PRIMARY].texInst->id;
+    rTU[TU_PRIMARY].magMode = msA->units[MTU_PRIMARY].magMode;
+    rTU[TU_PRIMARY].scale[0] = msA->units[MTU_PRIMARY].scale[0];
+    rTU[TU_PRIMARY].scale[1] = msA->units[MTU_PRIMARY].scale[1];
+    rTU[TU_PRIMARY].offset[0] = msA->units[MTU_PRIMARY].offset[0];
+    rTU[TU_PRIMARY].offset[1] = msA->units[MTU_PRIMARY].offset[1];
+    rTU[TU_PRIMARY].blendMode = msA->units[MTU_PRIMARY].blendMode;
+    rTU[TU_PRIMARY].blend = msA->units[MTU_PRIMARY].alpha;
+
+    if(msA->units[MTU_DETAIL].texInst)
+    {
+        rTU[TU_PRIMARY_DETAIL].tex = msA->units[MTU_DETAIL].texInst->id;
+        rTU[TU_PRIMARY_DETAIL].magMode = msA->units[MTU_DETAIL].magMode;
+        rTU[TU_PRIMARY_DETAIL].scale[0] = msA->units[MTU_DETAIL].scale[0];
+        rTU[TU_PRIMARY_DETAIL].scale[1] = msA->units[MTU_DETAIL].scale[1];
+        rTU[TU_PRIMARY_DETAIL].offset[0] = msA->units[MTU_DETAIL].offset[0];
+        rTU[TU_PRIMARY_DETAIL].offset[1] = msA->units[MTU_DETAIL].offset[1];
+        rTU[TU_PRIMARY_DETAIL].blendMode = msA->units[MTU_DETAIL].blendMode;
+        rTU[TU_PRIMARY_DETAIL].blend = msA->units[MTU_DETAIL].alpha;
+    }
+
+    if(msB->units[MTU_PRIMARY].texInst)
+    {
+        rTU[TU_INTER].tex = msB->units[MTU_PRIMARY].texInst->id;
+        rTU[TU_INTER].magMode = msB->units[MTU_PRIMARY].magMode;
+        rTU[TU_INTER].scale[0] = msB->units[MTU_PRIMARY].scale[0];
+        rTU[TU_INTER].scale[1] = msB->units[MTU_PRIMARY].scale[1];
+        rTU[TU_INTER].offset[0] = msB->units[MTU_PRIMARY].offset[0];
+        rTU[TU_INTER].offset[1] = msB->units[MTU_PRIMARY].offset[1];
+        rTU[TU_INTER].blendMode = msB->units[MTU_PRIMARY].blendMode;
+        rTU[TU_INTER].blend = msB->units[MTU_PRIMARY].alpha;
+
+        // Blend between the primary and inter textures.
+        rTU[TU_INTER].blend = interPos;
+    }
+
+    if(msB->units[MTU_DETAIL].texInst)
+    {
+        rTU[TU_INTER_DETAIL].tex = msB->units[MTU_DETAIL].texInst->id;
+        rTU[TU_INTER_DETAIL].magMode = msB->units[MTU_DETAIL].magMode;
+        rTU[TU_INTER_DETAIL].scale[0] = msB->units[MTU_DETAIL].scale[0];
+        rTU[TU_INTER_DETAIL].scale[1] = msB->units[MTU_DETAIL].scale[1];
+        rTU[TU_INTER_DETAIL].offset[0] = msB->units[MTU_DETAIL].offset[0];
+        rTU[TU_INTER_DETAIL].offset[1] = msB->units[MTU_DETAIL].offset[1];
+        rTU[TU_INTER_DETAIL].blendMode = msB->units[MTU_DETAIL].blendMode;
+        rTU[TU_INTER_DETAIL].blend = msB->units[MTU_DETAIL].alpha;
+
+        // Blend between the primary and inter detail textures.
+        rTU[TU_INTER_DETAIL].blend = interPos;
+    }
+
+    if(msA->units[MTU_REFLECTION].texInst)
+    {
+        rTU[TU_SHINY].tex = msA->units[MTU_REFLECTION].texInst->id;
+        rTU[TU_SHINY].magMode = msA->units[MTU_REFLECTION].magMode;
+        rTU[TU_SHINY].scale[0] = msA->units[MTU_REFLECTION].scale[0];
+        rTU[TU_SHINY].scale[1] = msA->units[MTU_REFLECTION].scale[1];
+        rTU[TU_SHINY].offset[0] = msA->units[MTU_REFLECTION].offset[0];
+        rTU[TU_SHINY].offset[1] = msA->units[MTU_REFLECTION].offset[1];
+        rTU[TU_SHINY].blendMode = msA->units[MTU_REFLECTION].blendMode;
+        rTU[TU_SHINY].blend = msA->units[MTU_REFLECTION].alpha;
+
+        if(msA->units[MTU_REFLECTION_MASK].texInst)
+        {
+            rTU[TU_SHINY_MASK].tex = msA->units[MTU_REFLECTION_MASK].texInst->id;
+            rTU[TU_SHINY_MASK].magMode = msA->units[MTU_REFLECTION_MASK].magMode;
+            rTU[TU_SHINY_MASK].scale[0] = msA->units[MTU_REFLECTION_MASK].scale[0];
+            rTU[TU_SHINY_MASK].scale[1] = msA->units[MTU_REFLECTION_MASK].scale[1];
+            rTU[TU_SHINY_MASK].offset[0] = msA->units[MTU_REFLECTION_MASK].offset[0];
+            rTU[TU_SHINY_MASK].offset[1] = msA->units[MTU_REFLECTION_MASK].offset[1];
+            rTU[TU_SHINY_MASK].blendMode = msA->units[MTU_REFLECTION_MASK].blendMode;
+            rTU[TU_SHINY_MASK].blend = msA->units[MTU_REFLECTION_MASK].alpha;
+        }
+
+        shinyMinColor[CR] = msA->shiny.minColor[CR];
+        shinyMinColor[CG] = msA->shiny.minColor[CG];
+        shinyMinColor[CB] = msA->shiny.minColor[CB];
+    }
+}
+
+/**
+ * Apply primitive-specific manipulations.
+ */
+static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                      boolean isWall, float texOffset[2], float texScale[2],
+                      const material_snapshot_t* msA,
+                      const material_snapshot_t* msB)
+{
+    rTU[TU_PRIMARY].scale[0] *= texScale[0];
+    rTU[TU_PRIMARY].scale[1] *= texScale[1];
+    rTU[TU_PRIMARY].offset[0] += texOffset[0] / msA->width;
+    rTU[TU_PRIMARY].offset[1] +=
+        (isWall? texOffset[1] : -texOffset[1]) / msA->height;
+
+    if(msA->units[MTU_DETAIL].texInst)
+    {
+        rTU[TU_PRIMARY_DETAIL].offset[0] +=
+            texOffset[0] * rTU[TU_PRIMARY_DETAIL].scale[0];
+        rTU[TU_PRIMARY_DETAIL].offset[1] +=
+            (isWall? texOffset[1] : -texOffset[1]) *
+                rTU[TU_PRIMARY_DETAIL].scale[1];
+    }
+
+    if(msB->units[MTU_PRIMARY].texInst)
+    {
+        rTU[TU_INTER].scale[0] *= texScale[0];
+        rTU[TU_INTER].scale[1] *= texScale[1];
+        rTU[TU_INTER].offset[0] += texOffset[0] / msB->width;
+        rTU[TU_INTER].offset[1] +=
+            (isWall? texOffset[1] : -texOffset[1]) / msB->height;
+    }
+
+    if(msB->units[MTU_DETAIL].texInst)
+    {
+        rTU[TU_INTER_DETAIL].offset[0] +=
+            texOffset[0] * rTU[TU_INTER_DETAIL].scale[0];
+        rTU[TU_INTER_DETAIL].offset[1] +=
+            (isWall? texOffset[1] : -texOffset[1]) *
+                rTU[TU_INTER_DETAIL].scale[1];
+    }
+
+    if(msA->units[MTU_REFLECTION].texInst)
+    {
+        rTU[TU_SHINY_MASK].scale[0] *= texScale[0];
+        rTU[TU_SHINY_MASK].scale[1] *= texScale[1];
+        rTU[TU_SHINY_MASK].offset[0] += texOffset[0] / msA->width;
+        rTU[TU_SHINY_MASK].offset[1] +=
+            (isWall? texOffset[1] : -texOffset[1]) / msA->height;
+    }
 }
 
 typedef struct {
@@ -1359,6 +1353,7 @@ typedef struct {
     uint            lightListIdx; // List of lights that affect this poly.
     boolean         glowing;
     boolean         reflective;
+    boolean         blended;
 
 // For bias:
     void*           mapObject;
@@ -1375,7 +1370,7 @@ typedef struct {
 static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                             const walldiv_t* divs,
                             const rendworldpoly_params_t* p,
-                            const rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
+                            const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                             const float shinyMinColor[3],
                             boolean isOpaque,
                             boolean drawAsVisSprite,
@@ -1402,12 +1397,12 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
     rcolors = R_AllocRendColors(realNumVertices);
     rtexcoords = R_AllocRendTexCoords(realNumVertices);
-    if(pTU[TU_INTER].tex)
+    if(rTU[TU_INTER].tex)
         rtexcoords2 = R_AllocRendTexCoords(realNumVertices);
 
     if(p->type != RPT_SKY_MASK)
     {
-        curTex = pTU[TU_PRIMARY].tex;
+        curTex = rTU[TU_PRIMARY].tex;
 
         // ShinySurface?
         if(p->reflective && !drawAsVisSprite)
@@ -1461,11 +1456,11 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         quadTexCoords(rtexcoords, rvertices, *p->segLength, p->texOrigin);
 
         // Blend texture coordinates.
-        if(pTU[TU_INTER].tex)
+        if(p->blended && rTU[TU_INTER].tex)
             quadTexCoords(rtexcoords2, rvertices, *p->segLength, p->texOrigin);
 
         // Shiny texture coordinates.
-        if(pTU[TU_SHINY].tex)
+        if(p->reflective && rTU[TU_SHINY].tex)
             quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2],
                                *p->segLength);
 
@@ -1487,7 +1482,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             xyz[VZ] = vtx->pos[VZ] - p->texOrigin[0][VZ];
 
             // Primary texture coordinates.
-            if(pTU[TU_PRIMARY].tex)
+            if(rTU[TU_PRIMARY].tex)
             {
                 rtexcoord_t*        tc = &rtexcoords[i];
 
@@ -1496,7 +1491,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             }
 
             // Blend primary texture coordinates.
-            if(pTU[TU_INTER].tex)
+            if(p->blended && rTU[TU_INTER].tex)
             {
                 rtexcoord_t*        tc = &rtexcoords2[i];
 
@@ -1505,7 +1500,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             }
 
             // Shiny texture coordinates.
-            if(pTU[TU_SHINY].tex)
+            if(p->reflective && rTU[TU_SHINY].tex)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx->pos);
             }
@@ -1594,7 +1589,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices);
         }
 
-        if(pTU[TU_SHINY].tex)
+        if(p->reflective && rTU[TU_SHINY].tex)
         {
             uint                i;
 
@@ -1607,7 +1602,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     MAX_OF(rcolors[i].rgba[CG], shinyMinColor[CG]);
                 shinyColors[i].rgba[CB] =
                     MAX_OF(rcolors[i].rgba[CB], shinyMinColor[CB]);
-                shinyColors[i].rgba[CA] = pTU[TU_SHINY].blend;
+                shinyColors[i].rgba[CA] = rTU[TU_SHINY].blend;
             }
         }
 
@@ -1654,7 +1649,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength,
                            mat->width, mat->height, texOffset,
                            blendMode, p->lightListIdx, isGlowing,
-                           !isOpaque, pTU);
+                           !isOpaque, rTU);
         R_FreeRendTexCoords(rtexcoords);
         if(rtexcoords2)
             R_FreeRendTexCoords(rtexcoords2);
@@ -1759,29 +1754,38 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                    rtexcoords + 3 + divs[0].num,
                    rtexcoords2? rtexcoords2 + 3 + divs[0].num : NULL,
                    rtexcoords5? rtexcoords5 + 3 + divs[0].num : NULL,
-                   shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
-                   rtexcoords + 3 + divs[0].num,
-                   rcolors + 3 + divs[0].num,
-                   shinyColors + 3 + divs[0].num,
-                   3 + divs[1].num,
-                   numLights,
-                   modTex, modColor, pTU);
-        RL_AddPoly(PT_FAN, p->type, rvertices, rtexcoords, rtexcoords2, rtexcoords5,
-                   shinyTexCoords, rtexcoords,
-                   rcolors, shinyColors,
-                   3 + divs[0].num,
-                   numLights,
-                   modTex, modColor, pTU);
+                   rcolors + 3 + divs[0].num, 3 + divs[1].num,
+                   numLights, modTex, modColor, rTU,
+                   rTU[TU_PRIMARY].blendMode);
+        RL_AddPoly(PT_FAN, p->type, rvertices, rtexcoords, rtexcoords2,
+                   rtexcoords5, rcolors, 3 + divs[0].num,
+                   numLights, modTex, modColor, rTU,
+                   rTU[TU_PRIMARY].blendMode);
+        if(p->reflective)
+        {
+            RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
+                       shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
+                       rtexcoords + 3 + divs[0].num, NULL,
+                       shinyColors + 3 + divs[0].num,
+                       3 + divs[1].num, 0, 0, NULL, rTU,
+                       rTU[TU_SHINY].blendMode);
+            RL_AddPoly(PT_FAN, RPT_SHINY, rvertices,
+                       shinyTexCoords, rtexcoords, NULL,
+                       shinyColors, 3 + divs[0].num, 0, 0, NULL, rTU,
+                       rTU[TU_SHINY].blendMode);
+        }
     }
     else
     {
         RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, p->type, rvertices,
-                   rtexcoords, rtexcoords2, rtexcoords5,
-                   shinyTexCoords, rtexcoords,
-                   rcolors, shinyColors,
-                   numVertices,
-                   numLights,
-                   modTex, modColor, pTU);
+                   rtexcoords, rtexcoords2, rtexcoords5, rcolors,
+                   numVertices, numLights, modTex, modColor, rTU,
+                   rTU[TU_PRIMARY].blendMode);
+        if(p->reflective)
+            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY, rvertices,
+                       shinyTexCoords, rtexcoords, NULL,
+                       shinyColors, numVertices, 0, 0, NULL, rTU,
+                       rTU[TU_SHINY].blendMode);
     }
 
     R_FreeRendTexCoords(rtexcoords);
@@ -1805,11 +1809,11 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
                            float alpha, sector_t* frontsec, boolean skyMask,
                            short sideFlags, boolean addDLights,
                            boolean addFakeRadio, boolean addReflection,
-                           boolean isGlowing,
+                           boolean isGlowing, boolean blended,
                            boolean isOpaque, const float shinyMinColor[3],
                            const float texOffset[2], const float texScale[2],
                            blendmode_t blendMode, material_t* mat,
-                           const rtexmapunit_t pTU[NUM_TEXMAP_UNITS])
+                           const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
 {
     rendworldpoly_params_t params;
     walldiv_t           divs[2];
@@ -1834,6 +1838,8 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
      */
     if(params.type != RPT_SKY_MASK)
     {
+        params.blended = blended;
+
         params.normal = surface->normal;
         params.sectorLightLevel = &frontsec->lightLevel;
         params.sectorLightColor = R_GetSectorLightColor(frontsec);
@@ -1924,7 +1930,7 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
 
     // Draw this seg.
     renderWorldPoly(rvertices, 4, hasDivisions? divs : NULL, &params,
-                    pTU, shinyMinColor, isOpaque,
+                    rTU, shinyMinColor, isOpaque,
                     drawAsVisSprite, blendMode, texOffset, mat);
     if(!drawAsVisSprite)
     {   // An entirely opaque seg was drawn.
@@ -2010,15 +2016,16 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         rendworldpoly_params_t params;
         uint                numVertices = ssec->numVertices;
         rvertex_t*          rvertices;
-        rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
+        rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
         float               shinyMinColor[3];
-        boolean             isOpaque, drawAsVisSprite = false,
+        boolean             isOpaque = true, drawAsVisSprite = false,
                             forceOpaque = false;
         blendmode_t         blendMode = BM_NORMAL;
         material_t*         mat = NULL;
         float               texOffset[2], texScale[2];
 
         memset(&params, 0, sizeof(params));
+        memset(rTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
 
         params.isWall = false;
         params.mapObject = ssec;
@@ -2121,6 +2128,10 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
          */
         if(params.type != RPT_SKY_MASK)
         {
+            // Smooth Texture Animation?
+            if(smoothTexAnim && (tempflags & RPF2_BLEND))
+                params.blended = true;
+
             // Dynamic lights.
             if(addDLights && !(tempflags & RPF2_GLOW))
                 params.lightListIdx =
@@ -2153,17 +2164,26 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         texScale[0] = ((sufFlags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[1] = ((sufFlags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        isOpaque =
-            setupPTU(pTU, shinyMinColor, params.isWall,
-                     params.type, mat, texOffset, texScale,
-                     ((smoothTexAnim && (tempflags & RPF2_BLEND))? true : false) // Smooth Texture Animation?
-                     );
+        if(params.type != RPT_SKY_MASK)
+        {
+            float               interPos;
+            material_snapshot_t msA, msB;
+
+            memset(&msA, 0, sizeof(msA));
+            memset(&msB, 0, sizeof(msB));
+
+            interPos = getSnapshots(&msA, &msB, mat, params.blended);
+            isOpaque = msA.isOpaque;
+
+            setupRTU(rTU, shinyMinColor, &msA, interPos, &msB);
+            setupRTU2(rTU, params.isWall, texOffset, texScale, &msA, &msB);
+        }
 
         if(!forceOpaque && params.type != RPT_SKY_MASK &&
            (!isOpaque || params.alpha < 1 || blendMode > 0))
             drawAsVisSprite = true;
 
-        renderWorldPoly(rvertices, numVertices, NULL, &params, pTU,
+        renderWorldPoly(rvertices, numVertices, NULL, &params, rTU,
                         shinyMinColor, isOpaque,
                         drawAsVisSprite, blendMode, texOffset, mat);
 
@@ -2256,18 +2276,20 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
 
         if(alpha > 0)
         {
-            rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
+            rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
             short               tempflags = 0;
             float               texOffset[2], texScale[2];
             float               shinyMinColor[3];
-            boolean             isOpaque, forceOpaque = false;
+            boolean             isOpaque = true, forceOpaque = false;
             material_t*         mat = NULL;
             rendpolytype_t      type = RPT_NORMAL;
             boolean             isTwoSided = (seg->lineDef &&
                 seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
             blendmode_t         blendMode = BM_NORMAL;
             boolean             addFakeRadio = false, addReflection = false,
-                                isGlowing = false;
+                                isGlowing = false, blended;
+
+            memset(rTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
 
             texOffset[VX] = texXOffset;
             texOffset[VY] = texYOffset;
@@ -2355,11 +2377,27 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                 addFakeRadio = !(surfaceInFlags & SUIF_NO_RADIO);
             }
 
-            isOpaque =
-                setupPTU(pTU, shinyMinColor, true, type, mat, texOffset,
-                         texScale,
-                         ((smoothTexAnim && (tempflags & RPF2_BLEND))? true : false) // Smooth Texture Animation?
-                         );
+            if(type != RPT_SKY_MASK)
+            {
+                // Smooth Texture Animation?
+                if(smoothTexAnim && (tempflags & RPF2_BLEND))
+                    blended = true;
+            }
+
+            if(type != RPT_SKY_MASK)
+            {
+                float               interPos;
+                material_snapshot_t msA, msB;
+
+                memset(&msA, 0, sizeof(msA));
+                memset(&msB, 0, sizeof(msB));
+
+                interPos = getSnapshots(&msA, &msB, mat, blended);
+                isOpaque = msA.isOpaque;
+
+                setupRTU(rTU, shinyMinColor, &msA, interPos, &msB);
+                setupRTU2(rTU, true, texOffset, texScale, &msA, &msB);
+            }
 
             isGlowing = ((tempflags & RPF2_GLOW)? true : false);
             addDLights = (addDLights && !(tempflags & RPF2_GLOW)? true : false);
@@ -2373,8 +2411,9 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                                    addFakeRadio,
                                    addReflection,
                                    isGlowing,
+                                   blended,
                                    isOpaque, shinyMinColor, texOffset,
-                                   texScale, blendMode, mat, pTU);
+                                   texScale, blendMode, mat, rTU);
         }
     }
 
@@ -2703,7 +2742,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 }
 
 static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
-                               rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
+                               rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                                float wallLength, material_t* mat)
 {
     material_snapshot_t ms;
@@ -2714,16 +2753,16 @@ static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
 
     Material_Prepare(&ms, mat, true, NULL);
 
-    pTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].texInst->id;
-    pTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
-    pTU[TU_PRIMARY].scale[0] = ms.units[MTU_PRIMARY].scale[0];
-    pTU[TU_PRIMARY].scale[1] = ms.units[MTU_PRIMARY].scale[1];
-    pTU[TU_PRIMARY].offset[0] = ms.units[MTU_PRIMARY].offset[0];
-    pTU[TU_PRIMARY].offset[1] = ms.units[MTU_PRIMARY].offset[1];
-    pTU[TU_PRIMARY].blend = ms.units[MTU_PRIMARY].alpha;
-    pTU[TU_PRIMARY].blendMode = ms.units[MTU_PRIMARY].blendMode;
+    rTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].texInst->id;
+    rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
+    rTU[TU_PRIMARY].scale[0] = ms.units[MTU_PRIMARY].scale[0];
+    rTU[TU_PRIMARY].scale[1] = ms.units[MTU_PRIMARY].scale[1];
+    rTU[TU_PRIMARY].offset[0] = ms.units[MTU_PRIMARY].offset[0];
+    rTU[TU_PRIMARY].offset[1] = ms.units[MTU_PRIMARY].offset[1];
+    rTU[TU_PRIMARY].blend = ms.units[MTU_PRIMARY].alpha;
+    rTU[TU_PRIMARY].blendMode = ms.units[MTU_PRIMARY].blendMode;
 
-    curTex = pTU[TU_PRIMARY].tex;
+    curTex = rTU[TU_PRIMARY].tex;
 
     // Top left.
     texOrigin[0][VX] = verts[1].pos[VX];
@@ -2744,7 +2783,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     rvertex_t           rvertices[4];
     rcolor_t            rcolors[4];
     rtexcoord_t         rtexcoords[4];
-    rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
+    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
     float*              vBL, *vBR, *vTL, *vTR;
     sector_t*           frontsec, *backsec;
     uint                j, num;
@@ -2752,7 +2791,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     sidedef_t*          side;
 
     // Init the poly.
-    memset(pTU, 0, sizeof(pTU));
+    memset(rTU, 0, sizeof(rTU));
 
     if(devSkyMode)
     {
@@ -2833,14 +2872,13 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
 
                 if(devSkyMode)
-                    prepareSkyMaskPoly(rvertices, rtexcoords, pTU, seg->length,
+                    prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                        frontsec->SP_floormaterial);
 
                 RL_AddPoly(PT_TRIANGLE_STRIP,
                            (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                           rvertices, rtexcoords, NULL,
-                           NULL, NULL, NULL, rcolors, NULL, 4,
-                           0, 0, NULL, pTU);
+                           rvertices, rtexcoords, NULL, NULL,
+                           rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
             }
 
             // Ceiling.
@@ -2852,14 +2890,13 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 vBL[VZ] = vBR[VZ] = fceil;
 
                 if(devSkyMode)
-                     prepareSkyMaskPoly(rvertices, rtexcoords, pTU, seg->length,
+                     prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                         frontsec->SP_ceilmaterial);
 
                 RL_AddPoly(PT_TRIANGLE_STRIP,
                            (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                           rvertices, rtexcoords, NULL,
-                           NULL, NULL, NULL, rcolors, NULL, 4,
-                           0, 0, NULL, pTU);
+                           rvertices, rtexcoords, NULL, NULL,
+                           rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
             }
         }
 
@@ -2876,14 +2913,13 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
 
                     if(devSkyMode)
-                        prepareSkyMaskPoly(rvertices, rtexcoords, pTU, seg->length,
+                        prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                            frontsec->SP_floormaterial);
 
                     RL_AddPoly(PT_TRIANGLE_STRIP,
                                (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, rtexcoords,
-                               NULL, NULL, NULL, NULL, rcolors, NULL,
-                               4, 0, 0, NULL, pTU);
+                               rvertices, rtexcoords, NULL, NULL,
+                               rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
                 }
 
                 // Ensure we add a solid view seg.
@@ -2900,15 +2936,14 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     vBL[VZ] = vBR[VZ] = bceil;
 
                     if(devSkyMode)
-                        prepareSkyMaskPoly(rvertices, rtexcoords, pTU, seg->length,
+                        prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                            frontsec->SP_ceilmaterial);
 
 
                     RL_AddPoly(PT_TRIANGLE_STRIP,
                                (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, rtexcoords,
-                               NULL, NULL, NULL, NULL, rcolors, NULL, 4,
-                               0, 0, NULL, pTU);
+                               rvertices, rtexcoords, NULL, NULL,
+                               rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
                 }
 
                 // Ensure we add a solid view seg.

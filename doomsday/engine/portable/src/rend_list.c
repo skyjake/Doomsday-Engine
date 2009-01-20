@@ -503,26 +503,26 @@ static rendlist_t* createList(listhash_t* hash)
 }
 
 static __inline void copyTU(rendlist_texmapunit_t* lTU,
-                            const rtexmapunit_t* pTU)
+                            const rtexmapunit_t* rTU)
 {
-    lTU->tex = pTU->tex;
-    lTU->magMode = pTU->magMode;
-    lTU->blendMode = pTU->blendMode;
-    lTU->blend = pTU->blend;
+    lTU->tex = rTU->tex;
+    lTU->magMode = rTU->magMode;
+    lTU->blendMode = rTU->blendMode;
+    lTU->blend = rTU->blend;
 }
 
 static __inline boolean compareTU(const rendlist_texmapunit_t* lTU,
-                                  const rtexmapunit_t* pTU)
+                                  const rtexmapunit_t* rTU)
 {
-    if(lTU->tex == pTU->tex && lTU->magMode == pTU->magMode &&
-       lTU->blend == pTU->blend)
+    if(lTU->tex == rTU->tex && lTU->magMode == rTU->magMode &&
+       lTU->blend == rTU->blend)
         return true;
 
     return false;
 }
 
 static rendlist_t* getListFor(rendpolytype_t polyType,
-                              const rtexmapunit_t pTU[NUM_TEXMAP_UNITS],
+                              const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                               boolean useLights)
 {
     listhash_t*         hash, *table;
@@ -546,19 +546,19 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
     }
 
     // Find/create a list in the hash.
-    hash = &table[(polyType == RPT_SHINY? pTU[TU_SHINY].tex :
-                   pTU[TU_PRIMARY].tex) % RL_HASH_SIZE];
+    hash = &table[(polyType == RPT_SHINY? rTU[TU_SHINY].tex :
+                   rTU[TU_PRIMARY].tex) % RL_HASH_SIZE];
     for(dest = hash->first; dest; dest = dest->next)
     {
         if((polyType == RPT_SHINY &&
-            compareTU(TU(dest, TU_PRIMARY), &pTU[TU_SHINY])) ||
+            compareTU(TU(dest, TU_PRIMARY), &rTU[TU_SHINY])) ||
            (polyType != RPT_SHINY &&
-            compareTU(TU(dest, TU_PRIMARY), &pTU[TU_PRIMARY]) &&
-            compareTU(TU(dest, TU_PRIMARY_DETAIL), &pTU[TU_PRIMARY_DETAIL])))
+            compareTU(TU(dest, TU_PRIMARY), &rTU[TU_PRIMARY]) &&
+            compareTU(TU(dest, TU_PRIMARY_DETAIL), &rTU[TU_PRIMARY_DETAIL])))
         {
             if(!TU(dest, TU_INTER)->tex &&
-               ((polyType == RPT_SHINY && !pTU[TU_SHINY_MASK].tex) ||
-                (polyType != RPT_SHINY && !pTU[TU_INTER].tex)))
+               ((polyType == RPT_SHINY && !rTU[TU_SHINY_MASK].tex) ||
+                (polyType != RPT_SHINY && !rTU[TU_INTER].tex)))
             {
                 // This will do great.
                 return dest;
@@ -566,8 +566,8 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
 
             // Is this eligible for conversion to a blended list?
             if(!dest->last && !convertable &&
-               ((polyType == RPT_SHINY && pTU[TU_SHINY_MASK].tex) ||
-                (polyType != RPT_SHINY && pTU[TU_INTER].tex)))
+               ((polyType == RPT_SHINY && rTU[TU_SHINY_MASK].tex) ||
+                (polyType != RPT_SHINY && rTU[TU_INTER].tex)))
             {
                 // If necessary, this empty list will be selected.
                 convertable = dest;
@@ -575,10 +575,10 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
 
             // Possibly an exact match?
             if((polyType == RPT_SHINY &&
-                compareTU(TU(dest, TU_INTER), &pTU[TU_SHINY_MASK])) ||
+                compareTU(TU(dest, TU_INTER), &rTU[TU_SHINY_MASK])) ||
                (polyType != RPT_SHINY &&
-                compareTU(TU(dest, TU_INTER), &pTU[TU_INTER]) &&
-                compareTU(TU(dest, TU_INTER_DETAIL), &pTU[TU_INTER_DETAIL])))
+                compareTU(TU(dest, TU_INTER), &rTU[TU_INTER]) &&
+                compareTU(TU(dest, TU_INTER_DETAIL), &rTU[TU_INTER_DETAIL])))
             {
                 return dest;
             }
@@ -590,12 +590,12 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
     {   // This list is currently empty.
         if(polyType == RPT_SHINY)
         {
-            copyTU(TU(convertable, TU_INTER), &pTU[TU_SHINY_MASK]);
+            copyTU(TU(convertable, TU_INTER), &rTU[TU_SHINY_MASK]);
         }
         else
         {
-            copyTU(TU(convertable, TU_INTER), &pTU[TU_INTER]);
-            copyTU(TU(convertable, TU_INTER_DETAIL), &pTU[TU_INTER_DETAIL]);
+            copyTU(TU(convertable, TU_INTER), &rTU[TU_INTER]);
+            copyTU(TU(convertable, TU_INTER_DETAIL), &rTU[TU_INTER_DETAIL]);
         }
 
         return convertable;
@@ -607,19 +607,19 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
     // Init the info.
     if(polyType == RPT_SHINY)
     {
-        copyTU(TU(dest, TU_PRIMARY), &pTU[TU_SHINY]);
-        if(pTU[TU_SHINY_MASK].tex)
-            copyTU(TU(dest, TU_INTER), &pTU[TU_SHINY_MASK]);
+        copyTU(TU(dest, TU_PRIMARY), &rTU[TU_SHINY]);
+        if(rTU[TU_SHINY_MASK].tex)
+            copyTU(TU(dest, TU_INTER), &rTU[TU_SHINY_MASK]);
     }
     else
     {
-        copyTU(TU(dest, TU_PRIMARY), &pTU[TU_PRIMARY]);
-        copyTU(TU(dest, TU_PRIMARY_DETAIL), &pTU[TU_PRIMARY_DETAIL]);
+        copyTU(TU(dest, TU_PRIMARY), &rTU[TU_PRIMARY]);
+        copyTU(TU(dest, TU_PRIMARY_DETAIL), &rTU[TU_PRIMARY_DETAIL]);
 
-        if(pTU[TU_INTER].tex)
+        if(rTU[TU_INTER].tex)
         {
-            copyTU(TU(dest, TU_INTER), &pTU[TU_INTER]);
-            copyTU(TU(dest, TU_INTER_DETAIL), &pTU[TU_INTER_DETAIL]);
+            copyTU(TU(dest, TU_INTER), &rTU[TU_INTER]);
+            copyTU(TU(dest, TU_INTER_DETAIL), &rTU[TU_INTER_DETAIL]);
         }
     }
 
@@ -803,7 +803,7 @@ static void addPoly(primtype_t type, rendpolytype_t polyType,
                     uint numVertices, blendmode_t blendMode,
                     uint numLights,
                     DGLuint modTex, float modColor[3],
-                    const rtexmapunit_t pTU[NUM_TEXMAP_UNITS])
+                    const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
 {
     uint                i, base, primSize, numIndices;
     rendlist_t*         li;
@@ -816,7 +816,7 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
 BEGIN_PROF( PROF_RL_GET_LIST );
 
     // Find/create a rendering list for the polygon's texture.
-    li = getListFor(polyType, pTU, useLights);
+    li = getListFor(polyType, rTU, useLights);
 
 END_PROF( PROF_RL_GET_LIST );
 
@@ -843,20 +843,20 @@ END_PROF( PROF_RL_GET_LIST );
     hdr->modColor[CG] = modColor? modColor[CG] : 0;
     hdr->modColor[CB] = modColor? modColor[CB] : 0;
 
-    if(pTU[TU_PRIMARY].tex || pTU[TU_SHINY_MASK].tex)
+    if(rTU[TU_PRIMARY].tex || rTU[TU_SHINY_MASK].tex)
     {
-        hdr->ptexScale[0] = pTU[TU_PRIMARY].scale[0];
-        hdr->ptexScale[1] = pTU[TU_PRIMARY].scale[1];
-        hdr->ptexOffset[0] = pTU[TU_PRIMARY].offset[0];
-        hdr->ptexOffset[1] = pTU[TU_PRIMARY].offset[1];
+        hdr->ptexScale[0] = rTU[TU_PRIMARY].scale[0];
+        hdr->ptexScale[1] = rTU[TU_PRIMARY].scale[1];
+        hdr->ptexOffset[0] = rTU[TU_PRIMARY].offset[0];
+        hdr->ptexOffset[1] = rTU[TU_PRIMARY].offset[1];
     }
 
-    if(pTU[TU_PRIMARY_DETAIL].tex)
+    if(rTU[TU_PRIMARY_DETAIL].tex)
     {
-        hdr->texScale[0] = pTU[TU_PRIMARY_DETAIL].scale[0];
-        hdr->texScale[1] = pTU[TU_PRIMARY_DETAIL].scale[1];
-        hdr->texOffset[0] = pTU[TU_PRIMARY_DETAIL].offset[0];
-        hdr->texOffset[1] = pTU[TU_PRIMARY_DETAIL].offset[1];
+        hdr->texScale[0] = rTU[TU_PRIMARY_DETAIL].scale[0];
+        hdr->texScale[1] = rTU[TU_PRIMARY_DETAIL].scale[1];
+        hdr->texOffset[0] = rTU[TU_PRIMARY_DETAIL].offset[0];
+        hdr->texOffset[1] = rTU[TU_PRIMARY_DETAIL].offset[1];
     }
     else
     {
@@ -882,12 +882,11 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
                 const rvertex_t* rvertices,
                 const rtexcoord_t* rtexcoords, const rtexcoord_t* rtexcoords1,
                 const rtexcoord_t* rtexcoords2,
-                const rtexcoord_t* srtexcoords, const rtexcoord_t* srtexcoords1,
                 const rcolor_t* rcolors,
-                const rcolor_t* srcolors,
                 uint numVertices, uint numLights,
                 DGLuint modTex, float modColor[3],
-                const rtexmapunit_t pTU[NUM_TEXMAP_UNITS])
+                const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                blendmode_t blendMode /* temp */)
 {
     if(numVertices < 3)
         return; // huh?
@@ -896,12 +895,7 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
         Con_Error("RL_AddPoly: Unknown primtype %i.", type);
 
     addPoly(type, polyType, rvertices, rtexcoords, rtexcoords1, rtexcoords2,
-            rcolors, numVertices, BM_NORMAL, numLights, modTex, modColor, pTU);
-
-    if(pTU[TU_SHINY].tex && polyType != RPT_SKY_MASK)
-        addPoly(type, RPT_SHINY, rvertices, srtexcoords, srtexcoords1,
-                NULL, srcolors, numVertices, pTU[TU_SHINY].blendMode,
-                0, 0, NULL, pTU);
+            rcolors, numVertices, blendMode, numLights, modTex, modColor, rTU);
 }
 
 /**

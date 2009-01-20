@@ -76,17 +76,15 @@ boolean         RL_IsMTexDetails(void);
 void            RL_ClearLists(void);
 void            RL_DeleteLists(void);
 
-void            RL_AddPoly(primtype_t type, rendpolytype_t polyType,
-                           const rvertex_t* vertices,
-                           const rtexcoord_t* rtexcoords,
-                           const rtexcoord_t* rtexcoords1,
-                           const rtexcoord_t* rtexcoords2,
-                           const rtexcoord_t* srtexcoords,
-                           const rtexcoord_t* srtexcoords1,
-                           const rcolor_t* colors, const rcolor_t* scolors,
-                           uint numVertices,
-                           uint numLights, DGLuint modTex, float modColor[3],
-                           const rtexmapunit_t tu[NUM_TEXMAP_UNITS]);
+void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
+                const rvertex_t* rvertices,
+                const rtexcoord_t* rtexcoords, const rtexcoord_t* rtexcoords1,
+                const rtexcoord_t* rtexcoords2,
+                const rcolor_t* rcolors,
+                uint numVertices, uint numLights,
+                DGLuint modTex, float modColor[3],
+                const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                blendmode_t blendMode /*temp*/);
 void            RL_RenderAllLists(void);
 
 #endif

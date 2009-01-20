@@ -1051,16 +1051,16 @@ static void renderShadowSeg(const rvertex_t* origVertices,
     float               texOrigin[2][3];
     rcolor_t*           rcolors;
     rtexcoord_t*        rtexcoords;
-    rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
+    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
     uint                realNumVertices = 4;
 
     if(divs)
         realNumVertices = 3 + divs[0].num + 3 + divs[1].num;
 
-    memset(pTU, 0, sizeof(pTU));
-    pTU[TU_PRIMARY].tex = curTex = GL_PrepareLSTexture(p->texture);
-    pTU[TU_PRIMARY].magMode = DGL_LINEAR;
-    pTU[TU_PRIMARY].blend = 1;
+    memset(rTU, 0, sizeof(rTU));
+    rTU[TU_PRIMARY].tex = curTex = GL_PrepareLSTexture(p->texture);
+    rTU[TU_PRIMARY].magMode = DGL_LINEAR;
+    rTU[TU_PRIMARY].blend = 1;
 
     // Top left.
     texOrigin[0][VX] = origVertices[1].pos[VX];
@@ -1113,19 +1113,19 @@ static void renderShadowSeg(const rvertex_t* origVertices,
             R_DivVertColors(rcolors, origColors, divs, bL, tL, bR, tR);
 
             RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices + 3 + divs[0].num,
-                       rtexcoords + 3 + divs[0].num, NULL, NULL, NULL, NULL,
-                       rcolors + 3 + divs[0].num, NULL, 3 + divs[1].num,
-                       0, 0, NULL, pTU);
-            RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices, rtexcoords, NULL, NULL, NULL, NULL,
-                       rcolors, NULL,
-                       3 + divs[0].num, 0, 0, NULL, pTU);
+                       rtexcoords + 3 + divs[0].num, NULL, NULL,
+                       rcolors + 3 + divs[0].num, 3 + divs[1].num,
+                       0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+            RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices, rtexcoords, NULL, NULL,
+                       rcolors, 3 + divs[0].num, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
 
             R_FreeRendVertices(rvertices);
         }
         else
         {
-            RL_AddPoly(PT_TRIANGLE_STRIP, RPT_SHADOW, origVertices, rtexcoords, NULL, NULL, NULL, NULL,
-                       rcolors, NULL, 4, 0, 0, NULL, pTU);
+            RL_AddPoly(PT_TRIANGLE_STRIP, RPT_SHADOW, origVertices,
+                       rtexcoords, NULL, NULL,
+                       rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
         }
     }
 
@@ -1363,7 +1363,7 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     const uint*         idx;
     rvertex_t           rvertices[4];
     rcolor_t            rcolors[4];
-    rtexmapunit_t       pTU[NUM_TEXMAP_UNITS];
+    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
     float               shadowAlpha;
     vertex_t*           vtx0, *vtx1;
 
@@ -1380,8 +1380,8 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     wind = (V2_Distance(inner[1], vtx1->V_pos) >
             V2_Distance(inner[0], vtx0->V_pos)? 1 : 0);
 
-    memset(pTU, 0, sizeof(pTU));
-    pTU[TU_PRIMARY].blend = 1;
+    memset(rTU, 0, sizeof(rTU));
+    rTU[TU_PRIMARY].blend = 1;
 
     idx = (normal[VZ] > 0 ? floorIndices[wind] : ceilIndices[wind]);
 
@@ -1427,8 +1427,8 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
 
     if(rendFakeRadio != 2)
         RL_AddPoly(PT_FAN, (renderWireframe? RPT_NORMAL : RPT_SHADOW),
-                   rvertices, NULL, NULL, NULL, NULL, NULL,
-                   rcolors, NULL, 4, 0, 0, NULL, pTU);
+                   rvertices, NULL, NULL, NULL,
+                   rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
 }
 
 /**
