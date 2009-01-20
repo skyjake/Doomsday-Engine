@@ -734,9 +734,9 @@ static boolean ssecBlockIterator(void* ptr, void* context)
                 // Check the bounds.
                 if(args->box &&
                    (ssec->bBox[1].pos[VX] < args->box[0][VX] ||
-                   ssec->bBox[0].pos[VX] > args->box[1][VX] ||
-                   ssec->bBox[1].pos[VY] < args->box[0][VY] ||
-                   ssec->bBox[0].pos[VY] > args->box[1][VY]))
+                    ssec->bBox[0].pos[VX] > args->box[1][VX] ||
+                    ssec->bBox[0].pos[VY] > args->box[1][VY] ||
+                    ssec->bBox[1].pos[VY] < args->box[0][VY]))
                    ok = false;
 
                 if(ok)
