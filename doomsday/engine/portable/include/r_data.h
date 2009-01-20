@@ -68,19 +68,11 @@ typedef struct masktex_s {
     short           width, height;
 } masktex_t;
 
-/**
- * Texture (map) units.
- * The Doomsday renderer virtualizes texture units and addresses each by the
- * following idents. All units need not be used, except TU_PRIMARY is
- * required if texturing is enabled.
- */
 typedef enum {
     TU_PRIMARY = 0,
     TU_PRIMARY_DETAIL,
     TU_INTER,
     TU_INTER_DETAIL,
-    TU_SHINY,
-    TU_SHINY_MASK,
     NUM_TEXMAP_UNITS
 } gltexunit_t;
 

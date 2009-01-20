@@ -52,7 +52,7 @@ enum {
 typedef struct material_textureunit_s {
     const struct gltexture_inst_s* texInst;
     int             magMode;
-    blendmode_t     blendMode; // Currently used only with shiny pass.
+    blendmode_t     blendMode; // Currently used only with reflection.
     float           alpha;
     float           scale[2], offset[2]; // For use with the texture matrix.
 } material_textureunit_t;

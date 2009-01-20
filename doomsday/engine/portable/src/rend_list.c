@@ -546,28 +546,23 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
     }
 
     // Find/create a list in the hash.
-    hash = &table[(polyType == RPT_SHINY? rTU[TU_SHINY].tex :
-                   rTU[TU_PRIMARY].tex) % RL_HASH_SIZE];
+    hash = &table[rTU[TU_PRIMARY].tex % RL_HASH_SIZE];
     for(dest = hash->first; dest; dest = dest->next)
     {
         if((polyType == RPT_SHINY &&
-            compareTU(TU(dest, TU_PRIMARY), &rTU[TU_SHINY])) ||
+            compareTU(TU(dest, TU_PRIMARY), &rTU[TU_PRIMARY])) ||
            (polyType != RPT_SHINY &&
             compareTU(TU(dest, TU_PRIMARY), &rTU[TU_PRIMARY]) &&
             compareTU(TU(dest, TU_PRIMARY_DETAIL), &rTU[TU_PRIMARY_DETAIL])))
         {
-            if(!TU(dest, TU_INTER)->tex &&
-               ((polyType == RPT_SHINY && !rTU[TU_SHINY_MASK].tex) ||
-                (polyType != RPT_SHINY && !rTU[TU_INTER].tex)))
+            if(!TU(dest, TU_INTER)->tex && !rTU[TU_INTER].tex)
             {
                 // This will do great.
                 return dest;
             }
 
             // Is this eligible for conversion to a blended list?
-            if(!dest->last && !convertable &&
-               ((polyType == RPT_SHINY && rTU[TU_SHINY_MASK].tex) ||
-                (polyType != RPT_SHINY && rTU[TU_INTER].tex)))
+            if(!dest->last && !convertable && rTU[TU_INTER].tex)
             {
                 // If necessary, this empty list will be selected.
                 convertable = dest;
@@ -575,7 +570,7 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
 
             // Possibly an exact match?
             if((polyType == RPT_SHINY &&
-                compareTU(TU(dest, TU_INTER), &rTU[TU_SHINY_MASK])) ||
+                compareTU(TU(dest, TU_INTER), &rTU[TU_INTER])) ||
                (polyType != RPT_SHINY &&
                 compareTU(TU(dest, TU_INTER), &rTU[TU_INTER]) &&
                 compareTU(TU(dest, TU_INTER_DETAIL), &rTU[TU_INTER_DETAIL])))
@@ -590,7 +585,7 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
     {   // This list is currently empty.
         if(polyType == RPT_SHINY)
         {
-            copyTU(TU(convertable, TU_INTER), &rTU[TU_SHINY_MASK]);
+            copyTU(TU(convertable, TU_INTER), &rTU[TU_INTER]);
         }
         else
         {
@@ -607,9 +602,9 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
     // Init the info.
     if(polyType == RPT_SHINY)
     {
-        copyTU(TU(dest, TU_PRIMARY), &rTU[TU_SHINY]);
-        if(rTU[TU_SHINY_MASK].tex)
-            copyTU(TU(dest, TU_INTER), &rTU[TU_SHINY_MASK]);
+        copyTU(TU(dest, TU_PRIMARY), &rTU[TU_PRIMARY]);
+        if(rTU[TU_PRIMARY].tex)
+            copyTU(TU(dest, TU_INTER), &rTU[TU_INTER]);
     }
     else
     {
@@ -843,7 +838,14 @@ END_PROF( PROF_RL_GET_LIST );
     hdr->modColor[CG] = modColor? modColor[CG] : 0;
     hdr->modColor[CB] = modColor? modColor[CB] : 0;
 
-    if(rTU[TU_PRIMARY].tex || rTU[TU_SHINY_MASK].tex)
+    if(polyType == RPT_SHINY && rTU[TU_INTER].tex)
+    {
+        hdr->ptexScale[0] = rTU[TU_INTER].scale[0];
+        hdr->ptexScale[1] = rTU[TU_INTER].scale[1];
+        hdr->ptexOffset[0] = rTU[TU_INTER].offset[0];
+        hdr->ptexOffset[1] = rTU[TU_INTER].offset[1];
+    }
+    else if(rTU[TU_PRIMARY].tex)
     {
         hdr->ptexScale[0] = rTU[TU_PRIMARY].scale[0];
         hdr->ptexScale[1] = rTU[TU_PRIMARY].scale[1];

@@ -56,7 +56,7 @@ typedef struct rtexmapuint_s {
     int             magMode;
     float           blend;
     float           scale[2], offset[2]; // For use with the texture matrix.
-    blendmode_t     blendMode; // Currently used only with shiny pass.
+    blendmode_t     blendMode; // Currently used only with reflection.
 } rtexmapunit_t;
 
 extern int renderTextures;

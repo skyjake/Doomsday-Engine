@@ -1205,6 +1205,7 @@ static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
 }
 
 static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                     rtexmapunit_t rTUs[NUM_TEXMAP_UNITS],
                      float shinyMinColor[3],
                      const material_snapshot_t* msA, float interPos,
                      const material_snapshot_t* msB)
@@ -1262,25 +1263,25 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
 
     if(msA->units[MTU_REFLECTION].texInst)
     {
-        rTU[TU_SHINY].tex = msA->units[MTU_REFLECTION].texInst->id;
-        rTU[TU_SHINY].magMode = msA->units[MTU_REFLECTION].magMode;
-        rTU[TU_SHINY].scale[0] = msA->units[MTU_REFLECTION].scale[0];
-        rTU[TU_SHINY].scale[1] = msA->units[MTU_REFLECTION].scale[1];
-        rTU[TU_SHINY].offset[0] = msA->units[MTU_REFLECTION].offset[0];
-        rTU[TU_SHINY].offset[1] = msA->units[MTU_REFLECTION].offset[1];
-        rTU[TU_SHINY].blendMode = msA->units[MTU_REFLECTION].blendMode;
-        rTU[TU_SHINY].blend = msA->units[MTU_REFLECTION].alpha;
+        rTUs[TU_PRIMARY].tex = msA->units[MTU_REFLECTION].texInst->id;
+        rTUs[TU_PRIMARY].magMode = msA->units[MTU_REFLECTION].magMode;
+        rTUs[TU_PRIMARY].scale[0] = msA->units[MTU_REFLECTION].scale[0];
+        rTUs[TU_PRIMARY].scale[1] = msA->units[MTU_REFLECTION].scale[1];
+        rTUs[TU_PRIMARY].offset[0] = msA->units[MTU_REFLECTION].offset[0];
+        rTUs[TU_PRIMARY].offset[1] = msA->units[MTU_REFLECTION].offset[1];
+        rTUs[TU_PRIMARY].blendMode = msA->units[MTU_REFLECTION].blendMode;
+        rTUs[TU_PRIMARY].blend = msA->units[MTU_REFLECTION].alpha;
 
         if(msA->units[MTU_REFLECTION_MASK].texInst)
         {
-            rTU[TU_SHINY_MASK].tex = msA->units[MTU_REFLECTION_MASK].texInst->id;
-            rTU[TU_SHINY_MASK].magMode = msA->units[MTU_REFLECTION_MASK].magMode;
-            rTU[TU_SHINY_MASK].scale[0] = msA->units[MTU_REFLECTION_MASK].scale[0];
-            rTU[TU_SHINY_MASK].scale[1] = msA->units[MTU_REFLECTION_MASK].scale[1];
-            rTU[TU_SHINY_MASK].offset[0] = msA->units[MTU_REFLECTION_MASK].offset[0];
-            rTU[TU_SHINY_MASK].offset[1] = msA->units[MTU_REFLECTION_MASK].offset[1];
-            rTU[TU_SHINY_MASK].blendMode = msA->units[MTU_REFLECTION_MASK].blendMode;
-            rTU[TU_SHINY_MASK].blend = msA->units[MTU_REFLECTION_MASK].alpha;
+            rTUs[TU_INTER].tex = msA->units[MTU_REFLECTION_MASK].texInst->id;
+            rTUs[TU_INTER].magMode = msA->units[MTU_REFLECTION_MASK].magMode;
+            rTUs[TU_INTER].scale[0] = msA->units[MTU_REFLECTION_MASK].scale[0];
+            rTUs[TU_INTER].scale[1] = msA->units[MTU_REFLECTION_MASK].scale[1];
+            rTUs[TU_INTER].offset[0] = msA->units[MTU_REFLECTION_MASK].offset[0];
+            rTUs[TU_INTER].offset[1] = msA->units[MTU_REFLECTION_MASK].offset[1];
+            rTUs[TU_INTER].blendMode = msA->units[MTU_REFLECTION_MASK].blendMode;
+            rTUs[TU_INTER].blend = msA->units[MTU_REFLECTION_MASK].alpha;
         }
 
         shinyMinColor[CR] = msA->shiny.minColor[CR];
@@ -1293,6 +1294,7 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
  * Apply primitive-specific manipulations.
  */
 static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                      rtexmapunit_t rTUs[NUM_TEXMAP_UNITS],
                       boolean isWall, float texOffset[2], float texScale[2],
                       const material_snapshot_t* msA,
                       const material_snapshot_t* msB)
@@ -1332,11 +1334,11 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
 
     if(msA->units[MTU_REFLECTION].texInst)
     {
-        rTU[TU_SHINY_MASK].scale[0] *= texScale[0];
-        rTU[TU_SHINY_MASK].scale[1] *= texScale[1];
-        rTU[TU_SHINY_MASK].offset[0] += texOffset[0] / msA->width;
-        rTU[TU_SHINY_MASK].offset[1] +=
-            (isWall? texOffset[1] : -texOffset[1]) / msA->height;
+        rTUs[TU_INTER].scale[0] *= texScale[0];
+        rTUs[TU_INTER].scale[1] *= texScale[1];
+        rTUs[TU_INTER].offset[0] += texOffset[0] / msA->width;
+        rTUs[TU_INTER].offset[1] += (isWall? texOffset[1] : -texOffset[1]) /
+            msA->height;
     }
 }
 
@@ -1371,6 +1373,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                             const walldiv_t* divs,
                             const rendworldpoly_params_t* p,
                             const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                            const rtexmapunit_t rTUs[NUM_TEXMAP_UNITS],
                             const float shinyMinColor[3],
                             boolean isOpaque,
                             boolean drawAsVisSprite,
@@ -1460,7 +1463,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             quadTexCoords(rtexcoords2, rvertices, *p->segLength, p->texOrigin);
 
         // Shiny texture coordinates.
-        if(p->reflective && rTU[TU_SHINY].tex)
+        if(p->reflective && rTUs[TU_PRIMARY].tex)
             quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2],
                                *p->segLength);
 
@@ -1500,7 +1503,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             }
 
             // Shiny texture coordinates.
-            if(p->reflective && rTU[TU_SHINY].tex)
+            if(p->reflective && rTUs[TU_PRIMARY].tex)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx->pos);
             }
@@ -1589,7 +1592,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices);
         }
 
-        if(p->reflective && rTU[TU_SHINY].tex)
+        if(p->reflective && rTUs[TU_PRIMARY].tex)
         {
             uint                i;
 
@@ -1602,7 +1605,7 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     MAX_OF(rcolors[i].rgba[CG], shinyMinColor[CG]);
                 shinyColors[i].rgba[CB] =
                     MAX_OF(rcolors[i].rgba[CB], shinyMinColor[CB]);
-                shinyColors[i].rgba[CA] = rTU[TU_SHINY].blend;
+                shinyColors[i].rgba[CA] = rTUs[TU_PRIMARY].blend;
             }
         }
 
@@ -1767,12 +1770,12 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                        shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
                        rtexcoords + 3 + divs[0].num, NULL,
                        shinyColors + 3 + divs[0].num,
-                       3 + divs[1].num, 0, 0, NULL, rTU,
-                       rTU[TU_SHINY].blendMode);
+                       3 + divs[1].num, 0, 0, NULL, rTUs,
+                       rTU[TU_PRIMARY].blendMode);
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices,
                        shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, 3 + divs[0].num, 0, 0, NULL, rTU,
-                       rTU[TU_SHINY].blendMode);
+                       shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs,
+                       rTU[TU_PRIMARY].blendMode);
         }
     }
     else
@@ -1784,8 +1787,8 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         if(p->reflective)
             RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY, rvertices,
                        shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, numVertices, 0, 0, NULL, rTU,
-                       rTU[TU_SHINY].blendMode);
+                       shinyColors, numVertices, 0, 0, NULL, rTUs,
+                       rTUs[TU_PRIMARY].blendMode);
     }
 
     R_FreeRendTexCoords(rtexcoords);
@@ -1813,7 +1816,8 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
                            boolean isOpaque, const float shinyMinColor[3],
                            const float texOffset[2], const float texScale[2],
                            blendmode_t blendMode, material_t* mat,
-                           const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
+                           const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
+                           const rtexmapunit_t rTUs[NUM_TEXMAP_UNITS])
 {
     rendworldpoly_params_t params;
     walldiv_t           divs[2];
@@ -1930,7 +1934,7 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
 
     // Draw this seg.
     renderWorldPoly(rvertices, 4, hasDivisions? divs : NULL, &params,
-                    rTU, shinyMinColor, isOpaque,
+                    rTU, rTUs, shinyMinColor, isOpaque,
                     drawAsVisSprite, blendMode, texOffset, mat);
     if(!drawAsVisSprite)
     {   // An entirely opaque seg was drawn.
@@ -2016,7 +2020,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         rendworldpoly_params_t params;
         uint                numVertices = ssec->numVertices;
         rvertex_t*          rvertices;
-        rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
+        rtexmapunit_t       rTU[NUM_TEXMAP_UNITS], rTUs[NUM_TEXMAP_UNITS];
         float               shinyMinColor[3];
         boolean             isOpaque = true, drawAsVisSprite = false,
                             forceOpaque = false;
@@ -2026,6 +2030,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
 
         memset(&params, 0, sizeof(params));
         memset(rTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
+        memset(rTUs, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
 
         params.isWall = false;
         params.mapObject = ssec;
@@ -2175,15 +2180,15 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
             interPos = getSnapshots(&msA, &msB, mat, params.blended);
             isOpaque = msA.isOpaque;
 
-            setupRTU(rTU, shinyMinColor, &msA, interPos, &msB);
-            setupRTU2(rTU, params.isWall, texOffset, texScale, &msA, &msB);
+            setupRTU(rTU, rTUs, shinyMinColor, &msA, interPos, &msB);
+            setupRTU2(rTU, rTUs, params.isWall, texOffset, texScale, &msA, &msB);
         }
 
         if(!forceOpaque && params.type != RPT_SKY_MASK &&
            (!isOpaque || params.alpha < 1 || blendMode > 0))
             drawAsVisSprite = true;
 
-        renderWorldPoly(rvertices, numVertices, NULL, &params, rTU,
+        renderWorldPoly(rvertices, numVertices, NULL, &params, rTU, rTUs,
                         shinyMinColor, isOpaque,
                         drawAsVisSprite, blendMode, texOffset, mat);
 
@@ -2276,7 +2281,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
 
         if(alpha > 0)
         {
-            rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
+            rtexmapunit_t       rTU[NUM_TEXMAP_UNITS], rTUs[NUM_TEXMAP_UNITS];
             short               tempflags = 0;
             float               texOffset[2], texScale[2];
             float               shinyMinColor[3];
@@ -2290,6 +2295,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                                 isGlowing = false, blended;
 
             memset(rTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
+            memset(rTUs, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
 
             texOffset[VX] = texXOffset;
             texOffset[VY] = texYOffset;
@@ -2395,8 +2401,8 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                 interPos = getSnapshots(&msA, &msB, mat, blended);
                 isOpaque = msA.isOpaque;
 
-                setupRTU(rTU, shinyMinColor, &msA, interPos, &msB);
-                setupRTU2(rTU, true, texOffset, texScale, &msA, &msB);
+                setupRTU(rTU, rTUs, shinyMinColor, &msA, interPos, &msB);
+                setupRTU2(rTU, rTUs, true, texOffset, texScale, &msA, &msB);
             }
 
             isGlowing = ((tempflags & RPF2_GLOW)? true : false);
@@ -2413,7 +2419,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                                    isGlowing,
                                    blended,
                                    isOpaque, shinyMinColor, texOffset,
-                                   texScale, blendMode, mat, rTU);
+                                   texScale, blendMode, mat, rTU, rTUs);
         }
     }
 

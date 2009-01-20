@@ -214,6 +214,9 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
     for(i = 0; i < DDMAX_MATERIAL_LAYERS; ++i)
         setTexUnit(snapshot, i, BM_NORMAL, DGL_LINEAR, NULL, 1, 1, 0, 0, 0);
 
+    snapshot->width = mat->width;
+    snapshot->height = mat->height;
+
     // Setup the primary texturing pass.
     if(mat->layers[0].tex)
     {
@@ -225,7 +228,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
             magMode = filterSprites? DGL_LINEAR : DGL_NEAREST;
 
         setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst,
-                   1.f / mat->width, 1.f / mat->height, 0, 0, 1);
+                   1.f / snapshot->width, 1.f / snapshot->height, 0, 0, 1);
 
         snapshot->isOpaque = !(texInst->flags & GLTF_MASKED);
 
@@ -247,9 +250,6 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
                 snapshot->topColor[CB] = 1;
         }
     }
-
-    snapshot->width = mat->width;
-    snapshot->height = mat->height;
 
     /**
      * If skymasked, we need only need to update the primary tex unit
@@ -291,10 +291,10 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
                 setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL,
                            snapshot->units[MTU_PRIMARY].magMode,
                            shinyMaskInst,
-                           snapshot->width * maskTextures[shinyMaskInst->
-                                tex->ofTypeID]->width,
-                           snapshot->height * maskTextures[shinyMaskInst->
-                                tex->ofTypeID]->height,
+                           1.f / (snapshot->width * maskTextures[
+                               shinyMaskInst->tex->ofTypeID]->width),
+                           1.f / (snapshot->height * maskTextures[
+                               shinyMaskInst->tex->ofTypeID]->height),
                            snapshot->units[MTU_PRIMARY].offset[0],
                            snapshot->units[MTU_PRIMARY].offset[1], 1);
         }
