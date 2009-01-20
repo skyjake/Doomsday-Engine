@@ -425,12 +425,9 @@ static boolean genTexCoords(const pvec3_t point, float scale,
 typedef struct surfacelumobjiterparams_s {
     vec3_t          v1, v2;
     vec3_t          normal;
-    boolean         sortBrightestFirst;
     boolean         haveList;
     uint            listIdx;
-    boolean         isPlane;
-    byte            useTex; /* For omni lights:
-                               @c 0 = side tex, @c 1 = floortex, @c 2 = ceiltex. */
+    byte            flags; // DLF_* flags.
 } surfacelumobjiterparams_t;
 
 boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
@@ -454,13 +451,12 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
         if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers))
             return true;
 
-        switch(params->useTex)
-        {
-        case 0:
-        default: tex = LUM_OMNI(lum)->tex; break;
-        case 1: tex = LUM_OMNI(lum)->floorTex; break;
-        case 2: tex = LUM_OMNI(lum)->ceilTex; break;
-        }
+        if(params->flags & DLF_TEX_CEILING)
+            tex = LUM_OMNI(lum)->ceilTex;
+        else if(params->flags & DLF_TEX_FLOOR)
+            tex = LUM_OMNI(lum)->floorTex;
+        else
+            tex = LUM_OMNI(lum)->tex;
 
         lightRGB = LUM_OMNI(lum)->color;
 
@@ -519,7 +515,7 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
         break;
 
     case LT_PLANE:
-        if(!params->isPlane) // Plannar glows don't currently affect planes.
+        if(!(params->flags & DLF_NO_PLANAR))
             tex = LUM_PLANE(lum)->tex;
 
         if(tex)
@@ -546,8 +542,10 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
         // Got a list for this surface yet?
         if(!params->haveList)
         {
-            params->listIdx =
-                newDynlightList(params->sortBrightestFirst);
+            boolean             sortBrightestFirst =
+                (params->flags & DLF_SORT_LUMADSC)? true : false;
+
+            params->listIdx = newDynlightList(sortBrightestFirst);
             params->haveList = true;
         }
 
@@ -571,39 +569,26 @@ static uint processSubSector(subsector_t* ssec, surfacelumobjiterparams_t* param
 }
 
 /**
- * Process dynamic lights for the specified seg.
+ * Project all lumobjs affecting the given quad (world space), calculate
+ * coordinates (in texture space) then store into a new list of dynlights.
+ *
+ * \assume The coordinates of the given quad must be contained wholly within
+ * the subsector specified. This is due to an optimization within the lumobj
+ * management which seperates them according to their position in the BSP.
+ *
+ * @param ssec          Subsector within which the quad wholly resides.
+ * @param topLeft       Coordinates of the top left corner of the quad.
+ * @param bottomRight   Coordinates of the bottom right corner of the quad.
+ * @param normal        Normalized normal of the quad.
+ * @param flags         DLF_* flags.
+ *
+ * @return              Dynlight list name if the quad is lit by one or more
+ *                      light sources, else @c 0.
  */
-uint DL_ProcessSegSection(seg_t* seg, subsector_t* ssec, float bottom,
-                          float top, boolean sortBrightestFirst)
+uint DL_ProjectOnSurface(subsector_t* ssec, const pvec3_t topLeft,
+                         const pvec3_t bottomRight, const float* normal,
+                         byte flags)
 {
-    sidedef_t*          side;
-    surfacelumobjiterparams_t params;
-
-    if(!useDynLights && !useWallGlow)
-        return 0; // Disabled.
-
-    if(!seg || !ssec)
-        return 0;
-
-    side = SEG_SIDEDEF(seg);
-
-    V3_Set(params.v1, seg->SG_v1pos[VX], seg->SG_v1pos[VY], top);
-    V3_Set(params.v2, seg->SG_v2pos[VX], seg->SG_v2pos[VY], bottom);
-    params.normal[VX] = side->SW_middlenormal[VX];
-    params.normal[VY] = side->SW_middlenormal[VY];
-    params.normal[VZ] = side->SW_middlenormal[VZ];
-    params.sortBrightestFirst = sortBrightestFirst;
-    params.haveList = false;
-    params.listIdx = 0;
-    params.useTex = 0;
-    params.isPlane = false;
-
-    return processSubSector(ssec, &params);
-}
-
-uint DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane)
-{
-    plane_t*            pln;
     surfacelumobjiterparams_t params;
 
     if(!useDynLights && !useWallGlow)
@@ -612,33 +597,12 @@ uint DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane)
     if(!ssec)
         return 0;
 
-    assert(plane < ssec->sector->planeCount); // Sanity check.
-
-    pln = ssec->sector->SP_plane(plane);
-
-    if(pln->type == PLN_FLOOR)
-    {
-        V3_Set(params.v1, ssec->bBox[0].pos[VX], ssec->bBox[1].pos[VY],
-               pln->visHeight);
-        V3_Set(params.v2, ssec->bBox[1].pos[VX], ssec->bBox[0].pos[VY],
-               pln->visHeight);
-    }
-    else
-    {
-        V3_Set(params.v1, ssec->bBox[0].pos[VX], ssec->bBox[0].pos[VY],
-               pln->visHeight);
-        V3_Set(params.v2, ssec->bBox[1].pos[VX], ssec->bBox[1].pos[VY],
-               pln->visHeight);
-    }
-
-    params.normal[VX] = pln->PS_normal[VX];
-    params.normal[VY] = pln->PS_normal[VY];
-    params.normal[VZ] = pln->PS_normal[VZ];
-    params.sortBrightestFirst = false;
+    V3_Copy(params.v1, topLeft);
+    V3_Copy(params.v2, bottomRight);
+    V3_Set(params.normal, normal[VX], normal[VY], normal[VZ]);
+    params.flags = flags;
     params.haveList = false;
     params.listIdx = 0;
-    params.useTex = (pln->type == PLN_CEILING? 2 : 1);
-    params.isPlane = true;
 
     return processSubSector(ssec, &params);
 }

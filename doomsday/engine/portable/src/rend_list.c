@@ -887,8 +887,7 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
                 const rcolor_t* rcolors,
                 uint numVertices, uint numLights,
                 DGLuint modTex, float modColor[3],
-                const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
-                blendmode_t blendMode /* temp */)
+                const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
 {
     if(numVertices < 3)
         return; // huh?
@@ -897,7 +896,7 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
         Con_Error("RL_AddPoly: Unknown primtype %i.", type);
 
     addPoly(type, polyType, rvertices, rtexcoords, rtexcoords1, rtexcoords2,
-            rcolors, numVertices, blendMode, numLights, modTex, modColor, rTU);
+            rcolors, numVertices, rTU[TU_PRIMARY].blendMode, numLights, modTex, modColor, rTU);
 }
 
 /**

@@ -1156,10 +1156,10 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
                        rtexcoords + 3 + params->divs[0].num, NULL, NULL,
                        rcolors + 3 + params->divs[0].num,
                        3 + params->divs[1].num, 0,
-                       0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                       0, NULL, rTU);
             RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices, rtexcoords, NULL, NULL,
                        rcolors, 3 + params->divs[0].num, 0,
-                       0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                       0, NULL, rTU);
         }
         else
         {
@@ -1167,7 +1167,7 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
                        RPT_LIGHT,
                        rvertices, rtexcoords, NULL, NULL,
                        rcolors, params->numVertices, 0,
-                       0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                       0, NULL, rTU);
         }
 
         R_FreeRendVertices(rvertices);
@@ -1349,6 +1349,7 @@ typedef struct {
     const float*    normal; // Surface normal.
     float           alpha;
     const float*    sectorLightLevel;
+    float           surfaceLightLevelDelta;
     const float*    sectorLightColor;
     const float*    surfaceColor;
 
@@ -1365,7 +1366,6 @@ typedef struct {
 
 // Wall only (todo).
     const float*    segLength;
-    float           wallAngleLightLevelDelta;
     const float*    surfaceColor2; // Secondary color.
 } rendworldpoly_params_t;
 
@@ -1545,10 +1545,8 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             else
             {
                 uint                i;
-                float               ll = *p->sectorLightLevel;
-
-                if(p->isWall)
-                    ll += p->wallAngleLightLevelDelta;
+                float               ll = *p->sectorLightLevel +
+                    p->surfaceLightLevelDelta;
 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 ||
@@ -1758,37 +1756,31 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                    rtexcoords2? rtexcoords2 + 3 + divs[0].num : NULL,
                    rtexcoords5? rtexcoords5 + 3 + divs[0].num : NULL,
                    rcolors + 3 + divs[0].num, 3 + divs[1].num,
-                   numLights, modTex, modColor, rTU,
-                   rTU[TU_PRIMARY].blendMode);
+                   numLights, modTex, modColor, rTU);
         RL_AddPoly(PT_FAN, p->type, rvertices, rtexcoords, rtexcoords2,
                    rtexcoords5, rcolors, 3 + divs[0].num,
-                   numLights, modTex, modColor, rTU,
-                   rTU[TU_PRIMARY].blendMode);
+                   numLights, modTex, modColor, rTU);
         if(p->reflective)
         {
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
                        shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
                        rtexcoords + 3 + divs[0].num, NULL,
                        shinyColors + 3 + divs[0].num,
-                       3 + divs[1].num, 0, 0, NULL, rTUs,
-                       rTU[TU_PRIMARY].blendMode);
+                       3 + divs[1].num, 0, 0, NULL, rTUs);
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices,
                        shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs,
-                       rTU[TU_PRIMARY].blendMode);
+                       shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs);
         }
     }
     else
     {
         RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, p->type, rvertices,
                    rtexcoords, rtexcoords2, rtexcoords5, rcolors,
-                   numVertices, numLights, modTex, modColor, rTU,
-                   rTU[TU_PRIMARY].blendMode);
+                   numVertices, numLights, modTex, modColor, rTU);
         if(p->reflective)
             RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY, rvertices,
                        shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, numVertices, 0, 0, NULL, rTUs,
-                       rTUs[TU_PRIMARY].blendMode);
+                       shinyColors, numVertices, 0, 0, NULL, rTUs);
     }
 
     R_FreeRendTexCoords(rtexcoords);
@@ -1803,12 +1795,10 @@ static void renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         R_FreeRendColors(shinyColors);
 }
 
-#define RPF2_SHINY  0x0001
-#define RPF2_GLOW   0x0002
-#define RPF2_BLEND  0x0004
-
 static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
-                           surface_t* surface, float bottom, float top,
+                           surface_t* surface, const fvertex_t* from,
+                           const fvertex_t* to,
+                           float bottom, float top,
                            float alpha, sector_t* frontsec, boolean skyMask,
                            short sideFlags, boolean addDLights,
                            boolean addFakeRadio, boolean addReflection,
@@ -1816,14 +1806,19 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
                            boolean isOpaque, const float shinyMinColor[3],
                            const float texOffset[2], const float texScale[2],
                            blendmode_t blendMode, material_t* mat,
+                           const float* color, const float* color2,
                            const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                            const rtexmapunit_t rTUs[NUM_TEXMAP_UNITS])
 {
     rendworldpoly_params_t params;
     walldiv_t           divs[2];
     boolean             hasDivisions = false, forceOpaque = false;
-    boolean             isTwoSided = (seg->lineDef &&
-        seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
+    linedef_t*          line = seg->lineDef;
+    sidedef_t*          side = SEG_SIDEDEF(seg);//(line? SEG_SIDEDEF(seg) : NULL);
+    boolean             isTwoSided = (line &&
+        line->L_frontside && line->L_backside)? true : false;
+    rvertex_t*          rvertices;
+    boolean             drawAsVisSprite = false;
 
     // Init the params.
     memset(&params, 0, sizeof(params));
@@ -1835,58 +1830,24 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
     params.elmIdx = (uint) section;
     params.tracker = &seg->tracker[section];
     params.affection = seg->affected;
+    params.blended = blended;
+    params.normal = surface->normal;
+    params.sectorLightLevel = &frontsec->lightLevel;
+    params.sectorLightColor = R_GetSectorLightColor(frontsec);
+    params.surfaceLightLevelDelta =
+        R_WallAngleLightLevelDelta(line, seg->side);
+    params.surfaceColor = color;
+    params.surfaceColor2 = color2;
 
-    /**
-     * If this poly is destined for the skymask, we don't need to
-     * do any further processing.
-     */
-    if(params.type != RPT_SKY_MASK)
+    // Check for neighborhood division?
+    if(!(section == SEG_MIDDLE && isTwoSided) &&
+       !(line->inFlags & LF_POLYOBJ))
     {
-        params.blended = blended;
+        applyWallHeightDivision(divs, seg, frontsec, bottom, top);
 
-        params.normal = surface->normal;
-        params.sectorLightLevel = &frontsec->lightLevel;
-        params.sectorLightColor = R_GetSectorLightColor(frontsec);
-        params.wallAngleLightLevelDelta =
-            R_WallAngleLightLevelDelta(seg->lineDef, seg->side);
-
-        if(addFakeRadio)
-            Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
-
-        selectSurfaceColors(&params.surfaceColor, &params.surfaceColor2,
-                            SEG_SIDEDEF(seg), section);
-
-        // Dynamic lights?
-        if(addDLights)
-            params.lightListIdx =
-                DL_ProcessSegSection(seg, ssec, bottom, top,
-                                     (section == SEG_MIDDLE && isTwoSided));
-
-        // Check for neighborhood division?
-        if(!(section == SEG_MIDDLE && isTwoSided) &&
-           !(seg->lineDef->inFlags & LF_POLYOBJ))
-        {
-            applyWallHeightDivision(divs, seg, frontsec, bottom, top);
-
-            if(divs[0].num > 0 || divs[1].num > 0)
-                hasDivisions = true;
-        }
-
-        // Render Shiny polys for this seg?
-        if(addReflection && surface->material &&
-           surface->material->reflection)
-        {
-            params.reflective = true;
-        }
-
-        // Make it fullbright?
-        if(isGlowing)
-            params.glowing = true;
+        if(divs[0].num > 0 || divs[1].num > 0)
+            hasDivisions = true;
     }
-
-    {
-    rvertex_t*          rvertices;
-    boolean             drawAsVisSprite = false;
 
     if(hasDivisions)
     {   // Allocate enough vertices for the divisions too.
@@ -1897,35 +1858,43 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
         rvertices = R_AllocRendVertices(4);
     }
 
+    // Vertex coords.
     // Bottom Left.
-    rvertices[0].pos[VX] = seg->SG_v1pos[VX];
-    rvertices[0].pos[VY] = seg->SG_v1pos[VY];
-    rvertices[0].pos[VZ] = bottom;
+    V3_Set(rvertices[0].pos, from->pos[VX], from->pos[VY], bottom);
 
     // Top Left.
-    rvertices[1].pos[VX] = seg->SG_v1pos[VX];
-    rvertices[1].pos[VY] = seg->SG_v1pos[VY];
-    rvertices[1].pos[VZ] = top;
+    V3_Set(rvertices[1].pos, from->pos[VX], from->pos[VY], top);
 
     // Bottom Right.
-    rvertices[2].pos[VX] = seg->SG_v2pos[VX];
-    rvertices[2].pos[VY] = seg->SG_v2pos[VY];
-    rvertices[2].pos[VZ] = bottom;
+    V3_Set(rvertices[2].pos, to->pos[VX], to->pos[VY], bottom);
 
     // Top Right.
-    rvertices[3].pos[VX] = seg->SG_v2pos[VX];
-    rvertices[3].pos[VY] = seg->SG_v2pos[VY];
-    rvertices[3].pos[VZ] = top;
+    V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
+    // Texture origin. Use the world vertex coords.
     // Top left.
-    params.texOrigin[0][VX] = seg->SG_v1pos[VX];
-    params.texOrigin[0][VY] = seg->SG_v1pos[VY];
-    params.texOrigin[0][VZ] = top;
+    V3_Copy(params.texOrigin[0], rvertices[1].pos);
 
     // Bottom right.
-    params.texOrigin[1][VX] = seg->SG_v2pos[VX];
-    params.texOrigin[1][VY] = seg->SG_v2pos[VY];
-    params.texOrigin[1][VZ] = bottom;
+    V3_Copy(params.texOrigin[1], rvertices[2].pos);
+
+    // Dynamic lights?
+    if(addDLights)
+        params.lightListIdx =
+            DL_ProjectOnSurface(ssec, params.texOrigin[0], params.texOrigin[1],
+                              side->SW_middlenormal,
+                              ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
+
+    // Render Shiny polys for this seg?
+    if(addReflection && surface->material &&
+       surface->material->reflection)
+    {
+        params.reflective = true;
+    }
+
+    // Make it fullbright?
+    if(isGlowing)
+        params.glowing = true;
 
     // If alpha, masked or blended we'll render as a vissprite.
     if(!forceOpaque && params.type != RPT_SKY_MASK &&
@@ -1944,11 +1913,11 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
             rendsegradio_params_t radioParams;
 
             radioParams.sectorLightLevel = &frontsec->lightLevel;
-            radioParams.linedefLength = &seg->lineDef->length;
-            radioParams.botCn = SEG_SIDEDEF(seg)->bottomCorners;
-            radioParams.topCn = SEG_SIDEDEF(seg)->topCorners;
-            radioParams.sideCn = SEG_SIDEDEF(seg)->sideCorners;
-            radioParams.spans = SEG_SIDEDEF(seg)->spans;
+            radioParams.linedefLength = &line->length;
+            radioParams.botCn = side->bottomCorners;
+            radioParams.topCn = side->topCorners;
+            radioParams.sideCn = side->sideCorners;
+            radioParams.spans = side->spans;
             radioParams.segOffset = &seg->offset;
             radioParams.segLength = &seg->length;
             radioParams.frontSec = seg->SG_frontsector;
@@ -1960,23 +1929,23 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
              */
 
             // Bottom Left.
-            rvertices[0].pos[VX] = seg->SG_v1pos[VX];
-            rvertices[0].pos[VY] = seg->SG_v1pos[VY];
+            rvertices[0].pos[VX] = from->pos[VX];
+            rvertices[0].pos[VY] = from->pos[VY];
             rvertices[0].pos[VZ] = bottom;
 
             // Top Left.
-            rvertices[1].pos[VX] = seg->SG_v1pos[VX];
-            rvertices[1].pos[VY] = seg->SG_v1pos[VY];
+            rvertices[1].pos[VX] = from->pos[VX];
+            rvertices[1].pos[VY] = from->pos[VY];
             rvertices[1].pos[VZ] = top;
 
             // Bottom Right.
-            rvertices[2].pos[VX] = seg->SG_v2pos[VX];
-            rvertices[2].pos[VY] = seg->SG_v2pos[VY];
+            rvertices[2].pos[VX] = to->pos[VX];
+            rvertices[2].pos[VY] = to->pos[VY];
             rvertices[2].pos[VZ] = bottom;
 
             // Top Right.
-            rvertices[3].pos[VX] = seg->SG_v2pos[VX];
-            rvertices[3].pos[VY] = seg->SG_v2pos[VY];
+            rvertices[3].pos[VX] = to->pos[VX];
+            rvertices[3].pos[VY] = to->pos[VY];
             rvertices[3].pos[VZ] = top;
 
             Rend_RadioSegSection(rvertices, (hasDivisions? divs:NULL),
@@ -1988,7 +1957,6 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
     }
 
     R_FreeRendVertices(rvertices);
-    }
 
     return false; // Do not clip with this.
 }
@@ -2074,7 +2042,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
                 mat = inMat;
                 params.type = RPT_NORMAL;
                 forceOpaque = true;
-                tempflags |= RPF2_GLOW;
+                params.glowing = true;
             }
             else
             {   // We'll mask this.
@@ -2091,17 +2059,12 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
             // Make any necessary adjustments to the surface flags to suit the
             // current texture mode.
             surfaceInFlags = sufInFlags;
-            if(texMode == 0)
+            if(texMode == 1)
             {
-                tempflags |= RPF2_BLEND;
+                params.glowing = true; // Make it stand out
             }
-            else if(texMode == 1)
+            else if(texMode == 2)
             {
-                tempflags |= RPF2_GLOW; // Make it stand out
-            }
-            else // texMode == 2
-            {
-                tempflags |= RPF2_BLEND;
                 surfaceInFlags &= ~(SUIF_MATERIAL_FIX);
             }
 
@@ -2120,11 +2083,9 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
                 params.alpha = sufColor[CA];
             }
 
-            if(mat)
-                tempflags |= RPF2_SHINY;
             if(glowingTextures &&
                ((sufFlags & DDSUF_GLOW) || (mat && (mat->flags & MATF_GLOW))))
-                tempflags |= RPF2_GLOW;
+                params.glowing = true;
         }
 
         /**
@@ -2134,25 +2095,25 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         if(params.type != RPT_SKY_MASK)
         {
             // Smooth Texture Animation?
-            if(smoothTexAnim && (tempflags & RPF2_BLEND))
+            if(smoothTexAnim && texMode != 1)
                 params.blended = true;
 
             // Dynamic lights.
-            if(addDLights && !(tempflags & RPF2_GLOW))
+            if(addDLights && !params.glowing)
+            {
                 params.lightListIdx =
-                    DL_ProcessSubSectorPlane(ssec, elmIdx);
+                    DL_ProjectOnSurface(ssec, params.texOrigin[0],
+                                      params.texOrigin[1], normal,
+                                      (DLF_NO_PLANAR |
+                                       (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
+            }
 
             // Render Shiny polys?
-            if(useShinySurfaces && (tempflags & RPF2_SHINY) &&
-               mat && mat->reflection)
+            if(useShinySurfaces && mat && mat->reflection)
             {
                 params.reflective = true;
             }
         }
-
-        // Make it fullbright?
-        if((tempflags & RPF2_GLOW))
-            params.glowing = true;
 
         params.normal = normal;
         params.sectorLightLevel = &sec->lightLevel;
@@ -2160,6 +2121,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         params.affection = affected;
 
         params.sectorLightColor = R_GetSectorLightColor(sec);
+        params.surfaceLightLevelDelta = 0;
         params.surfaceColor = sufColor;
 
         rvertices = R_AllocRendVertices(numVertices);
@@ -2281,6 +2243,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
 
         if(alpha > 0)
         {
+            int                 texMode = 0;
             rtexmapunit_t       rTU[NUM_TEXMAP_UNITS], rTUs[NUM_TEXMAP_UNITS];
             short               tempflags = 0;
             float               texOffset[2], texScale[2];
@@ -2293,6 +2256,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
             blendmode_t         blendMode = BM_NORMAL;
             boolean             addFakeRadio = false, addReflection = false,
                                 isGlowing = false, blended;
+            const float*        color, *color2;
 
             memset(rTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
             memset(rTUs, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
@@ -2311,7 +2275,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                 {
                     mat = surface->material;
                     forceOpaque = true;
-                    tempflags |= RPF2_GLOW;
+                    isGlowing = true;
                 }
                 else
                 {   // We'll mask this.
@@ -2320,7 +2284,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
             }
             else
             {
-                int                 texMode = 0, surfaceFlags, surfaceInFlags;
+                int                 surfaceFlags, surfaceInFlags;
 
                 // Determine which texture to use.
                 if(renderTextures == 2)
@@ -2346,17 +2310,12 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                 // current texture mode.
                 surfaceFlags = surface->flags;
                 surfaceInFlags = surface->inFlags;
-                if(texMode == 0)
+                if(texMode == 1)
                 {
-                    tempflags |= RPF2_BLEND;
+                    isGlowing = true; // Make it stand out
                 }
-                else if(texMode == 1)
+                else if(texMode == 2)
                 {
-                    tempflags |= RPF2_GLOW; // Make it stand out
-                }
-                else // texMode == 2
-                {
-                    tempflags |= RPF2_BLEND;
                     surfaceInFlags &= ~(SUIF_MATERIAL_FIX);
                 }
 
@@ -2373,12 +2332,10 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                         blendMode = surface->blendMode;
                 }
 
-                if(mat)
-                    tempflags |= RPF2_SHINY;
                 if(glowingTextures &&
                    ((surfaceFlags & DDSUF_GLOW) ||
                    (surface->material && (surface->material->flags & MATF_GLOW))))
-                    tempflags |= RPF2_GLOW;
+                    isGlowing = true;
 
                 addFakeRadio = !(surfaceInFlags & SUIF_NO_RADIO);
             }
@@ -2386,7 +2343,7 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
             if(type != RPT_SKY_MASK)
             {
                 // Smooth Texture Animation?
-                if(smoothTexAnim && (tempflags & RPF2_BLEND))
+                if(smoothTexAnim && texMode != 1)
                     blended = true;
             }
 
@@ -2405,12 +2362,14 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                 setupRTU2(rTU, rTUs, true, texOffset, texScale, &msA, &msB);
             }
 
-            isGlowing = ((tempflags & RPF2_GLOW)? true : false);
-            addDLights = (addDLights && !(tempflags & RPF2_GLOW)? true : false);
+            addDLights = (addDLights && !isGlowing? true : false);
             addFakeRadio = ((addFakeRadio && !isGlowing)? true : false);
-            addReflection = (useShinySurfaces && (tempflags & RPF2_SHINY)? true : false);
+            addReflection = (useShinySurfaces && mat && mat->reflection? true : false);
 
-            solidSeg = doRenderSeg(ssec, seg, section, surface, bottom, top,
+            selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
+
+            solidSeg = doRenderSeg(ssec, seg, section, surface,
+                                   &seg->SG_v1->v, &seg->SG_v2->v, bottom, top,
                                    (forceOpaque? 1 : alpha), frontsec,
                                    skyMask, sideFlags,
                                    addDLights,
@@ -2419,7 +2378,8 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
                                    isGlowing,
                                    blended,
                                    isOpaque, shinyMinColor, texOffset,
-                                   texScale, blendMode, mat, rTU, rTUs);
+                                   texScale, blendMode, mat, color, color2,
+                                   rTU, rTUs);
         }
     }
 
@@ -2479,6 +2439,8 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
         if(ldef->flags & DDLF_DONTPEGBOTTOM)
             offset[1] += -(fceil - ffloor);
 
+        Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
+
         renderSegSection(ssec, seg, SEG_MIDDLE, &side->SW_middlesurface,
                          ffloor, fceil, offset[0], offset[1],
                          /*temp >*/ frontsec, /*< temp*/
@@ -2533,6 +2495,11 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
 
     bceil = backsec->SP_ceilvisheight;
     bfloor = backsec->SP_floorvisheight;
+
+    if((side->SW_middleinflags & SUIF_PVIS) ||
+       (side->SW_topinflags & SUIF_PVIS) ||
+       (side->SW_bottominflags & SUIF_PVIS))
+        Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
 
     // Create the wall sections.
 
@@ -2884,7 +2851,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 RL_AddPoly(PT_TRIANGLE_STRIP,
                            (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                            rvertices, rtexcoords, NULL, NULL,
-                           rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                           rcolors, 4, 0, 0, NULL, rTU);
             }
 
             // Ceiling.
@@ -2902,7 +2869,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 RL_AddPoly(PT_TRIANGLE_STRIP,
                            (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                            rvertices, rtexcoords, NULL, NULL,
-                           rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                           rcolors, 4, 0, 0, NULL, rTU);
             }
         }
 
@@ -2925,7 +2892,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     RL_AddPoly(PT_TRIANGLE_STRIP,
                                (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                                rvertices, rtexcoords, NULL, NULL,
-                               rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                               rcolors, 4, 0, 0, NULL, rTU);
                 }
 
                 // Ensure we add a solid view seg.
@@ -2949,7 +2916,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     RL_AddPoly(PT_TRIANGLE_STRIP,
                                (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                                rvertices, rtexcoords, NULL, NULL,
-                               rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                               rcolors, 4, 0, 0, NULL, rTU);
                 }
 
                 // Ensure we add a solid view seg.

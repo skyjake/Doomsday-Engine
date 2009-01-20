@@ -1115,9 +1115,9 @@ static void renderShadowSeg(const rvertex_t* origVertices,
             RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices + 3 + divs[0].num,
                        rtexcoords + 3 + divs[0].num, NULL, NULL,
                        rcolors + 3 + divs[0].num, 3 + divs[1].num,
-                       0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                       0, 0, NULL, rTU);
             RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices, rtexcoords, NULL, NULL,
-                       rcolors, 3 + divs[0].num, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                       rcolors, 3 + divs[0].num, 0, 0, NULL, rTU);
 
             R_FreeRendVertices(rvertices);
         }
@@ -1125,7 +1125,7 @@ static void renderShadowSeg(const rvertex_t* origVertices,
         {
             RL_AddPoly(PT_TRIANGLE_STRIP, RPT_SHADOW, origVertices,
                        rtexcoords, NULL, NULL,
-                       rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                       rcolors, 4, 0, 0, NULL, rTU);
         }
     }
 
@@ -1428,7 +1428,7 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     if(rendFakeRadio != 2)
         RL_AddPoly(PT_FAN, (renderWireframe? RPT_NORMAL : RPT_SHADOW),
                    rvertices, NULL, NULL, NULL,
-                   rcolors, 4, 0, 0, NULL, rTU, rTU[TU_PRIMARY].blendMode);
+                   rcolors, 4, 0, 0, NULL, rTU);
 }
 
 /**

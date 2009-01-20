@@ -36,6 +36,12 @@
 
 #define MAX_GLOWHEIGHT      (1024.0f) // Absolute max glow height.
 
+// Flags for DL_ProjectOnSurface
+#define DLF_SORT_LUMADSC    0x1 // Sort dynlights by luma, brightest to dullest.
+#define DLF_NO_PLANAR       0x2 // Surface is not lit by planar lights.
+#define DLF_TEX_FLOOR       0x4 // Prefer the "floor" slot when picking textures.
+#define DLF_TEX_CEILING     0x8 // Prefer the "ceiling" slot when picking textures.
+
 /**
  * The data of a projected dynamic light is stored in this structure.
  * A list of these is associated with each surface lit by texture mapped lights
@@ -60,11 +66,9 @@ void            DL_InitForMap(void);
 void            DL_InitForNewFrame(void);
 
 // Action.
-uint            DL_ProcessSegSection(seg_t* seg, subsector_t* ssec,
-                                     float bottom, float top,
-                                     boolean sortBrightestFirst);
-uint            DL_ProcessSubSectorPlane(subsector_t* ssec, uint plane);
-
+uint            DL_ProjectOnSurface(subsector_t* ssec, const pvec3_t topLeft,
+                                    const pvec3_t bottomRight,
+                                    const float* normal, byte flags);
 // Helpers.
 boolean         DL_ListIterator(uint listIdx, void* data,
                                 boolean (*func) (const dynlight_t*, void*));

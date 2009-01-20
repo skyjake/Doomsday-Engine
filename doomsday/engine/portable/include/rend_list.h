@@ -56,7 +56,7 @@ typedef struct rtexmapuint_s {
     int             magMode;
     float           blend;
     float           scale[2], offset[2]; // For use with the texture matrix.
-    blendmode_t     blendMode; // Currently used only with reflection.
+    blendmode_t     blendMode;
 } rtexmapunit_t;
 
 extern int renderTextures;
@@ -83,8 +83,7 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
                 const rcolor_t* rcolors,
                 uint numVertices, uint numLights,
                 DGLuint modTex, float modColor[3],
-                const rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
-                blendmode_t blendMode /*temp*/);
+                const rtexmapunit_t rTU[NUM_TEXMAP_UNITS]);
 void            RL_RenderAllLists(void);
 
 #endif
