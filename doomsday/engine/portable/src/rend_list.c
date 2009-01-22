@@ -267,19 +267,6 @@ void RL_Register(void)
     // \todo Move cvars here.
 }
 
-void RL_SelectTexCoordArray(int unit, int index)
-{
-    void*               coords[MAX_TEX_UNITS];
-
-    // Does this unit exist?
-    if(unit >= numTexUnits)
-        return;
-
-    memset(coords, 0, sizeof(coords));
-    coords[unit] = texCoords[index];
-    DGL_Arrays(NULL, NULL, numTexUnits, coords, 0);
-}
-
 static void rlBind(const rendlist_texmapunit_t* tmu)
 {
     GL_BindTexture(renderTextures ? tmu->tex : 0, tmu->magMode);
@@ -318,6 +305,31 @@ boolean RL_IsMTexLights(void)
 boolean RL_IsMTexDetails(void)
 {
     return IS_MTEX_DETAILS;
+}
+
+/**
+ * The first selected unit is active after this call.
+ */
+static void selectTexUnits(int count)
+{
+    int                 i;
+
+    // Disable extra units.
+    for(i = numTexUnits - 1; i >= count; i--)
+    {
+        activeTexture(GL_TEXTURE0 + (byte) i);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits)
+            continue;
+
+        activeTexture(GL_TEXTURE0 + (byte) i);
+        glEnable(GL_TEXTURE_2D);
+    }
 }
 
 static void clearVertices(void)
@@ -903,7 +915,8 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
  * Draws the privitives that match the conditions. If no condition bits
  * are given, all primitives are considered eligible.
  */
-static void drawPrimitives(int conditions, rendlist_t* list)
+static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
+                           const rendlist_t* list)
 {
     primhdr_t*              hdr;
     boolean                 skip, bypass = false;
@@ -1014,7 +1027,37 @@ static void drawPrimitives(int conditions, rendlist_t* list)
             }
 
             // Render the primitive.
-            DGL_DrawElements(hdr->type, hdr->numIndices, hdr->indices);
+            {
+            GLenum              primType =
+                (hdr->type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : hdr->type ==
+                 DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
+
+            int                 i;
+
+            glBegin(primType);
+            for(i = 0; i < hdr->numIndices; ++i)
+            {
+                int                 j;
+                uint                index = hdr->indices[i];
+
+                for(j = 0; j < DGL_state.maxTexUnits && j < MAX_TEX_UNITS; ++j)
+                {
+                    if(coords[j])
+                    {
+                        glMultiTexCoord2fvARB(GL_TEXTURE0 + j,
+                                              texCoords[coords[j] - 1][index].st);
+                    }
+                }
+
+                glColor4ubv(colors[index].rgba);
+                glVertex3fv(vertices[index].xyz);
+            }
+            glEnd();
+
+#ifdef _DEBUG
+CheckError();
+#endif
+            }
 
             // Restore the texture matrix if changed.
             if(conditions & (DCF_SET_MATRIX_TEXTURE|DCF_SET_MATRIX_DTEXTURE))
@@ -1055,7 +1098,7 @@ if(numTexUnits < 2)
     Con_Error("setBlendState: Not enough texture units.\n");
 #endif
 
-    GL_SelectTexUnits(2);
+    selectTexUnits(2);
 
     rlBindTo(0, TU(list, TU_PRIMARY));
     rlBindTo(1, TU(list, TU_INTER));
@@ -1101,7 +1144,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         else
         {
             // Normal modulation.
-            GL_SelectTexUnits(1);
+            selectTexUnits(1);
             rlBind(TU(list, TU_PRIMARY));
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         }
@@ -1163,7 +1206,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
             return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
         }
         // No modulation at all.
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         rlBind(TU(list, TU_PRIMARY));
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
         return DCF_SET_MATRIX_TEXTURE0 | (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
@@ -1174,7 +1217,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
             break;
         if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
-            GL_SelectTexUnits(2);
+            selectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
@@ -1182,7 +1225,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         }
         else
         {
-            GL_SelectTexUnits(1);
+            selectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
             rlBind(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
@@ -1204,7 +1247,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
             break;
         if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
-            GL_SelectTexUnits(2);
+            selectTexUnits(2);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 8);
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
@@ -1213,7 +1256,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         else
         {
             // Normal modulation.
-            GL_SelectTexUnits(1);
+            selectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
             rlBind(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
@@ -1303,12 +1346,14 @@ static void finishListState(listmode_t mode, rendlist_t* list)
 /**
  * Setup GL state for an entire rendering pass (compassing multiple lists).
  */
-static void setupPassState(listmode_t mode)
+static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 {
+    memset(coords, 0, sizeof(*coords) * MAX_TEX_UNITS);
+
     switch(mode)
     {
     case LM_SKYMASK:
-        GL_SelectTexUnits(0);
+        selectTexUnits(0);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -1323,11 +1368,11 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_BLENDED:
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
     case LM_ALL:
         // The first texture unit is used for the main texture.
-        RL_SelectTexCoordArray(0, TCA_MAIN);
-        RL_SelectTexCoordArray(1, TCA_BLEND);
+        coords[0] = TCA_MAIN + 1;
+        coords[1] = TCA_BLEND + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -1343,17 +1388,17 @@ static void setupPassState(listmode_t mode)
     case LM_LIGHT_MOD_TEXTURE:
     case LM_TEXTURE_PLUS_LIGHT:
         // Modulate sector light, dynamic light and regular texture.
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
         if(mode == LM_LIGHT_MOD_TEXTURE)
         {
-            RL_SelectTexCoordArray(0, TCA_LIGHT);
-            RL_SelectTexCoordArray(1, TCA_MAIN);
+            coords[0] = TCA_LIGHT + 1;
+            coords[1] = TCA_MAIN + 1;
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 4); // Light * texture.
         }
         else
         {
-            RL_SelectTexCoordArray(0, TCA_MAIN);
-            RL_SelectTexCoordArray(1, TCA_LIGHT);
+            coords[0] = TCA_MAIN + 1;
+            coords[1] = TCA_LIGHT + 1;
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 5); // Texture + light.
         }
         glDisable(GL_ALPHA_TEST);
@@ -1370,8 +1415,8 @@ static void setupPassState(listmode_t mode)
 
     case LM_FIRST_LIGHT:
         // One light, no texture.
-        GL_SelectTexUnits(1);
-        RL_SelectTexCoordArray(0, TCA_LIGHT);
+        selectTexUnits(1);
+        coords[0] = TCA_LIGHT + 1;
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 6);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -1387,8 +1432,8 @@ static void setupPassState(listmode_t mode)
 
     case LM_BLENDED_FIRST_LIGHT:
         // One additive light, no texture.
-        GL_SelectTexUnits(1);
-        RL_SelectTexCoordArray(0, TCA_LIGHT);
+        selectTexUnits(1);
+        coords[0] = TCA_LIGHT + 1;
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 7); // Add light, no color.
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -1404,7 +1449,7 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_WITHOUT_TEXTURE:
-        GL_SelectTexUnits(0);
+        selectTexUnits(0);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -1418,8 +1463,8 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_LIGHTS:
-        GL_SelectTexUnits(1);
-        RL_SelectTexCoordArray(0, TCA_MAIN);
+        selectTexUnits(1);
+        coords[0] = TCA_MAIN + 1;
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -1443,8 +1488,8 @@ static void setupPassState(listmode_t mode)
     case LM_MOD_TEXTURE_MANY_LIGHTS:
     case LM_BLENDED_MOD_TEXTURE:
         // The first texture unit is used for the main texture.
-        RL_SelectTexCoordArray(0, TCA_MAIN);
-        RL_SelectTexCoordArray(1, TCA_BLEND);
+        coords[0] = TCA_MAIN + 1;
+        coords[1] = TCA_BLEND + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -1458,8 +1503,8 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
-        RL_SelectTexCoordArray(0, TCA_MAIN);
-        RL_SelectTexCoordArray(1, TCA_MAIN);
+        coords[0] = TCA_MAIN + 1;
+        coords[1] = TCA_MAIN + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -1473,8 +1518,8 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-        RL_SelectTexCoordArray(0, TCA_MAIN);
-        RL_SelectTexCoordArray(1, TCA_MAIN);
+        coords[0] = TCA_MAIN + 1;
+        coords[1] = TCA_MAIN + 1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -1488,8 +1533,8 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_ALL_DETAILS:
-        GL_SelectTexUnits(1);
-        RL_SelectTexCoordArray(0, TCA_MAIN);
+        selectTexUnits(1);
+        coords[0] = TCA_MAIN + 1;
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -1505,9 +1550,9 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_BLENDED_DETAILS:
-        GL_SelectTexUnits(2);
-        RL_SelectTexCoordArray(0, TCA_MAIN);
-        RL_SelectTexCoordArray(1, TCA_BLEND);
+        selectTexUnits(2);
+        coords[0] = TCA_MAIN + 1;
+        coords[1] = TCA_BLEND + 1;
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 3);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -1524,8 +1569,8 @@ static void setupPassState(listmode_t mode)
 
     case LM_SHADOW:
         // A bit like 'negative lights'.
-        GL_SelectTexUnits(1);
-        RL_SelectTexCoordArray(0, TCA_MAIN);
+        selectTexUnits(1);
+        coords[0] = TCA_MAIN + 1;
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -1544,8 +1589,8 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_SHINY:
-        GL_SelectTexUnits(1);
-        RL_SelectTexCoordArray(0, TCA_MAIN);
+        selectTexUnits(1);
+        coords[0] = TCA_MAIN + 1;
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1); // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -1567,9 +1612,9 @@ static void setupPassState(listmode_t mode)
         break;
 
     case LM_MASKED_SHINY:
-        GL_SelectTexUnits(2);
-        RL_SelectTexCoordArray(0, TCA_MAIN);
-        RL_SelectTexCoordArray(1, TCA_BLEND); // the mask
+        selectTexUnits(2);
+        coords[0] = TCA_MAIN + 1;
+        coords[1] = TCA_BLEND + 1; // the mask
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 8); // same as with details
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -1602,6 +1647,7 @@ static void renderLists(listmode_t mode, rendlist_t** lists, uint num)
 {
     uint                i;
     rendlist_t*         list;
+    uint                coords[MAX_TEX_UNITS];
 
     // If the first list is empty, we do nothing. Normally we expect
     // all lists to contain something.
@@ -1609,16 +1655,16 @@ static void renderLists(listmode_t mode, rendlist_t** lists, uint num)
         return;
 
     // Setup GL state that's common to all the lists in this mode.
-    setupPassState(mode);
+    setupPassState(mode, coords);
 
     // Draw each given list.
     for(i = 0; i < num; ++i)
     {
         list = lists[i];
 
-        // Setup GL state for this list, and
-        // draw the necessary subset of primitives on the list.
-        drawPrimitives(setupListState(mode, list), list);
+        // Setup GL state for this list, and draw the necessary subset of
+        // primitives on the list.
+        drawPrimitives(setupListState(mode, list), coords, list);
 
         // Some modes require cleanup.
         finishListState(mode, list);
@@ -1656,23 +1702,6 @@ Con_Error("collectLists: Ran out of MAX_RLISTS.\n");
     return count;
 }
 
-static void lockVertices(void)
-{
-    // We're only locking the vertex and color arrays, so disable the
-    // texcoord arrays for now. Every pass will enable/disable the texcoords
-    // that are needed.
-    DGL_DisableArrays(0, 0, DGL_ALL_BITS);
-
-    // Actually, don't lock anything. (Massive slowdown?)
-    DGL_Arrays(vertices, colors, 0, NULL, 0 /*numVertices */ );
-}
-
-static void unlockVertices(void)
-{
-    // Nothing was locked.
-    //DGL_UnlockArrays();
-}
-
 /**
  * We have several different paths to accommodate both multitextured
  * details and dynamic lights. Details take precedence (they always cover
@@ -1695,8 +1724,6 @@ BEGIN_PROF( PROF_RL_RENDER_ALL );
     if(rendSky && !devSkyMode)
         // The sky might be visible. Render the needed hemispheres.
         Rend_RenderSky(skyhemispheres);
-
-    lockVertices();
 
     // Mask the sky in the Z-buffer.
     lists[0] = &skyMaskList;
@@ -1900,11 +1927,8 @@ END_PROF( PROF_RL_RENDER_SHADOW );
     renderTextures = oldr;
     }
 
-    unlockVertices();
-
     // Return to the normal GL state.
-    GL_SelectTexUnits(1);
-    DGL_DisableArrays(true, true, DGL_ALL_BITS);
+    selectTexUnits(1);
     DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
