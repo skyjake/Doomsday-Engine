@@ -117,7 +117,7 @@ typedef struct dgl_state_ext_s {
 #endif
 } dgl_state_ext_t;
 
-extern int      polyCounter;
+extern int polyCounter;
 
 extern dgl_state_t DGL_state;
 extern dgl_state_texture_t DGL_state_texture;
@@ -175,7 +175,6 @@ void            DGL_Rotatef(float angle, float x, float y, float z);
 void            DGL_Scalef(float x, float y, float z);
 void            DGL_Ortho(float left, float top, float right, float bottom, float znear,
                           float zfar);
-void            DGL_DisableArrays(int vertices, int colors, int coords);
 void            DGL_MatrixMode(int mode);
 void            DGL_PushMatrix(void);
 void            DGL_PopMatrix(void);
