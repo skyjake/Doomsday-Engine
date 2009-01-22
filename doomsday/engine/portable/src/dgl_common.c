@@ -1139,20 +1139,20 @@ void DGL_PushMatrix(void)
 {
     glPushMatrix();
 
-    if(glGetError() == GL_STACK_OVERFLOW)
-    {
-        Con_Error("DG_PushMatrix: Stack overflow.\nEnsure you have current OpenGL Drivers installed on you system.\n");
-    }
+#if _DEBUG
+if(glGetError() == GL_STACK_OVERFLOW)
+    Con_Error("DG_PushMatrix: Stack overflow.\n");
+#endif
 }
 
 void DGL_PopMatrix(void)
 {
     glPopMatrix();
 
-    if(glGetError() == GL_STACK_UNDERFLOW)
-    {
-        Con_Error("DG_PopMatrix: Stack underflow.\nEnsure you have current OpenGL Drivers installed on you system.\n");
-    }
+#if _DEBUG
+if(glGetError() == GL_STACK_UNDERFLOW)
+    Con_Error("DG_PopMatrix: Stack underflow.\n");
+#endif
 }
 
 void DGL_LoadIdentity(void)
