@@ -123,6 +123,7 @@
  ./../../engine/win32/src/sys_audiod_loader.c
  ./../../engine/portable/src/sys_audiod_dummy.c
  ./../../engine/portable/src/sys_audiod_sdlmixer.c
+ ./../../engine/portable/src/sys_opengl.c
  ./../../engine/portable/src/sys_timer.c
  ./../../engine/portable/src/sys_system.c
  ./../../engine/portable/src/sys_sock.c
@@ -157,6 +158,5 @@
  ./../../engine/portable/src/dd_help.c
  ./../../engine/portable/src/dgl_common.c
  ./../../engine/portable/src/dgl_draw.c
- ./../../engine/portable/src/dgl_ext.c
  ./../../engine/portable/src/dgl_texture.c
   

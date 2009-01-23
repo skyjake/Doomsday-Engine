@@ -66,9 +66,9 @@ void            DL_InitForMap(void);
 void            DL_InitForNewFrame(void);
 
 // Action.
-uint            DL_ProjectOnSurface(subsector_t* ssec, const pvec3_t topLeft,
-                                    const pvec3_t bottomRight,
-                                    const float* normal, byte flags);
+uint            DL_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
+                                    const vectorcomp_t bottomRight[3],
+                                    const vectorcomp_t normal[3], byte flags);
 // Helpers.
 boolean         DL_ListIterator(uint listIdx, void* data,
                                 boolean (*func) (const dynlight_t*, void*));

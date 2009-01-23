@@ -35,7 +35,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
+#include "de_graphics.h"
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
@@ -48,7 +48,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-dgl_state_texture_t DGL_state_texture;
+gl_state_texture_t GL_state_texture;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -62,7 +62,7 @@ dgl_state_texture_t DGL_state_texture;
  */
 GLenum ChooseFormat(int comps)
 {
-    boolean     compress = (DGL_state_texture.useCompr && DGL_state.allowCompression);
+    boolean     compress = (GL_state_texture.useCompr && GL_state.allowCompression);
 
     switch(comps)
     {
@@ -70,11 +70,11 @@ GLenum ChooseFormat(int comps)
         return compress ? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE;
 
     case 3: // RGB
-        return !compress ? 3 : DGL_state_ext.s3TC ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT :
+        return !compress ? 3 : GL_state_ext.s3TC ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT :
             GL_COMPRESSED_RGB;
 
     case 4: // RGBA
-        return !compress ? 4 : DGL_state_ext.s3TC ? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT // >1-bit alpha
+        return !compress ? 4 : GL_state_ext.s3TC ? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT // >1-bit alpha
             : GL_COMPRESSED_RGBA;
 
     default:
@@ -90,35 +90,35 @@ void loadPalette(int sharedPalette)
     int         i;
     byte        paldata[256 * 3];
 
-    if(DGL_state_texture.usePalTex == false)
+    if(GL_state_texture.usePalTex == false)
         return;
 
     // Prepare the color table (RGBA -> RGB).
     for(i = 0; i < 256; ++i)
-        memcpy(paldata + i * 3, DGL_state_texture.palette[i].color, 3);
+        memcpy(paldata + i * 3, GL_state_texture.palette[i].color, 3);
 
     glColorTableEXT(sharedPalette ? GL_SHARED_TEXTURE_PALETTE_EXT :
                     GL_TEXTURE_2D, GL_RGB, 256, GL_RGB, GL_UNSIGNED_BYTE,
                     paldata);
 }
 
-boolean enablePalTexExt(boolean enable)
+boolean GL_EnablePalTexExt(boolean enable)
 {
-    if(!DGL_state.palExtAvailable && !DGL_state.sharedPalExtAvailable)
+    if(!GL_state.palExtAvailable && !GL_state.sharedPalExtAvailable)
     {
         Con_Message
-            ("drOpenGL.enablePalTexExt: No paletted texture support.\n");
+            ("drOpenGL.GL_EnablePalTexExt: No paletted texture support.\n");
         return false;
     }
 
-    if((enable && DGL_state_texture.usePalTex) ||
-       (!enable && !DGL_state_texture.usePalTex))
+    if((enable && GL_state_texture.usePalTex) ||
+       (!enable && !GL_state_texture.usePalTex))
         return true;
 
-    if(!enable && DGL_state_texture.usePalTex)
+    if(!enable && GL_state_texture.usePalTex)
     {
-        DGL_state_texture.usePalTex = false;
-        if(DGL_state.sharedPalExtAvailable)
+        GL_state_texture.usePalTex = false;
+        if(GL_state.sharedPalExtAvailable)
             glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
 #ifdef WIN32
         glColorTableEXT = NULL;
@@ -126,57 +126,42 @@ boolean enablePalTexExt(boolean enable)
         return true;
     }
 
-    DGL_state_texture.usePalTex = false;
+    GL_state_texture.usePalTex = false;
 
 #ifdef WIN32
     if((glColorTableEXT =
         (PFNGLCOLORTABLEEXTPROC) wglGetProcAddress("glColorTableEXT")) == NULL)
     {
-        Con_Message("drOpenGL.enablePalTexExt: getProcAddress failed.\n");
+        Con_Message("drOpenGL.GL_EnablePalTexExt: getProcAddress failed.\n");
         return false;
     }
 #endif
 
-    DGL_state_texture.usePalTex = true;
-    if(DGL_state.sharedPalExtAvailable)
+    GL_state_texture.usePalTex = true;
+    if(GL_state.sharedPalExtAvailable)
     {
-        Con_Message("drOpenGL.enablePalTexExt: Using shared tex palette.\n");
+        Con_Message("drOpenGL.GL_EnablePalTexExt: Using shared tex palette.\n");
         glEnable(GL_SHARED_TEXTURE_PALETTE_EXT);
         loadPalette(true);
     }
     else
     {   // Palette will be loaded separately for each texture.
-        Con_Message("drOpenGL.enablePalTexExt: Using tex palette.\n");
+        Con_Message("drOpenGL.GL_EnablePalTexExt: Using tex palette.\n");
     }
 
     return true;
 }
 
-/**
- * Create a new GL texture.
- *
- * @return              Name of the new texture.
- */
-DGLuint DGL_NewTexture(void)
-{
-    DGLuint texName;
-
-    // Generate a new texture name and bind it.
-    glGenTextures(1, (GLuint*) &texName);
-    glBindTexture(GL_TEXTURE_2D, texName);
-    return texName;
-}
-
-int DGL_GetTexAnisoMul(int level)
+int GL_GetTexAnisoMul(int level)
 {
     int         mul = 1;
 
     // Should anisotropic filtering be used?
-    if(DGL_state.useAnisotropic)
+    if(GL_state.useAnisotropic)
     {
         if(level < 0)
         {   // Go with the maximum!
-            mul = DGL_state.maxAniso;
+            mul = GL_state.maxAniso;
         }
         else
         {   // Convert from a DGL aniso level to a multiplier.
@@ -195,8 +180,8 @@ int DGL_GetTexAnisoMul(int level)
             }
 
             // Clamp.
-            if(mul > DGL_state.maxAniso)
-                mul = DGL_state.maxAniso;
+            if(mul > GL_state.maxAniso)
+                mul = GL_state.maxAniso;
         }
     }
 
@@ -253,7 +238,7 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
     byte       *image, *in, *out, *faded;
     int         i, numLevels, w, h, size = width * height, res;
     uint        comps = (format == DGL_LUMINANCE? 1 : 3);
-    float       invFactor = 1 - DGL_state_texture.grayMipmapFactor;
+    float       invFactor = 1 - GL_state_texture.grayMipmapFactor;
 
     // Buffer used for the faded texture.
     faded = M_Malloc(size / 4);
@@ -264,7 +249,7 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
     {
         for(i = 0, in = data, out = image; i < size; ++i, in += comps)
         {
-            res = (int) (*in * DGL_state_texture.grayMipmapFactor + 0x80 * invFactor);
+            res = (int) (*in * GL_state_texture.grayMipmapFactor + 0x80 * invFactor);
 
             // Clamp to [0, 255].
             if(res < 0)
@@ -281,7 +266,7 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
         w /= 2, h /= 2, numLevels++);
 
     // We do not want automatical mipmaps.
-    if(DGL_state_ext.genMip)
+    if(GL_state_ext.genMip)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
 
     // Upload the first level right away.
@@ -307,7 +292,7 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
     M_Free(faded);
     M_Free(image);
 
-    DGL_TexFilter(DGL_ANISO_FILTER, DGL_GetTexAnisoMul(-1 /*best*/));
+    GL_TexFilter(DGL_ANISO_FILTER, GL_GetTexAnisoMul(-1 /*best*/));
     return true;
 }
 
@@ -326,7 +311,7 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
  *
  * @return              @c true iff successful.
  */
-boolean DGL_TexImage(gltexformat_t format, int width, int height,
+boolean GL_TexImage(gltexformat_t format, int width, int height,
                      int genMips, void *data)
 {
     int         mipLevel = 0;
@@ -345,11 +330,11 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
         return false;
 
     // Check that the texture dimensions are valid.
-    if(!DGL_state.textureNonPow2 &&
+    if(!GL_state.textureNonPow2 &&
        (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
         return false;
 
-    if(width > DGL_state.maxTexSize || height > DGL_state.maxTexSize)
+    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
         return false;
 
     // Special fade-to-gray luminance texture? (used for details)
@@ -359,13 +344,13 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
     }
 
     // Automatic mipmap generation?
-    if(DGL_state_ext.genMip && genMips)
+    if(GL_state_ext.genMip && genMips)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 
     // Paletted texture?
-    if(DGL_state_texture.usePalTex && format == DGL_COLOR_INDEX_8)
+    if(GL_state_texture.usePalTex && format == DGL_COLOR_INDEX_8)
     {
-        if(genMips && !DGL_state_ext.genMip)
+        if(genMips && !GL_state_ext.genMip)
         {   // Build mipmap textures.
             gluBuild2DMipmaps(GL_TEXTURE_2D, GL_COLOR_INDEX8_EXT, width,
                               height, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, data);
@@ -377,7 +362,7 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
         }
 
         // Load palette, too (if not shared).
-        if(!DGL_state.sharedPalExtAvailable)
+        if(!GL_state.sharedPalExtAvailable)
             loadPalette(false);
     }
     else
@@ -429,18 +414,18 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
                 loadFormat = GL_RGB;
                 for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 3)
                 {
-                    pixel[CR] = DGL_state_texture.palette[bdata[i]].color[CR];
-                    pixel[CG] = DGL_state_texture.palette[bdata[i]].color[CG];
-                    pixel[CB] = DGL_state_texture.palette[bdata[i]].color[CB];
+                    pixel[CR] = GL_state_texture.palette[bdata[i]].color[CR];
+                    pixel[CG] = GL_state_texture.palette[bdata[i]].color[CG];
+                    pixel[CB] = GL_state_texture.palette[bdata[i]].color[CB];
                 }
                 break;
 
             case DGL_COLOR_INDEX_8_PLUS_A8:
                 for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 4)
                 {
-                    pixel[CR] = DGL_state_texture.palette[bdata[i]].color[CR];
-                    pixel[CG] = DGL_state_texture.palette[bdata[i]].color[CG];
-                    pixel[CB] = DGL_state_texture.palette[bdata[i]].color[CB];
+                    pixel[CR] = GL_state_texture.palette[bdata[i]].color[CR];
+                    pixel[CG] = GL_state_texture.palette[bdata[i]].color[CG];
+                    pixel[CB] = GL_state_texture.palette[bdata[i]].color[CB];
                     pixel[CA] = bdata[numPixels + i];
                 }
                 break;
@@ -466,7 +451,7 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
             }
         }
 
-        if(genMips && !DGL_state_ext.genMip)
+        if(genMips && !GL_state_ext.genMip)
         {   // Build all mipmap levels.
             gluBuild2DMipmaps(GL_TEXTURE_2D, ChooseFormat(colorComps), width,
                               height, loadFormat, GL_UNSIGNED_BYTE, buffer);
@@ -483,7 +468,7 @@ boolean DGL_TexImage(gltexformat_t format, int width, int height,
     }
 
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
 
     return true;
@@ -497,12 +482,12 @@ void DGL_DeleteTextures(int num, const DGLuint *names)
     glDeleteTextures(num, (const GLuint*) names);
 }
 
-void DGL_TexFilter(int pname, int param)
+void GL_TexFilter(int pname, int param)
 {
     switch(pname)
     {
     case DGL_ANISO_FILTER:
-        if(DGL_state.useAnisotropic)
+        if(GL_state.useAnisotropic)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             param);
         break;
@@ -527,12 +512,12 @@ void DGL_TexFilter(int pname, int param)
         }
 
     default:
-        Con_Error("DGL_TexFilter: Invalid value, pname = %i", pname);
+        Con_Error("GL_TexFilter: Invalid value, pname = %i", pname);
         break;
     }
 }
 
-void DGL_Palette(gltexformat_t format, void *data)
+void GL_Palette(gltexformat_t format, void *data)
 {
     unsigned char *ptr = data;
     int         i;
@@ -540,15 +525,15 @@ void DGL_Palette(gltexformat_t format, void *data)
 
     for(i = 0; i < 256; i++, ptr += size)
     {
-        DGL_state_texture.palette[i].color[CR] = ptr[CR];
-        DGL_state_texture.palette[i].color[CG] = ptr[CG];
-        DGL_state_texture.palette[i].color[CB] = ptr[CB];
-        DGL_state_texture.palette[i].color[CA] = format == DGL_RGBA ? ptr[CA] : 0xff;
+        GL_state_texture.palette[i].color[CR] = ptr[CR];
+        GL_state_texture.palette[i].color[CG] = ptr[CG];
+        GL_state_texture.palette[i].color[CB] = ptr[CB];
+        GL_state_texture.palette[i].color[CA] = format == DGL_RGBA ? ptr[CA] : 0xff;
     }
-    loadPalette(DGL_state.sharedPalExtAvailable);
+    loadPalette(GL_state.sharedPalExtAvailable);
 
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
 }
 
@@ -556,7 +541,7 @@ int DGL_Bind(DGLuint texture)
 {
     glBindTexture(GL_TEXTURE_2D, texture);
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
     return 0;
 }

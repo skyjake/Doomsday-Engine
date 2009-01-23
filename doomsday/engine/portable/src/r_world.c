@@ -223,25 +223,25 @@ boolean R_SurfaceListIterate(surfacelist_t* sl,
 boolean updateMovingSurface(surface_t* suf, void* context)
 {
     // X Offset
-    suf->oldOffset[0][0] = suf->oldOffset[1][0];
-    suf->oldOffset[1][0] = suf->offset[0];
-    if(suf->oldOffset[0][0] != suf->oldOffset[1][0])
-        if(fabs(suf->oldOffset[0][0] - suf->oldOffset[1][0]) >=
+    suf->oldOffset[0][0] = suf->oldOffset[0][1];
+    suf->oldOffset[0][1] = suf->offset[0];
+    if(suf->oldOffset[0][0] != suf->oldOffset[0][1])
+        if(fabs(suf->oldOffset[0][0] - suf->oldOffset[0][1]) >=
            MAX_SMOOTH_MATERIAL_MOVE)
         {
             // Too fast: make an instantaneous jump.
-            suf->oldOffset[0][0] = suf->oldOffset[1][0];
+            suf->oldOffset[0][0] = suf->oldOffset[0][1];
         }
 
     // Y Offset
-    suf->oldOffset[0][1] = suf->oldOffset[1][1];
+    suf->oldOffset[1][0] = suf->oldOffset[1][1];
     suf->oldOffset[1][1] = suf->offset[1];
-    if(suf->oldOffset[0][1] != suf->oldOffset[1][1])
-        if(fabs(suf->oldOffset[0][1] - suf->oldOffset[1][1]) >=
+    if(suf->oldOffset[1][0] != suf->oldOffset[1][1])
+        if(fabs(suf->oldOffset[1][0] - suf->oldOffset[1][1]) >=
            MAX_SMOOTH_MATERIAL_MOVE)
         {
             // Too fast: make an instantaneous jump.
-            suf->oldOffset[0][1] = suf->oldOffset[1][1];
+            suf->oldOffset[1][0] = suf->oldOffset[1][1];
         }
 
     return true;
@@ -262,11 +262,11 @@ boolean resetMovingSurface(surface_t* suf, void* context)
 {
     // X Offset.
     suf->visOffsetDelta[0] = 0;
-    suf->oldOffset[0][0] = suf->oldOffset[1][0] = suf->offset[0];
+    suf->oldOffset[0][0] = suf->oldOffset[0][1] = suf->offset[0];
 
-    // X Offset.
+    // Y Offset.
     suf->visOffsetDelta[1] = 0;
-    suf->oldOffset[0][1] = suf->oldOffset[1][1] = suf->offset[1];
+    suf->oldOffset[1][0] = suf->oldOffset[1][1] = suf->offset[1];
 
     Surface_Update(suf);
     R_SurfaceListRemove(movingSurfaceList, suf);
@@ -283,7 +283,7 @@ boolean interpMovingSurface(surface_t* suf, void* context)
 
     // Y Offset.
     suf->visOffsetDelta[1] =
-        suf->oldOffset[0][1] * (1 - frameTimePos) +
+        suf->oldOffset[1][0] * (1 - frameTimePos) +
                 suf->offset[1] * frameTimePos - suf->offset[1];
 
     // Visible material offset.
@@ -713,12 +713,105 @@ void R_ClearSurfaceDecorations(surface_t *suf)
     suf->numDecorations = 0;
 }
 
+void R_UpdateSkyFixForSec(const sector_t* sec)
+{
+    boolean             skyFloor, skyCeil;
+
+    if(!sec)
+        return; // Wha?
+
+    skyFloor = R_IsSkySurface(&sec->SP_floorsurface);
+    skyCeil = R_IsSkySurface(&sec->SP_ceilsurface);
+
+    if(!skyFloor && !skyCeil)
+        return;
+
+    if(skyCeil)
+    {
+        mobj_t*             mo;
+
+        // Adjust for the plane height.
+        if(sec->SP_ceilvisheight > skyFix[PLN_CEILING].height)
+        {   // Must raise the skyfix ceiling.
+            skyFix[PLN_CEILING].height = sec->SP_ceilvisheight;
+        }
+
+        // Check that all the mobjs in the sector fit in.
+        for(mo = sec->mobjList; mo; mo = mo->sNext)
+        {
+            float               extent = mo->pos[VZ] + mo->height;
+
+            if(extent > skyFix[PLN_CEILING].height)
+            {   // Must raise the skyfix ceiling.
+                skyFix[PLN_CEILING].height = extent;
+            }
+        }
+    }
+
+    if(skyFloor)
+    {
+        // Adjust for the plane height.
+        if(sec->SP_floorvisheight < skyFix[PLN_FLOOR].height)
+        {   // Must lower the skyfix floor.
+            skyFix[PLN_FLOOR].height = sec->SP_floorvisheight;
+        }
+    }
+
+    // Update for middle textures on two sided linedefs which intersect the
+    // floor and/or ceiling of their front and/or back sectors.
+    if(sec->lineDefs)
+    {
+        linedef_t**         linePtr = sec->lineDefs;
+
+        while(*linePtr)
+        {
+            linedef_t*          li = *linePtr;
+
+            // Must be twosided.
+            if(li->L_frontside && li->L_backside)
+            {
+                sidedef_t*          si = li->L_frontsector == sec?
+                    li->L_frontside : li->L_backside;
+
+                if(si->SW_middlematerial)
+                {
+                    if(skyCeil)
+                    {
+                        float               top =
+                            sec->SP_ceilvisheight +
+                                si->SW_middlevisoffset[VY];
+
+                        if(top > skyFix[PLN_CEILING].height)
+                        {   // Must raise the skyfix ceiling.
+                            skyFix[PLN_CEILING].height = top;
+                        }
+                    }
+
+                    if(skyFloor)
+                    {
+                        float               bottom =
+                            sec->SP_floorvisheight +
+                                si->SW_middlevisoffset[VY] -
+                                    si->SW_middlematerial->height;
+
+                        if(bottom < skyFix[PLN_FLOOR].height)
+                        {   // Must lower the skyfix floor.
+                            skyFix[PLN_FLOOR].height = bottom;
+                        }
+                    }
+                }
+            }
+            *linePtr++;
+        }
+    }
+}
+
 /**
  * Fixing the sky means that for adjacent sky sectors the lower sky
  * ceiling is lifted to match the upper sky. The raising only affects
  * rendering, it has no bearing on gameplay.
  */
-void R_UpdateSkyFix(void)
+void R_InitSkyFix(void)
 {
     uint                i;
 
@@ -728,108 +821,7 @@ void R_UpdateSkyFix(void)
     // Update for sector plane heights and mobjs which intersect the ceiling.
     for(i = 0; i < numSectors; ++i)
     {
-        sector_t*           sec = SECTOR_PTR(i);
-        mobj_t*             mo;
-
-        if(R_IsSkySurface(&sec->planes[PLN_CEILING]->surface))
-        {
-            // Adjust for the plane height.
-            if(sec->SP_ceilvisheight > skyFix[PLN_CEILING].height)
-            {   // Must raise the skyfix ceiling.
-                skyFix[PLN_CEILING].height = sec->SP_ceilvisheight;
-            }
-
-            // Check that all the mobjs in the sector fit in.
-            for(mo = sec->mobjList; mo; mo = mo->sNext)
-            {
-                float               extent = mo->pos[VZ] + mo->height;
-
-                if(extent > skyFix[PLN_CEILING].height)
-                {   // Must raise the skyfix ceiling.
-                    skyFix[PLN_CEILING].height = extent;
-                }
-            }
-        }
-
-        if(R_IsSkySurface(&sec->planes[PLN_FLOOR]->surface))
-        {
-            // Adjust for the plane height.
-            if(sec->SP_floorvisheight < skyFix[PLN_FLOOR].height)
-            {   // Must lower the skyfix floor.
-                skyFix[PLN_FLOOR].height = sec->SP_floorvisheight;
-            }
-        }
-    }
-
-    // Update for middle textures on two sided linedefs which intersect the
-    // floor and/or ceiling of their front and/or back sectors.
-    for(i = 0; i < numLineDefs; ++i)
-    {
-        linedef_t*          li = LINE_PTR(i);
-
-        // Must be twosided.
-        if(!li->L_frontside || !li->L_backside)
-            continue;
-
-        if(li->L_frontside && li->L_frontside->SW_middlematerial)
-        {
-            sidedef_t*          si = li->L_frontside;
-
-            if(R_IsSkySurface(&li->L_frontsector->SP_ceilsurface))
-            {
-                float               top =
-                    li->L_frontsector->SP_ceilvisheight +
-                        si->SW_middlevisoffset[VY];
-
-                if(top > skyFix[PLN_CEILING].height)
-                {   // Must raise the skyfix ceiling.
-                    skyFix[PLN_CEILING].height = top;
-                }
-            }
-
-            if(R_IsSkySurface(&li->L_frontsector->SP_floorsurface))
-            {
-                float               bottom =
-                    li->L_frontsector->SP_floorvisheight +
-                        si->SW_middlevisoffset[VY] -
-                            si->SW_middlematerial->height;
-
-                if(bottom < skyFix[PLN_FLOOR].height)
-                {   // Must lower the skyfix floor.
-                    skyFix[PLN_FLOOR].height = bottom;
-                }
-            }
-        }
-
-        if(li->L_backside && li->L_backside->SW_middlematerial)
-        {
-            sidedef_t*          si = li->L_backside;
-
-            if(R_IsSkySurface(&li->L_backsector->SP_ceilsurface))
-            {
-                float               top =
-                    li->L_backsector->SP_ceilvisheight +
-                        si->SW_middlevisoffset[VY];
-
-                if(top > skyFix[PLN_CEILING].height)
-                {   // Must raise the skyfix ceiling.
-                    skyFix[PLN_CEILING].height = top;
-                }
-            }
-
-            if(R_IsSkySurface(&li->L_backsector->SP_floorsurface))
-            {
-                float               bottom =
-                    li->L_backsector->SP_floorvisheight +
-                        si->SW_middlevisoffset[VY] -
-                            si->SW_middlematerial->height;
-
-                if(bottom < skyFix[PLN_FLOOR].height)
-                {   // Must lower the skyfix floor.
-                    skyFix[PLN_FLOOR].height = bottom;
-                }
-            }
-        }
+        R_UpdateSkyFixForSec(SECTOR_PTR(i));
     }
 }
 
@@ -1451,7 +1443,7 @@ void R_SetupMap(int mode, int flags)
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
 
-        R_UpdateSkyFix();
+        R_InitSkyFix();
 
         // Set intial values of various tracked and interpolated properties
         // (lighting, smoothed planes etc).

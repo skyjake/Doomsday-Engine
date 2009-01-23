@@ -406,10 +406,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\dgl_ext.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\dgl_texture.c"
 				>
 			</File>
@@ -834,6 +830,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\sys_opengl.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\sys_sdl_window.c"
 				>
 				<FileConfiguration
@@ -993,26 +993,6 @@
 						>
 						<Tool
 							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\mac\src\sys_window.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
 						/>
 					</FileConfiguration>
 				</File>
@@ -1343,6 +1323,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\dd_gl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\dd_help.h"
 				>
 			</File>
@@ -1419,10 +1403,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\de_dgl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\de_edit.h"
 				>
 			</File>
@@ -1475,10 +1455,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\dgl_atiext.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\api\doomsday.h"
 				>
 			</File>
@@ -1488,6 +1464,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\edit_map.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\gl_atiext.h"
 				>
 			</File>
 			<File
@@ -1932,6 +1912,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_network.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_opengl.h"
 				>
 			</File>
 			<File

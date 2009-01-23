@@ -29,7 +29,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 
@@ -109,13 +108,13 @@ void R_DrawViewBorder(void)
     if(viewwidth == 320 && viewheight == 200)
         return;
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, 320, 200, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 320, 200, 0, -1, 1);
 
     // View background.
-    DGL_Color4f(1, 1, 1, 1);
+    glColor4f(1, 1, 1, 1);
     mat = P_ToMaterial(P_MaterialNumForName(borderGfx[BG_BACKGROUND], MN_FLATS));
     if(mat)
     {
@@ -128,23 +127,23 @@ void R_DrawViewBorder(void)
 
     // The border top.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_TOP]));
-    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
                      p->height, 16, p->height);
     // Border bottom.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_BOTTOM]));
-    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
                      p->height, 16, p->height);
 
     // Left view border.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_LEFT]));
-    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx - bwidth, viewwindowy,
                      p->width, viewheight, p->width, 16);
     // Right view border.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_RIGHT]));
-    GL_BindTexture(curTex = GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
                      p->width, viewheight, p->width, 16);
 
@@ -159,6 +158,6 @@ void R_DrawViewBorder(void)
                  W_GetNumForName(borderGfx[BG_BOTTOMLEFT]));
     GL_UsePatchOffset(true);
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }

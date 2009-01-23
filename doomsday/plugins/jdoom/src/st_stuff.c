@@ -362,13 +362,13 @@ static void drawStatusBarBackground(int player, float width, float height)
     {
         // We can draw the full graphic in one go.
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0, 0);
+            DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(0, 0);
-            DGL_TexCoord2f(1, 0);
+            DGL_TexCoord2f(0, 1, 0);
             DGL_Vertex2f(width, 0);
-            DGL_TexCoord2f(1, 1);
+            DGL_TexCoord2f(0, 1, 1);
             DGL_Vertex2f(width, height);
-            DGL_TexCoord2f(0, 1);
+            DGL_TexCoord2f(0, 0, 1);
             DGL_Vertex2f(0, height);
         DGL_End();
     }
@@ -384,13 +384,13 @@ static void drawStatusBarBackground(int player, float width, float height)
         h = height * (float) ST_HEIGHT / ST_HEIGHT;
         cw = w / width;
 
-        DGL_TexCoord2f(0, 0);
+        DGL_TexCoord2f(0, 0, 0);
         DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(cw, 0);
+        DGL_TexCoord2f(0, cw, 0);
         DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(cw, 1);
+        DGL_TexCoord2f(0, cw, 1);
         DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0, 1);
+        DGL_TexCoord2f(0, 0, 1);
         DGL_Vertex2f(x, y + h);
 
         if(IS_NETGAME)
@@ -406,13 +406,13 @@ static void drawStatusBarBackground(int player, float width, float height)
                 cw2 = (x + w) / width;
                 ch = h / height;
 
-                DGL_TexCoord2f(cw, 0);
+                DGL_TexCoord2f(0, cw, 0);
                 DGL_Vertex2f(x, y);
-                DGL_TexCoord2f(cw2, 0);
+                DGL_TexCoord2f(0, cw2, 0);
                 DGL_Vertex2f(x + w, y);
-                DGL_TexCoord2f(cw2, ch);
+                DGL_TexCoord2f(0, cw2, ch);
                 DGL_Vertex2f(x + w, y + h);
-                DGL_TexCoord2f(cw, ch);
+                DGL_TexCoord2f(0, cw, ch);
                 DGL_Vertex2f(x, y + h);
             }
 
@@ -425,13 +425,13 @@ static void drawStatusBarBackground(int player, float width, float height)
             cw2 = (x + w) / width;
             ch = h / height;
 
-            DGL_TexCoord2f(cw, 0);
+            DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x, y);
-            DGL_TexCoord2f(cw2, 0);
+            DGL_TexCoord2f(0, cw2, 0);
             DGL_Vertex2f(x + w, y);
-            DGL_TexCoord2f(cw2, ch);
+            DGL_TexCoord2f(0, cw2, ch);
             DGL_Vertex2f(x + w, y + h);
-            DGL_TexCoord2f(cw, ch);
+            DGL_TexCoord2f(0, cw, ch);
             DGL_Vertex2f(x, y + h);
 
             // Awkward, 1 pixel tall strip bellow faceback.
@@ -443,13 +443,13 @@ static void drawStatusBarBackground(int player, float width, float height)
             cw2 = (x + w) / width;
             ch = (ST_HEIGHT - 1) / height;
 
-            DGL_TexCoord2f(cw, ch);
+            DGL_TexCoord2f(0, cw, ch);
             DGL_Vertex2f(x, y);
-            DGL_TexCoord2f(cw2, ch);
+            DGL_TexCoord2f(0, cw2, ch);
             DGL_Vertex2f(x + w, y);
-            DGL_TexCoord2f(cw2, 1);
+            DGL_TexCoord2f(0, cw2, 1);
             DGL_Vertex2f(x + w, y + h);
-            DGL_TexCoord2f(cw, 1);
+            DGL_TexCoord2f(0, cw, 1);
             DGL_Vertex2f(x, y + h);
 
             // After faceback.
@@ -469,13 +469,13 @@ static void drawStatusBarBackground(int player, float width, float height)
             cw = x / width;
         }
 
-        DGL_TexCoord2f(cw, 0);
+        DGL_TexCoord2f(0, cw, 0);
         DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(1, 0);
+        DGL_TexCoord2f(0, 1, 0);
         DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(1, 1);
+        DGL_TexCoord2f(0, 1, 1);
         DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(cw, 1);
+        DGL_TexCoord2f(0, cw, 1);
         DGL_Vertex2f(x, y + h);
 
         DGL_End();
@@ -491,13 +491,13 @@ static void drawStatusBarBackground(int player, float width, float height)
         h = height * ((float) armsBackground.height) / ST_HEIGHT;
 
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0, 0);
+            DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(x, y);
-            DGL_TexCoord2f(1, 0);
+            DGL_TexCoord2f(0, 1, 0);
             DGL_Vertex2f(x + w, y);
-            DGL_TexCoord2f(1, 1);
+            DGL_TexCoord2f(0, 1, 1);
             DGL_Vertex2f(x + w, y + h);
-            DGL_TexCoord2f(0, 1);
+            DGL_TexCoord2f(0, 0, 1);
             DGL_Vertex2f(x, y + h);
         DGL_End();
     }
@@ -518,13 +518,13 @@ static void drawStatusBarBackground(int player, float width, float height)
         ch = (float) (patch->height - 1) / patch->height;
 
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(cw, 0);
+            DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x, y);
-            DGL_TexCoord2f(cw2, 0);
+            DGL_TexCoord2f(0, cw2, 0);
             DGL_Vertex2f(x + w, y);
-            DGL_TexCoord2f(cw2, ch);
+            DGL_TexCoord2f(0, cw2, ch);
             DGL_Vertex2f(x + w, y + h);
-            DGL_TexCoord2f(cw, ch);
+            DGL_TexCoord2f(0, cw, ch);
             DGL_Vertex2f(x, y + h);
         DGL_End();
     }
@@ -1028,16 +1028,16 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(flip * 0, 0);
+        DGL_TexCoord2f(0, flip * 0, 0);
         DGL_Vertex2f(x, y);
 
-        DGL_TexCoord2f(!flip * 1, 0);
+        DGL_TexCoord2f(0, !flip * 1, 0);
         DGL_Vertex2f(x + w * scale, y);
 
-        DGL_TexCoord2f(!flip * 1, 1);
+        DGL_TexCoord2f(0, !flip * 1, 1);
         DGL_Vertex2f(x + w * scale, y + h * scale);
 
-        DGL_TexCoord2f(flip * 0, 1);
+        DGL_TexCoord2f(0, flip * 0, 1);
         DGL_Vertex2f(x, y + h * scale);
     DGL_End();
 }

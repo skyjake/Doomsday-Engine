@@ -34,7 +34,6 @@
 #include <stdlib.h>             // for atoi()
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_edit.h"
 #include "de_system.h"
@@ -871,10 +870,10 @@ void Net_Drawer(void)
         return;
 
     // Go into screen projection mode.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
     if(showBlinkR && SECONDS_TO_TICKS(gameTime) & 8)
     {
@@ -894,9 +893,9 @@ void Net_Drawer(void)
 
         strcat(buf, "]");
         i = theWindow->width - FR_TextWidth(buf);
-        //DGL_Color3f(0, 0, 0);
+        //glColor3f(0, 0, 0);
         //FR_TextOut(buf, i - 8, 12);
-        DGL_Color3f(1, 1, 1);
+        glColor3f(1, 1, 1);
         FR_ShadowTextOut(buf, i - 10, 10);
     }
 
@@ -917,8 +916,8 @@ void Net_Drawer(void)
     Rend_ConsoleFPS(theWindow->width - 10, 30);
 
     // Restore original matrix.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }
 
 /**

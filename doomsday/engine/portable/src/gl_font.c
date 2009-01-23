@@ -40,7 +40,6 @@
 #include <stdlib.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -113,7 +112,7 @@ static void FR_DestroyFontIdx(int idx)
 {
     jfrfont_t *font = fonts + idx;
 
-    DGL_DeleteTextures(1, (DGLuint*) &font->texture);
+    glDeleteTextures(1, (const GLuint*) &font->texture);
     memmove(fonts + idx, fonts + idx + 1,
             sizeof(jfrfont_t) * (numFonts - idx - 1));
     numFonts--;
@@ -785,19 +784,19 @@ int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shad
     {
         // The color of the text itself.
         DGL_GetIntegerv(DGL_CURRENT_COLOR_RGBA, origColor);
-        DGL_Color4ub(0, 0, 0, origColor[3] * shadowAlpha);
+        glColor4ub(0, 0, 0, origColor[3] * shadowAlpha);
     }
 
     // Set the texture.
-    DGL_Bind(cf->texture);
+    glBindTexture(GL_TEXTURE_2D, cf->texture);
 
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Scalef(1.f / cf->texWidth, 1.f / cf->texHeight, 1.f);
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadIdentity();
+    glScalef(1.f / cf->texWidth, 1.f / cf->texHeight, 1.f);
 
     // Print it.
-    DGL_Begin(DGL_QUADS);
+    glBegin(GL_QUADS);
 
     if(drawShadow)
     {
@@ -813,17 +812,17 @@ int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shad
             jfrchar_t *ch = cf->chars + (byte) text[i];
 
             // Upper left.
-            DGL_TexCoord2f(ch->x, ch->y);
-            DGL_Vertex2f(x, y);
+            glTexCoord2f(ch->x, ch->y);
+            glVertex2f(x, y);
             // Upper right.
-            DGL_TexCoord2f(ch->x + ch->w, ch->y);
-            DGL_Vertex2f(x + ch->w, y);
+            glTexCoord2f(ch->x + ch->w, ch->y);
+            glVertex2f(x + ch->w, y);
             // Lower right.
-            DGL_TexCoord2f(ch->x + ch->w, ch->y + ch->h);
-            DGL_Vertex2f(x + ch->w, y + ch->h);
+            glTexCoord2f(ch->x + ch->w, ch->y + ch->h);
+            glVertex2f(x + ch->w, y + ch->h);
             // Lower left.
-            DGL_TexCoord2f(ch->x, ch->y + ch->h);
-            DGL_Vertex2f(x, y + ch->h);
+            glTexCoord2f(ch->x, ch->y + ch->h);
+            glVertex2f(x, y + ch->h);
             // Move on.
             x += ch->w;
         }
@@ -833,7 +832,7 @@ int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shad
     }
 
     if(drawShadow)
-        DGL_Color4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
+        glColor4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
 
     x -= cf->marginWidth;
     y -= cf->marginHeight;
@@ -843,26 +842,26 @@ int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shad
         jfrchar_t *ch = cf->chars + (byte) text[i];
 
         // Upper left.
-        DGL_TexCoord2f(ch->x, ch->y);
-        DGL_Vertex2f(x, y);
+        glTexCoord2f(ch->x, ch->y);
+        glVertex2f(x, y);
         // Upper right.
-        DGL_TexCoord2f(ch->x + ch->w, ch->y);
-        DGL_Vertex2f(x + ch->w, y);
+        glTexCoord2f(ch->x + ch->w, ch->y);
+        glVertex2f(x + ch->w, y);
         // Lower right.
-        DGL_TexCoord2f(ch->x + ch->w, ch->y + ch->h);
-        DGL_Vertex2f(x + ch->w, y + ch->h);
+        glTexCoord2f(ch->x + ch->w, ch->y + ch->h);
+        glVertex2f(x + ch->w, y + ch->h);
         // Lower left.
-        DGL_TexCoord2f(ch->x, ch->y + ch->h);
-        DGL_Vertex2f(x, y + ch->h);
+        glTexCoord2f(ch->x, ch->y + ch->h);
+        glVertex2f(x, y + ch->h);
         // Move on.
         step = ch->w - 2*cf->marginWidth;
         width += step;
         x += step;
     }
-    DGL_End();
+    glEnd();
 
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PopMatrix();
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
     return width;
 }
 

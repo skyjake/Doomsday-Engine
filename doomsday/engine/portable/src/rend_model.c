@@ -39,7 +39,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
@@ -167,24 +166,24 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
     void       *coords[2];
 
     // Disable all vertex arrays.
-    DGL_DisableArrays(true, true, DGL_ALL_BITS);
+    GL_DisableArrays(true, true, DGL_ALL_BITS);
 
     // Load the vertex array.
     switch(mode)
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
-        DGL_Arrays(vertices, colors, 1, coords, 0);
+        GL_Arrays(vertices, colors, 1, coords, 0);
         break;
 
     case RC_BOTH_COORDS:
         coords[0] = NULL;
         coords[1] = texCoords;
-        DGL_Arrays(vertices, colors, 2, coords, 0);
+        GL_Arrays(vertices, colors, 2, coords, 0);
         break;
 
     default:
-        DGL_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
+        GL_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
         break;
     }
 
@@ -194,7 +193,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
         pos += 4;
 
         // The type of primitive depends on the sign.
-        DGL_Begin(count > 0 ? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
+        glBegin(count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
         if(count < 0)
             count = -count;
 
@@ -208,14 +207,14 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
 
             if(mode != RC_OTHER_COORDS)
             {
-                DGL_TexCoord2f(FLOAT(v->s), FLOAT(v->t));
+                glTexCoord2f(FLOAT(v->s), FLOAT(v->t));
             }
 
-            DGL_ArrayElement(LONG(v->index));
+            GL_ArrayElement(LONG(v->index));
         }
 
         // The primitive is complete.
-        DGL_End();
+        glEnd();
     }
 }
 
@@ -589,42 +588,42 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     // Setup transformation.
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
 
     // Model space => World space
-    DGL_Translatef(params->center[VX] + params->srvo[VX] +
-                    Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
-                  params->center[VZ] + params->srvo[VZ] +
-                    Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
-                  params->center[VY] + params->srvo[VY] + zSign *
-                    Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
+    glTranslatef(params->center[VX] + params->srvo[VX] +
+                   Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
+                 params->center[VZ] + params->srvo[VZ] +
+                   Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
+                 params->center[VY] + params->srvo[VY] + zSign *
+                   Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
 
     if(params->extraYawAngle || params->extraPitchAngle)
     {
         // Sky models have an extra rotation.
-        DGL_Scalef(1, 200 / 240.0f, 1);
-        DGL_Rotatef(params->extraYawAngle, 1, 0, 0);
-        DGL_Rotatef(params->extraPitchAngle, 0, 0, 1);
-        DGL_Scalef(1, 240 / 200.0f, 1);
+        glScalef(1, 200 / 240.0f, 1);
+        glRotatef(params->extraYawAngle, 1, 0, 0);
+        glRotatef(params->extraPitchAngle, 0, 0, 1);
+        glScalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    DGL_Rotatef(params->viewAlign ? params->yawAngleOffset : params->yaw,
-               0, 1, 0);
-    DGL_Rotatef(params->viewAlign ? params->pitchAngleOffset : params->pitch,
-               0, 0, 1);
+    glRotatef(params->viewAlign ? params->yawAngleOffset : params->yaw,
+              0, 1, 0);
+    glRotatef(params->viewAlign ? params->pitchAngleOffset : params->pitch,
+              0, 0, 1);
 
     // Scaling and model space offset.
-    DGL_Scalef(Mod_Lerp(mf->scale[VX], mfNext->scale[VX], inter),
-              Mod_Lerp(mf->scale[VY], mfNext->scale[VY], inter),
-              Mod_Lerp(mf->scale[VZ], mfNext->scale[VZ], inter));
+    glScalef(Mod_Lerp(mf->scale[VX], mfNext->scale[VX], inter),
+             Mod_Lerp(mf->scale[VY], mfNext->scale[VY], inter),
+             Mod_Lerp(mf->scale[VZ], mfNext->scale[VZ], inter));
     if(params->extraScale)
     {
         // Particle models have an extra scale.
-        DGL_Scalef(params->extraScale, params->extraScale, params->extraScale);
+        glScalef(params->extraScale, params->extraScale, params->extraScale);
     }
-    DGL_Translatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
+    glTranslatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
 
     // Now we can draw.
     numVerts = mdl->info.numVertices;
@@ -895,8 +894,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     // We're done!
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 
     // Normally culling is always enabled.
     if(subFlags & MFF_TWO_SIDED)

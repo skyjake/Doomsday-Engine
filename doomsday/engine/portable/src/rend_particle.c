@@ -31,7 +31,6 @@
 #include <stdlib.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
@@ -178,7 +177,7 @@ void PG_InitTextures(void)
 
 void PG_ShutdownTextures(void)
 {
-    DGL_DeleteTextures(NUM_TEX_NAMES, ptctexname);
+    glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }
 
@@ -507,7 +506,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
     ptcstage_t*         st;
     particle_t*         pt;
     ded_ptcstage_t*     dst, *nextDst;
-    glprimtype_t        primType = DGL_QUADS;
+    ushort              primType = GL_QUADS;
     blendmode_t         mode = BM_NORMAL, newMode;
     boolean             flatOnPlane, flatOnWall, nearPlane, nearWall;
 
@@ -533,14 +532,14 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
     {
         glDepthMask(GL_FALSE);
         glDisable(GL_CULL_FACE);
-        DGL_Bind(renderTextures ? ptctexname[usingTexture] : 0);
+        glBindTexture(GL_TEXTURE_2D, renderTextures ? ptctexname[usingTexture] : 0);
         glDepthFunc(GL_LEQUAL);
-        DGL_Begin(primType = DGL_QUADS);
+        glBegin(primType = GL_QUADS);
     }
     else
     {
-        DGL_Disable(DGL_TEXTURING); // Lines don't use textures.
-        DGL_Begin(primType = DGL_LINES);
+        glDisable(GL_TEXTURE_2D); // Lines don't use textures.
+        glBegin(primType = GL_LINES);
     }
 
     // How many particles can we render?
@@ -576,9 +575,9 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                  flags & PGF_INVMUL_BLEND ? BM_INVERSE_MUL : BM_NORMAL);
             if(newMode != mode)
             {
-                DGL_End();
+                glEnd();
                 GL_BlendMode(mode = newMode);
-                DGL_Begin(primType);
+                glBegin(primType);
             }
         }
 
@@ -637,7 +636,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         if(color[3] <= 0)
             continue;
 
-        DGL_Color4fv(color);
+        glColor4fv(color);
 
         nearPlane = (pt->sector &&
                      (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->pos[VZ] ||
@@ -677,17 +676,17 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Should the particle be flat against a plane?
             if(flatOnPlane)
             {
-                DGL_TexCoord2f(0, 0);
-                DGL_Vertex3f(center[VX] - size, center[VY], center[VZ] - size);
+                glTexCoord2f(0, 0);
+                glVertex3f(center[VX] - size, center[VY], center[VZ] - size);
 
-                DGL_TexCoord2f(1, 0);
-                DGL_Vertex3f(center[VX] + size, center[VY], center[VZ] - size);
+                glTexCoord2f(1, 0);
+                glVertex3f(center[VX] + size, center[VY], center[VZ] - size);
 
-                DGL_TexCoord2f(1, 1);
-                DGL_Vertex3f(center[VX] + size, center[VY], center[VZ] + size);
+                glTexCoord2f(1, 1);
+                glVertex3f(center[VX] + size, center[VY], center[VZ] + size);
 
-                DGL_TexCoord2f(0, 1);
-                DGL_Vertex3f(center[VX] - size, center[VY], center[VZ] + size);
+                glTexCoord2f(0, 1);
+                glVertex3f(center[VX] - size, center[VY], center[VZ] + size);
             }
             // Flat against a wall, then?
             else if(flatOnWall)
@@ -714,57 +713,57 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
 
                 P_LineUnitVector(pt->contact, line);
 
-                DGL_TexCoord2f(0, 0);
-                DGL_Vertex3f(projected[VX] - size * line[VX], center[VY] - size,
-                             projected[VY] - size * line[VY]);
+                glTexCoord2f(0, 0);
+                glVertex3f(projected[VX] - size * line[VX], center[VY] - size,
+                           projected[VY] - size * line[VY]);
 
-                DGL_TexCoord2f(1, 0);
-                DGL_Vertex3f(projected[VX] - size * line[VX], center[VY] + size,
-                             projected[VY] - size * line[VY]);
+                glTexCoord2f(1, 0);
+                glVertex3f(projected[VX] - size * line[VX], center[VY] + size,
+                           projected[VY] - size * line[VY]);
 
-                DGL_TexCoord2f(1, 1);
-                DGL_Vertex3f(projected[VX] + size * line[VX], center[VY] + size,
-                             projected[VY] + size * line[VY]);
+                glTexCoord2f(1, 1);
+                glVertex3f(projected[VX] + size * line[VX], center[VY] + size,
+                           projected[VY] + size * line[VY]);
 
-                DGL_TexCoord2f(0, 1);
-                DGL_Vertex3f(projected[VX] + size * line[VX], center[VY] - size,
-                             projected[VY] + size * line[VY]);
+                glTexCoord2f(0, 1);
+                glVertex3f(projected[VX] + size * line[VX], center[VY] - size,
+                           projected[VY] + size * line[VY]);
             }
             else
             {
-                DGL_TexCoord2f(0, 0);
-                DGL_Vertex3f(center[VX] + size * leftoff[VX],
-                             center[VY] + size * leftoff[VY] / 1.2f,
-                             center[VZ] + size * leftoff[VZ]);
+                glTexCoord2f(0, 0);
+                glVertex3f(center[VX] + size * leftoff[VX],
+                           center[VY] + size * leftoff[VY] / 1.2f,
+                           center[VZ] + size * leftoff[VZ]);
 
-                DGL_TexCoord2f(1, 0);
-                DGL_Vertex3f(center[VX] + size * rightoff[VX],
-                             center[VY] + size * rightoff[VY] / 1.2f,
-                             center[VZ] + size * rightoff[VZ]);
+                glTexCoord2f(1, 0);
+                glVertex3f(center[VX] + size * rightoff[VX],
+                           center[VY] + size * rightoff[VY] / 1.2f,
+                           center[VZ] + size * rightoff[VZ]);
 
-                DGL_TexCoord2f(1, 1);
-                DGL_Vertex3f(center[VX] - size * leftoff[VX],
-                             center[VY] - size * leftoff[VY] / 1.2f,
-                             center[VZ] - size * leftoff[VZ]);
+                glTexCoord2f(1, 1);
+                glVertex3f(center[VX] - size * leftoff[VX],
+                           center[VY] - size * leftoff[VY] / 1.2f,
+                           center[VZ] - size * leftoff[VZ]);
 
-                DGL_TexCoord2f(0, 1);
-                DGL_Vertex3f(center[VX] - size * rightoff[VX],
-                             center[VY] - size * rightoff[VY] / 1.2f,
-                             center[VZ] - size * rightoff[VZ]);
+                glTexCoord2f(0, 1);
+                glVertex3f(center[VX] - size * rightoff[VX],
+                           center[VY] - size * rightoff[VY] / 1.2f,
+                           center[VZ] - size * rightoff[VZ]);
             }
         }
         else // It's a line.
         {
-            DGL_Vertex3f(center[VX], center[VY], center[VZ]);
-            DGL_Vertex3f(center[VX] - FIX2FLT(pt->mov[VX]),
-                        center[VY] - FIX2FLT(pt->mov[VZ]),
-                        center[VZ] - FIX2FLT(pt->mov[VY]));
+            glVertex3f(center[VX], center[VY], center[VZ]);
+            glVertex3f(center[VX] - FIX2FLT(pt->mov[VX]),
+                       center[VY] - FIX2FLT(pt->mov[VZ]),
+                       center[VZ] - FIX2FLT(pt->mov[VY]));
         }
     }
 
     if(rtype != PTC_MODEL)
     {
-        DGL_End();
+        glEnd();
 
         if(usingTexture >= 0)
         {
@@ -774,7 +773,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         }
         else
         {
-            DGL_Enable(DGL_TEXTURING);
+            glEnable(GL_TEXTURE_2D);
         }
     }
 

@@ -36,7 +36,6 @@
 #include <assert.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -270,10 +269,10 @@ void R_Update(void)
     S_Reset();
 
     GL_InitVarFont();
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
     GL_TotalReset(true, false, false);
     GL_TotalReset(false, false, false); // Bring GL back online (no lightmaps, flares yet).
 
@@ -326,8 +325,8 @@ void R_Update(void)
     // the re-initialization.
     RL_DeleteLists();
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 
     GL_ShutdownVarFont();
 
@@ -748,12 +747,12 @@ void R_UseViewPort(viewport_t* port)
 {
     if(!port)
     {
-        DGL_Viewport(0, 0, theWindow->width, theWindow->height);
+        glViewport(0, FLIP(0 + theWindow->height - 1), theWindow->width, theWindow->height);
     }
     else
     {
         currentPort = port;
-        DGL_Viewport(port->x, port->y, port->width, port->height);
+        glViewport(port->x, FLIP(port->y + port->height - 1), port->width, port->height);
     }
 }
 

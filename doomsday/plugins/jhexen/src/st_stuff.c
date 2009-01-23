@@ -512,16 +512,16 @@ static void drawChain(hudstate_t* hud)
         float               cw = gemXOffset / dpChain[pClass].width;
 
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(1 - cw, 0);
+            DGL_TexCoord2f(0, 1 - cw, 0);
             DGL_Vertex2f(x, y);
 
-            DGL_TexCoord2f(1, 0);
+            DGL_TexCoord2f(0, 1, 0);
             DGL_Vertex2f(x + gemXOffset, y);
 
-            DGL_TexCoord2f(1, 1);
+            DGL_TexCoord2f(0, 1, 1);
             DGL_Vertex2f(x + gemXOffset, y + h);
 
-            DGL_TexCoord2f(1 - cw, 1);
+            DGL_TexCoord2f(0, 1 - cw, 1);
             DGL_Vertex2f(x, y + h);
         DGL_End();
     }
@@ -533,16 +533,16 @@ static void drawChain(hudstate_t* hud)
                 dpChain[pClass].width;
 
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0, 0);
+            DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(x + gemXOffset + dpLifeGem[pClass][pColor].width, y);
 
-            DGL_TexCoord2f(cw, 0);
+            DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x + w, y);
 
-            DGL_TexCoord2f(cw, 1);
+            DGL_TexCoord2f(0, cw, 1);
             DGL_Vertex2f(x + w, y + h);
 
-            DGL_TexCoord2f(0, 1);
+            DGL_TexCoord2f(0, 0, 1);
             DGL_Vertex2f(x + gemXOffset + dpLifeGem[pClass][pColor].width, y + h);
         DGL_End();
     }
@@ -639,13 +639,13 @@ static void drawStatusBarBackground(int player)
         h = 27;
         ch = 0.41538461538461538461538461538462;
 
-        DGL_TexCoord2f(0, 0);
+        DGL_TexCoord2f(0, 0, 0);
         DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(1, 0);
+        DGL_TexCoord2f(0, 1, 0);
         DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(1, ch);
+        DGL_TexCoord2f(0, 1, ch);
         DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0, ch);
+        DGL_TexCoord2f(0, 0, ch);
         DGL_Vertex2f(x, y + h);
 
         // left statue
@@ -656,13 +656,13 @@ static void drawStatusBarBackground(int player)
         cw = (float) 38 / ST_WIDTH;
         ch = 0.41538461538461538461538461538462;
 
-        DGL_TexCoord2f(0, ch);
+        DGL_TexCoord2f(0, 0, ch);
         DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(cw, ch);
+        DGL_TexCoord2f(0, cw, ch);
         DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(cw, 1);
+        DGL_TexCoord2f(0, cw, 1);
         DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0, 1);
+        DGL_TexCoord2f(0, 0, 1);
         DGL_Vertex2f(x, y + h);
 
         // right statue
@@ -673,13 +673,13 @@ static void drawStatusBarBackground(int player)
         cw = (float) (ST_WIDTH - 38) / ST_WIDTH;
         ch = 0.41538461538461538461538461538462f;
 
-        DGL_TexCoord2f(cw, ch);
+        DGL_TexCoord2f(0, cw, ch);
         DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(1, ch);
+        DGL_TexCoord2f(0, 1, ch);
         DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(1, 1);
+        DGL_TexCoord2f(0, 1, 1);
         DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(cw, 1);
+        DGL_TexCoord2f(0, cw, 1);
         DGL_Vertex2f(x, y + h);
         DGL_End();
 
@@ -715,16 +715,16 @@ static void drawStatusBarBackground(int player)
                 w = deathmatch ? 122 : 152;
                 h = 30;
                 cw = deathmatch ? (float) 15 / 122 : 0;
-                cw2 = 0.62295081967213114754098360655738f;
-                ch = 0.96774193548387096774193548387097f;
+                cw2 = 0.62295081967213114754098360655738;
+                ch = 0.96774193548387096774193548387097;
 
-                DGL_TexCoord2f(cw, 0);
+                DGL_TexCoord2f(0, cw, 0);
                 DGL_Vertex2f(x, y);
-                DGL_TexCoord2f(cw2, 0);
+                DGL_TexCoord2f(0, cw2, 0);
                 DGL_Vertex2f(x + w, y);
-                DGL_TexCoord2f(cw2, ch);
+                DGL_TexCoord2f(0, cw2, ch);
                 DGL_Vertex2f(x + w, y + h);
-                DGL_TexCoord2f(cw, ch);
+                DGL_TexCoord2f(0, cw, ch);
                 DGL_Vertex2f(x, y + h);
 
                 // right of statbar (after weapon puzzle display)
@@ -732,21 +732,21 @@ static void drawStatusBarBackground(int player)
                 y = 162;
                 w = 35;
                 h = 30;
-                cw = 0.85655737704918032786885245901639f;
-                ch = 0.96774193548387096774193548387097f;
+                cw = 0.85655737704918032786885245901639;
+                ch = 0.96774193548387096774193548387097;
 
-                DGL_TexCoord2f(cw, 0);
+                DGL_TexCoord2f(0, cw, 0);
                 DGL_Vertex2f(x, y);
-                DGL_TexCoord2f(1, 0);
+                DGL_TexCoord2f(0, 1, 0);
                 DGL_Vertex2f(x + w, y);
-                DGL_TexCoord2f(1, ch);
+                DGL_TexCoord2f(0, 1, ch);
                 DGL_Vertex2f(x + w, y + h);
-                DGL_TexCoord2f(cw, ch);
+                DGL_TexCoord2f(0, cw, ch);
                 DGL_Vertex2f(x, y + h);
 
                 DGL_End();
 
-                 GL_DrawPatch_CS(190, 162, dpWeaponSlot[pClass].lump);
+                GL_DrawPatch_CS(190, 162, dpWeaponSlot[pClass].lump);
             }
             else
             {
@@ -763,15 +763,15 @@ static void drawStatusBarBackground(int player)
             y = 162;
             w = 244;
             h = 30;
-            ch = 0.96774193548387096774193548387097f;
+            ch = 0.96774193548387096774193548387097;
 
-            DGL_TexCoord2f(0, 0);
+            DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(x, y);
-            DGL_TexCoord2f(1, 0);
+            DGL_TexCoord2f(0, 1, 0);
             DGL_Vertex2f(x + w, y);
-            DGL_TexCoord2f(1, ch);
+            DGL_TexCoord2f(0, 1, ch);
             DGL_Vertex2f(x + w, y + h);
-            DGL_TexCoord2f(0, ch);
+            DGL_TexCoord2f(0, 0, ch);
             DGL_Vertex2f(x, y + h);
 
             DGL_End();

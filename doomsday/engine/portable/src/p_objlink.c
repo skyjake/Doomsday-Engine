@@ -33,7 +33,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"

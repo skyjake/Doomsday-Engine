@@ -31,7 +31,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
@@ -90,23 +89,23 @@ void Rend_SpriteRegister(void)
 static __inline void renderQuad(gl_vertex_t *v, gl_color_t *c,
                                 gl_texcoord_t *tc)
 {
-    DGL_Begin(DGL_QUADS);
-        DGL_Color4ubv(c[0].rgba);
-        DGL_TexCoord2fv(tc[0].st);
-        DGL_Vertex3fv(v[0].xyz);
+    glBegin(GL_QUADS);
+        glColor4ubv(c[0].rgba);
+        glTexCoord2fv(tc[0].st);
+        glVertex3fv(v[0].xyz);
 
-        DGL_Color4ubv(c[1].rgba);
-        DGL_TexCoord2fv(tc[1].st);
-        DGL_Vertex3fv(v[1].xyz);
+        glColor4ubv(c[1].rgba);
+        glTexCoord2fv(tc[1].st);
+        glVertex3fv(v[1].xyz);
 
-        DGL_Color4ubv(c[2].rgba);
-        DGL_TexCoord2fv(tc[2].st);
-        DGL_Vertex3fv(v[2].xyz);
+        glColor4ubv(c[2].rgba);
+        glTexCoord2fv(tc[2].st);
+        glVertex3fv(v[2].xyz);
 
-        DGL_Color4ubv(c[3].rgba);
-        DGL_TexCoord2fv(tc[3].st);
-        DGL_Vertex3fv(v[3].xyz);
-    DGL_End();
+        glColor4ubv(c[3].rgba);
+        glTexCoord2fv(tc[3].st);
+        glVertex3fv(v[3].xyz);
+    glEnd();
 }
 
 /**
@@ -126,7 +125,7 @@ void Rend_Draw3DPlayerSprites(void)
 
     // Turn off fog.
     if(usingFog)
-        DGL_Disable(DGL_FOG);
+        glDisable(GL_FOG);
 
     for(i = 0; i < DDMAXPSPRITES; ++i)
     {
@@ -144,7 +143,7 @@ void Rend_Draw3DPlayerSprites(void)
 
     // Should we turn the fog back on?
     if(usingFog)
-        DGL_Enable(DGL_FOG);
+        glEnable(GL_FOG);
 }
 
 /**
@@ -375,7 +374,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     }
     else
     {
-        DGL_Bind(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     //  0---1
@@ -426,23 +425,23 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     tc[3].st[0] = params->texOffset[0] *  (params->texFlip[0]? 1:0);
     tc[3].st[1] = params->texOffset[1] * (!params->texFlip[1]? 1:0);
 
-    DGL_Begin(DGL_QUADS);
-        DGL_Color4ubv(c[0].rgba);
-        DGL_TexCoord2fv(tc[0].st);
-        DGL_Vertex2fv(v1);
+    glBegin(GL_QUADS);
+        glColor4ubv(c[0].rgba);
+        glTexCoord2fv(tc[0].st);
+        glVertex2fv(v1);
 
-        DGL_Color4ubv(c[1].rgba);
-        DGL_TexCoord2fv(tc[1].st);
-        DGL_Vertex2fv(v2);
+        glColor4ubv(c[1].rgba);
+        glTexCoord2fv(tc[1].st);
+        glVertex2fv(v2);
 
-        DGL_Color4ubv(c[2].rgba);
-        DGL_TexCoord2fv(tc[2].st);
-        DGL_Vertex2fv(v3);
+        glColor4ubv(c[2].rgba);
+        glTexCoord2fv(tc[2].st);
+        glVertex2fv(v3);
 
-        DGL_Color4ubv(c[3].rgba);
-        DGL_TexCoord2fv(tc[3].st);
-        DGL_Vertex2fv(v4);
-    DGL_End();
+        glColor4ubv(c[3].rgba);
+        glTexCoord2fv(tc[3].st);
+        glVertex2fv(v4);
+    glEnd();
     }
 }
 
@@ -565,88 +564,88 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     // done about this.
     if(withDyn)
     {
-        DGL_Begin(DGL_QUADS);
-        DGL_Color4fv(params->vertices[0].color);
-        DGL_MultiTexCoord2f(normal, params->texCoord[0][0],
-                            params->texCoord[1][1]);
+        glBegin(GL_QUADS);
+            glColor4fv(params->vertices[0].color);
+            glMultiTexCoord2fARB(normal, params->texCoord[0][0],
+                                 params->texCoord[1][1]);
 
-        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][0],
-                            params->modTexCoord[1][1]);
+            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][0],
+                                 params->modTexCoord[1][1]);
 
-        DGL_Vertex3f(params->vertices[0].pos[VX],
-                     params->vertices[0].pos[VZ],
-                     params->vertices[0].pos[VY]);
+            glVertex3f(params->vertices[0].pos[VX],
+                         params->vertices[0].pos[VZ],
+                         params->vertices[0].pos[VY]);
 
-        DGL_Color4fv(params->vertices[1].color);
-        DGL_MultiTexCoord2fv(normal, params->texCoord[0]);
+            glColor4fv(params->vertices[1].color);
+            glMultiTexCoord2fvARB(normal, params->texCoord[0]);
 
-        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][0],
-                            params->modTexCoord[1][0]);
+            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][0],
+                                 params->modTexCoord[1][0]);
 
-        DGL_Vertex3f(params->vertices[1].pos[VX],
-                     params->vertices[1].pos[VZ],
-                     params->vertices[1].pos[VY]);
+            glVertex3f(params->vertices[1].pos[VX],
+                         params->vertices[1].pos[VZ],
+                         params->vertices[1].pos[VY]);
 
-        DGL_Color4fv(params->vertices[3].color);
-        DGL_MultiTexCoord2f(normal, params->texCoord[1][0],
-                            params->texCoord[0][1]);
+            glColor4fv(params->vertices[3].color);
+            glMultiTexCoord2fARB(normal, params->texCoord[1][0],
+                                 params->texCoord[0][1]);
 
-        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][1],
-                            params->modTexCoord[1][0]);
+            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][1],
+                                 params->modTexCoord[1][0]);
 
-        DGL_Vertex3f(params->vertices[3].pos[VX],
-                     params->vertices[3].pos[VZ],
-                     params->vertices[3].pos[VY]);
+            glVertex3f(params->vertices[3].pos[VX],
+                         params->vertices[3].pos[VZ],
+                         params->vertices[3].pos[VY]);
 
-        DGL_Color4fv(params->vertices[2].color);
-        DGL_MultiTexCoord2fv(normal, params->texCoord[1]);
+            glColor4fv(params->vertices[2].color);
+            glMultiTexCoord2fvARB(normal, params->texCoord[1]);
 
-        DGL_MultiTexCoord2f(dyn, params->modTexCoord[0][1],
-                            params->modTexCoord[1][1]);
+            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][1],
+                                 params->modTexCoord[1][1]);
 
-        DGL_Vertex3f(params->vertices[2].pos[VX],
-                     params->vertices[2].pos[VZ],
-                     params->vertices[2].pos[VY]);
-        DGL_End();
+            glVertex3f(params->vertices[2].pos[VX],
+                         params->vertices[2].pos[VZ],
+                         params->vertices[2].pos[VY]);
+        glEnd();
 
         // Restore normal GL state.
         GL_SelectTexUnits(1);
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
-        DGL_DisableArrays(true, true, 0x1);
+        GL_DisableArrays(true, true, 0x1);
     }
     else
     {
-        DGL_Begin(DGL_QUADS);
-        DGL_Color4fv(params->vertices[0].color);
-        DGL_MultiTexCoord2f(normal, params->texCoord[0][0],
-                           params->texCoord[1][1]);
+        glBegin(GL_QUADS);
+            glColor4fv(params->vertices[0].color);
+            glMultiTexCoord2fARB(normal, params->texCoord[0][0],
+                               params->texCoord[1][1]);
 
-        DGL_Vertex3f(params->vertices[0].pos[VX],
-                    params->vertices[0].pos[VZ],
-                    params->vertices[0].pos[VY]);
+            glVertex3f(params->vertices[0].pos[VX],
+                        params->vertices[0].pos[VZ],
+                        params->vertices[0].pos[VY]);
 
-        DGL_Color4fv(params->vertices[1].color);
-        DGL_MultiTexCoord2fv(normal, params->texCoord[0]);
+            glColor4fv(params->vertices[1].color);
+            glMultiTexCoord2fvARB(normal, params->texCoord[0]);
 
-        DGL_Vertex3f(params->vertices[1].pos[VX],
-                    params->vertices[1].pos[VZ],
-                    params->vertices[1].pos[VY]);
+            glVertex3f(params->vertices[1].pos[VX],
+                        params->vertices[1].pos[VZ],
+                        params->vertices[1].pos[VY]);
 
-        DGL_Color4fv(params->vertices[3].color);
-        DGL_MultiTexCoord2f(normal, params->texCoord[1][0],
-                           params->texCoord[0][1]);
+            glColor4fv(params->vertices[3].color);
+            glMultiTexCoord2fARB(normal, params->texCoord[1][0],
+                               params->texCoord[0][1]);
 
-        DGL_Vertex3f(params->vertices[3].pos[VX],
-                    params->vertices[3].pos[VZ],
-                    params->vertices[3].pos[VY]);
+            glVertex3f(params->vertices[3].pos[VX],
+                        params->vertices[3].pos[VZ],
+                        params->vertices[3].pos[VY]);
 
-        DGL_Color4fv(params->vertices[2].color);
-        DGL_MultiTexCoord2fv(normal, params->texCoord[1]);
+            glColor4fv(params->vertices[2].color);
+            glMultiTexCoord2fvARB(normal, params->texCoord[1]);
 
-        DGL_Vertex3f(params->vertices[2].pos[VX],
-                    params->vertices[2].pos[VZ],
-                    params->vertices[2].pos[VY]);
-        DGL_End();
+            glVertex3f(params->vertices[2].pos[VX],
+                        params->vertices[2].pos[VZ],
+                        params->vertices[2].pos[VY]);
+        glEnd();
     }
 
     GL_BlendMode(BM_NORMAL);
@@ -872,16 +871,16 @@ boolean drawVLightVector(const vlight_t* light, void* context)
 {
     float               scale = 100;
 
-    DGL_Begin(DGL_LINES);
+    glBegin(GL_LINES);
     {
-        DGL_Color4f(light->color[CR], light->color[CG], light->color[CB], 1);
-        DGL_Vertex3f(scale * light->vector[VX],
+        glColor4f(light->color[CR], light->color[CG], light->color[CB], 1);
+        glVertex3f(scale * light->vector[VX],
                      scale * light->vector[VZ],
                      scale * light->vector[VY]);
-        DGL_Color4f(0, 0, 0, 1);
-        DGL_Vertex3f(0, 0, 0);
+        glColor4f(0, 0, 0, 1);
+        glVertex3f(0, 0, 0);
     }
-    DGL_End();
+    glEnd();
 
     return true; // Continue iteration.
 }
@@ -951,16 +950,16 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
 /*#if _DEBUG
 // Draw the surface normal.
-DGL_Disable(DGL_TEXTURING);
-DGL_Begin(DGL_LINES);
-DGL_Color4f(1, 0, 0, 1);
-DGL_Vertex3f(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
-DGL_Color4f(1, 0, 0, 0);
-DGL_Vertex3f(spriteCenter[VX] + surfaceNormal[VX] * 10,
-             spriteCenter[VZ] + surfaceNormal[VZ] * 10,
-             spriteCenter[VY] + surfaceNormal[VY] * 10);
-DGL_End();
-DGL_Enable(DGL_TEXTURING);
+glDisable(GL_TEXTURE2D);
+glBegin(GL_LINES);
+glColor4f(1, 0, 0, 1);
+glVertex3f(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
+glColor4f(1, 0, 0, 0);
+glVertex3f(spriteCenter[VX] + surfaceNormal[VX] * 10,
+           spriteCenter[VZ] + surfaceNormal[VZ] * 10,
+           spriteCenter[VY] + surfaceNormal[VY] * 10);
+glEnd();
+glEnable(GL_TEXTURE2D);
 #endif*/
 
     // All sprite vertices are co-plannar, so just copy the surface normal.
@@ -981,24 +980,24 @@ DGL_Enable(DGL_TEXTURING);
 /*#if _DEBUG
 if(params->vLightListIdx)
 {   // Draw the vlight vectors, for debug.
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
 
-    DGL_Translatef(params->center[VX], params->center[VZ],
-                   params->center[VY]);
+    glTranslatef(params->center[VX], params->center[VZ],
+                 params->center[VY]);
 
     VL_ListIterator(params->vLightListIdx, NULL, drawVLightVector);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE2D);
 }
 #endif*/
 
@@ -1007,11 +1006,11 @@ if(params->vLightListIdx)
     {
         // We must set up a modelview transformation matrix.
         restoreMatrix = true;
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
 
         // Rotate around the center of the sprite.
-        DGL_Translatef(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
+        glTranslatef(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
         if(!params->viewAligned)
         {
             float   s_dx = v1[VX] - v2[VX];
@@ -1036,22 +1035,22 @@ if(params->vLightListIdx)
                         maxSpriteAngle);
 
                     // Rotate along the sprite edge.
-                    DGL_Rotatef(turnAngle, s_dx, 0, s_dy);
+                    glRotatef(turnAngle, s_dx, 0, s_dy);
                 }
             }
             else
             {   // Restricted view plane alignment.
                 // This'll do, for now... Really it should notice both the
                 // sprite angle and vpitch.
-                DGL_Rotatef(vpitch * .5f, s_dx, 0, s_dy);
+                glRotatef(vpitch * .5f, s_dx, 0, s_dy);
             }
         }
         else
         {
             // Normal rotation perpendicular to the view plane.
-            DGL_Rotatef(vpitch, viewsidex, 0, viewsidey);
+            glRotatef(vpitch, viewsidex, 0, viewsidey);
         }
-        DGL_Translatef(-spriteCenter[VX], -spriteCenter[VZ], -spriteCenter[VY]);
+        glTranslatef(-spriteCenter[VX], -spriteCenter[VZ], -spriteCenter[VY]);
     }
 
     // Need to change blending modes?
@@ -1104,7 +1103,7 @@ if(params->vLightListIdx)
 
     // Need to restore the original modelview matrix?
     if(restoreMatrix)
-        DGL_PopMatrix();
+        glPopMatrix();
 
     // Change back to normal blending?
     if(params->blendMode != BM_NORMAL)

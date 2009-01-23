@@ -459,34 +459,34 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         while(p)
         {
             // V1
-            DGL_MultiTexCoord2f(0, p->data.quad.verts[0].tex[0],
-                                   p->data.quad.verts[0].tex[1]);
-            DGL_MultiTexCoord2f(1, p->data.quad.verts[0].pos[0],
-                                   p->data.quad.verts[0].pos[1]);
+            DGL_TexCoord2f(0, p->data.quad.verts[0].tex[0],
+                           p->data.quad.verts[0].tex[1]);
+            DGL_TexCoord2f(1, p->data.quad.verts[0].pos[0],
+                           p->data.quad.verts[0].pos[1]);
             DGL_Vertex2f(p->data.quad.verts[0].pos[0],
                          p->data.quad.verts[0].pos[1]);
 
             // V2
-            DGL_MultiTexCoord2f(0, p->data.quad.verts[1].tex[0],
-                                   p->data.quad.verts[1].tex[1]);
-            DGL_MultiTexCoord2f(1, p->data.quad.verts[1].pos[0],
-                                   p->data.quad.verts[1].pos[1]);
+            DGL_TexCoord2f(0, p->data.quad.verts[1].tex[0],
+                           p->data.quad.verts[1].tex[1]);
+            DGL_TexCoord2f(1, p->data.quad.verts[1].pos[0],
+                           p->data.quad.verts[1].pos[1]);
             DGL_Vertex2f(p->data.quad.verts[1].pos[0],
                          p->data.quad.verts[1].pos[1]);
 
             // V3
-            DGL_MultiTexCoord2f(0, p->data.quad.verts[2].tex[0],
-                                   p->data.quad.verts[2].tex[1]);
-            DGL_MultiTexCoord2f(1, p->data.quad.verts[2].pos[0],
-                                   p->data.quad.verts[2].pos[1]);
+            DGL_TexCoord2f(0, p->data.quad.verts[2].tex[0],
+                           p->data.quad.verts[2].tex[1]);
+            DGL_TexCoord2f(1, p->data.quad.verts[2].pos[0],
+                           p->data.quad.verts[2].pos[1]);
             DGL_Vertex2f(p->data.quad.verts[2].pos[0],
                          p->data.quad.verts[2].pos[1]);
 
             // V4
-            DGL_MultiTexCoord2f(0, p->data.quad.verts[3].tex[0],
-                                   p->data.quad.verts[3].tex[1]);
-            DGL_MultiTexCoord2f(1, p->data.quad.verts[3].pos[0],
-                                   p->data.quad.verts[3].pos[1]);
+            DGL_TexCoord2f(0, p->data.quad.verts[3].tex[0],
+                           p->data.quad.verts[3].tex[1]);
+            DGL_TexCoord2f(1, p->data.quad.verts[3].pos[0],
+                           p->data.quad.verts[3].pos[1]);
             DGL_Vertex2f(p->data.quad.verts[3].pos[0],
                          p->data.quad.verts[3].pos[1]);
 
@@ -502,9 +502,9 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         p = list->head;
         while(p)
         {
-            DGL_TexCoord2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+            DGL_TexCoord2f(0, p->data.line.a.pos[0], p->data.line.a.pos[1]);
             DGL_Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
-            DGL_TexCoord2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+            DGL_TexCoord2f(0, p->data.line.b.pos[0], p->data.line.b.pos[1]);
             DGL_Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
 
             p = p->next;

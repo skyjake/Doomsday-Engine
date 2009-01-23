@@ -43,7 +43,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
+#include "de_graphics.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_refresh.h"
@@ -648,9 +648,9 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
         {
             // Choose a suitable pixel format.
             // If multisampling is available, make use of it.
-            if(DGL_state_ext.wglMultisampleARB)
+            if(GL_state_ext.wglMultisampleARB)
             {
-                pixForm = DGL_state.multisampleFormat;
+                pixForm = GL_state.multisampleFormat;
             }
             else
             {   // Request a matching (or similar) pixel format.
@@ -1197,7 +1197,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         if(createContext(window))
         {
             // We can get on with initializing the OGL state.
-            initState();
+            Sys_InitGLState();
         }
 
         if(glIsInited)
@@ -1302,7 +1302,7 @@ void Sys_UpdateWindow(uint idx)
                 // framebuffer visible.
                 HDC     hdc = GetDC(window->hWnd);
 
-                if(DGL_state.forceFinishBeforeSwap)
+                if(GL_state.forceFinishBeforeSwap)
                 {
                     glFinish();
                 }

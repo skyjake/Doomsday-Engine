@@ -345,16 +345,16 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(flip * 0, 0);
+        DGL_TexCoord2f(0, flip * 0, 0);
         DGL_Vertex2f(x, y);
 
-        DGL_TexCoord2f(!flip * 1, 0);
+        DGL_TexCoord2f(0, !flip * 1, 0);
         DGL_Vertex2f(x + w * scale, y);
 
-        DGL_TexCoord2f(!flip * 1, 1);
+        DGL_TexCoord2f(0, !flip * 1, 1);
         DGL_Vertex2f(x + w * scale, y + h * scale);
 
-        DGL_TexCoord2f(flip * 0, 1);
+        DGL_TexCoord2f(0, flip * 0, 1);
         DGL_Vertex2f(x, y + h * scale);
     DGL_End();
 }

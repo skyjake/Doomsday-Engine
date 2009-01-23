@@ -141,6 +141,7 @@
 		</VirtualTargets>
 		<Unit filename="..\..\engine\api\Doomsday.def" />
 		<Unit filename="..\..\engine\api\dd_api.h" />
+		<Unit filename="..\..\engine\api\dd_gl.h" />
 		<Unit filename="..\..\engine\api\dd_maptypes.h" />
 		<Unit filename="..\..\engine\api\dd_plugin.h" />
 		<Unit filename="..\..\engine\api\dd_share.h" />
@@ -219,7 +220,6 @@
 		<Unit filename="..\..\engine\portable\include\de_console.h" />
 		<Unit filename="..\..\engine\portable\include\de_dam.h" />
 		<Unit filename="..\..\engine\portable\include\de_defs.h" />
-		<Unit filename="..\..\engine\portable\include\de_dgl.h" />
 		<Unit filename="..\..\engine\portable\include\de_edit.h" />
 		<Unit filename="..\..\engine\portable\include\de_graphics.h" />
 		<Unit filename="..\..\engine\portable\include\de_misc.h" />
@@ -233,9 +233,9 @@
 		<Unit filename="..\..\engine\portable\include\def_data.h" />
 		<Unit filename="..\..\engine\portable\include\def_main.h" />
 		<Unit filename="..\..\engine\portable\include\def_share.h" />
-		<Unit filename="..\..\engine\portable\include\dgl_atiext.h" />
 		<Unit filename="..\..\engine\portable\include\edit_bias.h" />
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
+		<Unit filename="..\..\engine\portable\include\gl_atiext.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
 		<Unit filename="..\..\engine\portable\include\gl_font.h" />
@@ -334,6 +334,9 @@
 		<Unit filename="..\..\engine\portable\include\sv_pool.h" />
 		<Unit filename="..\..\engine\portable\include\sv_sound.h" />
 		<Unit filename="..\..\engine\portable\include\sys_audio.h" />
+		<Unit filename="..\..\engine\portable\include\sys_audiod_dummy.h" />
+		<Unit filename="..\..\engine\portable\include\sys_audiod_loader.h" />
+		<Unit filename="..\..\engine\portable\include\sys_audiod_sdlmixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_console.h" />
 		<Unit filename="..\..\engine\portable\include\sys_direc.h" />
 		<Unit filename="..\..\engine\portable\include\sys_file.h" />
@@ -342,9 +345,7 @@
 		<Unit filename="..\..\engine\portable\include\sys_master.h" />
 		<Unit filename="..\..\engine\portable\include\sys_mixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_network.h" />
-		<Unit filename="..\..\engine\portable\include\sys_audiod_dummy.h" />
-		<Unit filename="..\..\engine\portable\include\sys_audiod_loader.h" />
-		<Unit filename="..\..\engine\portable\include\sys_audiod_sdlmixer.h" />
+		<Unit filename="..\..\engine\portable\include\sys_opengl.h" />
 		<Unit filename="..\..\engine\portable\include\sys_sock.h" />
 		<Unit filename="..\..\engine\portable\include\sys_system.h" />
 		<Unit filename="..\..\engine\portable\include\sys_timer.h" />
@@ -486,9 +487,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\dgl_draw.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\dgl_ext.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\dgl_texture.c">
@@ -785,6 +783,12 @@
 		<Unit filename="..\..\engine\portable\src\sys_direc.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\sys_audiod_dummy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\engine\portable\src\sys_audiod_sdlmixer.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_filein.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -794,15 +798,12 @@
 		<Unit filename="..\..\engine\portable\src\sys_network.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\sys_opengl.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_sdl_window.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\sys_audiod_dummy.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\sys_audiod_sdlmixer.c">
-			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_sock.c">
 			<Option compilerVar="CC" />

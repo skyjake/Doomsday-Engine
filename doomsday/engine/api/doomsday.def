@@ -39,6 +39,8 @@ NAME            "DOOMSDAY"
 ; 320 formerly P_Swapp
 ; 328 formerly P_RegisterCustomMapProperty
 ; 349 formerly R_MaterialIsCustom
+; 375 formerly DGL_MultiTexCoord2f
+; 376 formerly DGL_MultiTexCoord2fv
 
 EXPORTS
 ; Plugins.
@@ -368,8 +370,6 @@ EXPORTS
     DGL_Color4fv                @372 NONAME
     DGL_TexCoord2f              @373 NONAME
     DGL_TexCoord2fv             @374 NONAME
-    DGL_MultiTexCoord2f         @375 NONAME
-    DGL_MultiTexCoord2fv        @376 NONAME
     DGL_Vertex2f                @377 NONAME
     DGL_Vertex2fv               @378 NONAME
     DGL_Vertex3f                @379 NONAME

@@ -37,7 +37,6 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
-#include "de_dgl.h"
 
 #include "m_stack.h"
 
@@ -1608,13 +1607,11 @@ int R_GetSkinTexIndex(const char *skin)
 
 void R_DeleteSkinTextures(void)
 {
-extern void DGL_DeleteTextures(int num, const DGLuint *names);
-
     int                 i;
 
     for(i = 0; i < numSkinNames; ++i)
     {
-        DGL_DeleteTextures(1, &skinNames[i].tex);
+        glDeleteTextures(1, (const GLuint*) &skinNames[i].tex);
         skinNames[i].tex = 0;
     }
 }

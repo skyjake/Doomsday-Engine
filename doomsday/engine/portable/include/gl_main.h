@@ -39,6 +39,17 @@ typedef enum glfontstyle_e {
     NUM_GLFS
 } glfontstyle_t;
 
+extern int      numTexUnits;
+extern boolean  envModAdd;
+extern int      defResX, defResY, defBPP, defFullscreen;
+extern int      viewph, viewpw, viewpx, viewpy;
+extern int      r_framecounter;
+extern char     hiTexPath[], hiTexPath2[];
+extern int      UpdateState;
+extern float    vid_gamma, vid_bright, vid_contrast;
+extern int      glFontFixed, glFontVariable[NUM_GLFS];
+extern int      r_detail;
+
 boolean         GL_IsInited(void);
 
 void            GL_Register(void);
@@ -62,21 +73,25 @@ void            GL_InitVarFont(void);
 void            GL_ShutdownVarFont(void);
 const char*     GL_ChooseFixedFont(void);
 const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
+void            GL_ActiveTexture(const GLenum texture);
+boolean         GL_EnablePalTexExt(boolean enable);
+void            GL_InitArrays(void);
+void            GL_EnableArrays(int vertices, int colors, int coords);
+void            GL_DisableArrays(int vertices, int colors, int coords);
+void            GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
+                           int lock);
+void            GL_UnlockArrays(void);
+void            GL_ArrayElement(int index);
+void            GL_DrawElements(glprimtype_t type, int count, const uint *indices);
+boolean         GL_Grab(int x, int y, int width, int height, gltexformat_t format, void *buffer);
+boolean         GL_TexImage(gltexformat_t format, int width, int height, int genMips, void *data);
+void            GL_TexFilter(int pname, int param);
+void            GL_Palette(gltexformat_t format, void *data);
+int             GL_GetTexAnisoMul(int level);
 
 // Returns a pointer to a copy of the screen. The pointer must be
 // deallocated by the caller.
 unsigned char  *GL_GrabScreen(void);
-
-extern int      numTexUnits;
-extern boolean  envModAdd;
-extern int      defResX, defResY, defBPP, defFullscreen;
-extern int      viewph, viewpw, viewpx, viewpy;
-extern int      r_framecounter;
-extern char     hiTexPath[], hiTexPath2[];
-extern int      UpdateState;
-extern float    vid_gamma, vid_bright, vid_contrast;
-extern int      glFontFixed, glFontVariable[NUM_GLFS];
-extern int      r_detail;
 
 // Console commands.
 D_CMD(UpdateGammaRamp);

@@ -1760,14 +1760,14 @@ void FI_Drawer(void)
             DGL_Begin(DGL_QUADS);
             {
                 FI_UseColor(pic->object.color, 4);
-                DGL_TexCoord2f(0, 0);
+                DGL_TexCoord2f(0, 0, 0);
                 DGL_Vertex2f(0, 0);
-                DGL_TexCoord2f(1, 0);
+                DGL_TexCoord2f(0, 1, 0);
                 DGL_Vertex2f(1, 0);
                 FI_UseColor(pic->otherColor, 4);
-                DGL_TexCoord2f(1, 1);
+                DGL_TexCoord2f(0, 1, 1);
                 DGL_Vertex2f(1, 1);
-                DGL_TexCoord2f(0, 1);
+                DGL_TexCoord2f(0, 0, 1);
                 DGL_Vertex2f(0, 1);
             }
             DGL_End();

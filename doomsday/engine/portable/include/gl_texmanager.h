@@ -132,7 +132,6 @@ extern byte     loadExtAlways;
 extern int      texMagMode;
 extern int      upscaleAndSharpenPatches;
 extern int      glmode[6];
-extern unsigned int curTex;
 extern int      palLump;
 
 void            GL_TexRegister(void);

@@ -36,7 +36,6 @@
 #include <stdlib.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
@@ -145,7 +144,7 @@ typedef struct primhdr_s {
     // Must be an offset since the list is sometimes reallocated.
     uint            size; // Size of this primitive (zero = n/a).
 
-    glprimtype_t    type;
+    ushort          type; // OpenGL primitive type e.g., GL_TRIANGLE_STRIP.
     blendmode_t     blendMode; // BM_* Primitive-specific blending mode.
 
     // Elements in the vertex array for this primitive.
@@ -267,15 +266,35 @@ void RL_Register(void)
     // \todo Move cvars here.
 }
 
-static void rlBind(const rendlist_texmapunit_t* tmu)
+static void rlBind(DGLuint tex, int magMode)
 {
-    GL_BindTexture(renderTextures ? tmu->tex : 0, tmu->magMode);
+    if(!renderTextures)
+        tex = 0;
+
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                    magMode == DGL_NEAREST? GL_NEAREST : GL_LINEAR);
+    if(GL_state.useAnisotropic)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                        GL_GetTexAnisoMul(texAniso));
+#ifdef _DEBUG
+{
+GLenum  error;
+if((error = glGetError()) != GL_NO_ERROR)
+    Con_Error("OpenGL error: %i\n", error);
+}
+#endif
+}
+
+static void rlBind2(const rendlist_texmapunit_t* tmu)
+{
+    rlBind(tmu->tex, tmu->magMode);
 }
 
 static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
 {
-    DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
-    GL_BindTexture(renderTextures ? tmu->tex : 0, tmu->magMode);
+    GL_ActiveTexture(GL_TEXTURE0 + (byte) unit);
+    rlBind(tmu->tex, tmu->magMode);
 }
 
 static void clearHash(listhash_t* hash)
@@ -317,7 +336,7 @@ static void selectTexUnits(int count)
     // Disable extra units.
     for(i = numTexUnits - 1; i >= count; i--)
     {
-        activeTexture(GL_TEXTURE0 + (byte) i);
+        GL_ActiveTexture(GL_TEXTURE0 + (byte) i);
         glDisable(GL_TEXTURE_2D);
     }
 
@@ -327,7 +346,7 @@ static void selectTexUnits(int count)
         if(i >= numTexUnits)
             continue;
 
-        activeTexture(GL_TEXTURE0 + (byte) i);
+        GL_ActiveTexture(GL_TEXTURE0 + (byte) i);
         glEnable(GL_TEXTURE_2D);
     }
 }
@@ -520,7 +539,7 @@ static __inline void copyTU(rendlist_texmapunit_t* lTU,
     lTU->tex = rTU->tex;
     lTU->magMode = rTU->magMode;
     lTU->blendMode = rTU->blendMode;
-    lTU->blend = rTU->blend;
+    lTU->blend = MINMAX_OF(0, rTU->blend, 1);
 }
 
 static __inline boolean compareTU(const rendlist_texmapunit_t* lTU,
@@ -883,7 +902,7 @@ END_PROF( PROF_RL_GET_LIST );
     for(i = 0; i < numIndices; ++i)
         li->last->indices[i] = base + i;
     li->last->type =
-        (type == PT_TRIANGLE_STRIP? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
+        (type == PT_TRIANGLE_STRIP? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
 
     writePrimitive(li, base, rvertices, rtexcoords, rtexcoords1,
                    rtexcoords2, rcolors, numVertices, polyType);
@@ -967,12 +986,13 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
         }
 
         if(!skip)
-        {
+        {   // Render the primitive.
+            int                 i;
+
             if(conditions & DCF_SET_LIGHT_ENV)
             {   // Use the correct texture and color for the light.
-                DGL_SetInteger(DGL_ACTIVE_TEXTURE,
-                               (conditions & DCF_SET_LIGHT_ENV0)? 0 : 1);
-                GL_BindTexture(renderTextures ? hdr->modTex : 0, DGL_LINEAR);
+                GL_ActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
+                rlBind(hdr->modTex, DGL_LINEAR);
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
                 // Make sure the light is not repeated.
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
@@ -985,19 +1005,21 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             {   // Primitive-specific texture translation & scale.
                 if(conditions & DCF_SET_MATRIX_DTEXTURE0)
                 {
-                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
-                    DGL_MatrixMode(DGL_TEXTURE);
-                    DGL_LoadIdentity();
-                    DGL_Translatef(hdr->texOffset[0], hdr->texOffset[1], 1);
-                    DGL_Scalef(hdr->texScale[0], hdr->texScale[1], 1);
+                    GL_ActiveTexture(GL_TEXTURE0);
+                    glMatrixMode(GL_TEXTURE);
+                    glPushMatrix();
+                    glLoadIdentity();
+                    glTranslatef(hdr->texOffset[0], hdr->texOffset[1], 1);
+                    glScalef(hdr->texScale[0], hdr->texScale[1], 1);
                 }
                 if(conditions & DCF_SET_MATRIX_DTEXTURE1)
-                {
-                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
-                    DGL_MatrixMode(DGL_TEXTURE);
-                    DGL_LoadIdentity();
-                    DGL_Translatef(hdr->texOffset[0], hdr->texOffset[1], 1);
-                    DGL_Scalef(hdr->texScale[0], hdr->texScale[1], 1);
+                {   // Primitive-specific texture translation & scale.
+                    GL_ActiveTexture(GL_TEXTURE1);
+                    glMatrixMode(GL_TEXTURE);
+                    glPushMatrix();
+                    glLoadIdentity();
+                    glTranslatef(hdr->texOffset[0], hdr->texOffset[1], 1);
+                    glScalef(hdr->texScale[0], hdr->texScale[1], 1);
                 }
             }
 
@@ -1005,19 +1027,21 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             {   // Primitive-specific texture translation & scale.
                 if(conditions & DCF_SET_MATRIX_TEXTURE0)
                 {
-                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
-                    DGL_MatrixMode(DGL_TEXTURE);
-                    DGL_LoadIdentity();
-                    DGL_Translatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
-                    DGL_Scalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
+                    GL_ActiveTexture(GL_TEXTURE0);
+                    glMatrixMode(GL_TEXTURE);
+                    glPushMatrix();
+                    glLoadIdentity();
+                    glTranslatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
+                    glScalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
                 }
                 if(conditions & DCF_SET_MATRIX_TEXTURE1)
                 {
-                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
-                    DGL_MatrixMode(DGL_TEXTURE);
-                    DGL_LoadIdentity();
-                    DGL_Translatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
-                    DGL_Scalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
+                    GL_ActiveTexture(GL_TEXTURE1);
+                    glMatrixMode(GL_TEXTURE);
+                    glPushMatrix();
+                    glLoadIdentity();
+                    glTranslatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
+                    glScalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
                 }
             }
 
@@ -1026,21 +1050,13 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 GL_BlendMode(hdr->blendMode);
             }
 
-            // Render the primitive.
-            {
-            GLenum              primType =
-                (hdr->type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : hdr->type ==
-                 DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
-
-            int                 i;
-
-            glBegin(primType);
+            glBegin(hdr->type);
             for(i = 0; i < hdr->numIndices; ++i)
             {
                 int                 j;
                 uint                index = hdr->indices[i];
 
-                for(j = 0; j < DGL_state.maxTexUnits && j < MAX_TEX_UNITS; ++j)
+                for(j = 0; j < GL_state.maxTexUnits && j < MAX_TEX_UNITS; ++j)
                 {
                     if(coords[j])
                     {
@@ -1054,71 +1070,45 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             }
             glEnd();
 
-#ifdef _DEBUG
-CheckError();
-#endif
+            // Restore the texture matrix if changed.
+            if(conditions & DCF_SET_MATRIX_TEXTURE)
+            {
+                if(conditions & DCF_SET_MATRIX_TEXTURE0)
+                {
+                    GL_ActiveTexture(GL_TEXTURE0);
+                    glMatrixMode(GL_TEXTURE);
+                    glPopMatrix();
+                }
+                if(conditions & DCF_SET_MATRIX_TEXTURE1)
+                {
+                    GL_ActiveTexture(GL_TEXTURE1);
+                    glMatrixMode(GL_TEXTURE);
+                    glPopMatrix();
+                }
+            }
+            if(conditions & DCF_SET_MATRIX_DTEXTURE)
+            {
+                if(conditions & DCF_SET_MATRIX_DTEXTURE0)
+                {
+                    GL_ActiveTexture(GL_TEXTURE0);
+                    glMatrixMode(GL_TEXTURE);
+                    glPopMatrix();
+                }
+                if(conditions & DCF_SET_MATRIX_DTEXTURE1)
+                {
+                    GL_ActiveTexture(GL_TEXTURE1);
+                    glMatrixMode(GL_TEXTURE);
+                    glPopMatrix();
+                }
             }
 
-            // Restore the texture matrix if changed.
-            if(conditions & (DCF_SET_MATRIX_TEXTURE|DCF_SET_MATRIX_DTEXTURE))
-            {
-                if(conditions & (DCF_SET_MATRIX_TEXTURE0|DCF_SET_MATRIX_DTEXTURE0))
-                {
-                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
-                    DGL_MatrixMode(DGL_TEXTURE);
-                    DGL_LoadIdentity();
-                }
-                if(conditions & (DCF_SET_MATRIX_TEXTURE1|DCF_SET_MATRIX_DTEXTURE1))
-                {
-                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
-                    DGL_MatrixMode(DGL_TEXTURE);
-                    DGL_LoadIdentity();
-                }
-            }
+#ifdef _DEBUG
+Sys_CheckGLError();
+#endif
         }
 
         hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
     }
-}
-
-static void setEnvAlpha(float alpha)
-{
-    float           color[4];
-
-    color[0] = color[1] = color[2] = 0;
-    color[3] = MINMAX_OF(0, alpha, 1);
-
-    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-}
-
-static void setBlendState(rendlist_t* list, int modMode)
-{
-#ifdef _DEBUG
-if(numTexUnits < 2)
-    Con_Error("setBlendState: Not enough texture units.\n");
-#endif
-
-    selectTexUnits(2);
-
-    rlBindTo(0, TU(list, TU_PRIMARY));
-    rlBindTo(1, TU(list, TU_INTER));
-
-    DGL_SetInteger(DGL_MODULATE_TEXTURE, modMode);
-    setEnvAlpha(TU(list, TU_INTER)->blend);
-}
-
-static void setFogStateForDetails(void)
-{
-    // The fog color alpha is probably meaningless?
-    float                   midGray[4];
-
-    midGray[0] = .5f;
-    midGray[1] = .5f;
-    midGray[2] = .5f;
-    midGray[3] = fogColor[3];
-
-    DGL_Enable(DGL_FOG);
-    glFogfv(GL_FOG_COLOR, midGray);
 }
 
 /**
@@ -1138,14 +1128,28 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         // Should we do blending?
         if(TU(list, TU_INTER)->tex)
         {
+            float           color[4];
+
             // Blend between two textures, modulate with primary color.
-            setBlendState(list, 2);
+#ifdef _DEBUG
+if(numTexUnits < 2)
+    Con_Error("setupListState: Not enough texture units.\n");
+#endif
+            selectTexUnits(2);
+
+            rlBindTo(0, TU(list, TU_PRIMARY));
+            rlBindTo(1, TU(list, TU_INTER));
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 2);
+
+            color[0] = color[1] = color[2] = 0;
+            color[3] = TU(list, TU_INTER)->blend;
+            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         }
         else
         {
             // Normal modulation.
             selectTexUnits(1);
-            rlBind(TU(list, TU_PRIMARY));
+            rlBind2(TU(list, TU_PRIMARY));
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
         }
         return DCF_SET_MATRIX_TEXTURE0 | (TU(list, TU_INTER)->tex? DCF_SET_MATRIX_TEXTURE1 : 0);
@@ -1165,12 +1169,27 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         return DCF_SET_LIGHT_ENV0 | DCF_MANY_LIGHTS | DCF_BLEND;
 
     case LM_BLENDED:
+        {
+        float           color[4];
         // Only render the blended surfaces.
         if(!TU(list, TU_INTER)->tex)
             return DCF_SKIP;
-        setBlendState(list, 2);
-        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
+#ifdef _DEBUG
+if(numTexUnits < 2)
+    Con_Error("setupListState: Not enough texture units.\n");
+#endif
 
+        selectTexUnits(2);
+
+        rlBindTo(0, TU(list, TU_PRIMARY));
+        rlBindTo(1, TU(list, TU_INTER));
+
+        DGL_SetInteger(DGL_MODULATE_TEXTURE, 2);
+
+        color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER)->blend;
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+        return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
+        }
     case LM_BLENDED_FIRST_LIGHT:
         // Only blended surfaces.
         if(!TU(list, TU_INTER)->tex)
@@ -1183,7 +1202,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
 
     case LM_LIGHTS:
         // The light lists only contain dynlight primitives.
-        rlBind(TU(list, TU_PRIMARY));
+        rlBind2(TU(list, TU_PRIMARY));
         // Make sure the texture is not repeated.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1199,15 +1218,29 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         // Should we do blending?
         if(TU(list, TU_INTER)->tex)
         {
+            float           color[4];
+
             // Mode 3 actually just disables the second texture stage,
             // which would modulate with primary color.
-            setBlendState(list, 3);
+#ifdef _DEBUG
+if(numTexUnits < 2)
+    Con_Error("setupListState: Not enough texture units.\n");
+#endif
+            selectTexUnits(2);
+
+            rlBindTo(0, TU(list, TU_PRIMARY));
+            rlBindTo(1, TU(list, TU_INTER));
+
+            DGL_SetInteger(DGL_MODULATE_TEXTURE, 3);
+
+            color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER)->blend;
+            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
             // Render all primitives.
             return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
         }
         // No modulation at all.
         selectTexUnits(1);
-        rlBind(TU(list, TU_PRIMARY));
+        rlBind2(TU(list, TU_PRIMARY));
         DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
         return DCF_SET_MATRIX_TEXTURE0 | (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
 
@@ -1227,7 +1260,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         {
             selectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
-            rlBind(TU(list, TU_PRIMARY));
+            rlBind2(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
         }
         break;
@@ -1235,7 +1268,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
     case LM_ALL_DETAILS:
         if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
-            rlBind(TU(list, TU_PRIMARY_DETAIL));
+            rlBind2(TU(list, TU_PRIMARY_DETAIL));
             // Render all surfaces on the list.
             return DCF_SET_MATRIX_DTEXTURE0;
         }
@@ -1258,12 +1291,15 @@ static int setupListState(listmode_t mode, rendlist_t* list)
             // Normal modulation.
             selectTexUnits(1);
             DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
-            rlBind(TU(list, TU_PRIMARY));
+            rlBind2(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
         }
         break;
 
     case LM_BLENDED_DETAILS:
+        {
+        float           color[4];
+
         // We'll only render blended primitives.
         if(!TU(list, TU_INTER)->tex)
             break;
@@ -1273,22 +1309,24 @@ static int setupListState(listmode_t mode, rendlist_t* list)
 
         rlBindTo(0, TU(list, TU_PRIMARY_DETAIL));
         rlBindTo(1, TU(list, TU_INTER_DETAIL));
-        setEnvAlpha(TU(list, TU_INTER_DETAIL)->blend);
-        return DCF_SET_MATRIX_DTEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
 
+        color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER_DETAIL)->blend;
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+        return DCF_SET_MATRIX_DTEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
+        }
     case LM_SHADOW:
         // Render all primitives.
-        rlBind(TU(list, TU_PRIMARY));
+        rlBind2(TU(list, TU_PRIMARY));
         if(!TU(list, TU_PRIMARY)->tex)
         {
             // Apply a modelview shift.
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_PushMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
 
             // Scale towards the viewpoint to avoid Z-fighting.
-            DGL_Translatef(vx, vy, vz);
-            DGL_Scalef(.99f, .99f, .99f);
-            DGL_Translatef(-vx, -vy, -vz);
+            glTranslatef(vx, vy, vz);
+            glScalef(.99f, .99f, .99f);
+            glTranslatef(-vx, -vy, -vz);
         }
         return 0;
 
@@ -1297,7 +1335,9 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         rlBindTo(1, TU(list, TU_INTER));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        setEnvAlpha(1.0f);
+        {float           color[4];
+        color[0] = color[1] = color[2] = 0; color[3] = 1.0f;
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color); }
     case LM_ALL_SHINY:
     case LM_SHINY:
         rlBindTo(0, TU(list, TU_PRIMARY));
@@ -1330,8 +1370,8 @@ static void finishListState(listmode_t mode, rendlist_t* list)
         if(!TU(list, TU_PRIMARY)->tex)
         {
             // Restore original modelview matrix.
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_PopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
         }
         break;
 
@@ -1364,7 +1404,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glBlendFunc(GL_ZERO, GL_ONE);
         // No need for fog.
         if(usingFog)
-            DGL_Disable(DGL_FOG);
+            glDisable(GL_FOG);
         break;
 
     case LM_BLENDED:
@@ -1380,7 +1420,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
         // Fog is allowed during this pass.
         if(usingFog)
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
         // All of the surfaces are opaque.
         glDisable(GL_BLEND);
         break;
@@ -1408,7 +1448,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
         // Fog is allowed during this pass.
         if(usingFog)
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
         // All of the surfaces are opaque.
         glDisable(GL_BLEND);
         break;
@@ -1425,7 +1465,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
         // Fog is allowed during this pass.
         if(usingFog)
-            DGL_Disable(DGL_FOG);
+            glDisable(GL_FOG);
         // All of the surfaces are opaque.
         glDisable(GL_BLEND);
         break;
@@ -1442,7 +1482,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthFunc(GL_LEQUAL);
         // Fog is allowed during this pass.
         if(usingFog)
-            DGL_Disable(DGL_FOG);
+            glDisable(GL_FOG);
         // All of the surfaces are opaque.
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE);
@@ -1457,7 +1497,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthFunc(GL_LESS);
 
         // Fog must be disabled during this pass.
-        DGL_Disable(DGL_FOG);
+        glDisable(GL_FOG);
         // All of the surfaces are opaque.
         glDisable(GL_BLEND);
         break;
@@ -1474,11 +1514,11 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
         if(usingFog)
         {
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, blackColor);
         }
         else
-            DGL_Disable(DGL_FOG);
+            glDisable(GL_FOG);
 
         glEnable(GL_BLEND);
         GL_BlendMode(BM_ADD);
@@ -1499,7 +1539,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         // Fog would mess with the color (this is a multiplicative pass).
-        DGL_Disable(DGL_FOG);
+        glDisable(GL_FOG);
         break;
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
@@ -1514,7 +1554,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDisable(GL_BLEND);
         // Fog is allowed.
         if(usingFog)
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
         break;
 
     case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
@@ -1529,7 +1569,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         // This is a multiplicative pass.
-        DGL_Disable(DGL_FOG);
+        glDisable(GL_FOG);
         break;
 
     case LM_ALL_DETAILS:
@@ -1546,7 +1586,14 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
         if(usingFog)
-            setFogStateForDetails();
+        {
+            float               midGray[4];
+
+            glEnable(GL_FOG);
+            midGray[0] = midGray[1] = midGray[2] = .5f;
+            midGray[3] = fogColor[3]; // The alpha is probably meaningless?
+            glFogfv(GL_FOG_COLOR, midGray);
+        }
         break;
 
     case LM_BLENDED_DETAILS:
@@ -1564,7 +1611,14 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
         if(usingFog)
-            setFogStateForDetails();
+        {
+            float               midGray[4];
+
+            glEnable(GL_FOG);
+            midGray[0] = midGray[1] = midGray[2] = .5f;
+            midGray[3] = fogColor[3]; // The alpha is probably meaningless?
+            glFogfv(GL_FOG_COLOR, midGray);
+        }
         break;
 
     case LM_SHADOW:
@@ -1577,11 +1631,10 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
-
         // Set normal fog, if it's enabled.
         if(usingFog)
         {
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, fogColor);
         }
         glEnable(GL_BLEND);
@@ -1600,12 +1653,12 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         if(usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, blackColor);
         }
         else
         {
-            DGL_Disable(DGL_FOG);
+            glDisable(GL_FOG);
         }
         glEnable(GL_BLEND);
         GL_BlendMode(BM_ADD); // Purely additive.
@@ -1624,12 +1677,12 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         if(usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, blackColor);
         }
         else
         {
-            DGL_Disable(DGL_FOG);
+            glDisable(GL_FOG);
         }
         glEnable(GL_BLEND);
         GL_BlendMode(BM_ADD); // Purely additive.
@@ -1939,12 +1992,12 @@ END_PROF( PROF_RL_RENDER_SHADOW );
     GL_BlendMode(BM_NORMAL);
     if(usingFog)
     {
-        DGL_Enable(DGL_FOG);
+        glEnable(GL_FOG);
         glFogfv(GL_FOG_COLOR, fogColor);
     }
     else
     {
-        DGL_Disable(DGL_FOG);
+        glDisable(GL_FOG);
     }
 
     // Draw masked walls, sprites and models.

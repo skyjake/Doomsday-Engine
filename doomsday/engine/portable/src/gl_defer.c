@@ -33,7 +33,6 @@
 #endif
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -144,17 +143,16 @@ void GL_DestroyDeferred(deferred_t* d)
 
 void GL_ReserveNames(void)
 {
-    int                 i;
-
     if(!deferredInited)
         return; // Just ignore.
 
     Sys_Lock(deferredMutex);
-    for(i = reservedCount; i < NUM_RESERVED_NAMES; ++i)
+    if(reservedCount < NUM_RESERVED_NAMES)
     {
-        reservedNames[i] = DGL_NewTexture();
+        glGenTextures(NUM_RESERVED_NAMES - reservedCount,
+                      (GLuint*) &reservedNames[reservedCount]);
+        reservedCount = NUM_RESERVED_NAMES;
     }
-    reservedCount = NUM_RESERVED_NAMES;
     Sys_Unlock(deferredMutex);
 }
 
@@ -164,7 +162,7 @@ void GL_ReleaseReservedNames(void)
         return; // Just ignore.
 
     Sys_Lock(deferredMutex);
-    DGL_DeleteTextures(reservedCount, reservedNames);
+    glDeleteTextures(reservedCount, (const GLuint*) reservedNames);
     memset(reservedNames, 0, sizeof(reservedNames));
     reservedCount = 0;
     Sys_Unlock(deferredMutex);
@@ -232,7 +230,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
         }
 
         // The texture name must already be created.
-        DGL_Bind(content->name);
+        glBindTexture(GL_TEXTURE_2D, content->name);
 
         // Upload the texture.
         // No mipmapping or resizing is needed, upload directly.
@@ -258,7 +256,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
             content->format = DGL_LUMINANCE_PLUS_A8;
         }
 
-        result = DGL_TexImage(content->format, content->width, content->height,
+        result = GL_TexImage(content->format, content->width, content->height,
                               (content->grayMipmap >= 0? DGL_GRAY_MIPMAP :
                               (content->flags & TXCF_MIPMAP) != 0),
                               allocatedTempBuffer? allocatedTempBuffer : content->buffer);
@@ -275,13 +273,13 @@ void GL_UploadTextureContent(texturecontent_t* content)
         }
     }
 
-    DGL_TexFilter(DGL_MIN_FILTER, content->minFilter);
-    DGL_TexFilter(DGL_MAG_FILTER, content->magFilter);
+    GL_TexFilter(DGL_MIN_FILTER, content->minFilter);
+    GL_TexFilter(DGL_MAG_FILTER, content->magFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                     content->wrap[0] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
                     content->wrap[1] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    DGL_TexFilter(DGL_ANISO_FILTER, DGL_GetTexAnisoMul(content->anisoFilter));
+    GL_TexFilter(DGL_ANISO_FILTER, GL_GetTexAnisoMul(content->anisoFilter));
 }
 
 /**

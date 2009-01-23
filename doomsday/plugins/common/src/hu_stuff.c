@@ -426,19 +426,17 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
 {
     DGL_Color4f(r, g, b, a);
     DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0 * s, 0);
+        DGL_Vertex2f(x, y);
 
-    DGL_TexCoord2f(0 * s, 0);
-    DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(0, 1 * s, 0);
+        DGL_Vertex2f(x + w, y);
 
-    DGL_TexCoord2f(1 * s, 0);
-    DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(0, 1 * s, t);
+        DGL_Vertex2f(x + w, y + h);
 
-    DGL_TexCoord2f(1 * s, t);
-    DGL_Vertex2f(x + w, y + h);
-
-    DGL_TexCoord2f(0 * s, t);
-    DGL_Vertex2f(x, y + h);
-
+        DGL_TexCoord2f(0, 0 * s, t);
+        DGL_Vertex2f(x, y + h);
     DGL_End();
 }
 
@@ -1637,7 +1635,6 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
 {
     float               fsize = 4 + bright, red, green, blue, alpha;
     float               fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
-    int                 origColor[4];
 
     // Don't draw anything for very small letters.
     if(h <= 4)
@@ -1652,9 +1649,6 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
     blue  = MINMAX_OF(0.f, b, 1.f);
     alpha = MINMAX_OF(0.f, a, 1.f);
 
-    // Store original color.
-    DGL_GetIntegerv(DGL_CURRENT_COLOR_RGBA, origColor);
-
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     if(bright)
@@ -1666,9 +1660,6 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
                 green, blue, alpha);
 
     GL_BlendMode(BM_NORMAL);
-
-    // Restore original color.
-    DGL_Color4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
 }
 
 /**
@@ -2106,36 +2097,36 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
         DGL_Begin(DGL_QUADS);
             // Top Half
             DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            DGL_TexCoord2f( 0, 0);
+            DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(0, 0);
 
             DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            DGL_TexCoord2f(xscale, 0);
+            DGL_TexCoord2f(0, xscale, 0);
             DGL_Vertex2f(320, 0);
 
             DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            DGL_TexCoord2f(xscale, yscale * arg1);
+            DGL_TexCoord2f(0, xscale, yscale * arg1);
             DGL_Vertex2f(320, 200 * arg1);
 
             DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            DGL_TexCoord2f(0, yscale * arg1);
+            DGL_TexCoord2f(0, 0, yscale * arg1);
             DGL_Vertex2f(0, 200 * arg1);
 
             // Bottom Half
             DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            DGL_TexCoord2f(0, yscale * arg1);
+            DGL_TexCoord2f(0, 0, yscale * arg1);
             DGL_Vertex2f(0, 200 * arg1);
 
             DGL_Color4f(alpha * 0.7, alpha * 0.7, alpha * 0.8, 1 - (0-(alpha * 0.9)));
-            DGL_TexCoord2f( xscale, yscale * arg1);
+            DGL_TexCoord2f(0, xscale, yscale * arg1);
             DGL_Vertex2f(320, 200 * arg1);
 
             DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            DGL_TexCoord2f(xscale, yscale);
+            DGL_TexCoord2f(0, xscale, yscale);
             DGL_Vertex2f(320, 200);
 
             DGL_Color4f(alpha * 0.25, alpha * 0.3, alpha * 0.4, 1 - (alpha * 0.8) );
-            DGL_TexCoord2f(0, yscale);
+            DGL_TexCoord2f(0, 0, yscale);
             DGL_Vertex2f(0, 200);
         DGL_End();
     }

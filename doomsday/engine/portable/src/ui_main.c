@@ -33,7 +33,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_system.h"
@@ -187,8 +186,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
  */
 void UI_End(void)
 {
-    ddevent_t rel;
-    int i;
+    ddevent_t           rel;
 
     if(!uiActive)
         return;
@@ -313,7 +311,7 @@ void UI_LoadTextures(void)
 
 void UI_ClearTextures(void)
 {
-    DGL_DeleteTextures(NUM_UITEXTURES, uiTextures);
+    glDeleteTextures(NUM_UITEXTURES, (const GLuint*) uiTextures);
     memset(uiTextures, 0, sizeof(uiTextures));
 }
 
@@ -597,10 +595,10 @@ void UI_Drawer(void)
         return;
 
     // Go into screen projection mode.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
@@ -624,8 +622,8 @@ void UI_Drawer(void)
     }
 
     // Restore the original matrices.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }
 
 int UI_CountObjects(ui_object_t *list)
@@ -1894,12 +1892,12 @@ void UI_MixColors(ui_color_t *a, ui_color_t *b, ui_color_t *dest,
 
 void UI_SetColorA(ui_color_t *color, float alpha)
 {
-    DGL_Color4f(color->red, color->green, color->blue, alpha);
+    glColor4f(color->red, color->green, color->blue, alpha);
 }
 
 void UI_SetColor(ui_color_t *color)
 {
-    DGL_Color3f(color->red, color->green, color->blue);
+    glColor3f(color->red, color->green, color->blue);
 }
 
 void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
@@ -1925,8 +1923,8 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
         bottomAlpha = alpha;
 
     GL_BlendMode(BM_ADD);
-    DGL_Bind(uiTextures[UITEX_SHADE]);
-    DGL_Begin(DGL_QUADS);
+    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_SHADE]);
+    glBegin(GL_QUADS);
     for(i = 0; i < 2; ++i)
     {
         if(!secondary)
@@ -1939,18 +1937,18 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
             beta = 0.5f;
 
         UI_SetColorA(color, alpha * beta);
-        DGL_TexCoord2f(u[0], v[0]);
-        DGL_Vertex2f(x + border, y + border);
-        DGL_TexCoord2f(u[1], v[0]);
-        DGL_Vertex2f(x + w - border, y + border);
+        glTexCoord2f(u[0], v[0]);
+        glVertex2f(x + border, y + border);
+        glTexCoord2f(u[1], v[0]);
+        glVertex2f(x + w - border, y + border);
         UI_SetColorA(color, bottomAlpha * beta);
-        DGL_TexCoord2f(u[1], v[1]);
-        DGL_Vertex2f(x + w - border, y + h - border);
-        DGL_TexCoord2f(u[0], v[1]);
-        DGL_Vertex2f(x + border, y + h - border);
+        glTexCoord2f(u[1], v[1]);
+        glVertex2f(x + w - border, y + h - border);
+        glTexCoord2f(u[0], v[1]);
+        glVertex2f(x + border, y + h - border);
     }
+    glEnd();
 
-    DGL_End();
     GL_BlendMode(BM_NORMAL);
 }
 
@@ -1973,19 +1971,19 @@ void UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left,
     leftAlpha *= uiAlpha;
     rightAlpha *= uiAlpha;
 
-    DGL_Bind(uiTextures[UITEX_HINT]);
-    DGL_Begin(DGL_QUADS);
-    UI_SetColorA(left, leftAlpha);
-    DGL_TexCoord2f(0, 1);
-    DGL_Vertex2f(x, y + h);
-    DGL_TexCoord2f(0, 0);
-    DGL_Vertex2f(x, y);
-    UI_SetColorA(right ? right : left, rightAlpha);
-    DGL_TexCoord2f(1, 0);
-    DGL_Vertex2f(x + w, y);
-    DGL_TexCoord2f(1, 1);
-    DGL_Vertex2f(x + w, y + h);
-    DGL_End();
+    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_HINT]);
+    glBegin(GL_QUADS);
+        UI_SetColorA(left, leftAlpha);
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + h);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        UI_SetColorA(right ? right : left, rightAlpha);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+    glEnd();
 }
 
 void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
@@ -1994,14 +1992,14 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
     startAlpha *= uiAlpha;
     endAlpha *= uiAlpha;
 
-    DGL_Disable(DGL_TEXTURING);
-    DGL_Begin(DGL_LINES);
-    UI_SetColorA(start, startAlpha);
-    DGL_Vertex2f(x1, y1);
-    UI_SetColorA(end ? end : start, endAlpha);
-    DGL_Vertex2f(x2, y2);
-    DGL_End();
-    DGL_Enable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_LINES);
+        UI_SetColorA(start, startAlpha);
+        glVertex2f(x1, y1);
+        UI_SetColorA(end ? end : start, endAlpha);
+        glVertex2f(x2, y2);
+    glEnd();
+    glEnable(GL_TEXTURE_2D);
 }
 
 /**
@@ -2136,101 +2134,101 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
     // The fill comes first, if there's one.
     if(filled)
     {
-        DGL_Bind(uiTextures[UITEX_FILL]);
-        DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0.5f, 0.5f);
+        glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_FILL]);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.5f, 0.5f);
         UI_SetColorA(top, alpha);
-        DGL_Vertex2f(x + brd, y + brd);
-        DGL_Vertex2f(x + w - brd, y + brd);
+        glVertex2f(x + brd, y + brd);
+        glVertex2f(x + w - brd, y + brd);
         UI_SetColorA(bottom, bottomAlpha);
-        DGL_Vertex2f(x + w - brd, y + h - brd);
-        DGL_Vertex2f(x + brd, y + h - brd);
+        glVertex2f(x + w - brd, y + h - brd);
+        glVertex2f(x + brd, y + h - brd);
     }
     else
     {
-        DGL_Bind(uiTextures[UITEX_CORNER]);
-        DGL_Begin(DGL_QUADS);
+        glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_CORNER]);
+        glBegin(GL_QUADS);
     }
     if(!filled || brd > 0)
     {
         // Top Left.
         UI_SetColorA(top, alpha);
-        DGL_TexCoord2f(s[0], t[0]);
-        DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(0.5f, t[0]);
-        DGL_Vertex2f(x + brd, y);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + brd, y + brd);
-        DGL_TexCoord2f(s[0], 0.5f);
-        DGL_Vertex2f(x, y + brd);
+        glTexCoord2f(s[0], t[0]);
+        glVertex2f(x, y);
+        glTexCoord2f(0.5f, t[0]);
+        glVertex2f(x + brd, y);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + brd, y + brd);
+        glTexCoord2f(s[0], 0.5f);
+        glVertex2f(x, y + brd);
         // Top.
-        DGL_TexCoord2f(0.5f, t[0]);
-        DGL_Vertex2f(x + brd, y);
-        DGL_TexCoord2f(0.5f, t[0]);
-        DGL_Vertex2f(x + w - brd, y);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + w - brd, y + brd);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + brd, y + brd);
+        glTexCoord2f(0.5f, t[0]);
+        glVertex2f(x + brd, y);
+        glTexCoord2f(0.5f, t[0]);
+        glVertex2f(x + w - brd, y);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + w - brd, y + brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + brd, y + brd);
         // Top Right.
-        DGL_TexCoord2f(0.5f, t[0]);
-        DGL_Vertex2f(x + w - brd, y);
-        DGL_TexCoord2f(s[1], t[0]);
-        DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(s[1], 0.5f);
-        DGL_Vertex2f(x + w, y + brd);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + w - brd, y + brd);
+        glTexCoord2f(0.5f, t[0]);
+        glVertex2f(x + w - brd, y);
+        glTexCoord2f(s[1], t[0]);
+        glVertex2f(x + w, y);
+        glTexCoord2f(s[1], 0.5f);
+        glVertex2f(x + w, y + brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + w - brd, y + brd);
         // Right.
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + w - brd, y + brd);
-        DGL_TexCoord2f(s[1], 0.5f);
-        DGL_Vertex2f(x + w, y + brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + w - brd, y + brd);
+        glTexCoord2f(s[1], 0.5f);
+        glVertex2f(x + w, y + brd);
         UI_SetColorA(bottom, bottomAlpha);
-        DGL_TexCoord2f(s[1], 0.5f);
-        DGL_Vertex2f(x + w, y + h - brd);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + w - brd, y + h - brd);
+        glTexCoord2f(s[1], 0.5f);
+        glVertex2f(x + w, y + h - brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + w - brd, y + h - brd);
         // Bottom Right.
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + w - brd, y + h - brd);
-        DGL_TexCoord2f(s[1], 0.5f);
-        DGL_Vertex2f(x + w, y + h - brd);
-        DGL_TexCoord2f(s[1], t[1]);
-        DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0.5f, t[1]);
-        DGL_Vertex2f(x + w - brd, y + h);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + w - brd, y + h - brd);
+        glTexCoord2f(s[1], 0.5f);
+        glVertex2f(x + w, y + h - brd);
+        glTexCoord2f(s[1], t[1]);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0.5f, t[1]);
+        glVertex2f(x + w - brd, y + h);
         // Bottom.
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + brd, y + h - brd);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + w - brd, y + h - brd);
-        DGL_TexCoord2f(0.5f, t[1]);
-        DGL_Vertex2f(x + w - brd, y + h);
-        DGL_TexCoord2f(0.5f, t[1]);
-        DGL_Vertex2f(x + brd, y + h);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + brd, y + h - brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + w - brd, y + h - brd);
+        glTexCoord2f(0.5f, t[1]);
+        glVertex2f(x + w - brd, y + h);
+        glTexCoord2f(0.5f, t[1]);
+        glVertex2f(x + brd, y + h);
         // Bottom Left.
-        DGL_TexCoord2f(s[0], 0.5f);
-        DGL_Vertex2f(x, y + h - brd);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + brd, y + h - brd);
-        DGL_TexCoord2f(0.5f, t[1]);
-        DGL_Vertex2f(x + brd, y + h);
-        DGL_TexCoord2f(s[0], t[1]);
-        DGL_Vertex2f(x, y + h);
+        glTexCoord2f(s[0], 0.5f);
+        glVertex2f(x, y + h - brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + brd, y + h - brd);
+        glTexCoord2f(0.5f, t[1]);
+        glVertex2f(x + brd, y + h);
+        glTexCoord2f(s[0], t[1]);
+        glVertex2f(x, y + h);
         // Left.
         UI_SetColorA(top, alpha);
-        DGL_TexCoord2f(s[0], 0.5f);
-        DGL_Vertex2f(x, y + brd);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + brd, y + brd);
+        glTexCoord2f(s[0], 0.5f);
+        glVertex2f(x, y + brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + brd, y + brd);
         UI_SetColorA(bottom, bottomAlpha);
-        DGL_TexCoord2f(0.5f, 0.5f);
-        DGL_Vertex2f(x + brd, y + h - brd);
-        DGL_TexCoord2f(s[0], 0.5f);
-        DGL_Vertex2f(x, y + h - brd);
+        glTexCoord2f(0.5f, 0.5f);
+        glVertex2f(x + brd, y + h - brd);
+        glTexCoord2f(s[0], 0.5f);
+        glVertex2f(x, y + h - brd);
     }
-    DGL_End();
+    glEnd();
 }
 
 void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t *color,
@@ -2248,35 +2246,35 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
     alpha *= uiAlpha;
     if(alpha <= 0) return;
 
-    DGL_Disable(DGL_TEXTURING);
-    DGL_Begin(DGL_TRIANGLES);
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_TRIANGLES);
 
     y += radius / 4;
 
     // Upper left triangle.
     UI_SetColorA(radius > 0 ? hi : med, alpha);
-    DGL_Vertex2f(x, y);
-    DGL_Vertex2f(x - xrad, y + yrad);
+    glVertex2f(x, y);
+    glVertex2f(x - xrad, y + yrad);
     UI_SetColorA(radius > 0 ? hi : low, alpha);
-    DGL_Vertex2f(x, y - radius);
+    glVertex2f(x, y - radius);
 
     // Upper right triangle.
     UI_SetColorA(low, alpha);
-    DGL_Vertex2f(x, y);
-    DGL_Vertex2f(x, y - radius);
+    glVertex2f(x, y);
+    glVertex2f(x, y - radius);
     UI_SetColorA(med, alpha);
-    DGL_Vertex2f(x + xrad, y + yrad);
+    glVertex2f(x + xrad, y + yrad);
 
     // Bottom triangle.
     if(radius < 0)
         UI_SetColorA(hi, alpha);
-    DGL_Vertex2f(x, y);
-    DGL_Vertex2f(x + xrad, y + yrad);
+    glVertex2f(x, y);
+    glVertex2f(x + xrad, y + yrad);
     UI_SetColorA(radius > 0 ? low : med, alpha);
-    DGL_Vertex2f(x - xrad, y + yrad);
+    glVertex2f(x - xrad, y + yrad);
 
-    DGL_End();
-    DGL_Enable(DGL_TEXTURING);
+    glEnd();
+    glEnable(GL_TEXTURE_2D);
 }
 
 /**
@@ -2293,38 +2291,38 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
     if(alpha <= 0)
         return;
 
-    DGL_Disable(DGL_TEXTURING);
-    DGL_Begin(DGL_TRIANGLES);
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_TRIANGLES);
 
     x += radius / 4;
 
     // Upper left triangle.
     UI_SetColorA(radius > 0 ? hi : med, alpha);
-    DGL_Vertex2f(x, y);
+    glVertex2f(x, y);
     if(radius < 0)
         UI_SetColorA(low, alpha);
-    DGL_Vertex2f(x - radius, y);
-    DGL_Vertex2f(x + xrad, y - yrad);
+    glVertex2f(x - radius, y);
+    glVertex2f(x + xrad, y - yrad);
 
     // Lower left triangle.
     UI_SetColorA(radius > 0 ? med : hi, alpha);
-    DGL_Vertex2f(x, y);
+    glVertex2f(x, y);
     if(radius < 0)
         UI_SetColorA(hi, alpha);
-    DGL_Vertex2f(x + xrad, y + yrad);
+    glVertex2f(x + xrad, y + yrad);
     UI_SetColorA(radius > 0 ? low : med, alpha);
-    DGL_Vertex2f(x - radius, y);
+    glVertex2f(x - radius, y);
 
     // Right triangle.
     UI_SetColorA(radius > 0 ? med : hi, alpha);
-    DGL_Vertex2f(x, y);
+    glVertex2f(x, y);
     UI_SetColorA(radius > 0 ? hi : med, alpha);
-    DGL_Vertex2f(x + xrad, y - yrad);
+    glVertex2f(x + xrad, y - yrad);
     UI_SetColorA(radius > 0 ? low : hi, alpha);
-    DGL_Vertex2f(x + xrad, y + yrad);
+    glVertex2f(x + xrad, y + yrad);
 
-    DGL_End();
-    DGL_Enable(DGL_TEXTURING);
+    glEnd();
+    glEnable(GL_TEXTURE_2D);
 }
 
 void UI_DefaultButtonBackground(ui_color_t *col, boolean down)
@@ -2405,23 +2403,23 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
  */
 void UI_DrawMouse(int x, int y, int w, int h)
 {
-    DGL_Color3f(1, 1, 1);
-    DGL_Bind(uiTextures[UITEX_MOUSE]);
-    DGL_Begin(DGL_QUADS);
-    DGL_TexCoord2f(0, 0);
-    DGL_Vertex2f(x, y);
-    DGL_TexCoord2f(1, 0);
-    DGL_Vertex2f(x + w, y);
-    DGL_TexCoord2f(1, 1);
-    DGL_Vertex2f(x + w, y + h);
-    DGL_TexCoord2f(0, 1);
-    DGL_Vertex2f(x, y + h);
-    DGL_End();
+    glColor3f(1, 1, 1);
+    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_MOUSE]);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + h);
+    glEnd();
 }
 
 void UI_DrawLogo(int x, int y, int w, int h)
 {
-    DGL_Bind(uiTextures[UITEX_LOGO]);
+    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_LOGO]);
     GL_DrawRect(x, y, w, h, 1, 1, 1, uiAlpha);
 }
 
@@ -2441,7 +2439,7 @@ void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
     ui_color_t *light = UI_Color(UIC_BG_LIGHT);
 
     // Background gradient picture.
-    DGL_Bind(uiTextures[UITEX_BACKGROUND]);
+    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_BACKGROUND]);
     if(alpha < 1.0)
     {
         glEnable(GL_BLEND);
@@ -2452,21 +2450,21 @@ void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
         glDisable(GL_BLEND);
     }
 
-    DGL_Begin(DGL_QUADS);
-    // Top color.
-    DGL_Color4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-    DGL_TexCoord2f(0, 0);
-    DGL_Vertex2f(x, y);
-    DGL_TexCoord2f(1, 0);
-    DGL_Vertex2f(x + w, y);
+    glBegin(GL_QUADS);
+        // Top color.
+        glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
 
-    // Bottom color.
-    DGL_Color4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-    DGL_TexCoord2f(1, 1);
-    DGL_Vertex2f(x + w, y + h);
-    DGL_TexCoord2f(0, 1);
-    DGL_Vertex2f(0, y + h);
-    DGL_End();
+        // Bottom color.
+        glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, 1);
+        glVertex2f(0, y + h);
+    glEnd();
 
     glEnable(GL_BLEND);
 }

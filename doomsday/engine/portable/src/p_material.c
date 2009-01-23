@@ -105,7 +105,7 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
     mtp->texInst = texInst;
     mtp->magMode = magMode;
     mtp->blendMode = blendMode;
-    mtp->alpha = alpha;
+    mtp->alpha = MINMAX_OF(0, alpha, 1);
     mtp->scale[0] = sScale;
     mtp->scale[1] = tScale;
     mtp->offset[0] = 0;

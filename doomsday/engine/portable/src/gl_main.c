@@ -36,7 +36,6 @@
 #endif
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -660,8 +659,8 @@ void GL_Shutdown(void)
     Rend_Reset();
     GL_ShutdownRefresh();
 
-    // Shutdown DGL.
-    DGL_Shutdown();
+    // Shutdown OpenGL.
+    Sys_ShutdownGL();
 
     // Restore original gamma.
     if(!ArgExists("-leaveramp"))
@@ -684,16 +683,16 @@ void GL_Init2DState(void)
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
 
     // The projection matrix.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, 320, 200, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, 320, 200, 0, -1, 1);
 
     // Default state for the white fog is off.
     usingFog = false;
-    DGL_Disable(DGL_FOG);
+    glDisable(GL_FOG);
     glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
                           fogModeDefault == 1 ? GL_EXP :
                           GL_EXP2));
@@ -708,10 +707,10 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     if(push_state)
     {
         // Push the 2D matrices on the stack.
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PushMatrix();
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
     }
 
     glEnable(GL_CULL_FACE);
@@ -725,7 +724,7 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     {
         viewpw = viewwidth * theWindow->width / 320;
         viewph = viewheight * theWindow->height / 200 + 1;
-        DGL_Viewport(viewpx, viewpy, viewpw, viewph);
+        glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
     }
     else
     {
@@ -740,7 +739,7 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     viewpy = port->y + viewwindowy / 200.0f * port->height;
     viewpw = port->width * viewwidth / 320.0f;
     viewph = port->height * viewheight / 200.0f;
-    DGL_Viewport(viewpx, viewpy, viewpw, viewph);
+    glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
@@ -751,12 +750,12 @@ void GL_Restore2DState(int step)
     switch(step)
     {
     case 1: // After Restore Step 1 normal player sprites are rendered.
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_LoadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
         // FIXME: Aspect ratio when not 4:3.
-        DGL_Ortho(0, 0, 320, (320 * viewheight) / viewwidth, -1, 1);
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_LoadIdentity();
+        glOrtho(0, 320, (320 * viewheight) / viewwidth, 0, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
@@ -764,15 +763,15 @@ void GL_Restore2DState(int step)
         break;
 
     case 2: // After Restore Step 2 nothing special happens.
-        DGL_Viewport(currentView.x, currentView.y,
-                     currentView.width, currentView.height);
+        glViewport(currentView.x, FLIP(currentView.y + currentView.height - 1),
+                   currentView.width, currentView.height);
         break;
 
     case 3: // After Restore Step 3 we're back in 2D rendering mode.
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PopMatrix();
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         break;
@@ -788,12 +787,12 @@ void GL_ProjectionMatrix(void)
     // We're assuming pixels are squares.
     float               aspect = viewpw / (float) viewph;
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_LoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     gluPerspective(yfov = fieldOfView / aspect, aspect, glNearClip, glFarClip);
 
     // We'd like to have a left-handed coordinate system.
-    DGL_Scalef(1, 1, -1);
+    glScalef(1, 1, -1);
 }
 
 void GL_UseFog(int yes)
@@ -808,13 +807,13 @@ void GL_UseFog(int yes)
     {
         // Fog is turned on.
         usingFog = true;
-        DGL_Enable(DGL_FOG);
+        glEnable(GL_FOG);
     }
     else if(usingFog && !yes)
     {
         // Fog must be turned off.
         usingFog = false;
-        DGL_Disable(DGL_FOG);
+        glDisable(GL_FOG);
     }
     // Otherwise we won't do a thing.
 }
@@ -895,7 +894,7 @@ unsigned char *GL_GrabScreen(void)
     unsigned char *buffer = 0;
 
     buffer = M_Malloc(theWindow->width * theWindow->height * 3);
-    DGL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
+    GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
     return buffer;
 }
 

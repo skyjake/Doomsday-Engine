@@ -29,7 +29,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_platform.h"
-#include "de_dgl.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -214,10 +213,10 @@ void DD_DrawAndBlit(void)
         R_BeginWorldFrame();
 
         // Set up the basic 320x200 legacy projection for the game.
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PushMatrix();
-        DGL_LoadIdentity();
-        DGL_Ortho(0, 0, 320, 200, -1, 1);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0, 320, 200, 0, -1, 1);
 
         R_RenderViewPorts();
 
@@ -229,8 +228,8 @@ void DD_DrawAndBlit(void)
         }
 
         // Restore the projection mode that was previously in effect.
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
 
         // Debug information.
         Net_Drawer();
@@ -250,7 +249,7 @@ void DD_DrawAndBlit(void)
     // Draw console.
     Rend_Console();
 
-    // End the sequence.
+    // End any open DGL sequence.
     DGL_End();
 
     // Flush buffered stuff to screen (blits everything).

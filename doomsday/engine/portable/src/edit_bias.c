@@ -30,7 +30,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_edit.h"
 #include "de_system.h"
 #include "de_render.h"
@@ -742,43 +741,43 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     if(sector->lightLevel > maxLevel)
         maxLevel = sector->lightLevel;
 
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
 
-    DGL_Begin(DGL_LINES);
-    DGL_Color4f(1, 1, 1, .5f);
-    DGL_Vertex2f(x + off, y);
-    DGL_Vertex2f(x + off, y + height);
+    glBegin(GL_LINES);
+    glColor4f(1, 1, 1, .5f);
+    glVertex2f(x + off, y);
+    glVertex2f(x + off, y + height);
     // Normal lightlevel.
     secY = y + height * (1.0f - sector->lightLevel);
-    DGL_Vertex2f(x + off - 4, secY);
-    DGL_Vertex2f(x + off, secY);
+    glVertex2f(x + off - 4, secY);
+    glVertex2f(x + off, secY);
     if(maxLevel != minLevel)
     {
         // Max lightlevel.
         maxY = y + height * (1.0f - maxLevel);
-        DGL_Vertex2f(x + off + 4, maxY);
-        DGL_Vertex2f(x + off, maxY);
+        glVertex2f(x + off + 4, maxY);
+        glVertex2f(x + off, maxY);
         // Min lightlevel.
         minY = y + height * (1.0f - minLevel);
-        DGL_Vertex2f(x + off + 4, minY);
-        DGL_Vertex2f(x + off, minY);
+        glVertex2f(x + off + 4, minY);
+        glVertex2f(x + off, minY);
     }
     // Current min/max bias sector level.
     if(src->sectorLevel[0] > 0 || src->sectorLevel[1] > 0)
     {
-        DGL_Color3f(1, 0, 0);
+        glColor3f(1, 0, 0);
         p = y + height * (1.0f - src->sectorLevel[0]);
-        DGL_Vertex2f(x + off + 2, p);
-        DGL_Vertex2f(x + off - 2, p);
+        glVertex2f(x + off + 2, p);
+        glVertex2f(x + off - 2, p);
 
-        DGL_Color3f(0, 1, 0);
+        glColor3f(0, 1, 0);
         p = y + height * (1.0f - src->sectorLevel[1]);
-        DGL_Vertex2f(x + off + 2, p);
-        DGL_Vertex2f(x + off - 2, p);
+        glVertex2f(x + off + 2, p);
+        glVertex2f(x + off - 2, p);
     }
-    DGL_End();
+    glEnd();
 
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
 
     // The number values.
     sprintf(buf, "%03i", (short) (255.0f * sector->lightLevel));
@@ -804,10 +803,10 @@ void SBE_DrawHUD(void)
         return;
 
     // Go into screen projection mode.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
     // Overall stats: numSources / MAX (left)
     sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS,
@@ -840,39 +839,37 @@ void SBE_DrawHUD(void)
         SBE_DrawLevelGauge(20, theWindow->height/2 - 255/2, 255);
     }
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }
 
 void SBE_DrawStar(float pos[3], float size, float color[4])
 {
     float               black[4] = { 0, 0, 0, 0 };
 
-    DGL_Begin(DGL_LINES);
-    {
-        DGL_Color4fv(black);
-        DGL_Vertex3f(pos[VX] - size, pos[VZ], pos[VY]);
-        DGL_Color4fv(color);
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY]);
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY]);
-        DGL_Color4fv(black);
-        DGL_Vertex3f(pos[VX] + size, pos[VZ], pos[VY]);
+    glBegin(GL_LINES);
+        glColor4fv(black);
+        glVertex3f(pos[VX] - size, pos[VZ], pos[VY]);
+        glColor4fv(color);
+        glVertex3f(pos[VX], pos[VZ], pos[VY]);
+        glVertex3f(pos[VX], pos[VZ], pos[VY]);
+        glColor4fv(black);
+        glVertex3f(pos[VX] + size, pos[VZ], pos[VY]);
 
-        DGL_Vertex3f(pos[VX], pos[VZ] - size, pos[VY]);
-        DGL_Color4fv(color);
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY]);
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY]);
-        DGL_Color4fv(black);
-        DGL_Vertex3f(pos[VX], pos[VZ] + size, pos[VY]);
+        glVertex3f(pos[VX], pos[VZ] - size, pos[VY]);
+        glColor4fv(color);
+        glVertex3f(pos[VX], pos[VZ], pos[VY]);
+        glVertex3f(pos[VX], pos[VZ], pos[VY]);
+        glColor4fv(black);
+        glVertex3f(pos[VX], pos[VZ] + size, pos[VY]);
 
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY] - size);
-        DGL_Color4fv(color);
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY]);
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY]);
-        DGL_Color4fv(black);
-        DGL_Vertex3f(pos[VX], pos[VZ], pos[VY] + size);
-    }
-    DGL_End();
+        glVertex3f(pos[VX], pos[VZ], pos[VY] - size);
+        glColor4fv(color);
+        glVertex3f(pos[VX], pos[VZ], pos[VY]);
+        glVertex3f(pos[VX], pos[VZ], pos[VY]);
+        glColor4fv(black);
+        glVertex3f(pos[VX], pos[VZ], pos[VY] + size);
+    glEnd();
 }
 
 static void SBE_DrawIndex(source_t *src)
@@ -889,25 +886,25 @@ static void SBE_DrawIndex(source_t *src)
     scale = M_Distance(src->pos, eye) / (theWindow->width / 2);
 
     glDisable(GL_DEPTH_TEST);
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(src->pos[VX], src->pos[VZ], src->pos[VY]);
-    DGL_Rotatef(-vang + 180, 0, 1, 0);
-    DGL_Rotatef(vpitch, 1, 0, 0);
-    DGL_Scalef(-scale, -scale, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(src->pos[VX], src->pos[VZ], src->pos[VY]);
+    glRotatef(-vang + 180, 0, 1, 0);
+    glRotatef(vpitch, 1, 0, 0);
+    glScalef(-scale, -scale, 1);
 
     // Show the index number of the source.
     sprintf(buf, "%i", SB_ToIndex(src));
     UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE),
                  1 - M_Distance(src->pos, eye)/2000);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 
     glEnable(GL_DEPTH_TEST);
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
 }
 
 static void SBE_DrawSource(source_t *src)
@@ -952,22 +949,22 @@ static void SBE_DrawHue(void)
     eye[2] = vz;
 
     glDisable(GL_DEPTH_TEST);
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
 
-    DGL_Translatef(vx, vy, vz);
-    DGL_Scalef(1, 1.0f/1.2f, 1);
-    DGL_Translatef(-vx, -vy, -vz);
+    glTranslatef(vx, vy, vz);
+    glScalef(1, 1.0f/1.2f, 1);
+    glTranslatef(-vx, -vy, -vz);
 
     // The origin of the circle.
     for(i = 0; i < 3; ++i)
         center[i] = eye[i] + hueOrigin[i] * hueDistance;
 
     // Draw the circle.
-    DGL_Begin(DGL_QUAD_STRIP);
+    glBegin(GL_QUAD_STRIP);
     for(i = 0; i <= steps; ++i)
     {
         angle = 2*PI * i/steps;
@@ -978,22 +975,22 @@ static void SBE_DrawHue(void)
 
         SBE_HueOffset(angle, off);
 
-        DGL_Color4fv(color);
-        DGL_Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
-                    center[2] + outer * off[2]);
+        glColor4fv(color);
+        glVertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
+                   center[2] + outer * off[2]);
 
         // Saturation decreases in the center.
         color[0] = 1;
         color[1] = 1;
         color[2] = 1;
         color[3] = .15f;
-        DGL_Color4fv(color);
-        DGL_Vertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
-                    center[2] + inner * off[2]);
+        glColor4fv(color);
+        glVertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
+                   center[2] + inner * off[2]);
     }
-    DGL_End();
+    glEnd();
 
-    DGL_Begin(DGL_LINES);
+    glBegin(GL_LINES);
 
     // Draw the current hue.
     SBE_GetHueColor(sel, &hue, &saturation);
@@ -1001,11 +998,11 @@ static void SBE_DrawHue(void)
     sel[3] = 1;
     if(saturation > 0)
     {
-        DGL_Color4fv(sel);
-        DGL_Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
-                    center[2] + outer * off[2]);
-        DGL_Vertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
-                    center[2] + inner * off[2]);
+        glColor4fv(sel);
+        glVertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
+                   center[2] + outer * off[2]);
+        glVertex3f(center[0] + inner * off[0], center[1] + inner * off[1],
+                   center[2] + inner * off[2]);
     }
 
     // Draw the edges.
@@ -1018,11 +1015,11 @@ static void SBE_DrawHue(void)
         HSVtoRGB(color, i/steps, 1, 1);
         color[3] = 1;
 
-        DGL_Color4fv(color);
-        DGL_Vertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
-                    center[2] + outer * off[2]);
-        DGL_Vertex3f(center[0] + outer * off2[0], center[1] + outer * off2[1],
-                    center[2] + outer * off2[2]);
+        glColor4fv(color);
+        glVertex3f(center[0] + outer * off[0], center[1] + outer * off[1],
+                   center[2] + outer * off[2]);
+        glVertex3f(center[0] + outer * off2[0], center[1] + outer * off2[1],
+                   center[2] + outer * off2[2]);
 
         if(saturation > 0)
         {
@@ -1034,20 +1031,20 @@ static void SBE_DrawHue(void)
         {
             sel[3] = 1;
         }
-        DGL_Color4fv(sel);
+        glColor4fv(sel);
         s = inner + (outer - inner) * saturation;
-        DGL_Vertex3f(center[0] + s * off[0], center[1] + s * off[1],
-                    center[2] + s * off[2]);
-        DGL_Vertex3f(center[0] + s * off2[0], center[1] + s * off2[1],
-                    center[2] + s * off2[2]);
+        glVertex3f(center[0] + s * off[0], center[1] + s * off[1],
+                   center[2] + s * off[2]);
+        glVertex3f(center[0] + s * off2[0], center[1] + s * off2[1],
+                   center[2] + s * off2[2]);
     }
-    DGL_End();
+    glEnd();
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 
     glEnable(GL_DEPTH_TEST);
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
 }
 
@@ -1087,7 +1084,7 @@ void SBE_DrawCursor(void)
         s = SBE_GetNearest();
     }
 
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
 
     SBE_GetHand(hand);
     if((distance = M_Distance(s->pos, hand)) > 2 * editDistance)
@@ -1104,32 +1101,32 @@ void SBE_DrawCursor(void)
     {
         float lock = 2 + M_Distance(eye, s->pos)/100;
 
-        DGL_Color4f(1, 1, 1, 1);
+        glColor4f(1, 1, 1, 1);
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
 
-        DGL_Translatef(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        glTranslatef(s->pos[VX], s->pos[VZ], s->pos[VY]);
 
-        DGL_Rotatef(t/2, 0, 0, 1);
-        DGL_Rotatef(t, 1, 0, 0);
-        DGL_Rotatef(t * 15, 0, 1, 0);
+        glRotatef(t/2, 0, 0, 1);
+        glRotatef(t, 1, 0, 0);
+        glRotatef(t * 15, 0, 1, 0);
 
-        DGL_Begin(DGL_LINES);
-        DGL_Vertex3f(-lock, 0, -lock);
-        DGL_Vertex3f(+lock, 0, -lock);
+        glBegin(GL_LINES);
+            glVertex3f(-lock, 0, -lock);
+            glVertex3f(+lock, 0, -lock);
 
-        DGL_Vertex3f(+lock, 0, -lock);
-        DGL_Vertex3f(+lock, 0, +lock);
+            glVertex3f(+lock, 0, -lock);
+            glVertex3f(+lock, 0, +lock);
 
-        DGL_Vertex3f(+lock, 0, +lock);
-        DGL_Vertex3f(-lock, 0, +lock);
+            glVertex3f(+lock, 0, +lock);
+            glVertex3f(-lock, 0, +lock);
 
-        DGL_Vertex3f(-lock, 0, +lock);
-        DGL_Vertex3f(-lock, 0, -lock);
-        DGL_End();
+            glVertex3f(-lock, 0, +lock);
+            glVertex3f(-lock, 0, -lock);
+        glEnd();
 
-        DGL_PopMatrix();
+        glPopMatrix();
     }
 
     if(SBE_GetNearest() != SBE_GetGrabbed() && SBE_GetGrabbed())
@@ -1155,7 +1152,7 @@ void SBE_DrawCursor(void)
         }
     }
 
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 
 #undef SET_COL

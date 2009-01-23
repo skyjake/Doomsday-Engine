@@ -363,16 +363,16 @@ static void drawChain(hudstate_t* hud)
         float               cw = gemXOffset / chain.width;
 
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(1 - cw, 0);
+            DGL_TexCoord2f(0, 1 - cw, 0);
             DGL_Vertex2f(x, y);
 
-            DGL_TexCoord2f(1, 0);
+            DGL_TexCoord2f(0, 1, 0);
             DGL_Vertex2f(x + gemXOffset, y);
 
-            DGL_TexCoord2f(1, 1);
+            DGL_TexCoord2f(0, 1, 1);
             DGL_Vertex2f(x + gemXOffset, y + h);
 
-            DGL_TexCoord2f(1 - cw, 1);
+            DGL_TexCoord2f(0, 1 - cw, 1);
             DGL_Vertex2f(x, y + h);
         DGL_End();
     }
@@ -383,16 +383,16 @@ static void drawChain(hudstate_t* hud)
             (w - gemXOffset - lifeGems[gemNum].width) / chain.width;
 
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0, 0);
+            DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(x + gemXOffset + lifeGems[gemNum].width, y);
 
-            DGL_TexCoord2f(cw, 0);
+            DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x + w, y);
 
-            DGL_TexCoord2f(cw, 1);
+            DGL_TexCoord2f(0, cw, 1);
             DGL_Vertex2f(x + w, y + h);
 
-            DGL_TexCoord2f(0, 1);
+            DGL_TexCoord2f(0, 0, 1);
             DGL_Vertex2f(x + gemXOffset + lifeGems[gemNum].width, y + h);
         DGL_End();
     }

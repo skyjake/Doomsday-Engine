@@ -35,7 +35,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
+#include "de_graphics.h"
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
@@ -69,27 +69,27 @@ static boolean inPrim = false;
 
 // CODE --------------------------------------------------------------------
 
-void InitArrays(void)
+void GL_InitArrays(void)
 {
     double              version =
         strtod((const char*) glGetString(GL_VERSION), NULL);
 
     // If the driver's OpenGL version is older than 1.3, disable arrays
     // by default.
-    DGL_state.noArrays = (version < 1.3);
+    GL_state.noArrays = (version < 1.3);
 
     // Override the automatic selection?
     if(ArgExists("-vtxar"))
-        DGL_state.noArrays = false;
+        GL_state.noArrays = false;
     if(ArgExists("-novtxar"))
-        DGL_state.noArrays = true;
+        GL_state.noArrays = true;
 
-    if(!DGL_state.noArrays)
+    if(!GL_state.noArrays)
         return;
     memset(arrays, 0, sizeof(arrays));
 }
 
-void CheckError(void)
+void Sys_CheckGLError(void)
 {
 #ifdef _DEBUG
     GLenum  error;
@@ -139,17 +139,7 @@ void DGL_Color4fv(const float *data)
     glColor4fv(data);
 }
 
-void DGL_TexCoord2f(float s, float t)
-{
-    glTexCoord2f(s, t);
-}
-
-void DGL_TexCoord2fv(const float *data)
-{
-    glTexCoord2fv(data);
-}
-
-void DGL_MultiTexCoord2f(byte target, float s, float t)
+void DGL_TexCoord2f(byte target, float s, float t)
 {
     if(target == 0)
         glTexCoord2f(s, t);
@@ -157,7 +147,7 @@ void DGL_MultiTexCoord2f(byte target, float s, float t)
         glMultiTexCoord2fARB(GL_TEXTURE0 + target, s, t);
 }
 
-void DGL_MultiTexCoord2fv(byte target, float *data)
+void DGL_TexCoord2fv(byte target, float *data)
 {
     if(target == 0)
         glTexCoord2fv(data);
@@ -222,7 +212,7 @@ void DGL_Begin(glprimtype_t mode)
     if(inPrim)
         Con_Error("OpenGL: already inPrim");
     inPrim = true;
-    CheckError();
+    Sys_CheckGLError();
 #endif
 
     glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
@@ -243,7 +233,7 @@ void DGL_End(void)
 
 #ifdef _DEBUG
     inPrim = false;
-    CheckError();
+    Sys_CheckGLError();
 #endif
 }
 
@@ -253,7 +243,7 @@ boolean DGL_NewList(DGLuint list, int mode)
 #ifdef _DEBUG
 if(inList)
     Con_Error("OpenGL: already inList");
-CheckError();
+Sys_CheckGLError();
 #endif
 
     if(list)
@@ -283,7 +273,7 @@ DGLuint DGL_EndList(void)
     glEndList();
 #ifdef _DEBUG
     inList = 0;
-    CheckError();
+    Sys_CheckGLError();
 #endif
 
     return currentList;
@@ -302,13 +292,13 @@ void DGL_DeleteLists(DGLuint list, int range)
     glDeleteLists(list, range);
 }
 
-void DGL_EnableArrays(int vertices, int colors, int coords)
+void GL_EnableArrays(int vertices, int colors, int coords)
 {
     int         i;
 
     if(vertices)
     {
-        if(DGL_state.noArrays)
+        if(GL_state.noArrays)
             arrays[AR_VERTEX].enabled = true;
         else
             glEnableClientState(GL_VERTEX_ARRAY);
@@ -316,17 +306,17 @@ void DGL_EnableArrays(int vertices, int colors, int coords)
 
     if(colors)
     {
-        if(DGL_state.noArrays)
+        if(GL_state.noArrays)
             arrays[AR_COLOR].enabled = true;
         else
             glEnableClientState(GL_COLOR_ARRAY);
     }
 
-    for(i = 0; i < DGL_state.maxTexUnits && i < MAX_TEX_UNITS; i++)
+    for(i = 0; i < GL_state.maxTexUnits && i < MAX_TEX_UNITS; i++)
     {
         if(coords & (1 << i))
         {
-            if(DGL_state.noArrays)
+            if(GL_state.noArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = true;
             }
@@ -343,17 +333,17 @@ void DGL_EnableArrays(int vertices, int colors, int coords)
     }
 
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
 }
 
-void DGL_DisableArrays(int vertices, int colors, int coords)
+void GL_DisableArrays(int vertices, int colors, int coords)
 {
     int         i;
 
     if(vertices)
     {
-        if(DGL_state.noArrays)
+        if(GL_state.noArrays)
             arrays[AR_VERTEX].enabled = false;
         else
             glDisableClientState(GL_VERTEX_ARRAY);
@@ -361,17 +351,17 @@ void DGL_DisableArrays(int vertices, int colors, int coords)
 
     if(colors)
     {
-        if(DGL_state.noArrays)
+        if(GL_state.noArrays)
             arrays[AR_COLOR].enabled = false;
         else
             glDisableClientState(GL_COLOR_ARRAY);
     }
 
-    for(i = 0; i < DGL_state.maxTexUnits && i < MAX_TEX_UNITS; i++)
+    for(i = 0; i < GL_state.maxTexUnits && i < MAX_TEX_UNITS; i++)
     {
         if(coords & (1 << i))
         {
-            if(DGL_state.noArrays)
+            if(GL_state.noArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = false;
             }
@@ -389,21 +379,21 @@ void DGL_DisableArrays(int vertices, int colors, int coords)
     }
 
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
 }
 
 /**
  * Enable, set and optionally lock all enabled arrays.
  */
-void DGL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
+void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
                 int lock)
 {
     int         i;
 
     if(vertices)
     {
-        if(DGL_state.noArrays)
+        if(GL_state.noArrays)
         {
             arrays[AR_VERTEX].enabled = true;
             arrays[AR_VERTEX].data = vertices;
@@ -417,7 +407,7 @@ void DGL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 
     if(colors)
     {
-        if(DGL_state.noArrays)
+        if(GL_state.noArrays)
         {
             arrays[AR_COLOR].enabled = true;
             arrays[AR_COLOR].data = colors;
@@ -433,7 +423,7 @@ void DGL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
     {
         if(coords[i])
         {
-            if(DGL_state.noArrays)
+            if(GL_state.noArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = true;
                 arrays[AR_TEXCOORD0 + i].data = coords[i];
@@ -454,19 +444,19 @@ void DGL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 #ifndef UNIX
     if(glLockArraysEXT)
 #endif
-        if(!DGL_state.noArrays && lock > 0)
+        if(!GL_state.noArrays && lock > 0)
         {   // 'lock' is the number of vertices to lock.
             glLockArraysEXT(0, lock);
         }
 
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
 }
 
-void DGL_UnlockArrays(void)
+void GL_UnlockArrays(void)
 {
-    if(!DGL_state.noArrays)
+    if(!GL_state.noArrays)
     {
 #ifndef UNIX
         if(glUnlockArraysEXT)
@@ -475,13 +465,13 @@ void DGL_UnlockArrays(void)
     }
 
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
 }
 
-void DGL_ArrayElement(int index)
+void GL_ArrayElement(int index)
 {
-    if(!DGL_state.noArrays)
+    if(!GL_state.noArrays)
     {
         glArrayElement(index);
     }
@@ -489,7 +479,7 @@ void DGL_ArrayElement(int index)
     {
         int         i;
 
-        for(i = 0; i < DGL_state.maxTexUnits && i < MAX_TEX_UNITS; ++i)
+        for(i = 0; i < GL_state.maxTexUnits && i < MAX_TEX_UNITS; ++i)
         {
             if(arrays[AR_TEXCOORD0 + i].enabled)
             {
@@ -508,13 +498,13 @@ void DGL_ArrayElement(int index)
     }
 }
 
-void DGL_DrawElements(glprimtype_t type, int count, const uint *indices)
+void GL_DrawElements(glprimtype_t type, int count, const uint *indices)
 {
     GLenum          primType =
         (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : type ==
          DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
 
-    if(!DGL_state.noArrays)
+    if(!GL_state.noArrays)
     {
         glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
     }
@@ -525,12 +515,12 @@ void DGL_DrawElements(glprimtype_t type, int count, const uint *indices)
         glBegin(primType);
         for(i = 0; i < count; ++i)
         {
-            DGL_ArrayElement(indices[i]);
+            GL_ArrayElement(indices[i]);
         }
         glEnd();
     }
 
 #ifdef _DEBUG
-    CheckError();
+    Sys_CheckGLError();
 #endif
 }

@@ -33,7 +33,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -972,16 +971,16 @@ void LG_Debug(void)
     }
 
     // Go into screen projection mode.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
 
     for(y = 0; y < lgBlockHeight; ++y)
     {
-        DGL_Begin(DGL_QUADS);
+        glBegin(GL_QUADS);
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
             blockIdx = (lgBlockHeight - 1 - y) * lgBlockWidth + x;
@@ -998,16 +997,16 @@ void LG_Debug(void)
                     DGL_Color3fv(block->rgb);
             }
 
-            DGL_Vertex2f(x * lgDebugSize, y * lgDebugSize);
-            DGL_Vertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);
-            DGL_Vertex2f(x * lgDebugSize + lgDebugSize,
-                         y * lgDebugSize + lgDebugSize);
-            DGL_Vertex2f(x * lgDebugSize, y * lgDebugSize + lgDebugSize);
+            glVertex2f(x * lgDebugSize, y * lgDebugSize);
+            glVertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);
+            glVertex2f(x * lgDebugSize + lgDebugSize,
+                       y * lgDebugSize + lgDebugSize);
+            glVertex2f(x * lgDebugSize, y * lgDebugSize + lgDebugSize);
         }
-        DGL_End();
+        glEnd();
     }
 
-    DGL_Enable(DGL_TEXTURING);
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glEnable(GL_TEXTURE_2D);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }

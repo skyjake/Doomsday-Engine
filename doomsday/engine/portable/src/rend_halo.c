@@ -31,7 +31,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_render.h"
 #include "de_refresh.h"
@@ -113,7 +112,7 @@ void H_SetupState(boolean dosetup)
     if(dosetup)
     {
         if(usingFog)
-            DGL_Disable(DGL_FOG);
+            glDisable(GL_FOG);
         glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
         GL_BlendMode(BM_ADD);
@@ -121,7 +120,7 @@ void H_SetupState(boolean dosetup)
     else
     {
         if(usingFog)
-            DGL_Enable(DGL_FOG);
+            glEnable(GL_FOG);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
         GL_BlendMode(BM_NORMAL);
@@ -265,13 +264,13 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     // distance to the source.
 
     // Prepare the texture rotation matrix.
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadIdentity();
     // Rotate around the center of the texture.
-    DGL_Translatef(0.5f, 0.5f, 0);
-    DGL_Rotatef(turnAngle / PI * 180, 0, 0, 1);
-    DGL_Translatef(-0.5f, -0.5f, 0);
+    glTranslatef(0.5f, 0.5f, 0);
+    glRotatef(turnAngle / PI * 180, 0, 0, 1);
+    glTranslatef(-0.5f, -0.5f, 0);
 
     // The overall brightness of the flare.
     colorAverage = (rgba[CR] + rgba[CG] + rgba[CB] + 1) / 4;
@@ -381,7 +380,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         if(renderTextures)
             GL_BindTexture(tex, DGL_LINEAR);
         else
-            DGL_Bind(0);
+            glBindTexture(GL_TEXTURE_2D, 0);
 
         // Don't wrap the texture. Evidently some drivers can't just
         // take a hint... (or then something's changing the wrapping
@@ -391,30 +390,30 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
                         GL_CLAMP_TO_EDGE);
 
-        DGL_Color4fv(rgba);
+        glColor4fv(rgba);
 
-        DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, 0);
-        DGL_Vertex3f(haloPos[VX] + radX * leftOff[VX],
-                     haloPos[VY] + radY * leftOff[VY],
-                     haloPos[VZ] + radX * leftOff[VZ]);
-        DGL_TexCoord2f(1, 0);
-        DGL_Vertex3f(haloPos[VX] + radX * rightOff[VX],
-                     haloPos[VY] + radY * rightOff[VY],
-                     haloPos[VZ] + radX * rightOff[VZ]);
-        DGL_TexCoord2f(1, 1);
-        DGL_Vertex3f(haloPos[VX] - radX * leftOff[VX],
-                     haloPos[VY] - radY * leftOff[VY],
-                     haloPos[VZ] - radX * leftOff[VZ]);
-        DGL_TexCoord2f(0, 1);
-        DGL_Vertex3f(haloPos[VX] - radX * rightOff[VX],
-                     haloPos[VY] - radY * rightOff[VY],
-                     haloPos[VZ] - radX * rightOff[VZ]);
-        DGL_End();
+        glBegin(GL_QUADS);
+            glTexCoord2f(0, 0);
+            glVertex3f(haloPos[VX] + radX * leftOff[VX],
+                       haloPos[VY] + radY * leftOff[VY],
+                       haloPos[VZ] + radX * leftOff[VZ]);
+            glTexCoord2f(1, 0);
+            glVertex3f(haloPos[VX] + radX * rightOff[VX],
+                       haloPos[VY] + radY * rightOff[VY],
+                       haloPos[VZ] + radX * rightOff[VZ]);
+            glTexCoord2f(1, 1);
+            glVertex3f(haloPos[VX] - radX * leftOff[VX],
+                       haloPos[VY] - radY * leftOff[VY],
+                       haloPos[VZ] - radX * leftOff[VZ]);
+            glTexCoord2f(0, 1);
+            glVertex3f(haloPos[VX] - radX * rightOff[VX],
+                       haloPos[VY] - radY * rightOff[VY],
+                       haloPos[VZ] - radX * rightOff[VZ]);
+        glEnd();
     }
 
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PopMatrix();
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
 
     // Undo the changes to the DGL state.
     if(primary)

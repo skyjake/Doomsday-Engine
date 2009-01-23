@@ -44,7 +44,7 @@
 #include "resource.h"
 
 #include "de_base.h"
-#include "de_dgl.h"
+#include "de_graphics.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
@@ -243,7 +243,7 @@ static int initPluginSystem(void)
 
 static int initDGL(void)
 {
-    return DGL_PreInit();
+    return Sys_PreInitGL();
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -338,9 +338,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 {
                     DD_ErrorBox(true, "Error creating main window.");
                 }
-                else if(!DGL_Init())
+                else if(!Sys_InitGL())
                 {
-                    DD_ErrorBox(true, "Error initializing DGL.");
+                    DD_ErrorBox(true, "Error initializing OpenGL.");
                 }
                 else
                 {   // All initialization complete.

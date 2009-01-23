@@ -47,7 +47,6 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
-#include "de_dgl.h"
 
 #include "m_vector.h"
 
@@ -1058,7 +1057,7 @@ static void renderShadowSeg(const rvertex_t* origVertices,
         realNumVertices = 3 + divs[0].num + 3 + divs[1].num;
 
     memset(rTU, 0, sizeof(rTU));
-    rTU[TU_PRIMARY].tex = curTex = GL_PrepareLSTexture(p->texture);
+    rTU[TU_PRIMARY].tex = GL_PrepareLSTexture(p->texture);
     rTU[TU_PRIMARY].magMode = DGL_LINEAR;
     rTU[TU_PRIMARY].blend = 1;
 
@@ -1671,26 +1670,26 @@ static void drawPoint(float pos[3], float radius, const float color[4])
     radX = radius * 1;
     radY = radX / 1.2f;
 
-    DGL_Color4fv(color);
+    glColor4fv(color);
 
-    DGL_Begin(DGL_QUADS);
-    DGL_TexCoord2f(0, 0);
-    DGL_Vertex3f(finalPos[VX] + radX * leftOff[VX],
-                 finalPos[VY] + radY * leftOff[VY],
-                 finalPos[VZ] + radX * leftOff[VZ]);
-    DGL_TexCoord2f(1, 0);
-    DGL_Vertex3f(finalPos[VX] + radX * rightOff[VX],
-                 finalPos[VY] + radY * rightOff[VY],
-                 finalPos[VZ] + radX * rightOff[VZ]);
-    DGL_TexCoord2f(1, 1);
-    DGL_Vertex3f(finalPos[VX] - radX * leftOff[VX],
-                 finalPos[VY] - radY * leftOff[VY],
-                 finalPos[VZ] - radX * leftOff[VZ]);
-    DGL_TexCoord2f(0, 1);
-    DGL_Vertex3f(finalPos[VX] - radX * rightOff[VX],
-                 finalPos[VY] - radY * rightOff[VY],
-                 finalPos[VZ] - radX * rightOff[VZ]);
-    DGL_End();
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex3f(finalPos[VX] + radX * leftOff[VX],
+                   finalPos[VY] + radY * leftOff[VY],
+                   finalPos[VZ] + radX * leftOff[VZ]);
+        glTexCoord2f(1, 0);
+        glVertex3f(finalPos[VX] + radX * rightOff[VX],
+                   finalPos[VY] + radY * rightOff[VY],
+                   finalPos[VZ] + radX * rightOff[VZ]);
+        glTexCoord2f(1, 1);
+        glVertex3f(finalPos[VX] - radX * leftOff[VX],
+                   finalPos[VY] - radY * leftOff[VY],
+                   finalPos[VZ] - radX * leftOff[VZ]);
+        glTexCoord2f(0, 1);
+        glVertex3f(finalPos[VX] - radX * rightOff[VX],
+                   finalPos[VY] - radY * rightOff[VY],
+                   finalPos[VZ] - radX * rightOff[VZ]);
+    glEnd();
 }
 
 /**

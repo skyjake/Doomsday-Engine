@@ -40,7 +40,6 @@
 #include <SDL_syswm.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_refresh.h"
@@ -377,7 +376,7 @@ static boolean initOpenGL(void)
         return false;
 
     // Setup the GL state like we want it.
-    initState();
+    Sys_InitGLState();
     return true;
 }
 
@@ -731,7 +730,7 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
                          data))
         {
             // We can get on with initializing the OGL state.
-            initState();
+            Sys_InitGLState();
         }
 
         if(glIsInited)
@@ -815,7 +814,7 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
  */
 void Sys_UpdateWindow(uint idx)
 {
-    if(DGL_state.forceFinishBeforeSwap)
+    if(GL_state.forceFinishBeforeSwap)
     {
         glFinish();
     }

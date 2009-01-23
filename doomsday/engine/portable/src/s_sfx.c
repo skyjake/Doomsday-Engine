@@ -30,7 +30,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
@@ -1218,7 +1217,7 @@ void Sfx_DebugInfo(void)
     char                buf[200];
     uint                cachesize, ccnt;
 
-    DGL_Color3f(1, 1, 0);
+    glColor3f(1, 1, 0);
     if(!sfxAvail)
     {
         FR_ShadowTextOut("Sfx disabled", 0, 0);
@@ -1231,16 +1230,16 @@ void Sfx_DebugInfo(void)
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
-    DGL_Color3f(1, 1, 1);
+    glColor3f(1, 1, 1);
     FR_ShadowTextOut(buf, 10, 0);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
     {
         if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING))
-            DGL_Color3f(1, 1, 1);
+            glColor3f(1, 1, 1);
         else
-            DGL_Color3f(1, 1, 0);
+            glColor3f(1, 1, 0);
 
         sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u", i,
                 !(ch->flags & SFXCF_NO_ORIGIN) ? 'O' : '.',

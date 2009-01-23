@@ -31,7 +31,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -906,7 +905,7 @@ void LO_DrawLumobjs(void)
     float               color[4];
     uint                i;
 
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
@@ -925,10 +924,10 @@ void LO_DrawLumobjs(void)
         if(lum->type == LT_OMNI)
             lumCenter[VZ] += LUM_OMNI(lum)->zOff;
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
 
-        DGL_Translatef(lumCenter[VX], lumCenter[VZ], lumCenter[VY]);
+        glTranslatef(lumCenter[VX], lumCenter[VZ], lumCenter[VY]);
 
         switch(lum->type)
         {
@@ -941,31 +940,31 @@ void LO_DrawLumobjs(void)
             color[CB] = LUM_OMNI(lum)->color[CB];
             color[CA] = 1;
 
-            DGL_Begin(DGL_LINES);
+            glBegin(GL_LINES);
             {
-                DGL_Color4fv(black);
-                DGL_Vertex3f(-scale, 0, 0);
-                DGL_Color4fv(color);
-                DGL_Vertex3f(0, 0, 0);
-                DGL_Vertex3f(0, 0, 0);
-                DGL_Color4fv(black);
-                DGL_Vertex3f(scale, 0, 0);
+                glColor4fv(black);
+                glVertex3f(-scale, 0, 0);
+                glColor4fv(color);
+                glVertex3f(0, 0, 0);
+                glVertex3f(0, 0, 0);
+                glColor4fv(black);
+                glVertex3f(scale, 0, 0);
 
-                DGL_Vertex3f(0, -scale, 0);
-                DGL_Color4fv(color);
-                DGL_Vertex3f(0, 0, 0);
-                DGL_Vertex3f(0, 0, 0);
-                DGL_Color4fv(black);
-                DGL_Vertex3f(0, scale, 0);
+                glVertex3f(0, -scale, 0);
+                glColor4fv(color);
+                glVertex3f(0, 0, 0);
+                glVertex3f(0, 0, 0);
+                glColor4fv(black);
+                glVertex3f(0, scale, 0);
 
-                DGL_Vertex3f(0, 0, -scale);
-                DGL_Color4fv(color);
-                DGL_Vertex3f(0, 0, 0);
-                DGL_Vertex3f(0, 0, 0);
-                DGL_Color4fv(black);
-                DGL_Vertex3f(0, 0, scale);
+                glVertex3f(0, 0, -scale);
+                glColor4fv(color);
+                glVertex3f(0, 0, 0);
+                glVertex3f(0, 0, 0);
+                glColor4fv(black);
+                glVertex3f(0, 0, scale);
             }
-            DGL_End();
+            glEnd();
             break;
             }
 
@@ -978,17 +977,17 @@ void LO_DrawLumobjs(void)
             color[CB] = LUM_PLANE(lum)->color[CB];
             color[CA] = 1;
 
-            DGL_Begin(DGL_LINES);
+            glBegin(GL_LINES);
             {
-                DGL_Color4fv(black);
-                DGL_Vertex3f(scale * LUM_PLANE(lum)->normal[VX],
+                glColor4fv(black);
+                glVertex3f(scale * LUM_PLANE(lum)->normal[VX],
                              scale * LUM_PLANE(lum)->normal[VZ],
                              scale * LUM_PLANE(lum)->normal[VY]);
-                DGL_Color4fv(color);
-                DGL_Vertex3f(0, 0, 0);
+                glColor4fv(color);
+                glVertex3f(0, 0, 0);
 
             }
-            DGL_End();
+            glEnd();
             break;
             }
 
@@ -996,12 +995,12 @@ void LO_DrawLumobjs(void)
             break;
         }
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
     }
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
 }
 #endif

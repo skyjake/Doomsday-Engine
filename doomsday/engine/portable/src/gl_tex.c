@@ -37,7 +37,6 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
-#include "de_dgl.h"
 
 // MACROS ------------------------------------------------------------------
 

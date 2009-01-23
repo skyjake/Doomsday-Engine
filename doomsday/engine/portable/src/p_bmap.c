@@ -31,7 +31,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_system.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -976,10 +975,10 @@ static boolean rendBlockMobj(mobj_t* mo, void* data)
            mo->pos[VX] - bbox[0][VX] + mo->radius,
            mo->pos[VY] - bbox[0][VY] + mo->radius);
 
-    DGL_Vertex2f(start[VX], start[VY]);
-    DGL_Vertex2f(end[VX], start[VY]);
-    DGL_Vertex2f(end[VX], end[VY]);
-    DGL_Vertex2f(start[VX], end[VY]);
+    glVertex2f(start[VX], start[VY]);
+    glVertex2f(end[VX], start[VY]);
+    glVertex2f(end[VX], end[VY]);
+    glVertex2f(start[VX], end[VY]);
     return true; // Continue iteration.
 }
 
@@ -994,8 +993,8 @@ static boolean rendBlockLinedef(linedef_t* line, void* data)
     V2_Set(end,
            line->L_v2pos[VX] - bbox[0][VX], line->L_v2pos[VY] - bbox[0][VY]);
 
-    DGL_Vertex2fv(start);
-    DGL_Vertex2fv(end);
+    glVertex2fv(start);
+    glVertex2fv(end);
     return true; // Continue iteration.
 }
 
@@ -1015,10 +1014,10 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
         V2_Set(end,
                seg->SG_v2pos[VX] - bbox[0][VX], seg->SG_v2pos[VY] - bbox[0][VY]);
 
-        DGL_Begin(DGL_LINES);
-        DGL_Vertex2fv(start);
-        DGL_Vertex2fv(end);
-        DGL_End();
+        glBegin(GL_LINES);
+            glVertex2fv(start);
+            glVertex2fv(end);
+        glEnd();
 
         {
         float               length, dx, dy;
@@ -1036,26 +1035,26 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
             normal[VX] = -unit[VY];
             normal[VY] = unit[VX];
 
-            DGL_Bind(GL_PrepareLSTexture(LST_DYNAMIC));
+            glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
 
-            DGL_Enable(DGL_TEXTURING);
+            glEnable(GL_TEXTURE_2D);
             DGL_BlendOp(DGL_ADD);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-            DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0.75f, 0.5f);
-            DGL_Vertex2fv(start);
-            DGL_TexCoord2f(0.75f, 0.5f);
-            DGL_Vertex2fv(end);
-            DGL_TexCoord2f(0.75f, 1);
-            DGL_Vertex2f(end[VX] - normal[VX] * width,
-                        end[VY] - normal[VY] * width);
-            DGL_TexCoord2f(0.75f, 1);
-            DGL_Vertex2f(start[VX] - normal[VX] * width,
-                        start[VY] - normal[VY] * width);
-            DGL_End();
+            glBegin(GL_QUADS);
+                glTexCoord2f(0.75f, 0.5f);
+                glVertex2fv(start);
+                glTexCoord2f(0.75f, 0.5f);
+                glVertex2fv(end);
+                glTexCoord2f(0.75f, 1);
+                glVertex2f(end[VX] - normal[VX] * width,
+                           end[VY] - normal[VY] * width);
+                glTexCoord2f(0.75f, 1);
+                glVertex2f(start[VX] - normal[VX] * width,
+                           start[VY] - normal[VY] * width);
+            glEnd();
 
-            DGL_Disable(DGL_TEXTURING);
+            glDisable(GL_TEXTURE_2D);
             GL_BlendMode(BM_NORMAL);
             }
         }
@@ -1066,16 +1065,16 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
         V2_Set(end, ssec->bBox[1].pos[VX] - bbox[0][VX],
                     ssec->bBox[1].pos[VY] - bbox[0][VY]);
 
-        DGL_Begin(DGL_LINES);
-        DGL_Vertex2f(start[VX], start[VY]);
-        DGL_Vertex2f(end[VX], start[VY]);
-        DGL_Vertex2f(end[VX], start[VY]);
-        DGL_Vertex2f(end[VX], end[VY]);
-        DGL_Vertex2f(end[VX], end[VY]);
-        DGL_Vertex2f(start[VX], end[VY]);
-        DGL_Vertex2f(start[VX], end[VY]);
-        DGL_Vertex2f(start[VX], start[VY]);
-        DGL_End();
+        glBegin(GL_LINES);
+            glVertex2f(start[VX], start[VY]);
+            glVertex2f(end[VX], start[VY]);
+            glVertex2f(end[VX], start[VY]);
+            glVertex2f(end[VX], end[VY]);
+            glVertex2f(end[VX], end[VY]);
+            glVertex2f(start[VX], end[VY]);
+            glVertex2f(start[VX], end[VY]);
+            glVertex2f(start[VX], start[VY]);
+        glEnd();
         *segs++;
     }
     return true; // Continue iteration.
@@ -1095,14 +1094,14 @@ void rendBlockLinedefs(void* blockPtr, void* param,
         args.func = rendBlockLinedef;
         args.param = param;
 
-        DGL_Color4f(r, g, b, a);
-        DGL_Disable(DGL_TEXTURING);
+        glColor4f(r, g, b, a);
+        glDisable(GL_TEXTURE_2D);
 
-        DGL_Begin(DGL_LINES);
-        bmapBlockLinesIterator(block, &args);
-        DGL_End();
+        glBegin(GL_LINES);
+            bmapBlockLinesIterator(block, &args);
+        glEnd();
 
-        DGL_Enable(DGL_TEXTURING);
+        glEnable(GL_TEXTURE_2D);
     }
 
     // Polyobj lines?
@@ -1118,14 +1117,14 @@ void rendBlockLinedefs(void* blockPtr, void* param,
         args.func = PTR_PolyobjLines;
         args.param = &poargs;
 
-        DGL_Color4f(r, g, b, a);
-        DGL_Disable(DGL_TEXTURING);
+        glColor4f(r, g, b, a);
+        glDisable(GL_TEXTURE_2D);
 
-        DGL_Begin(DGL_LINES);
-        bmapBlockPolyobjsIterator(block, &args);
-        DGL_End();
+        glBegin(GL_LINES);
+            bmapBlockPolyobjsIterator(block, &args);
+        glEnd();
 
-        DGL_Enable(DGL_TEXTURING);
+        glEnable(GL_TEXTURE_2D);
     }
 }
 
@@ -1143,14 +1142,14 @@ void rendBlockMobjs(void* blockPtr, void* data,
         args.func = rendBlockMobj;
         args.param = data;
 
-        DGL_Color4f(r, g, b, a);
-        DGL_Disable(DGL_TEXTURING);
+        glColor4f(r, g, b, a);
+        glDisable(GL_TEXTURE_2D);
 
-        DGL_Begin(DGL_QUADS);
-        bmapBlockMobjsIterator(block, (void*) &args);
-        DGL_End();
+        glBegin(GL_QUADS);
+            bmapBlockMobjsIterator(block, (void*) &args);
+        glEnd();
 
-        DGL_Enable(DGL_TEXTURING);
+        glEnable(GL_TEXTURE_2D);
     }
 }
 
@@ -1169,7 +1168,7 @@ void rendBlockSubsectors(void* blockPtr, void* param,
         args.func = rendBlockSubsector;
         args.param = param;
 
-        DGL_Color4f(r, g, b, a);
+        glColor4f(r, g, b, a);
         ssecBlockIterator(block, &args);
     }
 }
@@ -1317,41 +1316,41 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     }
 
     // Go into screen projection mode.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    DGL_Translatef((theWindow->width / 2), (theWindow->height / 2), 0);
-    DGL_Scalef(scale, -scale, 1);
+    glTranslatef((theWindow->width / 2), (theWindow->height / 2), 0);
+    glScalef(scale, -scale, 1);
 
     if(followMobj)
     {   // Offset relatively to center on the location of the mobj.
         V2_Set(start,
                (vBlock[VX] * bmap->blockSize[VX]),
                (vBlock[VY] * bmap->blockSize[VY]));
-        DGL_Translatef(-start[VX], -start[VY], 0);
+        glTranslatef(-start[VX], -start[VY], 0);
     }
     else
     {   // Offset to center the blockmap on the screen.
-        DGL_Translatef(-(bmap->blockSize[VX] * bmap->dimensions[VX] / 2),
-                      -(bmap->blockSize[VY] * bmap->dimensions[VY] / 2), 0);
+        glTranslatef(-(bmap->blockSize[VX] * bmap->dimensions[VX] / 2),
+                     -(bmap->blockSize[VY] * bmap->dimensions[VY] / 2), 0);
     }
 
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
 
     // Draw a background.
     V2_Set(start, 0, 0);
     V2_Set(end, bmap->blockSize[VX] * bmap->dimensions[VX],
                 bmap->blockSize[VY] * bmap->dimensions[VY]);
 
-    DGL_Color4f(.25f, .25f, .25f, .66f);
-    DGL_Begin(DGL_QUADS);
-        DGL_Vertex2f(start[VX], start[VY]);
-        DGL_Vertex2f(end[VX], start[VY]);
-        DGL_Vertex2f(end[VX], end[VY]);
-        DGL_Vertex2f(start[VX], end[VY]);
-    DGL_End();
+    glColor4f(.25f, .25f, .25f, .66f);
+    glBegin(GL_QUADS);
+        glVertex2f(start[VX], start[VY]);
+        glVertex2f(end[VX], start[VY]);
+        glVertex2f(end[VX], end[VY]);
+        glVertex2f(start[VX], end[VY]);
+    glEnd();
 
     /**
      * Draw the blocks.
@@ -1368,20 +1367,20 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
             {
                 if(x == vBlock[VX] && y == vBlock[VY])
                 {   // The block the viewPlayer is in.
-                    DGL_Color4f(.66f, .66f, 1, .66f);
+                    glColor4f(.66f, .66f, 1, .66f);
                     draw = true;
                 }
                 else if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
                         y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
                 {   // In the viewPlayer's extended collision range.
-                    DGL_Color4f(.33f, .33f, .66f, .33f);
+                    glColor4f(.33f, .33f, .66f, .33f);
                     draw = true;
                 }
             }
 
             if(!draw && !block)
             {   // NULL block.
-                DGL_Color4f(0, 0, 0, .95f);
+                glColor4f(0, 0, 0, .95f);
                 draw = true;
             }
 
@@ -1393,12 +1392,12 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
                             bmap->blockSize[VY]);
                 V2_Sum(end, end, start);
 
-                DGL_Begin(DGL_QUADS);
-                    DGL_Vertex2f(start[VX], start[VY]);
-                    DGL_Vertex2f(end[VX], start[VY]);
-                    DGL_Vertex2f(end[VX], end[VY]);
-                    DGL_Vertex2f(start[VX], end[VY]);
-                DGL_End();
+                glBegin(GL_QUADS);
+                    glVertex2f(start[VX], start[VY]);
+                    glVertex2f(end[VX], start[VY]);
+                    glVertex2f(end[VX], end[VY]);
+                    glVertex2f(start[VX], end[VY]);
+                glEnd();
             }
         }
 
@@ -1406,29 +1405,29 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
      * Draw the grid lines
      */
 
-    DGL_Color4f(.5f, .5f, .5f, .125f);
+    glColor4f(.5f, .5f, .5f, .125f);
 
     // Vertical lines:
-    DGL_Begin(DGL_LINES);
+    glBegin(GL_LINES);
     for(x = 1; x < bmap->dimensions[VX]; ++x)
     {
-        DGL_Vertex2f(x * bmap->blockSize[VX],  0);
-        DGL_Vertex2f(x * bmap->blockSize[VX],
-                    bmap->blockSize[VY] * bmap->dimensions[VY]);
+        glVertex2f(x * bmap->blockSize[VX],  0);
+        glVertex2f(x * bmap->blockSize[VX],
+                   bmap->blockSize[VY] * bmap->dimensions[VY]);
     }
-    DGL_End();
+    glEnd();
 
     // Horizontal lines
-    DGL_Begin(DGL_LINES);
+    glBegin(GL_LINES);
     for(y = 1; y < bmap->dimensions[VY]; ++y)
     {
-        DGL_Vertex2f(0, y * bmap->blockSize[VY]);
-        DGL_Vertex2f(bmap->blockSize[VX] * bmap->dimensions[VX],
-                    y * bmap->blockSize[VY]);
+        glVertex2f(0, y * bmap->blockSize[VY]);
+        glVertex2f(bmap->blockSize[VX] * bmap->dimensions[VX],
+                   y * bmap->blockSize[VY]);
     }
-    DGL_End();
+    glEnd();
 
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
 
     /**
      * Draw the blockmap-linked data.
@@ -1490,17 +1489,17 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
                followMobj->pos[VX] - bmap->bBox[0][VX] + radius,
                followMobj->pos[VY] - bmap->bBox[0][VY] + radius);
 
-        DGL_Color4f(0, 1, 0, 1);
-        DGL_Disable(DGL_TEXTURING);
+        glColor4f(0, 1, 0, 1);
+        glDisable(GL_TEXTURE_2D);
 
-        DGL_Begin(DGL_QUADS);
-            DGL_Vertex2f(start[VX], start[VY]);
-            DGL_Vertex2f(end[VX], start[VY]);
-            DGL_Vertex2f(end[VX], end[VY]);
-            DGL_Vertex2f(start[VX], end[VY]);
-        DGL_End();
+        glBegin(GL_QUADS);
+            glVertex2f(start[VX], start[VY]);
+            glVertex2f(end[VX], start[VY]);
+            glVertex2f(end[VX], end[VY]);
+            glVertex2f(start[VX], end[VY]);
+        glEnd();
 
-        DGL_Enable(DGL_TEXTURING);
+        glEnable(GL_TEXTURE_2D);
     }
     else
     {   // Just draw the lot.
@@ -1523,25 +1522,25 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     V2_Set(end, 1 + bmap->blockSize[VX] * bmap->dimensions[VX],
            1 + bmap->blockSize[VY] * bmap->dimensions[VY]);
 
-    DGL_Color4f(1, .5f, .5f, 1);
-    DGL_Disable(DGL_TEXTURING);
+    glColor4f(1, .5f, .5f, 1);
+    glDisable(GL_TEXTURE_2D);
 
-    DGL_Begin(DGL_LINES);
-        DGL_Vertex2f(start[VX], start[VY]);
-        DGL_Vertex2f(end[VX], start[VY]);
+    glBegin(GL_LINES);
+        glVertex2f(start[VX], start[VY]);
+        glVertex2f(end[VX], start[VY]);
 
-        DGL_Vertex2f(end[VX], start[VY]);
-        DGL_Vertex2f(end[VX], end[VY]);
+        glVertex2f(end[VX], start[VY]);
+        glVertex2f(end[VX], end[VY]);
 
-        DGL_Vertex2f(end[VX], end[VY]);
-        DGL_Vertex2f(start[VX], end[VY]);
+        glVertex2f(end[VX], end[VY]);
+        glVertex2f(start[VX], end[VY]);
 
-        DGL_Vertex2f(start[VX], end[VY]);
-        DGL_Vertex2f(start[VX], start[VY]);
-    DGL_End();
+        glVertex2f(start[VX], end[VY]);
+        glVertex2f(start[VX], start[VY]);
+    glEnd();
 
-    DGL_PopMatrix();
-    DGL_Enable(DGL_TEXTURING);
+    glPopMatrix();
+    glEnable(GL_TEXTURE_2D);
 }
 
 void P_BlockmapDebug(void)
@@ -1587,10 +1586,10 @@ void P_BlockmapDebug(void)
 
     blockmapDebug(blockmap, followMobj, func);
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
     if(followMobj && bmapShowDebug != 3)
     {
@@ -1611,6 +1610,6 @@ void P_BlockmapDebug(void)
                  bmap->blockSize[VX], bmap->blockSize[VY],
                  bmap->dimensions[VX], bmap->dimensions[VY]);
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }

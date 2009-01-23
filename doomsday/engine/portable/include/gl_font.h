@@ -26,8 +26,8 @@
  * gl_font.h: Font Renderer
  */
 
-#ifndef __DGL_FONT_RENDERER_H__
-#define __DGL_FONT_RENDERER_H__
+#ifndef __GL_FONT_RENDERER_H__
+#define __GL_FONT_RENDERER_H__
 
 #ifdef WIN32
 #   ifndef WIN32_LEAN_AND_MEAN

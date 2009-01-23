@@ -26,8 +26,8 @@
  * rend_particle.h: Particle Effects
  */
 
-#ifndef __DGL_PARTICLES_H__
-#define __DGL_PARTICLES_H__
+#ifndef __GL_PARTICLES_H__
+#define __GL_PARTICLES_H__
 
 extern int      useParticles, maxParticles;
 extern float    particleSpawnRate;

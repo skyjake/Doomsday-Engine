@@ -2737,10 +2737,10 @@ static void renderLinedef(linedef_t* line, float r, float g, float b,
         DGL_Color4f(r, g, b, a);
 
         DGL_Begin(DGL_LINES);
-            DGL_TexCoord2f(v1[VX], v1[VY]);
+            DGL_TexCoord2f(0, v1[VX], v1[VY]);
             DGL_Vertex2f(v1[VX], v1[VY]);
 
-            DGL_TexCoord2f(v2[VX], v2[VY]);
+            DGL_TexCoord2f(0, v2[VX], v2[VY]);
             DGL_Vertex2f(v2[VX], v2[VY]);
         DGL_End();
 
@@ -2766,10 +2766,10 @@ static void renderLinedef(linedef_t* line, float r, float g, float b,
             v2[VY] = v1[VY] + normal[VY] * NORMTAIL_LENGTH;
 
             DGL_Begin(DGL_LINES);
-                DGL_TexCoord2f(v1[VX], v1[VY]);
+                DGL_TexCoord2f(0, v1[VX], v1[VY]);
                 DGL_Vertex2f(v1[VX], v1[VY]);
 
-                DGL_TexCoord2f(v2[VX], v2[VY]);
+                DGL_TexCoord2f(0, v2[VX], v2[VY]);
                 DGL_Vertex2f(v2[VX], v2[VY]);
             DGL_End();
 #undef NORMTAIL_LENGTH
@@ -2929,10 +2929,10 @@ static void drawLineCharacter(const vectorgrap_t* vg)
     {
         vgline_t*           vgl = &vg->lines[i];
 
-        DGL_TexCoord2f(vgl->a.pos[VX], vgl->a.pos[VY]);
-          DGL_Vertex2f(vgl->a.pos[VX], vgl->a.pos[VY]);
-        DGL_TexCoord2f(vgl->b.pos[VX], vgl->b.pos[VY]);
-          DGL_Vertex2f(vgl->b.pos[VX], vgl->b.pos[VY]);
+        DGL_TexCoord2f(0, vgl->a.pos[VX], vgl->a.pos[VY]);
+        DGL_Vertex2f(vgl->a.pos[VX], vgl->a.pos[VY]);
+        DGL_TexCoord2f(0, vgl->b.pos[VX], vgl->b.pos[VY]);
+        DGL_Vertex2f(vgl->b.pos[VX], vgl->b.pos[VY]);
     }
     DGL_End();
 }
@@ -3120,16 +3120,16 @@ static void drawMarks(void)
             DGL_Rotatef(map->angle, 0, 0, 1);
 
             DGL_Begin(DGL_QUADS);
-                DGL_TexCoord2f(0, 0);
+                DGL_TexCoord2f(0, 0, 0);
                 DGL_Vertex2f(-(w / 2), h / 2);
 
-                DGL_TexCoord2f(1, 0);
+                DGL_TexCoord2f(0, 1, 0);
                 DGL_Vertex2f(w / 2, h / 2);
 
-                DGL_TexCoord2f(1, 1);
+                DGL_TexCoord2f(0, 1, 1);
                 DGL_Vertex2f(w / 2, -(h / 2));
 
-                DGL_TexCoord2f(0, 1);
+                DGL_TexCoord2f(0, 0, 1);
                 DGL_Vertex2f(-(w / 2), -(h / 2));
             DGL_End();
 
@@ -3198,14 +3198,14 @@ static void setupGLStateForMap(void)
         DGL_Translatef(-(.5f), -(.5f), 0);
 
         DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, 1);
-        DGL_Vertex2f(win->x, win->y);
-        DGL_TexCoord2f(1, 1);
-        DGL_Vertex2f(win->x + win->width, win->y);
-        DGL_TexCoord2f(1, 0);
-        DGL_Vertex2f(win->x + win->width, win->y + win->height);
-        DGL_TexCoord2f(0, 0);
-        DGL_Vertex2f(win->x, win->y + win->height);
+            DGL_TexCoord2f(0, 0, 1);
+            DGL_Vertex2f(win->x, win->y);
+            DGL_TexCoord2f(0, 1, 1);
+            DGL_Vertex2f(win->x + win->width, win->y);
+            DGL_TexCoord2f(0, 1, 0);
+            DGL_Vertex2f(win->x + win->width, win->y + win->height);
+            DGL_TexCoord2f(0, 0, 0);
+            DGL_Vertex2f(win->x, win->y + win->height);
         DGL_End();
 
         DGL_MatrixMode(DGL_TEXTURE);
@@ -3271,19 +3271,17 @@ static void setupGLStateForMap(void)
 
                     DGL_Color4f(1, 1, 1, iconAlpha);
                     DGL_Begin(DGL_QUADS);
+                        DGL_TexCoord2f(0, 0, 0);
+                        DGL_Vertex2f(x, y);
 
-                    DGL_TexCoord2f(0, 0);
-                    DGL_Vertex2f(x, y);
+                        DGL_TexCoord2f(0, s, 0);
+                        DGL_Vertex2f(x + w * scale, y);
 
-                    DGL_TexCoord2f(s, 0);
-                    DGL_Vertex2f(x + w * scale, y);
+                        DGL_TexCoord2f(0, s, t);
+                        DGL_Vertex2f(x + w * scale, y + h * scale);
 
-                    DGL_TexCoord2f(s, t);
-                    DGL_Vertex2f(x + w * scale, y + h * scale);
-
-                    DGL_TexCoord2f(0, t);
-                    DGL_Vertex2f(x, y + h * scale);
-
+                        DGL_TexCoord2f(0, 0, t);
+                        DGL_Vertex2f(x, y + h * scale);
                     DGL_End();
                     }
 
@@ -3406,8 +3404,8 @@ static void renderVertexes(void)
     for(i = 0; i < numvertexes; ++i)
     {
         P_GetFloatv(DMU_VERTEX, i, DMU_XY, v);
-        DGL_TexCoord2f(v[VX], v[VY]);
-          DGL_Vertex2f(v[VX], v[VY]);
+        DGL_TexCoord2f(0, v[VX], v[VY]);
+        DGL_Vertex2f(v[VX], v[VY]);
     }
     DGL_End();
 

@@ -39,7 +39,6 @@
 #endif
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_render.h"
@@ -103,9 +102,6 @@ extern boolean palettedTextureExtAvailable;
 extern boolean s3tcAvailable;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// The current texture.
-DGLuint curTex = 0;
 
 int glMaxTexSize; // Maximum supported texture size.
 int ratioLimit = 0; // Zero if none.
@@ -350,7 +346,7 @@ static void LoadPalette(void)
             palData[i * 3 + c] = gammaTable[playPal[i * 3 + c]];
     }
 
-    DGL_Palette(DGL_RGB, palData);
+    GL_Palette(DGL_RGB, palData);
 }
 
 byte *GL_GetPalette(void)
@@ -436,7 +432,7 @@ void GL_DeleteLightMap(ded_lightmap_t* map)
 {
     if(map->tex != lightingTextures[LST_DYNAMIC].tex)
     {
-        DGL_DeleteTextures(1, &map->tex);
+        glDeleteTextures(1, (const GLuint*) &map->tex);
     }
     map->tex = 0;
 }
@@ -555,7 +551,7 @@ void GL_DeleteFlareMap(ded_flaremap_t* map)
 {
     if(map->tex != flareTextures[FXT_FLARE].tex)
     {
-        DGL_DeleteTextures(1, &map->tex);
+        glDeleteTextures(1, (const GLuint*) &map->tex);
     }
     map->tex = 0;
 }
@@ -688,11 +684,11 @@ void GL_ClearSystemTextures(void)
     }
 
     for(i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
-        DGL_DeleteTextures(1, &lightingTextures[i].tex);
+        glDeleteTextures(1, (const GLuint*) &lightingTextures[i].tex);
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
     for(i = 0; i < NUM_FLARE_TEXTURES; ++i)
-        DGL_DeleteTextures(1, &flareTextures[i].tex);
+        glDeleteTextures(1, (const GLuint*) &flareTextures[i].tex);
     memset(flareTextures, 0, sizeof(flareTextures));
 
     P_DeleteMaterialTextures(MN_SYSTEM);
@@ -729,13 +725,13 @@ void GL_ClearRuntimeTextures(void)
 
         if(p->tex)
         {
-            DGL_DeleteTextures(1, &p->tex);
+            glDeleteTextures(1, (const GLuint*) &p->tex);
             p->tex = 0;
         }
 
         if(p->tex2)
         {
-            DGL_DeleteTextures(1, &p->tex2);
+            glDeleteTextures(1, (const GLuint*) &p->tex2);
             p->tex2 = 0;
         }
     }
@@ -786,10 +782,9 @@ void GL_BindTexture(DGLuint texname, int magMode)
     if(Con_IsBusy())
         return;
 
-    DGL_Bind(texname);
-    DGL_TexFilter(DGL_MAG_FILTER, magMode);
-    DGL_TexFilter(DGL_ANISO_FILTER, DGL_GetTexAnisoMul(texAniso));
-    curTex = texname;
+    glBindTexture(GL_TEXTURE_2D, texname);
+    GL_TexFilter(DGL_MAG_FILTER, magMode);
+    GL_TexFilter(DGL_ANISO_FILTER, GL_GetTexAnisoMul(texAniso));
 }
 
 /*DGLuint GL_UploadTexture(byte *data, int width, int height,
@@ -961,7 +956,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     rgbaOriginal = NULL;
 
     // Bind the texture so we can upload content.
-    DGL_Bind(content->name);
+    glBindTexture(GL_TEXTURE_2D, content->name);
 
     if(load8bit)
     {
@@ -988,7 +983,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
                              GL_GetPalette(), false);
 
             // Upload it.
-            if(!DGL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
+            if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
                              DGL_COLOR_INDEX_8, levelWidth, levelHeight,
                              generateMipmaps &&
                              canGenMips ? true : generateMipmaps ? -i :
@@ -1016,7 +1011,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     else
     {
         // DGL knows how to generate mipmaps for RGB(A) textures.
-        if(!DGL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
+        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
                          generateMipmaps ? true : false, buffer))
         {
             Con_Error
@@ -1629,25 +1624,27 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
         }
 
         /*
-        texture = DGL_NewTexture();
+        // Generate a new texture name and bind it.
+        glGenTextures(1, (GLuint*) &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
         if(image.width < 128 && image.height < 128)
         {
             // Small textures will never be compressed.
             DGL_Disable(DGL_TEXTURE_COMPRESSION);
         }
-        DGL_TexImage(image.pixelSize ==
+        GL_TexImage(image.pixelSize ==
                     2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
                     3 ? DGL_RGB : image.pixelSize ==
                     4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height,
                     useMipmap, image.pixels);
         DGL_Enable(DGL_TEXTURE_COMPRESSION);
-        DGL_TexFilter(DGL_MAG_FILTER, glmode[texMagMode]);
-        DGL_TexFilter(DGL_MIN_FILTER,
+        GL_TexFilter(DGL_MAG_FILTER, glmode[texMagMode]);
+        GL_TexFilter(DGL_MIN_FILTER,
                         useMipmap ? glmode[mipmapping] : DGL_LINEAR);
         if(clamped)
         {
-            DGL_TexFilter(DGL_WRAP_S, DGL_CLAMP);
-            DGL_TexFilter(DGL_WRAP_T, DGL_CLAMP);
+            GL_TexFilter(DGL_WRAP_S, DGL_CLAMP);
+            GL_TexFilter(DGL_WRAP_T, DGL_CLAMP);
         }*/
 
         texture = GL_NewTextureWithParams2(( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
@@ -2147,9 +2144,6 @@ unsigned int GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
 {
     DGLuint             tex;
 
-    // We don't track the current texture with raw images.
-    curTex = 0;
-
     GL_BindTexture(tex = GL_PrepareRawTex(lump, part2),
                    (linearRaw ? DGL_LINEAR : DGL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
@@ -2455,7 +2449,7 @@ DGLuint GL_PreparePatch(lumpnum_t lump)
 
 void GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 {
-    GL_BindTexture(curTex = GL_PreparePatch(lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(lump), glmode[texMagMode]);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                     wrapS == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -2464,18 +2458,17 @@ void GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 }
 
 /**
- * You should use Disable(DGL_TEXTURING) instead of this.
+ * You should use glDisable(GL_TEXTURE_2D) instead of this.
  */
 void GL_SetNoTexture(void)
 {
-    DGL_Bind(0);
-    curTex = 0;
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 static void setTextureMinMode(DGLuint tex, int minMode)
 {
-    DGL_Bind(tex);
-    DGL_TexFilter(DGL_MIN_FILTER, minMode);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    GL_TexFilter(DGL_MIN_FILTER, minMode);
 }
 
 void GL_SetRawTextureParams(int minMode)
@@ -2613,13 +2606,13 @@ void GL_DeleteRawImages(void)
 
         if(r->tex)
         {
-            DGL_DeleteTextures(1, &r->tex);
+            glDeleteTextures(1, (const GLuint*) &r->tex);
             r->tex = 0;
         }
 
         if(r->tex2)
         {
-            DGL_DeleteTextures(1, &r->tex2);
+            glDeleteTextures(1, (const GLuint*) &r->tex2);
             r->tex2 = 0;
         }
     }
@@ -3472,7 +3465,7 @@ void GLTexture_ReleaseTextures(gltexture_t* tex)
 
             if(inst->id) // Is the texture loaded?
             {
-                DGL_DeleteTextures(1, &inst->id);
+                glDeleteTextures(1, (const GLuint*) &inst->id);
                 inst->id = 0;
             }
             node = node->next;
@@ -3499,8 +3492,8 @@ void GLTexture_SetMinMode(gltexture_t* tex, int minMode)
 
             if(inst->id) // Is the texture loaded?
             {
-                DGL_Bind(inst->id);
-                DGL_TexFilter(DGL_MIN_FILTER, minMode);
+                glBindTexture(GL_TEXTURE_2D, inst->id);
+                GL_TexFilter(DGL_MIN_FILTER, minMode);
             }
             node = node->next;
         }

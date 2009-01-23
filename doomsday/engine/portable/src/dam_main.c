@@ -567,7 +567,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             {
             uint                startTime = Sys_GetRealTime();
 
-            R_UpdateSkyFix();
+            R_InitSkyFix();
 
             // How much time did we spend?
             VERBOSE(Con_Message

@@ -77,7 +77,8 @@ boolean         R_SectorContainsSkySurfaces(const sector_t* sec);
 
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
-void            R_UpdateSkyFix(void);
+void            R_InitSkyFix(void);
+void            R_UpdateSkyFixForSec(const sector_t* sec);
 void            R_OrderVertices(const linedef_t* line, const sector_t* sector,
                                 vertex_t* verts[2]);
 plane_t*        R_NewPlaneForSector(sector_t* sec);

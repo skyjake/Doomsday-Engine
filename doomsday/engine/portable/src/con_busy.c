@@ -36,7 +36,6 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_dgl.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -247,7 +246,7 @@ static void Con_BusyDeleteTextures(void)
         FR_DestroyFont(busyFont);
     }
 
-    DGL_DeleteTextures(2, texLoading);
+    glDeleteTextures(2, (const GLuint*) texLoading);
     texLoading[0] = texLoading[1] = 0;
 
     busyFont = 0;
@@ -277,7 +276,7 @@ void Con_AcquireScreenshotTexture(void)
 #endif
 
     frame = M_Malloc(theWindow->width * theWindow->height * 3);
-    DGL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
+    GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
     glMaxTexSize = 512; // A bit of a hack, but don't use too large a texture.
     texScreenshot = GL_UploadTexture(frame, theWindow->width, theWindow->height,
                                      false, false, true, false, true,
@@ -295,7 +294,7 @@ void Con_AcquireScreenshotTexture(void)
 
 void Con_ReleaseScreenshotTexture(void)
 {
-    DGL_DeleteTextures(1, &texScreenshot);
+    glDeleteTextures(1, (const GLuint*) &texScreenshot);
     texScreenshot = 0;
 }
 
@@ -311,10 +310,10 @@ static void Con_BusyLoop(void)
 
     if(canDraw)
     {
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PushMatrix();
-        DGL_LoadIdentity();
-        DGL_Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
     }
 
     Sys_Lock(busy_Mutex);
@@ -344,8 +343,8 @@ static void Con_BusyLoop(void)
 
     if(canDraw)
     {
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
     }
 
     if(verbose)
@@ -363,19 +362,20 @@ static void Con_DrawScreenshotBackground(float x, float y, float width,
 {
     if(texScreenshot)
     {
-        DGL_Enable(DGL_TEXTURING);
-        DGL_Bind(texScreenshot);
-        DGL_Color3ub(255, 255, 255);
-        DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, 1);
-        DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(1, 1);
-        DGL_Vertex2f(x + width, y);
-        DGL_TexCoord2f(1, 0);
-        DGL_Vertex2f(x + width, y + height);
-        DGL_TexCoord2f(0, 0);
-        DGL_Vertex2f(x, y + height);
-        DGL_End();
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, texScreenshot);
+
+        glColor3ub(255, 255, 255);
+        glBegin(GL_QUADS);
+            glTexCoord2f(0, 1);
+            glVertex2f(x, y);
+            glTexCoord2f(1, 1);
+            glVertex2f(x + width, y);
+            glTexCoord2f(1, 0);
+            glVertex2f(x + width, y + height);
+            glTexCoord2f(0, 0);
+            glVertex2f(x, y + height);
+        glEnd();
     }
     else
     {
@@ -399,64 +399,64 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     edgeCount = MAX_OF(1, pos * 30);
 
     // Draw a background.
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     GL_BlendMode(BM_NORMAL);
 
-    DGL_Begin(DGL_TRIANGLE_FAN);
-    DGL_Color4ub(0, 0, 0, 140);
-    DGL_Vertex2f(x, y);
-    DGL_Color4ub(0, 0, 0, 0);
-    DGL_Vertex2f(x, y - backH);
-    DGL_Vertex2f(x + backW*.8f, y - backH*.8f);
-    DGL_Vertex2f(x + backW, y);
-    DGL_Vertex2f(x + backW*.8f, y + backH*.8f);
-    DGL_Vertex2f(x, y + backH);
-    DGL_Vertex2f(x - backW*.8f, y + backH*.8f);
-    DGL_Vertex2f(x - backW, y);
-    DGL_Vertex2f(x - backW*.8f, y - backH*.8f);
-    DGL_Vertex2f(x, y - backH);
-    DGL_End();
+    glBegin(GL_TRIANGLE_FAN);
+        glColor4ub(0, 0, 0, 140);
+        glVertex2f(x, y);
+        glColor4ub(0, 0, 0, 0);
+        glVertex2f(x, y - backH);
+        glVertex2f(x + backW*.8f, y - backH*.8f);
+        glVertex2f(x + backW, y);
+        glVertex2f(x + backW*.8f, y + backH*.8f);
+        glVertex2f(x, y + backH);
+        glVertex2f(x - backW*.8f, y + backH*.8f);
+        glVertex2f(x - backW, y);
+        glVertex2f(x - backW*.8f, y - backH*.8f);
+        glVertex2f(x, y - backH);
+    glEnd();
 
     // Draw the frame.
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
 
-    DGL_Bind(texLoading[0]);
+    glBindTexture(GL_TEXTURE_2D, texLoading[0]);
     GL_DrawRect(x - radius, y - radius, radius*2, radius*2, col[0], col[1], col[2], col[3]);
 
     // Rotate around center.
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Translatef(.5f, .5f, 0.f);
-    DGL_Rotatef(-busyTime * 20, 0.f, 0.f, 1.f);
-    DGL_Translatef(-.5f, -.5f, 0.f);
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadIdentity();
+    glTranslatef(.5f, .5f, 0.f);
+    glRotatef(-busyTime * 20, 0.f, 0.f, 1.f);
+    glTranslatef(-.5f, -.5f, 0.f);
 
     // Draw a fan.
-    DGL_Color4f(col[0], col[1], col[2], .66f);
-    DGL_Bind(texLoading[1]);
-    DGL_Begin(DGL_TRIANGLE_FAN);
+    glColor4f(col[0], col[1], col[2], .66f);
+    glBindTexture(GL_TEXTURE_2D, texLoading[1]);
+    glBegin(GL_TRIANGLE_FAN);
     // Center.
-    DGL_TexCoord2f(.5f, .5f);
-    DGL_Vertex2f(x, y);
+    glTexCoord2f(.5f, .5f);
+    glVertex2f(x, y);
     // Vertices along the edge.
     for(i = 0; i <= edgeCount; ++i)
     {
         float               angle = 2 * PI * pos *
             (i / (float)edgeCount) + PI/2;
 
-        DGL_TexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
-        DGL_Vertex2f(x + cos(angle)*radius, y + sin(angle)*radius);
+        glTexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
+        glVertex2f(x + cos(angle)*radius, y + sin(angle)*radius);
     }
-    DGL_End();
+    glEnd();
 
-    DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PopMatrix();
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
 
     // Draw the task name.
     if(busyTaskName)
     {
-        DGL_Color4f(1.f, 1.f, 1.f, .66f);
+        glColor4f(1.f, 1.f, 1.f, .66f);
         FR_TextOut(busyTaskName, x+radius, y - busyFontHgt/2);
     }
 }
@@ -540,22 +540,22 @@ void Con_BusyDrawConsoleOutput(void)
         }
     }
 
-    DGL_Disable(DGL_TEXTURING);
+    glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     GL_BlendMode(BM_NORMAL);
 
     // Dark gradient as background.
-    DGL_Begin(DGL_QUADS);
-    DGL_Color4ub(0, 0, 0, 0);
+    glBegin(GL_QUADS);
+    glColor4ub(0, 0, 0, 0);
     y = theWindow->height - (LINE_COUNT + 3) * busyFontHgt;
-    DGL_Vertex2f(0, y);
-    DGL_Vertex2f(theWindow->width, y);
-    DGL_Color4ub(0, 0, 0, 128);
-    DGL_Vertex2f(theWindow->width, theWindow->height);
-    DGL_Vertex2f(0, theWindow->height);
-    DGL_End();
+    glVertex2f(0, y);
+    glVertex2f(theWindow->width, y);
+    glColor4ub(0, 0, 0, 128);
+    glVertex2f(theWindow->width, theWindow->height);
+    glVertex2f(0, theWindow->height);
+    glEnd();
 
-    DGL_Enable(DGL_TEXTURING);
+    glEnable(GL_TEXTURE_2D);
 
     // The text lines.
     topY = y = theWindow->height - busyFontHgt * (2 * LINE_COUNT + .5f);
@@ -586,7 +586,7 @@ void Con_BusyDrawConsoleOutput(void)
             if(!line->text)
                 continue;
 
-            DGL_Color4f(1.f, 1.f, 1.f, color);
+            glColor4f(1.f, 1.f, 1.f, color);
             FR_TextOut(line->text, (theWindow->width - FR_TextWidth(line->text))/2, y);
         }
     }
@@ -639,10 +639,10 @@ void Con_StartupInit(void)
     GL_InitVarFont();
     fontHgt = FR_SingleLineHeight("Doomsday!");
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, glScreenWidth, glScreenHeight, 0, -1, 1);
 
     if(firstTime)
     {
@@ -663,10 +663,10 @@ void Con_StartupDone(void)
     if(isDedicated)
         return;
     titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-    DGL_DeleteTextures(1, (DGLuint*) &startupLogo);
+    glDeleteTextures(1, (const GLuint*) &startupLogo);
     startupLogo = 0;
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
     GL_ShutdownVarFont();
 
     // Update the secondary title and the game status.
@@ -688,7 +688,7 @@ void Con_DrawStartupBackground(float alpha)
                        *light = UI_COL(UIC_BG_LIGHT);
 
     // Background gradient picture.
-    DGL_Bind(startupLogo);
+    glBindTexture(GL_TEXTURE_2D, startupLogo);
     if(alpha < 1.0)
     {
         glEnable(GL_BLEND);
@@ -698,20 +698,20 @@ void Con_DrawStartupBackground(float alpha)
     {
         glDisable(GL_BLEND);
     }
-    DGL_Begin(DGL_QUADS);
-    // Top color.
-    DGL_Color4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-    DGL_TexCoord2f(0, 0);
-    DGL_Vertex2f(0, 0);
-    DGL_TexCoord2f(1, 0);
-    DGL_Vertex2f(glScreenWidth, 0);
-    // Bottom color.
-    DGL_Color4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-    DGL_TexCoord2f(1, 1);
-    DGL_Vertex2f(glScreenWidth, glScreenHeight);
-    DGL_TexCoord2f(0, 1);
-    DGL_Vertex2f(0, glScreenHeight);
-    DGL_End();
+    glBegin(GL_QUADS);
+        // Top color.
+        glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
+        glTexCoord2f(0, 0);
+        glVertex2f(0, 0);
+        glTexCoord2f(1, 0);
+        glVertex2f(glScreenWidth, 0);
+        // Bottom color.
+        glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
+        glTexCoord2f(1, 1);
+        glVertex2f(glScreenWidth, glScreenHeight);
+        glTexCoord2f(0, 1);
+        glVertex2f(0, glScreenHeight);
+    glEnd();
     glEnable(GL_BLEND);
 }
 
@@ -725,9 +725,9 @@ int Con_DrawTitle(float alpha)
     int width = 0;
     int height = UI_FontHeight();
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
 
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = FR_TextHeight("W") + UI_ScreenW(UI_BORDER);
@@ -747,8 +747,8 @@ int Con_DrawTitle(float alpha)
                      false, true, UI_COL(UIC_TEXT), .75f * alpha);
     }
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 
     FR_SetFont(glFontFixed);
     return height;
@@ -771,9 +771,9 @@ void Con_DrawStartupScreen(int show)
     if(ui_active)
         return;
 
-    //DGL_MatrixMode(DGL_PROJECTION);
-    //DGL_LoadIdentity();
-    //DGL_Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    //glOrtho(0, glScreenWidth, glScreenHeight, 0, -1, 1);
 
     Con_DrawStartupBackground(1.0);
 
@@ -815,9 +815,9 @@ void Con_DrawStartupScreen(int show)
 
                     x = (line->flags & CBLF_CENTER ?
                             (glScreenWidth - FR_TextWidth(line->text)) / 2 : 3);
-                    //DGL_Color3f(0, 0, 0);
+                    //glColor3f(0, 0, 0);
                     //FR_TextOut(line->text, x + 1, y + 1);
-                    DGL_Color3f(1, 1, 1);
+                    glColor3f(1, 1, 1);
                     FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
                 }
                 y += fontHgt;

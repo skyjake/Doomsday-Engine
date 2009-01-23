@@ -585,9 +585,9 @@ static uint processSubSector(subsector_t* ssec, surfacelumobjiterparams_t* param
  * @return              Dynlight list name if the quad is lit by one or more
  *                      light sources, else @c 0.
  */
-uint DL_ProjectOnSurface(subsector_t* ssec, const pvec3_t topLeft,
-                         const pvec3_t bottomRight, const float* normal,
-                         byte flags)
+uint DL_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
+                         const vectorcomp_t bottomRight[3],
+                         const vectorcomp_t normal[3], byte flags)
 {
     surfacelumobjiterparams_t params;
 

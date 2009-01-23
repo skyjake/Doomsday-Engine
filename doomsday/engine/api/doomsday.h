@@ -419,57 +419,6 @@ extern          "C" {
                                     float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
 
-    // DGL.
-    void            DGL_DeleteTextures(int num, const DGLuint* names);
-    int             DGL_Enable(int cap);
-    void            DGL_Disable(int cap);
-    void            DGL_EnableTexUnit(byte id);
-    void            DGL_DisableTexUnit(byte id);
-    boolean         DGL_GetIntegerv(int name, int* v);
-    int             DGL_GetInteger(int name);
-    boolean         DGL_SetInteger(int name, int value);
-    float           DGL_GetFloat(int name);
-    boolean         DGL_SetFloat(int name, float value);
-    void            DGL_BlendFunc(int param1, int param2);
-    void            DGL_BlendOp(int op);
-    void            DGL_MatrixMode(int mode);
-    void            DGL_PushMatrix(void);
-    void            DGL_PopMatrix(void);
-    void            DGL_LoadIdentity(void);
-    void            DGL_Ortho(float left, float top, float right, float bottom, float znear,
-                              float zfar);
-    void            DGL_Scissor(int x, int y, int width, int height);
-    void            DGL_Clear(int bufferbits);
-    int             DGL_Bind(DGLuint texture);
-    void            DGL_Begin(glprimtype_t type);
-    void            DGL_End(void);
-    boolean         DGL_NewList(DGLuint list, int mode);
-    DGLuint         DGL_EndList(void);
-    void            DGL_CallList(DGLuint list);
-    void            DGL_DeleteLists(DGLuint list, int range);
-    void            DGL_Translatef(float x, float y, float z);
-    void            DGL_Rotatef(float angle, float x, float y, float z);
-    void            DGL_Scalef(float x, float y, float z);
-    void            DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
-    void            DGL_Color3ubv(const DGLubyte *data);
-    void            DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
-    void            DGL_Color4ubv(const DGLubyte *data);
-    void            DGL_Color3f(float r, float g, float b);
-    void            DGL_Color3fv(const float* data);
-    void            DGL_Color4f(float r, float g, float b, float a);
-    void            DGL_Color4fv(const float* data);
-    void            DGL_TexCoord2f(float s, float t);
-    void            DGL_TexCoord2fv(const float* data);
-    void            DGL_MultiTexCoord2f(byte target, float s, float t);
-    void            DGL_MultiTexCoord2fv(byte target, float* data);
-    void            DGL_Vertex2f(float x, float y);
-    void            DGL_Vertex2fv(const float* data);
-    void            DGL_Vertex3f(float x, float y, float z);
-    void            DGL_Vertex3fv(const float* data);
-    void            DGL_Vertices2ftv(int num, const gl_ft2vertex_t* data);
-    void            DGL_Vertices3ftv(int num, const gl_ft3vertex_t* data);
-    void            DGL_Vertices3fctv(int num, const gl_fct3vertex_t* data);
-
     // Renderer.
     void            Rend_Reset(void);
     void            Rend_SkyParams(int layer, int param, void* data);
