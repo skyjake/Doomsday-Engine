@@ -129,17 +129,17 @@ void R_DrawSpecialFilter(int pnum)
 
         // Draw an inversing filter.
         DGL_Disable(DGL_TEXTURING);
-        GL_BlendMode(BM_INVERSE);
+        DGL_BlendMode(BM_INVERSE);
 
         r = MINMAX_OF(0.f, str * 2, 1.f);
         g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
         b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
 
         R_GetViewWindow(&x, &y, &w, &h);
-        GL_DrawRect(x, y, w, h, r, g, b, 1);
+        DGL_DrawRect(x, y, w, h, r, g, b, 1);
 
         // Restore the normal rendering state.
-        GL_BlendMode(BM_NORMAL);
+        DGL_BlendMode(BM_NORMAL);
         DGL_Enable(DGL_TEXTURING);
     }
 }
@@ -394,7 +394,7 @@ void D_Display2(void)
         {   // A (de)briefing is in process but the script hasn't started yet.
             // Just clear the screen, then.
             DGL_Disable(DGL_TEXTURING);
-            GL_DrawRect(0, 0, 320, 200, 0, 0, 0, 1);
+            DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, 1);
             DGL_Enable(DGL_TEXTURING);
         }
         break;

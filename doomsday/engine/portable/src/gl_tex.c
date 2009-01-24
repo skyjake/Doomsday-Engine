@@ -432,7 +432,7 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
 boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
                        boolean noStretch, boolean isMipMapped)
 {
-    if(DGL_GetInteger(DGL_TEXTURE_NON_POWER_OF_TWO) && !isMipMapped)
+    if(GL_state.textureNonPow2 && !isMipMapped)
     {
         *optWidth = width;
         *optHeight = height;
@@ -443,7 +443,8 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
         *optHeight = M_CeilPow2(height);
 
         // MaxTexSize may prevent using noStretch.
-        if(*optWidth > glMaxTexSize || *optHeight > glMaxTexSize)
+        if(*optWidth  > GL_state.maxTexSize ||
+           *optHeight > GL_state.maxTexSize)
         {
             noStretch = false;
         }
@@ -478,10 +479,10 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
 
     // Hardware limitations may force us to modify the preferred
     // texture size.
-    if(*optWidth > glMaxTexSize)
-        *optWidth = glMaxTexSize;
-    if(*optHeight > glMaxTexSize)
-        *optHeight = glMaxTexSize;
+    if(*optWidth > GL_state.maxTexSize)
+        *optWidth = GL_state.maxTexSize;
+    if(*optHeight > GL_state.maxTexSize)
+        *optHeight = GL_state.maxTexSize;
 
     // Some GL drivers seem to have problems with VERY small textures.
     if(*optWidth < MINTEXWIDTH)

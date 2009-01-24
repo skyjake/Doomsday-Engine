@@ -2067,7 +2067,7 @@ void AM_LoadData(void)
         if(!amMaskTexture && !Get(DD_NOVIDEO))
         {
             amMaskTexture =
-                GL_NewTextureWithParams2(DGL_LUMINANCE, 256, 256,
+                GL_NewTextureWithParams3(DGL_LUMINANCE, 256, 256,
                                          W_CacheLumpName("mapmask", PU_CACHE),
                                          0x8, DGL_NEAREST, DGL_LINEAR,
                                          0 /*no anisotropy*/,
@@ -2732,8 +2732,7 @@ static void renderLinedef(linedef_t* line, float r, float g, float b,
         P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
         P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
 
-        GL_BlendMode(blendMode);
-
+        DGL_BlendMode(blendMode);
         DGL_Color4f(r, g, b, a);
 
         DGL_Begin(DGL_LINES);
@@ -2775,7 +2774,7 @@ static void renderLinedef(linedef_t* line, float r, float g, float b,
 #undef NORMTAIL_LENGTH
         }
 
-        GL_BlendMode(BM_NORMAL);
+        DGL_BlendMode(BM_NORMAL);
     }
 }
 
@@ -2954,7 +2953,7 @@ static void renderLineCharacter(vectorgrap_t* vg, float x, float y,
     DGL_SetFloat(DGL_LINE_WIDTH, AM_LINE_WIDTH);
 
     DGL_Color4fv(rgba);
-    GL_BlendMode(blendmode);
+    DGL_BlendMode(blendmode);
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
@@ -3111,7 +3110,7 @@ static void drawMarks(void)
             x = map->markpoints[i].pos[VX];
             y = map->markpoints[i].pos[VY];
 
-            GL_SetPatch(patch->lump, DGL_CLAMP, DGL_CLAMP);
+            DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
             DGL_Color4f(1, 1, 1, map->alpha);
 
             DGL_MatrixMode(DGL_PROJECTION);
@@ -3179,7 +3178,7 @@ static void setupGLStateForMap(void)
         DGL_LoadIdentity();
 
          // We only want the left portion.
-        GL_SetRawImage(autopageLumpNum, false, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetRawImage(autopageLumpNum, false, DGL_REPEAT, DGL_REPEAT);
 
         DGL_Color4f(map->cfg.backgroundRGBA[0],
                     map->cfg.backgroundRGBA[1],
@@ -3216,12 +3215,12 @@ static void setupGLStateForMap(void)
     else
     {
         // Nope just a solid color.
-        GL_SetNoTexture();
-        GL_DrawRect(win->x, win->y, win->width, win->height,
-                    map->cfg.backgroundRGBA[0],
-                    map->cfg.backgroundRGBA[1],
-                    map->cfg.backgroundRGBA[2],
-                    map->alpha * map->cfg.backgroundRGBA[3]);
+        DGL_SetNoMaterial();
+        DGL_DrawRect(win->x, win->y, win->width, win->height,
+                     map->cfg.backgroundRGBA[0],
+                     map->cfg.backgroundRGBA[1],
+                     map->cfg.backgroundRGBA[2],
+                     map->alpha * map->cfg.backgroundRGBA[3]);
     }
 
 #if __JDOOM64__
@@ -3254,7 +3253,7 @@ static void setupGLStateForMap(void)
                 if(plr->artifacts[i])
                 {
                     R_GetSpriteInfo(artifactSprites[i], 0, &sprInfo);
-                    GL_SetPSprite(sprInfo.material);
+                    DGL_SetPSprite(sprInfo.material);
 
                     scale = win->height / (sprInfo.height * num);
                     x = win->width - sprInfo.width * scale;
@@ -3523,7 +3522,7 @@ void AM_Drawer(int viewplayer)
             // Setup the global list state.
             DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2],
                         info->rgba[3] * cfg.automapLineAlpha * map->alpha);
-            GL_BlendMode(info->blendMode);
+            DGL_BlendMode(info->blendMode);
 
             // Draw.
             DGL_CallList(map->lists[i]);
@@ -3532,7 +3531,7 @@ void AM_Drawer(int viewplayer)
 
     // Restore the previous state.
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
-    GL_BlendMode(BM_NORMAL);
+    DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
 
     if(map->flags & AMF_REND_VERTEXES)

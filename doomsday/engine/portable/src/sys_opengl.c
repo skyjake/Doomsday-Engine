@@ -182,13 +182,6 @@ static void testMultisampling(HDC hDC)
     uint            numFormats;
     float           fAttributes[] = {0,0};
 
-    /**
-     * These Attributes Are The Bits We Want To Test For In Our Sample
-     * Everything Is Pretty Standard, The Only One We Want To
-     * Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
-     * These Two Are Going To Do The Main Testing For Whether Or Not
-     * We Support Multisampling On This Hardware.
-     */
     int iAttributes[] =
     {
         WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
@@ -204,20 +197,20 @@ static void testMultisampling(HDC hDC)
         0,0
     };
 
-    // First We Check To See If We Can Get A Pixel Format For 4 Samples
-    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+    // First, see if we can get a pixel format using four samples.
+    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1,
+                                    &pixelFormat, &numFormats);
 
-    // If We Returned True, And Our Format Count Is Greater Than 1
     if(valid && numFormats >= 1)
-    {
+    {   // This will do nicely.
         GL_state_ext.wglMultisampleARB = 1;
         GL_state.multisampleFormat = pixelFormat;
     }
     else
-    {
-        // Our Pixel Format With 4 Samples Failed, Test For 2 Samples
+    {   // Failed. Try a pixel format using two samples.
         iAttributes[19] = 2;
-        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1,
+                                        &pixelFormat, &numFormats);
         if(valid && numFormats >= 1)
         {
             GL_state_ext.wglMultisampleARB = 1;
@@ -730,5 +723,15 @@ void Sys_PrintGLExtensions(void)
         printExtensions(
         ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC()));
     }
+#endif
+}
+
+void Sys_CheckGLError(void)
+{
+#ifdef _DEBUG
+    GLenum  error;
+
+    if((error = glGetError()) != GL_NO_ERROR)
+        Con_Error("OpenGL error: %i\n", error);
 #endif
 }

@@ -484,9 +484,9 @@ void DrawPlayerSetupMenu(void)
     }
 #endif
 
-    GL_SetTranslatedSprite(sprInfo.material, tclass, useColor);
+    DGL_SetTranslatedSprite(sprInfo.material, tclass, useColor);
 
-    GL_DrawRect(162 - sprInfo.offset,
+    DGL_DrawRect(162 - sprInfo.offset,
 #if __JDOOM__ || __JDOOM64__
                 menu->y + 70 - sprInfo.topOffset,
 #elif __JHERETIC__

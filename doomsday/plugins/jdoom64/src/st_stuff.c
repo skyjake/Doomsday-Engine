@@ -341,7 +341,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
         break;
     }
 
-    GL_SetPSprite(sprInfo.material);
+    DGL_SetPSprite(sprInfo.material);
 
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);

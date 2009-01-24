@@ -260,7 +260,7 @@ static void Con_BusyDeleteTextures(void)
  */
 void Con_AcquireScreenshotTexture(void)
 {
-    int                 oldMaxTexSize = glMaxTexSize;
+    int                 oldMaxTexSize = GL_state.maxTexSize;
     byte*               frame;
 #ifdef _DEBUG
     timespan_t          startTime;
@@ -277,13 +277,13 @@ void Con_AcquireScreenshotTexture(void)
 
     frame = M_Malloc(theWindow->width * theWindow->height * 3);
     GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
-    glMaxTexSize = 512; // A bit of a hack, but don't use too large a texture.
+    GL_state.maxTexSize = 512; // A bit of a hack, but don't use too large a texture.
     texScreenshot = GL_UploadTexture(frame, theWindow->width, theWindow->height,
                                      false, false, true, false, true,
-                                     DGL_LINEAR, DGL_LINEAR, 0 /*no anisotropy*/,
-                                     DGL_CLAMP, DGL_CLAMP,
+                                     GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                      TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
-    glMaxTexSize = oldMaxTexSize;
+    GL_state.maxTexSize = oldMaxTexSize;
     M_Free(frame);
 
 #ifdef _DEBUG

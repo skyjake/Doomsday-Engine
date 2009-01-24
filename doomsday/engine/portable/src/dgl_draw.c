@@ -89,155 +89,7 @@ void GL_InitArrays(void)
     memset(arrays, 0, sizeof(arrays));
 }
 
-void Sys_CheckGLError(void)
-{
-#ifdef _DEBUG
-    GLenum  error;
-
-    if((error = glGetError()) != GL_NO_ERROR)
-        Con_Error("OpenGL error: %i\n", error);
-#endif
-}
-
-void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
-{
-    glColor3ub(r, g, b);
-}
-
-void DGL_Color3ubv(const DGLubyte *data)
-{
-    glColor3ubv(data);
-}
-
-void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
-{
-    glColor4ub(r, g, b, a);
-}
-
-void DGL_Color4ubv(const DGLubyte *data)
-{
-    glColor4ubv(data);
-}
-
-void DGL_Color3f(float r, float g, float b)
-{
-    glColor3f(r, g, b);
-}
-
-void DGL_Color3fv(const float *data)
-{
-    glColor3fv(data);
-}
-
-void DGL_Color4f(float r, float g, float b, float a)
-{
-    glColor4f(r, g, b, a);
-}
-
-void DGL_Color4fv(const float *data)
-{
-    glColor4fv(data);
-}
-
-void DGL_TexCoord2f(byte target, float s, float t)
-{
-    if(target == 0)
-        glTexCoord2f(s, t);
-    else
-        glMultiTexCoord2fARB(GL_TEXTURE0 + target, s, t);
-}
-
-void DGL_TexCoord2fv(byte target, float *data)
-{
-    if(target == 0)
-        glTexCoord2fv(data);
-    else
-        glMultiTexCoord2fvARB(GL_TEXTURE0 + target, data);
-}
-
-void DGL_Vertex2f(float x, float y)
-{
-    glVertex2f(x, y);
-}
-
-void DGL_Vertex2fv(const float *data)
-{
-    glVertex2fv(data);
-}
-
-void DGL_Vertex3f(float x, float y, float z)
-{
-    glVertex3f(x, y, z);
-}
-
-void DGL_Vertex3fv(const float *data)
-{
-    glVertex3fv(data);
-}
-
-void DGL_Vertices2ftv(int num, const gl_ft2vertex_t *data)
-{
-    for(; num > 0; num--, data++)
-    {
-        glTexCoord2fv(data->tex);
-        glVertex2fv(data->pos);
-    }
-}
-
-void DGL_Vertices3ftv(int num, const gl_ft3vertex_t *data)
-{
-    for(; num > 0; num--, data++)
-    {
-        glTexCoord2fv(data->tex);
-        glVertex3fv(data->pos);
-    }
-}
-
-void DGL_Vertices3fctv(int num, const gl_fct3vertex_t *data)
-{
-    for(; num > 0; num--, data++)
-    {
-        glColor4fv(data->color);
-        glTexCoord2fv(data->tex);
-        glVertex3fv(data->pos);
-    }
-}
-
-void DGL_Begin(glprimtype_t mode)
-{
-    // We enter a Begin/End section.
-    primLevel++;
-
-#ifdef _DEBUG
-    if(inPrim)
-        Con_Error("OpenGL: already inPrim");
-    inPrim = true;
-    Sys_CheckGLError();
-#endif
-
-    glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
-            DGL_LINES ? GL_LINES : mode ==
-            DGL_TRIANGLES ? GL_TRIANGLES : mode ==
-            DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : mode ==
-            DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : mode ==
-            DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
-}
-
-void DGL_End(void)
-{
-    if(primLevel > 0)
-    {
-        primLevel--;
-        glEnd();
-    }
-
-#ifdef _DEBUG
-    inPrim = false;
-    Sys_CheckGLError();
-#endif
-}
-
-boolean DGL_NewList(DGLuint list, int mode)
+boolean GL_NewList(DGLuint list, int mode)
 {
     // We enter a New/End list section.
 #ifdef _DEBUG
@@ -266,9 +118,9 @@ Con_Error("OpenGL: List %u already in use.", (unsigned int) list);
     return true;
 }
 
-DGLuint DGL_EndList(void)
+DGLuint GL_EndList(void)
 {
-    DGLuint         currentList = inList;
+    DGLuint             currentList = inList;
 
     glEndList();
 #ifdef _DEBUG
@@ -279,7 +131,7 @@ DGLuint DGL_EndList(void)
     return currentList;
 }
 
-void DGL_CallList(DGLuint list)
+void GL_CallList(DGLuint list)
 {
     if(!list)
         return; // We do not consider zero a valid list id.
@@ -287,14 +139,14 @@ void DGL_CallList(DGLuint list)
     glCallList(list);
 }
 
-void DGL_DeleteLists(DGLuint list, int range)
+void GL_DeleteLists(DGLuint list, int range)
 {
     glDeleteLists(list, range);
 }
 
 void GL_EnableArrays(int vertices, int colors, int coords)
 {
-    int         i;
+    int                 i;
 
     if(vertices)
     {
@@ -484,21 +336,21 @@ void GL_ArrayElement(int index)
             if(arrays[AR_TEXCOORD0 + i].enabled)
             {
                 glMultiTexCoord2fvARB(GL_TEXTURE0 + i,
-                                      ((gl_texcoord_t *)
+                                      ((dgl_texcoord_t *)
                                        arrays[AR_TEXCOORD0 +
                                               i].data)[index].st);
             }
         }
 
         if(arrays[AR_COLOR].enabled)
-            glColor4ubv(((gl_color_t *) arrays[AR_COLOR].data)[index].rgba);
+            glColor4ubv(((dgl_color_t *) arrays[AR_COLOR].data)[index].rgba);
 
         if(arrays[AR_VERTEX].enabled)
-            glVertex3fv(((gl_vertex_t *) arrays[AR_VERTEX].data)[index].xyz);
+            glVertex3fv(((dgl_vertex_t *) arrays[AR_VERTEX].data)[index].xyz);
     }
 }
 
-void GL_DrawElements(glprimtype_t type, int count, const uint *indices)
+void GL_DrawElements(dglprimtype_t type, int count, const uint *indices)
 {
     GLenum          primType =
         (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : type ==
@@ -523,4 +375,186 @@ void GL_DrawElements(glprimtype_t type, int count, const uint *indices)
 #ifdef _DEBUG
     Sys_CheckGLError();
 #endif
+}
+
+void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
+{
+    glColor3ub(r, g, b);
+}
+
+void DGL_Color3ubv(const DGLubyte* vec)
+{
+    glColor3ubv(vec);
+}
+
+void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
+{
+    glColor4ub(r, g, b, a);
+}
+
+void DGL_Color4ubv(const DGLubyte* vec)
+{
+    glColor4ubv(vec);
+}
+
+void DGL_Color3f(float r, float g, float b)
+{
+    glColor3f(r, g, b);
+}
+
+void DGL_Color3fv(const float* vec)
+{
+    glColor3fv(vec);
+}
+
+void DGL_Color4f(float r, float g, float b, float a)
+{
+    glColor4f(r, g, b, a);
+}
+
+void DGL_Color4fv(const float* vec)
+{
+    glColor4fv(vec);
+}
+
+void DGL_TexCoord2f(byte target, float s, float t)
+{
+    if(target == 0)
+        glTexCoord2f(s, t);
+    else
+        glMultiTexCoord2fARB(GL_TEXTURE0 + target, s, t);
+}
+
+void DGL_TexCoord2fv(byte target, float* vec)
+{
+    if(target == 0)
+        glTexCoord2fv(vec);
+    else
+        glMultiTexCoord2fvARB(GL_TEXTURE0 + target, vec);
+}
+
+void DGL_Vertex2f(float x, float y)
+{
+    glVertex2f(x, y);
+}
+
+void DGL_Vertex2fv(const float* vec)
+{
+    glVertex2fv(vec);
+}
+
+void DGL_Vertex3f(float x, float y, float z)
+{
+    glVertex3f(x, y, z);
+}
+
+void DGL_Vertex3fv(const float* vec)
+{
+    glVertex3fv(vec);
+}
+
+void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
+{
+    for(; num > 0; num--, vec++)
+    {
+        glTexCoord2fv(vec->tex);
+        glVertex2fv(vec->pos);
+    }
+}
+
+void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
+{
+    for(; num > 0; num--, vec++)
+    {
+        glTexCoord2fv(vec->tex);
+        glVertex3fv(vec->pos);
+    }
+}
+
+void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
+{
+    for(; num > 0; num--, vec++)
+    {
+        glColor4fv(vec->color);
+        glTexCoord2fv(vec->tex);
+        glVertex3fv(vec->pos);
+    }
+}
+
+void DGL_Begin(dglprimtype_t mode)
+{
+    // We enter a Begin/End section.
+    primLevel++;
+
+#ifdef _DEBUG
+    if(inPrim)
+        Con_Error("OpenGL: already inPrim");
+    inPrim = true;
+    Sys_CheckGLError();
+#endif
+
+    glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
+            DGL_LINES ? GL_LINES : mode ==
+            DGL_TRIANGLES ? GL_TRIANGLES : mode ==
+            DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : mode ==
+            DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : mode ==
+            DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
+}
+
+void DGL_End(void)
+{
+    if(primLevel > 0)
+    {
+        primLevel--;
+        glEnd();
+    }
+
+#ifdef _DEBUG
+    inPrim = false;
+    Sys_CheckGLError();
+#endif
+}
+
+boolean DGL_NewList(DGLuint list, int mode)
+{
+    return GL_NewList(list, mode);
+}
+
+DGLuint DGL_EndList(void)
+{
+    return GL_EndList();
+}
+
+void DGL_CallList(DGLuint list)
+{
+    GL_CallList(list);
+}
+
+void DGL_DeleteLists(DGLuint list, int range)
+{
+    GL_DeleteLists(list, range);
+}
+
+void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
+                  float b, float a)
+{
+    GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
+}
+
+void DGL_DrawRect(float x, float y, float w, float h, float r, float g,
+                  float b, float a)
+{
+    GL_DrawRect(x, y, w, h, r, g, b, a);
+}
+
+void DGL_DrawRectTiled(int x, int y, int w, int h, int tw, int th)
+{
+    GL_DrawRectTiled(x, y, w, h, tw, th);
+}
+
+void DGL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
+                          int txoff, int tyoff, int cx, int cy, int cw,
+                          int ch)
+{
+    GL_DrawCutRectTiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
 }

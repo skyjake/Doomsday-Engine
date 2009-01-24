@@ -30,20 +30,20 @@
 #define __DOOMSDAY_GRAPHICS_DEREF_H__
 
 /**
- * Defines the content of a DGL texture. Used when creating textures either
+ * Defines the content of a GL texture. Used when creating textures either
  * immediately or in deferred mode (when busy).
  */
 typedef struct texturecontent_s {
     DGLuint         name;
     void*           buffer;
     size_t          bufferSize;
-    gltexformat_t   format;
+    dgltexformat_t   format;
     int             width;
     int             height;
     int             minFilter;
     int             magFilter;
     int             anisoFilter;
-    boolean         wrap[2];
+    int             wrap[2];
     int             grayMipmap;
     int             flags;
 } texturecontent_t;
@@ -69,9 +69,12 @@ void            GL_UploadDeferredContent(uint timeOutMilliSeconds);
 int             GL_GetDeferredCount(void);
 void            GL_InitTextureContent(texturecontent_t* content);
 DGLuint         GL_NewTexture(texturecontent_t* content, boolean* result);
-DGLuint         GL_NewTextureWithParams(gltexformat_t format, int width, int height, void* pixels,
+DGLuint         GL_NewTextureWithParams(dgltexformat_t format, int width, int height, void* pixels,
                                         int flags);
-DGLuint         GL_NewTextureWithParams2(gltexformat_t format, int width, int height, void* pixels,
+DGLuint         GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, void* pixels,
+                                         int flags, int minFilter, int magFilter, int anisoFilter,
+                                         boolean wrapS, boolean wrapT);
+DGLuint         GL_NewTextureWithParams3(dgltexformat_t format, int width, int height, void* pixels,
                                          int flags, int minFilter, int magFilter, int anisoFilter,
                                          boolean wrapS, boolean wrapT);
 /// \todo should these be public?

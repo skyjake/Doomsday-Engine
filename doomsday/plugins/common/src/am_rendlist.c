@@ -72,7 +72,7 @@ typedef struct amprim_s {
 } amprim_t;
 
 typedef struct amprimlist_s {
-    glprimtype_t    type; // DGL_QUAD or DGL_LINES
+    dglprimtype_t   type; // DGL_QUAD or DGL_LINES
     amprim_t *head, *tail, *unused;
 } amprimlist_t;
 
@@ -134,7 +134,7 @@ void AM_ListRegister(void)
 void AM_ListInit(void)
 {
     // Does the graphics library support multitexturing?
-    numTexUnits = DGL_GetInteger(DGL_MAX_TEXTURE_UNITS);
+    numTexUnits = DD_GetInteger(DD_MAX_TEXTURE_UNITS);
     envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
 }
 
@@ -246,7 +246,7 @@ static void AM_LinkPrimitiveToList(amprimlist_t* list, amprim_t* p)
  *
  * @return              Ptr to the new automap render primitive.
  */
-static void* AM_AllocatePrimitive(glprimtype_t type, uint tex,
+static void* AM_AllocatePrimitive(dglprimtype_t type, uint tex,
                                   boolean texIsPatchLumpNum)
 {
     amlist_t*           list;

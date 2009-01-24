@@ -560,9 +560,9 @@ void IN_Drawer(void)
 void IN_DrawStatBack(void)
 {
     DGL_Color4f(1, 1, 1, 1);
-    GL_SetMaterial(P_ToPtr(DMU_MATERIAL,
+    DGL_SetMaterial(P_ToPtr(DMU_MATERIAL,
         P_MaterialNumForName("FLOOR16", MN_FLATS)));
-    GL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
+    DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
 }
 
 void IN_DrawOldLevel(void)

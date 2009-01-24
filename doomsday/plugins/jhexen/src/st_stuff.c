@@ -501,7 +501,7 @@ static void drawChain(hudstate_t* hud)
     h = 7;
     cw = (float) w / dpChain[pClass].width;
 
-    GL_SetPatch(dpChain[pClass].lump, DGL_REPEAT, DGL_CLAMP);
+    DGL_SetPatch(dpChain[pClass].lump, DGL_REPEAT, DGL_CLAMP);
 
     DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
 
@@ -553,14 +553,14 @@ static void drawChain(hudstate_t* hud)
                          dpLifeGem[pClass][pColor].lump);
 
     // How about a glowing gem?
-    GL_BlendMode(BM_ADD);
+    DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     GL_PalIdxToRGB(theirColors[pColor], rgba);
-    GL_DrawRect(x + gemXOffset + 23, 193 - 6, 41, 24, rgba[0], rgba[1],
-                rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
+    DGL_DrawRect(x + gemXOffset + 23, 193 - 6, 41, 24, rgba[0], rgba[1],
+                 rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
-    GL_BlendMode(BM_NORMAL);
+    DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
 }
 
@@ -595,8 +595,8 @@ static void drawStatusBarBackground(int player)
          * Mask out the chain on the statusbar by drawing a solid black
          * rectangle over it.
          */
-        GL_SetNoTexture();
-        GL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, 1);
+        DGL_SetNoMaterial();
+        DGL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, 1);
         //// \kludge end
         GL_DrawPatch(0, 134, dpStatusBarTop.lump);
 
@@ -628,7 +628,7 @@ static void drawStatusBarBackground(int player)
     else
     {
         DGL_Color4f(1, 1, 1, alpha);
-        GL_SetPatch(dpStatusBar.lump, DGL_CLAMP, DGL_CLAMP);
+        DGL_SetPatch(dpStatusBar.lump, DGL_CLAMP, DGL_CLAMP);
 
         DGL_Begin(DGL_QUADS);
 
@@ -689,10 +689,10 @@ static void drawStatusBarBackground(int player)
          * Mask out the chain on the statusbar by cutting a window out and
          * drawing a solid near-black rectangle to fill the hole.
          */
-        GL_DrawCutRectTiled(38, 192, 244, 8, 320, 65, 38, 192-135,
-                            44, 193, 232, 7);
-        GL_SetNoTexture();
-        GL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, alpha);
+        DGL_DrawCutRectTiled(38, 192, 244, 8, 320, 65, 38, 192-135,
+                             44, 193, 232, 7);
+        DGL_SetNoMaterial();
+        DGL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, alpha);
         DGL_Color4f(1, 1, 1, alpha);
         //// \kludge end
 
@@ -707,7 +707,7 @@ static void drawStatusBarBackground(int player)
                 }
 
                 // left of statbar (upto weapon puzzle display)
-                GL_SetPatch(dpStatBar.lump, DGL_CLAMP, DGL_CLAMP);
+                DGL_SetPatch(dpStatBar.lump, DGL_CLAMP, DGL_CLAMP);
                 DGL_Begin(DGL_QUADS);
 
                 x = deathmatch ? 68 : 38;
@@ -756,7 +756,7 @@ static void drawStatusBarBackground(int player)
         else
         {
             // INVBAR
-            GL_SetPatch(dpInventoryBar.lump, DGL_CLAMP, DGL_CLAMP);
+            DGL_SetPatch(dpInventoryBar.lump, DGL_CLAMP, DGL_CLAMP);
             DGL_Begin(DGL_QUADS);
 
             x = 38;
@@ -1447,13 +1447,13 @@ static void drawWidgets(hudstate_t* hud)
             STlib_updateMultIcon(&hud->wManaBVial, refresh);
 
             // Draw the mana bars
-            GL_SetNoTexture();
-            GL_DrawRect(95, 165, 3,
-                        22 - (22 * plr->ammo[AT_BLUEMANA].owned) / MAX_MANA,
-                        0, 0, 0, hud->statusbarCounterAlpha);
-            GL_DrawRect(103, 165, 3,
-                        22 - (22 * plr->ammo[AT_GREENMANA].owned) / MAX_MANA,
-                        0, 0, 0, hud->statusbarCounterAlpha);
+            DGL_SetNoMaterial();
+            DGL_DrawRect(95, 165, 3,
+                         22 - (22 * plr->ammo[AT_BLUEMANA].owned) / MAX_MANA,
+                         0, 0, 0, hud->statusbarCounterAlpha);
+            DGL_DrawRect(103, 165, 3,
+                         22 - (22 * plr->ammo[AT_GREENMANA].owned) / MAX_MANA,
+                         0, 0, 0, hud->statusbarCounterAlpha);
         }
         else
         {

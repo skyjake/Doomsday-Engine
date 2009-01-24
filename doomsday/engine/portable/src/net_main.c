@@ -901,7 +901,7 @@ void Net_Drawer(void)
 
     if(netDev)
     {
-        /*      DGL_Color3f(1, 1, 1);
+        /*      glColor3f(1, 1, 1);
            sprintf(buf, "G%i", gametic);
            FR_TextOut(buf, 10, 10);
            for(i = 0, cl = clients; i<DDMAXPLAYERS; ++i, cl++)

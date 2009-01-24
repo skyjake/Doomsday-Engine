@@ -545,8 +545,7 @@ boolean GL_EarlyInit(void)
     GL_InitDeferred();
 
     // Check the maximum texture size.
-    DGL_GetIntegerv(DGL_MAX_TEXTURE_SIZE, &glMaxTexSize);
-    if(glMaxTexSize == 256)
+    if(GL_state.maxTexSize == 256)
     {
         int             bpp;
 
@@ -564,11 +563,11 @@ boolean GL_EarlyInit(void)
     {
         int     customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
 
-        if(glMaxTexSize < customSize)
-            customSize = glMaxTexSize;
-        glMaxTexSize = customSize;
-        Con_Message("  Using maximum texture size of %i x %i.\n", glMaxTexSize,
-                    glMaxTexSize);
+        if(GL_state.maxTexSize < customSize)
+            customSize = GL_state.maxTexSize;
+        GL_state.maxTexSize = customSize;
+        Con_Message("  Using maximum texture size of %i x %i.\n",
+                    GL_state.maxTexSize, GL_state.maxTexSize);
     }
     if(ArgCheck("-outlines"))
     {
@@ -577,7 +576,7 @@ boolean GL_EarlyInit(void)
     }
 
     // Does the graphics library support multitexturing?
-    numTexUnits = DGL_GetInteger(DGL_MAX_TEXTURE_UNITS);
+    numTexUnits = GL_state.maxTexUnits;
     envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
     if(numTexUnits > 1)
     {
@@ -889,9 +888,9 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
  * to data containing 24-bit RGB triplets. The caller must free the
  * returned buffer using M_Free()!
  */
-unsigned char *GL_GrabScreen(void)
+unsigned char* GL_GrabScreen(void)
 {
-    unsigned char *buffer = 0;
+    unsigned char*      buffer = 0;
 
     buffer = M_Malloc(theWindow->width * theWindow->height * 3);
     GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
@@ -906,52 +905,52 @@ void GL_BlendMode(blendmode_t mode)
     switch(mode)
     {
     case BM_ZEROALPHA:
-        DGL_BlendOp(DGL_ADD);
+        GL_BlendOp(GL_FUNC_ADD);
         glBlendFunc(GL_ONE, GL_ZERO);
         break;
 
     case BM_ADD:
-        DGL_BlendOp(DGL_ADD);
+        GL_BlendOp(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         break;
 
     case BM_DARK:
-        DGL_BlendOp(DGL_ADD);
+        GL_BlendOp(GL_FUNC_ADD);
         glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case BM_SUBTRACT:
-        DGL_BlendOp(DGL_SUBTRACT);
+        GL_BlendOp(GL_FUNC_SUBTRACT);
         glBlendFunc(GL_ONE, GL_SRC_ALPHA);
         break;
 
     case BM_ALPHA_SUBTRACT:
-        DGL_BlendOp(DGL_SUBTRACT);
+        GL_BlendOp(GL_FUNC_SUBTRACT);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         break;
 
     case BM_REVERSE_SUBTRACT:
-        DGL_BlendOp(DGL_REVERSE_SUBTRACT);
+        GL_BlendOp(GL_FUNC_REVERSE_SUBTRACT);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         break;
 
     case BM_MUL:
-        DGL_BlendOp(DGL_ADD);
+        GL_BlendOp(GL_FUNC_ADD);
         glBlendFunc(GL_ZERO, GL_SRC_COLOR);
         break;
 
     case BM_INVERSE:
-        DGL_BlendOp(DGL_ADD);
+        GL_BlendOp(GL_FUNC_ADD);
         glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR);
         break;
 
     case BM_INVERSE_MUL:
-        DGL_BlendOp(DGL_ADD);
+        GL_BlendOp(GL_FUNC_ADD);
         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
         break;
 
     default:
-        DGL_BlendOp(DGL_ADD);
+        GL_BlendOp(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         break;
     }

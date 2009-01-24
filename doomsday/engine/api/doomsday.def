@@ -332,6 +332,12 @@ EXPORTS
     R_AddToAnimGroup            @242 NONAME
 
 ; DGL.
+    DGL_SetMaterial             @117 NONAME
+    DGL_SetNoMaterial           @115 NONAME
+    DGL_SetPSprite              @114 NONAME
+    DGL_SetPatch                @196 NONAME
+    DGL_SetTranslatedSprite     @334 NONAME
+    DGL_SetRawImage             @119 NONAME
     DGL_Enable                  @387 NONAME
     DGL_Disable                 @388 NONAME
     DGL_EnableTexUnit           @405 NONAME
@@ -343,6 +349,7 @@ EXPORTS
     DGL_SetFloat                @401 NONAME
     DGL_BlendFunc               @389 NONAME
     DGL_BlendOp                 @407 NONAME
+    DGL_BlendMode               @338 NONAME
     DGL_MatrixMode              @359 NONAME
     DGL_PushMatrix              @360 NONAME
     DGL_PopMatrix               @361 NONAME
@@ -377,6 +384,10 @@ EXPORTS
     DGL_Vertices2ftv            @381 NONAME
     DGL_Vertices3ftv            @382 NONAME
     DGL_Vertices3fctv           @383 NONAME
+    DGL_DrawLine                @127 NONAME
+    DGL_DrawRect                @128 NONAME
+    DGL_DrawRectTiled           @129 NONAME
+    DGL_DrawCutRectTiled        @130 NONAME
 
 ; Renderer.
     Rend_Reset                  @103 NONAME
@@ -385,16 +396,10 @@ EXPORTS
 ; Graphics.
     GL_UseFog                   @104 NONAME
     GL_GrabScreen               @109 NONAME
-    GL_SetPSprite               @114 NONAME
-    GL_SetNoTexture             @115 NONAME
-    GL_SetPatch                 @196 NONAME
-    GL_SetTranslatedSprite      @334 NONAME
-    GL_SetMaterial              @117 NONAME
-    GL_SetRawImage              @119 NONAME
     GL_LoadGraphics             @244 NONAME
-    GL_NewTextureWithParams2    @329 NONAME
-    GL_BlendMode                @338 NONAME
+    GL_NewTextureWithParams3    @329 NONAME
     GL_PalIdxToRGB              @423 NONAME
+    GL_SetFilter                @132 NONAME
 
 ; Graphics: 2D drawing.
     GL_DrawPatch                @120 NONAME
@@ -405,11 +410,6 @@ EXPORTS
     GL_DrawShadowedPatch        @125 NONAME
     GL_DrawRawScreen            @126 NONAME
     GL_DrawRawScreen_CS         @235 NONAME
-    GL_DrawLine                 @127 NONAME
-    GL_DrawRect                 @128 NONAME
-    GL_DrawRectTiled            @129 NONAME
-    GL_DrawCutRectTiled         @130 NONAME
-    GL_SetFilter                @132 NONAME
 
 ; Graphics: Picture formats.
     PCX_GetSize                 @197 NONAME

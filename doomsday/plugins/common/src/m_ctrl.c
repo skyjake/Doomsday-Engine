@@ -468,9 +468,9 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
         width = M_StringWidth(name, huFontA);
         height = M_StringHeight(name, huFontA);
 
-        GL_SetNoTexture();
-        GL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height,
-                    bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
+        DGL_SetNoMaterial();
+        DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height,
+                     bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
 
         M_DrawSmallText(d->x + 1, d->y, name);
 
@@ -678,8 +678,8 @@ void M_ControlGrabDrawer(void)
     if(!grabbing)
         return;
 
-    GL_SetNoTexture();
-    GL_DrawRect(0, 0, 320, 200, 0, 0, 0, .7f);
+    DGL_SetNoMaterial();
+    DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, .7f);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();

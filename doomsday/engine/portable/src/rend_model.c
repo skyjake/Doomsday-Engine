@@ -84,10 +84,10 @@ float   rend_model_lod = 256;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Fixed-size vertex arrays for the model.
-static gl_vertex_t modelVertices[MAX_VERTS];
-static gl_vertex_t modelNormals[MAX_VERTS];
-static gl_color_t modelColors[MAX_VERTS];
-static gl_texcoord_t modelTexCoords[MAX_VERTS];
+static dgl_vertex_t modelVertices[MAX_VERTS];
+static dgl_vertex_t modelNormals[MAX_VERTS];
+static dgl_color_t modelColors[MAX_VERTS];
+static dgl_texcoord_t modelTexCoords[MAX_VERTS];
 
 // Global variables for ease of use. (Egads!)
 static float modelCenter[3];
@@ -157,8 +157,8 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
  * Render a set of GL commands using the given data.
  */
 void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
-                        gl_vertex_t *vertices, gl_color_t *colors,
-                        gl_texcoord_t *texCoords)
+                        dgl_vertex_t *vertices, dgl_color_t *colors,
+                        dgl_texcoord_t *texCoords)
 {
     byte       *pos;
     glcommand_vertex_t *v;
@@ -166,7 +166,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
     void       *coords[2];
 
     // Disable all vertex arrays.
-    GL_DisableArrays(true, true, DGL_ALL_BITS);
+    GL_DisableArrays(true, true, DDMAXINT);
 
     // Load the vertex array.
     switch(mode)
@@ -222,7 +222,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
  * Interpolate linearly between two sets of vertices.
  */
 void Mod_LerpVertices(float pos, int count, model_vertex_t *start,
-                      model_vertex_t *end, gl_vertex_t *out)
+                      model_vertex_t *end, dgl_vertex_t *out)
 {
     int         i;
     float       inv;
@@ -264,7 +264,7 @@ void Mod_LerpVertices(float pos, int count, model_vertex_t *start,
 /**
  * Negate all Z coordinates.
  */
-void Mod_MirrorVertices(int count, gl_vertex_t *v, int axis)
+void Mod_MirrorVertices(int count, dgl_vertex_t *v, int axis)
 {
     for(; count-- > 0; v++)
         v->xyz[axis] = -v->xyz[axis];
@@ -272,7 +272,7 @@ void Mod_MirrorVertices(int count, gl_vertex_t *v, int axis)
 
 typedef struct {
     float               color[3], extra[3], rotateYaw, rotatePitch;
-    gl_vertex_t*        normal;
+    dgl_vertex_t*        normal;
     uint                processedLights, maxLights;
     boolean             invert;
 } lightmodelvertexparams_t;
@@ -336,7 +336,7 @@ static boolean lightModelVertex(const vlight_t* vlight, void* context)
 /**
  * Calculate vertex lighting.
  */
-void Mod_VertexColors(int count, gl_color_t* out, gl_vertex_t* normal,
+void Mod_VertexColors(int count, dgl_color_t* out, dgl_vertex_t* normal,
                       uint vLightListIdx, uint maxLights, float ambient[4],
                       boolean invert, float rotateYaw, float rotatePitch)
 {
@@ -380,7 +380,7 @@ void Mod_VertexColors(int count, gl_color_t* out, gl_vertex_t* normal,
 /**
  * Set all the colors in the array to bright white.
  */
-void Mod_FullBrightVertexColors(int count, gl_color_t *colors, float alpha)
+void Mod_FullBrightVertexColors(int count, dgl_color_t *colors, float alpha)
 {
     for(; count-- > 0; colors++)
     {
@@ -392,7 +392,7 @@ void Mod_FullBrightVertexColors(int count, gl_color_t *colors, float alpha)
 /**
  * Set all the colors into the array to the same values.
  */
-void Mod_FixedVertexColors(int count, gl_color_t *colors, float *color)
+void Mod_FixedVertexColors(int count, dgl_color_t *colors, float *color)
 {
     byte        rgba[4];
 
@@ -407,7 +407,7 @@ void Mod_FixedVertexColors(int count, gl_color_t *colors, float *color)
 /**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-void Mod_ShinyCoords(int count, gl_texcoord_t *coords, gl_vertex_t *normals,
+void Mod_ShinyCoords(int count, dgl_texcoord_t *coords, dgl_vertex_t *normals,
                      float normYaw, float normPitch, float shinyAng,
                      float shinyPnt, float reactSpeed)
 {
@@ -838,12 +838,12 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 // We'll use multitexturing to clear out empty spots in
                 // the primary texture.
                 GL_SelectTexUnits(2);
-                DGL_SetInteger(DGL_MODULATE_TEXTURE, 11);
+                GL_ModulateTexture(11);
 
-                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+                GL_ActiveTexture(GL_TEXTURE1);
                 GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
-                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+                GL_ActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
@@ -851,7 +851,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                                    modelVertices, modelColors, modelTexCoords);
 
                 GL_SelectTexUnits(1);
-                DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+                GL_ModulateTexture(1);
             }
             else
             {
@@ -872,9 +872,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         GL_SelectTexUnits(2);
 
         // Tex1*Color + Tex2RGB*ConstRGB
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 10);
+        GL_ModulateTexture(10);
 
-        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+        GL_ActiveTexture(GL_TEXTURE1);
         GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
         // Multiply by shininess.
@@ -882,7 +882,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             color[c] *= color[3];
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
-        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+        GL_ActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
@@ -890,7 +890,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                            modelTexCoords);
 
         GL_SelectTexUnits(1);
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        GL_ModulateTexture(1);
     }
 
     // We're done!

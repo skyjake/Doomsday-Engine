@@ -32,12 +32,7 @@
 
 enum {
     // Values
-    DGL_COLOR_BITS,
-    DGL_MAX_TEXTURE_SIZE,
     DGL_SCISSOR_BOX,
-    DGL_POLY_COUNT,
-    DGL_TEXTURE_BINDING,
-    DGL_MAX_TEXTURE_UNITS,
     DGL_ACTIVE_TEXTURE,
 
     DGL_CURRENT_COLOR_R,
@@ -57,18 +52,12 @@ enum {
 
     // Caps
     DGL_TEXTURING = 0x5000,
-    DGL_SCISSOR_TEST = 0x5004,
-    DGL_FOG = 0x5008,
-    DGL_PALETTED_TEXTURES = 0x5009,
-    DGL_PALETTED_GENMIPS = 0x500B,
-    DGL_MODULATE_ADD_COMBINE = 0x500C,
-    DGL_MODULATE_TEXTURE = 0x500D,
-    DGL_TEXTURE_COMPRESSION = 0x500F,
-    DGL_TEXTURE_NON_POWER_OF_TWO = 0x5010,
-    DGL_VSYNC = 0x5011,
-    DGL_MULTISAMPLE = 0x5012,
-    DGL_LINE_SMOOTH = 0x5013,
-    DGL_POINT_SMOOTH = 0x5014,
+    DGL_SCISSOR_TEST,
+    DGL_FOG,
+    DGL_MODULATE_ADD_COMBINE,
+    DGL_MODULATE_TEXTURE,
+    DGL_LINE_SMOOTH,
+    DGL_POINT_SMOOTH,
 
     // Blending functions
     DGL_ZERO = 0x6000,
@@ -97,13 +86,10 @@ enum {
     DGL_NEAREST_MIPMAP_LINEAR,
     DGL_LINEAR_MIPMAP_LINEAR,
     DGL_CLAMP,
+    DGL_CLAMP_TO_EDGE,
     DGL_REPEAT,
-    DGL_GRAY_MIPMAP,
     DGL_LINE_WIDTH,
-    DGL_POINT_SIZE,
-
-    // Various bits
-    DGL_ALL_BITS = 0xFFFFFFFF
+    DGL_POINT_SIZE
 };
 
 // Types.
@@ -111,7 +97,7 @@ typedef unsigned char DGLubyte;
 typedef unsigned int DGLuint;
 
 // Texture formats:
-typedef enum gltexformat_e {
+typedef enum dgltexformat_e {
     DGL_RGB,
     DGL_RGBA,
     DGL_COLOR_INDEX_8,
@@ -119,9 +105,9 @@ typedef enum gltexformat_e {
     DGL_LUMINANCE,
     DGL_DEPTH_COMPONENT,
     DGL_LUMINANCE_PLUS_A8
-} gltexformat_t;
+} dgltexformat_t;
 
-typedef enum glprimtype_e {
+typedef enum dglprimtype_e {
     DGL_LINES,
     DGL_TRIANGLES,
     DGL_TRIANGLE_FAN,
@@ -129,98 +115,143 @@ typedef enum glprimtype_e {
     DGL_QUADS,
     DGL_QUAD_STRIP,
     DGL_POINTS
-} glprimtype_t;
+} dglprimtype_t;
 
-typedef struct gl_vertex_s {
+#define DDNUM_BLENDMODES    9
+
+typedef enum blendmode_e {
+    BM_ZEROALPHA = -1,
+    BM_NORMAL,
+    BM_ADD,
+    BM_DARK,
+    BM_SUBTRACT,
+    BM_REVERSE_SUBTRACT,
+    BM_MUL,
+    BM_INVERSE,
+    BM_INVERSE_MUL,
+    BM_ALPHA_SUBTRACT
+} blendmode_t;
+
+typedef struct dgl_vertex_s {
     float           xyz[4]; // The fourth is padding.
-} gl_vertex_t;
+} dgl_vertex_t;
 
-typedef struct gl_texcoord_s {
+typedef struct dgl_texcoord_s {
     float           st[2];
-} gl_texcoord_t;
+} dgl_texcoord_t;
 
-typedef struct gl_color_s {
+typedef struct dgl_color_s {
     byte            rgba[4];
-} gl_color_t;
+} dgl_color_t;
 
 typedef struct {
     DGLubyte        rgb[3];
-} gl_rgb_t;
+} dgl_rgb_t;
 
 typedef struct {
     DGLubyte        rgba[4];
-} gl_rgba_t;
+} dgl_rgba_t;
 
 // A 2-vertex with texture coordinates, using floats
 typedef struct {
     float           pos[2];
     float           tex[2];
-} gl_ft2vertex_t;
+} dgl_ft2vertex_t;
 
 // A 3-vertex with texture coordinates, using floats
 typedef struct {
     float           pos[3];
     float           tex[2];
-} gl_ft3vertex_t;
+} dgl_ft3vertex_t;
 
 // A 3-vertex with texture coordinates and a color, using floats
 typedef struct {
     float           pos[3];
     float           tex[2];
     float           color[4];
-} gl_fct3vertex_t;
+} dgl_fct3vertex_t;
 
 // A colored 3-vertex, using floats
 typedef struct {
     float           pos[3];
     float           color[4];
-} gl_fc3vertex_t;
+} dgl_fc3vertex_t;
 
-boolean         DGL_GetIntegerv(int name, int *v);
+int             DGL_Enable(int cap);
+void            DGL_Disable(int cap);
+
+boolean         DGL_GetIntegerv(int name, int* vec);
 int             DGL_GetInteger(int name);
 boolean         DGL_SetInteger(int name, int value);
 float           DGL_GetFloat(int name);
 boolean         DGL_SetFloat(int name, float value);
-void            DGL_BlendOp(int op);
-void            DGL_Scissor(int x, int y, int width, int height);
-int             DGL_Enable(int cap);
-void            DGL_Disable(int cap);
-void            DGL_EnableTexUnit(byte id);
-void            DGL_DisableTexUnit(byte id);
-void            DGL_BlendFunc(int param1, int param2);
-void            DGL_Translatef(float x, float y, float z);
-void            DGL_Rotatef(float angle, float x, float y, float z);
-void            DGL_Scalef(float x, float y, float z);
+
 void            DGL_Ortho(float left, float top, float right, float bottom, float znear,
                           float zfar);
+void            DGL_Scissor(int x, int y, int width, int height);
+
 void            DGL_MatrixMode(int mode);
 void            DGL_PushMatrix(void);
 void            DGL_PopMatrix(void);
 void            DGL_LoadIdentity(void);
-void            DGL_Begin(glprimtype_t type);
+
+void            DGL_Translatef(float x, float y, float z);
+void            DGL_Rotatef(float angle, float x, float y, float z);
+void            DGL_Scalef(float x, float y, float z);
+
+void            DGL_Begin(dglprimtype_t type);
 void            DGL_End(void);
 boolean         DGL_NewList(DGLuint list, int mode);
 DGLuint         DGL_EndList(void);
 void            DGL_CallList(DGLuint list);
 void            DGL_DeleteLists(DGLuint list, int range);
-void            DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
-void            DGL_Color3ubv(const DGLubyte *data);
-void            DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
-void            DGL_Color4ubv(const DGLubyte *data);
-void            DGL_Color3f(float r, float g, float b);
-void            DGL_Color3fv(const float *data);
-void            DGL_Color4f(float r, float g, float b, float a);
-void            DGL_Color4fv(const float *data);
-void            DGL_TexCoord2f(byte target, float s, float t);
-void            DGL_TexCoord2fv(byte target, float *data);
-void            DGL_Vertex2f(float x, float y);
-void            DGL_Vertex2fv(const float *data);
-void            DGL_Vertex3f(float x, float y, float z);
-void            DGL_Vertex3fv(const float *data);
-void            DGL_Vertices2ftv(int num, const gl_ft2vertex_t *data);
-void            DGL_Vertices3ftv(int num, const gl_ft3vertex_t *data);
-void            DGL_Vertices3fctv(int num, const gl_fct3vertex_t *data);
-void            DGL_DeleteTextures(int num, const DGLuint *names);
-int             DGL_Bind(DGLuint texture);
 
+void            DGL_SetMaterial(struct material_s* mat);
+void            DGL_SetNoMaterial(void);
+void            DGL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
+void            DGL_SetPSprite(struct material_s* mat);
+void            DGL_SetTranslatedSprite(struct material_s* mat, int tclass, int tmap);
+unsigned int    DGL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
+
+void            DGL_BlendOp(int op);
+void            DGL_BlendFunc(int param1, int param2);
+void            DGL_BlendMode(blendmode_t mode);
+
+void            DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
+void            DGL_Color3ubv(const DGLubyte* vec);
+void            DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
+void            DGL_Color4ubv(const DGLubyte* vec);
+void            DGL_Color3f(float r, float g, float b);
+void            DGL_Color3fv(const float* vec);
+void            DGL_Color4f(float r, float g, float b, float a);
+void            DGL_Color4fv(const float* vec);
+
+void            DGL_TexCoord2f(byte target, float s, float t);
+void            DGL_TexCoord2fv(byte target, float* vec);
+
+void            DGL_Vertex2f(float x, float y);
+void            DGL_Vertex2fv(const float* vec);
+void            DGL_Vertex3f(float x, float y, float z);
+void            DGL_Vertex3fv(const float* vec);
+void            DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec);
+void            DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec);
+void            DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
+
+void            DGL_DrawLine(float x1, float y1, float x2, float y2,
+                             float r, float g, float b, float a);
+void            DGL_DrawRect(float x, float y, float w, float h, float r,
+                             float g, float b, float a);
+void            DGL_DrawRectTiled(int x, int y, int w, int h, int tw,
+                                  int th);
+void            DGL_DrawCutRectTiled(int x, int y, int w, int h, int tw,
+                                     int th, int txoff, int tyoff, int cx,
+                                     int cy, int cw, int ch);
+/**
+ * \todo The following routines should not be necessary once materials can
+ * be created dynamically.
+ */
+int             DGL_Bind(DGLuint texture);
+void            DGL_DeleteTextures(int num, const DGLuint* names);
+void            DGL_EnableTexUnit(byte id);
+void            DGL_DisableTexUnit(byte id);
 #endif

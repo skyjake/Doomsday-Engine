@@ -585,8 +585,8 @@ void R_SetupFrame(player_t* player)
     viewer_t            sharpView, smoothView;
     viewdata_t*         vd;
 
-    // Reset the DGL triangle counter.
-    DGL_GetInteger(DGL_POLY_COUNT);
+    // Reset the GL triangle counter.
+    polyCounter = 0;
 
     viewPlayer = player;
     vd = &viewData[viewPlayer - ddPlayers];
@@ -772,7 +772,7 @@ void R_RenderPlayerView(int num)
     extern boolean      firstFrameAfterLoad;
     extern int          psp3d, modelTriCount;
 
-    int                 i, oldFlags = 0;
+    int                 oldFlags = 0;
     player_t*           player;
 
     if(num < 0 || num >= DDMAXPLAYERS)
@@ -846,9 +846,9 @@ void R_RenderPlayerView(int num)
     if(rendInfoTris)
     {
         // This count includes all triangles drawn since R_SetupFrame.
-        i = DGL_GetInteger(DGL_POLY_COUNT);
-        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", i, modelTriCount);
+        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
         modelTriCount = 0;
+        polyCounter = 0;
     }
 
     if(rendInfoLums)

@@ -204,11 +204,11 @@ DGLuint GL_GetReservedName(void)
 void GL_InitTextureContent(texturecontent_t* content)
 {
     memset(content, 0, sizeof(*content));
-    content->minFilter = DGL_LINEAR;
-    content->magFilter = DGL_LINEAR;
+    content->minFilter = GL_LINEAR;
+    content->magFilter = GL_LINEAR;
     content->anisoFilter = -1; // Best.
-    content->wrap[0] = false;
-    content->wrap[1] = false;
+    content->wrap[0] = GL_CLAMP;
+    content->wrap[1] = GL_CLAMP;
     content->grayMipmap = -1;
 }
 
@@ -226,7 +226,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
 
         if(content->grayMipmap >= 0)
         {
-            DGL_SetInteger(DGL_GRAY_MIPMAP, content->grayMipmap);
+            GL_SetGrayMipmap(content->grayMipmap);
         }
 
         // The texture name must already be created.
@@ -236,7 +236,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
         // No mipmapping or resizing is needed, upload directly.
         if(content->flags & TXCF_NO_COMPRESSION)
         {
-            DGL_Disable(DGL_TEXTURE_COMPRESSION);
+            GL_SetTextureCompression(false);
         }
 
         if((content->flags & TXCF_CONVERT_8BIT_TO_ALPHA) &&
@@ -257,14 +257,14 @@ void GL_UploadTextureContent(texturecontent_t* content)
         }
 
         result = GL_TexImage(content->format, content->width, content->height,
-                              (content->grayMipmap >= 0? DGL_GRAY_MIPMAP :
+                             (content->grayMipmap >= 0? DDMAXINT :
                               (content->flags & TXCF_MIPMAP) != 0),
-                              allocatedTempBuffer? allocatedTempBuffer : content->buffer);
+                             allocatedTempBuffer? allocatedTempBuffer : content->buffer);
         assert(result == true);
 
         if(content->flags & TXCF_NO_COMPRESSION)
         {
-            DGL_Enable(DGL_TEXTURE_COMPRESSION);
+            GL_SetTextureCompression(true);
         }
 
         if(allocatedTempBuffer)
@@ -273,13 +273,16 @@ void GL_UploadTextureContent(texturecontent_t* content)
         }
     }
 
-    GL_TexFilter(DGL_MIN_FILTER, content->minFilter);
-    GL_TexFilter(DGL_MAG_FILTER, content->magFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                    content->wrap[0] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                    content->wrap[1] == DGL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    GL_TexFilter(DGL_ANISO_FILTER, GL_GetTexAnisoMul(content->anisoFilter));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content->minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content->magFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, content->wrap[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, content->wrap[1]);
+    if(GL_state.useAnisotropic)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                        GL_GetTexAnisoMul(content->anisoFilter));
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 /**
@@ -322,10 +325,11 @@ DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
             break;
 
         default:
-            Con_Error("GL_NewTexture: Unknown format %i, don't know pixel size.\n",
-                      content->format);
+            Con_Error("GL_NewTexture: Unknown format %i, "
+                      "don't know pixel size.\n", content->format);
         }
-        content->bufferSize = content->width * content->height * bytesPerPixel;
+        content->bufferSize = content->width * content->height *
+            bytesPerPixel;
     }
 
     if(content->flags & TXCF_GRAY_MIPMAP)
@@ -370,8 +374,8 @@ Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
     return content->name;
 }
 
-DGLuint GL_NewTextureWithParams(gltexformat_t format, int width, int height, void* pixels,
-                                int flags)
+DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
+                                void* pixels, int flags)
 {
     texturecontent_t c;
 
@@ -384,9 +388,10 @@ DGLuint GL_NewTextureWithParams(gltexformat_t format, int width, int height, voi
     return GL_NewTexture(&c, NULL);
 }
 
-DGLuint GL_NewTextureWithParams2(gltexformat_t format, int width, int height, void* pixels,
-                                 int flags, int minFilter, int magFilter,
-                                 int anisoFilter, boolean wrapS, boolean wrapT)
+DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
+                                 void* pixels, int flags, int minFilter,
+                                 int magFilter, int anisoFilter,
+                                 int wrapS, int wrapT)
 {
     texturecontent_t c;
 
@@ -405,6 +410,29 @@ DGLuint GL_NewTextureWithParams2(gltexformat_t format, int width, int height, vo
 }
 
 /**
+ * Same as above except this version is part of the public API and thus some
+ * of the paramaters use the DGL counterparts.
+ */
+DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width, int height,
+                                 void* pixels, int flags, int minFilter,
+                                 int magFilter, int anisoFilter,
+                                 int wrapS, int wrapT)
+{
+    return GL_NewTextureWithParams2(format, width, height, pixels, flags,
+        (minFilter == DGL_LINEAR? GL_LINEAR :
+         minFilter == DGL_NEAREST? GL_NEAREST :
+         minFilter == DGL_NEAREST_MIPMAP_NEAREST? GL_NEAREST_MIPMAP_NEAREST :
+         minFilter == DGL_LINEAR_MIPMAP_NEAREST? GL_LINEAR_MIPMAP_NEAREST :
+         minFilter == DGL_NEAREST_MIPMAP_LINEAR? GL_NEAREST_MIPMAP_LINEAR :
+         GL_LINEAR_MIPMAP_LINEAR),
+        (magFilter == DGL_LINEAR? GL_LINEAR : GL_NEAREST), anisoFilter,
+        (wrapS == DGL_CLAMP? GL_CLAMP :
+         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
+        (wrapT == DGL_CLAMP? GL_CLAMP :
+         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+}
+
+/**
  * @param timeOutMilliSeconds  Zero for no timeout.
  */
 void GL_UploadDeferredContent(uint timeOutMilliSeconds)
@@ -413,14 +441,16 @@ void GL_UploadDeferredContent(uint timeOutMilliSeconds)
     uint                startTime;
 
     if(!deferredInited)
-        Con_Error("GL_UploadDeferredContent: Deferred GL task system not initialized.");
+        Con_Error("GL_UploadDeferredContent: Deferred GL task system "
+                  "not initialized.");
 
     startTime = Sys_GetRealTime();
 
-    // We'll reserve names multiple times, because the worker thread may be needing
-    // new texture names while we are uploading.
+    // We'll reserve names multiple times, because the worker thread may be
+    // needing new texture names while we are uploading.
     GL_ReserveNames();
-    while((!timeOutMilliSeconds || Sys_GetRealTime() - startTime < timeOutMilliSeconds) &&
+    while((!timeOutMilliSeconds ||
+           Sys_GetRealTime() - startTime < timeOutMilliSeconds) &&
           (d = GL_GetNextDeferred()) != NULL)
     {
         GL_UploadTextureContent(&d->content);

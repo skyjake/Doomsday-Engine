@@ -343,7 +343,7 @@ static void drawStatusBarBackground(int player, float width, float height)
     hudstate_t*         hud = &hudStates[player];
     float               armsBGX = ST_ARMSBGX - armsBackground.leftOffset;
 
-    GL_SetPatch(statusbar.lump, DGL_CLAMP, DGL_CLAMP);
+    DGL_SetPatch(statusbar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
     if(hud->blended)
     {
@@ -483,7 +483,7 @@ static void drawStatusBarBackground(int player, float width, float height)
 
     if(!deathmatch)
     {   // Draw the ARMS background.
-        GL_SetPatch(armsBackground.lump, DGL_CLAMP, DGL_CLAMP);
+        DGL_SetPatch(armsBackground.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         x = width * ((float) armsBGX - ST_X) / ST_WIDTH;
         y = height * ((float) armsBackground.topOffset) / ST_HEIGHT;
@@ -507,7 +507,7 @@ static void drawStatusBarBackground(int player, float width, float height)
         int             plrColor = cfg.playerColor[player];
         dpatch_t*       patch = &faceBackground[plrColor];
 
-        GL_SetPatch(patch->lump, DGL_CLAMP, DGL_CLAMP);
+        DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         x = width * (float) (ST_FX - ST_X) / ST_WIDTH;
         y = height * (float) (ST_HEIGHT - 30) / ST_HEIGHT;
@@ -1024,7 +1024,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
         break;
     }
 
-    GL_SetPSprite(sprInfo.material);
+    DGL_SetPSprite(sprInfo.material);
 
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);

@@ -235,7 +235,6 @@
 		<Unit filename="..\..\engine\portable\include\def_share.h" />
 		<Unit filename="..\..\engine\portable\include\edit_bias.h" />
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
-		<Unit filename="..\..\engine\portable\include\gl_atiext.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
 		<Unit filename="..\..\engine\portable\include\gl_font.h" />

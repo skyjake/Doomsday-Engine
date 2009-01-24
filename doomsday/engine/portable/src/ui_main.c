@@ -303,8 +303,9 @@ void UI_LoadTextures(void)
                 GL_LoadGraphics4(RC_GRAPHICS, picNames[i],
                                  (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL),
                                  false,
-                                 DGL_LINEAR, DGL_LINEAR,
-                                 DGL_CLAMP, DGL_CLAMP, 0 /*no anisotropy*/,
+                                 GL_LINEAR, GL_LINEAR,
+                                 0 /*no anisotropy*/,
+                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  TXCF_NO_COMPRESSION);
         }
 }

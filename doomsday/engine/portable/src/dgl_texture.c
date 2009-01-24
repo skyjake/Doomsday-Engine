@@ -233,7 +233,7 @@ void downMip8(byte *in, byte *fadedOut, int width, int height, float fade)
     }
 }
 
-boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
+boolean grayMipmap(dgltexformat_t format, int width, int height, void *data)
 {
     byte       *image, *in, *out, *faded;
     int         i, numLevels, w, h, size = width * height, res;
@@ -292,7 +292,9 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
     M_Free(faded);
     M_Free(image);
 
-    GL_TexFilter(DGL_ANISO_FILTER, GL_GetTexAnisoMul(-1 /*best*/));
+    if(GL_state.useAnisotropic)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                        GL_GetTexAnisoMul(-1 /*best*/));
     return true;
 }
 
@@ -311,11 +313,11 @@ boolean grayMipmap(gltexformat_t format, int width, int height, void *data)
  *
  * @return              @c true iff successful.
  */
-boolean GL_TexImage(gltexformat_t format, int width, int height,
-                     int genMips, void *data)
+boolean GL_TexImage(dgltexformat_t format, int width, int height,
+                    int genMips, void *data)
 {
-    int         mipLevel = 0;
-    byte       *bdata = data;
+    int                 mipLevel = 0;
+    byte*               bdata = data;
 
     // Negative genMips values mean that the specific mipmap level is
     // being uploaded.
@@ -338,7 +340,7 @@ boolean GL_TexImage(gltexformat_t format, int width, int height,
         return false;
 
     // Special fade-to-gray luminance texture? (used for details)
-    if(genMips == DGL_GRAY_MIPMAP)
+    if(genMips == DDMAXINT)
     {
         return grayMipmap(format, width, height, data);
     }
@@ -474,50 +476,7 @@ boolean GL_TexImage(gltexformat_t format, int width, int height,
     return true;
 }
 
-void DGL_DeleteTextures(int num, const DGLuint *names)
-{
-    if(!num || !names)
-        return;
-
-    glDeleteTextures(num, (const GLuint*) names);
-}
-
-void GL_TexFilter(int pname, int param)
-{
-    switch(pname)
-    {
-    case DGL_ANISO_FILTER:
-        if(GL_state.useAnisotropic)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                            param);
-        break;
-
-    case DGL_MIN_FILTER:
-    case DGL_MAG_FILTER:
-        {
-        GLenum  mlevs[] = {
-            GL_NEAREST,
-            GL_LINEAR,
-            GL_NEAREST_MIPMAP_NEAREST,
-            GL_LINEAR_MIPMAP_NEAREST,
-            GL_NEAREST_MIPMAP_LINEAR,
-            GL_LINEAR_MIPMAP_LINEAR
-        };
-
-        if(param >= DGL_NEAREST && param <= DGL_LINEAR_MIPMAP_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D,
-                            pname == DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER :
-                            GL_TEXTURE_MAG_FILTER, mlevs[param - DGL_NEAREST]);
-        break;
-        }
-
-    default:
-        Con_Error("GL_TexFilter: Invalid value, pname = %i", pname);
-        break;
-    }
-}
-
-void GL_Palette(gltexformat_t format, void *data)
+void GL_Palette(dgltexformat_t format, void *data)
 {
     unsigned char *ptr = data;
     int         i;
@@ -535,13 +494,4 @@ void GL_Palette(gltexformat_t format, void *data)
 #ifdef _DEBUG
     Sys_CheckGLError();
 #endif
-}
-
-int DGL_Bind(DGLuint texture)
-{
-    glBindTexture(GL_TEXTURE_2D, texture);
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
-    return 0;
 }

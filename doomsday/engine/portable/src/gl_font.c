@@ -387,9 +387,9 @@ int FR_PrepareFont(const char *name)
         // Load in the texture.
         font->texture = GL_NewTextureWithParams2(DGL_RGBA,
                                                  font->texWidth, font->texHeight, image,
-                                                 0, DGL_LINEAR, DGL_NEAREST,
+                                                 0, GL_LINEAR, GL_NEAREST,
                                                  -1 /*best anisotropy*/,
-                                                 DGL_CLAMP, DGL_CLAMP);
+                                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         M_Free(image);
         image = 0;
@@ -647,9 +647,9 @@ saveTGA24_rgba8888("ddfont.tga", bmpWidth, bmpHeight,
 
     // Create the DGL texture.
     font->texture = GL_NewTextureWithParams2(DGL_RGBA, imgWidth, imgHeight, image,
-                                             0, DGL_NEAREST, DGL_NEAREST,
+                                             0, GL_NEAREST, GL_NEAREST,
                                              -1 /*best anisotropy*/,
-                                             DGL_CLAMP, DGL_CLAMP);
+                                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     // We no longer need these.
     M_Free(image);
@@ -758,14 +758,14 @@ int FR_GetCurrent(void)
 /**
  * (x,y) is the upper left corner. Returns the length.
  */
-int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shadowY,
-                           float shadowAlpha)
+int FR_CustomShadowTextOut(const char* text, int x, int y, int shadowX,
+                           int shadowY, float shadowAlpha)
 {
-    int             width = 0, step;
-    size_t          i, len;
-    jfrfont_t      *cf;
-    int             origColor[4];
-    boolean         drawShadow = (shadowX || shadowY);
+    int                 width = 0, step;
+    size_t              i, len;
+    jfrfont_t*          cf;
+    float               origColor[4];
+    boolean             drawShadow = (shadowX || shadowY);
 
     if(!text)
         return 0;
@@ -783,8 +783,8 @@ int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shad
     if(drawShadow)
     {
         // The color of the text itself.
-        DGL_GetIntegerv(DGL_CURRENT_COLOR_RGBA, origColor);
-        glColor4ub(0, 0, 0, origColor[3] * shadowAlpha);
+        glGetFloatv(GL_CURRENT_COLOR, origColor);
+        glColor4f(0, 0, 0, origColor[3] * shadowAlpha);
     }
 
     // Set the texture.
@@ -832,7 +832,7 @@ int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shad
     }
 
     if(drawShadow)
-        glColor4ub(origColor[0], origColor[1], origColor[2], origColor[3]);
+        glColor4fv(origColor);
 
     x -= cf->marginWidth;
     y -= cf->marginHeight;

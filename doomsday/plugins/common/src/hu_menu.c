@@ -1831,7 +1831,8 @@ void Hu_MenuDrawer(void)
                 offset[VY] += (itemOn - mn->firstItem) * mn->itemHeight +
                     mn->itemHeight / 2;
 
-                GL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP, DGL_CLAMP);
+                DGL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP_TO_EDGE,
+                             DGL_CLAMP_TO_EDGE);
 
                 DGL_MatrixMode(DGL_MODELVIEW);
                 DGL_PushMatrix();
@@ -1841,7 +1842,7 @@ void Hu_MenuDrawer(void)
                 if(skull_angle)
                     DGL_Rotatef(skull_angle, 0, 0, 1);
 
-                GL_DrawRect(-width/2.f, -height/2.f, width, height, 1, 1, 1, menuAlpha);
+                DGL_DrawRect(-width/2.f, -height/2.f, width, height, 1, 1, 1, menuAlpha);
 
                 DGL_MatrixMode(DGL_MODELVIEW);
                 DGL_PopMatrix();
@@ -2254,9 +2255,9 @@ void DrawColorWidget(void)
 #endif
                              1, 1, 1, menuAlpha, true, BORDERUP);
 
-        GL_SetNoTexture();
-        GL_DrawRect(menu->x+w, menu->y-30, 24, 22, currentcolor[0],
-                    currentcolor[1], currentcolor[2], currentcolor[3]);
+        DGL_SetNoMaterial();
+        DGL_DrawRect(menu->x+w, menu->y-30, 24, 22, currentcolor[0],
+                     currentcolor[1], currentcolor[2], currentcolor[3]);
         M_DrawBackgroundBox(menu->x+w, menu->y-30, 24, 22, 1, 1, 1,
                             menuAlpha, false, BORDERDOWN);
 #if __JDOOM__ || __JDOOM64__
@@ -2529,11 +2530,11 @@ void M_DrawClassMenu(void)
     if(pClass == PCLASS_FIGHTER)
         tmap = 2;
 
-    GL_SetTranslatedSprite(sprInfo.material, 1, tmap);
+    DGL_SetTranslatedSprite(sprInfo.material, 1, tmap);
 
-    GL_DrawRect(BG_X + 56 - sprInfo.offset, BG_Y + 78 - sprInfo.topOffset,
-                M_CeilPow2(sprInfo.width), M_CeilPow2(sprInfo.height),
-                1, 1, 1, menuAlpha);
+    DGL_DrawRect(BG_X + 56 - sprInfo.offset, BG_Y + 78 - sprInfo.topOffset,
+                 M_CeilPow2(sprInfo.width), M_CeilPow2(sprInfo.height),
+                 1, 1, 1, menuAlpha);
 
 #undef BG_X
 #undef BG_Y
@@ -2734,16 +2735,16 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 #else
     DGL_Color4f(1, 1, 1, menuAlpha);
 
-    GL_SetPatch(dpLSLeft.lump, DGL_CLAMP, DGL_CLAMP);
-    GL_DrawRect(x, y - 3, dpLSLeft.width, dpLSLeft.height, 1, 1, 1, menuAlpha);
-    GL_SetPatch(dpLSRight.lump, DGL_CLAMP, DGL_CLAMP);
-    GL_DrawRect(x + width - dpLSRight.width, y - 3, dpLSRight.width,
-                dpLSRight.height, 1, 1, 1, menuAlpha);
+    DGL_SetPatch(dpLSLeft.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(x, y - 3, dpLSLeft.width, dpLSLeft.height, 1, 1, 1, menuAlpha);
+    DGL_SetPatch(dpLSRight.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(x + width - dpLSRight.width, y - 3, dpLSRight.width,
+                 dpLSRight.height, 1, 1, 1, menuAlpha);
 
-    GL_SetPatch(dpLSCntr.lump, DGL_REPEAT, DGL_REPEAT);
-    GL_DrawRectTiled(x + dpLSLeft.width, y - 3,
-                     width - dpLSLeft.width - dpLSRight.width,
-                     14, 8, 14);
+    DGL_SetPatch(dpLSCntr.lump, DGL_REPEAT, DGL_REPEAT);
+    DGL_DrawRectTiled(x + dpLSLeft.width, y - 3,
+                      width - dpLSLeft.width - dpLSRight.width,
+                      14, 8, 14);
 #endif
 }
 

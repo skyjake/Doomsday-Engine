@@ -426,19 +426,12 @@ extern          "C" {
     // Graphics.
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
-    unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels,
+    unsigned int    GL_LoadGraphics(const char* name, int mode);
+    unsigned int    GL_NewTextureWithParams3(int format, int width, int height, void* pixels,
                                              int flags, int minFilter, int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
-    void            GL_BlendMode(blendmode_t mode);
     void            GL_SetFilter(int filter_rgba);
     void            GL_PalIdxToRGB(int idx, float* rgb);
-    void            GL_SetNoTexture(void);
-    void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
-    void            GL_SetPSprite(material_t* mat);
-    void            GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap);
-    void            GL_SetMaterial(material_t* mat);
-    unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
-    unsigned int    GL_LoadGraphics(const char* name, int mode);
 
     // Graphics: 2D drawing.
     void            GL_DrawPatch(int x, int y, lumpnum_t lump);
@@ -451,16 +444,6 @@ extern          "C" {
     void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
     void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
                                         float scalex, float scaley);
-    void            GL_DrawLine(float x1, float y1, float x2, float y2,
-                                float r, float g, float b, float a);
-    void            GL_DrawRect(float x, float y, float w, float h, float r,
-                                float g, float b, float a);
-    void            GL_DrawRectTiled(int x, int y, int w, int h, int tw,
-                                     int th);
-    void            GL_DrawCutRectTiled(int x, int y, int w, int h, int tw,
-                                        int th, int txoff, int tyoff, int cx,
-                                        int cy, int cw, int ch);
-
     // Graphics: PCX.
     int             PCX_GetSize(const char* fn, int* w, int* h);
     void            PCX_Load(const char* fn, int bufWidth, int bufHeight,

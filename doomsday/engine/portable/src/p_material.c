@@ -212,7 +212,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     // Reset to the default state.
     for(i = 0; i < DDMAX_MATERIAL_LAYERS; ++i)
-        setTexUnit(snapshot, i, BM_NORMAL, DGL_LINEAR, NULL, 1, 1, 0, 0, 0);
+        setTexUnit(snapshot, i, BM_NORMAL, GL_LINEAR, NULL, 1, 1, 0, 0, 0);
 
     snapshot->width = mat->width;
     snapshot->height = mat->height;
@@ -225,7 +225,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
         int                 magMode = glmode[texMagMode];
 
         if(tex->type == GLT_SPRITE)
-            magMode = filterSprites? DGL_LINEAR : DGL_NEAREST;
+            magMode = filterSprites? GL_LINEAR : GL_NEAREST;
 
         setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst,
                    1.f / snapshot->width, 1.f / snapshot->height, 0, 0, 1);
@@ -271,7 +271,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
                 scale *= detailScale;
 
             setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL,
-                       DGL_LINEAR, detailInst, 1.f / width * scale,
+                       GL_LINEAR, detailInst, 1.f / width * scale,
                        1.f / height * scale, 0, 0, 1);
         }
 
@@ -285,7 +285,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
             snapshot->shiny.minColor[CB] = def->minColor[CB];
 
             setTexUnit(snapshot, MTU_REFLECTION, def->blendMode,
-                       DGL_LINEAR, shinyInst, 1, 1, 0, 0, def->shininess);
+                       GL_LINEAR, shinyInst, 1, 1, 0, 0, def->shininess);
 
             if(shinyMaskInst)
                 setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL,

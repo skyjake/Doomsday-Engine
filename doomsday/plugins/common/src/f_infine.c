@@ -1706,15 +1706,16 @@ void FI_Drawer(void)
     if(fi->bgMaterial)
     {
         FI_UseColor(fi->bgColor, 4);
-        GL_SetMaterial(fi->bgMaterial);
-        GL_DrawRectTiled(0, 0, 320, 200, 64, 64);
+        DGL_SetMaterial(fi->bgMaterial);
+        DGL_DrawRectTiled(0, 0, 320, 200, 64, 64);
     }
     else
     {
         // Just clear the screen, then.
         DGL_Disable(DGL_TEXTURING);
-        GL_DrawRect(0, 0, 320, 200, fi->bgColor[0].value, fi->bgColor[1].value,
-                    fi->bgColor[2].value, fi->bgColor[3].value);
+        DGL_DrawRect(0, 0, 320, 200, fi->bgColor[0].value,
+                     fi->bgColor[1].value, fi->bgColor[2].value,
+                     fi->bgColor[3].value);
         DGL_Enable(DGL_TEXTURING);
     }
 
@@ -1727,7 +1728,7 @@ void FI_Drawer(void)
 
         sq = pic->seq;
 
-        GL_SetNoTexture();      // Hmm...
+        DGL_SetNoMaterial(); // Hmm...
         FI_UseColor(pic->object.color, 4);
         FI_GetTurnCenter(pic, mid);
 

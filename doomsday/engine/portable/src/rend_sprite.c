@@ -86,8 +86,8 @@ void Rend_SpriteRegister(void)
     C_VAR_BYTE("rend-dev-nosprite", &devNoSprites, CVF_NO_ARCHIVE, 0, 1);
 }
 
-static __inline void renderQuad(gl_vertex_t *v, gl_color_t *c,
-                                gl_texcoord_t *tc)
+static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c,
+                                dgl_texcoord_t *tc)
 {
     glBegin(GL_QUADS);
         glColor4ubv(c[0].rgba);
@@ -149,7 +149,7 @@ void Rend_Draw3DPlayerSprites(void)
 /**
  * Set all the colors in the array to that specified.
  */
-void Spr_UniformVertexColors(int count, gl_color_t *colors,
+void Spr_UniformVertexColors(int count, dgl_color_t *colors,
                              const float *rgba)
 {
     for(; count-- > 0; colors++)
@@ -163,7 +163,7 @@ void Spr_UniformVertexColors(int count, gl_color_t *colors,
 
 typedef struct {
     float               color[3], extra[3];
-    gl_vertex_t*        normal;
+    dgl_vertex_t*        normal;
     uint                processedLights, maxLights;
 } lightspriteparams_t;
 
@@ -211,7 +211,7 @@ static boolean lightSprite(const vlight_t* vlight, void* context)
 /**
  * Calculate vertex lighting.
  */
-void Spr_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
+void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
                       uint vLightListIdx, uint maxLights,
                       const float* ambient)
 {
@@ -356,8 +356,8 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
 {
     int                 i;
     float               v1[2], v2[2], v3[2], v4[2];
-    gl_color_t          quadColors[4];
-    gl_vertex_t         quadNormals[4];
+    dgl_color_t          quadColors[4];
+    dgl_vertex_t         quadNormals[4];
 
     if(renderTextures == 1)
     {
@@ -413,8 +413,8 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     }
 
     {
-    gl_texcoord_t   tcs[4], *tc = tcs;
-    gl_color_t     *c = quadColors;
+    dgl_texcoord_t   tcs[4], *tc = tcs;
+    dgl_color_t     *c = quadColors;
 
     tc[0].st[0] = params->texOffset[0] *  (params->texFlip[0]? 1:0);
     tc[0].st[1] = params->texOffset[1] *  (params->texFlip[1]? 1:0);
@@ -506,16 +506,16 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         }
 
         GL_SelectTexUnits(2);
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, IS_MUL ? 4 : 5);
+        GL_ModulateTexture(IS_MUL ? 4 : 5);
 
         // The dynamic light.
-        DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 0 : 1);
-        GL_BindTexture(renderTextures ? params->modTex : 0, DGL_LINEAR);
+        GL_ActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
+        GL_BindTexture(renderTextures ? params->modTex : 0, GL_LINEAR);
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, params->modColor);
 
         // The actual texture.
-        DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 1 : 0);
+        GL_ActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
         GL_BindTexture(renderTextures ? params->tex : 0, params->magMode);
 
         withDyn = true;
@@ -523,7 +523,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     else
     {
         GL_SelectTexUnits(1);
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        GL_ModulateTexture(1);
 
         GL_BindTexture(renderTextures? params->tex : 0, params->magMode);
         normal = 0;
@@ -539,7 +539,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     {
         if(withDyn)
         {
-            DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 1 : 0);
+            GL_ActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
         }
 
         if(params->texCoord[0][VX] < 0 || params->texCoord[0][VX] > 1 ||
@@ -610,7 +610,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
 
         // Restore normal GL state.
         GL_SelectTexUnits(1);
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        GL_ModulateTexture(1);
         GL_DisableArrays(true, true, 0x1);
     }
     else
@@ -889,8 +889,8 @@ boolean drawVLightVector(const vlight_t* light, void* context)
 void Rend_RenderSprite(const rendspriteparams_t* params)
 {
     int                 i;
-    gl_color_t          quadColors[4];
-    gl_vertex_t         quadNormals[4];
+    dgl_color_t          quadColors[4];
+    dgl_vertex_t         quadNormals[4];
     boolean             restoreMatrix = false;
     boolean             restoreZ = false;
     float               spriteCenter[3];
@@ -1066,8 +1066,8 @@ if(params->vLightListIdx)
     }
 
     {
-    gl_vertex_t     vs[4], *v = vs;
-    gl_texcoord_t   tcs[4], *tc = tcs;
+    dgl_vertex_t     vs[4], *v = vs;
+    dgl_texcoord_t   tcs[4], *tc = tcs;
 
     //  1---2
     //  |   |  Vertex layout.

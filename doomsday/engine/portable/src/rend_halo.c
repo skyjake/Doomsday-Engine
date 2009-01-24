@@ -378,7 +378,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         }
 
         if(renderTextures)
-            GL_BindTexture(tex, DGL_LINEAR);
+            GL_BindTexture(tex, GL_LINEAR);
         else
             glBindTexture(GL_TEXTURE_2D, 0);
 

@@ -177,7 +177,7 @@ static void processMobjShadow(mobj_t* mo)
     // Prepare the poly.
     memset(rTU, 0, sizeof(rTU));
     rTU[TU_PRIMARY].tex = GL_PrepareLSTexture(LST_DYNAMIC);
-    rTU[TU_PRIMARY].magMode = DGL_LINEAR;
+    rTU[TU_PRIMARY].magMode = GL_LINEAR;
     rTU[TU_PRIMARY].blend = 1;
 
     rvertices[0].pos[VX] = pos[VX] - radius;

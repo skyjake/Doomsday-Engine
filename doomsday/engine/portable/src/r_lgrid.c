@@ -992,9 +992,9 @@ void LG_Debug(void)
             if(ddpl)
             {
                 if(vIdx == blockIdx && (blink & 16))
-                    DGL_Color3f(1, 0, 0);
+                    glColor3f(1, 0, 0);
                 else
-                    DGL_Color3fv(block->rgb);
+                    glColor3fv(block->rgb);
             }
 
             glVertex2f(x * lgDebugSize, y * lgDebugSize);

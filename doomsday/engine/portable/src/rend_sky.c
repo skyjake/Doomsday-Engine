@@ -418,7 +418,7 @@ void Rend_RenderSky(int hemis)
         glDepthMask(GL_FALSE);
         // Disable culling, all triangles face the viewer.
         glDisable(GL_CULL_FACE);
-        GL_DisableArrays(true, true, DGL_ALL_BITS);
+        GL_DisableArrays(true, true, DDMAXINT);
 
         // Setup a proper matrix.
         glMatrixMode(GL_MODELVIEW);

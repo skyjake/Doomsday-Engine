@@ -54,8 +54,6 @@
 
 #include <string.h>
 
-#include "gl_atiext.h"
-
 #define USE_MULTITEXTURE    1
 #define MAX_TEX_UNITS       2      // More won't be used.
 
@@ -140,6 +138,16 @@ extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
 extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
 extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
+#endif
+
+#ifndef GL_ATI_texture_env_combine3
+#define GL_MODULATE_ADD_ATI             0x8744
+#define GL_MODULATE_SIGNED_ADD_ATI      0x8745
+#define GL_MODULATE_SUBTRACT_ATI        0x8746
+#endif
+
+#ifndef GL_ATI_texture_env_combine3
+#define GL_ATI_texture_env_combine3     1
 #endif
 
 boolean         Sys_PreInitGL(void);

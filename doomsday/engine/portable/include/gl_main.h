@@ -74,7 +74,20 @@ void            GL_ShutdownVarFont(void);
 const char*     GL_ChooseFixedFont(void);
 const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
 void            GL_ActiveTexture(const GLenum texture);
+void            GL_ModulateTexture(int mode);
+void            GL_SelectTexUnits(int count);
+void            GL_SetTextureCompression(boolean on);
+void            GL_SetVSync(boolean on);
+void            GL_SetMultisample(boolean on);
+void            GL_EnableTexUnit(byte id);
+void            GL_DisableTexUnit(byte id);
+void            GL_BlendOp(int op);
+void            GL_SetGrayMipmap(int lev);
 boolean         GL_EnablePalTexExt(boolean enable);
+boolean         GL_NewList(DGLuint list, int mode);
+DGLuint         GL_EndList(void);
+void            GL_CallList(DGLuint list);
+void            GL_DeleteLists(DGLuint list, int range);
 void            GL_InitArrays(void);
 void            GL_EnableArrays(int vertices, int colors, int coords);
 void            GL_DisableArrays(int vertices, int colors, int coords);
@@ -82,11 +95,10 @@ void            GL_Arrays(void *vertices, void *colors, int numCoords, void **co
                            int lock);
 void            GL_UnlockArrays(void);
 void            GL_ArrayElement(int index);
-void            GL_DrawElements(glprimtype_t type, int count, const uint *indices);
-boolean         GL_Grab(int x, int y, int width, int height, gltexformat_t format, void *buffer);
-boolean         GL_TexImage(gltexformat_t format, int width, int height, int genMips, void *data);
-void            GL_TexFilter(int pname, int param);
-void            GL_Palette(gltexformat_t format, void *data);
+void            GL_DrawElements(dglprimtype_t type, int count, const uint *indices);
+boolean         GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer);
+boolean         GL_TexImage(dgltexformat_t format, int width, int height, int genMips, void *data);
+void            GL_Palette(dgltexformat_t format, void *data);
 int             GL_GetTexAnisoMul(int level);
 
 // Returns a pointer to a copy of the screen. The pointer must be

@@ -1038,7 +1038,7 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
             glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
 
             glEnable(GL_TEXTURE_2D);
-            DGL_BlendOp(DGL_ADD);
+            GL_BlendOp(GL_FUNC_ADD);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
             glBegin(GL_QUADS);

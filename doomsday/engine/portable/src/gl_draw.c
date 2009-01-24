@@ -88,7 +88,7 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    GL_SetRawImage(lump, false, DGL_CLAMP, DGL_CLAMP);
+    GL_SetRawImage(lump, false, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     raw = R_GetRawTex(lump);
     isTwoPart = (raw->tex2 != 0);
 
@@ -118,7 +118,7 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
     if(isTwoPart)
     {
         // And the other part.
-        GL_SetRawImage(lump, true, DGL_CLAMP, DGL_CLAMP);
+        GL_SetRawImage(lump, true, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         glBegin(GL_QUADS);
             glTexCoord2f(0, 0);
             glVertex2f(pixelBorder, 0);

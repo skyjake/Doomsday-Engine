@@ -201,7 +201,7 @@ void Rend_Reset(void)
     LO_Clear(); // Free lumobj stuff.
 
     if(dlBBox)
-        DGL_DeleteLists(dlBBox, 1);
+        GL_DeleteLists(dlBBox, 1);
     dlBBox = 0;
 }
 
@@ -1074,7 +1074,7 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
         rcolors = R_AllocRendColors(params->realNumVertices);
 
         rTU[TU_PRIMARY].tex = dyn->texture;
-        rTU[TU_PRIMARY].magMode = DGL_LINEAR;
+        rTU[TU_PRIMARY].magMode = GL_LINEAR;
 
         rTU[TU_PRIMARY_DETAIL].tex = 0;
         rTU[TU_INTER].tex = 0;
@@ -3675,7 +3675,7 @@ void Rend_RenderMap(void)
     // Set to true if dynlights are inited for this frame.
     loInited = false;
 
-    DGL_Enable(DGL_MULTISAMPLE);
+    GL_SetMultisample(true);
 
     // This is all the clearing we'll do.
     if(firstFrameAfterLoad || freezeRLs || P_IsInVoid(viewPlayer))
@@ -3750,7 +3750,7 @@ LO_DrawLumobjs();
     // Draw the Source Bias Editor's draw that identifies the current light.
     SBE_DrawCursor();
 
-    DGL_Disable(DGL_MULTISAMPLE);
+    GL_SetMultisample(false);
 }
 
 /**
@@ -3920,7 +3920,7 @@ void R_DrawLightRange(void)
 
 static DGLuint constructBBox(DGLuint name, float br)
 {
-    if(DGL_NewList(name, DGL_COMPILE))
+    if(GL_NewList(name, GL_COMPILE))
     {
         glBegin(GL_QUADS);
         {
@@ -3957,7 +3957,7 @@ static DGLuint constructBBox(DGLuint name, float br)
         }
         glEnd();
 
-        return DGL_EndList();
+        return GL_EndList();
     }
 
     return 0;
@@ -3994,7 +3994,7 @@ void Rend_DrawBBox(const float pos3f[3], float w, float l, float h,
     glScalef(w - br - br, h - br - br, l - br - br);
     glColor4f(color3f[0], color3f[1], color3f[2], alpha);
 
-    DGL_CallList(dlBBox);
+    GL_CallList(dlBBox);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

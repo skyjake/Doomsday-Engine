@@ -1058,7 +1058,7 @@ static void renderShadowSeg(const rvertex_t* origVertices,
 
     memset(rTU, 0, sizeof(rTU));
     rTU[TU_PRIMARY].tex = GL_PrepareLSTexture(p->texture);
-    rTU[TU_PRIMARY].magMode = DGL_LINEAR;
+    rTU[TU_PRIMARY].magMode = GL_LINEAR;
     rTU[TU_PRIMARY].blend = 1;
 
     // Top left.
@@ -1706,7 +1706,7 @@ void Rend_DrawShadowOffsetVerts(void)
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
 
-    GL_BindTexture(GL_PrepareLSTexture(LST_DYNAMIC), DGL_LINEAR);
+    GL_BindTexture(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
 
     for(i = 0; i < numLineDefs; ++i)
     {

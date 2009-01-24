@@ -231,9 +231,9 @@ int torchAdditive = true;
 /**
  * The vertex arrays.
  */
-static gl_vertex_t* vertices;
-static gl_texcoord_t* texCoords[NUM_TEXCOORD_ARRAYS];
-static gl_color_t* colors;
+static dgl_vertex_t* vertices;
+static dgl_texcoord_t* texCoords[NUM_TEXCOORD_ARRAYS];
+static dgl_color_t* colors;
 
 static uint numVertices, maxVertices;
 
@@ -272,8 +272,7 @@ static void rlBind(DGLuint tex, int magMode)
         tex = 0;
 
     glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                    magMode == DGL_NEAREST? GL_NEAREST : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
     if(GL_state.useAnisotropic)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                         GL_GetTexAnisoMul(texAniso));
@@ -398,12 +397,12 @@ static uint allocateVertices(uint count)
             maxVertices *= 2;
         }
 
-        vertices = M_Realloc(vertices, sizeof(gl_vertex_t) * maxVertices);
-        colors = M_Realloc(colors, sizeof(gl_color_t) * maxVertices);
+        vertices = M_Realloc(vertices, sizeof(dgl_vertex_t) * maxVertices);
+        colors = M_Realloc(colors, sizeof(dgl_color_t) * maxVertices);
         for(i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
         {
             texCoords[i] =
-                M_Realloc(texCoords[i], sizeof(gl_texcoord_t) * maxVertices);
+                M_Realloc(texCoords[i], sizeof(dgl_texcoord_t) * maxVertices);
         }
     }
     return base;
@@ -765,7 +764,7 @@ static void writePrimitive(const rendlist_t* list, uint base,
         // Vertex.
         {
         const rvertex_t*    rvtx = &rvertices[i];
-        gl_vertex_t*        vtx = &vertices[base + i];
+        dgl_vertex_t*        vtx = &vertices[base + i];
 
         vtx->xyz[0] = rvtx->pos[VX];
         vtx->xyz[1] = rvtx->pos[VZ];
@@ -779,7 +778,7 @@ static void writePrimitive(const rendlist_t* list, uint base,
         if(TU(list, TU_PRIMARY)->tex)
         {
             const rtexcoord_t*  rtc = &coords[i];
-            gl_texcoord_t*      tc = &texCoords[TCA_MAIN][base + i];
+            dgl_texcoord_t*      tc = &texCoords[TCA_MAIN][base + i];
 
             tc->st[0] = rtc->st[0];
             tc->st[1] = rtc->st[1];
@@ -789,7 +788,7 @@ static void writePrimitive(const rendlist_t* list, uint base,
         if(TU(list, TU_INTER)->tex)
         {
             const rtexcoord_t*  rtc = &coords1[i];
-            gl_texcoord_t*      tc = &texCoords[TCA_BLEND][base + i];
+            dgl_texcoord_t*      tc = &texCoords[TCA_BLEND][base + i];
 
             tc->st[0] = rtc->st[0];
             tc->st[1] = rtc->st[1];
@@ -799,7 +798,7 @@ static void writePrimitive(const rendlist_t* list, uint base,
         if((list->last->flags & PF_IS_LIT) && IS_MTEX_LIGHTS)
         {
             const rtexcoord_t*  rtc = &coords2[i];
-            gl_texcoord_t*      tc = &texCoords[TCA_LIGHT][base + i];
+            dgl_texcoord_t*      tc = &texCoords[TCA_LIGHT][base + i];
 
             tc->st[0] = rtc->st[0];
             tc->st[1] = rtc->st[1];
@@ -808,7 +807,7 @@ static void writePrimitive(const rendlist_t* list, uint base,
         // Color.
         {
         const rcolor_t*     rcolor = &rcolors[i];
-        gl_color_t*         color = &colors[base + i];
+        dgl_color_t*         color = &colors[base + i];
 
         color->rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CR], 1));
         color->rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CG], 1));
@@ -992,7 +991,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             if(conditions & DCF_SET_LIGHT_ENV)
             {   // Use the correct texture and color for the light.
                 GL_ActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
-                rlBind(hdr->modTex, DGL_LINEAR);
+                rlBind(hdr->modTex, GL_LINEAR);
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
                 // Make sure the light is not repeated.
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
@@ -1139,7 +1138,7 @@ if(numTexUnits < 2)
 
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_INTER));
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 2);
+            GL_ModulateTexture(2);
 
             color[0] = color[1] = color[2] = 0;
             color[3] = TU(list, TU_INTER)->blend;
@@ -1150,7 +1149,7 @@ if(numTexUnits < 2)
             // Normal modulation.
             selectTexUnits(1);
             rlBind2(TU(list, TU_PRIMARY));
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+            GL_ModulateTexture(1);
         }
         return DCF_SET_MATRIX_TEXTURE0 | (TU(list, TU_INTER)->tex? DCF_SET_MATRIX_TEXTURE1 : 0);
 
@@ -1184,7 +1183,7 @@ if(numTexUnits < 2)
         rlBindTo(0, TU(list, TU_PRIMARY));
         rlBindTo(1, TU(list, TU_INTER));
 
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 2);
+        GL_ModulateTexture(2);
 
         color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER)->blend;
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
@@ -1231,7 +1230,7 @@ if(numTexUnits < 2)
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_INTER));
 
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 3);
+            GL_ModulateTexture(3);
 
             color[0] = color[1] = color[2] = 0; color[3] = TU(list, TU_INTER)->blend;
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
@@ -1241,7 +1240,7 @@ if(numTexUnits < 2)
         // No modulation at all.
         selectTexUnits(1);
         rlBind2(TU(list, TU_PRIMARY));
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
+        GL_ModulateTexture(0);
         return DCF_SET_MATRIX_TEXTURE0 | (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
 
     case LM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
@@ -1251,7 +1250,7 @@ if(numTexUnits < 2)
         if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
             selectTexUnits(2);
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 9); // Tex+Detail, no color.
+            GL_ModulateTexture(9); // Tex+Detail, no color.
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
             return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
@@ -1259,7 +1258,7 @@ if(numTexUnits < 2)
         else
         {
             selectTexUnits(1);
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
+            GL_ModulateTexture(0);
             rlBind2(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
         }
@@ -1281,7 +1280,7 @@ if(numTexUnits < 2)
         if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
             selectTexUnits(2);
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 8);
+            GL_ModulateTexture(8);
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
             return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_DTEXTURE1;
@@ -1290,7 +1289,7 @@ if(numTexUnits < 2)
         {
             // Normal modulation.
             selectTexUnits(1);
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+            GL_ModulateTexture(1);
             rlBind2(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
         }
@@ -1316,7 +1315,8 @@ if(numTexUnits < 2)
         }
     case LM_SHADOW:
         // Render all primitives.
-        rlBind2(TU(list, TU_PRIMARY));
+        if(TU(list, TU_PRIMARY)->tex)
+            rlBind2(TU(list, TU_PRIMARY));
         if(!TU(list, TU_PRIMARY)->tex)
         {
             // Apply a modelview shift.
@@ -1433,13 +1433,13 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         {
             coords[0] = TCA_LIGHT + 1;
             coords[1] = TCA_MAIN + 1;
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 4); // Light * texture.
+            GL_ModulateTexture(4); // Light * texture.
         }
         else
         {
             coords[0] = TCA_MAIN + 1;
             coords[1] = TCA_LIGHT + 1;
-            DGL_SetInteger(DGL_MODULATE_TEXTURE, 5); // Texture + light.
+            GL_ModulateTexture(5); // Texture + light.
         }
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -1457,7 +1457,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // One light, no texture.
         selectTexUnits(1);
         coords[0] = TCA_LIGHT + 1;
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 6);
+        GL_ModulateTexture(6);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -1474,7 +1474,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // One additive light, no texture.
         selectTexUnits(1);
         coords[0] = TCA_LIGHT + 1;
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 7); // Add light, no color.
+        GL_ModulateTexture(7); // Add light, no color.
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
         glDepthMask(GL_FALSE);
@@ -1490,7 +1490,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
     case LM_WITHOUT_TEXTURE:
         selectTexUnits(0);
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        GL_ModulateTexture(1);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -1505,7 +1505,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
     case LM_LIGHTS:
         selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
         glDepthMask(GL_FALSE);
@@ -1575,7 +1575,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
     case LM_ALL_DETAILS:
         selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 0);
+        GL_ModulateTexture(0);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -1600,7 +1600,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         selectTexUnits(2);
         coords[0] = TCA_MAIN + 1;
         coords[1] = TCA_BLEND + 1;
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 3);
+        GL_ModulateTexture(3);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -1625,7 +1625,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // A bit like 'negative lights'.
         selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+        GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
         glDepthMask(GL_FALSE);
@@ -1644,7 +1644,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
     case LM_SHINY:
         selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 1); // 8 for multitexture
+        GL_ModulateTexture(1); // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -1668,7 +1668,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         selectTexUnits(2);
         coords[0] = TCA_MAIN + 1;
         coords[1] = TCA_BLEND + 1; // the mask
-        DGL_SetInteger(DGL_MODULATE_TEXTURE, 8); // same as with details
+        GL_ModulateTexture(8); // same as with details
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -1982,7 +1982,7 @@ END_PROF( PROF_RL_RENDER_SHADOW );
 
     // Return to the normal GL state.
     selectTexUnits(1);
-    DGL_SetInteger(DGL_MODULATE_TEXTURE, 1);
+    GL_ModulateTexture(1);
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

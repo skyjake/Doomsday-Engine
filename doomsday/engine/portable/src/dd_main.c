@@ -855,7 +855,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&gameDataFormat, &gameDataFormat},
     {&gameDrawHUD, 0},
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
-    {&symbolicEchoMode, &symbolicEchoMode}
+    {&symbolicEchoMode, &symbolicEchoMode},
+    {&GL_state.maxTexUnits, 0}
 };
 /* *INDENT-ON* */
 

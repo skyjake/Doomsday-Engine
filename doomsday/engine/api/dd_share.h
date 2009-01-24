@@ -187,6 +187,7 @@ enum {
     DD_GAME_DRAW_HUD_HINT, // Doomsday advises not to draw the HUD.
     DD_UPSCALE_AND_SHARPEN_PATCHES,
     DD_SYMBOLIC_ECHO,
+    DD_MAX_TEXTURE_UNITS,
     DD_LAST_VALUE,
 
     // General constants (not to be used with Get/Set).
@@ -890,21 +891,6 @@ typedef struct {
 // Graphics
 //
 //------------------------------------------------------------------------
-
-#define DDNUM_BLENDMODES    9
-
-typedef enum blendmode_e {
-    BM_ZEROALPHA = -1,
-    BM_NORMAL,
-    BM_ADD,
-    BM_DARK,
-    BM_SUBTRACT,
-    BM_REVERSE_SUBTRACT,
-    BM_MUL,
-    BM_INVERSE,
-    BM_INVERSE_MUL,
-    BM_ALPHA_SUBTRACT
-} blendmode_t;
 
 #define DDMAX_MATERIAL_LAYERS   1
 

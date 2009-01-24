@@ -209,7 +209,7 @@ void Hu_LoadData(void)
     if(!fogEffectData.texture && !Get(DD_NOVIDEO))
     {
         fogEffectData.texture =
-            GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64,
+            GL_NewTextureWithParams3(DGL_LUMINANCE, 64, 64,
                                      W_CacheLumpName("menufog", PU_CACHE),
                                      0, DGL_NEAREST, DGL_LINEAR,
                                      -1 /*best anisotropy*/,
@@ -767,7 +767,7 @@ static void drawTable(float x, float ly, float width, float height,
                 val = .8f;
 
             DGL_Disable(DGL_TEXTURING);
-            GL_DrawRect(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
+            DGL_DrawRect(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
             DGL_Enable(DGL_TEXTURING);
         }
 
@@ -841,7 +841,7 @@ DGL_Enable(DGL_TEXTURING);
                     cX += ((colW[n] - CELL_PADDING * 2) - w) / 2;
                     cY += ((lineHeight - CELL_PADDING * 2) - h) / 2;
 
-                    GL_SetMaterial(sprInfo.material);
+                    DGL_SetMaterial(sprInfo.material);
 
                     drawQuad(cX, cY, w, h, s, t, 1, 1, 1, alpha);
                 }
@@ -967,7 +967,7 @@ void HU_DrawScoreBoard(int player)
 
     // Draw a background around the whole thing.
     DGL_Disable(DGL_TEXTURING);
-    GL_DrawRect(x, y, width, height, 0, 0, 0, .4f * hud->scoreAlpha);
+    DGL_DrawRect(x, y, width, height, 0, 0, 0, .4f * hud->scoreAlpha);
     DGL_Enable(DGL_TEXTURING);
 
     // Title:
@@ -1652,14 +1652,14 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     if(bright)
-        GL_BlendMode(BM_ADD);
+        DGL_BlendMode(BM_ADD);
     else
         DGL_BlendFunc(DGL_ZERO, DGL_ONE_MINUS_SRC_ALPHA);
 
-    GL_DrawRect(x + w / 2.0f - fw / 2, y + h / 2.0f - fh / 2, fw, fh, red,
-                green, blue, alpha);
+    DGL_DrawRect(x + w / 2.0f - fw / 2, y + h / 2.0f - fh / 2, fw, fh, red,
+                 green, blue, alpha);
 
-    GL_BlendMode(BM_NORMAL);
+    DGL_BlendMode(BM_NORMAL);
 }
 
 /**
@@ -1886,8 +1886,8 @@ void M_DrawColorBox(int x, int y, float r, float g, float b, float a)
         a = 1;
 
     M_DrawBackgroundBox(x, y, 2, 1, 1, 1, 1, a, false, 1);
-    GL_SetNoTexture();
-    GL_DrawRect(x-1,y-1, 4, 3, r, g, b, a);
+    DGL_SetNoMaterial();
+    DGL_DrawRect(x-1,y-1, 4, 3, r, g, b, a);
 }
 
 /**
@@ -1935,47 +1935,47 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
 
     if(background)
     {
-        GL_SetMaterial(P_ToPtr(DMU_MATERIAL,
+        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL,
             P_MaterialNumForName(borderLumps[0], MN_FLATS)));
-        GL_DrawRectTiled(x, y, w, h, 64, 64);
+        DGL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 
     if(border)
     {
         // Top
-        GL_SetPatch(t->lump, DGL_REPEAT, DGL_REPEAT);
-        GL_DrawRectTiled(x, y - t->height, w, t->height,
-                         up * t->width, up * t->height);
+        DGL_SetPatch(t->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x, y - t->height, w, t->height,
+                          up * t->width, up * t->height);
         // Bottom
-        GL_SetPatch(b->lump, DGL_REPEAT, DGL_REPEAT);
-        GL_DrawRectTiled(x, y + h, w, b->height, up * b->width,
-                         up * b->height);
+        DGL_SetPatch(b->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x, y + h, w, b->height, up * b->width,
+                          up * b->height);
         // Left
-        GL_SetPatch(l->lump, DGL_REPEAT, DGL_REPEAT);
-        GL_DrawRectTiled(x - l->width, y, l->width, h,
-                         up * l->width, up * l->height);
+        DGL_SetPatch(l->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x - l->width, y, l->width, h,
+                          up * l->width, up * l->height);
         // Right
-        GL_SetPatch(r->lump, DGL_REPEAT, DGL_REPEAT);
-        GL_DrawRectTiled(x + w, y, r->width, h, up * r->width,
-                         up * r->height);
+        DGL_SetPatch(r->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x + w, y, r->width, h, up * r->width,
+                          up * r->height);
 
         // Top Left
-        GL_SetPatch(tl->lump, DGL_CLAMP, DGL_CLAMP);
-        GL_DrawRect(x - tl->width, y - tl->height,
-                    tl->width, tl->height,
-                    red, green, blue, alpha);
+        DGL_SetPatch(tl->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x - tl->width, y - tl->height,
+                     tl->width, tl->height,
+                     red, green, blue, alpha);
         // Top Right
-        GL_SetPatch(tr->lump, DGL_CLAMP, DGL_CLAMP);
-        GL_DrawRect(x + w, y - tr->height, tr->width, tr->height,
-                    red, green, blue, alpha);
+        DGL_SetPatch(tr->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x + w, y - tr->height, tr->width, tr->height,
+                     red, green, blue, alpha);
         // Bottom Right
-        GL_SetPatch(br->lump, DGL_CLAMP, DGL_CLAMP);
-        GL_DrawRect(x + w, y + h, br->width, br->height,
-                    red, green, blue, alpha);
+        DGL_SetPatch(br->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x + w, y + h, br->width, br->height,
+                     red, green, blue, alpha);
         // Bottom Left
-        GL_SetPatch(bl->lump, DGL_CLAMP, DGL_CLAMP);
-        GL_DrawRect(x - bl->width, y + h, bl->width, bl->height,
-                    red, green, blue, alpha);
+        DGL_SetPatch(bl->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height,
+                     red, green, blue, alpha);
     }
 }
 
@@ -1994,8 +1994,8 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
     GL_DrawPatch_CS(x - 32, y, W_GetNumForName("M_SLDLT"));
     GL_DrawPatch_CS(x + width * 8, y, W_GetNumForName("M_SLDRT"));
 
-    GL_SetPatch(W_GetNumForName("M_SLDMD1"), DGL_REPEAT, DGL_REPEAT);
-    GL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
+    DGL_SetPatch(W_GetNumForName("M_SLDMD1"), DGL_REPEAT, DGL_REPEAT);
+    DGL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
 
     DGL_Color4f( 1, 1, 1, alpha);
     GL_DrawPatch_CS(x + 4 + slot * 8, y + 7, W_GetNumForName("M_SLDKB"));
@@ -2004,18 +2004,18 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
     float       scale = height / 13.0f;
 
     xx = x;
-    GL_SetPatch(W_GetNumForName("M_THERML"), DGL_CLAMP, DGL_CLAMP);
-    GL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
+    DGL_SetPatch(W_GetNumForName("M_THERML"), DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
     xx += 6 * scale;
-    GL_SetPatch(W_GetNumForName("M_THERM2"), DGL_REPEAT, DGL_CLAMP);
-    GL_DrawRectTiled(xx, y, 8 * width * scale, height, 8 * scale, height);
+    DGL_SetPatch(W_GetNumForName("M_THERM2"), DGL_REPEAT, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRectTiled(xx, y, 8 * width * scale, height, 8 * scale, height);
     xx += 8 * width * scale;
-    GL_SetPatch(W_GetNumForName("M_THERMR"), DGL_CLAMP, DGL_CLAMP);
-    GL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
+    DGL_SetPatch(W_GetNumForName("M_THERMR"), DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
 
-    GL_SetPatch(W_GetNumForName("M_THERMO"), DGL_CLAMP, DGL_CLAMP);
-    GL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1,
-                alpha);
+    DGL_SetPatch(W_GetNumForName("M_THERMO"), DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1,
+                 alpha);
 #endif
 }
 
@@ -2050,8 +2050,8 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
 
     if(effectID == 4)
     {
-        GL_SetNoTexture();
-        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, MIN_OF(alpha, .5f));
+        DGL_SetNoMaterial();
+        DGL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, MIN_OF(alpha, .5f));
         return;
     }
 
@@ -2059,8 +2059,8 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     {
         DGL_Disable(DGL_TEXTURING);
         DGL_Color4f(alpha, alpha / 2, 0, alpha / 3);
-        GL_BlendMode(BM_INVERSE_MUL);
-        GL_DrawRectTiled(0, 0, 320, 200, 1, 1);
+        DGL_BlendMode(BM_INVERSE_MUL);
+        DGL_DrawRectTiled(0, 0, 320, 200, 1, 1);
         DGL_Enable(DGL_TEXTURING);
     }
 
@@ -2073,7 +2073,7 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     if(effectID == 1)
     {
         DGL_Color3f(alpha / 3, alpha / 2, alpha / 2);
-        GL_BlendMode(BM_INVERSE_MUL);
+        DGL_BlendMode(BM_INVERSE_MUL);
     }
     else if(effectID == 2)
     {
@@ -2136,17 +2136,17 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
         DGL_Rotatef(texAngle * (effectID == 0 ? 0.5 : 1), 0, 0, 1);
         DGL_Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
         if(effectID == 2)
-            GL_DrawRectTiled(0, 0, 320, 200, 270 / 8, 4 * 225);
+            DGL_DrawRectTiled(0, 0, 320, 200, 270 / 8, 4 * 225);
         else if(effectID == 0)
-            GL_DrawRectTiled(0, 0, 320, 200, 270 / 4, 8 * 225);
+            DGL_DrawRectTiled(0, 0, 320, 200, 270 / 4, 8 * 225);
         else
-            GL_DrawRectTiled(0, 0, 320, 200, 270, 225);
+            DGL_DrawRectTiled(0, 0, 320, 200, 270, 225);
     }
 
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PopMatrix();
 
-    GL_BlendMode(BM_NORMAL);
+    DGL_BlendMode(BM_NORMAL);
 }
 
 static void drawFogEffect(void)

@@ -233,13 +233,13 @@ void G_ConsoleBg(int *width, int *height)
 {
     if(consoleBG)
     {
-        GL_SetMaterial(consoleBG);
+        DGL_SetMaterial(consoleBG);
         *width = (int) (64 * consoleZoom);
         *height = (int) (64 * consoleZoom);
     }
     else
     {
-        GL_SetNoTexture();
+        DGL_SetNoMaterial();
         *width = *height = 0;
     }
 }

@@ -1467,10 +1467,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\gl_atiext.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\gl_defer.h"
 				>
 			</File>

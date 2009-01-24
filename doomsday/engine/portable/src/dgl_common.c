@@ -23,7 +23,7 @@
  */
 
 /**
- * dgl_common.c : Portable OpenGL init/state routines.
+ * dgl_common.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -48,10 +48,15 @@
 
 // CODE --------------------------------------------------------------------
 
+void GL_SetGrayMipmap(int lev)
+{
+    GL_state_texture.grayMipmapFactor = lev / 255.0f;
+}
+
 /**
- * Set the currently active GL texture by name.
+ * Set the currently active GL texture unit by ident.
  *
- * @param texture       GL texture name to make active.
+ * @param texture       GL texture unit ident to make active.
  */
 void GL_ActiveTexture(const GLenum texture)
 {
@@ -142,6 +147,282 @@ void envModMultiTex(int activate)
     }
 }
 
+/**
+ * Configure the GL state for the specified texture modulation mode.
+ *
+ * @param mode          Modulation mode ident.
+ */
+void GL_ModulateTexture(int mode)
+{
+    switch(mode)
+    {
+    case 0:
+        // No modulation: just replace with texture.
+        GL_ActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        break;
+
+    case 1:
+        // Normal texture modulation with primary color.
+        GL_ActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        break;
+
+    case 12:
+        // Normal texture modulation on both stages. TU 1 modulates with
+        // primary color, TU 2 with TU 1.
+        GL_ActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        GL_ActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        break;
+
+    case 2:
+    case 3:
+        // Texture modulation and interpolation.
+        GL_ActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        if(mode == 2)
+        {   // Used with surfaces that have a color.
+            // TU 2: Modulate previous with primary color.
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+
+        }
+        else
+        {   // Mode 3: Used with surfaces with no primary color.
+            // TU 2: Pass through.
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        }
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+
+        // TU 1: Interpolate between texture 1 and 2, using the constant
+        // alpha as the factor.
+        GL_ActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        break;
+
+    case 4:
+        // Apply sector light, dynamic light and texture.
+        envModMultiTex(true);
+        break;
+
+    case 5:
+    case 10:
+        // Sector light * texture + dynamic light.
+        GL_ActiveTexture(GL_TEXTURE1);
+        envAddColoredAlpha(true, mode == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
+
+        // Alpha remains unchanged.
+        if(GL_state_ext.nvTexEnvComb)
+        {
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA,
+                      GL_ONE_MINUS_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_ZERO);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA, GL_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_ALPHA_NV, GL_ZERO);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_ALPHA_NV, GL_SRC_ALPHA);
+        }
+        else
+        {
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        }
+
+        GL_ActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        break;
+
+    case 6:
+        // Simple dynlight addition (add to primary color).
+        GL_ActiveTexture(GL_TEXTURE0);
+        envAddColoredAlpha(true, GL_SRC_ALPHA);
+        break;
+
+    case 7:
+        // Dynlight addition without primary color.
+        GL_ActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        break;
+
+    case 8:
+    case 9:
+        // Texture and Detail.
+        GL_ActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 2);
+
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+
+        GL_ActiveTexture(GL_TEXTURE0);
+        if(mode == 8)
+        {
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        }
+        else
+        {   // Mode 9: Ignore primary color.
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        }
+        break;
+
+    case 11:
+        // Normal modulation, alpha of 2nd stage.
+        // Tex0: texture
+        // Tex1: shiny texture
+        GL_ActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+
+        GL_ActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void GL_BlendOp(int op)
+{
+#ifndef UNIX
+    if(!glBlendEquationEXT)
+        return;
+#endif
+    glBlendEquationEXT(op);
+}
+
+boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer)
+{
+    if(format != DGL_RGB)
+        return false;
+
+    // y+height-1 is the bottom edge of the rectangle. It's
+    // flipped to change the origin.
+    glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB,
+                 GL_UNSIGNED_BYTE, buffer);
+    return true;
+}
+
+void GL_EnableTexUnit(byte id)
+{
+    GL_ActiveTexture(GL_TEXTURE0 + id);
+    glEnable(GL_TEXTURE_2D);
+}
+
+void GL_DisableTexUnit(byte id)
+{
+    GL_ActiveTexture(GL_TEXTURE0 + id);
+    glDisable(GL_TEXTURE_2D);
+
+    // Implicit disabling of texcoord array.
+    if(GL_state.noArrays)
+    {
+        GL_DisableArrays(0, 0, 1 << id);
+    }
+}
+
+/**
+ * The first selected unit is active after this call.
+ */
+void GL_SelectTexUnits(int count)
+{
+    int                 i;
+
+    // Disable extra units.
+    for(i = numTexUnits - 1; i >= count; i--)
+        GL_DisableTexUnit(i);
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits)
+            continue;
+
+        GL_EnableTexUnit(i);
+    }
+}
+
+void GL_SetTextureCompression(boolean on)
+{
+    GL_state.allowCompression = on;
+}
+
+void GL_SetVSync(boolean on)
+{
+#ifdef WIN32
+    if(GL_state_ext.wglSwapIntervalEXT)
+    {
+        wglSwapIntervalEXT(on? 1 : 0);
+        GL_state.useVSync = on;
+    }
+#endif
+}
+
+void GL_SetMultisample(boolean on)
+{
+#if WIN32
+    if(on)
+        glEnable(GL_MULTISAMPLE_ARB);
+    else
+        glDisable(GL_MULTISAMPLE_ARB);
+#endif
+}
+
 void DGL_Scissor(int x, int y, int width, int height)
 {
     glScissor(x, FLIP(y + height - 1), width, height);
@@ -154,25 +435,8 @@ boolean DGL_GetIntegerv(int name, int *v)
 
     switch(name)
     {
-    case DGL_MAX_TEXTURE_SIZE:
-        *v = GL_state.maxTexSize;
-        break;
-
-    case DGL_MAX_TEXTURE_UNITS:
-        *v = GL_state.maxTexUnits;
-        break;
-
     case DGL_MODULATE_ADD_COMBINE:
         *v = GL_state_ext.nvTexEnvComb || GL_state_ext.atiTexEnvComb;
-        break;
-
-    case DGL_PALETTED_TEXTURES:
-        *v = GL_state_texture.usePalTex;
-        break;
-
-    case DGL_PALETTED_GENMIPS:
-        // We are unable to generate mipmaps for paletted textures.
-        *v = 0;
         break;
 
     case DGL_SCISSOR_TEST:
@@ -214,39 +478,6 @@ boolean DGL_GetIntegerv(int name, int *v)
             v[i] = (int) (color[i] * 255);
         break;
 
-    case DGL_POLY_COUNT:
-        *v = polyCounter;
-        polyCounter = 0;
-        break;
-
-    case DGL_TEXTURE_BINDING:
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, (GLint*) v);
-        break;
-
-    case DGL_TEXTURE_NON_POWER_OF_TWO:
-        *v = GL_state.textureNonPow2;
-        break;
-
-    case DGL_VSYNC:
-#if WIN32
-        *v = GL_state_ext.wglSwapIntervalEXT? GL_state.useVSync : -1;
-#else
-        *v = 1;
-#endif
-        break;
-
-    case DGL_MULTISAMPLE:
-#if WIN32
-        *v = GL_state_ext.wglMultisampleARB? GL_state.multisampleFormat : -1;
-#else
-        *v = -1;
-#endif
-        break;
-
-    case DGL_GRAY_MIPMAP:
-        *v = (int) (GL_state_texture.grayMipmapFactor * 255);
-        break;
-
     default:
         return false;
     }
@@ -267,195 +498,11 @@ boolean DGL_SetInteger(int name, int value)
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
-        GL_ActiveTexture(GL_TEXTURE0 + value);
+        GL_ActiveTexture(GL_TEXTURE0 + (byte) value);
         break;
 
     case DGL_MODULATE_TEXTURE:
-        switch(value)
-        {
-        case 0:
-            // No modulation: just replace with texture.
-            GL_ActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-            break;
-
-        case 1:
-            // Normal texture modulation with primary color.
-            GL_ActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            break;
-
-        case 12:
-            // Normal texture modulation on both stages. TU 1 modulates with
-            // primary color, TU 2 with TU 1.
-            GL_ActiveTexture(GL_TEXTURE1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            GL_ActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            break;
-
-        case 2:
-        case 3:
-            // Texture modulation and interpolation.
-            GL_ActiveTexture(GL_TEXTURE1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-            if(value == 2)
-            {   // Used with surfaces that have a color.
-                // TU 2: Modulate previous with primary color.
-                glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
-            }
-            else
-            {   // Mode 3: Used with surfaces with no primary color.
-                // TU 2: Pass through.
-                glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-            }
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-
-            // TU 1: Interpolate between texture 1 and 2, using the constant
-            // alpha as the factor.
-            GL_ActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
-            glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-            break;
-
-        case 4:
-            // Apply sector light, dynamic light and texture.
-            envModMultiTex(true);
-            break;
-
-        case 5:
-        case 10:
-            // Sector light * texture + dynamic light.
-            GL_ActiveTexture(GL_TEXTURE1);
-            envAddColoredAlpha(true, value == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
-
-            // Alpha remains unchanged.
-            if(GL_state_ext.nvTexEnvComb)
-            {
-                glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA,
-                          GL_ONE_MINUS_SRC_ALPHA);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PREVIOUS);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_ZERO);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA, GL_SRC_ALPHA);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_ALPHA_NV, GL_ZERO);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_ALPHA_NV, GL_SRC_ALPHA);
-            }
-            else
-            {
-                glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-                glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-                glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-            }
-
-            GL_ActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            break;
-
-        case 6:
-            // Simple dynlight addition (add to primary color).
-            GL_ActiveTexture(GL_TEXTURE0);
-            envAddColoredAlpha(true, GL_SRC_ALPHA);
-            break;
-
-        case 7:
-            // Dynlight addition without primary color.
-            GL_ActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-            break;
-
-        case 8:
-        case 9:
-            // Texture and Detail.
-            GL_ActiveTexture(GL_TEXTURE1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 2);
-
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-
-            GL_ActiveTexture(GL_TEXTURE0);
-            if(value == 8)
-            {
-                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            }
-            else
-            {   // Mode 9: Ignore primary color.
-                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-            }
-            break;
-
-        case 11:
-            // Normal modulation, alpha of 2nd stage.
-            // Tex0: texture
-            // Tex1: shiny texture
-            GL_ActiveTexture(GL_TEXTURE1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-
-            GL_ActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-            break;
-
-        default:
-            break;
-        }
-        break;
-
-    case DGL_GRAY_MIPMAP:
-        GL_state_texture.grayMipmapFactor = value / 255.0f;
+        GL_ModulateTexture(value);
         break;
 
     default:
@@ -505,20 +552,12 @@ boolean DGL_SetFloat(int name, float value)
 
 void DGL_EnableTexUnit(byte id)
 {
-    GL_ActiveTexture(GL_TEXTURE0 + id);
-    glEnable(GL_TEXTURE_2D);
+    GL_EnableTexUnit(id);
 }
 
 void DGL_DisableTexUnit(byte id)
 {
-    GL_ActiveTexture(GL_TEXTURE0 + id);
-    glDisable(GL_TEXTURE_2D);
-
-    // Implicit disabling of texcoord array.
-    if(GL_state.noArrays)
-    {
-        GL_DisableArrays(0, 0, 1 << id);
-    }
+    GL_DisableTexUnit(id);
 }
 
 int DGL_Enable(int cap)
@@ -531,10 +570,6 @@ int DGL_Enable(int cap)
 #endif
         break;
 
-    case DGL_TEXTURE_COMPRESSION:
-        GL_state.allowCompression = true;
-        break;
-
     case DGL_FOG:
         glEnable(GL_FOG);
         GL_state.useFog = true;
@@ -542,26 +577,6 @@ int DGL_Enable(int cap)
 
     case DGL_SCISSOR_TEST:
         glEnable(GL_SCISSOR_TEST);
-        break;
-
-    case DGL_PALETTED_TEXTURES:
-        GL_EnablePalTexExt(true);
-        break;
-
-    case DGL_VSYNC:
-#ifdef WIN32
-        if(GL_state_ext.wglSwapIntervalEXT)
-        {
-            wglSwapIntervalEXT(1);
-            GL_state.useVSync = true;
-        }
-#endif
-        break;
-
-    case DGL_MULTISAMPLE:
-#if WIN32
-        glEnable(GL_MULTISAMPLE_ARB);
-#endif
         break;
 
     case DGL_LINE_SMOOTH:
@@ -587,10 +602,6 @@ void DGL_Disable(int cap)
         glDisable(GL_TEXTURE_2D);
         break;
 
-    case DGL_TEXTURE_COMPRESSION:
-        GL_state.allowCompression = false;
-        break;
-
     case DGL_FOG:
         glDisable(GL_FOG);
         GL_state.useFog = false;
@@ -598,26 +609,6 @@ void DGL_Disable(int cap)
 
     case DGL_SCISSOR_TEST:
         glDisable(GL_SCISSOR_TEST);
-        break;
-
-    case DGL_PALETTED_TEXTURES:
-        GL_EnablePalTexExt(false);
-        break;
-
-    case DGL_VSYNC:
-#ifdef WIN32
-        if(GL_state_ext.wglSwapIntervalEXT)
-        {
-            wglSwapIntervalEXT(0);
-            GL_state.useVSync = false;
-        }
-#endif
-        break;
-
-    case DGL_MULTISAMPLE:
-#if WIN32
-        glDisable(GL_MULTISAMPLE_ARB);
-#endif
         break;
 
     case DGL_LINE_SMOOTH:
@@ -635,14 +626,9 @@ void DGL_Disable(int cap)
 
 void DGL_BlendOp(int op)
 {
-#ifndef UNIX
-    if(!glBlendEquationEXT)
-        return;
-#endif
-    glBlendEquationEXT(op ==
-                       DGL_SUBTRACT ? GL_FUNC_SUBTRACT : op ==
-                       DGL_REVERSE_SUBTRACT ? GL_FUNC_REVERSE_SUBTRACT :
-                       GL_FUNC_ADD);
+    GL_BlendOp(op == DGL_SUBTRACT ? GL_FUNC_SUBTRACT : op ==
+               DGL_REVERSE_SUBTRACT ? GL_FUNC_REVERSE_SUBTRACT :
+               GL_FUNC_ADD);
 }
 
 void DGL_BlendFunc(int param1, int param2)
@@ -668,6 +654,11 @@ void DGL_BlendFunc(int param1, int param2)
                 GL_ZERO);
 }
 
+void DGL_BlendMode(blendmode_t mode)
+{
+    GL_BlendMode(mode);
+}
+
 void DGL_MatrixMode(int mode)
 {
     glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
@@ -683,6 +674,45 @@ void DGL_PushMatrix(void)
 if(glGetError() == GL_STACK_OVERFLOW)
     Con_Error("DG_PushMatrix: Stack overflow.\n");
 #endif
+}
+
+void DGL_SetMaterial(material_t* mat)
+{
+    GL_SetMaterial(mat);
+}
+
+void DGL_SetNoMaterial(void)
+{
+    GL_SetNoTexture();
+}
+
+void DGL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
+{
+    GL_SetPatch(lump,
+        (wrapS == DGL_CLAMP? GL_CLAMP :
+         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
+        (wrapT == DGL_CLAMP? GL_CLAMP :
+         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+}
+
+void DGL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
+{
+    GL_SetTranslatedSprite(mat, tclass, tmap);
+}
+
+void DGL_SetPSprite(material_t* mat)
+{
+    GL_SetPSprite(mat);
+}
+
+unsigned int DGL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
+                             int wrapT)
+{
+    return GL_SetRawImage(lump, part2,
+        (wrapS == DGL_CLAMP? GL_CLAMP :
+         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
+        (wrapT == DGL_CLAMP? GL_CLAMP :
+         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
 }
 
 void DGL_PopMatrix(void)
@@ -721,27 +751,32 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear,
     glOrtho(left, right, bottom, top, znear, zfar);
 }
 
-boolean GL_Grab(int x, int y, int width, int height, gltexformat_t format, void *buffer)
+void DGL_DeleteTextures(int num, const DGLuint *names)
 {
-    if(format != DGL_RGB)
-        return false;
+    if(!num || !names)
+        return;
 
-    // y+height-1 is the bottom edge of the rectangle. It's
-    // flipped to change the origin.
-    glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB,
-                 GL_UNSIGNED_BYTE, buffer);
-    return true;
+    glDeleteTextures(num, (const GLuint*) names);
+}
+
+int DGL_Bind(DGLuint texture)
+{
+    glBindTexture(GL_TEXTURE_2D, texture);
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+    return 0;
 }
 
 #if 0 // Currently unused.
-int DGL_Project(int num, gl_fc3vertex_t *inVertices,
-               gl_fc3vertex_t *outVertices)
+int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
+               dgl_fc3vertex_t *outVertices)
 {
     GLdouble    modelMatrix[16], projMatrix[16];
     GLint       viewport[4];
     GLdouble    x, y, z;
     int         i, numOut;
-    gl_fc3vertex_t *in = inVertices, *out = outVertices;
+    dgl_fc3vertex_t *in = inVertices, *out = outVertices;
 
     if(num == 0)
         return 0;

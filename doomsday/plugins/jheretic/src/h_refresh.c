@@ -123,16 +123,16 @@ void R_DrawSpecialFilter(int pnum)
     if(cfg.ringFilter == 1)
     {
         DGL_BlendFunc(DGL_SRC_COLOR, DGL_SRC_COLOR);
-        GL_DrawRect(x, y, w, h, .5f, .35f, .1f, 1);
+        DGL_DrawRect(x, y, w, h, .5f, .35f, .1f, 1);
     }
     else
     {
         DGL_BlendFunc(DGL_DST_COLOR, DGL_SRC_COLOR);
-        GL_DrawRect(x, y, w, h, 0, 0, .6f, 1);
+        DGL_DrawRect(x, y, w, h, 0, 0, .6f, 1);
     }
 
     // Restore the normal rendering state.
-    GL_BlendMode(BM_NORMAL);
+    DGL_BlendMode(BM_NORMAL);
     DGL_Enable(DGL_TEXTURING);
 }
 
@@ -372,7 +372,7 @@ void H_Display2(void)
         {   // A (de)briefing is in process but the script hasn't started yet.
             // Just clear the screen, then.
             DGL_Disable(DGL_TEXTURING);
-            GL_DrawRect(0, 0, 320, 200, 0, 0, 0, 1);
+            DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, 1);
             DGL_Enable(DGL_TEXTURING);
         }
         break;

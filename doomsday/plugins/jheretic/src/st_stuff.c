@@ -352,7 +352,7 @@ static void drawChain(hudstate_t* hud)
     h = 8;
     cw = (float) w / chain.width;
 
-    GL_SetPatch(chain.lump, DGL_REPEAT, DGL_CLAMP);
+    DGL_SetPatch(chain.lump, DGL_REPEAT, DGL_CLAMP);
 
     DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
 
@@ -405,14 +405,14 @@ static void drawChain(hudstate_t* hud)
     shadeChain((hud->statusbarCounterAlpha + cfg.statusbarAlpha) /3);
 
     // How about a glowing gem?
-    GL_BlendMode(BM_ADD);
+    DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     GL_PalIdxToRGB(theirColors[gemNum], rgba);
-    GL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgba[0], rgba[1],
-                rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
+    DGL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgba[0], rgba[1],
+                 rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
-    GL_BlendMode(BM_NORMAL);
+    DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
 }
 
@@ -472,28 +472,28 @@ static void drawStatusBarBackground(int player)
         GL_DrawPatch_CS(0, 148, statusbarTopLeft.lump);
         GL_DrawPatch_CS(290, 148, statusbarTopRight.lump);
 
-        GL_SetPatch(statusbar.lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetPatch(statusbar.lump, DGL_REPEAT, DGL_REPEAT);
 
         // Top border.
-        GL_DrawCutRectTiled(34, 158, 248, 2, 320, 42, 34, 0, 0, 158, 0, 0);
+        DGL_DrawCutRectTiled(34, 158, 248, 2, 320, 42, 34, 0, 0, 158, 0, 0);
 
         // Chain background.
-        GL_DrawCutRectTiled(34, 191, 248, 9, 320, 42, 34, 33, 0, 191, 16, 8);
+        DGL_DrawCutRectTiled(34, 191, 248, 9, 320, 42, 34, 33, 0, 191, 16, 8);
 
         // Faces.
         if(P_GetPlayerCheats(plr) & CF_GODMODE)
         {
             // If GOD mode we need to cut windows
-            GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 16, 167, 16, 8);
-            GL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 287, 167, 16, 8);
+            DGL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 16, 167, 16, 8);
+            DGL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 287, 167, 16, 8);
 
             GL_DrawPatch_CS(16, 167, W_GetNumForName("GOD1"));
             GL_DrawPatch_CS(287, 167, W_GetNumForName("GOD2"));
         }
         else
         {
-            GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 0, 158, 0, 0);
-            GL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 0, 158, 0, 0);
+            DGL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 0, 158, 0, 0);
+            DGL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 0, 158, 0, 0);
         }
 
         if(!hud->inventory)

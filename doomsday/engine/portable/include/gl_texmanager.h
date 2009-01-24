@@ -123,7 +123,6 @@ typedef enum gfxmode_e {
     LGM_WHITE_ALPHA = 3
 } gfxmode_t;
 
-extern int      glMaxTexSize;
 extern int      ratioLimit;
 extern int      mipmapping, linearRaw, texQuality, filterSprites;
 extern int      texMagMode, texAniso;
@@ -151,7 +150,6 @@ void            GL_DoUpdateTexParams(cvar_t* unused);
 int             GL_InitPalettedTexture(void);
 
 void            GL_BindTexture(DGLuint texname, int magMode);
-void            GL_SelectTexUnits(int count);
 
 void            GL_LowRes(void);
 void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
