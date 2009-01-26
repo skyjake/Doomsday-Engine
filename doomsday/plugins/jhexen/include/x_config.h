@@ -93,7 +93,8 @@ typedef struct {
     byte            povLookAround;
     int             jLookDeltaMode;
 
-    int             xhair, xhairSize;
+    int             xhair;
+    float           xhairSize;
     byte            xhairVitality;
     float           xhairColor[4];
 

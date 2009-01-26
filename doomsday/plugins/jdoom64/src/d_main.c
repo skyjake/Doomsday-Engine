@@ -278,7 +278,7 @@ void G_PreInit(void)
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
     cfg.hudColor[3] = 0.75f;
     cfg.hudIconAlpha = 0.5f;
-    cfg.xhairSize = 1;
+    cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
     cfg.xhairColor[0] = 1;
     cfg.xhairColor[1] = 1;

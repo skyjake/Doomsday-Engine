@@ -183,7 +183,8 @@ typedef struct jdoom_config_s {
     int             cameraNoClip;
 
     // Crosshair.
-    int             xhair, xhairSize;
+    int             xhair;
+    float           xhairSize;
     byte            xhairVitality;
     float           xhairColor[4];
 

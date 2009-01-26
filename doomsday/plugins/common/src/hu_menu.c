@@ -3109,7 +3109,7 @@ void M_DrawHUDMenu(void)
         M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
         M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
         M_WriteMenuText(menu, 2, yesno[cfg.xhairVitality != 0]);
-        MN_DrawSlider(menu, 4, 9, cfg.xhairSize);
+        MN_DrawSlider(menu, 4, 11, cfg.xhairSize * 10 + .25f);
         MN_DrawSlider(menu, 7, 11, cfg.screenBlocks - 3);
         MN_DrawSlider(menu, 10, 20, cfg.statusbarScale - 1);
         MN_DrawSlider(menu, 13, 11, cfg.statusbarAlpha * 10 + .25f);
@@ -3129,7 +3129,7 @@ void M_DrawHUDMenu(void)
         M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
         M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
         M_WriteMenuText(menu, 2, yesno[cfg.xhairVitality != 0]);
-        MN_DrawSlider(menu, 4, 9, cfg.xhairSize);
+        MN_DrawSlider(menu, 4, 11, cfg.xhairSize * 10 + .25f);
         MN_DrawSlider(menu, 7, 11, cfg.screenBlocks - 3);
         MN_DrawSlider(menu, 10, 20, cfg.statusbarScale - 1);
         MN_DrawSlider(menu, 13, 11, cfg.statusbarAlpha * 10 + .25f);
@@ -3165,7 +3165,7 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
     M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
     M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
-    MN_DrawSlider(menu, idx++, 9, cfg.xhairSize);
+    MN_DrawSlider(menu, idx++, 11, cfg.xhairSize * 10 + .25f);
     MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3 );
 # if !__JDOOM64__
     MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
@@ -3209,21 +3209,7 @@ void M_Xhair(int option, void* context)
 
 void M_XhairSize(int option, void* context)
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    cfg.xhairSize += option == RIGHT_DIR ? 1 : -1;
-    if(cfg.xhairSize < 0)
-        cfg.xhairSize = 0;
-    if(cfg.xhairSize > 9)
-        cfg.xhairSize = 9;
-#else
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.xhairSize < 8)
-            cfg.xhairSize++;
-    }
-    else if(cfg.xhairSize > 0)
-        cfg.xhairSize--;
-#endif
+    M_FloatMod10(&cfg.xhairSize, option);
 }
 
 

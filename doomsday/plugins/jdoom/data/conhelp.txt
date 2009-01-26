@@ -28,9 +28,6 @@ inf = Params: conbg (materialname)
 [coord]
 desc = Print the coordinates of the consoleplayer.
 
-[crosshair]
-desc = Crosshair setup.
-
 [doomfont]
 desc = Use the Doom font in the console.
 

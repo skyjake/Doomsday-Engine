@@ -55,7 +55,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct crosspoint_s {
-    int                 x, y; // In window coordinates (*not* 320x200!).
+    float               x, y;
 } crosspoint_t;
 
 typedef struct crossline_s {
@@ -71,8 +71,6 @@ typedef struct cross_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdCrosshair);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -83,40 +81,34 @@ DEFCC(CCmdCrosshair);
 
 cross_t crosshairs[NUM_XHAIRS] = {
     // + (open center)
-    {4, {XL(-5, 0, -2, 0), XL(0, -5, 0, -2), XL(5, 0, 2, 0), XL(0, 5, 0, 2)}},
+    {4, {XL(-1, 0, -.4f, 0), XL(0, -1, 0, -.4f), XL(1, 0, .4f, 0), XL(0, 1, 0, .4f)}},
     // > <
     {4,
-     {XL(-7, -5, -2, 0), XL(-7, 5, -2, 0), XL(7, -5, 2, 0), XL(7, 5, 2, 0)}},
+     {XL(-1, -.714f, -.286f, 0), XL(-1, .714f, -.286f, 0), XL(1, -.714f, .286f, 0), XL(1, .714f, .286f, 0)}},
     // square
     {4,
-     {XL(-3, -3, -3, 3), XL(-3, 3, 3, 3), XL(3, 3, 3, -3), XL(3, -3, -3, -3)}},
+     {XL(-1, -1, -1, 1), XL(-1, 1, 1, 1), XL(1, 1, 1, -1), XL(1, -1, -1, -1)}},
     // square (open center)
     {8,
-     {XL(-4, -4, -4, -2), XL(-4, 2, -4, 4), XL(-4, 4, -2, 4), XL(2, 4, 4, 4),
-      XL(4, 4, 4, 2), XL(4, -2, 4, -4), XL(4, -4, 2, -4), XL(-2, -4, -4, -4)}},
+     {XL(-1, -1, -1, -.5f), XL(-1, .5f, -1, 1), XL(-1, 1, -.5f, 1), XL(.5f, 1, 1, 1),
+      XL(1, 1, 1, .5f), XL(1, -.5f, 1, -1), XL(1, -1, .5f, -1), XL(-.5f, -1, -1, -1)}},
     // diamond
-    {4, {XL(0, -3, 3, 0), XL(3, 0, 0, 3), XL(0, 3, -3, 0), XL(-3, 0, 0, -3)}},
+    {4, {XL(0, -1, 1, 0), XL(1, 0, 0, 1), XL(0, 1, -1, 0), XL(-1, 0, 0, -1)}},
     // ^
-    {2, {XL(-4, -4, 0, 0), XL(0, 0, 4, -4)}}
+    {2, {XL(-1, -1, 0, 0), XL(0, 0, 1, -1)}}
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CVARs for the crosshair
 cvar_t xhairCVars[] = {
-    {"view-cross-type", CVF_NO_MAX | CVF_PROTECTED, CVT_INT, &cfg.xhair, 0, 0},
-    {"view-cross-size", CVF_NO_MAX, CVT_INT, &cfg.xhairSize, 0, 0},
+    {"view-cross-type", 0, CVT_INT, &cfg.xhair, 0, NUM_XHAIRS},
+    {"view-cross-size", 0, CVT_FLOAT, &cfg.xhairSize, 0, 1},
     {"view-cross-vitality", 0, CVT_BYTE, &cfg.xhairVitality, 0, 1},
     {"view-cross-r", 0, CVT_FLOAT, &cfg.xhairColor[0], 0, 1},
     {"view-cross-g", 0, CVT_FLOAT, &cfg.xhairColor[1], 0, 1},
     {"view-cross-b", 0, CVT_FLOAT, &cfg.xhairColor[2], 0, 1},
     {"view-cross-a", 0, CVT_FLOAT, &cfg.xhairColor[3], 0, 1},
-    {NULL}
-};
-
-// Console commands for the crosshair
-ccmd_t xhairCCmds[] = {
-    {"crosshair",      NULL, CCmdCrosshair},
     {NULL}
 };
 
@@ -131,38 +123,35 @@ void X_Register(void)
 
     for(i = 0; xhairCVars[i].name; ++i)
         Con_AddVariable(xhairCVars + i);
-    for(i = 0; xhairCCmds[i].name; ++i)
-        Con_AddCommand(xhairCCmds + i);
 }
 
 void X_Drawer(int player)
 {
-    int                 i, centerX, centerY;
-    float               fact;
+    int                 i, xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS),
+                        centerX, centerY;
+    float               alpha, scale;
     ddplayer_t*         plr = players[player].plr;
     cross_t*            cross;
 
+    alpha = MINMAX_OF(1, cfg.xhairColor[3], 1);
+
     // Is there a crosshair to draw?
-    if(cfg.xhair < 1 || cfg.xhair > NUM_XHAIRS || !(cfg.xhairColor[3] > 0))
+    if(xhair == 0 || !(alpha > 0))
         return;
 
-    fact = (cfg.xhairSize + 1) / 2.0f;
+    scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * 80;
     centerX = Get(DD_VIEWWINDOW_X) + (Get(DD_VIEWWINDOW_WIDTH) / 2);
     centerY = Get(DD_VIEWWINDOW_Y) + (Get(DD_VIEWWINDOW_HEIGHT) / 2);
 
-    DGL_Disable(DGL_TEXTURING);
-
-    // Push the current matrices.
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
 
     DGL_Ortho(0, 0, 320, 200, -1, 1);
+    DGL_Translatef(centerX, centerY, 0);
+    DGL_Scalef(scale, scale, 1);
 
-    cross = crosshairs + cfg.xhair - 1;
+    cross = &crosshairs[xhair - 1];
 
     if(cfg.xhairVitality)
     {   // Color the crosshair according to how close the player is to death.
@@ -174,91 +163,33 @@ void X_Drawer(int player)
         R_HSVToRGB(vitalColor, HUE_DEAD +
             (HUE_LIVE - HUE_DEAD) * MINMAX_OF(0,
                 (float) plr->mo->health / maxHealth, 1), 1, 1);
-        vitalColor[3] = cfg.xhairColor[3];
+        vitalColor[3] = alpha;
         DGL_Color4fv(vitalColor);
     }
     else
     {
-        DGL_Color4fv(cfg.xhairColor);
+        float               color[4];
+
+        color[0] = MINMAX_OF(0, cfg.xhairColor[0], 1);
+        color[1] = MINMAX_OF(0, cfg.xhairColor[1], 1);
+        color[2] = MINMAX_OF(0, cfg.xhairColor[2], 1);
+        color[3] = alpha;
+
+        DGL_Color4fv(color);
     }
+
+    DGL_Disable(DGL_TEXTURING);
 
     DGL_Begin(DGL_LINES);
     for(i = 0; i < cross->numLines; ++i)
     {
-        crossline_t*        xline = cross->lines + i;
+        crossline_t*        xline = &cross->lines[i];
 
-        DGL_Vertex2f(fact * xline->a.x + centerX, fact * xline->a.y + centerY);
-        DGL_Vertex2f(fact * xline->b.x + centerX, fact * xline->b.y + centerY);
+        DGL_Vertex2f(xline->a.x, xline->a.y);
+        DGL_Vertex2f(xline->b.x, xline->b.y);
     }
     DGL_End();
 
     DGL_Enable(DGL_TEXTURING);
-
-    // Pop back the old matrices.
     DGL_PopMatrix();
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-/**
- * Console command for configuring the crosshair.
- */
-DEFCC(CCmdCrosshair)
-{
-    if(argc == 1)
-    {
-        Con_Printf("Usage:\n  crosshair (num)\n");
-        Con_Printf("  crosshair size (size)\n");
-        Con_Printf("  crosshair color (r) (g) (b)\n");
-        Con_Printf("  crosshair color (r) (g) (b) (a)\n");
-        Con_Printf("Num: 0=no crosshair, 1-%d: use crosshair 1...%d\n",
-                   NUM_XHAIRS, NUM_XHAIRS);
-        Con_Printf("Size: 1=normal\n");
-        Con_Printf("R, G, B, A: 0-1\n");
-        Con_Printf("Current values: xhair=%d, size=%d, vitality=%s color=(%f,%f,%f,%f)\n",
-                   cfg.xhair, cfg.xhairSize, cfg.xhairVitality? "on" : "off",
-                   cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2],
-                   cfg.xhairColor[3]);
-        return true;
-    }
-    else if(argc == 2) // Choose.
-    {
-        cfg.xhair = strtol(argv[1], NULL, 0);
-        if(cfg.xhair > NUM_XHAIRS || cfg.xhair < 0)
-        {
-            cfg.xhair = 0;
-            return false;
-        }
-        Con_Printf("Crosshair %d selected.\n", cfg.xhair);
-    }
-    else if(argc == 3) // Size.
-    {
-        if(stricmp(argv[1], "size"))
-            return false;
-        cfg.xhairSize = strtol(argv[2], NULL, 0);
-        if(cfg.xhairSize < 0)
-            cfg.xhairSize = 0;
-        Con_Printf("Crosshair size set to %d.\n", cfg.xhairSize);
-    }
-    else if(argc == 5 || argc == 6) // Color.
-    {
-        int                 i;
-
-        if(stricmp(argv[1], "color"))
-            return false;
-
-        for(i = 0; i < argc - 2; ++i)
-        {
-            cfg.xhairColor[i] = MINMAX_OF(0, strtod(argv[2 + i], NULL), 1);
-        }
-
-        Con_Printf("Crosshair color set to (%f, %f, %f, %f).\n",
-                   cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2],
-                   cfg.xhairColor[3]);
-    }
-    else
-        return false;
-
-    // Success!
-    return true;
 }

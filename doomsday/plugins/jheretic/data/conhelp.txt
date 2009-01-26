@@ -190,9 +190,6 @@ desc = Move a sector's ceiling plane.
 [movesec]
 desc = Move a sector's both planes.
 
-[crosshair]
-desc = Crosshair setup.
-
 [chatcomplete]
 desc = Send the chat message and exit chat mode.
 
