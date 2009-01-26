@@ -1414,7 +1414,7 @@ void Hu_MenuInit(void)
         endmsg[i] = GET_TXT(TXT_QUITMESSAGE1 + i - 1);
 #endif
 
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Skill names.
     for(i = 0, maxw = 0; i < NUM_SKILL_MODES; ++i)
     {

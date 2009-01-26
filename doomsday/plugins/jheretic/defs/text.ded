@@ -815,6 +815,31 @@ Text {
 }
 
 Text {
+  ID = "SKILL1";
+  Text = "Thou needeth a wet-nurse";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Yellowbellies-r-us";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Bringest them oneth";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "Thou art a smite-meister";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Black Plague possesses thee";
+}
+
+Text {
   ID = "KEY1";
   Text = "Yellow Key";
 }
