@@ -3482,8 +3482,7 @@ void AM_Drawer(int viewplayer)
     setupGLStateForMap();
 
     DGL_MatrixMode(DGL_PROJECTION);
-    DGL_Translatef(FIXXTOSCREENX(SCREENWIDTH / 2),
-                   FIXYTOSCREENY(SCREENHEIGHT / 2), 0);
+    DGL_Translatef(win->x + win->width / 2, win->y + win->height / 2, 0);
     DGL_Rotatef(map->angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1);
     DGL_Scalef(map->scaleMTOF, map->scaleMTOF, 1);
@@ -3503,10 +3502,8 @@ void AM_Drawer(int viewplayer)
         DGL_LoadIdentity();
 
         DGL_PushMatrix();
-        DGL_Scalef(1.f / FIXXTOSCREENX(SCREENWIDTH),
-                   1.f / FIXYTOSCREENY(SCREENHEIGHT), 1);
-        DGL_Translatef(FIXXTOSCREENX(SCREENWIDTH / 2),
-                       FIXYTOSCREENY(SCREENHEIGHT / 2), 0);
+        DGL_Scalef(1.f / win->width, 1.f / win->height, 1);
+        DGL_Translatef(win->width / 2, win->height / 2, 0);
         DGL_Rotatef(-map->angle, 0, 0, 1);
         DGL_Scalef(map->scaleMTOF, map->scaleMTOF, 1);
         DGL_Translatef(-map->viewX , -map->viewY, 0);
