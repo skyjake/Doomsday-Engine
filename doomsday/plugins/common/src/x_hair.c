@@ -133,7 +133,7 @@ void X_Drawer(int player)
     ddplayer_t*         plr = players[player].plr;
     cross_t*            cross;
 
-    alpha = MINMAX_OF(1, cfg.xhairColor[3], 1);
+    alpha = MINMAX_OF(0, cfg.xhairColor[3], 1);
 
     // Is there a crosshair to draw?
     if(xhair == 0 || !(alpha > 0))
