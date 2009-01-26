@@ -1408,7 +1408,7 @@ void R_InitFlats(void)
 {
     int                 i;
     float               starttime = Sys_GetSeconds();
-    stack_t*            stack = Stack_New();
+    ddstack_t*          stack = Stack_New();
 
     numFlats = 0;
 

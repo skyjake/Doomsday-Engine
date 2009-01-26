@@ -32,14 +32,14 @@
 extern "C" {
 #endif
 
-typedef void* stack_t;
+typedef void* ddstack_t;
 
-stack_t*        Stack_New(void);
-void            Stack_Delete(stack_t* stack);
+ddstack_t*      Stack_New(void);
+void            Stack_Delete(ddstack_t* stack);
 
-size_t          Stack_Height(stack_t* stack);
-void            Stack_Push(stack_t* stack, void* data);
-void*           Stack_Pop(stack_t* stack);
+size_t          Stack_Height(ddstack_t* stack);
+void            Stack_Push(ddstack_t* stack, void* data);
+void*           Stack_Pop(ddstack_t* stack);
 
 #ifdef __cplusplus
 }

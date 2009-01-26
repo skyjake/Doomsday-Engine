@@ -53,17 +53,17 @@ typedef struct {
 
 // CODE --------------------------------------------------------------------
 
-stack_t* Stack_New(void)
+ddstack_t* Stack_New(void)
 {
     stackdata_t*        stack = malloc(sizeof(stackdata_t));
 
     stack->height = 0;
     stack->data = NULL;
 
-    return (stack_t*) stack;
+    return (ddstack_t*) stack;
 }
 
-void Stack_Delete(stack_t* s)
+void Stack_Delete(ddstack_t* s)
 {
     stackdata_t*        stack;
 
@@ -83,7 +83,7 @@ Con_Message("Stack::Delete: Stack not empty!\n");
     free(stack);
 }
 
-size_t Stack_Height(stack_t* s)
+size_t Stack_Height(ddstack_t* s)
 {
     if(!s)
         return 0;
@@ -91,7 +91,7 @@ size_t Stack_Height(stack_t* s)
     return ((stackdata_t*) s)->height;
 }
 
-void Stack_Push(stack_t* s, void* data)
+void Stack_Push(ddstack_t* s, void* data)
 {
     stackdata_t*        stack;
 
@@ -103,7 +103,7 @@ void Stack_Push(stack_t* s, void* data)
     stack->data[stack->height-1] = data;
 }
 
-void* Stack_Pop(stack_t* s)
+void* Stack_Pop(ddstack_t* s)
 {
     stackdata_t*        stack;
 
