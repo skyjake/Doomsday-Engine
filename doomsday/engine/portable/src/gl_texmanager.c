@@ -480,7 +480,7 @@ void GL_LoadFlareMap(ded_flaremap_t* map, int oldidx)
                                                 image.width, image.height, image.pixels,
                                                 TXCF_NO_COMPRESSION, GL_NEAREST, GL_LINEAR,
                                                 0 /*no anisotropy*/,
-                                                GL_CLAMP, GL_CLAMP);
+                                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
             // Upload the texture.
             // No mipmapping or resizing is needed, upload directly.
@@ -1194,7 +1194,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
             // We don't want to compress the flares (banding would be noticeable).
             lightingTextures[LST_DYNAMIC].tex =
                 GL_LoadGraphics3("dLight", LGM_WHITE_ALPHA, GL_LINEAR, GL_LINEAR,
-                                 -1 /*best anisotropy*/, GL_CLAMP, GL_CLAMP,
+                                 -1 /*best anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  TXCF_NO_COMPRESSION);
         }
         // Global tex variables not set! (scalable texture)
@@ -1206,7 +1206,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
             lightingTextures[LST_GRADIENT].tex =
                 GL_LoadGraphics3("wallglow", LGM_WHITE_ALPHA, GL_LINEAR,
                                  GL_LINEAR, -1 /*best anisotropy*/,
-                                 GL_REPEAT, GL_CLAMP, 0);
+                                 GL_REPEAT, GL_CLAMP_TO_EDGE, 0);
         }
         // Global tex variables not set! (scalable texture)
         return lightingTextures[LST_GRADIENT].tex;
@@ -1224,28 +1224,28 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
                 lightingTextures[which].tex =
                     GL_LoadGraphics3("radioCO", LGM_WHITE_ALPHA, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP, GL_CLAMP, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_CC:
                 lightingTextures[which].tex =
                     GL_LoadGraphics3("radioCC", LGM_WHITE_ALPHA, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP, GL_CLAMP, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OO:
                 lightingTextures[which].tex =
                     GL_LoadGraphics3("radioOO", LGM_WHITE_ALPHA, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP, GL_CLAMP, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OE:
                 lightingTextures[which].tex =
                     GL_LoadGraphics3("radioOE", LGM_WHITE_ALPHA, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP, GL_CLAMP, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
                 break;
 
             default:
@@ -1274,7 +1274,7 @@ DGLuint GL_PrepareFlareTexture(flaretexid_t flare)
             GL_LoadGraphics3(flare == 0 ? "flare" : flare == 1 ? "brflare" :
                              "bigflare", LGM_WHITE_ALPHA,
                              GL_NEAREST, GL_LINEAR, 0 /*no anisotropy*/,
-                             GL_CLAMP, GL_CLAMP,
+                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                              TXCF_NO_COMPRESSION);
 
         if(flareTextures[flare].tex == 0)
@@ -1546,8 +1546,8 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
 {
     return GL_LoadGraphics4(resClass, name, mode, useMipmap,
                             GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-                            clamped? GL_CLAMP : GL_REPEAT,
-                            clamped? GL_CLAMP : GL_REPEAT, otherFlags);
+                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
+                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT, otherFlags);
 }
 
 DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
@@ -1732,8 +1732,6 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
                       zeroMask, 0, false);
     }
 
-    if(zeroMask && fillOutlines)
-        ColorOutlines(imgdata, width, height);
     *outbuffer = imgdata;
 }
 
@@ -1978,7 +1976,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                                  image.pixelSize == 4, false, true, false, false,
                                  GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
                                  0 /*no anisotropy*/,
-                                 GL_CLAMP, GL_CLAMP,
+                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  (image.pixelSize == 4? TXCF_APPLY_GAMMACORRECTION : 0));
 
             raw->width = 320;
@@ -2052,7 +2050,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                                      false, rgbdata, false, false,
                                      GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
                                      0 /*no anisotropy*/,
-                                     GL_CLAMP, GL_CLAMP,
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                      (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 // And the other part.
@@ -2060,7 +2058,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                     GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
                                      GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
                                      0 /*no anisotropy*/,
-                                     GL_CLAMP, GL_CLAMP,
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                      (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
@@ -2079,7 +2077,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                                      false, false, rgbdata, false, false,
                                      GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
                                      0 /*no anisotropy*/,
-                                     GL_CLAMP, GL_CLAMP,
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                      (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
