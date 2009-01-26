@@ -3355,7 +3355,15 @@ static void renderMapName(void)
         if(cfg.setBlocks < 13)
         {
 #if !__JDOOM64__
-            if(cfg.setBlocks == 12)
+            if(cfg.setBlocks <= 11 || cfg.automapHudDisplay == 2)
+            {   // We may need to adjust for the height of the statusbar
+                otherY = ST_Y;
+                otherY += ST_HEIGHT * (1 - (cfg.statusbarScale / 20.0f));
+
+                if(y > otherY)
+                    y = otherY;
+            }
+            else if(cfg.setBlocks == 12)
 #endif
             {   // We may need to adjust for the height of the HUD icons.
                 otherY = y;
@@ -3364,16 +3372,6 @@ static void renderMapName(void)
                 if(y > otherY)
                     y = otherY;
             }
-#if !__JDOOM64__
-            else if(cfg.setBlocks <= 11 || cfg.automapHudDisplay == 2)
-            {   // We may need to adjust for the height of the statusbar
-                otherY = ST_Y;
-                otherY += ST_HEIGHT * (1 - (cfg.statusbarScale / 20.0f));
-
-                if(y > otherY)
-                    y = otherY;
-            }
-#endif
         }
 
         Draw_BeginZoom(.4f, x, y);
