@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		B079185E0F2E280400A5A0C0 /* m_stack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = m_stack.c; sourceTree = "<group>"; };
+		B079185F0F2E280400A5A0C0 /* p_material.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = p_material.c; sourceTree = "<group>"; };
+		B07918600F2E280400A5A0C0 /* p_materialmanager.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = p_materialmanager.c; sourceTree = "<group>"; };
+		B07918610F2E280400A5A0C0 /* sys_opengl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sys_opengl.c; sourceTree = "<group>"; };
+		B07918630F2E282100A5A0C0 /* m_stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m_stack.h; sourceTree = "<group>"; };
+		B07918640F2E282100A5A0C0 /* p_material.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = p_material.h; sourceTree = "<group>"; };
+		B07918650F2E282100A5A0C0 /* p_materialmanager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = p_materialmanager.h; sourceTree = "<group>"; };
+		B07918660F2E282100A5A0C0 /* sys_opengl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sys_opengl.h; sourceTree = "<group>"; };
 		B086F9660F0B9EDD00955E23 /* dd_api.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dd_api.h; sourceTree = "<group>"; };
 		B086F9670F0B9EDD00955E23 /* dd_maptypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dd_maptypes.h; sourceTree = "<group>"; };
 		B086F9680F0B9EDD00955E23 /* dd_plugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dd_plugin.h; sourceTree = "<group>"; };
@@ -313,7 +321,6 @@
 		B086FAA40F0B9EDE00955E23 /* def_read.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = def_read.c; sourceTree = "<group>"; };
 		B086FAA50F0B9EDE00955E23 /* dgl_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dgl_common.c; sourceTree = "<group>"; };
 		B086FAA60F0B9EDE00955E23 /* dgl_draw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dgl_draw.c; sourceTree = "<group>"; };
-		B086FAA70F0B9EDE00955E23 /* dgl_ext.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dgl_ext.c; sourceTree = "<group>"; };
 		B086FAA80F0B9EDE00955E23 /* dgl_texture.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dgl_texture.c; sourceTree = "<group>"; };
 		B086FAA90F0B9EDE00955E23 /* edit_bias.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = edit_bias.c; sourceTree = "<group>"; };
 		B086FAAA0F0B9EDE00955E23 /* edit_map.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = edit_map.c; sourceTree = "<group>"; };
@@ -1371,6 +1378,10 @@
 		B086F9C80F0B9EDD00955E23 /* include */ = {
 			isa = PBXGroup;
 			children = (
+				B07918630F2E282100A5A0C0 /* m_stack.h */,
+				B07918640F2E282100A5A0C0 /* p_material.h */,
+				B07918650F2E282100A5A0C0 /* p_materialmanager.h */,
+				B07918660F2E282100A5A0C0 /* sys_opengl.h */,
 				B086F9C90F0B9EDD00955E23 /* b_command.h */,
 				B086F9CA0F0B9EDD00955E23 /* b_context.h */,
 				B086F9CB0F0B9EDD00955E23 /* b_device.h */,
@@ -1556,6 +1567,10 @@
 		B086FA7B0F0B9EDE00955E23 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				B079185E0F2E280400A5A0C0 /* m_stack.c */,
+				B079185F0F2E280400A5A0C0 /* p_material.c */,
+				B07918600F2E280400A5A0C0 /* p_materialmanager.c */,
+				B07918610F2E280400A5A0C0 /* sys_opengl.c */,
 				B086FA7C0F0B9EDE00955E23 /* b_command.c */,
 				B086FA7D0F0B9EDE00955E23 /* b_context.c */,
 				B086FA7E0F0B9EDE00955E23 /* b_device.c */,
@@ -1599,7 +1614,6 @@
 				B086FAA40F0B9EDE00955E23 /* def_read.c */,
 				B086FAA50F0B9EDE00955E23 /* dgl_common.c */,
 				B086FAA60F0B9EDE00955E23 /* dgl_draw.c */,
-				B086FAA70F0B9EDE00955E23 /* dgl_ext.c */,
 				B086FAA80F0B9EDE00955E23 /* dgl_texture.c */,
 				B086FAA90F0B9EDE00955E23 /* edit_bias.c */,
 				B086FAAA0F0B9EDE00955E23 /* edit_map.c */,
