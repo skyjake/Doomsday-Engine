@@ -131,9 +131,9 @@ void DD_RegisterInput(void)
     C_CMD("keymap", "s", KeyMap);
 #endif
     C_CMD("listinputdevices", "", ListInputDevices);
-    C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
 }
 
 /**
@@ -213,9 +213,17 @@ void I_InitVirtualInputDevices(void)
     axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
     axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
+
     axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
     axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
+    
+    // Register console variables for the axis settings.
+    // CAUTION: Allocating new axes may invalidate the pointers here.
+    C_VAR_FLOAT("input-mouse-x-scale", &dev->axes[0].scale, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("input-mouse-x-flags", &dev->axes[0].flags, 0, 0, 3);
+    C_VAR_FLOAT("input-mouse-y-scale", &dev->axes[1].scale, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("input-mouse-y-flags", &dev->axes[1].flags, 0, 0, 3);
 
     if(I_MousePresent())
         dev->flags = ID_ACTIVE;
@@ -224,6 +232,7 @@ void I_InitVirtualInputDevices(void)
     dev = &inputDevices[IDEV_JOY1];
     strcpy(dev->name, "joy");
     I_DeviceAllocKeys(dev, IJOY_MAXBUTTONS);
+    
     for(i = 0; i < IJOY_MAXAXES; ++i)
     {
         char name[32];
@@ -240,6 +249,22 @@ void I_InitVirtualInputDevices(void)
         axis->deadZone = DEFAULT_JOYSTICK_DEADZONE;
     }
 
+    // Register console variables for the axis settings.
+    for(i = 0; i < IJOY_MAXAXES; ++i)
+    {
+        inputdevaxis_t* axis = &dev->axes[i];
+        char varName[80];
+        
+        sprintf(varName, "input-joy-%s-scale", axis->name);
+        C_VAR_FLOAT(varName, &axis->scale, CVF_NO_MAX, 0, 0);
+
+        sprintf(varName, "input-joy-%s-flags", axis->name);
+        C_VAR_INT(varName, &axis->flags, 0, 0, 3);
+        
+        sprintf(varName, "input-joy-%s-deadzone", axis->name);
+        C_VAR_FLOAT(varName, &axis->deadZone, 0, 0, 1);
+    }
+    
     I_DeviceAllocHats(dev, IJOY_MAXHATS);
     for(i = 0; i < IJOY_MAXHATS; ++i)
     {
@@ -1332,7 +1357,10 @@ D_CMD(ListInputDevices)
         Con_Printf("%s (%i keys, %i axes)\n", dev->name, dev->numKeys,
                    dev->numAxes);
         for(j = 0; j < dev->numAxes; ++j)
+        {
             Con_Printf("  Axis #%i: %s\n", j, dev->axes[j].name);
-    }
+            I_PrintAxisConfig(dev, &dev->axes[j]);
+        }
+    }        
     return true;
 }
