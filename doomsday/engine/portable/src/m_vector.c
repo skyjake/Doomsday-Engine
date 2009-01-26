@@ -107,7 +107,7 @@ float V2_Normalize(pvec2_t vec)
 /**
  * Make a copy of the source vector.
  */
-void V2_Copy(pvec2_t dest, const pvec2_t src)
+void V2_Copy(pvec2_t dest, const_pvec2_t src)
 {
     dest[VX] = src[VX];
     dest[VY] = src[VY];
@@ -403,7 +403,7 @@ float V3_Normalize(pvec3_t vec)
 /**
  * Make a copy of the source vector.
  */
-void V3_Copy(pvec3_t dest, const pvec3_t src)
+void V3_Copy(pvec3_t dest, const_pvec3_t src)
 {
     dest[VX] = src[VX];
     dest[VY] = src[VY];
@@ -443,7 +443,7 @@ void V3_Subtract(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
 /**
  * Calculate the dot product of the two vectors.
  */
-float V3_DotProduct(const pvec3_t a, const pvec3_t b)
+float V3_DotProduct(const_pvec3_t a, const_pvec3_t b)
 {
     return a[VX] * b[VX] + a[VY] * b[VY] + a[VZ] * b[VZ];
 }

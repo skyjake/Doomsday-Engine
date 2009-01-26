@@ -31,7 +31,9 @@
 
 typedef float         vectorcomp_t;
 typedef vectorcomp_t  vec2_t[2];
+typedef const float   const_pvec2_t[2];
 typedef vectorcomp_t  vec3_t[3];
+typedef const float   const_pvec3_t[3];
 typedef vectorcomp_t *pvec2_t;
 typedef vectorcomp_t *pvec3_t;
 typedef vec2_t       *arvec2_t;
@@ -43,7 +45,7 @@ void            V2_SetFixed(pvec2_t vec, fixed_t x, fixed_t y);
 float           V2_Length(const pvec2_t vector);
 float           V2_Distance(const pvec2_t a, const pvec2_t b);
 float           V2_Normalize(pvec2_t vec);
-void            V2_Copy(pvec2_t dest, const pvec2_t src);
+void            V2_Copy(pvec2_t dest, const_pvec2_t src);
 void            V2_Scale(pvec2_t vector, float scalar);
 void            V2_Rotate(pvec2_t vec, float radians);
 void            V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2);
@@ -74,12 +76,12 @@ void            V3_SetFixed(pvec3_t vec, fixed_t x, fixed_t y, fixed_t z);
 float           V3_Length(const pvec3_t vec);
 float           V3_Distance(const pvec3_t a, const pvec3_t b);
 float           V3_Normalize(pvec3_t vec);
-void            V3_Copy(pvec3_t dest, const pvec3_t src);
+void            V3_Copy(pvec3_t dest, const_pvec3_t src);
 void            V3_Scale(pvec3_t vec, float scalar);
 void            V3_Sum(pvec3_t dest, const pvec3_t src1, const pvec3_t src2);
 void            V3_Subtract(pvec3_t dest, const pvec3_t src1,
                             const pvec3_t src2);
-float           V3_DotProduct(const pvec3_t a, const pvec3_t b);
+float           V3_DotProduct(const_pvec3_t a, const_pvec3_t b);
 void            V3_CrossProduct(pvec3_t dest, const pvec3_t src1,
                                 const pvec3_t src2);
 void            V3_PointCrossProduct(pvec3_t dest, const pvec3_t v1,
