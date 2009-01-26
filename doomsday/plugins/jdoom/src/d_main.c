@@ -395,8 +395,11 @@ void G_PreInit(void)
     cfg.hudColor[3] = 1;
     cfg.hudIconAlpha = 1;
     cfg.xhairSize = 1;
-    for(i = 0; i < 4; ++i)
-        cfg.xhairColor[i] = 255;
+    cfg.xhairVitality = false;
+    cfg.xhairColor[0] = 1;
+    cfg.xhairColor[1] = 1;
+    cfg.xhairColor[2] = 1;
+    cfg.xhairColor[3] = 1;
     cfg.moveCheckZ = true;
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;

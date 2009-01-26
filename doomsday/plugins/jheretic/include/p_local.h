@@ -52,7 +52,7 @@
 
 #define FLOATSPEED      4
 
-#define MAXHEALTH       100
+#define MAXHEALTH       (maxHealth) //100
 #define MAXCHICKENHEALTH 30
 #define VIEWHEIGHT      41
 

@@ -37,6 +37,7 @@
 #include "p_inventory.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -373,15 +374,14 @@ static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
 /**
  * @returns             @c false, if the body isn't needed at all.
  */
-boolean P_GiveBody(player_t *plr, int num)
+boolean P_GiveBody(player_t* plr, int num)
 {
-    int             max;
+    int                 max;
 
-    max = MAXHEALTH;
     if(plr->morphTics)
-    {
         max = MAXMORPHHEALTH;
-    }
+    else
+        max = maxHealth;
 
     if(plr->health >= max)
     {

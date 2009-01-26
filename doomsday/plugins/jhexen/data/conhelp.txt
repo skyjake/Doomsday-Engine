@@ -303,6 +303,9 @@ desc = The current crosshair.
 [view-cross-size]
 desc = Crosshair size: 1=Normal.
 
+[view-cross-vitality]
+desc = Color the crosshair according to how near you are to death.
+
 [view-cross-r]
 desc = Crosshair color red component.
 

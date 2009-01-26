@@ -223,7 +223,7 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
         if(sat)
             *sat = 0;
 
-        HSVtoRGB(color, 0, 0, 1);
+        R_HSVToRGB(color, 0, 0, 1);
         return;
     }
 
@@ -253,7 +253,7 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
 
     //Con_Printf("sat=%f, hue=%f\n", saturation, hue);
 
-    HSVtoRGB(color, hue, saturation, 1);
+    R_HSVToRGB(color, hue, saturation, 1);
 }
 
 void SBE_EndFrame(void)
@@ -970,7 +970,7 @@ static void SBE_DrawHue(void)
         angle = 2*PI * i/steps;
 
         // Calculate the hue color for this angle.
-        HSVtoRGB(color, i/steps, 1, 1);
+        R_HSVToRGB(color, i/steps, 1, 1);
         color[3] = .5f;
 
         SBE_HueOffset(angle, off);
@@ -1012,7 +1012,7 @@ static void SBE_DrawHue(void)
         SBE_HueOffset(2*PI * (i + 1)/steps, off2);
 
         // Calculate the hue color for this angle.
-        HSVtoRGB(color, i/steps, 1, 1);
+        R_HSVToRGB(color, i/steps, 1, 1);
         color[3] = 1;
 
         glColor4fv(color);

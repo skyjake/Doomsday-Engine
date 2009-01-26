@@ -184,7 +184,8 @@ typedef struct jdoom_config_s {
 
     // Crosshair.
     int             xhair, xhairSize;
-    byte            xhairColor[4];
+    byte            xhairVitality;
+    float           xhairColor[4];
 
     // Network.
     byte            netDeathmatch;

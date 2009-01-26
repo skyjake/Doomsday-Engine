@@ -414,7 +414,8 @@ extern          "C" {
     void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
     int             R_CreateAnimGroup(int flags);
     void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
-
+    void            R_PalIdxToRGB(int idx, float* rgb);
+    void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2,
                                     float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
@@ -431,7 +432,6 @@ extern          "C" {
                                              int flags, int minFilter, int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
     void            GL_SetFilter(int filter_rgba);
-    void            GL_PalIdxToRGB(int idx, float* rgb);
 
     // Graphics: 2D drawing.
     void            GL_DrawPatch(int x, int y, lumpnum_t lump);

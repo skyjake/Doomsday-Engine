@@ -39,6 +39,7 @@
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "p_player.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -39,6 +39,7 @@
 #include "g_common.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -677,7 +678,7 @@ static void CheatHealthFunc(player_t *player, cheat_t *cheat)
     }
     else
     {
-        player->health = player->plr->mo->health = MAXHEALTH;
+        player->health = player->plr->mo->health = maxHealth;
     }
     P_SetMessage(player, TXT_CHEATHEALTH, false);
 }

@@ -154,31 +154,6 @@ void CalculatePal18to8(byte *dest, byte *palette)
 }
 
 /**
- * Given a color palette index, calculate the equivilent RGB color.
- *
- * @param idx           Color Palette, color index.
- * @param rgb           Ptr to the
- */
-void GL_PalIdxToRGB(int idx, float* rgb)
-{
-    if(rgb)
-    {
-        if(!(idx < 0))
-        {
-            int                 c;
-            byte*               pal = GL_GetPalette();
-
-            idx = MIN_OF(idx, 255);
-            for(c = 0; c < 3; ++c)
-                rgb[c] = gammaTable[pal[idx * 3 + c]] * reciprocal255;
-            return;
-        }
-
-        rgb[CR] = rgb[CG] = rgb[CB] = 0;
-    }
-}
-
-/**
  * in/out format:
  * 1 = palette indices
  * 2 = palette indices followed by alpha values

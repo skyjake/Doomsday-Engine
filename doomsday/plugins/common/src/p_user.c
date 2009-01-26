@@ -82,8 +82,8 @@ boolean     P_TestMobjLocation(mobj_t *mobj);
 
 boolean onground;
 
-#if __JDOOM__ || __JDOOM64__
 int maxHealth; // 100
+#if __JDOOM__ || __JDOOM64__
 int healthLimit; // 200
 int godModeHealth; // 100
 int soulSphereLimit; // 200
@@ -789,7 +789,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 # if __JHERETIC__
     player->powers[PT_WEAPONLEVEL2] = 0;
 # endif
-    player->health = mo->health = MAXHEALTH;
+    player->health = mo->health = maxHealth;
     player->plr->mo = mo;
 # if __JHERETIC__
     player->class = PCLASS_PLAYER;
@@ -1315,7 +1315,7 @@ void P_PlayerThinkItems(player_t *player)
 #endif
 #if __JHEXEN__
     if(!arti && P_GetImpulseControlState(pnum, CTL_HEALTH) &&
-       (player->plr->mo->health < MAXHEALTH))
+       (player->plr->mo->health < maxHealth))
     {
         arti = AFT_HEALTH;
     }

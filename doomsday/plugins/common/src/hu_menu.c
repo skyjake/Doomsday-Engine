@@ -864,18 +864,19 @@ static menuitem_t HUDItems[] = {
 #endif
     {ITT_EFUNC, 0, "MESSAGES :", M_ChangeMessages, 0},
     {ITT_LRFUNC, 0, "CROSSHAIR :", M_Xhair, 0},
+    {ITT_EFUNC, 0, "CROSSHAIR VITALITY :", M_ToggleVar, 0, NULL, "view-cross-vitality"},
     {ITT_LRFUNC, 0, "CROSSHAIR SIZE :", M_XhairSize, 0},
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
-    {ITT_LRFUNC, 0, "SCREEN SIZE", M_SizeDisplay, 0},
+    {ITT_LRFUNC, 0, "SCREEN SIZE :", M_SizeDisplay, 0},
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
 #if !__JDOOM64__
-    {ITT_LRFUNC, 0, "STATUS BAR SIZE", M_SizeStatusBar, 0},
+    {ITT_LRFUNC, 0, "STATUS BAR SIZE :", M_SizeStatusBar, 0},
 # if !__JDOOM__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -886,18 +887,16 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
 # endif
 #endif
-#if __JHEXEN__ || __JSTRIFE__
-    {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
+#if __JHEXEN__
     {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
     {ITT_EFUNC, 0, "SHOW MANA :", M_ToggleVar, 0, NULL, "hud-mana" },
     {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, "hud-health" },
     {ITT_EFUNC, 0, "SHOW ARTIFACT :", M_ToggleVar, 0, NULL, "hud-artifact" },
     {ITT_EFUNC, 0, "   HUD COLOUR", SCColorWidget, 5},
-    {ITT_LRFUNC, 0, "SCALE", M_HUDScale, 0},
+    {ITT_LRFUNC, 0, "SCALE :", M_HUDScale, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #elif __JHERETIC__
-    {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
     {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
     {ITT_EFUNC, 0, "SHOW AMMO :", M_ToggleVar, 0, NULL, "hud-ammo" },
     {ITT_EFUNC, 0, "SHOW ARMOR :", M_ToggleVar, 0, NULL, "hud-armor" },
@@ -905,7 +904,7 @@ static menuitem_t HUDItems[] = {
     {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, "hud-health" },
     {ITT_EFUNC, 0, "SHOW KEYS :", M_ToggleVar, 0, NULL, "hud-keys" },
     {ITT_EFUNC, 0, "   HUD COLOUR", SCColorWidget, 5},
-    {ITT_LRFUNC, 0, "SCALE", M_HUDScale, 0},
+    {ITT_LRFUNC, 0, "SCALE :", M_HUDScale, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0}
 #endif
@@ -919,28 +918,28 @@ static menu_t HUDDef = {
     64, 30,
 #endif
     M_DrawHUDMenu,
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     23, HUDItems,
 #elif __JHERETIC__
     25, HUDItems,
 #elif __JDOOM64__
-    11, HUDItems,
+    12, HUDItems,
 #elif __JDOOM__
-    14, HUDItems,
+    15, HUDItems,
 #endif
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     0, 15        // 21
 #elif __JHERETIC__
     0, 15        // 23
 #elif __JDOOM64__
     0, 11
 #elif __JDOOM__
-    0, 14
+    0, 15
 #endif
 };
 
@@ -3109,10 +3108,11 @@ void M_DrawHUDMenu(void)
     {
         M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
         M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
-        MN_DrawSlider(menu, 3, 9, cfg.xhairSize);
-        MN_DrawSlider(menu, 6, 11, cfg.screenBlocks - 3);
-        MN_DrawSlider(menu, 9, 20, cfg.statusbarScale - 1);
-        MN_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
+        M_WriteMenuText(menu, 2, yesno[cfg.xhairVitality != 0]);
+        MN_DrawSlider(menu, 4, 9, cfg.xhairSize);
+        MN_DrawSlider(menu, 7, 11, cfg.screenBlocks - 3);
+        MN_DrawSlider(menu, 10, 20, cfg.statusbarScale - 1);
+        MN_DrawSlider(menu, 13, 11, cfg.statusbarAlpha * 10 + .25f);
     }
     else
     {
@@ -3128,10 +3128,11 @@ void M_DrawHUDMenu(void)
     {
         M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
         M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
-        MN_DrawSlider(menu, 3, 9, cfg.xhairSize);
-        MN_DrawSlider(menu, 6, 11, cfg.screenBlocks - 3);
-        MN_DrawSlider(menu, 9, 20, cfg.statusbarScale - 1);
-        MN_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
+        M_WriteMenuText(menu, 2, yesno[cfg.xhairVitality != 0]);
+        MN_DrawSlider(menu, 4, 9, cfg.xhairSize);
+        MN_DrawSlider(menu, 7, 11, cfg.screenBlocks - 3);
+        MN_DrawSlider(menu, 10, 20, cfg.statusbarScale - 1);
+        MN_DrawSlider(menu, 13, 11, cfg.statusbarAlpha * 10 + .25f);
     }
     else
     {
@@ -3163,6 +3164,7 @@ void M_DrawHUDMenu(void)
                     cfg.hudColor[2], menuAlpha);
     M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
     M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
     MN_DrawSlider(menu, idx++, 9, cfg.xhairSize);
     MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3 );
 # if !__JDOOM64__
@@ -3228,50 +3230,26 @@ void M_XhairSize(int option, void* context)
 #if __JDOOM__ || __JDOOM64__
 void M_XhairR(int option, void* context)
 {
-    int         val = cfg.xhairColor[0];
-
-    val += (option == RIGHT_DIR ? 17 : -17);
-    if(val < 0)
-        val = 0;
-    if(val > 255)
-        val = 255;
-    cfg.xhairColor[0] = val;
+    cfg.xhairColor[0] = MINMAX_OF(0,
+        cfg.xhairColor[0] + (option == RIGHT_DIR ? .1f : -.1f), 1);
 }
 
 void M_XhairG(int option, void* context)
 {
-    int         val = cfg.xhairColor[1];
-
-    val += (option == RIGHT_DIR ? 17 : -17);
-    if(val < 0)
-        val = 0;
-    if(val > 255)
-        val = 255;
-    cfg.xhairColor[1] = val;
+    cfg.xhairColor[1] = MINMAX_OF(0,
+        cfg.xhairColor[1] + (option == RIGHT_DIR ? .1f : -.1f), 1);
 }
 
 void M_XhairB(int option, void* context)
 {
-    int         val = cfg.xhairColor[2];
-
-    val += (option == RIGHT_DIR ? 17 : -17);
-    if(val < 0)
-        val = 0;
-    if(val > 255)
-        val = 255;
-    cfg.xhairColor[2] = val;
+    cfg.xhairColor[2] = MINMAX_OF(0,
+        cfg.xhairColor[2] + (option == RIGHT_DIR ? .1f : -.1f), 1);
 }
 
 void M_XhairAlpha(int option, void* context)
 {
-    int         val = cfg.xhairColor[3];
-
-    val += (option == RIGHT_DIR ? 17 : -17);
-    if(val < 0)
-        val = 0;
-    if(val > 255)
-        val = 255;
-    cfg.xhairColor[3] = val;
+    cfg.xhairColor[3] = MINMAX_OF(0,
+        cfg.xhairColor[3] + (option == RIGHT_DIR ? .1f : -.1f), 1);
 }
 #endif
 

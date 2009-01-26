@@ -254,8 +254,11 @@ void G_PreInit(void)
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
     cfg.xhairSize = 1;
-    for(i = 0; i < 4; ++i)
-        cfg.xhairColor[i] = 255;
+    cfg.xhairVitality = false;
+    cfg.xhairColor[0] = 1;
+    cfg.xhairColor[1] = 1;
+    cfg.xhairColor[2] = 1;
+    cfg.xhairColor[3] = 1;
     cfg.jumpEnabled = cfg.netJumping = true; // true by default in Hexen
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;

@@ -41,6 +41,7 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "dmu_lib.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 

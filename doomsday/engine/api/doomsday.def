@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 438 <--
+; --> 439 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -330,6 +330,8 @@ EXPORTS
     R_PointInSubsector          @102 NONAME
     R_CreateAnimGroup           @241 NONAME
     R_AddToAnimGroup            @242 NONAME
+    R_PalIdxToRGB               @423 NONAME
+    R_HSVToRGB                  @439 NONAME
 
 ; DGL.
     DGL_SetMaterial             @117 NONAME
@@ -398,7 +400,6 @@ EXPORTS
     GL_GrabScreen               @109 NONAME
     GL_LoadGraphics             @244 NONAME
     GL_NewTextureWithParams3    @329 NONAME
-    GL_PalIdxToRGB              @423 NONAME
     GL_SetFilter                @132 NONAME
 
 ; Graphics: 2D drawing.

@@ -40,6 +40,7 @@
 #include "am_map.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -525,7 +526,7 @@ static void cheatHealthFunc(player_t* player, cheatseq_t* cheat)
     }
     else
     {
-        player->health = player->plr->mo->health = MAXHEALTH;
+        player->health = player->plr->mo->health = maxHealth;
     }
     P_SetMessage(player, TXT_CHEATHEALTH, false);
 }

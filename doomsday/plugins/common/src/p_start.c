@@ -127,9 +127,10 @@ void P_Init(void)
     P_InitLava();
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-    // Maximum health and armor points.
     maxHealth = 100;
+    GetDefInt("Player|Max Health", &maxHealth);
+
+#if __JDOOM__ || __JDOOM64__
     healthLimit = 200;
     godModeHealth = 100;
     megaSphereHealth = 200;
@@ -141,7 +142,6 @@ void P_Init(void)
     armorClass[0] = 1;
     armorClass[1] = armorClass[2] = armorClass[3] = 2;
 
-    GetDefInt("Player|Max Health", &maxHealth);
     GetDefInt("Player|Health Limit", &healthLimit);
     GetDefInt("Player|God Health", &godModeHealth);
 

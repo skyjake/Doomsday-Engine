@@ -594,7 +594,7 @@ static const int plrColors[] = {
 
         // Pick team color:
 #if __JHEXEN__
-        GL_PalIdxToRGB(plrColors[info->team], info->color);
+        R_PalIdxToRGB(plrColors[info->team], info->color);
 #else
         switch(info->team)
         {

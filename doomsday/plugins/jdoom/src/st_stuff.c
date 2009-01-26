@@ -44,6 +44,7 @@
 #include "p_tick.h" // for P_IsPaused
 #include "p_player.h"
 #include "am_map.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -37,6 +37,7 @@
 #include "p_player.h"
 #include "p_inventory.h"
 #include "p_tick.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -192,11 +193,10 @@ boolean P_GiveBody(player_t *player, int num)
 {
     int                 max;
 
-    max = MAXHEALTH;
     if(player->morphTics)
-    {
         max = MAXCHICKENHEALTH;
-    }
+    else
+        max = maxHealth;
 
     if(player->health >= max)
     {

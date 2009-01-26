@@ -87,10 +87,6 @@
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 extern float turboMul;
-extern int maxHealth, healthLimit, godModeHealth;
-extern int soulSphereHealth, soulSphereLimit, megaSphereHealth;
-extern int armorPoints[4]; // Green, blue, IDFA and IDKFA points.
-extern int armorClass[4]; // Green and blue classes.
 extern int maxAmmo[NUM_AMMO_TYPES];
 extern int clipAmmo[NUM_AMMO_TYPES];
 

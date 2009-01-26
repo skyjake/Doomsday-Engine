@@ -94,7 +94,8 @@ typedef struct {
     int             jLookDeltaMode;
 
     int             xhair, xhairSize;
-    byte            xhairColor[4];
+    byte            xhairVitality;
+    float           xhairColor[4];
 
     int             statusbarScale;
     float           statusbarAlpha;

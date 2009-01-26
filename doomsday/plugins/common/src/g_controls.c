@@ -878,7 +878,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         cmd->arti = NUM_ARTIFACT_TYPES;
     }
     else if(plr->plr->mo && PLAYER_ACTION(pnum, A_HEALTH) &&
-            !cmd->arti && (plr->plr->mo->health < MAXHEALTH))
+            !cmd->arti && (plr->plr->mo->health < maxHealth))
     {
         PLAYER_ACTION(pnum, A_HEALTH) = false;
         cmd->arti = AFT_HEALTH;

@@ -416,6 +416,99 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 }
 
 /**
+ * Given a color palette index, calculate the equivilent RGB color.
+ *
+ * @param idx           Color Palette, color index.
+ * @param rgb           Ptr to the
+ */
+void R_PalIdxToRGB(int idx, float* rgb)
+{
+    if(rgb)
+    {
+        if(!(idx < 0))
+        {
+            int                 c;
+            byte*               pal = GL_GetPalette();
+
+            idx = MIN_OF(idx, 255);
+            for(c = 0; c < 3; ++c)
+                rgb[c] = gammaTable[pal[idx * 3 + c]] * reciprocal255;
+            return;
+        }
+
+        rgb[CR] = rgb[CG] = rgb[CB] = 0;
+    }
+}
+
+/**
+ * Conversion from HSV to RGB.  Everything is [0,1].
+ */
+void R_HSVToRGB(float* rgb, float h, float s, float v)
+{
+    int                 i;
+    float               f, p, q, t;
+
+    if(!rgb)
+        return;
+
+    if(s == 0)
+    {
+        // achromatic (grey)
+        rgb[0] = rgb[1] = rgb[2] = v;
+        return;
+    }
+
+    if(h >= 1)
+        h -= 1;
+
+    h *= 6; // sector 0 to 5
+    i = floor(h);
+    f = h - i; // factorial part of h
+    p = v * (1 - s);
+    q = v * (1 - s * f);
+    t = v * (1 - s * (1 - f));
+
+    switch(i)
+    {
+    case 0:
+        rgb[0] = v;
+        rgb[1] = t;
+        rgb[2] = p;
+        break;
+
+    case 1:
+        rgb[0] = q;
+        rgb[1] = v;
+        rgb[2] = p;
+        break;
+
+    case 2:
+        rgb[0] = p;
+        rgb[1] = v;
+        rgb[2] = t;
+        break;
+
+    case 3:
+        rgb[0] = p;
+        rgb[1] = q;
+        rgb[2] = v;
+        break;
+
+    case 4:
+        rgb[0] = t;
+        rgb[1] = p;
+        rgb[2] = v;
+        break;
+
+    default:
+        rgb[0] = v;
+        rgb[1] = p;
+        rgb[2] = q;
+        break;
+    }
+}
+
+/**
  * Returns a ptr to the sector which owns the given ddmobj_base_t.
  *
  * @param ddMobjBase    ddmobj_base_t to search for.

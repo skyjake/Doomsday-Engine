@@ -2946,7 +2946,7 @@ static void renderLineCharacter(vectorgrap_t* vg, float x, float y,
     automap_t*          map = &automaps[mapviewplayer];
     float               oldLineWidth, rgba[4];
 
-    GL_PalIdxToRGB(color, rgba);
+    R_PalIdxToRGB(color, rgba);
     rgba[3] = MINMAX_OF(0.f, alpha, 1.f);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);

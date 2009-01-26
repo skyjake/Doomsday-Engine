@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,6 @@
 
 #define NUM_XHAIRS      (6)
 
-void        X_Drawer(void);
+void        X_Drawer(int player);
 void        X_Register(void);
 #endif

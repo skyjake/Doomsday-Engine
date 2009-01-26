@@ -343,7 +343,7 @@ void D_Display(int layer)
 
             // Crosshair.
             if(!P_IsCamera(plr->plr->mo)) // $democam
-                X_Drawer();
+                X_Drawer(player);
         }
 
         // Draw the automap?

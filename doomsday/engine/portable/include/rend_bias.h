@@ -105,6 +105,5 @@ source_t*       SB_GetSource(int which);
 int             SB_ToIndex(source_t* source);
 
 void            SB_SetColor(float* dest, float* src);
-void            HSVtoRGB(float* rgb, float h, float s, float v);
 
 #endif

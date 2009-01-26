@@ -55,7 +55,6 @@ void            pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest,
                        int destWidth, int destHeight, int alpha, int srcRegX,
                        int srcRegY, int destRegX, int destRegY, int regWidth,
                        int regHeight);
-void            GL_PalIdxToRGB(int idx, float* rgba);
 void            averageColorIdx(rgbcol_t col, byte *data, int w, int h,
                                 byte *palette, boolean hasAlpha);
 void            averageColorRGB(rgbcol_t col, byte *data, int w, int h);
