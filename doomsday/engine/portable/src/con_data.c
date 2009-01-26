@@ -273,6 +273,8 @@ void Con_AddVariableList(cvar_t* varlist)
 
 void Con_AddVariable(cvar_t* var)
 {
+    char* nameCopy = NULL;
+    
     if(!var)
         return;
 
@@ -289,6 +291,12 @@ void Con_AddVariable(cvar_t* var)
         cvars = M_Realloc(cvars, sizeof(cvar_t) * maxCVars);
     }
     memcpy(cvars + numCVars - 1, var, sizeof(cvar_t));
+    
+    // Make a static copy of the variable name in the zone.
+    // This allows the source data to change (in case of dynamic registrations).
+    nameCopy = Z_Malloc(strlen(var->name) + 1, PU_STATIC, NULL);
+    strcpy(nameCopy, var->name);
+    cvars[numCVars - 1].name = nameCopy;
 
     // Sort them.
     qsort(cvars, numCVars, sizeof(cvar_t), wordListSorter);
