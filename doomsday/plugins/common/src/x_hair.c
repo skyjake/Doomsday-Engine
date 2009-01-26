@@ -127,9 +127,11 @@ void X_Register(void)
 
 void X_Drawer(int player)
 {
+#define XHAIR_LINE_WIDTH    1.f
+
     int                 i, xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS),
                         centerX, centerY;
-    float               alpha, scale;
+    float               alpha, scale, oldLineWidth;
     ddplayer_t*         plr = players[player].plr;
     cross_t*            cross;
 
@@ -165,6 +167,9 @@ void X_Drawer(int player)
                 (float) plr->mo->health / maxHealth, 1), 1, 1);
         vitalColor[3] = alpha;
         DGL_Color4fv(vitalColor);
+
+#undef HUE_DEAD
+#undef HUE_LIVE
     }
     else
     {
@@ -178,6 +183,8 @@ void X_Drawer(int player)
         DGL_Color4fv(color);
     }
 
+    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+    DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);
     DGL_Disable(DGL_TEXTURING);
 
     DGL_Begin(DGL_LINES);
@@ -190,6 +197,10 @@ void X_Drawer(int player)
     }
     DGL_End();
 
+    // Restore the previous state.
+    DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
     DGL_Enable(DGL_TEXTURING);
     DGL_PopMatrix();
+
+#undef XHAIR_LINE_WIDTH
 }
