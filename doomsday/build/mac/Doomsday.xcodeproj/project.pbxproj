@@ -383,7 +383,6 @@
 		B086FAE30F0B9EDE00955E23 /* r_lgrid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_lgrid.c; sourceTree = "<group>"; };
 		B086FAE40F0B9EDE00955E23 /* r_lumobjs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_lumobjs.c; sourceTree = "<group>"; };
 		B086FAE50F0B9EDE00955E23 /* r_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_main.c; sourceTree = "<group>"; };
-		B086FAE60F0B9EDE00955E23 /* r_materials.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_materials.c; sourceTree = "<group>"; };
 		B086FAE70F0B9EDE00955E23 /* r_model.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_model.c; sourceTree = "<group>"; };
 		B086FAE80F0B9EDE00955E23 /* r_shadow.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_shadow.c; sourceTree = "<group>"; };
 		B086FAE90F0B9EDE00955E23 /* r_sky.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_sky.c; sourceTree = "<group>"; };
@@ -1676,7 +1675,6 @@
 				B086FAE30F0B9EDE00955E23 /* r_lgrid.c */,
 				B086FAE40F0B9EDE00955E23 /* r_lumobjs.c */,
 				B086FAE50F0B9EDE00955E23 /* r_main.c */,
-				B086FAE60F0B9EDE00955E23 /* r_materials.c */,
 				B086FAE70F0B9EDE00955E23 /* r_model.c */,
 				B086FAE80F0B9EDE00955E23 /* r_shadow.c */,
 				B086FAE90F0B9EDE00955E23 /* r_sky.c */,

@@ -58,6 +58,7 @@ typedef struct cvarbutton_s {
     const char *cvarname;
     const char *yes;
     const char *no;
+    int     mask;
 } cvarbutton_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -143,6 +144,10 @@ cvarbutton_t cvarbuttons[] = {
     {0, "rend-sky-full"},
     {0, "rend-shadow"},
     {0, "rend-fakeradio"},
+    {0, "input-mouse-x-flags", "Invert", "Invert", IDA_INVERT },
+    {0, "input-mouse-x-flags", "Disable", "Disable", IDA_DISABLED },
+    {0, "input-mouse-y-flags", "Invert", "Invert", IDA_INVERT },
+    {0, "input-mouse-y-flags", "Disable", "Disable", IDA_DISABLED },
     {0, 0}
 };
 
@@ -258,6 +263,8 @@ uidata_slider_t sld_con_alpha = { 0, 100, 0, 1, false, "con-alpha" };
 uidata_slider_t sld_con_light = { 0, 100, 0, 1, false, "con-light" };
 uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, "input-key-delay1" };
 uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, "input-key-delay2" };
+uidata_slider_t sld_mouse_x_scale = { 0, .01f, 0, .00005f, true, "input-mouse-x-scale" };
+uidata_slider_t sld_mouse_y_scale = { 0, .01f, 0, .00005f, true, "input-mouse-y-scale" };
 uidata_slider_t sld_client_pos_interval =
     { 0, 70, 0, 1, false, "client-pos-interval" };
 uidata_slider_t sld_server_frame_interval =
@@ -405,6 +412,16 @@ ui_object_t ob_panel[] =
 
     { UI_META,      4 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Input Options", UIText_BrightDrawer },
+    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Mouse X sensitivity", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_mouse_x_scale },
+    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Mouse X mode", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 130, 80, 55,   "input-mouse-x-flags", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton, 0, IDA_INVERT },
+    { UI_BUTTON2,   0,  0,              765, 130, 80, 55,   "input-mouse-x-flags", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton, 0, IDA_DISABLED },
+    { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Mouse Y sensitivity", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 190, 300, 55,   "",        UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_mouse_y_scale },
+    { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Mouse Y mode", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 250, 80, 55,   "input-mouse-y-flags", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton, 0, IDA_INVERT },
+    { UI_BUTTON2,   0,  0,              765, 250, 80, 55,   "input-mouse-y-flags", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton, 0, IDA_DISABLED },
     { UI_META,      4,  0,              0, 60 },
     { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Enable joystick", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 250, 70, 55,   "input-joy", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -685,13 +702,31 @@ void CP_CvarButton(ui_object_t *ob)
 {
     cvarbutton_t *cb = ob->data;
     cvar_t     *var = Con_GetVariable(cb->cvarname);
+    int         value;
 
-    strcpy(ob->text, cb->active ? cb->yes : cb->no);
+    strcpy(ob->text, cb->active? cb->yes : cb->no);
 
     if(!var)
         return;
 
-    Con_SetInteger(cb->cvarname, cb->active, true);
+    if(cb->mask)
+    {
+        value = Con_GetInteger(cb->cvarname);
+        if(cb->active)
+        {
+            value |= cb->mask;
+        }
+        else
+        {
+            value &= ~cb->mask;
+        }
+    }
+    else
+    {
+        value = cb->active;        
+    }
+    
+    Con_SetInteger(cb->cvarname, value, true);
 }
 
 void CP_CvarList(ui_object_t *ob)
@@ -730,7 +765,16 @@ void CP_CvarSlider(ui_object_t *ob)
     }
 
     if(var->type == CVT_FLOAT)
-        Con_SetFloat(var->name, (int) (100 * value) / 100.0f, true);
+    {
+        if(slid->step >= .01f)
+        {
+            Con_SetFloat(var->name, (int) (100 * value) / 100.0f, true);
+        }
+        else
+        {
+            Con_SetFloat(var->name, value, true);
+        }
+    }
     else if(var->type == CVT_INT)
         Con_SetInteger(var->name, (int) value, true);
     else if(var->type == CVT_BYTE)
@@ -1131,16 +1175,16 @@ D_CMD(OpenPanel)
             {
                 // This button has already been initialized.
                 cvb = ob->data;
-                cvb->active = Con_GetByte(cvb->cvarname) != 0;
+                cvb->active = (Con_GetByte(cvb->cvarname) & (ob->data2? ob->data2 : ~0)) != 0;
                 strcpy(ob->text, cvb->active ? cvb->yes : cvb->no);
                 continue;
             }
             // Find the cvarbutton representing this one.
             for(cvb = cvarbuttons; cvb->cvarname; cvb++)
             {
-                if(!strcmp(ob->text, cvb->cvarname))
+                if(!strcmp(ob->text, cvb->cvarname) && ob->data2 == cvb->mask)
                 {
-                    cvb->active = Con_GetByte(cvb->cvarname) != 0;
+                    cvb->active = (Con_GetByte(cvb->cvarname) & (ob->data2? ob->data2 : ~0)) != 0;
                     ob->data = cvb;
                     strcpy(ob->text, cvb->active ? cvb->yes : cvb->no);
                     break;

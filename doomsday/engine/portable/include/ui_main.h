@@ -125,6 +125,7 @@ typedef struct ui_object_s {
     void            (*ticker) (struct ui_object_s *);
     void            (*action) (struct ui_object_s *);
     void           *data;          // Pointer to extra data.
+    int             data2;         // Extra numerical data.
     int             timer;
     int             x, y, w, h;    // Position and dimensions, auto-inited.
 } ui_object_t;

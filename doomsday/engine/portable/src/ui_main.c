@@ -1729,7 +1729,16 @@ void UISlider_Drawer(ui_object_t *ob)
 
     // The value.
     if(dat->floatmode)
-        sprintf(buf, "%.2f", dat->value);
+    {
+        if(dat->step >= .01f)
+        {
+            sprintf(buf, "%.2f", dat->value);
+        }
+        else
+        {
+            sprintf(buf, "%.5f", dat->value);
+        }
+    }
     else
         sprintf(buf, "%i", (int) dat->value);
     if(dat->zerotext && dat->value == dat->min)
