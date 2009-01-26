@@ -885,10 +885,11 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
                 MINMAX_OF(0, rcolors[i].rgba[c], 1);
         }
     }
-    vis->data.wall.texCoord[0][VX] = texOffset[VX] / texWidth;
+
+    vis->data.wall.texCoord[0][VX] = (texOffset? texOffset[VX] / texWidth : 0);
     vis->data.wall.texCoord[1][VX] =
         vis->data.wall.texCoord[0][VX] + wallLength / texWidth;
-    vis->data.wall.texCoord[0][VY] = texOffset[VY] / texHeight;
+    vis->data.wall.texCoord[0][VY] = (texOffset? texOffset[VY] / texHeight : 0);
     vis->data.wall.texCoord[1][VY] =
         vis->data.wall.texCoord[0][VY] +
             (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / texHeight;
@@ -1294,13 +1295,19 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                       const material_snapshot_t* msA,
                       const material_snapshot_t* msB)
 {
-    rTU[TU_PRIMARY].scale[0] *= texScale[0];
-    rTU[TU_PRIMARY].scale[1] *= texScale[1];
-    rTU[TU_PRIMARY].offset[0] += texOffset[0] / msA->width;
-    rTU[TU_PRIMARY].offset[1] +=
-        (isWall? texOffset[1] : -texOffset[1]) / msA->height;
+    if(texScale)
+    {
+        rTU[TU_PRIMARY].scale[0] *= texScale[0];
+        rTU[TU_PRIMARY].scale[1] *= texScale[1];
+    }
+    if(texOffset)
+    {
+        rTU[TU_PRIMARY].offset[0] += texOffset[0] / msA->width;
+        rTU[TU_PRIMARY].offset[1] +=
+            (isWall? texOffset[1] : -texOffset[1]) / msA->height;
+    }
 
-    if(msA->units[MTU_DETAIL].texInst)
+    if(msA->units[MTU_DETAIL].texInst && texOffset)
     {
         rTU[TU_PRIMARY_DETAIL].offset[0] +=
             texOffset[0] * rTU[TU_PRIMARY_DETAIL].scale[0];
@@ -1311,14 +1318,20 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
 
     if(msB && msB->units[MTU_PRIMARY].texInst)
     {
-        rTU[TU_INTER].scale[0] *= texScale[0];
-        rTU[TU_INTER].scale[1] *= texScale[1];
-        rTU[TU_INTER].offset[0] += texOffset[0] / msB->width;
-        rTU[TU_INTER].offset[1] +=
-            (isWall? texOffset[1] : -texOffset[1]) / msB->height;
+        if(texScale)
+        {
+            rTU[TU_INTER].scale[0] *= texScale[0];
+            rTU[TU_INTER].scale[1] *= texScale[1];
+        }
+        if(texOffset)
+        {
+            rTU[TU_INTER].offset[0] += texOffset[0] / msB->width;
+            rTU[TU_INTER].offset[1] +=
+                (isWall? texOffset[1] : -texOffset[1]) / msB->height;
+        }
     }
 
-    if(msB && msB->units[MTU_DETAIL].texInst)
+    if(msB && msB->units[MTU_DETAIL].texInst && texOffset)
     {
         rTU[TU_INTER_DETAIL].offset[0] +=
             texOffset[0] * rTU[TU_INTER_DETAIL].scale[0];
@@ -1329,11 +1342,17 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
 
     if(msA->units[MTU_REFLECTION].texInst)
     {
-        rTUs[TU_INTER].scale[0] *= texScale[0];
-        rTUs[TU_INTER].scale[1] *= texScale[1];
-        rTUs[TU_INTER].offset[0] += texOffset[0] / msA->width;
-        rTUs[TU_INTER].offset[1] += (isWall? texOffset[1] : -texOffset[1]) /
-            msA->height;
+        if(texScale)
+        {
+            rTUs[TU_INTER].scale[0] *= texScale[0];
+            rTUs[TU_INTER].scale[1] *= texScale[1];
+        }
+        if(texOffset)
+        {
+            rTUs[TU_INTER].offset[0] += texOffset[0] / msA->width;
+            rTUs[TU_INTER].offset[1] += (isWall? texOffset[1] : -texOffset[1]) /
+                msA->height;
+        }
     }
 }
 
@@ -1342,7 +1361,7 @@ typedef struct {
     rendpolytype_t  type;
     blendmode_t     blendMode;
     const float*    texTL, *texBR;
-    vec2_t          texOffset, texScale;
+    const float*    texOffset, *texScale;
     const float*    normal; // Surface normal.
     float           alpha;
     const float*    sectorLightLevel;
@@ -1800,11 +1819,15 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         !(p->alpha < 1 || !msA->isOpaque || p->blendMode > 0));
 }
 
-static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
+static boolean doRenderSeg(seg_t* seg,
                            const fvertex_t* from, const fvertex_t* to,
                            float bottom, float top, const pvec3_t normal,
-                           float alpha, sector_t* frontsec, boolean skyMask,
-                           short sideFlags, boolean addDLights,
+                           float alpha,
+                           const float* lightLevel, float lightLevelDelta,
+                           const float* lightColor,
+                           uint lightListIdx,
+                           const walldiv_t* divs,
+                           boolean skyMask,
                            boolean addFakeRadio, boolean addReflection,
                            boolean isGlowing,
                            const float texTL[3], const float texBR[3],
@@ -1812,16 +1835,13 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
                            const float texScale[2],
                            blendmode_t blendMode,
                            const float* color, const float* color2,
+                           biastracker_t* tracker,
+                           biasaffection_t* affected, uint elmIdx /*tmp*/,
                            const material_snapshot_t* msA, float inter,
                            const material_snapshot_t* msB)
 {
     rendworldpoly_params_t params;
-    walldiv_t           divs[2];
-    boolean             hasDivisions = false;
-    linedef_t*          line = seg->lineDef;
-    sidedef_t*          side = (line? SEG_SIDEDEF(seg) : NULL);
-    boolean             isTwoSided = (line &&
-        line->L_frontside && line->L_backside)? true : false;
+    sidedef_t*          side = (seg->lineDef? SEG_SIDEDEF(seg) : NULL);
     rvertex_t*          rvertices;
 
     // Init the params.
@@ -1832,34 +1852,23 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
     params.segLength = &seg->length;
     params.alpha = alpha;
     params.mapObject = seg;
-    params.elmIdx = (uint) section;
-    params.tracker = &seg->tracker[section];
-    params.affection = seg->affected;
+    params.elmIdx = elmIdx;
+    params.tracker = tracker;
+    params.affection = affected;
     params.normal = normal;
     params.texTL = texTL;
     params.texBR = texBR;
-    params.sectorLightLevel = &frontsec->lightLevel;
-    params.sectorLightColor = R_GetSectorLightColor(frontsec);
-    params.surfaceLightLevelDelta =
-        R_WallAngleLightLevelDelta(line, seg->side);
+    params.sectorLightLevel = lightLevel;
+    params.surfaceLightLevelDelta = lightLevelDelta;
+    params.sectorLightColor = lightColor;
     params.surfaceColor = color;
     params.surfaceColor2 = color2;
     params.blendMode = blendMode;
-    params.texOffset[0] = texOffset[0];
-    params.texOffset[1] = texOffset[1];
-    params.texScale[0] = texScale[0];
-    params.texScale[1] = texScale[1];
+    params.texOffset = texOffset;
+    params.texScale = texScale;
+    params.lightListIdx = lightListIdx;
 
-    // Check for neighborhood division?
-    if(!(section == SEG_MIDDLE && isTwoSided) &&
-       !(line->inFlags & LF_POLYOBJ))
-    {
-        applyWallHeightDivision(divs, seg, frontsec, bottom, top);
-        if(divs[0].num > 0 || divs[1].num > 0)
-            hasDivisions = true;
-    }
-
-    if(hasDivisions)
+    if(divs)
     {
         // Allocate enough vertices for the divisions too.
         rvertices = R_AllocRendVertices(3 + divs[0].num + 3 + divs[1].num);
@@ -1882,13 +1891,6 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
     // Top Right.
     V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
-    // Dynamic lights?
-    if(addDLights)
-        params.lightListIdx =
-            DL_ProjectOnSurface(ssec, params.texTL, params.texBR,
-                                side->SW_middlenormal,
-                                ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
-
     // Is reflective?
     if(addReflection)
     {
@@ -1900,16 +1902,15 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
         params.glowing = true;
 
     // Draw this seg.
-    if(renderWorldPoly(rvertices, 4, hasDivisions? divs : NULL, &params,
-                       msA, inter, msB))
+    if(renderWorldPoly(rvertices, 4, divs, &params, msA, inter, msB))
     {   // Drawn poly was opaque.
         // Render Fakeradio polys for this seg?
         if(params.type != RPT_SKY_MASK && addFakeRadio)
         {
             rendsegradio_params_t radioParams;
 
-            radioParams.sectorLightLevel = &frontsec->lightLevel;
-            radioParams.linedefLength = &line->length;
+            radioParams.sectorLightLevel = lightLevel;
+            radioParams.linedefLength = &seg->lineDef->length;
             radioParams.botCn = side->bottomCorners;
             radioParams.topCn = side->topCorners;
             radioParams.sideCn = side->sideCorners;
@@ -1936,8 +1937,7 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
             // Top Right.
             V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
-            Rend_RadioSegSection(rvertices, (hasDivisions? divs:NULL),
-                                 &radioParams);
+            Rend_RadioSegSection(rvertices, divs, &radioParams);
         }
 
         R_FreeRendVertices(rvertices);
@@ -1951,12 +1951,13 @@ static boolean doRenderSeg(subsector_t* ssec, seg_t* seg, segsection_t section,
 
 static void renderPlane(subsector_t* ssec, planetype_t type,
                         float height, const vectorcomp_t normal[3],
-                        material_t* inMat, int sufFlags, short sufInFlags,
+                        material_t* inMat, short sufInFlags,
                         const float sufColor[4], blendmode_t blendMode,
                         const float texTL[3], const float texBR[3],
-                        const float texOff[2],
+                        const float texOffset[2], const float texScale[2],
                         boolean skyMasked,
-                        boolean addDLights, biastracker_t* tracker,
+                        boolean addDLights, boolean isGlowing,
+                        biastracker_t* tracker,
                         biasaffection_t* affected, uint elmIdx /*tmp*/,
                         int texMode /*tmp*/)
 {
@@ -1986,20 +1987,8 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     params.sectorLightColor = R_GetSectorLightColor(sec);
     params.surfaceLightLevelDelta = 0;
     params.surfaceColor = sufColor;
-
-    params.texOffset[VX] = texOff[VX];
-    params.texOffset[VY] = texOff[VY];
-
-    // Add the Y offset to orient the Y flipped texture.
-    if(type == PLN_CEILING)
-        params.texOffset[VY] -= ssec->bBox[1].pos[VY] - ssec->bBox[0].pos[VY];
-
-    // Add the additional offset to align with the worldwide grid.
-    params.texOffset[VX] += ssec->worldGridOffset[VX];
-    params.texOffset[VY] += ssec->worldGridOffset[VY];
-
-    params.texScale[VX] = ((sufFlags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
-    params.texScale[VY] = ((sufFlags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    params.texOffset = texOffset;
+    params.texScale = texScale;
 
     if(skyMasked)
     {
@@ -2023,21 +2012,12 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     }
     else
     {
-        int                 surfaceInFlags = 0;
-
         params.type = RPT_NORMAL;
         mat = inMat;
 
-        // Make any necessary adjustments to the surface flags to suit the
-        // current texture mode.
-        surfaceInFlags = sufInFlags;
-        if(texMode == 1)
+        if(isGlowing)
         {
             params.glowing = true; // Make it stand out
-        }
-        else if(texMode == 2)
-        {
-            surfaceInFlags &= ~(SUIF_MATERIAL_FIX);
         }
 
         if(type != PLN_MID)
@@ -2054,10 +2034,6 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
                 params.blendMode = blendMode;
             params.alpha = sufColor[CA];
         }
-
-        if(glowingTextures &&
-           ((sufFlags & DDSUF_GLOW) || (mat && (mat->flags & MATF_GLOW))))
-            params.glowing = true;
     }
 
     /**
@@ -2087,8 +2063,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     }
 
     rvertices = R_AllocRendVertices(numVertices);
-    Rend_PreparePlane(rvertices, numVertices, height, ssec,
-                      !(normal[VZ] > 0));
+    Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0));
 
     if(params.type != RPT_SKY_MASK)
     {
@@ -2103,11 +2078,12 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
 
 static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
                              float height, const vectorcomp_t normal[3],
-                             material_t* inMat, int sufFlags, short sufInFlags,
+                             material_t* inMat, short sufInFlags,
                              const float sufColor[4], blendmode_t blendMode,
-                             const float texOff[2],
+                             const float texOffset[2], const float texScale[2],
                              boolean skyMasked,
-                             boolean addDLights, biastracker_t* tracker,
+                             boolean addDLights, boolean isGlowing,
+                             biastracker_t* tracker,
                              biasaffection_t* affected, uint elmIdx /*tmp*/,
                              int texMode /*tmp*/)
 {
@@ -2132,9 +2108,9 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         V3_Set(texBR, ssec->bBox[1].pos[VX],
                ssec->bBox[type == PLN_FLOOR? 0 : 1].pos[VY], height);
 
-        renderPlane(ssec, type, height, normal, inMat, sufFlags, sufInFlags,
-                    sufColor, blendMode, texTL, texBR, texOff, skyMasked,
-                    addDLights, tracker, affected, elmIdx, texMode);
+        renderPlane(ssec, type, height, normal, inMat, sufInFlags,
+                    sufColor, blendMode, texTL, texBR, texOffset, texScale,
+                    skyMasked, addDLights, isGlowing, tracker, affected, elmIdx, texMode);
     }
 }
 
@@ -2159,17 +2135,20 @@ static boolean isVisible(surface_t* surface, sector_t* frontsec,
     return false;
 }
 
-static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
-                                segsection_t section, surface_t* surface,
-                                const fvertex_t* from, const fvertex_t* to,
-                                float bottom, float top,
-                                float texXOffset, float texYOffset,
-                                sector_t* frontsec, boolean softSurface,
-                                boolean skyMask, boolean addDLights,
-                                short sideFlags)
+static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
+                              segsection_t section, surface_t* surface,
+                              const fvertex_t* from, const fvertex_t* to,
+                              float bottom, float top,
+                              const float texOffset[2],
+                              sector_t* frontsec, boolean softSurface,
+                              boolean addDLights, short sideFlags)
 {
     float               alpha;
+    boolean             skyMask;
     boolean             solidSeg = true;
+
+    if(!isVisible(surface, frontsec, false, &skyMask))
+        return false;
 
     if(bottom >= top)
         return true;
@@ -2225,8 +2204,10 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
     {
         int                 texMode = 0;
         short               tempflags = 0;
-        float               texTL[3], texBR[3], texOffset[2], texScale[2],
+        uint                lightListIdx = 0;
+        float               texTL[3], texBR[3], texScale[2],
                             inter = 0;
+        walldiv_t           divs[2];
         boolean             forceOpaque = false;
         material_t*         mat = NULL;
         rendpolytype_t      type = RPT_NORMAL;
@@ -2241,8 +2222,6 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
         memset(&msA, 0, sizeof(msA));
         memset(&msB, 0, sizeof(msB));
 
-        texOffset[VX] = texXOffset;
-        texOffset[VY] = texYOffset;
         texScale[0] = ((surface->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
@@ -2335,23 +2314,41 @@ static boolean renderSegSection(subsector_t* ssec, seg_t* seg,
             inter = getSnapshots(&msA, blended? &msB : NULL, mat);
         }
 
-        addDLights = (addDLights && !isGlowing? true : false);
+        if(addDLights && !isGlowing)
+            lightListIdx =
+                DL_ProjectOnSurface(ssec, texTL, texBR,
+                                    SEG_SIDEDEF(seg)->SW_middlenormal,
+                                    ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
+
         addFakeRadio = ((addFakeRadio && !isGlowing)? true : false);
         addReflection = (useShinySurfaces && mat && mat->reflection? true : false);
 
         selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
 
-        solidSeg = doRenderSeg(ssec, seg, section,
+        // Check for neighborhood division?
+        divs[0].num = divs[1].num = 0;
+        if(!(section == SEG_MIDDLE && isTwoSided) &&
+           !(seg->lineDef->inFlags & LF_POLYOBJ))
+        {
+            applyWallHeightDivision(divs, seg, frontsec, bottom, top);
+        }
+
+        solidSeg = doRenderSeg(seg,
                                from, to, bottom, top,
                                surface->normal, (forceOpaque? 1 : alpha),
-                               frontsec,
-                               skyMask, sideFlags,
-                               addDLights,
+                               &frontsec->lightLevel,
+                               R_WallAngleLightLevelDelta(seg->lineDef, seg->side),
+                               R_GetSectorLightColor(frontsec),
+                               lightListIdx,
+                               (divs[0].num > 0 || divs[1].num > 0)? divs : NULL,
+                               skyMask,
                                addFakeRadio,
                                addReflection,
                                isGlowing,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
+                               &seg->tracker[section], seg->affected,
+                               (uint) section,
                                &msA, inter, blended? &msB : NULL);
     }
 
@@ -2402,24 +2399,22 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
     // Middle section.
     if(side->SW_middleinflags & SUIF_PVIS)
     {
-        float               offset[2];
+        float               texOffset[2];
         surface_t*          surface = &side->SW_middlesurface;
-        boolean             skyMask;
 
-        offset[0] = surface->visOffset[0] + seg->offset;
-        offset[1] = surface->visOffset[1];
+        texOffset[0] = surface->visOffset[0] + seg->offset;
+        texOffset[1] = surface->visOffset[1];
 
         if(ldef->flags & DDLF_DONTPEGBOTTOM)
-            offset[1] += -(fceil - ffloor);
+            texOffset[1] += -(fceil - ffloor);
 
         Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
 
-        if(isVisible(&side->SW_middlesurface, frontsec, false, &skyMask))
-            renderSegSection(ssec, seg, SEG_MIDDLE, &side->SW_middlesurface,
-                             &seg->SG_v1->v, &seg->SG_v2->v, ffloor, fceil,
-                             offset[0], offset[1],
-                             /*temp >*/ frontsec, /*< temp*/
-                             false, skyMask, true, side->flags);
+        rendSegSection(ssec, seg, SEG_MIDDLE, &side->SW_middlesurface,
+                           &seg->SG_v1->v, &seg->SG_v2->v, ffloor, fceil,
+                           texOffset,
+                           /*temp >*/ frontsec, /*< temp*/
+                           false, true, side->flags);
     }
 
     if(P_IsInVoid(viewPlayer))
@@ -2428,213 +2423,291 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
     return solidSeg;
 }
 
+static boolean findBottomTop(segsection_t section, float segOffset,
+                             const surface_t* suf,
+                             const plane_t* ffloor, const plane_t* fceil,
+                             const plane_t* bfloor, const plane_t* bceil,
+                             boolean unpegBottom, boolean unpegTop,
+                             boolean stretchMiddle, boolean isSelfRef,
+                             float* bottom, float* top, float texOffset[2])
+{
+    switch(section)
+    {
+    case SEG_TOP:
+        *top = fceil->visHeight;
+        // Can't go over front ceiling, would induce polygon flaws.
+        if(bceil->visHeight < ffloor->visHeight)
+            *bottom = ffloor->visHeight;
+        else
+            *bottom = bceil->visHeight;
+        if(*top > *bottom)
+        {
+            texOffset[VX] = suf->visOffset[VX] + segOffset;
+            texOffset[VY] = suf->visOffset[VY];
+
+            // Align with normal middle texture?
+            if(!unpegTop)
+                texOffset[VY] += -(fceil->visHeight - bceil->visHeight);
+
+            return true;
+        }
+        break;
+
+    case SEG_BOTTOM:
+        {
+        float               t = bfloor->visHeight;
+
+        *bottom = ffloor->visHeight;
+        // Can't go over the back ceiling, would induce polygon flaws.
+        if(bfloor->visHeight > bceil->visHeight)
+            t = bceil->visHeight;
+
+        // Can't go over front ceiling, would induce polygon flaws.
+        if(t > fceil->visHeight)
+            t = fceil->visHeight;
+        *top = t;
+
+        if(*top > *bottom)
+        {
+            texOffset[VX] = suf->visOffset[VX] + segOffset;
+            texOffset[VY] = suf->visOffset[VY];
+
+            // Can't go over the back ceiling, would induce polygon flaws.
+            if(bfloor->visHeight > bceil->visHeight)
+                texOffset[VY] += bfloor->visHeight - bceil->visHeight;
+
+            // Can't go over front ceiling, would induce polygon flaws.
+            if(*top > fceil->visHeight)
+                texOffset[VY] += *top - fceil->visHeight;
+
+            // Align with normal middle texture?
+            if(unpegBottom)
+                texOffset[VY] += (fceil->visHeight - bfloor->visHeight);
+
+            return true;
+        }
+        break;
+        }
+    case SEG_MIDDLE:
+        {
+        float               ftop, fbottom, vR_ZBottom, vR_ZTop;
+        material_t*         mat = suf->material->current;
+
+        if(isSelfRef)
+        {
+            fbottom = MIN_OF(bfloor->visHeight, ffloor->visHeight);
+            ftop    = MAX_OF(bceil->visHeight, fceil->visHeight);
+        }
+        else
+        {
+            fbottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
+            ftop    = MIN_OF(bceil->visHeight, fceil->visHeight);
+        }
+
+        fbottom += suf->visOffset[2];
+        ftop    += suf->visOffset[2];
+
+        *bottom = vR_ZBottom = fbottom;
+        *top    = vR_ZTop    = ftop;
+
+        if(stretchMiddle)
+        {
+            if(*top > *bottom)
+            {
+                texOffset[VX] = suf->visOffset[VX] + segOffset;
+                texOffset[VY] = 0;
+
+                return true;
+            }
+        }
+        else
+        {
+            boolean             clipBottom =
+                !(R_IsSkySurface(&ffloor->surface) &&
+                  R_IsSkySurface(&bfloor->surface));
+            boolean             clipTop =
+                !(R_IsSkySurface(&fceil->surface) &&
+                  R_IsSkySurface(&bceil->surface));
+
+            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop,
+                    NULL, suf->visOffset[VY], mat->height, unpegBottom,
+                    clipTop, clipBottom))
+            {
+                texOffset[VX] = suf->visOffset[VX] + segOffset;
+                texOffset[VY] = 0;
+
+                return true;
+            }
+        }
+        }
+        break;
+    }
+
+    return false;
+}
+
 /**
  * Renders wall sections for given two-sided seg.
  */
 static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
 {
-    int                 solidSeg = false;
-    sector_t*           backsec;
-    sidedef_t*          backsid, *side;
-    linedef_t*          ldef;
-    float               ffloor, fceil, bfloor, bceil;
-    boolean             backSide;
-    sector_t*           frontsec;
     int                 pid = viewPlayer - ddPlayers;
+    float               bottom, top, texOffset[2];
+    sector_t*           frontSec, *backSec;
+    sidedef_t*          frontSide, *backSide;
+    plane_t*            ffloor, *fceil, *bfloor, *bceil;
+    linedef_t*          line;
+    int                 solidSeg = false;
 
-    backsid = SEG_SIDEDEF(seg->backSeg);
-    side = SEG_SIDEDEF(seg);
-    frontsec = side->sector;
-    backsec = backsid->sector;
-    backSide = seg->side;
-    ldef = seg->lineDef;
+    frontSide = SEG_SIDEDEF(seg);
+    backSide = SEG_SIDEDEF(seg->backSeg);
+    frontSec = frontSide->sector;
+    backSec = backSide->sector;
+    line = seg->lineDef;
 
-    if(!ldef->mapped[pid])
+    if(!line->mapped[pid])
     {
-        ldef->mapped[pid] = true; // This line is now seen in the map.
+        line->mapped[pid] = true; // This line is now seen in the map.
 
         // Send a status report.
         if(gx.HandleMapObjectStatusReport)
             gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
-                                           GET_LINE_IDX(ldef),
+                                           GET_LINE_IDX(line),
                                            DMU_LINEDEF, &pid);
     }
 
-    if(backsec == frontsec &&
-       !side->SW_topmaterial && !side->SW_bottommaterial &&
-       !side->SW_middlematerial)
+    if(backSec == frontSec &&
+       !frontSide->SW_topmaterial && !frontSide->SW_bottommaterial &&
+       !frontSide->SW_middlematerial)
        return false; // Ugh... an obvious wall seg hack. Best take no chances...
 
-    ffloor = ssec->sector->SP_floorvisheight;
-    fceil = ssec->sector->SP_ceilvisheight;
+    ffloor = ssec->sector->SP_plane(PLN_FLOOR);
+    fceil  = ssec->sector->SP_plane(PLN_CEILING);
+    bfloor = backSec->SP_plane(PLN_FLOOR);
+    bceil  = backSec->SP_plane(PLN_CEILING);
 
-    bceil = backsec->SP_ceilvisheight;
-    bfloor = backsec->SP_floorvisheight;
-
-    if((side->SW_middleinflags & SUIF_PVIS) ||
-       (side->SW_topinflags & SUIF_PVIS) ||
-       (side->SW_bottominflags & SUIF_PVIS))
+    if((frontSide->SW_middleinflags & SUIF_PVIS) ||
+       (frontSide->SW_topinflags & SUIF_PVIS) ||
+       (frontSide->SW_bottominflags & SUIF_PVIS))
         Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
 
-    // Create the wall sections.
-
-    // We may need multiple wall sections.
-    // Determine which parts of the segment are visible.
+    /**
+     * Create the wall sections.
+     *
+     * We may need multiple wall sections.
+     * Determine which parts of the segment are really visible.
+     */
 
     // Middle section.
-    if(side->SW_middleinflags & SUIF_PVIS)
+    if(frontSide->SW_middleinflags & SUIF_PVIS)
     {
-        surface_t*          surface = &side->SW_middlesurface;
-        float               texOffset[2];
-        float               top, bottom, vL_ZBottom, vR_ZBottom, vL_ZTop, vR_ZTop;
-        boolean             softSurface = false, clipBottom, clipTop;
-        material_t*         mat;
+        surface_t*          suf = &frontSide->SW_middlesurface;
 
-        if(LINE_SELFREF(ldef))
+        if(findBottomTop(SEG_MIDDLE, seg->offset, suf,
+                         ffloor, fceil, bfloor, bceil,
+                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                         (line->flags & DDLF_DONTPEGTOP)? true : false,
+                         LINE_SELFREF(line)? true : false,
+                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+                         &bottom, &top, texOffset))
         {
-            bottom = MIN_OF(bfloor, ffloor);
-            top    = MAX_OF(bceil, fceil);
-        }
-        else
-        {
-            bottom = MAX_OF(bfloor, ffloor);
-            top    = MIN_OF(bceil, fceil);
-        }
-
-        bottom += surface->visOffset[2];
-        top += surface->visOffset[2];
-
-        vL_ZBottom = vR_ZBottom = bottom;
-        vL_ZTop    = vR_ZTop    = top;
-
-        clipTop = !(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-                    R_IsSkySurface(&backsec->SP_ceilsurface));
-        clipBottom = !(R_IsSkySurface(&frontsec->SP_floorsurface) &&
-                       R_IsSkySurface(&backsec->SP_floorsurface));
-
-        mat = surface->material->current;
-        if((side->flags & SDF_MIDDLE_STRETCH) ||
-           Rend_MidMaterialPos
-           (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
-           &texOffset[VY], surface->visOffset[VY], mat->height,
-            (ldef->flags & DDLF_DONTPEGBOTTOM)? true : false,
-            clipTop, clipBottom))
-        {
-            boolean             skyMask;
-
-            // Can we make this a soft surface?
-            if((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-               !(ldef->flags & DDLF_BLOCKING))
+            solidSeg = rendSegSection(ssec, seg, SEG_MIDDLE, suf,
+                                      &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
+                                      frontSec,
+                                      (((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+                                        !(line->flags & DDLF_BLOCKING))? true : false),
+                                      true, frontSide->flags);
+            if(solidSeg)
             {
-                softSurface = true;
+                float               xbottom, xtop;
+                surface_t*          suf = &frontSide->SW_middlesurface;
+
+                if(LINE_SELFREF(line))
+                {
+                    xbottom = MIN_OF(bfloor->visHeight, ffloor->visHeight);
+                    xtop    = MAX_OF(bceil->visHeight, fceil->visHeight);
+                }
+                else
+                {
+                    xbottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
+                    xtop    = MIN_OF(bceil->visHeight, fceil->visHeight);
+                }
+
+                xbottom += suf->visOffset[2];
+                xtop    += suf->visOffset[2];
+
+                // Can we make this a solid segment?
+                if(!(top >= xtop && bottom <= xbottom))
+                     solidSeg = false;
             }
-
-            texOffset[VX] = surface->visOffset[VX] + seg->offset;
-            texOffset[VY] = 0;
-
-            if(isVisible(surface, frontsec, false, &skyMask))
-                solidSeg =
-                    renderSegSection(ssec, seg, SEG_MIDDLE, surface,
-                                     &seg->SG_v1->v, &seg->SG_v2->v,
-                                     vL_ZBottom, vL_ZTop, texOffset[VX],
-                                     texOffset[VY],
-                                     /*temp >*/ frontsec, /*< temp*/
-                                     softSurface, skyMask, true,
-                                     side->flags);
-
-            // Can we make this a solid segment?
-            if(!(vL_ZTop >= top && vL_ZBottom <= bottom &&
-                 vR_ZTop >= top && vR_ZBottom <= bottom))
-                 solidSeg = false;
         }
     }
 
     // Upper section.
-    if(side->SW_topinflags & SUIF_PVIS)
+    if(frontSide->SW_topinflags & SUIF_PVIS)
     {
-        float               bottom = bceil;
-        float               texOffset[2];
-        surface_t*          surface = &side->SW_topsurface;
-        boolean             skyMask;
+        surface_t*      suf = &frontSide->SW_topsurface;
 
-        if(bceil < ffloor)
-        {   // Can't go over front ceiling, would induce polygon flaws.
-            bottom = ffloor;
+        if(findBottomTop(SEG_TOP, seg->offset, suf,
+                         ffloor, fceil, bfloor, bceil,
+                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                         (line->flags & DDLF_DONTPEGTOP)? true : false,
+                         LINE_SELFREF(line)? true : false,
+                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+                         &bottom, &top, texOffset))
+        {
+            rendSegSection(ssec, seg, SEG_TOP, suf,
+                           &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
+                           frontSec, false, true, frontSide->flags);
         }
-
-        texOffset[VX] = surface->visOffset[VX] + seg->offset;
-        texOffset[VY] = surface->visOffset[VY];
-
-        if(!(ldef->flags & DDLF_DONTPEGTOP))
-            texOffset[VY] += -(fceil - bceil);  // Align with normal middle texture.
-
-        if(isVisible(&side->SW_topsurface, frontsec, false, &skyMask))
-            renderSegSection(ssec, seg, SEG_TOP, &side->SW_topsurface,
-                             &seg->SG_v1->v, &seg->SG_v2->v, bottom, fceil,
-                             texOffset[VX], texOffset[VY], frontsec, false,
-                             skyMask, true, side->flags);
     }
 
     // Lower section.
-    if(side->SW_bottominflags & SUIF_PVIS)
+    if(frontSide->SW_bottominflags & SUIF_PVIS)
     {
-        float               top = bfloor;
-        float               texOffset[2];
-        surface_t*          surface = &side->SW_bottomsurface;
-        boolean             skyMask;
+        surface_t*          suf = &frontSide->SW_bottomsurface;
 
-        texOffset[VX] = surface->visOffset[VX] + seg->offset;
-        texOffset[VY] = surface->visOffset[VY];
-
-        if(bfloor > bceil)
-        {   // Can't go over the back ceiling, would induce polygon flaws.
-            texOffset[VY] += bfloor - bceil;
-            top = bceil;
+        if(findBottomTop(SEG_BOTTOM, seg->offset, suf,
+                         ffloor, fceil, bfloor, bceil,
+                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                         (line->flags & DDLF_DONTPEGTOP)? true : false,
+                         LINE_SELFREF(line)? true : false,
+                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+                         &bottom, &top, texOffset))
+        {
+            rendSegSection(ssec, seg, SEG_BOTTOM, suf,
+                           &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
+                           frontSec, false, true, frontSide->flags);
         }
-
-        if(top > fceil)
-        {   // Can't go over front ceiling, would induce polygon flaws.
-            texOffset[VY] += top - fceil;
-            top = fceil;
-        }
-
-        if(ldef->flags & DDLF_DONTPEGBOTTOM)
-            texOffset[VY] += (fceil - bfloor); // Align with normal middle texture.
-
-        if(isVisible(&side->SW_bottomsurface, frontsec, false, &skyMask))
-            renderSegSection(ssec, seg, SEG_BOTTOM, &side->SW_bottomsurface,
-                             &seg->SG_v1->v, &seg->SG_v2->v, ffloor, top,
-                             texOffset[VX], texOffset[VY], frontsec,
-                             false, skyMask, true, side->flags);
     }
 
     // Can we make this a solid segment in the clipper?
     if(solidSeg == -1)
         return false; // NEVER (we have a hole we couldn't fix).
 
-    if(ldef->L_frontside && ldef->L_backside &&
-       ldef->L_frontsector == ldef->L_backsector)
+    if(line->L_frontside && line->L_backside &&
+       line->L_frontsector == line->L_backsector)
        return false;
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
-        if(backsec == frontsec)
+        if(backSec == frontSec)
         {
             // An obvious hack, what to do though??
         }
-        else if((bceil <= ffloor &&
-                    ((side->SW_topmaterial /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
-                     (side->SW_middlematerial))) ||
-                (bfloor >= fceil &&
-                    (side->SW_bottommaterial || side->SW_middlematerial)))
+        else if((bceil->visHeight <= ffloor->visHeight &&
+                    ((frontSide->SW_topmaterial /* && !(frontSide->flags & SDF_MIDTEXUPPER)*/) ||
+                     (frontSide->SW_middlematerial))) ||
+                (bfloor->visHeight >= fceil->visHeight &&
+                    (frontSide->SW_bottommaterial || frontSide->SW_middlematerial)))
         {
             // A closed gap.
             solidSeg = true;
         }
         else if((seg->frameFlags & SEGINF_BACKSECSKYFIX) ||
-                (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil &&
-                (side->SW_topmaterial /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
-                (side->SW_bottommaterial)))
+                (!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
+                (frontSide->SW_topmaterial /*&& !(frontSide->flags & SDF_MIDTEXUPPER)*/) &&
+                (frontSide->SW_bottommaterial)))
         {
             // A zero height back segment
             solidSeg = true;
@@ -3119,12 +3192,13 @@ static void Rend_RenderSubsector(uint ssecidx)
     for(i = 0; i < sect->planeCount; ++i)
     {
         int                 texMode;
-        float               height;
+        float               height, texOffset[2], texScale[2];
         const plane_t*      plane = sect->planes[i];
         const surface_t*    suf = &plane->surface;
         subplaneinfo_t*     subPln =
             &plane->subPlanes[ssec->inSectorID];
         material_t*         mat;
+        boolean             isGlowing = false;
 
         // Determine plane height.
         if(!R_IsSkySurface(suf))
@@ -3162,11 +3236,30 @@ static void Rend_RenderSubsector(uint ssecidx)
             // For lighting debug, render all solid surfaces using the gray texture.
             mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
 
+        V2_Copy(texOffset, suf->visOffset);
+
+        // Add the Y offset to orient the Y flipped texture.
+        if(plane->type == PLN_CEILING)
+            texOffset[VY] -= ssec->bBox[1].pos[VY] - ssec->bBox[0].pos[VY];
+
+        // Add the additional offset to align with the worldwide grid.
+        texOffset[VX] += ssec->worldGridOffset[VX];
+        texOffset[VY] += ssec->worldGridOffset[VY];
+
+        texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
+        texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+
+        if(glowingTextures &&
+           (texMode == 1 || ((suf->flags & DDSUF_GLOW) ||
+                             (mat && (mat->flags & MATF_GLOW)))))
+            isGlowing = true;
+
         Rend_RenderPlane(ssec, plane->type, height, suf->normal, mat,
-                         suf->flags, suf->inFlags, suf->rgba,
-                         suf->blendMode, suf->visOffset, R_IsSkySurface(suf),
-                         true, &subPln->tracker, subPln->affected,
-                         plane->planeID, texMode);
+                         suf->inFlags, suf->rgba,
+                         suf->blendMode, texOffset, texScale,
+                         R_IsSkySurface(suf), true, isGlowing,
+                         &subPln->tracker, subPln->affected, plane->planeID,
+                         texMode);
     }
 
     if(devSkyMode == 2)
@@ -3196,9 +3289,10 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
                              P_GetMaterial(DDT_GRAY, MN_SYSTEM),
-                             suf->flags, suf->inFlags, suf->rgba,
-                             BM_NORMAL, suf->visOffset, false,
+                             suf->inFlags, suf->rgba,
+                             BM_NORMAL, NULL, NULL, false,
                              (vy > plane->visHeight? true : false),
+                             false,
                              &subPln->tracker, subPln->affected,
                              plane->planeID, 2);
         }
@@ -3218,9 +3312,10 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
                              P_GetMaterial(DDT_GRAY, MN_SYSTEM),
-                             suf->flags, suf->inFlags, suf->rgba,
-                             BM_NORMAL, suf->visOffset, false,
+                             suf->inFlags, suf->rgba,
+                             BM_NORMAL, NULL, NULL, false,
                              (vy < plane->visHeight? true : false),
+                             false,
                              &subPln->tracker, subPln->affected,
                              plane->planeID, 2);
         }

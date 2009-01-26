@@ -287,11 +287,17 @@ if((error = glGetError()) != GL_NO_ERROR)
 
 static void rlBind2(const rendlist_texmapunit_t* tmu)
 {
+    if(!tmu->tex)
+        return;
+
     rlBind(tmu->tex, tmu->magMode);
 }
 
 static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
 {
+    if(!tmu->tex)
+        return;
+
     GL_ActiveTexture(GL_TEXTURE0 + (byte) unit);
     rlBind(tmu->tex, tmu->magMode);
 }
