@@ -351,7 +351,6 @@ static void copyStr(char *dest, const char *src, int num, int destSize)
  * Folder 'Music' is mapped to Data/Game/Music
  * Folder 'Textures' is mapped to Data/Game/Textures
  * Folder 'Flats' is mapped to Data/Game/Flats
- * Folder 'ShineMaps' is mapped to Data/Game/ShineMaps
  * Folder 'DetailTextures' is mapped to Data/Game/DetailTextures
  * Folder 'Patches' is mapped to Data/Game/Patches
  * Folder 'Sfx' is mapped to Data/Game/Sfx
@@ -372,7 +371,6 @@ static void mapPath(char *path)
            !strnicmp("Music" DIR_SEP_STR, path, 6) ||
            !strnicmp("Textures" DIR_SEP_STR, path, 9) ||
            !strnicmp("Flats" DIR_SEP_STR, path, 6) ||
-           !strnicmp("ShineMaps" DIR_SEP_STR, path, 10) ||
            !strnicmp("DetailTextures" DIR_SEP_STR, path, 15) ||
            !strnicmp("Patches" DIR_SEP_STR, path, 8) ||
            !strnicmp("Sfx" DIR_SEP_STR, path, 4))
