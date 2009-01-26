@@ -1700,7 +1700,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
     for(pass = 0; pass < 2; ++pass)
     {
         count = initialCount;
-        maxCount = typeInTime * 2;
+        maxCount = typeInTime;
 
         // Disable type-in?
         if(!doTypeIn || cfg.menuEffects > 0)
@@ -1748,6 +1748,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
             {
                 break;
             }
+
             if(!c)
                 break;
             if(c == '\n')
