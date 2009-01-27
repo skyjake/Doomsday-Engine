@@ -314,6 +314,7 @@ typedef struct automap_s {
 } automap_t;
 
 typedef struct vectorgrap_s {
+    DGLuint         dlist;
     uint            count;
     vgline_t*       lines;
 } vectorgrap_t;
@@ -512,6 +513,7 @@ static vectorgrap_t* getVectorGraphic(uint idx)
 
     vg->lines = malloc(linecount * sizeof(vgline_t));
     vg->count = linecount;
+    vg->dlist = 0;
     for(i = 0; i < linecount; ++i)
         memcpy(&vg->lines[i], &lines[i], sizeof(vgline_t));
     }
@@ -794,6 +796,8 @@ void AM_Shutdown(void)
 
         if(vg)
         {
+            if(vg->dlist)
+                DGL_DeleteLists(vg->dlist, 1);
             free(vg->lines);
             free(vg);
         }
@@ -2919,41 +2923,40 @@ static void rotate2D(float* x, float* y, angle_t a)
     *x = tmpx;
 }
 
-static void drawLineCharacter(const vectorgrap_t* vg)
+static DGLuint constructLineCharacter(DGLuint name, const vectorgrap_t* vg)
 {
-    uint                i;
-
-    DGL_Begin(DGL_LINES);
-    for(i = 0; i < vg->count; ++i)
+    if(DGL_NewList(name, DGL_COMPILE))
     {
-        vgline_t*           vgl = &vg->lines[i];
+        uint                i;
 
-        DGL_TexCoord2f(0, vgl->a.pos[VX], vgl->a.pos[VY]);
-        DGL_Vertex2f(vgl->a.pos[VX], vgl->a.pos[VY]);
-        DGL_TexCoord2f(0, vgl->b.pos[VX], vgl->b.pos[VY]);
-        DGL_Vertex2f(vgl->b.pos[VX], vgl->b.pos[VY]);
+        DGL_Begin(DGL_LINES);
+        for(i = 0; i < vg->count; ++i)
+        {
+            vgline_t*           vgl = &vg->lines[i];
+
+            DGL_TexCoord2f(0, vgl->a.pos[VX], vgl->a.pos[VY]);
+            DGL_Vertex2f(vgl->a.pos[VX], vgl->a.pos[VY]);
+            DGL_TexCoord2f(0, vgl->b.pos[VX], vgl->b.pos[VY]);
+            DGL_Vertex2f(vgl->b.pos[VX], vgl->b.pos[VY]);
+        }
+        DGL_End();
+
+        return DGL_EndList();
     }
-    DGL_End();
+
+    return 0;
 }
 
 /**
  * Draws a line character (eg the player arrow)
  */
 static void renderLineCharacter(vectorgrap_t* vg, float x, float y,
-                                float angle, float scale, int color,
-                                float alpha, blendmode_t blendmode)
+                                float angle, float scale,
+                                const float rgb[3], float alpha,
+                                blendmode_t blendmode)
 {
-    automap_t*          map = &automaps[mapviewplayer];
-    float               oldLineWidth, rgba[4];
-
-    R_PalIdxToRGB(color, rgba);
-    rgba[3] = MINMAX_OF(0.f, alpha, 1.f);
-
-    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, AM_LINE_WIDTH);
-
-    DGL_Color4fv(rgba);
-    DGL_BlendMode(blendmode);
+    if(!vg->dlist)
+        vg->dlist = constructLineCharacter(0, vg);
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
@@ -2966,16 +2969,16 @@ static void renderLineCharacter(vectorgrap_t* vg, float x, float y,
     DGL_PushMatrix();
     DGL_Translatef(x, y, 1);
 
-    drawLineCharacter(vg);
+    DGL_Color4f(rgb[0], rgb[1], rgb[2], alpha);
+    DGL_BlendMode(blendmode);
+
+    DGL_CallList(vg->dlist);
 
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PopMatrix();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
-
-    // Restore previous line width.
-    DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 }
 
 /**
@@ -2992,8 +2995,7 @@ static void renderPlayers(void)
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t*           p = &players[i];
-        int                 color;
-        float               alpha;
+        float               rgb[3], alpha;
         mobj_t*             mo;
 
         if(!p->plr->inGame)
@@ -3004,19 +3006,20 @@ static void renderPlayers(void)
             continue;
 #endif
 
-        color = their_colors[cfg.playerColor[i]];
+        R_PalIdxToRGB(their_colors[cfg.playerColor[i]], rgb);
         alpha = cfg.automapLineAlpha;
-
 #if !__JHEXEN__
         if(p->powers[PT_INVISIBILITY])
-            alpha *= 0.125;
+            alpha *= .125f;
 #endif
+        alpha = MINMAX_OF(0.f, alpha * map->alpha, 1.f);
+
         mo = p->plr->mo;
 
         /* $unifiedangles */
         renderLineCharacter(vg, mo->pos[VX], mo->pos[VY],
                             mo->angle / (float) ANGLE_MAX * 360, size,
-                            color, alpha * map->alpha, BM_NORMAL);
+                            rgb, alpha, BM_NORMAL);
     }
 }
 
@@ -3043,12 +3046,17 @@ static int getKeyColorForMobjType(int type)
     };
     uint                i;
 
-    for(i = 0; keyColors[i].moType; ++i)
+    for(i = 0; keyColors[i].moType != -1; ++i)
         if(keyColors[i].moType == type)
             return keyColors[i].color;
 
     return -1; // Not a key.
 }
+
+typedef struct {
+    int             flags; // AMF_* flags.
+    float           rgb[3], alpha;
+} renderthing_params_t;
 
 /**
  * Draws all things on the map
@@ -3056,31 +3064,34 @@ static int getKeyColorForMobjType(int type)
 static boolean renderThing(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
-    automap_t*          map = &automaps[mapviewplayer];
-    int                 keyColor;
+    renderthing_params_t* p = (renderthing_params_t*) context;
 
-    if(map->flags & AMF_REND_KEYS)
+    if(p->flags & AMF_REND_KEYS)
     {
+        int                 keyColor;
+
         // Is this a key?
         if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
         {   // This mobj is indeed a key.
+            float               rgb[4];
+
+            R_PalIdxToRGB(keyColor, rgb);
+
             /* $unifiedangles */
             renderLineCharacter(getVectorGraphic(VG_KEYSQUARE),
-                                mo->pos[VX], mo->pos[VY],
-                                0, PLAYERRADIUS, keyColor,
-                                map->alpha * cfg.automapLineAlpha, BM_NORMAL);
+                                mo->pos[VX], mo->pos[VY], 0,
+                                PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
             return true; // Continue iteration.
         }
     }
 
-    if(map->flags & AMF_REND_THINGS)
+    if(p->flags & AMF_REND_THINGS)
     {   // Something else.
         /* $unifiedangles */
         renderLineCharacter(getVectorGraphic(VG_TRIANGLE),
                             mo->pos[VX], mo->pos[VY],
                             mo->angle / (float) ANGLE_MAX * 360,
-                            PLAYERRADIUS, THINGCOLORS,
-                            map->alpha * cfg.automapLineAlpha, BM_NORMAL);
+                            PLAYERRADIUS, p->rgb, p->alpha, BM_NORMAL);
     }
 
     return true; // Continue iteration.
@@ -3525,7 +3536,6 @@ void AM_Drawer(int viewplayer)
     }
 
     // Restore the previous state.
-    DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
     DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
 
@@ -3539,7 +3549,18 @@ void AM_Drawer(int viewplayer)
     // Draw the map objects:
     renderPlayers();
     if(map->flags & (AMF_REND_THINGS|AMF_REND_KEYS))
-        P_IterateThinkers(P_MobjThinker, renderThing, NULL);
+    {
+        renderthing_params_t params;
+
+        params.flags = map->flags;
+        R_PalIdxToRGB(THINGCOLORS, params.rgb);
+        params.alpha = MINMAX_OF(0.f,
+            cfg.automapLineAlpha * map->alpha, 1.f);
+
+        P_IterateThinkers(P_MobjThinker, renderThing, &params);
+    }
+
+    DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 
     if(amMaskTexture)
     {
