@@ -1563,6 +1563,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\m_stack.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\m_string.h"
 				>
 			</File>
