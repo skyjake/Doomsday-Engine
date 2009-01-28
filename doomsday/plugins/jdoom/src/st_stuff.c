@@ -289,7 +289,7 @@ cvar_t sthudCVars[] =
     {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
     {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1},
+    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1},
     {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
 
     // HUD icons
@@ -348,7 +348,7 @@ static void drawStatusBarBackground(int player, float width, float height)
 
     if(hud->blended)
     {
-        alpha = cfg.statusbarAlpha - hud->hideAmount;
+        alpha = cfg.statusbarOpacity - hud->hideAmount;
         if(!(alpha > 0))
             return;
 

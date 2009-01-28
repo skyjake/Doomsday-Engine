@@ -232,7 +232,7 @@ desc = Menu selection flash speed.
 desc = 1=Menu skull turns at slider items.
 
 [menu-effect]
-desc = Disable menu effects: 1=type-in, 2=all.
+desc = 0=Disable menu effects. 1=type-in.
 
 [menu-color-r]
 desc = Menu color red component.
@@ -256,7 +256,7 @@ desc = Menu color B blue component.
 desc = Strength of type-in glitter.
 
 [menu-fog]
-desc = Menu fog mode: 0=shimmer, 1=black smoke, 2=blue vertical, 3=grey smoke, 4=dimmed.
+desc = Menu fog mode: 0=off, 1=shimmer, 2=black smoke, 3=blue vertical, 4=grey smoke, 5=dimmed.
 
 [menu-shadow]
 desc = Menu text shadow darkness.
@@ -465,41 +465,11 @@ desc = Chat macro 9.
 [chat-macro9]
 desc = Chat macro 10.
 
-[map-color-unseen-r]
-desc = Automap unseen areas, red component.
+[map-alpha-lines]
+desc = Alpha level of automap lines.
 
-[map-color-unseen-g]
-desc = Automap unseen areas, green component.
-
-[map-color-unseen-b]
-desc = Automap unseen areas, blue component.
-
-[map-color-wall-r]
-desc = Automap walls, red component.
-
-[map-color-wall-g]
-desc = Automap walls, green component.
-
-[map-color-wall-b]
-desc = Automap walls, blue component.
-
-[map-color-floor-r]
-desc = Automap floor height difference lines, red component.
-
-[map-color-floor-g]
-desc = Automap floor height difference lines, green component.
-
-[map-color-floor-b]
-desc = Automap floor height difference lines, blue component.
-
-[map-color-ceiling-r]
-desc = Automap ceiling height difference lines, red component.
-
-[map-color-ceiling-g]
-desc = Automap ceiling height difference lines, green component.
-
-[map-color-ceiling-b]
-desc = Automap ceiling height difference lines, blue component.
+[map-babykeys]
+desc = 1=Show keys in automap (easy skill mode only).
 
 [map-background-r]
 desc = Automap background color, red component.
@@ -510,17 +480,14 @@ desc = Automap background color, green component.
 [map-background-b]
 desc = Automap background color, blue component.
 
-[map-background-a]
-desc = Alpha level of the automap background.
+[map-cheat-counter]
+desc = 6-bit bitfield. Show kills, items and secret counters in automap.
 
-[map-alpha-lines]
-desc = Alpha level of automap lines.
+[map-cheat-counter-scale]
+desc = Size factor for the counters in the automap.
 
-[map-rotate]
-desc = 1=Automap turns with player, up=forward.
-
-[map-huddisplay]
-desc = 0=No HUD when in the automap 1=Current HUD display shown when in the automap 2=Always show Status Bar when in the automap
+[map-customcolors]
+desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.
 
 [map-door-colors]
 desc = 1=Show door colors in automap.
@@ -528,20 +495,65 @@ desc = 1=Show door colors in automap.
 [map-door-glow]
 desc = Door glow thickness in the automap (with map-door-colors).
 
-[map-cheat-counter]
-desc = 6-bit bitfield. Show kills, items and secret counters in automap.
+[map-huddisplay]
+desc = 0=No HUD when in the automap 1=Current HUD display shown when in the automap 2=Always show Status Bar when in the automap
 
-[map-cheat-counter-scale]
-desc = Size factor for the counters in the automap.
+[map-mobj-r]
+desc = Automap mobjs, red component.
 
-[map-babykeys]
-desc = 1=Show keys in automap (easy skill mode only).
+[map-mobj-g]
+desc = Automap mobjs, green component.
+
+[map-mobj-b]
+desc = Automap mobjs, blue component.
+
+[map-opacity]
+desc = Opacity of the automap.
 
 [map-pan-speed]
 desc = Pan speed multiplier in the automap.
 
 [map-pan-resetonopen]
 desc = 1= Reset automap pan location when opening the automap.
+
+[map-rotate]
+desc = 1=Automap turns with player, up=forward.
+
+[map-wall-r]
+desc = Automap walls, red component.
+
+[map-wall-g]
+desc = Automap walls, green component.
+
+[map-wall-b]
+desc = Automap walls, blue component.
+
+[map-wall-ceilingchange-r]
+desc = Automap ceiling height difference lines, red component.
+
+[map-wall-ceilingchange-g]
+desc = Automap ceiling height difference lines, green component.
+
+[map-wall-ceilingchange-b]
+desc = Automap ceiling height difference lines, blue component.
+
+[map-wall-floorchange-r]
+desc = Automap floor height difference lines, red component.
+
+[map-wall-floorchange-g]
+desc = Automap floor height difference lines, green component.
+
+[map-wall-floorchange-b]
+desc = Automap floor height difference lines, blue component.
+
+[map-wall-unseen-r]
+desc = Automap unseen areas, red component.
+
+[map-wall-unseen-g]
+desc = Automap unseen areas, green component.
+
+[map-wall-unseen-b]
+desc = Automap unseen areas, blue component.
 
 [map-zoom-speed]
 desc = Zoom in/out speed multiplier in the automap.

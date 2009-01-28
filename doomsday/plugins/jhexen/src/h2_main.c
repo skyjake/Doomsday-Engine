@@ -281,8 +281,8 @@ void G_PreInit(void)
     cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
     cfg.menuColor2[1] = defFontRGB2[1];
     cfg.menuColor2[2] = defFontRGB2[2];
-    cfg.menuEffects = 1;
-    cfg.hudFog = 4;
+    cfg.menuEffects = 0;
+    cfg.hudFog = 5;
     cfg.menuSlam = true;
     cfg.flashColor[0] = 1.0f;
     cfg.flashColor[1] = .5f;
@@ -299,34 +299,35 @@ void G_PreInit(void)
     cfg.cameraNoClip = true;
     cfg.bobView = cfg.bobWeapon = 1;
 
-    cfg.statusbarAlpha = 1;
+    cfg.statusbarOpacity = 1;
     cfg.statusbarCounterAlpha = 1;
     cfg.inventoryTimer = 5;
 
-/*    cfg.automapPos = 5;
-    cfg.automapWidth = 1.0f;
-    cfg.automapHeight = 1.0f;*/
+    cfg.automapCustomColors = 0; // Never.
+    cfg.automapL0[0] = .42f; // Unseen areas
+    cfg.automapL0[1] = .42f;
+    cfg.automapL0[2] = .42f;
 
-    cfg.automapL0[0] = 0.42f;   // Unseen areas
-    cfg.automapL0[1] = 0.42f;
-    cfg.automapL0[2] = 0.42f;
+    cfg.automapL1[0] = .41f; // onesided lines
+    cfg.automapL1[1] = .30f;
+    cfg.automapL1[2] = .15f;
 
-    cfg.automapL1[0] = 0.41f;   // onesided lines
-    cfg.automapL1[1] = 0.30f;
-    cfg.automapL1[2] = 0.15f;
+    cfg.automapL2[0] = .82f; // floor height change lines
+    cfg.automapL2[1] = .70f;
+    cfg.automapL2[2] = .52f;
 
-    cfg.automapL2[0] = 0.82f;   // floor height change lines
-    cfg.automapL2[1] = 0.70f;
-    cfg.automapL2[2] = 0.52f;
+    cfg.automapL3[0] = .47f; // ceiling change lines
+    cfg.automapL3[1] = .30f;
+    cfg.automapL3[2] = .16f;
 
-    cfg.automapL3[0] = 0.47f;   // ceiling change lines
-    cfg.automapL3[1] = 0.30f;
-    cfg.automapL3[2] = 0.16f;
+    cfg.automapMobj[0] = 1.f;
+    cfg.automapMobj[1] = 1.f;
+    cfg.automapMobj[2] = 1.f;
 
     cfg.automapBack[0] = 1.0f;
     cfg.automapBack[1] = 1.0f;
     cfg.automapBack[2] = 1.0f;
-    cfg.automapBack[3] = 1.0f;
+    cfg.automapOpacity = 1.0f;
     cfg.automapLineAlpha = 1.0f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;

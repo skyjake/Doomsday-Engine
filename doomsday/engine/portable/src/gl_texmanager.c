@@ -94,6 +94,7 @@ void            GLTexture_SetMinMode(gltexture_t* tex, int minMode);
 
 static void LoadPalette(void);
 static void GL_SetTexCoords(float* tc, int wid, int hgt);
+static void calcGammaTable(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -218,6 +219,8 @@ void GL_EarlyInitTextureManager(void)
     else
         memcpy(pal18To8, W_CacheLumpNum(i, PU_CACHE), sizeof(pal18To8));
 
+    calcGammaTable();
+
     numGLTextures = 0;
     glTextures = NULL;
 
@@ -322,20 +325,25 @@ void GL_ShutdownTextureManager(void)
     texInited = false;
 }
 
-static void LoadPalette(void)
+static void calcGammaTable(void)
 {
-    int                 i, c;
-    byte*               playPal;
-    byte                palData[256 * 3];
+    int                 i;
     double              invGamma;
-
-    palLump = W_GetNumForName(PALLUMPNAME);
-    playPal = GL_GetPalette();
 
     // Clamp to a sane range.
     invGamma = 1.0f - MINMAX_OF(0, texGamma, 1);
     for(i = 0; i < 256; ++i)
         gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
+}
+
+static void LoadPalette(void)
+{
+    int                 i, c;
+    byte*               playPal;
+    byte                palData[256 * 3];
+
+    palLump = W_GetNumForName(PALLUMPNAME);
+    playPal = GL_GetPalette();
 
     // Prepare the color table.
     for(i = 0; i < 256; ++i)
@@ -2524,8 +2532,9 @@ void GL_DoUpdateTexGamma(cvar_t *unused)
 {
     if(texInited)
     {
-        GL_TexReset();
+        calcGammaTable();
         LoadPalette();
+        GL_TexReset();
     }
 
     Con_Printf("Gamma correction set to %f.\n", texGamma);

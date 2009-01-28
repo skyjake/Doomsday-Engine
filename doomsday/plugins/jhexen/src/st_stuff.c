@@ -227,7 +227,7 @@ cvar_t sthudCVars[] =
     {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
     {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1},
+    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1},
     {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
 
     // HUD icons
@@ -428,7 +428,7 @@ static void drawWeaponPieces(hudstate_t* hud)
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
 
-    alpha = MINMAX_OF(0.f, cfg.statusbarAlpha - hud->hideAmount, 1.f);
+    alpha = MINMAX_OF(0.f, cfg.statusbarOpacity - hud->hideAmount, 1.f);
 
     if(plr->pieces == 7)
     {
@@ -476,7 +476,7 @@ static void drawChain(hudstate_t* hud)
     int                 x, y, w, h, cw;
     int                 gemoffset = 36, pClass, pColor;
     float               healthPos, gemXOffset;
-    float               gemglow, rgba[4];
+    float               gemglow, rgb[3];
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
 
@@ -556,9 +556,9 @@ static void drawChain(hudstate_t* hud)
     DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    R_PalIdxToRGB(theirColors[pColor], rgba);
-    DGL_DrawRect(x + gemXOffset + 23, 193 - 6, 41, 24, rgba[0], rgba[1],
-                 rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
+    R_PalIdxToRGB(rgb, theirColors[pColor], false);
+    DGL_DrawRect(x + gemXOffset + 23, 193 - 6, 41, 24, rgb[0], rgb[1],
+                 rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
     DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
@@ -578,7 +578,7 @@ static void drawStatusBarBackground(int player)
 
     if(hud->blended)
     {
-        alpha = cfg.statusbarAlpha - hud->hideAmount;
+        alpha = cfg.statusbarOpacity - hud->hideAmount;
         if(!(alpha > 0))
             return;
         alpha = MINMAX_OF(0.f, alpha, 1.f);

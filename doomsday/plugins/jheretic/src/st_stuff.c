@@ -243,7 +243,7 @@ cvar_t sthudCVars[] =
     {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
     {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarAlpha, 0, 1},
+    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1},
     {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
 
     // HUD icons
@@ -327,7 +327,7 @@ static void drawChain(hudstate_t* hud)
     int                 chainY;
     float               healthPos, gemXOffset, gemglow;
     int                 x, y, w, h, gemNum;
-    float               cw, rgba[4];
+    float               cw, rgb[3];
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
 
@@ -402,15 +402,15 @@ static void drawChain(hudstate_t* hud)
                          1, hud->statusbarCounterAlpha,
                          lifeGems[gemNum].lump);
 
-    shadeChain((hud->statusbarCounterAlpha + cfg.statusbarAlpha) /3);
+    shadeChain((hud->statusbarCounterAlpha + cfg.statusbarOpacity) /3);
 
     // How about a glowing gem?
     DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    R_PalIdxToRGB(theirColors[gemNum], rgba);
-    DGL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgba[0], rgba[1],
-                 rgba[2], gemglow - (1 - hud->statusbarCounterAlpha));
+    R_PalIdxToRGB(rgb, theirColors[gemNum], false);
+    DGL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgb[0], rgb[1],
+                 rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
     DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
@@ -429,7 +429,7 @@ static void drawStatusBarBackground(int player)
 
     if(hud->blended)
     {
-        alpha = cfg.statusbarAlpha - hud->hideAmount;
+        alpha = cfg.statusbarOpacity - hud->hideAmount;
         if(!(alpha > 0))
             return;
         alpha = MINMAX_OF(0.f, alpha, 1.f);

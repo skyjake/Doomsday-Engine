@@ -124,4 +124,6 @@ void    SCEnterMultiplayerMenu(int option, void *data);
 
 void    MN_TickerEx(void); // The extended ticker.
 
+void            M_ToggleVar(int option, void* context);
+
 #endif

@@ -146,4 +146,6 @@ void        MN_DrTextB_CS(char *text, int x, int y);
 
 void        strcatQuoted(char *dest, char *src);
 
+void            M_ToggleVar(int option, void* context);
+
 #endif

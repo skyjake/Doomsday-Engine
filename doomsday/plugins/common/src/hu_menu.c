@@ -100,8 +100,6 @@ void M_ReadThis3(int option, void* context);
 
 void M_QuitDOOM(int option, void* context);
 
-void M_ToggleVar(int option, void* context);
-
 void M_OpenDCP(int option, void* context);
 void M_ChangeMessages(int option, void* context);
 void M_WeaponAutoSwitch(int option, void* context);
@@ -114,7 +112,7 @@ void M_MusicVol(int option, void* context);
 void M_SizeDisplay(int option, void* context);
 #if !__JDOOM64__
 void M_SizeStatusBar(int option, void* context);
-void M_StatusBarAlpha(int option, void* context);
+void M_StatusBarOpacity(int option, void* context);
 #endif
 void M_HUDRed(int option, void* context);
 void M_HUDGreen(int option, void* context);
@@ -125,11 +123,10 @@ void M_SaveSelect(int option, void* context);
 void M_Xhair(int option, void* context);
 void M_XhairSize(int option, void* context);
 
-#if __JDOOM__ || __JDOOM64__
-void M_XhairR(int option, void* context);
-void M_XhairG(int option, void* context);
-void M_XhairB(int option, void* context);
-void M_XhairAlpha(int option, void* context);
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void            M_KillCounter(int option, void* data);
+void            M_ItemCounter(int option, void* data);
+void            M_SecretCounter(int option, void* data);
 #endif
 
 void M_DoSave(int slot);
@@ -274,8 +271,10 @@ static rgba_t widgetcolors[] = { // Ptrs to colors editable with the colour widg
     { &cfg.automapL1[0], &cfg.automapL1[1], &cfg.automapL1[2], NULL },
     { &cfg.automapL2[0], &cfg.automapL2[1], &cfg.automapL2[2], NULL },
     { &cfg.automapL3[0], &cfg.automapL3[1], &cfg.automapL3[2], NULL },
-    { &cfg.automapBack[0], &cfg.automapBack[1], &cfg.automapBack[2], &cfg.automapBack[3] },
-    { &cfg.hudColor[0], &cfg.hudColor[1], &cfg.hudColor[2], &cfg.hudColor[3] }
+    { &cfg.automapBack[0], &cfg.automapBack[1], &cfg.automapBack[2], NULL },
+    { &cfg.hudColor[0], &cfg.hudColor[1], &cfg.hudColor[2], &cfg.hudColor[3] },
+    { &cfg.automapMobj[0], &cfg.automapMobj[1], &cfg.automapMobj[2], NULL },
+    { &cfg.xhairColor[0], &cfg.xhairColor[1], &cfg.xhairColor[2], &cfg.xhairColor[3]}
 };
 
 static boolean widgetEdit = false; // No active widget by default.
@@ -710,19 +709,19 @@ static menu_t SkillDef = {
 static menuitem_t OptionsItems[] = {
     {ITT_EFUNC, 0, "end game", M_EndGame, 0},
     {ITT_EFUNC, 0, "control panel", M_OpenDCP, 0},
-    {ITT_SETMENU, 0, "controls...", NULL, MENU_CONTROLS},
-    {ITT_SETMENU, 0, "gameplay...", NULL, MENU_GAMEPLAY},
-    {ITT_SETMENU, 0, "hud...", NULL, MENU_HUD},
-    {ITT_SETMENU, 0, "automap...", NULL, MENU_MAP},
-    {ITT_SETMENU, 0, "weapons...", NULL, MENU_WEAPONSETUP},
-    {ITT_SETMENU, 0, "sound...", NULL, MENU_OPTIONS2},
-    {ITT_EFUNC, 0, "mouse...", M_OpenDCP, 2},
-    {ITT_EFUNC, 0, "joystick...", M_OpenDCP, 2}
+    {ITT_SETMENU, 0, "controls", NULL, MENU_CONTROLS},
+    {ITT_SETMENU, 0, "gameplay", NULL, MENU_GAMEPLAY},
+    {ITT_SETMENU, 0, "hud", NULL, MENU_HUD},
+    {ITT_SETMENU, 0, "automap", NULL, MENU_MAP},
+    {ITT_SETMENU, 0, "weapons", NULL, MENU_WEAPONSETUP},
+    {ITT_SETMENU, 0, "sound", NULL, MENU_OPTIONS2},
+    {ITT_EFUNC, 0, "mouse", M_OpenDCP, 2},
+    {ITT_EFUNC, 0, "joystick", M_OpenDCP, 2}
 };
 
 static menu_t OptionsDef = {
     0,
-    112, 63,
+    110, 63,
     M_DrawOptions,
     10, OptionsItems,
     0, MENU_MAIN,
@@ -844,88 +843,113 @@ menu_t ReadDef3 = {
 #endif
 
 static menuitem_t HUDItems[] = {
-#if __JDOOM64__
-    {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, "hud-ammo" },
-    {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, "hud-armor" },
-    {ITT_EFUNC, 0, "show power keys :", M_ToggleVar, 0, NULL, "hud-power" },
-    {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL,"hud-health" },
-    {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, "hud-keys" },
-    {ITT_LRFUNC, 0, "scale", M_HUDScale, 0},
-    {ITT_EFUNC, 0, "   HUD color", SCColorWidget, 5},
-#elif __JDOOM__
-    {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, "hud-ammo"},
-    {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, "hud-armor"},
-    {ITT_EFUNC, 0, "show face :", M_ToggleVar, 0, NULL, "hud-face"},
-    {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL, "hud-health"},
-    {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, "hud-keys"},
-    {ITT_EFUNC, 0, "single key display :", M_ToggleVar, 0, NULL, "hud-keys-combine"},
-    {ITT_LRFUNC, 0, "scale", M_HUDScale, 0},
-    {ITT_EFUNC, 0, "   HUD color", SCColorWidget, 5},
-#endif
-    {ITT_EFUNC, 0, "MESSAGES :", M_ChangeMessages, 0},
-    {ITT_LRFUNC, 0, "CROSSHAIR :", M_Xhair, 0},
-    {ITT_EFUNC, 0, "CROSSHAIR VITALITY :", M_ToggleVar, 0, NULL, "view-cross-vitality"},
-    {ITT_LRFUNC, 0, "CROSSHAIR SIZE :", M_XhairSize, 0},
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+    {ITT_LRFUNC, 0, "Screen size :", M_SizeDisplay, 0},
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
-    {ITT_LRFUNC, 0, "SCREEN SIZE :", M_SizeDisplay, 0},
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JDOOM__
+    {ITT_EFUNC, 0, "Single key display :", M_ToggleVar, 0, NULL, "hud-keys-combine"},
+#endif
+    {ITT_EFUNC, 0, "Show messages :", M_ChangeMessages, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+
+    {ITT_INERT, 0, "Crosshair", NULL, 0},
+    {ITT_LRFUNC, 0, "Symbol :", M_Xhair, 0},
+    {ITT_LRFUNC, 0, "Size :", M_XhairSize, 0},
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
-#if !__JDOOM64__
-    {ITT_LRFUNC, 0, "STATUS BAR SIZE :", M_SizeStatusBar, 0},
-# if !__JDOOM__
+    {ITT_EFUNC, 0, "Vitality color :", M_ToggleVar, 0, NULL, "view-cross-vitality"},
+    {ITT_EFUNC, 0, "   color", SCColorWidget, 7 },
+
+#if __JHERETIC__ || __JHEXEN__
+    // Push the statusbar options onto the next page.
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, "Status bar", NULL, 0},
+    {ITT_LRFUNC, 0, "Size :", M_SizeStatusBar, 0},
+# if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 # endif
-    {ITT_LRFUNC, 0, "STATUS BAR ALPHA :", M_StatusBarAlpha, 0},
-# if !__JDOOM__
+    {ITT_LRFUNC, 0, "Opacity :", M_StatusBarOpacity, 0},
+# if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 # endif
 #endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_INERT, 0, "Counters", NULL, 0 },
+    {ITT_LRFUNC, 0, "Kills :", M_KillCounter, 0 },
+    {ITT_LRFUNC, 0, "Items :", M_ItemCounter, 0 },
+    {ITT_LRFUNC, 0, "Secrets :", M_SecretCounter, 0 },
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    // Push the fullscreen options onto the next page.
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
+
+#if __JHERETIC__
+    // Push the fullscreen options onto the next page.
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
+
+    {ITT_INERT, 0, "Fullscreen HUD",    NULL, 0},
+    {ITT_LRFUNC, 0, "Scale :", M_HUDScale, 0},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
+    {ITT_EFUNC, 0, "   color", SCColorWidget, 5},
 #if __JHEXEN__
-    {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
-    {ITT_EFUNC, 0, "SHOW MANA :", M_ToggleVar, 0, NULL, "hud-mana" },
-    {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, "hud-health" },
-    {ITT_EFUNC, 0, "SHOW ARTIFACT :", M_ToggleVar, 0, NULL, "hud-artifact" },
-    {ITT_EFUNC, 0, "   HUD COLOUR", SCColorWidget, 5},
-    {ITT_LRFUNC, 0, "SCALE :", M_HUDScale, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-#elif __JHERETIC__
-    {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
-    {ITT_EFUNC, 0, "SHOW AMMO :", M_ToggleVar, 0, NULL, "hud-ammo" },
-    {ITT_EFUNC, 0, "SHOW ARMOR :", M_ToggleVar, 0, NULL, "hud-armor" },
-    {ITT_EFUNC, 0, "SHOW ARTIFACT :", M_ToggleVar, 0, NULL, "hud-artifact" },
-    {ITT_EFUNC, 0, "SHOW HEALTH :", M_ToggleVar, 0, NULL, "hud-health" },
-    {ITT_EFUNC, 0, "SHOW KEYS :", M_ToggleVar, 0, NULL, "hud-keys" },
-    {ITT_EFUNC, 0, "   HUD COLOUR", SCColorWidget, 5},
-    {ITT_LRFUNC, 0, "SCALE :", M_HUDScale, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0}
+    {ITT_EFUNC, 0, "Show mana :", M_ToggleVar, 0, NULL, "hud-mana" },
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    {ITT_EFUNC, 0, "Show ammo :", M_ToggleVar, 0, NULL, "hud-ammo" },
+    {ITT_EFUNC, 0, "Show armor :", M_ToggleVar, 0, NULL, "hud-armor" },
+#endif
+#if __JDOOM64__
+    {ITT_EFUNC, 0, "Show power keys :", M_ToggleVar, 0, NULL, "hud-power" },
+#endif
+#if __JDOOM__
+    {ITT_EFUNC, 0, "Show face :", M_ToggleVar, 0, NULL, "hud-face"},
+#endif
+    {ITT_EFUNC, 0, "Show health :", M_ToggleVar, 0, NULL, "hud-health"},
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    {ITT_EFUNC, 0, "Show keys :", M_ToggleVar, 0, NULL, "hud-keys"},
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EFUNC, 0, "Show artifact :", M_ToggleVar, 0, NULL, "hud-artifact" },
 #endif
 };
 
 static menu_t HUDDef = {
     0,
 #if __JDOOM__ || __JDOOM64__
-    70, 40,
+    80, 40,
 #else
-    64, 30,
+    80, 28,
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    23, HUDItems,
+    30, HUDItems,
 #elif __JHERETIC__
-    25, HUDItems,
+    40, HUDItems,
 #elif __JDOOM64__
-    12, HUDItems,
+    23, HUDItems,
 #elif __JDOOM__
-    15, HUDItems,
+    27, HUDItems,
 #endif
     0, MENU_OPTIONS,
     huFontA,
@@ -937,17 +961,14 @@ static menu_t HUDDef = {
 #elif __JHERETIC__
     0, 15        // 23
 #elif __JDOOM64__
-    0, 11
+    0, 19
 #elif __JDOOM__
-    0, 15
+    0, 19
 #endif
 };
 
 static menuitem_t WeaponItems[] = {
-    {ITT_EMPTY,  0, "Use left/right to move", NULL, 0 },
-    {ITT_EMPTY,  0, "item up/down the list." , NULL, 0 },
-    {ITT_EMPTY,  0, NULL, NULL, 0},
-    {ITT_EMPTY,  0, "PRIORITY ORDER", NULL, 0},
+    {ITT_EMPTY,  0, "Priority order", NULL, 0},
     {ITT_LRFUNC, 0, "1 :", M_WeaponOrder, 0 << NUM_WEAPON_TYPES },
     {ITT_LRFUNC, 0, "2 :", M_WeaponOrder, 1 << NUM_WEAPON_TYPES },
     {ITT_LRFUNC, 0, "3 :", M_WeaponOrder, 2 << NUM_WEAPON_TYPES },
@@ -980,17 +1001,17 @@ static menu_t WeaponDef = {
 #if __JDOOM__ || __JDOOM64__
     68, 34,
 #else
-    50, 20,
+    78, 28,
 #endif
     M_DrawWeaponMenu,
 #if __JDOOM64__
-    21, WeaponItems,
-#elif __JDOOM__
-    20, WeaponItems,
-#elif __JHERETIC__
     18, WeaponItems,
+#elif __JDOOM__
+    17, WeaponItems,
+#elif __JHERETIC__
+    15, WeaponItems,
 #elif __JHEXEN__
-    14, WeaponItems,
+    11, WeaponItems,
 #endif
     0, MENU_OPTIONS,
     huFontA,
@@ -1060,7 +1081,7 @@ static menuitem_t GameplayItems[] = {
 #if __JHEXEN__
 static menu_t GameplayDef = {
     0,
-    64, 25,
+    88, 25,
     M_DrawGameplay,
     3, GameplayItems,
     0, MENU_OPTIONS,
@@ -1186,7 +1207,7 @@ cvar_t menuCVars[] =
     {"menu-colorb-g", 0, CVT_FLOAT, &cfg.menuColor2[1], 0, 1},
     {"menu-colorb-b", 0, CVT_FLOAT, &cfg.menuColor2[2], 0, 1},
     {"menu-glitter", 0, CVT_FLOAT, &cfg.menuGlitter, 0, 1},
-    {"menu-fog", 0, CVT_INT, &cfg.hudFog, 0, 4},
+    {"menu-fog", 0, CVT_INT, &cfg.hudFog, 0, 5},
     {"menu-shadow", 0, CVT_FLOAT, &cfg.menuShadow, 0, 1},
     {"menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 2},
     {"menu-slam", 0, CVT_BYTE, &cfg.menuSlam, 0, 1},
@@ -2261,37 +2282,41 @@ void DrawColorWidget(void)
                             menuAlpha, false, BORDERDOWN);
 #if __JDOOM__ || __JDOOM64__
         MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
-        M_WriteText2(menu->x, menu->y, ColorWidgetItems[0].text,
-                     huFontA, 1, 1, 1, menuAlpha);
+        M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
+                     huFontA, 1, 1, 1, menuAlpha, true, 0);
         MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
-        M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A),
-                     ColorWidgetItems[1].text, huFontA, 1, 1, 1, menuAlpha);
+        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A),
+                     ColorWidgetItems[1].text, huFontA, 1, 1, 1, menuAlpha,
+                     true, 0);
         MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
-        M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 2),
-                     ColorWidgetItems[2].text, huFontA, 1, 1, 1, menuAlpha);
+        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 2),
+                     ColorWidgetItems[2].text, huFontA, 1, 1, 1, menuAlpha,
+                     true, 0);
 #else
         MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
-        M_WriteText2(menu->x, menu->y, ColorWidgetItems[0].text,
-                     huFontA, 1, 1, 1, menuAlpha);
+        M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
+                     huFontA, 1, 1, 1, menuAlpha, true, 0);
         MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
-        M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                     ColorWidgetItems[3].text, huFontA, 1, 1, 1, menuAlpha);
+        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
+                     ColorWidgetItems[3].text, huFontA, 1, 1, 1, menuAlpha,
+                     true, 0);
         MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
-        M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 6),
-                     ColorWidgetItems[6].text, huFontA, 1, 1, 1, menuAlpha);
+        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 6),
+                     ColorWidgetItems[6].text, huFontA, 1, 1, 1, menuAlpha,
+                     true, 0);
 #endif
         if(rgba)
         {
 #if __JDOOM__ || __JDOOM64__
             MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
-            M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 3),
+            M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
                          ColorWidgetItems[3].text, huFontA, 1, 1, 1,
-                         menuAlpha);
+                         menuAlpha, true, 0);
 #else
             MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
-            M_WriteText2(menu->x, menu->y + (LINEHEIGHT_A * 9),
+            M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 9),
                          ColorWidgetItems[9].text, huFontA, 1, 1, 1,
-                         menuAlpha);
+                         menuAlpha, true, 0);
 #endif
         }
 
@@ -2361,9 +2386,9 @@ void M_WriteMenuText(const menu_t* menu, int index, const char* text)
     if(menu->items[index].text)
         off = M_StringWidth(menu->items[index].text, menu->font) + 4;
 
-    M_WriteText2(menu->x + off,
+    M_WriteText3(menu->x + off,
                  menu->y + menu->itemHeight * (index  - menu->firstItem),
-                 text, menu->font, 1, 1, 1, menuAlpha);
+                 text, menu->font, 1, 1, 1, menuAlpha, true, 0);
 }
 
 /**
@@ -2509,8 +2534,8 @@ void M_DrawClassMenu(void)
         "m_mbox"
     };
 
-    M_WriteText2(34, 24, "CHOOSE CLASS:", huFontB, menu->color[0],
-                 menu->color[1], menu->color[2], menuAlpha);
+    M_WriteText3(34, 24, "CHOOSE CLASS:", huFontB, menu->color[0],
+                 menu->color[1], menu->color[2], menuAlpha, true, 0);
 
     pClass = (playerclass_t) menu->items[itemOn].option;
     if(pClass < 0)
@@ -2557,10 +2582,10 @@ void M_DrawEpisode(void)
 
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
 
-        M_WriteText2(160 - M_StringWidth(str, huFontA) / 2,
-                     200 - M_StringHeight(str, huFontA), str, huFontA,
+        M_WriteText3(160 - M_StringWidth(str, huFontA) / 2,
+                     200 - M_StringHeight(str, huFontA) - 2, str, huFontA,
                      cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
-                     menuAlpha);
+                     menuAlpha, true, 0);
     }
 #else // __JDOOM__
     WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
@@ -2664,12 +2689,12 @@ void M_DrawLoad(void)
         M_DrawSaveLoadBorder(LoadDef.x - 8, SAVEGAME_BOX_YOFFSET + LoadDef.y +
                              (menu->itemHeight * i), width + 16);
 
-        M_WriteText2(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 +
+        M_WriteText3(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 +
                      (menu->itemHeight * i),
                      savegamestrings[i], menu->font,
                      i == itemOn? r : menu->color[0],
                      i == itemOn? g : menu->color[1],
-                     i == itemOn? b : menu->color[2], menuAlpha);
+                     i == itemOn? b : menu->color[2], menuAlpha, true, 0);
     }
 }
 
@@ -2701,12 +2726,12 @@ void M_DrawSave(void)
         M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y +
                              (menu->itemHeight * i), width + 16);
 
-        M_WriteText2(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
+        M_WriteText3(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
                      (menu->itemHeight * i),
                      savegamestrings[i], menu->font,
                      i == itemOn? r : menu->color[0],
                      i == itemOn? g : menu->color[1],
-                     i == itemOn? b : menu->color[2], menuAlpha);
+                     i == itemOn? b : menu->color[2], menuAlpha, true, 0);
     }
 
     if(saveStringEnter)
@@ -2716,9 +2741,9 @@ void M_DrawSave(void)
         if(len < SAVESTRINGSIZE)
         {
             i = M_StringWidth(savegamestrings[saveSlot], huFontA);
-            M_WriteText2(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
+            M_WriteText3(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
                          (menu->itemHeight * saveSlot), "_", huFontA,
-                         r, g, b, menuAlpha);
+                         r, g, b, menuAlpha, true, 0);
         }
     }
 }
@@ -2978,12 +3003,25 @@ void M_DrawWeaponMenu(void)
     byte berserkAutoSwitch = cfg.berserkAutoSwitch;
 #endif
 
-    M_DrawTitle("WEAPONS", menu->y - 20);
+    M_DrawTitle("WEAPONS", menu->y - 26);
+
+    /**
+     * \kludge Inform the user how to change the order.
+     */
+    if(itemOn - 1 >= 0 && itemOn - 1 < NUM_WEAPON_TYPES)
+    {
+        const char* str = "Use left/right to move weapon up/down";
+
+        M_WriteText3(160 - M_StringWidth(str, huFontA) / 2,
+                     200 - M_StringHeight(str, huFontA) - 2, str, huFontA,
+                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
+                     menuAlpha, true, 0);
+    }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
 #if __JDOOM__ || __JDOOM64__
-        M_WriteMenuText(menu, 4+i, GET_TXT(TXT_WEAPON1 + cfg.weaponOrder[i]));
+        M_WriteMenuText(menu, 1+i, GET_TXT(TXT_WEAPON1 + cfg.weaponOrder[i]));
 #elif __JHERETIC__
         /**
          * \fixme We should allow different weapon preferences per player
@@ -2991,38 +3029,38 @@ void M_DrawWeaponMenu(void)
          * chicken which has only 1 weapon anyway -we'll just show the
          * names of the player's weapons for now.
          */
-        M_WriteMenuText(menu, 4+i, GET_TXT(TXT_TXT_WPNSTAFF + cfg.weaponOrder[i]));
+        M_WriteMenuText(menu, 1+i, GET_TXT(TXT_TXT_WPNSTAFF + cfg.weaponOrder[i]));
 #elif __JHEXEN__
         /**
          * \fixme We should allow different weapon preferences per player
          * class. Then we can show the real names here.
          */
-        M_WriteMenuText(menu, 4+i, weaponids[cfg.weaponOrder[i]]);
+        M_WriteMenuText(menu, 1+i, weaponids[cfg.weaponOrder[i]]);
 #endif
     }
 
 #if __JHEXEN__
-    M_WriteMenuText(menu, 8, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 11, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 12, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 13, autoswitch[cfg.ammoAutoSwitch]);
+    M_WriteMenuText(menu, 5, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 8, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 9, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 10, autoswitch[cfg.ammoAutoSwitch]);
 #elif __JHERETIC__
-    M_WriteMenuText(menu, 12, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 15, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 16, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 17, autoswitch[cfg.ammoAutoSwitch]);
+    M_WriteMenuText(menu, 9, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 12, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 13, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 14, autoswitch[cfg.ammoAutoSwitch]);
 #elif __JDOOM64__
-    M_WriteMenuText(menu, 14, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 17, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 18, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 19, autoswitch[cfg.ammoAutoSwitch]);
-    M_WriteMenuText(menu, 20, yesno[berserkAutoSwitch != 0]);
+    M_WriteMenuText(menu, 11, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 14, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 15, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 16, autoswitch[cfg.ammoAutoSwitch]);
+    M_WriteMenuText(menu, 17, yesno[berserkAutoSwitch != 0]);
 #elif __JDOOM__
-    M_WriteMenuText(menu, 13, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 16, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 17, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 18, autoswitch[cfg.ammoAutoSwitch]);
-    M_WriteMenuText(menu, 19, yesno[berserkAutoSwitch != 0]);
+    M_WriteMenuText(menu, 10, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 13, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 14, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 15, autoswitch[cfg.ammoAutoSwitch]);
+    M_WriteMenuText(menu, 16, yesno[berserkAutoSwitch != 0]);
 #endif
 }
 
@@ -3079,98 +3117,141 @@ void M_AmmoAutoSwitch(int option, void* context)
 
 void M_DrawHUDMenu(void)
 {
-#if __JDOOM__ || __JDOOM64__
-    int                 idx;
-#endif
+    int                 idx, page;
     menu_t*             menu = &HUDDef;
+#if __JDOOM__ || __JDOOM64__
+    char                buf[1024];
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    char*               token;
+#endif
     char*               xhairnames[7] = {
         "NONE", "CROSS", "ANGLES", "SQUARE", "OPEN SQUARE", "DIAMOND", "V"
     };
-
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    char       *token;
-
-    M_DrawTitle("hud options", 4);
-
-    // Draw the page arrows.
-    DGL_Color4f( 1, 1, 1, menuAlpha);
-    token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
-    GL_DrawPatch_CS(menu->x -20, menu->y - 16, W_GetNumForName(token));
-    token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
-             menuTime & 8) ? "invgemr2" : "invgemr1";
-    GL_DrawPatch_CS(312 - (menu->x -20), menu->y - 16, W_GetNumForName(token));
-#else
-    M_DrawTitle("HUD OPTIONS", menu->y - 20);
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    static char*        countnames[4] = { "HIDDEN", "COUNT", "PERCENT", "COUNT+PCNT" };
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
-    if(menu->firstItem < menu->numVisItems)
-    {
-        M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
-        M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
-        M_WriteMenuText(menu, 2, yesno[cfg.xhairVitality != 0]);
-        MN_DrawSlider(menu, 4, 11, cfg.xhairSize * 10 + .25f);
-        MN_DrawSlider(menu, 7, 11, cfg.screenBlocks - 3);
-        MN_DrawSlider(menu, 10, 20, cfg.statusbarScale - 1);
-        MN_DrawSlider(menu, 13, 11, cfg.statusbarAlpha * 10 + .25f);
-    }
-    else
-    {
-        M_WriteMenuText(menu, 16, yesno[cfg.hudShown[HUD_MANA] != 0]);
-        M_WriteMenuText(menu, 17, yesno[cfg.hudShown[HUD_HEALTH]]);
-        M_WriteMenuText(menu, 18, yesno[cfg.hudShown[HUD_ARTI]]);
-        MN_DrawColorBox(menu,19, cfg.hudColor[0], cfg.hudColor[1],
-                        cfg.hudColor[2], menuAlpha);
-        MN_DrawSlider(menu, 21, 10, cfg.hudScale * 10 - 3 + .5f);
-    }
-#elif __JHERETIC__
-    if(menu->firstItem < menu->numVisItems)
-    {
-        M_WriteMenuText(menu, 0, yesno[cfg.msgShow != 0]);
-        M_WriteMenuText(menu, 1, xhairnames[cfg.xhair]);
-        M_WriteMenuText(menu, 2, yesno[cfg.xhairVitality != 0]);
-        MN_DrawSlider(menu, 4, 11, cfg.xhairSize * 10 + .25f);
-        MN_DrawSlider(menu, 7, 11, cfg.screenBlocks - 3);
-        MN_DrawSlider(menu, 10, 20, cfg.statusbarScale - 1);
-        MN_DrawSlider(menu, 13, 11, cfg.statusbarAlpha * 10 + .25f);
-    }
-    else
-    {
-        M_WriteMenuText(menu, 16, yesno[cfg.hudShown[HUD_AMMO]]);
-        M_WriteMenuText(menu, 17, yesno[cfg.hudShown[HUD_ARMOR]]);
-        M_WriteMenuText(menu, 18, yesno[cfg.hudShown[HUD_ARTI]]);
-        M_WriteMenuText(menu, 19, yesno[cfg.hudShown[HUD_HEALTH]]);
-        M_WriteMenuText(menu, 20, yesno[cfg.hudShown[HUD_KEYS]]);
-        MN_DrawColorBox(menu, 21, cfg.hudColor[0], cfg.hudColor[1],
-                        cfg.hudColor[2], menuAlpha);
-        MN_DrawSlider(menu, 23, 10, cfg.hudScale * 10 - 3 + .5f);
-    }
-#elif __JDOOM__ || __JDOOM64__
-    idx = 0;
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_AMMO]]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARMOR]]);
-# if __JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_POWER]]);
-# else
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_FACE]]);
-# endif
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_HEALTH]]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_KEYS]]);
-# if __JDOOM__
+    M_DrawTitle("HUD options", menu->y - 28);
+#if __JDOOM__ || __JDOOM64__
+    sprintf(buf, "Page %i/%i", menu->firstItem / menu->numVisItems + 1,
+            menu->itemCount / menu->numVisItems + 1);
+    M_WriteText3(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
+                 huFontA, 1, .7f, .3f, Hu_MenuAlpha(), true, 0);
+#else
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+
+    // Draw the page arrows.
+    token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
+    GL_DrawPatch_CS(menu->x, menu->y - 22, W_GetNumForName(token));
+    token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
+             menuTime & 8) ? "invgemr2" : "invgemr1";
+    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
+#endif
+
+    idx = menu->firstItem;
+    page = menu->firstItem / menu->numVisItems + 1;
+    if(page == 2)
+        goto page2;
+#if __JHERETIC__
+    if(page == 3)
+        goto page3;
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3 );
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+#if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.hudKeysCombine]);
-# endif
+#endif
+    M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
+
+    // Crosshair options:
+    idx += 2;
+    M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    MN_DrawSlider(menu, idx++, 11, cfg.xhairSize * 10 + .25f);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
+    MN_DrawColorBox(menu, idx++, cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2], cfg.xhairColor[3]);
+
+#if __JHERETIC__ || __JHEXEN__
+    return;
+
+page2:
+#endif
+
+#if !__JDOOM64__
+    // Statusbar options:
+    idx += 2;
+    MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
+#if __JHERETIC__ || __JHEXEN__
+    idx += 2;
+#endif
+    MN_DrawSlider(menu, idx++, 11, cfg.statusbarOpacity * 10 + .25f);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    // Counters:
+    idx += 2;
+    M_WriteMenuText(menu, idx++, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
+    M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
+    M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    return;
+
+page2:
+#endif
+
+    // Fullscreen HUD options:
+#if __JHERETIC__
+    return;
+
+page3:
+#endif
+
+    idx++;
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
     MN_DrawSlider(menu, idx++, 10, cfg.hudScale * 10 - 3 + .5f);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
     MN_DrawColorBox(menu, idx++, cfg.hudColor[0], cfg.hudColor[1],
                     cfg.hudColor[2], menuAlpha);
-    M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
-    M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
-    MN_DrawSlider(menu, idx++, 11, cfg.xhairSize * 10 + .25f);
-    MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3 );
-# if !__JDOOM64__
-    MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
-    MN_DrawSlider(menu, idx++, 11, cfg.statusbarAlpha * 10 + .25f);
-# endif
+#if __JHEXEN__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_MANA]]);
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_AMMO]]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARMOR]]);
+#endif
+#if __JDOOM64__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_POWER]]);
+#endif
+#if __JDOOM__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_FACE]]);
+#endif
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_HEALTH]]);
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_KEYS]]);
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARTI]]);
 #endif
 }
 
@@ -3186,6 +3267,56 @@ void M_FloatMod10(float *variable, int option)
     else if(val > 0)
         val--;
     *variable = val / 10.0f;
+}
+
+/**
+ * Set the show kills counter
+ */
+void M_KillCounter(int option, void *data)
+{
+    int         op = (cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2);
+
+    op += option == RIGHT_DIR ? 1 : -1;
+    if(op < 0)
+        op = 0;
+    if(op > 3)
+        op = 3;
+    cfg.counterCheat &= ~0x9;
+    cfg.counterCheat |= (op & 0x1) | ((op & 0x2) << 2);
+}
+
+/**
+ * Set the show items counter
+ */
+void M_ItemCounter(int option, void *data)
+{
+    int         op =
+        ((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3);
+
+    op += option == RIGHT_DIR ? 1 : -1;
+    if(op < 0)
+        op = 0;
+    if(op > 3)
+        op = 3;
+    cfg.counterCheat &= ~0x12;
+    cfg.counterCheat |= ((op & 0x1) << 1) | ((op & 0x2) << 3);
+}
+
+/**
+ * Set the show secrets counter
+ */
+void M_SecretCounter(int option, void *data)
+{
+    int         op =
+        ((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4);
+
+    op += option == RIGHT_DIR ? 1 : -1;
+    if(op < 0)
+        op = 0;
+    if(op > 3)
+        op = 3;
+    cfg.counterCheat &= ~0x24;
+    cfg.counterCheat |= ((op & 0x1) << 2) | ((op & 0x2) << 4);
 }
 
 void M_Xhair(int option, void* context)
@@ -3212,33 +3343,6 @@ void M_XhairSize(int option, void* context)
     M_FloatMod10(&cfg.xhairSize, option);
 }
 
-
-#if __JDOOM__ || __JDOOM64__
-void M_XhairR(int option, void* context)
-{
-    cfg.xhairColor[0] = MINMAX_OF(0,
-        cfg.xhairColor[0] + (option == RIGHT_DIR ? .1f : -.1f), 1);
-}
-
-void M_XhairG(int option, void* context)
-{
-    cfg.xhairColor[1] = MINMAX_OF(0,
-        cfg.xhairColor[1] + (option == RIGHT_DIR ? .1f : -.1f), 1);
-}
-
-void M_XhairB(int option, void* context)
-{
-    cfg.xhairColor[2] = MINMAX_OF(0,
-        cfg.xhairColor[2] + (option == RIGHT_DIR ? .1f : -.1f), 1);
-}
-
-void M_XhairAlpha(int option, void* context)
-{
-    cfg.xhairColor[3] = MINMAX_OF(0,
-        cfg.xhairColor[3] + (option == RIGHT_DIR ? .1f : -.1f), 1);
-}
-#endif
-
 #if __JDOOM64__
 void M_WeaponRecoil(int option, void* context)
 {
@@ -3262,9 +3366,9 @@ void M_SizeStatusBar(int option, void* context)
     R_SetViewSize(cfg.screenBlocks);
 }
 
-void M_StatusBarAlpha(int option, void* context)
+void M_StatusBarOpacity(int option, void* context)
 {
-    M_FloatMod10(&cfg.statusbarAlpha, option);
+    M_FloatMod10(&cfg.statusbarOpacity, option);
 
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 }
@@ -3707,7 +3811,7 @@ void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
         x = M_StringWidth(menu->items[item].text, menu->font);
 
     x += menu->x + 6;
-    y = menu->y + menu->itemHeight * item;
+    y = menu->y + menu->itemHeight * (item - menu->firstItem);
 
     M_DrawSlider(x, y, width, height, slot, menuAlpha);
 #endif

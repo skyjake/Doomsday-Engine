@@ -594,7 +594,7 @@ static const int plrColors[] = {
 
         // Pick team color:
 #if __JHEXEN__
-        R_PalIdxToRGB(plrColors[info->team], info->color);
+        R_PalIdxToRGB(info->color, plrColors[info->team], false);
 #else
         switch(info->team)
         {
@@ -1173,6 +1173,9 @@ void Hu_FogEffectTicker(timespan_t time)
     if(!M_RunTrigger(&fixed, time))
         return;
 
+    if(cfg.hudFog == 0)
+        return;
+
     // Move towards the target alpha
     if(fog->alpha != fog->targetAlpha)
     {
@@ -1193,7 +1196,7 @@ void Hu_FogEffectTicker(timespan_t time)
 
     for(i = 0; i < 2; ++i)
     {
-        if(cfg.hudFog == 1)
+        if(cfg.hudFog == 2)
         {
             fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
             fog->layers[i].posAngle -= MENUFOGSPEED[!i];
@@ -1214,7 +1217,7 @@ void Hu_FogEffectTicker(timespan_t time)
     }
 
     // Calculate the height of the menuFog 3 Y join
-    if(cfg.hudFog == 3)
+    if(cfg.hudFog == 4)
     {
         if(fog->scrollDir && fog->joinY > 0.46f)
             fog->joinY = fog->joinY / 1.002f;
@@ -1588,10 +1591,10 @@ void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
  */
 int M_StringWidth(const char *string, dpatch_t * font)
 {
-    uint        i;
-    int         w = 0;
-    int         c;
-    boolean     skip;
+    uint                i;
+    int                 w = 0, maxWidth = -1;
+    int                 c;
+    boolean             skip;
 
     for(i = 0, skip = false; i < strlen(string); ++i)
     {
@@ -1600,7 +1603,7 @@ int M_StringWidth(const char *string, dpatch_t * font)
         if(string[i] == '{')
             skip = true;
 
-        if(skip == false)
+        if(skip == false && string[i] != '\n')
         {
             if(c < 0 || c >= HU_FONTSIZE)
                 w += 4;
@@ -1610,8 +1613,20 @@ int M_StringWidth(const char *string, dpatch_t * font)
 
         if(string[i] == '}')
             skip = false;
+
+        if(string[i] == '\n')
+        {
+            if(w > maxWidth)
+                maxWidth = w;
+            w = 0;
+        }
+        else if(i == strlen(string) - 1 && maxWidth == -1)
+        {
+            maxWidth = w;
+        }
     }
-    return w;
+
+    return maxWidth;
 }
 
 /**
@@ -1665,13 +1680,13 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
 /**
  * Write a string using the huFont.
  */
-void M_WriteText(int x, int y, const char *string)
+void M_WriteText(int x, int y, const char* string)
 {
     M_WriteText2(x, y, string, huFontA, 1, 1, 1, 1);
 }
 
-void M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
-                  float green, float blue, float alpha)
+void M_WriteText2(int x, int y, const char* string, dpatch_t* font,
+                  float red, float green, float blue, float alpha)
 {
     M_WriteText3(x, y, string, font, red, green, blue, alpha, false, 0);
 }
@@ -1680,7 +1695,7 @@ void M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
  * Write a string using a colored, custom font.
  * Also do a type-in effect.
  */
-void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
+void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
                   float red, float green, float blue, float alpha,
                   boolean doTypeIn, int initialCount)
 {
@@ -1690,7 +1705,7 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
     int                 c;
     int                 cx;
     int                 cy;
-    int                 count, maxCount, yoff;
+    int                 count, yoff;
     float               flash;
     float               fr = (1 + 2 * red) / 3;
     float               fb = (1 + 2 * blue) / 3;
@@ -1700,11 +1715,6 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
     for(pass = 0; pass < 2; ++pass)
     {
         count = initialCount;
-        maxCount = typeInTime;
-
-        // Disable type-in?
-        if(!doTypeIn || cfg.menuEffects > 0)
-            maxCount = 0xffff;
 
         if(red >= 0)
             DGL_Color4f(red, green, blue, alpha);
@@ -1716,38 +1726,45 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
         for(;;)
         {
             c = *ch++;
-            count++;
             yoff = 0;
             flash = 0;
-            if(count == maxCount)
+            // Do the type-in effect?
+            if(doTypeIn && cfg.menuEffects != 0)
             {
-                flash = 1;
-                if(red >= 0)
-                    DGL_Color4f(1, 1, 1, 1);
+                int                 maxCount =
+                    (typeInTime > 0? typeInTime * 2 : 0);
+
+                if(count == maxCount)
+                {
+                    flash = 1;
+                    if(red >= 0)
+                        DGL_Color4f(1, 1, 1, 1);
+                }
+                else if(count + 1 == maxCount)
+                {
+                    flash = 0.5f;
+                    if(red >= 0)
+                        DGL_Color4f((1 + red) / 2, (1 + green) / 2, (1 + blue) / 2,
+                                   alpha);
+                }
+                else if(count + 2 == maxCount)
+                {
+                    flash = 0.25f;
+                    if(red >= 0)
+                        DGL_Color4f(red, green, blue, alpha);
+                }
+                else if(count + 3 == maxCount)
+                {
+                    flash = 0.12f;
+                    if(red >= 0)
+                        DGL_Color4f(red, green, blue, alpha);
+                }
+                else if(count > maxCount)
+                {
+                    break;
+                }
             }
-            else if(count + 1 == maxCount)
-            {
-                flash = 0.5f;
-                if(red >= 0)
-                    DGL_Color4f((1 + red) / 2, (1 + green) / 2, (1 + blue) / 2,
-                               alpha);
-            }
-            else if(count + 2 == maxCount)
-            {
-                flash = 0.25f;
-                if(red >= 0)
-                    DGL_Color4f(red, green, blue, alpha);
-            }
-            else if(count + 3 == maxCount)
-            {
-                flash = 0.12f;
-                if(red >= 0)
-                    DGL_Color4f(red, green, blue, alpha);
-            }
-            else if(count > maxCount)
-            {
-                break;
-            }
+            count++;
 
             if(!c)
                 break;
@@ -2158,10 +2175,10 @@ static void drawFogEffect(void)
     DGL_PushMatrix();
 
     // Two layers.
-    Hu_DrawFogEffect(cfg.hudFog, mfd->texture,
+    Hu_DrawFogEffect(cfg.hudFog - 1, mfd->texture,
                      mfd->layers[0].texOffset, mfd->layers[0].texAngle,
                      mfd->alpha, fogEffectData.joinY);
-    Hu_DrawFogEffect(cfg.hudFog, mfd->texture,
+    Hu_DrawFogEffect(cfg.hudFog - 1, mfd->texture,
                      mfd->layers[1].texOffset, mfd->layers[1].texAngle,
                      mfd->alpha, fogEffectData.joinY);
 
@@ -2183,7 +2200,7 @@ void Hu_Drawer(void)
         DGL_Ortho(0, 0, 320, 200, -1, 1);
 
         // Draw the fog effect?
-        if(fogEffectData.alpha > 0 && cfg.menuEffects <= 1 &&
+        if(fogEffectData.alpha > 0 && cfg.hudFog &&
            !((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) &&
               MN_CurrentMenuHasBackground()))
             drawFogEffect();

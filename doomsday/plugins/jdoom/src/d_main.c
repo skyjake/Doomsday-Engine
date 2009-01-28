@@ -393,6 +393,7 @@ void G_PreInit(void)
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
     cfg.hudColor[3] = 1;
+    cfg.hudFog = 1;
     cfg.hudIconAlpha = 1;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
@@ -435,38 +436,35 @@ void G_PreInit(void)
     cfg.fallOff = true;
     cfg.fixOuchFace = true;
 
-    cfg.statusbarScale = 20;         // Full size.
-    cfg.statusbarAlpha = 1;
+    cfg.statusbarScale = 20; // Full size.
+    cfg.statusbarOpacity = 1;
     cfg.statusbarCounterAlpha = 1;
 
-/*    cfg.automapPos = 5;
-    cfg.automapWidth = 1.0f;
-    cfg.automapHeight = 1.0f;*/
+    cfg.automapCustomColors = 0; // Never.
+    cfg.automapL0[0] = .4f; // Unseen areas
+    cfg.automapL0[1] = .4f;
+    cfg.automapL0[2] = .4f;
 
-    /**
-     * \fixme These colors should be determined from the PLAYPAL instead
-     * as done in original DOOM.
-     */
-    cfg.automapL0[0] = 0.4f;    // Unseen areas
-    cfg.automapL0[1] = 0.4f;
-    cfg.automapL0[2] = 0.4f;
+    cfg.automapL1[0] = 1.f; // onesided lines
+    cfg.automapL1[1] = 0.f;
+    cfg.automapL1[2] = 0.f;
 
-    cfg.automapL1[0] = 1.0f;    // onesided lines
-    cfg.automapL1[1] = 0.0f;
-    cfg.automapL1[2] = 0.0f;
+    cfg.automapL2[0] = .77f; // floor height change lines
+    cfg.automapL2[1] = .6f;
+    cfg.automapL2[2] = .325f;
 
-    cfg.automapL2[0] = 0.77f;   // floor height change lines
-    cfg.automapL2[1] = 0.6f;
-    cfg.automapL2[2] = 0.325f;
+    cfg.automapL3[0] = 1.f; // ceiling change lines
+    cfg.automapL3[1] = .95f;
+    cfg.automapL3[2] = 0.f;
 
-    cfg.automapL3[0] = 1.0f;    // ceiling change lines
-    cfg.automapL3[1] = 0.95f;
-    cfg.automapL3[2] = 0.0f;
+    cfg.automapMobj[0] = 0.f;
+    cfg.automapMobj[1] = 1.f;
+    cfg.automapMobj[2] = 0.f;
 
-    cfg.automapBack[0] = 0.0f;
-    cfg.automapBack[1] = 0.0f;
-    cfg.automapBack[2] = 0.0f;
-    cfg.automapBack[3] = 0.7f;
+    cfg.automapBack[0] = 0.f;
+    cfg.automapBack[1] = 0.f;
+    cfg.automapBack[2] = 0.f;
+    cfg.automapOpacity = .7f;
     cfg.automapLineAlpha = .7f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;

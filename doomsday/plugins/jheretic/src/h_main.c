@@ -328,34 +328,35 @@ void G_PreInit(void)
     cfg.moveBlock = false;
     cfg.fallOff = true;
 
-    cfg.statusbarAlpha = 1;
+    cfg.statusbarOpacity = 1;
     cfg.statusbarCounterAlpha = 1;
     cfg.inventoryTimer = 5;
 
-/*    cfg.automapPos = 5;
-    cfg.automapWidth = 1.0f;
-    cfg.automapHeight = 1.0f;*/
+    cfg.automapCustomColors = 0; // Never.
+    cfg.automapL0[0] = .455f; // Unseen areas
+    cfg.automapL0[1] = .482f;
+    cfg.automapL0[2] = .439f;
 
-    cfg.automapL0[0] = 0.42f;   // Unseen areas
-    cfg.automapL0[1] = 0.42f;
-    cfg.automapL0[2] = 0.42f;
+    cfg.automapL1[0] = .294f; // onesided lines
+    cfg.automapL1[1] = .196f;
+    cfg.automapL1[2] = .063f;
 
-    cfg.automapL1[0] = 0.41f;   // onesided lines
-    cfg.automapL1[1] = 0.30f;
-    cfg.automapL1[2] = 0.15f;
+    cfg.automapL2[0] = .184f; // floor height change lines
+    cfg.automapL2[1] = .094f;
+    cfg.automapL2[2] = .002f;
 
-    cfg.automapL2[0] = 0.82f;   // floor height change lines
-    cfg.automapL2[1] = 0.70f;
-    cfg.automapL2[2] = 0.52f;
+    cfg.automapL3[0] = .592f; // ceiling change lines
+    cfg.automapL3[1] = .388f;
+    cfg.automapL3[2] = .231f;
 
-    cfg.automapL3[0] = 0.47f;   // ceiling change lines
-    cfg.automapL3[1] = 0.30f;
-    cfg.automapL3[2] = 0.16f;
+    cfg.automapMobj[0] = 1.f;
+    cfg.automapMobj[1] = 1.f;
+    cfg.automapMobj[2] = 1.f;
 
     cfg.automapBack[0] = 1.0f;
     cfg.automapBack[1] = 1.0f;
     cfg.automapBack[2] = 1.0f;
-    cfg.automapBack[3] = 1.0f;
+    cfg.automapOpacity = 1.0f;
     cfg.automapLineAlpha = 1.0f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;
@@ -396,8 +397,8 @@ void G_PreInit(void)
     cfg.weaponOrder[6] = WT_EIGHTH;     // gauntlets \ beak
     cfg.weaponOrder[7] = WT_FIRST;      // staff \ beak
 
-    cfg.menuEffects = 1;
-    cfg.hudFog = 4;
+    cfg.menuEffects = 0;
+    cfg.hudFog = 5;
 
     cfg.ringFilter = 1;
     cfg.tomeCounter = 10;

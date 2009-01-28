@@ -418,21 +418,31 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 /**
  * Given a color palette index, calculate the equivilent RGB color.
  *
+ * @param rgb           Final color will be written back here.
  * @param idx           Color Palette, color index.
- * @param rgb           Ptr to the
+ * @param correctGamma  @c TRUE if the current gamma ramp should be applied.
  */
-void R_PalIdxToRGB(int idx, float* rgb)
+void R_PalIdxToRGB(float* rgb, int idx, boolean correctGamma)
 {
     if(rgb)
     {
         if(!(idx < 0))
         {
-            int                 c;
             byte*               pal = GL_GetPalette();
 
-            idx = MIN_OF(idx, 255);
-            for(c = 0; c < 3; ++c)
-                rgb[c] = gammaTable[pal[idx * 3 + c]] * reciprocal255;
+            idx = MINMAX_OF(0, idx, 255) * 3;
+            if(correctGamma)
+            {
+                rgb[0] = gammaTable[pal[idx]] * reciprocal255;
+                rgb[1] = gammaTable[pal[idx + 1]] * reciprocal255;
+                rgb[2] = gammaTable[pal[idx + 2]] * reciprocal255;
+            }
+            else
+            {
+                rgb[0] = pal[idx] * reciprocal255;
+                rgb[1] = pal[idx + 1] * reciprocal255;
+                rgb[2] = pal[idx + 2] * reciprocal255;
+            }
             return;
         }
 

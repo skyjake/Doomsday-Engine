@@ -99,7 +99,7 @@ typedef struct {
     float           xhairColor[4];
 
     int             statusbarScale;
-    float           statusbarAlpha;
+    float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
     int             msgCount;
@@ -123,14 +123,17 @@ typedef struct {
 /*    int             automapPos;
     float           automapWidth;
     float           automapHeight; */
+    float           automapMobj[3];
     float           automapL0[3];
     float           automapL1[3];
     float           automapL2[3];
     float           automapL3[3];
-    float           automapBack[4];
+    float           automapBack[3];
+    float           automapOpacity;
     float           automapLineAlpha;
     byte            automapRotate;
     byte            automapHudDisplay;
+    int             automapCustomColors;
     byte            automapShowDoors;
     float           automapDoorGlow;
     byte            automapBabyKeys;

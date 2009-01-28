@@ -266,6 +266,7 @@ typedef struct automap_s {
     uint            numSpecialLines;
 
     vectorgrapname_t vectorGraphicForPlayer;
+    vectorgrapname_t vectorGraphicForThing;
     int             scissorState[5];
 
 // DGL Display lists.
@@ -334,14 +335,13 @@ void            M_DrawMapMenu(void);
 void            M_MapPosition(int option, void* data);
 void            M_MapWidth(int option, void* data);
 void            M_MapHeight(int option, void* data);
+void            M_MapOpacity(int option, void* data);
 void            M_MapLineAlpha(int option, void* data);
 void            M_MapDoorColors(int option, void* data);
 void            M_MapDoorGlow(int option, void* data);
 void            M_MapRotate(int option, void* data);
 void            M_MapStatusbar(int option, void* data);
-void            M_MapKills(int option, void* data);
-void            M_MapItems(int option, void* data);
-void            M_MapSecrets(int option, void* data);
+void            M_MapCustomColors(int option, void* data);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -370,6 +370,7 @@ extern DGLuint amMaskTexture;
 int mapviewplayer;
 
 cvar_t mapCVars[] = {
+    {"map-opacity", 0, CVT_FLOAT, &cfg.automapOpacity, 0, 1},
     {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
@@ -377,19 +378,22 @@ cvar_t mapCVars[] = {
     {"map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1},
     {"map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1},
     {"map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1},
-    {"map-background-a", 0, CVT_FLOAT, &cfg.automapBack[3], 0, 1},
-    {"map-color-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1},
-    {"map-color-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1},
-    {"map-color-unseen-b", 0, CVT_FLOAT, &cfg.automapL0[2], 0, 1},
-    {"map-color-wall-r", 0, CVT_FLOAT, &cfg.automapL1[0], 0, 1},
-    {"map-color-wall-g", 0, CVT_FLOAT, &cfg.automapL1[1], 0, 1},
-    {"map-color-wall-b", 0, CVT_FLOAT, &cfg.automapL1[2], 0, 1},
-    {"map-color-floor-r", 0, CVT_FLOAT, &cfg.automapL2[0], 0, 1},
-    {"map-color-floor-g", 0, CVT_FLOAT, &cfg.automapL2[1], 0, 1},
-    {"map-color-floor-b", 0, CVT_FLOAT, &cfg.automapL2[2], 0, 1},
-    {"map-color-ceiling-r", 0, CVT_FLOAT, &cfg.automapL3[0], 0, 1},
-    {"map-color-ceiling-g", 0, CVT_FLOAT, &cfg.automapL3[1], 0, 1},
-    {"map-color-ceiling-b", 0, CVT_FLOAT, &cfg.automapL3[2], 0, 1},
+    {"map-customcolors", 0, CVT_INT, &cfg.automapCustomColors, 0, 1},
+    {"map-mobj-r", 0, CVT_FLOAT, &cfg.automapMobj[0], 0, 1},
+    {"map-mobj-g", 0, CVT_FLOAT, &cfg.automapMobj[1], 0, 1},
+    {"map-mobj-b", 0, CVT_FLOAT, &cfg.automapMobj[2], 0, 1},
+    {"map-wall-r", 0, CVT_FLOAT, &cfg.automapL1[0], 0, 1},
+    {"map-wall-g", 0, CVT_FLOAT, &cfg.automapL1[1], 0, 1},
+    {"map-wall-b", 0, CVT_FLOAT, &cfg.automapL1[2], 0, 1},
+    {"map-wall-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1},
+    {"map-wall-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1},
+    {"map-wall-unseen-b", 0, CVT_FLOAT, &cfg.automapL0[2], 0, 1},
+    {"map-wall-floorchange-r", 0, CVT_FLOAT, &cfg.automapL2[0], 0, 1},
+    {"map-wall-floorchange-g", 0, CVT_FLOAT, &cfg.automapL2[1], 0, 1},
+    {"map-wall-floorchange-b", 0, CVT_FLOAT, &cfg.automapL2[2], 0, 1},
+    {"map-wall-ceilingchange-r", 0, CVT_FLOAT, &cfg.automapL3[0], 0, 1},
+    {"map-wall-ceilingchange-g", 0, CVT_FLOAT, &cfg.automapL3[1], 0, 1},
+    {"map-wall-ceilingchange-b", 0, CVT_FLOAT, &cfg.automapL3[2], 0, 1},
     {"map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1},
     {"map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200},
     {"map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2},
@@ -463,6 +467,21 @@ Con_Error("mapForPlayerId: Invalid player id %i.", id);
     }
 
     return &automaps[id];
+}
+
+static void getMapColor(float* rgb, const float* uColor, int palidx,
+                        boolean customPal)
+{
+    if((!customPal && !cfg.automapCustomColors) ||
+       (customPal && cfg.automapCustomColors != 2))
+    {
+        R_PalIdxToRGB(rgb, palidx, false);
+        return;
+    }
+
+    rgb[0] = uColor[0];
+    rgb[1] = uColor[1];
+    rgb[2] = uColor[2];
 }
 
 static vectorgrap_t* getVectorGraphic(uint idx)
@@ -615,6 +634,7 @@ void AM_Register(void)
 void AM_Init(void)
 {
     uint                i;
+    boolean             customPal;
 
     if(IS_DEDICATED)
         return;
@@ -627,11 +647,14 @@ void AM_Init(void)
     AM_ListInit();
     AM_LoadData();
 
+    customPal = !W_IsFromIWAD(W_GetNumForName("PLAYPAL"));
+
     memset(&automaps, 0, sizeof(automaps));
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         uint                j;
         automap_t*          map = &automaps[i];
+        float               rgb[3];
 
         // Initialize.
         // \fixme Put these values into an array (or read from a lump?).
@@ -754,25 +777,43 @@ void AM_Init(void)
         map->cfg.zoomSpeed = cfg.automapZoomSpeed;
         setViewRotateMode(map, cfg.automapRotate);
 
+        AM_SetVectorGraphic(i, AMO_THING, VG_TRIANGLE);
+        /*getMapColor(rgb, cfg.automapMobj, THINGCOLORS, customPal);
+        AM_SetColorAndAlpha(i, AMO_THING, rgb[0], rgb[1], rgb[2], 1);*/
         AM_SetVectorGraphic(i, AMO_THINGPLAYER, VG_ARROW);
-        AM_SetColorAndAlpha(i, AMO_BACKGROUND,
-                            cfg.automapBack[0], cfg.automapBack[1],
-                            cfg.automapBack[2], cfg.automapBack[3]);
-        AM_SetColorAndAlpha(i, AMO_UNSEENLINE,
-                            cfg.automapL0[0], cfg.automapL0[1],
-                            cfg.automapL0[2], 1);
-        AM_SetColorAndAlpha(i, AMO_SINGLESIDEDLINE,
-                            cfg.automapL1[0], cfg.automapL1[1],
-                            cfg.automapL1[2], 1);
-        AM_SetColorAndAlpha(i, AMO_TWOSIDEDLINE,
-                            cfg.automapL0[0], cfg.automapL0[1],
-                            cfg.automapL0[2], 1);
-        AM_SetColorAndAlpha(i, AMO_FLOORCHANGELINE,
-                            cfg.automapL2[0], cfg.automapL2[1],
-                            cfg.automapL2[2], 1);
-        AM_SetColorAndAlpha(i, AMO_CEILINGCHANGELINE,
-                            cfg.automapL3[0], cfg.automapL3[1],
-                            cfg.automapL3[2], 1);
+
+#if __JHERETIC__ || __JHEXEN__
+        if(W_CheckNumForName("AUTOPAGE") == -1)
+        {
+            AM_SetColorAndAlpha(i, AMO_BACKGROUND, .55f, .45f, .35f,
+                                cfg.automapOpacity);
+        }
+        else
+        {
+            getMapColor(rgb, cfg.automapBack, WHITE, customPal);
+            AM_SetColorAndAlpha(i, AMO_BACKGROUND, rgb[0], rgb[1], rgb[2],
+                                cfg.automapOpacity);
+        }
+#else
+        getMapColor(rgb, cfg.automapBack, BACKGROUND, customPal);
+        AM_SetColorAndAlpha(i, AMO_BACKGROUND, rgb[0], rgb[1], rgb[2],
+                            cfg.automapOpacity);
+#endif
+
+        getMapColor(rgb, cfg.automapL0, GRAYS+3, customPal);
+        AM_SetColorAndAlpha(i, AMO_UNSEENLINE, rgb[0], rgb[1], rgb[2], 1);
+
+        getMapColor(rgb, cfg.automapL1, WALLCOLORS, customPal);
+        AM_SetColorAndAlpha(i, AMO_SINGLESIDEDLINE, rgb[0], rgb[1], rgb[2], 1);
+
+        getMapColor(rgb, cfg.automapL0, TSWALLCOLORS, customPal);
+        AM_SetColorAndAlpha(i, AMO_TWOSIDEDLINE, rgb[0], rgb[1], rgb[2], 1);
+
+        getMapColor(rgb, cfg.automapL2, FDWALLCOLORS, customPal);
+        AM_SetColorAndAlpha(i, AMO_FLOORCHANGELINE, rgb[0], rgb[1], rgb[2], 1);
+
+        getMapColor(rgb, cfg.automapL3, CDWALLCOLORS, customPal);
+        AM_SetColorAndAlpha(i, AMO_CEILINGCHANGELINE, rgb[0], rgb[1], rgb[2], 1);
     }
 }
 
@@ -1867,13 +1908,17 @@ void AM_SetVectorGraphic(int pid, int objectname, int vgname)
 
     switch(objectname)
     {
+    case AMO_THING:
+        map->vectorGraphicForThing = vgname;
+        break;
+
     case AMO_THINGPLAYER:
         map->vectorGraphicForPlayer = vgname;
         break;
 
     default:
-        Con_Error("AM_SetVectorGraphic: Object %i does not support vector graphic.",
-                  objectname);
+        Con_Error("AM_SetVectorGraphic: Object %i does not support vector "
+                  "graphic.", objectname);
         break;
     }
 }
@@ -2053,17 +2098,7 @@ void AM_LoadData(void)
 #endif
 
     if(autopageLumpNum != -1)
-    {
-        if((autopageLumpNum = W_CheckNumForName("AUTOPAGE")) == -1)
-        {
-#if __JHERETIC__ || __JHEXEN__
-            Con_SetFloat("map-background-r", .55f, false);
-            Con_SetFloat("map-background-g", .45f, false);
-            Con_SetFloat("map-background-b", .35f, false);
-            Con_SetFloat("map-background-a", 1, false);
-#endif
-        }
-    }
+        autopageLumpNum = W_CheckNumForName("AUTOPAGE");
 
     if(numTexUnits > 1)
     {   // Great, we can replicate the map fade out effect using multitexture,
@@ -3006,7 +3041,8 @@ static void renderPlayers(void)
             continue;
 #endif
 
-        R_PalIdxToRGB(their_colors[cfg.playerColor[i]], rgb);
+        R_PalIdxToRGB(rgb, (!IS_NETGAME? WHITE :
+            their_colors[cfg.playerColor[i]]), false);
         alpha = cfg.automapLineAlpha;
 #if !__JHEXEN__
         if(p->powers[PT_INVISIBILITY])
@@ -3055,6 +3091,7 @@ static int getKeyColorForMobjType(int type)
 
 typedef struct {
     int             flags; // AMF_* flags.
+    vectorgrap_t*   vgraph;
     float           rgb[3], alpha;
 } renderthing_params_t;
 
@@ -3075,7 +3112,7 @@ static boolean renderThing(thinker_t* th, void* context)
         {   // This mobj is indeed a key.
             float               rgb[4];
 
-            R_PalIdxToRGB(keyColor, rgb);
+            R_PalIdxToRGB(rgb, keyColor, false);
 
             /* $unifiedangles */
             renderLineCharacter(getVectorGraphic(VG_KEYSQUARE),
@@ -3088,8 +3125,7 @@ static boolean renderThing(thinker_t* th, void* context)
     if(p->flags & AMF_REND_THINGS)
     {   // Something else.
         /* $unifiedangles */
-        renderLineCharacter(getVectorGraphic(VG_TRIANGLE),
-                            mo->pos[VX], mo->pos[VY],
+        renderLineCharacter(p->vgraph, mo->pos[VX], mo->pos[VY],
                             mo->angle / (float) ANGLE_MAX * 360,
                             PLAYERRADIUS, p->rgb, p->alpha, BM_NORMAL);
     }
@@ -3553,7 +3589,9 @@ void AM_Drawer(int viewplayer)
         renderthing_params_t params;
 
         params.flags = map->flags;
-        R_PalIdxToRGB(THINGCOLORS, params.rgb);
+        params.vgraph = getVectorGraphic(map->vectorGraphicForThing);
+        getMapColor(params.rgb, cfg.automapMobj, THINGCOLORS,
+                    !W_IsFromIWAD(W_GetNumForName("PLAYPAL")));
         params.alpha = MINMAX_OF(0.f,
             cfg.automapLineAlpha * map->alpha, 1.f);
 
@@ -3585,32 +3623,33 @@ void AM_Drawer(int viewplayer)
 //-------------------------------------------------------------------------------
 
 menuitem_t MAPItems[] = {
-    {ITT_LRFUNC, 0, "hud display :        ",    M_MapStatusbar, 0 },
-#if !__JHEXEN__
-    {ITT_LRFUNC, 0, "kills count :         ",   M_MapKills, 0 },
-    {ITT_LRFUNC, 0, "items count :         ",   M_MapItems, 0 },
-    {ITT_LRFUNC, 0, "secrets count :    ",      M_MapSecrets, 0 },
+    {ITT_LRFUNC, 0, "opacity :", M_MapOpacity, 0},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
 #endif
-    {ITT_NAVLEFT, 0, "automap colours",         NULL, 0 },
-    {ITT_EFUNC, 0, "   walls",                  SCColorWidget, 1 },
-    {ITT_EFUNC, 0, "   floor height changes",   SCColorWidget, 2 },
-    {ITT_EFUNC, 0, "   ceiling height changes", SCColorWidget, 3 },
-    {ITT_EFUNC, 0, "   unseen areas",           SCColorWidget, 0 },
-    {ITT_EFUNC, 0, "   background",             SCColorWidget, 4 },
+    {ITT_LRFUNC, 0, "line alpha :", M_MapLineAlpha, 0 },
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+#endif
+    {ITT_LRFUNC, 0, "hud display :", M_MapStatusbar, 0 },
+    {ITT_EFUNC, 0, "door colors :", M_MapDoorColors, 0 },
+    {ITT_LRFUNC, 0, "door glow : ", M_MapDoorGlow, 0 },
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
+#endif
 #if __JDOOM__ || __JDOOM64__
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+    {ITT_EMPTY, 0, NULL, NULL, 0 },
 #endif
-    {ITT_EFUNC, 0, "door colors :        ",     M_MapDoorColors, 0 },
-    {ITT_LRFUNC, 0, "door glow : ",             M_MapDoorGlow, 0 },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-#endif
-    {ITT_LRFUNC, 0, "line alpha :          ",   M_MapLineAlpha, 0 },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
-#endif
+    {ITT_LRFUNC, 0, "use custom colors :", M_MapCustomColors, 0 },
+    {ITT_EFUNC, 0, "   wall", SCColorWidget, 1 },
+    {ITT_EFUNC, 0, "   floor height change", SCColorWidget, 2 },
+    {ITT_EFUNC, 0, "   ceiling height change", SCColorWidget, 3 },
+    {ITT_EFUNC, 0, "   unseen", SCColorWidget, 0 },
+    {ITT_EFUNC, 0, "   thing", SCColorWidget, 6 },
+    {ITT_EFUNC, 0, "   background", SCColorWidget, 4 },
 };
 
 menu_t MapDef = {
@@ -3621,20 +3660,20 @@ menu_t MapDef = {
     64, 28,
 #endif
     M_DrawMapMenu,
-#if __JHERETIC__
-    17, MAPItems,
+#if __JHERETIC__ || __JHEXEN__
+    18, MAPItems,
 #else
-    14, MAPItems,
+    13, MAPItems,
 #endif
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
-#if __JHERETIC__
-    0, 17
+#if __JHERETIC__ || __JHEXEN__
+    0, 11
 #else
-    0, 14
+    0, 13
 #endif
 };
 
@@ -3643,62 +3682,86 @@ menu_t MapDef = {
  */
 void M_DrawMapMenu(void)
 {
-    static char*            hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
-    static char*            yesno[2] = { "NO", "YES" };
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    static char*            countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
+    static char*        hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
+    static char*        yesno[2] = { "NO", "YES" };
+    static char*        customColors[3] = { "NEVER", "AUTO", "ALWAYS" };
+    float               menuAlpha;
+    uint                idx;
+#if __JHERETIC__ || __JHEXEN__
+    char*               token;
+    int                 page;
 #endif
-    float                   menuAlpha;
-    const menu_t*           menu = &MapDef;
+    const menu_t*       menu = &MapDef;
 
     menuAlpha = Hu_MenuAlpha();
 
     M_DrawTitle("Automap OPTIONS", menu->y - 26);
 
-#if __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, 0, hudviewnames[cfg.automapHudDisplay]);
-    M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
-    M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
-    M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
-    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
-    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
-    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
-    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
-    M_WriteMenuText(menu, 11, yesno[cfg.automapShowDoors]);
-    MN_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    MN_DrawSlider(menu, 13, 11, cfg.automapLineAlpha * 10 + .5f);
-#else
-    M_WriteMenuText(menu, 0, hudviewnames[cfg.automapHudDisplay]);
-# if __JHERETIC__
-    M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
-    M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
-    M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
-    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
-    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
-    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
-    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
-    M_WriteMenuText(menu, 10, yesno[cfg.automapShowDoors]);
-    MN_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    MN_DrawSlider(menu, 15, 11, cfg.automapLineAlpha * 10 + .5f);
-# else
-    MN_DrawColorBox(menu, 2, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
-    MN_DrawColorBox(menu, 3, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
-    MN_DrawColorBox(menu, 4, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
-    MN_DrawColorBox(menu, 5, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
-    MN_DrawColorBox(menu, 6, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
-    M_WriteMenuText(menu, 7, yesno[cfg.automapShowDoors]);
-    MN_DrawSlider(menu, 9, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    MN_DrawSlider(menu, 12, 11, cfg.automapLineAlpha * 10 + .5f);
-# endif
+#if __JHERETIC__ || __JHEXEN__
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+
+    // Draw the page arrows.
+    token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
+    GL_DrawPatch_CS(menu->x, menu->y - 22, W_GetNumForName(token));
+    token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
+             menuTime & 8) ? "invgemr2" : "invgemr1";
+    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
 #endif
+
+    idx = menu->firstItem;
+#if __JHERETIC__ || __JHEXEN__
+    page = menu->firstItem / menu->numVisItems + 1;
+    if(page == 2)
+        goto page2;
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    MN_DrawSlider(menu, idx++, 11, cfg.automapOpacity * 10 + .5f);
+#if __JHERETIC__ || __JHEXEN__
+    idx+= 2;
+#endif
+    MN_DrawSlider(menu, idx++, 11, cfg.automapLineAlpha * 10 + .5f);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    M_WriteMenuText(menu, idx++, hudviewnames[cfg.automapHudDisplay % 3]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.automapShowDoors]);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    MN_DrawSlider(menu, idx++, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    idx++;
+#if __JHERETIC__ || __JHEXEN__
+    return;
+
+page2:
+#endif
+    M_WriteMenuText(menu, idx++, customColors[cfg.automapCustomColors % 3]);
+    MN_DrawColorBox(menu, idx++, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
+    MN_DrawColorBox(menu, idx++, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
+    MN_DrawColorBox(menu, idx++, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
+    MN_DrawColorBox(menu, idx++, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
+    MN_DrawColorBox(menu, idx++, cfg.automapMobj[0], cfg.automapMobj[1], cfg.automapMobj[2], menuAlpha);
+    MN_DrawColorBox(menu, idx, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
 }
 
 /**
  * Set automap line alpha
  */
-void M_MapLineAlpha(int option, void *data)
+void M_MapOpacity(int option, void* data)
+{
+    M_FloatMod10(&cfg.automapOpacity, option);
+}
+
+/**
+ * Set automap line alpha
+ */
+void M_MapLineAlpha(int option, void* data)
 {
     M_FloatMod10(&cfg.automapLineAlpha, option);
 }
@@ -3749,52 +3812,13 @@ void M_MapStatusbar(int option, void *data)
         cfg.automapHudDisplay--;
 }
 
-/**
- * Set the show kills counter
- */
-void M_MapKills(int option, void *data)
+void M_MapCustomColors(int option, void* data)
 {
-    int         op = (cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2);
-
-    op += option == RIGHT_DIR ? 1 : -1;
-    if(op < 0)
-        op = 0;
-    if(op > 3)
-        op = 3;
-    cfg.counterCheat &= ~0x9;
-    cfg.counterCheat |= (op & 0x1) | ((op & 0x2) << 2);
-}
-
-/**
- * Set the show items counter
- */
-void M_MapItems(int option, void *data)
-{
-    int         op =
-        ((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3);
-
-    op += option == RIGHT_DIR ? 1 : -1;
-    if(op < 0)
-        op = 0;
-    if(op > 3)
-        op = 3;
-    cfg.counterCheat &= ~0x12;
-    cfg.counterCheat |= ((op & 0x1) << 1) | ((op & 0x2) << 3);
-}
-
-/**
- * Set the show secrets counter
- */
-void M_MapSecrets(int option, void *data)
-{
-    int         op =
-        ((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4);
-
-    op += option == RIGHT_DIR ? 1 : -1;
-    if(op < 0)
-        op = 0;
-    if(op > 3)
-        op = 3;
-    cfg.counterCheat &= ~0x24;
-    cfg.counterCheat |= ((op & 0x1) << 2) | ((op & 0x2) << 4);
+    if(option == RIGHT_DIR)
+    {
+        if(cfg.automapCustomColors < 2)
+            cfg.automapCustomColors++;
+    }
+    else if(cfg.automapCustomColors > 0)
+        cfg.automapCustomColors--;
 }

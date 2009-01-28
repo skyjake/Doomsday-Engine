@@ -124,7 +124,7 @@ typedef struct jdoom_config_s {
     byte            respawnMonstersNightmare;
 
     int             statusbarScale;
-    float           statusbarAlpha;
+    float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
     /** Compatibility options.
@@ -150,14 +150,17 @@ typedef struct jdoom_config_s {
 /*  int             automapPos;
     float           automapWidth;
     float           automapHeight;*/
+    float           automapMobj[3];
     float           automapL0[3];
     float           automapL1[3];
     float           automapL2[3];
     float           automapL3[3];
-    float           automapBack[4];
+    float           automapBack[3];
+    float           automapOpacity;
     float           automapLineAlpha;
     byte            automapRotate;
     int             automapHudDisplay;
+    int             automapCustomColors;
     byte            automapShowDoors;
     float           automapDoorGlow;
     byte            automapBabyKeys;
