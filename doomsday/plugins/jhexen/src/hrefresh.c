@@ -224,7 +224,7 @@ static void rendHUD(int player)
 
         // Do we need to render a full status bar at this point?
         if(!(AM_IsMapActive(player) && cfg.automapHudDisplay == 0) &&
-           !P_IsCamera(plr->plr->mo))
+           !(P_IsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             if(true == (WINDOWHEIGHT == 200))
             {
@@ -256,7 +256,7 @@ void G_Display(int layer)
     if(layer == 0)
     {
         // $democam: can be set on every frame.
-        if(cfg.setBlocks > 10 || P_IsCamera(plr->plr->mo))
+        if(cfg.setBlocks > 10 || (P_IsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             // Full screen.
             R_SetViewWindowTarget(0, 0, 320, 200);
@@ -295,7 +295,7 @@ void G_Display(int layer)
             rendPlayerView(player);
 
             // Crosshair.
-            if(!P_IsCamera(plr->plr->mo)) // $democam
+            if(!(P_IsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
                 X_Drawer(player);
         }
 
