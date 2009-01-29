@@ -614,7 +614,7 @@ void NetCl_Intermission(byte *data)
 
     // Close any automaps left open at the end of the previous map.
     for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(i, false, true);
+        AM_Open(AM_MapForPlayer(i), false, true);
 
 #if __JDOOM__ || __JDOOM64__
     if(flags & IMF_BEGIN)

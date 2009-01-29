@@ -1599,7 +1599,7 @@ void G_DoCompleted(void)
     {
         if(players[i].plr->inGame)
         {
-            AM_Open(i, false, true);
+            AM_Open(AM_MapForPlayer(i), false, true);
 
             G_PlayerLeaveMap(i); // take away cards and stuff
 

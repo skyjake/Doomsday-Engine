@@ -90,7 +90,6 @@
 			<Add alias="All" targets="Release Win32;Debug Win32;" />
 		</VirtualTargets>
 		<Unit filename="..\..\plugins\common\include\am_map.h" />
-		<Unit filename="..\..\plugins\common\include\am_rendlist.h" />
 		<Unit filename="..\..\plugins\common\include\d_net.h" />
 		<Unit filename="..\..\plugins\common\include\d_netcl.h" />
 		<Unit filename="..\..\plugins\common\include\d_netsv.h" />
@@ -131,13 +130,11 @@
 		<Unit filename="..\..\plugins\common\include\p_xgline.h" />
 		<Unit filename="..\..\plugins\common\include\p_xgsec.h" />
 		<Unit filename="..\..\plugins\common\include\r_common.h" />
+		<Unit filename="..\..\plugins\common\include\rend_automap.h" />
 		<Unit filename="..\..\plugins\common\include\st_lib.h" />
 		<Unit filename="..\..\plugins\common\include\x_hair.h" />
 		<Unit filename="..\..\plugins\common\include\xgclass.h" />
 		<Unit filename="..\..\plugins\common\src\am_map.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\am_rendlist.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\d_net.c">
@@ -263,6 +260,7 @@
 		<Unit filename="..\..\plugins\common\src\r_common.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\plugins\common\src\rend_automap.c" />
 		<Unit filename="..\..\plugins\common\src\st_lib.c">
 			<Option compilerVar="CC" />
 		</Unit>

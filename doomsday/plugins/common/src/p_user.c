@@ -1536,27 +1536,28 @@ void P_PlayerThinkMap(player_t* player)
 {
     uint                plnum = player - players;
     playerbrain_t*      brain = &player->brain;
+    automapid_t         map = AM_MapForPlayer(plnum);
 
     if(brain->mapToggle)
-        AM_Open(plnum, !AM_IsMapActive(plnum), false);
+        AM_Open(map, !AM_IsActive(map), false);
 
     if(brain->mapFollow)
-        AM_ToggleFollow(plnum);
+        AM_ToggleFollow(map);
 
     if(brain->mapRotate)
-        AM_SetViewRotate(plnum, 2); // 2 = toggle.
+        AM_SetViewRotate(map, 2); // 2 = toggle.
 
     if(brain->mapZoomMax)
-        AM_ToggleZoomMax(plnum);
+        AM_ToggleZoomMax(map);
 
     if(brain->mapMarkAdd)
     {
         mobj_t*         pmo = player->plr->mo;
-        AM_AddMark(plnum, pmo->pos[VX], pmo->pos[VY]);
+        AM_AddMark(map, pmo->pos[VX], pmo->pos[VY]);
     }
 
     if(brain->mapMarkClearAll)
-        AM_ClearMarks(plnum);
+        AM_ClearMarks(map);
 }
 
 void P_PlayerThinkPowers(player_t* player)

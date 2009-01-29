@@ -603,7 +603,7 @@ static void drawStatusBarBackground(int player)
         if(!hud->inventory)
         {
             // Main interface
-            if(!AM_IsMapActive(player))
+            if(!AM_IsActive(AM_MapForPlayer(player)))
             {
                 GL_DrawPatch(38, 162, dpStatBar.lump);
 
@@ -699,7 +699,7 @@ static void drawStatusBarBackground(int player)
         if(!hud->inventory)
         {
             // Main interface
-            if(!AM_IsMapActive(player))
+            if(!AM_IsActive(AM_MapForPlayer(player)))
             {
                 if(deathmatch)
                 {
@@ -1418,7 +1418,7 @@ static void drawWidgets(hudstate_t* hud)
     hud->oldHealth = -1;
     if(!hud->inventory)
     {
-        if(!AM_IsMapActive(player))
+        if(!AM_IsActive(AM_MapForPlayer(player)))
         {
             // Frags
             if(deathmatch)
@@ -1738,7 +1738,7 @@ void ST_doRefresh(int player)
     }
 
     drawStatusBarBackground(player);
-    if(!hud->inventory && !AM_IsMapActive(player))
+    if(!hud->inventory && !AM_IsActive(AM_MapForPlayer(player)))
         drawWeaponPieces(hud);
     drawChain(hud);
     drawWidgets(hud);
@@ -1914,8 +1914,8 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
 
     hud->firstTime = hud->firstTime || refresh;
     hud->statusbarOn = (fullscreenmode < 2) ||
-                      (AM_IsMapActive(player) &&
-                       (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+        (AM_IsActive(AM_MapForPlayer(player)) &&
+         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
     ST_doPaletteStuff(player, false);

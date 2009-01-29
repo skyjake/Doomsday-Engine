@@ -477,6 +477,7 @@ boolean Cht_Responder(event_t *ev)
     int                 i;
     byte                key = ev->data1;
     boolean             eat;
+    automapid_t         map;
 
     if(ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
@@ -509,7 +510,8 @@ boolean Cht_Responder(event_t *ev)
         }
     }
 
-    if(AM_IsMapActive(CONSOLEPLAYER))
+    map = AM_MapForPlayer(CONSOLEPLAYER);
+    if(AM_IsActive(am))
     {
         if(ev->state == EVS_DOWN)
         {
@@ -915,7 +917,7 @@ static void CheatScriptFunc3(player_t *player, cheat_t * cheat)
 
 static void CheatRevealFunc(player_t *player, cheat_t *cheat)
 {
-    AM_IncMapCheatLevel(player - players);
+    AM_IncMapCheatLevel(AM_MapForPlayer(player - players));
 }
 
 /**
@@ -1207,21 +1209,23 @@ DEFCC(CCmdCheatRunScript)
 DEFCC(CCmdCheatReveal)
 {
     int                 option;
+    automapid_t         map;
 
     if(!canCheat())
         return false; // Can't cheat!
 
     // Reset them (for 'nothing'). :-)
-    AM_SetCheatLevel(CONSOLEPLAYER, 0);
-    AM_RevealMap(CONSOLEPLAYER, false);
+    map = AM_MapForPlayer(CONSOLEPLAYER);
+    AM_SetCheatLevel(map, 0);
+    AM_RevealMap(map, false);
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
     if(option == 1)
-        AM_RevealMap(CONSOLEPLAYER, true);
+        AM_RevealMap(map, true);
     else if(option != 0)
-        AM_SetCheatLevel(CONSOLEPLAYER, option -1);
+        AM_SetCheatLevel(map, option -1);
 
     return true;
 }

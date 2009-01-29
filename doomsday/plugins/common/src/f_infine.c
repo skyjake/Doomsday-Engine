@@ -407,7 +407,7 @@ void FI_ClearState(void)
         G_ChangeGameState(GS_INFINE);
         // Close the automap for all local players.
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_Open(i, false, true);
+            AM_Open(AM_MapForPlayer(i), false, true);
     }
 
     fiActive = true;
@@ -789,7 +789,7 @@ void FI_DemoEnds(void)
         G_SetGameAction(GA_NONE);
 
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_Open(i, false, true);
+            AM_Open(AM_MapForPlayer(i), false, true);
     }
 }
 

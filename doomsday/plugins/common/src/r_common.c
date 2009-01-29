@@ -164,31 +164,28 @@ boolean R_IsFullScreenViewWindow(void)
  * Does the given display player's automap obscure the window completely?
  * \note: Window dimensions are in fixed scale {x} 0 - 320, {y} 0 - 200.
  *
- * @param playerid  Index of the player whose map to check.
- * @param x         Top left X coordinate.
- * @param y         Top left Y coordinate.
- * @param w         Width.
- * @param h         Height.
+ * @param playerid      Index of the player whose map to check.
+ * @param x             Top left X coordinate.
+ * @param y             Top left Y coordinate.
+ * @param w             Width.
+ * @param h             Height.
  *
- * @return          @true if there is no point within the given window
- *                  which is even partially visible.
+ * @return              @true if there is no point within the given window
+ *                      which is even partially visible.
  */
 boolean R_MapObscures(int playerid, int x, int y, int w, int h)
 {
-#define FIXXTOSCREENX(x) (scrwidth * (x / (float) SCREENWIDTH))
-#define FIXYTOSCREENY(y) (scrheight * (y / (float) SCREENHEIGHT))
+    boolean             retVal = false;
+    automapid_t         map = AM_MapForPlayer(DISPLAYPLAYER);
 
-    boolean     retVal = false;
-
-    if(AM_IsMapActive(DISPLAYPLAYER))
+    if(AM_IsActive(map))
     {
         float   alpha;
 
-        AM_GetColorAndAlpha(DISPLAYPLAYER, AMO_BACKGROUND,
-                                    NULL, NULL, NULL, &alpha);
-        if(!(alpha < 1) && !(AM_GlobalAlpha(DISPLAYPLAYER) < 1))
+        AM_GetColorAndAlpha(map, AMO_BACKGROUND, NULL, NULL, NULL, &alpha);
+        if(!(alpha < 1) && !(AM_GlobalAlpha(map) < 1))
         {
-            if(AM_IsMapWindowInFullScreenMode(DISPLAYPLAYER))
+            if(AM_IsMapWindowInFullScreenMode(map))
             {
                 retVal = true;
             }
@@ -203,7 +200,7 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
                 float       fh = FIXYTOSCREENY(h);
                 float       mx, my, mw, mh;
 
-                AM_GetWindow(DISPLAYPLAYER, &mx, &my, &mw, &mh);
+                AM_GetWindow(map, &mx, &my, &mw, &mh);
                 if(mx >= fx && my >= fy && mw >= fw && mh >= fh)
                     retVal = true;
             }
@@ -211,9 +208,6 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
     }
 
     return retVal;
-
-#undef FIXXTOSCREENX
-#undef FIXYTOSCREENY
 }
 
 void R_CachePatch(dpatch_t* dp, const char* name)

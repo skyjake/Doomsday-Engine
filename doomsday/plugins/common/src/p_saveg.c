@@ -1231,7 +1231,7 @@ static void SV_ReadPlayer(player_t *p)
         p->powers[i] = SV_ReadLong();
     }
     if(p->powers[PT_ALLMAP])
-        AM_RevealMap(p - players, true);
+        AM_RevealMap(AM_MapForPlayer(p - players), true);
 
 #if __JHEXEN__
     p->keys = SV_ReadLong();
@@ -2520,7 +2520,7 @@ static void SV_ReadLine(linedef_t *li)
         // Set line as having been seen by all players..
         memset(xli->mapped, 0, sizeof(xli->mapped));
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_UpdateLinedef(i, lineIDX, true);
+            AM_UpdateLinedef(AM_MapForPlayer(i), lineIDX, true);
         flags &= ~0x0100; // remove the old flag.
     }
     xli->flags = flags;

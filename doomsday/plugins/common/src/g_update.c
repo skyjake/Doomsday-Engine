@@ -47,7 +47,7 @@
 
 #include "hu_pspr.h"
 #include "hu_menu.h"
-#include "am_map.h"
+#include "rend_automap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -176,7 +176,7 @@ void G_UpdateState(int step)
         Hu_UnloadData();
 
         // Free the automap mask texture.
-        AM_UnloadData();
+        Rend_AutomapUnloadData();
         break;
 
     case DD_RENDER_RESTART_POST:
@@ -184,7 +184,7 @@ void G_UpdateState(int step)
         Hu_LoadData();
 
         // Reload the automap mask texture.
-        AM_LoadData();
+        Rend_AutomapLoadData();
         break;
     }
 }

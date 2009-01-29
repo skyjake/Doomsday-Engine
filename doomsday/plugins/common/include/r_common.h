@@ -36,6 +36,12 @@ typedef struct dpatch_s {
     lumpnum_t       lump;
 } dpatch_t;
 
+// Translate between fixed screen dimensions to actual, current.
+#define FIXXTOSCREENX(x) (scrwidth * ((x) / (float) SCREENWIDTH))
+#define FIXYTOSCREENY(y) (scrheight * ((y) / (float) SCREENHEIGHT))
+#define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / scrwidth))
+#define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / scrheight))
+
 void            R_SetViewWindowTarget(int x, int y, int w, int h);
 void            R_ViewWindowTicker(void);
 void            R_GetViewWindow(float* x, float* y, float* w, float* h);

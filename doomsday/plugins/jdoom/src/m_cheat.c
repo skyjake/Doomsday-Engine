@@ -243,15 +243,14 @@ boolean Cht_Responder(event_t* ev)
         }
     }
 
-    if(AM_IsMapActive(CONSOLEPLAYER) && ev->type == EV_KEY)
+    if(!deathmatch && ev->type == EV_KEY && ev->state == EVS_DOWN)
     {
-        if(ev->state == EVS_DOWN)
+        automapid_t         map = AM_MapForPlayer(CONSOLEPLAYER);
+
+        if(AM_IsActive(map) && Cht_CheckCheat(&cheatAutomap, (char) ev->data1))
         {
-            if(!deathmatch && Cht_CheckCheat(&cheatAutomap, (char) ev->data1))
-            {
-                AM_IncMapCheatLevel(CONSOLEPLAYER);
-                return true;
-            }
+            AM_IncMapCheatLevel(map);
+            return true;
         }
     }
 
@@ -625,21 +624,23 @@ DEFCC(CCmdCheatWarp)
 DEFCC(CCmdCheatReveal)
 {
     int                 option;
+    automapid_t         map;
 
     if(!can_cheat())
         return false; // Can't cheat!
 
     // Reset them (for 'nothing'). :-)
-    AM_SetCheatLevel(CONSOLEPLAYER, 0);
-    AM_RevealMap(CONSOLEPLAYER, false);
+    map = AM_MapForPlayer(CONSOLEPLAYER);
+    AM_SetCheatLevel(map, 0);
+    AM_RevealMap(map, false);
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
     if(option == 1)
-        AM_RevealMap(CONSOLEPLAYER, true);
+        AM_RevealMap(map, true);
     else if(option != 0)
-        AM_SetCheatLevel(CONSOLEPLAYER, option -1);
+        AM_SetCheatLevel(map, option -1);
 
     return true;
 }

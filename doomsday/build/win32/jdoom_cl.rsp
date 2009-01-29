@@ -53,9 +53,9 @@
  ./../../plugins/common/src/hu_msg.c
  ./../../plugins/common/src/f_infine.c
  ./../../plugins/common/src/am_map.c
- ./../../plugins/common/src/am_rendlist.c
  ./../../plugins/jdoom/src/tables.c
  ./../../plugins/common/src/r_common.c
+ ./../../plugins/common/src/rend_automap.c
  ./../../plugins/jdoom/src/m_random.c
  ./../../plugins/common/src/m_fixed.c
  ./../../plugins/jdoom/src/m_cheat.c

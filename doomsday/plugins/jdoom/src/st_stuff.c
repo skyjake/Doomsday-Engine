@@ -1235,8 +1235,9 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
     hud = &hudStates[player];
 
     hud->firstTime = hud->firstTime || refresh;
-    hud->statusbarActive = (fullscreenMode < 2) || (AM_IsMapActive(player) &&
-                     (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+    hud->statusbarActive = (fullscreenMode < 2) ||
+        (AM_IsActive(AM_MapForPlayer(player)) &&
+         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
     ST_doPaletteStuff(player);

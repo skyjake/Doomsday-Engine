@@ -225,10 +225,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\am_rendlist.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\include\d_net.h"
 				>
 			</File>
@@ -389,6 +385,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\rend_automap.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\st_lib.h"
 				>
 			</File>
@@ -406,10 +406,6 @@
 			>
 			<File
 				RelativePath="..\..\..\plugins\common\src\am_map.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\am_rendlist.c"
 				>
 			</File>
 			<File
@@ -578,6 +574,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\r_common.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\rend_automap.c"
 				>
 			</File>
 			<File

@@ -37,12 +37,13 @@
 #include "r_common.h"
 #include "p_mapsetup.h"
 #include "g_controls.h"
-#include "am_map.h"
 #include "g_common.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "am_map.h"
 #include "x_hair.h"
 #include "p_tick.h"
+#include "rend_automap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -218,12 +219,14 @@ static void rendHUD(int player)
     // These various HUD's will be drawn unless Doomsday advises not to
     if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
     {
+        automapid_t         map = AM_MapForPlayer(player);
+
         // Draw HUD displays only visible when the automap is open.
-        if(AM_IsMapActive(player))
+        if(AM_IsActive(map))
             HU_DrawMapCounters();
 
         // Do we need to render a full status bar at this point?
-        if(!(AM_IsMapActive(player) && cfg.automapHudDisplay == 0) &&
+        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
            !(P_IsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             if(true == (WINDOWHEIGHT == 200))
@@ -300,7 +303,7 @@ void G_Display(int layer)
         }
 
         // Draw the automap.
-        AM_Drawer(player);
+        Rend_Automap(player);
     }
     else if(layer == 1)
     {

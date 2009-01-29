@@ -323,7 +323,7 @@ boolean P_GivePower(player_t* player, int power)
     }
 
     if(power == PT_ALLMAP)
-        AM_RevealMap(player - players, true);
+        AM_RevealMap(AM_MapForPlayer(player - players), true);
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
@@ -353,7 +353,7 @@ boolean P_TakePower(player_t* player, int power)
         return false; // Dont got it.
 
     if(power == PT_ALLMAP)
-        AM_RevealMap(player - players, false);
+        AM_RevealMap(AM_MapForPlayer(player - players), false);
 
     player->powers[power] = 0;
     return true;
@@ -776,7 +776,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         P_DropWeapon(target->player);
 
         // Don't die with the automap open.
-        AM_Open(target->player - players, false, false);
+        AM_Open(AM_MapForPlayer(target->player - players), false, false);
     }
 
     if(target->health < -target->info->spawnHealth &&

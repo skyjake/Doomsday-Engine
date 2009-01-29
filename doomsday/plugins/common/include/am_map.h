@@ -26,8 +26,8 @@
  * am_map.h : Automap, automap menu and related code.
  */
 
-#ifndef __AM_MAP_H__
-#define __AM_MAP_H__
+#ifndef __COMMON_AUTOMAP__
+#define __COMMON_AUTOMAP__
 
 #define NUMMARKPOINTS       (10)
 
@@ -272,6 +272,16 @@
 
 #endif
 
+typedef unsigned int automapid_t;
+
+// Automap flags:
+#define AMF_REND_THINGS         0x01
+#define AMF_REND_KEYS           0x02
+#define AMF_REND_ALLLINES       0x04
+#define AMF_REND_XGLINES        0x08
+#define AMF_REND_VERTEXES       0x10
+#define AMF_REND_LINE_NORMALS   0x20
+
 typedef enum {
     AMO_NONE = -1,
     AMO_THING = 0,
@@ -285,6 +295,34 @@ typedef enum {
     AMO_NUMOBJECTS
 } automapobjectname_t;
 
+typedef struct mapobjectinfo_s {
+    float           rgba[4];
+    int             blendMode;
+    float           glowAlpha, glowWidth;
+    boolean         glow;
+    boolean         scaleWithView;
+} mapobjectinfo_t;
+
+enum {
+    MOL_LINEDEF = 0,
+    MOL_LINEDEF_TWOSIDED,
+    MOL_LINEDEF_FLOOR,
+    MOL_LINEDEF_CEILING,
+    MOL_LINEDEF_UNSEEN,
+    NUM_MAP_OBJECTLISTS
+};
+
+typedef struct automapcfg_s {
+    float           lineGlowScale;
+    boolean         glowingLineSpecials;
+    float           backgroundRGBA[4];
+    float           panSpeed;
+    boolean         panResetOnOpen;
+    float           zoomSpeed;
+
+    mapobjectinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
+} automapcfg_t;
+
 typedef enum glowtype_e {
     NO_GLOW,
     TWOSIDED_GLOW,
@@ -293,6 +331,7 @@ typedef enum glowtype_e {
 } glowtype_t;
 
 typedef enum vectorgraphname_e {
+    VG_NONE = -1,
     VG_KEYSQUARE,
     VG_TRIANGLE,
     VG_ARROW,
@@ -300,63 +339,93 @@ typedef enum vectorgraphname_e {
     NUM_VECTOR_GRAPHS
 } vectorgrapname_t;
 
+typedef struct mpoint_s {
+    float               pos[3];
+} mpoint_t;
+
+typedef struct mline_s {
+    mpoint_t            a, b;
+} vgline_t;
+
+typedef struct vectorgrap_s {
+    DGLuint         dlist;
+    uint            count;
+    vgline_t*       lines;
+} vectorgrap_t;
+
+vectorgrap_t* AM_GetVectorGraph(vectorgrapname_t id);
+
 extern int mapviewplayer;
 
-void    AM_Register(void);  // Called during init to register automap cvars and ccmds.
-void    AM_Init(void);      // Called during init to initialize the automap.
-void    AM_Shutdown(void);  // Called on exit to free any allocated memory.
-void    AM_LoadData(void);
-void    AM_UnloadData(void);
+void    AM_Register(void); // Called during init to register automap cvars and ccmds.
+void    AM_Init(void); // Called during init to initialize the automap.
+void    AM_Shutdown(void); // Called on exit to free any allocated memory.
 
 void    AM_InitForMap(void); // Called at the end of a map load.
-void    AM_Ticker(void);    // Called by main loop.
-void    AM_Drawer(int viewplayer); // Called every frame to render the map (if visible).
+void    AM_Ticker(void); // Called by main loop.
 
-void    AM_Open(int pnum, boolean yes, boolean fast);
+automapid_t AM_MapForPlayer(int plrnum);
 
-void    AM_SetWindowTarget(int pid, int x, int y, int w, int h);
-void    AM_SetWindowFullScreenMode(int pid, int value);
-void    AM_SetViewTarget(int pid, float x, float y);
-void    AM_SetViewScaleTarget(int pid, float scale);
-void    AM_SetViewAngleTarget(int pid, float angle);
-void    AM_SetViewRotate(int pid, int offOnToggle);
-void    AM_SetGlobalAlphaTarget(int pid, float alpha);
-void    AM_SetColor(int pid, int objectname, float r, float g, float b);
-void    AM_SetColorAndAlpha(int pid, int objectname, float r, float g,
+void    AM_Open(automapid_t id, boolean yes, boolean fast);
+
+void    AM_SetWindowTarget(automapid_t id, int x, int y, int w, int h);
+void    AM_SetWindowFullScreenMode(automapid_t id, int value);
+void    AM_SetViewTarget(automapid_t id, float x, float y);
+void    AM_SetViewScaleTarget(automapid_t id, float scale);
+void    AM_SetViewAngleTarget(automapid_t id, float angle);
+void    AM_SetViewRotate(automapid_t id, int offOnToggle);
+void    AM_SetGlobalAlphaTarget(automapid_t id, float alpha);
+void    AM_SetColor(automapid_t id, int objectname, float r, float g, float b);
+void    AM_SetColorAndAlpha(automapid_t id, int objectname, float r, float g,
                             float b, float a);
-void    AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode);
-void    AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
+void    AM_SetBlendmode(automapid_t id, int objectname, blendmode_t blendmode);
+void    AM_SetGlow(automapid_t id, int objectname, glowtype_t type, float size,
                    float alpha, boolean canScale);
-void    AM_SetVectorGraphic(int pid, int objectname, int vgname);
-void    AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
+void    AM_SetVectorGraphic(automapid_t id, int objectname, int vgname);
+vectorgrapname_t AM_GetVectorGraphic(automapid_t id, int objectname);
+void    AM_RegisterSpecialLine(automapid_t id, int cheatLevel, int lineSpecial,
                                int sided,
                                float r, float g, float b, float a,
                                blendmode_t blendmode,
                                glowtype_t glowType, float glowAlpha,
                                float glowWidth, boolean scaleGlowWithView);
-int     AM_AddMark(int pid, float x, float y);
-void    AM_ClearMarks(int pid);
-void    AM_ToggleFollow(int pid);
-void    AM_ToggleZoomMax(int pid);
-void    AM_UpdateLinedef(int pid, uint lineIdx, boolean visible);
-void    AM_RevealMap(int pid, boolean on);
+int     AM_AddMark(automapid_t id, float x, float y);
+boolean AM_GetMark(automapid_t id, uint mark, float* x, float* y);
+void    AM_ClearMarks(automapid_t id);
+void    AM_ToggleFollow(automapid_t id);
+void    AM_ToggleZoomMax(automapid_t id);
+void    AM_UpdateLinedef(automapid_t id, uint lineIdx, boolean visible);
+void    AM_RevealMap(automapid_t id, boolean on);
+boolean AM_IsRevealed(automapid_t id);
 
 // \todo Split this functionality down into logical seperate settings.
-void    AM_SetCheatLevel(int pnum, int level);
-void    AM_IncMapCheatLevel(int pnum); // Called to increase map cheat level.
+void    AM_SetCheatLevel(automapid_t id, int level);
+void    AM_IncMapCheatLevel(automapid_t id); // Called to increase map cheat level.
 
-boolean AM_IsMapActive(int pnum);
-float   AM_FrameToMap(int pid, float val);
-float   AM_MapToFrame(int pid, float val);
-void    AM_GetWindow(int pid, float *x, float *y, float *w, float *h);
-boolean AM_IsMapWindowInFullScreenMode(int pid);
-float   AM_GlobalAlpha(int pid);
-void    AM_GetColor(int pid, int objectname, float *r, float *g, float *b);
-void    AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
-                            float *b, float *a);
-void    AM_GetViewPosition(int pid, float *x, float *y);
-float   AM_ViewAngle(int pid);
+boolean AM_IsActive(automapid_t id);
+float   AM_FrameToMap(automapid_t id, float val);
+float   AM_MapToFrame(automapid_t id, float val);
+void    AM_GetWindow(automapid_t id, float* x, float* y, float* w, float* h);
+boolean AM_IsMapWindowInFullScreenMode(automapid_t id);
+float   AM_GlobalAlpha(automapid_t id);
+void    AM_GetColor(automapid_t id, int objectname, float* r, float* g, float* b);
+void    AM_GetColorAndAlpha(automapid_t id, int objectname, float* r, float* g,
+                            float* b, float* a);
+void    AM_GetViewPosition(automapid_t id, float* x, float* y);
+void    AM_GetViewParallaxPosition(automapid_t id, float* x, float* y);
+float   AM_ViewAngle(automapid_t id);
+float   AM_MapToFrameMultiplier(automapid_t id);
+int     AM_GetFlags(automapid_t id);
+void    AM_GetMapBBox(automapid_t id, float vbbox[4]);
 
 void    M_DrawMAP(void); // Called to render the map menu.
 
+const automapcfg_t* AM_GetMapConfig(automapid_t id);
+const mapobjectinfo_t* AM_GetMapObjectInfo(automapid_t id, int objectname);
+const mapobjectinfo_t* AM_GetInfoForSpecialLine(automapid_t id, int special,
+                                                const sector_t* frontsector,
+                                                const sector_t* backsector);
+
+void AM_GetMapColor(float* rgb, const float* uColor, int palidx,
+                    boolean customPal);
 #endif

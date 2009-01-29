@@ -168,7 +168,7 @@ void IN_Start(void)
     interTime = 0;
     oldInterTime = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(i, false, true);
+        AM_Open(AM_MapForPlayer(i), false, true);
 
     S_StartMusic("intr", true);
 }

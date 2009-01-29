@@ -506,7 +506,7 @@ static void interpretLinedefFlags(void)
 
             // Update the automap(s) with all immediately visible lines.
             for(p = 0; p < MAXPLAYERS; ++p)
-                AM_UpdateLinedef(p, i, true);
+                AM_UpdateLinedef(AM_MapForPlayer(p), i, true);
             xline->flags &= ~ML_MAPPED;
         }
 
@@ -735,11 +735,12 @@ static void P_ResetWorldState(void)
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t*           plr = &players[i];
+        automapid_t         map = AM_MapForPlayer(i);
 
         plr->killCount = plr->secretCount = plr->itemCount = 0;
 
-        AM_SetCheatLevel(i, 0);
-        AM_RevealMap(i, false);
+        AM_SetCheatLevel(map, 0);
+        AM_RevealMap(map, false);
     }
 
 #if __JDOOM__ || __JDOOM64__
