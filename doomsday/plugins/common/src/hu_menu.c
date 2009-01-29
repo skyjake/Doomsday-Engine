@@ -3181,7 +3181,8 @@ void M_DrawHUDMenu(void)
     idx++;
 #endif
     M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
-    MN_DrawColorBox(menu, idx++, cfg.xhairColor[0], cfg.xhairColor[1], cfg.xhairColor[2], cfg.xhairColor[3]);
+    MN_DrawColorBox(menu, idx++, cfg.xhairColor[0], cfg.xhairColor[1],
+                    cfg.xhairColor[2], cfg.xhairColor[3]);
 
 #if __JHERETIC__ || __JHEXEN__
     return;
@@ -3232,7 +3233,7 @@ page3:
     idx++;
 #endif
     MN_DrawColorBox(menu, idx++, cfg.hudColor[0], cfg.hudColor[1],
-                    cfg.hudColor[2], menuAlpha);
+                    cfg.hudColor[2], cfg.hudColor[3]);
 #if __JHEXEN__
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_MANA]]);
 #endif
@@ -3786,7 +3787,8 @@ void MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
     int                 y =
         menu->y + menu->itemHeight * (index - menu->firstItem) + 3;
 
-    M_DrawColorBox(x, y, r, g, b, a);
+    M_DrawBackgroundBox(x, y, 2, 2, 1, 1, 1, menuAlpha, true, 1);
+    M_DrawColorBox(x, y, r, g, b, a * menuAlpha);
 }
 
 /**

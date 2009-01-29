@@ -1903,7 +1903,6 @@ void M_DrawColorBox(int x, int y, float r, float g, float b, float a)
     if(a < 0)
         a = 1;
 
-    M_DrawBackgroundBox(x, y, 2, 1, 1, 1, 1, a, false, 1);
     DGL_SetNoMaterial();
     DGL_DrawRect(x-1,y-1, 4, 3, r, g, b, a);
 }

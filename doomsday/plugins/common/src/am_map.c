@@ -3742,12 +3742,12 @@ void M_DrawMapMenu(void)
 page2:
 #endif
     M_WriteMenuText(menu, idx++, customColors[cfg.automapCustomColors % 3]);
-    MN_DrawColorBox(menu, idx++, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menuAlpha);
-    MN_DrawColorBox(menu, idx++, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menuAlpha);
-    MN_DrawColorBox(menu, idx++, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menuAlpha);
-    MN_DrawColorBox(menu, idx++, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menuAlpha);
-    MN_DrawColorBox(menu, idx++, cfg.automapMobj[0], cfg.automapMobj[1], cfg.automapMobj[2], menuAlpha);
-    MN_DrawColorBox(menu, idx, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menuAlpha);
+    MN_DrawColorBox(menu, idx++, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], 1);
+    MN_DrawColorBox(menu, idx++, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], 1);
+    MN_DrawColorBox(menu, idx++, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], 1);
+    MN_DrawColorBox(menu, idx++, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], 1);
+    MN_DrawColorBox(menu, idx++, cfg.automapMobj[0], cfg.automapMobj[1], cfg.automapMobj[2], 1);
+    MN_DrawColorBox(menu, idx, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], 1);
 }
 
 /**
