@@ -190,7 +190,7 @@ void B_Init(void)
     B_NewContext("menu");
     B_NewContext("shortcut");
     B_AcquireKeyboard(B_NewContext("chat"), true);
-    B_AcquireKeyboard(B_NewContext("message"), true);
+    B_AcquireAll(B_NewContext("message"), true);
 
     // Binding context for the console.
     bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
