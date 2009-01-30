@@ -69,7 +69,7 @@
 
 #if __JHEXEN__
 typedef struct stairqueue_s {
-    sector_t       *sector;
+    sector_t*       sector;
     int             type;
     float           height;
 } stairqueue_t;
@@ -79,7 +79,7 @@ typedef struct stairdata_s {
     float           stepDelta;
     int             direction;
     float           speed;
-    int             texture;
+    material_t*     material;
     int             startDelay;
     int             startDelayDelta;
     int             textureChange;
@@ -802,8 +802,8 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
 
             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
-            P_SetIntp(sec, DMU_FLOOR_MATERIAL,
-                      P_GetIntp(frontsector, DMU_FLOOR_MATERIAL));
+            P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
+                      P_GetPtrp(frontsector, DMU_FLOOR_MATERIAL));
 
             xsec->special = P_ToXSector(frontsector)->special;
             break;
@@ -896,7 +896,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 
     xsec = P_ToXSector(frontSec);
     if(xsec->special == params->type + STAIR_SECTOR_TYPE && !xsec->specialData &&
-       P_GetIntp(frontSec, DMU_FLOOR_MATERIAL) == stairData.texture &&
+       P_GetPtrp(frontSec, DMU_FLOOR_MATERIAL) == stairData.material &&
        P_GetIntp(frontSec, DMU_VALID_COUNT) != VALIDCOUNT)
     {
         enqueueStairSector(frontSec, params->type ^ 1, params->height);
@@ -905,7 +905,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 
     xsec = P_ToXSector(backSec);
     if(xsec->special == params->type + STAIR_SECTOR_TYPE && !xsec->specialData &&
-       P_GetIntp(backSec, DMU_FLOOR_MATERIAL) == stairData.texture &&
+       P_GetPtrp(backSec, DMU_FLOOR_MATERIAL) == stairData.material &&
        P_GetIntp(backSec, DMU_VALID_COUNT) != VALIDCOUNT)
     {
         enqueueStairSector(backSec, params->type ^ 1, params->height);
@@ -919,7 +919,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 typedef struct spreadsectorparams_s {
     sector_t*           baseSec;
-    int                 material;
+    material_t*         material;
     sector_t*           foundSec;
 } spreadsectorparams_t;
 
@@ -941,7 +941,7 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
     if(!backSec)
         return 1; // Continue iteration.
 
-    if(P_GetIntp(backSec, DMU_FLOOR_MATERIAL) != params->material)
+    if(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL) != params->material)
         return 1; // Continue iteration.
 
     xsec = P_ToXSector(backSec);
@@ -1022,7 +1022,7 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         // 1. Find 2-sided line with a front side in the same sector.
         // 2. Other side is the next sector to raise.
         params.baseSec = sec;
-        params.material = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
+        params.material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         params.foundSec = NULL;
 
         while(!P_Iteratep(params.baseSec, DMU_LINEDEF, &params,
@@ -1147,15 +1147,15 @@ static void processStairSector(sector_t *sec, int type, float height,
  * @param direction     Positive = up. Negative = down.
  */
 #if __JHEXEN__
-int EV_BuildStairs(linedef_t *line, byte *args, int direction,
+int EV_BuildStairs(linedef_t* line, byte* args, int direction,
                    stairs_e stairsType)
 {
     float               height;
     int                 delay;
     int                 type;
     int                 resetDelay;
-    sector_t           *sec = NULL, *qSec;
-    iterlist_t         *list;
+    sector_t*           sec = NULL, *qSec;
+    iterlist_t*         list;
 
     // Set global stairs variables
     stairData.textureChange = 0;
@@ -1182,7 +1182,7 @@ int EV_BuildStairs(linedef_t *line, byte *args, int direction,
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        stairData.texture = P_GetIntp(sec, DMU_FLOOR_MATERIAL);
+        stairData.material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         stairData.startHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
