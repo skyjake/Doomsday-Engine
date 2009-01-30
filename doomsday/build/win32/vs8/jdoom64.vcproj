@@ -296,6 +296,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\p_automap.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_ceiling.h"
 				>
 			</File>
@@ -481,6 +485,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\p_actor.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\p_automap.c"
 				>
 			</File>
 			<File

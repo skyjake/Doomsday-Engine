@@ -29,7 +29,7 @@
 #ifndef __COMMON_RENDER_AUTOMAP_H__
 #define __COMMON_RENDER_AUTOMAP_H__
 
-#include "am_map.h"
+#include "p_automap.h"
 
 extern boolean freezeMapRLs;
 
@@ -37,7 +37,7 @@ void            Rend_AutomapInit(void);
 void            Rend_AutomapLoadData(void);
 void            Rend_AutomapUnloadData(void);
 
-void            Rend_Automap(int player);
-void            Rend_AutomapRebuild(automapid_t id);
+void            Rend_Automap(int player, const automap_t* map);
+void            Rend_AutomapRebuild(int player);
 
 #endif

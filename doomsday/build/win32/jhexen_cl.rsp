@@ -11,6 +11,7 @@
  ./../../plugins/common/src/p_start.c
  ./../../plugins/common/src/p_mapsetup.c
  ./../../plugins/common/src/p_actor.c
+ ./../../plugins/common/src/p_automap.c
  ./../../plugins/common/src/p_player.c
  ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_inventory.c

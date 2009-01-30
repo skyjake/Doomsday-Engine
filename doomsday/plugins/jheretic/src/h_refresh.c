@@ -321,7 +321,7 @@ void H_Display(int layer)
         }
 
         // Draw the automap?
-        Rend_Automap(player);
+        AM_Drawer(player);
     }
     else if(layer == 1)
     {

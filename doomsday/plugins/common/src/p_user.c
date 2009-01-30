@@ -1553,7 +1553,7 @@ void P_PlayerThinkMap(player_t* player)
     if(brain->mapMarkAdd)
     {
         mobj_t*         pmo = player->plr->mo;
-        AM_AddMark(map, pmo->pos[VX], pmo->pos[VY]);
+        AM_AddMark(map, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ]);
     }
 
     if(brain->mapMarkClearAll)

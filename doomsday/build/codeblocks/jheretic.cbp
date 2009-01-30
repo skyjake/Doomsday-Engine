@@ -106,6 +106,7 @@
 		<Unit filename="..\..\plugins\common\include\m_argv.h" />
 		<Unit filename="..\..\plugins\common\include\m_defs.h" />
 		<Unit filename="..\..\plugins\common\include\p_actor.h" />
+		<Unit filename="..\..\plugins\common\include\p_automap.h" />
 		<Unit filename="..\..\plugins\common\include\p_ceiling.h" />
 		<Unit filename="..\..\plugins\common\include\p_door.h" />
 		<Unit filename="..\..\plugins\common\include\p_floor.h" />
@@ -151,6 +152,7 @@
 		<Unit filename="..\..\plugins\common\src\m_fixed.c" />
 		<Unit filename="..\..\plugins\common\src\m_multi.c" />
 		<Unit filename="..\..\plugins\common\src\p_actor.c" />
+		<Unit filename="..\..\plugins\common\src\p_automap.c" />
 		<Unit filename="..\..\plugins\common\src\p_ceiling.c" />
 		<Unit filename="..\..\plugins\common\src\p_door.c" />
 		<Unit filename="..\..\plugins\common\src\p_floor.c" />
