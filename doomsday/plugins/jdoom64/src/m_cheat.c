@@ -249,17 +249,6 @@ boolean Cht_Responder(event_t *ev)
         }
     }
 
-    if(!deathmatch && ev->type == EV_KEY && ev->state == EVS_DOWN)
-    {
-        automapid_t         map = AM_MapForPlayer(CONSOLEPLAYER);
-
-        if(AM_IsActive(map) && Cht_CheckCheat(&cheatAutomap, (char) ev->data1))
-        {
-            AM_IncMapCheatLevel(map);
-            return true;
-        }
-    }
-
     return false;
 }
 
@@ -608,6 +597,11 @@ DEFCC(CCmdCheatSuicide)
         }
         else
         {   // When not in a netgame we'll ask the player to confirm.
+            player_t*           plr = &players[CONSOLEPLAYER];
+
+            if(plr->playerState == PST_DEAD)
+                return false; // Already dead!
+
             Hu_MsgStart(MSG_YESNO, SUICIDEASK, Cht_SuicideResponse, NULL);
         }
     }

@@ -511,7 +511,7 @@ boolean Cht_Responder(event_t *ev)
     }
 
     map = AM_MapForPlayer(CONSOLEPLAYER);
-    if(AM_IsActive(am))
+    if(AM_IsActive(map))
     {
         if(ev->state == EVS_DOWN)
         {
@@ -981,6 +981,11 @@ DEFCC(CCmdCheatSuicide)
         }
         else
         {   // When not in a netgame we'll ask the player to confirm.
+            player_t*           plr = &players[CONSOLEPLAYER];
+
+            if(plr->playerState == PST_DEAD)
+                return false; // Already dead!
+
             Hu_MsgStart(MSG_YESNO, SUICIDEASK, Cht_SuicideResponse, NULL);
         }
     }
