@@ -160,7 +160,7 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
  *
  * @return              Ptr to the targeted mobj if found, ELSE @c NULL;
  */
-mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
+mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
 {
 #define MAPBLOCKUNITS       128
 #define MAPBLOCKSHIFT       (FRACBITS+7)
@@ -194,6 +194,7 @@ mobj_t *P_RoughMonsterSearch(mobj_t *mo, int distance)
     box[BOXTOP]    = box[BOXBOTTOM] + MAPBLOCKUNITS;
 
     // Check the first block.
+    VALIDCOUNT++;
     if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
     {   // Found a target right away!
         return params.target;

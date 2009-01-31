@@ -1208,8 +1208,10 @@ void C_DECL A_VileChase(mobj_t *actor)
         box[BOXTOP]    = vileTry[VY] + MAXRADIUS * 2;
 
         vileObj = actor;
+
         // Call PIT_VileCheck to check whether object is a corpse
         // that can be raised.
+        VALIDCOUNT++;
         if(!P_MobjsBoxIterator(box, PIT_VileCheck, 0))
         {
             // Got one!

@@ -1583,6 +1583,7 @@ void Rend_Automap(int player, const automap_t* map)
 
         Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                               &aabb[BOXBOTTOM], &aabb[BOXTOP]);
+        VALIDCOUNT++;
         P_MobjsBoxIterator(aabb, renderThing, &params);
     }
 

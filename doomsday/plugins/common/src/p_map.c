@@ -250,7 +250,6 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    VALIDCOUNT++;
     P_EmptyIterList(spechit);
 
     box[BOXLEFT]   = tmBBox[BOXLEFT]   - MAXRADIUS;
@@ -259,6 +258,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     box[BOXTOP]    = tmBBox[BOXTOP]    + MAXRADIUS;
 
     // Stomp on any things contacted.
+    VALIDCOUNT++;
     if(!P_MobjsBoxIterator(box, PIT_StompThing, &stomping))
         return false;
 
@@ -352,6 +352,7 @@ boolean P_CheckSides(mobj_t* actor, float x, float y)
     tmBBox[BOXTOP]    = (startPos[VY] > endPos[VY]? startPos[VY] : endPos[VY]);
     tmBBox[BOXBOTTOM] = (startPos[VY] < endPos[VY]? startPos[VY] : endPos[VY]);
 
+    VALIDCOUNT++;
     return !P_AllLinesBoxIterator(tmBBox, PIT_CrossLine, 0);
 }
 
@@ -1054,7 +1055,6 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tmFloorMaterial = P_GetPtrp(newSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    VALIDCOUNT++;
     P_EmptyIterList(spechit);
 
 #if __JHEXEN__
@@ -1073,6 +1073,8 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     box[BOXRIGHT]  = tmBBox[BOXRIGHT]  + MAXRADIUS;
     box[BOXBOTTOM] = tmBBox[BOXBOTTOM] - MAXRADIUS;
     box[BOXTOP]    = tmBBox[BOXTOP]    + MAXRADIUS;
+
+    VALIDCOUNT++;
 
     // The camera goes through all objects.
     if(!P_IsCamera(thing))
@@ -2082,7 +2084,7 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
 #if __JHEXEN__
     damageSource = canDamageSource;
 #endif
-
+    VALIDCOUNT++;
     P_MobjsBoxIterator(box, PIT_RadiusAttack, 0);
 }
 
@@ -2696,6 +2698,7 @@ void PIT_ThrustSpike(mobj_t* actor)
     bbox[BOXTOP]    += radius;
 
     // Stomp on any things contacted.
+    VALIDCOUNT++;
     P_MobjsBoxIterator(bbox, PIT_ThrustStompThing, 0);
 }
 
@@ -2761,7 +2764,6 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmCeilingZ = P_GetFloatp(newSSec, DMU_CEILING_HEIGHT);
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 
-    VALIDCOUNT++;
     P_EmptyIterList(spechit);
 
     if(tmThing->flags & MF_NOCLIP)
@@ -2777,6 +2779,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     box[BOXBOTTOM] = tmBBox[BOXBOTTOM] - MAXRADIUS;
     box[BOXTOP]    = tmBBox[BOXTOP]    + MAXRADIUS;
 
+    VALIDCOUNT++;
     if(!P_MobjsBoxIterator(box, PIT_CheckOnmobjZ, 0))
     {
         *tmThing = oldMo;
