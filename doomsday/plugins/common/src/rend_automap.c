@@ -34,6 +34,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <stdlib.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
