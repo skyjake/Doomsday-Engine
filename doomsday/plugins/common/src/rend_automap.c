@@ -136,11 +136,25 @@ static DGLuint amMaskTexture = 0; // Used to mask the map primitives.
 
 // CODE --------------------------------------------------------------------
 
+static void deleteMapLists(rautomap_data_t* rmap)
+{
+    uint                i;
+
+    for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
+    {
+        if(rmap->lists[i])
+            DGL_DeleteLists(rmap->lists[i], 1);
+        rmap->lists[i] = 0;
+    }
+}
+
 void Rend_AutomapInit(void)
 {
     // Does the graphics library support multitexturing?
     numTexUnits = DD_GetInteger(DD_MAX_TEXTURE_UNITS);
     envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
+
+    memset(rautomaps, 0, sizeof(rautomaps));
 }
 
 /**
@@ -198,17 +212,31 @@ void Rend_AutomapUnloadData(void)
     // Destroy all display lists.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           pl = &players[i];
-
-        if(!((pl->plr->flags & DDPF_LOCAL) && pl->plr->inGame))
-            continue;
-
-        Rend_AutomapRebuild(i);
+        deleteMapLists(&rautomaps[i]);
     }
 
     if(amMaskTexture)
         DGL_DeleteTextures(1, (DGLuint*) &amMaskTexture);
     amMaskTexture = 0;
+}
+
+/**
+ * Called immediately after map load.
+ */
+void Rend_AutomapInitForMap(void)
+{
+    uint                i;
+
+    if(Get(DD_NOVIDEO) || IS_DEDICATED)
+        return; // Nothing to do.
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        rautomap_data_t*    rmap = &rautomaps[i];
+
+        deleteMapLists(rmap);
+        rmap->constructMap = true;
+    }
 }
 
 /**
@@ -1414,17 +1442,14 @@ static void compileObjectLists(rautomap_data_t* rmap, const automap_t* map,
 {
     uint                i;
 
+    deleteMapLists(rmap);
+
     for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
     {
-        if(rmap->lists[i])
-            DGL_DeleteLists(rmap->lists[i], 1);
-        rmap->lists[i] = 0;
-
         // Build commands and compile to a display list.
         if(DGL_NewList(0, DGL_COMPILE))
         {
             renderWalls(map, cfg, player, i, true);
-
             rmap->lists[i] = DGL_EndList();
         }
     }
@@ -1434,17 +1459,14 @@ static void compileObjectLists(rautomap_data_t* rmap, const automap_t* map,
 
 void Rend_AutomapRebuild(int player)
 {
-    uint                i;
-    automapid_t         map = AM_MapForPlayer(player);
-    rautomap_data_t*    rmap = &rautomaps[map-1];
+    automapid_t         map;
 
-    for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
+    if((map = AM_MapForPlayer(player)))
     {
-        if(rmap->lists[i])
-            DGL_DeleteLists(rmap->lists[i], 1);
-        rmap->lists[i] = 0;
+        rautomap_data_t*    rmap = &rautomaps[map-1];
+
+        rmap->constructMap = true;
     }
-    rmap->constructMap = true;
 }
 
 /**

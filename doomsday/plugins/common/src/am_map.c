@@ -644,8 +644,6 @@ void AM_Init(void)
         Automap_SetViewRotate(map, cfg.automapRotate);
         Automap_SetMaxLocationTargetDelta(map, 128); // In world units.
         Automap_SetWindowTarget(map, 0, 0, scrwidth, scrheight);
-
-        Rend_AutomapRebuild(i);
     }
 }
 
@@ -695,8 +693,6 @@ void AM_InitForMap(void)
         automap_t*          map = &automaps[i];
         automapcfg_t*       mcfg = &automapCFGs[i];
 
-        Rend_AutomapRebuild(i);
-
         mcfg->revealed = false;
 
         Automap_SetWindowFullScreenMode(map, true);
@@ -723,6 +719,8 @@ void AM_InitForMap(void)
             Automap_SetLocationTarget(map, mo->pos[VX], mo->pos[VY]);
         }
     }
+
+    Rend_AutomapInitForMap();
 }
 
 /**
@@ -1179,7 +1177,6 @@ int AM_GetFlags(automapid_t id)
 static void setColor(automapcfg_t* cfg, int objectname, float r, float g,
                      float b)
 {
-    int                 i;
     mapobjectinfo_t*    info;
 
     if(objectname == AMO_NONE)
@@ -1235,8 +1232,7 @@ static void setColor(automapcfg_t* cfg, int objectname, float r, float g,
     info->rgba[2] = b;
 
     // We will need to rebuild one or more display lists.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        Rend_AutomapRebuild(i);
+    Rend_AutomapRebuild(cfg - automapCFGs);
 }
 
 void AM_SetColor(automapid_t id, int objectname, float r, float g, float b)
@@ -1312,7 +1308,6 @@ void AM_GetColor(automapid_t id, int objectname, float* r, float* g, float* b)
 static void setColorAndAlpha(automapcfg_t* cfg, int objectname, float r,
                              float g, float b, float a)
 {
-    int                 i;
     mapobjectinfo_t*    info;
 
     if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
@@ -1368,8 +1363,7 @@ static void setColorAndAlpha(automapcfg_t* cfg, int objectname, float r,
     info->rgba[3] = a;
 
     // We will need to rebuild one or more display lists.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        Rend_AutomapRebuild(i);
+    Rend_AutomapRebuild(cfg - automapCFGs);
 }
 
 void AM_SetColorAndAlpha(automapid_t id, int objectname, float r, float g,
@@ -1448,7 +1442,6 @@ void AM_GetColorAndAlpha(automapid_t id, int objectname, float* r, float* g,
 
 void AM_SetBlendmode(automapid_t id, int objectname, blendmode_t blendmode)
 {
-    uint                i;
     automapcfg_t*       cfg;
     mapobjectinfo_t*    info;
 
@@ -1493,14 +1486,12 @@ void AM_SetBlendmode(automapid_t id, int objectname, blendmode_t blendmode)
     info->blendMode = blendmode;
 
     // We will need to rebuild one or more display lists.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        Rend_AutomapRebuild(i);
+    Rend_AutomapRebuild(id - 1);
 }
 
 void AM_SetGlow(automapid_t id, int objectname, glowtype_t type, float size,
                 float alpha, boolean canScale)
 {
-    uint                i;
     automapcfg_t*       cfg;
     mapobjectinfo_t*    info;
 
@@ -1550,8 +1541,7 @@ void AM_SetGlow(automapid_t id, int objectname, glowtype_t type, float size,
     info->scaleWithView = canScale;
 
     // We will need to rebuild one or more display lists.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        Rend_AutomapRebuild(i);
+    Rend_AutomapRebuild(id - 1);
 }
 
 void AM_SetVectorGraphic(automapcfg_t* cfg, int objectname, int vgname)

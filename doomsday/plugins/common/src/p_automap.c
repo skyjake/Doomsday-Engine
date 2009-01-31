@@ -267,7 +267,6 @@ void Automap_RunTic(automap_t* map)
     height = Automap_FrameToMap(map, map->window.height);
 
     // Calculate the in-view, AABB.
-#if 0
     {   // Rotation-aware.
 #define ADDTOBOX(b, x, y) if((x) < (b)[BOXLEFT]) \
     (b)[BOXLEFT] = (x); \
@@ -315,12 +314,6 @@ void Automap_RunTic(automap_t* map)
 
 #undef ADDTOBOX
     }
-#else
-    map->viewAABB[BOXLEFT]   = map->viewX - width  / 2;
-    map->viewAABB[BOXRIGHT]  = map->viewX + width  / 2;
-    map->viewAABB[BOXBOTTOM] = map->viewY - height / 2;
-    map->viewAABB[BOXTOP]    = map->viewY + height / 2;
-#endif
 }
 
 /**

@@ -37,6 +37,7 @@ void            Rend_AutomapInit(void);
 void            Rend_AutomapLoadData(void);
 void            Rend_AutomapUnloadData(void);
 
+void            Rend_AutomapInitForMap(void);
 void            Rend_Automap(int player, const automap_t* map);
 void            Rend_AutomapRebuild(int player);
 
