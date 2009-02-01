@@ -894,27 +894,23 @@ void LG_Evaluate(const float *point, float *color)
 
         if(block->flags & GBF_CHANGED)
         {   // We are waiting for an updated value, for now use the old.
-            color[0] = block->oldRGB[0];
-            color[1] = block->oldRGB[1];
-            color[2] = block->oldRGB[2];
+            color[CR] = block->oldRGB[CR];
+            color[CG] = block->oldRGB[CG];
+            color[CB] = block->oldRGB[CB];
         }
         else
         {
-            color[0] = block->rgb[0];
-            color[1] = block->rgb[1];
-            color[2] = block->rgb[2];
+            color[CR] = block->rgb[CR];
+            color[CG] = block->rgb[CG];
+            color[CB] = block->rgb[CB];
         }
     }
-#if 0
     else
-    {
-        // DEBUG:
-        // Bright purple if the block doesn't have a sector.
-        color[0] = 1;
-        color[1] = 0;
-        color[2] = 1;
+    {   // The block has no sector!?
+        // Must be an error in the lightgrid covering sector determination.
+        // Init to black.
+        color[CR] = color[CG] = color[CB] = 1;
     }
-#endif
 
     // Biased ambient light causes a dimming in the Z direction.
     if(dz && block->bias)
