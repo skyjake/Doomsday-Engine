@@ -909,7 +909,7 @@ void LG_Evaluate(const float *point, float *color)
     {   // The block has no sector!?
         // Must be an error in the lightgrid covering sector determination.
         // Init to black.
-        color[CR] = color[CG] = color[CB] = 1;
+        color[CR] = color[CG] = color[CB] = 0;
     }
 
     // Biased ambient light causes a dimming in the Z direction.
