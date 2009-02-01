@@ -757,7 +757,8 @@ static int volLinearToLog(float vol)
         return DSBVOLUME_MAX;
 
     // Straighten the volume curve.
-    return MIN_OF(DSBVOLUME_MIN, (int) (100 * 20 * log10(vol)));
+    return MINMAX_OF(DSBVOLUME_MIN, (int) (100 * 20 * log10(vol)),
+                     DSBVOLUME_MAX);
 }
 
 /**
@@ -799,12 +800,17 @@ Con_Error("dsDS9::DS_DSoundSet: Unknown prop %i.", prop);
         break;
 
     case SFXBP_VOLUME:
-        if(value <= 0) // Use logarithmic attenuation.
-            DSBUF(buf)->SetVolume((LONG) ((-1 - value) * 10000));
-        else // Linear volume.
-            DSBUF(buf)->SetVolume(volLinearToLog(value));
-        break;
+        {
+        LONG            volume;
 
+        if(value <= 0) // Use logarithmic attenuation.
+            volume = (LONG) ((-1 - value) * 10000);
+        else // Linear volume.
+            volume = (LONG) volLinearToLog(value);
+
+        DSBUF(buf)->SetVolume(volume);
+        break;
+        }
     case SFXBP_FREQUENCY:
         {
         unsigned int    freq = (unsigned int) (buf->rate * value);
