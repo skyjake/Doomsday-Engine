@@ -27,6 +27,15 @@ NAME            "DOOMSDAY"
 ; 131 formerly GL_DrawPSprite
 ; 143 formerly M_Random
 ; 144 formerly M_FRandom
+; 197 formerly PCX_GetSize
+; 198 formerly PCX_Load
+; 199 formerly PCX_MemoryLoad
+; 200 formerly PNG_Load
+; 201 formerly TGA_Save24_rgb565
+; 202 formerly TGA_Save24_rgb888
+; 203 formerly TGA_Save24_rgba8888
+; 204 formerly TGA_Save16_rgb888
+; 205 formerly TGA_GetSize
 ; 206 formerly GL_Update
 ; 232 formerly R_SetAnimGroup
 ; 238 formerly DGL_Color2
@@ -411,21 +420,6 @@ EXPORTS
     GL_DrawShadowedPatch        @125 NONAME
     GL_DrawRawScreen            @126 NONAME
     GL_DrawRawScreen_CS         @235 NONAME
-
-; Graphics: Picture formats.
-    PCX_GetSize                 @197 NONAME
-    PCX_Load                    @198 NONAME
-    PCX_MemoryLoad              @199 NONAME
-
-; Graphics: PNG.
-    PNG_Load                    @200 NONAME
-
-; Graphics: TGA.
-    TGA_Save24_rgb565           @201 NONAME
-    TGA_Save24_rgb888           @202 NONAME
-    TGA_Save24_rgba8888         @203 NONAME
-    TGA_Save16_rgb888           @204 NONAME
-    TGA_GetSize                 @205 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

@@ -444,27 +444,6 @@ extern          "C" {
     void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
     void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
                                         float scalex, float scaley);
-    // Graphics: PCX.
-    int             PCX_GetSize(const char* fn, int* w, int* h);
-    void            PCX_Load(const char* fn, int bufWidth, int bufHeight,
-                             byte* outBuffer);
-    int             PCX_MemoryLoad(byte* imgdata, int len, int bufWidth,
-                                   int bufHeight, byte* outBuffer);
-
-    // Graphics: PNG.
-    byte*           PNG_Load(const char* fileName, int* width, int* height,
-                             int* pixelSize);
-
-    // Graphics: TGA.
-    int             TGA_Save24_rgb565(const char* filename, int w, int h,
-                                      unsigned short* buffer);
-    int             TGA_Save24_rgb888(const char* filename, int w, int h,
-                                      byte* buffer);
-    int             TGA_Save24_rgba8888(const char* filename, int w, int h,
-                                        byte* buffer);
-    int             TGA_Save16_rgb888(const char* filename, int w, int h,
-                                      byte* buffer);
-    int             TGA_GetSize(const char* filename, int *w, int *h);
 
     // Audio.
     void            S_MapChange(void);
