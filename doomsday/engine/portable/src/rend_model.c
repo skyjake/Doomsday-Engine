@@ -536,7 +536,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     {
         // What rule to use for determining the skin?
         useSkin +=
-            (subFlags & MFF_IDSKIN ? params->id : SECONDS_TO_TICKS(gameTime) / mf->skinTics) % smf->skinRange;
+            (subFlags & MFF_IDSKIN ? params->id : SECONDS_TO_TICKS(ddMapTime) / mf->skinTics) % smf->skinRange;
     }
 
     // Scale interpos. Intermark becomes zero and endmark becomes one.
