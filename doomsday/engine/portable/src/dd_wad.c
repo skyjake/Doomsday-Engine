@@ -735,13 +735,27 @@ void W_Reset(void)
  * @return              @c true, iff the given filename exists and
  *                      is an IWAD.
  */
-int W_IsIWAD(char *fn)
+int W_IsIWAD(const char* fn)
 {
-    FILE               *file;
+    FILE*               file;
     char                id[5];
+    const char*         ext;
 
     if(!M_FileExists(fn))
         return false;
+
+    // Determine the file name extension.
+    ext = strrchr(fn, '.');
+    if(!ext)
+        ext = "";
+    else
+        ext++; // Move to point after the dot.
+
+    // Is it a gwa file? these are NOT IWADs even though they may be marked
+    // as such in the header...
+    if(!stricmp(ext, "gwa"))
+        return false;
+
     if((file = fopen(fn, "rb")) == NULL)
         return false;
 
@@ -759,7 +773,7 @@ int W_IsIWAD(char *fn)
  *
  * @return              @c true, if the file is a PK3 package.
  */
-boolean W_IsPK3(const char *fn)
+boolean W_IsPK3(const char* fn)
 {
     size_t              len = strlen(fn);
 
@@ -1213,7 +1227,7 @@ void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
     return lumpCache[lump];
 }
 
-void *W_CacheLumpName(char *name, int tag)
+void* W_CacheLumpName(char* name, int tag)
 {
     return W_CacheLumpNum(W_GetNumForName(name), tag);
 }
@@ -1233,7 +1247,7 @@ void W_ChangeCacheTag(lumpnum_t lump, int tag)
  */
 void W_CheckIWAD(void)
 {
-    extern char *iwadList[];
+    extern char*        iwadList[];
 
     int                 i;
 
