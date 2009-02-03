@@ -839,6 +839,7 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
                                  seg->SG_v2pos, NULL, NULL, NULL))
                 {
                     luminousClipped[lumIdx] = 1;
+                    break;
                 }
             }
         }
