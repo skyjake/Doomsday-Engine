@@ -27,7 +27,7 @@
  * WAD Files and Data Lump Cache
  *
  * This version supports runtime (un)loading, replacement of flats and
- * sprites, IWAD checking and is GWA aware (but not supported).
+ * sprites and IWAD checking.
  *
  * Internally, the cache has two parts: the Primary cache, which is loaded
  * from data files, and the Auxiliary cache, which is generated at runtime.
@@ -601,10 +601,10 @@ boolean W_AddFile(const char *fileName, boolean allowDuplicate)
     if(!loadingForStartup)
         rec->flags = FRF_RUNTIME;
 
-    if(stricmp(extension, "wad") && stricmp(extension, "gwa")) // lmp?
+    if(stricmp(extension, "wad")) // lmp?
     {
         int                 offset = 0;
-        char               *slash = NULL;
+        char*               slash = NULL;
 
         // Single lump file.
         fileInfo = &singleInfo;
@@ -1341,9 +1341,8 @@ void W_GetIWADFileName(char *buf, int bufSize)
 
 /**
  * Compiles a list of PWAD file names, separated by the specified character.
- * All .GWA files are excluded from the list.
  */
-void W_GetPWADFileNames(char *buf, int bufSize, char separator)
+void W_GetPWADFileNames(char* buf, int bufSize, char separator)
 {
     int                 i;
 
@@ -1353,8 +1352,7 @@ void W_GetPWADFileNames(char *buf, int bufSize, char separator)
             char                temp[256];
 
             Dir_FileName(records[i].fileName, temp);
-            if(!stricmp(temp + strlen(temp) - 3, "gwa") ||
-               !stricmp(temp + strlen(temp) - 3, "lmp"))
+            if(!stricmp(temp + strlen(temp) - 3, "lmp"))
                 continue;
 
             M_LimitedStrCat(temp, 64, separator, buf, bufSize);
