@@ -79,6 +79,8 @@
 
 #define BASETHRESHOLD       100 // Follow a player exlusively for 3 seconds.
 
+#define sentient(mobj)      ((mobj)->health > 0 && (mobj)->info->seeState)
+
 extern int TimerGame; // Tic countdown for deathmatch.
 
 #define thinkerCap          (*gi.thinkerCap)
