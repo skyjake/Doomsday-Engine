@@ -530,8 +530,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
 
-    if(mo->type == MT_SKULL ||
-       ((mo->flags & MF_COUNTKILL) && mo->health > 0))
+    if(!mo->player && sentient(mo) && (mo->flags & MF_SHOOTABLE))
     {
         P_DamageMobj(mo, NULL, NULL, 10000, false);
         (*count)++;

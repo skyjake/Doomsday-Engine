@@ -1557,7 +1557,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
 
-    if((mo->flags & MF_COUNTKILL) && mo->health > 0)
+    if(!mo->player && sentient(mo) && (mo->flags & MF_SHOOTABLE))
     {
         mo->flags2 &= ~(MF2_NONSHOOTABLE + MF2_INVULNERABLE);
         mo->flags |= MF_SHOOTABLE;

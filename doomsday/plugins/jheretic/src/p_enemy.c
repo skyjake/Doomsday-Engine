@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
@@ -2023,7 +2023,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
 
-    if((mo->flags & MF_COUNTKILL) && mo->health > 0)
+    if(!mo->player && sentient(mo) && (mo->flags & MF_SHOOTABLE))
     {
         P_DamageMobj(mo, NULL, NULL, 10000, false);
         (*count)++;
