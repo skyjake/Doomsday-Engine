@@ -2607,8 +2607,8 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
                          ffloor, fceil, bfloor, bceil,
                          (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                          (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         LINE_SELFREF(line)? true : false,
                          (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+                         LINE_SELFREF(line)? true : false,
                          &bottom, &top, texOffset))
         {
             solidSeg = rendSegSection(ssec, seg, SEG_MIDDLE, suf,
@@ -2652,8 +2652,8 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
                          ffloor, fceil, bfloor, bceil,
                          (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                          (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         LINE_SELFREF(line)? true : false,
                          (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+                         LINE_SELFREF(line)? true : false,
                          &bottom, &top, texOffset))
         {
             rendSegSection(ssec, seg, SEG_TOP, suf,
@@ -2671,8 +2671,8 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
                          ffloor, fceil, bfloor, bceil,
                          (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                          (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         LINE_SELFREF(line)? true : false,
                          (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+                         LINE_SELFREF(line)? true : false,
                          &bottom, &top, texOffset))
         {
             rendSegSection(ssec, seg, SEG_BOTTOM, suf,
