@@ -101,10 +101,9 @@ void        M_WriteText3(int x, int y, const char *string, dpatch_t *font,
 int         M_DrawText(int x, int y, boolean direct, char *string);
 void        M_DrawTitle(char *text, int y);
 
-int         M_StringWidth(const char *string, dpatch_t * font);
-int         M_StringHeight(const char *string, dpatch_t * font);
-void        M_DrawColorBox(int x, int y, float r, float g, float b, float a);
-void        M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
+int         M_StringWidth(const char* string, dpatch_t* font);
+int         M_StringHeight(const char* string, dpatch_t* font);
+void        M_DrawBackgroundBox(float x, float y, float w, float h, float red, float green,
                                 float blue, float alpha, boolean background,
                                 int border);
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__

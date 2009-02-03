@@ -241,11 +241,11 @@ void            DGL_DrawLine(float x1, float y1, float x2, float y2,
                              float r, float g, float b, float a);
 void            DGL_DrawRect(float x, float y, float w, float h, float r,
                              float g, float b, float a);
-void            DGL_DrawRectTiled(int x, int y, int w, int h, int tw,
-                                  int th);
-void            DGL_DrawCutRectTiled(int x, int y, int w, int h, int tw,
-                                     int th, int txoff, int tyoff, int cx,
-                                     int cy, int cw, int ch);
+void            DGL_DrawRectTiled(float x, float y, float w, float h,
+                                  int tw, int th);
+void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw,
+                                     int th, int txoff, int tyoff, float cx,
+                                     float cy, float cw, float ch);
 /**
  * \todo The following routines should not be necessary once materials can
  * be created dynamically.

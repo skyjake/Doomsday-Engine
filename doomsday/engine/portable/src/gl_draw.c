@@ -268,7 +268,7 @@ void GL_DrawRect(float x, float y, float w, float h, float r, float g,
     glEnd();
 }
 
-void GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th)
+void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
 {
     // Make sure the current texture will be tiled.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -289,16 +289,16 @@ void GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th)
 /**
  * The cut rectangle must be inside the other one.
  */
-void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
-                         int txoff, int tyoff, int cx, int cy, int cw,
-                         int ch)
+void GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
+                         int txoff, int tyoff, float cx, float cy, float cw,
+                         float ch)
 {
     float               ftw = tw, fth = th;
     float               txo = (1.0f / (float)tw) * (float)txoff;
     float               tyo = (1.0f / (float)th) * (float)tyoff;
 
     // We'll draw at max four rectangles.
-    int     toph = cy - y, bottomh = y + h - (cy + ch), sideh =
+    float     toph = cy - y, bottomh = y + h - (cy + ch), sideh =
         h - toph - bottomh, lefth = cx - x, righth = x + w - (cx + cw);
 
     glBegin(GL_QUADS);
@@ -332,7 +332,7 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
 
     if(righth > 0 && sideh > 0)
     {
-        int                 ox = x + lefth + cw;
+        float               ox = x + lefth + cw;
         float               xoff = (lefth + cw) / ftw;
         float               yoff = toph / fth;
 
@@ -349,7 +349,7 @@ void GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
 
     if(bottomh > 0)
     {
-        int                 oy = y + toph + sideh;
+        float               oy = y + toph + sideh;
         float               yoff = (toph + sideh) / fth;
 
         glTexCoord2f(txo, yoff + tyo);

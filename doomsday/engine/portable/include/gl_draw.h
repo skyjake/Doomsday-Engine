@@ -46,9 +46,9 @@ void            GL_DrawLine(float x1, float y1, float x2, float y2, float r,
                             float g, float b, float a);
 void            GL_DrawRect(float x, float y, float w, float h, float r,
                             float g, float b, float a);
-void            GL_DrawRectTiled(int x, int y, int w, int h, int tw, int th);
-void            GL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
-                                    int txoff, int tyoff, int cx, int cy, int cw, int ch);
+void            GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
+void            GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
+                                    int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
 // Filters:
 void            GL_SetFilter(int filterRGBA);

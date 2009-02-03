@@ -153,7 +153,7 @@ void M_DrawWeaponMenu(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
 void M_DrawFilesMenu(void);
-void M_DrawBackgroundBox(int x, int y, int w, int h,
+void M_DrawBackgroundBox(float x, float y, float w, float h,
                          float r, float g, float b, float a,
                          boolean background, int border);
 
@@ -3780,15 +3780,27 @@ void M_OpenDCP(int option, void* context)
 #undef NUM_PANEL_NAMES
 }
 
-void MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
+void MN_DrawColorBox(const menu_t* menu, int index, float r, float g,
                      float b, float a)
 {
-    int                 x = menu->x + 4;
-    int                 y =
-        menu->y + menu->itemHeight * (index - menu->firstItem) + 3;
+#define COLORBOX_OFFSET_Y   (-.5f)
 
-    M_DrawBackgroundBox(x, y, 2, 2, 1, 1, 1, menuAlpha, true, 1);
-    M_DrawColorBox(x, y, r, g, b, a * menuAlpha);
+    float               x = menu->x, y = menu->y, w, h;
+
+    y += menu->itemHeight * (index - menu->firstItem);
+    h = menu->itemHeight;
+    y += h / 2;
+    x += h / 2;
+    h /= 4;
+    y -= h / 2;
+    y += COLORBOX_OFFSET_Y;
+    w = h;
+
+    M_DrawBackgroundBox(x, y, w, h, 1, 1, 1, menuAlpha, true, 1);
+    DGL_SetNoMaterial();
+    DGL_DrawRect(x, y, w, h, r, g, b, (a < 0? 1 : a) * menuAlpha);
+
+#undef COLORBOX_OFFSET_Y
 }
 
 /**

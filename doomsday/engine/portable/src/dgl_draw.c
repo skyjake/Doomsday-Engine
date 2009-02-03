@@ -547,14 +547,14 @@ void DGL_DrawRect(float x, float y, float w, float h, float r, float g,
     GL_DrawRect(x, y, w, h, r, g, b, a);
 }
 
-void DGL_DrawRectTiled(int x, int y, int w, int h, int tw, int th)
+void DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
 {
     GL_DrawRectTiled(x, y, w, h, tw, th);
 }
 
-void DGL_DrawCutRectTiled(int x, int y, int w, int h, int tw, int th,
-                          int txoff, int tyoff, int cx, int cy, int cw,
-                          int ch)
+void DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
+                          int txoff, int tyoff, float cx, float cy, float cw,
+                          float ch)
 {
     GL_DrawCutRectTiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
 }

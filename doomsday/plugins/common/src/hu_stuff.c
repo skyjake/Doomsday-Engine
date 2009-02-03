@@ -1896,25 +1896,14 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
 }
 
 /**
- * Draws a little colour box using the background box for a border
- */
-void M_DrawColorBox(int x, int y, float r, float g, float b, float a)
-{
-    if(a < 0)
-        a = 1;
-
-    DGL_SetNoMaterial();
-    DGL_DrawRect(x-1,y-1, 4, 3, r, g, b, a);
-}
-
-/**
  * Draws a box using the border patches, a border is drawn outside.
  */
-void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
-                         float blue, float alpha, boolean background, int border)
+void M_DrawBackgroundBox(float x, float y, float w, float h, float red,
+                         float green, float blue, float alpha,
+                         boolean background, int border)
 {
-    dpatch_t    *t = 0, *b = 0, *l = 0, *r = 0, *tl = 0, *tr = 0, *br = 0, *bl = 0;
-    int         up = -1;
+    dpatch_t*           t = 0, *b = 0, *l = 0, *r = 0, *tl = 0, *tr = 0, *br = 0, *bl = 0;
+    int                 up = -1;
 
     switch(border)
     {
