@@ -448,6 +448,9 @@ static int CeilPow2(int num)
 
 void DrawPlayerSetupMenu(void)
 {
+#define AVAILABLE_WIDTH     38
+#define AVAILABLE_HEIGHT    52
+
     spriteinfo_t        sprInfo;
     menu_t*             menu = &PlayerSetupMenu;
     int                 useColor = plrColor;
@@ -461,6 +464,8 @@ void DrawPlayerSetupMenu(void)
     int                 numColors = 4;
     static const int    sprites[3] = {SPR_PLAY, SPR_PLAY, SPR_PLAY};
 #endif
+    float               x, y, w, h, w2, h2;
+    float               s, t, scale;
 
     M_DrawTitle(GET_TXT(TXT_PLAYERSETUP), menu->y - 28);
 
@@ -484,18 +489,51 @@ void DrawPlayerSetupMenu(void)
     }
 #endif
 
+    x = 162;
+#if __JDOOM__ || __JDOOM64__
+    y = menu->y + 70;
+#elif __JHERETIC__
+    y = menu->y + 80;
+#else
+    y = menu->y + 90;
+#endif
+
+    w = sprInfo.width;
+    h = sprInfo.height;
+    w2 = M_CeilPow2(w);
+    h2 = M_CeilPow2(h);
+    // Let's calculate texture coordinates.
+    // To remove a possible edge artifact, move the corner a bit up/left.
+    s = (w - 0.4f) / w2 + 1.f / sprInfo.offset;
+    t = (h - 0.4f) / h2 + 1.f / sprInfo.topOffset;
+
+    if(h > w)
+        scale = AVAILABLE_HEIGHT / h;
+    else
+        scale = AVAILABLE_WIDTH / w;
+
+    w *= scale;
+    h *= scale;
+
+    x -= sprInfo.width / 2 * scale;
+    y -= sprInfo.height * scale;
+
     DGL_SetTranslatedSprite(sprInfo.material, tclass, useColor);
 
-    DGL_DrawRect(162 - sprInfo.offset,
-#if __JDOOM__ || __JDOOM64__
-                menu->y + 70 - sprInfo.topOffset,
-#elif __JHERETIC__
-                menu->y + 80 - sprInfo.topOffset,
-#else
-                menu->y + 90 - sprInfo.topOffset,
-#endif
-                CeilPow2(sprInfo.width), CeilPow2(sprInfo.height), 1, 1, 1,
-                menuAlpha);
+    DGL_Color4f(1, 1, 1, menuAlpha);
+    DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0 * s, 0);
+        DGL_Vertex2f(x, y);
+
+        DGL_TexCoord2f(0, 1 * s, 0);
+        DGL_Vertex2f(x + w, y);
+
+        DGL_TexCoord2f(0, 1 * s, t);
+        DGL_Vertex2f(x + w, y + h);
+
+        DGL_TexCoord2f(0, 0 * s, t);
+        DGL_Vertex2f(x, y + h);
+    DGL_End();
 
     if(plrColor == numColors)
     {
@@ -510,6 +548,8 @@ void DrawPlayerSetupMenu(void)
                       "AUTOMATIC", huFontA, 1, 1, 1, menuAlpha);
     }
 
+#undef AVAILABLE_WIDTH
+#undef AVAILABLE_HEIGHT
 }
 
 void SCEnterMultiplayerMenu(int option, void* data)
