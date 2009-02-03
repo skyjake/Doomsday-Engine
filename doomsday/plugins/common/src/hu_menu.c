@@ -102,6 +102,7 @@ void M_QuitDOOM(int option, void* context);
 
 void M_OpenDCP(int option, void* context);
 void M_ChangeMessages(int option, void* context);
+void M_HUDHideTime(int option, void* context);
 void M_WeaponAutoSwitch(int option, void* context);
 void M_AmmoAutoSwitch(int option, void* context);
 void M_HUDInfo(int option, void* context);
@@ -852,6 +853,22 @@ static menuitem_t HUDItems[] = {
     {ITT_EFUNC, 0, "Single key display :", M_ToggleVar, 0, NULL, "hud-keys-combine"},
 #endif
     {ITT_EFUNC, 0, "Show messages :", M_ChangeMessages, 0},
+    {ITT_LRFUNC, 0, "Auto-hide :", M_HUDHideTime, 0},
+    {ITT_INERT, 0, "Un-hide events", NULL, 0},
+    {ITT_EFUNC, 0, "Receive damage :", M_ToggleVar, 0, NULL, "hud-unhide-damage"},
+    {ITT_EFUNC, 0, "Pickup health :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-health"},
+    {ITT_EFUNC, 0, "Pickup armor :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-armor"},
+    {ITT_EFUNC, 0, "Pickup powerup :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-powerup"},
+    {ITT_EFUNC, 0, "Pickup weapon :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-weapon"},
+#if __JHEXEN__
+    {ITT_EFUNC, 0, "Pickup mana :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-ammo"},
+#else
+    {ITT_EFUNC, 0, "Pickup ammo :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-ammo"},
+#endif
+    {ITT_EFUNC, 0, "Pickup key :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-key"},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EFUNC, 0, "Pickup item :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-invitem"},
+#endif
     {ITT_EMPTY, 0, NULL, NULL, 0},
 
     {ITT_INERT, 0, "Crosshair", NULL, 0},
@@ -863,12 +880,6 @@ static menuitem_t HUDItems[] = {
 #endif
     {ITT_EFUNC, 0, "Vitality color :", M_ToggleVar, 0, NULL, "view-cross-vitality"},
     {ITT_EFUNC, 0, "   color", SCColorWidget, 7 },
-
-#if __JHERETIC__ || __JHEXEN__
-    // Push the statusbar options onto the next page.
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-#endif
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -884,9 +895,10 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
 # endif
 #endif
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+#if __JDOOM__ || __JDOOM64__
     {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {ITT_INERT, 0, "Counters", NULL, 0 },
     {ITT_LRFUNC, 0, "Kills :", M_KillCounter, 0 },
     {ITT_LRFUNC, 0, "Items :", M_ItemCounter, 0 },
@@ -899,9 +911,6 @@ static menuitem_t HUDItems[] = {
 #endif
 
 #if __JHERETIC__
-    // Push the fullscreen options onto the next page.
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
 
@@ -943,13 +952,13 @@ static menu_t HUDDef = {
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    30, HUDItems,
+    38, HUDItems,
 #elif __JHERETIC__
-    40, HUDItems,
+    45, HUDItems,
 #elif __JDOOM64__
-    23, HUDItems,
+    32, HUDItems,
 #elif __JDOOM__
-    27, HUDItems,
+    36, HUDItems,
 #endif
     0, MENU_OPTIONS,
     huFontA,
@@ -3153,7 +3162,7 @@ void M_DrawHUDMenu(void)
     page = menu->firstItem / menu->numVisItems + 1;
     if(page == 2)
         goto page2;
-#if __JHERETIC__
+#if __JHERETIC__ || __JHEXEN__
     if(page == 3)
         goto page3;
 #endif
@@ -3170,8 +3179,42 @@ void M_DrawHUDMenu(void)
 #endif
     M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
 
+    // Auto-hide HUD options:
+    {
+    char                secString[11];
+    const char*         str;
+    uint                seconds = MINMAX_OF(0, cfg.hudTimer, 30);
+    if(seconds > 0)
+    {
+        memset(secString, 0, sizeof(secString));
+        snprintf(secString, 10, "%2u seconds", seconds);
+        str = secString;
+    }
+    else
+        str = "Disabled";
+    M_WriteMenuText(menu, idx++, str);
+    }
+    idx++;
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_DAMAGE]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_HEALTH]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_ARMOR]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_POWER]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_WEAPON]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_AMMO]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_KEY]? 1 : 0]);
+#if __JHERETIC__ || __JHEXEN__
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_INVITEM]? 1 : 0]);
+#endif
+#if __JDOOM__ || __JDOOM64__
+    idx++;
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    return;
+page2:
+#endif
+
     // Crosshair options:
-    idx += 2;
+    idx++;
     M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
@@ -3183,49 +3226,46 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
     MN_DrawColorBox(menu, idx++, cfg.xhairColor[0], cfg.xhairColor[1],
                     cfg.xhairColor[2], cfg.xhairColor[3]);
-
 #if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+#if __JDOOM__ || __JDOOM64__
     return;
-
 page2:
 #endif
 
 #if !__JDOOM64__
     // Statusbar options:
-    idx += 2;
+    idx += 1;
+#if __JHERETIC__ || __JHEXEN__
+    idx ++;
+#endif
     MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
 #if __JHERETIC__ || __JHEXEN__
     idx += 2;
 #endif
     MN_DrawSlider(menu, idx++, 11, cfg.statusbarOpacity * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
+    return;
+
+page3:
+#endif
+#if __JDOOM__ || __JDOOM64__
     idx++;
 #endif
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Counters:
-    idx += 2;
+    idx++;
     M_WriteMenuText(menu, idx++, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-    return;
-
-page2:
-#endif
-
     // Fullscreen HUD options:
+    idx += 2;
 #if __JHERETIC__
-    return;
-
-page3:
-#endif
-
-    idx++;
-#if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
     MN_DrawSlider(menu, idx++, 10, cfg.hudScale * 10 - 3 + .5f);
@@ -3509,6 +3549,21 @@ void M_ChangeMessages(int option, void* context)
 {
     cfg.msgShow = !cfg.msgShow;
     P_SetMessage(players + CONSOLEPLAYER, !cfg.msgShow ? MSGOFF : MSGON, true);
+}
+
+void M_HUDHideTime(int option, void* context)
+{
+    int                 val = cfg.hudTimer;
+
+    if(option == RIGHT_DIR)
+    {
+        if(val < 30)
+            val++;
+    }
+    else if(val > 0)
+        val--;
+
+    cfg.hudTimer = val;
 }
 
 void M_HUDScale(int option, void* context)
