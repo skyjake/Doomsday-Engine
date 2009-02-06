@@ -982,15 +982,16 @@ void LG_Debug(void)
             blockIdx = (lgBlockHeight - 1 - y) * lgBlockWidth + x;
             block = &grid[blockIdx];
 
-            if(!block->sector)
-                continue;
-
-            if(ddpl)
+            if(ddpl && vIdx == blockIdx && (blink & 16))
             {
-                if(vIdx == blockIdx && (blink & 16))
-                    glColor3f(1, 0, 0);
-                else
-                    glColor3fv(block->rgb);
+                glColor3f(1, 0, 0);
+            }
+            else
+            {
+                if(!block->sector)
+                    continue;
+
+                glColor3fv(block->rgb);
             }
 
             glVertex2f(x * lgDebugSize, y * lgDebugSize);
