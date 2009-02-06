@@ -923,10 +923,14 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         {
             Material_Prepare(&ms, mat, true, NULL);
         }
-    }
 
-    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
-                   ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
+                       ms.units[MTU_PRIMARY].magMode);
+    }
+    else
+    {
+        GL_SetNoTexture();
+    }
 
     // Coordinates to the center of the sprite (game coords).
     spriteCenter[VX] = params->center[VX] + params->srvo[VX];
