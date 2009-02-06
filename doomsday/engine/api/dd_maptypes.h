@@ -54,6 +54,7 @@
 #define DMT_SECTOR_SSECTORS DDVT_PTR   // [ssectorCount+1] size.
 #define DMT_SECTOR_SOUNDORG DDVT_PTR
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
+#define DMT_SECTOR_REVERB DDVT_FLOAT
 
 #define DMT_SIDEDEF_SEGCOUNT DDVT_UINT
 #define DMT_SIDEDEF_SEGS DDVT_PTR      // [segcount] size, segs arranged left>right
