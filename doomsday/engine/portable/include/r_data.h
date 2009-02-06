@@ -105,13 +105,6 @@ typedef struct shadowlink_s {
     byte            side;
 } shadowlink_t;
 
-typedef struct subplaneinfo_s {
-    vertexillum_t*  illum;
-    biastracker_t   tracker;
-    uint            updated;
-    biasaffection_t affected[MAX_BIAS_AFFECTED];
-} subplaneinfo_t;
-
 typedef float       colorcomp_t;
 typedef colorcomp_t rgbcol_t[3];
 typedef colorcomp_t rgbacol_t[4];

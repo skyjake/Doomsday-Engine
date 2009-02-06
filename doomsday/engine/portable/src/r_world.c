@@ -522,11 +522,9 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
  */
 plane_t* R_NewPlaneForSector(sector_t* sec)
 {
-    uint                villumCount;
     surface_t*          suf;
     plane_t*            plane;
     subsector_t**       ssecPtr;
-    vertexillum_t*      illums;
 
     if(!sec)
         return NULL; // Do wha?
@@ -576,30 +574,35 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     Surface_SetColorRGBA(suf, 1, 1, 1, 1);
     Surface_SetBlendMode(suf, BM_NORMAL);
 
-    // Allocate the subplanes of this plane.
-    plane->subPlanes =
-        Z_Calloc(sec->ssectorCount * sizeof(subplaneinfo_t),
-                 PU_MAP, NULL);
+    /**
+     * Resize the biassurface lists for the subsector planes.
+     * If we are in map setup mode, don't create the biassurfaces now,
+     * as planes are created before the bias system is available.
+     */
 
-    // Count the number of vertexillum's we'll need.
-    villumCount = 0;
-    ssecPtr = sec->ssectors;
-    while(*ssecPtr)
-    {
-        villumCount += (*ssecPtr)->numVertices;
-        *ssecPtr++;
-    }
-
-    // Allocate the vertexillums.
-    illums = Z_Calloc(villumCount * sizeof(*illums), PU_MAP, NULL);
     ssecPtr = sec->ssectors;
     while(*ssecPtr)
     {
         subsector_t*        ssec = *ssecPtr;
-        subplaneinfo_t*     subPln = &plane->subPlanes[ssec->inSectorID];
+        biassurface_t**     newList;
+        uint                n = 0;
 
-        subPln->illum = illums;
-        illums += ssec->numVertices;
+        newList = Z_Calloc(sec->planeCount * sizeof(biassurface_t*),
+                           PU_MAP, NULL);
+        // Copy the existing list?
+        if(ssec->bsuf)
+        {
+            for(; n < sec->planeCount - 1; ++n)
+            {
+                newList[n] = ssec->bsuf[n];
+            }
+            Z_Free(ssec->bsuf);
+        }
+        if(!mapSetup)
+            newList[n] = SB_CreateSurface(ssec->numVertices);
+
+        ssec->bsuf = newList;
+
         *ssecPtr++;
     }
 
@@ -613,10 +616,11 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
  * @param id            The sector, plane id to be destroyed.
  * @param sec           Ptr to sector for which a plane will be destroyed.
  */
-void R_DestroyPlaneOfSector(uint id, sector_t *sec)
+void R_DestroyPlaneOfSector(uint id, sector_t* sec)
 {
     uint                i;
-    plane_t            *plane, **newList = NULL;
+    plane_t*            plane, **newList = NULL;
+    subsector_t**       ssecPtr;
 
     if(!sec)
         return; // Do wha?
@@ -652,12 +656,17 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     // If this plane's surface if in the deocrated list, remove it.
     R_SurfaceListRemove(decoratedSurfaceList, &plane->surface);
 
-    // Destroy the subplanes.
-    for(i = 0; i < plane->sector->ssectorCount; ++i)
+    // Destroy the biassurfaces for this plane.
+    ssecPtr = sec->ssectors;
+    while(*ssecPtr)
     {
-        Z_Free(plane->subPlanes[i].illum);
+        subsector_t*        ssec = *ssecPtr;
+
+        SB_DestroySurface(ssec->bsuf[id]);
+        if(id < sec->planeCount)
+            memmove(ssec->bsuf + id, ssec->bsuf + id + 1, sizeof(biassurface_t*));
+        *ssecPtr++;
     }
-    Z_Free(plane->subPlanes);
 
     // Destroy the specified plane.
     Z_Free(plane);
@@ -1275,49 +1284,6 @@ void R_PolygonizeMap(gamemap_t *map)
 #endif
 }
 
-static void prepareSubsectorForBias(subsector_t* ssec)
-{
-    uint                i, j;
-    seg_t**             segPtr;
-
-    if(ssec->sector)
-    {
-        for(i = 0; i < ssec->sector->planeCount; ++i)
-        {
-            subplaneinfo_t*     plane =
-                &ssec->sector->planes[i]->subPlanes[ssec->inSectorID];
-
-            for(j = 0; j < ssec->numVertices; ++j)
-                SB_InitVertexIllum(&plane->illum[j]);
-        }
-    }
-
-    segPtr = ssec->segs;
-    while(*segPtr)
-    {
-        uint                i;
-        seg_t*              seg = *segPtr;
-
-        for(i = 0; i < 4; ++i)
-        {
-            uint                j;
-
-            for(j = 0; j < 3; ++j)
-                SB_InitVertexIllum(&seg->illum[j][i]);
-        }
-
-        *segPtr++;
-    }
-}
-
-void R_PrepareForBias(gamemap_t* map)
-{
-    uint                i;
-
-    for(i = 0; i < map->numSSectors; ++i)
-        prepareSubsectorForBias(&map->ssectors[i]);
-}
-
 /**
  * The test is done on subsectors.
  */
@@ -1822,11 +1788,18 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
             while(*segp)
             {
                 seg_t*          seg = *segp;
-                SB_SegHasMoved(seg);
+
+                if(seg->lineDef)
+                {
+                    for(i = 0; i < 3; ++i)
+                        SB_SurfaceMoved(seg->bsuf[i]);
+                }
+
                 *segp++;
             }
 
-            SB_PlaneHasMoved(ssec, pln->planeID);
+            SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
+
             *ssecp++;
         }
 

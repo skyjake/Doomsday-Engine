@@ -87,10 +87,7 @@ typedef struct seg_s {
     byte                flags;
     float               length;        // Accurate length of the segment (v1 -> v2).
     float               offset;
-    unsigned int        updated;
-    struct biasaffection_s affected[MAX_BIAS_AFFECTED];
-    struct biastracker_s tracker[3];   // 0=middle, 1=top, 2=bottom
-    struct vertexillum_s illum[3][4];
+    biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
 } seg_t;
 
@@ -113,6 +110,7 @@ typedef struct subsector_s {
     unsigned short      numVertices;
     struct fvertex_s**  vertices;      // [numvertices] size
     struct shadowlink_s* shadows;
+    struct biassurface_s** bsuf;       // [sector->planeCount] size.
 } subsector_t;
 
 typedef struct materiallayer_s {
@@ -237,7 +235,6 @@ typedef struct plane_s {
     float               visHeightDelta;
     planetype_t         type;          // PLN_* type.
     int                 planeID;
-    struct subplaneinfo_s* subPlanes;
 } plane_t;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.

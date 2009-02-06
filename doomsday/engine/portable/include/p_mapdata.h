@@ -117,6 +117,19 @@ typedef struct surfacelist_s {
     surfacelistnode_t* head;
 } surfacelist_t;
 
+/**
+ * Stores the data pertaining to vertex lighting for a worldmap, surface.
+ */
+typedef struct biassurface_s {
+    uint            updated;
+    uint            size;
+    vertexillum_t*  illum; // [size]
+    biastracker_t   tracker;
+    biasaffection_t affected[MAX_BIAS_AFFECTED];
+
+    struct biassurface_s* next;
+} biassurface_t;
+
 typedef void* blockmap_t;
 
 #include "p_polyob.h"
@@ -228,7 +241,7 @@ typedef struct gamemap_s {
     linedef_t*      lineDefs;
 
     uint            numSideDefs;
-    sidedef_t*       sideDefs;
+    sidedef_t*      sideDefs;
 
     uint            numPolyObjs;
     polyobj_t**     polyObjs;

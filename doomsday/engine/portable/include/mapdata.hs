@@ -93,10 +93,7 @@ struct seg
     BYTE    byte        flags
     FLOAT   float       length      // Accurate length of the segment (v1 -> v2).
     FLOAT   float       offset
-    -       uint        updated
-    -       biasaffection_s[MAX_BIAS_AFFECTED] affected
-    -       biastracker_s[3] tracker // 0=middle, 1=top, 2=bottom
-    -       vertexillum_s[3][4] illum
+    -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
     -       short       frameFlags
 end
 
@@ -120,6 +117,7 @@ struct subsector
     -       ushort      numVertices
     -       fvertex_s** vertices // [numvertices] size
     -       shadowlink_s* shadows
+    -       biassurface_s** bsuf // [sector->planeCount] size.
 end
 
 internal
@@ -249,7 +247,6 @@ struct plane
     -       float       visHeightDelta
     -       planetype_t type // PLN_* type.
     -       int         planeID
-    -       subplaneinfo_s* subPlanes
 end
 
 internal

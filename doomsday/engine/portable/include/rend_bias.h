@@ -29,6 +29,8 @@
 #ifndef __DOOMSDAY_RENDER_SHADOW_BIAS_H__
 #define __DOOMSDAY_RENDER_SHADOW_BIAS_H__
 
+#include "m_vector.h"
+
 #define MAX_BIAS_LIGHTS   (8 * 32) // Hard limit due to change tracking.
 #define MAX_BIAS_AFFECTED 6
 
@@ -82,16 +84,18 @@ extern unsigned int currentTimeSB;
 void            SB_Register(void);
 void            SB_InitForMap(const char* uniqueId);
 void            SB_InitVertexIllum(vertexillum_t* villum);
-void            SB_SegHasMoved(struct seg_s* seg);
-void            SB_PlaneHasMoved(const struct subsector_s* subsector, uint plane);
+
+struct biassurface_s* SB_CreateSurface(uint num);
+void            SB_DestroySurface(struct biassurface_s* bsuf);
+void            SB_SurfaceMoved(struct biassurface_s* bsuf);
+
 void            SB_BeginFrame(void);
-void            SB_RendPoly(const struct rvertex_s* rvertices,
-                            struct rcolor_s* rcolors,
-                            size_t numVertices, const float* normal,
+void            SB_RendPoly(struct rcolor_s* rcolors,
+                            struct biassurface_s* bsuf,
+                            const struct rvertex_s* rvertices,
+                            size_t numVertices, const vectorcomp_t* normal,
                             float sectorLightLevel,
-                            biastracker_t* tracker,
-                            biasaffection_t* affected,
-                            void* surface, uint elmIdx, boolean isSeg);
+                            void* mapObject, uint elmIdx, boolean isSeg);
 void            SB_EndFrame(void);
 
 int             SB_NewSourceAt(float x, float y, float z, float size, float minLight,

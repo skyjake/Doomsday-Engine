@@ -1377,8 +1377,7 @@ typedef struct {
 // For bias:
     void*           mapObject;
     uint            elmIdx;
-    biasaffection_t* affection;
-    biastracker_t*  tracker;
+    biassurface_t*  bsuf;
 
 // Wall only (todo).
     const float*    segLength;
@@ -1557,12 +1556,11 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         }
         else
         {   // Non-uniform color.
-            if(useBias)
+            if(useBias && p->bsuf)
             {
                 // Do BIAS lighting for this poly.
-                SB_RendPoly(rvertices, rcolors, numVertices,
+                SB_RendPoly(rcolors, p->bsuf, rvertices, numVertices,
                             p->normal, *p->sectorLightLevel,
-                            p->tracker, p->affection,
                             p->mapObject, p->elmIdx, p->isWall);
             }
             else
@@ -1635,7 +1633,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     }
     else
     {
-        memset(rcolors, 0, sizeof(*rcolors) * numVertices);
+        memset(rcolors, 0, sizeof(rcolor_t) * numVertices);
     }
 
     if(IS_MUL && useLights)
@@ -1835,8 +1833,7 @@ static boolean doRenderSeg(seg_t* seg,
                            const float texScale[2],
                            blendmode_t blendMode,
                            const float* color, const float* color2,
-                           biastracker_t* tracker,
-                           biasaffection_t* affected, uint elmIdx /*tmp*/,
+                           biassurface_t* bsuf, uint elmIdx /*tmp*/,
                            const material_snapshot_t* msA, float inter,
                            const material_snapshot_t* msB)
 {
@@ -1853,8 +1850,7 @@ static boolean doRenderSeg(seg_t* seg,
     params.alpha = alpha;
     params.mapObject = seg;
     params.elmIdx = elmIdx;
-    params.tracker = tracker;
-    params.affection = affected;
+    params.bsuf = bsuf;
     params.normal = normal;
     params.texTL = texTL;
     params.texBR = texBR;
@@ -1957,8 +1953,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
                         const float texOffset[2], const float texScale[2],
                         boolean skyMasked,
                         boolean addDLights, boolean isGlowing,
-                        biastracker_t* tracker,
-                        biasaffection_t* affected, uint elmIdx /*tmp*/,
+                        biassurface_t* bsuf, uint elmIdx /*tmp*/,
                         int texMode /*tmp*/)
 {
     float               inter = 0;
@@ -1978,8 +1973,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     params.isWall = false;
     params.mapObject = ssec;
     params.elmIdx = elmIdx;
-    params.tracker = tracker;
-    params.affection = affected;
+    params.bsuf = bsuf;
     params.normal = normal;
     params.texTL = texTL;
     params.texBR = texBR;
@@ -2083,8 +2077,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
                              const float texOffset[2], const float texScale[2],
                              boolean skyMasked,
                              boolean addDLights, boolean isGlowing,
-                             biastracker_t* tracker,
-                             biasaffection_t* affected, uint elmIdx /*tmp*/,
+                             biassurface_t* bsuf, uint elmIdx /*tmp*/,
                              int texMode /*tmp*/)
 {
     sector_t*           sec = ssec->sector;
@@ -2110,7 +2103,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
 
         renderPlane(ssec, type, height, normal, inMat, sufInFlags,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
-                    skyMasked, addDLights, isGlowing, tracker, affected, elmIdx, texMode);
+                    skyMasked, addDLights, isGlowing, bsuf, elmIdx, texMode);
     }
 }
 
@@ -2347,8 +2340,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                isGlowing,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
-                               &seg->tracker[section], seg->affected,
-                               (uint) section,
+                               seg->bsuf[section], (uint) section,
                                &msA, inter, blended? &msB : NULL);
     }
 
@@ -3195,8 +3187,6 @@ static void Rend_RenderSubsector(uint ssecidx)
         float               height, texOffset[2], texScale[2];
         const plane_t*      plane = sect->planes[i];
         const surface_t*    suf = &plane->surface;
-        subplaneinfo_t*     subPln =
-            &plane->subPlanes[ssec->inSectorID];
         material_t*         mat;
         boolean             isGlowing = false;
 
@@ -3258,7 +3248,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                          suf->inFlags, suf->rgba,
                          suf->blendMode, texOffset, texScale,
                          R_IsSkySurface(suf), true, isGlowing,
-                         &subPln->tracker, subPln->affected, plane->planeID,
+                         ssec->bsuf[plane->planeID], plane->planeID,
                          texMode);
     }
 
@@ -3275,8 +3265,6 @@ static void Rend_RenderSubsector(uint ssecidx)
             vec3_t              normal;
             const plane_t*      plane = sect->SP_plane(PLN_FLOOR);
             const surface_t*    suf = &plane->surface;
-            subplaneinfo_t*     subPln =
-                &plane->subPlanes[ssec->inSectorID];
 
             /**
              * Flip the plane normal according to the z positon of the
@@ -3292,8 +3280,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                              suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy > plane->visHeight? true : false),
-                             false,
-                             &subPln->tracker, subPln->affected,
+                             false, NULL,
                              plane->planeID, 2);
         }
 
@@ -3303,8 +3290,6 @@ static void Rend_RenderSubsector(uint ssecidx)
             vec3_t              normal;
             const plane_t*      plane = sect->SP_plane(PLN_CEILING);
             const surface_t*    suf = &plane->surface;
-            subplaneinfo_t*     subPln =
-                &plane->subPlanes[ssec->inSectorID];
 
             V3_Copy(normal, plane->PS_normal);
             if(vy > plane->visHeight)
@@ -3315,8 +3300,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                              suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy < plane->visHeight? true : false),
-                             false,
-                             &subPln->tracker, subPln->affected,
+                             false, NULL,
                              plane->planeID, 2);
         }
     }

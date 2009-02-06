@@ -512,8 +512,6 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             // Must be called before we go any further.
             P_InitUnusedMobjList();
 
-            R_PrepareForBias(map);
-
             // Must be called before any mobjs are spawned.
             R_InitLinks(map);
 

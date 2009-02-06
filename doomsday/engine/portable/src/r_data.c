@@ -599,7 +599,7 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 
         for(c = 0; c < 4; ++c)
         {
-            dst[2 + i ].rgba[c] = src[0].rgba[c] +
+            dst[2 + i].rgba[c] = src[0].rgba[c] +
                 (src[1].rgba[c] - src[0].rgba[c]) * inter;
         }
     }

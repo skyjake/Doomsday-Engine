@@ -423,7 +423,7 @@ void V3_Scale(pvec3_t vec, float scalar)
 /**
  * Calculate the sum of two 3-dimensional vectors.
  */
-void V3_Sum(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
+void V3_Sum(pvec3_t dest, const_pvec3_t src1, const_pvec3_t src2)
 {
     dest[VX] = src1[VX] + src2[VX];
     dest[VY] = src1[VY] + src2[VY];
@@ -433,7 +433,7 @@ void V3_Sum(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V3_Subtract(pvec3_t dest, const pvec3_t src1, const pvec3_t src2)
+void V3_Subtract(pvec3_t dest, const_pvec3_t src1, const_pvec3_t src2)
 {
     dest[VX] = src1[VX] - src2[VX];
     dest[VY] = src1[VY] - src2[VY];

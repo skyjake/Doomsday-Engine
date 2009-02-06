@@ -124,17 +124,21 @@ void P_InitData(void)
     P_InitMapUpdate();
 }
 
-void P_PolyobjChanged(polyobj_t *po)
+void P_PolyobjChanged(polyobj_t* po)
 {
     uint                i;
-    seg_t             **segPtr = po->segs;
+    seg_t**             segPtr = po->segs;
 
     for(i = 0; i < po->numSegs; ++i, segPtr++)
     {
-        seg_t              *seg = *segPtr;
+        int                 j;
+        seg_t*              seg = *segPtr;
 
         // Shadow bias must be told.
-        SB_SegHasMoved(seg);
+        for(j = 0; j < 3; ++j)
+        {
+            SB_SurfaceMoved(seg->bsuf[j]);
+        }
     }
 }
 
@@ -145,7 +149,7 @@ void P_PolyobjChanged(polyobj_t *po)
  *
  * The entire ID string will be in lowercase letters.
  */
-const char *P_GenerateUniqueMapID(const char *mapID)
+const char* P_GenerateUniqueMapID(const char* mapID)
 {
     static char         uid[256];
     filename_t          base;
@@ -322,6 +326,9 @@ boolean P_LoadMap(const char *mapID)
         uint                i;
         gamemap_t          *map = P_GetCurrentMap();
 
+        // Tell shadow bias to initialize the bias light sources.
+        SB_InitForMap(P_GetUniqueMapID(map));
+
         Cl_Reset();
         RL_DeleteLists();
         Rend_CalcLightModRange(NULL);
@@ -353,9 +360,6 @@ boolean P_LoadMap(const char *mapID)
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
         spawnParticleGeneratorsForMap(P_GetMapID(map));
-
-        // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(P_GetUniqueMapID(map));
 
         // Initialize the lighting grid.
         LG_Init();

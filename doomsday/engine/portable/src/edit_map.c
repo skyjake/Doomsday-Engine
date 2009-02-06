@@ -1400,7 +1400,6 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
                 &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
             seg_t*              seg = &segs[j];
             float               dx, dy;
-            uint                k;
 
             // This line is part of a polyobj.
             line->inFlags |= LF_POLYOBJ;
@@ -1415,24 +1414,6 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
             seg->SG_frontsector = line->L_frontsector;
             seg->SG_backsector = NULL;
             seg->flags |= SEGF_POLYOBJ;
-
-            // Initialize the bias illumination data.
-            for(k = 0; k < 4; ++k)
-            {
-                uint                l;
-
-                for(l = 0; l < 3; ++l)
-                {
-                    uint                m;
-
-                    seg->illum[l][k].flags = VIF_STILL_UNSEEN;
-
-                    for(m = 0; m < MAX_BIAS_AFFECTED; ++m)
-                    {
-                        seg->illum[l][k].casted[m].source = -1;
-                    }
-                }
-            }
 
             destP->segs[j] = seg;
         }
