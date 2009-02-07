@@ -244,7 +244,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 10;
-  Flags = noblockmap | issile | dropoff | nogravity;
+  Flags = noblockmap | missile | dropoff | nogravity;
   Flags2 = noteleport;
 }
 
