@@ -345,6 +345,11 @@ int main(int argc, char **argv)
     {
         char                libPath[PATH_MAX];
 
+        if(!initPluginSystem())
+        {
+            DD_ErrorBox(true, "Error initializing plugin system.");
+        }
+        
         // Determine our basedir, and other global paths.
         determineGlobalPaths(&app);
 
@@ -363,10 +368,6 @@ int main(int argc, char **argv)
         else if(!initTimingSystem())
         {
             DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        else if(!initPluginSystem())
-        {
-            DD_ErrorBox(true, "Error initializing plugin system.");
         }
         // Load the rendering DLL.
         else if(!initDGL())
