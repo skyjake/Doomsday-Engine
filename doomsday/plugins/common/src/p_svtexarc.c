@@ -93,8 +93,13 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
 {
     int                 c;
     char                name[9];
-    const char*         matName = P_GetMaterialName(mat);
-    material_namespace_t     matGroup = P_GetIntp(mat, DMU_NAMESPACE);
+    const char*         matName;
+    material_namespace_t mnamespace;
+
+    if(!mat)
+        return;
+    matName = P_GetMaterialName(mat);
+    mnamespace = P_GetIntp(mat, DMU_NAMESPACE);
 
     // Get the name of the material.
     if(matName)
@@ -107,7 +112,7 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
     // Has this already been registered?
     for(c = 0; c < arc->count; c++)
     {
-        if(arc->table[c].mnamespace == matGroup &&
+        if(arc->table[c].mnamespace == mnamespace &&
            !stricmp(arc->table[c].name, name))
         {
             break;// Yes, skip it...
@@ -117,7 +122,7 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
     if(c == arc->count)
     {
         strcpy(arc->table[arc->count++].name, name);
-        arc->table[arc->count - 1].mnamespace = matGroup;
+        arc->table[arc->count - 1].mnamespace = mnamespace;
     }
 }
 
@@ -146,7 +151,7 @@ void SV_InitMaterialArchives(void)
     }
 }
 
-unsigned short SV_SearchArchive(materialarchive_t *arc, char *name)
+unsigned short SV_SearchArchive(materialarchive_t* arc, const char* name)
 {
     int                 i;
 
@@ -159,11 +164,14 @@ unsigned short SV_SearchArchive(materialarchive_t *arc, char *name)
 }
 
 /**
- * @return              The archive number of the given texture.
+ * @return              The archive number of the given material.
  */
 unsigned short SV_MaterialArchiveNum(material_t* mat)
 {
     char                name[9];
+
+    if(!mat)
+        return 0;
 
     if(P_GetMaterialName(mat))
         strncpy(name, P_GetMaterialName(mat), 8);
