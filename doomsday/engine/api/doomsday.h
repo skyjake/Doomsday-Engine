@@ -141,6 +141,7 @@ extern          "C" {
     void            Con_Error(char* error, ...) PRINTF_F(1,2);
 
     // Console: Bindings.
+    void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
     void            B_FormEventString(char* buff, evtype_t type, evstate_t state,
                                       int data1);
     int             B_BindingsForCommand(const char* cmd, char* buf, int bufSize);

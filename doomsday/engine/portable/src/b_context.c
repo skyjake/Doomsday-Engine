@@ -327,6 +327,16 @@ void B_AcquireAll(bcontext_t* bc, boolean doAcquire)
     B_UpdateDeviceStateAssociations();
 }
 
+void B_SetContextFallback(const char* name, int (*responderFunc)(event_t*))
+{
+    bcontext_t *ctx = B_ContextByName(name);
+    
+    if(!ctx)
+        return;
+    
+    ctx->fallbackResponder = responderFunc;
+}
+
 bcontext_t* B_ContextByName(const char* name)
 {
     int                 i;
@@ -504,6 +514,9 @@ boolean B_TryEvent(ddevent_t* event)
 {
     int                 i;
     evbinding_t*        eb;
+    event_t             ev;
+
+    DD_ConvertEvent(event, &ev);
 
     for(i = 0; i < bindContextCount; ++i)
     {
@@ -518,6 +531,10 @@ boolean B_TryEvent(ddevent_t* event)
             if(B_TryCommandBinding(eb, event, bc))
                 return true;
         }
+
+        // Try the fallback.
+        if(bc->fallbackResponder && bc->fallbackResponder(&ev))
+            return true;
     }
     // Nobody used it.
     return false;

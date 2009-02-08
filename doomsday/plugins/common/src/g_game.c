@@ -571,12 +571,23 @@ static const char* getGameStateStr(gamestate_t state)
 #endif
 
 /**
+ * Called when the gameui binding context is active. Triggers the menu.
+ */
+int G_UIResponder(event_t* event)
+{
+    return Hu_MenuResponder(event);
+}
+
+/**
  * Change the game's state.
  *
  * @param state         The state to change to.
  */
 void G_ChangeGameState(gamestate_t state)
 {
+    boolean gameUIActive = false;
+    boolean gameActive = true;
+    
     if(state < 0 || state >= NUM_GAME_STATES)
         Con_Error("G_ChangeGameState: Invalid state %i.\n", (int) state);
 
@@ -590,6 +601,30 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
 
         gameState = state;
     }
+    
+    // Update the state of the gameui binding context.
+    switch(gameState)
+    {
+        case GS_FINALE:
+        case GS_DEMOSCREEN:
+        case GS_WAITING:
+        case GS_INFINE:
+            gameActive = false;
+        case GS_INTERMISSION:
+            gameUIActive = true;
+            break;
+            
+        default:
+            break;
+    }
+    
+    if(gameUIActive)
+    {
+        DD_Execute(true, "activatebcontext gameui");
+        B_SetContextFallback("gameui", G_UIResponder);
+    }
+    
+    DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
 }
 
 /**

@@ -188,6 +188,7 @@ void B_Init(void)
     B_NewContext("map");
     B_NewContext("map-freepan");
     B_NewContext("menu");
+    B_NewContext("gameui");
     B_NewContext("shortcut");
     B_AcquireKeyboard(B_NewContext("chat"), true);
     B_AcquireAll(B_NewContext("message"), true);

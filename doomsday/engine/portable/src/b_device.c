@@ -238,6 +238,9 @@ dbinding_t* B_FindDeviceBinding(bcontext_t* context, uint device, cbdevtype_t bi
     dbinding_t*         d;
     int                 i;
 
+    if(!context)
+        return NULL;
+    
     for(cb = context->controlBinds.next; cb != &context->controlBinds; cb = cb->next)
     {
         for(i = 0; i < DDMAXPLAYERS; ++i)

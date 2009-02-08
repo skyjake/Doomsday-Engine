@@ -616,8 +616,7 @@ void M_DrawControlsMenu(void)
 
 #if __JDOOM__ || __JDOOM64__
     M_DrawTitle("CONTROLS", menu->y - 28);
-    sprintf(buf, "PAGE %i/%i", menu->firstItem / menu->numVisItems + 1,
-            menu->itemCount / menu->numVisItems + 1);
+    Hu_MenuPageString(buf, menu);
     M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
                  huFontA, 1, .7f, .3f, Hu_MenuAlpha());
 #else

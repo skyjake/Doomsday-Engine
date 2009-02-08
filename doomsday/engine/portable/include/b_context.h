@@ -53,6 +53,7 @@ typedef struct bclass_s {
     byte            flags;
     evbinding_t     commandBinds; // List of command bindings.
     controlbinding_t controlBinds;
+    int           (*fallbackResponder)(event_t* event); // event_t
 } bcontext_t;
 
 void            B_UpdateDeviceStateAssociations(void);
@@ -61,6 +62,7 @@ void            B_DestroyAllContexts(void);
 void            B_ActivateContext(bcontext_t* bc, boolean doActivate);
 void            B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire);
 void            B_AcquireAll(bcontext_t* bc, boolean doAcquire);
+void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
 bcontext_t*     B_ContextByPos(int pos);
 bcontext_t*     B_ContextByName(const char* name);
 int             B_ContextCount(void);

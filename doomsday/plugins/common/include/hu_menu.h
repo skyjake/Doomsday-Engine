@@ -41,6 +41,8 @@ typedef enum menucommand_e {
     MCMD_NAV_RIGHT,
     MCMD_NAV_DOWN,
     MCMD_NAV_UP,
+    MCMD_NAV_PAGEDOWN,
+    MCMD_NAV_PAGEUP,
     MCMD_SELECT, // Execute whatever action is attaced to the current item.
     MCMD_DELETE
 } menucommand_e;
@@ -57,6 +59,7 @@ void            Hu_MenuCommand(menucommand_e cmd);
 boolean         Hu_MenuIsActive(void);
 void            Hu_MenuSetAlpha(float alpha);
 float           Hu_MenuAlpha(void);
+void            Hu_MenuPageString(char* page, const menu_t* menu);
 
 boolean         M_EditResponder(event_t* ev);
 

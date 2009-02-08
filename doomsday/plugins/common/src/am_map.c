@@ -1978,7 +1978,6 @@ void M_DrawMapMenu(void)
     uint                idx;
 #if __JHERETIC__ || __JHEXEN__
     char*               token;
-    int                 page;
 #endif
     const menu_t*       menu = &MapDef;
 
@@ -1997,13 +1996,7 @@ void M_DrawMapMenu(void)
     GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
 #endif
 
-    idx = menu->firstItem;
-#if __JHERETIC__ || __JHEXEN__
-    page = menu->firstItem / menu->numVisItems + 1;
-    if(page == 2)
-        goto page2;
-#endif
-
+    idx = 0; 
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -2021,15 +2014,8 @@ void M_DrawMapMenu(void)
     idx++;
 #endif
     MN_DrawSlider(menu, idx++, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-#if __JHERETIC__ || __JHEXEN__
     idx++;
-#endif
-    idx++;
-#if __JHERETIC__ || __JHEXEN__
-    return;
-
-page2:
-#endif
+    
     M_WriteMenuText(menu, idx++, customColors[cfg.automapCustomColors % 3]);
     MN_DrawColorBox(menu, idx++, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], 1);
     MN_DrawColorBox(menu, idx++, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], 1);

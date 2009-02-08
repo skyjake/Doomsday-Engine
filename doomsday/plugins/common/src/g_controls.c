@@ -416,6 +416,10 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent menu:key-return menuselect",
         "bindevent menu:mouse-left-down menuselect",
         "bindevent menu:key-delete menudelete",
+        "bindevent menu:key-pgup menupageup",
+        "bindevent menu:key-pgup-repeat menupageup",
+        "bindevent menu:key-pgdown menupagedown",
+        "bindevent menu:key-pgdown-repeat menupagedown",
 
         // On-screen messages:
         "bindevent message:key-y messageyes",

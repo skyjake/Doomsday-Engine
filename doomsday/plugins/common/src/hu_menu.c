@@ -1232,6 +1232,8 @@ ccmd_t menuCCmds[] = {
     {"menu",        "", CCmdMenuAction},
     {"menuup",      "", CCmdMenuAction},
     {"menudown",    "", CCmdMenuAction},
+    {"menupageup",  "", CCmdMenuAction},
+    {"menupagedown","", CCmdMenuAction},
     {"menuleft",    "", CCmdMenuAction},
     {"menuright",   "", CCmdMenuAction},
     {"menuselect",  "", CCmdMenuAction},
@@ -1641,6 +1643,23 @@ void Hu_MenuTicker(timespan_t time)
 #undef MENUALPHA_FADE_STEP
 }
 
+void Hu_MenuPageString(char* page, const menu_t* menu)
+{
+    sprintf(page, "PAGE %i/%i", (menu->firstItem + menu->numVisItems/2) / menu->numVisItems + 1,
+            (menu->itemCount + menu->numVisItems/2) / menu->numVisItems);
+}
+
+static void M_UpdateMenuVisibleItems()
+{
+    if(!currentMenu)
+        return;
+
+    currentMenu->firstItem = MAX_OF(0, itemOn - currentMenu->numVisItems/2);
+    currentMenu->firstItem = MIN_OF(currentMenu->firstItem,
+                                    currentMenu->itemCount - currentMenu->numVisItems);
+    currentMenu->firstItem = MAX_OF(0, currentMenu->firstItem);
+}
+
 void M_SetupNextMenu(menu_t* menudef)
 {
     if(!menudef)
@@ -1670,6 +1689,8 @@ void M_SetupNextMenu(menu_t* menudef)
             itemOn = i;
     }
 
+    M_UpdateMenuVisibleItems();
+    
     menu_color = 0;
     skull_angle = 0;
     typeInTime = 0;
@@ -1746,6 +1767,7 @@ void Hu_MenuDrawer(void)
         currentMenu->numVisItems = currentMenu->unscaled.numVisItems / cfg.menuScale;
         currentMenu->y = 110 - (110 - currentMenu->unscaled.y) / cfg.menuScale;
 
+        /*
         if(currentMenu->firstItem && currentMenu->firstItem < currentMenu->numVisItems)
         {
             // Make sure all pages are divided correctly.
@@ -1755,6 +1777,7 @@ void Hu_MenuDrawer(void)
         {
             itemOn = currentMenu->firstItem + currentMenu->numVisItems - 1;
         }
+        */
     }
 
     if(currentMenu->drawFunc)
@@ -1893,6 +1916,35 @@ void Hu_MenuDrawer(void)
     M_ControlGrabDrawer();
 }
 
+void Hu_MenuNavigatePage(menu_t* menu, int pageDelta)
+{
+    int firstVI;
+    int oldOnItem = itemOn;
+    
+    if(pageDelta < 0)
+    {
+        itemOn = MAX_OF(0, itemOn - menu->numVisItems);
+    }
+    else
+    {
+        itemOn = MIN_OF(menu->itemCount - 1, itemOn + menu->numVisItems);
+    }
+
+    // Don't land on empty items.
+    while(menu->items[itemOn].type == ITT_EMPTY && (itemOn > 0))
+        itemOn--;
+    while(menu->items[itemOn].type == ITT_EMPTY && itemOn < menu->itemCount)
+        itemOn++;
+             
+    if(itemOn != oldOnItem)
+    {
+        // Make a sound, too.
+        S_LocalSound(menusnds[4], NULL);
+    }
+    
+    M_UpdateMenuVisibleItems();
+}
+
 /**
  * Execute a menu navigation/action command.
  */
@@ -1974,26 +2026,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             else
             {
                 menu_nav_left:
-
-                // Let's try to change to the previous page.
-                if(menu->firstItem - menu->numVisItems >= 0)
-                {
-                    menu->firstItem -= menu->numVisItems;
-                    itemOn -= menu->numVisItems;
-
-                    // Ensure cursor points to an editable item
-                    firstVI = menu->firstItem;
-                    while(menu->items[itemOn].type == ITT_EMPTY &&
-                          (itemOn > firstVI))
-                        itemOn--;
-
-                    while(!menu->items[itemOn].type &&
-                         itemOn < menu->numVisItems)
-                        itemOn++;
-
-                    // Make a sound, too.
-                    S_LocalSound(menusnds[4], NULL);
-                }
+                Hu_MenuNavigatePage(menu, -1);
             }
             break;
 
@@ -2006,56 +2039,46 @@ void Hu_MenuCommand(menucommand_e cmd)
             else
             {
                 menu_nav_right:
-
-                // Move on to the next page, if possible.
-                if(menu->firstItem + menu->numVisItems <
-                   menu->itemCount)
-                {
-                    menu->firstItem += menu->numVisItems;
-                    itemOn += menu->numVisItems;
-
-                    // Ensure cursor points to an editable item
-                    firstVI = menu->firstItem;
-                    while((menu->items[itemOn].type == ITT_EMPTY ||
-                           itemOn >= menu->itemCount) && itemOn > firstVI)
-                        itemOn--;
-
-                    while(menu->items[itemOn].type == ITT_EMPTY &&
-                          itemOn < menu->numVisItems)
-                        itemOn++;
-
-                    // Make a sound, too.
-                    S_LocalSound(menusnds[4], NULL);
-                }
+                Hu_MenuNavigatePage(menu, +1);
             }
+            break;
+
+        case MCMD_NAV_PAGEUP:
+            Hu_MenuNavigatePage(menu, -1);
+            break;
+                
+        case MCMD_NAV_PAGEDOWN:
+            Hu_MenuNavigatePage(menu, +1);
             break;
 
         case MCMD_NAV_DOWN:
             i = 0;
             do
             {
-                if(itemOn + 1 > lastVI)
-                    itemOn = firstVI;
+                if(itemOn + 1 > menu->itemCount - 1)
+                    itemOn = 0;
                 else
                     itemOn++;
             } while(menu->items[itemOn].type == ITT_EMPTY &&
                     i++ < menu->itemCount);
             menu_color = 0;
             S_LocalSound(menusnds[3], NULL);
+            M_UpdateMenuVisibleItems();
             break;
 
         case MCMD_NAV_UP:
             i = 0;
             do
             {
-                if(itemOn <= firstVI)
-                    itemOn = lastVI;
+                if(itemOn <= 0)
+                    itemOn = menu->itemCount - 1;
                 else
                     itemOn--;
             } while(menu->items[itemOn].type == ITT_EMPTY &&
                     i++ < menu->itemCount);
             menu_color = 0;
             S_LocalSound(menusnds[3], NULL);
+            M_UpdateMenuVisibleItems();
             break;
 
         case MCMD_NAV_OUT:
@@ -2388,9 +2411,19 @@ void M_DrawTitle(char *text, int y)
                      cfg.menuColor[2], menuAlpha, true, true, ALIGN_LEFT);
 }
 
+boolean MN_IsItemVisible(const menu_t* menu, int item)
+{
+    if(item < menu->firstItem || item >= menu->firstItem + menu->numVisItems)
+        return false;
+    return true;
+}
+
 void M_WriteMenuText(const menu_t* menu, int index, const char* text)
 {
     int                 off = 0;
+
+    if(!MN_IsItemVisible(menu, index))
+        return;
 
     if(menu->items[index].text)
         off = M_StringWidth(menu->items[index].text, menu->font) + 4;
@@ -3124,9 +3157,12 @@ void M_AmmoAutoSwitch(int option, void* context)
         cfg.ammoAutoSwitch--;
 }
 
+/**
+ * @todo This could use a cleanup.
+ */
 void M_DrawHUDMenu(void)
 {
-    int                 idx, page;
+    int                 idx;//, page;
     menu_t*             menu = &HUDDef;
 #if __JDOOM__ || __JDOOM64__
     char                buf[1024];
@@ -3143,8 +3179,7 @@ void M_DrawHUDMenu(void)
 
     M_DrawTitle("HUD options", menu->y - 28);
 #if __JDOOM__ || __JDOOM64__
-    sprintf(buf, "Page %i/%i", menu->firstItem / menu->numVisItems + 1,
-            menu->itemCount / menu->numVisItems + 1);
+    Hu_MenuPageString(buf, menu);
     M_WriteText3(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
                  huFontA, 1, .7f, .3f, Hu_MenuAlpha(), true, 0);
 #else
@@ -3158,19 +3193,19 @@ void M_DrawHUDMenu(void)
     GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
 #endif
 
-    idx = menu->firstItem;
-    page = menu->firstItem / menu->numVisItems + 1;
-    if(page == 2)
-        goto page2;
+    idx = 0; //-menu->firstItem;
+    //page = menu->firstItem / menu->numVisItems + 1;
+    /*if(page == 2)
+        goto page2;*/
 #if __JHERETIC__ || __JHEXEN__
-    if(page == 3)
-        goto page3;
+    /*if(page == 3)
+        goto page3;*/
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3 );
+    MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3209,12 +3244,15 @@ void M_DrawHUDMenu(void)
     idx++;
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    return;
-page2:
+    //return;
+//page2:
 #endif
 
     // Crosshair options:
     idx++;
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
     M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
@@ -3230,23 +3268,20 @@ page2:
     idx++;
 #endif
 #if __JDOOM__ || __JDOOM64__
-    return;
-page2:
+//    return;
+//page2:
 #endif
 
 #if !__JDOOM64__
     // Statusbar options:
-    idx += 1;
-#if __JHERETIC__ || __JHEXEN__
-    idx ++;
-#endif
+    idx += 2;
     MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
 #if __JHERETIC__ || __JHEXEN__
     idx += 2;
 #endif
     MN_DrawSlider(menu, idx++, 11, cfg.statusbarOpacity * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
-    return;
+    //return;
 
 page3:
 #endif
@@ -3255,6 +3290,10 @@ page3:
 #endif
 #endif
 
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Counters:
     idx++;
@@ -3842,6 +3881,9 @@ void MN_DrawColorBox(const menu_t* menu, int index, float r, float g,
 
     float               x = menu->x, y = menu->y, w, h;
 
+    if(!MN_IsItemVisible(menu, index))
+        return;
+    
     y += menu->itemHeight * (index - menu->firstItem);
     h = menu->itemHeight;
     y += h / 2;
@@ -3867,14 +3909,20 @@ void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
     int                 x;
     int                 y;
 
+    if(!MN_IsItemVisible(menu, item)) 
+        return;
+    
     x = menu->x + 24;
     y = menu->y + 2 + (menu->itemHeight * (item  - menu->firstItem));
 
     M_DrawSlider(x, y, width, slot, menuAlpha);
 #else
-    int                 x =0, y =0;
+    int                 x = 0, y = 0;
     int                 height = menu->itemHeight - 1;
     float               scale = height / 13.0f;
+
+    if(!MN_IsItemVisible(menu, item)) 
+        return;
 
     if(menu->items[item].text)
         x = M_StringWidth(menu->items[item].text, menu->font);
@@ -3955,6 +4003,28 @@ DEFCC(CCmdMenuAction)
 
             default:
                 break;
+            }
+            return true;
+        }
+        else if(!stricmp(argv[0], "menupagedown"))
+        {
+            switch(mode)
+            {
+                case 0: // Menu nav
+                case 2: // Widget edit
+                    Hu_MenuCommand(MCMD_NAV_PAGEDOWN);
+                    break;
+            }
+            return true;
+        }
+        else if(!stricmp(argv[0], "menupageup"))
+        {
+            switch(mode)
+            {
+                case 0: // Menu nav
+                case 2: // Widget edit
+                    Hu_MenuCommand(MCMD_NAV_PAGEUP);
+                    break;
             }
             return true;
         }
