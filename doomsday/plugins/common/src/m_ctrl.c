@@ -157,10 +157,10 @@ controlconfig_t* grabbing = 0;
 static controlconfig_t controlConfig[] =
 {
     { "movement" },
-    { "forward", 0, "walk", 0, CCF_STAGED | CCF_NON_INVERSE },
-    { "backward", 0, "walk", 0, CCF_STAGED | CCF_INVERSE },
-    { "strafe left", 0, "sidestep", 0, CCF_STAGED | CCF_INVERSE },
-    { "strafe right", 0, "sidestep", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "forward", 0, "walk", 0, CCF_NON_INVERSE },
+    { "backward", 0, "walk", 0, CCF_INVERSE },
+    { "strafe left", 0, "sidestep", 0, CCF_INVERSE },
+    { "strafe right", 0, "sidestep", 0, CCF_NON_INVERSE },
     { "turn left", 0, "turn", 0, CCF_STAGED | CCF_INVERSE },
     { "turn right", 0, "turn", 0, CCF_STAGED | CCF_NON_INVERSE },
     { "jump", 0, 0, "impulse jump" },
