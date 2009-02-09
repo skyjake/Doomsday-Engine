@@ -43,6 +43,7 @@
 #include "g_common.h"
 #include "g_controls.h"
 #include "p_player.h"
+#include "p_user.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
 

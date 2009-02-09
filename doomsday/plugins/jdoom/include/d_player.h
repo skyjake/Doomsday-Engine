@@ -106,6 +106,7 @@ typedef struct player_s {
     int             jumpTics;
     int             airCounter;
     int             flyHeight;
+    int             rebornWait; // The player can be reborn if this counter is zero.
     int             update, startSpot;
 
     // Target view to a mobj (NULL=disabled):

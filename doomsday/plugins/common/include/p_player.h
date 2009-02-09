@@ -45,26 +45,24 @@
 void        P_InitPlayerClassInfo(void);
 #endif
 
-int         P_GetPlayerNum(player_t *player);
-int         P_GetPlayerCheats(player_t *player);
+int         P_GetPlayerNum(player_t* player);
+int         P_GetPlayerCheats(player_t* player);
 
-weapontype_t P_PlayerFindWeapon(player_t *player, boolean next);
-weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
+weapontype_t P_PlayerFindWeapon(player_t* player, boolean next);
+weapontype_t P_MaybeChangeWeapon(player_t* player, weapontype_t weapon,
                                  ammotype_t ammo, boolean force);
-boolean     P_CheckAmmo(player_t* plr);
-void        P_ShotAmmo(player_t *player);
+boolean     P_CheckAmmo(player_t* player);
+void        P_ShotAmmo(player_t* player);
 
-void        P_PlayerThink(player_t *player, timespan_t ticLength);
-void        P_RaiseDeadPlayer(player_t *player);
 #if __JHEXEN__
 void        P_PlayerChangeClass(player_t* player, playerclass_t newClass);
 #endif
 
-void        P_SetMessage(player_t *pl, char *msg, boolean noHide);
+void        P_SetMessage(player_t* player, char* msg, boolean noHide);
 #if __JHEXEN__ || __JSTRIFE__
-void        P_SetYellowMessage(player_t *pl, char *msg, boolean noHide);
+void        P_SetYellowMessage(player_t* player, char* msg, boolean noHide);
 #endif
 
-boolean     P_IsCamera(mobj_t *mo);
-void        P_PlayerThinkCamera(player_t *player);
+boolean     P_IsCamera(mobj_t* mo);
+void        P_PlayerThinkCamera(player_t* player);
 #endif

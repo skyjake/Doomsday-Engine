@@ -117,6 +117,7 @@ typedef struct player_s {
     int             morphTics; // Player is a pig if > 0.
     int             jumpTics; // Delay the next jump for a moment.
     int             airCounter;
+    int             rebornWait; // The player can be reborn if this counter is zero.
     unsigned int    worldTimer; // Total time the player's been playing.
     int             update, startSpot;
     // Target view to a mobj (NULL=disabled).

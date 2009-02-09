@@ -1115,6 +1115,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         target->flags2 &= ~MF2_FLY;
         target->player->powers[PT_FLIGHT] = 0;
         target->player->playerState = PST_DEAD;
+        target->player->rebornWait = PLAYER_REBORN_TICS;
         target->player->update |= PSF_STATE | PSF_POWERS;
 
         // Let the engine know about this, too. The DEAD flag will be

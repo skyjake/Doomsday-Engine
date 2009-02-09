@@ -34,6 +34,8 @@
 
 #include "dd_types.h"
 
+#define PLAYER_REBORN_TICS      (1*TICSPERSEC)
+
 extern boolean onground;
 
 extern int maxHealth;
@@ -54,7 +56,7 @@ void            P_Thrust(player_t *player, angle_t angle, float move);
 boolean         P_IsPlayerOnGround(player_t *player);
 void            P_CheckPlayerJump(player_t *player);
 void            P_MovePlayer(player_t *player);
-void            P_RaiseDeadPlayer(player_t *player);
+void            P_PlayerReborn(player_t *player);
 
 void            P_ClientSideThink(void);
 void            P_DeathThink(player_t *player);

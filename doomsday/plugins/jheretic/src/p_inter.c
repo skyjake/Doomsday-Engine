@@ -829,6 +829,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         target->player->powers[PT_FLIGHT] = 0;
         target->player->powers[PT_WEAPONLEVEL2] = 0;
         target->player->playerState = PST_DEAD;
+        target->player->rebornWait = PLAYER_REBORN_TICS;
         target->player->plr->flags |= DDPF_DEAD;
         target->player->update |= PSF_STATE;
         P_DropWeapon(target->player);

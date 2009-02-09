@@ -120,6 +120,7 @@ typedef struct playerbrain_s {
     uint        mapMarkClearAll : 1;
     uint        hudShow : 1;
     uint        scoreShow : 1;
+    uint        doReborn: 1; // Set when the player wishes to be reborn.
 } playerbrain_t;
 
 void        G_ControlRegister(void);

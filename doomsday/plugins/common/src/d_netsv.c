@@ -48,6 +48,7 @@
 #include "d_net.h"
 #include "p_svtexarc.h"
 #include "p_player.h"
+#include "p_user.h"
 #include "p_map.h"
 #include "g_common.h"
 #include "p_tick.h"
@@ -1380,7 +1381,7 @@ void NetSv_DoAction(int player, const char *data)
     if(pl->playerState == PST_DEAD)
     {
         // This player is dead. Rise, my friend!
-        P_RaiseDeadPlayer(pl);
+        P_PlayerReborn(pl);
         return;
     }
 

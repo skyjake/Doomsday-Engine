@@ -57,6 +57,7 @@
 #include "d_net.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "p_user.h"
 #include "g_common.h"
 #include "am_map.h"
 
@@ -479,6 +480,9 @@ void P_DeathThink(player_t* player)
     angle_t delta;
     int     lookDelta;
 
+    if(player->rebornWait > 0)
+        player->rebornWait--;
+
     P_MovePsprites(player);
 
     onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
@@ -606,7 +610,7 @@ void P_DeathThink(player_t* player)
 #endif
     }
 
-    if(player->brain.use)
+    if(!(player->rebornWait > 0) && player->brain.doReborn)
     {
         if(IS_CLIENT)
         {
@@ -614,7 +618,7 @@ void P_DeathThink(player_t* player)
         }
         else
         {
-            P_RaiseDeadPlayer(player);
+            P_PlayerReborn(player);
         }
     }
 }
@@ -622,9 +626,9 @@ void P_DeathThink(player_t* player)
 /**
  * Called when a dead player wishes to be reborn.
  *
- * @param player Player that wants to be reborn.
+ * @param player        Player that wishes to be reborn.
  */
-void P_RaiseDeadPlayer(player_t *player)
+void P_PlayerReborn(player_t* player)
 {
     player->playerState = PST_REBORN;
 #if __JHERETIC__ || __JHEXEN__
@@ -1846,6 +1850,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
     int                 i;
     boolean             strafe = false;
     playerbrain_t      *brain = &player->brain;
+    boolean             oldAttack = brain->attack;
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
@@ -1895,6 +1900,15 @@ void P_PlayerThinkUpdateControls(player_t* player)
     // Fire.
     P_GetControlState(playerNum, CTL_ATTACK, &vel, &off);
     brain->attack = (vel + off != 0);
+
+    // Once dead, the intended action for a given control state change,
+    // changes. Here we interpret Use and Fire as "I wish to be Reborn".
+    brain->doReborn = false;
+    if(player->playerState == PST_DEAD)
+    {
+        if(brain->use || (brain->attack && !oldAttack))
+            brain->doReborn = true;
+    }
 
     // Weapons.
     brain->changeWeapon = WT_NOCHANGE;
