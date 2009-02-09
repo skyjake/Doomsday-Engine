@@ -36,10 +36,7 @@ typedef enum {
     ITT_EMPTY,
     ITT_EFUNC,
     ITT_LRFUNC,
-    ITT_SETMENU,
-    ITT_INERT,
-    ITT_NAVLEFT,
-    ITT_NAVRIGHT
+    ITT_SETMENU
 } menuitemtype_t;
 
 // Menu item flags

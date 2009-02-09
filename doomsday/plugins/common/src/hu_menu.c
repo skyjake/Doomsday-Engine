@@ -854,7 +854,7 @@ static menuitem_t HUDItems[] = {
 #endif
     {ITT_EFUNC, 0, "Show messages :", M_ChangeMessages, 0},
     {ITT_LRFUNC, 0, "Auto-hide :", M_HUDHideTime, 0},
-    {ITT_INERT, 0, "Un-hide events", NULL, 0},
+    {ITT_EMPTY, 0, "Un-hide events", NULL, 0},
     {ITT_EFUNC, 0, "Receive damage :", M_ToggleVar, 0, NULL, "hud-unhide-damage"},
     {ITT_EFUNC, 0, "Pickup health :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-health"},
     {ITT_EFUNC, 0, "Pickup armor :", M_ToggleVar, 0, NULL, "hud-unhide-pickup-armor"},
@@ -871,7 +871,7 @@ static menuitem_t HUDItems[] = {
 #endif
     {ITT_EMPTY, 0, NULL, NULL, 0},
 
-    {ITT_INERT, 0, "Crosshair", NULL, 0},
+    {ITT_EMPTY, 0, "Crosshair", NULL, 0},
     {ITT_LRFUNC, 0, "Symbol :", M_Xhair, 0},
     {ITT_LRFUNC, 0, "Size :", M_XhairSize, 0},
 #if __JHERETIC__ || __JHEXEN__
@@ -899,7 +899,7 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    {ITT_INERT, 0, "Counters", NULL, 0 },
+    {ITT_EMPTY, 0, "Counters", NULL, 0 },
     {ITT_LRFUNC, 0, "Kills :", M_KillCounter, 0 },
     {ITT_LRFUNC, 0, "Items :", M_ItemCounter, 0 },
     {ITT_LRFUNC, 0, "Secrets :", M_SecretCounter, 0 },
@@ -914,7 +914,7 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
 
-    {ITT_INERT, 0, "Fullscreen HUD",    NULL, 0},
+    {ITT_EMPTY, 0, "Fullscreen HUD",    NULL, 0},
     {ITT_LRFUNC, 0, "Scale :", M_HUDScale, 0},
 #if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -1803,8 +1803,7 @@ void Hu_MenuDrawer(void)
             else
             {
 #endif
-            if(currentMenu->items[i].type == ITT_EMPTY ||
-               currentMenu->items[i].type >= ITT_INERT)
+            if(currentMenu->items[i].type == ITT_EMPTY)
             {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
                 r = cfg.menuColor[0];
@@ -2023,11 +2022,10 @@ void Hu_MenuCommand(menucommand_e cmd)
                 item->func(LEFT_DIR | item->option, item->data);
                 S_LocalSound(menusnds[4], NULL);
             }
-            else
+            /*else
             {
-                menu_nav_left:
                 Hu_MenuNavigatePage(menu, -1);
-            }
+            }*/
             break;
 
         case MCMD_NAV_RIGHT:
@@ -2036,19 +2034,16 @@ void Hu_MenuCommand(menucommand_e cmd)
                 item->func(RIGHT_DIR | item->option, item->data);
                 S_LocalSound(menusnds[4], NULL);
             }
-            else
+            /*else
             {
-                menu_nav_right:
                 Hu_MenuNavigatePage(menu, +1);
-            }
+            }*/
             break;
 
         case MCMD_NAV_PAGEUP:
-            Hu_MenuNavigatePage(menu, -1);
-            break;
-
         case MCMD_NAV_PAGEDOWN:
-            Hu_MenuNavigatePage(menu, +1);
+            Hu_MenuNavigatePage(menu, cmd == MCMD_NAV_PAGEUP? -1 : +1);
+            S_LocalSound(menusnds[3], NULL);
             break;
 
         case MCMD_NAV_DOWN:
@@ -2112,14 +2107,6 @@ void Hu_MenuCommand(menucommand_e cmd)
             {
                 M_SetupNextMenu(menulist[item->option]);
                 S_LocalSound(menusnds[5], NULL);
-            }
-            else if(item->type == ITT_NAVLEFT)
-            {
-                goto menu_nav_left;
-            }
-            else if(item->type == ITT_NAVRIGHT)
-            {
-                goto menu_nav_right;
             }
             else if(item->func != NULL)
             {
@@ -2236,8 +2223,7 @@ int Hu_MenuResponder(event_t* ev)
         {
             const menuitem_t*   item = &menu->items[i];
 
-            if(item->text && item->text[0] &&
-               !(item->type == ITT_EMPTY || item->type == ITT_INERT))
+            if(item->text && item->text[0] && item->type != ITT_EMPTY)
             {
                 const char*         ch = item->text;
                 boolean             inParamBlock = false;

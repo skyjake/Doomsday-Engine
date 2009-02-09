@@ -413,13 +413,9 @@ void M_InitControlsMenu(void)
         }
 
         // Inert items.
-        if(!cc->itemText)
+        if(!cc->itemText || (!cc->command && !cc->controlName))
         {
             item->type = ITT_EMPTY;
-        }
-        else if(!cc->controlName && !cc->command)
-        {
-            item->type = ITT_INERT;
         }
         else
         {
