@@ -162,6 +162,7 @@ typedef struct {
     float           menuColor[3];
     float           menuColor2[3];
     byte            menuSlam;
+    byte            menuHotkeys;
 
     byte            netMap, netClass, netColor, netSkill;
     byte            netEpisode; // Unused in Hexen.

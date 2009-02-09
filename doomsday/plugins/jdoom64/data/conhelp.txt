@@ -254,6 +254,9 @@ desc = Strength of type-in glitter.
 [menu-fog]
 desc = Menu fog mode: 0=off, 1=shimmer, 2=black smoke, 3=blue vertical, 4=grey smoke, 5=dimmed.
 
+[menu-hotkeys]
+desc = 1=Enable hotkey navigation in the menu.
+
 [menu-shadow]
 desc = Menu text shadow darkness.
 

@@ -90,6 +90,7 @@ typedef struct jheretic_config_s {
     float           menuShadow;
 
     byte            menuSlam;
+    byte            menuHotkeys;
     byte            askQuickSaveLoad;
     float           flashColor[3];
     int             flashSpeed;

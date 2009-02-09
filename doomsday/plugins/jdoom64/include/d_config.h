@@ -92,6 +92,7 @@ typedef struct jdoom64_config_s {
     float           menuShadow;
     int             menuQuitSound;
     byte            menuSlam;
+    byte            menuHotkeys;
     byte            askQuickSaveLoad;
     float           flashColor[3];
     int             flashSpeed;

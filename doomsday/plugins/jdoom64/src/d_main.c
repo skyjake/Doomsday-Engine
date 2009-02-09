@@ -308,6 +308,7 @@ void G_PreInit(void)
     cfg.menuColor[0] = 1;
     cfg.menuColor2[0] = 1;
     cfg.menuSlam = false;
+    cfg.menuHotkeys = true;
     cfg.askQuickSaveLoad = true;
 
     cfg.maxSkulls = true;

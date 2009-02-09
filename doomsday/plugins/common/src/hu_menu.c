@@ -1199,9 +1199,8 @@ static menu_t ColorWidgetMnu = {
 #endif
 };
 
-// Cvars for the menu
-cvar_t menuCVars[] =
-{
+// Cvars for the menu:
+cvar_t menuCVars[] = {
     {"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1},
     {"menu-flash-r", 0, CVT_FLOAT, &cfg.flashColor[0], 0, 1},
     {"menu-flash-g", 0, CVT_FLOAT, &cfg.flashColor[1], 0, 1},
@@ -1221,13 +1220,14 @@ cvar_t menuCVars[] =
     {"menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 2},
     {"menu-slam", 0, CVT_BYTE, &cfg.menuSlam, 0, 1},
     {"menu-quick-ask", 0, CVT_BYTE, &cfg.askQuickSaveLoad, 0, 1},
+    {"menu-hotkeys", 0, CVT_BYTE, &cfg.menuHotkeys, 0, 1},
 #if __JDOOM__ || __JDOOM64__
     {"menu-quitsound", 0, CVT_INT, &cfg.menuQuitSound, 0, 1},
 #endif
     {NULL}
 };
 
-// Console commands for the menu
+// Console commands for the menu:
 ccmd_t menuCCmds[] = {
     {"menu",        "", CCmdMenuAction},
     {"menuup",      "", CCmdMenuAction},
@@ -2241,9 +2241,9 @@ boolean Hu_MenuResponder(event_t* ev)
      * The first ASCII character of a menu item's text string is used
      * as a "hotkey" shortcut to allow navigating directly to that item.
      */
-    if(ev->type == EV_KEY &&
-       (ev->state == EVS_DOWN || ev->state == EVS_REPEAT) &&
-       !(menu->flags & MNF_NOHOTKEYS))
+    if(cfg.menuHotkeys && !(menu->flags & MNF_NOHOTKEYS) &&
+       ev->type == EV_KEY &&
+       (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
     {
         int                 i, first, last; // First and last, visible menu items.
         int                 cand = toupper(ev->data1);

@@ -321,6 +321,7 @@ void G_PreInit(void)
     cfg.menuColor2[1] = defFontRGB2[1];
     cfg.menuColor2[2] = defFontRGB2[2];
     cfg.menuSlam = true;
+    cfg.menuHotkeys = true;
     cfg.askQuickSaveLoad = true;
 
     cfg.monstersStuckInDoors = false;
