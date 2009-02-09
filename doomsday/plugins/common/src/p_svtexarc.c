@@ -156,8 +156,10 @@ unsigned short SV_SearchArchive(materialarchive_t* arc, const char* name)
     int                 i;
 
     for(i = 0; i < arc->count; ++i)
+    {
         if(!stricmp(arc->table[i].name, name))
-            return i;
+            return i + 1;
+    }
 
     // Not found?!!!
     return 0;
@@ -184,6 +186,10 @@ unsigned short SV_MaterialArchiveNum(material_t* mat)
 
 material_t* SV_GetArchiveMaterial(int archivenum, int group)
 {
+    if(archivenum == 0)
+        return NULL;
+    archivenum--;
+
     if(matArchive.version < 1 && group == 1)
     {
         archivenum += numFlats;

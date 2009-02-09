@@ -733,7 +733,7 @@ const char* P_GetMaterialName(material_t* mat)
         return NULL;
 
     if(mat && (num = P_ToMaterialNum(mat)))
-        return materialBinds[num].name;
+        return materialBinds[num-1].name;
 
     return "NOMAT"; // Should never happen.
 }
