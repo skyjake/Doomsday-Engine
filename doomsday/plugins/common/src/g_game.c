@@ -573,9 +573,29 @@ static const char* getGameStateStr(gamestate_t state)
 /**
  * Called when the gameui binding context is active. Triggers the menu.
  */
-int G_UIResponder(event_t* event)
+int G_UIResponder(event_t* ev)
 {
-    return Hu_MenuResponder(event);
+    // Handle "Press any key to continue" messages.
+    if(Hu_MsgResponder(ev))
+        return true;
+
+    if(!Hu_MenuIsActive())
+    {
+        // Any key/button down pops up menu if in demos.
+        if(G_GetGameAction() == GA_NONE && !singledemo &&
+           (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
+        {
+            if(ev->state == EVS_DOWN &&
+               (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
+                ev->type == EV_JOY_BUTTON))
+            {
+                Hu_MenuCommand(MCMD_OPEN);
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -587,7 +607,7 @@ void G_ChangeGameState(gamestate_t state)
 {
     boolean gameUIActive = false;
     boolean gameActive = true;
-    
+
     if(state < 0 || state >= NUM_GAME_STATES)
         Con_Error("G_ChangeGameState: Invalid state %i.\n", (int) state);
 
@@ -601,7 +621,7 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
 
         gameState = state;
     }
-    
+
     // Update the state of the gameui binding context.
     switch(gameState)
     {
@@ -613,17 +633,17 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
         case GS_INTERMISSION:
             gameUIActive = true;
             break;
-            
+
         default:
             break;
     }
-    
+
     if(gameUIActive)
     {
         DD_Execute(true, "activatebcontext gameui");
         B_SetContextFallback("gameui", G_UIResponder);
     }
-    
+
     DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
 }
 

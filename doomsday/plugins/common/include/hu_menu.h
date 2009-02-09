@@ -51,7 +51,7 @@ void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 
 void            Hu_MenuTicker(timespan_t time);
-boolean         Hu_MenuResponder(event_t* ev);
+int             Hu_MenuResponder(event_t* ev);
 void            Hu_MenuDrawer(void);
 
 void            Hu_MenuCommand(menucommand_e cmd);

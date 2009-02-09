@@ -1989,6 +1989,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
             // Enable the menu binding class
             DD_Execute(true, "activatebcontext menu");
+            B_SetContextFallback("menu", Hu_MenuResponder);
         }
     }
     else
@@ -2199,41 +2200,17 @@ boolean M_EditResponder(event_t *ev)
 }
 
 /**
- * This is the "fallback" responder, its the last stage in the event chain
- * so if an event reaches here it means there was no suitable binding for it.
- *
- * Handles the hotkey selection in the menu and "press any key" messages.
+ * Handles the hotkey selection in the menu.
  *
  * @return              @c true, if it ate the event.
  */
-boolean Hu_MenuResponder(event_t* ev)
+int Hu_MenuResponder(event_t* ev)
 {
-    menu_t*             menu = currentMenu;
+    menu_t*             menu;
 
-    // Handle "Press any key to continue" messages
-    if(Hu_MsgResponder(ev))
-        return true;
-
-    if(!menuActive)
-    {
-        // Any key/button down pops up menu if in demos.
-        if(G_GetGameAction() == GA_NONE && !singledemo &&
-           (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
-        {
-            if(ev->state == EVS_DOWN &&
-               (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
-                ev->type == EV_JOY_BUTTON))
-            {
-                Hu_MenuCommand(MCMD_OPEN);
-                return true;
-            }
-        }
-
+    if(!menuActive || widgetEdit)
         return false;
-    }
-
-    if(widgetEdit)
-        return false;
+    menu = currentMenu;
 
     /**
      * Handle navigation by "hotkeys", if enabled.
