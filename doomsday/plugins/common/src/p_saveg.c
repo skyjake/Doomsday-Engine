@@ -1390,7 +1390,7 @@ static void SV_ReadPlayer(player_t *p)
 
 #if __JHEXEN__
 # define MOBJ_SAVEVERSION 6
-#elif __JHEREITC__
+#elif __JHERETIC__
 # define MOBJ_SAVEVERSION 8
 #else
 # define MOBJ_SAVEVERSION 7
@@ -4497,7 +4497,7 @@ static void P_ArchiveMap(boolean savePlayers)
 static void P_UnArchiveMap(void)
 {
 #if __JHEXEN__
-    int         segType = SV_ReadLong();
+    int                 segType = SV_ReadLong();
 
     // Determine the map version.
     if(segType == ASEG_MAP_HEADER2)
@@ -4513,7 +4513,11 @@ static void P_UnArchiveMap(void)
         Con_Error("Corrupt save game: Segment [%d] failed alignment check",
                   ASEG_MAP_HEADER);
     }
+#else
+    AssertSegment(ASEG_MAP_HEADER2);
+#endif
 
+#if __JHEXEN__
     // Read the map timer
     mapTime = SV_ReadLong();
 #endif
