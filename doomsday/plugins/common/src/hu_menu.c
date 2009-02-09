@@ -1690,7 +1690,7 @@ void M_SetupNextMenu(menu_t* menudef)
     }
 
     M_UpdateMenuVisibleItems();
-    
+
     menu_color = 0;
     skull_angle = 0;
     typeInTime = 0;
@@ -1918,9 +1918,8 @@ void Hu_MenuDrawer(void)
 
 void Hu_MenuNavigatePage(menu_t* menu, int pageDelta)
 {
-    int firstVI;
     int oldOnItem = itemOn;
-    
+
     if(pageDelta < 0)
     {
         itemOn = MAX_OF(0, itemOn - menu->numVisItems);
@@ -1935,13 +1934,13 @@ void Hu_MenuNavigatePage(menu_t* menu, int pageDelta)
         itemOn--;
     while(menu->items[itemOn].type == ITT_EMPTY && itemOn < menu->itemCount)
         itemOn++;
-             
+
     if(itemOn != oldOnItem)
     {
         // Make a sound, too.
         S_LocalSound(menusnds[4], NULL);
     }
-    
+
     M_UpdateMenuVisibleItems();
 }
 
@@ -2046,7 +2045,7 @@ void Hu_MenuCommand(menucommand_e cmd)
         case MCMD_NAV_PAGEUP:
             Hu_MenuNavigatePage(menu, -1);
             break;
-                
+
         case MCMD_NAV_PAGEDOWN:
             Hu_MenuNavigatePage(menu, +1);
             break;
@@ -2209,11 +2208,7 @@ boolean M_EditResponder(event_t *ev)
  */
 boolean Hu_MenuResponder(event_t* ev)
 {
-    int                 ch = -1;
-    int                 i;
-    uint                cid;
-    int                 firstVI, lastVI;    // first and last visible item
-    boolean             skip;
+    menu_t*             menu = currentMenu;
 
     // Handle "Press any key to continue" messages
     if(Hu_MsgResponder(ev))
@@ -2237,40 +2232,77 @@ boolean Hu_MenuResponder(event_t* ev)
         return false;
     }
 
-    if(widgetEdit || (currentMenu->flags & MNF_NOHOTKEYS))
+    if(widgetEdit)
         return false;
 
-    if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
-        ch = ev->data1;
-
-    if(ch == -1)
-        return false;
-
-    firstVI = currentMenu->firstItem;
-    lastVI = firstVI + currentMenu->numVisItems - 1;
-
-    if(lastVI > currentMenu->itemCount - 1)
-        lastVI = currentMenu->itemCount - 1;
-    currentMenu->lastOn = itemOn;
-
-    // First letter of each item is treated as a hotkey
-    for(i = firstVI; i <= lastVI; ++i)
+    /**
+     * Handle navigation by "hotkeys", if enabled.
+     *
+     * The first ASCII character of a menu item's text string is used
+     * as a "hotkey" shortcut to allow navigating directly to that item.
+     */
+    if(ev->type == EV_KEY &&
+       (ev->state == EVS_DOWN || ev->state == EVS_REPEAT) &&
+       !(menu->flags & MNF_NOHOTKEYS))
     {
-        if(currentMenu->items[i].text && currentMenu->items[i].type != ITT_EMPTY)
-        {
-            cid = 0;
-            if(currentMenu->items[i].text[0] == '{')
-            {   // A parameter string, skip till '}' is found
-                for(cid = 0, skip = true;
-                     cid < strlen(currentMenu->items[i].text) && skip; ++cid)
-                    if(currentMenu->items[i].text[cid] == '}')
-                        skip = false;
-            }
+        int                 i, first, last; // First and last, visible menu items.
+        int                 cand = toupper(ev->data1);
 
-            if(toupper(ch) == toupper(currentMenu->items[i].text[cid]))
+        first = last = menu->firstItem;
+        last += menu->numVisItems - 1;
+
+        if(last > menu->itemCount - 1)
+            last = menu->itemCount - 1;
+        menu->lastOn = itemOn;
+
+        for(i = first; i <= last; ++i)
+        {
+            const menuitem_t*   item = &menu->items[i];
+
+            if(item->text && item->text[0] &&
+               !(item->type == ITT_EMPTY || item->type == ITT_INERT))
             {
-                itemOn = i;
-                return true;
+                const char*         ch = item->text;
+                boolean             inParamBlock = false;
+
+                /**
+                 * Skip over any paramater blocks, we are only interested
+                 * in the first (drawable) ASCII character.
+                 *
+                 * \assume Item text strings are '\0' terminated.
+                 */
+                do
+                {
+                    if(!ch)
+                        break;
+
+                    if(inParamBlock)
+                    {
+                        if(*ch == '}')
+                            inParamBlock = false;
+                    }
+                    else
+                    {
+                        if(*ch == '{')
+                        {
+                            inParamBlock = true;
+                        }
+                        else if(!(*ch == ' ' || *ch == '\n'))
+                        {
+                            int                 c =
+                                toupper(*ch) - HU_FONTSTART;
+
+                            if(c >= 0 && c < HU_FONTSIZE)
+                                break; // First drawable character found.
+                        }
+                    }
+                } while(*ch++);
+
+                if(ch && toupper(*ch) == cand)
+                {
+                    itemOn = i;
+                    return true;
+                }
             }
         }
     }
@@ -3193,14 +3225,7 @@ void M_DrawHUDMenu(void)
     GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
 #endif
 
-    idx = 0; //-menu->firstItem;
-    //page = menu->firstItem / menu->numVisItems + 1;
-    /*if(page == 2)
-        goto page2;*/
-#if __JHERETIC__ || __JHEXEN__
-    /*if(page == 3)
-        goto page3;*/
-#endif
+    idx = 0;
 
 #if __JHERETIC__ || __JHEXEN__
     idx++;
@@ -3243,10 +3268,6 @@ void M_DrawHUDMenu(void)
 #if __JDOOM__ || __JDOOM64__
     idx++;
 #endif
-#if __JHERETIC__ || __JHEXEN__
-    //return;
-//page2:
-#endif
 
     // Crosshair options:
     idx++;
@@ -3267,10 +3288,6 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-#if __JDOOM__ || __JDOOM64__
-//    return;
-//page2:
-#endif
 
 #if !__JDOOM64__
     // Statusbar options:
@@ -3280,11 +3297,7 @@ void M_DrawHUDMenu(void)
     idx += 2;
 #endif
     MN_DrawSlider(menu, idx++, 11, cfg.statusbarOpacity * 10 + .25f);
-#if __JHERETIC__ || __JHEXEN__
-    //return;
 
-page3:
-#endif
 #if __JDOOM__ || __JDOOM64__
     idx++;
 #endif
@@ -3293,7 +3306,7 @@ page3:
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    
+
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Counters:
     idx++;
@@ -3883,7 +3896,7 @@ void MN_DrawColorBox(const menu_t* menu, int index, float r, float g,
 
     if(!MN_IsItemVisible(menu, index))
         return;
-    
+
     y += menu->itemHeight * (index - menu->firstItem);
     h = menu->itemHeight;
     y += h / 2;
@@ -3909,9 +3922,9 @@ void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
     int                 x;
     int                 y;
 
-    if(!MN_IsItemVisible(menu, item)) 
+    if(!MN_IsItemVisible(menu, item))
         return;
-    
+
     x = menu->x + 24;
     y = menu->y + 2 + (menu->itemHeight * (item  - menu->firstItem));
 
@@ -3921,7 +3934,7 @@ void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
     int                 height = menu->itemHeight - 1;
     float               scale = height / 13.0f;
 
-    if(!MN_IsItemVisible(menu, item)) 
+    if(!MN_IsItemVisible(menu, item))
         return;
 
     if(menu->items[item].text)
