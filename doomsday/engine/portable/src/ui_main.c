@@ -79,7 +79,7 @@ void    UI_MouseFocus(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int glMaxTexSize;
-
+extern int gameDrawHUD;
 extern boolean stopTime;
 extern boolean tickUI;
 extern boolean tickFrame;
@@ -160,6 +160,8 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     tickUI = tckui;
     tickFrame = tckframe;
     uiDrawGame = drawGame = drwgame;
+    // Advise the game not to draw any HUD displays
+    gameDrawHUD = false;
     I_SetUIMouseMode(true);
 
     // Setup state.
@@ -208,6 +210,9 @@ void UI_End(void)
     stopTime = false;
     tickUI = false;
     drawGame = true;
+    // Advise the game it can now draw HUD displays again.
+    gameDrawHUD = true;
+
     I_SetUIMouseMode(false);
 
     // Inform everybody that the shift key was (possibly) released while

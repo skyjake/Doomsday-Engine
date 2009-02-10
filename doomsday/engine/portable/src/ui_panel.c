@@ -433,8 +433,8 @@ ui_object_t ob_panel[] =
     { UI_META,      5 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
     { UI_META,      5,  0,              0, -60 },
-    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Field Of View angle", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
+    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Field Of View angle", UIText_Drawer },
+    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fov },
     { UI_BUTTON,    0,  0,              680, 190, 70, 60,   "90",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
     { UI_BUTTON,    0,  0,              755, 190, 70, 60,   "95",       UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
     { UI_BUTTON,    0,  0,              830, 190, 70, 60,   "100",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
@@ -723,9 +723,9 @@ void CP_CvarButton(ui_object_t *ob)
     }
     else
     {
-        value = cb->active;        
+        value = cb->active;
     }
-    
+
     Con_SetInteger(cb->cvarname, value, true);
 }
 
