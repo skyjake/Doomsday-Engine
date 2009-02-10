@@ -217,7 +217,7 @@ void I_InitVirtualInputDevices(void)
     axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
     axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
-    
+
     // Register console variables for the axis settings.
     // CAUTION: Allocating new axes may invalidate the pointers here.
     C_VAR_FLOAT("input-mouse-x-scale", &dev->axes[0].scale, CVF_NO_MAX, 0, 0);
@@ -232,7 +232,7 @@ void I_InitVirtualInputDevices(void)
     dev = &inputDevices[IDEV_JOY1];
     strcpy(dev->name, "joy");
     I_DeviceAllocKeys(dev, IJOY_MAXBUTTONS);
-    
+
     for(i = 0; i < IJOY_MAXAXES; ++i)
     {
         char name[32];
@@ -254,17 +254,17 @@ void I_InitVirtualInputDevices(void)
     {
         inputdevaxis_t* axis = &dev->axes[i];
         char varName[80];
-        
+
         sprintf(varName, "input-joy-%s-scale", axis->name);
         C_VAR_FLOAT(varName, &axis->scale, CVF_NO_MAX, 0, 0);
 
         sprintf(varName, "input-joy-%s-flags", axis->name);
         C_VAR_INT(varName, &axis->flags, 0, 0, 3);
-        
+
         sprintf(varName, "input-joy-%s-deadzone", axis->name);
         C_VAR_FLOAT(varName, &axis->deadZone, 0, 0, 1);
     }
-    
+
     I_DeviceAllocHats(dev, IJOY_MAXHATS);
     for(i = 0; i < IJOY_MAXHATS; ++i)
     {
@@ -753,57 +753,65 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     {
         switch(ddEvent->device)
         {
-            case IDEV_KEYBOARD:
-                ev->type = EV_KEY;
-                if(ddEvent->type == E_TOGGLE)
+        case IDEV_KEYBOARD:
+            ev->type = EV_KEY;
+            if(ddEvent->type == E_TOGGLE)
+            {
+                ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
+                              ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
+                              EVS_REPEAT );
+                ev->data1 = ddEvent->toggle.id;
+            }
+            break;
+
+        case IDEV_MOUSE:
+            if(ddEvent->type == E_AXIS)
+            {
+                ev->type = EV_MOUSE_AXIS;
+            }
+            else if(ddEvent->type == E_TOGGLE)
+            {
+                ev->type = EV_MOUSE_BUTTON;
+                ev->data1 = ddEvent->toggle.id;
+                ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
+                              ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
+                              EVS_REPEAT );
+            }
+            break;
+
+        case IDEV_JOY1:
+        case IDEV_JOY2:
+        case IDEV_JOY3:
+        case IDEV_JOY4:
+            if(ddEvent->type == E_AXIS)
+            {
+                int* data = &ev->data1;
+                ev->type = EV_JOY_AXIS;
+                ev->state = 0;
+                if(ddEvent->axis.id >= 0 && ddEvent->axis.id < 6)
                 {
-                    ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
-                                  ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
-                                  EVS_REPEAT );
-                    ev->data1 = ddEvent->toggle.id;
+                    data[ddEvent->axis.id] = ddEvent->axis.pos;
                 }
-                break;
-                
-            case IDEV_MOUSE:
-                if(ddEvent->type == E_AXIS)
-                    ev->type = EV_MOUSE_AXIS;
-                else if(ddEvent->type == E_TOGGLE)
-                    ev->type = EV_MOUSE_BUTTON;
-                break;
-                
-            case IDEV_JOY1:
-            case IDEV_JOY2:
-            case IDEV_JOY3:
-            case IDEV_JOY4:
-                if(ddEvent->type == E_AXIS)
-                {
-                    int* data = &ev->data1;
-                    ev->type = EV_JOY_AXIS;
-                    ev->state = 0;
-                    if(ddEvent->axis.id >= 0 && ddEvent->axis.id < 6)
-                    {
-                        data[ddEvent->axis.id] = ddEvent->axis.pos;
-                    }
-                    /// @todo  The other dataN's must contain up-to-date information
-                    /// as well. Read them from the current joystick status.
-                }
-                else if(ddEvent->type == E_TOGGLE)
-                {
-                    ev->type = EV_JOY_BUTTON;
-                    ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
-                                  ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
-                                  EVS_REPEAT );
-                    ev->data1 = ddEvent->toggle.id;
-                }
-                else if(ddEvent->type == E_ANGLE)
-                    ev->type = EV_POV;
-                break;
-                
-            default:
+                /// @todo  The other dataN's must contain up-to-date information
+                /// as well. Read them from the current joystick status.
+            }
+            else if(ddEvent->type == E_TOGGLE)
+            {
+                ev->type = EV_JOY_BUTTON;
+                ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
+                              ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
+                              EVS_REPEAT );
+                ev->data1 = ddEvent->toggle.id;
+            }
+            else if(ddEvent->type == E_ANGLE)
+                ev->type = EV_POV;
+            break;
+
+        default:
 #if _DEBUG
-                Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
+            Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 #endif
-                break;
+            break;
         }
     }
 }
@@ -1366,6 +1374,6 @@ D_CMD(ListInputDevices)
             Con_Printf("  Axis #%i: %s\n", j, dev->axes[j].name);
             I_PrintAxisConfig(dev, &dev->axes[j]);
         }
-    }        
+    }
     return true;
 }
