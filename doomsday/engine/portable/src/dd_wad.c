@@ -1573,7 +1573,7 @@ D_CMD(ListFiles)
 
 D_CMD(ResetLumps)
 {
-    GL_SetFilter(0);
+    GL_SetFilter(false);
     W_Reset();
     Con_Message("Only startup files remain.\n");
     DD_UpdateEngineState();

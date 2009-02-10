@@ -1058,10 +1058,10 @@ void MStaffSpawn(mobj_t *mo, angle_t angle)
     }
 }
 
-void C_DECL A_MStaffAttack(player_t *plr, pspdef_t *psp)
+void C_DECL A_MStaffAttack(player_t* plr, pspdef_t* psp)
 {
     angle_t         angle;
-    mobj_t         *mo;
+    mobj_t*         mo;
 
     P_ShotAmmo(plr);
     mo = plr->plr->mo;
@@ -1071,28 +1071,44 @@ void C_DECL A_MStaffAttack(player_t *plr, pspdef_t *psp)
     MStaffSpawn(mo, angle - ANGLE_1 * 5);
     MStaffSpawn(mo, angle + ANGLE_1 * 5);
     S_StartSound(SFX_MAGE_STAFF_FIRE, plr->plr->mo);
+    plr->damageCount = 0;
+    plr->bonusCount = 0;
+
     if(plr == &players[CONSOLEPLAYER])
     {
-        plr->damageCount = 0;
-        plr->bonusCount = 0;
+        int             pal = STARTSCOURGEPAL;
+        float           rgba[4];
 
-        R_SetFilter(STARTSCOURGEPAL);
+        // $democam
+        R_GetFilterColor(rgba, pal);
+        GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+
+        GL_SetFilter(true);
     }
 }
 
-void C_DECL A_MStaffPalette(player_t *plr, pspdef_t *psp)
+void C_DECL A_MStaffPalette(player_t* plr, pspdef_t* psp)
 {
-    int             pal;
-
     if(plr == &players[CONSOLEPLAYER])
     {
-        pal = STARTSCOURGEPAL + psp->state - (&states[S_MSTAFFATK_2]);
+        int             pal = STARTSCOURGEPAL +
+            psp->state - (&states[S_MSTAFFATK_2]);
+
         if(pal == STARTSCOURGEPAL + 3)
         {   // Reset back to original playpal.
             pal = 0;
         }
 
-        R_SetFilter(pal);
+        if(pal)
+        {
+            float           rgba[4];
+
+            // $democam
+            R_GetFilterColor(rgba, pal);
+            GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+
+            GL_SetFilter(true);
+        }
     }
 }
 
@@ -1638,41 +1654,57 @@ void C_DECL A_CHolyAttack2(mobj_t *mo)
     }
 }
 
-void C_DECL A_CHolyAttack(player_t *plr, pspdef_t *psp)
+void C_DECL A_CHolyAttack(player_t* plr, pspdef_t* psp)
 {
-    mobj_t     *pmo;
+    mobj_t*             pmo;
 
     P_ShotAmmo(plr);
     pmo = P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
+    plr->damageCount = 0;
+    plr->bonusCount = 0;
+
     if(plr == &players[CONSOLEPLAYER])
     {
-        plr->damageCount = 0;
-        plr->bonusCount = 0;
+        float               rgba[4];
 
-        R_SetFilter(STARTHOLYPAL);
+        // $democam
+        R_GetFilterColor(rgba, STARTHOLYPAL);
+        GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+
+        GL_SetFilter(true);
     }
+
     S_StartSound(SFX_CHOLY_FIRE, plr->plr->mo);
 }
 
-void C_DECL A_CHolyPalette(player_t *plr, pspdef_t *psp)
+void C_DECL A_CHolyPalette(player_t* plr, pspdef_t* psp)
 {
-    int         pal;
-
     if(plr == &players[CONSOLEPLAYER])
     {
-        pal = STARTHOLYPAL + psp->state - (&states[S_CHOLYATK_6]);
+        int                 pal = STARTHOLYPAL +
+            psp->state - (&states[S_CHOLYATK_6]);
+
         if(pal == STARTHOLYPAL + 3)
-        {                       // reset back to original playpal
+        {   // reset back to original playpal
             pal = 0;
         }
 
-        R_SetFilter(pal);
+        if(pal)
+        {
+            float               rgba[4];
+
+            // $democam
+            R_GetFilterColor(rgba, pal);
+            GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+
+            GL_SetFilter(true);
+        }
     }
 }
 
-static void CHolyFindTarget(mobj_t *mo)
+static void CHolyFindTarget(mobj_t* mo)
 {
-    mobj_t     *target;
+    mobj_t*             target;
 
     target = P_RoughMonsterSearch(mo, 6*128);
     if(target)

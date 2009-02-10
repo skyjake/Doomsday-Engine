@@ -237,6 +237,8 @@ typedef enum {
 
 enum { VX, VY, VZ }; // Vertex indices.
 
+enum { CR, CG, CB, CA }; // Color indices.
+
 #define IS_SERVER           (Get(DD_SERVER))
 #define IS_CLIENT           (Get(DD_CLIENT))
 #define IS_NETGAME          (Get(DD_NETGAME))

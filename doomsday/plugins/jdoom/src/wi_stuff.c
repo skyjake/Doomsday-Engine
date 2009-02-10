@@ -1580,7 +1580,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
     int                 i, j, k;
     teaminfo_t         *tin;
 
-    GL_SetFilter(0);
+    GL_SetFilter(false);
     WI_initVariables(wbstartstruct);
     WI_loadData();
 

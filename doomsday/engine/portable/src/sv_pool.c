@@ -438,6 +438,8 @@ void Sv_RegisterResetMobj(dt_mobj_t* reg)
  */
 void Sv_RegisterPlayer(dt_player_t* reg, uint number)
 {
+#define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
+
     player_t*           plr = &ddPlayers[number];
     ddplayer_t*         ddpl = &plr->shared;
     client_t*           c = &clients[number];
@@ -451,10 +453,21 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
         (gx.MobjFriction ? gx.MobjFriction(ddpl->mo) : DEFAULT_FRICTION);
     reg->extraLight = ddpl->extraLight;
     reg->fixedColorMap = ddpl->fixedColorMap;
-    reg->filter = ddpl->filter;
+    if(ddpl->flags & DDPF_VIEW_FILTER)
+    {
+        reg->filter = FMAKERGBA(ddpl->filterColor[CR],
+            ddpl->filterColor[CG], ddpl->filterColor[CB],
+            ddpl->filterColor[CA]);
+    }
+    else
+    {
+        reg->filter = 0;
+    }
     reg->clYaw = (ddpl->mo ? ddpl->mo->angle : 0);
     reg->clPitch = ddpl->lookDir;
     memcpy(reg->psp, ddpl->pSprites, sizeof(ddpsprite_t) * 2);
+
+#undef FMAKERGBA
 }
 
 /**

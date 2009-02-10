@@ -432,7 +432,8 @@ extern          "C" {
     unsigned int    GL_NewTextureWithParams3(int format, int width, int height, void* pixels,
                                              int flags, int minFilter, int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
-    void            GL_SetFilter(int filter_rgba);
+    void            GL_SetFilter(boolean enable);
+    void            GL_SetFilterColor(float r, float g, float b, float a);
 
     // Graphics: 2D drawing.
     void            GL_DrawPatch(int x, int y, lumpnum_t lump);

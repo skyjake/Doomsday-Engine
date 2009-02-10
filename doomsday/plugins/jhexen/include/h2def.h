@@ -301,6 +301,8 @@ typedef enum {
 
 enum { VX, VY, VZ }; // Vertex indices.
 
+enum { CR, CG, CB, CA }; // Color indices.
+
 #define IS_SERVER           (Get(DD_SERVER))
 #define IS_CLIENT           (Get(DD_CLIENT))
 #define IS_NETGAME          (Get(DD_NETGAME))
@@ -345,27 +347,25 @@ void            H2_Main(void);
 void            G_IdentifyVersion(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
-void            R_SetFilter(int filter);
-int             R_GetFilterColor(int filter);
 void            R_InitRefresh(void);
 
 int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
+void*           G_GetVariable(int id);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 int             G_GetMapNumber(int episode, int map);
 void            G_InitNew(skillmode_t skill, int episode, int map);
 void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
 void            G_DeferredNewGame(skillmode_t skill);
-void            G_DeferedPlayDemo(char *demo);
+void            G_DeferedPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
 void            G_LoadGame(int slot);
 void            G_DoLoadGame(void);
-void            G_SaveGame(int slot, char *description);
+void            G_SaveGame(int slot, char* description);
 void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
-                             int map, char *name);
-void            G_PlayDemo(char *name);
-void            G_TimeDemo(char *name);
+                             int map, char* name);
+void            G_PlayDemo(char* name);
+void            G_TimeDemo(char* name);
 void            G_TeleportNewMap(int map, int position);
 void            G_LeaveMap(int map, int position, boolean secret);
 void            G_StartNewGame(skillmode_t skill);
@@ -378,12 +378,12 @@ void            G_DemoEnds(void);
 void            G_DemoAborted(void);
 
 void            G_Ticker(timespan_t ticLength);
-boolean         G_Responder(event_t *ev);
+boolean         G_Responder(event_t* ev);
 
 void            P_Init(void);
 
 void            P_SetupMap(int episode, int map, int playermask,
-                             skillmode_t skill);
+                           skillmode_t skill);
 
 extern boolean setsizeneeded;
 
@@ -425,7 +425,7 @@ extern char* sc_ScriptsDir;
 
 void            CT_Init(void);
 void            CT_Drawer(void);
-boolean         CT_Responder(event_t *ev);
+boolean         CT_Responder(event_t* ev);
 void            CT_Ticker(void);
 char            CT_dequeueChatChar(void);
 

@@ -57,7 +57,4 @@ void        ST_Stop(int player);
 
 // Called when it might be neccessary for the hud to unhide.
 void        ST_HUDUnHide(int player, hueevent_t event);
-
-int         R_GetFilterColor(int filter);
-
 #endif

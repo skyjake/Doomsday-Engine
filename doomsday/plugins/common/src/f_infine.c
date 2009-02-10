@@ -427,7 +427,7 @@ void FI_ClearState(void)
     fi->waitingText = NULL;
     fi->waitingPic = NULL;
     memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
-    GL_SetFilter(0); // Clear the current filter.
+    GL_SetFilter(false); // Clear the current filter.
     for(i = 0; i < 4; ++i)
     {
         FI_InitValue(fi->bgColor + i, 1);

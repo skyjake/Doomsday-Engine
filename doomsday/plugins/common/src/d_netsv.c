@@ -255,9 +255,8 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 
 void NetSv_Ticker(void)
 {
-    player_t   *plr;
-    int         i, red, palette;
-    float       power;
+    int                 i;
+    float               power;
 
     // Map rotation checker.
     NetSv_CheckCycling();
@@ -268,9 +267,11 @@ void NetSv_Ticker(void)
     // Set the camera filters for players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
+        player_t*           plr;
+        int                 red, palette = 0;
+
         if(!players[i].plr->inGame)
             continue;
-
         plr = &players[i];
 
         red = plr->damageCount;
@@ -284,6 +285,7 @@ void NetSv_Ticker(void)
                 red = bz;
         }
 #endif
+
         if(red)
         {
             palette = (red + 7) >> 3;
@@ -305,7 +307,9 @@ void NetSv_Ticker(void)
 #if __JDOOM__ || __JDOOM64__
         else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
                 plr->powers[PT_IRONFEET] & 8)
-            palette = 13;       //RADIATIONPAL;
+        {
+            palette = 13; //RADIATIONPAL;
+        }
 #elif __JHEXEN__
         else if(plr->poisonCount)
         {
@@ -321,19 +325,20 @@ void NetSv_Ticker(void)
             palette = STARTICEPAL;
         }
 #endif
-        else
-        {
-            palette = 0;
-        }
 
+        if(palette > 0)
+            plr->plr->flags |= DDPF_VIEW_FILTER;
+        else
+            plr->plr->flags &= ~DDPF_VIEW_FILTER;
+
+        // $democam
         if(oldPals[i] != palette)
-        {
-            // The filter changes, send it to the client.
+        {   // The filter changes.
+            R_GetFilterColor(plr->plr->filterColor, palette);
+            // If we are the server, we'll need inform the client.
             plr->plr->flags |= DDPF_FILTER;
             oldPals[i] = palette;
         }
-
-        plr->plr->filter = R_GetFilterColor(palette);
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -366,8 +371,10 @@ void NetSv_Ticker(void)
     }
 
     // Send the player state updates.
-    for(i = 0, plr = players; i < MAXPLAYERS; i++, plr++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
+        player_t*           plr = &players[i];
+
         // Don't send on every tic. Also, don't send to all
         // players at the same time.
         if(((int) GAMETIC + i) % 10)
@@ -379,7 +386,7 @@ void NetSv_Ticker(void)
         // packet.
         if(plr->update & (PSF_OWNED_WEAPONS | PSF_STATE))
         {
-            int         flags =
+            int                 flags =
                 (plr->update & PSF_OWNED_WEAPONS ? PSF2_OWNED_WEAPONS : 0) |
                 (plr->update & PSF_STATE ? PSF2_STATE : 0);
 

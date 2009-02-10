@@ -147,6 +147,45 @@ void R_DrawSpecialFilter(int pnum)
     }
 }
 
+boolean R_GetFilterColor(float rgba[4], int filter)
+{
+    if(!rgba)
+        return false;
+
+    // We have to choose the right color and alpha.
+    if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
+    {   // Red.
+        rgba[CR] = 1;
+        rgba[CG] = 0;
+        rgba[CB] = 0;
+        rgba[CA] = filter / 9.f;
+        return true;
+    }
+
+    if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
+    {   // Gold.
+        rgba[CR] = 1;
+        rgba[CG] = .8f;
+        rgba[CB] = .5f;
+        rgba[CA] = (filter - STARTBONUSPALS + 1) / 16.f;
+        return true;
+    }
+
+    if(filter == 13) // RADIATIONPAL
+    {   // Green.
+        rgba[CR] = 0;
+        rgba[CG] = .7f;
+        rgba[CB] = 0;
+        rgba[CA] = .15f;
+        return true;
+    }
+
+    if(filter)
+        Con_Message("R_GetFilterColor: Real strange filter number: %d.\n", filter);
+
+    return false;
+}
+
 /**
  * Show map name and author.
  */
@@ -238,10 +277,16 @@ static void rendPlayerView(int player)
     DD_SetVariable(DD_VIEWX_OFFSET, &plr->viewOffset[VX]);
     DD_SetVariable(DD_VIEWY_OFFSET, &plr->viewOffset[VY]);
     DD_SetVariable(DD_VIEWZ_OFFSET, &plr->viewOffset[VZ]);
-
     // The view angle offset.
     DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
-    GL_SetFilter(plr->plr->filter); // $democam
+
+    // $democam
+    GL_SetFilter((plr->plr->flags & DDPF_VIEW_FILTER)? true : false);
+    if(plr->plr->flags & DDPF_VIEW_FILTER)
+    {
+        const float*        color = plr->plr->filterColor;
+        GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
+    }
 
     // How about fullbright?
     DD_SetInteger(DD_FULLBRIGHT, isFullBright);

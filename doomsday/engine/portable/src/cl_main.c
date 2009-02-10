@@ -120,7 +120,7 @@ void Cl_CleanUp(void)
     Cl_DestroyClientMobjs();
     Cl_InitPlayers();
     Cl_RemoveMovers();
-    GL_SetFilter(0);
+    GL_SetFilter(false);
 }
 
 /**
@@ -261,7 +261,7 @@ void Cl_GetPackets(void)
         // a game is in progress.
         if(Cl_GameReady())
         {
-            boolean handled = true;
+            boolean             handled = true;
 
             switch(netBuffer.msg.type)
             {
@@ -283,9 +283,21 @@ void Cl_GetPackets(void)
                 break;
 
             case PSV_FILTER:
-                ddPlayers[consolePlayer].shared.filter = Msg_ReadLong();
-                break;
+                {
+                player_t*           plr = &ddPlayers[consolePlayer];
+                int                 filter = Msg_ReadLong();
 
+                if(filter)
+                    plr->shared.flags |= DDPF_VIEW_FILTER;
+                else
+                    plr->shared.flags &= ~DDPF_VIEW_FILTER;
+
+                plr->shared.filterColor[CR] = filter & 0xff;
+                plr->shared.filterColor[CG] = (filter >> 8) & 0xff;
+                plr->shared.filterColor[CB] = (filter >> 16) & 0xff;
+                plr->shared.filterColor[CA] = (filter >> 24) & 0xff;
+                break;
+                }
             default:
                 handled = false;
             }

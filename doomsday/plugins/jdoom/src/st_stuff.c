@@ -48,9 +48,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8)           \
-                            + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
-
 // Radiation suit, green shift.
 #define RADIATIONPAL        (13)
 
@@ -842,38 +839,15 @@ void ST_Ticker(void)
     }
 }
 
-int R_GetFilterColor(int filter)
-{
-    int                 rgba = 0;
-
-    // We have to choose the right color and alpha.
-    if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-        // Red.
-        rgba = FMAKERGBA(1, 0, 0, filter / 9.0);
-    else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-        // Gold.
-        rgba = FMAKERGBA(1, .8, .5, (filter - STARTBONUSPALS + 1) / 16.0);
-    else if(filter == RADIATIONPAL)
-        // Green.
-        rgba = FMAKERGBA(0, .7, 0, .15f);
-    else if(filter)
-        Con_Error("R_GetFilterColor: Real strange filter number: %d.\n", filter);
-
-    return rgba;
-}
-
 void ST_doPaletteStuff(int player)
 {
-    int                 palette;
-    int                 cnt;
-    int                 bzc;
+    int                 palette = 0, cnt, bzc;
     player_t*           plr = &players[player];
 
     cnt = plr->damageCount;
 
     if(plr->powers[PT_STRENGTH])
-    {
-        // slowly fade the berzerk out
+    {   // Slowly fade the berzerk out.
         bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
 
         if(bzc > cnt)
@@ -886,27 +860,29 @@ void ST_doPaletteStuff(int player)
 
         if(palette >= NUMREDPALS)
             palette = NUMREDPALS - 1;
-
         palette += STARTREDPALS;
     }
-
     else if(plr->bonusCount)
     {
         palette = (plr->bonusCount + 7) >> 3;
-
         if(palette >= NUMBONUSPALS)
             palette = NUMBONUSPALS - 1;
-
         palette += STARTBONUSPALS;
     }
-
     else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
             plr->powers[PT_IRONFEET] & 8)
+    {
         palette = RADIATIONPAL;
-    else
-        palette = 0;
+    }
 
-    plr->plr->filter = R_GetFilterColor(palette); // $democam
+    // $democam
+    if(palette)
+    {
+        plr->plr->flags |= DDPF_VIEW_FILTER;
+        R_GetFilterColor(plr->plr->filterColor, palette);
+    }
+    else
+        plr->plr->flags &= ~DDPF_VIEW_FILTER;
 }
 
 static void drawWidgets(hudstate_t* hud)

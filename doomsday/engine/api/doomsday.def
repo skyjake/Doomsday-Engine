@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 440 <--
+; --> 441 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -411,6 +411,7 @@ EXPORTS
     GL_LoadGraphics             @244 NONAME
     GL_NewTextureWithParams3    @329 NONAME
     GL_SetFilter                @132 NONAME
+    GL_SetFilterColor           @441 NONAME
 
 ; Graphics: 2D drawing.
     GL_DrawPatch                @120 NONAME

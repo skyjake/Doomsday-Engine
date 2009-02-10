@@ -129,7 +129,7 @@ void IN_Start(void)
         return;
     }
 
-    GL_SetFilter(0);
+    GL_SetFilter(false);
     initStats();
     loadPics();
     intermission = true;

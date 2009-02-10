@@ -634,11 +634,7 @@ void P_PlayerReborn(player_t* player)
 #if __JHERETIC__ || __JHEXEN__
     P_InventoryResetCursor(player);
 
-    if(player == &players[CONSOLEPLAYER])
-    {
-        R_SetFilter(0);
-    }
-
+    player->plr->flags &= ~DDPF_VIEW_FILTER;
     newTorch[player - players] = 0;
     newTorchDelta[player - players] = 0;
 # if __JHEXEN__

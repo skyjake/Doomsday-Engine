@@ -52,7 +52,8 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int curfilter = 0;       // The current filter (0 = none).
+static boolean drawFilter = false;
+static float filterColor[4] = { 0, 0, 0, 0 };
 static boolean usePatchOffset = true;   // A bit of a hack...
 
 // CODE --------------------------------------------------------------------
@@ -68,7 +69,7 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
     boolean             isTwoPart;
     float               pixelBorder = 0;
     float               tcb = 0;
-    rawtex_t           *raw;
+    rawtex_t*           raw;
 
     if(lump < 0 || lump >= numLumps)
         return;
@@ -377,9 +378,17 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     glEnd();
 }
 
-void GL_SetFilter(int filterRGBA)
+void GL_SetFilter(boolean enabled)
 {
-    curfilter = filterRGBA;
+    drawFilter = enabled;
+}
+
+void GL_SetFilterColor(float r, float g, float b, float a)
+{
+    filterColor[CR] = MINMAX_OF(0, r, 1);
+    filterColor[CG] = MINMAX_OF(0, g, 1);
+    filterColor[CB] = MINMAX_OF(0, b, 1);
+    filterColor[CA] = MINMAX_OF(0, a, 1);
 }
 
 /**
@@ -387,14 +396,13 @@ void GL_SetFilter(int filterRGBA)
  */
 int GL_DrawFilter(void)
 {
-    if(!curfilter)
+    if(!drawFilter)
         return 0; // No filter needed.
 
     // No texture, please.
     glDisable(GL_TEXTURE_2D);
 
-    glColor4ub(curfilter & 0xff, (curfilter >> 8) & 0xff,
-                (curfilter >> 16) & 0xff, (curfilter >> 24) & 0xff);
+    glColor4fv(filterColor);
 
     glBegin(GL_QUADS);
         glVertex2f(viewwindowx, viewwindowy);

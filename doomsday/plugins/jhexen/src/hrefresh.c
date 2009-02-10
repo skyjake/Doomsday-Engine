@@ -47,8 +47,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
-
 #define WINDOWHEIGHT            (Get(DD_VIEWWINDOW_HEIGHT))
 
 // TYPES -------------------------------------------------------------------
@@ -186,10 +184,16 @@ static void rendPlayerView(int player)
     DD_SetVariable(DD_VIEWX_OFFSET, &plr->viewOffset[VX]);
     DD_SetVariable(DD_VIEWY_OFFSET, &plr->viewOffset[VY]);
     DD_SetVariable(DD_VIEWZ_OFFSET, &plr->viewOffset[VZ]);
-
     // The view angle offset.
     DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
-    GL_SetFilter(plr->plr->filter); // $democam
+
+    // $democam
+    GL_SetFilter((plr->plr->flags & DDPF_VIEW_FILTER)? true : false);
+    if(plr->plr->flags & DDPF_VIEW_FILTER)
+    {
+        const float*        color = plr->plr->filterColor;
+        GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
+    }
 
     // Render the view with possible custom filters.
     R_RenderPlayerView(player);
@@ -364,36 +368,64 @@ void G_Display2(void)
     Hu_Drawer();
 }
 
-int R_GetFilterColor(int filter)
+boolean R_GetFilterColor(float rgba[4], int filter)
 {
+    if(!rgba)
+        return false;
+
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-        // Red?
-        return FMAKERGBA(1, 0, 0, filter / 8.0); // Full red with filter 8.
+    {   // Red.
+        rgba[CR] = 1;
+        rgba[CG] = 0;
+        rgba[CB] = 0;
+        rgba[CA] = filter / 8.f; // Full red with filter 8.
+        return true;
+    }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-        // Light Yellow?
-        return FMAKERGBA(1, 1, .5, (filter - STARTBONUSPALS + 1) / 16.0);
-    else if(filter >= STARTPOISONPALS &&
-            filter < STARTPOISONPALS + NUMPOISONPALS)
-        // Green?
-        return FMAKERGBA(0, 1, 0, (filter - STARTPOISONPALS + 1) / 16.0);
+    {   // Light Yellow.
+        rgba[CR] = 1;
+        rgba[CG] = 1;
+        rgba[CB] = .5f;
+        rgba[CA] = (filter - STARTBONUSPALS + 1) / 16.f;
+        return true;
+    }
+    else if(filter >= STARTPOISONPALS && filter < STARTPOISONPALS + NUMPOISONPALS)
+    {   // Green.
+        rgba[CR] = 0;
+        rgba[CG] = 1;
+        rgba[CB] = 0;
+        rgba[CA] = (filter - STARTPOISONPALS + 1) / 16.f;
+        return true;
+    }
     else if(filter >= STARTSCOURGEPAL)
-        // Orange?
-        return FMAKERGBA(1, .5, 0, (STARTSCOURGEPAL + 3 - filter) / 6.0);
+    {   // Orange.
+        rgba[CR] = 1;
+        rgba[CG] = .5f;
+        rgba[CB] = 0;
+        rgba[CA] = (STARTSCOURGEPAL + 3 - filter) / 6.f;
+        return true;
+    }
     else if(filter >= STARTHOLYPAL)
-        // White?
-        return FMAKERGBA(1, 1, 1, (STARTHOLYPAL + 3 - filter) / 6.0);
+    {   // White.
+        rgba[CR] = 1;
+        rgba[CG] = 1;
+        rgba[CB] = 1;
+        rgba[CA] = (STARTHOLYPAL + 3 - filter) / 6.f;
+        return true;
+    }
     else if(filter == STARTICEPAL)
-        // Light blue?
-        return FMAKERGBA(.5f, .5f, 1, .4f);
-    else if(filter)
-        Con_Error("R_GetFilterColor: Strange filter number: %d.\n", filter);
-    return 0;
-}
+    {   // Light blue.
+        rgba[CR] = .5f;
+        rgba[CG] = .5f;
+        rgba[CB] = 1;
+        rgba[CA] = .4f;
+        return true;
+    }
 
-void R_SetFilter(int filter)
-{
-    GL_SetFilter(R_GetFilterColor(filter));
+    if(filter)
+        Con_Error("R_GetFilterColor: Strange filter number: %d.\n", filter);
+    return false;
 }
 
 void H2_EndFrame(void)

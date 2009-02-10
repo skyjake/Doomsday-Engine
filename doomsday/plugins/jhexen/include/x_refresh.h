@@ -37,4 +37,5 @@ void            G_Display2(void);
 
 void            R_SetViewSize(int blocks);
 void            R_SetAllDoomsdayFlags(void);
+boolean         R_GetFilterColor(float rgba[4], int filter);
 #endif

@@ -1207,17 +1207,18 @@ typedef struct ticcmd_s {
     } controltype_t;
 
     // Player flags.
-#define DDPF_FIXANGLES      0x1    // Server: send angle/pitch to client.
-#define DDPF_FILTER         0x2    // Server: send filter to client.
-#define DDPF_FIXPOS         0x4    // Server: send coords to client.
-#define DDPF_DEAD           0x8    // Cl & Sv: player is dead.
-#define DDPF_CAMERA         0x10   // Player is a cameraman.
-#define DDPF_LOCAL          0x20   // Player is local (e.g. player zero).
-#define DDPF_FIXMOM         0x40   // Server: send momentum to client.
-#define DDPF_NOCLIP         0x80   // Client: don't clip movement.
-#define DDPF_CHASECAM       0x100  // Chase camera mode (third person view).
-#define DDPF_INTERYAW       0x200  // Interpolate view yaw angles (used with locking).
-#define DDPF_INTERPITCH     0x400  // Interpolate view pitch angles (used with locking).
+#define DDPF_FIXANGLES      0x1 // Server: send angle/pitch to client.
+#define DDPF_FILTER         0x2 // Server: send filter to client.
+#define DDPF_FIXPOS         0x4 // Server: send coords to client.
+#define DDPF_DEAD           0x8 // Cl & Sv: player is dead.
+#define DDPF_CAMERA         0x10 // Player is a cameraman.
+#define DDPF_LOCAL          0x20 // Player is local (e.g. player zero).
+#define DDPF_FIXMOM         0x40 // Server: send momentum to client.
+#define DDPF_NOCLIP         0x80 // Client: don't clip movement.
+#define DDPF_CHASECAM       0x100 // Chase camera mode (third person view).
+#define DDPF_INTERYAW       0x200 // Interpolate view yaw angles (used with locking).
+#define DDPF_INTERPITCH     0x400 // Interpolate view pitch angles (used with locking).
+#define DDPF_VIEW_FILTER    0x800 // Cl & Sv: Draw the current view filter.
 
 #define PLAYERNAMELEN       81
 
@@ -1270,7 +1271,7 @@ typedef struct ticcmd_s {
                                 // (not entirely accurate so it shouldn't
                                 // be used for anything critical).
         int             flags;
-        int             filter; // RGBA filter for the camera
+        float           filterColor[4]; // RGBA filter for the camera.
         fixcounters_t   fixCounter;
         fixcounters_t   fixAcked;
         angle_t         lastAngle; // For calculating turndeltas.

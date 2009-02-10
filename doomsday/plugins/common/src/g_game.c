@@ -1164,8 +1164,8 @@ void G_PlayerLeaveMap(int player)
     p->plr->fixedColorMap = 0; // Cancel IR goggles.
 
     // Clear filter.
-    p->plr->filter = 0;
-    p->plr->flags |= DDPF_FILTER;
+    p->plr->flags &= ~DDPF_VIEW_FILTER;
+    p->plr->flags |= DDPF_FILTER; // Server: Send the change to the client.
     p->damageCount = 0; // No palette changes.
     p->bonusCount = 0;
 

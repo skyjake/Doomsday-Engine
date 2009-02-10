@@ -1352,7 +1352,7 @@ void ST_Ticker(void)
  */
 void ST_doPaletteStuff(int player, boolean forceChange)
 {
-    int                 palette;
+    int                 palette = 0;
     player_t*           plr;
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -1392,20 +1392,19 @@ void ST_doPaletteStuff(int player, boolean forceChange)
             palette += STARTBONUSPALS;
         }
         else if(plr->plr->mo->flags2 & MF2_ICEDAMAGE)
-        {                       // Frozen player
+        {   // Frozen player
             palette = STARTICEPAL;
         }
-        else
-        {
-            palette = 0;
-        }
-    }
-    else
-    {
-        palette = 0;
     }
 
-    plr->plr->filter = R_GetFilterColor(palette);
+    // $democam
+    if(palette)
+    {
+        plr->plr->flags |= DDPF_VIEW_FILTER;
+        R_GetFilterColor(plr->plr->filterColor, palette);
+    }
+    else
+        plr->plr->flags &= ~DDPF_VIEW_FILTER;
 }
 
 static void drawWidgets(hudstate_t* hud)

@@ -215,7 +215,19 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n", num, s->mobjId);
         ddpl->extraLight = i & 0xf8;
     }
     if(df & PDF_FILTER)
-        ddpl->filter = Msg_ReadLong();
+    {
+        int             filter = Msg_ReadLong();
+
+        if(filter)
+            ddpl->flags |= DDPF_VIEW_FILTER;
+        else
+            ddpl->flags &= ~DDPF_VIEW_FILTER;
+
+        ddpl->filterColor[CR] = filter & 0xff;
+        ddpl->filterColor[CG] = (filter >> 8) & 0xff;
+        ddpl->filterColor[CB] = (filter >> 16) & 0xff;
+        ddpl->filterColor[CA] = (filter >> 24) & 0xff;
+    }
     if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
         //pl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
         junk = Msg_ReadShort();
@@ -755,7 +767,19 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
         ddpl->extraLight = i & 0xf8;
     }
     if(df & PDF_FILTER)
-        ddpl->filter = Msg_ReadLong();
+    {
+        int             filter = Msg_ReadLong();
+
+        if(filter)
+            ddpl->flags |= DDPF_VIEW_FILTER;
+        else
+            ddpl->flags &= ~DDPF_VIEW_FILTER;
+
+        ddpl->filterColor[CR] = filter & 0xff;
+        ddpl->filterColor[CG] = (filter >> 8) & 0xff;
+        ddpl->filterColor[CB] = (filter >> 16) & 0xff;
+        ddpl->filterColor[CA] = (filter >> 24) & 0xff;
+    }
     if(df & PDF_CLYAW) // Only sent when Fixangles is used.
         //ddpl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
         junk = Msg_ReadShort();
@@ -804,7 +828,7 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
  */
 boolean Cl_IsFreeToMove(int plrNum)
 {
-    mobj_t             *mo = ddPlayers[plrNum].shared.mo;
+    mobj_t*             mo = ddPlayers[plrNum].shared.mo;
 
     if(!mo)
         return false;

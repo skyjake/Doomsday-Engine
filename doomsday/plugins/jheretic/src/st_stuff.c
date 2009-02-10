@@ -40,10 +40,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define FMAKERGBA(r, g, b, a) ( \
-    (byte)(0xff * (r)) + ((byte)(0xff * (g)) << 8) + \
-    ((byte)(0xff * (b)) << 16) + ((byte)(0xff * (a)) << 24))
-
 // Current ammo icon(sbbar).
 #define ST_AMMOIMGWIDTH     (24)
 #define ST_AMMOICONX        (111)
@@ -671,33 +667,13 @@ void ST_Ticker(void)
     }
 }
 
-int R_GetFilterColor(int filter)
-{
-    int                 rgba = 0;
-
-    // We have to choose the right color and alpha.
-    if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-        // Red?
-        rgba = FMAKERGBA(1, 0, 0, filter / 8.0);    // Full red with filter 8.
-    else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-        // Light Yellow?
-        rgba = FMAKERGBA(1, 1, .5, (filter - STARTBONUSPALS + 1) / 16.0);
-
-    return rgba;
-}
-
-void R_SetFilter(int filter)
-{
-    GL_SetFilter(R_GetFilterColor(filter));
-}
-
 /**
  * Sets the new palette based upon current values of player->damageCount
  * and player->bonusCount
  */
 void ST_doPaletteStuff(int player)
 {
-    int                 palette;
+    int                 palette = 0;
     player_t*           plr = &players[player];
 
     if(plr->damageCount)
@@ -718,12 +694,15 @@ void ST_doPaletteStuff(int player)
         }
         palette += STARTBONUSPALS;
     }
-    else
-    {
-        palette = 0;
-    }
 
-    plr->plr->filter = R_GetFilterColor(palette);   // $democam
+    // $democam
+    if(palette)
+    {
+        plr->plr->flags |= DDPF_VIEW_FILTER;
+        R_GetFilterColor(plr->plr->filterColor, palette);
+    }
+    else
+        plr->plr->flags &= ~DDPF_VIEW_FILTER;
 }
 
 static void drawWidgets(hudstate_t* hud)

@@ -51,7 +51,8 @@ void            GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, 
                                     int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
 // Filters:
-void            GL_SetFilter(int filterRGBA);
+void            GL_SetFilter(boolean enable);
+void            GL_SetFilterColor(float r, float g, float b, float a);
 int             GL_DrawFilter(void);
 
 #endif

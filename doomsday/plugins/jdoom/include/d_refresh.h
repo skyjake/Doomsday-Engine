@@ -46,5 +46,5 @@ void            R_DrawMapTitle(void);
 
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
-
+boolean         R_GetFilterColor(float rgba[4], int filter);
 #endif

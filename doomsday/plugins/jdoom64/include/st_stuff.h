@@ -69,8 +69,6 @@ void    ST_Init(void);
 // Called when it might be neccessary for the hud to unhide.
 void    ST_HUDUnHide(int player, hueevent_t event);
 
-int     R_GetFilterColor(int filter);
-
 void    ST_HUDSpriteSize(int sprite, int *w, int *h);
 void    ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
                          float scale, float alpha, boolean flip);

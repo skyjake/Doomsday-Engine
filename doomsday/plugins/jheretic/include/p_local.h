@@ -166,7 +166,4 @@ void            Draw_EndZoom(void);
 #define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
 #define LOOKDIR2RAD(x) (LOOKDIR2DEG(x)/180*PI)
 
-void            R_SetFilter(int filter);
-int             R_GetFilterColor(int filter);
-
 #endif
