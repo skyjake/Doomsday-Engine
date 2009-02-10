@@ -338,6 +338,7 @@ void G_PreInit(void)
     cfg.automapZoomSpeed = .1f;
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
+    cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
     cfg.counterCheatScale = .7f; //From jHeretic
 
     cfg.msgShow = true;

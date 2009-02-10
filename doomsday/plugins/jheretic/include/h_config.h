@@ -163,6 +163,7 @@ typedef struct jheretic_config_s {
     float           automapZoomSpeed;
     float           automapPanSpeed;
     byte            automapPanResetOnOpen;
+    float           automapOpenSeconds;
 
     int             msgCount;
     float           msgScale;
@@ -172,7 +173,7 @@ typedef struct jheretic_config_s {
     byte            msgShow;
     float           msgColor[3];
 
-    char           *chatMacros[10];
+    char*           chatMacros[10];
     byte            chatBeep;
 
     int             corpseTime;

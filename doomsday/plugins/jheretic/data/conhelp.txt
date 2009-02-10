@@ -546,6 +546,9 @@ desc = Automap mobjs, blue component.
 [map-opacity]
 desc = Opacity of the automap.
 
+[map-open-timer]
+desc = Time taken to open/close the automap, in seconds.
+
 [map-pan-speed]
 desc = Pan speed multiplier in the automap.
 

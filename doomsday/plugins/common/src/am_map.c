@@ -228,6 +228,7 @@ cvar_t mapCVars[] = {
     {"map-pan-resetonopen", 0, CVT_BYTE, &cfg.automapPanResetOnOpen, 0, 1},
     {"map-rotate", 0, CVT_BYTE, &cfg.automapRotate, 0, 1},
     {"map-zoom-speed", 0, CVT_FLOAT, &cfg.automapZoomSpeed, 0, 1},
+    {"map-open-timer", CVF_NO_MAX, CVT_FLOAT, &cfg.automapOpenSeconds, 0, 0},
     {"rend-dev-freeze-map", CVF_NO_ARCHIVE, CVT_BYTE, &freezeMapRLs, 0, 1},
     {NULL}
 };
@@ -606,6 +607,7 @@ static void initAutomapConfig(int player)
     mcfg->panSpeed = cfg.automapPanSpeed;
     mcfg->panResetOnOpen = cfg.automapPanResetOnOpen;
     mcfg->zoomSpeed = cfg.automapZoomSpeed;
+    mcfg->openSeconds = cfg.automapOpenSeconds;
 }
 
 /**
@@ -639,6 +641,7 @@ void AM_Init(void)
         map->window.oldY = map->window.y = 0;
         map->window.oldWidth = map->window.width = scrwidth;
         map->window.oldHeight = map->window.height = scrheight;
+        map->alpha = map->targetAlpha = map->oldAlpha = 0;
 
         Automap_SetViewScaleTarget(map, 1);
         Automap_SetViewRotate(map, cfg.automapRotate);
@@ -769,7 +772,7 @@ void AM_Open(automapid_t id, boolean yes, boolean fast)
     {
         if(!players[mcfg->followPlayer].plr->inGame)
         {   // Set viewer target to the center of the map.
-        float               aabb[4];
+            float               aabb[4];
             Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                                   &aabb[BOXBOTTOM], &aabb[BOXTOP]);
             Automap_SetLocationTarget(map, (aabb[BOXRIGHT] - aabb[BOXLEFT]) / 2,
@@ -1133,19 +1136,6 @@ void AM_ToggleFollow(automapid_t id)
 
     P_SetMessage(&players[mcfg->followPlayer],
                  (map->panMode ? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), false);
-}
-
-void AM_SetGlobalAlphaTarget(automapid_t id, float alpha)
-{
-    automap_t*          map;
-
-    if(IS_DEDICATED)
-        return; // Ignore.
-
-    if(!(map = getAutomap(id)))
-        return;
-
-    Automap_SetOpacityTarget(map, alpha);
 }
 
 /**
@@ -1768,8 +1758,6 @@ static void findMinMaxBoundaries(void)
  */
 static void mapTicker(automap_t* map)
 {
-#define MAPALPHA_FADE_STEP .07
-
     int                 playerNum;
     float               diff = 0, panX[2], panY[2],
                         zoomVel, zoomSpeed;
@@ -1797,18 +1785,11 @@ static void mapTicker(automap_t* map)
         return;
 
     // Move towards the target alpha level for the automap.
-    if(map->alpha != map->targetAlpha)
-    {
-        diff = map->targetAlpha - map->alpha;
-        if(fabs(diff) > MAPALPHA_FADE_STEP)
-        {
-            map->alpha += MAPALPHA_FADE_STEP * (diff > 0? 1 : -1);
-        }
-        else
-        {
-            map->alpha = map->targetAlpha;
-        }
-    }
+    if(++map->alphaTimer < mcfg->openSeconds * TICSPERSEC)
+        map->alpha = LERP(map->oldAlpha, map->targetAlpha,
+                          map->alphaTimer / (mcfg->openSeconds * TICSPERSEC));
+    else
+        map->alpha = map->targetAlpha;
 
     // If the automap is not active do nothing else.
     if(!map->active)
@@ -1875,8 +1856,6 @@ static void mapTicker(automap_t* map)
                          FIXXTOSCREENX(newWidth), FIXYTOSCREENY(newHeight));
 
     Automap_RunTic(map);
-
-#undef MAPALPHA_FADE_STEP
 }
 
 /**
@@ -1996,7 +1975,7 @@ void M_DrawMapMenu(void)
     GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
 #endif
 
-    idx = 0; 
+    idx = 0;
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -2015,7 +1994,7 @@ void M_DrawMapMenu(void)
 #endif
     MN_DrawSlider(menu, idx++, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
     idx++;
-    
+
     M_WriteMenuText(menu, idx++, customColors[cfg.automapCustomColors % 3]);
     MN_DrawColorBox(menu, idx++, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], 1);
     MN_DrawColorBox(menu, idx++, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], 1);

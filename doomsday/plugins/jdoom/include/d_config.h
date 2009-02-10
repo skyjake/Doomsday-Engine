@@ -168,6 +168,7 @@ typedef struct jdoom_config_s {
     float           automapZoomSpeed;
     float           automapPanSpeed;
     byte            automapPanResetOnOpen;
+    float           automapOpenSeconds;
 
     int             msgCount;
     float           msgScale;

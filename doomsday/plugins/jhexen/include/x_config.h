@@ -140,6 +140,7 @@ typedef struct {
     float           automapZoomSpeed;
     float           automapPanSpeed;
     byte            automapPanResetOnOpen;
+    float           automapOpenSeconds;
 
     int             messagesOn;
     char*           chatMacros[10];

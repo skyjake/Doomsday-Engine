@@ -144,26 +144,17 @@ void Automap_Open(automap_t* map, int yes, int fast)
     if(!map)
         return;
 
-    if(yes)
-    {
-        if(map->active)
-            return; // Already active.
+    if(yes && map->active)
+        return; // No change.
 
-        map->active = true;
-        map->targetAlpha = 1;
-        if(fast)
-            map->alpha = 1;
-    }
-    else
-    {
-        if(!map->active)
-            return; // Already closed.
+    map->oldAlpha = map->alpha;
+    map->targetAlpha = (yes? 1.f : 0.f);
+    if(fast)
+        map->alpha = map->targetAlpha;
+    // Reset the timer.
+    map->alphaTimer = 0.f;
 
-        map->active = false;
-        map->targetAlpha = 0;
-        if(fast)
-            map->alpha = 0;
-    }
+    map->active = (yes? true : false);
 }
 
 void Automap_RunTic(automap_t* map)
@@ -669,8 +660,17 @@ void Automap_SetOpacityTarget(automap_t* map, float alpha)
 {
     if(!map)
         return;
+    alpha = MINMAX_OF(0, alpha, 1);
 
-    map->targetAlpha = MINMAX_OF(0, alpha, 1);
+    // Already at this target?
+    if(alpha == map->targetAlpha)
+        return;
+
+    map->oldAlpha = map->alpha;
+    // Restart the timer.
+    map->alphaTimer = 0;
+
+    map->targetAlpha = alpha;
 }
 
 /**

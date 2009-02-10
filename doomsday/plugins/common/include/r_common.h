@@ -42,6 +42,8 @@ typedef struct dpatch_s {
 #define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / scrwidth))
 #define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / scrheight))
 
+#define LERP(start, end, pos) (end * pos + start * (1 - pos))
+
 void            R_SetViewWindowTarget(int x, int y, int w, int h);
 void            R_ViewWindowTicker(void);
 void            R_GetViewWindow(float* x, float* y, float* w, float* h);

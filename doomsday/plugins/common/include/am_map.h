@@ -29,6 +29,8 @@
 #ifndef __COMMON_AUTOMAP_MANAGER__
 #define __COMMON_AUTOMAP_MANAGER__
 
+#define AUTOMAP_OPEN_SECONDS    (.3f) // Num of seconds to open/close the map.
+
 #if __JDOOM__ || __JDOOM64__
 // For use if I do walls with outsides/insides
 #define BLUES       (256-4*16+8)
@@ -343,6 +345,7 @@ typedef struct automapcfg_s {
     float           panSpeed;
     boolean         panResetOnOpen;
     float           zoomSpeed;
+    float           openSeconds; // Num seconds it takes for the map to open/close.
     automapspecialline_t specialLines[AM_MAXSPECIALLINES];
     uint            numSpecialLines;
     vectorgrapname_t vectorGraphicForPlayer;

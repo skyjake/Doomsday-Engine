@@ -75,8 +75,8 @@ typedef struct automap_s {
     float           bounds[4];
 
 // Paramaters for render.
-    float           alpha;
-    float           targetAlpha;
+    float           alpha, targetAlpha, oldAlpha;
+    float           alphaTimer;
 
 // Automap window (screen space).
     automapwindow_t window;
@@ -105,7 +105,7 @@ typedef struct automap_s {
     float           oldAngle; // Previous.
 
 // View frame coordinates on map.
-     float           viewAABB[4]; // Clip bbox coordinates on map.
+     float          viewAABB[4]; // Clip bbox coordinates on map.
 
 // Misc
     float           maxViewPositionDelta;
