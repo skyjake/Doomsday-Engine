@@ -144,7 +144,7 @@ void Automap_Open(automap_t* map, int yes, int fast)
     if(!map)
         return;
 
-    if(yes && map->active)
+    if(yes == map->active)
         return; // No change.
 
     map->oldAlpha = map->alpha;
