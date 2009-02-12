@@ -1649,15 +1649,22 @@ void Hu_MenuPageString(char* page, const menu_t* menu)
             (menu->itemCount + menu->numVisItems/2) / menu->numVisItems);
 }
 
-static void M_UpdateMenuVisibleItems()
+static void M_UpdateMenuVisibleItems(void)
 {
     if(!currentMenu)
         return;
 
-    currentMenu->firstItem = MAX_OF(0, itemOn - currentMenu->numVisItems/2);
-    currentMenu->firstItem = MIN_OF(currentMenu->firstItem,
-                                    currentMenu->itemCount - currentMenu->numVisItems);
-    currentMenu->firstItem = MAX_OF(0, currentMenu->firstItem);
+    if(!widgetEdit)
+    {
+        currentMenu->firstItem = MAX_OF(0, itemOn - currentMenu->numVisItems/2);
+        currentMenu->firstItem = MIN_OF(currentMenu->firstItem,
+                                        currentMenu->itemCount - currentMenu->numVisItems);
+        currentMenu->firstItem = MAX_OF(0, currentMenu->firstItem);
+    }
+    else
+    {
+        currentMenu->firstItem = currentMenu->firstItem;
+    }
 }
 
 void M_SetupNextMenu(menu_t* menudef)
@@ -1667,26 +1674,33 @@ void M_SetupNextMenu(menu_t* menudef)
 
     currentMenu = menudef;
 
-    // Have we been to this menu before?
-    // If so move the cursor to the last selected item
-    if(currentMenu->lastOn)
+    if(!widgetEdit)
     {
-        itemOn = currentMenu->lastOn;
+        // Have we been to this menu before?
+        // If so move the cursor to the last selected item
+        if(currentMenu->lastOn)
+        {
+            itemOn = currentMenu->lastOn;
+        }
+        else
+        {   // Select the first active item in this menu.
+            int                     i;
+
+            for(i = 0; i < menudef->itemCount; ++i)
+            {
+                if(menudef->items[i].type != ITT_EMPTY)
+                    break;
+            }
+
+            if(i > menudef->itemCount)
+                itemOn = -1;
+            else
+                itemOn = i;
+        }
     }
     else
-    {   // Select the first active item in this menu.
-        int                     i;
-
-        for(i = 0; i < menudef->itemCount; ++i)
-        {
-            if(menudef->items[i].type != ITT_EMPTY)
-                break;
-        }
-
-        if(i > menudef->itemCount)
-            itemOn = -1;
-        else
-            itemOn = i;
+    {
+        itemOn = 0;
     }
 
     M_UpdateMenuVisibleItems();
