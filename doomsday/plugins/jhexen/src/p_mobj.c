@@ -2159,10 +2159,10 @@ static boolean radiusGiveArmor(thinker_t* th, void* context)
                             params->origin[VY] - mo->pos[VY]);
     if(dist <= params->maxDistance)
     {
-        if((P_GiveArmor(mo->player, ARMOR_ARMOR, 1)) ||
-           (P_GiveArmor(mo->player, ARMOR_SHIELD, 1)) ||
-           (P_GiveArmor(mo->player, ARMOR_HELMET, 1)) ||
-           (P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
+        if((P_GiveArmor2(mo->player, ARMOR_ARMOR, 1)) ||
+           (P_GiveArmor2(mo->player, ARMOR_SHIELD, 1)) ||
+           (P_GiveArmor2(mo->player, ARMOR_HELMET, 1)) ||
+           (P_GiveArmor2(mo->player, ARMOR_AMULET, 1)))
         {
             params->effective = true;
             S_StartSound(SFX_MYSTICINCANT, mo);

@@ -403,43 +403,40 @@ boolean P_GiveBody(player_t* plr, int num)
 }
 
 /**
- * @return              @c false, if the armor is worse than the currently
- *                      owned armor.
+ * @return              @c true, iff the armor was given.
  */
-boolean P_GiveArmor(player_t *plr, armortype_t armortype, int amount)
+boolean P_GiveArmor(player_t* plr, armortype_t type, int points)
+{
+    if(plr->armorPoints[type] >= points)
+        return false;
+
+    plr->armorPoints[type] = points;
+    plr->update |= PSF_ARMOR;
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
+
+    return true;
+}
+
+/**
+ * @return              @c true, iff the armor was given.
+ */
+boolean P_GiveArmor2(player_t* plr, armortype_t type, int amount)
 {
     int             hits, totalArmor;
 
+    hits = amount * 5 * FRACUNIT;
+    totalArmor =
+        plr->armorPoints[ARMOR_ARMOR] +
+        plr->armorPoints[ARMOR_SHIELD] +
+        plr->armorPoints[ARMOR_HELMET] +
+        plr->armorPoints[ARMOR_AMULET] + PCLASS_INFO(plr->class)->autoArmorSave;
+    if(totalArmor >= PCLASS_INFO(plr->class)->maxArmor * 5 * FRACUNIT)
+        return false;
+
+    plr->armorPoints[type] += hits;
     plr->update |= PSF_ARMOR;
-    if(amount == -1)
-    {
-        hits = PCLASS_INFO(plr->class)->armorIncrement[armortype];
-        if(plr->armorPoints[armortype] >= hits)
-        {
-            return false;
-        }
-        else
-        {
-            plr->armorPoints[armortype] = hits;
-        }
-    }
-    else
-    {
-        hits = amount * 5 * FRACUNIT;
-        totalArmor =
-            plr->armorPoints[ARMOR_ARMOR] +
-            plr->armorPoints[ARMOR_SHIELD] +
-            plr->armorPoints[ARMOR_HELMET] +
-            plr->armorPoints[ARMOR_AMULET] + PCLASS_INFO(plr->class)->autoArmorSave;
-        if(totalArmor < PCLASS_INFO(plr->class)->maxArmor * 5 * FRACUNIT)
-        {
-            plr->armorPoints[armortype] += hits;
-        }
-        else
-        {
-            return false;
-        }
-    }
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
@@ -697,28 +694,32 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         break;
 
     case SPR_ARM1:
-        if(!P_GiveArmor(player, ARMOR_ARMOR, -1))
+        if(!P_GiveArmor(player, ARMOR_ARMOR,
+                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_ARMOR]))
             return;
 
         P_SetMessage(player, TXT_ARMOR1, false);
         break;
 
     case SPR_ARM2:
-        if(!P_GiveArmor(player, ARMOR_SHIELD, -1))
+        if(!P_GiveArmor(player, ARMOR_SHIELD,
+                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_SHIELD]))
             return;
 
         P_SetMessage(player, TXT_ARMOR2, false);
         break;
 
     case SPR_ARM3:
-        if(!P_GiveArmor(player, ARMOR_HELMET, -1))
+        if(!P_GiveArmor(player, ARMOR_HELMET,
+                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_HELMET]))
             return;
 
         P_SetMessage(player, TXT_ARMOR3, false);
         break;
 
     case SPR_ARM4:
-        if(!P_GiveArmor(player, ARMOR_AMULET, -1))
+        if(!P_GiveArmor(player, ARMOR_AMULET,
+                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_AMULET]))
             return;
 
         P_SetMessage(player, TXT_ARMOR4, false);

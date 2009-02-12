@@ -32,4 +32,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+boolean         P_GiveArmor(player_t* plr, armortype_t type, int points);
+boolean         P_GiveArmor2(player_t* plr, armortype_t type, int amount);
+
 #endif

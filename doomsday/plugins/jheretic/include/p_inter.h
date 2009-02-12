@@ -32,4 +32,6 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+boolean         P_GiveArmor(player_t* plr, int type, int points);
+
 #endif

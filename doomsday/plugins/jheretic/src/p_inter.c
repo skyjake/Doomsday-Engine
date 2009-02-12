@@ -219,19 +219,15 @@ boolean P_GiveBody(player_t *player, int num)
 }
 
 /**
- * @return              @c false, if the armor is worse than the
- *                      current armor.
+ * @return              @c true, iff the armor was given.
  */
-boolean P_GiveArmor(player_t *player, int armortype)
+boolean P_GiveArmor(player_t* player, int type, int points)
 {
-    int                 hits;
-
-    hits = armortype * 100;
-    if(player->armorPoints >= hits)
+    if(player->armorPoints >= points)
         return false;
 
-    player->armorType = armortype;
-    player->armorPoints = hits;
+    player->armorType = type;
+    player->armorPoints = points;
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
@@ -423,14 +419,14 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
         break;
 
     case SPR_SHLD: // Item_Shield1
-        if(!P_GiveArmor(player, 1))
+        if(!P_GiveArmor(player, 1, 1 * 100))
             return;
 
         P_SetMessage(player, TXT_ITEMSHIELD1, false);
         break;
 
     case SPR_SHD2: // Item_Shield2
-        if(!P_GiveArmor(player, 2))
+        if(!P_GiveArmor(player, 2, 2 * 100))
             return;
 
         P_SetMessage(player, TXT_ITEMSHIELD2, false);

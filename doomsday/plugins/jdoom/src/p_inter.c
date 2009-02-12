@@ -211,26 +211,15 @@ boolean P_GiveBody(player_t *player, int num)
 }
 
 /**
- * @return              @c false, if the armor is worse than the current
- *                      armor.
+ * @return              @c true, iff the armor was given.
  */
-boolean P_GiveArmor(player_t *player, int armortype)
+boolean P_GiveArmor(player_t* player, int type, int points)
 {
-    int                 hits, i;
-
-    i = armortype - 1;
-    if(i < 0)
-        i = 0;
-    else if(i > 1)
-        i = 1;
-
-    //hits = armortype*100;
-    hits = armorPoints[i];
-    if(player->armorPoints >= hits)
+    if(player->armorPoints >= points)
         return false; // Don't pick up.
 
-    player->armorType = armortype;
-    player->armorPoints = hits;
+    player->armorType = type;
+    player->armorPoints = points;
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
@@ -384,13 +373,15 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     {
     // Armor
     case SPR_ARM1:
-        if(!P_GiveArmor(player, armorClass[0]))
+        if(!P_GiveArmor(player, armorClass[0],
+                        armorPoints[MINMAX_OF(0, armorClass[0] - 1, 1)]))
             return;
         P_SetMessage(player, GOTARMOR, false);
         break;
 
     case SPR_ARM2:
-        if(!P_GiveArmor(player, armorClass[1]))
+        if(!P_GiveArmor(player, armorClass[1],
+                        armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]))
             return;
         P_SetMessage(player, GOTMEGA, false);
         break;
@@ -440,7 +431,8 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         player->health = megaSphereHealth;
         player->plr->mo->health = player->health;
         player->update |= PSF_HEALTH;
-        P_GiveArmor(player, armorClass[1]);
+        P_GiveArmor(player, armorClass[1],
+                    armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
         P_SetMessage(player, GOTMSPHERE, false);
         sound = SFX_GETPOW;
 
