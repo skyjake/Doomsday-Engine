@@ -187,7 +187,7 @@ void B_Init(void)
     // FIXME: Obviously belong to the game, so shouldn't be here.
     B_NewContext("map");
     B_NewContext("map-freepan");
-    B_NewContext("menu");
+    B_AcquireAll(B_NewContext("menu"), true);
     B_NewContext("gameui");
     B_NewContext("shortcut");
     B_AcquireKeyboard(B_NewContext("chat"), true);
