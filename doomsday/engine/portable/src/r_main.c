@@ -321,6 +321,21 @@ void R_Update(void)
         Surface_Update(&side->SW_bottomsurface);
     }
 
+    for(i = 0; i < numPolyObjs; ++i)
+    {
+        polyobj_t*          po = polyObjs[i];
+        seg_t**             segPtr = po->segs;
+
+        while(*segPtr)
+        {
+            sidedef_t*          side = SEG_SIDEDEF(*segPtr);
+
+            Surface_Update(&side->SW_middlesurface);
+
+            *segPtr++;
+        }
+    }
+
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
