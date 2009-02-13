@@ -42,7 +42,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define MATERIALS_BLOCK_ALLOC (32) // Num materials to allocate per block.
-#define MATERIALS_NAME_HASH_SIZE (512)
+#define MATERIAL_NAME_HASH_SIZE (512)
 
 // TYPES -------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ static material_t* materialsHead; // Head of the linked list of materials.
 
 static materialbind_t* materialBinds;
 static materialnum_t maxMaterialBinds;
-static uint hashTable[MATERIALS_NAME_HASH_SIZE];
+static uint hashTable[NUM_MATERIAL_NAMESPACES][MATERIAL_NAME_HASH_SIZE];
 
 // CODE --------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ static boolean isKnownMNamespace(material_namespace_t mnamespace)
 
 /**
  * This is a hash function. Given a material name it generates a
- * somewhat-random number between 0 and MATERIALS_NAME_HASH_SIZE.
+ * somewhat-random number between 0 and MATERIAL_NAME_HASH_SIZE.
  *
  * @return              The generated hash index.
  */
@@ -147,7 +147,7 @@ static uint hashForName(const char* name)
         }
     }
 
-    return key % MATERIALS_NAME_HASH_SIZE;
+    return key % MATERIAL_NAME_HASH_SIZE;
 }
 
 /**
@@ -163,9 +163,10 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
                                            material_namespace_t mnamespace)
 {
     // Go through the candidates.
-    if(hashTable[hash])
+    if(hashTable[mnamespace][hash])
     {
-        materialbind_t*     mb = &materialBinds[hashTable[hash] - 1];
+        materialbind_t*     mb = &materialBinds[
+            hashTable[mnamespace][hash] - 1];
 
         for(;;)
         {
@@ -173,7 +174,7 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
 
             mat = mb->mat;
 
-            if(mat->mnamespace == mnamespace && !strncmp(mb->name, name, 8))
+            if(!strncmp(mb->name, name, 8))
                 return ((mb) - materialBinds) + 1;
 
             if(!mb->hashNext)
@@ -214,6 +215,7 @@ static materialnum_t getMaterialNumForIndex(uint idx,
 }
 
 static void newMaterialNameBinding(material_t* mat, const char* name,
+                                   material_namespace_t mnamespace,
                                    uint hash)
 {
     materialbind_t*     mb;
@@ -233,8 +235,8 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     mb->mat = mat;
 
     // We also hash the name for faster searching.
-    mb->hashNext = hashTable[hash];
-    hashTable[hash] = (mb - materialBinds) + 1;
+    mb->hashNext = hashTable[mnamespace][hash];
+    hashTable[mnamespace][hash] = (mb - materialBinds) + 1;
 }
 
 /**
@@ -526,7 +528,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material "
     mat = createMaterial(width, height, flags, mnamespace, def, tex);
 
     // Now create a name binding for it.
-    newMaterialNameBinding(mat, name, hash);
+    newMaterialNameBinding(mat, name, mnamespace, hash);
 
     return mat;
 }
