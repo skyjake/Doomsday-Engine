@@ -74,13 +74,13 @@ void            Def_Read(void);
 
 void            Def_ReadProcessDED(const char* fileName);
 
-int             Def_GetMobjNum(char* id);
-int             Def_GetMobjNumForName(char* name);
-int             Def_GetStateNum(char* id);
-int             Def_GetSpriteNum(char* name);
+int             Def_GetMobjNum(const char* id);
+int             Def_GetMobjNumForName(const char* name);
+int             Def_GetStateNum(const char* id);
+int             Def_GetSpriteNum(const char* name);
 int             Def_GetModelNum(const char* id);
-int             Def_GetMusicNum(char* id);
-int             Def_GetSoundNum(char* id);
+int             Def_GetMusicNum(const char* id);
+int             Def_GetSoundNum(const char* id);
 int             Def_EvalFlags(char* ptr);
 ded_mapinfo_t*  Def_GetMapInfo(const char* mapID);
 ded_sky_t*      Def_GetSky(const char* id);

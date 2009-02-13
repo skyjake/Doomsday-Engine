@@ -158,7 +158,7 @@ void Def_Init(void)
     {
         while(c < MAX_READ)
         {
-            char               *arg = ArgNext();
+            char*               arg = ArgNext();
 
             if(!arg || arg[0] == '-')
                 break;
@@ -175,7 +175,7 @@ void Def_Init(void)
         for(c = 0; dedFiles[c] && c < MAX_READ; ++c);
             while(c < MAX_READ)
             {
-                char               *arg = ArgNext();
+                char*               arg = ArgNext();
 
                 if(!arg || arg[0] == '-')
                     break;
@@ -217,9 +217,9 @@ void Def_Destroy(void)
  * Guesses the location of the Defs Auto directory based on main DED
  * file.
  */
-void Def_GetAutoPath(char *path)
+void Def_GetAutoPath(char* path)
 {
-    char               *lastSlash;
+    char*               lastSlash;
 
     strcpy(path, topDefsFileName);
     lastSlash = strrchr(path, DIR_SEP_CHAR);
@@ -233,9 +233,10 @@ void Def_GetAutoPath(char *path)
 }
 
 /**
- * Returns the number of the given sprite, or -1 if it doesn't exist.
+ * @return              Number of the given sprite else,
+ *                      @c -1, if it doesn't exist.
  */
-int Def_GetSpriteNum(char *name)
+int Def_GetSpriteNum(const char* name)
 {
     int                 i;
 
@@ -249,7 +250,7 @@ int Def_GetSpriteNum(char *name)
     return -1;
 }
 
-int Def_GetMobjNum(char *id)
+int Def_GetMobjNum(const char* id)
 {
     int                 i;
 
@@ -263,7 +264,7 @@ int Def_GetMobjNum(char *id)
     return -1;
 }
 
-int Def_GetMobjNumForName(char *name)
+int Def_GetMobjNumForName(const char* name)
 {
     int                 i;
 
@@ -277,7 +278,7 @@ int Def_GetMobjNumForName(char *name)
     return -1;
 }
 
-int Def_GetStateNum(char *id)
+int Def_GetStateNum(const char* id)
 {
     int                 i;
 
@@ -305,7 +306,7 @@ int Def_GetModelNum(const char *id)
     return -1;
 }
 
-int Def_GetSoundNum(char *id)
+int Def_GetSoundNum(const char* id)
 {
     int                 i;
 
@@ -325,7 +326,7 @@ int Def_GetSoundNum(char *id)
  * Looks up a sound using the Name key. If the name is not found, returns
  * the NULL sound index (zero).
  */
-int Def_GetSoundNumForName(char *name)
+int Def_GetSoundNumForName(const char* name)
 {
     int                 i;
 
@@ -339,7 +340,7 @@ int Def_GetSoundNumForName(char *name)
     return 0;
 }
 
-int Def_GetMusicNum(char *id)
+int Def_GetMusicNum(const char* id)
 {
     int                 i;
 
@@ -359,11 +360,11 @@ int Def_GetMusicNum(char *id)
 
    } */
 
-acfnptr_t Def_GetActionPtr(char *name)
+acfnptr_t Def_GetActionPtr(const char* name)
 {
     // Action links are provided by the Game, who owns the actual
     // action functions.
-    actionlink_t       *link =
+    actionlink_t*       link =
         (actionlink_t *) gx.GetVariable(DD_ACTION_LINK);
 
     if(!name || !name[0])
@@ -640,9 +641,9 @@ int Def_GetTextNumForName(const char* name)
 /**
  * Escape sequences are un-escaped (\n, \r, \t, \s, \_).
  */
-void Def_InitTextDef(ddtext_t *txt, char *str)
+void Def_InitTextDef(ddtext_t* txt, char* str)
 {
-    char               *out, *in;
+    char*               out, *in;
 
     if(!str)
         str = ""; // Handle null pointers with "".
@@ -673,7 +674,7 @@ void Def_InitTextDef(ddtext_t *txt, char *str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
+int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
 {
     // Skip directories.
     if(type == FT_DIRECTORY)
@@ -696,7 +697,7 @@ int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
     return true;
 }
 
-void Def_ReadProcessDED(const char *fileName)
+void Def_ReadProcessDED(const char* fileName)
 {
     filename_t          fn, fullFn;
     directory_t         dir;
@@ -728,7 +729,7 @@ void Def_ReadProcessDED(const char *fileName)
 /**
  * Prints a count with a 2-space indentation.
  */
-void Def_CountMsg(int count, const char *label)
+void Def_CountMsg(int count, const char* label)
 {
     if(!verbose && !count)
         return; // Don't print zeros if not verbose.
@@ -764,9 +765,9 @@ void Def_ReadLumpDefs(void)
 /**
  * Uses gettingFor. Initializes the state-owners information.
  */
-int Def_StateForMobj(char *state_id)
+int Def_StateForMobj(const char* state)
 {
-    int                 num = Def_GetStateNum(state_id);
+    int                 num = Def_GetStateNum(state);
     int                 st, count = 16;
 
     if(num < 0)
@@ -784,10 +785,11 @@ int Def_StateForMobj(char *state_id)
             stateOwners[st] = gettingFor;
         }
     }
+
     return num;
 }
 
-int Def_GetIntValue(char *val, int *returned_val)
+int Def_GetIntValue(char* val, int* returned_val)
 {
     char               *data;
 
@@ -879,18 +881,17 @@ void Def_Read(void)
 
     for(i = 0; i < countStates.num; ++i)
     {
-        ded_state_t        *dst = &defs.states[i];
-
+        ded_state_t*        dst = &defs.states[i];
         // Make sure duplicate IDs overwrite the earliest.
         int                 stateNum = Def_GetStateNum(dst->id);
-        ded_state_t        *dstNew = defs.states + stateNum;
-        state_t            *st = states + stateNum;
+        ded_state_t*        dstNew = defs.states + stateNum;
+        state_t*            st = states + stateNum;
 
         st->sprite = Def_GetSpriteNum(dst->sprite.id);
         st->flags = dst->flags;
         st->frame = dst->frame;
 
-        // check for the old or'd in fullbright flag.
+        // Check for the old or'd in fullbright flag.
         if(st->frame & FF_FULLBRIGHT)
         {
             st->frame &= FF_FRAMEMASK;
@@ -922,10 +923,9 @@ void Def_Read(void)
                    defs.count.mobjs.num);
     for(i = 0; i < countMobjInfo.num; ++i)
     {
-        ded_mobj_t         *dmo = &defs.mobjs[i];
-
+        ded_mobj_t*         dmo = &defs.mobjs[i];
         // Make sure duplicate defs overwrite the earliest.
-        mobjinfo_t         *mo = &mobjInfo[Def_GetMobjNum(dmo->id)];
+        mobjinfo_t*         mo = &mobjInfo[Def_GetMobjNum(dmo->id)];
 
         gettingFor = mo;
         mo->doomedNum = dmo->doomedNum;
@@ -1018,10 +1018,9 @@ void Def_Read(void)
                    defs.count.sounds.num);
     for(i = 0; i < countSounds.num; ++i)
     {
-        ded_sound_t *snd = defs.sounds + i;
-
+        ded_sound_t*        snd = defs.sounds + i;
         // Make sure duplicate defs overwrite the earliest.
-        sfxinfo_t *si = sounds + Def_GetSoundNum(snd->id);
+        sfxinfo_t*          si = sounds + Def_GetSoundNum(snd->id);
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
@@ -1042,10 +1041,9 @@ void Def_Read(void)
     // Music.
     for(i = 0; i < defs.count.music.num; ++i)
     {
-        ded_music_t *mus = defs.music + i;
-
+        ded_music_t*        mus = defs.music + i;
         // Make sure duplicate defs overwrite the earliest.
-        ded_music_t *earliest = defs.music + Def_GetMusicNum(mus->id);
+        ded_music_t*        earliest = defs.music + Def_GetMusicNum(mus->id);
 
         if(earliest == mus)
             continue;
@@ -1087,7 +1085,7 @@ void Def_Read(void)
     // Particle generators.
     for(i = 0; i < defs.count.ptcGens.num; ++i)
     {
-        ded_ptcgen_t       *pg = &defs.ptcGens[i];
+        ded_ptcgen_t*       pg = &defs.ptcGens[i];
         int                 st = Def_GetStateNum(pg->state);
 
         pg->typeNum = Def_GetMobjNum(pg->type);
@@ -1124,7 +1122,7 @@ void Def_Read(void)
             // Make sure the previously built list is unlinked.
             while(statePtcGens[st])
             {
-                ded_ptcgen_t       *temp = statePtcGens[st]->stateNext;
+                ded_ptcgen_t*       temp = statePtcGens[st]->stateNext;
 
                 statePtcGens[st]->stateNext = NULL;
                 statePtcGens[st] = temp;
@@ -1260,7 +1258,7 @@ void Def_PostInit(void)
     }
 }
 
-void Def_SetLightMap(ded_lightmap_t * map, const char *id,
+void Def_SetLightMap(ded_lightmap_t* map, const char* id,
                      unsigned int texture)
 {
     if(stricmp(map->id, id))
@@ -1269,10 +1267,10 @@ void Def_SetLightMap(ded_lightmap_t * map, const char *id,
     map->tex = texture;
 }
 
-void Def_LightMapLoaded(const char *id, unsigned int texture)
+void Def_LightMapLoaded(const char* id, unsigned int texture)
 {
     int                 i, k;
-    ded_decor_t        *decor;
+    ded_decor_t*        decor;
 
     // Load lightmaps.
     for(i = 0; i < defs.count.lights.num; ++i)
@@ -1297,7 +1295,7 @@ void Def_LightMapLoaded(const char *id, unsigned int texture)
     }
 }
 
-void Def_SetFlareMap(ded_flaremap_t * map, const char *id,
+void Def_SetFlareMap(ded_flaremap_t* map, const char* id,
                      unsigned int texture, boolean disabled,
                      boolean custom)
 {
@@ -1309,11 +1307,11 @@ void Def_SetFlareMap(ded_flaremap_t * map, const char *id,
     map->custom = custom;
 }
 
-void Def_FlareMapLoaded(const char *id, unsigned int texture,
+void Def_FlareMapLoaded(const char* id, unsigned int texture,
                         boolean disabled, boolean custom)
 {
     int                 i, k;
-    ded_decor_t        *decor;
+    ded_decor_t*        decor;
 
     for(i = 0; i < defs.count.lights.num; ++i)
     {
@@ -1339,7 +1337,7 @@ void Def_FlareMapLoaded(const char *id, unsigned int texture,
  * Can we reach 'snew' if we start searching from 'sold'?
  * Take a maximum of 16 steps.
  */
-boolean Def_SameStateSequence(state_t * snew, state_t * sold)
+boolean Def_SameStateSequence(state_t* snew, state_t* sold)
 {
     int                 it, target = snew - states, start = sold - states;
     int                 count = 0;
@@ -1373,7 +1371,7 @@ static int Friendly(int num)
  * Converts a DED line type to the internal format.
  * Bit of a nuisance really...
  */
-void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
+void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
 {
     int                 i, k, a, temp;
 
@@ -1467,7 +1465,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 /**
  * Converts a DED sector type to the internal format.
  */
-void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
+void Def_CopySectorType(sectortype_t* s, ded_sectortype_t* def)
 {
     int                 i, k;
 
@@ -1515,12 +1513,12 @@ void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
 /**
  * @return              @c true, if the definition was found.
  */
-int Def_Get(int type, char *id, void *out)
+int Def_Get(int type, char* id, void* out)
 {
     int                 i;
-    ded_mapinfo_t      *map;
-    ddmapinfo_t        *mout;
-    finalescript_t     *fin;
+    ded_mapinfo_t*      map;
+    ddmapinfo_t*        mout;
+    finalescript_t*     fin;
 
     switch(type)
     {
@@ -1662,10 +1660,10 @@ int Def_Get(int type, char *id, void *out)
  * This is supposed to be the main interface for outside parties to
  * modify definitions (unless they want to do it manually with dedfile.h).
  */
-int Def_Set(int type, int index, int value, void *ptr)
+int Def_Set(int type, int index, int value, void* ptr)
 {
-    ded_music_t        *musdef = 0;
     int                 i;
+    ded_music_t*        musdef = 0;
 
     switch(type)
     {
@@ -1733,8 +1731,8 @@ int Def_Set(int type, int index, int value, void *ptr)
 }
 
 /**
- * \fixme Prints a list of all the registered mobjs to the console.
- * Does this belong here?
+ * Prints a list of all the registered mobjs to the console.
+ * \fixme Does this belong here?
  */
 D_CMD(ListMobjs)
 {
