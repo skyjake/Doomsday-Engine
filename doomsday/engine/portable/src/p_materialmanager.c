@@ -303,21 +303,30 @@ void P_DeleteMaterialTextures(material_namespace_t mnamespace)
         Con_Error("P_DeleteMaterialTextures: Internal error, "
                   "invalid materialgroup '%i'.", (int) mnamespace);
 
-    if(materialsHead)
+    if(materialBinds)
     {
-        material_t*        mat;
+        uint                i;
 
-        mat = materialsHead;
-        do
-        {
-            if(mat->mnamespace == mnamespace)
+        for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
+            if(hashTable[mnamespace][i])
             {
-                uint                i;
+                materialbind_t*     mb = &materialBinds[
+                    hashTable[mnamespace][i] - 1];
 
-                for(i = 0; i < mat->numLayers; ++i)
-                    GL_ReleaseGLTexture(mat->layers[i].tex);
+                for(;;)
+                {
+                    material_t*         mat = mb->mat;
+                    uint                j;
+
+                    for(j = 0; j < mat->numLayers; ++j)
+                        GL_ReleaseGLTexture(mat->layers[j].tex);
+
+                    if(!mb->hashNext)
+                        break;
+
+                    mb = &materialBinds[mb->hashNext - 1];
+                }
             }
-        } while((mat = mat->globalNext));
     }
 }
 
@@ -781,42 +790,74 @@ void P_MaterialManagerTicker(timespan_t time)
     animateAnimGroups();
 }
 
+static void printMaterialInfo(materialnum_t num, boolean printNamespace)
+{
+    const materialbind_t* mb = &materialBinds[num];
+    uint                i;
+    int                 numDigits = M_NumDigits(numMaterialBinds);
+
+    Con_Printf(" %*lu - \"%s\"", numDigits, num, mb->name);
+    if(printNamespace)
+        Con_Printf(" (%i)", mb->mat->mnamespace);
+    Con_Printf(" [%i, %i]", mb->mat->width, mb->mat->height);
+
+    for(i = 0; i < mb->mat->numLayers; ++i)
+    {
+        Con_Printf(" %i:%s", i, GL_GetGLTexture(mb->mat->layers[i].tex)->name);
+    }
+    Con_Printf("\n");
+}
+
 static void printMaterials(material_namespace_t mnamespace, const char* like)
 {
-    materialnum_t       i, numDigits;
+    materialnum_t       i;
 
     if(!(mnamespace < NUM_MATERIAL_NAMESPACES))
         return;
 
     if(mnamespace == MN_ANY)
+    {
         Con_Printf("Known Materials (IDX - Name (Namespace) [width, height]):\n");
+
+        for(i = 0; i < numMaterialBinds; ++i)
+        {
+            materialbind_t*     mb = &materialBinds[i];
+
+            if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
+                continue;
+
+            printMaterialInfo(i, true);
+        }
+    }
     else
+    {
         Con_Printf("Known Materials in Namespace %i (IDX - Name "
                    "[width, height]):\n", mnamespace);
 
-    numDigits = M_NumDigits(numMaterialBinds);
-    for(i = 0; i < numMaterialBinds; ++i)
-    {
-        uint                j;
-        materialbind_t*     mb = &materialBinds[i];
-        material_t*         mat = mb->mat;
-
-        if(mnamespace != MN_ANY && mat->mnamespace != mnamespace)
-            continue;
-
-        if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
-            continue;
-
-        Con_Printf(" %*lu - \"%s\"", numDigits, i, mb->name);
-        if(mnamespace == MN_ANY)
-            Con_Printf(" (%i)", mat->mnamespace);
-        Con_Printf(" [%i, %i]", mat->width, mat->height);
-
-        for(j = 0; j < mat->numLayers; ++j)
+        if(materialBinds)
         {
-            Con_Printf(" %i:%s", j, GL_GetGLTexture(mat->layers[j].tex)->name);
+            uint                i;
+
+            for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
+                if(hashTable[mnamespace][i])
+                {
+                    materialnum_t       num = hashTable[mnamespace][i] - 1;
+                    materialbind_t*     mb = &materialBinds[num];
+
+                    for(;;)
+                    {
+                        if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
+                            continue;
+
+                        printMaterialInfo(num, false);
+
+                        if(!mb->hashNext)
+                            break;
+
+                        mb = &materialBinds[mb->hashNext - 1];
+                    }
+                }
         }
-        Con_Printf("\n");
     }
 }
 
