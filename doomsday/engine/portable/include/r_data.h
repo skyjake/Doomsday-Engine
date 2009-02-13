@@ -36,6 +36,8 @@
 #include "def_data.h"
 #include "r_extres.h"
 
+#define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
+
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
@@ -302,6 +304,10 @@ void            R_DeleteSkinTextures(void);
 void            R_DestroySkins(void); // Called at shutdown.
 
 void            R_InitAnimGroup(ded_group_t* def);
+
+void            R_LoadPalette(void);
+byte*           R_GetPalette(void);
+byte*           R_GetPal18to8(void);
 
 detailtex_t*    R_CreateDetailTexture(ded_detailtexture_t* def);
 detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);

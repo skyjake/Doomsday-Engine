@@ -140,7 +140,9 @@ void            GL_InitTextureManager(void);
 void            GL_ResetTextureManager(void);
 void            GL_ShutdownTextureManager(void);
 
-void            GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlareMaps);
+void            GL_LoadSystemTextures(void);
+void            GL_LoadLightmaps(void);
+void            GL_LoadFlareTextures(void);
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
@@ -215,8 +217,6 @@ void            GL_UpdateTexParams(int mipmode);
 void            GL_DeleteRawImages(void);
 
 boolean         GL_IsColorKeyed(const char* path);
-byte*           GL_GetPalette(void);
-byte*           GL_GetPal18to8(void);
 
 // Management of and access to gltextures (via the texmanager):
 const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeID,

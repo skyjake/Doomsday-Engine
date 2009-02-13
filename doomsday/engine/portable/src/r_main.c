@@ -264,18 +264,6 @@ void R_Update(void)
 {
     uint                i;
 
-    // Stop playing sounds and music.
-    Demo_StopPlayback();
-    S_Reset();
-
-    GL_InitVarFont();
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-    GL_TotalReset(true, false, false);
-    GL_TotalReset(false, false, false); // Bring GL back online (no lightmaps, flares yet).
-
     R_UpdateTexturesAndFlats();
     R_InitTextures();
     R_InitFlats();
@@ -288,7 +276,10 @@ void R_Update(void)
     R_UpdateTranslationTables();
 
     // Now that we've read the defs, we can load lightmaps and flares.
-    GL_LoadSystemTextures(true, true);
+    GL_LoadSystemTextures();
+    GL_LoadLightmaps();
+    GL_LoadFlareTextures();
+
     Def_PostInit();
 
     R_InitModels(); // Defs might've changed.
@@ -339,11 +330,6 @@ void R_Update(void)
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    GL_ShutdownVarFont();
 
     // Update the secondary title and the game status.
     Con_InitUI();

@@ -56,8 +56,9 @@ void            GL_Register(void);
 boolean         GL_EarlyInit(void);
 void            GL_Init(void);
 void            GL_Shutdown(void);
-void            GL_TotalReset(boolean doShutdown,
-                              boolean loadLightMaps, boolean loadFlareMaps);
+void            GL_TotalReset(void);
+void            GL_TotalRestore(void);
+
 void            GL_Init2DState(void);
 void            GL_SwitchTo3DState(boolean push_state, viewport_t* port);
 void            GL_Restore2DState(int step);
@@ -66,7 +67,7 @@ void            GL_RuntimeMode(void);
 void            GL_DoUpdate(void);
 void            GL_BlendMode(blendmode_t mode);
 
-void            GL_InitRefresh(boolean loadLightMaps, boolean loadFlareMaps);
+void            GL_InitRefresh(void);
 void            GL_ShutdownRefresh(void);
 void            GL_UseFog(int yes);
 void            GL_InitVarFont(void);
@@ -91,19 +92,21 @@ void            GL_DeleteLists(DGLuint list, int range);
 void            GL_InitArrays(void);
 void            GL_EnableArrays(int vertices, int colors, int coords);
 void            GL_DisableArrays(int vertices, int colors, int coords);
-void            GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
+void            GL_Arrays(void* vertices, void* colors, int numCoords, void** coords,
                            int lock);
 void            GL_UnlockArrays(void);
 void            GL_ArrayElement(int index);
-void            GL_DrawElements(dglprimtype_t type, int count, const uint *indices);
-boolean         GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer);
-boolean         GL_TexImage(dgltexformat_t format, int width, int height, int genMips, void *data);
-void            GL_Palette(dgltexformat_t format, void *data);
+void            GL_DrawElements(dglprimtype_t type, int count, const uint* indices);
+boolean         GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void* buffer);
+boolean         GL_TexImage(dgltexformat_t format, int width, int height, int genMips, void* data);
 int             GL_GetTexAnisoMul(int level);
+
+void            GL_InitPalette(void);
+void            GL_Palette(dgltexformat_t format, void* data);
 
 // Returns a pointer to a copy of the screen. The pointer must be
 // deallocated by the caller.
-unsigned char  *GL_GrabScreen(void);
+unsigned char*  GL_GrabScreen(void);
 
 // Console commands.
 D_CMD(UpdateGammaRamp);

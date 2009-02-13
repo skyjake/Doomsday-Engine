@@ -40,8 +40,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define RGB18(r, g, b) ((r)+((g)<<6)+((b)<<12))
-
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
 
@@ -120,40 +118,6 @@ void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
 }
 
 /**
- * Prepare the pal18To8 table.
- * A time-consuming operation (64 * 64 * 64 * 256!).
- */
-void CalculatePal18to8(byte *dest, byte *palette)
-{
-    int         r, g, b, i;
-    byte        palRGB[3];
-    unsigned int diff, smallestDiff, closestIndex = 0;
-
-    for(r = 0; r < 64; ++r)
-        for(g = 0; g < 64; ++g)
-            for(b = 0; b < 64; ++b)
-            {
-                // We must find the color index that most closely
-                // resembles this RGB combination.
-                smallestDiff = 0;
-                for(i = 0; i < 256; ++i)
-                {
-                    memcpy(palRGB, palette + 3 * i, 3);
-                    diff =
-                        (palRGB[0] - (r << 2)) * (palRGB[0] - (r << 2)) +
-                        (palRGB[1] - (g << 2)) * (palRGB[1] - (g << 2)) +
-                        (palRGB[2] - (b << 2)) * (palRGB[2] - (b << 2));
-                    if(diff < smallestDiff)
-                    {
-                        smallestDiff = diff;
-                        closestIndex = i;
-                    }
-                }
-                dest[RGB18(r, g, b)] = closestIndex;
-            }
-}
-
-/**
  * in/out format:
  * 1 = palette indices
  * 2 = palette indices followed by alpha values
@@ -200,7 +164,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
     // Conversion from RGB(A) to pal8(a), using pal18To8.
     else if(informat >= 3 && outformat <= 2)
     {
-        byte *pal18To8 = GL_GetPal18to8();
+        byte*           pal18To8 = R_GetPal18to8();
 
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
@@ -758,11 +722,11 @@ void ColorOutlines(byte *buffer, int width, int height)
  * looking up the nearest match in the PLAYPAL. Increases the brightness
  * to maximum.
  */
-void DeSaturate(byte *buffer, byte *palette, int width, int height)
+void DeSaturate(byte* buffer, byte* palette, int width, int height)
 {
-    int         i, max, temp = 0, paletteIndex = 0;
-    byte       *rgb, *pal18To8 = GL_GetPal18to8();
-    const int   numpels = width * height;
+    int                 i, max, temp = 0, paletteIndex = 0;
+    byte*               rgb, *pal18To8 = R_GetPal18to8();
+    const int           numpels = width * height;
 
     // What is the maximum color value?
     max = 0;
@@ -1009,7 +973,7 @@ void GL_CalcLuminance(byte *buffer, int width, int height, int pixelSize,
                       float* brightX, float* brightY, rgbcol_t* color,
                       float* lumSize)
 {
-    byte*               palette = (pixelSize == 1? GL_GetPalette() : NULL);
+    byte*               palette = (pixelSize == 1? R_GetPalette() : NULL);
     int                 i, k, x, y, c, cnt = 0, posCnt = 0;
     byte                rgb[3], *src, *alphaSrc = NULL;
     int                 limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;

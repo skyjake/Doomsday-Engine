@@ -53,8 +53,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define PALLUMPNAME     "PLAYPAL"
-
 #define GLTEXTURE_NAME_HASH_SIZE (512)
 
 // TYPES -------------------------------------------------------------------
@@ -92,7 +90,6 @@ void            GLTexture_SetMinMode(gltexture_t* tex, int minMode);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void LoadPalette(void);
 static void GL_SetTexCoords(float* tc, int wid, int hgt);
 static void calcGammaTable(void);
 
@@ -119,11 +116,6 @@ int texAniso = -1; // Use best.
 
 float texGamma = 0;
 byte gammaTable[256];
-
-// Convert a 18-bit RGB (666) value to a playpal index.
-// \fixme 256kb - Too big?
-byte pal18To8[262144];
-int palLump;
 
 int glmode[6] = // Indexed by 'mipmapping'.
 {
@@ -209,21 +201,10 @@ void GL_EarlyInitTextureManager(void)
     // Initialize the smart texture filtering routines.
     GL_InitSmartFilter();
 
-    // The palette lump, for color information (really??!!?!?!).
-    palLump = W_GetNumForName(PALLUMPNAME);
-
-    // Load the pal18To8 table from the lump PAL18TO8. We need it
-    // when resizing textures.
-    if((i = W_CheckNumForName("PAL18TO8")) == -1)
-        CalculatePal18to8(pal18To8, GL_GetPalette());
-    else
-        memcpy(pal18To8, W_CacheLumpNum(i, PU_CACHE), sizeof(pal18To8));
-
     calcGammaTable();
 
     numGLTextures = 0;
     glTextures = NULL;
-
     for(i = 0; i < NUM_GLTEXTURE_TYPES; ++i)
         memset(glTextureTypeData[i].hashTable, 0, sizeof(glTextureTypeData[i].hashTable));
 }
@@ -249,25 +230,6 @@ void GL_InitTextureManager(void)
 
     // Should we allow using external resources with PWAD textures?
     highResWithPWAD = ArgExists("-pwadtex");
-
-    // Do we need to generate a pal18To8 table?
-    if(ArgCheck("-dump_pal18to8"))
-    {
-        CalculatePal18to8(pal18To8, GL_GetPalette());
-
-        {
-            FILE   *file = fopen("pal18To8.lmp", "wb");
-
-            fwrite(pal18To8, sizeof(pal18To8), 1, file);
-            fclose(file);
-        }
-    }
-
-    GL_InitPalettedTexture();
-
-    // DGL needs the palette information regardless of whether the
-    // paletted textures are enabled or not.
-    LoadPalette();
 
     // System textures loaded in GL_LoadSystemTextures.
     memset(flareTextures, 0, sizeof(flareTextures));
@@ -334,36 +296,6 @@ static void calcGammaTable(void)
     invGamma = 1.0f - MINMAX_OF(0, texGamma, 1);
     for(i = 0; i < 256; ++i)
         gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
-}
-
-static void LoadPalette(void)
-{
-    int                 i, c;
-    byte*               playPal;
-    byte                palData[256 * 3];
-
-    palLump = W_GetNumForName(PALLUMPNAME);
-    playPal = GL_GetPalette();
-
-    // Prepare the color table.
-    for(i = 0; i < 256; ++i)
-    {
-        // Adjust the values for the appropriate gamma level.
-        for(c = 0; c < 3; ++c)
-            palData[i * 3 + c] = gammaTable[playPal[i * 3 + c]];
-    }
-
-    GL_Palette(DGL_RGB, palData);
-}
-
-byte *GL_GetPalette(void)
-{
-    return W_CacheLumpNum(palLump, PU_CACHE);
-}
-
-byte *GL_GetPal18to8(void)
-{
-    return pal18To8;
 }
 
 /**
@@ -443,9 +375,9 @@ void GL_DeleteLightMap(ded_lightmap_t* map)
 }
 
 /**
- * Flaremaps are normally monochrome images but we'll allow full color.
+ * Flare textures are normally monochrome images but we'll allow full color.
  */
-void GL_LoadFlareMap(ded_flaremap_t* map, int oldidx)
+void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
 {
     image_t             image;
     filename_t          resource;
@@ -459,7 +391,7 @@ void GL_LoadFlareMap(ded_flaremap_t* map, int oldidx)
 
     if(!strcmp(map->id, "-"))
     {
-        // No flaremap, if we don't know where to find the map.
+        // We don't know where to find the texture.
         map->tex = 0;
         map->disabled = true;
         map->custom = false;
@@ -494,7 +426,7 @@ void GL_LoadFlareMap(ded_flaremap_t* map, int oldidx)
             // No mipmapping or resizing is needed, upload directly.
             GL_DestroyImage(&image);
 
-            // Copy this to all defs with the same flaremap.
+            // Copy this to all defs with the same flare texture.
             Def_FlareMapLoaded(map->id, map->tex, map->disabled, map->custom);
             loaded = true;
         }
@@ -552,7 +484,7 @@ void GL_LoadFlareMap(ded_flaremap_t* map, int oldidx)
     }
 }
 
-void GL_DeleteFlareMap(ded_flaremap_t* map)
+void GL_DeleteFlareTexture(ded_flaremap_t* map)
 {
     if(map->tex != flareTextures[FXT_FLARE].tex)
     {
@@ -564,7 +496,7 @@ void GL_DeleteFlareMap(ded_flaremap_t* map)
 /**
  * Prepares all the system textures (dlight, ptcgens).
  */
-void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
+void GL_LoadSystemTextures(void)
 {
     struct ddtexdef_s {
         char            name[9];
@@ -577,8 +509,7 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
         {"DDT_BBOX", DDT_BBOX},
         {"DDT_GRAY", DDT_GRAY}
     };
-    int                 i, k;
-    ded_decor_t*        decor;
+    int                 i;
 
     if(!texInited)
         return;
@@ -601,7 +532,6 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
     GL_PrepareLSTexture(LST_DYNAMIC);
     GL_PrepareLSTexture(LST_GRADIENT);
 
-    // Preload flares
     GL_PrepareFlareTexture(FXT_FLARE);
     if(!haloRealistic)
     {
@@ -609,48 +539,74 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
         GL_PrepareFlareTexture(FXT_BIGFLARE);
     }
 
-    if(loadLightMaps || loadFlares)
+    PG_InitTextures(); // Load particle textures.
+}
+
+/**
+ * Prepares all the lightmap textures.
+ */
+void GL_LoadLightmaps(void)
+{
+    int                 i;
+    ded_decor_t*        decor;
+
+    if(!texInited)
+        return;
+
+    for(i = 0; i < defs.count.lights.num; ++i)
     {
-        // Load lightmaps and flaremaps.
-        for(i = 0; i < defs.count.lights.num; ++i)
-        {
-            if(loadLightMaps)
-            {
-                GL_LoadLightMap(&defs.lights[i].up);
-                GL_LoadLightMap(&defs.lights[i].down);
-                GL_LoadLightMap(&defs.lights[i].sides);
-            }
-
-            if(loadFlares)
-                GL_LoadFlareMap(&defs.lights[i].flare, -1);
-        }
-        for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-            ++i, decor++)
-        {
-            for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-            {
-                if(loadFlares)
-                    GL_LoadFlareMap(&decor->lights[k].flare,
-                                    decor->lights[k].flareTexture);
-
-                if(!R_IsValidLightDecoration(&decor->lights[k]))
-                    break;
-
-                if(loadLightMaps)
-                {
-                    GL_LoadLightMap(&decor->lights[k].up);
-                    GL_LoadLightMap(&decor->lights[k].down);
-                    GL_LoadLightMap(&decor->lights[k].sides);
-                }
-            }
-
-            // Generate RGB lightmaps for decorations.
-            //R_GenerateDecorMap(decor);
-        }
+        GL_LoadLightMap(&defs.lights[i].up);
+        GL_LoadLightMap(&defs.lights[i].down);
+        GL_LoadLightMap(&defs.lights[i].sides);
     }
 
-    // Load particle textures.
-    PG_InitTextures();
+    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
+        ++i, decor++)
+    {
+        int                 k;
+
+        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        {
+            if(!R_IsValidLightDecoration(&decor->lights[k]))
+                break;
+
+            GL_LoadLightMap(&decor->lights[k].up);
+            GL_LoadLightMap(&decor->lights[k].down);
+            GL_LoadLightMap(&decor->lights[k].sides);
+        }
+
+        // Generate RGB lightmaps for decorations.
+        //R_GenerateDecorMap(decor);
+    }
+}
+
+/**
+ * Prepares all the flare textures.
+ */
+void GL_LoadFlareTextures(void)
+{
+    int                 i;
+    ded_decor_t*        decor;
+
+    if(!texInited)
+        return;
+
+    for(i = 0; i < defs.count.lights.num; ++i)
+    {
+        GL_LoadFlareTexture(&defs.lights[i].flare, -1);
+    }
+
+    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
+        ++i, decor++)
+    {
+        int                 k;
+
+        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        {
+            GL_LoadFlareTexture(&decor->lights[k].flare,
+                            decor->lights[k].flareTexture);
+        }
+    }
 }
 
 /**
@@ -671,7 +627,7 @@ void GL_ClearSystemTextures(void)
         GL_DeleteLightMap(&defs.lights[i].down);
         GL_DeleteLightMap(&defs.lights[i].sides);
 
-        GL_DeleteFlareMap(&defs.lights[i].flare);
+        GL_DeleteFlareTexture(&defs.lights[i].flare);
     }
     for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
         ++i, decor++)
@@ -684,7 +640,7 @@ void GL_ClearSystemTextures(void)
             GL_DeleteLightMap(&decor->lights[k].down);
             GL_DeleteLightMap(&decor->lights[k].sides);
 
-            GL_DeleteFlareMap(&decor->lights[k].flare);
+            GL_DeleteFlareTexture(&decor->lights[k].flare);
         }
     }
 
@@ -854,7 +810,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
         freeOriginal = true;
         rgbaOriginal = M_Malloc(width * height * comps);
         GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data,
-                         rgbaOriginal, GL_GetPalette(), !load8bit);
+                         rgbaOriginal, R_GetPalette(), !load8bit);
     }
 
     if(applyTexGamma)
@@ -878,7 +834,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
             byte   *temp = M_Malloc(4 * width * height);
 
             GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp,
-                             GL_GetPalette(), !load8bit);
+                             R_GetPalette(), !load8bit);
             if(freeOriginal)
                 M_Free(rgbaOriginal);
             rgbaOriginal = temp;
@@ -965,7 +921,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
             // Convert to palette indices.
             GL_ConvertBuffer(levelWidth, levelHeight, comps,
                              alphaChannel ? 2 : 1, buffer, idxBuffer,
-                             GL_GetPalette(), false);
+                             R_GetPalette(), false);
 
             // Upload it.
             if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
@@ -2296,7 +2252,7 @@ DGLuint GL_BindTexPatch(patchtex_t* p)
 
         if(monochrome || (p->flags & PF_MONOCHROME))
         {
-            DeSaturate(buffer, GL_GetPalette(), patchWidth, patchHeight);
+            DeSaturate(buffer, R_GetPalette(), patchWidth, patchHeight);
             p->flags |= PF_MONOCHROME;
         }
 
@@ -2306,7 +2262,7 @@ DGLuint GL_BindTexPatch(patchtex_t* p)
             byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
 
             GL_ConvertBuffer(patchWidth, patchHeight, 2, 4, buffer, rgbaPixels,
-                             GL_GetPalette(), false);
+                             R_GetPalette(), false);
 
             GL_SmartFilter2x(rgbaPixels, upscaledPixels, patchWidth, patchHeight,
                              patchWidth * 8);
@@ -2335,7 +2291,7 @@ DGLuint GL_BindTexPatch(patchtex_t* p)
 
             // Back to indexed+alpha.
             GL_ConvertBuffer(patchWidth, patchHeight, 4, 2, upscaledPixels, rgbaPixels,
-                             GL_GetPalette(), false);
+                             R_GetPalette(), false);
 
             // Replace the old buffer.
             M_Free(upscaledPixels);
@@ -2521,7 +2477,10 @@ void GL_DoUpdateTexParams(cvar_t *unused)
 void GL_TexReset(void)
 {
     GL_ClearTextureMemory();
-    GL_LoadSystemTextures(true, true);
+    GL_LoadSystemTextures();
+    GL_LoadLightmaps();
+    GL_LoadFlareTextures();
+
     Con_Printf("All DGL textures deleted.\n");
 }
 
@@ -2533,7 +2492,7 @@ void GL_DoUpdateTexGamma(cvar_t *unused)
     if(texInited)
     {
         calcGammaTable();
-        LoadPalette();
+        GL_InitPalette();
         GL_TexReset();
     }
 
@@ -3279,7 +3238,7 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
             else
             {
                 averageColorIdx(texInst->data.texture.color, image.pixels, image.width, image.height,
-                                GL_GetPalette(), false);
+                                R_GetPalette(), false);
             }
 
             // Calculate the averaged top line color.
@@ -3291,7 +3250,7 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
             else
             {
                 lineAverageColorIdx(texInst->data.texture.topColor, image.pixels, image.width,
-                                    image.height, 0, GL_GetPalette(), false);
+                                    image.height, 0, R_GetPalette(), false);
             }
         }
 

@@ -42,6 +42,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define PALLUMPNAME         "PLAYPAL"
+
 #define PATCHTEX_HASH_SIZE  128
 #define PATCHTEX_HASH(x)    (patchtexhash + (((unsigned) x) & (PATCHTEX_HASH_SIZE - 1)))
 
@@ -115,6 +117,11 @@ byte rendInfoRPolys = 0;
 // Created in r_model.c, when registering the skins.
 int numSkinNames;
 skintex_t* skinNames;
+
+// Convert a 18-bit RGB (666) value to a playpal index.
+// \fixme 256kb - Too big?
+byte pal18To8[262144];
+int palLump;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -610,6 +617,77 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 void R_ShutdownData(void)
 {
     P_ShutdownMaterialManager();
+}
+
+byte* R_GetPal18to8(void)
+{
+    return pal18To8;
+}
+
+/**
+ * Prepare the pal18To8 table.
+ * A time-consuming operation (64 * 64 * 64 * 256!).
+ */
+static void calculatePal18to8(byte* dest, byte* palette)
+{
+    int                 r, g, b, i;
+    byte                palRGB[3];
+    unsigned int        diff, smallestDiff, closestIndex = 0;
+
+    for(r = 0; r < 64; ++r)
+    {
+        for(g = 0; g < 64; ++g)
+        {
+            for(b = 0; b < 64; ++b)
+            {
+                // We must find the color index that most closely
+                // resembles this RGB combination.
+                smallestDiff = 0;
+                for(i = 0; i < 256; ++i)
+                {
+                    memcpy(palRGB, palette + 3 * i, 3);
+                    diff =
+                        (palRGB[0] - (r << 2)) * (palRGB[0] - (r << 2)) +
+                        (palRGB[1] - (g << 2)) * (palRGB[1] - (g << 2)) +
+                        (palRGB[2] - (b << 2)) * (palRGB[2] - (b << 2));
+                    if(diff < smallestDiff)
+                    {
+                        smallestDiff = diff;
+                        closestIndex = i;
+                    }
+                }
+                dest[RGB18(r, g, b)] = closestIndex;
+            }
+        }
+    }
+}
+
+void R_LoadPalette(void)
+{
+    lumpnum_t           lump;
+
+    // The palette lump, for color information (really??!!?!?!).
+    palLump = W_GetNumForName(PALLUMPNAME);
+
+    // Load the pal18To8 table from the lump PAL18TO8. We need it
+    // when resizing textures.
+    if((lump = W_CheckNumForName("PAL18TO8")) == -1)
+        calculatePal18to8(pal18To8, R_GetPalette());
+    else
+        memcpy(pal18To8, W_CacheLumpNum(lump, PU_CACHE), sizeof(pal18To8));
+
+    if(ArgCheck("-dump_pal18to8"))
+    {
+        FILE*           file = fopen("pal18To8.lmp", "wb");
+
+        fwrite(pal18To8, sizeof(pal18To8), 1, file);
+        fclose(file);
+    }
+}
+
+byte* R_GetPalette(void)
+{
+    return W_CacheLumpNum(palLump, PU_CACHE);
 }
 
 /**

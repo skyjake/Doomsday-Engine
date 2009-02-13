@@ -428,7 +428,7 @@ void R_PalIdxToRGB(float* rgb, int idx, boolean correctGamma)
     {
         if(!(idx < 0))
         {
-            byte*               pal = GL_GetPalette();
+            byte*               pal = R_GetPalette();
 
             idx = MINMAX_OF(0, idx, 255) * 3;
             if(correctGamma)

@@ -67,7 +67,6 @@ int             DrawRealPatch(byte *buffer, int texwidth, int texheight,
                               boolean maskZero, unsigned char *transtable,
                               boolean checkForAlpha);
 void            DeSaturate(byte *buffer, byte *palette, int width, int height);
-void            CalculatePal18to8(byte *dest, byte *palette);
 boolean         ImageHasAlpha(image_t *image);
 
 #endif

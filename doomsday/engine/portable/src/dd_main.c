@@ -407,7 +407,9 @@ int DD_Main(void)
     if(!isDedicated)
     {
         GL_Init();
-        GL_InitRefresh(true, true);
+        GL_InitRefresh();
+        GL_LoadLightmaps();
+        GL_LoadFlareTextures();
     }
 
     // Do deferred uploads.
@@ -581,6 +583,8 @@ static int DD_StartupWorker(void *parm)
     gx.UpdateState(DD_GAME_MODE);
 
     // Palette information will be needed for preparing textures.
+    R_LoadPalette();
+
     GL_EarlyInitTextureManager();
 
     // Get the material manager up and running.
@@ -799,8 +803,19 @@ void DD_AddStartupWAD(const char *file)
     wadFiles[i] = new;
 }
 
+static int DD_UpdateWorker(void* parm)
+{
+    GL_InitRefresh();
+    R_Update();
+
+    Con_BusyWorkerEnd();
+    return 0;
+}
+
 void DD_UpdateEngineState(void)
 {
+    boolean             hadFog;
+
     // Update refresh.
     Con_Message("Updating state...\n");
 
@@ -808,14 +823,41 @@ void DD_UpdateEngineState(void)
     F_InitDirec();
 
     gx.UpdateState(DD_PRE);
-    R_Update();
+
+    // Stop playing sounds and music.
+    Demo_StopPlayback();
+    S_Reset();
+
+    GL_InitVarFont();
+
+    /*glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);*/
+
+    hadFog = usingFog;
+    GL_TotalReset();
+    GL_TotalRestore(); // Bring GL back online.
+
+    // Make sure the fog is enabled, if necessary.
+    if(hadFog)
+        GL_UseFog(true);
+
+    // Now that GL is back online, we can continue the update in busy mode.
+    Con_InitProgress(200);
+    Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR
+             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Updating engine state...",
+             DD_UpdateWorker, NULL);
+
+    GL_ShutdownVarFont();
+
+    /*glMatrixMode(GL_PROJECTION);
+    glPopMatrix();*/
+
     gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
     R_ResetAnimGroups();
-
-    // \fixme We need to update surfaces.
-    //R_UpdateAllSurfaces(true);
 }
 
 /* *INDENT-OFF* */

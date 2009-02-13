@@ -599,6 +599,34 @@ boolean GL_EarlyInit(void)
     return true;
 }
 
+void GL_InitPalette(void)
+{
+    int                 i, c;
+    byte*               playPal;
+    byte                palData[256 * 3];
+
+    if(novideo)
+        return;
+
+    GL_InitPalettedTexture();
+
+    /**
+     * DGL needs the palette information regardless of whether the
+     * paletted textures are enabled or not.
+     */
+
+    // Prepare the color table.
+    playPal = R_GetPalette();
+    for(i = 0; i < 256; ++i)
+    {
+        // Adjust the values for the appropriate gamma level.
+        for(c = 0; c < 3; ++c)
+            palData[i * 3 + c] = gammaTable[playPal[i * 3 + c]];
+    }
+
+    GL_Palette(DGL_RGB, palData);
+}
+
 /**
  * Finishes GL initialization. This can be called once the virtual file
  * system has been fully loaded up, and the console variables have been
@@ -614,6 +642,9 @@ void GL_Init(void)
     // Initialize font renderer.
     GL_InitFont();
 
+    // Initialize palette management.
+    GL_InitPalette();
+
     // Set the gamma in accordance with vid-gamma, vid-bright and
     // vid-contrast.
     GL_SetGamma();
@@ -624,12 +655,11 @@ void GL_Init(void)
 
 /**
  * Initializes the graphics library for refresh. Also called at update.
- * Loadmaps can be loaded after all definitions have been read.
  */
-void GL_InitRefresh(boolean loadLightMaps, boolean loadFlares)
+void GL_InitRefresh(void)
 {
     GL_InitTextureManager();
-    GL_LoadSystemTextures(loadLightMaps, loadFlares);
+    GL_LoadSystemTextures();
 }
 
 /**
@@ -818,64 +848,54 @@ void GL_UseFog(int yes)
 }
 
 /**
- * This needs to be called twice: first shutdown, then restore.
  * GL is reset back to the state it was right after initialization.
- * Lightmaps and flares can be loaded after defs have been loaded
- * (during restore).
+ * Use GL_TotalRestore to bring back online.
  */
-void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
-                   boolean loadFlares)
+void GL_TotalReset(void)
 {
-//    static char oldFontName[256];
-    static boolean hadFog;
-
     if(isDedicated)
         return;
 
-    if(doShutdown)
+    GL_ShutdownVarFont();
+
+    // Update the secondary title and the game status.
+    Con_InitUI();
+
+    // Delete all textures.
+    GL_ResetTextureManager();
+    GL_ShutdownFont();
+    GL_ReleaseReservedNames();
+
+#if _DEBUG
+    Z_CheckHeap();
+#endif
+}
+
+/**
+ * Called after a GL_TotalReset to bring GL back online.
+ */
+void GL_TotalRestore(void)
+{
+    if(isDedicated)
+        return;
+
+    // Getting back up and running.
+    GL_ReserveNames();
+    GL_InitFont();
+    GL_InitVarFont();
+    GL_Init2DState();
+    GL_InitPalette();
+
     {
-        //int         fontIDX = -1;
+    gamemap_t*          map = P_GetCurrentMap();
+    ded_mapinfo_t*      mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
-        hadFog = usingFog;
-        GL_ShutdownVarFont();
-
-        // Update the secondary title and the game status.
-        Con_InitUI();
-
-//        if(fontIDX != -1)
-//            strcpy(oldFontName, FR_GetFont(fontIDX)->name);
-
-        // Delete all textures.
-        GL_ResetTextureManager();
-        GL_ShutdownFont();
-        GL_ReleaseReservedNames();
-    }
+    // Restore map's fog settings.
+    if(!mapInfo || !(mapInfo->flags & MIF_FOG))
+        R_SetupFogDefaults();
     else
-    {
-        gamemap_t  *map = P_GetCurrentMap();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
-        // Getting back up and running.
-        GL_ReserveNames();
-        GL_InitFont();
-        GL_InitVarFont();
-
-        // Restore the old font.
-        //Con_Executef(CMDS_DDAY, true, "font name %s", oldFontName, false);
-        GL_Init2DState();
-
-        GL_InitRefresh(loadLightMaps, loadFlares);
-
-        // Restore map's fog settings.
-        if(!mapInfo || !(mapInfo->flags & MIF_FOG))
-            R_SetupFogDefaults();
-        else
-            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
-                       mapInfo->fogDensity, mapInfo->fogColor);
-
-        // Make sure the fog is enabled, if necessary.
-        if(hadFog)
-            GL_UseFog(true);
+        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
+                   mapInfo->fogDensity, mapInfo->fogColor);
     }
 
 #if _DEBUG

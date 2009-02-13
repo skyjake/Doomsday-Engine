@@ -711,17 +711,21 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     // Do we need a new GL context due to changes to the window?
     if(!novideo && newGLContext)
     {   // Maybe requires a renderer restart.
+extern boolean usingFog;
+
         boolean         glIsInited = GL_IsInited();
 #if defined(WIN32)
         void           *data = window->hWnd;
 #else
         void           *data = NULL;
 #endif
+        boolean         hadFog;
 
         if(glIsInited)
         {
             // Shut everything down, but remember our settings.
-            GL_TotalReset(true, 0, 0);
+            hadFog = usingFog;
+            GL_TotalReset();
             gx.UpdateState(DD_RENDER_RESTART_PRE);
         }
 
@@ -736,7 +740,13 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
         if(glIsInited)
         {
             // Re-initialize.
-            GL_TotalReset(false, true, true);
+            GL_TotalRestore();
+            GL_InitRefresh();
+            GL_LoadLightmaps();
+            GL_LoadFlareTextures();
+
+            if(hadFog)
+                GL_UseFog(true);
             gx.UpdateState(DD_RENDER_RESTART_POST);
         }
     }
