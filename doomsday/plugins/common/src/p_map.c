@@ -1549,7 +1549,7 @@ boolean PTR_ShootTraverse(intercept_t* in)
         d[VY] = pos[VY] - tracePos[VY];
         d[VZ] = pos[VZ] - tracePos[VZ];
 
-        if(d[VZ] != 0)
+        if(!INRANGE_OF(d[VZ], 0, .0001f)) // Epsilon
         {
             contact = R_PointInSubsector(pos[VX], pos[VY]);
             step = P_ApproxDistance3(d[VX], d[VY], d[VZ]);
