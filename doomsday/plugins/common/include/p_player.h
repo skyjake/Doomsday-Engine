@@ -37,32 +37,37 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #if __JHEXEN__
-void        P_InitPlayerClassInfo(void);
+void            P_InitPlayerClassInfo(void);
 #endif
 
-int         P_GetPlayerNum(player_t* player);
-int         P_GetPlayerCheats(player_t* player);
+int             P_GetPlayerNum(player_t* plr);
+int             P_GetPlayerCheats(player_t* plr);
 
-weapontype_t P_PlayerFindWeapon(player_t* player, boolean next);
-weapontype_t P_MaybeChangeWeapon(player_t* player, weapontype_t weapon,
-                                 ammotype_t ammo, boolean force);
-boolean     P_CheckAmmo(player_t* player);
-void        P_ShotAmmo(player_t* player);
+weapontype_t    P_PlayerFindWeapon(player_t* plr, boolean next);
+weapontype_t    P_MaybeChangeWeapon(player_t* plr, weapontype_t weapon,
+                                    ammotype_t ammo, boolean force);
+boolean         P_CheckAmmo(player_t* plr);
+void            P_ShotAmmo(player_t* plr);
 
 #if __JHEXEN__
-void        P_PlayerChangeClass(player_t* player, playerclass_t newClass);
+void            P_PlayerChangeClass(player_t* plr, playerclass_t newClass);
 #endif
 
-void        P_SetMessage(player_t* player, char* msg, boolean noHide);
+void            P_SetMessage(player_t* plr, char* msg, boolean noHide);
 #if __JHEXEN__ || __JSTRIFE__
-void        P_SetYellowMessage(player_t* player, char* msg, boolean noHide);
+void            P_SetYellowMessage(player_t* plr, char* msg, boolean noHide);
 #endif
 
-boolean     P_IsCamera(mobj_t* mo);
-void        P_PlayerThinkCamera(player_t* player);
+void            P_PlayerThinkCamera(player_t* plr);
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void            P_PlayerSetArmorType(player_t* plr, int type);
+int             P_PlayerGiveArmorBonus(player_t* plr, int points);
+#else // __JHEXEN__
+int             P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points);
+#endif
+
 #endif

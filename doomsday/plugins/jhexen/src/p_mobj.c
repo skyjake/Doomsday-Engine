@@ -748,7 +748,7 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // Adjust height.
     mo->pos[VZ] += mo->mom[MZ];
-    if((mo->flags & MF_FLOAT) && mo->target && !P_IsCamera(mo->target))
+    if((mo->flags & MF_FLOAT) && mo->target && !P_MobjIsCamera(mo->target))
     {
         // Float down towards target if too close.
         if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
@@ -1859,7 +1859,7 @@ boolean P_HitFloor(mobj_t *thing)
         return false;
 
     default:
-        if(P_IsCamera(thing))
+        if(P_MobjIsCamera(thing))
             return false;
         break;
     }
@@ -2434,7 +2434,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle,
     default:
         if(source->player)
         {
-            if(!P_IsCamera(source->player->plr->mo))
+            if(!P_MobjIsCamera(source->player->plr->mo))
                 spawnZOff = cfg.plrViewHeight - 9 +
                     source->player->plr->lookDir / 173;
         }
@@ -2550,7 +2550,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     }
     else
     {
-        if(!P_IsCamera(source->player->plr->mo))
+        if(!P_MobjIsCamera(source->player->plr->mo))
             pos[VZ] += cfg.plrViewHeight - 9 +
                 (source->player->plr->lookDir / 173);
         pos[VZ] -= source->floorClip;
@@ -2622,7 +2622,7 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
     }
 
     memcpy(pos, source->pos, sizeof(pos));
-    if(!P_IsCamera(source->player->plr->mo))
+    if(!P_MobjIsCamera(source->player->plr->mo))
         pos[VZ] += cfg.plrViewHeight - 9 +
             (source->player->plr->lookDir / 173);
     pos[VZ] -= source->floorClip;
@@ -2674,7 +2674,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
         }
     }
 
-    if(!P_IsCamera(source->player->plr->mo))
+    if(!P_MobjIsCamera(source->player->plr->mo))
         z += cfg.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
     z -= source->floorClip;
     th = P_SpawnMobj3f(type, x, y, z, angle);

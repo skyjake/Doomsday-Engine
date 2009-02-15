@@ -38,6 +38,8 @@ void            P_MobjSetSRVOZ(mobj_t* mo, float stepz);
 void            P_MobjClearSRVO(mobj_t* mo);
 void            P_MobjAngleSRVOTicker(mobj_t* mo);
 
+boolean         P_MobjIsCamera(mobj_t* mo);
+
 void            P_UpdateHealthBits(mobj_t* mo);
 
 #endif

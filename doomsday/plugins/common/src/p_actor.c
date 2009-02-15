@@ -214,6 +214,13 @@ void P_MobjClearSRVO(mobj_t *mo)
     memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
+boolean P_MobjIsCamera(mobj_t *mo)
+{
+    // Client mobjs do not have thinkers and thus cannot be cameras.
+    return (mo && mo->thinker.function && mo->player &&
+            (mo->player->plr->flags & DDPF_CAMERA));
+}
+
 /**
  * The first three bits of the selector special byte contain a relative
  * health level.

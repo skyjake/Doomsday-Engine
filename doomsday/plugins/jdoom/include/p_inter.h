@@ -40,5 +40,5 @@ void            P_GiveKey(player_t *plr, keytype_t keyType);
 boolean         P_GiveBody(player_t *plr, int num);
 void            P_GiveBackpack(player_t *plr);
 boolean         P_GiveWeapon(player_t *plr, weapontype_t weapon, boolean dropped);
-boolean         P_GiveArmor(player_t* plr, int type, int points);
+boolean         P_GiveArmorType(player_t* plr, int type, int points);
 #endif

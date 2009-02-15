@@ -327,7 +327,7 @@ static void rendHUD(int player)
 
         // Do we need to render a full status bar at this point?
         if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
-           !(P_IsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             int                 viewmode =
                 ((WINDOWHEIGHT == 200)? cfg.setBlocks - 10 : 0);
@@ -354,7 +354,7 @@ void D_Display(int layer)
     if(layer == 0)
     {
         // $democam: can be set on every frame.
-        if(cfg.setBlocks > 10 || (P_IsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             // Full screen.
             R_SetViewWindowTarget(0, 0, 320, 200);
@@ -395,7 +395,7 @@ void D_Display(int layer)
             R_DrawSpecialFilter(player);
 
             // Crosshair.
-            if(!(P_IsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
+            if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
                 X_Drawer(player);
         }
 
@@ -499,7 +499,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
         mo->ddFlags |= DDMF_FLY | DDMF_NOGRAVITY;
 
     // $democam: cameramen are invisible
-    if(P_IsCamera(mo))
+    if(P_MobjIsCamera(mo))
         mo->ddFlags |= DDMF_DONTDRAW;
 
     if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpseTics == -1)

@@ -429,7 +429,7 @@ void P_MobjMoveZ(mobj_t* mo)
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
 
     if(!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT)) &&
-       mo->target && !P_IsCamera(mo->target))
+       mo->target && !P_MobjIsCamera(mo->target))
     {
         float               dist, delta;
 
@@ -1378,7 +1378,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
                 }
             }
 
-        if(!P_IsCamera(source->player->plr->mo))
+        if(!P_MobjIsCamera(source->player->plr->mo))
             spawnZOff = cfg.plrViewHeight - 9 +
                 source->player->plr->lookDir / 173;
     }

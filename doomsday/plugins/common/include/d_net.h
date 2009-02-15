@@ -150,15 +150,6 @@ enum {
 #define PSF_REBORN          0xf7ff
 #endif
 
-#ifdef __JSTRIFE__
-#define PSF_ARMOR           PSF_ARMOR_POINTS    // For convenience.
-#define PSF_WEAPONS         (PSF_PENDING_WEAPON | PSF_READY_WEAPON)
-#define PSF_INVENTORY       0x0008 // ArtifactCount and invSlotNum, too.
-#define PSF_MORPH_TIME      0x4000
-#define PSF_LOCAL_QUAKE     0x8000
-#define PSF_REBORN          0xf7ff
-#endif
-
 // Intermission flags.
 #define IMF_BEGIN           0x01
 #define IMF_END             0x02

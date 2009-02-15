@@ -618,16 +618,9 @@ void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
     mo->mom[MZ] += mom[MZ];
 }
 
-boolean P_IsCamera(mobj_t *mo)
-{
-    // Client mobjs do not have thinkers and thus cannot be cameras.
-    return (mo && mo->thinker.function && mo->player &&
-            (mo->player->plr->flags & DDPF_CAMERA));
-}
-
 int P_CameraXYMovement(mobj_t *mo)
 {
-    if(!P_IsCamera(mo))
+    if(!P_MobjIsCamera(mo))
         return false;
 #if __JDOOM__ || __JDOOM64__
     if(mo->flags & MF_NOCLIP ||
@@ -667,7 +660,7 @@ int P_CameraXYMovement(mobj_t *mo)
 
 int P_CameraZMovement(mobj_t *mo)
 {
-    if(!P_IsCamera(mo))
+    if(!P_MobjIsCamera(mo))
         return false;
 
     mo->pos[VZ] += mo->mom[MZ];
@@ -784,6 +777,63 @@ DEFCC(CCmdSetCamera)
     }
     return true;
 }
+
+/**
+ * Give the player an armor bonus (points delta).
+ *
+ * @param plr           This.
+ * @param points        Points delta.
+ *
+ * @return              Number of points applied.
+ */
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+int P_PlayerGiveArmorBonus(player_t* plr, int points)
+#else // __JHEXEN__
+int P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points)
+#endif
+{
+    int                 delta, oldPoints;
+    int*                current;
+
+    if(!points)
+        return 0;
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    current = &plr->armorPoints;
+#else // __JHEXEN__
+    current = &plr->armorPoints[type];
+#endif
+
+    oldPoints = *current;
+    if(points > 0)
+    {
+        delta = points; /// \fixme No upper limit?
+    }
+    else
+    {
+        if(*current + points < 0)
+            delta = -(*current);
+        else
+            delta = points;
+    }
+
+    if(*current != oldPoints)
+        plr->update |= PSF_ARMOR_POINTS;
+
+    return delta;
+}
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void P_PlayerSetArmorType(player_t* plr, int type)
+{
+    int                 oldType = plr->armorType;
+
+    plr->armorType = type;
+
+    if(plr->armorType != oldType)
+        plr->update |= PSF_ARMOR_TYPE;
+}
+#endif
 
 DEFCC(CCmdSetViewMode)
 {

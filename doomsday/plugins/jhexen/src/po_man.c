@@ -565,7 +565,7 @@ static void thrustMobj(struct mobj_s* mo, void* segp, void* pop)
     if(IS_CLIENT)
         return;
 
-    if(P_IsCamera(mo)) // Cameras don't interact with polyobjs.
+    if(P_MobjIsCamera(mo)) // Cameras don't interact with polyobjs.
         return;
 
     if(!(mo->flags & MF_SHOOTABLE) && !mo->player)

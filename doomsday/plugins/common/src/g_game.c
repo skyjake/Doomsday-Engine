@@ -897,7 +897,7 @@ void G_Ticker(timespan_t ticLength)
         player_t       *plr = &players[i];
 
         if(plr->plr->inGame && plr->playerState == PST_REBORN &&
-           !P_IsCamera(plr->plr->mo))
+           !P_MobjIsCamera(plr->plr->mo))
             G_DoReborn(i);
 
         // Player has left?

@@ -221,22 +221,21 @@ boolean P_GiveBody(player_t *player, int num)
 /**
  * @return              @c true, iff the armor was given.
  */
-boolean P_GiveArmor(player_t* player, int type, int points)
+boolean P_GiveArmor(player_t* plr, int type, int points)
 {
-    if(player->armorPoints >= points)
+    if(plr->armorPoints >= points)
         return false;
 
-    player->armorType = type;
-    player->armorPoints = points;
-    player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
+    P_PlayerSetArmorType(plr, type);
+    P_PlayerGiveArmorBonus(plr, points);
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(player - players, HUE_ON_PICKUP_ARMOR);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
 
-void P_GiveKey(player_t *player, keytype_t key)
+void P_GiveKey(player_t* player, keytype_t key)
 {
     if(player->keys[key])
         return;
@@ -383,391 +382,480 @@ void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
     P_MobjChangeState(thing, thing->info->spawnState);
 }
 
-void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
+typedef enum {
+    IT_NONE = 0,
+    IT_HEALTH_POTION,
+    IT_SHIELD1,
+    IT_SHIELD2,
+    IT_BAGOFHOLDING,
+    IT_ALLMAP,
+    IT_KEY_BLUE,
+    IT_KEY_YELLOW,
+    IT_KEY_GREEN,
+    IT_ARTIFACT_HEALTHPOTION,
+    IT_ARTIFACT_WINGS,
+    IT_ARTIFACT_INVUL,
+    IT_ARTIFACT_TOMB,
+    IT_ARTIFACT_INVIS,
+    IT_ARTIFACT_EGG,
+    IT_ARTIFACT_HEALTHSUPER,
+    IT_ARTIFACT_TORCH,
+    IT_ARTIFACT_FIREBOMB,
+    IT_ARTIFACT_TELEPORT,
+    IT_AMMO_WAND,
+    IT_AMMO_WAND_LARGE,
+    IT_AMMO_MACE,
+    IT_AMMO_MACE_LARGE,
+    IT_AMMO_CROSSBOW,
+    IT_AMMO_CROSSBOW_LARGE,
+    IT_AMMO_BLASTER,
+    IT_AMMO_BLASTER_LARGE,
+    IT_AMMO_SKULL,
+    IT_AMMO_SKULL_LARGE,
+    IT_AMMO_PHOENIX,
+    IT_AMMO_PHOENIX_LARGE,
+    IT_WEAPON_MACE,
+    IT_WEAPON_CROSSBOW,
+    IT_WEAPON_BLASTER,
+    IT_WEAPON_SKULLROD,
+    IT_WEAPON_PHOENIXROD,
+    IT_WEAPON_GAUNTLETS
+} itemtype_t;
+
+static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 {
-    int                 i;
-    player_t*           player;
-    float               delta;
-    int                 sound;
-    boolean             respawn;
+    struct item_s {
+        itemtype_t      type;
+        spritetype_e    sprite;
+    } items[] = {
+        { IT_HEALTH_POTION, SPR_PTN1 },
+        { IT_SHIELD1, SPR_SHLD },
+        { IT_SHIELD2, SPR_SHD2 },
+        { IT_BAGOFHOLDING, SPR_BAGH },
+        { IT_ALLMAP, SPR_SPMP },
+        { IT_KEY_BLUE, SPR_BKYY },
+        { IT_KEY_YELLOW, SPR_CKYY },
+        { IT_KEY_GREEN, SPR_AKYY },
+        { IT_ARTIFACT_HEALTHPOTION, SPR_PTN2 },
+        { IT_ARTIFACT_WINGS, SPR_SOAR },
+        { IT_ARTIFACT_INVUL, SPR_INVU },
+        { IT_ARTIFACT_TOMB, SPR_PWBK },
+        { IT_ARTIFACT_INVIS, SPR_INVS },
+        { IT_ARTIFACT_EGG, SPR_EGGC },
+        { IT_ARTIFACT_HEALTHSUPER, SPR_SPHL },
+        { IT_ARTIFACT_TORCH, SPR_TRCH },
+        { IT_ARTIFACT_FIREBOMB, SPR_FBMB },
+        { IT_ARTIFACT_TELEPORT, SPR_ATLP },
+        { IT_AMMO_WAND, SPR_AMG1 },
+        { IT_AMMO_WAND_LARGE, SPR_AMG2 },
+        { IT_AMMO_MACE, SPR_AMM1 },
+        { IT_AMMO_MACE_LARGE, SPR_AMM2 },
+        { IT_AMMO_CROSSBOW, SPR_AMC1 },
+        { IT_AMMO_CROSSBOW_LARGE, SPR_AMC2 },
+        { IT_AMMO_BLASTER, SPR_AMB1 },
+        { IT_AMMO_BLASTER_LARGE, SPR_AMB2 },
+        { IT_AMMO_SKULL, SPR_AMS1 },
+        { IT_AMMO_SKULL_LARGE, SPR_AMS2 },
+        { IT_AMMO_PHOENIX, SPR_AMP1 },
+        { IT_AMMO_PHOENIX_LARGE, SPR_AMP2 },
+        { IT_WEAPON_MACE, SPR_WMCE },
+        { IT_WEAPON_CROSSBOW, SPR_WBOW },
+        { IT_WEAPON_BLASTER, SPR_WBLS },
+        { IT_WEAPON_SKULLROD, SPR_WSKL },
+        { IT_WEAPON_PHOENIXROD, SPR_WPHX },
+        { IT_WEAPON_GAUNTLETS, SPR_WGNT },
+        { IT_NONE, 0 },
+    };
+    uint                i;
 
-    delta = special->pos[VZ] - toucher->pos[VZ];
-    if(delta > toucher->height || delta < -32)
+    for(i = 0; items[i].type != IT_NONE; ++i)
+        if(items[i].sprite == sprite)
+            return items[i].type;
+
+    return IT_NONE;
+}
+
+static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
+{
+    switch(item)
     {
-        return; // Out of reach.
-    }
+    case IT_HEALTH_POTION:
+        if(!P_GiveBody(plr, 10))
+            return false;
 
-    if(toucher->health <= 0)
-    {
-        return; // Toucher is dead.
-    }
-
-    sound = SFX_ITEMUP;
-    player = toucher->player;
-    if(player == NULL)
-        return;
-
-    respawn = true;
-    switch(special->sprite)
-    {
-    // Items
-    case SPR_PTN1: // Item_HealingPotion
-        if(!P_GiveBody(player, 10))
-            return;
-
-        P_SetMessage(player, TXT_ITEMHEALTH, false);
+        P_SetMessage(plr, TXT_ITEMHEALTH, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_SHLD: // Item_Shield1
-        if(!P_GiveArmor(player, 1, 1 * 100))
-            return;
+    case IT_SHIELD1:
+        if(!P_GiveArmor(plr, 1, 1 * 100))
+            return false;
 
-        P_SetMessage(player, TXT_ITEMSHIELD1, false);
+        P_SetMessage(plr, TXT_ITEMSHIELD1, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_SHD2: // Item_Shield2
-        if(!P_GiveArmor(player, 2, 2 * 100))
-            return;
+    case IT_SHIELD2:
+        if(!P_GiveArmor(plr, 2, 2 * 100))
+            return false;
 
-        P_SetMessage(player, TXT_ITEMSHIELD2, false);
+        P_SetMessage(plr, TXT_ITEMSHIELD2, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_BAGH: // Item_BagOfHolding
-        if(!player->backpack)
+    case IT_BAGOFHOLDING:
+        if(!plr->backpack)
         {
+            int                 i;
+
             for(i = 0; i < NUM_AMMO_TYPES; ++i)
             {
-                player->ammo[i].max *= 2;
+                plr->ammo[i].max *= 2;
             }
-            player->backpack = true;
+            plr->backpack = true;
         }
 
-        P_GiveAmmo(player, AT_CRYSTAL, AMMO_GWND_WIMPY);
-        P_GiveAmmo(player, AT_ORB, AMMO_BLSR_WIMPY);
-        P_GiveAmmo(player, AT_ARROW, AMMO_CBOW_WIMPY);
-        P_GiveAmmo(player, AT_RUNE, AMMO_SKRD_WIMPY);
-        P_GiveAmmo(player, AT_FIREORB, AMMO_PHRD_WIMPY);
-        P_SetMessage(player, TXT_ITEMBAGOFHOLDING, false);
+        P_GiveAmmo(plr, AT_CRYSTAL, AMMO_GWND_WIMPY);
+        P_GiveAmmo(plr, AT_ORB, AMMO_BLSR_WIMPY);
+        P_GiveAmmo(plr, AT_ARROW, AMMO_CBOW_WIMPY);
+        P_GiveAmmo(plr, AT_RUNE, AMMO_SKRD_WIMPY);
+        P_GiveAmmo(plr, AT_FIREORB, AMMO_PHRD_WIMPY);
+        P_SetMessage(plr, TXT_ITEMBAGOFHOLDING, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_SPMP: // Item_SuperMap.
-        if(!P_GivePower(player, PT_ALLMAP))
-            return;
+    case IT_ALLMAP:
+        if(!P_GivePower(plr, PT_ALLMAP))
+            return false;
 
-        P_SetMessage(player, TXT_ITEMSUPERMAP, false);
+        P_SetMessage(plr, TXT_ITEMSUPERMAP, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-     // Keys
-    case SPR_BKYY: // Key_Blue
-        if(!player->keys[KT_BLUE])
+    case IT_KEY_BLUE:
+        if(!plr->keys[KT_BLUE])
         {
-            P_SetMessage(player, TXT_GOTBLUEKEY, false);
+            P_SetMessage(plr, TXT_GOTBLUEKEY, false);
         }
 
-        P_GiveKey(player, KT_BLUE);
-        sound = SFX_KEYUP;
-        if(!IS_NETGAME)
+        P_GiveKey(plr, KT_BLUE);
+        S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_KEY_YELLOW:
+        if(!plr->keys[KT_YELLOW])
         {
-            break;
+            P_SetMessage(plr, TXT_GOTYELLOWKEY, false);
         }
-        return;
 
-    case SPR_CKYY: // Key_Yellow
-        if(!player->keys[KT_YELLOW])
+        P_GiveKey(plr, KT_YELLOW);
+        S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_KEY_GREEN:
+        if(!plr->keys[KT_GREEN])
         {
-            P_SetMessage(player, TXT_GOTYELLOWKEY, false);
+            P_SetMessage(plr, TXT_GOTGREENKEY, false);
         }
 
-        sound = SFX_KEYUP;
-        P_GiveKey(player, KT_YELLOW);
-        if(!IS_NETGAME)
-        {
-            break;
-        }
-        return;
-
-    case SPR_AKYY: // Key_Green
-        if(!player->keys[KT_GREEN])
-        {
-            P_SetMessage(player, TXT_GOTGREENKEY, false);
-        }
-
-        sound = SFX_KEYUP;
-        P_GiveKey(player, KT_GREEN);
-        if(!IS_NETGAME)
-        {
-            break;
-        }
-        return;
-
-    // Artifacts
-    case SPR_PTN2: // Arti_HealingPotion
-        if(P_InventoryGive(player, AFT_HEALTH))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTIHEALTH, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_SOAR: // Arti_Fly.
-        if(P_InventoryGive(player, AFT_FLY))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTIFLY, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_INVU: // Arti_Invulnerability.
-        if(P_InventoryGive(player, AFT_INVULNERABILITY))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTIINVULNERABILITY, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_PWBK: // Arti_TomeOfPower.
-        if(P_InventoryGive(player, AFT_TOMBOFPOWER))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTITOMEOFPOWER, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_INVS: // Arti_Invisibility.
-        if(P_InventoryGive(player, AFT_INVISIBILITY))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTIINVISIBILITY, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_EGGC: // Arti_Egg.
-        if(P_InventoryGive(player, AFT_EGG))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTIEGG, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_SPHL: // Arti_SuperHealth.
-        if(P_InventoryGive(player, AFT_SUPERHEALTH))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTISUPERHEALTH, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_TRCH: // Arti_Torch.
-        if(P_InventoryGive(player, AFT_TORCH))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTITORCH, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_FBMB: // Arti_FireBomb.
-        if(P_InventoryGive(player, AFT_FIREBOMB))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTIFIREBOMB, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    case SPR_ATLP: // Arti_Teleport.
-        if(P_InventoryGive(player, AFT_TELEPORT))
-        {
-            if(special->flags & MF_COUNTITEM)
-                player->itemCount++;
-
-            P_SetMessage(player, TXT_ARTITELEPORT, false);
-            P_SetDormantArtifact(special);
-        }
-        return;
-
-    // Ammo
-    case SPR_AMG1: // Ammo_GoldWandWimpy.
-        if(!P_GiveAmmo(player, AT_CRYSTAL, special->health))
-            return;
-
-        P_SetMessage(player, TXT_AMMOGOLDWAND1, false);
+        P_GiveKey(plr, KT_GREEN);
+        S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
         break;
 
-    case SPR_AMG2: // Ammo_GoldWandHefty.
-        if(!P_GiveAmmo(player, AT_CRYSTAL, special->health))
-            return;
+    case IT_ARTIFACT_HEALTHPOTION:
+        if(!P_InventoryGive(plr, AFT_HEALTH))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOGOLDWAND2, false);
+        P_SetMessage(plr, TXT_ARTIHEALTH, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMM1: // Ammo_MaceWimpy.
-        if(!P_GiveAmmo(player, AT_MSPHERE, special->health))
-            return;
+    case IT_ARTIFACT_WINGS:
+        if(!P_InventoryGive(plr, AFT_FLY))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOMACE1, false);
+        P_SetMessage(plr, TXT_ARTIFLY, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMM2: // Ammo_MaceHefty.
-        if(!P_GiveAmmo(player, AT_MSPHERE, special->health))
-            return;
+    case IT_ARTIFACT_INVUL:
+        if(!P_InventoryGive(plr, AFT_INVULNERABILITY))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOMACE2, false);
+        P_SetMessage(plr, TXT_ARTIINVULNERABILITY, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMC1: // Ammo_CrossbowWimpy.
-        if(!P_GiveAmmo(player, AT_ARROW, special->health))
-            return;
+    case IT_ARTIFACT_TOMB:
+        if(!P_InventoryGive(plr, AFT_TOMBOFPOWER))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOCROSSBOW1, false);
+        P_SetMessage(plr, TXT_ARTITOMEOFPOWER, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMC2: // Ammo_CrossbowHefty.
-        if(!P_GiveAmmo(player, AT_ARROW, special->health))
-            return;
+    case IT_ARTIFACT_INVIS:
+        if(!P_InventoryGive(plr, AFT_INVISIBILITY))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOCROSSBOW2, false);
+        P_SetMessage(plr, TXT_ARTIINVISIBILITY, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMB1: // Ammo_BlasterWimpy.
-        if(!P_GiveAmmo(player, AT_ORB, special->health))
-            return;
+    case IT_ARTIFACT_EGG:
+        if(!P_InventoryGive(plr, AFT_EGG))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOBLASTER1, false);
+        P_SetMessage(plr, TXT_ARTIEGG, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMB2: // Ammo_BlasterHefty.
-        if(!P_GiveAmmo(player, AT_ORB, special->health))
-            return;
+    case IT_ARTIFACT_HEALTHSUPER:
+        if(!P_InventoryGive(plr, AFT_SUPERHEALTH))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOBLASTER2, false);
+        P_SetMessage(plr, TXT_ARTISUPERHEALTH, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMS1: // Ammo_SkullRodWimpy.
-        if(!P_GiveAmmo(player, AT_RUNE, special->health))
-            return;
+    case IT_ARTIFACT_TORCH:
+        if(!P_InventoryGive(plr, AFT_TORCH))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOSKULLROD1, false);
+        P_SetMessage(plr, TXT_ARTITORCH, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMS2: // Ammo_SkullRodHefty.
-        if(!P_GiveAmmo(player, AT_RUNE, special->health))
-            return;
+    case IT_ARTIFACT_FIREBOMB:
+        if(!P_InventoryGive(plr, AFT_FIREBOMB))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOSKULLROD2, false);
+        P_SetMessage(plr, TXT_ARTIFIREBOMB, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMP1: // Ammo_PhoenixRodWimpy.
-        if(!P_GiveAmmo(player, AT_FIREORB, special->health))
-            return;
+    case IT_ARTIFACT_TELEPORT:
+        if(!P_InventoryGive(plr, AFT_TELEPORT))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOPHOENIXROD1, false);
+        P_SetMessage(plr, TXT_ARTITELEPORT, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_AMP2: // Ammo_PhoenixRodHefty.
-        if(!P_GiveAmmo(player, AT_FIREORB, special->health))
-            return;
+    case IT_AMMO_WAND:
+        if(!P_GiveAmmo(plr, AT_CRYSTAL, quantity))
+            return false;
 
-        P_SetMessage(player, TXT_AMMOPHOENIXROD2, false);
+        P_SetMessage(plr, TXT_AMMOGOLDWAND1, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    // Weapons
-    case SPR_WMCE: // Weapon_Mace.
-        if(!P_GiveWeapon(player, WT_SEVENTH))
-            return;
+    case IT_AMMO_WAND_LARGE:
+        if(!P_GiveAmmo(plr, AT_CRYSTAL, quantity))
+            return false;
 
-        P_SetMessage(player, TXT_WPNMACE, false);
-        sound = SFX_WPNUP;
+        P_SetMessage(plr, TXT_AMMOGOLDWAND2, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_WBOW: // Weapon_Crossbow.
-        if(!P_GiveWeapon(player, WT_THIRD))
-            return;
+    case IT_AMMO_MACE:
+        if(!P_GiveAmmo(plr, AT_MSPHERE, quantity))
+            return false;
 
-        P_SetMessage(player, TXT_WPNCROSSBOW, false);
-        sound = SFX_WPNUP;
+        P_SetMessage(plr, TXT_AMMOMACE1, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_WBLS: // Weapon_Blaster.
-        if(!P_GiveWeapon(player, WT_FOURTH))
-            return;
+    case IT_AMMO_MACE_LARGE:
+        if(!P_GiveAmmo(plr, AT_MSPHERE, quantity))
+            return false;
 
-        P_SetMessage(player, TXT_WPNBLASTER, false);
-        sound = SFX_WPNUP;
+        P_SetMessage(plr, TXT_AMMOMACE2, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_WSKL: // Weapon_SkullRod.
-        if(!P_GiveWeapon(player, WT_FIFTH))
-            return;
+    case IT_AMMO_CROSSBOW:
+        if(!P_GiveAmmo(plr, AT_ARROW, quantity))
+            return false;
 
-        P_SetMessage(player, TXT_WPNSKULLROD, false);
-        sound = SFX_WPNUP;
+        P_SetMessage(plr, TXT_AMMOCROSSBOW1, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_WPHX: // Weapon_PhoenixRod.
-        if(!P_GiveWeapon(player, WT_SIXTH))
-            return;
+    case IT_AMMO_CROSSBOW_LARGE:
+        if(!P_GiveAmmo(plr, AT_ARROW, quantity))
+            return false;
 
-        P_SetMessage(player, TXT_WPNPHOENIXROD, false);
-        sound = SFX_WPNUP;
+        P_SetMessage(plr, TXT_AMMOCROSSBOW2, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case SPR_WGNT: // Weapon_Gauntlets.
-        if(!P_GiveWeapon(player, WT_EIGHTH))
-            return;
+    case IT_AMMO_BLASTER:
+        if(!P_GiveAmmo(plr, AT_ORB, quantity))
+            return false;
 
-        P_SetMessage(player, TXT_WPNGAUNTLETS, false);
-        sound = SFX_WPNUP;
+        P_SetMessage(plr, TXT_AMMOBLASTER1, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_BLASTER_LARGE:
+        if(!P_GiveAmmo(plr, AT_ORB, quantity))
+            return false;
+
+        P_SetMessage(plr, TXT_AMMOBLASTER2, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_SKULL:
+        if(!P_GiveAmmo(plr, AT_RUNE, quantity))
+            return false;
+
+        P_SetMessage(plr, TXT_AMMOSKULLROD1, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_SKULL_LARGE:
+        if(!P_GiveAmmo(plr, AT_RUNE, quantity))
+            return false;
+
+        P_SetMessage(plr, TXT_AMMOSKULLROD2, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_PHOENIX:
+        if(!P_GiveAmmo(plr, AT_FIREORB, quantity))
+            return false;
+
+        P_SetMessage(plr, TXT_AMMOPHOENIXROD1, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_PHOENIX_LARGE:
+        if(!P_GiveAmmo(plr, AT_FIREORB, quantity))
+            return false;
+
+        P_SetMessage(plr, TXT_AMMOPHOENIXROD2, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_MACE:
+        if(!P_GiveWeapon(plr, WT_SEVENTH))
+            return false;
+
+        P_SetMessage(plr, TXT_WPNMACE, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_CROSSBOW:
+        if(!P_GiveWeapon(plr, WT_THIRD))
+            return false;
+
+        P_SetMessage(plr, TXT_WPNCROSSBOW, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_BLASTER:
+        if(!P_GiveWeapon(plr, WT_FOURTH))
+            return false;
+
+        P_SetMessage(plr, TXT_WPNBLASTER, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_SKULLROD:
+        if(!P_GiveWeapon(plr, WT_FIFTH))
+            return false;
+
+        P_SetMessage(plr, TXT_WPNSKULLROD, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_PHOENIXROD:
+        if(!P_GiveWeapon(plr, WT_SIXTH))
+            return false;
+
+        P_SetMessage(plr, TXT_WPNPHOENIXROD, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_GAUNTLETS:
+        if(!P_GiveWeapon(plr, WT_EIGHTH))
+            return false;
+
+        P_SetMessage(plr, TXT_WPNGAUNTLETS, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     default:
-        Con_Error("P_SpecialThing: Unknown gettable thing");
+        Con_Error("giveItem: Unknown item %i.", (int) item);
     }
 
-    if(special->flags & MF_COUNTITEM)
-    {
-        player->itemCount++;
+    return true;
+}
+
+void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
+{
+    player_t*           player;
+    float               delta;
+    itemtype_t          item;
+
+    delta = special->pos[VZ] - toucher->pos[VZ];
+    if(delta > toucher->height || delta < -32)
+    {   // Out of reach.
+        return;
     }
 
-    if(deathmatch && respawn && !(special->flags & MF_DROPPED))
+    // Dead thing touching (can happen with a sliding player corpse).
+    if(toucher->health <= 0)
+        return;
+
+    player = toucher->player;
+
+    // Identify by sprite.
+    if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-        P_HideSpecialThing(special);
+        if(!giveItem(player, item, special->health))
+            return; // Don't destroy the item.
     }
     else
     {
-        P_MobjRemove(special, false);
+        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
+                    (int) special->type);
     }
 
-    player->bonusCount += BONUSADD;
+    if(special->flags & MF_COUNTITEM)
+        player->itemCount++;
 
-    ST_doPaletteStuff(player - players);
+    switch(item)
+    {
+    case IT_ARTIFACT_HEALTHPOTION:
+    case IT_ARTIFACT_WINGS:
+    case IT_ARTIFACT_INVUL:
+    case IT_ARTIFACT_TOMB:
+    case IT_ARTIFACT_INVIS:
+    case IT_ARTIFACT_EGG:
+    case IT_ARTIFACT_HEALTHSUPER:
+    case IT_ARTIFACT_TORCH:
+    case IT_ARTIFACT_FIREBOMB:
+    case IT_ARTIFACT_TELEPORT:
+        P_SetDormantArtifact(special);
+        break;
 
-    S_ConsoleSound(sound, NULL, player - players);
+    default:
+        if(deathmatch && !(special->flags & MF_DROPPED))
+            P_HideSpecialThing(special);
+        else
+            P_MobjRemove(special, false);
+
+        player->bonusCount += BONUSADD;
+        break;
+    }
 }
 
 void P_KillMobj(mobj_t *source, mobj_t *target)

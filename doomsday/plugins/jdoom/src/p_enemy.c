@@ -492,7 +492,7 @@ static boolean lookForPlayers(mobj_t *actor, boolean allAround)
 
         player = &players[actor->lastLook];
 
-        if(P_IsCamera(player->plr->mo))
+        if(P_MobjIsCamera(player->plr->mo))
             continue;
 
         if(player->health <= 0)
@@ -742,7 +742,7 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     if(!actor->target || !(actor->target->flags & MF_SHOOTABLE) ||
-       P_IsCamera(actor->target))
+       P_MobjIsCamera(actor->target))
     {
         // Look for a new target.
         if(lookForPlayers(actor, true))

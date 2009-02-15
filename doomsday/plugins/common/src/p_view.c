@@ -106,7 +106,7 @@ void P_CalcHeight(player_t* plr)
         airborne = pmo->pos[VZ] > pmo->floorZ; // Truly in the air?
 
     // Morphed players don't bob their view.
-    if(P_IsCamera(ddplr->mo) /*$democam*/ ||
+    if(P_MobjIsCamera(ddplr->mo) /*$democam*/ ||
        (ddplr->flags & DDPF_CHASECAM) || airborne || morphed ||
        (P_GetPlayerCheats(plr) & CF_NOMOMENTUM))
     {
@@ -147,7 +147,7 @@ void P_CalcHeight(player_t* plr)
 
     // Should viewheight be moved? Not if camera or we're in demo.
     if(!((P_GetPlayerCheats(plr) & CF_NOMOMENTUM) ||
-        P_IsCamera(pmo) /*$democam*/ || Get(DD_PLAYBACK)))
+        P_MobjIsCamera(pmo) /*$democam*/ || Get(DD_PLAYBACK)))
     {
         // Move viewheight.
         if(plr->playerState == PST_LIVE)
@@ -177,11 +177,11 @@ void P_CalcHeight(player_t* plr)
 
     // Set the plr's eye-level Z coordinate.
     ddplr->viewZ = pmo->pos[VZ] +
-                     (P_IsCamera(pmo)? 0 : ddplr->viewHeight);
+                     (P_MobjIsCamera(pmo)? 0 : ddplr->viewHeight);
 
     // During demo playback (or camera mode) the viewz will not be modified
     // any further.
-    if(!(Get(DD_PLAYBACK) || P_IsCamera(pmo) ||
+    if(!(Get(DD_PLAYBACK) || P_MobjIsCamera(pmo) ||
        (ddplr->flags & DDPF_CHASECAM)))
     {
         if(morphed)

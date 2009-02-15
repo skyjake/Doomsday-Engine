@@ -396,7 +396,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         return true;
 
     if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) ||
-       P_IsCamera(thing) || P_IsCamera(tmThing))
+       P_MobjIsCamera(thing) || P_MobjIsCamera(tmThing))
         return true;
 
 #if !__JHEXEN__
@@ -1077,7 +1077,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     VALIDCOUNT++;
 
     // The camera goes through all objects.
-    if(!P_IsCamera(thing))
+    if(!P_MobjIsCamera(thing))
     {
 #if __JHEXEN__
         blockingMobj = NULL;
@@ -2196,7 +2196,7 @@ static boolean P_ThingHeightClip(mobj_t* thing)
 {
     boolean             onfloor;
 
-    if(P_IsCamera(thing))
+    if(P_MobjIsCamera(thing))
         return false; // Don't height clip cameras.
 
     onfloor = (thing->pos[VZ] == thing->floorZ)? true : false;
@@ -2799,7 +2799,7 @@ static void P_FakeZMovement(mobj_t* mo)
     float               dist;
     float               delta;
 
-    if(P_IsCamera(mo))
+    if(P_MobjIsCamera(mo))
         return;
 
     // Adjust height.

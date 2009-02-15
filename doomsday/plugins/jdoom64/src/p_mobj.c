@@ -441,7 +441,7 @@ void P_MobjMoveZ(mobj_t* mo)
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
 
     if(!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT)) &&
-       mo->target && !P_IsCamera(mo->target))
+       mo->target && !P_MobjIsCamera(mo->target))
     {
         // Float down towards target if too close.
         dist = P_ApproxDistance(mo->pos[VX] - mo->target->pos[VX],
@@ -1497,7 +1497,7 @@ void P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
             }
         }
 
-    if(!P_IsCamera(source->player->plr->mo))
+    if(!P_MobjIsCamera(source->player->plr->mo))
         spawnZOff = cfg.plrViewHeight - 9 +
                         source->player->plr->lookDir / 173;
     else
@@ -1576,7 +1576,7 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t sourceAngle)
         }
     }
 
-    if(!P_IsCamera(source->player->plr->mo))
+    if(!P_MobjIsCamera(source->player->plr->mo))
         spawnZOff = cfg.plrViewHeight - 9 +
                         source->player->plr->lookDir / 173;
     else

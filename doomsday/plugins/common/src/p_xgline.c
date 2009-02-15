@@ -1302,6 +1302,7 @@ int C_DECL XL_DoPower(linedef_t* line, boolean dummy, void* context,
 {
     player_t*           player = 0;
     linetype_t*         info = context2;
+    int                 delta;
 
     if(activator)
         player = activator->player;
@@ -1316,11 +1317,24 @@ int C_DECL XL_DoPower(linedef_t* line, boolean dummy, void* context,
         return false;
     }
 
-    player->armorPoints += XG_RandomInt(info->iparm[0], info->iparm[1]);
-    if(player->armorPoints < info->iparm[2])
-        player->armorPoints = info->iparm[2];
-    if(player->armorPoints > info->iparm[3])
-        player->armorPoints = info->iparm[3];
+    delta = XG_RandomInt(info->iparm[0], info->iparm[1]);
+    if(delta > 0)
+    {
+        if(player->armorPoints + delta >= info->iparm[3])
+            delta = info->iparm[3] - player->armorPoints;
+    }
+    else
+    {
+        if(player->armorPoints + delta <= info->iparm[2])
+            delta = info->iparm[2] - player->armorPoints;
+    }
+
+    if(delta)
+    {
+        if(!player->armorType)
+            P_PlayerSetArmorType(player, 1);
+        P_PlayerGiveArmorBonus(player, delta);
+    }
 
     return true;
 }

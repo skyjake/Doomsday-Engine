@@ -41,9 +41,91 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BONUSADD 6
+#define BONUSADD                (6)
 
 // TYPES -------------------------------------------------------------------
+
+typedef enum {
+    IT_NONE = -1,
+    IT_HEALTH_VIAL,
+    IT_ARMOR_MESH,
+    IT_ARMOR_SHIELD,
+    IT_ARMOR_HELMET,
+    IT_ARMOR_AMULET,
+    IT_KEY_STEEL,
+    IT_KEY_CAVE,
+    IT_KEY_AXE,
+    IT_KEY_FIRE,
+    IT_KEY_EMERALD,
+    IT_KEY_DUNGEON,
+    IT_KEY_SILVER,
+    IT_KEY_RUSTED,
+    IT_KEY_HORN,
+    IT_KEY_SWAMP,
+    IT_KEY_CASTLE,
+    IT_ARTIFACT_QUARTZFLASK,
+    IT_ARTIFACT_WINGS,
+    IT_ARTIFACT_DEFENDER,
+    IT_ARTIFACT_SERVANT,
+    IT_ARTIFACT_PORKALATOR,
+    IT_ARTIFACT_MYSTICURN,
+    IT_ARTIFACT_AMBITINCANT,
+    IT_ARTIFACT_TORCH,
+    IT_ARTIFACT_CHAOSDEVICE,
+    IT_ARTIFACT_BANISHDEVICE,
+    IT_ARTIFACT_FLETCHETTE,
+    IT_ARTIFACT_BOOTSOFSPEED,
+    IT_ARTIFACT_KRATEROFMIGHT,
+    IT_ARTIFACT_BRACERS,
+    IT_ARTIFACT_REPULSION,
+    IT_PUZZLE_SKULL,
+    IT_PUZZLE_BIGGEM,
+    IT_PUZZLE_REDGEM,
+    IT_PUZZLE_GREENGEM1,
+    IT_PUZZLE_GREENGEM2,
+    IT_PUZZLE_BLUEGEM1,
+    IT_PUZZLE_BLUEGEM2,
+    IT_PUZZLE_BOOK1,
+    IT_PUZZLE_BOOK2,
+    IT_PUZZLE_SKULL2,
+    IT_PUZZLE_FWEAPON,
+    IT_PUZZLE_CWEAPON,
+    IT_PUZZLE_MWEAPON,
+    IT_PUZZLE_GEAR1,
+    IT_PUZZLE_GEAR2,
+    IT_PUZZLE_GEAR3,
+    IT_PUZZLE_GEAR4,
+    IT_MANA_BLUE,
+    IT_MANA_GREEN,
+    IT_MANA_COMBINED,
+    IT_WEAPON_FROSTSHARDS,
+    IT_WEAPON_ARCOFDEATH,
+    IT_WEAPON_AXE,
+    IT_WEAPON_HAMMER,
+    IT_WEAPON_SERPENTSTAFF,
+    IT_WEAPON_FIRESTORM,
+    IT_WEAPON_QUIETUS1,
+    IT_WEAPON_QUIETUS2,
+    IT_WEAPON_QUIETUS3,
+    IT_WEAPON_WRAITHVERGE1,
+    IT_WEAPON_WRAITHVERGE2,
+    IT_WEAPON_WRAITHVERGE3,
+    IT_WEAPON_BLOODSCOURGE1,
+    IT_WEAPON_BLOODSCOURGE2,
+    IT_WEAPON_BLOODSCOURGE3
+} itemtype_t;
+
+// Item Info Flags:
+#define IIF_LEAVE_COOP          0x1 // Leave for others in Cooperative games.
+#define IIF_LEAVE_DEATHMATCH    0x2 // Leave for others in Deathmatch games.
+
+typedef struct iteminfo_s {
+    itemtype_t          type;
+    short               flags; // IIF_* flags.
+    boolean            (*giveFunc) (player_t*);
+    textenum_t          pickupMsg;
+    sfxenum_t           pickupSound;
+} iteminfo_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -51,22 +133,82 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void SetDormantArtifact(mobj_t *arti);
-static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
-                              mobj_t *artifact);
-static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
-                            weapontype_t weaponType, mobj_t *weapon,
-                            char *message);
-static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
-                                 int pieceValue, mobj_t *pieceMobj);
+static void SetDormantArtifact(mobj_t* arti);
+
+static boolean pickupHealthVial(player_t* plr);
+static boolean pickupMesh(player_t* plr);
+static boolean pickupShield(player_t* plr);
+static boolean pickupHelmet(player_t* plr);
+static boolean pickupAmulet(player_t* plr);
+static boolean pickupSteelKey(player_t* plr);
+static boolean pickupCaveKey(player_t* plr);
+static boolean pickupAxeKey(player_t* plr);
+static boolean pickupFireKey(player_t* plr);
+static boolean pickupEmeraldKey(player_t* plr);
+static boolean pickupDungeonKey(player_t* plr);
+static boolean pickupSilverKey(player_t* plr);
+static boolean pickupRustedKey(player_t* plr);
+static boolean pickupHornKey(player_t* plr);
+static boolean pickupSwampKey(player_t* plr);
+static boolean pickupCastleKey(player_t* plr);
+static boolean pickupQuartzFlask(player_t* plr);
+static boolean pickupWings(player_t* plr);
+static boolean pickupDefender(player_t* plr);
+static boolean pickupServant(player_t* plr);
+static boolean pickupPorkalator(player_t* plr);
+static boolean pickupMysticUrn(player_t* plr);
+static boolean pickupAmbitIncant(player_t* plr);
+static boolean pickupTorch(player_t* plr);
+static boolean pickupChaosDevice(player_t* plr);
+static boolean pickupBanishDevice(player_t* plr);
+static boolean pickupFletchette(player_t* plr);
+static boolean pickupBootsOfSpeed(player_t* plr);
+static boolean pickupKraterOfMight(player_t* plr);
+static boolean pickupBracers(player_t* plr);
+static boolean pickupRepulsion(player_t* plr);
+static boolean pickupSkull(player_t* plr);
+static boolean pickupBigGem(player_t* plr);
+static boolean pickupRedGem(player_t* plr);
+static boolean pickupGreenGem1(player_t* plr);
+static boolean pickupGreenGem2(player_t* plr);
+static boolean pickupBlueGem1(player_t* plr);
+static boolean pickupBlueGem2(player_t* plr);
+static boolean pickupBook1(player_t* plr);
+static boolean pickupBook2(player_t* plr);
+static boolean pickupSkull2(player_t* plr);
+static boolean pickupFWeapon(player_t* plr);
+static boolean pickupCWeapon(player_t* plr);
+static boolean pickupMWeapon(player_t* plr);
+static boolean pickupGear1(player_t* plr);
+static boolean pickupGear2(player_t* plr);
+static boolean pickupGear3(player_t* plr);
+static boolean pickupGear4(player_t* plr);
+static boolean pickupBlueMana(player_t* plr);
+static boolean pickupGreenMana(player_t* plr);
+static boolean pickupCombinedMana(player_t* plr);
+static boolean pickupFrostShards(player_t* plr);
+static boolean pickupArcOfDeath(player_t* plr);
+static boolean pickupAxe(player_t* plr);
+static boolean pickupHammer(player_t* plr);
+static boolean pickupSerpentStaff(player_t* plr);
+static boolean pickupFireStorm(player_t* plr);
+static boolean pickupQuietus1(player_t* plr);
+static boolean pickupQuietus2(player_t* plr);
+static boolean pickupQuietus3(player_t* plr);
+static boolean pickupWraithVerge1(player_t* plr);
+static boolean pickupWraithVerge2(player_t* plr);
+static boolean pickupWraithVerge3(player_t* plr);
+static boolean pickupBloodScourge1(player_t* plr);
+static boolean pickupBloodScourge2(player_t* plr);
+static boolean pickupBloodScourge3(player_t* plr);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     echoMsg = 1;
+int echoMsg = 1;
 
-int     TextKeyMessages[] = {
+int TextKeyMessages[] = {
     TXT_TXT_KEY_STEEL,
     TXT_TXT_KEY_CAVE,
     TXT_TXT_KEY_AXE,
@@ -81,6 +223,76 @@ int     TextKeyMessages[] = {
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// Index using itemtype_t - 1;
+static const iteminfo_t items[] = {
+    { IT_HEALTH_VIAL, 0, pickupHealthVial, TXT_TXT_ITEMHEALTH, SFX_PICKUP_ITEM },
+    { IT_ARMOR_MESH, 0, pickupMesh, TXT_TXT_ARMOR1, SFX_PICKUP_ITEM },
+    { IT_ARMOR_SHIELD, 0, pickupShield, TXT_TXT_ARMOR2, SFX_PICKUP_ITEM },
+    { IT_ARMOR_HELMET, 0, pickupHelmet, TXT_TXT_ARMOR3, SFX_PICKUP_ITEM },
+    { IT_ARMOR_AMULET, 0, pickupAmulet, TXT_TXT_ARMOR4, SFX_PICKUP_ITEM },
+    { IT_KEY_STEEL, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupSteelKey, TXT_TXT_KEY_STEEL, SFX_PICKUP_KEY },
+    { IT_KEY_CAVE, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupCaveKey, TXT_TXT_KEY_CAVE, SFX_PICKUP_KEY },
+    { IT_KEY_AXE, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupAxeKey, TXT_TXT_KEY_AXE, SFX_PICKUP_KEY },
+    { IT_KEY_FIRE, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupFireKey, TXT_TXT_KEY_FIRE, SFX_PICKUP_KEY },
+    { IT_KEY_EMERALD, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupEmeraldKey, TXT_TXT_KEY_EMERALD, SFX_PICKUP_KEY },
+    { IT_KEY_DUNGEON, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupDungeonKey, TXT_TXT_KEY_DUNGEON, SFX_PICKUP_KEY },
+    { IT_KEY_SILVER, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupSilverKey, TXT_TXT_KEY_SILVER, SFX_PICKUP_KEY },
+    { IT_KEY_RUSTED, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupRustedKey, TXT_TXT_KEY_RUSTED, SFX_PICKUP_KEY },
+    { IT_KEY_HORN, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupHornKey, TXT_TXT_KEY_HORN, SFX_PICKUP_KEY },
+    { IT_KEY_SWAMP, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupSwampKey, TXT_TXT_KEY_SWAMP, SFX_PICKUP_KEY },
+    { IT_KEY_CASTLE, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupCastleKey, TXT_TXT_KEY_CASTLE, SFX_PICKUP_KEY },
+    { IT_ARTIFACT_QUARTZFLASK, 0, pickupQuartzFlask, TXT_TXT_ARTIHEALTH, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_WINGS, 0, pickupWings, TXT_TXT_ARTIFLY, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_DEFENDER, 0, pickupDefender, TXT_TXT_ARTIINVULNERABILITY, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_SERVANT, 0, pickupServant, TXT_TXT_ARTISUMMON, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_PORKALATOR, 0, pickupPorkalator, TXT_TXT_ARTIEGG, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_MYSTICURN, 0, pickupMysticUrn, TXT_TXT_ARTISUPERHEALTH, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_AMBITINCANT, 0, pickupAmbitIncant, TXT_TXT_ARTIHEALINGRADIUS, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_TORCH, 0, pickupTorch, TXT_TXT_ARTITORCH, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_CHAOSDEVICE, 0, pickupChaosDevice, TXT_TXT_ARTITELEPORT, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_BANISHDEVICE, 0, pickupBanishDevice, TXT_TXT_ARTITELEPORTOTHER, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_FLETCHETTE, 0, pickupFletchette, TXT_TXT_ARTIPOISONBAG, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_BOOTSOFSPEED, 0, pickupBootsOfSpeed, TXT_TXT_ARTISPEED, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_KRATEROFMIGHT, 0, pickupKraterOfMight, TXT_TXT_ARTIBOOSTMANA, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_BRACERS, 0, pickupBracers, TXT_TXT_ARTIBOOSTARMOR, SFX_PICKUP_ARTIFACT },
+    { IT_ARTIFACT_REPULSION, 0, pickupRepulsion, TXT_TXT_ARTIBLASTRADIUS, SFX_PICKUP_ARTIFACT },
+    { IT_PUZZLE_SKULL, IIF_LEAVE_COOP, pickupSkull, TXT_TXT_ARTIPUZZSKULL, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_BIGGEM, IIF_LEAVE_COOP, pickupBigGem, TXT_TXT_ARTIPUZZGEMBIG, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_REDGEM, IIF_LEAVE_COOP, pickupRedGem, TXT_TXT_ARTIPUZZGEMRED, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_GREENGEM1, IIF_LEAVE_COOP, pickupGreenGem1, TXT_TXT_ARTIPUZZGEMGREEN1, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_GREENGEM2, IIF_LEAVE_COOP, pickupGreenGem2, TXT_TXT_ARTIPUZZGEMGREEN2, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_BLUEGEM1, IIF_LEAVE_COOP, pickupBlueGem1, TXT_TXT_ARTIPUZZGEMBLUE1, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_BLUEGEM2, IIF_LEAVE_COOP, pickupBlueGem2, TXT_TXT_ARTIPUZZGEMBLUE2, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_BOOK1, IIF_LEAVE_COOP, pickupBook1, TXT_TXT_ARTIPUZZBOOK1, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_BOOK2, IIF_LEAVE_COOP, pickupBook2, TXT_TXT_ARTIPUZZBOOK2, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_SKULL2, IIF_LEAVE_COOP, pickupSkull2, TXT_TXT_ARTIPUZZSKULL2, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_FWEAPON, IIF_LEAVE_COOP, pickupFWeapon, TXT_TXT_ARTIPUZZFWEAPON, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_CWEAPON, IIF_LEAVE_COOP, pickupCWeapon, TXT_TXT_ARTIPUZZCWEAPON, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_MWEAPON, IIF_LEAVE_COOP, pickupMWeapon, TXT_TXT_ARTIPUZZMWEAPON, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_GEAR1, IIF_LEAVE_COOP, pickupGear1, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_GEAR2, IIF_LEAVE_COOP, pickupGear2, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_GEAR3, IIF_LEAVE_COOP, pickupGear3, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_GEAR4, IIF_LEAVE_COOP, pickupGear4, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
+    { IT_MANA_BLUE, 0, pickupBlueMana, TXT_TXT_MANA_1, SFX_PICKUP_ITEM },
+    { IT_MANA_GREEN, 0, pickupGreenMana, TXT_TXT_MANA_2, SFX_PICKUP_ITEM },
+    { IT_MANA_COMBINED, 0, pickupCombinedMana, TXT_TXT_MANA_BOTH, SFX_PICKUP_ITEM },
+    { IT_WEAPON_FROSTSHARDS, IIF_LEAVE_COOP, pickupFrostShards, TXT_TXT_WEAPON_M2, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_ARCOFDEATH, IIF_LEAVE_COOP, pickupArcOfDeath, TXT_TXT_WEAPON_M3, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_AXE, IIF_LEAVE_COOP, pickupAxe, TXT_TXT_WEAPON_F2, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_HAMMER, IIF_LEAVE_COOP, pickupHammer, TXT_TXT_WEAPON_F3, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_SERPENTSTAFF, IIF_LEAVE_COOP, pickupSerpentStaff, TXT_TXT_WEAPON_C2, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_FIRESTORM, IIF_LEAVE_COOP, pickupFireStorm, TXT_TXT_WEAPON_C3, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_QUIETUS1, IIF_LEAVE_COOP, pickupQuietus1, TXT_TXT_QUIETUS_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_QUIETUS2, IIF_LEAVE_COOP, pickupQuietus2, TXT_TXT_QUIETUS_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_QUIETUS3, IIF_LEAVE_COOP, pickupQuietus3, TXT_TXT_QUIETUS_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_WRAITHVERGE1, IIF_LEAVE_COOP, pickupWraithVerge1, TXT_TXT_WRAITHVERGE_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_WRAITHVERGE2, IIF_LEAVE_COOP, pickupWraithVerge2, TXT_TXT_WRAITHVERGE_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_WRAITHVERGE3, IIF_LEAVE_COOP, pickupWraithVerge3, TXT_TXT_WRAITHVERGE_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_BLOODSCOURGE1, IIF_LEAVE_COOP, pickupBloodScourge1, TXT_TXT_BLOODSCOURGE_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_BLOODSCOURGE2, IIF_LEAVE_COOP, pickupBloodScourge2, TXT_TXT_BLOODSCOURGE_PIECE, SFX_PICKUP_WEAPON },
+    { IT_WEAPON_BLOODSCOURGE3, IIF_LEAVE_COOP, pickupBloodScourge3, TXT_TXT_BLOODSCOURGE_PIECE, SFX_PICKUP_WEAPON }
+};
 
 // CODE --------------------------------------------------------------------
 
@@ -137,238 +349,124 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
     return true;
 }
 
-static void TryPickupWeapon(player_t *plr, playerclass_t weaponClass,
-                            weapontype_t weaponType, mobj_t *weapon,
-                            char *message)
+static boolean giveWeaponWrongClassMana(player_t* plr, playerclass_t weaponClass,
+                                        weapontype_t weaponType)
 {
-    boolean         remove, gaveMana, gaveWeapon;
+    if(IS_NETGAME && !deathmatch)
+    {   // Can't pick up wrong-class weapons in coop netplay.
+        return false;
+    }
+
+    if(!P_GiveMana(plr, (weaponType == WT_SECOND)? AT_BLUEMANA : AT_GREENMANA, 25))
+    {   // Didn't need the mana, so don't pick it up.
+        return false;
+    }
+
+    return true;
+}
+
+static boolean giveWeaponPieceWrongClassMana(player_t* plr, playerclass_t pieceClass)
+{
+    if(IS_NETGAME && !deathmatch)
+    {   // Can't pick up wrong-class weapons in coop netplay.
+        return false;
+    }
+
+    if(!P_GiveMana(plr, AT_BLUEMANA, 20) + P_GiveMana(plr, AT_GREENMANA, 20))
+    {   // Didn't need the mana, so don't pick it up.
+        return false;
+    }
+
+    return true;
+}
+
+boolean P_GiveWeapon(player_t* plr, playerclass_t matchClass,
+                     weapontype_t weaponType)
+{
+    boolean             gaveMana = false;
+
+    if(plr->class != matchClass)
+        return giveWeaponWrongClassMana(plr, matchClass, weaponType);
 
     plr->update |= PSF_WEAPONS;
 
-    remove = true;
-    if(plr->class != weaponClass)
-    {   // Wrong class, but try to pick up for mana.
-        if(IS_NETGAME && !deathmatch)
-        {   // Can't pick up weapons for other classes in coop netplay.
-            return;
-        }
+    // Always attempt to give mana unless this a cooperative game and the
+    // player already has this weapon piece.
+    if(!(IS_NETGAME && !deathmatch && plr->weapons[weaponType].owned))
+        gaveMana = P_GiveMana(plr, (weaponType == WT_SECOND)? AT_BLUEMANA : AT_GREENMANA, 25);
 
-        if(weaponType == WT_SECOND)
-        {
-            if(!P_GiveMana(plr, AT_BLUEMANA, 25))
-            {
-                return;
-            }
-        }
-        else
-        {
-            if(!P_GiveMana(plr, AT_GREENMANA, 25))
-            {
-                return;
-            }
-        }
-    }
-    else if(IS_NETGAME && !deathmatch)
-    {   // Cooperative net-game.
-        if(plr->weapons[weaponType].owned)
-        {
-            return;
-        }
-
+    if(!plr->weapons[weaponType].owned)
+    {
         plr->weapons[weaponType].owned = true;
         plr->update |= PSF_OWNED_WEAPONS;
-        if(weaponType == WT_SECOND)
-        {
-            P_GiveMana(plr, AT_BLUEMANA, 25);
-        }
-        else
-        {
-            P_GiveMana(plr, AT_GREENMANA, 25);
-        }
-        plr->pendingWeapon = weaponType;
-        remove = false;
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
+
+        // Should we change weapon automatically?
+        P_MaybeChangeWeapon(plr, weaponType, AT_NOAMMO, false);
     }
-    else
-    {   // Deathmatch or single player game.
-        if(weaponType == WT_SECOND)
-        {
-            gaveMana = P_GiveMana(plr, AT_BLUEMANA, 25);
-        }
-        else
-        {
-            gaveMana = P_GiveMana(plr, AT_GREENMANA, 25);
-        }
-
-        if(plr->weapons[weaponType].owned)
-        {
-            gaveWeapon = false;
-        }
-        else
-        {
-            gaveWeapon = true;
-            plr->weapons[weaponType].owned = true;
-            plr->update |= PSF_OWNED_WEAPONS;
-
-            // Should we change weapon automatically?
-            P_MaybeChangeWeapon(plr, weaponType, AT_NOAMMO, false);
-        }
-
-        // Maybe unhide the HUD?
-        if(gaveWeapon)
-            ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
-
-        if(!(gaveWeapon || gaveMana))
-        {    // Player didn't need the weapon or any mana.
-            return;
-        }
+    else if(!gaveMana)
+    {    // Player didn't need the weapon or any mana.
+        return false;
     }
 
-    P_SetMessage(plr, message, false);
-    if(weapon->special)
-    {
-        P_ExecuteLineSpecial(weapon->special, weapon->args, NULL, 0,
-                             plr->plr->mo);
-        weapon->special = 0;
-    }
-
-    if(remove)
-    {
-        if(deathmatch && !(weapon->flags2 & MF2_DROPPED))
-        {
-            P_HideSpecialThing(weapon);
-        }
-        else
-        {
-            P_MobjRemove(weapon, false);
-        }
-    }
-
-    plr->bonusCount += BONUSADD;
-    S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, plr - players);
-    ST_doPaletteStuff(plr - players, false);
+    return true;
 }
 
-static void TryPickupWeaponPiece(player_t *plr, playerclass_t matchClass,
-                                 int pieceValue, mobj_t *pieceMobj)
+boolean P_GiveWeaponPiece(player_t* plr, playerclass_t matchClass,
+                          int pieceValue)
 {
-    boolean         remove, checkAssembled, gaveWeapon;
-    int             gaveMana;
-    static int      fourthWeaponText[] = {
-        TXT_TXT_WEAPON_F4,
-        TXT_TXT_WEAPON_C4,
-        TXT_TXT_WEAPON_M4
-    };
-    static int      weaponPieceText[] = {
-        TXT_TXT_QUIETUS_PIECE,
-        TXT_TXT_WRAITHVERGE_PIECE,
-        TXT_TXT_BLOODSCOURGE_PIECE
-    };
-    static int      pieceValueTrans[] = {
+    static int          pieceValueTrans[] = {
         0,                      // 0: never
         WPIECE1 | WPIECE2 | WPIECE3,    // WPIECE1 (1)
         WPIECE2 | WPIECE3,      // WPIECE2 (2)
         0,                      // 3: never
         WPIECE3                 // WPIECE3 (4)
     };
+    boolean             gaveMana = false;
 
-    remove = true;
-    checkAssembled = true;
-    gaveWeapon = false;
     if(plr->class != matchClass)
-    {   // Wrong class, but try to pick up for mana.
-        if(IS_NETGAME && !deathmatch)
-        {   // Can't pick up wrong-class weapons in coop netplay.
-            return;
-        }
+        return giveWeaponPieceWrongClassMana(plr, matchClass);
 
-        checkAssembled = false;
-        gaveMana =
-            P_GiveMana(plr, AT_BLUEMANA, 20) + P_GiveMana(plr, AT_GREENMANA, 20);
-        if(!gaveMana)
-        {   // Didn't need the mana, so don't pick it up.
-            return;
-        }
-    }
-    else if(IS_NETGAME && !deathmatch)
-    {   // Cooperative net-game.
-        if(plr->pieces & pieceValue)
-        {   // Already has the piece.
-            return;
-        }
-
-        pieceValue = pieceValueTrans[pieceValue];
-        P_GiveMana(plr, AT_BLUEMANA, 20);
-        P_GiveMana(plr, AT_GREENMANA, 20);
-        remove = false;
-    }
-    else
-    {   // Deathmatch or single plr game.
-        gaveMana =
-            P_GiveMana(plr, AT_BLUEMANA, 20) + P_GiveMana(plr, AT_GREENMANA, 20);
-        if(plr->pieces & pieceValue)
-        {   // Already has the piece, check if mana needed.
-            if(!gaveMana)
-            {   // Didn't need the mana, so don't pick it up.
-                return;
-            }
-
-            checkAssembled = false;
-        }
-    }
-
-    // Pick up the weapon piece.
-    if(pieceMobj->special)
+    // Always attempt to give mana unless this a cooperative game and the
+    // player already has this weapon piece.
+    if(!((plr->pieces & pieceValue) && IS_NETGAME && !deathmatch))
     {
-        P_ExecuteLineSpecial(pieceMobj->special, pieceMobj->args, NULL, 0,
-                             plr->plr->mo);
-        pieceMobj->special = 0;
+        gaveMana = P_GiveMana(plr, AT_BLUEMANA, 20) ||
+                   P_GiveMana(plr, AT_GREENMANA, 20);
     }
 
-    if(remove)
-    {
-        if(deathmatch && !(pieceMobj->flags2 & MF2_DROPPED))
-        {
-            P_HideSpecialThing(pieceMobj);
-        }
-        else
-        {
-            P_MobjRemove(pieceMobj, false);
-        }
+    if(plr->pieces & pieceValue)
+    {   // Already has the piece.
+        if(IS_NETGAME && !deathmatch) // Cooperative net-game.
+            return false;
+        // Deathmatch or single player.
+        if(!gaveMana) // Didn't need the mana, so don't pick it up.
+            return false;
     }
-
-    plr->bonusCount += BONUSADD;
-    ST_doPaletteStuff(plr - players, false);
 
     // Check if fourth weapon assembled.
-    if(checkAssembled)
+    if(IS_NETGAME && !deathmatch) // Cooperative net-game.
+        pieceValue = pieceValueTrans[pieceValue];
+    if(!(plr->pieces & pieceValue))
     {
         plr->pieces |= pieceValue;
         if(plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
         {
-            gaveWeapon = true;
             plr->weapons[WT_FOURTH].owned = true;
             plr->pendingWeapon = WT_FOURTH;
             plr->update |= PSF_WEAPONS | PSF_OWNED_WEAPONS;
+
+            // Should we change weapon automatically?
+            P_MaybeChangeWeapon(plr, WT_FOURTH, AT_NOAMMO, false);
         }
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
     }
 
-    if(gaveWeapon)
-    {
-        P_SetMessage(plr, GET_TXT(fourthWeaponText[matchClass]), false);
-        // Play the build-sound full volume for all players.
-        S_StartSound(SFX_WEAPON_BUILD, NULL);
-
-        // Should we change weapon automatically?
-        P_MaybeChangeWeapon(plr, WT_FOURTH, AT_NOAMMO, false);
-    }
-    else
-    {
-        P_SetMessage(plr, GET_TXT(weaponPieceText[matchClass]), false);
-        S_ConsoleSound(SFX_PICKUP_WEAPON, NULL, plr - players);
-    }
+    return true;
 }
 
 /**
@@ -410,8 +508,7 @@ boolean P_GiveArmor(player_t* plr, armortype_t type, int points)
     if(plr->armorPoints[type] >= points)
         return false;
 
-    plr->armorPoints[type] = points;
-    plr->update |= PSF_ARMOR;
+    P_PlayerGiveArmorBonus(plr, type, points);
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
@@ -540,71 +637,9 @@ boolean P_GivePower(player_t *plr, powertype_t power)
     return retval;
 }
 
-static void TryPickupArtifact(player_t *plr, artitype_e artifactType,
-                              mobj_t *artifact)
+boolean P_GiveArtifact(player_t* plr, artitype_e artifact)
 {
-    int             artifactMessages[NUM_ARTIFACT_TYPES] = {
-        0,
-        TXT_TXT_ARTIINVULNERABILITY,
-        TXT_TXT_ARTIHEALTH,
-        TXT_TXT_ARTISUPERHEALTH,
-        TXT_TXT_ARTIHEALINGRADIUS,
-        TXT_TXT_ARTISUMMON,
-        TXT_TXT_ARTITORCH,
-        TXT_TXT_ARTIEGG,
-        TXT_TXT_ARTIFLY,
-        TXT_TXT_ARTIBLASTRADIUS,
-        TXT_TXT_ARTIPOISONBAG,
-        TXT_TXT_ARTITELEPORTOTHER,
-        TXT_TXT_ARTISPEED,
-        TXT_TXT_ARTIBOOSTMANA,
-        TXT_TXT_ARTIBOOSTARMOR,
-        TXT_TXT_ARTITELEPORT,
-        TXT_TXT_ARTIPUZZSKULL,
-        TXT_TXT_ARTIPUZZGEMBIG,
-        TXT_TXT_ARTIPUZZGEMRED,
-        TXT_TXT_ARTIPUZZGEMGREEN1,
-        TXT_TXT_ARTIPUZZGEMGREEN2,
-        TXT_TXT_ARTIPUZZGEMBLUE1,
-        TXT_TXT_ARTIPUZZGEMBLUE2,
-        TXT_TXT_ARTIPUZZBOOK1,
-        TXT_TXT_ARTIPUZZBOOK2,
-        TXT_TXT_ARTIPUZZSKULL2,
-        TXT_TXT_ARTIPUZZFWEAPON,
-        TXT_TXT_ARTIPUZZCWEAPON,
-        TXT_TXT_ARTIPUZZMWEAPON,
-        TXT_TXT_ARTIPUZZGEAR, // All gear pickups use the same text.
-        TXT_TXT_ARTIPUZZGEAR,
-        TXT_TXT_ARTIPUZZGEAR,
-        TXT_TXT_ARTIPUZZGEAR
-    };
-
-    if(P_InventoryGive(plr, artifactType))
-    {
-        if(artifact->special)
-        {
-            P_ExecuteLineSpecial(artifact->special, artifact->args, NULL, 0,
-                                 NULL);
-            artifact->special = 0;
-        }
-
-        plr->bonusCount += BONUSADD;
-        if(artifactType < AFT_FIRSTPUZZITEM)
-        {
-            SetDormantArtifact(artifact);
-            S_StartSound(SFX_PICKUP_ARTIFACT, artifact);
-            P_SetMessage(plr, GET_TXT(artifactMessages[artifactType]), false);
-        }
-        else
-        {   // Puzzle item.
-            S_StartSound(SFX_PICKUP_ITEM, NULL);
-            P_SetMessage(plr, GET_TXT(artifactMessages[artifactType]), false);
-            if(!IS_NETGAME || deathmatch)
-            {   // Remove puzzle items if not cooperative netplay.
-                P_MobjRemove(artifact, false);
-            }
-        }
-    }
+    return P_InventoryGive(plr, artifact);
 }
 
 /**
@@ -644,24 +679,519 @@ void C_DECL A_RestoreArtifact(mobj_t *arti)
 /**
  * Make a special thing visible again.
  */
-void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
+void C_DECL A_RestoreSpecialThing1(mobj_t* thing)
 {
     thing->flags2 &= ~MF2_DONTDRAW;
     S_StartSound(SFX_RESPAWN, thing);
 }
 
-void C_DECL A_RestoreSpecialThing2(mobj_t *thing)
+void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
 {
     thing->flags |= MF_SPECIAL;
     P_MobjChangeState(thing, thing->info->spawnState);
 }
 
-void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
+static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 {
-    player_t       *player;
-    float           delta;
-    int             sound;
-    boolean         respawn;
+    struct item_s {
+        itemtype_t      type;
+        spritetype_e    sprite;
+    } items[] = {
+        { IT_HEALTH_VIAL, SPR_PTN1 },
+        { IT_ARMOR_MESH, SPR_ARM1 },
+        { IT_ARMOR_SHIELD, SPR_ARM2 },
+        { IT_ARMOR_HELMET, SPR_ARM3 },
+        { IT_ARMOR_AMULET, SPR_ARM4 },
+        { IT_KEY_STEEL, SPR_KEY1 },
+        { IT_KEY_CAVE, SPR_KEY2 },
+        { IT_KEY_AXE, SPR_KEY3 },
+        { IT_KEY_FIRE, SPR_KEY4 },
+        { IT_KEY_EMERALD, SPR_KEY5 },
+        { IT_KEY_DUNGEON, SPR_KEY6 },
+        { IT_KEY_SILVER, SPR_KEY7 },
+        { IT_KEY_RUSTED, SPR_KEY8 },
+        { IT_KEY_HORN, SPR_KEY9 },
+        { IT_KEY_SWAMP, SPR_KEYA },
+        { IT_KEY_CASTLE, SPR_KEYB },
+        { IT_ARTIFACT_QUARTZFLASK, SPR_PTN2 },
+        { IT_ARTIFACT_WINGS, SPR_SOAR },
+        { IT_ARTIFACT_DEFENDER, SPR_INVU },
+        { IT_ARTIFACT_SERVANT, SPR_SUMN },
+        { IT_ARTIFACT_PORKALATOR, SPR_PORK },
+        { IT_ARTIFACT_MYSTICURN, SPR_SPHL },
+        { IT_ARTIFACT_AMBITINCANT, SPR_HRAD },
+        { IT_ARTIFACT_TORCH, SPR_TRCH },
+        { IT_ARTIFACT_CHAOSDEVICE, SPR_ATLP },
+        { IT_ARTIFACT_BANISHDEVICE, SPR_TELO },
+        { IT_ARTIFACT_FLETCHETTE, SPR_PSBG },
+        { IT_ARTIFACT_BOOTSOFSPEED, SPR_SPED },
+        { IT_ARTIFACT_KRATEROFMIGHT, SPR_BMAN },
+        { IT_ARTIFACT_BRACERS, SPR_BRAC },
+        { IT_ARTIFACT_REPULSION, SPR_BLST },
+        { IT_PUZZLE_SKULL, SPR_ASKU },
+        { IT_PUZZLE_BIGGEM, SPR_ABGM },
+        { IT_PUZZLE_REDGEM, SPR_AGMR },
+        { IT_PUZZLE_GREENGEM1, SPR_AGMG },
+        { IT_PUZZLE_GREENGEM2, SPR_AGG2 },
+        { IT_PUZZLE_BLUEGEM1, SPR_AGMB },
+        { IT_PUZZLE_BLUEGEM2, SPR_AGB2 },
+        { IT_PUZZLE_BOOK1, SPR_ABK1 },
+        { IT_PUZZLE_BOOK2, SPR_ABK2 },
+        { IT_PUZZLE_SKULL2, SPR_ASK2 },
+        { IT_PUZZLE_FWEAPON, SPR_AFWP },
+        { IT_PUZZLE_CWEAPON, SPR_ACWP },
+        { IT_PUZZLE_MWEAPON, SPR_AMWP },
+        { IT_PUZZLE_GEAR1, SPR_AGER },
+        { IT_PUZZLE_GEAR2, SPR_AGR2 },
+        { IT_PUZZLE_GEAR3, SPR_AGR3 },
+        { IT_PUZZLE_GEAR4, SPR_AGR4 },
+        { IT_MANA_BLUE, SPR_MAN1 },
+        { IT_MANA_GREEN, SPR_MAN2 },
+        { IT_MANA_COMBINED, SPR_MAN3 },
+        { IT_WEAPON_FROSTSHARDS, SPR_WMCS },
+        { IT_WEAPON_ARCOFDEATH, SPR_WMLG },
+        { IT_WEAPON_AXE, SPR_WFAX },
+        { IT_WEAPON_HAMMER, SPR_WFHM },
+        { IT_WEAPON_SERPENTSTAFF, SPR_WCSS },
+        { IT_WEAPON_FIRESTORM, SPR_WCFM },
+        { IT_WEAPON_QUIETUS1, SPR_WFR1 },
+        { IT_WEAPON_QUIETUS2, SPR_WFR2 },
+        { IT_WEAPON_QUIETUS3, SPR_WFR3 },
+        { IT_WEAPON_WRAITHVERGE1, SPR_WCH1 },
+        { IT_WEAPON_WRAITHVERGE2, SPR_WCH2 },
+        { IT_WEAPON_WRAITHVERGE3, SPR_WCH3 },
+        { IT_WEAPON_BLOODSCOURGE1, SPR_WMS1 },
+        { IT_WEAPON_BLOODSCOURGE2, SPR_WMS2 },
+        { IT_WEAPON_BLOODSCOURGE3, SPR_WMS3 },
+        { IT_NONE, 0 }
+    };
+    uint                i;
+
+    for(i = 0; items[i].type != IT_NONE; ++i)
+        if(items[i].sprite == sprite)
+            return items[i].type;
+
+    return IT_NONE;
+}
+
+static boolean pickupHealthVial(player_t* plr)
+{
+    return P_GiveBody(plr, 10);
+}
+
+static boolean pickupMesh(player_t* plr)
+{
+    return P_GiveArmor(plr, ARMOR_ARMOR,
+                       PCLASS_INFO(plr->class)->armorIncrement[ARMOR_ARMOR]);
+}
+
+static boolean pickupShield(player_t* plr)
+{
+    return P_GiveArmor(plr, ARMOR_SHIELD,
+                       PCLASS_INFO(plr->class)->armorIncrement[ARMOR_SHIELD]);
+}
+
+static boolean pickupHelmet(player_t* plr)
+{
+    return P_GiveArmor(plr, ARMOR_HELMET,
+                       PCLASS_INFO(plr->class)->armorIncrement[ARMOR_HELMET]);
+}
+
+static boolean pickupAmulet(player_t* plr)
+{
+    return P_GiveArmor(plr, ARMOR_AMULET,
+                        PCLASS_INFO(plr->class)->armorIncrement[ARMOR_AMULET]);
+}
+
+static boolean pickupSteelKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY1);
+}
+
+static boolean pickupCaveKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY2);
+}
+
+static boolean pickupAxeKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY3);
+}
+
+static boolean pickupFireKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY4);
+}
+
+static boolean pickupEmeraldKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY5);
+}
+
+static boolean pickupDungeonKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY6);
+}
+
+static boolean pickupSilverKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY7);
+}
+
+static boolean pickupRustedKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY8);
+}
+
+static boolean pickupHornKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEY9);
+}
+
+static boolean pickupSwampKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEYA);
+}
+
+static boolean pickupCastleKey(player_t* plr)
+{
+    return P_GiveKey(plr, KT_KEYB);
+}
+
+static boolean pickupQuartzFlask(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_HEALTH);
+}
+
+static boolean pickupWings(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_FLY);
+}
+
+static boolean pickupDefender(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_INVULNERABILITY);
+}
+
+static boolean pickupServant(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_SUMMON);
+}
+
+static boolean pickupPorkalator(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_EGG);
+}
+
+static boolean pickupMysticUrn(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_SUPERHEALTH);
+}
+
+static boolean pickupAmbitIncant(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_HEALINGRADIUS);
+}
+
+static boolean pickupTorch(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_TORCH);
+}
+
+static boolean pickupChaosDevice(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_TELEPORT);
+}
+
+static boolean pickupBanishDevice(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_TELEPORTOTHER);
+}
+
+static boolean pickupFletchette(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_POISONBAG);
+}
+
+static boolean pickupBootsOfSpeed(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_SPEED);
+}
+
+static boolean pickupKraterOfMight(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_BOOSTMANA);
+}
+
+static boolean pickupBracers(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_BOOSTARMOR);
+}
+
+static boolean pickupRepulsion(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_BLASTRADIUS);
+}
+
+static boolean pickupSkull(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZSKULL);
+}
+
+static boolean pickupBigGem(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEMBIG);
+}
+
+static boolean pickupRedGem(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEMRED);
+}
+
+static boolean pickupGreenGem1(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEMGREEN1);
+}
+
+static boolean pickupGreenGem2(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEMGREEN2);
+}
+
+static boolean pickupBlueGem1(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEMBLUE1);
+}
+
+static boolean pickupBlueGem2(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEMBLUE2);
+}
+
+static boolean pickupBook1(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZBOOK1);
+}
+
+static boolean pickupBook2(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZBOOK2);
+}
+
+static boolean pickupSkull2(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZSKULL2);
+}
+
+static boolean pickupFWeapon(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZFWEAPON);
+}
+
+static boolean pickupCWeapon(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZCWEAPON);
+}
+
+static boolean pickupMWeapon(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZMWEAPON);
+}
+
+static boolean pickupGear1(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEAR1);
+}
+
+static boolean pickupGear2(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEAR2);
+}
+
+static boolean pickupGear3(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEAR3);
+}
+
+static boolean pickupGear4(player_t* plr)
+{
+    return P_GiveArtifact(plr, AFT_PUZZGEAR4);
+}
+
+static boolean pickupBlueMana(player_t* plr)
+{
+    return P_GiveMana(plr, AT_BLUEMANA, 15);
+}
+
+static boolean pickupGreenMana(player_t* plr)
+{
+    return P_GiveMana(plr, AT_GREENMANA, 15);
+}
+
+static boolean pickupCombinedMana(player_t* plr)
+{
+    if(!P_GiveMana(plr, AT_BLUEMANA, 20))
+    {
+        if(!P_GiveMana(plr, AT_GREENMANA, 20))
+            return false;
+    }
+    else
+    {
+        P_GiveMana(plr, AT_GREENMANA, 20);
+    }
+
+    return true;
+}
+
+static boolean pickupFrostShards(player_t* plr)
+{
+    return P_GiveWeapon(plr, PCLASS_MAGE, WT_SECOND);
+}
+
+static boolean pickupArcOfDeath(player_t* plr)
+{
+    return P_GiveWeapon(plr, PCLASS_MAGE, WT_THIRD);
+}
+
+static boolean pickupAxe(player_t* plr)
+{
+    return P_GiveWeapon(plr, PCLASS_FIGHTER, WT_SECOND);
+}
+
+static boolean pickupHammer(player_t* plr)
+{
+    return P_GiveWeapon(plr, PCLASS_FIGHTER, WT_THIRD);
+}
+
+static boolean pickupSerpentStaff(player_t* plr)
+{
+    return P_GiveWeapon(plr, PCLASS_CLERIC, WT_SECOND);
+}
+
+static boolean pickupFireStorm(player_t* plr)
+{
+    return P_GiveWeapon(plr, PCLASS_CLERIC, WT_THIRD);
+}
+
+static boolean pickupQuietus1(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_FIGHTER, WPIECE1);
+}
+
+static boolean pickupQuietus2(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_FIGHTER, WPIECE2);
+}
+
+static boolean pickupQuietus3(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_FIGHTER, WPIECE3);
+}
+
+static boolean pickupWraithVerge1(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_CLERIC, WPIECE1);
+}
+
+static boolean pickupWraithVerge2(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_CLERIC, WPIECE2);
+}
+
+static boolean pickupWraithVerge3(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_CLERIC, WPIECE3);
+}
+
+static boolean pickupBloodScourge1(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_MAGE, WPIECE1);
+}
+
+static boolean pickupBloodScourge2(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_MAGE, WPIECE2);
+}
+
+static boolean pickupBloodScourge3(player_t* plr)
+{
+    return P_GiveWeaponPiece(plr, PCLASS_MAGE, WPIECE3);
+}
+
+static boolean giveItem(player_t* plr, itemtype_t item)
+{
+    const iteminfo_t*   info = &items[item-1];
+    int                 oldPieces = plr->pieces;
+
+    // Attempt to pickup the item.
+    if(!info->giveFunc(plr))
+        return false; // Didn't pick it up.
+
+    switch(item)
+    {
+    case IT_WEAPON_QUIETUS1:
+    case IT_WEAPON_QUIETUS2:
+    case IT_WEAPON_QUIETUS3:
+    case IT_WEAPON_WRAITHVERGE1:
+    case IT_WEAPON_WRAITHVERGE2:
+    case IT_WEAPON_WRAITHVERGE3:
+    case IT_WEAPON_BLOODSCOURGE1:
+    case IT_WEAPON_BLOODSCOURGE2:
+    case IT_WEAPON_BLOODSCOURGE3:
+        if(plr->pieces != oldPieces &&
+           plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
+        {
+            int                 msg;
+
+            switch(item)
+            {
+            case IT_WEAPON_QUIETUS1:
+            case IT_WEAPON_QUIETUS2:
+            case IT_WEAPON_QUIETUS3:
+                msg = TXT_TXT_WEAPON_F4;
+                break;
+
+            case IT_WEAPON_WRAITHVERGE1:
+            case IT_WEAPON_WRAITHVERGE2:
+            case IT_WEAPON_WRAITHVERGE3:
+                msg = TXT_TXT_WEAPON_C4;
+                break;
+
+            case IT_WEAPON_BLOODSCOURGE1:
+            case IT_WEAPON_BLOODSCOURGE2:
+            case IT_WEAPON_BLOODSCOURGE3:
+                msg = TXT_TXT_WEAPON_M4;
+                break;
+            }
+
+            P_SetMessage(plr, GET_TXT(msg), false);
+            // Play the build-sound full volume for all players.
+            S_StartSound(SFX_WEAPON_BUILD, NULL);
+            break;
+        }
+        // Fall-through:
+
+    default:
+        S_StartSound(info->pickupSound, plr->plr->mo);
+        P_SetMessage(plr, GET_TXT(info->pickupMsg), false);
+        break;
+    }
+
+    // Should we leave this item for others?
+    if((info->flags & IIF_LEAVE_COOP) && IS_NETGAME && !deathmatch)
+        return false;
+    if((info->flags & IIF_LEAVE_DEATHMATCH) && IS_NETGAME && deathmatch)
+        return false;
+
+    return true;
+}
+
+void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
+{
+    player_t*           player;
+    float               delta;
+    itemtype_t          item;
+    boolean             wasTaken = false;
 
     if(IS_CLIENT)
         return;
@@ -672,326 +1202,21 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         return;
     }
 
+    // Dead thing touching (can happen with a sliding player corpse).
     if(toucher->health <= 0)
-    {   // Toucher is dead.
         return;
-    }
 
-    sound = SFX_PICKUP_ITEM;
     player = toucher->player;
-    if(player == NULL)
-        return;
 
-    respawn = true;
-    switch(special->sprite)
+    // Identify by sprite.
+    if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-    // Items
-    case SPR_PTN1: // Item_HealingPotion.
-        if(!P_GiveBody(player, 10))
-            return;
-
-        P_SetMessage(player, TXT_ITEMHEALTH, false);
-        break;
-
-    case SPR_ARM1:
-        if(!P_GiveArmor(player, ARMOR_ARMOR,
-                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_ARMOR]))
-            return;
-
-        P_SetMessage(player, TXT_ARMOR1, false);
-        break;
-
-    case SPR_ARM2:
-        if(!P_GiveArmor(player, ARMOR_SHIELD,
-                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_SHIELD]))
-            return;
-
-        P_SetMessage(player, TXT_ARMOR2, false);
-        break;
-
-    case SPR_ARM3:
-        if(!P_GiveArmor(player, ARMOR_HELMET,
-                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_HELMET]))
-            return;
-
-        P_SetMessage(player, TXT_ARMOR3, false);
-        break;
-
-    case SPR_ARM4:
-        if(!P_GiveArmor(player, ARMOR_AMULET,
-                        PCLASS_INFO(player->class)->armorIncrement[ARMOR_AMULET]))
-            return;
-
-        P_SetMessage(player, TXT_ARMOR4, false);
-        break;
-
-    // Keys
-    case SPR_KEY1:
-    case SPR_KEY2:
-    case SPR_KEY3:
-    case SPR_KEY4:
-    case SPR_KEY5:
-    case SPR_KEY6:
-    case SPR_KEY7:
-    case SPR_KEY8:
-    case SPR_KEY9:
-    case SPR_KEYA:
-    case SPR_KEYB:
-        if(!P_GiveKey(player, special->sprite - SPR_KEY1))
-            return;
-
-        P_SetMessage(player,
-                     GET_TXT(TextKeyMessages[special->sprite - SPR_KEY1]),
-                     false);
-        sound = SFX_PICKUP_KEY;
-
-        // Check and process the special now in case the key doesn't
-        // get removed for coop netplay
-        if(special->special)
-        {
-            P_ExecuteLineSpecial(special->special, special->args, NULL, 0,
-                                 toucher);
-            special->special = 0;
-        }
-
-        if(!IS_NETGAME)
-        {   // Only remove keys in single player game.
-            break;
-        }
-        player->bonusCount += BONUSADD;
-        S_ConsoleSound(sound, NULL, player - players);
-        ST_doPaletteStuff(player - players, false);
-        return;
-
-    // Artifacts
-    case SPR_PTN2:
-        TryPickupArtifact(player, AFT_HEALTH, special);
-        return;
-
-    case SPR_SOAR:
-        TryPickupArtifact(player, AFT_FLY, special);
-        return;
-
-    case SPR_INVU:
-        TryPickupArtifact(player, AFT_INVULNERABILITY, special);
-        return;
-
-    case SPR_SUMN:
-        TryPickupArtifact(player, AFT_SUMMON, special);
-        return;
-
-    case SPR_PORK:
-        TryPickupArtifact(player, AFT_EGG, special);
-        return;
-
-    case SPR_SPHL:
-        TryPickupArtifact(player, AFT_SUPERHEALTH, special);
-        return;
-
-    case SPR_HRAD:
-        TryPickupArtifact(player, AFT_HEALINGRADIUS, special);
-        return;
-
-    case SPR_TRCH:
-        TryPickupArtifact(player, AFT_TORCH, special);
-        return;
-
-    case SPR_ATLP:
-        TryPickupArtifact(player, AFT_TELEPORT, special);
-        return;
-
-    case SPR_TELO:
-        TryPickupArtifact(player, AFT_TELEPORTOTHER, special);
-        return;
-
-    case SPR_PSBG:
-        TryPickupArtifact(player, AFT_POISONBAG, special);
-        return;
-
-    case SPR_SPED:
-        TryPickupArtifact(player, AFT_SPEED, special);
-        return;
-
-    case SPR_BMAN:
-        TryPickupArtifact(player, AFT_BOOSTMANA, special);
-        return;
-
-    case SPR_BRAC:
-        TryPickupArtifact(player, AFT_BOOSTARMOR, special);
-        return;
-
-    case SPR_BLST:
-        TryPickupArtifact(player, AFT_BLASTRADIUS, special);
-        return;
-
-    // Puzzle artifacts
-    case SPR_ASKU:
-        TryPickupArtifact(player, AFT_PUZZSKULL, special);
-        return;
-
-    case SPR_ABGM:
-        TryPickupArtifact(player, AFT_PUZZGEMBIG, special);
-        return;
-
-    case SPR_AGMR:
-        TryPickupArtifact(player, AFT_PUZZGEMRED, special);
-        return;
-
-    case SPR_AGMG:
-        TryPickupArtifact(player, AFT_PUZZGEMGREEN1, special);
-        return;
-
-    case SPR_AGG2:
-        TryPickupArtifact(player, AFT_PUZZGEMGREEN2, special);
-        return;
-
-    case SPR_AGMB:
-        TryPickupArtifact(player, AFT_PUZZGEMBLUE1, special);
-        return;
-
-    case SPR_AGB2:
-        TryPickupArtifact(player, AFT_PUZZGEMBLUE2, special);
-        return;
-
-    case SPR_ABK1:
-        TryPickupArtifact(player, AFT_PUZZBOOK1, special);
-        return;
-
-    case SPR_ABK2:
-        TryPickupArtifact(player, AFT_PUZZBOOK2, special);
-        return;
-
-    case SPR_ASK2:
-        TryPickupArtifact(player, AFT_PUZZSKULL2, special);
-        return;
-
-    case SPR_AFWP:
-        TryPickupArtifact(player, AFT_PUZZFWEAPON, special);
-        return;
-
-    case SPR_ACWP:
-        TryPickupArtifact(player, AFT_PUZZCWEAPON, special);
-        return;
-
-    case SPR_AMWP:
-        TryPickupArtifact(player, AFT_PUZZMWEAPON, special);
-        return;
-
-    case SPR_AGER:
-        TryPickupArtifact(player, AFT_PUZZGEAR1, special);
-        return;
-
-    case SPR_AGR2:
-        TryPickupArtifact(player, AFT_PUZZGEAR2, special);
-        return;
-
-    case SPR_AGR3:
-        TryPickupArtifact(player, AFT_PUZZGEAR3, special);
-        return;
-
-    case SPR_AGR4:
-        TryPickupArtifact(player, AFT_PUZZGEAR4, special);
-        return;
-
-    // Mana
-    case SPR_MAN1:
-        if(!P_GiveMana(player, AT_BLUEMANA, 15))
-            return;
-
-        P_SetMessage(player, TXT_MANA_1, false);
-        break;
-
-    case SPR_MAN2:
-        if(!P_GiveMana(player, AT_GREENMANA, 15))
-            return;
-
-        P_SetMessage(player, TXT_MANA_2, false);
-        break;
-
-    case SPR_MAN3: // Double Mana Dodecahedron.
-        if(!P_GiveMana(player, AT_BLUEMANA, 20))
-        {
-            if(!P_GiveMana(player, AT_GREENMANA, 20))
-                return;
-        }
-        else
-        {
-            P_GiveMana(player, AT_GREENMANA, 20);
-        }
-        P_SetMessage(player, TXT_MANA_BOTH, false);
-        break;
-
-    // 2nd and 3rd Mage Weapons
-    case SPR_WMCS: // Frost Shards.
-        TryPickupWeapon(player, PCLASS_MAGE, WT_SECOND, special,
-                        TXT_WEAPON_M2);
-        return;
-
-    case SPR_WMLG: // Arc of Death.
-        TryPickupWeapon(player, PCLASS_MAGE, WT_THIRD, special, TXT_WEAPON_M3);
-        return;
-
-    // 2nd and 3rd Fighter Weapons
-    case SPR_WFAX: // Timon's Axe.
-        TryPickupWeapon(player, PCLASS_FIGHTER, WT_SECOND, special,
-                        TXT_WEAPON_F2);
-        return;
-
-    case SPR_WFHM: // Hammer of Retribution.
-        TryPickupWeapon(player, PCLASS_FIGHTER, WT_THIRD, special,
-                        TXT_WEAPON_F3);
-        return;
-
-    // 2nd and 3rd Cleric Weapons
-    case SPR_WCSS: // Serpent Staff.
-        TryPickupWeapon(player, PCLASS_CLERIC, WT_SECOND, special,
-                        TXT_WEAPON_C2);
-        return;
-
-    case SPR_WCFM: // Firestorm.
-        TryPickupWeapon(player, PCLASS_CLERIC, WT_THIRD, special,
-                        TXT_WEAPON_C3);
-        return;
-
-    // Fourth Weapon Pieces.
-    case SPR_WFR1:
-        TryPickupWeaponPiece(player, PCLASS_FIGHTER, WPIECE1, special);
-        return;
-
-    case SPR_WFR2:
-        TryPickupWeaponPiece(player, PCLASS_FIGHTER, WPIECE2, special);
-        return;
-
-    case SPR_WFR3:
-        TryPickupWeaponPiece(player, PCLASS_FIGHTER, WPIECE3, special);
-        return;
-
-    case SPR_WCH1:
-        TryPickupWeaponPiece(player, PCLASS_CLERIC, WPIECE1, special);
-        return;
-
-    case SPR_WCH2:
-        TryPickupWeaponPiece(player, PCLASS_CLERIC, WPIECE2, special);
-        return;
-
-    case SPR_WCH3:
-        TryPickupWeaponPiece(player, PCLASS_CLERIC, WPIECE3, special);
-        return;
-
-    case SPR_WMS1:
-        TryPickupWeaponPiece(player, PCLASS_MAGE, WPIECE1, special);
-        return;
-
-    case SPR_WMS2:
-        TryPickupWeaponPiece(player, PCLASS_MAGE, WPIECE2, special);
-        return;
-
-    case SPR_WMS3:
-        TryPickupWeaponPiece(player, PCLASS_MAGE, WPIECE3, special);
-        return;
-
-    default:
-        Con_Error("P_SpecialThing: Unknown gettable thing");
+        wasTaken = giveItem(player, item);
+    }
+    else
+    {
+        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
+                    (int) special->type);
     }
 
     if(special->special)
@@ -1001,18 +1226,64 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         special->special = 0;
     }
 
-    if(deathmatch && respawn && !(special->flags2 & MF2_DROPPED))
+    if(wasTaken)
     {
-        P_HideSpecialThing(special);
-    }
-    else
-    {
-        P_MobjRemove(special, false);
+        /**
+         * Taken items are handled differently depending upon the type of
+         * item: artifact, puzzle or other.
+         */
+        switch(item)
+        {
+        // Artifacts:
+        case IT_ARTIFACT_QUARTZFLASK:
+        case IT_ARTIFACT_WINGS:
+        case IT_ARTIFACT_DEFENDER:
+        case IT_ARTIFACT_SERVANT:
+        case IT_ARTIFACT_PORKALATOR:
+        case IT_ARTIFACT_MYSTICURN:
+        case IT_ARTIFACT_AMBITINCANT:
+        case IT_ARTIFACT_TORCH:
+        case IT_ARTIFACT_CHAOSDEVICE:
+        case IT_ARTIFACT_BANISHDEVICE:
+        case IT_ARTIFACT_FLETCHETTE:
+        case IT_ARTIFACT_BOOTSOFSPEED:
+        case IT_ARTIFACT_KRATEROFMIGHT:
+        case IT_ARTIFACT_BRACERS:
+        case IT_ARTIFACT_REPULSION:
+            SetDormantArtifact(special);
+            break;
+
+        // Puzzle items:
+        case IT_PUZZLE_SKULL:
+        case IT_PUZZLE_BIGGEM:
+        case IT_PUZZLE_REDGEM:
+        case IT_PUZZLE_GREENGEM1:
+        case IT_PUZZLE_GREENGEM2:
+        case IT_PUZZLE_BLUEGEM1:
+        case IT_PUZZLE_BLUEGEM2:
+        case IT_PUZZLE_BOOK1:
+        case IT_PUZZLE_BOOK2:
+        case IT_PUZZLE_SKULL2:
+        case IT_PUZZLE_FWEAPON:
+        case IT_PUZZLE_CWEAPON:
+        case IT_PUZZLE_MWEAPON:
+        case IT_PUZZLE_GEAR1:
+        case IT_PUZZLE_GEAR2:
+        case IT_PUZZLE_GEAR3:
+        case IT_PUZZLE_GEAR4:
+            P_MobjRemove(special, false);
+            break;
+
+        default:
+            if(deathmatch && !(special->flags2 & MF2_DROPPED))
+                P_HideSpecialThing(special);
+            else
+                P_MobjRemove(special, false);
+            break;
+        }
     }
 
     player->bonusCount += BONUSADD;
-    S_ConsoleSound(sound, NULL, player - players);
-    ST_doPaletteStuff(player - players, false);
 }
 
 typedef struct {

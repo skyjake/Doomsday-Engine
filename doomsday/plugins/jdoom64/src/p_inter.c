@@ -221,17 +221,16 @@ boolean P_GiveBody(player_t *player, int num)
 /**
  * @return              @c true, iff the armor was given.
  */
-boolean P_GiveArmor(player_t* player, int type, int points)
+boolean P_GiveArmor(player_t* plr, int type, int points)
 {
-    if(player->armorPoints >= points)
+    if(plr->armorPoints >= points)
         return false; // Don't pick up.
 
-    player->armorType = type;
-    player->armorPoints = points;
-    player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
+    P_PlayerSetArmorType(plr, type);
+    P_PlayerGiveArmorBonus(plr, points);
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(player - players, HUE_ON_PICKUP_ARMOR);
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
@@ -362,390 +361,522 @@ boolean P_TakePower(player_t* player, int power)
     return true;
 }
 
-void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
+typedef enum {
+    IT_NONE = 0,
+    IT_HEALTH_PACK,
+    IT_HEALTH_KIT,
+    IT_HEALTH_BONUS,
+    IT_HEALTH_SOULSPHERE,
+    IT_ARMOR_GREEN,
+    IT_ARMOR_BLUE,
+    IT_ARMOR_BONUS,
+    IT_WEAPON_BFG,
+    IT_WEAPON_CHAINGUN,
+    IT_WEAPON_CHAINSAW,
+    IT_WEAPON_RLAUNCHER,
+    IT_WEAPON_PLASMARIFLE,
+    IT_WEAPON_SHOTGUN,
+    IT_WEAPON_SSHOTGUN,
+    IT_WEAPON_LASERGUN,
+    IT_AMMO_CLIP,
+    IT_AMMO_CLIP_BOX,
+    IT_AMMO_ROCKET,
+    IT_AMMO_ROCKET_BOX,
+    IT_AMMO_CELL,
+    IT_AMMO_CELL_BOX,
+    IT_AMMO_SHELL,
+    IT_AMMO_SHELL_BOX,
+    IT_KEY_BLUE,
+    IT_KEY_YELLOW,
+    IT_KEY_RED,
+    IT_KEY_BLUESKULL,
+    IT_KEY_YELLOWSKULL,
+    IT_KEY_REDSKULL,
+    IT_INVUL,
+    IT_BESERK,
+    IT_INVIS,
+    IT_SUIT,
+    IT_ALLMAP,
+    IT_VISOR,
+    IT_BACKPACK,
+    IT_MEGASPHERE,
+    IT_ARTIFACT1,
+    IT_ARTIFACT2,
+    IT_ARTIFACT3
+} itemtype_t;
+
+static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 {
-    player_t       *player;
-    float           delta;
-    int             sound;
+    struct item_s {
+        itemtype_t      type;
+        spritetype_e    sprite;
+    } items[] = {
+        { IT_HEALTH_PACK, SPR_STIM },
+        { IT_HEALTH_KIT, SPR_MEDI },
+        { IT_HEALTH_BONUS, SPR_BON1 },
+        { IT_HEALTH_SOULSPHERE, SPR_SOUL },
+        { IT_ARMOR_GREEN, SPR_ARM1 },
+        { IT_ARMOR_BLUE, SPR_ARM2 },
+        { IT_ARMOR_BONUS, SPR_BON2 },
+        { IT_WEAPON_BFG, SPR_BFUG },
+        { IT_WEAPON_CHAINGUN, SPR_MGUN },
+        { IT_WEAPON_CHAINSAW, SPR_CSAW },
+        { IT_WEAPON_RLAUNCHER, SPR_LAUN },
+        { IT_WEAPON_PLASMARIFLE, SPR_PLSM },
+        { IT_WEAPON_SHOTGUN, SPR_SHOT },
+        { IT_WEAPON_SSHOTGUN, SPR_SGN2 },
+        { IT_WEAPON_LASERGUN, SPR_LSRG },
+        { IT_AMMO_CLIP, SPR_CLIP },
+        { IT_AMMO_CLIP_BOX, SPR_AMMO },
+        { IT_AMMO_ROCKET, SPR_RCKT },
+        { IT_AMMO_ROCKET_BOX, SPR_BROK },
+        { IT_AMMO_CELL, SPR_CELL },
+        { IT_AMMO_CELL_BOX, SPR_CELP },
+        { IT_AMMO_SHELL, SPR_SHEL },
+        { IT_AMMO_SHELL_BOX, SPR_SBOX },
+        { IT_KEY_BLUE, SPR_BKEY },
+        { IT_KEY_YELLOW, SPR_YKEY },
+        { IT_KEY_RED, SPR_RKEY },
+        { IT_KEY_BLUESKULL, SPR_BSKU },
+        { IT_KEY_YELLOWSKULL, SPR_YSKU },
+        { IT_KEY_REDSKULL, SPR_RSKU },
+        { IT_INVUL, SPR_PINV },
+        { IT_BESERK, SPR_PSTR },
+        { IT_INVIS, SPR_PINS },
+        { IT_SUIT, SPR_SUIT },
+        { IT_ALLMAP, SPR_PMAP },
+        { IT_VISOR, SPR_PVIS },
+        { IT_BACKPACK, SPR_BPAK },
+        { IT_MEGASPHERE, SPR_MEGA },
+        { IT_ARTIFACT1, SPR_ART1 },
+        { IT_ARTIFACT2, SPR_ART2 },
+        { IT_ARTIFACT3, SPR_ART3 },
+        { IT_NONE, 0 }
+    };
+    uint                i;
+
+    for(i = 0; items[i].type != IT_NONE; ++i)
+        if(items[i].sprite == sprite)
+            return items[i].type;
+
+    return IT_NONE;
+}
+
+/**
+ * @param plr           Player being given item.
+ * @param item          Type of item being given.
+ * @param dropped       @c true = the item was dropped by some entity.
+ *
+ * @return              @c true iff the item should be destroyed.
+ */
+static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
+{
+    switch(item)
+    {
+    case IT_ARMOR_GREEN:
+        if(!P_GiveArmor(plr, armorClass[0],
+                        armorPoints[MINMAX_OF(0, armorClass[0] - 1, 1)]))
+            return false;
+        P_SetMessage(plr, GOTARMOR, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_ARMOR_BLUE:
+        if(!P_GiveArmor(plr, armorClass[1],
+                        armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]))
+            return false;
+        P_SetMessage(plr, GOTMEGA, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_ARMOR_BONUS:
+        //plr->armorPoints++;  // Can go over 100%
+        plr->armorPoints += 2; // jd64 Can go over 100%
+        if(plr->armorPoints > armorPoints[1]) // 200
+            plr->armorPoints = armorPoints[1];
+        if(!plr->armorType)
+            plr->armorType = armorClass[0];
+        plr->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
+        P_SetMessage(plr, GOTARMBONUS, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
+        break;
+
+    case IT_HEALTH_BONUS:
+        //plr->health++;       // Can go over 100%
+        plr->health += 2;      // jd64 Can go over 100%
+        if(plr->health > healthLimit)
+            plr->health = healthLimit;
+        plr->plr->mo->health = plr->health;
+        plr->update |= PSF_HEALTH;
+        P_SetMessage(plr, GOTHTHBONUS, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_HEALTH);
+        break;
+
+    case IT_HEALTH_SOULSPHERE:
+        plr->health += soulSphereHealth;
+        if(plr->health > soulSphereLimit)
+            plr->health = soulSphereLimit;
+        plr->plr->mo->health = plr->health;
+        plr->update |= PSF_HEALTH;
+        P_SetMessage(plr, GOTSUPER, false);
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_HEALTH);
+        break;
+
+    case IT_MEGASPHERE:
+        if(gameMode != commercial)
+            return false;
+        plr->health = megaSphereHealth;
+        plr->plr->mo->health = plr->health;
+        plr->update |= PSF_HEALTH;
+        P_GiveArmor(plr, armorClass[1],
+                    armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
+        P_SetMessage(plr, GOTMSPHERE, false);
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_HEALTH);
+        break;
+
+    case IT_KEY_BLUE:
+        if(!plr->keys[KT_BLUECARD])
+            P_SetMessage(plr, GOTBLUECARD, false);
+        P_GiveKey(plr, KT_BLUECARD);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_KEY_YELLOW:
+        if(!plr->keys[KT_YELLOWCARD])
+            P_SetMessage(plr, GOTYELWCARD, false);
+        P_GiveKey(plr, KT_YELLOWCARD);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_KEY_RED:
+        if(!plr->keys[KT_REDCARD])
+            P_SetMessage(plr, GOTREDCARD, false);
+        P_GiveKey(plr, KT_REDCARD);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_KEY_BLUESKULL:
+        if(!plr->keys[KT_BLUESKULL])
+            P_SetMessage(plr, GOTBLUESKUL, false);
+        P_GiveKey(plr, KT_BLUESKULL);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_KEY_YELLOWSKULL:
+        if(!plr->keys[KT_YELLOWSKULL])
+            P_SetMessage(plr, GOTYELWSKUL, false);
+        P_GiveKey(plr, KT_YELLOWSKULL);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_KEY_REDSKULL:
+        if(!plr->keys[KT_REDSKULL])
+            P_SetMessage(plr, GOTREDSKULL, false);
+        P_GiveKey(plr, KT_REDSKULL);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(IS_NETGAME)
+            return false;
+        break;
+
+    case IT_HEALTH_PACK:
+        if(!P_GiveBody(plr, 10))
+            return false;
+        P_SetMessage(plr, GOTSTIM, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_HEALTH_KIT:
+        {
+        int                 oldHealth = plr->health;
+
+        /**
+         * DOOM bug:
+         * The following test was originaly placed AFTER the call to
+         * P_GiveBody thereby making the first outcome impossible as
+         * the medikit gives 25 points of health. This resulted that
+         * the GOTMEDINEED "Picked up a medikit that you REALLY need"
+         * was never used.
+         */
+        if(!P_GiveBody(plr, 25))
+            return false;
+
+        P_SetMessage(plr, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT), false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+        }
+    case IT_INVUL:
+        if(!P_GivePower(plr, PT_INVULNERABILITY))
+            return false;
+        P_SetMessage(plr, GOTINVUL, false);
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+        break;
+
+    case IT_BESERK:
+        if(!P_GivePower(plr, PT_STRENGTH))
+            return false;
+        P_SetMessage(plr, GOTBERSERK, false);
+        if(plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
+        {
+            plr->pendingWeapon = WT_FIRST;
+            plr->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+        }
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+        break;
+
+    case IT_INVIS:
+        if(!P_GivePower(plr, PT_INVISIBILITY))
+            return false;
+        P_SetMessage(plr, GOTINVIS, false);
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+        break;
+
+    case IT_SUIT:
+        if(!P_GivePower(plr, PT_IRONFEET))
+            return false;
+        P_SetMessage(plr, GOTSUIT, false);
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+        break;
+
+    case IT_ALLMAP:
+        if(!P_GivePower(plr, PT_ALLMAP))
+            return false;
+        P_SetMessage(plr, GOTMAP, false);
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+        break;
+
+    case IT_VISOR:
+        if(!P_GivePower(plr, PT_INFRARED))
+            return false;
+        P_SetMessage(plr, GOTVISOR, false);
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+        break;
+
+    case IT_AMMO_CLIP:
+        if(!P_GiveAmmo(plr, AT_CLIP, dropped? 0 : 1))
+            return false;
+        P_SetMessage(plr, GOTCLIP, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_CLIP_BOX:
+        if(!P_GiveAmmo(plr, AT_CLIP, 5))
+            return false;
+        P_SetMessage(plr, GOTCLIPBOX, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_ROCKET:
+        if(!P_GiveAmmo(plr, AT_MISSILE, 1))
+            return false;
+        P_SetMessage(plr, GOTROCKET, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_ROCKET_BOX:
+        if(!P_GiveAmmo(plr, AT_MISSILE, 5))
+            return false;
+        P_SetMessage(plr, GOTROCKBOX, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_CELL:
+        if(!P_GiveAmmo(plr, AT_CELL, 1))
+            return false;
+        P_SetMessage(plr, GOTCELL, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_CELL_BOX:
+        if(!P_GiveAmmo(plr, AT_CELL, 5))
+            return false;
+        P_SetMessage(plr, GOTCELLBOX, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_SHELL:
+        if(!P_GiveAmmo(plr, AT_SHELL, 1))
+            return false;
+        P_SetMessage(plr, GOTSHELLS, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_AMMO_SHELL_BOX:
+        if(!P_GiveAmmo(plr, AT_SHELL, 5))
+            return false;
+        P_SetMessage(plr, GOTSHELLBOX, false);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_BACKPACK:
+        P_GiveBackpack(plr);
+        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_BFG:
+        if(!P_GiveWeapon(plr, WT_SEVENTH, dropped))
+            return false;
+        P_SetMessage(plr, GOTBFG9000, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_CHAINGUN:
+        if(!P_GiveWeapon(plr, WT_FOURTH, dropped))
+            return false;
+        P_SetMessage(plr, GOTCHAINGUN, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_CHAINSAW:
+        if(!P_GiveWeapon(plr, WT_EIGHTH, dropped))
+            return false;
+        P_SetMessage(plr, GOTCHAINSAW, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_RLAUNCHER:
+        if(!P_GiveWeapon(plr, WT_FIFTH, dropped))
+            return false;
+        P_SetMessage(plr, GOTLAUNCHER, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_PLASMARIFLE:
+        if(!P_GiveWeapon(plr, WT_SIXTH, dropped))
+            return false;
+        P_SetMessage(plr, GOTPLASMA, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_SHOTGUN:
+        if(!P_GiveWeapon(plr, WT_THIRD, dropped))
+            return false;
+        P_SetMessage(plr, GOTSHOTGUN, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_SSHOTGUN:
+        if(!P_GiveWeapon(plr, WT_NINETH, dropped))
+            return false;
+        P_SetMessage(plr, GOTSHOTGUN2, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_WEAPON_LASERGUN:
+        if(!P_GiveWeapon(plr, WT_TENTH, dropped))
+            return false;
+
+        P_SetMessage(plr, GOTUNMAKER, false);
+        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        break;
+
+    case IT_ARTIFACT1:
+        if(plr->artifacts[it_laserpw1])
+        {
+            if(!(mapTime & 0x1f))
+                P_SetMessage(plr, NGOTPOWERUP1, false);
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+
+            return false; //Don't destroy item, can be collected later by other players.
+        }
+        else
+        {
+            P_InventoryGive(plr, it_laserpw1);
+            P_SetMessage(plr, GOTPOWERUP1, false);
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
+        break;
+
+    case IT_ARTIFACT2:
+        if(plr->artifacts[it_laserpw2])
+        {
+            if(!(mapTime & 0x1f))
+                P_SetMessage(plr, NGOTPOWERUP2, false);
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+
+            return false; //Don't destroy item, can be collected later by other players.
+        }
+        else
+        {
+            P_InventoryGive(plr, it_laserpw2);
+            P_SetMessage(plr, GOTPOWERUP2, false);
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
+        break;
+
+    case IT_ARTIFACT3:
+        if(plr->artifacts[it_laserpw3])
+        {
+            if(!(mapTime & 0x1f))
+                P_SetMessage(plr, NGOTPOWERUP3, false);
+
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+            return false; //Don't destroy item, can be collected later by other players.
+        }
+        else
+        {
+            P_InventoryGive(plr, it_laserpw3);
+            P_SetMessage(plr, GOTPOWERUP3, false);
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
+        break;
+
+    default:
+        Con_Error("giveItem: Unknown item %i.", (int) item);
+    }
+
+    return true;
+}
+
+void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
+{
+    player_t*           player;
+    float               delta;
+    itemtype_t          item;
 
     delta = special->pos[VZ] - toucher->pos[VZ];
-
     if(delta > toucher->height || delta < -8)
     {   // Out of reach.
         return;
     }
 
-    sound = SFX_ITEMUP;
-    player = toucher->player;
-
-    // Dead thing touching. Can happen with a sliding player corpse.
+    // Dead thing touching (can happen with a sliding player corpse).
     if(toucher->health <= 0)
         return;
 
+    player = toucher->player;
+
     // Identify by sprite.
-    switch(special->sprite)
+    if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-    // armor
-    case SPR_ARM1:
-        if(!P_GiveArmor(player, armorClass[0],
-                        armorPoints[MINMAX_OF(0, armorClass[0] - 1, 1)]))
-            return;
-        P_SetMessage(player, GOTARMOR, false);
-        break;
-
-    case SPR_ARM2:
-        if(!P_GiveArmor(player, armorClass[1],
-                        armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]))
-            return;
-        P_SetMessage(player, GOTMEGA, false);
-        break;
-
-        // bonus items
-    case SPR_BON1:
-        //player->health++;       // Can go over 100%
-        player->health += 2;      // jd64 Can go over 100%
-        if(player->health > healthLimit)
-            player->health = healthLimit;
-        player->plr->mo->health = player->health;
-        player->update |= PSF_HEALTH;
-        P_SetMessage(player, GOTHTHBONUS, false);
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
-        break;
-
-    case SPR_BON2:
-        //player->armorPoints++;  // Can go over 100%
-        player->armorPoints += 2; // jd64 Can go over 100%
-        if(player->armorPoints > armorPoints[1]) // 200
-            player->armorPoints = armorPoints[1];
-        if(!player->armorType)
-            player->armorType = armorClass[0];
-        player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
-        P_SetMessage(player, GOTARMBONUS, false);
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(player - players, HUE_ON_PICKUP_ARMOR);
-        break;
-
-    case SPR_SOUL:
-        player->health += soulSphereHealth;
-        if(player->health > soulSphereLimit)
-            player->health = soulSphereLimit;
-        player->plr->mo->health = player->health;
-        player->update |= PSF_HEALTH;
-        P_SetMessage(player, GOTSUPER, false);
-        sound = SFX_GETPOW;
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
-        break;
-
-    case SPR_MEGA:
-        if(gameMode != commercial)
-            return;
-        player->health = megaSphereHealth;
-        player->plr->mo->health = player->health;
-        player->update |= PSF_HEALTH;
-        P_GiveArmor(player, armorClass[1],
-                    armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
-        P_SetMessage(player, GOTMSPHERE, false);
-        sound = SFX_GETPOW;
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(player - players, HUE_ON_PICKUP_HEALTH);
-        break;
-
-    // Keys. Leave for everyone.
-    case SPR_BKEY:
-        if(!player->keys[KT_BLUECARD])
-            P_SetMessage(player, GOTBLUECARD, false);
-        P_GiveKey(player, KT_BLUECARD);
-        if(!IS_NETGAME)
-            break;
-        return;
-
-    case SPR_YKEY:
-        if(!player->keys[KT_YELLOWCARD])
-            P_SetMessage(player, GOTYELWCARD, false);
-        P_GiveKey(player, KT_YELLOWCARD);
-        if(!IS_NETGAME)
-            break;
-        return;
-
-    case SPR_RKEY:
-        if(!player->keys[KT_REDCARD])
-            P_SetMessage(player, GOTREDCARD, false);
-        P_GiveKey(player, KT_REDCARD);
-        if(!IS_NETGAME)
-            break;
-        return;
-
-    case SPR_BSKU:
-        if(!player->keys[KT_BLUESKULL])
-            P_SetMessage(player, GOTBLUESKUL, false);
-        P_GiveKey(player, KT_BLUESKULL);
-        if(!IS_NETGAME)
-            break;
-        return;
-
-    case SPR_YSKU:
-        if(!player->keys[KT_YELLOWSKULL])
-            P_SetMessage(player, GOTYELWSKUL, false);
-        P_GiveKey(player, KT_YELLOWSKULL);
-        if(!IS_NETGAME)
-            break;
-        return;
-
-    case SPR_RSKU:
-        if(!player->keys[KT_REDSKULL])
-            P_SetMessage(player, GOTREDSKULL, false);
-        P_GiveKey(player, KT_REDSKULL);
-        if(!IS_NETGAME)
-            break;
-        return;
-
-    // Medikits, heals.
-    case SPR_STIM:
-        if(!P_GiveBody(player, 10))
-            return;
-        P_SetMessage(player, GOTSTIM, false);
-        break;
-
-    case SPR_MEDI:
-    {
-        int                 msg;
-        // DOOM bug
-        // The following test was originaly placed AFTER the call to
-        // P_GiveBody thereby making the first outcome impossible as
-        // the medikit gives 25 points of health. This resulted that
-        // the GOTMEDINEED "Picked up a medikit that you REALLY need"
-        // was never used.
-        if(player->health < 25)
-            msg = TXT_GOTMEDINEED;
-        else
-            msg = TXT_GOTMEDIKIT;
-
-        if(!P_GiveBody(player, 25))
-            return;
-
-        P_SetMessage(player, GET_TXT(msg), false);
-        break;
+        if(!giveItem(player, item, (special->flags & MF_DROPPED)? true : false))
+            return; // Don't destroy the item.
     }
-    // Powerups.
-    case SPR_PINV:
-        if(!P_GivePower(player, PT_INVULNERABILITY))
-            return;
-        P_SetMessage(player, GOTINVUL, false);
-        sound = SFX_GETPOW;
-        break;
-
-    case SPR_PSTR:
-        if(!P_GivePower(player, PT_STRENGTH))
-            return;
-        P_SetMessage(player, GOTBERSERK, false);
-        if(player->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
-        {
-            player->pendingWeapon = WT_FIRST;
-            player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
-        }
-        sound = SFX_GETPOW;
-        break;
-
-    case SPR_PINS:
-        if(!P_GivePower(player, PT_INVISIBILITY))
-            return;
-        P_SetMessage(player, GOTINVIS, false);
-        sound = SFX_GETPOW;
-        break;
-
-    case SPR_SUIT:
-        if(!P_GivePower(player, PT_IRONFEET))
-            return;
-        P_SetMessage(player, GOTSUIT, false);
-        sound = SFX_GETPOW;
-        break;
-
-    case SPR_PMAP:
-        if(!P_GivePower(player, PT_ALLMAP))
-            return;
-        P_SetMessage(player, GOTMAP, false);
-        sound = SFX_GETPOW;
-        break;
-
-    case SPR_PVIS:
-        if(!P_GivePower(player, PT_INFRARED))
-            return;
-        P_SetMessage(player, GOTVISOR, false);
-        sound = SFX_GETPOW;
-        break;
-
-        // ammo
-    case SPR_CLIP:
-        if(special->flags & MF_DROPPED)
-        {
-            if(!P_GiveAmmo(player, AT_CLIP, 0))
-                return;
-        }
-        else
-        {
-            if(!P_GiveAmmo(player, AT_CLIP, 1))
-                return;
-        }
-        P_SetMessage(player, GOTCLIP, false);
-        break;
-
-    case SPR_AMMO:
-        if(!P_GiveAmmo(player, AT_CLIP, 5))
-            return;
-        P_SetMessage(player, GOTCLIPBOX, false);
-        break;
-
-    case SPR_RCKT:
-        if(!P_GiveAmmo(player, AT_MISSILE, 1))
-            return;
-        P_SetMessage(player, GOTROCKET, false);
-        break;
-
-    case SPR_BROK:
-        if(!P_GiveAmmo(player, AT_MISSILE, 5))
-            return;
-        P_SetMessage(player, GOTROCKBOX, false);
-        break;
-
-    case SPR_CELL:
-        if(!P_GiveAmmo(player, AT_CELL, 1))
-            return;
-        P_SetMessage(player, GOTCELL, false);
-        break;
-
-    case SPR_CELP:
-        if(!P_GiveAmmo(player, AT_CELL, 5))
-            return;
-        P_SetMessage(player, GOTCELLBOX, false);
-        break;
-
-    case SPR_SHEL:
-        if(!P_GiveAmmo(player, AT_SHELL, 1))
-            return;
-        P_SetMessage(player, GOTSHELLS, false);
-        break;
-
-    case SPR_SBOX:
-        if(!P_GiveAmmo(player, AT_SHELL, 5))
-            return;
-        P_SetMessage(player, GOTSHELLBOX, false);
-        break;
-
-    case SPR_BPAK:
-        P_GiveBackpack(player);
-        break;
-
-        // weapons
-    case SPR_BFUG:
-        if(!P_GiveWeapon(player, WT_SEVENTH, false))
-            return;
-        P_SetMessage(player, GOTBFG9000, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_MGUN:
-        if(!P_GiveWeapon(player, WT_FOURTH, special->flags & MF_DROPPED))
-            return;
-        P_SetMessage(player, GOTCHAINGUN, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_CSAW:
-        if(!P_GiveWeapon(player, WT_EIGHTH, false))
-            return;
-        P_SetMessage(player, GOTCHAINSAW, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_LAUN:
-        if(!P_GiveWeapon(player, WT_FIFTH, false))
-            return;
-        P_SetMessage(player, GOTLAUNCHER, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_PLSM:
-        if(!P_GiveWeapon(player, WT_SIXTH, false))
-            return;
-        P_SetMessage(player, GOTPLASMA, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_SHOT:
-        if(!P_GiveWeapon(player, WT_THIRD, special->flags & MF_DROPPED))
-            return;
-        P_SetMessage(player, GOTSHOTGUN, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_SGN2:
-        if(!P_GiveWeapon(player, WT_NINETH, special->flags & MF_DROPPED))
-            return;
-        P_SetMessage(player, GOTSHOTGUN2, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_LSRG: // jd64
-        if(!P_GiveWeapon(player, WT_TENTH, special->flags & MF_DROPPED))
-            return;
-
-        P_SetMessage(player, GOTUNMAKER, false);
-        sound = SFX_WPNUP;
-        break;
-
-    case SPR_ART1: // jd64
-        if(player->artifacts[it_laserpw1])
-        {
-            if(!(mapTime & 0x1f))
-                P_SetMessage(player, NGOTPOWERUP1, false);
-
-            return; //Don't destroy item, can be collected later by other players.
-        }
-        else
-        {
-            P_InventoryGive(player, it_laserpw1);
-            P_SetMessage(player, GOTPOWERUP1, false);
-        }
-        break;
-
-    case SPR_ART2: // jd64
-        if(player->artifacts[it_laserpw2])
-        {
-            if(!(mapTime & 0x1f))
-                P_SetMessage(player, NGOTPOWERUP2, false);
-
-            return; //Don't destroy item, can be collected later by other players.
-        }
-        else
-        {
-            P_InventoryGive(player, it_laserpw2);
-            P_SetMessage(player, GOTPOWERUP2, false);
-        }
-        break;
-
-    case SPR_ART3: // jd64
-        if(player->artifacts[it_laserpw3])
-        {
-            if(!(mapTime & 0x1f))
-                P_SetMessage(player, NGOTPOWERUP3, false);
-
-            return; //Don't destroy item, can be collected later by other players.
-        }
-        else
-        {
-            P_InventoryGive(player, it_laserpw3);
-            P_SetMessage(player, GOTPOWERUP3, false);
-        }
-        break;
-
-    default:
-        Con_Error("P_SpecialThing: Unknown gettable thing");
+    else
+    {
+        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
+                    (int) special->type);
     }
 
     if(special->flags & MF_COUNTITEM)
@@ -753,9 +884,6 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     P_MobjRemove(special, false);
     player->bonusCount += BONUSADD;
-    /*if (player == &players[CONSOLEPLAYER])
-       S_StartSound (NULL, sound); */
-    S_ConsoleSound(sound, NULL, player - players);
 }
 
 void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
