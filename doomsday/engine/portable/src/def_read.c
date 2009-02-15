@@ -2139,6 +2139,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     READSTR(l->deactMaterial.name)
                     l->deactMaterial.mnamespace = MN_ANY;
                 }
+                else
                 RV_INT("Act type", l->actLineType)
                 RV_INT("Deact type", l->deactLineType)
                 RV_STR("Act message", l->actMsg)
