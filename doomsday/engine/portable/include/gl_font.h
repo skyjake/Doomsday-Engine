@@ -43,19 +43,19 @@
 #   include <windows.h>
 #endif
 
-#define MAX_CHARS   256            // Normal 256 ANSI characters.
+#define MAX_CHARS           256 // Normal 256 ANSI characters.
 
 // Data for a character.
 typedef struct {
-    int             x, y;          // The upper left corner of the character.
-    int             w, h;          // The width and height.
+    int             x, y; // The upper left corner of the character.
+    int             w, h; // The width and height.
 } jfrchar_t;
 
 // Data for a font.
 typedef struct {
     int             id;
     char            name[256];
-    unsigned int    texture;       // The name of the texture for this font.
+    DGLuint         tex; // The name of the texture for this font.
     int             texWidth, texHeight;
     boolean         hasEmbeddedShadow;
     int             marginWidth;
@@ -69,7 +69,7 @@ typedef struct {
 
 int             FR_Init(void);
 void            FR_Shutdown(void);
-jfrfont_t      *FR_GetFont(int id);
+jfrfont_t*      FR_GetFont(int id);
 
 #ifdef WIN32
 // Prepare a GDI font. Select it as the current font. Only available
@@ -77,23 +77,23 @@ jfrfont_t      *FR_GetFont(int id);
 int             FR_PrepareGDIFont(HFONT hfont);
 #endif
 
-int             FR_PrepareFont(const char *name);
+int             FR_PrepareFont(const char* name);
 
 // Change the current font.
 void            FR_SetFont(int id);
 int             FR_GetCurrent(void);
 void            FR_DestroyFont(int id);
 int             FR_CharWidth(int ch);
-int             FR_TextWidth(const char *text);
-int             FR_TextHeight(const char *text);
-int             FR_SingleLineHeight(const char *text);
-int             FR_GlyphTopToAscent(const char *text);
+int             FR_TextWidth(const char* text);
+int             FR_TextHeight(const char* text);
+int             FR_SingleLineHeight(const char* text);
+int             FR_GlyphTopToAscent(const char* text);
 
 // (x,y) is the upper left corner. Returns the length.
-int             FR_TextOut(const char *text, int x, int y);
-int             FR_ShadowTextOut(const char *text, int x, int y);
-int             FR_CustomShadowTextOut(const char *text, int x, int y,
+int             FR_TextOut(const char* text, int x, int y);
+int             FR_ShadowTextOut(const char* text, int x, int y);
+int             FR_CustomShadowTextOut(const char* text, int x, int y,
                                        int shadowX, int shadowY,
                                        float shadowAlpha);
 
-#endif                          // __OGL_FONT_RENDERER_H__
+#endif // __OGL_FONT_RENDERER_H__
