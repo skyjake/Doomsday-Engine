@@ -193,7 +193,7 @@ typedef struct mobj_s {
 
     // Hexen-specific data:
     struct player_s *player; // Only valid if type == MT_PLAYER
-    mobjinfo_t*     info; // &mobjInfo[mobj->type]
+    mobjinfo_t*     info; // &MOBJINFO[mobj->type]
     int             damage; // For missiles
     int             flags;
     int             flags2; // Heretic flags

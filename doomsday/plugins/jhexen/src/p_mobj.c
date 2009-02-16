@@ -111,7 +111,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
         P_MobjRemove(mobj, false);
         return false;
     }
-    st = &states[state];
+    st = &STATES[state];
 
     P_MobjSetState(mobj, state);
     mobj->turnTime = false; // $visangle-facetarget
@@ -127,7 +127,7 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
 /**
  * Same as P_MobjChangeState, but does not call the state function.
  */
-boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
+boolean P_SetMobjStateNF(mobj_t* mobj, statenum_t state)
 {
     if(state == S_NULL)
     {   // Remove mobj
@@ -141,10 +141,10 @@ boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
     return true;
 }
 
-void P_ExplodeMissile(mobj_t *mo)
+void P_ExplodeMissile(mobj_t* mo)
 {
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
-    P_MobjChangeState(mo, mobjInfo[mo->type].deathState);
+    P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
 
     if(mo->flags & MF_MISSILE)
     {
@@ -173,7 +173,7 @@ void P_ExplodeMissile(mobj_t *mo)
     }
 }
 
-void P_FloorBounceMissile(mobj_t *mo)
+void P_FloorBounceMissile(mobj_t* mo)
 {
     boolean             shouldSplash = P_HitFloor(mo);
 
@@ -371,14 +371,15 @@ float P_MobjGetFriction(mobj_t *mo)
     return FRICTION_NORMAL;
 }
 
-void P_MobjMoveXY(mobj_t *mo)
+void P_MobjMoveXY(mobj_t* mo)
 {
-    float       posTry[2];
-    player_t   *player;
-    float       move[2];
-    int         special;
-    angle_t     angle;
-    static int  windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
+    static const int    windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
+
+    float               posTry[2];
+    player_t*           player;
+    float               move[2];
+    int                 special;
+    angle_t             angle;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
@@ -390,7 +391,7 @@ void P_MobjMoveXY(mobj_t *mo)
         {   // A flying mobj slammed into something
             mo->flags &= ~MF_SKULLFLY;
             mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
-            P_MobjChangeState(mo, mo->info->seeState);
+            P_MobjChangeState(mo, P_GetState(mo->type, SN_SEE));
         }
         return;
     }
@@ -688,7 +689,7 @@ explode:
         if(player)
         {
             if((unsigned)
-               ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runState) <
+               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) <
                4)
             {
                 P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
@@ -780,6 +781,8 @@ void P_MobjMoveZ(mobj_t *mo)
     // Clip movement.
     if(mo->pos[VZ] <= mo->floorZ)
     {   // Hit the floor
+        statenum_t              state;
+
         if(mo->flags & MF_MISSILE)
         {
             mo->pos[VZ] = mo->floorZ;
@@ -898,10 +901,10 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(mo->info->crashState && (mo->flags & MF_CORPSE) &&
-           !(mo->flags2 & MF2_ICEDAMAGE))
+        if((state = P_GetState(mo->type, SN_CRASH)) != S_NULL &&
+           (mo->flags & MF_CORPSE) && !(mo->flags2 & MF2_ICEDAMAGE))
         {
-            P_MobjChangeState(mo, mo->info->crashState);
+            P_MobjChangeState(mo, state);
             return;
         }
     }
@@ -1206,12 +1209,12 @@ void P_MobjThinker(mobj_t *mobj)
         }
     }
 
-    // Cycle through states, calling action functions at transitions.
+    // Cycle through STATES, calling action functions at transitions.
     if(mobj->tics != -1)
     {
         mobj->tics--;
         P_MobjAngleSRVOTicker(mobj);
-        // You can cycle through multiple states in a tic.
+        // You can cycle through multiple STATES in a tic.
         while(!mobj->tics)
         {
             P_MobjClearSRVO(mobj);
@@ -1231,7 +1234,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                       angle_t angle)
 {
     mobj_t*             mo;
-    mobjinfo_t*         info = &mobjInfo[type];
+    mobjinfo_t*         info = &MOBJINFO[type];
     float               space;
     int                 ddflags = 0;
 
@@ -1262,7 +1265,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mo->lastLook = P_Random() % MAXPLAYERS;
 
     // Must link before setting state.
-    P_MobjSetState(mo, info->spawnState);
+    P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
 
     // Set subsector and/or block links.
     P_MobjSetPosition(mo);
@@ -1561,7 +1564,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(spot->type == mobjInfo[i].doomedNum)
+        if(spot->type == MOBJINFO[i].doomedNum)
         {
             break;
         }
@@ -1576,18 +1579,18 @@ void P_SpawnMapThing(spawnspot_t *spot)
     // Clients only spawn local objects.
     if(IS_CLIENT)
     {
-        if(!(mobjInfo[i].flags & MF_LOCAL))
+        if(!(MOBJINFO[i].flags & MF_LOCAL))
             return;
     }
 
     // Don't spawn keys and players in deathmatch.
-    if(deathmatch && (mobjInfo[i].flags & MF_NOTDMATCH))
+    if(deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
     {
         return;
     }
 
     // Don't spawn monsters if -nomonsters.
-    if(noMonstersParm && (mobjInfo[i].flags & MF_COUNTKILL))
+    if(noMonstersParm && (MOBJINFO[i].flags & MF_COUNTKILL))
     {
         return;
     }
@@ -1595,15 +1598,15 @@ void P_SpawnMapThing(spawnspot_t *spot)
     pos[VX] = spot->pos[VX];
     pos[VY] = spot->pos[VY];
 
-    if(mobjInfo[i].flags & MF_SPAWNCEILING)
+    if(MOBJINFO[i].flags & MF_SPAWNCEILING)
     {
         pos[VZ] = ONCEILINGZ;
     }
-    else if(mobjInfo[i].flags2 & MF2_SPAWNFLOAT)
+    else if(MOBJINFO[i].flags2 & MF2_SPAWNFLOAT)
     {
         pos[VZ] = FLOATRANDZ;
     }
-    else if(mobjInfo[i].flags2 & MF2_FLOATBOB)
+    else if(MOBJINFO[i].flags2 & MF2_FLOATBOB)
     {
         pos[VZ] = spot->height;
     }

@@ -39,7 +39,7 @@
 #include "g_controls.h"
 
 //
-// Player states.
+// Player STATES.
 //
 typedef enum {
     PST_LIVE, // Playing or camping.

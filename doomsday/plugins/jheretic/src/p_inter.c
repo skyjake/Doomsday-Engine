@@ -348,14 +348,14 @@ void P_SetDormantArtifact(mobj_t *arti)
     S_StartSound(SFX_ARTIUP, arti);
 }
 
-void C_DECL A_RestoreArtifact(mobj_t *arti)
+void C_DECL A_RestoreArtifact(mobj_t* arti)
 {
     arti->flags |= MF_SPECIAL;
-    P_MobjChangeState(arti, arti->info->spawnState);
+    P_MobjChangeState(arti, P_GetState(arti->type, SN_SPAWN));
     S_StartSound(SFX_RESPAWN, arti);
 }
 
-void P_HideSpecialThing(mobj_t *thing)
+void P_HideSpecialThing(mobj_t* thing)
 {
     thing->flags &= ~MF_SPECIAL;
     thing->flags2 |= MF2_DONTDRAW;
@@ -365,7 +365,7 @@ void P_HideSpecialThing(mobj_t *thing)
 /**
  * Make a special thing visible again.
  */
-void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
+void C_DECL A_RestoreSpecialThing1(mobj_t* thing)
 {
     if(thing->type == MT_WMACE)
     {   // Do random mace placement.
@@ -379,7 +379,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t *thing)
 void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
 {
     thing->flags |= MF_SPECIAL;
-    P_MobjChangeState(thing, thing->info->spawnState);
+    P_MobjChangeState(thing, P_GetState(thing->type, SN_SPAWN));
 }
 
 typedef enum {
@@ -858,8 +858,10 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
 }
 
-void P_KillMobj(mobj_t *source, mobj_t *target)
+void P_KillMobj(mobj_t* source, mobj_t* target)
 {
+    statenum_t          state;
+
     if(!target) // Nothing to kill.
         return;
 
@@ -928,14 +930,14 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         AM_Open(AM_MapForPlayer(target->player - players), false, false);
     }
 
-    if(target->health < -(target->info->spawnHealth / 2) &&
-       target->info->xDeathState)
+    if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
+       target->health < -(target->info->spawnHealth / 2))
     {   // Extreme death.
-        P_MobjChangeState(target, target->info->xDeathState);
+        P_MobjChangeState(target, state);
     }
     else
     {   // Normal death.
-        P_MobjChangeState(target, target->info->deathState);
+        P_MobjChangeState(target, P_GetState(target->type, SN_DEATH));
     }
 
     target->tics -= P_Random() & 3;
@@ -1467,10 +1469,12 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if((P_Random() < target->info->painChance) &&
            !(target->flags & MF_SKULLFLY))
         {
+            statenum_t          state;
+
             target->flags |= MF_JUSTHIT; // Fight back!
 
-            if(target->info->painState)
-                P_MobjChangeState(target, target->info->painState);
+            if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+                P_MobjChangeState(target, state);
         }
 
         target->reactionTime = 0; // We're awake now...
@@ -1479,15 +1483,17 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
            !target->threshold && !(source->flags3 & MF3_NOINFIGHT) &&
            !(target->type == MT_SORCERER2 && source->type == MT_WIZARD))
         {
+            statenum_t          state;
+
             // Target mobj is not intent on another mobj, so make it chase
             // after the source of the damage.
             target->target = source;
             target->threshold = BASETHRESHOLD;
 
-            if(target->state == &states[target->info->spawnState] &&
-               target->info->seeState != S_NULL)
+            if((state = P_GetState(target->type, SN_SEE)) != S_NULL &&
+               target->state == &STATES[P_GetState(target->type, SN_SPAWN)])
             {
-                P_MobjChangeState(target, target->info->seeState);
+                P_MobjChangeState(target, state);
             }
         }
     }

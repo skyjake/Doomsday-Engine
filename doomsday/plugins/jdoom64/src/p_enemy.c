@@ -29,7 +29,7 @@
 /**
  * p_enemy.c: Enemy thinking, AI.
  *
- * Action Pointer Functions that are associated with states/frames.
+ * Action Pointer Functions that are associated with STATES/frames.
  *
  * Enemies are allways spawned with targetplayer = -1, threshold = 0
  * Most monsters are spawned unaware of all players,
@@ -168,7 +168,7 @@ static boolean checkMissileRange(mobj_t *actor)
         P_ApproxDistance(actor->pos[VX] - actor->target->pos[VX],
                          actor->pos[VY] - actor->target->pos[VY]) - 64;
 
-    if(!actor->info->meleeState)
+    if(P_GetState(actor->type, SN_MELEE) == S_NULL)
         dist -= 128; // No melee attack, so fire more.
 
     if(actor->type == MT_CYBORG || actor->type == MT_SKULL)
@@ -629,7 +629,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     actor->reactionTime--;
     if(actor->reactionTime <= 0)
     {
-        P_MobjChangeState(actor, actor->info->deathState + 2);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + 2);
     }
 
     // Check if there are no more Bitches left in the map.
@@ -989,7 +989,7 @@ void C_DECL A_Look(mobj_t *actor)
         }
     }
 
-    P_MobjChangeState(actor, actor->info->seeState);
+    P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
 }
 
 /**
@@ -1018,9 +1018,10 @@ void C_DECL A_TargetCamera(mobj_t* actor)
 /**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
-void C_DECL A_Chase(mobj_t *actor)
+void C_DECL A_Chase(mobj_t* actor)
 {
     int                 delta;
+    statenum_t          state;
 
     // jd64 >
     if(actor->flags & MF_FLOAT)
@@ -1068,7 +1069,7 @@ void C_DECL A_Chase(mobj_t *actor)
         }
         else
         {
-            P_MobjChangeState(actor, actor->info->spawnState);
+            P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
         }
 
         return;
@@ -1085,23 +1086,24 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // Check for melee attack.
-    if(actor->info->meleeState && checkMeleeRange(actor))
+    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+       checkMeleeRange(actor))
     {
         if(actor->info->attackSound)
             S_StartSound(actor->info->attackSound, actor);
 
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, state);
         return;
     }
 
     // Check for missile attack.
-    if(actor->info->missileState)
+    if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
         if(!(!fastParm && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
-                P_MobjChangeState(actor, actor->info->missileState);
+                P_MobjChangeState(actor, state);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
@@ -1212,7 +1214,7 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_MobjChangeState(actor, actor->info->seeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
     }
 }
 
@@ -1783,7 +1785,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     an = angle >> ANGLETOFINESHIFT;
 
     prestep = 4 +
-        3 * ((actor->info->radius + mobjInfo[MT_SKULL].radius) / 2);
+        3 * ((actor->info->radius + MOBJINFO[MT_SKULL].radius) / 2);
 
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += prestep * FIX2FLT(finecosine[an]);
@@ -1883,7 +1885,7 @@ void A_Rocketshootpuff(mobj_t *actor, angle_t angle)
     an = angle >> ANGLETOFINESHIFT;
 
     prestep = 4 + 3 *
-              (actor->info->radius + mobjInfo[MT_ROCKETPUFF].radius) / 2;
+              (actor->info->radius + MOBJINFO[MT_ROCKETPUFF].radius) / 2;
 
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += prestep * FIX2FLT(finecosine[an]);
@@ -1979,7 +1981,7 @@ void C_DECL A_CyberDeath(mobj_t *actor)
     actor->reactionTime--;
     if(actor->reactionTime <= 0)
     {
-        P_MobjChangeState(actor, actor->info->deathState + 2);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + 2);
     }
 
     S_StartSound(actor->info->deathSound | DDSF_NO_ATTENUATION, NULL);

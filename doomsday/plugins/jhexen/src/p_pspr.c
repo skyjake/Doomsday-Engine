@@ -404,7 +404,7 @@ void P_SetPsprite(player_t *plr, int position, statenum_t stnum)
             break;
         }
 
-        state = &states[stnum];
+        state = &STATES[stnum];
         psp->state = state;
         psp->tics = state->tics; // could be 0
         P_SetPSpriteOffset(psp, plr, state);
@@ -439,7 +439,7 @@ void P_SetPspriteNF(player_t *plr, int position, statenum_t stnum)
             break;
         }
 
-        state = &states[stnum];
+        state = &STATES[stnum];
         psp->state = state;
         psp->tics = state->tics; // could be 0
 
@@ -545,8 +545,8 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     ddpsprite_t *ddpsp;
 
     // Change plr from attack state
-    if(plr->plr->mo->state >= &states[PCLASS_INFO(plr->class)->attackState] &&
-       plr->plr->mo->state <= &states[PCLASS_INFO(plr->class)->attackEndState])
+    if(plr->plr->mo->state >= &STATES[PCLASS_INFO(plr->class)->attackState] &&
+       plr->plr->mo->state <= &STATES[PCLASS_INFO(plr->class)->attackEndState])
     {
         P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->normalState);
     }
@@ -556,7 +556,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
         wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
 
         // A weaponready sound?
-        if(psp->state == &states[wminfo->readyState] && wminfo->readySound)
+        if(psp->state == &STATES[wminfo->readyState] && wminfo->readySound)
             S_StartSound(wminfo->readySound, plr->plr->mo);
 
         // Check for change, if plr is dead, put the weapon away.
@@ -935,7 +935,7 @@ void C_DECL A_LightningZap(mobj_t *mo)
     mo->health -= 8;
     if(mo->health <= 0)
     {
-        P_MobjChangeState(mo, mo->info->deathState);
+        P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
         return;
     }
 
@@ -1002,15 +1002,15 @@ void C_DECL A_MLightningAttack(player_t *plr, pspdef_t *psp)
     P_ShotAmmo(plr);
 }
 
-void C_DECL A_ZapMimic(mobj_t *mo)
+void C_DECL A_ZapMimic(mobj_t* mo)
 {
-    mobj_t         *target;
+    mobj_t*             target;
 
     target = mo->lastEnemy;
     if(target)
     {
-        if(target->state >= &states[target->info->deathState] ||
-           target->state == &states[S_FREETARGMOBJ])
+        if(target->state >= &STATES[P_GetState(target->type, SN_DEATH)] ||
+           target->state == &STATES[S_FREETARGMOBJ])
         {
             P_ExplodeMissile(mo);
         }
@@ -1022,7 +1022,7 @@ void C_DECL A_ZapMimic(mobj_t *mo)
     }
 }
 
-void C_DECL A_LastZap(mobj_t *mo)
+void C_DECL A_LastZap(mobj_t* mo)
 {
     mobj_t*             pmo;
 
@@ -1092,7 +1092,7 @@ void C_DECL A_MStaffPalette(player_t* plr, pspdef_t* psp)
     if(plr == &players[CONSOLEPLAYER])
     {
         int             pal = STARTSCOURGEPAL +
-            psp->state - (&states[S_MSTAFFATK_2]);
+            psp->state - (&STATES[S_MSTAFFATK_2]);
 
         if(pal == STARTSCOURGEPAL + 3)
         {   // Reset back to original playpal.
@@ -1645,7 +1645,7 @@ void C_DECL A_CHolyAttack2(mobj_t *mo)
         {
             next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
                                   pmo->angle + ANG180);
-            P_MobjChangeState(next, next->info->spawnState + 1);
+            P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
             tail->tracer = next;
             tail = next;
         }
@@ -1682,7 +1682,7 @@ void C_DECL A_CHolyPalette(player_t* plr, pspdef_t* psp)
     if(plr == &players[CONSOLEPLAYER])
     {
         int                 pal = STARTHOLYPAL +
-            psp->state - (&states[S_CHOLYATK_6]);
+            psp->state - (&STATES[S_CHOLYATK_6]);
 
         if(pal == STARTHOLYPAL + 3)
         {   // reset back to original playpal
@@ -1822,7 +1822,7 @@ static void CHolyWeave(mobj_t *mo)
     mo->special2 = weaveZ + (weaveXY << 16);
 }
 
-void C_DECL A_CHolySeek(mobj_t *mo)
+void C_DECL A_CHolySeek(mobj_t* mo)
 {
     mo->health--;
     if(mo->health <= 0)
@@ -1830,7 +1830,7 @@ void C_DECL A_CHolySeek(mobj_t *mo)
         mo->mom[MX] /= 4;
         mo->mom[MY] /= 4;
         mo->mom[MZ] = 0;
-        P_MobjChangeState(mo, mo->info->deathState);
+        P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
         mo->tics -= P_Random() & 3;
         return;
     }
@@ -1847,12 +1847,12 @@ void C_DECL A_CHolySeek(mobj_t *mo)
     CHolyWeave(mo);
 }
 
-static void CHolyTailFollow(mobj_t *mo, float dist)
+static void CHolyTailFollow(mobj_t* mo, float dist)
 {
-    uint        an;
-    angle_t     angle;
-    mobj_t     *child;
-    float       oldDistance, newDistance;
+    uint                an;
+    angle_t             angle;
+    mobj_t*             child;
+    float               oldDistance, newDistance;
 
     child = mo->tracer;
     if(child)
@@ -1911,7 +1911,7 @@ void C_DECL A_CHolyTail(mobj_t *mo)
     parent = mo->target;
     if(parent)
     {
-        if(parent->state >= &states[parent->info->deathState])
+        if(parent->state >= &STATES[P_GetState(parent->type, SN_DEATH)])
         {   // Ghost removed, so remove all tail parts.
             CHolyTailRemove(mo);
         }

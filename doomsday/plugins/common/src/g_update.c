@@ -51,8 +51,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MANGLE_STATE(x)     ((state_t*) ((x)? (x)-states : -1))
-#define RESTORE_STATE(x)    ((int)(x)==-1? NULL : &states[(int)(x)])
+#define MANGLE_STATE(x)     ((state_t*) ((x)? (x)-STATES : -1))
+#define RESTORE_STATE(x)    ((int)(x)==-1? NULL : &STATES[(int)(x)])
 
 // TYPES -------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ static boolean mangleMobj(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     mo->state = MANGLE_STATE(mo->state);
-    mo->info = (mobjinfo_t *) (mo->info - mobjInfo);
+    mo->info = (mobjinfo_t *) (mo->info - MOBJINFO);
 
     return true; // Continue iteration.
 }
@@ -85,7 +85,7 @@ static boolean restoreMobj(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     mo->state = RESTORE_STATE(mo->state);
-    mo->info = &mobjInfo[(int) mo->info];
+    mo->info = &MOBJINFO[(int) mo->info];
 
     return true; // Continue iteration.
 }

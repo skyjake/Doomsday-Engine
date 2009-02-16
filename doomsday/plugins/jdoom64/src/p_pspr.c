@@ -106,7 +106,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
             break;
         }
 
-        state = &states[stnum];
+        state = &STATES[stnum];
         psp->state = state;
         psp->tics = state->tics; // Could be 0.
 
@@ -207,8 +207,8 @@ void C_DECL A_WeaponReady(player_t* player, pspdef_t* psp)
     DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
 
     // Get out of attack state.
-    if(player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackState] ||
-       player->plr->mo->state == &states[PCLASS_INFO(player->class)->attackEndState])
+    if(player->plr->mo->state == &STATES[PCLASS_INFO(player->class)->attackState] ||
+       player->plr->mo->state == &STATES[PCLASS_INFO(player->class)->attackEndState])
     {
         P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
     }
@@ -218,7 +218,7 @@ void C_DECL A_WeaponReady(player_t* player, pspdef_t* psp)
         wminfo = WEAPON_INFO(player->readyWeapon, player->class, 0);
 
         // A weaponready sound?
-        if(psp->state == &states[wminfo->readyState] && wminfo->readySound)
+        if(psp->state == &STATES[wminfo->readyState] && wminfo->readySound)
             S_StartSound(wminfo->readySound, player->plr->mo);
 
         // Check for change. If player is dead, put the weapon away.
@@ -747,7 +747,7 @@ void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
 
     P_SetPsprite(player, ps_flash,
                  weaponInfo[player->readyWeapon][player->class].mode[0].flashState + psp->state -
-                 &states[S_CHAIN1]);
+                 &STATES[S_CHAIN1]);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)

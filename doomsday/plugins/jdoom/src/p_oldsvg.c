@@ -251,7 +251,7 @@ static void SV_ReadMobj(void)
 
     valid = SV_ReadLong();
     type = SV_ReadLong();
-    info = &mobjInfo[type];
+    info = &MOBJINFO[type];
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
@@ -324,7 +324,7 @@ static void SV_ReadMobj(void)
 
     SV_UpdateReadMobjFlags(mo, 0);
 
-    mo->state = &states[(int) mo->state];
+    mo->state = &STATES[(int) mo->state];
     mo->target = NULL;
     if(mo->player)
     {
@@ -366,7 +366,7 @@ void P_v19_UnArchivePlayers(void)
             if(players[i].pSprites[j].state)
             {
                 players[i].pSprites[j].state =
-                    &states[(int) players[i].pSprites[j].state];
+                    &STATES[(int) players[i].pSprites[j].state];
             }
         }
     }

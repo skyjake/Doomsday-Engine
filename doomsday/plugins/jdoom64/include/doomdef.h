@@ -58,8 +58,8 @@
 // Global parameters/defines.
 //
 
-#define mobjInfo            (*gi.mobjInfo)
-#define states              (*gi.states)
+#define MOBJINFO            (*gi.mobjInfo)
+#define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
 // Verbose messages.

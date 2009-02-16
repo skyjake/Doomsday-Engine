@@ -2595,7 +2595,7 @@ void M_DrawClassMenu(void)
         pClass = (menuTime / 5) % (menu->itemCount - 1);
     }
 
-    R_GetSpriteInfo(states[PCLASS_INFO(pClass)->normalState].sprite,
+    R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite,
                     ((menuTime >> 3) & 3), &sprInfo);
 
     DGL_Color4f(1, 1, 1, menuAlpha);

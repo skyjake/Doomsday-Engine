@@ -929,31 +929,26 @@ void Def_Read(void)
 
         gettingFor = mo;
         mo->doomedNum = dmo->doomedNum;
-        mo->spawnState = Def_StateForMobj(dmo->spawnState);
-        mo->seeState = Def_StateForMobj(dmo->seeState);
-        mo->painState = Def_StateForMobj(dmo->painState);
-        mo->meleeState = Def_StateForMobj(dmo->meleeState);
-        mo->missileState = Def_StateForMobj(dmo->missileState);
-        mo->crashState = Def_StateForMobj(dmo->crashState);
-        mo->deathState = Def_StateForMobj(dmo->deathState);
-        mo->xDeathState = Def_StateForMobj(dmo->xDeathState);
-        mo->raiseState = Def_StateForMobj(dmo->raiseState);
         mo->spawnHealth = dmo->spawnHealth;
-        mo->seeSound = Def_GetSoundNum(dmo->seeSound);
         mo->reactionTime = dmo->reactionTime;
-        mo->attackSound = Def_GetSoundNum(dmo->attackSound);
         mo->painChance = dmo->painChance;
-        mo->painSound = Def_GetSoundNum(dmo->painSound);
-        mo->deathSound = Def_GetSoundNum(dmo->deathSound);
         mo->speed = dmo->speed;
         mo->radius = dmo->radius;
         mo->height = dmo->height;
         mo->mass = dmo->mass;
         mo->damage = dmo->damage;
-        mo->activeSound = Def_GetSoundNum(dmo->activeSound);
         mo->flags = dmo->flags[0];
         mo->flags2 = dmo->flags[1];
         mo->flags3 = dmo->flags[2];
+        for(k = 0; k < NUM_STATE_NAMES; ++k)
+        {
+            mo->states[k] = Def_StateForMobj(dmo->states[k]);
+        }
+        mo->seeSound = Def_GetSoundNum(dmo->seeSound);
+        mo->attackSound = Def_GetSoundNum(dmo->attackSound);
+        mo->painSound = Def_GetSoundNum(dmo->painSound);
+        mo->deathSound = Def_GetSoundNum(dmo->deathSound);
+        mo->activeSound = Def_GetSoundNum(dmo->activeSound);
         for(k = 0; k < NUM_MOBJ_MISC; ++k)
             mo->misc[k] = dmo->misc[k];
     }

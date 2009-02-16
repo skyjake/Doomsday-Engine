@@ -561,7 +561,7 @@ static int calcPainOffset(hudstate_t* hud)
 }
 
 /**
- * This is a not-very-pretty routine which handles the face states
+ * This is a not-very-pretty routine which handles the face STATES
  * and their timing. the precedence of expressions is:
  *
  * dead > evil grin > turned head > straight ahead
@@ -1318,7 +1318,7 @@ void ST_loadGraphics(void)
     // Status bar background bits.
     R_CachePatch(&statusbar, "STBAR");
 
-    // Face states:
+    // Face STATES:
     faceNum = 0;
     for(i = 0; i < ST_NUMPAINFACES; ++i)
     {

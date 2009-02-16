@@ -336,7 +336,7 @@ static boolean fadeSpawn(thinker_t* th, void* context)
             // Emit sound, where?
             S_StartSound(SFX_ITMBK, mo);
 
-            if(mobjInfo[spawntype].flags & MF_COUNTKILL)
+            if(MOBJINFO[spawntype].flags & MF_COUNTKILL)
                 totalKills++;
         }
     }

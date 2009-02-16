@@ -680,7 +680,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
             break;
         }
 
-        state = &states[stnum];
+        state = &STATES[stnum];
         psp->state = state;
         psp->tics = state->tics; // Could be 0.
         if(state->misc[0])
@@ -798,8 +798,8 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
     ddpsprite_t        *ddpsp;
 
     // Change player from attack state
-    if(player->plr->mo->state == &states[S_PLAY_ATK1] ||
-       player->plr->mo->state == &states[S_PLAY_ATK2])
+    if(player->plr->mo->state == &STATES[S_PLAY_ATK1] ||
+       player->plr->mo->state == &STATES[S_PLAY_ATK2])
     {
         P_MobjChangeState(player->plr->mo, S_PLAY);
     }
@@ -809,7 +809,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
         wminfo = WEAPON_INFO(player->readyWeapon, player->class, (player->powers[PT_WEAPONLEVEL2]?1:0));
 
         // A weaponready sound?
-        if(psp->state == &states[wminfo->readyState] && wminfo->readySound)
+        if(psp->state == &STATES[wminfo->readyState] && wminfo->readySound)
 #if __JHERETIC__
             if(P_Random() < 128)
 #endif
@@ -877,7 +877,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
     }
     else
     {
-        if(player->plr->mo->state == &states[S_CHICPLAY_ATK1])
+        if(player->plr->mo->state == &STATES[S_CHICPLAY_ATK1])
         {   // Take out of attack state.
             P_MobjChangeState(player->plr->mo, S_CHICPLAY);
         }
@@ -1212,7 +1212,7 @@ void C_DECL A_FireGoldWandPL2(player_t *player, pspdef_t *psp)
 
     puffType = MT_GOLDWANDPUFF2;
     P_BulletSlope(mo);
-    momZ = mobjInfo[MT_GOLDWANDFX2].speed * bulletSlope;
+    momZ = MOBJINFO[MT_GOLDWANDFX2].speed * bulletSlope;
 
     P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle - (ANG45 / 8), momZ);
     P_SpawnMissileAngle(MT_GOLDWANDFX2, mo, mo->angle + (ANG45 / 8), momZ);
@@ -1322,7 +1322,7 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
         ball->special3 = MAGIC_JUNK;
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
         ball->flags2 &= ~MF2_FLOORBOUNCE;
-        P_MobjChangeState(ball, ball->info->spawnState);
+        P_MobjChangeState(ball, P_GetState(ball->type, SN_SPAWN));
         S_StartSound(SFX_BOUNCE, ball);
     }
     else
@@ -1353,7 +1353,7 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
     else
     {   // Bounce
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
-        P_MobjChangeState(ball, ball->info->spawnState);
+        P_MobjChangeState(ball, P_GetState(ball->type, SN_SPAWN));
 
         tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos, ball->angle + ANG90);
         tiny->target = ball->target;
@@ -1459,7 +1459,7 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
             ball->mom[MY] = ball->info->speed * FIX2FLT(finesine[an]);
         }
 
-        P_MobjChangeState(ball, ball->info->spawnState);
+        P_MobjChangeState(ball, P_GetState(ball->type, SN_SPAWN));
         S_StartSound(SFX_PSTOP, ball);
     }
     else

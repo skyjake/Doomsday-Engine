@@ -530,7 +530,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         tmThing->flags &= ~MF_SKULLFLY;
         tmThing->mom[MX] = tmThing->mom[MY] = tmThing->mom[MZ] = 0;
 
-        P_MobjChangeState(tmThing, tmThing->info->spawnState);
+        P_MobjChangeState(tmThing, P_GetState(tmThing->type, SN_SPAWN));
 
         return false; // Stop moving.
     }
@@ -2529,7 +2529,7 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
         }
         else
         {
-            if(thing->state != &states[S_GIBS1])
+            if(thing->state != &STATES[S_GIBS1])
             {
                 P_MobjChangeState(thing, S_GIBS1);
                 thing->height = 0;
@@ -2836,7 +2836,7 @@ static void P_FakeZMovement(mobj_t* mo)
         if(mo->flags & MF_SKULLFLY)
             mo->mom[MZ] = -mo->mom[MZ]; // The skull slammed into something
 
-        if(mo->info->crashState && (mo->flags & MF_CORPSE))
+        if(P_GetState(mo->type, SN_CRASH) && (mo->flags & MF_CORPSE))
             return;
     }
     else if(mo->flags2 & MF2_LOGRAV)

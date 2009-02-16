@@ -444,7 +444,7 @@ void P_MovePlayer(player_t *player)
         }
 
         if((forwardMove != 0 || sideMove != 0) &&
-           player->plr->mo->state == &states[pClassInfo->normalState])
+           player->plr->mo->state == &STATES[pClassInfo->normalState])
         {
             P_MobjChangeState(player->plr->mo, pClassInfo->runState);
         }
@@ -1621,8 +1621,8 @@ void P_PlayerThinkPowers(player_t* player)
         if(!--player->powers[PT_WEAPONLEVEL2])
         {
             if((player->readyWeapon == WT_SIXTH) &&
-               (player->pSprites[ps_weapon].state != &states[S_PHOENIXREADY])
-               && (player->pSprites[ps_weapon].state != &states[S_PHOENIXUP]))
+               (player->pSprites[ps_weapon].state != &STATES[S_PHOENIXREADY])
+               && (player->pSprites[ps_weapon].state != &STATES[S_PHOENIXUP]))
             {
                 P_SetPsprite(player, ps_weapon, S_PHOENIXREADY);
                 player->ammo[AT_FIREORB].owned = MAX_OF(0,
@@ -1758,7 +1758,7 @@ void P_PlayerThinkPowers(player_t* player)
 
 /**
  * Handles the updating of the player's view angles depending on the game
- * input controllers. Control states are queried from the engine. Note
+ * input controllers. Control STATES are queried from the engine. Note
  * that this is done as often as possible (i.e., on every frame) so that
  * changes will be smooth and lag-free.
  *

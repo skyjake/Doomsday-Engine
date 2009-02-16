@@ -34,7 +34,7 @@
 #endif
 
 // The player data structure depends on a number of other structs: items
-// (internal inventory), animation states (closely tied to the sprites used
+// (internal inventory), animation STATES (closely tied to the sprites used
 // to represent them, unfortunately).
 #include "d_items.h"
 #include "p_pspr.h"
@@ -50,7 +50,7 @@
 #endif
 
 /**
- * Player states.
+ * Player STATES.
  */
 typedef enum {
     PST_LIVE, // Playing or camping.

@@ -726,22 +726,14 @@ int PatchThing(int thingy)
 
     static const struct Key keys[] = {
         {"ID #", myoffsetof(ded_mobj_t, doomedNum, 0)},
-        {"Initial frame", myoffsetof(ded_mobj_t, spawnState, OFF_STATE)},
         {"Hit points", myoffsetof(ded_mobj_t, spawnHealth, 0)},
-        {"First moving frame", myoffsetof(ded_mobj_t, seeState, OFF_STATE)},
         {"Reaction time", myoffsetof(ded_mobj_t, reactionTime, 0)},
-        {"Injury frame", myoffsetof(ded_mobj_t, painState, OFF_STATE)},
         {"Pain chance", myoffsetof(ded_mobj_t, painChance, 0)},
-        {"Close attack frame", myoffsetof(ded_mobj_t, meleeState, OFF_STATE)},
-        {"Far attack frame", myoffsetof(ded_mobj_t, missileState, OFF_STATE)},
-        {"Death frame", myoffsetof(ded_mobj_t, deathState, OFF_STATE)},
-        {"Exploding frame", myoffsetof(ded_mobj_t, xDeathState, OFF_STATE)},
         {"Speed", myoffsetof(ded_mobj_t, speed, OFF_FLOAT)},
         {"Width", myoffsetof(ded_mobj_t, radius, OFF_FIXED)},
         {"Height", myoffsetof(ded_mobj_t, height, OFF_FIXED)},
         {"Mass", myoffsetof(ded_mobj_t, mass, 0)},
         {"Missile damage", myoffsetof(ded_mobj_t, damage, 0)},
-        {"Respawn frame", myoffsetof(ded_mobj_t, raiseState, OFF_STATE)},
         //{ "Translucency",     myoffsetof(ded_mobj_t,translucency,0) },
         {"Alert sound", myoffsetof(ded_mobj_t, seeSound, OFF_SOUND)},
         {"Attack sound", myoffsetof(ded_mobj_t, attackSound, OFF_SOUND)},
@@ -750,12 +742,26 @@ int PatchThing(int thingy)
         {"Action sound", myoffsetof(ded_mobj_t, activeSound, OFF_SOUND)},
         {NULL,}
     };
-
-    // flags can be specified by name (a .bex extension):
+    static const struct {
+        const char*     label;
+        size_t          labelLen;
+        statename_t     name;
+    } stateNames[] = {
+        { "Initial", 7, SN_SPAWN },
+        { "First moving", 12, SN_SEE },
+        { "Injury", 6, SN_PAIN },
+        { "Close attack", 12, SN_MELEE },
+        { "Far attack", 10, SN_MISSILE },
+        { "Death", 5, SN_DEATH },
+        { "Exploding", 9, SN_XDEATH },
+        { "Respawn", 7, SN_RAISE },
+        { NULL, -1 }
+    };
+    // Flags can be specified by name (a .bex extension):
     static const struct {
         short           bit;
         short           whichflags;
-        const char     *name;
+        const char*     name;
     } bitnames[] =
     {
         {0, 0, "SPECIAL"},
@@ -831,7 +837,7 @@ int PatchThing(int thingy)
         {31, 1, "REFLECTIVE"}
     };
     int             result;
-    ded_mobj_t     *info, dummy;
+    ded_mobj_t*     info, dummy;
     boolean         hadHeight = false;
     boolean         checkHeight = false;
 
@@ -851,14 +857,32 @@ int PatchThing(int thingy)
 
     while((result = GetLine()) == 1)
     {
-        size_t          sndmap = atoi(Line2);
+        int             value = atoi(Line2);
+        size_t          len = strlen(Line1);
+        size_t          sndmap;
 
+        sndmap = value;
         if(sndmap >= sizeof(SoundMap))
             sndmap = 0;
 
-        if(HandleKey(keys, info, Line1, atoi(Line2)))
+        if(HandleKey(keys, info, Line1, value))
         {
-            if(!stricmp(Line1, "Bits"))
+            if(!stricmp(Line1 + len - 6, " frame"))
+            {
+                uint                i;
+
+                for(i = 0; stateNames[i].label; ++i)
+                {
+                    if(!strnicmp(stateNames[i].label, Line1,
+                                 stateNames[i].labelLen))
+                    {
+                        strcpy(info->states[stateNames[i].name],
+                               ded->states[value].id);
+                        break;
+                    }
+                }
+            }
+            else if(!stricmp(Line1, "Bits"))
             {
                 int             value = 0, value2 = 0;
                 boolean         vchanged = false, v2changed = false;

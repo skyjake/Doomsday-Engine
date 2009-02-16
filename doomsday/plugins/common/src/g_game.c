@@ -2055,20 +2055,20 @@ void G_InitNew(skillmode_t skill, int episode, int map)
         )
     {
         for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            states[i].tics = 1;
+            STATES[i].tics = 1;
         for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            states[i].tics = 4;
+            STATES[i].tics = 4;
         for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            states[i].tics = 1;
+            STATES[i].tics = 1;
     }
     else
     {
         for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            states[i].tics = 2;
+            STATES[i].tics = 2;
         for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            states[i].tics = 8;
+            STATES[i].tics = 8;
         for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            states[i].tics = 2;
+            STATES[i].tics = 2;
     }
 #endif
 
@@ -2084,7 +2084,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
     {
-        mobjInfo[MonsterMissileInfo[i].type].speed =
+        MOBJINFO[MonsterMissileInfo[i].type].speed =
             MonsterMissileInfo[i].speed[speed];
     }
 #endif

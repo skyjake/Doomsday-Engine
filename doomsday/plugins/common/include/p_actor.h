@@ -41,5 +41,5 @@ void            P_MobjAngleSRVOTicker(mobj_t* mo);
 boolean         P_MobjIsCamera(mobj_t* mo);
 
 void            P_UpdateHealthBits(mobj_t* mo);
-
+statenum_t      P_GetState(mobjtype_t mobjType, statename_t name);
 #endif

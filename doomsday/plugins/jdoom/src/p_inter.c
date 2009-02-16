@@ -889,13 +889,13 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     }
 
     if(target->health < -target->info->spawnHealth &&
-       target->info->xDeathState)
+       P_GetState(target->type, SN_XDEATH))
     {   // Extreme death.
-        P_MobjChangeState(target, target->info->xDeathState);
+        P_MobjChangeState(target, P_GetState(target->type, SN_XDEATH));
     }
     else
     {   // Normal death.
-        P_MobjChangeState(target, target->info->deathState);
+        P_MobjChangeState(target, P_GetState(target->type, SN_DEATH));
     }
 
     target->tics -= P_Random() & 3;
@@ -1117,10 +1117,12 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if((P_Random() < target->info->painChance) &&
            !(target->flags & MF_SKULLFLY))
         {
+            statenum_t          state;
+
             target->flags |= MF_JUSTHIT; // Fight back!
 
-            if(target->info->painState)
-                P_MobjChangeState(target, target->info->painState);
+            if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+                P_MobjChangeState(target, state);
         }
 
         target->reactionTime = 0; // We're awake now...
@@ -1129,15 +1131,17 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
            ((!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) || target->type == MT_VILE) &&
            source != target && source->type != MT_VILE)
         {
+            statenum_t          state;
+
             // Target mobj is not intent on another mobj, so make it chase
             // after the source of the damage.
             target->target = source;
             target->threshold = BASETHRESHOLD;
 
-            if(target->state == &states[target->info->spawnState] &&
-               target->info->seeState != S_NULL)
+            if((state = P_GetState(target->type, SN_SEE)) != S_NULL &&
+               target->state == &STATES[P_GetState(target->type, SN_SPAWN)])
             {
-                P_MobjChangeState(target, target->info->seeState);
+                P_MobjChangeState(target, state);
             }
         }
     }

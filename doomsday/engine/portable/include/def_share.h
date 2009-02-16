@@ -51,33 +51,38 @@ typedef struct state_s {
     int             misc[NUM_STATE_MISC];
 } state_t;
 
+typedef enum {
+    SN_SPAWN,
+    SN_SEE,
+    SN_PAIN,
+    SN_MELEE,
+    SN_MISSILE,
+    SN_CRASH,
+    SN_DEATH,
+    SN_XDEATH,
+    SN_RAISE,
+    NUM_STATE_NAMES
+} statename_t;
+
 typedef struct {
     int             doomedNum;
-    int             spawnState;
     int             spawnHealth;
-    int             seeState;
-    int             seeSound;
-    int             reactionTime;
-    int             attackSound;
-    int             painState;
-    int             painChance;
-    int             painSound;
-    int             meleeState;
-    int             missileState;
-    int             crashState;
-    int             deathState;
-    int             xDeathState;
-    int             deathSound;
     float           speed;
     float           radius;
     float           height;
     int             mass;
     int             damage;
-    int             activeSound;
     int             flags;
     int             flags2;
     int             flags3;
-    int             raiseState;
+    int             reactionTime;
+    int             painChance;
+    int             states[NUM_STATE_NAMES];
+    int             painSound;
+    int             deathSound;
+    int             activeSound;
+    int             attackSound;
+    int             seeSound;
     int             misc[NUM_MOBJ_MISC];
 } mobjinfo_t;
 

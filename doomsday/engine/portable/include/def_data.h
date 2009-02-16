@@ -117,15 +117,7 @@ typedef struct {
     int             doomedNum;
     ded_string_t    name;
 
-    ded_stateid_t   spawnState;
-    ded_stateid_t   seeState;
-    ded_stateid_t   painState;
-    ded_stateid_t   meleeState;
-    ded_stateid_t   missileState;
-    ded_stateid_t   crashState;
-    ded_stateid_t   deathState;
-    ded_stateid_t   xDeathState;
-    ded_stateid_t   raiseState;
+    ded_stateid_t   states[NUM_STATE_NAMES];
 
     ded_soundid_t   seeSound;
     ded_soundid_t   attackSound;

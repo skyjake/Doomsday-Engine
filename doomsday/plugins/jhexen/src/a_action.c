@@ -98,7 +98,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
     for(i = (P_Random() & 3) + 3; i; i--)
     {
         mo = P_SpawnMobj3fv(MT_POTTERYBIT1, actor->pos, P_Random() << 24);
-        P_MobjChangeState(mo, mo->info->spawnState + (P_Random() % 5));
+        P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 5));
         if(mo)
         {
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
@@ -111,7 +111,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
     if(actor->args[0])
     {   // Spawn an item.
         if(!noMonstersParm ||
-           !(mobjInfo[TranslateThingType[actor->args[0]]].
+           !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {   // Only spawn monsters if not -nomonsters.
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos,
@@ -121,16 +121,16 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
     P_MobjRemove(actor, false);
 }
 
-void C_DECL A_PotteryChooseBit(mobj_t *actor)
+void C_DECL A_PotteryChooseBit(mobj_t* actor)
 {
-    P_MobjChangeState(actor, actor->info->deathState + (P_Random() % 5) + 1);
+    P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + (P_Random() % 5) + 1);
     actor->tics = 256 + (P_Random() << 1);
 }
 
-void C_DECL A_PotteryCheck(mobj_t *actor)
+void C_DECL A_PotteryCheck(mobj_t* actor)
 {
     int                 i;
-    mobj_t             *pmo;
+    mobj_t*             pmo;
 
     if(!IS_NETGAME)
     {
@@ -141,7 +141,7 @@ void C_DECL A_PotteryCheck(mobj_t *actor)
                              actor->pos[VX], actor->pos[VY]) -
              pmo->angle) <= ANGLE_45))
         {   // Previous state (pottery bit waiting state).
-            P_MobjChangeState(actor, actor->state - &states[0] - 1);
+            P_MobjChangeState(actor, actor->state - &STATES[0] - 1);
         }
         else
         {
@@ -162,14 +162,14 @@ void C_DECL A_PotteryCheck(mobj_t *actor)
                                  actor->pos[VX], actor->pos[VY]) -
                  pmo->angle) <= ANGLE_45))
             {   // Previous state (pottery bit waiting state).
-                P_MobjChangeState(actor, actor->state - &states[0] - 1);
+                P_MobjChangeState(actor, actor->state - &STATES[0] - 1);
                 return;
             }
         }
     }
 }
 
-void C_DECL A_CorpseBloodDrip(mobj_t *actor)
+void C_DECL A_CorpseBloodDrip(mobj_t* actor)
 {
     if(P_Random() > 128)
     {
@@ -180,15 +180,15 @@ void C_DECL A_CorpseBloodDrip(mobj_t *actor)
                   actor->pos[VZ] + actor->height / 2, actor->angle);
 }
 
-void C_DECL A_CorpseExplode(mobj_t *actor)
+void C_DECL A_CorpseExplode(mobj_t* actor)
 {
     int                 i, n;
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     for(i = (P_Random() & 3) + 3; i; i--)
     {
         mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos, P_Random() << 24);
-        P_MobjChangeState(mo, mo->info->spawnState + (P_Random() % 3));
+        P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 3));
         if(mo)
         {
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
@@ -509,7 +509,7 @@ void C_DECL A_FogMove(mobj_t *actor)
 
     if(actor->args[3]-- <= 0)
     {
-        P_SetMobjStateNF(actor, actor->info->deathState);
+        P_SetMobjStateNF(actor, P_GetState(actor->type, SN_DEATH));
         return;
     }
 
@@ -525,9 +525,9 @@ void C_DECL A_FogMove(mobj_t *actor)
     actor->mom[MY] = speed * FIX2FLT(finesine[an]);
 }
 
-void C_DECL A_PoisonBagInit(mobj_t *actor)
+void C_DECL A_PoisonBagInit(mobj_t* actor)
 {
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     mo = P_SpawnMobj3f(MT_POISONCLOUD,
                        actor->pos[VX], actor->pos[VY], actor->pos[VZ] + 28,
@@ -569,15 +569,15 @@ void C_DECL A_PoisonBagDamage(mobj_t *actor)
     actor->special2 = (bobIndex + 1) & 63;
 }
 
-void C_DECL A_PoisonShroom(mobj_t *actor)
+void C_DECL A_PoisonShroom(mobj_t* actor)
 {
     actor->tics = 128 + (P_Random() << 1);
 }
 
-void C_DECL A_CheckThrowBomb(mobj_t *actor)
+void C_DECL A_CheckThrowBomb(mobj_t* actor)
 {
     if(fabs(actor->mom[MX]) < 1.5f && fabs(actor->mom[MY]) < 1.5f &&
-       actor->mom[MZ] < 2 && actor->state == &states[S_THROWINGBOMB6])
+       actor->mom[MZ] < 2 && actor->state == &STATES[S_THROWINGBOMB6])
     {
         P_MobjChangeState(actor, S_THROWINGBOMB7);
         actor->pos[VZ] = actor->floorZ;
@@ -589,7 +589,7 @@ void C_DECL A_CheckThrowBomb(mobj_t *actor)
 
     if(!--actor->health)
     {
-        P_MobjChangeState(actor, actor->info->deathState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH));
     }
 }
 
@@ -603,9 +603,9 @@ void C_DECL A_CheckThrowBomb(mobj_t *actor)
  *      args[4]     TID of map thing for focus of quake
  */
 
-boolean A_LocalQuake(byte *args, mobj_t *actor)
+boolean A_LocalQuake(byte* args, mobj_t* actor)
 {
-    mobj_t             *focus, *target;
+    mobj_t*             focus, *target;
     int                 lastfound = 0;
     int                 success = false;
 
@@ -710,34 +710,34 @@ void C_DECL A_TeloSpawnA(mobj_t *mo)
     telospawn(MT_TELOTHER_FX2, mo);
 }
 
-void C_DECL A_TeloSpawnB(mobj_t *mo)
+void C_DECL A_TeloSpawnB(mobj_t* mo)
 {
     telospawn(MT_TELOTHER_FX3, mo);
 }
 
-void C_DECL A_TeloSpawnC(mobj_t *mo)
+void C_DECL A_TeloSpawnC(mobj_t* mo)
 {
     telospawn(MT_TELOTHER_FX4, mo);
 }
 
-void C_DECL A_TeloSpawnD(mobj_t *mo)
+void C_DECL A_TeloSpawnD(mobj_t* mo)
 {
     telospawn(MT_TELOTHER_FX5, mo);
 }
 
-void C_DECL A_CheckTeleRing(mobj_t *actor)
+void C_DECL A_CheckTeleRing(mobj_t* actor)
 {
     if(actor->special1-- <= 0)
     {
-        P_MobjChangeState(actor, actor->info->deathState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH));
     }
 }
 
-void P_SpawnDirt(mobj_t *mo, float radius)
+void P_SpawnDirt(mobj_t* mo, float radius)
 {
     float               pos[3];
     int                 dtype = 0;
-    mobj_t             *pmo;
+    mobj_t*             pmo;
     uint                an;
 
     an = P_Random() << 5;
@@ -848,11 +848,11 @@ void C_DECL A_ThrustImpale(mobj_t *actor)
 #if MSVC
 #  pragma optimize("g",off)
 #endif
-void C_DECL A_SoAExplode(mobj_t *actor)
+void C_DECL A_SoAExplode(mobj_t* actor)
 {
-    int         i;
-    mobj_t     *mo = NULL;
-    float       pos[3];
+    int                 i;
+    mobj_t*             mo = NULL;
+    float               pos[3];
 
     for(i = 0; i < 10; ++i)
     {
@@ -865,7 +865,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
         pos[VZ] += FIX2FLT(P_Random() * FLT2FIX(actor->height) / 256);
 
         mo = P_SpawnMobj3fv(MT_ZARMORCHUNK, pos, P_Random() << 24);
-        P_MobjChangeState(mo, mo->info->spawnState + i);
+        P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + i);
         if(mo)
         {
             mo->mom[MZ] = ((P_Random() & 7) + 5);
@@ -877,7 +877,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
     if(actor->args[0])
     {   // Spawn an item.
         if(!noMonstersParm ||
-           !(mobjInfo[TranslateThingType[actor->args[0]]].
+           !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {   // Only spawn monsters if not -nomonsters.
             P_SpawnMobj3fv(TranslateThingType[actor->args[0]], actor->pos,
@@ -960,7 +960,7 @@ void C_DECL A_BatSpawn(mobj_t *actor)
     }
 }
 
-void C_DECL A_BatMove(mobj_t *actor)
+void C_DECL A_BatMove(mobj_t* actor)
 {
     angle_t         angle;
     uint            an;
@@ -968,7 +968,7 @@ void C_DECL A_BatMove(mobj_t *actor)
 
     if(actor->special2 < 0)
     {
-        P_MobjChangeState(actor, actor->info->deathState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH));
     }
     actor->special2 -= 2;       // Called every 2 tics
 
@@ -996,7 +996,7 @@ void C_DECL A_BatMove(mobj_t *actor)
     actor->args[0] = (actor->args[0] + 3) & 63;
 }
 
-void C_DECL A_TreeDeath(mobj_t *actor)
+void C_DECL A_TreeDeath(mobj_t* actor)
 {
     if(!(actor->flags2 & MF2_FIREDAMAGE))
     {
@@ -1008,11 +1008,11 @@ void C_DECL A_TreeDeath(mobj_t *actor)
     }
     else
     {
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_MELEE));
     }
 }
 
-void C_DECL A_NoGravity(mobj_t *actor)
+void C_DECL A_NoGravity(mobj_t* actor)
 {
     actor->flags |= MF_NOGRAVITY;
 }

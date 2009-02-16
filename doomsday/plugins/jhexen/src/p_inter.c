@@ -669,10 +669,10 @@ static void SetDormantArtifact(mobj_t *arti)
     }
 }
 
-void C_DECL A_RestoreArtifact(mobj_t *arti)
+void C_DECL A_RestoreArtifact(mobj_t* arti)
 {
     arti->flags |= MF_SPECIAL;
-    P_MobjChangeState(arti, arti->info->spawnState);
+    P_MobjChangeState(arti, P_GetState(arti->type, SN_SPAWN));
     S_StartSound(SFX_RESPAWN, arti);
 }
 
@@ -688,7 +688,7 @@ void C_DECL A_RestoreSpecialThing1(mobj_t* thing)
 void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
 {
     thing->flags |= MF_SPECIAL;
-    P_MobjChangeState(thing, thing->info->spawnState);
+    P_MobjChangeState(thing, P_GetState(thing->type, SN_SPAWN));
 }
 
 static itemtype_t getItemTypeBySprite(spritetype_e sprite)
@@ -1331,10 +1331,11 @@ mobj_t* ActiveMinotaur(player_t* master)
     return NULL;
 }
 
-void P_KillMobj(mobj_t *source, mobj_t *target)
+void P_KillMobj(mobj_t* source, mobj_t* target)
 {
-    int             dummy;
-    mobj_t         *master;
+    int                 dummy;
+    mobj_t*             master;
+    statenum_t          state;
 
     if(!target)
         return; // Nothing to kill.
@@ -1593,23 +1594,23 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         target->height = 24;
     }
 
-    if(target->health < -(target->info->spawnHealth / 2) &&
-       target->info->xDeathState)
+    if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
+       target->health < -(target->info->spawnHealth / 2))
     {   // Extreme death.
-        P_MobjChangeState(target, target->info->xDeathState);
+        P_MobjChangeState(target, state);
     }
     else
     {   // Normal death.
-        if((target->type == MT_FIREDEMON) &&
-           (target->pos[VZ] <= target->floorZ + 2) &&
-           (target->info->xDeathState))
+        if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
+           target->type == MT_FIREDEMON &&
+           target->pos[VZ] <= target->floorZ + 2)
         {
             // This is to fix the imps' staying in fall state.
-            P_MobjChangeState(target, target->info->xDeathState);
+            P_MobjChangeState(target, state);
         }
         else
         {
-            P_MobjChangeState(target, target->info->deathState);
+            P_MobjChangeState(target, P_GetState(target->type, SN_DEATH));
         }
     }
 
@@ -2200,9 +2201,12 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             {
                 if(P_Random() < 96)
                 {
+                    statenum_t          state;
+
                     target->flags |= MF_JUSTHIT; // fight back!
-                    if(target->info->painState)
-                        P_MobjChangeState(target, target->info->painState);
+
+                    if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+                        P_MobjChangeState(target, state);
                 }
                 else
                 {   // "electrocute" the target.
@@ -2223,10 +2227,13 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             }
             else
             {
+                statenum_t          state;
+
                 target->flags |= MF_JUSTHIT; // fight back!
 
-                if(target->info->painState)
-                    P_MobjChangeState(target, target->info->painState);
+                if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+                    P_MobjChangeState(target, state);
+
                 if(inflictor && inflictor->type == MT_POISONCLOUD)
                 {
                     if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
@@ -2252,12 +2259,15 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             if(!((target->type == MT_CENTAUR && source->type == MT_CENTAURLEADER) ||
                  (target->type == MT_CENTAURLEADER && source->type == MT_CENTAUR)))
             {
+                statenum_t          state;
+
                 target->target = source;
                 target->threshold = BASETHRESHOLD;
-                if(target->state == &states[target->info->spawnState] &&
-                   target->info->seeState != S_NULL)
+
+                if((state = P_GetState(target->type, SN_SEE)) != S_NULL &&
+                   target->state == &STATES[P_GetState(target->type, SN_SPAWN)])
                 {
-                    P_MobjChangeState(target, target->info->seeState);
+                    P_MobjChangeState(target, state);
                 }
             }
         }
@@ -2383,8 +2393,10 @@ int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
     {   // Still alive, phew!
         if(!(mapTime & 63) && playPainSound)
         {
-            if(target->info->painState)
-                P_MobjChangeState(target, target->info->painState);
+            statenum_t          state;
+
+            if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+                P_MobjChangeState(target, state);
         }
     }
     else

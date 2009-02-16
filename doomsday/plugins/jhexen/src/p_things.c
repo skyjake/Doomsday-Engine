@@ -180,7 +180,7 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(noMonstersParm && (mobjInfo[moType].flags & MF_COUNTKILL))
+    if(noMonstersParm && (MOBJINFO[moType].flags & MF_COUNTKILL))
     {   // Don't spawn monsters if -nomonsters
         return false;
     }
@@ -228,7 +228,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(noMonstersParm && (mobjInfo[moType].flags & MF_COUNTKILL))
+    if(noMonstersParm && (MOBJINFO[moType].flags & MF_COUNTKILL))
     {   // Don't spawn monsters if -nomonsters
         return false;
     }
@@ -238,7 +238,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
     {
         z = mobj->pos[VZ];
 
-        if(mobjInfo[moType].flags2 & MF2_FLOATBOB)
+        if(MOBJINFO[moType].flags2 & MF2_FLOATBOB)
             z -= mobj->floorZ;
 
         newMobj = P_SpawnMobj3f(moType, mobj->pos[VX], mobj->pos[VY], z,

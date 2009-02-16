@@ -66,8 +66,8 @@ extern game_export_t gx;
 // Global parameters/defines.
 //
 
-#define mobjInfo            (*gi.mobjInfo)
-#define states              (*gi.states)
+#define MOBJINFO            (*gi.mobjInfo)
+#define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
 // Game mode handling - identify IWAD version to handle IWAD dependend

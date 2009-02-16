@@ -667,7 +667,7 @@ void G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src)
 
 /**
  * Response to in-game control actions (movement, inventory etc).
- * Updates the ticcmd with the current control states.
+ * Updates the ticcmd with the current control STATES.
  */
 static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
                                 float elapsedTime)

@@ -108,7 +108,7 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 /**
  * Called after a move to link the mobj back into the world.
  */
-void P_MobjSetPosition(mobj_t *mo)
+void P_MobjSetPosition(mobj_t* mo)
 {
     int                 flags = 0;
 
@@ -124,7 +124,7 @@ void P_MobjSetPosition(mobj_t *mo)
 /**
  * Unlinks a mobj from the world so that it can be moved.
  */
-void P_MobjUnsetPosition(mobj_t *mo)
+void P_MobjUnsetPosition(mobj_t* mo)
 {
     P_MobjUnlink(mo);
 }
@@ -133,7 +133,7 @@ void P_MobjUnsetPosition(mobj_t *mo)
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_MobjSetSRVO(mobj_t *mo, float stepx, float stepy)
+void P_MobjSetSRVO(mobj_t* mo, float stepx, float stepy)
 {
     mo->srvo[VX] = -stepx;
     mo->srvo[VY] = -stepy;
@@ -143,7 +143,7 @@ void P_MobjSetSRVO(mobj_t *mo, float stepx, float stepy)
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_MobjSetSRVOZ(mobj_t *mo, float stepz)
+void P_MobjSetSRVOZ(mobj_t* mo, float stepz)
 {
     mo->srvo[VZ] = -stepz;
 }
@@ -154,7 +154,7 @@ void P_MobjSetSRVOZ(mobj_t *mo, float stepz)
  * Real-life analogy: angular momentum (you can't suddenly just take a
  * 90 degree turn in zero time).
  */
-void P_MobjAngleSRVOTicker(mobj_t *mo)
+void P_MobjAngleSRVOTicker(mobj_t* mo)
 {
     short               target, step, diff;
     int                 lstep, hgt;
@@ -209,12 +209,12 @@ void P_MobjAngleSRVOTicker(mobj_t *mo)
  * The thing's timer has run out, which means the thing has completed its
  * step. Or there has been a teleport.
  */
-void P_MobjClearSRVO(mobj_t *mo)
+void P_MobjClearSRVO(mobj_t* mo)
 {
     memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
-boolean P_MobjIsCamera(mobj_t *mo)
+boolean P_MobjIsCamera(mobj_t* mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
     return (mo && mo->thinker.function && mo->player &&
@@ -225,7 +225,7 @@ boolean P_MobjIsCamera(mobj_t *mo)
  * The first three bits of the selector special byte contain a relative
  * health level.
  */
-void P_UpdateHealthBits(mobj_t *mobj)
+void P_UpdateHealthBits(mobj_t* mobj)
 {
     int                 i;
 
@@ -239,4 +239,23 @@ void P_UpdateHealthBits(mobj_t *mobj)
             i = 0;
         mobj->selector |= i << DDMOBJ_SELECTOR_SHIFT;
     }
+}
+
+/**
+ * Given a mobjtype, lookup the statenum associated to the named state.
+ *
+ * @param mobjType      Type of mobj.
+ * @param name          State name identifier.
+ *
+ * @return              Statenum of the associated state ELSE @c, S_NULL.
+ */
+statenum_t P_GetState(mobjtype_t type, statename_t name)
+{
+
+    if(type < 0 || type >= NUMMOBJTYPES)
+        return S_NULL;
+    if(name < 0 || name >= NUM_STATE_NAMES)
+        return S_NULL;
+
+    return MOBJINFO[type].states[name];
 }

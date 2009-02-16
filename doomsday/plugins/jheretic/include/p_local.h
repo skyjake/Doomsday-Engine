@@ -72,7 +72,7 @@
 // Follow a player exlusively for 3 seconds.
 #define BASETHRESHOLD   100
 
-#define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seeState)
+#define sentient(mobj) ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
 #define FOOTCLIPSIZEF    (10)
 

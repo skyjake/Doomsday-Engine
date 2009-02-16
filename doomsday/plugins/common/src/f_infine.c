@@ -338,7 +338,7 @@ static ficmd_t fiCommands[] = {
     {"imageanim", 3, FIC_AnimImage},    // imageanim (hndl) (raw-img) (time)
     {"picsound", 2, FIC_PicSound},  // picsound (hndl) (sound)
     {"repeat", 1, FIC_Repeat},  // repeat (handle)
-    {"states", 3, FIC_StateAnim},   // states (handle) (state) (count)
+    {"STATES", 3, FIC_StateAnim},   // STATES (handle) (state) (count)
 
     // Text
     {"text", 4, FIC_Text},      // text (hndl) (x) (y) (string)
@@ -557,7 +557,7 @@ void FI_Reset(void)
     if(fi && fi->suspended)
         return;
 
-    // Pop all the states.
+    // Pop all the STATES.
     while(fi)
         FI_PopState();
 
@@ -2211,13 +2211,13 @@ void FIC_StateAnim(void)
     int                 count = FI_GetInteger();
     spriteinfo_t        sinf;
 
-    // Animate N states starting from the given one.
+    // Animate N STATES starting from the given one.
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
     pic->flags.done = false;
     for(; count > 0 && s > 0; count--)
     {
-        state_t            *st = &states[s];
+        state_t            *st = &STATES[s];
 
         i = FI_GetNextSeq(pic);
         if(i == MAX_SEQUENCE)
@@ -2501,18 +2501,18 @@ void FIC_SeeSound(void)
 {
     int                 num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
-    if(num < 0 || mobjInfo[num].seeSound <= 0)
+    if(num < 0 || MOBJINFO[num].seeSound <= 0)
         return;
-    S_LocalSound(mobjInfo[num].seeSound, NULL);
+    S_LocalSound(MOBJINFO[num].seeSound, NULL);
 }
 
 void FIC_DieSound(void)
 {
     int                 num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
-    if(num < 0 || mobjInfo[num].deathSound <= 0)
+    if(num < 0 || MOBJINFO[num].deathSound <= 0)
         return;
-    S_LocalSound(mobjInfo[num].deathSound, NULL);
+    S_LocalSound(MOBJINFO[num].deathSound, NULL);
 }
 
 void FIC_Music(void)

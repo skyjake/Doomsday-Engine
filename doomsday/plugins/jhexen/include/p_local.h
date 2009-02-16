@@ -79,7 +79,7 @@
 
 #define BASETHRESHOLD       100 // Follow a player exlusively for 3 seconds.
 
-#define sentient(mobj)      ((mobj)->health > 0 && (mobj)->info->seeState)
+#define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
 extern int TimerGame; // Tic countdown for deathmatch.
 

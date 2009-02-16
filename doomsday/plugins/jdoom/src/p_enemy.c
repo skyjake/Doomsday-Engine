@@ -28,7 +28,7 @@
 /**
  * p_enemy.c: Enemy thinking, AI (jDoom-specific).
  *
- * Action Pointer Functions that are associated with states/frames.
+ * Action Pointer Functions that are associated with STATES/frames.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -156,7 +156,7 @@ static boolean checkMissileRange(mobj_t *actor)
         P_ApproxDistance(actor->pos[VX] - actor->target->pos[VX],
                          actor->pos[VY] - actor->target->pos[VY]) - 64;
 
-    if(!actor->info->meleeState)
+    if(P_GetState(actor->type, SN_MELEE) == S_NULL)
         dist -= 128; // No melee attack, so fire more.
 
     if(actor->type == MT_VILE)
@@ -705,15 +705,16 @@ void C_DECL A_Look(mobj_t* actor)
         }
     }
 
-    P_MobjChangeState(actor, actor->info->seeState);
+    P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
 }
 
 /**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
-void C_DECL A_Chase(mobj_t *actor)
+void C_DECL A_Chase(mobj_t* actor)
 {
     int                 delta;
+    statenum_t          state;
 
     if(actor->reactionTime)
         actor->reactionTime--;
@@ -750,7 +751,7 @@ void C_DECL A_Chase(mobj_t *actor)
         }
         else
         {
-            P_MobjChangeState(actor, actor->info->spawnState);
+            P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
         }
 
         return;
@@ -767,23 +768,24 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // Check for melee attack.
-    if(actor->info->meleeState && checkMeleeRange(actor))
+    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+       checkMeleeRange(actor))
     {
         if(actor->info->attackSound)
             S_StartSound(actor->info->attackSound, actor);
 
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, state);
         return;
     }
 
     // Check for missile attack.
-    if(actor->info->missileState)
+    if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
         if(!(gameSkill < SM_NIGHTMARE && !fastParm && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
-                P_MobjChangeState(actor, actor->info->missileState);
+                P_MobjChangeState(actor, state);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
@@ -868,7 +870,7 @@ void C_DECL A_SPosAttack(mobj_t *actor)
     }
 }
 
-void C_DECL A_CPosAttack(mobj_t *actor)
+void C_DECL A_CPosAttack(mobj_t* actor)
 {
     int                 angle, bangle, damage;
     float               slope;
@@ -886,7 +888,7 @@ void C_DECL A_CPosAttack(mobj_t *actor)
     P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
 }
 
-void C_DECL A_CPosRefire(mobj_t *actor)
+void C_DECL A_CPosRefire(mobj_t* actor)
 {
     // Keep firing unless target got out of sight.
     A_FaceTarget(actor);
@@ -897,11 +899,11 @@ void C_DECL A_CPosRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_MobjChangeState(actor, actor->info->seeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
     }
 }
 
-void C_DECL A_SpidRefire(mobj_t *actor)
+void C_DECL A_SpidRefire(mobj_t* actor)
 {
     // Keep firing unless target got out of sight.
     A_FaceTarget(actor);
@@ -912,7 +914,7 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     if(!actor->target || actor->target->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_MobjChangeState(actor, actor->info->seeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
     }
 }
 
@@ -1140,10 +1142,10 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
     if(thing->tics != -1)
         return true; // Not lying still yet.
 
-    if(thing->info->raiseState == S_NULL)
+    if(P_GetState(thing->type, SN_RAISE) == S_NULL)
         return true; // Monster doesn't have a raise state.
 
-    maxdist = thing->info->radius + mobjInfo[MT_VILE].radius;
+    maxdist = thing->info->radius + MOBJINFO[MT_VILE].radius;
 
     if(fabs(thing->pos[VX] - vileTry[VX]) > maxdist ||
        fabs(thing->pos[VY] - vileTry[VY]) > maxdist)
@@ -1223,7 +1225,7 @@ void C_DECL A_VileChase(mobj_t *actor)
             S_StartSound(SFX_SLOP, corpseHit);
             info = corpseHit->info;
 
-            P_MobjChangeState(corpseHit, info->raiseState);
+            P_MobjChangeState(corpseHit, P_GetState(corpseHit->type, SN_RAISE));
 
             if(cfg.raiseGhosts)
             {
@@ -1474,7 +1476,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     an = angle >> ANGLETOFINESHIFT;
 
     prestep = 4 +
-        3 * ((actor->info->radius + mobjInfo[MT_SKULL].radius) / 2);
+        3 * ((actor->info->radius + MOBJINFO[MT_SKULL].radius) / 2);
 
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += prestep * FIX2FLT(finecosine[an]);
@@ -1948,7 +1950,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24);
 
     if(lookForPlayers(newmobj, true))
-        P_MobjChangeState(newmobj, newmobj->info->seeState);
+        P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));
 
     // Telefrag anything in this spot.
     P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);

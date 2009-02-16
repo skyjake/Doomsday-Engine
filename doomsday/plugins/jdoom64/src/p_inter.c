@@ -892,6 +892,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     mobj_t*             mo;
     unsigned int        an;
     angle_t             angle;
+    statenum_t          state;
 
     if(!target) // nothing to kill
         return;
@@ -948,14 +949,14 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         AM_Open(AM_MapForPlayer(target->player - players), false, false);
     }
 
-    if(target->health < -target->info->spawnHealth &&
-       target->info->xDeathState)
+    if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
+       target->health < -target->info->spawnHealth)
     {   // Extreme death.
-        P_MobjChangeState(target, target->info->xDeathState);
+        P_MobjChangeState(target, state);
     }
     else
     {   // Normal death.
-        P_MobjChangeState(target, target->info->deathState);
+        P_MobjChangeState(target, P_GetState(target->type, SN_DEATH));
     }
 
     target->tics -= P_Random() & 3;
@@ -1206,10 +1207,12 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if((P_Random() < target->info->painChance) &&
            !(target->flags & MF_SKULLFLY))
         {
+            statenum_t          state;
+
             target->flags |= MF_JUSTHIT; // Fight back!
 
-            if(target->info->painState)
-                P_MobjChangeState(target, target->info->painState);
+            if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+                P_MobjChangeState(target, state);
         }
 
         target->reactionTime = 0; // We're awake now...
@@ -1218,12 +1221,15 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
            (!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) &&
            source != target)
         {
+            statenum_t          state;
+
             // If not intent on another player, chase after this one.
             target->target = source;
             target->threshold = BASETHRESHOLD;
-            if(target->state == &states[target->info->spawnState] &&
-               target->info->seeState != S_NULL)
-                P_MobjChangeState(target, target->info->seeState);
+
+            if((state = P_GetState(target->type, SN_SEE)) != S_NULL &&
+               target->state == &STATES[P_GetState(target->type, SN_SPAWN)])
+                P_MobjChangeState(target, state);
         }
     }
     else

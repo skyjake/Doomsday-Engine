@@ -39,7 +39,7 @@
 #include "g_controls.h"
 
 //
-// Player states.
+// Player STATES.
 //
 typedef enum {
     // Playing or camping.

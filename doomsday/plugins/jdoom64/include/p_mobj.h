@@ -68,7 +68,7 @@
 #define VIEWHEIGHT          (54)
 
 // GMJ 02/02/02
-#define sentient(mobj) ((mobj)->health > 0 && (mobj)->info->seeState)
+#define sentient(mobj) ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
 /**
  * (Re)Spawn flags:
@@ -116,7 +116,7 @@ typedef struct spawnspot_s {
  * is used to draw the sprite if it is visible.
  * The sprite and frame values are allmost allways set
  * from state_t structures.
- * The statescr.exe utility generates the states.h and states.c
+ * The statescr.exe utility generates the STATES.h and STATES.c
  * files that contain the sprite/frame numbers from the
  * statescr.txt source file.
  * The xyz origin point represents a point at the bottom middle

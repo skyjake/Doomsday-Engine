@@ -258,7 +258,7 @@ static void SV_v13_ReadMobj(void)
     mom[MZ] = FIX2FLT(SV_v13_ReadLong());
     valid = SV_v13_ReadLong();
     type = SV_v13_ReadLong();
-    info = &mobjInfo[type];
+    info = &MOBJINFO[type];
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
@@ -335,7 +335,7 @@ static void SV_v13_ReadMobj(void)
 
     SV_UpdateReadMobjFlags(mo, 0);
 
-    mo->state = &states[(int) mo->state];
+    mo->state = &STATES[(int) mo->state];
     mo->target = NULL;
     if(mo->player)
     {
@@ -368,7 +368,7 @@ void P_v13_UnArchivePlayers(void)
             if(plr->pSprites[j].state)
             {
                 plr->pSprites[j].state =
-                    &states[(int) plr->pSprites[j].state];
+                    &STATES[(int) plr->pSprites[j].state];
             }
         }
     }

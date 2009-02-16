@@ -993,14 +993,14 @@ static void SV_WritePlayer(int playernum)
     memcpy(dp, players[playernum].plr, sizeof(ddtemp));
     temp.plr = &ddtemp;
 
-    // Convert the psprite states.
+    // Convert the psprite STATES.
     for(i = 0; i < numPSprites; ++i)
     {
         pspdef_t       *pspDef = &temp.pSprites[i];
 
         if(pspDef->state)
         {
-            pspDef->state = (state_t *) (pspDef->state - states);
+            pspDef->state = (state_t *) (pspDef->state - STATES);
         }
     }
 
@@ -1380,7 +1380,7 @@ static void SV_ReadPlayer(player_t *p)
     for(i = 0; i < numPSprites; ++i)
         if(p->pSprites[i].state)
         {
-            p->pSprites[i].state = &states[(int) p->pSprites[i].state];
+            p->pSprites[i].state = &STATES[(int) p->pSprites[i].state];
         }
 
     // Mark the player for fixpos and fixangles.
@@ -1402,7 +1402,7 @@ static void SV_WriteMobj(mobj_t *original)
 
     memcpy(mo, original, sizeof(*mo));
     // Mangle it!
-    mo->state = (state_t *) (mo->state - states);
+    mo->state = (state_t *) (mo->state - STATES);
     if(mo->player)
         mo->player = (player_t *) ((mo->player - players) + 1);
 
@@ -1668,7 +1668,7 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 
 static void RestoreMobj(mobj_t *mo, int ver)
 {
-    mo->info = &mobjInfo[mo->type];
+    mo->info = &MOBJINFO[mo->type];
 
     P_MobjSetState(mo, (int) mo->state);
 
@@ -1801,7 +1801,7 @@ static int SV_ReadMobj(thinker_t *th)
 #if __JHEXEN__
     mo->info = (mobjinfo_t *) SV_ReadLong();
 #else
-    mo->info = &mobjInfo[mo->type];
+    mo->info = &MOBJINFO[mo->type];
 #endif
 
     if(mo->info->flags & MF_SOLID)
@@ -1846,7 +1846,7 @@ static int SV_ReadMobj(thinker_t *th)
             mo->special3 = mo->health;
             if(mo->type == MT_HORNRODFX2 && mo->special3 > 16)
                 mo->special3 = 16;
-            mo->health = mobjInfo[mo->type].spawnHealth;
+            mo->health = MOBJINFO[mo->type].spawnHealth;
             break;
 
         default:

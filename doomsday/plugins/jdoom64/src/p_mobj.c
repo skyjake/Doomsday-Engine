@@ -113,7 +113,7 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
         }
 
         P_MobjSetState(mobj, state);
-        st = &states[state];
+        st = &STATES[state];
 
         mobj->turnTime = false; // $visangle-facetarget
 
@@ -139,7 +139,7 @@ void P_ExplodeMissile(mobj_t *mo)
 
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
-    P_MobjChangeState(mo, mobjInfo[mo->type].deathState);
+    P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
 
     mo->tics -= P_Random() & 3;
 
@@ -164,7 +164,7 @@ void P_ExplodeMissile(mobj_t *mo)
 void P_FloorBounceMissile(mobj_t *mo)
 {
     mo->mom[MZ] = -mo->mom[MZ];
-    P_MobjChangeState(mo, mobjInfo[mo->type].deathState);
+    P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
 }
 
 /**
@@ -202,7 +202,7 @@ void P_MobjMoveXY(mobj_t* mo)
             mo->flags &= ~MF_SKULLFLY;
             mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
-            P_MobjChangeState(mo, mo->info->spawnState);
+            P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN));
         }
 
         return;
@@ -334,7 +334,7 @@ void P_MobjMoveXY(mobj_t* mo)
        mo->mom[MY] > -STANDSPEED && mo->mom[MY] < STANDSPEED)
     {
         // If in a walking frame, stop moving.
-        if((unsigned) ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runState) < 4)
+        if((unsigned) ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) < 4)
             P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
     }
 
@@ -844,14 +844,14 @@ void P_MobjThinker(mobj_t *mobj)
     }
     // < d64tc
 
-    // Cycle through states, calling action functions at transitions.
+    // Cycle through STATES, calling action functions at transitions.
     if(mobj->tics != -1)
     {
         mobj->tics--;
 
         P_MobjAngleSRVOTicker(mobj); // "angle-servo"; smooth actor turning.
 
-        // You can cycle through multiple states in a tic.
+        // You can cycle through multiple STATES in a tic.
         if(!mobj->tics)
         {
             P_MobjClearSRVO(mobj);
@@ -890,7 +890,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                       angle_t angle)
 {
     mobj_t             *mo;
-    mobjinfo_t         *info = &mobjInfo[type];
+    mobjinfo_t         *info = &MOBJINFO[type];
     float               space;
     int                 ddflags = 0;
 
@@ -923,7 +923,7 @@ mobj_t *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     // can not be called yet.
 
     // Must link before setting state (ID assigned for the mo).
-    P_MobjSetState(mo, info->spawnState);
+    P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
     P_MobjSetPosition(mo);
 
     mo->floorZ   = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
@@ -1033,11 +1033,11 @@ void P_CheckRespawnQueue(void) // jd64
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(sobj->type == mobjInfo[i].doomedNum)
+        if(sobj->type == MOBJINFO[i].doomedNum)
             break;
     }
 
-    if(mobjInfo[i].flags & MF_SPAWNCEILING)
+    if(MOBJINFO[i].flags & MF_SPAWNCEILING)
         pos[VZ] = ONCEILINGZ;
     else
         pos[VZ] = ONFLOORZ;
@@ -1239,14 +1239,14 @@ void P_SpawnMapThing(spawnspot_t *th)
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(th->type == mobjInfo[i].doomedNum)
+        if(th->type == MOBJINFO[i].doomedNum)
             break;
     }
 
     // Clients only spawn local objects.
     if(IS_CLIENT)
     {
-        if(!(mobjInfo[i].flags & MF_LOCAL))
+        if(!(MOBJINFO[i].flags & MF_LOCAL))
             return;
     }
 
@@ -1254,7 +1254,7 @@ void P_SpawnMapThing(spawnspot_t *th)
         return;
 
     // Don't spawn keycards in deathmatch.
-    if(deathmatch && mobjInfo[i].flags & MF_NOTDMATCH)
+    if(deathmatch && MOBJINFO[i].flags & MF_NOTDMATCH)
         return;
 
     // Check for specific disabled objects.
@@ -1275,7 +1275,7 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     // Don't spawn any monsters if -nomonsters.
-    if(noMonstersParm && (i == MT_SKULL || (mobjInfo[i].flags & MF_COUNTKILL)))
+    if(noMonstersParm && (i == MT_SKULL || (MOBJINFO[i].flags & MF_COUNTKILL)))
     {
         return;
     }
@@ -1283,16 +1283,16 @@ void P_SpawnMapThing(spawnspot_t *th)
     pos[VX] = th->pos[VX];
     pos[VY] = th->pos[VY];
 
-    if(mobjInfo[i].flags & MF_SPAWNCEILING)
+    if(MOBJINFO[i].flags & MF_SPAWNCEILING)
         pos[VZ] = ONCEILINGZ;
-    else if(mobjInfo[i].flags2 & MF2_SPAWNFLOAT)
+    else if(MOBJINFO[i].flags2 & MF2_SPAWNFLOAT)
         pos[VZ] = FLOATRANDZ;
     else
         pos[VZ] = ONFLOORZ;
 
     // jd64 >
     // \fixme Forces no gravity to spawn on ceiling? why?? - DJS
-    if((mobjInfo[i].flags & MF_NOGRAVITY) && (th->flags & MTF_FORCECEILING))
+    if((MOBJINFO[i].flags & MF_NOGRAVITY) && (th->flags & MTF_FORCECEILING))
         pos[VZ] = ONCEILINGZ;
     // < d64tc
 

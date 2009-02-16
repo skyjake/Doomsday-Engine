@@ -26,7 +26,7 @@
 /**
  * p_enemy.c: Enemy thinking, AI.
  *
- * Action Pointer Functions that are associated with states/frames.
+ * Action Pointer Functions that are associated with STATES/frames.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -197,7 +197,7 @@ boolean P_CheckMissileRange(mobj_t *mo)
 
     dist = P_ApproxDistance(mo->pos[VX] - mo->target->pos[VX],
                             mo->pos[VY] - mo->target->pos[VY]) - 64;
-    if(!mo->info->meleeState)
+    if(P_GetState(mo->type, SN_MELEE) == S_NULL)
     {   // No melee attack, so fire more frequently.
         dist -= 128;
     }
@@ -597,15 +597,16 @@ void C_DECL A_Look(mobj_t *actor)
             S_StartSound(sound, actor);
         }
     }
-    P_MobjChangeState(actor, actor->info->seeState);
+    P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
 }
 
 /**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
-void C_DECL A_Chase(mobj_t *actor)
+void C_DECL A_Chase(mobj_t* actor)
 {
-    int             delta;
+    int                 delta;
+    statenum_t          state;
 
     if(actor->reactionTime)
         actor->reactionTime--;
@@ -647,7 +648,7 @@ void C_DECL A_Chase(mobj_t *actor)
             return;
         }
 
-        P_MobjChangeState(actor, actor->info->spawnState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
         return;
     }
 
@@ -661,24 +662,25 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // Check for melee attack.
-    if(actor->info->meleeState && P_CheckMeleeRange(actor, false))
+    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+       P_CheckMeleeRange(actor, false))
     {
         if(actor->info->attackSound)
         {
             S_StartSound(actor->info->attackSound, actor);
         }
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, state);
         return;
     }
 
     // Check for missile attack.
-    if(actor->info->missileState)
+    if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
         if(!(gameSkill < SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
-                P_MobjChangeState(actor, actor->info->missileState);
+                P_MobjChangeState(actor, state);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
@@ -1113,9 +1115,10 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
     }
 }
 
-void C_DECL A_MinotaurChase(mobj_t *actor)
+void C_DECL A_MinotaurChase(mobj_t* actor)
 {
-    unsigned int *startTime = (unsigned int *) actor->args;
+    unsigned int*       startTime = (unsigned int *) actor->args;
+    statenum_t          state;
 
     actor->flags &= ~MF_SHADOW; // In case pain caused him to.
     actor->flags &= ~MF_ALTSHADOW;  // Skip his fade in.
@@ -1140,19 +1143,21 @@ void C_DECL A_MinotaurChase(mobj_t *actor)
     actor->reactionTime = 0;
 
     // Melee attack.
-    if(actor->info->meleeState && P_CheckMeleeRange(actor, false))
+    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+       P_CheckMeleeRange(actor, false))
     {
         if(actor->info->attackSound)
             S_StartSound(actor->info->attackSound, actor);
 
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, state);
         return;
     }
 
     // Missile attack.
-    if(actor->info->missileState && P_CheckMissileRange(actor))
+    if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL &&
+       P_CheckMissileRange(actor))
     {
-        P_MobjChangeState(actor, actor->info->missileState);
+        P_MobjChangeState(actor, state);
         return;
     }
 
@@ -1254,7 +1259,7 @@ void C_DECL A_MinotaurCharge(mobj_t* actor)
     else
     {
         actor->flags &= ~MF_SKULLFLY;
-        P_MobjChangeState(actor, actor->info->seeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
     }
 }
 
@@ -1762,23 +1767,24 @@ void C_DECL A_AddPlayerCorpse(mobj_t *actor)
     bodyqueslot++;
 }
 
-void C_DECL A_SerpentUnHide(mobj_t *actor)
+void C_DECL A_SerpentUnHide(mobj_t* actor)
 {
     actor->flags2 &= ~MF2_DONTDRAW;
     actor->floorClip = 24;
 }
 
-void C_DECL A_SerpentHide(mobj_t *actor)
+void C_DECL A_SerpentHide(mobj_t* actor)
 {
     actor->flags2 |= MF2_DONTDRAW;
     actor->floorClip = 0;
 }
 
-void C_DECL A_SerpentChase(mobj_t *actor)
+void C_DECL A_SerpentChase(mobj_t* actor)
 {
-    int         delta;
-    float       oldpos[3];
-    int         oldFloor;
+    int                 delta;
+    float               oldpos[3];
+    int                 oldFloor;
+    statenum_t          state;
 
     if(actor->reactionTime)
     {
@@ -1821,7 +1827,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
         {   // Got a new target.
             return;
         }
-        P_MobjChangeState(actor, actor->info->spawnState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
         return;
     }
 
@@ -1835,13 +1841,14 @@ void C_DECL A_SerpentChase(mobj_t *actor)
     }
 
     // Check for melee attack.
-    if(actor->info->meleeState && P_CheckMeleeRange(actor, false))
+    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+       P_CheckMeleeRange(actor, false))
     {
         if(actor->info->attackSound)
         {
             S_StartSound(actor->info->attackSound, actor);
         }
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, state);
         return;
     }
 
@@ -1945,9 +1952,10 @@ void C_DECL A_SerpentDiveSound(mobj_t *actor)
 /**
  * Similar to A_Chase, only has a hardcoded entering of meleestate.
  */
-void C_DECL A_SerpentWalk(mobj_t *actor)
+void C_DECL A_SerpentWalk(mobj_t* actor)
 {
-    int         delta;
+    int                 delta;
+    statenum_t          state;
 
     if(actor->reactionTime)
     {
@@ -1990,7 +1998,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
         {   // Got a new target.
             return;
         }
-        P_MobjChangeState(actor, actor->info->spawnState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
         return;
     }
 
@@ -2004,7 +2012,8 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
     }
 
     // Check for melee attack.
-    if(actor->info->meleeState && P_CheckMeleeRange(actor, false))
+    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+       P_CheckMeleeRange(actor, false))
     {
         if(actor->info->attackSound)
         {
@@ -2220,24 +2229,24 @@ static mobj_t* spawnCentaurStuff(mobjtype_t type, angle_t angle, mobj_t *mo)
 /**
  * Spawn shield/sword sprites when the centaur pulps.
  */
-void C_DECL A_CentaurDropStuff(mobj_t *mo)
+void C_DECL A_CentaurDropStuff(mobj_t* mo)
 {
     // Order is important P_Randoms!
     spawnCentaurStuff(MT_CENTAUR_SHIELD, mo->angle + ANG90, mo);
     spawnCentaurStuff(MT_CENTAUR_SHIELD, mo->angle - ANG90, mo);
 }
 
-void C_DECL A_CentaurDefend(mobj_t *actor)
+void C_DECL A_CentaurDefend(mobj_t* actor)
 {
     A_FaceTarget(actor);
     if(P_CheckMeleeRange(actor, false) && P_Random() < 32)
     {
         A_UnSetInvulnerable(actor);
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_MELEE));
     }
 }
 
-void C_DECL A_BishopAttack(mobj_t *actor)
+void C_DECL A_BishopAttack(mobj_t* actor)
 {
     if(!actor->target)
         return;
@@ -2254,9 +2263,9 @@ void C_DECL A_BishopAttack(mobj_t *actor)
 /**
  * Spawns one of a string of bishop missiles.
  */
-void C_DECL A_BishopAttack2(mobj_t *actor)
+void C_DECL A_BishopAttack2(mobj_t* actor)
 {
-    mobj_t     *mo;
+    mobj_t*             mo;
 
     if(!actor->target || !actor->special1)
     {
@@ -2274,11 +2283,11 @@ void C_DECL A_BishopAttack2(mobj_t *actor)
     actor->special1--;
 }
 
-void C_DECL A_BishopMissileWeave(mobj_t *actor)
+void C_DECL A_BishopMissileWeave(mobj_t* actor)
 {
-    float           pos[3];
-    uint            weaveXY, weaveZ;
-    uint            an;
+    float               pos[3];
+    uint                weaveXY, weaveZ;
+    uint                an;
 
     // Unpack the weave vector.
     weaveXY = actor->special2 >> 16;
@@ -2531,7 +2540,7 @@ static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
     }
 }
 
-void C_DECL A_DragonInitFlight(mobj_t *actor)
+void C_DECL A_DragonInitFlight(mobj_t* actor)
 {
     int             search;
 
@@ -2541,7 +2550,7 @@ void C_DECL A_DragonInitFlight(mobj_t *actor)
         actor->tracer = P_FindMobjFromTID(actor->tid, &search);
         if(search == -1)
         {
-            P_MobjChangeState(actor, actor->info->spawnState);
+            P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
             return;
         }
     } while(actor->tracer == actor);
@@ -2549,7 +2558,7 @@ void C_DECL A_DragonInitFlight(mobj_t *actor)
     P_MobjRemoveFromTIDList(actor);
 }
 
-void C_DECL A_DragonFlight(mobj_t *actor)
+void C_DECL A_DragonFlight(mobj_t* actor)
 {
     angle_t         angle;
 
@@ -2574,7 +2583,7 @@ void C_DECL A_DragonFlight(mobj_t *actor)
         }
         else if(abs(actor->angle - angle) <= ANGLE_1 * 20)
         {
-            P_MobjChangeState(actor, actor->info->missileState);
+            P_MobjChangeState(actor, P_GetState(actor->type, SN_MISSILE));
             S_StartSound(SFX_DRAGON_ATTACK, actor);
         }
     }
@@ -2584,7 +2593,7 @@ void C_DECL A_DragonFlight(mobj_t *actor)
     }
 }
 
-void C_DECL A_DragonFlap(mobj_t *actor)
+void C_DECL A_DragonFlap(mobj_t* actor)
 {
     A_DragonFlight(actor);
     if(P_Random() < 240)
@@ -3153,7 +3162,7 @@ void C_DECL A_FiredChase(mobj_t *actor)
     {
         if(P_CheckMissileRange(actor) && (P_Random() < 20))
         {
-            P_MobjChangeState(actor, actor->info->missileState);
+            P_MobjChangeState(actor, P_GetState(actor->type, SN_MISSILE));
             actor->flags |= MF_JUSTATTACKED;
             return;
         }
@@ -3367,17 +3376,19 @@ void C_DECL A_SorcSpinBalls(mobj_t *mo)
         pmo->target = mo;
 }
 
-void C_DECL A_SorcBallOrbit(mobj_t *actor)
+void C_DECL A_SorcBallOrbit(mobj_t* actor)
 {
-    uint        an;
-    angle_t     angle = 0, baseangle;
-    int         mode = actor->target->args[3];
-    mobj_t     *parent = actor->target;
-    float       dist = parent->radius - actor->radius * 2;
-    angle_t     prevangle = (angle_t) actor->special1;
+    uint                an;
+    angle_t             angle = 0, baseangle;
+    int                 mode = actor->target->args[3];
+    mobj_t*             parent = actor->target;
+    float               dist = parent->radius - actor->radius * 2;
+    angle_t             prevangle = (angle_t) actor->special1;
+    statenum_t          state;
 
-    if(actor->target->health <= 0 && actor->info->painState)
-        P_MobjChangeState(actor, actor->info->painState);
+    if((state = P_GetState(actor->type, SN_PAIN)) != S_NULL &&
+       actor->target->health <= 0)
+        P_MobjChangeState(actor, state);
 
     baseangle = (angle_t) parent->special1;
     switch(actor->type)
@@ -3833,18 +3844,17 @@ void C_DECL A_SorcFX2Orbit(mobj_t *mo)
     mobj_t*             parent = mo->target;
     float               dist = parent->info->radius;
 
-    if((parent->health <= 0) || // Sorcerer is dead.
-       (!parent->args[0])) // Time expired.
+    if(parent->health <= 0 || // Sorcerer is dead.
+       !parent->args[0]) // Time expired.
     {
-        P_SetMobjStateNF(mo, mo->info->deathState);
+        P_SetMobjStateNF(mo, P_GetState(mo->type, SN_DEATH));
         parent->args[0] = 0;
-        parent->flags2 &= ~MF2_REFLECTIVE;
-        parent->flags2 &= ~MF2_INVULNERABLE;
+        parent->flags2 &= ~(MF2_REFLECTIVE | MF2_INVULNERABLE);
     }
 
     if(mo->args[0] && (parent->args[0]-- <= 0)) // Time expired.
     {
-        P_SetMobjStateNF(mo, mo->info->deathState);
+        P_SetMobjStateNF(mo, P_GetState(mo->type, SN_DEATH));
         parent->args[0] = 0;
         parent->flags2 &= ~MF2_REFLECTIVE;
     }
@@ -3908,18 +3918,18 @@ void C_DECL A_SorcererBishopEntry(mobj_t* mo)
 /**
  * FX4 - rapid fire balls.
  */
-void C_DECL A_SorcFX4Check(mobj_t *mo)
+void C_DECL A_SorcFX4Check(mobj_t* mo)
 {
     if(mo->special2-- <= 0)
     {
-        P_SetMobjStateNF(mo, mo->info->deathState);
+        P_SetMobjStateNF(mo, P_GetState(mo->type, SN_DEATH));
     }
 }
 
 /**
  * Ball death - spawn stuff.
  */
-void C_DECL A_SorcBallPop(mobj_t *mo)
+void C_DECL A_SorcBallPop(mobj_t* mo)
 {
     S_StartSound(SFX_SORCERER_BALLPOP, NULL);
     mo->flags &= ~MF_NOGRAVITY;
@@ -3934,13 +3944,13 @@ void C_DECL A_SorcBallPop(mobj_t *mo)
     mo->args[3] = 5; // Bounce time in seconds.
 }
 
-void C_DECL A_BounceCheck(mobj_t *mo)
+void C_DECL A_BounceCheck(mobj_t* mo)
 {
     if(mo->args[4]-- <= 0)
     {
         if(mo->args[3]-- <= 0)
         {
-            P_MobjChangeState(mo, mo->info->deathState);
+            P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
             switch(mo->type)
             {
             case MT_SORCBALL1:
@@ -3964,15 +3974,16 @@ void C_DECL A_BounceCheck(mobj_t *mo)
     }
 }
 
-void C_DECL A_FastChase(mobj_t *mo)
+void C_DECL A_FastChase(mobj_t* mo)
 {
 #define CLASS_BOSS_STRAFE_RANGE     (64*10)
 
-    int             delta;
-    float           dist;
-    angle_t         angle;
-    uint            an;
-    mobj_t         *target;
+    int                 delta;
+    float               dist;
+    angle_t             angle;
+    uint                an;
+    mobj_t*             target;
+    statenum_t          state;
 
     if(mo->reactionTime)
     {
@@ -4014,7 +4025,7 @@ void C_DECL A_FastChase(mobj_t *mo)
         if(P_LookForPlayers(mo, true))
             return; // Got a new target
 
-        P_MobjChangeState(mo, mo->info->spawnState);
+        P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN));
         return;
     }
 
@@ -4060,14 +4071,14 @@ void C_DECL A_FastChase(mobj_t *mo)
     }
 
     // Check for missile attack.
-    if(mo->info->missileState)
+    if((state = P_GetState(mo->type, SN_MISSILE)) != S_NULL)
     {
         if(gameSkill < SM_NIGHTMARE && mo->moveCount)
             goto nomissile;
         if(!P_CheckMissileRange(mo))
             goto nomissile;
 
-        P_MobjChangeState(mo, mo->info->missileState);
+        P_MobjChangeState(mo, state);
         mo->flags |= MF_JUSTATTACKED;
         return;
     }
@@ -4117,7 +4128,7 @@ void C_DECL A_MageAttack(mobj_t *mo)
     A_MStaffAttack2(mo);
 }
 
-void C_DECL A_ClassBossHealth(mobj_t *mo)
+void C_DECL A_ClassBossHealth(mobj_t* mo)
 {
     if(IS_NETGAME && !deathmatch) // Co-op only.
     {
@@ -4132,17 +4143,17 @@ void C_DECL A_ClassBossHealth(mobj_t *mo)
 /**
  * Checks if an object hit the floor.
  */
-void C_DECL A_CheckFloor(mobj_t *mo)
+void C_DECL A_CheckFloor(mobj_t* mo)
 {
     if(mo->pos[VZ] <= mo->floorZ)
     {
         mo->pos[VZ] = mo->floorZ;
         mo->flags2 &= ~MF2_LOGRAV;
-        P_MobjChangeState(mo, mo->info->deathState);
+        P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
     }
 }
 
-void C_DECL A_FreezeDeath(mobj_t *mo)
+void C_DECL A_FreezeDeath(mobj_t* mo)
 {
     mo->tics = 75 + P_Random() + P_Random();
     mo->flags |= MF_SOLID | MF_SHOOTABLE | MF_NOBLOOD;
@@ -4220,7 +4231,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
 
         pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos, P_Random() << 24);
 
-        P_MobjChangeState(pmo, pmo->info->spawnState + (P_Random() % 3));
+        P_MobjChangeState(pmo, P_GetState(pmo->type, SN_SPAWN) + (P_Random() % 3));
 
         if(pmo)
         {
@@ -4243,7 +4254,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
         pos[VZ] += (P_Random() * mo->height) / 255;
 
         pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos, P_Random() << 24);
-        P_MobjChangeState(pmo, pmo->info->spawnState + (P_Random() % 3));
+        P_MobjChangeState(pmo, P_GetState(pmo->type, SN_SPAWN) + (P_Random() % 3));
 
         if(pmo)
         {
@@ -4340,7 +4351,7 @@ void C_DECL A_KoraxChase(mobj_t *actor)
 
     if(P_Random() < 30)
     {
-        P_MobjChangeState(actor, actor->info->missileState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_MISSILE));
     }
     else if(P_Random() < 30)
     {
@@ -4430,7 +4441,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax)
     {
         next = P_SpawnMobj3fv(MT_HOLY_TAIL, spirit->pos,
                               spirit->angle + ANG180);
-        P_MobjChangeState(next, next->info->spawnState + 1);
+        P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
         tail->tracer = next;
         tail = next;
     }

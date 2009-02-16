@@ -71,7 +71,7 @@
 
 #define BASETHRESHOLD       (100)
 
-#define sentient(mobj)      ((mobj)->health > 0 && (mobj)->info->seeState)
+#define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)

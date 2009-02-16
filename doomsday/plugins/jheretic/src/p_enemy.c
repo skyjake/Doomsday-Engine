@@ -26,7 +26,7 @@
 /**
  * p_enemy.c: Enemy thinking, AI.
  *
- * Action Pointer Functions that are associated with states/frames.
+ * Action Pointer Functions that are associated with STATES/frames.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -156,9 +156,8 @@ boolean P_CheckMissileRange(mobj_t *actor)
          (actor->pos[VX] - actor->target->pos[VX],
           actor->pos[VY] - actor->target->pos[VY])) - 64;
 
-    // No melee attack, so fire more frequently
-    if(!actor->info->meleeState)
-        dist -= 128;
+    if(P_GetState(actor->type, SN_MELEE) == S_NULL)
+        dist -= 128; // No melee attack, so fire more frequently.
 
     // Imp's fly attack from far away
     if(actor->type == MT_IMP)
@@ -650,15 +649,16 @@ void C_DECL A_Look(mobj_t *actor)
             S_StartSound(sound, actor);
     }
 
-    P_MobjChangeState(actor, actor->info->seeState);
+    P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
 }
 
 /**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
-void C_DECL A_Chase(mobj_t *actor)
+void C_DECL A_Chase(mobj_t* actor)
 {
-    int         delta;
+    int                 delta;
+    statenum_t          state;
 
     if(actor->reactionTime)
         actor->reactionTime--;
@@ -694,7 +694,7 @@ void C_DECL A_Chase(mobj_t *actor)
         if(P_LookForPlayers(actor, true))
             return;  // Got a new target.
 
-        P_MobjChangeState(actor, actor->info->spawnState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
         return;
     }
 
@@ -709,23 +709,24 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 
     // Check for melee attack.
-    if(actor->info->meleeState && P_CheckMeleeRange(actor))
+    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+       P_CheckMeleeRange(actor))
     {
         if(actor->info->attackSound)
             S_StartSound(actor->info->attackSound, actor);
 
-        P_MobjChangeState(actor, actor->info->meleeState);
+        P_MobjChangeState(actor, state);
         return;
     }
 
     // Check for missile attack.
-    if(actor->info->missileState)
+    if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
         if(!(gameSkill < SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
-                P_MobjChangeState(actor, actor->info->missileState);
+                P_MobjChangeState(actor, state);
                 actor->flags |= MF_JUSTATTACKED;
                 return;
             }
@@ -859,7 +860,7 @@ void C_DECL A_BeastPuff(mobj_t *actor)
     }
 }
 
-void C_DECL A_ImpMeAttack(mobj_t *actor)
+void C_DECL A_ImpMeAttack(mobj_t* actor)
 {
     if(!actor->target)
         return;
@@ -872,15 +873,15 @@ void C_DECL A_ImpMeAttack(mobj_t *actor)
     }
 }
 
-void C_DECL A_ImpMsAttack(mobj_t *actor)
+void C_DECL A_ImpMsAttack(mobj_t* actor)
 {
-    mobj_t     *dest;
-    uint        an;
-    int         dist;
+    mobj_t*             dest;
+    uint                an;
+    int                 dist;
 
     if(!actor->target || P_Random() > 64)
     {
-        P_MobjChangeState(actor, actor->info->seeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
         return;
     }
 
@@ -1307,7 +1308,7 @@ void C_DECL A_GenWizard(mobj_t *actor)
 
     mo = P_SpawnMobj3f(MT_WIZARD,
                        actor->pos[VX], actor->pos[VY],
-                       actor->pos[VZ] - (mobjInfo[MT_WIZARD].height / 2),
+                       actor->pos[VZ] - (MOBJINFO[MT_WIZARD].height / 2),
                        actor->angle);
 
     if(P_TestMobjLocation(mo) == false)
@@ -1318,7 +1319,7 @@ void C_DECL A_GenWizard(mobj_t *actor)
 
     actor->mom[MX] = actor->mom[MY] = actor->mom[MZ] = 0;
 
-    P_MobjChangeState(actor, mobjInfo[actor->type].deathState);
+    P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH));
 
     actor->flags &= ~MF_MISSILE;
 
@@ -1465,7 +1466,7 @@ void C_DECL A_MinotaurCharge(mobj_t *actor)
     else
     {
         actor->flags &= ~MF_SKULLFLY;
-        P_MobjChangeState(actor, actor->info->seeState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
     }
 }
 
@@ -1664,7 +1665,7 @@ void C_DECL A_WhirlwindSeek(mobj_t *actor)
     if(actor->special3 < 0)
     {
         actor->mom[MX] = actor->mom[MY] = actor->mom[MZ] = 0;
-        P_MobjChangeState(actor, mobjInfo[actor->type].deathState);
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH));
         actor->flags &= ~MF_MISSILE;
         return;
     }
