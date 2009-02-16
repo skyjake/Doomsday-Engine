@@ -3376,7 +3376,7 @@ void C_DECL A_SorcBallOrbit(mobj_t *actor)
     float       dist = parent->radius - actor->radius * 2;
     angle_t     prevangle = (angle_t) actor->special1;
 
-    if(actor->target->health <= 0)
+    if(actor->target->health <= 0 && actor->info->painState)
         P_MobjChangeState(actor, actor->info->painState);
 
     baseangle = (angle_t) parent->special1;

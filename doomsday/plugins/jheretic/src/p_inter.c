@@ -1469,7 +1469,8 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         {
             target->flags |= MF_JUSTHIT; // Fight back!
 
-            P_MobjChangeState(target, target->info->painState);
+            if(target->info->painState)
+                P_MobjChangeState(target, target->info->painState);
         }
 
         target->reactionTime = 0; // We're awake now...

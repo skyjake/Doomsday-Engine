@@ -2201,7 +2201,8 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
                 if(P_Random() < 96)
                 {
                     target->flags |= MF_JUSTHIT; // fight back!
-                    P_MobjChangeState(target, target->info->painState);
+                    if(target->info->painState)
+                        P_MobjChangeState(target, target->info->painState);
                 }
                 else
                 {   // "electrocute" the target.
@@ -2224,7 +2225,8 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             {
                 target->flags |= MF_JUSTHIT; // fight back!
 
-                P_MobjChangeState(target, target->info->painState);
+                if(target->info->painState)
+                    P_MobjChangeState(target, target->info->painState);
                 if(inflictor && inflictor->type == MT_POISONCLOUD)
                 {
                     if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
@@ -2381,7 +2383,8 @@ int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
     {   // Still alive, phew!
         if(!(mapTime & 63) && playPainSound)
         {
-            P_MobjChangeState(target, target->info->painState);
+            if(target->info->painState)
+                P_MobjChangeState(target, target->info->painState);
         }
     }
     else
