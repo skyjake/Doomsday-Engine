@@ -993,7 +993,7 @@ static void SV_WritePlayer(int playernum)
     memcpy(dp, players[playernum].plr, sizeof(ddtemp));
     temp.plr = &ddtemp;
 
-    // Convert the psprite STATES.
+    // Convert the psprite states.
     for(i = 0; i < numPSprites; ++i)
     {
         pspdef_t       *pspDef = &temp.pSprites[i];

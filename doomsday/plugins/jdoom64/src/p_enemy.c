@@ -29,7 +29,7 @@
 /**
  * p_enemy.c: Enemy thinking, AI.
  *
- * Action Pointer Functions that are associated with STATES/frames.
+ * Action Pointer Functions that are associated with states/frames.
  *
  * Enemies are allways spawned with targetplayer = -1, threshold = 0
  * Most monsters are spawned unaware of all players,

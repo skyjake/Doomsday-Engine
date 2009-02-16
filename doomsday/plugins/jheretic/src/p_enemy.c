@@ -26,7 +26,7 @@
 /**
  * p_enemy.c: Enemy thinking, AI.
  *
- * Action Pointer Functions that are associated with STATES/frames.
+ * Action Pointer Functions that are associated with states/frames.
  */
 
 // HEADER FILES ------------------------------------------------------------

@@ -28,7 +28,7 @@
 /**
  * p_enemy.c: Enemy thinking, AI (jDoom-specific).
  *
- * Action Pointer Functions that are associated with STATES/frames.
+ * Action Pointer Functions that are associated with states/frames.
  */
 
 // HEADER FILES ------------------------------------------------------------

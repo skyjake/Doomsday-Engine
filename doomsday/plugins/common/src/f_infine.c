@@ -338,7 +338,7 @@ static ficmd_t fiCommands[] = {
     {"imageanim", 3, FIC_AnimImage},    // imageanim (hndl) (raw-img) (time)
     {"picsound", 2, FIC_PicSound},  // picsound (hndl) (sound)
     {"repeat", 1, FIC_Repeat},  // repeat (handle)
-    {"STATES", 3, FIC_StateAnim},   // STATES (handle) (state) (count)
+    {"states", 3, FIC_StateAnim},   // states (handle) (state) (count)
 
     // Text
     {"text", 4, FIC_Text},      // text (hndl) (x) (y) (string)
@@ -557,7 +557,7 @@ void FI_Reset(void)
     if(fi && fi->suspended)
         return;
 
-    // Pop all the STATES.
+    // Pop all the states.
     while(fi)
         FI_PopState();
 
@@ -2211,7 +2211,7 @@ void FIC_StateAnim(void)
     int                 count = FI_GetInteger();
     spriteinfo_t        sinf;
 
-    // Animate N STATES starting from the given one.
+    // Animate N states starting from the given one.
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
     pic->flags.done = false;

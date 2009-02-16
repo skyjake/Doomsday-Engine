@@ -1758,7 +1758,7 @@ void P_PlayerThinkPowers(player_t* player)
 
 /**
  * Handles the updating of the player's view angles depending on the game
- * input controllers. Control STATES are queried from the engine. Note
+ * input controllers. Control states are queried from the engine. Note
  * that this is done as often as possible (i.e., on every frame) so that
  * changes will be smooth and lag-free.
  *
