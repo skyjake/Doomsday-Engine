@@ -241,10 +241,10 @@ static void Con_BusyDeleteTextures(void)
         return;
 
     // Destroy the font.
-    if(busyFont)
+/*    if(busyFont)
     {
         FR_DestroyFont(busyFont);
-    }
+    }*/
 
     glDeleteTextures(2, (const GLuint*) texLoading);
     texLoading[0] = texLoading[1] = 0;
