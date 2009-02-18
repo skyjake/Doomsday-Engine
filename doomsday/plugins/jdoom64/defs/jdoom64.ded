@@ -13,6 +13,7 @@ Header {
   Model path = "data\jdoom64\models";
 }
 
+Include "flags.ded";
 Include "objects.ded";
 Include "sprites.ded";
 Include "materials.ded";
