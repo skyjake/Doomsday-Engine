@@ -111,18 +111,14 @@ md %BIN_DIR%
 md %OBJ_DIR%
 GOTO Done
 
-:: *** Resources (dialogs for Doomsday and drD3D)
+
+:: *** Resources (dialogs for Doomsday)
 :: Requires rc.exe and cvtres.exe from the Platform SDK.
 :Res
 ECHO Generating resources for Doomsday (doomsday_res.obj)...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" ./../../engine/win32/res/Doomsday.rc
 cvtres /OUT:%OBJ_DIR%\doomsday_res.obj /MACHINE:X86 ./../../engine/win32/res/Doomsday.res
 ECHO.
-ECHO Generating resources for drD3D (drD3D_res.obj)...
-rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" ./../../plugins/d3d/res/drD3D.rc
-IF NOT EXIST %OBJ_DIR%\drD3D md %OBJ_DIR%\drD3D
-cvtres /OUT:%OBJ_DIR%\drD3D\drD3D_res.obj /MACHINE:X86 ./../../plugins/d3d/res/drD3D.res
-GOTO Done
 
 
 :: *** Execute a Python Script
