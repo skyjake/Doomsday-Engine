@@ -31,6 +31,7 @@
  ./../../plugins/common/src/x_hair.c
  ./../../plugins/common/src/r_common.c
  ./../../plugins/common/src/rend_automap.c
+ ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/m_fixed.c
  ./../../plugins/common/src/hu_pspr.c
  ./../../plugins/common/src/g_defs.c

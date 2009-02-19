@@ -60,6 +60,7 @@
  ./../../plugins/jdoom/src/m_random.c
  ./../../plugins/common/src/m_fixed.c
  ./../../plugins/jdoom/src/m_cheat.c
+ ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/g_defs.c
  ./../../plugins/common/src/g_controls.c
  ./../../plugins/common/src/g_game.c

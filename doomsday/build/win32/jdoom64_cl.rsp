@@ -14,6 +14,7 @@
  ./../../plugins/common/src/hu_msg.c
  ./../../plugins/common/src/hu_pspr.c
  ./../../plugins/common/src/hu_stuff.c
+ ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/m_fixed.c
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/p_actor.c
