@@ -828,7 +828,7 @@ void DD_UpdateEngineState(void)
     Demo_StopPlayback();
     S_Reset();
 
-    GL_InitVarFont();
+    //GL_InitVarFont();
 
     /*glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -849,7 +849,7 @@ void DD_UpdateEngineState(void)
              | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Updating engine state...",
              DD_UpdateWorker, NULL);
 
-    GL_ShutdownVarFont();
+    //GL_ShutdownVarFont();
 
     /*glMatrixMode(GL_PROJECTION);
     glPopMatrix();*/

@@ -164,9 +164,6 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     gameDrawHUD = false;
     I_SetUIMouseMode(true);
 
-    // Setup state.
-    GL_InitVarFont();
-
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     uiFontHgt = FR_TextHeight("W");
@@ -199,8 +196,7 @@ void UI_End(void)
     // Restore full alpha.
     uiAlpha = uiTargetAlpha = 1.0;
 
-    // Restore old state.
-    GL_ShutdownVarFont();
+    FR_SetFont(glFontFixed);
 
     // Update the secondary title and the game status.
     Con_InitUI();

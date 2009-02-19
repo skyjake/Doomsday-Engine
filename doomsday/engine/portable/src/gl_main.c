@@ -438,13 +438,13 @@ void GL_InitFont(void)
 {
     FR_Init();
     FR_PrepareFont(GL_ChooseFixedFont());
-    glFontFixed =
-        glFontVariable[GLFS_NORMAL] =
-        glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
+    glFontFixed = FR_GetCurrent();
 
     Con_SetMaxLineLength();
 
-    // Also keep the bold and light fonts loaded.
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height));
+    glFontVariable[GLFS_NORMAL] = FR_GetCurrent();
+
     FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, theWindow->width, theWindow->height));
     glFontVariable[GLFS_BOLD] = FR_GetCurrent();
 
@@ -471,14 +471,16 @@ void GL_ShutdownFont(void)
         glFontVariable[GLFS_LIGHT] = 0;
 }
 
+#if 0
 void GL_InitVarFont(void)
 {
     int         oldFont;
-    int         i;
+    //int         i;
 
-    if(novideo || varFontInited)
+    if(novideo) //|| varFontInited)
         return;
 
+    /*
     VERBOSE2(Con_Message("GL_InitVarFont.\n"));
 
     oldFont = FR_GetCurrent();
@@ -498,18 +500,19 @@ void GL_InitVarFont(void)
 
     FR_SetFont(oldFont);
     VERBOSE2(Con_Message("GL_InitVarFont: Restored old font %i.\n", oldFont));
-
-    varFontInited = true;
+     */
+    //varFontInited = true;
 }
 
 void GL_ShutdownVarFont(void)
 {
-    int         i;
+//    int         i;
 
-    if(novideo || !varFontInited)
+    if(novideo) // || !varFontInited)
         return;
 
-    FR_SetFont(glFontFixed);
+    //FR_SetFont(glFontFixed);
+    /*
     for(i = 0; i < NUM_GLFS; ++i)
     {
         // Keep the bold and light fonts loaded.
@@ -519,8 +522,10 @@ void GL_ShutdownVarFont(void)
         FR_DestroyFont(glFontVariable[i]);
         glFontVariable[i] = glFontFixed;
     }
-    varFontInited = false;
+     */
+    //varFontInited = false;
 }
+#endif
 
 /**
  * One-time initialization of DGL and the renderer. This is done very early
@@ -856,7 +861,7 @@ void GL_TotalReset(void)
     if(isDedicated)
         return;
 
-    GL_ShutdownVarFont();
+    //GL_ShutdownVarFont();
 
     // Update the secondary title and the game status.
     Con_InitUI();
@@ -882,7 +887,7 @@ void GL_TotalRestore(void)
     // Getting back up and running.
     GL_ReserveNames();
     GL_InitFont();
-    GL_InitVarFont();
+    //GL_InitVarFont();
     GL_Init2DState();
     GL_InitPalette();
 
