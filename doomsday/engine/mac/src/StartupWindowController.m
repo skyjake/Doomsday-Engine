@@ -30,6 +30,7 @@ typedef uint64_t      io_user_reference_t;
 
 - (void)awakeFromNib
 {
+    /*
     [window setAutodisplay:YES];
 
     // This startup window is used by the engine.
@@ -43,6 +44,7 @@ typedef uint64_t      io_user_reference_t;
         initWithString:@"Doomsday Engine launching...\n"];
 
     [storage appendAttributedString:str];   
+     */
 }
 
 - (void)print:(const char *)message

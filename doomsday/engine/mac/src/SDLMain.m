@@ -35,10 +35,10 @@ char  **gArgv;
 static BOOL   gFinderLaunch;
 
 /* The window controller takes care of the Doomsday startup message window. */
-static NSWindowController *gWindowController;
+/*static NSWindowController *gWindowController;*/
 
 /* Set when the startup window is created. */
-StartupWindowController* gStartupWindowController;
+/*StartupWindowController* gStartupWindowController;*/
 
 #if SDL_USE_NIB_FILE
 /* A helper category for NSString */
@@ -176,11 +176,13 @@ void setupWindowMenu(void)
 
 void openStartupWindow(void)
 {
+    /*
     gWindowController = [[NSWindowController alloc] 
         initWithWindowNibName:@"Startup"];
     
     NSWindow* window = [gWindowController window];
     [window orderFrontRegardless];
+     */
 }
 
 /*
@@ -189,10 +191,12 @@ void openStartupWindow(void)
  */
 void PrintInStartupWindow(const char *message)
 {
+    /*
     if(gStartupWindowController)
     {
         [gStartupWindowController print:message];
     } 
+     */
 }
 
 /*
@@ -204,9 +208,11 @@ void CloseStartupWindow(void)
     // doesn't seem to realize it has a window in the NIB...
     // This isn't done in the right thread, though.
 
+    /*
     [gWindowController close];
     [gWindowController release];
     gWindowController = 0;
+     */
 }
 
 /* Replacement for NSApplicationMain */
@@ -233,7 +239,7 @@ void CustomApplicationMain (argc, argv)
     /* Start the main event loop */
     [NSApp run];
         
-    [gWindowController release];    
+    /*[gWindowController release];    */
     [sdlMain release];
     [pool release];
 }
