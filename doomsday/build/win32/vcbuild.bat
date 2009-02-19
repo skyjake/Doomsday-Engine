@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread wadMapConverter dswinmm dsdirectsound jdoom jheretic jhexen jdoom64
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dpwadmapconverter dswinmm dsdirectsound jdoom jheretic jhexen jdoom64
 GOTO Done
 
 
@@ -206,10 +206,10 @@ GOTO Failure
 
 
 :: *** dpWadMapConverter.dll
-:wadMapConverter
+:dpWadMapConverter
 ECHO Compiling dpWadMapConverter.dll (WAD Map converter plugin)...
-md %OBJ_DIR%\dpwadmapconverter
-cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpwadmapconverter" /Fd"./%OBJ_DIR%/dpwadmapconverter" /W3 /Gd  @dpwadmapconverter.rsp  /link /OUT:"./%BIN_DIR%/dpWadMapConverter.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpwadmapconverter.lib" %LIBS% ./%BIN_DIR%/doomsday.lib
+md %OBJ_DIR%\dpWadMapConverter
+cl /O2 /Ob1 %INCS% /I "./../../plugins/wadmapconverter/include" %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpwadmapconverter/" /Fd"./%OBJ_DIR%/dpWadMapConverter/" /W3 /Gd  @dpwadmapconverter_cl.rsp  /link /OUT:"./%BIN_DIR%/dpWadMapConverter.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpwadmapconverter.lib" %LIBS% ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
