@@ -84,7 +84,7 @@
  ./../../engine/portable/src/p_linedef.c
  ./../../engine/portable/src/p_objlink.c
  ./../../engine/portable/src/p_plane.c
- ./../../engine/portable/src/p_polyobj.c
+ ./../../engine/portable/src/p_polyob.c
  ./../../engine/portable/src/p_sector.c
  ./../../engine/portable/src/p_seg.c
  ./../../engine/portable/src/p_sidedef.c
