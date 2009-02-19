@@ -23,6 +23,7 @@ SET DX_LIB=C:\Program Files\Microsoft DirectX SDK (March 2008)\Lib
 REM ---- Creative Labs EAX:
 SET EAX_INC=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Include
 SET EAX_LIB=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Libs
+SET EAX_DLL=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\dll
 
 REM ---- SDL:
 SET SDL_INC=D:\sdk\SDL-1.2.13\include

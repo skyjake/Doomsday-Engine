@@ -133,14 +133,14 @@ GOTO Done
 
 :: *** Copy DLLs to the build directory, for packaging.
 :copydll
-copy %SDL_LIB%\SDL.dll .
-copy %SDLNET_LIB%\SDL_net.dll .
-copy %SDLMIXER_LIB%\SDL_mixer.dll .
-copy %SDLMIXER_LIB%\ogg.dll .
-copy %SDLMIXER_LIB%\smpeg.dll .
-copy %SDLMIXER_LIB%\vorbis.dll .
-copy %SDLMIXER_LIB%\vorbisfile.dll .
-copy %EAX_DLL%\eax.dll .
+copy "%SDL_LIB%\SDL.dll" .
+copy "%SDLNET_LIB%\SDL_net.dll" .
+copy "%SDLMIXER_LIB%\SDL_mixer.dll" .
+copy "%SDLMIXER_LIB%\ogg.dll" .
+copy "%SDLMIXER_LIB%\smpeg.dll" .
+copy "%SDLMIXER_LIB%\vorbis.dll" .
+copy "%SDLMIXER_LIB%\vorbisfile.dll" .
+copy "%EAX_DLL%\eax.dll" .
 GOTO Done
 
 :: *** Mapdata type headers
