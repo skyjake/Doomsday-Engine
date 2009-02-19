@@ -17,8 +17,8 @@ REM ---- Python Interpreter
 SET PYTHON_DIR=C:\Python25
 
 REM ---- DirectX:
-SET DX_INC=C:\Program Files (x86)\Microsoft DirectX SDK (March 2008)\Include
-SET DX_LIB=C:\Program Files (x86)\Microsoft DirectX SDK (March 2008)\Lib
+SET DX_INC=C:\Program Files\Microsoft DirectX SDK (March 2008)\Include
+SET DX_LIB=C:\Program Files\Microsoft DirectX SDK (March 2008)\Lib
 
 REM ---- Creative Labs EAX:
 SET EAX_INC=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Include
