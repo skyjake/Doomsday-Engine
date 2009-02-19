@@ -33,7 +33,6 @@
  ./../../plugins/common/src/g_defs.c
  ./../../plugins/common/src/g_controls.c
  ./../../plugins/common/src/g_game.c
- ./../../plugins/common/src/g_update.c
  ./../../plugins/common/src/f_infine.c
  ./../../plugins/common/src/p_saveg.c
  ./../../plugins/common/src/hu_stuff.c
