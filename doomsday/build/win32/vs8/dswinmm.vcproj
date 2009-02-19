@@ -42,10 +42,12 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="..\..\..\engine\api;..\..\..\plugins\winmm\include"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_USRDLL;DPWINMM_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="2"
 			/>
 			<Tool
@@ -59,9 +61,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				GenerateDebugInformation="true"
+				AdditionalDependencies="./Bin/Release/Doomsday.lib winmm.lib"
+				OutputFile="./Bin/Release/dsWinMM.dll"
+				ModuleDefinitionFile="..\..\..\plugins\winmm\api\dswinmm.def"
+				GenerateDebugInformation="false"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				ImportLibrary="./Bin/Release/dsWinMM.lib"
 				TargetMachine="1"
 			/>
 			<Tool
