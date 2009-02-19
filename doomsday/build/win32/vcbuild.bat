@@ -181,8 +181,8 @@ GOTO Failure
 :: *** dsOpenAL.dll
 :dsOpenAL
 ECHO Compiling dsOpenAL.dll (OpenAL SoundFX driver)...
-REM md %OBJ_DIR%\dsOpenAL
-REM cl /O2 /Ob1 %INCS% /I "%OPENAL_INC" %DLLDEFINES% /D "DSOPENAL_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%oBJ_DIR/dsOpenAL" /Fd"./%OBJ_DIR/dsOpenAL" /W3 /Gd  @dsopenal_cl.rsp  /link /OUT:"./%BIN_DIR%/dsOpenAL.dll" %LFLAGS% /DLL / DEF:"./../../plugins/openal/api/dsOpenAL.def" /IMPLIB:"./%BIN_DIR%/dsOpenAL.lib" %LIBS% /LIBPATH:"%OPENAL_LIB%" ./%BIN_DIR%/doomsday.lib openal32.lib
+md %OBJ_DIR%\dsOpenAL
+cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DSOPENAL_EXPORTS" /I "%OPENAL_INC%" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsOpenAL" /Fd"./%OBJ_DIR%/dsOpenAL" /W3 /Gd  @dsopenal_cl.rsp  /link /OUT:"./%BIN_DIR%/dsOpenAL.dll" %LFLAGS% /DLL /DEF:"./../../plugins/openal/api/dsOpenAL.def" /IMPLIB:"./%BIN_DIR%/dsOpenAL.lib" %LIBS% /LIBPATH:"%OPENAL_LIB%" ./%BIN_DIR%/doomsday.lib openal32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
