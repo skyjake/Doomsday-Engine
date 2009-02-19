@@ -199,8 +199,8 @@ GOTO Failure
 :: *** dsWinMM.dll
 :dsWinMM
 ECHO Compiling dsWinMM.dll (Windows Multimedia Mixing driver)...
-md %OBJ_DIR%\dswinmm
-cl /O2 /Ob1 %INCS% /I "./../../plugins/winmm/include" /I "%WINMM_INC%" %DLLDEFINES% /D "DSWINMM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dswinmm/" /Fd"./%OBJ_DIR%/dswinmm/" /W3 /Gd  @dswinmm_cl.rsp  /link /OUT:"./%BIN_DIR%/dswinmm.dll" %LFLAGS% /DLL /DEF:"./../../plugins/winmm/api/dswinmm.def" /IMPLIB:"./%BIN_DIR%/dswinmm.lib" %LIBS% /LIBPATH: winmm.lib ./%BIN_DIR%/doomsday.lib
+md %OBJ_DIR%\dsWinMM
+cl /O2 /Ob1 %INCS% /I "./../../plugins/winmm/include" %DLLDEFINES% /D "DSWINMM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dswinmm/" /Fd"./%OBJ_DIR%/dswinmm/" /W3 /Gd  @dswinmm_cl.rsp  /link /OUT:"./%BIN_DIR%/dswinmm.dll" %LFLAGS% /DLL /DEF:"./../../plugins/winmm/api/dswinmm.def" /IMPLIB:"./%BIN_DIR%/dswinmm.lib" %LIBS% winmm.lib ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
