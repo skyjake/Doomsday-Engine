@@ -1,2 +1,2 @@
- ./../../plugins/directsound/src/driver_directsound.cpp
+ .\..\..\plugins\directsound\src\driver_directsound.cpp
  

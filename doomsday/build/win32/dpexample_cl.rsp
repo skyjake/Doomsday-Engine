@@ -1,1 +1,1 @@
- ./../../plugins/exampleplugin/src/example.c
+ .\..\..\plugins\exampleplugin\src\example.c

@@ -3,8 +3,8 @@ REM Modify and save as "vcconfig.bat".
 
 SET ROOT_DIR=D:\deng\svn\trunk\doomsday
 
-SET BIN_DIR=Bin\Release
-SET OBJ_DIR=Obj\Release
+SET BIN_DIR=.\bin\release
+SET OBJ_DIR=.\obj\release
 
 REM -=- Requirements for Doomsday.exe -=-
 REM
@@ -39,7 +39,7 @@ SET SDLMIXER_LIB=D:\sdk\SDL_mixer-1.2.7\lib
 
 REM -=- Requirements for drOpenGL.dll -=-
 REM
-REM ---- OpenGL (GL/gl.h, GL/glext.h, GL/glu.h):
+REM ---- OpenGL (GL\gl.h, GL\glext.h, GL\glu.h):
 SET GL_INC=D:\sdk\OpenGL
 
 REM -=- Requirements for dsOpenAL.dll -=-

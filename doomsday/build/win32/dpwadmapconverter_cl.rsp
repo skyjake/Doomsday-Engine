@@ -1,2 +1,2 @@
- ./../../plugins/wadmapconverter/src/wadmapconverter.c
- ./../../plugins/wadmapconverter/src/load.c
+ .\..\..\plugins\wadmapconverter\src\wadmapconverter.c
+ .\..\..\plugins\wadmapconverter\src\load.c
