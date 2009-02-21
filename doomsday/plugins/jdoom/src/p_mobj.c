@@ -322,7 +322,7 @@ void P_MobjMoveXY(mobj_t *mo)
     if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
         return; // No friction for missiles ever.
 
-    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj /*&& !(mo->flags2 & MF2_FLY)*/)
+    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
         return; // No friction when falling.
 
     if(cfg.slidingCorpses)
