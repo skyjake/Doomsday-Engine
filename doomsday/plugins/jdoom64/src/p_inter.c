@@ -407,7 +407,7 @@ typedef enum {
 
 static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 {
-    struct item_s {
+    static const struct item_s {
         itemtype_t      type;
         spritetype_e    sprite;
     } items[] = {

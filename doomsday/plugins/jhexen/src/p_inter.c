@@ -693,7 +693,7 @@ void C_DECL A_RestoreSpecialThing2(mobj_t* thing)
 
 static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 {
-    struct item_s {
+    static const struct item_s {
         itemtype_t      type;
         spritetype_e    sprite;
     } items[] = {
@@ -1120,12 +1120,12 @@ static boolean pickupBloodScourge3(player_t* plr)
 
 static boolean giveItem(player_t* plr, itemtype_t item)
 {
-    const iteminfo_t*   info = &items[item-1];
+    const iteminfo_t*   info = &items[item];
     int                 oldPieces = plr->pieces;
 
     // Attempt to pickup the item.
     if(!info->giveFunc(plr))
-        return false; // Didn't pick it up.
+        return false; // Did not make use of it.
 
     switch(item)
     {
@@ -1177,12 +1177,6 @@ static boolean giveItem(player_t* plr, itemtype_t item)
         break;
     }
 
-    // Should we leave this item for others?
-    if((info->flags & IIF_LEAVE_COOP) && IS_NETGAME && !deathmatch)
-        return false;
-    if((info->flags & IIF_LEAVE_DEATHMATCH) && IS_NETGAME && deathmatch)
-        return false;
-
     return true;
 }
 
@@ -1191,7 +1185,8 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     player_t*           player;
     float               delta;
     itemtype_t          item;
-    boolean             wasTaken = false;
+    const iteminfo_t*   info;
+    boolean             wasUsed = false, removeItem = false;
 
     if(IS_CLIENT)
         return;
@@ -1211,7 +1206,13 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     // Identify by sprite.
     if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-        wasTaken = giveItem(player, item);
+        if((wasUsed = giveItem(player, item)))
+        {
+            // Should we leave this item for others?
+            if(!((info->flags & IIF_LEAVE_COOP) && IS_NETGAME && !deathmatch)) &&
+               !((info->flags & IIF_LEAVE_DEATHMATCH) && IS_NETGAME && deathmatch))
+                removeItem = true;
+        }
     }
     else
     {
@@ -1219,15 +1220,17 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
                     (int) special->type);
     }
 
-    if(special->special)
+    if(wasUsed && special->special)
     {
         P_ExecuteLineSpecial(special->special, special->args, NULL, 0,
                              toucher);
         special->special = 0;
     }
 
-    if(wasTaken)
+    if(removeItem)
     {
+        player->bonusCount += BONUSADD;
+
         /**
          * Taken items are handled differently depending upon the type of
          * item: artifact, puzzle or other.
@@ -1282,8 +1285,6 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
             break;
         }
     }
-
-    player->bonusCount += BONUSADD;
 }
 
 typedef struct {
@@ -1449,7 +1450,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         // Don't die with the automap open.
-        AM_Open(target->player - players, false, false);
+        AM_Open(AM_MapForPlayer(target->player - players), false, false);
     }
     else
     {   // Target is some monster or an object.
