@@ -233,7 +233,7 @@ void R_SetViewGrid(int numCols, int numRows)
 
             // The console number is -1 if the viewport belongs to no
             // one.
-            viewports[p].console = P_LocalToConsole(p);
+            viewports[p].console = displayPlayer; //clients[P_LocalToConsole(p)].viewConsole;
         }
     }
 }

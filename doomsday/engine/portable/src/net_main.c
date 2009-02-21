@@ -1321,7 +1321,9 @@ D_CMD(SetConsole)
 
     cp = atoi(argv[1]);
     if(ddPlayers[cp].shared.inGame)
+    {
         consolePlayer = displayPlayer = cp;
+    }
 
     // Update the viewports.
     R_SetViewGrid(0, 0);

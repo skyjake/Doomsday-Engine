@@ -66,13 +66,14 @@ int P_LocalToConsole(int localPlayer)
 
     for(i = 0, count = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t*           plr = &ddPlayers[i];
+        int console = (i + consolePlayer) % DDMAXPLAYERS;
+        player_t*           plr = &ddPlayers[console];
         ddplayer_t*         ddpl = &plr->shared;
 
         if(ddpl->flags & DDPF_LOCAL)
         {
             if(count++ == localPlayer)
-                return i;
+                return console;
         }
     }
 
@@ -86,21 +87,27 @@ int P_LocalToConsole(int localPlayer)
  */
 int P_ConsoleToLocal(int playerNum)
 {
-    int                 i, count;
+    int                 i, count = 0;
     player_t*           plr = &ddPlayers[playerNum];
+    int                 console = consolePlayer;
 
     if(!(plr->shared.flags & DDPF_LOCAL))
         return -1; // Not local at all.
-
-    for(i = 0, count = 0; i < playerNum; ++i)
+    
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t*           plr = &ddPlayers[i];
+        int console = (i + consolePlayer) % DDMAXPLAYERS;
+        player_t*           plr = &ddPlayers[console];
 
+        if(console == playerNum)
+        {
+            return count;
+        }
+        
         if(plr->shared.flags & DDPF_LOCAL)
             count++;
     }
-
-    return count;
+    return -1;
 }
 
 /**
