@@ -1754,12 +1754,10 @@ void R_UpdateData(void)
 void R_InitTranslationTables(void)
 {
     int                 i;
-    byte               *transLump;
+    byte*               transLump;
 
     // Allocate translation tables
-    translationTables = Z_Malloc(256 * 3 * ( /*DDMAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
-
-    translationTables = (byte *) (((long) translationTables + 255) & ~255);
+    translationTables = Z_Malloc(256 * 3 * ( /*DDMAXPLAYERS*/ 8 - 1), PU_REFRESHTRANS, 0);
 
     for(i = 0; i < 3 * ( /*DDMAXPLAYERS*/ 8 - 1); ++i)
     {
