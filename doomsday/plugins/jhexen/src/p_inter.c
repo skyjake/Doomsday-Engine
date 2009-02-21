@@ -1185,7 +1185,6 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     player_t*           player;
     float               delta;
     itemtype_t          item;
-    const iteminfo_t*   info;
     boolean             wasUsed = false, removeItem = false;
 
     if(IS_CLIENT)
@@ -1206,10 +1205,12 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     // Identify by sprite.
     if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
+        const iteminfo_t*   info = &items[item];
+
         if((wasUsed = giveItem(player, item)))
         {
             // Should we leave this item for others?
-            if(!((info->flags & IIF_LEAVE_COOP) && IS_NETGAME && !deathmatch)) &&
+            if(!((info->flags & IIF_LEAVE_COOP) && IS_NETGAME && !deathmatch) &&
                !((info->flags & IIF_LEAVE_DEATHMATCH) && IS_NETGAME && deathmatch))
                 removeItem = true;
         }
