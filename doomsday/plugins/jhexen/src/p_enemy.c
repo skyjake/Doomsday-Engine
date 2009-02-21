@@ -1783,7 +1783,7 @@ void C_DECL A_SerpentChase(mobj_t* actor)
 {
     int                 delta;
     float               oldpos[3];
-    int                 oldFloor;
+    material_t*         oldMaterial;
     statenum_t          state;
 
     if(actor->reactionTime)
@@ -1863,13 +1863,13 @@ void C_DECL A_SerpentChase(mobj_t* actor)
     // Chase towards player.
     memcpy(oldpos, actor->pos, sizeof(oldpos));
 
-    oldFloor = P_GetFloatp(actor->subsector, DMU_FLOOR_MATERIAL);
+    oldMaterial = P_GetPtrp(actor->subsector, DMU_FLOOR_MATERIAL);
     if(--actor->moveCount < 0 || !P_Move(actor))
     {
         P_NewChaseDir(actor);
     }
 
-    if(P_GetFloatp(actor->subsector, DMU_FLOOR_MATERIAL) != oldFloor)
+    if(P_GetPtrp(actor->subsector, DMU_FLOOR_MATERIAL) != oldMaterial)
     {
         P_TryMove(actor, oldpos[VX], oldpos[VY]);
         P_NewChaseDir(actor);
