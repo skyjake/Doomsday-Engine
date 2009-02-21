@@ -212,6 +212,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
 
     // Get ready for ticking.
     DD_ResetTimer();
+    
+    DD_Executef(true, "setcon %i", consolePlayer);
 }
 
 void Cl_HandlePlayerInfo(playerinfo_packet_t* info)

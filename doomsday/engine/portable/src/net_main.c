@@ -1513,6 +1513,7 @@ D_CMD(Net)
             Con_Printf("Server: %s\n", isServer ? "yes" : "no");
             Con_Printf("Client: %s\n", isClient ? "yes" : "no");
             Con_Printf("Console number: %i\n", consolePlayer);
+            Con_Printf("Local player #: %i\n", P_ConsoleToLocal(consolePlayer));
 
             N_PrintInfo();
         }

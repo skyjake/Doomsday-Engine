@@ -91,6 +91,11 @@ int P_ConsoleToLocal(int playerNum)
     player_t*           plr = &ddPlayers[playerNum];
     int                 console = consolePlayer;
 
+    if(playerNum == consolePlayer)
+    {
+        return 0;
+    }
+    
     if(!(plr->shared.flags & DDPF_LOCAL))
         return -1; // Not local at all.
     
