@@ -1323,6 +1323,9 @@ if(numTexUnits < 2)
         // Render all primitives.
         if(TU(list, TU_PRIMARY)->tex)
             rlBind2(TU(list, TU_PRIMARY));
+        else
+            rlBind(0, GL_LINEAR);
+
         if(!TU(list, TU_PRIMARY)->tex)
         {
             // Apply a modelview shift.
