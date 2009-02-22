@@ -141,6 +141,8 @@ ECHO Processing openal.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\openal\res\openal.rc"
 ECHO Processing wadmapconverter.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\wadmapconverter\res\wadmapconverter.rc"
+ECHO Processing winmm.rc...
+rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\winmm\res\winmm.rc"
 
 
 ECHO ***************************************************************************
@@ -173,6 +175,10 @@ cvtres /out:"%OBJ_DIR%\dsopenal\dsopenal_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DI
 ECHO Processing wadmapconverter.res...
 md %OBJ_DIR%\dpwadmapconverter
 cvtres /out:"%OBJ_DIR%\dpwadmapconverter\dpwadmapconverter_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\wadmapconverter\res\wadmapconverter.res"
+ECHO Processing winmm.res...
+md %OBJ_DIR%\dswinmm
+cvtres /out:"%OBJ_DIR%\dswinmm\dswinmm_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\winmm\res\winmm.res"
+
 
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
@@ -269,7 +275,7 @@ ECHO ***************************************************************************
 ECHO *******   Compiling dsWinMM.dll (Windows Multimedia Mixing driver)   ******
 ECHO ***************************************************************************
 md %OBJ_DIR%\dsWinMM
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\winmm\include" %DLLDEFINES% /D "DSWINMM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dswinmm\\" /Fd"%OBJ_DIR%\dswinmm\\" /W3 /Gd  @dswinmm_cl.rsp  /link /out:"%BIN_DIR%\dswinmm.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\winmm\api\dswinmm.def" /implib:"%BIN_DIR%\dswinmm.lib" %LIBS% winmm.lib %BIN_DIR%\doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\winmm\include" %DLLDEFINES% /D "DSWINMM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dswinmm\\" /Fd"%OBJ_DIR%\dswinmm\\" /W3 /Gd "%OBJ_DIR%\dswinmm\dswinmm_res.obj" @dswinmm_cl.rsp  /link /out:"%BIN_DIR%\dsWinMM.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\winmm\api\dswinmm.def" /implib:"%BIN_DIR%\dsWinMM.lib" %LIBS% winmm.lib %BIN_DIR%\doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

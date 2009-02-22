@@ -63,6 +63,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="./Bin/Release/Doomsday.lib winmm.lib"
 				OutputFile="./Bin/Release/dsWinMM.dll"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\winmm\api\dswinmm.def"
 				GenerateDebugInformation="false"
 				OptimizeReferences="2"
@@ -153,6 +154,7 @@
 				OutputFile="./Bin/Debug/dsWinMM.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\winmm\api\dswinmm.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./Bin/Debug/dsWinMM.pdb"
@@ -218,12 +220,28 @@
 				RelativePath="..\..\..\plugins\winmm\include\midistream.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\plugins\winmm\include\version.h"
+				>
+			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\winmm\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+			<File
+				RelativePath="..\..\..\plugins\winmm\res\winmm.rc"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\..\plugins\winmm\api\dswinmm.def"
