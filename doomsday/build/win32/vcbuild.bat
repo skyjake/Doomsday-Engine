@@ -133,6 +133,9 @@ ECHO Processing jheretic.rc...
 rc /D "__JHERETIC__" /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\jheretic\res\jheretic.rc"
 ECHO Processing jhexen.rc...
 rc /D "__JHEXEN__" /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\jhexen\res\jhexen.rc"
+ECHO Processing dehread.rc...
+rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\dehread\res\dehread.rc"
+
 
 ECHO ***************************************************************************
 ECHO ********************* Converting resources to objects *********************
@@ -152,6 +155,10 @@ cvtres /out:"%OBJ_DIR%\jheretic\jheretic_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DI
 ECHO Processing jHexen.res...
 md %OBJ_DIR%\jhexen
 cvtres /out:"%OBJ_DIR%\jhexen\jhexen_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\jhexen\res\jhexen.res"
+ECHO Processing dehread.res...
+md %OBJ_DIR%\dpdehread
+cvtres /out:"%OBJ_DIR%\dpdehread\dpdehread_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\dehread\res\dehread.res"
+
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -214,7 +221,7 @@ ECHO ***************************************************************************
 ECHO ***********   Compiling dpDehRead.dll (Dehacked Reader Plugin)   **********
 ECHO ***************************************************************************
 md %OBJ_DIR%\dpDehRead
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %DLLDEFINES% /D "DPDEHREAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpDehRead\\" /Fd"%OBJ_DIR%\dpDehRead\\" /W3 /Gd   @dpdehread_cl.rsp   /link /out:"%BIN_DIR%\dpDehRead.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpDehRead.lib" %LIBS% %BIN_DIR%\Doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %DLLDEFINES% /D "DPDEHREAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpDehRead\\" /Fd"%OBJ_DIR%\dpDehRead\\" /W3 /Gd "%OBJ_DIR%\dpdehread\dpdehread_res.obj" @dpdehread_cl.rsp   /link /out:"%BIN_DIR%\dpDehRead.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpDehRead.lib" %LIBS% %BIN_DIR%\Doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

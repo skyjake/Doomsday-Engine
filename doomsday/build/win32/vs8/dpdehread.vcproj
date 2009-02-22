@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -81,6 +81,7 @@
 				OutputFile=".\./Bin/Release/dpDehRead.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ProgramDatabaseFile=".\./Bin/Release/dpDehRead.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -165,7 +166,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -176,6 +177,7 @@
 				OutputFile=".\./Bin/Debug/dpDehRead.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/dpDehRead.pdb"
 				RandomizedBaseAddress="1"
@@ -222,11 +224,27 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath="..\..\..\plugins\dehread\include\version.h"
+				>
+			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\dehread\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
+			<File
+				RelativePath="..\..\..\plugins\dehread\res\dehread.rc"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
