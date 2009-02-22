@@ -203,7 +203,7 @@ CALL vcbuild.bat checkdmt
 ECHO ***************************************************************************
 ECHO ********************   Compiling Doomsday.exe (Engine)   ******************
 ECHO ***************************************************************************
-cl /Ob1 /Oi /Ot /Oy /GF /FD /EHsc /MT /GS /Gy /Fo"%OBJ_DIR%\\" /Fd"%OBJ_DIR%\\" /W3 /Gd /Gs /I "%INCS_ENGINE_API%\\" /I "%EAX_INC%" /I "%SDL_INC%" /I "%SDLMIXER_INC%" /I "%SDLNET_INC%" /I "%DX_INC%" /I "%PLATFORM_INC%" /I "%INCS_ENGINE_WIN32%\\" /I "%GL_INC%" /I "%INCS_ENGINE_PORTABLE%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%INCS_LIBPNG_PORTABLE%\\" /I "%INCS_LIBCURL%\\" /I "%INCS_ZLIB%\\" /I "%INCS_PLUGIN_COMMON%\\" %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  "%OBJ_DIR%\doomsday_res.obj"  @doomsday_cl.rsp  /link /out:"%BIN_DIR%\Doomsday.exe" /def:"%DENG_ENGINE_API_DIR%\doomsday.def" /implib:"%BIN_DIR%\Doomsday.lib" %LFLAGS% %LIBS% /libpath:"%PLATFORM_LIB%\\" /libpath:"%DX_LIB%\\" "%EXTERNAL%\libpng\win32\libpng13.lib" "%EXTERNAL%\zlib\win32\zlib1.lib" "%EXTERNAL%\lzss\win32\lzss.lib" "%EXTERNAL%\libcurl\win32\curllib.lib" sdl_net.lib sdl.lib SDL_mixer.lib wsock32.lib dinput8.lib dsound.lib dxguid.lib winmm.lib opengl32.lib glu32.lib kernel32.lib gdi32.lib ole32.lib user32.lib
+cl /Ob1 /Oi /Ot /Oy /GF /FD /EHsc /MT /GS /Gy /Fo"%OBJ_DIR%\\" /Fd"%OBJ_DIR%\\" /W3 /Gd /Gs /I "%INCS_ENGINE_API%\\" /I "%EAX_INC%" /I "%SDL_INC%" /I "%SDLMIXER_INC%" /I "%SDLNET_INC%" /I "%DX_INC%" /I "%PLATFORM_INC%" /I "%INCS_ENGINE_WIN32%\\" /I "%GL_INC%" /I "%INCS_ENGINE_PORTABLE%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%INCS_LIBPNG_PORTABLE%\\" /I "%INCS_LIBCURL%\\" /I "%INCS_ZLIB%\\" /I "%INCS_PLUGIN_COMMON%\\" %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  "%OBJ_DIR%\doomsday_res.obj"  @doomsday_cl.rsp  /link /out:"%BIN_DIR%\Doomsday.exe" /def:"%DENG_ENGINE_API_DIR%\doomsday.def" /implib:"%BIN_DIR%\Doomsday.lib" %LFLAGS% %LIBS% /libpath:"%PLATFORM_LIB%\\" /libpath:"%DX_LIB%\\" "%DENG_EXTERNAL_DIR%\libpng\win32\libpng13.lib" "%DENG_EXTERNAL_DIR%\zlib\win32\zlib1.lib" "%DENG_EXTERNAL_DIR%\lzss\win32\lzss.lib" "%DENG_EXTERNAL_DIR%\libcurl\win32\curllib.lib" sdl_net.lib sdl.lib SDL_mixer.lib wsock32.lib dinput8.lib dsound.lib dxguid.lib winmm.lib opengl32.lib glu32.lib kernel32.lib gdi32.lib ole32.lib user32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -269,7 +269,7 @@ ECHO ***************************************************************************
 ECHO **************   Compiling jDoom.dll (jDoom Game Library)   ***************
 ECHO ***************************************************************************
 md %OBJ_DIR%\jDoom
-cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jdoom\include" /D "__JDOOM__" %DLLDEFINES% /D "JDOOM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jDoom\\" /Fd"%OBJ_DIR%\jDoom\\" /W3 /Gd "%OBJ_DIR%\jdoom\jdoom_res.obj" @jdoom_cl.rsp  /link  /out:"%BIN_DIR%\jDoom.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jdoom\api\jdoom.def" /implib:"%BIN_DIR%\jDoom.lib" "%BIN_DIR%\doomsday.lib" "%EXTERNAL%\lzss\win32\lzss.lib"
+cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jdoom\include" /D "__JDOOM__" %DLLDEFINES% /D "JDOOM_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jDoom\\" /Fd"%OBJ_DIR%\jDoom\\" /W3 /Gd "%OBJ_DIR%\jdoom\jdoom_res.obj" @jdoom_cl.rsp  /link  /out:"%BIN_DIR%\jDoom.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jdoom\api\jdoom.def" /implib:"%BIN_DIR%\jDoom.lib" "%BIN_DIR%\doomsday.lib" "%DENG_EXTERNAL_DIR%\lzss\win32\lzss.lib"
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -280,7 +280,7 @@ ECHO ***************************************************************************
 ECHO ***********   Compiling jHeretic.dll (jHeretic Game Library)   ************
 ECHO ***************************************************************************
 md %OBJ_DIR%\jHeretic
-cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jheretic\include" /D "__JHERETIC__" %DLLDEFINES% /D "JHERETIC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jHeretic\\" /Fd"%OBJ_DIR%\jHeretic\\" /W3 /Gd "%OBJ_DIR%\jheretic\jheretic_res.obj" @jheretic_cl.rsp  /link /out:"%BIN_DIR%\jHeretic.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jheretic\api\jheretic.def" /implib:"%BIN_DIR%\jHeretic.lib" %BIN_DIR%\doomsday.lib %EXTERNAL%\lzss\win32\lzss.lib
+cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jheretic\include" /D "__JHERETIC__" %DLLDEFINES% /D "JHERETIC_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jHeretic\\" /Fd"%OBJ_DIR%\jHeretic\\" /W3 /Gd "%OBJ_DIR%\jheretic\jheretic_res.obj" @jheretic_cl.rsp  /link /out:"%BIN_DIR%\jHeretic.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jheretic\api\jheretic.def" /implib:"%BIN_DIR%\jHeretic.lib" %BIN_DIR%\doomsday.lib %DENG_EXTERNAL_DIR%\lzss\win32\lzss.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -291,7 +291,7 @@ ECHO ***************************************************************************
 ECHO *************   Compiling jHexen.dll (jHexen Game Library)   **************
 ECHO ***************************************************************************
 md %OBJ_DIR%\jHexen
-cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jhexen\include" /D "__JHEXEN__" %DLLDEFINES% /D "JHEXEN_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jHexen\\" /Fd"%OBJ_DIR%\jHexen\\" /W3 /Gd "%OBJ_DIR%\jhexen\jhexen_res.obj" @jhexen_cl.rsp  /link /out:"%BIN_DIR%\jHexen.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jhexen\api\jhexen.def" /implib:"%BIN_DIR%\jHexen.lib" %BIN_DIR%\doomsday.lib %EXTERNAL%\lzss\win32\lzss.lib
+cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jhexen\include" /D "__JHEXEN__" %DLLDEFINES% /D "JHEXEN_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jHexen\\" /Fd"%OBJ_DIR%\jHexen\\" /W3 /Gd "%OBJ_DIR%\jhexen\jhexen_res.obj" @jhexen_cl.rsp  /link /out:"%BIN_DIR%\jHexen.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jhexen\api\jhexen.def" /implib:"%BIN_DIR%\jHexen.lib" %BIN_DIR%\doomsday.lib %DENG_EXTERNAL_DIR%\lzss\win32\lzss.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -302,7 +302,7 @@ ECHO ***************************************************************************
 ECHO ************   Compiling jDoom64.dll (jDoom64 Game Library)   *************
 ECHO ***************************************************************************
 md %OBJ_DIR%\jDoom64
-cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jdoom64\include" /D "__JDOOM64__" %DLLDEFINES% /D "JDOOM64_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jDoom64\\" /Fd"%OBJ_DIR%\jDoom64\\" /W3 /Gd "%OBJ_DIR%\jdoom64\jdoom64_res.obj" @jdoom64_cl.rsp  /link  /out:"%BIN_DIR%\jDoom64.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jdoom64\api\jdoom64.def" /implib:"%BIN_DIR%\jDoom64.lib" %BIN_DIR%\doomsday.lib %EXTERNAL%\lzss\win32\lzss.lib
+cl /O2 /Ob1 /I "%INCS_PLUGIN_COMMON%\\" /I "%INCS_ENGINE_API%\\" /I "%INCS_LZSS_PORTABLE%\\" /I "%DENG_PLUGINS_DIR%\jdoom64\include" /D "__JDOOM64__" %DLLDEFINES% /D "JDOOM64_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\jDoom64\\" /Fd"%OBJ_DIR%\jDoom64\\" /W3 /Gd "%OBJ_DIR%\jdoom64\jdoom64_res.obj" @jdoom64_cl.rsp  /link  /out:"%BIN_DIR%\jDoom64.dll" %LFLAGS% /libpath:".\Lib" /dll /def:"%DENG_PLUGINS_DIR%\jdoom64\api\jdoom64.def" /implib:"%BIN_DIR%\jDoom64.lib" %BIN_DIR%\doomsday.lib %DENG_EXTERNAL_DIR%\lzss\win32\lzss.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
