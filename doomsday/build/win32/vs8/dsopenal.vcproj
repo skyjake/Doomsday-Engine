@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -79,6 +79,7 @@
 				OutputFile=".\./Bin/Release/dsOpenAL.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\openal\api\dsopenal.def"
 				ProgramDatabaseFile=".\./Bin/Release/dsOpenAL.pdb"
 				RandomizedBaseAddress="1"
@@ -162,7 +163,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -173,6 +174,7 @@
 				OutputFile=".\./Bin/Debug/dsOpenAL.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\openal\api\dsopenal.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/dsOpenAL.pdb"
@@ -238,11 +240,27 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath="..\..\..\plugins\openal\include\version.h"
+				>
+			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\openal\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
+			<File
+				RelativePath="..\..\..\plugins\openal\res\openal.rc"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\..\plugins\openal\api\dsopenal.def"

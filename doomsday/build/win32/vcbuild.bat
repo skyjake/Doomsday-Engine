@@ -137,6 +137,8 @@ ECHO Processing dehread.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\dehread\res\dehread.rc"
 ECHO Processing directsound.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\directsound\res\directsound.rc"
+ECHO Processing openal.rc...
+rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\openal\res\openal.rc"
 
 
 ECHO ***************************************************************************
@@ -163,6 +165,9 @@ cvtres /out:"%OBJ_DIR%\dpdehread\dpdehread_res.obj" /MACHINE:X86 "%DENG_PLUGINS_
 ECHO Processing directsound.res...
 md %OBJ_DIR%\dsdirectsound
 cvtres /out:"%OBJ_DIR%\dsdirectsound\dsdirectsound_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\directsound\res\directsound.res"
+ECHO Processing openal.res...
+md %OBJ_DIR%\dsopenal
+cvtres /out:"%OBJ_DIR%\dsopenal\dsopenal_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\openal\res\openal.res"
 
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
@@ -237,7 +242,7 @@ ECHO ***************************************************************************
 ECHO ************   Compiling dsOpenAL.dll (OpenAL SoundFX driver)   ***********
 ECHO ***************************************************************************
 md %OBJ_DIR%\dsOpenAL
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %DLLDEFINES% /D "DSOPENAL_EXPORTS" /I "%OPENAL_INC%" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dsOpenAL" /Fd"%OBJ_DIR%\dsOpenAL" /W3 /Gd  @dsopenal_cl.rsp  /link /out:"%BIN_DIR%\dsOpenAL.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\openal\api\dsOpenAL.def" /implib:"%BIN_DIR%\dsOpenAL.lib" %LIBS% /libpath:"%OPENAL_LIB%" %BIN_DIR%\doomsday.lib openal32.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %DLLDEFINES% /D "DSOPENAL_EXPORTS" /I "%OPENAL_INC%" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dsOpenAL" /Fd"%OBJ_DIR%\dsOpenAL" /W3 /Gd "%OBJ_DIR%\dsopenal\dsopenal_res.obj" @dsopenal_cl.rsp  /link /out:"%BIN_DIR%\dsOpenAL.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\openal\api\dsOpenAL.def" /implib:"%BIN_DIR%\dsOpenAL.lib" %LIBS% /libpath:"%OPENAL_LIB%" %BIN_DIR%\doomsday.lib openal32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
