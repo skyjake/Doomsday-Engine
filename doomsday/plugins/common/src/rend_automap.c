@@ -1487,7 +1487,7 @@ void Rend_Automap(int player, const automap_t* map)
 
     plr = &players[player];
 
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!(/*(plr->plr->flags & DDPF_LOCAL) && */ plr->plr->inGame))
         return;
 
     if(!(Automap_GetOpacity(map) > 0))

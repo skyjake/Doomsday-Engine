@@ -100,6 +100,7 @@ void Cl_LocalCommand(void)
     player_t           *plr = &ddPlayers[consolePlayer];
     ddplayer_t         *ddpl = &plr->shared;
     clplayerstate_t    *s = &clPlayerStates[consolePlayer];
+    float               off, vel;
 
     if(ddMapTime < 0.333)
     {
@@ -112,9 +113,20 @@ void Cl_LocalCommand(void)
         }
     }
 
-    s->forwardMove = cl->lastCmd->forwardMove * 2048;
+    //s->forwardMove = cl->lastCmd->forwardMove * 2048;
+    
+    P_GetControlState(consolePlayer, CTL_WALK, &vel, &off);
+    s->forwardMove = (off + vel) * 2048;
+
     s->sideMove = cl->lastCmd->sideMove * 2048;
     s->angle = ddpl->mo->angle; //ddpl->clAngle; /* $unifiedangles */
+#if _DEBUG
+    if(s->forwardMove || s->sideMove)
+    {
+        Con_Message("Cl_LocalCommand: fwd=%i sd=%i\n", s->forwardMove, s->sideMove);
+    }
+    VERBOSE2(Con_Message("Cl_LocalCommand: angle=%x\n", s->angle));
+#endif
     s->turnDelta = 0;
 }
 
@@ -320,6 +332,10 @@ void Cl_MovePlayer(int plrNum)
     // Move.
     P_MobjMovement2(mo, st);
     P_MobjZMovement(mo);
+    
+#ifdef _DEBUG
+    VERBOSE2(Con_Message("Cl_MovePlayer: Pl%i: mo x=%g y=%g\n", plrNum, mo->pos[VX], mo->pos[VY]));
+#endif
 
     /**
      * Predict change in movement (thrust).
@@ -728,7 +744,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
                 // Update the new client mobj's information from the real
                 // mobj, which is already known.
 #if _DEBUG
-                Con_Message("Cl_RdPlrD2: Pl%i: Coping pos&angle from real mobj to clmobj.\n",
+                Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.\n",
                             num);
                 Con_Message("  x=%g y=%g z=%g\n", ddpl->mo->pos[VX], ddpl->mo->pos[VY],
                             ddpl->mo->pos[VZ]);

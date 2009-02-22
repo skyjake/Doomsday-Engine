@@ -1781,7 +1781,7 @@ static void mapTicker(automap_t* map)
     P_GetControlState(playerNum, CTL_MAP_PAN_X, &panX[0], &panX[1]);
     P_GetControlState(playerNum, CTL_MAP_PAN_Y, &panY[0], &panY[1]);
 
-    if(!((mapPlayer->plr->flags & DDPF_LOCAL) && mapPlayer->plr->inGame))
+    if(!(/*(mapPlayer->plr->flags & DDPF_LOCAL) &&*/ mapPlayer->plr->inGame))
         return;
 
     // Move towards the target alpha level for the automap.
