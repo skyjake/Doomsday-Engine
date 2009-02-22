@@ -79,6 +79,7 @@
 				OutputFile="./Bin/Debug/dpWadMapConverter.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./Bin/Debug/dpWadMapConverter.pdb"
 				RandomizedBaseAddress="1"
@@ -172,6 +173,7 @@
 				OutputFile=".\./Bin/Release/dpWadMapConverter.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ProgramDatabaseFile=".\./Bin/Release/dpWadMapConverter.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -222,14 +224,30 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
+				RelativePath="..\..\..\plugins\wadmapconverter\include\version.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\wadmapconverter\include\wadmapconverter.h"
 				>
 			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\wadmapconverter\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
+			<File
+				RelativePath="..\..\..\plugins\wadmapconverter\res\wadmapconverter.rc"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
