@@ -22,7 +22,7 @@
  */
 
 /**
- * directsound.rc: dpDirectSound.dll resource script.
+ * directsound.rc: dsDirectSound.dll resource script.
  */
 
 #include "resource.h"
@@ -57,7 +57,7 @@ END
 3 TEXTINCLUDE
 BEGIN
     "#ifndef NO_MANIFEST\r\n"
-    "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""dpdirectsound.dll.manifest""\r\n"
+    "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""dsdirectsound.dll.manifest""\r\n"
     "#endif\r\n"
     "\r\n"
     "VS_VERSION_INFO VERSIONINFO\r\n"
@@ -81,7 +81,7 @@ BEGIN
     "            VALUE ""FileVersion"",     PLUGIN_VERSION_TEXT ""\0""\r\n"
     "            VALUE ""InternalName"",    PLUGIN_NICENAME ""\0""\r\n"
     "            VALUE ""LegalCopyright"",  ""Copyright © 2003-2009, Deng Team\0""\r\n"
-    "            VALUE ""OriginalFilename"", ""dpDirectSound.dll\0""\r\n"
+    "            VALUE ""OriginalFilename"", ""dsDirectSound.dll\0""\r\n"
     "            VALUE ""ProductName"",     PLUGIN_NICENAME ""\0""\r\n"
     "            VALUE ""ProductVersion"",  PLUGIN_VERSION_TEXT ""\0""\r\n"
     "        END\r\n"
@@ -119,7 +119,7 @@ BEGIN
             VALUE "FileVersion",    PLUGIN_VERSION_TEXT "\0"
             VALUE "InternalName",   PLUGIN_NICENAME "\0"
             VALUE "LegalCopyright", "Copyright © 2003-2009, Deng Team\0"
-            VALUE "OriginalFilename", "dpDirectSound.dll\0"
+            VALUE "OriginalFilename", "dsDirectSound.dll\0"
             VALUE "ProductName",    PLUGIN_NICENAME "\0"
             VALUE "ProductVersion", PLUGIN_VERSION_TEXT "\0"
         END

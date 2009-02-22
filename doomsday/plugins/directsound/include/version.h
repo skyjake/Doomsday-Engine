@@ -27,26 +27,26 @@
  * version.h: Version numbering, naming etc.
  */
 
-#ifndef __DPDIRECTSOUND_VERSION_H__
-#define __DPDIRECTSOUND_VERSION_H__
+#ifndef __DSDIRECTSOUND_VERSION_H__
+#define __DSDIRECTSOUND_VERSION_H__
 
-#ifndef DPDIRECTSOUND_VER_ID
+#ifndef DSDIRECTSOUND_VER_ID
 #  ifdef _DEBUG
-#    define DPDIRECTSOUND_VER_ID "+D Doomsday"
+#    define DSDIRECTSOUND_VER_ID "+D Doomsday"
 #  else
-#    define DPDIRECTSOUND_VER_ID "Doomsday"
+#    define DSDIRECTSOUND_VER_ID "Doomsday"
 #  endif
 #endif
 
 // Used to derive filepaths.
-#define PLUGIN_NAME         "dpdirectsound"
+#define PLUGIN_NAME         "dsdirectsound"
 
 // Presented to the user in dialogs, messages etc.
 #define PLUGIN_NICENAME     "DirectSound Audio Driver"
 #define PLUGIN_DETAILS      "Doomsday plugin for audio playback via DirectSound"
 
 #define PLUGIN_VERSION_TEXT "1.2.0"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DPDIRECTSOUND_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSDIRECTSOUND_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,2,0,0 // For WIN32 version info.
 
 #endif
