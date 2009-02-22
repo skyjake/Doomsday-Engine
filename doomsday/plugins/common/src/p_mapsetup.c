@@ -662,6 +662,8 @@ void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Loading map...", P_SetupMapWorker, &param);
 
+    AM_InitForMap();
+    
     R_SetupMap(DDSMM_AFTER_BUSY, 0);
 
 #if __JHEXEN__
@@ -757,8 +759,6 @@ static void P_ResetWorldState(void)
  */
 static void P_FinalizeMap(void)
 {
-    AM_InitForMap();
-
 #if __JDOOM__ || __JDOOM64__
     // Adjust slime lower wall textures (a hack!).
     // This will hide the ugly green bright line that would otherwise be
