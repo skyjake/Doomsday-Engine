@@ -718,7 +718,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
 
             // If it was just created, the coordinates are not yet correct.
             // The update will be made when the mobj data is received.
-            if(!justCreated)
+            if(!justCreated && num != consolePlayer)
             {
                 // Replace the hidden client mobj with the real player mobj.
                 Cl_UpdateRealPlayerMobj(ddpl->mo, &s->cmo->mo, 0xffffffff);
@@ -727,6 +727,12 @@ void Cl_ReadPlayerDelta2(boolean skip)
             {
                 // Update the new client mobj's information from the real
                 // mobj, which is already known.
+#if _DEBUG
+                Con_Message("Cl_RdPlrD2: Pl%i: Coping pos&angle from real mobj to clmobj.\n",
+                            num);
+                Con_Message("  x=%g y=%g z=%g\n", ddpl->mo->pos[VX], ddpl->mo->pos[VY],
+                            ddpl->mo->pos[VZ]);
+#endif
                 s->cmo->mo.pos[VX] = ddpl->mo->pos[VX];
                 s->cmo->mo.pos[VY] = ddpl->mo->pos[VY];
                 s->cmo->mo.pos[VZ] = ddpl->mo->pos[VZ];
