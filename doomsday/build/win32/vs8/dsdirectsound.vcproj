@@ -81,6 +81,7 @@
 				OutputFile=".\./Bin/Debug/dsDirectSound.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\directsound\api\dsdirectsound.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/dsDirectSound.pdb"
@@ -177,6 +178,7 @@
 				OutputFile=".\./Bin/Release/dsDirectSound.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
 				ModuleDefinitionFile="..\..\..\plugins\directsound\api\dsdirectsound.def"
 				ProgramDatabaseFile=".\./Bin/Release/dsDirectSound.pdb"
 				RandomizedBaseAddress="1"
@@ -223,11 +225,27 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath="..\..\..\plugins\directsound\include\version.h"
+				>
+			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\directsound\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
+			<File
+				RelativePath="..\..\..\plugins\directsound\res\directsound.rc"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\..\plugins\directsound\api\dsdirectsound.def"

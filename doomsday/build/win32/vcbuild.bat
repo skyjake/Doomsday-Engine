@@ -135,6 +135,8 @@ ECHO Processing jhexen.rc...
 rc /D "__JHEXEN__" /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\jhexen\res\jhexen.rc"
 ECHO Processing dehread.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\dehread\res\dehread.rc"
+ECHO Processing directsound.rc...
+rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\directsound\res\directsound.rc"
 
 
 ECHO ***************************************************************************
@@ -158,6 +160,9 @@ cvtres /out:"%OBJ_DIR%\jhexen\jhexen_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\j
 ECHO Processing dehread.res...
 md %OBJ_DIR%\dpdehread
 cvtres /out:"%OBJ_DIR%\dpdehread\dpdehread_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\dehread\res\dehread.res"
+ECHO Processing directsound.res...
+md %OBJ_DIR%\dsdirectsound
+cvtres /out:"%OBJ_DIR%\dsdirectsound\dsdirectsound_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\directsound\res\directsound.res"
 
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
@@ -243,7 +248,7 @@ ECHO ***************************************************************************
 ECHO *****   Compiling dsDirectSound.dll (DirectSound(3D) SoundFX driver)   ****
 ECHO ***************************************************************************
 md %OBJ_DIR%\dsDirectSound
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DX_INC%" /I "%EAX_INC%" %DLLDEFINES% /D "DSDIRECTSOUND_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dsDirectSound" /Fd"%OBJ_DIR%\dsDirectSound" /W3 /Gd  @dsdirectsound_cl.rsp  /link /out:"%BIN_DIR%\dsDirectSound.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\directsound\api\dsdirectsound.def" /implib:"%BIN_DIR%\dsDirectSound.lib" %LIBS% /libpath:"%DX_LIB%\\" /libpath:"%EAX_LIB%" eax.lib eaxguid.lib dsound.lib dxguid.lib %BIN_DIR%\doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DX_INC%" /I "%EAX_INC%" %DLLDEFINES% /D "DSDIRECTSOUND_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dsDirectSound" /Fd"%OBJ_DIR%\dsDirectSound" /W3 /Gd "%OBJ_DIR%\dsdirectsound\dsdirectsound_res.obj" @dsdirectsound_cl.rsp  /link /out:"%BIN_DIR%\dsDirectSound.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\directsound\api\dsdirectsound.def" /implib:"%BIN_DIR%\dsDirectSound.lib" %LIBS% /libpath:"%DX_LIB%\\" /libpath:"%EAX_LIB%" eax.lib eaxguid.lib dsound.lib dxguid.lib %BIN_DIR%\doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
