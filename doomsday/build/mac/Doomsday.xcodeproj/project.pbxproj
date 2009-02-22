@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		B01995A40F51619B009020DF /* p_automap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = p_automap.c; sourceTree = "<group>"; };
+		B01995A50F51619B009020DF /* rend_automap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rend_automap.c; sourceTree = "<group>"; };
 		B079185E0F2E280400A5A0C0 /* m_stack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = m_stack.c; sourceTree = "<group>"; };
 		B079185F0F2E280400A5A0C0 /* p_material.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = p_material.c; sourceTree = "<group>"; };
 		B07918600F2E280400A5A0C0 /* p_materialmanager.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = p_materialmanager.c; sourceTree = "<group>"; };
@@ -464,7 +466,6 @@
 		B086FB6E0F0B9EDF00955E23 /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zconf.h; sourceTree = "<group>"; };
 		B086FB6F0F0B9EDF00955E23 /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zlib.h; sourceTree = "<group>"; };
 		B086FB780F0B9EDF00955E23 /* am_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = am_map.h; sourceTree = "<group>"; };
-		B086FB790F0B9EDF00955E23 /* am_rendlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = am_rendlist.h; sourceTree = "<group>"; };
 		B086FB7A0F0B9EDF00955E23 /* d_net.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_net.h; sourceTree = "<group>"; };
 		B086FB7B0F0B9EDF00955E23 /* d_netcl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_netcl.h; sourceTree = "<group>"; };
 		B086FB7C0F0B9EDF00955E23 /* d_netsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_netsv.h; sourceTree = "<group>"; };
@@ -1946,7 +1947,6 @@
 			isa = PBXGroup;
 			children = (
 				B086FB780F0B9EDF00955E23 /* am_map.h */,
-				B086FB790F0B9EDF00955E23 /* am_rendlist.h */,
 				B086FB7A0F0B9EDF00955E23 /* d_net.h */,
 				B086FB7B0F0B9EDF00955E23 /* d_netcl.h */,
 				B086FB7C0F0B9EDF00955E23 /* d_netsv.h */,
@@ -1997,6 +1997,8 @@
 		B086FBA50F0B9EDF00955E23 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				B01995A40F51619B009020DF /* p_automap.c */,
+				B01995A50F51619B009020DF /* rend_automap.c */,
 				B086FBA60F0B9EDF00955E23 /* am_map.c */,
 				B086FBA80F0B9EDF00955E23 /* d_net.c */,
 				B086FBA90F0B9EDF00955E23 /* d_netcl.c */,
