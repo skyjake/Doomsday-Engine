@@ -1113,7 +1113,7 @@ void GL_CalcLuminance(byte *buffer, int width, int height, int pixelSize,
     }
 
 #ifdef _DEBUG
-    VERBOSE(Con_Message("GL_CalcLuminance: "
+    VERBOSE2(Con_Message("GL_CalcLuminance: "
                         "  width %dpx, height %dpx, bits %d\n"
                         "  cell region X[%d, %d] Y[%d, %d]\n"
                         "  flare X= %g Y=%g %s\n"
