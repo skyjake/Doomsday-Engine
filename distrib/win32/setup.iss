@@ -104,9 +104,10 @@ Filename: "{app}\snowberry\snowberry.exe"; Description: "{cm:LaunchProgram,Dooms
 
 [UninstallDelete]
 Type: files; Name: "{app}\doomsday.url"
+Type: files; Name: "{app}\snowberry\plugins\tab30.plugin\Contents\tab30\*.pyc"
 Type: files; Name: "{app}\snowberry\plugins\*.pyc"
 Type: files; Name: "{app}\snowberry\*.log"
+Type: dirifempty; Name: "{app}\snowberry\plugins\tab30.plugin"
 Type: dirifempty; Name: "{app}\snowberry\plugins"
 Type: dirifempty; Name: "{app}\snowberry"
 Type: dirifempty; Name: "{app}"
-
