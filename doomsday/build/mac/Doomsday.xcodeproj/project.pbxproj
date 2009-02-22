@@ -1158,6 +1158,8 @@
 		B086FE6D0F0B9EE200955E23 /* wadmapconverter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wadmapconverter.c; sourceTree = "<group>"; };
 		B0A1E6B10EA9C21A00D85079 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = ../../CMakeLists.txt; sourceTree = SOURCE_ROOT; };
 		B0A8094D06F1F45D007AEB2E /* Read Me.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = "Read Me.rtf"; sourceTree = "<group>"; };
+		B0EE23170F52051600D49358 /* p_automap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = p_automap.h; sourceTree = "<group>"; };
+		B0EE23180F52051600D49358 /* rend_automap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rend_automap.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -1946,6 +1948,8 @@
 		B086FB770F0B9EDF00955E23 /* include */ = {
 			isa = PBXGroup;
 			children = (
+				B0EE23170F52051600D49358 /* p_automap.h */,
+				B0EE23180F52051600D49358 /* rend_automap.h */,
 				B086FB780F0B9EDF00955E23 /* am_map.h */,
 				B086FB7A0F0B9EDF00955E23 /* d_net.h */,
 				B086FB7B0F0B9EDF00955E23 /* d_netcl.h */,
