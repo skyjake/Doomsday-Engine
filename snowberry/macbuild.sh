@@ -9,19 +9,13 @@ echo "Building version "$VERSION
 echo $VERSION > VERSION
 
 # Locations.
-DENG_DIR=/Volumes/deng-trunk/doomsday/build/mac
+DENG_DIR=../doomsday/mybuild/
 TARGET_IMAGE=images/deng-$VERSION.dmg
 
 # Clean.
 chmod -R u+w build dist
 rm -rf build dist
-rm $TARGET_IMAGE
-
-# Finalize.
-pushd .
-cd $DENG_DIR
-./finalize.sh
-popd
+rm -f $TARGET_IMAGE
 
 # Copy the resource files into the correct place.
 mkdir -p build/addons
@@ -42,13 +36,8 @@ cp -R plugins/{tab30.plugin,about.py,help.py,launcher.py,preferences.py,profilel
 python buildapp.py py2app
 
 # Place Doomsday.app inside the bundle.
-cp -R $DENG_DIR/build/Deployment/Doomsday.app \
-  $DENG_DIR/build/Deployment/*.bundle "dist/Doomsday Engine.app/Contents"
-
-# Make sure the readme is included in the image.
-#cp $DENG_DIR/Readme.rtf dist
+cp -R $DENG_DIR/Doomsday.app \
+  $DENG_DIR/*.bundle "dist/Doomsday Engine.app/Contents"
 
 # Create a disk image.
 sh img.sh $TARGET_IMAGE "Doomsday Engine ${VERSION}"
-
-#hdiutil create -srcfolder dist -volname "Doomsday Engine ${VERSION}" -nouuid -noanyowners $TARGET_IMAGE

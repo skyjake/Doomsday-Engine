@@ -285,9 +285,11 @@
 		B0F176B3087C36620051F24A /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = B0F176B4087C36620051F24A /* Build configuration list for PBXProject "Snowberry" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 0;
 			mainGroup = B0F176B1087C36610051F24A;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				B0F176E4087C39F90051F24A /* Snowberry */,
 			);
@@ -313,7 +315,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				OPTIMIZATION_CFLAGS = "-O0";
+				GCC_OPTIMIZATION_LEVEL = 0;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				OTHER_REZFLAGS = "";
@@ -332,7 +334,7 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				OPTIMIZATION_CFLAGS = "-O0";
+				GCC_OPTIMIZATION_LEVEL = 0;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				OTHER_REZFLAGS = "";

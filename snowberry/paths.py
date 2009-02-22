@@ -39,15 +39,18 @@ def isHomeless():
     noHome = '-nohome' in sys.argv
     useHome = '-home' in sys.argv
 
-    # The default.
     if useHome:
         return False
 
     if noHome:
         return True
 
-    # The default is homeless in Windows.
-    return host.isWindows()
+    # The default is homeless in Windows versions earlier than Vista and
+    # Win Server 2008.
+    if host.isWindows() and not host.isWindowsVista():
+        return True
+
+    return False
 
 
 # Directory Type constants to be used with getSystemPath() and
