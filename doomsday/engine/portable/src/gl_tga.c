@@ -120,7 +120,7 @@ static int16_t readShort(DFILE* f)
 {
     int16_t             v;
     F_Read(&v, sizeof(v), f);
-    return v;
+    return SHORT(v);
 }
 
 /**
