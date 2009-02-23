@@ -390,7 +390,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-backslash-repeat {impulse showscore}",
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",
-#if !__JHEXEN__
+#if !defined(__JHEXEN__) && !defined(__JHERETIC__)
         "bindevent key-return msgrefresh",
 #endif
 
