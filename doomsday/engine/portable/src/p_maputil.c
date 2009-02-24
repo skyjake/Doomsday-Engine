@@ -230,7 +230,7 @@ int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
  * @return              Non-zero if the point is on the right side of the
  *                      specified line.
  */
-int P_PointOnLinedefSide(float x, float y, linedef_t* line)
+int P_PointOnLinedefSide(float x, float y, const linedef_t* line)
 {
     return !P_PointOnLineSide(x, y, line->L_v1pos[VX], line->L_v1pos[VY],
                               line->dX, line->dY);
@@ -336,57 +336,93 @@ int P_BoxOnLineSide3(const int bbox[4], double lineSX, double lineSY,
 /**
  * Considers the line to be infinite.
  *
- * Returns side 0 or 1, -1 if box crosses the line
+ * @return              @c  0 = completely in front of the line.
+ * @return              @c  1 = completely behind the line.
+ *                      @c -1 = box crosses the line.
  */
 int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
-                     linedef_t* ld)
+                     const linedef_t* ld)
 {
-    int                 p;
+    int                 a = 0, b = 0;
 
     switch(ld->slopeType)
     {
-    default: // shutup compiler.
-    case ST_HORIZONTAL:
-    {
-        float ly = ld->L_v1pos[VY];
-        return (yl > ly) ==
-                (p = yh > ly) ? p ^ (ld->dX < 0) : -1;
-    }
-    case ST_VERTICAL:
-    {
-        float lx = ld->L_v1pos[VX];
-        return (xl < lx) ==
-                (p = xh < lx) ? p ^ (ld->dY < 0) : -1;
-    }
-    case ST_POSITIVE:
-        return P_PointOnLinedefSide(xh, yl, ld) ==
-                (p = P_PointOnLinedefSide(xl, yh, ld)) ? p : -1;
+    default: // Shut up compiler.
+      case ST_HORIZONTAL:
+        a = yh > ld->L_v1pos[VY];
+        b = yl > ld->L_v1pos[VY];
+        if(ld->dX < 0)
+        {
+            a ^= 1;
+            b ^= 1;
+        }
+        break;
+
+      case ST_VERTICAL:
+        a = xh < ld->L_v1pos[VX];
+        b = xl < ld->L_v1pos[VX];
+        if(ld->dY < 0)
+        {
+            a ^= 1;
+            b ^= 1;
+        }
+        break;
+
+      case ST_POSITIVE:
+        a = P_PointOnLinedefSide(xl, yh, ld);
+        b = P_PointOnLinedefSide(xh, yl, ld);
+        break;
 
     case ST_NEGATIVE:
-        return (P_PointOnLinedefSide(xl, yl, ld)) ==
-                (p = P_PointOnLinedefSide(xh, yh, ld)) ? p : -1;
+        a = P_PointOnLinedefSide(xh, yh, ld);
+        b = P_PointOnLinedefSide(xl, yl, ld);
+        break;
     }
+
+    if(a == b)
+        return a;
+
+    return -1;
 }
 
-int P_BoxOnLineSide(float* box, linedef_t* ld)
+int P_BoxOnLineSide(const float* box, const linedef_t* ld)
 {
     return P_BoxOnLineSide2(box[BOXLEFT], box[BOXRIGHT],
                             box[BOXBOTTOM], box[BOXTOP], ld);
 }
 
 /**
- * Returns 0 or 1
+ * @return              @c 0 if point is in front of the line, else @c 1.
  */
-int P_PointOnDivlineSide(float fx, float fy, divline_t* line)
+int P_PointOnDivlineSide(float fx, float fy, const divline_t* line)
 {
     fixed_t             x = FLT2FIX(fx);
     fixed_t             y = FLT2FIX(fy);
 
-    return  !line->dX? x <= line->pos[VX]? line->dY > 0 : line->dY <
-        0 : !line->dY? y <= line->pos[VY]? line->dX < 0 : line->dX >
-        0 : (line->dY ^ line->dX ^ (x -= line->pos[VX]) ^ (y -= line->pos[VY])) <
-        0? (line->dY ^ x) < 0 : FixedMul(y >> 8, line->dX >> 8) >=
-        FixedMul(line->dY >> 8, x >> 8);
+    if(!line->dX)
+    {
+        return (x <= line->pos[VX])? line->dY > 0 : line->dY < 0;
+    }
+    else if(!line->dY)
+    {
+        return (y <= line->pos[VY])? line->dX < 0 : line->dX > 0;
+    }
+    else
+    {
+        fixed_t             dX = x - line->pos[VX];
+        fixed_t             dY = y - line->pos[VY];
+
+        // Try to quickly decide by comparing signs.
+        if((line->dY ^ line->dX ^ dX ^ dY) & 0x80000000)
+        {   // Left is negative.
+            return ((line->dY ^ dX) & 0x80000000)? 1 : 0;
+        }
+        else
+        {   // if left >= right return 1 else 0.
+            return FixedMul(dY >> 8, line->dX >> 8) >=
+                FixedMul(line->dY >> 8, dX >> 8);
+        }
+    }
 }
 
 void P_MakeDivline(linedef_t* li, divline_t* dl)
