@@ -4,9 +4,6 @@
 //
 #define IDI_MAIN                        101
 #define IDI_DOOMSDAY_ICON               106
-#define IDD_STARTUP_WINDOW              113
-#define IDC_MESSAGES                    1000
-#define IDC_PROGRESS                    1004
 
 // Next default values for new objects
 //

@@ -95,7 +95,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				OutputManifestFile="..\..\..\engine\win32\res\$(ProjectName).manifest"
+				OutputManifestFile="$(IntDir)\$(TargetFileName).embed.manifest"
 				EmbedManifest="false"
 			/>
 			<Tool
@@ -198,7 +198,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				OutputManifestFile="..\..\..\engine\win32\res\$(ProjectName).manifest"
+				OutputManifestFile="$(IntDir)\$(TargetFileName).embed.manifest"
 				EmbedManifest="false"
 			/>
 			<Tool

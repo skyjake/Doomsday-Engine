@@ -43,16 +43,29 @@
  * Revision number increases with each small (maintenance) release.
  */
 
+#define DOOMSDAY_RELEASE_NAME   "beta6"
+
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
 #define DOOMSDAY_VERSION        10900 // Don't touch; see above.
-
-#define DOOMSDAY_RELEASE_NAME   "-beta6"
-#define DOOMSDAY_VERSION_TEXT   "1.9.0" DOOMSDAY_RELEASE_NAME
+#if defined(DOOMSDAY_RELEASE_NAME)
+#  define DOOMSDAY_VERSION_TEXT "1.9.0-" DOOMSDAY_RELEASE_NAME
+#else
+#  define DOOMSDAY_VERSION_TEXT "1.9.0"
+#endif
 #define DOOMSDAY_VERSION_NUMBER 1,9,0,0 // For WIN32 version info.
+
 #define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
+
+/**
+ * If DOOMSDAY_RELEASE_FULL is NOT defined, the Win32 version info
+ * will be marked accordingly, indicating that this is a special build,
+ * for example, an alpha/beta/release candidate/etc and the SpecialBuild
+ * string will be populated with the content of DOOMSDAY_RELEASE_NAME.
+ */
+//#define DOOMSDAY_RELEASE_FULL   1
 
 #endif
