@@ -431,6 +431,9 @@ static void P_LoadMapObjs(void)
     }
 }
 
+/**
+ * \todo This should be done in the map converter plugin, not here.
+ */
 static void interpretLinedefFlags(void)
 {
 #define ML_BLOCKING             1 // Solid, is an obstacle.
@@ -663,7 +666,7 @@ void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
              "Loading map...", P_SetupMapWorker, &param);
 
     AM_InitForMap();
-    
+
     R_SetupMap(DDSMM_AFTER_BUSY, 0);
 
 #if __JHEXEN__
