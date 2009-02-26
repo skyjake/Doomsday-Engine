@@ -4333,8 +4333,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
     if((!actor->special2) &&
        (actor->health <= (actor->info->spawnHealth / 2)))
     {
-        lastfound = 0;
-        spot = P_FindMobjFromTID(KORAX_FIRST_TELEPORT_TID, &lastfound);
+        spot = P_FindMobjFromTID(KORAX_FIRST_TELEPORT_TID, &actor->special1);
         if(spot)
         {
             P_Teleport(actor, spot->pos[VX], spot->pos[VY], spot->angle, true);
@@ -4363,8 +4362,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
     {
         if(P_Random() < 10)
         {
-            lastfound = actor->special1;
-            spot = P_FindMobjFromTID(KORAX_TELEPORT_TID, &lastfound);
+            spot = P_FindMobjFromTID(KORAX_TELEPORT_TID, &actor->special1);
             actor->tracer = spot;
             if(spot)
             {
