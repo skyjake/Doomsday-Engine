@@ -376,14 +376,13 @@ void P_v13_UnArchivePlayers(void)
 
 void P_v13_UnArchiveWorld(void)
 {
-    uint        i, j;
-    fixed_t     offx, offy;
-    short      *get;
-    int         firstflat = W_CheckNumForName("F_START") + 1;
-    sector_t   *sec;
-    xsector_t  *xsec;
-    linedef_t     *line;
-    xline_t    *xline;
+    uint                i, j;
+    fixed_t             offx, offy;
+    short*              get;
+    sector_t*           sec;
+    xsector_t*          xsec;
+    linedef_t*          line;
+    xline_t*            xline;
 
     get = (short *) save_p;
 
@@ -395,11 +394,11 @@ void P_v13_UnArchiveWorld(void)
 
         P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetIntp(sec, DMU_FLOOR_MATERIAL, *get++ + firstflat);
-        P_SetIntp(sec, DMU_CEILING_MATERIAL, *get++ + firstflat);
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL, P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
-        xsec->special = *get++;  // needed?
-        /*xsec->tag =*/ *get++;      // needed?
+        xsec->special = *get++; // needed?
+        /*xsec->tag =*/ *get++; // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }

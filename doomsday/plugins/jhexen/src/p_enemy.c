@@ -4324,11 +4324,11 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
  * 255          For use in death script (spawn spots).
  */
 
-void C_DECL A_KoraxChase(mobj_t *actor)
+void C_DECL A_KoraxChase(mobj_t* actor)
 {
-    mobj_t     *spot;
-    int         lastfound;
-    byte        args[3] = { 0, 0, 0 };
+    mobj_t*             spot;
+    int                 lastfound;
+    byte                args[3] = { 0, 0, 0 };
 
     if((!actor->special2) &&
        (actor->health <= (actor->info->spawnHealth / 2)))
@@ -4375,21 +4375,21 @@ void C_DECL A_KoraxChase(mobj_t *actor)
     }
 }
 
-void C_DECL A_KoraxStep(mobj_t *actor)
+void C_DECL A_KoraxStep(mobj_t* actor)
 {
     A_Chase(actor);
 }
 
-void C_DECL A_KoraxStep2(mobj_t *actor)
+void C_DECL A_KoraxStep2(mobj_t* actor)
 {
     S_StartSound(SFX_KORAX_STEP, NULL);
     A_Chase(actor);
 }
 
-void C_DECL A_KoraxBonePop(mobj_t *actor)
+void C_DECL A_KoraxBonePop(mobj_t* actor)
 {
-    mobj_t     *mo;
-    byte        args[5];
+    mobj_t*             mo;
+    byte                args[5];
 
     args[0] = args[1] = args[2] = args[3] = args[4] = 0;
 
@@ -4421,10 +4421,10 @@ void C_DECL A_KoraxBonePop(mobj_t *actor)
     P_StartACS(255, 0, args, actor, NULL, 0); // Death script.
 }
 
-void KSpiritInit(mobj_t *spirit, mobj_t *korax)
+void KSpiritInit(mobj_t* spirit, mobj_t* korax)
 {
-    int         i;
-    mobj_t     *tail, *next;
+    int                 i;
+    mobj_t*             tail, *next;
 
     spirit->health = KORAX_SPIRIT_LIFETIME;
 
@@ -4448,7 +4448,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax)
     tail->tracer = NULL; // Last tail bit.
 }
 
-void C_DECL A_KoraxDecide(mobj_t *actor)
+void C_DECL A_KoraxDecide(mobj_t* actor)
 {
     if(P_Random() < 220)
     {
@@ -4461,10 +4461,10 @@ void C_DECL A_KoraxDecide(mobj_t *actor)
 }
 
 static void spawnKoraxMissile(mobjtype_t type, angle_t angle, float distance,
-                             float height, mobj_t *source, mobj_t *target)
+                             float height, mobj_t* source, mobj_t* target)
 {
-    uint            an;
-    float           pos[3];
+    uint                an;
+    float               pos[3];
 
     pos[VX] = source->pos[VX];
     pos[VY] = source->pos[VY];
@@ -4489,10 +4489,10 @@ static void spawnKoraxMissile(mobjtype_t type, angle_t angle, float distance,
  * 5 = middle right.
  * 6 = lower right.
  */
-void C_DECL A_KoraxMissile(mobj_t *mo)
+void C_DECL A_KoraxMissile(mobj_t* mo)
 {
-    int         type = P_Random() % 6;
-    int         sound;
+    int                 type = P_Random() % 6;
+    int                 sound;
 
     S_StartSound(SFX_KORAX_ATTACK, mo);
 
@@ -4555,12 +4555,12 @@ void C_DECL A_KoraxMissile(mobj_t *mo)
 /**
  * Call action code scripts (250-254).
  */
-void C_DECL A_KoraxCommand(mobj_t *mo)
+void C_DECL A_KoraxCommand(mobj_t* mo)
 {
-    byte            args[5];
-    float           pos[3];
-    uint            an;
-    int             numcommands;
+    byte                args[5];
+    float               pos[3];
+    uint                an;
+    int                 numcommands;
 
     S_StartSound(SFX_KORAX_COMMAND, mo);
 
@@ -4612,11 +4612,11 @@ void C_DECL A_KoraxCommand(mobj_t *mo)
     }
 }
 
-void C_DECL A_KSpiritWeave(mobj_t *mo)
+void C_DECL A_KSpiritWeave(mobj_t* mo)
 {
-    float       pos[3];
-    uint        weaveXY, weaveZ;
-    uint        an;
+    float               pos[3];
+    uint                weaveXY, weaveZ;
+    uint                an;
 
     pos[VX] = mo->pos[VX];
     pos[VY] = mo->pos[VY];
@@ -4648,13 +4648,13 @@ void C_DECL A_KSpiritWeave(mobj_t *mo)
     mo->special2 = weaveZ + (weaveXY << 16);
 }
 
-void C_DECL A_KSpiritSeeker(mobj_t *mo, angle_t thresh, angle_t turnMax)
+void C_DECL A_KSpiritSeeker(mobj_t* mo, angle_t thresh, angle_t turnMax)
 {
-    int         dir, dist;
-    angle_t     delta;
-    uint        an;
-    mobj_t     *target;
-    float       newZ, deltaZ;
+    int                 dir, dist;
+    angle_t             delta;
+    uint                an;
+    mobj_t*             target;
+    float               newZ, deltaZ;
 
     target = mo->tracer;
     if(target == NULL)
@@ -4709,7 +4709,7 @@ void C_DECL A_KSpiritSeeker(mobj_t *mo, angle_t thresh, angle_t turnMax)
     }
 }
 
-void C_DECL A_KSpiritRoam(mobj_t *mo)
+void C_DECL A_KSpiritRoam(mobj_t* mo)
 {
     if(mo->health-- <= 0)
     {
@@ -4732,7 +4732,7 @@ void C_DECL A_KSpiritRoam(mobj_t *mo)
     }
 }
 
-void C_DECL A_KBolt(mobj_t *mo)
+void C_DECL A_KBolt(mobj_t* mo)
 {
     // Countdown lifetime.
     if(mo->special1-- <= 0)
@@ -4741,13 +4741,13 @@ void C_DECL A_KBolt(mobj_t *mo)
     }
 }
 
-void C_DECL A_KBoltRaise(mobj_t *mo)
+void C_DECL A_KBoltRaise(mobj_t* mo)
 {
 #define KORAX_BOLT_HEIGHT       (48)
 #define KORAX_BOLT_LIFETIME     (3)
 
-    float           z;
-    mobj_t         *pmo;
+    float               z;
+    mobj_t*             pmo;
 
     // Spawn a child upward.
     z = mo->pos[VZ] + KORAX_BOLT_HEIGHT;

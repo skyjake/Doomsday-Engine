@@ -1264,12 +1264,13 @@ static int CmdChangeFloor(void)
 static int CmdChangeFloorDirect(void)
 {
     int                 tag;
-    materialnum_t       mat;
+    material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    mat = P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS);
+    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(
+        GetACString(LONG(*PCodePtr++)), MN_FLATS));
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1277,7 +1278,7 @@ static int CmdChangeFloorDirect(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_FLOOR_MATERIAL, mat);
+            P_SetPtrp(sec, DMU_FLOOR_MATERIAL, mat);
         }
     }
 
@@ -1287,11 +1288,12 @@ static int CmdChangeFloorDirect(void)
 static int CmdChangeCeiling(void)
 {
     int                 tag;
-    materialnum_t       mat;
+    material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
-    mat = P_MaterialNumForName(GetACString(Pop()), MN_FLATS);
+    mat = P_ToPtr(DMU_MATERIAL,
+        P_MaterialNumForName(GetACString(Pop()), MN_FLATS));
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1300,7 +1302,7 @@ static int CmdChangeCeiling(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_CEILING_MATERIAL, mat);
+            P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
     }
 
@@ -1310,12 +1312,13 @@ static int CmdChangeCeiling(void)
 static int CmdChangeCeilingDirect(void)
 {
     int                 tag;
-    materialnum_t       mat;
+    material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    mat = P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS);
+    mat = P_ToPtr(DMU_MATERIAL,
+        P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS));
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1323,7 +1326,7 @@ static int CmdChangeCeilingDirect(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_CEILING_MATERIAL, mat);
+            P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
     }
 
