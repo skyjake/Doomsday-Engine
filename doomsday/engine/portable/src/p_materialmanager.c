@@ -529,10 +529,10 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material "
      * A new material.
      */
 
-    // Sanity checks.
-    assert(tex != 0);
-    assert(width > 0);
-    assert(height > 0);
+    // Only create complete materials.
+    // \todo Doing this here isn't ideal.
+    if(tex == 0 || !(width > 0) || !(height > 0))
+        return NULL;
 
     mat = createMaterial(width, height, flags, mnamespace, def, tex);
 
