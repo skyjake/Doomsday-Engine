@@ -400,6 +400,7 @@ void P_SpawnThings(void)
     maceSpotCount = 0;
     maceSpots = NULL;
     bossSpotCount = 0;
+    bossSpots = NULL;
 #endif
 
     for(i = 0; i < numthings; ++i)
