@@ -817,6 +817,7 @@ int P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points)
             delta = points;
     }
 
+    *current += delta;
     if(*current != oldPoints)
         plr->update |= PSF_ARMOR_POINTS;
 
