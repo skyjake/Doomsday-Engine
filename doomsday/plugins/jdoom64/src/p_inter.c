@@ -490,13 +490,11 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_ARMOR_BONUS:
-        //plr->armorPoints++;  // Can go over 100%
-        plr->armorPoints += 2; // jd64 Can go over 100%
-        if(plr->armorPoints > armorPoints[1]) // 200
-            plr->armorPoints = armorPoints[1];
         if(!plr->armorType)
-            plr->armorType = armorClass[0];
-        plr->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
+            P_PlayerSetArmorType(plr, armorClass[0]);
+        if(plr->armorPoints < armorPoints[1])
+            P_PlayerGiveArmorBonus(plr, 2);
+
         P_SetMessage(plr, GOTARMBONUS, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
