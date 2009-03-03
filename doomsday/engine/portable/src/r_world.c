@@ -67,7 +67,7 @@ int rendSkyLight = 1; // cvar.
 float rendLightWallAngle = 1; // Intensity of angle-based wall lighting.
 
 boolean firstFrameAfterLoad;
-boolean mapSetup;
+boolean ddMapSetup;
 
 nodeindex_t* linelinks; // Indices to roots.
 
@@ -598,7 +598,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
             }
             Z_Free(ssec->bsuf);
         }
-        if(!mapSetup)
+        if(!ddMapSetup)
             newList[n] = SB_CreateSurface(ssec->numVertices);
 
         ssec->bsuf = newList;
@@ -1396,7 +1396,7 @@ void R_SetupMap(int mode, int flags)
         Z_EnableFastMalloc(false);
 
         // A new map is about to be setup.
-        mapSetup = true;
+        ddMapSetup = true;
         return;
 
     case DDSMM_AFTER_LOADING:
@@ -1542,7 +1542,7 @@ void R_SetupMap(int mode, int flags)
         ddMapTime = 0;
 
         // We've finished setting up the map.
-        mapSetup = false;
+        ddMapSetup = false;
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;

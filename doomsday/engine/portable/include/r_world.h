@@ -47,7 +47,7 @@ typedef struct skyfix_s {
 } skyfix_t;
 
 extern int rendSkyLight; // cvar
-extern boolean mapSetup;
+extern boolean ddMapSetup;
 extern skyfix_t skyFix[2]; // [floor, ceiling]
 
 // Map Info flags.
