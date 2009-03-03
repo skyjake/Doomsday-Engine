@@ -26,8 +26,8 @@
  * mn_def.h: Menu defines and types.
  */
 
-#ifndef __MN_DEF_H__
-#define __MN_DEF_H__
+#ifndef __MENU_DEFS_H__
+#define __MENU_DEFS_H__
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -84,7 +84,8 @@ typedef enum {
     MENU_MULTIPLAYER,
     MENU_GAMESETUP,
     MENU_PLAYERSETUP,
-    MENU_WEAPONSETUP,
+    MENU_INVENTORY,
+    MENU_WEAPONS,
     MENU_CONTROLS,
     MENU_NONE
 } menutype_t;

@@ -1085,10 +1085,10 @@ void G_InitPlayer(int player)
  */
 void G_PlayerLeaveMap(int player)
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    int                 i;
+#if __JHERETIC__ || __JHEXEN__
+    uint                i;
 #endif
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     int                 flightPower;
 #endif
     player_t*           p = &players[player];
@@ -1109,11 +1109,11 @@ void G_PlayerLeaveMap(int player)
 #endif
 
     // Remember if flying
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     flightPower = p->powers[PT_FLIGHT];
 #endif
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     // Strip flight artifacts?
     if(!deathmatch && newCluster) // Entering new cluster
     {
@@ -1128,7 +1128,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_POWERS;
     memset(p->powers, 0, sizeof(p->powers));
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     if(!newCluster && !deathmatch)
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
 #endif
@@ -1169,7 +1169,7 @@ void G_PlayerLeaveMap(int player)
     p->damageCount = 0; // No palette changes.
     p->bonusCount = 0;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     p->poisonCount = 0;
 #endif
 
@@ -1316,10 +1316,6 @@ void G_PlayerReborn(int player)
     // Reset maxammo.
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
         p->ammo[i].max = maxAmmo[i];
-#endif
-
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    P_InventoryResetCursor(p);
 #endif
 
     // We'll need to update almost everything.

@@ -4994,20 +4994,18 @@ static boolean SV_LoadGame2(void)
     // Restore player structs
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        mobj_t *mo = players[i].plr->mo;
+        mobj_t*             mo = players[i].plr->mo;
 
         memcpy(&players[i], &playerBackup[i], sizeof(player_t));
         players[i].plr->mo = mo;
-        players[i].readyArtifact = players[i].inventory[players[i].invPtr].type;
-
-        P_InventoryResetCursor(&players[i]);
+        players[i].readyArtifact = players[i].inventory[0].type;
     }
 #endif
 
     // Notify the players that weren't in the savegame.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        boolean notLoaded = false;
+        boolean             notLoaded = false;
 
 #if __JHEXEN__
         if(players[i].plr->inGame)
@@ -5017,7 +5015,7 @@ static boolean SV_LoadGame2(void)
                 if(saveToRealPlayerNum[k] == i)
                     break;
             if(k < MAXPLAYERS)
-                continue;           // Found; don't bother this player.
+                continue; // Found; don't bother this player.
 
             players[i].playerState = PST_REBORN;
 

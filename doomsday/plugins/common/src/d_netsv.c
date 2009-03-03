@@ -1015,9 +1015,11 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #endif
     }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     if(flags & PSF_INVENTORY)
     {
+        uint                i;
+
         *ptr++ = pl->inventorySlotNum;
         for(i = 0; i < pl->inventorySlotNum; ++i)
             WRITE_SHORT(ptr,

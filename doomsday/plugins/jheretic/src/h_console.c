@@ -215,8 +215,6 @@ ccmd_t gameCCmds[] = {
     {"viewmode",    NULL,   CCmdSetViewMode},
 
     // Heretic specific
-    {"invleft",     NULL,   CCmdInventory},
-    {"invright",    NULL,   CCmdInventory},
     {"chicken",     "",     CCmdCheatPig},
     {NULL}
 };

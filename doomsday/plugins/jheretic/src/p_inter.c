@@ -1048,7 +1048,7 @@ boolean P_MorphMonster(mobj_t *actor)
 
 boolean P_AutoUseChaosDevice(player_t *player)
 {
-    int                 i;
+    uint                i;
 
     //// \todo Do this in the inventory code.
     for(i = 0; i < player->inventorySlotNum; ++i)
@@ -1067,12 +1067,12 @@ boolean P_AutoUseChaosDevice(player_t *player)
 
 void P_AutoUseHealth(player_t *player, int saveHealth)
 {
-    int                 i;
-    int                 count;
+    uint                i;
+    uint                count;
     int                 normalCount = 0;
-    int                 normalSlot = 0;
+    uint                normalSlot = 0;
     int                 superCount = 0;
-    int                 superSlot = 0;
+    uint                superSlot = 0;
 
     //// \todo Do this in the inventory code.
     for(i = 0; i < player->inventorySlotNum; ++i)
@@ -1096,7 +1096,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryTake(player, normalSlot);
+            P_InventoryTake(player, AFT_HEALTH);
         }
     }
     else if(superCount * 100 >= saveHealth)
@@ -1106,7 +1106,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryTake(player, superSlot);
+            P_InventoryTake(player, AFT_SUPERHEALTH);
         }
     }
     else if((gameSkill == SM_BABY) &&
@@ -1118,14 +1118,14 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryTake(player, normalSlot);
+            P_InventoryTake(player, AFT_HEALTH);
         }
 
         count = (saveHealth + 99) / 100;
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryTake(player, normalSlot);
+            P_InventoryTake(player, AFT_HEALTH);
         }
     }
 

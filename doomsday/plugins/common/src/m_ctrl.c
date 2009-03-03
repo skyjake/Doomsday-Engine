@@ -217,13 +217,13 @@ static controlconfig_t controlConfig[] =
     { "weapon 4", 0, 0, "impulse weapon4" },
 #endif
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     { NULL },
 
     { "inventory" },
-    { "move left", 0, 0, "invleft" },
-    { "move right", 0, 0, "invright" },
-    { "use artifact", 0, 0, "impulse useartifact" },
+    { "move left", 0, 0, "impulse previtem" },
+    { "move right", 0, 0, "impulse nextitem" },
+    { "use artifact", 0, 0, "impulse useitem" },
     { "panic!", 0, 0, "impulse panic" },
 #endif
 

@@ -28,6 +28,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "jheretic.h"
 
 #include "d_net.h"
@@ -63,7 +65,7 @@
 
 // Current artifact count (sbar).
 #define ST_ARTIFACTCWIDTH   (2)
-#define ST_ARTIFACTCX       (209)
+#define ST_ARTIFACTCX       (208)
 #define ST_ARTIFACTCY       (182)
 
 // AMMO number pos.
@@ -101,20 +103,18 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    int             inventoryTics;
-    boolean         inventory;
-    int             artifactFlash;
-
+    boolean         stopped;
     int             hideTics;
     float           hideAmount;
 
-    boolean         stopped;
     float           showBar; // Slide statusbar amount 1.0 is fully open.
     float           alpha; // Fullscreen hud alpha value.
 
     float           statusbarCounterAlpha;
     boolean         firstTime; // ST_Start() has just been called.
     boolean         statusbarActive; // Whether left-side main status bar is active.
+
+    int             artifactFlash;
     int             invSlots[NUMVISINVSLOTS]; // Current inventory slot indices. 0 = none.
     int             invSlotsCount[NUMVISINVSLOTS]; // Current inventory slot count indices. 0 = none.
     int             currentInvIdx; // Current artifact index. 0 = none.
@@ -124,7 +124,6 @@ typedef struct {
     boolean         fragsOn; // !deathmatch.
     boolean         blended; // Whether to use alpha blending.
 
-    boolean         hitCenterFrame;
     int             tomePlay;
     int             healthMarker;
     int             chainWiggle;
@@ -134,6 +133,13 @@ typedef struct {
     int             oldAmmoIconIdx;
     int             oldReadyWeapon;
     int             oldHealth;
+
+    int             inventoryTics;
+    boolean         inventory;
+    int             invPtr;
+    uint            invVarCursorPos; // Variable-range, fullscreen inv cursor.
+    uint            invFixedCursorPos; // Fixed-range, statusbar inv cursor.
+    boolean         hitCenterFrame;
 
     // Widgets:
     st_multicon_t   wCurrentArtifact; // Current artifact.
@@ -152,10 +158,16 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void        ST_ResizeInventory(struct cvar_s* cvar);
+
 // Console commands for the HUD/Statusbar.
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void inventoryIndexes(const player_t* plr, const hudstate_t* hud,
+                             uint maxVisSlots, int origCursor,
+                             uint* firstVisible, uint* cursorPos);
 
 static void drawINumber(signed int val, int x, int y, float r, float g, float b, float a);
 static void drawBNumber(signed int val, int x, int y, float Red, float Green, float Blue, float Alpha);
@@ -181,7 +193,7 @@ static char ammoPic[][10] = {
 };
 
 // Artifact patch names:
-static char artifactList[][10] = {
+static char artifactList[5 + NUM_ARTIFACT_TYPES][10] = {
     {"USEARTIA"}, // Use artifact flash.
     {"USEARTIB"},
     {"USEARTIC"},
@@ -217,7 +229,7 @@ static dpatch_t iNumbers[10];
 static dpatch_t sNumbers[10];
 static dpatch_t negative;
 static dpatch_t ammoIcons[11];
-static dpatch_t artifacts[16];
+static dpatch_t artifacts[5 + NUM_ARTIFACT_TYPES];
 static dpatch_t spinBook;
 static dpatch_t spinFly;
 static dpatch_t keys[NUM_KEY_TYPES];
@@ -247,12 +259,14 @@ cvar_t sthudCVars[] =
     {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
     {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
     {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1},
-    {"hud-artifact", 0, CVT_BYTE, &cfg.hudShown[HUD_ARTI], 0, 1},
+    {"hud-currentitem", 0, CVT_BYTE, &cfg.hudShown[HUD_CURRENTITEM], 0, 1},
 
     // HUD displays
     {"hud-tome-timer", CVF_NO_MAX, CVT_INT, &cfg.tomeCounter, 0, 0},
     {"hud-tome-sound", CVF_NO_MAX, CVT_INT, &cfg.tomeSound, 0, 0},
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
+    {"hud-inventory-slot-showempty", 0, CVT_BYTE, &cfg.inventorySlotShowEmpty, 0, 1},
+    {"hud-inventory-slot-max", CVF_NO_MAX, CVT_INT, &cfg.inventorySlotMaxVis, 0, 0, ST_ResizeInventory},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
@@ -510,7 +524,7 @@ void ST_updateWidgets(int player)
 {
     static int          largeammo = 1994; // Means "n/a".
 
-    int                 i, x;
+    int                 i;
     ammotype_t          ammoType;
     boolean             found;
     hudstate_t*         hud = &hudStates[player];
@@ -567,32 +581,33 @@ void ST_updateWidgets(int player)
         hud->fragsCount += plr->frags[i] * (i != player ? 1 : -1);
     }
 
-    // Current artifact.
-    if(hud->artifactFlash)
-    {
-        hud->currentInvIdx = 5 - hud->artifactFlash;
-        hud->artifactFlash--;
-        hud->oldCurrentArtifact = -1; // So that the correct artifact fills in after the flash.
-    }
-    else if(hud->oldCurrentArtifact != plr->readyArtifact ||
-            hud->oldCurrentArtifactCount != plr->inventory[plr->invPtr].count)
-    {
-
-        if(plr->readyArtifact > 0)
-        {
-            hud->currentInvIdx = plr->readyArtifact + 5;
-        }
-
-        hud->oldCurrentArtifact = plr->readyArtifact;
-        hud->oldCurrentArtifactCount = plr->inventory[plr->invPtr].count;
-    }
-
     // Update the inventory.
-    x = plr->invPtr - plr->curPos;
+    {
+    uint                i, idx, first, to;
+
+    inventoryIndexes(plr, hud, NUMVISINVSLOTS, hud->invFixedCursorPos,
+                     &first, NULL);
+
     for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
-        hud->invSlots[i] = plr->inventory[x + i].type +5; // Plus 5 for useartifact patches.
-        hud->invSlotsCount[i] = plr->inventory[x + i].count;
+        hud->invSlots[i] = AFT_NONE + 5; // Plus 5 for useitem patches.
+        hud->invSlotsCount[i] = 0;
+    }
+
+    if(plr->inventorySlotNum < NUMVISINVSLOTS)
+        to = plr->inventorySlotNum;
+    else
+        to = NUMVISINVSLOTS;
+
+    idx = first;
+    for(i = 0; i < to; ++i)
+    {
+        hud->invSlots[i] = plr->inventory[idx].type +5; // Plus 5 for useitem patches.
+        hud->invSlotsCount[i] = plr->inventory[idx].count;
+
+        if(++idx > plr->inventorySlotNum - 1)
+            idx = 0;
+    }
     }
 }
 
@@ -607,6 +622,8 @@ void ST_Ticker(void)
 
         if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
             continue;
+
+        ST_updateWidgets(i);
 
         if(!P_IsPaused())
         {
@@ -624,7 +641,25 @@ void ST_Ticker(void)
                     hud->hideAmount += 0.1f;
             }
 
-            ST_updateWidgets(i);
+            // Current artifact.
+            if(hud->artifactFlash)
+            {
+                hud->currentInvIdx = 5 - hud->artifactFlash;
+                hud->artifactFlash--;
+                hud->oldCurrentArtifact = -1; // So that the correct artifact fills in after the flash.
+            }
+            else if(hud->oldCurrentArtifact != plr->readyArtifact ||
+                    hud->oldCurrentArtifactCount != plr->inventory[hud->invPtr].count)
+            {
+
+                if(plr->readyArtifact > 0)
+                {
+                    hud->currentInvIdx = plr->readyArtifact + 5;
+                }
+
+                hud->oldCurrentArtifact = plr->readyArtifact;
+                hud->oldCurrentArtifactCount = plr->inventory[hud->invPtr].count;
+            }
 
             if(mapTime & 1)
             {
@@ -657,11 +692,20 @@ void ST_Ticker(void)
                 }
             }
 
-            // Turn inventory off after a certain amount of time.
-            if(hud->inventory && !(--hud->inventoryTics))
+            if(hud->inventory)
             {
-                plr->readyArtifact = plr->inventory[plr->invPtr].type;
-                hud->inventory = false;
+                // Turn inventory off after a certain amount of time?
+                if(cfg.inventoryTimer == 0)
+                {
+                    hud->inventoryTics = 0;
+                }
+                else
+                {
+                    if(hud->inventoryTics > 0)
+                        hud->inventoryTics--;
+                    if(hud->inventoryTics == 0 && cfg.inventoryTimer > 0)
+                        ST_Inventory(i, false); // Close the inventory.
+                }
             }
         }
     }
@@ -707,7 +751,7 @@ void ST_doPaletteStuff(int player)
 
 static void drawWidgets(hudstate_t* hud)
 {
-    int                 x, i;
+    int                 i;
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
     boolean             refresh = true;
@@ -738,38 +782,61 @@ static void drawWidgets(hudstate_t* hud)
         if(plr->readyArtifact > 0)
         {
             STlib_updateMultIcon(&hud->wCurrentArtifact, refresh);
-            if(!hud->artifactFlash && plr->inventory[plr->invPtr].count > 1)
+            if(!hud->artifactFlash && plr->inventory[hud->invPtr].count > 1)
                 STlib_updateNum(&hud->wCurrentArtifactCount, refresh);
         }
     }
     else
     {   // Draw Inventory.
-        x = plr->invPtr - plr->curPos;
+        uint                i, idx, slot, from, to, first, selected,
+                            numVisSlots, maxVisSlots;
+        int                 x;
 
+        maxVisSlots = NUMVISINVSLOTS;
+
+        inventoryIndexes(plr, hud, maxVisSlots, hud->invFixedCursorPos,
+                         &first, &selected);
+
+        from = 0;
+        to = maxVisSlots;
+        numVisSlots = to - from;
+
+        x = ST_INVENTORYX;
+
+        idx = first;
+        slot = 0;
         for(i = 0; i < NUMVISINVSLOTS; ++i)
         {
-            if(plr->inventory[x + i].type != AFT_NONE)
+            if(plr->inventory[idx].type != AFT_NONE)
             {
                 STlib_updateMultIcon(&hud->wInvSlots[i], refresh);
 
-                if(plr->inventory[x + i].count > 1)
+                if(plr->inventory[idx].count > 1)
                     STlib_updateNum(&hud->wInvSlotsCount[i], refresh);
             }
+
+            if(i == selected)
+                GL_DrawPatchLitAlpha(x + slot * 31, 189, 1, hud->statusbarCounterAlpha,
+                                     artifactSelectBox.lump);
+            if(++idx > plr->inventorySlotNum - 1)
+                idx = 0;
+            slot++;
         }
 
-        // Draw selector box.
-        GL_DrawPatchLitAlpha(ST_INVENTORYX + plr->curPos * 31, 189, 1,
-                             hud->statusbarCounterAlpha, artifactSelectBox.lump);
+        if(plr->inventorySlotNum > maxVisSlots)
+        {
+            uint                n = hud->invPtr - selected;
 
-        // Draw more left indicator.
-        if(x != 0)
-            GL_DrawPatchLitAlpha(38, 159, 1, hud->statusbarCounterAlpha,
-                                 !(mapTime & 4) ? invPageLeft.lump : invPageLeft2.lump);
+            // Draw more left indicator.
+            if(cfg.inventoryWrap || n != 0)
+                GL_DrawPatchLitAlpha(38, 159, 1, hud->statusbarCounterAlpha,
+                                     !(mapTime & 4) ? invPageLeft.lump : invPageLeft2.lump);
 
-        // Draw more right indicator.
-        if(plr->inventorySlotNum - x > 7)
-            GL_DrawPatchLitAlpha(269, 159, 1, hud->statusbarCounterAlpha,
-                                 !(mapTime & 4) ? invPageRight.lump : invPageRight2.lump);
+            // Draw more right indicator.
+            if(cfg.inventoryWrap || plr->inventorySlotNum - n > numVisSlots)
+                GL_DrawPatchLitAlpha(269, 159, 1, hud->statusbarCounterAlpha,
+                                     !(mapTime & 4) ? invPageRight.lump : invPageRight2.lump);
+        }
     }
 }
 
@@ -790,16 +857,14 @@ void ST_Inventory(int player, boolean show)
     if(show)
     {
         hud->inventory = true;
-
         hud->inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
-        if(hud->inventoryTics < 1)
-            hud->inventoryTics = 1;
 
         ST_HUDUnHide(player, HUE_FORCE);
     }
     else
     {
         hud->inventory = false;
+        plr->readyArtifact = plr->inventory[hud->invPtr].type;
     }
 }
 
@@ -818,6 +883,105 @@ boolean ST_IsInventoryVisible(int player)
     hud = &hudStates[player];
 
     return hud->inventory;
+}
+
+boolean ST_InventorySelect(int player, artitype_e arti)
+{
+    uint                i;
+    player_t*           plr;
+    hudstate_t*         hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return false;
+
+    plr = &players[player];
+    hud = &hudStates[player];
+
+    i = 0;
+    while(plr->inventory[i].type != arti && i < plr->inventorySlotNum)
+        i++;
+
+    if(i != plr->inventorySlotNum)
+    {
+        plr->readyArtifact = plr->inventory[i].type;
+        hud->invVarCursorPos = hud->invFixedCursorPos = 0;
+        hud->invPtr = i;
+        return true;
+    }
+
+    return false;
+}
+
+boolean ST_InventoryMove(int player, int dir, boolean silent)
+{
+    player_t*           plr;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return false;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return false;
+
+    if(plr->inventorySlotNum > 1)
+    {
+        hudstate_t*         hud = &hudStates[player];
+
+        if(dir == -1)
+        {
+            if(hud->invPtr == 0)
+            {
+                if(cfg.inventoryWrap)
+                    hud->invPtr = plr->inventorySlotNum - 1;
+            }
+            else
+                hud->invPtr--;
+
+            // First the fixed range statusbar cursor.
+            if(hud->invFixedCursorPos > 0)
+                hud->invFixedCursorPos--;
+
+            // Now the variable range full-screen cursor.
+            if(hud->invVarCursorPos > 0)
+                hud->invVarCursorPos--;
+        }
+        else if(dir == 1)
+        {
+            uint                maxVisSlots;
+
+            if(hud->invPtr == plr->inventorySlotNum - 1)
+            {
+                if(cfg.inventoryWrap)
+                    hud->invPtr = 0;
+            }
+            else
+                hud->invPtr++;
+
+            // First the fixed range statusbar cursor.
+            if(hud->invFixedCursorPos < NUMVISINVSLOTS - 1 &&
+               !(hud->invFixedCursorPos + 1 > plr->inventorySlotNum - 1))
+                hud->invFixedCursorPos++;
+
+            // Now the variable range full-screen cursor.
+            if(cfg.inventorySlotMaxVis)
+                maxVisSlots = cfg.inventorySlotMaxVis;
+            else
+                maxVisSlots = NUM_ARTIFACT_TYPES - 1;
+
+            if(hud->invVarCursorPos < maxVisSlots - 1 &&
+               !(hud->invVarCursorPos + 1 > plr->inventorySlotNum - 1))
+                hud->invVarCursorPos++;
+        }
+
+        if(!silent)
+        {
+            hud->inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
+        }
+
+        plr->readyArtifact = plr->inventory[hud->invPtr].type;
+    }
+
+    return true;
 }
 
 void ST_InventoryFlashCurrent(int player)
@@ -1103,6 +1267,76 @@ void ST_doRefresh(int player)
     }
 }
 
+static void inventoryIndexes(const player_t* plr, const hudstate_t* hud,
+                             uint maxVisSlots, int origCursor,
+                             uint* firstVisible, uint* cursorPos)
+{
+    int                 cursor, first;
+
+    if(!firstVisible && !cursorPos)
+        return;
+
+    if(cfg.inventoryWrap)
+    {
+        cursor = origCursor;
+        first = hud->invPtr - origCursor;
+
+        if(first < 0)
+            first += plr->inventorySlotNum;
+    }
+    else
+    {
+        if(plr->inventorySlotNum < maxVisSlots)
+        {
+            cursor = hud->invPtr;
+            first = 0;
+        }
+        else
+        {
+            cursor = origCursor;
+            first = hud->invPtr - origCursor;
+
+            if(first < 0)
+            {
+                cursor += first;
+                first = 0;
+            }
+            else if(first + maxVisSlots > plr->inventorySlotNum - 1)
+            {
+                cursor += 0 - (plr->inventorySlotNum - maxVisSlots - first);
+                first = plr->inventorySlotNum - maxVisSlots;
+            }
+        }
+    }
+
+    if(firstVisible)
+        *firstVisible = (unsigned) first;
+    if(cursorPos)
+        *cursorPos = (unsigned) cursor;
+}
+
+static void drawInventoryItem(const player_t* plr, uint idx,
+                              int x, int y, float iconAlpha, float countAlpha)
+{
+#define COUNT_XOFFSET       19
+#define COUNT_YOFFSET       22
+
+    if(idx < plr->inventorySlotNum &&
+       plr->inventory[idx].type != AFT_NONE)
+    {
+        int                 lump = // Plus 5 for useitem flashes.
+            W_GetNumForName(artifactList[plr->inventory[idx].type + 5]);
+
+        GL_DrawPatchLitAlpha(x, y, 1, iconAlpha, lump);
+        DrSmallNumber(plr->inventory[idx].count,
+                      x + COUNT_XOFFSET, y + COUNT_YOFFSET, 1, 1, 1,
+                      countAlpha);
+    }
+
+#undef COUNT_XOFFSET
+#undef COUNT_YOFFSET
+}
+
 void ST_doFullscreenStuff(int player)
 {
     int                 i, x, temp = 0;
@@ -1213,61 +1447,130 @@ Draw_EndZoom();
 
     if(!hud->inventory)
     {
-        if(cfg.hudShown[HUD_ARTI] && plr->readyArtifact > 0)
+        if(cfg.hudShown[HUD_CURRENTITEM] && plr->readyArtifact > 0)
         {
 Draw_BeginZoom(cfg.hudScale, 318, 198);
 
             GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha / 2,
                                  W_GetNumForName("ARTIBOX"));
             GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha,
-                                 W_GetNumForName(artifactList[plr->readyArtifact + 5]));  //plus 5 for useartifact flashes
-            DrSmallNumber(plr->inventory[plr->invPtr].count, 307, 188, 1,
+                                 W_GetNumForName(artifactList[hud->currentInvIdx]));
+            DrSmallNumber(plr->inventory[hud->invPtr].count, 307, 188, 1,
                           1, 1, textAlpha);
 Draw_EndZoom();
         }
     }
     else
     {
-        float               invScale;
+        uint                i, idx, slot, from, to, first, selected,
+                            numVisSlots, maxVisSlots;
+        float               invScale, lightDelta;
 
-        invScale = MINMAX_OF(0.25f, cfg.hudScale - 0.25f, 0.8f);
+        if(cfg.inventorySlotMaxVis)
+            maxVisSlots = cfg.inventorySlotMaxVis;
+        else
+            maxVisSlots = NUM_ARTIFACT_TYPES - 1;
+
+        inventoryIndexes(plr, hud, maxVisSlots, hud->invVarCursorPos,
+                         &first, &selected);
+
+        from = 0;
+        to = maxVisSlots;
+        numVisSlots = to - from;
+
+        if(plr->inventorySlotNum < numVisSlots)
+        {
+            int                 shift =
+                (numVisSlots - plr->inventorySlotNum) / 2;
+
+            from = shift;
+            selected += shift;
+
+            to = numVisSlots -
+                (int) ceil((float) (numVisSlots - plr->inventorySlotNum) / 2);
+        }
+        if(!cfg.inventorySlotShowEmpty)
+            numVisSlots = to - from;
+
+        {
+#define EXTRA_SCALE         .75f
+
+        float               availWidth = SCREENWIDTH - 50 * 2,
+                            width = (numVisSlots * 31) * EXTRA_SCALE;
+
+        if(width > availWidth)
+            invScale = availWidth / width;
+        else
+            invScale = 1;
+        invScale *= cfg.hudScale * EXTRA_SCALE;
+
+#undef EXTRA_SCALE
+        }
+
+        x = 160;
+        x -= (numVisSlots * 31) / 2;
+
+        if(numVisSlots % 2)
+            lightDelta = 1.f / numVisSlots;
+        else
+            lightDelta = 1.f / (numVisSlots - 1);
+        lightDelta *= 2;
 
 Draw_BeginZoom(invScale, 160, 198);
 
-        x = plr->invPtr - plr->curPos;
-        for(i = 0; i < 7; ++i)
+        slot = 0;
+        for(i = cfg.inventorySlotShowEmpty? 0 : from;
+            i < (cfg.inventorySlotShowEmpty? numVisSlots : to); ++i)
         {
-            GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconAlpha/2, W_GetNumForName("ARTIBOX"));
-            if(plr->inventorySlotNum > x + i &&
-               plr->inventory[x + i].type != AFT_NONE)
+            float               light, alpha;
+
+            if(slot < numVisSlots / 2)
+                light = (slot + 1) * lightDelta;
+            else
+                light = (numVisSlots - slot) * lightDelta;
+            alpha = (i == selected? iconAlpha / 2 : light / 2);
+
+            GL_DrawPatchLitAlpha(x + slot * 31, 168,
+                                 light, alpha, W_GetNumForName("ARTIBOX"));
+            slot++;
+        }
+
+        idx = first;
+        slot = cfg.inventorySlotShowEmpty? from : 0;
+        for(i = from; i < to; ++i)
+        {
+            drawInventoryItem(plr, idx, x + slot * 31, 168,
+                              i == selected? hud->alpha : iconAlpha / 3,
+                              i == selected? hud->alpha : textAlpha / 2);
+
+            if(i == selected)
+                GL_DrawPatchLitAlpha(x + slot * 31, 197, 1, hud->alpha,
+                                     artifactSelectBox.lump);
+
+            if(++idx > plr->inventorySlotNum - 1)
+                idx = 0;
+            slot++;
+        }
+
+        if(plr->inventorySlotNum > maxVisSlots)
+        {
+#define CURSOR_XOFFSET          2
+
+            uint                n = hud->invPtr - selected;
+
+            if(cfg.inventoryWrap || n != 0)
             {
-                int                 lump;
-
-                // Plus 5 for useartifact flashes.
-                lump = W_GetNumForName(
-                    artifactList[plr->inventory[x + i].type + 5]);
-
-                GL_DrawPatchLitAlpha(50 + i * 31, 168, 1,
-                                     i == plr->curPos? hud->alpha : iconAlpha,
-                                     lump);
-                DrSmallNumber(plr->inventory[x + i].count, 69 + i * 31,
-                              190, 1, 1, 1,
-                              i == plr->curPos? hud->alpha : textAlpha / 2);
+                GL_DrawPatchLitAlpha(x - invPageLeft.width - CURSOR_XOFFSET, 177, 1, iconAlpha,
+                                     !(mapTime & 4)? invPageLeft.lump : invPageLeft2.lump);
             }
-        }
 
-        GL_DrawPatchLitAlpha(50 + plr->curPos * 31, 197, 1, hud->alpha,
-                             artifactSelectBox.lump);
-        if(x != 0)
-        {
-            GL_DrawPatchLitAlpha(38, 167, 1, iconAlpha,
-                                 !(mapTime & 4)? invPageLeft.lump : invPageLeft2.lump);
-        }
+            if(cfg.inventoryWrap || plr->inventorySlotNum - n > numVisSlots)
+            {
+                GL_DrawPatchLitAlpha(x + numVisSlots * 31 + CURSOR_XOFFSET, 177, 1, iconAlpha,
+                                     !(mapTime & 4)? invPageRight.lump : invPageRight2.lump);
+            }
 
-        if(plr->inventorySlotNum - x > 7)
-        {
-            GL_DrawPatchLitAlpha(269, 167, 1, iconAlpha,
-                                 !(mapTime & 4)? invPageRight.lump : invPageRight2.lump);
+#undef CURSOR_XOFFSET
         }
 
 Draw_EndZoom();
@@ -1432,21 +1735,16 @@ static void initData(hudstate_t* hud)
     STlib_init();
 
     hud->firstTime = true;
-    hud->inventory = false;
     hud->stopped = true;
     hud->showBar = 0.0f;
     hud->alpha = 0.0f;
 
     hud->tomePlay = 0;
     hud->statusbarCounterAlpha = 0.0f;
-    hud->currentInvIdx = 0;
     hud->blended = false;
-    hud->oldCurrentArtifact = 0;
-    hud->oldCurrentArtifactCount = 0;
     hud->oldAmmoIconIdx = -1;
     hud->oldReadyWeapon = -1;
     hud->oldHealth = -1;
-    hud->currentInvIdx = 0;
     hud->currentAmmoIconIdx = 0;
 
     hud->statusbarActive = true;
@@ -1456,11 +1754,19 @@ static void initData(hudstate_t* hud)
         hud->keyBoxes[i] = false;
     }
 
+    hud->inventory = false;
+    hud->inventoryTics = 0;
+    hud->invVarCursorPos = hud->invFixedCursorPos = 0;
+    hud->invPtr = 0;
     for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
         hud->invSlots[i] = 0;
         hud->invSlotsCount[i] = 0;
     }
+
+    hud->currentInvIdx = 0;
+    hud->oldCurrentArtifact = 0;
+    hud->oldCurrentArtifactCount = 0;
 
     ST_HUDUnHide(player, HUE_FORCE);
 }
@@ -1611,6 +1917,25 @@ void ST_Init(void)
     ST_loadData();
 }
 
+void ST_ResizeInventory(cvar_t* unused)
+{
+    int                 i;
+    uint                maxVisSlots;
+
+    if(cfg.inventorySlotMaxVis)
+        maxVisSlots = cfg.inventorySlotMaxVis;
+    else
+        maxVisSlots = NUM_ARTIFACT_TYPES - 1;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        hudstate_t*         hud = &hudStates[i];
+
+        if(hud->invVarCursorPos >= maxVisSlots)
+            hud->invVarCursorPos = maxVisSlots - 1;
+    }
+}
+
 /**
  * Console command to change the size of the status bar.
  */
@@ -1625,10 +1950,7 @@ DEFCC(CCmdStatusBarSize)
     else
         *val = strtol(argv[1], NULL, 0);
 
-    if(*val < min)
-        *val = min;
-    if(*val > max)
-        *val = max;
+    *val = MINMAX_OF(min, *val, max);
 
     // Update the view size if necessary.
     R_SetViewSize(cfg.screenBlocks);

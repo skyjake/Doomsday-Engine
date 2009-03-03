@@ -404,6 +404,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(flags & PSF_INVENTORY)
     {
+        uint                i;
+
         pl->inventorySlotNum = NetCl_ReadByte();
         for(i = 0; i < NUMINVENTORYSLOTS; ++i)
         {
@@ -423,11 +425,6 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
                 ST_HUDUnHide(pl - players, HUE_ON_PICKUP_INVITEM);
             }
         }
-
-#  if __JHERETIC__
-        if(plrNum == CONSOLEPLAYER)
-            P_InventoryCheckReadyArtifact(&players[CONSOLEPLAYER]);
-#  endif
     }
 #endif
 

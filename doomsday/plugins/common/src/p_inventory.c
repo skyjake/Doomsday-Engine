@@ -74,19 +74,20 @@ boolean         usearti = true;
  */
 uint P_InventoryCount(player_t* player, artitype_e arti)
 {
-    int                 i;
-    uint                count;
+    uint                count = 0;
 
-    if(!player || arti < AFT_NONE + 1 || arti > NUM_ARTIFACT_TYPES - 1)
-        return 0;
-
-    count = 0;
-    for(i = 0; i < player->inventorySlotNum; ++i)
+    if(player && (arti == AFT_NONE ||
+                 (arti >= AFT_FIRST && arti < NUM_ARTIFACT_TYPES)))
     {
-        if(arti != AFT_NONE && player->inventory[i].type != arti)
-            continue;
+        uint                i;
 
-        count += player->inventory[i].count;
+        for(i = 0; i < player->inventorySlotNum; ++i)
+        {
+            if(arti != AFT_NONE && player->inventory[i].type != arti)
+                continue;
+
+            count += player->inventory[i].count;
+        }
     }
 
     return count;
@@ -102,15 +103,15 @@ uint P_InventoryCount(player_t* player, artitype_e arti)
  */
 boolean P_InventoryGive(player_t* player, artitype_e arti)
 {
-    int                 i;
-# if __JHEXEN__
-    boolean             slidePointer = false;
-# endif
+    uint                i;
+    uint                oldNumArtifacts;
+    boolean             givenArtifact = false;
 
     if(!player || arti < AFT_NONE + 1 || arti > NUM_ARTIFACT_TYPES - 1)
         return false;
 
-    player->update |= PSF_INVENTORY;
+    // Count total number of owned artifacts.
+    oldNumArtifacts = P_InventoryCount(player, AFT_NONE);
 
     i = 0;
     while(player->inventory[i].type != arti && i < player->inventorySlotNum)
@@ -124,20 +125,17 @@ boolean P_InventoryGive(player_t* player, artitype_e arti)
             i = 0;
             while(player->inventory[i].type < AFT_FIRSTPUZZITEM &&
                   i < player->inventorySlotNum)
-            {
                 i++;
-            }
 
             if(i != player->inventorySlotNum)
             {
-                int             j;
+                uint                j;
 
                 for(j = player->inventorySlotNum; j > i; j--)
                 {
                     player->inventory[j].count =
                         player->inventory[j - 1].count;
                     player->inventory[j].type = player->inventory[j - 1].type;
-                    slidePointer = true;
                 }
             }
         }
@@ -145,6 +143,9 @@ boolean P_InventoryGive(player_t* player, artitype_e arti)
         player->inventory[i].count = 1;
         player->inventory[i].type = arti;
         player->inventorySlotNum++;
+        player->update |= PSF_INVENTORY;
+
+        givenArtifact = true;
     }
     else
     {
@@ -160,26 +161,23 @@ boolean P_InventoryGive(player_t* player, artitype_e arti)
         }
 
         player->inventory[i].count++;
+        player->update |= PSF_INVENTORY;
+
+        givenArtifact = true;
     }
 
-    if(!P_InventoryCount(player, AFT_NONE))
-    {   // This is the first artifact the player has been given; ready it.
-        player->readyArtifact = arti;
-    }
-# if __JHEXEN__
-    else if(slidePointer && i <= player->invPtr)
+    if(givenArtifact)
     {
-        player->invPtr++;
-        player->curPos++;
-        if(player->curPos > 6)
-        {
-            player->curPos = 6;
-        }
-    }
-# endif
+        int                 plrnum = player - players;
 
-    // Maybe unhide the HUD?
-    ST_HUDUnHide(player - players, HUE_ON_PICKUP_INVITEM);
+        if(oldNumArtifacts == 0)
+        {   // This is the first artifact the player has been given; ready it.
+            ST_InventorySelect(plrnum, arti);
+        }
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plrnum, HUE_ON_PICKUP_INVITEM);
+    }
 
     return true;
 }
@@ -187,112 +185,38 @@ boolean P_InventoryGive(player_t* player, artitype_e arti)
 /**
  * Take one of the specified artifact from the player (if owned).
  */
-void P_InventoryTake(player_t* player, int slot)
+void P_InventoryTake(player_t* player, artitype_e arti)
 {
-    int                 i;
+    uint                i;
 
-    if(!player || slot < 0 || slot > NUMINVENTORYSLOTS)
+    if(!player || arti < AFT_NONE + 1 || arti > NUM_ARTIFACT_TYPES - 1)
         return;
 
     player->update |= PSF_INVENTORY;
 
-    if(!(--player->inventory[slot].count))
-    {   // Used last of a type - compact the artifact list
-        player->readyArtifact = AFT_NONE;
-        player->inventory[slot].type = AFT_NONE;
-
-        for(i = slot + 1; i < player->inventorySlotNum; ++i)
-        {
-            player->inventory[i - 1] = player->inventory[i];
-        }
-
-        player->inventorySlotNum--;
-
-        // Set position markers and get next readyArtifact.
-        player->invPtr--;
-        if(player->invPtr < 6)
-        {
-            player->curPos--;
-            if(player->curPos < 0)
-                player->curPos = 0;
-        }
-
-        if(player->invPtr >= player->inventorySlotNum)
-            player->invPtr = player->inventorySlotNum - 1;
-
-        if(player->invPtr < 0)
-            player->invPtr = 0;
-
-        player->readyArtifact = player->inventory[player->invPtr].type;
-    }
-}
-
-# if __JHERETIC__
-void P_InventoryCheckReadyArtifact(player_t* player)
-{
-    if(!player)
-        return;
-
-    if(!player->inventory[player->invPtr].count)
+    for(i = 0; i < player->inventorySlotNum; ++i)
     {
-        // Set position markers and get next readyArtifact.
-        player->invPtr--;
-        if(player->invPtr < 6)
-        {
-            player->curPos--;
-            if(player->curPos < 0)
-            {
-                player->curPos = 0;
-            }
-        }
+        if(player->inventory[i].type != arti)
+            continue;
 
-        if(player->invPtr >= player->inventorySlotNum)
-        {
-            player->invPtr = player->inventorySlotNum - 1;
-        }
+        if(!(--player->inventory[i].count))
+        {   // Used last of a type - compact the artifact list
+            uint                j;
 
-        if(player->invPtr < 0)
-        {
-            player->invPtr = 0;
-        }
-
-        player->readyArtifact = player->inventory[player->invPtr].type;
-
-        if(!player->inventorySlotNum)
             player->readyArtifact = AFT_NONE;
-    }
-}
-# endif
+            player->inventory[i].type = AFT_NONE;
 
-void P_InventoryNext(player_t* player)
-{
-    if(!player)
-        return;
+            for(j = i + 1; j < player->inventorySlotNum; ++j)
+            {
+                player->inventory[j - 1] = player->inventory[j];
+            }
 
-    player->invPtr--;
-    if(player->invPtr < 6)
-    {
-        player->curPos--;
-        if(player->curPos < 0)
-        {
-            player->curPos = 0;
+            player->inventorySlotNum--;
+
+            // Set position markers and get next readyArtifact.
+            ST_InventoryMove(player - players, -1, true);
         }
     }
-
-    if(player->invPtr < 0)
-    {
-        player->invPtr = player->inventorySlotNum - 1;
-        if(player->invPtr < 6)
-        {
-            player->curPos = player->invPtr;
-        }
-        else
-        {
-            player->curPos = 6;
-        }
-    }
-
-    player->readyArtifact = player->inventory[player->invPtr].type;
 }
 
 boolean P_InventoryUse(player_t* player, artitype_e arti)
@@ -349,7 +273,7 @@ boolean P_InventoryUse(player_t* player, artitype_e arti)
 # endif
         {NULL, SFX_NONE}
     };
-    int                 i;
+    uint                i;
     boolean             success = false;
 
     if(!player || arti < AFT_NONE + 1 || arti > NUM_ARTIFACT_TYPES - 1)
@@ -362,7 +286,7 @@ boolean P_InventoryUse(player_t* player, artitype_e arti)
             if(artifacts[arti - 1].func(player))
             {   // Artifact was used.
                 success = true;
-                P_InventoryTake(player, i);
+                P_InventoryTake(player, arti);
                 S_ConsoleSound(artifacts[arti - 1].useSnd, NULL,
                                player - players);
 
@@ -371,12 +295,12 @@ boolean P_InventoryUse(player_t* player, artitype_e arti)
             else
             {   // Unable to use artifact.
                 // Set current artifact to the next available?
-                if(cfg.inventoryNextOnUnuse)
+                if(cfg.inventoryUseNext)
                 {
 # if __JHEXEN__
                     if(arti < AFT_FIRSTPUZZITEM)
 # endif
-                        P_InventoryNext(player);
+                        ST_InventoryMove(player - players, -1, true);
                 }
             }
 
@@ -385,94 +309,6 @@ boolean P_InventoryUse(player_t* player, artitype_e arti)
     }
 
     return success;
-}
-
-void P_InventoryResetCursor(player_t* player)
-{
-    if(!player)
-        return;
-
-    player->invPtr = 0;
-    player->curPos = 0;
-}
-
-/**
- * Does not bother to check the validity of the params as the only
- * caller is DEFCC(CCmdInventory) (bellow).
- */
-static boolean P_InventoryMove(player_t* plr, int dir)
-{
-    int                 player = plr - players;
-
-    if(!ST_IsInventoryVisible(player))
-    {
-        ST_Inventory(player, true);
-        return false;
-    }
-
-    ST_Inventory(player, true); // Reset the inventory auto-hide timer.
-
-    if(dir == 0)
-    {
-        plr->invPtr--;
-        if(plr->invPtr < 0)
-        {
-            plr->invPtr = 0;
-        }
-        else
-        {
-            plr->curPos--;
-            if(plr->curPos < 0)
-            {
-                plr->curPos = 0;
-            }
-        }
-    }
-    else
-    {
-        plr->invPtr++;
-        if(plr->invPtr >= plr->inventorySlotNum)
-        {
-            plr->invPtr--;
-            if(plr->invPtr < 0)
-                plr->invPtr = 0;
-        }
-        else
-        {
-            plr->curPos++;
-            if(plr->curPos > 6)
-            {
-                plr->curPos = 6;
-            }
-        }
-    }
-    return true;
-}
-
-/**
- * Move the inventory selector
- */
-DEFCC(CCmdInventory)
-{
-    int                 player = CONSOLEPLAYER;
-
-    if(argc > 2)
-    {
-        Con_Printf("Usage: %s (player)\n", argv[0]);
-        Con_Printf("If player is not specified, will default to CONSOLEPLAYER.\n");
-        return true;
-    }
-
-    if(argc == 2)
-        player = strtol(argv[1], NULL, 0);
-
-    if(player < 0)
-        player = 0;
-    if(player > MAXPLAYERS -1)
-        player = MAXPLAYERS -1;
-
-    P_InventoryMove(&players[player], !stricmp(argv[0], "invright"));
-    return true;
 }
 
 #endif

@@ -73,6 +73,9 @@ void            P_PlayerThinkJump(player_t *player);
 void            P_PlayerThinkView(player_t *player);
 void            P_PlayerThinkSpecial(player_t *player);
 void            P_PlayerThinkSounds(player_t *player);
+#if __JHERETIC__ || __JHEXEN__
+void            P_PlayerThinkInventory(player_t* player);
+#endif
 void            P_PlayerThinkItems(player_t *player);
 void            P_PlayerThinkWeapons(player_t *player);
 void            P_PlayerThinkUse(player_t *player);

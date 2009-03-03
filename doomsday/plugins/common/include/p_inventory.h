@@ -39,19 +39,10 @@
 extern boolean useArti;
 
 boolean         P_InventoryGive(player_t* player, artitype_e arti);
-void            P_InventoryTake(player_t* player, int slot);
+void            P_InventoryTake(player_t* player, artitype_e arti);
 
 boolean         P_InventoryUse(player_t* player, artitype_e arti);
 uint            P_InventoryCount(player_t* player, artitype_e arti);
-
-void            P_InventoryResetCursor(player_t* player);
-void            P_InventoryNext(player_t* player);
-
-#if __JHERETIC__
-void            P_InventoryCheckReadyArtifact(player_t* player);
-#endif
-
-DEFCC(CCmdInventory);
 
 #endif
 #endif

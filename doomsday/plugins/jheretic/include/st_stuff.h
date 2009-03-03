@@ -61,9 +61,10 @@ void        ST_updateGraphics(void);
 // Called when it might be neccessary for the hud to unhide.
 void        ST_HUDUnHide(int player, hueevent_t ev);
 
-void        ST_Inventory(int player, boolean show);
-boolean     ST_IsInventoryVisible(int player);
-
-void        ST_InventoryFlashCurrent(int player);
+void            ST_Inventory(int player, boolean show);
+boolean         ST_IsInventoryVisible(int player);
+boolean         ST_InventorySelect(int player, artitype_e arti);
+boolean         ST_InventoryMove(int player, int dir, boolean silent);
+void            ST_InventoryFlashCurrent(int player);
 
 #endif

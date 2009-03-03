@@ -158,10 +158,8 @@ typedef struct player_s {
     // DJS - Here follows Heretic specific player_t properties
     //
     inventory_t     inventory[NUMINVENTORYSLOTS];
-    int             invPtr;
-    int             curPos;
+    uint            inventorySlotNum;
     artitype_e      readyArtifact;
-    int             inventorySlotNum;
 
     int             flameCount; // For flame thrower duration.
 

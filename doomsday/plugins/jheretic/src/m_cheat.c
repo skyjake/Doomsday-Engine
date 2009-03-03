@@ -571,41 +571,25 @@ static void cheatTickerFunc(player_t* player, cheatseq_t* cheat)
        } */
 }
 
-static void cheatArtifact1Func(player_t *player, cheatseq_t * cheat)
+static void cheatArtifact1Func(player_t* player, cheatseq_t* cheat)
 {
     P_SetMessage(player, TXT_CHEATARTIFACTS1, false);
 }
 
-static void cheatArtifact2Func(player_t *player, cheatseq_t * cheat)
+static void cheatArtifact2Func(player_t* player, cheatseq_t* cheat)
 {
     P_SetMessage(player, TXT_CHEATARTIFACTS2, false);
 }
 
-static void cheatArtifact3Func(player_t *player, cheatseq_t * cheat)
+static void cheatArtifact3Func(player_t* player, cheatseq_t* cheat)
 {
-    int     i;
-    artitype_e type;
-    int     count;
+    int                 i;
+    artitype_e          type;
+    int                 count;
 
     type = cheat->args[0] - 'a' + 1;
     count = cheat->args[1] - '0';
-    if(type == 26 && count == 0)
-    {                           // All artifacts
-        for(type = AFT_NONE + 1; type < NUM_ARTIFACT_TYPES; type++)
-        {
-            if(gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
-            {
-                continue;
-            }
-
-            for(i = 0; i < MAXARTICOUNT; i++)
-            {
-                P_InventoryGive(player, type);
-            }
-        }
-        P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
-    }
-    else if(type > AFT_NONE && type < NUM_ARTIFACT_TYPES && count > 0 && count < 10)
+    if(type > AFT_NONE && type < NUM_ARTIFACT_TYPES && count > 0 && count < 10)
     {
         if(gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
         {
@@ -620,7 +604,7 @@ static void cheatArtifact3Func(player_t *player, cheatseq_t * cheat)
         P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
     }
     else
-    {                           // Bad input
+    {   // Bad input
         P_SetMessage(player, TXT_CHEATARTIFACTSFAIL, false);
     }
 }
@@ -880,13 +864,26 @@ DEFCC(CCmdCheatGive)
 
         case 'f':
             {
-            cheatseq_t cheat;
+            artitype_e          type;
+
+            // All artifacts
+            for(type = AFT_FIRST; type < NUM_ARTIFACT_TYPES; ++type)
+            {
+                int                 i;
+
+                if(gameMode == shareware &&
+                   (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
+                {
+                    continue;
+                }
+
+                for(i = 0; i < MAXARTICOUNT; ++i)
+                {
+                    P_InventoryGive(plyr, type);
+                }
+            }
 
             Con_Printf("Artifacts given.\n");
-
-            cheat.args[0] = 'z';
-            cheat.args[1] = '0';
-            cheatArtifact3Func(plyr, &cheat);
             break;
             }
 

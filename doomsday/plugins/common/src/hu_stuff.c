@@ -1988,13 +1988,15 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, float red,
 /**
  * Draws a menu slider control
  */
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
 void M_DrawSlider(int x, int y, int width, int slot, float alpha)
 #else
 void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 #endif
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
+    float               unit = (width * 8 + 2) / width;
+
     DGL_Color4f( 1, 1, 1, alpha);
 
     GL_DrawPatch_CS(x - 32, y, W_GetNumForName("M_SLDLT"));
@@ -2004,7 +2006,7 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
     DGL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
 
     DGL_Color4f( 1, 1, 1, alpha);
-    GL_DrawPatch_CS(x + 4 + slot * 8, y + 7, W_GetNumForName("M_SLDKB"));
+    GL_DrawPatch_CS(x + 4 + slot * unit, y + 7, W_GetNumForName("M_SLDKB"));
 #else
     int         xx;
     float       scale = height / 13.0f;

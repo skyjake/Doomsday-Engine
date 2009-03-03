@@ -103,6 +103,10 @@ void M_QuitDOOM(int option, void* context);
 void M_OpenDCP(int option, void* context);
 void M_ChangeMessages(int option, void* context);
 void M_HUDHideTime(int option, void* context);
+#if __JHERETIC__ || __JHEXEN__
+void M_InventoryHideTime(int option, void* context);
+void M_InventorySlotMaxVis(int option, void* context);
+#endif
 void M_WeaponAutoSwitch(int option, void* context);
 void M_AmmoAutoSwitch(int option, void* context);
 void M_HUDInfo(int option, void* context);
@@ -149,6 +153,9 @@ void M_DrawOptions(void);
 void M_DrawOptions2(void);
 void M_DrawGameplay(void);
 void M_DrawHUDMenu(void);
+#if __JHERETIC__ || __JHEXEN__
+void M_DrawInventoryMenu(void);
+#endif
 void M_DrawMapMenu(void);
 void M_DrawWeaponMenu(void);
 void M_DrawLoad(void);
@@ -714,7 +721,10 @@ static menuitem_t OptionsItems[] = {
     {ITT_SETMENU, 0, "gameplay", NULL, MENU_GAMEPLAY},
     {ITT_SETMENU, 0, "hud", NULL, MENU_HUD},
     {ITT_SETMENU, 0, "automap", NULL, MENU_MAP},
-    {ITT_SETMENU, 0, "weapons", NULL, MENU_WEAPONSETUP},
+    {ITT_SETMENU, 0, "weapons", NULL, MENU_WEAPONS},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_SETMENU, 0, "inventory", NULL, MENU_INVENTORY},
+#endif
     {ITT_SETMENU, 0, "sound", NULL, MENU_OPTIONS2},
     {ITT_EFUNC, 0, "mouse", M_OpenDCP, 2},
     {ITT_EFUNC, 0, "joystick", M_OpenDCP, 2}
@@ -724,13 +734,23 @@ static menu_t OptionsDef = {
     0,
     110, 63,
     M_DrawOptions,
-    10, OptionsItems,
+#if __JHERETIC__ || __JHEXEN__
+    11,
+#else
+    10,
+#endif
+    OptionsItems,
     0, MENU_MAIN,
     huFontA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
-    0, 10
+    0,
+#if __JHERETIC__ || __JHEXEN__
+    11
+#else
+    10
+#endif
 };
 
 static menuitem_t Options2Items[] = {
@@ -939,7 +959,7 @@ static menuitem_t HUDItems[] = {
     {ITT_EFUNC, 0, "Show keys :", M_ToggleVar, 0, NULL, "hud-keys"},
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    {ITT_EFUNC, 0, "Show artifact :", M_ToggleVar, 0, NULL, "hud-artifact" },
+    {ITT_EFUNC, 0, "Show item :", M_ToggleVar, 0, NULL, "hud-item" },
 #endif
 };
 
@@ -975,6 +995,32 @@ static menu_t HUDDef = {
     0, 19
 #endif
 };
+
+#if __JHERETIC__ || __JHEXEN__
+static menuitem_t InventoryItems[] = {
+    {ITT_EFUNC,  0, "Wrap around :", M_ToggleVar, 0, NULL, "ctl-inventory-wrap"},
+    {ITT_EFUNC,  0, "Choose and use :", M_ToggleVar, 0, NULL, "ctl-inventory-use-immediate"},
+    {ITT_EFUNC,  0, "Next on use :", M_ToggleVar, 0, NULL, "ctl-inventory-use-next"},
+    {ITT_LRFUNC, 0, "Auto-hide :", M_InventoryHideTime, 0},
+    {ITT_EMPTY,  0, NULL, NULL, 0},
+    {ITT_EMPTY,  0, "Full-screen HUD", NULL, 0},
+    {ITT_LRFUNC, 0, "Max Visible Slots :", M_InventorySlotMaxVis, 0},
+    {ITT_EFUNC,  0, "Hide Empty Slots: ", M_ToggleVar, 0, NULL, "hud-inventory-slot-showempty"}
+};
+
+static menu_t InventoryDef = {
+    0,
+    78, 48,
+    M_DrawInventoryMenu,
+    8, InventoryItems,
+    0, MENU_OPTIONS,
+    huFontA,
+    cfg.menuColor2,
+    NULL, false,
+    LINEHEIGHT_A,
+    0, 8
+};
+#endif
 
 static menuitem_t WeaponItems[] = {
     {ITT_EMPTY,  0, "Priority order", NULL, 0},
@@ -1146,7 +1192,7 @@ menu_t* menulist[] = {
     &GameplayDef,
     &HUDDef,
     &MapDef,
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     &FilesMenu,
 #endif
     &LoadDef,
@@ -1154,6 +1200,9 @@ menu_t* menulist[] = {
     &MultiplayerMenu,
     &GameSetupMenu,
     &PlayerSetupMenu,
+#if __JHERETIC__ || __JHEXEN__
+    &InventoryDef,
+#endif
     &WeaponDef,
     &ControlsDef,
     NULL
@@ -3166,6 +3215,53 @@ void M_AmmoAutoSwitch(int option, void* context)
         cfg.ammoAutoSwitch--;
 }
 
+#if __JHERETIC__ || __JHEXEN__
+void M_DrawInventoryMenu(void)
+{
+    menu_t*             menu = &InventoryDef;
+    int                 idx = 0;
+
+    M_DrawTitle("Inventory Options", menu->y - 28);
+
+    M_WriteMenuText(menu, idx++, yesno[cfg.inventoryWrap? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.inventoryUseImmediate? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.inventoryUseNext? 1 : 0]);
+
+    // Auto-hide option:
+    {
+    char                secString[11];
+    const char*         str;
+    uint                seconds = MINMAX_OF(0, cfg.inventoryTimer, 30);
+    if(seconds > 0)
+    {
+        memset(secString, 0, sizeof(secString));
+        snprintf(secString, 10, "%2u seconds", seconds);
+        str = secString;
+    }
+    else
+        str = "Disabled";
+    M_WriteMenuText(menu, idx++, str);
+    }
+    idx += 2;
+    {
+    char                buff[3];
+    const char*         str;
+    uint                val = MINMAX_OF(0, cfg.inventorySlotMaxVis, 16);
+
+    if(val > 0)
+    {
+        memset(buff, 0, sizeof(buff));
+        snprintf(buff, 2, "%2u", val);
+        str = buff;
+    }
+    else
+        str = "Automatic";
+    M_WriteMenuText(menu, idx++, str);
+    }
+    M_WriteMenuText(menu, idx++, yesno[!cfg.inventorySlotShowEmpty? 1 : 0]);
+}
+#endif
+
 /**
  * @todo This could use a cleanup.
  */
@@ -3297,7 +3393,7 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 10, cfg.hudScale * 10 - 3 + .5f);
+    MN_DrawSlider(menu, idx++, 8, cfg.hudScale * 10 - 3 + .5f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3321,7 +3417,7 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_KEYS]]);
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARTI]]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_CURRENTITEM]]);
 #endif
 }
 
@@ -3595,13 +3691,45 @@ void M_HUDHideTime(int option, void* context)
     cfg.hudTimer = val;
 }
 
+#if __JHERETIC__ || __JHEXEN__
+void M_InventoryHideTime(int option, void* context)
+{
+    int                 val = cfg.inventoryTimer;
+
+    if(option == RIGHT_DIR)
+    {
+        if(val < 30)
+            val++;
+    }
+    else if(val > 0)
+        val--;
+
+    cfg.inventoryTimer = val;
+}
+
+void M_InventorySlotMaxVis(int option, void* context)
+{
+    int                 val = cfg.inventorySlotMaxVis;
+
+    if(option == RIGHT_DIR)
+    {
+        if(val < 16)
+            val++;
+    }
+    else if(val > 0)
+        val--;
+
+    cfg.inventorySlotMaxVis = val;
+}
+#endif
+
 void M_HUDScale(int option, void* context)
 {
     int                 val = (cfg.hudScale + .05f) * 10;
 
     if(option == RIGHT_DIR)
     {
-        if(val < 12)
+        if(val < 10)
             val++;
     }
     else if(val > 3)

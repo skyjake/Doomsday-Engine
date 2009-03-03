@@ -42,7 +42,7 @@ enum {
     HUD_ARMOR,
     HUD_KEYS,
     HUD_HEALTH,
-    HUD_ARTI
+    HUD_CURRENTITEM
 };
 
 // Hud Unhide Events (the hud will unhide on these events if enabled).
@@ -126,12 +126,11 @@ typedef struct jheretic_config_s {
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
-    float           inventoryTimer; // Number of seconds until the invetory auto-hides.
-
-    /** Compatibility options.
-    * \todo Put these into an array so we can use a bit array to change
-    * multiple options based on a compatibility mode (ala PrBoom).
-    */
+    /**
+     * Compatibility options.
+     * \todo Put these into an array so we can use a bit array to change
+     * multiple options based on a compatibility mode (ala PrBoom).
+     */
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
     byte            moveBlock; // Dont handle large negative movement in P_TryMove.
@@ -210,8 +209,12 @@ typedef struct jheretic_config_s {
 
     // jHeretic specific
     int             ringFilter;
-    int             chooseAndUse;
-    int             inventoryNextOnUnuse;
+    float           inventoryTimer; // Number of seconds until the invetory auto-hides.
+    byte            inventoryWrap;
+    byte            inventoryUseNext;
+    byte            inventoryUseImmediate;
+    int             inventorySlotMaxVis;
+    byte            inventorySlotShowEmpty;
     int             tomeCounter, tomeSound;
     byte            fastMonsters;
 } game_config_t;

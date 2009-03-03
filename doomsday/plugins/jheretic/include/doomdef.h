@@ -254,8 +254,9 @@ typedef enum {
  * Artifacts (collectable, inventory items).
  */
 typedef enum {
-    AFT_NONE,
-    AFT_INVULNERABILITY,
+    AFT_NONE = 0,
+    AFT_FIRST = 1,
+    AFT_INVULNERABILITY = AFT_FIRST,
     AFT_INVISIBILITY,
     AFT_HEALTH,
     AFT_SUPERHEALTH,

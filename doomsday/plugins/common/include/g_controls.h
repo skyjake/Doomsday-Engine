@@ -65,7 +65,9 @@ enum {
     CTL_WEAPON0,
     CTL_NEXT_WEAPON,
     CTL_PREV_WEAPON,
-    CTL_USE_ARTIFACT,
+    CTL_USE_ITEM,
+    CTL_NEXT_ITEM,
+    CTL_PREV_ITEM,
     CTL_PANIC,
     CTL_TOME_OF_POWER,
     CTL_INVISIBILITY,
@@ -105,6 +107,9 @@ typedef struct playerbrain_s {
     float       upMove;             // 1.0 for maximum movement
     int         changeWeapon;       // WT_NOCHANGE, or the weapon to change to
     int         cycleWeapon;        // +1 or -1
+#if __JHERETIC__ || __JHEXEN__
+    int         cycleArtifact;      // +1 or -1
+#endif
     // Bits:
     uint        speed : 1;
     uint        use : 1;
@@ -121,6 +126,9 @@ typedef struct playerbrain_s {
     uint        hudShow : 1;
     uint        scoreShow : 1;
     uint        doReborn: 1; // Set when the player wishes to be reborn.
+#if __JHERETIC__ || __JHEXEN__
+    uint        useArtifact: 1;
+#endif
 } playerbrain_t;
 
 void        G_ControlRegister(void);

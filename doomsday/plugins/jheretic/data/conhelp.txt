@@ -165,12 +165,6 @@ desc = Set camera viewlock.
 desc = Set camera viewlock mode.
 inf = Params: lockmode (0-1).
 
-[invleft]
-desc = Move inventory cursor to the left.
-
-[invright]
-desc = Move inventory cursor to the right.
-
 [chicken]
 desc = Turn yourself into a chicken. Go ahead.
 
@@ -639,10 +633,13 @@ desc = 1=Always run.
 [ctl-use-dclick]
 desc = 1=Doubleclick forward/strafe equals use key.
 
-[ctl-use-immediate]
+[ctl-inventory-wrap]
+desc = 1=Inventory selection wraps around.
+
+[ctl-inventory-use-immediate]
 desc = 1=Use items immediately from the inventory.
 
-[ctl-use-next]
+[ctl-inventory-use-next]
 desc = 1=Automatically select the next inventory item when unusable.
 
 [ctl-look-speed]
@@ -855,14 +852,20 @@ desc = 1=Show keys when the status bar is hidden.
 [hud-health]
 desc = 1=Show health when the status bar is hidden.
 
-[hud-artifact]
-desc = 1=Show artifact when the status bar is hidden.
+[hud-currentitem]
+desc = 1=Show current item in full-screen mode.
 
 [hud-tome-timer]
 desc = Countdown seconds for the Tome of Power.
 
 [hud-tome-sound]
 desc = Seconds for countdown sound of Tome of Power.
+
+[hud-inventory-slot-max]
+desc = Maximum number of inventory slots to display in full-screen mode.
+
+[hud-inventory-slot-showempty]
+desc = 1=Show empty inventory slots in full-screen mode.
 
 [hud-inventory-timer]
 desc = Seconds before the inventory auto-hides.

@@ -632,8 +632,6 @@ void P_PlayerReborn(player_t* player)
 {
     player->playerState = PST_REBORN;
 #if __JHERETIC__ || __JHEXEN__
-    P_InventoryResetCursor(player);
-
     player->plr->flags &= ~DDPF_VIEW_FILTER;
     newTorch[player - players] = 0;
     newTorchDelta[player - players] = 0;
@@ -1206,12 +1204,12 @@ void P_PlayerThinkJump(player_t *player)
     P_CheckPlayerJump(player);
 }
 
-void P_PlayerThinkView(player_t *player)
+void P_PlayerThinkView(player_t* player)
 {
     P_CalcHeight(player);
 }
 
-void P_PlayerThinkSpecial(player_t *player)
+void P_PlayerThinkSpecial(player_t* player)
 {
     if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
@@ -1221,13 +1219,31 @@ void P_PlayerThinkSpecial(player_t *player)
 #endif
 }
 
+#if __JHERETIC__ || __JHEXEN__
 /**
- * \todo Need to replace this as it comes straight from Hexen.
+ * For inventory management, could be done client-side.
  */
-void P_PlayerThinkSounds(player_t *player)
+void P_PlayerThinkInventory(player_t* player)
+{
+    int                 pnum = player - players;
+
+    if(player->brain.cycleArtifact)
+    {
+        if(!ST_IsInventoryVisible(pnum))
+        {
+            ST_Inventory(pnum, true);
+            return;
+        }
+
+        ST_InventoryMove(pnum, player->brain.cycleArtifact, false);
+    }
+}
+#endif
+
+void P_PlayerThinkSounds(player_t* player)
 {
 #if __JHEXEN__
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t*             plrmo = player->plr->mo;
 
     switch(player->class)
     {
@@ -1264,62 +1280,33 @@ void P_PlayerThinkSounds(player_t *player)
 #endif
 }
 
-void P_PlayerThinkItems(player_t *player)
+void P_PlayerThinkItems(player_t* player)
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     int                 arti = 0; // What to use?
     int                 pnum = player - players;
 
-    // Moving in the inventory is handled by "invleft" and "invright" commands.
-    // \fixme Switch to using impulses for consistency.
-
-    // Check the "Use Artifact" impulse.
-    if(P_GetImpulseControlState(pnum, CTL_USE_ARTIFACT))
+    if(player->brain.useArtifact)
     {
-        if(player->brain.speed && artiSkipParm)
-        {
-            if(player->inventory[player->invPtr].type != AFT_NONE)
-            {
-                arti = 0xff;
-            }
-        }
-        else
-        {
-            // If the inventory is visible, just close it (depending on cfg.chooseAndUse).
-            if(ST_IsInventoryVisible(player - players))
-            {
-                player->readyArtifact = player->inventory[player->invPtr].type;
-
-                ST_Inventory(player - players, false); // close the inventory
-
-                if(cfg.chooseAndUse)
-                    arti = player->inventory[player->invPtr].type;
-                else
-                    arti = 0;
-            }
-            else
-            {
-                arti = player->inventory[player->invPtr].type;
-            }
-        }
+        arti = player->readyArtifact;
     }
 
     // Artifact hot keys.
 #if __JHERETIC__
     // Check Tome of Power and other artifact hotkeys.
-    if(!arti && P_GetImpulseControlState(pnum, CTL_TOME_OF_POWER) &&
+    if(arti == AFT_NONE && P_GetImpulseControlState(pnum, CTL_TOME_OF_POWER) &&
        !player->powers[PT_WEAPONLEVEL2])
     {
         arti = AFT_TOMBOFPOWER;
     }
 #endif
 #if __JHEXEN__
-    if(!arti && P_GetImpulseControlState(pnum, CTL_HEALTH) &&
+    if(arti == AFT_NONE && P_GetImpulseControlState(pnum, CTL_HEALTH) &&
        (player->plr->mo->health < maxHealth))
     {
         arti = AFT_HEALTH;
     }
-    if(!arti && P_GetImpulseControlState(pnum, CTL_INVULNERABILITY) &&
+    if(arti == AFT_NONE && P_GetImpulseControlState(pnum, CTL_INVULNERABILITY) &&
        !player->powers[PT_INVULNERABILITY])
     {
         arti = AFT_INVULNERABILITY;
@@ -1362,7 +1349,7 @@ void P_PlayerThinkItems(player_t *player)
             { 0, AFT_NONE }              // Terminator.
         };
         int i;
-        for(i = 0; controlArtiMap[i].artifact != AFT_NONE && !arti; i++)
+        for(i = 0; controlArtiMap[i].artifact != AFT_NONE && arti == AFT_NONE; i++)
         {
             if(P_GetImpulseControlState(pnum, controlArtiMap[i].control))
             {
@@ -1373,7 +1360,7 @@ void P_PlayerThinkItems(player_t *player)
     }
 #endif
 
-    if(arti)
+    if(arti != AFT_NONE)
     {   // Use an artifact
         if(arti == NUM_ARTIFACT_TYPES)
         {   // Use one of each artifact (except puzzle artifacts).
@@ -1386,10 +1373,6 @@ void P_PlayerThinkItems(player_t *player)
             {
                 P_InventoryUse(player, i);
             }
-        }
-        else if(arti == 0xff)
-        {
-            P_InventoryNext(player);
         }
         else
         {
@@ -1928,6 +1911,46 @@ void P_PlayerThinkUpdateControls(player_t* player)
         brain->cycleWeapon = 0;
     }
 
+#if __JHERETIC__ || __JHEXEN__
+    // Artifacts.
+    brain->useArtifact = false;
+    if(P_GetImpulseControlState(playerNum, CTL_USE_ITEM))
+    {
+        if(brain->speed && artiSkipParm)
+        {
+            brain->cycleArtifact = -1;
+        }
+        else
+        {
+            // If the inventory is visible, close it (depending on cfg.chooseAndUse).
+            if(ST_IsInventoryVisible(player - players))
+            {
+                ST_Inventory(player - players, false); // close the inventory
+
+                if(cfg.inventoryUseImmediate)
+                    brain->useArtifact = true;
+            }
+            else
+            {
+                brain->useArtifact = true;
+            }
+        }
+    }
+
+    if(P_GetImpulseControlState(playerNum, CTL_NEXT_ITEM))
+    {
+        brain->cycleArtifact = +1;
+    }
+    else if(P_GetImpulseControlState(playerNum, CTL_PREV_ITEM))
+    {
+        brain->cycleArtifact = -1;
+    }
+    else
+    {
+        brain->cycleArtifact = 0;
+    }
+#endif
+
     // HUD.
     brain->hudShow = (P_GetImpulseControlState(playerNum, CTL_HUD_SHOW) != 0);
     brain->scoreShow = (P_GetImpulseControlState(playerNum, CTL_SCORE_SHOW) != 0);
@@ -2003,6 +2026,9 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkSounds(player);
+#if __JHERETIC__ || __JHEXEN__
+        P_PlayerThinkInventory(player);
+#endif
         P_PlayerThinkItems(player);
     }
 

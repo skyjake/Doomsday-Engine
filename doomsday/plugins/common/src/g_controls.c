@@ -134,7 +134,7 @@ static float   mousey;
 static pcontrolstate_t controlStates[MAXPLAYERS];
 
 // CVars for control/input
-cvar_t  controlCVars[] = {
+cvar_t controlCVars[] = {
 // Control (options/preferences)
     {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1},
 
@@ -142,9 +142,10 @@ cvar_t  controlCVars[] = {
     {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
 
     {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickUse, 0, 1},
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1},
-    {"ctl-use-next", 0, CVT_INT, &cfg.inventoryNextOnUnuse, 0, 1},
+#if __JHERETIC__ || __JHEXEN__
+    {"ctl-inventory-wrap", 0, CVT_BYTE, &cfg.inventoryWrap, 0, 1},
+    {"ctl-inventory-use-immediate", 0, CVT_BYTE, &cfg.inventoryUseImmediate, 0, 1},
+    {"ctl-inventory-use-next", 0, CVT_BYTE, &cfg.inventoryUseNext, 0, 1},
 #endif
 
     {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
@@ -207,7 +208,10 @@ void G_ControlRegister(void)
 #endif
     P_NewPlayerControl(CTL_NEXT_WEAPON, CTLT_IMPULSE, "nextweapon", "game");
     P_NewPlayerControl(CTL_PREV_WEAPON, CTLT_IMPULSE, "prevweapon", "game");
-    P_NewPlayerControl(CTL_USE_ARTIFACT, CTLT_IMPULSE, "useartifact", "game");
+#if __JHERETIC__ || __JHEXEN__
+    P_NewPlayerControl(CTL_USE_ITEM, CTLT_IMPULSE, "useitem", "game");
+    P_NewPlayerControl(CTL_NEXT_ITEM, CTLT_IMPULSE, "nextitem", "game");
+    P_NewPlayerControl(CTL_PREV_ITEM, CTLT_IMPULSE, "previtem", "game");
 
     P_NewPlayerControl(CTL_TOME_OF_POWER, CTLT_IMPULSE, "tome", "game");
     P_NewPlayerControl(CTL_INVISIBILITY, CTLT_IMPULSE, "invisibility", "game");
@@ -227,6 +231,7 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_INVULNERABILITY, CTLT_IMPULSE, "invulnerability", "game");
     P_NewPlayerControl(CTL_DARK_SERVANT, CTLT_IMPULSE, "darkservant", "game");
     P_NewPlayerControl(CTL_EGG, CTLT_IMPULSE, "egg", "game");
+#endif
 
     P_NewPlayerControl(CTL_MAP, CTLT_IMPULSE, "automap", "game");
     P_NewPlayerControl(CTL_MAP_PAN_X, CTLT_NUMERIC, "mappanx", "map-freepan");
@@ -310,11 +315,11 @@ DEFCC( CCmdDefaultGameBinds )
 #endif
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-        "bindevent key-sqbracketleft invleft",
-        "bindevent key-sqbracketleft-repeat invleft",
-        "bindevent key-sqbracketright invright",
-        "bindevent key-sqbracketright-repeat invright",
-        "bindevent key-return {impulse useartifact}",
+        "bindevent key-sqbracketleft {impulse previtem}",
+        "bindevent key-sqbracketleft-repeat {impulse previtem}",
+        "bindevent key-sqbracketright {impulse nextitem}",
+        "bindevent key-sqbracketright-repeat {impulse nextitem}",
+        "bindevent key-return {impulse useitem}",
 #endif
 
         // Player controls: mouse
@@ -428,7 +433,7 @@ DEFCC( CCmdDefaultGameBinds )
 
         NULL
     };
-    int         i;
+    int                 i;
 
     for(i = 0; binds[i]; ++i)
         DD_Execute(false, binds[i]);

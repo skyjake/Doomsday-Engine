@@ -256,7 +256,6 @@ void G_PreInit(void)
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
     cfg.dclickUse = false;
-    cfg.inventoryNextOnUnuse = true;
     cfg.povLookAround = true;
     cfg.statusbarScale = 20;         // Full size.
     cfg.screenBlocks = cfg.setBlocks = 10;
@@ -277,7 +276,7 @@ void G_PreInit(void)
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_HEALTH] = true;
-    cfg.hudShown[HUD_ARTI] = true;
+    cfg.hudShown[HUD_CURRENTITEM] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.hudScale = .7f;
@@ -331,7 +330,6 @@ void G_PreInit(void)
 
     cfg.statusbarOpacity = 1;
     cfg.statusbarCounterAlpha = 1;
-    cfg.inventoryTimer = 5;
 
     cfg.automapCustomColors = 0; // Never.
     cfg.automapL0[0] = .455f; // Unseen areas
@@ -380,6 +378,13 @@ void G_PreInit(void)
     cfg.msgColor[0] = defFontRGB2[0];
     cfg.msgColor[1] = defFontRGB2[1];
     cfg.msgColor[2] = defFontRGB2[2];
+
+    cfg.inventoryTimer = 5;
+    cfg.inventoryWrap = true;
+    cfg.inventoryUseNext = false;
+    cfg.inventoryUseImmediate = false;
+    cfg.inventorySlotMaxVis = 7;
+    cfg.inventorySlotShowEmpty = true;
 
     cfg.chatBeep = 1;
 

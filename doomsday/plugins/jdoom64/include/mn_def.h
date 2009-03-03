@@ -27,8 +27,8 @@
  * mn_def.h: Menu defines and types.
  */
 
-#ifndef __MENU_DEFS_H_
-#define __MENU_DEFS_H_
+#ifndef __MENU_DEFS_H__
+#define __MENU_DEFS_H__
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -85,7 +85,7 @@ typedef enum {
     MENU_MULTIPLAYER,
     MENU_GAMESETUP,
     MENU_PLAYERSETUP,
-    MENU_WEAPONSETUP,
+    MENU_WEAPONS,
     MENU_CONTROLS,
     MENU_NONE
 } menutype_t;
