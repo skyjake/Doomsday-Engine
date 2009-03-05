@@ -1816,7 +1816,11 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t mangle,
                 }
 
                 if(!lineTarget)
-                    angle = angle;
+                {
+                    angle = mangle;
+                    slope =
+                        tan(LOOKDIR2RAD(source->dPlayer->lookDir)) / 1.2f;
+                }
             }
 
         if(!(source->player->plr->flags & DDPF_CAMERA))
@@ -1874,7 +1878,7 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t mangle,
         // Make sure the speed is right (in 3D).
         dist = P_ApproxDistance(P_ApproxDistance(th->mom[MX], th->mom[MY]),
                                 th->mom[MZ]);
-        if(!dist)
+        if(dist < 1)
             dist = 1;
         dist = th->info->speed / dist;
 
