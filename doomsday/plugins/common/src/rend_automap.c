@@ -1243,23 +1243,23 @@ static void setupGLStateForMap(const automap_t* map,
     }
 
 #if __JDOOM64__
-    // jd64 > Laser artifacts
+    // jd64 > Demon keys
     // If drawn in HUD we don't need them visible in the map too.
-    if(!cfg.hudShown[HUD_POWER])
+    if(!cfg.hudShown[HUD_INVENTORY])
     {
         int                 i, num;
         player_t*           plr = &players[player];
 
         num = 0;
-        for(i = 0; i < NUM_ARTIFACT_TYPES; ++i)
-            if(plr->artifacts[i])
+        for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+            if(plr->inventory[i])
                 num++;
 
         if(num > 0)
         {
             float               x, y, w, h, spacing, scale, iconAlpha;
             spriteinfo_t        sprInfo;
-            int                 artifactSprites[NUM_ARTIFACT_TYPES] = {
+            int                 invItemSprites[NUM_INVENTORYITEM_TYPES] = {
                 SPR_ART1, SPR_ART2, SPR_ART3
             };
 
@@ -1268,11 +1268,11 @@ static void setupGLStateForMap(const automap_t* map,
             spacing = wh / num;
             y = 0;
 
-            for(i = 0; i < NUM_ARTIFACT_TYPES; ++i)
+            for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
             {
-                if(plr->artifacts[i])
+                if(plr->inventory[i])
                 {
-                    R_GetSpriteInfo(artifactSprites[i], 0, &sprInfo);
+                    R_GetSpriteInfo(invItemSprites[i], 0, &sprInfo);
                     DGL_SetPSprite(sprInfo.material);
 
                     scale = wh / (sprInfo.height * num);

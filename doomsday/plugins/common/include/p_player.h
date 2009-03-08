@@ -57,7 +57,7 @@ void            P_PlayerChangeClass(player_t* plr, playerclass_t newClass);
 #endif
 
 void            P_SetMessage(player_t* plr, char* msg, boolean noHide);
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 void            P_SetYellowMessage(player_t* plr, char* msg, boolean noHide);
 #endif
 

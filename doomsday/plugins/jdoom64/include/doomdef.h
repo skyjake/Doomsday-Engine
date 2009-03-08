@@ -170,18 +170,17 @@ typedef enum {
     NUM_KEY_TYPES
 } keytype_t;
 
-// jd64 >
-//
-// Laser Powerups
-//
-typedef enum
-{
-    it_laserpw1,
-    it_laserpw2,
-    it_laserpw3,
-    NUM_ARTIFACT_TYPES
-} laserpw_t;
-// < jd64
+/**
+ * Inventory Item Types:
+ */
+typedef enum {
+    IIT_NONE = 0,
+    IIT_FIRST = 1,
+    IIT_DEMONKEY1 = IIT_FIRST,
+    IIT_DEMONKEY2,
+    IIT_DEMONKEY3,
+    NUM_INVENTORYITEM_TYPES
+} inventoryitemtype_t;
 
 // The defined weapons,
 //  including a marker indicating

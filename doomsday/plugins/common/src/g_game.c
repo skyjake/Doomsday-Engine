@@ -72,6 +72,7 @@
 #include "p_mapspec.h"
 #include "f_infine.h"
 #include "p_start.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -231,8 +232,8 @@ int gsvAmmo[NUM_AMMO_TYPES];
 
 char *gsvMapName = NOTAMAPNAME;
 
-#if __JHERETIC__ || __JHEXEN__
-int gsvArtifacts[NUM_ARTIFACT_TYPES];
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+int gsvInvItems[NUM_INVENTORYITEM_TYPES];
 #endif
 
 #if __JHEXEN__
@@ -241,8 +242,7 @@ int gsvWPieces[4];
 
 static gamestate_t gameState = GS_DEMOSCREEN;
 
-cvar_t gamestatusCVars[] =
-{
+cvar_t gamestatusCVars[] = {
    {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
    {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
    {"game-paused", READONLYCVAR, CVT_INT, &paused, 0, 0},
@@ -313,17 +313,17 @@ cvar_t gamestatusCVars[] =
    {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOW], 0, 0},
    {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[KT_GREEN], 0, 0},
    {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUE], 0, 0},
-   // Artifacts
-   {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_INVULNERABILITY], 0, 0},
-   {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_INVISIBILITY], 0, 0},
-   {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_HEALTH], 0, 0},
-   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SUPERHEALTH], 0, 0},
-   {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TOMBOFPOWER], 0, 0},
-   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TORCH], 0, 0},
-   {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_FIREBOMB], 0, 0},
-   {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_EGG], 0, 0},
-   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_FLY], 0, 0},
-   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TELEPORT], 0, 0},
+   // Inventory items
+   {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0},
+   {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVISIBILITY], 0, 0},
+   {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0},
+   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0},
+   {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TOMBOFPOWER], 0, 0},
+   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0},
+   {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FIREBOMB], 0, 0},
+   {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0},
+   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0},
+   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0},
 #elif __JHEXEN__
    // Mana
    {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[AT_BLUEMANA], 0, 0},
@@ -350,39 +350,39 @@ cvar_t gamestatusCVars[] =
    {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0},
    {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0},
    {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0},
-   // Artifacts
-   {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_INVULNERABILITY], 0, 0},
-   {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_HEALTH], 0, 0},
-   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SUPERHEALTH], 0, 0},
-   {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_HEALINGRADIUS], 0, 0},
-   {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SUMMON], 0, 0},
-   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TORCH], 0, 0},
-   {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_EGG], 0, 0},
-   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_FLY], 0, 0},
-   {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_BLASTRADIUS], 0, 0},
-   {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_POISONBAG], 0, 0},
-   {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TELEPORTOTHER], 0, 0},
-   {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_SPEED], 0, 0},
-   {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_BOOSTMANA], 0, 0},
-   {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_BOOSTARMOR], 0, 0},
-   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_TELEPORT], 0, 0},
-   {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZSKULL], 0, 0},
-   {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMBIG], 0, 0},
-   {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMRED], 0, 0},
-   {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMGREEN1], 0, 0},
-   {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMGREEN2], 0, 0},
-   {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMBLUE1], 0, 0},
-   {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEMBLUE2], 0, 0},
-   {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZBOOK1], 0, 0},
-   {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZBOOK2], 0, 0},
-   {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZSKULL2], 0, 0},
-   {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZFWEAPON], 0, 0},
-   {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZCWEAPON], 0, 0},
-   {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZMWEAPON], 0, 0},
-   {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR1], 0, 0},
-   {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR2], 0, 0},
-   {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR3], 0, 0},
-   {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvArtifacts[AFT_PUZZGEAR4], 0, 0},
+   // Inventory items
+   {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0},
+   {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0},
+   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0},
+   {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALINGRADIUS], 0, 0},
+   {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUMMON], 0, 0},
+   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0},
+   {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0},
+   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0},
+   {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BLASTRADIUS], 0, 0},
+   {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_POISONBAG], 0, 0},
+   {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORTOTHER], 0, 0},
+   {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SPEED], 0, 0},
+   {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTMANA], 0, 0},
+   {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTARMOR], 0, 0},
+   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0},
+   {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL], 0, 0},
+   {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBIG], 0, 0},
+   {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMRED], 0, 0},
+   {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN1], 0, 0},
+   {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN2], 0, 0},
+   {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE1], 0, 0},
+   {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE2], 0, 0},
+   {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK1], 0, 0},
+   {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK2], 0, 0},
+   {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL2], 0, 0},
+   {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZFWEAPON], 0, 0},
+   {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZCWEAPON], 0, 0},
+   {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZMWEAPON], 0, 0},
+   {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR1], 0, 0},
+   {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR2], 0, 0},
+   {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR3], 0, 0},
+   {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR4], 0, 0},
 #endif
    {NULL}
 };
@@ -513,6 +513,11 @@ void G_CommonPostInit(void)
 
     Con_Message("Hu_LoadData: Setting up heads up display.\n");
     Hu_LoadData();
+
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+    Con_Message("P_InventoryInit: Init player item inventory.\n");
+    P_InitInventory();
+#endif
 
     Con_Message("ST_Init: Init status bar.\n");
     ST_Init();
@@ -772,10 +777,10 @@ boolean G_Responder(event_t *ev)
     player_t *plr = &players[CONSOLEPLAYER];
 
     if(!actions[A_USEARTIFACT].on)
-    {   // Flag to denote that it's okay to use an artifact.
-        if(!ST_IsInventoryVisible())
+    {   // Flag to denote that it's okay to use an inventory item.
+        if(!ST_InventoryIsVisible())
         {
-            plr->readyArtifact = plr->inventory[plr->invPtr].type;
+            plr->readyItem = plr->inventory[plr->invPtr].type;
         }
         usearti = true;
     }
@@ -814,12 +819,13 @@ boolean G_Responder(event_t *ev)
  * Updates the game status cvars based on game and player data.
  * Called each tick by G_Ticker().
  */
-void G_UpdateGSVarsForPlayer(player_t *pl)
+void G_UpdateGSVarsForPlayer(player_t* pl)
 {
-    int                 i;
+    int                 i, plrnum;
 
     if(!pl)
         return;
+    plrnum = pl - players;
 
     gsvHealth = pl->health;
 #if !__JHEXEN__
@@ -863,10 +869,12 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
         gsvAmmo[i] = pl->ammo[i].owned;
 
-#if __JHERETIC__ || __JHEXEN__
-    // artifacts
-    for(i = 0; i < NUMINVENTORYSLOTS; ++i)
-        gsvArtifacts[pl->inventory[i].type] = pl->inventory[i].count;
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+    // Inventory items
+    for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    {
+        gsvInvItems[i] = P_InventoryCount(plrnum, IIT_FIRST + i);
+    }
 #endif
 }
 
@@ -1077,7 +1085,7 @@ void G_InitPlayer(int player)
 /**
  * Called when a player leaves a map.
  *
- * Jobs include; striping keys, artifacts and powers from the player
+ * Jobs include; striping keys, inventory and powers from the player
  * and configuring other player-specific properties ready for the next
  * map.
  *
@@ -1085,7 +1093,7 @@ void G_InitPlayer(int player)
  */
 void G_PlayerLeaveMap(int player)
 {
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__
     uint                i;
 #endif
 #if __JHEXEN__
@@ -1101,27 +1109,30 @@ void G_PlayerLeaveMap(int player)
 #endif
 
 #if __JHERETIC__
-    // Empty the player's inventory of excess artifacts.
-    for(i = 0; i < p->inventorySlotNum; ++i)
+    // Empty the inventory of excess items
+    for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        p->inventory[i].count = 1;
+        inventoryitemtype_t type = IIT_FIRST + i;
+        uint            count = P_InventoryCount(player, type);
+
+        if(count)
+        {
+            uint            j;
+
+            // When entering a new cluster. strip ALL flight items,
+            // otherwise leave the player one of each type.
+            if(!(type == IIT_FLY && !deathmatch && newCluster))
+                count--;
+
+            for(j = 0; j < count; ++j)
+                P_InventoryTake(player, type, true);
+        }
     }
 #endif
 
     // Remember if flying
 #if __JHEXEN__
     flightPower = p->powers[PT_FLIGHT];
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-    // Strip flight artifacts?
-    if(!deathmatch && newCluster) // Entering new cluster
-    {
-        p->powers[PT_FLIGHT] = 0;
-
-        for(i = 0; i < MAXARTICOUNT; ++i)
-            P_InventoryUse(p, AFT_FLY);
-    }
 #endif
 
     // Remove their powers.
@@ -1194,6 +1205,10 @@ void ClearPlayer(player_t *p)
     memset(p, 0, sizeof(*p));
     // Restore the pointer to ddplayer.
     p->plr = ddplayer;
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+    P_InventoryEmpty(p - players);
+    P_InventorySetReadyItem(p - players, IIT_NONE);
+#endif
     // Also clear ddplayer.
     memset(ddplayer, 0, sizeof(*ddplayer));
     // Restore the pointer to this player.

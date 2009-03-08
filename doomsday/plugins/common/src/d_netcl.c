@@ -37,13 +37,8 @@
 #  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "p_inventory.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#  include "p_inventory.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
-#  include "p_inventory.h"
 #endif
 
 #include "am_map.h"
@@ -55,6 +50,7 @@
 #include "p_map.h"
 #include "g_common.h"
 #include "p_actor.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -401,29 +397,32 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     if(flags & PSF_INVENTORY)
     {
-        uint                i;
+        uint                i, count;
 
-        pl->inventorySlotNum = NetCl_ReadByte();
-        for(i = 0; i < NUMINVENTORYSLOTS; ++i)
+        for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
         {
-            if(i >= pl->inventorySlotNum)
-            {
-                pl->inventory[i].type = AFT_NONE;
-                pl->inventory[i].count = 0;
-                continue;
-            }
+            inventoryitemtype_t type = IIT_FIRST + i;
+            uint            j, count = P_InventoryCount(plrNum, type);
+
+            for(j = 0; j < count; ++j)
+                P_InventoryTake(plrNum, type, true);
+        }
+
+        count = NetCl_ReadByte();
+        for(i = 0; i < count; ++i)
+        {
+            inventoryitemtype_t type;
+            uint                j, num;
 
             s = NetCl_ReadShort();
-            pl->inventory[i].type = s & 0xff;
-            pl->inventory[i].count = s >> 8;
-            if(pl->inventory[i].type != AFT_NONE)
-            {
-                // Maybe unhide the HUD?
-                ST_HUDUnHide(pl - players, HUE_ON_PICKUP_INVITEM);
-            }
+            type = s & 0xff;
+            num = s >> 8;
+
+            for(j = 0; j < num; ++j)
+                P_InventoryGive(plrNum, type, true);
         }
     }
 #endif

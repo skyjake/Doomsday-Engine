@@ -25,24 +25,47 @@
  * p_inventory.h: Common code for player inventory.
  */
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
 
 #ifndef __COMMON_INVENTORY_H__
 #define __COMMON_INVENTORY_H__
 
-#if __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+// Inventory Item Flags:
+#define IIF_USE_PANIC           0x1 // Item is usable when panicked.
 
-extern boolean useArti;
+typedef struct {
+    byte            flags;
+    char            action[32];
+    char            useSnd[32];
+    char            patch[9];
+    int             hotKeyCtrlIdent;
+} def_invitem_t;
 
-boolean         P_InventoryGive(player_t* player, artitype_e arti);
-void            P_InventoryTake(player_t* player, artitype_e arti);
+typedef struct {
+    inventoryitemtype_t type;
+    acfnptr_t       action;
+    sfxenum_t       useSnd;
+    lumpnum_t       patchLump;
+} invitem_t;
 
-boolean         P_InventoryUse(player_t* player, artitype_e arti);
-uint            P_InventoryCount(player_t* player, artitype_e arti);
+extern int didUseItem;
+
+void            P_InitInventory(void);
+const invitem_t* P_GetInvItem(int id);
+const def_invitem_t* P_GetInvItemDef(inventoryitemtype_t type);
+
+void            P_InventoryEmpty(int player);
+int             P_InventoryGive(int player, inventoryitemtype_t type,
+                                int silent);
+int             P_InventoryTake(int player, inventoryitemtype_t type,
+                                int silent);
+int             P_InventoryUse(int player, inventoryitemtype_t type,
+                               int silent);
+
+int             P_InventorySetReadyItem(int player, inventoryitemtype_t type);
+inventoryitemtype_t P_InventoryReadyItem(int player);
+
+unsigned int    P_InventoryCount(int player, inventoryitemtype_t type);
 
 #endif
 #endif

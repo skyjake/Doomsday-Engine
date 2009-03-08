@@ -37,8 +37,8 @@
 #include "dd_share.h"
 
 typedef struct {
-    char           *name; // Name of the routine.
-    void            (C_DECL * func) (); // Pointer to the function.
+    char*           name; // Name of the routine.
+    void   (C_DECL *func) (); // Pointer to the function.
 } actionlink_t;
 
 extern actionlink_t actionlinks[];
@@ -168,5 +168,17 @@ void C_DECL     A_WhirlwindSeek();
 void C_DECL     A_WizAtk1();
 void C_DECL     A_WizAtk2();
 void C_DECL     A_WizAtk3();
+
+// Inventory:
+void C_DECL     A_FireBomb();
+void C_DECL     A_TombOfPower();
+void C_DECL     A_Egg();
+void C_DECL     A_Wings();
+void C_DECL     A_Teleport();
+void C_DECL     A_Torch();
+void C_DECL     A_Health();
+void C_DECL     A_SuperHealth();
+void C_DECL     A_Invisibility();
+void C_DECL     A_Invulnerability();
 
 #endif

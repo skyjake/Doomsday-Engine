@@ -25,7 +25,7 @@
 /**
  * p_user.c : Player related stuff.
  *
- * Bobbing POV/weapon, movement, pending weapon, artifact usage...
+ * Bobbing POV/weapon, movement, pending weapon...
  * Compiles for jDoom, jHeretic and jHexen.
  */
 

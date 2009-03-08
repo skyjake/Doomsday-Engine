@@ -82,9 +82,9 @@ static void cheatHealthFunc(player_t* player, cheatseq_t* cheat);
 static void cheatKeysFunc(player_t* player, cheatseq_t* cheat);
 static void cheatSoundFunc(player_t* player, cheatseq_t* cheat);
 static void cheatTickerFunc(player_t* player, cheatseq_t* cheat);
-static void cheatArtifact1Func(player_t* player, cheatseq_t* cheat);
-static void cheatArtifact2Func(player_t* player, cheatseq_t* cheat);
-static void cheatArtifact3Func(player_t* player, cheatseq_t* cheat);
+static void cheatInvItem1Func(player_t* player, cheatseq_t* cheat);
+static void cheatInvItem2Func(player_t* player, cheatseq_t* cheat);
+static void cheatInvItem3Func(player_t* player, cheatseq_t* cheat);
 static void cheatWarpFunc(player_t* player, cheatseq_t* cheat);
 static void cheatChickenFunc(player_t* player, cheatseq_t* cheat);
 static void cheatMassacreFunc(player_t* player, cheatseq_t* cheat);
@@ -184,8 +184,8 @@ static byte cheatTickerSeq[] = {
     0xff, 0
 };
 
-// Get an artifact 1st stage (ask for type).
-static byte cheatArtifact1Seq[] = {
+// Get an inventory item 1st stage (ask for type).
+static byte cheatInvItem1Seq[] = {
     CHEAT_ENCRYPT('g'),
     CHEAT_ENCRYPT('i'),
     CHEAT_ENCRYPT('m'),
@@ -194,8 +194,8 @@ static byte cheatArtifact1Seq[] = {
     0xff
 };
 
-// Get an artifact 2nd stage (ask for count).
-static byte cheatArtifact2Seq[] = {
+// Get an inventory item 2nd stage (ask for count).
+static byte cheatInvItem2Seq[] = {
     CHEAT_ENCRYPT('g'),
     CHEAT_ENCRYPT('i'),
     CHEAT_ENCRYPT('m'),
@@ -204,8 +204,8 @@ static byte cheatArtifact2Seq[] = {
     0, 0xff, 0
 };
 
-// Get an artifact final stage.
-static byte cheatArtifact3Seq[] = {
+// Get an inventory item final stage.
+static byte cheatInvItem3Seq[] = {
     CHEAT_ENCRYPT('g'),
     CHEAT_ENCRYPT('i'),
     CHEAT_ENCRYPT('m'),
@@ -286,9 +286,9 @@ static cheatseq_t cheats[] = {
     {cheatKeysFunc, cheatKeysSeq, NULL, {0, 0}, 0},
     {cheatSoundFunc, cheatSoundSeq, NULL, {0, 0}, 0},
     {cheatTickerFunc, cheatTickerSeq, NULL, {0, 0}, 0},
-    {cheatArtifact1Func, cheatArtifact1Seq, NULL, {0, 0}, 0},
-    {cheatArtifact2Func, cheatArtifact2Seq, NULL, {0, 0}, 0},
-    {cheatArtifact3Func, cheatArtifact3Seq, NULL, {0, 0}, 0},
+    {cheatInvItem1Func, cheatInvItem1Seq, NULL, {0, 0}, 0},
+    {cheatInvItem2Func, cheatInvItem2Seq, NULL, {0, 0}, 0},
+    {cheatInvItem3Func, cheatInvItem3Seq, NULL, {0, 0}, 0},
     {cheatWarpFunc, cheatWarpSeq, NULL, {0, 0}, 0},
     {cheatChickenFunc, cheatChickenSeq, NULL, {0, 0}, 0},
     {cheatMassacreFunc, cheatMassacreSeq, NULL, {0, 0}, 0},
@@ -503,7 +503,7 @@ static void cheatWeaponsFunc(player_t *player, cheatseq_t *cheat)
     P_SetMessage(player, TXT_CHEATWEAPONS, false);
 }
 
-static void cheatPowerFunc(player_t *player, cheatseq_t *cheat)
+static void cheatPowerFunc(player_t* player, cheatseq_t* cheat)
 {
     player->update |= PSF_POWERS;
     if(player->powers[PT_WEAPONLEVEL2])
@@ -513,8 +513,10 @@ static void cheatPowerFunc(player_t *player, cheatseq_t *cheat)
     }
     else
     {
-        P_InventoryGive(player, AFT_TOMBOFPOWER);
-        P_InventoryUse(player, AFT_TOMBOFPOWER);
+        int             plrnum = player - players;
+
+        P_InventoryGive(plrnum, IIT_TOMBOFPOWER, true);
+        P_InventoryUse(plrnum, IIT_TOMBOFPOWER, true);
         P_SetMessage(player, TXT_CHEATPOWERON, false);
     }
 }
@@ -571,41 +573,40 @@ static void cheatTickerFunc(player_t* player, cheatseq_t* cheat)
        } */
 }
 
-static void cheatArtifact1Func(player_t* player, cheatseq_t* cheat)
+static void cheatInvItem1Func(player_t* player, cheatseq_t* cheat)
 {
-    P_SetMessage(player, TXT_CHEATARTIFACTS1, false);
+    P_SetMessage(player, TXT_CHEATINVITEMS1, false);
 }
 
-static void cheatArtifact2Func(player_t* player, cheatseq_t* cheat)
+static void cheatInvItem2Func(player_t* player, cheatseq_t* cheat)
 {
-    P_SetMessage(player, TXT_CHEATARTIFACTS2, false);
+    P_SetMessage(player, TXT_CHEATINVITEMS2, false);
 }
 
-static void cheatArtifact3Func(player_t* player, cheatseq_t* cheat)
+static void cheatInvItem3Func(player_t* player, cheatseq_t* cheat)
 {
-    int                 i;
-    artitype_e          type;
-    int                 count;
+    int                 i, count, plrnum = player - players;
+    inventoryitemtype_t type;
 
     type = cheat->args[0] - 'a' + 1;
     count = cheat->args[1] - '0';
-    if(type > AFT_NONE && type < NUM_ARTIFACT_TYPES && count > 0 && count < 10)
+    if(type > IIT_NONE && type < NUM_INVENTORYITEM_TYPES && count > 0 && count < 10)
     {
-        if(gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
+        if(gameMode == shareware && (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
         {
-            P_SetMessage(player, TXT_CHEATARTIFACTSFAIL, false);
+            P_SetMessage(player, TXT_CHEATITEMSFAIL, false);
             return;
         }
 
         for(i = 0; i < count; ++i)
         {
-            P_InventoryGive(player, type);
+            P_InventoryGive(plrnum, type, false);
         }
-        P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
+        P_SetMessage(player, TXT_CHEATINVITEMS3, false);
     }
     else
     {   // Bad input
-        P_SetMessage(player, TXT_CHEATARTIFACTSFAIL, false);
+        P_SetMessage(player, TXT_CHEATITEMSFAIL, false);
     }
 }
 
@@ -795,14 +796,14 @@ DEFCC(CCmdCheatGive)
         Con_Printf("Stuff consists of one or more of (type:id). "
                    "If no id; give all of type:\n");
         Con_Printf(" a - ammo\n");
-        Con_Printf(" f - artifacts\n");
+        Con_Printf(" i - items\n");
         Con_Printf(" h - health\n");
         Con_Printf(" k - keys\n");
         Con_Printf(" p - backpack full of ammo\n");
         Con_Printf(" r - armor\n");
         Con_Printf(" t - tomb of power\n");
         Con_Printf(" w - weapons\n");
-        Con_Printf("Example: 'give akw' gives artifacts, keys and weapons.\n");
+        Con_Printf("Example: 'give ikw' gives items, keys and weapons.\n");
         Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
         return true;
     }
@@ -862,28 +863,29 @@ DEFCC(CCmdCheatGive)
             break;
             }
 
-        case 'f':
+        case 'i':
             {
-            artitype_e          type;
+            int                 plrnum = plyr - players;
+            inventoryitemtype_t type;
 
-            // All artifacts
-            for(type = AFT_FIRST; type < NUM_ARTIFACT_TYPES; ++type)
+            // All inventory items
+            for(type = IIT_FIRST; type < NUM_INVENTORYITEM_TYPES; ++type)
             {
                 int                 i;
 
                 if(gameMode == shareware &&
-                   (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
+                   (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
                 {
                     continue;
                 }
 
-                for(i = 0; i < MAXARTICOUNT; ++i)
+                for(i = 0; i < MAXINVITEMCOUNT; ++i)
                 {
-                    P_InventoryGive(plyr, type);
+                    P_InventoryGive(plrnum, type, false);
                 }
             }
 
-            Con_Printf("Artifacts given.\n");
+            Con_Printf("Items given.\n");
             break;
             }
 

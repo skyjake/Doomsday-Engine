@@ -45,6 +45,7 @@
 #include "p_map.h"
 #include "p_tick.h"
 #include "p_terraintype.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1967,34 +1968,35 @@ void P_MovePsprites(player_t *player)
     player->pSprites[ps_flash].pos[VY] = player->pSprites[ps_weapon].pos[VY];
 }
 
-boolean P_UseArtiFireBomb(player_t* player)
+void C_DECL A_FireBomb(mobj_t* mo)
 {
     uint            an;
-    mobj_t*         plrmo, *mo;
+    mobj_t*         bomb;
 
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    plrmo = player->plr->mo;
-    an = plrmo->angle >> ANGLETOFINESHIFT;
-
-    mo = P_SpawnMobj3f(MT_FIREBOMB,
-                       plrmo->pos[VX] + 24 * FIX2FLT(finecosine[an]),
-                       plrmo->pos[VY] + 24 * FIX2FLT(finesine[an]),
-                       plrmo->pos[VZ] - plrmo->floorClip + 15,
-                       plrmo->angle);
-    if(mo)
+    an = mo->angle >> ANGLETOFINESHIFT;
+    bomb = P_SpawnMobj3f(MT_FIREBOMB,
+                         mo->pos[VX] + 24 * FIX2FLT(finecosine[an]),
+                         mo->pos[VY] + 24 * FIX2FLT(finesine[an]),
+                         mo->pos[VZ] - mo->floorClip + 15,
+                         mo->angle);
+    if(bomb)
     {
-        mo->target = player->plr->mo;
+        bomb->target = mo;
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiTombOfPower(player_t* player)
+void C_DECL A_TombOfPower(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    player_t*           player;
+
+    if(!mo->player)
+        return;
+    player = mo->player;
 
     if(player->morphTics)
     {   // Attempt to undo chicken.
@@ -2011,9 +2013,7 @@ boolean P_UseArtiTombOfPower(player_t* player)
     else
     {
         if(!P_GivePower(player, PT_WEAPONLEVEL2))
-        {
-            return false;
-        }
+            return;
 
         if(player->readyWeapon == WT_FIRST)
         {
@@ -2025,92 +2025,84 @@ boolean P_UseArtiTombOfPower(player_t* player)
         }
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiEgg(player_t* player)
+void C_DECL A_Egg(mobj_t* mo)
 {
-    mobj_t*         plrmo;
+    if(!mo->player)
+        return;
 
-    if(!player)
-        return false;
-    plrmo = player->plr->mo;
+#if __JHEXEN__
+    P_SpawnPlayerMissile(MT_EGGFX, mo);
+    P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 3));
+#else
+    P_SpawnMissile(MT_EGGFX, mo, NULL);
+    P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6), -12345);
+    P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 6), -12345);
+    P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3), -12345);
+    P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 3), -12345);
+#endif
 
-# if __JHEXEN__
-    P_SpawnPlayerMissile(MT_EGGFX, plrmo);
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 6));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 6));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 3));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 3));
-# else
-    P_SpawnMissile(MT_EGGFX, plrmo, NULL);
-    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 6), -12345);
-    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 6), -12345);
-    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 3), -12345);
-    P_SpawnMissileAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 3), -12345);
-# endif
-
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiFly(player_t* player)
+void C_DECL A_Wings(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_GivePower(player, PT_FLIGHT))
-    {
-        return false;
-    }
-
-    return true;
+    didUseItem = P_GivePower(mo->player, PT_FLIGHT);
 }
 
-boolean P_UseArtiTeleport(player_t* player)
+void C_DECL A_Teleport(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    P_ArtiTele(player);
-    return true;
+    P_ArtiTele(mo->player);
+    didUseItem = true;
 }
 
-boolean P_UseArtiTorch(player_t* player)
+void C_DECL A_Torch(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_INFRARED);
+    didUseItem = P_GivePower(mo->player, PT_INFRARED);
 }
 
-boolean P_UseArtiHealth(player_t* player)
+void C_DECL A_Health(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GiveBody(player, 25);
+    didUseItem = P_GiveBody(mo->player, 25);
 }
 
-boolean P_UseArtiSuperHealth(player_t* player)
+void C_DECL A_SuperHealth(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GiveBody(player, 100);
+    didUseItem = P_GiveBody(mo->player, 100);
 }
 
-boolean P_UseArtiInvisibility(player_t* player)
+void C_DECL A_Invisibility(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_INVISIBILITY);
+    didUseItem = P_GivePower(mo->player, PT_INVISIBILITY);
 }
 
-boolean P_UseArtiInvulnerability(player_t* player)
+void C_DECL A_Invulnerability(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_INVULNERABILITY);
+    didUseItem = P_GivePower(mo->player, PT_INVULNERABILITY);
 }

@@ -23,7 +23,7 @@
  */
 
 /**
- * d_items.h: Items key cards, artifacts, weapon, ammunition.
+ * d_items.h: Items key cards, weapon, ammunition.
  */
 
 #ifndef __D_ITEMS__

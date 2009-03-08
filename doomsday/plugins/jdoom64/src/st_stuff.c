@@ -106,7 +106,7 @@ cvar_t sthudCVars[] =
     {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
     {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
     {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
-    {"hud-power", 0, CVT_BYTE, &cfg.hudShown[HUD_POWER], 0, 1},
+    {"hud-power", 0, CVT_BYTE, &cfg.hudShown[HUD_INVENTORY], 0, 1},
 
     // HUD displays
     {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
@@ -421,10 +421,10 @@ Draw_EndZoom();
     }
     pos = oldPos;
 
-    // jd64 > Laser artifacts
-    if(cfg.hudShown[HUD_POWER])
+    // Inventory
+    if(cfg.hudShown[HUD_INVENTORY])
     {
-        if(plr->artifacts[it_laserpw1])
+        if(plr->inventory[IIT_DEMONKEY1])
         {
             spr = SPR_ART1;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -432,7 +432,7 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
-        if(plr->artifacts[it_laserpw2])
+        if(plr->inventory[IIT_DEMONKEY2])
         {
             spr = SPR_ART2;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -440,7 +440,7 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
-        if(plr->artifacts[it_laserpw3])
+        if(plr->inventory[IIT_DEMONKEY3])
         {
             spr = SPR_ART3;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -448,7 +448,6 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
     }
-    // < d64tc
 
     if(cfg.hudShown[HUD_AMMO])
     {
@@ -567,9 +566,6 @@ void ST_loadData(void)
 static void initData(hudstate_t* hud)
 {
     int                 player = hud - hudStates;
-
-    // Ensure the HUD widget lib has been inited.
-    STlib_init();
 
     hud->firstTime = true;
     hud->statusbarActive = true;

@@ -27,7 +27,7 @@
 /**
  * p_user.c : Player related stuff.
  *
- * Bobbing POV/weapon, movement, pending weapon, artifact usage...
+ * Bobbing POV/weapon, movement, pending weapon...
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -415,7 +415,7 @@ void P_MovePlayer(player_t *player)
 #if __JHEXEN__
         if(player->powers[PT_SPEED] && !player->morphTics)
         {
-            // Adjust for a player with a speed artifact
+            // Adjust for a player with the speed power.
             forwardMove = (3 * forwardMove) / 2;
             sideMove = (3 * sideMove) / 2;
         }
@@ -1227,15 +1227,15 @@ void P_PlayerThinkInventory(player_t* player)
 {
     int                 pnum = player - players;
 
-    if(player->brain.cycleArtifact)
+    if(player->brain.cycleInvItem)
     {
-        if(!ST_IsInventoryVisible(pnum))
+        if(!ST_InventoryIsVisible(pnum))
         {
             ST_Inventory(pnum, true);
             return;
         }
 
-        ST_InventoryMove(pnum, player->brain.cycleArtifact, false);
+        ST_InventoryMove(pnum, player->brain.cycleInvItem, false);
     }
 }
 #endif
@@ -1283,101 +1283,34 @@ void P_PlayerThinkSounds(player_t* player)
 void P_PlayerThinkItems(player_t* player)
 {
 #if __JHERETIC__ || __JHEXEN__
-    int                 arti = 0; // What to use?
+    inventoryitemtype_t i, type = IIT_NONE; // What to use?
     int                 pnum = player - players;
 
-    if(player->brain.useArtifact)
+    if(player->brain.useInvItem)
     {
-        arti = player->readyArtifact;
+        type = P_InventoryReadyItem(pnum);
     }
 
-    // Artifact hot keys.
-#if __JHERETIC__
-    // Check Tome of Power and other artifact hotkeys.
-    if(arti == AFT_NONE && P_GetImpulseControlState(pnum, CTL_TOME_OF_POWER) &&
-       !player->powers[PT_WEAPONLEVEL2])
+    // Inventory item hot keys.
+    for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        arti = AFT_TOMBOFPOWER;
-    }
-#endif
-#if __JHEXEN__
-    if(arti == AFT_NONE && P_GetImpulseControlState(pnum, CTL_HEALTH) &&
-       (player->plr->mo->health < maxHealth))
-    {
-        arti = AFT_HEALTH;
-    }
-    if(arti == AFT_NONE && P_GetImpulseControlState(pnum, CTL_INVULNERABILITY) &&
-       !player->powers[PT_INVULNERABILITY])
-    {
-        arti = AFT_INVULNERABILITY;
-    }
-#endif
+        const def_invitem_t* def = P_GetInvItemDef(i);
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {
-        // Check for other artifact keys.
-        struct {
-            int control;
-            int artifact;
-        } controlArtiMap[] = {
-#if __JHERETIC__
-            { CTL_INVULNERABILITY, AFT_INVULNERABILITY },
-            { CTL_INVISIBILITY, AFT_INVISIBILITY },
-            { CTL_HEALTH, AFT_HEALTH },
-            { CTL_SUPER_HEALTH, AFT_SUPERHEALTH },
-            { CTL_TORCH, AFT_TORCH },
-            { CTL_FIREBOMB, AFT_FIREBOMB },
-            { CTL_EGG, AFT_EGG },
-            { CTL_FLY, AFT_FLY },
-            { CTL_TELEPORT, AFT_TELEPORT },
-            { CTL_PANIC, NUM_ARTIFACT_TYPES },
-#endif
-#if __JHEXEN__ || __JSTRIFE__
-            { CTL_INVULNERABILITY, AFT_INVULNERABILITY },
-            { CTL_BLAST_RADIUS, AFT_BLASTRADIUS },
-            { CTL_MYSTIC_URN, AFT_SUPERHEALTH },
-            { CTL_TORCH, AFT_TORCH },
-            { CTL_KRATER, AFT_BOOSTMANA },
-            { CTL_SPEED_BOOTS, AFT_SPEED },
-            { CTL_POISONBAG, AFT_POISONBAG },
-            { CTL_EGG, AFT_EGG },
-            { CTL_TELEPORT, AFT_TELEPORT },
-            { CTL_DARK_SERVANT, AFT_SUMMON },
-            { CTL_TELEPORT_OTHER, AFT_TELEPORTOTHER },
-            { CTL_PANIC, NUM_ARTIFACT_TYPES },
-#endif
-            { 0, AFT_NONE }              // Terminator.
-        };
-        int i;
-        for(i = 0; controlArtiMap[i].artifact != AFT_NONE && arti == AFT_NONE; i++)
+        if(def->hotKeyCtrlIdent != -1 &&
+           P_GetImpulseControlState(pnum, def->hotKeyCtrlIdent))
         {
-            if(P_GetImpulseControlState(pnum, controlArtiMap[i].control))
-            {
-                arti = controlArtiMap[i].artifact;
-                break;
-            }
+            type = i;
+            break;
         }
     }
-#endif
 
-    if(arti != AFT_NONE)
-    {   // Use an artifact
-        if(arti == NUM_ARTIFACT_TYPES)
-        {   // Use one of each artifact (except puzzle artifacts).
-            int     i;
-# if __JHEXEN__ || __JSTRIFE__
-            for(i = AFT_NONE + 1; i < AFT_FIRSTPUZZITEM; ++i)
-# else
-            for(i = AFT_NONE + 1; i < NUM_ARTIFACT_TYPES; ++i)
-# endif
-            {
-                P_InventoryUse(player, i);
-            }
-        }
-        else
-        {
-            P_InventoryUse(player, arti);
-        }
+    // Panic?
+    if(type == IIT_NONE && P_GetImpulseControlState(pnum, CTL_PANIC))
+        type = NUM_INVENTORYITEM_TYPES;
+
+    if(type != IIT_NONE)
+    {   // Use one (or more) inventory items.
+        P_InventoryUse(pnum, type, false);
     }
 #endif
 
@@ -1385,16 +1318,16 @@ void P_PlayerThinkItems(player_t* player)
     if(player->brain.upMove > 0 && !player->powers[PT_FLIGHT])
     {
         // Start flying automatically.
-        P_InventoryUse(player, AFT_FLY);
+        P_InventoryUse(pnum, IIT_FLY, false);
     }
 #endif
 }
 
-void P_PlayerThinkWeapons(player_t *player)
+void P_PlayerThinkWeapons(player_t* player)
 {
-    playerbrain_t *brain = &player->brain;
-    weapontype_t oldweapon = player->pendingWeapon;
-    weapontype_t newweapon;
+    playerbrain_t*  brain = &player->brain;
+    weapontype_t    oldweapon = player->pendingWeapon;
+    weapontype_t    newweapon;
 
     if(brain->cycleWeapon)
     {
@@ -1912,42 +1845,42 @@ void P_PlayerThinkUpdateControls(player_t* player)
     }
 
 #if __JHERETIC__ || __JHEXEN__
-    // Artifacts.
-    brain->useArtifact = false;
+    // Inventory items.
+    brain->useInvItem = false;
     if(P_GetImpulseControlState(playerNum, CTL_USE_ITEM))
     {
-        if(brain->speed && artiSkipParm)
+        if(brain->speed && invSkipParam)
         {
-            brain->cycleArtifact = -1;
+            brain->cycleInvItem = -1;
         }
         else
         {
             // If the inventory is visible, close it (depending on cfg.chooseAndUse).
-            if(ST_IsInventoryVisible(player - players))
+            if(ST_InventoryIsVisible(player - players))
             {
                 ST_Inventory(player - players, false); // close the inventory
 
                 if(cfg.inventoryUseImmediate)
-                    brain->useArtifact = true;
+                    brain->useInvItem = true;
             }
             else
             {
-                brain->useArtifact = true;
+                brain->useInvItem = true;
             }
         }
     }
 
     if(P_GetImpulseControlState(playerNum, CTL_NEXT_ITEM))
     {
-        brain->cycleArtifact = +1;
+        brain->cycleInvItem = +1;
     }
     else if(P_GetImpulseControlState(playerNum, CTL_PREV_ITEM))
     {
-        brain->cycleArtifact = -1;
+        brain->cycleInvItem = -1;
     }
     else
     {
-        brain->cycleArtifact = 0;
+        brain->cycleInvItem = 0;
     }
 #endif
 

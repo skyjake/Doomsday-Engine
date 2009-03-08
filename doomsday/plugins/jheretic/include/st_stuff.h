@@ -62,9 +62,11 @@ void        ST_updateGraphics(void);
 void        ST_HUDUnHide(int player, hueevent_t ev);
 
 void            ST_Inventory(int player, boolean show);
-boolean         ST_IsInventoryVisible(int player);
-boolean         ST_InventorySelect(int player, artitype_e arti);
+boolean         ST_InventorySelect(int player, inventoryitemtype_t type);
 boolean         ST_InventoryMove(int player, int dir, boolean silent);
+
+void            ST_InventoryMarkDirty(int player);
+boolean         ST_InventoryIsVisible(int player);
 void            ST_InventoryFlashCurrent(int player);
 
 #endif

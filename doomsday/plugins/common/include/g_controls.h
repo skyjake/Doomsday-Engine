@@ -65,16 +65,28 @@ enum {
     CTL_WEAPON0,
     CTL_NEXT_WEAPON,
     CTL_PREV_WEAPON,
+#if __JHERETIC__ || __JHEXEN__
     CTL_USE_ITEM,
     CTL_NEXT_ITEM,
     CTL_PREV_ITEM,
     CTL_PANIC,
+#endif
+#if __JHERETIC__
     CTL_TOME_OF_POWER,
     CTL_INVISIBILITY,
     CTL_FLY,
     CTL_TORCH,
     CTL_HEALTH,
     CTL_SUPER_HEALTH,
+    CTL_TELEPORT,
+    CTL_FIREBOMB,
+    CTL_INVULNERABILITY,
+    CTL_EGG,
+#endif
+#if __JHEXEN__
+    CTL_FLY,
+    CTL_TORCH,
+    CTL_HEALTH,
     CTL_MYSTIC_URN,
     CTL_KRATER,
     CTL_SPEED_BOOTS,
@@ -86,6 +98,7 @@ enum {
     CTL_INVULNERABILITY,
     CTL_DARK_SERVANT,
     CTL_EGG,
+#endif
     CTL_MAP,
     CTL_MAP_PAN_X,
     CTL_MAP_PAN_Y,
@@ -108,7 +121,7 @@ typedef struct playerbrain_s {
     int         changeWeapon;       // WT_NOCHANGE, or the weapon to change to
     int         cycleWeapon;        // +1 or -1
 #if __JHERETIC__ || __JHEXEN__
-    int         cycleArtifact;      // +1 or -1
+    int         cycleInvItem;       // +1 or -1
 #endif
     // Bits:
     uint        speed : 1;
@@ -127,7 +140,7 @@ typedef struct playerbrain_s {
     uint        scoreShow : 1;
     uint        doReborn: 1; // Set when the player wishes to be reborn.
 #if __JHERETIC__ || __JHEXEN__
-    uint        useArtifact: 1;
+    uint        useInvItem: 1;
 #endif
 } playerbrain_t;
 

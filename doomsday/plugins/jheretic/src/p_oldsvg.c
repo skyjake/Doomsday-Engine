@@ -44,6 +44,7 @@
 #include "p_plat.h"
 #include "p_floor.h"
 #include "am_map.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -101,7 +102,7 @@ static void SV_v13_Read(void* data, int len)
 
 static void SV_v13_ReadPlayer(player_t* pl)
 {
-    int             i;
+    int             i, plrnum = pl - players;
     byte            temp[12];
     ddplayer_t*     ddpl = pl->plr;
 
@@ -119,16 +120,20 @@ static void SV_v13_ReadPlayer(player_t* pl)
     pl->armorPoints = SV_v13_ReadLong();
     pl->armorType = SV_v13_ReadLong();
 
-    memset(pl->inventory, 0, sizeof(pl->inventory));
+    P_InventoryEmpty(plrnum);
     for(i = 0; i < 14; ++i)
     {
-        pl->inventory[i].type = SV_v13_ReadLong();
-        pl->inventory[i].count = SV_v13_ReadLong();
+        inventoryitemtype_t type = SV_v13_ReadLong();
+        int             j, count = SV_v13_ReadLong();
+
+        for(j = 0; j < count; ++j)
+            P_InventoryGive(plrnum, type, true);
     }
 
-    pl->readyArtifact = SV_v13_ReadLong();
-    SV_v13_ReadLong(); // artifactCount
-    pl->inventorySlotNum = SV_v13_ReadLong();
+    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_v13_ReadLong());
+    ST_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
+    SV_v13_ReadLong(); // current inventory item count?
+    /*pl->inventorySlotNum =*/ SV_v13_ReadLong();
 
     memset(pl->powers, 0, sizeof(pl->powers));
     pl->powers[PT_INVULNERABILITY] = (SV_v13_ReadLong()? true : false);

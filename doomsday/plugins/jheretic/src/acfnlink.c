@@ -170,6 +170,17 @@ actionlink_t actionlinks[] = {
     {"A_WizAtk1",           A_WizAtk1},
     {"A_WizAtk2",           A_WizAtk2},
     {"A_WizAtk3",           A_WizAtk3},
+    // Inventory:
+    {"A_FireBomb",          A_FireBomb},
+    {"A_TombOfPower",       A_TombOfPower},
+    {"A_Egg",               A_Egg},
+    {"A_Wings",             A_Wings},
+    {"A_Teleport",          A_Teleport},
+    {"A_Torch",             A_Torch},
+    {"A_Health",            A_Health},
+    {"A_SuperHealth",       A_SuperHealth},
+    {"A_Invisibility",      A_Invisibility},
+    {"A_Invulnerability",   A_Invulnerability},
     {0, 0}
 };
 

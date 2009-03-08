@@ -149,14 +149,11 @@ typedef struct playerheader_s {
     int             numWeapons;
     int             numAmmoTypes;
     int             numPSprites;
-#if __JHERETIC__ || __JHEXEN__
-    int             numInvSlots;
+#if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
+    int             numInvItemTypes;
 #endif
 #if __JHEXEN__
     int             numArmorTypes;
-#endif
-#if __JDOOM64__
-    int             numArtifacts;
 #endif
 } playerheader_t;
 
@@ -1006,7 +1003,7 @@ static void SV_WritePlayer(int playernum)
 
     // Version number. Increase when you make changes to the player data
     // segment format.
-    SV_WriteByte(5);
+    SV_WriteByte(6);
 
 #if __JHEXEN__
     // Class.
@@ -1041,14 +1038,15 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->armorType);
 #endif
 
-#if __JHEXEN__
-    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
+#if __JDOOM64__ || __JHEXEN__
+    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
     {
-        SV_WriteLong(p->inventory[i].type);
-        SV_WriteLong(p->inventory[i].count);
+        inventoryitemtype_t type = IIT_FIRST + i;
+
+        SV_WriteLong(type);
+        SV_WriteLong(P_InventoryCount(playernum, type));
     }
-    SV_WriteLong(p->readyArtifact);
-    SV_WriteLong(p->inventorySlotNum);
+    SV_WriteLong(P_InventoryReadyItem(playernum));
 #endif
 
     for(i = 0; i < GetPlayerHeader()->numPowers; ++i)
@@ -1068,13 +1066,6 @@ static void SV_WritePlayer(int playernum)
 #if __JHEXEN__
     SV_WriteLong(p->pieces);
 #else
-# if __JDOOM64__
-    for(i = 0; i < GetPlayerHeader()->numArtifacts; ++i)
-    {
-        SV_WriteLong(p->artifacts[i]);
-    }
-# endif
-
     SV_WriteLong(p->backpack);
 #endif
 
@@ -1138,13 +1129,14 @@ static void SV_WritePlayer(int playernum)
 #endif
 
 #if __JHERETIC__
-    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
+    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
     {
-        SV_WriteLong(p->inventory[i].type);
-        SV_WriteLong(p->inventory[i].count);
+        inventoryitemtype_t type = IIT_FIRST + i;
+
+        SV_WriteLong(type);
+        SV_WriteLong(P_InventoryCount(playernum, type));
     }
-    SV_WriteLong(p->readyArtifact);
-    SV_WriteLong(p->inventorySlotNum);
+    SV_WriteLong(P_InventoryReadyItem(playernum));
     SV_WriteLong(p->chickenPeck);
 #endif
 
@@ -1168,16 +1160,17 @@ static void SV_WritePlayer(int playernum)
 /**
  * Reads a player's data (not including the ID number).
  */
-static void SV_ReadPlayer(player_t *p)
+static void SV_ReadPlayer(player_t* p)
 {
-    int                 i, numPSprites = GetPlayerHeader()->numPSprites;
+    int                 i, plrnum = p - players,
+                        numPSprites = GetPlayerHeader()->numPSprites;
     byte                ver;
-    ddplayer_t         *dp = p->plr;
+    ddplayer_t*         dp = p->plr;
 
     ver = SV_ReadByte();
 
 #if __JHEXEN__
-    cfg.playerClass[p - players] = SV_ReadByte();
+    cfg.playerClass[plrnum] = SV_ReadByte();
 
     memset(p, 0, sizeof(*p));   // Force everything NULL,
     p->plr = dp;                // but restore the ddplayer pointer.
@@ -1212,18 +1205,27 @@ static void SV_ReadPlayer(player_t *p)
     p->armorType = SV_ReadLong();
 #endif
 
-#if __JHEXEN__
-    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
+#if __JDOOM64__ || __JHEXEN__
+    P_InventoryEmpty(plrnum);
+    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
     {
-        p->inventory[i].type  = SV_ReadLong();
-        p->inventory[i].count = SV_ReadLong();
+        inventoryitemtype_t type = SV_ReadLong();
+        int             j, count = SV_ReadLong();
+
+        for(j = 0; j < count; ++j)
+            P_InventoryGive(plrnum, type, true);
     }
-    p->readyArtifact = SV_ReadLong();
+
+    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_ReadLong());
+    ST_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
+# if __JHEXEN__
     if(ver < 5)
     {
-        /*p->artifactCount =*/ SV_ReadLong();
+        SV_ReadLong(); // Current inventory item count?
     }
-    p->inventorySlotNum = SV_ReadLong();
+    if(ver < 6)
+    /*p->inventorySlotNum =*/ SV_ReadLong();
+# endif
 #endif
 
     for(i = 0; i < GetPlayerHeader()->numPowers; ++i)
@@ -1231,7 +1233,7 @@ static void SV_ReadPlayer(player_t *p)
         p->powers[i] = SV_ReadLong();
     }
     if(p->powers[PT_ALLMAP])
-        AM_RevealMap(AM_MapForPlayer(p - players), true);
+        AM_RevealMap(AM_MapForPlayer(plrnum), true);
 
 #if __JHEXEN__
     p->keys = SV_ReadLong();
@@ -1245,12 +1247,6 @@ static void SV_ReadPlayer(player_t *p)
 #if __JHEXEN__
     p->pieces = SV_ReadLong();
 #else
-# if __JDOOM64__
-    for(i = 0; i < GetPlayerHeader()->numArtifacts; ++i)
-    {
-        p->artifacts[i] = SV_ReadLong();
-    }
-# endif
     p->backpack = SV_ReadLong();
 #endif
 
@@ -1336,18 +1332,25 @@ static void SV_ReadPlayer(player_t *p)
         /*p->messageTics =*/ SV_ReadLong();
 
     p->flyHeight = SV_ReadLong();
-    for(i = 0; i < GetPlayerHeader()->numInvSlots; ++i)
+
+    P_InventoryEmpty(plrnum);
+    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
     {
-        p->inventory[i].type = SV_ReadLong();
-        p->inventory[i].count = SV_ReadLong();
+        inventoryitemtype_t type = SV_ReadLong();
+        int             j, count = SV_ReadLong();
+
+        for(j = 0; j < count; ++j)
+            P_InventoryGive(plrnum, type, true);
     }
 
-    p->readyArtifact = SV_ReadLong();
+    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_ReadLong());
+    ST_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
     if(ver < 5)
     {
-        /*p->artifactCount =*/ SV_ReadLong();
+        SV_ReadLong(); // Current inventory item count?
     }
-    p->inventorySlotNum = SV_ReadLong();
+    if(ver < 6)
+    /*p->inventorySlotNum =*/ SV_ReadLong();
 
     p->chickenPeck = SV_ReadLong();
 # endif
@@ -1997,14 +2000,11 @@ static void P_ArchivePlayerHeader(void)
     ph->numWeapons = NUM_WEAPON_TYPES;
     ph->numAmmoTypes = NUM_AMMO_TYPES;
     ph->numPSprites = NUMPSPRITES;
-#if __JHERETIC__ || __JHEXEN__
-    ph->numInvSlots = NUMINVENTORYSLOTS;
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+    ph->numInvItemTypes = NUM_INVENTORYITEM_TYPES;
 #endif
 #if __JHEXEN__
     ph->numArmorTypes = NUMARMOR;
-#endif
-#if __JDOOM64__
-    ph->numArtifacts = NUM_ARTIFACT_TYPES;
 #endif
 
     SV_WriteLong(ph->numPowers);
@@ -2013,15 +2013,13 @@ static void P_ArchivePlayerHeader(void)
     SV_WriteLong(ph->numWeapons);
     SV_WriteLong(ph->numAmmoTypes);
     SV_WriteLong(ph->numPSprites);
-#if __JHERETIC__ || __JHEXEN__
-    SV_WriteLong(ph->numInvSlots);
+#if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
+    SV_WriteLong(ph->numInvItemTypes);
 #endif
 #if __JHEXEN__
     SV_WriteLong(ph->numArmorTypes);
 #endif
-#if __JDOOM64__
-    SV_WriteLong(ph->numArtifacts);
-#endif
+
     playerHeaderOK = true;
 }
 
@@ -2049,16 +2047,15 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numPSprites = SV_ReadLong();
 #if __JHERETIC__
         if(ver >= 2)
-            playerHeader.numInvSlots = SV_ReadLong();
+            playerHeader.numInvItemTypes = SV_ReadLong();
         else
-            playerHeader.numInvSlots = NUMINVENTORYSLOTS;
+            playerHeader.numInvItemTypes = NUM_INVENTORYITEM_TYPES;
+#endif
+#if __JHEXEN__ || __JDOOM64__
+        playerHeader.numInvItemTypes = SV_ReadLong();
 #endif
 #if __JHEXEN__
-        playerHeader.numInvSlots = SV_ReadLong();
         playerHeader.numArmorTypes = SV_ReadLong();
-#endif
-#if __JDOOM64__
-        playerHeader.numArtifacts = SV_ReadLong();
 #endif
     }
     else // The old format didn't save the counts.
@@ -2070,7 +2067,7 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numWeapons = 4;
         playerHeader.numAmmoTypes = 2;
         playerHeader.numPSprites = 2;
-        playerHeader.numInvSlots = 33;
+        playerHeader.numInvItemTypes = 33;
         playerHeader.numArmorTypes = 4;
 #elif __JDOOM__ || __JDOOM64__
         playerHeader.numPowers = 6;
@@ -2079,12 +2076,15 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numWeapons = 9;
         playerHeader.numAmmoTypes = 4;
         playerHeader.numPSprites = 2;
+# if __JDOOM64__
+        playerHeader.numInvItemTypes = 3;
+# endif
 #elif __JHERETIC__
         playerHeader.numPowers = 9;
         playerHeader.numKeys = 3;
         playerHeader.numFrags = 4; // ?
         playerHeader.numWeapons = 8;
-        playerHeader.numInvSlots = 14;
+        playerHeader.numInvItemTypes = 14;
         playerHeader.numAmmoTypes = 6;
         playerHeader.numPSprites = 2;
 #endif
@@ -4998,7 +4998,6 @@ static boolean SV_LoadGame2(void)
 
         memcpy(&players[i], &playerBackup[i], sizeof(player_t));
         players[i].plr->mo = mo;
-        players[i].readyArtifact = players[i].inventory[0].type;
     }
 #endif
 

@@ -42,7 +42,7 @@ extern boolean noMonstersParm;
 extern boolean respawnParm;
 extern boolean turboParm;
 extern boolean fastParm;
-extern boolean artiSkipParm;
+extern boolean invSkipParam;
 
 extern float turboMul;
 extern skillmode_t startSkill;

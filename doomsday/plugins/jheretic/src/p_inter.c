@@ -320,39 +320,35 @@ boolean P_GivePower(player_t* player, powertype_t power)
     {
         if(power == PT_ALLMAP)
             AM_RevealMap(AM_MapForPlayer(player - players), true);
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
     }
 
     return retval;
 }
 
 /**
- * Removes the MF_SPECIAL flag, and initiates the artifact pickup
- * animation.
+ * Removes the MF_SPECIAL flag, and initiates the item pickup animation.
  */
-void P_SetDormantArtifact(mobj_t *arti)
+void P_SetDormantItem(mobj_t* mo)
 {
-    arti->flags &= ~MF_SPECIAL;
-    if(deathmatch && (arti->type != MT_ARTIINVULNERABILITY) &&
-       (arti->type != MT_ARTIINVISIBILITY))
+    mo->flags &= ~MF_SPECIAL;
+    if(deathmatch && (mo->type != MT_ARTIINVULNERABILITY) &&
+       (mo->type != MT_ARTIINVISIBILITY))
     {
-        P_MobjChangeState(arti, S_DORMANTARTI1);
+        P_MobjChangeState(mo, S_DORMANTARTI1);
     }
     else
     {   // Don't respawn.
-        P_MobjChangeState(arti, S_DEADARTI1);
+        P_MobjChangeState(mo, S_DEADARTI1);
     }
 
-    S_StartSound(SFX_ARTIUP, arti);
+    S_StartSound(SFX_ARTIUP, mo);
 }
 
-void C_DECL A_RestoreArtifact(mobj_t* arti)
+void C_DECL A_RestoreArtifact(mobj_t* mo)
 {
-    arti->flags |= MF_SPECIAL;
-    P_MobjChangeState(arti, P_GetState(arti->type, SN_SPAWN));
-    S_StartSound(SFX_RESPAWN, arti);
+    mo->flags |= MF_SPECIAL;
+    P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN));
+    S_StartSound(SFX_RESPAWN, mo);
 }
 
 void P_HideSpecialThing(mobj_t* thing)
@@ -392,16 +388,16 @@ typedef enum {
     IT_KEY_BLUE,
     IT_KEY_YELLOW,
     IT_KEY_GREEN,
-    IT_ARTIFACT_HEALTHPOTION,
-    IT_ARTIFACT_WINGS,
-    IT_ARTIFACT_INVUL,
-    IT_ARTIFACT_TOMB,
-    IT_ARTIFACT_INVIS,
-    IT_ARTIFACT_EGG,
-    IT_ARTIFACT_HEALTHSUPER,
-    IT_ARTIFACT_TORCH,
-    IT_ARTIFACT_FIREBOMB,
-    IT_ARTIFACT_TELEPORT,
+    IT_ITEM_HEALTHPOTION,
+    IT_ITEM_WINGS,
+    IT_ITEM_INVUL,
+    IT_ITEM_TOMB,
+    IT_ITEM_INVIS,
+    IT_ITEM_EGG,
+    IT_ITEM_HEALTHSUPER,
+    IT_ITEM_TORCH,
+    IT_ITEM_FIREBOMB,
+    IT_ITEM_TELEPORT,
     IT_AMMO_WAND,
     IT_AMMO_WAND_LARGE,
     IT_AMMO_MACE,
@@ -436,16 +432,16 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
         { IT_KEY_BLUE, SPR_BKYY },
         { IT_KEY_YELLOW, SPR_CKYY },
         { IT_KEY_GREEN, SPR_AKYY },
-        { IT_ARTIFACT_HEALTHPOTION, SPR_PTN2 },
-        { IT_ARTIFACT_WINGS, SPR_SOAR },
-        { IT_ARTIFACT_INVUL, SPR_INVU },
-        { IT_ARTIFACT_TOMB, SPR_PWBK },
-        { IT_ARTIFACT_INVIS, SPR_INVS },
-        { IT_ARTIFACT_EGG, SPR_EGGC },
-        { IT_ARTIFACT_HEALTHSUPER, SPR_SPHL },
-        { IT_ARTIFACT_TORCH, SPR_TRCH },
-        { IT_ARTIFACT_FIREBOMB, SPR_FBMB },
-        { IT_ARTIFACT_TELEPORT, SPR_ATLP },
+        { IT_ITEM_HEALTHPOTION, SPR_PTN2 },
+        { IT_ITEM_WINGS, SPR_SOAR },
+        { IT_ITEM_INVUL, SPR_INVU },
+        { IT_ITEM_TOMB, SPR_PWBK },
+        { IT_ITEM_INVIS, SPR_INVS },
+        { IT_ITEM_EGG, SPR_EGGC },
+        { IT_ITEM_HEALTHSUPER, SPR_SPHL },
+        { IT_ITEM_TORCH, SPR_TRCH },
+        { IT_ITEM_FIREBOMB, SPR_FBMB },
+        { IT_ITEM_TELEPORT, SPR_ATLP },
         { IT_AMMO_WAND, SPR_AMG1 },
         { IT_AMMO_WAND_LARGE, SPR_AMG2 },
         { IT_AMMO_MACE, SPR_AMM1 },
@@ -528,6 +524,9 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         if(!P_GivePower(plr, PT_ALLMAP))
             return false;
 
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_POWER);
+
         P_SetMessage(plr, TXT_ITEMSUPERMAP, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -568,83 +567,83 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
         break;
 
-    case IT_ARTIFACT_HEALTHPOTION:
-        if(!P_InventoryGive(plr, AFT_HEALTH))
+    case IT_ITEM_HEALTHPOTION:
+        if(!P_InventoryGive(plr - players, IIT_HEALTH, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTIHEALTH, false);
+        P_SetMessage(plr, TXT_INV_HEALTH, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_WINGS:
-        if(!P_InventoryGive(plr, AFT_FLY))
+    case IT_ITEM_WINGS:
+        if(!P_InventoryGive(plr - players, IIT_FLY, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTIFLY, false);
+        P_SetMessage(plr, TXT_INV_FLY, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_INVUL:
-        if(!P_InventoryGive(plr, AFT_INVULNERABILITY))
+    case IT_ITEM_INVUL:
+        if(!P_InventoryGive(plr - players, IIT_INVULNERABILITY, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTIINVULNERABILITY, false);
+        P_SetMessage(plr, TXT_INV_INVULNERABILITY, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_TOMB:
-        if(!P_InventoryGive(plr, AFT_TOMBOFPOWER))
+    case IT_ITEM_TOMB:
+        if(!P_InventoryGive(plr - players, IIT_TOMBOFPOWER, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTITOMEOFPOWER, false);
+        P_SetMessage(plr, TXT_INV_TOMEOFPOWER, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_INVIS:
-        if(!P_InventoryGive(plr, AFT_INVISIBILITY))
+    case IT_ITEM_INVIS:
+        if(!P_InventoryGive(plr - players, IIT_INVISIBILITY, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTIINVISIBILITY, false);
+        P_SetMessage(plr, TXT_INV_INVISIBILITY, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_EGG:
-        if(!P_InventoryGive(plr, AFT_EGG))
+    case IT_ITEM_EGG:
+        if(!P_InventoryGive(plr - players, IIT_EGG, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTIEGG, false);
+        P_SetMessage(plr, TXT_INV_EGG, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_HEALTHSUPER:
-        if(!P_InventoryGive(plr, AFT_SUPERHEALTH))
+    case IT_ITEM_HEALTHSUPER:
+        if(!P_InventoryGive(plr - players, IIT_SUPERHEALTH, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTISUPERHEALTH, false);
+        P_SetMessage(plr, TXT_INV_SUPERHEALTH, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_TORCH:
-        if(!P_InventoryGive(plr, AFT_TORCH))
+    case IT_ITEM_TORCH:
+        if(!P_InventoryGive(plr - players, IIT_TORCH, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTITORCH, false);
+        P_SetMessage(plr, TXT_INV_TORCH, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_FIREBOMB:
-        if(!P_InventoryGive(plr, AFT_FIREBOMB))
+    case IT_ITEM_FIREBOMB:
+        if(!P_InventoryGive(plr - players, IIT_FIREBOMB, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTIFIREBOMB, false);
+        P_SetMessage(plr, TXT_INV_FIREBOMB, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT_TELEPORT:
-        if(!P_InventoryGive(plr, AFT_TELEPORT))
+    case IT_ITEM_TELEPORT:
+        if(!P_InventoryGive(plr - players, IIT_TELEPORT, false))
             return false;
 
-        P_SetMessage(plr, TXT_ARTITELEPORT, false);
+        P_SetMessage(plr, TXT_INV_TELEPORT, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
@@ -834,17 +833,17 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 
     switch(item)
     {
-    case IT_ARTIFACT_HEALTHPOTION:
-    case IT_ARTIFACT_WINGS:
-    case IT_ARTIFACT_INVUL:
-    case IT_ARTIFACT_TOMB:
-    case IT_ARTIFACT_INVIS:
-    case IT_ARTIFACT_EGG:
-    case IT_ARTIFACT_HEALTHSUPER:
-    case IT_ARTIFACT_TORCH:
-    case IT_ARTIFACT_FIREBOMB:
-    case IT_ARTIFACT_TELEPORT:
-        P_SetDormantArtifact(special);
+    case IT_ITEM_HEALTHPOTION:
+    case IT_ITEM_WINGS:
+    case IT_ITEM_INVUL:
+    case IT_ITEM_TOMB:
+    case IT_ITEM_INVIS:
+    case IT_ITEM_EGG:
+    case IT_ITEM_HEALTHSUPER:
+    case IT_ITEM_TORCH:
+    case IT_ITEM_FIREBOMB:
+    case IT_ITEM_TELEPORT:
+        P_SetDormantItem(special);
         break;
 
     default:
@@ -1046,57 +1045,38 @@ boolean P_MorphMonster(mobj_t *actor)
     return true;
 }
 
-boolean P_AutoUseChaosDevice(player_t *player)
+boolean P_AutoUseChaosDevice(player_t* player)
 {
-    uint                i;
+    int                 plrnum = player - players;
 
-    //// \todo Do this in the inventory code.
-    for(i = 0; i < player->inventorySlotNum; ++i)
+    //// \todo Do this in the inventory code?
+    if(P_InventoryCount(plrnum, IIT_TELEPORT))
     {
-        if(player->inventory[i].type == AFT_TELEPORT)
-        {
-            P_InventoryUse(player, AFT_TELEPORT);
-            P_DamageMobj(player->plr->mo, NULL, NULL,
-                         player->health - (player->health + 1) / 2, false);
-            return true;
-        }
+        P_InventoryUse(plrnum, IIT_TELEPORT, false);
+        P_DamageMobj(player->plr->mo, NULL, NULL,
+                     player->health - (player->health + 1) / 2, false);
+        return true;
     }
 
     return false;
 }
 
-void P_AutoUseHealth(player_t *player, int saveHealth)
+void P_AutoUseHealth(player_t* player, int saveHealth)
 {
-    uint                i;
-    uint                count;
-    int                 normalCount = 0;
-    uint                normalSlot = 0;
-    int                 superCount = 0;
-    uint                superSlot = 0;
+    uint                i, count;
+    int                 plrnum = player - players;
+    int                 normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
+    int                 superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
 
-    //// \todo Do this in the inventory code.
-    for(i = 0; i < player->inventorySlotNum; ++i)
-    {
-        if(player->inventory[i].type == AFT_HEALTH)
-        {
-            normalSlot = i;
-            normalCount = player->inventory[i].count;
-        }
-        else if(player->inventory[i].type == AFT_SUPERHEALTH)
-        {
-            superSlot = i;
-            superCount = player->inventory[i].count;
-        }
-    }
-
-    if((gameSkill == SM_BABY) && (normalCount * 25 >= saveHealth))
+    //// \todo Do this in the inventory code?
+    if(gameSkill == SM_BABY && normalCount * 25 >= saveHealth)
     {
         // Use quartz flasks.
         count = (saveHealth + 24) / 25;
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryTake(player, AFT_HEALTH);
+            P_InventoryTake(plrnum, IIT_HEALTH, false);
         }
     }
     else if(superCount * 100 >= saveHealth)
@@ -1106,11 +1086,11 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryTake(player, AFT_SUPERHEALTH);
+            P_InventoryTake(plrnum, IIT_SUPERHEALTH, false);
         }
     }
-    else if((gameSkill == SM_BABY) &&
-            (superCount * 100 + normalCount * 25 >= saveHealth))
+    else if(gameSkill == SM_BABY &&
+            superCount * 100 + normalCount * 25 >= saveHealth)
     {
         // Use mystic urns and quartz flasks.
         count = (saveHealth + 24) / 25;
@@ -1118,14 +1098,14 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryTake(player, AFT_HEALTH);
+            P_InventoryTake(plrnum, IIT_HEALTH, false);
         }
 
         count = (saveHealth + 99) / 100;
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryTake(player, AFT_HEALTH);
+            P_InventoryTake(plrnum, IIT_SUPERHEALTH, false);
         }
     }
 

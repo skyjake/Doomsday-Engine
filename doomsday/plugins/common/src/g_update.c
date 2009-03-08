@@ -48,6 +48,7 @@
 #include "hu_pspr.h"
 #include "hu_menu.h"
 #include "rend_automap.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -155,7 +156,11 @@ void G_UpdateState(int step)
         XG_Update();
 #endif
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+        P_InitInventory();
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
         ST_Init();
 #endif
 
@@ -166,7 +171,7 @@ void G_UpdateState(int step)
         S_ParseSndInfoLump();
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         S_MapMusic();
 #endif
         break;

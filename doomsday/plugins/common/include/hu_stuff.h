@@ -54,6 +54,7 @@ typedef enum border_e {
 // The fonts.
 extern dpatch_t huFont[HU_FONTSIZE];
 extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
+extern dpatch_t huMinus;
 
 // Name graphics of each map.
 extern dpatch_t* mapNamePatches;
@@ -83,7 +84,7 @@ void            Hu_FogEffectSetAlphaTarget(float alpha);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                         dpatch_t* patch, const char *altstring,
+                         const dpatch_t* patch, const char *altstring,
                          boolean builtin, int halign);
 
 void        WI_DrawParamText(int x, int y, const char* string,

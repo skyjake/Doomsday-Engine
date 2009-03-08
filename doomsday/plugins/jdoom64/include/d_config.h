@@ -43,7 +43,7 @@ enum {
     HUD_AMMO,
     HUD_KEYS,
     HUD_FRAGS,
-    HUD_POWER, // jd64
+    HUD_INVENTORY, // jd64
     NUMHUDDISPLAYS
 };
 

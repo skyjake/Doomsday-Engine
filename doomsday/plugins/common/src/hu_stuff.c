@@ -111,6 +111,8 @@ typedef struct fogeffectdata_s {
 dpatch_t huFont[HU_FONTSIZE];
 dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 
+dpatch_t huMinus;
+
 int typeInTime = 0;
 
 #if __JDOOM__ || __JDOOM64__
@@ -219,6 +221,15 @@ void Hu_LoadData(void)
     // Load the border patches
     for(i = 1; i < 9; ++i)
         R_CachePatch(&borderPatches[i-1], borderLumps[i]);
+
+    // Patch used for '-' (minus) in the status bar.
+#if __JDOOM__
+    R_CachePatch(&huMinus, "STTMINUS");
+#elif __JDOOM64__
+    R_CachePatch(&huMinus, "FONTB046");
+#else
+    R_CachePatch(&huMinus, "FONTB13");
+#endif
 
 #if __JDOOM__ || __JDOOM64__
     // load the heads-up fonts
@@ -1830,8 +1841,8 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                  dpatch_t* patch, const char* altstring, boolean builtin,
-                  int halign)
+                  const dpatch_t* patch, const char* altstring,
+                  boolean builtin, int halign)
 {
     char                def[80], *string;
     int                 patchString = 0;

@@ -145,7 +145,7 @@ typedef struct player_s {
 
     int             flyHeight;
 
-    laserpw_t       artifacts[NUM_ARTIFACT_TYPES]; // jd64
+    inventoryitemtype_t inventory[NUM_INVENTORYITEM_TYPES];
 } player_t;
 
 #endif

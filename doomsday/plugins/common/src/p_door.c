@@ -510,7 +510,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
 
 # if __JDOOM64__
     case 343: // jd64
-        if(!p->artifacts[it_laserpw1])
+        if(!p->inventory[IIT_DEMONKEY1])
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
@@ -519,7 +519,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         break;
 
     case 344: // jd64
-        if(!p->artifacts[it_laserpw2])
+        if(!p->inventory[IIT_DEMONKEY2])
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
@@ -528,7 +528,7 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         break;
 
     case 345: // jd64
-        if(!p->artifacts[it_laserpw3])
+        if(!p->inventory[IIT_DEMONKEY3])
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);

@@ -251,25 +251,25 @@ typedef enum {
 #define CHICKENTICS         (40*TICRATE)
 
 /**
- * Artifacts (collectable, inventory items).
+ * Inventory Item Types:
  */
 typedef enum {
-    AFT_NONE = 0,
-    AFT_FIRST = 1,
-    AFT_INVULNERABILITY = AFT_FIRST,
-    AFT_INVISIBILITY,
-    AFT_HEALTH,
-    AFT_SUPERHEALTH,
-    AFT_TOMBOFPOWER,
-    AFT_TORCH,
-    AFT_FIREBOMB,
-    AFT_EGG,
-    AFT_FLY,
-    AFT_TELEPORT,
-    NUM_ARTIFACT_TYPES
-} artitype_e;
+    IIT_NONE = 0,
+    IIT_FIRST = 1,
+    IIT_INVULNERABILITY = IIT_FIRST,
+    IIT_INVISIBILITY,
+    IIT_HEALTH,
+    IIT_SUPERHEALTH,
+    IIT_TOMBOFPOWER,
+    IIT_TORCH,
+    IIT_FIREBOMB,
+    IIT_EGG,
+    IIT_FLY,
+    IIT_TELEPORT,
+    NUM_INVENTORYITEM_TYPES
+} inventoryitemtype_t;
 
-#define MAXARTICOUNT        16
+#define MAXINVITEMCOUNT        16
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 

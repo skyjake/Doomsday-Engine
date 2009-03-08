@@ -998,27 +998,28 @@ static menu_t HUDDef = {
 
 #if __JHERETIC__ || __JHEXEN__
 static menuitem_t InventoryItems[] = {
+    {ITT_EFUNC,  0, "Select mode : ", M_ToggleVar, 0, NULL, "ctl-inventory-mode"},
     {ITT_EFUNC,  0, "Wrap around :", M_ToggleVar, 0, NULL, "ctl-inventory-wrap"},
     {ITT_EFUNC,  0, "Choose and use :", M_ToggleVar, 0, NULL, "ctl-inventory-use-immediate"},
-    {ITT_EFUNC,  0, "Next on use :", M_ToggleVar, 0, NULL, "ctl-inventory-use-next"},
+    {ITT_EFUNC,  0, "Select next if use failed :", M_ToggleVar, 0, NULL, "ctl-inventory-use-next"},
     {ITT_LRFUNC, 0, "Auto-hide :", M_InventoryHideTime, 0},
     {ITT_EMPTY,  0, NULL, NULL, 0},
     {ITT_EMPTY,  0, "Full-screen HUD", NULL, 0},
-    {ITT_LRFUNC, 0, "Max Visible Slots :", M_InventorySlotMaxVis, 0},
-    {ITT_EFUNC,  0, "Hide Empty Slots: ", M_ToggleVar, 0, NULL, "hud-inventory-slot-showempty"}
+    {ITT_LRFUNC, 0, "Max visible slots :", M_InventorySlotMaxVis, 0, NULL, "hud-inventory-slot-max"},
+    {ITT_EFUNC,  0, "Show empty slots :", M_ToggleVar, 0, NULL, "hud-inventory-slot-showempty"}
 };
 
 static menu_t InventoryDef = {
     0,
     78, 48,
     M_DrawInventoryMenu,
-    8, InventoryItems,
+    9, InventoryItems,
     0, MENU_OPTIONS,
     huFontA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
-    0, 8
+    0, 9
 };
 #endif
 
@@ -3220,9 +3221,11 @@ void M_DrawInventoryMenu(void)
 {
     menu_t*             menu = &InventoryDef;
     int                 idx = 0;
+    static char*        modeNames[2] = { "Cursor", "Scroll" };
 
     M_DrawTitle("Inventory Options", menu->y - 28);
 
+    M_WriteMenuText(menu, idx++, modeNames[cfg.inventorySelectMode? 1 : 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.inventoryWrap? 1 : 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.inventoryUseImmediate? 1 : 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.inventoryUseNext? 1 : 0]);
@@ -3257,8 +3260,8 @@ void M_DrawInventoryMenu(void)
     else
         str = "Automatic";
     M_WriteMenuText(menu, idx++, str);
+    M_WriteMenuText(menu, idx++, yesno[cfg.inventorySlotShowEmpty? 1 : 0]);
     }
-    M_WriteMenuText(menu, idx++, yesno[!cfg.inventorySlotShowEmpty? 1 : 0]);
 }
 #endif
 
@@ -3407,7 +3410,7 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARMOR]]);
 #endif
 #if __JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_POWER]]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_INVENTORY]]);
 #endif
 #if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_FACE]]);
@@ -3709,6 +3712,7 @@ void M_InventoryHideTime(int option, void* context)
 
 void M_InventorySlotMaxVis(int option, void* context)
 {
+    char*               cvarname;
     int                 val = cfg.inventorySlotMaxVis;
 
     if(option == RIGHT_DIR)
@@ -3719,7 +3723,12 @@ void M_InventorySlotMaxVis(int option, void* context)
     else if(val > 0)
         val--;
 
-    cfg.inventorySlotMaxVis = val;
+    if(!context)
+        return;
+    cvarname = (char*) context;
+
+    Con_SetInteger(cvarname, val, false);
+    S_LocalSound(menusnds[0], NULL);
 }
 #endif
 

@@ -53,6 +53,7 @@
 #include "g_common.h"
 #include "p_tick.h"
 #include "p_start.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1018,18 +1019,29 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #if __JHERETIC__ || __JHEXEN__
     if(flags & PSF_INVENTORY)
     {
-        uint                i;
+        uint                i, count = 0;
 
-        *ptr++ = pl->inventorySlotNum;
-        for(i = 0; i < pl->inventorySlotNum; ++i)
-            WRITE_SHORT(ptr,
-                        (pl->inventory[i].
-                         type & 0xff) | ((pl->inventory[i].
-                                          count & 0xff) << 8));
+        for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+            count += (P_InventoryCount(srcPlrNum, IIT_FIRST + i)? 1 : 0);
+
+        *ptr++ = count;
+        if(count)
+        {
+            for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+            {
+                inventoryitemtype_t type = IIT_FIRST + i;
+                uint                num = P_InventoryCount(srcPlrNum, type);
+
+                if(num)
+                {
+                    WRITE_SHORT(ptr, (type & 0xff) | ((num & 0xff) << 8));
+                }
+            }
+        }
     }
 #endif
 
-    if(flags & PSF_POWERS)      // Austin P.?
+    if(flags & PSF_POWERS)
     {
         // First see which powers should be sent.
 #if __JHEXEN__ || __JSTRIFE__

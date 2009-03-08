@@ -52,6 +52,7 @@
 #include "p_terraintype.h"
 #include "p_tick.h"
 #include "p_actor.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -3085,6 +3086,11 @@ boolean P_UsePuzzleItem(player_t* player, int itemType)
 
     P_PathTraverse(pos1[VX], pos1[VY], pos2[VX], pos2[VY],
                    PT_ADDLINES | PT_ADDMOBJS, PTR_PuzzleItemTraverse);
+
+    if(!puzzleActivated)
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+    }
 
     return puzzleActivated;
 }

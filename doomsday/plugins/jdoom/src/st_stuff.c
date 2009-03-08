@@ -1353,9 +1353,6 @@ static void initData(hudstate_t* hud)
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
 
-    // Ensure the HUD widget lib has been inited.
-    STlib_init();
-
     hud->firstTime = true;
     hud->statusbarActive = true;
     hud->stopped = true;

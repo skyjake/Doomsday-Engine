@@ -136,7 +136,7 @@ enum {
 #endif
 
 #ifdef __JHERETIC__
-#define PSF_INVENTORY       0x0008 // ArtifactCount and invSlotNum, too.
+#define PSF_INVENTORY       0x0008
 #define PSF_MORPH_TIME      0x4000
 #define PSF_REBORN          0x77ff
 #endif
@@ -144,10 +144,14 @@ enum {
 #ifdef __JHEXEN__
 #define PSF_ARMOR           PSF_ARMOR_POINTS    // For convenience.
 #define PSF_WEAPONS         (PSF_PENDING_WEAPON | PSF_READY_WEAPON)
-#define PSF_INVENTORY       0x0008 // ArtifactCount and invSlotNum, too.
+#define PSF_INVENTORY       0x0008
 #define PSF_MORPH_TIME      0x4000
 #define PSF_LOCAL_QUAKE     0x8000
 #define PSF_REBORN          0xf7ff
+#endif
+
+#ifdef __JDOOM64__
+#define PSF_INVENTORY       0x0008
 #endif
 
 // Intermission flags.

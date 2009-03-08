@@ -74,7 +74,7 @@ boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
 boolean turboParm; // checkparm of -turbo
 boolean fastParm; // checkparm of -fast
-boolean artiSkipParm; // whether shift-enter skips an artifact
+boolean invSkipParam; // whether shift-enter skips an inventory item
 
 float turboMul; // multiplier for turbo
 
@@ -380,11 +380,12 @@ void G_PreInit(void)
     cfg.msgColor[2] = defFontRGB2[2];
 
     cfg.inventoryTimer = 5;
-    cfg.inventoryWrap = true;
+    cfg.inventoryWrap = false;
     cfg.inventoryUseNext = false;
     cfg.inventoryUseImmediate = false;
     cfg.inventorySlotMaxVis = 7;
     cfg.inventorySlotShowEmpty = true;
+    cfg.inventorySelectMode = 0; // Cursor select.
 
     cfg.chatBeep = 1;
 
@@ -468,7 +469,7 @@ void G_PostInit(void)
     noMonstersParm = ArgCheck("-nomonsters");
     respawnParm = ArgCheck("-respawn");
     devParm = ArgCheck("-devparm");
-    artiSkipParm = !(ArgCheck("-noartiskip"));
+    invSkipParam = !(ArgCheck("-noartiskip"));
 
     if(ArgCheck("-deathmatch"))
     {

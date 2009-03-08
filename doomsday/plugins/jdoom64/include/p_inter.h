@@ -38,16 +38,15 @@
 extern int maxAmmo[];
 extern int clipAmmo[];
 
-boolean         P_GivePower(player_t *plr, int);
-boolean         P_TakePower(player_t *plr, int power);
-void            P_GiveKey(player_t *plr, keytype_t keyType);
-boolean         P_GiveBody(player_t *plr, int num);
-void            P_GiveBackpack(player_t *plr);
-boolean         P_GiveWeapon(player_t *plr, weapontype_t weapon, boolean dropped);
+boolean         P_GivePower(player_t* plr, int);
+boolean         P_TakePower(player_t* plr, int power);
+void            P_GiveKey(player_t* plr, keytype_t keyType);
+boolean         P_GiveBody(player_t* plr, int num);
+void            P_GiveBackpack(player_t* plr);
+boolean         P_GiveWeapon(player_t* plr, weapontype_t weapon, boolean dropped);
 boolean         P_GiveArmor(player_t* plr, int type, int points);
-boolean         P_InventoryGive(player_t *plr, laserpw_t artifact); // jd64
 
-void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
-int             P_DamageMobj(mobj_t *target, mobj_t *inflictor,
-                             mobj_t *source, int damage, boolean stomping);
+void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
+int             P_DamageMobj(mobj_t* target, mobj_t* inflictor,
+                             mobj_t* source, int damage, boolean stomping);
 #endif
