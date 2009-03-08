@@ -83,12 +83,6 @@ typedef struct player_s {
     int             health; // Only used between maps, mo->health is used during.
     int             armorPoints[NUMARMOR];
 
-    inventory_t     inventory[NUMINVENTORYSLOTS];
-    int             invPtr;
-    int             curPos;
-    artitype_e      readyArtifact;
-    int             inventorySlotNum;
-
     int             powers[NUM_POWER_TYPES];
     int             keys;
     int             pieces; // Fourth Weapon pieces.
@@ -125,36 +119,4 @@ typedef struct player_s {
     int             lockFull;
 } player_t;
 
-boolean         P_UseArtiPoisonBag(player_t* player);
-boolean         P_UseArtiEgg(player_t* player);
-boolean         P_UseArtiSummon(player_t* player);
-boolean         P_UseArtiBoostArmor(player_t* player);
-boolean         P_UseArtiBoostMana(player_t* player);
-boolean         P_UseArtiTeleportOther(player_t* player);
-boolean         P_UseArtiSpeed(player_t* player);
-boolean         P_UseArtiFly(player_t* player);
-boolean         P_UseArtiBlastRadius(player_t* player);
-boolean         P_UseArtiTeleport(player_t* player);
-boolean         P_UseArtiTorch(player_t* player);
-boolean         P_UseArtiHealRadius(player_t* player);
-boolean         P_UseArtiHealth(player_t* player);
-boolean         P_UseArtiSuperHealth(player_t* player);
-boolean         P_UseArtiInvulnerability(player_t* player);
-boolean         P_UseArtiPuzzSkull(player_t* player);
-boolean         P_UseArtiPuzzGemBig(player_t* player);
-boolean         P_UseArtiPuzzGemRed(player_t* player);
-boolean         P_UseArtiPuzzGemGreen1(player_t* player);
-boolean         P_UseArtiPuzzGemGreen2(player_t* player);
-boolean         P_UseArtiPuzzGemBlue1(player_t* player);
-boolean         P_UseArtiPuzzGemBlue2(player_t* player);
-boolean         P_UseArtiPuzzBook1(player_t* player);
-boolean         P_UseArtiPuzzBook2(player_t* player);
-boolean         P_UseArtiPuzzSkull2(player_t* player);
-boolean         P_UseArtiPuzzFWeapon(player_t* player);
-boolean         P_UseArtiPuzzCWeapon(player_t* player);
-boolean         P_UseArtiPuzzMWeapon(player_t* player);
-boolean         P_UseArtiPuzzGear1(player_t* player);
-boolean         P_UseArtiPuzzGear2(player_t* player);
-boolean         P_UseArtiPuzzGear3(player_t* player);
-boolean         P_UseArtiPuzzGear4(player_t* player);
 #endif

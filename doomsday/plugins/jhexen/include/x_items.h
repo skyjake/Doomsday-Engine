@@ -23,7 +23,7 @@
  */
 
 /**
- * x_items.h: Items, key cards/artifacts/weapons/ammunition...
+ * x_items.h: Items, key cards/weapons/ammunition...
  */
 
 #ifndef __X_ITEMS_H__
@@ -34,8 +34,6 @@
 #endif
 
 #include "h2def.h"
-
-#define NUMINVENTORYSLOTS   NUM_ARTIFACT_TYPES
 
 #define WEAPON_INFO(weaponnum, pclass, fmode) ( \
     &weaponInfo[weaponnum][pclass].mode[fmode])
@@ -59,11 +57,6 @@ typedef struct {
 typedef struct {
     weaponmodeinfo_t mode[NUMWEAPLEVELS];
 } weaponinfo_t;
-
-typedef struct {
-    int             type;
-    int             count;
-} inventory_t;
 
 extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 

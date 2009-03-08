@@ -421,7 +421,7 @@ void C_DECL A_Summon(mobj_t *actor)
     if(mo)
     {
         if(P_TestMobjLocation(mo) == false || !actor->tracer)
-        {   // Didn't fit - change back to artifact.
+        {   // Didn't fit - change back to item.
             P_MobjChangeState(mo, S_NULL);
 
             mo = P_SpawnMobj3fv(MT_SUMMONMAULATOR, actor->pos, actor->angle);

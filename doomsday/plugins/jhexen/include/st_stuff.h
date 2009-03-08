@@ -63,10 +63,8 @@ void        ST_Init(void);
 boolean     ST_Responder(event_t* ev);
 void        ST_Ticker(void);
 void        ST_Drawer(int player, int fullscreenMode, boolean refresh);
-void        ST_Inventory(int player, boolean show);
-boolean     ST_IsInventoryVisible(int player);
-
-void        ST_InventoryFlashCurrent(int player);
 void        ST_PaletteFlash(boolean forceChange);
+
+void        ST_FlashCurrentItem(int player);
 
 #endif

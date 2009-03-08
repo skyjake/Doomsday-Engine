@@ -56,8 +56,8 @@ extern dpatch_t huFont[HU_FONTSIZE];
 extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 extern dpatch_t huMinus;
 
-#if __JHERETIC__
-extern dpatch_t sNumbers[10];
+#if __JHERETIC__ || __JHEXEN__
+extern dpatch_t dpSmallNumbers[10];
 #endif
 
 // Name graphics of each map.
@@ -110,7 +110,7 @@ void        M_WriteText3(int x, int y, const char *string, dpatch_t *font,
                          float red, float green, float blue, float alpha,
                          boolean doTypeIn, int initialCount);
 
-#if __JHERETIC__
+#if __JHERETIC__ || __JHEXEN__
 void        Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
 #endif
 

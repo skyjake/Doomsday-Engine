@@ -57,7 +57,11 @@
 
 // Inventory item counts (relative to each slot).
 #define ST_INVCOUNTDIGITS   (2)
+#if __JHERETIC__
 #define ST_INVCOUNTOFFX     (27)
+#else
+#define ST_INVCOUNTOFFX     (30)
+#endif
 #define ST_INVCOUNTOFFY     (22)
 
 // HUD Inventory Flags:
@@ -279,6 +283,44 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
 void Hu_InventoryDraw(int player, int x, int y, float alpha,
                       float textAlpha, float iconAlpha)
 {
+#if __JHEXEN__
+    float               invScale;
+
+    invScale = MINMAX_OF(0.25f, cfg.hudScale - 0.25f, 0.8f);
+
+    Draw_BeginZoom(invScale, 160, 198);
+    x = hud->invPtr - hud->invCursorPos;
+    for(i = 0; i < NUMVISINVSLOTS; i++)
+    {
+        GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, dpInvItems[5 + IIT_NONE].lump);
+        if(plr->inventorySlotNum > x + i &&
+           plr->inventory[x + i].type != IIT_NONE)
+        {
+            GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==hud->invCursorPos? hud->alpha : iconalpha,
+                                 dpInvItems[5 + plr->inventory[x + i].type].lump);
+
+            if(plr->inventory[x + i].count > 1)
+            {
+                Hu_DrawSmallNum(plr->inventory[x + i].count, 66 + i * 31,
+                                188,1, 1, 1, i==hud->invCursorPos? hud->alpha : textalpha/2);
+            }
+        }
+    }
+    GL_DrawPatchLitAlpha(50 + hud->invCursorPos * 31, 167, 1, hud->alpha,dpSelectBox.lump);
+    if(x != 0)
+    {
+        GL_DrawPatchLitAlpha(40, 167, 1, iconalpha,
+                     !(mapTime & 4) ? dpIndicatorLeft1.lump :
+                     dpIndicatorLeft2.lump);
+    }
+    if(plr->inventorySlotNum - x > NUMVISINVSLOTS)
+    {
+        GL_DrawPatchLitAlpha(268, 167, 1, iconalpha,
+                     !(mapTime & 4) ? dpIndicatorRight1.lump :
+                     dpIndicatorRight2.lump);
+    }
+    Draw_EndZoom();
+#else
 #define BORDER              1
 
     const hud_inventory_t* inv;
@@ -419,10 +461,39 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 Draw_EndZoom();
 
 #undef BORDER
+#endif
 }
 
 void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 {
+#if __JHEXEN__
+
+        x = hud->invPtr - hud->invCursorPos;
+
+        for(i = 0; i < NUMVISINVSLOTS; ++i)
+        {
+            if(plr->inventory[x + i].type != IIT_NONE)
+            {
+                STlib_updateMultIcon(&hud->wInvSlots[i], refresh);
+
+                if(plr->inventory[x + i].count > 1)
+                    STlib_updateNum(&hud->wInvSlotsCount[i], refresh);
+            }
+        }
+
+        // Draw selector box
+        GL_DrawPatch(ST_INVENTORYX + hud->invCursorPos * 31, 163, dpSelectBox.lump);
+
+        // Draw more left indicator
+        if(x != 0)
+            GL_DrawPatchLitAlpha(42, 163, 1, hud->statusbarCounterAlpha,
+                                 !(mapTime & 4) ? dpIndicatorLeft1.lump : dpIndicatorLeft2.lump);
+
+        // Draw more right indicator
+        if(plr->inventorySlotNum - x > NUMVISINVSLOTS)
+            GL_DrawPatchLitAlpha(269, 163, 1, hud->statusbarCounterAlpha,
+                                 !(mapTime & 4) ? dpIndicatorRight1.lump : dpIndicatorRight2.lump);
+#else
     const hud_inventory_t* inv;
     player_t*           plr;
     uint                i, idx, slot, from, to, first, cursor;
@@ -485,6 +556,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
             GL_DrawPatchLitAlpha(269, y - 1, 1, alpha,
                                  dpInvPageRight[!(mapTime & 4)? 1 : 0].lump);
     }
+#endif
 }
 
 static void inventoryMove(hud_inventory_t* inv, int dir, boolean canWrap)

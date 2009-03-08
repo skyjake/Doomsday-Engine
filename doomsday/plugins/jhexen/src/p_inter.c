@@ -63,21 +63,21 @@ typedef enum {
     IT_KEY_HORN,
     IT_KEY_SWAMP,
     IT_KEY_CASTLE,
-    IT_ARTIFACT_QUARTZFLASK,
-    IT_ARTIFACT_WINGS,
-    IT_ARTIFACT_DEFENDER,
-    IT_ARTIFACT_SERVANT,
-    IT_ARTIFACT_PORKALATOR,
-    IT_ARTIFACT_MYSTICURN,
-    IT_ARTIFACT_AMBITINCANT,
-    IT_ARTIFACT_TORCH,
-    IT_ARTIFACT_CHAOSDEVICE,
-    IT_ARTIFACT_BANISHDEVICE,
-    IT_ARTIFACT_FLETCHETTE,
-    IT_ARTIFACT_BOOTSOFSPEED,
-    IT_ARTIFACT_KRATEROFMIGHT,
-    IT_ARTIFACT_BRACERS,
-    IT_ARTIFACT_REPULSION,
+    IT_ITEM_QUARTZFLASK,
+    IT_ITEM_WINGS,
+    IT_ITEM_DEFENDER,
+    IT_ITEM_SERVANT,
+    IT_ITEM_PORKALATOR,
+    IT_ITEM_MYSTICURN,
+    IT_ITEM_AMBITINCANT,
+    IT_ITEM_TORCH,
+    IT_ITEM_CHAOSDEVICE,
+    IT_ITEM_BANISHDEVICE,
+    IT_ITEM_FLETCHETTE,
+    IT_ITEM_BOOTSOFSPEED,
+    IT_ITEM_KRATEROFMIGHT,
+    IT_ITEM_BRACERS,
+    IT_ITEM_REPULSION,
     IT_PUZZLE_SKULL,
     IT_PUZZLE_BIGGEM,
     IT_PUZZLE_REDGEM,
@@ -133,7 +133,7 @@ typedef struct iteminfo_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void SetDormantArtifact(mobj_t* arti);
+static void setDormantItem(mobj_t* mo);
 
 static boolean pickupHealthVial(player_t* plr);
 static boolean pickupMesh(player_t* plr);
@@ -226,11 +226,11 @@ int TextKeyMessages[] = {
 
 // Index using itemtype_t - 1;
 static const iteminfo_t items[] = {
-    { IT_HEALTH_VIAL, 0, pickupHealthVial, TXT_TXT_ITEMHEALTH, SFX_PICKUP_ITEM },
-    { IT_ARMOR_MESH, 0, pickupMesh, TXT_TXT_ARMOR1, SFX_PICKUP_ITEM },
-    { IT_ARMOR_SHIELD, 0, pickupShield, TXT_TXT_ARMOR2, SFX_PICKUP_ITEM },
-    { IT_ARMOR_HELMET, 0, pickupHelmet, TXT_TXT_ARMOR3, SFX_PICKUP_ITEM },
-    { IT_ARMOR_AMULET, 0, pickupAmulet, TXT_TXT_ARMOR4, SFX_PICKUP_ITEM },
+    { IT_HEALTH_VIAL, 0, pickupHealthVial, TXT_TXT_ITEMHEALTH, SFX_PICKUP_PUZZ },
+    { IT_ARMOR_MESH, 0, pickupMesh, TXT_TXT_ARMOR1, SFX_PICKUP_PUZZ },
+    { IT_ARMOR_SHIELD, 0, pickupShield, TXT_TXT_ARMOR2, SFX_PICKUP_PUZZ },
+    { IT_ARMOR_HELMET, 0, pickupHelmet, TXT_TXT_ARMOR3, SFX_PICKUP_PUZZ },
+    { IT_ARMOR_AMULET, 0, pickupAmulet, TXT_TXT_ARMOR4, SFX_PICKUP_PUZZ },
     { IT_KEY_STEEL, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupSteelKey, TXT_TXT_KEY_STEEL, SFX_PICKUP_KEY },
     { IT_KEY_CAVE, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupCaveKey, TXT_TXT_KEY_CAVE, SFX_PICKUP_KEY },
     { IT_KEY_AXE, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupAxeKey, TXT_TXT_KEY_AXE, SFX_PICKUP_KEY },
@@ -242,41 +242,41 @@ static const iteminfo_t items[] = {
     { IT_KEY_HORN, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupHornKey, TXT_TXT_KEY_HORN, SFX_PICKUP_KEY },
     { IT_KEY_SWAMP, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupSwampKey, TXT_TXT_KEY_SWAMP, SFX_PICKUP_KEY },
     { IT_KEY_CASTLE, IIF_LEAVE_COOP | IIF_LEAVE_DEATHMATCH, pickupCastleKey, TXT_TXT_KEY_CASTLE, SFX_PICKUP_KEY },
-    { IT_ARTIFACT_QUARTZFLASK, 0, pickupQuartzFlask, TXT_TXT_ARTIHEALTH, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_WINGS, 0, pickupWings, TXT_TXT_ARTIFLY, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_DEFENDER, 0, pickupDefender, TXT_TXT_ARTIINVULNERABILITY, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_SERVANT, 0, pickupServant, TXT_TXT_ARTISUMMON, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_PORKALATOR, 0, pickupPorkalator, TXT_TXT_ARTIEGG, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_MYSTICURN, 0, pickupMysticUrn, TXT_TXT_ARTISUPERHEALTH, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_AMBITINCANT, 0, pickupAmbitIncant, TXT_TXT_ARTIHEALINGRADIUS, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_TORCH, 0, pickupTorch, TXT_TXT_ARTITORCH, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_CHAOSDEVICE, 0, pickupChaosDevice, TXT_TXT_ARTITELEPORT, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_BANISHDEVICE, 0, pickupBanishDevice, TXT_TXT_ARTITELEPORTOTHER, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_FLETCHETTE, 0, pickupFletchette, TXT_TXT_ARTIPOISONBAG, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_BOOTSOFSPEED, 0, pickupBootsOfSpeed, TXT_TXT_ARTISPEED, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_KRATEROFMIGHT, 0, pickupKraterOfMight, TXT_TXT_ARTIBOOSTMANA, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_BRACERS, 0, pickupBracers, TXT_TXT_ARTIBOOSTARMOR, SFX_PICKUP_ARTIFACT },
-    { IT_ARTIFACT_REPULSION, 0, pickupRepulsion, TXT_TXT_ARTIBLASTRADIUS, SFX_PICKUP_ARTIFACT },
-    { IT_PUZZLE_SKULL, IIF_LEAVE_COOP, pickupSkull, TXT_TXT_ARTIPUZZSKULL, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_BIGGEM, IIF_LEAVE_COOP, pickupBigGem, TXT_TXT_ARTIPUZZGEMBIG, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_REDGEM, IIF_LEAVE_COOP, pickupRedGem, TXT_TXT_ARTIPUZZGEMRED, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_GREENGEM1, IIF_LEAVE_COOP, pickupGreenGem1, TXT_TXT_ARTIPUZZGEMGREEN1, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_GREENGEM2, IIF_LEAVE_COOP, pickupGreenGem2, TXT_TXT_ARTIPUZZGEMGREEN2, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_BLUEGEM1, IIF_LEAVE_COOP, pickupBlueGem1, TXT_TXT_ARTIPUZZGEMBLUE1, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_BLUEGEM2, IIF_LEAVE_COOP, pickupBlueGem2, TXT_TXT_ARTIPUZZGEMBLUE2, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_BOOK1, IIF_LEAVE_COOP, pickupBook1, TXT_TXT_ARTIPUZZBOOK1, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_BOOK2, IIF_LEAVE_COOP, pickupBook2, TXT_TXT_ARTIPUZZBOOK2, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_SKULL2, IIF_LEAVE_COOP, pickupSkull2, TXT_TXT_ARTIPUZZSKULL2, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_FWEAPON, IIF_LEAVE_COOP, pickupFWeapon, TXT_TXT_ARTIPUZZFWEAPON, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_CWEAPON, IIF_LEAVE_COOP, pickupCWeapon, TXT_TXT_ARTIPUZZCWEAPON, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_MWEAPON, IIF_LEAVE_COOP, pickupMWeapon, TXT_TXT_ARTIPUZZMWEAPON, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_GEAR1, IIF_LEAVE_COOP, pickupGear1, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_GEAR2, IIF_LEAVE_COOP, pickupGear2, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_GEAR3, IIF_LEAVE_COOP, pickupGear3, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
-    { IT_PUZZLE_GEAR4, IIF_LEAVE_COOP, pickupGear4, TXT_TXT_ARTIPUZZGEAR, SFX_PICKUP_ITEM },
-    { IT_MANA_BLUE, 0, pickupBlueMana, TXT_TXT_MANA_1, SFX_PICKUP_ITEM },
-    { IT_MANA_GREEN, 0, pickupGreenMana, TXT_TXT_MANA_2, SFX_PICKUP_ITEM },
-    { IT_MANA_COMBINED, 0, pickupCombinedMana, TXT_TXT_MANA_BOTH, SFX_PICKUP_ITEM },
+    { IT_ITEM_QUARTZFLASK, 0, pickupQuartzFlask, TXT_TXT_INV_HEALTH, SFX_PICKUP_ITEM },
+    { IT_ITEM_WINGS, 0, pickupWings, TXT_TXT_INV_FLY, SFX_PICKUP_ITEM },
+    { IT_ITEM_DEFENDER, 0, pickupDefender, TXT_TXT_INV_INVULNERABILITY, SFX_PICKUP_ITEM },
+    { IT_ITEM_SERVANT, 0, pickupServant, TXT_TXT_INV_SUMMON, SFX_PICKUP_ITEM },
+    { IT_ITEM_PORKALATOR, 0, pickupPorkalator, TXT_TXT_INV_EGG, SFX_PICKUP_ITEM },
+    { IT_ITEM_MYSTICURN, 0, pickupMysticUrn, TXT_TXT_INV_SUPERHEALTH, SFX_PICKUP_ITEM },
+    { IT_ITEM_AMBITINCANT, 0, pickupAmbitIncant, TXT_TXT_INV_HEALINGRADIUS, SFX_PICKUP_ITEM },
+    { IT_ITEM_TORCH, 0, pickupTorch, TXT_TXT_INV_TORCH, SFX_PICKUP_ITEM },
+    { IT_ITEM_CHAOSDEVICE, 0, pickupChaosDevice, TXT_TXT_INV_TELEPORT, SFX_PICKUP_ITEM },
+    { IT_ITEM_BANISHDEVICE, 0, pickupBanishDevice, TXT_TXT_INV_TELEPORTOTHER, SFX_PICKUP_ITEM },
+    { IT_ITEM_FLETCHETTE, 0, pickupFletchette, TXT_TXT_INV_POISONBAG, SFX_PICKUP_ITEM },
+    { IT_ITEM_BOOTSOFSPEED, 0, pickupBootsOfSpeed, TXT_TXT_INV_SPEED, SFX_PICKUP_ITEM },
+    { IT_ITEM_KRATEROFMIGHT, 0, pickupKraterOfMight, TXT_TXT_INV_BOOSTMANA, SFX_PICKUP_ITEM },
+    { IT_ITEM_BRACERS, 0, pickupBracers, TXT_TXT_INV_BOOSTARMOR, SFX_PICKUP_ITEM },
+    { IT_ITEM_REPULSION, 0, pickupRepulsion, TXT_TXT_INV_BLASTRADIUS, SFX_PICKUP_ITEM },
+    { IT_PUZZLE_SKULL, IIF_LEAVE_COOP, pickupSkull, TXT_TXT_INV_PUZZSKULL, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_BIGGEM, IIF_LEAVE_COOP, pickupBigGem, TXT_TXT_INV_PUZZGEMBIG, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_REDGEM, IIF_LEAVE_COOP, pickupRedGem, TXT_TXT_INV_PUZZGEMRED, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_GREENGEM1, IIF_LEAVE_COOP, pickupGreenGem1, TXT_TXT_INV_PUZZGEMGREEN1, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_GREENGEM2, IIF_LEAVE_COOP, pickupGreenGem2, TXT_TXT_INV_PUZZGEMGREEN2, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_BLUEGEM1, IIF_LEAVE_COOP, pickupBlueGem1, TXT_TXT_INV_PUZZGEMBLUE1, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_BLUEGEM2, IIF_LEAVE_COOP, pickupBlueGem2, TXT_TXT_INV_PUZZGEMBLUE2, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_BOOK1, IIF_LEAVE_COOP, pickupBook1, TXT_TXT_INV_PUZZBOOK1, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_BOOK2, IIF_LEAVE_COOP, pickupBook2, TXT_TXT_INV_PUZZBOOK2, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_SKULL2, IIF_LEAVE_COOP, pickupSkull2, TXT_TXT_INV_PUZZSKULL2, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_FWEAPON, IIF_LEAVE_COOP, pickupFWeapon, TXT_TXT_INV_PUZZFWEAPON, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_CWEAPON, IIF_LEAVE_COOP, pickupCWeapon, TXT_TXT_INV_PUZZCWEAPON, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_MWEAPON, IIF_LEAVE_COOP, pickupMWeapon, TXT_TXT_INV_PUZZMWEAPON, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_GEAR1, IIF_LEAVE_COOP, pickupGear1, TXT_TXT_INV_PUZZGEAR1, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_GEAR2, IIF_LEAVE_COOP, pickupGear2, TXT_TXT_INV_PUZZGEAR2, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_GEAR3, IIF_LEAVE_COOP, pickupGear3, TXT_TXT_INV_PUZZGEAR3, SFX_PICKUP_PUZZ },
+    { IT_PUZZLE_GEAR4, IIF_LEAVE_COOP, pickupGear4, TXT_TXT_INV_PUZZGEAR4, SFX_PICKUP_PUZZ },
+    { IT_MANA_BLUE, 0, pickupBlueMana, TXT_TXT_MANA_1, SFX_PICKUP_PUZZ },
+    { IT_MANA_GREEN, 0, pickupGreenMana, TXT_TXT_MANA_2, SFX_PICKUP_PUZZ },
+    { IT_MANA_COMBINED, 0, pickupCombinedMana, TXT_TXT_MANA_BOTH, SFX_PICKUP_PUZZ },
     { IT_WEAPON_FROSTSHARDS, IIF_LEAVE_COOP, pickupFrostShards, TXT_TXT_WEAPON_M2, SFX_PICKUP_WEAPON },
     { IT_WEAPON_ARCOFDEATH, IIF_LEAVE_COOP, pickupArcOfDeath, TXT_TXT_WEAPON_M3, SFX_PICKUP_WEAPON },
     { IT_WEAPON_AXE, IIF_LEAVE_COOP, pickupAxe, TXT_TXT_WEAPON_F2, SFX_PICKUP_WEAPON },
@@ -637,43 +637,46 @@ boolean P_GivePower(player_t *plr, powertype_t power)
     return retval;
 }
 
-boolean P_GiveArtifact(player_t* plr, artitype_e artifact)
+boolean P_GiveItem(player_t* plr, inventoryitemtype_t item)
 {
-    return P_InventoryGive(plr, artifact);
+    if(plr)
+        return P_InventoryGive(plr - players, item, false);
+
+    return false;
 }
 
 /**
- * Removes the MF_SPECIAL flag and initiates the artifact pickup animation.
+ * Removes the MF_SPECIAL flag and initiates the item pickup animation.
  */
-static void SetDormantArtifact(mobj_t *arti)
+static void setDormantItem(mobj_t* mo)
 {
-    arti->flags &= ~MF_SPECIAL;
-    if(deathmatch && !(arti->flags2 & MF2_DROPPED))
+    mo->flags &= ~MF_SPECIAL;
+    if(deathmatch && !(mo->flags2 & MF2_DROPPED))
     {
-        if(arti->type == MT_ARTIINVULNERABILITY)
+        if(mo->type == MT_ARTIINVULNERABILITY)
         {
-            P_MobjChangeState(arti, S_DORMANTARTI3_1);
+            P_MobjChangeState(mo, S_DORMANTARTI3_1);
         }
-        else if(arti->type == MT_SUMMONMAULATOR || arti->type == MT_ARTIFLY)
+        else if(mo->type == MT_SUMMONMAULATOR || mo->type == MT_ARTIFLY)
         {
-            P_MobjChangeState(arti, S_DORMANTARTI2_1);
+            P_MobjChangeState(mo, S_DORMANTARTI2_1);
         }
         else
         {
-            P_MobjChangeState(arti, S_DORMANTARTI1_1);
+            P_MobjChangeState(mo, S_DORMANTARTI1_1);
         }
     }
     else
     {   // Don't respawn.
-        P_MobjChangeState(arti, S_DEADARTI1);
+        P_MobjChangeState(mo, S_DEADARTI1);
     }
 }
 
-void C_DECL A_RestoreArtifact(mobj_t* arti)
+void C_DECL A_RestoreArtifact(mobj_t* mo)
 {
-    arti->flags |= MF_SPECIAL;
-    P_MobjChangeState(arti, P_GetState(arti->type, SN_SPAWN));
-    S_StartSound(SFX_RESPAWN, arti);
+    mo->flags |= MF_SPECIAL;
+    P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN));
+    S_StartSound(SFX_RESPAWN, mo);
 }
 
 /**
@@ -713,21 +716,21 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
         { IT_KEY_HORN, SPR_KEY9 },
         { IT_KEY_SWAMP, SPR_KEYA },
         { IT_KEY_CASTLE, SPR_KEYB },
-        { IT_ARTIFACT_QUARTZFLASK, SPR_PTN2 },
-        { IT_ARTIFACT_WINGS, SPR_SOAR },
-        { IT_ARTIFACT_DEFENDER, SPR_INVU },
-        { IT_ARTIFACT_SERVANT, SPR_SUMN },
-        { IT_ARTIFACT_PORKALATOR, SPR_PORK },
-        { IT_ARTIFACT_MYSTICURN, SPR_SPHL },
-        { IT_ARTIFACT_AMBITINCANT, SPR_HRAD },
-        { IT_ARTIFACT_TORCH, SPR_TRCH },
-        { IT_ARTIFACT_CHAOSDEVICE, SPR_ATLP },
-        { IT_ARTIFACT_BANISHDEVICE, SPR_TELO },
-        { IT_ARTIFACT_FLETCHETTE, SPR_PSBG },
-        { IT_ARTIFACT_BOOTSOFSPEED, SPR_SPED },
-        { IT_ARTIFACT_KRATEROFMIGHT, SPR_BMAN },
-        { IT_ARTIFACT_BRACERS, SPR_BRAC },
-        { IT_ARTIFACT_REPULSION, SPR_BLST },
+        { IT_ITEM_QUARTZFLASK, SPR_PTN2 },
+        { IT_ITEM_WINGS, SPR_SOAR },
+        { IT_ITEM_DEFENDER, SPR_INVU },
+        { IT_ITEM_SERVANT, SPR_SUMN },
+        { IT_ITEM_PORKALATOR, SPR_PORK },
+        { IT_ITEM_MYSTICURN, SPR_SPHL },
+        { IT_ITEM_AMBITINCANT, SPR_HRAD },
+        { IT_ITEM_TORCH, SPR_TRCH },
+        { IT_ITEM_CHAOSDEVICE, SPR_ATLP },
+        { IT_ITEM_BANISHDEVICE, SPR_TELO },
+        { IT_ITEM_FLETCHETTE, SPR_PSBG },
+        { IT_ITEM_BOOTSOFSPEED, SPR_SPED },
+        { IT_ITEM_KRATEROFMIGHT, SPR_BMAN },
+        { IT_ITEM_BRACERS, SPR_BRAC },
+        { IT_ITEM_REPULSION, SPR_BLST },
         { IT_PUZZLE_SKULL, SPR_ASKU },
         { IT_PUZZLE_BIGGEM, SPR_ABGM },
         { IT_PUZZLE_REDGEM, SPR_AGMR },
@@ -860,162 +863,162 @@ static boolean pickupCastleKey(player_t* plr)
 
 static boolean pickupQuartzFlask(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_HEALTH);
+    return P_GiveItem(plr, IIT_HEALTH);
 }
 
 static boolean pickupWings(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_FLY);
+    return P_GiveItem(plr, IIT_FLY);
 }
 
 static boolean pickupDefender(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_INVULNERABILITY);
+    return P_GiveItem(plr, IIT_INVULNERABILITY);
 }
 
 static boolean pickupServant(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_SUMMON);
+    return P_GiveItem(plr, IIT_SUMMON);
 }
 
 static boolean pickupPorkalator(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_EGG);
+    return P_GiveItem(plr, IIT_EGG);
 }
 
 static boolean pickupMysticUrn(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_SUPERHEALTH);
+    return P_GiveItem(plr, IIT_SUPERHEALTH);
 }
 
 static boolean pickupAmbitIncant(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_HEALINGRADIUS);
+    return P_GiveItem(plr, IIT_HEALINGRADIUS);
 }
 
 static boolean pickupTorch(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_TORCH);
+    return P_GiveItem(plr, IIT_TORCH);
 }
 
 static boolean pickupChaosDevice(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_TELEPORT);
+    return P_GiveItem(plr, IIT_TELEPORT);
 }
 
 static boolean pickupBanishDevice(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_TELEPORTOTHER);
+    return P_GiveItem(plr, IIT_TELEPORTOTHER);
 }
 
 static boolean pickupFletchette(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_POISONBAG);
+    return P_GiveItem(plr, IIT_POISONBAG);
 }
 
 static boolean pickupBootsOfSpeed(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_SPEED);
+    return P_GiveItem(plr, IIT_SPEED);
 }
 
 static boolean pickupKraterOfMight(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_BOOSTMANA);
+    return P_GiveItem(plr, IIT_BOOSTMANA);
 }
 
 static boolean pickupBracers(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_BOOSTARMOR);
+    return P_GiveItem(plr, IIT_BOOSTARMOR);
 }
 
 static boolean pickupRepulsion(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_BLASTRADIUS);
+    return P_GiveItem(plr, IIT_BLASTRADIUS);
 }
 
 static boolean pickupSkull(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZSKULL);
+    return P_GiveItem(plr, IIT_PUZZSKULL);
 }
 
 static boolean pickupBigGem(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEMBIG);
+    return P_GiveItem(plr, IIT_PUZZGEMBIG);
 }
 
 static boolean pickupRedGem(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEMRED);
+    return P_GiveItem(plr, IIT_PUZZGEMRED);
 }
 
 static boolean pickupGreenGem1(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEMGREEN1);
+    return P_GiveItem(plr, IIT_PUZZGEMGREEN1);
 }
 
 static boolean pickupGreenGem2(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEMGREEN2);
+    return P_GiveItem(plr, IIT_PUZZGEMGREEN2);
 }
 
 static boolean pickupBlueGem1(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEMBLUE1);
+    return P_GiveItem(plr, IIT_PUZZGEMBLUE1);
 }
 
 static boolean pickupBlueGem2(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEMBLUE2);
+    return P_GiveItem(plr, IIT_PUZZGEMBLUE2);
 }
 
 static boolean pickupBook1(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZBOOK1);
+    return P_GiveItem(plr, IIT_PUZZBOOK1);
 }
 
 static boolean pickupBook2(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZBOOK2);
+    return P_GiveItem(plr, IIT_PUZZBOOK2);
 }
 
 static boolean pickupSkull2(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZSKULL2);
+    return P_GiveItem(plr, IIT_PUZZSKULL2);
 }
 
 static boolean pickupFWeapon(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZFWEAPON);
+    return P_GiveItem(plr, IIT_PUZZFWEAPON);
 }
 
 static boolean pickupCWeapon(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZCWEAPON);
+    return P_GiveItem(plr, IIT_PUZZCWEAPON);
 }
 
 static boolean pickupMWeapon(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZMWEAPON);
+    return P_GiveItem(plr, IIT_PUZZMWEAPON);
 }
 
 static boolean pickupGear1(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEAR1);
+    return P_GiveItem(plr, IIT_PUZZGEAR1);
 }
 
 static boolean pickupGear2(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEAR2);
+    return P_GiveItem(plr, IIT_PUZZGEAR2);
 }
 
 static boolean pickupGear3(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEAR3);
+    return P_GiveItem(plr, IIT_PUZZGEAR3);
 }
 
 static boolean pickupGear4(player_t* plr)
 {
-    return P_GiveArtifact(plr, AFT_PUZZGEAR4);
+    return P_GiveItem(plr, IIT_PUZZGEAR4);
 }
 
 static boolean pickupBlueMana(player_t* plr)
@@ -1234,27 +1237,27 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 
         /**
          * Taken items are handled differently depending upon the type of
-         * item: artifact, puzzle or other.
+         * item: inventory, puzzle or other.
          */
         switch(item)
         {
-        // Artifacts:
-        case IT_ARTIFACT_QUARTZFLASK:
-        case IT_ARTIFACT_WINGS:
-        case IT_ARTIFACT_DEFENDER:
-        case IT_ARTIFACT_SERVANT:
-        case IT_ARTIFACT_PORKALATOR:
-        case IT_ARTIFACT_MYSTICURN:
-        case IT_ARTIFACT_AMBITINCANT:
-        case IT_ARTIFACT_TORCH:
-        case IT_ARTIFACT_CHAOSDEVICE:
-        case IT_ARTIFACT_BANISHDEVICE:
-        case IT_ARTIFACT_FLETCHETTE:
-        case IT_ARTIFACT_BOOTSOFSPEED:
-        case IT_ARTIFACT_KRATEROFMIGHT:
-        case IT_ARTIFACT_BRACERS:
-        case IT_ARTIFACT_REPULSION:
-            SetDormantArtifact(special);
+        // Inventory:
+        case IT_ITEM_QUARTZFLASK:
+        case IT_ITEM_WINGS:
+        case IT_ITEM_DEFENDER:
+        case IT_ITEM_SERVANT:
+        case IT_ITEM_PORKALATOR:
+        case IT_ITEM_MYSTICURN:
+        case IT_ITEM_AMBITINCANT:
+        case IT_ITEM_TORCH:
+        case IT_ITEM_CHAOSDEVICE:
+        case IT_ITEM_BANISHDEVICE:
+        case IT_ITEM_FLETCHETTE:
+        case IT_ITEM_BOOTSOFSPEED:
+        case IT_ITEM_KRATEROFMIGHT:
+        case IT_ITEM_BRACERS:
+        case IT_ITEM_REPULSION:
+            setDormantItem(special);
             break;
 
         // Puzzle items:
@@ -1736,62 +1739,54 @@ boolean P_MorphMonster(mobj_t *actor)
     return true;
 }
 
-void P_AutoUseHealth(player_t *player, int saveHealth)
+void P_AutoUseHealth(player_t* player, int saveHealth)
 {
-    int             i, count, normalCount, superCount;
-    int             normalSlot = 0, superSlot = 0;
+    uint                i, count;
+    int                 plrnum = player - players;
+    int                 normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
+    int                 superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
 
-    normalCount = superCount = 0;
-    for(i = 0; i < player->inventorySlotNum; ++i)
+    //// \todo Do this in the inventory code?
+    if(gameSkill == SM_BABY && normalCount * 25 >= saveHealth)
     {
-        if(player->inventory[i].type == AFT_HEALTH)
-        {
-            normalSlot = i;
-            normalCount = player->inventory[i].count;
-        }
-        else if(player->inventory[i].type == AFT_SUPERHEALTH)
-        {
-            superSlot = i;
-            superCount = player->inventory[i].count;
-        }
-    }
-
-    if((gameSkill == SM_BABY) && (normalCount * 25 >= saveHealth))
-    {   // Use quartz flasks.
+        // Use quartz flasks.
         count = (saveHealth + 24) / 25;
-        for(i = 0; i < count; i++)
+        for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryTake(player, normalSlot);
+            P_InventoryTake(plrnum, IIT_HEALTH, false);
         }
     }
     else if(superCount * 100 >= saveHealth)
-    {   // Use mystic urns.
+    {
+        // Use mystic urns.
         count = (saveHealth + 99) / 100;
-        for(i = 0; i < count; i++)
+        for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryTake(player, superSlot);
+            P_InventoryTake(plrnum, IIT_SUPERHEALTH, false);
         }
     }
-    else if((gameSkill == SM_BABY) &&
-            (superCount * 100 + normalCount * 25 >= saveHealth))
-    {   // Use mystic urns and quartz flasks.
+    else if(gameSkill == SM_BABY &&
+            superCount * 100 + normalCount * 25 >= saveHealth)
+    {
+        // Use mystic urns and quartz flasks.
         count = (saveHealth + 24) / 25;
         saveHealth -= count * 25;
         for(i = 0; i < count; ++i)
         {
             player->health += 25;
-            P_InventoryTake(player, normalSlot);
+            P_InventoryTake(plrnum, IIT_HEALTH, false);
         }
 
         count = (saveHealth + 99) / 100;
         for(i = 0; i < count; ++i)
         {
             player->health += 100;
-            P_InventoryTake(player, normalSlot);
+            P_InventoryTake(plrnum, IIT_SUPERHEALTH, false);
         }
     }
+
     player->plr->mo->health = player->health;
 }
 

@@ -199,8 +199,6 @@ ccmd_t  gameCCmds[] = {
     {"viewmode",    NULL,   CCmdSetViewMode},
 
     // jHexen specific
-    {"invleft",     NULL,   CCmdInventory},
-    {"invright",    NULL,   CCmdInventory},
     {"pig",         "",     CCmdCheatPig},
     {"runscript",   "i",    CCmdCheatRunScript},
     {"scriptinfo",  NULL,   CCmdScriptInfo},

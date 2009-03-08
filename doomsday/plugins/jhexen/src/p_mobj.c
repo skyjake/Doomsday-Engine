@@ -1295,7 +1295,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     }
     else if(mo->flags2 & MF2_FLOATBOB)
     {
-        mo->pos[VZ] += mo->floorZ; // Artifact z passed in as height
+        mo->pos[VZ] += mo->floorZ; // Z passed in as height.
     }
 
     mo->floorClip = 0;
@@ -1995,7 +1995,7 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
             victim->flags2 |= MF2_BLASTED;
         }
     }
-    else // Full strength blast from artifact.
+    else // Full strength.
     {
         if(victim->flags & MF_MISSILE)
         {
@@ -2134,7 +2134,7 @@ void P_BlastRadius(player_t* pl)
     mobj_t*             pmo = pl->plr->mo;
     radiusblastparams_t params;
 
-    S_StartSound(SFX_ARTIFACT_BLAST, pmo);
+    S_StartSound(SFX_INVITEM_BLAST, pmo);
     P_NoiseAlert(pmo, pmo);
 
     params.source = pmo;

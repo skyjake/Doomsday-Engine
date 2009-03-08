@@ -48,6 +48,7 @@
 #include "am_map.h"
 #include "p_switch.h"
 #include "p_player.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -90,7 +91,7 @@ boolean respawnParm; // checkparm of -respawn
 boolean turboParm; // checkparm of -turbo
 boolean randomClassParm; // checkparm of -randclass
 boolean devParm; // checkparm of -devparm
-boolean artiSkipParm; // Whether shift-enter skips an artifact.
+boolean invSkipParam; // Whether shift-enter skips an inventory item.
 
 float turboMul; // Multiplier for turbo.
 boolean netCheatParm; // Allow cheating in netgames (-netcheat)
@@ -244,11 +245,10 @@ void G_PreInit(void)
     cfg.playerMoveSpeed = 1;
     cfg.statusbarScale = 20;
     cfg.dclickUse = false;
-    cfg.inventoryNextOnUnuse = true;
     cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
-    cfg.hudShown[HUD_ARTI] = true;
+    cfg.hudShown[HUD_CURRENTITEM] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.lookSpeed = 3;
@@ -350,6 +350,14 @@ void G_PreInit(void)
     cfg.msgColor[0] = defFontRGB2[0];
     cfg.msgColor[1] = defFontRGB2[1];
     cfg.msgColor[2] = defFontRGB2[2];
+
+    cfg.inventoryTimer = 5;
+    cfg.inventoryWrap = false;
+    cfg.inventoryUseNext = false;
+    cfg.inventoryUseImmediate = false;
+    cfg.inventorySlotMaxVis = 7;
+    cfg.inventorySlotShowEmpty = true;
+    cfg.inventorySelectMode = 0; // Cursor select.
 
     cfg.chatBeep = 1;
 
@@ -485,7 +493,7 @@ static void handleArgs(void)
     respawnParm = ArgExists("-respawn");
     randomClassParm = ArgExists("-randclass");
     devParm = ArgExists("-devparm");
-    artiSkipParm = ArgExists("-artiskip");
+    invSkipParam = ArgExists("-artiskip");
     netCheatParm = ArgExists("-netcheat");
 
     cfg.netDeathmatch = ArgExists("-deathmatch");
@@ -620,6 +628,7 @@ void G_Shutdown(void)
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
     P_FreeButtons();
+    P_ShutdownInventory();
     AM_Shutdown();
     X_DestroyLUTs();
 }

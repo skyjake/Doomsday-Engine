@@ -39,6 +39,7 @@
  .\..\..\plugins\common\src\hu_log.c
  .\..\..\plugins\common\src\hu_lib.c
  .\..\..\plugins\common\src\hu_msg.c
+ .\..\..\plugins\common\src\hu_inventory.c
  .\..\..\plugins\common\src\st_lib.c
  .\..\..\plugins\common\src\am_map.c
  .\..\..\plugins\jhexen\src\g_ctrl.c

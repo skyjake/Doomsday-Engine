@@ -36,7 +36,7 @@
 enum {
     HUD_MANA,
     HUD_HEALTH,
-    HUD_ARTI
+    HUD_CURRENTITEM
 };
 
 // Hud Unhide Events (the hud will unhide on these events if enabled).
@@ -61,8 +61,6 @@ typedef enum {
 
 typedef struct {
     float           playerMoveSpeed;
-    int             chooseAndUse;
-    int             inventoryNextOnUnuse;
     float           lookSpeed;
     float           turnSpeed;
     int             quakeFly;
@@ -114,7 +112,6 @@ typedef struct {
     byte            ammoAutoSwitch;
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-    float           inventoryTimer; // Number of seconds until the invetory auto-hides.
 
     byte            counterCheat;
     float           counterCheatScale;
@@ -177,6 +174,14 @@ typedef struct {
 
     playerclass_t   playerClass[MAXPLAYERS];
     byte            playerColor[MAXPLAYERS];
+
+    float           inventoryTimer; // Number of seconds until the invetory auto-hides.
+    byte            inventoryWrap;
+    byte            inventoryUseNext;
+    byte            inventoryUseImmediate;
+    int             inventorySlotMaxVis;
+    byte            inventorySlotShowEmpty;
+    byte            inventorySelectMode;
 } game_config_t;
 
 extern game_config_t cfg;

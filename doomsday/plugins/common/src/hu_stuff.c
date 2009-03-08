@@ -110,8 +110,8 @@ typedef struct fogeffectdata_s {
 
 dpatch_t huFont[HU_FONTSIZE];
 dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
-#if __JHERETIC__
-dpatch_t sNumbers[10];
+#if __JHERETIC__ || __JHEXEN__
+dpatch_t dpSmallNumbers[10];
 #endif
 dpatch_t huMinus;
 
@@ -389,11 +389,11 @@ void Hu_LoadData(void)
 
 #endif
 
-#if __JHERETIC__
+#if __JHERETIC__ || __JHEXEN__
     for(i = 0; i < 10; ++i)
     {
         sprintf(buffer, "SMALLIN%d", i);
-        R_CachePatch(&sNumbers[i], buffer);
+        R_CachePatch(&dpSmallNumbers[i], buffer);
     }
 #endif
 
@@ -1853,10 +1853,10 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
     }
 }
 
-#if __JHERETIC__
+#if __JHERETIC__ || __JHEXEN__
 void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
 {
-    int                 w = sNumbers[0].width;
+    int                 w = dpSmallNumbers[0].width;
     boolean             drawMinus = false;
 
     if(val < 0)
@@ -1871,14 +1871,14 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
 
     // In the special case of 0, you draw 0.
     if(val == 0)
-        WI_DrawPatch(x - w, y, 1, 1, 1, alpha, &sNumbers[0], NULL, false,
-                     ALIGN_LEFT);
+        WI_DrawPatch(x - w, y, 1, 1, 1, alpha, &dpSmallNumbers[0], NULL,
+                     false, ALIGN_LEFT);
 
     // Draw the number.
     while(val && numDigits--)
     {
         x -= w;
-        WI_DrawPatch(x, y, 1, 1, 1, alpha, &sNumbers[val % 10],
+        WI_DrawPatch(x, y, 1, 1, 1, alpha, &dpSmallNumbers[val % 10],
                      NULL, false, ALIGN_LEFT);
         val /= 10;
     }

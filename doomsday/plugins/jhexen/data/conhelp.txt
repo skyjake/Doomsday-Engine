@@ -163,12 +163,6 @@ desc = Set camera viewlock.
 desc = Set camera viewlock mode.
 inf = Params: lockmode (0-1).
 
-[invleft]
-desc = Move inventory cursor to the left.
-
-[invright]
-desc = Move inventory cursor to the right.
-
 [pig]
 desc = Turn yourself into a pig. Go ahead.
 
@@ -714,10 +708,16 @@ desc = 1=Always run.
 [ctl-use-dclick]
 desc = 1=Doubleclick forward/strafe equals use key.
 
-[ctl-use-immediate]
+[ctl-inventory-mode]
+desc = Inventory selection mode 0=cursor, 1=scroll.
+
+[ctl-inventory-wrap]
+desc = 1=Inventory selection wraps around.
+
+[ctl-inventory-use-immediate]
 desc = 1=Use items immediately from the inventory.
 
-[ctl-use-next]
+[ctl-inventory-use-next]
 desc = 1=Automatically select the next inventory item when unusable.
 
 [ctl-look-speed]
@@ -882,8 +882,14 @@ desc = Show mana when the status bar is hidden. 1= top, 2= bottom, 0= off
 [hud-health]
 desc = Show health when the status bar is hidden.
 
-[hud-artifact]
-desc = Show artifact when the status bar is hidden.
+[hud-currentitem]
+desc = 1=Show current item in full-screen mode.
+
+[hud-inventory-slot-max]
+desc = Maximum number of inventory slots to display in full-screen mode.
+
+[hud-inventory-slot-showempty]
+desc = 1=Show empty inventory slots in full-screen mode.
 
 [hud-inventory-timer]
 desc = Seconds before the inventory auto-hides.

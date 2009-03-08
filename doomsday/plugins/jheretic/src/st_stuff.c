@@ -900,11 +900,12 @@ static void drawIcons(int player)
 
             if(val > 9)
             {
-                GL_DrawPatch_CS(COUNT_X, COUNT_Y, sNumbers[(val / 10) % 10].lump);
+                GL_DrawPatch_CS(COUNT_X, COUNT_Y,
+                                dpSmallNumbers[(val / 10) % 10].lump);
             }
 
             val = val % 10;
-            GL_DrawPatch_CS(COUNT_X + 4, COUNT_Y, sNumbers[val].lump);
+            GL_DrawPatch_CS(COUNT_X + 4, COUNT_Y, dpSmallNumbers[val].lump);
 
 #undef COUNT_X
 #undef COUNT_Y

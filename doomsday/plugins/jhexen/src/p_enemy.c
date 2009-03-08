@@ -4327,7 +4327,6 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
 void C_DECL A_KoraxChase(mobj_t* actor)
 {
     mobj_t*             spot;
-    int                 lastfound;
     byte                args[3] = { 0, 0, 0 };
 
     if((!actor->special2) &&

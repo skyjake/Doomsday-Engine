@@ -38,6 +38,7 @@
 
 #include "p_player.h"
 #include "p_map.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2132,129 +2133,126 @@ void P_MovePsprites(player_t *plr)
     plr->pSprites[ps_flash].pos[VY] = plr->pSprites[ps_weapon].pos[VY];
 }
 
-boolean P_UseArtiPoisonBag(player_t* player)
+void C_DECL A_PoisonBag(mobj_t* mo)
 {
-    mobj_t*         plrmo, *mo;
+    player_t*       player;
+    mobj_t*         bag;
     float           pos[3];
     angle_t         angle;
     mobjtype_t      type;
 
-    if(!player)
-        return false;
-
-    plrmo = player->plr->mo;
+    if(!mo->player)
+        return;
+    player = mo->player;
 
     if(player->class == PCLASS_FIGHTER || player->class == PCLASS_PIG)
     {
         type = MT_THROWINGBOMB;
-        pos[VX] = plrmo->pos[VX];
-        pos[VY] = plrmo->pos[VY];
-        pos[VZ] = plrmo->pos[VZ] - plrmo->floorClip + 35;
-        angle = plrmo->angle + (((P_Random() & 7) - 4) << 24);
+        pos[VX] = mo->pos[VX];
+        pos[VY] = mo->pos[VY];
+        pos[VZ] = mo->pos[VZ] - mo->floorClip + 35;
+        angle = mo->angle + (((P_Random() & 7) - 4) << 24);
     }
     else
     {
-        uint                an = plrmo->angle >> ANGLETOFINESHIFT;
+        uint                an = mo->angle >> ANGLETOFINESHIFT;
 
         if(player->class == PCLASS_CLERIC)
             type = MT_POISONBAG;
         else
             type = MT_FIREBOMB;
-        pos[VX] = plrmo->pos[VX] + 16 * FIX2FLT(finecosine[an]);
-        pos[VY] = plrmo->pos[VY] + 24 * FIX2FLT(finesine[an]);
-        pos[VZ] = plrmo->pos[VZ] - plrmo->floorClip + 8;
-        angle = plrmo->angle;
+        pos[VX] = mo->pos[VX] + 16 * FIX2FLT(finecosine[an]);
+        pos[VY] = mo->pos[VY] + 24 * FIX2FLT(finesine[an]);
+        pos[VZ] = mo->pos[VZ] - mo->floorClip + 8;
+        angle = mo->angle;
     }
 
-    mo = P_SpawnMobj3fv(type, pos, angle);
-    if(mo)
+    if((bag = P_SpawnMobj3fv(type, pos, angle)))
     {
-        mo->target = plrmo;
+        bag->target = mo;
 
         if(type == MT_THROWINGBOMB)
         {
-            mo->mom[MZ] =
+            bag->mom[MZ] =
                 4 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
-            mo->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+            bag->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
 
-            P_ThrustMobj(mo, mo->angle, mo->info->speed);
+            P_ThrustMobj(bag, bag->angle, bag->info->speed);
 
-            mo->mom[MX] += plrmo->mom[MX] / 2;
-            mo->mom[MY] += plrmo->mom[MY] / 2;
+            bag->mom[MX] += mo->mom[MX] / 2;
+            bag->mom[MY] += mo->mom[MY] / 2;
 
-            mo->tics -= P_Random() & 3;
-            P_CheckMissileSpawn(mo);
+            bag->tics -= P_Random() & 3;
+            P_CheckMissileSpawn(bag);
         }
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiEgg(player_t* player)
+void C_DECL A_Egg(mobj_t* mo)
 {
-    mobj_t*         plrmo;
+    if(!mo->player)
+        return;
 
-    if(!player)
-        return false;
-    plrmo = player->plr->mo;
+    P_SpawnPlayerMissile(MT_EGGFX, mo);
+    P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 3));
 
-    P_SpawnPlayerMissile(MT_EGGFX, plrmo);
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 6));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 6));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 3));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 3));
-
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiSummon(player_t* player)
+void C_DECL A_Summon(mobj_t* mo)
 {
-    mobj_t*         plrmo, *mo;
+    mobj_t*         servant;
 
-    if(!player)
-        return false;
-    plrmo = player->plr->mo;
+    if(!mo->player)
+        return;
 
-    mo = P_SpawnPlayerMissile(MT_SUMMON_FX, plrmo);
-    if(mo)
+    if((servant = P_SpawnPlayerMissile(MT_SUMMON_FX, mo)))
     {
-        mo->target = plrmo;
-        mo->tracer = plrmo;
-        mo->mom[MZ] = 5;
+        servant->target = mo;
+        servant->tracer = mo;
+        servant->mom[MZ] = 5;
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiBoostArmor(player_t* player)
+void C_DECL A_BoostArmor(mobj_t* mo)
 {
     int             i, count;
 
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
     count = 0;
     for(i = 0; i < NUMARMOR; ++i)
     {
-        count += P_GiveArmor(player, i, 1); // 1 point per armor type.
+        count += P_GiveArmor(mo->player, i, 1); // 1 point per armor type.
     }
 
     if(!count)
-        return false;
+        return;
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiBoostMana(player_t* player)
+void C_DECL A_BoostMana(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    player_t*           player;
+
+    if(!mo->player)
+        return;
+    player = mo->player;
 
     if(!P_GiveMana(player, AT_BLUEMANA, MAX_MANA))
     {
         if(!P_GiveMana(player, AT_GREENMANA, MAX_MANA))
         {
-            return false;
+            return;
         }
     }
     else
@@ -2262,337 +2260,235 @@ boolean P_UseArtiBoostMana(player_t* player)
         P_GiveMana(player, AT_GREENMANA, MAX_MANA);
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiTeleportOther(player_t* player)
+void C_DECL A_TeleportOther(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    P_ArtiTeleportOther(player);
+    P_ArtiTeleportOther(mo->player);
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiSpeed(player_t* player)
+void C_DECL A_Speed(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_SPEED);
+    didUseItem = P_GivePower(mo->player, PT_SPEED);
 }
 
-boolean P_UseArtiFly(player_t* player)
+void C_DECL A_Fly(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_GivePower(player, PT_FLIGHT))
+    if(!P_GivePower(mo->player, PT_FLIGHT))
     {
-        return false;
+        return;
     }
 
-    if(player->plr->mo->mom[MZ] <= -35)
+    if(mo->mom[MZ] <= -35)
     {   // Stop falling scream.
-        S_StopSound(0, player->plr->mo);
+        S_StopSound(0, mo);
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiBlastRadius(player_t* player)
+void C_DECL A_BlastRadius(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    P_BlastRadius(player);
-    return true;
+    P_BlastRadius(mo->player);
+    didUseItem = true;
 }
 
-boolean P_UseArtiTeleport(player_t* player)
+void C_DECL A_Teleport(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    P_ArtiTele(player);
-    return true;
+    P_ArtiTele(mo->player);
+    didUseItem = true;
 }
 
-boolean P_UseArtiTorch(player_t* player)
+void C_DECL P_UseItemTorch(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_INFRARED);
+    didUseItem = P_GivePower(mo->player, PT_INFRARED);
 }
 
-boolean P_UseArtiHealRadius(player_t* player)
+void C_DECL P_UseItemHealRadius(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_HealRadius(player);
+    didUseItem = P_HealRadius(mo->player);
 }
 
-boolean P_UseArtiHealth(player_t* player)
+void C_DECL P_UseItemHealth(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GiveBody(player, 25);
+    didUseItem = P_GiveBody(mo->player, 25);
 }
 
-boolean P_UseArtiSuperHealth(player_t* player)
+void C_DECL P_UseItemSuperHealth(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GiveBody(player, 100);
+    didUseItem = P_GiveBody(mo->player, 100);
 }
 
-boolean P_UseArtiInvulnerability(player_t* player)
+void C_DECL P_UseItemInvulnerability(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_INVULNERABILITY);
+    didUseItem = P_GivePower(mo->player, PT_INVULNERABILITY);
 }
 
-boolean P_UseArtiPuzzSkull(player_t* player)
+void C_DECL P_UseItemPuzzSkull(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZSKULL))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZSKULL);
 }
 
-boolean P_UseArtiPuzzGemBig(player_t* player)
+void C_DECL P_UseItemPuzzGemBig(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBIG))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBIG);
 }
 
-boolean P_UseArtiPuzzGemRed(player_t* player)
+void C_DECL P_UseItemPuzzGemRed(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMRED))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMRED);
 }
 
-boolean P_UseArtiPuzzGemGreen1(player_t* player)
+void C_DECL P_UseItemPuzzGemGreen1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMGREEN1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN1);
 }
 
-boolean P_UseArtiPuzzGemGreen2(player_t* player)
+void C_DECL P_UseItemPuzzGemGreen2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMGREEN2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN2);
 }
 
-boolean P_UseArtiPuzzGemBlue1(player_t* player)
+void C_DECL P_UseItemPuzzGemBlue1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBLUE1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE1);
 }
 
-boolean P_UseArtiPuzzGemBlue2(player_t* player)
+void C_DECL P_UseItemPuzzGemBlue2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBLUE2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE2);
 }
 
-boolean P_UseArtiPuzzBook1(player_t* player)
+void C_DECL P_UseItemPuzzBook1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZBOOK1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZBOOK1);
 }
 
-boolean P_UseArtiPuzzBook2(player_t* player)
+void C_DECL P_UseItemPuzzBook2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZBOOK2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZBOOK2);
 }
 
-boolean P_UseArtiPuzzSkull2(player_t* player)
+void C_DECL P_UseItemPuzzSkull2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZSKULL2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZSKULL2);
 }
 
-boolean P_UseArtiPuzzFWeapon(player_t* player)
+void C_DECL P_UseItemPuzzFWeapon(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZFWEAPON))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZFWEAPON);
 }
 
-boolean P_UseArtiPuzzCWeapon(player_t* player)
+void C_DECL P_UseItemPuzzCWeapon(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZCWEAPON))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZCWEAPON);
 }
 
-boolean P_UseArtiPuzzMWeapon(player_t* player)
+void C_DECL P_UseItemPuzzMWeapon(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZMWEAPON))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZMWEAPON);
 }
 
-boolean P_UseArtiPuzzGear1(player_t* player)
+void C_DECL P_UseItemPuzzGear1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR1);
 }
 
-boolean P_UseArtiPuzzGear2(player_t* player)
+void C_DECL P_UseItemPuzzGear2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR2);
 }
 
-boolean P_UseArtiPuzzGear3(player_t* player)
+void C_DECL P_UseItemPuzzGear3(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR3))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR3);
 }
 
-boolean P_UseArtiPuzzGear4(player_t* player)
+void C_DECL P_UseItemPuzzGear4(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR4))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR4);
 }

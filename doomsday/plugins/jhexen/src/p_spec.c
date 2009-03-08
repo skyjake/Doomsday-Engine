@@ -160,7 +160,7 @@ boolean EV_SectorSoundChange(byte* args)
     return rtn;
 }
 
-static boolean CheckedLockedDoor(mobj_t *mo, byte lock)
+static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
 {
     extern int  TextKeyMessages[11];
     char        LockedBuffer[80];
@@ -184,20 +184,20 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(linedef_t *line, byte *args, mobj_t *mo)
+boolean EV_LineSearchForPuzzleItem(linedef_t* line, byte* args, mobj_t* mo)
 {
-    artitype_e  arti;
+    inventoryitemtype_t  type;
 
     if(!mo || !mo->player || !line)
         return false;
 
-    arti = AFT_FIRSTPUZZITEM + P_ToXLine(line)->arg1;
+    type = IIT_FIRSTPUZZITEM + P_ToXLine(line)->arg1;
 
-    if(arti < AFT_FIRSTPUZZITEM)
+    if(type < IIT_FIRSTPUZZITEM)
         return false;
 
     // Search player's inventory for puzzle items
-    return P_InventoryUse(mo->player, arti);
+    return P_InventoryUse(mo->player - players, type, false);
 }
 
 boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
