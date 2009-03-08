@@ -97,6 +97,7 @@
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
+		<Unit filename="..\..\plugins\common\include\hu_inventory.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\hu_log.h" />
 		<Unit filename="..\..\plugins\common\include\hu_menu.h" />
@@ -143,6 +144,7 @@
 		<Unit filename="..\..\plugins\common\src\g_controls.c" />
 		<Unit filename="..\..\plugins\common\src\g_game.c" />
 		<Unit filename="..\..\plugins\common\src\g_update.c" />
+		<Unit filename="..\..\plugins\common\src\hu_inventory.c" />
 		<Unit filename="..\..\plugins\common\src\hu_lib.c" />
 		<Unit filename="..\..\plugins\common\src\hu_log.c" />
 		<Unit filename="..\..\plugins\common\src\hu_menu.c" />

@@ -73,6 +73,9 @@
 #include "f_infine.h"
 #include "p_start.h"
 #include "p_inventory.h"
+#if __JHERETIC__ || __JHEXEN__
+# include "hu_inventory.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -513,10 +516,8 @@ void G_CommonPostInit(void)
 
     Con_Message("Hu_LoadData: Setting up heads up display.\n");
     Hu_LoadData();
-
-#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
-    Con_Message("P_InventoryInit: Init player item inventory.\n");
-    P_InitInventory();
+#if __JHERETIC__ || __JHEXEN__
+    Hu_InventoryInit();
 #endif
 
     Con_Message("ST_Init: Init status bar.\n");
@@ -778,7 +779,7 @@ boolean G_Responder(event_t *ev)
 
     if(!actions[A_USEARTIFACT].on)
     {   // Flag to denote that it's okay to use an inventory item.
-        if(!ST_InventoryIsVisible())
+        if(!Hu_InventoryIsOpen())
         {
             plr->readyItem = plr->inventory[plr->invPtr].type;
         }

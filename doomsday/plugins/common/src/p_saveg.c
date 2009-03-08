@@ -68,6 +68,9 @@
 #include "p_floor.h"
 #include "p_plat.h"
 #include "hu_log.h"
+#if __JHERETIC__ || __JHEXEN__
+#include "hu_inventory.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -1217,8 +1220,8 @@ static void SV_ReadPlayer(player_t* p)
     }
 
     P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_ReadLong());
-    ST_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
 # if __JHEXEN__
+    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
     if(ver < 5)
     {
         SV_ReadLong(); // Current inventory item count?
@@ -1344,7 +1347,7 @@ static void SV_ReadPlayer(player_t* p)
     }
 
     P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_ReadLong());
-    ST_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
+    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
     if(ver < 5)
     {
         SV_ReadLong(); // Current inventory item count?

@@ -261,6 +261,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\hu_inventory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\hu_lib.h"
 				>
 			</File>
@@ -446,6 +450,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\g_update.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\hu_inventory.c"
 				>
 			</File>
 			<File

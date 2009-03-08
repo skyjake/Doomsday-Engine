@@ -45,6 +45,7 @@
 #include "p_floor.h"
 #include "am_map.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -131,7 +132,7 @@ static void SV_v13_ReadPlayer(player_t* pl)
     }
 
     P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_v13_ReadLong());
-    ST_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
+    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
     SV_v13_ReadLong(); // current inventory item count?
     /*pl->inventorySlotNum =*/ SV_v13_ReadLong();
 

@@ -35,6 +35,7 @@
 
 typedef struct {
     byte            flags;
+    char            niceName[32];
     char            action[32];
     char            useSnd[32];
     char            patch[9];
@@ -43,6 +44,7 @@ typedef struct {
 
 typedef struct {
     inventoryitemtype_t type;
+    textenum_t      niceName;
     acfnptr_t       action;
     sfxenum_t       useSnd;
     lumpnum_t       patchLump;
@@ -51,6 +53,8 @@ typedef struct {
 extern int didUseItem;
 
 void            P_InitInventory(void);
+void            P_ShutdownInventory(void);
+
 const invitem_t* P_GetInvItem(int id);
 const def_invitem_t* P_GetInvItemDef(inventoryitemtype_t type);
 

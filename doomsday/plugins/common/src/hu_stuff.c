@@ -110,7 +110,9 @@ typedef struct fogeffectdata_s {
 
 dpatch_t huFont[HU_FONTSIZE];
 dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
-
+#if __JHERETIC__
+dpatch_t sNumbers[10];
+#endif
 dpatch_t huMinus;
 
 int typeInTime = 0;
@@ -126,6 +128,13 @@ dpatch_t m_pause; // Paused graphic.
 #if __JDOOM__
 // Name graphics of each episode.
 dpatch_t* episodeNamePatches = NULL;
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+dpatch_t dpInvItemBox;
+dpatch_t dpInvSelectBox;
+dpatch_t dpInvPageLeft[2];
+dpatch_t dpInvPageRight[2];
 #endif
 
 cvar_t hudCVars[] = {
@@ -378,6 +387,22 @@ void Hu_LoadData(void)
     memcpy(&huFontB[58], &huFontB[62], sizeof(dpatch_t));
     memcpy(&huFontB[62], &tmp, sizeof(dpatch_t));
 
+#endif
+
+#if __JHERETIC__
+    for(i = 0; i < 10; ++i)
+    {
+        sprintf(buffer, "SMALLIN%d", i);
+        R_CachePatch(&sNumbers[i], buffer);
+    }
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    R_CachePatch(&dpInvSelectBox, "SELECTBO");
+    R_CachePatch(&dpInvPageLeft[0], "INVGEML1");
+    R_CachePatch(&dpInvPageLeft[1], "INVGEML2");
+    R_CachePatch(&dpInvPageRight[0], "INVGEMR1");
+    R_CachePatch(&dpInvPageRight[1], "INVGEMR2");
 #endif
 
     HUMsg_Init();
@@ -1827,6 +1852,43 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
         }
     }
 }
+
+#if __JHERETIC__
+void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
+{
+    int                 w = sNumbers[0].width;
+    boolean             drawMinus = false;
+
+    if(val < 0)
+    {
+        if(numDigits == 2 && val < -9)
+            val = -9;
+        else if(numDigits == 3 && val < -99)
+            val = -99;
+        val = -val;
+        drawMinus = true;
+    }
+
+    // In the special case of 0, you draw 0.
+    if(val == 0)
+        WI_DrawPatch(x - w, y, 1, 1, 1, alpha, &sNumbers[0], NULL, false,
+                     ALIGN_LEFT);
+
+    // Draw the number.
+    while(val && numDigits--)
+    {
+        x -= w;
+        WI_DrawPatch(x, y, 1, 1, 1, alpha, &sNumbers[val % 10],
+                     NULL, false, ALIGN_LEFT);
+        val /= 10;
+    }
+
+    // Draw a minus sign if necessary.
+    if(drawMinus)
+        WI_DrawPatch(x - 8, y, 1, 1, 1, alpha, &huMinus, NULL, false,
+                     ALIGN_LEFT);
+}
+#endif
 
 /**
  * This routine tests for a string-replacement for the patch.

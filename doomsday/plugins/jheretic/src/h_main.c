@@ -46,6 +46,7 @@
 #include "p_mapspec.h"
 #include "p_switch.h"
 #include "am_map.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -590,6 +591,7 @@ void G_Shutdown(void)
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
     P_FreeButtons();
+    P_ShutdownInventory();
     AM_Shutdown();
 }
 

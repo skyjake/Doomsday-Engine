@@ -62,6 +62,7 @@
 #include "p_actor.h"
 #include "p_switch.h"
 #include "g_defs.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -115,6 +116,10 @@ static int numPlayerStartsMax = 0;
  */
 void P_Init(void)
 {
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+    P_InitInventory();
+#endif
+
 #if __JHEXEN__
     P_InitMapInfo();
 #endif

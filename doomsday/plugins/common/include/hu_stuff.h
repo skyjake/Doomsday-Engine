@@ -56,6 +56,10 @@ extern dpatch_t huFont[HU_FONTSIZE];
 extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
 extern dpatch_t huMinus;
 
+#if __JHERETIC__
+extern dpatch_t sNumbers[10];
+#endif
+
 // Name graphics of each map.
 extern dpatch_t* mapNamePatches;
 // Name graphics of each skill mode.
@@ -73,6 +77,13 @@ extern int typeInTime;
 #if __JDOOM__
 // Plutonia and TNT map names.
 extern char *mapNamesPlut[32], *mapNamesTNT[32];
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+extern dpatch_t dpInvItemBox;
+extern dpatch_t dpInvSelectBox;
+extern dpatch_t dpInvPageLeft[2];
+extern dpatch_t dpInvPageRight[2];
 #endif
 
 void            Hu_LoadData(void);
@@ -98,6 +109,10 @@ void        M_WriteText2(int x, int y, const char *string, dpatch_t *font, float
 void        M_WriteText3(int x, int y, const char *string, dpatch_t *font,
                          float red, float green, float blue, float alpha,
                          boolean doTypeIn, int initialCount);
+
+#if __JHERETIC__
+void        Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
+#endif
 
 int         M_DrawText(int x, int y, boolean direct, char *string);
 void        M_DrawTitle(char *text, int y);

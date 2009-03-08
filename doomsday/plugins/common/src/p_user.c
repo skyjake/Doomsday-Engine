@@ -60,6 +60,9 @@
 #include "p_user.h"
 #include "g_common.h"
 #include "am_map.h"
+#if __JHERETIC__ || __JHEXEN__
+#include "hu_inventory.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -1229,13 +1232,14 @@ void P_PlayerThinkInventory(player_t* player)
 
     if(player->brain.cycleInvItem)
     {
-        if(!ST_InventoryIsVisible(pnum))
+        if(!Hu_InventoryIsOpen(pnum))
         {
-            ST_Inventory(pnum, true);
+            Hu_InventoryOpen(pnum, true);
             return;
         }
 
-        ST_InventoryMove(pnum, player->brain.cycleInvItem, false);
+        Hu_InventoryMove(pnum, player->brain.cycleInvItem,
+                         cfg.inventoryWrap, false);
     }
 }
 #endif
@@ -1856,9 +1860,9 @@ void P_PlayerThinkUpdateControls(player_t* player)
         else
         {
             // If the inventory is visible, close it (depending on cfg.chooseAndUse).
-            if(ST_InventoryIsVisible(player - players))
+            if(Hu_InventoryIsOpen(player - players))
             {
-                ST_Inventory(player - players, false); // close the inventory
+                Hu_InventoryOpen(player - players, false); // close the inventory
 
                 if(cfg.inventoryUseImmediate)
                     brain->useInvItem = true;

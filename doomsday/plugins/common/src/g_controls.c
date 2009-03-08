@@ -847,11 +847,11 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         }
         else
         {
-            if(ST_InventoryIsVisible())
+            if(Hu_InventoryIsOpen())
             {
                 plr->readyItem = plr->inventory[plr->invPtr].type;
 
-                ST_Inventory(plr - players, false); // close the inventory
+                Hu_InventoryOpen(plr - players, false); // close the inventory
 
                 if(cfg.chooseAndUse)
                     cmd->arti = plr->inventory[plr->invPtr].type;
