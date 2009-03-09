@@ -251,13 +251,13 @@ void P_GiveKey(player_t* player, keytype_t card)
 /**
  * d64tc
  */
-boolean P_InventoryGive(player_t* player, laserpw_t artifact)
+boolean P_GiveItem(player_t* player, inventoryitemtype_t item)
 {
-    if(player->artifacts[artifact])
+    if(player->inventory[item])
         return false;
 
     player->bonusCount = BONUSADD;
-    player->artifacts[artifact] = 1;
+    player->inventory[item] = 1;
     return true;
 }
 
@@ -400,9 +400,9 @@ typedef enum {
     IT_VISOR,
     IT_BACKPACK,
     IT_MEGASPHERE,
-    IT_ARTIFACT1,
-    IT_ARTIFACT2,
-    IT_ARTIFACT3
+    IT_DEMONKEY1,
+    IT_DEMONKEY2,
+    IT_DEMONKEY3
 } itemtype_t;
 
 static itemtype_t getItemTypeBySprite(spritetype_e sprite)
@@ -448,9 +448,9 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
         { IT_VISOR, SPR_PVIS },
         { IT_BACKPACK, SPR_BPAK },
         { IT_MEGASPHERE, SPR_MEGA },
-        { IT_ARTIFACT1, SPR_ART1 },
-        { IT_ARTIFACT2, SPR_ART2 },
-        { IT_ARTIFACT3, SPR_ART3 },
+        { IT_DEMONKEY1, SPR_ART1 },
+        { IT_DEMONKEY2, SPR_ART2 },
+        { IT_DEMONKEY3, SPR_ART3 },
         { IT_NONE, 0 }
     };
     uint                i;
@@ -789,8 +789,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
-    case IT_ARTIFACT1:
-        if(plr->artifacts[it_laserpw1])
+    case IT_DEMONKEY1:
+        if(plr->inventory[IIT_DEMONKEY1])
         {
             if(!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP1, false);
@@ -800,14 +800,14 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         }
         else
         {
-            P_InventoryGive(plr, it_laserpw1);
+            P_GiveItem(plr, IIT_DEMONKEY1);
             P_SetMessage(plr, GOTPOWERUP1, false);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
         break;
 
-    case IT_ARTIFACT2:
-        if(plr->artifacts[it_laserpw2])
+    case IT_DEMONKEY2:
+        if(plr->inventory[IIT_DEMONKEY2])
         {
             if(!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP2, false);
@@ -817,14 +817,14 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         }
         else
         {
-            P_InventoryGive(plr, it_laserpw2);
+            P_GiveItem(plr, IIT_DEMONKEY2);
             P_SetMessage(plr, GOTPOWERUP2, false);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
         break;
 
-    case IT_ARTIFACT3:
-        if(plr->artifacts[it_laserpw3])
+    case IT_DEMONKEY3:
+        if(plr->inventory[IIT_DEMONKEY3])
         {
             if(!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP3, false);
@@ -834,7 +834,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         }
         else
         {
-            P_InventoryGive(plr, it_laserpw3);
+            P_GiveItem(plr, IIT_DEMONKEY3);
             P_SetMessage(plr, GOTPOWERUP3, false);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -873,7 +873,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
     else
     {
-        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
+        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.\n",
                     (int) special->type);
     }
 

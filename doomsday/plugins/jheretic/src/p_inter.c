@@ -824,7 +824,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
     else
     {
-        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
+        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.\n",
                     (int) special->type);
     }
 
