@@ -292,7 +292,7 @@ void C_DECL     A_Invulnerability();
 void C_DECL     A_Health();
 void C_DECL     A_SuperHealth();
 void C_DECL     A_HealRadius();
-void C_DECL     A_Summon();
+void C_DECL     A_SummonTarget();
 void C_DECL     A_Torch();
 void C_DECL     A_Egg();
 void C_DECL     A_Wings();

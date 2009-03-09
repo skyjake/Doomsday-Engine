@@ -1241,8 +1241,6 @@ void ST_loadGraphics(void)
         R_CachePatch(&iNumbers[i], nameBuf);
     }
 
-    R_CachePatch(&dpInvItemBox, "ARTIBOX");
-
     // Inventory item flash anim.
     {
     const char          invItemFlashAnim[5][9] = {

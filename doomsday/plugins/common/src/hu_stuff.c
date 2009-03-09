@@ -398,6 +398,7 @@ void Hu_LoadData(void)
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
+    R_CachePatch(&dpInvItemBox, "ARTIBOX");
     R_CachePatch(&dpInvSelectBox, "SELECTBO");
     R_CachePatch(&dpInvPageLeft[0], "INVGEML1");
     R_CachePatch(&dpInvPageLeft[1], "INVGEML2");

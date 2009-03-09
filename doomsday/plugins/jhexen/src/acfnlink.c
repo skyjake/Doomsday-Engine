@@ -276,7 +276,7 @@ actionlink_t actionlinks[] = {
     {"A_Health",            A_Health},
     {"A_SuperHealth",       A_SuperHealth},
     {"A_HealRadius",        A_HealRadius},
-    {"A_Summon",            A_Summon},
+    {"A_SummonTarget",      A_SummonTarget},
     {"A_Torch",             A_Torch},
     {"A_Egg",               A_Egg},
     {"A_Wings",             A_Wings},

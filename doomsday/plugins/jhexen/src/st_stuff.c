@@ -1642,11 +1642,11 @@ Draw_EndZoom();
 
 Draw_BeginZoom(cfg.hudScale, 318, 198);
 
-                    GL_DrawPatchLitAlpha(286, 170, 1, iconAlpha / 2,
+                    GL_DrawPatchLitAlpha(290, 170, 1, iconAlpha / 2,
                                          dpInvItemBox.lump);
-                    GL_DrawPatchLitAlpha(286, 169, 1, iconAlpha, patch);
+                    GL_DrawPatchLitAlpha(289, 169, 1, iconAlpha, patch);
                     if((count = P_InventoryCount(player, readyItem)) > 1)
-                        Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, 302, 192,
+                        Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, 317, 192,
                                         textAlpha);
 Draw_EndZoom();
                 }
@@ -1657,7 +1657,7 @@ Draw_EndZoom();
     {
 #define BORDER              2
 #define INVENTORY_HEIGHT    30
-#define INVENTORY_X         SCREENWIDTH / 2
+#define INVENTORY_X         SCREENWIDTH / 2 - 2
 #define INVENTORY_Y         SCREENHEIGHT - INVENTORY_HEIGHT - BORDER
 
         float               textAlpha =

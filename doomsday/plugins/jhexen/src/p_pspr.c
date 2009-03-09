@@ -2204,7 +2204,7 @@ void C_DECL A_Egg(mobj_t* mo)
     didUseItem = true;
 }
 
-void C_DECL A_Summon(mobj_t* mo)
+void C_DECL A_SummonTarget(mobj_t* mo)
 {
     mobj_t*         servant;
 
@@ -2281,7 +2281,7 @@ void C_DECL A_Speed(mobj_t* mo)
     didUseItem = P_GivePower(mo->player, PT_SPEED);
 }
 
-void C_DECL A_Fly(mobj_t* mo)
+void C_DECL A_Wings(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2317,7 +2317,7 @@ void C_DECL A_Teleport(mobj_t* mo)
     didUseItem = true;
 }
 
-void C_DECL P_UseItemTorch(mobj_t* mo)
+void C_DECL A_Torch(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2325,7 +2325,7 @@ void C_DECL P_UseItemTorch(mobj_t* mo)
     didUseItem = P_GivePower(mo->player, PT_INFRARED);
 }
 
-void C_DECL P_UseItemHealRadius(mobj_t* mo)
+void C_DECL A_HealRadius(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2333,7 +2333,7 @@ void C_DECL P_UseItemHealRadius(mobj_t* mo)
     didUseItem = P_HealRadius(mo->player);
 }
 
-void C_DECL P_UseItemHealth(mobj_t* mo)
+void C_DECL A_Health(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2341,7 +2341,7 @@ void C_DECL P_UseItemHealth(mobj_t* mo)
     didUseItem = P_GiveBody(mo->player, 25);
 }
 
-void C_DECL P_UseItemSuperHealth(mobj_t* mo)
+void C_DECL A_SuperHealth(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2349,7 +2349,7 @@ void C_DECL P_UseItemSuperHealth(mobj_t* mo)
     didUseItem = P_GiveBody(mo->player, 100);
 }
 
-void C_DECL P_UseItemInvulnerability(mobj_t* mo)
+void C_DECL A_Invulnerability(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2357,7 +2357,7 @@ void C_DECL P_UseItemInvulnerability(mobj_t* mo)
     didUseItem = P_GivePower(mo->player, PT_INVULNERABILITY);
 }
 
-void C_DECL P_UseItemPuzzSkull(mobj_t* mo)
+void C_DECL A_PuzzSkull(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2365,7 +2365,7 @@ void C_DECL P_UseItemPuzzSkull(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZSKULL);
 }
 
-void C_DECL P_UseItemPuzzGemBig(mobj_t* mo)
+void C_DECL A_PuzzGemBig(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2373,7 +2373,7 @@ void C_DECL P_UseItemPuzzGemBig(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBIG);
 }
 
-void C_DECL P_UseItemPuzzGemRed(mobj_t* mo)
+void C_DECL A_PuzzGemRed(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2381,7 +2381,7 @@ void C_DECL P_UseItemPuzzGemRed(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMRED);
 }
 
-void C_DECL P_UseItemPuzzGemGreen1(mobj_t* mo)
+void C_DECL A_PuzzGemGreen1(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2389,7 +2389,7 @@ void C_DECL P_UseItemPuzzGemGreen1(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN1);
 }
 
-void C_DECL P_UseItemPuzzGemGreen2(mobj_t* mo)
+void C_DECL A_PuzzGemGreen2(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2397,7 +2397,7 @@ void C_DECL P_UseItemPuzzGemGreen2(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN2);
 }
 
-void C_DECL P_UseItemPuzzGemBlue1(mobj_t* mo)
+void C_DECL A_PuzzGemBlue1(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2405,7 +2405,7 @@ void C_DECL P_UseItemPuzzGemBlue1(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE1);
 }
 
-void C_DECL P_UseItemPuzzGemBlue2(mobj_t* mo)
+void C_DECL A_PuzzGemBlue2(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2413,7 +2413,7 @@ void C_DECL P_UseItemPuzzGemBlue2(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE2);
 }
 
-void C_DECL P_UseItemPuzzBook1(mobj_t* mo)
+void C_DECL A_PuzzBook1(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2421,7 +2421,7 @@ void C_DECL P_UseItemPuzzBook1(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZBOOK1);
 }
 
-void C_DECL P_UseItemPuzzBook2(mobj_t* mo)
+void C_DECL A_PuzzBook2(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2429,7 +2429,7 @@ void C_DECL P_UseItemPuzzBook2(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZBOOK2);
 }
 
-void C_DECL P_UseItemPuzzSkull2(mobj_t* mo)
+void C_DECL A_PuzzSkull2(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2437,7 +2437,7 @@ void C_DECL P_UseItemPuzzSkull2(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZSKULL2);
 }
 
-void C_DECL P_UseItemPuzzFWeapon(mobj_t* mo)
+void C_DECL A_PuzzFWeapon(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2445,7 +2445,7 @@ void C_DECL P_UseItemPuzzFWeapon(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZFWEAPON);
 }
 
-void C_DECL P_UseItemPuzzCWeapon(mobj_t* mo)
+void C_DECL A_PuzzCWeapon(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2453,7 +2453,7 @@ void C_DECL P_UseItemPuzzCWeapon(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZCWEAPON);
 }
 
-void C_DECL P_UseItemPuzzMWeapon(mobj_t* mo)
+void C_DECL A_PuzzMWeapon(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2461,7 +2461,7 @@ void C_DECL P_UseItemPuzzMWeapon(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZMWEAPON);
 }
 
-void C_DECL P_UseItemPuzzGear1(mobj_t* mo)
+void C_DECL A_PuzzGear1(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2469,7 +2469,7 @@ void C_DECL P_UseItemPuzzGear1(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR1);
 }
 
-void C_DECL P_UseItemPuzzGear2(mobj_t* mo)
+void C_DECL A_PuzzGear2(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2477,7 +2477,7 @@ void C_DECL P_UseItemPuzzGear2(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR2);
 }
 
-void C_DECL P_UseItemPuzzGear3(mobj_t* mo)
+void C_DECL A_PuzzGear3(mobj_t* mo)
 {
     if(!mo->player)
         return;
@@ -2485,7 +2485,7 @@ void C_DECL P_UseItemPuzzGear3(mobj_t* mo)
     didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR3);
 }
 
-void C_DECL P_UseItemPuzzGear4(mobj_t* mo)
+void C_DECL A_PuzzGear4(mobj_t* mo)
 {
     if(!mo->player)
         return;
