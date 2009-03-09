@@ -247,7 +247,7 @@ void R_Init(void)
     R_InitData();
     // viewwidth / viewheight / detailLevel are set by the defaults
     R_SetViewWindow(0, 0, 320, 200);
-    R_InitSprites();
+    R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
     R_InitTranslationTables();
     Rend_Init();
@@ -267,6 +267,7 @@ void R_Update(void)
     R_UpdateTexturesAndFlats();
     R_InitTextures();
     R_InitFlats();
+    R_PreInitSprites();
 
     // Re-read definitions.
     Def_Read();

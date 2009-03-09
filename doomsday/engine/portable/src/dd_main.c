@@ -591,6 +591,7 @@ static int DD_StartupWorker(void *parm)
     P_InitMaterialManager();
     R_InitTextures();
     R_InitFlats();
+    R_PreInitSprites();
 
     // Now that we've generated the auto-materials we can initialize
     // definitions.

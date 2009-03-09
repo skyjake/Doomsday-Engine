@@ -1526,58 +1526,6 @@ void R_InitFlats(void)
                         Sys_GetSeconds() - starttime));
 }
 
-/**
- * @return              The new sprite index number.
- */
-int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
-{
-    int                 i;
-    spritetex_t**       newList, *ptr;
-    material_t*         mat = NULL;
-    const gltexture_t*  tex;
-    lumppatch_t*        patch;
-
-    // Is this lump already entered?
-    for(i = 0; i < numSpriteTextures; ++i)
-        if(spriteTextures[i]->lump == lump)
-        {
-            if(matP)
-                *matP = P_GetMaterial(i, MN_SPRITES);
-            return i;
-        }
-
-    newList = Z_Malloc(sizeof(spritetex_t*) * ++numSpriteTextures, PU_SPRITE, 0);
-    if(numSpriteTextures > 1)
-    {
-        for(i = 0; i < numSpriteTextures -1; ++i)
-            newList[i] = spriteTextures[i];
-
-        Z_Free(spriteTextures);
-    }
-
-    spriteTextures = newList;
-    ptr = spriteTextures[numSpriteTextures - 1] =
-        Z_Calloc(sizeof(spritetex_t), PU_SPRITE, 0);
-    ptr->lump = lump;
-    patch = (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
-    ptr->offX = SHORT(patch->leftOffset);
-    ptr->offY = SHORT(patch->topOffset);
-    ptr->width = SHORT(patch->width);
-    ptr->height = SHORT(patch->height);
-
-    tex = GL_CreateGLTexture(W_LumpName(lump), numSpriteTextures - 1,
-                               GLT_SPRITE);
-
-    // Create a new material for this sprite texture.
-    mat = P_MaterialCreate(W_LumpName(lump), SHORT(patch->width),
-                           SHORT(patch->height), 0, tex->id, MN_SPRITES, NULL);
-
-    if(matP)
-        *matP = mat;
-
-    return numSpriteTextures - 1;
-}
-
 void R_ExpandSkinName(char *skin, char *expanded, const char *modelfn)
 {
     directory_t         mydir;

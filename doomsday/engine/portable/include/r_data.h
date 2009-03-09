@@ -295,8 +295,6 @@ void            R_PrecachePatch(lumpnum_t lump);
 
 doomtexturedef_t* R_GetDoomTextureDef(int num);
 
-int             R_NewSpriteTexture(lumpnum_t lump, material_t** mat);
-
 int             R_GetSkinTexIndex(const char* skin);
 skintex_t*      R_GetSkinTexByIndex(int id);
 int             R_RegisterSkin(char* skin, const char* modelfn, char* fullpath);

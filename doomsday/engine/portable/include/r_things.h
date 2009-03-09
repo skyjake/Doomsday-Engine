@@ -50,6 +50,7 @@ typedef struct {
 } spriteframe_t;
 
 typedef struct {
+    char            name[5];
     int             numFrames;
     spriteframe_t*  spriteFrames;
 } spritedef_t;
@@ -202,7 +203,10 @@ vissprite_t*    R_NewVisSprite(void);
 void            R_AddSprites(subsector_t* ssec);
 void            R_AddPSprites(void);
 void            R_DrawSprites(void);
+
+void            R_PreInitSprites(void);
 void            R_InitSprites(void);
+
 void            R_ClearSprites(void);
 void            R_ClipVisSprite(vissprite_t* vis, int xl, int xh);
 
