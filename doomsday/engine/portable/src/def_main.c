@@ -977,7 +977,7 @@ void Def_Read(void)
 
             if(l->stages[0].type != -1) // Not unused.
             {
-                tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type);
+                if(!(tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type)))
                 VERBOSE( Con_Message("Def_Read: Warning, unknown %s "
                                      "'%s' in material '%s' (layer %i "
                                      "stage %i).\n",
