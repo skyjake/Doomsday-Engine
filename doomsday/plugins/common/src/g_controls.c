@@ -1317,17 +1317,17 @@ void G_ResetLookOffset(int pnum)
     cstate->lookheld = 0;
 }
 
-int G_PrivilegedResponder(event_t *event)
+int G_PrivilegedResponder(event_t* ev)
 {
-    if(M_ControlsPrivilegedResponder(event))
+    if(M_ControlsPrivilegedResponder(ev))
     {
         return true;
     }
 
     // Process the screen shot key right away.
-    if(devParm && event->type == EV_KEY && event->data1 == DDKEY_F1)
+    if(devParm && ev->type == EV_KEY && ev->data1 == DDKEY_F1)
     {
-        if(event->state == EVS_DOWN)
+        if(ev->state == EVS_DOWN)
             G_ScreenShot();
 
         return true; // All F1 events are eaten.
