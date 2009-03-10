@@ -1202,10 +1202,10 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
         slope = P_AimLineAttack(mo, angle, 2 * MELEERANGE);
         if(lineTarget)
         {
-            plr->plr->mo->special1++;
+            mo->special1++;
             if(mo->special1 == 3)
             {
-                damage /= 2;
+                damage *= 2;
                 power = 6;
                 PuffType = MT_HAMMERPUFF;
             }
@@ -1227,7 +1227,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
             mo->special1++;
             if(mo->special1 == 3)
             {
-                damage /= 2;
+                damage *= 2;
                 power = 6;
                 PuffType = MT_HAMMERPUFF;
             }
@@ -1272,7 +1272,7 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     power = 0;
     if(plr->ammo[AT_BLUEMANA].owned > 0)
     {
-        damage /= 2;
+        damage *= 2;
         power = 6;
         PuffType = MT_AXEPUFF_GLOW;
         useMana = 1;
