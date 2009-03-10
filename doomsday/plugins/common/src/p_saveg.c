@@ -105,7 +105,7 @@
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
 
-# define MY_SAVE_VERSION       6
+# define MY_SAVE_VERSION       7
 # define SAVESTRINGSIZE        24
 # define SAVEGAMENAME          "Hex"
 # define CLIENTSAVEGAMENAME    "HexenCl"
@@ -162,19 +162,20 @@ typedef struct playerheader_s {
 
 typedef enum gamearchivesegment_e {
     ASEG_GAME_HEADER = 101, //jhexen only
-    ASEG_MAP_HEADER,        //jhexen only
+    ASEG_MAP_HEADER, //jhexen only
     ASEG_WORLD,
-    ASEG_POLYOBJS,          //jhexen only
-    ASEG_MOBJS,             //jhexen < ver 4 only
+    ASEG_POLYOBJS, //jhexen only
+    ASEG_MOBJS, //jhexen < ver 4 only
     ASEG_THINKERS,
-    ASEG_SCRIPTS,           //jhexen only
+    ASEG_SCRIPTS, //jhexen only
     ASEG_PLAYERS,
-    ASEG_SOUNDS,            //jhexen only
-    ASEG_MISC,              //jhexen only
+    ASEG_SOUNDS, //jhexen only
+    ASEG_MISC, //jhexen only
     ASEG_END,
     ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2,       //jhexen only
-    ASEG_PLAYER_HEADER
+    ASEG_MAP_HEADER2, //jhexen only
+    ASEG_PLAYER_HEADER,
+    ASEG_GLOBALSCRIPTDATA //jhexen only
 } gamearchivesegment_t;
 
 #if __JHEXEN__
@@ -225,8 +226,8 @@ typedef enum lineclass_e {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void SV_WriteMobj(mobj_t *mobj);
-static int  SV_ReadMobj(thinker_t *th);
+static void SV_WriteMobj(mobj_t* mobj);
+static int  SV_ReadMobj(thinker_t* th);
 static void SV_WriteCeiling(ceiling_t* ceiling);
 static int  SV_ReadCeiling(ceiling_t* ceiling);
 static void SV_WriteDoor(door_t* door);
@@ -237,22 +238,22 @@ static void SV_WritePlat(plat_t* plat);
 static int  SV_ReadPlat(plat_t* plat);
 
 #if __JHEXEN__
-static void SV_WriteLight(light_t *light);
-static int  SV_ReadLight(light_t *light);
-static void SV_WritePhase(phase_t *phase);
-static int  SV_ReadPhase(phase_t *phase);
-static void SV_WriteScript(acs_t *script);
-static int  SV_ReadScript(acs_t *script);
-static void SV_WriteDoorPoly(polydoor_t *polydoor);
-static int  SV_ReadDoorPoly(polydoor_t *polydoor);
-static void SV_WriteMovePoly(polyevent_t *movepoly);
-static int  SV_ReadMovePoly(polyevent_t *movepoly);
-static void SV_WriteRotatePoly(polyevent_t *rotatepoly);
-static int  SV_ReadRotatePoly(polyevent_t *rotatepoly);
-static void SV_WritePillar(pillar_t *pillar);
-static int  SV_ReadPillar(pillar_t *pillar);
-static void SV_WriteFloorWaggle(waggle_t *floorwaggle);
-static int  SV_ReadFloorWaggle(waggle_t *floorwaggle);
+static void SV_WriteLight(light_t* light);
+static int  SV_ReadLight(light_t* light);
+static void SV_WritePhase(phase_t* phase);
+static int  SV_ReadPhase(phase_t* phase);
+static void SV_WriteScript(acs_t* script);
+static int  SV_ReadScript(acs_t* script);
+static void SV_WriteDoorPoly(polydoor_t* polydoor);
+static int  SV_ReadDoorPoly(polydoor_t* polydoor);
+static void SV_WriteMovePoly(polyevent_t* movepoly);
+static int  SV_ReadMovePoly(polyevent_t* movepoly);
+static void SV_WriteRotatePoly(polyevent_t* rotatepoly);
+static int  SV_ReadRotatePoly(polyevent_t* rotatepoly);
+static void SV_WritePillar(pillar_t* pillar);
+static int  SV_ReadPillar(pillar_t* pillar);
+static void SV_WriteFloorWaggle(waggle_t* floorwaggle);
+static int  SV_ReadFloorWaggle(waggle_t* floorwaggle);
 #else
 static void SV_WriteFlash(lightflash_t* flash);
 static int  SV_ReadFlash(lightflash_t* flash);
@@ -4413,7 +4414,8 @@ static void P_ArchiveScripts(void)
         SV_WriteShort(ACSInfo[i].state);
         SV_WriteShort(ACSInfo[i].waitValue);
     }
-    SV_Write(MapVars, sizeof(MapVars));
+    for(i = 0; i < MAX_ACS_MAP_VARS; ++i)
+        SV_WriteLong(MapVars[i]);
 }
 
 static void P_UnArchiveScripts(void)
@@ -4426,8 +4428,58 @@ static void P_UnArchiveScripts(void)
         ACSInfo[i].state = SV_ReadShort();
         ACSInfo[i].waitValue = SV_ReadShort();
     }
-    memcpy(MapVars, saveptr.b, sizeof(MapVars));
-    saveptr.b += sizeof(MapVars);
+    for(i = 0; i < MAX_ACS_MAP_VARS; ++i)
+        MapVars[i] = SV_ReadLong();
+}
+
+static void P_ArchiveGlobalScriptData(void)
+{
+    int                 i;
+
+    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
+    SV_WriteByte(2); // version byte
+
+    for(i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+        SV_WriteLong(WorldVars[i]);
+
+    for(i = 0; i < MAX_ACS_STORE; ++i)
+    {
+        int                 j;
+        const acsstore_t*   store = &ACSStore[i];
+
+        SV_WriteLong(store->map);
+        SV_WriteLong(store->script);
+        for(j = 0; j < 4; ++j)
+            SV_WriteByte(store->args[j]);
+    }
+}
+
+static void P_UnArchiveGlobalScriptData(void)
+{
+    int                 i, ver = 1;
+
+    if(saveVersion >= 7)
+    {
+        AssertSegment(ASEG_GLOBALSCRIPTDATA);
+        ver = SV_ReadByte();
+    }
+
+    for(i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+        WorldVars[i] = SV_ReadLong();
+
+    for(i = 0; i < MAX_ACS_STORE; ++i)
+    {
+        int                 j;
+        acsstore_t*         store = &ACSStore[i];
+
+        store->map = SV_ReadLong();
+        store->script = SV_ReadLong();
+        for(j = 0; j < 4; ++j)
+            store->args[j] = SV_ReadByte();
+    }
+
+    if(saveVersion < 7)
+        SV_Read(junkbuffer, 12); // Junk.
 }
 
 static void P_ArchiveMisc(void)
@@ -4665,13 +4717,13 @@ typedef struct savegameparam_s {
     char       *description;
 } savegameparam_t;
 
-int SV_SaveGameWorker(void *ptr)
+int SV_SaveGameWorker(void* ptr)
 {
-    savegameparam_t *param = ptr;
+    savegameparam_t*        param = ptr;
 #if __JHEXEN__
-    char        versionText[HXS_VERSION_TEXT_LENGTH];
+    char                    versionText[HXS_VERSION_TEXT_LENGTH];
 #else
-    int     i;
+    int                     i;
 #endif
 
     playerHeaderOK = false; // Uninitialized.
@@ -4704,8 +4756,7 @@ int SV_SaveGameWorker(void *ptr)
     SV_WriteByte(randomClassParm);
 
     // Write global script info
-    SV_Write(WorldVars, sizeof(WorldVars));
-    SV_Write(ACSStore, sizeof(ACSStore));
+    P_ArchiveGlobalScriptData();
 #else
     // Write the header.
     hdr.magic = MY_SAVE_MAGIC;
@@ -4921,18 +4972,15 @@ static boolean SV_LoadGame2(void)
 #endif
         return false; // Something went wrong.
 
-    // Read global save data not part of the game metadata.
-#if __JHEXEN__
-    // Read global script info
-    memcpy(WorldVars, saveptr.b, sizeof(WorldVars));
-    saveptr.b += sizeof(WorldVars);
-    memcpy(ACSStore, saveptr.b, sizeof(ACSStore));
-    saveptr.b += sizeof(ACSStore);
-#endif
-
     // Allocate a small junk buffer.
     // (Data from old save versions is read into here).
     junkbuffer = malloc(sizeof(byte) * 64);
+
+    // Read global save data not part of the game metadata.
+#if __JHEXEN__
+    // Read global script info.
+    P_UnArchiveGlobalScriptData();
+#endif
 
 #if !__JHEXEN__
     // Load the map.
