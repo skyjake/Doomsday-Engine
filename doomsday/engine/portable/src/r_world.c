@@ -1644,7 +1644,8 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
                 SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
                     surface;
 
-            if(!backSuf->material->inAnimGroup && !R_IsSkySurface(backSuf))
+            if(!(backSuf->material && backSuf->material->inAnimGroup) &&
+               !R_IsSkySurface(backSuf))
                 choice = backSuf->material;
         }
 
