@@ -414,8 +414,22 @@ void R_PreInitSprites(void)
 
         // Add the frame(s).
         {
-        spriterecord_frame_t* sprFrame =
-            Z_BlockNewElement(spriteRecordFrameBlockSet);
+        spriterecord_frame_t* sprFrame = rec->frames;
+        boolean             link = false;
+
+        while(sprFrame)
+        {
+            if(sprFrame->frame[0] == name[4] - 'A' + 1 &&
+               sprFrame->rotation[0] == name[5] - '0')
+                break;
+            sprFrame = sprFrame->next;
+        }
+
+        if(!sprFrame)
+        {   // A new frame.
+            sprFrame = Z_BlockNewElement(spriteRecordFrameBlockSet);
+            link = true;
+        }
 
         sprFrame->lump = i;
         sprFrame->frame[0] = name[4] - 'A' + 1;
@@ -430,8 +444,11 @@ void R_PreInitSprites(void)
             sprFrame->frame[1] = 0;
         }
 
-        sprFrame->next = rec->frames;
-        rec->frames = sprFrame;
+        if(link)
+        {
+            sprFrame->next = rec->frames;
+            rec->frames = sprFrame;
+        }
         }
     }
 
