@@ -48,6 +48,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "p_tick.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -508,7 +509,8 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t *psp)
  */
 void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
 {
-    mobj_t             *pmo;
+    int                 plrNum = player - players;
+    mobj_t*             pmo;
     short               laserPower;
 
     P_ShotAmmo(player);
@@ -521,11 +523,11 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
     pmo = player->plr->mo;
 
     laserPower = 0;
-    if(player->inventory[IIT_DEMONKEY1])
+    if(P_InventoryCount(plrNum, IIT_DEMONKEY1))
         laserPower++;
-    if(player->inventory[IIT_DEMONKEY2])
+    if(P_InventoryCount(plrNum, IIT_DEMONKEY2))
         laserPower++;
-    if(player->inventory[IIT_DEMONKEY3])
+    if(P_InventoryCount(plrNum, IIT_DEMONKEY3))
         laserPower++;
 
     switch(laserPower)
