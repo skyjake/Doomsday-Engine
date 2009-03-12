@@ -130,6 +130,10 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
  * Initializes the material archives (translation tables).
  * Must be called before saving. The table is written before any world data
  * is saved.
+ *
+ * \fixme: Poor design. What about the case where we wish to save a
+ * reference to a material which is not currently used on any world surface
+ * (for example, thinkers that will change a material at some later time)?
  */
 void SV_InitMaterialArchives(void)
 {
