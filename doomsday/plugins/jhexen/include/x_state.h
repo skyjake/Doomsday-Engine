@@ -53,8 +53,6 @@ extern int     verbose;
 
 extern boolean  paused;            // Game Pause?
 
-extern boolean  viewActive;
-
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
 extern int      viewangleoffset;

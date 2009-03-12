@@ -50,7 +50,6 @@ extern int totalKills, totalItems, totalSecret;
 extern boolean deathmatch;
 extern boolean respawnMonsters;
 extern boolean userGame;
-extern boolean viewActive;
 extern boolean paused;
 extern boolean precache;
 extern wbstartstruct_t wmInfo;
