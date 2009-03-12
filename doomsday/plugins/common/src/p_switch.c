@@ -60,8 +60,6 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-button_t* buttonlist;
-
 #if __JHEXEN__
 switchlist_t switchInfo[] = {
     {"SW_1_UP", "SW_1_DN", SFX_SWITCH1},
@@ -268,142 +266,172 @@ void P_InitSwitchList(void)
 }
 #endif
 
-/**
- * Start a button (retriggerable switch) counting down till it turns off.
- *
- * Passed the linedef the button is on, which texture on the sidedef contains
- * the button, the texture number of the button, and the time the button is
- * to remain active in gametics.
- */
-void P_StartButton(linedef_t* line, linesection_t section, material_t* mat,
-                   int time)
-{
-    button_t*           button;
-
-    // See if button is already pressed
-    for(button = buttonlist; button; button = button->next)
-    {
-        if(button->timer && button->line == line)
-            return;
-    }
-
-    for(button = buttonlist; button; button = button->next)
-    {
-        if(!button->timer) // use first unused element of list
-        {
-            button->line = line;
-            button->section = section;
-            button->material = mat;
-            button->timer = time;
-            button->soundOrg =
-                P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
-            return;
-        }
-    }
-
-    button = malloc(sizeof(button_t));
-    button->line = line;
-    button->section = section;
-    button->material = mat;
-    button->timer = time;
-    button->soundOrg =
-        P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
-
-    if(buttonlist)
-        button->next = buttonlist;
-    else
-        button->next = NULL;
-
-    buttonlist = button;
-}
-
-/**
- * Function that changes wall texture.
- * Tell it if switch is ok to use again (1=yes, it's a button).
- */
-void P_ChangeSwitchMaterial(linedef_t* line, int useAgain)
+material_t* P_GetSwitch(material_t* mat, const switchlist_t** info)
 {
     int                 i;
-    material_t*         topMaterial, *middleMaterial, *bottomMaterial;
-#if !__JHEXEN__
-    int                 sound;
-#endif
-    sidedef_t*          sdef = P_GetPtrp(line, DMU_SIDEDEF0);
-    sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
-#if !__JHEXEN__
-    if(!useAgain)
-        P_ToXLine(line)->special = 0;
-#endif
-
-    topMaterial = P_GetPtrp(sdef, DMU_TOP_MATERIAL);
-    middleMaterial = P_GetPtrp(sdef, DMU_MIDDLE_MATERIAL);
-    bottomMaterial = P_GetPtrp(sdef, DMU_BOTTOM_MATERIAL);
-
-#if !__JHEXEN__
-# if __JHERETIC__
-    sound = SFX_SWITCH;
-# else
-    sound = SFX_SWTCHN;
-#endif
-
-    // EXIT SWITCH?
-# if !__JHERETIC__
-    if(P_ToXLine(line)->special == 11)
-    {
-        sound = SFX_SWTCHX;
-    }
-# endif
-#endif
+    if(!mat)
+        return NULL;
 
     for(i = 0; i < numswitches * 2; ++i)
     {
-        if(switchlist[i] == topMaterial)
+        if(switchlist[i] == mat)
         {
-#if __JHEXEN__
-            S_StartSound(switchInfo[i / 2].soundID,
-                         P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
-#else
-            S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
-#endif
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL, switchlist[i^1]);
+            if(info)
+                *info = &switchInfo[i / 2];
 
-            if(useAgain)
-                P_StartButton(line, LS_TOP, switchlist[i], BUTTONTIME);
-
-            return;
-        }
-        else if(switchlist[i] == middleMaterial)
-        {
-#if __JHEXEN__
-            S_StartSound(switchInfo[i / 2].soundID,
-                         P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
-#else
-            S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
-#endif
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, switchlist[i^1]);
-
-            if(useAgain)
-                P_StartButton(line, LS_MIDDLE, switchlist[i], BUTTONTIME);
-
-            return;
-        }
-        else if(switchlist[i] == bottomMaterial)
-        {
-#if __JHEXEN__
-            S_StartSound(switchInfo[i / 2].soundID,
-                         P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
-#else
-            S_StartSound(sound, P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
-#endif
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, switchlist[i^1]);
-
-            if(useAgain)
-                P_StartButton(line, LS_BOTTOM, switchlist[i], BUTTONTIME);
-
-            return;
+            return switchlist[i^1];
         }
     }
+
+    return NULL;
+}
+
+void T_MaterialChanger(materialchanger_t* mchanger)
+{
+    if(!(--mchanger->timer))
+    {
+        P_SetPtrp(mchanger->side,
+                  mchanger->ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :
+                  mchanger->ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
+                  DMU_BOTTOM_MATERIAL, mchanger->material);
+#if __JDOOM__ || __JDOOM64__
+        S_StartSound(SFX_SWTCHN, P_GetPtrp(
+            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
+#elif __JHERETIC__
+        S_StartSound(SFX_SWITCH, P_GetPtrp(
+            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
+#endif
+
+        P_ThinkerRemove(&mchanger->thinker);
+    }
+}
+
+void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+                            material_t* mat, int tics)
+{
+    materialchanger_t*  mchanger;
+
+    mchanger = Z_Calloc(sizeof(*mchanger), PU_MAPSPEC, 0);
+    mchanger->thinker.function = T_MaterialChanger;
+
+    P_ThinkerAdd(&mchanger->thinker);
+
+    mchanger->side = side;
+    mchanger->ssurfaceID = ssurfaceID;
+    mchanger->material = mat;
+    mchanger->timer = tics;
+}
+
+typedef struct {
+    sidedef_t*          side;
+    sidedefsurfaceid_t  ssurfaceID;
+} findmaterialchangerparams_t;
+
+boolean findMaterialChanger(thinker_t* th, void* data)
+{
+    materialchanger_t*  mchanger = (materialchanger_t*) th;
+    findmaterialchangerparams_t* params =
+        (findmaterialchangerparams_t*) data;
+
+    if(mchanger->side == params->side &&
+       mchanger->ssurfaceID == params->ssurfaceID)
+        return false; // Stop iteration.
+
+    return true; // Keep looking.
+}
+
+void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+                   material_t* mat, int tics)
+{
+    findmaterialchangerparams_t params;
+
+    params.side = side;
+    params.ssurfaceID = ssurfaceID;
+
+    // See if a material change has already been queued.
+    if(!P_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
+        return;
+
+    P_SpawnMaterialChanger(side, ssurfaceID, mat, tics);
+}
+
+/**
+ * @param side          Sidedef where the surface to be changed is found.
+ * @param ssurfaceID    Id of the sidedef surface to be changed.
+ * @param sound         If non-zero, play this sound, ELSE the sound to
+ *                      play will be taken from the switchinfo. Note that
+ *                      a sound will play iff a switch state change occurs
+ *                      and param silent is non-zero.
+ * @param silent        @c true = no sound will be played.
+ * @param tics          @c <= 0 = A permanent change.
+ *                      @c  > 0 = Change back after this many tics.
+ */
+boolean P_ToggleSwitch2(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+                        int sound, boolean silent, int tics)
+{
+    material_t*         mat, *current;
+    const switchlist_t* info;
+
+    current = P_GetPtrp(side,
+                        ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :
+                        ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
+                        DMU_BOTTOM_MATERIAL);
+
+    if((mat = P_GetSwitch(current, &info)))
+    {
+        if(!silent)
+        {
+            // \todo Get these defaults from switchinfo.
+            if(!sound)
+            {
+#if __JHEXEN__
+                sound = info->soundID;
+#elif __JHERETIC__
+                sound = SFX_SWITCH;
+#else
+                sound = SFX_SWTCHN;
+#endif
+            }
+
+            S_StartSound(sound, P_GetPtrp(P_GetPtrp(side, DMU_SECTOR),
+                                          DMU_SOUND_ORIGIN));
+        }
+
+        P_SetPtrp(side, ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :
+                        ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
+                        DMU_BOTTOM_MATERIAL, mat);
+        if(tics > 0)
+            P_StartButton(side, ssurfaceID, current, tics);
+
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * @param side          Sidedef where the switch to be changed is found.
+ * @param sound         If non-zero, play this sound, ELSE the sound to
+ *                      play will be taken from the switchinfo. Note that
+ *                      a sound will play iff a switch state change occurs
+ *                      and param silent is non-zero.
+ * @param silent        @c true = no sound will be played.
+ * @param tics          @c <= 0 = A permanent change.
+ *                      @c  > 0 = Change back after this many tics.
+ */
+boolean P_ToggleSwitch(sidedef_t* side, int sound, boolean silent, int tics)
+{
+    if(P_ToggleSwitch2(side, SID_TOP, sound, silent, tics))
+        return true;
+
+    if(P_ToggleSwitch2(side, SID_MIDDLE, sound, silent, tics))
+        return true;
+
+    if(P_ToggleSwitch2(side, SID_BOTTOM, sound, silent, tics))
+        return true;
+
+    return false;
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__

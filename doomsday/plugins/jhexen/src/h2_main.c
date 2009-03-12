@@ -627,7 +627,6 @@ void G_Shutdown(void)
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
-    P_FreeButtons();
     P_ShutdownInventory();
     AM_Shutdown();
     X_DestroyLUTs();

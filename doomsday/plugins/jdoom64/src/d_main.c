@@ -46,6 +46,7 @@
 #include "p_switch.h"
 #include "am_map.h"
 #include "g_defs.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -270,7 +271,7 @@ void G_PreInit(void)
     cfg.hudShown[HUD_AMMO] = true;
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
-    cfg.hudShown[HUD_POWER] = false; // They will be visible when the automap is.
+    cfg.hudShown[HUD_INVENTORY] = false; // They will be visible when the automap is.
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.hudScale = .6f;
@@ -546,7 +547,7 @@ void G_Shutdown(void)
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
-    P_FreeButtons();
+    P_ShutdownInventory();
     AM_Shutdown();
 }
 

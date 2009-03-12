@@ -59,6 +59,7 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 #include "p_tick.h"
+#include "p_switch.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -114,17 +115,17 @@
         : reftype == LSREF_THING_EXIST? "SECTORS WITH THING" \
         : reftype == LSREF_THING_NOEXIST? "SECTORS WITHOUT THING" : "???")
 
-#define TO_DMU_TOP_COLOR(x) (x == 0? DMU_TOP_COLOR_RED \
-        : x == 1? DMU_TOP_COLOR_GREEN \
+#define TO_DMU_TOP_COLOR(x) ((x) == 0? DMU_TOP_COLOR_RED \
+        : (x) == 1? DMU_TOP_COLOR_GREEN \
         : DMU_TOP_COLOR_BLUE)
 
-#define TO_DMU_MIDDLE_COLOR(x) (x == 0? DMU_MIDDLE_COLOR_RED \
-        : x == 1? DMU_MIDDLE_COLOR_GREEN \
-        : x == 2? DMU_MIDDLE_COLOR_BLUE \
+#define TO_DMU_MIDDLE_COLOR(x) ((x) == 0? DMU_MIDDLE_COLOR_RED \
+        : (x) == 1? DMU_MIDDLE_COLOR_GREEN \
+        : (x) == 2? DMU_MIDDLE_COLOR_BLUE \
         : DMU_MIDDLE_ALPHA)
 
-#define TO_DMU_BOTTOM_COLOR(x) (x == 0? DMU_BOTTOM_COLOR_RED \
-        : x == 1? DMU_BOTTOM_COLOR_GREEN \
+#define TO_DMU_BOTTOM_COLOR(x) ((x) == 0? DMU_BOTTOM_COLOR_RED \
+        : (x) == 1? DMU_BOTTOM_COLOR_GREEN \
         : DMU_BOTTOM_COLOR_BLUE)
 
 // TYPES -------------------------------------------------------------------
@@ -1892,119 +1893,17 @@ boolean XL_CheckMobjGone(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean XL_SwitchSwap(sidedef_t* side, int section)
-{
-    const char*         name;
-    char                buf[10];
-    material_t*         material = NULL;
-    boolean             makeChange = false;
-
-    if(!side)
-        return false;
-
-    // Which section of the wall are we checking?
-    if(section == LWS_UPPER)
-        material = P_GetPtrp(side, DMU_TOP_MATERIAL);
-    else if(section == LWS_MID)
-        material = P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
-    else
-        material = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
-
-    if(!material)
-        return false; // No material on this section.
-
-    name = P_GetMaterialName(material);
-    if(!name)
-        return false; // Most peculiar.
-
-    strncpy(buf, name, 8);
-    buf[8] = 0;
-
-    //// \fixmeDoes this texture have another switch texture?
-    //// Use the switch texture list in p_switches for this.
-#if __JHERETIC__
-    //// \kludge A kludge for Heretic.  Since it has some switch texture names
-    //// that don't follow the SW1/SW2 pattern, we'll do some special
-    //// checking.
-    if(!stricmp(buf, "SW1ON"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW1OFF", MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!stricmp(buf, "SW1OFF"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW1ON", MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!stricmp(buf, "SW2ON"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW2OFF", MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!stricmp(buf, "SW2OFF"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW2ON", MN_TEXTURES));
-        makeChange = true;
-    }
-#endif
-
-    if(!strnicmp(buf, "SW1", 3))
-    {
-        buf[2] = '2';
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(buf, MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!strnicmp(buf, "SW2", 3))
-    {
-        buf[2] = '1';
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(buf, MN_TEXTURES));
-        makeChange = true;
-    }
-
-    // Are we doing a switch swap?
-    if(makeChange)
-    {
-        // Which section of the wall are we working on?
-        // Make the change.
-        if(section == LWS_UPPER)
-            P_SetPtrp(side, DMU_TOP_MATERIAL, material);
-        else if(section == LWS_MID)
-            P_SetPtrp(side, DMU_MIDDLE_MATERIAL, material);
-        else if(section == LWS_LOWER)
-            P_SetPtrp(side, DMU_BOTTOM_MATERIAL, material);
-        else
-            return false;
-
-        // The change was successfull.
-        return true;
-    }
-    else
-        return false;
-}
-
 void XL_SwapSwitchTextures(linedef_t* line, int snum)
 {
-    sidedef_t*          side;
+    if(line)
+    {
+        sidedef_t*          side = P_GetPtrp(line,
+            snum? DMU_SIDEDEF1 : DMU_SIDEDEF0);
 
-    if(snum)
-        side = P_GetPtrp(line, DMU_SIDEDEF1);
-    else
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-    if(!side)
-        return;
-
-    if(XL_SwitchSwap(side, LWS_UPPER) ||
-       XL_SwitchSwap(side, LWS_MID) ||
-       XL_SwitchSwap(side, LWS_LOWER) )
-        XG_Dev("XL_SwapSwitchTextures: Line %i, side %i", P_ToIndex(line),
-                P_ToIndex(side));
+        if(side && P_ToggleSwitch(side, SFX_NONE, true, 0))
+            XG_Dev("XL_SwapSwitchTextures: Line %i, side %i",
+                   P_ToIndex(line), P_ToIndex(side));
+    }
 }
 
 /**

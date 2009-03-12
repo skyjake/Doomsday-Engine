@@ -67,6 +67,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "p_switch.h"
 #include "hu_log.h"
 #if __JHERETIC__ || __JHEXEN__
 #include "hu_inventory.h"
@@ -226,49 +227,51 @@ typedef enum lineclass_e {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void SV_WriteMobj(mobj_t* mobj);
-static int  SV_ReadMobj(thinker_t* th);
-static void SV_WriteCeiling(ceiling_t* ceiling);
-static int  SV_ReadCeiling(ceiling_t* ceiling);
-static void SV_WriteDoor(door_t* door);
-static int  SV_ReadDoor(door_t* door);
-static void SV_WriteFloor(floor_t* floor);
-static int  SV_ReadFloor(floor_t* floor);
-static void SV_WritePlat(plat_t* plat);
-static int  SV_ReadPlat(plat_t* plat);
+static void SV_WriteMobj(const mobj_t* mobj);
+static int SV_ReadMobj(thinker_t* th);
+static void SV_WriteCeiling(const ceiling_t* ceiling);
+static int SV_ReadCeiling(ceiling_t* ceiling);
+static void SV_WriteDoor(const door_t* door);
+static int SV_ReadDoor(door_t* door);
+static void SV_WriteFloor(const floor_t* floor);
+static int SV_ReadFloor(floor_t* floor);
+static void SV_WritePlat(const plat_t* plat);
+static int SV_ReadPlat(plat_t* plat);
+static void SV_WriteMaterialChanger(const materialchanger_t* mchanger);
+static int SV_ReadMaterialChanger(materialchanger_t* mchanger);
 
 #if __JHEXEN__
-static void SV_WriteLight(light_t* light);
-static int  SV_ReadLight(light_t* light);
-static void SV_WritePhase(phase_t* phase);
-static int  SV_ReadPhase(phase_t* phase);
-static void SV_WriteScript(acs_t* script);
-static int  SV_ReadScript(acs_t* script);
-static void SV_WriteDoorPoly(polydoor_t* polydoor);
-static int  SV_ReadDoorPoly(polydoor_t* polydoor);
-static void SV_WriteMovePoly(polyevent_t* movepoly);
-static int  SV_ReadMovePoly(polyevent_t* movepoly);
-static void SV_WriteRotatePoly(polyevent_t* rotatepoly);
-static int  SV_ReadRotatePoly(polyevent_t* rotatepoly);
-static void SV_WritePillar(pillar_t* pillar);
-static int  SV_ReadPillar(pillar_t* pillar);
-static void SV_WriteFloorWaggle(waggle_t* floorwaggle);
-static int  SV_ReadFloorWaggle(waggle_t* floorwaggle);
+static void SV_WriteLight(const light_t* light);
+static int SV_ReadLight(light_t* light);
+static void SV_WritePhase(const phase_t* phase);
+static int SV_ReadPhase(phase_t* phase);
+static void SV_WriteScript(const acs_t* script);
+static int SV_ReadScript(acs_t* script);
+static void SV_WriteDoorPoly(const polydoor_t* polydoor);
+static int SV_ReadDoorPoly(polydoor_t* polydoor);
+static void SV_WriteMovePoly(const polyevent_t* movepoly);
+static int SV_ReadMovePoly(polyevent_t* movepoly);
+static void SV_WriteRotatePoly(const polyevent_t* rotatepoly);
+static int SV_ReadRotatePoly(polyevent_t* rotatepoly);
+static void SV_WritePillar(const pillar_t* pillar);
+static int SV_ReadPillar(pillar_t* pillar);
+static void SV_WriteFloorWaggle(const waggle_t* floorwaggle);
+static int SV_ReadFloorWaggle(waggle_t* floorwaggle);
 #else
-static void SV_WriteFlash(lightflash_t* flash);
-static int  SV_ReadFlash(lightflash_t* flash);
-static void SV_WriteStrobe(strobe_t* strobe);
-static int  SV_ReadStrobe(strobe_t* strobe);
-static void SV_WriteGlow(glow_t* glow);
-static int  SV_ReadGlow(glow_t* glow);
+static void SV_WriteFlash(const lightflash_t* flash);
+static int SV_ReadFlash(lightflash_t* flash);
+static void SV_WriteStrobe(const strobe_t* strobe);
+static int SV_ReadStrobe(strobe_t* strobe);
+static void SV_WriteGlow(const glow_t* glow);
+static int SV_ReadGlow(glow_t* glow);
 # if __JDOOM__ || __JDOOM64__
-static void SV_WriteFlicker(fireflicker_t* flicker);
-static int  SV_ReadFlicker(fireflicker_t* flicker);
+static void SV_WriteFlicker(const fireflicker_t* flicker);
+static int SV_ReadFlicker(fireflicker_t* flicker);
 # endif
 
 # if __JDOOM64__
-static void SV_WriteBlink(lightblink_t* flicker);
-static int  SV_ReadBlink(lightblink_t* flicker);
+static void SV_WriteBlink(const lightblink_t* flicker);
+static int SV_ReadBlink(lightblink_t* flicker);
 # endif
 #endif
 
@@ -290,19 +293,19 @@ static void SV_DMLoadMap(void);
 
 #if __JHEXEN__
 extern int ACScriptCount;
-extern byte *ActionCodeBase;
-extern acsinfo_t *ACSInfo;
+extern byte* ActionCodeBase;
+extern acsinfo_t* ACSInfo;
 #endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-LZFILE *savefile;
+LZFILE* savefile;
 #if __JHEXEN__
-char    savePath[256];        /* = "hexndata\\"; */
-char    clientSavePath[256];  /* = "hexndata\\client\\"; */
+char savePath[256];        /* = "hexndata\\"; */
+char clientSavePath[256];  /* = "hexndata\\client\\"; */
 #else
-char    savePath[128];         /* = "savegame\\"; */
-char    clientSavePath[128];  /* = "savegame\\client\\"; */
+char savePath[128];         /* = "savegame\\"; */
+char clientSavePath[128];  /* = "savegame\\client\\"; */
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -314,18 +317,18 @@ static saveheader_t hdr;
 #endif
 static playerheader_t playerHeader;
 static boolean playerHeaderOK = false;
-static mobj_t **thing_archive = NULL;
-static uint thing_archiveSize = 0;
+static mobj_t** thingArchive = NULL;
+static uint thingArchiveSize = 0;
 static int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
-static targetplraddress_t *targetPlayerAddrs = NULL;
-static byte *saveBuffer;
+static targetplraddress_t* targetPlayerAddrs = NULL;
+static byte* saveBuffer;
 static boolean savingPlayers;
 #else
 static int numSoundTargets = 0;
 #endif
 
-static byte *junkbuffer;        // Old save data is read into here.
+static byte* junkbuffer; // Old save data is read into here.
 
 static thinkerinfo_t thinkerInfo[] = {
     {
@@ -489,6 +492,14 @@ static thinkerinfo_t thinkerInfo[] = {
     },
 # endif
 #endif
+    {
+      TC_MATERIALCHANGER,
+      T_MaterialChanger,
+      TSF_SPECIAL,
+      SV_WriteMaterialChanger,
+      SV_ReadMaterialChanger,
+      sizeof(materialchanger_t)
+    },
     // Terminator
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
@@ -591,14 +602,14 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
         P_IterateThinkers(P_MobjThinker, countMobjs, &params);
     }
 
-    thing_archive = calloc(params.count, sizeof(mobj_t*));
-    return thing_archiveSize = params.count;
+    thingArchive = calloc(params.count, sizeof(mobj_t*));
+    return thingArchiveSize = params.count;
 }
 
 /**
  * Used by the read code when mobjs are read.
  */
-static void SV_SetArchiveThing(mobj_t *mo, int num)
+static void SV_SetArchiveThing(mobj_t* mo, int num)
 {
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -608,10 +619,10 @@ static void SV_SetArchiveThing(mobj_t *mo, int num)
     if(num < 0)
         return;
 
-    if(!thing_archive)
+    if(!thingArchive)
         Con_Error("SV_SetArchiveThing: Thing archive uninitialized.");
 
-    thing_archive[num] = mo;
+    thingArchive[num] = mo;
 }
 
 /**
@@ -619,11 +630,11 @@ static void SV_SetArchiveThing(mobj_t *mo, int num)
  */
 static void SV_FreeThingArchive(void)
 {
-    if(thing_archive)
+    if(thingArchive)
     {
-        free(thing_archive);
-        thing_archive = NULL;
-        thing_archiveSize = 0;
+        free(thingArchive);
+        thingArchive = NULL;
+        thingArchiveSize = 0;
     }
 }
 
@@ -633,13 +644,13 @@ static void SV_FreeThingArchive(void)
  * Number zero is not used.
  */
 #if __JHEXEN__
-int SV_ThingArchiveNum(mobj_t *mo)
+int SV_ThingArchiveNum(mobj_t* mo)
 #else
-unsigned short SV_ThingArchiveNum(mobj_t *mo)
+unsigned short SV_ThingArchiveNum(mobj_t* mo)
 #endif
 {
-    uint        i, first_empty = 0;
-    boolean     found;
+    uint                i, firstEmpty = 0;
+    boolean             found;
 
     // We only archive valid mobj thinkers.
     if(mo == NULL || ((thinker_t *) mo)->function != P_MobjThinker)
@@ -650,37 +661,37 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
         return MOBJ_XX_PLAYER;
 #endif
 
-    if(!thing_archive)
+    if(!thingArchive)
         Con_Error("SV_ThingArchiveNum: Thing archive uninitialized.");
 
     found = false;
-    for(i = 0; i < thing_archiveSize; ++i)
+    for(i = 0; i < thingArchiveSize; ++i)
     {
-        if(!thing_archive[i] && !found)
+        if(!thingArchive[i] && !found)
         {
-            first_empty = i;
+            firstEmpty = i;
             found = true;
             continue;
         }
-        if(thing_archive[i] == mo)
+        if(thingArchive[i] == mo)
             return i + 1;
     }
 
     if(!found)
     {
         Con_Error("SV_ThingArchiveNum: Thing archive exhausted!\n");
-        return 0;               // No number available!
+        return 0; // No number available!
     }
 
     // OK, place it in an empty pos.
-    thing_archive[first_empty] = mo;
-    return first_empty + 1;
+    thingArchive[firstEmpty] = mo;
+    return firstEmpty + 1;
 }
 
 #if __JHEXEN__
 static void SV_FreeTargetPlayerList(void)
 {
-    targetplraddress_t *p = targetPlayerAddrs, *np;
+    targetplraddress_t* p = targetPlayerAddrs, *np;
 
     while(p != NULL)
     {
@@ -712,7 +723,7 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
     }
 #endif
 
-    if(!thing_archive)
+    if(!thingArchive)
         Con_Error("SV_GetArchiveThing: Thing archive uninitialized.");
 
     // Check that the thing archive id is valid.
@@ -722,7 +733,7 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
         if(thingid == -1)
             return NULL; // A NULL reference.
 
-        if(thingid < 0 || (uint) thingid > thing_archiveSize - 1)
+        if(thingid < 0 || (uint) thingid > thingArchiveSize - 1)
             return NULL;
     }
     else
@@ -731,7 +742,7 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
         if(thingid == 0)
             return NULL; // A NULL reference.
 
-        if(thingid < 1 || (uint) thingid > thing_archiveSize)
+        if(thingid < 1 || (uint) thingid > thingArchiveSize)
         {
             Con_Message("SV_GetArchiveThing: Invalid NUM %i??\n", thingid);
             return NULL;
@@ -740,14 +751,14 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
         thingid -= 1;
     }
 
-    return thing_archive[thingid];
+    return thingArchive[thingid];
 }
 
-static playerheader_t *GetPlayerHeader(void)
+static playerheader_t* getPlayerHeader(void)
 {
 #if _DEBUG
     if(!playerHeaderOK)
-        Con_Error("GetPlayerHeader: Attempted to read before init!");
+        Con_Error("getPlayerHeader: Attempted to read before init!");
 #endif
     return &playerHeader;
 }
@@ -985,7 +996,7 @@ void SV_HxInitBaseSlot(void)
  */
 static void SV_WritePlayer(int playernum)
 {
-    int                 i, numPSprites = GetPlayerHeader()->numPSprites;
+    int                 i, numPSprites = getPlayerHeader()->numPSprites;
     player_t            temp, *p = &temp;
     ddplayer_t          ddtemp, *dp = &ddtemp;
 
@@ -1033,7 +1044,7 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->health);
 
 #if __JHEXEN__
-    for(i = 0; i < GetPlayerHeader()->numArmorTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numArmorTypes; ++i)
     {
         SV_WriteLong(p->armorPoints[i]);
     }
@@ -1043,7 +1054,7 @@ static void SV_WritePlayer(int playernum)
 #endif
 
 #if __JDOOM64__ || __JHEXEN__
-    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = IIT_FIRST + i;
 
@@ -1053,7 +1064,7 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(P_InventoryReadyItem(playernum));
 #endif
 
-    for(i = 0; i < GetPlayerHeader()->numPowers; ++i)
+    for(i = 0; i < getPlayerHeader()->numPowers; ++i)
     {
         SV_WriteLong(p->powers[i]);
     }
@@ -1061,7 +1072,7 @@ static void SV_WritePlayer(int playernum)
 #if __JHEXEN__
     SV_WriteLong(p->keys);
 #else
-    for(i = 0; i < GetPlayerHeader()->numKeys; ++i)
+    for(i = 0; i < getPlayerHeader()->numKeys; ++i)
     {
         SV_WriteLong(p->keys[i]);
     }
@@ -1073,7 +1084,7 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->backpack);
 #endif
 
-    for(i = 0; i < GetPlayerHeader()->numFrags; ++i)
+    for(i = 0; i < getPlayerHeader()->numFrags; ++i)
     {
         SV_WriteLong(p->frags[i]);
     }
@@ -1081,12 +1092,12 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->readyWeapon);
     SV_WriteLong(p->pendingWeapon);
 
-    for(i = 0; i < GetPlayerHeader()->numWeapons; ++i)
+    for(i = 0; i < getPlayerHeader()->numWeapons; ++i)
     {
         SV_WriteLong(p->weapons[i].owned);
     }
 
-    for(i = 0; i < GetPlayerHeader()->numAmmoTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numAmmoTypes; ++i)
     {
         SV_WriteLong(p->ammo[i].owned);
 #if !__JHEXEN__
@@ -1133,7 +1144,7 @@ static void SV_WritePlayer(int playernum)
 #endif
 
 #if __JHERETIC__
-    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = IIT_FIRST + i;
 
@@ -1167,7 +1178,7 @@ static void SV_WritePlayer(int playernum)
 static void SV_ReadPlayer(player_t* p)
 {
     int                 i, plrnum = p - players,
-                        numPSprites = GetPlayerHeader()->numPSprites;
+                        numPSprites = getPlayerHeader()->numPSprites;
     byte                ver;
     ddplayer_t*         dp = p->plr;
 
@@ -1200,7 +1211,7 @@ static void SV_ReadPlayer(player_t* p)
     p->health = SV_ReadLong();
 
 #if __JHEXEN__
-    for(i = 0; i < GetPlayerHeader()->numArmorTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numArmorTypes; ++i)
     {
         p->armorPoints[i] = SV_ReadLong();
     }
@@ -1211,7 +1222,7 @@ static void SV_ReadPlayer(player_t* p)
 
 #if __JDOOM64__ || __JHEXEN__
     P_InventoryEmpty(plrnum);
-    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = SV_ReadLong();
         int             j, count = SV_ReadLong();
@@ -1232,7 +1243,7 @@ static void SV_ReadPlayer(player_t* p)
 # endif
 #endif
 
-    for(i = 0; i < GetPlayerHeader()->numPowers; ++i)
+    for(i = 0; i < getPlayerHeader()->numPowers; ++i)
     {
         p->powers[i] = SV_ReadLong();
     }
@@ -1242,7 +1253,7 @@ static void SV_ReadPlayer(player_t* p)
 #if __JHEXEN__
     p->keys = SV_ReadLong();
 #else
-    for(i = 0; i < GetPlayerHeader()->numKeys; ++i)
+    for(i = 0; i < getPlayerHeader()->numKeys; ++i)
     {
         p->keys[i] = SV_ReadLong();
     }
@@ -1254,7 +1265,7 @@ static void SV_ReadPlayer(player_t* p)
     p->backpack = SV_ReadLong();
 #endif
 
-    for(i = 0; i < GetPlayerHeader()->numFrags; ++i)
+    for(i = 0; i < getPlayerHeader()->numFrags; ++i)
     {
         p->frags[i] = SV_ReadLong();
     }
@@ -1267,12 +1278,12 @@ static void SV_ReadPlayer(player_t* p)
 #endif
         p->pendingWeapon = SV_ReadLong();
 
-    for(i = 0; i < GetPlayerHeader()->numWeapons; ++i)
+    for(i = 0; i < getPlayerHeader()->numWeapons; ++i)
     {
         p->weapons[i].owned = (SV_ReadLong()? true : false);
     }
 
-    for(i = 0; i < GetPlayerHeader()->numAmmoTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numAmmoTypes; ++i)
     {
         p->ammo[i].owned = SV_ReadLong();
 
@@ -1338,7 +1349,7 @@ static void SV_ReadPlayer(player_t* p)
     p->flyHeight = SV_ReadLong();
 
     P_InventoryEmpty(plrnum);
-    for(i = 0; i < GetPlayerHeader()->numInvItemTypes; ++i)
+    for(i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = SV_ReadLong();
         int             j, count = SV_ReadLong();
@@ -1403,7 +1414,7 @@ static void SV_ReadPlayer(player_t* p)
 # define MOBJ_SAVEVERSION 7
 #endif
 
-static void SV_WriteMobj(mobj_t *original)
+static void SV_WriteMobj(const mobj_t* original)
 {
     mobj_t              temp, *mo = &temp;
 
@@ -1440,7 +1451,7 @@ static void SV_WriteMobj(mobj_t *original)
 
 #if !__JHEXEN__
     // A version 2 features: archive number and target.
-    SV_WriteShort(SV_ThingArchiveNum(original));
+    SV_WriteShort(SV_ThingArchiveNum((mobj_t*) original));
     SV_WriteShort(SV_ThingArchiveNum(mo->target));
 
 # if __JDOOM__ || __JDOOM64__
@@ -1573,7 +1584,7 @@ static void SV_WriteMobj(mobj_t *original)
 
     SV_WriteLong(FLT2FIX(mo->floorClip));
 #if __JHEXEN__
-    SV_WriteLong(SV_ThingArchiveNum(original));
+    SV_WriteLong(SV_ThingArchiveNum((mobj_t*) original));
     SV_WriteLong(mo->tid);
     SV_WriteLong(mo->special);
     SV_Write(mo->args, sizeof(mo->args));
@@ -2738,7 +2749,7 @@ static void P_UnArchiveWorld(void)
 #endif
 }
 
-static void SV_WriteCeiling(ceiling_t* ceiling)
+static void SV_WriteCeiling(const ceiling_t* ceiling)
 {
     SV_WriteByte(2); // Write a version byte.
 
@@ -2850,7 +2861,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
     return true; // Add this thinker.
 }
 
-static void SV_WriteDoor(door_t *door)
+static void SV_WriteDoor(const door_t *door)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -2935,7 +2946,7 @@ static int SV_ReadDoor(door_t *door)
     return true; // Add this thinker.
 }
 
-static void SV_WriteFloor(floor_t *floor)
+static void SV_WriteFloor(const floor_t *floor)
 {
     SV_WriteByte(3); // Write a version byte.
 
@@ -3066,7 +3077,7 @@ static int SV_ReadFloor(floor_t* floor)
     return true; // Add this thinker.
 }
 
-static void SV_WritePlat(plat_t *plat)
+static void SV_WritePlat(const plat_t *plat)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3171,7 +3182,7 @@ static int SV_ReadPlat(plat_t *plat)
 }
 
 #if __JHEXEN__
-static void SV_WriteLight(light_t *th)
+static void SV_WriteLight(const light_t* th)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3189,9 +3200,9 @@ static void SV_WriteLight(light_t *th)
     SV_WriteLong(th->count);
 }
 
-static int SV_ReadLight(light_t *th)
+static int SV_ReadLight(light_t* th)
 {
-    sector_t *sector;
+    sector_t*           sector;
 
     if(saveVersion >= 4)
     {
@@ -3237,7 +3248,7 @@ static int SV_ReadLight(light_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WritePhase(phase_t *th)
+static void SV_WritePhase(const phase_t* th)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3250,9 +3261,9 @@ static void SV_WritePhase(phase_t *th)
     SV_WriteLong((int) (255.0f * th->baseValue));
 }
 
-static int SV_ReadPhase(phase_t *th)
+static int SV_ReadPhase(phase_t* th)
 {
-    sector_t *sector;
+    sector_t*           sector;
 
     if(saveVersion >= 4)
     {
@@ -3290,9 +3301,9 @@ static int SV_ReadPhase(phase_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WriteScript(acs_t *th)
+static void SV_WriteScript(const acs_t* th)
 {
-    uint        i;
+    uint                i;
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -3310,10 +3321,10 @@ static void SV_WriteScript(acs_t *th)
     SV_WriteLong((int) (th->ip) - (int) ActionCodeBase);
 }
 
-static int SV_ReadScript(acs_t *th)
+static int SV_ReadScript(acs_t* th)
 {
-    int         temp;
-    uint        i;
+    int                 temp;
+    uint                i;
 
     if(saveVersion >= 4)
     {
@@ -3368,7 +3379,7 @@ static int SV_ReadScript(acs_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WriteDoorPoly(polydoor_t *th)
+static void SV_WriteDoorPoly(const polydoor_t* th)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3389,7 +3400,7 @@ static void SV_WriteDoorPoly(polydoor_t *th)
     SV_WriteByte(th->close);
 }
 
-static int SV_ReadDoorPoly(polydoor_t *th)
+static int SV_ReadDoorPoly(polydoor_t* th)
 {
     if(saveVersion >= 4)
     {
@@ -3436,7 +3447,7 @@ static int SV_ReadDoorPoly(polydoor_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WriteMovePoly(polyevent_t *th)
+static void SV_WriteMovePoly(const polyevent_t* th)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3451,7 +3462,7 @@ static void SV_WriteMovePoly(polyevent_t *th)
     SV_WriteLong(FLT2FIX(th->speed[VY]));
 }
 
-static int SV_ReadMovePoly(polyevent_t *th)
+static int SV_ReadMovePoly(polyevent_t* th)
 {
     if(saveVersion >= 4)
     {
@@ -3487,7 +3498,7 @@ static int SV_ReadMovePoly(polyevent_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WriteRotatePoly(polyevent_t *th)
+static void SV_WriteRotatePoly(const polyevent_t* th)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3502,7 +3513,7 @@ static void SV_WriteRotatePoly(polyevent_t *th)
     SV_WriteLong(FLT2FIX(th->speed[VY]));
 }
 
-static int SV_ReadRotatePoly(polyevent_t *th)
+static int SV_ReadRotatePoly(polyevent_t* th)
 {
     if(saveVersion >= 4)
     {
@@ -3537,7 +3548,7 @@ static int SV_ReadRotatePoly(polyevent_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WritePillar(pillar_t *th)
+static void SV_WritePillar(const pillar_t* th)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3554,9 +3565,9 @@ static void SV_WritePillar(pillar_t *th)
     SV_WriteLong(th->crush);
 }
 
-static int SV_ReadPillar(pillar_t *th)
+static int SV_ReadPillar(pillar_t* th)
 {
-    sector_t *sector;
+    sector_t*           sector;
 
     if(saveVersion >= 4)
     {
@@ -3604,7 +3615,7 @@ static int SV_ReadPillar(pillar_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WriteFloorWaggle(waggle_t *th)
+static void SV_WriteFloorWaggle(const waggle_t* th)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3623,9 +3634,9 @@ static void SV_WriteFloorWaggle(waggle_t *th)
     SV_WriteLong(th->state);
 }
 
-static int SV_ReadFloorWaggle(waggle_t *th)
+static int SV_ReadFloorWaggle(waggle_t* th)
 {
-    sector_t *sector;
+    sector_t*           sector;
 
     if(saveVersion >= 4)
     {
@@ -3678,7 +3689,7 @@ static int SV_ReadFloorWaggle(waggle_t *th)
 #endif // __JHEXEN__
 
 #if !__JHEXEN__
-static void SV_WriteFlash(lightflash_t* flash)
+static void SV_WriteFlash(const lightflash_t* flash)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3696,7 +3707,7 @@ static void SV_WriteFlash(lightflash_t* flash)
 
 static int SV_ReadFlash(lightflash_t* flash)
 {
-    sector_t* sector;
+    sector_t*           sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3738,7 +3749,7 @@ static int SV_ReadFlash(lightflash_t* flash)
     return true; // Add this thinker.
 }
 
-static void SV_WriteStrobe(strobe_t* strobe)
+static void SV_WriteStrobe(const strobe_t* strobe)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3754,9 +3765,9 @@ static void SV_WriteStrobe(strobe_t* strobe)
     SV_WriteLong(strobe->brightTime);
 }
 
-static int SV_ReadStrobe(strobe_t *strobe)
+static int SV_ReadStrobe(strobe_t* strobe)
 {
-    sector_t* sector;
+    sector_t*           sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3797,7 +3808,7 @@ static int SV_ReadStrobe(strobe_t *strobe)
     return true; // Add this thinker.
 }
 
-static void SV_WriteGlow(glow_t *glow)
+static void SV_WriteGlow(const glow_t* glow)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3811,9 +3822,9 @@ static void SV_WriteGlow(glow_t *glow)
     SV_WriteLong(glow->direction);
 }
 
-static int SV_ReadGlow(glow_t *glow)
+static int SV_ReadGlow(glow_t* glow)
 {
-    sector_t* sector;
+    sector_t*           sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3851,7 +3862,7 @@ static int SV_ReadGlow(glow_t *glow)
 }
 
 # if __JDOOM__ || __JDOOM64__
-static void SV_WriteFlicker(fireflicker_t *flicker)
+static void SV_WriteFlicker(const fireflicker_t* flicker)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3868,9 +3879,9 @@ static void SV_WriteFlicker(fireflicker_t *flicker)
  * T_FireFlicker was added to save games in ver5, therefore we don't have
  * an old format to support.
  */
-static int SV_ReadFlicker(fireflicker_t *flicker)
+static int SV_ReadFlicker(fireflicker_t* flicker)
 {
-    sector_t* sector;
+    sector_t*           sector;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
@@ -3888,7 +3899,7 @@ static int SV_ReadFlicker(fireflicker_t *flicker)
 # endif
 
 # if __JDOOM64__
-static void SV_WriteBlink(lightblink_t *blink)
+static void SV_WriteBlink(const lightblink_t* blink)
 {
     SV_WriteByte(1); // Write a version byte.
 
@@ -3908,7 +3919,7 @@ static void SV_WriteBlink(lightblink_t *blink)
  * T_LightBlink was added to save games in ver5, therefore we don't have an
  * old format to support
  */
-static int SV_ReadBlink(lightblink_t *blink)
+static int SV_ReadBlink(lightblink_t* blink)
 {
     sector_t* sector;
     /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3930,6 +3941,42 @@ static int SV_ReadBlink(lightblink_t *blink)
 }
 # endif
 #endif // !__JHEXEN__
+
+static void SV_WriteMaterialChanger(const materialchanger_t* mchanger)
+{
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    // Write a type byte. For future use (e.g., changing plane surface
+    // materials as well as sidedef surface materials).
+    SV_WriteByte(0);
+    SV_WriteLong(mchanger->timer);
+    SV_WriteLong(P_ToIndex(mchanger->side));
+    SV_WriteByte((byte) mchanger->ssurfaceID);
+    SV_WriteShort(SV_MaterialArchiveNum(mchanger->material));
+}
+
+static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
+{
+    sidedef_t*          side;
+    /*int ver =*/ SV_ReadByte(); // version byte.
+
+    SV_ReadByte(); // Type byte.
+    mchanger->timer = SV_ReadLong();
+    // Note: the thinker class byte has already been read.
+    side = P_ToPtr(DMU_SIDEDEF, (int) SV_ReadLong());
+    if(!side)
+        Con_Error("t_materialchanger: bad sidedef number\n");
+    mchanger->side = side;
+    mchanger->ssurfaceID = (sidedefsurfaceid_t) SV_ReadByte();
+    mchanger->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
+
+    mchanger->thinker.function = T_MaterialChanger;
+
+    return true; // Add this thinker.
+}
 
 /**
  * Archives the specified thinker.
@@ -3980,7 +4027,7 @@ static void P_ArchiveThinkers(boolean savePlayers)
 
     SV_BeginSegment(ASEG_THINKERS);
 #if __JHEXEN__
-    SV_WriteLong(thing_archiveSize); // number of mobjs.
+    SV_WriteLong(thingArchiveSize); // number of mobjs.
 #endif
 
     // Save off the current thinkers.
@@ -4118,7 +4165,7 @@ static void P_UnArchiveThinkers(void)
             else
                 tClass = TC_MOBJ;
 
-            if(tClass == TC_MOBJ && i == thing_archiveSize)
+            if(tClass == TC_MOBJ && i == thingArchiveSize)
             {
                 AssertSegment(ASEG_THINKERS);
                 // We have reached the begining of the "specials" block.
@@ -4790,7 +4837,7 @@ int SV_SaveGameWorker(void* ptr)
     // Set the mobj archive numbers
     SV_InitThingArchive(false, true);
 #if !__JHEXEN__
-    SV_WriteLong(thing_archiveSize);
+    SV_WriteLong(thingArchiveSize);
 #endif
 
     P_ArchivePlayerHeader();

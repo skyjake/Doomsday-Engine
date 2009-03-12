@@ -29,6 +29,10 @@
 #ifndef __P_SAVEG_H__
 #define __P_SAVEG_H__
 
+/**
+ * Original indices must remain unchanged!
+ * Added new think classes to the end.
+ */
 typedef enum thinkclass_e {
     TC_NULL = -1,
     TC_END,
@@ -60,6 +64,7 @@ typedef enum thinkclass_e {
     TC_GLOW,
 # endif
 #endif
+    TC_MATERIALCHANGER,
     NUMTHINKERCLASSES
 } thinkerclass_t;
 

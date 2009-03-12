@@ -641,7 +641,8 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
        buttonSuccess)
     {
-        P_ChangeSwitchMaterial(line, repeat);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), 0, false,
+                       repeat? BUTTONTIME : 0);
     }
 
     return true;
@@ -778,59 +779,7 @@ void P_PlayerOnSpecialFloor(player_t* player)
 
 void P_UpdateSpecials(void)
 {
-    button_t *button;
-
-    //  DO BUTTONS
-    for(button = buttonlist; button; button = button->next)
-    {
-        if(button->timer)
-        {
-            button->timer--;
-            if(!button->timer)
-            {
-                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
-                //sector_t *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
-
-                switch(button->section)
-                {
-                case LS_TOP:
-                    P_SetPtrp(sdef, DMU_TOP_MATERIAL, button->material);
-                    break;
-
-                case LS_MIDDLE:
-                    P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, button->material);
-                    break;
-
-                case LS_BOTTOM:
-                    P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, button->material);
-                    break;
-
-                default:
-                    Con_Error("P_UpdateSpecials: Unknown sidedef section \"%i\".",
-                              (int) button->section);
-                }
-
-                button->line = NULL;
-                button->section = 0;
-                button->material = NULL;
-                button->soundOrg = NULL;
-            }
-        }
-    }
-}
-
-void P_FreeButtons(void)
-{
-    button_t *button, *np;
-
-    button = buttonlist;
-    while(button != NULL)
-    {
-        np = button->next;
-        free(button);
-        button = np;
-    }
-    buttonlist = NULL;
+    // Stub.
 }
 
 /**
@@ -906,8 +855,6 @@ void P_SpawnSpecials(void)
             break;
         }
     }
-
-    P_FreeButtons();
 }
 
 void P_AnimateSurfaces(void)
