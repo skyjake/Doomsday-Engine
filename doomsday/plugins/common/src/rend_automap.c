@@ -52,6 +52,9 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "r_common.h"
+#if __JDOOM64__
+#  include "p_inventory.h"
+#endif
 
 #include "rend_automap.h"
 
@@ -1247,13 +1250,16 @@ static void setupGLStateForMap(const automap_t* map,
     // If drawn in HUD we don't need them visible in the map too.
     if(!cfg.hudShown[HUD_INVENTORY])
     {
-        int                 i, num;
+        int                 i, num = 0;
         player_t*           plr = &players[player];
+        inventoryitemtype_t items[3] = {
+            IIT_DEMONKEY1,
+            IIT_DEMONKEY2,
+            IIT_DEMONKEY3
+        };
 
-        num = 0;
-        for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
-            if(plr->inventory[i])
-                num++;
+        for(i = 0; i < 3; ++i)
+            num += P_InventoryCount(player, items[i])? 1 : 0;
 
         if(num > 0)
         {
@@ -1268,9 +1274,9 @@ static void setupGLStateForMap(const automap_t* map,
             spacing = wh / num;
             y = 0;
 
-            for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+            for(i = 0; i < 3; ++i)
             {
-                if(plr->inventory[i])
+                if(P_InventoryCount(player, items[i]))
                 {
                     R_GetSpriteInfo(invItemSprites[i], 0, &sprInfo);
                     DGL_SetPSprite(sprInfo.material);

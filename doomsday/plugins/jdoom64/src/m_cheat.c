@@ -45,6 +45,7 @@
 #include "hu_msg.h"
 #include "p_user.h"
 #include "p_start.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -490,33 +491,29 @@ void Cht_MyPosFunc(player_t *plyr)
  * Each time the player enters the code, player gains a powerup.
  * when entered again, player recieves next powerup.
  */
-void cht_LaserFunc(player_t *plyr)
+void cht_LaserFunc(player_t* p)
 {
-    laserpw_t           arti;
-
-    if(plyr->artifacts[it_laserpw1] && plyr->artifacts[it_laserpw2] &&
-       plyr->artifacts[it_laserpw3])
+    if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
     {
-        P_SetMessage(plyr, STSTR_BEHOLDX, false); // No more!
+        P_SetMessage(p, STSTR_BEHOLDX, false);
         return;
     }
 
-    if(!plyr->artifacts[it_laserpw1])
-        arti = it_laserpw1;
-    else if(!plyr->artifacts[it_laserpw2])
-        arti = it_laserpw2;
-    else
-        arti = it_laserpw3;
+    if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
+    {
+        P_SetMessage(p, STSTR_BEHOLDX, false);
+        return;
+    }
 
-    plyr->artifacts[arti] = 1;
-    P_SetMessage(plyr, STSTR_BEHOLDX, false);
+    if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
+        P_SetMessage(p, STSTR_BEHOLDX, false);
 }
 
-static void CheatDebugFunc(player_t *player, cheatseq_t *cheat)
+static void CheatDebugFunc(player_t* player, cheatseq_t* cheat)
 {
     char                lumpName[9];
     char                textBuffer[256];
-    subsector_t        *sub;
+    subsector_t*        sub;
 
     if(!player->plr->mo || !userGame)
         return;

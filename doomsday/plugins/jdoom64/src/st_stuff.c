@@ -42,6 +42,7 @@
 #include "hu_stuff.h"
 #include "am_map.h"
 #include "p_tick.h" // for P_IsPaused
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -424,7 +425,7 @@ Draw_EndZoom();
     // Inventory
     if(cfg.hudShown[HUD_INVENTORY])
     {
-        if(plr->inventory[IIT_DEMONKEY1])
+        if(P_InventoryCount(player, IIT_DEMONKEY1))
         {
             spr = SPR_ART1;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -432,7 +433,7 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
-        if(plr->inventory[IIT_DEMONKEY2])
+        if(P_InventoryCount(player, IIT_DEMONKEY2))
         {
             spr = SPR_ART2;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -440,7 +441,7 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
-        if(plr->inventory[IIT_DEMONKEY3])
+        if(P_InventoryCount(player, IIT_DEMONKEY3))
         {
             spr = SPR_ART3;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -451,7 +452,7 @@ Draw_EndZoom();
 
     if(cfg.hudShown[HUD_AMMO])
     {
-        ammotype_t ammotype;
+        ammotype_t          ammotype;
 
         //// \todo Only supports one type of ammo per weapon.
         //// for each type of ammo this weapon takes.

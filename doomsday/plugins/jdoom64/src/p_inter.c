@@ -44,6 +44,7 @@
 #include "p_user.h"
 #include "p_tick.h"
 #include "p_actor.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -253,11 +254,11 @@ void P_GiveKey(player_t* player, keytype_t card)
  */
 boolean P_GiveItem(player_t* player, inventoryitemtype_t item)
 {
-    if(player->inventory[item])
+    if(!P_InventoryGive(player - players, item, false))
         return false;
 
     player->bonusCount = BONUSADD;
-    player->inventory[item] = 1;
+
     return true;
 }
 
@@ -790,7 +791,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_DEMONKEY1:
-        if(plr->inventory[IIT_DEMONKEY1])
+        if(P_InventoryCount(plr - players, IIT_DEMONKEY1))
         {
             if(!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP1, false);
@@ -807,7 +808,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_DEMONKEY2:
-        if(plr->inventory[IIT_DEMONKEY2])
+        if(P_InventoryCount(plr - players, IIT_DEMONKEY2))
         {
             if(!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP2, false);
@@ -824,7 +825,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_DEMONKEY3:
-        if(plr->inventory[IIT_DEMONKEY3])
+        if(P_InventoryCount(plr - players, IIT_DEMONKEY3))
         {
             if(!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP3, false);

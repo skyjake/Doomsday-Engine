@@ -521,11 +521,11 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
     pmo = player->plr->mo;
 
     laserPower = 0;
-    if(player->artifacts[it_laserpw1])
+    if(player->inventory[IIT_DEMONKEY1])
         laserPower++;
-    if(player->artifacts[it_laserpw2])
+    if(player->inventory[IIT_DEMONKEY2])
         laserPower++;
-    if(player->artifacts[it_laserpw3])
+    if(player->inventory[IIT_DEMONKEY3])
         laserPower++;
 
     switch(laserPower)

@@ -33,11 +33,14 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <assert.h>
+#include <string.h>
 
 #if __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
+#elif __JDOOM64__
+#  include "jdoom64.h"
 #endif
 
 #include "p_player.h"
@@ -119,9 +122,9 @@ static const def_invitem_t itemDefs[NUM_INVENTORYITEM_TYPES-1] = {
     {0, "TXT_ARTIPUZZGEAR3", "A_PuzzGear3", "PUZZLE_SUCCESS", "ARTIGER3", -1},
     {0, "TXT_ARTIPUZZGEAR4", "A_PuzzGear4", "PUZZLE_SUCCESS", "ARTIGER4", -1}
 #elif __JDOOM64__
-    {0, "DEMONKEY1", "", "", "", -1},
-    {0, "DEMONKEY2", "", "", "", -1},
-    {0, "DEMONKEY3", "", "", "", -1}
+    {IIF_READY_ALWAYS, "DEMONKEY1", "", "", "", -1},
+    {IIF_READY_ALWAYS, "DEMONKEY2", "", "", "", -1},
+    {IIF_READY_ALWAYS, "DEMONKEY3", "", "", "", -1}
 #endif
 };
 
@@ -260,12 +263,14 @@ static int tryTakeItem(playerinventory_t* inv, inventoryitemtype_t type)
 
         players[player].update |= PSF_INVENTORY;
 
+#if __JHERETIC__ || __JHEXEN__
         // Inform the HUD.
         Hu_InventoryMarkDirty(player);
 
         // Set position markers and set the next readyItem?
         if(inv->readyItem == IIT_NONE)
             Hu_InventoryMove(player, -1, false, true);
+#endif
 
         return true;
     }
@@ -425,13 +430,23 @@ int P_InventorySetReadyItem(int player, inventoryitemtype_t type)
     inv = &inventories[player];
 
     if(type == IIT_NONE || countItems(inv, type))
-    {   // A valid change request.
-        if(inv->readyItem != type)
+    {   // A valid ready request.
+        boolean             mustEquip = true;
+
+        if(type != IIT_NONE)
+        {
+            const def_invitem_t* def = P_GetInvItemDef(type);
+            mustEquip = ((def->flags & IIF_READY_ALWAYS)? false : true);
+        }
+
+        if(mustEquip && inv->readyItem != type)
         {   // Make it so.
             inv->readyItem = type;
 
+#if __JHERETIC__ || __JHEXEN__
             // Inform the HUD.
             Hu_InventoryMarkDirty(player);
+#endif
         }
 
         return 1;
@@ -479,18 +494,29 @@ int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
     {   // Item was given.
         players[player].update |= PSF_INVENTORY;
 
+#if __JHERETIC__ || __JHEXEN__
         // Inform the HUD.
         Hu_InventoryMarkDirty(player);
+#endif
 
         if(oldNumItems == 0)
         {   // This is the first item the player has been given; ready it.
-            inv->readyItem = type;
-            Hu_InventorySelect(player, type);
+            const def_invitem_t* def = P_GetInvItemDef(type);
+
+            if(!(def->flags & IIF_READY_ALWAYS))
+            {
+                inv->readyItem = type;
+#if __JHERETIC__ || __JHEXEN__
+                Hu_InventorySelect(player, type);
+#endif
+            }
         }
 
         // Maybe unhide the HUD?
+#if __JHERETIC__ || __JHEXEN__
         if(!silent)
             ST_HUDUnHide(player, HUE_ON_PICKUP_INVITEM);
+#endif
 
         return 1;
     }
@@ -564,6 +590,7 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
     if(lastUsed == IIT_NONE)
     {   // Failed to use an item.
         // Set current to the next available?
+#if __JHERETIC__ || __JHEXEN__
         if(type != NUM_INVENTORYITEM_TYPES && cfg.inventoryUseNext)
         {
 # if __JHEXEN__
@@ -571,6 +598,7 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
 # endif
                 Hu_InventoryMove(player, -1, false, true);
         }
+#endif
 
         return false;
     }
@@ -580,7 +608,9 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
         invitem_t*          item = &invItems[lastUsed-1];
 
         S_ConsoleSound(item->useSnd, NULL, player);
+#if __JHERETIC__ || __JHEXEN__
         ST_FlashCurrentItem(player);
+#endif
     }
 
     return true;

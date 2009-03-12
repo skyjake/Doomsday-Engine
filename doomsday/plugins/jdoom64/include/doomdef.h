@@ -182,6 +182,8 @@ typedef enum {
     NUM_INVENTORYITEM_TYPES
 } inventoryitemtype_t;
 
+#define MAXINVITEMCOUNT        16
+
 // The defined weapons,
 //  including a marker indicating
 //  user has not changed weapon.

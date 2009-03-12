@@ -32,6 +32,7 @@
 
 // Inventory Item Flags:
 #define IIF_USE_PANIC           0x1 // Item is usable when panicked.
+#define IIF_READY_ALWAYS        0x8 // Item is always "ready" (i.e., usable).
 
 typedef struct {
     byte            flags;

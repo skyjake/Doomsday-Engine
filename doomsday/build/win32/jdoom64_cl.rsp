@@ -22,6 +22,7 @@
  .\..\..\plugins\common\src\p_ceiling.c
  .\..\..\plugins\common\src\p_door.c
  .\..\..\plugins\common\src\p_floor.c
+ .\..\..\plugins\common\src\p_inventory.c
  .\..\..\plugins\common\src\p_iterlist.c
  .\..\..\plugins\common\src\p_map.c
  .\..\..\plugins\common\src\p_mapsetup.c

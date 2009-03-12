@@ -50,8 +50,9 @@
 #include "p_mapspec.h"
 #include "p_door.h"
 #if __JDOOM64__
-#include "p_ceiling.h"
-#include "p_floor.h"
+#  include "p_ceiling.h"
+#  include "p_floor.h"
+#  include "p_inventory.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -509,8 +510,8 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         break;
 
 # if __JDOOM64__
-    case 343: // jd64
-        if(!p->inventory[IIT_DEMONKEY1])
+    case 343:
+        if(!P_InventoryCount(p - players, IIT_DEMONKEY1))
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
@@ -518,8 +519,8 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         }
         break;
 
-    case 344: // jd64
-        if(!p->inventory[IIT_DEMONKEY2])
+    case 344:
+        if(!P_InventoryCount(p - players, IIT_DEMONKEY2))
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
@@ -527,8 +528,8 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         }
         break;
 
-    case 345: // jd64
-        if(!p->inventory[IIT_DEMONKEY3])
+    case 345:
+        if(!P_InventoryCount(p - players, IIT_DEMONKEY3))
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);

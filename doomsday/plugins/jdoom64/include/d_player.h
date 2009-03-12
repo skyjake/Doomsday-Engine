@@ -144,8 +144,6 @@ typedef struct player_s {
     int             lockFull;
 
     int             flyHeight;
-
-    inventoryitemtype_t inventory[NUM_INVENTORYITEM_TYPES];
 } player_t;
 
 #endif
