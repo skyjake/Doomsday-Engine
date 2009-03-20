@@ -217,7 +217,10 @@ void Rend_AutomapUnloadData(void)
     // Destroy all display lists.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        deleteMapLists(&rautomaps[i]);
+        rautomap_data_t*    rmap = &rautomaps[i];
+
+        deleteMapLists(rmap);
+        rmap->constructMap = true;
     }
 
     if(amMaskTexture)
