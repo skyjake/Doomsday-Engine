@@ -125,7 +125,7 @@ static int GetXGClasses(void)
  */
 void Def_Init(void)
 {
-    int                 c;
+    int                 c, p;
 
     sprNames = NULL; // Sprite name list.
     mobjInfo = NULL;
@@ -147,41 +147,30 @@ void Def_Init(void)
 
     DED_Init(&defs);
 
+    memset(dedFiles, 0, sizeof(dedFiles));
+
     // The engine defs.
-    dedFiles[0] = defsFileName;
+    c = 0;
+    dedFiles[c++] = defsFileName;
 
     // Add the default ded. It will be overwritten by -defs.
-    dedFiles[c = 1] = topDefsFileName;
+    dedFiles[c++] = topDefsFileName;
 
     // See which .ded files are specified on the command line.
-    if(ArgCheck("-defs"))
+    for(p = 0; p < Argc(); ++p)
     {
-        while(c < MAX_READ)
+        const char*         arg = Argv(p);
+
+        if(stricmp(arg, "-def") && stricmp(arg, "-defs"))
+            continue;
+
+        while(c < MAX_READ && ++p != Argc() && !ArgIsOption(p))
         {
-            char*               arg = ArgNext();
-
-            if(!arg || arg[0] == '-')
-                break;
-
             // Add it to the list.
-            dedFiles[c++] = arg;
+            dedFiles[c++] = Argv(p);
         }
-    }
 
-    // How about additional .ded files?
-    if(ArgCheckWith("-def", 1))
-    {
-        // Find the next empty place.
-        for(c = 0; dedFiles[c] && c < MAX_READ; ++c);
-            while(c < MAX_READ)
-            {
-                char*               arg = ArgNext();
-
-                if(!arg || arg[0] == '-')
-                    break;
-                // Add it to the list.
-                dedFiles[c++] = arg;
-            }
+        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
 }
 
