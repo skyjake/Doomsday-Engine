@@ -3376,6 +3376,8 @@ static int SV_ReadScript(acs_t* th)
         th->ip = (int *) (ActionCodeBase + SV_ReadLong());
     }
 
+    th->thinker.function = T_InterpretACS;
+
     return true; // Add this thinker.
 }
 
