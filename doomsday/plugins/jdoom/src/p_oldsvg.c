@@ -788,7 +788,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_ceiling:
             PADSAVEP();
-            ceiling = Z_Calloc(sizeof(*ceiling), PU_MAPSPEC, NULL);
+            ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, NULL);
 
             SV_ReadCeiling(ceiling);
 
@@ -797,7 +797,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_door:
             PADSAVEP();
-            door = Z_Calloc(sizeof(*door), PU_MAPSPEC, NULL);
+            door = Z_Calloc(sizeof(*door), PU_MAP, NULL);
 
             SV_ReadDoor(door);
 
@@ -806,7 +806,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_floor:
             PADSAVEP();
-            floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, NULL);
+            floor = Z_Calloc(sizeof(*floor), PU_MAP, NULL);
 
             SV_ReadFloor(floor);
 
@@ -815,7 +815,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_plat:
             PADSAVEP();
-            plat = Z_Calloc(sizeof(*plat), PU_MAPSPEC, NULL);
+            plat = Z_Calloc(sizeof(*plat), PU_MAP, NULL);
 
             SV_ReadPlat(plat);
 
@@ -824,7 +824,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_flash:
             PADSAVEP();
-            flash = Z_Calloc(sizeof(*flash), PU_MAPSPEC, NULL);
+            flash = Z_Calloc(sizeof(*flash), PU_MAP, NULL);
 
             SV_ReadFlash(flash);
 
@@ -833,7 +833,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_strobe:
             PADSAVEP();
-            strobe = Z_Calloc(sizeof(*strobe), PU_MAPSPEC, NULL);
+            strobe = Z_Calloc(sizeof(*strobe), PU_MAP, NULL);
 
             SV_ReadStrobe(strobe);
 
@@ -842,7 +842,7 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_glow:
             PADSAVEP();
-            glow = Z_Calloc(sizeof(*glow), PU_MAPSPEC, NULL);
+            glow = Z_Calloc(sizeof(*glow), PU_MAP, NULL);
 
             SV_ReadGlow(glow);
 

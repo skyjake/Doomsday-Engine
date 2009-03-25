@@ -291,7 +291,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 
         // new door thinker
         rtn = 1;
-        ceiling = Z_Calloc(sizeof(*ceiling), PU_MAPSPEC, 0);
+        ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, 0);
 
         ceiling->thinker.function = T_MoveCeiling;
         P_ThinkerAdd(&ceiling->thinker);

@@ -109,7 +109,7 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2];
         }
 
-        pillar = Z_Calloc(sizeof(*pillar), PU_MAPSPEC, 0);
+        pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         P_ToXSector(sec)->specialData = pillar;
         P_ThinkerAdd(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
@@ -169,7 +169,7 @@ int EV_OpenPillar(linedef_t *line, byte *args)
             continue; // Pillar isn't closed.
 
         rtn = 1;
-        pillar = Z_Calloc(sizeof(*pillar), PU_MAPSPEC, 0);
+        pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         P_ToXSector(sec)->specialData = pillar;
         P_ThinkerAdd(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;

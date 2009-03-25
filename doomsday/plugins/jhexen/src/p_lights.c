@@ -165,7 +165,7 @@ boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
         think = false;
         rtn = true;
 
-        light = Z_Calloc(sizeof(*light), PU_MAPSPEC, 0);
+        light = Z_Calloc(sizeof(*light), PU_MAP, 0);
         light->type = type;
         light->sector = sec;
         light->count = 0;
@@ -265,7 +265,7 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
 {
     phase_t    *phase;
 
-    phase = Z_Calloc(sizeof(*phase), PU_MAPSPEC, 0);
+    phase = Z_Calloc(sizeof(*phase), PU_MAP, 0);
     P_ThinkerAdd(&phase->thinker);
     phase->sector = sector;
     if(index == -1)

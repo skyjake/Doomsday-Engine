@@ -127,7 +127,7 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
         Con_Error("EV_RotatePoly:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pe = Z_Calloc(sizeof(*pe), PU_MAPSPEC, 0);
+    pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
     P_ThinkerAdd(&pe->thinker);
     pe->thinker.function = T_RotatePoly;
     pe->polyobj = polyNum;
@@ -165,7 +165,7 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
             break;
         }
 
-        pe = Z_Calloc(sizeof(*pe), PU_MAPSPEC, 0);
+        pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
         P_ThinkerAdd(&pe->thinker);
         pe->thinker.function = T_RotatePoly;
         po->specialData = pe;
@@ -259,7 +259,7 @@ boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
         Con_Error("EV_MovePoly:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pe = Z_Calloc(sizeof(*pe), PU_MAPSPEC, 0);
+    pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
     P_ThinkerAdd(&pe->thinker);
     pe->thinker.function = T_MovePoly;
     pe->polyobj = polyNum;
@@ -291,7 +291,7 @@ boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
             break;
         }
 
-        pe = Z_Calloc(sizeof(*pe), PU_MAPSPEC, 0);
+        pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
         P_ThinkerAdd(&pe->thinker);
         pe->thinker.function = T_MovePoly;
         pe->polyobj = mirror;
@@ -459,7 +459,7 @@ boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
         Con_Error("EV_OpenPolyDoor:  Invalid polyobj num: %d\n", polyNum);
     }
 
-    pd = Z_Calloc(sizeof(*pd), PU_MAPSPEC, 0);
+    pd = Z_Calloc(sizeof(*pd), PU_MAP, 0);
     P_ThinkerAdd(&pd->thinker);
     pd->thinker.function = T_PolyDoor;
     pd->type = type;
@@ -497,7 +497,7 @@ boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
             break;
         }
 
-        pd = Z_Calloc(sizeof(*pd), PU_MAPSPEC, 0);
+        pd = Z_Calloc(sizeof(*pd), PU_MAP, 0);
         P_ThinkerAdd(&pd->thinker);
         pd->thinker.function = T_PolyDoor;
         pd->polyobj = mirror;

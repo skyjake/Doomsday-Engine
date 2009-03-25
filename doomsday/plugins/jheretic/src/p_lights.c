@@ -90,7 +90,7 @@ void P_SpawnLightFlash(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flash = Z_Calloc(sizeof(*flash), PU_MAPSPEC, 0);
+    flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
 
     P_ThinkerAdd(&flash->thinker);
 
@@ -141,7 +141,7 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     float               otherLevel = DDMAXFLOAT;
     strobe_t           *flash;
 
-    flash = Z_Calloc(sizeof(*flash), PU_MAPSPEC, 0);
+    flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
 
     P_ThinkerAdd(&flash->thinker);
 
@@ -280,7 +280,7 @@ void P_SpawnGlowingLight(sector_t *sector)
     float               otherLevel = DDMAXFLOAT;
     glow_t             *g;
 
-    g = Z_Calloc(sizeof(*g), PU_MAPSPEC, 0);
+    g = Z_Calloc(sizeof(*g), PU_MAP, 0);
 
     P_ThinkerAdd(&g->thinker);
 

@@ -295,7 +295,7 @@ static void StartOpenACS(int number, int infoIndex, int *address)
 {
     acs_t*              script;
 
-    script = Z_Calloc(sizeof(*script), PU_MAPSPEC, 0);
+    script = Z_Calloc(sizeof(*script), PU_MAP, 0);
     script->number = number;
 
     // World objects are allotted 1 second for initialization
@@ -362,7 +362,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
         return false;
     }
 
-    script = Z_Calloc(sizeof(*script), PU_MAPSPEC, 0);
+    script = Z_Calloc(sizeof(*script), PU_MAP, 0);
 
     script->number = number;
     script->infoIndex = infoIndex;

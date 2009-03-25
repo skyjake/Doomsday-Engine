@@ -269,7 +269,7 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
 
         // Find lowest & highest floors around sector
         rtn = 1;
-        plat = Z_Calloc(sizeof(*plat), PU_MAPSPEC, 0);
+        plat = Z_Calloc(sizeof(*plat), PU_MAP, 0);
         plat->thinker.function = T_PlatRaise;
         P_ThinkerAdd(&plat->thinker);
 

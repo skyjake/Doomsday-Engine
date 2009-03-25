@@ -195,7 +195,6 @@ typedef struct targetplraddress_s {
 
 // Thinker Save flags
 #define TSF_SERVERONLY      0x01    // Only saved by servers.
-#define TSF_SPECIAL         0x02    // Its a special (eg T_MoveCeiling)
 
 typedef struct thinkerinfo_s {
     thinkerclass_t  thinkclass;
@@ -352,7 +351,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_CEILING,
       T_MoveCeiling,
-      TSF_SPECIAL,
+      0,
       SV_WriteCeiling,
       SV_ReadCeiling,
       sizeof(ceiling_t)
@@ -360,7 +359,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_DOOR,
       T_Door,
-      TSF_SPECIAL,
+      0,
       SV_WriteDoor,
       SV_ReadDoor,
       sizeof(door_t)
@@ -368,7 +367,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_FLOOR,
       T_MoveFloor,
-      TSF_SPECIAL,
+      0,
       SV_WriteFloor,
       SV_ReadFloor,
       sizeof(floor_t)
@@ -376,7 +375,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_PLAT,
       T_PlatRaise,
-      TSF_SPECIAL,
+      0,
       SV_WritePlat,
       SV_ReadPlat,
       sizeof(plat_t)
@@ -450,7 +449,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_FLASH,
       T_LightFlash,
-      TSF_SPECIAL,
+      0,
       SV_WriteFlash,
       SV_ReadFlash,
       sizeof(lightflash_t)
@@ -458,7 +457,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_STROBE,
       T_StrobeFlash,
-      TSF_SPECIAL,
+      0,
       SV_WriteStrobe,
       SV_ReadStrobe,
       sizeof(strobe_t)
@@ -466,7 +465,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_GLOW,
       T_Glow,
-      TSF_SPECIAL,
+      0,
       SV_WriteGlow,
       SV_ReadGlow,
       sizeof(glow_t)
@@ -475,7 +474,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_FLICKER,
       T_FireFlicker,
-      TSF_SPECIAL,
+      0,
       SV_WriteFlicker,
       SV_ReadFlicker,
       sizeof(fireflicker_t)
@@ -485,7 +484,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_BLINK,
       T_LightBlink,
-      TSF_SPECIAL,
+      0,
       SV_WriteBlink,
       SV_ReadBlink,
       sizeof(lightblink_t)
@@ -495,7 +494,7 @@ static thinkerinfo_t thinkerInfo[] = {
     {
       TC_MATERIALCHANGER,
       T_MaterialChanger,
-      TSF_SPECIAL,
+      0,
       SV_WriteMaterialChanger,
       SV_ReadMaterialChanger,
       sizeof(materialchanger_t)
@@ -4218,9 +4217,7 @@ static void P_UnArchiveThinkers(void)
                     }
                     else
                     {
-                        th = Z_Calloc(thInfo->size,
-                                      ((thInfo->flags & TSF_SPECIAL)? PU_MAPSPEC : PU_MAP),
-                                      0);
+                        th = Z_Calloc(thInfo->size, PU_MAP, 0);
                     }
 
                     // Is there a thinker header block?

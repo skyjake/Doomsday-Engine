@@ -546,7 +546,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
         rtn = 1;
 
         // New floor thinker.
-        floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, 0);
+        floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
         floor->thinker.function = T_MoveFloor;
         P_ThinkerAdd(&floor->thinker);
         xsec->specialData = floor;
@@ -981,7 +981,7 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
 
         // New floor thinker.
         rtn = 1;
-        floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, 0);
+        floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
         P_ThinkerAdd(&floor->thinker);
         xsec->specialData = floor;
         floor->thinker.function = T_MoveFloor;
@@ -1030,7 +1030,7 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         {   // We found another sector to spread to.
             height += stairsize;
 
-            floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, 0);
+            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             P_ThinkerAdd(&floor->thinker);
 
@@ -1096,7 +1096,7 @@ static void processStairSector(sector_t *sec, int type, float height,
 
     height += stairData.stepDelta;
 
-    floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, 0);
+    floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
     P_ThinkerAdd(&floor->thinker);
     P_ToXSector(sec)->specialData = floor;
     floor->thinker.function = T_MoveFloor;
@@ -1277,7 +1277,7 @@ int EV_DoDonut(linedef_t *line)
                 P_GetFloatp(inner, DMU_FLOOR_HEIGHT);
 
             // Spawn rising slime.
-            floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, 0);
+            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             P_ThinkerAdd(&floor->thinker);
 
@@ -1293,7 +1293,7 @@ int EV_DoDonut(linedef_t *line)
             floor->floorDestHeight = destHeight;
 
             // Spawn lowering donut-hole.
-            floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, 0);
+            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             P_ThinkerAdd(&floor->thinker);
 

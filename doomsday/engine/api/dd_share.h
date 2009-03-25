@@ -508,7 +508,6 @@ typedef enum
 
 #define PU_MAP              50 // Static until map exited (may still be
                                // freed during the map, though).
-#define PU_MAPSPEC          51 // A special thinker in a map.
 #define PU_MAPSTATIC        52 // Not freed until map exited.
 
 // Tags >= 100 are purgable whenever needed.

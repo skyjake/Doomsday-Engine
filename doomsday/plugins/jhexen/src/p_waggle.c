@@ -121,7 +121,7 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
             continue; // Already moving, so keep going...
 
         retCode = true;
-        waggle = Z_Calloc(sizeof(*waggle), PU_MAPSPEC, 0);
+        waggle = Z_Calloc(sizeof(*waggle), PU_MAP, 0);
         P_ToXSector(sec)->specialData = waggle;
         waggle->thinker.function = T_FloorWaggle;
         waggle->sector = sec;

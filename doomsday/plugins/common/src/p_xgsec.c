@@ -374,7 +374,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
         // If there is not already an xsthinker for this sector, create one.
         if(P_IterateThinkers(XS_Thinker, findXSThinker, sec))
         {   // Not created one yet.
-            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAPSPEC, 0);
+            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAP, 0);
 
             xs->thinker.function = XS_Thinker;
             xs->sector = sec;

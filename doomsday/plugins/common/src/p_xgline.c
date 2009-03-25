@@ -631,7 +631,7 @@ void XL_SetLineType(linedef_t* line, int id)
         // If there is not already an xlthinker for this line, create one.
         if(P_IterateThinkers(XL_Thinker, findXLThinker, line))
         {   // Not created one yet.
-            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAPSPEC, 0);
+            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
             xl->thinker.function = XL_Thinker;
             xl->line = line;
