@@ -359,6 +359,12 @@ boolean RIT_ContactFinder(linedef_t* line, void* data)
         return true;
     }
 
+    // Don't spread if the middle material completely fills the gap between
+    // floor and ceiling (direction is from dest to source).
+    if(Rend_DoesMidTextureFillGap(line,
+        dest == line->L_backsector? BACK : FRONT))
+        return true;
+
     // Calculate 2D distance to line.
     vtx = line->L_v1;
     distance = ((vtx->V_pos[VY] - params->objPos[VY]) * line->dX -
