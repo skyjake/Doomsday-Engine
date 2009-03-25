@@ -787,7 +787,7 @@ void ST_loadGraphics(void)
 
     for(i = 0; i < NUMARMOR; ++i)
     {
-        sprintf(namebuf, "ARMSLOT", i + 1);
+        sprintf(namebuf, "ARMSLOT%d", i + 1);
         R_CachePatch(&dpArmorSlot[i], namebuf);
     }
 
