@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 441 <--
+; --> 443 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -465,6 +465,10 @@ EXPORTS
 
     ; Vectors.
     V2_Rotate                   @344 NONAME
+
+    ; Utilities.
+    M_PointLineDistance         @442 NONAME
+    M_ProjectPointOnLine        @443 NONAME
 
 ; Miscellaneous: Command line.
     ArgAbbreviate               @146 NONAME

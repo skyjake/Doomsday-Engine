@@ -64,4 +64,10 @@ void            P_SpawnPlayers(void);
 
 void            P_GetMapLumpName(int episode, int map, char *lumpName);
 
+void            P_MoveThingsOutOfWalls();
+
+#if __JHERETIC__
+void            P_TurnGizmosAwayFromDoors();
+#endif
+
 #endif

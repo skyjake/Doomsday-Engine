@@ -70,13 +70,6 @@ typedef struct {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#if __JHERETIC__
-void P_TurnGizmosAwayFromDoors();
-void P_MoveThingsOutOfWalls();
-#elif __JHEXEN__
-void P_TurnTorchesToFaceWalls();
-#endif
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -797,18 +790,17 @@ static void P_FinalizeMap(void)
     }
     }
 
-#elif __JHERETIC__
-    // Do some fine tuning with mobj placement and orientation.
-    P_MoveThingsOutOfWalls();
-    P_TurnGizmosAwayFromDoors();
-
 #elif __JHEXEN__
-    P_TurnTorchesToFaceWalls();
-
     // Check if the map should have lightening.
     P_InitLightning();
 
     SN_StopAllSequences();
+#endif
+
+    // Do some fine tuning with mobj placement and orientation.
+    P_MoveThingsOutOfWalls();
+#if __JHERETIC__
+    P_TurnGizmosAwayFromDoors();
 #endif
 }
 
