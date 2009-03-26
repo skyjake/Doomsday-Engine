@@ -110,9 +110,10 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
         }
 
         pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
-        P_ToXSector(sec)->specialData = pillar;
-        P_ThinkerAdd(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
+        P_ThinkerAdd(&pillar->thinker);
+
+        P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;
 
         if(!args[2])
@@ -169,10 +170,12 @@ int EV_OpenPillar(linedef_t *line, byte *args)
             continue; // Pillar isn't closed.
 
         rtn = 1;
+
         pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
-        P_ToXSector(sec)->specialData = pillar;
-        P_ThinkerAdd(&pillar->thinker);
         pillar->thinker.function = T_BuildPillar;
+        P_ThinkerAdd(&pillar->thinker);
+
+        P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;
         if(!args[2])
         {

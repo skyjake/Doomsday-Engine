@@ -87,10 +87,9 @@ void P_SpawnFireFlicker(sector_t *sector)
     //P_ToXSector(sector)->special = 0; // jd64
 
     flick = Z_Calloc(sizeof(*flick), PU_MAP, 0);
-
+    flick->thinker.function = T_FireFlicker;
     P_ThinkerAdd(&flick->thinker);
 
-    flick->thinker.function = T_FireFlicker;
     flick->sector = sector;
     flick->count = 4;
     flick->maxLight = lightLevel;
@@ -141,10 +140,9 @@ void P_SpawnLightFlash(sector_t *sector)
     //P_ToXSector(sector)->special = 0; // jd64
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-
+    flash->thinker.function = T_LightFlash;
     P_ThinkerAdd(&flash->thinker);
 
-    flash->thinker.function = T_LightFlash;
     flash->sector = sector;
     flash->maxLight = lightLevel;
 
@@ -188,10 +186,9 @@ void P_SpawnLightBlink(sector_t *sector)
     lightblink_t       *blink;
 
     blink = Z_Calloc(sizeof(*blink), PU_MAP, 0);
-
+    blink->thinker.function = T_LightBlink;
     P_ThinkerAdd(&blink->thinker);
 
-    blink->thinker.function = T_LightBlink;
     blink->sector = sector;
     blink->maxLight = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
 
@@ -233,13 +230,12 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     float               otherLevel = DDMAXFLOAT;
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-
+    flash->thinker.function = T_StrobeFlash;
     P_ThinkerAdd(&flash->thinker);
 
     flash->sector = sector;
     flash->darkTime = fastOrSlow;
     flash->brightTime = STROBEBRIGHT;
-    flash->thinker.function = T_StrobeFlash;
     flash->maxLight = lightLevel;
     P_FindSectorSurroundingLowestLight(sector, &otherLevel);
     if(otherLevel < lightLevel)
@@ -372,7 +368,7 @@ void P_SpawnGlowingLight(sector_t* sector)
     glow_t*             g;
 
     g = Z_Calloc(sizeof(*g), PU_MAP, 0);
-
+    g->thinker.function = T_Glow;
     P_ThinkerAdd(&g->thinker);
 
     g->sector = sector;
@@ -382,6 +378,5 @@ void P_SpawnGlowingLight(sector_t* sector)
     else
         g->minLight = lightLevel;
     g->maxLight = lightLevel;
-    g->thinker.function = T_Glow;
     g->direction = -1;
 }

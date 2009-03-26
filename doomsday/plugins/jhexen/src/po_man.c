@@ -128,8 +128,9 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
     }
 
     pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
-    P_ThinkerAdd(&pe->thinker);
     pe->thinker.function = T_RotatePoly;
+    P_ThinkerAdd(&pe->thinker);
+
     pe->polyobj = polyNum;
 
     if(args[2])
@@ -166,8 +167,9 @@ boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
         }
 
         pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
-        P_ThinkerAdd(&pe->thinker);
         pe->thinker.function = T_RotatePoly;
+        P_ThinkerAdd(&pe->thinker);
+
         po->specialData = pe;
         pe->polyobj = mirror;
         if(args[2])
@@ -260,8 +262,9 @@ boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
     }
 
     pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
-    P_ThinkerAdd(&pe->thinker);
     pe->thinker.function = T_MovePoly;
+    P_ThinkerAdd(&pe->thinker);
+
     pe->polyobj = polyNum;
     if(timesEight)
     {
@@ -292,8 +295,9 @@ boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
         }
 
         pe = Z_Calloc(sizeof(*pe), PU_MAP, 0);
-        P_ThinkerAdd(&pe->thinker);
         pe->thinker.function = T_MovePoly;
+        P_ThinkerAdd(&pe->thinker);
+
         pe->polyobj = mirror;
         po->specialData = pe;
         if(timesEight)
@@ -460,8 +464,9 @@ boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
     }
 
     pd = Z_Calloc(sizeof(*pd), PU_MAP, 0);
-    P_ThinkerAdd(&pd->thinker);
     pd->thinker.function = T_PolyDoor;
+    P_ThinkerAdd(&pd->thinker);
+
     pd->type = type;
     pd->polyobj = polyNum;
     if(type == PODOOR_SLIDE)
@@ -498,8 +503,9 @@ boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
         }
 
         pd = Z_Calloc(sizeof(*pd), PU_MAP, 0);
-        P_ThinkerAdd(&pd->thinker);
         pd->thinker.function = T_PolyDoor;
+        P_ThinkerAdd(&pd->thinker);
+
         pd->polyobj = mirror;
         pd->type = type;
         po->specialData = pd;

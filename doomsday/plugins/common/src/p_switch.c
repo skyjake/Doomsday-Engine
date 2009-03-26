@@ -314,7 +314,6 @@ void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
 
     mchanger = Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
     mchanger->thinker.function = T_MaterialChanger;
-
     P_ThinkerAdd(&mchanger->thinker);
 
     mchanger->side = side;

@@ -377,8 +377,9 @@ void XS_SetSectorType(struct sector_s* sec, int special)
             xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAP, 0);
 
             xs->thinker.function = XS_Thinker;
-            xs->sector = sec;
             P_ThinkerAdd(&xs->thinker);
+
+            xs->sector = sec;
         }
     }
     else
@@ -645,6 +646,8 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
     // Allocate a new thinker.
     mover = Z_Calloc(sizeof(*mover), PU_MAP, 0);
     mover->thinker.function = XS_PlaneMover;
+    P_ThinkerAdd(&mover->thinker);
+
     mover->sector = sec;
     mover->ceiling = ceiling;
 
@@ -1452,9 +1455,6 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     // Increment wait time.
     xline->xg->fdata += info->fparm[6];
 
-    // Add the thinker if necessary.
-    P_ThinkerAdd(&mover->thinker);
-
     // Do start stuff. Play sound?
     if(playsound)
         XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
@@ -1587,8 +1587,6 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
         // Start building start sound.
         XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
     }
-
-    P_ThinkerAdd(&mover->thinker);
 
     return true; // Building has begun!
 }
@@ -3229,7 +3227,6 @@ DEFCC(CCmdMovePlane)
     if(isBoth)
         mover->flags |= PMF_OTHER_FOLLOWS;
 
-    P_ThinkerAdd(&mover->thinker);
     return true;
 }
 

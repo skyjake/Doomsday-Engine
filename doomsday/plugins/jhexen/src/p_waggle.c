@@ -121,9 +121,12 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
             continue; // Already moving, so keep going...
 
         retCode = true;
+
         waggle = Z_Calloc(sizeof(*waggle), PU_MAP, 0);
-        P_ToXSector(sec)->specialData = waggle;
         waggle->thinker.function = T_FloorWaggle;
+        P_ThinkerAdd(&waggle->thinker);
+
+        P_ToXSector(sec)->specialData = waggle;
         waggle->sector = sec;
         waggle->originalHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         waggle->accumulator = offset;
@@ -134,7 +137,6 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
             FIX2FLT(FLT2FIX(waggle->targetScale) / (TICSPERSEC + ((3 * TICSPERSEC) * height) / 255));
         waggle->ticker = timer ? timer * 35 : -1;
         waggle->state = WS_EXPAND;
-        P_ThinkerAdd(&waggle->thinker);
     }
 
     return retCode;

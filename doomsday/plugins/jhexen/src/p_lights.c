@@ -242,8 +242,8 @@ boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
 
         if(think)
         {
-            P_ThinkerAdd(&light->thinker);
             light->thinker.function = T_Light;
+            P_ThinkerAdd(&light->thinker);
         }
         else
         {
@@ -261,12 +261,14 @@ void T_Phase(phase_t *phase)
                      phase->baseValue + phaseTable[phase->index]);
 }
 
-void P_SpawnPhasedLight(sector_t *sector, float base, int index)
+void P_SpawnPhasedLight(sector_t* sector, float base, int index)
 {
-    phase_t    *phase;
+    phase_t*            phase;
 
     phase = Z_Calloc(sizeof(*phase), PU_MAP, 0);
+    phase->thinker.function = T_Phase;
     P_ThinkerAdd(&phase->thinker);
+
     phase->sector = sector;
     if(index == -1)
     {   // Sector->lightLevel as the index.
@@ -280,7 +282,6 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
     phase->baseValue = base;
     P_SectorSetLight(phase->sector,
                      phase->baseValue + phaseTable[phase->index]);
-    phase->thinker.function = T_Phase;
 
     P_ToXSector(sector)->special = 0;
 }

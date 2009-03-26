@@ -982,9 +982,10 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         // New floor thinker.
         rtn = 1;
         floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
-        P_ThinkerAdd(&floor->thinker);
-        xsec->specialData = floor;
         floor->thinker.function = T_MoveFloor;
+        P_ThinkerAdd(&floor->thinker);
+
+        xsec->specialData = floor;
         floor->state = FS_UP;
         floor->sector = sec;
         switch(type)
@@ -1097,9 +1098,9 @@ static void processStairSector(sector_t *sec, int type, float height,
     height += stairData.stepDelta;
 
     floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
+    floor->thinker.function = T_MoveFloor;
     P_ThinkerAdd(&floor->thinker);
     P_ToXSector(sec)->specialData = floor;
-    floor->thinker.function = T_MoveFloor;
     floor->type = FT_RAISEBUILDSTEP;
     floor->state = (stairData.direction == -1? FS_DOWN : FS_UP);
     floor->sector = sec;

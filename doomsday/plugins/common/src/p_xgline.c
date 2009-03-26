@@ -634,8 +634,9 @@ void XL_SetLineType(linedef_t* line, int id)
             xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
             xl->thinker.function = XL_Thinker;
-            xl->line = line;
             P_ThinkerAdd(&xl->thinker);
+
+            xl->line = line;
         }
     }
     else if(id)

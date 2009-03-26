@@ -52,13 +52,146 @@ unsigned short iddealer = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static thinker_t thinkerCap; // The head and tail of the thinker list.
+static size_t numThinkerLists;
+static thinker_t* thinkerCaps; // The head and tail of the thinker lists.
+static boolean inited = false;
 
 // CODE --------------------------------------------------------------------
 
-boolean P_IsMobjThinker(think_t thinker)
+static void linkThinkerToList(thinker_t* th, thinker_t* list)
 {
-    if(thinker == gx.MobjThinker)
+    // Link the thinker to the thinker list.
+    list->prev->next = th;
+    th->next = list;
+    th->prev = list->prev;
+    list->prev = th;
+}
+
+static void unlinkThinkerFromList(thinker_t* th)
+{
+    th->next->prev = th->prev;
+    th->prev->next = th->next;
+}
+
+static void initThinkerList(thinker_t* list)
+{
+    list->prev = list->next = list;
+}
+
+static thinker_t* listForThinkFunc(think_t func, boolean canCreate)
+{
+    size_t              i;
+
+    for(i = 0; i < numThinkerLists; ++i)
+    {
+        thinker_t*          list = &thinkerCaps[i];
+
+        if(list->function == func)
+            return list;
+    }
+
+    if(!canCreate)
+        return NULL;
+
+    // A new thinker type.
+    {
+    thinker_t*          list;
+    thinker_t*          newLists =
+        Z_Calloc(sizeof(thinker_t) * ++numThinkerLists, PU_STATIC, 0);
+
+    if(thinkerCaps)
+    {
+        for(i = 0; i < numThinkerLists-1; ++i)
+        {
+            thinker_t*          dst = &newLists[i];
+            const thinker_t*    src = &thinkerCaps[i];
+
+            memcpy(dst, src, sizeof(thinker_t));
+            if(dst->next != dst->prev)
+            {
+                dst->next->prev = dst;
+                dst->prev->next = dst;
+            }
+            else
+            {
+                dst->next = dst->prev = dst;
+            }
+        }
+
+        Z_Free(thinkerCaps);
+    }
+
+    thinkerCaps = newLists;
+    list = &thinkerCaps[numThinkerLists-1];
+
+    initThinkerList(list);
+    list->function = func;
+    // Set the list sentinel to instasis (safety measure).
+    list->inStasis = true;
+
+    return list;
+    }
+}
+
+static boolean runThinker(thinker_t* th, void* context)
+{
+    // Thinker cannot think when in stasis.
+    if(!th->inStasis)
+    {
+        if(th->function == (think_t) -1)
+        {
+            // Time to remove it.
+            unlinkThinkerFromList(th);
+
+            if(th->id)
+            {   // Its a mobj.
+                P_MobjRecycle((mobj_t*) th);
+            }
+            else
+            {
+                Z_Free(th);
+            }
+        }
+        else if(th->function)
+        {
+            th->function(th);
+        }
+    }
+
+    return true; // Continue iteration.
+}
+
+static boolean iterateThinkers(thinker_t* list,
+                               boolean (*callback) (thinker_t*, void*),
+                               void* context)
+{
+    boolean             result = true;
+
+    if(list)
+    {
+        thinker_t*          th, *next;
+
+        th = list->next;
+        while(th != list && th)
+        {
+#ifdef FAKE_MEMORY_ZONE
+            assert(th->next != NULL);
+            assert(th->prev != NULL);
+#endif
+
+            next = th->next;
+            if((result = callback(th, context)) == 0)
+                break;
+            th = next;
+        }
+    }
+
+    return result;
+}
+
+boolean P_IsMobjThinker(think_t func)
+{
+    if(func && func == gx.MobjThinker)
         return true;
 
     return false;
@@ -95,6 +228,30 @@ thid_t P_NewMobjID(void)
     return iddealer;
 }
 
+void P_InitThinkers(void)
+{
+    if(!inited)
+    {
+        numThinkerLists = 0;
+        thinkerCaps = NULL;
+    }
+    else
+    {
+        size_t              i;
+
+        for(i = 0; i < numThinkerLists; ++i)
+            initThinkerList(&thinkerCaps[i]);
+    }
+
+    P_ClearMobjIDs();
+    inited = true;
+}
+
+boolean P_ThinkerListInited(void)
+{
+    return inited;
+}
+
 /**
  * Iterate the list of thinkers making a callback for each.
  *
@@ -104,57 +261,30 @@ thid_t P_NewMobjID(void)
  *                      until a callback returns a zero value.
  * @param context       Is passed to the callback function.
  */
-boolean P_IterateThinkers(think_t type,
-                          boolean (*callback) (thinker_t* thinker, void*),
+boolean P_IterateThinkers(think_t func,
+                          boolean (*callback) (thinker_t*, void*),
                           void* context)
 {
+    if(!inited)
+        return true;
+
+    if(func)
+        return iterateThinkers(listForThinkFunc(func, false), callback,
+                               context);
+
+    {
     boolean             result = true;
-    thinker_t*          th, *next;
+    size_t              i;
 
-    th = thinkerCap.next;
-    while(th != &thinkerCap && th)
+    for(i = 0; i < numThinkerLists; ++i)
     {
-#ifdef FAKE_MEMORY_ZONE
-        assert(th->next != NULL);
-        assert(th->prev != NULL);
-#endif
+        thinker_t*          list = &thinkerCaps[i];
 
-        next = th->next;
-        if(!(type && th->function && th->function != type))
-            if((result = callback(th, context)) == 0)
-                break;
-        th = next;
+        if((result = iterateThinkers(list, callback, context)) == 0)
+            break;
     }
-
     return result;
-}
-
-static boolean runThinker(thinker_t* th, void* context)
-{
-    // Thinker cannot think when in stasis.
-    if(!th->inStasis)
-    {
-        if(th->function == (think_t) -1)
-        {
-            // Time to remove it.
-            th->next->prev = th->prev;
-            th->prev->next = th->next;
-            if(th->id)
-            {   // Its a mobj.
-                P_MobjRecycle((mobj_t*) th);
-            }
-            else
-            {
-                Z_Free(th);
-            }
-        }
-        else if(th->function)
-        {
-            th->function(th);
-        }
     }
-
-    return true; // Continue iteration.
 }
 
 void P_RunThinkers(void)
@@ -162,27 +292,18 @@ void P_RunThinkers(void)
     P_IterateThinkers(NULL, runThinker, NULL);
 }
 
-void P_InitThinkers(void)
-{
-    thinkerCap.prev = thinkerCap.next = &thinkerCap;
-    P_ClearMobjIDs();
-}
-
-boolean P_ThinkerListInited(void)
-{
-    return (thinkerCap.next)? true : false;
-}
-
 /**
  * Adds a new thinker at the end of the list.
  */
 void P_ThinkerAdd(thinker_t* th)
 {
-    // Link the thinker to the thinker list.
-    thinkerCap.prev->next = th;
-    th->next = &thinkerCap;
-    th->prev = thinkerCap.prev;
-    thinkerCap.prev = th;
+    if(!th)
+        return;
+
+    if(!th->function)
+    {
+        Con_Error("P_ThinkerAdd: Invalid thinker function.");
+    }
 
     // Will it need an ID?
     if(P_IsMobjThinker(th->function))
@@ -195,6 +316,9 @@ void P_ThinkerAdd(thinker_t* th)
         // Zero is not a valid ID.
         th->id = 0;
     }
+
+    // Link the thinker to the thinker list.
+    linkThinkerToList(th, listForThinkFunc(th->function, true));
 }
 
 /**
