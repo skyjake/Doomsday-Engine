@@ -37,6 +37,10 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct {
+    thinker_t       thinkerCap;
+} thinkerlist_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -53,18 +57,18 @@ unsigned short iddealer = 0;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static size_t numThinkerLists;
-static thinker_t* thinkerCaps; // The head and tail of the thinker lists.
+static thinkerlist_t** thinkerLists;
 static boolean inited = false;
 
 // CODE --------------------------------------------------------------------
 
-static void linkThinkerToList(thinker_t* th, thinker_t* list)
+static void linkThinkerToList(thinker_t* th, thinkerlist_t* list)
 {
     // Link the thinker to the thinker list.
-    list->prev->next = th;
-    th->next = list;
-    th->prev = list->prev;
-    list->prev = th;
+    list->thinkerCap.prev->next = th;
+    th->next = &list->thinkerCap;
+    th->prev = list->thinkerCap.prev;
+    list->thinkerCap.prev = th;
 }
 
 static void unlinkThinkerFromList(thinker_t* th)
@@ -73,20 +77,20 @@ static void unlinkThinkerFromList(thinker_t* th)
     th->prev->next = th->next;
 }
 
-static void initThinkerList(thinker_t* list)
+static void initThinkerList(thinkerlist_t* list)
 {
-    list->prev = list->next = list;
+    list->thinkerCap.prev = list->thinkerCap.next = &list->thinkerCap;
 }
 
-static thinker_t* listForThinkFunc(think_t func, boolean canCreate)
+static thinkerlist_t* listForThinkFunc(think_t func, boolean canCreate)
 {
     size_t              i;
 
     for(i = 0; i < numThinkerLists; ++i)
     {
-        thinker_t*          list = &thinkerCaps[i];
+        thinkerlist_t*      list = thinkerLists[i];
 
-        if(list->function == func)
+        if(list->thinkerCap.function == func)
             return list;
     }
 
@@ -95,39 +99,17 @@ static thinker_t* listForThinkFunc(think_t func, boolean canCreate)
 
     // A new thinker type.
     {
-    thinker_t*          list;
-    thinker_t*          newLists =
-        Z_Calloc(sizeof(thinker_t) * ++numThinkerLists, PU_STATIC, 0);
+    thinkerlist_t*      list;
 
-    if(thinkerCaps)
-    {
-        for(i = 0; i < numThinkerLists-1; ++i)
-        {
-            thinker_t*          dst = &newLists[i];
-            const thinker_t*    src = &thinkerCaps[i];
-
-            memcpy(dst, src, sizeof(thinker_t));
-            if(dst->next != dst->prev)
-            {
-                dst->next->prev = dst;
-                dst->prev->next = dst;
-            }
-            else
-            {
-                dst->next = dst->prev = dst;
-            }
-        }
-
-        Z_Free(thinkerCaps);
-    }
-
-    thinkerCaps = newLists;
-    list = &thinkerCaps[numThinkerLists-1];
+    thinkerLists = Z_Realloc(thinkerLists, sizeof(thinkerlist_t*) *
+                             ++numThinkerLists, PU_STATIC);
+    thinkerLists[numThinkerLists-1] = list =
+        Z_Calloc(sizeof(thinkerlist_t), PU_STATIC, 0);
 
     initThinkerList(list);
-    list->function = func;
+    list->thinkerCap.function = func;
     // Set the list sentinel to instasis (safety measure).
-    list->inStasis = true;
+    list->thinkerCap.inStasis = true;
 
     return list;
     }
@@ -161,7 +143,7 @@ static boolean runThinker(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-static boolean iterateThinkers(thinker_t* list,
+static boolean iterateThinkers(thinkerlist_t* list,
                                boolean (*callback) (thinker_t*, void*),
                                void* context)
 {
@@ -171,8 +153,8 @@ static boolean iterateThinkers(thinker_t* list,
     {
         thinker_t*          th, *next;
 
-        th = list->next;
-        while(th != list && th)
+        th = list->thinkerCap.next;
+        while(th != &list->thinkerCap && th)
         {
 #ifdef FAKE_MEMORY_ZONE
             assert(th->next != NULL);
@@ -233,14 +215,14 @@ void P_InitThinkers(void)
     if(!inited)
     {
         numThinkerLists = 0;
-        thinkerCaps = NULL;
+        thinkerLists = NULL;
     }
     else
     {
         size_t              i;
 
         for(i = 0; i < numThinkerLists; ++i)
-            initThinkerList(&thinkerCaps[i]);
+            initThinkerList(thinkerLists[i]);
     }
 
     P_ClearMobjIDs();
@@ -278,7 +260,7 @@ boolean P_IterateThinkers(think_t func,
 
     for(i = 0; i < numThinkerLists; ++i)
     {
-        thinker_t*          list = &thinkerCaps[i];
+        thinkerlist_t*      list = thinkerLists[i];
 
         if((result = iterateThinkers(list, callback, context)) == 0)
             break;
