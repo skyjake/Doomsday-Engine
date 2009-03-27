@@ -49,7 +49,6 @@ typedef struct {
 } linkobjtossecparams_t;
 
 boolean         RIT_LinkObjToSubSector(subsector_t* subsector, void* params);
-boolean         RIT_ContactFinder(linedef_t* line, void* data);
 
 boolean         R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
                                            boolean (*func) (void*, void*),

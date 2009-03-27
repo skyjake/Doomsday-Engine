@@ -74,9 +74,7 @@ typedef struct contactfinder_data_s {
     objtype_t       objType;
     vec3_t          objPos;
     float           objRadius;
-    vec2_t          box[2];
-    boolean         didSpread;
-    int             firstValid;
+    float           box[4];
 } contactfinderparams_t;
 
 typedef struct objcontact_s {
@@ -272,110 +270,101 @@ boolean RIT_LinkObjToSubSector(subsector_t* subsector, void* data)
     return true; // Continue iteration.
 }
 
-/**
- * Iterate subsectors of sector, within or intersecting the specified
- * bounding box, looking for those which are close enough to the given obj.
- * For each, register a subsector > obj "contact".
- *
- * @param obj           The obj hoping contacting the sector.
- * @param box           Subsectors within this bounding box will be processed.
- * @param sector        Ptr to the sector to check for contacts.
- */
-static void contactSector(void* obj, objtype_t type, const arvec2_t box,
-                          sector_t* sector)
-{
-    linkobjtossecparams_t params;
-
-    params.obj = obj;
-    params.type = type;
-
-    P_SubsectorsBoxIteratorv(box, sector, RIT_LinkObjToSubSector, &params);
-}
+static void processSeg(seg_t* seg, void* data);
 
 /**
- * Attempt to spread the obj from the given contact over a twosided linedef,
- * into the (relative) back sector.
+ * Attempt to spread the obj from the given contact from the source ssec and
+ * into the (relative) back ssec.
  *
- * @param line          Ptr to linedef to attempt to spread over.
+ * @param ssec          Ptr to subsector to attempt to spread over to.
  * @param data          Ptr to contactfinder_data structure.
  *
  * @return              @c true, because this function is also used as an
  *                      iterator.
  */
-boolean RIT_ContactFinder(linedef_t* line, void* data)
+static void spreadInSsec(subsector_t* ssec, void* data)
+{
+    seg_t**             segPtr = ssec->segs;
+
+    while(*segPtr)
+        processSeg(*segPtr++, data);
+}
+
+static void processSeg(seg_t* seg, void* data)
 {
     contactfinderparams_t* params = (contactfinderparams_t*) data;
-    sector_t*           source, *dest;
+    subsector_t*        source, *dest;
     float               distance;
     vertex_t*           vtx;
 
-    if(!line->L_frontside || !line->L_backside ||
-       line->L_frontsector == line->L_backsector)
-    {
-        // Line must be between two different sectors.
-        return true;
-    }
+    // Seg must be between two different ssecs.
+    if(seg->lineDef &&
+       (!seg->backSeg || seg->subsector == seg->backSeg->subsector))
+        return;
 
     // Which way does the spread go?
-    if(line->L_frontsector->validCount == validCount)
+    if(seg->subsector->validCount == validCount &&
+       seg->backSeg->subsector->validCount != validCount)
     {
-        source = line->L_frontsector;
-        dest = line->L_backsector;
-    }
-    else if(line->L_backsector->validCount == validCount)
-    {
-        source = line->L_backsector;
-        dest = line->L_frontsector;
+        source = seg->subsector;
+        dest = seg->backSeg->subsector;
     }
     else
     {
         // Not eligible for spreading.
-        return true;
+        return;
     }
 
-    if(dest->validCount >= params->firstValid &&
-       dest->validCount <= validCount + 1)
+    // Is the dest ssector inside the objlink's AABB?
+    if(dest->bBox[1].pos[VX] <= params->box[BOXLEFT] ||
+       dest->bBox[0].pos[VX] >= params->box[BOXRIGHT] ||
+       dest->bBox[1].pos[VY] <= params->box[BOXBOTTOM] ||
+       dest->bBox[0].pos[VY] >= params->box[BOXTOP])
     {
-        // This was already spreaded to.
-        return true;
-    }
-
-    // Is this line inside the params's bounds?
-    if(line->bBox[BOXRIGHT]  <= params->box[0][VX] ||
-       line->bBox[BOXLEFT]   >= params->box[1][VX] ||
-       line->bBox[BOXTOP]    <= params->box[0][VY] ||
-       line->bBox[BOXBOTTOM] >= params->box[1][VY])
-    {
-        // The line is not inside the params's bounds.
-        return true;
+        // The ssector is not inside the params's bounds.
+        return;
     }
 
     // Can the spread happen?
-    if(dest->planes[PLN_CEILING]->height <= dest->planes[PLN_FLOOR]->height ||
-       dest->planes[PLN_CEILING]->height <= source->planes[PLN_FLOOR]->height ||
-       dest->planes[PLN_FLOOR]->height   >= source->planes[PLN_CEILING]->height)
+    if(seg->lineDef)
     {
-        // No; destination sector is closed with no height.
-        return true;
+        if(dest->sector)
+        {
+            if(dest->sector->planes[PLN_CEILING]->height <= dest->sector->planes[PLN_FLOOR]->height ||
+               dest->sector->planes[PLN_CEILING]->height <= source->sector->planes[PLN_FLOOR]->height ||
+               dest->sector->planes[PLN_FLOOR]->height   >= source->sector->planes[PLN_CEILING]->height)
+            {
+                // No; destination sector is closed with no height.
+                return;
+            }
+        }
+
+        // Don't spread if the middle material completely fills the gap between
+        // floor and ceiling (direction is from dest to source).
+        if(Rend_DoesMidTextureFillGap(seg->lineDef,
+            dest == seg->backSeg->subsector? BACK : FRONT))
+            return;
     }
 
-    // Don't spread if the middle material completely fills the gap between
-    // floor and ceiling (direction is from dest to source).
-    if(Rend_DoesMidTextureFillGap(line,
-        dest == line->L_backsector? BACK : FRONT))
-        return true;
-
-    // Calculate 2D distance to line.
-    vtx = line->L_v1;
-    distance = ((vtx->V_pos[VY] - params->objPos[VY]) * line->dX -
-                (vtx->V_pos[VX] - params->objPos[VX]) * line->dY) /
-                   line->length;
-
-    if((source == line->L_frontsector && distance < 0) ||
-       (source == line->L_backsector && distance > 0))
+    // Calculate 2D distance to seg.
     {
-        // Can't spread in this direction.
-        return true;
+    float               dx, dy;
+
+    dx = seg->SG_v2pos[VX] - seg->SG_v1pos[VX];
+    dy = seg->SG_v2pos[VY] - seg->SG_v1pos[VY];
+    vtx = seg->SG_v1;
+    distance = ((vtx->V_pos[VY] - params->objPos[VY]) * dx -
+                (vtx->V_pos[VX] - params->objPos[VX]) * dy) / seg->length;
+    }
+
+    if(seg->lineDef)
+    {
+        if((source == seg->subsector && distance < 0) ||
+           (source == seg->backSeg->subsector && distance > 0))
+        {
+            // Can't spread in this direction.
+            return;
+        }
     }
 
     // Check distance against the obj radius.
@@ -383,39 +372,37 @@ boolean RIT_ContactFinder(linedef_t* line, void* data)
         distance = -distance;
     if(distance >= params->objRadius)
     {   // The obj doesn't reach that far.
-        return true;
+        return;
     }
 
-    // Obj spreads to the destination sector.
-    params->didSpread = true;
-
     // During next step, obj will continue spreading from there.
-    dest->validCount = validCount + 1;
+    dest->validCount = validCount;
 
-    // Add this obj to the destination's subsectors.
-    contactSector(params->obj, params->objType, params->box, dest);
+    // Add this obj to the destination subsector.
+    {
+    linkobjtossecparams_t lparams;
 
-    return true;
+    lparams.obj = params->obj;
+    lparams.type = params->objType;
+
+    RIT_LinkObjToSubSector(dest, &lparams);
+    }
+
+    spreadInSsec(dest, data);
 }
 
 /**
  * Create a contact for the objlink in all the subsectors the linked obj is
- * contacting (tests done on bounding boxes and the sector spread test).
+ * contacting (tests done on bounding boxes and the subsector spread test).
  *
  * @param oLink         Ptr to objlink to find subsector contacts for.
  */
 static void findContacts(objlink_t* oLink)
 {
-    static uint         numSpreads = 0, numFinds = 0;
-
-    int                 firstValid;
     contactfinderparams_t params;
-    vec2_t              point;
-    float*              radius;
+    float               radius;
     pvec3_t             pos;
     subsector_t**       ssec;
-
-    firstValid = ++validCount;
 
     switch(oLink->type)
     {
@@ -427,7 +414,7 @@ static void findContacts(objlink_t* oLink)
             return; // Only omni lights spread.
 
         pos = lum->pos;
-        radius = &LUM_OMNI(lum)->radius;
+        radius = LUM_OMNI(lum)->radius;
         ssec = &lum->subsector;
         break;
         }
@@ -436,54 +423,37 @@ static void findContacts(objlink_t* oLink)
         mobj_t*             mo = (mobj_t*) oLink->obj;
 
         pos = mo->pos;
-        radius = &mo->radius;
+        radius = mo->radius;
         ssec = &mo->subsector;
         break;
         }
     }
 
-    // Do the sector spread. Begin from the obj's own sector.
-    (*ssec)->sector->validCount = validCount;
+    // Do the subsector spread. Begin from the obj's own ssec.
+    (*ssec)->validCount = ++validCount;
 
     params.obj = oLink->obj;
     params.objType = oLink->type;
     V3_Copy(params.objPos, pos);
     // Use a slightly smaller radius than what the obj really is.
-    params.objRadius = *radius * .9f;
-    params.firstValid = firstValid;
-    V2_Set(point, params.objPos[VX] - *radius, params.objPos[VY] - *radius);
-    V2_InitBox(params.box, point);
-    V2_Set(point, params.objPos[VX] + *radius, params.objPos[VY] + *radius);
-    V2_AddToBox(params.box, point);
+    params.objRadius = radius * .9f;
 
-    // Always contact the obj's own sector.
-    contactSector(oLink->obj, oLink->type, params.box, (*ssec)->sector);
+    params.box[BOXLEFT]   = params.objPos[VX] - radius;
+    params.box[BOXRIGHT]  = params.objPos[VX] + radius;
+    params.box[BOXBOTTOM] = params.objPos[VY] - radius;
+    params.box[BOXTOP]    = params.objPos[VY] + radius;
 
-    numFinds++;
-
-    // We'll keep doing this until the obj has spreaded everywhere inside
-    // the bounding box.
-    do
+    // Always contact the obj's own subsector.
     {
-        params.didSpread = false;
-        numSpreads++;
+    linkobjtossecparams_t params;
 
-        P_AllLinesBoxIteratorv(params.box, RIT_ContactFinder, &params);
+    params.obj = oLink->obj;
+    params.type = oLink->type;
 
-        // Increment validCount for the next round of spreading.
-        validCount++;
+    RIT_LinkObjToSubSector(*ssec, &params);
     }
-    while(params.didSpread);
 
-/*
-#ifdef _DEBUG
-if(!((numFinds + 1) % 1000))
-{
-    Con_Printf("finds=%i avg=%.3f\n", numFinds,
-               numSpreads / (float)numFinds);
-}
-#endif
-*/
+    spreadInSsec(*ssec, &params);
 }
 
 /**
