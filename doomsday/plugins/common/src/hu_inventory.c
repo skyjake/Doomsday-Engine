@@ -65,7 +65,7 @@
 #define ST_INVCOUNTOFFY     (22)
 
 #define ST_INVSLOTOFFX      (1)
-#define ST_INVSELECTOFFY    (-ST_INVENTORYHEIGHT)
+#define ST_INVSELECTOFFY    (ST_INVENTORYHEIGHT)
 #else
 #define ST_INVICONOFFY      (-1)
 
@@ -280,6 +280,9 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
                     cursor -= shift;
             }
         }
+
+        if(first < 0)
+            first = 0;
     }
 
     if(firstVisible)
@@ -457,7 +460,8 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 
     const hud_inventory_t* inv;
     player_t*           plr;
-    uint                i, idx, slot, from, to, first, cursor;
+    uint                i, idx, slot, from, to, first, cursor, startSlot,
+                        endSlot;
 
     if(alpha <= 0)
         return;
@@ -469,41 +473,50 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 
     inventoryIndexes(plr, inv, NUMVISINVSLOTS,
                      inv->fixedCursorPos, &first, &cursor,
-                     NULL, NULL);
-
-    from = 0;
-    to = MIN_OF(inv->numUsedSlots, NUMVISINVSLOTS);
+                     &startSlot, &endSlot);
 
     idx = first;
-    slot = 0;
+    from = startSlot;
+    slot = startSlot;
+    if(startSlot > 0)
+        to = NUMVISINVSLOTS;
+    else
+        to = endSlot - startSlot;
+    if(inv->numUsedSlots - 1 < endSlot - startSlot)
+        to = from + inv->numUsedSlots;
     for(i = from; i < to; ++i)
     {
-        uint                count;
-        const invitem_t*    item = P_GetInvItem(inv->slots[idx]);
-
-        if((count = P_InventoryCount(player, item->type)))
+        if(i >= startSlot && i < endSlot)
         {
-            GL_DrawPatchLitAlpha(x + slot * 31, y, 1,
-                                 alpha, item->patchLump);
+            uint                count;
+            const invitem_t*    item =
+                P_GetInvItem(inv->slots[idx]);
 
-            if(count > 1)
-                Hu_DrawSmallNum(P_InventoryCount(player, item->type),
-                                ST_INVCOUNTDIGITS,
-                                x + slot * 31 + ST_INVCOUNTOFFX,
-                                y + ST_INVCOUNTOFFY,
-                                alpha);
+            if((count = P_InventoryCount(player, item->type)))
+            {
+                GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH,
+                                     y + ST_INVICONOFFY, 1,
+                                     alpha,
+                                     item->patchLump);
+
+                if(count > 1)
+                    Hu_DrawSmallNum(P_InventoryCount(player, item->type),
+                                    ST_INVCOUNTDIGITS,
+                                    x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX,
+                                    y + ST_INVCOUNTOFFY,
+                                    alpha);
+            }
+
+            if(++idx > inv->numOwnedItemTypes - 1)
+                idx = 0;
         }
 
-        if(i == cursor)
-            GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH,
-                                 y + ST_INVSELECTOFFY - BORDER,
-                                 1, alpha,
-                                 dpInvSelectBox.lump);
-
-        if(++idx > inv->numOwnedItemTypes - 1)
-            idx = 0;
         slot++;
     }
+
+    GL_DrawPatchLitAlpha(x + cursor * ST_INVSLOTWIDTH,
+                         y + ST_INVSELECTOFFY - BORDER,
+                         1, alpha, dpInvSelectBox.lump);
 
     if(inv->numUsedSlots > NUMVISINVSLOTS)
     {
