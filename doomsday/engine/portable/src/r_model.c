@@ -373,6 +373,14 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
 
             // Aspect undoing.
             frame->vertices[k].xyz[VY] *= rModelAspectMod;
+
+            for(c = 0; c < 3; ++c)
+            {
+                if(!k || frame->vertices[k].xyz[c] < frame->min[c])
+                    frame->min[c] = frame->vertices[k].xyz[c];
+                if(!k || frame->vertices[k].xyz[c] > frame->max[c])
+                    frame->max[c] = frame->vertices[k].xyz[c];
+            }
         }
     }
     M_Free(frames);
@@ -463,6 +471,14 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
             }
             // Aspect undo.
             frame->vertices[k].xyz[1] *= rModelAspectMod;
+
+            for(c = 0; c < 3; ++c)
+            {
+                if(!k || frame->vertices[k].xyz[c] < frame->min[c])
+                    frame->min[c] = frame->vertices[k].xyz[c];
+                if(!k || frame->vertices[k].xyz[c] > frame->max[c])
+                    frame->max[c] = frame->vertices[k].xyz[c];
+            }
         }
     }
     M_Free(temp);
@@ -811,29 +827,21 @@ if(mo->dPlayer)
     return interp;
 }
 
-static model_frame_t *R_GetModelFrame(int model, int frame)
+static model_frame_t* R_GetModelFrame(int model, int frame)
 {
     return modellist[model]->frames + frame;
 }
 
-static void R_GetModelBounds(int model, int frame, float min[3], float max[3])
+static void R_GetModelBounds(int model, int frame, float min[3],
+                             float max[3])
 {
-    int                 i, k;
-    model_frame_t      *mframe = R_GetModelFrame(model, frame);
-    model_t            *mo = modellist[model];
-    model_vertex_t     *v;
+    model_frame_t*      mframe = R_GetModelFrame(model, frame);
 
     if(!mframe)
         Con_Error("R_GetModelBounds: bad model/frame.\n");
 
-    for(i = 0, v = mframe->vertices; i < mo->info.numVertices; ++i, v++)
-        for(k = 0; k < 3; ++k)
-        {
-            if(!i || v->xyz[k] < min[k])
-                min[k] = v->xyz[k];
-            if(!i || v->xyz[k] > max[k])
-                max[k] = v->xyz[k];
-        }
+    memcpy(min, mframe->min, sizeof(float)*3);
+    memcpy(max, mframe->max, sizeof(float)*3);
 }
 
 /**
@@ -894,18 +902,32 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
     R_ScaleModel(mf, ms.height, off);
 }
 
-static float R_GetModelVisualRadius(modeldef_t* mf)
+float R_GetModelVisualRadius(modeldef_t* mf)
 {
-    float               min[3], max[3];
+    int                 i;
+    float               maxRadius = 0;
 
     if(!mf->sub[0].model)
         return 0;
 
-    // Use the first submodel's bounds.
-    R_GetModelBounds(mf->sub[0].model, mf->sub[0].frame, min, max);
-    // Half of the average of width and depth.
-    return (mf->scale[VX] * (max[VX] - min[VX]) +
-            mf->scale[VZ] * (max[VZ] - min[VZ])) / 3.5f;
+    // Use the first frame bounds.
+    for(i = 0; i < MAX_FRAME_MODELS; ++i)
+    {
+        float               min[3], max[3], radius;
+
+        if(!mf->sub[i].model)
+            break;
+
+        R_GetModelBounds(mf->sub[i].model, mf->sub[i].frame, min, max);
+
+        // Half the distance from bottom left to top right.
+        radius = (mf->scale[VX] * (max[VX] - min[VX]) +
+                  mf->scale[VZ] * (max[VZ] - min[VZ])) / 3.5f;
+        if(radius > maxRadius)
+            maxRadius = radius;
+    }
+
+    return maxRadius;
 }
 
 /**

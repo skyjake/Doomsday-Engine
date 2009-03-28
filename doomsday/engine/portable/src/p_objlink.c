@@ -423,7 +423,7 @@ static void findContacts(objlink_t* oLink)
         mobj_t*             mo = (mobj_t*) oLink->obj;
 
         pos = mo->pos;
-        radius = mo->radius;
+        radius = R_VisualRadius(mo);
         ssec = &mo->subsector;
         break;
         }

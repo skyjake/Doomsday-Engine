@@ -1221,61 +1221,52 @@ void R_ProjectSprite(mobj_t* mo)
         align = true;
 
     // Perform visibility checking.
+    {
+    float               center[2], v1[2], v2[2];
+    float               width = R_VisualRadius(mo)*2, offset = 0;
+
     if(!mf)
-    {   // Its a sprite.
-        if(!align && alwaysAlign != 2 && alwaysAlign != 3)
+        offset = (float) sprTex->offX - (width / 2);
+
+    // Project a line segment relative to the view in 2D, then check
+    // if not entirely clipped away in the 360 degree angle clipper.
+    center[VX] = mo->pos[VX];
+    center[VY] = mo->pos[VY];
+    M_ProjectViewRelativeLine2D(center, !mf || (align || alwaysAlign == 3),
+                                width, offset, v1, v2);
+
+    // Check for visibility.
+    if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
+    {   // Isn't visible.
+        if(mf)
         {
-            float               center[2], v1[2], v2[2];
-            float               width, offset;
-
-            visType = VSPR_SPRITE;
-
-            width = (float) ms.width;
-            offset = (float) sprTex->offX - (width / 2);
-
-            // Project a line segment relative to the view in 2D, then check
-            // if not entirely clipped away in the 360 degree angle clipper.
-            center[VX] = mo->pos[VX];
-            center[VY] = mo->pos[VY];
-            M_ProjectViewRelativeLine2D(center, (align || alwaysAlign == 3),
-                                        width, offset, v1, v2);
-
-            // Check for visibility.
-            if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
-                return; // Isn't visible.
-        }
-    }
-    else
-    {   // Its a model.
-        float               v[2], off[2];
-        float               sinrv, cosrv;
-
-        visType = VSPR_MODEL;
-
-        v[VX] = mo->pos[VX];
-        v[VY] = mo->pos[VY];
-
-        thangle =
-            BANG2RAD(bamsAtan2(pos[VY] * 10, pos[VX] * 10)) - PI / 2;
-        sinrv = sin(thangle);
-        cosrv = cos(thangle);
-        off[VX] = cosrv * mo->radius;
-        off[VY] = sinrv * mo->radius;
-        if(!C_CheckViewRelSeg
-           (v[VX] - off[VX], v[VY] - off[VY], v[VX] + off[VX],
-            v[VY] + off[VY]))
-        {
-            // The visibility check indicates that the model's origin is
-            // not visible. However, if the model is close to the viewpoint
-            // we will need to draw it. Otherwise large models are likely
-            // to disappear too early.
+            // If the model is close to the viewpoint we will need to
+            // draw it. Otherwise large models are likely to disappear
+            // too early.
             if(P_ApproxDistance
                (distance, mo->pos[VZ] + (mo->height / 2) - viewZ) >
                MAX_OBJECT_RADIUS)
             {
-                return;         // Can't be visible.
+                return; // Can't be visible.
             }
         }
+        else
+        {
+            return;
+        }
+    }
+    }
+
+    if(!mf)
+    {
+        visType = mf? VSPR_MODEL : VSPR_SPRITE;
+    }
+    else
+    {   // Its a model.
+        visType = VSPR_MODEL;
+        thangle = BANG2RAD(bamsAtan2(pos[VY] * 10, pos[VX] * 10)) -
+            PI / 2;
+
         // Viewaligning means scaling down Z with models.
         align = false;
     }

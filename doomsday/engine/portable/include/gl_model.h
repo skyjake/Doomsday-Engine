@@ -209,6 +209,7 @@ typedef struct model_frame_s {
     char            name[16];
     model_vertex_t *vertices;
     model_vertex_t *normals;
+    float           min[3], max[3];
 } model_frame_t;
 
 typedef struct model_s {
