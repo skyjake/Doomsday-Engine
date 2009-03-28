@@ -539,7 +539,7 @@ void GL_LoadSystemTextures(void)
         GL_PrepareFlareTexture(FXT_BIGFLARE);
     }
 
-    PG_InitTextures(); // Load particle textures.
+    Rend_ParticleInitTextures(); // Load particle textures.
 }
 
 /**
@@ -656,7 +656,7 @@ void GL_ClearSystemTextures(void)
     UI_ClearTextures();
 
     // Delete the particle textures.
-    PG_ShutdownTextures();
+    Rend_ParticleShutdownTextures();
 }
 
 /**

@@ -71,7 +71,6 @@ extern int useDynLights, translucentIceCorpse;
 extern int skyhemispheres;
 extern int loMaxRadius;
 extern int devNoCulling;
-extern boolean firstFrameAfterLoad;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -3105,7 +3104,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     }
 
     // Mark the particle generators in the sector visible.
-    PG_SectorIsVisible(sect);
+    Rend_ParticleMarkInSectorVisible(sect);
 
     // Sprites for this subsector have to be drawn. This must be done before
     // the segments of this subsector are added to the clipper. Otherwise
@@ -3756,12 +3755,6 @@ void Rend_RenderMap(void)
 
     GL_SetMultisample(true);
 
-    // This is all the clearing we'll do.
-    if(firstFrameAfterLoad || freezeRLs || P_IsInVoid(viewPlayer))
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    else
-        glClear(GL_DEPTH_BUFFER_BIT);
-
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(true);
 
@@ -3771,6 +3764,9 @@ void Rend_RenderMap(void)
         RL_ClearLists(); // Clear the lists for new quads.
         C_ClearRanges(); // Clear the clipper.
         LO_BeginFrame();
+
+        // Clear particle generator visibilty info.
+        Rend_ParticleInitForNewFrame();
 
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();

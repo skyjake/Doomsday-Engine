@@ -2015,7 +2015,7 @@ BEGIN_PROF( PROF_RL_RENDER_MASKED );
     Rend_DrawMasked();
 
     // Draw particles.
-    PG_Render();
+    Rend_RenderParticles();
 
 END_PROF( PROF_RL_RENDER_MASKED );
 END_PROF( PROF_RL_RENDER_ALL );

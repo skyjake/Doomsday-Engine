@@ -261,21 +261,6 @@ int P_GetMapAmbientLightLevel(gamemap_t* map)
     return map->ambientLightLevel;
 }
 
-static void spawnParticleGeneratorsForMap(const char* mapID)
-{
-    uint                startTime = Sys_GetRealTime();
-
-    // Spawn all type-triggered particle generators.
-    // Let's hope there aren't too many...
-    P_SpawnTypeParticleGens();
-    P_SpawnMapParticleGens(mapID);
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("spawnParticleGeneratorsForMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-}
-
 /**
  * Begin the process of loading a new map.
  * Can be accessed by the games via the public API.
@@ -324,7 +309,7 @@ boolean P_LoadMap(const char *mapID)
     if(DAM_AttemptMapLoad(mapID))
     {
         uint                i;
-        gamemap_t          *map = P_GetCurrentMap();
+        gamemap_t*          map = P_GetCurrentMap();
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(P_GetUniqueMapID(map));
@@ -351,15 +336,13 @@ boolean P_LoadMap(const char *mapID)
         // Texture animations should begin from their first step.
         R_ResetAnimGroups();
 
-        // Init Particle Generator links.
-        PG_InitForLevel();
-
         R_InitObjLinksForMap();
         LO_InitForMap(); // Lumobj management.
         DL_InitForMap(); // Projected dynlights (from lumobjs) management.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
-        spawnParticleGeneratorsForMap(P_GetMapID(map));
+        // Init Particle Generator links.
+        P_PtcInitForMap();
 
         // Initialize the lighting grid.
         LG_Init();

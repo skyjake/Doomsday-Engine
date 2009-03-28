@@ -22,23 +22,23 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * rend_particle.h: Particle Effects
  */
 
-#ifndef __GL_PARTICLES_H__
-#define __GL_PARTICLES_H__
+#ifndef __DOOMSDAY_RENDER_PARTICLES_H__
+#define __DOOMSDAY_RENDER_PARTICLES_H__
 
-extern int      useParticles, maxParticles;
-extern float    particleSpawnRate;
+extern int useParticles, maxParticles;
+extern float particleSpawnRate;
 
-void        Rend_ParticleRegister(void);
+void            Rend_ParticleRegister(void);
+void            Rend_ParticleInitTextures(void);
+void            Rend_ParticleShutdownTextures(void);
 
-void        PG_InitTextures(void);
-void        PG_ShutdownTextures(void);
-void        PG_InitForLevel(void);
-void        PG_InitForNewFrame(void);
-void        PG_SectorIsVisible(sector_t *sector);
-void        PG_Render(void);
+void            Rend_ParticleInitForNewFrame(void);
+void            Rend_ParticleMarkInSectorVisible(sector_t* sector);
+
+void            Rend_RenderParticles(void);
 
 #endif

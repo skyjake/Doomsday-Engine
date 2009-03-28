@@ -76,6 +76,7 @@ D_CMD(ViewGrid);
 
 extern byte rendInfoRPolys;
 extern byte freezeRLs;
+extern boolean firstFrameAfterLoad;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -558,6 +559,9 @@ void R_BeginWorldFrame(void)
         // Create objlinks for mobjs.
         R_CreateMobjLinks();
 
+        // Link all active particle generators into the world.
+        P_CreatePtcGenLinks();
+
         // Link objs to all contacted surfaces.
         R_LinkObjs();
     }
@@ -799,7 +803,6 @@ void R_RenderPlayerView(int num)
         R_ClearSprites();
 
     R_ProjectPlayerSprites(); // Only if 3D models exists for them.
-    PG_InitForNewFrame();
 
     // Hide the viewPlayer's mobj?
     if(!(player->shared.flags & DDPF_CHASECAM))
@@ -871,6 +874,33 @@ void R_RenderViewPorts(void)
 {
     int                 oldDisplay = displayPlayer;
     int                 x, y, p;
+    GLbitfield          bits = GL_DEPTH_BUFFER_BIT;
+
+    if(firstFrameAfterLoad || freezeRLs)
+    {
+        bits |= GL_COLOR_BUFFER_BIT;
+    }
+    else
+    {
+        int                 i;
+
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t*           plr = &ddPlayers[i];
+
+            if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
+                continue;
+
+            if(P_IsInVoid(plr))
+            {
+                bits |= GL_COLOR_BUFFER_BIT;
+                break;
+            }
+        }
+    }
+
+    // This is all the clearing we'll do.
+    glClear(bits);
 
     // Draw a view for all players with a visible viewport.
     for(p = 0, y = 0; y < gridRows; ++y)
