@@ -1232,7 +1232,7 @@ void R_ProjectSprite(mobj_t* mo)
     // if not entirely clipped away in the 360 degree angle clipper.
     center[VX] = mo->pos[VX];
     center[VY] = mo->pos[VY];
-    M_ProjectViewRelativeLine2D(center, !mf || (align || alwaysAlign == 3),
+    M_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
                                 width, offset, v1, v2);
 
     // Check for visibility.
