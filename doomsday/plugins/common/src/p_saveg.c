@@ -1406,7 +1406,7 @@ static void SV_ReadPlayer(player_t* p)
 }
 
 #if __JHEXEN__
-# define MOBJ_SAVEVERSION 6
+# define MOBJ_SAVEVERSION 7
 #elif __JHERETIC__
 # define MOBJ_SAVEVERSION 8
 #else
@@ -1446,6 +1446,9 @@ static void SV_WriteMobj(const mobj_t* original)
     //
     // JHERETIC
     // 8: Added special3
+    //
+    // JHEXEN
+    // 7: Removed superfluous info ptr
     SV_WriteByte(MOBJ_SAVEVERSION);
 
 #if !__JHEXEN__
@@ -1490,10 +1493,6 @@ static void SV_WriteMobj(const mobj_t* original)
     SV_WriteLong(mo->valid);
 
     SV_WriteLong(mo->type);
-#if __JHEXEN__
-    SV_WriteLong((int) mo->info);
-#endif
-
     SV_WriteLong(mo->tics); // State tic counter.
     SV_WriteLong((int) mo->state);
 
@@ -1816,10 +1815,10 @@ static int SV_ReadMobj(thinker_t *th)
     mo->valid = SV_ReadLong();
     mo->type = SV_ReadLong();
 #if __JHEXEN__
-    mo->info = (mobjinfo_t *) SV_ReadLong();
-#else
-    mo->info = &MOBJINFO[mo->type];
+    if(ver < 7)
+        /*mo->info = (mobjinfo_t *)*/ SV_ReadLong();
 #endif
+    mo->info = &MOBJINFO[mo->type];
 
     if(mo->info->flags & MF_SOLID)
         mo->ddFlags |= DDMF_SOLID;
