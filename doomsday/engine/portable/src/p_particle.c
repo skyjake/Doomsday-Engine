@@ -70,8 +70,8 @@ static void P_Uncertain(fixed_t* pos, fixed_t low, fixed_t high);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int useParticles = true;
-unsigned int maxParticles = 0; // Unlimited.
+byte useParticles = true;
+int maxParticles = 0; // Unlimited.
 float particleSpawnRate = 1; // Unmodified.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

@@ -29,7 +29,8 @@
 #ifndef __DOOMSDAY_RENDER_PARTICLES_H__
 #define __DOOMSDAY_RENDER_PARTICLES_H__
 
-extern int useParticles, maxParticles;
+extern byte useParticles;
+extern int maxParticles;
 extern float particleSpawnRate;
 
 void            Rend_ParticleRegister(void);

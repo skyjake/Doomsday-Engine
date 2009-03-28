@@ -82,7 +82,7 @@ static porder_t* order = NULL;
 void Rend_ParticleRegister(void)
 {
     // Cvars
-    C_VAR_INT("rend-particle", &useParticles, 0, 0, 1);
+    C_VAR_BYTE("rend-particle", &useParticles, 0, 0, 1);
     C_VAR_INT("rend-particle-max", &maxParticles, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("rend-particle-rate", &particleSpawnRate, 0, 0, 5);
     C_VAR_FLOAT("rend-particle-diffuse", &particleDiffuse,
@@ -241,7 +241,7 @@ static void checkOrderBuffer(size_t max)
     }
 
     if(orderSize > currentSize)
-        order = Z_Realloc(order, sizeof(*order) * orderSize, PU_MAP);
+        order = Z_Realloc(order, sizeof(porder_t) * orderSize, PU_MAP);
 }
 
 static boolean countParticles(ptcgen_t* gen, void* context)
@@ -358,7 +358,7 @@ static int listVisibleParticles(void)
     numParts = numVisibleParticles;
 
     // Sort the order list back->front. A quicksort is fast enough.
-    qsort(order, numParts, sizeof(*order), comparePOrder);
+    qsort(order, numParts, sizeof(porder_t), comparePOrder);
 
     return true;
 }
@@ -663,7 +663,7 @@ static void renderParticles(int rtype, boolean withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                float               line[2], pos[3];
+                float               line[2], pos[2];
                 vertex_t*           vtx;
 
                 line[0] = pt->contact->dX;
@@ -679,7 +679,6 @@ static void renderParticles(int rtype, boolean withBlend)
                 // Z-fighting.
                 pos[VX] = FIX2FLT(pt->pos[VX]);
                 pos[VY] = FIX2FLT(pt->pos[VY]);
-                pos[VZ] = FIX2FLT(pt->pos[VZ]);
                 M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1,
                                      projected);
 
@@ -739,8 +738,8 @@ static void renderParticles(int rtype, boolean withBlend)
 
         if(usingTexture >= 0)
         {
-            glDepthMask(GL_TRUE);
             glEnable(GL_CULL_FACE);
+            glDepthMask(GL_TRUE);
             glDepthFunc(GL_LESS);
         }
         else
