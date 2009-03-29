@@ -100,15 +100,15 @@ typedef struct objcontactlist_s {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static objlink_t* objLinks = NULL;
-static objlink_t* objLinkFirst, *objLinkCursor;
+static objlink_t* objLinkFirst = NULL, *objLinkCursor = NULL;
 
 static objblockmap_t* objBlockmap = NULL;
 
 // List of unused and used obj-subsector contacts.
-static objcontact_t* contFirst, *contCursor;
+static objcontact_t* contFirst = NULL, *contCursor = NULL;
 
 // List of obj contacts for each subsector.
-static objcontactlist_t* subContacts;
+static objcontactlist_t* subContacts = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -590,7 +590,8 @@ void R_InitForNewFrame(void)
 {
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
-    memset(subContacts, 0, numSSectors * sizeof(*subContacts));
+    if(subContacts)
+        memset(subContacts, 0, numSSectors * sizeof(*subContacts));
 }
 
 boolean R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,

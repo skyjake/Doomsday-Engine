@@ -1401,11 +1401,6 @@ void R_SetupMap(int mode, int flags)
 
     case DDSMM_AFTER_LOADING:
     {
-        // Loading a game usually destroys all thinkers. Until a proper
-        // savegame system handled by the engine is introduced we'll have
-        // to resort to re-initializing the most important stuff.
-        P_SpawnTypeParticleGens();
-
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
 

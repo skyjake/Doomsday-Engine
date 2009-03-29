@@ -303,7 +303,7 @@ void T_MaterialChanger(materialchanger_t* mchanger)
             P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
 #endif
 
-        P_ThinkerRemove(&mchanger->thinker);
+        DD_ThinkerRemove(&mchanger->thinker);
     }
 }
 
@@ -314,7 +314,7 @@ void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
 
     mchanger = Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
     mchanger->thinker.function = T_MaterialChanger;
-    P_ThinkerAdd(&mchanger->thinker);
+    DD_ThinkerAdd(&mchanger->thinker);
 
     mchanger->side = side;
     mchanger->ssurfaceID = ssurfaceID;
@@ -349,7 +349,7 @@ void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
     params.ssurfaceID = ssurfaceID;
 
     // See if a material change has already been queued.
-    if(!P_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
+    if(!DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
         return;
 
     P_SpawnMaterialChanger(side, ssurfaceID, mat, tics);

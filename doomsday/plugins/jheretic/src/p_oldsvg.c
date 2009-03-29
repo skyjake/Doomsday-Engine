@@ -471,8 +471,8 @@ typedef enum
     byte                tclass;
 
     // Remove all the current thinkers.
-    P_IterateThinkers(NULL, removeThinker, NULL);
-    P_InitThinkers();
+    DD_IterateThinkers(NULL, removeThinker, NULL);
+    DD_InitThinkers();
 
     // read in saved thinkers
     for(;;)
@@ -531,7 +531,7 @@ typedef struct {
 
     ceiling->thinker.function = T_MoveCeiling;
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&ceiling->thinker, true);
+        DD_ThinkerSetStasis(&ceiling->thinker, true);
 
     P_ToXSector(ceiling->sector)->specialData = T_MoveCeiling;
     return true; // Add this thinker.
@@ -656,7 +656,7 @@ typedef struct {
 
     plat->thinker.function = T_PlatRaise;
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&plat->thinker, true);
+        DD_ThinkerSetStasis(&plat->thinker, true);
 
     P_ToXSector(plat->sector)->specialData = T_PlatRaise;
     return true; // Add this thinker.
@@ -801,7 +801,7 @@ enum {
 
             SV_ReadCeiling(ceiling);
 
-            P_ThinkerAdd(&ceiling->thinker);
+            DD_ThinkerAdd(&ceiling->thinker);
             break;
 
         case tc_door:
@@ -809,7 +809,7 @@ enum {
 
             SV_ReadDoor(door);
 
-            P_ThinkerAdd(&door->thinker);
+            DD_ThinkerAdd(&door->thinker);
             break;
 
         case tc_floor:
@@ -817,7 +817,7 @@ enum {
 
             SV_ReadFloor(floor);
 
-            P_ThinkerAdd(&floor->thinker);
+            DD_ThinkerAdd(&floor->thinker);
             break;
 
         case tc_plat:
@@ -825,7 +825,7 @@ enum {
 
             SV_ReadPlat(plat);
 
-            P_ThinkerAdd(&plat->thinker);
+            DD_ThinkerAdd(&plat->thinker);
             break;
 
         case tc_flash:
@@ -833,7 +833,7 @@ enum {
 
             SV_ReadFlash(flash);
 
-            P_ThinkerAdd(&flash->thinker);
+            DD_ThinkerAdd(&flash->thinker);
             break;
 
         case tc_strobe:
@@ -841,7 +841,7 @@ enum {
 
             SV_ReadStrobe(strobe);
 
-            P_ThinkerAdd(&strobe->thinker);
+            DD_ThinkerAdd(&strobe->thinker);
             break;
 
         case tc_glow:
@@ -849,7 +849,7 @@ enum {
 
             SV_ReadGlow(glow);
 
-            P_ThinkerAdd(&glow->thinker);
+            DD_ThinkerAdd(&glow->thinker);
             break;
 
         default:

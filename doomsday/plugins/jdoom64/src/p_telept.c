@@ -111,7 +111,7 @@ static mobj_t* getTeleportDestination(short tag)
         {
             params.sec = sec;
 
-            if(!P_IterateThinkers(P_MobjThinker, findMobj, &params))
+            if(!DD_IterateThinkers(P_MobjThinker, findMobj, &params))
             {   // Found one.
                 return params.foundMobj;
             }
@@ -367,7 +367,7 @@ int EV_FadeSpawn(linedef_t* li, mobj_t* mo)
         while((sec = P_IterListIterator(list)) != NULL)
         {
             params.sec = sec;
-            P_IterateThinkers(P_MobjThinker, fadeSpawn, &params);
+            DD_IterateThinkers(P_MobjThinker, fadeSpawn, &params);
         }
     }
 
@@ -448,7 +448,7 @@ int EV_FadeAway(linedef_t* line, mobj_t* thing)
         while((sec = P_IterListIterator(list)) != NULL)
         {
             params.sec = sec;
-            P_IterateThinkers(P_MobjThinker, PIT_ChangeMobjFlags, &params);
+            DD_IterateThinkers(P_MobjThinker, PIT_ChangeMobjFlags, &params);
         }
     }
 

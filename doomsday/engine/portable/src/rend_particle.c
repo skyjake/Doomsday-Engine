@@ -37,6 +37,7 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_ui.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -66,6 +67,7 @@ extern float vang, vpitch;
 DGLuint ptctexname[NUM_TEX_NAMES];
 int particleNearLimit = 0;
 float particleDiffuse = 4;
+byte devDrawGenerators = false; // Display active generators?
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -89,6 +91,8 @@ void Rend_ParticleRegister(void)
                 CVF_NO_MAX, 0, 0);
     C_VAR_INT("rend-particle-visible-near", &particleNearLimit,
               CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE("rend-dev-generator-show-indices", &devDrawGenerators,
+               CVF_NO_ARCHIVE, 0, 1);
 }
 
 static boolean markPtcGenVisible(ptcgen_t* gen, void* context)
@@ -241,7 +245,7 @@ static void checkOrderBuffer(size_t max)
     }
 
     if(orderSize > currentSize)
-        order = Z_Realloc(order, sizeof(porder_t) * orderSize, PU_MAP);
+        order = Z_Realloc(order, sizeof(porder_t) * orderSize, PU_STATIC);
 }
 
 static boolean countParticles(ptcgen_t* gen, void* context)
@@ -808,4 +812,81 @@ void Rend_RenderParticles(void)
         // particles.
         renderPass(true);
     }
+}
+
+static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
+{
+#define MAX_GENERATOR_DIST  2048
+
+    float*              eye = (float*) context;
+
+    // Determine approximate center.
+    if((gen->source || (gen->flags & PGF_UNTRIGGERED)))
+    {
+        float               pos[3], dist, alpha;
+
+        if(gen->source)
+        {
+            pos[VX] = gen->source->pos[VX];
+            pos[VY] = gen->source->pos[VY];
+            pos[VZ] = gen->source->pos[VZ] - gen->source->floorClip +
+                FIX2FLT(gen->center[VZ]);
+        }
+        else
+        {
+            pos[VX] = FIX2FLT(gen->center[VX]);
+            pos[VY] = FIX2FLT(gen->center[VY]);
+            pos[VZ] = FIX2FLT(gen->center[VZ]);
+        }
+
+        dist = M_Distance(pos, eye);
+        alpha = 1 - MIN_OF(dist, MAX_GENERATOR_DIST) / MAX_GENERATOR_DIST;
+
+        if(alpha > 0)
+        {
+            char                buf[80];
+            float               scale = dist / (theWindow->width / 2);
+
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+
+            glTranslatef(pos[VX], pos[VZ], pos[VY]);
+            glRotatef(-vang + 180, 0, 1, 0);
+            glRotatef(vpitch, 1, 0, 0);
+            glScalef(-scale, -scale, 1);
+
+            sprintf(buf, "%i", P_PtcGenToIndex(gen));
+            UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
+        }
+    }
+
+    return true; // Continue iteration.
+
+#undef MAX_GENERATOR_DIST
+}
+
+/**
+ * Debugging aid; Draw all active generators.
+ */
+void Rend_RenderGenerators(void)
+{
+    float               eye[3];
+
+    if(!devDrawGenerators)
+        return;
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    eye[VX] = vx;
+    eye[VY] = vz;
+    eye[VZ] = vy;
+
+    P_IteratePtcGens(drawGeneratorOrigin, eye);
+
+    // Restore previous state.
+    glEnable(GL_DEPTH_TEST);
 }

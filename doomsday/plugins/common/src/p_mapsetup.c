@@ -549,7 +549,6 @@ int P_SetupMapWorker(void* ptr)
 #endif
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-    P_InitThinkers();
 
     P_GetMapLumpName(param->episode, param->map, mapID);
     if(!P_LoadMap(mapID))
@@ -557,6 +556,7 @@ int P_SetupMapWorker(void* ptr)
         Con_Error("P_SetupMap: Failed loading map \"%s\".\n", mapID);
     }
 
+    DD_InitThinkers();
     P_LoadMapObjs();
     P_SpawnThings();
 

@@ -185,14 +185,14 @@ void T_Door(door_t* door)
             case DT_INSTANTRAISE:  //jd64
             case DT_INSTANTCLOSE:  //jd64
                 P_ToXSector(door->sector)->specialData = NULL;
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
                 break;
 #endif
 #if __JDOOM__ || __JDOOM64__
             case DT_BLAZERAISE:
             case DT_BLAZECLOSE:
                 xsec->specialData = NULL;
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
 
                 // DOOMII BUG:
                 // This is what causes blazing doors to produce two closing
@@ -207,7 +207,7 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORCLOSE);
 #endif
@@ -286,7 +286,7 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
                 S_StopSound(0, (mobj_t *) P_GetPtrp(door->sector,
                                                     DMU_CEILING_SOUND_ORIGIN));
@@ -328,7 +328,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         rtn = 1;
         door = Z_Calloc(sizeof(*door), PU_MAP, 0);
         door->thinker.function = T_Door;
-        P_ThinkerAdd(&door->thinker);
+        DD_ThinkerAdd(&door->thinker);
         xsec->specialData = door;
 
         door->sector = sec;
@@ -736,7 +736,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
     // New door thinker.
     door = Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = T_Door;
-    P_ThinkerAdd(&door->thinker);
+    DD_ThinkerAdd(&door->thinker);
     xsec->specialData = door;
     door->sector = sec;
     door->state = DS_UP;
@@ -858,7 +858,7 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 
     door = Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = T_Door;
-    P_ThinkerAdd(&door->thinker);
+    DD_ThinkerAdd(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
@@ -876,7 +876,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 
     door = Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = T_Door;
-    P_ThinkerAdd(&door->thinker);
+    DD_ThinkerAdd(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;

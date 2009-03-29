@@ -390,13 +390,13 @@ extern          "C" {
     void            P_MaterialPrecache(material_t* mat);
 
     // Play: Thinkers.
-    void            P_ThinkerAdd(thinker_t* th);
-    void            P_ThinkerRemove(thinker_t* th);
-    void            P_ThinkerSetStasis(thinker_t* th, boolean on);
+    void            DD_InitThinkers(void);
+    void            DD_RunThinkers(void);
+    void            DD_ThinkerAdd(thinker_t* th);
+    void            DD_ThinkerRemove(thinker_t* th);
+    void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
 
-    boolean         P_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
-    void            P_RunThinkers(void);
-    void            P_InitThinkers(void);
+    boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
 
     // Refresh.
     int             DD_GetFrameRate(void);

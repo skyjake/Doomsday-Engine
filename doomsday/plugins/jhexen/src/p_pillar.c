@@ -69,7 +69,7 @@ void T_BuildPillar(pillar_t *pillar)
         P_ToXSector(pillar->sector)->specialData = NULL;
         SN_StopSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN));
         P_TagFinished(P_ToXSector(pillar->sector)->tag);
-        P_ThinkerRemove(&pillar->thinker);
+        DD_ThinkerRemove(&pillar->thinker);
     }
 }
 
@@ -111,7 +111,7 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
 
         pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         pillar->thinker.function = T_BuildPillar;
-        P_ThinkerAdd(&pillar->thinker);
+        DD_ThinkerAdd(&pillar->thinker);
 
         P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;
@@ -173,7 +173,7 @@ int EV_OpenPillar(linedef_t *line, byte *args)
 
         pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         pillar->thinker.function = T_BuildPillar;
-        P_ThinkerAdd(&pillar->thinker);
+        DD_ThinkerAdd(&pillar->thinker);
 
         P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;

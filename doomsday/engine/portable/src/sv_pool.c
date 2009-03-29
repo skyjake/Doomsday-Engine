@@ -2196,30 +2196,26 @@ typedef struct {
 static boolean newMobjDelta(thinker_t* th, void* context)
 {
     newmobjdeltaparams_t* params = (newmobjdeltaparams_t*) context;
+    mobj_t*             mo = (mobj_t *) th;
 
-    if(P_IsMobjThinker(th->function))
+    // Some objects should not be processed.
+    if(!Sv_IsMobjIgnored(mo))
     {
-        mobj_t*             mo = (mobj_t *) th;
+        mobjdelta_t         delta;
 
-        // Some objects should not be processed.
-        if(!Sv_IsMobjIgnored(mo))
+        // Compare to produce a delta.
+        if(Sv_RegisterCompareMobj(params->reg, mo, &delta))
         {
-            mobjdelta_t         delta;
+            Sv_AddDeltaToPools(&delta, params->targets);
 
-            // Compare to produce a delta.
-            if(Sv_RegisterCompareMobj(params->reg, mo, &delta))
+            if(params->doUpdate)
             {
-                Sv_AddDeltaToPools(&delta, params->targets);
+                reg_mobj_t*         obj;
 
-                if(params->doUpdate)
-                {
-                    reg_mobj_t*         obj;
-
-                    // This'll add a new register-mobj if it doesn't
-                    // already exist.
-                    obj = Sv_RegisterAddMobj(params->reg, mo->thinker.id);
-                    Sv_RegisterMobj(&obj->mo, mo);
-                }
+                // This'll add a new register-mobj if it doesn't
+                // already exist.
+                obj = Sv_RegisterAddMobj(params->reg, mo->thinker.id);
+                Sv_RegisterMobj(&obj->mo, mo);
             }
         }
     }
@@ -2238,7 +2234,8 @@ void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     params.doUpdate = doUpdate;
     params.targets = targets;
 
-    P_IterateThinkers(NULL, newMobjDelta, &params);
+    // Mobjs are always public.
+    P_IterateThinkers(gx.MobjThinker, 0x1, newMobjDelta, &params);
 }
 
 /**

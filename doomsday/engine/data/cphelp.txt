@@ -604,6 +604,9 @@ desc = 1=Render player view in wireframe mode.
 [rend-dev-framecount]
 desc = Frame counter.
 
+[rend-dev-generator-show-indices]
+desc = 1=Display particle generator indices.
+
 [rend-dev-blockmap-debug]
 desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=Subsectors.
 

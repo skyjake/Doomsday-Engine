@@ -70,37 +70,37 @@ extern boolean mapSetup;
  * These map data arrays are internal to the engine.
  */
 char mapID[9]; // Name by which the game referred to the current map.
-uint numVertexes;
-vertex_t* vertexes;
+uint numVertexes = 0;
+vertex_t* vertexes = NULL;
 
-uint numSegs;
-seg_t* segs;
+uint numSegs = 0;
+seg_t* segs = NULL;
 
-uint numSectors;
-sector_t* sectors;
+uint numSectors = 0;
+sector_t* sectors = NULL;
 
-uint numSSectors;
-subsector_t* ssectors;
+uint numSSectors = 0;
+subsector_t* ssectors = NULL;
 
-uint numNodes;
-node_t* nodes;
+uint numNodes = 0;
+node_t* nodes = NULL;
 
-uint numLineDefs;
-linedef_t* lineDefs;
+uint numLineDefs = 0;
+linedef_t* lineDefs = NULL;
 
-uint numSideDefs;
-sidedef_t* sideDefs;
+uint numSideDefs = 0;
+sidedef_t* sideDefs = NULL;
 
-watchedplanelist_t* watchedPlaneList;
-surfacelist_t* movingSurfaceList;
-surfacelist_t* decoratedSurfaceList;
+watchedplanelist_t* watchedPlaneList = NULL;
+surfacelist_t* movingSurfaceList = NULL;
+surfacelist_t* decoratedSurfaceList = NULL;
 
-blockmap_t* BlockMap;
-blockmap_t* SSecBlockMap;
+blockmap_t* BlockMap = NULL;
+blockmap_t* SSecBlockMap = NULL;
 
-byte* rejectMatrix; // For fast sight rejection.
+byte* rejectMatrix = NULL; // For fast sight rejection.
 
-nodepile_t* mobjNodes, *lineNodes; // All kinds of wacky links.
+nodepile_t* mobjNodes = NULL, *lineNodes = NULL; // All kinds of wacky links.
 
 float mapGravity;
 
@@ -310,6 +310,9 @@ boolean P_LoadMap(const char *mapID)
     {
         uint                i;
         gamemap_t*          map = P_GetCurrentMap();
+
+        // Init the thinker lists (public and private).
+        P_InitThinkerLists(0x1 | 0x2);
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(P_GetUniqueMapID(map));

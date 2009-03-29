@@ -147,7 +147,7 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     mo->ddFlags = ddflags;
     mo->thinker.function = function;
     if(mo->thinker.function)
-        P_ThinkerAdd(&mo->thinker);
+        P_ThinkerAdd(&mo->thinker, true); // Make it public.
 
     return mo;
 }

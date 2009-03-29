@@ -459,8 +459,8 @@ enum thinkerclass_e {
     byte                tClass;
 
     // Remove all the current thinkers.
-    P_IterateThinkers(NULL, removeThinker, NULL);
-    P_InitThinkers();
+    DD_IterateThinkers(NULL, removeThinker, NULL);
+    DD_InitThinkers();
 
     // Read in saved thinkers.
     for(;;)
@@ -521,7 +521,7 @@ typedef struct {
 
     ceiling->thinker.function = T_MoveCeiling;
     if(!(temp + V19_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&ceiling->thinker, true);
+        DD_ThinkerSetStasis(&ceiling->thinker, true);
 
     P_ToXSector(ceiling->sector)->specialData = ceiling;
     return true; // Add this thinker.
@@ -646,7 +646,7 @@ typedef struct {
 
     plat->thinker.function = T_PlatRaise;
     if(!(temp + V19_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&plat->thinker, true);
+        DD_ThinkerSetStasis(&plat->thinker, true);
 
     P_ToXSector(plat->sector)->specialData = plat;
     return true; // Add this thinker.
@@ -792,7 +792,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadCeiling(ceiling);
 
-            P_ThinkerAdd(&ceiling->thinker);
+            DD_ThinkerAdd(&ceiling->thinker);
             break;
 
         case tc_door:
@@ -801,7 +801,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadDoor(door);
 
-            P_ThinkerAdd(&door->thinker);
+            DD_ThinkerAdd(&door->thinker);
             break;
 
         case tc_floor:
@@ -810,7 +810,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadFloor(floor);
 
-            P_ThinkerAdd(&floor->thinker);
+            DD_ThinkerAdd(&floor->thinker);
             break;
 
         case tc_plat:
@@ -819,7 +819,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadPlat(plat);
 
-            P_ThinkerAdd(&plat->thinker);
+            DD_ThinkerAdd(&plat->thinker);
             break;
 
         case tc_flash:
@@ -828,7 +828,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadFlash(flash);
 
-            P_ThinkerAdd(&flash->thinker);
+            DD_ThinkerAdd(&flash->thinker);
             break;
 
         case tc_strobe:
@@ -837,7 +837,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadStrobe(strobe);
 
-            P_ThinkerAdd(&strobe->thinker);
+            DD_ThinkerAdd(&strobe->thinker);
             break;
 
         case tc_glow:
@@ -846,7 +846,7 @@ void P_v19_UnArchiveSpecials(void)
 
             SV_ReadGlow(glow);
 
-            P_ThinkerAdd(&glow->thinker);
+            DD_ThinkerAdd(&glow->thinker);
             break;
 
         default:

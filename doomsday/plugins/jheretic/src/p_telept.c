@@ -1,7 +1,7 @@
 /**\file
  *\section License
  * License: GPL
- * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
@@ -215,7 +215,7 @@ static mobj_t* getTeleportDestination(short tag)
         {
             params.sec = sec;
 
-            if(!P_IterateThinkers(P_MobjThinker, findMobj, &params))
+            if(!DD_IterateThinkers(P_MobjThinker, findMobj, &params))
             {   // Found one!
                 return params.foundMobj;
             }

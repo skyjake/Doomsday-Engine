@@ -254,6 +254,7 @@ void R_Init(void)
     Rend_Init();
     frameCount = 0;
     R_InitViewBorder();
+    P_PtcInit();
 
     Def_PostInit();
 }

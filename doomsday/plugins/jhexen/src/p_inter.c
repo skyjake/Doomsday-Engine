@@ -1330,7 +1330,7 @@ mobj_t* ActiveMinotaur(player_t* master)
     params.master = master;
     params.foundMobj = NULL;
 
-    if(!P_IterateThinkers(P_MobjThinker, findActiveMinotaur, &params))
+    if(!DD_IterateThinkers(P_MobjThinker, findActiveMinotaur, &params))
         return params.foundMobj;
 
     return NULL;

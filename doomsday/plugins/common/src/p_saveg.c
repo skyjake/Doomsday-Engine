@@ -598,7 +598,7 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
     else
     {
         // Count the number of mobjs we'll be writing.
-        P_IterateThinkers(P_MobjThinker, countMobjs, &params);
+        DD_IterateThinkers(P_MobjThinker, countMobjs, &params);
     }
 
     thingArchive = calloc(params.count, sizeof(mobj_t*));
@@ -2784,7 +2784,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         if(hdr.version == 5)
         {
             if(!SV_ReadByte())
-                P_ThinkerSetStasis(&ceiling->thinker, true);
+                DD_ThinkerSetStasis(&ceiling->thinker, true);
         }
 #endif
 
@@ -2851,7 +2851,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         ceiling->thinker.function = T_MoveCeiling;
 #if !__JHEXEN__
         if(!junk.function)
-            P_ThinkerSetStasis(&ceiling->thinker, true);
+            DD_ThinkerSetStasis(&ceiling->thinker, true);
 #endif
     }
 
@@ -3116,7 +3116,7 @@ static int SV_ReadPlat(plat_t *plat)
         if(hdr.version == 5)
         {
         if(!SV_ReadByte())
-            P_ThinkerSetStasis(&plat->thinker, true);
+            DD_ThinkerSetStasis(&plat->thinker, true);
         }
 #endif
 
@@ -3171,7 +3171,7 @@ static int SV_ReadPlat(plat_t *plat)
         plat->thinker.function = T_PlatRaise;
 #if !__JHEXEN__
         if(!junk.function)
-            P_ThinkerSetStasis(&plat->thinker, true);
+            DD_ThinkerSetStasis(&plat->thinker, true);
 #endif
     }
 
@@ -4031,7 +4031,7 @@ static void P_ArchiveThinkers(boolean savePlayers)
 #endif
 
     // Save off the current thinkers.
-    P_IterateThinkers(NULL, archiveThinker, &localSavePlayers);
+    DD_IterateThinkers(NULL, archiveThinker, &localSavePlayers);
 
     // Add a terminating marker.
     SV_WriteByte(TC_END);
@@ -4123,8 +4123,8 @@ static void P_UnArchiveThinkers(void)
     if(IS_SERVER)
 #endif
     {
-        P_IterateThinkers(NULL, removeThinker, NULL);
-        P_InitThinkers();
+        DD_IterateThinkers(NULL, removeThinker, NULL);
+        DD_InitThinkers();
     }
 
 #if __JHEXEN__
@@ -4244,18 +4244,18 @@ static void P_UnArchiveThinkers(void)
                       tClass);
 
         if(knownThinker)
-            P_ThinkerAdd(th);
+            DD_ThinkerAdd(th);
         if(inStasis)
-            P_ThinkerSetStasis(th, true);
+            DD_ThinkerSetStasis(th, true);
     }
 
     // Update references to things.
 #if __JHEXEN__
-    P_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
+    DD_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
 #else
     if(IS_SERVER)
     {
-        P_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
+        DD_IterateThinkers(P_MobjThinker, restoreMobjLinks, NULL);
 
         for(i = 0; i < numlines; ++i)
         {

@@ -95,7 +95,7 @@ static byte* luminousClipped = NULL;
 static uint* luminousOrder = NULL;
 
 // List of unused and used list nodes, for linking lumobjs with subsectors.
-static lumlistnode_t* listNodeFirst, *listNodeCursor;
+static lumlistnode_t* listNodeFirst = NULL, *listNodeCursor = NULL;
 
 // List of lumobjs for each subsector;
 static lumlistnode_t** subLumObjList = NULL;
@@ -218,7 +218,8 @@ void LO_ClearForFrame(void)
 
     // Start reusing nodes from the first one in the list.
     listNodeCursor = listNodeFirst;
-    memset(subLumObjList, 0, sizeof(lumlistnode_t*) * numSSectors);
+    if(subLumObjList)
+        memset(subLumObjList, 0, sizeof(lumlistnode_t*) * numSSectors);
     numLuminous = 0;
 }
 
@@ -569,8 +570,6 @@ static int C_DECL lumobjSorter(const void* e1, const void* e2)
  */
 void LO_BeginFrame(void)
 {
-#define MAX_LINKS      (8192) // Normally 100-200, heavy: 1000
-
     uint                i;
 
     if(!(numLuminous > 0))
@@ -620,8 +619,6 @@ void LO_BeginFrame(void)
     // objLinks already contains links if there are any light decorations
     // currently in use.
     loInited = true;
-
-#undef MAX_LINKS
 }
 
 /**
@@ -886,8 +883,7 @@ void LO_UnlinkMobjLumobj(mobj_t* mo)
 
 boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 {
-    if(P_IsMobjThinker(th->function))
-        LO_UnlinkMobjLumobj((mobj_t*) th);
+    LO_UnlinkMobjLumobj((mobj_t*) th);
 
     return true; // Continue iteration.
 }
@@ -895,7 +891,10 @@ boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 void LO_UnlinkMobjLumobjs(cvar_t* var)
 {
     if(!useDynLights)
-        P_IterateThinkers(NULL, LOIT_UnlinkMobjLumobj, NULL);
+    {
+        // Mobjs are always public.
+        P_IterateThinkers(gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);
+    }
 }
 
 #if _DEBUG

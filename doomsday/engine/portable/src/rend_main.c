@@ -3810,17 +3810,12 @@ void Rend_RenderMap(void)
     }
     RL_RenderAllLists();
 
-    Rend_RenderNormals();
-
-/*#if _DEBUG
-LO_DrawLumobjs();
-#endif*/
-
-    // Draw the mobj bounding boxes.
-    Rend_RenderBoundingBoxes();
-
-    // Draw the vertex position/indice debug aids.
-    Rend_Vertexes();
+    // Draw various debugging displays:
+    Rend_RenderNormals(); // World surface normals.
+    //LO_DrawLumobjs(); // Lumobjs.
+    Rend_RenderBoundingBoxes(); // Mobj bounding boxes.
+    Rend_Vertexes(); // World vertex positions/indices.
+    Rend_RenderGenerators(); // Particle generator origins.
 
     // Draw the Source Bias Editor's draw that identifies the current light.
     SBE_DrawCursor();

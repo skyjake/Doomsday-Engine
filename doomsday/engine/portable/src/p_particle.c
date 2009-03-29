@@ -78,9 +78,9 @@ float particleSpawnRate = 1; // Unmodified.
 
 static ptcgen_t* activePtcGens[MAX_ACTIVE_PTCGENS];
 
-static pglink_t** pgLinks; // Array of pointers to pgLinks in pgStore.
+static pglink_t** pgLinks = NULL; // Array of pointers to pgLinks in pgStore.
 static pglink_t* pgStore;
-static unsigned int pgCursor, pgMax;
+static unsigned int pgCursor = 0, pgMax;
 
 static vec2_t mbox[2];
 static int tmpz, tmprad, tmcross, tmpx1, tmpx2, tmpy1, tmpy2;
@@ -166,9 +166,9 @@ static ptcgen_t* P_PtcGenCreate(void)
 {
     ptcgen_t*           gen = Z_Calloc(sizeof(ptcgen_t), PU_MAP, 0);
 
-    // Link the thinker to the list of thinkers.
+    // Link the thinker to the list of (private) thinkers.
     gen->thinker.function = P_PtcGenThinker;
-    P_ThinkerAdd(&gen->thinker);
+    P_ThinkerAdd(&gen->thinker, false);
 
     return gen;
 }
@@ -207,6 +207,14 @@ static ptcgen_t* P_NewPtcGen(void)
     }
 
     return 0; // Creation failed.
+}
+
+/**
+ * Called once during startup.
+ */
+void P_PtcInit(void)
+{
+    memset(activePtcGens, 0, sizeof(activePtcGens));
 }
 
 void P_PtcInitForMap(void)
@@ -274,7 +282,7 @@ ptcgenid_t P_PtcGenToIndex(const ptcgen_t* gen)
  */
 static pglink_t* PG_GetLink(void)
 {
-    if(pgCursor != pgMax)
+    if(pgCursor < pgMax)
         return &pgStore[pgCursor++];
 
     VERBOSE(Con_Message("PG_GetLink: Out of PGen store.\n"));
@@ -307,9 +315,11 @@ void P_CreatePtcGenLinks(void)
 {
     ptcgenid_t          i;
 
-    // Clear the PG links.
-    memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
-    pgCursor = 0;
+    if(pgLinks)
+    {   // Clear the PG links.
+        memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
+        pgCursor = 0;
+    }
 
     if(!useParticles)
         return;
@@ -398,22 +408,31 @@ static void P_PresimParticleGen(ptcgen_t* gen, int tics)
  * Creates a new mobj-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnParticleGen(ded_ptcgen_t* def, mobj_t* source)
+void P_SpawnParticleGen(const ded_ptcgen_t* def, mobj_t* source)
 {
     ptcgen_t*           gen;
 
     if(isDedicated || !useParticles || !(gen = P_NewPtcGen()))
         return;
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
             def->state, def - defs.ptcgens, defs.states[source->state-states].id,
             defs.mobjs[source->type].id, source);
-#endif
-*/
+#endif*/
 
     // Initialize the particle generator.
     gen->count = def->particles;
+    // Size of source sector might determine count.
+    if(def->flags & PGF_SCALED_RATE)
+    {
+        gen->spawnRateMultiplier = source->subsector->sector->approxArea;
+    }
+    else
+    {
+        gen->spawnRateMultiplier = 1;
+    }
+
     P_InitParticleGen(gen, def);
     gen->source = source;
     gen->srcid = source->thinker.id;
@@ -430,24 +449,23 @@ static void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, sector_t* sec,
                                     boolean isCeiling)
 {
     ptcgen_t*           gen;
-    float*              box;
-    float               width, height;
 
-    if(isDedicated || !useParticles || !(gen = P_NewPtcGen()))
+    if(isDedicated || !useParticles)
         return;
 
+    if(!(gen = P_NewPtcGen()))
+        return;
+
+    gen->count = def->particles;
     // Size of source sector might determine count.
     if(def->flags & PGF_PARTS_PER_128)
     {
-        // This is rather a rough estimate of sector area.
-        box = sec->bBox;
-        width = (box[BOXRIGHT] - box[BOXLEFT]) / 128;
-        height = (box[BOXTOP] - box[BOXBOTTOM]) / 128;
-        gen->area = width * height;
-        gen->count = def->particles * gen->area;
+        gen->spawnRateMultiplier = sec->approxArea;
     }
     else
-        gen->count = def->particles;
+    {
+        gen->spawnRateMultiplier = 1;
+    }
 
     // Initialize the particle generator.
     P_InitParticleGen(gen, def);
@@ -1258,20 +1276,13 @@ void P_PtcGenThinker(ptcgen_t* gen)
     // Spawn new particles?
     if((gen->age <= def->spawnAge || def->spawnAge < 0) &&
        (gen->source || gen->sector || gen->type >= 0 ||
-        gen->flags & PGF_UNTRIGGERED))
+        (gen->flags & PGF_UNTRIGGERED)))
     {
-        if(gen->flags & PGF_PARTS_PER_128 || gen->flags & PGF_SCALED_RATE)
-        {
-            // Density spawning.
-            newparts = def->spawnRate * gen->area;
-        }
-        else
-        {
-            // Normal spawning.
-            newparts = def->spawnRate;
-        }
-        newparts *=
-            particleSpawnRate * (1 - def->spawnRateVariance * RNG_RandFloat());
+        newparts = def->spawnRate * gen->spawnRateMultiplier;
+
+        newparts *= particleSpawnRate *
+            (1 - def->spawnRateVariance * RNG_RandFloat());
+
         gen->spawnCount += newparts;
         while(gen->spawnCount >= 1)
         {
@@ -1284,7 +1295,8 @@ void P_PtcGenThinker(ptcgen_t* gen)
                     Cl_MobjIterator(PIT_ClientMobjParticles, gen);
                 }
 
-                P_IterateThinkers(gx.MobjThinker, manyNewParticles, gen);
+                P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
+                                  manyNewParticles, gen);
 
                 // The generator has no real source.
                 gen->source = NULL;
@@ -1408,6 +1420,8 @@ void P_SpawnTypeParticleGens(void)
 
         // Initialize the particle generator.
         gen->count = def->particles;
+        gen->spawnRateMultiplier = 1;
+
         P_InitParticleGen(gen, def);
         gen->type = def->typeNum;
         gen->type2 = def->type2Num;
@@ -1439,6 +1453,8 @@ void P_SpawnMapParticleGens(const char* mapId)
 
         // Initialize the particle generator.
         gen->count = def->particles;
+        gen->spawnRateMultiplier = 1;
+
         P_InitParticleGen(gen, def);
         gen->flags |= PGF_UNTRIGGERED;
 
@@ -1452,21 +1468,19 @@ void P_SpawnMapParticleGens(const char* mapId)
  */
 void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
 {
-    int                 i;
-    float               len;
-    ptcgen_t*           gen;
-    ded_ptcgen_t*       def;
+    const ded_ptcgen_t* def;
 
     // Are particles allowed?
-    if(isDedicated || !useParticles || !mo || !inflictor || amount <= 0)
+    if(isDedicated || !useParticles)
         return;
 
-    // Search for a suitable definition.
-    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    if(!mo || !inflictor || amount <= 0)
+        return;
+
+    if((def = Def_GetDamageGenerator(mo->type)))
     {
-        // It must be for this type of mobj.
-        if(def->damageNum != mo->type)
-            continue;
+        ptcgen_t*           gen;
+        vec3_t              vector, vecDelta;
 
         // Create it.
         if(!(gen = P_NewPtcGen()))
@@ -1474,32 +1488,28 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
 
         gen->count = def->particles;
         P_InitParticleGen(gen, def);
-        gen->flags |= PGF_UNTRIGGERED;
-        gen->area = amount;
-        if(gen->area < 1)
-            gen->area = 1;
 
-        // Calculate appropriate center coordinates and the vector.
+        gen->flags |= PGF_UNTRIGGERED;
+        gen->spawnRateMultiplier = MAX_OF(amount, 1);
+
+        // Calculate appropriate center coordinates.
         gen->center[VX] += FLT2FIX(mo->pos[VX]);
         gen->center[VY] += FLT2FIX(mo->pos[VY]);
         gen->center[VZ] += FLT2FIX(mo->pos[VZ] + mo->height / 2);
-        gen->vector[VX] += FLT2FIX(mo->pos[VX] - inflictor->pos[VX]);
-        gen->vector[VY] += FLT2FIX(mo->pos[VY] - inflictor->pos[VY]);
-        gen->vector[VZ] +=
-            FLT2FIX(mo->pos[VZ] + (mo->height / 2) - inflictor->pos[VZ] - (inflictor->height / 2));
 
-        // Normalize the vector.
-        len =
-            P_ApproxDistance(P_ApproxDistance
-                             (FIX2FLT(gen->vector[VX]), FIX2FLT(gen->vector[VY])),
-                             FIX2FLT(gen->vector[VZ]));
-        if(len != 0)
-        {
-            uint                k;
+        // Calculate launch vector.
+        V3_Set(vecDelta, inflictor->pos[VX] - mo->pos[VX],
+               inflictor->pos[VY] - mo->pos[VY],
+               (inflictor->pos[VZ] - inflictor->height / 2) -
+                  (mo->pos[VZ] + mo->height / 2));
 
-            for(k = 0; k < 3; ++k)
-                gen->vector[k] = FixedDiv(gen->vector[k], FLT2FIX(len));
-        }
+        V3_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
+        V3_Sum(vector, vector, vecDelta);
+        V3_Normalize(vector);
+
+        gen->vector[VX] = FLT2FIX(vector[VX]);
+        gen->vector[VY] = FLT2FIX(vector[VY]);
+        gen->vector[VZ] = FLT2FIX(vector[VZ]);
 
         // Is there a need to pre-simulate?
         P_PresimParticleGen(gen, def->preSim);

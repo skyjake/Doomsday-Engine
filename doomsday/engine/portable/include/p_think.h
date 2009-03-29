@@ -41,18 +41,24 @@ typedef struct thinker_s {
 
 boolean         P_ThinkerListInited(void);
 
-void            P_InitThinkers(void);
-void            P_RunThinkers(void);
-boolean         P_IterateThinkers(think_t type,
+void            P_InitThinkerLists(byte flags);
+boolean         P_IterateThinkers(think_t type, byte flags,
                                   boolean (*callback) (thinker_t* th, void*),
                                   void* context);
 
-void            P_ThinkerAdd(thinker_t* th);
+void            P_ThinkerAdd(thinker_t* th, boolean makePublic);
 void            P_ThinkerRemove(thinker_t* th);
-void            P_ThinkerSetStasis(thinker_t* th, boolean on);
 
 void            P_SetMobjID(thid_t id, boolean state);
 boolean         P_IsUsedMobjID(thid_t id);
 boolean         P_IsMobjThinker(think_t thinker);
 
+// Public interface:
+void            DD_InitThinkers(void);
+void            DD_RunThinkers(void);
+void            DD_ThinkerAdd(thinker_t* th);
+void            DD_ThinkerRemove(thinker_t* th);
+void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
+boolean         DD_IterateThinkers(think_t func, boolean (*callback) (thinker_t*, void*),
+                                   void* context);
 #endif

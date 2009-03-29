@@ -549,6 +549,22 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
     return NULL; // Not found.
 }
 
+ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
+{
+    int                 i;
+    ded_ptcgen_t*       def;
+
+    // Search for a suitable definition.
+    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    {
+        // It must be for this type of mobj.
+        if(def->damageNum == mobjType)
+            return def;
+    }
+
+    return NULL;
+}
+
 ded_xgclass_t* Def_GetXGClass(const char* name)
 {
     ded_xgclass_t*      def;

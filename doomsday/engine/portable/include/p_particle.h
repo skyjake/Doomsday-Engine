@@ -96,10 +96,10 @@ typedef struct {
 typedef struct {
     short           type;
     short           flags;
-    int             resistance;
-    int             bounce;
-    int             radius;
-    int             gravity;
+    fixed_t         resistance;
+    fixed_t         bounce;
+    fixed_t         radius;
+    fixed_t         gravity;
 } ptcstage_t;
 
 // Particle Generator
@@ -107,7 +107,7 @@ typedef struct ptcgen_s {
     thinker_t       thinker; // Func = P_PtcGenThinker
     sector_t*       sector; // Flat-triggered.
     int             ceiling; // Flat-triggered.
-    float           area; // Rough estimate of sector area.
+    //float           area; // Rough estimate of sector area.
     const ded_ptcgen_t* def; // The definition of this generator.
     mobj_t*         source; // If mobj-triggered.
     int             srcid; // Source mobj ID.
@@ -117,6 +117,7 @@ typedef struct ptcgen_s {
     fixed_t         vector[3]; // Converted from the definition.
     int             flags; // PGF_* flags.
     float           spawnCount;
+    float           spawnRateMultiplier;
     int             spawnCP; // Spawn cursor.
     int             age;
     int             count; // Number of particles.
@@ -126,10 +127,12 @@ typedef struct ptcgen_s {
 
 typedef short ptcgenid_t;
 
+void            P_PtcInit(void);
+
 void            P_PtcInitForMap(void);
 
 void            P_CreatePtcGenLinks(void);
-const ptcgen_t* P_IndexToPtcGen(ptcgenid_t);
+const ptcgen_t* P_IndexToPtcGen(ptcgenid_t ptcGenID);
 ptcgenid_t      P_PtcGenToIndex(const ptcgen_t* gen);
 
 boolean         P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
@@ -138,7 +141,7 @@ boolean         P_IterateSectorLinkedPtcGens(sector_t* sector,
                                              boolean (*callback) (ptcgen_t*, void*),
                                              void* context);
 
-void            P_SpawnParticleGen(ded_ptcgen_t* def, mobj_t* source);
+void            P_SpawnParticleGen(const ded_ptcgen_t* def, mobj_t* source);
 void            P_SpawnTypeParticleGens(void);
 void            P_SpawnMapParticleGens(const char* mapID);
 void            P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor,

@@ -41,5 +41,6 @@ void            Rend_ParticleInitForNewFrame(void);
 void            Rend_ParticleMarkInSectorVisible(sector_t* sector);
 
 void            Rend_RenderParticles(void);
-
+// Debugging aid:
+void            Rend_RenderGenerators(void);
 #endif

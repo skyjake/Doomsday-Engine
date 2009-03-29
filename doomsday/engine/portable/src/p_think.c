@@ -38,6 +38,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
+    boolean         isPublic; /* @c true = all thinkers in this list are
+                                 visible publically */
     thinker_t       thinkerCap;
 } thinkerlist_t;
 
@@ -62,6 +64,37 @@ static boolean inited = false;
 
 // CODE --------------------------------------------------------------------
 
+static thid_t newMobjID(void)
+{
+    // Increment the ID dealer until a free ID is found.
+    // \fixme What if all IDs are in use? 65535 thinkers!?
+    while(P_IsUsedMobjID(++iddealer));
+    // Mark this ID as used.
+    P_SetMobjID(iddealer, true);
+    return iddealer;
+}
+
+void P_ClearMobjIDs(void)
+{
+    memset(idtable, 0, sizeof(idtable));
+    idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
+}
+
+boolean P_IsUsedMobjID(thid_t id)
+{
+    return idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
+}
+
+void P_SetMobjID(thid_t id, boolean state)
+{
+    int                 c = id >> 5, bit = 1 << (id & 31); //(id % 32);
+
+    if(state)
+        idtable[c] |= bit;
+    else
+        idtable[c] &= ~bit;
+}
+
 static void linkThinkerToList(thinker_t* th, thinkerlist_t* list)
 {
     // Link the thinker to the thinker list.
@@ -82,7 +115,8 @@ static void initThinkerList(thinkerlist_t* list)
     list->thinkerCap.prev = list->thinkerCap.next = &list->thinkerCap;
 }
 
-static thinkerlist_t* listForThinkFunc(think_t func, boolean canCreate)
+static thinkerlist_t* listForThinkFunc(think_t func, boolean isPublic,
+                                       boolean canCreate)
 {
     size_t              i;
 
@@ -90,7 +124,7 @@ static thinkerlist_t* listForThinkFunc(think_t func, boolean canCreate)
     {
         thinkerlist_t*      list = thinkerLists[i];
 
-        if(list->thinkerCap.function == func)
+        if(list->thinkerCap.function == func && list->isPublic == isPublic)
             return list;
     }
 
@@ -107,6 +141,7 @@ static thinkerlist_t* listForThinkFunc(think_t func, boolean canCreate)
         Z_Calloc(sizeof(thinkerlist_t), PU_STATIC, 0);
 
     initThinkerList(list);
+    list->isPublic = isPublic;
     list->thinkerCap.function = func;
     // Set the list sentinel to instasis (safety measure).
     list->thinkerCap.inStasis = true;
@@ -171,113 +206,12 @@ static boolean iterateThinkers(thinkerlist_t* list,
     return result;
 }
 
-boolean P_IsMobjThinker(think_t func)
-{
-    if(func && func == gx.MobjThinker)
-        return true;
-
-    return false;
-}
-
-void P_ClearMobjIDs(void)
-{
-    memset(idtable, 0, sizeof(idtable));
-    idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
-}
-
-boolean P_IsUsedMobjID(thid_t id)
-{
-    return idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
-}
-
-void P_SetMobjID(thid_t id, boolean state)
-{
-    int                 c = id >> 5, bit = 1 << (id & 31); //(id % 32);
-
-    if(state)
-        idtable[c] |= bit;
-    else
-        idtable[c] &= ~bit;
-}
-
-thid_t P_NewMobjID(void)
-{
-    // Increment the ID dealer until a free ID is found.
-    // \fixme What if all IDs are in use? 65535 thinkers!?
-    while(P_IsUsedMobjID(++iddealer));
-    // Mark this ID as used.
-    P_SetMobjID(iddealer, true);
-    return iddealer;
-}
-
-void P_InitThinkers(void)
-{
-    if(!inited)
-    {
-        numThinkerLists = 0;
-        thinkerLists = NULL;
-    }
-    else
-    {
-        size_t              i;
-
-        for(i = 0; i < numThinkerLists; ++i)
-            initThinkerList(thinkerLists[i]);
-    }
-
-    P_ClearMobjIDs();
-    inited = true;
-}
-
-boolean P_ThinkerListInited(void)
-{
-    return inited;
-}
-
 /**
- * Iterate the list of thinkers making a callback for each.
- *
- * @param type          If not @c NULL, only make a callback for thinkers
- *                      whose function matches this.
- * @param callback      The callback to make. Iteration will continue
- *                      until a callback returns a zero value.
- * @param context       Is passed to the callback function.
+ * @param th            Thinker to be added.
+ * @param makePublic    If @c true, this thinker will be visible publically
+ *                      via the Doomsday public API thinker interface(s).
  */
-boolean P_IterateThinkers(think_t func,
-                          boolean (*callback) (thinker_t*, void*),
-                          void* context)
-{
-    if(!inited)
-        return true;
-
-    if(func)
-        return iterateThinkers(listForThinkFunc(func, false), callback,
-                               context);
-
-    {
-    boolean             result = true;
-    size_t              i;
-
-    for(i = 0; i < numThinkerLists; ++i)
-    {
-        thinkerlist_t*      list = thinkerLists[i];
-
-        if((result = iterateThinkers(list, callback, context)) == 0)
-            break;
-    }
-    return result;
-    }
-}
-
-void P_RunThinkers(void)
-{
-    P_IterateThinkers(NULL, runThinker, NULL);
-}
-
-/**
- * Adds a new thinker at the end of the list.
- */
-void P_ThinkerAdd(thinker_t* th)
+void P_ThinkerAdd(thinker_t* th, boolean makePublic)
 {
     if(!th)
         return;
@@ -291,7 +225,7 @@ void P_ThinkerAdd(thinker_t* th)
     if(P_IsMobjThinker(th->function))
     {
         // It is a mobj, give it an ID.
-        th->id = P_NewMobjID();
+        th->id = newMobjID();
     }
     else
     {
@@ -300,7 +234,7 @@ void P_ThinkerAdd(thinker_t* th)
     }
 
     // Link the thinker to the thinker list.
-    linkThinkerToList(th, listForThinkFunc(th->function, true));
+    linkThinkerToList(th, listForThinkFunc(th->function, makePublic, true));
 }
 
 /**
@@ -332,16 +266,157 @@ void P_ThinkerRemove(thinker_t* th)
     th->function = (think_t) - 1;
 }
 
+boolean P_IsMobjThinker(think_t func)
+{
+    if(func && func == gx.MobjThinker)
+        return true;
+
+    return false;
+}
+
+/**
+ * Init the thinker lists.
+ *
+ * @params flags        0x1 = Init public thinkers.
+ *                      0x2 = Init private (engine-internal) thinkers.
+ */
+void P_InitThinkerLists(byte flags)
+{
+    if(!inited)
+    {
+        numThinkerLists = 0;
+        thinkerLists = NULL;
+    }
+    else
+    {
+        size_t              i;
+
+        for(i = 0; i < numThinkerLists; ++i)
+        {
+            thinkerlist_t*      list = thinkerLists[i];
+
+            if(list->isPublic && !(flags & 0x1))
+                continue;
+            if(!list->isPublic && !(flags & 0x2))
+                continue;
+
+            initThinkerList(list);
+        }
+    }
+
+    P_ClearMobjIDs();
+    inited = true;
+}
+
+boolean P_ThinkerListInited(void)
+{
+    return inited;
+}
+
+/**
+ * Iterate the list of thinkers making a callback for each.
+ *
+ * @param func          If not @c NULL, only make a callback for thinkers
+ *                      whose function matches this.
+ * @param flags         Thinker filter flags.
+ * @param callback      The callback to make. Iteration will continue
+ *                      until a callback returns a zero value.
+ * @param context       Is passed to the callback function.
+ */
+boolean P_IterateThinkers(think_t func, byte flags,
+                          boolean (*callback) (thinker_t*, void*),
+                          void* context)
+{
+    if(!inited)
+        return true;
+
+    if(func)
+    {   // We might have both public and shared lists for this func.
+        boolean             result = true;
+
+        if(flags & 0x1)
+            result = iterateThinkers(listForThinkFunc(func, true, false),
+                                     callback, context);
+        if(result && (flags & 0x2))
+            result = iterateThinkers(listForThinkFunc(func, false, false),
+                                     callback, context);
+        return result;
+    }
+
+    {
+    boolean             result = true;
+    size_t              i;
+
+    for(i = 0; i < numThinkerLists; ++i)
+    {
+        thinkerlist_t*      list = thinkerLists[i];
+
+        if(list->isPublic && !(flags & 0x1))
+            continue;
+        if(!list->isPublic && !(flags & 0x2))
+            continue;
+
+        if((result = iterateThinkers(list, callback, context)) == 0)
+            break;
+    }
+    return result;
+    }
+}
+
+/**
+ * Part of the Doomsday public API.
+ */
+void DD_InitThinkers(void)
+{
+    P_InitThinkerLists(0x1); // Init the public thinker lists.
+}
+
+/**
+ * Part of the Doomsday public API.
+ */
+void DD_RunThinkers(void)
+{
+    P_IterateThinkers(NULL, 0x1 | 0x2, runThinker, NULL);
+}
+
+/**
+ * Adds a new thinker to the thinker lists.
+ * Part of the Doomsday public API.
+ */
+void DD_ThinkerAdd(thinker_t* th)
+{
+    P_ThinkerAdd(th, true); // This is a public thinker.
+}
+
+/**
+ * Removes a thinker from the thinker lists.
+ * Part of the Doomsday public API.
+ */
+void DD_ThinkerRemove(thinker_t* th)
+{
+    P_ThinkerRemove(th);
+}
+
 /**
  * Change the 'in stasis' state of a thinker (stop it from thinking).
  *
  * @param th            The thinker to change.
  * @param on            @c true, put into stasis.
  */
-void P_ThinkerSetStasis(thinker_t* th, boolean on)
+void DD_ThinkerSetStasis(thinker_t* th, boolean on)
 {
     if(th)
     {
         th->inStasis = on;
     }
+}
+
+/**
+ * Part of the Doomsday public API.
+ */
+boolean DD_IterateThinkers(think_t func,
+                           boolean (*callback) (thinker_t*, void*),
+                           void* context)
+{
+    return P_IterateThinkers(func, 0x1, callback, context);
 }

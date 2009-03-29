@@ -748,11 +748,11 @@ static void buildSectorLineLists(gamemap_t *map)
 /**
  * \pre Lines in sector must be setup before this is called!
  */
-static void updateSectorBounds(sector_t *sec)
+static void updateSectorBounds(sector_t* sec)
 {
-    uint        i;
-    float      *bbox;
-    vertex_t   *vtx;
+    uint                i;
+    float*              bbox;
+    vertex_t*           vtx;
 
     if(!sec)
         return;
@@ -782,6 +782,10 @@ static void updateSectorBounds(sector_t *sec)
         if(vtx->V_pos[VY] > bbox[BOXTOP])
             bbox[BOXTOP]   = vtx->V_pos[VY];
     }
+
+    // This is very rough estimate of sector area.
+    sec->approxArea = ((bbox[BOXRIGHT] - bbox[BOXLEFT]) / 128) *
+        ((bbox[BOXTOP] - bbox[BOXBOTTOM]) / 128);
 }
 
 /**

@@ -318,27 +318,28 @@ end
 
 struct sector
     -       int         frameFlags
-    INT     int         validCount  // if == validCount, already checked.
+    INT     int         validCount // if == validCount, already checked.
     -       int         flags
-    -       float[4]    bBox        // Bounding box for the sector
+    -       float[4]    bBox // Bounding box for the sector.
+    -		float		approxArea // Rough approximation of sector area.
     FLOAT   float       lightLevel
     -       float       oldLightLevel
     FLOAT   float[3]    rgb
     -       float[3]    oldRGB
-    PTR     mobj_s*     mobjList    // List of mobjs in the sector.
+    PTR     mobj_s*     mobjList // List of mobjs in the sector.
     UINT    uint        lineDefCount
-    PTR     linedef_s** lineDefs       // [lineDefCount+1] size.
+    PTR     linedef_s** lineDefs // [lineDefCount+1] size.
     UINT    uint        ssectorCount
     PTR     subsector_s** ssectors // [ssectorCount+1] size.
     -       uint        numReverbSSecAttributors
     -       subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
     PTR     ddmobj_base_t soundOrg
     UINT    uint        planeCount
-    -       plane_s**   planes      // [planeCount+1] size.
-    -       sector_s*   lightSource // Main sky light source
-    -       uint        blockCount  // Number of gridblocks in the sector.
+    -       plane_s**   planes // [planeCount+1] size.
+    -       sector_s*   lightSource // Main sky light source.
+    -       uint        blockCount // Number of gridblocks in the sector.
     -       uint        changedBlockCount // Number of blocks to mark changed.
-    -       ushort*     blocks      // Light grid block indices.
+    -       ushort*     blocks // Light grid block indices.
     FLOAT   float[NUM_REVERB_DATA] reverb
     -       msector_t   buildData
 end
