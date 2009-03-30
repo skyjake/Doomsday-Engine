@@ -51,7 +51,7 @@ def run(addon):
 
     def makeField(header, content):
         return '<tr><td width="20%" bgcolor="#E8E8E8" align="right"><b>' + header + \
-               '</b><td width="80%">' + content
+               '</b></td><td width="80%">' + content + '</td></tr>'
 
     beginTable = '<p><table width="100%" border=0 cellpadding=6 cellspacing=0>'
     endTable = '</table>'

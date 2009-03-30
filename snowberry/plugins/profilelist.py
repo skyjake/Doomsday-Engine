@@ -88,11 +88,11 @@ def makeHTML(name, iconName, gameName=None, boldName=False):
     
     html = '<table width="100%%" border=0 cellspacing=2 cellpadding=%i>' % padding
     html += '<tr><td width="%i"' % iconSize + '><img width="%i"' % iconSize
-    html += ' height="%i"' % iconSize + ' src="' + iconPath + '"><td>' 
+    html += ' height="%i"' % iconSize + ' src="' + iconPath + '"></td><td>' 
     html += '<font size="+1">' + nameStyle[0] + name + nameStyle[1] + '</font>'
     if gameName:
         html += '<br><font color="#808080" size="-1">' + gameName + '</font>' 
-    html += '</table>'
+    html += '</td></tr></table>'
     return html 
 
 

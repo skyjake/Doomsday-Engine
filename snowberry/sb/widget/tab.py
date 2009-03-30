@@ -87,9 +87,9 @@ class FormattedTabArea (FormattedList):
 
         return ('<table width="100%" border=0 cellspacing=3 cellpadding=1>' +
                 '<tr><td width=35><img width=32 height=32 ' +
-                'src="%s"><td align="left" valign="center">%s</td>' %
+                'src="%s"></td><td align="left" valign="center">%s</td>' %
                 (paths.findBitmap(imageName), language.translate(tabId)) +
-                '</table>')
+                '</tr></table>')
 
     def retranslate(self):
         """Update the icons and names of the categories."""
