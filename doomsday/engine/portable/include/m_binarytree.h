@@ -32,15 +32,6 @@
 extern "C" {
 #endif
 
-// The C_DECL macro, used with compare functions.
-#ifndef C_DECL
-#  if defined(WIN32)
-#    define C_DECL __cdecl
-#  elif defined(UNIX)
-#    define C_DECL
-#  endif
-#endif
-
 typedef void* binarytree_t;
 
 // Creation/destruction methods:

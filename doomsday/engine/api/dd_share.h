@@ -35,6 +35,17 @@
 extern "C" {
 #endif
 
+// The C_DECL macro, used with compare functions.
+#ifndef C_DECL
+#  if defined(WIN32)
+#    define C_DECL __cdecl
+#  elif defined(UNIX)
+#    define C_DECL
+#  else
+#    define C_DECL
+#  endif
+#endif
+
 #include <stdlib.h>
 #include "../portable/include/dd_version.h"
 #include "dd_types.h"
