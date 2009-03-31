@@ -32,8 +32,8 @@ IF YOU HAVE A SOURCE TARBALL:
    example under the doomsday directory in the source tree.  For 
    instance:
    
-      $ mkdir deng-1.9.0/doomsday/build
-      $ cd deng-1.9.0/doomsday/build
+      $ mkdir deng-1.9.0/doomsday/mybuild
+      $ cd deng-1.9.0/doomsday/mybuild
 
 3. Run CMake.  For example:
 
