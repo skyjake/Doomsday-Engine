@@ -45,8 +45,8 @@
 #define PLUGIN_NICENAME     "DirectSound Audio Driver"
 #define PLUGIN_DETAILS      "Doomsday plugin for audio playback via DirectSound"
 
-#define PLUGIN_VERSION_TEXT "1.2.0"
+#define PLUGIN_VERSION_TEXT "1.2.1"
 #define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSDIRECTSOUND_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,2,0,0 // For WIN32 version info.
+#define PLUGIN_VERSION_NUMBER 1,2,1,0 // For WIN32 version info.
 
 #endif
