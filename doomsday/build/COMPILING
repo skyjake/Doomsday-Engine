@@ -28,24 +28,31 @@ IF YOU HAVE A SOURCE TARBALL:
 
 1. Unpack the source tarball, if you haven't already done so.
 
-2. Cd to the Build directory.  Compiling under the Build directory
-   will keep the main source directories clean of any object files.
-   It also prevents conflicts in the Src/Common/ directory, which is
-   used in a slightly different way by each game.
+2. Create your build directory.  It can be located anywhere, for 
+   example under the doomsday directory in the source tree.  For 
+   instance:
+   
+      $ mkdir deng-1.9.0/doomsday/build
+      $ cd deng-1.9.0/doomsday/build
 
-3. Run "cmake ../"  By default, everything will be installed under
-   FIXME.  You might want to use e.g. FIXME.
+3. Run CMake.  For example:
+
+      $ cmake ..
 
 4. If cmake failed due to missing libraries, install the required
    ones.  Make sure you have the development files for each.
 
-5. On *NIX run "make" and then "su -c 'make install'" or
-   "sudo 'make install'" depending on you *NIX distribution.
-   This will compile everything and install the executable (doomsday),
-   the libraries (games, renderer, sound), data files and definitions
-   files under the directory specified by the configured prefix.
+5. Compile everything:
 
-6. See the main README for tips on running the game.
+      $ make
+
+6. On *NIX run "su -c 'make install'" or "sudo 'make install'" 
+   depending on you *NIX distribution.  This will install the 
+   executable (doomsday), the libraries (games, renderer, sound), 
+   data files and definitions files under the directory specified
+   by the configured prefix.
+
+7. See the main README for tips on running the game.
 
 
 IF YOU USE SVN:
