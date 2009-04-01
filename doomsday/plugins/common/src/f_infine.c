@@ -562,6 +562,7 @@ void FI_Reset(void)
         FI_PopState();
 
     fiActive = false;
+    G_ChangeGameState(GS_WAITING);
 }
 
 /**
