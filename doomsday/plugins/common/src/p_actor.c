@@ -256,5 +256,5 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
     if(name < 0 || name >= NUM_STATE_NAMES)
         return S_NULL;
 
-    return MOBJINFO[type].info->states[name];
+    return MOBJINFO[type].states[name];
 }
