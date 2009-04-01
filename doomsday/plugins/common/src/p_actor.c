@@ -251,11 +251,10 @@ void P_UpdateHealthBits(mobj_t* mobj)
  */
 statenum_t P_GetState(mobjtype_t type, statename_t name)
 {
-
-    if(type < 0 || type >= NUMMOBJTYPES)
+    if(type < 0 || type >= Get(DD_NUMMOBJTYPES))
         return S_NULL;
     if(name < 0 || name >= NUM_STATE_NAMES)
         return S_NULL;
 
-    return MOBJINFO[type].states[name];
+    return MOBJINFO[type].info->states[name];
 }
