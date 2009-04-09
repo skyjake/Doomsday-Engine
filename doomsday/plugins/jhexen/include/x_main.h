@@ -49,6 +49,9 @@ extern char *borderLumps[];
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
 
+extern boolean useScriptsDir;
+extern filename_t scriptsDir;
+
 void            G_DetectIWADs(void);
 void            G_PreInit(void);
 void            G_PostInit(void);

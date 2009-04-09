@@ -1508,7 +1508,7 @@ void Def_CopySectorType(sectortype_t* s, ded_sectortype_t* def)
 /**
  * @return              @c true, if the definition was found.
  */
-int Def_Get(int type, char* id, void* out)
+int Def_Get(int type, const char* id, void* out)
 {
     int                 i;
     ded_mapinfo_t*      map;
@@ -1663,22 +1663,34 @@ int Def_Set(int type, int index, int value, void* ptr)
     switch(type)
     {
     case DD_DEF_SOUND:
+        {
+        sfxinfo_t*          sfxInfo;
+
         if(index < 0 || index >= countSounds.num)
             Con_Error("Def_Set: Sound index %i is invalid.\n", index);
+        sfxInfo = &sounds[index];
 
         switch(value)
         {
         case DD_LUMP:
+            {
+            char*               lumpName = (char*) ptr;
+
             S_StopSound(index, 0);
-            strcpy(sounds[index].lumpName, ptr);
-            sounds[index].lumpNum = W_CheckNumForName(sounds[index].lumpName);
+
+            memset(sfxInfo->lumpName, 0, sizeof(sfxInfo->lumpName));
+            if(lumpName && lumpName[0])
+                strncpy(sfxInfo->lumpName, lumpName, 8);
+
+            sfxInfo->lumpNum = W_CheckNumForName(sfxInfo->lumpName);
+            }
             break;
 
         default:
             break;
         }
         break;
-
+        }
     case DD_DEF_MUSIC:
         if(index == DD_NEW)
         {

@@ -90,7 +90,7 @@ ded_decor_t*    Def_GetDecoration(material_t* mat, boolean hasExt);
 ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt);
 ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt);
 ded_ptcgen_t*   Def_GetGenerator(material_t* mat, boolean hasExt);
-int             Def_Get(int type, char* id, void* out);
+int             Def_Get(int type, const char* id, void* out);
 boolean         Def_SameStateSequence(state_t* snew, state_t* sold);
 void            Def_LightMapLoaded(const char* id, uint texture);
 void            Def_FlareMapLoaded(const char* id, uint texture,

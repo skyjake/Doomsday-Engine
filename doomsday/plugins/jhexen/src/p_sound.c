@@ -95,32 +95,47 @@ void S_ParseSndInfoLump(void)
 
         while(SC_GetString())
         {
-            if(*sc_String == '$')
+            int                 iTok;
+            const char*         sTok = SC_LastReadString();
+
+            if(*sTok == '$')
             {
-                if(!stricmp(sc_String, "$ARCHIVEPATH"))
+                if(!stricmp(sTok, "$ARCHIVEPATH"))
                 {
                     SC_MustGetString();
-                    strcpy(ArchivePath, sc_String);
+                    sTok = SC_LastReadString();
+
+                    strcpy(ArchivePath, sTok);
                 }
-                else if(!stricmp(sc_String, "$MAP"))
+                else if(!stricmp(sTok, "$MAP"))
                 {
                     SC_MustGetNumber();
+                    iTok = SC_LastReadInteger();
                     SC_MustGetString();
-                    if(sc_Number)
+                    sTok = SC_LastReadString();
+
+                    if(iTok)
                     {
-                        P_PutMapSongLump(sc_Number, sc_String);
+                        P_PutMapSongLump(iTok, sTok);
                     }
                 }
+
                 continue;
             }
             else
             {
-                i = Def_Get(DD_DEF_SOUND_BY_NAME, sc_String, 0);
+                i = Def_Get(DD_DEF_SOUND_BY_NAME, sTok, 0);
                 if(i)
                 {
+                    char            lumpName[9];
+
                     SC_MustGetString();
-                    Def_Set(DD_DEF_SOUND, i, DD_LUMP,
-                            *sc_String != '?' ? sc_String : "default");
+                    sTok = SC_LastReadString();
+
+                    memset(lumpName, 0, sizeof(lumpName));
+                    strncpy(lumpName, *sTok != '?' ? sTok : "default", 8);
+
+                    Def_Set(DD_DEF_SOUND, i, DD_LUMP, (void*) lumpName);
                 }
                 else
                 {

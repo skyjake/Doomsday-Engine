@@ -80,7 +80,7 @@ extern          "C" {
     ddplayer_t*     DD_GetPlayer(int number);
 
     // Base: Definitions.
-    int             Def_Get(int type, char* id, void* out);
+    int             Def_Get(int type, const char* id, void* out);
     int             Def_Set(int type, int index, int value, void* ptr);
     int             Def_EvalFlags(char* flags);
 

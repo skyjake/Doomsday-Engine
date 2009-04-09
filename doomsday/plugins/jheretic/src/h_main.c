@@ -49,12 +49,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXWADFILES         20
-
-// MAPDIR should be defined as the directory that holds development maps
-// for the -wart # # command
-#define MAPDIR              "\\data\\"
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -107,21 +101,9 @@ char *borderLumps[] = {
     "bordbl" // bottom left
 };
 
-char *wadFiles[MAXWADFILES] = {
-    "heretic.wad",
-    "texture1.lmp",
-    "texture2.lmp",
-    "pnames.lmp"
-};
-
 char *baseDefault = "heretic.cfg";
 
-char exrnWADs[80];
-char exrnWADs2[80];
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static boolean devMap;
 
 // CODE --------------------------------------------------------------------
 
@@ -420,7 +402,7 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
-    int                 e, m, p;
+    int                 p;
     char                file[256];
     char                mapStr[6];
 
@@ -512,24 +494,6 @@ void G_PostInit(void)
         turboMul = scale / 100.f;
     }
 
-    // -DEVMAP <episode> <map>
-    // Adds a map wad from the development directory to the wad list,
-    // and sets the start episode and the start map.
-    devMap = false;
-    p = ArgCheck("-devmap");
-    if(p && p < myargc - 2)
-    {
-        e = Argv(p + 1)[0];
-        m = Argv(p + 2)[0];
-        sprintf(file, MAPDIR "E%cM%c.wad", e, m);
-        addFile(file);
-        printf("DEVMAP: Episode %c, Map %c.\n", e, m);
-        startEpisode = e - '0';
-        startMap = m - '0';
-        autoStart = true;
-        devMap = true;
-    }
-
     // Are we autostarting?
     if(autoStart)
     {
@@ -546,7 +510,7 @@ void G_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autoStart || IS_NETGAME) && (devMap == false))
+    if(autoStart || IS_NETGAME)
     {
         sprintf(mapStr, "E%d%d", startEpisode, startMap);
         if(!W_CheckNumForName(mapStr))

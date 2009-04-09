@@ -51,7 +51,7 @@ boolean         P_GetMapDoubleSky(int map);
 boolean         P_GetMapLightning(int map);
 int             P_GetMapFadeTable(int map);
 char           *P_GetMapSongLump(int map);
-void            P_PutMapSongLump(int map, char *lumpName);
+void            P_PutMapSongLump(int map, const char* lumpName);
 int             P_GetCDStartTrack(void);
 int             P_GetCDEnd1Track(void);
 int             P_GetCDEnd2Track(void);
