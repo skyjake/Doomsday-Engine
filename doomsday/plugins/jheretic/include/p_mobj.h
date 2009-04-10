@@ -235,6 +235,8 @@ typedef struct polyobj_s {
 } polyobj_t;
 
 extern spawnspot_t* things;
+mobjtype_t puffType;
+mobj_t* missileMobj;
 
 void        P_RespawnEnqueue(spawnspot_t *spot);
 void        P_CheckRespawnQueue(void);

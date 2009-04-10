@@ -38,6 +38,7 @@
 
 #include "p_player.h"
 #include "p_map.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -706,7 +707,7 @@ void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
     angle = plr->plr->mo->angle;
     slope = P_AimLineAttack(plr->plr->mo, angle, MELEERANGE);
 
-    PuffType = MT_SNOUTPUFF;
+    puffType = MT_SNOUTPUFF;
     puffSpawned = NULL;
 
     P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
@@ -734,7 +735,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 
     damage = 60 + (P_Random() & 63);
     power = 10;
-    PuffType = MT_HAMMERPUFF;
+    puffType = MT_HAMMERPUFF;
     for(i = 0; i < 16; ++i)
     {
         angle = mo->angle + i * (ANG45 / 32);
@@ -1193,7 +1194,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
 
     damage = 40 + (P_Random() & 15);
     power = 2;
-    PuffType = MT_PUNCHPUFF;
+    puffType = MT_PUNCHPUFF;
 
     for(i = 0; i < 16; ++i)
     {
@@ -1206,7 +1207,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
             {
                 damage /= 2;
                 power = 6;
-                PuffType = MT_HAMMERPUFF;
+                puffType = MT_HAMMERPUFF;
             }
 
             P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
@@ -1228,7 +1229,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
             {
                 damage /= 2;
                 power = 6;
-                PuffType = MT_HAMMERPUFF;
+                puffType = MT_HAMMERPUFF;
             }
 
             P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
@@ -1273,12 +1274,12 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     {
         damage /= 2;
         power = 6;
-        PuffType = MT_AXEPUFF_GLOW;
+        puffType = MT_AXEPUFF_GLOW;
         useMana = 1;
     }
     else
     {
-        PuffType = MT_AXEPUFF;
+        puffType = MT_AXEPUFF;
         useMana = 0;
     }
 
@@ -1339,7 +1340,7 @@ void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
     float       slope;
 
     damage = 25 + (P_Random() & 15);
-    PuffType = MT_HAMMERPUFF;
+    puffType = MT_HAMMERPUFF;
     for(i = 0; i < 16; ++i)
     {
         angle = plr->plr->mo->angle + i * (ANG45 / 16);
@@ -1383,7 +1384,7 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
 
     pmo = plr->plr->mo;
     damage = 20 + (P_Random() & 15);
-    PuffType = MT_CSTAFFPUFF;
+    puffType = MT_CSTAFFPUFF;
     for(i = 0; i < 3; ++i)
     {
         angle = pmo->angle + i * (ANG45 / 16);

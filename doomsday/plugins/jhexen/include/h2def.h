@@ -56,22 +56,17 @@
 #define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
 
 // Verbose messages.
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
-
-extern game_import_t gi;
-extern game_export_t gx;
-
-//
-// Global parameters/defines.
-//
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 #define MOBJINFO            (*gi.mobjInfo)
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Game mode handling - identify IWAD version to handle IWAD dependend
-// animations etc.
+/**
+ * Game mode handling - identify IWAD version to handle IWAD dependend
+ * animations etc.
+ */
 typedef enum {
     shareware, // 4 map demo
     registered, // HEXEN registered
@@ -92,6 +87,9 @@ typedef enum {
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
 #define SCREEN_MUL          1
+
+#define WINDOWWIDTH         (Get(DD_VIEWWINDOW_WIDTH))
+#define WINDOWHEIGHT        (Get(DD_VIEWWINDOW_HEIGHT))
 
 #define MAXPLAYERS          8
 
@@ -251,7 +249,6 @@ typedef enum {
 #define FLIGHTTICS          (60*TICRATE)
 #define SPEEDTICS           (45*TICRATE)
 #define MORPHTICS           (40*TICRATE)
-//#define MAULATORTICS      (25*TICRATE)
 
 /**
  * Artifacts (collectable, inventory items).
@@ -318,13 +315,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 
 #define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
-// Uncomment, to enable all timebomb stuff.
-#define TIMEBOMB_YEAR       (95) // years since 1900
-#define TIMEBOMB_STARTDATE  (268) // initial date (9/26)
-#define TIMEBOMB_ENDDATE    (301) // end date (10/29)
-
-extern int maulatorSeconds;
-
 #define MAULATORTICS        ((unsigned int) maulatorSeconds * TICSPERSEC)
 
 // Most damage defined using HITDICE
@@ -334,15 +324,14 @@ extern int maulatorSeconds;
 
 #define TELEFOGHEIGHT       (32)
 
-extern fixed_t finesine[5 * FINEANGLES / 4];
-extern fixed_t *finecosine;
-
-// Set if homebrew PWAD stuff has been added.
-extern boolean  modifiedgame;
-
 #define MAX_PLAYER_STARTS   (8)
 
-void            H2_Main(void);
+#define PI                  3.141592657
+
+extern int maulatorSeconds;
+extern fixed_t finesine[5 * FINEANGLES / 4];
+extern fixed_t* finecosine;
+extern int localQuakeHappening[MAXPLAYERS];
 
 void            G_IdentifyVersion(void);
 void            G_CommonPreInit(void);
@@ -385,27 +374,9 @@ void            P_Init(void);
 void            P_SetupMap(int episode, int map, int playermask,
                            skillmode_t skill);
 
-extern boolean setsizeneeded;
-
-extern int      localQuakeHappening[MAXPLAYERS];
-
 byte            P_Random(void);
 void            M_ResetRandom(void);
 
-extern unsigned char rndtable[256];
-
-//----------------------
-// Chat mode (CT_chat.c)
-//----------------------
-
-void            CT_Init(void);
-void            CT_Drawer(void);
-boolean         CT_Responder(event_t* ev);
-void            CT_Ticker(void);
-char            CT_dequeueChatChar(void);
-
-extern boolean  chatmodeon;
-
-void        Draw_TeleportIcon(void);
+void            Draw_TeleportIcon(void);
 
 #endif // __H2DEF_H__

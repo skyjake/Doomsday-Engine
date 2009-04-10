@@ -1568,7 +1568,7 @@ void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
     if(mo)
         mo->special3 = 140;
 
-    // Use MissileMobj instead of the return value from
+    // Use missileMobj instead of the return value from
     // P_SpawnMissile because we need to give info to the mobj
     // even if it exploded immediately.
     if(IS_NETGAME)

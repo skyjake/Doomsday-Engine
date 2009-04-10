@@ -300,7 +300,6 @@
 		<Unit filename="..\..\plugins\jhexen\include\p_waggle.h" />
 		<Unit filename="..\..\plugins\jhexen\include\po_man.h" />
 		<Unit filename="..\..\plugins\jhexen\include\r_defs.h" />
-		<Unit filename="..\..\plugins\jhexen\include\r_local.h" />
 		<Unit filename="..\..\plugins\jhexen\include\s_sequence.h" />
 		<Unit filename="..\..\plugins\jhexen\include\sc_man.h" />
 		<Unit filename="..\..\plugins\jhexen\include\st_stuff.h" />

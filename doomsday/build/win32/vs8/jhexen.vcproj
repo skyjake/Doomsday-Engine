@@ -729,10 +729,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\include\r_local.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jhexen\include\s_sequence.h"
 				>
 			</File>

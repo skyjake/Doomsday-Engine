@@ -42,6 +42,7 @@
 #include "p_map.h"
 #include "p_player.h"
 #include "g_common.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -81,8 +82,8 @@ extern mobj_t lavaInflictor;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-mobjtype_t PuffType;
-mobj_t *MissileMobj;
+mobjtype_t puffType;
+mobj_t* missileMobj;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1772,7 +1773,7 @@ void P_SpawnPuff(float x, float y, float z, angle_t angle)
     mobj_t*             puff;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    puff = P_SpawnMobj3f(PuffType, x, y, z, angle);
+    puff = P_SpawnMobj3f(puffType, x, y, z, angle);
     if(lineTarget && puff->info->seeSound)
     {   // Hit thing sound.
         S_StartSound(puff->info->seeSound, puff);
@@ -1782,7 +1783,7 @@ void P_SpawnPuff(float x, float y, float z, angle_t angle)
         S_StartSound(puff->info->attackSound, puff);
     }
 
-    switch(PuffType)
+    switch(puffType)
     {
     case MT_PUNCHPUFF:
         puff->mom[MZ] = 1;
@@ -2559,37 +2560,37 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
         pos[VZ] -= source->floorClip;
     }
 
-    MissileMobj = P_SpawnMobj3fv(type, pos, angle);
+    missileMobj = P_SpawnMobj3fv(type, pos, angle);
 
-    MissileMobj->target = source;
+    missileMobj->target = source;
     an = angle >> ANGLETOFINESHIFT;
-    MissileMobj->mom[MX] =
-        movfac * MissileMobj->info->speed * FIX2FLT(finecosine[an]);
-    MissileMobj->mom[MY] =
-        movfac * MissileMobj->info->speed * FIX2FLT(finesine[an]);
-    MissileMobj->mom[MZ] = MissileMobj->info->speed * slope;
+    missileMobj->mom[MX] =
+        movfac * missileMobj->info->speed * FIX2FLT(finecosine[an]);
+    missileMobj->mom[MY] =
+        movfac * missileMobj->info->speed * FIX2FLT(finesine[an]);
+    missileMobj->mom[MZ] = missileMobj->info->speed * slope;
 
-    if(MissileMobj->type == MT_MWAND_MISSILE ||
-       MissileMobj->type == MT_CFLAME_MISSILE)
+    if(missileMobj->type == MT_MWAND_MISSILE ||
+       missileMobj->type == MT_CFLAME_MISSILE)
     {   // Ultra-fast ripper spawning missile
-        MissileMobj->pos[VX] += MissileMobj->mom[MX] / 8;
-        MissileMobj->pos[VY] += MissileMobj->mom[MY] / 8;
-        MissileMobj->pos[VZ] += MissileMobj->mom[MZ] / 8;
+        missileMobj->pos[VX] += missileMobj->mom[MX] / 8;
+        missileMobj->pos[VY] += missileMobj->mom[MY] / 8;
+        missileMobj->pos[VZ] += missileMobj->mom[MZ] / 8;
     }
     else
     {   // Normal missile
-        MissileMobj->pos[VX] += MissileMobj->mom[MX] / 2;
-        MissileMobj->pos[VY] += MissileMobj->mom[MY] / 2;
-        MissileMobj->pos[VZ] += MissileMobj->mom[MZ] / 2;
+        missileMobj->pos[VX] += missileMobj->mom[MX] / 2;
+        missileMobj->pos[VY] += missileMobj->mom[MY] / 2;
+        missileMobj->pos[VZ] += missileMobj->mom[MZ] / 2;
     }
 
-    if(!P_TryMove(MissileMobj, MissileMobj->pos[VX], MissileMobj->pos[VY]))
+    if(!P_TryMove(missileMobj, missileMobj->pos[VX], missileMobj->pos[VY]))
     {   // Exploded immediately
-        P_ExplodeMissile(MissileMobj);
+        P_ExplodeMissile(missileMobj);
         return NULL;
     }
 
-    return MissileMobj;
+    return missileMobj;
 }
 
 mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)

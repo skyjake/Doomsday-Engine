@@ -192,8 +192,6 @@ static void     findMinMaxBoundaries(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean viewActive;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 cvar_t mapCVars[] = {
@@ -752,8 +750,6 @@ void AM_Open(automapid_t id, boolean yes, boolean fast)
         DD_Execute(true, "activatebcontext map");
         if(map->panMode)
             DD_Execute(true, "activatebcontext map-freepan");
-
-        viewActive = false;
     }
     else
     {
@@ -762,8 +758,6 @@ void AM_Open(automapid_t id, boolean yes, boolean fast)
 
         DD_Execute(true, "deactivatebcontext map");
         DD_Execute(true, "deactivatebcontext map-freepan");
-
-        viewActive = true;
     }
 
     Automap_Open(map, yes, fast);

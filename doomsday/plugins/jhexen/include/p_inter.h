@@ -32,6 +32,11 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+extern int maxAmmo[NUM_AMMO_TYPES];
+extern int clipAmmo[NUM_AMMO_TYPES];
+
+extern int TextKeyMessages[11];
+
 boolean         P_GiveArmor(player_t* plr, armortype_t type, int points);
 boolean         P_GiveArmor2(player_t* plr, armortype_t type, int amount);
 

@@ -232,6 +232,8 @@ typedef struct polyobj_s {
 } polyobj_t;
 
 extern spawnspot_t* things;
+extern mobjtype_t puffType;
+extern mobj_t* missileMobj;
 
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                           angle_t angle);

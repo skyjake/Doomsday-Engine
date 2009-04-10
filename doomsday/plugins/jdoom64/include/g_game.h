@@ -53,7 +53,6 @@ extern boolean userGame;
 extern int mapStartTic;
 extern int bodyQueueSlot;
 extern boolean deathmatch;
-extern boolean viewActive;
 extern boolean paused;
 extern boolean precache;
 extern int gsvMapMusic;

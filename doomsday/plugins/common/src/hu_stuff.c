@@ -550,14 +550,14 @@ static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers,
 {
 #if __JHEXEN__
 static const int plrColors[] = {
-    AM_PLR1_COLOR,
-    AM_PLR2_COLOR,
-    AM_PLR3_COLOR,
-    AM_PLR4_COLOR,
-    AM_PLR5_COLOR,
-    AM_PLR6_COLOR,
-    AM_PLR7_COLOR,
-    AM_PLR8_COLOR
+    /*AM_PLR1_COLOR*/ 157, // Blue
+    /*AM_PLR2_COLOR*/ 177, // Red
+    /*AM_PLR3_COLOR*/ 137, // Yellow
+    /*AM_PLR4_COLOR*/ 198, // Green
+    /*AM_PLR5_COLOR*/ 215, // Jade
+    /*AM_PLR6_COLOR*/  32, // White
+    /*AM_PLR7_COLOR*/ 106, // Hazel
+    /*AM_PLR8_COLOR*/ 234  // Purple
 };
 #else
     static const float  green[3] = { 0.f,    .8f,  0.f   };

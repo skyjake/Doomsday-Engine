@@ -60,7 +60,6 @@
 #include "../../jhexen/include/p_waggle.h"
 #include "../../jhexen/include/po_man.h"
 #include "../../jhexen/include/r_defs.h"
-#include "../../jhexen/include/r_local.h"
 #include "../../jhexen/include/s_sequence.h"
 #include "../../jhexen/include/sc_man.h"
 #include "../../jhexen/include/st_stuff.h"

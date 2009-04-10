@@ -47,8 +47,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define WINDOWHEIGHT            (Get(DD_VIEWWINDOW_HEIGHT))
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -62,8 +60,6 @@ extern void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-boolean setsizeneeded;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -80,8 +76,6 @@ void R_InitRefresh(void)
  */
 void R_SetViewSize(int blocks)
 {
-    setsizeneeded = true;
-
     if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
         int                 i;

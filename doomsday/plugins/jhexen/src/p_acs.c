@@ -38,30 +38,31 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define SCRIPT_CONTINUE 0
-#define SCRIPT_STOP 1
-#define SCRIPT_TERMINATE 2
-#define OPEN_SCRIPTS_BASE 1000
-#define PRINT_BUFFER_SIZE 256
-#define GAME_SINGLE_PLAYER 0
+#define SCRIPT_CONTINUE     0
+#define SCRIPT_STOP         1
+#define SCRIPT_TERMINATE    2
+
+#define OPEN_SCRIPTS_BASE   1000
+#define PRINT_BUFFER_SIZE   256
+
+#define GAME_SINGLE_PLAYER  0
 #define GAME_NET_COOPERATIVE 1
 #define GAME_NET_DEATHMATCH 2
-#define TEXTURE_TOP 0
-#define TEXTURE_MIDDLE 1
-#define TEXTURE_BOTTOM 2
-#define S_DROP ACScript->stackPtr--
-#define S_POP ACScript->stack[--ACScript->stackPtr]
-#define S_PUSH(x) ACScript->stack[ACScript->stackPtr++] = x
+
+#define TEXTURE_TOP         0
+#define TEXTURE_MIDDLE      1
+#define TEXTURE_BOTTOM      2
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct acsheader_s {
-    int     marker;
-    int     infoOffset;
-    int     code;
+    int             marker;
+    int             infoOffset;
+    int             code;
 } acsheader_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -70,10 +71,10 @@ typedef struct acsheader_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void StartOpenACS(int number, int infoIndex, int *address);
+static void StartOpenACS(int number, int infoIndex, int* address);
 static void ScriptFinished(int number);
 static boolean TagBusy(int tag);
-static boolean AddToACSStore(int map, int number, byte *args);
+static boolean AddToACSStore(int map, int number, byte* args);
 static int GetACSIndex(int number);
 static void Push(int value);
 static int Pop(void);
@@ -189,22 +190,22 @@ static void ThingCount(int type, int tid);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     ACScriptCount;
-byte   *ActionCodeBase;
-acsinfo_t *ACSInfo;
-int     MapVars[MAX_ACS_MAP_VARS];
-int     WorldVars[MAX_ACS_WORLD_VARS];
+int ACScriptCount;
+byte* ActionCodeBase;
+acsinfo_t* ACSInfo;
+int MapVars[MAX_ACS_MAP_VARS];
+int WorldVars[MAX_ACS_WORLD_VARS];
 acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static acs_t *ACScript;
-static int *PCodePtr;
+static acs_t* ACScript;
+static int* PCodePtr;
 static byte SpecArgs[8];
 static int ACStringCount;
-static char **ACStrings;
+static char** ACStrings;
 static char PrintBuffer[PRINT_BUFFER_SIZE];
-static acs_t *NewScript;
+static acs_t* NewScript;
 
 static char ErrorMsg[128];
 
@@ -238,7 +239,7 @@ CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
 
 // CODE --------------------------------------------------------------------
 
-char *GetACString(int id)
+char* GetACString(int id)
 {
     if(id < 0 || id > ACStringCount)
         return NULL;
@@ -248,17 +249,17 @@ char *GetACString(int id)
 
 void P_LoadACScripts(int lump)
 {
-    int         i;
-    int        *buffer;
-    acsheader_t *header;
-    acsinfo_t  *info;
+    int                 i;
+    int*                buffer;
+    acsheader_t*        header;
+    acsinfo_t*          info;
 
     header = W_CacheLumpNum(lump, PU_MAP);
     ActionCodeBase = (byte *) header;
     buffer = (int *) ((byte *) header + LONG(header->infoOffset));
     ACScriptCount = LONG(*buffer++);
     if(ACScriptCount == 0 || IS_CLIENT)
-    {                           // Empty behavior lump
+    {   // Empty behavior lump.
         ACScriptCount = 0;
         return;
     }
@@ -291,7 +292,7 @@ void P_LoadACScripts(int lump)
     memset(MapVars, 0, sizeof(MapVars));
 }
 
-static void StartOpenACS(int number, int infoIndex, int *address)
+static void StartOpenACS(int number, int infoIndex, int* address)
 {
     acs_t*              script;
 
@@ -382,26 +383,26 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
     return true;
 }
 
-static boolean AddToACSStore(int map, int number, byte *args)
+static boolean AddToACSStore(int map, int number, byte* args)
 {
-    int         i;
-    int         index;
+    int                 i, index;
 
     index = -1;
     for(i = 0; ACSStore[i].map != 0; ++i)
     {
         if(ACSStore[i].script == number && ACSStore[i].map == map)
-        {   // Don't allow duplicates
+        {   // Don't allow duplicates.
             return false;
         }
+
         if(index == -1 && ACSStore[i].map == -1)
-        {   // Remember first empty slot
+        {   // Remember first empty slot.
             index = i;
         }
     }
 
     if(index == -1)
-    {   // Append required
+    {   // Append required.
         if(i == MAX_ACS_STORE)
         {
             Con_Error("AddToACSStore: MAX_ACS_STORE (%d) exceeded.",
@@ -410,20 +411,18 @@ static boolean AddToACSStore(int map, int number, byte *args)
         index = i;
         ACSStore[index + 1].map = 0;
     }
+
     ACSStore[index].map = map;
     ACSStore[index].script = number;
     *((int *) ACSStore[index].args) = *((int *) args);
     return true;
 }
 
-boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
+boolean P_StartLockedACS(linedef_t* line, byte* args, mobj_t* mo, int side)
 {
-    int         i;
-    int         lock;
-    byte        newArgs[5];
-    char        LockedBuffer[80];
-
-    extern int TextKeyMessages[11];
+    int                 i, lock;
+    byte                newArgs[5];
+    char                LockedBuffer[80];
 
     lock = args[4];
     if(!mo->player)
@@ -453,7 +452,7 @@ boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
 
 boolean P_TerminateACS(int number, int map)
 {
-    int         infoIndex;
+    int                 infoIndex;
 
     infoIndex = GetACSIndex(number);
     if(infoIndex == -1)
@@ -473,7 +472,7 @@ boolean P_TerminateACS(int number, int map)
 
 boolean P_SuspendACS(int number, int map)
 {
-    int         infoIndex;
+    int                 infoIndex;
 
     infoIndex = GetACSIndex(number);
     if(infoIndex == -1)
@@ -500,7 +499,7 @@ void P_ACSInitNewGame(void)
 
 void T_InterpretACS(acs_t* script)
 {
-    int             cmd, action;
+    int                 cmd, action;
 
     if(ACSInfo[script->infoIndex].state == ASTE_TERMINATING)
     {
@@ -540,7 +539,7 @@ void T_InterpretACS(acs_t* script)
 
 void P_TagFinished(int tag)
 {
-    int             i;
+    int                 i;
 
     if(TagBusy(tag) == true)
     {
@@ -559,7 +558,7 @@ void P_TagFinished(int tag)
 
 void P_PolyobjFinished(int po)
 {
-    int             i;
+    int                 i;
 
     if(PO_Busy(po) == true)
     {
@@ -578,7 +577,7 @@ void P_PolyobjFinished(int po)
 
 static void ScriptFinished(int number)
 {
-    int             i;
+    int                 i;
 
     for(i = 0; i < ACScriptCount; ++i)
     {

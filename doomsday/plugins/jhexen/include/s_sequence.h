@@ -74,29 +74,29 @@ typedef enum {
 } seqtype_t;
 
 typedef struct seqnode_s {
-    int            *sequencePtr;
+    int*            sequencePtr;
     int             sequence;
-    mobj_t         *mobj;
+    mobj_t*         mobj;
     int             currentSoundID;
     int             delayTics;
     int             volume;
     int             stopSound;
-    struct seqnode_s *prev;
-    struct seqnode_s *next;
+    struct seqnode_s* prev;
+    struct seqnode_s* next;
 } seqnode_t;
 
 extern int ActiveSequences;
-extern seqnode_t *SequenceListHead;
+extern seqnode_t* SequenceListHead;
 
 void            SN_InitSequenceScript(void);
-void            SN_StartSequence(mobj_t *mobj, int sequence);
-void            SN_StartSequenceInSec(sector_t *sector, int seqBase);
-void            SN_StartSequenceName(mobj_t *mobj, char *name);
-void            SN_StopSequence(mobj_t *mobj);
-void            SN_StopSequenceInSec(sector_t *sector);
+void            SN_StartSequence(mobj_t* mobj, int sequence);
+void            SN_StartSequenceInSec(sector_t* sector, int seqBase);
+void            SN_StartSequenceName(mobj_t* mobj, char* name);
+void            SN_StopSequence(mobj_t* mobj);
+void            SN_StopSequenceInSec(sector_t* sector);
 void            SN_UpdateActiveSequences(void);
 void            SN_StopAllSequences(void);
-int             SN_GetSequenceOffset(int sequence, int *sequencePtr);
+int             SN_GetSequenceOffset(int sequence, int* sequencePtr);
 void            SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics,
                                   int volume, int currentSoundID);
 #endif

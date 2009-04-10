@@ -38,6 +38,7 @@
 #include "p_player.h"
 #include "p_map.h"
 #include "p_user.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 

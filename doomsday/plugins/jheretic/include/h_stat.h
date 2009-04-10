@@ -53,7 +53,6 @@
 
 // Status flags for refresh.
 extern boolean paused;
-extern boolean viewActive;
 // If true, load all graphics at level load.
 extern boolean precache;
 

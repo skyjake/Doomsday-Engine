@@ -32,8 +32,6 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-extern int debugSound; // debug flag for displaying sound info
-
 extern int gameEpisode;
 extern int gameMap;
 extern skillmode_t gameSkill;

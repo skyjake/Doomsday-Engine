@@ -86,7 +86,6 @@ static void CheatNoClipFunc(player_t *player, cheat_t *cheat);
 static void CheatWeaponsFunc(player_t *player, cheat_t *cheat);
 static void CheatHealthFunc(player_t *player, cheat_t *cheat);
 static void CheatKeysFunc(player_t *player, cheat_t *cheat);
-static void CheatSoundFunc(player_t *player, cheat_t *cheat);
 static void CheatArtifactAllFunc(player_t *player, cheat_t *cheat);
 static void CheatPuzzleFunc(player_t *player, cheat_t *cheat);
 static void CheatWarpFunc(player_t *player, cheat_t *cheat);
@@ -170,16 +169,6 @@ static byte cheatKeysSeq[] = {
     CHEAT_ENCRYPT('t'),
     CHEAT_ENCRYPT('h'),
     0xff, 0
-};
-
-// Toggle sound debug info
-static byte cheatSoundSeq[] = {
-    CHEAT_ENCRYPT('n'),
-    CHEAT_ENCRYPT('o'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('s'),
-    CHEAT_ENCRYPT('e'),
-    0xff
 };
 
 // Toggle ticker
@@ -432,7 +421,6 @@ static cheat_t cheats[] = {
     {CheatWeaponsFunc, cheatWeaponsSeq, NULL, {0, 0}, 0},
     {CheatHealthFunc, cheatHealthSeq, NULL, {0, 0}, 0},
     {CheatKeysFunc, cheatKeysSeq, NULL, {0, 0}, 0},
-    {CheatSoundFunc, cheatSoundSeq, NULL, {0, 0}, 0},
     {CheatArtifactAllFunc, cheatArtifactAllSeq, NULL, {0, 0}, 0},
     {CheatPuzzleFunc, cheatPuzzleSeq, NULL, {0, 0}, 0},
     {CheatWarpFunc, cheatWarpSeq, NULL, {0, 0}, 0},
@@ -690,19 +678,6 @@ static void CheatKeysFunc(player_t *player, cheat_t *cheat)
     player->update |= PSF_KEYS;
     player->keys = 2047;
     P_SetMessage(player, TXT_CHEATKEYS, false);
-}
-
-static void CheatSoundFunc(player_t *player, cheat_t *cheat)
-{
-    debugSound = !debugSound;
-    if(debugSound)
-    {
-        P_SetMessage(player, TXT_CHEATSOUNDON, false);
-    }
-    else
-    {
-        P_SetMessage(player, TXT_CHEATSOUNDOFF, false);
-    }
 }
 
 static void CheatArtifactAllFunc(player_t *player, cheat_t *cheat)

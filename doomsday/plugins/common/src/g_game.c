@@ -156,8 +156,6 @@ void    G_StopDemo(void);
 
 game_config_t cfg; // The global cfg.
 
-int debugSound; // Debug flag for displaying sound info.
-
 skillmode_t gameSkill;
 int gameEpisode;
 int gameMap;
@@ -171,8 +169,6 @@ boolean respawnMonsters;
 boolean paused;
 boolean sendPause; // Send a pause event next tic.
 boolean userGame; // Ok to save / end game.
-
-boolean viewActive;
 
 boolean deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
@@ -1799,7 +1795,6 @@ void G_DoCompleted(void)
 
     // Tell the clients what's going on.
     NetSv_Intermission(IMF_BEGIN, 0, 0);
-    viewActive = false;
 
 #elif __JHERETIC__
     // Let the clients know the next map.
@@ -1870,7 +1865,6 @@ void G_DoWorldDone(void)
 #endif
     G_DoLoadMap();
     G_SetGameAction(GA_NONE);
-    viewActive = true;
 }
 
 #if __JHEXEN__ || __JSTRIFE__
@@ -2108,7 +2102,6 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     userGame = true; // Will be set false if a demo.
     paused = false;
-    viewActive = true;
     gameEpisode = episode;
     gameMap = map;
     gameSkill = skill;

@@ -94,10 +94,6 @@ boolean artiSkipParm; // Whether shift-enter skips an artifact.
 float turboMul; // Multiplier for turbo.
 boolean netCheatParm; // Allow cheating in netgames (-netcheat)
 
-skillmode_t startSkill;
-int startEpisode;
-int startMap;
-
 gamemode_t gameMode;
 int gameModeBits;
 
@@ -107,12 +103,6 @@ char gameModeString[17];
 // Default font colours.
 const float defFontRGB[] = { .9f, 0.0f, 0.0f};
 const float defFontRGB2[] = { .9f, .9f, .9f};
-
-// Network games parameters.
-
-boolean autoStart;
-
-FILE   *debugFile;
 
 char* borderLumps[] = {
     "F_022", // Background.
@@ -128,6 +118,10 @@ char* borderLumps[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean autoStart;
+static skillmode_t startSkill;
+static int startEpisode;
+static int startMap;
 static int warpMap;
 
 static execopt_t execOptions[] = {

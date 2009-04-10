@@ -42,6 +42,7 @@
 #include "p_plat.h"
 #include "p_floor.h"
 #include "p_switch.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 

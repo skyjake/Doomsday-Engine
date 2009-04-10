@@ -34,6 +34,7 @@
 #include "jhexen.h"
 
 #include "p_map.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -39,6 +39,7 @@
 #include "p_mapspec.h"
 #include "p_map.h"
 #include "g_common.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -98,7 +99,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void KSpiritInit(mobj_t *spirit, mobj_t *korax);
+void KSpiritInit(mobj_t* spirit, mobj_t* korax);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -122,10 +123,10 @@ static const float dirSpeed[8][2] =
 };
 #undef MOVESPEED_DIAGONAL
 
-mobj_t *corpseQueue[CORPSEQUEUESIZE];
+mobj_t* corpseQueue[CORPSEQUEUESIZE];
 int corpseQueueSlot;
-mobj_t *bodyque[BODYQUESIZE];
-int bodyqueslot;
+mobj_t* bodyQueue[BODYQUESIZE];
+int bodyQueueSlot;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1759,12 +1760,12 @@ void P_InitCreatureCorpseQueue(boolean corpseScan)
 
 void C_DECL A_AddPlayerCorpse(mobj_t *actor)
 {
-    if(bodyqueslot >= BODYQUESIZE)
+    if(bodyQueueSlot >= BODYQUESIZE)
     {   // Too many player corpses - remove an old one.
-        P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE], true);
+        P_MobjRemove(bodyQueue[bodyQueueSlot % BODYQUESIZE], true);
     }
-    bodyque[bodyqueslot % BODYQUESIZE] = actor;
-    bodyqueslot++;
+    bodyQueue[bodyQueueSlot % BODYQUESIZE] = actor;
+    bodyQueueSlot++;
 }
 
 void C_DECL A_SerpentUnHide(mobj_t* actor)

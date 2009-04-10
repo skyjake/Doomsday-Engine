@@ -1697,7 +1697,7 @@ if(lineWasHit)
                             pos[VX], pos[VY]);
 
 #if __JHEXEN__
-        if(PuffType == MT_FLAMEPUFF2)
+        if(puffType == MT_FLAMEPUFF2)
         {   // Cleric FlameStrike does fire damage.
             damageDone = P_DamageMobj(th, &lavaInflictor, shootThing,
                                       lineAttackDamage, false);
@@ -1721,7 +1721,7 @@ if(lineWasHit)
                     P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage,
                                  attackAngle + ANG180);
 #elif __JHEXEN__
-                    if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
+                    if(puffType == MT_AXEPUFF || puffType == MT_AXEPUFF_GLOW)
                     {
                         P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mo);
                     }
@@ -1959,7 +1959,7 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
                       PT_ADDLINES | PT_ADDMOBJS, PTR_ShootTraverse))
     {
 #if __JHEXEN__
-        switch(PuffType)
+        switch(puffType)
         {
         case MT_PUNCHPUFF:
             S_StartSound(SFX_FIGHTER_PUNCH_MISS, t1);

@@ -34,10 +34,6 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#ifndef __R_LOCAL__
-#include "r_local.h"
-#endif
-
 #include "p_start.h"
 #include "p_actor.h"
 #include "p_spec.h"
@@ -81,10 +77,6 @@
 
 #define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
-extern int TimerGame; // Tic countdown for deathmatch.
-
-#define thinkerCap          (*gi.thinkerCap)
-
 #define USE_MANA1           1
 #define USE_MANA2           1
 
@@ -110,16 +102,6 @@ boolean     P_UndoPlayerMorph(player_t *plr);
 #define ONCEILINGZ          DDMAXFLOAT
 #define FLOATRANDZ          (DDMAXFLOAT-1)
 #define FROMCEILINGZ128     (DDMAXFLOAT-2)
-
-// Time interval for item respawning.
-#define ITEMQUESIZE         128
-
-extern int iquehead;
-extern int iquetail;
-
-extern mobjtype_t PuffType;
-extern mobj_t *MissileMobj;
-extern float *FloatBobOffset;
 
 void        P_Thrust(player_t *plr, angle_t angle, float move);
 void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
@@ -155,9 +137,6 @@ int         P_Massacre(void);
 boolean     P_LookForMonsters(mobj_t *mo);
 void        P_InitCreatureCorpseQueue(boolean corpseScan);
 
-#define MAXINTERCEPTS       128
-extern intercept_t intercepts[MAXINTERCEPTS], *intercept_p;
-
 mobj_t     *P_RoughMonsterSearch(mobj_t *mo, int distance);
 
 void        P_Validate();
@@ -166,8 +145,6 @@ void        P_Validate();
 #define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
-
-extern int clipmana[NUM_AMMO_TYPES];
 
 void        P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
 void        P_PoisonPlayer(player_t *plr, mobj_t *poisoner, int poison);

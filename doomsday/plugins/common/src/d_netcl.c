@@ -629,7 +629,6 @@ void NetCl_Intermission(byte *data)
         G_PrepareWIData();
 
         G_ChangeGameState(GS_INTERMISSION);
-        viewActive = false;
 
         WI_Start(&wmInfo);
     }
