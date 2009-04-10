@@ -89,14 +89,14 @@ ccmd_t netCCmds[] = {
 #if __JHEXEN__
     {"setclass", "i", CCmdSetClass, CMDF_NO_DEDICATED},
 #endif
-    {"startcycle", "", CCmdMapCycle},
-    {"endcycle", "", CCmdMapCycle},
+    {"startcycle", "", CCmdStartMapCycle},
+    {"endcycle", "", CCmdEndMapCycle},
     {NULL}
 };
 
 // Net code related console variables
 cvar_t netCVars[] = {
-    {"MapCycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle},
+    {"mapcycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle},
     {"server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle},
     {"server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1},
     {"server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1},

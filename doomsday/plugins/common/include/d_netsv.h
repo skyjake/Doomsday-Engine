@@ -75,6 +75,7 @@ void            NetSv_DoCheat(int player, const char *data);
 void            NetSv_DoAction(int player, const char *data);
 void            NetSv_SendJumpPower(int target, float power);
 
-DEFCC(CCmdMapCycle);
+DEFCC(CCmdStartMapCycle);
+DEFCC(CCmdEndMapCycle);
 
 #endif

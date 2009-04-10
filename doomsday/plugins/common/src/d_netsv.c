@@ -1477,22 +1477,19 @@ void NetSv_SendMessage(int plrNum, char *msg)
     NetSv_SendMessageEx(plrNum, msg, false);
 }
 
-void NetSv_SendYellowMessage(int plrNum, char *msg)
+void NetSv_SendYellowMessage(int plrNum, char* msg)
 {
     NetSv_SendMessageEx(plrNum, msg, true);
 }
 
-void P_Telefrag(mobj_t *thing)
+void P_Telefrag(mobj_t* thing)
 {
     P_TeleportMove(thing, thing->pos[VX], thing->pos[VY], false);
 }
 
-/**
- * Handles the console commands "startcycle" and "endcycle".
- */
-DEFCC(CCmdMapCycle)
+DEFCC(CCmdStartMapCycle)
 {
-    int         map;
+    int                 map;
 
     if(!IS_SERVER)
     {
@@ -1500,26 +1497,34 @@ DEFCC(CCmdMapCycle)
         return false;
     }
 
-    if(!stricmp(argv[0], "startcycle")) // (Re)start rotation?
+    // (Re)start the rotation. Find the first map in the sequence.
+    cycleIndex = 0;
+    if((map = NetSv_ScanCycle(cycleIndex, 0)) >= 0)
     {
-        // Find the first map in the sequence.
-        map = NetSv_ScanCycle(cycleIndex = 0, 0);
-        if(map < 0)
-        {
-            Con_Printf("MapCycle \"%s\" is invalid.\n", mapCycle);
-            return false;
-        }
         // Warp there.
         NetSv_CycleToMapNum(map);
         cyclingMaps = true;
+
+        return true;
     }
-    else
-    {   // OK, then we need to end it.
-        if(cyclingMaps)
-        {
-            cyclingMaps = false;
-            NetSv_SendMessage(DDSP_ALL_PLAYERS, "MAP ROTATION ENDS");
-        }
+
+    Con_Printf("MapCycle \"%s\" is invalid.\n", mapCycle);
+    return false;
+}
+
+DEFCC(CCmdEndMapCycle)
+{
+    if(!IS_SERVER)
+    {
+        Con_Printf("Only allowed for a server.\n");
+        return false;
+    }
+
+    // End the rotation.
+    if(cyclingMaps)
+    {
+        cyclingMaps = false;
+        NetSv_SendMessage(DDSP_ALL_PLAYERS, "MAP ROTATION ENDS");
     }
 
     return true;
