@@ -417,8 +417,6 @@ maximum-texture-size-2048: 2048 x 2048
 maximum-texture-size-4096: 4096 x 4096
 
 sound-driver: Driver de Som
-sound-driver-ds8: Embutido (DirectSound 8)
-sound-driver-ds6: CompatÌvel (DirectSound 6)
 sound-driver-sdlmixer: SDL_mixer
 sound-driver-openal: OpenAL
 sound-driver-dummy: Bobo (sem som)
