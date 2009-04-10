@@ -326,7 +326,6 @@ disable-audio: Gar Kein Audio
 disable-sound-effects: Soundeffeke abschalten
 disable-music: Musik abschalten
 disable-primary-buffer: Primary Buffer abschalten
-disable-fmod: Disable FMOD
 
 eax-options: EAX Optionen
 disable-eax: EAX abschalten

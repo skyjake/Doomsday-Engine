@@ -427,7 +427,6 @@ disable-audio: Disable all audio
 disable-sound-effects: Disable sound effects
 disable-music: Disable music
 disable-primary-buffer: Don't set primary buffer format
-disable-fmod: Disable FMOD
 
 eax-options: EAX Options
 disable-eax: Disable EAX

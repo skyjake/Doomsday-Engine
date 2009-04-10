@@ -426,7 +426,6 @@ disable-audio: Desabilitar todo o ·udio
 disable-sound-effects: Desabilitar efeitos sonoros
 disable-music: Desabilitar m?sica
 disable-primary-buffer: N„o definir formato de buffer prim·rio
-disable-fmod: Desabilitar FMOD
 
 eax-options: OpÁ?es EAX
 disable-eax: Desabilitar EAX

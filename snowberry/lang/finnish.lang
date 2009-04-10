@@ -273,7 +273,6 @@ disable-audio: Poista kaikki ‰‰net
 disable-sound-effects: Poista ‰‰niefektit
 disable-music: Poista musiikki
 disable-primary-buffer: Ei aseta ensisijaista puskuriformaattia
-disable-fmod: Poista FMOD
 
 eax-options: EAX-valinnat
 disable-eax: Poista EAX
