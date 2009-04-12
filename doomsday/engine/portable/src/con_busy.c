@@ -113,7 +113,7 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     {   // Take a copy of the task name.
         size_t              len = strlen(taskName);
 
-        busyTaskName = M_Calloc(len);
+        busyTaskName = M_Calloc(len+1);
         snprintf(busyTaskName, len, "%s", taskName);
     }
     Sys_Unlock(busy_Mutex);
