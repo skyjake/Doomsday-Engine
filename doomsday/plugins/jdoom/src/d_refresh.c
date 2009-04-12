@@ -192,9 +192,9 @@ void R_DrawMapTitle(void)
     float               alpha = 1;
     int                 y = 12;
     int                 mapnum;
-    char               *lname, *lauthor;
+    char*               lname, *lauthor;
 
-    if(!cfg.mapTitle || actualMapTime > 6 * TICSPERSEC)
+    if(!gs.cfg.mapTitle || actualMapTime > 6 * TICSPERSEC)
         return;
 
     // Make the text a bit smaller.
@@ -228,7 +228,7 @@ void R_DrawMapTitle(void)
     }
 
     if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump) &&
-       (!cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
+       (!gs.cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
     {
         M_WriteText3(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
                      huFontA, .5f, .5f, .5f, alpha, false, 0);
@@ -242,22 +242,15 @@ void R_DrawMapTitle(void)
  * Do not really change anything here, because Doomsday might be in the
  * middle of a refresh. The change will take effect next refresh.
  */
-void R_SetViewSize(int blocks)
+void R_SetViewSize(int player, int blocks)
 {
-    cfg.setSizeNeeded = true;
-
-    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
+    if(PLRPROFILE.screen.setBlocks != blocks && blocks > 10 && blocks < 13)
     {
-        int                 i;
-
         // When going fullscreen, force a hud show event (to reset the timer).
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            ST_HUDUnHide(i, HUE_FORCE);
-        }
+        ST_HUDUnHide(player, HUE_FORCE);
     }
 
-    cfg.setBlocks = blocks;
+    PLRPROFILE.screen.setBlocks = blocks;
 }
 
 static void rendPlayerView(int player)
@@ -318,19 +311,18 @@ static void rendHUD(int player)
         automapid_t         map = AM_MapForPlayer(player);
         boolean             redrawsbar = false;
 
-        // Draw HUD displays only visible when the automap is open.
-        if(AM_IsActive(map))
-            HU_DrawMapCounters();
+        if(!(IS_NETGAME && deathmatch))
+            HU_DrawCheatCounters();
 
         if(WINDOWHEIGHT != 200)
             redrawsbar = true;
 
         // Do we need to render a full status bar at this point?
-        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
+        if(!(AM_IsActive(map) && PLRPROFILE.automap.hudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             int                 viewmode =
-                ((WINDOWHEIGHT == 200)? cfg.setBlocks - 10 : 0);
+                ((WINDOWHEIGHT == 200)? PLRPROFILE.screen.setBlocks - 10 : 0);
 
             ST_Drawer(player, viewmode, redrawsbar);
         }
@@ -354,19 +346,20 @@ void D_Display(int layer)
     if(layer == 0)
     {
         // $democam: can be set on every frame.
-        if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        if(PLRPROFILE.screen.setBlocks > 10 ||
+           (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             // Full screen.
             R_SetViewWindowTarget(0, 0, 320, 200);
         }
         else
         {
-            int                 w = cfg.setBlocks * 32;
-            int                 h =
-                cfg.setBlocks * (200 - ST_HEIGHT * cfg.statusbarScale / 20) / 10;
+            int                 w = PLRPROFILE.screen.setBlocks * 32;
+            int                 h = PLRPROFILE.screen.setBlocks *
+                (200 - ST_HEIGHT * PLRPROFILE.statusbar.scale / 20) / 10;
 
             R_SetViewWindowTarget(160 - (w / 2),
-                                  (200 - ST_HEIGHT * cfg.statusbarScale / 20 - h) / 2,
+                                  (200 - ST_HEIGHT * PLRPROFILE.statusbar.scale / 20 - h) / 2,
                                   w, h);
         }
 
@@ -502,7 +495,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     if(P_MobjIsCamera(mo))
         mo->ddFlags |= DDMF_DONTDRAW;
 
-    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpseTics == -1)
+    if((mo->flags & MF_CORPSE) && PLRPROFILE.corpseTime && mo->corpseTics == -1)
         mo->ddFlags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.

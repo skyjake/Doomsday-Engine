@@ -83,8 +83,8 @@ typedef enum {
     MENU_SAVE,
     MENU_MULTIPLAYER,
     MENU_GAMESETUP,
+    MENU_PROFILES,
     MENU_PLAYERSETUP,
-    MENU_WEAPONSETUP,
     MENU_CONTROLS,
     MENU_NONE
 } menutype_t;
@@ -95,11 +95,13 @@ extern menu_t* currentMenu;
 extern short itemOn;
 
 extern menu_t MapDef;
+extern menu_t ControlsDef;
+extern menu_t ProfilesDef;
+extern menu_t EditProfileDef;
 
 // Multiplayer menus.
 extern menu_t MultiplayerMenu;
 extern menu_t GameSetupMenu;
-extern menu_t PlayerSetupMenu;
 
 void            M_DrawTitle(char* text, int y);
 void            M_WriteMenuText(const menu_t* menu, int index, const char* text);

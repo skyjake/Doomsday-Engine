@@ -118,7 +118,7 @@ static boolean checkMeleeRange(mobj_t *actor)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!GAMERULES.noMaxZMonsterMeleeAttack)
     {   // Account for Z height difference.
         if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
            pl->pos[VZ] + pl->height < actor->pos[VZ])
@@ -258,7 +258,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
                 good |= ld == blockLine ? 1 : 2;
         }
 
-        if(!good || cfg.monstersStuckInDoors)
+        if(!good || GAMERULES.monstersStuckInDoors)
             return good;
         else
             return (P_Random() >= 230) || (good & 1);
@@ -438,7 +438,7 @@ static void newChaseDir(mobj_t *actor)
     if(actor->floorZ - actor->dropOffZ > 24 &&
        actor->pos[VZ] <= actor->floorZ &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
-       !cfg.avoidDropoffs && avoidDropoff(actor))
+       !GAMERULES.avoidDropoffs && avoidDropoff(actor))
     {
         // Move away from dropoff.
         doNewChaseDir(actor, dropoffDelta[VX], dropoffDelta[VY]);
@@ -1156,7 +1156,7 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
 
     // DJS - Used the PRBoom method to fix archvile raising ghosts
     // If !raiseghosts then ressurect a "normal" MF_SOLID one.
-    if(cfg.raiseGhosts)
+    if(GAMERULES.raiseGhosts)
     {
         corpseHit->height *= 2*2;
         check = P_CheckPosition2f(corpseHit, corpseHit->pos[VX], corpseHit->pos[VY]);
@@ -1227,7 +1227,7 @@ void C_DECL A_VileChase(mobj_t *actor)
 
             P_MobjChangeState(corpseHit, P_GetState(corpseHit->type, SN_RAISE));
 
-            if(cfg.raiseGhosts)
+            if(GAMERULES.raiseGhosts)
             {
                 corpseHit->height *= 2*2;
             }
@@ -1460,7 +1460,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     float               prestep;
     sector_t*           sec;
 
-    if(cfg.maxSkulls)
+    if(GAMERULES.maxSkulls)
     {   // Limit the number of MT_SKULL's we should spawn.
         countmobjoftypeparams_t params;
 
@@ -1484,7 +1484,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     pos[VZ] += 8;
 
     // Compat option to prevent spawning lost souls inside walls.
-    if(!cfg.allowSkullsInWalls)
+    if(!GAMERULES.allowSkullsInWalls)
     {
         /**
          * Check whether the Lost Soul is being fired through a 1-sided
@@ -1642,7 +1642,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
              */
 
             // Added compatibility option.
-            if(!cfg.anyBossDeath)
+            if(!GAMERULES.anyBossDeath)
                 if(mo->type != MT_BRUISER)
                     return;
             break;

@@ -272,43 +272,42 @@ static dpatch_t armsBackground;
 static dpatch_t arms[6][2];
 
 // CVARs for the HUD/Statusbar:
-cvar_t sthudCVars[] =
-{
+cvar_t sthudCVars[] = {
     // HUD scale
-    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
+    {"hud-scale", 0, CVT_FLOAT, &PLRPROFILE.hud.scale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.statusbarScale, 1, 20},
+    {"hud-status-size", CVF_PROTECTED, CVT_INT, &PLRPROFILE.statusbar.scale, 1, 20},
 
     // HUD colour + alpha
-    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
-    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1},
-    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1},
-    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
-    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
+    {"hud-color-r", 0, CVT_FLOAT, &PLRPROFILE.hud.color[0], 0, 1},
+    {"hud-color-g", 0, CVT_FLOAT, &PLRPROFILE.hud.color[1], 0, 1},
+    {"hud-color-b", 0, CVT_FLOAT, &PLRPROFILE.hud.color[2], 0, 1},
+    {"hud-color-a", 0, CVT_FLOAT, &PLRPROFILE.hud.color[3], 0, 1},
+    {"hud-icon-alpha", 0, CVT_FLOAT, &PLRPROFILE.hud.iconAlpha, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1},
-    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
+    {"hud-status-alpha", 0, CVT_FLOAT, &PLRPROFILE.statusbar.opacity, 0, 1},
+    {"hud-status-icon-a", 0, CVT_FLOAT, &PLRPROFILE.statusbar.counterAlpha, 0, 1},
 
     // HUD icons
-    {"hud-face", 0, CVT_BYTE, &cfg.hudShown[HUD_FACE], 0, 1},
-    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1},
-    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
-    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
-    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
-    {"hud-keys-combine", 0, CVT_BYTE, &cfg.hudKeysCombine, 0, 1},
+    {"hud-face", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_FACE], 0, 1},
+    {"hud-health", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_HEALTH], 0, 1},
+    {"hud-armor", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_ARMOR], 0, 1},
+    {"hud-ammo", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_AMMO], 0, 1},
+    {"hud-keys", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_KEYS], 0, 1},
+    {"hud-keys-combine", 0, CVT_BYTE, &PLRPROFILE.hud.keysCombine, 0, 1},
 
     // HUD displays
-    {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
+    {"hud-frags", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_FRAGS], 0, 1},
 
-    {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
+    {"hud-timer", 0, CVT_FLOAT, &PLRPROFILE.hud.timer, 0, 60},
 
-    {"hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1},
-    {"hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1},
-    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1},
-    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1},
-    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1},
-    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
-    {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
+    {"hud-unhide-damage", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_DAMAGE], 0, 1},
+    {"hud-unhide-pickup-health", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_HEALTH], 0, 1},
+    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_ARMOR], 0, 1},
+    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_POWER], 0, 1},
+    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_WEAPON], 0, 1},
+    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_AMMO], 0, 1},
+    {"hud-unhide-pickup-key", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_KEY], 0, 1},
     {NULL}
 };
 
@@ -345,7 +344,7 @@ static void drawStatusBarBackground(int player, float width, float height)
 
     if(hud->blended)
     {
-        alpha = cfg.statusbarOpacity - hud->hideAmount;
+        alpha = PLRPROFILE.statusbar.opacity - hud->hideAmount;
         if(!(alpha > 0))
             return;
 
@@ -502,7 +501,7 @@ static void drawStatusBarBackground(int player, float width, float height)
 
     if(IS_NETGAME) // Faceback.
     {
-        int             plrColor = cfg.playerColor[player];
+        int             plrColor = gs.players[player].color;
         dpatch_t*       patch = &faceBackground[plrColor];
 
         DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
@@ -545,9 +544,9 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
         return;
 
-    if(ev == HUE_FORCE || cfg.hudUnHide[ev])
+    if(ev == HUE_FORCE || PLRPROFILE.hud.unHide[ev])
     {
-        hudStates[player].hideTics = (cfg.hudTimer * TICSPERSEC);
+        hudStates[player].hideTics = (PLRPROFILE.hud.timer * TICSPERSEC);
         hudStates[player].hideAmount = 0;
     }
 }
@@ -624,13 +623,13 @@ void ST_updateFaceWidget(int player)
             // frame duration of only 1 tic.
             // if(plr->health - oldHealth > ST_MUCHPAIN)
 
-            if((cfg.fixOuchFace?
+            if((PLRPROFILE.statusbar.fixOuchFace?
                (hud->oldHealth - plr->health) :
                (plr->health - hud->oldHealth)) > ST_MUCHPAIN)
             {
                 hud->faceCount = ST_TURNCOUNT;
                 hud->faceIndex = calcPainOffset(hud) + ST_OUCHOFFSET;
-                if(cfg.fixOuchFace)
+                if(PLRPROFILE.statusbar.fixOuchFace)
                     hud->priority = 8; // Added to fix 1 tic issue.
             }
             else
@@ -681,7 +680,7 @@ void ST_updateFaceWidget(int player)
             // to end up with MORE health than he started with.
             // if(plr->health - oldHealth > ST_MUCHPAIN)
 
-            if((cfg.fixOuchFace?
+            if((PLRPROFILE.statusbar.fixOuchFace?
                (hud->oldHealth - plr->health) :
                (plr->health - hud->oldHealth)) > ST_MUCHPAIN)
             {
@@ -756,7 +755,7 @@ void ST_updateWidgets(int player)
     if(hud->blended)
     {
         hud->statusbarCounterAlpha =
-            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hud->hideAmount, 1.f);
+            MINMAX_OF(0.f, PLRPROFILE.statusbar.counterAlpha - hud->hideAmount, 1.f);
     }
     else
         hud->statusbarCounterAlpha = 1.0f;
@@ -765,7 +764,7 @@ void ST_updateWidgets(int player)
     found = false;
     for(ammoType=0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->pClass].mode[0].ammoType[ammoType])
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon
@@ -821,7 +820,7 @@ void ST_Ticker(void)
 
         if(!P_IsPaused())
         {
-            if(cfg.hudTimer == 0)
+            if(PLRPROFILE.hud.timer == 0)
             {
                 hud->hideTics = hud->hideAmount = 0;
             }
@@ -829,7 +828,7 @@ void ST_Ticker(void)
             {
                 if(hud->hideTics > 0)
                     hud->hideTics--;
-                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                if(hud->hideTics == 0 && PLRPROFILE.hud.timer > 0 && hud->hideAmount < 1)
                     hud->hideAmount += 0.1f;
             }
 
@@ -930,12 +929,12 @@ void ST_doRefresh(int player)
 
     hud = &hudStates[player];
 
-    statusbarVisible = (cfg.statusbarScale < 20 ||
-        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
+    statusbarVisible = (PLRPROFILE.statusbar.scale < 20 ||
+        (PLRPROFILE.statusbar.scale == 20 && hud->showBar < 1.0f));
 
     hud->firstTime = false;
 
-    fscale = cfg.statusbarScale / 20.0f;
+    fscale = PLRPROFILE.statusbar.scale / 20.0f;
     h = SCREENHEIGHT * (1 - fscale);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1032,45 +1031,45 @@ void ST_doFullscreenStuff(int player)
     player_t*           plr = &players[player];
     char                buf[20];
     int                 w, h, pos = 0, spr, i;
-    int                 width = 320 / cfg.hudScale;
-    int                 height = 200 / cfg.hudScale;
+    int                 width = 320 / PLRPROFILE.hud.scale;
+    int                 height = 200 / PLRPROFILE.hud.scale;
     float               textAlpha =
-        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
+        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - PLRPROFILE.hud.color[3]), 1.f);
     float               iconAlpha =
-        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - PLRPROFILE.hud.iconAlpha), 1.f);
 
-    if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
+    if(IS_NETGAME && deathmatch && PLRPROFILE.hud.shown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - 8;
-        if(cfg.hudShown[HUD_HEALTH] || cfg.hudShown[HUD_AMMO])
+        if(PLRPROFILE.hud.shown[HUD_HEALTH] || PLRPROFILE.hud.shown[HUD_AMMO])
         {
-            i -= 18 * cfg.hudScale;
+            i -= 18 * PLRPROFILE.hud.scale;
         }
         sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-        M_WriteText2(2, i, buf, huFontA, cfg.hudColor[0], cfg.hudColor[1],
-                     cfg.hudColor[2], textAlpha);
+        M_WriteText2(2, i, buf, huFontA, PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1],
+                     PLRPROFILE.hud.color[2], textAlpha);
     }
 
     // Setup the scaling matrix.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+    DGL_Scalef(PLRPROFILE.hud.scale, PLRPROFILE.hud.scale, 1);
 
     // Draw the visible HUD data, first health.
-    if(cfg.hudShown[HUD_HEALTH])
+    if(PLRPROFILE.hud.shown[HUD_HEALTH])
     {
         ST_drawHUDSprite(SPR_STIM, 2, height - 2, HOT_BLEFT, 1, iconAlpha,
                          false);
         ST_HUDSpriteSize(SPR_STIM, &w, &h);
         pos = w + 2;
         sprintf(buf, "%i%%", plr->health);
-        M_WriteText2(pos, height - 14, buf, huFontB, cfg.hudColor[0],
-                     cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+        M_WriteText2(pos, height - 14, buf, huFontB, PLRPROFILE.hud.color[0],
+                     PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2], textAlpha);
         pos += M_StringWidth(buf, huFontB) + 2;
     }
 
-    if(cfg.hudShown[HUD_AMMO])
+    if(PLRPROFILE.hud.shown[HUD_AMMO])
     {
         ammotype_t          ammoType;
         float               scale;
@@ -1079,7 +1078,7 @@ void ST_doFullscreenStuff(int player)
         //// for each type of ammo this weapon takes.
         for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
         {
-            if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+            if(!weaponInfo[plr->readyWeapon][plr->pClass].mode[0].ammoType[ammoType])
                 continue;
 
             spr = ammoSprite[ammoType];
@@ -1091,16 +1090,16 @@ void ST_doFullscreenStuff(int player)
             pos += w + 2;
             sprintf(buf, "%i", plr->ammo[ammoType]);
             M_WriteText2(pos, height - 14, buf, huFontB,
-                         cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
+                         PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2],
                          textAlpha);
             break;
         }
     }
 
     // Doomguy's face | use a bit of extra scale.
-    if(cfg.hudShown[HUD_FACE])
+    if(PLRPROFILE.hud.shown[HUD_FACE])
     {
-        int             plrColor = cfg.playerColor[player];
+        int             plrColor = gs.players[player].color;
 
         pos = (width/2) -(faceBackground[plrColor].width/2) + 6;
 
@@ -1119,7 +1118,7 @@ Draw_EndZoom();
     }
 
     pos = width - 2;
-    if(cfg.hudShown[HUD_ARMOR])
+    if(PLRPROFILE.hud.shown[HUD_ARMOR])
     {
         int                 maxArmor, armorOffset;
 
@@ -1132,7 +1131,7 @@ Draw_EndZoom();
         sprintf(buf, "%i%%", plr->armorPoints);
         pos -= armorOffset;
         M_WriteText2(pos + armorOffset - M_StringWidth(buf, huFontB), height - 14, buf, huFontB,
-                     cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+                     PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2], textAlpha);
         pos -= 2;
 
         spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
@@ -1143,7 +1142,7 @@ Draw_EndZoom();
     }
 
     // Keys | use a bit of extra scale.
-    if(cfg.hudShown[HUD_KEYS])
+    if(PLRPROFILE.hud.shown[HUD_KEYS])
     {
         static int          keyPairs[3][2] = {
             {KT_REDCARD, KT_REDSKULL},
@@ -1167,7 +1166,7 @@ Draw_BeginZoom(0.75f, pos , height - 2);
             if(!plr->keys[i])
                 continue;
 
-            if(cfg.hudKeysCombine)
+            if(PLRPROFILE.hud.keysCombine)
             {
                 int                 j;
 
@@ -1213,7 +1212,7 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
     hud->firstTime = hud->firstTime || refresh;
     hud->statusbarActive = (fullscreenMode < 2) ||
         (AM_IsActive(AM_MapForPlayer(player)) &&
-         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+         (PLRPROFILE.automap.hudDisplay == 0 || PLRPROFILE.automap.hudDisplay == 2));
 
     // Do palette shifts.
     ST_doPaletteStuff(player);
@@ -1414,7 +1413,7 @@ void ST_createWidgets(int player)
     found = false;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->pClass].mode[0].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
         ptr = &plr->ammo[ammoType].owned;
@@ -1520,7 +1519,7 @@ void ST_Init(void)
  */
 DEFCC(CCmdStatusBarSize)
 {
-    int                 min = 1, max = 20, *val = &cfg.statusbarScale;
+    int                 min = 1, max = 20, *val = &PLRPROFILE.statusbar.scale;
 
     if(!stricmp(argv[1], "+"))
         (*val)++;
@@ -1535,7 +1534,7 @@ DEFCC(CCmdStatusBarSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks);
+    R_SetViewSize(CONSOLEPLAYER, PLRPROFILE.screen.blocks);
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // So the user can see the change.
     return true;
 }

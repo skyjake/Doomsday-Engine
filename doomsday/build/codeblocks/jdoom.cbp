@@ -186,12 +186,10 @@
 		<Unit filename="..\..\plugins\common\src\hu_stuff.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\m_fixed.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\m_multi.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\common\src\m_ctrl.c" />
+		<Unit filename="..\..\plugins\common\src\m_fixed.c" />
+		<Unit filename="..\..\plugins\common\src\m_multi.c" />
+		<Unit filename="..\..\plugins\common\src\m_playerprofile.c" />
 		<Unit filename="..\..\plugins\common\src\p_actor.c">
 			<Option compilerVar="CC" />
 		</Unit>

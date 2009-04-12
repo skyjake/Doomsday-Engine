@@ -1560,7 +1560,7 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
     cnt = bcnt = 0;
     firstRefresh = 1;
     me = wbs->pNum;
-    myTeam = cfg.playerColor[wbs->pNum];
+    myTeam = gs.players[wbs->pNum].color;
     plrs = wbs->plyr;
 
     if(!wbs->maxKills)
@@ -1575,10 +1575,10 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
             wbs->epsd -= 3;
 }
 
-void WI_Start(wbstartstruct_t *wbstartstruct)
+void WI_Start(wbstartstruct_t* wbstartstruct)
 {
     int                 i, j, k;
-    teaminfo_t         *tin;
+    teaminfo_t*         tin;
 
     GL_SetFilter(false);
     WI_initVariables(wbstartstruct);
@@ -1591,14 +1591,14 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
         for(j = 0; j < MAXPLAYERS; ++j)
         {
             // Is the player in this team?
-            if(!plrs[j].inGame || cfg.playerColor[j] != i)
+            if(!plrs[j].inGame || gs.players[j].color != i)
                 continue;
 
             tin->members++;
 
             // Check the frags.
             for(k = 0; k < MAXPLAYERS; ++k)
-                tin->frags[cfg.playerColor[k]] += plrs[j].frags[k];
+                tin->frags[gs.players[k].color] += plrs[j].frags[k];
 
             // Counters.
             if(plrs[j].items > tin->items)

@@ -107,7 +107,7 @@ static void SV_ReadPlayer(player_t* pl)
     int             i;
 
     SV_ReadLong();
-    pl->playerState = SV_ReadLong();
+    pl->pState = SV_ReadLong();
     SV_Read(NULL, 8);
     pl->plr->viewZ = FIX2FLT(SV_ReadLong());
     pl->plr->viewHeight = FIX2FLT(SV_ReadLong());

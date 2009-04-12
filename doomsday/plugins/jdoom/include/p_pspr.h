@@ -46,8 +46,8 @@
  * coordinates are in virtual, [320 x 200] viewscreen-space.
  */
 typedef enum {
-    ps_weapon,
-    ps_flash,
+    PS_WEAPON,
+    PS_FLASH,
     NUMPSPRITES
 } psprnum_t;
 

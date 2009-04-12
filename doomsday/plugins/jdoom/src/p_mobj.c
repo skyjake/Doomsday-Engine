@@ -173,7 +173,7 @@ float P_MobjGetFriction(mobj_t *mo)
 static boolean isInWalkState(player_t* pl)
 {
     return pl->plr->mo->state - STATES -
-                PCLASS_INFO(pl->class)->runState < 4;
+                PCLASS_INFO(pl->pClass)->runState < 4;
 }
 
 static float getFriction(mobj_t* mo)
@@ -234,11 +234,11 @@ void P_MobjMoveXY(mobj_t *mo)
          */
 
         largeNegative = false;
-        if(!cfg.moveBlock &&
+        if(!GAMERULES.moveBlock &&
            (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
         {
             // Make an exception for "north-only wallrunning".
-            if(!(cfg.wallRunNorthOnly && mo->wallRun))
+            if(!(GAMERULES.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
@@ -325,7 +325,7 @@ void P_MobjMoveXY(mobj_t *mo)
     if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
         return; // No friction when falling.
 
-    if(cfg.slidingCorpses)
+    if(GAMERULES.slidingCorpses)
     {
         // $dropoff_fix: Add objects falling off ledges, does not apply to
         // players!
@@ -351,7 +351,7 @@ void P_MobjMoveXY(mobj_t *mo)
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->pClass)->normalState);
 
         mo->mom[MX] = mo->mom[MY] = 0;
 
@@ -559,7 +559,7 @@ void P_MobjMoveZ(mobj_t* mo)
         {
             mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
             mo->dPlayer->viewHeightDelta =
-                (cfg.plrViewHeight - mo->dPlayer->viewHeight) / 8;
+                (PLRPROFILE.camera.offsetZ - mo->dPlayer->viewHeight) / 8;
         }
 
         mo->pos[VZ] = floorZ;
@@ -766,7 +766,7 @@ void P_MobjThinker(mobj_t* mo)
 
         if(mo->pos[VZ] > mo->dropOffZ && // Only objects contacting dropoff.
            !(mo->flags & MF_NOGRAVITY) &&
-           !(mo->flags2 & MF2_FLOATBOB) && cfg.fallOff)
+           !(mo->flags2 & MF2_FLOATBOB) && GAMERULES.fallOff)
         {
             P_ApplyTorque(mo);
         }
@@ -777,7 +777,7 @@ void P_MobjThinker(mobj_t* mo)
         }
     }
 
-    if(cfg.slidingCorpses)
+    if(GAMERULES.slidingCorpses)
     {
         if(((mo->flags & MF_CORPSE)? mo->pos[VZ] > mo->dropOffZ :
                                        mo->pos[VZ] - mo->dropOffZ > 24) && // Only objects contacting drop off
@@ -792,19 +792,22 @@ void P_MobjThinker(mobj_t* mo)
         }
     }
 
-    // $vanish: dead monsters disappear after some time.
-    if(cfg.corpseTime && (mo->flags & MF_CORPSE) && mo->corpseTics != -1)
+    /**
+     * $vanish: dead monsters disappear after some time.
+     * \fixme This should be done entirely client-side!
+     */
+    if(PLRPROFILE.corpseTime && (mo->flags & MF_CORPSE) && mo->corpseTics != -1)
     {
-        if(++mo->corpseTics < cfg.corpseTime * TICSPERSEC)
+        if(++mo->corpseTics < PLRPROFILE.corpseTime * TICSPERSEC)
         {
             mo->translucency = 0; // Opaque.
         }
-        else if(mo->corpseTics < cfg.corpseTime * TICSPERSEC + VANISHTICS)
+        else if(mo->corpseTics < PLRPROFILE.corpseTime * TICSPERSEC + VANISHTICS)
         {
             // Translucent during vanishing.
             mo->translucency =
                 ((mo->corpseTics -
-                  cfg.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
+                  PLRPROFILE.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
         }
         else
         {
@@ -873,7 +876,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z, angle_t angle)
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
     mo->health =
-        info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+        info->spawnHealth * (IS_NETGAME ? GAMERULES.mobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
     // Let the engine know about solid objects.
@@ -965,7 +968,7 @@ void P_CheckRespawnQueue(void)
 
     // Only respawn items in deathmatch 2 and optionally in coop.
     if(deathmatch != 2 &&
-       (!cfg.coopRespawnItems || !IS_NETGAME || deathmatch))
+       (!GAMERULES.coopRespawnItems || !IS_NETGAME || deathmatch))
         return;
 
     // Nothing left to respawn?
@@ -1047,7 +1050,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 
     p = &players[pnum];
 
-    if(p->playerState == PST_REBORN)
+    if(p->pState == PST_REBORN)
         G_PlayerReborn(pnum);
 
     if(spot)
@@ -1073,7 +1076,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     }
 
     // Set color translations for player sprites.
-    i = cfg.playerColor[pnum];
+    i = gs.players[pnum].color;
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
 
@@ -1084,7 +1087,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     mobj->health = p->health;
 
     p->plr->mo = mobj;
-    p->playerState = PST_LIVE;
+    p->pState = PST_LIVE;
     p->refire = 0;
     p->damageCount = 0;
     p->bonusCount = 0;
@@ -1099,13 +1102,13 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
+        p->plr->mo->pos[VZ] += (float) PLRPROFILE.camera.offsetZ;
         p->plr->viewHeight = 0;
     }
     else
-        p->plr->viewHeight = (float) cfg.plrViewHeight;
+        p->plr->viewHeight = (float) PLRPROFILE.camera.offsetZ;
 
-    p->class = PCLASS_PLAYER;
+    p->pClass = PCLASS_PLAYER;
 
     // Setup gun psprite.
     P_SetupPsprites(p);
@@ -1202,16 +1205,16 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(IS_NETGAME && (th->flags & MTF_NOTSINGLE))
     {
         // Cooperative weapons?
-        if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP &&
+        if(GAMERULES.noCoopWeapons && !deathmatch && i >= MT_CLIP &&
            i <= MT_SUPERSHOTGUN)
             return;
 
         // Don't spawn any special objects in coop?
-        if(cfg.noCoopAnything && !deathmatch)
+        if(GAMERULES.noCoopAnything && !deathmatch)
             return;
 
         // BFG disabled in netgames?
-        if(cfg.noNetBFG && i == MT_MISC25)
+        if(GAMERULES.noBFG && i == MT_MISC25)
             return;
     }
 
@@ -1358,7 +1361,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
         // See which target is to be aimed at.
         angle = source->angle;
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!cfg.noAutoAim)
+        if(PLRPROFILE.ctrl.useAutoAim)
             if(!lineTarget)
             {
                 angle += 1 << 26;
@@ -1379,7 +1382,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
             }
 
         if(!P_MobjIsCamera(source->player->plr->mo))
-            spawnZOff = cfg.plrViewHeight - 9 +
+            spawnZOff = PLRPROFILE.camera.offsetZ - 9 +
                 source->player->plr->lookDir / 173;
     }
     else
@@ -1421,7 +1424,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
 
     if(source->player)
     {   // Allow free-aim with the BFG in deathmatch?
-        if(deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
+        if(deathmatch && GAMERULES.freeAimBFG == 0 && type == MT_BFG)
             th->mom[MZ] = 0;
         else
             th->mom[MZ] = th->info->speed * slope;
