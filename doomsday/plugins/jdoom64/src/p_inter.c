@@ -137,7 +137,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
+            if(!weaponInfo[weapon][player->pClass].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
             if(deathmatch)
@@ -163,7 +163,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
+            if(!weaponInfo[weapon][player->pClass].mode[0].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             // Give one clip with a dropped weapon, two clips with a found
@@ -343,7 +343,7 @@ boolean P_TakePower(player_t* player, int power)
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
     {
-        if(plrmo->pos[VZ] != plrmo->floorZ && cfg.lookSpring)
+        if(plrmo->pos[VZ] != plrmo->floorZ && PLRPROFILE.camera.lookSpring)
         {
             player->centering = true;
         }
@@ -637,12 +637,14 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GivePower(plr, PT_STRENGTH))
             return false;
         P_SetMessage(plr, GOTBERSERK, false);
-        if(plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
+        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
+
+        /// \fixme Should be client side.
+        if(plr->readyWeapon != WT_FIRST && PLRPROFILE.inventory.berserkAutoSwitch)
         {
             plr->pendingWeapon = WT_FIRST;
             plr->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
         }
-        S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_INVIS:
@@ -939,7 +941,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         target->flags &= ~MF_SOLID;
         target->flags2 &= ~MF2_FLY;
         target->player->powers[PT_FLIGHT] = 0;
-        target->player->playerState = PST_DEAD;
+        target->player->pState = PST_DEAD;
         target->player->rebornWait = PLAYER_REBORN_TICS;
         target->player->update |= PSF_STATE;
         target->player->plr->flags |= DDPF_DEAD;
@@ -1045,13 +1047,13 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+            if(IS_NETGAME && !deathmatch && GAMERULES.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
-            if(cfg.noTeamDamage &&
-               cfg.playerColor[target->player - players] ==
-               cfg.playerColor[source->player - players])
+            if(GAMERULES.noTeamDamage &&
+               gs.players[target->player - players].color ==
+               gs.players[source->player - players].color)
                 return 0;
         }
     }
@@ -1102,7 +1104,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= GAMERULES.mobDamageModifier;
     }
 
     // Some close combat weapons should not inflict thrust and push the

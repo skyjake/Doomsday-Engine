@@ -129,7 +129,7 @@ static boolean checkMeleeRange(mobj_t *actor)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!GAMERULES.noMaxZMonsterMeleeAttack)
     {   // Account for Z height difference.
         if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
            pl->pos[VZ] + pl->height < actor->pos[VZ])
@@ -256,7 +256,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
                 good |= ld == blockLine ? 1 : 2;
         }
 
-        if(!good || cfg.monstersStuckInDoors)
+        if(!good || GAMERULES.monstersStuckInDoors)
             return good;
         else
             return (P_Random() >= 230) || (good & 1);
@@ -436,7 +436,7 @@ static void newChaseDir(mobj_t *actor)
     if(actor->floorZ - actor->dropOffZ > 24 &&
        actor->pos[VZ] <= actor->floorZ &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
-       !cfg.avoidDropoffs && avoidDropoff(actor))
+       !GAMERULES.avoidDropoffs && avoidDropoff(actor))
     {
         // Move away from dropoff.
         doNewChaseDir(actor, dropoffDelta[VX], dropoffDelta[VY]);
@@ -1769,7 +1769,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     float               prestep;
     sector_t*           sec;
 
-    if(cfg.maxSkulls)
+    if(GAMERULES.maxSkulls)
     {   // Limit the number of MT_SKULL's we should spawn.
         countmobjoftypeparams_t params;
 
@@ -1793,7 +1793,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     pos[VZ] += 8;
 
     // Compat option to prevent spawning lost souls inside walls.
-    if(cfg.allowSkullsInWalls)
+    if(GAMERULES.allowSkullsInWalls)
     {
         newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
     }

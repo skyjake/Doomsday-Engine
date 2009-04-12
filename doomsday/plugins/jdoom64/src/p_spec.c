@@ -956,7 +956,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // SECRET SECTOR
         player->secretCount++;
         P_ToXSector(sector)->special = 0;
-        if(cfg.secretMsg)
+        if(GAMERULES.announceSecrets)
         {
             P_SetMessage(player, "You've found a secret area!", false);
             // S_ConsoleSound(SFX_GETPOW, 0, player - players); // jd64
@@ -1433,7 +1433,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
             break;
 
         // Prevent zombies from exiting levels,
-        if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
+        if(mo->player && mo->player->health <= 0 && !GAMERULES.zombiesCanExit)
         {
             S_StartSound(SFX_NOWAY, mo);
             return false;
@@ -1515,7 +1515,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
             break;
 
         // Prevent zombies from exiting levels.
-        if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
+        if(mo->player && mo->player->health <= 0 && !GAMERULES.zombiesCanExit)
         {
             S_StartSound(SFX_NOWAY, mo);
             return false;

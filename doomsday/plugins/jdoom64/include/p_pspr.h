@@ -39,8 +39,8 @@
  * coordinates are given for a 320*200 view screen.
  */
 typedef enum {
-    ps_weapon,
-    ps_flash,
+    PS_WEAPON,
+    PS_FLASH,
     NUMPSPRITES
 } psprnum_t;
 
