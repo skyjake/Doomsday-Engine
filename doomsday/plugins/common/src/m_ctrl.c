@@ -111,7 +111,7 @@ menu_t ControlsDef = {
     0, NULL,
     1, MENU_OPTIONS,
     huFontA,                    //1, 0, 0,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
     0, 17, { 17, 40 }
@@ -126,7 +126,7 @@ menu_t ControlsDef = {
     0, NULL,
     1, MENU_OPTIONS,
     huFontA,                    //1, 0, 0,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
     0, 15, { 15, 26 }
@@ -141,7 +141,7 @@ menu_t ControlsDef = {
     0, NULL,
     1, MENU_OPTIONS,
     huFontA,                    //1, 0, 0,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
     0, 16, { 16, 21 }
@@ -616,8 +616,8 @@ void M_DrawControlsMenu(void)
     M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
                  huFontA, 1, .7f, .3f, Hu_MenuAlpha());
 #else
-    M_WriteText2(120, 100 - 98/cfg.menuScale, "CONTROLS", huFontB, cfg.menuColor[0],
-                 cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
+    M_WriteText2(120, 100 - 98/gs.cfg.menuScale, "CONTROLS", huFontB, gs.cfg.menuColor[0],
+                 gs.cfg.menuColor[1], gs.cfg.menuColor[2], Hu_MenuAlpha());
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -631,7 +631,7 @@ void M_DrawControlsMenu(void)
 
     strcpy(buf, "Select to assign new, [Del] to clear");
     M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2,
-                 100 + (95/cfg.menuScale) - M_StringHeight(buf, huFontA), buf, huFontA,
+                 100 + (95/gs.cfg.menuScale) - M_StringHeight(buf, huFontA), buf, huFontA,
 #if __JDOOM__
                  1, .7f, .3f,
 #else

@@ -1009,13 +1009,12 @@ static void SV_WritePlayer(int playernum)
     SV_WriteByte(5);
 
 #if __JHEXEN__
-    // Class.
-    SV_WriteByte(cfg.playerClass[playernum]);
+    SV_WriteByte(gs.players[playernum].pClass); // Original class.
 #endif
 
-    SV_WriteLong(p->playerState);
+    SV_WriteLong(p->pState);
 #if __JHEXEN__
-    SV_WriteLong(p->class);    // 2nd class...?
+    SV_WriteLong(p->pClass); // Current class.
 #endif
     SV_WriteLong(FLT2FIX(dp->viewZ));
     SV_WriteLong(FLT2FIX(dp->viewHeight));
@@ -1161,7 +1160,7 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->flameCount);
 
     // Added in ver 2
-    SV_WriteByte(p->class);
+    SV_WriteByte(p->pClass);
 #endif
 }
 
@@ -1177,15 +1176,15 @@ static void SV_ReadPlayer(player_t *p)
     ver = SV_ReadByte();
 
 #if __JHEXEN__
-    cfg.playerClass[p - players] = SV_ReadByte();
+    gs.players[p - players].pClass = SV_ReadByte(); // Original class.
 
     memset(p, 0, sizeof(*p));   // Force everything NULL,
     p->plr = dp;                // but restore the ddplayer pointer.
 #endif
 
-    p->playerState = SV_ReadLong();
+    p->pState = SV_ReadLong();
 #if __JHEXEN__
-    p->class = SV_ReadLong();        // 2nd class...?
+    p->pClass = SV_ReadLong(); // Current class.
 #endif
     dp->viewZ = FIX2FLT(SV_ReadLong());
     dp->viewHeight = FIX2FLT(SV_ReadLong());
@@ -1367,7 +1366,7 @@ static void SV_ReadPlayer(player_t *p)
     p->flameCount = SV_ReadLong();
 
     if(ver >= 2)
-        p->class = SV_ReadByte();
+        p->pClass = SV_ReadByte();
 #endif
 
 #if !__JHEXEN__
@@ -5019,7 +5018,7 @@ static boolean SV_LoadGame2(void)
             if(k < MAXPLAYERS)
                 continue;           // Found; don't bother this player.
 
-            players[i].playerState = PST_REBORN;
+            players[i].pState = PST_REBORN;
 
             if(!i)
             {
@@ -5372,9 +5371,9 @@ void SV_MapTeleport(int map, int position)
 
         if(IS_NETGAME || deathmatch)
         {
-            if(players[i].playerState == PST_DEAD)
+            if(players[i].pState == PST_DEAD)
             {   // In a network game, force all players to be alive
-                players[i].playerState = PST_REBORN;
+                players[i].pState = PST_REBORN;
             }
             if(!deathmatch)
             {   // Cooperative net-play, retain keys and weapons
@@ -5386,7 +5385,7 @@ void SV_MapTeleport(int map, int position)
                 }
             }
         }
-        playerWasReborn = (players[i].playerState == PST_REBORN);
+        playerWasReborn = (players[i].pState == PST_REBORN);
         if(deathmatch)
         {
             memset(players[i].frags, 0, sizeof(players[i].frags));

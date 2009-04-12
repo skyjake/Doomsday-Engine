@@ -195,38 +195,38 @@ static void     findMinMaxBoundaries(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 cvar_t mapCVars[] = {
-    {"map-opacity", 0, CVT_FLOAT, &cfg.automapOpacity, 0, 1},
-    {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1},
+    {"map-opacity", 0, CVT_FLOAT, &PLRPROFILE.automap.opacity, 0, 1},
+    {"map-alpha-lines", 0, CVT_FLOAT, &PLRPROFILE.automap.lineAlpha, 0, 1},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
+    {"map-babykeys", 0, CVT_BYTE, &PLRPROFILE.automap.babyKeys, 0, 1},
 #endif
-    {"map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1},
-    {"map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1},
-    {"map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1},
-    {"map-customcolors", 0, CVT_INT, &cfg.automapCustomColors, 0, 1},
-    {"map-mobj-r", 0, CVT_FLOAT, &cfg.automapMobj[0], 0, 1},
-    {"map-mobj-g", 0, CVT_FLOAT, &cfg.automapMobj[1], 0, 1},
-    {"map-mobj-b", 0, CVT_FLOAT, &cfg.automapMobj[2], 0, 1},
-    {"map-wall-r", 0, CVT_FLOAT, &cfg.automapL1[0], 0, 1},
-    {"map-wall-g", 0, CVT_FLOAT, &cfg.automapL1[1], 0, 1},
-    {"map-wall-b", 0, CVT_FLOAT, &cfg.automapL1[2], 0, 1},
-    {"map-wall-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1},
-    {"map-wall-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1},
-    {"map-wall-unseen-b", 0, CVT_FLOAT, &cfg.automapL0[2], 0, 1},
-    {"map-wall-floorchange-r", 0, CVT_FLOAT, &cfg.automapL2[0], 0, 1},
-    {"map-wall-floorchange-g", 0, CVT_FLOAT, &cfg.automapL2[1], 0, 1},
-    {"map-wall-floorchange-b", 0, CVT_FLOAT, &cfg.automapL2[2], 0, 1},
-    {"map-wall-ceilingchange-r", 0, CVT_FLOAT, &cfg.automapL3[0], 0, 1},
-    {"map-wall-ceilingchange-g", 0, CVT_FLOAT, &cfg.automapL3[1], 0, 1},
-    {"map-wall-ceilingchange-b", 0, CVT_FLOAT, &cfg.automapL3[2], 0, 1},
-    {"map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1},
-    {"map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200},
-    {"map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2},
-    {"map-pan-speed", 0, CVT_FLOAT, &cfg.automapPanSpeed, 0, 1},
-    {"map-pan-resetonopen", 0, CVT_BYTE, &cfg.automapPanResetOnOpen, 0, 1},
-    {"map-rotate", 0, CVT_BYTE, &cfg.automapRotate, 0, 1},
-    {"map-zoom-speed", 0, CVT_FLOAT, &cfg.automapZoomSpeed, 0, 1},
-    {"map-open-timer", CVF_NO_MAX, CVT_FLOAT, &cfg.automapOpenSeconds, 0, 0},
+    {"map-background-r", 0, CVT_FLOAT, &PLRPROFILE.automap.background[0], 0, 1},
+    {"map-background-g", 0, CVT_FLOAT, &PLRPROFILE.automap.background[1], 0, 1},
+    {"map-background-b", 0, CVT_FLOAT, &PLRPROFILE.automap.background[2], 0, 1},
+    {"map-customcolors", 0, CVT_INT, &PLRPROFILE.automap.customColors, 0, 1},
+    {"map-mobj-r", 0, CVT_FLOAT, &PLRPROFILE.automap.mobj[0], 0, 1},
+    {"map-mobj-g", 0, CVT_FLOAT, &PLRPROFILE.automap.mobj[1], 0, 1},
+    {"map-mobj-b", 0, CVT_FLOAT, &PLRPROFILE.automap.mobj[2], 0, 1},
+    {"map-wall-r", 0, CVT_FLOAT, &PLRPROFILE.automap.line1[0], 0, 1},
+    {"map-wall-g", 0, CVT_FLOAT, &PLRPROFILE.automap.line1[1], 0, 1},
+    {"map-wall-b", 0, CVT_FLOAT, &PLRPROFILE.automap.line1[2], 0, 1},
+    {"map-wall-unseen-r", 0, CVT_FLOAT, &PLRPROFILE.automap.line0[0], 0, 1},
+    {"map-wall-unseen-g", 0, CVT_FLOAT, &PLRPROFILE.automap.line0[1], 0, 1},
+    {"map-wall-unseen-b", 0, CVT_FLOAT, &PLRPROFILE.automap.line0[2], 0, 1},
+    {"map-wall-floorchange-r", 0, CVT_FLOAT, &PLRPROFILE.automap.line2[0], 0, 1},
+    {"map-wall-floorchange-g", 0, CVT_FLOAT, &PLRPROFILE.automap.line2[1], 0, 1},
+    {"map-wall-floorchange-b", 0, CVT_FLOAT, &PLRPROFILE.automap.line2[2], 0, 1},
+    {"map-wall-ceilingchange-r", 0, CVT_FLOAT, &PLRPROFILE.automap.line3[0], 0, 1},
+    {"map-wall-ceilingchange-g", 0, CVT_FLOAT, &PLRPROFILE.automap.line3[1], 0, 1},
+    {"map-wall-ceilingchange-b", 0, CVT_FLOAT, &PLRPROFILE.automap.line3[2], 0, 1},
+    {"map-door-colors", 0, CVT_BYTE, &PLRPROFILE.automap.showDoors, 0, 1},
+    {"map-door-glow", 0, CVT_FLOAT, &PLRPROFILE.automap.doorGlow, 0, 200},
+    {"map-huddisplay", 0, CVT_INT, &PLRPROFILE.automap.hudDisplay, 0, 2},
+    {"map-pan-speed", 0, CVT_FLOAT, &PLRPROFILE.automap.panSpeed, 0, 1},
+    {"map-pan-resetonopen", 0, CVT_BYTE, &PLRPROFILE.automap.panResetOnOpen, 0, 1},
+    {"map-rotate", 0, CVT_BYTE, &PLRPROFILE.automap.rotate, 0, 1},
+    {"map-zoom-speed", 0, CVT_FLOAT, &PLRPROFILE.automap.zoomSpeed, 0, 1},
+    {"map-open-timer", CVF_NO_MAX, CVT_FLOAT, &PLRPROFILE.automap.openSeconds, 0, 0},
     {"rend-dev-freeze-map", CVF_NO_ARCHIVE, CVT_BYTE, &freezeMapRLs, 0, 1},
     {NULL}
 };
@@ -282,8 +282,8 @@ Con_Error("AM_MapForPlayer: Invalid player num %i.", plrnum);
 void AM_GetMapColor(float* rgb, const float* uColor, int palidx,
                     boolean customPal)
 {
-    if((!customPal && !cfg.automapCustomColors) ||
-       (customPal && cfg.automapCustomColors != 2))
+    if((!customPal && !PLRPROFILE.automap.customColors) ||
+       (customPal && PLRPROFILE.automap.customColors != 2))
     {
         R_PalIdxToRGB(rgb, palidx, false);
         return;
@@ -560,7 +560,7 @@ static void initAutomapConfig(int player)
 #endif
 
     AM_SetVectorGraphic(mcfg, AMO_THING, VG_TRIANGLE);
-    /*AM_GetMapColor(rgb, cfg.automapMobj, THINGCOLORS, customPal);
+    /*AM_GetMapColor(rgb, PLRPROFILE.automap.Mobj, THINGCOLORS, customPal);
     setColorAndAlpha(mcfg, AMO_THING, rgb[0], rgb[1], rgb[2], 1);*/
     AM_SetVectorGraphic(mcfg, AMO_THINGPLAYER, VG_ARROW);
 
@@ -568,44 +568,44 @@ static void initAutomapConfig(int player)
     if(W_CheckNumForName("AUTOPAGE") == -1)
     {
         setColorAndAlpha(mcfg, AMO_BACKGROUND, .55f, .45f, .35f,
-                         cfg.automapOpacity);
+                         PLRPROFILE.automap.opacity);
     }
     else
     {
-        AM_GetMapColor(rgb, cfg.automapBack, WHITE, customPal);
+        AM_GetMapColor(rgb, PLRPROFILE.automap.background, WHITE, customPal);
         setColorAndAlpha(mcfg, AMO_BACKGROUND, rgb[0], rgb[1], rgb[2],
-                         cfg.automapOpacity);
+                         PLRPROFILE.automap.opacity);
     }
 #else
-    AM_GetMapColor(rgb, cfg.automapBack, BACKGROUND, customPal);
+    AM_GetMapColor(rgb, PLRPROFILE.automap.background, BACKGROUND, customPal);
     setColorAndAlpha(mcfg, AMO_BACKGROUND, rgb[0], rgb[1], rgb[2],
-                        cfg.automapOpacity);
+                        PLRPROFILE.automap.opacity);
 #endif
 
-    AM_GetMapColor(rgb, cfg.automapL0, GRAYS+3, customPal);
+    AM_GetMapColor(rgb, PLRPROFILE.automap.line0, GRAYS+3, customPal);
     setColorAndAlpha(mcfg, AMO_UNSEENLINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL1, WALLCOLORS, customPal);
+    AM_GetMapColor(rgb, PLRPROFILE.automap.line1, WALLCOLORS, customPal);
     setColorAndAlpha(mcfg, AMO_SINGLESIDEDLINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL0, TSWALLCOLORS, customPal);
+    AM_GetMapColor(rgb, PLRPROFILE.automap.line0, TSWALLCOLORS, customPal);
     setColorAndAlpha(mcfg, AMO_TWOSIDEDLINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL2, FDWALLCOLORS, customPal);
+    AM_GetMapColor(rgb, PLRPROFILE.automap.line2, FDWALLCOLORS, customPal);
     setColorAndAlpha(mcfg, AMO_FLOORCHANGELINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL3, CDWALLCOLORS, customPal);
+    AM_GetMapColor(rgb, PLRPROFILE.automap.line3, CDWALLCOLORS, customPal);
     setColorAndAlpha(mcfg, AMO_CEILINGCHANGELINE, rgb[0], rgb[1], rgb[2], 1);
 
     // Setup map config based on player's config.
     // \todo All players' maps work from the same config!
     mcfg->followPlayer = player;
-    mcfg->lineGlowScale = cfg.automapDoorGlow;
-    mcfg->glowingLineSpecials = cfg.automapShowDoors;
-    mcfg->panSpeed = cfg.automapPanSpeed;
-    mcfg->panResetOnOpen = cfg.automapPanResetOnOpen;
-    mcfg->zoomSpeed = cfg.automapZoomSpeed;
-    mcfg->openSeconds = cfg.automapOpenSeconds;
+    mcfg->lineGlowScale = PLRPROFILE.automap.doorGlow;
+    mcfg->glowingLineSpecials = PLRPROFILE.automap.showDoors;
+    mcfg->panSpeed = PLRPROFILE.automap.panSpeed;
+    mcfg->panResetOnOpen = PLRPROFILE.automap.panResetOnOpen;
+    mcfg->zoomSpeed = PLRPROFILE.automap.zoomSpeed;
+    mcfg->openSeconds = PLRPROFILE.automap.openSeconds;
 }
 
 /**
@@ -642,7 +642,7 @@ void AM_Init(void)
         map->alpha = map->targetAlpha = map->oldAlpha = 0;
 
         Automap_SetViewScaleTarget(map, 1);
-        Automap_SetViewRotate(map, cfg.automapRotate);
+        Automap_SetViewRotate(map, PLRPROFILE.automap.rotate);
         Automap_SetMaxLocationTargetDelta(map, 128); // In world units.
         Automap_SetWindowTarget(map, 0, 0, scrwidth, scrheight);
     }
@@ -703,7 +703,7 @@ void AM_InitForMap(void)
         Automap_ClearMarks(map);
 
 #if !__JHEXEN__
-        if(gameSkill == SM_BABY && cfg.automapBabyKeys)
+        if(gameSkill == SM_BABY && PLRPROFILE.automap.babyKeys)
             map->flags |= AMF_REND_KEYS;
 
         if(!IS_NETGAME && mcfg->cheating)
@@ -979,11 +979,11 @@ void AM_SetViewRotate(automapid_t id, int offOnToggle)
     mcfg = getAutomapCFG(id);
 
     if(offOnToggle == 2)
-        cfg.automapRotate = !cfg.automapRotate;
+        PLRPROFILE.automap.rotate = !PLRPROFILE.automap.rotate;
     else
-        cfg.automapRotate = (offOnToggle? true : false);
+        PLRPROFILE.automap.rotate = (offOnToggle? true : false);
 
-    Automap_SetViewRotate(map, cfg.automapRotate);
+    Automap_SetViewRotate(map, PLRPROFILE.automap.rotate);
 
     P_SetMessage(&players[mcfg->followPlayer],
                  (map->rotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), false);
@@ -1929,7 +1929,7 @@ menu_t MapDef = {
 #endif
     0, MENU_OPTIONS,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
 #if __JHERETIC__ || __JHEXEN__
@@ -1973,29 +1973,29 @@ void M_DrawMapMenu(void)
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.automapOpacity * 10 + .5f);
+    MN_DrawSlider(menu, idx++, 11, PLRPROFILE.automap.opacity * 10 + .5f);
 #if __JHERETIC__ || __JHEXEN__
     idx+= 2;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.automapLineAlpha * 10 + .5f);
+    MN_DrawSlider(menu, idx++, 11, PLRPROFILE.automap.lineAlpha * 10 + .5f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    M_WriteMenuText(menu, idx++, hudviewnames[cfg.automapHudDisplay % 3]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.automapShowDoors]);
+    M_WriteMenuText(menu, idx++, hudviewnames[PLRPROFILE.automap.hudDisplay % 3]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.automap.showDoors]);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+    MN_DrawSlider(menu, idx++, 21, (PLRPROFILE.automap.doorGlow - 1) / 10 + .5f );
     idx++;
 
-    M_WriteMenuText(menu, idx++, customColors[cfg.automapCustomColors % 3]);
-    MN_DrawColorBox(menu, idx++, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapMobj[0], cfg.automapMobj[1], cfg.automapMobj[2], 1);
-    MN_DrawColorBox(menu, idx, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], 1);
+    M_WriteMenuText(menu, idx++, customColors[PLRPROFILE.automap.customColors % 3]);
+    MN_DrawColorBox(menu, idx++, PLRPROFILE.automap.line1[0], PLRPROFILE.automap.line1[1], PLRPROFILE.automap.line1[2], 1);
+    MN_DrawColorBox(menu, idx++, PLRPROFILE.automap.line2[0], PLRPROFILE.automap.line2[1], PLRPROFILE.automap.line2[2], 1);
+    MN_DrawColorBox(menu, idx++, PLRPROFILE.automap.line3[0], PLRPROFILE.automap.line3[1], PLRPROFILE.automap.line3[2], 1);
+    MN_DrawColorBox(menu, idx++, PLRPROFILE.automap.line0[0], PLRPROFILE.automap.line0[1], PLRPROFILE.automap.line0[2], 1);
+    MN_DrawColorBox(menu, idx++, PLRPROFILE.automap.mobj[0], PLRPROFILE.automap.mobj[1], PLRPROFILE.automap.mobj[2], 1);
+    MN_DrawColorBox(menu, idx, PLRPROFILE.automap.background[0], PLRPROFILE.automap.background[1], PLRPROFILE.automap.background[2], 1);
 }
 
 /**
@@ -2003,7 +2003,7 @@ void M_DrawMapMenu(void)
  */
 void M_MapOpacity(int option, void* data)
 {
-    M_FloatMod10(&cfg.automapOpacity, option);
+    M_FloatMod10(&PLRPROFILE.automap.opacity, option);
 }
 
 /**
@@ -2011,63 +2011,63 @@ void M_MapOpacity(int option, void* data)
  */
 void M_MapLineAlpha(int option, void* data)
 {
-    M_FloatMod10(&cfg.automapLineAlpha, option);
+    M_FloatMod10(&PLRPROFILE.automap.lineAlpha, option);
 }
 
 /**
  * Set show line/teleport lines in different color
  */
-void M_MapDoorColors(int option, void *data)
+void M_MapDoorColors(int option, void* data)
 {
-    cfg.automapShowDoors = !cfg.automapShowDoors;
+    PLRPROFILE.automap.showDoors = !PLRPROFILE.automap.showDoors;
 }
 
 /**
  * Set glow line amount
  */
-void M_MapDoorGlow(int option, void *data)
+void M_MapDoorGlow(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
-        if(cfg.automapDoorGlow < 200)
-            cfg.automapDoorGlow++;
+        if(PLRPROFILE.automap.doorGlow < 200)
+            PLRPROFILE.automap.doorGlow++;
     }
-    else if(cfg.automapDoorGlow > 0)
-        cfg.automapDoorGlow--;
+    else if(PLRPROFILE.automap.doorGlow > 0)
+        PLRPROFILE.automap.doorGlow--;
 }
 
 /**
  * Set rotate mode
  */
-void M_MapRotate(int option, void *data)
+void M_MapRotate(int option, void* data)
 {
-    cfg.automapRotate = !cfg.automapRotate;
+    PLRPROFILE.automap.rotate = !PLRPROFILE.automap.rotate;
 
     Automap_SetViewRotate(getAutomap(AM_MapForPlayer(CONSOLEPLAYER)),
-                          cfg.automapRotate);
+                          PLRPROFILE.automap.rotate);
 }
 
 /**
  * Set which HUD to draw when in automap
  */
-void M_MapStatusbar(int option, void *data)
+void M_MapStatusbar(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
-        if(cfg.automapHudDisplay < 2)
-            cfg.automapHudDisplay++;
+        if(PLRPROFILE.automap.hudDisplay < 2)
+            PLRPROFILE.automap.hudDisplay++;
     }
-    else if(cfg.automapHudDisplay > 0)
-        cfg.automapHudDisplay--;
+    else if(PLRPROFILE.automap.hudDisplay > 0)
+        PLRPROFILE.automap.hudDisplay--;
 }
 
 void M_MapCustomColors(int option, void* data)
 {
     if(option == RIGHT_DIR)
     {
-        if(cfg.automapCustomColors < 2)
-            cfg.automapCustomColors++;
+        if(PLRPROFILE.automap.customColors < 2)
+            PLRPROFILE.automap.customColors++;
     }
-    else if(cfg.automapCustomColors > 0)
-        cfg.automapCustomColors--;
+    else if(PLRPROFILE.automap.customColors > 0)
+        PLRPROFILE.automap.customColors--;
 }

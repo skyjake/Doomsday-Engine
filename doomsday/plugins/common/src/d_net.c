@@ -136,42 +136,42 @@ int D_NetServerStarted(int before)
     G_StopDemo();
 
     // We're the server, so...
-    cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
+    gs.players[0].color = PLR_COLOR(0, PLRPROFILE.color);
 
 #if __JHEXEN__
-    cfg.playerClass[0] = cfg.netClass;
+    gs.players[0].pClass = PLRPROFILE.pClass;
 #elif __JHERETIC__
-    cfg.playerClass[0] = PCLASS_PLAYER;
+    gs.players[0].pClass = PCLASS_PLAYER;
 #endif
 
     // Set the game parameters.
-    deathmatch = cfg.netDeathmatch;
-    noMonstersParm = cfg.netNoMonsters;
+    deathmatch = GAMERULES.deathmatch;
+    noMonstersParm = GAMERULES.noMonsters;
 
-    cfg.jumpEnabled = cfg.netJumping;
+//    gs.cfg.jumpEnabled = GAMERULES.jumpAllow;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    respawnMonsters = cfg.netRespawn;
+    respawnMonsters = GAMERULES.respawn;
 #endif
 
 #if __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
+    randomClassParm = GAMERULES.randomClass;
 #endif
 
     // Hexen has translated map numbers.
 #if __JHEXEN__
-    netMap = P_TranslateMap(cfg.netMap);
+    netMap = P_TranslateMap(gs.netMap);
 #else
-    netMap = cfg.netMap;
+    netMap = gs.netMap;
 #endif
 
 #if __JDOOM64__
     netEpisode = 1;
 #else
-    netEpisode = cfg.netEpisode;
+    netEpisode = gs.netEpisode;
 #endif
 
-    G_InitNew(cfg.netSkill, netEpisode, netMap);
+    G_InitNew(gs.netSkill, netEpisode, netMap);
 
     // Close the menu, the game begins!!
     Hu_MenuCommand(MCMD_CLOSE);
@@ -270,7 +270,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
             // Client responds to new player?
             Con_Message("PE: (client) player %i has arrived.\n", plrNumber);
             G_DoReborn(plrNumber);
-            //players[plrNumber].playerstate = PST_REBORN;
+            //players[plrNumber].pState = PST_REBORN;
         }
         if(showmsg)
         {
@@ -284,7 +284,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     {
         Con_Message("PE: player %i has left.\n", plrNumber);
 
-        players[plrNumber].playerState = PST_GONE;
+        players[plrNumber].pState = PST_GONE;
 
         // Print a notification.
         snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s left the game", Net_GetPlayerName(plrNumber));
@@ -297,7 +297,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     // Here we will only display the message (if not a local message).
     else if(peType == DDPE_CHAT_MESSAGE && plrNumber != CONSOLEPLAYER)
     {
-        int     i, num, oldecho = cfg.echoMsg;
+        int     i, num, oldecho = gs.cfg.echoMsg;
 
         // Count the number of players.
         for(i = num = 0; i < MAXPLAYERS; ++i)
@@ -308,9 +308,9 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
                 (const char *) data);
 
         // The chat message is already echoed by the console.
-        cfg.echoMsg = false;
-        D_NetMessageEx(CONSOLEPLAYER, msgBuff, (cfg.chatBeep? true : false));
-        cfg.echoMsg = oldecho;
+        gs.cfg.echoMsg = false;
+        D_NetMessageEx(CONSOLEPLAYER, msgBuff, (PLRPROFILE.chat.playBeep? true : false));
+        gs.cfg.echoMsg = oldecho;
     }
 
     return true;
@@ -349,7 +349,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
                 NetSv_SendPlayerInfo(i, parm);
 
         // Send info about our jump power.
-        NetSv_SendJumpPower(parm, cfg.jumpEnabled ? cfg.jumpPower : 0);
+        NetSv_SendJumpPower(parm, GAMERULES.jumpAllow ? GAMERULES.jumpPower : 0);
         NetSv_Paused(paused);
         break;
         }
@@ -513,7 +513,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     case GPT_CLASS:
-        players[CONSOLEPLAYER].class = bData[0];
+        players[CONSOLEPLAYER].pClass = bData[0];
         break;
 #endif
 
@@ -657,14 +657,13 @@ Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
 DEFCC(CCmdSetColor)
 {
 #if __JHEXEN__
-    int     numColors = 8;
-#elif __JSTRIFE__
-    int     numColors = 8;
+    int                 numColors = 8;
 #else
-    int     numColors = 4;
+    int                 numColors = 4;
 #endif
 
-    cfg.netColor = atoi(argv[1]);
+    PLRPROFILE.color = atoi(argv[1]);
+
     if(IS_SERVER) // A local player?
     {
         int                 player = CONSOLEPLAYER;
@@ -676,7 +675,7 @@ DEFCC(CCmdSetColor)
         // a local mobj we're dealing with. We'll change the color translation
         // bits directly.
 
-        cfg.playerColor[player] = PLR_COLOR(player, cfg.netColor);
+        gs.players[player].color = PLR_COLOR(player, PLRPROFILE.color);
 
         // Change the color of the mobj (translation flags).
         players[player].plr->mo->flags &= ~MF_TRANSLATION;
@@ -685,14 +684,14 @@ DEFCC(CCmdSetColor)
         // Additional difficulty is caused by the fact that the Fighter's
         // colors 0 (blue) and 2 (yellow) must be swapped.
         players[player].plr->mo->flags |=
-            (cfg.playerClass[player] ==
-             PCLASS_FIGHTER ? (cfg.playerColor[player] ==
-                               0 ? 2 : cfg.playerColor[player] ==
-                               2 ? 0 : cfg.playerColor[player]) : cfg.
-             playerColor[player]) << MF_TRANSSHIFT;
-        players[player].colorMap = cfg.playerColor[player];
+            (gs.players[player].pClass ==
+             PCLASS_FIGHTER ? (gs.players[player].color == 0 ? 2 :
+                               gs.players[player].color == 2 ? 0 :
+                               gs.players[player].color) :
+             gs.players[player].color) << MF_TRANSSHIFT;
+        players[player].colorMap = gs.players[player].color;
 #else
-        players[player].plr->mo->flags |= cfg.playerColor[player] << MF_TRANSSHIFT;
+        players[player].plr->mo->flags |= gs.players[player].color << MF_TRANSSHIFT;
 #endif
 
         // Tell the clients about the change.
@@ -721,7 +720,8 @@ DEFCC(CCmdSetClass)
     if(!PCLASS_INFO(newClass)->userSelectable)
         return false;
 
-    cfg.netClass = newClass;
+    PLRPROFILE.pClass = newClass;
+
     if(IS_CLIENT)
     {
         // Tell the server that we've changed our class.
@@ -729,7 +729,7 @@ DEFCC(CCmdSetClass)
     }
     else
     {
-        P_PlayerChangeClass(&players[CONSOLEPLAYER], cfg.netClass);
+        P_PlayerChangeClass(&players[CONSOLEPLAYER], PLRPROFILE.pClass);
     }
 
     return true;
@@ -761,29 +761,29 @@ DEFCC(CCmdSetMap)
 #endif
 
     // Update game mode.
-    deathmatch = cfg.netDeathmatch;
-    noMonstersParm = cfg.netNoMonsters;
+    deathmatch = GAMERULES.deathmatch;
+    noMonstersParm = GAMERULES.noMonsters;
 
-    cfg.jumpEnabled = cfg.netJumping;
+//    gs.cfg.jumpEnabled = GAMERULES.jumpAllow;
 
 #if __JDOOM__ || __JHERETIC__
-    respawnMonsters = cfg.netRespawn;
+    respawnMonsters = GAMERULES.respawn;
     ep = atoi(argv[1]);
     map = atoi(argv[2]);
 #elif __JDOOM64__
-    respawnMonsters = cfg.netRespawn;
+    respawnMonsters = GAMERULES.respawn;
     ep = 1;
     map = atoi(argv[1]);
 #elif __JSTRIFE__
     ep = 1;
     map = atoi(argv[1]);
 #elif __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
+    randomClassParm = GAMERULES.randomClass;
     ep = 1;
     map = P_TranslateMap(atoi(argv[1]));
 #endif
 
     // Use the configured network skill level for the new map.
-    G_DeferedInitNew(cfg.netSkill, ep, map);
+    G_DeferedInitNew(gs.netSkill, ep, map);
     return true;
 }

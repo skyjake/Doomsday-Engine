@@ -99,16 +99,16 @@ float HU_PSpriteYOffset(player_t *pl)
 {
     int         viewWindowHeight = Get(DD_VIEWWINDOW_HEIGHT);
 #if __JDOOM__ || __JDOOM64__
-    float       offy = (cfg.plrViewHeight - 41) * 2;
+    float       offy = (PLRPROFILE.camera.offsetZ - 41) * 2;
 #else
-    float       offy = PSpriteSY[pl->class][pl->readyWeapon];
+    float       offy = PSpriteSY[pl->pClass][pl->readyWeapon];
 #endif
 
 #if !__JDOOM64__
     // If the status bar is visible, the sprite is moved up a bit.
     if(viewWindowHeight < SCREENHEIGHT)
     {
-        offy -= (((float) ST_HEIGHT * cfg.statusbarScale) / (2 * 20) - 1);
+        offy -= (((float) ST_HEIGHT * PLRPROFILE.statusbar.scale) / (2 * 20) - 1);
     }
 #endif
 
@@ -155,7 +155,7 @@ void HU_UpdatePlayerSprite(int pnum)
         }
         else
 #elif __JHEXEN__
-        if(pl->powers[PT_INVULNERABILITY] && pl->class == PCLASS_CLERIC)
+        if(pl->powers[PT_INVULNERABILITY] && pl->pClass == PCLASS_CLERIC)
         {
             if(pl->powers[PT_INVULNERABILITY] > 4 * 32)
             {

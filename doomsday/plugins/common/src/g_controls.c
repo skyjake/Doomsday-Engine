@@ -136,25 +136,24 @@ static pcontrolstate_t controlStates[MAXPLAYERS];
 // CVars for control/input
 cvar_t  controlCVars[] = {
 // Control (options/preferences)
-    {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1},
+    {"ctl-aim-auto", 0, CVT_BYTE, &PLRPROFILE.ctrl.useAutoAim, 0, 1},
 
-    {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5},
-    {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
+    {"ctl-turn-speed", 0, CVT_FLOAT, &PLRPROFILE.ctrl.turnSpeed, 1, 5},
+    {"ctl-run", 0, CVT_BYTE, &PLRPROFILE.ctrl.alwaysRun, 0, 1},
 
-    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickUse, 0, 1},
+    {"ctl-use-dclick", 0, CVT_BYTE, &PLRPROFILE.ctrl.dclickUse, 0, 1},
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {"ctl-use-immediate", 0, CVT_INT, &cfg.chooseAndUse, 0, 1},
-    {"ctl-use-next", 0, CVT_INT, &cfg.inventoryNextOnUnuse, 0, 1},
+    {"ctl-use-immediate", 0, CVT_INT, &PLRPROFILE.inventory.chooseAndUse, 0, 1},
+    {"ctl-use-next", 0, CVT_INT, &PLRPROFILE.inventory.nextOnNoUse, 0, 1},
 #endif
 
-    {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
-    {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
+    {"ctl-look-speed", 0, CVT_FLOAT, &PLRPROFILE.ctrl.lookSpeed, 1, 5},
 
-    {"ctl-look-mouse", 0, CVT_INT, &cfg.useMLook, 0, 1},
-
-    {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
-    {"ctl-look-joy", 0, CVT_INT, &cfg.useJLook, 0, 1},
-    {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jLookDeltaMode, 0, 1},
+    {"ctl-look-spring", 0, CVT_BYTE, &PLRPROFILE.camera.lookSpring, 0, 1},
+    {"ctl-look-mouse", 0, CVT_BYTE, &PLRPROFILE.camera.useMLook, 0, 1},
+    {"ctl-look-pov", 0, CVT_BYTE, &PLRPROFILE.camera.povLookAround, 0, 1},
+    {"ctl-look-joy", 0, CVT_BYTE, &PLRPROFILE.camera.useJLook, 0, 1},
+    {"ctl-look-joy-delta", 0, CVT_BYTE, &PLRPROFILE.camera.jLookDeltaMode, 0, 1},
     {NULL}
 };
 
@@ -523,12 +522,12 @@ char G_MakeLookDelta(float offset)
  */
 static void G_AdjustAngle(player_t *player, int turn, float elapsed)
 {
-    if(!player->plr->mo || player->playerState == PST_DEAD ||
+    if(!player->plr->mo || player->pState == PST_DEAD ||
        player->viewLock)
         return; // Sorry, can't help you, pal.
 
     /* $unifiedangles */
-    player->plr->mo->angle += FLT2FIX(cfg.turnSpeed * elapsed * 35.f * turn);
+    player->plr->mo->angle += FLT2FIX(PLRPROFILE.ctrl.turnSpeed * elapsed * 35.f * turn);
 }
 
 static void G_AdjustLookDir(player_t *player, int look, float elapsed)
@@ -543,7 +542,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
         }
         else
         {
-            ddplr->lookDir += cfg.lookSpeed * look * elapsed * 35; /* $unifiedangles */
+            ddplr->lookDir += PLRPROFILE.ctrl.lookSpeed * look * elapsed * 35; /* $unifiedangles */
         }
     }
 
@@ -574,7 +573,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
  */
 void G_LookAround(int pnum)
 {
-    pcontrolstate_t *cstate = &controlStates[pnum];
+    pcontrolstate_t*    cstate = &controlStates[pnum];
 
     if(povangle != -1)
     {
@@ -590,9 +589,11 @@ void G_LookAround(int pnum)
     else
         cstate->targetLookOffset = 0;
 
-    if(cstate->targetLookOffset != cstate->lookOffset && cfg.povLookAround)
+    if(cstate->targetLookOffset != cstate->lookOffset &&
+       PLRPROFILE.camera.povLookAround)
     {
-        float   diff = (cstate->targetLookOffset - cstate->lookOffset) / 2;
+        float               diff = (cstate->targetLookOffset -
+            cstate->lookOffset) / 2;
 
         // Clamp it.
         if(diff > .075f)
@@ -693,14 +694,14 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
     // Check the joystick axes.
     for(i = 0; i < 8; i++)
-        if(axes[cfg.joyaxis[i]])
-            *axes[cfg.joyaxis[i]] += joymove[i];
+        if(axes[gs.cfg.joyaxis[i]])
+            *axes[gs.cfg.joyaxis[i]] += joymove[i];
 
     strafe = PLAYER_ACTION(pnum, A_STRAFE);
     speed = PLAYER_ACTION(pnum, A_SPEED);
 
     // Walk -> run, run -> walk.
-    if(cfg.alwaysRun)
+    if(PLRPROFILE.ctrl.alwaysRun)
         speed = !speed;
 
     // Use two stage accelerative turning on the keyboard and joystick.
@@ -780,7 +781,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         side -= sideMoveSpeed;
 
     // Look up/down/center keys
-    if(!cfg.lookSpring || (cfg.lookSpring && !forward))
+    if(!PLRPROFILE.ctrl.lookSpring || (PLRPROFILE.ctrl.lookSpring && !forward))
     {
         if(PLAYER_ACTION(pnum, A_LOOKUP))
         {
@@ -809,7 +810,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         flyheight = TOCENTER;
 
 #if __JHERETIC__
-        if(!cfg.useMLook) // only in jHeretic
+        if(!PLRPROFILE.ctrl.useMLook) // only in jHeretic
             look = TOCENTER;
 #else
         look = TOCENTER;
@@ -837,7 +838,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
                 ST_Inventory(plr - players, false); // close the inventory
 
-                if(cfg.chooseAndUse)
+                if(gs.cfg.chooseAndUse)
                     cmd->arti = plr->inventory[plr->invPtr].type;
                 else
                     cmd->arti = 0;
@@ -1027,7 +1028,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
     // forward double click
     if(PLAYER_ACTION(pnum, A_FORWARD) != cstate->dclickstate &&
-        cstate->dclicktime > 1 && cfg.dclickUse)
+        cstate->dclicktime > 1 && PLRPROFILE.ctrl.dclickUse)
     {
         cstate->dclickstate = PLAYER_ACTION(pnum, A_FORWARD);
 
@@ -1054,7 +1055,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     // strafe double click
     bstrafe = strafe;
     if(bstrafe != cstate->dclickstate2 &&
-       cstate->dclicktime2 > 1 && cfg.dclickUse)
+       cstate->dclicktime2 > 1 && PLRPROFILE.ctrl.dclickUse)
     {
         cstate->dclickstate2 = bstrafe;
         if(cstate->dclickstate2)
@@ -1084,7 +1085,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     {
         // Mouse angle changes are immediate.
         if(!pausestate && plr->plr->mo &&
-           plr->playerState != PST_DEAD)
+           plr->pState != PST_DEAD)
         {
             plr->plr->mo->angle += FLT2FIX(mousex * -8); //G_AdjustAngle(plr, mousex * -8, 1);
         }
@@ -1095,8 +1096,8 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         // Speed based turning.
         G_AdjustAngle(plr, turn, elapsedTime);
 
-        if(strafe || (!cfg.useMLook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
-           plr->playerState == PST_DEAD)
+        if(strafe || (!PLRPROFILE.ctrl.useMLook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
+           plr->pState == PST_DEAD)
         {
             forward += 8 * mousey * elapsedTics;
         }
@@ -1106,19 +1107,19 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
                 (FLT2FIX(mousey * 8) / (float) ANGLE_180) * 180 *
                 110.0 / 85.0;
 
-            if(cfg.mlookInverseY)
+            if(gs.cfg.mlookInverseY)
                 adj = -adj;
             plr->plr->lookDir += adj; /* $unifiedangles */
         }
-        if(cfg.useJLook)
+        if(PLRPROFILE.ctrl.useJLook)
         {
-            if(cfg.jLookDeltaMode) /* $unifiedangles */
+            if(PLRPROFILE.ctrl.jLookDeltaMode) /* $unifiedangles */
                 plr->plr->lookDir +=
-                    joylook / 20.0f * cfg.lookSpeed *
-                    (cfg.jlookInverseY ? -1 : 1) * elapsedTics;
+                    joylook / 20.0f * PLRPROFILE.ctrl.lookSpeed *
+                    (gs.cfg.jlookInverseY ? -1 : 1) * elapsedTics;
             else
                 plr->plr->lookDir =
-                    joylook * 1.1f * (cfg.jlookInverseY ? -1 : 1);
+                    joylook * 1.1f * (gs.cfg.jlookInverseY ? -1 : 1);
         }
     }
 
@@ -1144,13 +1145,13 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     }
 #endif
 
-    if(cfg.playerMoveSpeed > 1)
-        cfg.playerMoveSpeed = 1;
+    if(PLRPROFILE.ctrl.moveSpeed > 1)
+        PLRPROFILE.ctrl.moveSpeed = 1;
 
-    cmd->forwardMove += forward * cfg.playerMoveSpeed;
-    cmd->sideMove += side * cfg.playerMoveSpeed;;
+    cmd->forwardMove += forward * PLRPROFILE.ctrl.moveSpeed;
+    cmd->sideMove += side * PLRPROFILE.ctrl.moveSpeed;;
 
-    if(cfg.lookSpring && !PLAYER_ACTION(pnum, A_MLOOK) &&
+    if(PLRPROFILE.ctrl.lookSpring && !PLAYER_ACTION(pnum, A_MLOOK) &&
        (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3 ||
            cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3 ||
            cstate->mlookPressed))
@@ -1159,7 +1160,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         look = TOCENTER;
     }
 
-    if(plr->playerState == PST_LIVE && !pausestate)
+    if(plr->pState == PST_LIVE && !pausestate)
         G_AdjustLookDir(plr, look, elapsedTime);
 
     cmd->fly = flyheight;
@@ -1234,8 +1235,8 @@ boolean G_AdjustControlState(event_t* ev)
         return false;           // always let key events filter down
 
     case EV_MOUSE_AXIS:
-        mousex += (float)(ev->data1 * (1 + cfg.mouseSensiX/5.0f)) / DD_MICKEY_ACCURACY;
-        mousey += (float)(ev->data2 * (1 + cfg.mouseSensiY/5.0f)) / DD_MICKEY_ACCURACY;
+        mousex += (float)(ev->data1 * (1 + gs.cfg.mouseSensiX/5.0f)) / DD_MICKEY_ACCURACY;
+        mousey += (float)(ev->data2 * (1 + gs.cfg.mouseSensiY/5.0f)) / DD_MICKEY_ACCURACY;
         return true;            // eat events
 
     case EV_MOUSE_BUTTON:
@@ -1267,7 +1268,7 @@ boolean G_AdjustControlState(event_t* ev)
                 povangle = ev->data1;
 
             // If looking around with PoV, don't allow bindings.
-            if(cfg.povLookAround)
+            if(PLRPROFILE.ctrl.povLookAround)
                 return true;
         }
         break;

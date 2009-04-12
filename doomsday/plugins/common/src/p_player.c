@@ -122,7 +122,7 @@ int P_GetPlayerCheats(player_t *player)
     {
         if(player->plr->flags & DDPF_CAMERA)
             return (player->cheats |
-                    (CF_GODMODE | cfg.cameraNoClip? CF_NOCLIP : 0));
+                    (CF_GODMODE | GAMERULES.cameraNoClip? CF_NOCLIP : 0));
         else
             return player->cheats;
     }
@@ -139,7 +139,7 @@ void P_ShotAmmo(player_t *player)
     ammotype_t          i;
     int                 fireMode;
     weaponinfo_t*       wInfo =
-        &weaponInfo[player->readyWeapon][player->class];
+        &weaponInfo[player->readyWeapon][player->pClass];
 
 #if __JHERETIC__
     if(deathmatch)
@@ -197,7 +197,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     // Assume weapon power level zero.
     lvl = 0;
 
-    pclass = player->class;
+    pclass = player->pClass;
 
 #if __JHERETIC__
     if(player->powers[PT_WEAPONLEVEL2])
@@ -213,7 +213,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         found = false;
         for(i = 0; i < NUM_WEAPON_TYPES && !found; ++i)
         {
-            candidate = cfg.weaponOrder[i];
+            candidate = PLRPROFILE.inventory.weaponOrder[i];
             winf = &weaponInfo[candidate][pclass];
 
             // Is candidate available in this game mode?
@@ -262,21 +262,21 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         }
         // Is the player currently firing?
         else if(!((player->brain.attack) &&
-                  cfg.noWeaponAutoSwitchIfFiring))
+                  PLRPROFILE.inventory.noWeaponAutoSwitchIfFiring))
         {
             // Should we change weapon automatically?
-            if(cfg.weaponAutoSwitch == 2)
+            if(PLRPROFILE.inventory.weaponAutoSwitch == 2)
             {   // Always change weapon mode
                 returnval = weapon;
             }
-            else if(cfg.weaponAutoSwitch == 1)
+            else if(PLRPROFILE.inventory.weaponAutoSwitch == 1)
             {   // Change if better mode
 
                 // Iterate the weapon order array and see if a weapon change
                 // should be made. Preferences are user selectable.
                 for(i = 0; i < NUM_WEAPON_TYPES; ++i)
                 {
-                    candidate = cfg.weaponOrder[i];
+                    candidate = PLRPROFILE.inventory.weaponOrder[i];
                     winf = &weaponInfo[candidate][pclass];
 
                     // Is candidate available in this game mode?
@@ -297,7 +297,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
     else if(ammo != AT_NOAMMO) // Player is about to be given some ammo.
     {
-        if((!(player->ammo[ammo].owned > 0) && cfg.ammoAutoSwitch != 0) ||
+        if((!(player->ammo[ammo].owned > 0) && PLRPROFILE.inventory.ammoAutoSwitch != 0) ||
            force)
         {   // We were down to zero, so select a new weapon.
 
@@ -306,7 +306,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             // Preferences are user selectable.
             for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                candidate = cfg.weaponOrder[i];
+                candidate = PLRPROFILE.inventory.weaponOrder[i];
                 winf = &weaponInfo[candidate][pclass];
 
                 // Is candidate available in this game mode?
@@ -331,12 +331,12 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                  * been given. Somewhat complex logic to decipher first...
                  */
 
-                if(cfg.ammoAutoSwitch == 2)
+                if(PLRPROFILE.inventory.ammoAutoSwitch == 2)
                 {   // Always change weapon mode.
                     returnval = candidate;
                     break;
                 }
-                else if(cfg.ammoAutoSwitch == 1 &&
+                else if(PLRPROFILE.inventory.ammoAutoSwitch == 1 &&
                         player->readyWeapon == candidate)
                 {   // readyweapon has a higher priority so don't change.
                     break;
@@ -372,7 +372,7 @@ boolean P_CheckAmmo(player_t* plr)
     ammotype_t          i;
     weaponinfo_t*       wInfo;
 
-    wInfo = &weaponInfo[plr->readyWeapon][plr->class];
+    wInfo = &weaponInfo[plr->readyWeapon][plr->pClass];
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
     fireMode = 0;
 #endif
@@ -388,7 +388,7 @@ boolean P_CheckAmmo(player_t* plr)
     //// \kludge Work around the multiple firing modes problems.
     //// We need to split the weapon firing routines and implement them as
     //// new fire modes.
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
+    if(plr->pClass == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
         return true;
     // < KLUDGE
 #endif
@@ -415,7 +415,7 @@ boolean P_CheckAmmo(player_t* plr)
 
     // Now set appropriate weapon overlay.
     if(plr->pendingWeapon != WT_NOCHANGE)
-        P_SetPsprite(plr, ps_weapon, wInfo->mode[fireMode].downState);
+        P_SetPsprite(plr, PS_WEAPON, wInfo->mode[fireMode].downState);
 
     return false;
 }
@@ -461,9 +461,9 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 #endif
 
     // Are we using weapon order preferences for next/previous?
-    if(cfg.weaponNextMode)
+    if(PLRPROFILE.inventory.weaponNextMode)
     {
-        list = (weapontype_t*) cfg.weaponOrder;
+        list = (weapontype_t*) PLRPROFILE.inventory.weaponOrder;
         next = !next; // Invert order.
     }
     else
@@ -498,7 +498,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
             break;
 
         // Available in this game mode? And a valid weapon?
-        if((weaponInfo[w][player->class].mode[lvl].
+        if((weaponInfo[w][player->pClass].mode[lvl].
             gameModeBits & gameModeBits) && player->weapons[w].owned)
             break;
     }
@@ -522,8 +522,8 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
     if(!PCLASS_INFO(newClass)->userSelectable)
         return;
 
-    player->class = newClass;
-    cfg.playerClass[player - players] = newClass;
+    player->pClass = newClass;
+    gs.players[player - players].pClass = newClass;
 
     // Take away armor.
     for(i = 0; i < NUMARMOR; ++i)
@@ -556,11 +556,11 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetMessage(player_t* pl, char *msg, boolean noHide)
+void P_SetMessage(player_t* pl, char* msg, boolean noHide)
 {
     HUMsg_PlayerMessage(pl - players, msg, MESSAGETICS, noHide, false);
 
-    if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
+    if(pl == &players[CONSOLEPLAYER] && gs.cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
@@ -576,11 +576,11 @@ void P_SetMessage(player_t* pl, char *msg, boolean noHide)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
+void P_SetYellowMessage(player_t* pl, char* msg, boolean noHide)
 {
     HUMsg_PlayerMessage(pl - players, msg, 5 * MESSAGETICS, noHide, true);
 
-    if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
+    if(pl == &players[CONSOLEPLAYER] && gs.cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
@@ -690,7 +690,7 @@ void P_PlayerThinkCamera(player_t *player)
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
     {
-        if(player->playerState == PST_LIVE)
+        if(player->pState == PST_LIVE)
             player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
         return;
     }
@@ -914,7 +914,7 @@ DEFCC(CCmdMakeLocal)
         return false;
     }
 
-    plr->playerState = PST_REBORN;
+    plr->pState = PST_REBORN;
     plr->plr->inGame = true;
     sprintf(buf, "conlocp %i", p);
     DD_Execute(false, buf);

@@ -250,8 +250,8 @@ void P_DealPlayerStarts(int group)
             if(!pl->plr->inGame)
                 continue;
 
-            Con_Printf("- pl%i: color %i, spot %i\n", i, cfg.playerColor[i],
-                       pl->startSpot);
+            Con_Printf("- pl%i: color %i, spot %i\n", i,
+                       gs.players[i].color, pl->startSpot);
         }
     }
 }

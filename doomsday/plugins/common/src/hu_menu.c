@@ -77,11 +77,13 @@ typedef struct rgba_s {
 
 extern void Ed_MakeCursorVisible(void);
 void M_InitControlsMenu(void);
+void M_InitProfilesMenu(void);
 void M_ControlGrabDrawer(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void M_NewGame(int option, void* context);
+void M_EnterProfilesMenu(int option, void* context);
 void M_Episode(int option, void* context); // Does nothing in jHEXEN
 void M_ChooseClass(int option, void* context); // Does something only in jHEXEN
 void M_ChooseSkill(int option, void* context);
@@ -103,12 +105,9 @@ void M_QuitDOOM(int option, void* context);
 void M_OpenDCP(int option, void* context);
 void M_ChangeMessages(int option, void* context);
 void M_HUDHideTime(int option, void* context);
-void M_WeaponAutoSwitch(int option, void* context);
-void M_AmmoAutoSwitch(int option, void* context);
 void M_HUDInfo(int option, void* context);
 void M_HUDScale(int option, void* context);
 void M_SfxVol(int option, void* context);
-void M_WeaponOrder(int option, void* context);
 void M_MusicVol(int option, void* context);
 void M_SizeDisplay(int option, void* context);
 #if !__JDOOM64__
@@ -150,7 +149,6 @@ void M_DrawOptions2(void);
 void M_DrawGameplay(void);
 void M_DrawHUDMenu(void);
 void M_DrawMapMenu(void);
-void M_DrawWeaponMenu(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
 void M_DrawFilesMenu(void);
@@ -192,7 +190,7 @@ int saveCharIndex; // Which char we're editing.
 
 char endstring[160];
 
-static char* yesno[2] = {"NO", "YES"};
+char* yesno[2] = {"NO", "YES"};
 
 #if __JDOOM__ || __JHERETIC__
 int epi;
@@ -268,14 +266,14 @@ static int MenuPClass;
 #endif
 
 static rgba_t widgetcolors[] = { // Ptrs to colors editable with the colour widget
-    { &cfg.automapL0[0], &cfg.automapL0[1], &cfg.automapL0[2], NULL },
-    { &cfg.automapL1[0], &cfg.automapL1[1], &cfg.automapL1[2], NULL },
-    { &cfg.automapL2[0], &cfg.automapL2[1], &cfg.automapL2[2], NULL },
-    { &cfg.automapL3[0], &cfg.automapL3[1], &cfg.automapL3[2], NULL },
-    { &cfg.automapBack[0], &cfg.automapBack[1], &cfg.automapBack[2], NULL },
-    { &cfg.hudColor[0], &cfg.hudColor[1], &cfg.hudColor[2], &cfg.hudColor[3] },
-    { &cfg.automapMobj[0], &cfg.automapMobj[1], &cfg.automapMobj[2], NULL },
-    { &cfg.xhairColor[0], &cfg.xhairColor[1], &cfg.xhairColor[2], &cfg.xhairColor[3]}
+    { &PLRPROFILE.automap.line0[0], &PLRPROFILE.automap.line0[1], &PLRPROFILE.automap.line0[2], NULL },
+    { &PLRPROFILE.automap.line1[0], &PLRPROFILE.automap.line1[1], &PLRPROFILE.automap.line1[2], NULL },
+    { &PLRPROFILE.automap.line2[0], &PLRPROFILE.automap.line2[1], &PLRPROFILE.automap.line2[2], NULL },
+    { &PLRPROFILE.automap.line3[0], &PLRPROFILE.automap.line3[1], &PLRPROFILE.automap.line3[2], NULL },
+    { &PLRPROFILE.automap.background[0], &PLRPROFILE.automap.background[1], &PLRPROFILE.automap.background[2], NULL },
+    { &PLRPROFILE.hud.color[0], &PLRPROFILE.hud.color[1], &PLRPROFILE.hud.color[2], &PLRPROFILE.hud.color[3] },
+    { &PLRPROFILE.automap.mobj[0], &PLRPROFILE.automap.mobj[1], &PLRPROFILE.automap.mobj[2], NULL },
+    { &PLRPROFILE.xhair.color[0], &PLRPROFILE.xhair.color[1], &PLRPROFILE.xhair.color[2], &PLRPROFILE.xhair.color[3]}
 };
 
 static boolean widgetEdit = false; // No active widget by default.
@@ -363,7 +361,7 @@ menu_t MainDef = {
     5, MainItems,
     0, MENU_NONE,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
     0, 5
@@ -374,7 +372,7 @@ menu_t MainDef = {
     5, MainItems,
     0, MENU_NONE,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
     0, 5
@@ -385,7 +383,7 @@ menu_t MainDef = {
     6, MainItems,
     0, MENU_NONE,
     huFontA,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
     0, 6
@@ -396,7 +394,7 @@ menu_t MainDef = {
     5, MainItems,
     0, MENU_NONE,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
     0, 5
@@ -407,7 +405,7 @@ menu_t MainDef = {
     6, MainItems,
     0, MENU_NONE,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
     0, 6
@@ -415,66 +413,56 @@ menu_t MainDef = {
 };
 
 menuitem_t NewGameItems[] = {
-    {ITT_EFUNC, 0, "S", M_NewGame, 0},
-    {ITT_EFUNC, 0, "M", SCEnterMultiplayerMenu, 0}
+    { ITT_EFUNC, 0, "S", M_NewGame, 0 },
+    { ITT_EFUNC, 0, "M", SCEnterMultiplayerMenu, 0 },
+    { ITT_EFUNC, 0, "P", M_EnterProfilesMenu, 0 }
 };
 
 menu_t NewGameDef = {
 #if __JHEXEN__
     0,
-    110, 50,
+    97, 50,
     M_DrawNewGameMenu,
-    2, NewGameItems,
+    3, NewGameItems,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
-    0, 2
+    0, 3
 #elif __JHERETIC__
     0,
-    110, 64,
+    97, 64,
     M_DrawNewGameMenu,
     2, NewGameItems,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
-    0, 2
-#elif __JSTRIFE__
-    0,
-    97, 64,
-    M_DrawNewGameMenu,
-    2, NewGameItems,
-    0, MENU_MAIN,
-    huFontA,
-    cfg.menuColor,
-    NULL, false,
-    LINEHEIGHT_B + 1,
-    0, 2
+    0, 3
 #elif __JDOOM64__
     0,
-    97, 64,
+    80, 64,
     M_DrawNewGameMenu,
-    2, NewGameItems,
+    3, NewGameItems,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
-    0, 2
+    0, 3
 #else
     0,
-    97, 64,
+    80, 64,
     M_DrawNewGameMenu,
-    2, NewGameItems,
+    3, NewGameItems,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
-    0, 2
+    0, 3
 #endif
 };
 
@@ -488,7 +476,7 @@ menu_t ClassDef = {
     0, NULL,
     0, MENU_NEWGAME,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
     0, 0
@@ -512,7 +500,7 @@ menu_t EpiDef = {
     0, NULL,
     0, MENU_NEWGAME,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT + 1,
     0, 0
@@ -533,7 +521,7 @@ static menu_t FilesMenu = {
     2, FilesItems,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT + 1,
     0, 2
@@ -564,7 +552,7 @@ static menu_t LoadDef = {
     NUMSAVESLOTS, LoadItems,
     0, MENU_MAIN,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A + 8,
     0, NUMSAVESLOTS
@@ -594,7 +582,7 @@ static menu_t SaveDef = {
     NUMSAVESLOTS, SaveItems,
     0, MENU_MAIN,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A + 8,
     0, NUMSAVESLOTS
@@ -616,7 +604,7 @@ static menu_t SkillDef = {
     5, SkillItems,
     2, MENU_NEWGAME,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
     0, 5
@@ -638,7 +626,7 @@ static menu_t SkillDef = {
     5, SkillItems,
     2, MENU_CLASS,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
     0, 5
@@ -659,7 +647,7 @@ static menu_t SkillDef = {
     5, SkillItems,
     2, MENU_EPISODE,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
     0, 5
@@ -678,7 +666,7 @@ static menu_t SkillDef = {
     4, SkillItems,
     2, MENU_NEWGAME,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
     0, 4
@@ -700,7 +688,7 @@ static menu_t SkillDef = {
     5, SkillItems,
     2, MENU_EPISODE,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
     0, 5
@@ -711,10 +699,11 @@ static menuitem_t OptionsItems[] = {
     {ITT_EFUNC, 0, "end game", M_EndGame, 0},
     {ITT_EFUNC, 0, "control panel", M_OpenDCP, 0},
     {ITT_SETMENU, 0, "controls", NULL, MENU_CONTROLS},
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {ITT_SETMENU, 0, "gameplay", NULL, MENU_GAMEPLAY},
+#endif
     {ITT_SETMENU, 0, "hud", NULL, MENU_HUD},
     {ITT_SETMENU, 0, "automap", NULL, MENU_MAP},
-    {ITT_SETMENU, 0, "weapons", NULL, MENU_WEAPONSETUP},
     {ITT_SETMENU, 0, "sound", NULL, MENU_OPTIONS2},
     {ITT_EFUNC, 0, "mouse", M_OpenDCP, 2},
     {ITT_EFUNC, 0, "joystick", M_OpenDCP, 2}
@@ -724,13 +713,22 @@ static menu_t OptionsDef = {
     0,
     110, 63,
     M_DrawOptions,
-    10, OptionsItems,
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    9,
+#else
+    8,
+#endif
+    OptionsItems,
     0, MENU_MAIN,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
-    0, 10
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    0, 9
+#else
+    0, 8
+#endif
 };
 
 static menuitem_t Options2Items[] = {
@@ -764,7 +762,7 @@ static menu_t Options2Def = {
 #endif
     0, MENU_OPTIONS,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
 #if __JDOOM__ || __JDOOM64__
@@ -786,7 +784,7 @@ menu_t ReadDef1 = {
     1, ReadItems1,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     "HELP1",
 #if __JDOOM__
     false,
@@ -812,7 +810,7 @@ menu_t ReadDef2 = {
     1, ReadItems2,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     "HELP2",
 #if __JDOOM__
     false,
@@ -835,7 +833,7 @@ menu_t ReadDef3 = {
     1, ReadItems3,
     0, MENU_MAIN,
     huFontB,
-    cfg.menuColor,
+    gs.cfg.menuColor,
     "CREDIT", true,
     LINEHEIGHT,
     0, 1
@@ -962,7 +960,7 @@ static menu_t HUDDef = {
 #endif
     0, MENU_OPTIONS,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
 #if __JHEXEN__
@@ -976,96 +974,23 @@ static menu_t HUDDef = {
 #endif
 };
 
-static menuitem_t WeaponItems[] = {
-    {ITT_EMPTY,  0, "Priority order", NULL, 0},
-    {ITT_LRFUNC, 0, "1 :", M_WeaponOrder, 0 << NUM_WEAPON_TYPES },
-    {ITT_LRFUNC, 0, "2 :", M_WeaponOrder, 1 << NUM_WEAPON_TYPES },
-    {ITT_LRFUNC, 0, "3 :", M_WeaponOrder, 2 << NUM_WEAPON_TYPES },
-    {ITT_LRFUNC, 0, "4 :", M_WeaponOrder, 3 << NUM_WEAPON_TYPES },
-#if !__JHEXEN__
-    {ITT_LRFUNC, 0, "5 :", M_WeaponOrder, 4 << NUM_WEAPON_TYPES },
-    {ITT_LRFUNC, 0, "6 :", M_WeaponOrder, 5 << NUM_WEAPON_TYPES },
-    {ITT_LRFUNC, 0, "7 :", M_WeaponOrder, 6 << NUM_WEAPON_TYPES },
-    {ITT_LRFUNC, 0, "8 :", M_WeaponOrder, 7 << NUM_WEAPON_TYPES },
-#endif
-#if __JDOOM__ || __JDOOM64__
-    {ITT_LRFUNC, 0, "9 :", M_WeaponOrder, 8 << NUM_WEAPON_TYPES },
-#endif
-#if __JDOOM64__
-    {ITT_LRFUNC, 0, "10 :", M_WeaponOrder, 9 << NUM_WEAPON_TYPES },
-#endif
-    {ITT_EFUNC,  0, "Use with Next/Previous :", M_ToggleVar, 0, NULL, "player-weapon-nextmode"},
-    {ITT_EMPTY,  0, NULL, NULL, 0},
-    {ITT_EMPTY,  0, "AUTOSWITCH", NULL, 0},
-    {ITT_LRFUNC, 0, "PICKUP WEAPON :", M_WeaponAutoSwitch, 0},
-    {ITT_EFUNC,  0, "   IF NOT FIRING :", M_ToggleVar, 0, NULL, "player-autoswitch-notfiring"},
-    {ITT_LRFUNC, 0, "PICKUP AMMO :", M_AmmoAutoSwitch, 0},
-#if __JDOOM__ || __JDOOM64__
-    {ITT_EFUNC,  0, "PICKUP BERSERK :", M_ToggleVar, 0, NULL, "player-autoswitch-berserk"}
-#endif
-};
-
-static menu_t WeaponDef = {
-    MNF_NOHOTKEYS,
-#if __JDOOM__ || __JDOOM64__
-    68, 34,
-#else
-    78, 28,
-#endif
-    M_DrawWeaponMenu,
-#if __JDOOM64__
-    18, WeaponItems,
-#elif __JDOOM__
-    17, WeaponItems,
-#elif __JHERETIC__
-    15, WeaponItems,
-#elif __JHEXEN__
-    11, WeaponItems,
-#endif
-    0, MENU_OPTIONS,
-    huFontA,
-    cfg.menuColor2,
-    NULL, false,
-    LINEHEIGHT_A,
-#if __JDOOM64__
-    0, 21
-#elif __JDOOM__
-    0, 20
-#elif __JHERETIC__
-    0, 18
-#elif __JHEXEN__
-    0, 14
-#endif
-};
-
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 static menuitem_t GameplayItems[] = {
-    {ITT_EFUNC, 0, "ALWAYS RUN :", M_ToggleVar, 0, NULL, "ctl-run"},
-    {ITT_EFUNC, 0, "USE LOOKSPRING :", M_ToggleVar, 0, NULL, "ctl-look-spring"},
-    {ITT_EFUNC, 0, "USE AUTOAIM :", M_ToggleVar, 0, NULL, "ctl-aim-noauto"},
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
-    {ITT_EFUNC, 0, "ALLOW JUMPING :", M_ToggleVar, 0, NULL, "player-jump"},
-#endif
-
 #if __JDOOM64__
     { ITT_EFUNC, 0, "WEAPON RECOIL : ", M_WeaponRecoil, 0 },
 #endif
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, "COMPATIBILITY", NULL, 0 },
-# if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__
     {ITT_EFUNC, 0, "ANY BOSS TRIGGER 666 :", M_ToggleVar, 0, NULL,
         "game-anybossdeath666"},
-#  if !__JDOOM64__
+# if !__JDOOM64__
     {ITT_EFUNC, 0, "AV RESURRECTS GHOSTS :", M_ToggleVar, 0, NULL,
         "game-raiseghosts"},
-#  endif
+# endif
     {ITT_EFUNC, 0, "PE LIMITED TO 20 LOST SOULS :", M_ToggleVar, 0, NULL,
         "game-maxskulls"},
     {ITT_EFUNC, 0, "LS CAN GET STUCK INSIDE WALLS :", M_ToggleVar, 0, NULL,
         "game-skullsinwalls"},
-# endif
-# if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+#endif
     {ITT_EFUNC, 0, "MONSTERS CAN GET STUCK IN DOORS :", M_ToggleVar, 0, NULL,
         "game-monsters-stuckindoors"},
     {ITT_EFUNC, 0, "SOME OBJECTS NEVER HANG OVER LEDGES :", M_ToggleVar, 0, NULL,
@@ -1078,29 +1003,14 @@ static menuitem_t GameplayItems[] = {
         "game-objects-clipping"},
     {ITT_EFUNC, 0, "  ^IFNOT NORTHONLY WALLRUNNING :", M_ToggleVar, 0, NULL,
         "game-player-wallrun-northonly"},
-# endif
-# if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__
     {ITT_EFUNC, 0, "ZOMBIE PLAYERS CAN EXIT MAPS :", M_ToggleVar, 0, NULL,
         "game-zombiescanexit"},
-    {ITT_EFUNC, 0, "FIX OUCH FACE :", M_ToggleVar, 0, NULL, "hud-face-ouchfix"},
-# endif
 #endif
 };
+#endif
 
-#if __JHEXEN__
-static menu_t GameplayDef = {
-    0,
-    88, 25,
-    M_DrawGameplay,
-    3, GameplayItems,
-    0, MENU_OPTIONS,
-    huFontA,
-    cfg.menuColor2,
-    NULL, false,
-    LINEHEIGHT_A,
-    0, 3
-};
-#else
+#if !__JHEXEN__
 static menu_t GameplayDef = {
     0,
 #if __JHERETIC__
@@ -1110,23 +1020,23 @@ static menu_t GameplayDef = {
 #endif
     M_DrawGameplay,
 #if __JDOOM64__
-    17, GameplayItems,
+    11, GameplayItems,
 #elif __JDOOM__
-    18, GameplayItems,
+    11, GameplayItems,
 #else
-    12, GameplayItems,
+    6, GameplayItems,
 #endif
     0, MENU_OPTIONS,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
 #if __JDOOM64__
-    0, 17
+    0, 11
 #elif __JDOOM__
-    0, 18
+    0, 11
 #else
-    0, 12
+    0, 6
 #endif
 };
 #endif
@@ -1143,35 +1053,37 @@ menu_t* menulist[] = {
     &SkillDef,
     &OptionsDef,
     &Options2Def,
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     &GameplayDef,
+#endif
     &HUDDef,
     &MapDef,
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     &FilesMenu,
 #endif
     &LoadDef,
     &SaveDef,
     &MultiplayerMenu,
     &GameSetupMenu,
-    &PlayerSetupMenu,
-    &WeaponDef,
+    &ProfilesDef,
+    &EditProfileDef,
     &ControlsDef,
     NULL
 };
 
 static menuitem_t ColorWidgetItems[] = {
     {ITT_LRFUNC, 0, "red :    ", M_WGCurrentColor, 0, NULL, &currentcolor[0] },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
     {ITT_LRFUNC, 0, "green :", M_WGCurrentColor, 0, NULL, &currentcolor[1] },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
     {ITT_LRFUNC, 0, "blue :  ", M_WGCurrentColor, 0, NULL, &currentcolor[2] },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
@@ -1189,7 +1101,7 @@ static menu_t ColorWidgetMnu = {
 #endif
     0, MENU_OPTIONS,
     huFontA,
-    cfg.menuColor2,
+    gs.cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
 #if __JDOOM__ || __JDOOM64__
@@ -1201,28 +1113,28 @@ static menu_t ColorWidgetMnu = {
 
 // Cvars for the menu:
 cvar_t menuCVars[] = {
-    {"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1},
-    {"menu-flash-r", 0, CVT_FLOAT, &cfg.flashColor[0], 0, 1},
-    {"menu-flash-g", 0, CVT_FLOAT, &cfg.flashColor[1], 0, 1},
-    {"menu-flash-b", 0, CVT_FLOAT, &cfg.flashColor[2], 0, 1},
-    {"menu-flash-speed", 0, CVT_INT, &cfg.flashSpeed, 0, 50},
-    {"menu-turningskull", 0, CVT_BYTE, &cfg.turningSkull, 0, 1},
-    {"menu-effect", 0, CVT_INT, &cfg.menuEffects, 0, 2},
-    {"menu-color-r", 0, CVT_FLOAT, &cfg.menuColor[0], 0, 1},
-    {"menu-color-g", 0, CVT_FLOAT, &cfg.menuColor[1], 0, 1},
-    {"menu-color-b", 0, CVT_FLOAT, &cfg.menuColor[2], 0, 1},
-    {"menu-colorb-r", 0, CVT_FLOAT, &cfg.menuColor2[0], 0, 1},
-    {"menu-colorb-g", 0, CVT_FLOAT, &cfg.menuColor2[1], 0, 1},
-    {"menu-colorb-b", 0, CVT_FLOAT, &cfg.menuColor2[2], 0, 1},
-    {"menu-glitter", 0, CVT_FLOAT, &cfg.menuGlitter, 0, 1},
-    {"menu-fog", 0, CVT_INT, &cfg.hudFog, 0, 5},
-    {"menu-shadow", 0, CVT_FLOAT, &cfg.menuShadow, 0, 1},
-    {"menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 2},
-    {"menu-slam", 0, CVT_BYTE, &cfg.menuSlam, 0, 1},
-    {"menu-quick-ask", 0, CVT_BYTE, &cfg.askQuickSaveLoad, 0, 1},
-    {"menu-hotkeys", 0, CVT_BYTE, &cfg.menuHotkeys, 0, 1},
+    {"menu-scale", 0, CVT_FLOAT, &gs.cfg.menuScale, .1f, 1},
+    {"menu-flash-r", 0, CVT_FLOAT, &gs.cfg.flashColor[0], 0, 1},
+    {"menu-flash-g", 0, CVT_FLOAT, &gs.cfg.flashColor[1], 0, 1},
+    {"menu-flash-b", 0, CVT_FLOAT, &gs.cfg.flashColor[2], 0, 1},
+    {"menu-flash-speed", 0, CVT_INT, &gs.cfg.flashSpeed, 0, 50},
+    {"menu-turningskull", 0, CVT_BYTE, &gs.cfg.turningSkull, 0, 1},
+    {"menu-effect", 0, CVT_INT, &gs.cfg.menuEffects, 0, 2},
+    {"menu-color-r", 0, CVT_FLOAT, &gs.cfg.menuColor[0], 0, 1},
+    {"menu-color-g", 0, CVT_FLOAT, &gs.cfg.menuColor[1], 0, 1},
+    {"menu-color-b", 0, CVT_FLOAT, &gs.cfg.menuColor[2], 0, 1},
+    {"menu-colorb-r", 0, CVT_FLOAT, &gs.cfg.menuColor2[0], 0, 1},
+    {"menu-colorb-g", 0, CVT_FLOAT, &gs.cfg.menuColor2[1], 0, 1},
+    {"menu-colorb-b", 0, CVT_FLOAT, &gs.cfg.menuColor2[2], 0, 1},
+    {"menu-glitter", 0, CVT_FLOAT, &gs.cfg.menuGlitter, 0, 1},
+    {"menu-fog", 0, CVT_INT, &gs.cfg.hudFog, 0, 5},
+    {"menu-shadow", 0, CVT_FLOAT, &gs.cfg.menuShadow, 0, 1},
+    {"menu-patch-replacement", 0, CVT_BYTE, &gs.cfg.usePatchReplacement, 0, 2},
+    {"menu-slam", 0, CVT_BYTE, &gs.cfg.menuSlam, 0, 1},
+    {"menu-quick-ask", 0, CVT_BYTE, &gs.cfg.askQuickSaveLoad, 0, 1},
+    {"menu-hotkeys", 0, CVT_BYTE, &gs.cfg.menuHotkeys, 0, 1},
 #if __JDOOM__ || __JDOOM64__
-    {"menu-quitsound", 0, CVT_INT, &cfg.menuQuitSound, 0, 1},
+    {"menu-quitsound", 0, CVT_INT, &gs.cfg.menuQuitSound, 0, 1},
 #endif
     {NULL}
 };
@@ -1462,6 +1374,7 @@ void Hu_MenuInit(void)
     // Play modes.
     NewGameItems[0].text = GET_TXT(TXT_SINGLEPLAYER);
     NewGameItems[1].text = GET_TXT(TXT_MULTIPLAYER);
+    NewGameItems[2].text = GET_TXT(TXT_PLAYERPROFILE);
 
     currentMenu = &MainDef;
     menuActive = false;
@@ -1529,6 +1442,7 @@ void Hu_MenuInit(void)
     M_InitPlayerClassMenu();
 #endif
     M_InitControlsMenu();
+    M_InitProfilesMenu();
 }
 
 /**
@@ -1615,11 +1529,11 @@ void Hu_MenuTicker(timespan_t time)
 
         menuTime++;
 
-        menu_color += cfg.flashSpeed;
+        menu_color += gs.cfg.flashSpeed;
         if(menu_color >= 100)
             menu_color -= 100;
 
-        if(cfg.turningSkull && currentMenu->items[itemOn].type == ITT_LRFUNC)
+        if(gs.cfg.turningSkull && currentMenu->items[itemOn].type == ITT_LRFUNC)
             skull_angle += 5;
         else if(skull_angle != 0)
         {
@@ -1768,7 +1682,7 @@ void Hu_MenuDrawer(void)
             DGL_MatrixMode(DGL_MODELVIEW);
 
             DGL_Translatef(160, 100, 0);
-            DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
+            DGL_Scalef(gs.cfg.menuScale, gs.cfg.menuScale, 1);
             DGL_Translatef(-160, -100, 0);
         }
     }
@@ -1778,8 +1692,8 @@ void Hu_MenuDrawer(void)
 
     if(allowScaling && currentMenu->unscaled.numVisItems)
     {
-        currentMenu->numVisItems = currentMenu->unscaled.numVisItems / cfg.menuScale;
-        currentMenu->y = 110 - (110 - currentMenu->unscaled.y) / cfg.menuScale;
+        currentMenu->numVisItems = currentMenu->unscaled.numVisItems / gs.cfg.menuScale;
+        currentMenu->y = 110 - (110 - currentMenu->unscaled.y) / gs.cfg.menuScale;
 
         /*
         if(currentMenu->firstItem && currentMenu->firstItem < currentMenu->numVisItems)
@@ -1809,7 +1723,7 @@ void Hu_MenuDrawer(void)
 
             // Which color?
 #if __JDOOM__ || __JDOOM64__
-            if(!cfg.usePatchReplacement)
+            if(!gs.cfg.usePatchReplacement)
             {
                 r = 1;
                 g = b = 0;
@@ -1820,9 +1734,9 @@ void Hu_MenuDrawer(void)
             if(currentMenu->items[i].type == ITT_EMPTY)
             {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-                r = cfg.menuColor[0];
-                g = cfg.menuColor[1];
-                b = cfg.menuColor[2];
+                r = gs.cfg.menuColor[0];
+                g = gs.cfg.menuColor[1];
+                b = gs.cfg.menuColor[2];
 #else
                 // FIXME
                 r = 1;
@@ -1830,16 +1744,16 @@ void Hu_MenuDrawer(void)
                 b = .3f;
 #endif
             }
-            else if(itemOn == i && !widgetEdit && cfg.usePatchReplacement)
+            else if(itemOn == i && !widgetEdit && gs.cfg.usePatchReplacement)
             {
                 // Selection!
                 if(menu_color <= 50)
                     t = menu_color / 50.0f;
                 else
                     t = (100 - menu_color) / 50.0f;
-                r = currentMenu->color[0] * t + cfg.flashColor[0] * (1 - t);
-                g = currentMenu->color[1] * t + cfg.flashColor[1] * (1 - t);
-                b = currentMenu->color[2] * t + cfg.flashColor[2] * (1 - t);
+                r = currentMenu->color[0] * t + gs.cfg.flashColor[0] * (1 - t);
+                g = currentMenu->color[1] * t + gs.cfg.flashColor[1] * (1 - t);
+                b = currentMenu->color[2] * t + gs.cfg.flashColor[2] * (1 - t);
             }
             else
             {
@@ -1863,7 +1777,7 @@ void Hu_MenuDrawer(void)
                                  currentMenu->items[i].text, currentMenu->font,
                                  r, g, b, menuAlpha,
                                  false,
-                                 cfg.usePatchReplacement? true : false,
+                                 gs.cfg.usePatchReplacement? true : false,
                                  ALIGN_LEFT);
             }
 
@@ -2219,7 +2133,7 @@ int Hu_MenuResponder(event_t* ev)
      * The first ASCII character of a menu item's text string is used
      * as a "hotkey" shortcut to allow navigating directly to that item.
      */
-    if(cfg.menuHotkeys && !(menu->flags & MNF_NOHOTKEYS) &&
+    if(gs.cfg.menuHotkeys && !(menu->flags & MNF_NOHOTKEYS) &&
        ev->type == EV_KEY &&
        (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
     {
@@ -2416,8 +2330,8 @@ void M_ToggleVar(int index, void* context)
 void M_DrawTitle(char *text, int y)
 {
     WI_DrawParamText(160 - M_StringWidth(text, huFontB) / 2, y, text,
-                     huFontB, cfg.menuColor[0], cfg.menuColor[1],
-                     cfg.menuColor[2], menuAlpha, true, true, ALIGN_LEFT);
+                     huFontB, gs.cfg.menuColor[0], gs.cfg.menuColor[1],
+                     gs.cfg.menuColor[2], menuAlpha, true, true, ALIGN_LEFT);
 }
 
 boolean MN_IsItemVisible(const menu_t* menu, int item)
@@ -2635,7 +2549,7 @@ void M_DrawEpisode(void)
 
         M_WriteText3(160 - M_StringWidth(str, huFontA) / 2,
                      200 - M_StringHeight(str, huFontA) - 2, str, huFontA,
-                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
+                     gs.cfg.menuColor2[0], gs.cfg.menuColor2[1], gs.cfg.menuColor2[3],
                      menuAlpha, true, 0);
     }
 #else // __JDOOM__
@@ -2731,9 +2645,9 @@ void M_DrawLoad(void)
         t = menu_color / 50.0f;
     else
         t = (100 - menu_color) / 50.0f;
-    r = currentMenu->color[0] * t + cfg.flashColor[0] * (1 - t);
-    g = currentMenu->color[1] * t + cfg.flashColor[1] * (1 - t);
-    b = currentMenu->color[2] * t + cfg.flashColor[2] * (1 - t);
+    r = currentMenu->color[0] * t + gs.cfg.flashColor[0] * (1 - t);
+    g = currentMenu->color[1] * t + gs.cfg.flashColor[1] * (1 - t);
+    b = currentMenu->color[2] * t + gs.cfg.flashColor[2] * (1 - t);
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
@@ -2768,9 +2682,9 @@ void M_DrawSave(void)
         t = menu_color / 50.0f;
     else
         t = (100 - menu_color) / 50.0f;
-    r = currentMenu->color[0] * t + cfg.flashColor[0] * (1 - t);
-    g = currentMenu->color[1] * t + cfg.flashColor[1] * (1 - t);
-    b = currentMenu->color[2] * t + cfg.flashColor[2] * (1 - t);
+    r = currentMenu->color[0] * t + gs.cfg.flashColor[0] * (1 - t);
+    g = currentMenu->color[1] * t + gs.cfg.flashColor[1] * (1 - t);
+    b = currentMenu->color[2] * t + gs.cfg.flashColor[2] * (1 - t);
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
@@ -2855,7 +2769,7 @@ static void M_QuickSave(void)
 {
     player_t*               player = &players[CONSOLEPLAYER];
 
-    if(player->playerState == PST_DEAD ||
+    if(player->pState == PST_DEAD ||
        Get(DD_PLAYBACK))
     {
         Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
@@ -2878,7 +2792,7 @@ static void M_QuickSave(void)
     }
     sprintf(tempstring, QSPROMPT, savegamestrings[quickSaveSlot]);
 
-    if(!cfg.askQuickSaveLoad)
+    if(!gs.cfg.askQuickSaveLoad)
     {
         M_DoSave(quickSaveSlot);
         S_LocalSound(menusnds[1], NULL);
@@ -2914,7 +2828,7 @@ static void M_QuickLoad(void)
 
     sprintf(tempstring, QLPROMPT, savegamestrings[quickSaveSlot]);
 
-    if(!cfg.askQuickSaveLoad)
+    if(!gs.cfg.askQuickSaveLoad)
     {
         M_LoadSelect(quickSaveSlot, NULL);
         S_LocalSound(menusnds[1], NULL);
@@ -2960,12 +2874,12 @@ void M_DrawOptions(void)
     M_DrawTitle("OPTIONS", menu->y - 32);
 #else
 # if __JDOOM64__
-    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1],
-                 cfg.menuColor[2], menuAlpha, 0, "{case}OPTIONS", true,
+    WI_DrawPatch(160, menu->y - 20, gs.cfg.menuColor[0], gs.cfg.menuColor[1],
+                 gs.cfg.menuColor[2], menuAlpha, 0, "{case}OPTIONS", true,
                  ALIGN_CENTER);
 #else
-    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1],
-                 cfg.menuColor[2], menuAlpha, &m_optttl, "{case}OPTIONS", true,
+    WI_DrawPatch(160, menu->y - 20, gs.cfg.menuColor[0], gs.cfg.menuColor[1],
+                 gs.cfg.menuColor[2], menuAlpha, &m_optttl, "{case}OPTIONS", true,
                  ALIGN_CENTER);
 # endif
 #endif
@@ -2988,6 +2902,7 @@ void M_DrawOptions2(void)
 #endif
 }
 
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void M_DrawGameplay(void)
 {
     int                 idx = 0;
@@ -2995,176 +2910,38 @@ void M_DrawGameplay(void)
 
 #if __JHEXEN__
     M_DrawTitle("GAMEPLAY", 0);
-    M_WriteMenuText(menu, idx++, yesno[cfg.alwaysRun != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.lookSpring != 0]);
-    M_WriteMenuText(menu, idx++, yesno[!cfg.noAutoAim]);
-#else
-
-# if __JHERETIC__
+#elif __JHERETIC__
     M_DrawTitle("GAMEPLAY", 4);
-# else
+#else
     M_DrawTitle("GAMEPLAY", menu->y - 20);
-# endif
+#endif
 
-    M_WriteMenuText(menu, idx++, yesno[cfg.alwaysRun != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.lookSpring != 0]);
-    M_WriteMenuText(menu, idx++, yesno[!cfg.noAutoAim]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.jumpEnabled != 0]);
+#if !__JHEXEN__
 # if __JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.weaponRecoil != 0]);
-    idx = 7;
-# else
-    idx = 6;
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.weaponRecoil != 0]);
 # endif
 # if __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.anyBossDeath != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.anyBossDeath != 0]);
 #   if !__JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.raiseGhosts != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.raiseGhosts != 0]);
 #   endif
-    M_WriteMenuText(menu, idx++, yesno[cfg.maxSkulls != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.allowSkullsInWalls != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.maxSkulls != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.allowSkullsInWalls != 0]);
 # endif
 # if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.monstersStuckInDoors != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.avoidDropoffs != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.fallOff != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.slidingCorpses != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.moveBlock != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.wallRunNorthOnly != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.monstersStuckInDoors != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.avoidDropoffs != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.fallOff != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.slidingCorpses != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.moveBlock != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.wallRunNorthOnly != 0]);
 # endif
 # if __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.zombiesCanExit != 0]);
-# endif
-# if __JDOOM__
-    M_WriteMenuText(menu, idx++, yesno[cfg.fixOuchFace != 0]);
+    M_WriteMenuText(menu, idx++, yesno[GAMERULES.zombiesCanExit != 0]);
 # endif
 #endif
 }
-
-void M_DrawWeaponMenu(void)
-{
-    menu_t     *menu = &WeaponDef;
-    int         i = 0;
-    char       *autoswitch[] = { "NEVER", "IF BETTER", "ALWAYS" };
-#if __JHEXEN__
-    char       *weaponids[] = { "First", "Second", "Third", "Fourth"};
 #endif
-
-#if __JDOOM__ || __JDOOM64__
-    byte berserkAutoSwitch = cfg.berserkAutoSwitch;
-#endif
-
-    M_DrawTitle("WEAPONS", menu->y - 26);
-
-    /**
-     * \kludge Inform the user how to change the order.
-     */
-    if(itemOn - 1 >= 0 && itemOn - 1 < NUM_WEAPON_TYPES)
-    {
-        const char* str = "Use left/right to move weapon up/down";
-
-        M_WriteText3(160 - M_StringWidth(str, huFontA) / 2,
-                     200 - M_StringHeight(str, huFontA) - 2, str, huFontA,
-                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
-                     menuAlpha, true, 0);
-    }
-
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-#if __JDOOM__ || __JDOOM64__
-        M_WriteMenuText(menu, 1+i, GET_TXT(TXT_WEAPON1 + cfg.weaponOrder[i]));
-#elif __JHERETIC__
-        /**
-         * \fixme We should allow different weapon preferences per player
-         * class. However, since the only other class in jHeretic is the
-         * chicken which has only 1 weapon anyway -we'll just show the
-         * names of the player's weapons for now.
-         */
-        M_WriteMenuText(menu, 1+i, GET_TXT(TXT_TXT_WPNSTAFF + cfg.weaponOrder[i]));
-#elif __JHEXEN__
-        /**
-         * \fixme We should allow different weapon preferences per player
-         * class. Then we can show the real names here.
-         */
-        M_WriteMenuText(menu, 1+i, weaponids[cfg.weaponOrder[i]]);
-#endif
-    }
-
-#if __JHEXEN__
-    M_WriteMenuText(menu, 5, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 8, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 9, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 10, autoswitch[cfg.ammoAutoSwitch]);
-#elif __JHERETIC__
-    M_WriteMenuText(menu, 9, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 12, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 13, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 14, autoswitch[cfg.ammoAutoSwitch]);
-#elif __JDOOM64__
-    M_WriteMenuText(menu, 11, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 14, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 15, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 16, autoswitch[cfg.ammoAutoSwitch]);
-    M_WriteMenuText(menu, 17, yesno[berserkAutoSwitch != 0]);
-#elif __JDOOM__
-    M_WriteMenuText(menu, 10, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 13, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 14, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 15, autoswitch[cfg.ammoAutoSwitch]);
-    M_WriteMenuText(menu, 16, yesno[berserkAutoSwitch != 0]);
-#endif
-}
-
-void M_WeaponOrder(int option, void* context)
-{
-    int         choice = option >> NUM_WEAPON_TYPES;
-    int         temp;
-
-    if(option & RIGHT_DIR)
-    {
-        if(choice < NUM_WEAPON_TYPES-1)
-        {
-            temp = cfg.weaponOrder[choice+1];
-            cfg.weaponOrder[choice+1] = cfg.weaponOrder[choice];
-            cfg.weaponOrder[choice] = temp;
-
-            itemOn++;
-        }
-    }
-    else
-    {
-        if(choice > 0)
-        {
-            temp = cfg.weaponOrder[choice];
-            cfg.weaponOrder[choice] = cfg.weaponOrder[choice-1];
-            cfg.weaponOrder[choice-1] = temp;
-
-            itemOn--;
-        }
-    }
-}
-
-void M_WeaponAutoSwitch(int option, void* context)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.weaponAutoSwitch < 2)
-            cfg.weaponAutoSwitch++;
-    }
-    else if(cfg.weaponAutoSwitch > 0)
-        cfg.weaponAutoSwitch--;
-}
-
-void M_AmmoAutoSwitch(int option, void* context)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.ammoAutoSwitch < 2)
-            cfg.ammoAutoSwitch++;
-    }
-    else if(cfg.ammoAutoSwitch > 0)
-        cfg.ammoAutoSwitch--;
-}
 
 /**
  * @todo This could use a cleanup.
@@ -3207,20 +2984,20 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3);
+    MN_DrawSlider(menu, idx++, 11, PLRPROFILE.screen.blocks - 3);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
 #if __JDOOM__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudKeysCombine]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.keysCombine]);
 #endif
-    M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.msgLog.show != 0]);
 
     // Auto-hide HUD options:
     {
     char                secString[11];
     const char*         str;
-    uint                seconds = MINMAX_OF(0, cfg.hudTimer, 30);
+    uint                seconds = MINMAX_OF(0, PLRPROFILE.hud.timer, 30);
     if(seconds > 0)
     {
         memset(secString, 0, sizeof(secString));
@@ -3232,15 +3009,15 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, str);
     }
     idx++;
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_DAMAGE]? 1 : 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_HEALTH]? 1 : 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_ARMOR]? 1 : 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_POWER]? 1 : 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_WEAPON]? 1 : 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_AMMO]? 1 : 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_KEY]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_DAMAGE]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_PICKUP_HEALTH]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_PICKUP_ARMOR]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_PICKUP_POWER]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_PICKUP_WEAPON]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_PICKUP_AMMO]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_PICKUP_KEY]? 1 : 0]);
 #if __JHERETIC__ || __JHEXEN__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_INVITEM]? 1 : 0]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.unHide[HUE_ON_PICKUP_INVITEM]? 1 : 0]);
 #endif
 #if __JDOOM__ || __JDOOM64__
     idx++;
@@ -3251,17 +3028,17 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
+    M_WriteMenuText(menu, idx++, xhairnames[PLRPROFILE.xhair.type]);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.xhairSize * 10 + .25f);
+    MN_DrawSlider(menu, idx++, 11, PLRPROFILE.xhair.size * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
-    MN_DrawColorBox(menu, idx++, cfg.xhairColor[0], cfg.xhairColor[1],
-                    cfg.xhairColor[2], cfg.xhairColor[3]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.xhair.vitality != 0]);
+    MN_DrawColorBox(menu, idx++, PLRPROFILE.xhair.color[0], PLRPROFILE.xhair.color[1],
+                    PLRPROFILE.xhair.color[2], PLRPROFILE.xhair.color[3]);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3269,11 +3046,11 @@ void M_DrawHUDMenu(void)
 #if !__JDOOM64__
     // Statusbar options:
     idx += 2;
-    MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
+    MN_DrawSlider(menu, idx++, 20, PLRPROFILE.statusbar.scale - 1);
 #if __JHERETIC__ || __JHEXEN__
     idx += 2;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.statusbarOpacity * 10 + .25f);
+    MN_DrawSlider(menu, idx++, 11, PLRPROFILE.statusbar.opacity * 10 + .25f);
 
 #if __JDOOM__ || __JDOOM64__
     idx++;
@@ -3287,9 +3064,9 @@ void M_DrawHUDMenu(void)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Counters:
     idx++;
-    M_WriteMenuText(menu, idx++, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
-    M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
-    M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
+    M_WriteMenuText(menu, idx++, countnames[(PLRPROFILE.hud.counterCheat & 0x1) | ((PLRPROFILE.hud.counterCheat & 0x8) >> 2)]);
+    M_WriteMenuText(menu, idx++, countnames[((PLRPROFILE.hud.counterCheat & 0x2) >> 1) | ((PLRPROFILE.hud.counterCheat & 0x10) >> 3)]);
+    M_WriteMenuText(menu, idx++, countnames[((PLRPROFILE.hud.counterCheat & 0x4) >> 2) | ((PLRPROFILE.hud.counterCheat & 0x20) >> 4)]);
 #endif
 
     // Fullscreen HUD options:
@@ -3297,31 +3074,31 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 10, cfg.hudScale * 10 - 3 + .5f);
+    MN_DrawSlider(menu, idx++, 10, PLRPROFILE.hud.scale * 10 - 3 + .5f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawColorBox(menu, idx++, cfg.hudColor[0], cfg.hudColor[1],
-                    cfg.hudColor[2], cfg.hudColor[3]);
+    MN_DrawColorBox(menu, idx++, PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1],
+                    PLRPROFILE.hud.color[2], PLRPROFILE.hud.color[3]);
 #if __JHEXEN__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_MANA]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_MANA]]);
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_AMMO]]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARMOR]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_AMMO]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_ARMOR]]);
 #endif
 #if __JDOOM64__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_POWER]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_POWER]]);
 #endif
 #if __JDOOM__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_FACE]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_FACE]]);
 #endif
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_HEALTH]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_HEALTH]]);
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_KEYS]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_KEYS]]);
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_ARTI]]);
+    M_WriteMenuText(menu, idx++, yesno[PLRPROFILE.hud.shown[HUD_ARTI]]);
 #endif
 }
 
@@ -3339,84 +3116,90 @@ void M_FloatMod10(float *variable, int option)
     *variable = val / 10.0f;
 }
 
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 /**
  * Set the show kills counter
  */
-void M_KillCounter(int option, void *data)
+void M_KillCounter(int option, void* data)
 {
-    int         op = (cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2);
+    int                 op = (PLRPROFILE.hud.counterCheat & 0x1) |
+        ((PLRPROFILE.hud.counterCheat & 0x8) >> 2);
 
     op += option == RIGHT_DIR ? 1 : -1;
     if(op < 0)
         op = 0;
     if(op > 3)
         op = 3;
-    cfg.counterCheat &= ~0x9;
-    cfg.counterCheat |= (op & 0x1) | ((op & 0x2) << 2);
+
+    PLRPROFILE.hud.counterCheat &= ~0x9;
+    PLRPROFILE.hud.counterCheat |= (op & 0x1) | ((op & 0x2) << 2);
 }
 
 /**
  * Set the show items counter
  */
-void M_ItemCounter(int option, void *data)
+void M_ItemCounter(int option, void* data)
 {
-    int         op =
-        ((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3);
+    int                 op = ((PLRPROFILE.hud.counterCheat & 0x2) >> 1) |
+        ((PLRPROFILE.hud.counterCheat & 0x10) >> 3);
 
     op += option == RIGHT_DIR ? 1 : -1;
     if(op < 0)
         op = 0;
     if(op > 3)
         op = 3;
-    cfg.counterCheat &= ~0x12;
-    cfg.counterCheat |= ((op & 0x1) << 1) | ((op & 0x2) << 3);
+
+    PLRPROFILE.hud.counterCheat &= ~0x12;
+    PLRPROFILE.hud.counterCheat |= ((op & 0x1) << 1) | ((op & 0x2) << 3);
 }
 
 /**
  * Set the show secrets counter
  */
-void M_SecretCounter(int option, void *data)
+void M_SecretCounter(int option, void* data)
 {
-    int         op =
-        ((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4);
+    int                 op = ((PLRPROFILE.hud.counterCheat & 0x4) >> 2) |
+        ((PLRPROFILE.hud.counterCheat & 0x20) >> 4);
 
     op += option == RIGHT_DIR ? 1 : -1;
     if(op < 0)
         op = 0;
     if(op > 3)
         op = 3;
-    cfg.counterCheat &= ~0x24;
-    cfg.counterCheat |= ((op & 0x1) << 2) | ((op & 0x2) << 4);
+
+    PLRPROFILE.hud.counterCheat &= ~0x24;
+    PLRPROFILE.hud.counterCheat |= ((op & 0x1) << 2) | ((op & 0x2) << 4);
 }
+#endif
 
 void M_Xhair(int option, void* context)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    cfg.xhair += option == RIGHT_DIR ? 1 : -1;
-    if(cfg.xhair < 0)
-        cfg.xhair = 0;
-    if(cfg.xhair > NUM_XHAIRS)
-        cfg.xhair = NUM_XHAIRS;
+    PLRPROFILE.xhair.type += option == RIGHT_DIR ? 1 : -1;
+    if(PLRPROFILE.xhair.type < 0)
+        PLRPROFILE.xhair.type = 0;
+    if(PLRPROFILE.xhair.type > NUM_XHAIRS)
+        PLRPROFILE.xhair.type = NUM_XHAIRS;
 #else
     if(option == RIGHT_DIR)
     {
-        if(cfg.xhair < NUM_XHAIRS)
-            cfg.xhair++;
+        if(PLRPROFILE.xhair.type < NUM_XHAIRS)
+            PLRPROFILE.xhair.type++;
     }
-    else if(cfg.xhair > 0)
-        cfg.xhair--;
+    else if(PLRPROFILE.xhair.type > 0)
+        PLRPROFILE.xhair.type--;
 #endif
 }
 
 void M_XhairSize(int option, void* context)
 {
-    M_FloatMod10(&cfg.xhairSize, option);
+    M_FloatMod10(&PLRPROFILE.xhair.size, option);
 }
 
 #if __JDOOM64__
 void M_WeaponRecoil(int option, void* context)
 {
-    cfg.weaponRecoil = !cfg.weaponRecoil;
+    GAMERULES.weaponRecoil = !GAMERULES.weaponRecoil;
 }
 #endif
 
@@ -3425,20 +3208,20 @@ void M_SizeStatusBar(int option, void* context)
 {
     if(option == RIGHT_DIR)
     {
-        if(cfg.statusbarScale < 20)
-            cfg.statusbarScale++;
+        if(PLRPROFILE.statusbar.scale < 20)
+            PLRPROFILE.statusbar.scale++;
     }
-    else if(cfg.statusbarScale > 1)
-        cfg.statusbarScale--;
+    else if(PLRPROFILE.statusbar.scale > 1)
+        PLRPROFILE.statusbar.scale--;
 
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 
-    R_SetViewSize(cfg.screenBlocks);
+    R_SetViewSize(CONSOLEPLAYER, PLRPROFILE.screen.blocks);
 }
 
 void M_StatusBarOpacity(int option, void* context)
 {
-    M_FloatMod10(&cfg.statusbarOpacity, option);
+    M_FloatMod10(&PLRPROFILE.statusbar.opacity, option);
 
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 }
@@ -3469,6 +3252,11 @@ void M_NewGame(int option, void* context)
     else
         M_SetupNextMenu(&EpiDef);
 #endif
+}
+
+void M_EnterProfilesMenu(int option, void* data)
+{
+    M_SetupNextMenu(&ProfilesDef);
 }
 
 int M_QuitResponse(msgresponse_t response, void* context)
@@ -3506,7 +3294,7 @@ int M_QuitResponse(msgresponse_t response, void* context)
 
 #if __JDOOM__ || __JDOOM64__
         // Play an exit sound if it is enabled.
-        if(cfg.menuQuitSound && !IS_NETGAME)
+        if(gs.cfg.menuQuitSound && !IS_NETGAME)
         {
             if(!quitYet)
             {
@@ -3576,13 +3364,13 @@ void M_EndGame(int option, void* context)
 
 void M_ChangeMessages(int option, void* context)
 {
-    cfg.msgShow = !cfg.msgShow;
-    P_SetMessage(players + CONSOLEPLAYER, !cfg.msgShow ? MSGOFF : MSGON, true);
+    PLRPROFILE.msgLog.show = !PLRPROFILE.msgLog.show;
+    P_SetMessage(players + CONSOLEPLAYER, !PLRPROFILE.msgLog.show ? MSGOFF : MSGON, true);
 }
 
 void M_HUDHideTime(int option, void* context)
 {
-    int                 val = cfg.hudTimer;
+    int                 val = PLRPROFILE.hud.timer;
 
     if(option == RIGHT_DIR)
     {
@@ -3592,12 +3380,12 @@ void M_HUDHideTime(int option, void* context)
     else if(val > 0)
         val--;
 
-    cfg.hudTimer = val;
+    PLRPROFILE.hud.timer = val;
 }
 
 void M_HUDScale(int option, void* context)
 {
-    int                 val = (cfg.hudScale + .05f) * 10;
+    int                 val = (PLRPROFILE.hud.scale + .05f) * 10;
 
     if(option == RIGHT_DIR)
     {
@@ -3607,24 +3395,24 @@ void M_HUDScale(int option, void* context)
     else if(val > 3)
         val--;
 
-    cfg.hudScale = val / 10.0f;
+    PLRPROFILE.hud.scale = val / 10.0f;
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 }
 
 #if __JDOOM__ || __JDOOM64__
 void M_HUDRed(int option, void* context)
 {
-    M_FloatMod10(&cfg.hudColor[0], option);
+    M_FloatMod10(&PLRPROFILE.hud.color[0], option);
 }
 
 void M_HUDGreen(int option, void* context)
 {
-    M_FloatMod10(&cfg.hudColor[1], option);
+    M_FloatMod10(&PLRPROFILE.hud.color[1], option);
 }
 
 void M_HUDBlue(int option, void* context)
 {
-    M_FloatMod10(&cfg.hudColor[2], option);
+    M_FloatMod10(&PLRPROFILE.hud.color[2], option);
 }
 #endif
 
@@ -3648,7 +3436,7 @@ void M_SaveGame(int option, void* context)
 {
     player_t*           player = &players[CONSOLEPLAYER];
 
-    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
+    if(player->pState == PST_DEAD || Get(DD_PLAYBACK))
     {
         Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
         return;
@@ -3767,7 +3555,7 @@ void M_ChooseSkill(int option, void* context)
 {
 #if __JHEXEN__
     Hu_MenuCommand(MCMD_CLOSEFAST);
-    cfg.playerClass[CONSOLEPLAYER] = MenuPClass;
+    gs.players[CONSOLEPLAYER].pClass = MenuPClass;
     G_DeferredNewGame(option);
 #else
 # if __JDOOM__ || __JSTRIFE__
@@ -3829,20 +3617,20 @@ void M_SizeDisplay(int option, void* context)
     if(option == RIGHT_DIR)
     {
 #if __JDOOM64__
-        if(cfg.screenBlocks < 11)
+        if(PLRPROFILE.screen.blocks < 11)
 #else
-        if(cfg.screenBlocks < 13)
+        if(PLRPROFILE.screen.blocks < 13)
 #endif
         {
-            cfg.screenBlocks++;
+            PLRPROFILE.screen.blocks++;
         }
     }
-    else if(cfg.screenBlocks > 3)
+    else if(PLRPROFILE.screen.blocks > 3)
     {
-        cfg.screenBlocks--;
+        PLRPROFILE.screen.blocks--;
     }
 
-    R_SetViewSize(cfg.screenBlocks);
+    R_SetViewSize(CONSOLEPLAYER, PLRPROFILE.screen.blocks);
 }
 
 void M_OpenDCP(int option, void* context)

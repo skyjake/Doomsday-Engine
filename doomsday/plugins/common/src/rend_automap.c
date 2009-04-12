@@ -834,7 +834,7 @@ int renderPolyObjSeg(void* obj, void* context)
     if((info = AM_GetMapObjectInfo(AM_MapForPlayer(p->plr - players), amo)))
     {
         renderLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
-                      info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(p->map),
+                      info->rgba[3] * PLRPROFILE.automap.lineAlpha * Automap_GetOpacity(p->map),
                       info->blendMode,
                       (p->map->flags & AMF_REND_LINE_NORMALS)? true : false);
     }
@@ -1011,8 +1011,8 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg,
 #endif
 
         R_PalIdxToRGB(rgb, (!IS_NETGAME? WHITE :
-            their_colors[cfg.playerColor[i]]), false);
-        alpha = cfg.automapLineAlpha;
+            their_colors[gs.players[i].color]), false);
+        alpha = PLRPROFILE.automap.lineAlpha;
 #if !__JHEXEN__
         if(p->powers[PT_INVISIBILITY])
             alpha *= .125f;
@@ -1245,7 +1245,7 @@ static void setupGLStateForMap(const automap_t* map,
 #if __JDOOM64__
     // jd64 > Laser artifacts
     // If drawn in HUD we don't need them visible in the map too.
-    if(!cfg.hudShown[HUD_POWER])
+    if(!PLRPROFILE.hud.shown[HUD_POWER])
     {
         int                 i, num;
         player_t*           plr = &players[player];
@@ -1386,22 +1386,22 @@ static void renderMapName(const automap_t* map)
 
         x = SCREENXTOFIXX(wx + (ww * .5f));
         y = SCREENYTOFIXY(wy + wh);
-        if(cfg.setBlocks < 13)
+        if(PLRPROFILE.screen.setBlocks < 13)
         {
 #if !__JDOOM64__
-            if(cfg.setBlocks <= 11 || cfg.automapHudDisplay == 2)
+            if(PLRPROFILE.screen.setBlocks <= 11 || PLRPROFILE.automap.hudDisplay == 2)
             {   // We may need to adjust for the height of the statusbar
                 otherY = ST_Y;
-                otherY += ST_HEIGHT * (1 - (cfg.statusbarScale / 20.0f));
+                otherY += ST_HEIGHT * (1 - (PLRPROFILE.statusbar.scale / 20.0f));
 
                 if(y > otherY)
                     y = otherY;
             }
-            else if(cfg.setBlocks == 12)
+            else if(PLRPROFILE.screen.setBlocks == 12)
 #endif
             {   // We may need to adjust for the height of the HUD icons.
                 otherY = y;
-                otherY += -(y * (cfg.hudScale / 10.0f));
+                otherY += -(y * (PLRPROFILE.hud.scale / 10.0f));
 
                 if(y > otherY)
                     y = otherY;
@@ -1548,7 +1548,7 @@ void Rend_Automap(int player, const automap_t* map)
 
             // Setup the global list state.
             DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2],
-                        info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(map));
+                        info->rgba[3] * PLRPROFILE.automap.lineAlpha * Automap_GetOpacity(map));
             DGL_BlendMode(info->blendMode);
 
             // Draw.
@@ -1576,10 +1576,10 @@ void Rend_Automap(int player, const automap_t* map)
 
         params.flags = Automap_GetFlags(map);
         params.vgraph = AM_GetVectorGraph(AM_GetVectorGraphic(mcfg, AMO_THING));
-        AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS,
+        AM_GetMapColor(params.rgb, PLRPROFILE.automap.mobj, THINGCOLORS,
                        !W_IsFromIWAD(W_GetNumForName("PLAYPAL")));
         params.alpha = MINMAX_OF(0.f,
-            cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
+            PLRPROFILE.automap.lineAlpha * Automap_GetOpacity(map), 1.f);
 
         Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                               &aabb[BOXBOTTOM], &aabb[BOXTOP]);

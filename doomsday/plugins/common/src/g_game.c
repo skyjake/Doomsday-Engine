@@ -154,7 +154,7 @@ void    G_StopDemo(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-game_config_t cfg; // The global cfg.
+game_state_t gs; // Global game state.
 
 skillmode_t gameSkill;
 int gameEpisode;
@@ -501,7 +501,7 @@ void G_CommonPostInit(void)
     XG_Register(); // Register XG classnames.
 #endif
 
-    R_SetViewSize(cfg.screenBlocks);
+    R_SetViewSize(CONSOLEPLAYER, PLRPROFILE.screen.blocks);
     R_SetBorderGfx(borderLumps);
 
     Con_Message("P_Init: Init Playloop state.\n");
@@ -681,8 +681,8 @@ void G_DoLoadMap(void)
     {
         player_t           *plr = &players[i];
 
-        if(plr->plr->inGame && plr->playerState == PST_DEAD)
-            plr->playerState = PST_REBORN;
+        if(plr->plr->inGame && plr->pState == PST_DEAD)
+            plr->pState = PST_REBORN;
 
 #if __JHEXEN__ || __JSTRIFE__
         if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) ||
@@ -826,7 +826,7 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
 #endif
         // armor
 #if __JHEXEN__
-    gsvArmor = FixedDiv(PCLASS_INFO(pl->class)->autoArmorSave +
+    gsvArmor = FixedDiv(PCLASS_INFO(pl->pClass)->autoArmorSave +
                         pl->armorPoints[ARMOR_ARMOR] +
                         pl->armorPoints[ARMOR_SHIELD] +
                         pl->armorPoints[ARMOR_HELMET] +
@@ -892,14 +892,14 @@ void G_Ticker(timespan_t ticLength)
     {
         player_t       *plr = &players[i];
 
-        if(plr->plr->inGame && plr->playerState == PST_REBORN &&
+        if(plr->plr->inGame && plr->pState == PST_REBORN &&
            !P_MobjIsCamera(plr->plr->mo))
             G_DoReborn(i);
 
         // Player has left?
-        if(plr->playerState == PST_GONE)
+        if(plr->pState == PST_GONE)
         {
-            plr->playerState = PST_REBORN;
+            plr->pState = PST_REBORN;
             if(plr->plr->mo)
             {
                 if(!IS_CLIENT)
@@ -1270,13 +1270,13 @@ void G_PlayerReborn(int player)
     p->secretCount = secretcount;
 #if __JHEXEN__ || __JSTRIFE__
     p->worldTimer = worldTimer;
-    p->colorMap = cfg.playerColor[player];
+    p->colorMap = gs.players[player].color;
 #endif
 #if __JHEXEN__
-    p->class = cfg.playerClass[player];
+    p->pClass = gs.players[player].pClass;
 #endif
     p->useDown = p->attackDown = true; // Don't do anything immediately.
-    p->playerState = PST_LIVE;
+    p->pState = PST_LIVE;
     p->health = maxHealth;
 
 #if __JDOOM__ || __JDOOM64__
@@ -2036,7 +2036,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
     if(skill == SM_NIGHTMARE)
-        respawnMonsters = cfg.respawnMonstersNightmare;
+        respawnMonsters = GAMERULES.respawnMonstersNightmare;
 #endif
 
 //// \kludge Doom/Heretic Fast Monters/Missiles
@@ -2091,7 +2091,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
         {
             player_t           *plr = &players[i];
 
-            plr->playerState = PST_REBORN;
+            plr->pState = PST_REBORN;
 #if __JHEXEN__ || __JSTRIFE__
             plr->worldTimer = 0;
 #else

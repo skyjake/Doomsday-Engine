@@ -128,8 +128,8 @@ dpatch_t* episodeNamePatches = NULL;
 
 cvar_t hudCVars[] = {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
-    {"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
+    {"hud-cheat-counter", 0, CVT_BYTE, &PLRPROFILE.hud.counterCheat, 0, 63},
+    {"hud-cheat-counter-scale", 0, CVT_FLOAT, &PLRPROFILE.hud.counterCheatScale, .1f, 1},
 #endif
     {NULL}
 };
@@ -586,11 +586,11 @@ static const int plrColors[] = {
         if(plr->morphTics > 0)
             info->pClass = PCLASS_PIG;
         else
-            info->pClass = plr->class;
+            info->pClass = plr->pClass;
 #else
         info->pClass = PCLASS_PLAYER;
 #endif
-        info->team = cfg.playerColor[i];
+        info->team = gs.players[i].color;
 
         // Pick team color:
 #if __JHEXEN__
@@ -1031,9 +1031,9 @@ static void drawWorldTimer(void)
 /**
  * Handles what counters to draw eg title, timer, dm stats etc
  */
-void HU_DrawMapCounters(void)
+void HU_DrawCheatCounters(void)
 {
-    player_t           *plr;
+    player_t*           plr;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     char                buf[40], tmp[20];
     int                 x = 5, y = LINEHEIGHT_A * 3;
@@ -1053,24 +1053,24 @@ void HU_DrawMapCounters(void)
     drawWorldTimer();
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    Draw_BeginZoom(cfg.counterCheatScale, x, y);
+    Draw_BeginZoom(PLRPROFILE.hud.counterCheatScale, x, y);
 
-    if(cfg.counterCheat)
+    if(PLRPROFILE.hud.counterCheat)
     {
         // Kills.
-        if(cfg.counterCheat & (CCH_KILLS | CCH_KILLS_PRCNT))
+        if(PLRPROFILE.hud.counterCheat & (CCH_KILLS | CCH_KILLS_PRCNT))
         {
             strcpy(buf, "Kills: ");
-            if(cfg.counterCheat & CCH_KILLS)
+            if(PLRPROFILE.hud.counterCheat & CCH_KILLS)
             {
                 sprintf(tmp, "%i/%i ", plr->killCount, totalKills);
                 strcat(buf, tmp);
             }
-            if(cfg.counterCheat & CCH_KILLS_PRCNT)
+            if(PLRPROFILE.hud.counterCheat & CCH_KILLS_PRCNT)
             {
-                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
+                sprintf(tmp, "%s%i%%%s", (PLRPROFILE.hud.counterCheat & CCH_KILLS ? "(" : ""),
                         totalKills ? plr->killCount * 100 / totalKills : 100,
-                        (cfg.counterCheat & CCH_KILLS ? ")" : ""));
+                        (PLRPROFILE.hud.counterCheat & CCH_KILLS ? ")" : ""));
                 strcat(buf, tmp);
             }
 
@@ -1080,19 +1080,19 @@ void HU_DrawMapCounters(void)
         }
 
         // Items.
-        if(cfg.counterCheat & (CCH_ITEMS | CCH_ITEMS_PRCNT))
+        if(PLRPROFILE.hud.counterCheat & (CCH_ITEMS | CCH_ITEMS_PRCNT))
         {
             strcpy(buf, "Items: ");
-            if(cfg.counterCheat & CCH_ITEMS)
+            if(PLRPROFILE.hud.counterCheat & CCH_ITEMS)
             {
                 sprintf(tmp, "%i/%i ", plr->itemCount, totalItems);
                 strcat(buf, tmp);
             }
-            if(cfg.counterCheat & CCH_ITEMS_PRCNT)
+            if(PLRPROFILE.hud.counterCheat & CCH_ITEMS_PRCNT)
             {
-                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
+                sprintf(tmp, "%s%i%%%s", (PLRPROFILE.hud.counterCheat & CCH_ITEMS ? "(" : ""),
                         totalItems ? plr->itemCount * 100 / totalItems : 100,
-                        (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
+                        (PLRPROFILE.hud.counterCheat & CCH_ITEMS ? ")" : ""));
                 strcat(buf, tmp);
             }
 
@@ -1102,19 +1102,19 @@ void HU_DrawMapCounters(void)
         }
 
         // Secrets.
-        if(cfg.counterCheat & (CCH_SECRET | CCH_SECRET_PRCNT))
+        if(PLRPROFILE.hud.counterCheat & (CCH_SECRET | CCH_SECRET_PRCNT))
         {
             strcpy(buf, "Secret: ");
-            if(cfg.counterCheat & CCH_SECRET)
+            if(PLRPROFILE.hud.counterCheat & CCH_SECRET)
             {
                 sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
                 strcat(buf, tmp);
             }
-            if(cfg.counterCheat & CCH_SECRET_PRCNT)
+            if(PLRPROFILE.hud.counterCheat & CCH_SECRET_PRCNT)
             {
-                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
+                sprintf(tmp, "%s%i%%%s", (PLRPROFILE.hud.counterCheat & CCH_SECRET ? "(" : ""),
                         totalSecret ? plr->secretCount * 100 / totalSecret : 100,
-                        (cfg.counterCheat & CCH_SECRET ? ")" : ""));
+                        (PLRPROFILE.hud.counterCheat & CCH_SECRET ? ")" : ""));
                 strcat(buf, tmp);
             }
 
@@ -1173,7 +1173,7 @@ void Hu_FogEffectTicker(timespan_t time)
     if(!M_RunTrigger(&fixed, time))
         return;
 
-    if(cfg.hudFog == 0)
+    if(gs.cfg.hudFog == 0)
         return;
 
     // Move towards the target alpha
@@ -1196,7 +1196,7 @@ void Hu_FogEffectTicker(timespan_t time)
 
     for(i = 0; i < 2; ++i)
     {
-        if(cfg.hudFog == 2)
+        if(gs.cfg.hudFog == 2)
         {
             fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
             fog->layers[i].posAngle -= MENUFOGSPEED[!i];
@@ -1217,7 +1217,7 @@ void Hu_FogEffectTicker(timespan_t time)
     }
 
     // Calculate the height of the menuFog 3 Y join
-    if(cfg.hudFog == 4)
+    if(gs.cfg.hudFog == 4)
     {
         if(fog->scrollDir && fog->joinY > 0.46f)
             fog->joinY = fog->joinY / 1.002f;
@@ -1710,7 +1710,7 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
     float               fr = (1 + 2 * red) / 3;
     float               fb = (1 + 2 * blue) / 3;
     float               fg = (1 + 2 * green) / 3;
-    float               fa = cfg.menuGlitter * alpha;
+    float               fa = gs.cfg.menuGlitter * alpha;
 
     for(pass = 0; pass < 2; ++pass)
     {
@@ -1729,7 +1729,7 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
             yoff = 0;
             flash = 0;
             // Do the type-in effect?
-            if(doTypeIn && cfg.menuEffects != 0)
+            if(doTypeIn && gs.cfg.menuEffects != 0)
             {
                 int                 maxCount =
                     (typeInTime > 0? typeInTime * 2 : 0);
@@ -1803,13 +1803,13 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
                                   fr, fg, fb, flash * fa);
                 }
             }
-            else if(cfg.menuShadow > 0)
+            else if(gs.cfg.menuShadow > 0)
             {
                 // Shadow.
                 M_LetterFlash(cx, cy + yoff, w, h, false, 1, 1, 1,
                               (red <
                                0 ? DGL_GetInteger(DGL_CURRENT_COLOR_A) /
-                               255.0f : alpha) * cfg.menuShadow);
+                               255.0f : alpha) * gs.cfg.menuShadow);
             }
 
             cx += w;
@@ -1852,7 +1852,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             return;
         }
     }
-    else if(cfg.usePatchReplacement)
+    else if(gs.cfg.usePatchReplacement)
     {   // We might be able to replace the patch with a string
         if(!patch)
             return;
@@ -1873,7 +1873,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             }
 
             // A built-in replacement?
-            if(cfg.usePatchReplacement == 2 && altstring)
+            if(gs.cfg.usePatchReplacement == 2 && altstring)
             {
                 WI_DrawParamText(x, y, altstring, huFontB, r, g, b, a, false,
                                  true, halign);
@@ -2163,10 +2163,10 @@ static void drawFogEffect(void)
     DGL_PushMatrix();
 
     // Two layers.
-    Hu_DrawFogEffect(cfg.hudFog - 1, mfd->texture,
+    Hu_DrawFogEffect(gs.cfg.hudFog - 1, mfd->texture,
                      mfd->layers[0].texOffset, mfd->layers[0].texAngle,
                      mfd->alpha, fogEffectData.joinY);
-    Hu_DrawFogEffect(cfg.hudFog - 1, mfd->texture,
+    Hu_DrawFogEffect(gs.cfg.hudFog - 1, mfd->texture,
                      mfd->layers[1].texOffset, mfd->layers[1].texAngle,
                      mfd->alpha, fogEffectData.joinY);
 
@@ -2188,7 +2188,7 @@ void Hu_Drawer(void)
         DGL_Ortho(0, 0, 320, 200, -1, 1);
 
         // Draw the fog effect?
-        if(fogEffectData.alpha > 0 && cfg.hudFog &&
+        if(fogEffectData.alpha > 0 && gs.cfg.hudFog &&
            !((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) &&
               MN_CurrentMenuHasBackground()))
             drawFogEffect();

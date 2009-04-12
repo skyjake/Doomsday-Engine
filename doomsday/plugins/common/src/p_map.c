@@ -165,8 +165,8 @@ static int tmUnstuck; // $unstuck: used to check unsticking
 
 float P_GetGravity(void)
 {
-    if(IS_NETGAME && cfg.netGravity != -1)
-        return (float) cfg.netGravity / 100;
+    if(IS_NETGAME && GAMERULES.gravityModifier != -1)
+        return (float) GAMERULES.gravityModifier / 100;
 
     return *((float*) DD_GetVariable(DD_GRAVITY));
 }
@@ -402,7 +402,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
 #if !__JHEXEN__
     // Player only.
     if(tmThing->player && tm[VZ] != DDMAXFLOAT &&
-       (cfg.moveCheckZ || (tmThing->flags2 & MF2_PASSMOBJ)))
+       (GAMERULES.moveCheckZ || (tmThing->flags2 & MF2_PASSMOBJ)))
     {
         if((thing->pos[VZ] > tm[VZ] + tmHeight) ||
            (thing->pos[VZ] + thing->height < tm[VZ]))
@@ -1266,7 +1266,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
         if(!(thing->flags & (MF_DROPOFF | MF_FLOAT)))
         {
             // Dropoff height limit.
-            if(cfg.avoidDropoffs)
+            if(GAMERULES.avoidDropoffs)
             {
                 if(tmFloorZ - tmDropoffZ > 24)
                     return false; // Don't stand over dropoff.
@@ -1876,15 +1876,15 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->class == PCLASS_FIGHTER ||
-       t1->player->class == PCLASS_CLERIC ||
-       t1->player->class == PCLASS_MAGE))
+      (t1->player->pClass == PCLASS_FIGHTER ||
+       t1->player->pClass == PCLASS_CLERIC ||
+       t1->player->pClass == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
-            shootZ += (cfg.plrViewHeight - 5);
+            shootZ += (PLRPROFILE.camera.offsetZ - 5);
     }
     else
         shootZ += (t1->height / 2) + 8;
@@ -1905,11 +1905,11 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
 
     if(lineTarget)
     {   // While autoaiming, we accept this slope.
-        if(!t1->player || !cfg.noAutoAim)
+        if(!t1->player || PLRPROFILE.ctrl.useAutoAim)
             return aimSlope;
     }
 
-    if(t1->player && cfg.noAutoAim)
+    if(t1->player && !PLRPROFILE.ctrl.useAutoAim)
     {
         // The slope is determined by lookdir.
         return tan(LOOKDIR2RAD(t1->dPlayer->lookDir)) / 1.2;
@@ -1938,15 +1938,15 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->class == PCLASS_FIGHTER ||
-       t1->player->class == PCLASS_CLERIC ||
-       t1->player->class == PCLASS_MAGE))
+      (t1->player->pClass == PCLASS_FIGHTER ||
+       t1->player->pClass == PCLASS_CLERIC ||
+       t1->player->pClass == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
-            shootZ += cfg.plrViewHeight - 5;
+            shootZ += PLRPROFILE.camera.offsetZ - 5;
     }
     else
         shootZ += (t1->height / 2) + 8;
@@ -2019,10 +2019,10 @@ boolean PIT_RadiusAttack(mobj_t* thing, void* data)
     dist = (dx > dy? dx : dy);
 
 #if __JHEXEN__
-    if(!cfg.netNoMaxZRadiusAttack)
+    if(!GAMERULES.noMaxZRadiusAttack)
         dist = (dz > dist? dz : dist);
 #else
-    if(!(cfg.netNoMaxZRadiusAttack || (thing->info->flags2 & MF2_INFZBOMBDAMAGE)))
+    if(!(GAMERULES.noMaxZRadiusAttack || (thing->info->flags2 & MF2_INFZBOMBDAMAGE)))
         dist = (dz > dist? dz : dist);
 #endif
 
@@ -2104,7 +2104,7 @@ boolean PTR_UseTraverse(intercept_t* in)
         if(OPENRANGE <= 0)
         {
             if(useThing->player)
-                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->pClass)->failUseSound,
                              useThing);
 
             return false; // Can't use through a wall.
@@ -2116,7 +2116,7 @@ boolean PTR_UseTraverse(intercept_t* in)
             float       pheight = useThing->pos[VZ] + useThing->height/2;
 
             if((OPENTOP < pheight) || (OPENBOTTOM > pheight))
-                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->pClass)->failUseSound,
                              useThing);
         }
 #endif
@@ -2992,7 +2992,7 @@ boolean PTR_PuzzleItemTraverse(intercept_t* in)
 
                 if(puzzleItemUser->player)
                 {
-                    switch(puzzleItemUser->player->class)
+                    switch(puzzleItemUser->player->pClass)
                     {
                     case PCLASS_FIGHTER:
                         sound = SFX_PUZZLE_FAIL_FIGHTER;

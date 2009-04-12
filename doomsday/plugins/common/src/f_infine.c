@@ -2035,11 +2035,11 @@ void FIC_If(void)
 #if __JHEXEN__
     // Player classes.
     else if(!stricmp(fiToken, "fighter"))
-        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_FIGHTER);
+        val = (gs.players[CONSOLEPLAYER].pClass == PCLASS_FIGHTER);
     else if(!stricmp(fiToken, "cleric"))
-        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_CLERIC);
+        val = (gs.players[CONSOLEPLAYER].pClass == PCLASS_CLERIC);
     else if(!stricmp(fiToken, "mage"))
-        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_MAGE);
+        val = (gs.players[CONSOLEPLAYER].pClass == PCLASS_MAGE);
 #endif
     else
     {

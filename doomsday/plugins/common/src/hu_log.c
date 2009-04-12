@@ -213,38 +213,36 @@ static const char shiftXForm[] = {
 
 cvar_t logCVars[] = {
     // Behaviour
-    {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
-    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
-#if __JHEXEN__
-    {"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2},
-#else
-    {"msg-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1},
+    {"msg-count", 0, CVT_INT, &PLRPROFILE.msgLog.count, 0, 8},
+    {"msg-echo", 0, CVT_BYTE, &gs.cfg.echoMsg, 0, 1},
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    {"msg-secret", 0, CVT_BYTE, &GAMERULES.announceSecrets, 0, 1},
 #endif
-    {"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0},
+    {"msg-uptime", CVF_NO_MAX, CVT_INT, &PLRPROFILE.msgLog.upTime, 35, 0},
 
     // Display
-    {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2},
-    {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0},
-    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0},
-    {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1},
+    {"msg-align", 0, CVT_INT, &PLRPROFILE.msgLog.align, 0, 2},
+    {"msg-blink", CVF_NO_MAX, CVT_INT, &PLRPROFILE.msgLog.blink, 0, 0},
+    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &PLRPROFILE.msgLog.scale, 0, 0},
+    {"msg-show", 0, CVT_BYTE, &PLRPROFILE.msgLog.show, 0, 1},
 
     // Colour defaults
-    {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1},
-    {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1},
-    {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1},
+    {"msg-color-r", 0, CVT_FLOAT, &PLRPROFILE.msgLog.color[0], 0, 1},
+    {"msg-color-g", 0, CVT_FLOAT, &PLRPROFILE.msgLog.color[1], 0, 1},
+    {"msg-color-b", 0, CVT_FLOAT, &PLRPROFILE.msgLog.color[2], 0, 1},
 
     // Chat macros
-    {"chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0},
-    {"chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0},
-    {"chat-macro2", 0, CVT_CHARPTR, &cfg.chatMacros[2], 0, 0},
-    {"chat-macro3", 0, CVT_CHARPTR, &cfg.chatMacros[3], 0, 0},
-    {"chat-macro4", 0, CVT_CHARPTR, &cfg.chatMacros[4], 0, 0},
-    {"chat-macro5", 0, CVT_CHARPTR, &cfg.chatMacros[5], 0, 0},
-    {"chat-macro6", 0, CVT_CHARPTR, &cfg.chatMacros[6], 0, 0},
-    {"chat-macro7", 0, CVT_CHARPTR, &cfg.chatMacros[7], 0, 0},
-    {"chat-macro8", 0, CVT_CHARPTR, &cfg.chatMacros[8], 0, 0},
-    {"chat-macro9", 0, CVT_CHARPTR, &cfg.chatMacros[9], 0, 0},
-    {"chat-beep", 0, CVT_BYTE, &cfg.chatBeep, 0, 1},
+    {"chat-macro0", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[0], 0, 0},
+    {"chat-macro1", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[1], 0, 0},
+    {"chat-macro2", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[2], 0, 0},
+    {"chat-macro3", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[3], 0, 0},
+    {"chat-macro4", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[4], 0, 0},
+    {"chat-macro5", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[5], 0, 0},
+    {"chat-macro6", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[6], 0, 0},
+    {"chat-macro7", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[7], 0, 0},
+    {"chat-macro8", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[8], 0, 0},
+    {"chat-macro9", 0, CVT_CHARPTR, &PLRPROFILE.chat.macros[9], 0, 0},
+    {"chat-beep", 0, CVT_BYTE, &PLRPROFILE.chat.playBeep, 0, 1},
     {NULL}
 };
 
@@ -286,8 +284,8 @@ void HUMsg_Init(void)
 
     // Setup strings.
     for(i = 0; i < 10; ++i)
-        if(!cfg.chatMacros[i]) // Don't overwrite if already set.
-            cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+        if(!PLRPROFILE.chat.macros[i]) // Don't overwrite if already set.
+            PLRPROFILE.chat.macros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
 
 #define INIT_STRINGS(x, x_idx) \
     INIT_STRINGS(player_names, player_names_idx);
@@ -356,10 +354,10 @@ void HUMsg_Ticker(void)
 void HUMsg_Drawer(int player)
 {
     // Don't draw the messages when the map title is up.
-    if(cfg.mapTitle && actualMapTime < 6 * 35)
+    if(gs.cfg.mapTitle && actualMapTime < 6 * 35)
         return;
 
-    if(cfg.msgShow)
+    if(PLRPROFILE.msgLog.show)
         HU_MsgBufDraw(&msgBuffer[player]);
 
     if(player == CONSOLEPLAYER)
@@ -463,13 +461,13 @@ static void HU_MsgBufAddMessage(msgbuffer_t* buf, char* txt, int tics)
     msg->text = realloc(msg->text, len + 1);
     strcpy(msg->text, txt);
     msg->text[len] = 0;
-    msg->time = msg->duration = cfg.msgUptime + tics;
+    msg->time = msg->duration = PLRPROFILE.msgLog.upTime + tics;
 
     buf->lastmsg = IN_RANGE(buf->lastmsg + 1);
 
     if(buf->msgcount == MAX_MESSAGES)
         buf->firstmsg = buf->lastmsg;
-    else if(buf->msgcount == cfg.msgCount)
+    else if(buf->msgcount == PLRPROFILE.msgLog.count)
         buf->firstmsg = IN_RANGE(buf->firstmsg + 1);
     else
         buf->msgcount++;
@@ -598,7 +596,7 @@ static void HU_MsgBufDraw(msgbuffer_t* buf)
     // How many messages should we print?
     num = buf->msgcount;
 
-    switch(cfg.msgAlign)
+    switch(PLRPROFILE.msgLog.align)
     {
     case ALIGN_LEFT:    x = 0;      break;
     case ALIGN_CENTER:  x = 160;    break;
@@ -606,7 +604,7 @@ static void HU_MsgBufDraw(msgbuffer_t* buf)
     default:            x = 0;      break;
     }
 
-    Draw_BeginZoom(cfg.msgScale, x, 0);
+    Draw_BeginZoom(PLRPROFILE.msgLog.scale, x, 0);
     DGL_Translatef(0, -buf->yoffset, 0);
 
     // First 'num' messages starting from the last one.
@@ -616,12 +614,12 @@ static void HU_MsgBufDraw(msgbuffer_t* buf)
         msg = &buf->messages[m];
 
         // Set colour and alpha.
-        memcpy(col, cfg.msgColor, sizeof(cfg.msgColor));
+        memcpy(col, PLRPROFILE.msgLog.color, sizeof(PLRPROFILE.msgLog.color));
         col[3] = 1;
 
-        td = cfg.msgUptime - msg->time;
+        td = PLRPROFILE.msgLog.upTime - msg->time;
         msgTics = msg->duration - msg->time;
-        blinkSpeed = cfg.msgBlink;
+        blinkSpeed = PLRPROFILE.msgLog.blink;
 
         if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
         {
@@ -649,7 +647,7 @@ static void HU_MsgBufDraw(msgbuffer_t* buf)
         // is displayed, e.g. colour (Hexen's important messages).
         WI_DrawParamText(x, 1 + y, msg->text, huFontA,
                          col[0], col[1], col[2], col[3], false, false,
-                         cfg.msgAlign);
+                         PLRPROFILE.msgLog.align);
     }
 
     Draw_EndZoom();
@@ -705,7 +703,7 @@ static void sendMessage(const char* msg)
     else
     {   // Send to all of the destination color.
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->inGame && cfg.playerColor[i] == chatTo)
+            if(players[i].plr->inGame && gs.players[i].color == chatTo)
             {
                 if(!IS_NETGAME)
                 {   // Send it locally.
@@ -743,7 +741,7 @@ static boolean sendMacro(int num)
         if(chatOn)
             closeChat();
 
-        sendMessage(cfg.chatMacros[num]);
+        sendMessage(PLRPROFILE.chat.macros[num]);
         return true;
     }
 

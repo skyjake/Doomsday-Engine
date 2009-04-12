@@ -47,6 +47,8 @@ typedef enum menucommand_e {
     MCMD_DELETE
 } menucommand_e;
 
+extern char* yesno[];
+
 void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 

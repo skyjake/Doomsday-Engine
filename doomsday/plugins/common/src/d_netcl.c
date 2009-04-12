@@ -263,7 +263,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
     player_t *pl = &players[plrNum];
     unsigned int flags;
-    //int     oldstate = pl->playerState;
+    //int     oldstate = pl->pState;
     byte    b;
     int     i, k;
 
@@ -298,23 +298,23 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
     if(flags & PSF2_STATE)
     {
         b = NetCl_ReadByte();
-        pl->playerState = b & 0xf;
+        pl->pState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
 
 #ifdef _DEBUG
         Con_Message("NetCl_UpdatePlayerState2: New state = %i\n",
-                    pl->playerState);
+                    pl->pState);
 #endif
 
         // Set or clear the DEAD flag for this player.
-        if(pl->playerState == PST_LIVE)
+        if(pl->pState == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
 
-        //if(pl->playerState != oldstate)
+        //if(pl->pState != oldstate)
         {
             P_SetupPsprites(pl);
         }
@@ -347,17 +347,17 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
         b = NetCl_ReadByte();
-        pl->playerState = b & 0xf;
+        pl->pState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
         // Set or clear the DEAD flag for this player.
-        if(pl->playerState == PST_LIVE)
+        if(pl->pState == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
 
-        //if(oldstate != pl->playerState) // && oldstate == PST_DEAD)
+        //if(oldstate != pl->pState) // && oldstate == PST_DEAD)
         {
             P_SetupPsprites(pl);
         }
@@ -598,7 +598,7 @@ void NetCl_UpdatePSpriteState(byte *data)
 
     NetCl_SetReadBuffer(data);
     s = NetCl_ReadShort();
-    P_SetPsprite(&players[CONSOLEPLAYER], ps_weapon, s);
+    P_SetPsprite(&players[CONSOLEPLAYER], PS_WEAPON, s);
      */
 }
 
@@ -729,24 +729,25 @@ void NetCl_Finale(int packetType, byte *data)
  * Clients have other players' info, but it's only "FYI"; they don't
  * really need it.
  */
-void NetCl_UpdatePlayerInfo(byte *data)
+void NetCl_UpdatePlayerInfo(byte* data)
 {
     int                 num;
 
     NetCl_SetReadBuffer(data);
     num = NetCl_ReadByte();
-    cfg.playerColor[num] = NetCl_ReadByte();
+    gs.players[num].color = NetCl_ReadByte();
 #if __JHEXEN__ || __JHERETIC__
-    cfg.playerClass[num] = NetCl_ReadByte();
-    players[num].class = cfg.playerClass[num];
+    /// \fixme Do NOT assume the current class and original class are equal.
+    gs.players[num].pClass = NetCl_ReadByte();
+    players[num].pClass = gs.players[num].pClass;
 #endif
 
-#if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-               cfg.playerColor[num]);
+               gs.players[num].color);
 #else
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-               cfg.playerColor[num], cfg.playerClass[num]);
+               gs.players[num].color, gs.players[num].pClass);
 #endif
 }
 
@@ -760,9 +761,9 @@ void NetCl_SendPlayerInfo()
     if(!IS_CLIENT)
         return;
 
-    *ptr++ = cfg.netColor;
+    *ptr++ = gs.players[CONSOLEPLAYER].color;
 #if __JHEXEN__
-    *ptr++ = cfg.netClass;
+    *ptr++ = players[CONSOLEPLAYER].pClass;
 #elif __JHERETIC__
     *ptr++ = PCLASS_PLAYER;
 #endif

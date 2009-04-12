@@ -202,8 +202,8 @@ static void drawMessage(void)
         *p = 0;
 
         x = 160 - M_StringWidth(string, huFontA) / 2;
-        M_WriteText3(x, y, string, huFontA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
+        M_WriteText3(x, y, string, huFontA, gs.cfg.menuColor2[0],
+                     gs.cfg.menuColor2[1], gs.cfg.menuColor2[2], 1, true, 0);
         y += huFontA[17].height;
 
         if((*p) = c)
@@ -217,14 +217,14 @@ static void drawMessage(void)
     {
     case MSG_ANYKEY:
         x = 160 - M_StringWidth(PRESSKEY, huFontA) / 2;
-        M_WriteText3(x, y, PRESSKEY, huFontA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
+        M_WriteText3(x, y, PRESSKEY, huFontA, gs.cfg.menuColor2[0],
+                     gs.cfg.menuColor2[1], gs.cfg.menuColor2[2], 1, true, 0);
         break;
 
     case MSG_YESNO:
         x = 160 - M_StringWidth(yesNoMessage, huFontA) / 2;
-        M_WriteText3(x, y, yesNoMessage, huFontA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
+        M_WriteText3(x, y, yesNoMessage, huFontA, gs.cfg.menuColor2[0],
+                     gs.cfg.menuColor2[1], gs.cfg.menuColor2[2], 1, true, 0);
         break;
 
     default:
@@ -246,7 +246,7 @@ void Hu_MsgDrawer(void)
     DGL_PushMatrix();
     DGL_Translatef(160, 100, 0);
 
-    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+    DGL_Scalef(PLRPROFILE.hud.scale, PLRPROFILE.hud.scale, 1);
 
     DGL_Translatef(-160, -100, 0);
 

@@ -102,13 +102,13 @@ cross_t crosshairs[NUM_XHAIRS] = {
 
 // CVARs for the crosshair
 cvar_t xhairCVars[] = {
-    {"view-cross-type", 0, CVT_INT, &cfg.xhair, 0, NUM_XHAIRS},
-    {"view-cross-size", 0, CVT_FLOAT, &cfg.xhairSize, 0, 1},
-    {"view-cross-vitality", 0, CVT_BYTE, &cfg.xhairVitality, 0, 1},
-    {"view-cross-r", 0, CVT_FLOAT, &cfg.xhairColor[0], 0, 1},
-    {"view-cross-g", 0, CVT_FLOAT, &cfg.xhairColor[1], 0, 1},
-    {"view-cross-b", 0, CVT_FLOAT, &cfg.xhairColor[2], 0, 1},
-    {"view-cross-a", 0, CVT_FLOAT, &cfg.xhairColor[3], 0, 1},
+    {"view-cross-type", 0, CVT_INT, &PLRPROFILE.xhair, 0, NUM_XHAIRS},
+    {"view-cross-size", 0, CVT_FLOAT, &PLRPROFILE.xhair.size, 0, 1},
+    {"view-cross-vitality", 0, CVT_BYTE, &PLRPROFILE.xhair.vitality, 0, 1},
+    {"view-cross-r", 0, CVT_FLOAT, &PLRPROFILE.xhair.color[0], 0, 1},
+    {"view-cross-g", 0, CVT_FLOAT, &PLRPROFILE.xhair.color[1], 0, 1},
+    {"view-cross-b", 0, CVT_FLOAT, &PLRPROFILE.xhair.color[2], 0, 1},
+    {"view-cross-a", 0, CVT_FLOAT, &PLRPROFILE.xhair.color[3], 0, 1},
     {NULL}
 };
 
@@ -129,19 +129,19 @@ void X_Drawer(int player)
 {
 #define XHAIR_LINE_WIDTH    1.f
 
-    int                 i, xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS),
+    int                 i, xhair = MINMAX_OF(0, PLRPROFILE.xhair.type, NUM_XHAIRS),
                         centerX, centerY;
     float               alpha, scale, oldLineWidth;
     ddplayer_t*         plr = players[player].plr;
     cross_t*            cross;
 
-    alpha = MINMAX_OF(0, cfg.xhairColor[3], 1);
+    alpha = MINMAX_OF(0, PLRPROFILE.xhair.color[3], 1);
 
     // Is there a crosshair to draw?
     if(xhair == 0 || !(alpha > 0))
         return;
 
-    scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * 80;
+    scale = .125f + MINMAX_OF(0, PLRPROFILE.xhair.size, 1) * .125f * 80;
     centerX = Get(DD_VIEWWINDOW_X) + (Get(DD_VIEWWINDOW_WIDTH) / 2);
     centerY = Get(DD_VIEWWINDOW_Y) + (Get(DD_VIEWWINDOW_HEIGHT) / 2);
 
@@ -155,7 +155,7 @@ void X_Drawer(int player)
 
     cross = &crosshairs[xhair - 1];
 
-    if(cfg.xhairVitality)
+    if(PLRPROFILE.xhair.vitality)
     {   // Color the crosshair according to how close the player is to death.
 #define HUE_DEAD            0.f
 #define HUE_LIVE            .3f
@@ -175,9 +175,9 @@ void X_Drawer(int player)
     {
         float               color[4];
 
-        color[0] = MINMAX_OF(0, cfg.xhairColor[0], 1);
-        color[1] = MINMAX_OF(0, cfg.xhairColor[1], 1);
-        color[2] = MINMAX_OF(0, cfg.xhairColor[2], 1);
+        color[0] = MINMAX_OF(0, PLRPROFILE.xhair.color[0], 1);
+        color[1] = MINMAX_OF(0, PLRPROFILE.xhair.color[1], 1);
+        color[2] = MINMAX_OF(0, PLRPROFILE.xhair.color[2], 1);
         color[3] = alpha;
 
         DGL_Color4fv(color);

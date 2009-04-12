@@ -111,7 +111,7 @@ void HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor)
     int         i, w, x;
     unsigned char c;
 
-    DGL_Color3fv(cfg.hudColor);
+    DGL_Color3fv(PLRPROFILE.hud.color);
 
     x = l->x;
     for(i = 0; i < l->len; ++i)

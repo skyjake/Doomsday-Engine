@@ -156,7 +156,7 @@ void NetSv_UpdateGameConfig(void)
         strcat(gameConfigString, " respawn");
 #endif
 
-    if(cfg.jumpEnabled)
+    if(GAMERULES.jumpAllow)
         strcat(gameConfigString, " jump");
 }
 
@@ -350,16 +350,16 @@ void NetSv_Ticker(void)
         if(!players[i].plr->inGame)
             continue;
 
-        if(oldClasses[i] != players[i].class)
+        if(oldClasses[i] != players[i].pClass)
         {
-            oldClasses[i] = players[i].class;
-            NetSv_SendPlayerClass(i, players[i].class);
+            oldClasses[i] = players[i].pClass;
+            NetSv_SendPlayerClass(i, players[i].pClass);
         }
     }
 #endif
 
     // Inform clients about jumping?
-    power = (cfg.jumpEnabled ? cfg.jumpPower : 0);
+    power = (GAMERULES.jumpAllow ? GAMERULES.jumpPower : 0);
     if(power != netJumpPower)
     {
         netJumpPower = power;
@@ -732,7 +732,7 @@ void NetSv_NewPlayerEnters(int plrnumber)
 
     Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrnumber);
 
-    plr->playerState = PST_REBORN;  // Force an init.
+    plr->pState = PST_REBORN;  // Force an init.
 
     // Re-deal player starts.
     P_DealPlayerStarts(0);
@@ -889,7 +889,7 @@ void NetSv_SendGameState(int flags, int to)
 #else
             | 0
 #endif
-            | (cfg.jumpEnabled? 0x10 : 0)
+            | (GAMERULES.jumpAllow? 0x10 : 0)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
             | (gameSkill << 5);
 #else
@@ -958,7 +958,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
 
     if(flags & PSF2_STATE)
     {
-        *ptr++ = pl->playerState |
+        *ptr++ = pl->pState |
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
             (pl->armorType << 4);
 #else
@@ -994,7 +994,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     WRITE_SHORT(ptr, flags);
     if(flags & PSF_STATE)
     {
-        *ptr++ = pl->playerState |
+        *ptr++ = pl->pState |
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
             (pl->armorType << 4);
 #else
@@ -1180,9 +1180,9 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
         return;
 
     *ptr++ = whose;
-    *ptr++ = cfg.playerColor[whose];
+    *ptr++ = gs.players[whose].color;
 #if __JHERETIC__ || __JHEXEN__
-    *ptr++ = cfg.playerClass[whose];
+    *ptr++ = gs.players[whose].pClass;
 #endif
     Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO, buffer,
                    ptr - buffer);
@@ -1195,21 +1195,21 @@ void NetSv_ChangePlayerInfo(int from, byte* data)
 
     // Color is first.
     col = *data++;
-    cfg.playerColor[from] = PLR_COLOR(from, col);
+    gs.players[from].color = PLR_COLOR(from, col);
 #if __JHERETIC__ || __JHEXEN__
-    cfg.playerClass[from] = *data++;
+    gs.players[from].pClass = *data++;
     Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i, class=%i\n", from,
-               cfg.playerColor[from], cfg.playerClass[from]);
+               gs.players[from].color, gs.players[from].pClass);
 #else
     Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i\n", from,
-               cfg.playerColor[from]);
+               gs.players[from].color);
 #endif
 
 #if __JHEXEN__
     // The 'colormap' variable controls the setting of the color
     // translation flags when the player is (re)spawned (which will
     // be done in P_PlayerChangeClass).
-    pl->colorMap = cfg.playerColor[from];
+    pl->colorMap = gs.players[from].color;
 #else
     if(pl->plr->mo)
     {
@@ -1220,7 +1220,7 @@ void NetSv_ChangePlayerInfo(int from, byte* data)
 #endif
 
 #if __JHEXEN__
-    P_PlayerChangeClass(pl, cfg.playerClass[from]);
+    P_PlayerChangeClass(pl, gs.players[from].pClass);
 #endif
 
     // Re-deal start spots.
@@ -1265,7 +1265,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 #if __JDOOM__ || __JDOOM64__
     char        buf[160], *in, tmp[2];
 
-    if(!cfg.killMessages || !deathmatch)
+    if(!GAMERULES.announceFrags || !deathmatch)
         return;
 
     buf[0] = 0;
@@ -1385,7 +1385,7 @@ void NetSv_DoAction(int player, const char *data)
                 angle, lookDir);
 #endif
 
-    if(pl->playerState == PST_DEAD)
+    if(pl->pState == PST_DEAD)
     {
         // This player is dead. Rise, my friend!
         P_PlayerReborn(pl);

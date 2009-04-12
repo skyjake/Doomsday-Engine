@@ -371,7 +371,7 @@ boolean P_InventoryUse(player_t* player, artitype_e arti)
             else
             {   // Unable to use artifact.
                 // Set current artifact to the next available?
-                if(cfg.inventoryNextOnUnuse)
+                if(PLRPROFILE.inventory.nextOnNoUse)
                 {
 # if __JHEXEN__
                     if(arti < AFT_FIRSTPUZZITEM)
