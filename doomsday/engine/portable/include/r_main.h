@@ -47,7 +47,6 @@ extern boolean  resyncFrameTimePos;
 extern int      loadInStartupMode;
 extern int      validCount;
 extern int      viewwidth, viewheight, viewwindowx, viewwindowy;
-extern boolean  setSizeNeeded;
 extern int      frameCount;
 extern int      viewAngleOffset;
 extern int      extraLight;

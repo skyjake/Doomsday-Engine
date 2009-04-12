@@ -90,7 +90,6 @@ float viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
 angle_t viewAngle;
 float viewPitch; // Player->lookDir, global version.
 float viewCos, viewSin;
-boolean setSizeNeeded;
 
 // Precalculated math tables.
 fixed_t* fineCosine = &finesine[FINEANGLES / 4];
