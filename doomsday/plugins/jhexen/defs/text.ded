@@ -678,8 +678,8 @@ Text {
 }
 
 Text {
-  ID = "PLAYERSETUP";
-  Text = "Player Setup";
+  ID = "PLAYERPROFILE";
+  Text = "Player Profile";
 }
 
 Text {

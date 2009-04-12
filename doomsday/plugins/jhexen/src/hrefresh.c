@@ -74,17 +74,14 @@ void R_InitRefresh(void)
  * Don't really change anything here, because i might be in the middle of
  * a refresh.  The change will take effect next refresh.
  */
-void R_SetViewSize(int blocks)
+void R_SetViewSize(int player, int blocks)
 {
-    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
+    if(PLRPROFILE.screen.setBlocks != blocks && blocks > 10 && blocks < 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
-        int                 i;
-
-        for(i = 0; i < MAXPLAYERS; ++i)
-            ST_HUDUnHide(i, HUE_FORCE);
+        ST_HUDUnHide(player, HUE_FORCE);
     }
 
-    cfg.setBlocks = blocks;
+    PLRPROFILE.screen.setBlocks = blocks;
 }
 
 void R_DrawMapTitle(void)
@@ -93,7 +90,7 @@ void R_DrawMapTitle(void)
     int                 y = 12;
     char*               lname, *lauthor;
 
-    if(!cfg.mapTitle || actualMapTime > 6 * 35)
+    if(!gs.cfg.mapTitle || actualMapTime > 6 * 35)
         return;
 
     // Make the text a bit smaller.
@@ -115,7 +112,7 @@ void R_DrawMapTitle(void)
     if(!lname)
         lname = P_GetMapName(gameMap);
 
-    Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
+    Draw_BeginZoom((1 + PLRPROFILE.hud.scale)/2, 160, y);
 
     if(lname)
     {
@@ -219,18 +216,17 @@ static void rendHUD(int player)
     {
         automapid_t         map = AM_MapForPlayer(player);
 
-        // Draw HUD displays only visible when the automap is open.
-        if(AM_IsActive(map))
-            HU_DrawMapCounters();
+        if(!(IS_NETGAME && deathmatch))
+            HU_DrawCheatCounters();
 
         // Do we need to render a full status bar at this point?
-        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
+        if(!(AM_IsActive(map) && PLRPROFILE.automap.hudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             if(true == (WINDOWHEIGHT == 200))
             {
                 // Fullscreen. Which mode?
-                ST_Drawer(player, cfg.setBlocks - 10, true);
+                ST_Drawer(player, PLRPROFILE.screen.setBlocks - 10, true);
             }
             else
             {
@@ -257,7 +253,7 @@ void G_Display(int layer)
     if(layer == 0)
     {
         // $democam: can be set on every frame.
-        if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        if(PLRPROFILE.screen.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             // Full screen.
             R_SetViewWindowTarget(0, 0, 320, 200);
@@ -266,10 +262,11 @@ void G_Display(int layer)
         {
             int                 w, h;
 
-            w = cfg.setBlocks * 32;
-            h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
+            w = PLRPROFILE.screen.setBlocks * 32;
+            h = PLRPROFILE.screen.setBlocks *
+                (200 - SBARHEIGHT * PLRPROFILE.statusbar.scale / 20) / 10;
             R_SetViewWindowTarget(160 - (w >> 1),
-                                  (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) >> 1,
+                                  (200 - SBARHEIGHT * PLRPROFILE.statusbar.scale / 20 - h) >> 1,
                                   w, h);
         }
 
@@ -444,7 +441,7 @@ void R_SetAllDoomsdayFlags(void)
     for(i = 0; i < numsectors; ++i)
         for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->sNext)
         {
-            if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
+            if(IS_CLIENT && (mo->ddFlags & DDMF_REMOTE))
                 continue;
 
             // Reset the flags for a new frame.
@@ -482,13 +479,13 @@ void R_SetAllDoomsdayFlags(void)
             {
                 if(mo->flags & MF_SHADOW)
                     mo->ddFlags |= DDMF_SHADOW;
-                if(mo->flags & MF_ALTSHADOW ||
-                   (cfg.translucentIceCorpse && mo->flags & MF_ICECORPSE))
+                if((mo->flags & MF_ALTSHADOW) ||
+                   (PLRPROFILE.translucentIceCorpse && (mo->flags & MF_ICECORPSE)))
                     mo->ddFlags |= DDMF_ALTSHADOW;
             }
 
-            if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
-               mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
+            if(((mo->flags & MF_VIEWALIGN) && !(mo->flags & MF_MISSILE)) ||
+               (mo->flags & MF_FLOAT) || ((mo->flags & MF_MISSILE) &&
                                         !(mo->flags & MF_VIEWALIGN)))
                 mo->ddFlags |= DDMF_VIEWALIGN;
 
@@ -499,7 +496,7 @@ void R_SetAllDoomsdayFlags(void)
             {
                 if(mo->player)
                 {
-                    Class = mo->player->class;
+                    Class = mo->player->pClass;
                 }
                 else
                 {

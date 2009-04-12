@@ -351,7 +351,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *x = 0;
         else
-            *x = 1 + (cfg.bobWeapon * players[player].bob) *
+            *x = 1 + (PLRPROFILE.psprite.bob * players[player].bob) *
                 FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
@@ -360,7 +360,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *y = 0;
         else
-            *y = 32 + (cfg.bobWeapon * players[player].bob) *
+            *y = 32 + (PLRPROFILE.psprite.bob * players[player].bob) *
                 FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }
@@ -452,19 +452,19 @@ void P_SetPspriteNF(player_t *plr, int position, statenum_t stnum)
 void P_ActivateMorphWeapon(player_t *plr)
 {
     plr->pendingWeapon = WT_NOCHANGE;
-    plr->pSprites[ps_weapon].pos[VY] = WEAPONTOP;
+    plr->pSprites[PS_WEAPON].pos[VY] = WEAPONTOP;
     plr->readyWeapon = WT_FIRST; // Snout is the first weapon
     plr->update |= PSF_WEAPONS;
-    P_SetPsprite(plr, ps_weapon, S_SNOUTREADY);
+    P_SetPsprite(plr, PS_WEAPON, S_SNOUTREADY);
 }
 
 void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
 {
     plr->pendingWeapon = WT_NOCHANGE;
     plr->readyWeapon = weapon;
-    plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    plr->pSprites[PS_WEAPON].pos[VY] = WEAPONBOTTOM;
     plr->update |= PSF_WEAPONS;
-    P_SetPsprite(plr, ps_weapon, weaponInfo[weapon][plr->class].mode[0].upState);
+    P_SetPsprite(plr, PS_WEAPON, weaponInfo[weapon][plr->pClass].mode[0].upState);
 }
 
 /**
@@ -475,10 +475,10 @@ void P_BringUpWeapon(player_t *plr)
     statenum_t newState;
     weaponmodeinfo_t *wminfo;
 
-    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class, 0);
+    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->pClass, 0);
 
     newState = wminfo->upState;
-    if(plr->class == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
+    if(plr->pClass == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {
         newState = S_FAXEUP_G;
@@ -491,8 +491,8 @@ void P_BringUpWeapon(player_t *plr)
         S_StartSound(wminfo->raiseSound, plr->plr->mo);
 
     plr->pendingWeapon = WT_NOCHANGE;
-    plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
-    P_SetPsprite(plr, ps_weapon, newState);
+    plr->pSprites[PS_WEAPON].pos[VY] = WEAPONBOTTOM;
+    P_SetPsprite(plr, PS_WEAPON, newState);
 }
 
 void P_FireWeapon(player_t *plr)
@@ -503,8 +503,8 @@ void P_FireWeapon(player_t *plr)
         return;
 
     // Psprite state.
-    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->attackState);
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
+    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->pClass)->attackState);
+    if(plr->pClass == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {   // Glowing axe.
         attackState = S_FAXEATK_G1;
@@ -513,13 +513,13 @@ void P_FireWeapon(player_t *plr)
     {
         if(plr->refire)
             attackState =
-                weaponInfo[plr->readyWeapon][plr->class].mode[0].holdAttackState;
+                weaponInfo[plr->readyWeapon][plr->pClass].mode[0].holdAttackState;
         else
             attackState =
-                weaponInfo[plr->readyWeapon][plr->class].mode[0].attackState;
+                weaponInfo[plr->readyWeapon][plr->pClass].mode[0].attackState;
     }
 
-    P_SetPsprite(plr, ps_weapon, attackState);
+    P_SetPsprite(plr, PS_WEAPON, attackState);
     P_NoiseAlert(plr->plr->mo, plr->plr->mo);
 
     plr->update |= PSF_AMMO;
@@ -533,8 +533,8 @@ void P_FireWeapon(player_t *plr)
  */
 void P_DropWeapon(player_t *plr)
 {
-    P_SetPsprite(plr, ps_weapon,
-                 weaponInfo[plr->readyWeapon][plr->class].mode[0].downState);
+    P_SetPsprite(plr, PS_WEAPON,
+                 weaponInfo[plr->readyWeapon][plr->pClass].mode[0].downState);
 }
 
 /**
@@ -546,15 +546,15 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     ddpsprite_t *ddpsp;
 
     // Change plr from attack state
-    if(plr->plr->mo->state >= &STATES[PCLASS_INFO(plr->class)->attackState] &&
-       plr->plr->mo->state <= &STATES[PCLASS_INFO(plr->class)->attackEndState])
+    if(plr->plr->mo->state >= &STATES[PCLASS_INFO(plr->pClass)->attackState] &&
+       plr->plr->mo->state <= &STATES[PCLASS_INFO(plr->pClass)->attackEndState])
     {
-        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->normalState);
+        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->pClass)->normalState);
     }
 
     if(plr->readyWeapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->pClass, 0);
 
         // A weaponready sound?
         if(psp->state == &STATES[wminfo->readyState] && wminfo->readySound)
@@ -563,7 +563,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
         // Check for change, if plr is dead, put the weapon away.
         if(plr->pendingWeapon != WT_NOCHANGE || !plr->health)
         {   //  (pending weapon should allready be validated)
-            P_SetPsprite(plr, ps_weapon, wminfo->downState);
+            P_SetPsprite(plr, PS_WEAPON, wminfo->downState);
             return;
         }
     }
@@ -571,7 +571,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     // Check for autofire.
     if(plr->brain.attack)
     {
-        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->pClass, 0);
 
         if(!plr->attackDown || wminfo->autoFire)
         {
@@ -636,7 +636,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
         return;
     }
 
-    if(plr->playerState == PST_DEAD)
+    if(plr->pState == PST_DEAD)
     {   // Player is dead, so don't bring up a pending weapon.
         psp->pos[VY] = WEAPONBOTTOM;
         return;
@@ -644,7 +644,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
 
     if(!plr->health)
     {   // Player is dead, so keep the weapon off screen.
-        P_SetPsprite(plr, ps_weapon, S_NULL);
+        P_SetPsprite(plr, PS_WEAPON, S_NULL);
         return;
     }
 
@@ -665,15 +665,15 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     }
 
     psp->pos[VY] = WEAPONTOP;
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
+    if(plr->pClass == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {
-        P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
+        P_SetPsprite(plr, PS_WEAPON, S_FAXEREADY_G);
     }
     else
     {
-        P_SetPsprite(plr, ps_weapon,
-                     weaponInfo[plr->readyWeapon][plr->class].mode[0].
+        P_SetPsprite(plr, PS_WEAPON,
+                     weaponInfo[plr->readyWeapon][plr->pClass].mode[0].
                      readyState);
     }
 }
@@ -786,7 +786,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 
   hammerdone:
     if(plr->ammo[AT_GREENMANA].owned <
-       weaponInfo[plr->readyWeapon][plr->class].mode[0].perShot[AT_GREENMANA])
+       weaponInfo[plr->readyWeapon][plr->pClass].mode[0].perShot[AT_GREENMANA])
     {   // Don't spawn a hammer if the plr doesn't have enough mana.
         mo->special1 = false;
     }
@@ -1254,7 +1254,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
     if(mo->special1 == 3)
     {
         mo->special1 = 0;
-        P_SetPsprite(plr, ps_weapon, S_PUNCHATK2_1);
+        P_SetPsprite(plr, PS_WEAPON, S_PUNCHATK2_1);
         S_StartSound(SFX_FIGHTER_GRUNT, mo);
     }
 }
@@ -1328,7 +1328,7 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     {
         P_ShotAmmo(plr);
         if(!(plr->ammo[AT_BLUEMANA].owned > 0))
-            P_SetPsprite(plr, ps_weapon, S_FAXEATK_5);
+            P_SetPsprite(plr, PS_WEAPON, S_FAXEATK_5);
     }
 }
 
@@ -1404,7 +1404,7 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
                 newLife = (newLife > 100 ? 100 : newLife);
                 pmo->health = plr->health = newLife;
 
-                P_SetPsprite(plr, ps_weapon, S_CSTAFFATK2_1);
+                P_SetPsprite(plr, PS_WEAPON, S_CSTAFFATK2_1);
             }
 
             P_ShotAmmo(plr);
@@ -1425,7 +1425,7 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
                 newLife = (newLife > 100 ? 100 : newLife);
                 pmo->health = plr->health = newLife;
 
-                P_SetPsprite(plr, ps_weapon, S_CSTAFFATK2_1);
+                P_SetPsprite(plr, PS_WEAPON, S_CSTAFFATK2_1);
             }
 
             P_ShotAmmo(plr);
@@ -1486,7 +1486,7 @@ void C_DECL A_CStaffCheckBlink(player_t *plr, pspdef_t *psp)
 {
     if(!--plr->plr->mo->special1)
     {
-        P_SetPsprite(plr, ps_weapon, S_CSTAFFBLINK1);
+        P_SetPsprite(plr, PS_WEAPON, S_CSTAFFBLINK1);
         plr->plr->mo->special1 = (P_Random() + 50) >> 2;
     }
 }
@@ -2129,8 +2129,8 @@ void P_MovePsprites(player_t *plr)
         }
     }
 
-    plr->pSprites[ps_flash].pos[VX] = plr->pSprites[ps_weapon].pos[VX];
-    plr->pSprites[ps_flash].pos[VY] = plr->pSprites[ps_weapon].pos[VY];
+    plr->pSprites[PS_FLASH].pos[VX] = plr->pSprites[PS_WEAPON].pos[VX];
+    plr->pSprites[PS_FLASH].pos[VY] = plr->pSprites[PS_WEAPON].pos[VY];
 }
 
 boolean P_UseArtiPoisonBag(player_t* player)
@@ -2145,7 +2145,7 @@ boolean P_UseArtiPoisonBag(player_t* player)
 
     plrmo = player->plr->mo;
 
-    if(player->class == PCLASS_FIGHTER || player->class == PCLASS_PIG)
+    if(player->pClass == PCLASS_FIGHTER || player->pClass == PCLASS_PIG)
     {
         type = MT_THROWINGBOMB;
         pos[VX] = plrmo->pos[VX];
@@ -2157,7 +2157,7 @@ boolean P_UseArtiPoisonBag(player_t* player)
     {
         uint                an = plrmo->angle >> ANGLETOFINESHIFT;
 
-        if(player->class == PCLASS_CLERIC)
+        if(player->pClass == PCLASS_CLERIC)
             type = MT_POISONBAG;
         else
             type = MT_FIREBOMB;

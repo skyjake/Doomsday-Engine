@@ -153,7 +153,7 @@ boolean P_CheckMeleeRange(mobj_t *actor, boolean midrange)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!GAMERULES.noMaxZMonsterMeleeAttack)
     {   // Account for Z height difference.
         if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
            pl->pos[VZ] + pl->height < actor->pos[VZ])
@@ -1379,7 +1379,7 @@ void C_DECL A_Scream(mobj_t *actor)
             else if(actor->health > -50)
             {   // Normal death sound.
                 //// \todo pull these from the class def.
-                switch(actor->player->class)
+                switch(actor->player->pClass)
                 {
                 case PCLASS_FIGHTER:
                     sound = SFX_PLAYER_FIGHTER_NORMAL_DEATH;
@@ -1401,7 +1401,7 @@ void C_DECL A_Scream(mobj_t *actor)
             else if(actor->health > -100)
             {   // Crazy death sound.
                 //// \todo pull these from the class def.
-                switch(actor->player->class)
+                switch(actor->player->pClass)
                 {
                 case PCLASS_FIGHTER:
                     sound = SFX_PLAYER_FIGHTER_CRAZY_DEATH;
@@ -1423,7 +1423,7 @@ void C_DECL A_Scream(mobj_t *actor)
             else
             {   // Extreme death sound.
                 //// \todo pull these from the class def.
-                switch(actor->player->class)
+                switch(actor->player->pClass)
                 {
                 case PCLASS_FIGHTER:
                     sound = SFX_PLAYER_FIGHTER_EXTREME1_DEATH;
@@ -1613,7 +1613,7 @@ void C_DECL A_SkullPop(mobj_t *actor)
         plr = actor->player;
         actor->player = NULL;
         actor->dPlayer = NULL;
-        actor->special1 = plr->class;
+        actor->special1 = plr->pClass;
         mo->player = plr;
         mo->dPlayer = plr->plr;
         mo->health = actor->health;

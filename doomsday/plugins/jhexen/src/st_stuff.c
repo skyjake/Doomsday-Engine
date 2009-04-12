@@ -213,41 +213,40 @@ static dpatch_t dpSpinDefense[16];
 static dpatch_t dpTeleIcon;
 
 // CVARs for the HUD/Statusbar
-cvar_t sthudCVars[] =
-{
+cvar_t sthudCVars[] = {
     // HUD scale
-    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
+    {"hud-scale", 0, CVT_FLOAT, &PLRPROFILE.hud.scale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.statusbarScale, 1, 20},
+    {"hud-status-size", CVF_PROTECTED, CVT_INT, &PLRPROFILE.statusbar.scale, 1, 20},
 
     // HUD colour + alpha
-    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
-    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1},
-    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1},
-    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
-    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
+    {"hud-color-r", 0, CVT_FLOAT, &PLRPROFILE.hud.color[0], 0, 1},
+    {"hud-color-g", 0, CVT_FLOAT, &PLRPROFILE.hud.color[1], 0, 1},
+    {"hud-color-b", 0, CVT_FLOAT, &PLRPROFILE.hud.color[2], 0, 1},
+    {"hud-color-a", 0, CVT_FLOAT, &PLRPROFILE.hud.color[3], 0, 1},
+    {"hud-icon-alpha", 0, CVT_FLOAT, &PLRPROFILE.hud.iconAlpha, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1},
-    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
+    {"hud-status-alpha", 0, CVT_FLOAT, &PLRPROFILE.statusbar.opacity, 0, 1},
+    {"hud-status-icon-a", 0, CVT_FLOAT, &PLRPROFILE.statusbar.counterAlpha, 0, 1},
 
     // HUD icons
-    {"hud-mana", 0, CVT_BYTE, &cfg.hudShown[HUD_MANA], 0, 2},
-    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1},
-    {"hud-artifact", 0, CVT_BYTE, &cfg.hudShown[HUD_ARTI], 0, 1},
+    {"hud-mana", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_MANA], 0, 2},
+    {"hud-health", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_HEALTH], 0, 1},
+    {"hud-artifact", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_ARTI], 0, 1},
 
     // HUD displays
-    {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
+    {"hud-inventory-timer", 0, CVT_FLOAT, &PLRPROFILE.inventory.timer, 0, 30},
 
-    {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
+    {"hud-timer", 0, CVT_FLOAT, &PLRPROFILE.hud.timer, 0, 60},
 
-    {"hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1},
-    {"hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1},
-    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1},
-    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1},
-    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1},
-    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
-    {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
-    {"hud-unhide-pickup-invitem", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_INVITEM], 0, 1},
+    {"hud-unhide-damage", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_DAMAGE], 0, 1},
+    {"hud-unhide-pickup-health", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_HEALTH], 0, 1},
+    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_ARMOR], 0, 1},
+    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_POWER], 0, 1},
+    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_WEAPON], 0, 1},
+    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_AMMO], 0, 1},
+    {"hud-unhide-pickup-key", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_KEY], 0, 1},
+    {"hud-unhide-pickup-invitem", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_INVITEM], 0, 1},
     {NULL}
 };
 
@@ -276,16 +275,16 @@ static void drawAnimatedIcons(hudstate_t* hud)
 {
     int             leftoff = 0;
     int             frame;
-    float           iconalpha = (hud->statusbarOn? 1: hud->alpha) - (1 - cfg.hudIconAlpha);
+    float           iconalpha = (hud->statusbarOn? 1: hud->alpha) - (1 - PLRPROFILE.hud.iconAlpha);
     int             player = hud - hudStates;
     player_t*       plr = &players[player];
 
     // If the fullscreen mana is drawn, we need to move the icons on the left
     // a bit to the right.
-    if(cfg.hudShown[HUD_MANA] == 1 && cfg.screenBlocks > 11)
+    if(PLRPROFILE.hud.shown[HUD_MANA] == 1 && PLRPROFILE.screen.blocks > 11)
         leftoff = 42;
 
-    Draw_BeginZoom(cfg.hudScale, 2, 2);
+    Draw_BeginZoom(PLRPROFILE.hud.scale, 2, 2);
 
     // Wings of wrath
     if(plr->powers[PT_FLIGHT])
@@ -340,7 +339,7 @@ static void drawAnimatedIcons(hudstate_t* hud)
 
     Draw_EndZoom();
 
-    Draw_BeginZoom(cfg.hudScale, 318, 2);
+    Draw_BeginZoom(PLRPROFILE.hud.scale, 318, 2);
 
     // Defensive power
     if(plr->powers[PT_INVULNERABILITY])
@@ -376,7 +375,7 @@ static void drawKeyBar(hudstate_t* hud)
     player_t*           plr = &players[player];
 
     // Original player class (i.e. not pig).
-    pClass = cfg.playerClass[player];
+    pClass = gs.players[player].pClass;
 
     xPosition = 46;
     for(i = 0; i < NUM_KEY_TYPES && xPosition <= 126; ++i)
@@ -426,9 +425,9 @@ static void drawWeaponPieces(hudstate_t* hud)
     float               alpha;
 
     // Original player class (i.e. not pig).
-    pClass = cfg.playerClass[player];
+    pClass = gs.players[player].pClass;
 
-    alpha = MINMAX_OF(0.f, cfg.statusbarOpacity - hud->hideAmount, 1.f);
+    alpha = MINMAX_OF(0.f, PLRPROFILE.statusbar.opacity - hud->hideAmount, 1.f);
 
     if(plr->pieces == 7)
     {
@@ -483,14 +482,14 @@ static void drawChain(hudstate_t* hud)
     hud->oldHealth = hud->healthMarker;
 
     // Original player class (i.e. not pig).
-    pClass = cfg.playerClass[player];
+    pClass = gs.players[player].pClass;
 
     healthPos = MINMAX_OF(0, hud->healthMarker / 100.f, 100);
 
     if(!IS_NETGAME)
         pColor = 1; // Always use the red life gem (the second gem).
     else
-        pColor = cfg.playerColor[player];
+        pColor = gs.players[player].color;
 
     gemglow = healthPos;
 
@@ -574,11 +573,11 @@ static void drawStatusBarBackground(int player)
     float               alpha;
 
     // Original class (i.e. not pig).
-    pClass = cfg.playerClass[player];
+    pClass = gs.players[player].pClass;
 
     if(hud->blended)
     {
-        alpha = cfg.statusbarOpacity - hud->hideAmount;
+        alpha = PLRPROFILE.statusbar.opacity - hud->hideAmount;
         if(!(alpha > 0))
             return;
         alpha = MINMAX_OF(0.f, alpha, 1.f);
@@ -1115,7 +1114,7 @@ void ST_Inventory(int player, boolean show)
     {
         hud->inventory = true;
 
-        hud->inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
+        hud->inventoryTics = (int) (PLRPROFILE.inventory.timer * TICSPERSEC);
         if(hud->inventoryTics < 1)
             hud->inventoryTics = 1;
 
@@ -1168,12 +1167,12 @@ void ST_updateWidgets(int player)
     player_t*           plr = &players[player];
 
     // Original player class (i.e. not pig).
-    pClass = cfg.playerClass[player];
+    pClass = gs.players[player].pClass;
 
     if(hud->blended)
     {
         hud->statusbarCounterAlpha =
-            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hud->hideAmount, 1.f);
+            MINMAX_OF(0.f, PLRPROFILE.statusbar.counterAlpha - hud->hideAmount, 1.f);
     }
     else
         hud->statusbarCounterAlpha = 1.0f;
@@ -1310,7 +1309,7 @@ void ST_Ticker(void)
             int                 delta;
             int                 curHealth;
 
-            if(cfg.hudTimer == 0)
+            if(PLRPROFILE.hud.timer == 0)
             {
                 hud->hideTics = hud->hideAmount = 0;
             }
@@ -1318,7 +1317,7 @@ void ST_Ticker(void)
             {
                 if(hud->hideTics > 0)
                     hud->hideTics--;
-                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                if(hud->hideTics == 0 && PLRPROFILE.hud.timer > 0 && hud->hideAmount < 1)
                     hud->hideAmount += 0.1f;
             }
 
@@ -1700,9 +1699,9 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
         return;
 
-    if(ev == HUE_FORCE || cfg.hudUnHide[ev])
+    if(ev == HUE_FORCE || PLRPROFILE.hud.unHide[ev])
     {
-        hudStates[player].hideTics = (cfg.hudTimer * TICSPERSEC);
+        hudStates[player].hideTics = (PLRPROFILE.hud.timer * TICSPERSEC);
         hudStates[player].hideAmount = 0;
     }
 }
@@ -1720,14 +1719,14 @@ void ST_doRefresh(int player)
 
     hud = &hudStates[player];
 
-    statusbarVisible = (cfg.statusbarScale < 20 ||
-        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
+    statusbarVisible = (PLRPROFILE.statusbar.scale < 20 ||
+        (PLRPROFILE.statusbar.scale == 20 && hud->showBar < 1.0f));
 
     hud->firstTime = false;
 
     if(statusbarVisible)
     {
-        float               fscale = cfg.statusbarScale / 20.0f;
+        float               fscale = PLRPROFILE.statusbar.scale / 20.0f;
         float               h = 200 * (1 - fscale);
 
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1756,32 +1755,32 @@ void ST_doFullscreenStuff(int player)
     hudstate_t*         hud = &hudStates[player];
     player_t*           plr = &players[player];
     float               textalpha =
-        hud->alpha - hud->hideAmount - (1 - cfg.hudColor[3]);
+        hud->alpha - hud->hideAmount - (1 - PLRPROFILE.hud.color[3]);
     float               iconalpha =
-        hud->alpha - hud->hideAmount - (1 - cfg.hudIconAlpha);
+        hud->alpha - hud->hideAmount - (1 - PLRPROFILE.hud.iconAlpha);
 
-    if(cfg.hudShown[HUD_HEALTH])
+    if(PLRPROFILE.hud.shown[HUD_HEALTH])
     {
-        Draw_BeginZoom(cfg.hudScale, 5, 198);
+        Draw_BeginZoom(PLRPROFILE.hud.scale, 5, 198);
         if(plr->plr->mo->health > 0)
         {
             DrBNumber(plr->plr->mo->health, 5, 180,
-                      cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+                      PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2], textalpha);
         }
         else
         {
-            DrBNumber(0, 5, 180, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
+            DrBNumber(0, 5, 180, PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2],
                       textalpha);
         }
         Draw_EndZoom();
     }
 
-    if(cfg.hudShown[HUD_MANA])
+    if(PLRPROFILE.hud.shown[HUD_MANA])
     {
         int     dim[2] = { dpManaAIcons[0].lump, dpManaBIcons[0].lump };
         int     bright[2] = { dpManaAIcons[0].lump, dpManaBIcons[0].lump };
         int     patches[2] = { 0, 0 };
-        int     ypos = cfg.hudShown[HUD_MANA] == 2 ? 152 : 2;
+        int     ypos = PLRPROFILE.hud.shown[HUD_MANA] == 2 ? 152 : 2;
 
         for(i = 0; i < 2; i++)
             if(!(plr->ammo[i].owned > 0))
@@ -1809,7 +1808,7 @@ void ST_doFullscreenStuff(int player)
                 if(!patches[i])
                     patches[i] = bright[i];
         }
-        Draw_BeginZoom(cfg.hudScale, 2, ypos);
+        Draw_BeginZoom(PLRPROFILE.hud.scale, 2, ypos);
         for(i = 0; i < 2; i++)
         {
             GL_DrawPatchLitAlpha(2, ypos + i * 13, 1, iconalpha, patches[i]);
@@ -1829,18 +1828,18 @@ void ST_doFullscreenStuff(int player)
                 temp += plr->frags[i];
             }
         }
-        Draw_BeginZoom(cfg.hudScale, 2, 198);
+        Draw_BeginZoom(PLRPROFILE.hud.scale, 2, 198);
         DrINumber(temp, 45, 185, 1, 1, 1, textalpha);
         Draw_EndZoom();
     }
 
     if(!hud->inventory)
     {
-        if(cfg.hudShown[HUD_ARTI])
+        if(PLRPROFILE.hud.shown[HUD_ARTI])
         {
             if(plr->readyArtifact > 0)
             {
-                Draw_BeginZoom(cfg.hudScale, 318, 198);
+                Draw_BeginZoom(PLRPROFILE.hud.scale, 318, 198);
 
                 GL_DrawPatchLitAlpha(286, 170, 1, iconalpha/2,
                                      dpArtifacts[5 + AFT_NONE].lump);
@@ -1860,7 +1859,7 @@ void ST_doFullscreenStuff(int player)
     {
         float               invScale;
 
-        invScale = MINMAX_OF(0.25f, cfg.hudScale - 0.25f, 0.8f);
+        invScale = MINMAX_OF(0.25f, PLRPROFILE.hud.scale - 0.25f, 0.8f);
 
         Draw_BeginZoom(invScale, 160, 198);
         x = plr->invPtr - plr->curPos;
@@ -1914,7 +1913,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
     hud->firstTime = hud->firstTime || refresh;
     hud->statusbarOn = (fullscreenmode < 2) ||
         (AM_IsActive(AM_MapForPlayer(player)) &&
-         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+         (PLRPROFILE.automap.hudDisplay == 0 || PLRPROFILE.automap.hudDisplay == 2));
 
     // Do palette shifts
     ST_doPaletteStuff(player, false);
@@ -1988,7 +1987,7 @@ void Draw_TeleportIcon(void)
  */
 DEFCC(CCmdStatusBarSize)
 {
-    int                 min = 1, max = 20, *val = &cfg.statusbarScale;
+    int                 min = 1, max = 20, *val = &PLRPROFILE.statusbar.scale;
 
     if(!stricmp(argv[1], "+"))
         (*val)++;
@@ -2003,7 +2002,7 @@ DEFCC(CCmdStatusBarSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks);
+    R_SetViewSize(CONSOLEPLAYER, PLRPROFILE.screen.blocks);
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // So the user can see the change.
 
     return true;

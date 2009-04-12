@@ -445,7 +445,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
         if(side == 0) // Only teleport when crossing the front side of a line
         {
             // Players must be alive to teleport
-            if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
+            if(!(mo && mo->player && mo->player->pState == PST_DEAD))
             {
                 G_LeaveMap(args[0], args[1], false);
                 success = true;
@@ -457,7 +457,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
         if(side == 0)  // Only teleport when crossing the front side of a line
         {
             // Players must be alive to teleport
-            if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
+            if(!(mo && mo->player && mo->player->pState == PST_DEAD))
             {
                 success = true;
                 if(deathmatch)
@@ -1191,7 +1191,7 @@ static void P_LightningFlash(void)
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.
-        if(cfg.snd3D && plrmo && !IS_NETGAME)
+        if(Con_GetInteger("sound-3d") && plrmo && !IS_NETGAME)
         {
             crashOrigin =
                 P_SpawnMobj3f(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),

@@ -690,10 +690,10 @@ explode:
         if(player)
         {
             if((unsigned)
-               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) <
+               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->pClass)->runState) <
                4)
             {
-                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->pClass)->normalState);
             }
         }
         mo->mom[MX] = 0;
@@ -745,7 +745,7 @@ void P_MobjMoveZ(mobj_t *mo)
     {
         mo->player->plr->viewHeight -= mo->floorZ - mo->pos[VZ];
         mo->player->plr->viewHeightDelta =
-            (cfg.plrViewHeight - mo->player->plr->viewHeight) / 8;
+            (PLRPROFILE.camera.offsetZ - mo->player->plr->viewHeight) / 8;
     }
 
     // Adjust height.
@@ -852,7 +852,7 @@ void P_MobjMoveZ(mobj_t *mo)
                         // Fix DOOM bug - dead players grunting when hitting the ground
                         // (e.g., after an archvile attack)
                         if(mo->player->health > 0)
-                            switch(mo->player->class)
+                            switch(mo->player->pClass)
                             {
                             case PCLASS_FIGHTER:
                                 S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -879,7 +879,7 @@ void P_MobjMoveZ(mobj_t *mo)
                             S_StartSound(SFX_PLAYER_LAND, mo);
                     }
 
-                    if(!cfg.useMLook && cfg.lookSpring)
+                    if(!PLRPROFILE.camera.useMLook && PLRPROFILE.camera.lookSpring)
                         mo->player->centering = true;
                 }
             }
@@ -988,7 +988,7 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
     else if(mo->mom[MZ] < -P_GetGravity() * 12 && !mo->player->morphTics)
     {
         S_StartSound(SFX_PLAYER_LAND, mo);
-        switch(mo->player->class)
+        switch(mo->player->pClass)
         {
         case PCLASS_FIGHTER:
             S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -1012,7 +1012,7 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
     }
 
     // Lookspring is stupid when mouselook is on (and not in demo).
-    if(!cfg.useMLook && cfg.lookSpring) // || demorecording || demoplayback)
+    if(!PLRPROFILE.camera.useMLook && PLRPROFILE.camera.lookSpring) // || demorecording || demoplayback)
         mo->player->centering = true;
 }
 
@@ -1168,7 +1168,7 @@ void P_MobjThinker(mobj_t *mobj)
                         mobj->player->plr->viewHeight -=
                             onmo->pos[VZ] + onmo->height - mobj->pos[VZ];
                         mobj->player->plr->viewHeightDelta =
-                            (cfg.plrViewHeight - mobj->player->plr->viewHeight) / 8;
+                            (PLRPROFILE.camera.offsetZ - mobj->player->plr->viewHeight) / 8;
                         mobj->pos[VZ] = onmo->pos[VZ] + onmo->height;
                         mobj->flags2 |= MF2_ONMOBJ;
                         mobj->mom[MZ] = 0;
@@ -1256,7 +1256,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     // This doesn't appear to actually be used see P_DamageMobj in P_inter.c
     mo->damage = info->damage;
     mo->health = info->spawnHealth *
-        (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+        (IS_NETGAME ? GAMERULES.mobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
     if(gameSkill != SM_NIGHTMARE)
@@ -1332,7 +1332,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
         return;
 
     p = &players[playernum];
-    if(p->playerState == PST_REBORN)
+    if(p->pState == PST_REBORN)
     {
         G_PlayerReborn(playernum);
     }
@@ -1350,22 +1350,22 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
 
     if(randomClassParm && deathmatch)
     {
-        p->class = P_Random() % 3;
-        if(p->class == cfg.playerClass[playernum])
+        p->pClass = P_Random() % 3;
+        if(p->pClass == gs.players[playernum].pClass)
         {
-            p->class = (p->class + 1) % 3;
+            p->pClass = (p->pClass + 1) % 3;
         }
 
-        cfg.playerClass[playernum] = p->class;
+        gs.players[playernum].pClass = p->pClass;
         NetSv_SendPlayerInfo(playernum, DDSP_ALL_PLAYERS);
     }
     else
     {
-        p->class = cfg.playerClass[playernum];
+        p->pClass = gs.players[playernum].pClass;
     }
 
     /* $unifiedangles */
-    mobj = P_SpawnMobj3fv(PCLASS_INFO(p->class)->mobjType, pos,
+    mobj = P_SpawnMobj3fv(PCLASS_INFO(p->pClass)->mobjType, pos,
                           (spot? spot->angle : 0));
 
     // With clients all player mobjs are remote, even the CONSOLEPLAYER.
@@ -1377,7 +1377,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
     }
 
     // Set translation table data.
-    if(p->class == PCLASS_FIGHTER && (p->colorMap == 0 || p->colorMap == 2))
+    if(p->pClass == PCLASS_FIGHTER && (p->colorMap == 0 || p->colorMap == 2))
     {
         // The first type should be blue, and the third should be the
         // Fighter's original gold color
@@ -1401,7 +1401,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
     mobj->dPlayer = p->plr;
     mobj->health = p->health;
     p->plr->mo = mobj;
-    p->playerState = PST_LIVE;
+    p->pState = PST_LIVE;
     p->refire = 0;
     p->damageCount = 0;
     p->bonusCount = 0;
@@ -1415,11 +1415,11 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
+        p->plr->mo->pos[VZ] += (float) PLRPROFILE.camera.offsetZ;
         p->plr->viewHeight = 0;
     }
     else
-        p->plr->viewHeight = cfg.plrViewHeight;
+        p->plr->viewHeight = PLRPROFILE.camera.offsetZ;
 
     p->plr->lookDir = 0;
     P_SetupPsprites(p);
@@ -1532,7 +1532,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
     // Check current character classes with spawn flags.
     if(IS_NETGAME == false)
     {   // Single player.
-        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
+        if((spot->flags & classFlags[gs.players[0].pClass]) == 0)
         {   // Not for current class.
             return;
         }
@@ -1544,7 +1544,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
         {
             if(players[i].plr->inGame)
             {
-                spawnMask |= classFlags[cfg.playerClass[i]];
+                spawnMask |= classFlags[gs.players[i].pClass];
             }
         }
 
@@ -2242,7 +2242,7 @@ boolean P_HealRadius(player_t* player)
     params.origin[VY] = pmo->pos[VY];
     params.maxDistance = HEAL_RADIUS_DIST;
 
-    switch(player->class)
+    switch(player->pClass)
     {
     case PCLASS_FIGHTER:
         P_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);
@@ -2439,7 +2439,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle,
         if(source->player)
         {
             if(!P_MobjIsCamera(source->player->plr->mo))
-                spawnZOff = cfg.plrViewHeight - 9 +
+                spawnZOff = PLRPROFILE.camera.offsetZ - 9 +
                     source->player->plr->lookDir / 173;
         }
         else
@@ -2516,7 +2516,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     float           pos[3], slope;
     float           fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float           movfac = 1;
-    boolean         dontAim = cfg.noAutoAim;
+    boolean         dontAim = !PLRPROFILE.ctrl.useAutoAim;
 
     // Try to find a target
     angle = source->angle;
@@ -2555,7 +2555,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     else
     {
         if(!P_MobjIsCamera(source->player->plr->mo))
-            pos[VZ] += cfg.plrViewHeight - 9 +
+            pos[VZ] += PLRPROFILE.camera.offsetZ - 9 +
                 (source->player->plr->lookDir / 173);
         pos[VZ] -= source->floorClip;
     }
@@ -2601,7 +2601,7 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
     float           pos[3], slope;
     float           fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float           movfac = 1;
-    boolean         dontAim = cfg.noAutoAim;
+    boolean         dontAim = !PLRPROFILE.ctrl.useAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2627,7 +2627,7 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
 
     memcpy(pos, source->pos, sizeof(pos));
     if(!P_MobjIsCamera(source->player->plr->mo))
-        pos[VZ] += cfg.plrViewHeight - 9 +
+        pos[VZ] += PLRPROFILE.camera.offsetZ - 9 +
             (source->player->plr->lookDir / 173);
     pos[VZ] -= source->floorClip;
 
@@ -2655,7 +2655,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
     angle_t         angle;
     float           slope, movfac = 1;
     float           fangle = LOOKDIR2RAD(source->player->plr->lookDir);
-    boolean         dontAim = cfg.noAutoAim;
+    boolean         dontAim = !PLRPROFILE.ctrl.useAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2679,7 +2679,8 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
     }
 
     if(!P_MobjIsCamera(source->player->plr->mo))
-        z += cfg.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
+        z += PLRPROFILE.camera.offsetZ - 9 +
+            (source->player->plr->lookDir / 173);
     z -= source->floorClip;
     th = P_SpawnMobj3f(type, x, y, z, angle);
 

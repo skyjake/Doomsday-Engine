@@ -217,14 +217,138 @@ void G_DetectIWADs(void)
     DD_AddIWAD("hexen.wad");
 }
 
+void G_InitPlayerProfile(playerprofile_t* pf)
+{
+    int                 i;
+
+    if(!pf)
+        return;
+
+    // Config defaults. The real settings are read from the .cfg files
+    // but these will be used no such files are found.
+    memset(pf, 0, sizeof(playerprofile_t));
+    pf->color = 8;
+    pf->pClass = PCLASS_FIGHTER;
+
+    pf->ctrl.moveSpeed = 1;
+    pf->ctrl.dclickUse = false;
+    pf->ctrl.lookSpeed = 3;
+    pf->ctrl.turnSpeed = 1;
+    pf->ctrl.airborneMovement = 1;
+    pf->ctrl.useAutoAim = true;
+
+    pf->screen.blocks = pf->screen.setBlocks = 10;
+
+    pf->camera.offsetZ = 48;
+    pf->camera.bob = 1;
+    pf->camera.povLookAround = true;
+
+    pf->psprite.bob = 1;
+
+    pf->xhair.size = .5f;
+    pf->xhair.vitality = false;
+    pf->xhair.color[CR] = 1;
+    pf->xhair.color[CG] = 1;
+    pf->xhair.color[CB] = 1;
+    pf->xhair.color[CA] = 1;
+
+    pf->inventory.weaponAutoSwitch = 1; // IF BETTER
+    pf->inventory.noWeaponAutoSwitchIfFiring = false;
+    pf->inventory.ammoAutoSwitch = 0; // never
+    pf->inventory.timer = 5;
+    pf->inventory.nextOnNoUse = true;
+    pf->inventory.weaponOrder[0] = WT_FOURTH;
+    pf->inventory.weaponOrder[1] = WT_THIRD;
+    pf->inventory.weaponOrder[2] = WT_SECOND;
+    pf->inventory.weaponOrder[3] = WT_FIRST;
+
+    pf->hud.scale = .7f;
+    pf->hud.color[CR] = defFontRGB[CR];    // use the default colour by default.
+    pf->hud.color[CG] = defFontRGB[CG];
+    pf->hud.color[CB] = defFontRGB[CB];
+    pf->hud.color[CA] = 1;
+    pf->hud.iconAlpha = 1;
+    pf->hud.shown[HUD_MANA] = true;
+    pf->hud.shown[HUD_HEALTH] = true;
+    pf->hud.shown[HUD_ARTI] = true;
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+        pf->hud.unHide[i] = 1;
+
+    pf->statusbar.scale = 20;
+    pf->statusbar.opacity = 1;
+    pf->statusbar.counterAlpha = 1;
+
+    pf->automap.customColors = 0; // Never.
+    pf->automap.line0[CR] = .42f; // Unseen areas
+    pf->automap.line0[CG] = .42f;
+    pf->automap.line0[CB] = .42f;
+
+    pf->automap.line1[CR] = .41f; // onesided lines
+    pf->automap.line1[CG] = .30f;
+    pf->automap.line1[CB] = .15f;
+
+    pf->automap.line2[CR] = .82f; // floor height change lines
+    pf->automap.line2[CG] = .70f;
+    pf->automap.line2[CB] = .52f;
+
+    pf->automap.line3[CR] = .47f; // ceiling change lines
+    pf->automap.line3[CG] = .30f;
+    pf->automap.line3[CB] = .16f;
+
+    pf->automap.mobj[CR] = 1.f;
+    pf->automap.mobj[CG] = 1.f;
+    pf->automap.mobj[CB] = 1.f;
+
+    pf->automap.background[CR] = 1.0f;
+    pf->automap.background[CG] = 1.0f;
+    pf->automap.background[CB] = 1.0f;
+    pf->automap.opacity = 1.0f;
+    pf->automap.lineAlpha = 1.0f;
+    pf->automap.showDoors = true;
+    pf->automap.doorGlow = 8;
+    pf->automap.hudDisplay = 2;
+    pf->automap.rotate = true;
+    pf->automap.babyKeys = false;
+    pf->automap.zoomSpeed = .1f;
+    pf->automap.panSpeed = .5f;
+    pf->automap.panResetOnOpen = true;
+    pf->automap.openSeconds = AUTOMAP_OPEN_SECONDS;
+
+    pf->msgLog.show = true;
+    pf->msgLog.count = 4;
+    pf->msgLog.scale = .8f;
+    pf->msgLog.upTime = 5 * TICSPERSEC;
+    pf->msgLog.align = ALIGN_CENTER;
+    pf->msgLog.blink = 5;
+    pf->msgLog.color[CR] = defFontRGB2[CR];
+    pf->msgLog.color[CG] = defFontRGB2[CG];
+    pf->msgLog.color[CB] = defFontRGB2[CB];
+
+    pf->chat.playBeep = 1;
+}
+
+void G_InitGameRules(gamerules_t* gr)
+{
+    if(!gr)
+        return;
+
+    memset(gr, 0, sizeof(gamerules_t));
+
+    gr->jumpAllow = true; // True by default in Hexen.
+    gr->jumpPower = 9;
+    gr->fastMonsters = false;
+    gr->mobDamageModifier = 1;
+    gr->mobHealthModifier = 1;
+    gr->gravityModifier = -1; // Use map default.
+    gr->cameraNoClip = true;
+}
+
 /**
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
 void G_PreInit(void)
 {
-    int                     i;
-
     // Calculate the various LUTs used by the playsim.
     X_CreateLUTs();
 
@@ -233,125 +357,34 @@ void G_PreInit(void)
 
     G_SetGameMode(indetermined);
 
+    memset(gs.players, 0, sizeof(gs.players));
+    gs.netMap = 1;
+    gs.netSkill = SM_MEDIUM;
+
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
-    memset(&cfg, 0, sizeof(cfg));
-    cfg.playerMoveSpeed = 1;
-    cfg.statusbarScale = 20;
-    cfg.dclickUse = false;
-    cfg.inventoryNextOnUnuse = true;
-    cfg.screenBlocks = cfg.setBlocks = 10;
-    cfg.hudShown[HUD_MANA] = true;
-    cfg.hudShown[HUD_HEALTH] = true;
-    cfg.hudShown[HUD_ARTI] = true;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
-        cfg.hudUnHide[i] = 1;
-    cfg.lookSpeed = 3;
-    cfg.turnSpeed = 1;
-    cfg.xhairSize = .5f;
-    cfg.xhairVitality = false;
-    cfg.xhairColor[0] = 1;
-    cfg.xhairColor[1] = 1;
-    cfg.xhairColor[2] = 1;
-    cfg.xhairColor[3] = 1;
-    cfg.jumpEnabled = cfg.netJumping = true; // true by default in Hexen
-    cfg.jumpPower = 9;
-    cfg.airborneMovement = 1;
-    cfg.weaponAutoSwitch = 1; // IF BETTER
-    cfg.noWeaponAutoSwitchIfFiring = false;
-    cfg.ammoAutoSwitch = 0; // never
-    cfg.fastMonsters = false;
-    cfg.netMap = 1;
-    cfg.netSkill = SM_MEDIUM;
-    cfg.netColor = 8;           // Use the default color by default.
-    cfg.netMobDamageModifier = 1;
-    cfg.netMobHealthModifier = 1;
-    cfg.netGravity = -1;        // use map default
-    cfg.plrViewHeight = 48;
-    cfg.mapTitle = true;
-    cfg.menuScale = .75f;
-    cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
-    cfg.menuColor[1] = defFontRGB[1];
-    cfg.menuColor[2] = defFontRGB[2];
-    cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
-    cfg.menuColor2[1] = defFontRGB2[1];
-    cfg.menuColor2[2] = defFontRGB2[2];
-    cfg.menuEffects = 0;
-    cfg.menuHotkeys = true;
-    cfg.hudFog = 5;
-    cfg.menuSlam = true;
-    cfg.flashColor[0] = 1.0f;
-    cfg.flashColor[1] = .5f;
-    cfg.flashColor[2] = .5f;
-    cfg.flashSpeed = 4;
-    cfg.turningSkull = false;
-    cfg.hudScale = .7f;
-    cfg.hudColor[0] = defFontRGB[0];    // use the default colour by default.
-    cfg.hudColor[1] = defFontRGB[1];
-    cfg.hudColor[2] = defFontRGB[2];
-    cfg.hudColor[3] = 1;
-    cfg.hudIconAlpha = 1;
-    cfg.usePatchReplacement = 2; // Use built-in replacements if available.
-    cfg.cameraNoClip = true;
-    cfg.bobView = cfg.bobWeapon = 1;
+    memset(&gs.cfg, 0, sizeof(gs.cfg));
+    gs.cfg.mapTitle = true;
+    gs.cfg.menuScale = .75f;
+    gs.cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
+    gs.cfg.menuColor[1] = defFontRGB[1];
+    gs.cfg.menuColor[2] = defFontRGB[2];
+    gs.cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
+    gs.cfg.menuColor2[1] = defFontRGB2[1];
+    gs.cfg.menuColor2[2] = defFontRGB2[2];
+    gs.cfg.menuEffects = 0;
+    gs.cfg.menuHotkeys = true;
+    gs.cfg.hudFog = 5;
+    gs.cfg.menuSlam = true;
+    gs.cfg.flashColor[0] = 1.0f;
+    gs.cfg.flashColor[1] = .5f;
+    gs.cfg.flashColor[2] = .5f;
+    gs.cfg.flashSpeed = 4;
+    gs.cfg.turningSkull = false;
+    gs.cfg.usePatchReplacement = 2; // Use built-in replacements if available.
 
-    cfg.statusbarOpacity = 1;
-    cfg.statusbarCounterAlpha = 1;
-    cfg.inventoryTimer = 5;
-
-    cfg.automapCustomColors = 0; // Never.
-    cfg.automapL0[0] = .42f; // Unseen areas
-    cfg.automapL0[1] = .42f;
-    cfg.automapL0[2] = .42f;
-
-    cfg.automapL1[0] = .41f; // onesided lines
-    cfg.automapL1[1] = .30f;
-    cfg.automapL1[2] = .15f;
-
-    cfg.automapL2[0] = .82f; // floor height change lines
-    cfg.automapL2[1] = .70f;
-    cfg.automapL2[2] = .52f;
-
-    cfg.automapL3[0] = .47f; // ceiling change lines
-    cfg.automapL3[1] = .30f;
-    cfg.automapL3[2] = .16f;
-
-    cfg.automapMobj[0] = 1.f;
-    cfg.automapMobj[1] = 1.f;
-    cfg.automapMobj[2] = 1.f;
-
-    cfg.automapBack[0] = 1.0f;
-    cfg.automapBack[1] = 1.0f;
-    cfg.automapBack[2] = 1.0f;
-    cfg.automapOpacity = 1.0f;
-    cfg.automapLineAlpha = 1.0f;
-    cfg.automapShowDoors = true;
-    cfg.automapDoorGlow = 8;
-    cfg.automapHudDisplay = 2;
-    cfg.automapRotate = true;
-    cfg.automapBabyKeys = false;
-    cfg.automapZoomSpeed = .1f;
-    cfg.automapPanSpeed = .5f;
-    cfg.automapPanResetOnOpen = true;
-    cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
-    cfg.counterCheatScale = .7f; //From jHeretic
-
-    cfg.msgShow = true;
-    cfg.msgCount = 4;
-    cfg.msgScale = .8f;
-    cfg.msgUptime = 5 * TICSPERSEC;
-    cfg.msgAlign = ALIGN_CENTER;
-    cfg.msgBlink = 5;
-    cfg.msgColor[0] = defFontRGB2[0];
-    cfg.msgColor[1] = defFontRGB2[1];
-    cfg.msgColor[2] = defFontRGB2[2];
-
-    cfg.chatBeep = 1;
-
-    cfg.weaponOrder[0] = WT_FOURTH;
-    cfg.weaponOrder[1] = WT_THIRD;
-    cfg.weaponOrder[2] = WT_SECOND;
-    cfg.weaponOrder[3] = WT_FIRST;
+    G_InitGameRules(&GAMERULES);
+    G_InitPlayerProfile(&PLRPROFILE);
 
     // Hexen has a nifty "Ethereal Travel" screen, so don't show the
     // console during map setup.
@@ -420,7 +453,7 @@ void G_PostInit(void)
 
         Con_Message("\nPlayer Class: '%s'\n", pClassInfo->niceName);
     }
-    cfg.playerClass[CONSOLEPLAYER] = pClass;
+    gs.players[CONSOLEPLAYER].pClass = pClass;
 
     P_InitMapMusicInfo(); // Init music fields in mapinfo.
 
@@ -485,7 +518,7 @@ static void handleArgs(void)
     artiSkipParm = ArgExists("-artiskip");
     netCheatParm = ArgExists("-netcheat");
 
-    cfg.netDeathmatch = ArgExists("-deathmatch");
+    GAMERULES.deathmatch = ArgExists("-deathmatch");
 
     // Turbo movement option.
     p = ArgCheck("-turbo");

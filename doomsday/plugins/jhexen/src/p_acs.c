@@ -1615,7 +1615,7 @@ static int CmdAmbientSound(void)
     volume = Pop();
     // If we are playing 3D sounds, create a temporary source mobj
     // for the sound.
-    if(cfg.snd3D && plrmo)
+    if(Con_GetInteger("sound-3d") && plrmo)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.

@@ -330,9 +330,6 @@ desc = Number of HUD messages displayed at the same time.
 [msg-uptime]
 desc = Number of tics to keep HUD messages on screen.
 
-[msg-hub-override]
-desc = Override the transition hub message.
-
 [msg-scale]
 desc = Scaling factor for HUD messages.
 
@@ -702,8 +699,8 @@ desc = First slider control.
 [input-joy-slider2]
 desc = Second slider control.
 
-[ctl-aim-noauto]
-desc = 1=Autoaiming disabled.
+[ctl-aim-auto]
+desc = 1=Autoaiming enabled.
 
 [ctl-turn-speed]
 desc = The speed of turning left/right.
@@ -759,12 +756,6 @@ desc = Scale for viewheight bobbing.
 [view-bob-weapon]
 desc = Scale for player weapon bobbing.
 
-[server-game-skill]
-desc = Skill level in multiplayer games.
-
-[server-game-map]
-desc = Map to use in multiplayer games.
-
 [server-game-deathmatch]
 desc = 1=Start multiplayers games as deathmatch.
 
@@ -803,9 +794,6 @@ desc = Player class in multiplayer games.
 
 [player-move-speed]
 desc = Player movement speed modifier.
-
-[player-jump]
-desc = 1=Allow jumping.
 
 [player-jump-power]
 desc = Jump power (for all clients if this is the server).

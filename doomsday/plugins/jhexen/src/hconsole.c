@@ -95,67 +95,64 @@ cvar_t gameCVars[] = {
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 13},
-    {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
+    {"view-size", CVF_PROTECTED, CVT_INT, &PLRPROFILE.screen.blocks, 3, 13},
+    {"hud-title", 0, CVT_BYTE, &gs.cfg.mapTitle, 0, 1},
 
-    {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1},
-    {"view-bob-weapon", 0, CVT_FLOAT, &cfg.bobWeapon, 0, 1},
+    {"view-bob-height", 0, CVT_FLOAT, &PLRPROFILE.camera.bob, 0, 1},
+    {"view-bob-weapon", 0, CVT_FLOAT, &PLRPROFILE.psprite.bob, 0, 1},
 
 // Server-side options
     // Game state
-    {"server-game-skill", 0, CVT_BYTE, &cfg.netSkill, 0, 4},
-    {"server-game-map", 0, CVT_BYTE, &cfg.netMap, 1, 99},
     {"server-game-deathmatch", 0, CVT_BYTE,
-        &cfg.netDeathmatch, 0, 1}, /* jHexen only has one deathmatch mode */
+        &GAMERULES.deathmatch, 0, 1}, /* jHexen only has one deathmatch mode */
 
     // Modifiers
-    {"server-game-mod-damage", 0, CVT_BYTE, &cfg.netMobDamageModifier, 1, 100},
-    {"server-game-mod-health", 0, CVT_BYTE, &cfg.netMobHealthModifier, 1, 20},
-    {"server-game-mod-gravity", 0, CVT_INT, &cfg.netGravity, -1, 100},
+    {"server-game-mod-damage", 0, CVT_BYTE, &GAMERULES.mobDamageModifier, 1, 100},
+    {"server-game-mod-health", 0, CVT_BYTE, &GAMERULES.mobHealthModifier, 1, 20},
+    {"server-game-mod-gravity", 0, CVT_INT, &GAMERULES.gravityModifier, -1, 100},
 
     // Gameplay options
-    {"server-game-jump", 0, CVT_BYTE, &cfg.netJumping, 0, 1},
-    {"server-game-nomonsters", 0, CVT_BYTE, &cfg.netNoMonsters, 0, 1},
-    {"server-game-randclass", 0, CVT_BYTE, &cfg.netRandomClass, 0, 1},
+    {"server-game-jump", 0, CVT_BYTE, &GAMERULES.jumpAllow, 0, 1},
+    {"server-game-nomonsters", 0, CVT_BYTE, &GAMERULES.noMonsters, 0, 1},
+    {"server-game-randclass", 0, CVT_BYTE, &GAMERULES.randomClass, 0, 1},
     {"server-game-radiusattack-nomaxz", 0, CVT_BYTE,
-        &cfg.netNoMaxZRadiusAttack, 0, 1},
+        &GAMERULES.noMaxZRadiusAttack, 0, 1},
     {"server-game-monster-meleeattack-nomaxz", 0, CVT_BYTE,
-        &cfg.netNoMaxZMonsterMeleeAttack, 0, 1},
+        &GAMERULES.noMaxZMonsterMeleeAttack, 0, 1},
 
 // Player
     // Player data
-    {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 8},
-    {"player-eyeheight", 0, CVT_INT, &cfg.plrViewHeight, 41, 54},
-    {"player-class", 0, CVT_BYTE, &cfg.netClass, 0, 2},
+    {"player-color", 0, CVT_BYTE, &PLRPROFILE.color, 0, 8},
+    {"player-eyeheight", 0, CVT_INT, &PLRPROFILE.camera.offsetZ, 41, 54},
+    {"player-class", 0, CVT_BYTE, &PLRPROFILE.pClass, 0, 2},
 
     // Movment
-    {"player-move-speed", 0, CVT_FLOAT, &cfg.playerMoveSpeed, 0, 1},
-    {"player-jump", 0, CVT_INT, &cfg.jumpEnabled, 0, 1},
-    {"player-jump-power", 0, CVT_FLOAT, &cfg.jumpPower, 0, 100},
-    {"player-air-movement", 0, CVT_BYTE, &cfg.airborneMovement, 0, 32},
+    {"player-move-speed", 0, CVT_FLOAT, &PLRPROFILE.ctrl.moveSpeed, 0, 1},
+    {"player-jump-power", 0, CVT_FLOAT, &GAMERULES.jumpPower, 0, 100},
+    {"player-air-movement", 0, CVT_BYTE, &PLRPROFILE.ctrl.airborneMovement, 0, 32},
 
     // Weapon switch preferences
-    {"player-autoswitch", 0, CVT_BYTE, &cfg.weaponAutoSwitch, 0, 2},
-    {"player-autoswitch-ammo", 0, CVT_BYTE, &cfg.ammoAutoSwitch, 0, 2},
+    {"player-autoswitch", 0, CVT_BYTE, &PLRPROFILE.inventory.weaponAutoSwitch, 0, 2},
+    {"player-autoswitch-ammo", 0, CVT_BYTE, &PLRPROFILE.inventory.ammoAutoSwitch, 0, 2},
     {"player-autoswitch-notfiring", 0, CVT_BYTE,
-        &cfg.noWeaponAutoSwitchIfFiring, 0, 1},
+        &PLRPROFILE.inventory.noWeaponAutoSwitchIfFiring, 0, 1},
 
     // Weapon Order preferences
-    {"player-weapon-order0", 0, CVT_INT, &cfg.weaponOrder[0], 0, NUM_WEAPON_TYPES},
-    {"player-weapon-order1", 0, CVT_INT, &cfg.weaponOrder[1], 0, NUM_WEAPON_TYPES},
-    {"player-weapon-order2", 0, CVT_INT, &cfg.weaponOrder[2], 0, NUM_WEAPON_TYPES},
-    {"player-weapon-order3", 0, CVT_INT, &cfg.weaponOrder[3], 0, NUM_WEAPON_TYPES},
+    {"player-weapon-order0", 0, CVT_INT, &PLRPROFILE.inventory.weaponOrder[0], 0, NUM_WEAPON_TYPES},
+    {"player-weapon-order1", 0, CVT_INT, &PLRPROFILE.inventory.weaponOrder[1], 0, NUM_WEAPON_TYPES},
+    {"player-weapon-order2", 0, CVT_INT, &PLRPROFILE.inventory.weaponOrder[2], 0, NUM_WEAPON_TYPES},
+    {"player-weapon-order3", 0, CVT_INT, &PLRPROFILE.inventory.weaponOrder[3], 0, NUM_WEAPON_TYPES},
 
-    {"player-weapon-nextmode", 0, CVT_BYTE, &cfg.weaponNextMode, 0, 1},
+    {"player-weapon-nextmode", 0, CVT_BYTE, &PLRPROFILE.inventory.weaponNextMode, 0, 1},
 
     // Misc
-    {"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1},
+    {"player-camera-noclip", 0, CVT_BYTE, &GAMERULES.cameraNoClip, 0, 1},
 
 // Compatibility options
-    {"game-icecorpse", 0, CVT_INT, &cfg.translucentIceCorpse, 0, 1},
+    {"game-icecorpse", 0, CVT_BYTE, &PLRPROFILE.translucentIceCorpse, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
+    {"game-fastmonsters", 0, CVT_BYTE, &GAMERULES.fastMonsters, 0, 1},
 
 // Gameplay
     {"game-maulator-time", CVF_NO_MAX, CVT_INT, &maulatorSeconds, 1, 0},
@@ -288,7 +285,7 @@ DEFCC(CCmdScreenShot)
  */
 DEFCC(CCmdViewSize)
 {
-    int                 min = 3, max = 13, *val = &cfg.screenBlocks;
+    int                 min = 3, max = 13, *val = &PLRPROFILE.screen.blocks;
 
     if(argc != 2)
     {
@@ -312,7 +309,7 @@ DEFCC(CCmdViewSize)
         *val = max;
 
     // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks);
+    R_SetViewSize(CONSOLEPLAYER, PLRPROFILE.screen.blocks);
     return true;
 }
 

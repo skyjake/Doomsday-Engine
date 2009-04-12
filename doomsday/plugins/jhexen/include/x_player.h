@@ -71,8 +71,8 @@ typedef enum {
 // Extended player information, Hexen specific.
 typedef struct player_s {
     ddplayer_t*     plr; // Pointer to the engine's player data.
-    playerstate_t   playerState;
-    playerclass_t   class; // Player class type.
+    playerstate_t   pState;
+    playerclass_t   pClass; // Player class.
     playerbrain_t   brain;
 
     float           viewOffset[3];
