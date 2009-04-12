@@ -118,7 +118,7 @@ boolean P_CheckMeleeRange(mobj_t *actor)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!GAMERULES.noMaxZMonsterMeleeAttack)
     {   // Account for Z height difference.
         if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
            pl->pos[VZ] + pl->height < actor->pos[VZ])
@@ -240,7 +240,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
                 good |= ld == blockLine ? 1 : 2;
         }
 
-        if(!good || cfg.monstersStuckInDoors)
+        if(!good || GAMERULES.monstersStuckInDoors)
             return good;
         else
             return (P_Random() >= 230) || (good & 1);
@@ -423,7 +423,7 @@ void P_NewChaseDir(mobj_t *actor)
     if(actor->floorZ - actor->dropOffZ > 24 &&
        actor->pos[VZ] <= actor->floorZ &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
-       !cfg.avoidDropoffs && P_AvoidDropoff(actor))
+       !GAMERULES.avoidDropoffs && P_AvoidDropoff(actor))
     {
         // Move away from dropoff.
         newChaseDir(actor, dropoffDelta[VX], dropoffDelta[VY]);
@@ -667,7 +667,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(actor->threshold)
         actor->threshold--;
 
-    if(gameSkill == SM_NIGHTMARE || cfg.fastMonsters)
+    if(gameSkill == SM_NIGHTMARE || GAMERULES.fastMonsters)
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;

@@ -35,8 +35,8 @@
 #endif
 
 typedef enum {
-    ps_weapon,
-    ps_flash,
+    PS_WEAPON,
+    PS_FLASH,
     NUMPSPRITES
 } psprnum_t;
 

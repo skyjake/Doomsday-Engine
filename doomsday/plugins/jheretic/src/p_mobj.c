@@ -384,11 +384,11 @@ void P_MobjMoveXY(mobj_t* mo)
          */
 
         largeNegative = false;
-        if(!cfg.moveBlock &&
+        if(!GAMERULES.moveBlock &&
            (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
         {
             // Make an exception for "north-only wallrunning".
-            if(!(cfg.wallRunNorthOnly && mo->wallRun))
+            if(!(GAMERULES.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
@@ -491,7 +491,7 @@ void P_MobjMoveXY(mobj_t* mo)
         return;
     }
 
-    if(cfg.slidingCorpses)
+    if(GAMERULES.slidingCorpses)
     {
         /**
          * $dropoff_fix:
@@ -518,8 +518,8 @@ void P_MobjMoveXY(mobj_t* mo)
        mo->mom[MY] > -STANDSPEED && mo->mom[MY] < STANDSPEED)
     {
         // If in a walking frame, stop moving.
-        if((unsigned) ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) < 4)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+        if((unsigned) ((player->plr->mo->state - STATES) - PCLASS_INFO(player->pClass)->runState) < 4)
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->pClass)->normalState);
     }
 
     if((!player || (player->plr->cmd.forwardMove == 0 && player->plr->cmd.sideMove == 0)) &&
@@ -576,7 +576,7 @@ void P_MobjMoveZ(mobj_t *mo)
         mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
 
         mo->dPlayer->viewHeightDelta =
-            (cfg.plrViewHeight - mo->dPlayer->viewHeight) / 8;
+            (PLRPROFILE.camera.offsetZ - mo->dPlayer->viewHeight) / 8;
     }
 
     // Adjust height.
@@ -971,7 +971,7 @@ void P_MobjThinker(mobj_t *mobj)
     // Non-sentient objects at rest.
     else if(!(mobj->mom[MX] != 0 || mobj->mom[MY] != 0) && !sentient(mobj) &&
             !(mobj->player) && !((mobj->flags & MF_CORPSE) &&
-            cfg.slidingCorpses))
+            GAMERULES.slidingCorpses))
     {
         /**
          * Objects fall off ledges if they are hanging off slightly push off
@@ -979,7 +979,7 @@ void P_MobjThinker(mobj_t *mobj)
          */
 
         if(mobj->pos[VZ] > mobj->dropOffZ && // Only objects contacting dropoff
-           !(mobj->flags & MF_NOGRAVITY) && cfg.fallOff)
+           !(mobj->flags & MF_NOGRAVITY) && GAMERULES.fallOff)
         {
             P_ApplyTorque(mobj);
         }
@@ -990,7 +990,7 @@ void P_MobjThinker(mobj_t *mobj)
         }
     }
 
-    if(cfg.slidingCorpses)
+    if(GAMERULES.slidingCorpses)
     {
         if(((mobj->flags & MF_CORPSE) ? mobj->pos[VZ] > mobj->dropOffZ :
                                         mobj->pos[VZ] - mobj->dropOffZ > 24) && // Only objects contacting drop off.
@@ -1006,18 +1006,19 @@ void P_MobjThinker(mobj_t *mobj)
     }
 
     // $vanish: dead monsters disappear after some time.
-    if(cfg.corpseTime && (mobj->flags & MF_CORPSE) && mobj->corpseTics != -1)
+    /// \fixme Should be entirely client-side.
+    if(PLRPROFILE.corpseTime && (mobj->flags & MF_CORPSE) && mobj->corpseTics != -1)
     {
-        if(++mobj->corpseTics < cfg.corpseTime * TICSPERSEC)
+        if(++mobj->corpseTics < PLRPROFILE.corpseTime * TICSPERSEC)
         {
             mobj->translucency = 0; // Opaque.
         }
-        else if(mobj->corpseTics < cfg.corpseTime * TICSPERSEC + VANISHTICS)
+        else if(mobj->corpseTics < PLRPROFILE.corpseTime * TICSPERSEC + VANISHTICS)
         {
             // Translucent during vanishing.
             mobj->translucency =
                 ((mobj->corpseTics -
-                  cfg.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
+                  PLRPROFILE.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
         }
         else
         {
@@ -1098,7 +1099,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
     mo->health =
-        info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+        info->spawnHealth * (IS_NETGAME ? GAMERULES.mobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
     if(gameSkill != SM_NIGHTMARE)
@@ -1189,11 +1190,11 @@ void P_EmptyRespawnQueue(void)
  * Called when a player is spawned on the level. Most of the player
  * structure stays unchanged between levels.
  */
-void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
+void P_SpawnPlayer(spawnspot_t* spot, int plrnum)
 {
-    player_t           *p;
+    player_t*           p;
     float               pos[3];
-    mobj_t             *mobj;
+    mobj_t*             mobj;
     int                 i;
 
     if(!players[plrnum].plr->inGame)
@@ -1201,10 +1202,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
 
     p = &players[plrnum];
 
-    Con_Printf("P_SpawnPlayer: spawning player %i, col=%i.\n", plrnum,
-               cfg.playerColor[plrnum]);
-
-    if(p->playerState == PST_REBORN)
+    if(p->pState == PST_REBORN)
         G_PlayerReborn(plrnum);
 
     if(spot)
@@ -1230,7 +1228,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
     }
 
     // Set color translations for player sprites.
-    i = cfg.playerColor[plrnum];
+    i = gs.players[plrnum].color;
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
     p->plr->lookDir = 0; /* $unifiedangles */
@@ -1242,7 +1240,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
     mobj->dPlayer = p->plr;
     mobj->health = p->health;
     p->plr->mo = mobj;
-    p->playerState = PST_LIVE;
+    p->pState = PST_LIVE;
     p->refire = 0;
     p->damageCount = 0;
     p->bonusCount = 0;
@@ -1257,15 +1255,15 @@ void P_SpawnPlayer(spawnspot_t *spot, int plrnum)
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
+        p->plr->mo->pos[VZ] += (float) PLRPROFILE.camera.offsetZ;
         p->plr->viewHeight = 0;
     }
     else
-        p->plr->viewHeight = (float) cfg.plrViewHeight;
+        p->plr->viewHeight = (float) PLRPROFILE.camera.offsetZ;
 
     P_SetupPsprites(p); // Setup gun psprite.
 
-    p->class = PCLASS_PLAYER;
+    p->pClass = PCLASS_PLAYER;
 
     if(deathmatch)
     {   // Give all keys in death match mode.
@@ -1662,7 +1660,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
         // see which target is to be aimed at
         angle = source->angle;
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!cfg.noAutoAim)
+        if(PLRPROFILE.ctrl.useAutoAim)
             if(!lineTarget)
             {
                 angle += 1 << 26;
@@ -1682,7 +1680,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
             }
 
         if(!P_MobjIsCamera(source->player->plr->mo))
-            spawnZOff = cfg.plrViewHeight - 9 +
+            spawnZOff = PLRPROFILE.camera.offsetZ - 9 +
                 source->player->plr->lookDir / 173;
     }
     else
@@ -1804,7 +1802,7 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t mangle,
     {
         // Try to find a target.
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!cfg.noAutoAim)
+        if(PLRPROFILE.ctrl.useAutoAim)
             if(!lineTarget)
             {
                 angle += 1 << 26;
@@ -1820,7 +1818,7 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t mangle,
             }
 
         if(!(source->player->plr->flags & DDPF_CAMERA))
-            spawnZOff = cfg.plrViewHeight - 9 +
+            spawnZOff = PLRPROFILE.camera.offsetZ - 9 +
                         (source->player->plr->lookDir) / 173;
     }
     else

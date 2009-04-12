@@ -106,7 +106,7 @@ static void SV_v13_ReadPlayer(player_t* pl)
     ddplayer_t*     ddpl = pl->plr;
 
     SV_v13_ReadLong(); // mo
-    pl->playerState = SV_v13_ReadLong();
+    pl->pState = SV_v13_ReadLong();
     SV_v13_Read(temp, 10); // ticcmd_t
     ddpl->viewZ = FIX2FLT(SV_v13_ReadLong());
     ddpl->viewHeight = FIX2FLT(SV_v13_ReadLong());

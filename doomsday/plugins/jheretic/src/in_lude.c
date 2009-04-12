@@ -212,7 +212,7 @@ void IN_InitStats(void)
             if(!players[i].plr->inGame)
                 continue;
 
-            playerTeam[i] = cfg.playerColor[i];
+            playerTeam[i] = gs.players[i].color;
             teamInfo[playerTeam[i]].members++;
         }
     }

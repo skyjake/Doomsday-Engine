@@ -156,7 +156,7 @@ void P_ApplyTorque(mobj_t *mo)
     int     flags = mo->intFlags;
 
     // Corpse sliding anomalies, made configurable.
-    if(!cfg.slidingCorpses)
+    if(!GAMERULES.slidingCorpses)
         return;
 
     tmThing = mo;

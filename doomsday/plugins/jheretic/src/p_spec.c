@@ -891,7 +891,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // SECRET SECTOR
         player->secretCount++;
         P_ToXSector(sector)->special = 0;
-        if(cfg.secretMsg)
+        if(GAMERULES.announceSecrets)
         {
             P_SetMessage(player, "You've found a secret area!", false);
             S_ConsoleSound(SFX_WPNUP, 0, player - players);

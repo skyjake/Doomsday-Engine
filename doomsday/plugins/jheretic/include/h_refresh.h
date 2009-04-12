@@ -40,7 +40,7 @@ void            R_InitRefresh(void);
 void            H_Display(int layer);
 void            H_Display2(void);
 
-void            R_SetViewSize(int blocks);
+void            R_SetViewSize(int player, int blocks);
 
 void            R_DrawSpecialFilter(int pnum);
 void            R_DrawMapTitle(int x, int y, float alpha,

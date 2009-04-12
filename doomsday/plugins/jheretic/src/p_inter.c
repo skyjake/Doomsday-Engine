@@ -138,7 +138,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[lvl].ammoType[i])
+            if(!weaponInfo[weapon][player->pClass].mode[lvl].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
@@ -159,7 +159,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[lvl].ammoType[i])
+            if(!weaponInfo[weapon][player->pClass].mode[lvl].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
@@ -914,7 +914,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         target->flags2 &= ~MF2_FLY;
         target->player->powers[PT_FLIGHT] = 0;
         target->player->powers[PT_WEAPONLEVEL2] = 0;
-        target->player->playerState = PST_DEAD;
+        target->player->pState = PST_DEAD;
         target->player->rebornWait = PLAYER_REBORN_TICS;
         target->player->plr->flags |= DDPF_DEAD;
         target->player->update |= PSF_STATE;
@@ -1181,13 +1181,13 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+            if(IS_NETGAME && !deathmatch && GAMERULES.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
-            if(cfg.noTeamDamage &&
-               cfg.playerColor[target->player - players] ==
-               cfg.playerColor[source->player - players])
+            if(GAMERULES.noTeamDamage &&
+               gs.players[target->player - players].color ==
+               gs.players[source->player - players].color)
                 return 0;
         }
     }
@@ -1213,7 +1213,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= GAMERULES.mobDamageModifier;
     }
 
     // Special damage types.

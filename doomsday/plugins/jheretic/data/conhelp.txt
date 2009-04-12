@@ -516,11 +516,11 @@ desc = Automap background color, green component.
 [map-background-b]
 desc = Automap background color, blue component.
 
-[map-cheat-counter]
-desc = 6-bit bitfield. Show kills, items and secret counters in automap.
+[hud-cheat-counter]
+desc = 6-bit bitfield. Show kills, items and secret counters.
 
-[map-cheat-counter-scale]
-desc = Size factor for the counters in the automap.
+[hud-cheat-counter-scale]
+desc = Size factor for the counters.
 
 [map-customcolors]
 desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.
@@ -627,8 +627,8 @@ desc = First slider control.
 [input-joy-slider2]
 desc = Second slider control.
 
-[ctl-aim-noauto]
-desc = 1=Autoaiming disabled.
+[ctl-aim-auto]
+desc = 1=Autoaiming enabled.
 
 [ctl-turn-speed]
 desc = The speed of turning left/right.
@@ -690,15 +690,6 @@ desc = HUD weapon lowered during weapon switching.
 [view-ringfilter]
 desc = Ring effect filter. 1=Brownish, 2=Blue.
 
-[server-game-skill]
-desc = Skill level in multiplayer games.
-
-[server-game-map]
-desc = Map to use in multiplayer games.
-
-[server-game-episode]
-desc = Episode to use in multiplayer games.
-
 [server-game-deathmatch]
 desc = Start multiplayers games as deathmatch.
 
@@ -737,9 +728,6 @@ desc = Player eye height. The original is 41.
 
 [player-move-speed]
 desc = Player movement speed modifier.
-
-[player-jump]
-desc = 1=Allow jumping.
 
 [player-jump-power]
 desc = Jump power (for all clients if this is the server).
