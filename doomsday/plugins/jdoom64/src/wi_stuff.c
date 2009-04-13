@@ -170,10 +170,10 @@ void WI_drawLF(void)
 
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
 
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         mapnum = wbs->last;
     else
-        mapnum = ((gameEpisode -1) * 9) + wbs->last;
+        mapnum = ((gs.episode -1) * 9) + wbs->last;
 
     ptr = strchr(lname, ':'); // Skip the E#M# or Level #.
     if(ptr)
@@ -205,8 +205,8 @@ void WI_drawEL(void)
     ddmapinfo_t         minfo;
     char                levid[10];
 
-    P_GetMapLumpName(gameEpisode, wbs->next+1, levid);
-    mapnum = G_GetMapNumber(gameEpisode, wbs->next);
+    P_GetMapLumpName(gs.episode, wbs->next+1, levid);
+    mapnum = G_GetMapNumber(gs.episode, wbs->next);
 
     // See if there is a level name.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)
@@ -228,7 +228,7 @@ void WI_drawEL(void)
     y += (5 * mapNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &mapNamePatches[((gameEpisode -1) * 9) + wbs->next],
+                 &mapNamePatches[((gs.episode -1) * 9) + wbs->next],
                  lname, false, ALIGN_CENTER);
 }
 
@@ -1007,7 +1007,7 @@ void WI_Ticker(void)
     switch(state)
     {
     case ILS_SHOW_STATS:
-        if(deathmatch)
+        if(GAMERULES.deathmatch)
             WI_updateDeathmatchStats();
         else if(IS_NETGAME)
             WI_updateNetgameStats();
@@ -1115,7 +1115,7 @@ void WI_Drawer(void)
     switch(state)
     {
     case ILS_SHOW_STATS:
-        if(deathmatch)
+        if(GAMERULES.deathmatch)
             WI_drawDeathmatchStats();
         else if(IS_NETGAME)
             WI_drawNetgameStats();
@@ -1211,7 +1211,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
         }
     }
 
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
         WI_initDeathmatchStats();
     else if(IS_NETGAME)
         WI_initNetgameStats();

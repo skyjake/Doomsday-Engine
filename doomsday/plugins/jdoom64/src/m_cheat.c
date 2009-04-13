@@ -436,7 +436,7 @@ boolean Cht_WarpFunc(player_t *plyr, char *buf)
 
     // So be it.
     P_SetMessage(plyr, STSTR_CLEV, false);
-    G_DeferedInitNew(gameSkill, epsd, map);
+    G_DeferedInitNew(gs.skill, epsd, map);
 
     // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
@@ -512,16 +512,16 @@ void cht_LaserFunc(player_t *plyr)
     P_SetMessage(plyr, STSTR_BEHOLDX, false);
 }
 
-static void CheatDebugFunc(player_t *player, cheatseq_t *cheat)
+static void CheatDebugFunc(player_t* player, cheatseq_t* cheat)
 {
     char                lumpName[9];
     char                textBuffer[256];
-    subsector_t        *sub;
+    subsector_t*        sub;
 
-    if(!player->plr->mo || !userGame)
+    if(!player->plr->mo || !gs.userGame)
         return;
 
-    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+    P_GetMapLumpName(gs.episode, gs.map.id, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName, player->plr->mo->pos[VX], player->plr->mo->pos[VY],
             player->plr->mo->pos[VZ]);
@@ -879,7 +879,7 @@ DEFCC(CCmdCheatLeaveMap)
     }
 
     // Exit the map.
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
 
     return true;
 }

@@ -177,6 +177,10 @@ typedef struct {
 } playerprofile_t;
 
 typedef struct {
+    int             deathmatch; // Only if started as net death.
+
+    float           turboMul; // multiplier for turbo
+    byte            monsterInfight;
     float           jumpPower;
     byte            slidingCorpses;
     byte            fastMonsters;
@@ -200,7 +204,6 @@ typedef struct {
     byte            zombiesCanExit; // Zombie players can exit maps.
     byte            fallOff; // Objects fall under their own weight.
     byte            cameraNoClip;
-    byte            deathmatch;
     byte            freeAimBFG; // Allow free-aim with BFG.
     byte            mobDamageModifier; // Multiplier for non-player mobj damage.
     byte            mobHealthModifier; // Health modifier for non-player mobjs.
@@ -211,25 +214,5 @@ typedef struct {
     byte            respawn;
     byte            jumpAllow;
 } gamerules_t;
-
-typedef struct {
-    playerprofile_t playerProfile;
-    struct {
-        playerclass_t   pClass;
-        byte            color;
-    } players[MAXPLAYERS];
-
-    byte            netMap;
-    byte            netSkill;
-    byte            netSlot;
-
-    gamerules_t     rules;
-    gameconfig_t    cfg;
-} game_state_t;
-
-#define PLRPROFILE          (gs.playerProfile)
-#define GAMERULES           (gs.rules)
-
-extern game_state_t gs;
 
 #endif

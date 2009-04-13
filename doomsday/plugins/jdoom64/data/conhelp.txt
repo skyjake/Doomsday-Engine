@@ -764,9 +764,6 @@ desc = 1=No monsters.
 [server-game-respawn]
 desc = 1= -respawn was used.
 
-[server-game-respawn-monsters-nightmare]
-desc = 1=Monster respawning in Nightmare difficulty enabled.
-
 [server-game-radiusattack-nomaxz]
 desc = 1=ALL radius attacks are infinitely tall.
 

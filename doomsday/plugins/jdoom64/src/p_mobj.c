@@ -866,7 +866,7 @@ void P_MobjThinker(mobj_t *mobj)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnMonsters)
+        if(!GAMERULES.respawn)
             return;
 
         mobj->moveCount++;
@@ -1171,7 +1171,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     P_SetupPsprites(p);
 
     // Give all cards in death match mode.
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         for(i = 0; i < NUM_KEY_TYPES; ++i)
             p->keys[i] = true;
@@ -1230,10 +1230,10 @@ void P_SpawnMapThing(spawnspot_t *th)
 // < d64tc
 
     // Check for apropriate skill level.
-    if(gameSkill == SM_BABY)
+    if(gs.skill == SM_BABY)
         bit = 1;
     else
-        bit = 1 << (gameSkill - 1);
+        bit = 1 << (gs.skill - 1);
 
     if(!(th->flags & bit))
         return;
@@ -1256,19 +1256,19 @@ void P_SpawnMapThing(spawnspot_t *th)
         return;
 
     // Don't spawn keycards in deathmatch.
-    if(deathmatch && MOBJINFO[i].flags & MF_NOTDMATCH)
+    if(GAMERULES.deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
         return;
 
     // Check for specific disabled objects.
     if(IS_NETGAME && (th->flags & MTF_NOTSINGLE))
     {
         // Cooperative weapons?
-        if(GAMERULES.noCoopWeapons && !deathmatch && i >= MT_CLIP &&
+        if(GAMERULES.noCoopWeapons && !GAMERULES.deathmatch && i >= MT_CLIP &&
            i <= MT_SUPERSHOTGUN)
             return;
 
         // Don't spawn any special objects in coop?
-        if(GAMERULES.noCoopAnything && !deathmatch)
+        if(GAMERULES.noCoopAnything && !GAMERULES.deathmatch)
             return;
 
         // BFG disabled in netgames?
@@ -1277,7 +1277,7 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     // Don't spawn any monsters if -nomonsters.
-    if(noMonstersParm && (i == MT_SKULL || (MOBJINFO[i].flags & MF_COUNTKILL)))
+    if(GAMERULES.noMonsters && (i == MT_SKULL || (MOBJINFO[i].flags & MF_COUNTKILL)))
     {
         return;
     }
@@ -1317,9 +1317,9 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(mobj->tics > 0)
         mobj->tics = 1 + (P_Random() % mobj->tics);
     if(mobj->flags & MF_COUNTKILL)
-        totalKills++;
+        gs.map.totalKills++;
     if(mobj->flags & MF_COUNTITEM)
-        totalItems++;
+        gs.map.totalItems++;
 
     if(th->flags & MTF_DEAF)
         mobj->flags |= MF_AMBUSH;
@@ -1518,8 +1518,8 @@ void P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source)
     th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
 
-    // Allow free-aim with the BFG in deathmatch?
-    if(deathmatch && GAMERULES.freeAimBFG == 0 && type == MT_BFG)
+    // Allow free-aim with the BFG?
+    if(GAMERULES.freeAimBFG == 0 && type == MT_BFG)
         th->mom[MZ] = 0;
     else
         th->mom[MZ] = th->info->speed * slope;

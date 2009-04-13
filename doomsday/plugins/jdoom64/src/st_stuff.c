@@ -166,7 +166,7 @@ void ST_updateWidgets(int player)
     hudstate_t*         hud = &hudStates[player];
 
     // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
+    hud->statusbarFragsOn = GAMERULES.deathmatch && hud->statusbarActive;
     hud->currentFragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -259,7 +259,7 @@ void ST_doPaletteStuff(int player)
 static void drawWidgets(hudstate_t* hud)
 {
     // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
+    hud->statusbarFragsOn = GAMERULES.deathmatch && hud->statusbarActive;
 
     STlib_updateNum(&hud->wFrags, true);
 }
@@ -358,7 +358,7 @@ void ST_doFullscreenStuff(int player)
     textalpha = MINMAX_OF(0.f, textalpha, 1.f);
     iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
 
-    if(IS_NETGAME && deathmatch && PLRPROFILE.hud.shown[HUD_FRAGS])
+    if(IS_NETGAME && GAMERULES.deathmatch && PLRPROFILE.hud.shown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - HUDBORDERY;

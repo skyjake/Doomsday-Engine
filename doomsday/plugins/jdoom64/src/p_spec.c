@@ -571,7 +571,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
         break;
 
     case 53:
@@ -654,7 +654,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
         break;
 
     case 125:
@@ -971,7 +971,7 @@ void P_PlayerInSpecialSector(player_t *player)
             P_DamageMobj(player->plr->mo, NULL, NULL, 20);
 
         if(player->health <= 10)
-            G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+            G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
         break;
 */
 
@@ -1211,7 +1211,7 @@ void P_SpawnSpecials(void)
             {
             case 9:
                 // SECRET SECTOR
-                totalSecret++;
+                gs.map.totalSecret++;
                 break;
             }
             continue;
@@ -1277,7 +1277,7 @@ void P_SpawnSpecials(void)
 
         case 9:
             // SECRET SECTOR
-            totalSecret++;
+            gs.map.totalSecret++;
             break;
 
         case 10:
@@ -1328,7 +1328,7 @@ void P_SpawnSpecials(void)
         case 994: // jd64
             // kaiser - be sure to have that linedef count the secrets.
             // FIXME: DJS - secret lines??
-            totalSecret++;
+            gs.map.totalSecret++;
             break;
         }
 
@@ -1440,7 +1440,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         }
 
         P_ChangeSwitchMaterial(line, 0);
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
         break;
 
     case 14:
@@ -1522,7 +1522,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         }
 
         P_ChangeSwitchMaterial(line, 0);
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
         break;
 
     case 55:

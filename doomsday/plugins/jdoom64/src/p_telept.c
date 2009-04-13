@@ -337,7 +337,7 @@ static boolean fadeSpawn(thinker_t* th, void* context)
             S_StartSound(SFX_ITMBK, mo);
 
             if(MOBJINFO[spawntype].flags & MF_COUNTKILL)
-                totalKills++;
+                gs.map.totalKills++;
         }
     }
 

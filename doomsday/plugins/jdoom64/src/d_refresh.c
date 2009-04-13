@@ -216,7 +216,7 @@ void R_DrawMapTitle(void)
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Compose the mapnumber used to check the map name patches array.
-    mapnum = gameMap - 1;
+    mapnum = gs.map.id - 1;
 
     if(lname)
     {
@@ -309,7 +309,7 @@ static void rendHUD(int player)
     {
         automapid_t         map = AM_MapForPlayer(player);
 
-        if(!(IS_NETGAME && deathmatch))
+        if(!(IS_NETGAME && GAMERULES.deathmatch))
             HU_DrawCheatCounters();
 
         // Do we need to render a full status bar at this point?
@@ -438,7 +438,7 @@ void D_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(paused && !fiActive)
+    if(gs.paused && !fiActive)
     {
         WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, &m_pause, NULL, false,
                      ALIGN_CENTER);

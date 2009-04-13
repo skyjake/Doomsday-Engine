@@ -39,25 +39,7 @@
 
 extern int verbose;
 extern boolean devParm;
-extern boolean noMonstersParm;
-extern boolean respawnParm;
-extern boolean fastParm;
-extern boolean turboParm;
-extern float turboMul;
-extern skillmode_t startSkill;
-extern int startEpisode;
-extern int startMap;
-extern boolean autoStart;
-extern FILE *debugFile;
-extern gamemode_t gameMode;
-extern int gameModeBits;
-extern char gameModeString[];
-extern boolean monsterInfight;
-extern char title[];
-extern int demoSequence;
-extern int pageTic;
-extern char *pageName;
-extern char *borderLumps[];
+extern char* borderLumps[];
 
 void            G_PostInit(void);
 void            G_PreInit(void);

@@ -175,7 +175,7 @@ cvar_t gameCVars[] = {
     {"game-corpse-sliding", 0, CVT_BYTE, &GAMERULES.slidingCorpses, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &fastParm, 0, 1},
+    {"game-fastmonsters", 0, CVT_BYTE, &GAMERULES.fastMonsters, 0, 1},
 
 // Gameplay
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &PLRPROFILE.corpseTime, 0, 0},

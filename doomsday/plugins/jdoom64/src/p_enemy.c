@@ -1079,7 +1079,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(!fastParm)
+        if(!GAMERULES.fastMonsters)
             newChaseDir(actor);
 
         return;
@@ -1099,7 +1099,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(!fastParm && actor->moveCount))
+        if(!(!GAMERULES.fastMonsters && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1990,7 +1990,7 @@ void C_DECL A_CyberDeath(mobj_t *actor)
     if(bossKilled)
         return;
 
-    if((gameMap != 32) && (gameMap != 33) && (gameMap != 35))
+    if((gs.map.id != 32) && (gs.map.id != 33) && (gs.map.id != 35))
         return;
 
     // Make sure there is a player alive for victory.
@@ -2011,7 +2011,7 @@ void C_DECL A_CyberDeath(mobj_t *actor)
         return;
     }
 
-    if(gameMap == 32 || gameMap == 33)
+    if(gs.map.id == 32 || gs.map.id == 33)
     {
         dummyLine = P_AllocDummyLine();
         P_ToXLine(dummyLine)->tag = 666;
@@ -2020,9 +2020,9 @@ void C_DECL A_CyberDeath(mobj_t *actor)
         P_FreeDummyLine(dummyLine);
         return;
     }
-    else if(gameMap == 35)
+    else if(gs.map.id == 35)
     {
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
     }
 }
 
@@ -2083,7 +2083,7 @@ void C_DECL A_BarrelExplode(mobj_t* actor)
     if(bossKilled)
         return;
 
-    if(gameMap != 1)
+    if(gs.map.id != 1)
         return;
 
     if(actor->type != MT_BARREL)
@@ -2129,7 +2129,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    if(gameMap != 30)
+    if(gs.map.id != 30)
         return;
 
     if(mo->type != MT_BITCH)
@@ -2153,7 +2153,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return;
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -2163,8 +2163,8 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
-                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gs.gameMode != commercial &&
+                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2175,8 +2175,8 @@ void C_DECL A_Metal(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_MEAL |
-                 (gameMode != commercial &&
-                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gs.gameMode != commercial &&
+                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

@@ -64,36 +64,9 @@
 int verbose;
 
 boolean devParm; // checkparm of -devparm
-boolean noMonstersParm; // checkparm of -nomonsters
-boolean respawnParm; // checkparm of -respawn
-boolean fastParm; // checkparm of -fast
-boolean turboParm; // checkparm of -turbo
-
-float turboMul; // multiplier for turbo
-boolean monsterInfight;
-
-skillmode_t startSkill;
-int startEpisode;
-int startMap;
-boolean autoStart;
-FILE *debugFile;
-
-gamemode_t gameMode;
-int gameModeBits;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
-
-// Print title for every printed line.
-char title[128];
-
-// Demo loop.
-int demoSequence;
-int pageTic;
-char *pageName;
 
 // The patches used in drawing the view border.
-char *borderLumps[] = {
+char* borderLumps[] = {
     "FTILEABC",
     "brdr_t",
     "brdr_r",
@@ -106,6 +79,11 @@ char *borderLumps[] = {
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static skillmode_t startSkill;
+static int startEpisode;
+static int startMap;
+static boolean autoStart;
 
 // CODE --------------------------------------------------------------------
 
@@ -122,19 +100,19 @@ char *borderLumps[] = {
  */
 boolean G_SetGameMode(gamemode_t mode)
 {
-    gameMode = mode;
-
     if(G_GetGameState() == GS_MAP)
         return false;
+
+    gs.gameMode = mode;
 
     switch(mode)
     {
     case commercial:
-        gameModeBits = GM_COMMERCIAL;
+        gs.gameModeBits = GM_COMMERCIAL;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
+        gs.gameModeBits = GM_INDETERMINED;
         break;
 
     default:
@@ -230,9 +208,9 @@ void G_IdentifyVersion(void)
     // The game mode string is returned in DD_Get(DD_GAME_MODE).
     // It is sent out in netgames, and the pcl_hello2 packet contains it.
     // A client can't connect unless the same game mode is used.
-    memset(gameModeString, 0, sizeof(gameModeString));
+    memset(gs.gameModeString, 0, sizeof(gs.gameModeString));
 
-    strcpy(gameModeString, "doom64");
+    strcpy(gs.gameModeString, "doom64");
 }
 
 void G_InitPlayerProfile(playerprofile_t* pf)
@@ -352,13 +330,14 @@ void G_InitGameRules(gamerules_t* gr)
 
     memset(gr, 0, sizeof(gamerules_t));
 
+    gr->turboMul = 1.0f;
     gr->moveCheckZ = true;
     gr->jumpPower = 9;
     gr->announceSecrets = true;
     gr->slidingCorpses = false;
     gr->fastMonsters = false;
     gr->jumpAllow = true;
-    gr->freeAimBFG = 0; // Allow free-aim 0=none 1=not BFG 2=All.
+    gr->freeAimBFG = true;
     gr->mobDamageModifier = 1;
     gr->mobHealthModifier = 1;
     gr->gravityModifier = -1; // Use map default.
@@ -383,6 +362,9 @@ void G_PreInit(void)
     G_SetGameMode(indetermined);
 
     memset(gs.players, 0, sizeof(gs.players));
+    gs.state = GS_DEMOSCREEN;
+    gs.stateLast = -1;
+    gs.action = GA_NONE;
     gs.netMap = 1;
     gs.netSkill = SM_MEDIUM;
     gs.netSlot = 0;
@@ -442,10 +424,10 @@ void G_PostInit(void)
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
-    monsterInfight = GetDefInt("AI|Infight", 0);
+    GAMERULES.monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameSkill = startSkill = SM_NOITEMS;
+    gs.skill = startSkill = SM_NOITEMS;
     startEpisode = 1;
     startMap = 1;
     autoStart = false;
@@ -454,10 +436,11 @@ void G_PostInit(void)
     // None.
 
     // Command line options
-    noMonstersParm = ArgCheck("-nomonsters");
-    respawnParm = ArgCheck("-respawn");
-    fastParm = ArgCheck("-fast");
     devParm = ArgCheck("-devparm");
+
+    GAMERULES.noMonsters = ArgCheck("-nomonsters");
+    GAMERULES.respawn = ArgCheck("-respawn");
+    GAMERULES.fastMonsters = ArgCheck("-fast");
 
     if(ArgCheck("-altdeath"))
         GAMERULES.deathmatch = 2;
@@ -472,7 +455,7 @@ void G_PostInit(void)
     }
 
     p = ArgCheck("-timer");
-    if(p && p < myargc - 1 && deathmatch)
+    if(p && p < myargc - 1 && GAMERULES.deathmatch)
     {
         int                 time;
 
@@ -492,12 +475,10 @@ void G_PostInit(void)
 
     // Turbo option.
     p = ArgCheck("-turbo");
-    turboMul = 1.0f;
     if(p)
     {
         int                 scale = 200;
 
-        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -506,14 +487,7 @@ void G_PostInit(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turboMul = scale / 100.f;
-    }
-
-    // Are we autostarting?
-    if(autoStart)
-    {
-        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode,
-                    startMap, startSkill + 1);
+        GAMERULES.turboMul = scale / 100.f;
     }
 
     // Load a saved game?
@@ -522,6 +496,13 @@ void G_PostInit(void)
     {
         SV_GetSaveGameFileName(Argv(p + 1)[0] - '0', file);
         G_LoadGame(file);
+    }
+
+    // Are we autostarting?
+    if(autoStart)
+    {
+        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode,
+                    startMap, startSkill + 1);
     }
 
     // Check valid episode and map.
@@ -535,15 +516,6 @@ void G_PostInit(void)
             startMap = 1;
         }
     }
-
-    // Print a string showing the state of the game parameters.
-    Con_Message("Game state parameters:%s%s%s%s%s\n",
-                noMonstersParm? " nomonsters" : "",
-                respawnParm? " respawn" : "",
-                fastParm? " fast" : "",
-                turboParm? " turbo" : "",
-                (GAMERULES.deathmatch ==1)? " deathmatch" :
-                    (GAMERULES.deathmatch ==2)? " altdeath" : "");
 
     if(G_GetGameAction() != GA_LOADGAME)
     {
