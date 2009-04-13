@@ -271,7 +271,7 @@ static void rendHUD(int player)
         if((WINDOWHEIGHT != 200))
             redrawsbar = true;
 
-        if(!(IS_NETGAME && deathmatch))
+        if(!(IS_NETGAME && GAMERULES.deathmatch))
             HU_DrawCheatCounters();
 
         // Do we need to render a full status bar at this point?
@@ -412,7 +412,7 @@ void H_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(paused && !fiActive)
+    if(gs.paused && !fiActive)
     {
         GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
     }

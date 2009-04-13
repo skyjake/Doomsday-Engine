@@ -143,6 +143,7 @@ typedef struct {
         byte            ammoAutoSwitch;
         int             weaponOrder[NUM_WEAPON_TYPES];
         byte            weaponNextMode; // if true use the weaponOrder for next/previous.
+        byte            artiSkip; // whether shift-enter skips an artifact
     } inventory;
     struct {
         float           mobj[3];
@@ -183,6 +184,10 @@ typedef struct {
 } playerprofile_t;
 
 typedef struct {
+    int             deathmatch; // Only if started as net death.
+
+    float           turboMul; // multiplier for turbo
+    byte            monsterInfight;
     byte            moveCheckZ; // if true, mobjs can move over/under each other.
     float           jumpPower;
     byte            slidingCorpses;
@@ -196,7 +201,6 @@ typedef struct {
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
     byte            fallOff; // Objects fall under their own weight.
     byte            cameraNoClip;
-    byte            deathmatch;
     byte            mobDamageModifier; // multiplier for non-player mobj damage
     byte            mobHealthModifier; // health modifier for non-player mobjs
     int             gravityModifier; // multiplayer custom gravity
@@ -207,27 +211,6 @@ typedef struct {
     byte            jumpAllow;
     byte            fastMonsters;
 } gamerules_t;
-
-typedef struct {
-    playerprofile_t playerProfile;
-    struct {
-        playerclass_t   pClass;
-        byte            color;
-    } players[MAXPLAYERS];
-
-    byte            netEpisode;
-    byte            netMap;
-    byte            netSkill;
-    byte            netSlot;
-
-    gamerules_t     rules;
-    gameconfig_t    cfg;
-} game_state_t;
-
-#define PLRPROFILE          (gs.playerProfile)
-#define GAMERULES           (gs.rules)
-
-extern game_state_t gs;
 
 int             GetDefInt(char *def, int *returned_value);
 

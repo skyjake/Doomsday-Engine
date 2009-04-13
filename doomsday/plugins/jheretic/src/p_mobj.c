@@ -1049,7 +1049,7 @@ void P_MobjThinker(mobj_t *mobj)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnMonsters)
+        if(!GAMERULES.respawn)
             return;
 
         mobj->moveCount++;
@@ -1102,7 +1102,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         info->spawnHealth * (IS_NETGAME ? GAMERULES.mobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
-    if(gameSkill != SM_NIGHTMARE)
+    if(gs.skill != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;
@@ -1265,7 +1265,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int plrnum)
 
     p->pClass = PCLASS_PLAYER;
 
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {   // Give all keys in death match mode.
         for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
@@ -1327,12 +1327,12 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(!IS_NETGAME && (th->flags & 16))
         return;
 
-    if(gameSkill == SM_BABY)
+    if(gs.skill == SM_BABY)
         bit = 1;
-    else if(gameSkill == SM_NIGHTMARE)
+    else if(gs.skill == SM_NIGHTMARE)
         bit = 4;
     else
-        bit = 1 << (gameSkill - 1);
+        bit = 1 << (gs.skill - 1);
     if(!(th->flags & bit))
         return;
 
@@ -1357,11 +1357,11 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     // Don't spawn keys and players in deathmatch.
-    if(deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
+    if(GAMERULES.deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
         return;
 
     // Don't spawn any monsters if -nomonsters.
-    if(noMonstersParm && (MOBJINFO[i].flags & MF_COUNTKILL))
+    if(GAMERULES.noMonsters && (MOBJINFO[i].flags & MF_COUNTKILL))
         return;
 
     switch(i)
@@ -1377,14 +1377,14 @@ void P_SpawnMapThing(spawnspot_t *th)
     case MT_ARTISUPERHEAL:
     case MT_ARTITELEPORT:
     case MT_ITEMSHIELD2:
-        if(gameMode == shareware)
+        if(gs.gameMode == shareware)
         {   // Don't place on map in shareware version.
             return;
         }
         break;
 
     case MT_WMACE:
-        if(gameMode != shareware)
+        if(gs.gameMode != shareware)
         {   // Put in the mace spot list.
             P_AddMaceSpot(th);
             return;
@@ -1416,9 +1416,9 @@ void P_SpawnMapThing(spawnspot_t *th)
     if(mobj->tics > 0)
         mobj->tics = 1 + (P_Random() % mobj->tics);
     if(mobj->flags & MF_COUNTKILL)
-        totalKills++;
+        gs.map.totalKills++;
     if(mobj->flags & MF_COUNTITEM)
-        totalItems++;
+        gs.map.totalItems++;
 
     if(th->flags & MTF_AMBUSH)
         mobj->flags |= MF_AMBUSH;

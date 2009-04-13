@@ -94,7 +94,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     if(!(player->ammo[ammo].owned < player->ammo[ammo].max))
         return false;
 
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    if(gs.skill == SM_BABY || gs.skill == SM_NIGHTMARE)
     {   // Extra ammo in baby mode and nightmare mode.
         num += num / 1;
     }
@@ -125,7 +125,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
     boolean             gaveAmmo = false;
     boolean             gaveWeapon = false;
 
-    if(IS_NETGAME && !deathmatch)
+    if(IS_NETGAME && !GAMERULES.deathmatch)
     {
         // Leave placed weapons forever on net games.
         if(player->weapons[weapon].owned)
@@ -335,7 +335,7 @@ boolean P_GivePower(player_t* player, powertype_t power)
 void P_SetDormantArtifact(mobj_t *arti)
 {
     arti->flags &= ~MF_SPECIAL;
-    if(deathmatch && (arti->type != MT_ARTIINVULNERABILITY) &&
+    if(GAMERULES.deathmatch && (arti->type != MT_ARTIINVULNERABILITY) &&
        (arti->type != MT_ARTIINVISIBILITY))
     {
         P_MobjChangeState(arti, S_DORMANTARTI1);
@@ -848,7 +848,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
         break;
 
     default:
-        if(deathmatch && !(special->flags & MF_DROPPED))
+        if(GAMERULES.deathmatch && !(special->flags & MF_DROPPED))
             P_HideSpecialThing(special);
         else
             P_MobjRemove(special, false);
@@ -1089,7 +1089,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         }
     }
 
-    if((gameSkill == SM_BABY) && (normalCount * 25 >= saveHealth))
+    if((gs.skill == SM_BABY) && (normalCount * 25 >= saveHealth))
     {
         // Use quartz flasks.
         count = (saveHealth + 24) / 25;
@@ -1109,7 +1109,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
             P_InventoryTake(player, superSlot);
         }
     }
-    else if((gameSkill == SM_BABY) &&
+    else if((gs.skill == SM_BABY) &&
             (superCount * 100 + normalCount * 25 >= saveHealth))
     {
         // Use mystic urns and quartz flasks.
@@ -1181,7 +1181,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && GAMERULES.noCoopDamage)
+            if(IS_NETGAME && !GAMERULES.deathmatch && GAMERULES.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
@@ -1203,7 +1203,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     }
 
     player = target->player;
-    if(player && gameSkill == SM_BABY)
+    if(player && gs.skill == SM_BABY)
         damage /= 2; // Take half damage in trainer mode.
 
     // Use the cvar damage multiplier netMobDamageModifier only if the
@@ -1436,7 +1436,8 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         }
 
         if(damage >= player->health &&
-           ((gameSkill == SM_BABY) || deathmatch) && !player->morphTics)
+           ((gs.skill == SM_BABY) || GAMERULES.deathmatch) &&
+           !player->morphTics)
         {   // Try to use some inventory health.
             P_AutoUseHealth(player, damage - player->health + 1);
         }

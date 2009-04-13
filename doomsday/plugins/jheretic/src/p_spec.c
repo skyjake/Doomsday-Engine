@@ -500,7 +500,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
         break;
 
     case 53:
@@ -586,7 +586,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
   //case 124: // DJS - In Heretic, the secret exit is 105
     case 105:
         // Secret EXIT
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
         break;
 
     // DJS - Heretic has an additional stair build special
@@ -1076,7 +1076,7 @@ void P_SpawnSpecials(void)
             {
             case 9:
                 // SECRET SECTOR
-                totalSecret++;
+                gs.map.totalSecret++;
                 break;
 
             default:
@@ -1116,7 +1116,7 @@ void P_SpawnSpecials(void)
 
         case 9:
             // SECRET SECTOR
-            totalSecret++;
+            gs.map.totalSecret++;
             break;
 
         case 10:
@@ -1573,7 +1573,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
         P_ChangeSwitchMaterial(line, 0);
         break;
 
@@ -1636,7 +1636,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
         P_ChangeSwitchMaterial(line, 0);
         break;
 

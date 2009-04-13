@@ -254,7 +254,7 @@ void P_ArtiTele(player_t* player)
     angle_t             destAngle;
 
     //// \todo Spawn spot selection does not belong in this file.
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         selections = deathmatchP - deathmatchStarts;
         i = P_Random() % selections;

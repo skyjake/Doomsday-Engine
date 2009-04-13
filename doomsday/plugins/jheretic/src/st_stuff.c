@@ -449,7 +449,7 @@ static void drawStatusBarBackground(int player)
 
         if(!hud->inventory)
         {
-            if(deathmatch)
+            if(GAMERULES.deathmatch)
                 GL_DrawPatch(34, 160, statBar.lump);
             else
                 GL_DrawPatch(34, 160, lifeBar.lump);
@@ -493,7 +493,7 @@ static void drawStatusBarBackground(int player)
 
         if(!hud->inventory)
         {
-            if(deathmatch)
+            if(GAMERULES.deathmatch)
                 GL_DrawPatch_CS(34, 160, statBar.lump);
             else
                 GL_DrawPatch_CS(34, 160, lifeBar.lump);
@@ -555,7 +555,7 @@ void ST_updateWidgets(int player)
     }
 
     // Used by wFrags widget.
-    hud->fragsOn = deathmatch && hud->statusbarActive;
+    hud->fragsOn = GAMERULES.deathmatch && hud->statusbarActive;
     hud->fragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -718,7 +718,7 @@ static void drawWidgets(hudstate_t* hud)
         // Draw all the counters.
 
         // Frags.
-        if(deathmatch)
+        if(GAMERULES.deathmatch)
             STlib_updateNum(&hud->wFrags, refresh);
         else
             STlib_updateNum(&hud->wHealth, refresh);
@@ -1196,7 +1196,7 @@ Draw_BeginZoom(PLRPROFILE.hud.scale, 2, 198);
     }
 Draw_EndZoom();
 
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         temp = 0;
         for(i = 0; i < MAXPLAYERS; ++i)

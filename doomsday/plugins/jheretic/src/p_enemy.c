@@ -667,7 +667,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(actor->threshold)
         actor->threshold--;
 
-    if(gameSkill == SM_NIGHTMARE || GAMERULES.fastMonsters)
+    if(gs.skill == SM_NIGHTMARE || GAMERULES.fastMonsters)
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
@@ -703,7 +703,7 @@ void C_DECL A_Chase(mobj_t* actor)
     {
         actor->flags &= ~MF_JUSTATTACKED;
 
-        if(gameSkill != SM_NIGHTMARE)
+        if(gs.skill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -722,7 +722,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill < SM_NIGHTMARE && actor->moveCount))
+        if(!(gs.skill < SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
@@ -2083,11 +2083,11 @@ void C_DECL A_BossDeath(mobj_t* actor)
     countmobjoftypeparams_t params;
 
     // Not a boss level?
-    if(gameMap != 8)
+    if(gs.map.id != 8)
         return;
 
     // Not considered a boss in this episode?
-    if(actor->type != bossType[gameEpisode - 1])
+    if(actor->type != bossType[gs.episode - 1])
         return;
 
     // Scan the remaining thinkers to see if all bosses are dead.
@@ -2101,7 +2101,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
     }
 
     // Kill any remaining monsters.
-    if(gameEpisode > 1)
+    if(gs.episode > 1)
         P_Massacre();
 
     dummyLine = P_AllocDummyLine();

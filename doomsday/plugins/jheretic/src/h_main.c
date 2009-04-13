@@ -64,32 +64,12 @@
 int verbose;
 
 boolean devParm; // checkparm of -devparm
-boolean noMonstersParm; // checkparm of -nomonsters
-boolean respawnParm; // checkparm of -respawn
-boolean turboParm; // checkparm of -turbo
-boolean fastParm; // checkparm of -fast
-boolean artiSkipParm; // whether shift-enter skips an artifact
-
-float turboMul; // multiplier for turbo
-
-skillmode_t startSkill;
-int startEpisode;
-int startMap;
-boolean autoStart;
-
-gamemode_t gameMode;
-int gameModeBits;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
-
-boolean monsterInfight;
 
 // Default font colours.
 const float defFontRGB[] = { .425f, 0.986f, 0.378f};
 const float defFontRGB2[] = { 1.0f, 1.0f, 1.0f};
 
-char *borderLumps[] = {
+char* borderLumps[] = {
     "FLAT513", // background
     "bordt", // top
     "bordr", // right
@@ -101,9 +81,12 @@ char *borderLumps[] = {
     "bordbl" // bottom left
 };
 
-char *baseDefault = "heretic.cfg";
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static skillmode_t startSkill;
+static int startEpisode;
+static int startMap;
+static boolean autoStart;
 
 // CODE --------------------------------------------------------------------
 
@@ -120,27 +103,27 @@ char *baseDefault = "heretic.cfg";
  */
 boolean G_SetGameMode(gamemode_t mode)
 {
-    gameMode = mode;
-
     if(G_GetGameState() == GS_MAP)
         return false;
+
+    gs.gameMode = mode;
 
     switch(mode)
     {
     case shareware: // shareware, E1, M9
-        gameModeBits = GM_SHAREWARE;
+        gs.gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // registered episodes
-        gameModeBits = GM_REGISTERED;
+        gs.gameModeBits = GM_REGISTERED;
         break;
 
     case extended: // episodes 4 and 5 present
-        gameModeBits = GM_EXTENDED;
+        gs.gameModeBits = GM_EXTENDED;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
+        gs.gameModeBits = GM_INDETERMINED;
         break;
 
     default:
@@ -148,44 +131,6 @@ boolean G_SetGameMode(gamemode_t mode)
     }
 
     return true;
-}
-
-static void addFile(char *file)
-{
-    int             numWADFiles;
-    char           *new;
-
-    for(numWADFiles = 0; wadFiles[numWADFiles]; numWADFiles++);
-
-    new = malloc(strlen(file) + 1);
-    strcpy(new, file);
-    if(strlen(exrnWADs) + strlen(file) < 78)
-    {
-        if(strlen(exrnWADs))
-        {
-            strcat(exrnWADs, ", ");
-        }
-        else
-        {
-            strcpy(exrnWADs, "External Wadfiles: ");
-        }
-        strcat(exrnWADs, file);
-    }
-    else if(strlen(exrnWADs2) + strlen(file) < 79)
-    {
-        if(strlen(exrnWADs2))
-        {
-            strcat(exrnWADs2, ", ");
-        }
-        else
-        {
-            strcpy(exrnWADs2, "     ");
-            strcat(exrnWADs, ",");
-        }
-        strcat(exrnWADs2, file);
-    }
-
-    wadFiles[numWADFiles] = new;
 }
 
 /**
@@ -209,17 +154,17 @@ void G_DetectIWADs(void)
 void G_IdentifyVersion(void)
 {
     // The game mode string is used in netgames.
-    strcpy(gameModeString, "heretic");
+    strcpy(gs.gameModeString, "heretic");
 
     if(W_CheckNumForName("E2M1") == -1)
     {
         // Can't find episode 2 maps, must be the shareware WAD
-        strcpy(gameModeString, "heretic-share");
+        strcpy(gs.gameModeString, "heretic-share");
     }
     else if(W_CheckNumForName("EXTENDED") != -1)
     {
         // Found extended lump, must be the extended WAD
-        strcpy(gameModeString, "heretic-ext");
+        strcpy(gs.gameModeString, "heretic-ext");
     }
 }
 
@@ -346,6 +291,7 @@ void G_InitGameRules(gamerules_t* gr)
 
     memset(gr, 0, sizeof(gamerules_t));
 
+    gr->turboMul = 1.0f;
     gr->moveCheckZ = true;
     gr->jumpPower = 9;
     gr->slidingCorpses = false;
@@ -360,7 +306,6 @@ void G_InitGameRules(gamerules_t* gr)
     gr->moveBlock = false;
     gr->fallOff = true;
     gr->cameraNoClip = true;
-    gr->respawnMonstersNightmare = false;
 }
 
 /**
@@ -376,6 +321,9 @@ void G_PreInit(void)
         borderLumps[0] = "FLOOR04";
 
     memset(gs.players, 0, sizeof(gs.players));
+    gs.state = GS_DEMOSCREEN;
+    gs.stateLast = -1;
+    gs.action = GA_NONE;
     gs.netEpisode = 1;
     gs.netMap = 1;
     gs.netSkill = SM_MEDIUM;
@@ -443,14 +391,14 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gameMode == shareware? "Heretic Shareware Startup\n" :
-                gameMode == registered? "Heretic Registered Startup\n" :
-                gameMode == extended? "Heretic: Shadow of the Serpent Riders Startup\n" :
+                gs.gameMode == shareware? "Heretic Shareware Startup\n" :
+                gs.gameMode == registered? "Heretic Registered Startup\n" :
+                gs.gameMode == extended? "Heretic: Shadow of the Serpent Riders Startup\n" :
                 "Public Heretic\n");
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
-    monsterInfight = GetDefInt("AI|Infight", 0);
+    GAMERULES.monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Defaults for skill, episode and map.
     startSkill = SM_MEDIUM;
@@ -462,10 +410,11 @@ void G_PostInit(void)
     /* None */
 
     // Command line options.
-    noMonstersParm = ArgCheck("-nomonsters");
-    respawnParm = ArgCheck("-respawn");
     devParm = ArgCheck("-devparm");
-    artiSkipParm = !(ArgCheck("-noartiskip"));
+    PLRPROFILE.inventory.artiSkip = !(ArgCheck("-noartiskip"));
+
+    GAMERULES.noMonsters = ArgCheck("-nomonsters");
+    GAMERULES.respawn = ArgCheck("-respawn");
 
     if(ArgCheck("-deathmatch"))
     {
@@ -497,12 +446,10 @@ void G_PostInit(void)
 
     // turbo option.
     p = ArgCheck("-turbo");
-    turboMul = 1.0f;
     if(p)
     {
         int             scale = 200;
 
-        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -511,14 +458,7 @@ void G_PostInit(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turboMul = scale / 100.f;
-    }
-
-    // Are we autostarting?
-    if(autoStart)
-    {
-        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode,
-                    startMap, startSkill + 1);
+        GAMERULES.turboMul = scale / 100.f;
     }
 
     // Load a saved game?
@@ -527,6 +467,13 @@ void G_PostInit(void)
     {
         SV_GetSaveGameFileName(Argv(p + 1)[0] - '0', file);
         G_LoadGame(file);
+    }
+
+    // Are we autostarting?
+    if(autoStart)
+    {
+        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode,
+                    startMap, startSkill + 1);
     }
 
     // Check valid episode and map

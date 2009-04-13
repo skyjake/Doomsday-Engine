@@ -871,9 +871,9 @@ void SV_v13_LoadGame(char *savename)
         Con_Message("Savegame ID '%s': incompatible?\n", save_p);
     }
     save_p += VERSIONSIZE;
-    gameSkill = *save_p++;
-    gameEpisode = *save_p++;
-    gameMap = *save_p++;
+    gs.skill = *save_p++;
+    gs.episode = *save_p++;
+    gs.map.id = *save_p++;
 
     for(i = 0; i < 4; ++i)
     {
@@ -881,7 +881,7 @@ void SV_v13_LoadGame(char *savename)
     }
 
     // Load a base map.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_InitNew(gs.skill, gs.episode, gs.map.id);
 
     // Create map time.
     a = *save_p++;

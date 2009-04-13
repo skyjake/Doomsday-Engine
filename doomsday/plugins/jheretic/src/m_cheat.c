@@ -329,7 +329,7 @@ boolean Cht_Responder(event_t* ev)
     if(ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
 
-    if(IS_NETGAME || gameSkill == SM_NIGHTMARE)
+    if(IS_NETGAME || gs.skill == SM_NIGHTMARE)
     {   // Can't cheat in a net-game, or in nightmare mode.
         return false;
     }
@@ -354,7 +354,7 @@ boolean Cht_Responder(event_t* ev)
     {
         if(ev->state == EVS_DOWN)
         {
-            if(!deathmatch && cheatAutomap[cheatCount] == ev->data1)
+            if(!GAMERULES.deathmatch && cheatAutomap[cheatCount] == ev->data1)
                 cheatCount++;
             else
                 cheatCount = 0;
@@ -383,7 +383,7 @@ static boolean canCheat(void)
     if(IS_NETGAME && !IS_CLIENT && netSvAllowCheats)
         return true;
 
-    return !(gameSkill == SM_NIGHTMARE || (IS_NETGAME /*&& !netcheat */ )
+    return !(gs.skill == SM_NIGHTMARE || (IS_NETGAME /*&& !netcheat */ )
              || players[CONSOLEPLAYER].health <= 0);
 }
 
@@ -492,7 +492,7 @@ static void cheatWeaponsFunc(player_t *player, cheatseq_t *cheat)
     }
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        if(weaponInfo[i][0].mode[0].gameModeBits & gameModeBits)
+        if(weaponInfo[i][0].mode[0].gameModeBits & gs.gameModeBits)
             player->weapons[i].owned = true;
     }
 
@@ -593,7 +593,7 @@ static void cheatArtifact3Func(player_t *player, cheatseq_t * cheat)
     {                           // All artifacts
         for(type = AFT_NONE + 1; type < NUM_ARTIFACT_TYPES; type++)
         {
-            if(gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
+            if(gs.gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
             {
                 continue;
             }
@@ -607,7 +607,7 @@ static void cheatArtifact3Func(player_t *player, cheatseq_t * cheat)
     }
     else if(type > AFT_NONE && type < NUM_ARTIFACT_TYPES && count > 0 && count < 10)
     {
-        if(gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
+        if(gs.gameMode == shareware && (type == AFT_SUPERHEALTH || type == AFT_TELEPORT))
         {
             P_SetMessage(player, TXT_CHEATARTIFACTSFAIL, false);
             return;
@@ -634,7 +634,7 @@ static void cheatWarpFunc(player_t *player, cheatseq_t *cheat)
     map = cheat->args[1] - '0';
     if(G_ValidateMap(&episode, &map))
     {
-        G_DeferedInitNew(gameSkill, episode, map);
+        G_DeferedInitNew(gs.skill, episode, map);
         Hu_MenuCommand(MCMD_CLOSE);
         P_SetMessage(player, TXT_CHEATWARP, false);
     }
@@ -677,22 +677,22 @@ static void cheatIDKFAFunc(player_t *player, cheatseq_t * cheat)
     P_SetMessage(player, TXT_CHEATIDKFA, false);
 }
 
-static void cheatIDDQDFunc(player_t *player, cheatseq_t *cheat)
+static void cheatIDDQDFunc(player_t* player, cheatseq_t* cheat)
 {
     P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000, false);
     P_SetMessage(player, TXT_CHEATIDDQD, false);
 }
 
-static void CheatDebugFunc(player_t *player, cheatseq_t *cheat)
+static void CheatDebugFunc(player_t* player, cheatseq_t* cheat)
 {
     char                lumpName[9];
     char                textBuffer[256];
-    subsector_t        *sub;
+    subsector_t*        sub;
 
-    if(!player->plr->mo || !userGame)
+    if(!player->plr->mo || !gs.userGame)
         return;
 
-    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+    P_GetMapLumpName(gs.episode, gs.map.id, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName,
             player->plr->mo->pos[VX],
@@ -966,7 +966,7 @@ DEFCC(CCmdCheatGive)
                 idx = ((int) buf[i+1]) - 48;
                 if(idx >= 0 && idx < NUM_WEAPON_TYPES)
                 {   // Give one specific weapon.
-                    if(weaponInfo[idx][0].mode[0].gameModeBits & gameModeBits)
+                    if(weaponInfo[idx][0].mode[0].gameModeBits & gs.gameModeBits)
                     {
                         plyr->update |= PSF_OWNED_WEAPONS;
                         plyr->weapons[idx].owned = true;
@@ -1038,7 +1038,7 @@ DEFCC(CCmdCheatLeaveMap)
     }
 
     // Exit the level.
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
 
     return true;
 }

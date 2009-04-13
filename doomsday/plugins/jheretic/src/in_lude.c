@@ -232,7 +232,7 @@ void IN_InitStats(void)
     {
         gameType = SINGLE;
     }
-    else if( /*IS_NETGAME && */ !deathmatch)
+    else if( /*IS_NETGAME && */ !GAMERULES.deathmatch)
     {
         gameType = COOPERATIVE;
         memset(killPercent, 0, sizeof(killPercent));
@@ -242,23 +242,23 @@ void IN_InitStats(void)
         {
             if(players[i].plr->inGame)
             {
-                if(totalKills)
+                if(gs.map.totalKills)
                 {
-                    j = players[i].killCount * 100 / totalKills;
+                    j = players[i].killCount * 100 / gs.map.totalKills;
                     if(j > killPercent[playerTeam[i]])
                         killPercent[playerTeam[i]] = j;
                 }
 
-                if(totalItems)
+                if(gs.map.totalItems)
                 {
-                    j = players[i].itemCount * 100 / totalItems;
+                    j = players[i].itemCount * 100 / gs.map.totalItems;
                     if(j > bonusPercent[playerTeam[i]])
                         bonusPercent[playerTeam[i]] = j;
                 }
 
-                if(totalSecret)
+                if(gs.map.totalSecret)
                 {
-                    j = players[i].secretCount * 100 / totalSecret;
+                    j = players[i].secretCount * 100 / gs.map.totalSecret;
                     if(j > secretPercent[playerTeam[i]])
                         secretPercent[playerTeam[i]] = j;
                 }
@@ -330,7 +330,7 @@ void IN_LoadPics(void)
 {
     int                 i;
 
-    switch(gameEpisode)
+    switch(gs.episode)
     {
     case 1:
         interPic = W_GetNumForName("MAPE1");
@@ -387,7 +387,7 @@ void IN_Ticker(void)
     if(oldInterTime < interTime)
     {
         interState++;
-        if(gameEpisode > 3 && interState >= 1)
+        if(gs.episode > 3 && interState >= 1)
         {
             // Extended Wad levels:  skip directly to the next level
             interState = 3;
@@ -397,7 +397,7 @@ void IN_Ticker(void)
         {
         case 0:
             oldInterTime = interTime + 300;
-            if(gameEpisode > 3)
+            if(gs.episode > 3)
             {
                 oldInterTime = interTime + 1200;
             }
@@ -429,7 +429,7 @@ void IN_Ticker(void)
             NetSv_Intermission(IMF_TIME, 0, interTime);
             return;
         }
-        else if(interState < 2 && gameEpisode < 4)
+        else if(interState < 2 && gs.episode < 4)
         {
             interState = 2;
             skipIntermission = false;
@@ -529,7 +529,7 @@ void IN_Drawer(void)
         break;
 
     case 1: // Leaving old level.
-        if(gameEpisode < 4)
+        if(gs.episode < 4)
         {
             GL_DrawPatch(0, 0, interPic);
             IN_DrawOldLevel();
@@ -537,7 +537,7 @@ void IN_Drawer(void)
         break;
 
     case 2: // Going to the next level.
-        if(gameEpisode < 4)
+        if(gs.episode < 4)
         {
             GL_DrawPatch(0, 0, interPic);
             IN_DrawYAH();
@@ -545,7 +545,7 @@ void IN_Drawer(void)
         break;
 
     case 3: // Waiting before going to the next level.
-        if(gameEpisode < 4)
+        if(gs.episode < 4)
         {
             GL_DrawPatch(0, 0, interPic);
         }
@@ -570,7 +570,7 @@ void IN_DrawOldLevel(void)
     int                 i, x;
     char               *levelname;
 
-    levelname = P_GetShortMapName(gameEpisode, prevMap);
+    levelname = P_GetShortMapName(gs.episode, gs.mapPrev.id);
 
     x = 160 - M_StringWidth(levelname, huFontB) / 2;
     M_WriteText2(x, 3, levelname, huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -578,38 +578,38 @@ void IN_DrawOldLevel(void)
     x = 160 - M_StringWidth("FINISHED", huFontA) / 2;
     M_WriteText2(x, 25, "FINISHED", huFontA, defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
 
-    if(prevMap == 9)
+    if(gs.mapPrev.id == 9)
     {
-        for(i = 0; i < gameMap - 1; ++i)
+        for(i = 0; i < gs.map.id - 1; ++i)
         {
-            GL_DrawPatch(YAHspot[gameEpisode - 1][i].x,
-                         YAHspot[gameEpisode - 1][i].y, beenThere);
+            GL_DrawPatch(YAHspot[gs.episode - 1][i].x,
+                         YAHspot[gs.episode - 1][i].y, beenThere);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(YAHspot[gameEpisode - 1][8].x,
-                         YAHspot[gameEpisode - 1][8].y, beenThere);
+            GL_DrawPatch(YAHspot[gs.episode - 1][8].x,
+                         YAHspot[gs.episode - 1][8].y, beenThere);
         }
     }
     else
     {
-        for(i = 0; i < prevMap - 1; ++i)
+        for(i = 0; i < gs.mapPrev.id - 1; ++i)
         {
-            GL_DrawPatch(YAHspot[gameEpisode - 1][i].x,
-                         YAHspot[gameEpisode - 1][i].y, beenThere);
+            GL_DrawPatch(YAHspot[gs.episode - 1][i].x,
+                         YAHspot[gs.episode - 1][i].y, beenThere);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(YAHspot[gameEpisode - 1][8].x,
-                         YAHspot[gameEpisode - 1][8].y, beenThere);
+            GL_DrawPatch(YAHspot[gs.episode - 1][8].x,
+                         YAHspot[gs.episode - 1][8].y, beenThere);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(YAHspot[gameEpisode - 1][prevMap - 1].x,
-                         YAHspot[gameEpisode - 1][prevMap - 1].y, beenThere);
+            GL_DrawPatch(YAHspot[gs.episode - 1][gs.mapPrev.id - 1].x,
+                         YAHspot[gs.episode - 1][gs.mapPrev.id - 1].y, beenThere);
         }
     }
 }
@@ -619,7 +619,7 @@ void IN_DrawYAH(void)
     int                 i, x;
     char               *levelname;
 
-    levelname = P_GetShortMapName(gameEpisode, gameMap);
+    levelname = P_GetShortMapName(gs.episode, gs.map.id);
 
     x = 160 - M_StringWidth("NOW ENTERING:", huFontA) / 2;
     M_WriteText2(x, 10, "NOW ENTERING:", huFontA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
@@ -627,27 +627,27 @@ void IN_DrawYAH(void)
     x = 160 - M_StringWidth(levelname, huFontB) / 2;
     M_WriteText2(x, 20, levelname, huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    if(prevMap == 9)
+    if(gs.mapPrev.id == 9)
     {
-        prevMap = gameMap - 1;
+        gs.mapPrev.id = gs.map.id - 1;
     }
 
-    for(i = 0; i < prevMap; ++i)
+    for(i = 0; i < gs.mapPrev.id; ++i)
     {
-        GL_DrawPatch(YAHspot[gameEpisode - 1][i].x,
-                     YAHspot[gameEpisode - 1][i].y, beenThere);
+        GL_DrawPatch(YAHspot[gs.episode - 1][i].x,
+                     YAHspot[gs.episode - 1][i].y, beenThere);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(YAHspot[gameEpisode - 1][8].x,
-                     YAHspot[gameEpisode - 1][8].y, beenThere);
+        GL_DrawPatch(YAHspot[gs.episode - 1][8].x,
+                     YAHspot[gs.episode - 1][8].y, beenThere);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        GL_DrawPatch(YAHspot[gameEpisode - 1][gameMap - 1].x,
-                     YAHspot[gameEpisode - 1][gameMap - 1].y, goingThere);
+        GL_DrawPatch(YAHspot[gs.episode - 1][gs.map.id - 1].x,
+                     YAHspot[gs.episode - 1][gs.map.id - 1].y, goingThere);
     }
 }
 
@@ -658,7 +658,7 @@ void IN_DrawSingleStats(void)
     int                 x;
     char               *levelname;
 
-    levelname = P_GetShortMapName(gameEpisode, prevMap);
+    levelname = P_GetShortMapName(gs.episode, gs.mapPrev.id);
 
     M_WriteText2(50, 65, "KILLS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_WriteText2(50, 90, "ITEMS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -686,7 +686,7 @@ void IN_DrawSingleStats(void)
     GL_DrawPatchLitAlpha(250, 67, 0, .4f, slash);
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     GL_DrawPatch_CS(248, 65, slash);
-    IN_DrawNumber(totalKills, 248, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    IN_DrawNumber(gs.map.totalKills, 248, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 60)
     {
@@ -703,7 +703,7 @@ void IN_DrawSingleStats(void)
     GL_DrawPatchLitAlpha(250, 92, 0, .4f, slash);
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     GL_DrawPatch_CS(248, 90, slash);
-    IN_DrawNumber(totalItems, 248, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    IN_DrawNumber(gs.map.totalItems, 248, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 90)
     {
@@ -720,7 +720,7 @@ void IN_DrawSingleStats(void)
     GL_DrawPatchLitAlpha(250, 117, 0, .4f, slash);
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     GL_DrawPatch_CS(248, 115, slash);
-    IN_DrawNumber(totalSecret, 248, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    IN_DrawNumber(gs.map.totalSecret, 248, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 150)
     {
@@ -733,7 +733,7 @@ void IN_DrawSingleStats(void)
         sounds++;
     }
 
-    if(gameMode != extended || gameEpisode < 4)
+    if(gs.gameMode != extended || gs.episode < 4)
     {
         M_WriteText2(85, 160, "TIME", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         IN_DrawTime(155, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -743,7 +743,7 @@ void IN_DrawSingleStats(void)
         x = 160 - M_StringWidth("NOW ENTERING:", huFontA) / 2;
         M_WriteText2(x, 160, "NOW ENTERING:", huFontA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
-        levelname = P_GetShortMapName(gameEpisode, gameMap);
+        levelname = P_GetShortMapName(gs.episode, gs.map.id);
 
         x = 160 - M_StringWidth(levelname, huFontB) / 2;
         M_WriteText2(x, 170, levelname, huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -761,7 +761,7 @@ void IN_DrawCoopStats(void)
     int                 ypos;
     char               *levelname;
 
-    levelname = P_GetShortMapName(gameEpisode, prevMap);
+    levelname = P_GetShortMapName(gs.episode, gs.mapPrev.id);
 
     M_WriteText2(95, 35, "KILLS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_WriteText2(155, 35, "BONUS", huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
