@@ -52,7 +52,7 @@
 // All the versions of DOOM have different savegame IDs, but 500 will be the
 // savegame base from now on.
 #define SAVE_VERSION_BASE   500
-#define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
+#define SAVE_VERSION        (SAVE_VERSION_BASE + gs.gameMode)
 #define SAVESTRINGSIZE      (24)
 #define VERSIONSIZE         (16)
 
@@ -887,14 +887,14 @@ void SV_v19_LoadGame(char *savename)
     }
     savePtr += VERSIONSIZE;
 
-    gameSkill = *savePtr++;
-    gameEpisode = *savePtr++;
-    gameMap = *savePtr++;
+    gs.skill = *savePtr++;
+    gs.episode = *savePtr++;
+    gs.map.id = *savePtr++;
     for(i = 0; i < 4; ++i)
         players[i].plr->inGame = *savePtr++;
 
     // Load a base map.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_InitNew(gs.skill, gs.episode, gs.map.id);
 
     // Get the map time.
     a = *savePtr++;

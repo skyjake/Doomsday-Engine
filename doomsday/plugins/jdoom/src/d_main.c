@@ -63,23 +63,9 @@
 int verbose;
 
 boolean devParm; // checkparm of -devparm
-boolean noMonstersParm; // checkparm of -noMonstersParm
-boolean respawnParm; // checkparm of -respawn
-boolean fastParm; // checkparm of -fast
-boolean turboParm; // checkparm of -turbo
-
-float turboMul; // multiplier for turbo
-boolean monsterInfight;
-
-gamemode_t gameMode;
-int gameModeBits;
-gamemission_t gameMission = GM_DOOM;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
 
 // The patches used in drawing the view border.
-char *borderLumps[] = {
+char* borderLumps[] = {
     "FLOOR7_2",
     "brdr_t",
     "brdr_r",
@@ -113,37 +99,37 @@ static boolean autoStart;
  */
 boolean G_SetGameMode(gamemode_t mode)
 {
-    gameMode = mode;
-
     if(G_GetGameState() == GS_MAP)
         return false;
+
+    gs.gameMode = mode;
 
     switch(mode)
     {
     case shareware: // DOOM 1 shareware, E1, M9
-        gameModeBits = GM_SHAREWARE;
+        gs.gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // DOOM 1 registered, E3, M27
-        gameModeBits = GM_REGISTERED;
+        gs.gameModeBits = GM_REGISTERED;
         break;
 
     case commercial: // DOOM 2 retail, E1 M34
-        gameModeBits = GM_COMMERCIAL;
+        gs.gameModeBits = GM_COMMERCIAL;
         break;
 
     // DOOM 2 german edition not handled
 
     case retail: // DOOM 1 retail, E4, M36
-        gameModeBits = GM_RETAIL;
+        gs.gameModeBits = GM_RETAIL;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
+        gs.gameModeBits = GM_INDETERMINED;
         break;
 
     default:
-        Con_Error("G_SetGameMode: Unknown gameMode %i", mode);
+        Con_Error("G_SetGameMode: Unknown gs.gameMode %i", mode);
     }
 
     return true;
@@ -286,11 +272,11 @@ static void identifyFromData(void)
     {
         // DOOM 2.
         G_SetGameMode(commercial);
-        gameMission = GM_DOOM2;
+        gs.gameMission = GM_DOOM2;
         if(ArgCheck("-plutonia"))
-            gameMission = GM_PLUT;
+            gs.gameMission = GM_PLUT;
         if(ArgCheck("-tnt"))
-            gameMission = GM_TNT;
+            gs.gameMission = GM_TNT;
         return;
     }
 
@@ -311,13 +297,13 @@ static void identifyFromData(void)
             G_SetGameMode(list[i].mode);
             // Check the mission packs.
             if(lumpsFound(plutonia_lumps))
-                gameMission = GM_PLUT;
+                gs.gameMission = GM_PLUT;
             else if(lumpsFound(tnt_lumps))
-                gameMission = GM_TNT;
-            else if(gameMode == commercial)
-                gameMission = GM_DOOM2;
+                gs.gameMission = GM_TNT;
+            else if(gs.gameMode == commercial)
+                gs.gameMission = GM_DOOM2;
             else
-                gameMission = GM_DOOM;
+                gs.gameMission = GM_DOOM;
             return;
         }
     }
@@ -329,7 +315,7 @@ static void identifyFromData(void)
 }
 
 /**
- * gameMode, gameMission and the gameModeString are set.
+ * gs.gameMode, gs.gameMission and the gs.gameModeString are set.
  */
 void G_IdentifyVersion(void)
 {
@@ -338,15 +324,15 @@ void G_IdentifyVersion(void)
     // The game mode string is returned in DD_Get(DD_GAME_MODE).
     // It is sent out in netgames, and the PCL_HELLO2 packet contains it.
     // A client can't connect unless the same game mode is used.
-    memset(gameModeString, 0, sizeof(gameModeString));
+    memset(gs.gameModeString, 0, sizeof(gs.gameModeString));
 
-    strcpy(gameModeString,
-           gameMode == shareware ? "doom1-share" :
-           gameMode == registered ? "doom1" :
-           gameMode == retail ? "doom1-ultimate" :
-           gameMode == commercial ?
-                (gameMission == GM_PLUT ? "doom2-plut" :
-                 gameMission == GM_TNT ? "doom2-tnt" : "doom2") :
+    strcpy(gs.gameModeString,
+           gs.gameMode == shareware ? "doom1-share" :
+           gs.gameMode == registered ? "doom1" :
+           gs.gameMode == retail ? "doom1-ultimate" :
+           gs.gameMode == commercial ?
+                (gs.gameMission == GM_PLUT ? "doom2-plut" :
+                 gs.gameMission == GM_TNT ? "doom2-tnt" : "doom2") :
            "-");
 }
 
@@ -472,13 +458,14 @@ void G_InitGameRules(gamerules_t* gr)
 
     memset(gr, 0, sizeof(gamerules_t));
 
+    gr->turboMul = 1.0f;
     gr->moveCheckZ = true;
     gr->jumpPower = 9;
     gr->announceSecrets = true;
     gr->slidingCorpses = false;
     gr->fastMonsters = false;
     gr->jumpAllow = true;
-    gr->freeAimBFG = 0; // allow free-aim 0=none 1=not BFG 2=All
+    gr->freeAimBFG = true;
     gr->mobDamageModifier = 1;
     gr->mobHealthModifier = 1;
     gr->gravityModifier = -1; // use map default
@@ -491,7 +478,6 @@ void G_InitGameRules(gamerules_t* gr)
     gr->fallOff = true;
     gr->announceFrags = true;
     gr->cameraNoClip = true;
-    gr->respawnMonstersNightmare = true;
 }
 
 /**
@@ -503,6 +489,10 @@ void G_PreInit(void)
     G_SetGameMode(indetermined);
 
     memset(gs.players, 0, sizeof(gs.players));
+    gs.state = GS_DEMOSCREEN;
+    gs.stateLast = -1;
+    gs.action = GA_NONE;
+    gs.gameMission = GM_DOOM;
     gs.netEpisode = 1;
     gs.netMap = 1;
     gs.netSkill = SM_MEDIUM;
@@ -549,8 +539,8 @@ void G_PostInit(void)
     char                mapStr[6];
 
     // Border background changes depending on mission.
-    if(gameMission == GM_DOOM2 || gameMission == GM_PLUT ||
-       gameMission == GM_TNT)
+    if(gs.gameMission == GM_DOOM2 || gs.gameMission == GM_PLUT ||
+       gs.gameMission == GM_TNT)
         borderLumps[0] = "GRNROCK";
 
     // Common post init routine
@@ -564,39 +554,40 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gameMode == retail ? "The Ultimate DOOM Startup\n" :
-                gameMode == shareware ? "DOOM Shareware Startup\n" :
-                gameMode == registered ? "DOOM Registered Startup\n" :
-                gameMode == commercial ?
-                    (gameMission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
-                     gameMission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
+                gs.gameMode == retail ? "The Ultimate DOOM Startup\n" :
+                gs.gameMode == shareware ? "DOOM Shareware Startup\n" :
+                gs.gameMode == registered ? "DOOM Registered Startup\n" :
+                gs.gameMode == commercial ?
+                    (gs.gameMission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
+                     gs.gameMission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
                      "DOOM 2: Hell on Earth\n") :
                 "Public DOOM\n");
 
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
-    monsterInfight = GetDefInt("AI|Infight", 0);
+    GAMERULES.monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameSkill = startSkill = SM_NOITEMS;
+    gs.skill = startSkill = SM_NOITEMS;
     startEpisode = 1;
     startMap = 1;
     autoStart = false;
 
     // Game mode specific settings.
     // Plutonia and TNT automatically turn on the full sky.
-    if(gameMode == commercial &&
-       (gameMission == GM_PLUT || gameMission == GM_TNT))
+    if(gs.gameMode == commercial &&
+       (gs.gameMission == GM_PLUT || gs.gameMission == GM_TNT))
     {
         Con_SetInteger("rend-sky-full", 1, true);
     }
 
     // Command line options.
-    noMonstersParm = ArgCheck("-nomonsters");
-    respawnParm = ArgCheck("-respawn");
-    fastParm = ArgCheck("-fast");
     devParm = ArgCheck("-devparm");
+
+    GAMERULES.noMonsters = ArgCheck("-nomonsters");
+    GAMERULES.respawn = ArgCheck("-respawn");
+    GAMERULES.fastMonsters = ArgCheck("-fast");
 
     if(ArgCheck("-altdeath"))
         GAMERULES.deathmatch = 2;
@@ -619,7 +610,7 @@ void G_PostInit(void)
     }
 
     p = ArgCheck("-timer");
-    if(p && p < myargc - 1 && deathmatch)
+    if(p && p < myargc - 1 && GAMERULES.deathmatch)
     {
         int                 time;
 
@@ -633,7 +624,7 @@ void G_PostInit(void)
     p = ArgCheck("-warp");
     if(p && p < myargc - 1)
     {
-        if(gameMode == commercial)
+        if(gs.gameMode == commercial)
         {
             startMap = atoi(Argv(p + 1));
             autoStart = true;
@@ -648,12 +639,10 @@ void G_PostInit(void)
 
     // Turbo option.
     p = ArgCheck("-turbo");
-    turboMul = 1.0f;
     if(p)
     {
         int                 scale = 200;
 
-        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -662,18 +651,7 @@ void G_PostInit(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turboMul = scale / 100.f;
-    }
-
-    // Are we autostarting?
-    if(autoStart)
-    {
-        if(gameMode == commercial)
-            Con_Message("Warp to Map %d, Skill %d\n", startMap,
-                        startSkill + 1);
-        else
-            Con_Message("Warp to Episode %d, Map %d, Skill %d\n",
-                        startEpisode, startMap, startSkill + 1);
+        GAMERULES.turboMul = scale / 100.f;
     }
 
     // Load a saved game?
@@ -684,10 +662,21 @@ void G_PostInit(void)
         G_LoadGame(file);
     }
 
+    // Are we autostarting?
+    if(autoStart)
+    {
+        if(gs.gameMode == commercial)
+            Con_Message("Warp to Map %d, Skill %d\n", startMap,
+                        startSkill + 1);
+        else
+            Con_Message("Warp to Episode %d, Map %d, Skill %d\n",
+                        startEpisode, startMap, startSkill + 1);
+    }
+
     // Check valid episode and map
     if(autoStart || IS_NETGAME)
     {
-        if(gameMode == commercial)
+        if(gs.gameMode == commercial)
             sprintf(mapStr, "MAP%2.2d", startMap);
         else
             sprintf(mapStr, "E%d%d", startEpisode, startMap);
@@ -698,15 +687,6 @@ void G_PostInit(void)
             startMap = 1;
         }
     }
-
-    // Print a string showing the state of the game parameters
-    Con_Message("Game state parameters:%s%s%s%s%s\n",
-                noMonstersParm? " nomonsters" : "",
-                respawnParm? " respawn" : "",
-                fastParm? " fast" : "",
-                turboParm? " turbo" : "",
-                (GAMERULES.deathmatch ==1)? " deathmatch" :
-                    (GAMERULES.deathmatch ==2)? " altdeath" : "");
 
     if(G_GetGameAction() != GA_LOADGAME)
     {

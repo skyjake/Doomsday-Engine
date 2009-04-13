@@ -48,8 +48,8 @@
 #define MTF_HARD            4 // Can be spawned in Hard skill modes.
 #define MTF_DEAF            8 // Mobj will be deaf spawned deaf.
 #define MTF_NOTSINGLE       16 // Can not be spawned in single player gamemodes.
-#define MTF_NOTDM           32 // Can not be spawned in the Deathmatch gameMode.
-#define MTF_NOTCOOP         64 // Can not be spawned in the Co-op gameMode.
+#define MTF_NOTDM           32 // Can not be spawned in the Deathmatch gs.gameMode.
+#define MTF_NOTCOOP         64 // Can not be spawned in the Co-op gs.gameMode.
 #define MTF_DORMANT         512 // Mobj will be spawned invulnerble and inert.
 
 typedef struct spawnspot_s {

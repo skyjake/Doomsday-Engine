@@ -478,7 +478,7 @@ static void drawStatusBarBackground(int player, float width, float height)
         DGL_End();
     }
 
-    if(!deathmatch)
+    if(!GAMERULES.deathmatch)
     {   // Draw the ARMS background.
         DGL_SetPatch(armsBackground.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -791,10 +791,10 @@ void ST_updateWidgets(int player)
     ST_updateFaceWidget(player);
 
     // Used by wArms[] widgets.
-    hud->statusbarArmsOn = hud->statusbarActive && !deathmatch;
+    hud->statusbarArmsOn = hud->statusbarActive && !GAMERULES.deathmatch;
 
     // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
+    hud->statusbarFragsOn = GAMERULES.deathmatch && hud->statusbarActive;
     hud->currentFragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -891,10 +891,10 @@ static void drawWidgets(hudstate_t* hud)
     boolean             refresh = true;
 
     // Used by wArms[] widgets.
-    hud->statusbarArmsOn = hud->statusbarActive && !deathmatch;
+    hud->statusbarArmsOn = hud->statusbarActive && !GAMERULES.deathmatch;
 
     // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
+    hud->statusbarFragsOn = GAMERULES.deathmatch && hud->statusbarActive;
 
     STlib_updateNum(&hud->wReadyWeapon, refresh);
 
@@ -1038,7 +1038,8 @@ void ST_doFullscreenStuff(int player)
     float               iconAlpha =
         MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - PLRPROFILE.hud.iconAlpha), 1.f);
 
-    if(IS_NETGAME && deathmatch && PLRPROFILE.hud.shown[HUD_FRAGS])
+    if(IS_NETGAME && GAMERULES.deathmatch &&
+       PLRPROFILE.hud.shown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - 8;

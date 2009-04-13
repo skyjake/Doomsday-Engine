@@ -761,7 +761,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE && !fastParm)
+        if(gs.skill != SM_NIGHTMARE && !GAMERULES.fastMonsters)
             newChaseDir(actor);
 
         return;
@@ -781,7 +781,8 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill < SM_NIGHTMARE && !fastParm && actor->moveCount))
+        if(!(gs.skill < SM_NIGHTMARE && !GAMERULES.fastMonsters &&
+             actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1617,19 +1618,19 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
     {
-        if(gameMap != 7)
+        if(gs.map.id != 7)
             return;
         if((mo->type != MT_FATSO) && (mo->type != MT_BABY))
             return;
     }
     else
     {
-        switch(gameEpisode)
+        switch(gs.episode)
         {
         case 1:
-            if(gameMap != 8)
+            if(gs.map.id != 8)
                 return;
 
             /**
@@ -1648,7 +1649,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         case 2:
-            if(gameMap != 8)
+            if(gs.map.id != 8)
                 return;
 
             if(mo->type != MT_CYBORG)
@@ -1656,7 +1657,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         case 3:
-            if(gameMap != 8)
+            if(gs.map.id != 8)
                 return;
 
             if(mo->type != MT_SPIDER)
@@ -1665,7 +1666,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         case 4:
-            switch(gameMap)
+            switch(gs.map.id)
             {
             case 6:
                 if(mo->type != MT_CYBORG)
@@ -1684,7 +1685,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         default:
-            if(gameMap != 8)
+            if(gs.map.id != 8)
                 return;
             break;
         }
@@ -1712,9 +1713,9 @@ void C_DECL A_BossDeath(mobj_t* mo)
     }
 
     // Victory!
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
     {
-        if(gameMap == 7)
+        if(gs.map.id == 7)
         {
             if(mo->type == MT_FATSO)
             {
@@ -1740,7 +1741,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     }
     else
     {
-        switch(gameEpisode)
+        switch(gs.episode)
         {
         case 1:
             dummyLine = P_AllocDummyLine();
@@ -1752,7 +1753,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         case 4:
-            switch(gameMap)
+            switch(gs.map.id)
             {
             case 6:
                 dummyLine = P_AllocDummyLine();
@@ -1775,7 +1776,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         }
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1785,8 +1786,8 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
-                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gs.gameMode != commercial &&
+                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1797,8 +1798,8 @@ void C_DECL A_Metal(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_METAL |
-                 (gameMode != commercial &&
-                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gs.gameMode != commercial &&
+                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1863,7 +1864,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
 
 void C_DECL A_BrainDie(mobj_t *mo)
 {
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
 }
 
 void C_DECL A_BrainSpit(mobj_t *mo)
@@ -1875,7 +1876,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
         return; // Ignore if no targets.
 
     brain.easy ^= 1;
-    if(gameSkill <= SM_EASY && (!brain.easy))
+    if(gs.skill <= SM_EASY && (!brain.easy))
         return;
 
     // Shoot a cube at current target.
@@ -1963,7 +1964,7 @@ void C_DECL A_PlayerScream(mobj_t *mo)
 {
     int                 sound = SFX_PLDETH; // Default death sound.
 
-    if((gameMode == commercial) && (mo->health < -50))
+    if((gs.gameMode == commercial) && (mo->health < -50))
     {
         // If the player dies less with less than -50% without gibbing.
         sound = SFX_PDIEHI;

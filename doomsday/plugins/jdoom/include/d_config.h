@@ -183,9 +183,12 @@ typedef struct {
 } playerprofile_t;
 
 typedef struct {
+    int             deathmatch; // Only if started as net death.
+
+    float           turboMul; // multiplier for turbo.
+    byte            monsterInfight;
     byte            announceSecrets;
     byte            announceFrags;
-    byte            deathmatch;
     byte            freeAimBFG; // Allow free-aim with BFG.
     byte            mobDamageModifier; // Multiplier for non-player mobj damage.
     byte            mobHealthModifier; // Health modifier for non-player mobjs.
@@ -205,7 +208,6 @@ typedef struct {
     byte            noCoopAnything;
     byte            noBFG;
     byte            coopRespawnItems;
-    byte            respawnMonstersNightmare;
     byte            raiseGhosts;
     byte            maxSkulls;
     byte            allowSkullsInWalls;
@@ -218,26 +220,5 @@ typedef struct {
     byte            fallOff; // Objects fall under their own weight.
     byte            cameraNoClip;
 } gamerules_t;
-
-typedef struct {
-    playerprofile_t playerProfile;
-    struct {
-        playerclass_t   pClass;
-        byte            color;
-    } players[MAXPLAYERS];
-
-    byte            netEpisode;
-    byte            netMap;
-    byte            netSkill;
-    byte            netSlot;
-
-    gamerules_t     rules;
-    gameconfig_t    cfg;
-} game_state_t;
-
-#define PLRPROFILE          (gs.playerProfile)
-#define GAMERULES           (gs.rules)
-
-extern game_state_t gs;
 
 #endif

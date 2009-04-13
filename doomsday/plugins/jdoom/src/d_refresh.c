@@ -214,10 +214,10 @@ void R_DrawMapTitle(void)
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Compose the mapnumber used to check the map name patches array.
-    if(gameMode == commercial)
-        mapnum = gameMap -1;
+    if(gs.gameMode == commercial)
+        mapnum = gs.map.id -1;
     else
-        mapnum = ((gameEpisode -1) * 9) + gameMap -1;
+        mapnum = ((gs.episode -1) * 9) + gs.map.id -1;
 
     if(lname)
     {
@@ -311,7 +311,7 @@ static void rendHUD(int player)
         automapid_t         map = AM_MapForPlayer(player);
         boolean             redrawsbar = false;
 
-        if(!(IS_NETGAME && deathmatch))
+        if(!(IS_NETGAME && GAMERULES.deathmatch))
             HU_DrawCheatCounters();
 
         if(WINDOWHEIGHT != 200)
@@ -444,7 +444,7 @@ void D_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(paused && !fiActive)
+    if(gs.paused && !fiActive)
     {
         WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, &m_pause, NULL, false,
                      ALIGN_CENTER);

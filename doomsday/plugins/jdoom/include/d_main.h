@@ -37,17 +37,7 @@
 
 extern int verbose;
 extern boolean devParm;
-extern boolean noMonstersParm;
-extern boolean respawnParm;
-extern boolean fastParm;
-extern boolean turboParm;
-extern float turboMul;
-extern gamemode_t gameMode;
-extern int gameModeBits;
-extern gamemission_t gameMission;
-extern char gameModeString[];
-extern boolean monsterInfight;
-extern char *borderLumps[];
+extern char* borderLumps[];
 
 void            G_PostInit(void);
 void            G_PreInit(void);

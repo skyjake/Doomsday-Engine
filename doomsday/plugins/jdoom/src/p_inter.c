@@ -86,7 +86,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     else
         num = clipAmmo[ammo] / 2;
 
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    if(gs.skill == SM_BABY || gs.skill == SM_NIGHTMARE)
     {
         // Give double ammo in trainer mode (you'll need it in nightmare!).
         num *= 2;
@@ -115,7 +115,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
     ammotype_t          i;
     boolean             gaveAmmo = false, gaveWeapon = false;
 
-    if(IS_NETGAME && (deathmatch != 2) && !dropped)
+    if(IS_NETGAME && (GAMERULES.deathmatch != 2) && !dropped)
     {
         // Leave placed weapons forever on net games.
         if(player->weapons[weapon].owned)
@@ -131,7 +131,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
             if(!weaponInfo[weapon][player->pClass].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
-            if(deathmatch)
+            if(GAMERULES.deathmatch)
                 numClips = 5;
             else
                 numClips = 2;
@@ -141,7 +141,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         }
 
         // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
+        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, GAMERULES.deathmatch == 1);
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
@@ -590,7 +590,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_MEGASPHERE:
-        if(gameMode != commercial)
+        if(gs.gameMode != commercial)
             return false;
         plr->health = megaSphereHealth;
         plr->plr->mo->health = plr->health;
@@ -985,7 +985,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && GAMERULES.noCoopDamage)
+            if(IS_NETGAME && !GAMERULES.deathmatch && GAMERULES.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
@@ -1002,7 +1002,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     }
 
     player = target->player;
-    if(player && gameSkill == SM_BABY)
+    if(player && gs.skill == SM_BABY)
         damage /= 2; // Take half damage in trainer mode.
 
     // Use the cvar damage multiplier netMobDamageModifier only if the
