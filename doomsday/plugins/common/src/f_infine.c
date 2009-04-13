@@ -135,7 +135,7 @@ typedef struct fistate_s {
     char*           script; // A copy of the script.
     char*           cp; // The command cursor.
     infinemode_t    mode;
-    int             overlayGameState; // Overlay scripts run only in one gameMode.
+    int             overlayGameState; // Overlay scripts run only in one gs.gameMode.
     int             timer;
     boolean         conditions[NUM_FICONDS];
     int             inTime;
@@ -593,13 +593,15 @@ void FI_Start(char *finalescript, infinemode_t mode)
     {
         // We are able to figure out the truth values of all the
         // conditions.
-        fi->conditions[FICOND_SECRET] = (secretExit != 0);
-
 #if __JHEXEN__
+        fi->conditions[FICOND_SECRET] = false;
+
         // Current hub has been completed?
         fi->conditions[FICOND_LEAVEHUB] =
-            (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
+            (P_GetMapCluster(gs.map.id) != P_GetMapCluster(gs.mapPrev.id));
 #else
+        fi->conditions[FICOND_SECRET] = (gs.mapPrev.secretExit? true : false);
+
         // Only Hexen has hubs.
         fi->conditions[FICOND_LEAVEHUB] = false;
 #endif
@@ -616,7 +618,7 @@ void FI_Start(char *finalescript, infinemode_t mode)
 
     if(mode == FIMODE_OVERLAY)
     {
-        // Overlay scripts stop when the gameMode changes.
+        // Overlay scripts stop when the gs.gameMode changes.
         fi->overlayGameState = G_GetGameState();
     }
 
@@ -676,7 +678,7 @@ void FI_End(void)
             // Enter the map, this was a briefing.
             G_ChangeGameState(GS_MAP);
             S_MapMusic();
-            mapStartTic = (int) GAMETIC;
+            gs.map.startTic = (int) GAMETIC;
             mapTime = actualMapTime = 0;
         }
         else if(oldMode == FIMODE_LOCAL)
@@ -1999,12 +2001,12 @@ void FIC_If(void)
     }
     else if(!stricmp(fiToken, "deathmatch"))
     {
-        val = deathmatch != false;
+        val = GAMERULES.deathmatch != false;
     }
     else if(!stricmp(fiToken, "shareware"))
     {
 #if __JDOOM__
-        val = (gameMode == shareware);
+        val = (gs.gameMode == shareware);
 #elif __JHERETIC__
         val = shareware != false;
 #else
@@ -2020,11 +2022,11 @@ void FIC_If(void)
     // Game modes.
     else if(!stricmp(fiToken, "ultimate"))
     {
-        val = (gameMode == retail);
+        val = (gs.gameMode == retail);
     }
     else if(!stricmp(fiToken, "commercial"))
     {
-        val = (gameMode == commercial);
+        val = (gs.gameMode == commercial);
     }
 #endif
     else if(!stricmp(fiToken, "leavehub"))

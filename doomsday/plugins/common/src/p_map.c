@@ -202,7 +202,7 @@ boolean PIT_StompThing(mobj_t* mo, void* data)
         return false;
 #elif __JDOOM__
     // Monsters don't stomp things except on a boss map.
-    if(!tmThing->player && gameMap != 30)
+    if(!tmThing->player && gs.map.id != 30)
         return false;
 #endif
 
@@ -466,7 +466,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
-                if(IS_NETGAME && !deathmatch && thing->player)
+                if(IS_NETGAME && !GAMERULES.deathmatch && thing->player)
                     return true; // don't attack other co-op players
 
                 if((thing->flags2 & MF2_REFLECTIVE) &&
@@ -720,7 +720,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             if(!thing->player)
                 return false; // Hit same species as originator, explode, no damage
 #else
-            if(!monsterInfight && thing->type != MT_PLAYER)
+            if(!GAMERULES.monsterInfight && thing->type != MT_PLAYER)
             {
                 // Explode, but do no damage.
                 // Let players missile other players.
@@ -1812,7 +1812,7 @@ boolean PTR_AimTraverse(intercept_t* in)
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
-    if(th->player && IS_NETGAME && !deathmatch)
+    if(th->player && IS_NETGAME && !GAMERULES.deathmatch)
         return true; // Don't aim at fellow co-op players.
 #endif
 

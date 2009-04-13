@@ -145,18 +145,16 @@ int D_NetServerStarted(int before)
 #endif
 
     // Set the game parameters.
-    deathmatch = GAMERULES.deathmatch;
+/*  deathmatch = GAMERULES.deathmatch;
     noMonstersParm = GAMERULES.noMonsters;
-
-//    gs.cfg.jumpEnabled = GAMERULES.jumpAllow;
+    gs.cfg.jumpEnabled = GAMERULES.jumpAllow;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     respawnMonsters = GAMERULES.respawn;
 #endif
-
 #if __JHEXEN__
     randomClassParm = GAMERULES.randomClass;
-#endif
+#endif*/
 
     // Hexen has translated map numbers.
 #if __JHEXEN__
@@ -189,10 +187,10 @@ int D_NetServerClose(int before)
     if(!before)
     {
         // Restore normal game state.
-        deathmatch = false;
-        noMonstersParm = false;
+        GAMERULES.deathmatch = false;
+        GAMERULES.noMonsters = false;
 #if __JHEXEN__
-        randomClassParm = false;
+        GAMERULES.randomClass = false;
 #endif
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
     }
@@ -220,10 +218,10 @@ int D_NetDisconnect(int before)
         return true;
 
     // Restore normal game state.
-    deathmatch = false;
-    noMonstersParm = false;
+    GAMERULES.deathmatch = false;
+    GAMERULES.noMonsters = false;
 #if __JHEXEN__
-    randomClassParm = false;
+    GAMERULES.randomClass = false;
 #endif
 
     // Start demo.
@@ -350,7 +348,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
 
         // Send info about our jump power.
         NetSv_SendJumpPower(parm, GAMERULES.jumpAllow ? GAMERULES.jumpPower : 0);
-        NetSv_Paused(paused);
+        NetSv_Paused(gs.paused);
         break;
         }
 
@@ -409,14 +407,14 @@ int D_NetWorldEvent(int type, int parm, void *data)
             G_DemoEnds();
 
         // Restore normal game state.
-        deathmatch = false;
-        noMonstersParm = false;
+        GAMERULES.deathmatch = false;
+        GAMERULES.noMonsters = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        respawnMonsters = false;
+        GAMERULES.respawn = false;
 #endif
 
 #if __JHEXEN__
-        randomClassParm = false;
+        GAMERULES.randomClass = false;
 #endif
         break;
 
@@ -552,7 +550,7 @@ void D_ChatSound(void)
     S_LocalSound(SFX_CHAT, NULL);
 #else
 # if __JDOOM__
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         S_LocalSound(SFX_RADIO, NULL);
     else
 # endif
@@ -761,24 +759,20 @@ DEFCC(CCmdSetMap)
 #endif
 
     // Update game mode.
-    deathmatch = GAMERULES.deathmatch;
-    noMonstersParm = GAMERULES.noMonsters;
-
+//    deathmatch = GAMERULES.deathmatch;
+//    noMonstersParm = GAMERULES.noMonsters;
 //    gs.cfg.jumpEnabled = GAMERULES.jumpAllow;
 
 #if __JDOOM__ || __JHERETIC__
-    respawnMonsters = GAMERULES.respawn;
+//    respawnMonsters = GAMERULES.respawn;
     ep = atoi(argv[1]);
     map = atoi(argv[2]);
 #elif __JDOOM64__
-    respawnMonsters = GAMERULES.respawn;
-    ep = 1;
-    map = atoi(argv[1]);
-#elif __JSTRIFE__
+//    respawnMonsters = GAMERULES.respawn;
     ep = 1;
     map = atoi(argv[1]);
 #elif __JHEXEN__
-    randomClassParm = GAMERULES.randomClass;
+//    randomClass = GAMERULES.randomClass;
     ep = 1;
     map = P_TranslateMap(atoi(argv[1]));
 #endif

@@ -142,7 +142,7 @@ void P_ShotAmmo(player_t *player)
         &weaponInfo[player->readyWeapon][player->pClass];
 
 #if __JHERETIC__
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
         fireMode = 0; // In deathmatch always use mode zero.
     else
         fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -217,7 +217,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             winf = &weaponInfo[candidate][pclass];
 
             // Is candidate available in this game mode?
-            if(!(winf->mode[lvl].gameModeBits & gameModeBits))
+            if(!(winf->mode[lvl].gameModeBits & gs.gameModeBits))
                 continue;
 
             // Does the player actually own this candidate?
@@ -233,7 +233,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue; // Weapon does not take this type of ammo.
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
-                if(deathmatch &&
+                if(GAMERULES.deathmatch &&
                    player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
                 {   // Not enough ammo of this type. Candidate is NOT good.
                     good = false;
@@ -280,7 +280,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     winf = &weaponInfo[candidate][pclass];
 
                     // Is candidate available in this game mode?
-                    if(!(winf->mode[lvl].gameModeBits & gameModeBits))
+                    if(!(winf->mode[lvl].gameModeBits & gs.gameModeBits))
                         continue;
 
                     if(weapon == candidate)
@@ -310,7 +310,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                 winf = &weaponInfo[candidate][pclass];
 
                 // Is candidate available in this game mode?
-                if(!(winf->mode[lvl].gameModeBits & gameModeBits))
+                if(!(winf->mode[lvl].gameModeBits & gs.gameModeBits))
                     continue;
 
                 // Does the player actually own this candidate?
@@ -378,7 +378,7 @@ boolean P_CheckAmmo(player_t* plr)
 #endif
 #if __JHERETIC__
     // If deathmatch always use firemode two ammo requirements.
-    if(plr->powers[PT_WEAPONLEVEL2] && !deathmatch)
+    if(plr->powers[PT_WEAPONLEVEL2] && !GAMERULES.deathmatch)
         fireMode = 1;
     else
         fireMode = 0;
@@ -499,7 +499,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 
         // Available in this game mode? And a valid weapon?
         if((weaponInfo[w][player->pClass].mode[lvl].
-            gameModeBits & gameModeBits) && player->weapons[w].owned)
+            gameModeBits & gs.gameModeBits) && player->weapons[w].owned)
             break;
     }
 

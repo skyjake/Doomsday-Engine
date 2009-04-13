@@ -4251,7 +4251,7 @@ static void P_UnArchiveBrain(void)
         brainTargets[i] = SV_GetArchiveThing((int) brainTargets[i], NULL);
     }
 
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         P_SpawnBrainTargets();
 }
 #endif
@@ -4693,11 +4693,11 @@ int SV_SaveGameWorker(void *ptr)
     SV_BeginSegment(ASEG_GAME_HEADER);
 
     // Write current map and difficulty
-    SV_WriteByte(gameMap);
-    SV_WriteByte(gameSkill);
-    SV_WriteByte(deathmatch);
-    SV_WriteByte(noMonstersParm);
-    SV_WriteByte(randomClassParm);
+    SV_WriteByte(gs.map.id);
+    SV_WriteByte(gs.skill);
+    SV_WriteByte(GAMERULES.deathmatch);
+    SV_WriteByte(GAMERULES.noMonsters);
+    SV_WriteByte(GAMERULES.randomClass);
 
     // Write global script info
     SV_Write(WorldVars, sizeof(WorldVars));
@@ -4707,21 +4707,21 @@ int SV_SaveGameWorker(void *ptr)
     hdr.magic = MY_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
 # if __JDOOM__ || __JDOOM64__
-    hdr.gameMode = gameMode;
+    hdr.gameMode = gs.gameMode;
 # elif __JHERETIC__
     hdr.gameMode = 0;
 # endif
 
     strncpy(hdr.description, param->description, SAVESTRINGSIZE);
     hdr.description[SAVESTRINGSIZE - 1] = 0;
-    hdr.skill = gameSkill;
-    if(fastParm)
+    hdr.skill = gs.skill;
+    if(GAMERULES.fastMonsters)
         hdr.skill |= 0x80;      // Set high byte.
-    hdr.episode = gameEpisode;
-    hdr.map = gameMap;
-    hdr.deathmatch = deathmatch;
-    hdr.noMonsters = noMonstersParm;
-    hdr.respawnMonsters = respawnMonsters;
+    hdr.episode = gs.episode;
+    hdr.map = gs.map.id;
+    hdr.deathmatch = GAMERULES.deathmatch;
+    hdr.noMonsters = GAMERULES.noMonsters;
+    hdr.respawnMonsters = GAMERULES.respawn;
     hdr.mapTime = mapTime;
     hdr.gameID = SV_GameID();
     for(i = 0; i < MAXPLAYERS; i++)
@@ -4755,7 +4755,7 @@ int SV_SaveGameWorker(void *ptr)
         char        fileName[100];
 
         // Open the output file
-        sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
+        sprintf(fileName, "%shex6%02d.hxs", savePath, gs.map.id);
         M_TranslatePath(fileName, fileName);
         OpenStreamOut(fileName);
 
@@ -4856,12 +4856,12 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 
     AssertSegment(ASEG_GAME_HEADER);
 
-    gameEpisode = 1;
-    gameMap = SV_ReadByte();
-    gameSkill = SV_ReadByte();
-    deathmatch = SV_ReadByte();
-    noMonstersParm = SV_ReadByte();
-    randomClassParm = SV_ReadByte();
+    gs.episode = 1;
+    gs.map.id = SV_ReadByte();
+    gs.skill = SV_ReadByte();
+    GAMERULES.deathmatch = SV_ReadByte();
+    GAMERULES.noMonsters = SV_ReadByte();
+    GAMERULES.randomClass = SV_ReadByte();
 
 #else
     lzRead(hdr, sizeof(*hdr), savefile);
@@ -4879,21 +4879,21 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
     }
 
 # if __JDOOM__ || __JDOOM64__
-    if(hdr->gameMode != gameMode && !ArgExists("-nosavecheck"))
+    if(hdr->gameMode != gs.gameMode && !ArgExists("-nosavecheck"))
     {
-        Con_Message("SV_LoadGame: savegame not from gameMode %i.\n",
-                    gameMode);
+        Con_Message("SV_LoadGame: savegame not from gs.gameMode %i.\n",
+                    gs.gameMode);
         return false;
     }
 # endif
 
-    gameSkill = hdr->skill & 0x7f;
-    fastParm = (hdr->skill & 0x80) != 0;
-    gameEpisode = hdr->episode;
-    gameMap = hdr->map;
-    deathmatch = hdr->deathmatch;
-    noMonstersParm = hdr->noMonsters;
-    respawnMonsters = hdr->respawnMonsters;
+    gs.skill = hdr->skill & 0x7f;
+    GAMERULES.fastMonsters = (hdr->skill & 0x80) != 0;
+    gs.episode = hdr->episode;
+    gs.map.id = hdr->map;
+    GAMERULES.deathmatch = hdr->deathmatch;
+    GAMERULES.noMonsters = hdr->noMonsters;
+    GAMERULES.respawn = hdr->respawnMonsters;
 #endif
 
     return true; // Read was OK.
@@ -4932,7 +4932,7 @@ static boolean SV_LoadGame2(void)
 
 #if !__JHEXEN__
     // Load the map.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_InitNew(gs.skill, gs.episode, gs.map.id);
 
     // Set the time.
     mapTime = hdr.mapTime;
@@ -5143,12 +5143,12 @@ void SV_SaveClient(unsigned int gameID)
     memset(&hdr, 0, sizeof(hdr));
     hdr.magic = MY_CLIENT_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
-    hdr.skill = gameSkill;
-    hdr.episode = gameEpisode;
-    hdr.map = gameMap;
-    hdr.deathmatch = deathmatch;
-    hdr.noMonsters = noMonstersParm;
-    hdr.respawnMonsters = respawnMonsters;
+    hdr.skill = gs.skill;
+    hdr.episode = gs.episode;
+    hdr.map = gs.map.id;
+    hdr.deathmatch = GAMERULES.deathmatch;
+    hdr.noMonsters = GAMERULES.noMonsters;
+    hdr.respawnMonsters = GAMERULES.respawn;
     hdr.mapTime = mapTime;
     hdr.gameID = gameID;
     SV_Write(&hdr, sizeof(hdr));
@@ -5202,16 +5202,16 @@ void SV_LoadClient(unsigned int gameid)
     // (Data from old save versions is read into here)
     junkbuffer = malloc(sizeof(byte) * 64);
 
-    gameSkill = hdr.skill;
-    deathmatch = hdr.deathmatch;
-    noMonstersParm = hdr.noMonsters;
-    respawnMonsters = hdr.respawnMonsters;
+    gs.skill = hdr.skill;
+    GAMERULES.deathmatch = hdr.deathmatch;
+    GAMERULES.noMonsters = hdr.noMonsters;
+    GAMERULES.respawn = hdr.respawnMonsters;
     // Do we need to change the map?
-    if(gameMap != hdr.map || gameEpisode != hdr.episode)
+    if(gs.map.id != hdr.map || gs.episode != hdr.episode)
     {
-        gameMap = hdr.map;
-        gameEpisode = hdr.episode;
-        G_InitNew(gameSkill, gameEpisode, gameMap);
+        gs.map.id = hdr.map;
+        gs.episode = hdr.episode;
+        G_InitNew(gs.skill, gs.episode, gs.map.id);
     }
     mapTime = hdr.mapTime;
 
@@ -5257,10 +5257,10 @@ static void SV_HxLoadMap(void)
     briefDisabled = true;
 
     // Load a base map
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_InitNew(gs.skill, gs.episode, gs.map.id);
 
     // Create the name
-    sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
+    sprintf(fileName, "%shex6%02d.hxs", savePath, gs.map.id);
     M_TranslatePath(fileName, fileName);
 
 #ifdef _DEBUG
@@ -5297,9 +5297,9 @@ void SV_MapTeleport(int map, int position)
 
     playerHeaderOK = false; // Uninitialized.
 
-    if(!deathmatch)
+    if(!GAMERULES.deathmatch)
     {
-        if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
+        if(P_GetMapCluster(gs.map.id) == P_GetMapCluster(map))
         {   // Same cluster - save map without saving player mobjs
             char        fileName[100];
 
@@ -5307,7 +5307,7 @@ void SV_MapTeleport(int map, int position)
             SV_InitThingArchive(false, false);
 
             // Open the output file
-            sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
+            sprintf(fileName, "%shex6%02d.hxs", savePath, gs.map.id);
             M_TranslatePath(fileName, fileName);
             OpenStreamOut(fileName);
 
@@ -5323,8 +5323,8 @@ void SV_MapTeleport(int map, int position)
     }
 
     // Store player structs for later
-    rClass = randomClassParm;
-    randomClassParm = false;
+    rClass = GAMERULES.randomClass;
+    GAMERULES.randomClass = false;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         memcpy(&playerBackup[i], &players[i], sizeof(player_t));
@@ -5334,17 +5334,17 @@ void SV_MapTeleport(int map, int position)
     // for the following check (player mobj redirection)
     targetPlayerAddrs = NULL;
 
-    gameMap = map;
-    sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
+    gs.map.id = map;
+    sprintf(fileName, "%shex6%02d.hxs", savePath, gs.map.id);
     M_TranslatePath(fileName, fileName);
-    if(!deathmatch && ExistingFile(fileName))
+    if(!GAMERULES.deathmatch && ExistingFile(fileName))
     {   // Unarchive map.
         SV_HxLoadMap();
         briefDisabled = true;
     }
     else
     {   // New map.
-        G_InitNew(gameSkill, gameEpisode, gameMap);
+        G_InitNew(gs.skill, gs.episode, gs.map.id);
 
         // Destroy all freshly spawned players
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -5369,13 +5369,13 @@ void SV_MapTeleport(int map, int position)
         players[i].attacker = NULL;
         players[i].poisoner = NULL;
 
-        if(IS_NETGAME || deathmatch)
+        if(IS_NETGAME || GAMERULES.deathmatch)
         {
             if(players[i].pState == PST_DEAD)
             {   // In a network game, force all players to be alive
                 players[i].pState = PST_REBORN;
             }
-            if(!deathmatch)
+            if(!GAMERULES.deathmatch)
             {   // Cooperative net-play, retain keys and weapons
                 oldKeys = players[i].keys;
                 oldPieces = players[i].pieces;
@@ -5386,7 +5386,7 @@ void SV_MapTeleport(int map, int position)
             }
         }
         playerWasReborn = (players[i].pState == PST_REBORN);
-        if(deathmatch)
+        if(GAMERULES.deathmatch)
         {
             memset(players[i].frags, 0, sizeof(players[i].frags));
             players[i].plr->mo = NULL;
@@ -5397,7 +5397,7 @@ void SV_MapTeleport(int map, int position)
             P_SpawnPlayer(P_GetPlayerStart(position, i), i);
         }
 
-        if(playerWasReborn && IS_NETGAME && !deathmatch)
+        if(playerWasReborn && IS_NETGAME && !GAMERULES.deathmatch)
         {   // Restore keys and weapons when reborn in co-op
             players[i].keys = oldKeys;
             players[i].pieces = oldPieces;
@@ -5422,7 +5422,7 @@ void SV_MapTeleport(int map, int position)
             targetPlayerMobj = players[i].plr->mo;
         }
     }
-    randomClassParm = rClass;
+    GAMERULES.randomClass = rClass;
 
     //// \fixme Redirect anything targeting a player mobj
     //// FIXME! This only supports single player games!!
@@ -5456,13 +5456,13 @@ void SV_MapTeleport(int map, int position)
     }
 
     // Launch waiting scripts
-    if(!deathmatch)
+    if(!GAMERULES.deathmatch)
     {
         P_CheckACSStore();
     }
 
     // For single play, save immediately into the reborn slot
-    if(!IS_NETGAME && !deathmatch)
+    if(!IS_NETGAME && !GAMERULES.deathmatch)
     {
         SV_SaveGame(REBORN_SLOT, REBORN_DESCRIPTION);
     }

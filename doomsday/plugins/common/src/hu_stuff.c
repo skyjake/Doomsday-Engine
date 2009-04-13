@@ -266,7 +266,7 @@ void Hu_LoadData(void)
         }
     }
 # else
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
     {
         int NUMCMAPS = 32;
         mapNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
@@ -528,7 +528,7 @@ int scoreInfoCompare(const void* a, const void* b)
     if(infoB->kills > infoA->kills)
         return 1;
 
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {   // In deathmatch, suicides affect your place on the scoreboard.
         if(infoA->suicides < infoB->suicides)
             return -1;
@@ -605,7 +605,7 @@ static const int plrColors[] = {
         }
 #endif
 
-        if(deathmatch)
+        if(GAMERULES.deathmatch)
         {
             for(j = 0; j < maxPlayers; ++j)
             {
@@ -886,7 +886,7 @@ const char* P_GetGameModeName(void)
 
     if(IS_NETGAME)
     {
-        if(deathmatch)
+        if(GAMERULES.deathmatch)
             return dm;
 
         return coop;
@@ -1063,13 +1063,13 @@ void HU_DrawCheatCounters(void)
             strcpy(buf, "Kills: ");
             if(PLRPROFILE.hud.counterCheat & CCH_KILLS)
             {
-                sprintf(tmp, "%i/%i ", plr->killCount, totalKills);
+                sprintf(tmp, "%i/%i ", plr->killCount, gs.map.totalKills);
                 strcat(buf, tmp);
             }
             if(PLRPROFILE.hud.counterCheat & CCH_KILLS_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (PLRPROFILE.hud.counterCheat & CCH_KILLS ? "(" : ""),
-                        totalKills ? plr->killCount * 100 / totalKills : 100,
+                        gs.map.totalKills ? plr->killCount * 100 / gs.map.totalKills : 100,
                         (PLRPROFILE.hud.counterCheat & CCH_KILLS ? ")" : ""));
                 strcat(buf, tmp);
             }
@@ -1085,13 +1085,13 @@ void HU_DrawCheatCounters(void)
             strcpy(buf, "Items: ");
             if(PLRPROFILE.hud.counterCheat & CCH_ITEMS)
             {
-                sprintf(tmp, "%i/%i ", plr->itemCount, totalItems);
+                sprintf(tmp, "%i/%i ", plr->itemCount, gs.map.totalItems);
                 strcat(buf, tmp);
             }
             if(PLRPROFILE.hud.counterCheat & CCH_ITEMS_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (PLRPROFILE.hud.counterCheat & CCH_ITEMS ? "(" : ""),
-                        totalItems ? plr->itemCount * 100 / totalItems : 100,
+                        gs.map.totalItems ? plr->itemCount * 100 / gs.map.totalItems : 100,
                         (PLRPROFILE.hud.counterCheat & CCH_ITEMS ? ")" : ""));
                 strcat(buf, tmp);
             }
@@ -1107,13 +1107,13 @@ void HU_DrawCheatCounters(void)
             strcpy(buf, "Secret: ");
             if(PLRPROFILE.hud.counterCheat & CCH_SECRET)
             {
-                sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
+                sprintf(tmp, "%i/%i ", plr->secretCount, gs.map.totalSecret);
                 strcat(buf, tmp);
             }
             if(PLRPROFILE.hud.counterCheat & CCH_SECRET_PRCNT)
             {
                 sprintf(tmp, "%s%i%%%s", (PLRPROFILE.hud.counterCheat & CCH_SECRET ? "(" : ""),
-                        totalSecret ? plr->secretCount * 100 / totalSecret : 100,
+                        gs.map.totalSecret ? plr->secretCount * 100 / gs.map.totalSecret : 100,
                         (PLRPROFILE.hud.counterCheat & CCH_SECRET ? ")" : ""));
                 strcat(buf, tmp);
             }

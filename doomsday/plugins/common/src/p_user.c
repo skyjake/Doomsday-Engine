@@ -409,8 +409,8 @@ void P_MovePlayer(player_t *player)
             FIX2FLT(pClassInfo->forwardMove[speed]) * brain->forwardMove;
         sideMove = FIX2FLT(pClassInfo->sideMove[speed]) * brain->sideMove;
 
-        forwardMove *= turboMul;
-        sideMove    *= turboMul;
+        forwardMove *= GAMERULES.turboMul;
+        sideMove    *= GAMERULES.turboMul;
 
 #if __JHEXEN__
         if(player->powers[PT_SPEED] && !player->morphTics)
@@ -1276,7 +1276,7 @@ void P_PlayerThinkItems(player_t *player)
     // Check the "Use Artifact" impulse.
     if(P_GetImpulseControlState(pnum, CTL_USE_ARTIFACT))
     {
-        if(player->brain.speed && artiSkipParm)
+        if(player->brain.speed && PLRPROFILE.inventory.artiSkip)
         {
             if(player->inventory[player->invPtr].type != AFT_NONE)
             {
@@ -1443,7 +1443,7 @@ void P_PlayerThinkWeapons(player_t *player)
                 newweapon = WT_FIRST;
 
             // Swapping between shotgun and super-shotgun.
-            if(gameMode == commercial)
+            if(gs.gameMode == commercial)
             {
                 if(newweapon == WT_THIRD)
                     newweapon = WT_NINETH;
@@ -1453,7 +1453,7 @@ void P_PlayerThinkWeapons(player_t *player)
         }
 
 # if !__JDOOM64__
-        if(gameMode != commercial && newweapon == WT_NINETH)
+        if(gs.gameMode != commercial && newweapon == WT_NINETH)
         {
             // In non-Doom II, supershotgun is the same as normal shotgun.
             newweapon = WT_THIRD;
@@ -1475,7 +1475,7 @@ void P_PlayerThinkWeapons(player_t *player)
         if(player->weapons[newweapon].owned && newweapon != player->readyWeapon)
         {
             if(weaponInfo[newweapon][player->pClass].mode[0].gameModeBits
-               & gameModeBits)
+               & gs.gameModeBits)
             {
                 player->pendingWeapon = newweapon;
             }

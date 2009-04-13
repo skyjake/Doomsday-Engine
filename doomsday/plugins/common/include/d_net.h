@@ -78,7 +78,7 @@ enum {
 // This packet is sent by servers to clients when the game state
 // changes.
 typedef struct {
-    byte            gameMode;
+    byte            gs.gameMode;
     byte            flags;
     byte            episode, map;
     byte            deathmatch:2;

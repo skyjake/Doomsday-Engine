@@ -703,7 +703,7 @@ void AM_InitForMap(void)
         Automap_ClearMarks(map);
 
 #if !__JHEXEN__
-        if(gameSkill == SM_BABY && PLRPROFILE.automap.babyKeys)
+        if(gs.skill == SM_BABY && PLRPROFILE.automap.babyKeys)
             map->flags |= AMF_REND_KEYS;
 
         if(!IS_NETGAME && mcfg->cheating)

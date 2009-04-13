@@ -457,7 +457,7 @@ void G_RegisterBindClasses(void)
 DEFCC( CCmdPause )
 {
     // Toggle pause.
-    G_SetPause(!(paused & 1));
+    G_SetPause(!(gs.paused & 1));
     return true;
 }
 
@@ -467,11 +467,11 @@ void G_SetPause(boolean yes)
         return; // No change.
 
     if(yes)
-        paused |= 1;
+        gs.paused |= 1;
     else
-        paused &= ~1;
+        gs.paused &= ~1;
 
-    if(paused)
+    if(gs.paused)
     {
         // This will stop all sounds from all origins.
         S_StopSound(0, 0);
@@ -485,7 +485,7 @@ void G_SetPause(boolean yes)
 
     // Servers are responsible for informing clients about
     // pauses in the game.
-    NetSv_Paused(paused);
+    NetSv_Paused(gs.paused);
 }
 
 /**
@@ -979,11 +979,11 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     else if(PLAYER_ACTION(pnum, A_WEAPONCYCLE2)) // Shotgun/super sg.
     {
         if(ISWPN(WT_THIRD) && GOTWPN(WT_NINETH) &&
-           gameMode == commercial)
+           gs.gameMode == commercial)
             i = WT_NINETH;
         else if(ISWPN(WT_NINETH))
             i = WT_THIRD;
-        else if(GOTWPN(WT_NINETH) && gameMode == commercial)
+        else if(GOTWPN(WT_NINETH) && gs.gameMode == commercial)
             i = WT_NINETH;
         else
             i = WT_THIRD;
@@ -1295,24 +1295,24 @@ void G_ResetMousePos(void)
  */
 void G_ResetLookOffset(int pnum)
 {
-    pcontrolstate_t *cstate = &controlStates[pnum];
+    pcontrolstate_t*    cstate = &controlStates[pnum];
 
     cstate->lookOffset = 0;
     cstate->targetLookOffset = 0;
     cstate->lookheld = 0;
 }
 
-int G_PrivilegedResponder(event_t *event)
+int G_PrivilegedResponder(event_t* ev)
 {
-    if(M_ControlsPrivilegedResponder(event))
+    if(M_ControlsPrivilegedResponder(ev))
     {
         return true;
     }
 
     // Process the screen shot key right away.
-    if(devParm && event->type == EV_KEY && event->data1 == DDKEY_F1)
+    if(devParm && ev->type == EV_KEY && ev->data1 == DDKEY_F1)
     {
-        if(event->state == EVS_DOWN)
+        if(ev->state == EVS_DOWN)
             G_ScreenShot();
 
         return true; // All F1 events are eaten.

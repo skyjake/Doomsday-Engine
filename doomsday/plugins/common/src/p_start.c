@@ -408,7 +408,7 @@ void P_SpawnThings(void)
 #if __JDOOM__
         // Do not spawn cool, new stuff if !commercial
         spawn = true;
-        if(gameMode != commercial)
+        if(gs.gameMode != commercial)
         {
             switch(th->type)
             {
@@ -434,7 +434,7 @@ void P_SpawnThings(void)
     }
 
 #if __JDOOM__
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         P_SpawnBrainTargets();
 #endif
 
@@ -444,7 +444,7 @@ void P_SpawnThings(void)
         int     spot;
 
         // Sometimes doesn't show up if not in deathmatch.
-        if(!(!deathmatch && P_Random() < 64))
+        if(!(!GAMERULES.deathmatch && P_Random() < 64))
         {
             spot = P_Random() % maceSpotCount;
             P_SpawnMobj3f(MT_WMACE,
@@ -459,7 +459,7 @@ void P_SpawnThings(void)
     P_CreateTIDList();
     P_InitCreatureCorpseQueue(false); // false = do NOT scan for corpses
 
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         playerCount = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -497,7 +497,7 @@ void P_SpawnPlayers(void)
     int                 i;
 
     // If deathmatch, randomly spawn the active players.
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->inGame)

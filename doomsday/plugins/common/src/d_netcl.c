@@ -158,7 +158,7 @@ void NetCl_UpdateGameState(byte *data)
         return;
 
 #if __JDOOM__
-    if(!NetCl_IsCompatible(gsGameMode, gameMode))
+    if(!NetCl_IsCompatible(gsGameMode, gs.gameMode))
     {
         // Wrong game mode! This is highly irregular!
         Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
@@ -168,35 +168,14 @@ void NetCl_UpdateGameState(byte *data)
     }
 #endif
 
-    deathmatch = gsDeathmatch;
-    noMonstersParm = !gsMonsters;
+    GAMERULES.deathmatch = gsDeathmatch;
+    GAMERULES.noMonsters = !gsMonsters;
 #if !__JHEXEN__
-    respawnMonsters = gsRespawn;
-#endif
-
-    // Some statistics.
-#if __JHEXEN__ || __JSTRIFE__
-    Con_Message("Game state: Map=%i Skill=%i %s\n", gsMap, gsSkill,
-                deathmatch == 1 ? "Deathmatch" : deathmatch ==
-                2 ? "Deathmatch2" : "Co-op");
-#else
-    Con_Message("Game state: Map=%i Episode=%i Skill=%i %s\n", gsMap,
-                gsEpisode, gsSkill,
-                deathmatch == 1 ? "Deathmatch" : deathmatch ==
-                2 ? "Deathmatch2" : "Co-op");
-#endif
-#if !__JHEXEN__
-    Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
-                respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
-                gsJumping ? "yes" : "no", gsGravity);
-#else
-    Con_Message("  Monsters=%s Jumping=%s Gravity=%.1f\n",
-                !noMonstersParm ? "yes" : "no",
-                gsJumping ? "yes" : "no", gsGravity);
+    GAMERULES.respawn = gsRespawn;
 #endif
 
 #ifdef __JHERETIC__
-    prevMap = gameMap;
+    gs.mapPrev.id = gs.map.id;
 #endif
 
     // Start reading after the GS packet.
@@ -213,9 +192,9 @@ void NetCl_UpdateGameState(byte *data)
     }
     else
     {
-        gameSkill = gsSkill;
-        gameEpisode = gsEpisode;
-        gameMap = gsMap;
+        gs.skill = gsSkill;
+        gs.episode = gsEpisode;
+        gs.map.id = gsMap;
     }
 
     // Set gravity.
@@ -663,8 +642,8 @@ void NetCl_Intermission(byte *data)
 #if __JHEXEN__ || __JSTRIFE__
     if(flags & IMF_BEGIN)
     {
-        leaveMap = NetCl_ReadByte();
-        leavePosition = NetCl_ReadByte();
+        gs.mapPrev.id = NetCl_ReadByte();
+        gs.mapPrev.leavePosition = NetCl_ReadByte();
         G_ChangeGameState(GS_INTERMISSION);
         IN_Start();
     }
@@ -782,7 +761,7 @@ void NetCl_SaveGame(void *data)
 #endif
 }
 
-void NetCl_LoadGame(void *data)
+void NetCl_LoadGame(void* data)
 {
     if(!IS_CLIENT)
         return;
@@ -801,8 +780,8 @@ void NetCl_LoadGame(void *data)
  */
 void NetCl_Paused(boolean setPause)
 {
-    paused = (setPause != 0);
-    DD_SetInteger(DD_CLIENT_PAUSED, paused);
+    gs.paused = (setPause != 0);
+    DD_SetInteger(DD_CLIENT_PAUSED, gs.paused);
 }
 
 /**
@@ -810,13 +789,13 @@ void NetCl_Paused(boolean setPause)
  * buffer that contains the data (kludge to work around the parameter
  * passing from the engine).
  */
-void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
+void* NetCl_WriteCommands(ticcmd_t* cmd, int count)
 {
     static byte         msg[1024]; // A shared buffer.
 
     int                 i;
-    ushort             *size = (ushort *) msg;
-    byte               *out = msg + 2, *flags, *start = out;
+    ushort*             size = (ushort *) msg;
+    byte*               out = msg + 2, *flags, *start = out;
     ticcmd_t            prev;
 
     // Always compare against the previous command.

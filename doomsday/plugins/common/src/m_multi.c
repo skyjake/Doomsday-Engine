@@ -324,7 +324,7 @@ void DrawGameSetupMenu(void)
 
 # if __JDOOM__ || __JHERETIC__
 #  if __JDOOM__
-    if(gameMode != commercial)
+    if(gs.gameMode != commercial)
 #  endif
     {
         sprintf(buf, "%i", gs.netEpisode);
@@ -384,7 +384,7 @@ void SCEnterMultiplayerMenu(int option, void* data)
 
     // Choose the correct items for the Game Setup menu.
 #if __JDOOM__
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
     {
         GameSetupMenu.items = GameSetupItems2;
         GameSetupMenu.itemCount = GameSetupMenu.numVisItems =
@@ -443,25 +443,25 @@ void SCEnterGameSetup(int option, void* data)
     if(gs.netMap > 32)
         gs.netMap = 32;
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
     {
         gs.netEpisode = 1;
     }
-    else if(gameMode == retail)
+    else if(gs.gameMode == retail)
     {
         if(gs.netEpisode > 4)
             gs.netEpisode = 4;
         if(gs.netMap > 9)
             gs.netMap = 9;
     }
-    else if(gameMode == registered)
+    else if(gs.gameMode == registered)
     {
         if(gs.netEpisode > 3)
             gs.netEpisode = 3;
         if(gs.netMap > 9)
             gs.netMap = 9;
     }
-    else if(gameMode == shareware)
+    else if(gs.gameMode == shareware)
     {
         gs.netEpisode = 1;
         if(gs.netMap > 9)
@@ -511,7 +511,7 @@ void SCGameSetupDeathmatch(int option, void* data)
 void SCGameSetupEpisode(int option, void* data)
 {
 # if __JDOOM__
-    if(gameMode == shareware)
+    if(gs.gameMode == shareware)
     {
         gs.netEpisode = 1;
         return;
@@ -519,7 +519,7 @@ void SCGameSetupEpisode(int option, void* data)
 
     if(option == RIGHT_DIR)
     {
-        if(gs.netEpisode < (gameMode == retail ? 4 : 3))
+        if(gs.netEpisode < (gs.gameMode == retail ? 4 : 3))
             gs.netEpisode++;
     }
     else if(gs.netEpisode > 1)
@@ -535,7 +535,7 @@ void SCGameSetupEpisode(int option, void* data)
 
     if(option == RIGHT_DIR)
     {
-        if(gs.netEpisode < (gameMode == extended? 6 : 3))
+        if(gs.netEpisode < (gs.gameMode == extended? 6 : 3))
             gs.netEpisode++;
     }
     else if(gs.netEpisode > 1)
@@ -554,7 +554,7 @@ void SCGameSetupMap(int option, void* data)
         if(gs.netMap < 32)
             gs.netMap++;
 #elif __JDOOM__
-        if(gs.netMap < (gameMode == commercial ? 32 : 9))
+        if(gs.netMap < (gs.gameMode == commercial ? 32 : 9))
             gs.netMap++;
 #elif __JHERETIC__
         if(gs.netMap < (gs.netEpisode == 6? 3 : 9))

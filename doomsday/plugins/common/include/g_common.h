@@ -54,8 +54,6 @@ enum {
     JOYAXIS_LOOK
 };
 
-extern boolean singledemo;
-
 void            G_Register(void);
 void            G_PreInit(void);
 void            G_PostInit(void);

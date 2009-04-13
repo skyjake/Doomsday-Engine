@@ -1767,14 +1767,14 @@ int XL_ValidateMap(int val, int type)
     int                 episode, map = val;
 
 #if __JDOOM__
-    if(gameMode == commercial || gameMode == shareware)
+    if(gs.gameMode == commercial || gs.gameMode == shareware)
         episode = 0;
     else
-        episode = gameEpisode;
+        episode = gs.episode;
 #elif __JDOOM64__
     episode = 0;
 #elif __JHERETIC__
-    episode = gameEpisode;
+    episode = gs.episode;
 #endif
 
     if(!G_ValidateMap(&episode, &map))
@@ -1794,7 +1794,7 @@ int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
         return false;
     }
 
@@ -1821,10 +1821,10 @@ int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
     if(map)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %i", map);
-        nextMap = map;
+        gs.mapNext = map;
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
     return false; // Only do this once!
 }
 
@@ -2513,17 +2513,17 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
     }
 
     // Check skill level.
-    if(gameSkill < 1)
+    if(gs.skill < 1)
         i = 1;
-    else if(gameSkill > 3)
+    else if(gs.skill > 3)
         i = 4;
     else
-        i = 1 << (gameSkill - 1);
+        i = 1 << (gs.skill - 1);
     i <<= LTF2_SKILL_SHIFT;
     if(!(info->flags2 & i))
     {
         XG_Dev("  Line %i: ABORTING EVENT due to skill level (%i)",
-               P_ToIndex(line), gameSkill);
+               P_ToIndex(line), gs.skill);
         return false;
     }
 

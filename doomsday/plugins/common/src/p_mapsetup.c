@@ -583,49 +583,48 @@ int P_SetupMapWorker(void* ptr)
     P_SpawnSpecials();
 
     // Preload graphics.
-    if(precache)
     {
 #if __JDOOM__
-        static const mobjtype_precachedata_t types[] = {
-            { GM_ANY,   MT_SKULL },
-            // Missiles:
-            { GM_ANY,   MT_BRUISERSHOT },
-            { GM_ANY,   MT_TROOPSHOT },
-            { GM_ANY,   MT_HEADSHOT },
-            { GM_ANY,   MT_ROCKET },
-            { GM_NOTSHAREWARE, MT_PLASMA },
-            { GM_NOTSHAREWARE, MT_BFG },
-            { GM_DOOM2, MT_ARACHPLAZ },
-            { GM_DOOM2, MT_FATSHOT },
-            // Potentially dropped weapons:
-            { GM_ANY,   MT_CLIP },
-            { GM_ANY,   MT_SHOTGUN },
-            { GM_ANY,   MT_CHAINGUN },
-            // Misc effects:
-            { GM_DOOM2, MT_FIRE },
-            { GM_ANY,   MT_TRACER },
-            { GM_ANY,   MT_SMOKE },
-            { GM_DOOM2, MT_FATSHOT },
-            { GM_ANY,   MT_BLOOD },
-            { GM_ANY,   MT_PUFF },
-            { GM_ANY,   MT_TFOG }, // Teleport FX.
-            { GM_ANY,   MT_EXTRABFG },
-            { GM_ANY,   MT_ROCKETPUFF },
-            { 0,        0}
-        };
-        uint                i;
+    static const mobjtype_precachedata_t types[] = {
+        { GM_ANY,   MT_SKULL },
+        // Missiles:
+        { GM_ANY,   MT_BRUISERSHOT },
+        { GM_ANY,   MT_TROOPSHOT },
+        { GM_ANY,   MT_HEADSHOT },
+        { GM_ANY,   MT_ROCKET },
+        { GM_NOTSHAREWARE, MT_PLASMA },
+        { GM_NOTSHAREWARE, MT_BFG },
+        { GM_DOOM2, MT_ARACHPLAZ },
+        { GM_DOOM2, MT_FATSHOT },
+        // Potentially dropped weapons:
+        { GM_ANY,   MT_CLIP },
+        { GM_ANY,   MT_SHOTGUN },
+        { GM_ANY,   MT_CHAINGUN },
+        // Misc effects:
+        { GM_DOOM2, MT_FIRE },
+        { GM_ANY,   MT_TRACER },
+        { GM_ANY,   MT_SMOKE },
+        { GM_DOOM2, MT_FATSHOT },
+        { GM_ANY,   MT_BLOOD },
+        { GM_ANY,   MT_PUFF },
+        { GM_ANY,   MT_TFOG }, // Teleport FX.
+        { GM_ANY,   MT_EXTRABFG },
+        { GM_ANY,   MT_ROCKETPUFF },
+        { 0,        0}
+    };
+    uint                i;
 #endif
 
-        R_PrecacheMap();
-        R_PrecachePSprites();
+    R_PrecacheMap();
+    R_PrecachePSprites();
 
 #if __JDOOM__
-        for(i = 0; types[i].type != 0; ++i)
-            if(types[i].gameModeBits & gameModeBits)
-                R_PrecacheMobjNum(types[i].type);
+    for(i = 0; types[i].type != 0; ++i)
+        if(types[i].gameModeBits & gs.gameModeBits)
+            R_PrecacheMobjNum(types[i].type);
 
-        if(IS_NETGAME)
-            R_PrecacheMobjNum(MT_IFOG);
+    if(IS_NETGAME)
+        R_PrecacheMobjNum(MT_IFOG);
 #endif
     }
 
@@ -663,14 +662,14 @@ void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
              "Loading map...", P_SetupMapWorker, &param);
 
     AM_InitForMap();
-    
+
     R_SetupMap(DDSMM_AFTER_BUSY, 0);
 
 #if __JHEXEN__
     {
     int i;
     // Load colormap and set the fullbright flag
-    i = P_GetMapFadeTable(gameMap);
+    i = P_GetMapFadeTable(gs.map.id);
     if(i == W_GetNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
@@ -718,11 +717,11 @@ static void P_ResetWorldState(void)
 #endif
 
 #if !__JHEXEN__
-    totalKills = totalItems = totalSecret = 0;
+    gs.map.totalKills = gs.map.totalItems = gs.map.totalSecret = 0;
 #endif
 
     timerGame = 0;
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         parm = ArgCheck("-timer");
         if(parm && parm < Argc() - 1)
@@ -829,7 +828,7 @@ char* P_GetMapNiceName(void)
 #if __JHEXEN__
     // In jHexen we can look in the MAPINFO for the map name.
     if(!lname)
-        lname = P_GetMapName(gameMap);
+        lname = P_GetMapName(gs.map.id);
 #endif
 
     return lname;

@@ -149,7 +149,7 @@ boolean P_InventoryGive(player_t* player, artitype_e arti)
     else
     {
 # if __JHEXEN__
-        if(arti >= AFT_FIRSTPUZZITEM && IS_NETGAME && !deathmatch)
+        if(arti >= AFT_FIRSTPUZZITEM && IS_NETGAME && !GAMERULES.deathmatch)
         {   // Can't carry more than 1 puzzle item in coop netplay.
             return false;
         }

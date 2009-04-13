@@ -1006,7 +1006,7 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg,
             continue;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        if(deathmatch && p != &players[player])
+        if(GAMERULES.deathmatch && p != &players[player])
             continue;
 #endif
 
@@ -1371,13 +1371,13 @@ static void renderMapName(const automap_t* map)
 
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
-        mapNum = gameMap -1;
+        mapNum = gs.map.id -1;
         patch = &mapNamePatches[mapNum];
 #elif __JDOOM__
-        if(gameMode == commercial)
-            mapNum = gameMap -1;
+        if(gs.gameMode == commercial)
+            mapNum = gs.map.id -1;
         else
-            mapNum = ((gameEpisode -1) * 9) + gameMap -1;
+            mapNum = ((gs.episode -1) * 9) + gs.map.id -1;
 
         patch = &mapNamePatches[mapNum];
 #endif

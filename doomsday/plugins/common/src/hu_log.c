@@ -719,7 +719,7 @@ static void sendMessage(const char* msg)
     }
 
 #if __JDOOM__
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         S_LocalSound(SFX_RADIO, 0);
     else
         S_LocalSound(SFX_TINK, 0);

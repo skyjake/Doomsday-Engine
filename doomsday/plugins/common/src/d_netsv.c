@@ -140,19 +140,19 @@ void NetSv_UpdateGameConfig(void)
 
     memset(gameConfigString, 0, sizeof(gameConfigString));
 
-    sprintf(gameConfigString, "skill%i", gameSkill + 1);
+    sprintf(gameConfigString, "skill%i", gs.skill + 1);
 
-    if(deathmatch > 1)
-        sprintf(gameConfigString, " dm%i", deathmatch);
-    else if(deathmatch)
+    if(GAMERULES.deathmatch > 1)
+        sprintf(gameConfigString, " dm%i", GAMERULES.deathmatch);
+    else if(GAMERULES.deathmatch)
         strcat(gameConfigString, " dm");
     else
         strcat(gameConfigString, " coop");
 
-    if(noMonstersParm)
+    if(GAMERULES.noMonsters)
         strcat(gameConfigString, " nomonst");
 #if !__JHEXEN__
-    if(respawnMonsters)
+    if(GAMERULES.respawn)
         strcat(gameConfigString, " respawn");
 #endif
 
@@ -412,7 +412,7 @@ void NetSv_CycleToMapNum(int map)
 #if __JDOOM64__
     sprintf(cmd, "setmap 1 %i", map);
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         sprintf(cmd, "setmap 1 %i", map);
     else
         sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
@@ -532,7 +532,7 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
                             tmp[1] ==
                             '*' ? M_Random() % 10 : tmp[1] - '0');
 #elif __JDOOM__
-                    if(gameMode == commercial)
+                    if(gs.gameMode == commercial)
                     {
                         sprintf(lump, "MAP%i%i", episode =
                                 tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
@@ -738,7 +738,7 @@ void NetSv_NewPlayerEnters(int plrnumber)
     P_DealPlayerStarts(0);
 
     // Spawn the player into the world.
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrnumber);
     }
@@ -852,7 +852,7 @@ void NetSv_SendGameState(int flags, int to)
     // Print a short message that describes the game state.
     if(verbose || IS_DEDICATED)
     {
-        Con_Printf("Game setup: ep%i map%i %s\n", gameEpisode, gameMap,
+        Con_Printf("Game setup: ep%i map%i %s\n", gs.episode, gs.map.id,
                    gameConfigString);
     }
 
@@ -875,23 +875,23 @@ void NetSv_SendGameState(int flags, int to)
         // due to compatibility with older versions.
 
 #if __JDOOM__ || __JDOOM64__
-        ptr[0] = gameMode;
+        ptr[0] = gs.gameMode;
 #else
         ptr[0] = 0;
 #endif
         ptr[1] = flags;
-        ptr[2] = gameEpisode;
-        ptr[3] = gameMap;
-        ptr[4] = (deathmatch & 0x3)
-            | (!noMonstersParm? 0x4 : 0)
+        ptr[2] = gs.episode;
+        ptr[3] = gs.map.id;
+        ptr[4] = (GAMERULES.deathmatch & 0x3)
+            | (!GAMERULES.noMonsters? 0x4 : 0)
 #if !__JHEXEN__
-            | (respawnMonsters? 0x8 : 0)
+            | (GAMERULES.respawn? 0x8 : 0)
 #else
             | 0
 #endif
             | (GAMERULES.jumpAllow? 0x10 : 0)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-            | (gameSkill << 5);
+            | (gs.skill << 5);
 #else
         ;
 #endif
@@ -899,7 +899,7 @@ void NetSv_SendGameState(int flags, int to)
         ptr[5] = 0;
 
 #else
-        ptr[5] = gameSkill & 0x7;
+        ptr[5] = gs.skill & 0x7;
 #endif
         ptr[6] = (gravity >> 8) & 0xff; // low byte
         ptr[7] = (gravity >> 16) & 0xff; // high byte
@@ -1265,7 +1265,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 #if __JDOOM__ || __JDOOM64__
     char        buf[160], *in, tmp[2];
 
-    if(!GAMERULES.announceFrags || !deathmatch)
+    if(!GAMERULES.announceFrags || !GAMERULES.deathmatch)
         return;
 
     buf[0] = 0;

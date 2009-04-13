@@ -1211,13 +1211,13 @@ void M_LoadData(void)
     R_CachePatch(&dpLSRight, "M_LSRGHT");
     R_CachePatch(&dpLSCntr, "M_LSCNTR");
 # if __JDOOM__
-    if(gameMode == retail || gameMode == commercial)
+    if(gs.gameMode == retail || gs.gameMode == commercial)
         R_CachePatch(&credit, "CREDIT");
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         R_CachePatch(&help, "HELP");
-    if(gameMode == shareware || gameMode == registered || gameMode == retail)
+    if(gs.gameMode == shareware || gs.gameMode == registered || gs.gameMode == retail)
         R_CachePatch(&help1, "HELP1");
-    if(gameMode == shareware || gameMode == registered)
+    if(gs.gameMode == shareware || gs.gameMode == registered)
         R_CachePatch(&help2, "HELP2");
 # endif
 #endif
@@ -1237,7 +1237,7 @@ void M_InitEpisodeMenu(void)
     int                 i, maxw, w, numEpisodes;
 
 #if __JDOOM__
-    switch(gameMode)
+    switch(gs.gameMode)
     {
     case commercial:    numEpisodes = 0; break;
     case retail:        numEpisodes = 4; break;
@@ -1245,7 +1245,7 @@ void M_InitEpisodeMenu(void)
     default:            numEpisodes = 3; break;
     }
 #else  __JHERETIC__
-    if(gameMode == extended)
+    if(gs.gameMode == extended)
         numEpisodes = 6;
     else
         numEpisodes = 3;
@@ -1390,7 +1390,7 @@ void Hu_MenuInit(void)
 
 #if __JDOOM__
     // Here we catch version dependencies, like HELP1/2, and four episodes.
-    switch(gameMode)
+    switch(gs.gameMode)
     {
     case commercial:
         item = &MainItems[4]; // Read This!
@@ -3247,7 +3247,7 @@ void M_NewGame(int option, void* context)
 #elif __JDOOM64__ || __JSTRIFE__
     M_SetupNextMenu(&SkillDef);
 #else // __JDOOM__
-    if(gameMode == commercial)
+    if(gs.gameMode == commercial)
         M_SetupNextMenu(&SkillDef);
     else
         M_SetupNextMenu(&EpiDef);
@@ -3298,7 +3298,7 @@ int M_QuitResponse(msgresponse_t response, void* context)
         {
             if(!quitYet)
             {
-                if(gameMode == commercial)
+                if(gs.gameMode == commercial)
                     S_LocalSound(quitsounds2[((int)GAMETIC >> 2) & 7], NULL);
                 else
                     S_LocalSound(quitsounds[((int)GAMETIC >> 2) & 7], NULL);
@@ -3347,7 +3347,7 @@ int M_EndGameResponse(msgresponse_t response, void* context)
 
 void M_EndGame(int option, void* context)
 {
-    if(!userGame)
+    if(!gs.userGame)
     {
         Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, NULL);
         return;
@@ -3525,7 +3525,7 @@ void M_Episode(int option, void* context)
         return;
     }
 #else
-    if(gameMode == shareware && option)
+    if(gs.gameMode == shareware && option)
     {
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         M_SetupNextMenu(&ReadDef1);
@@ -3961,7 +3961,7 @@ DEFCC(CCmdMenuAction)
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
 # if __JDOOM__
-        if(gameMode == retail)
+        if(gs.gameMode == retail)
             currentMenu = &ReadDef2;
         else
 # endif
