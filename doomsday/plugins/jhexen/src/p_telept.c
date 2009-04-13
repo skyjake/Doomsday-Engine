@@ -262,7 +262,7 @@ void P_ArtiTele(player_t* player)
     float           destPos[3];
     angle_t         destAngle;
 
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         selections = deathmatchP - deathmatchStarts;
         i = P_Random() % selections;

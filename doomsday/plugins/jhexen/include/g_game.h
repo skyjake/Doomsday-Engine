@@ -32,16 +32,52 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-extern int gameEpisode;
-extern int gameMap;
-extern skillmode_t gameSkill;
-extern boolean deathmatch;
-extern boolean userGame;
+#include "x_config.h"
 
-extern int rebornPosition;
-extern int leaveMap;
-extern int leavePosition;
-extern boolean secretExit;
+typedef struct {
+    gamemode_t      gameMode;
+    int             gameModeBits;
+    // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
+    char            gameModeString[17];
+
+    gameaction_t    action;
+    gamestate_t     state, stateLast;
+    boolean         paused;
+    boolean         userGame; // Ok to save / end game.
+
+    playerprofile_t playerProfile;
+    struct {
+        playerclass_t   pClass; // Original class, current may differ.
+        byte            color; // Current color.
+    } players[MAXPLAYERS];
+
+    skillmode_t     skill;
+    int             episode; // Unused in jHexen.
+
+    struct {
+        int             id; // Id of the current map.
+        int             startTic; // Game tic at map start.
+        // Position indicator for cooperative net-play reborn.
+        int             rebornPosition;
+    } map;
+    struct {
+        int             id; // Id of the previous map.
+        int             leavePosition;
+    } mapPrev;
+
+    byte            netEpisode; // Unused in jHexen.
+    byte            netMap;
+    byte            netSkill;
+    byte            netSlot;
+
+    gamerules_t     rules;
+    gameconfig_t    cfg;
+} game_state_t;
+
+#define PLRPROFILE          (gs.playerProfile)
+#define GAMERULES           (gs.rules)
+
+extern game_state_t gs;
 
 extern int gsvMapMusic;
 

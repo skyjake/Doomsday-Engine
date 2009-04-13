@@ -111,7 +111,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
     S_StartSound(SFX_POTTERY_EXPLODE, mo);
     if(actor->args[0])
     {   // Spawn an item.
-        if(!noMonstersParm ||
+        if(!GAMERULES.noMonsters ||
            !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {   // Only spawn monsters if not -nomonsters.
@@ -877,7 +877,7 @@ void C_DECL A_SoAExplode(mobj_t* actor)
 
     if(actor->args[0])
     {   // Spawn an item.
-        if(!noMonstersParm ||
+        if(!GAMERULES.noMonsters ||
            !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {   // Only spawn monsters if not -nomonsters.

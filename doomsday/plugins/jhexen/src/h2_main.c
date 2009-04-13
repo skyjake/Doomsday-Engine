@@ -80,25 +80,10 @@ static void warpCheck(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int verbose;
+boolean devParm; // checkparm of -devparm
 
 boolean useScriptsDir = false;
 filename_t scriptsDir;
-
-boolean noMonstersParm; // checkparm of -nomonsters
-boolean respawnParm; // checkparm of -respawn
-boolean turboParm; // checkparm of -turbo
-boolean randomClassParm; // checkparm of -randclass
-boolean devParm; // checkparm of -devparm
-boolean artiSkipParm; // Whether shift-enter skips an artifact.
-
-float turboMul; // Multiplier for turbo.
-boolean netCheatParm; // Allow cheating in netgames (-netcheat)
-
-gamemode_t gameMode;
-int gameModeBits;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
 
 // Default font colours.
 const float defFontRGB[] = { .9f, 0.0f, 0.0f};
@@ -147,27 +132,27 @@ static execopt_t execOptions[] = {
  */
 boolean G_SetGameMode(gamemode_t mode)
 {
-    gameMode = mode;
-
     if(G_GetGameState() == GS_MAP)
         return false;
+
+    gs.gameMode = mode;
 
     switch(mode)
     {
     case shareware: // Shareware (4-map demo)
-        gameModeBits = GM_SHAREWARE;
+        gs.gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // HEXEN registered
-        gameModeBits = GM_REGISTERED;
+        gs.gameModeBits = GM_REGISTERED;
         break;
 
     case extended: // Deathkings
-        gameModeBits = GM_REGISTERED|GM_EXTENDED;
+        gs.gameModeBits = GM_REGISTERED|GM_EXTENDED;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
+        gs.gameModeBits = GM_INDETERMINED;
         break;
 
     default:
@@ -183,13 +168,13 @@ boolean G_SetGameMode(gamemode_t mode)
 void G_IdentifyVersion(void)
 {
     // Determine the game mode. Assume demo mode.
-    strcpy(gameModeString, "hexen-demo");
+    strcpy(gs.gameModeString, "hexen-demo");
     G_SetGameMode(shareware);
 
     if(W_CheckNumForName("MAP05") >= 0)
     {
         // Normal Hexen.
-        strcpy(gameModeString, "hexen");
+        strcpy(gs.gameModeString, "hexen");
         G_SetGameMode(registered);
     }
 
@@ -197,7 +182,7 @@ void G_IdentifyVersion(void)
     if(W_CheckNumForName("MAP59") >= 0 && W_CheckNumForName("MAP60") >= 0)
     {
         // It must be Deathkings!
-        strcpy(gameModeString, "hexen-dk");
+        strcpy(gs.gameModeString, "hexen-dk");
         G_SetGameMode(extended);
     }
 }
@@ -334,6 +319,7 @@ void G_InitGameRules(gamerules_t* gr)
 
     memset(gr, 0, sizeof(gamerules_t));
 
+    gr->turboMul = 1.0f;
     gr->jumpAllow = true; // True by default in Hexen.
     gr->jumpPower = 9;
     gr->fastMonsters = false;
@@ -358,6 +344,9 @@ void G_PreInit(void)
     G_SetGameMode(indetermined);
 
     memset(gs.players, 0, sizeof(gs.players));
+    gs.state = GS_DEMOSCREEN;
+    gs.stateLast = -1;
+    gs.action = GA_NONE;
     gs.netMap = 1;
     gs.netSkill = SM_MEDIUM;
 
@@ -412,7 +401,7 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
+                gs.gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
                     : "Hexen\n");
     Con_FPrintf(CBLF_RULER, "");
 
@@ -467,17 +456,17 @@ void G_PostInit(void)
     // MAPINFO.TXT script must be already processed.
     warpCheck();
 
+    // Load a saved game?
+    if((p = ArgCheckWith("-loadgame", 1)) != 0)
+    {
+        G_LoadGame(atoi(Argv(p + 1)));
+    }
+
     // Are we autostarting?
     if(autoStart)
     {
         Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap,
                     P_GetMapName(startMap), startMap, startSkill + 1);
-    }
-
-    // Load a saved game?
-    if((p = ArgCheckWith("-loadgame", 1)) != 0)
-    {
-        G_LoadGame(atoi(Argv(p + 1)));
     }
 
     // Check valid episode and map.
@@ -511,23 +500,21 @@ static void handleArgs(void)
     int                     p;
     execopt_t              *opt;
 
-    noMonstersParm = ArgExists("-nomonsters");
-    respawnParm = ArgExists("-respawn");
-    randomClassParm = ArgExists("-randclass");
     devParm = ArgExists("-devparm");
-    artiSkipParm = ArgExists("-artiskip");
-    netCheatParm = ArgExists("-netcheat");
 
+    PLRPROFILE.inventory.artiSkip = ArgExists("-artiskip");
+
+    GAMERULES.noMonsters = ArgExists("-nomonsters");
+    GAMERULES.respawn = ArgExists("-respawn");
+    GAMERULES.randomClass = ArgExists("-randclass");
     GAMERULES.deathmatch = ArgExists("-deathmatch");
 
     // Turbo movement option.
     p = ArgCheck("-turbo");
-    turboMul = 1.0f;
     if(p)
     {
         int                     scale = 200;
 
-        turboParm = true;
         if(p < Argc() - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -536,7 +523,7 @@ static void handleArgs(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        turboMul = scale / 100.f;
+        GAMERULES.turboMul = scale / 100.f;
     }
 
     // Process command line options.

@@ -74,7 +74,7 @@ boolean PIT_MobjTargetable(mobj_t* mo, void* data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source)) ||
-                (IS_NETGAME && !deathmatch && mo->player))
+                (IS_NETGAME && !GAMERULES.deathmatch && mo->player))
                 return true; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
@@ -94,7 +94,7 @@ boolean PIT_MobjTargetable(mobj_t* mo, void* data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source->tracer)) ||
-                (IS_NETGAME && !deathmatch && mo->player))
+                (IS_NETGAME && !GAMERULES.deathmatch && mo->player))
                 return true; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
@@ -111,7 +111,7 @@ boolean PIT_MobjTargetable(mobj_t* mo, void* data)
            !(mo->flags2 & MF2_DORMANT))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !deathmatch && mo->player))
+               (IS_NETGAME && !GAMERULES.deathmatch && mo->player))
                 return true; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
@@ -140,7 +140,7 @@ boolean PIT_MobjTargetable(mobj_t* mo, void* data)
            !(mo->flags2 & MF2_DORMANT))
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
-               (IS_NETGAME && !deathmatch && mo->player) ||
+               (IS_NETGAME && !GAMERULES.deathmatch && mo->player) ||
                mo == params->source->target)
                 return true; // Continue iteration.
 

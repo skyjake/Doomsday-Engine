@@ -123,7 +123,7 @@ void IN_Start(void)
     SN_StopAllSequences();
 
     // InFine handles the text.
-    if(!deathmatch)
+    if(!GAMERULES.deathmatch)
     {
         G_SetGameAction(GA_LEAVEMAP);
         return;
@@ -165,7 +165,7 @@ static void initStats(void)
     int                 slaughterCount;
     int                 playerCount;
 
-    if(!deathmatch)
+    if(!GAMERULES.deathmatch)
     {
 #if 0
         int                 oldCluster;
@@ -352,7 +352,7 @@ static void CheckForSkip(void)
         }
     }
 
-    if(deathmatch && interTime < 140)
+    if(GAMERULES.deathmatch && interTime < 140)
     {   // Wait for 4 seconds before allowing a skip.
         if(skipIntermission == 1)
         {

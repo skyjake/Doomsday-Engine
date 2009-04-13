@@ -473,7 +473,7 @@ boolean Cht_Responder(event_t *ev)
     if(G_GetGameState() != GS_MAP)
         return false;
 
-    if(gameSkill == SM_NIGHTMARE)
+    if(gs.skill == SM_NIGHTMARE)
     {   // Can't cheat in nightmare mode
         return false;
     }
@@ -503,8 +503,8 @@ boolean Cht_Responder(event_t *ev)
     {
         if(ev->state == EVS_DOWN)
         {
-            if(cheatKills[ShowKillsCount] == ev->data1 && IS_NETGAME
-               && deathmatch)
+            if(cheatKills[ShowKillsCount] == ev->data1 && IS_NETGAME &&
+               GAMERULES.deathmatch)
             {
                 ShowKillsCount++;
                 if(ShowKillsCount == 5)
@@ -540,7 +540,7 @@ static boolean canCheat(void)
 #ifdef _DEBUG
     return true;
 #else
-    return !(gameSkill == SM_NIGHTMARE || (IS_NETGAME && !netCheatParm) ||
+    return !(gs.skill == SM_NIGHTMARE || (IS_NETGAME && !netCheatParm) ||
              players[CONSOLEPLAYER].health <= 0);
 #endif
 }
@@ -709,7 +709,7 @@ static void CheatPuzzleFunc(player_t *player, cheat_t *cheat)
 
 static void CheatInitFunc(player_t *player, cheat_t *cheat)
 {
-    G_DeferedInitNew(gameSkill, gameEpisode, gameMap);
+    G_DeferedInitNew(gs.skill, gs.episode, gs.map.id);
     P_SetMessage(player, TXT_CHEATWARP, false);
 }
 
@@ -735,7 +735,7 @@ static void CheatWarpFunc(player_t *player, cheat_t *cheat)
         return;
     }
 
-    if(map == gameMap)
+    if(map == gs.map.id)
     {   // Don't try to teleport to current map.
         P_SetMessage(player, TXT_CHEATBADINPUT, false);
         return;
@@ -823,21 +823,21 @@ static void CheatClassFunc2(player_t* player, cheat_t* cheat)
     P_PlayerChangeClass(player, cheat->args[0] - '0');
 }
 
-static void CheatVersionFunc(player_t *player, cheat_t *cheat)
+static void CheatVersionFunc(player_t* player, cheat_t* cheat)
 {
     DD_Execute(false, "version");
 }
 
-static void CheatDebugFunc(player_t *player, cheat_t *cheat)
+static void CheatDebugFunc(player_t* player, cheat_t* cheat)
 {
     char                lumpName[9];
     char                textBuffer[256];
-    subsector_t        *sub;
+    subsector_t*        sub;
 
-    if(!player->plr->mo || !userGame)
+    if(!player->plr->mo || !gs.userGame)
         return;
 
-    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+    P_GetMapLumpName(gs.episode, gs.map.id, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName,
             player->plr->mo->pos[VX],

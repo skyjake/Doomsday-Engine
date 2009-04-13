@@ -110,7 +110,7 @@ void R_DrawMapTitle(void)
 
     // Use stardard map name if DED didn't define it.
     if(!lname)
-        lname = P_GetMapName(gameMap);
+        lname = P_GetMapName(gs.map.id);
 
     Draw_BeginZoom((1 + PLRPROFILE.hud.scale)/2, 160, y);
 
@@ -216,7 +216,7 @@ static void rendHUD(int player)
     {
         automapid_t         map = AM_MapForPlayer(player);
 
-        if(!(IS_NETGAME && deathmatch))
+        if(!(IS_NETGAME && GAMERULES.deathmatch))
             HU_DrawCheatCounters();
 
         // Do we need to render a full status bar at this point?
@@ -347,7 +347,7 @@ void G_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(paused && !fiActive)
+    if(gs.paused && !fiActive)
     {
         GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
     }

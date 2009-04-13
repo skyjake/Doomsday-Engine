@@ -37,13 +37,7 @@
 // We need the playr data structure as well.
 #include "x_player.h"
 
-extern boolean paused; // Game Pause?
-
-// Timer, for scores.
-extern int mapStartTic; // Game tic at map start.
-
 // Quit after playing a demo from cmdline.
-extern boolean singledemo;
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 

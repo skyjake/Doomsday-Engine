@@ -380,7 +380,7 @@ void SN_UpdateActiveSequences(void)
     seqnode_t  *node;
     boolean     sndPlaying;
 
-    if(!ActiveSequences || paused)
+    if(!ActiveSequences || gs.paused)
     {   // No sequences currently playing/game is paused
         return;
     }

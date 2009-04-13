@@ -1259,7 +1259,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         (IS_NETGAME ? GAMERULES.mobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
-    if(gameSkill != SM_NIGHTMARE)
+    if(gs.skill != SM_NIGHTMARE)
     {
         mo->reactionTime = info->reactionTime;
     }
@@ -1348,7 +1348,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
         pos[VX] = pos[VY] = pos[VZ] = 0;
     }
 
-    if(randomClassParm && deathmatch)
+    if(GAMERULES.randomClass && GAMERULES.deathmatch)
     {
         p->pClass = P_Random() % 3;
         if(p->pClass == gs.players[playernum].pClass)
@@ -1423,7 +1423,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
 
     p->plr->lookDir = 0;
     P_SetupPsprites(p);
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {   // Give all keys in death match mode.
         p->keys = 2047;
     }
@@ -1500,7 +1500,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
     {
         spawnMask = MTF_GSINGLE;
     }
-    else if(deathmatch)
+    else if(GAMERULES.deathmatch)
     {
         spawnMask = MTF_GDEATHMATCH;
     }
@@ -1513,11 +1513,11 @@ void P_SpawnMapThing(spawnspot_t *spot)
         return;
 
     // Check current skill with spawn flags.
-    if(gameSkill == SM_BABY || gameSkill == SM_EASY)
+    if(gs.skill == SM_BABY || gs.skill == SM_EASY)
     {
         spawnMask = MTF_EASY;
     }
-    else if(gameSkill == SM_HARD || gameSkill == SM_NIGHTMARE)
+    else if(gs.skill == SM_HARD || gs.skill == SM_NIGHTMARE)
     {
         spawnMask = MTF_HARD;
     }
@@ -1537,7 +1537,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
             return;
         }
     }
-    else if(deathmatch == false)
+    else if(GAMERULES.deathmatch == false)
     {   // Cooperative.
         spawnMask = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -1585,13 +1585,13 @@ void P_SpawnMapThing(spawnspot_t *spot)
     }
 
     // Don't spawn keys and players in deathmatch.
-    if(deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
+    if(GAMERULES.deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
     {
         return;
     }
 
     // Don't spawn monsters if -nomonsters.
-    if(noMonstersParm && (MOBJINFO[i].flags & MF_COUNTKILL))
+    if(GAMERULES.noMonsters && (MOBJINFO[i].flags & MF_COUNTKILL))
     {
         return;
     }

@@ -144,6 +144,21 @@ typedef struct classinfo_s{
 
 extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
+typedef enum {
+    GA_NONE,
+    GA_LOADMAP,
+    GA_INITNEW,
+    GA_NEWGAME,
+    GA_LOADGAME,
+    GA_SAVEGAME,
+    GA_COMPLETED,
+    GA_LEAVEMAP,
+    GA_SINGLEREBORN,
+    GA_VICTORY,
+    GA_WORLDDONE,
+    GA_SCREENSHOT
+} gameaction_t;
+
 /**
  * Game state (hi-level).
  *

@@ -32,19 +32,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-extern gamemode_t gameMode;
-extern int gameModeBits;
-extern char gameModeString[];
-
-extern boolean noMonstersParm; // checkparm of -nomonsters
-extern boolean respawnParm; // checkparm of -respawn
-extern boolean turboParm; // checkparm of -turbo
-extern boolean randomClassParm; // checkparm of -randclass
 extern boolean devParm; // checkparm of -devparm
-extern boolean artiSkipParm; // Whether shift-enter skips an artifact.
-extern float turboMul; // Multiplier for turbo.
-extern boolean netCheatParm; // Allow cheating in netgames (-netcheat)
-
 extern char* borderLumps[];
 
 // Default font colours.

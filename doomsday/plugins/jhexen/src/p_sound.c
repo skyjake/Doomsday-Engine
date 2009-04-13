@@ -67,8 +67,8 @@ void S_MapMusic(void)
     int                 cdTrack;
 
     // Update the 'currentmap' music definition.
-    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gameMap));
-    cdTrack = P_GetMapCDTrack(gameMap);
+    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gs.map.id));
+    cdTrack = P_GetMapCDTrack(gs.map.id);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
     if(S_StartMusic("currentmap", true))
     {

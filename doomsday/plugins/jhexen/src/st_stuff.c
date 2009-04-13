@@ -606,7 +606,7 @@ static void drawStatusBarBackground(int player)
             {
                 GL_DrawPatch(38, 162, dpStatBar.lump);
 
-                if(deathmatch)
+                if(GAMERULES.deathmatch)
                 {
                     GL_DrawPatch_CS(38, 162, dpKills.lump);
                 }
@@ -700,7 +700,7 @@ static void drawStatusBarBackground(int player)
             // Main interface
             if(!AM_IsActive(AM_MapForPlayer(player)))
             {
-                if(deathmatch)
+                if(GAMERULES.deathmatch)
                 {
                     GL_DrawPatch_CS(38, 162, dpKills.lump);
                 }
@@ -709,11 +709,11 @@ static void drawStatusBarBackground(int player)
                 DGL_SetPatch(dpStatBar.lump, DGL_CLAMP, DGL_CLAMP);
                 DGL_Begin(DGL_QUADS);
 
-                x = deathmatch ? 68 : 38;
+                x = GAMERULES.deathmatch ? 68 : 38;
                 y = 162;
-                w = deathmatch ? 122 : 152;
+                w = GAMERULES.deathmatch ? 122 : 152;
                 h = 30;
-                cw = deathmatch ? (float) 15 / 122 : 0;
+                cw = GAMERULES.deathmatch ? (float) 15 / 122 : 0;
                 cw2 = 0.62295081967213114754098360655738;
                 ch = 0.96774193548387096774193548387097;
 
@@ -1178,7 +1178,7 @@ void ST_updateWidgets(int player)
         hud->statusbarCounterAlpha = 1.0f;
 
     // Used by w_frags widget.
-    hud->fragsOn = deathmatch && hud->statusbarOn;
+    hud->fragsOn = GAMERULES.deathmatch && hud->statusbarOn;
 
     hud->fragsCount = 0;
 
@@ -1419,7 +1419,7 @@ static void drawWidgets(hudstate_t* hud)
         if(!AM_IsActive(AM_MapForPlayer(player)))
         {
             // Frags
-            if(deathmatch)
+            if(GAMERULES.deathmatch)
                 STlib_updateNum(&hud->wFrags, refresh);
             else
                 STlib_updateNum(&hud->wHealth, refresh);
@@ -1818,7 +1818,7 @@ void ST_doFullscreenStuff(int player)
         Draw_EndZoom();
     }
 
-    if(deathmatch)
+    if(GAMERULES.deathmatch)
     {
         temp = 0;
         for(i = 0; i < MAXPLAYERS; i++)

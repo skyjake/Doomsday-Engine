@@ -460,7 +460,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
             if(!(mo && mo->player && mo->player->pState == PST_DEAD))
             {
                 success = true;
-                if(deathmatch)
+                if(GAMERULES.deathmatch)
                 {
                     // Winning in deathmatch just goes back to map 1
                     G_LeaveMap(1, 0, false);
@@ -1235,7 +1235,7 @@ void P_InitLightning(void)
 {
     uint                i, secCount;
 
-    if(!P_GetMapLightning(gameMap))
+    if(!P_GetMapLightning(gs.map.id))
     {
         mapHasLightning = false;
         lightningFlash = 0;

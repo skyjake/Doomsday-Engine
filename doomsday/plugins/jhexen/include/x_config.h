@@ -134,7 +134,7 @@ typedef struct {
         byte            ammoAutoSwitch;
         int             weaponOrder[NUM_WEAPON_TYPES];
         byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-
+        byte            artiSkip; // Whether shift-enter skips an artifact.
         float           timer; // Number of seconds until the inventory auto-hides.
         int             chooseAndUse;
         int             nextOnNoUse;
@@ -178,10 +178,13 @@ typedef struct {
 } playerprofile_t;
 
 typedef struct {
+    int             deathmatch; // Only if started as net death.
+
+    byte            respawn; // checkparm of -respawn
+    float           turboMul; // Multiplier for turbo.
     byte            cameraNoClip;
     byte            fastMonsters;
     float           jumpPower;
-    byte            deathmatch;
     byte            noMonsters;
     byte            randomClass;
     byte            jumpAllow;
@@ -191,25 +194,5 @@ typedef struct {
     byte            noMaxZRadiusAttack; // Radius attacks are infinitely tall.
     byte            noMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
 } gamerules_t;
-
-typedef struct {
-    playerprofile_t playerProfile;
-    struct {
-        playerclass_t   pClass; // Original class, current may differ.
-        byte            color; // Current color.
-    } players[MAXPLAYERS];
-
-    byte            netEpisode; // Unused in jHexen.
-    byte            netMap;
-    byte            netSkill;
-
-    gamerules_t     rules;
-    gameconfig_t    cfg;
-} game_state_t;
-
-#define PLRPROFILE          (gs.playerProfile)
-#define GAMERULES           (gs.rules)
-
-extern game_state_t gs;
 
 #endif

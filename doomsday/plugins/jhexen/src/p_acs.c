@@ -318,7 +318,7 @@ void P_CheckACSStore(void)
 
     for(store = ACSStore; store->map != 0; store++)
     {
-        if(store->map == gameMap)
+        if(store->map == gs.map.id)
         {
             P_StartACS(store->script, 0, store->args, NULL, NULL, 0);
             if(NewScript)
@@ -338,7 +338,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
     aste_t*             statePtr;
 
     NewScript = NULL;
-    if(map && map != gameMap)
+    if(map && map != gs.map.id)
     {   // Add to the script store.
         return AddToACSStore(map, number, args);
     }
@@ -1540,7 +1540,7 @@ static int CmdGameType(void)
     {
         gametype = GAME_SINGLE_PLAYER;
     }
-    else if(deathmatch)
+    else if(GAMERULES.deathmatch)
     {
         gametype = GAME_NET_DEATHMATCH;
     }
@@ -1555,7 +1555,7 @@ static int CmdGameType(void)
 
 static int CmdGameSkill(void)
 {
-    Push(gameSkill);
+    Push(gs.skill);
     return SCRIPT_CONTINUE;
 }
 
