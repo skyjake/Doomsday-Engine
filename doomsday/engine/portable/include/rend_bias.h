@@ -85,7 +85,7 @@ void            SB_Register(void);
 void            SB_InitForMap(const char* uniqueId);
 void            SB_InitVertexIllum(vertexillum_t* villum);
 
-struct biassurface_s* SB_CreateSurface(uint num);
+struct biassurface_s* SB_CreateSurface(void);
 void            SB_DestroySurface(struct biassurface_s* bsuf);
 void            SB_SurfaceMoved(struct biassurface_s* bsuf);
 

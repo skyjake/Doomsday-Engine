@@ -598,8 +598,20 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
             }
             Z_Free(ssec->bsuf);
         }
+
         if(!ddMapSetup)
-            newList[n] = SB_CreateSurface(ssec->numVertices);
+        {
+            uint                i;
+            biassurface_t*      bsuf = SB_CreateSurface();
+
+            bsuf->size = ssec->numVertices;
+            bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+
+            for(i = 0; i < bsuf->size; ++i)
+                SB_InitVertexIllum(&bsuf->illum[i]);
+
+            newList[n] = bsuf;
+        }
 
         ssec->bsuf = newList;
 
