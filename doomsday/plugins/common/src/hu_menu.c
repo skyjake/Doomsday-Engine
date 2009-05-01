@@ -1534,7 +1534,7 @@ void Hu_MenuInit(void)
         item->func = M_QuitDOOM;
         item->text = "{case}Quit Game";
         item->patch = &m_quitg;
-        MainDef.itemCount--;
+        MainDef.itemCount = 5;
         MainDef.y += 8;
         SkillDef.prevMenu = MENU_NEWGAME;
         ReadDef1.x = 330;
