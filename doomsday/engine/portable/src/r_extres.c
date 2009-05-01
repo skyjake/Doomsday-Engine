@@ -105,7 +105,7 @@ static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
     {".png", ".tga", ".pcx", NULL}
 };
 
-static resclass_t classInfo[NUM_RESOURCE_CLASSES];
+static resclass_t resClasses[NUM_RESOURCE_CLASSES];
 
 // CODE --------------------------------------------------------------------
 
@@ -151,33 +151,33 @@ void R_InitDataPaths(const char *path, boolean justGamePaths)
         if(justGamePaths && i == RC_GRAPHICS)
             continue;
 
-        memset(&classInfo[i], 0, sizeof(classInfo[i]));
+        memset(&resClasses[i], 0, sizeof(resClasses[i]));
 
         // The -texdir option specifies a path to look for TGA textures.
         if(ArgCheckWith(explicitOption[i][0], 1))
         {
-            M_TranslatePath(ArgNext(), classInfo[i].path);
+            M_TranslatePath(ArgNext(), resClasses[i].path);
         }
         else
         {
             // Build the path for the resource class using the default
             // elements.
-            strcpy(classInfo[i].path, dataPath);
-            strcat(classInfo[i].path, defaultResourcePath[i]);
+            strcpy(resClasses[i].path, dataPath);
+            strcat(resClasses[i].path, defaultResourcePath[i]);
         }
 
-        Dir_ValidDir(classInfo[i].path);
+        Dir_ValidDir(resClasses[i].path);
 
         // The overriding path.
         if(ArgCheckWith(explicitOption[i][1], 1))
         {
-            M_TranslatePath(ArgNext(), classInfo[i].overridePath);
+            M_TranslatePath(ArgNext(), resClasses[i].overridePath);
         }
-        Dir_ValidDir(classInfo[i].overridePath);
+        Dir_ValidDir(resClasses[i].overridePath);
 
         VERBOSE2(Con_Message
-                 ("  %i: %s (%s)\n", i, M_PrettyPath(classInfo[i].path),
-                  M_PrettyPath(classInfo[i].overridePath)));
+                 ("  %i: %s (%s)\n", i, M_PrettyPath(resClasses[i].path),
+                  M_PrettyPath(resClasses[i].overridePath)));
     }
 }
 
@@ -271,7 +271,7 @@ boolean R_TryResourceFile(resourceclass_t resClass, const char *path,
 boolean R_FindResource(resourceclass_t resClass, const char *name,
                        const char *optionalSuffix, char *fileName)
 {
-    resclass_t *info = &classInfo[resClass];
+    resclass_t *info = &resClasses[resClass];
     const char *gameMode;
     char    path[256];
     char    fn[256];
