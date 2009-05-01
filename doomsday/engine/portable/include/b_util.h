@@ -23,7 +23,7 @@
  */
 
 /**
- * b_main.h: Bindings
+ * b_util.h: Bindings
  */
 
 #ifndef __DOOMSDAY_BIND_UTIL_H__
