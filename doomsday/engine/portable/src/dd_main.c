@@ -547,7 +547,7 @@ static int DD_StartupWorker(void *parm)
 
     Con_SetProgress(40);
 
-    if(defaultWads)
+    if(defaultWads && defaultWads[0])
         AddToWadList(defaultWads);  // These must take precedence.
     HandleArgs(1);              // Only the WADs.
 
