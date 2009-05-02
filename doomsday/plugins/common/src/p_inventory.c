@@ -183,8 +183,14 @@ static unsigned int countItems(const playerinventory_t* inv,
 static boolean useItem(playerinventory_t* inv, inventoryitemtype_t type,
                        boolean panic)
 {
-    int                 plrnum = inv - inventories;
-    const invitem_t*    item = &invItems[type-1];
+    int                 plrnum;
+    const invitem_t*    item;
+
+    if(!countItems(inv, type))
+        return false; // That was a non-starter.
+
+    plrnum = inv - inventories;
+    item = &invItems[type-1];
 
     // Is this usable?
     if(!item->action)
