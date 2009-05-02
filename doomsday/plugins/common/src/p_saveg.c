@@ -5378,9 +5378,10 @@ static void SV_HxLoadMap(void)
 void SV_MapTeleport(int map, int position)
 {
     int         i;
-    int         j;
     char        fileName[100];
     player_t    playerBackup[MAXPLAYERS];
+    uint        numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
+    inventoryitemtype_t readyItem[MAXPLAYERS];
     mobj_t     *targetPlayerMobj;
     boolean     rClass;
     boolean     playerWasReborn;
@@ -5421,7 +5422,13 @@ void SV_MapTeleport(int map, int position)
     randomClassParm = false;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
+        uint                j;
+
         memcpy(&playerBackup[i], &players[i], sizeof(player_t));
+
+        for(j = 0; j < NUM_INVENTORYITEM_TYPES; ++j)
+            numInventoryItems[i][j] = P_InventoryCount(i, j);
+        readyItem[i] = P_InventoryReadyItem(i);
     }
 
     // Only SV_HxLoadMap() uses targetPlayerAddrs, so it's NULLed here
@@ -5454,11 +5461,27 @@ void SV_MapTeleport(int map, int position)
     targetPlayerMobj = NULL;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
+        uint                j;
+
         if(!players[i].plr->inGame)
         {
             continue;
         }
+
         memcpy(&players[i], &playerBackup[i], sizeof(player_t));
+        for(j = 0; j < NUM_INVENTORYITEM_TYPES; ++j)
+        {
+            uint                k;
+
+            // Don't give back the wings of wrath if reborn.
+            if(j == IIT_FLY && players[i].playerState == PST_REBORN)
+                continue;
+
+            for(k = 0; k < numInventoryItems[i][j]; ++k)
+                P_InventoryGive(i, j, true);
+        }
+        P_InventorySetReadyItem(i, readyItem[i]);
+
         HUMsg_ClearMessages(i);
         players[i].attacker = NULL;
         players[i].poisoner = NULL;
