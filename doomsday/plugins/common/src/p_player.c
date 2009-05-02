@@ -58,7 +58,13 @@
 #define MESSAGETICS             (4 * TICSPERSEC)
 #define CAMERA_FRICTION_THRESHOLD (.4f)
 
+#if __JDOOM64__
+#define NUM_WEAPON_SLOTS        (8)
+#elif __JDOOM__ || __JHERETIC__
 #define NUM_WEAPON_SLOTS        (7)
+#elif __JHEXEN__
+#define NUM_WEAPON_SLOTS        (4)
+#endif
 
 // TYPES -------------------------------------------------------------------
 
