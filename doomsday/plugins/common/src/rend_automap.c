@@ -223,6 +223,15 @@ void Rend_AutomapUnloadData(void)
         rmap->constructMap = true;
     }
 
+    for(i = 0; i < NUM_VECTOR_GRAPHS; ++i)
+    {
+        vectorgrap_t*       vgraph = AM_GetVectorGraph(i);
+
+        if(vgraph->dlist)
+            DGL_DeleteLists(vgraph->dlist, 1);
+        vgraph->dlist = 0;
+    }
+
     if(amMaskTexture)
         DGL_DeleteTextures(1, (DGLuint*) &amMaskTexture);
     amMaskTexture = 0;
