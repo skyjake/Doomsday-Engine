@@ -210,9 +210,7 @@ void LO_ClearForFrame(void)
     if(++i > 40)
     {
         i = 0;
-        PRINT_PROF(PROF_DYN_INIT_DEL);
         PRINT_PROF(PROF_DYN_INIT_ADD);
-        PRINT_PROF(PROF_DYN_INIT_LINK);
     }
 #endif
 
