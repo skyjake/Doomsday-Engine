@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "dd_share.h"
 
@@ -57,7 +58,14 @@
 #define MESSAGETICS             (4 * TICSPERSEC)
 #define CAMERA_FRICTION_THRESHOLD (.4f)
 
+#define NUM_WEAPON_SLOTS        (7)
+
 // TYPES -------------------------------------------------------------------
+
+typedef struct weaponslotinfo_s {
+    uint                num;
+    weapontype_t*       types;
+} weaponslotinfo_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -71,7 +79,149 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static weaponslotinfo_t weaponSlots[NUM_WEAPON_SLOTS];
+
 // CODE --------------------------------------------------------------------
+
+static byte slotForWeaponType(weapontype_t type, uint* position)
+{
+    byte                i = 0, found = 0;
+
+    do
+    {
+        weaponslotinfo_t*   slot = &weaponSlots[i];
+        uint                j = 0;
+
+        while(!found && j < slot->num)
+        {
+            if(slot->types[j] == type)
+            {
+                found = i + 1;
+                if(position)
+                    *position = j;
+            }
+            else
+                j++;
+        }
+
+    } while(!found && ++i < NUM_WEAPON_SLOTS);
+
+    return found;
+}
+
+static void unlinkWeaponInSlot(byte slotidx, weapontype_t type)
+{
+    uint                i;
+    weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+
+    for(i = 0; i < slot->num; ++i)
+        if(slot->types[i] == type)
+            break;
+
+    if(i == slot->num)
+        return; // Not linked to this slot.
+
+    memmove(&slot->types[i], &slot->types[i+1], sizeof(weapontype_t) *
+            (slot->num - 1 - i));
+    slot->types = realloc(slot->types, sizeof(weapontype_t) * --slot->num);
+}
+
+static void linkWeaponInSlot(byte slotidx, weapontype_t type)
+{
+    weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+
+    slot->types = realloc(slot->types, sizeof(weapontype_t) * ++slot->num);
+    if(slot->num > 1)
+        memmove(&slot->types[1], &slot->types[0],
+                sizeof(weapontype_t) * (slot->num - 1));
+
+    slot->types[0] = type;
+}
+
+void P_InitWeaponSlots(void)
+{
+    memset(weaponSlots, 0, sizeof(weaponSlots));
+}
+
+void P_FreeWeaponSlots(void)
+{
+    byte                i;
+
+    for(i = 0; i < NUM_WEAPON_SLOTS; ++i)
+    {
+        weaponslotinfo_t*   slot = &weaponSlots[i];
+
+        if(slot->types)
+            free(slot->types);
+        slot->types = NULL;
+        slot->num = 0;
+    }
+}
+
+boolean P_SetWeaponSlot(weapontype_t type, byte slot)
+{
+    byte                currentSlot;
+
+    if(slot > NUM_WEAPON_SLOTS)
+        return false;
+
+    currentSlot = slotForWeaponType(type, NULL);
+
+    // First, remove the weapon (if found).
+    if(currentSlot)
+        unlinkWeaponInSlot(currentSlot, type);
+
+    if(slot != 0)
+    {   // Add this weapon to the specified slot (head).
+        linkWeaponInSlot(slot, type);
+    }
+
+    return true;
+}
+
+byte P_GetWeaponSlot(weapontype_t type)
+{
+    if(type >= WT_FIRST && type < NUM_WEAPON_TYPES)
+        return slotForWeaponType(type, NULL);
+
+    return 0;
+}
+
+weapontype_t P_WeaponSlotCycle(weapontype_t type, boolean prev)
+{
+    if(type >= WT_FIRST && type < NUM_WEAPON_TYPES)
+    {
+        byte                slotidx;
+        uint                position;
+
+        if((slotidx = slotForWeaponType(type, &position)))
+        {
+            weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+
+            if(slot->num > 1)
+            {
+                if(prev)
+                {
+                    if(position == 0)
+                        position = slot->num - 1;
+                    else
+                        position--;
+                }
+                else
+                {
+                    if(position == slot->num - 1)
+                        position = 0;
+                    else
+                        position++;
+                }
+
+                return slot->types[position];
+            }
+        }
+    }
+
+    return type;
+}
 
 /**
  * Initialize player class info.
@@ -425,11 +575,11 @@ boolean P_CheckAmmo(player_t* plr)
  * weapon if no other valid choices. Preferences are NOT user selectable.
  *
  * @param player        The player to work with.
- * @param next          Search direction @c true = next, @c false = previous.
+ * @param prev          Search direction @c true = previous, @c false = next.
  */
-weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
+weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
 {
-    weapontype_t       *list, w = 0;
+    weapontype_t*       list, w = 0;
     int                 lvl, i;
 #if __JDOOM__
     static weapontype_t wp_list[] = {
@@ -464,7 +614,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
     if(cfg.weaponNextMode)
     {
         list = (weapontype_t*) cfg.weaponOrder;
-        next = !next; // Invert order.
+        prev = !prev; // Invert order.
     }
     else
         list = wp_list;
@@ -481,10 +631,10 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
     for(;;)
     {
         // Move the iterator.
-        if(next)
-            i++;
-        else
+        if(prev)
             i--;
+        else
+            i++;
 
         if(i < 0)
             i = NUM_WEAPON_TYPES - 1;

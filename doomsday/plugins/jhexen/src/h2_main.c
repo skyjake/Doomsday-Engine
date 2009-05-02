@@ -390,6 +390,9 @@ void G_PostInit(void)
     // Common post init routine.
     G_CommonPostInit();
 
+    // Initialize weapon info using definitions.
+    P_InitWeaponInfo();
+
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
                 gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
@@ -630,6 +633,7 @@ void G_Shutdown(void)
     P_ShutdownInventory();
     AM_Shutdown();
     X_DestroyLUTs();
+    P_FreeWeaponSlots();
 }
 
 void G_EndFrame(void)

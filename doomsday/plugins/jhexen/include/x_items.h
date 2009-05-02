@@ -60,4 +60,5 @@ typedef struct {
 
 extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
+void            P_InitWeaponInfo(void);
 #endif

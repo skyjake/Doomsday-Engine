@@ -1329,14 +1329,9 @@ void P_PlayerThinkItems(player_t* player)
 
 void P_PlayerThinkWeapons(player_t* player)
 {
-    playerbrain_t*  brain = &player->brain;
-    weapontype_t    oldweapon = player->pendingWeapon;
-    weapontype_t    newweapon;
-
-    if(brain->cycleWeapon)
-    {
-        player->pendingWeapon = P_PlayerFindWeapon(player, brain->cycleWeapon > 0);
-    }
+    playerbrain_t*      brain = &player->brain;
+    weapontype_t        oldweapon = player->pendingWeapon;
+    weapontype_t        newweapon = WT_NOCHANGE;
 
     // Check for weapon change.
 #if __JHERETIC__ || __JHEXEN__
@@ -1344,61 +1339,41 @@ void P_PlayerThinkWeapons(player_t* player)
 #else
     if(brain->changeWeapon != WT_NOCHANGE)
 #endif
+    {   // Direct slot selection.
+        weapontype_t        cand, first;
+
+        // Is this a same-slot weapon cycle?
+        if(P_GetWeaponSlot(brain->changeWeapon) ==
+           P_GetWeaponSlot(player->readyWeapon))
+        {   // Yes.
+            cand = player->readyWeapon;
+        }
+        else
+        {   // No.
+            cand = brain->changeWeapon;
+        }
+
+        first = cand = P_WeaponSlotCycle(cand, brain->cycleWeapon < 0);
+
+        do
+        {
+            if(player->weapons[cand].owned)
+                newweapon = cand;
+        } while(newweapon == WT_NOCHANGE &&
+               (cand = P_WeaponSlotCycle(cand, brain->cycleWeapon < 0)) !=
+                first);
+    }
+    else if(brain->cycleWeapon)
+    {   // Linear cycle.
+        newweapon = P_PlayerFindWeapon(player, brain->cycleWeapon < 0);
+    }
+
+    if(newweapon != WT_NOCHANGE && newweapon != player->readyWeapon)
     {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-#  define HAS_WEAPON(x) (player->weaponOwned[x])
-#  define CUR_WEAPON(x)  (palyer->readyWeapon == x)
-#endif
-
-        // The actual changing of the weapon is done when the weapon psprite
-        // can do it (read: not in the middle of an attack).
-        newweapon = brain->changeWeapon;
-#if __JDOOM__ || __JDOOM64__
-        if(newweapon == player->readyWeapon)
+        if(weaponInfo[newweapon][player->class].mode[0].gameModeBits
+           & gameModeBits)
         {
-            // Swapping between fists and chainaw.
-            if(newweapon == WT_FIRST)
-                newweapon = WT_EIGHTH;
-            else if(newweapon == WT_EIGHTH)
-                newweapon = WT_FIRST;
-
-            // Swapping between shotgun and super-shotgun.
-            if(gameMode == commercial)
-            {
-                if(newweapon == WT_THIRD)
-                    newweapon = WT_NINETH;
-                else if(newweapon == WT_NINETH)
-                    newweapon = WT_THIRD;
-            }
-        }
-
-# if !__JDOOM64__
-        if(gameMode != commercial && newweapon == WT_NINETH)
-        {
-            // In non-Doom II, supershotgun is the same as normal shotgun.
-            newweapon = WT_THIRD;
-        }
-# endif
-#endif // __JDOOM__ || __JDOOM64__
-
-#if __JHERETIC__
-        // Swapping between staff and gauntlets.
-        if(newweapon == player->readyWeapon)
-        {
-            if(newweapon == WT_FIRST)
-                newweapon = WT_EIGHTH;
-            else if(newweapon == WT_EIGHTH)
-                newweapon = WT_FIRST;
-        }
-#endif // __JHERETIC__
-
-        if(player->weapons[newweapon].owned && newweapon != player->readyWeapon)
-        {
-            if(weaponInfo[newweapon][player->class].mode[0].gameModeBits
-               & gameModeBits)
-            {
-                player->pendingWeapon = newweapon;
-            }
+            player->pendingWeapon = newweapon;
         }
     }
 
@@ -1826,14 +1801,6 @@ void P_PlayerThinkUpdateControls(player_t* player)
             brain->doReborn = true;
     }
 
-    // Weapons.
-    brain->changeWeapon = WT_NOCHANGE;
-    for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)
-        if(P_GetImpulseControlState(playerNum, CTL_WEAPON1 + i))
-        {
-            brain->changeWeapon = i;
-        }
-
     // Weapon cycling.
     if(P_GetImpulseControlState(playerNum, CTL_NEXT_WEAPON))
     {
@@ -1847,6 +1814,22 @@ void P_PlayerThinkUpdateControls(player_t* player)
     {
         brain->cycleWeapon = 0;
     }
+
+    // Weapons.
+    brain->changeWeapon = WT_NOCHANGE;
+    for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)
+        if(P_GetImpulseControlState(playerNum, CTL_WEAPON1 + i))
+        {
+            brain->changeWeapon = i;
+            brain->cycleWeapon = +1; // Direction for same-slot cycle.
+#if __JDOOM__ || __JDOOM64__
+            if(i == WT_EIGHTH || i == WT_NINETH)
+                brain->cycleWeapon = -1;
+#elif __JHERETIC__
+            if(i == WT_EIGHTH)
+                brain->cycleWeapon = -1;
+#endif
+        }
 
 #if __JHERETIC__ || __JHEXEN__
     // Inventory items.

@@ -43,10 +43,17 @@
 void            P_InitPlayerClassInfo(void);
 #endif
 
+void            P_InitWeaponSlots(void);
+void            P_FreeWeaponSlots(void);
+
+boolean         P_SetWeaponSlot(weapontype_t type, byte slot);
+byte            P_GetWeaponSlot(weapontype_t type);
+weapontype_t    P_WeaponSlotCycle(weapontype_t type, boolean prev);
+
 int             P_GetPlayerNum(player_t* plr);
 int             P_GetPlayerCheats(player_t* plr);
 
-weapontype_t    P_PlayerFindWeapon(player_t* plr, boolean next);
+weapontype_t    P_PlayerFindWeapon(player_t* plr, boolean prev);
 weapontype_t    P_MaybeChangeWeapon(player_t* plr, weapontype_t weapon,
                                     ammotype_t ammo, boolean force);
 boolean         P_CheckAmmo(player_t* plr);

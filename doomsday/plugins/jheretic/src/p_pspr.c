@@ -664,6 +664,17 @@ void P_InitWeaponInfo(void)
         weaponInfo[i][pclass].mode[1].staticSwitch = GetDefInt(buf, 0);
     }
 
+    /// \todo Get this info from values.
+    P_InitWeaponSlots();
+
+    P_SetWeaponSlot(WT_FIRST, 1);
+    P_SetWeaponSlot(WT_EIGHTH, 1);
+    P_SetWeaponSlot(WT_SECOND, 2);
+    P_SetWeaponSlot(WT_THIRD, 3);
+    P_SetWeaponSlot(WT_FOURTH, 4);
+    P_SetWeaponSlot(WT_FIFTH, 5);
+    P_SetWeaponSlot(WT_SIXTH, 6);
+    P_SetWeaponSlot(WT_SEVENTH, 7);
 #undef WPINF
 }
 

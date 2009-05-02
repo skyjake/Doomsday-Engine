@@ -47,6 +47,7 @@
 #include "p_switch.h"
 #include "am_map.h"
 #include "p_inventory.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -592,6 +593,7 @@ void G_Shutdown(void)
     P_DestroySectorTagLists();
     P_ShutdownInventory();
     AM_Shutdown();
+    P_FreeWeaponSlots();
 }
 
 void G_EndFrame(void)

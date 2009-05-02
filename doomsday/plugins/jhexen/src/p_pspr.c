@@ -366,6 +366,20 @@ void R_GetWeaponBob(int player, float* x, float* y)
 }
 
 /**
+ *Initialize weapon info, maxammo and clipammo.
+ */
+void P_InitWeaponInfo(void)
+{
+    /// \todo Get this info from values.
+    P_InitWeaponSlots();
+
+    P_SetWeaponSlot(WT_FIRST, 1);
+    P_SetWeaponSlot(WT_SECOND, 2);
+    P_SetWeaponSlot(WT_THIRD, 3);
+    P_SetWeaponSlot(WT_FOURTH, 4);
+}
+
+/**
  * Offset in state->misc1/2.
  */
 void P_SetPSpriteOffset(pspdef_t *psp, player_t *plr, state_t *state)
