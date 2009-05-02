@@ -1223,6 +1223,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\b_util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\bsp_edge.h"
 				>
 			</File>
