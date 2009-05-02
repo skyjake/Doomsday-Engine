@@ -48,6 +48,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+  PROF_MOBJ_INIT_ADD
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct viewer_s {
@@ -516,6 +520,17 @@ void R_CreateMobjLinks(void)
 {
     uint                i;
     sector_t*           seciter;
+#ifdef DD_PROFILE
+    static int          p;
+
+    if(++p > 40)
+    {
+        p = 0;
+        PRINT_PROF( PROF_MOBJ_INIT_ADD );
+    }
+#endif
+
+BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
     for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
     {
@@ -526,6 +541,8 @@ void R_CreateMobjLinks(void)
             R_ObjLinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }
     }
+
+END_PROF( PROF_MOBJ_INIT_ADD );
 }
 
 /**

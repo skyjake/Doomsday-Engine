@@ -46,6 +46,11 @@
 #define Y_TO_OBBY(bm, cy)           (((cy) - (bm)->origin[1]) >> (FRACBITS+7))
 #define OBB_XY(bm, bx, by)          (&(bm)->blocks[(bx) + (by) * (bm)->width])
 
+BEGIN_PROF_TIMERS()
+  PROF_OBJLINK_SPREAD,
+  PROF_OBJLINK_LINK
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct objlink_s {
@@ -92,6 +97,8 @@ typedef struct objcontactlist_s {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void processSeg(seg_t* seg, void* data);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -269,8 +276,6 @@ boolean RIT_LinkObjToSubSector(subsector_t* subsector, void* data)
 
     return true; // Continue iteration.
 }
-
-static void processSeg(seg_t* seg, void* data);
 
 /**
  * Attempt to spread the obj from the given contact from the source ssec and
@@ -521,8 +526,12 @@ void R_InitForSubsector(subsector_t* ssec)
 {
     float               maxRadius = MAX_OF(DDMOBJ_RADIUS_MAX, loMaxRadius);
 
+BEGIN_PROF( PROF_OBJLINK_SPREAD );
+
     // Make sure we know which objs are contacting us.
     R_ObjBlockmapSpreadObjsInSubSector(objBlockmap, ssec, maxRadius);
+
+END_PROF( PROF_OBJLINK_SPREAD );
 }
 
 /**
@@ -558,6 +567,8 @@ void R_LinkObjs(void)
 {
     objlink_t*          oLink;
 
+BEGIN_PROF( PROF_OBJLINK_LINK );
+
     // Link objlinks into the objlink blockmap.
     oLink = objLinks;
     while(oLink)
@@ -579,6 +590,8 @@ void R_LinkObjs(void)
 
         oLink = oLink->next;
     }
+
+END_PROF( PROF_OBJLINK_LINK );
 }
 
 /**
@@ -588,6 +601,17 @@ void R_LinkObjs(void)
  */
 void R_InitForNewFrame(void)
 {
+#ifdef DD_PROFILE
+    static int i;
+
+    if(++i > 40)
+    {
+        i = 0;
+        PRINT_PROF(PROF_OBJLINK_SPREAD);
+        PRINT_PROF(PROF_OBJLINK_LINK);
+    }
+#endif
+
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
     if(subContacts)

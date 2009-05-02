@@ -41,7 +41,8 @@
 // MACROS ------------------------------------------------------------------
 
 BEGIN_PROF_TIMERS()
-  PROF_DYN_INIT_ADD
+  PROF_LUMOBJ_INIT_ADD,
+  PROF_LUMOBJ_FRAME_SORT
 END_PROF_TIMERS()
 
 // TYPES -------------------------------------------------------------------
@@ -210,7 +211,8 @@ void LO_ClearForFrame(void)
     if(++i > 40)
     {
         i = 0;
-        PRINT_PROF(PROF_DYN_INIT_ADD);
+        PRINT_PROF(PROF_LUMOBJ_INIT_ADD);
+        PRINT_PROF(PROF_LUMOBJ_FRAME_SORT);
     }
 #endif
 
@@ -573,6 +575,8 @@ void LO_BeginFrame(void)
     if(!(numLuminous > 0))
         return;
 
+BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
+
     // Update lumobj distances ready for linking and sorting.
     for(i = 0; i < numLuminous; ++i)
     {
@@ -617,6 +621,8 @@ void LO_BeginFrame(void)
     // objLinks already contains links if there are any light decorations
     // currently in use.
     loInited = true;
+
+END_PROF( PROF_LUMOBJ_FRAME_SORT );
 }
 
 /**
@@ -686,7 +692,7 @@ void LO_AddLuminousMobjs(void)
     if(!useDynLights && !useWallGlow)
         return;
 
-BEGIN_PROF( PROF_DYN_INIT_ADD );
+BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
     {
@@ -714,7 +720,7 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
         }
     }
 
-END_PROF( PROF_DYN_INIT_ADD );
+END_PROF( PROF_LUMOBJ_INIT_ADD );
 }
 
 typedef struct lumobjiterparams_s {

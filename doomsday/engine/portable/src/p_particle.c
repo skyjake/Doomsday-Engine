@@ -49,6 +49,10 @@
 #define VECSUB(a,b)         ( a[VX]-=b[VX], a[VY]-=b[VY] )
 #define VECCPY(a,b)         ( a[VX]=b[VX], a[VY]=b[VY] )
 
+BEGIN_PROF_TIMERS()
+  PROF_PTCGEN_LINK
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct pglink_s {
@@ -314,6 +318,17 @@ static void PG_LinkPtcGen(ptcgen_t* gen, uint secIDX)
 void P_CreatePtcGenLinks(void)
 {
     ptcgenid_t          i;
+#ifdef DD_PROFILE
+    static int p;
+
+    if(++p > 40)
+    {
+        p = 0;
+        PRINT_PROF(PROF_PTCGEN_LINK);
+    }
+#endif
+
+BEGIN_PROF(PROF_PTCGEN_LINK);
 
     if(pgLinks)
     {   // Clear the PG links.
@@ -321,24 +336,26 @@ void P_CreatePtcGenLinks(void)
         pgCursor = 0;
     }
 
-    if(!useParticles)
-        return;
-
-    // Link all active generators to sectors.
-    for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+    if(useParticles)
     {
-        ptcgen_t*           gen;
-
-        if((gen = activePtcGens[i]) != NULL)
+        // Link all active generators to sectors.
+        for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
         {
-            int                 k;
+            ptcgen_t*           gen;
 
-            // \fixme Overkill?
-            for(k = 0; k < gen->count; ++k)
-                if(gen->ptcs[k].stage >= 0)
-                    PG_LinkPtcGen(gen, GET_SECTOR_IDX(gen->ptcs[k].sector));
+            if((gen = activePtcGens[i]) != NULL)
+            {
+                int                 k;
+
+                // \fixme Overkill?
+                for(k = 0; k < gen->count; ++k)
+                    if(gen->ptcs[k].stage >= 0)
+                        PG_LinkPtcGen(gen, GET_SECTOR_IDX(gen->ptcs[k].sector));
+            }
         }
     }
+
+END_PROF(PROF_PTCGEN_LINK);
 }
 
 /**

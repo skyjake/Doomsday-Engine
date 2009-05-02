@@ -49,6 +49,10 @@
 #define GBF_CHANGED     0x1     // Grid block sector light has changed.
 #define GBF_CONTRIBUTOR 0x2     // Contributes light to a changed block.
 
+BEGIN_PROF_TIMERS()
+  PROF_GRID_UPDATE
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct gridblock_s {
@@ -747,8 +751,20 @@ void LG_Update(void)
     int                 bias;
     int                 height;
 
+#ifdef DD_PROFILE
+    static int          i;
+
+    if(++i > 40)
+    {
+        i = 0;
+        PRINT_PROF( PROF_GRID_UPDATE );
+    }
+#endif
+
     if(!lgInited || !needsUpdate)
         return;
+
+BEGIN_PROF( PROF_GRID_UPDATE );
 
 #if 0
     for(block = grid, y = 0; y < lgBlockHeight; ++y)
@@ -848,6 +864,8 @@ void LG_Update(void)
     }
 
     needsUpdate = false;
+
+END_PROF( PROF_GRID_UPDATE );
 }
 
 /**

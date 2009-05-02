@@ -46,6 +46,12 @@
 #define MAX_DECOR_LIGHTS    (16384)
 #define MAX_DECOR_MODELS    (8192)
 
+BEGIN_PROF_TIMERS()
+  PROF_DECOR_UPDATE,
+  PROF_DECOR_PROJECT,
+  PROF_DECOR_ADD_LUMINOUS
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct decorsource_s {
@@ -299,10 +305,14 @@ void Rend_AddLuminousDecorations(void)
 {
     decorsource_t*      src;
 
+BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
+
     for(src = sourceFirst; src != sourceCursor; src = src->next)
     {
         addLuminousDecoration(src);
     }
+
+END_PROF( PROF_DECOR_ADD_LUMINOUS );
 }
 
 /**
@@ -817,6 +827,8 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
 void Rend_UpdateSurfaceDecorations(void)
 {
+BEGIN_PROF( PROF_DECOR_UPDATE );
+
     // This only needs to be done if decorations have been enabled.
     if(useDecorations)
     {
@@ -855,6 +867,8 @@ void Rend_UpdateSurfaceDecorations(void)
             }
         }
     }
+
+END_PROF( PROF_DECOR_UPDATE );
 }
 
 /**
@@ -862,6 +876,18 @@ void Rend_UpdateSurfaceDecorations(void)
  */
 void Rend_InitDecorationsForFrame(void)
 {
+#ifdef DD_PROFILE
+    static int          i;
+
+    if(++i > 40)
+    {
+        i = 0;
+        PRINT_PROF( PROF_DECOR_UPDATE );
+        PRINT_PROF( PROF_DECOR_PROJECT );
+        PRINT_PROF( PROF_DECOR_ADD_LUMINOUS );
+    }
+#endif
+
     clearDecorations();
 
     // This only needs to be done if decorations have been enabled.
@@ -869,7 +895,11 @@ void Rend_InitDecorationsForFrame(void)
     {
         Rend_UpdateSurfaceDecorations(); // temporary.
 
+BEGIN_PROF( PROF_DECOR_PROJECT );
+
         R_SurfaceListIterate(decoratedSurfaceList,
                              R_ProjectSurfaceDecorations, &decorMaxDist);
+
+END_PROF( PROF_DECOR_PROJECT );
     }
 }

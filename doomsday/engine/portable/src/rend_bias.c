@@ -44,6 +44,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+  PROF_BIAS_UPDATE
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct affection_s {
@@ -744,8 +748,20 @@ void SB_BeginFrame(void)
     source_t*           s;
     biastracker_t       allChanges;
 
+#ifdef DD_PROFILE
+    static int          i;
+
+    if(++i > 40)
+    {
+        i = 0;
+        PRINT_PROF( PROF_BIAS_UPDATE );
+    }
+#endif
+
     if(!useBias)
         return;
+
+BEGIN_PROF( PROF_BIAS_UPDATE );
 
     // The time that applies on this frame.
     currentTimeSB = Sys_GetRealTime();
@@ -817,6 +833,8 @@ void SB_BeginFrame(void)
         }
     }
     }
+
+END_PROF( PROF_BIAS_UPDATE );
 }
 
 void SB_EndFrame(void)
