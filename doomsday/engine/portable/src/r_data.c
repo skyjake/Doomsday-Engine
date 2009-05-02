@@ -958,7 +958,7 @@ typedef struct {
     byte*               validTexDefs;
     short*              texDefNumPatches;
     int                 numTexDefs, numValidTexDefs;
-    doomtexturedef_t**      texDefs;
+    doomtexturedef_t**  texDefs = NULL;
 
     lumpSize = W_LumpLength(lump);
     maptex1 = M_Malloc(lumpSize);
