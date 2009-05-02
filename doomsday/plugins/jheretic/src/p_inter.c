@@ -227,7 +227,7 @@ boolean P_GiveArmor(player_t* plr, int type, int points)
         return false;
 
     P_PlayerSetArmorType(plr, type);
-    P_PlayerGiveArmorBonus(plr, points);
+    P_PlayerGiveArmorBonus(plr, points - plr->armorPoints);
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
