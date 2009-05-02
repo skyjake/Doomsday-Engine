@@ -49,10 +49,10 @@ typedef struct profiler_s {
 # define END_PROF_TIMERS()  ,NUM_PROFS }; static profiler_t profiler_[NUM_PROFS];
 # define BEGIN_PROF(x)      (profiler_[x].startCount++, profiler_[x].startTime = Sys_GetRealTime())
 # define END_PROF(x)        (profiler_[x].totalTime += Sys_GetRealTime() - profiler_[x].startTime)
-# define PRINT_PROF(x)      Con_Message(#x ": %i ms (%i starts) [%f ms]\n", \
-                                profiler_[x].totalTime, profiler_[x].startCount, \
+# define PRINT_PROF(x)      Con_Message("[%f ms] " #x ": %i ms (%i starts)\n", \
                                 profiler_[x].startCount? profiler_[x].totalTime / \
-                                (float) profiler_[x].startCount : 0)
+                                (float) profiler_[x].startCount : 0, \
+                                profiler_[x].totalTime, profiler_[x].startCount)
 #else                           // Profiling is disabled.
 # define END_PROF_TIMERS()  ,NUM_PROFS };
 # define BEGIN_PROF(x)
