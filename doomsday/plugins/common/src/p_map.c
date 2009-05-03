@@ -497,7 +497,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                     if(P_Random() < 128)
                     {
                         P_SpawnMobj3fv(MT_HOLY_PUFF, tmThing->pos,
-                                       P_Random() << 24);
+                                       P_Random() << 24, 0);
                         S_StartSound(SFX_SPIRIT_ATTACK, tmThing);
                         if((thing->flags & MF_COUNTKILL) && P_Random() < 128 &&
                            !S_IsPlaying(SFX_PUPPYBEAT, thing))
@@ -1680,7 +1680,7 @@ if(lineWasHit)
     if(puffType == MT_BLASTERPUFF1)
     {   // Make blaster big puff.
         mobj_t*             mo =
-            P_SpawnMobj3fv(MT_BLASTERPUFF2, pos, P_Random() << 24);
+            P_SpawnMobj3fv(MT_BLASTERPUFF2, pos, P_Random() << 24, 0);
 
         S_StartSound(SFX_BLSHIT, mo);
     }
@@ -2581,7 +2581,7 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
             // Spray blood in a random direction.
             mo = P_SpawnMobj3f(MT_BLOOD, thing->pos[VX], thing->pos[VY],
                                thing->pos[VZ] + (thing->height /2),
-                               P_Random() << 24);
+                               P_Random() << 24, 0);
 
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 12);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 12);

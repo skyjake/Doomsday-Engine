@@ -1122,6 +1122,7 @@ DEFCC(CCmdSpawnMobj)
     float               pos[3];
     mobj_t*             mo;
     angle_t             angle;
+    int                 spawnFlags;
 
     if(argc != 5 && argc != 6)
     {
@@ -1152,10 +1153,12 @@ DEFCC(CCmdSpawnMobj)
     // The coordinates.
     pos[VX] = strtod(argv[2], 0);
     pos[VY] = strtod(argv[3], 0);
+    pos[VZ] = 0;
+
     if(!stricmp(argv[4], "floor"))
-        pos[VZ] = ONFLOORZ;
+        spawnFlags |= MTF_Z_FLOOR;
     else if(!stricmp(argv[4], "ceil"))
-        pos[VZ] = ONCEILINGZ;
+        spawnFlags |= MTF_Z_CEIL;
     else
     {
         pos[VZ] = strtod(argv[4], 0) +
@@ -1168,7 +1171,7 @@ DEFCC(CCmdSpawnMobj)
     else
         angle = 0;
 
-    mo = P_SpawnMobj3fv(type, pos, angle);
+    mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags);
     if(mo)
     {
 

@@ -114,10 +114,6 @@ boolean         P_UndoPlayerMorph(player_t *player);
 #define FRICTION_HIGH       (0.5f)
 #define FRICTION_LOW        (0.97265625f)
 
-#define ONFLOORZ            DDMINFLOAT
-#define ONCEILINGZ          DDMAXFLOAT
-#define FLOATRANDZ          (DDMAXFLOAT-1)
-
 extern mobjtype_t puffType;
 extern mobj_t  *missileMobj;
 

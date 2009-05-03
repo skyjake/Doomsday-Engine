@@ -738,15 +738,15 @@ boolean P_UndoPlayerMorph(player_t *player)
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
     mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjType,
-                        pos, angle);
+                        pos, angle, 0);
 # else
-    mo = P_SpawnMobj3fv(MT_PLAYER, pos, angle);
+    mo = P_SpawnMobj3fv(MT_PLAYER, pos, angle, 0);
 # endif
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
         P_MobjRemove(mo, false);
-        mo = P_SpawnMobj3fv(oldBeast, pos, angle);
+        mo = P_SpawnMobj3fv(oldBeast, pos, angle, 0);
 
         mo->health = player->health;
         mo->special1 = weapon;
@@ -803,7 +803,7 @@ boolean P_UndoPlayerMorph(player_t *player)
     fog = P_SpawnMobj3f(MT_TFOG,
                         pos[VX] + 20 * FIX2FLT(finecosine[an]),
                         pos[VY] + 20 * FIX2FLT(finesine[an]),
-                        pos[VZ] + TELEFOGHEIGHT, angle + ANG180);
+                        pos[VZ] + TELEFOGHEIGHT, angle + ANG180, 0);
 # if __JHERETIC__
     S_StartSound(SFX_TELEPT, fog);
 # else
@@ -1109,7 +1109,7 @@ void P_PlayerThinkMove(player_t *player)
             int         playerNum;
 
             speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos,
-                                     plrmo->angle);
+                                     plrmo->angle, 0);
             if(speedMo)
             {
                 playerNum = P_GetPlayerNum(player);

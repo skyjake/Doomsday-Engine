@@ -101,19 +101,17 @@ typedef struct msector_s {
 } msector_t;
 
 typedef struct mthing_s {
-    int16_t         pos[2];
+    int16_t         pos[3];
     int16_t         angle;
     int16_t         type;
-    int16_t         flags;
+    int32_t         flags;
 
     // Hexen format members:
     int16_t         xTID;
-    int16_t         xSpawnZ;
     byte            xSpecial;
     byte            xArgs[5];
 
     // DOOM64 format members:
-    int16_t         d64posZ;
     int16_t         d64TID;
 } mthing_t;
 

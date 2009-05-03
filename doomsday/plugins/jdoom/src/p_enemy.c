@@ -1051,7 +1051,7 @@ void C_DECL A_Tracer(mobj_t *actor)
     th = P_SpawnMobj3f(MT_SMOKE,
                        actor->pos[VX] - actor->mom[MX],
                        actor->pos[VY] - actor->mom[MY],
-                       actor->pos[VZ], actor->angle + ANG180);
+                       actor->pos[VZ], actor->angle + ANG180, 0);
 
     th->mom[MZ] = 1;
     th->tics -= P_Random() & 3;
@@ -1304,7 +1304,7 @@ void C_DECL A_VileTarget(mobj_t *actor)
     A_FaceTarget(actor);
 
     fog = P_SpawnMobj3fv(MT_FIRE, actor->target->pos,
-                         actor->target->angle + ANG180);
+                         actor->target->angle + ANG180, 0);
 
     actor->tracer = fog;
     fog->target = actor;
@@ -1495,7 +1495,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         if(P_CheckSides(actor, pos[VX], pos[VY]))
             return;
 
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
+        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
         sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
@@ -1511,7 +1511,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     }
     else
     {   // Use the original DOOM method.
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
+        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
     }
 
     // Check for movements, $dropoff_fix.
@@ -1829,7 +1829,7 @@ void C_DECL A_BrainScream(mobj_t *mo)
         pos[VY] = mo->pos[VY] - 320;
         pos[VZ] = 128 + (P_Random() * 2);
 
-        th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24);
+        th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0);
         th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
         P_MobjChangeState(th, S_BRAINEXPLODE1);
@@ -1851,7 +1851,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
     pos[VY] = mo->pos[VY];
     pos[VZ] = 128 + (P_Random() * 2);
 
-    th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24);
+    th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0);
     th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
     P_MobjChangeState(th, S_BRAINEXPLODE1);
@@ -1917,7 +1917,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     targ = mo->target;
 
     // First spawn teleport fog.
-    fog = P_SpawnMobj3fv(MT_SPAWNFIRE, targ->pos, targ->angle + ANG180);
+    fog = P_SpawnMobj3fv(MT_SPAWNFIRE, targ->pos, targ->angle + ANG180, 0);
     S_StartSound(SFX_TELEPT, fog);
 
     // Randomly select monster to spawn.
@@ -1947,7 +1947,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     else
         type = MT_BRUISER;
 
-    newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24);
+    newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24, 0);
 
     if(lookForPlayers(newmobj, true))
         P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));

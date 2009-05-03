@@ -454,8 +454,8 @@ void P_SpawnThings(void)
         {
             spot = P_Random() % maceSpotCount;
             P_SpawnMobj3f(MT_WMACE,
-                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY],
-                          ONFLOORZ, maceSpots[spot].angle);
+                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY], 0,
+                          maceSpots[spot].angle, MTF_Z_FLOOR);
         }
     }
 #endif
@@ -557,8 +557,7 @@ void G_DummySpawnPlayer(int playernum)
 {
     spawnspot_t     faraway;
 
-    faraway.pos[VX] = faraway.pos[VY] = 0;
-    faraway.angle = 0;
+    memset(&faraway, 0, sizeof(faraway));
     P_SpawnPlayer(&faraway, playernum);
 }
 

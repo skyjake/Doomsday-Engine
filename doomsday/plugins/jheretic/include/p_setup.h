@@ -41,6 +41,7 @@ enum {
     MO_XSECTOR,
     MO_X,
     MO_Y,
+    MO_Z,
     MO_ANGLE,
     MO_TYPE,
     MO_FLAGS,

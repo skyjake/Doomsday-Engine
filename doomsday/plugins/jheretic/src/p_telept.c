@@ -57,11 +57,7 @@
 
 mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
 {
-    subsector_t*        ss = R_PointInSubsector(x, y);
-
-    return P_SpawnMobj3f(MT_TFOG, x, y,
-                         P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT,
-                         angle);
+    return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MTF_Z_FLOOR);
 }
 
 boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
@@ -121,9 +117,9 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
     if(spawnFog)
     {
         // Spawn teleport fog at source and destination
-        fogDelta = thing->flags & MF_MISSILE? 0 : TELEFOGHEIGHT;
+        fogDelta = ((thing->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
         fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
-                            oldpos[VZ] + fogDelta, oldAngle + ANG180);
+                            oldpos[VZ] + fogDelta, oldAngle + ANG180, 0);
         S_StartSound(SFX_TELEPT, fog);
 
         an = angle >> ANGLETOFINESHIFT;
@@ -131,7 +127,7 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
             P_SpawnMobj3f(MT_TFOG,
                           x + 20 * FIX2FLT(finecosine[an]),
                           y + 20 * FIX2FLT(finesine[an]),
-                          thing->pos[VZ] + fogDelta, angle + ANG180);
+                          thing->pos[VZ] + fogDelta, angle + ANG180, 0);
         S_StartSound(SFX_TELEPT, fog);
     }
 

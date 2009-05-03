@@ -865,7 +865,7 @@ void C_DECL A_FSwordFlames(mobj_t *mo)
         pos[VZ] = mo->pos[VZ] + FIX2FLT((P_Random() - 128) << 11);
         angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY]);
 
-        P_SpawnMobj3fv(MT_FSWORD_FLAME, pos, angle);
+        P_SpawnMobj3fv(MT_FSWORD_FLAME, pos, angle, 0);
     }
 }
 
@@ -966,7 +966,7 @@ void C_DECL A_LightningZap(mobj_t *mo)
     pmo = P_SpawnMobj3f(MT_LIGHTNING_ZAP,
                         mo->pos[VX] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
                         mo->pos[VY] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
-                        mo->pos[VZ] + deltaZ, P_Random() << 24);
+                        mo->pos[VZ] + deltaZ, P_Random() << 24, 0);
     if(pmo)
     {
         pmo->lastEnemy = mo;
@@ -1041,7 +1041,7 @@ void C_DECL A_LastZap(mobj_t* mo)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos, P_Random() << 24);
+    pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos, P_Random() << 24, 0);
     if(pmo)
     {
         P_MobjChangeState(pmo, S_LIGHTNING_ZAP_X1);
@@ -1548,7 +1548,7 @@ void C_DECL A_CFlameMissile(mobj_t *mo)
                                 blockingMobj->pos[VX] + dist * FIX2FLT(finecosine[an]),
                                 blockingMobj->pos[VY] + dist * FIX2FLT(finesine[an]),
                                 blockingMobj->pos[VZ] + 5,
-                                (angle_t) an << ANGLETOFINESHIFT);
+                                (angle_t) an << ANGLETOFINESHIFT, 0);
             if(pmo)
             {
                 pmo->target = mo->target;
@@ -1564,7 +1564,7 @@ void C_DECL A_CFlameMissile(mobj_t *mo)
                                 blockingMobj->pos[VX] - dist * FIX2FLT(finecosine[an]),
                                 blockingMobj->pos[VY] - dist * FIX2FLT(finesine[an]),
                                 blockingMobj->pos[VZ] + 5,
-                                (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)));
+                                (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0);
             if(pmo)
             {
                 pmo->target = mo->target;
@@ -1605,15 +1605,17 @@ void C_DECL A_CHolyAttack3(mobj_t *mo)
 /**
  * Spawns the spirits
  */
-void C_DECL A_CHolyAttack2(mobj_t *mo)
+void C_DECL A_CHolyAttack2(mobj_t* mo)
 {
-    int         i, j;
-    mobj_t     *pmo, *tail, *next;
+    int                 i, j;
+    mobj_t*             pmo, *tail, *next;
 
     for(i = 0; i < 4; ++i)
     {
-        pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos,
-                             mo->angle + (ANGLE_45 + ANGLE_45 / 2) - ANGLE_45 * i);
+        angle_t             angle = mo->angle + (ANGLE_45 + ANGLE_45 / 2) -
+            ANGLE_45 * i;
+
+        pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos, angle, 0);
         if(!pmo)
             continue;
 
@@ -1654,12 +1656,12 @@ void C_DECL A_CHolyAttack2(mobj_t *mo)
             pmo->flags &= ~MF_MISSILE;
         }
 
-        tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos, pmo->angle + ANG180);
+        tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos, pmo->angle + ANG180, 0);
         tail->target = pmo; // Parent.
         for(j = 1; j < 3; ++j)
         {
             next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
-                                  pmo->angle + ANG180);
+                                  pmo->angle + ANG180, 0);
             P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
             tail->tracer = next;
             tail = next;
@@ -1962,7 +1964,7 @@ void C_DECL A_CHolyCheckScream(mobj_t *mo)
 
 void C_DECL A_CHolySpawnPuff(mobj_t *mo)
 {
-    P_SpawnMobj3fv(MT_HOLY_MISSILE_PUFF, mo->pos, P_Random() << 24);
+    P_SpawnMobj3fv(MT_HOLY_MISSILE_PUFF, mo->pos, P_Random() << 24, 0);
 }
 
 void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
@@ -2181,7 +2183,7 @@ void C_DECL A_PoisonBag(mobj_t* mo)
         angle = mo->angle;
     }
 
-    if((bag = P_SpawnMobj3fv(type, pos, angle)))
+    if((bag = P_SpawnMobj3fv(type, pos, angle, 0)))
     {
         bag->target = mo;
 

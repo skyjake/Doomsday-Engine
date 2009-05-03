@@ -191,7 +191,7 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
     vspeed = FIX2FLT((int) args[4] << 13);
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
-        newMobj = P_SpawnMobj3fv(moType, mobj->pos, angle);
+        newMobj = P_SpawnMobj3fv(moType, mobj->pos, angle, 0);
 
         if(newMobj->info->seeSound)
             S_StartSound(newMobj->info->seeSound, newMobj);
@@ -242,7 +242,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
             z -= mobj->floorZ;
 
         newMobj = P_SpawnMobj3f(moType, mobj->pos[VX], mobj->pos[VY], z,
-                                angle);
+                                angle, 0);
         if(P_TestMobjLocation(newMobj) == false)
         {   // Didn't fit
             P_MobjRemove(newMobj, true);
@@ -254,7 +254,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
                 fogMobj = P_SpawnMobj3f(MT_TFOG,
                                         mobj->pos[VX], mobj->pos[VY],
                                         mobj->pos[VZ] + TELEFOGHEIGHT,
-                                        angle + ANG180);
+                                        angle + ANG180, 0);
                 S_StartSound(SFX_TELEPORT, fogMobj);
             }
 

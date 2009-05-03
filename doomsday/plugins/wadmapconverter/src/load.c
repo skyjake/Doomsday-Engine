@@ -1187,6 +1187,11 @@ static boolean loadSectors(const byte* buf, size_t len)
 
 static boolean loadThings(const byte* buf, size_t len)
 {
+// New flags: \todo get these from a game api header.
+#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
+#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
+#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
+
     uint                num, n;
     size_t              elmSize;
     const byte*         ptr;
@@ -1201,34 +1206,126 @@ static boolean loadThings(const byte* buf, size_t len)
     {
     default:
     case MF_DOOM:
+/**
+ * DOOM Thing flags:
+ */
+#define MTF_EASY            0x00000001 // Can be spawned in Easy skill modes.
+#define MTF_MEDIUM          0x00000002 // Can be spawned in Medium skill modes.
+#define MTF_HARD            0x00000004 // Can be spawned in Hard skill modes.
+#define MTF_DEAF            0x00000008 // Mobj will be deaf spawned deaf.
+#define MTF_NOTSINGLE       0x00000010 // (BOOM) Can not be spawned in single player gamemodes.
+#define MTF_NOTDM           0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
+#define MTF_FRIENDLY        0x00000080 // (BOOM) friendly monster.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
+
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
             mthing_t*           t = &map->things[n];
 
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            t->pos[VZ] = 0;
             t->angle = SHORT(*((const int16_t*) (ptr+4)));
             t->type = SHORT(*((const int16_t*) (ptr+6)));
             t->flags = SHORT(*((const int16_t*) (ptr+8)));
+            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+            // DOOM format things spawn on the floor by default unless their
+            // type-specific flags override.
+            t->flags |= MTF_Z_FLOOR;
         }
+
+#undef MTF_EASY
+#undef MTF_MEDIUM
+#undef MTF_HARD
+#undef MTF_AMBUSH
+#undef MTF_NOTSINGLE
+#undef MTF_NOTDM
+#undef MTF_NOTCOOP
+#undef MTF_FRIENDLY
+#undef MASK_UNKNOWN_THING_FLAGS
         break;
 
     case MF_DOOM64:
+/**
+ * DOOM64 Thing flags:
+ */
+#define MTF_EASY            0x00000001 // Appears in easy skill modes.
+#define MTF_MEDIUM          0x00000002 // Appears in medium skill modes.
+#define MTF_HARD            0x00000004 // Appears in hard skill modes.
+#define MTF_DEAF            0x00000008 // Thing is deaf.
+#define MTF_NOTSINGLE       0x00000010 // Appears in multiplayer game modes only.
+#define MTF_DONTSPAWNATSTART 0x00000020 // Do not spawn this thing at map start.
+#define MTF_SCRIPT_TOUCH    0x00000040 // Mobjs spawned from this spot will envoke a script when touched.
+#define MTF_SCRIPT_DEATH    0x00000080 // Mobjs spawned from this spot will envoke a script on death.
+#define MTF_SECRET          0x00000100 // A secret (bonus) item.
+#define MTF_NOTARGET        0x00000200 // Mobjs spawned from this spot will not target their attacker when hurt.
+#define MTF_NOTDM           0x00000400 // Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000800 // Can not be spawned in the Co-op gameMode.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
+
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
             mthing_t*           t = &map->things[n];
 
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
-            t->d64posZ = SHORT(*((const int16_t*) (ptr+4)));
+            t->pos[VZ] = SHORT(*((const int16_t*) (ptr+4)));
             t->angle = SHORT(*((const int16_t*) (ptr+6)));
             t->type = SHORT(*((const int16_t*) (ptr+8)));
+
             t->flags = SHORT(*((const int16_t*) (ptr+10)));
+            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+            // DOOM64 format things spawn relative to the floor by default
+            // unless their type-specific flags override.
+            t->flags |= MTF_Z_FLOOR;
+
             t->d64TID = SHORT(*((const int16_t*) (ptr+12)));
         }
+
+#undef MTF_EASY
+#undef MTF_MEDIUM
+#undef MTF_HARD
+#undef MTF_DEAF
+#undef MTF_NOTSINGLE
+#undef MTF_DONTSPAWNATSTART
+#undef MTF_SCRIPT_TOUCH
+#undef MTF_SCRIPT_DEATH
+#undef MTF_SECRET
+#undef MTF_NOTARGET
+#undef MTF_NOTDM
+#undef MTF_NOTCOOP
+#undef MASK_UNKNOWN_THING_FLAGS
         break;
 
     case MF_HEXEN:
+/**
+ * Hexen Thing flags:
+ */
+#define MTF_EASY            0x00000001
+#define MTF_NORMAL          0x00000002
+#define MTF_HARD            0x00000004
+#define MTF_AMBUSH          0x00000008
+#define MTF_DORMANT         0x00000010
+#define MTF_FIGHTER         0x00000020
+#define MTF_CLERIC          0x00000040
+#define MTF_MAGE            0x00000080
+#define MTF_GSINGLE         0x00000100
+#define MTF_GCOOP           0x00000200
+#define MTF_GDEATHMATCH     0x00000400
+// The following are not currently used.
+#define MTF_SHADOW          0x00000800 // (ZDOOM) Thing is 25% translucent.
+#define MTF_INVISIBLE       0x00001000 // (ZDOOM) Makes the thing invisible.
+#define MTF_FRIENDLY        0x00002000 // (ZDOOM) Friendly monster.
+#define MTF_STILL           0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
+
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
             mthing_t*           t = &map->things[n];
@@ -1236,10 +1333,16 @@ static boolean loadThings(const byte* buf, size_t len)
             t->xTID = SHORT(*((const int16_t*) (ptr)));
             t->pos[VX] = SHORT(*((const int16_t*) (ptr+2)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+4)));
-            t->xSpawnZ = SHORT(*((const int16_t*) (ptr+6)));
+            t->pos[VZ] = SHORT(*((const int16_t*) (ptr+6)));
             t->angle = SHORT(*((const int16_t*) (ptr+8)));
             t->type = SHORT(*((const int16_t*) (ptr+10)));
+
             t->flags = SHORT(*((const int16_t*) (ptr+12)));
+            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+            // HEXEN format things spawn relative to the floor by default
+            // unless their type-specific flags override.
+            t->flags |= MTF_Z_FLOOR;
+
             t->xSpecial = *(ptr+14);
             t->xArgs[0] = *(ptr+15);
             t->xArgs[1] = *(ptr+16);
@@ -1247,10 +1350,32 @@ static boolean loadThings(const byte* buf, size_t len)
             t->xArgs[3] = *(ptr+18);
             t->xArgs[4] = *(ptr+19);
         }
+
+#undef MTF_EASY
+#undef MTF_NORMAL
+#undef MTF_HARD
+#undef MTF_AMBUSH
+#undef MTF_DORMANT
+#undef MTF_FIGHTER
+#undef MTF_CLERIC
+#undef MTF_MAGE
+#undef MTF_GSINGLE
+#undef MTF_GCOOP
+#undef MTF_GDEATHMATCH
+// The following are not currently used.
+#undef MTF_SHADOW
+#undef MTF_INVISIBLE
+#undef MTF_FRIENDLY
+#undef MTF_STILL
+#undef MASK_UNKNOWN_THING_FLAGS
         break;
     }
 
     return true;
+
+#undef MTF_Z_FLOOR
+#undef MTF_Z_CEIL
+#undef MTF_Z_RANDOM
 }
 
 static boolean loadLights(const byte* buf, size_t len)
@@ -1515,18 +1640,18 @@ boolean TransferMap(void)
 
         MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->pos[VX]);
         MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->pos[VY]);
+        MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->pos[VZ]);
         MPE_GameObjProperty("Thing", i, "Angle", DDVT_SHORT, &th->angle);
         MPE_GameObjProperty("Thing", i, "Type", DDVT_SHORT, &th->type);
-        MPE_GameObjProperty("Thing", i, "Flags", DDVT_SHORT, &th->flags);
+        MPE_GameObjProperty("Thing", i, "Flags", DDVT_INT, &th->flags);
 
         if(map->format == MF_DOOM64)
         {
-            MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->d64posZ);
             MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->d64TID);
         }
         else if(map->format == MF_HEXEN)
         {
-            MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->xSpawnZ);
+
             MPE_GameObjProperty("Thing", i, "Special", DDVT_BYTE, &th->xSpecial);
             MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->xTID);
             MPE_GameObjProperty("Thing", i, "Arg0", DDVT_BYTE, &th->xArgs[0]);

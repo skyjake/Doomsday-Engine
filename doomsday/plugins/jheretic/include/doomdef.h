@@ -160,12 +160,6 @@ typedef enum {
     NUM_SKILL_MODES
 } skillmode_t;
 
-// Skill flags for the above.
-#define MTF_EASY            1
-#define MTF_NORMAL          2
-#define MTF_HARD            4
-#define MTF_AMBUSH          8 // Deaf monsters/do not react to sound.
-
 /**
  * Keys (as in, keys to lockables).
  */

@@ -1623,7 +1623,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Spawn flash at the old position?
     if(info->iparm[2])
     {
-        flash = P_SpawnMobj3fv(MT_TFOG, mobj->pos, mobj->angle + ANG180);
+        flash = P_SpawnMobj3fv(MT_TFOG, mobj->pos, mobj->angle + ANG180, 0);
 
         // Play a sound?
         if(info->iparm[3])
@@ -1745,7 +1745,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
         flash = P_SpawnMobj3f(MT_TFOG,
                               mobj->pos[VX] + 24 * FIX2FLT(finecosine[an]),
                               mobj->pos[VY] + 24 * FIX2FLT(finesine[an]),
-                              mobj->pos[VZ], mobj->angle + ANG180);
+                              mobj->pos[VZ], mobj->angle + ANG180, 0);
 
         // Play a sound?
         if(info->iparm[3])

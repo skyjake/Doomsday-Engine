@@ -314,10 +314,14 @@ static void SV_ReadMobj(void)
     // For nightmare respawn.
     mo->spawnSpot.pos[VX] = (float) SV_ReadShort();
     mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
-    mo->spawnSpot.pos[VZ] = ONFLOORZ;
+    mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
     mo->spawnSpot.type = (int) SV_ReadShort();
+
     mo->spawnSpot.flags = (int) SV_ReadShort();
+    mo->spawnSpot.flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    // Spawn on the floor by default unless the mobjtype flags override.
+    mo->spawnSpot.flags |= MTF_Z_FLOOR;
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();

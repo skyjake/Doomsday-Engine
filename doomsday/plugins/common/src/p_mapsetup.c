@@ -337,9 +337,8 @@ static void P_LoadMapObjs(void)
 
         th->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
         th->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-#if __JDOOM64__
         th->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
-#endif
+
         th->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
         th->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
 
@@ -348,15 +347,14 @@ static void P_LoadMapObjs(void)
          * in the angle field in THINGS. Thus, we cannot translate the angle
          * until we know whether it is a polyobject type or not.
          */
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         th->angle = P_GetGMOShort(MO_THING, i, MO_ANGLE);
 #else
         th->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         th->tid = P_GetGMOShort(MO_THING, i, MO_ID);
-        th->height = P_GetGMOShort(MO_THING, i, MO_Z);
         th->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
         th->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
         th->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);

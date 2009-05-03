@@ -1143,7 +1143,7 @@ static void P_LightningFlash(void)
                 P_SpawnMobj3f(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),
                               plrmo->pos[VY] + (16 * (M_Random() - 127) << FRACBITS),
                               plrmo->pos[VZ] + (4000 << FRACBITS), MT_CAMERA,
-                              0);
+                              0, 0);
             crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
         }
 

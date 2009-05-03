@@ -1408,9 +1408,9 @@ static void SV_ReadPlayer(player_t* p)
 #if __JHEXEN__
 # define MOBJ_SAVEVERSION 7
 #elif __JHERETIC__
-# define MOBJ_SAVEVERSION 8
+# define MOBJ_SAVEVERSION 9
 #else
-# define MOBJ_SAVEVERSION 7
+# define MOBJ_SAVEVERSION 9
 #endif
 
 static void SV_WriteMobj(const mobj_t* original)
@@ -1444,8 +1444,12 @@ static void SV_WriteMobj(const mobj_t* original)
     // 7: Added generator in jHeretic
     // 7: Added flags3
     //
+    // JDOOM
+    // 9: Revised spawnspot flag interpretation
+    //
     // JHERETIC
     // 8: Added special3
+    // 9: Revised spawnspot flag interpretation
     //
     // JHEXEN
     // 7: Removed superfluous info ptr
@@ -1665,6 +1669,15 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
         // Non-persistent flags might screw things up a lot worse otherwise.
         mo->flags2 = mo->info->flags2;
 # endif
+    }
+#endif
+
+#if __JDOOM__ || __JHERETIC__
+    if(ver < 9)
+    {
+        mo->spawnSpot.flags &= ~MASK_UNKNOWN_THING_FLAGS;
+        // Spawn on the floor by default unless the mobjtype flags override.
+        mo->spawnSpot.flags |= MTF_Z_FLOOR;
     }
 #endif
 
@@ -1913,7 +1926,7 @@ static int SV_ReadMobj(thinker_t *th)
     {
         mo->spawnSpot.pos[VX] = (float) SV_ReadShort();
         mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
-        mo->spawnSpot.pos[VZ] = ONFLOORZ;
+        mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
         mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
         mo->spawnSpot.type = (int) SV_ReadShort();
         mo->spawnSpot.flags = (int) SV_ReadShort();

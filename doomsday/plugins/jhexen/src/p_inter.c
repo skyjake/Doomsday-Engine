@@ -1648,10 +1648,10 @@ boolean P_MorphPlayer(player_t *player)
     P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
-                        angle + ANG180);
+                        angle + ANG180, 0);
     S_StartSound(SFX_TELEPORT, fog);
 
-    beastMo = P_SpawnMobj3fv(MT_PIGPLAYER, pos, angle);
+    beastMo = P_SpawnMobj3fv(MT_PIGPLAYER, pos, angle, 0);
     beastMo->special1 = player->readyWeapon;
     beastMo->player = player;
     beastMo->dPlayer = player->plr;
@@ -1710,10 +1710,10 @@ boolean P_MorphMonster(mobj_t *actor)
     P_MobjChangeState(actor, S_FREETARGMOBJ);
 
     fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
-                        oldAngle + ANG180);
+                        oldAngle + ANG180, 0);
     S_StartSound(SFX_TELEPORT, fog);
 
-    monster = P_SpawnMobj3fv(MT_PIG, pos, oldMonster.angle);
+    monster = P_SpawnMobj3fv(MT_PIG, pos, oldMonster.angle, 0);
     monster->special2 = moType;
     monster->special1 = MORPHTICS + P_Random();
     monster->flags |= (oldMonster.flags & MF_SHADOW);
