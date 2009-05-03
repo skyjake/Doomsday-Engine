@@ -378,7 +378,10 @@ int Mus_Start(ded_music_t* def, boolean looped)
     int                 order[3], i, songID = def - defs.music;
 
     // We will not restart the currently playing song.
-    if(!musAvail || !iMusic || songID == currentSong)
+    if(!musAvail || !iMusic)
+        return false;
+
+    if(iMusic->gen.Get(MUSIP_PLAYING, NULL) && songID == currentSong)
         return false;
 
     // Stop the currently playing song.

@@ -32,6 +32,7 @@
 // Music interface properties.
 enum {
     MUSIP_ID, // Only for Get()ing.
+    MUSIP_PLAYING, // Is playback in progress?
     MUSIP_VOLUME
 };
 

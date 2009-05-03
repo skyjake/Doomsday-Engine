@@ -131,8 +131,6 @@ audiointerface_music_t audiod_sdlmixer_music = {
 static char storage[0x40000];
 static int channelCounter = 0;
 
-static size_t songSize = 0;
-static char* song;
 static Mix_Music* currentMusic;
 
 // CODE --------------------------------------------------------------------
@@ -140,6 +138,18 @@ static Mix_Music* currentMusic;
 static void msg(const char* msg)
 {
     Con_Message("SDLMixer: %s\n", msg);
+}
+
+/**
+ * This is the hook we ask SDL_mixer to call when music playback finishes.
+ */
+static void musicPlaybackFinished(void)
+{
+    if(currentMusic)
+    {
+        Mix_FreeMusic(currentMusic);
+        currentMusic = NULL;
+    }
 }
 
 void DS_SDLMixerError(void)
@@ -190,12 +200,8 @@ void DS_SDLMixerShutdown(void)
     Mix_CloseAudio();
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
-    if(song)
-        free(song);
     if(currentMusic)
         Mix_FreeMusic(currentMusic);
-
-    song = NULL;
     currentMusic = NULL;
 
     sdlInitOk = false;
@@ -432,7 +438,7 @@ void DS_SDLMixer_SFX_Listenerv(int prop, float* values)
 
 int DS_SDLMixer_Music_Init(void)
 {
-    // The music interface is available without any extra work.
+    Mix_HookMusicFinished(musicPlaybackFinished);
     return sdlInitOk;
 }
 
@@ -467,6 +473,9 @@ int DS_SDLMixer_Music_Get(int prop, void* value)
     case MUSIP_ID:
         strcpy(value, "SDLMixer/Music");
         break;
+
+    case MUSIP_PLAYING:
+        return (currentMusic? true : false);
 
     default:
         return false;
