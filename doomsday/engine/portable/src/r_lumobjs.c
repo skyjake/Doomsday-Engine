@@ -85,6 +85,7 @@ float loRadiusFactor = 3;
 int useMobjAutoLights = true; // Enable automaticaly calculated lights
                               // attached to mobjs.
 byte rendInfoLums = false;
+byte devDrawLums = false; // Display active lumobjs?
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -113,6 +114,7 @@ void LO_Register(void)
     C_VAR_INT("rend-light-radius-max", &loMaxRadius, 0, 64, 512);
 
     C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
+    C_VAR_BYTE("rend-dev-lums", &devDrawLums, CVF_NO_ARCHIVE, 0, 1);
 }
 
 static lumlistnode_t* allocListNode(void)
@@ -901,13 +903,15 @@ void LO_UnlinkMobjLumobjs(cvar_t* var)
     }
 }
 
-#if _DEBUG
 void LO_DrawLumobjs(void)
 {
     static const float  black[4] = { 0, 0, 0, 0 };
     static const float  white[4] = { 1, 1, 1, 1 };
     float               color[4];
     uint                i;
+
+    if(!devDrawLums)
+        return;
 
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -1007,4 +1011,3 @@ void LO_DrawLumobjs(void)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 }
-#endif

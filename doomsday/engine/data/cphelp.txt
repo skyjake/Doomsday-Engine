@@ -604,6 +604,9 @@ desc = 1=Render player view in wireframe mode.
 [rend-dev-framecount]
 desc = Frame counter.
 
+[rend-dev-lums]
+desc = 1=Display lumobj debug display.
+
 [rend-dev-generator-show-indices]
 desc = 1=Display particle generator indices.
 

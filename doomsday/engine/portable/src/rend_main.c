@@ -3812,7 +3812,7 @@ void Rend_RenderMap(void)
 
     // Draw various debugging displays:
     Rend_RenderNormals(); // World surface normals.
-    //LO_DrawLumobjs(); // Lumobjs.
+    LO_DrawLumobjs(); // Lumobjs.
     Rend_RenderBoundingBoxes(); // Mobj bounding boxes.
     Rend_Vertexes(); // World vertex positions/indices.
     Rend_RenderGenerators(); // Particle generator origins.
