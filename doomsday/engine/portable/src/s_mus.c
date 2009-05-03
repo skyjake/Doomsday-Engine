@@ -301,48 +301,29 @@ boolean Mus_IsMUSLump(int lump)
 }
 
 /**
- * Load a song file.
+ * Check for the existence of an "external" music file.
  * Songs can be either in external files or non-MUS lumps.
  *
  * @return              Non-zero if an external file of that name exists.
  */
-int Mus_GetExt(ded_music_t* def, char* path)
+int Mus_GetExt(ded_music_t* def, filename_t retPath)
 {
-    char                buf[300];
-    lumpnum_t           lump;
-    size_t              len;
-    void*               ptr;
+    filename_t          path;
 
     if(!musAvail || !iMusic)
         return false;
 
-    if(path)
-        strcpy(path, "");
-
     // All external music files are specified relative to the base path.
     if(def->path.path[0])
     {
-        M_PrependBasePath(def->path.path, buf);
-        if(F_Access(buf))
+        M_PrependBasePath(def->path.path, path);
+        if(F_Access(path))
         {
             // Return the real file name if not just checking.
-            if(path)
+            if(retPath)
             {
-                // Because the song can be in a virtual file, we must buffer
-                // it ourselves.
-                DFILE*              file = F_Open(buf, "rb");
-
-                VERBOSE(Con_Message("Mus_GetExt: Opened Song %s "
-                                    "(File \"%s\" %ul bytes)\n",
-                                    def->id, M_PrettyPath(def->path.path),
-                                    F_Length(file)));
-
-                ptr = iMusic->SongBuffer(len = F_Length(file));
-                F_Read(ptr, len, file);
-                F_Close(file);
-
-                // Clear the path so the caller knows it's in the buffer.
-                strcpy(path, "");
+                strncpy(retPath, path, FILENAME_T_MAXLEN);
+                retPath[FILENAME_T_MAXLEN] = '\0';
             }
 
             return true;
@@ -355,37 +336,16 @@ int Mus_GetExt(ded_music_t* def, char* path)
     // Try the resource locator.
     if(R_FindResource(RC_MUSIC, def->lumpName, NULL, path))
     {
-        // We must read the song into a buffer, because the path may
-        // be a virtual file and the audio driver may not know anything about those.
-        DFILE*              file;
+        if(retPath)
+        {
+            strncpy(retPath, path, FILENAME_T_MAXLEN);
+            retPath[FILENAME_T_MAXLEN] = '\0';
+        }
 
-        file = F_Open(path, "rb");
-        ptr = iMusic->SongBuffer(len = F_Length(file));
-        F_Read(ptr, len, file);
-        F_Close(file);
-
-        // Clear the path so the caller knows it's in the buffer.
-        strcpy(path, "");
-
-        return true; // Got it!
+        return true;
     }
 
-    lump = W_CheckNumForName(def->lumpName);
-    if(lump < 0)
-        return false; // No such lump.
-
-    if(Mus_IsMUSLump(lump))
-        return false; // It's MUS!
-
-    if(!iMusic->SongBuffer)
-        return false;
-
-    // Take a copy. Might be a big one (since it could be an MP3), so
-    // use the standard memory allocation routines.
-    ptr = iMusic->SongBuffer(len = W_LumpLength(lump));
-    W_ReadLump(lump, ptr);
-
-    return true;
+    return false;
 }
 
 /**
@@ -414,7 +374,7 @@ int Mus_GetCD(ded_music_t* def)
  */
 int Mus_Start(ded_music_t* def, boolean looped)
 {
-    char                path[300];
+    filename_t          path;
     int                 order[3], i, songID = def - defs.music;
 
     // We will not restart the currently playing song.
@@ -451,6 +411,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
     // Try to start the song.
     for(i = 0; i < 3; ++i)
     {
+        boolean             canPlayMUS = true;
+
         switch(order[i])
         {
         case MUSP_CD:
@@ -460,20 +422,55 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
         case MUSP_EXT:
             if(Mus_GetExt(def, path))
-            {
-                if(path[0])
-                {
-                    if(verbose)
-                        Con_Printf("Mus_Start: %s\n", path);
+            {   // Its an external file.
+                // The song may be in a virtual file, so we must buffer
+                // it ourselves.
+                DFILE*              file = F_Open(path, "rb");
+                size_t              len = F_Length(file);
 
-                    return iMusic->PlayFile(path, looped);
+                if(!iMusic->Play)
+                {   // Music interface does not offer buffer playback.
+                    // Write to disk and play from there.
+                    FILE*               outFile;
+                    void*               buf = malloc(len);
+
+                    if((outFile = fopen(BUFFERED_MUSIC_FILE, "wb")) == NULL)
+                    {
+                        Con_Message("Mus_Start: Couldn't open %s for writing. %s\n",
+                                    BUFFERED_MUSIC_FILE, strerror(errno));
+                        F_Close(file);
+                        return false;
+                    }
+
+                    F_Read(buf, len, file);
+
+                    fwrite(buf, 1, len, outFile);
+                    fclose(outFile);
+
+                    F_Close(file);
+
+                    return iMusic->PlayFile(BUFFERED_MUSIC_FILE, looped);
                 }
                 else
-                {
+                {   // Music interface offers buffered playback. Use it.
+                    void*               ptr;
+
+                    VERBOSE(Con_Message("Mus_GetExt: Opened Song %s "
+                                        "(File \"%s\" %ul bytes)\n",
+                                        def->id, M_PrettyPath(path),
+                                        len));
+
+                    ptr = iMusic->SongBuffer(len);
+                    F_Read(ptr, len, file);
+                    F_Close(file);
+
                     return iMusic->Play(looped);
                 }
             }
-            break;
+
+            // Next, try non-MUS lumps.
+            canPlayMUS = false;
+            // Fall through.
 
         case MUSP_MUS:
             {
@@ -487,6 +484,9 @@ int Mus_Start(ded_music_t* def, boolean looped)
                 if(Mus_IsMUSLump(lump))
                 {   // Lump is in DOOM's MUS format.
                     byte*               lumpPtr;
+
+                    if(!canPlayMUS)
+                        break;
 
                     // Cache the lump, convert to MIDI and output to a temp
                     // file in the working directory. Use a filename with the .mid
