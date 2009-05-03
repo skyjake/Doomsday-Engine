@@ -375,13 +375,17 @@ int Mus_GetCD(ded_music_t* def)
 int Mus_Start(ded_music_t* def, boolean looped)
 {
     filename_t          path;
-    int                 order[3], i, songID = def - defs.music;
+    int                 i, order[3], songID;
 
-    // We will not restart the currently playing song.
-    if(!musAvail || !iMusic)
+    if(!musAvail)
         return false;
 
-    if(iMusic->gen.Get(MUSIP_PLAYING, NULL) && songID == currentSong)
+    songID = def - defs.music;
+
+    // We will not restart the currently playing song.
+    if(songID == currentSong &&
+       ((iMusic && iMusic->gen.Get(MUSIP_PLAYING, NULL)) ||
+        (iCD && iCD->gen.Get(MUSIP_PLAYING, NULL))))
         return false;
 
     // Stop the currently playing song.
@@ -476,58 +480,59 @@ int Mus_Start(ded_music_t* def, boolean looped)
             // Fall through.
 
         case MUSP_MUS:
+            if(iMusic)
             {
-            lumpnum_t           lump;
+                lumpnum_t           lump;
 
-            if((lump = W_CheckNumForName(def->lumpName)) != -1)
-            {
-                size_t              len;
-                void*               ptr;
+                if((lump = W_CheckNumForName(def->lumpName)) != -1)
+                {
+                    size_t              len;
+                    void*               ptr;
 
-                if(Mus_IsMUSLump(lump))
-                {   // Lump is in DOOM's MUS format.
-                    byte*               lumpPtr;
+                    if(Mus_IsMUSLump(lump))
+                    {   // Lump is in DOOM's MUS format.
+                        byte*               lumpPtr;
 
-                    if(!canPlayMUS)
-                        break;
+                        if(!canPlayMUS)
+                            break;
 
-                    // Cache the lump, convert to MIDI and output to a temp
-                    // file in the working directory. Use a filename with the .mid
-                    // extension so that the player knows the format.
-                    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
-                    M_Mus2Midi(lumpPtr, W_LumpLength(lump), BUFFERED_MIDI_MUSIC_FILE);
-                    Z_ChangeTag(lumpPtr, PU_CACHE);
+                        // Cache the lump, convert to MIDI and output to a temp
+                        // file in the working directory. Use a filename with the .mid
+                        // extension so that the player knows the format.
+                        lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+                        M_Mus2Midi(lumpPtr, W_LumpLength(lump), BUFFERED_MIDI_MUSIC_FILE);
+                        Z_ChangeTag(lumpPtr, PU_CACHE);
 
-                    // Play the newly converted MIDI file.
-                    return iMusic->PlayFile(BUFFERED_MIDI_MUSIC_FILE, looped);
-                }
-
-                if(!iMusic->Play)
-                {   // Music interface does not offer buffer playback.
-                    FILE*               file;
-                    byte*               lumpPtr;
-
-                    // Write this lump to disk and play from there.
-                    if((file = fopen(BUFFERED_MUSIC_FILE, "wb")) == NULL)
-                    {
-                        Con_Message("Mus_Start: Couldn't open %s for writing. %s\n",
-                                    BUFFERED_MUSIC_FILE, strerror(errno));
-                        return false;
+                        // Play the newly converted MIDI file.
+                        return iMusic->PlayFile(BUFFERED_MIDI_MUSIC_FILE, looped);
                     }
 
-                    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
-                    fwrite(lumpPtr, 1, W_LumpLength(lump), file);
-                    fclose(file);
-                    Z_ChangeTag(lumpPtr, PU_CACHE);
+                    if(!iMusic->Play)
+                    {   // Music interface does not offer buffer playback.
+                        FILE*               file;
+                        byte*               lumpPtr;
 
-                    // Play the cached music file.
-                    return iMusic->PlayFile(BUFFERED_MUSIC_FILE, looped);
+                        // Write this lump to disk and play from there.
+                        if((file = fopen(BUFFERED_MUSIC_FILE, "wb")) == NULL)
+                        {
+                            Con_Message("Mus_Start: Couldn't open %s for writing. %s\n",
+                                        BUFFERED_MUSIC_FILE, strerror(errno));
+                            return false;
+                        }
+
+                        lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+                        fwrite(lumpPtr, 1, W_LumpLength(lump), file);
+                        fclose(file);
+                        Z_ChangeTag(lumpPtr, PU_CACHE);
+
+                        // Play the cached music file.
+                        return iMusic->PlayFile(BUFFERED_MUSIC_FILE, looped);
+                    }
+
+                    ptr = iMusic->SongBuffer(len = W_LumpLength(lump));
+                    W_ReadLump(lump, ptr);
+                    return iMusic->Play(looped);
                 }
-
-                ptr = iMusic->SongBuffer(len = W_LumpLength(lump));
-                W_ReadLump(lump, ptr);
-                return iMusic->Play(looped);
-            }
             }
             break;
 
