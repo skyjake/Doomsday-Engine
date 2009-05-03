@@ -47,7 +47,6 @@
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 #include "sys_audiod_mus.h"
-#include "m_mus2midi.h"
 
 // MACROS ------------------------------------------------------------------
 
