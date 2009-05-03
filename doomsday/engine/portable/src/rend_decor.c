@@ -199,11 +199,14 @@ static void projectDecoration(decorsource_t* src)
  */
 void Rend_ProjectDecorations(void)
 {
-    decorsource_t*      src;
-
-    for(src = sourceFirst; src != sourceCursor; src = src->next)
+    if(sourceFirst != sourceCursor)
     {
-        projectDecoration(src);
+        decorsource_t*      src = sourceFirst;
+
+        do
+        {
+            projectDecoration(src);
+        } while((src = src->next) != sourceCursor);
     }
 }
 
@@ -303,13 +306,16 @@ static void addLuminousDecoration(decorsource_t* src)
  */
 void Rend_AddLuminousDecorations(void)
 {
-    decorsource_t*      src;
-
 BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
 
-    for(src = sourceFirst; src != sourceCursor; src = src->next)
+    if(sourceFirst != sourceCursor)
     {
-        addLuminousDecoration(src);
+        decorsource_t*      src = sourceFirst;
+
+        do
+        {
+            addLuminousDecoration(src);
+        } while((src = src->next) != sourceCursor);
     }
 
 END_PROF( PROF_DECOR_ADD_LUMINOUS );
