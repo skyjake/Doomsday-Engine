@@ -862,7 +862,7 @@ void C_DECL A_FSwordFlames(mobj_t *mo)
     {
         pos[VX] = mo->pos[VX] + FIX2FLT((P_Random() - 128) << 12);
         pos[VY] = mo->pos[VY] + FIX2FLT((P_Random() - 128) << 12);
-        pos[VX] = mo->pos[VZ] + FIX2FLT((P_Random() - 128) << 11);
+        pos[VZ] = mo->pos[VZ] + FIX2FLT((P_Random() - 128) << 11);
         angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY]);
 
         P_SpawnMobj3fv(MT_FSWORD_FLAME, pos, angle);
