@@ -309,7 +309,9 @@ typedef enum vectorgraphname_e {
     VG_KEYSQUARE,
     VG_TRIANGLE,
     VG_ARROW,
+#if !__JHEXEN__
     VG_CHEATARROW,
+#endif
     NUM_VECTOR_GRAPHS
 } vectorgrapname_t;
 
