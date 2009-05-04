@@ -137,6 +137,7 @@ typedef struct jheretic_config_s {
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
 
     byte            fallOff; // Objects fall under their own weight.
+    byte            fixFloorFire; // Fix Heretic bug; explode Maulotaur floor fire when feetclipped.
 
     byte            counterCheat;
     float           counterCheatScale;

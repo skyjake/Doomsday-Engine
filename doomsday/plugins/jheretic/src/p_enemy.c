@@ -1529,7 +1529,8 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
     else
     {
         mobj_t*             mo;
-        boolean             fixFloorFire = (actor->floorClip > 0);
+        boolean             fixFloorFire = (!cfg.fixFloorFire &&
+            actor->floorClip > 0);
 
         /**
          * Original Heretic bug:

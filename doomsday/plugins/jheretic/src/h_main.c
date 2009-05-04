@@ -315,7 +315,7 @@ void G_PreInit(void)
     cfg.plrViewHeight = 41;
     cfg.mapTitle = true;
   //cfg.hideAuthorIdSoft = true;
-    cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
+    cfg.menuColor[0] = defFontRGB[0]; // use the default colour by default.
     cfg.menuColor[1] = defFontRGB[1];
     cfg.menuColor[2] = defFontRGB[2];
     cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
@@ -329,6 +329,7 @@ void G_PreInit(void)
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
     cfg.fallOff = true;
+    cfg.fixFloorFire = false;
 
     cfg.statusbarOpacity = 1;
     cfg.statusbarCounterAlpha = 1;

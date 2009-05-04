@@ -714,6 +714,9 @@ desc =  gravity modifier, multiplayer (-1..100). -1 = Map default.
 [server-game-jump]
 desc = 1=Allow jumping in multiplayer games.
 
+[server-game-maulotaur-fixfloorfire]
+desc = 1=Fix bug in original Heretic which would explode the Maulotaur floor fire if spawned while it's feet are clipped.
+
 [server-game-nomonsters]
 desc = 1=No monsters.
 
