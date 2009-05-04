@@ -255,7 +255,8 @@ mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
 void        P_SpawnPuff(float x, float y, float z, angle_t angle);
 void        P_SpawnBlood(float x, float y, float z, int damage,
                          angle_t angle);
-mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest,
+                           boolean checkSpawn);
 mobj_t*     P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
                                 angle_t angle, float momz);
 mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);

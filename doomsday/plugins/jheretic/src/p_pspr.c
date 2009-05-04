@@ -1182,7 +1182,7 @@ void C_DECL A_FireBlasterPL2(player_t* player, pspdef_t* psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnMissile(MT_BLASTERFX1, player->plr->mo, NULL);
+    P_SpawnMissile(MT_BLASTERFX1, player->plr->mo, NULL, true);
 }
 
 void C_DECL A_FireGoldWandPL1(player_t *player, pspdef_t *psp)
@@ -1399,7 +1399,7 @@ void C_DECL A_FireMacePL2(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnMissile(MT_MACEFX4, player->plr->mo, NULL);
+    mo = P_SpawnMissile(MT_MACEFX4, player->plr->mo, NULL, true);
     if(mo)
     {
         mo->mom[MX] += player->plr->mo->mom[MX];
@@ -1512,7 +1512,7 @@ void C_DECL A_FireCrossbowPL1(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnMissile(MT_CRBOWFX1, pmo, NULL);
+    P_SpawnMissile(MT_CRBOWFX1, pmo, NULL, true);
     P_SpawnMissileAngle(MT_CRBOWFX3, pmo, pmo->angle - (ANG45 / 10), -12345);
     P_SpawnMissileAngle(MT_CRBOWFX3, pmo, pmo->angle + (ANG45 / 10), -12345);
 }
@@ -1526,7 +1526,7 @@ void C_DECL A_FireCrossbowPL2(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnMissile(MT_CRBOWFX2, pmo, NULL);
+    P_SpawnMissile(MT_CRBOWFX2, pmo, NULL, true);
     P_SpawnMissileAngle(MT_CRBOWFX2, pmo, pmo->angle - (ANG45 / 10), -12345);
     P_SpawnMissileAngle(MT_CRBOWFX2, pmo, pmo->angle + (ANG45 / 10), -12345);
     P_SpawnMissileAngle(MT_CRBOWFX3, pmo, pmo->angle - (ANG45 / 5), -12345);
@@ -1556,7 +1556,7 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnMissile(MT_HORNRODFX1, player->plr->mo, NULL);
+    mo = P_SpawnMissile(MT_HORNRODFX1, player->plr->mo, NULL, true);
     // Randomize the first frame
     if(mo && P_Random() > 128)
     {
@@ -1576,7 +1576,7 @@ void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL);
+    mo = P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL, true);
     if(mo)
         mo->special3 = 140;
 
@@ -1736,7 +1736,7 @@ void C_DECL A_FirePhoenixPL1(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnMissile(MT_PHOENIXFX1, player->plr->mo, NULL);
+    P_SpawnMissile(MT_PHOENIXFX1, player->plr->mo, NULL, true);
     angle = player->plr->mo->angle + ANG180;
     an = angle >> ANGLETOFINESHIFT;
     player->plr->mo->mom[MX] += 4 * FIX2FLT(finecosine[an]);
@@ -2051,7 +2051,7 @@ void C_DECL A_Egg(mobj_t* mo)
     P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3));
     P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 3));
 #else
-    P_SpawnMissile(MT_EGGFX, mo, NULL);
+    P_SpawnMissile(MT_EGGFX, mo, NULL, true);
     P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6), -12345);
     P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 6), -12345);
     P_SpawnMissileAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3), -12345);

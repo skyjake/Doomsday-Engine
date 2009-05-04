@@ -822,12 +822,12 @@ void C_DECL A_KnightAttack(mobj_t *actor)
     if(actor->type == MT_KNIGHTGHOST || P_Random() < 40)
     {
         // Red axe.
-        P_SpawnMissile(MT_REDAXE, actor, actor->target);
+        P_SpawnMissile(MT_REDAXE, actor, actor->target, true);
         return;
     }
 
     // Green axe.
-    P_SpawnMissile(MT_KNIGHTAXE, actor, actor->target);
+    P_SpawnMissile(MT_KNIGHTAXE, actor, actor->target, true);
 }
 
 void C_DECL A_ImpExplode(mobj_t* actor)
@@ -921,7 +921,7 @@ void C_DECL A_ImpMsAttack2(mobj_t *actor)
         return;
     }
 
-    P_SpawnMissile(MT_IMPBALL, actor, actor->target);
+    P_SpawnMissile(MT_IMPBALL, actor, actor->target, true);
 }
 
 void C_DECL A_ImpDeath(mobj_t *actor)
@@ -1095,7 +1095,7 @@ void C_DECL A_MummyAttack2(mobj_t *actor)
         return;
     }
 
-    mo = P_SpawnMissile(MT_MUMMYFX1, actor, actor->target);
+    mo = P_SpawnMissile(MT_MUMMYFX1, actor, actor->target, true);
 
     if(mo != NULL)
         mo->tracer = actor->target;
@@ -1155,12 +1155,12 @@ void C_DECL A_Srcr1Attack(mobj_t *actor)
     if(actor->health > (actor->info->spawnHealth / 3) * 2)
     {
         // Spit one fireball.
-        P_SpawnMissile(MT_SRCRFX1, actor, actor->target);
+        P_SpawnMissile(MT_SRCRFX1, actor, actor->target, true);
     }
     else
     {
         // Spit three fireballs.
-        mo = P_SpawnMissile(MT_SRCRFX1, actor, actor->target);
+        mo = P_SpawnMissile(MT_SRCRFX1, actor, actor->target, true);
         if(mo)
         {
             angle = mo->angle;
@@ -1283,7 +1283,7 @@ void C_DECL A_Srcr2Attack(mobj_t *actor)
     else
     {
         // Blue bolt.
-        P_SpawnMissile(MT_SOR2FX1, actor, actor->target);
+        P_SpawnMissile(MT_SOR2FX1, actor, actor->target, true);
     }
 }
 
@@ -1490,7 +1490,7 @@ void C_DECL A_MinotaurAtk2(mobj_t *actor)
         return;
     }
 
-    mo = P_SpawnMissile(MT_MNTRFX1, actor, actor->target);
+    mo = P_SpawnMissile(MT_MNTRFX1, actor, actor->target, true);
     if(mo)
     {
         S_StartSound(SFX_MINAT2, mo);
@@ -1508,10 +1508,10 @@ void C_DECL A_MinotaurAtk2(mobj_t *actor)
 /**
  * Minotaur : Floor fire attack.
  */
-void C_DECL A_MinotaurAtk3(mobj_t *actor)
+void C_DECL A_MinotaurAtk3(mobj_t* actor)
 {
-    mobj_t     *mo;
-    player_t   *player;
+
+    player_t*           player;
 
     if(!actor->target)
         return;
@@ -1528,9 +1528,49 @@ void C_DECL A_MinotaurAtk3(mobj_t *actor)
     }
     else
     {
-        mo = P_SpawnMissile(MT_MNTRFX2, actor, actor->target);
-        if(mo != NULL)
-            S_StartSound(SFX_MINAT1, mo);
+        mobj_t*             mo;
+        boolean             fixFloorFire = (actor->floorClip > 0);
+
+        /**
+         * Original Heretic bug:
+         * When an attempt is made to spawn MT_MNTRFX2 (the Maulotaur's
+         * ground flame) the z coordinate is set to ONFLOORZ but if the
+         * Maulotaur's feet are currently clipped (i.e., it is in a sector
+         * whose terrain info is set to clip) then FOOTCLIPSIZE is subtracted
+         * from the z coordinate. So when P_SpawnMobj is called,
+         * z != ONFLOORZ, so rather than being set to the height of the floor
+         * it is left at 2146838915 (float: 32758.162).
+         *
+         * This in turn means that when P_TryMove is called (via
+         * P_CheckMissileSpawn), the test which is there to check whether a
+         * missile hits an upper sidedef section will return true
+         * (ceilingheight - thingz > thingheight).
+         *
+         * This results in P_ExplodeMissile being called instantly.
+         *
+         * jHeretic fixes this bug, however we maintain original behaviour
+         * using the following method:
+         *
+         * 1) Do not call P_CheckMissileSpawn from P_SpawnMissile.
+         * 2) Use special-case logic here which behaves similarly.
+         */
+
+        if((mo = P_SpawnMissile(MT_MNTRFX2, actor, actor->target,
+                                (fixFloorFire? false : true))))
+        {
+            if(fixFloorFire)
+            {
+                mo->pos[VX] += mo->mom[MX] / 2;
+                mo->pos[VY] += mo->mom[MY] / 2;
+                mo->pos[VZ] += mo->mom[MZ] / 2;
+
+                P_ExplodeMissile(mo);
+            }
+            else
+            {
+                S_StartSound(SFX_MINAT1, mo);
+            }
+        }
     }
 
     if(P_Random() < 192 && actor->special2 == 0)
@@ -1576,7 +1616,7 @@ void C_DECL A_BeastAttack(mobj_t *actor)
         return;
     }
 
-    P_SpawnMissile(MT_BEASTBALL, actor, actor->target);
+    P_SpawnMissile(MT_BEASTBALL, actor, actor->target, true);
 }
 
 void C_DECL A_HeadAttack(mobj_t *actor)
@@ -1613,13 +1653,13 @@ void C_DECL A_HeadAttack(mobj_t *actor)
     if(randAttack < atkResolve1[(FLT2FIX(dist) != 0)? 1 : 0])
     {
         // Ice ball
-        P_SpawnMissile(MT_HEADFX1, actor, target);
+        P_SpawnMissile(MT_HEADFX1, actor, target, true);
         S_StartSound(SFX_HEDAT2, actor);
     }
     else if(randAttack < atkResolve2[(FLT2FIX(dist) != 0)? 1 : 0])
     {
         // Fire column
-        baseFire = P_SpawnMissile(MT_HEADFX3, actor, target);
+        baseFire = P_SpawnMissile(MT_HEADFX3, actor, target, true);
         if(baseFire != NULL)
         {
             P_MobjChangeState(baseFire, S_HEADFX3_4);  // Don't grow
@@ -1645,7 +1685,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
     else
     {
         // Whirlwind.
-        mo = P_SpawnMissile(MT_WHIRLWIND, actor, target);
+        mo = P_SpawnMissile(MT_WHIRLWIND, actor, target, true);
         if(mo != NULL)
         {
             mo->pos[VZ] -= 32;
@@ -1727,7 +1767,7 @@ void C_DECL A_SnakeAttack(mobj_t *actor)
 
     S_StartSound(actor->info->attackSound, actor);
     A_FaceTarget(actor);
-    P_SpawnMissile(MT_SNAKEPRO_A, actor, actor->target);
+    P_SpawnMissile(MT_SNAKEPRO_A, actor, actor->target, true);
 }
 
 void C_DECL A_SnakeAttack2(mobj_t *actor)
@@ -1740,7 +1780,7 @@ void C_DECL A_SnakeAttack2(mobj_t *actor)
 
     S_StartSound(actor->info->attackSound, actor);
     A_FaceTarget(actor);
-    P_SpawnMissile(MT_SNAKEPRO_B, actor, actor->target);
+    P_SpawnMissile(MT_SNAKEPRO_B, actor, actor->target, true);
 }
 
 void C_DECL A_ClinkAttack(mobj_t *actor)
@@ -1794,7 +1834,7 @@ void C_DECL A_WizAtk3(mobj_t *actor)
         return;
     }
 
-    mo = P_SpawnMissile(MT_WIZFX1, actor, actor->target);
+    mo = P_SpawnMissile(MT_WIZFX1, actor, actor->target, true);
     if(mo)
     {
         momZ = mo->mom[MZ];

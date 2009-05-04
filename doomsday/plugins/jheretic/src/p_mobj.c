@@ -1614,10 +1614,12 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
  * @param dest          The mobj being shot at. Can be @c NULL if source
  *                      is a player.
  * @param type          The type of mobj to be shot.
+ * @param checkSpawn    @c true call P_CheckMissileSpawn.
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest,
+                       boolean checkSpawn)
 {
     float               pos[3];
     mobj_t*             th = 0;
@@ -1674,6 +1676,10 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
         case MT_KNIGHTAXE: // Knight normal axe.
         case MT_REDAXE: // Knight red power axe.
             spawnZOff = 36;
+            break;
+
+        case MT_MNTRFX2:
+            spawnZOff = 0;
             break;
 
         default:
@@ -1742,10 +1748,10 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     missileMobj = th;
 #endif
 
-    if(P_CheckMissileSpawn(th))
-        return th;
+    if(checkSpawn)
+        return (P_CheckMissileSpawn(th)? th : NULL);
 
-    return NULL;
+    return th;
 }
 
 /**
