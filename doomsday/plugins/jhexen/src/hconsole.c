@@ -75,6 +75,8 @@ DEFCC(CCmdScriptInfo);
 DEFCC(CCmdTest);
 DEFCC(CCmdMovePlane);
 
+void G_UpdateEyeHeight(cvar_t* unused);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 DEFCC(CCmdScreenShot);
@@ -125,7 +127,7 @@ cvar_t gameCVars[] = {
 // Player
     // Player data
     {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 8},
-    {"player-eyeheight", 0, CVT_INT, &cfg.plrViewHeight, 41, 54},
+    {"player-eyeheight", 0, CVT_INT, &cfg.plrViewHeight, 41, 54, G_UpdateEyeHeight},
     {"player-class", 0, CVT_BYTE, &cfg.netClass, 0, 2},
 
     // Movment
@@ -240,6 +242,17 @@ void G_ConsoleBg(int *width, int *height)
         DGL_SetNoMaterial();
         *width = *height = 0;
     }
+}
+
+/**
+ * Called when the player-eyeheight cvar is changed.
+ */
+void G_UpdateEyeHeight(cvar_t* unused)
+{
+    player_t*           plr = &players[CONSOLEPLAYER];
+
+    if(!(plr->plr->flags & DDPF_CAMERA))
+        plr->plr->viewHeight = (float) cfg.plrViewHeight;
 }
 
 /**
