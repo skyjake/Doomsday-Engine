@@ -2474,14 +2474,46 @@ void GL_DoUpdateTexParams(cvar_t *unused)
     GL_SetTextureParams(glmode[mipmapping], true, true);
 }
 
-void GL_TexReset(void)
+static int doTexReset(void* parm)
 {
+    boolean             usingBusyMode = *((boolean*) parm);
+
     GL_ClearTextureMemory();
+    Con_Printf("All DGL textures deleted.\n");
+
+    if(usingBusyMode)
+        Con_SetProgress(100);
+
+    /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
     GL_LoadLightmaps();
     GL_LoadFlareTextures();
 
-    Con_Printf("All DGL textures deleted.\n");
+    if(usingBusyMode)
+    {
+        Con_SetProgress(200);
+
+        Con_BusyWorkerEnd();
+    }
+
+    return 0;
+}
+
+void GL_TexReset(void)
+{
+    boolean             useBusyMode = !Con_IsBusy();
+
+    if(useBusyMode)
+    {
+        Con_InitProgress(200);
+        Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR
+                 | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Reseting textures...",
+                 doTexReset, &useBusyMode);
+    }
+    else
+    {
+        doTexReset(&useBusyMode);
+    }
 }
 
 /**
