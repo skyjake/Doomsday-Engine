@@ -476,8 +476,9 @@ void G_CommonPreInit(void)
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
     HU_Register();              // For the HUD displays.
-    HUMsg_Register();           // For the (message) log and chat widget.
-    Hu_MsgRegister();           // For the HUD messages.
+    HUMsg_Register();           // For the player message logs.
+    Chat_Register();
+    Hu_MsgRegister();           // For the game messages.
     ST_Register();              // For the hud/statusbar.
     X_Register();               // For the crosshair.
 
@@ -793,7 +794,7 @@ boolean G_Responder(event_t *ev)
             return true;
 
         // Try the chatmode responder.
-        if(HUMsg_Responder(ev))
+        if(Chat_Responder(ev))
             return true;
 
         // Check for cheats.

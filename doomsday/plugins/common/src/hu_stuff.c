@@ -43,8 +43,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "hu_menu.h"
@@ -52,6 +50,7 @@
 #include "hu_stuff.h"
 #include "hu_log.h"
 #include "p_mapsetup.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -406,7 +405,7 @@ void Hu_LoadData(void)
     R_CachePatch(&dpInvPageRight[1], "INVGEMR2");
 #endif
 
-    HUMsg_Init();
+    Chat_Init();
 }
 
 void Hu_UnloadData(void)
@@ -442,6 +441,7 @@ void HU_Start(int player)
     if(player < 0 || player >= MAXPLAYERS)
         return;
 
+    Chat_Start();
     HUMsg_Start(); // Why here?
 
     hud = &hudStates[player];
@@ -453,8 +453,13 @@ void HU_Start(int player)
 
 void HU_Drawer(int player)
 {
-    HUMsg_Drawer(player);
+    // Don't draw the message log while the map title is up.
+    if(!(cfg.mapTitle && actualMapTime < 6 * 35))
+    {
+        HUMsg_Drawer(player);
+    }
 
+    Chat_Drawer(player);
     HU_DrawScoreBoard(player);
 }
 
