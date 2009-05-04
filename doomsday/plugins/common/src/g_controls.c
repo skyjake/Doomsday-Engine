@@ -404,8 +404,8 @@ DEFCC( CCmdDefaultGameBinds )
 
         "bindevent key-h {impulse showhud}",
         "bindevent key-backslash-repeat {impulse showscore}",
-        "bindevent key-minus {viewsize -}",
-        "bindevent key-equals {viewsize +}",
+        "bindevent key-minus-repeat {viewsize -}",
+        "bindevent key-equals-repeat {viewsize +}",
 #if !defined(__JHEXEN__) && !defined(__JHERETIC__)
         "bindevent key-return msgrefresh",
 #endif
