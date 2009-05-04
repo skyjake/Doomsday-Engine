@@ -55,4 +55,5 @@ void        HUMsg_Init(void);
 void        HUMsg_PlayerMessage(int player, char* message, int tics,
                                 boolean noHide, boolean yellow);
 void        HUMsg_ClearMessages(int player);
+void        HUMsg_Refresh(int player);
 #endif

@@ -60,6 +60,7 @@
 #include "p_user.h"
 #include "g_common.h"
 #include "am_map.h"
+#include "hu_log.h"
 #if __JHERETIC__ || __JHEXEN__
 #include "hu_inventory.h"
 #endif
@@ -1418,13 +1419,16 @@ void P_PlayerThinkPsprites(player_t *player)
 
 void P_PlayerThinkHUD(player_t* player)
 {
-    playerbrain_t* brain = &player->brain;
+    playerbrain_t*      brain = &player->brain;
 
     if(brain->hudShow)
         ST_HUDUnHide(player - players, HUE_FORCE);
 
     if(brain->scoreShow)
         HU_ScoreBoardUnHide(player - players);
+
+    if(brain->logRefresh)
+        HUMsg_Refresh(player - players);
 }
 
 void P_PlayerThinkMap(player_t* player)
@@ -1874,6 +1878,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
     // HUD.
     brain->hudShow = (P_GetImpulseControlState(playerNum, CTL_HUD_SHOW) != 0);
     brain->scoreShow = (P_GetImpulseControlState(playerNum, CTL_SCORE_SHOW) != 0);
+    brain->logRefresh = (P_GetImpulseControlState(playerNum, CTL_LOG_REFRESH) != 0);
 
     // Automap.
     brain->mapToggle = (P_GetImpulseControlState(playerNum, CTL_MAP) != 0);

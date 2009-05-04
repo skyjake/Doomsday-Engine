@@ -113,9 +113,6 @@ desc = Move a sector's floor plane.
 [movesec]
 desc = Move a sector's both planes.
 
-[msgrefresh]
-desc = Show last HUD message.
-
 [noclip]
 desc = No movement clipping aka, walk through walls (cheat).
 

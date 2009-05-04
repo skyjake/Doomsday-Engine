@@ -109,7 +109,8 @@ enum {
     CTL_MAP_MARK_ADD,
     CTL_MAP_MARK_CLEAR_ALL,
     CTL_HUD_SHOW,
-    CTL_SCORE_SHOW
+    CTL_SCORE_SHOW,
+    CTL_LOG_REFRESH
 };
 
 // This structure replaced ticcmd as the place where players store the intentions
@@ -142,6 +143,7 @@ typedef struct playerbrain_s {
 #if __JHERETIC__ || __JHEXEN__
     uint        useInvItem: 1;
 #endif
+    uint        logRefresh: 1;
 } playerbrain_t;
 
 void        G_ControlRegister(void);

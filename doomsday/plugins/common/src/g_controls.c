@@ -244,6 +244,8 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_EGG, CTLT_IMPULSE, "egg", "game");
 #endif
 
+    P_NewPlayerControl(CTL_LOG_REFRESH, CTLT_IMPULSE, "msgrefresh", "game");
+
     P_NewPlayerControl(CTL_MAP, CTLT_IMPULSE, "automap", "game");
     P_NewPlayerControl(CTL_MAP_PAN_X, CTLT_NUMERIC, "mappanx", "map-freepan");
     P_NewPlayerControl(CTL_MAP_PAN_Y, CTLT_NUMERIC, "mappany", "map-freepan");
@@ -406,8 +408,10 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-backslash-repeat {impulse showscore}",
         "bindevent key-minus-repeat {viewsize -}",
         "bindevent key-equals-repeat {viewsize +}",
+
+        // Player message log:
 #if !defined(__JHEXEN__) && !defined(__JHERETIC__)
-        "bindevent key-return msgrefresh",
+        "bindevent key-return {impulse msgrefresh}",
 #endif
 
         // Menu events:

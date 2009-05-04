@@ -311,7 +311,8 @@ static controlconfig_t controlConfig[] =
     { "show score", 0, 0, "impulse showscore", CCF_REPEAT },
     { "smaller view", 0, 0, "viewsize -" },
     { "larger view", 0, 0, "viewsize +" },
-    { "message refresh", 0, 0, "msgrefresh" },
+
+    { "message refresh", 0, 0, "impulse msgrefresh" },
 
     { NULL },
 

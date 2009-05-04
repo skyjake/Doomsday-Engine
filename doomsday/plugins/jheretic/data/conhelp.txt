@@ -199,9 +199,6 @@ desc = Send a chat macro.
 [beginchat]
 desc = Begin chat mode.
 
-[msgrefresh]
-desc = Show last HUD message.
-
 [message]
 desc = Show a local game message.
 inf = Params: message (msg)\nFor example, 'message "this is a message"'.

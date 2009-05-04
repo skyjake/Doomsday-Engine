@@ -256,7 +256,6 @@ ccmd_t logCCmds[] = {
     {"chatsendmacro",   NULL,   CCmdMsgAction},
     {"beginchat",       NULL,   CCmdMsgAction},
     {"message",         "s",    CCmdLocalMessage},
-    {"msgrefresh",      "",     CCmdMsgAction},
     {NULL}
 };
 
@@ -522,15 +521,23 @@ static void HU_MsgBufClear(msgbuffer_t* buf)
 }
 
 /**
- * \fixme This doesn't seem to work as intended.
+ * Rewind the log buffer, and make the last few messages visible again.
  *
  * @param buf           Ptr to the message buffer to refresh.
  */
-static void HU_MsgBufRefresh(msgbuffer_t* buf)
+void HUMsg_Refresh(int player)
 {
-    if(!buf)
+    player_t*           plr;
+    msgbuffer_t*        buf;
+
+    if(player < 0 || player >= MAXPLAYERS)
         return;
 
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    buf = &msgBuffer[player];
     buf->visible = true;
     buf->timer = HU_MSGTIMEOUT;
 }
@@ -822,13 +829,6 @@ DEFCC(CCmdMsgAction)
             Con_Message("Invalid macro number\n");
             return false;
         }
-    }
-    else if(!stricmp(argv[0], "msgrefresh")) // refresh the message buffer
-    {
-        if(chatOn)
-            return false;
-
-        HU_MsgBufRefresh(&msgBuffer[CONSOLEPLAYER]);
     }
     else if(!stricmp(argv[0], "beginchat")) // begin chat mode
     {
