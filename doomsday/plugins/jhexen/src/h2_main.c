@@ -75,7 +75,6 @@ static void execOptionScripts(char **args, int tag);
 static void execOptionDevMaps(char **args, int tag);
 static void execOptionSkill(char **args, int tag);
 static void execOptionPlayDemo(char **args, int tag);
-static void warpCheck(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -445,7 +444,33 @@ void G_PostInit(void)
 
     // Check for command line warping. Follows P_Init() because the
     // MAPINFO.TXT script must be already processed.
-    warpCheck();
+    p = ArgCheck("-warp");
+    if(p && p < Argc() - 1)
+    {
+        int                     map;
+
+        warpMap = atoi(Argv(p + 1));
+        map = P_TranslateMap(warpMap);
+        if(map == -1)
+        {   // Couldn't find real map number.
+            startMap = 1;
+            Con_Message("-WARP: Invalid map number.\n");
+        }
+        else
+        {   // Found a valid startmap.
+            startMap = map;
+            autoStart = true;
+        }
+    }
+    else
+    {
+        warpMap = 1;
+        startMap = P_TranslateMap(1);
+        if(startMap == -1)
+        {
+            startMap = 1;
+        }
+    }
 
     // Are we autostarting?
     if(autoStart)
@@ -461,9 +486,10 @@ void G_PostInit(void)
     }
 
     // Check valid episode and map.
-    if((autoStart || IS_NETGAME))
+    if(autoStart || IS_NETGAME)
     {
         sprintf(mapStr,"MAP%2.2d", startMap);
+
         if(!W_CheckNumForName(mapStr))
         {
             startEpisode = 1;
@@ -475,8 +501,7 @@ void G_PostInit(void)
     {
         if(autoStart || IS_NETGAME)
         {
-            G_StartNewInit();
-            G_InitNew(startSkill, startEpisode, startMap);
+            G_DeferedInitNew(startSkill, startEpisode, startMap);
         }
         else
         {
@@ -525,37 +550,6 @@ static void handleArgs(void)
         if(p && p < Argc() - opt->requiredArgs)
         {
             opt->func(ArgvPtr(p), opt->tag);
-        }
-    }
-}
-
-static void warpCheck(void)
-{
-    int                     p, map;
-
-    p = ArgCheck("-warp");
-    if(p && p < Argc() - 1)
-    {
-        warpMap = atoi(Argv(p + 1));
-        map = P_TranslateMap(warpMap);
-        if(map == -1)
-        {   // Couldn't find real map number.
-            startMap = 1;
-            Con_Message("-WARP: Invalid map number.\n");
-        }
-        else
-        {   // Found a valid startmap.
-            startMap = map;
-            autoStart = true;
-        }
-    }
-    else
-    {
-        warpMap = 1;
-        startMap = P_TranslateMap(1);
-        if(startMap == -1)
-        {
-            startMap = 1;
         }
     }
 }
