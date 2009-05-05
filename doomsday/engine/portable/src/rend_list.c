@@ -1350,6 +1350,9 @@ if(numTexUnits < 2)
     case LM_ALL_SHINY:
     case LM_SHINY:
         rlBindTo(0, TU(list, TU_PRIMARY));
+        if(!TU(list, TU_INTER)->tex)
+            selectTexUnits(1);
+
         // Make sure the texture is not clamped.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
