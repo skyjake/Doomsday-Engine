@@ -390,7 +390,7 @@ void Hu_LogShutdown(void)
             if(msg->text)
                 free(msg->text);
             msg->text = NULL;
-            msg->len = 0;
+            msg->maxLen = 0;
         }
 
         log->msgCount = log->numVisibleMsgs = 0;
