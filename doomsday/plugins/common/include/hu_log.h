@@ -40,16 +40,21 @@
 #  include "jhexen.h"
 #endif
 
-void            HUMsg_Register(void);
+// Log Message Flags (LMF_*), used with Hu_LogPost.
+#define LMF_NOHIDE          (0x1)
+#define LMF_YELLOW          (0x2)
 
-void            HUMsg_Start(void);
-void            HUMsg_PlayerMessage(int player, char* message, int tics,
-                                    boolean noHide, boolean yellow);
-void            HUMsg_ClearMessages(int player);
-void            HUMsg_Refresh(int player);
+void            Hu_LogRegister(void);
 
-void            HUMsg_Drawer(int player);
-void            HUMsg_Ticker(void);
+void            Hu_LogStart(int player);
+void            Hu_LogShutdown(void);
+
+void            Hu_LogPost(int player, byte flags, const char* msg, int tics);
+void            Hu_LogRefresh(int player);
+void            Hu_LogEmpty(int player);
+
+void            Hu_LogDrawer(int player);
+void            Hu_LogTicker(void);
 #endif
 
 /**\file

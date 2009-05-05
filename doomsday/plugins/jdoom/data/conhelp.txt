@@ -300,9 +300,6 @@ desc = 1=Show messages.
 [msg-echo]
 desc = 1=Echo all messages to the console.
 
-[msg-secret]
-desc = 1=Announce the discovery of secret areas.
-
 [msg-count]
 desc = Number of HUD messages displayed at the same time.
 
@@ -725,6 +722,9 @@ desc = Scale for player weapon bobbing.
 
 [view-bob-weapon-switch-lower]
 desc = HUD weapon lowered during weapon switching.
+
+[server-game-announce-secret]
+desc = 1=Announce the discovery of secret areas.
 
 [server-game-skill]
 desc = Skill level in multiplayer games.

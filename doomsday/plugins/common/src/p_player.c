@@ -714,7 +714,9 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
  */
 void P_SetMessage(player_t* pl, char *msg, boolean noHide)
 {
-    HUMsg_PlayerMessage(pl - players, msg, MESSAGETICS, noHide, false);
+    byte                flags = (noHide? LMF_NOHIDE : 0);
+
+    Hu_LogPost(pl - players, flags, msg, MESSAGETICS);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
@@ -723,7 +725,7 @@ void P_SetMessage(player_t* pl, char *msg, boolean noHide)
     NetSv_SendMessage(pl - players, msg);
 }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 /**
  * Send a yellow message to the given player and maybe echos it to the console.
  *
@@ -734,7 +736,9 @@ void P_SetMessage(player_t* pl, char *msg, boolean noHide)
  */
 void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
 {
-    HUMsg_PlayerMessage(pl - players, msg, 5 * MESSAGETICS, noHide, true);
+    byte                flags = LMF_YELLOW | (noHide? LMF_NOHIDE : 0);
+
+    Hu_LogPost(pl - players, flags, msg, 5 * MESSAGETICS);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);

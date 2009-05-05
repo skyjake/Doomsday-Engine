@@ -1428,7 +1428,7 @@ void P_PlayerThinkHUD(player_t* player)
         HU_ScoreBoardUnHide(player - players);
 
     if(brain->logRefresh)
-        HUMsg_Refresh(player - players);
+        Hu_LogRefresh(player - players);
 }
 
 void P_PlayerThinkMap(player_t* player)

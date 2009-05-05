@@ -442,7 +442,7 @@ void HU_Start(int player)
         return;
 
     Chat_Start();
-    HUMsg_Start(); // Why here?
+    Hu_LogStart(player);
 
     hud = &hudStates[player];
     if(hud->active)
@@ -456,7 +456,7 @@ void HU_Drawer(int player)
     // Don't draw the message log while the map title is up.
     if(!(cfg.mapTitle && actualMapTime < 6 * 35))
     {
-        HUMsg_Drawer(player);
+        Hu_LogDrawer(player);
     }
 
     Chat_Drawer(player);
@@ -1178,7 +1178,7 @@ void Hu_Ticker(void)
 {
     int                 i;
 
-    HUMsg_Ticker();
+    Hu_LogTicker();
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {

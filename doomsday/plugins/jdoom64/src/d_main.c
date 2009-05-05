@@ -536,13 +536,9 @@ void G_PostInit(void)
 
 void G_Shutdown(void)
 {
-    uint                i;
-
     Hu_MsgShutdown();
     Hu_UnloadData();
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_ClearMessages(i);
+    Hu_LogShutdown();
 
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);

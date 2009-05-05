@@ -476,7 +476,7 @@ void G_CommonPreInit(void)
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
     HU_Register();              // For the HUD displays.
-    HUMsg_Register();           // For the player message logs.
+    Hu_LogRegister();           // For the player message logs.
     Chat_Register();
     Hu_MsgRegister();           // For the game messages.
     ST_Register();              // For the hud/statusbar.
@@ -1183,7 +1183,7 @@ void G_PlayerLeaveMap(int player)
     p->poisonCount = 0;
 #endif
 
-    HUMsg_ClearMessages(p - players);
+    Hu_LogEmpty(p - players);
 }
 
 /**

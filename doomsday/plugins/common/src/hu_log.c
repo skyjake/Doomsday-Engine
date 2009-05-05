@@ -33,9 +33,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -47,6 +45,7 @@
 #  include "jhexen.h"
 #endif
 
+#include "hu_log.h"
 #include "hu_stuff.h"
 #include "p_tick.h" // for P_IsPaused()
 #include "d_net.h"
@@ -58,12 +57,15 @@
 #define LOG_MSG_FLASHFADETICS (1*TICSPERSEC)
 #define LOG_MSG_TIMEOUT     (4*TICRATE)
 
+// Local Message flags:
+#define MF_JUSTADDED        (0x1)
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct logmsg_s {
     char*           text;
-    int             time;
-    int             duration; // Time when posted.
+    uint            ticsRemain, tics;
+    byte            flags;
 } logmsg_t;
 
 typedef struct msglog_s {
@@ -73,9 +75,11 @@ typedef struct msglog_s {
     boolean         dontFuckWithMe;
 
     logmsg_t        msgs[LOG_MAX_MESSAGES];
-    uint            nextMsg, msgCount;
+    uint            msgCount; // Number of used msg slots.
+    uint            nextMsg; // Index of the next slot to be used in msgs.
+    uint            numVisibleMsgs; // Number of visible messages.
 
-    int             timer;
+    int             timer; // Auto-hide timer.
     float           yOffset; // Scroll-up offset.
 } msglog_t;
 
@@ -96,12 +100,6 @@ static msglog_t msgLogs[MAXPLAYERS];
 cvar_t msgLogCVars[] = {
     // Behaviour
     {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
-    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
-#if __JHEXEN__
-    {"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2},
-#else
-    {"msg-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1},
-#endif
     {"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0},
 
     // Display
@@ -111,9 +109,9 @@ cvar_t msgLogCVars[] = {
     {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1},
 
     // Colour defaults
-    {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1},
-    {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1},
-    {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1},
+    {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1},
+    {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1},
+    {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1},
     {NULL}
 };
 
@@ -123,7 +121,7 @@ cvar_t msgLogCVars[] = {
  * Called during the PreInit of each game during start up.
  * Register Cvars and CCmds for the opperation/look of the message log.
  */
-void HUMsg_Register(void)
+void Hu_LogRegister(void)
 {
     int                 i;
 
@@ -152,19 +150,25 @@ static void logPush(msglog_t* log, const char* txt, int tics)
     msg->text = realloc(msg->text, len + 1);
     snprintf(msg->text, len, "%s", txt);
     msg->text[len] = '\0';
-    msg->time = msg->duration = tics;
+    msg->ticsRemain = msg->tics = tics;
+    msg->flags = MF_JUSTADDED;
 
-    log->timer = LOG_MSG_TIMEOUT;
     if(log->nextMsg < LOG_MAX_MESSAGES - 1)
         log->nextMsg++;
     else
         log->nextMsg = 0;
 
-    if(log->msgCount < (unsigned) cfg.msgCount)
+    if(log->msgCount < LOG_MAX_MESSAGES)
         log->msgCount++;
+
+    if(log->numVisibleMsgs < (unsigned) cfg.msgCount)
+        log->numVisibleMsgs++;
 
     log->notToBeFuckedWith = log->dontFuckWithMe;
     log->dontFuckWithMe = 0;
+
+    // Reset the auto-hide timer.
+    log->timer = LOG_MSG_TIMEOUT;
 
     log->visible = true;
 }
@@ -179,38 +183,18 @@ static void logPop(msglog_t* log)
     int                 oldest;
     logmsg_t*           msg;
 
-    if(log->msgCount == 0)
+    if(log->numVisibleMsgs == 0)
         return;
 
-    oldest = (unsigned) log->nextMsg - log->msgCount;
+    oldest = (unsigned) log->nextMsg - log->numVisibleMsgs;
     if(oldest < 0)
         oldest += LOG_MAX_MESSAGES;
 
     msg = &log->msgs[oldest];
-    msg->time = 10;
+    msg->ticsRemain = 10;
+    msg->flags &= ~MF_JUSTADDED;
 
-    log->msgCount--;
-}
-
-/**
- * Empties the msglog.
- *
- * @param log           Ptr to the msglog to clear.
- */
-static void logEmpty(msglog_t* log)
-{
-    int                 i;
-
-    for(i = 0; i < LOG_MAX_MESSAGES; ++i)
-    {
-        logmsg_t*           msg = &log->msgs[i];
-
-        if(msg->text)
-            free(msg->text);
-        msg->text = NULL;
-    }
-
-    log->msgCount = 0;
+    log->numVisibleMsgs--;
 }
 
 /**
@@ -227,39 +211,42 @@ static void logTicker(msglog_t* log)
     if(P_IsPaused())
         return;
 
-    // Countdown to scroll-up.
+    // All messags tic away. When lower than lineheight, offset the y origin
+    // of the message log. When zero, the earliest is pop'd.
     for(i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
-        if(log->msgs[i].time > 0)
-            log->msgs[i].time--;
+        logmsg_t*           msg = &log->msgs[i];
+
+        if(msg->ticsRemain > 0)
+            msg->ticsRemain--;
     }
 
-    if(log->msgCount != 0)
+    if(log->numVisibleMsgs)
     {
         int                 oldest;
         logmsg_t*           msg;
 
-        oldest = (unsigned) log->nextMsg - log->msgCount;
+        oldest = (unsigned) log->nextMsg - log->numVisibleMsgs;
         if(oldest < 0)
             oldest += LOG_MAX_MESSAGES;
 
         msg = &log->msgs[oldest];
 
         log->yOffset = 0;
-        if(msg->time == 0)
+        if(msg->ticsRemain == 0)
         {
             logPop(log);
         }
-        else if(msg->time <= LINEHEIGHT_A)
+        else
         {
-            log->yOffset = LINEHEIGHT_A - msg->time;
+            if(msg->ticsRemain <= LINEHEIGHT_A)
+                log->yOffset = LINEHEIGHT_A - msg->ticsRemain;
         }
     }
 
-    // Tick down message counter if a message is up.
+    // Tic the auto-hide timer.
     if(log->timer > 0)
         log->timer--;
-
     if(log->timer == 0)
     {
         log->visible = false;
@@ -275,178 +262,90 @@ static void logTicker(msglog_t* log)
 static void logDrawer(msglog_t* log)
 {
     uint                i, numVisible;
-    int                 n, y, lh = LINEHEIGHT_A, x;
-    int                 td, msgTics, blinkSpeed;
-    float               col[4];
-    logmsg_t*           msg;
+    int                 n, x, y;
 
     // How many messages should we print?
     switch(cfg.msgAlign)
     {
-    case ALIGN_LEFT:    x = 0;      break;
-    case ALIGN_CENTER:  x = 160;    break;
-    case ALIGN_RIGHT:   x = 320;    break;
-    default:            x = 0;      break;
+    default:
+    case ALIGN_LEFT:    x = 0;              break;
+    case ALIGN_CENTER:  x = SCREENWIDTH/2;  break;
+    case ALIGN_RIGHT:   x = SCREENWIDTH;    break;
     }
 
-    Draw_BeginZoom(cfg.msgScale, x, 0);
-    DGL_Translatef(0, -log->yOffset, 0);
-
     // First 'num' messages starting from the first one.
-    numVisible = MIN_OF(log->msgCount, (unsigned) cfg.msgCount);
+    numVisible = MIN_OF(log->numVisibleMsgs, (unsigned) cfg.msgCount);
     n = log->nextMsg - numVisible;
     if(n < 0)
         n += LOG_MAX_MESSAGES;
 
     y = 0;
-    for(i = 0; i < numVisible; ++i, y += lh)
+
+    Draw_BeginZoom(cfg.msgScale, x, 0);
+    DGL_Translatef(0, -log->yOffset, 0);
+
+    for(i = 0; i < numVisible; ++i, y += LINEHEIGHT_A)
     {
-        msg = &log->msgs[n];
+        logmsg_t*           msg = &log->msgs[n];
+        float               col[4];
 
-        // Set colour and alpha.
-        memcpy(col, cfg.msgColor, sizeof(cfg.msgColor));
-        col[3] = 1;
+        // Default colour and alpha.
+        col[CR] = cfg.msgColor[CR];
+        col[CG] = cfg.msgColor[CG];
+        col[CB] = cfg.msgColor[CB];
+        col[CA] = 1;
 
-        td = cfg.msgUptime - msg->time;
-        msgTics = msg->duration - msg->time;
-        blinkSpeed = cfg.msgBlink;
-
-        if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
+        if(msg->flags & MF_JUSTADDED)
         {
-            // Flash color.
-            col[0] = col[1] = col[2] = 1;
-        }
-        else if(blinkSpeed != 0 &&
-                msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS &&
-                msgTics >= blinkSpeed)
-        {
-            int                 c;
+            uint                msgTics, td, blinkSpeed = cfg.msgBlink;
 
-            // Fade color to normal.
-            for(c = 0; c < 3; ++c)
-                col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) *
-                            (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
+            msgTics = msg->tics - msg->ticsRemain;
+            td = cfg.msgUptime - msg->ticsRemain;
+
+            if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
+            {
+                // Flash color.
+                col[CR] = col[CG] = col[CB] = 1;
+            }
+            else if(blinkSpeed != 0 &&
+                    msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS &&
+                    msgTics >= blinkSpeed)
+            {
+                int                 c;
+
+                // Fade color to normal.
+                for(c = 0; c < 3; ++c)
+                    col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) *
+                                (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
+            }
         }
         else
         {
             // Fade alpha out.
-            if(i == 0 && msg->time <= LINEHEIGHT_A)
-                col[3] = msg->time / (float) LINEHEIGHT_A * 0.9f;
+            if(i == 0 && msg->ticsRemain <= LINEHEIGHT_A)
+                col[CA] = msg->ticsRemain / (float) LINEHEIGHT_A * .9f;
         }
 
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
         WI_DrawParamText(x, 1 + y, msg->text, huFontA,
-                         col[0], col[1], col[2], col[3], false, false,
+                         col[CR], col[CG], col[CB], col[CA], false, false,
                          cfg.msgAlign);
 
-        if(n < LOG_MAX_MESSAGES - 1)
-            n++;
-        else
-            n = 0;
+        n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
     }
 
     Draw_EndZoom();
 }
 
 /**
- * Called by HU_Start().
- */
-void HUMsg_Start(void)
-{
-    int                 i, j;
-
-    // Create the message logs for all local players.
-    //// \todo we only need logs for active local players.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        msglog_t*           log = &msgLogs[i];
-
-        log->visible = false;
-        log->dontFuckWithMe = false;
-        log->notToBeFuckedWith = false;
-        log->yOffset = 0; // Scroll-up offset.
-        log->timer = 0;
-        log->visible = true;
-        log->nextMsg = log->msgCount = 0;
-
-        for(j = 0; j < LOG_MAX_MESSAGES; ++j)
-        {
-            logmsg_t*           msg = &log->msgs[j];
-
-            msg->text = NULL;
-            msg->time = 0;
-            msg->duration = 0;
-        }
-    }
-}
-
-/**
- * Called by HU_ticker().
- */
-void HUMsg_Ticker(void)
-{
-    int                 i;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        logTicker(&msgLogs[i]);
-    }
-}
-
-void HUMsg_Drawer(int player)
-{
-    if(cfg.msgShow)
-    {
-        logDrawer(&msgLogs[player]);
-    }
-}
-
-void HUMsg_PlayerMessage(int player, char* message, int tics,
-                         boolean noHide, boolean yellow)
-{
-#define YELLOW_FORMAT   "{r=1; g=0.7; b=0.3;}"
-
-    msglog_t*           log = &msgLogs[player];
-
-    if(!message || !tics)
-        return;
-
-    if(!log->notToBeFuckedWith || log->dontFuckWithMe)
-    {
-        char*           buf;
-
-        if(yellow)
-        {
-            buf = malloc((strlen(message)+strlen(YELLOW_FORMAT)+1) * sizeof(char));
-            sprintf(buf, YELLOW_FORMAT "%s", message);
-        }
-        else
-        {
-            buf = malloc((strlen(message)+1) * sizeof(char));
-            sprintf(buf, "%s", message);
-        }
-
-        logPush(log, buf, cfg.msgUptime + tics);
-
-        free(buf);
-    }
-
-#undef YELLOW_FORMAT
-}
-
-void HUMsg_ClearMessages(int player)
-{
-    logEmpty(&msgLogs[player]);
-}
-
-/**
- * Rewind the log buffer, and make the last few messages visible again.
+ * Initialize the message log of the specified player. Typically called after
+ * map load or when said player enters the world.
  *
- * @param log           Ptr to the msglog to refresh.
+ * @param player        Player (local) number whose message log to init.
  */
-void HUMsg_Refresh(int player)
+void Hu_LogStart(int player)
 {
     player_t*           plr;
     msglog_t*           log;
@@ -459,8 +358,183 @@ void HUMsg_Refresh(int player)
         return;
 
     log = &msgLogs[player];
+    memset(log, 0, sizeof(msglog_t));
+}
+
+/**
+ * Called during final shutdown.
+ */
+void Hu_LogShutdown(void)
+{
+    int                 i;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        msglog_t*           log = &msgLogs[i];
+        int                 j;
+
+        for(j = 0; j < LOG_MAX_MESSAGES; ++j)
+        {
+            logmsg_t*           msg = &log->msgs[j];
+
+            if(msg->text)
+                free(msg->text);
+            msg->text = NULL;
+        }
+
+        log->msgCount = log->numVisibleMsgs = 0;
+    }
+}
+
+/**
+ * Called TICSPERSEC times a second.
+ */
+void Hu_LogTicker(void)
+{
+    int                 i;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        logTicker(&msgLogs[i]);
+    }
+}
+
+/**
+ * Draw the message log of the specified player.
+ *
+ * @param player        Player (local) number whose message log to draw.
+ */
+void Hu_LogDrawer(int player)
+{
+    if(cfg.msgShow)
+    {
+        logDrawer(&msgLogs[player]);
+    }
+}
+
+/**
+ * Post a message to the specified player's log.
+ *
+ * @param player        Player (local) number whose log to post to.
+ * @param flags         LMF_* flags
+ *                      LMF_NOHIDE:
+ *                      Always display this message regardless whether the
+ *                      player the message log has been hidden.
+ *                      LMF_YELLOW:
+ *                      Prepend the YELLOW param string to msg.
+ * @param msg           Message text to be posted.
+ * @param tics          Minimum number of tics (from *now*) the message
+ *                      should be visible for.
+ */
+void Hu_LogPost(int player, byte flags, const char* msg, int tics)
+{
+#define YELLOW_FORMAT   "{r=1; g=0.7; b=0.3;}"
+
+    player_t*           plr;
+    msglog_t*           log;
+
+    if(!msg || !msg[0] || !(tics > 0))
+        return;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    log = &msgLogs[player];
+
+    if(!log->notToBeFuckedWith || log->dontFuckWithMe)
+    {
+        char*           buf;
+
+        if(flags & LMF_YELLOW)
+        {
+            buf = malloc((strlen(msg)+strlen(YELLOW_FORMAT)+1) * sizeof(char));
+            sprintf(buf, YELLOW_FORMAT "%s", msg);
+        }
+        else
+        {
+            buf = malloc((strlen(msg)+1) * sizeof(char));
+            sprintf(buf, "%s", msg);
+        }
+
+        logPush(log, buf, cfg.msgUptime + tics);
+
+        free(buf);
+    }
+
+#undef YELLOW_FORMAT
+}
+
+/**
+ * Rewind the message log of the specified player, making the last few
+ * messages visible again.
+ *
+ * @param player        Player (local) number whose message log to refresh.
+ */
+void Hu_LogRefresh(int player)
+{
+    uint                i;
+    int                 n;
+    player_t*           plr;
+    msglog_t*           log;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    log = &msgLogs[player];
     log->visible = true;
+    log->numVisibleMsgs = MIN_OF((unsigned) cfg.msgCount,
+        MIN_OF(log->msgCount, (unsigned) LOG_MAX_MESSAGES));
+
+    // Reset the auto-hide timer.
     log->timer = LOG_MSG_TIMEOUT;
+
+    // Refresh the messages.
+    n = log->nextMsg - log->numVisibleMsgs;
+    if(n < 0)
+        n += LOG_MAX_MESSAGES;
+
+    for(i = 0; i < log->numVisibleMsgs; ++i)
+    {
+        logmsg_t*           msg = &log->msgs[n];
+
+        // Change the tics remaining to that at post time plus a small bonus
+        // so that they don't all disappear at once.
+        msg->ticsRemain = msg->tics + i * (TICSPERSEC >> 2);
+        msg->flags &= ~MF_JUSTADDED;
+
+        n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
+    }
+}
+
+/**
+ * Empty the message log of the specified player.
+ *
+ * @param player        Player (local) number whose message log to empty.
+ */
+void Hu_LogEmpty(int player)
+{
+    player_t*           plr;
+    msglog_t*           log;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        return;
+
+    log = &msgLogs[player];
+
+    while(log->numVisibleMsgs)
+        logPop(log);
 }
 
 /**\file

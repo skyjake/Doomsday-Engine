@@ -127,6 +127,9 @@ cvar_t gameCVars[] = {
     {"server-game-coop-nodamage", 0, CVT_BYTE, &cfg.noCoopDamage, 0, 1},
     {"server-game-noteamdamage", 0, CVT_BYTE, &cfg.noTeamDamage, 0, 1},
 
+    // Misc
+    {"server-game-announce-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1},
+
 // Player
     // Player data
     {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 4},
@@ -178,6 +181,7 @@ cvar_t gameCVars[] = {
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0},
 
 // Misc
+    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
     {NULL}
 };
 

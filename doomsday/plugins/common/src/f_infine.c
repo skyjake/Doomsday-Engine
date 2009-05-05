@@ -396,10 +396,6 @@ void FI_ClearState(void)
 {
     int                 i, c;
 
-    // Clear the message queue for all local players.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_ClearMessages(i);
-
     // General game state.
     G_SetGameAction(GA_NONE);
     if(fi->mode != FIMODE_OVERLAY)
@@ -588,6 +584,9 @@ void FI_Start(char *finalescript, infinemode_t mode)
     // Init InFine state.
     FI_NewState(finalescript);
     fi->mode = mode;
+    // Clear the message queue for all local players.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        Hu_LogEmpty(i);
     FI_ClearState();
 
     if(!IS_CLIENT)

@@ -124,6 +124,9 @@ cvar_t gameCVars[] = {
     {"server-game-monster-meleeattack-nomaxz", 0, CVT_BYTE,
         &cfg.netNoMaxZMonsterMeleeAttack, 0, 1},
 
+    // Misc
+    {"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2},
+
 // Player
     // Player data
     {"player-color", 0, CVT_BYTE, &cfg.netColor, 0, 8},
@@ -162,6 +165,8 @@ cvar_t gameCVars[] = {
 // Gameplay
     {"game-maulator-time", CVF_NO_MAX, CVT_INT, &maulatorSeconds, 1, 0},
 
+// Misc
+    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
     {NULL}
 };
 

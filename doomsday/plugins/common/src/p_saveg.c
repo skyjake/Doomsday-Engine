@@ -5495,7 +5495,7 @@ void SV_MapTeleport(int map, int position)
         }
         P_InventorySetReadyItem(i, readyItem[i]);
 
-        HUMsg_ClearMessages(i);
+        Hu_LogEmpty(i);
         players[i].attacker = NULL;
         players[i].poisoner = NULL;
 

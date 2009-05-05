@@ -136,6 +136,7 @@ cvar_t gameCVars[] = {
 
     // Misc
     {"server-game-deathmatch-killmsg", 0, CVT_BYTE, &cfg.killMessages, 0, 1},
+    {"server-game-announce-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1},
 
 // Player
     // Player data
@@ -194,6 +195,7 @@ cvar_t gameCVars[] = {
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0},
 
 // Misc
+    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
     {NULL}
 };
 
