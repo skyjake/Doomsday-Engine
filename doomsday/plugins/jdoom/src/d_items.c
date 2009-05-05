@@ -189,7 +189,6 @@ void P_InitWeaponInfo(void)
 
     int                 i;
     int                 pclass = PCLASS_PLAYER;
-    ammotype_t          k;
     char                buf[80];
     char*               data;
 
@@ -199,17 +198,15 @@ void P_InitWeaponInfo(void)
         sprintf(buf, WPINF "%i|Type", i);
         if(Def_Get(DD_DEF_VALUE, buf, &data))
         {
-            // Set the right types of ammo.
-            if(!stricmp(data, "noammo"))
+            memset(weaponInfo[i][pclass].mode[0].ammoType, 0,
+                   sizeof(int) * NUM_AMMO_TYPES);
+            memset(weaponInfo[i][pclass].mode[0].perShot, 0,
+                   sizeof(int) * NUM_AMMO_TYPES);
+
+            if(stricmp(data, "noammo"))
             {
-                for(k = 0; k < NUM_AMMO_TYPES; ++k)
-                {
-                    weaponInfo[i][pclass].mode[0].ammoType[k] = false;
-                    weaponInfo[i][pclass].mode[0].perShot[k] = 0;
-                }
-            }
-            else
-            {
+                ammotype_t          k;
+
                 for(k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
                     if(!stricmp(data, ammoTypeNames[k]))
