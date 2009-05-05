@@ -14,6 +14,7 @@ DefaultDirName={pf}\Doomsday
 DefaultGroupName=Doomsday Engine
 AllowNoIcons=yes
 SetupIconFile=..\..\..\snowberry\graphics\snowberry.ico
+UninstallIconFile=..\..\..\snowberry\graphics\snowberry.ico
 SourceDir=..\..\doomsday\build\win32
 OutputDir=..\..\..\distrib\win32\packages
 LicenseFile=license.txt
@@ -40,6 +41,7 @@ Name: "{app}\snowberry\graphics"
 Name: "{app}\snowberry\conf"
 Name: "{app}\snowberry\lang"
 Name: "{app}\snowberry\plugins"
+Name: "{app}\doc"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -76,9 +78,9 @@ Source: "..\..\..\snowberry\plugins\tab30.plugin\Contents\tab30\*.py"; DestDir: 
 Source: "..\..\..\snowberry\profiles\*.prof"; DestDir: "{app}\snowberry\profiles"; Components: Launcher
 Source: "..\..\..\snowberry\conf\*.conf"; DestDir: "{app}\snowberry\conf"; Components: Launcher
 ; Documentation
-;Source: "Doc\jDoom\Doomlic.txt"; DestDir: "{app}\doc\jdoom"
-;Source: "Doc\jDoom\jDoom.txt"; DestDir: "{app}\doc\jdoom"
-;Source: "Doc\Ravenlic.txt"; DestDir: "{app}\doc"
+Source: "..\..\plugins\jdoom\doc\LICENSE"; DestDir: "{app}\doc\jdoom"; Components: Engine\jDoom
+Source: "..\..\plugins\jheretic\doc\LICENSE"; DestDir: "{app}\doc\jheretic"; Components: Engine\jHeretic
+Source: "..\..\plugins\jhexen\doc\LICENSE"; DestDir: "{app}\doc\jhexen"; Components: Engine\jHexen
 
 ; Resources
 Source: "doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
