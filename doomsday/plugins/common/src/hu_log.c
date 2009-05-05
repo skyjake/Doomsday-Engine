@@ -419,7 +419,7 @@ void Hu_LogDrawer(int player)
  * @param flags         LMF_* flags
  *                      LMF_NOHIDE:
  *                      Always display this message regardless whether the
- *                      player the message log has been hidden.
+ *                      player's message log has been hidden.
  *                      LMF_YELLOW:
  *                      Prepend the YELLOW param string to msg.
  * @param msg           Message text to be posted.
