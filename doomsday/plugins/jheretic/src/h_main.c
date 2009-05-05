@@ -76,7 +76,6 @@ boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
 boolean turboParm; // checkparm of -turbo
 boolean fastParm; // checkparm of -fast
-boolean invSkipParam; // whether shift-enter skips an inventory item
 
 float turboMul; // multiplier for turbo
 
@@ -472,7 +471,6 @@ void G_PostInit(void)
     noMonstersParm = ArgCheck("-nomonsters");
     respawnParm = ArgCheck("-respawn");
     devParm = ArgCheck("-devparm");
-    invSkipParam = !(ArgCheck("-noartiskip"));
 
     if(ArgCheck("-deathmatch"))
     {

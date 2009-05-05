@@ -1840,24 +1840,17 @@ void P_PlayerThinkUpdateControls(player_t* player)
     brain->useInvItem = false;
     if(P_GetImpulseControlState(playerNum, CTL_USE_ITEM))
     {
-        if(brain->speed && invSkipParam)
+        // If the inventory is visible, close it (depending on cfg.chooseAndUse).
+        if(Hu_InventoryIsOpen(player - players))
         {
-            brain->cycleInvItem = -1;
+            Hu_InventoryOpen(player - players, false); // close the inventory
+
+            if(cfg.inventoryUseImmediate)
+                brain->useInvItem = true;
         }
         else
         {
-            // If the inventory is visible, close it (depending on cfg.chooseAndUse).
-            if(Hu_InventoryIsOpen(player - players))
-            {
-                Hu_InventoryOpen(player - players, false); // close the inventory
-
-                if(cfg.inventoryUseImmediate)
-                    brain->useInvItem = true;
-            }
-            else
-            {
-                brain->useInvItem = true;
-            }
+            brain->useInvItem = true;
         }
     }
 

@@ -840,35 +840,23 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     // Use artifact key
     if(PLAYER_ACTION(pnum, A_USEARTIFACT))
     {
-        if(PLAYER_ACTION(pnum, A_SPEED) && invSkipParam)
+        if(Hu_InventoryIsOpen())
         {
-            if(plr->inventory[plr->invPtr].type != IIT_NONE)
-            {
-                PLAYER_ACTION(pnum, A_USEARTIFACT) = false;
+            plr->readyItem = plr->inventory[plr->invPtr].type;
 
-                cmd->arti = 0xff;
-            }
-        }
-        else
-        {
-            if(Hu_InventoryIsOpen())
-            {
-                plr->readyItem = plr->inventory[plr->invPtr].type;
+            Hu_InventoryOpen(plr - players, false); // close the inventory
 
-                Hu_InventoryOpen(plr - players, false); // close the inventory
-
-                if(cfg.chooseAndUse)
-                    cmd->arti = plr->inventory[plr->invPtr].type;
-                else
-                    cmd->arti = 0;
-
-                usearti = false;
-            }
-            else if(usearti)
-            {
+            if(cfg.chooseAndUse)
                 cmd->arti = plr->inventory[plr->invPtr].type;
-                usearti = false;
-            }
+            else
+                cmd->arti = 0;
+
+            usearti = false;
+        }
+        else if(usearti)
+        {
+            cmd->arti = plr->inventory[plr->invPtr].type;
+            usearti = false;
         }
     }
 #endif

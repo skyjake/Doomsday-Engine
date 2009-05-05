@@ -91,7 +91,6 @@ boolean respawnParm; // checkparm of -respawn
 boolean turboParm; // checkparm of -turbo
 boolean randomClassParm; // checkparm of -randclass
 boolean devParm; // checkparm of -devparm
-boolean invSkipParam; // Whether shift-enter skips an inventory item.
 
 float turboMul; // Multiplier for turbo.
 boolean netCheatParm; // Allow cheating in netgames (-netcheat)
@@ -496,7 +495,6 @@ static void handleArgs(void)
     respawnParm = ArgExists("-respawn");
     randomClassParm = ArgExists("-randclass");
     devParm = ArgExists("-devparm");
-    invSkipParam = ArgExists("-artiskip");
     netCheatParm = ArgExists("-netcheat");
 
     cfg.netDeathmatch = ArgExists("-deathmatch");

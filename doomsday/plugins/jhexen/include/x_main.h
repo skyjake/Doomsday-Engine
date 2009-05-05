@@ -37,7 +37,6 @@ extern boolean respawnParm; // checkparm of -respawn
 extern boolean turboParm; // checkparm of -turbo
 extern boolean randomClassParm; // checkparm of -randclass
 extern boolean devParm; // checkparm of -devparm
-extern boolean invSkipParam; // Whether shift-enter skips an inventory item.
 extern float turboMul; // Multiplier for turbo.
 
 extern int gameModeBits;
