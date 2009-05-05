@@ -553,9 +553,10 @@ void G_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autoStart || IS_NETGAME) && (devMap == false))
+    if(autoStart || IS_NETGAME && !devMap)
     {
         sprintf(mapStr, "E%d%d", startEpisode, startMap);
+
         if(!W_CheckNumForName(mapStr))
         {
             startEpisode = 1;
@@ -567,7 +568,7 @@ void G_PostInit(void)
     {
         if(autoStart || IS_NETGAME)
         {
-            G_InitNew(startSkill, startEpisode, startMap);
+            G_DeferedInitNew(startSkill, startEpisode, startMap);
         }
         else
         {
