@@ -976,7 +976,8 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
                       float scale, float alpha, boolean flip)
 {
-    int                 w, h;
+    int                 w, h, w2, h2;
+    float               s, t;
     spriteinfo_t        sprInfo;
 
     if(!(alpha > 0))
@@ -986,6 +987,8 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
+    w2 = M_CeilPow2(w);
+    h2 = M_CeilPow2(h);
 
     switch(hotspot)
     {
@@ -1003,18 +1006,23 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
     DGL_SetPSprite(sprInfo.material);
 
+    // Let's calculate texture coordinates.
+    // To remove a possible edge artifact, move the corner a bit up/left.
+    s = (w - 0.4f) / w2;
+    t = (h - 0.4f) / h2;
+
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, flip * 0, 0);
+        DGL_TexCoord2f(0, flip * s, 0);
         DGL_Vertex2f(x, y);
 
-        DGL_TexCoord2f(0, !flip * 1, 0);
+        DGL_TexCoord2f(0, !flip * s, 0);
         DGL_Vertex2f(x + w * scale, y);
 
-        DGL_TexCoord2f(0, !flip * 1, 1);
+        DGL_TexCoord2f(0, !flip * s, t);
         DGL_Vertex2f(x + w * scale, y + h * scale);
 
-        DGL_TexCoord2f(0, flip * 0, 1);
+        DGL_TexCoord2f(0, flip * s, t);
         DGL_Vertex2f(x, y + h * scale);
     DGL_End();
 }
