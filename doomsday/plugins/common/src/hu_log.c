@@ -64,6 +64,7 @@
 
 typedef struct logmsg_s {
     char*           text;
+    size_t          maxLen;
     uint            ticsRemain, tics;
     byte            flags;
 } logmsg_t;
@@ -147,7 +148,16 @@ static void logPush(msglog_t* log, const char* txt, int tics)
     len = strlen(txt);
     msg = &log->msgs[log->nextMsg];
 
-    msg->text = realloc(msg->text, len + 1);
+    if(len > msg->maxLen)
+    {
+        msg->text = realloc(msg->text, len + 1);
+        msg->maxLen = len;
+    }
+    else
+    {
+        memset(msg->text, 0, msg->maxLen);
+    }
+
     snprintf(msg->text, len, "%s", txt);
     msg->text[len] = '\0';
     msg->ticsRemain = msg->tics = tics;
@@ -380,6 +390,7 @@ void Hu_LogShutdown(void)
             if(msg->text)
                 free(msg->text);
             msg->text = NULL;
+            msg->len = 0;
         }
 
         log->msgCount = log->numVisibleMsgs = 0;
