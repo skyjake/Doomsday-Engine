@@ -46,10 +46,6 @@
 #define FRICTION_FLY        (0.91796875f)
 #define FRICTION_HIGH       (0.5f)
 
-#define ONFLOORZ            (DDMINFLOAT)
-#define ONCEILINGZ          (DDMAXFLOAT)
-#define FLOATRANDZ          (DDMAXFLOAT - 1)
-
 // Player radius for movement checking.
 #define PLAYERRADIUS        (25)
 
@@ -73,28 +69,26 @@
 /**
  * (Re)Spawn flags:
  */
-#define MTF_EASY            1 // Appears in easy skill modes.
-#define MTF_MEDIUM          2 // Appears in medium skill modes.
-#define MTF_HARD            4 // Appears in hard skill modes.
-#define MTF_DEAF            8 // Thing is deaf.
-#define MTF_NOTSINGLE       16 // Appears in multiplayer game modes only.
+#define MTF_EASY            0x00000001 // Appears in easy skill modes.
+#define MTF_MEDIUM          0x00000002 // Appears in medium skill modes.
+#define MTF_HARD            0x00000004 // Appears in hard skill modes.
+#define MTF_DEAF            0x00000008 // Thing is deaf.
+#define MTF_NOTSINGLE       0x00000010 // Appears in multiplayer game modes only.
+#define MTF_DONTSPAWNATSTART 0x00000020 // Do not spawn this thing at map start.
+#define MTF_SCRIPT_TOUCH    0x00000040 // Mobjs spawned from this spot will envoke a script when touched.
+#define MTF_SCRIPT_DEATH    0x00000080 // Mobjs spawned from this spot will envoke a script on death.
+#define MTF_SECRET          0x00000100 // A secret (bonus) item.
+#define MTF_NOTARGET        0x00000200 // Mobjs spawned from this spot will not target their attacker when hurt.
+#define MTF_NOTDM           0x00000400 // Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000800 // Can not be spawned in the Co-op gameMode.
 
-// jd64 FIXME:
-// DJS - Unfortunetly Doom64TC has already used the thing bits for
-// other purposes so we should update the IWAD! No doubt that some
-// of these can be pruned anyway...
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
 
-//#define MTF_NOTDM           32 // Doesn't appear in Deathmatch
-//#define MTF_NOTCOOP         64 // Doesn't appear in Coop
-//#define MTF_DORMANT         512 // THING is invulnerble and inert
-
-// Forces a MF_SPAWNCEILING enemies (d64 custom) to spawn on floor
-#define MTF_FORCECEILING    32
-#define MTF_WALKOFF         64
-#define MTF_TRANSLUCENT     128
-#define MTF_RESPAWN         256
-#define MTF_SPAWNPLAYERZ    512
-#define MTF_FLOAT           1024
+// New flags:
+#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
+#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
+#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
 typedef struct spawnspot_s {
     float           pos[3];

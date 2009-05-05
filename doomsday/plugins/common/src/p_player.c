@@ -571,7 +571,7 @@ boolean P_CheckAmmo(player_t* plr)
 
     // Now set appropriate weapon overlay.
     if(plr->pendingWeapon != WT_NOCHANGE)
-        P_SetPsprite(plr, ps_weapon, wInfo->mode[fireMode].downState);
+        P_SetPsprite(plr, ps_weapon, wInfo->mode[fireMode].states[WSN_DOWN]);
 
     return false;
 }

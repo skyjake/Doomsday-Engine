@@ -290,7 +290,7 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
 }
 
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-                      float scale, float a, boolean flip)
+                      float scale, float alpha, boolean flip)
 {
     int                 w, h, w2, h2;
     float               s, t;

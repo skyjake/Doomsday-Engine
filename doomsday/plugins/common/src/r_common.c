@@ -89,13 +89,13 @@ void R_PrecachePSprites(void)
         {
             pclass = players[CONSOLEPLAYER].class;
 
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].upState);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].downState);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].readyState);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].attackState);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].flashState);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_READY]);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK]);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_FLASH]);
 #if __JHERETIC__ || __JHEXEN__
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].holdAttackState);
+            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK_HOLD]);
 #endif
         }
     }

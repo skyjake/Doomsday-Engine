@@ -61,13 +61,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0}, // type: clip | shell | cell | misl
      {0, 0, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_PUNCHUP,
+     { S_PUNCHUP, S_PUNCHDOWN, S_PUNCH, S_PUNCH1, S_NULL },
      0,            // raise sound id
-     S_PUNCHDOWN,
-     S_PUNCH,
-     0,            // ready sound
-     S_PUNCH1,
-     S_NULL
+     0             // ready sound
     }
    },
    {
@@ -76,13 +72,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {1, 0, 0, 0}, // type: clip | shell | cell | misl
      {1, 0, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_PISTOLUP,
+     { S_PISTOLUP, S_PISTOLDOWN, S_PISTOL, S_PISTOL1, S_PISTOLFLASH },
      0,            // raise sound id
-     S_PISTOLDOWN,
-     S_PISTOL,
-     0,            // ready sound
-     S_PISTOL1,
-     S_PISTOLFLASH
+     0             // ready sound
     }
    },
    {
@@ -91,13 +83,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 1, 0, 0}, // type: clip | shell | cell | misl
      {0, 1, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_SGUNUP,
+     { S_SGUNUP, S_SGUNDOWN, S_SGUN, S_SGUN1, S_SGUNFLASH1 },
      0,            // raise sound id
-     S_SGUNDOWN,
-     S_SGUN,
-     0,            // ready sound
-     S_SGUN1,
-     S_SGUNFLASH1
+     0             // ready sound
     }
    },
    {
@@ -106,13 +94,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {1, 0, 0, 0}, // type: clip | shell | cell | misl
      {1, 0, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_CHAINUP,
+     { S_CHAINUP, S_CHAINDOWN, S_CHAIN, S_CHAIN1, S_CHAINFLASH1 },
      0,            // raise sound id
-     S_CHAINDOWN,
-     S_CHAIN,
-     0,            // ready sound
-     S_CHAIN1,
-     S_CHAINFLASH1
+     0             // ready sound
     }
    },
    {
@@ -121,13 +105,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 1}, // type: clip | shell | cell | misl
      {0, 0, 0, 1}, // pershot: clip | shell | cell | misl
      false,        // autofire when raised if fire held
-     S_MISSILEUP,
+     { S_MISSILEUP, S_MISSILEDOWN, S_MISSILE, S_MISSILE1, S_MISSILEFLASH1 },
      0,            // raise sound id
-     S_MISSILEDOWN,
-     S_MISSILE,
-     0,            // ready sound
-     S_MISSILE1,
-     S_MISSILEFLASH1
+     0             // ready sound
     }
    },
    {
@@ -136,13 +116,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 1, 0}, // type: clip | shell | cell | misl
      {0, 0, 1, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_PLASMAUP,
+     { S_PLASMAUP, S_PLASMADOWN, S_PLASMA, S_PLASMA1, S_PLASMASHOCK1 },
      0,            // raise sound id
-     S_PLASMADOWN,
-     S_PLASMA,
-     0,            // ready sound
-     S_PLASMA1,
-     S_PLASMASHOCK1
+     0             // ready sound
     }
    },
    {
@@ -151,13 +127,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 1, 0},  // type: clip | shell | cell | misl
      {0, 0, 40, 0}, // pershot: clip | shell | cell | misl
      false,         // autofire when raised if fire held
-     S_BFGUP,
+     { S_BFGUP, S_BFGDOWN, S_BFG, S_BFG1, S_BFGFLASH1 },
      0,            // raise sound id
-     S_BFGDOWN,
-     S_BFG,
-     0,            // ready sound
-     S_BFG1,
-     S_BFGFLASH1
+     0             // ready sound
     }
    },
    {
@@ -166,13 +138,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0}, // type: clip | shell | cell | misl
      {0, 0, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_SAWUP,
+     { S_SAWUP, S_SAWDOWN, S_SAW, S_SAW1, S_NULL },
      SFX_SAWUP,    // raise sound id
-     S_SAWDOWN,
-     S_SAW,
-     SFX_SAWIDL,   // ready sound
-     S_SAW1,
-     S_NULL
+     SFX_SAWIDL    // ready sound
     }
    },
    {
@@ -181,13 +149,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 1, 0, 0}, // type: clip | shell | cell | misl
      {0, 2, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_DSGUNUP,
+     { S_DSGUNUP, S_DSGUNDOWN, S_DSGUN, S_DSGUN1, S_DSGUNFLASH1 },
      0,            // raise sound id
-     S_DSGUNDOWN,
-     S_DSGUN,
-     0,            // ready sound
-     S_DSGUN1,
-     S_DSGUNFLASH1
+     0             // ready sound
     }
    },
    {
@@ -196,13 +160,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 1, 0}, // type: clip | shell | cell | misl
      {0, 0, 1, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
-     S_UNKFUP,
+     { S_UNKFUP, S_UNKFDOWN, S_UNKF, S_UNKF1, S_UNKFLASH1 },
      0,            // raise sound id
-     S_UNKFDOWN,
-     S_UNKF,
-     0,            // ready sound
-     S_UNKF1,
-     S_UNKFLASH1
+     0             // ready sound
     }
    }
 };
@@ -280,15 +240,15 @@ void P_InitWeaponInfo(void)
         // end todo
 
         sprintf(buf, WPINF "%i|Up", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].upState);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_UP]);
         sprintf(buf, WPINF "%i|Down", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].downState);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_DOWN]);
         sprintf(buf, WPINF "%i|Ready", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].readyState);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_READY]);
         sprintf(buf, WPINF "%i|Atk", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].attackState);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_ATTACK]);
         sprintf(buf, WPINF "%i|Flash", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].flashState);
+        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_FLASH]);
         sprintf(buf, WPINF "%i|Static", i);
         weaponInfo[i][pclass].mode[0].staticSwitch = GetDefInt(buf, 0);
     }

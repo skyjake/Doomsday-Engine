@@ -81,14 +81,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_PUNCHUP,                // upstate
+      { S_PUNCHUP, S_PUNCHDOWN, S_PUNCHREADY, S_PUNCHATK1_1, S_PUNCHATK1_1, S_NULL },
       0,                        // raise sound id
-      S_PUNCHDOWN,              // downstate
-      S_PUNCHREADY,             // readystate
-      0,                        // readysound
-      S_PUNCHATK1_1,            // atkstate
-      S_PUNCHATK1_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -97,14 +92,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CMACEUP,                // upstate
+      { S_CMACEUP, S_CMACEDOWN, S_CMACEREADY, S_CMACEATK_1, S_CMACEATK_1, S_NULL },
       0,                        // raise sound id
-      S_CMACEDOWN,              // downstate
-      S_CMACEREADY,             // readystate
-      0,                        // readysound
-      S_CMACEATK_1,             // atkstate
-      S_CMACEATK_1,             // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
       },
      {
@@ -113,14 +103,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_MWANDUP,
+      { S_MWANDUP, S_MWANDDOWN, S_MWANDREADY, S_MWANDATK_1, S_MWANDATK_1, S_NULL },
       0,                        // raise sound id
-      S_MWANDDOWN,
-      S_MWANDREADY,
-      0,                        // readysound
-      S_MWANDATK_1,
-      S_MWANDATK_1,
-      S_NULL
+      0                         // readysound
       }
      },
      {
@@ -129,14 +114,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
       }
      },
@@ -147,14 +127,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 0},                   // type: mana1 | mana2
       {2, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_FAXEUP,                 // upstate
+      { S_FAXEUP, S_FAXEDOWN, S_FAXEREADY, S_FAXEATK_1, S_FAXEATK_1, S_NULL },
       0,                        // raise sound id
-      S_FAXEDOWN,               // downstate
-      S_FAXEREADY,              // readystate
-      0,                        // readysound
-      S_FAXEATK_1,              // atkstate
-      S_FAXEATK_1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -163,14 +138,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 0},                   // type: mana1 | mana2
       {1, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CSTAFFUP,               // upstate
+      { S_CSTAFFUP, S_CSTAFFDOWN, S_CSTAFFREADY, S_CSTAFFATK_1, S_CSTAFFATK_1, S_NULL },
       0,                        // raise sound id
-      S_CSTAFFDOWN,             // downstate
-      S_CSTAFFREADY,            // readystate
-      0,                        // readysound
-      S_CSTAFFATK_1,            // atkstate
-      S_CSTAFFATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -179,14 +149,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 0},                   // type: mana1 | mana2
       {3, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CONEUP,                 // upstate
+      { S_CONEUP, S_CONEDOWN, S_CONEREADY, S_CONEATK1_1, S_CONEATK1_3, S_NULL },
       0,                        // raise sound id
-      S_CONEDOWN,               // downstate
-      S_CONEREADY,              // readystate
-      0,                        // readysound
-      S_CONEATK1_1,             // atkstate
-      S_CONEATK1_3,             // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -195,14 +160,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      }
     },
@@ -213,14 +173,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 1},                   // type: mana1 | mana2
       {0, 3},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_FHAMMERUP,              // upstate
+      { S_FHAMMERUP, S_FHAMMERDOWN, S_FHAMMERREADY, S_FHAMMERATK_1, S_FHAMMERATK_1, S_NULL },
       0,                        // raise sound id
-      S_FHAMMERDOWN,            // downstate
-      S_FHAMMERREADY,           // readystate
-      0,                        // readysound
-      S_FHAMMERATK_1,           // atkstate
-      S_FHAMMERATK_1,           // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -229,14 +184,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 1},                   // type: mana1 | mana2
       {0, 4},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CFLAMEUP,               // upstate
+      { S_CFLAMEUP, S_CFLAMEDOWN, S_CFLAMEREADY1, S_CFLAMEATK_1, S_CFLAMEATK_1, S_NULL },
       0,                        // raise sound id
-      S_CFLAMEDOWN,             // downstate
-      S_CFLAMEREADY1,           // readystate
-      0,                        // readysound
-      S_CFLAMEATK_1,            // atkstate
-      S_CFLAMEATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -245,14 +195,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 1},                   // type: mana1 | mana2
       {0, 5},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_MLIGHTNINGUP,           // upstate
+      { S_MLIGHTNINGUP, S_MLIGHTNINGDOWN, S_MLIGHTNINGREADY, S_MLIGHTNINGATK_1, S_MLIGHTNINGATK_1, S_NULL },
       0,                        // raise sound id
-      S_MLIGHTNINGDOWN,         // downstate
-      S_MLIGHTNINGREADY,        // readystate
-      0,                        // readysound
-      S_MLIGHTNINGATK_1,        // atkstate
-      S_MLIGHTNINGATK_1,        // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -261,14 +206,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      }
     },
@@ -279,14 +219,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 1},                   // type: mana1 | mana2
       {14, 14},                 // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_FSWORDUP,               // upstate
+      { S_FSWORDUP, S_FSWORDDOWN, S_FSWORDREADY, S_FSWORDATK_1, S_FSWORDATK_1, S_NULL },
       0,                        // raise sound id
-      S_FSWORDDOWN,             // downstate
-      S_FSWORDREADY,            // readystate
-      0,                        // readysound
-      S_FSWORDATK_1,            // atkstate
-      S_FSWORDATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -295,14 +230,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 1},                   // type: mana1 | mana2
       {18, 18},                 // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CHOLYUP,                // upstate
+      { S_CHOLYUP, S_CHOLYDOWN, S_CHOLYREADY, S_CHOLYATK_1, S_CHOLYATK_1, S_NULL },
       0,                        // raise sound id
-      S_CHOLYDOWN,              // downstate
-      S_CHOLYREADY,             // readystate
-      0,                        // readysound
-      S_CHOLYATK_1,             // atkstate
-      S_CHOLYATK_1,             // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -311,14 +241,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 1},                   // type: mana1 | mana2
       {15, 15},                 // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_MSTAFFUP,               // upstate
+      { S_MSTAFFUP, S_MSTAFFDOWN, S_MSTAFFREADY, S_MSTAFFATK_1, S_MSTAFFATK_1, S_NULL },
       0,                        // raise sound id
-      S_MSTAFFDOWN,             // downstate
-      S_MSTAFFREADY,            // readystate
-      0,                        // readysound
-      S_MSTAFFATK_1,            // atkstate
-      S_MSTAFFATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -327,14 +252,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      }
     }
@@ -478,7 +398,7 @@ void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
     plr->readyWeapon = weapon;
     plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
     plr->update |= PSF_WEAPONS;
-    P_SetPsprite(plr, ps_weapon, weaponInfo[weapon][plr->class].mode[0].upState);
+    P_SetPsprite(plr, ps_weapon, weaponInfo[weapon][plr->class].mode[0].states[WSN_UP]);
 }
 
 /**
@@ -491,7 +411,7 @@ void P_BringUpWeapon(player_t *plr)
 
     wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class, 0);
 
-    newState = wminfo->upState;
+    newState = wminfo->states[WSN_UP];
     if(plr->class == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {
@@ -527,10 +447,10 @@ void P_FireWeapon(player_t *plr)
     {
         if(plr->refire)
             attackState =
-                weaponInfo[plr->readyWeapon][plr->class].mode[0].holdAttackState;
+                weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_ATTACK_HOLD];
         else
             attackState =
-                weaponInfo[plr->readyWeapon][plr->class].mode[0].attackState;
+                weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_ATTACK];
     }
 
     P_SetPsprite(plr, ps_weapon, attackState);
@@ -548,7 +468,7 @@ void P_FireWeapon(player_t *plr)
 void P_DropWeapon(player_t *plr)
 {
     P_SetPsprite(plr, ps_weapon,
-                 weaponInfo[plr->readyWeapon][plr->class].mode[0].downState);
+                 weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_DOWN]);
 }
 
 /**
@@ -571,13 +491,13 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
         wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
 
         // A weaponready sound?
-        if(psp->state == &STATES[wminfo->readyState] && wminfo->readySound)
+        if(psp->state == &STATES[wminfo->states[WSN_READY]] && wminfo->readySound)
             S_StartSound(wminfo->readySound, plr->plr->mo);
 
         // Check for change, if plr is dead, put the weapon away.
         if(plr->pendingWeapon != WT_NOCHANGE || !plr->health)
         {   //  (pending weapon should allready be validated)
-            P_SetPsprite(plr, ps_weapon, wminfo->downState);
+            P_SetPsprite(plr, ps_weapon, wminfo->states[WSN_DOWN]);
             return;
         }
     }
@@ -688,7 +608,7 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     {
         P_SetPsprite(plr, ps_weapon,
                      weaponInfo[plr->readyWeapon][plr->class].mode[0].
-                     readyState);
+                     states[WSN_READY]);
     }
 }
 

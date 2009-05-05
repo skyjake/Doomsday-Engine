@@ -83,14 +83,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_STAFFUP,                 // upstate
+     { S_STAFFUP,  S_STAFFDOWN, S_STAFFREADY, S_STAFFATK1_1,  S_STAFFATK1_1, S_NULL },
      0,                         // raise sound id
-     S_STAFFDOWN,               // downstate
-     S_STAFFREADY,              // readystate
-     0,                         // readysound
-     S_STAFFATK1_1,             // atkstate
-     S_STAFFATK1_1,             // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // Staff lvl2
     {
@@ -98,14 +93,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_STAFFUP2,                // upstate
+     { S_STAFFUP2, S_STAFFDOWN2, S_STAFFREADY2_1, S_STAFFATK2_1, S_STAFFATK2_1, S_NULL },
      0,                         // raise sound id
-     S_STAFFDOWN2,              // downstate
-     S_STAFFREADY2_1,           // readystate
-     SFX_STFCRK,                // readysound
-     S_STAFFATK2_1,             // atkstate
-     S_STAFFATK2_1,             // holdatkstate
-     S_NULL                     // flashstate
+     SFX_STFCRK                 // readysound
     }
     }
    },
@@ -116,14 +106,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -131,14 +116,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    }
@@ -151,14 +131,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {1, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {USE_GWND_AMMO_1, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_GOLDWANDUP,              // upstate
+     { S_GOLDWANDUP, S_GOLDWANDDOWN, S_GOLDWANDREADY, S_GOLDWANDATK1_1, S_GOLDWANDATK1_1, S_NULL },
      0,                         // raise sound id
-     S_GOLDWANDDOWN,            // downstate
-     S_GOLDWANDREADY,           // readystate
-     0,                         // readysound
-     S_GOLDWANDATK1_1,          // atkstate
-     S_GOLDWANDATK1_1,          // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -166,14 +141,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {1, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {USE_GWND_AMMO_2, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_GOLDWANDUP,              // upstate
+     { S_GOLDWANDUP, S_GOLDWANDDOWN, S_GOLDWANDREADY, S_GOLDWANDATK2_1, S_GOLDWANDATK2_1, S_NULL },
      0,                         // raise sound id
-     S_GOLDWANDDOWN,            // downstate
-     S_GOLDWANDREADY,           // readystate
-     0,                         // readysound
-     S_GOLDWANDATK2_1,          // atkstate
-     S_GOLDWANDATK2_1,          // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    },
@@ -184,14 +154,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -199,14 +164,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    }
@@ -219,14 +179,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 1, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, USE_CBOW_AMMO_1, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_CRBOWUP,                 // upstate
+     { S_CRBOWUP, S_CRBOWDOWN, S_CRBOW1, S_CRBOWATK1_1, S_CRBOWATK1_1, S_NULL },
      0,                         // raise sound id
-     S_CRBOWDOWN,               // downstate
-     S_CRBOW1,                  // readystate
-     0,                         // readysound
-     S_CRBOWATK1_1,             // atkstate
-     S_CRBOWATK1_1,             // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -234,14 +189,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 1, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, USE_CBOW_AMMO_2, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_CRBOWUP,                 // upstate
+     { S_CRBOWUP, S_CRBOWDOWN, S_CRBOW1, S_CRBOWATK2_1, S_CRBOWATK2_1, S_NULL },
      0,                         // raise sound id
-     S_CRBOWDOWN,               // downstate
-     S_CRBOW1,                  // readystate
-     0,                         // readysound
-     S_CRBOWATK2_1,             // atkstate
-     S_CRBOWATK2_1,             // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    },
@@ -252,14 +202,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -267,14 +212,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    }
@@ -287,14 +227,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 1, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, USE_BLSR_AMMO_1, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BLASTERUP,               // upstate
+     { S_BLASTERUP, S_BLASTERDOWN, S_BLASTERREADY, S_BLASTERATK1_1, S_BLASTERATK1_3, S_NULL },
      0,                         // raise sound id
-     S_BLASTERDOWN,             // downstate
-     S_BLASTERREADY,            // readystate
-     0,                         // readysound
-     S_BLASTERATK1_1,           // atkstate
-     S_BLASTERATK1_3,           // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -302,14 +237,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 1, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, USE_BLSR_AMMO_2, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BLASTERUP,               // upstate
+     { S_BLASTERUP, S_BLASTERDOWN, S_BLASTERREADY, S_BLASTERATK2_1, S_BLASTERATK2_3, S_NULL },
      0,                         // raise sound id
-     S_BLASTERDOWN,             // downstate
-     S_BLASTERREADY,            // readystate
-     0,                         // readysound
-     S_BLASTERATK2_1,           // atkstate
-     S_BLASTERATK2_3,           // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    },
@@ -320,14 +250,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -335,14 +260,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    }
@@ -355,14 +275,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, USE_SKRD_AMMO_1, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_HORNRODUP,               // upstate
+     { S_HORNRODUP, S_HORNRODDOWN, S_HORNRODREADY, S_HORNRODATK1_1, S_HORNRODATK1_1, S_NULL },
      0,                         // raise sound id
-     S_HORNRODDOWN,             // downstate
-     S_HORNRODREADY,            // readystate
-     0,                         // readysound
-     S_HORNRODATK1_1,           // atkstate
-     S_HORNRODATK1_1,           // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -370,14 +285,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, USE_SKRD_AMMO_2, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_HORNRODUP,               // upstate
+     { S_HORNRODUP, S_HORNRODDOWN, S_HORNRODREADY, S_HORNRODATK2_1, S_HORNRODATK2_1, S_NULL },
      0,                         // raise sound id
-     S_HORNRODDOWN,             // downstate
-     S_HORNRODREADY,            // readystate
-     0,                         // readysound
-     S_HORNRODATK2_1,           // atkstate
-     S_HORNRODATK2_1,           // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    },
@@ -388,14 +298,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -403,14 +308,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    }
@@ -423,14 +323,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, USE_PHRD_AMMO_1, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
-     S_PHOENIXUP,               // upstate
+     { S_PHOENIXUP, S_PHOENIXDOWN, S_PHOENIXREADY, S_PHOENIXATK1_1, S_PHOENIXATK1_1, S_NULL },
      0,                         // raise sound id
-     S_PHOENIXDOWN,             // downstate
-     S_PHOENIXREADY,            // readystate
-     0,                         // readysound
-     S_PHOENIXATK1_1,           // atkstate
-     S_PHOENIXATK1_1,           // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -438,14 +333,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, USE_PHRD_AMMO_2, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
-     S_PHOENIXUP,               // upstate
+     { S_PHOENIXUP, S_PHOENIXDOWN, S_PHOENIXREADY, S_PHOENIXATK2_1, S_PHOENIXATK2_2, S_NULL },
      0,                         // raise sound id
-     S_PHOENIXDOWN,             // downstate
-     S_PHOENIXREADY,            // readystate
-     0,                         // readysound
-     S_PHOENIXATK2_1,           // atkstate
-     S_PHOENIXATK2_2,           // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    },
@@ -456,14 +346,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -471,14 +356,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    }
@@ -491,14 +371,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, USE_MACE_AMMO_1}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_MACEUP,                  // upstate
+     { S_MACEUP, S_MACEDOWN, S_MACEREADY, S_MACEATK1_1, S_MACEATK1_2, S_NULL },
      0,                         // raise sound id
-     S_MACEDOWN,                // downstate
-     S_MACEREADY,               // readystate
-     0,                         // readysound
-     S_MACEATK1_1,              // atkstate
-     S_MACEATK1_2,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -506,14 +381,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, USE_MACE_AMMO_2}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_MACEUP,                  // upstate
+     { S_MACEUP, S_MACEDOWN, S_MACEREADY, S_MACEATK2_1, S_MACEATK2_1, S_NULL },
      0,                         // raise sound id
-     S_MACEDOWN,                // downstate
-     S_MACEREADY,               // readystate
-     0,                         // readysound
-     S_MACEATK2_1,              // atkstate
-     S_MACEATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    },
@@ -524,14 +394,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -539,14 +404,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
      0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
     }
     }
    }
@@ -559,14 +419,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_GAUNTLETUP,              // upstate
+     { S_GAUNTLETUP, S_GAUNTLETDOWN, S_GAUNTLETREADY, S_GAUNTLETATK1_1, S_GAUNTLETATK1_3, S_NULL },
      SFX_GNTACT,                // raise sound id
-     S_GAUNTLETDOWN,            // downstate
-     S_GAUNTLETREADY,           // readystate
-     0,                         // readysound
-     S_GAUNTLETATK1_1,          // atkstate
-     S_GAUNTLETATK1_3,          // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -574,14 +429,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_GAUNTLETUP2,             // upstate
+     { S_GAUNTLETUP2, S_GAUNTLETDOWN2, S_GAUNTLETREADY2_1, S_GAUNTLETATK2_1, S_GAUNTLETATK2_3, S_NULL },
      SFX_GNTACT,                // raise sound id
-     S_GAUNTLETDOWN2,           // downstate
-     S_GAUNTLETREADY2_1,        // readystate
-     0,                         // readysound
-     S_GAUNTLETATK2_1,          // atkstate
-     S_GAUNTLETATK2_3,          // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    },
@@ -592,14 +442,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK1_1, S_BEAKATK1_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK1_1,              // atkstate
-     S_BEAKATK1_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     },
     // lvl2
     {
@@ -607,14 +452,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
-     S_BEAKUP,                  // upstate
+     { S_BEAKUP, S_BEAKDOWN, S_BEAKREADY, S_BEAKATK2_1, S_BEAKATK2_1, S_NULL },
      0,                         // raise sound id
-     S_BEAKDOWN,                // downstate
-     S_BEAKREADY,               // readystate
-     0,                         // readysound
-     S_BEAKATK2_1,              // atkstate
-     S_BEAKATK2_1,              // holdatkstate
-     S_NULL                     // flashstate
+     0                          // readysound
     }
     }
    }
@@ -729,7 +569,7 @@ void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
     player->readyWeapon = weapon;
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
-    P_SetPsprite(player, ps_weapon, weaponInfo[weapon][player->class].mode[0].upState);
+    P_SetPsprite(player, ps_weapon, weaponInfo[weapon][player->class].mode[0].states[WSN_UP]);
 }
 
 /**
@@ -751,7 +591,7 @@ void P_BringUpWeapon(player_t *player)
     player->pendingWeapon = WT_NOCHANGE;
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
 
-    P_SetPsprite(player, ps_weapon, wminfo->upState);
+    P_SetPsprite(player, ps_weapon, wminfo->states[WSN_UP]);
 }
 
 void P_FireWeapon(player_t *player)
@@ -765,9 +605,9 @@ void P_FireWeapon(player_t *player)
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackState);
 
     if(player->refire)
-        attackState = weaponInfo[player->readyWeapon][player->class].mode[lvl].holdAttackState;
+        attackState = weaponInfo[player->readyWeapon][player->class].mode[lvl].states[WSN_ATTACK_HOLD];
     else
-        attackState = weaponInfo[player->readyWeapon][player->class].mode[lvl].attackState;
+        attackState = weaponInfo[player->readyWeapon][player->class].mode[lvl].states[WSN_ATTACK];
 
     NetSv_PSpriteChange(player - players, attackState);
     P_SetPsprite(player, ps_weapon, attackState);
@@ -798,7 +638,7 @@ void P_DropWeapon(player_t *player)
         level = 0;
 
     P_SetPsprite(player, ps_weapon,
-                 weaponInfo[player->readyWeapon][player->class].mode[level].downState);
+                 weaponInfo[player->readyWeapon][player->class].mode[level].states[WSN_DOWN]);
 }
 
 /**
@@ -821,7 +661,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
         wminfo = WEAPON_INFO(player->readyWeapon, player->class, (player->powers[PT_WEAPONLEVEL2]?1:0));
 
         // A weaponready sound?
-        if(psp->state == &STATES[wminfo->readyState] && wminfo->readySound)
+        if(psp->state == &STATES[wminfo->states[WSN_READY]] && wminfo->readySound)
 #if __JHERETIC__
             if(P_Random() < 128)
 #endif
@@ -830,7 +670,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
         // Check for change if player is dead, put the weapon away.
         if(player->pendingWeapon != WT_NOCHANGE || !player->health)
         {   //  (pending weapon should allready be validated)
-            P_SetPsprite(player, ps_weapon, wminfo->downState);
+            P_SetPsprite(player, ps_weapon, wminfo->states[WSN_DOWN]);
             return;
         }
     }
@@ -976,7 +816,7 @@ void C_DECL A_BeakRaise(player_t *player, pspdef_t *psp)
 {
     psp->pos[VY] = WEAPONTOP;
     P_SetPsprite(player, ps_weapon,
-                 weaponInfo[player->readyWeapon][player->class].mode[0].readyState);
+                 weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_READY]);
 }
 
 void C_DECL A_Raise(player_t *player, pspdef_t *psp)
@@ -1008,9 +848,9 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     // The weapon has been raised all the way,
     //  so change to the ready state.
     if(player->powers[PT_WEAPONLEVEL2])
-        newstate = weaponInfo[player->readyWeapon][player->class].mode[1].readyState;
+        newstate = weaponInfo[player->readyWeapon][player->class].mode[1].states[WSN_READY];
     else
-        newstate = weaponInfo[player->readyWeapon][player->class].mode[0].readyState;
+        newstate = weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_READY];
 
     P_SetPsprite(player, ps_weapon, newstate);
 }
