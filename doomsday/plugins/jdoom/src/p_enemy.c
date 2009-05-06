@@ -1818,15 +1818,16 @@ void C_DECL A_BrainPain(mobj_t *mo)
     S_StartSound(SFX_BOSPN, NULL);
 }
 
-void C_DECL A_BrainScream(mobj_t *mo)
+void C_DECL A_BrainScream(mobj_t* mo)
 {
     float               pos[3];
-    mobj_t             *th;
+    mobj_t*             th;
+
+    pos[VY] = mo->pos[VY] - 320;
 
     for(pos[VX] = mo->pos[VX] - 196; pos[VX] < mo->pos[VX] + 320;
         pos[VX] += 8)
     {
-        pos[VY] = mo->pos[VY] - 320;
         pos[VZ] = 128 + (P_Random() * 2);
 
         th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0);
@@ -1842,12 +1843,12 @@ void C_DECL A_BrainScream(mobj_t *mo)
     S_StartSound(SFX_BOSDTH, NULL);
 }
 
-void C_DECL A_BrainExplode(mobj_t *mo)
+void C_DECL A_BrainExplode(mobj_t* mo)
 {
     float               pos[3];
-    mobj_t             *th;
+    mobj_t*             th;
 
-    pos[VX] = mo->pos[VX] + ((P_Random() - P_Random()) * 2048);
+    pos[VX] = mo->pos[VX] + FIX2FLT((P_Random() - P_Random()) * 2048);
     pos[VY] = mo->pos[VY];
     pos[VZ] = 128 + (P_Random() * 2);
 
