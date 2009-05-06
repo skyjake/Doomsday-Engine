@@ -422,7 +422,7 @@ int DS_Init(void)
     Con_Printf("DirectSound Configuration:\n");
     Con_Printf("  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
                (primaryBufferHW? "hardware" : "software"));
-    Con_Printf("  Hardware buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
+    Con_Printf("  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
     Con_Printf("  DSP: %s", eaxAvailable? "EAX 2.0" : "None");
     if(eaxAvailable)
         Con_Printf(" (%s)", useEAX? "enabled" : "disabled");
