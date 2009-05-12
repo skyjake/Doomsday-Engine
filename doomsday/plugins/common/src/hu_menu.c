@@ -369,7 +369,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     5, MainItems,
     0, MENU_NONE,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
@@ -380,7 +380,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     5, MainItems,
     0, MENU_NONE,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
@@ -391,7 +391,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     6, MainItems,
     0, MENU_NONE,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
@@ -402,7 +402,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     5, MainItems,
     0, MENU_NONE,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
@@ -413,7 +413,7 @@ menu_t MainDef = {
     M_DrawMainMenu,
     6, MainItems,
     0, MENU_NONE,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
@@ -433,7 +433,7 @@ menu_t NewGameDef = {
     M_DrawNewGameMenu,
     2, NewGameItems,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
@@ -444,7 +444,7 @@ menu_t NewGameDef = {
     M_DrawNewGameMenu,
     2, NewGameItems,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B,
@@ -455,7 +455,7 @@ menu_t NewGameDef = {
     M_DrawNewGameMenu,
     2, NewGameItems,
     0, MENU_MAIN,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
@@ -466,7 +466,7 @@ menu_t NewGameDef = {
     M_DrawNewGameMenu,
     2, NewGameItems,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
@@ -477,7 +477,7 @@ menu_t NewGameDef = {
     M_DrawNewGameMenu,
     2, NewGameItems,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
@@ -494,7 +494,7 @@ menu_t ClassDef = {
     M_DrawClassMenu,
     0, NULL,
     0, MENU_NEWGAME,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT_B + 1,
@@ -518,7 +518,7 @@ menu_t EpiDef = {
     M_DrawEpisode,
     0, NULL,
     0, MENU_NEWGAME,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT + 1,
@@ -539,7 +539,7 @@ static menu_t FilesMenu = {
     M_DrawFilesMenu,
     2, FilesItems,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT + 1,
@@ -570,7 +570,7 @@ static menu_t LoadDef = {
     M_DrawLoad,
     NUMSAVESLOTS, LoadItems,
     0, MENU_MAIN,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A + 8,
@@ -600,7 +600,7 @@ static menu_t SaveDef = {
     M_DrawSave,
     NUMSAVESLOTS, SaveItems,
     0, MENU_MAIN,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A + 8,
@@ -622,7 +622,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_NEWGAME,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
@@ -644,7 +644,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_CLASS,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
@@ -665,7 +665,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_EPISODE,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
@@ -684,7 +684,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     4, SkillItems,
     2, MENU_NEWGAME,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
@@ -706,7 +706,7 @@ static menu_t SkillDef = {
     M_DrawSkillMenu,
     5, SkillItems,
     2, MENU_EPISODE,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     NULL, false,
     LINEHEIGHT,
@@ -741,7 +741,7 @@ static menu_t OptionsDef = {
 #endif
     OptionsItems,
     0, MENU_MAIN,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -783,7 +783,7 @@ static menu_t Options2Def = {
     7, Options2Items,
 #endif
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -805,7 +805,7 @@ menu_t ReadDef1 = {
     M_DrawReadThis,
     1, ReadItems1,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     "HELP1",
 #if __JDOOM__
@@ -831,7 +831,7 @@ menu_t ReadDef2 = {
     M_DrawReadThis,
     1, ReadItems2,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     "HELP2",
 #if __JDOOM__
@@ -854,7 +854,7 @@ menu_t ReadDef3 = {
     M_DrawReadThis,
     1, ReadItems3,
     0, MENU_MAIN,
-    huFontB,
+    GF_FONTB,
     cfg.menuColor,
     "CREDIT", true,
     LINEHEIGHT,
@@ -981,7 +981,7 @@ static menu_t HUDDef = {
     36, HUDItems,
 #endif
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -1015,7 +1015,7 @@ static menu_t InventoryDef = {
     M_DrawInventoryMenu,
     9, InventoryItems,
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -1070,7 +1070,7 @@ static menu_t WeaponDef = {
     11, WeaponItems,
 #endif
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -1141,7 +1141,7 @@ static menu_t GameplayDef = {
     M_DrawGameplay,
     3, GameplayItems,
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -1164,7 +1164,7 @@ static menu_t GameplayDef = {
     12, GameplayItems,
 #endif
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -1238,7 +1238,7 @@ static menu_t ColorWidgetMnu = {
     10, ColorWidgetItems,
 #endif
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -2225,7 +2225,7 @@ boolean M_EditResponder(event_t *ev)
                 if(saveStringEnter)
                 {
                     if(saveCharIndex < SAVESTRINGSIZE &&
-                        M_StringWidth(savegamestrings[saveSlot], huFontA)
+                        M_StringWidth(savegamestrings[saveSlot], GF_FONTA)
                         < (SAVESTRINGSIZE - 1) * 8)
                     {
                         savegamestrings[saveSlot][saveCharIndex++] = ch;
@@ -2374,26 +2374,26 @@ void DrawColorWidget(void)
 #if __JDOOM__ || __JDOOM64__
         MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
         M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
-                     huFontA, 1, 1, 1, menuAlpha, true, 0);
+                     GF_FONTA, 1, 1, 1, menuAlpha, true, 0);
         MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A),
-                     ColorWidgetItems[1].text, huFontA, 1, 1, 1, menuAlpha,
+                     ColorWidgetItems[1].text, GF_FONTA, 1, 1, 1, menuAlpha,
                      true, 0);
         MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 2),
-                     ColorWidgetItems[2].text, huFontA, 1, 1, 1, menuAlpha,
+                     ColorWidgetItems[2].text, GF_FONTA, 1, 1, 1, menuAlpha,
                      true, 0);
 #else
         MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
         M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
-                     huFontA, 1, 1, 1, menuAlpha, true, 0);
+                     GF_FONTA, 1, 1, 1, menuAlpha, true, 0);
         MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                     ColorWidgetItems[3].text, huFontA, 1, 1, 1, menuAlpha,
+                     ColorWidgetItems[3].text, GF_FONTA, 1, 1, 1, menuAlpha,
                      true, 0);
         MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 6),
-                     ColorWidgetItems[6].text, huFontA, 1, 1, 1, menuAlpha,
+                     ColorWidgetItems[6].text, GF_FONTA, 1, 1, 1, menuAlpha,
                      true, 0);
 #endif
         if(rgba)
@@ -2401,12 +2401,12 @@ void DrawColorWidget(void)
 #if __JDOOM__ || __JDOOM64__
             MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
             M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                         ColorWidgetItems[3].text, huFontA, 1, 1, 1,
+                         ColorWidgetItems[3].text, GF_FONTA, 1, 1, 1,
                          menuAlpha, true, 0);
 #else
             MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
             M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 9),
-                         ColorWidgetItems[9].text, huFontA, 1, 1, 1,
+                         ColorWidgetItems[9].text, GF_FONTA, 1, 1, 1,
                          menuAlpha, true, 0);
 #endif
         }
@@ -2465,8 +2465,8 @@ void M_ToggleVar(int index, void* context)
 
 void M_DrawTitle(char *text, int y)
 {
-    WI_DrawParamText(160 - M_StringWidth(text, huFontB) / 2, y, text,
-                     huFontB, cfg.menuColor[0], cfg.menuColor[1],
+    WI_DrawParamText(160 - M_StringWidth(text, GF_FONTB) / 2, y, text,
+                     GF_FONTB, cfg.menuColor[0], cfg.menuColor[1],
                      cfg.menuColor[2], menuAlpha, true, true, ALIGN_LEFT);
 }
 
@@ -2635,7 +2635,7 @@ void M_DrawClassMenu(void)
         "m_mbox"
     };
 
-    M_WriteText3(34, 24, "CHOOSE CLASS:", huFontB, menu->color[0],
+    M_WriteText3(34, 24, "CHOOSE CLASS:", GF_FONTB, menu->color[0],
                  menu->color[1], menu->color[2], menuAlpha, true, 0);
 
     pClass = (playerclass_t) menu->items[itemOn].option;
@@ -2683,8 +2683,8 @@ void M_DrawEpisode(void)
 
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
 
-        M_WriteText3(160 - M_StringWidth(str, huFontA) / 2,
-                     200 - M_StringHeight(str, huFontA) - 2, str, huFontA,
+        M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
+                     200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
                      cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
                      menuAlpha, true, 0);
     }
@@ -2841,9 +2841,9 @@ void M_DrawSave(void)
 
         if(len < SAVESTRINGSIZE)
         {
-            i = M_StringWidth(savegamestrings[saveSlot], huFontA);
+            i = M_StringWidth(savegamestrings[saveSlot], GF_FONTA);
             M_WriteText3(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
-                         (menu->itemHeight * saveSlot), "_", huFontA,
+                         (menu->itemHeight * saveSlot), "_", GF_FONTA,
                          r, g, b, menuAlpha, true, 0);
         }
     }
@@ -3113,8 +3113,8 @@ void M_DrawWeaponMenu(void)
     {
         const char* str = "Use left/right to move weapon up/down";
 
-        M_WriteText3(160 - M_StringWidth(str, huFontA) / 2,
-                     200 - M_StringHeight(str, huFontA) - 2, str, huFontA,
+        M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
+                     200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
                      cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
                      menuAlpha, true, 0);
     }
@@ -3288,8 +3288,8 @@ void M_DrawHUDMenu(void)
     M_DrawTitle("HUD options", menu->y - 28);
 #if __JDOOM__ || __JDOOM64__
     Hu_MenuPageString(buf, menu);
-    M_WriteText3(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
-                 huFontA, 1, .7f, .3f, Hu_MenuAlpha(), true, 0);
+    M_WriteText3(160 - M_StringWidth(buf, GF_FONTA) / 2, menu->y - 12, buf,
+                 GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha(), true, 0);
 #else
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 

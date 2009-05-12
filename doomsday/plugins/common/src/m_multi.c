@@ -127,7 +127,7 @@ menu_t MultiplayerMenu = {
     DrawMultiplayerMenu,
     3, MultiplayerItems,
     0, MENU_NEWGAME,
-    huFontA,cfg.menuColor2,
+    GF_FONTA,cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
     0, 3
@@ -266,7 +266,7 @@ menu_t GameSetupMenu = {
     DrawGameSetupMenu,
     NUM_GAMESETUP_ITEMS, GameSetupItems1,
     0, MENU_MULTIPLAYER,
-    huFontA,                  //1, 0, 0,
+    GF_FONTA,                  //1, 0, 0,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
@@ -298,7 +298,7 @@ menu_t PlayerSetupMenu = {
     DrawPlayerSetupMenu,
     NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
     0, MENU_MULTIPLAYER,
-    huFontB, cfg.menuColor, NULL, false, LINEHEIGHT_B,
+    GF_FONTB, cfg.menuColor, NULL, false, LINEHEIGHT_B,
     0, NUM_PLAYERSETUP_ITEMS
 };
 
@@ -329,19 +329,19 @@ void DrANumber(int number, int x, int y)
 
     sprintf(buff, "%i", number);
 
-    M_WriteText2(x, y, buff, huFontA, 1, 1, 1, Hu_MenuAlpha());
+    M_WriteText2(x, y, buff, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextA_CS(char* text, int centerX, int y)
 {
-    M_WriteText2(centerX - M_StringWidth(text, huFontA) / 2, y, text,
-                 huFontA, 1, 0, 0, Hu_MenuAlpha());
+    M_WriteText2(centerX - M_StringWidth(text, GF_FONTA) / 2, y, text,
+                 GF_FONTA, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextB_CS(char *text, int centerX, int y)
 {
-    M_WriteText2(centerX - M_StringWidth(text, huFontB) / 2, y, text,
-                 huFontB, 1, 0, 0, Hu_MenuAlpha());
+    M_WriteText2(centerX - M_StringWidth(text, GF_FONTB) / 2, y, text,
+                 GF_FONTB, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void DrawMultiplayerMenu(void)
@@ -410,9 +410,9 @@ void DrawGameSetupMenu(void)
 
     sprintf(buf, "%i", cfg.netMap);
     M_WriteMenuText(menu, idx++, buf);
-    M_WriteText2(160 - M_StringWidth(mapName, huFontA) / 2,
+    M_WriteText2(160 - M_StringWidth(mapName, GF_FONTA) / 2,
                  menu->y + menu->itemHeight, mapName,
-                 huFontA, 1, 0.7f, 0.3f, Hu_MenuAlpha());
+                 GF_FONTA, 1, 0.7f, 0.3f, Hu_MenuAlpha());
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -545,7 +545,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      "AUTOMATIC", huFontA, 1, 1, 1, menuAlpha);
+                      "AUTOMATIC", GF_FONTA, 1, 1, 1, menuAlpha);
     }
 
 #undef AVAILABLE_WIDTH
@@ -904,7 +904,7 @@ void MN_TickerEx(void)
     }
 }
 
-int Ed_VisibleSlotChars(char* text, int (*widthFunc) (const char* text, dpatch_t* font))
+int Ed_VisibleSlotChars(char* text, int (*widthFunc) (const char* text, gamefontid_t font))
 {
     char                cbuf[2] = { 0, 0 };
     int                 i, w;
@@ -912,7 +912,7 @@ int Ed_VisibleSlotChars(char* text, int (*widthFunc) (const char* text, dpatch_t
     for(i = 0, w = 0; text[i]; ++i)
     {
         cbuf[0] = text[i];
-        w += widthFunc(cbuf, huFontA);
+        w += widthFunc(cbuf, GF_FONTA);
         if(w > SLOT_WIDTH)
             break;
     }
@@ -950,7 +950,7 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 {
     int                 vis;
     char                buf[MAX_EDIT_LEN + 1], *text;
-    int                 width = M_StringWidth("a", huFontA) * 27;
+    int                 width = M_StringWidth("a", GF_FONTA) * 27;
 
     strcpy(buf, ef->text);
     strupr(buf);
@@ -962,7 +962,7 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 
     M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
     M_WriteText2(menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index),
-                 text, huFontA, 1, 1, 1, Hu_MenuAlpha());
+                 text, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void SCEditField(int efptr, void* data)

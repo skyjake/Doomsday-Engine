@@ -339,7 +339,7 @@ static void logDrawer(msglog_t* log)
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
-        WI_DrawParamText(x, 1 + y, msg->text, huFontA,
+        WI_DrawParamText(x, 1 + y, msg->text, GF_FONTA,
                          col[CR], col[CG], col[CB], col[CA], false, false,
                          cfg.msgAlign);
 
@@ -604,9 +604,6 @@ void Hu_LogEmpty(int player)
 
 // MACROS ------------------------------------------------------------------
 
-#define CHAT_X              (0)
-#define CHAT_Y              (0 + (huFont[0].height +1))
-
 // TYPES -------------------------------------------------------------------
 
 #if __JHEXEN__
@@ -779,14 +776,15 @@ void Chat_Start(void)
     int                 i;
 
     // Create the chat widget
-    HUlib_initIText(&chat, CHAT_X, CHAT_Y, huFontA, HU_FONTSTART, &chatOn);
+    HUlib_initIText(&chat, 0, 0 + M_StringHeight("A", GF_FONTA) + 1,
+                    GF_FONTA, &chatOn);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         Chat_Open(i, false);
 
         // Create the input buffers.
-        HUlib_initIText(&chatBuffer[i], 0, 0, 0, 0, &chatAlwaysOff);
+        HUlib_initIText(&chatBuffer[i], 0, 0, 0, &chatAlwaysOff);
     }
 }
 

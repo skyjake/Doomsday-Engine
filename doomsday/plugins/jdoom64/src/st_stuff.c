@@ -375,7 +375,7 @@ void ST_doFullscreenStuff(int player)
             i -= 18 * cfg.hudScale;
         }
         sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-        M_WriteText2(HUDBORDERX, i, buf, huFontA, cfg.hudColor[0], cfg.hudColor[1],
+        M_WriteText2(HUDBORDERX, i, buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1],
                      cfg.hudColor[2], textalpha);
     }
 
@@ -388,17 +388,17 @@ void ST_doFullscreenStuff(int player)
     if(cfg.hudShown[HUD_HEALTH])
     {
         sprintf(buf, "HEALTH");
-        pos = M_StringWidth(buf, huFontA)/2;
-        M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - huFont[0].height - 4,
-                     buf, huFontA, 1, 1, 1, iconalpha);
+        pos = M_StringWidth(buf, GF_FONTA)/2;
+		M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
+                     buf, GF_FONTA, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->health);
-        M_WriteText2(HUDBORDERX + pos - (M_StringWidth(buf, huFontB)/2),
-                     h_height - HUDBORDERY, buf, huFontB,
+        M_WriteText2(HUDBORDERX + pos - (M_StringWidth(buf, GF_FONTB)/2),
+                     h_height - HUDBORDERY, buf, GF_FONTB,
                      cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 
         oldPos = pos;
-        pos = HUDBORDERX * 2 + M_StringWidth(buf, huFontB);
+        pos = HUDBORDERX * 2 + M_StringWidth(buf, GF_FONTB);
     }
 
     // Keys  | use a bit of extra scale.
@@ -468,8 +468,8 @@ Draw_EndZoom();
                 continue;
 
             sprintf(buf, "%i", plr->ammo[ammotype]);
-            pos = (h_width/2) - (M_StringWidth(buf, huFontB)/2);
-            M_WriteText2(pos, h_height - HUDBORDERY, buf, huFontB,
+            pos = (h_width/2) - (M_StringWidth(buf, GF_FONTB)/2);
+            M_WriteText2(pos, h_height - HUDBORDERY, buf, GF_FONTB,
                          cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
             break;
         }
@@ -479,15 +479,15 @@ Draw_EndZoom();
     if(cfg.hudShown[HUD_ARMOR])
     {
         sprintf(buf, "ARMOR");
-        w = M_StringWidth(buf, huFontA);
+        w = M_StringWidth(buf, GF_FONTA);
         M_WriteText2(h_width - w - HUDBORDERX,
-                     h_height - HUDBORDERY - huFont[0].height - 4,
-                     buf, huFontA, 1, 1, 1, iconalpha);
+					 h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
+                     buf, GF_FONTA, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->armorPoints);
-        M_WriteText2(h_width - (w/2) - (M_StringWidth(buf, huFontB)/2) - HUDBORDERX,
+        M_WriteText2(h_width - (w/2) - (M_StringWidth(buf, GF_FONTB)/2) - HUDBORDERX,
                      h_height - HUDBORDERY,
-                     buf, huFontB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
+                     buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
                      textalpha);
     }
 

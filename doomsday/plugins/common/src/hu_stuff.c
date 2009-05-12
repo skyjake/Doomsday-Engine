@@ -107,8 +107,9 @@ typedef struct fogeffectdata_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-dpatch_t huFont[HU_FONTSIZE];
-dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
+static gamefont_t gFonts[NUM_GAME_FONTS];
+static gamefontid_t currentGFontIndex;
+
 #if __JHERETIC__ || __JHEXEN__
 dpatch_t dpSmallNumbers[10];
 #endif
@@ -165,6 +166,51 @@ void HU_Register(void)
         Con_AddVariable(&hudCVars[i]);
 }
 
+void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
+{
+	gamefont_t*			font;
+
+	if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
+	{
+		Con_Message("R_SetFontCharacter: Warning, unknown font id %i.\n",
+					(int) fontid);
+		return;
+	}
+
+	font = &gFonts[fontid];
+	memset(font->chars[ch].lumpname, 0, sizeof(font->chars[ch].lumpname));
+	strncpy(font->chars[ch].lumpname, lumpname, 8);
+
+    // Instruct Doomsday to load the patch in monochrome mode.
+    // (2 = weighted average).
+    DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
+    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
+
+	R_CachePatch(&font->chars[ch].patch, font->chars[ch].lumpname);
+
+    DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
+    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
+}
+
+/**
+ * Change the current font.
+ */
+void R_SetFont(gamefontid_t fontid)
+{
+	if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
+        return; // No such font.
+
+    currentGFontIndex = fontid;
+}
+
+gamefontid_t R_GetCurrentFont(void)
+{
+    if(currentGFontIndex == -1)
+        return 0;
+
+    return currentGFontIndex;
+}
+
 /**
  * Loads the font patches and inits various strings
  * JHEXEN Note: Don't bother with the yellow font, we'll colour the white version
@@ -173,10 +219,6 @@ void Hu_LoadData(void)
 {
     int                 i, j;
     char                buffer[9];
-#if __JHERETIC__ || __JHEXEN__
-    dpatch_t            tmp;
-#endif
-
 #if __JDOOM__ || __JDOOM64__
     char                name[9];
     static const char*  skillModePatchNames[] =
@@ -242,29 +284,16 @@ void Hu_LoadData(void)
 #if __JDOOM__ || __JDOOM64__
     // load the heads-up fonts
     j = HU_FONTSTART;
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
     for(i = 0; i < HU_FONTSIZE; ++i, ++j)
     {
-        // The original small red font.
+        // Small font.
         sprintf(buffer, "STCFN%.3d", j);
-        R_CachePatch(&huFont[i], buffer);
+		R_SetFontCharacter(GF_FONTA, i, buffer);
 
-        // Small white font.
-        sprintf(buffer, "FONTA%.3d", j);
-        R_CachePatch(&huFontA[i], buffer);
-
-        // Large (12) white font.
+        // Large font.
         sprintf(buffer, "FONTB%.3d", j);
-        R_CachePatch(&huFontB[i], buffer);
-        if(huFontB[i].lump == -1)
-        {
-            // This character is missing! (the first character
-            // is supposedly always found)
-            memcpy(&huFontB[0 + i], &huFontB[4], sizeof(dpatch_t));
-        }
+		R_SetFontCharacter(GF_FONTB, i, buffer);
     }
-
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
 
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
@@ -314,78 +343,29 @@ void Hu_LoadData(void)
             R_CachePatch(&episodeNamePatches[i], episodePatchNames[i]);
     }
 # endif
-#elif __JSTRIFE__
-    // load the heads-up fonts
-
-    // Tell Doomsday to load the following patches in monochrome mode
-    // (2 = weighted average)
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
-
-    j = HU_FONTSTART;
-    for(i = 0; i < HU_FONTSIZE; ++i, ++j)
-    {
-        // The original small red font.
-        sprintf(buffer, "STCFN%.3d", j);
-        R_CachePatch(&huFont[i], buffer);
-
-        // Small white font.
-        sprintf(buffer, "STCFN%.3d", j);
-        R_CachePatch(&huFontA[i], buffer);
-
-        // Large (12) white font.
-        sprintf(buffer, "STBFN.3d", j);
-        R_CachePatch(&huFontB[i], buffer);
-        if(huFontB[i].lump == -1)
-        {
-            // This character is missing! (the first character
-            // is supposedly always found)
-            memcpy(&huFontB[0 + i], &huFontB[4], sizeof(dpatch_t));
-        }
-    }
-
-    // deactivate monochrome mode
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
 #else
-    // Tell Doomsday to load the following patches in monochrome mode
-    // (2 = weighted average)
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
-
     // Heretic/Hexen don't use ASCII numbered font patches
     // plus they don't even have a full set eg '!' = 1 '_'= 58 !!!
     j = 1;
     for(i = 0; i < HU_FONTSIZE; ++i, ++j)
     {
+        int                 idx = j;
+
+        // Heretic and Hexen don't use ASCII numbering for all font patches.
+        // As such we need to switch some patches.
+        if(idx == 58)
+            idx = 62;
+        else if(idx == 62)
+            idx = 58;
+
         // Small font.
-        sprintf(buffer, "FONTA%.2d", j);
-        R_CachePatch(&huFontA[i], buffer);
+        sprintf(buffer, "FONTA%.2d", idx);
+        R_SetFontCharacter(GF_FONTA, i, buffer);
 
-        // Large (12) font.
-        sprintf(buffer, "FONTB%.2d", j);
-        R_CachePatch(&huFontB[i], buffer);
-        if(huFontB[i].lump == -1)
-        {
-            // This character is missing! (the first character
-            // is supposedly always found)
-            memcpy(&huFontB[0 + i], &huFontB[4], sizeof(dpatch_t));
-        }
+        // Large font.
+        sprintf(buffer, "FONTB%.2d", idx);
+        R_SetFontCharacter(GF_FONTB, i, buffer);
     }
-
-    // deactivate monochrome mode
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
-
-    // Heretic and Hexen don't use ASCII numbering for all font patches.
-    // As such we need to switch some patches.
-
-    tmp = huFontA[58];
-    memcpy(&huFontA[58], &huFontA[62], sizeof(dpatch_t));
-    memcpy(&huFontA[62], &tmp, sizeof(dpatch_t));
-
-    tmp = huFontB[58];
-    memcpy(&huFontB[58], &huFontB[62], sizeof(dpatch_t));
-    memcpy(&huFontB[62], &tmp, sizeof(dpatch_t));
-
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -482,7 +462,7 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
     DGL_End();
 }
 
-void HU_DrawText(const char* str, dpatch_t* font, float x, float y,
+void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
                  float scale, float r, float g, float b, float a,
                  boolean alignRight)
 {
@@ -508,9 +488,9 @@ void HU_DrawText(const char* str, dpatch_t* font, float x, float y,
             if(c < 0 || c >= HU_FONTSIZE)
                 continue;
 
-            if(!font[c].lump)
+			if(!gFonts[font].chars[c].patch.lump)
                 continue;
-            p = &font[c];
+			p = &gFonts[font].chars[c].patch;
 
             x -= p->width * scale;
         }
@@ -537,9 +517,9 @@ void HU_DrawText(const char* str, dpatch_t* font, float x, float y,
         if(c < 0 || c >= HU_FONTSIZE)
             continue;
 
-        if(!font[c].lump)
+		if(!gFonts[font].chars[c].patch.lump)
             continue;
-        p = &font[c];
+		p = &gFonts[font].chars[c].patch;
 
         w = p->width;
         h = p->height;
@@ -731,7 +711,7 @@ static void drawTable(float x, float ly, float width, float height,
     colW = calloc(1, sizeof(*colW) * numCols);
 
     lineHeight = height / (MAXPLAYERS + 1);
-    fontHeight = M_StringHeight("AgIq^_", huFontA);
+    fontHeight = M_StringHeight("AgIq^_", GF_FONTA);
     fontScale = (lineHeight - CELL_PADDING * 2) / fontHeight;
     fontOffsetY = 0;
     if(fontScale > 1)
@@ -748,7 +728,7 @@ static void drawTable(float x, float ly, float width, float height,
 
         if(columns[n].flags & CF_FIXEDWIDTH)
         {
-            colW[n] = M_StringWidth(columns[n].label, huFontA) + CELL_PADDING * 2;
+            colW[n] = M_StringWidth(columns[n].label, GF_FONTA) + CELL_PADDING * 2;
             fixedWidth += colW[n];
         }
     }
@@ -786,7 +766,7 @@ static void drawTable(float x, float ly, float width, float height,
         else
             cX += CELL_PADDING;
 
-        HU_DrawText(columns[n].label, huFontA, cX, cY,
+        HU_DrawText(columns[n].label, GF_FONTA, cX, cY,
                     fontScale, 1.f, 1.f, 1.f, alpha, columns[n].alignRight);
     }
     ly += lineHeight;
@@ -892,21 +872,21 @@ DGL_Enable(DGL_TEXTURING);
                 }
 
             case 1: // Name.
-                HU_DrawText(name, huFontA, cX, cY + fontOffsetY, fontScale,
+                HU_DrawText(name, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, false);
                 break;
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
-                HU_DrawText(buf, huFontA, cX, cY + fontOffsetY, fontScale,
+                HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, true);
                 break;
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
-                HU_DrawText(buf, huFontA, cX, cY + fontOffsetY, fontScale,
+                HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, true);
                 break;
@@ -937,10 +917,10 @@ const char* P_GetGameModeName(void)
     return sp;
 }
 
-static void drawMapMetaData(float x, float y, dpatch_t* font, float alpha)
+static void drawMapMetaData(float x, float y, gamefontid_t font, float alpha)
 {
-    static const char*      unnamed = "unnamed";
-    const char*             lname = P_GetMapNiceName();
+    static const char*  unnamed = "unnamed";
+    const char*         lname = P_GetMapNiceName();
 
     if(!lname)
         lname = unnamed;
@@ -964,7 +944,7 @@ static void drawMapMetaData(float x, float y, dpatch_t* font, float alpha)
  */
 void HU_DrawScoreBoard(int player)
 {
-#define LINE_BORDER        4
+#define LINE_BORDER		4
 
     column_t columns[] = {
         {"cl", 0, CF_FIXEDWIDTH, false},
@@ -1013,10 +993,10 @@ void HU_DrawScoreBoard(int player)
     DGL_Enable(DGL_TEXTURING);
 
     // Title:
-    M_WriteText2(x + width / 2 - M_StringWidth("ranking", huFontB) / 2,
-                 y + LINE_BORDER, "ranking", huFontB, 1, 0, 0, hud->scoreAlpha);
+    M_WriteText2(x + width / 2 - M_StringWidth("ranking", GF_FONTB) / 2,
+                 y + LINE_BORDER, "ranking", GF_FONTB, 1, 0, 0, hud->scoreAlpha);
 
-    drawMapMetaData(x, y + 16, huFontA, hud->scoreAlpha);
+    drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
     drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount,
               hud->scoreAlpha, player);
@@ -1048,7 +1028,7 @@ static void drawWorldTimer(void)
     seconds = worldTimer;
 
     sprintf(timeBuffer, "%.2d : %.2d : %.2d", hours, minutes, seconds);
-    M_WriteText2(240, 8, timeBuffer, huFontA, 1, 1, 1, 1);
+    M_WriteText2(240, 8, timeBuffer, GF_FONTA, 1, 1, 1, 1);
 
     if(days)
     {
@@ -1061,10 +1041,10 @@ static void drawWorldTimer(void)
             sprintf(dayBuffer, "%.2d DAYS", days);
         }
 
-        M_WriteText2(240, 20, dayBuffer, huFontA, 1, 1, 1, 1);
+        M_WriteText2(240, 20, dayBuffer, GF_FONTA, 1, 1, 1, 1);
         if(days >= 5)
         {
-            M_WriteText2(230, 35, "YOU FREAK!!!", huFontA, 1, 1, 1, 1);
+            M_WriteText2(230, 35, "YOU FREAK!!!", GF_FONTA, 1, 1, 1, 1);
         }
     }
 #endif
@@ -1116,7 +1096,7 @@ void HU_DrawMapCounters(void)
                 strcat(buf, tmp);
             }
 
-            M_WriteText2(x, y, buf, huFontA, 1, 1, 1, 1);
+            M_WriteText2(x, y, buf, GF_FONTA, 1, 1, 1, 1);
 
             y += LINEHEIGHT_A;
         }
@@ -1138,7 +1118,7 @@ void HU_DrawMapCounters(void)
                 strcat(buf, tmp);
             }
 
-            M_WriteText2(x, y, buf, huFontA, 1, 1, 1, 1);
+            M_WriteText2(x, y, buf, GF_FONTA, 1, 1, 1, 1);
 
             y += LINEHEIGHT_A;
         }
@@ -1160,7 +1140,7 @@ void HU_DrawMapCounters(void)
                 strcat(buf, tmp);
             }
 
-            M_WriteText2(x, y, buf, huFontA, 1, 1, 1, 1);
+            M_WriteText2(x, y, buf, GF_FONTA, 1, 1, 1, 1);
 
             y += LINEHEIGHT_A;
         }
@@ -1316,7 +1296,7 @@ float WI_ParseFloat(char** str)
 /**
  * Draw a string of text controlled by parameter blocks.
  */
-void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
+void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
                       float defRed, float defGreen, float defBlue,
                       float defAlpha, boolean defCase, boolean defTypeIn,
                       int halign)
@@ -1325,7 +1305,7 @@ void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
 
     char                smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
     char                temp[256], *str, *string, *end;
-    dpatch_t*           font = defFont;
+    gamefontid_t        font = defFont;
     float               r = defRed, g = defGreen, b = defBlue, a = defAlpha;
     float               offX = 0, offY = 0, width = 0;
     float               scaleX = 1, scaleY = 1, angle = 0, extraScale;
@@ -1384,12 +1364,12 @@ void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
                     // at this stage.
                     if(!strnicmp(string, "fonta", 5))
                     {
-                        font = huFontA;
+                        font = GF_FONTA;
                         string += 5;
                     }
                     else if(!strnicmp(string, "fontb", 5))
                     {
-                        font = huFontB;
+                        font = GF_FONTB;
                         string += 5;
                     }
                     else
@@ -1435,12 +1415,12 @@ void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
                 // What do we have here?
                 if(!strnicmp(string, "fonta", 5))
                 {
-                    font = huFontA;
+                    font = GF_FONTA;
                     string += 5;
                 }
                 else if(!strnicmp(string, "fontb", 5))
                 {
-                    font = huFontB;
+                    font = GF_FONTB;
                     string += 5;
                 }
                 else if(!strnicmp(string, "flash", 5))
@@ -1487,7 +1467,7 @@ void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
                 {
                     string += 5;
                     cx = x;
-                    cy += scaleY * font[0].height;
+					cy += scaleY * gFonts[font].chars[0].patch.height;
                 }
                 else if(!strnicmp(string, "r", 1))
                 {
@@ -1631,7 +1611,7 @@ void WI_DrawParamText(int x, int y, const char* inString, dpatch_t* defFont,
  * Find string width from huFont chars
  * Skips parameter blocks eg "{param}Text" = 4 chars
  */
-int M_StringWidth(const char *string, dpatch_t * font)
+int M_StringWidth(const char* string, gamefontid_t font)
 {
     uint                i;
     int                 w = 0, maxWidth = -1;
@@ -1650,7 +1630,7 @@ int M_StringWidth(const char *string, dpatch_t * font)
             if(c < 0 || c >= HU_FONTSIZE)
                 w += 4;
             else
-                w += font[c].width;
+				w += gFonts[font].chars[c].patch.width;
         }
 
         if(string[i] == '}')
@@ -1671,14 +1651,18 @@ int M_StringWidth(const char *string, dpatch_t * font)
     return maxWidth;
 }
 
+int M_CharWidth(int ch, gamefontid_t font)
+{
+	return gFonts[font].chars[ch].patch.width;
+}
+
 /**
  * Find string height from huFont chars
  */
-int M_StringHeight(const char *string, dpatch_t *font)
+int M_StringHeight(const char* string, gamefontid_t font)
 {
-    uint        i;
-    int         h;
-    int         height = font[17].height;
+    uint				i;
+	int					h, height = gFonts[font].chars[17].patch.height;
 
     h = height;
     for(i = 0; i < strlen(string); ++i)
@@ -1719,15 +1703,284 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
     DGL_BlendMode(BM_NORMAL);
 }
 
+void M_DrawChar(int x, int y, int ch, gamefontid_t font)
+{
+    lumpnum_t           lump;
+
+	lump = gFonts[font].chars[ch].patch.lump;
+
+    GL_DrawPatch_CS(x, y, lump);
+}
+
+void HUlib_drawTextLine2(int x, int y, const char* string, size_t len,
+                         gamefontid_t fontid, boolean drawCursor)
+{
+	const gamefont_t*	font = &gFonts[fontid];
+    size_t              i;
+
+    DGL_Color3fv(cfg.hudColor);
+
+    for(i = 0; i < len; ++i)
+    {
+        unsigned char		c = toupper(string[i]);
+        int					w;
+
+        if(c != ' ' && c >= HU_FONTSTART && c <= HU_FONTEND)
+        {
+			const dpatch_t*         p =
+                &font->chars[c - HU_FONTSTART].patch;
+
+			w = p->width;
+            if(x + w > SCREENWIDTH)
+                break;
+
+			GL_DrawPatch_CS(x, y, p->lump);
+            x += w;
+        }
+        else
+        {
+            x += 4;
+            if(x >= SCREENWIDTH)
+                break;
+        }
+    }
+
+    // Draw the cursor if requested.
+	if(drawCursor &&
+       x + font->chars['_' - HU_FONTSTART].patch.width <= SCREENWIDTH)
+		GL_DrawPatch_CS(x, y, font->chars['_' - HU_FONTSTART].patch.lump);
+}
+
+#if __JHERETIC__
+void HU_DrawBNumber(signed int val, int x, int y, float red,
+                    float green, float blue, float alpha)
+{
+    const dpatch_t*     patch;
+    int                 xpos;
+    int                 oldval;
+
+    oldval = val;
+    xpos = x;
+    if(val < 0)
+    {
+        val = 0;
+    }
+
+    if(val > 99)
+    {
+        patch = &gFonts[GF_FONTB].chars[15 + val / 100].patch;
+
+        GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
+                             patch->lump);
+        DGL_Color4f(red, green, blue, alpha);
+        GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
+        DGL_Color4f(1, 1, 1, 1);
+    }
+
+    val = val % 100;
+    xpos += 12;
+    if(val > 9 || oldval > 99)
+    {
+        patch = &gFonts[GF_FONTB].chars[15 + val / 10].patch;
+
+        GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
+                             patch->lump);
+        DGL_Color4f(red, green, blue, alpha);
+        GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
+        DGL_Color4f(1, 1, 1, 1);
+    }
+
+    val = val % 10;
+    xpos += 12;
+    patch = &gFonts[GF_FONTB].chars[15 + val].patch;
+
+    GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
+                         patch->lump);
+    DGL_Color4f(red, green, blue, alpha);
+    GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
+    DGL_Color4f(1, 1, 1, 1);
+}
+#endif
+
+#if __JHERETIC__
+void IN_DrawShadowChar(int x, int y, int ch, gamefontid_t font)
+{
+    GL_DrawPatchLitAlpha(x+2, y+2, 0, .4f,
+                         gFonts[font].chars[ch].patch.lump);
+    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawChar(x, y, ch, font);
+}
+#elif __JHEXEN__
+void GL_DrawShadowedPatch2(float x, float y, float r, float g, float b,
+                           float a, lumpnum_t lump)
+{
+    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, a * .4f, lump);
+    DGL_Color4f(r, g, b, a);
+    GL_DrawPatch_CS(x, y, lump);
+    DGL_Color4f(1, 1, 1, 1);
+}
+#endif
+
+#if __JHERETIC__
+void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
+                   float b, float a)
+{
+    int                 xpos;
+    int                 oldval;
+    int                 realdigits;
+    boolean             neg;
+
+    oldval = val;
+    xpos = x;
+    neg = false;
+    realdigits = 1;
+
+    if(val < 0)
+    {
+        val = -val;
+        neg = true;
+        if(val > 99)
+        {
+            val = 99;
+        }
+    }
+
+    if(val > 9)
+    {
+        realdigits++;
+        if(digits < realdigits)
+        {
+            realdigits = digits;
+            val = 9;
+        }
+    }
+
+    if(val > 99)
+    {
+        realdigits++;
+        if(digits < realdigits)
+        {
+            realdigits = digits;
+            val = 99;
+        }
+    }
+
+    if(val > 999)
+    {
+        realdigits++;
+        if(digits < realdigits)
+        {
+            realdigits = digits;
+            val = 999;
+        }
+    }
+
+    if(digits == 4)
+    {
+		GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val / 1000].patch.width / 2 - 12, y + 2, 0, .4f, gFonts[GF_FONTB].chars[15+val / 1000].patch.lump);
+        DGL_Color4f(r, g, b, a);
+        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val / 1000].patch.width / 2 - 12, y, gFonts[GF_FONTB].chars[15+val / 1000].patch.lump);
+    }
+
+    if(digits > 2)
+    {
+        if(realdigits > 2)
+        {
+            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val / 100].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15+val / 100].patch.lump);
+            DGL_Color4f(r, g, b, a);
+            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val / 100].patch.width / 2, y, gFonts[GF_FONTB].chars[15+val / 100].patch.lump);
+        }
+        xpos += 12;
+    }
+
+    val = val % 100;
+    if(digits > 1)
+    {
+        if(val > 9)
+        {
+            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val / 10].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15+val / 10].patch.lump);
+            DGL_Color4f(r, g, b, a);
+            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val / 10].patch.width / 2, y, gFonts[GF_FONTB].chars[15+val / 10].patch.lump);
+        }
+        else if(digits == 2 || oldval > 99)
+        {
+            GL_DrawPatchLitAlpha(xpos+2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15].patch.lump);
+            DGL_Color4f(r, g, b, a);
+            GL_DrawPatch_CS(xpos, y, gFonts[GF_FONTB].chars[15].patch.lump);
+        }
+        xpos += 12;
+    }
+
+    val = val % 10;
+    GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15+val].patch.lump);
+    DGL_Color4f(r, g, b, a);
+    GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val].patch.width / 2, y, gFonts[GF_FONTB].chars[15+val].patch.lump);
+    if(neg)
+    {
+        GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[13].patch.width / 2 - 12 * (realdigits), y+2, 0, .4f, gFonts[GF_FONTB].chars[13].patch.lump);
+        DGL_Color4f(r, g, b, a);
+        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[13].patch.width / 2 - 12 * (realdigits), y, gFonts[GF_FONTB].chars[13].patch.lump);
+    }
+}
+#endif
+
+#if __JHEXEN__
+/**
+ * Draws a three digit number using FontB
+ */
+void DrBNumber(int val, int x, int y, float red, float green, float blue,
+               float alpha)
+{
+    dpatch_t*           patch;
+    int                 xpos;
+    int                 oldval;
+
+    // Limit to three digits.
+    if(val > 999)
+        val = 999;
+    if(val < -999)
+        val = -999;
+
+    oldval = val;
+    xpos = x;
+    if(val < 0)
+    {
+        val = 0;
+    }
+
+    if(val > 99)
+    {
+        patch = &gFonts[GF_FONTB].chars['0' - HU_FONTSTART + val / 100].patch;
+        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
+                              blue, alpha, patch->lump);
+    }
+
+    val = val % 100;
+    xpos += 12;
+    if(val > 9 || oldval > 99)
+    {
+        patch = &gFonts[GF_FONTB].chars['0' - HU_FONTSTART + val / 10].patch;
+        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
+                              blue, alpha, patch->lump);
+    }
+
+    val = val % 10;
+    xpos += 12;
+    patch = &gFonts[GF_FONTB].chars['0' - HU_FONTSTART + val].patch;
+    GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green, blue,
+                          alpha, patch->lump);
+}
+#endif
+
 /**
  * Write a string using the huFont.
  */
 void M_WriteText(int x, int y, const char* string)
 {
-    M_WriteText2(x, y, string, huFontA, 1, 1, 1, 1);
+    M_WriteText2(x, y, string, GF_FONTA, 1, 1, 1, 1);
 }
 
-void M_WriteText2(int x, int y, const char* string, dpatch_t* font,
+void M_WriteText2(int x, int y, const char* string, gamefontid_t font,
                   float red, float green, float blue, float alpha)
 {
     M_WriteText3(x, y, string, font, red, green, blue, alpha, false, 0);
@@ -1737,7 +1990,7 @@ void M_WriteText2(int x, int y, const char* string, dpatch_t* font,
  * Write a string using a colored, custom font.
  * Also do a type-in effect.
  */
-void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
+void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
                   float red, float green, float blue, float alpha,
                   boolean doTypeIn, int initialCount)
 {
@@ -1824,10 +2077,10 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
                 continue;
             }
 
-            w = font[c].width;
-            h = font[c].height;
+			w = gFonts[font].chars[c].patch.width;
+			h = gFonts[font].chars[c].patch.height;
 
-            if(!font[c].lump)
+			if(!gFonts[font].chars[c].patch.lump)
             {
                 // A character we don't have a patch for...?!
                 continue;
@@ -1836,7 +2089,7 @@ void M_WriteText3(int x, int y, const char* string, dpatch_t* font,
             if(pass)
             {
                 // The character itself.
-                GL_DrawPatch_CS(cx, cy + yoff, font[c].lump);
+				GL_DrawPatch_CS(cx, cy + yoff, gFonts[font].chars[c].patch.lump);
 
                 // Do something flashy!
                 if(flash > 0)
@@ -1926,7 +2179,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     {   // We have already determined a string to replace this with.
         if(W_IsFromIWAD(patch->lump))
         {
-            WI_DrawParamText(x, y, altstring, huFontB, r, g, b, a, false,
+            WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false,
                              true, halign);
             return;
         }
@@ -1946,7 +2199,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             // A user replacement?
             if(patchString)
             {
-                WI_DrawParamText(x, y, string, huFontB, r, g, b, a, false,
+                WI_DrawParamText(x, y, string, GF_FONTB, r, g, b, a, false,
                                  true, halign);
                 return;
             }
@@ -1954,7 +2207,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring)
             {
-                WI_DrawParamText(x, y, altstring, huFontB, r, g, b, a, false,
+                WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false,
                                  true, halign);
                 return;
             }

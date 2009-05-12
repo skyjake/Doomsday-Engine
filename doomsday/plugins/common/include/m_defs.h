@@ -66,12 +66,12 @@ typedef struct {
     int             flags;
     int             x;
     int             y;
-    void            (*drawFunc) (void);
+    void          (*drawFunc) (void);
     int             itemCount;
     const menuitem_t* items;
     int             lastOn;
     int             prevMenu; // menutype_t
-    dpatch_t*       font; // Font for menu items.
+    gamefontid_t    font; // Font for menu items.
     float*          color;
     char*           background; // Background lump name for this menu (if any).
     boolean         backgroundIsRaw;

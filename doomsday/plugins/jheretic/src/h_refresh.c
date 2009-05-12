@@ -166,8 +166,8 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     return false;
 }
 
-void R_DrawMapTitle(int x, int y, float alpha, dpatch_t* font,
-                      boolean center)
+void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
+                    boolean center)
 {
     int                 strX;
     char*               lname, *lauthor;
@@ -190,9 +190,9 @@ void R_DrawMapTitle(int x, int y, float alpha, dpatch_t* font,
     {
         strX = x;
         if(center)
-            strX -= M_StringWidth(lauthor, huFontA) / 2;
+            strX -= M_StringWidth(lauthor, GF_FONTA) / 2;
 
-        M_WriteText3(strX, y, lauthor, huFontA, .5f, .5f, .5f, alpha,
+        M_WriteText3(strX, y, lauthor, GF_FONTA, .5f, .5f, .5f, alpha,
                      false, 0);
     }
 }
@@ -389,7 +389,7 @@ void H_Display2(void)
                 x = SCREENWIDTH / 2;
                 y = 13;
                 Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
-                R_DrawMapTitle(x, y, alpha, huFontB, true);
+                R_DrawMapTitle(x, y, alpha, GF_FONTB, true);
                 Draw_EndZoom();
             }
         }

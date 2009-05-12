@@ -1468,11 +1468,10 @@ int FI_CharWidth(int ch, boolean fontb)
     if(ch < 33)
         return 4;
 
-    return fontb ? huFontB[ch - HU_FONTSTART].width :
-        huFontA[ch - HU_FONTSTART].width;
+    return M_CharWidth(ch - HU_FONTSTART, fontb? GF_FONTB : GF_FONTA);
 }
 
-int FI_GetLineWidth(char *text, boolean fontb)
+int FI_GetLineWidth(char* text, boolean fontb)
 {
     int                 width = 0;
 
@@ -1497,18 +1496,11 @@ int FI_GetLineWidth(char *text, boolean fontb)
 
 int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
-    lumpnum_t           lump;
-
     ch = FI_FilterChar(ch);
-
-    if(fontb)
-        lump = huFontB[ch - HU_FONTSTART].lump;
-    else
-        lump = huFontA[ch - HU_FONTSTART].lump;
 
     // Draw the character. Don't try to draw spaces.
     if(ch > 32)
-        GL_DrawPatch_CS(x, y, lump);
+        M_DrawChar(x, y, ch - HU_FONTSTART, fontb? GF_FONTB : GF_FONTA);
 
     return FI_CharWidth(ch, fontb);
 }

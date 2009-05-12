@@ -230,8 +230,8 @@ void R_DrawMapTitle(void)
     if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump) &&
        (!cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
     {
-        M_WriteText3(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
-                     huFontA, .5f, .5f, .5f, alpha, false, 0);
+        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
+                     GF_FONTA, .5f, .5f, .5f, alpha, false, 0);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -433,7 +433,7 @@ void D_Display2(void)
 
     case GS_WAITING:
         //gl.Clear(DGL_COLOR_BUFFER_BIT);
-        //M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", huFontA, 1, 0, 0, 1);
+        //M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", GF_FONTA, 1, 0, 0, 1);
         break;
 
     case GS_INFINE:

@@ -140,7 +140,6 @@ DEFCC(CCmdStatusBarSize);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void drawINumber(signed int val, int x, int y, float r, float g, float b, float a);
-static void drawBNumber(signed int val, int x, int y, float Red, float Green, float Blue, float Alpha);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -744,55 +743,6 @@ static void drawINumber(signed int val, int x, int y, float r, float g,
     GL_DrawPatch_CS(x + 18, y, iNumbers[val].lump);
 }
 
-static void drawBNumber(signed int val, int x, int y, float red,
-                        float green, float blue, float alpha)
-{
-    const dpatch_t*     patch;
-    int                 xpos;
-    int                 oldval;
-
-    oldval = val;
-    xpos = x;
-    if(val < 0)
-    {
-        val = 0;
-    }
-
-    if(val > 99)
-    {
-        patch = &huFontB[15 + val / 100];
-
-        GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
-                             patch->lump);
-        DGL_Color4f(red, green, blue, alpha);
-        GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
-        DGL_Color4f(1, 1, 1, 1);
-    }
-
-    val = val % 100;
-    xpos += 12;
-    if(val > 9 || oldval > 99)
-    {
-        patch = &huFontB[15 + val / 10];
-
-        GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
-                             patch->lump);
-        DGL_Color4f(red, green, blue, alpha);
-        GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
-        DGL_Color4f(1, 1, 1, 1);
-    }
-
-    val = val % 10;
-    xpos += 12;
-    patch = &huFontB[15 + val];
-
-    GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
-                         patch->lump);
-    DGL_Color4f(red, green, blue, alpha);
-    GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
-    DGL_Color4f(1, 1, 1, 1);
-}
-
 /**
  * Unhides the current HUD display if hidden.
  *
@@ -998,13 +948,13 @@ Draw_BeginZoom(cfg.hudScale, 2, 198);
     {
         if(plr->plr->mo->health > 0)
         {
-            drawBNumber(plr->plr->mo->health, 2, 180,
+            HU_DrawBNumber(plr->plr->mo->health, 2, 180,
                         cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
                         textAlpha);
         }
         else
         {
-            drawBNumber(0, 2, 180, cfg.hudColor[0], cfg.hudColor[1],
+            HU_DrawBNumber(0, 2, 180, cfg.hudColor[0], cfg.hudColor[1],
                         cfg.hudColor[2], textAlpha);
         }
     }

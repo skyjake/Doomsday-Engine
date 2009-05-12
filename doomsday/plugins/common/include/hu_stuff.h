@@ -34,6 +34,11 @@
 
 #include "r_common.h"
 
+typedef enum border_e {
+    BORDERUP = 1,
+    BORDERDOWN
+} border_t;
+
 enum {
     ALIGN_LEFT = 0,
     ALIGN_CENTER,
@@ -46,16 +51,22 @@ enum {
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE         (HU_FONTEND - HU_FONTSTART + 1)
 
-typedef enum border_e {
-    BORDERUP = 1,
-    BORDERDOWN
-} border_t;
-
 // The fonts.
-extern dpatch_t huFont[HU_FONTSIZE];
-extern dpatch_t huFontA[HU_FONTSIZE], huFontB[HU_FONTSIZE];
-extern dpatch_t huMinus;
+typedef enum {
+	GF_FIRST = 0,
+	GF_FONTA = GF_FIRST,
+	GF_FONTB,
+	NUM_GAME_FONTS
+} gamefontid_t;
 
+typedef struct gamefont_s {
+	struct gamefont_char_s {
+		char			lumpname[9];
+		dpatch_t		patch;
+	} chars[HU_FONTSIZE];
+} gamefont_t;
+
+extern dpatch_t huMinus;
 #if __JHERETIC__ || __JHEXEN__
 extern dpatch_t dpSmallNumbers[10];
 #endif
@@ -95,37 +106,56 @@ void            Hu_FogEffectSetAlphaTarget(float alpha);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                         const dpatch_t* patch, const char *altstring,
+                         const dpatch_t* patch, const char* altstring,
                          boolean builtin, int halign);
-
 void        WI_DrawParamText(int x, int y, const char* string,
-                             dpatch_t* defFont, float defRed, float defGreen,
-                             float defBlue, float defAlpha, boolean defCase,
-                             boolean defTypeIn, int halign);
-
+                             gamefontid_t font, float defRed,
+                             float defGreen, float defBlue, float defAlpha,
+                             boolean defCase, boolean defTypeIn,
+                             int halign);
 void        M_WriteText(int x, int y, const char *string);
-void        M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
+void        M_WriteText2(int x, int y, const char *string,
+                         gamefontid_t font, float red,
                          float green, float blue, float alpha);
-void        M_WriteText3(int x, int y, const char *string, dpatch_t *font,
-                         float red, float green, float blue, float alpha,
-                         boolean doTypeIn, int initialCount);
-
+void        M_WriteText3(int x, int y, const char *string,
+                         gamefontid_t font, float red, float green,
+                         float blue, float alpha, boolean doTypeIn,
+                         int initialCount);
+void        HUlib_drawTextLine2(int x, int y, const char* string,
+                                size_t len, gamefontid_t font,
+                                boolean drawcursor);
+void        M_DrawChar(int x, int y, int ch, gamefontid_t font);
 #if __JHERETIC__ || __JHEXEN__
-void        Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
+void        Hu_DrawSmallNum(int val, int numDigits, int x, int y,
+                            float alpha);
 #endif
-
+#if __JHERETIC__
+void HU_DrawBNumber(signed int val, int x, int y, float red,
+                    float green, float blue, float alpha);
+void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
+                   float b, float a);
+void IN_DrawShadowChar(int x, int y, int ch, gamefontid_t font);
+#endif
+#if __JHEXEN__
+void DrBNumber(int val, int x, int y, float red, float green, float blue,
+               float alpha);
+#endif
 int         M_DrawText(int x, int y, boolean direct, char *string);
 void        M_DrawTitle(char *text, int y);
 
-int         M_StringWidth(const char* string, dpatch_t* font);
-int         M_StringHeight(const char* string, dpatch_t* font);
-void        M_DrawBackgroundBox(float x, float y, float w, float h, float red, float green,
-                                float blue, float alpha, boolean background,
+int         M_StringWidth(const char* string, gamefontid_t font);
+int         M_CharWidth(int ch, gamefontid_t font);
+int         M_StringHeight(const char* string, gamefontid_t font);
+
+void        M_DrawBackgroundBox(float x, float y, float w, float h,
+                                float red, float green, float blue,
+                                float alpha, boolean background,
                                 int border);
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
 void        M_DrawSlider(int x, int y, int width, int slot, float alpha);
 #else
-void        M_DrawSlider(int x, int y, int width, int height, int slot, float alpha);
+void        M_DrawSlider(int x, int y, int width, int height, int slot,
+                         float alpha);
 #endif
 
 void        Draw_BeginZoom(float s, float originX, float originY);

@@ -125,16 +125,16 @@ void R_DrawMapTitle(void)
 
     if(lname)
     {
-        M_WriteText3(160 - M_StringWidth(lname, huFontB) / 2, y, lname,
-                    huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
+        M_WriteText3(160 - M_StringWidth(lname, GF_FONTB) / 2, y, lname,
+                    GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
                     alpha, false, 0);
         y += 20;
     }
 
     if(lauthor)
     {
-        M_WriteText3(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
-                    huFontA, .5f, .5f, .5f, alpha, false, 0);
+        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
+                    GF_FONTA, .5f, .5f, .5f, alpha, false, 0);
     }
 
     Draw_EndZoom();

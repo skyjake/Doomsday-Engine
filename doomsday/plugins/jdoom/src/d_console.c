@@ -294,7 +294,7 @@ int ConTextOut(const char *text, int x, int y)
 
     typeInTime = 0xffffff;
 
-    M_WriteText2(x, y, text, huFontA, -1, -1, -1, -1);
+    M_WriteText2(x, y, text, GF_FONTA, -1, -1, -1, -1);
     typeInTime = old;
     return 0;
 }
@@ -304,7 +304,7 @@ int ConTextOut(const char *text, int x, int y)
  */
 int ConTextWidth(const char *text)
 {
-    return M_StringWidth(text, huFontA);
+    return M_StringWidth(text, GF_FONTA);
 }
 
 /**

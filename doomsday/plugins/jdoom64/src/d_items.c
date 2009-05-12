@@ -203,7 +203,6 @@ void P_InitWeaponInfo(void)
 
     int                 i;
     int                 pclass = PCLASS_PLAYER;
-    ammotype_t          k;
     char                buf[80];
     char*               data;
 

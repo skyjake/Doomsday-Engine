@@ -149,8 +149,6 @@ DEFCC(CCmdStatusBarSize);
 
 static void DrINumber(signed int val, int x, int y, float r, float g,
                       float b, float a);
-static void DrBNumber(signed int val, int x, int y, float Red, float Green,
-                      float Blue, float Alpha);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1349,61 +1347,6 @@ static void DrINumber(signed int val, int x, int y, float r, float g,
     val = val % 10;
     GL_DrawPatch_CS(x + 16, y, dpINumbers[val].lump);
 
-}
-
-void GL_DrawShadowedPatch2(float x, float y, float r, float g, float b,
-                           float a, lumpnum_t lump)
-{
-    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, a * .4f, lump);
-    DGL_Color4f(r, g, b, a);
-    GL_DrawPatch_CS(x, y, lump);
-    DGL_Color4f(1, 1, 1, 1);
-}
-
-/**
- * Draws a three digit number using FontB
- */
-static void DrBNumber(int val, int x, int y, float red, float green,
-                      float blue, float alpha)
-{
-    dpatch_t*           patch;
-    int                 xpos;
-    int                 oldval;
-
-    // Limit to three digits.
-    if(val > 999)
-        val = 999;
-    if(val < -999)
-        val = -999;
-
-    oldval = val;
-    xpos = x;
-    if(val < 0)
-    {
-        val = 0;
-    }
-
-    if(val > 99)
-    {
-        patch = &huFontB['0' - HU_FONTSTART + val / 100];
-        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
-                              blue, alpha, patch->lump);
-    }
-
-    val = val % 100;
-    xpos += 12;
-    if(val > 9 || oldval > 99)
-    {
-        patch = &huFontB['0' - HU_FONTSTART + val / 10];
-        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
-                              blue, alpha, patch->lump);
-    }
-
-    val = val % 10;
-    xpos += 12;
-    patch = &huFontB['0' - HU_FONTSTART + val];
-    GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green, blue,
-                          alpha, patch->lump);
 }
 
 #if 0 // Unused atm

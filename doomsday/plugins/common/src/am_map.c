@@ -1928,7 +1928,7 @@ menu_t MapDef = {
     13, MAPItems,
 #endif
     0, MENU_OPTIONS,
-    huFontA,
+    GF_FONTA,
     cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,

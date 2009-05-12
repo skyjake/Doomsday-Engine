@@ -1056,7 +1056,7 @@ void ST_doFullscreenStuff(int player)
             i -= 18 * cfg.hudScale;
         }
         sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-        M_WriteText2(2, i, buf, huFontA, cfg.hudColor[0], cfg.hudColor[1],
+        M_WriteText2(2, i, buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1],
                      cfg.hudColor[2], textAlpha);
     }
 
@@ -1073,9 +1073,9 @@ void ST_doFullscreenStuff(int player)
         ST_HUDSpriteSize(SPR_STIM, &w, &h);
         pos = w + 2;
         sprintf(buf, "%i%%", plr->health);
-        M_WriteText2(pos, height - 14, buf, huFontB, cfg.hudColor[0],
+        M_WriteText2(pos, height - 14, buf, GF_FONTB, cfg.hudColor[0],
                      cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-        pos += M_StringWidth(buf, huFontB) + 2;
+        pos += M_StringWidth(buf, GF_FONTB) + 2;
     }
 
     if(cfg.hudShown[HUD_AMMO])
@@ -1098,7 +1098,7 @@ void ST_doFullscreenStuff(int player)
             ST_HUDSpriteSize(spr, &w, &h);
             pos += w + 2;
             sprintf(buf, "%i", plr->ammo[ammoType]);
-            M_WriteText2(pos, height - 14, buf, huFontB,
+            M_WriteText2(pos, height - 14, buf, GF_FONTB,
                          cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
                          textAlpha);
             break;
@@ -1135,11 +1135,11 @@ Draw_EndZoom();
         maxArmor = MAX_OF(maxArmor, armorPoints[2]);
         maxArmor = MAX_OF(maxArmor, armorPoints[2]);
         sprintf(buf, "%i%%", maxArmor);
-        armorOffset = M_StringWidth(buf, huFontB);
+        armorOffset = M_StringWidth(buf, GF_FONTB);
 
         sprintf(buf, "%i%%", plr->armorPoints);
         pos -= armorOffset;
-        M_WriteText2(pos + armorOffset - M_StringWidth(buf, huFontB), height - 14, buf, huFontB,
+        M_WriteText2(pos + armorOffset - M_StringWidth(buf, GF_FONTB), height - 14, buf, GF_FONTB,
                      cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
         pos -= 2;
 

@@ -36,8 +36,7 @@
 // Text Line widget, (parent of Scrolling Text and Input Text widgets).
 typedef struct {
     int             x, y; // Left-justified position of scrolling text window.
-    struct dpatch_s* f; // Font.
-    int             sc; // Start character.
+    gamefontid_t	font;
     char            l[HU_MAXLINELENGTH + 1]; // Line of text.
     int             len; // Current line length.
     int             needsupdate; // Whether this line needs to be udpated.
@@ -64,21 +63,22 @@ void            HUlib_init(void);
 
 void            HUlib_clearTextLine(hu_textline_t* t);
 void            HUlib_initTextLine(hu_textline_t* t, int x, int y,
-                                   dpatch_t* f, int sc);
+                                   gamefontid_t font);
 boolean         HUlib_addCharToTextLine(hu_textline_t* t, char ch);
 boolean         HUlib_delCharFromTextLine(hu_textline_t* t);
-void            HUlib_drawTextLine(hu_textline_t* l, boolean drawcursor);
 void            HUlib_eraseTextLine(hu_textline_t* l);
 
 void            HUlib_initSText(hu_stext_t* s, int x, int y, int h,
-                                dpatch_t* font, int startchar, boolean* on);
+                                gamefontid_t font,boolean* on);
+
 void            HUlib_addLineToSText(hu_stext_t* s);
-void            HUlib_addMessageToSText(hu_stext_t* s, char* prefix, char* msg);
+void            HUlib_addMessageToSText(hu_stext_t* s, char* prefix,
+                                        char* msg);
 void            HUlib_drawSText(hu_stext_t* s);
 void            HUlib_eraseSText(hu_stext_t* s);
 
-void            HUlib_initIText(hu_itext_t* it, int x, int y, dpatch_t* font,
-                                int startchar, boolean* on);
+void            HUlib_initIText(hu_itext_t* it, int x, int y,
+                                gamefontid_t font, boolean* on);
 void            HUlib_delCharFromIText(hu_itext_t* it);
 void            HUlib_eraseLineFromIText(hu_itext_t* it);
 void            HUlib_resetIText(hu_itext_t* it);

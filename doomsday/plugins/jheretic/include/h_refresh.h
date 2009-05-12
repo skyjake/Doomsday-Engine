@@ -32,7 +32,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "r_common.h" // For dpatch_t
+#include "hu_stuff.h" // For gamefontid_t
 
 #include "p_mobj.h"
 
@@ -44,7 +44,7 @@ void            R_SetViewSize(int blocks);
 
 void            R_DrawSpecialFilter(int pnum);
 void            R_DrawMapTitle(int x, int y, float alpha,
-                                 dpatch_t* font, boolean center);
+                               gamefontid_t font, boolean center);
 
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);

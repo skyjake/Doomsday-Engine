@@ -1599,7 +1599,7 @@ void C_DECL A_MntrFloorFire(mobj_t *actor)
     mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MTF_Z_FLOOR);
 
     mo->target = actor->target;
-    mo->mom[MX] = 1; // Force block checking.
+    mo->mom[MX] = 1.f / 16; // Force block checking.
 
     P_CheckMissileSpawn(mo);
 }

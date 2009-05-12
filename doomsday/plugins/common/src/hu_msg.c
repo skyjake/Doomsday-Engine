@@ -190,7 +190,7 @@ static void drawMessage(void)
     int                 x, y;
     char*               p;
 
-    y = 100 - M_StringHeight(msgText, huFontA) / 2;
+    y = 100 - M_StringHeight(msgText, GF_FONTA) / 2;
     p = msgText;
     while(*p)
     {
@@ -201,29 +201,29 @@ static void drawMessage(void)
 
         *p = 0;
 
-        x = 160 - M_StringWidth(string, huFontA) / 2;
-        M_WriteText3(x, y, string, huFontA, cfg.menuColor2[0],
+        x = 160 - M_StringWidth(string, GF_FONTA) / 2;
+        M_WriteText3(x, y, string, GF_FONTA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
-        y += huFontA[17].height;
+		y += M_StringHeight(string, GF_FONTA);
 
         if((*p) = c)
             p++;
     }
 
     // An additional blank line between the message and response prompt.
-    y += huFontA[17].height;
+    y += M_StringHeight("A", GF_FONTA);
 
     switch(msgType)
     {
     case MSG_ANYKEY:
-        x = 160 - M_StringWidth(PRESSKEY, huFontA) / 2;
-        M_WriteText3(x, y, PRESSKEY, huFontA, cfg.menuColor2[0],
+        x = 160 - M_StringWidth(PRESSKEY, GF_FONTA) / 2;
+        M_WriteText3(x, y, PRESSKEY, GF_FONTA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
         break;
 
     case MSG_YESNO:
-        x = 160 - M_StringWidth(yesNoMessage, huFontA) / 2;
-        M_WriteText3(x, y, yesNoMessage, huFontA, cfg.menuColor2[0],
+        x = 160 - M_StringWidth(yesNoMessage, GF_FONTA) / 2;
+        M_WriteText3(x, y, yesNoMessage, GF_FONTA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
         break;
 
