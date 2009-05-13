@@ -262,6 +262,7 @@ void G_PreInit(void)
     cfg.menuGlitter = .5f;
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
+    cfg.menuEffects = 1; // Do type-in effect.
     cfg.flashColor[0] = .7f;
     cfg.flashColor[1] = .9f;
     cfg.flashColor[2] = 1;
