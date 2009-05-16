@@ -1480,11 +1480,11 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         quadTexCoords(rtexcoords, rvertices, *p->segLength, p->texTL);
 
         // Blend texture coordinates.
-        if(rTU[TU_INTER].tex)
+        if(rTU[TU_INTER].tex && !drawAsVisSprite)
             quadTexCoords(rtexcoords2, rvertices, *p->segLength, p->texTL);
 
         // Shiny texture coordinates.
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
+        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
             quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2],
                                *p->segLength);
 
@@ -1610,7 +1610,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices);
         }
 
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
+        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
         {
             uint                i;
 
