@@ -181,7 +181,6 @@ void G_DetectIWADs(void)
         {"doom.wad", "-doom"},
         {"doom.wad", "-ultimate"},
         {"doomu.wad", "-udoom"},
-    {"freedoom.wad", "-freedoom"},
         {0, 0}
     };
     int                 i, k;
@@ -283,7 +282,7 @@ static void identifyFromData(void)
         return;
     }
 
-    if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt") || ArgCheck("-freedoom"))
+    if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt"))
     {
         // DOOM 2.
         G_SetGameMode(commercial);
