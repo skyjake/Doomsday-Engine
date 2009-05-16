@@ -1846,7 +1846,8 @@ static boolean doRenderSeg(seg_t* seg,
     params.type = (skyMask? RPT_SKY_MASK : RPT_NORMAL);
     params.isWall = true;
     params.segLength = &seg->length;
-    params.alpha = alpha;
+    params.forceOpaque = (alpha < 0? true : false);
+    params.alpha = (alpha < 0? 1 : alpha);
     params.mapObject = seg;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
@@ -2327,7 +2328,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
 
         solidSeg = doRenderSeg(seg,
                                from, to, bottom, top,
-                               surface->normal, (forceOpaque? 1 : alpha),
+                               surface->normal, (forceOpaque? -1 : alpha),
                                &frontsec->lightLevel,
                                R_WallAngleLightLevelDelta(seg->lineDef, seg->side),
                                R_GetSectorLightColor(frontsec),
