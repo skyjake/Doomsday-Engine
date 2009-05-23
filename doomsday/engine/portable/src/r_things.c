@@ -526,12 +526,16 @@ static void initSpriteDefs(const spriterecord_t** sprRecords, int num)
         {
             int                 frame;
             const spriterecord_t* rec;
-            spritedef_t*        sprDef;
+            spritedef_t*        sprDef = &sprites[n];
 
             if(!sprRecords[n])
+            {   // A record for a sprite we were unable to locate.
+                sprDef->numFrames = 0;
+                sprDef->spriteFrames = NULL;
                 continue;
+            }
+
             rec = sprRecords[n];
-            sprDef = &sprites[n];
 
             memset(sprTemp, -1, sizeof(sprTemp));
             maxFrame = -1;
