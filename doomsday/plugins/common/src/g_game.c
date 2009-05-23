@@ -1658,6 +1658,9 @@ void G_DoCompleted(void)
     if(FI_Debriefing(gameEpisode, gameMap))
         return;
 
+    // We have either just returned from a debriefing or there wasn't one.
+    briefDisabled = false;
+
     G_SetGameAction(GA_NONE);
 
     for(i = 0; i < MAXPLAYERS; ++i)

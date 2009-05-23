@@ -670,6 +670,9 @@ void FI_End(void)
                 return;
             }
             G_SetGameAction(GA_COMPLETED);
+
+            // Don't play the debriefing again.
+            briefDisabled = true;
         }
         else if(oldMode == FIMODE_BEFORE)
         {
