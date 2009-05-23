@@ -1526,7 +1526,7 @@ void R_InitFlats(void)
                         Sys_GetSeconds() - starttime));
 }
 
-void R_ExpandSkinName(char *skin, char *expanded, const char *modelfn)
+void R_ExpandSkinName(char* expanded, const char* skin, const char* modelfn)
 {
     directory_t         mydir;
 
@@ -1550,7 +1550,8 @@ void R_ExpandSkinName(char *skin, char *expanded, const char *modelfn)
 /**
  * Registers a new skin name.
  */
-int R_RegisterSkin(char *skin, const char *modelfn, char *fullpath)
+int R_RegisterSkin(const char* skin, const char* modelfn,
+                   char* fullpath)
 {
     const char         *formats[3] = { ".png", ".tga", ".pcx" };
     char                buf[256];
@@ -1575,7 +1576,7 @@ int R_RegisterSkin(char *skin, const char *modelfn, char *fullpath)
     for(i = 0; i < 3 && idx < 0; ++i)
     {
         strcpy(ext, formats[i]);
-        R_ExpandSkinName(fn, fullpath ? fullpath : buf, modelfn);
+        R_ExpandSkinName(fullpath ? fullpath : buf, fn, modelfn);
         idx = R_GetSkinTexIndex(fullpath ? fullpath : buf);
     }
 

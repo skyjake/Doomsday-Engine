@@ -297,7 +297,8 @@ doomtexturedef_t* R_GetDoomTextureDef(int num);
 
 int             R_GetSkinTexIndex(const char* skin);
 skintex_t*      R_GetSkinTexByIndex(int id);
-int             R_RegisterSkin(char* skin, const char* modelfn, char* fullpath);
+int             R_RegisterSkin(const char* skin, const char* modelfn,
+                               char* fullpath);
 void            R_DeleteSkinTextures(void);
 void            R_DestroySkins(void); // Called at shutdown.
 
