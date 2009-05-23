@@ -311,7 +311,7 @@ static void setupFadeout(skylayer_t* slayer)
 
         // Ensure we have up to date info on the material.
         memset(&params, 0, sizeof(params));
-        params.flags = MLF_LOAD_AS_SKY;
+        params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
         if(slayer->flags & SLF_MASKED)
             params.flags |= MLF_ZEROMASK;
 
@@ -369,7 +369,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                 material_snapshot_t ms;
 
                 memset(&params, 0, sizeof(params));
-                params.flags = MLF_LOAD_AS_SKY;
+                params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
                 if(slayer->flags & SLF_MASKED)
                     params.flags |= MLF_ZEROMASK;
 
@@ -573,7 +573,7 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
             material_load_params_t params;
 
             memset(&params, 0, sizeof(params));
-            params.flags = MLF_LOAD_AS_SKY;
+            params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
             if(slayer->flags & SLF_MASKED)
                 params.flags |= MLF_ZEROMASK;
 

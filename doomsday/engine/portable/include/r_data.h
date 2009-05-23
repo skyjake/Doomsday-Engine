@@ -143,8 +143,8 @@ typedef struct {
 // Model skin.
 typedef struct {
     char            path[256];
-    DGLuint         tex;
-} skintex_t;
+    gltextureid_t   id;
+} skinname_t;
 
 // Patch flags.
 #define PF_MONOCHROME         0x1
@@ -256,6 +256,9 @@ extern int numShinyTextures;
 extern masktex_t** maskTextures;
 extern int numMaskTextures;
 
+extern uint numSkinNames;
+extern skinname_t* skinNames;
+
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
 rcolor_t*       R_AllocRendColors(uint num);
@@ -295,11 +298,10 @@ void            R_PrecachePatch(lumpnum_t lump);
 
 doomtexturedef_t* R_GetDoomTextureDef(int num);
 
-int             R_GetSkinTexIndex(const char* skin);
-skintex_t*      R_GetSkinTexByIndex(int id);
-int             R_RegisterSkin(const char* skin, const char* modelfn,
-                               char* fullpath);
-void            R_DeleteSkinTextures(void);
+uint            R_GetSkinNumForName(const char* path);
+const skinname_t* R_GetSkinNameByIndex(uint id);
+uint            R_RegisterSkin(const char* skin, const char* modelfn,
+                               char* fullpath, boolean isShinySkin);
 void            R_DestroySkins(void); // Called at shutdown.
 
 void            R_InitAnimGroup(ded_group_t* def);

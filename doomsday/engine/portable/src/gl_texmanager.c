@@ -58,7 +58,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct gltexture_inst_node_s {
-    int             flags; // Texture instance (GLTXF_*) flags.
+    int             flags; // Texture instance (MLF_*) flags.
     gltexture_inst_t inst;
     struct gltexture_inst_node_s* next; // Next in list of instances.
 } gltexture_inst_node_t;
@@ -151,7 +151,9 @@ static gltexture_typedata_t glTextureTypeData[NUM_GLTEXTURE_TYPES] = {
     { GL_LoadSprite }, // GLT_SPRITE
     { GL_LoadDetailTexture }, // GLT_DETAIL
     { GL_LoadShinyTexture }, // GLT_SHINY
-    { GL_LoadMaskTexture } // GLT_MASK
+    { GL_LoadMaskTexture }, // GLT_MASK
+    { GL_LoadModelSkin }, // GLT_MODELSKIN
+    { GL_LoadModelShinySkin }
 };
 
 // CODE --------------------------------------------------------------------
@@ -674,8 +676,6 @@ void GL_ClearRuntimeTextures(void)
 
     // gltexture-wrapped GL textures; textures, flats, sprites, system...
     GL_DeleteAllTexturesForGLTextures(GLT_ANY);
-
-    R_DeleteSkinTextures();
 
     {
     patchtex_t** patches, **ptr;
@@ -2588,66 +2588,56 @@ void GL_DeleteRawImages(void)
     Z_Free(rawTexs);
 }
 
-unsigned int GL_PrepareSkin(skintex_t *st, boolean allowTexComp)
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst,
+                      void* context)
 {
-    if(!st)
-        return 0;
+    skinname_t*         sn;
 
-    // If the texture has already been loaded, we don't need to
-    // do anything.
-    if(!st->tex)
+    if(!image)
+        return 0; // Wha?
+
+    sn = &skinNames[inst->tex->ofTypeID];
+
+    if(!GL_LoadImage(image, sn->path, true))
     {
-        int                 flags = TXCF_APPLY_GAMMACORRECTION;
-        image_t             image;
-
-        // Load the texture.
-        if(!GL_LoadImage(&image, st->path, true))
-            Con_Error("GL_PrepareSkin: %s not found.\n", st->path);
-
-        if(!allowTexComp)
-            flags |= TXCF_NO_COMPRESSION;
-
-        st->tex =
-            GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, true, true, false, false,
-                             glmode[mipmapping], GL_LINEAR, texAniso,
-                             GL_REPEAT, GL_REPEAT,
-                             flags);
-
-        // We don't need the image data any more.
-        M_Free(image.pixels);
+        VERBOSE(Con_Printf("GL_LoadModelSkin: %s not found!\n",
+                           sn->path));
+        return 0;
     }
 
-    return st->tex;
+    return 2; // Always external.
 }
 
-unsigned int GL_PrepareShinySkin(skintex_t *stp)
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst,
+                           void* context)
 {
-    image_t             image;
+    skinname_t*         sn;
 
-    if(!stp)
-        return 0; // Does not have a shiny skin.
+    if(!image)
+        return 0; // Wha?
 
-    if(!stp->tex)
+    sn = &skinNames[inst->tex->ofTypeID];
+
+    if(!GL_LoadImageCK(image, sn->path, true))
     {
-        // Load in the texture.
-        if(!GL_LoadImageCK(&image, stp->path, true))
-        {
-            Con_Error("GL_PrepareShinySkin: Failed to load '%s'.\n",
-                      stp->path);
-        }
-
-        stp->tex =
-            GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, true, true, false, false,
-                             glmode[mipmapping], GL_LINEAR, texAniso,
-                             GL_REPEAT, GL_REPEAT, 0);
-
-        // We don't need the image data any more.
-        GL_DestroyImage(&image);
+        VERBOSE(Con_Printf("GL_LoadModelShinySkin: %s not found!\n",
+                           sn->path));
+        return 0;
     }
 
-    return stp->tex;
+    return 2; // Always external.
 }
 
 /**
@@ -3097,18 +3087,20 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 int                 flags = 0;
                 boolean             noCompression = false;
                 boolean             alphaChannel;
-                material_load_params_t* params =
-                    (material_load_params_t*) context;
-
-                if(params)
-                {
-                    noCompression = (params->flags & MLF_LOAD_AS_SKY)? true : false;
-                }
 
                 if(image.pixelSize > 1)
                     flags |= TXCF_APPLY_GAMMACORRECTION;
-                if(noCompression)
-                    flags |= TXCF_NO_COMPRESSION;
+
+                // Disable compression?
+                if(context)
+                {
+                    material_load_params_t* params =
+                        (material_load_params_t*) context;
+
+                    if(params->flags & MLF_TEX_NO_COMPRESSION)
+                        flags |= TXCF_NO_COMPRESSION;
+                }
+
                 alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) ||
                     (tmpResult == 1 && image.isMasked))? true : false;
 
@@ -3138,6 +3130,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         case GLT_SYSTEM:
         case GLT_SHINY:
         case GLT_MASK:
+        case GLT_MODELSKIN:
+        case GLT_MODELSHINYSKIN:
             if(tmpResult)
             {
                 texturecontent_t    c;
@@ -3152,6 +3146,11 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                                         DGL_COLOR_INDEX_8_PLUS_A8 :
                                         DGL_COLOR_INDEX_8 ) );
                 }
+                else if(tex->type == GLT_MODELSKIN ||
+                        tex->type == GLT_MODELSHINYSKIN)
+                {
+                    c.format = (image.pixelSize == 4? DGL_RGBA : DGL_RGB);
+                }
                 else
                 {
                     c.format = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
@@ -3162,13 +3161,36 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 c.width = image.width;
                 c.height = image.height;
                 c.buffer = image.pixels;
-                c.flags = (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0);
-                if(tex->type == GLT_SPRITE)
+                c.flags = 0;
+
+                // Disable compression?
+                if(image.width < 128 && image.height < 128)
+                    c.flags |= TXCF_NO_COMPRESSION;
+                if(context &&
+                   (tex->type == GLT_MODELSKIN ||
+                    tex->type == GLT_MODELSHINYSKIN))
                 {
-                    c.flags |= TXCF_EASY_UPLOAD | TXCF_UPLOAD_ARG_NOSTRETCH;
+                    material_load_params_t* params =
+                        (material_load_params_t*) context;
+
+                    if(params->flags & MLF_TEX_NO_COMPRESSION)
+                        c.flags |= TXCF_NO_COMPRESSION;
+                }
+
+                if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN ||
+                   tex->type == GLT_MODELSHINYSKIN)
+                {
+                    c.flags |= TXCF_EASY_UPLOAD;
+                    if(tex->type == GLT_SPRITE)
+                        c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+
                     if(image.pixelSize != 3) c.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
                     if(image.pixelSize > 1) c.flags |= TXCF_UPLOAD_ARG_RGBDATA;
                 }
+
+                if(tex->type == GLT_MODELSKIN)
+                    c.flags |= TXCF_APPLY_GAMMACORRECTION;
+
                 if(tex->type == GLT_DETAIL)
                 {
                     float               contrast = *((float*) context);
@@ -3189,6 +3211,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                     texInst->data.detail.contrast = contrast;
                 }
                 else if(tex->type == GLT_SPRITE || tex->type == GLT_MASK ||
+                        tex->type == GLT_MODELSKIN ||
+                        tex->type == GLT_MODELSHINYSKIN ||
                         tex->type == GLT_SYSTEM)
                 {
                     c.flags |= TXCF_MIPMAP;
@@ -3336,7 +3360,9 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     case GLT_SHINY:
     case GLT_MASK:
     case GLT_SYSTEM:
-        return false; // Its definetely not.
+    case GLT_MODELSKIN:
+    case GLT_MODELSHINYSKIN:
+        return false; // Its definitely not.
 
     default:
         Con_Error("updateGLTexture: Internal Error, invalid type %i.",
@@ -3371,8 +3397,10 @@ float GLTexture_GetWidth(const gltexture_t* tex)
     case GLT_MASK:
         return maskTextures[tex->ofTypeID]->width;
 
-    case GLT_SYSTEM:
-        return 64; //// \fixme.
+    case GLT_SYSTEM: /// \fixme Do not assume!
+    case GLT_MODELSKIN:
+    case GLT_MODELSHINYSKIN:
+        return 64;
 
     default:
         Con_Error("GLTexture_GetWidth: Internal error, "
@@ -3407,8 +3435,10 @@ float GLTexture_GetHeight(const gltexture_t* tex)
     case GLT_MASK:
         return maskTextures[tex->ofTypeID]->height;
 
-    case GLT_SYSTEM:
-        return 64; //// \fixme.
+    case GLT_SYSTEM: /// \fixme Do not assume!
+    case GLT_MODELSKIN:
+    case GLT_MODELSHINYSKIN:
+        return 64;
 
     default:
         Con_Error("GLTexture_GetHeight: Internal error, "

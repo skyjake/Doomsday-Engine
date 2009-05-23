@@ -704,6 +704,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
     if(shininess > 0)
     {
+        const skinname_t*       sn;
+
         shinyColor = mf->def->sub[number].shinyColor;
 
         // With psprites, add the view angle/pitch.
@@ -763,7 +765,15 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         }
         color[3] = shininess;
 
-        shinyTexture = GL_PrepareShinySkin(R_GetSkinTexByIndex(mf->sub[number].shinySkin));
+        // Ensure we've prepared the shiny skin.
+        shinyTexture = 0;
+        if((sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin)))
+        {
+            const gltexture_inst_t* texInst;
+
+            if((texInst = GL_PrepareGLTexture(sn->id, NULL, NULL)))
+                shinyTexture = texInst->id;
+        }
     }
 
     if(renderTextures == 2)
@@ -784,13 +794,25 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        skintex_t*          st;
+        const skinname_t*       sn;
+
 
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
             useSkin = 0;
 
-        st = R_GetSkinTexByIndex(mdl->skins[useSkin].id);
-        skinTexture = GL_PrepareSkin(st, mdl->allowTexComp);
+        skinTexture = 0;
+
+        if((sn = R_GetSkinNameByIndex(mdl->skins[useSkin].id)))
+        {
+            const gltexture_inst_t* texInst;
+            material_load_params_t params;
+
+            memset(&params, 0, sizeof(params));
+            params.flags = (!mdl->allowTexComp? MLF_TEX_NO_COMPRESSION : 0);
+
+            if((texInst = GL_PrepareGLTexture(sn->id, &params, NULL)))
+                skinTexture = texInst->id;
+        }
     }
 
     // If we mirror the model, triangles have a different orientation.

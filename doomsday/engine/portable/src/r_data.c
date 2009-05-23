@@ -115,8 +115,8 @@ byte rendInfoRPolys = 0;
 // This is because we want to have permanent ID numbers for skins,
 // and the ID numbers are the same as indices to the skinNames array.
 // Created in r_model.c, when registering the skins.
-int numSkinNames;
-skintex_t* skinNames;
+uint numSkinNames = 0;
+skinname_t* skinNames = NULL;
 
 // Convert a 18-bit RGB (666) value to a playpal index.
 // \fixme 256kb - Too big?
@@ -1526,6 +1526,57 @@ void R_InitFlats(void)
                         Sys_GetSeconds() - starttime));
 }
 
+uint R_CreateSkinTex(const char* skin, boolean isShinySkin)
+{
+    int                 id;
+    skinname_t*         st;
+    char                realPath[256];
+    char                name[9];
+    const gltexture_t*  glTex;
+
+    if(!skin[0])
+        return 0;
+
+    // Convert the given skin file to a full pathname.
+    // \fixme Why is this done here and not during init??
+    _fullpath(realPath, skin, 255);
+
+    // Have we already created one for this?
+    if((id = R_GetSkinNumForName(realPath)))
+        return id;
+
+    if(M_NumDigits(numSkinNames + 1) > 8)
+    {
+#if _DEBUG
+Con_Message("R_GetSkinTex: Too many model skins!\n");
+#endif
+        return 0;
+    }
+
+    /**
+     * A new skin name.
+     */
+
+    // Create a gltexture for it.
+    snprintf(name, 8, "%-*i", 8, numSkinNames + 1);
+    name[M_NumDigits(numSkinNames + 1)] = '\0';
+    glTex = GL_CreateGLTexture(name, numSkinNames,
+        (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
+
+    skinNames = M_Realloc(skinNames, sizeof(*skinNames) * ++numSkinNames);
+    st = skinNames + (numSkinNames - 1);
+
+    strcpy(st->path, realPath);
+    st->id = glTex->id;
+
+    if(verbose)
+    {
+        Con_Message("SkinTex: %s => %li\n", M_PrettyPath(skin),
+                    (long) (1 + (st - skinNames)));
+    }
+    return 1 + (st - skinNames); // 1-based index.
+}
+
 void R_ExpandSkinName(char* expanded, const char* skin, const char* modelfn)
 {
     directory_t         mydir;
@@ -1550,14 +1601,15 @@ void R_ExpandSkinName(char* expanded, const char* skin, const char* modelfn)
 /**
  * Registers a new skin name.
  */
-int R_RegisterSkin(const char* skin, const char* modelfn,
-                   char* fullpath)
+uint R_RegisterSkin(const char* skin, const char* modelfn, char* fullpath,
+                    boolean isShinySkin)
 {
     const char         *formats[3] = { ".png", ".tga", ".pcx" };
     char                buf[256];
     char                fn[256];
     char               *ext;
-    int                 i, idx = -1;
+    int                 i;
+    uint                idx = 0;
 
     // Has a skin name been provided?
     if(!skin[0])
@@ -1573,74 +1625,34 @@ int R_RegisterSkin(const char* skin, const char* modelfn,
     }
 
     // Try PNG, TGA, PCX.
-    for(i = 0; i < 3 && idx < 0; ++i)
+    for(i = 0; i < 3 && idx == 0; ++i)
     {
         strcpy(ext, formats[i]);
         R_ExpandSkinName(fullpath ? fullpath : buf, fn, modelfn);
-        idx = R_GetSkinTexIndex(fullpath ? fullpath : buf);
+
+        idx = R_CreateSkinTex(fullpath ? fullpath : buf, isShinySkin);
     }
 
     return idx;
 }
 
-skintex_t *R_GetSkinTex(const char *skin)
+const skinname_t* R_GetSkinNameByIndex(uint id)
 {
-    int                 i;
-    skintex_t          *st;
-    char                realPath[256];
-
-    if(!skin[0])
+    if(!id || id > numSkinNames)
         return NULL;
 
-    // Convert the given skin file to a full pathname.
-    // \fixme Why is this done here and not during init??
-    _fullpath(realPath, skin, 255);
+    return &skinNames[id-1];
+}
+
+uint R_GetSkinNumForName(const char* path)
+{
+    uint                i;
 
     for(i = 0; i < numSkinNames; ++i)
-        if(!stricmp(skinNames[i].path, realPath))
-            return skinNames + i;
+        if(!stricmp(skinNames[i].path, path))
+            return i + 1; // 1-based index.
 
-    // We must allocate a new skintex_t.
-    skinNames = M_Realloc(skinNames, sizeof(*skinNames) * ++numSkinNames);
-    st = skinNames + (numSkinNames - 1);
-    strcpy(st->path, realPath);
-    st->tex = 0; // Not yet prepared.
-
-    if(verbose)
-    {
-        Con_Message("SkinTex: %s => %li\n", M_PrettyPath(skin),
-                    (long) (st - skinNames));
-    }
-    return st;
-}
-
-skintex_t *R_GetSkinTexByIndex(int id)
-{
-    if(id < 0 || id >= numSkinNames)
-        return NULL;
-
-    return &skinNames[id];
-}
-
-int R_GetSkinTexIndex(const char *skin)
-{
-    skintex_t          *sk = R_GetSkinTex(skin);
-
-    if(!sk)
-        return -1;
-
-    return sk - skinNames;
-}
-
-void R_DeleteSkinTextures(void)
-{
-    int                 i;
-
-    for(i = 0; i < numSkinNames; ++i)
-    {
-        glDeleteTextures(1, (const GLuint*) &skinNames[i].tex);
-        skinNames[i].tex = 0;
-    }
+    return 0;
 }
 
 /**

@@ -54,6 +54,8 @@ typedef enum {
     GLT_DETAIL,
     GLT_SHINY,
     GLT_MASK,
+    GLT_MODELSKIN,
+    GLT_MODELSHINYSKIN,
     NUM_GLTEXTURE_TYPES
 } gltexture_type_t;
 
@@ -62,7 +64,9 @@ typedef enum {
     (t) == GLT_SPRITE? "sprite" : \
     (t) == GLT_DETAIL? "detailtex" : \
     (t) == GLT_SHINY? "shinytex" : \
-    (t) == GLT_MASK? "masktex" : "systemtex")
+    (t) == GLT_MASK? "masktex" : \
+    (t) == GLT_MODELSKIN? "modelskin" : \
+    (t) == GLT_MODELSHINYSKIN? "modelshinyskin" : "systemtex")
 
 typedef struct gltexture_s {
     gltextureid_t   id;
@@ -189,16 +193,15 @@ byte            GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, v
 byte            GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
+
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare);
 
 DGLuint         GL_PreparePatch(lumpnum_t lump);
 DGLuint         GL_GetRawTexInfo(lumpnum_t lump, boolean part2);
 DGLuint         GL_PrepareRawTex(lumpnum_t lump, boolean part2);
-
-// Load the skin texture and prepare it for rendering.
-unsigned int    GL_PrepareSkin(skintex_t* stp, boolean allowTexComp);
-unsigned int    GL_PrepareShinySkin(skintex_t* stp);
 
 void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);

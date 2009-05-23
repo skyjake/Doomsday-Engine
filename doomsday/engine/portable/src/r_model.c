@@ -522,8 +522,8 @@ static void R_RegisterModelSkin(model_t *mdl, int index)
     memset(buf, 0, sizeof(buf));
     memcpy(buf, mdl->skins[index].name, 64);
 
-    mdl->skins[index].id =
-        R_RegisterSkin(buf, mdl->fileName, mdl->skins[index].name);
+    mdl->skins[index].id = R_RegisterSkin(buf, mdl->fileName,
+        mdl->skins[index].name, false);
 
     if(mdl->skins[index].id < 0)
     {
@@ -1112,8 +1112,8 @@ static void setupModel(ded_model_t *def)
             sub->offset[k] = subdef->offset[k];
 
         sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinySkin =
-            R_RegisterSkin(subdef->shinySkin, subdef->filename.path, NULL);
+        sub->shinySkin = R_RegisterSkin(subdef->shinySkin,
+            subdef->filename.path, NULL, true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
@@ -1366,6 +1366,8 @@ void R_PrecacheModelSkins(modeldef_t* modef)
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
     {
+        const skinname_t*       sn;
+
         if(!modef->sub[sub].model)
             continue;
 
@@ -1373,18 +1375,22 @@ void R_PrecacheModelSkins(modeldef_t* modef)
         // Load all skins.
         for(k = 0; k < mdl->info.numSkins; ++k)
         {
-            skintex_t*          st;
-
-            st = R_GetSkinTexByIndex(mdl->skins[k].id);
-            if(st)
+            if((sn = R_GetSkinNameByIndex(mdl->skins[k].id)))
             {
-                GL_BindTexture(GL_PrepareSkin(st, mdl->allowTexComp),
-                               glmode[texMagMode]);
+                material_load_params_t params;
+
+                memset(&params, 0, sizeof(params));
+                params.flags = (!mdl->allowTexComp? MLF_TEX_NO_COMPRESSION : 0);
+
+                GL_PrepareGLTexture(sn->id, &params, NULL);
             }
         }
 
-        GL_BindTexture(GL_PrepareShinySkin(R_GetSkinTexByIndex(modef->sub[sub].shinySkin)),
-                       glmode[texMagMode]);
+        // Load the shiny skin.
+        if((sn = R_GetSkinNameByIndex(modef->sub[sub].shinySkin)))
+        {
+            GL_PrepareGLTexture(sn->id, NULL, NULL);
+        }
     }
 }
 
