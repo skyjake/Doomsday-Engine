@@ -314,13 +314,13 @@ EXPORTS
     P_MaterialPrecache          @436 NONAME
 
 ; Play: Thinkers.
-    DD_ThinkerAdd                @86 NONAME
-    DD_ThinkerRemove             @87 NONAME
-    DD_ThinkerSetStasis          @426 NONAME	
+    DD_ThinkerAdd               @86 NONAME
+    DD_ThinkerRemove            @87 NONAME
+    DD_ThinkerSetStasis         @426 NONAME	
 
-    DD_RunThinkers               @84 NONAME
-    DD_InitThinkers              @85 NONAME
-    DD_IterateThinkers           @425 NONAME
+    DD_RunThinkers              @84 NONAME
+    DD_InitThinkers             @85 NONAME
+    DD_IterateThinkers          @425 NONAME
 
 ; Refresh.
     DD_GetFrameRate             @88 NONAME
