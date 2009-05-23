@@ -873,7 +873,7 @@ void R_ProjectPlayerSprites(void)
                 (32 - psp->pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
             if(weaponFOVShift > 0 && fieldOfView > 90)
-                spr->data.model.yawAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
+                spr->data.model.pitchAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
             // Real rotation angles.
             spr->data.model.yaw =
                 viewAngle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
