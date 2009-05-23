@@ -890,6 +890,7 @@ void FI_Execute(char * cmd)
             // k stays at zero if the number of operands is correct.
             oldcp = fi->cp;
             for(k = fiCommands[i].operands; k > 0; k--)
+            {
                 if(!FI_GetToken())
                 {
                     fi->cp = oldcp;
@@ -897,6 +898,7 @@ void FI_Execute(char * cmd)
                                 fiCommands[i].token);
                     break;
                 }
+            }
 
                 // Should we skip this command?
             if((fi->skipNext && !fiCommands[i].whenCondSkipping) ||
@@ -1358,6 +1360,8 @@ void FI_SkipTo(const char* marker)
 
     // Stop any waiting.
     fi->wait = 0;
+    fi->waitingText = NULL;
+    fi->waitingPic = NULL;
 
     // Rewind the script so we can jump anywhere.
     fi->cp = fi->script;
