@@ -1806,8 +1806,6 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
             bufferSkyTexture(texDef, &image->pixels, image->width,
                              image->height, zeroMask);
             image->isMasked = zeroMask;
-
-            result = 1;
         }
         else
         {
@@ -1834,7 +1832,67 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
                                   image->height, 0);
             }
 
-            result = 1;
+        }
+
+        result = 1;
+    }
+
+    return result;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = not prepared
+ *                      1 = found and prepared a lump resource.
+ *                      2 = found and prepared an external resource.
+ */
+byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
+{
+    byte                result = 0;
+
+    if(!image)
+        return result; // Wha?
+
+    // Let's first try the resource locator and see if there is a
+    // 'high-resolution' version available.
+    if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(p->lump)) &&
+       GL_LoadHighResPatch(image, lumpInfo[p->lump].name) != NULL)
+    {   // High resolution patch loaded.
+        result = 2;
+    }
+    else
+    {   // Use data from the normal lump.
+        if(p->lump >= 0 && p->lump < numLumps)
+        {
+            boolean             scaleSharp = (upscaleAndSharpenPatches ||
+                (p->flags & PF_UPSCALE_AND_SHARPEN));
+            int                 patchWidth, patchHeight;
+            lumppatch_t*        patch;
+
+            patch = W_CacheLumpNum(p->lump, PU_CACHE);
+            patchWidth = SHORT(patch->width);
+            patchHeight = SHORT(patch->height);
+
+            if(patchWidth * patchHeight)
+            {
+                if(scaleSharp)
+                {
+                    patchWidth += 2;
+                    patchHeight += 2;
+                }
+
+                image->width = patchWidth;
+                image->height = patchHeight;
+                image->pixelSize = 1;
+
+                // Allocate memory for the patch.
+                image->pixels = M_Calloc(2 * image->width * image->height);
+                image->isMasked = DrawRealPatch(image->pixels, image->width,
+                    image->height, patch, scaleSharp? 1 : 0,
+                    scaleSharp? 1 : 0, false, 0, true);
+
+                result = 1;
+            }
         }
     }
 
@@ -1945,30 +2003,58 @@ void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
                    ms.units[MTU_PRIMARY].magMode);
 }
 
-DGLuint GL_GetPatchOtherPart(int idx)
+/**
+ * @return              The outcome:
+ *                      0 = not prepared
+ *                      1 = found and prepared a lump resource.
+ *                      2 = found and prepared an external resource.
+ */
+byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 {
-    patchtex_t*         patchTex = R_GetPatchTex(idx);
+    byte                result = 0;
+    filename_t          fileName;
 
-    if(!patchTex->tex)
+    if(!image)
+        return result; // Wha?
+
+    // First try to find an external resource.
+    if(R_FindResource(RC_PATCH, lumpInfo[r->lump].name, NULL, fileName) &&
+       GL_LoadImage(image, fileName, false) != NULL)
+    {   // High resolution rawtex loaded.
+        result = 2;
+    }
+    else
     {
-        // The patch isn't yet bound with OpenGL.
-        patchTex->tex = GL_BindTexPatch(patchTex);
+        // Must load the old-fashioned data lump.
+        byte*               lumpdata;
+
+        // Load the raw image data.
+        lumpdata = W_CacheLumpNum(r->lump, PU_STATIC);
+
+        image->width = 320;
+
+        // Try to load it as a PCX image first.
+        image->pixels = M_Malloc(3 * 320 * 200);
+        if(PCX_MemoryLoad(lumpdata, lumpInfo[r->lump].size, 320, 200,
+                          image->pixels))
+        {
+            image->height = 200;
+            image->pixelSize = 3;
+        }
+        else
+        {
+            // PCX load failed. It must be an old-fashioned raw image.
+            memcpy(image->pixels, lumpdata, 3 * 320 * 200);
+            image->height = (int) (lumpInfo[r->lump].size / 320);
+            image->pixelSize = 1;
+        }
+
+        W_ChangeCacheTag(r->lump, PU_CACHE);
+
+        result = 1;
     }
 
-    return patchTex->tex2;
-}
-
-DGLuint GL_GetRawOtherPart(int idx)
-{
-    rawtex_t*           raw = R_GetRawTex(idx);
-
-    if(!raw->tex)
-    {
-        // The raw isn't yet bound with OpenGL.
-        raw->tex = GL_BindTexRaw(raw);
-    }
-
-    return GL_GetRawTexInfo(idx, true);
+    return result;
 }
 
 /**
@@ -1977,12 +2063,12 @@ DGLuint GL_GetRawOtherPart(int idx)
  * 2003-05-30 (skyjake): External resources can be larger than 320x200,
  * but they're never split into two parts.
  */
-DGLuint GL_BindTexRaw(rawtex_t *raw)
+DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 {
-    image_t             image;
-    int                 lump = raw->lump;
+    if(!raw)
+        return 0; // Wha?
 
-    if(lump < 0 || lump >= numLumps)
+    if(raw->lump < 0 || raw->lump >= numLumps)
     {
         GL_BindTexture(0, 0);
         return 0;
@@ -1990,12 +2076,11 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
 
     if(!raw->tex)
     {
-        // First try to find an external resource.
-        filename_t          fileName;
+        image_t             image;
+        byte                result;
 
-        if(R_FindResource(RC_PATCH, lumpInfo[lump].name, NULL, fileName) &&
-           GL_LoadImage(&image, fileName, false) != NULL)
-        {
+        if((result = GL_LoadRawTex(&image, raw)) == 2)
+        {   // Loaded an external raw texture.
             // We have the image in the buffer. We'll upload it as one
             // big texture.
             raw->tex =
@@ -2015,82 +2100,60 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
         }
         else
         {
-            // Must load the old-fashioned data lump.
-            byte   *lumpdata, *image;
-            int     height, assumedWidth = 320;
-            boolean need_free_image = true;
-            boolean rgbdata;
-            int     comps;
+            int                 assumedWidth = 320;
+            boolean             rgbdata = (image.pixelSize > 1? true:false);
 
-            // Load the raw image data.
-            // It's most efficient to create two textures for it (256 + 64 = 320).
-            lumpdata = W_CacheLumpNum(lump, PU_STATIC);
-            height = 200;
+            // It's most efficient to create two textures (256+64 = 320).
 
-            // Try to load it as a PCX image first.
-            image = M_Malloc(3 * 320 * 200);
-            if(PCX_MemoryLoad(lumpdata, lumpInfo[lump].size, 320, 200, image))
+            if(!(image.height < 200))
             {
-                rgbdata = true;
-                comps = 3;
-            }
-            else
-            {
-                // PCX load failed. It must be an old-fashioned raw image.
-                need_free_image = false;
-                M_Free(image);
-                height = (int) (lumpInfo[lump].size / 320);
-                rgbdata = false;
-                comps = 1;
-                image = lumpdata;
-            }
-
-            if(!(height < 200))
-            {
-                int     i, k, c, idx;
-                byte   *dat1, *dat2;
+                int                 k, comps = image.pixelSize;
+                byte*               dat1, *dat2;
 
                 // Two pieces:
                 dat1 = M_Calloc(comps * 256 * 256);
                 dat2 = M_Calloc(comps * 64 * 256);
 
                 // Image data loaded, divide it into two parts.
-                for(k = 0; k < height; ++k)
+                for(k = 0; k < image.height; ++k)
+                {
+                    int                 i;
+
                     for(i = 0; i < 256; ++i)
                     {
-                        idx = k * assumedWidth + i;
+                        int                 c, idx = k * assumedWidth + i;
+
                         // Part one.
                         for(c = 0; c < comps; ++c)
-                            dat1[(k * 256 + i) * comps + c] = image[idx * comps + c];
-
-                        // We can setup part two at the same time.
-                        for(c = 0; c < comps; ++c)
                         {
+                            dat1[(k * 256 + i) * comps + c] =
+                                image.pixels[idx * comps + c];
+
+                            // We can setup part two at the same time.
                             dat2[(k * 64 + i) * comps + c] =
-                                image[(idx + 256) * comps + c];
+                                image.pixels[(idx + 256) * comps + c];
                         }
                     }
+                }
 
                 // Upload part one.
-                raw->tex =
-                    GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
-                                     false, rgbdata, false, false,
-                                     GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
-                                     0 /*no anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
+                raw->tex = GL_UploadTexture(dat1, 256,
+                    assumedWidth < 320 ? image.height : 256, false, false,
+                    rgbdata, false, false, GL_NEAREST,
+                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 // And the other part.
-                raw->tex2 =
-                    GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
-                                     GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
-                                     0 /*no anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
+                raw->tex2 = GL_UploadTexture(dat2, 64, 256, false, false,
+                    rgbdata, false, false, GL_NEAREST,
+                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
                 raw->width2 = 64;
-                raw->height = raw->height2 = height;
+                raw->height = raw->height2 = image.height;
                 M_Free(dat1);
                 M_Free(dat2);
             }
@@ -2099,24 +2162,20 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                 assumedWidth = 256;
 
                 // Generate a texture.
-                raw->tex =
-                    GL_UploadTexture(image, 256, height,
-                                     false, false, rgbdata, false, false,
-                                     GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
-                                     0 /*no anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
+                raw->tex = GL_UploadTexture(image.pixels, 256, image.height,
+                    false, false, rgbdata, false, false, GL_NEAREST,
+                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
-                raw->height = height;
+                raw->height = image.height;
 
                 raw->tex2 = 0;
                 raw->width2 = raw->height2 = 0;
             }
 
-            if(need_free_image)
-                M_Free(image);
-            W_ChangeCacheTag(lump, PU_CACHE);
+            GL_DestroyImage(&image);
         }
     }
 
@@ -2126,29 +2185,57 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
 /**
  * Returns the OpenGL name of the texture.
  */
-DGLuint GL_PrepareRawTex(lumpnum_t lump, boolean part2)
+DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
 {
-    rawtex_t           *raw = R_GetRawTex(lump);
-
-    if(!raw->tex)
+    if(rawTex)
     {
-        // The rawtex isn't yet bound with OpenGL.
-        raw->tex = GL_BindTexRaw(raw);
+        if(!rawTex->tex)
+        {   // The rawtex isn't yet bound with OpenGL.
+            rawTex->tex = GL_PrepareRawTex2(rawTex);
+        }
+
+        return rawTex->tex;
     }
 
-    return GL_GetRawTexInfo(lump, part2);
+    return 0;
 }
 
-unsigned int GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
-                            int wrapT)
+/**
+ * Returns the OpenGL name of the texture.
+ */
+DGLuint GL_PrepareRawTexOtherPart(rawtex_t* rawTex)
 {
-    DGLuint             tex;
+    if(rawTex)
+    {
+        if(!rawTex->tex)
+        {   // The rawtex isn't yet bound with OpenGL.
+            rawTex->tex = GL_PrepareRawTex2(rawTex);
+        }
 
-    GL_BindTexture(tex = GL_PrepareRawTex(lump, part2),
-                   (linearRaw ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-    return (unsigned int) tex;
+        return rawTex->tex2;
+    }
+
+    return 0;
+}
+
+void GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT)
+{
+    rawtex_t*           rawTex;
+
+    if((rawTex = R_GetRawTex(lump)))
+    {
+        DGLuint             tex;
+
+        if(!part2)
+            tex = GL_PrepareRawTex(rawTex);
+        else
+            tex = GL_PrepareRawTexOtherPart(rawTex);
+
+        GL_BindTexture(tex,
+                       (linearRaw ? GL_LINEAR : GL_NEAREST));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+    }
 }
 
 /**
@@ -2253,175 +2340,154 @@ static void SharpenPixels(byte* pixels, int width, int height)
 /**
  * \note: No mipmaps are generated for regular patches.
  */
-DGLuint GL_BindTexPatch(patchtex_t* p)
+DGLuint GL_PreparePatch2(patchtex_t* p)
 {
-    lumppatch_t*        patch;
-    byte*               patchptr;
-    image_t             image;
-    lumpnum_t           lump = p->lump;
-
-    if(lump < 0 || lump >= numLumps)
+    if(!p->tex)
     {
-        GL_BindTexture(0, 0);
-        return 0;
-    }
+        image_t             image;
+        byte                result;
 
-    patch = (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
-    p->offX = -SHORT(patch->leftOffset);
-    p->offY = -SHORT(patch->topOffset);
-    p->extraOffset[VX] = p->extraOffset[VY] = 0;
+        if(p->lump < 0 || p->lump >= numLumps)
+        {
+            GL_BindTexture(0, 0);
+            return 0;
+        }
 
-    // Let's first try the resource locator and see if there is a
-    // 'high-resolution' version available.
-    if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
-       (patchptr = GL_LoadHighResPatch(&image, lumpInfo[lump].name)) != NULL)
-    {
-        // This is our texture! No mipmaps are generated.
-        p->tex =
-            GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, false, true, false, false,
-                             GL_NEAREST, glmode[texMagMode], texAniso,
-                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
+        {
+        lumppatch_t*        patch;
+        patch = (lumppatch_t*) W_CacheLumpNum(p->lump, PU_CACHE);
+        p->offX = -SHORT(patch->leftOffset);
+        p->offY = -SHORT(patch->topOffset);
+        p->extraOffset[VX] = p->extraOffset[VY] = 0;
         p->width = SHORT(patch->width);
         p->height = SHORT(patch->height);
-
-        // The original image is no longer needed.
-        GL_DestroyImage(&image);
-    }
-    else
-    {
-        // Use data from the normal lump.
-        boolean scaleSharp = (upscaleAndSharpenPatches ||
-                              (p->flags & PF_UPSCALE_AND_SHARPEN));
-        int     addBorder = (scaleSharp? 1 : 0);
-        int     patchWidth = SHORT(patch->width) + addBorder*2;
-        int     patchHeight = SHORT(patch->height) + addBorder*2;
-        int     numpels = patchWidth * patchHeight, alphaChannel;
-        byte   *buffer;
-
-        if(!numpels)
-            return 0; // This won't do!
-
-        // Allocate memory for the patch.
-        buffer = M_Calloc(2 * numpels);
-
-        alphaChannel =
-            DrawRealPatch(buffer, patchWidth, patchHeight,
-                          patch, addBorder, addBorder, false, 0, true);
-
-        if(fillOutlines && !scaleSharp)
-            ColorOutlines(buffer, patchWidth, patchHeight);
-
-        if(monochrome || (p->flags & PF_MONOCHROME))
-        {
-            DeSaturate(buffer, R_GetPalette(), patchWidth, patchHeight);
-            p->flags |= PF_MONOCHROME;
         }
 
-        if(scaleSharp)
+        if((result = GL_LoadDoomPatch(&image, p)) == 2)
+        {   // High resolution patch loaded.
+            // This is our texture! No mipmaps are generated.
+            p->tex = GL_UploadTexture(image.pixels, image.width,
+                image.height, image.pixelSize == 4, false, true, false,
+                false, GL_NEAREST, glmode[texMagMode], texAniso,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+
+            // The original image is no longer needed.
+            GL_DestroyImage(&image);
+        }
+        else if(result == 1)
         {
-            byte* rgbaPixels = M_Malloc(numpels * 4 * 2); // also for the final output
-            byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
+            // Using data from the normal lump.
+            boolean scaleSharp = (upscaleAndSharpenPatches ||
+                                  (p->flags & PF_UPSCALE_AND_SHARPEN));
+            int                 addBorder = (scaleSharp? 1 : 0);
+            int                 numpels = image.width * image.height;
 
-            GL_ConvertBuffer(patchWidth, patchHeight, 2, 4, buffer, rgbaPixels,
-                             R_GetPalette(), false);
+            if(fillOutlines && !scaleSharp)
+                ColorOutlines(image.pixels, image.width, image.height);
 
-            GL_SmartFilter2x(rgbaPixels, upscaledPixels, patchWidth, patchHeight,
-                             patchWidth * 8);
-            patchWidth *= 2;
-            patchHeight *= 2;
-
-            /*
+            if(monochrome || (p->flags & PF_MONOCHROME))
             {
-                static int counter = 1;
-                FILE *f;
-                char buf[100];
-                sprintf(buf, "dumped-%s-%i.dat", W_LumpName(p->lump), counter++);
-                f = fopen(buf, "wb");
-                fwrite(upscaledPixels, 4 * 4 * numpels, 1, f);
-                fclose(f);
+                DeSaturate(image.pixels, R_GetPalette(), image.width,
+                           image.height);
+                p->flags |= PF_MONOCHROME;
             }
-            */
-            /*
-            Con_Message("upscale and sharpen on %s (lump %i) monochrome:%i\n", W_LumpName(p->lump),
-                        p->lump, p->flags & PF_MONOCHROME);
+
+            if(scaleSharp)
+            {
+                byte*               rgbaPixels = M_Malloc(numpels * 4 * 2);
+                byte*               upscaledPixels = M_Malloc(numpels * 4 * 4);
+
+                GL_ConvertBuffer(image.width, image.height, 2, 4,
+                                 image.pixels, rgbaPixels, R_GetPalette(),
+                                 false);
+
+                GL_SmartFilter2x(rgbaPixels, upscaledPixels, image.width,
+                                 image.height, image.width * 8);
+                image.width *= 2;
+                image.height *= 2;
+
+                //EnhanceContrast(upscaledPixels, image.width,image.height);
+                SharpenPixels(upscaledPixels, image.width, image.height);
+                BlackOutlines(upscaledPixels, image.width, image.height);
+
+                // Back to indexed+alpha.
+                GL_ConvertBuffer(image.width, image.height, 4, 2,
+                                 upscaledPixels, rgbaPixels, R_GetPalette(),
+                                 false);
+
+                // Replace the old buffer.
+                M_Free(upscaledPixels);
+                M_Free(image.pixels);
+                image.pixels = rgbaPixels;
+
+                // We'll sharpen it in the future as well.
+                p->flags |= PF_UPSCALE_AND_SHARPEN;
+            }
+
+            /**
+             * See if we have to split the patch into two parts.
+             * This is done to conserve the quality of wide textures (like
+             * the DOOM status bar) on video cards that have a pitifully
+             * small maximum texture size.
              */
+            if(p->width > GL_state.maxTexSize)
+            {
+                // The width of the first part is max texture size.
+                int                 part2Width;
+                byte*               tmpBuf;
 
-            //EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
-            SharpenPixels(upscaledPixels, patchWidth, patchHeight);
-            BlackOutlines(upscaledPixels, patchWidth, patchHeight);
+                part2Width = image.width - GL_state.maxTexSize;
+                tmpBuf = M_Malloc(2 * image.height *
+                    MAX_OF(GL_state.maxTexSize, part2Width));
 
-            // Back to indexed+alpha.
-            GL_ConvertBuffer(patchWidth, patchHeight, 4, 2, upscaledPixels, rgbaPixels,
-                             R_GetPalette(), false);
+                // Use a temporary buffer for doing the splitting.
+                // First, part one.
+                pixBlt(image.pixels, image.width, image.height, tmpBuf,
+                       GL_state.maxTexSize, image.height, image.isMasked,
+                       0, 0, 0, 0, GL_state.maxTexSize, image.height);
 
-            // Replace the old buffer.
-            M_Free(upscaledPixels);
-            M_Free(buffer);
-            buffer = rgbaPixels;
+                p->tex = GL_UploadTexture(tmpBuf, GL_state.maxTexSize,
+                    image.height, image.isMasked, false, false, false,
+                    false, GL_NEAREST, GL_LINEAR, texAniso,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
-            // We'll sharpen it in the future as well.
-            p->flags |= PF_UPSCALE_AND_SHARPEN;
+                // Then part two.
+                pixBlt(image.pixels, image.width, image.height, tmpBuf,
+                       part2Width, image.height, image.isMasked,
+                       GL_state.maxTexSize, 0, 0, 0, part2Width,
+                       image.height);
+
+                p->tex2 = GL_UploadTexture(tmpBuf, part2Width,
+                    image.height, image.isMasked, false, false, false,
+                    false, GL_NEAREST, glmode[texMagMode], texAniso,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+
+                p->width2 = p->width - GL_state.maxTexSize;
+                p->width = GL_state.maxTexSize;
+                p->height2 = p->height;
+
+                M_Free(tmpBuf);
+            }
+            else // We can use the normal one-part method.
+            {
+                // Generate a texture.
+                p->tex = GL_UploadTexture(image.pixels, image.width,
+                    image.height, image.isMasked, false, false, false,
+                    false, GL_NEAREST, glmode[texMagMode], texAniso,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+
+                p->width += addBorder*2;
+                p->height += addBorder*2;
+                p->extraOffset[VX] = -addBorder;
+                p->extraOffset[VY] = -addBorder;
+
+                p->tex2 = 0;
+                p->width2 = p->height2 = 0;
+            }
+
+            // The original image is no longer needed.
+            GL_DestroyImage(&image);
         }
-
-        // See if we have to split the patch into two parts.
-        // This is done to conserve the quality of wide textures
-        // (like the status bar) on video cards that have a pitifully
-        // small maximum texture size. ;-)
-        if(SHORT(patch->width) > GL_state.maxTexSize)
-        {
-            // The width of the first part is max texture size.
-            int     part2width = patchWidth - GL_state.maxTexSize;
-            byte   *tempbuff =
-                M_Malloc(2 * MAX_OF(GL_state.maxTexSize, part2width) *
-                         patchHeight);
-
-            // We'll use a temporary buffer for doing to splitting.
-            // First, part one.
-            pixBlt(buffer, patchWidth, patchHeight, tempbuff,
-                   GL_state.maxTexSize, patchHeight, alphaChannel,
-                   0, 0, 0, 0, GL_state.maxTexSize, patchHeight);
-            p->tex =
-                GL_UploadTexture(tempbuff, GL_state.maxTexSize, patchHeight,
-                                 alphaChannel, false, false, false, false,
-                                 GL_NEAREST, GL_LINEAR, texAniso,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-            // Then part two.
-            pixBlt(buffer, patchWidth, patchHeight, tempbuff,
-                   part2width, patchHeight, alphaChannel, GL_state.maxTexSize,
-                   0, 0, 0, part2width, patchHeight);
-            p->tex2 =
-                GL_UploadTexture(tempbuff, part2width, patchHeight,
-                                 alphaChannel, false, false, false, false,
-                                 GL_NEAREST, glmode[texMagMode], texAniso,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-            p->width = GL_state.maxTexSize;
-            p->width2 = SHORT(patch->width) - GL_state.maxTexSize;
-            p->height = p->height2 = SHORT(patch->height);
-
-            M_Free(tempbuff);
-        }
-        else // We can use the normal one-part method.
-        {
-            // Generate a texture.
-            p->tex =
-                GL_UploadTexture(buffer, patchWidth, patchHeight,
-                                 alphaChannel, false, false, false, false,
-                                 GL_NEAREST, glmode[texMagMode], texAniso,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-            p->width = SHORT(patch->width) + addBorder*2;
-            p->height = SHORT(patch->height) + addBorder*2;
-            p->extraOffset[VX] = -addBorder;
-            p->extraOffset[VY] = -addBorder;
-
-            p->tex2 = 0;
-            p->width2 = p->height2 = 0;
-        }
-        M_Free(buffer);
     }
 
     return p->tex;
@@ -2430,24 +2496,39 @@ DGLuint GL_BindTexPatch(patchtex_t* p)
 /**
  * Returns the OpenGL name of the texture.
  */
-DGLuint GL_PreparePatch(lumpnum_t lump)
+DGLuint GL_PreparePatch(patchtex_t* patchTex)
 {
-    patchtex_t*         patchTex = R_GetPatchTex(lump);
+    if(patchTex)
+    {
+        if(!patchTex->tex)
+        {   // The patch isn't yet bound with OpenGL.
+            patchTex->tex = GL_PreparePatch2(patchTex);
+        }
 
-    if(!patchTex)
-        return 0;
-
-    if(!patchTex->tex)
-    {   // The patch isn't yet bound with OpenGL.
-        patchTex->tex = GL_BindTexPatch(patchTex);
+        return patchTex->tex;
     }
 
-    return patchTex->tex;
+    return 0;
+}
+
+DGLuint GL_PreparePatchOtherPart(patchtex_t* patchTex)
+{
+    if(patchTex)
+    {
+        if(!patchTex->tex)
+        {   // The patch isn't yet bound with OpenGL.
+            patchTex->tex = GL_PreparePatch2(patchTex);
+        }
+
+        return patchTex->tex2;
+    }
+
+    return 0;
 }
 
 void GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 {
-    GL_BindTexture(GL_PreparePatch(lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(lump)), glmode[texMagMode]);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
@@ -2649,19 +2730,6 @@ void GL_DeleteRawImages(void)
         }
     }
     Z_Free(rawTexs);
-}
-
-/**
- * @return              The rawtex name, if it has been prepared.
- */
-DGLuint GL_GetRawTexInfo(lumpnum_t lump, boolean part2)
-{
-    rawtex_t           *rawtex = R_GetRawTex(lump);
-
-    if(!rawtex)
-        return 0;
-
-    return (part2? rawtex->tex2 : rawtex->tex);
 }
 
 /**

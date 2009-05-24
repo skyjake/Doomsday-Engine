@@ -127,23 +127,23 @@ void R_DrawViewBorder(void)
 
     // The border top.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_TOP]));
-    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
                      p->height, 16, p->height);
     // Border bottom.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_BOTTOM]));
-    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
                      p->height, 16, p->height);
 
     // Left view border.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_LEFT]));
-    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx - bwidth, viewwindowy,
                      p->width, viewheight, p->width, 16);
     // Right view border.
     p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_RIGHT]));
-    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
     GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
                      p->width, viewheight, p->width, 16);
 

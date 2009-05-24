@@ -176,6 +176,9 @@ byte            GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 byte            GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
+
+byte            GL_LoadDoomPatch(image_t* image, const patchtex_t* p);
+byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
 byte            GL_LoadExtTexture(image_t* image, resourceclass_t resClass,
                                   const char* name, gfxmode_t mode);
 
@@ -187,25 +190,26 @@ DGLuint         GL_PrepareExtTexture(resourceclass_t resClass,
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare);
 
-DGLuint         GL_PreparePatch(lumpnum_t lump);
-DGLuint         GL_GetRawTexInfo(lumpnum_t lump, boolean part2);
-DGLuint         GL_PrepareRawTex(lumpnum_t lump, boolean part2);
+DGLuint         GL_PreparePatch(patchtex_t* patch);
+DGLuint         GL_PreparePatchOtherPart(patchtex_t* patch);
+DGLuint         GL_PrepareRawTex(rawtex_t* rawTex);
+DGLuint         GL_PrepareRawTexOtherPart(rawtex_t* rawTex);
 
 void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);
-void            GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap);
+void            GL_SetTranslatedSprite(material_t* mat, int tclass,
+                                       int tmap);
 
-DGLuint         GL_BindTexPatch(struct patchtex_s* p);
-DGLuint         GL_GetPatchOtherPart(lumpnum_t lump);
 void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps are generated.
-DGLuint         GL_BindTexRaw(struct rawtex_s* r);
-DGLuint         GL_GetRawOtherPart(lumpnum_t lump);
-unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
+
+void            GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
+                               int wrapT);
+void            GL_DeleteRawImages(void);
+
 void            GL_SetNoTexture(void);
 
 void            GL_NewSplitTex(lumpnum_t lump, DGLuint part2name);
 void            GL_UpdateTexParams(int mipmode);
-void            GL_DeleteRawImages(void);
 
 boolean         GL_IsColorKeyed(const char* path);
 
@@ -216,7 +220,8 @@ void            GL_ReleaseGLTexture(gltextureid_t id);
 const gltexture_inst_t* GL_PrepareGLTexture(gltextureid_t id, void* context,
                                             byte* result);
 const gltexture_t* GL_GetGLTexture(gltextureid_t id);
-const gltexture_t* GL_GetGLTextureByName(const char* name, gltexture_type_t type);
+const gltexture_t* GL_GetGLTextureByName(const char* name,
+                                         gltexture_type_t type);
 void            GL_SetAllGLTexturesMinMode(int minMode);
 void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 

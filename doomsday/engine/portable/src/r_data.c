@@ -1809,7 +1809,7 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
  */
 void R_PrecachePatch(lumpnum_t num)
 {
-    GL_PreparePatch(num);
+    GL_PreparePatch(R_GetPatchTex(num));
 }
 
 static boolean isInList(void** list, size_t len, void* elm)
