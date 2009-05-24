@@ -80,8 +80,6 @@ D_CMD(SmoothRaw);
 D_CMD(TranslateFont);
 #endif
 
-byte* GL_LoadHighResFlat(image_t* img, const char* name);
-byte* GL_LoadHighResPatch(image_t* img, char* name);
 void GL_DoResetDetailTextures(cvar_t* unused);
 
 /// gltexture_t abstract interface:
@@ -1211,90 +1209,32 @@ byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst,
  */
 DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 {
-    switch(which)
-    {
-    case LST_DYNAMIC:
-        // The dynamic light map is a 64x64 grayscale 8-bit image.
-        if(!lightingTextures[LST_DYNAMIC].tex)
-        {
-            // We don't want to compress the flares (banding would be noticeable).
-            lightingTextures[LST_DYNAMIC].tex =
-                GL_PrepareExtTexture(RC_GRAPHICS, "dLight", LGM_WHITE_ALPHA,
-                                 false, GL_LINEAR, GL_LINEAR,
-                                 -1 /*best anisotropy*/, GL_CLAMP_TO_EDGE,
-                                 GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
-        }
+    struct lstex_s {
+        const char*     name;
+        int             wrapS, wrapT;
+    } lstexes[NUM_LIGHTING_TEXTURES] = {
+        { "dLight", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "wallglow", GL_REPEAT, GL_CLAMP_TO_EDGE },
+        { "radioCO", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "radioCC", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "radioOO", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "radioOE", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE }
+    };
 
-        return lightingTextures[LST_DYNAMIC].tex;
-
-    case LST_GRADIENT:
-        if(!lightingTextures[LST_GRADIENT].tex)
-        {
-            lightingTextures[LST_GRADIENT].tex =
-                GL_PrepareExtTexture(RC_GRAPHICS, "wallglow", LGM_WHITE_ALPHA,
-                                 false, GL_LINEAR, GL_LINEAR,
-                                 -1 /*best anisotropy*/, GL_REPEAT,
-                                 GL_CLAMP_TO_EDGE, 0);
-        }
-
-        return lightingTextures[LST_GRADIENT].tex;
-
-    case LST_RADIO_CO:          // closed/open
-    case LST_RADIO_CC:          // closed/closed
-    case LST_RADIO_OO:          // open/open
-    case LST_RADIO_OE:          // open/edge
-        // FakeRadio corner shadows.
-        if(!lightingTextures[which].tex)
-        {
-            switch(which)
-            {
-            case LST_RADIO_CO:
-                lightingTextures[which].tex =
-                    GL_PrepareExtTexture(RC_GRAPHICS, "radioCO",
-                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     TXCF_NO_COMPRESSION);
-                break;
-
-            case LST_RADIO_CC:
-                lightingTextures[which].tex =
-                    GL_PrepareExtTexture(RC_GRAPHICS, "radioCC",
-                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     TXCF_NO_COMPRESSION);
-                break;
-
-            case LST_RADIO_OO:
-                lightingTextures[which].tex =
-                    GL_PrepareExtTexture(RC_GRAPHICS, "radioOO",
-                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     TXCF_NO_COMPRESSION);
-                break;
-
-            case LST_RADIO_OE:
-                lightingTextures[which].tex =
-                    GL_PrepareExtTexture(RC_GRAPHICS, "radioOE",
-                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     TXCF_NO_COMPRESSION);
-                break;
-
-            default:
-                break;
-            }
-        }
-
-        return lightingTextures[which].tex;
-
-    default:
-        // Failed to prepare anything.
+    if(which < 0 || which >= NUM_LIGHTING_TEXTURES)
         return 0;
+
+    if(!lightingTextures[which].tex)
+    {
+        lightingTextures[which].tex =
+            GL_PrepareExtTexture(RC_GRAPHICS, lstexes[which].name,
+                                 LGM_WHITE_ALPHA, false, GL_LINEAR,
+                                 GL_LINEAR, -1 /*best anisotropy*/,
+                                 lstexes[which].wrapS, lstexes[which].wrapT,
+                                 TXCF_NO_COMPRESSION);
     }
+
+    return lightingTextures[which].tex;
 }
 
 DGLuint GL_PrepareFlareTexture(flaretexid_t flare)
@@ -1377,42 +1317,50 @@ byte GL_LoadExtTexture(image_t* image, resourceclass_t resClass,
  *                      1 = found and prepared a lump resource.
  *                      2 = found and prepared an external resource.
  */
-byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
+byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
+                 void* context)
 {
     const flat_t*       flat;
-    byte                result = 0;
+    const lumpinfo_t*   lmpInf;
 
-    if(!image)
-        return result; // Wha?
+    if(!img)
+        return 0; // Wha?
 
     flat = flats[inst->tex->ofTypeID];
+    lmpInf = &lumpInfo[flat->lump];
 
-    // Try to load a high resolution version of this flat.
-    if((loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)) &&
-       GL_LoadHighResFlat(image, lumpInfo[flat->lump].name) != NULL)
+    // Try to load a high resolution version of this flat?
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
+                         GLTexture_IsFromIWAD(inst->tex)))
     {
-        result = 2;
-    }
-    else
-    {
-        if(lumpInfo[flat->lump].size < 4096)
-            return result; // Too small.
+        filename_t          file;
+        boolean             found;
 
-        // Get a pointer to the texture data.
-        image->pixels = M_Malloc(lumpInfo[flat->lump].size);
-        memcpy(image->pixels, W_CacheLumpNum(flat->lump, PU_STATIC),
-               lumpInfo[flat->lump].size);
-        W_ChangeCacheTag(flat->lump, PU_CACHE);
+        // First try the Flats category.
+        found = GL_LocateHighRes(file, lmpInf->name, "", false, RC_FLAT);
 
-        image->width = flat->width;
-        image->height = flat->height;
-        image->isMasked = false;
-        image->pixelSize = 1;
+        // Try the old-fashioned "Flat-NAME" in the Textures category.
+        if(!found)
+            found = GL_LocateHighRes(file, lmpInf->name, "flat-", false,
+                                     RC_TEXTURE);
 
-        result = 1;
+        if(found && GL_LoadImage(img, file, false))
+            return 2;
     }
 
-    return result;
+    if(lmpInf->size < 4096)
+        return 0; // Too small.
+
+    // Read in the flat.
+    img->pixels = M_Malloc(lmpInf->size);
+    W_ReadLump(flat->lump, img->pixels);
+
+    img->width = flat->width;
+    img->height = flat->height;
+    img->isMasked = false;
+    img->pixelSize = 1;
+
+    return 1;
 }
 
 /**
@@ -1518,11 +1466,11 @@ byte* GL_LoadImage(image_t* img, const char* imagefn, boolean useModelPath)
  * First sees if there is a color-keyed version of the given image. If
  * there is it is loaded. Otherwise the 'regular' version is loaded.
  */
-byte *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
+byte* GL_LoadImageCK(image_t* img, const char* name, boolean useModelPath)
 {
     char                keyFileName[256];
-    byte               *pixels;
-    char               *ptr;
+    byte*               pixels;
+    char*               ptr;
 
     strcpy(keyFileName, name);
 
@@ -1544,7 +1492,7 @@ byte *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
 /**
  * Frees all memory associated with the image.
  */
-void GL_DestroyImage(image_t * img)
+void GL_DestroyImage(image_t* img)
 {
     M_Free(img->pixels);
     img->pixels = NULL;
@@ -1553,70 +1501,17 @@ void GL_DestroyImage(image_t * img)
 /**
  * Name must end in \0.
  */
-byte *GL_LoadHighRes(image_t* img, const char* name, char* prefix,
-                     boolean allowColorKey, resourceclass_t resClass)
+boolean GL_LocateHighRes(char* fileName, const char* name,
+                         const char* prefix, boolean allowColorKey,
+                         resourceclass_t resClass)
 {
-    filename_t          resource, fileName;
+    filename_t          resource;
 
     // Form the resource name.
     sprintf(resource, "%s%s", prefix, name);
 
-    if(!R_FindResource
-       (resClass, resource, allowColorKey ? "-ck" : NULL, fileName))
-    {
-        // There is no such external resource file.
-        return NULL;
-    }
-
-    return GL_LoadImage(img, fileName, false);
-}
-
-/**
- * Use this when loading custom textures from the Data\*\Textures dir.
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadTexture(image_t* img, const char* name)
-{
-    return GL_LoadHighRes(img, name, "", true, RC_TEXTURE);
-}
-
-/**
- * Use this when loading high-res wall textures.
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadHighResTexture(image_t *img, const char* name)
-{
-    if(noHighResTex)
-        return NULL;
-    return GL_LoadTexture(img, name);
-}
-
-/**
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadHighResFlat(image_t *img, const char *name)
-{
-    byte *ptr;
-
-    if(noHighResTex)
-        return NULL;
-
-    // First try the Flats category.
-    if((ptr = GL_LoadHighRes(img, name, "", false, RC_FLAT)) != NULL)
-        return ptr;
-
-    // Try the old-fashioned "Flat-NAME" in the Textures category.
-    return GL_LoadHighRes(img, name, "flat-", false, RC_TEXTURE);
-}
-
-/**
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadHighResPatch(image_t *img, char *name)
-{
-    if(noHighResTex)
-        return NULL;
-    return GL_LoadHighRes(img, name, "", true, RC_PATCH);
+    return R_FindResource(resClass, resource, allowColorKey ? "-ck" : NULL,
+                          fileName);
 }
 
 /**
@@ -1628,8 +1523,8 @@ DGLuint GL_PrepareExtTexture(resourceclass_t resClass, const char* name,
                              int magFilter, int anisoFilter, int wrapS,
                              int wrapT, int otherFlags)
 {
-    image_t         image;
-    DGLuint         texture = 0;
+    image_t             image;
+    DGLuint             texture = 0;
 
     if(GL_LoadExtTexture(&image, resClass, name, mode))
     {   // Loaded successfully and converted accordingly.
@@ -1773,12 +1668,11 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
 {
     int                 i, flags = 0;
     doomtexturedef_t*   texDef;
-    byte                result = 0;
     boolean             loadAsSky = false, zeroMask = false;
     material_load_params_t* params = (material_load_params_t*) context;
 
     if(!image)
-        return result; // Wha?
+        return 0; // Wha?
 
     if(params)
     {
@@ -1788,56 +1682,56 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
 
     texDef = R_GetDoomTextureDef(inst->tex->ofTypeID);
 
-    // Try to load a high resolution version of this texture.
-    if((loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)) &&
-       GL_LoadHighResTexture(image, texDef->name) != NULL)
+    // Try to load a high resolution version of this texture?
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
+                         GLTexture_IsFromIWAD(inst->tex)))
     {
-        // High resolution texture loaded.
-        result = 2;
+        filename_t          fileName;
+
+        if(GL_LocateHighRes(fileName, texDef->name, "", true, RC_TEXTURE))
+            if(GL_LoadImage(image, fileName, false))
+                return 2; // High resolution texture loaded.
+    }
+
+    // None found. Load the lowres version.
+    image->width = texDef->width;
+    image->height = texDef->height;
+    image->pixelSize = 1;
+
+    if(loadAsSky)
+    {
+        bufferSkyTexture(texDef, &image->pixels, image->width,
+                         image->height, zeroMask);
+        image->isMasked = zeroMask;
     }
     else
     {
-        image->width = texDef->width;
-        image->height = texDef->height;
-        image->pixelSize = 1;
+        /**
+         * \todo if we are resizing masked textures re match patches then
+         * we are needlessly duplicating work.
+         */
+        image->pixels = M_Malloc(2 * image->width * image->height);
+        image->isMasked =
+            bufferTexture(texDef, image->pixels, image->width,
+                          image->height, &i);
 
-        if(loadAsSky)
+        // The -bigmtex option allows the engine to resize masked
+        // textures whose patches are too big to fit the texture.
+        if(allowMaskedTexEnlarge && image->isMasked && i)
         {
-            bufferSkyTexture(texDef, &image->pixels, image->width,
-                             image->height, zeroMask);
-            image->isMasked = zeroMask;
-        }
-        else
-        {
-            /**
-             * \todo if we are resizing masked textures re match patches then
-             * we are needlessly duplicating work.
-             */
+            // Adjust the defined height to fit the largest patch.
+            texDef->height = image->height = i;
+            // Get a new buffer.
+            M_Free(image->pixels);
             image->pixels = M_Malloc(2 * image->width * image->height);
             image->isMasked =
                 bufferTexture(texDef, image->pixels, image->width,
-                              image->height, &i);
-
-            // The -bigmtex option allows the engine to resize masked
-            // textures whose patches are too big to fit the texture.
-            if(allowMaskedTexEnlarge && image->isMasked && i)
-            {
-                // Adjust the defined height to fit the largest patch.
-                texDef->height = image->height = i;
-                // Get a new buffer.
-                M_Free(image->pixels);
-                image->pixels = M_Malloc(2 * image->width * image->height);
-                image->isMasked =
-                    bufferTexture(texDef, image->pixels, image->width,
-                                  image->height, 0);
-            }
-
+                              image->height, 0);
         }
 
-        result = 1;
     }
 
-    return result;
+    return 1;
 }
 
 /**
@@ -1848,55 +1742,59 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
  */
 byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
 {
-    byte                result = 0;
+    const lumpinfo_t*   lmpInf;
 
     if(!image)
-        return result; // Wha?
+        return 0; // Wha?
 
-    // Let's first try the resource locator and see if there is a
-    // 'high-resolution' version available.
-    if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(p->lump)) &&
-       GL_LoadHighResPatch(image, lumpInfo[p->lump].name) != NULL)
-    {   // High resolution patch loaded.
-        result = 2;
+    lmpInf = &lumpInfo[p->lump];
+
+    // Try to load a high resolution version of the patch?
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
+                         W_IsFromIWAD(p->lump)))
+    {
+        filename_t          fileName;
+
+        if(GL_LocateHighRes(fileName, lmpInf->name, "", true, RC_PATCH))
+            if(GL_LoadImage(image, fileName, false))
+                return 2; // High resolution patch loaded.
     }
-    else
-    {   // Use data from the normal lump.
-        if(p->lump >= 0 && p->lump < numLumps)
+
+    // Use data from the normal lump.
+    if(p->lump >= 0 && p->lump < numLumps)
+    {
+        boolean             scaleSharp = (upscaleAndSharpenPatches ||
+            (p->flags & PF_UPSCALE_AND_SHARPEN));
+        int                 patchWidth, patchHeight;
+        lumppatch_t*        patch;
+
+        patch = W_CacheLumpNum(p->lump, PU_CACHE);
+        patchWidth = SHORT(patch->width);
+        patchHeight = SHORT(patch->height);
+
+        if(patchWidth * patchHeight)
         {
-            boolean             scaleSharp = (upscaleAndSharpenPatches ||
-                (p->flags & PF_UPSCALE_AND_SHARPEN));
-            int                 patchWidth, patchHeight;
-            lumppatch_t*        patch;
-
-            patch = W_CacheLumpNum(p->lump, PU_CACHE);
-            patchWidth = SHORT(patch->width);
-            patchHeight = SHORT(patch->height);
-
-            if(patchWidth * patchHeight)
+            if(scaleSharp)
             {
-                if(scaleSharp)
-                {
-                    patchWidth += 2;
-                    patchHeight += 2;
-                }
-
-                image->width = patchWidth;
-                image->height = patchHeight;
-                image->pixelSize = 1;
-
-                // Allocate memory for the patch.
-                image->pixels = M_Calloc(2 * image->width * image->height);
-                image->isMasked = DrawRealPatch(image->pixels, image->width,
-                    image->height, patch, scaleSharp? 1 : 0,
-                    scaleSharp? 1 : 0, false, 0, true);
-
-                result = 1;
+                patchWidth += 2;
+                patchHeight += 2;
             }
+
+            image->width = patchWidth;
+            image->height = patchHeight;
+            image->pixelSize = 1;
+
+            // Allocate memory for the patch.
+            image->pixels = M_Calloc(2 * image->width * image->height);
+            image->isMasked = DrawRealPatch(image->pixels, image->width,
+                image->height, patch, scaleSharp? 1 : 0,
+                scaleSharp? 1 : 0, false, 0, true);
+
+            return 1;
         }
     }
 
-    return result;
+    return 0;
 }
 
 /**

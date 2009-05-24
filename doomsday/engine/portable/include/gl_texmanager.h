@@ -152,8 +152,10 @@ byte*           GL_LoadImage(image_t* img, const char* imagefn,
                              boolean useModelPath);
 byte*           GL_LoadImageCK(image_t* img, const char* imagefn,
                                boolean useModelPath);
+boolean         GL_LocateHighRes(char* fileName, const char* name,
+                                 const char* prefix, boolean allowColorKey,
+                                 resourceclass_t resClass);
 void            GL_DestroyImage(image_t* img);
-byte*           GL_LoadTexture(image_t* img, const char* name);
 
 DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  boolean flagAlphaChannel,

@@ -124,7 +124,7 @@ static float pointDist(fixed_t c[3])
 void Rend_ParticleInitTextures(void)
 {
     int                 i;
-    boolean             reported = false;
+    boolean             reported;
 
     if(ptctexname[0])
         return; // Already been here.
@@ -133,9 +133,9 @@ void Rend_ParticleInitTextures(void)
     memset(ptctexname, 0, sizeof(ptctexname));
 
     // Load the zeroth texture (the default: a blurred point).
-    ptctexname[0] = GL_PrepareExtTexture(RC_GRAPHICS, "Zeroth", LGM_WHITE_ALPHA,
-        true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE,
-        GL_CLAMP_TO_EDGE, 0);
+    ptctexname[0] = GL_PrepareExtTexture(RC_GRAPHICS, "Zeroth",
+        LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
     if(ptctexname[0] == 0)
     {
@@ -145,42 +145,49 @@ void Rend_ParticleInitTextures(void)
     // Load any custom particle textures. They are loaded from the
     // highres texture directory and are named "ParticleNN.(tga|png|pcx)".
     // The first is "Particle00". (based on Leesz' textured particles mod)
+    reported = false;
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
-        char                filename[80];
+        filename_t          fileName;
+        char                name[80];
         image_t             image;
 
         // Try to load the texture.
-        sprintf(filename, "Particle%02i", i);
-        if(GL_LoadTexture(&image, filename) == NULL)
-        {
-            // Just show the first 'not found'.
-            if(verbose && !reported)
+        sprintf(name, "Particle%02i", i);
+
+        if(GL_LocateHighRes(fileName, name, "", true, RC_TEXTURE))
+            if(GL_LoadImage(&image, fileName, false))
             {
-                Con_Message("Rend_ParticleInitTextures: %s not found.\n", filename);
+                VERBOSE(
+                Con_Message("Rend_ParticleInitTextures: Texture "
+                            "%02i: %i * %i * %i\n", i, image.width,
+                            image.height, image.pixelSize));
+
+                // If 8-bit with no alpha, generate alpha automatically.
+                if(image.originalBits == 8)
+                {
+                    GL_ConvertToAlpha(&image, true);
+                }
+
+                // Create a new texture and upload the image.
+                ptctexname[i + 1] = GL_NewTextureWithParams(
+                    image.pixelSize == 4 ? DGL_RGBA :
+                    image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
+                    image.width, image.height, image.pixels,
+                    TXCF_NO_COMPRESSION);
+
+                // Free the buffer.
+                GL_DestroyImage(&image);
+                continue;
             }
-            reported = true;
-            continue;
-        }
 
-        VERBOSE(Con_Message
-                ("Rend_ParticleInitTextures: Texture %02i: %i * %i * %i\n", i,
-                 image.width, image.height, image.pixelSize));
-
-        // If the source is 8-bit with no alpha, generate alpha automatically.
-        if(image.originalBits == 8)
+        // Just show the first 'not found'.
+        if(verbose && !reported)
         {
-            GL_ConvertToAlpha(&image, true);
+            Con_Message("Rend_ParticleInitTextures: %s not found.\n",
+                        name);
+            reported = true;
         }
-
-        // Create a new texture and upload the image.
-        ptctexname[i + 1] = GL_NewTextureWithParams(image.pixelSize == 4 ? DGL_RGBA : image.pixelSize ==
-                                                    2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
-                                                    image.width, image.height, image.pixels,
-                                                    TXCF_NO_COMPRESSION);
-
-        // Free the buffer.
-        GL_DestroyImage(&image);
     }
 }
 
