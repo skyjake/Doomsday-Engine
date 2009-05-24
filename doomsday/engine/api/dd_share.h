@@ -902,6 +902,31 @@ typedef struct {
 //
 //------------------------------------------------------------------------
 
+/**
+ * Resource classes. Each has its own subdir under Data\Game\.
+ */
+typedef enum resourceclass_e {
+    RC_TEXTURE,
+    RC_FLAT,
+    RC_PATCH,                  // Not sprites, mind you. Names == lumpnames.
+    RC_LIGHTMAP,
+    RC_FLAREMAP,
+    RC_MUSIC,                  // Names == lumpnames.
+    RC_SFX,                    // Names == lumpnames.
+    RC_GRAPHICS,               // Doomsday graphics.
+    NUM_RESOURCE_CLASSES
+} resourceclass_t;
+
+/**
+ * Processing modes for GL_LoadGraphics.
+ */
+typedef enum gfxmode_e {
+    LGM_NORMAL = 0,
+    LGM_GRAYSCALE = 1,
+    LGM_GRAYSCALE_ALPHA = 2,
+    LGM_WHITE_ALPHA = 3
+} gfxmode_t;
+
 #define DDMAX_MATERIAL_LAYERS   1
 
 typedef enum material_namespace_e {

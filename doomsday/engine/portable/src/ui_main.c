@@ -301,7 +301,7 @@ void UI_LoadTextures(void)
         if(!uiTextures[i])
         {
             uiTextures[i] =
-                GL_LoadGraphics4(RC_GRAPHICS, picNames[i],
+                GL_PrepareExtTexture(RC_GRAPHICS, picNames[i],
                                  (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL),
                                  false,
                                  GL_LINEAR, GL_LINEAR,

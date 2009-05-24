@@ -2077,7 +2077,7 @@ void FIC_Marker(void)
 
 void FIC_Delete(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    fiobj_t*            obj = FI_FindObject(FI_GetToken());
 
     if(obj)
     {
@@ -2087,7 +2087,7 @@ void FIC_Delete(void)
 
 void FIC_Image(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
 
     FI_ClearAnimation(pic);
     pic->lump[0] = W_CheckNumForName(FI_GetToken());
@@ -2098,7 +2098,7 @@ void FIC_Image(void)
 
 void FIC_ImageAt(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
@@ -2111,14 +2111,15 @@ void FIC_ImageAt(void)
 
 void FIC_XImage(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
-    const char         *fileName;
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         fileName;
 
     FI_ClearAnimation(pic);
 
     // Load the external resource.
     fileName = FI_GetToken();
-    pic->lump[0] = GL_LoadGraphics(fileName, 0);
+    pic->lump[0] = GL_LoadGraphics(RC_GRAPHICS, fileName, LGM_NORMAL,
+                                   false, true, 0);
 
     pic->flags.is_patch = false;
     pic->flags.is_rect = true;
@@ -2127,7 +2128,7 @@ void FIC_XImage(void)
 
 void FIC_Patch(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
@@ -2140,7 +2141,7 @@ void FIC_Patch(void)
 void FIC_SetPatch(void)
 {
     int                 num;
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
 
     if((num = W_CheckNumForName(FI_GetToken()))!= -1)
     {
@@ -2152,7 +2153,7 @@ void FIC_SetPatch(void)
 
 void FIC_ClearAnim(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
 
     FI_ClearAnimation(pic);
 }

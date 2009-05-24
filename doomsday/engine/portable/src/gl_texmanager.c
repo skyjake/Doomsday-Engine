@@ -76,6 +76,9 @@ D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
 D_CMD(SmoothRaw);
+#ifdef _DEBUG
+D_CMD(TranslateFont);
+#endif
 
 byte* GL_LoadHighResFlat(image_t* img, const char* name);
 byte* GL_LoadHighResPatch(image_t* img, char* name);
@@ -87,6 +90,10 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex,
 void            GLTexture_ReleaseTextures(gltexture_t* tex);
 
 void            GLTexture_SetMinMode(gltexture_t* tex, int minMode);
+
+#if _DEBUG
+void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
+#endif
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -190,6 +197,9 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("smoothscr", "i", SmoothRaw, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
+#if _DEBUG
+    C_CMD_FLAGS("translatefont", "ss", TranslateFont, CMDF_NO_DEDICATED);
+#endif
 }
 
 /**
@@ -1144,6 +1154,58 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 }
 
 /**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst,
+                      void* context)
+{
+    skinname_t*         sn;
+
+    if(!image)
+        return 0; // Wha?
+
+    sn = &skinNames[inst->tex->ofTypeID];
+
+    if(!GL_LoadImage(image, sn->path, true))
+    {
+        VERBOSE(Con_Printf("GL_LoadModelSkin: %s not found!\n",
+                           sn->path));
+        return 0;
+    }
+
+    return 2; // Always external.
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst,
+                           void* context)
+{
+    skinname_t*         sn;
+
+    if(!image)
+        return 0; // Wha?
+
+    sn = &skinNames[inst->tex->ofTypeID];
+
+    if(!GL_LoadImageCK(image, sn->path, true))
+    {
+        VERBOSE(Con_Printf("GL_LoadModelShinySkin: %s not found!\n",
+                           sn->path));
+        return 0;
+    }
+
+    return 2; // Always external.
+}
+
+/**
  * Prepare a texture used in the lighting system. 'which' must be one
  * of the LST_* constants.
  */
@@ -1157,22 +1219,24 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         {
             // We don't want to compress the flares (banding would be noticeable).
             lightingTextures[LST_DYNAMIC].tex =
-                GL_LoadGraphics3("dLight", LGM_WHITE_ALPHA, GL_LINEAR, GL_LINEAR,
-                                 -1 /*best anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 TXCF_NO_COMPRESSION);
+                GL_PrepareExtTexture(RC_GRAPHICS, "dLight", LGM_WHITE_ALPHA,
+                                 false, GL_LINEAR, GL_LINEAR,
+                                 -1 /*best anisotropy*/, GL_CLAMP_TO_EDGE,
+                                 GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
         }
-        // Global tex variables not set! (scalable texture)
+
         return lightingTextures[LST_DYNAMIC].tex;
 
     case LST_GRADIENT:
         if(!lightingTextures[LST_GRADIENT].tex)
         {
             lightingTextures[LST_GRADIENT].tex =
-                GL_LoadGraphics3("wallglow", LGM_WHITE_ALPHA, GL_LINEAR,
-                                 GL_LINEAR, -1 /*best anisotropy*/,
-                                 GL_REPEAT, GL_CLAMP_TO_EDGE, 0);
+                GL_PrepareExtTexture(RC_GRAPHICS, "wallglow", LGM_WHITE_ALPHA,
+                                 false, GL_LINEAR, GL_LINEAR,
+                                 -1 /*best anisotropy*/, GL_REPEAT,
+                                 GL_CLAMP_TO_EDGE, 0);
         }
-        // Global tex variables not set! (scalable texture)
+
         return lightingTextures[LST_GRADIENT].tex;
 
     case LST_RADIO_CO:          // closed/open
@@ -1186,37 +1250,45 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
             {
             case LST_RADIO_CO:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioCO", LGM_WHITE_ALPHA, GL_LINEAR,
+                    GL_PrepareExtTexture(RC_GRAPHICS, "radioCO",
+                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                     TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_CC:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioCC", LGM_WHITE_ALPHA, GL_LINEAR,
+                    GL_PrepareExtTexture(RC_GRAPHICS, "radioCC",
+                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                     TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OO:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioOO", LGM_WHITE_ALPHA, GL_LINEAR,
+                    GL_PrepareExtTexture(RC_GRAPHICS, "radioOO",
+                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                     TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OE:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioOE", LGM_WHITE_ALPHA, GL_LINEAR,
+                    GL_PrepareExtTexture(RC_GRAPHICS, "radioOE",
+                                     LGM_WHITE_ALPHA, false, GL_LINEAR,
                                      GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
+                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                     TXCF_NO_COMPRESSION);
                 break;
 
             default:
                 break;
             }
         }
-        // Global tex variables not set! (scalable texture)
+
         return lightingTextures[which].tex;
 
     default:
@@ -1235,9 +1307,11 @@ DGLuint GL_PrepareFlareTexture(flaretexid_t flare)
     {
         // We don't want to compress the flares (banding would be noticeable).
         flareTextures[flare].tex =
-            GL_LoadGraphics3(flare == 0 ? "flare" : flare == 1 ? "brflare" :
-                             "bigflare", LGM_WHITE_ALPHA,
-                             GL_NEAREST, GL_LINEAR, 0 /*no anisotropy*/,
+            GL_PrepareExtTexture(RC_GRAPHICS,
+                             flare == 0 ? "flare" :
+                             flare == 1 ? "brflare" : "bigflare",
+                             LGM_WHITE_ALPHA, false, GL_NEAREST,
+                             GL_LINEAR, 0 /*no anisotropy*/,
                              GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                              TXCF_NO_COMPRESSION);
 
@@ -1249,6 +1323,52 @@ DGLuint GL_PrepareFlareTexture(flaretexid_t flare)
     }
 
     return flareTextures[flare].tex;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = not prepared
+ *                      1 = found and prepared a lump resource.
+ *                      2 = found and prepared an external resource.
+ */
+byte GL_LoadExtTexture(image_t* image, resourceclass_t resClass,
+                       const char* name, gfxmode_t mode)
+{
+    filename_t          fileName;
+
+    if(R_FindResource(resClass, name, NULL, fileName) &&
+       GL_LoadImage(image, fileName, false))
+    {
+        // Too big for us?
+        if(image->width  > GL_state.maxTexSize ||
+           image->height > GL_state.maxTexSize)
+        {
+            int     newWidth = MIN_OF(image->width, GL_state.maxTexSize);
+            int     newHeight = MIN_OF(image->height, GL_state.maxTexSize);
+            byte   *tmp = M_Malloc(newWidth * newHeight * image->pixelSize);
+
+            GL_ScaleBuffer32(image->pixels, image->width, image->height,
+                             tmp, newWidth, newHeight, image->pixelSize);
+            M_Free(image->pixels);
+            image->pixels = tmp;
+            image->width = newWidth;
+            image->height = newHeight;
+        }
+
+        // Force it to grayscale?
+        if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
+        {
+            GL_ConvertToAlpha(image, mode == LGM_WHITE_ALPHA);
+        }
+        else if(mode == LGM_GRAYSCALE)
+        {
+            GL_ConvertToLuminance(image);
+        }
+
+        return 2; // Always external.
+    }
+
+    return 0;
 }
 
 /**
@@ -1499,107 +1619,50 @@ byte *GL_LoadHighResPatch(image_t *img, char *name)
     return GL_LoadHighRes(img, name, "", true, RC_PATCH);
 }
 
-DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
-{
-    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, false, true, 0);
-}
-
-DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap, boolean clamped,
-                         int otherFlags)
-{
-    return GL_LoadGraphics4(resClass, name, mode, useMipmap,
-                            GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
-                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT, otherFlags);
-}
-
-DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
-                         int minFilter, int magFilter, int anisoFilter,
-                         int wrapS, int wrapT, int otherFlags)
-{
-    return GL_LoadGraphics4(RC_GRAPHICS, name, mode, false,
-                            minFilter, magFilter, anisoFilter, wrapS, wrapT,
-                            otherFlags);
-}
-
 /**
- * Extended version that uses a custom resource class.
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
  * actual pixel colors all white.
  */
-DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap,
-                         int minFilter, int magFilter, int anisoFilter,
-                         int wrapS, int wrapT, int otherFlags)
+DGLuint GL_PrepareExtTexture(resourceclass_t resClass, const char* name,
+                             gfxmode_t mode, int useMipmap, int minFilter,
+                             int magFilter, int anisoFilter, int wrapS,
+                             int wrapT, int otherFlags)
 {
-    image_t image;
-    filename_t fileName;
-    DGLuint texture = 0;
+    image_t         image;
+    DGLuint         texture = 0;
 
-    if(R_FindResource(resClass, name, NULL, fileName) &&
-       GL_LoadImage(&image, fileName, false))
-    {
-        // Too big for us?
-        if(image.width  > GL_state.maxTexSize ||
-           image.height > GL_state.maxTexSize)
-        {
-            int     newWidth = MIN_OF(image.width, GL_state.maxTexSize);
-            int     newHeight = MIN_OF(image.height, GL_state.maxTexSize);
-            byte   *temp = M_Malloc(newWidth * newHeight * image.pixelSize);
-
-            GL_ScaleBuffer32(image.pixels, image.width, image.height, temp,
-                             newWidth, newHeight, image.pixelSize);
-            M_Free(image.pixels);
-            image.pixels = temp;
-            image.width = newWidth;
-            image.height = newHeight;
-        }
-
-        // Force it to grayscale?
-        if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
-        {
-            GL_ConvertToAlpha(&image, mode == LGM_WHITE_ALPHA);
-        }
-        else if(mode == LGM_GRAYSCALE)
-        {
-            GL_ConvertToLuminance(&image);
-        }
-
-        /*
-        // Generate a new texture name and bind it.
-        glGenTextures(1, (GLuint*) &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        if(image.width < 128 && image.height < 128)
-        {
-            // Small textures will never be compressed.
-            GL_SetTextureCompression(false);
-        }
-        GL_TexImage(image.pixelSize ==
-                    2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                    3 ? DGL_RGB : image.pixelSize ==
-                    4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height,
-                    useMipmap, image.pixels);
-        GL_SetTextureCompression(true);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                        useMipmap ? glmode[mipmapping] : GL_LINEAR);
-        */
-
-        texture = GL_NewTextureWithParams2(( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                                             image.pixelSize == 3 ? DGL_RGB :
-                                             image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                                           image.width, image.height, image.pixels,
-                                           ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
-                                             (useMipmap == DDMAXINT? TXCF_GRAY_MIPMAP : 0) |
-                                             (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
-                                           (useMipmap ? glmode[mipmapping] : GL_LINEAR),
-                                           magFilter, texAniso,
-                                           wrapS, wrapT);
+    if(GL_LoadExtTexture(&image, resClass, name, mode))
+    {   // Loaded successfully and converted accordingly.
+        // Upload the image to GL.
+        texture = GL_NewTextureWithParams2(
+            ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+              image.pixelSize == 3 ? DGL_RGB :
+              image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
+            image.width, image.height, image.pixels,
+            ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
+              (useMipmap == DDMAXINT? TXCF_GRAY_MIPMAP : 0) |
+              (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
+              (useMipmap ? glmode[mipmapping] : GL_LINEAR),
+              magFilter, texAniso, wrapS, wrapT);
 
         GL_DestroyImage(&image);
     }
+
     return texture;
+}
+
+/**
+ * Part of the Doomsday public API.
+ */
+DGLuint GL_LoadGraphics(resourceclass_t resClass, const char *name,
+                        gfxmode_t mode, int useMipmap, boolean clamped,
+                        int otherFlags)
+{
+    return GL_PrepareExtTexture(resClass, name, mode, useMipmap,
+                            GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
+                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
+                            otherFlags);
 }
 
 /**
@@ -2586,58 +2649,6 @@ void GL_DeleteRawImages(void)
         }
     }
     Z_Free(rawTexs);
-}
-
-/**
- * @return              The outcome:
- *                      0 = none loaded.
- *                      1 = a lump resource.
- *                      2 = an external resource.
- */
-byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst,
-                      void* context)
-{
-    skinname_t*         sn;
-
-    if(!image)
-        return 0; // Wha?
-
-    sn = &skinNames[inst->tex->ofTypeID];
-
-    if(!GL_LoadImage(image, sn->path, true))
-    {
-        VERBOSE(Con_Printf("GL_LoadModelSkin: %s not found!\n",
-                           sn->path));
-        return 0;
-    }
-
-    return 2; // Always external.
-}
-
-/**
- * @return              The outcome:
- *                      0 = none loaded.
- *                      1 = a lump resource.
- *                      2 = an external resource.
- */
-byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst,
-                           void* context)
-{
-    skinname_t*         sn;
-
-    if(!image)
-        return 0; // Wha?
-
-    sn = &skinNames[inst->tex->ofTypeID];
-
-    if(!GL_LoadImageCK(image, sn->path, true))
-    {
-        VERBOSE(Con_Printf("GL_LoadModelShinySkin: %s not found!\n",
-                           sn->path));
-        return 0;
-    }
-
-    return 2; // Always external.
 }
 
 /**

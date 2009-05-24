@@ -133,8 +133,9 @@ void Rend_ParticleInitTextures(void)
     memset(ptctexname, 0, sizeof(ptctexname));
 
     // Load the zeroth texture (the default: a blurred point).
-    ptctexname[0] =
-        GL_LoadGraphics2(RC_GRAPHICS, "Zeroth", LGM_WHITE_ALPHA, true, true, 0);
+    ptctexname[0] = GL_PrepareExtTexture(RC_GRAPHICS, "Zeroth", LGM_WHITE_ALPHA,
+        true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE,
+        GL_CLAMP_TO_EDGE, 0);
 
     if(ptctexname[0] == 0)
     {

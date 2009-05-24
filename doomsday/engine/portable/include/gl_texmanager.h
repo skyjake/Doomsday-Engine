@@ -117,16 +117,6 @@ typedef struct image_s {
     byte*           pixels;
 } image_t;
 
-/**
- * Processing modes for GL_LoadGraphics.
- */
-typedef enum gfxmode_e {
-    LGM_NORMAL = 0,
-    LGM_GRAYSCALE = 1,
-    LGM_GRAYSCALE_ALPHA = 2,
-    LGM_WHITE_ALPHA = 3
-} gfxmode_t;
-
 extern int      ratioLimit;
 extern int      mipmapping, linearRaw, texQuality, filterSprites;
 extern int      texMagMode, texAniso;
@@ -158,33 +148,24 @@ int             GL_InitPalettedTexture(void);
 void            GL_BindTexture(DGLuint texname, int magMode);
 
 void            GL_LowRes(void);
-void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
 byte*           GL_LoadImage(image_t* img, const char* imagefn,
                              boolean useModelPath);
 byte*           GL_LoadImageCK(image_t* img, const char* imagefn,
                                boolean useModelPath);
 void            GL_DestroyImage(image_t* img);
 byte*           GL_LoadTexture(image_t* img, const char* name);
-DGLuint         GL_LoadGraphics(const char* name, gfxmode_t mode);
-DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char* name,
-                                 gfxmode_t mode, int useMipmap, boolean clamped,
-                                 int otherFlags);
-DGLuint         GL_LoadGraphics3(const char* name, gfxmode_t mode,
-                                 int minFilter, int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT, int otherFlags);
-DGLuint         GL_LoadGraphics4(resourceclass_t resClass, const char* name,
-                                 gfxmode_t mode, int useMipmap,
-                                 int minFilter, int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT, int otherFlags);
+
 DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  boolean flagAlphaChannel,
                                  boolean flagGenerateMipmaps,
                                  boolean flagRgbData,
                                  boolean flagNoStretch,
                                  boolean flagNoSmartFilter,
-                                 int minFilter, int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT, int otherFlags);
+                                 int minFilter, int magFilter,
+                                 int anisoFilter, int wrapS, int wrapT,
+                                 int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
+
 
 byte            GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* context);
@@ -195,7 +176,14 @@ byte            GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 byte            GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadExtTexture(image_t* image, resourceclass_t resClass,
+                                  const char* name, gfxmode_t mode);
 
+DGLuint         GL_PrepareExtTexture(resourceclass_t resClass,
+                                     const char* name, gfxmode_t mode,
+                                     int useMipmap, int minFilter,
+                                     int magFilter, int anisoFilter,
+                                     int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare);
 
@@ -236,4 +224,5 @@ void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 float           GLTexture_GetWidth(const gltexture_t* tex);
 float           GLTexture_GetHeight(const gltexture_t* tex);
 boolean         GLTexture_IsFromIWAD(const gltexture_t* tex);
+
 #endif

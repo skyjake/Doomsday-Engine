@@ -655,7 +655,9 @@ void Con_StartupInit(void)
     }
 
     // Load graphics.
-    startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
+    startupLogo = GL_PrepareExtTexture(RC_GRAPHICS, "Background", LGM_GRAYSCALE,
+        false, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE,
+        GL_CLAMP_TO_EDGE, 0);
 }
 
 void Con_StartupDone(void)

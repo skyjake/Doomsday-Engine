@@ -414,8 +414,10 @@ extern          "C" {
                                     spriteinfo_t* sprinfo);
     void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
     int             R_CreateAnimGroup(int flags);
-    void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
-    void            R_PalIdxToRGB(float* rgb, int idx, boolean correctGamma);
+    void            R_AddToAnimGroup(int groupNum, materialnum_t num,
+                                     int tics, int randomTics);
+    void            R_PalIdxToRGB(float* rgb, int idx,
+                                  boolean correctGamma);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2,
                                     float y2);
@@ -428,9 +430,14 @@ extern          "C" {
     // Graphics.
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
-    unsigned int    GL_LoadGraphics(const char* name, int mode);
-    unsigned int    GL_NewTextureWithParams3(int format, int width, int height, void* pixels,
-                                             int flags, int minFilter, int magFilter, int anisoFilter,
+    DGLuint         GL_LoadGraphics(resourceclass_t resClass,
+                                     const char* name, gfxmode_t mode,
+                                     int useMipmap, boolean clamped,
+                                     int otherFlags);
+    DGLuint         GL_NewTextureWithParams3(int format, int width,
+                                             int height, void* pixels,
+                                             int flags, int minFilter,
+                                             int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
@@ -443,9 +450,11 @@ extern          "C" {
     void            GL_DrawFuzzPatch(int x, int y, lumpnum_t lump);
     void            GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump);
     void            GL_DrawShadowedPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
-    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
-                                        float scalex, float scaley);
+    void            GL_DrawRawScreen(lumpnum_t lump, float offx,
+                                     float offy);
+    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx,
+                                        float offy, float scalex,
+                                        float scaley);
 
     // Audio.
     void            S_MapChange(void);
