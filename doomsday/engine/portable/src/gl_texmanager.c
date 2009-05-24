@@ -981,7 +981,8 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
  *                      1 = loaded data from a lump resource.
  *                      2 = loaded data from an external resource.
  */
-byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, void* context)
+byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst,
+                      void* context)
 {
     static const char* ddTexNames[NUM_DD_TEXTURES] = {
         "unknown",
@@ -1337,12 +1338,14 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
         boolean             found;
 
         // First try the Flats category.
-        found = GL_LocateHighRes(file, lmpInf->name, "", false, RC_FLAT);
+        if(!(found = R_FindResource(RC_FLAT, lmpInf->name, NULL, file)))
+        {   // Try the old-fashioned "Flat-NAME" in the Textures category.
+            filename_t          resource;
 
-        // Try the old-fashioned "Flat-NAME" in the Textures category.
-        if(!found)
-            found = GL_LocateHighRes(file, lmpInf->name, "flat-", false,
-                                     RC_TEXTURE);
+            snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lmpInf->name);
+
+            found = R_FindResource(RC_TEXTURE, resource, NULL, file);
+        }
 
         if(found && GL_LoadImage(img, file, false))
             return 2;
@@ -1496,22 +1499,6 @@ void GL_DestroyImage(image_t* img)
 {
     M_Free(img->pixels);
     img->pixels = NULL;
-}
-
-/**
- * Name must end in \0.
- */
-boolean GL_LocateHighRes(char* fileName, const char* name,
-                         const char* prefix, boolean allowColorKey,
-                         resourceclass_t resClass)
-{
-    filename_t          resource;
-
-    // Form the resource name.
-    sprintf(resource, "%s%s", prefix, name);
-
-    return R_FindResource(resClass, resource, allowColorKey ? "-ck" : NULL,
-                          fileName);
 }
 
 /**
@@ -1688,7 +1675,7 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
     {
         filename_t          fileName;
 
-        if(GL_LocateHighRes(fileName, texDef->name, "", true, RC_TEXTURE))
+        if(R_FindResource(RC_TEXTURE, fileName, "-ck", fileName))
             if(GL_LoadImage(image, fileName, false))
                 return 2; // High resolution texture loaded.
     }
@@ -1755,7 +1742,7 @@ byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
     {
         filename_t          fileName;
 
-        if(GL_LocateHighRes(fileName, lmpInf->name, "", true, RC_PATCH))
+        if(R_FindResource(RC_PATCH, lmpInf->name, "-ck", fileName))
             if(GL_LoadImage(image, fileName, false))
                 return 2; // High resolution patch loaded.
     }
@@ -1803,19 +1790,20 @@ byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
  *                      1 = loaded data from a lump resource.
  *                      2 = loaded data from an external resource.
  */
-byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
+byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
+                   void* context)
 {
-    spritetex_t*        sprTex;
-    filename_t          resource, fileName;
+    const spritetex_t*  sprTex;
+    const lumpinfo_t*   lmpInf;
     int                 tmap = 0, tclass = 0;
     boolean             pSprite = false;
-    byte                result = 0;
     material_load_params_t* params = (material_load_params_t*) context;
 
     if(!image)
-        return result; // Wha?
+        return 0; // Wha?
 
     sprTex = spriteTextures[inst->tex->ofTypeID];
+    lmpInf = &lumpInfo[sprTex->lump];
 
     if(params)
     {
@@ -1824,53 +1812,56 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
         pSprite = params->pSprite;
     }
 
-    // Compose a resource name.
-    if(pSprite)
+    // Attempt to load a high resolution version of this sprite?
+    if(!noHighResPatches)
     {
-        sprintf(resource, "%s-hud", lumpInfo[sprTex->lump].name);
-    }
-    else
-    {
-        if(tclass || tmap)
-        {   // Translated.
-            sprintf(resource, "%s-table%i%i",
-                    lumpInfo[sprTex->lump].name, tclass, tmap);
+        filename_t          resource, fileName;
+        boolean             found;
+
+        // Compose a resource name.
+        if(pSprite)
+        {
+            snprintf(resource, FILENAME_T_MAXLEN, "%s-hud", lmpInf->name);
         }
         else
-        {   // Not translated; use the normal resource.
-            strcpy(resource, lumpInfo[sprTex->lump].name);
+        {
+            if(tclass || tmap)
+            {   // Translated.
+                snprintf(resource, FILENAME_T_MAXLEN, "%s-table%i%i",
+                         lmpInf->name, tclass, tmap);
+            }
+            else
+            {   // Not translated; use the normal resource.
+                strncpy(resource, lmpInf->name, FILENAME_T_MAXLEN);
+            }
         }
+
+        found = R_FindResource(RC_PATCH, resource, "-ck", fileName);
+        if(!found && pSprite)
+            found = R_FindResource(RC_PATCH, lmpInf->name, "-ck", fileName);
+
+        if(found && GL_LoadImage(image, fileName, false) != NULL)
+            return 2; // Loaded high resolution sprite.
     }
 
-    if(!noHighResPatches &&
-       (R_FindResource(RC_PATCH, resource, "-ck", fileName) ||
-        (pSprite && R_FindResource(RC_PATCH, lumpInfo[sprTex->lump].name, "-ck", fileName))) &&
-       GL_LoadImage(image, fileName, false) != NULL)
     {
-        // A high-resolution version of this sprite has been found.
-        result = 2;
+    unsigned char*      table = NULL;
+    lumppatch_t*        patch = W_CacheLumpNum(sprTex->lump, PU_CACHE);
+
+    if(tclass || tmap)
+        table = translationTables - 256 + tclass * ((8 - 1) * 256) +
+            tmap * 256;
+
+    image->width = sprTex->width;
+    image->height = sprTex->height;
+    image->pixelSize = 1;
+    image->pixels = M_Calloc(2 * image->width * image->height);
+
+    DrawRealPatch(image->pixels, image->width, image->height, patch,
+                  0, 0, false, table, false);
+
+    return 1;
     }
-    else
-    {   // There's no name for this patch, load it in.
-        unsigned char*      table = NULL;
-        lumppatch_t*        patch =
-            (lumppatch_t*) W_CacheLumpNum(sprTex->lump, PU_CACHE);
-
-        if(tclass || tmap)
-            table = translationTables - 256 + tclass * ((8 - 1) * 256) + tmap * 256;
-
-        image->width = sprTex->width;
-        image->height = sprTex->height;
-        image->pixelSize = 1;
-        image->pixels = M_Calloc(2 * image->width * image->height);
-
-        DrawRealPatch(image->pixels, image->width, image->height, patch,
-                      0, 0, false, table, false);
-
-        result = 1;
-    }
-
-    return result;
 }
 
 void GL_SetPSprite(material_t* mat)
@@ -2587,18 +2578,6 @@ void GL_DoTexReset(cvar_t* unused)
 void GL_DoResetDetailTextures(cvar_t* unused)
 {
     GL_DeleteAllTexturesForGLTextures(GLT_DETAIL);
-}
-
-void GL_LowRes(void)
-{
-    // Set everything as low as they go.
-    filterSprites = 0;
-    linearRaw = 0;
-    texMagMode = 0;
-
-    // And do a texreset so everything is updated.
-    GL_SetTextureParams(GL_NEAREST, true, true);
-    GL_TexReset();
 }
 
 /**

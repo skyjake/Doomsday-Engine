@@ -155,7 +155,7 @@ void Rend_ParticleInitTextures(void)
         // Try to load the texture.
         sprintf(name, "Particle%02i", i);
 
-        if(GL_LocateHighRes(fileName, name, "", true, RC_TEXTURE))
+        if(R_FindResource(RC_TEXTURE, name, "-ck", fileName))
             if(GL_LoadImage(&image, fileName, false))
             {
                 VERBOSE(

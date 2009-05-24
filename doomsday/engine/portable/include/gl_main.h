@@ -74,6 +74,7 @@ void            GL_UseFog(int yes);
 //void            GL_ShutdownVarFont(void);
 const char*     GL_ChooseFixedFont(void);
 const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
+void            GL_LowRes(void);
 void            GL_ActiveTexture(const GLenum texture);
 void            GL_ModulateTexture(int mode);
 void            GL_SelectTexUnits(int count);

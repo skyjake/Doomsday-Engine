@@ -134,27 +134,30 @@ void            GL_InitTextureManager(void);
 void            GL_ResetTextureManager(void);
 void            GL_ShutdownTextureManager(void);
 
+void            GL_TexReset(void);
 void            GL_LoadSystemTextures(void);
 void            GL_LoadLightmaps(void);
 void            GL_LoadFlareTextures(void);
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
+void            GL_DeleteRawImages(void);
+int             GL_InitPalettedTexture(void);
+
 void            GL_DoTexReset(cvar_t* unused);
 void            GL_DoUpdateTexGamma(cvar_t* unused);
 void            GL_DoUpdateTexParams(cvar_t* unused);
-int             GL_InitPalettedTexture(void);
+void            GL_UpdateTexParams(int mipmode);
 
 void            GL_BindTexture(DGLuint texname, int magMode);
+void            GL_SetNoTexture(void);
+void            GL_SetTextureParams(int minMode, int gameTex, int uiTex);
+boolean         GL_IsColorKeyed(const char* path);
 
-void            GL_LowRes(void);
 byte*           GL_LoadImage(image_t* img, const char* imagefn,
                              boolean useModelPath);
 byte*           GL_LoadImageCK(image_t* img, const char* imagefn,
                                boolean useModelPath);
-boolean         GL_LocateHighRes(char* fileName, const char* name,
-                                 const char* prefix, boolean allowColorKey,
-                                 resourceclass_t resClass);
 void            GL_DestroyImage(image_t* img);
 
 DGLuint         GL_UploadTexture(byte* data, int width, int height,
@@ -167,7 +170,6 @@ DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  int anisoFilter, int wrapS, int wrapT,
                                  int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
-
 
 byte            GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* context);
@@ -206,14 +208,7 @@ void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps
 
 void            GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
                                int wrapT);
-void            GL_DeleteRawImages(void);
 
-void            GL_SetNoTexture(void);
-
-void            GL_NewSplitTex(lumpnum_t lump, DGLuint part2name);
-void            GL_UpdateTexParams(int mipmode);
-
-boolean         GL_IsColorKeyed(const char* path);
 
 // Management of and access to gltextures (via the texmanager):
 const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeID,
