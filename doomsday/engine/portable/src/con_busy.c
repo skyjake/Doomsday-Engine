@@ -203,14 +203,14 @@ static void Con_BusyLoadTextures(void)
     {
         // These must be real files in the base dir because virtual files haven't
         // been loaded yet when engine startup is done.
-        if(GL_LoadImage(&image, "}data/graphics/loading1.png", false))
+        if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
         {
             texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);
             GL_DestroyImage(&image);
         }
 
-        if(GL_LoadImage(&image, "}data/graphics/loading2.png", false))
+        if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
         {
             texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);

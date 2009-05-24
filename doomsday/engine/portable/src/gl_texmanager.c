@@ -353,7 +353,7 @@ void GL_LoadLightMap(ded_lightmap_t *map)
     {
         // Search an external resource.
         if(R_FindResource(RC_LIGHTMAP, map->id, "-ck", resource) &&
-           GL_LoadImage(&image, resource, false))
+           GL_LoadImage(&image, resource))
         {
             if(!image.isMasked)
             {
@@ -411,7 +411,7 @@ void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
     {
         // Search an external resource.
         if(R_FindResource(RC_FLAREMAP, map->id, "-ck", resource) &&
-           GL_LoadImage(&image, resource, false))
+           GL_LoadImage(&image, resource))
         {
             // A custom flare texture
             map->custom = true;
@@ -1004,7 +1004,7 @@ byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst,
                   "invalid ddtex id %i.", num);
 
     if(!(R_FindResource(RC_GRAPHICS, ddTexNames[num], NULL, fileName) &&
-         GL_LoadImage(image, fileName, false)))
+         GL_LoadImage(image, fileName)))
     {
         Con_Error("GL_LoadDDTexture: \"%s\" not found!\n", ddTexNames[num]);
     }
@@ -1035,7 +1035,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
         filename_t          fileName;
 
         if(!(R_FindResource(RC_TEXTURE, dTex->external, NULL, fileName) &&
-             GL_LoadImage(image, fileName, false)))
+             GL_LoadImage(image, fileName)))
         {
             VERBOSE(Con_Message("GL_LoadDetailTexture: "
                                 "Failed to load: %s\n", dTex->external));
@@ -1114,7 +1114,7 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst,
     sTex = shinyTextures[inst->tex->ofTypeID];
 
     if(!(R_FindResource(RC_LIGHTMAP, sTex->external, NULL, fileName) &&
-         GL_LoadImage(image, fileName, false)))
+         GL_LoadImage(image, fileName)))
     {
         VERBOSE(Con_Printf("GL_LoadShinyTexture: %s not found!\n",
                            sTex->external));
@@ -1142,7 +1142,7 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
     mTex = maskTextures[inst->tex->ofTypeID];
 
     if(!(R_FindResource(RC_LIGHTMAP, mTex->external, NULL, fileName) &&
-         GL_LoadImage(image, fileName, false)))
+         GL_LoadImage(image, fileName)))
     {
         VERBOSE(Con_Printf("GL_LoadMaskTexture: %s not found!\n",
                            mTex->external));
@@ -1161,21 +1161,23 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst,
                       void* context)
 {
-    skinname_t*         sn;
+    const skinname_t*   sn;
+    filename_t          fileName;
 
     if(!image)
         return 0; // Wha?
 
     sn = &skinNames[inst->tex->ofTypeID];
 
-    if(!GL_LoadImage(image, sn->path, true))
-    {
-        VERBOSE(Con_Printf("GL_LoadModelSkin: %s not found!\n",
-                           sn->path));
-        return 0;
-    }
+    if(R_FindModelFile(sn->path, fileName))
+        if(GL_LoadImage(image, fileName))
+        {
+            return 2; // Always external.
+        }
 
-    return 2; // Always external.
+    VERBOSE(Con_Printf("GL_LoadModelSkin: %s not found!\n", sn->path));
+
+    return 0;
 }
 
 /**
@@ -1184,24 +1186,44 @@ byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst,
  *                      1 = a lump resource.
  *                      2 = an external resource.
  */
-byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst,
+byte GL_LoadModelShinySkin(image_t* img, const gltexture_inst_t* inst,
                            void* context)
 {
-    skinname_t*         sn;
+    const skinname_t*   sn;
+    filename_t          resource, fileName;
+    char*               ptr;
 
-    if(!image)
+    if(!img)
         return 0; // Wha?
 
     sn = &skinNames[inst->tex->ofTypeID];
 
-    if(!GL_LoadImageCK(image, sn->path, true))
+    /**
+     * First sees if there is a color-keyed version. If there is load it.
+     * Otherwise the 'regular' version is loaded.
+     */
+    strcpy(resource, sn->path);
+
+    // Append the "-ck" and try to load.
+    if((ptr = strrchr(resource, '.')))
     {
-        VERBOSE(Con_Printf("GL_LoadModelShinySkin: %s not found!\n",
-                           sn->path));
-        return 0;
+        memmove(ptr + 3, ptr, strlen(ptr) + 1);
+        ptr[0] = '-';
+        ptr[1] = 'c';
+        ptr[2] = 'k';
+
+        if(R_FindModelFile(resource, fileName))
+            if(GL_LoadImage(img, fileName))
+                return 2;
     }
 
-    return 2; // Always external.
+    if(R_FindModelFile(sn->path, fileName))
+        if(GL_LoadImage(img, fileName))
+            return 2;
+
+    VERBOSE(Con_Printf("GL_LoadModelShinySkin: %s not found!\n",
+                       sn->path));
+    return 0;
 }
 
 /**
@@ -1278,7 +1300,7 @@ byte GL_LoadExtTexture(image_t* image, resourceclass_t resClass,
     filename_t          fileName;
 
     if(R_FindResource(resClass, name, NULL, fileName) &&
-       GL_LoadImage(image, fileName, false))
+       GL_LoadImage(image, fileName))
     {
         // Too big for us?
         if(image->width  > GL_state.maxTexSize ||
@@ -1347,7 +1369,7 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
             found = R_FindResource(RC_TEXTURE, resource, NULL, file);
         }
 
-        if(found && GL_LoadImage(img, file, false))
+        if(found && GL_LoadImage(img, file))
             return 2;
     }
 
@@ -1372,24 +1394,11 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-byte* GL_LoadImage(image_t* img, const char* imagefn, boolean useModelPath)
+static byte* loadImage(image_t* img, const char* imagefn)
 {
     DFILE*              file;
     char                ext[40];
     int                 format;
-
-    // Clear any old values.
-    memset(img, 0, sizeof(*img));
-
-    if(useModelPath)
-    {
-        if(!R_FindModelFile(imagefn, img->fileName))
-            return NULL; // Not found.
-    }
-    else
-    {
-        strcpy(img->fileName, imagefn);
-    }
 
     // We know how to load PCX, TGA and PNG.
     M_GetFileExt(img->fileName, ext);
@@ -1465,31 +1474,14 @@ byte* GL_LoadImage(image_t* img, const char* imagefn, boolean useModelPath)
     return img->pixels;
 }
 
-/**
- * First sees if there is a color-keyed version of the given image. If
- * there is it is loaded. Otherwise the 'regular' version is loaded.
- */
-byte* GL_LoadImageCK(image_t* img, const char* name, boolean useModelPath)
+byte* GL_LoadImage(image_t* img, const char* imagefn)
 {
-    char                keyFileName[256];
-    byte*               pixels;
-    char*               ptr;
+    // Clear any old values.
+    memset(img, 0, sizeof(*img));
 
-    strcpy(keyFileName, name);
+    strcpy(img->fileName, imagefn);
 
-    // Append the "-ck" and try to load.
-    ptr = strrchr(keyFileName, '.');
-    if(ptr)
-    {
-        memmove(ptr + 3, ptr, strlen(ptr) + 1);
-        ptr[0] = '-';
-        ptr[1] = 'c';
-        ptr[2] = 'k';
-        if((pixels = GL_LoadImage(img, keyFileName, useModelPath)) != NULL)
-            return pixels;
-    }
-
-    return GL_LoadImage(img, name, useModelPath);
+    return loadImage(img, imagefn);
 }
 
 /**
@@ -1675,8 +1667,8 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
     {
         filename_t          fileName;
 
-        if(R_FindResource(RC_TEXTURE, fileName, "-ck", fileName))
-            if(GL_LoadImage(image, fileName, false))
+        if(R_FindResource(RC_TEXTURE, texDef->name, "-ck", fileName))
+            if(GL_LoadImage(image, fileName))
                 return 2; // High resolution texture loaded.
     }
 
@@ -1743,7 +1735,7 @@ byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
         filename_t          fileName;
 
         if(R_FindResource(RC_PATCH, lmpInf->name, "-ck", fileName))
-            if(GL_LoadImage(image, fileName, false))
+            if(GL_LoadImage(image, fileName))
                 return 2; // High resolution patch loaded.
     }
 
@@ -1840,7 +1832,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         if(!found && pSprite)
             found = R_FindResource(RC_PATCH, lmpInf->name, "-ck", fileName);
 
-        if(found && GL_LoadImage(image, fileName, false) != NULL)
+        if(found && GL_LoadImage(image, fileName) != NULL)
             return 2; // Loaded high resolution sprite.
     }
 
@@ -1908,7 +1900,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 
     // First try to find an external resource.
     if(R_FindResource(RC_PATCH, lumpInfo[r->lump].name, NULL, fileName) &&
-       GL_LoadImage(image, fileName, false) != NULL)
+       GL_LoadImage(image, fileName) != NULL)
     {   // High resolution rawtex loaded.
         result = 2;
     }

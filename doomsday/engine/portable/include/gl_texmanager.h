@@ -154,10 +154,7 @@ void            GL_SetNoTexture(void);
 void            GL_SetTextureParams(int minMode, int gameTex, int uiTex);
 boolean         GL_IsColorKeyed(const char* path);
 
-byte*           GL_LoadImage(image_t* img, const char* imagefn,
-                             boolean useModelPath);
-byte*           GL_LoadImageCK(image_t* img, const char* imagefn,
-                               boolean useModelPath);
+byte*           GL_LoadImage(image_t* img, const char* imagefn);
 void            GL_DestroyImage(image_t* img);
 
 DGLuint         GL_UploadTexture(byte* data, int width, int height,

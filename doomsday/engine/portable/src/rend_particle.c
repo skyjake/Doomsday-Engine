@@ -156,7 +156,7 @@ void Rend_ParticleInitTextures(void)
         sprintf(name, "Particle%02i", i);
 
         if(R_FindResource(RC_TEXTURE, name, "-ck", fileName))
-            if(GL_LoadImage(&image, fileName, false))
+            if(GL_LoadImage(&image, fileName))
             {
                 VERBOSE(
                 Con_Message("Rend_ParticleInitTextures: Texture "
