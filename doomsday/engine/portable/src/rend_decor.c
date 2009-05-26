@@ -771,7 +771,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
     case SEG_TOP:
         suf = &side->SW_topsurface;
-        if(line->L_frontside && line->L_backside && backCeil != frontCeil &&
+        if(line->L_frontside && line->L_backside && backCeil < frontCeil &&
            (!R_IsSkySurface(&line->L_backsector->SP_ceilsurface) ||
             !R_IsSkySurface(&line->L_frontsector->SP_ceilsurface)))
         {
@@ -783,7 +783,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
     case SEG_BOTTOM:
         suf = &side->SW_bottomsurface;
-        if(line->L_frontside && line->L_backside && backFloor != frontFloor &&
+        if(line->L_frontside && line->L_backside && backFloor > frontFloor &&
            (!R_IsSkySurface(&line->L_backsector->SP_floorsurface) ||
             !R_IsSkySurface(&line->L_frontsector->SP_floorsurface)))
         {
