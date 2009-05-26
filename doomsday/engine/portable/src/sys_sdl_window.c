@@ -615,7 +615,7 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     int             width, height, bpp, flags;
     boolean         newGLContext = false;
     boolean         changeWindowDimensions = false;
-    boolean         inControlPanel;
+    boolean         inControlPanel = false;
 
     if(uFlags & DDSW_NOCHANGES)
         return true; // Nothing to do.
