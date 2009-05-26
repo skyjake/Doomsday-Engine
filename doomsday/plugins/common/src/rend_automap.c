@@ -862,7 +862,7 @@ int renderPolyObjSeg(void* obj, void* context)
 boolean drawSegsOfPolyobject(polyobj_t* po, void* context)
 {
     seg_t**             segPtr;
-    int                 result;
+    int                 result = 1;
 
     segPtr = po->segs;
     while(*segPtr && (result = renderPolyObjSeg(*segPtr, context)) != 0)
