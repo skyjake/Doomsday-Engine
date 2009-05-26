@@ -1496,7 +1496,7 @@ int PatchPars(int dummy)
             par = atoi(space);
         }
 
-        info = 0;
+        info = NULL;
         /*if (!(info = FindLevelInfo (mapname)) ) {
            Printf (PRINT_HIGH, "No map %s\n", mapname);
            continue;
@@ -1508,7 +1508,9 @@ int PatchPars(int dummy)
                 break;
             }
 
-        info->parTime = (float) par;
+        if(info)
+            info->parTime = (float) par;
+
         LPrintf("Par for %s changed to %d\n", mapname, par);
     }
     return result;
