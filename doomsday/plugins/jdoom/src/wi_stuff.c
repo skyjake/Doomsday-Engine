@@ -363,7 +363,7 @@ void WI_drawEL(void)
 {
     int                 y = WI_TITLEY;
     int                 mapNum;
-    char               *mapName;
+    char               *mapName = NULL;
     ddmapinfo_t         minfo;
     char                lumpName[10];
 
