@@ -2881,8 +2881,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                                     byte* result)
 {
     byte                tmpResult;
-    gltexture_inst_t    tempInst;
-    gltexture_inst_t*   texInst;
+    gltexture_inst_t*   texInst = NULL;
 
     if(tex->type < GLT_SYSTEM || tex->type >= NUM_GLTEXTURE_TYPES)
     {
@@ -2905,17 +2904,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         break;
     }
 
-    if(!texInst)
-    {   // No existing suitable instance.
-        // Use a temporay local instance until we are sure preparation
-        // completes successfully.
-        memset(&tempInst, 0, sizeof(tempInst));
-        tempInst.tex = tex;
-
-        texInst = &tempInst;
-    }
-
-    if(texInst->id)
+    if(texInst && texInst->id)
     {   // Already prepared.
         tmpResult = 0;
     }
@@ -2923,12 +2912,23 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
     {
         boolean             didDefer = false;
         image_t             image;
+        gltexture_typedata_t* glTexType = &glTextureTypeData[tex->type];
+        gltexture_inst_t    localInst;
+
+        if(!texInst)
+        {   // No existing suitable instance.
+            // Use a temporary local instance until we are sure preparation
+            // completes successfully.
+            memset(&localInst, 0, sizeof(localInst));
+            localInst.tex = tex;
+
+            texInst = &localInst;
+        }
 
         memset(&image, 0, sizeof(image));
 
         // Load in the raw source image.
-        if(!(tmpResult = glTextureTypeData[tex->type].
-                loadData(&image, texInst, context)))
+        if(!(tmpResult = glTexType->loadData(&image, texInst, context)))
         {   // Source image not loaded.
             return NULL;
         }
@@ -3237,7 +3237,7 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
 
         GL_DestroyImage(&image);
 
-        if(tmpResult && texInst == &tempInst)
+        if(tmpResult && texInst == &localInst)
         {   // We have a new instance.
             int                 flags = 0;
             gltexture_inst_node_t* node;
@@ -3253,7 +3253,7 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
 
             // Add it to the list of intances for this gltexture.
             node = Z_Malloc(sizeof(*node), PU_STATIC, 0);
-            memcpy(&node->inst, &tempInst, sizeof(gltexture_inst_t));
+            memcpy(&node->inst, &localInst, sizeof(gltexture_inst_t));
             node->flags = flags;
             node->next = (gltexture_inst_node_t*) tex->instances;
             tex->instances = (void*) node;
