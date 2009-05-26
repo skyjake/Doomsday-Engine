@@ -310,6 +310,8 @@ static void initClassData(void)
 
 static void freeClassData(void)
 {
+    int                 i;
+
     for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         resclass_t*         info = &resClasses[i];
@@ -362,7 +364,7 @@ const char* R_GetDataPath(void)
  */
 void R_SetDataPath(const char* path)
 {
-    if(dataPath && !stricmp(path, Str_Text(dataPath))
+    if(dataPath && !stricmp(path, Str_Text(dataPath)))
         return;
 
     // The base data path has changed, rebuild everything!
