@@ -906,7 +906,8 @@ typedef struct {
  * Resource classes. Each has its own subdir under Data\Game\.
  */
 typedef enum resourceclass_e {
-    RC_TEXTURE,
+    RC_FIRST = 0,
+    RC_TEXTURE = RC_FIRST,
     RC_FLAT,
     RC_PATCH,                  // Not sprites, mind you. Names == lumpnames.
     RC_LIGHTMAP,

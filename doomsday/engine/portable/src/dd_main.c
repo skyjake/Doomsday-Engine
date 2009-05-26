@@ -506,7 +506,7 @@ static int DD_StartupWorker(void *parm)
     if(gx.PreInit)
         gx.PreInit();
 
-    Con_SetProgress(30);
+    Con_SetProgress(40);
 
     // We now accept no more custom properties.
     //DAM_LockCustomPropertys();
@@ -548,7 +548,7 @@ static int DD_StartupWorker(void *parm)
         }
     }
 
-    Con_SetProgress(40);
+    Con_SetProgress(50);
 
     if(defaultWads && defaultWads[0])
         AddToWadList(defaultWads);  // These must take precedence.
@@ -560,12 +560,14 @@ static int DD_StartupWorker(void *parm)
     // Add real files from the Auto directory to the wadFiles list.
     DD_AddAutoData(false);
 
+    Con_SetProgress(60);
+
     W_InitMultipleFiles(wadFiles);
     F_InitDirec();
     VERBOSE(Con_Message("W_Init: Done in %.2f seconds.\n",
                         Sys_GetSeconds() - starttime));
 
-    Con_SetProgress(75);
+    Con_SetProgress(70);
 
     // Load help resources. Now virtual files are available as well.
     if(!isDedicated)
@@ -585,8 +587,12 @@ static int DD_StartupWorker(void *parm)
     // Now the game can identify the game mode.
     gx.UpdateState(DD_GAME_MODE);
 
+    Con_SetProgress(90);
+
     // We can now initialize the resource locator (game mode identified).
     R_InitResourceLocator();
+
+    Con_SetProgress(100);
 
     // Palette information will be needed for preparing textures.
     R_LoadPalette();
@@ -598,6 +604,8 @@ static int DD_StartupWorker(void *parm)
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();
+
+    Con_SetProgress(130);
 
     // Now that we've generated the auto-materials we can initialize
     // definitions.
@@ -649,16 +657,18 @@ static int DD_StartupWorker(void *parm)
         Con_Error("---End of lumps---\n");
     }
 
-    Con_SetProgress(100);
+    Con_SetProgress(140);
 
     Con_Message("B_Init: Init bindings.\n");
     B_Init();
     Con_ParseCommands(bindingsConfigFileName, false);
 
-    Con_SetProgress(125);
+    Con_SetProgress(150);
 
     Con_Message("R_Init: Init the refresh daemon.\n");
     R_Init();
+
+    Con_SetProgress(165);
 
     Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
@@ -667,13 +677,13 @@ static int DD_StartupWorker(void *parm)
     if(gx.PostInit)
         gx.PostInit();
 
-    Con_SetProgress(150);
+    Con_SetProgress(175);
 
     // Defs have been read; we can now init models and the map format info.
     R_InitModels();
     P_InitData();
 
-    Con_SetProgress(199);
+    Con_SetProgress(190);
 
     // Try to load the autoexec file. This is done here to make sure
     // everything is initialized: the user can do here anything that
@@ -719,10 +729,12 @@ static int DD_StartupWorker(void *parm)
     if(isDedicated)
         Con_Open(true);
 
-    Con_SetProgress(200);
+    Con_SetProgress(199);
 
     Plug_DoHook(HOOK_INIT, 0, 0);   // Any initialization hooks?
     Con_UpdateKnownWords();         // For word completion (with Tab).
+
+    Con_SetProgress(200);
 
 #ifdef WIN32
     // This thread has finished using COM.
