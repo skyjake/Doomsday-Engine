@@ -395,10 +395,10 @@ void            M_ResetRandom(void);
 
 extern unsigned char rndtable[256];
 
-void            SC_Open(char* name);
+void            SC_Open(const char* name);
 void            SC_OpenLump(lumpnum_t lump);
-void            SC_OpenFile(char* name);
-void            SC_OpenFileCLib(char* name);
+void            SC_OpenFile(const char* name);
+void            SC_OpenFileCLib(const char* name);
 void            SC_Close(void);
 boolean         SC_GetString(void);
 void            SC_MustGetString(void);
@@ -418,7 +418,7 @@ extern int sc_Line;
 extern boolean sc_End;
 extern boolean sc_Crossed;
 extern boolean sc_FileScripts;
-extern char* sc_ScriptsDir;
+extern const char* sc_ScriptsDir;
 
 //----------------------
 // Chat mode (CT_chat.c)

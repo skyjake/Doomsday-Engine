@@ -408,6 +408,9 @@ int DD_Main(void)
     {
         GL_Init();
         GL_InitRefresh();
+
+        // \todo we could be loading these in busy mode.
+        GL_LoadSystemTextures();
         GL_LoadLightmaps();
         GL_LoadFlareTextures();
     }
@@ -475,7 +478,7 @@ static int DD_StartupWorker(void *parm)
     Con_SetProgress(20);
 
     DD_AddStartupWAD("}data\\doomsday.pk3");
-    R_InitExternalResources();
+    R_SetDataPath("}data\\");
 
     // The name of the .cfg will invariably be overwritten by the Game.
     strcpy(configFileName, "doomsday.cfg");
@@ -535,7 +538,7 @@ static int DD_StartupWorker(void *parm)
     {
         for(;;)
         {
-            char           *arg = ArgNext();
+            const char*         arg = ArgNext();
 
             if(!arg || arg[0] == '-')
                 break;
@@ -582,6 +585,9 @@ static int DD_StartupWorker(void *parm)
     // Now the game can identify the game mode.
     gx.UpdateState(DD_GAME_MODE);
 
+    // We can now initialize the resource locator (game mode identified).
+    R_InitResourceLocator();
+
     // Palette information will be needed for preparing textures.
     R_LoadPalette();
 
@@ -609,11 +615,11 @@ static int DD_StartupWorker(void *parm)
 
     if(ArgCheckWith("-dumplump", 1))
     {
-        char           *arg = ArgNext();
+        const char*     arg = ArgNext();
         char            fname[100];
-        FILE           *file;
+        FILE*           file;
         int             lump = W_GetNumForName(arg);
-        byte           *lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+        byte*           lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
 
         sprintf(fname, "%s.dum", arg);
         file = fopen(fname, "wb");
@@ -654,8 +660,6 @@ static int DD_StartupWorker(void *parm)
     Con_Message("R_Init: Init the refresh daemon.\n");
     R_Init();
 
-    Con_SetProgress(199);
-
     Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
     Demo_Init();
@@ -663,8 +667,13 @@ static int DD_StartupWorker(void *parm)
     if(gx.PostInit)
         gx.PostInit();
 
-    // Now the defs have been read we can init the map format info
+    Con_SetProgress(150);
+
+    // Defs have been read; we can now init models and the map format info.
+    R_InitModels();
     P_InitData();
+
+    Con_SetProgress(199);
 
     // Try to load the autoexec file. This is done here to make sure
     // everything is initialized: the user can do here anything that
@@ -676,7 +685,7 @@ static int DD_StartupWorker(void *parm)
     {
         for(;;)
         {
-            char           *arg = ArgNext();
+            const char*         arg = ArgNext();
 
             if(!arg || arg[0] == '-')
                 break;
@@ -694,7 +703,7 @@ static int DD_StartupWorker(void *parm)
 
         for(++p; p < Argc(); p++)
         {
-            char           *arg = Argv(p);
+            const char*         arg = Argv(p);
 
             if(arg[0] == '-')
             {

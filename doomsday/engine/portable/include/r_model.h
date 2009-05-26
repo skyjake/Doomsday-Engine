@@ -110,15 +110,12 @@ extern float rModelAspectMod;
 
 void            R_InitModels(void);
 void            R_ShutdownModels(void);
-void            R_ClearModelPath(void);
-void            R_AddModelPath(char* addPath, boolean append);
 float           R_CheckModelFor(struct mobj_s* mo, modeldef_t** mdef,
                                 modeldef_t** nextmdef);
 modeldef_t*     R_CheckIDModelFor(const char* id);
 int             R_ModelFrameNumForName(int modelnum, char* fname);
 void            R_SetModelFrame(modeldef_t* modef, int frame);
 void            R_SetSpriteReplacement(int sprite, char* modelname);
-int             R_FindModelFile(const char* filename, char* outfn);
 void            R_PrecacheSkinsForState(int stateIndex);
 boolean         R_PrecacheSkinsForMobj(thinker_t* th, void* context);
 void            R_PrecacheModelSkins(modeldef_t* modef);

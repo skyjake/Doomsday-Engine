@@ -52,7 +52,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    float   pos[3];
+    float           pos[3];
 } vector_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -65,7 +65,7 @@ typedef struct {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float   rModelAspectMod = 1 / 1.2f; //.833334f;
+float rModelAspectMod = 1 / 1.2f; //.833334f;
 
 // The dummy is used for model zero.
 model_t dummy = { true, "Dummy-Dummy" };
@@ -81,8 +81,6 @@ float avertexnormals[NUMVERTEXNORMALS][3] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static ddstring_t modelPath;
-
 static int maxModelDefs;
 static modeldef_t** stateModefs;
 
@@ -93,9 +91,9 @@ static modeldef_t** stateModefs;
  */
 static void UnpackVector(unsigned short packed, float vec[3])
 {
-    float       yaw = (packed & 511) / 512.0f * 2 * PI;
-    float       pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
-    float       cosp = (float) cos(pitch);
+    float               yaw = (packed & 511) / 512.0f * 2 * PI;
+    float               pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+    float               cosp = (float) cos(pitch);
 
     vec[VX] = (float) cos(yaw) * cosp;
     vec[VY] = (float) sin(yaw) * cosp;
@@ -105,9 +103,9 @@ static void UnpackVector(unsigned short packed, float vec[3])
 /**
  * Returns an index if the specified model has already been loaded.
  */
-static int R_FindModelFor(const char *filename)
+static int R_FindModelFor(const char* filename)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_MODELS; ++i)
         if(modellist[i] && !stricmp(modellist[i]->fileName, filename))
@@ -120,7 +118,7 @@ static int R_FindModelFor(const char *filename)
  */
 static int R_NewModelFor(void /*const char *filename*/)
 {
-    int         i;
+    int                 i;
 
     // Take the first empty spot.
     for(i = 0; i < MAX_MODELS; ++i)
@@ -207,103 +205,10 @@ static void *AllocAndLoad(DFILE *file, int offset, int len)
     return ptr;
 }
 
-void R_ClearModelPath(void)
-{
-    // Free the old path.
-    Str_Free(&modelPath);
-}
-
-/**
- * Appends or prepends a new path to the list of model search paths.
- * -modeldir prepends, DED files append search paths.
- */
-void R_AddModelPath(char *addPath, boolean append)
-{
-    // Compile the new search path.
-    if(append)
-    {
-        Str_Append(&modelPath, ";");
-        Str_Append(&modelPath, addPath);
-    }
-    else
-    {
-        Str_Prepend(&modelPath, ";");
-        Str_Prepend(&modelPath, addPath);
-    }
-}
-
-/**
- * Returns true if the file was found.
- */
-int R_FindModelFile(const char *filename, char *outfn)
-{
-    char                buf[256], ext[50];
-
-    if(!filename || !filename[0])
-        return false;
-
-    // DMD takes precedence over MD2.
-    strcpy(buf, filename);
-    M_GetFileExt(buf, ext);
-    if(!stricmp(ext, "md2"))
-    {
-        // Swap temporarily to DMD and see if it exists.
-        M_ReplaceFileExt(buf, "dmd");
-        if(FH_Find(buf, outfn))
-            return true;
-        M_ReplaceFileExt(buf, "md2");
-    }
-
-    // Try finding the given file name.
-    if(FH_Find(buf, outfn))
-        return true;
-
-    // How about alternative extensions?
-    // If DMD is not found, try MD2 instead.
-    if(!stricmp(ext, "dmd"))
-    {
-        M_ReplaceFileExt(buf, "md2");
-        if(FH_Find(buf, outfn))
-            return true;
-    }
-
-    // Try loading using the base path as the starting point.
-    if(!Dir_IsAbsolute(filename))
-    {
-        strcpy(buf, ddBasePath);
-        strcat(buf, filename);
-        if(F_Access(buf))
-        {
-            VERBOSE2(Con_Printf
-                     ("R_FindModelFile: " "Base path hit: %s\n", buf));
-
-            strcpy(outfn, buf);
-            return true;        // Got it.
-        }
-    }
-
-    // No success.
-    return false;
-}
-
-/**
- * Searches the model paths for the file and opens it.
- */
-#if 0 // unused atm
-static DFILE *R_OpenModelFile(char *filename)
-{
-    char        buf[256];
-
-    if(R_FindModelFile(filename, buf))
-        return F_Open(buf, "rb");
-    return NULL;
-}
-#endif
-
-static void R_MissingModel(const char *fn)
+static void R_MissingModel(const char* fn)
 {
     //if(verbose)
-    Con_Printf("  %s not found.\n", fn);
+    Con_Printf("Warning: Failed to locate model \"%s\".\n", fn);
 }
 
 static void R_LoadModelMD2(DFILE *file, model_t *mdl)
@@ -535,19 +440,17 @@ static void R_RegisterModelSkin(model_t *mdl, int index)
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(char *origfn)
+static int R_LoadModel(char* origfn)
 {
     int                 i, index;
-    model_t            *mdl;
-    DFILE              *file = NULL;
+    model_t*            mdl;
+    DFILE*              file = NULL;
     char                filename[256];
 
     if(!origfn[0])
         return 0; // No model specified.
 
-    VERBOSE2(Con_Message("R_LoadModel: %s\n", origfn));
-
-    if(!R_FindModelFile(origfn, filename))
+    if(!R_FindResource2(RT_MODEL, RC_MODEL, origfn, NULL, filename))
     {
         R_MissingModel(origfn);
         return 0;
@@ -1201,7 +1104,7 @@ void R_InitModels(void)
 {
     int                 i, k, minsel;
     float               minmark;
-    modeldef_t         *me, *other, *closest;
+    modeldef_t*         me, *other, *closest;
     uint                usedTime;
 
     // Dedicated servers do nothing with models.
@@ -1209,17 +1112,6 @@ void R_InitModels(void)
         return;
 
     Con_Message("R_InitModels: Initializing MD2 models.\n");
-    VERBOSE2(Con_Message("  Search path: %s\n", modelPath.str));
-
-    // Build the file hash for searching model files.
-    usedTime = Sys_GetRealTime();
-    FH_Init(modelPath.str);
-    VERBOSE(Con_Message
-            ("  File hash built in %.2f seconds.\n",
-             (Sys_GetRealTime() - usedTime) / 1000.0f));
-
-    //Con_InitProgress("R_Init: Initializing models...", defs.count.models.num);
-
     usedTime = Sys_GetRealTime();
 
     if(modefs)

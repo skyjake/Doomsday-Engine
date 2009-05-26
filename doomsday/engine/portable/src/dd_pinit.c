@@ -71,10 +71,10 @@ game_export_t __gx;
 
 // CODE --------------------------------------------------------------------
 
-int DD_CheckArg(char *tag, char **value)
+int DD_CheckArg(char* tag, const char** value)
 {
-    int     i = ArgCheck(tag);
-    char   *next = ArgNext();
+    int                 i = ArgCheck(tag);
+    const char*         next = ArgNext();
 
     if(!i)
         return 0;
@@ -83,20 +83,23 @@ int DD_CheckArg(char *tag, char **value)
     return 1;
 }
 
-void DD_ErrorBox(boolean error, char *format, ...)
+void DD_ErrorBox(boolean error, char* format, ...)
 {
-    char    buff[200];
-    va_list args;
+    char                buff[200];
+    va_list             args;
 
     va_start(args, format);
     vsnprintf(buff, sizeof(buff), format, args);
     va_end(args);
+
 #ifdef WIN32
     suspendMsgPump = true;
-    MessageBox(NULL, (LPCTSTR) buff, (LPCTSTR) ("Doomsday " DOOMSDAY_VERSION_TEXT),
+    MessageBox(NULL, (LPCTSTR) buff,
+               (LPCTSTR) ("Doomsday " DOOMSDAY_VERSION_TEXT),
                (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
     suspendMsgPump = false;
 #endif
+
 #ifdef UNIX
     fputs(buff, stderr);
 #endif
@@ -105,11 +108,11 @@ void DD_ErrorBox(boolean error, char *format, ...)
 /**
  * Compose the title for the main window.
  */
-void DD_ComposeMainWindowTitle(char *title)
+void DD_ComposeMainWindowTitle(char* title)
 {
     if(__gx.GetVariable)
     {
-        char       *gameName = (char *) __gx.GetVariable(DD_GAME_ID);
+        char*               gameName = (char*) __gx.GetVariable(DD_GAME_ID);
         sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s",
                 (isDedicated? " (Dedicated)" : ""), gameName);
     }
@@ -120,7 +123,7 @@ void DD_ComposeMainWindowTitle(char *title)
     }
 }
 
-void SetGameImports(game_import_t *imp)
+void SetGameImports(game_import_t* imp)
 {
     memset(imp, 0, sizeof(*imp));
     imp->apiSize = sizeof(*imp);
@@ -139,9 +142,9 @@ void SetGameImports(game_import_t *imp)
 
 void DD_InitAPI(void)
 {
-    GETGAMEAPI GetGameAPI = app.GetGameAPI;
+    GETGAMEAPI          GetGameAPI = app.GetGameAPI;
 
-    game_export_t *gameExPtr;
+    game_export_t*      gameExPtr;
 
     // Put the imported stuff into the imports.
     SetGameImports(&__gi);
@@ -152,7 +155,7 @@ void DD_InitAPI(void)
            MIN_OF(sizeof(__gx), gameExPtr->apiSize));
 }
 
-void DD_InitCommandLine(const char *cmdLine)
+void DD_InitCommandLine(const char* cmdLine)
 {
     ArgInit(cmdLine);
 
@@ -199,11 +202,11 @@ void DD_Verbosity(void)
  */
 boolean DD_EarlyInit(void)
 {
-    char               *outfilename = "doomsday.out";
+    const char*         outFileName = "doomsday.out";
 
     // We'll redirect stdout to a log file.
-    DD_CheckArg("-out", &outfilename);
-    outFile = fopen(outfilename, "w");
+    DD_CheckArg("-out", &outFileName);
+    outFile = fopen(outFileName, "w");
     if(!outFile)
     {
         DD_ErrorBox(false, "Couldn't open message output file.");
@@ -247,7 +250,7 @@ boolean DD_EarlyInit(void)
  */
 void DD_ShutdownAll(void)
 {
-    int     i;
+    int                 i;
 
     Con_Shutdown();
     DD_ShutdownHelp();
@@ -267,7 +270,6 @@ void DD_ShutdownAll(void)
     R_Shutdown();
     Def_Destroy();
     F_ShutdownDirec();
-    FH_Clear();
     ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();

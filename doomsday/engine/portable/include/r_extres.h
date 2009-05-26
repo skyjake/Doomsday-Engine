@@ -29,12 +29,21 @@
 #ifndef __DOOMSDAY_REFRESH_EXT_RES_H__
 #define __DOOMSDAY_REFRESH_EXT_RES_H__
 
-void            R_InitExternalResources(void);
+void            R_InitResourceLocator(void);
+void            R_ShutdownResourceLocator(void);
+
 void            R_SetDataPath(const char* path);
-void            R_InitDataPaths(const char* path, boolean justGamePaths);
 const char*     R_GetDataPath(void);
 void            R_PrependDataPath(const char* origPath, char* newPath);
-boolean         R_FindResource(resourceclass_t resClass, const char* name,
-                               const char* optionalSuffix, char* fileName);
 
+void            R_AddClassDataPath(resourceclass_t resClass,
+                                   const char* addPath, boolean append);
+void            R_ClearClassDataPath(resourceclass_t resClass);
+const char*     R_GetClassDataPath(resourceclass_t resClass);
+
+boolean         R_FindResource(resourcetype_t resType, const char* name,
+                               const char* optionalSuffix, char* fileName);
+boolean         R_FindResource2(resourcetype_t resType,
+                               resourceclass_t resClass, const char* name,
+                               const char* optionalSuffix, char* fileName);
 #endif

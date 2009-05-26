@@ -914,8 +914,19 @@ typedef enum resourceclass_e {
     RC_MUSIC,                  // Names == lumpnames.
     RC_SFX,                    // Names == lumpnames.
     RC_GRAPHICS,               // Doomsday graphics.
+    RC_MODEL,
     NUM_RESOURCE_CLASSES
 } resourceclass_t;
+
+typedef enum resourcetype_e {
+    RT_UNKNOWN = -1,
+    RT_FIRST = 0,
+    RT_GRAPHIC = RT_FIRST,
+    RT_MODEL,
+    RT_SOUND,
+    RT_MUSIC,
+    NUM_RESOURCE_TYPES
+} resourcetype_t;
 
 /**
  * Processing modes for GL_LoadGraphics.

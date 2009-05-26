@@ -1157,9 +1157,9 @@ boolean M_CheckPath(char *path)
  * The dot is not included in the returned extension.
  * The extension can be at most 10 characters long.
  */
-void M_GetFileExt(const char *path, char *ext)
+void M_GetFileExt(const char* path, char* ext)
 {
-    char   *ptr = strrchr(path, '.');
+    char*               ptr = strrchr(path, '.');
 
     *ext = 0;
     if(!ptr)
@@ -1171,9 +1171,9 @@ void M_GetFileExt(const char *path, char *ext)
 /**
  * The new extension must not include a dot.
  */
-void M_ReplaceFileExt(char *path, char *newext)
+void M_ReplaceFileExt(char* path, const char* newext)
 {
-    char   *ptr = strrchr(path, '.');
+    char*               ptr = strrchr(path, '.');
 
     if(!ptr)
     {
@@ -1234,6 +1234,29 @@ char* M_StrCatQuoted(char* dest, const char* src)
     strcat(dest, "\"");
 
     return dest;
+}
+
+/**
+ * Somewhat similar to strtok().
+ */
+char* M_StrTok(char** cursor, char* delimiters)
+{
+    char*               begin = *cursor;
+
+    while(**cursor && !strchr(delimiters, **cursor))
+        (*cursor)++;
+
+    if(**cursor)
+    {
+        // Stop here.
+        **cursor = 0;
+
+        // Advance one more so we'll start from the right character on
+        // the next call.
+        (*cursor)++;
+    }
+
+    return begin;
 }
 
 /**

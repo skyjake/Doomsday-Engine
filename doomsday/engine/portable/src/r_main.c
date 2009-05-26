@@ -253,7 +253,6 @@ void R_Init(void)
     // viewwidth / viewheight / detailLevel are set by the defaults
     R_SetViewWindow(0, 0, 320, 200);
     R_InitSprites(); // Fully initialize sprites.
-    R_InitModels();
     R_InitTranslationTables();
     Rend_Init();
     frameCount = 0;
@@ -353,6 +352,7 @@ void R_Shutdown(void)
 {
     R_ShutdownModels();
     R_ShutdownData();
+    R_ShutdownResourceLocator();
     // Most allocated memory goes down with the zone.
 }
 

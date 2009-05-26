@@ -579,7 +579,7 @@ sfxsample_t* Sfx_Cache(int id)
          * external resource (probably a custom sound).
          */
         if((info->lumpNum < 0 || W_IsFromIWAD(info->lumpNum)) &&
-           R_FindResource(RC_SFX, info->lumpName, NULL, buf) &&
+           R_FindResource(RT_SOUND, info->lumpName, NULL, buf) &&
            (samp.data =
             WAV_Load(buf, &samp.bytesPer, &samp.rate, &samp.numSamples)))
         {   // Loading was successful!

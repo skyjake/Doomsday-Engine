@@ -664,7 +664,6 @@ void GL_Init(void)
 void GL_InitRefresh(void)
 {
     GL_InitTextureManager();
-    GL_LoadSystemTextures();
 }
 
 /**

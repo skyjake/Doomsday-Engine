@@ -164,7 +164,7 @@ void G_DetectIWADs(void)
         char   *override;
     } fspec_t;
 
-    // The '>' means the paths are affected by the base path.
+    // The '}' means the paths are affected by the base path.
     char   *paths[] = {
         "}data\\"GAMENAMETEXT"\\",
         "}data\\",
@@ -174,14 +174,14 @@ void G_DetectIWADs(void)
         0
     };
     fspec_t iwads[] = {
-        {"tnt.wad", "-tnt"},
-        {"plutonia.wad", "-plutonia"},
-        {"doom2.wad", "-doom2"},
-        {"doom1.wad", "-sdoom"},
-        {"doom.wad", "-doom"},
-        {"doom.wad", "-ultimate"},
-        {"doomu.wad", "-udoom"},
-        {0, 0}
+        { "tnt.wad",        "-tnt" },
+        { "plutonia.wad",   "-plutonia" },
+        { "doom2.wad",      "-doom2" },
+        { "doom1.wad",      "-sdoom" },
+        { "doom.wad",       "-doom" },
+        { "doom.wad",       "-ultimate" },
+        { "doomu.wad",      "-udoom" },
+        { 0, 0 }
     };
     int                 i, k;
     boolean             overridden = false;

@@ -52,7 +52,7 @@ void            M_ExtractFileBase(const char* path, char* dest);
 void            M_ExtractFileBase2(const char* path, char* dest,
                                    int max, int ignore);
 void            M_GetFileExt(const char* path, char* ext);
-void            M_ReplaceFileExt(char* path, char* newext);
+void            M_ReplaceFileExt(char* path, const char* newext);
 boolean         M_CheckPath(char* path);
 int             M_FileExists(const char* file);
 void            M_TranslatePath(const char* path, char* translated);
@@ -82,6 +82,7 @@ char*           M_LimitedStrCat(const char* str, size_t maxWidth,
                                 char separator, char* buf,
                                 size_t bufLength);
 char*           M_StrCatQuoted(char* dest, const char* src);
+char*           M_StrTok(char** cursor, char* delimiters);
 
 // Random numbers.
 byte            RNG_RandByte(void);

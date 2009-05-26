@@ -49,17 +49,17 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-static char    cfgFile[256];
+static char cfgFile[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-boolean Con_ParseCommands(char *fileName, boolean setdefault)
+boolean Con_ParseCommands(const char* fileName, boolean setdefault)
 {
-    DFILE  *file;
-    char    buff[512];
-    int     line = 1;
+    DFILE*              file;
+    char                buff[512];
+    int                 line = 1;
 
     // Is this supposed to be the default?
     if(setdefault)

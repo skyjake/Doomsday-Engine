@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +18,23 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * m_filehash.h: File Name Hash Table
+/**
+ * m_filehash.h: File name/directory search hashes.
  */
 
 #ifndef __DOOMSDAY_MISC_FILE_HASH_H__
 #define __DOOMSDAY_MISC_FILE_HASH_H__
 
-void            FH_Clear(void);
-void            FH_Init(const char *pathList);
-boolean         FH_Find(const char *name, char *foundPath);
+typedef void* filehash_t;
+
+filehash_t*     FileHash_Create(const char* pathList);
+void            FileHash_Destroy(filehash_t* fh);
+
+boolean         FileHash_Find(filehash_t* fh, const char* name,
+                              char* foundPath);
 
 #endif

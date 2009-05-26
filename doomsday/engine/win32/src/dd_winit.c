@@ -265,7 +265,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     else
     {
         char                buf[256];
-        char               *libName = NULL;
+        const char*         libName = NULL;
 
         // Initialize COM.
         CoInitialize(NULL);

@@ -96,7 +96,7 @@ boolean firstDED;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean defsInited = false;
-static char* dedFiles[MAX_READ];
+static const char* dedFiles[MAX_READ];
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
@@ -125,7 +125,7 @@ static int GetXGClasses(void)
  */
 void Def_Init(void)
 {
-    int                 c, p;
+    int                 i, c, p;
 
     sprNames = NULL; // Sprite name list.
     mobjInfo = NULL;
@@ -147,7 +147,8 @@ void Def_Init(void)
 
     DED_Init(&defs);
 
-    memset(dedFiles, 0, sizeof(dedFiles));
+    for(i = 0; i < MAX_READ; ++i)
+        dedFiles[i] = NULL;
 
     // The engine defs.
     c = 0;
@@ -840,7 +841,7 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        R_ClearModelPath();
+        R_ClearClassDataPath(RC_MODEL);
         Def_Destroy();
     }
 
@@ -1171,13 +1172,29 @@ void Def_Read(void)
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (prepend).
-    Dir_FixSlashes(defs.modelPath);
-    R_AddModelPath(defs.modelPath, false);
+    Dir_ValidDir(defs.modelPath);
+    R_AddClassDataPath(RC_MODEL, defs.modelPath, false);
+
     // Model search path specified on the command line?
     if(ArgCheckWith("-modeldir", 1))
     {
+        filename_t          path;
+
+        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(path);
+
         // Prepend to the search list; takes precedence.
-        R_AddModelPath(ArgNext(), false);
+        R_AddClassDataPath(RC_MODEL, path, false);
+    }
+    if(ArgCheckWith("-modeldir2", 1))
+    {
+        filename_t          path;
+
+        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(path);
+
+        // Prepend to the search list; takes precedence.
+        R_AddClassDataPath(RC_MODEL, ArgNext(), false);
     }
 
     defsInited = true;

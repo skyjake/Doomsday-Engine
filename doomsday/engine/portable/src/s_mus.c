@@ -334,7 +334,7 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
     }
 
     // Try the resource locator.
-    if(R_FindResource(RC_MUSIC, def->lumpName, NULL, path))
+    if(R_FindResource(RT_MUSIC, def->lumpName, NULL, path))
     {
         if(retPath)
         {

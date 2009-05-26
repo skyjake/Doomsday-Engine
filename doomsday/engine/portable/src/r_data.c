@@ -1589,8 +1589,8 @@ void R_ExpandSkinName(char* expanded, const char* skin, const char* modelfn)
     strcat(expanded, skin);
     if(!F_Access(expanded))
     {
-        // Try the whole model path.
-        if(!R_FindModelFile(skin, expanded))
+        // Try the resource locator.
+        if(!R_FindResource2(RT_GRAPHIC, RC_MODEL, skin, NULL, expanded))
         {
             expanded[0] = 0;
             return;
@@ -1604,10 +1604,10 @@ void R_ExpandSkinName(char* expanded, const char* skin, const char* modelfn)
 uint R_RegisterSkin(const char* skin, const char* modelfn, char* fullpath,
                     boolean isShinySkin)
 {
-    const char         *formats[3] = { ".png", ".tga", ".pcx" };
+    const char*         formats[3] = { ".png", ".tga", ".pcx" };
     char                buf[256];
     char                fn[256];
-    char               *ext;
+    char*               ext;
     int                 i;
     uint                idx = 0;
 

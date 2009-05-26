@@ -137,8 +137,7 @@ void Str_Alloc(ddstring_t *ds, size_t for_length, int preserve)
 
     while(ds->size < for_length)
         ds->size *= 2;
-    buf = Z_Malloc(ds->size, PU_STATIC, 0);
-    memset(buf, 0, ds->size);
+    buf = Z_Calloc(ds->size, PU_STATIC, 0);
 
     if(preserve && ds->str)
         strncpy(buf, ds->str, ds->size - 1);
@@ -202,7 +201,7 @@ void Str_Appendf(ddstring_t *ds, const char *format, ...)
  */
 void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
 {
-    Str_Alloc(dest, dest->length + count, true);
+    Str_Alloc(dest, dest->length + count + 1, true);
     memcpy(dest->str + dest->length, src + start, count);
     dest->length += count;
 

@@ -797,7 +797,9 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             // A new model path. Append to the list.
             READSTR(label);
             CHECKSC;
-            R_AddModelPath(label, true);
+
+            Dir_ValidDir(label);
+            R_AddClassDataPath(RC_MODEL, label, true);
         }
 
         if(ISTOKEN("Header"))

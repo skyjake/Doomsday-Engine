@@ -58,7 +58,7 @@ int sc_Line;
 boolean sc_End;
 boolean sc_Crossed;
 boolean sc_FileScripts = false;
-char* sc_ScriptsDir = "";
+const char* sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -102,7 +102,7 @@ static void openScriptLump(lumpnum_t lump)
     AlreadyGot = false;
 }
 
-static void openScriptFile(char* name)
+static void openScriptFile(const char* name)
 {
     SC_Close();
 
@@ -119,7 +119,7 @@ static void openScriptFile(char* name)
     AlreadyGot = false;
 }
 
-static void openScriptCLib(char* name)
+static void openScriptCLib(const char* name)
 {
     SC_Close();
 
@@ -136,7 +136,7 @@ static void openScriptCLib(char* name)
     AlreadyGot = false;
 }
 
-void SC_Open(char* name)
+void SC_Open(const char* name)
 {
     char                fileName[128];
 
@@ -168,7 +168,7 @@ void SC_OpenLump(lumpnum_t lump)
  * Loads a script (from a file) and prepares it for parsing.  Uses the
  * zone memory allocator for memory allocation and de-allocation.
  */
-void SC_OpenFile(char* name)
+void SC_OpenFile(const char* name)
 {
     openScriptFile(name);
 }
@@ -177,7 +177,7 @@ void SC_OpenFile(char* name)
  * Loads a script (from a file) and prepares it for parsing.  Uses C
  * library function calls for memory allocation and de-allocation.
  */
-void SC_OpenFileCLib(char* name)
+void SC_OpenFileCLib(const char* name)
 {
     openScriptCLib(name);
 }

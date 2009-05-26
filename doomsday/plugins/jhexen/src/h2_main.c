@@ -55,8 +55,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct execopt_s {
-    char           *name;
-    void          (*func) (char **args, int tag);
+    char*           name;
+    void          (*func) (const char** args, int tag);
     int             requiredArgs;
     int             tag;
 } execopt_t;
@@ -71,10 +71,10 @@ extern void X_DestroyLUTs(void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void handleArgs();
-static void execOptionScripts(char **args, int tag);
-static void execOptionDevMaps(char **args, int tag);
-static void execOptionSkill(char **args, int tag);
-static void execOptionPlayDemo(char **args, int tag);
+static void execOptionScripts(const char** args, int tag);
+static void execOptionDevMaps(const char** args, int tag);
+static void execOptionSkill(const char** args, int tag);
+static void execOptionPlayDemo(const char** args, int tag);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -83,7 +83,7 @@ static void execOptionPlayDemo(char **args, int tag);
 int verbose;
 
 boolean DevMaps; // true = map development mode.
-char *DevMapsDir = ""; // Development maps directory.
+char* DevMapsDir = ""; // Development maps directory.
 
 boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
@@ -554,29 +554,31 @@ static void handleArgs(void)
     }
 }
 
-static void execOptionSkill(char **args, int tag)
+static void execOptionSkill(const char** args, int tag)
 {
     startSkill = args[1][0] - '1';
     autoStart = true;
 }
 
-static void execOptionPlayDemo(char **args, int tag)
+static void execOptionPlayDemo(const char** args, int tag)
 {
-    char                    file[256];
+    char                file[256];
 
     sprintf(file, "%s.lmp", args[1]);
     DD_AddStartupWAD(file);
     Con_Message("Playing demo %s.lmp.\n", args[1]);
 }
 
-static void execOptionScripts(char **args, int tag)
+static void execOptionScripts(const char** args, int tag)
 {
     sc_FileScripts = true;
     sc_ScriptsDir = args[1];
 }
 
-static void execOptionDevMaps(char **args, int tag)
+static void execOptionDevMaps(const char** args, int tag)
 {
+    char*               str;
+
     DevMaps = true;
     Con_Message("Map development mode enabled:\n");
     Con_Message("[config    ] = %s\n", args[1]);
@@ -590,8 +592,9 @@ static void execOptionDevMaps(char **args, int tag)
     SC_MustGetString();
     Con_Message("[scriptsdir] = %s\n", sc_String);
     sc_FileScripts = true;
-    sc_ScriptsDir = malloc(strlen(sc_String) + 1);
-    strcpy(sc_ScriptsDir, sc_String);
+    str = malloc(strlen(sc_String) + 1);
+    strcpy(str, sc_String);
+    sc_ScriptsDir = str;
 
     while(SC_GetString())
     {
