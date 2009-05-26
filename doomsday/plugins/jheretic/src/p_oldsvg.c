@@ -225,7 +225,7 @@ static void SV_v13_ReadMobj(void)
 {
     angle_t         angle;
     spritenum_t     sprite;
-    int             frame, valid, type, ddflags;
+    int             frame, valid, type, ddflags = 0;
     float           pos[3], mom[3], floorz, ceilingz, radius, height;
     mobj_t         *mo;
     mobjinfo_t*     info;
