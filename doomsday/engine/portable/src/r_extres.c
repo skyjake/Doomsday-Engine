@@ -314,7 +314,6 @@ static boolean findResource(resourcetype_t resType,
         if(ptr && *ptr != '*')
         {
             strncpy(ext, ptr + 1, 10);
-            strlwr(ext);
 
             Str_PartAppend(fn, name, 0, ptr - name);
             Str_Append(fn, optionalSuffix);
