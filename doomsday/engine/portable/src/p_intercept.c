@@ -122,7 +122,8 @@ boolean P_TraverseIntercepts(traverser_t func, float maxfrac)
         if(!func(in))
             return false; // Don't bother going farther.
 
-        in->frac = DDMAXFLOAT;
+        if(in)
+            in->frac = DDMAXFLOAT;
     }
 
     return true; // Everything was traversed.
