@@ -260,9 +260,12 @@ static void addLuminousDecoration(decorsource_t* src)
     l->decorSource = src;
 
     LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex = src->data.light.def->sides.tex;
-    LUM_OMNI(l)->ceilTex = src->data.light.def->up.tex;
-    LUM_OMNI(l)->floorTex = src->data.light.def->down.tex;
+    LUM_OMNI(l)->tex =
+        GL_GetLightMapTexture(src->data.light.def->sides.id);
+    LUM_OMNI(l)->ceilTex =
+        GL_GetLightMapTexture(src->data.light.def->up.id);
+    LUM_OMNI(l)->floorTex =
+        GL_GetLightMapTexture(src->data.light.def->down.id);
 
     // These are the same rules as in DL_MobjRadius().
     LUM_OMNI(l)->radius = src->data.light.def->radius * 40 * loRadiusFactor;

@@ -151,7 +151,6 @@ typedef struct {
 
 typedef struct ded_lightmap_s {
     ded_stringid_t  id;
-    unsigned int    tex; // Runtime
 } ded_lightmap_t;
 
 typedef struct ded_flaremap_s {

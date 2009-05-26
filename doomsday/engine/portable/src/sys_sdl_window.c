@@ -742,7 +742,6 @@ extern boolean usingFog;
             // Re-initialize.
             GL_TotalRestore();
             GL_InitRefresh();
-            GL_LoadLightmaps();
             GL_LoadFlareTextures();
 
             if(hadFog)

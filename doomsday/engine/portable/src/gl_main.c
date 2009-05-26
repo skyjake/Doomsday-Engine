@@ -674,6 +674,7 @@ void GL_ShutdownRefresh(void)
     GL_ShutdownTextureManager();
     R_DestroySkins();
     R_DestroyDetailTextures();
+    R_DestroyLightMaps();
     R_DestroyShinyTextures();
     R_DestroyMaskTextures();
 }

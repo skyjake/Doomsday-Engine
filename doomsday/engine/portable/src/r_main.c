@@ -281,9 +281,8 @@ void R_Update(void)
     R_InitSprites(); // Fully reinitialize sprites.
     R_UpdateTranslationTables();
 
-    // Now that we've read the defs, we can load lightmaps and flares.
+    // Now that we've read the defs, we can load flares.
     GL_LoadSystemTextures();
-    GL_LoadLightmaps();
     GL_LoadFlareTextures();
 
     Def_PostInit();

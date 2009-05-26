@@ -59,6 +59,11 @@ typedef struct detailtex_s {
     const char*     external;
 } detailtex_t;
 
+typedef struct lightmap_s {
+    gltextureid_t   id;
+    const char*     external;
+} lightmap_t;
+
 typedef struct shinytex_s {
     gltextureid_t   id;
     const char*     external;
@@ -250,6 +255,9 @@ extern int numSpriteTextures;
 extern detailtex_t** detailTextures;
 extern int numDetailTextures;
 
+extern lightmap_t** lightMaps;
+extern int numLightMaps;
+
 extern shinytex_t** shinyTextures;
 extern int numShinyTextures;
 
@@ -313,6 +321,10 @@ byte*           R_GetPal18to8(void);
 detailtex_t*    R_CreateDetailTexture(ded_detailtexture_t* def);
 detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);
 void            R_DestroyDetailTextures(void); // Called at shutdown.
+
+lightmap_t*     R_CreateLightMap(ded_lightmap_t* def);
+lightmap_t*     R_GetLightMap(const char* external);
+void            R_DestroyLightMaps(void); // Called at shutdown.
 
 shinytex_t*     R_CreateShinyTexture(ded_reflection_t* def);
 shinytex_t*     R_GetShinyTexture(const char* external);

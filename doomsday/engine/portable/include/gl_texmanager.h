@@ -56,6 +56,7 @@ typedef enum {
     GLT_MASK,
     GLT_MODELSKIN,
     GLT_MODELSHINYSKIN,
+    GLT_LIGHTMAP,
     NUM_GLTEXTURE_TYPES
 } gltexture_type_t;
 
@@ -66,7 +67,8 @@ typedef enum {
     (t) == GLT_SHINY? "shinytex" : \
     (t) == GLT_MASK? "masktex" : \
     (t) == GLT_MODELSKIN? "modelskin" : \
-    (t) == GLT_MODELSHINYSKIN? "modelshinyskin" : "systemtex")
+    (t) == GLT_MODELSHINYSKIN? "modelshinyskin" : \
+    (t) == GLT_LIGHTMAP? "lightmap" : "systemtex")
 
 typedef struct gltexture_s {
     gltextureid_t   id;
@@ -136,7 +138,6 @@ void            GL_ShutdownTextureManager(void);
 
 void            GL_TexReset(void);
 void            GL_LoadSystemTextures(void);
-void            GL_LoadLightmaps(void);
 void            GL_LoadFlareTextures(void);
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
@@ -177,6 +178,7 @@ byte            GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 byte            GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context);
 
 byte            GL_LoadDoomPatch(image_t* image, const patchtex_t* p);
 byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
@@ -195,6 +197,8 @@ DGLuint         GL_PreparePatch(patchtex_t* patch);
 DGLuint         GL_PreparePatchOtherPart(patchtex_t* patch);
 DGLuint         GL_PrepareRawTex(rawtex_t* rawTex);
 DGLuint         GL_PrepareRawTexOtherPart(rawtex_t* rawTex);
+
+DGLuint         GL_GetLightMapTexture(const char* name);
 
 void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);

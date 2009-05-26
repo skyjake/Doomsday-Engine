@@ -530,9 +530,9 @@ if(!mat)
 
         if(def)
         {
-            LUM_OMNI(l)->tex = def->sides.tex;
-            LUM_OMNI(l)->ceilTex = def->up.tex;
-            LUM_OMNI(l)->floorTex = def->down.tex;
+            LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
+            LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
+            LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
 
             if(def->flare.disabled)
                 LUM_OMNI(l)->flags |= LUMOF_NOHALO;

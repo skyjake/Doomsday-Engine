@@ -1251,6 +1251,31 @@ void Def_PostInit(void)
         R_CreateDetailTexture(&defs.details[i]);
     }
 
+    // Lightmaps.
+    GL_DeleteAllTexturesForGLTextures(GLT_LIGHTMAP);
+    R_DestroyLightMaps();
+    for(i = 0; i < defs.count.lights.num; ++i)
+    {
+        R_CreateLightMap(&defs.lights[i].up);
+        R_CreateLightMap(&defs.lights[i].down);
+        R_CreateLightMap(&defs.lights[i].sides);
+    }
+
+    for(i = 0; i < defs.count.decorations.num; ++i)
+    {
+        ded_decor_t*        decor = &defs.decorations[i];
+
+        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        {
+            if(!R_IsValidLightDecoration(&decor->lights[k]))
+                break;
+
+            R_CreateLightMap(&decor->lights[k].up);
+            R_CreateLightMap(&decor->lights[k].down);
+            R_CreateLightMap(&decor->lights[k].sides);
+        }
+    }
+
     // Surface reflections.
     GL_DeleteAllTexturesForGLTextures(GLT_SHINY);
     GL_DeleteAllTexturesForGLTextures(GLT_MASK);
@@ -1272,43 +1297,6 @@ void Def_PostInit(void)
     for(i = 0; i < defs.count.groups.num; ++i)
     {
         R_InitAnimGroup(&defs.groups[i]);
-    }
-}
-
-void Def_SetLightMap(ded_lightmap_t* map, const char* id,
-                     unsigned int texture)
-{
-    if(stricmp(map->id, id))
-        return; // Not the same lightmap?
-
-    map->tex = texture;
-}
-
-void Def_LightMapLoaded(const char* id, unsigned int texture)
-{
-    int                 i, k;
-    ded_decor_t*        decor;
-
-    // Load lightmaps.
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        Def_SetLightMap(&defs.lights[i].up, id, texture);
-        Def_SetLightMap(&defs.lights[i].down, id, texture);
-        Def_SetLightMap(&defs.lights[i].sides, id, texture);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-
-            Def_SetLightMap(&decor->lights[k].up, id, texture);
-            Def_SetLightMap(&decor->lights[k].down, id, texture);
-            Def_SetLightMap(&decor->lights[k].sides, id, texture);
-        }
     }
 }
 

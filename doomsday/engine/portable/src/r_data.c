@@ -99,6 +99,9 @@ spritetex_t** spriteTextures = NULL;
 int numDetailTextures = 0;
 detailtex_t** detailTextures = NULL;
 
+int numLightMaps = 0;
+lightmap_t** lightMaps = NULL;
+
 int numShinyTextures = 0;
 shinytex_t** shinyTextures = NULL;
 
@@ -2111,6 +2114,83 @@ void R_DestroyDetailTextures(void)
         M_Free(detailTextures);
     detailTextures = NULL;
     numDetailTextures = 0;
+}
+
+lightmap_t* R_CreateLightMap(ded_lightmap_t* def)
+{
+    char                name[9];
+    const gltexture_t*  glTex;
+    lightmap_t*         lmap;
+
+    if(!def->id[0] || def->id[0] == '-')
+        return NULL; // Not a lightmap
+
+    // Have we already created one for this?
+    if((lmap = R_GetLightMap(def->id)))
+        return NULL;
+
+    if(M_NumDigits(numLightMaps + 1) > 8)
+    {
+#if _DEBUG
+Con_Message("R_CreateLightMap: Too many lightmaps!\n");
+#endif
+        return NULL;
+    }
+
+    /**
+     * A new lightmap.
+     */
+
+    // Create a gltexture for it.
+    snprintf(name, 8, "%-*i", 8, numLightMaps + 1);
+    name[M_NumDigits(numLightMaps + 1)] = '\0';
+    glTex = GL_CreateGLTexture(name, numLightMaps, GLT_LIGHTMAP);
+
+    lmap = M_Malloc(sizeof(*lmap));
+    lmap->id = glTex->id;
+    lmap->external = def->id;
+
+    // Add it to the list.
+    lightMaps = M_Realloc(lightMaps, sizeof(lightmap_t*) * ++numLightMaps);
+    lightMaps[numLightMaps-1] = lmap;
+
+    return lmap;
+}
+
+lightmap_t* R_GetLightMap(const char* external)
+{
+    int                 i;
+
+    if(external && external[0] && external[0] != '-')
+    {
+        for(i = 0; i < numLightMaps; ++i)
+        {
+            lightmap_t*         lmap = lightMaps[i];
+
+            if(!stricmp(lmap->external, external))
+                return lmap;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * This is called at final shutdown.
+ */
+void R_DestroyLightMaps(void)
+{
+    int                 i;
+
+    for(i = 0; i < numLightMaps; ++i)
+    {
+        M_Free(lightMaps[i]);
+    }
+
+    if(lightMaps)
+        M_Free(lightMaps);
+    lightMaps = NULL;
+    numLightMaps = 0;
 }
 
 shinytex_t* R_CreateShinyTexture(ded_reflection_t* def)

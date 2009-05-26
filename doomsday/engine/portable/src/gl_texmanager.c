@@ -158,7 +158,8 @@ static gltexture_typedata_t glTextureTypeData[NUM_GLTEXTURE_TYPES] = {
     { GL_LoadShinyTexture }, // GLT_SHINY
     { GL_LoadMaskTexture }, // GLT_MASK
     { GL_LoadModelSkin }, // GLT_MODELSKIN
-    { GL_LoadModelShinySkin }
+    { GL_LoadModelShinySkin }, // GLT_MODELSHINYSKIN
+    { GL_LoadLightMap }
 };
 
 // CODE --------------------------------------------------------------------
@@ -331,61 +332,6 @@ int GL_InitPalettedTexture(void)
 }
 
 /**
- * Lightmaps should be monochrome images.
- */
-void GL_LoadLightMap(ded_lightmap_t *map)
-{
-    image_t             image;
-    filename_t          resource;
-
-    if(map->tex)
-        return; // Already loaded.
-
-    // Default texture name.
-    map->tex = lightingTextures[LST_DYNAMIC].tex;
-
-    if(!strcmp(map->id, "-"))
-    {
-        // No lightmap, if we don't know where to find the map.
-        map->tex = 0;
-    }
-    else if(map->id[0]) // Not an empty string.
-    {
-        // Search an external resource.
-        if(R_FindResource2(RT_GRAPHIC, RC_LIGHTMAP, map->id, "-ck",
-                           resource) &&
-           GL_LoadImage(&image, resource))
-        {
-            if(!image.isMasked)
-            {
-                // An alpha channel is required. If one is not in the
-                // image data, we'll generate it.
-                GL_ConvertToAlpha(&image, true);
-            }
-
-            map->tex = GL_NewTextureWithParams(image.pixelSize ==
-                                               2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                                               3 ? DGL_RGB : DGL_RGBA,
-                                               image.width, image.height, image.pixels,
-                                               TXCF_NO_COMPRESSION);
-            GL_DestroyImage(&image);
-
-            // Copy this to all defs with the same lightmap.
-            Def_LightMapLoaded(map->id, map->tex);
-        }
-    }
-}
-
-void GL_DeleteLightMap(ded_lightmap_t* map)
-{
-    if(map->tex != lightingTextures[LST_DYNAMIC].tex)
-    {
-        glDeleteTextures(1, (const GLuint*) &map->tex);
-    }
-    map->tex = 0;
-}
-
-/**
  * Flare textures are normally monochrome images but we'll allow full color.
  */
 void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
@@ -555,44 +501,6 @@ void GL_LoadSystemTextures(void)
 }
 
 /**
- * Prepares all the lightmap textures.
- */
-void GL_LoadLightmaps(void)
-{
-    int                 i;
-    ded_decor_t*        decor;
-
-    if(!texInited)
-        return;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        GL_LoadLightMap(&defs.lights[i].up);
-        GL_LoadLightMap(&defs.lights[i].down);
-        GL_LoadLightMap(&defs.lights[i].sides);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        int                 k;
-
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-
-            GL_LoadLightMap(&decor->lights[k].up);
-            GL_LoadLightMap(&decor->lights[k].down);
-            GL_LoadLightMap(&decor->lights[k].sides);
-        }
-
-        // Generate RGB lightmaps for decorations.
-        //R_GenerateDecorMap(decor);
-    }
-}
-
-/**
  * Prepares all the flare textures.
  */
 void GL_LoadFlareTextures(void)
@@ -635,10 +543,6 @@ void GL_ClearSystemTextures(void)
 
     for(i = 0; i < defs.count.lights.num; ++i)
     {
-        GL_DeleteLightMap(&defs.lights[i].up);
-        GL_DeleteLightMap(&defs.lights[i].down);
-        GL_DeleteLightMap(&defs.lights[i].sides);
-
         GL_DeleteFlareTexture(&defs.lights[i].flare);
     }
     for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
@@ -648,9 +552,6 @@ void GL_ClearSystemTextures(void)
         {
             if(!R_IsValidLightDecoration(&decor->lights[k]))
                 break;
-            GL_DeleteLightMap(&decor->lights[k].up);
-            GL_DeleteLightMap(&decor->lights[k].down);
-            GL_DeleteLightMap(&decor->lights[k].sides);
 
             GL_DeleteFlareTexture(&decor->lights[k].flare);
         }
@@ -1098,6 +999,36 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
         W_ChangeCacheTag(dTex->lump, PU_CACHE);
         return 1;
     }
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst,
+                     void* context)
+{
+    lightmap_t*         lmap;
+    filename_t          fileName;
+
+    if(!image)
+        return 0; // Wha?
+
+    lmap = lightMaps[inst->tex->ofTypeID];
+
+    // Search an external resource.
+    if(!(R_FindResource2(RT_GRAPHIC, RC_LIGHTMAP, lmap->external, "-ck",
+                         fileName) && GL_LoadImage(image, fileName)))
+    {
+        VERBOSE(
+        Con_Message("GL_LoadLightMap: Failed to load: %s\n",
+                    lmap->external));
+        return 0;
+    }
+
+    return 2;
 }
 
 /**
@@ -2132,6 +2063,28 @@ void GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT)
     }
 }
 
+DGLuint GL_GetLightMapTexture(const char* name)
+{
+    lightmap_t*         lmap;
+
+    if(name && name[0])
+    {
+        if(name[0] == '-')
+            return 0;
+
+        if((lmap = R_GetLightMap(name)))
+        {
+            const gltexture_inst_t* texInst;
+
+            if((texInst = GL_PrepareGLTexture(lmap->id, NULL, NULL)))
+                return texInst->id;
+        }
+    }
+
+    // Return the default texture name.
+    return GL_PrepareLSTexture(LST_DYNAMIC);
+}
+
 /**
  * @param pixels  RGBA data. Input read here, and output written here.
  * @param width   Width of the buffer.
@@ -2524,7 +2477,6 @@ static int doTexReset(void* parm)
 
     /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
-    GL_LoadLightmaps();
     GL_LoadFlareTextures();
 
     if(usingBusyMode)
@@ -3012,6 +2964,14 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 ColorOutlines(image.pixels, image.width, image.height);
         }
 
+        // Lightmaps should be monochrome images.
+        if(tex->type == GLT_LIGHTMAP && !image.isMasked)
+        {
+            // An alpha channel is required. If one is not in the
+            // image data, we'll generate it.
+            GL_ConvertToAlpha(&image, true);
+        }
+
         switch(tex->type)
         {
         case GLT_FLAT:
@@ -3093,6 +3053,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         case GLT_MASK:
         case GLT_MODELSKIN:
         case GLT_MODELSHINYSKIN:
+        case GLT_LIGHTMAP:
             if(tmpResult)
             {
                 texturecontent_t    c;
@@ -3128,7 +3089,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 if(image.width < 128 && image.height < 128)
                     c.flags |= TXCF_NO_COMPRESSION;
                 if(context &&
-                   (tex->type == GLT_MODELSKIN ||
+                   (tex->type == GLT_LIGHTMAP ||
+                    tex->type == GLT_MODELSKIN ||
                     tex->type == GLT_MODELSHINYSKIN))
                 {
                     material_load_params_t* params =
@@ -3139,13 +3101,15 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 }
 
                 if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN ||
-                   tex->type == GLT_MODELSHINYSKIN)
+                   tex->type == GLT_MODELSHINYSKIN ||
+                   tex->type == GLT_LIGHTMAP)
                 {
                     c.flags |= TXCF_EASY_UPLOAD;
                     if(tex->type == GLT_SPRITE)
                         c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
                     if(image.pixelSize != 3) c.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
+                    if(tex->type != GLT_LIGHTMAP)
                     if(image.pixelSize > 1) c.flags |= TXCF_UPLOAD_ARG_RGBDATA;
                 }
 
@@ -3188,7 +3152,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                                     (filterSprites ? GL_LINEAR : GL_NEAREST) :
                                GL_LINEAR);
                 c.anisoFilter = texAniso;
-                if(tex->type == GLT_SPRITE)
+                if(tex->type == GLT_SPRITE || tex->type == GLT_LIGHTMAP)
                     c.wrap[0] = c.wrap[1] = GL_CLAMP_TO_EDGE;
                 else
                     c.wrap[0] = c.wrap[1] = GL_REPEAT;
@@ -3399,6 +3363,7 @@ float GLTexture_GetHeight(const gltexture_t* tex)
     case GLT_SYSTEM: /// \fixme Do not assume!
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN:
+    case GLT_LIGHTMAP:
         return 64;
 
     default:
