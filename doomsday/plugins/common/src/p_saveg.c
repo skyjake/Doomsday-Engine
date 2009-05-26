@@ -4391,9 +4391,11 @@ static void P_ArchiveSounds(void)
         SV_WriteLong(node->volume);
         SV_WriteLong(SN_GetSequenceOffset(node->sequence, node->sequencePtr));
         SV_WriteLong(node->currentSoundID);
+
+        i = 0;
         if(node->mobj)
         {
-            for(i = 0; i < numpolyobjs; ++i)
+            for(; i < numpolyobjs; ++i)
             {
                 if(node->mobj == (mobj_t*) P_GetPolyobj(i | 0x80000000))
                 {
@@ -4424,7 +4426,7 @@ static void P_UnArchiveSounds(void)
     int             numSequences, sequence, seqOffset;
     int             delayTics, soundID, volume;
     int             polySnd, secNum, ver;
-    mobj_t*         sndMobj;
+    mobj_t*         sndMobj = NULL;
 
     AssertSegment(ASEG_SOUNDS);
 
