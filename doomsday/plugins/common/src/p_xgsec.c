@@ -984,7 +984,7 @@ boolean XS_GetPlane(linedef_t* actline, sector_t* sector, int ref,
 {
     material_t*         otherMat;
     float               otherHeight;
-    sector_t*           otherSec, *iter;
+    sector_t*           otherSec = NULL, *iter;
     xline_t*            xline;
     char                buff[50];
 
