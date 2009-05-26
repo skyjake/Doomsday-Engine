@@ -204,7 +204,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
                 }
 
                 // Handle the 'One-Sided Window' trick.
-                if(line->buildData.windowEffect)
+                if(line->buildData.windowEffect && front)
                 {
                     hedge_t    *other;
 
