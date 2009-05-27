@@ -411,7 +411,6 @@ int DD_Main(void)
 
         // \todo we could be loading these in busy mode.
         GL_LoadSystemTextures();
-        GL_LoadFlareTextures();
     }
 
     // Do deferred uploads.

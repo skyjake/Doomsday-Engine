@@ -534,12 +534,15 @@ if(!mat)
             LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
             LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
 
-            if(def->flare.disabled)
-                LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+            if(!(def->flare.id && def->flare.id[0] == '-'))
+            {
+                LUM_OMNI(l)->flareTex =
+                    GL_GetFlareTexture(def->flare.id, -1);
+            }
             else
             {
-                LUM_OMNI(l)->flareCustom = def->flare.custom;
-                LUM_OMNI(l)->flareTex = def->flare.tex;
+                LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+                LUM_OMNI(l)->flareTex = 0;
             }
         }
         else

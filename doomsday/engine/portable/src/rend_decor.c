@@ -217,6 +217,7 @@ static void addLuminousDecoration(decorsource_t* src)
     uint                lumIdx;
     lumobj_t*           l;
     float               brightness;
+    const ded_decorlight_t* def = src->data.light.def;
 
     src->lumIdx = 0;
     src->fadeMul = 1;
@@ -225,19 +226,11 @@ static void addLuminousDecoration(decorsource_t* src)
         return;
 
     // Does it pass the sector light limitation?
-    if(src->type == DT_LIGHT)
-    {
-        min = src->data.light.def->lightLevels[0];
-        max = src->data.light.def->lightLevels[1];
-    }
-    else // Its a decor model.
-    {
-        min = src->data.model.def->lightLevels[0];
-        max = src->data.model.def->lightLevels[0];
-    }
+    min = def->lightLevels[0];
+    max = def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel,
-                                          min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(
+            src->subsector->sector->lightLevel, min, max)) > 0))
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
@@ -247,9 +240,10 @@ static void addLuminousDecoration(decorsource_t* src)
         return;
 
     /**
-     * \todo From here on is pretty much the same as LO_AddLuminous, reconcile
-     * the two.
+     * \todo From here on is pretty much the same as LO_AddLuminous,
+     * reconcile the two.
      */
+
     lumIdx = LO_NewLuminous(LT_OMNI, src->subsector);
     l = LO_GetLuminous(lumIdx);
 
@@ -260,24 +254,21 @@ static void addLuminousDecoration(decorsource_t* src)
     l->decorSource = src;
 
     LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex =
-        GL_GetLightMapTexture(src->data.light.def->sides.id);
-    LUM_OMNI(l)->ceilTex =
-        GL_GetLightMapTexture(src->data.light.def->up.id);
-    LUM_OMNI(l)->floorTex =
-        GL_GetLightMapTexture(src->data.light.def->down.id);
+    LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
+    LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
+    LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
 
     // These are the same rules as in DL_MobjRadius().
-    LUM_OMNI(l)->radius = src->data.light.def->radius * 40 * loRadiusFactor;
+    LUM_OMNI(l)->radius = def->radius * 40 * loRadiusFactor;
 
     // Don't make a too small or too large light.
     if(LUM_OMNI(l)->radius > loMaxRadius)
         LUM_OMNI(l)->radius = loMaxRadius;
 
-    if(src->data.light.def->haloRadius > 0)
+    if(def->haloRadius > 0)
     {
-        LUM_OMNI(l)->flareSize =
-            src->data.light.def->haloRadius * 60 * (50 + haloSize) / 100.0f;
+        LUM_OMNI(l)->flareSize = def->haloRadius * 60 *
+            (50 + haloSize) / 100.0f;
         if(LUM_OMNI(l)->flareSize < 1)
             LUM_OMNI(l)->flareSize = 1;
     }
@@ -286,20 +277,21 @@ static void addLuminousDecoration(decorsource_t* src)
         LUM_OMNI(l)->flareSize = 0;
     }
 
-    if(src->data.light.def->flare.disabled)
+    if(!(def->flare.id && def->flare.id[0] == '-'))
     {
-        LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+        LUM_OMNI(l)->flareTex =
+            GL_GetFlareTexture(def->flare.id, def->flareTexture);
     }
     else
-    {
-        LUM_OMNI(l)->flareCustom = src->data.light.def->flare.custom;
-        LUM_OMNI(l)->flareTex = src->data.light.def->flare.tex;
+    {   // Primary halo disabled.
+        LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+        LUM_OMNI(l)->flareTex = 0;
     }
 
     LUM_OMNI(l)->flareMul = 1;
 
     for(i = 0; i < 3; ++i)
-        LUM_OMNI(l)->color[i] = src->data.light.def->color[i] * src->fadeMul;
+        LUM_OMNI(l)->color[i] = def->color[i] * src->fadeMul;
 
     src->lumIdx = lumIdx;
 }

@@ -1251,14 +1251,20 @@ void Def_PostInit(void)
         R_CreateDetailTexture(&defs.details[i]);
     }
 
-    // Lightmaps.
+    // Lightmaps and flare textures.
     GL_DeleteAllTexturesForGLTextures(GLT_LIGHTMAP);
+    GL_DeleteAllTexturesForGLTextures(GLT_FLARE);
     R_DestroyLightMaps();
+    R_DestroyFlareTextures();
     for(i = 0; i < defs.count.lights.num; ++i)
     {
-        R_CreateLightMap(&defs.lights[i].up);
-        R_CreateLightMap(&defs.lights[i].down);
-        R_CreateLightMap(&defs.lights[i].sides);
+        ded_light_t*        lig = &defs.lights[i];
+
+        R_CreateLightMap(&lig->up);
+        R_CreateLightMap(&lig->down);
+        R_CreateLightMap(&lig->sides);
+
+        R_CreateFlareTexture(&lig->flare);
     }
 
     for(i = 0; i < defs.count.decorations.num; ++i)
@@ -1267,12 +1273,16 @@ void Def_PostInit(void)
 
         for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
+            ded_decorlight_t*   lig = &decor->lights[k];
+
+            if(!R_IsValidLightDecoration(lig))
                 break;
 
-            R_CreateLightMap(&decor->lights[k].up);
-            R_CreateLightMap(&decor->lights[k].down);
-            R_CreateLightMap(&decor->lights[k].sides);
+            R_CreateLightMap(&lig->up);
+            R_CreateLightMap(&lig->down);
+            R_CreateLightMap(&lig->sides);
+
+            R_CreateFlareTexture(&lig->flare);
         }
     }
 
@@ -1297,44 +1307,6 @@ void Def_PostInit(void)
     for(i = 0; i < defs.count.groups.num; ++i)
     {
         R_InitAnimGroup(&defs.groups[i]);
-    }
-}
-
-void Def_SetFlareMap(ded_flaremap_t* map, const char* id,
-                     unsigned int texture, boolean disabled,
-                     boolean custom)
-{
-    if(stricmp(map->id, id))
-        return; // Not the same lightmap?
-
-    map->tex = texture;
-    map->disabled = disabled;
-    map->custom = custom;
-}
-
-void Def_FlareMapLoaded(const char* id, unsigned int texture,
-                        boolean disabled, boolean custom)
-{
-    int                 i, k;
-    ded_decor_t*        decor;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        Def_SetFlareMap(&defs.lights[i].flare, id, texture, disabled,
-                        custom);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-
-            Def_SetFlareMap(&decor->lights[k].flare, id, texture,
-                            disabled, custom);
-        }
     }
 }
 

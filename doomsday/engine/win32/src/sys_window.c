@@ -1209,7 +1209,6 @@ extern boolean usingFog;
             // Re-initialize.
             GL_TotalRestore();
             GL_InitRefresh();
-            GL_LoadFlareTextures();
 
             if(hadFog)
                 GL_UseFog(true);

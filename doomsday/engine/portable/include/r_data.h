@@ -64,6 +64,11 @@ typedef struct lightmap_s {
     const char*     external;
 } lightmap_t;
 
+typedef struct flaretex_s {
+    gltextureid_t   id;
+    const char*     external;
+} flaretex_t;
+
 typedef struct shinytex_s {
     gltextureid_t   id;
     const char*     external;
@@ -213,10 +218,11 @@ typedef enum lightingtexid_e {
 } lightingtexid_t;
 
 typedef enum flaretexid_e {
+    FXT_ROUND,
     FXT_FLARE, // (flare)
     FXT_BRFLARE, // (brFlare)
     FXT_BIGFLARE, // (bigFlare)
-    NUM_FLARE_TEXTURES
+    NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
 
 /**
@@ -257,6 +263,9 @@ extern int numDetailTextures;
 
 extern lightmap_t** lightMaps;
 extern int numLightMaps;
+
+extern flaretex_t** flareTextures;
+extern int numFlareTextures;
 
 extern shinytex_t** shinyTextures;
 extern int numShinyTextures;
@@ -318,19 +327,23 @@ void            R_LoadPalette(void);
 byte*           R_GetPalette(void);
 byte*           R_GetPal18to8(void);
 
-detailtex_t*    R_CreateDetailTexture(ded_detailtexture_t* def);
+detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
 detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);
 void            R_DestroyDetailTextures(void); // Called at shutdown.
 
-lightmap_t*     R_CreateLightMap(ded_lightmap_t* def);
+lightmap_t*     R_CreateLightMap(const ded_lightmap_t* def);
 lightmap_t*     R_GetLightMap(const char* external);
 void            R_DestroyLightMaps(void); // Called at shutdown.
 
-shinytex_t*     R_CreateShinyTexture(ded_reflection_t* def);
+flaretex_t*     R_CreateFlareTexture(const ded_flaremap_t* def);
+flaretex_t*     R_GetFlareTexture(const char* external);
+void            R_DestroyFlareTextures(void); // Called at shutdown.
+
+shinytex_t*     R_CreateShinyTexture(const ded_reflection_t* def);
 shinytex_t*     R_GetShinyTexture(const char* external);
 void            R_DestroyShinyTextures(void); // Called at shutdown.
 
-masktex_t*      R_CreateMaskTexture(ded_reflection_t* def);
+masktex_t*      R_CreateMaskTexture(const ded_reflection_t* def);
 masktex_t*      R_GetMaskTexture(const char* external);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 

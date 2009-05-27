@@ -57,6 +57,7 @@ typedef enum {
     GLT_MODELSKIN,
     GLT_MODELSHINYSKIN,
     GLT_LIGHTMAP,
+    GLT_FLARE,
     NUM_GLTEXTURE_TYPES
 } gltexture_type_t;
 
@@ -68,7 +69,8 @@ typedef enum {
     (t) == GLT_MASK? "masktex" : \
     (t) == GLT_MODELSKIN? "modelskin" : \
     (t) == GLT_MODELSHINYSKIN? "modelshinyskin" : \
-    (t) == GLT_LIGHTMAP? "lightmap" : "systemtex")
+    (t) == GLT_LIGHTMAP? "lightmap" : \
+    (t) == GLT_FLARE? "flaretex" : "systemtex")
 
 typedef struct gltexture_s {
     gltextureid_t   id;
@@ -138,7 +140,6 @@ void            GL_ShutdownTextureManager(void);
 
 void            GL_TexReset(void);
 void            GL_LoadSystemTextures(void);
-void            GL_LoadFlareTextures(void);
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
@@ -179,6 +180,7 @@ byte            GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* ins
 byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 
 byte            GL_LoadDoomPatch(image_t* image, const patchtex_t* p);
 byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
@@ -191,7 +193,7 @@ DGLuint         GL_PrepareExtTexture(resourceclass_t resClass,
                                      int magFilter, int anisoFilter,
                                      int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint         GL_PrepareFlareTexture(flaretexid_t flare);
+DGLuint         GL_PrepareSysFlareTexture(flaretexid_t flare);
 
 DGLuint         GL_PreparePatch(patchtex_t* patch);
 DGLuint         GL_PreparePatchOtherPart(patchtex_t* patch);
@@ -199,6 +201,7 @@ DGLuint         GL_PrepareRawTex(rawtex_t* rawTex);
 DGLuint         GL_PrepareRawTexOtherPart(rawtex_t* rawTex);
 
 DGLuint         GL_GetLightMapTexture(const char* name);
+DGLuint         GL_GetFlareTexture(const char* name, int oldIdx);
 
 void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);

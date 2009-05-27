@@ -783,7 +783,7 @@ static boolean generateHaloForVisSprite(vissprite_t* spr, boolean primary)
 
     return H_RenderHalo(center[VX], center[VY], center[VZ],
                         LUM_OMNI(lum)->flareSize,
-                        LUM_OMNI(lum)->flareTex, LUM_OMNI(lum)->flareCustom,
+                        LUM_OMNI(lum)->flareTex,
                         LUM_OMNI(lum)->color,
                         LO_DistanceToViewer(spr->lumIdx, viewPlayer - ddPlayers),
                         occlusionFactor, flareMul,

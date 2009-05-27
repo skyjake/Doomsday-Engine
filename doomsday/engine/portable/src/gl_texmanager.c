@@ -136,7 +136,7 @@ int glmode[6] = // Indexed by 'mipmapping'.
 ddtexture_t lightingTextures[NUM_LIGHTING_TEXTURES];
 
 // Names of the flare textures (halos).
-ddtexture_t flareTextures[NUM_FLARE_TEXTURES];
+ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -159,7 +159,8 @@ static gltexture_typedata_t glTextureTypeData[NUM_GLTEXTURE_TYPES] = {
     { GL_LoadMaskTexture }, // GLT_MASK
     { GL_LoadModelSkin }, // GLT_MODELSKIN
     { GL_LoadModelShinySkin }, // GLT_MODELSHINYSKIN
-    { GL_LoadLightMap }
+    { GL_LoadLightMap }, // GLT_LIGHTMAP
+    { GL_LoadFlareTexture }
 };
 
 // CODE --------------------------------------------------------------------
@@ -243,7 +244,7 @@ void GL_InitTextureManager(void)
     highResWithPWAD = ArgExists("-pwadtex");
 
     // System textures loaded in GL_LoadSystemTextures.
-    memset(flareTextures, 0, sizeof(flareTextures));
+    memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
     // Initialization done.
@@ -332,126 +333,6 @@ int GL_InitPalettedTexture(void)
 }
 
 /**
- * Flare textures are normally monochrome images but we'll allow full color.
- */
-void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
-{
-    image_t             image;
-    filename_t          resource;
-    boolean             loaded = false;
-
-    if(map->tex)
-        return; // Already loaded.
-
-    // Default texture (automatic).
-    map->tex = 0;
-
-    if(!strcmp(map->id, "-"))
-    {
-        // We don't know where to find the texture.
-        map->tex = 0;
-        map->disabled = true;
-        map->custom = false;
-        loaded = true;
-    }
-    else if(map->id[0]) // Not an empty string.
-    {
-        // Search an external resource.
-        if(R_FindResource2(RT_GRAPHIC, RC_FLAREMAP, map->id, "-ck",
-                           resource) &&
-           GL_LoadImage(&image, resource))
-        {
-            // A custom flare texture
-            map->custom = true;
-            map->disabled = false;
-
-            if(!image.isMasked || image.pixelSize != 4)
-            {
-                // An alpha channel is required. If one is not in the
-                // image data, we'll generate it.
-                GL_ConvertToAlpha(&image, true);
-            }
-
-            map->tex = GL_NewTextureWithParams2(image.pixelSize ==
-                                                2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                                                3 ? DGL_RGB : DGL_RGBA,
-                                                image.width, image.height, image.pixels,
-                                                TXCF_NO_COMPRESSION, GL_NEAREST, GL_LINEAR,
-                                                0 /*no anisotropy*/,
-                                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-            // Upload the texture.
-            // No mipmapping or resizing is needed, upload directly.
-            GL_DestroyImage(&image);
-
-            // Copy this to all defs with the same flare texture.
-            Def_FlareMapLoaded(map->id, map->tex, map->disabled, map->custom);
-            loaded = true;
-        }
-    }
-
-    if(!loaded)
-    {   // External resource not found.
-        // Perhaps a "built-in" flare texture id?
-        char               *end;
-        int                 id = 0, pass;
-        boolean             ok;
-
-        // First pass:
-        // Try to convert str "map->tex" to a flare tex constant idx
-        // Second pass:
-        // Use oldidx (if available) as a flare tex constant idx
-        for(pass = 0; pass < 2 && !loaded; ++pass)
-        {
-            ok = false;
-            if(pass == 0 && map->id[0])
-            {
-                id = strtol(map->id, &end, 0);
-                if(!(*end && !isspace(*end)))
-                    ok = true;
-            }
-            else if(pass == 1 && oldidx != -1)
-            {
-                id = oldidx;
-                ok = true;
-            }
-
-            if(ok)
-            {   // Yes it is!
-                // Maybe Automatic OR dynlight?
-                if(id == 0 || id == 1)
-                {
-                    map->tex = (id? GL_PrepareLSTexture(LST_DYNAMIC) : 0);
-                    map->custom = false;
-                    map->disabled = false;
-                    loaded = true;
-                }
-                else
-                {
-                    id -= 2;
-                    if(id >= 0 && id < NUM_FLARE_TEXTURES)
-                    {
-                        map->tex = GL_PrepareFlareTexture(id);
-                        map->custom = false;
-                        map->disabled = false;
-                        loaded = true;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void GL_DeleteFlareTexture(ded_flaremap_t* map)
-{
-    if(map->tex != flareTextures[FXT_FLARE].tex)
-    {
-        glDeleteTextures(1, (const GLuint*) &map->tex);
-    }
-    map->tex = 0;
-}
-
-/**
  * Prepares all the system textures (dlight, ptcgens).
  */
 void GL_LoadSystemTextures(void)
@@ -490,43 +371,14 @@ void GL_LoadSystemTextures(void)
     GL_PrepareLSTexture(LST_DYNAMIC);
     GL_PrepareLSTexture(LST_GRADIENT);
 
-    GL_PrepareFlareTexture(FXT_FLARE);
+    GL_PrepareSysFlareTexture(FXT_FLARE);
     if(!haloRealistic)
     {
-        GL_PrepareFlareTexture(FXT_BRFLARE);
-        GL_PrepareFlareTexture(FXT_BIGFLARE);
+        GL_PrepareSysFlareTexture(FXT_BRFLARE);
+        GL_PrepareSysFlareTexture(FXT_BIGFLARE);
     }
 
     Rend_ParticleInitTextures(); // Load particle textures.
-}
-
-/**
- * Prepares all the flare textures.
- */
-void GL_LoadFlareTextures(void)
-{
-    int                 i;
-    ded_decor_t*        decor;
-
-    if(!texInited)
-        return;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        GL_LoadFlareTexture(&defs.lights[i].flare, -1);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        int                 k;
-
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            GL_LoadFlareTexture(&decor->lights[k].flare,
-                            decor->lights[k].flareTexture);
-        }
-    }
 }
 
 /**
@@ -535,35 +387,18 @@ void GL_LoadFlareTextures(void)
  */
 void GL_ClearSystemTextures(void)
 {
-    int                 i, k;
-    ded_decor_t        *decor;
+    int                 i;
 
     if(!texInited)
         return;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        GL_DeleteFlareTexture(&defs.lights[i].flare);
-    }
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-
-            GL_DeleteFlareTexture(&decor->lights[k].flare);
-        }
-    }
 
     for(i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
         glDeleteTextures(1, (const GLuint*) &lightingTextures[i].tex);
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
-    for(i = 0; i < NUM_FLARE_TEXTURES; ++i)
-        glDeleteTextures(1, (const GLuint*) &flareTextures[i].tex);
-    memset(flareTextures, 0, sizeof(flareTextures));
+    for(i = 0; i < NUM_SYSFLARE_TEXTURES; ++i)
+        glDeleteTextures(1, (const GLuint*) &sysFlareTextures[i].tex);
+    memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
     P_DeleteMaterialTextures(MN_SYSTEM);
     UI_ClearTextures();
@@ -1037,6 +872,36 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst,
  *                      1 = a lump resource.
  *                      2 = an external resource.
  */
+byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst,
+                         void* context)
+{
+    flaretex_t*         fTex;
+    filename_t          fileName;
+
+    if(!image)
+        return 0; // Wha?
+
+    fTex = flareTextures[inst->tex->ofTypeID];
+
+    // Search an external resource.
+    if(!(R_FindResource2(RT_GRAPHIC, RC_FLAREMAP, fTex->external, "-ck",
+                         fileName) && GL_LoadImage(image, fileName)))
+    {
+        VERBOSE(
+        Con_Message("GL_LoadFlareTexture: Failed to load: %s\n",
+                    fTex->external));
+        return 0;
+    }
+
+    return 2;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
 byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst,
                          void* context)
 {
@@ -1197,32 +1062,32 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
     return lightingTextures[which].tex;
 }
 
-DGLuint GL_PrepareFlareTexture(flaretexid_t flare)
+DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
 {
-    // There are three flare textures.
-    if(flare >= NUM_FLARE_TEXTURES)
+    if(flare >= NUM_SYSFLARE_TEXTURES)
         return 0;
 
-    if(!flareTextures[flare].tex)
+    if(!sysFlareTextures[flare].tex)
     {
         // We don't want to compress the flares (banding would be noticeable).
-        flareTextures[flare].tex =
+        sysFlareTextures[flare].tex =
             GL_PrepareExtTexture(RC_GRAPHICS,
-                             flare == 0 ? "flare" :
-                             flare == 1 ? "brflare" : "bigflare",
+                             flare == 0 ? "dlight" :
+                             flare == 1 ? "flare" :
+                             flare == 2 ? "brflare" : "bigflare",
                              LGM_WHITE_ALPHA, false, GL_NEAREST,
                              GL_LINEAR, 0 /*no anisotropy*/,
                              GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                              TXCF_NO_COMPRESSION);
 
-        if(flareTextures[flare].tex == 0)
+        if(sysFlareTextures[flare].tex == 0)
         {
-            Con_Error("GL_PrepareFlareTexture: flare texture %i not found!\n",
+            Con_Error("GL_PrepareSysFlareTexture: flare texture %i not found!\n",
                       flare);
         }
     }
 
-    return flareTextures[flare].tex;
+    return sysFlareTextures[flare].tex;
 }
 
 /**
@@ -2085,6 +1950,127 @@ DGLuint GL_GetLightMapTexture(const char* name)
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
 
+#if 0
+/**
+ * Flare textures are normally monochrome images but we'll allow full color.
+ */
+void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
+{
+    boolean             loaded = false;
+
+    if(map->tex)
+        return; // Already loaded.
+
+    // Default texture (automatic).
+    map->tex = 0;
+
+    if(!strcmp(map->id, "-"))
+    {
+        // We don't know where to find the texture.
+        map->tex = 0;
+        map->disabled = true;
+        map->custom = false;
+        loaded = true;
+    }
+    else if(map->id[0]) // Not an empty string.
+    {
+        // A custom flare texture
+        map->custom = true;
+        map->disabled = false;
+
+        if prepareFails
+            setChosenTexture to default;
+    }
+
+    if(!loaded)
+    {   // External resource not found.
+        // Perhaps a "built-in" flare texture id?
+        char*               end;
+        int                 id = 0, pass;
+        boolean             ok;
+
+        // First pass:
+        // Try to convert str "map->tex" to a flare tex constant idx
+        // Second pass:
+        // Use oldidx (if available) as a flare tex constant idx
+        for(pass = 0; pass < 2 && !loaded; ++pass)
+        {
+            ok = false;
+            if(pass == 0 && map->id[0])
+            {
+                id = strtol(map->id, &end, 0);
+                if(!(*end && !isspace(*end)))
+                    ok = true;
+            }
+            else if(pass == 1 && oldIdx != -1)
+            {
+                id = oldIdx;
+                ok = true;
+            }
+
+            if(ok)
+            {   // Yes it is!
+                // Maybe Automatic OR dynlight?
+                if(id == 0 || id == 1)
+                {
+                    map->tex = (id? GL_PrepareLSTexture(LST_DYNAMIC) : 0);
+                    map->custom = false;
+                    map->disabled = false;
+                    loaded = true;
+                }
+                else
+                {
+                    id -= 2;
+                    if(id >= 0 && id < NUM_FLARE_TEXTURES)
+                    {
+                        map->tex = GL_PrepareFlareTexture(id);
+                        map->custom = false;
+                        map->disabled = false;
+                        loaded = true;
+                    }
+                }
+            }
+        }
+    }
+}
+#endif
+
+/**
+ * Attempt to locate and prepare a flare texture.
+ * Somewhat more complicated than it needs to be due to the fact there
+ * are two different selection methods.
+ *
+ * @param name          Name of a flare texture or "0" to "4".
+ * @param oldIdx        Old method of flare texture selection, by id.
+ */
+DGLuint GL_GetFlareTexture(const char* name, int oldIdx)
+{
+    if(name && name[0])
+    {
+        flaretex_t*         fTex;
+
+        if(name[0] == '-' || (name[0] == '0' && !name[1]))
+            return 0; // Use the automatic selection logic.
+
+        if(name[0] >= '1' && name[0] <= '4' && !name[1])
+            return GL_PrepareSysFlareTexture(name[0] - '1');
+
+        if((fTex = R_GetFlareTexture(name)))
+        {
+            const gltexture_inst_t* texInst;
+
+            if((texInst = GL_PrepareGLTexture(fTex->id, NULL, NULL)))
+                return texInst->id;
+        }
+    }
+    else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
+    {
+        return GL_PrepareSysFlareTexture(oldIdx-1);
+    }
+
+    return 0; // Use the automatic selection logic.
+}
+
 /**
  * @param pixels  RGBA data. Input read here, and output written here.
  * @param width   Width of the buffer.
@@ -2477,7 +2463,6 @@ static int doTexReset(void* parm)
 
     /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
-    GL_LoadFlareTextures();
 
     if(usingBusyMode)
     {
@@ -2964,8 +2949,10 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 ColorOutlines(image.pixels, image.width, image.height);
         }
 
-        // Lightmaps should be monochrome images.
-        if(tex->type == GLT_LIGHTMAP && !image.isMasked)
+        // Lightmaps and flare textures should be monochrome images.
+        if((tex->type == GLT_LIGHTMAP ||
+            (tex->type == GLT_FLARE && image.pixelSize != 4)) &&
+           !image.isMasked)
         {
             // An alpha channel is required. If one is not in the
             // image data, we'll generate it.
@@ -3054,6 +3041,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         case GLT_MODELSKIN:
         case GLT_MODELSHINYSKIN:
         case GLT_LIGHTMAP:
+        case GLT_FLARE:
             if(tmpResult)
             {
                 texturecontent_t    c;
@@ -3086,7 +3074,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 c.flags = 0;
 
                 // Disable compression?
-                if(image.width < 128 && image.height < 128)
+                if((image.width < 128 && image.height < 128) ||
+                   tex->type == GLT_FLARE)
                     c.flags |= TXCF_NO_COMPRESSION;
                 if(context &&
                    (tex->type == GLT_LIGHTMAP ||
@@ -3102,14 +3091,14 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
 
                 if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN ||
                    tex->type == GLT_MODELSHINYSKIN ||
-                   tex->type == GLT_LIGHTMAP)
+                   tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
                 {
                     c.flags |= TXCF_EASY_UPLOAD;
                     if(tex->type == GLT_SPRITE)
                         c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
                     if(image.pixelSize != 3) c.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
-                    if(tex->type != GLT_LIGHTMAP)
+                    if(tex->type != GLT_LIGHTMAP && tex->type != GLT_FLARE)
                     if(image.pixelSize > 1) c.flags |= TXCF_UPLOAD_ARG_RGBDATA;
                 }
 
@@ -3151,8 +3140,14 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                                tex->type == GLT_SPRITE?
                                     (filterSprites ? GL_LINEAR : GL_NEAREST) :
                                GL_LINEAR);
-                c.anisoFilter = texAniso;
-                if(tex->type == GLT_SPRITE || tex->type == GLT_LIGHTMAP)
+
+                if(tex->type == GLT_FLARE)
+                    c.anisoFilter = 0 /*no anisotropy*/;
+                else
+                    c.anisoFilter = texAniso;
+
+                if(tex->type == GLT_SPRITE || tex->type == GLT_LIGHTMAP ||
+                   tex->type == GLT_FLARE)
                     c.wrap[0] = c.wrap[1] = GL_CLAMP_TO_EDGE;
                 else
                     c.wrap[0] = c.wrap[1] = GL_REPEAT;
@@ -3287,6 +3282,8 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     case GLT_SYSTEM:
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN:
+    case GLT_LIGHTMAP:
+    case GLT_FLARE:
         return false; // Its definitely not.
 
     default:
@@ -3325,6 +3322,8 @@ float GLTexture_GetWidth(const gltexture_t* tex)
     case GLT_SYSTEM: /// \fixme Do not assume!
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN:
+    case GLT_LIGHTMAP:
+    case GLT_FLARE:
         return 64;
 
     default:
@@ -3364,6 +3363,7 @@ float GLTexture_GetHeight(const gltexture_t* tex)
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN:
     case GLT_LIGHTMAP:
+    case GLT_FLARE:
         return 64;
 
     default:

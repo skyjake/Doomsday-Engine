@@ -48,7 +48,7 @@ typedef struct flare_s {
     float       offset;
     float       size;
     float       alpha;
-    int         texture; // -1=dlight, 0=flare, 1=brflare, 2=bigflare
+    int         texture; // 0=round, 1=flare, 2=brflare, 3=bigflare
 } flare_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -142,10 +142,10 @@ void H_SetupState(boolean dosetup)
  * @return          @c true, if a halo was rendered.
  */
 boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
-                     boolean customTex, float color[3],
-                     float distanceToViewer, float occlusionFactor,
-                     float brightnessFactor, float viewXOffset,
-                     boolean primary, boolean viewRelativeRotate)
+                     float color[3], float distanceToViewer,
+                     float occlusionFactor, float brightnessFactor,
+                     float viewXOffset, boolean primary,
+                     boolean viewRelativeRotate)
 {
     int             i, k;
     float           viewPos[3];
@@ -330,28 +330,28 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         {
             // The 'realistic' halos just use the blurry round
             // texture unless custom.
-            if(!customTex)
-                tex = GL_PrepareLSTexture(LST_DYNAMIC);
+            if(!tex)
+                tex = GL_PrepareSysFlareTexture(FXT_ROUND);
         }
         else
         {
-            if(!(primary && (customTex || tex)))
+            if(!(primary && tex))
             {
                 if(size > 45 || (colorAverage > .90 && size > 20))
                 {
                     // The "Very Bright" condition.
                     radius *= .65f;
                     if(!i)
-                        tex = GL_PrepareFlareTexture(FXT_BIGFLARE);
+                        tex = GL_PrepareSysFlareTexture(FXT_BIGFLARE);
                     else
-                        tex = GL_PrepareFlareTexture(fl->texture);
+                        tex = GL_PrepareSysFlareTexture(fl->texture);
                 }
                 else
                 {
                     if(!i)
-                        tex = GL_PrepareLSTexture(LST_DYNAMIC);
+                        tex = GL_PrepareSysFlareTexture(FXT_ROUND);
                     else
-                        tex = GL_PrepareFlareTexture(fl->texture);
+                        tex = GL_PrepareSysFlareTexture(fl->texture);
                 }
             }
         }

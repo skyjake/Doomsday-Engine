@@ -102,6 +102,9 @@ detailtex_t** detailTextures = NULL;
 int numLightMaps = 0;
 lightmap_t** lightMaps = NULL;
 
+int numFlareTextures = 0;
+flaretex_t** flareTextures = NULL;
+
 int numShinyTextures = 0;
 shinytex_t** shinyTextures = NULL;
 
@@ -2038,7 +2041,7 @@ void R_InitAnimGroup(ded_group_t* def)
     }
 }
 
-detailtex_t* R_CreateDetailTexture(ded_detailtexture_t* def)
+detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
 {
     char                name[9];
     const gltexture_t*  glTex;
@@ -2116,7 +2119,7 @@ void R_DestroyDetailTextures(void)
     numDetailTextures = 0;
 }
 
-lightmap_t* R_CreateLightMap(ded_lightmap_t* def)
+lightmap_t* R_CreateLightMap(const ded_lightmap_t* def)
 {
     char                name[9];
     const gltexture_t*  glTex;
@@ -2193,7 +2196,89 @@ void R_DestroyLightMaps(void)
     numLightMaps = 0;
 }
 
-shinytex_t* R_CreateShinyTexture(ded_reflection_t* def)
+flaretex_t* R_CreateFlareTexture(const ded_flaremap_t* def)
+{
+    flaretex_t*         fTex;
+    char                name[9];
+    const gltexture_t*  glTex;
+
+    if(!def->id || !def->id[0] || def->id[0] == '-')
+        return NULL; // Not a flare texture.
+
+    // Perhaps a "built-in" flare texture id?
+    // Try to convert the id to a system flare tex constant idx
+    if(def->id[0] >= '0' && def->id[0] <= '4' && !def->id[1])
+        return NULL; // Don't create a flaretex for this
+
+    // Have we already created one for this?
+    if((fTex = R_GetFlareTexture(def->id)))
+        return NULL;
+
+    if(M_NumDigits(numFlareTextures + 1) > 8)
+    {
+#if _DEBUG
+Con_Message("R_CreateFlareTexture: Too many flare textures!\n");
+#endif
+        return NULL;
+    }
+
+    /**
+     * A new flare texture.
+     */
+    // Create a gltexture for it.
+    snprintf(name, 8, "%-*i", 8, numFlareTextures + 1);
+    name[M_NumDigits(numFlareTextures + 1)] = '\0';
+    glTex = GL_CreateGLTexture(name, numFlareTextures, GLT_FLARE);
+
+    fTex = M_Malloc(sizeof(*fTex));
+    fTex->external = def->id;
+    fTex->id = glTex->id;
+
+    // Add it to the list.
+    flareTextures =
+        M_Realloc(flareTextures, sizeof(flaretex_t*) * ++numFlareTextures);
+    flareTextures[numFlareTextures-1] = fTex;
+
+    return fTex;
+}
+
+flaretex_t* R_GetFlareTexture(const char* external)
+{
+    int                 i;
+
+    if(!external || !external[0] || external[0] == '-')
+        return NULL;
+
+    for(i = 0; i < numFlareTextures; ++i)
+    {
+        flaretex_t*         fTex = flareTextures[i];
+
+        if(!stricmp(fTex->external, external))
+            return fTex;
+    }
+
+    return NULL;
+}
+
+/**
+ * This is called at final shutdown.
+ */
+void R_DestroyFlareTextures(void)
+{
+    int                 i;
+
+    for(i = 0; i < numFlareTextures; ++i)
+    {
+        M_Free(flareTextures[i]);
+    }
+
+    if(flareTextures)
+        M_Free(flareTextures);
+    flareTextures = NULL;
+    numFlareTextures = 0;
+}
+
+shinytex_t* R_CreateShinyTexture(const ded_reflection_t* def)
 {
     char                name[9];
     const gltexture_t*  glTex;
@@ -2266,7 +2351,7 @@ void R_DestroyShinyTextures(void)
     numShinyTextures = 0;
 }
 
-masktex_t* R_CreateMaskTexture(ded_reflection_t* def)
+masktex_t* R_CreateMaskTexture(const ded_reflection_t* def)
 {
     char                name[9];
     const gltexture_t*  glTex;

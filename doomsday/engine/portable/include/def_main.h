@@ -93,9 +93,6 @@ ded_ptcgen_t*   Def_GetGenerator(material_t* mat, boolean hasExt);
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 int             Def_Get(int type, char* id, void* out);
 boolean         Def_SameStateSequence(state_t* snew, state_t* sold);
-void            Def_LightMapLoaded(const char* id, uint texture);
-void            Def_FlareMapLoaded(const char* id, uint texture,
-                                   boolean disabled, boolean custom);
 
 D_CMD(ListMobjs);
 #endif

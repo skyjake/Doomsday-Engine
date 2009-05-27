@@ -155,11 +155,6 @@ typedef struct ded_lightmap_s {
 
 typedef struct ded_flaremap_s {
     ded_stringid_t  id;
-    unsigned int    tex; // Runtime
-    boolean         custom; // If true tex = custom flare else flaretexname
-    boolean         disabled; /* As zero = automatic and flare ids
-                                 are unsigned we need an extra flag
-                                 to indicate when id == "-" */
 } ded_flaremap_t;
 
 typedef struct {

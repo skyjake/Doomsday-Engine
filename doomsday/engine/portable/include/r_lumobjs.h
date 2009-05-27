@@ -65,7 +65,6 @@ typedef struct lumobj_s {
             float           xOff;
             DGLuint         flareTex; // Flaremap if flareCustom ELSE (flaretexName id.
                                       // Zero = automatical)
-            boolean         flareCustom; // True id flareTex is a custom flare graphic
             float           flareMul; // Flare brightness factor.
         } omni;
         struct lumobj_plane_s {
