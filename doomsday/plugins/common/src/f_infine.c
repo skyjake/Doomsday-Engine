@@ -1457,13 +1457,12 @@ int FI_Responder(event_t* ev)
 int FI_FilterChar(int ch)
 {
     // Filter it.
-    ch = toupper(ch);
     if(ch == '_')
         ch = '[';
     else if(ch == '\\')
         ch = '/';
-    else if(ch < 32 || ch > 'Z')
-        ch = 32; // We don't have this char.
+    else if(ch < ' ' || ch > 'z')
+        ch = ' '; // We don't have this char.
 
     return ch;
 }
@@ -1471,9 +1470,6 @@ int FI_FilterChar(int ch)
 int FI_CharWidth(int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
-
-    if(ch == ' ')
-        return 4;
 
     return M_CharWidth(ch, fontb? GF_FONTB : GF_FONTA);
 }
@@ -1505,9 +1501,7 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
 
-    // Draw the character. Don't try to draw spaces.
-    if(ch != ' ')
-        M_DrawChar(x, y, ch, fontb? GF_FONTB : GF_FONTA);
+    M_DrawChar(x, y, ch, fontb? GF_FONTB : GF_FONTA);
 
     return FI_CharWidth(ch, fontb);
 }
