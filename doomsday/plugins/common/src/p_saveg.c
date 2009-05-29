@@ -78,7 +78,7 @@
 #if __JDOOM__
 # define MY_SAVE_MAGIC         0x1DEAD666
 # define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
-# define MY_SAVE_VERSION       6
+# define MY_SAVE_VERSION       7
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "DoomSav"
@@ -87,7 +87,7 @@
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
 # define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
-# define MY_SAVE_VERSION       6
+# define MY_SAVE_VERSION       7
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "D64Sav"
@@ -96,7 +96,7 @@
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
 # define MY_CLIENT_SAVE_MAGIC  0x1062AF43
-# define MY_SAVE_VERSION       6
+# define MY_SAVE_VERSION       7
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x9d
 # define SAVEGAMENAME          "HticSav"
@@ -106,7 +106,7 @@
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
 
-# define MY_SAVE_VERSION       7
+# define MY_SAVE_VERSION       8
 # define SAVESTRINGSIZE        24
 # define SAVEGAMENAME          "Hex"
 # define CLIENTSAVEGAMENAME    "HexenCl"
@@ -282,11 +282,9 @@ static void ClearSaveSlot(int slot);
 static void CopySaveSlot(int sourceSlot, int destSlot);
 static void CopyFile(char *sourceName, char *destName);
 static boolean ExistingFile(char *name);
-
-static void SV_HxLoadMap(void);
-#else
-static void SV_DMLoadMap(void);
 #endif
+
+static void unarchiveMap(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -2723,19 +2721,19 @@ static void P_ArchiveWorld(void)
 
 static void P_UnArchiveWorld(void)
 {
-    uint                i;
-    int                 matArchiveVer = 0;
+    uint                i, num;
+    int                 matArchiveVer = -1;
 
     AssertSegment(ASEG_MATERIAL_ARCHIVE);
 
 #if __JHEXEN__
-    if(saveVersion >= 6)
+    if(saveVersion < 6)
 #else
-    if(hdr.version >= 6)
+    if(hdr.version < 6)
 #endif
-        matArchiveVer = 1;
+        matArchiveVer = 0;
 
-    // Load texturearchive?
+    // Load the material archive for this map?
 #if !__JHEXEN__
     if(hdr.version >= 4)
 #endif
@@ -2745,6 +2743,7 @@ static void P_UnArchiveWorld(void)
     // Load sectors.
     for(i = 0; i < numsectors; ++i)
         SV_ReadSector(P_ToPtr(DMU_SECTOR, i));
+
     // Load lines.
     for(i = 0; i < numlines; ++i)
         SV_ReadLine(P_ToPtr(DMU_LINEDEF, i));
@@ -5021,7 +5020,6 @@ static boolean SV_LoadGame2(void)
     boolean     loaded[MAXPLAYERS], infile[MAXPLAYERS];
 #if __JHEXEN__
     int         k;
-    player_t    playerBackup[MAXPLAYERS];
 #endif
 
     // Read the header.
@@ -5042,10 +5040,13 @@ static boolean SV_LoadGame2(void)
     P_UnArchiveGlobalScriptData();
 #endif
 
-#if !__JHEXEN__
-    // Load the map.
+    // We don't want to see a briefing if we're loading a save game.
+    briefDisabled = true;
+
+    // Load the map and configure some game settings.
     G_InitNew(gameSkill, gameEpisode, gameMap);
 
+#if !__JHEXEN__
     // Set the time.
     mapTime = hdr.mapTime;
 
@@ -5075,18 +5076,10 @@ static boolean SV_LoadGame2(void)
 
 #if __JHEXEN__
     Z_Free(saveBuffer);
-
-    // Save player structs
-    memcpy(playerBackup, players, sizeof(playerBackup));
 #endif
 
-    // Load the current map
-#if __JHEXEN__
-    SV_HxLoadMap();
-#else
-    // Load the current map
-    SV_DMLoadMap();
-#endif
+    // Load the current map state.
+    unarchiveMap();
 
 #if !__JHEXEN__
     // Check consistency.
@@ -5101,15 +5094,6 @@ static boolean SV_LoadGame2(void)
 #if __JHEXEN__
     // Don't need the player mobj relocation info for load game
     SV_FreeTargetPlayerList();
-
-    // Restore player structs
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        mobj_t*             mo = players[i].plr->mo;
-
-        memcpy(&players[i], &playerBackup[i], sizeof(player_t));
-        players[i].plr->mo = mo;
-    }
 #endif
 
     // Notify the players that weren't in the savegame.
@@ -5195,9 +5179,6 @@ boolean SV_LoadGame(char *filename)
     // Load the file
     M_ReadFile(fileName, &saveBuffer);
 #else
-    // Make sure an opening briefing is not shown.
-    // (G_InitNew --> G_DoLoadMap)
-    briefDisabled = true;
 
     savefile = lzOpen(filename, "rp");
     if(!savefile)
@@ -5343,69 +5324,61 @@ void SV_LoadClient(unsigned int gameid)
 #endif
 }
 
-#if !__JHEXEN__
-static void SV_DMLoadMap(void)
+static void unarchiveMap(void)
 {
-    P_UnArchiveMap();
-
-    // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupMap(DDSMM_AFTER_LOADING, 0);
-}
-#endif
-
 #if __JHEXEN__
-static void SV_HxLoadMap(void)
-{
-    char        fileName[100];
-
-#ifdef _DEBUG
-    Con_Printf("SV_HxLoadMap: Begin, G_InitNew...\n");
-#endif
-
-    // We don't want to see a briefing if we're loading a save game.
-    briefDisabled = true;
-
-    // Load a base map
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    char                fileName[100];
 
     // Create the name
     sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
     M_TranslatePath(fileName, fileName);
 
 #ifdef _DEBUG
-    Con_Printf("SV_HxLoadMap: Reading %s\n", fileName);
+    Con_Printf("unarchiveMap: Reading %s\n", fileName);
 #endif
 
     // Load the file
     M_ReadFile(fileName, &saveBuffer);
     saveptr.b = saveBuffer;
+#endif
 
     P_UnArchiveMap();
 
+#if __JHEXEN__
     // Free mobj list and save buffer
     SV_FreeThingArchive();
     Z_Free(saveBuffer);
+#endif
 
     // Spawn particle generators, fix HOMS etc, etc...
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }
 
+#if __JHEXEN__
 void SV_MapTeleport(int map, int position)
 {
-    int         i;
-    char        fileName[100];
-    player_t    playerBackup[MAXPLAYERS];
-    uint        numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
+    int                 i, oldKeys = 0, oldPieces = 0, bestWeapon;
+    char                fileName[100];
+    player_t            playerBackup[MAXPLAYERS];
+    uint                numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
     inventoryitemtype_t readyItem[MAXPLAYERS];
-    mobj_t     *targetPlayerMobj;
-    boolean     rClass;
-    boolean     playerWasReborn;
-    boolean     oldWeaponOwned[NUM_WEAPON_TYPES];
-    int         oldKeys = 0;
-    int         oldPieces = 0;
-    int         bestWeapon;
+    mobj_t*             targetPlayerMobj;
+    boolean             rClass, playerWasReborn, revisit;
+    boolean             oldWeaponOwned[NUM_WEAPON_TYPES];
 
     playerHeaderOK = false; // Uninitialized.
+
+    /**
+     * First, determine whether we've been to this map previously and if so,
+     * whether we need to load the archived map state.
+     */
+    sprintf(fileName, "%shex6%02d.hxs", savePath, map);
+    M_TranslatePath(fileName, fileName);
+
+    if(!deathmatch && ExistingFile(fileName))
+        revisit = true;
+    else
+        revisit = false;
 
     if(!deathmatch)
     {
@@ -5446,22 +5419,22 @@ void SV_MapTeleport(int map, int position)
         readyItem[i] = P_InventoryReadyItem(i);
     }
 
-    // Only SV_HxLoadMap() uses targetPlayerAddrs, so it's NULLed here
+    // Only unarchiveMap() uses targetPlayerAddrs, so it's NULLed here
     // for the following check (player mobj redirection)
     targetPlayerAddrs = NULL;
 
-    gameMap = map;
-    sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
-    M_TranslatePath(fileName, fileName);
-    if(!deathmatch && ExistingFile(fileName))
-    {   // Unarchive map.
-        SV_HxLoadMap();
+    // We don't want to see a briefing if we're loading a save game.
+    if(revisit)
         briefDisabled = true;
+
+    G_InitNew(gameSkill, gameEpisode, map);
+
+    if(revisit)
+    {   // Been here before, load the previous map state.
+        unarchiveMap();
     }
     else
-    {   // New map.
-        G_InitNew(gameSkill, gameEpisode, gameMap);
-
+    {   // First visit.
         // Destroy all freshly spawned players
         for(i = 0; i < MAXPLAYERS; ++i)
         {

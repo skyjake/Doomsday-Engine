@@ -85,6 +85,12 @@ static int numFlats; // Used with older versions.
 
 // CODE --------------------------------------------------------------------
 
+static void initMaterialNameLUT(void)
+{
+    matArchive.count = 0;
+    memset(matArchive.table, 0, sizeof(matArchive.table));
+}
+
 /**
  * Called for every material in the map before saving by
  * Sv_InitTextureArchives.
@@ -139,7 +145,9 @@ void SV_InitMaterialArchives(void)
 {
     uint                i;
 
-    matArchive.count = 0;
+    matArchive.version = MATERIAL_ARCHIVE_VERSION;
+
+    initMaterialNameLUT();
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -220,7 +228,9 @@ void SV_WriteMaterialArchive(void)
 {
     int                 i;
 
+    SV_WriteByte(matArchive.version);
     SV_WriteShort(matArchive.count);
+
     for(i = 0; i < matArchive.count; ++i)
     {
         SV_Write(matArchive.table[i].name, 8);
@@ -228,7 +238,8 @@ void SV_WriteMaterialArchive(void)
     }
 }
 
-static void readMatArchive(materialarchive_t* arc, material_namespace_t defaultGroup)
+static void readMatArchive(materialarchive_t* arc,
+                           material_namespace_t defaultGroup)
 {
     int                 i, num;
 
@@ -246,10 +257,24 @@ static void readMatArchive(materialarchive_t* arc, material_namespace_t defaultG
     arc->count += num;
 }
 
+/**
+ * @param version       Override support for/of a particular version.
+ */
 void SV_ReadMaterialArchive(int version)
 {
-    matArchive.count = 0;
-    matArchive.version = version;
+    if(version >= 0)
+    {
+        matArchive.version = version;
+        if(version != 0)
+            SV_ReadByte();
+    }
+    else
+    {
+        matArchive.version = SV_ReadByte();
+    }
+
+    initMaterialNameLUT();
+
     readMatArchive(&matArchive, MN_FLATS);
 
     if(matArchive.version == 0)
