@@ -562,32 +562,32 @@ void Hu_LoadData(void)
         { 93, "FONTA63" }, // ]
         { 94, "FONTA64" }, // ^
         { 95, "FONTA59" }, // _
-        { 97, "FONTA033" }, // a
-        { 98, "FONTA034" }, // b
-        { 99, "FONTA035" }, // c
-        { 100, "FONTA036" }, // d
-        { 101, "FONTA037" }, // e
-        { 102, "FONTA038" }, // f
-        { 103, "FONTA039" }, // g
-        { 104, "FONTA040" }, // h
-        { 105, "FONTA041" }, // i
-        { 106, "FONTA042" }, // j
-        { 107, "FONTA043" }, // k
-        { 108, "FONTA044" }, // l
-        { 109, "FONTA045" }, // m
-        { 110, "FONTA046" }, // n
-        { 111, "FONTA047" }, // o
-        { 112, "FONTA048" }, // p
-        { 113, "FONTA049" }, // q
-        { 114, "FONTA050" }, // r
-        { 115, "FONTA051" }, // s
-        { 116, "FONTA052" }, // t
-        { 117, "FONTA053" }, // u
-        { 118, "FONTA054" }, // v
-        { 119, "FONTA055" }, // w
-        { 120, "FONTA056" }, // x
-        { 121, "FONTA057" }, // y
-        { 122, "FONTA058" } // z
+        { 97, "FONTA33" }, // a
+        { 98, "FONTA34" }, // b
+        { 99, "FONTA35" }, // c
+        { 100, "FONTA36" }, // d
+        { 101, "FONTA37" }, // e
+        { 102, "FONTA38" }, // f
+        { 103, "FONTA39" }, // g
+        { 104, "FONTA40" }, // h
+        { 105, "FONTA41" }, // i
+        { 106, "FONTA42" }, // j
+        { 107, "FONTA43" }, // k
+        { 108, "FONTA44" }, // l
+        { 109, "FONTA45" }, // m
+        { 110, "FONTA46" }, // n
+        { 111, "FONTA47" }, // o
+        { 112, "FONTA48" }, // p
+        { 113, "FONTA49" }, // q
+        { 114, "FONTA50" }, // r
+        { 115, "FONTA51" }, // s
+        { 116, "FONTA52" }, // t
+        { 117, "FONTA53" }, // u
+        { 118, "FONTA54" }, // v
+        { 119, "FONTA55" }, // w
+        { 120, "FONTA56" }, // x
+        { 121, "FONTA57" }, // y
+        { 122, "FONTA58" } // z
     };
     static const fontpatch_t fontB[] = {
         { 32, "FONTB00" }, // ' '
@@ -654,32 +654,32 @@ void Hu_LoadData(void)
         { 93, "FONTB61" }, // ]
         { 94, "FONTB62" }, // ^
         { 95, "FONTB63" }, // _
-        { 97, "FONTB065" }, // a
-        { 98, "FONTB066" }, // b
-        { 99, "FONTB067" }, // c
-        { 100, "FONTB068" }, // d
-        { 101, "FONTB069" }, // e
-        { 102, "FONTB070" }, // f
-        { 103, "FONTB071" }, // g
-        { 104, "FONTB072" }, // h
-        { 105, "FONTB073" }, // i
-        { 106, "FONTB074" }, // j
-        { 107, "FONTB075" }, // k
-        { 108, "FONTB076" }, // l
-        { 109, "FONTB077" }, // m
-        { 110, "FONTB078" }, // n
-        { 111, "FONTB079" }, // o
-        { 112, "FONTB080" }, // p
-        { 113, "FONTB081" }, // q
-        { 114, "FONTB082" }, // r
-        { 115, "FONTB083" }, // s
-        { 116, "FONTB084" }, // t
-        { 117, "FONTB085" }, // u
-        { 118, "FONTB086" }, // v
-        { 119, "FONTB087" }, // w
-        { 120, "FONTB088" }, // x
-        { 121, "FONTB089" }, // y
-        { 122, "FONTB090" } // z
+        { 97, "FONTB33" }, // a
+        { 98, "FONTB34" }, // b
+        { 99, "FONTB35" }, // c
+        { 100, "FONTB36" }, // d
+        { 101, "FONTB37" }, // e
+        { 102, "FONTB38" }, // f
+        { 103, "FONTB39" }, // g
+        { 104, "FONTB40" }, // h
+        { 105, "FONTB41" }, // i
+        { 106, "FONTB42" }, // j
+        { 107, "FONTB43" }, // k
+        { 108, "FONTB44" }, // l
+        { 109, "FONTB45" }, // m
+        { 110, "FONTB46" }, // n
+        { 111, "FONTB47" }, // o
+        { 112, "FONTB48" }, // p
+        { 113, "FONTB49" }, // q
+        { 114, "FONTB50" }, // r
+        { 115, "FONTB51" }, // s
+        { 116, "FONTB52" }, // t
+        { 117, "FONTB53" }, // u
+        { 118, "FONTB54" }, // v
+        { 119, "FONTB55" }, // w
+        { 120, "FONTB56" }, // x
+        { 121, "FONTB57" }, // y
+        { 122, "FONTB58" } // z
     };
 #endif
 
