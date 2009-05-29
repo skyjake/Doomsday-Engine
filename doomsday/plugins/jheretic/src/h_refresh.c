@@ -181,7 +181,7 @@ void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
 
         M_WriteText3(strX, y, lname, font,
                      defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha,
-                     false, 0);
+                     false, true, 0);
         y += 20;
     }
 
@@ -193,7 +193,7 @@ void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
             strX -= M_StringWidth(lauthor, GF_FONTA) / 2;
 
         M_WriteText3(strX, y, lauthor, GF_FONTA, .5f, .5f, .5f, alpha,
-                     false, 0);
+                     false, true, 0);
     }
 }
 

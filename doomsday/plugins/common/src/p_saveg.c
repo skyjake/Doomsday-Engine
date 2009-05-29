@@ -2721,7 +2721,7 @@ static void P_ArchiveWorld(void)
 
 static void P_UnArchiveWorld(void)
 {
-    uint                i, num;
+    uint                i;
     int                 matArchiveVer = -1;
 
     AssertSegment(ASEG_MATERIAL_ARCHIVE);

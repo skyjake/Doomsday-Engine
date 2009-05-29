@@ -73,11 +73,10 @@ void HUlib_clearTextLine(hu_textline_t *t)
     t->needsupdate = true;
 }
 
-void HUlib_initTextLine(hu_textline_t *t, int x, int y, gamefontid_t font)
+void HUlib_initTextLine(hu_textline_t *t, int x, int y)
 {
     t->x = x;
     t->y = y;
-	t->font = font;
     HUlib_clearTextLine(t);
 }
 
@@ -102,9 +101,10 @@ boolean HUlib_delCharFromTextLine(hu_textline_t *t)
     return true;
 }
 
-void HUlib_drawTextLine(hu_textline_t* l, boolean drawcursor)
+void HUlib_drawTextLine(hu_textline_t* l, gamefontid_t font,
+                        boolean drawcursor)
 {
-    HUlib_drawTextLine2(l->x, l->y, l->l, l->len, l->font, drawcursor);
+    HUlib_drawTextLine2(l->x, l->y, l->l, l->len, font, drawcursor);
 }
 
 /**
@@ -116,109 +116,25 @@ void HUlib_eraseTextLine(hu_textline_t* l)
         l->needsupdate--;
 }
 
-void HUlib_initSText(hu_stext_t* s, int x, int y, int h, gamefontid_t font,
-                     boolean* on)
-{
-    int					i;
-
-    s->h = h;
-    s->on = on;
-    s->laston = true;
-    s->cl = 0;
-
-    for(i = 0; i < h; ++i)
-    {
-		HUlib_initTextLine(&s->l[i], x,
-						   y - i * M_StringHeight("A", font) + 1, font);
-    }
-}
-
-void HUlib_addLineToSText(hu_stext_t* s)
-{
-    int					i;
-
-    // Add a clear line.
-    if(++s->cl == s->h)
-        s->cl = 0;
-
-    HUlib_clearTextLine(&s->l[s->cl]);
-
-    // Everything needs updating.
-    for(i = 0; i < s->h; ++i)
-    {
-        s->l[i].needsupdate = 4;
-    }
-}
-
-void HUlib_addMessageToSText(hu_stext_t* s, char* prefix, char* msg)
-{
-    HUlib_addLineToSText(s);
-
-    if(prefix)
-    {
-        while(*prefix)
-            HUlib_addCharToTextLine(&s->l[s->cl], *(prefix++));
-    }
-
-    while(*msg)
-        HUlib_addCharToTextLine(&s->l[s->cl], *(msg++));
-}
-
-void HUlib_drawSText(hu_stext_t* s)
-{
-    int					i, idx;
-    hu_textline_t*		l;
-
-    if(!*s->on)
-        return; // If not on, don't draw.
-
-    // Draw everything.
-    for(i = 0; i < s->h; ++i)
-    {
-        idx = s->cl - i;
-        if(idx < 0)
-            idx += s->h; // Handle queue of lines.
-
-        l = &s->l[idx];
-
-        HUlib_drawTextLine(l, false);
-    }
-}
-
-void HUlib_eraseSText(hu_stext_t* s)
-{
-    int					i;
-
-    for(i = 0; i < s->h; ++i)
-    {
-        if(s->laston && !*s->on)
-            s->l[i].needsupdate = 4;
-        HUlib_eraseTextLine(&s->l[i]);
-    }
-
-    s->laston = *s->on;
-}
-
-void HUlib_initIText(hu_itext_t* it, int x, int y, gamefontid_t font,
-                     boolean* on)
+void HUlib_initText(hu_text_t* it, int x, int y, boolean* on)
 {
     it->lm = 0; // Default left margin is start of text.
     it->on = on;
     it->laston = true;
 
-    HUlib_initTextLine(&it->l, x, y, font);
+    HUlib_initTextLine(&it->l, x, y);
 }
 
 /**
  * Adheres to the left margin restriction
  */
-void HUlib_delCharFromIText(hu_itext_t* it)
+void HUlib_delCharFromText(hu_text_t* it)
 {
     if(it->l.len != it->lm)
         HUlib_delCharFromTextLine(&it->l);
 }
 
-void HUlib_eraseLineFromIText(hu_itext_t* it)
+void HUlib_eraseLineFromText(hu_text_t* it)
 {
     while(it->lm != it->l.len)
         HUlib_delCharFromTextLine(&it->l);
@@ -227,13 +143,13 @@ void HUlib_eraseLineFromIText(hu_itext_t* it)
 /**
  * Resets left margin as well.
  */
-void HUlib_resetIText(hu_itext_t* it)
+void HUlib_resetText(hu_text_t* it)
 {
     it->lm = 0;
     HUlib_clearTextLine(&it->l);
 }
 
-void HUlib_addPrefixToIText(hu_itext_t* it, char* str)
+void HUlib_addPrefixToText(hu_text_t* it, char* str)
 {
     while(*str)
         HUlib_addCharToTextLine(&it->l, *(str++));
@@ -246,9 +162,9 @@ void HUlib_addPrefixToIText(hu_itext_t* it, char* str)
  *
  * @return              @c true, if it ate the key.
  */
-boolean HUlib_keyInIText(hu_itext_t* it, unsigned char ch)
+boolean HUlib_keyInText(hu_text_t* it, unsigned char ch)
 {
-    if(ch >= ' ' && ch <= '_')
+    if(ch >= ' ' && ch <= 'z')
     {
         HUlib_addCharToTextLine(&it->l, (char) ch);
         return true;
@@ -257,17 +173,17 @@ boolean HUlib_keyInIText(hu_itext_t* it, unsigned char ch)
     return false;
 }
 
-void HUlib_drawIText(hu_itext_t* it)
+void HUlib_drawText(hu_text_t* it, gamefontid_t font)
 {
     hu_textline_t*		l = &it->l;
 
     if(!*it->on)
         return;
 
-    HUlib_drawTextLine(l, true);
+    HUlib_drawTextLine(l, font, true);
 }
 
-void HUlib_eraseIText(hu_itext_t* it)
+void HUlib_eraseText(hu_text_t* it)
 {
     if(it->laston && !*it->on)
         it->l.needsupdate = 4;

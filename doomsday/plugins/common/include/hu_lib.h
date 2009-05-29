@@ -28,28 +28,15 @@
 
 #include "hu_stuff.h"
 
-#define HU_CHARERASE        (KEY_BACKSPACE)
-
-#define HU_MAXLINES         (4)
 #define HU_MAXLINELENGTH    (160)
 
 // Text Line widget, (parent of Scrolling Text and Input Text widgets).
 typedef struct {
     int             x, y; // Left-justified position of scrolling text window.
-    gamefontid_t	font;
     char            l[HU_MAXLINELENGTH + 1]; // Line of text.
     int             len; // Current line length.
     int             needsupdate; // Whether this line needs to be udpated.
 } hu_textline_t;
-
-// Scrolling Text window widget (child of Text Line widget).
-typedef struct {
-    hu_textline_t   l[HU_MAXLINES]; // Text lines to draw.
-    int             h; // Height in lines.
-    int             cl; // Current line number.
-    boolean*        on; // Whether to update window.
-    boolean         laston; // Last value of *->on.
-} hu_stext_t;
 
 // Input Text Line widget (child of Text Line widget).
 typedef struct {
@@ -57,34 +44,23 @@ typedef struct {
     int             lm; // Left margin past which I am not to delete characters.
     boolean*        on; // Whether to update window.
     boolean         laston; // Last value of *->on.
-} hu_itext_t;
+} hu_text_t;
 
 void            HUlib_init(void);
 
 void            HUlib_clearTextLine(hu_textline_t* t);
-void            HUlib_initTextLine(hu_textline_t* t, int x, int y,
-                                   gamefontid_t font);
+void            HUlib_initTextLine(hu_textline_t* t, int x, int y);
 boolean         HUlib_addCharToTextLine(hu_textline_t* t, char ch);
 boolean         HUlib_delCharFromTextLine(hu_textline_t* t);
 void            HUlib_eraseTextLine(hu_textline_t* l);
 
-void            HUlib_initSText(hu_stext_t* s, int x, int y, int h,
-                                gamefontid_t font,boolean* on);
-
-void            HUlib_addLineToSText(hu_stext_t* s);
-void            HUlib_addMessageToSText(hu_stext_t* s, char* prefix,
-                                        char* msg);
-void            HUlib_drawSText(hu_stext_t* s);
-void            HUlib_eraseSText(hu_stext_t* s);
-
-void            HUlib_initIText(hu_itext_t* it, int x, int y,
-                                gamefontid_t font, boolean* on);
-void            HUlib_delCharFromIText(hu_itext_t* it);
-void            HUlib_eraseLineFromIText(hu_itext_t* it);
-void            HUlib_resetIText(hu_itext_t* it);
-void            HUlib_addPrefixToIText(hu_itext_t* it, char* str);
-boolean         HUlib_keyInIText(hu_itext_t* it, unsigned char ch);
-void            HUlib_drawIText(hu_itext_t* it);
-void            HUlib_eraseIText(hu_itext_t* it);
+void            HUlib_initText(hu_text_t* it, int x, int y, boolean* on);
+void            HUlib_delCharFromText(hu_text_t* it);
+void            HUlib_eraseLineFromText(hu_text_t* it);
+void            HUlib_resetText(hu_text_t* it);
+void            HUlib_addPrefixToText(hu_text_t* it, char* str);
+boolean         HUlib_keyInText(hu_text_t* it, unsigned char ch);
+void            HUlib_drawText(hu_text_t* it, gamefontid_t font);
+void            HUlib_eraseText(hu_text_t* it);
 
 #endif

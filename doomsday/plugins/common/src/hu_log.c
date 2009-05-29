@@ -692,49 +692,9 @@ ccmd_t chatCCmds[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int chatTo = 0; // 0=all, 1=player 0, etc.
-static hu_itext_t chat;
-static hu_itext_t chatBuffer[MAXPLAYERS];
+static hu_text_t chat;
+static hu_text_t chatBuffer[MAXPLAYERS];
 static boolean chatAlwaysOff = false;
-
-static const char shiftXForm[] = {
-    0,
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-    31,
-    ' ', '!', '"', '#', '$', '%', '&',
-    '"',                        // shift-'
-    '(', ')', '*', '+',
-    '<',                        // shift-,
-    '_',                        // shift--
-    '>',                        // shift-.
-    '?',                        // shift-/
-    ')',                        // shift-0
-    '!',                        // shift-1
-    '@',                        // shift-2
-    '#',                        // shift-3
-    '$',                        // shift-4
-    '%',                        // shift-5
-    '^',                        // shift-6
-    '&',                        // shift-7
-    '*',                        // shift-8
-    '(',                        // shift-9
-    ':',
-    ':',                        // shift-;
-    '<',
-    '+',                        // shift-=
-    '>', '?', '@',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '[',                        // shift-[
-    '!',                        // shift-backslash
-    ']',                        // shift-]
-    '"', '_',
-    '\'',                       // shift-`
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '{', '|', '}', '~', 127
-};
 
 // CODE --------------------------------------------------------------------
 
@@ -776,15 +736,14 @@ void Chat_Start(void)
     int                 i;
 
     // Create the chat widget
-    HUlib_initIText(&chat, 0, 0 + M_StringHeight("A", GF_FONTA) + 1,
-                    GF_FONTA, &chatOn);
+    HUlib_initText(&chat, 0, M_CharHeight('A', GF_FONTA) + 1, &chatOn);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         Chat_Open(i, false);
 
         // Create the input buffers.
-        HUlib_initIText(&chatBuffer[i], 0, 0, 0, &chatAlwaysOff);
+        HUlib_initText(&chatBuffer[i], 0, 0, &chatAlwaysOff);
     }
 }
 
@@ -795,7 +754,7 @@ void Chat_Open(int player, boolean open)
         chatOn = true;
         chatTo = player;
 
-        HUlib_resetIText(&chat);
+        HUlib_resetText(&chat);
 
         // Enable the chat binding class
         DD_Execute(true, "activatebcontext chat");
@@ -817,24 +776,27 @@ boolean Chat_Responder(event_t* ev)
     boolean             eatkey = false;
     unsigned char       c;
 
-    if(G_GetGameState() != GS_MAP || !chatOn)
+    if(!chatOn || G_GetGameState() != GS_MAP)
         return false;
 
-    if(ev->type == EV_KEY && ev->data1 == DDKEY_RSHIFT)
+    if(ev->type != EV_KEY)
+        return false;
+
+    if(ev->data1 == DDKEY_RSHIFT)
     {
         shiftdown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
         return false;
     }
 
-    if(ev->type != EV_KEY || ev->state != EVS_DOWN)
+    if(ev->state != EVS_DOWN)
         return false;
 
     c = (unsigned char) ev->data1;
 
-    if(shiftdown || (c >= 'a' && c <= 'z'))
+    if(shiftdown)
         c = shiftXForm[c];
 
-    eatkey = HUlib_keyInIText(&chat, c);
+    eatkey = HUlib_keyInText(&chat, c);
 
     return eatkey;
 }
@@ -842,7 +804,7 @@ boolean Chat_Responder(event_t* ev)
 void Chat_Drawer(int player)
 {
     if(player == CONSOLEPLAYER)
-        HUlib_drawIText(&chat);
+        HUlib_drawText(&chat, GF_FONTA);
 }
 
 /**
@@ -952,7 +914,7 @@ DEFCC(CCmdMsgAction)
         }
         else if(!stricmp(argv[0], "chatdelete"))
         {
-            HUlib_delCharFromIText(&chat);
+            HUlib_delCharFromText(&chat);
         }
     }
 

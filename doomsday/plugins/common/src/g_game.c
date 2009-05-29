@@ -821,10 +821,13 @@ boolean G_Responder(event_t *ev)
 void G_UpdateGSVarsForPlayer(player_t* pl)
 {
     int                 i, plrnum;
+    gamestate_t         gameState;
 
     if(!pl)
         return;
+
     plrnum = pl - players;
+    gameState = G_GetGameState();
 
     gsvHealth = pl->health;
 #if !__JHEXEN__
@@ -869,10 +872,13 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
         gsvAmmo[i] = pl->ammo[i].owned;
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
-    // Inventory items
+    // Inventory items.
     for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        gsvInvItems[i] = P_InventoryCount(plrnum, IIT_FIRST + i);
+        if(pl->plr->inGame && gameState == GS_MAP)
+            gsvInvItems[i] = P_InventoryCount(plrnum, IIT_FIRST + i);
+        else
+            gsvInvItems[i] = 0;
     }
 #endif
 }

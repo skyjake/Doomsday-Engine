@@ -288,31 +288,18 @@ void G_UpdateEyeHeight(cvar_t* unused)
  * Draw (char *) text in the game's font.
  * Called by the console drawer.
  */
-int ConTextOut(const char *text, int x, int y)
+int ConTextOut(const char* text, int x, int y)
 {
-    int                 old = typeInTime;
-
-    typeInTime = 0xffffff;
-
-    M_WriteText2(x, y, text, GF_FONTA, -1, -1, -1, -1);
-    typeInTime = old;
+    M_WriteText3(x, y, text, GF_FONTA, -1, -1, -1, -1, false, false, 0);
     return 0;
 }
 
 /**
  * Get the visual width of (char*) text in the game's font.
  */
-int ConTextWidth(const char *text)
+int ConTextWidth(const char* text)
 {
     return M_StringWidth(text, GF_FONTA);
-}
-
-/**
- * Custom filter when drawing text in the game's font.
- */
-void ConTextFilter(char *text)
-{
-    strupr(text);
 }
 
 /**
@@ -370,7 +357,7 @@ DEFCC(CCmdDoom64Font)
     cfont.sizeY = 2;
     cfont.drawText = ConTextOut;
     cfont.getWidth = ConTextWidth;
-    cfont.filterText = ConTextFilter;
+    cfont.filterText = NULL;
 
     Con_SetFont(&cfont);
     return true;

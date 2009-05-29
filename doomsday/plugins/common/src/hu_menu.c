@@ -205,17 +205,6 @@ static char* yesno[2] = {"NO", "YES"};
 int epi;
 #endif
 
-static char shiftTable[59] = // Contains characters 32 to 90.
-{
-    /* 32 */ 0, 0, 0, 0, 0, 0, 0, '"',
-    /* 40 */ 0, 0, 0, 0, '<', '_', '>', '?', ')', '!',
-    /* 50 */ '@', '#', '$', '%', '^', '&', '*', '(', 0, ':',
-    /* 60 */ 0, '+', 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 70 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 80 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 90 */ 0
-};
-
 int menu_color = 0;
 float skull_angle = 0;
 
@@ -1257,7 +1246,7 @@ cvar_t menuCVars[] = {
     {"menu-flash-b", 0, CVT_FLOAT, &cfg.flashColor[2], 0, 1},
     {"menu-flash-speed", 0, CVT_INT, &cfg.flashSpeed, 0, 50},
     {"menu-turningskull", 0, CVT_BYTE, &cfg.turningSkull, 0, 1},
-    {"menu-effect", 0, CVT_INT, &cfg.menuEffects, 0, 2},
+    {"menu-effect", 0, CVT_INT, &cfg.menuEffects, 0, 1},
     {"menu-color-r", 0, CVT_FLOAT, &cfg.menuColor[0], 0, 1},
     {"menu-color-g", 0, CVT_FLOAT, &cfg.menuColor[1], 0, 1},
     {"menu-color-b", 0, CVT_FLOAT, &cfg.menuColor[2], 0, 1},
@@ -2199,52 +2188,54 @@ boolean M_EditResponder(event_t *ev)
     int                 ch = -1;
     char*               ptr;
 
-    if(!saveStringEnter && !ActiveEdit/* && !messageToPrint*/)
+    if(!saveStringEnter && !ActiveEdit)
+        return false;
+
+    if(ev->type != EV_KEY)
         return false;
 
     if(ev->data1 == DDKEY_RSHIFT)
-        shiftdown = (ev->state == EVS_DOWN);
+    {
+        shiftdown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
+        return true;
+    }
 
-    if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
-        ch = ev->data1;
-
-    if(ch == -1)
+    if(!(ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
         return false;
 
-    // String input
-    if(saveStringEnter || ActiveEdit)
-    {
-        ch = toupper(ch);
-        if(!(ch != 32 && (ch - HU_FONTSTART < 0 || ch - HU_FONTSTART >= HU_FONTSIZE)))
-        {
-            if(ch >= ' ' && ch <= 'Z')
-            {
-                if(shiftdown && shiftTable[ch - 32])
-                    ch = shiftTable[ch - 32];
+    ch = ev->data1;
 
-                if(saveStringEnter)
-                {
-                    if(saveCharIndex < SAVESTRINGSIZE &&
-                        M_StringWidth(savegamestrings[saveSlot], GF_FONTA)
-                        < (SAVESTRINGSIZE - 1) * 8)
-                    {
-                        savegamestrings[saveSlot][saveCharIndex++] = ch;
-                        savegamestrings[saveSlot][saveCharIndex] = 0;
-                    }
-                }
-                else
-                {
-                    if(strlen(ActiveEdit->text) < MAX_EDIT_LEN - 2)
-                    {
-                        ptr = ActiveEdit->text + strlen(ActiveEdit->text);
-                        ptr[0] = ch;
-                        ptr[1] = 0;
-                        Ed_MakeCursorVisible();
-                    }
-                }
+    if(ch >= ' ' && ch <= 'z')
+    {
+        if(shiftdown)
+            ch = shiftXForm[ch];
+
+        if(saveStringEnter)
+        {
+            if(saveCharIndex < SAVESTRINGSIZE &&
+                M_StringWidth(savegamestrings[saveSlot], GF_FONTA)
+                < (SAVESTRINGSIZE - 1) * 8)
+            {
+                savegamestrings[saveSlot][saveCharIndex++] = ch;
+                savegamestrings[saveSlot][saveCharIndex] = 0;
             }
-            return true;
         }
+        else
+        {
+            // Filter out nasty characters.
+            if(ch == '%')
+                return true;
+
+            if(strlen(ActiveEdit->text) < MAX_EDIT_LEN - 2)
+            {
+                ptr = ActiveEdit->text + strlen(ActiveEdit->text);
+                ptr[0] = ch;
+                ptr[1] = 0;
+                Ed_MakeCursorVisible();
+            }
+        }
+
+        return true;
     }
 
     return false;
@@ -2316,16 +2307,12 @@ int Hu_MenuResponder(event_t* ev)
                         }
                         else if(!(*ch == ' ' || *ch == '\n'))
                         {
-                            int                 c =
-                                toupper(*ch) - HU_FONTSTART;
-
-                            if(c >= 0 && c < HU_FONTSIZE)
-                                break; // First drawable character found.
+                            break; // First drawable character found.
                         }
                     }
                 } while(*ch++);
 
-                if(ch && toupper(*ch) == cand)
+                if(ch && *ch == cand)
                 {
                     itemOn = i;
                     return true;
@@ -2374,27 +2361,27 @@ void DrawColorWidget(void)
 #if __JDOOM__ || __JDOOM64__
         MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
         M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
-                     GF_FONTA, 1, 1, 1, menuAlpha, true, 0);
+                     GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
         MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A),
                      ColorWidgetItems[1].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, 0);
+                     true, true, 0);
         MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 2),
                      ColorWidgetItems[2].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, 0);
+                     true, true, 0);
 #else
         MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
         M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
-                     GF_FONTA, 1, 1, 1, menuAlpha, true, 0);
+                     GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
         MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
                      ColorWidgetItems[3].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, 0);
+                     true, true, 0);
         MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
         M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 6),
                      ColorWidgetItems[6].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, 0);
+                     true, true, 0);
 #endif
         if(rgba)
         {
@@ -2402,12 +2389,12 @@ void DrawColorWidget(void)
             MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
             M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
                          ColorWidgetItems[3].text, GF_FONTA, 1, 1, 1,
-                         menuAlpha, true, 0);
+                         menuAlpha, true, true, 0);
 #else
             MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
             M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 9),
                          ColorWidgetItems[9].text, GF_FONTA, 1, 1, 1,
-                         menuAlpha, true, 0);
+                         menuAlpha, true, true, 0);
 #endif
         }
 
@@ -2489,7 +2476,7 @@ void M_WriteMenuText(const menu_t* menu, int index, const char* text)
 
     M_WriteText3(menu->x + off,
                  menu->y + menu->itemHeight * (index  - menu->firstItem),
-                 text, menu->font, 1, 1, 1, menuAlpha, true, 0);
+                 text, menu->font, 1, 1, 1, menuAlpha, true, true, 0);
 }
 
 /**
@@ -2636,7 +2623,7 @@ void M_DrawClassMenu(void)
     };
 
     M_WriteText3(34, 24, "CHOOSE CLASS:", GF_FONTB, menu->color[0],
-                 menu->color[1], menu->color[2], menuAlpha, true, 0);
+                 menu->color[1], menu->color[2], menuAlpha, true, true, 0);
 
     pClass = (playerclass_t) menu->items[itemOn].option;
     if(pClass < 0)
@@ -2686,7 +2673,7 @@ void M_DrawEpisode(void)
         M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
                      200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
                      cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
-                     menuAlpha, true, 0);
+                     menuAlpha, true, true, 0);
     }
 #else // __JDOOM__
     WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
@@ -2795,7 +2782,8 @@ void M_DrawLoad(void)
                      savegamestrings[i], menu->font,
                      i == itemOn? r : menu->color[0],
                      i == itemOn? g : menu->color[1],
-                     i == itemOn? b : menu->color[2], menuAlpha, true, 0);
+                     i == itemOn? b : menu->color[2], menuAlpha,
+                     true, true, 0);
     }
 }
 
@@ -2832,7 +2820,8 @@ void M_DrawSave(void)
                      savegamestrings[i], menu->font,
                      i == itemOn? r : menu->color[0],
                      i == itemOn? g : menu->color[1],
-                     i == itemOn? b : menu->color[2], menuAlpha, true, 0);
+                     i == itemOn? b : menu->color[2], menuAlpha,
+                     true, true, 0);
     }
 
     if(saveStringEnter)
@@ -2844,7 +2833,7 @@ void M_DrawSave(void)
             i = M_StringWidth(savegamestrings[saveSlot], GF_FONTA);
             M_WriteText3(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
                          (menu->itemHeight * saveSlot), "_", GF_FONTA,
-                         r, g, b, menuAlpha, true, 0);
+                         r, g, b, menuAlpha, true, true, 0);
         }
     }
 }
@@ -3116,7 +3105,7 @@ void M_DrawWeaponMenu(void)
         M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
                      200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
                      cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
-                     menuAlpha, true, 0);
+                     menuAlpha, true, true, 0);
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -3289,7 +3278,7 @@ void M_DrawHUDMenu(void)
 #if __JDOOM__ || __JDOOM64__
     Hu_MenuPageString(buf, menu);
     M_WriteText3(160 - M_StringWidth(buf, GF_FONTA) / 2, menu->y - 12, buf,
-                 GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha(), true, 0);
+                 GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha(), true, true, 0);
 #else
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 

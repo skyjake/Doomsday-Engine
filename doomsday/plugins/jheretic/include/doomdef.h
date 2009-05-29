@@ -350,12 +350,6 @@ int             M_DrawText(int x, int y, boolean direct, char *string);
 
 void            MN_ActivateMenu(void);
 void            MN_DeactivateMenu(void);
-void            MN_DrTextA(char *text, int x, int y);
-int             MN_TextAWidth(char *text);
-void            MN_DrTextB(char *text, int x, int y);
-int             MN_TextBWidth(char *text);
-void            MN_TextFilter(char *text);
-int             MN_FilterChar(int ch);
 
 // Drawing text in the Current State.
 void            MN_DrTextA_CS(char *text, int x, int y);

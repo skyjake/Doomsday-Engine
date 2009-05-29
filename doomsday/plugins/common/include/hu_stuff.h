@@ -45,12 +45,6 @@ enum {
     ALIGN_RIGHT
 };
 
-#define HU_FONTSTART        '!' // the first font characters
-#define HU_FONTEND          '_' // the last font characters
-
-// Calculate # of glyphs in font.
-#define HU_FONTSIZE         (HU_FONTEND - HU_FONTSTART + 1)
-
 // The fonts.
 typedef enum {
 	GF_FIRST = 0,
@@ -63,7 +57,7 @@ typedef struct gamefont_s {
 	struct gamefont_char_s {
 		char			lumpname[9];
 		dpatch_t		patch;
-	} chars[HU_FONTSIZE];
+	} chars[256];
 } gamefont_t;
 
 extern dpatch_t huMinus;
@@ -83,6 +77,7 @@ extern dpatch_t m_pause; // Paused graphic.
 extern dpatch_t* episodeNamePatches;
 #endif
 
+extern const char shiftXForm[];
 extern int typeInTime;
 
 #if __JDOOM__
@@ -119,7 +114,8 @@ void        M_WriteText2(int x, int y, const char *string,
                          float green, float blue, float alpha);
 void        M_WriteText3(int x, int y, const char *string,
                          gamefontid_t font, float red, float green,
-                         float blue, float alpha, boolean doTypeIn,
+                         float blue, float alpha,
+                         boolean flagTypeIn, boolean flagShadow,
                          int initialCount);
 void        HUlib_drawTextLine2(int x, int y, const char* string,
                                 size_t len, gamefontid_t font,
@@ -144,7 +140,8 @@ int         M_DrawText(int x, int y, boolean direct, char *string);
 void        M_DrawTitle(char *text, int y);
 
 int         M_StringWidth(const char* string, gamefontid_t font);
-int         M_CharWidth(int ch, gamefontid_t font);
+int         M_CharWidth(unsigned char ch, gamefontid_t font);
+int         M_CharHeight(unsigned char ch, gamefontid_t font);
 int         M_StringHeight(const char* string, gamefontid_t font);
 
 void        M_DrawBackgroundBox(float x, float y, float w, float h,

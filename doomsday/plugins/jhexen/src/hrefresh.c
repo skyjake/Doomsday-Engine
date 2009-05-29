@@ -127,14 +127,14 @@ void R_DrawMapTitle(void)
     {
         M_WriteText3(160 - M_StringWidth(lname, GF_FONTB) / 2, y, lname,
                     GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
-                    alpha, false, 0);
+                    alpha, false, true, 0);
         y += 20;
     }
 
     if(lauthor)
     {
         M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
-                    GF_FONTA, .5f, .5f, .5f, alpha, false, 0);
+                    GF_FONTA, .5f, .5f, .5f, alpha, false, true, 0);
     }
 
     Draw_EndZoom();

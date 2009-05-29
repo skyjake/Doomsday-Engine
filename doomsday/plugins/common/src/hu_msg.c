@@ -203,7 +203,8 @@ static void drawMessage(void)
 
         x = 160 - M_StringWidth(string, GF_FONTA) / 2;
         M_WriteText3(x, y, string, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
+                     true, true, 0);
 		y += M_StringHeight(string, GF_FONTA);
 
         if((*p) = c)
@@ -218,13 +219,15 @@ static void drawMessage(void)
     case MSG_ANYKEY:
         x = 160 - M_StringWidth(PRESSKEY, GF_FONTA) / 2;
         M_WriteText3(x, y, PRESSKEY, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
+                     true, true, 0);
         break;
 
     case MSG_YESNO:
         x = 160 - M_StringWidth(yesNoMessage, GF_FONTA) / 2;
         M_WriteText3(x, y, yesNoMessage, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1, true, 0);
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
+                     true, true, 0);
         break;
 
     default:

@@ -97,6 +97,11 @@ typedef struct fogeffectdata_s {
     boolean         scrollDir;
 } fogeffectdata_t;
 
+typedef struct fontpatch_s {
+    byte        ch;
+    char        lumpName[9];
+} fontpatch_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -136,6 +141,46 @@ dpatch_t dpInvSelectBox;
 dpatch_t dpInvPageLeft[2];
 dpatch_t dpInvPageRight[2];
 #endif
+
+const char shiftXForm[] = {
+    0,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    31,
+    ' ', '!', '"', '#', '$', '%', '&',
+    '"',                        // shift-'
+    '(', ')', '*', '+',
+    '<',                        // shift-,
+    '_',                        // shift--
+    '>',                        // shift-.
+    '?',                        // shift-/
+    ')',                        // shift-0
+    '!',                        // shift-1
+    '@',                        // shift-2
+    '#',                        // shift-3
+    '$',                        // shift-4
+    '%',                        // shift-5
+    '^',                        // shift-6
+    '&',                        // shift-7
+    '*',                        // shift-8
+    '(',                        // shift-9
+    ':',
+    ':',                        // shift-;
+    '<',
+    '+',                        // shift-=
+    '>', '?', '@',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '[',                        // shift-[
+    '!',                        // shift-backslash
+    ']',                        // shift-]
+    '"', '_',
+    '\'',                       // shift-`
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '{', '|', '}', '~', 127
+};
 
 cvar_t hudCVars[] = {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -177,7 +222,7 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 		return;
 	}
 
-	font = &gFonts[fontid];
+    font = &gFonts[fontid];
 	memset(font->chars[ch].lumpname, 0, sizeof(font->chars[ch].lumpname));
 	strncpy(font->chars[ch].lumpname, lumpname, 8);
 
@@ -190,6 +235,29 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 
     DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
+}
+
+void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
+{
+    size_t              i;
+	gamefont_t*			font;
+
+    if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
+	{
+		Con_Message("R_InitFont: Warning, unknown font id %i.\n",
+					(int) fontid);
+		return;
+	}
+
+	font = &gFonts[fontid];
+    memset(font, 0, sizeof(*font));
+
+    for(i = 0; i < num; ++i)
+    {
+        const fontpatch_t*  p = &patches[i];
+
+        R_SetFontCharacter(fontid, p->ch, p->lumpName);
+    }
 }
 
 /**
@@ -217,10 +285,9 @@ gamefontid_t R_GetCurrentFont(void)
  */
 void Hu_LoadData(void)
 {
-    int                 i, j;
-    char                buffer[9];
-#if __JDOOM__ || __JDOOM64__
+    int                 i;
     char                name[9];
+#if __JDOOM__ || __JDOOM64__
     static const char*  skillModePatchNames[] =
     {
         "M_JKILL",
@@ -240,6 +307,379 @@ void Hu_LoadData(void)
         "M_EPI2",
         "M_EPI3",
         "M_EPI4"
+    };
+#endif
+/**
+ * \todo Read this information from a definition (ideally with more user
+ * friendly mnemonics).
+ */
+#if __JDOOM__ || __JDOOM64__
+    static const fontpatch_t fontA[] = {
+        { 32, "STCFN032" }, // ' '
+        { 33, "STCFN033" }, // !
+        { 34, "STCFN034" }, // "
+        { 35, "STCFN035" }, // #
+        { 36, "STCFN036" }, // $
+        { 37, "STCFN037" }, // %
+        { 38, "STCFN038" }, // &
+        { 39, "STCFN039" }, // '
+        { 40, "STCFN040" }, // (
+        { 41, "STCFN041" }, // )
+        { 42, "STCFN042" }, // *
+        { 43, "STCFN043" }, // +
+        { 44, "STCFN044" }, // ,
+        { 45, "STCFN045" }, // -
+        { 46, "STCFN046" }, // .
+        { 47, "STCFN047" }, // /
+        { 48, "STCFN048" }, // 0
+        { 49, "STCFN049" }, // 1
+        { 50, "STCFN050" }, // 2
+        { 51, "STCFN051" }, // 3
+        { 52, "STCFN052" }, // 4
+        { 53, "STCFN053" }, // 5
+        { 54, "STCFN054" }, // 6
+        { 55, "STCFN055" }, // 7
+        { 56, "STCFN056" }, // 8
+        { 57, "STCFN057" }, // 9
+        { 58, "STCFN058" }, // :
+        { 59, "STCFN059" }, // ;
+        { 60, "STCFN060" }, // <
+        { 61, "STCFN061" }, // =
+        { 62, "STCFN062" }, // >
+        { 63, "STCFN063" }, // ?
+        { 64, "STCFN064" }, // @
+        { 65, "STCFN065" }, // A
+        { 66, "STCFN066" }, // B
+        { 67, "STCFN067" }, // C
+        { 68, "STCFN068" }, // D
+        { 69, "STCFN069" }, // E
+        { 70, "STCFN070" }, // F
+        { 71, "STCFN071" }, // G
+        { 72, "STCFN072" }, // H
+        { 73, "STCFN073" }, // I
+        { 74, "STCFN074" }, // J
+        { 75, "STCFN075" }, // K
+        { 76, "STCFN076" }, // L
+        { 77, "STCFN077" }, // M
+        { 78, "STCFN078" }, // N
+        { 79, "STCFN079" }, // O
+        { 80, "STCFN080" }, // P
+        { 81, "STCFN081" }, // Q
+        { 82, "STCFN082" }, // R
+        { 83, "STCFN083" }, // S
+        { 84, "STCFN084" }, // T
+        { 85, "STCFN085" }, // U
+        { 86, "STCFN086" }, // V
+        { 87, "STCFN087" }, // W
+        { 88, "STCFN088" }, // X
+        { 89, "STCFN089" }, // Y
+        { 90, "STCFN090" }, // Z
+        { 91, "STCFN091" }, // [
+        { 92, "STCFN092" }, // '\'
+        { 93, "STCFN093" }, // ]
+        { 94, "STCFN094" }, // ^
+        { 95, "STCFN095" }, // _
+        { 96, "STCFN121" }, // `
+        { 97, "STCFN065" }, // a
+        { 98, "STCFN066" }, // b
+        { 99, "STCFN067" }, // c
+        { 100, "STCFN068" }, // d
+        { 101, "STCFN069" }, // e
+        { 102, "STCFN070" }, // f
+        { 103, "STCFN071" }, // g
+        { 104, "STCFN072" }, // h
+        { 105, "STCFN073" }, // i
+        { 106, "STCFN074" }, // j
+        { 107, "STCFN075" }, // k
+        { 108, "STCFN076" }, // l
+        { 109, "STCFN077" }, // m
+        { 110, "STCFN078" }, // n
+        { 111, "STCFN079" }, // o
+        { 112, "STCFN080" }, // p
+        { 113, "STCFN081" }, // q
+        { 114, "STCFN082" }, // r
+        { 115, "STCFN083" }, // s
+        { 116, "STCFN084" }, // t
+        { 117, "STCFN085" }, // u
+        { 118, "STCFN086" }, // v
+        { 119, "STCFN087" }, // w
+        { 120, "STCFN088" }, // x
+        { 121, "STCFN089" }, // y
+        { 122, "STCFN090" } // z
+    };
+    static const fontpatch_t fontB[] = {
+        { 32, "FONTB032" }, // ' '
+        { 33, "FONTB033" }, // !
+        { 34, "FONTB034" }, // "
+        { 35, "FONTB035" }, // #
+        { 36, "FONTB036" }, // $
+        { 37, "FONTB037" }, // %
+        { 38, "FONTB038" }, // &
+        { 39, "FONTB039" }, // '
+        { 40, "FONTB040" }, // (
+        { 41, "FONTB041" }, // )
+        { 42, "FONTB042" }, // *
+        { 43, "FONTB043" }, // +
+        { 44, "FONTB044" }, // ,
+        { 45, "FONTB045" }, // -
+        { 46, "FONTB046" }, // .
+        { 47, "FONTB047" }, // /
+        { 48, "FONTB048" }, // 0
+        { 49, "FONTB049" }, // 1
+        { 50, "FONTB050" }, // 2
+        { 51, "FONTB051" }, // 3
+        { 52, "FONTB052" }, // 4
+        { 53, "FONTB053" }, // 5
+        { 54, "FONTB053" }, // 6
+        { 55, "FONTB055" }, // 7
+        { 56, "FONTB056" }, // 8
+        { 57, "FONTB057" }, // 9
+        { 58, "FONTB058" }, // :
+        { 59, "FONTB059" }, // ;
+        { 60, "FONTB060" }, // <
+        { 61, "FONTB061" }, // =
+        { 62, "FONTB062" }, // >
+        { 63, "FONTB063" }, // ?
+        { 64, "FONTB064" }, // @
+        { 65, "FONTB065" }, // A
+        { 66, "FONTB066" }, // B
+        { 67, "FONTB067" }, // C
+        { 68, "FONTB068" }, // D
+        { 69, "FONTB069" }, // E
+        { 70, "FONTB070" }, // F
+        { 71, "FONTB071" }, // G
+        { 72, "FONTB072" }, // H
+        { 73, "FONTB073" }, // I
+        { 74, "FONTB074" }, // J
+        { 75, "FONTB075" }, // K
+        { 76, "FONTB076" }, // L
+        { 77, "FONTB077" }, // M
+        { 78, "FONTB078" }, // N
+        { 79, "FONTB079" }, // O
+        { 80, "FONTB080" }, // P
+        { 81, "FONTB081" }, // Q
+        { 82, "FONTB082" }, // R
+        { 83, "FONTB083" }, // S
+        { 84, "FONTB084" }, // T
+        { 85, "FONTB085" }, // U
+        { 86, "FONTB086" }, // V
+        { 87, "FONTB087" }, // W
+        { 88, "FONTB088" }, // X
+        { 89, "FONTB089" }, // Y
+        { 90, "FONTB090" }, // Z
+        { 97, "FONTB065" }, // a
+        { 98, "FONTB066" }, // b
+        { 99, "FONTB067" }, // c
+        { 100, "FONTB068" }, // d
+        { 101, "FONTB069" }, // e
+        { 102, "FONTB070" }, // f
+        { 103, "FONTB071" }, // g
+        { 104, "FONTB072" }, // h
+        { 105, "FONTB073" }, // i
+        { 106, "FONTB074" }, // j
+        { 107, "FONTB075" }, // k
+        { 108, "FONTB076" }, // l
+        { 109, "FONTB077" }, // m
+        { 110, "FONTB078" }, // n
+        { 111, "FONTB079" }, // o
+        { 112, "FONTB080" }, // p
+        { 113, "FONTB081" }, // q
+        { 114, "FONTB082" }, // r
+        { 115, "FONTB083" }, // s
+        { 116, "FONTB084" }, // t
+        { 117, "FONTB085" }, // u
+        { 118, "FONTB086" }, // v
+        { 119, "FONTB087" }, // w
+        { 120, "FONTB088" }, // x
+        { 121, "FONTB089" }, // y
+        { 122, "FONTB090" } // z
+    };
+#else // __JHERETIC__ || __JHEXEN__
+    // Heretic/Hexen don't use ASCII numbered font patches
+    // plus they don't even have a full set eg '!' = 1 '_'= 58 !!!
+    static const fontpatch_t fontA[] = {
+        { 32, "FONTA00" }, // ' '
+        { 33, "FONTA01" }, // !
+        { 34, "FONTA02" }, // "
+        { 35, "FONTA03" }, // #
+        { 36, "FONTA04" }, // $
+        { 37, "FONTA05" }, // %
+        { 38, "FONTA06" }, // &
+        { 39, "FONTA07" }, // '
+        { 40, "FONTA08" }, // (
+        { 41, "FONTA09" }, // )
+        { 42, "FONTA10" }, // *
+        { 43, "FONTA11" }, // +
+        { 44, "FONTA12" }, // ,
+        { 45, "FONTA13" }, // -
+        { 46, "FONTA14" }, // .
+        { 47, "FONTA15" }, // /
+        { 48, "FONTA16" }, // 0
+        { 49, "FONTA17" }, // 1
+        { 50, "FONTA18" }, // 2
+        { 51, "FONTA19" }, // 3
+        { 52, "FONTA20" }, // 4
+        { 53, "FONTA21" }, // 5
+        { 54, "FONTA22" }, // 6
+        { 55, "FONTA23" }, // 7
+        { 56, "FONTA24" }, // 8
+        { 57, "FONTA25" }, // 9
+        { 58, "FONTA26" }, // :
+        { 59, "FONTA27" }, // ;
+        { 60, "FONTA28" }, // <
+        { 61, "FONTA29" }, // =
+        { 62, "FONTA30" }, // >
+        { 63, "FONTA31" }, // ?
+        { 64, "FONTA32" }, // @
+        { 65, "FONTA33" }, // A
+        { 66, "FONTA34" }, // B
+        { 67, "FONTA35" }, // C
+        { 68, "FONTA36" }, // D
+        { 69, "FONTA37" }, // E
+        { 70, "FONTA38" }, // F
+        { 71, "FONTA39" }, // G
+        { 72, "FONTA40" }, // H
+        { 73, "FONTA41" }, // I
+        { 74, "FONTA42" }, // J
+        { 75, "FONTA43" }, // K
+        { 76, "FONTA44" }, // L
+        { 77, "FONTA45" }, // M
+        { 78, "FONTA46" }, // N
+        { 79, "FONTA47" }, // O
+        { 80, "FONTA48" }, // P
+        { 81, "FONTA49" }, // Q
+        { 82, "FONTA50" }, // R
+        { 83, "FONTA51" }, // S
+        { 84, "FONTA52" }, // T
+        { 85, "FONTA53" }, // U
+        { 86, "FONTA54" }, // V
+        { 87, "FONTA55" }, // W
+        { 88, "FONTA56" }, // X
+        { 89, "FONTA57" }, // Y
+        { 90, "FONTA58" }, // Z
+        { 91, "FONTA61" }, // [
+        { 92, "FONTA62" }, // '\'
+        { 93, "FONTA63" }, // ]
+        { 94, "FONTA64" }, // ^
+        { 95, "FONTA59" }, // _
+        { 97, "FONTA033" }, // a
+        { 98, "FONTA034" }, // b
+        { 99, "FONTA035" }, // c
+        { 100, "FONTA036" }, // d
+        { 101, "FONTA037" }, // e
+        { 102, "FONTA038" }, // f
+        { 103, "FONTA039" }, // g
+        { 104, "FONTA040" }, // h
+        { 105, "FONTA041" }, // i
+        { 106, "FONTA042" }, // j
+        { 107, "FONTA043" }, // k
+        { 108, "FONTA044" }, // l
+        { 109, "FONTA045" }, // m
+        { 110, "FONTA046" }, // n
+        { 111, "FONTA047" }, // o
+        { 112, "FONTA048" }, // p
+        { 113, "FONTA049" }, // q
+        { 114, "FONTA050" }, // r
+        { 115, "FONTA051" }, // s
+        { 116, "FONTA052" }, // t
+        { 117, "FONTA053" }, // u
+        { 118, "FONTA054" }, // v
+        { 119, "FONTA055" }, // w
+        { 120, "FONTA056" }, // x
+        { 121, "FONTA057" }, // y
+        { 122, "FONTA058" } // z
+    };
+    static const fontpatch_t fontB[] = {
+        { 32, "FONTB00" }, // ' '
+        { 33, "FONTB01" }, // !
+        { 34, "FONTB02" }, // "
+        { 35, "FONTB03" }, // #
+        { 36, "FONTB04" }, // $
+        { 37, "FONTB05" }, // %
+        { 38, "FONTB06" }, // &
+        { 39, "FONTB07" }, // '
+        { 40, "FONTB08" }, // (
+        { 41, "FONTB09" }, // )
+        { 42, "FONTB10" }, // *
+        { 43, "FONTB11" }, // +
+        { 44, "FONTB12" }, // ,
+        { 45, "FONTB13" }, // -
+        { 46, "FONTB14" }, // .
+        { 47, "FONTB15" }, // /
+        { 48, "FONTB16" }, // 0
+        { 49, "FONTB17" }, // 1
+        { 50, "FONTB18" }, // 2
+        { 51, "FONTB19" }, // 3
+        { 52, "FONTB20" }, // 4
+        { 53, "FONTB21" }, // 5
+        { 54, "FONTB22" }, // 6
+        { 55, "FONTB23" }, // 7
+        { 56, "FONTB24" }, // 8
+        { 57, "FONTB25" }, // 9
+        { 58, "FONTB26" }, // :
+        { 59, "FONTB27" }, // ;
+        { 60, "FONTB28" }, // <
+        { 61, "FONTB29" }, // =
+        { 62, "FONTB30" }, // >
+        { 63, "FONTB31" }, // ?
+        { 64, "FONTB32" }, // @
+        { 65, "FONTB33" }, // A
+        { 66, "FONTB34" }, // B
+        { 67, "FONTB35" }, // C
+        { 68, "FONTB36" }, // D
+        { 69, "FONTB37" }, // E
+        { 70, "FONTB38" }, // F
+        { 71, "FONTB39" }, // G
+        { 72, "FONTB40" }, // H
+        { 73, "FONTB41" }, // I
+        { 74, "FONTB42" }, // J
+        { 75, "FONTB43" }, // K
+        { 76, "FONTB44" }, // L
+        { 77, "FONTB45" }, // M
+        { 78, "FONTB46" }, // N
+        { 79, "FONTB47" }, // O
+        { 80, "FONTB48" }, // P
+        { 81, "FONTB49" }, // Q
+        { 82, "FONTB50" }, // R
+        { 83, "FONTB51" }, // S
+        { 84, "FONTB52" }, // T
+        { 85, "FONTB53" }, // U
+        { 86, "FONTB54" }, // V
+        { 87, "FONTB55" }, // W
+        { 88, "FONTB56" }, // X
+        { 89, "FONTB57" }, // Y
+        { 90, "FONTB58" }, // Z
+        { 91, "FONTB59" }, // [
+        { 92, "FONTB60" }, // '\'
+        { 93, "FONTB61" }, // ]
+        { 94, "FONTB62" }, // ^
+        { 95, "FONTB63" }, // _
+        { 97, "FONTB065" }, // a
+        { 98, "FONTB066" }, // b
+        { 99, "FONTB067" }, // c
+        { 100, "FONTB068" }, // d
+        { 101, "FONTB069" }, // e
+        { 102, "FONTB070" }, // f
+        { 103, "FONTB071" }, // g
+        { 104, "FONTB072" }, // h
+        { 105, "FONTB073" }, // i
+        { 106, "FONTB074" }, // j
+        { 107, "FONTB075" }, // k
+        { 108, "FONTB076" }, // l
+        { 109, "FONTB077" }, // m
+        { 110, "FONTB078" }, // n
+        { 111, "FONTB079" }, // o
+        { 112, "FONTB080" }, // p
+        { 113, "FONTB081" }, // q
+        { 114, "FONTB082" }, // r
+        { 115, "FONTB083" }, // s
+        { 116, "FONTB084" }, // t
+        { 117, "FONTB085" }, // u
+        { 118, "FONTB086" }, // v
+        { 119, "FONTB087" }, // w
+        { 120, "FONTB088" }, // x
+        { 121, "FONTB089" }, // y
+        { 122, "FONTB090" } // z
     };
 #endif
 
@@ -282,19 +722,6 @@ void Hu_LoadData(void)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    // load the heads-up fonts
-    j = HU_FONTSTART;
-    for(i = 0; i < HU_FONTSIZE; ++i, ++j)
-    {
-        // Small font.
-        sprintf(buffer, "STCFN%.3d", j);
-		R_SetFontCharacter(GF_FONTA, i, buffer);
-
-        // Large font.
-        sprintf(buffer, "FONTB%.3d", j);
-		R_SetFontCharacter(GF_FONTB, i, buffer);
-    }
-
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
         R_CachePatch(&skillModeNames[i], skillModePatchNames[i]);
@@ -326,15 +753,17 @@ void Hu_LoadData(void)
     }
     else
     {
+        int                 j;
+
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
         mapNamePatches = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
-        for(j = 0; j < 4; ++j) // Number of episodes.
+        for(i = 0; i < 4; ++i) // Number of episodes.
         {
-            for(i = 0; i < 9; ++i) // Number of maps per episode.
+            for(j = 0; j < 9; ++j) // Number of maps per episode.
             {
-                sprintf(name, "WILV%2.2d", (j * 10) + i);
-                R_CachePatch(&mapNamePatches[(j* 9)+i], name);
+                sprintf(name, "WILV%2.2d", (i * 10) + j);
+                R_CachePatch(&mapNamePatches[(i* 9) + j], name);
             }
         }
 
@@ -343,36 +772,16 @@ void Hu_LoadData(void)
             R_CachePatch(&episodeNamePatches[i], episodePatchNames[i]);
     }
 # endif
-#else
-    // Heretic/Hexen don't use ASCII numbered font patches
-    // plus they don't even have a full set eg '!' = 1 '_'= 58 !!!
-    j = 1;
-    for(i = 0; i < HU_FONTSIZE; ++i, ++j)
-    {
-        int                 idx = j;
-
-        // Heretic and Hexen don't use ASCII numbering for all font patches.
-        // As such we need to switch some patches.
-        if(idx == 58)
-            idx = 62;
-        else if(idx == 62)
-            idx = 58;
-
-        // Small font.
-        sprintf(buffer, "FONTA%.2d", idx);
-        R_SetFontCharacter(GF_FONTA, i, buffer);
-
-        // Large font.
-        sprintf(buffer, "FONTB%.2d", idx);
-        R_SetFontCharacter(GF_FONTB, i, buffer);
-    }
 #endif
+
+    R_InitFont(GF_FONTA, fontA, sizeof(fontA) / sizeof(fontA[0]));
+    R_InitFont(GF_FONTB, fontB, sizeof(fontB) / sizeof(fontB[0]));
 
 #if __JHERETIC__ || __JHEXEN__
     for(i = 0; i < 10; ++i)
     {
-        sprintf(buffer, "SMALLIN%d", i);
-        R_CachePatch(&dpSmallNumbers[i], buffer);
+        sprintf(name, "SMALLIN%d", i);
+        R_CachePatch(&dpSmallNumbers[i], name);
     }
 #endif
 
@@ -484,10 +893,6 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
             if(!c)
                 break;
 
-            c = toupper(c) - HU_FONTSTART;
-            if(c < 0 || c >= HU_FONTSIZE)
-                continue;
-
 			if(!gFonts[font].chars[c].patch.lump)
                 continue;
 			p = &gFonts[font].chars[c].patch;
@@ -512,10 +917,6 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
 
         if(!c)
             break;
-
-        c = toupper(c) - HU_FONTSTART;
-        if(c < 0 || c >= HU_FONTSIZE)
-            continue;
 
 		if(!gFonts[font].chars[c].patch.lump)
             continue;
@@ -1253,28 +1654,6 @@ void Hu_FogEffectTicker(timespan_t time)
 #undef FOGALPHA_FADE_STEP
 }
 
-int MN_FilterChar(int ch)
-{
-    ch = toupper(ch);
-    if(ch == '_')
-        ch = '[';
-    else if(ch == '\\')
-        ch = '/';
-    else if(ch < 32 || ch > 'Z')
-        ch = 32;                // We don't have this char.
-    return ch;
-}
-
-void MN_TextFilter(char* text)
-{
-    int                 k;
-
-    for(k = 0; text[k]; ++k)
-    {
-        text[k] = MN_FilterChar(text[k]);
-    }
-}
-
 /**
  * Expected: <whitespace> = <whitespace> <float>
  */
@@ -1588,7 +1967,7 @@ void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
             DGL_Scalef(scaleX, scaleY * extraScale, 1);
 
             // Draw it.
-            M_WriteText3(0, 0, temp, font, r, g, b, a, typeIn,
+            M_WriteText3(0, 0, temp, font, r, g, b, a, typeIn, false,
                          typeIn ? charCount : 0);
             charCount += strlen(temp);
 
@@ -1620,18 +1999,13 @@ int M_StringWidth(const char* string, gamefontid_t font)
 
     for(i = 0, skip = false; i < strlen(string); ++i)
     {
-        c = toupper(string[i]) - HU_FONTSTART;
+        c = string[i];
 
         if(string[i] == '{')
             skip = true;
 
         if(skip == false && string[i] != '\n')
-        {
-            if(c < 0 || c >= HU_FONTSIZE)
-                w += 4;
-            else
-				w += gFonts[font].chars[c].patch.width;
-        }
+            w += gFonts[font].chars[c].patch.width;
 
         if(string[i] == '}')
             skip = false;
@@ -1651,9 +2025,14 @@ int M_StringWidth(const char* string, gamefontid_t font)
     return maxWidth;
 }
 
-int M_CharWidth(int ch, gamefontid_t font)
+int M_CharWidth(unsigned char ch, gamefontid_t font)
 {
 	return gFonts[font].chars[ch].patch.width;
+}
+
+int M_CharHeight(unsigned char ch, gamefontid_t font)
+{
+	return gFonts[font].chars[ch].patch.height;
 }
 
 /**
@@ -1662,12 +2041,15 @@ int M_CharWidth(int ch, gamefontid_t font)
 int M_StringHeight(const char* string, gamefontid_t font)
 {
     uint				i;
-	int					h, height = gFonts[font].chars[17].patch.height;
+	int					h, height = gFonts[font].chars['A'].patch.height;
 
     h = height;
     for(i = 0; i < strlen(string); ++i)
+    {
         if(string[i] == '\n')
             h += height;
+    }
+
     return h;
 }
 
@@ -1722,33 +2104,22 @@ void HUlib_drawTextLine2(int x, int y, const char* string, size_t len,
 
     for(i = 0; i < len; ++i)
     {
-        unsigned char		c = toupper(string[i]);
+        unsigned char		c = string[i];
         int					w;
+		const dpatch_t*     p = &font->chars[c].patch;
 
-        if(c != ' ' && c >= HU_FONTSTART && c <= HU_FONTEND)
-        {
-			const dpatch_t*         p =
-                &font->chars[c - HU_FONTSTART].patch;
+		w = p->width;
+        if(x + w > SCREENWIDTH)
+            break;
 
-			w = p->width;
-            if(x + w > SCREENWIDTH)
-                break;
-
-			GL_DrawPatch_CS(x, y, p->lump);
-            x += w;
-        }
-        else
-        {
-            x += 4;
-            if(x >= SCREENWIDTH)
-                break;
-        }
+		GL_DrawPatch_CS(x, y, p->lump);
+        x += w;
     }
 
     // Draw the cursor if requested.
 	if(drawCursor &&
-       x + font->chars['_' - HU_FONTSTART].patch.width <= SCREENWIDTH)
-		GL_DrawPatch_CS(x, y, font->chars['_' - HU_FONTSTART].patch.lump);
+       x + font->chars['_'].patch.width <= SCREENWIDTH)
+		GL_DrawPatch_CS(x, y, font->chars['_'].patch.lump);
 }
 
 #if __JHERETIC__
@@ -1950,7 +2321,7 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue,
 
     if(val > 99)
     {
-        patch = &gFonts[GF_FONTB].chars['0' - HU_FONTSTART + val / 100].patch;
+        patch = &gFonts[GF_FONTB].chars['0' + val / 100].patch;
         GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
                               blue, alpha, patch->lump);
     }
@@ -1959,14 +2330,14 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue,
     xpos += 12;
     if(val > 9 || oldval > 99)
     {
-        patch = &gFonts[GF_FONTB].chars['0' - HU_FONTSTART + val / 10].patch;
+        patch = &gFonts[GF_FONTB].chars['0' + val / 10].patch;
         GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
                               blue, alpha, patch->lump);
     }
 
     val = val % 10;
     xpos += 12;
-    patch = &gFonts[GF_FONTB].chars['0' - HU_FONTSTART + val].patch;
+    patch = &gFonts[GF_FONTB].chars['0' + val].patch;
     GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green, blue,
                           alpha, patch->lump);
 }
@@ -1983,7 +2354,7 @@ void M_WriteText(int x, int y, const char* string)
 void M_WriteText2(int x, int y, const char* string, gamefontid_t font,
                   float red, float green, float blue, float alpha)
 {
-    M_WriteText3(x, y, string, font, red, green, blue, alpha, false, 0);
+    M_WriteText3(x, y, string, font, red, green, blue, alpha, false, true, 0);
 }
 
 /**
@@ -1992,22 +2363,19 @@ void M_WriteText2(int x, int y, const char* string, gamefontid_t font,
  */
 void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
                   float red, float green, float blue, float alpha,
-                  boolean doTypeIn, int initialCount)
+                  boolean flagTypeIn, boolean flagShadow, int initialCount)
 {
-    int                 pass;
-    int                 w, h;
-    const char         *ch;
-    int                 c;
-    int                 cx;
-    int                 cy;
-    int                 count, yoff;
-    float               flash;
-    float               fr = (1 + 2 * red) / 3;
-    float               fb = (1 + 2 * blue) / 3;
-    float               fg = (1 + 2 * green) / 3;
-    float               fa = cfg.menuGlitter * alpha;
+    const char*         ch;
+    unsigned char       c;
+    int                 pass, w, h, cx, cy, count, yoff;
+    float               flash, flashColor[4];
 
-    for(pass = 0; pass < 2; ++pass)
+    flashColor[CR] = (red >= 0?   ((1 + 2 * MINMAX_OF(0, red,   1)) / 3) : 1);
+    flashColor[CB] = (blue >= 0?  ((1 + 2 * MINMAX_OF(0, blue,  1)) / 3) : 1);
+    flashColor[CG] = (green >= 0? ((1 + 2 * MINMAX_OF(0, green, 1)) / 3) : 1);
+    flashColor[CA] = cfg.menuGlitter * (alpha>=0? MINMAX_OF(0, alpha, 1) : 1);
+
+    for(pass = (flagShadow? 0 : 1); pass < 2; ++pass)
     {
         count = initialCount;
 
@@ -2024,7 +2392,7 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
             yoff = 0;
             flash = 0;
             // Do the type-in effect?
-            if(doTypeIn && cfg.menuEffects != 0)
+            if(flagTypeIn && cfg.menuEffects != 0)
             {
                 int                 maxCount =
                     (typeInTime > 0? typeInTime * 2 : 0);
@@ -2063,17 +2431,11 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
 
             if(!c)
                 break;
+
             if(c == '\n')
             {
                 cx = x;
                 cy += 12;
-                continue;
-            }
-
-            c = toupper(c) - HU_FONTSTART;
-            if(c < 0 || c >= HU_FONTSIZE)
-            {
-                cx += 4;
                 continue;
             }
 
@@ -2095,10 +2457,11 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
                 if(flash > 0)
                 {
                     M_LetterFlash(cx, cy + yoff, w, h, true,
-                                  fr, fg, fb, flash * fa);
+                                  flashColor[CR], flashColor[CG],
+                                  flashColor[CB], flashColor[CA] * flash);
                 }
             }
-            else if(cfg.menuShadow > 0)
+            else if(flagShadow && cfg.menuShadow > 0)
             {
                 // Shadow.
                 M_LetterFlash(cx, cy + yoff, w, h, false, 1, 1, 1,

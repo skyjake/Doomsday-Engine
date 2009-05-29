@@ -1472,10 +1472,10 @@ int FI_CharWidth(int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
 
-    if(ch < 33)
+    if(ch == ' ')
         return 4;
 
-    return M_CharWidth(ch - HU_FONTSTART, fontb? GF_FONTB : GF_FONTA);
+    return M_CharWidth(ch, fontb? GF_FONTB : GF_FONTA);
 }
 
 int FI_GetLineWidth(char* text, boolean fontb)
@@ -1506,8 +1506,8 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
     ch = FI_FilterChar(ch);
 
     // Draw the character. Don't try to draw spaces.
-    if(ch > 32)
-        M_DrawChar(x, y, ch - HU_FONTSTART, fontb? GF_FONTB : GF_FONTA);
+    if(ch != ' ')
+        M_DrawChar(x, y, ch, fontb? GF_FONTB : GF_FONTA);
 
     return FI_CharWidth(ch, fontb);
 }
