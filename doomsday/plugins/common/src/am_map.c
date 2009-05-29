@@ -1693,7 +1693,7 @@ void AM_IncMapCheatLevel(automapid_t id)
     if(!(map = getAutomap(id)))
         return;
     mcfg = getAutomapCFG(id);
-    mcfg->cheating = (mcfg->cheating + 1) % 4;
+    mcfg->cheating = (mcfg->cheating + 1) % 3;
 
     flags = Automap_GetFlags(map);
     if(mcfg->cheating)
