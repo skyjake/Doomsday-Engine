@@ -2298,7 +2298,8 @@ void C_DECL A_PuzzSkull(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZSKULL);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZSKULL - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGemBig(mobj_t* mo)
@@ -2306,7 +2307,8 @@ void C_DECL A_PuzzGemBig(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBIG);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMBIG - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGemRed(mobj_t* mo)
@@ -2314,7 +2316,8 @@ void C_DECL A_PuzzGemRed(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMRED);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMRED - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGemGreen1(mobj_t* mo)
@@ -2322,7 +2325,8 @@ void C_DECL A_PuzzGemGreen1(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN1);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN1 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGemGreen2(mobj_t* mo)
@@ -2330,7 +2334,8 @@ void C_DECL A_PuzzGemGreen2(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN2);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN2 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGemBlue1(mobj_t* mo)
@@ -2338,7 +2343,8 @@ void C_DECL A_PuzzGemBlue1(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE1);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE1 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGemBlue2(mobj_t* mo)
@@ -2346,7 +2352,8 @@ void C_DECL A_PuzzGemBlue2(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE2);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE2 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzBook1(mobj_t* mo)
@@ -2354,7 +2361,8 @@ void C_DECL A_PuzzBook1(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZBOOK1);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZBOOK1 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzBook2(mobj_t* mo)
@@ -2362,7 +2370,8 @@ void C_DECL A_PuzzBook2(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZBOOK2);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZBOOK2 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzSkull2(mobj_t* mo)
@@ -2370,7 +2379,8 @@ void C_DECL A_PuzzSkull2(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZSKULL2);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZSKULL2 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzFWeapon(mobj_t* mo)
@@ -2378,7 +2388,8 @@ void C_DECL A_PuzzFWeapon(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZFWEAPON);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZFWEAPON - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzCWeapon(mobj_t* mo)
@@ -2386,7 +2397,8 @@ void C_DECL A_PuzzCWeapon(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZCWEAPON);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZCWEAPON - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzMWeapon(mobj_t* mo)
@@ -2394,7 +2406,8 @@ void C_DECL A_PuzzMWeapon(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZMWEAPON);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZMWEAPON - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGear1(mobj_t* mo)
@@ -2402,7 +2415,8 @@ void C_DECL A_PuzzGear1(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR1);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR1 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGear2(mobj_t* mo)
@@ -2410,7 +2424,8 @@ void C_DECL A_PuzzGear2(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR2);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR2 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGear3(mobj_t* mo)
@@ -2418,7 +2433,8 @@ void C_DECL A_PuzzGear3(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR3);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR3 - IIT_FIRSTPUZZITEM);
 }
 
 void C_DECL A_PuzzGear4(mobj_t* mo)
@@ -2426,5 +2442,6 @@ void C_DECL A_PuzzGear4(mobj_t* mo)
     if(!mo->player)
         return;
 
-    didUseItem = P_UsePuzzleItem(mo->player, IIT_PUZZGEAR4);
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR4 - IIT_FIRSTPUZZITEM);
 }
