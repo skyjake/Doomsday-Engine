@@ -428,11 +428,6 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     return false;
 }
 
-void H2_EndFrame(void)
-{
-    SN_UpdateActiveSequences();
-}
-
 /**
  * Updates ddflags of all visible mobjs (in sectorlinks).
  * Not strictly necessary (in single player games at least) but here

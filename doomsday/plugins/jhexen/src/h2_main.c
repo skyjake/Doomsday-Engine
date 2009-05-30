@@ -629,5 +629,5 @@ void G_Shutdown(void)
 
 void G_EndFrame(void)
 {
-    // Nothing to do.
+    SN_UpdateActiveSequences();
 }
