@@ -1981,9 +1981,7 @@ void ReadDehacked(char *filename)
  */
 int DefsHook(int hook_type, int parm, void *data)
 {
-    char    temp[256];
-    char   *fn;
-    int     i;
+    int                 i;
 
     verbose = ArgExists("-verbose");
     ded = (ded_t *) data;
@@ -2001,6 +1999,9 @@ int DefsHook(int hook_type, int parm, void *data)
     // How about the -deh option?
     if(ArgCheckWith("-deh", 1))
     {
+        char                temp[256];
+        const char*         fn;
+
         // Aha! At least one DEH specified. Let's read all of 'em.
         while((fn = ArgNext()) != NULL && fn[0] != '-')
         {
