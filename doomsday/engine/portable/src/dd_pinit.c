@@ -136,8 +136,6 @@ void SetGameImports(game_import_t* imp)
     imp->text = &texts;
 
     imp->validCount = &validCount;
-    imp->topSlope = &topSlope;
-    imp->bottomSlope = &bottomSlope;
 }
 
 void DD_InitAPI(void)

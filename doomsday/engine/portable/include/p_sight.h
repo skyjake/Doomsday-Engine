@@ -29,9 +29,6 @@
 #ifndef __DOOMSDAY_PLAY_SIGHT_H__
 #define __DOOMSDAY_PLAY_SIGHT_H__
 
-extern float topSlope;
-extern float bottomSlope;
-
 boolean         P_CheckLineSight(const float from[3], const float to[3]);
 
 #endif

@@ -5,6 +5,8 @@
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
+ *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,69 +54,76 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float sightStartZ;            // eye z of looker
-float topSlope, bottomSlope;  // slopes to top and bottom of target
-int sightcounts[3];
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static divline_t strace;
+// killough 4/19/98:
+// Convert LOS info to struct for reentrancy and efficiency of data locality
+
+static struct losdata_s {
+    divline_t       trace;
+    float           startZ; // Eye z of looker.
+    float           topSlope; // Slope to top of target.
+    float           bottomSlope; // Slope to bottom of target.
+} los;
 
 // CODE --------------------------------------------------------------------
 
-boolean PTR_SightTraverse(intercept_t* in)
+static boolean sightTraverse(intercept_t* in)
 {
     linedef_t*          li;
     float               slope;
 
-    if(in == NULL)
-        return true; // Something was out of bounds?
-
-    li = in->d.lineDef;
-
-    // Crosses a two sided line.
-    P_LineOpening(li);
-
-    // Check for totally closed doors.
-    if(openbottom >= opentop)
-        return false; // Stop iteration.
-
-    if(li->L_frontsector->SP_floorheight != li->L_backsector->SP_floorheight)
+    if(in && in->type == ICPT_LINE)
     {
-        slope = (openbottom - sightStartZ) / in->frac;
-        if(slope > bottomSlope)
-            bottomSlope = slope;
-    }
+        li = in->d.lineDef;
 
-    if(li->L_frontsector->SP_ceilheight != li->L_backsector->SP_ceilheight)
-    {
-        slope = (opentop - sightStartZ) / in->frac;
-        if(slope < topSlope)
-            topSlope = slope;
-    }
+        // Crosses a two sided line.
+        P_LineOpening(li);
 
-    if(topSlope <= bottomSlope)
-        return false; // Stop iteration.
+        // Check for totally closed doors.
+        if(openbottom >= opentop)
+            return false; // Stop iteration.
+
+        if(li->L_frontsector->SP_floorheight !=
+           li->L_backsector->SP_floorheight)
+        {
+            slope = (openbottom - los.startZ) / in->frac;
+            if(slope > los.bottomSlope)
+                los.bottomSlope = slope;
+        }
+
+        if(li->L_frontsector->SP_ceilheight !=
+           li->L_backsector->SP_ceilheight)
+        {
+            slope = (opentop - los.startZ) / in->frac;
+            if(slope < los.topSlope)
+                los.topSlope = slope;
+        }
+
+        if(los.topSlope <= los.bottomSlope)
+            return false; // Stop iteration.
+    }
 
     return true; // Continue iteration.
 }
 
-boolean PIT_CheckSightLine(linedef_t *line, void *data)
+static boolean checkSightLine(linedef_t* line, void* data)
 {
-    int         s[2];
-    divline_t   dl;
+    int                 s[2];
+    divline_t           dl;
 
     s[0] = P_PointOnDivlineSide(line->L_v1pos[VX],
-                                line->L_v1pos[VY], &strace);
+                                line->L_v1pos[VY], &los.trace);
     s[1] = P_PointOnDivlineSide(line->L_v2pos[VX],
-                                line->L_v2pos[VY], &strace);
+                                line->L_v2pos[VY], &los.trace);
     if(s[0] == s[1])
         return true; // Line isn't crossed, continue iteration.
 
     P_MakeDivline(line, &dl);
-    s[0] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX]), FIX2FLT(strace.pos[VY]), &dl);
-    s[1] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX] + strace.dX),
-                                FIX2FLT(strace.pos[VY] + strace.dY),
+    s[0] = P_PointOnDivlineSide(FIX2FLT(los.trace.pos[VX]),
+                                FIX2FLT(los.trace.pos[VY]), &dl);
+    s[1] = P_PointOnDivlineSide(FIX2FLT(los.trace.pos[VX] + los.trace.dX),
+                                FIX2FLT(los.trace.pos[VY] + los.trace.dY),
                                 &dl);
     if(s[0] == s[1])
         return true; // Line isn't crossed, continue iteration.
@@ -130,18 +139,15 @@ boolean PIT_CheckSightLine(linedef_t *line, void *data)
 }
 
 /**
- * Traces a line from x1,y1 to x2,y2, calling the traverser function for
- * each.
+ * Traces a line of sight.
  *
- * @param x1            Origin X (world) coordinate.
- * @param y1            Origin Y (world) coordinate.
- * @param x2            Destination X (world) coordinate.
- * @param y2            Destination Y (world) coordinate.
+ * @param from          World position, trace origin coordinates.
+ * @param to            World position, trace target coordinates.
  *
- * @return              @c true if the traverser function returns @c true for
- *                      all visited lines.
+ * @return              @c true if the traverser function returns @c true
+ *                      for all visited lines.
  */
-boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
+boolean P_CheckLineSight(const float from[3], const float to[3])
 {
     uint                originBlock[2], destBlock[2];
     float               delta[2];
@@ -153,8 +159,12 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     gamemap_t*          map = P_GetCurrentMap();
     vec2_t              origin, dest, min, max;
 
-    V2_Set(origin, x1, y1);
-    V2_Set(dest, x2, y2);
+    los.startZ = from[VZ];
+    los.topSlope = to[VZ] + 1 - los.startZ;
+    los.bottomSlope = to[VZ] - 1 - los.startZ;
+
+    V2_Copy(origin, from);
+    V2_Copy(dest, to);
 
     P_GetBlockmapBounds(map->blockMap, min, max);
 
@@ -179,10 +189,10 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     if((FLT2FIX(origin[VY] - min[VY]) & (MAPBLOCKSIZE - 1)) == 0)
         origin[VY] += 1;
 
-    strace.pos[VX] = FLT2FIX(origin[VX]);
-    strace.pos[VY] = FLT2FIX(origin[VY]);
-    strace.dX = FLT2FIX(dest[VX] - origin[VX]);
-    strace.dY = FLT2FIX(dest[VY] - origin[VY]);
+    los.trace.pos[VX] = FLT2FIX(origin[VX]);
+    los.trace.pos[VY] = FLT2FIX(origin[VY]);
+    los.trace.dX = FLT2FIX(dest[VX] - origin[VX]);
+    los.trace.dY = FLT2FIX(dest[VY] - origin[VY]);
 
     /**
      * It is possible that one or both points are outside the blockmap.
@@ -235,13 +245,15 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     if(destBlock[VX] > originBlock[VX])
     {
         stepDir[VX] = 1;
-        partial = 1 - FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        partial = 1 - FIX2FLT(
+            (FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
         delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
     }
     else if(destBlock[VX] < originBlock[VX])
     {
         stepDir[VX] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        partial = FIX2FLT(
+            (FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
         delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
     }
     else
@@ -256,13 +268,15 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     if(destBlock[VY] > originBlock[VY])
     {
         stepDir[VY] = 1;
-        partial = 1 - FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        partial = 1 - FIX2FLT(
+            (FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
         delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
     }
     else if(destBlock[VY] < originBlock[VY])
     {
         stepDir[VY] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        partial = FIX2FLT(
+            (FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
         delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
     }
     else
@@ -289,16 +303,14 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
         if(numPolyObjs > 0)
         {
             if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
-                                               PIT_CheckSightLine, 0))
+                                               checkSightLine, 0))
             {
-                sightcounts[1]++;
                 return false; // Early out.
             }
         }
 
-        if(!P_BlockmapLinesIterator(BlockMap, block, PIT_CheckSightLine, 0))
+        if(!P_BlockmapLinesIterator(BlockMap, block, checkSightLine, 0))
         {
-            sightcounts[1]++;
             return false; // Early out.
         }
 
@@ -322,17 +334,8 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
         }
     }
 
-    // Couldn't early out, so go through the sorted list
-    sightcounts[2]++;
+    // Couldn't early out, so go through the sorted list.
+    P_CalcInterceptDistances(&los.trace);
 
-    return P_SightTraverseIntercepts(&strace, PTR_SightTraverse);
-}
-
-boolean P_CheckLineSight(const float from[3], const float to[3])
-{
-    sightStartZ = from[VZ];
-    topSlope = to[VZ] + 1 - sightStartZ;
-    bottomSlope = to[VZ] - 1 - sightStartZ;
-
-    return P_SightPathTraverse(from[VX], from[VY], to[VX], to[VY]);
+    return P_TraverseIntercepts(sightTraverse, -1);
 }
