@@ -47,6 +47,7 @@
 #include "g_controls.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
+#include "p_actor.h"
 #include "rend_automap.h"
 
 // MACROS ------------------------------------------------------------------

@@ -203,7 +203,6 @@
 		<Unit filename="..\..\engine\portable\include\dam_loader.h" />
 		<Unit filename="..\..\engine\portable\include\dam_main.h" />
 		<Unit filename="..\..\engine\portable\include\dam_read.h" />
-		<Unit filename="..\..\engine\portable\include\dam_reject.h" />
 		<Unit filename="..\..\engine\portable\include\dd_def.h" />
 		<Unit filename="..\..\engine\portable\include\dd_help.h" />
 		<Unit filename="..\..\engine\portable\include\dd_input.h" />
@@ -441,9 +440,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\dam_read.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\dam_reject.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\dd_help.c">

@@ -143,7 +143,6 @@ boolean PIT_CheckSightLine(linedef_t *line, void *data)
  */
 boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
 {
-
     uint                originBlock[2], destBlock[2];
     float               delta[2];
     float               partial;
@@ -329,70 +328,7 @@ boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
     return P_SightTraverseIntercepts(&strace, PTR_SightTraverse);
 }
 
-/**
- * Checks the reject matrix to find out if the two sectors are visible
- * from each other.
- */
-boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
-{
-    uint        s1, s2;
-    uint        pnum, bytenum, bitnum;
-
-    if(rejectMatrix != NULL)
-    {
-        // Determine subsector entries in REJECT table.
-        s1 = GET_SECTOR_IDX(sec1);
-        s2 = GET_SECTOR_IDX(sec2);
-        pnum = s1 * numSectors + s2;
-        bytenum = pnum >> 3;
-        bitnum = 1 << (pnum & 7);
-
-        // Check in REJECT table.
-        if(rejectMatrix[bytenum] & bitnum)
-        {
-            sightcounts[0]++;
-            // Can't possibly be connected.
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
- * Look from eyes of t1 to any part of t2 (start from middle of t1).
- *
- * @param t1            The mobj doing the looking.
- * @param t2            The mobj being looked at.
- *
- * @return              @c true if a straight line between t1 and t2 is
- *                      unobstructed.
- */
-boolean P_CheckSight(mobj_t* t1, mobj_t* t2)
-{
-    // If either is unlinked, they can't see each other.
-    if(!t1->subsector || !t2->subsector)
-        return false;
-
-    // Check for trivial rejection.
-    if(!P_CheckReject(t1->subsector->sector, t2->subsector->sector))
-        return false;
-
-    if(t2->dPlayer && (t2->dPlayer->flags & DDPF_CAMERA))
-        return false; // Cameramen don't exist!
-
-    // Check precisely.
-    sightStartZ = t1->pos[VZ];
-    if(!(t1->dPlayer && (t1->dPlayer->flags & DDPF_CAMERA)))
-        sightStartZ += t1->height + -(t1->height / 4);
-
-    topSlope = t2->pos[VZ] + t2->height - sightStartZ;
-    bottomSlope = t2->pos[VZ] - sightStartZ;
-
-    return P_SightPathTraverse(t1->pos[VX], t1->pos[VY],
-                               t2->pos[VX], t2->pos[VY]);
-}
-
-boolean P_CheckLineSight(float from[3], float to[3])
+boolean P_CheckLineSight(const float from[3], const float to[3])
 {
     sightStartZ = from[VZ];
     topSlope = to[VZ] + 1 - sightStartZ;

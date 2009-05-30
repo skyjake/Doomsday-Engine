@@ -181,7 +181,7 @@ EXPORTS
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
     P_PathTraverse              @75 NONAME
-    P_CheckSight                @76 NONAME
+    P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
 

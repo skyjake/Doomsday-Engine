@@ -45,6 +45,7 @@
 
 #include "p_player.h"
 #include "p_tick.h"
+#include "p_actor.h"
 
 // MACROS ------------------------------------------------------------------
 

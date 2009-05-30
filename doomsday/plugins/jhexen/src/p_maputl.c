@@ -31,6 +31,7 @@
 
 #include "jhexen.h"
 #include "r_common.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 

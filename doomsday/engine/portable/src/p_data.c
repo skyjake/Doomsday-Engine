@@ -98,8 +98,6 @@ surfacelist_t* decoratedSurfaceList = NULL;
 blockmap_t* BlockMap = NULL;
 blockmap_t* SSecBlockMap = NULL;
 
-byte* rejectMatrix = NULL; // For fast sight rejection.
-
 nodepile_t* mobjNodes = NULL, *lineNodes = NULL; // All kinds of wacky links.
 
 float mapGravity;
@@ -205,7 +203,6 @@ void P_SetCurrentMap(gamemap_t* map)
     numPolyObjs = map->numPolyObjs;
     polyObjs = map->polyObjs;
 
-    rejectMatrix = map->rejectMatrix;
     mobjNodes = &map->mobjNodes;
     lineNodes = &map->lineNodes;
     linelinks = map->lineLinks;

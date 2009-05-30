@@ -70,7 +70,6 @@ void            P_MobjLink(mobj_t* mo, byte flags);
 int             P_MobjUnlink(mobj_t* mo);
 boolean         P_MobjUnlinkFromRing(mobj_t* mo, linkmobj_t** list);
 void            P_MobjLinkToRing(mobj_t* mo, linkmobj_t** link);
-void            P_PointToBlock(float x, float y, uint *bx, uint *by);
 
 boolean         PIT_AddLineIntercepts(linedef_t *ld, void *data);
 boolean         PIT_AddMobjIntercepts(mobj_t *mo, void *data);

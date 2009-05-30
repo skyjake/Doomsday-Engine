@@ -244,7 +244,6 @@ typedef struct {
 extern nodeindex_t* linelinks;
 extern blockmap_t* BlockMap;
 extern blockmap_t* SSecBlockMap;
-extern byte* rejectMatrix; // For fast sight rejection.
 extern nodepile_t* mobjNodes, *lineNodes;
 
 extern int viewwidth, viewheight;

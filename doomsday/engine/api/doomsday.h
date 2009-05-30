@@ -246,7 +246,7 @@ extern          "C" {
     boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
                                    int flags,
                                    boolean (*trav) (intercept_t*));
-    boolean         P_CheckSight(struct mobj_s* t1, struct mobj_s* t2);
+    boolean         P_CheckLineSight(const float from[3], const float to[3]);
 
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);

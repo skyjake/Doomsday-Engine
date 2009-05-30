@@ -338,10 +338,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\dam_reject.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\dd_help.c"
 				>
 			</File>
@@ -1312,10 +1308,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\dam_main.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\dam_reject.h"
 				>
 			</File>
 			<File

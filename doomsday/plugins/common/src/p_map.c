@@ -53,6 +53,7 @@
 #include "p_tick.h"
 #include "p_actor.h"
 #include "p_player.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -162,6 +163,8 @@ static boolean puzzleActivated;
 static int tmUnstuck; // $unstuck: used to check unsticking
 #endif
 
+static byte* rejectMatrix = NULL; // For fast sight rejection.
+
 // CODE --------------------------------------------------------------------
 
 float P_GetGravity(void)
@@ -170,6 +173,76 @@ float P_GetGravity(void)
         return (float) cfg.netGravity / 100;
 
     return *((float*) DD_GetVariable(DD_GRAVITY));
+}
+
+/**
+ * Checks the reject matrix to find out if the two sectors are visible
+ * from each other.
+ */
+static boolean checkReject(subsector_t* a, subsector_t* b)
+{
+    if(rejectMatrix != NULL)
+    {
+        uint                s1, s2, pnum, bytenum, bitnum;
+        sector_t*           sec1 = P_GetPtrp(a, DMU_SECTOR);
+        sector_t*           sec2 = P_GetPtrp(b, DMU_SECTOR);
+
+        // Determine subsector entries in REJECT table.
+        s1 = P_ToIndex(sec1);
+        s2 = P_ToIndex(sec2);
+        pnum = s1 * numsectors + s2;
+        bytenum = pnum >> 3;
+        bitnum = 1 << (pnum & 7);
+
+        // Check in REJECT table.
+        if(rejectMatrix[bytenum] & bitnum)
+        {
+            // Can't possibly be connected.
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Look from eyes of t1 to any part of t2 (start from middle of t1).
+ *
+ * @param from          The mobj doing the looking.
+ * @param to            The mobj being looked at.
+ *
+ * @return              @c true if a straight line between t1 and t2 is
+ *                      unobstructed.
+ */
+boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
+{
+    float               fPos[3], tPos[3];
+
+    // If either is unlinked, they can't see each other.
+    if(!from->subsector || !to->subsector)
+        return false;
+
+    if(to->dPlayer && (to->dPlayer->flags & DDPF_CAMERA))
+        return false; // Cameramen don't exist!
+
+    // Check for trivial rejection.
+    if(!checkReject(from->subsector, to->subsector))
+        return false;
+
+    fPos[VX] = from->pos[VX];
+    fPos[VY] = from->pos[VY];
+    fPos[VZ] = from->pos[VZ];
+
+    if(!P_MobjIsCamera(from))
+        fPos[VZ] += from->height + -(from->height / 4);
+
+    tPos[VX] = to->pos[VX];
+    tPos[VY] = to->pos[VY];
+    tPos[VZ] = to->pos[VZ];
+
+    tPos[VZ] += to->height;
+
+    return P_CheckLineSight(fPos, tPos);
 }
 
 boolean PIT_StompThing(mobj_t* mo, void* data)

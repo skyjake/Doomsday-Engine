@@ -33,6 +33,5 @@
 
 #include "dam_blockmap.h"
 #include "dam_file.h"
-#include "dam_reject.h"
 
 #endif
