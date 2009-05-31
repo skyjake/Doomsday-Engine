@@ -42,7 +42,7 @@
 // MACROS ------------------------------------------------------------------
 
 // Point + custom textures.
-#define NUM_TEX_NAMES           (1 + MAX_PTC_TEXTURES)
+#define NUM_TEX_NAMES           (MAX_PTC_TEXTURES)
 
 // TYPES -------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ extern float vang, vpitch;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-DGLuint ptctexname[NUM_TEX_NAMES];
+DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
 int particleNearLimit = 0;
 float particleDiffuse = 4;
 byte devDrawGenerators = false; // Display active generators?
@@ -72,8 +72,8 @@ byte devDrawGenerators = false; // Display active generators?
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static size_t numParts;
-static boolean hasPoints[NUM_TEX_NAMES], hasLines, hasNoBlend, hasBlend;
-static boolean hasModels;
+static boolean hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
+static boolean hasPointTexs[NUM_TEX_NAMES];
 static byte visiblePtcGens[MAX_ACTIVE_PTCGENS];
 
 static size_t orderSize = 0;
@@ -118,6 +118,19 @@ static float pointDist(fixed_t c[3])
     return dist;
 }
 
+byte GL_LoadParticleTexture(image_t* image, const char* name)
+{
+    filename_t          fileName;
+
+    if(R_FindResource2(RT_GRAPHIC, RC_TEXTURE, name, "-ck", fileName) &&
+       GL_LoadImage(image, fileName))
+    {
+        return 2;
+    }
+
+    return 0;
+}
+
 /**
  * The particle texture is a modification of the dynlight texture.
  */
@@ -126,18 +139,15 @@ void Rend_ParticleInitTextures(void)
     int                 i;
     boolean             reported;
 
-    if(ptctexname[0])
+    if(pointTex)
         return; // Already been here.
 
-    // Clear the texture names array.
-    memset(ptctexname, 0, sizeof(ptctexname));
-
     // Load the zeroth texture (the default: a blurred point).
-    ptctexname[0] = GL_PrepareExtTexture(RC_GRAPHICS, "Zeroth",
+    pointTex = GL_PrepareExtTexture(RC_GRAPHICS, "Zeroth",
         LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
-    if(ptctexname[0] == 0)
+    if(pointTex == 0)
     {
         Con_Error("Rend_ParticleInitTextures: \"Zeroth\" not found.\n");
     }
@@ -145,54 +155,59 @@ void Rend_ParticleInitTextures(void)
     // Load any custom particle textures. They are loaded from the
     // highres texture directory and are named "ParticleNN.(tga|png|pcx)".
     // The first is "Particle00". (based on Leesz' textured particles mod)
+
+    // Clear the texture names array.
+    memset(ptctexname, 0, sizeof(ptctexname));
     reported = false;
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
-        filename_t          fileName;
-        char                name[80];
         image_t             image;
+        char                name[80];
 
         // Try to load the texture.
         sprintf(name, "Particle%02i", i);
 
-        if(R_FindResource2(RT_GRAPHIC, RC_TEXTURE, name, "-ck", fileName))
-            if(GL_LoadImage(&image, fileName))
+        if(GL_LoadParticleTexture(&image, name))
+        {
+            VERBOSE(
+            Con_Message("Rend_ParticleInitTextures: Texture "
+                        "%02i: %i * %i * %i\n", i, image.width,
+                        image.height, image.pixelSize));
+
+            // If 8-bit with no alpha, generate alpha automatically.
+            if(image.originalBits == 8)
             {
-                VERBOSE(
-                Con_Message("Rend_ParticleInitTextures: Texture "
-                            "%02i: %i * %i * %i\n", i, image.width,
-                            image.height, image.pixelSize));
-
-                // If 8-bit with no alpha, generate alpha automatically.
-                if(image.originalBits == 8)
-                {
-                    GL_ConvertToAlpha(&image, true);
-                }
-
-                // Create a new texture and upload the image.
-                ptctexname[i + 1] = GL_NewTextureWithParams(
-                    image.pixelSize == 4 ? DGL_RGBA :
-                    image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
-                    image.width, image.height, image.pixels,
-                    TXCF_NO_COMPRESSION);
-
-                // Free the buffer.
-                GL_DestroyImage(&image);
-                continue;
+                GL_ConvertToAlpha(&image, true);
             }
 
-        // Just show the first 'not found'.
-        if(verbose && !reported)
-        {
-            Con_Message("Rend_ParticleInitTextures: %s not found.\n",
-                        name);
-            reported = true;
+            // Create a new texture and upload the image.
+            ptctexname[i] = GL_NewTextureWithParams(
+                image.pixelSize == 4 ? DGL_RGBA :
+                image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
+                image.width, image.height, image.pixels,
+                TXCF_NO_COMPRESSION);
         }
+        else
+        {
+            // Just show the first 'not found'.
+            if(verbose && !reported)
+            {
+                Con_Message("Rend_ParticleInitTextures: %s not found.\n",
+                            name);
+                reported = true;
+            }
+        }
+
+        // Free the buffer.
+        GL_DestroyImage(&image);
     }
 }
 
 void Rend_ParticleShutdownTextures(void)
 {
+    glDeleteTextures(1, (const GLuint*) &pointTex);
+    pointTex = 0;
+
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }
@@ -314,7 +329,7 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
         stagetype = gen->stages[pt->stage].type;
         if(stagetype == PTC_POINT)
         {
-            hasPoints[0] = true;
+            hasPoints = true;
         }
         else if(stagetype == PTC_LINE)
         {
@@ -323,7 +338,7 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
         else if(stagetype >= PTC_TEXTURE &&
                 stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
         {
-            hasPoints[stagetype - PTC_TEXTURE + 1] = true;
+            hasPointTexs[stagetype - PTC_TEXTURE] = true;
         }
         else if(stagetype >= PTC_MODEL &&
                 stagetype < PTC_MODEL + MAX_PTC_MODELS)
@@ -347,8 +362,8 @@ static int listVisibleParticles(void)
 {
     size_t              numVisibleParticles;
 
-    hasModels = hasLines = hasBlend = hasNoBlend = false;
-    memset(hasPoints, 0, sizeof(hasPoints));
+    hasPoints = hasModels = hasLines = hasBlend = hasNoBlend = false;
+    memset(hasPointTexs, 0, sizeof(hasPointTexs));
 
     // First count how many particles are in the visible generators.
     numParts = 0;
@@ -481,7 +496,8 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 static void renderParticles(int rtype, boolean withBlend)
 {
     size_t              i;
-    int                 c, usingTexture = -1;
+    int                 c;
+    DGLuint             tex = 0;
     float               leftoff[3], rightoff[3];
     ushort              primType = GL_QUADS;
     blendmode_t         mode = BM_NORMAL, newMode;
@@ -494,21 +510,28 @@ static void renderParticles(int rtype, boolean withBlend)
     }
 
     // Should we use a texture?
-    if(rtype == PTC_POINT)
-        usingTexture = 0;
-    else if(rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES)
-        usingTexture = rtype - PTC_TEXTURE + 1;
+    if(rtype == PTC_POINT ||
+       (rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES))
+    {
+        if(renderTextures)
+        {
+            if(rtype == PTC_POINT || !ptctexname[rtype - PTC_TEXTURE])
+                tex = pointTex;
+            else
+                tex = ptctexname[rtype - PTC_TEXTURE];
+        }
+    }
 
     if(rtype == PTC_MODEL)
     {
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
     }
-    else if(usingTexture >= 0)
+    else if(tex != 0)
     {
         glDepthMask(GL_FALSE);
         glDisable(GL_CULL_FACE);
-        glBindTexture(GL_TEXTURE_2D, renderTextures ? ptctexname[usingTexture] : 0);
+        glBindTexture(GL_TEXTURE_2D, tex);
         glDepthFunc(GL_LEQUAL);
         glBegin(primType = GL_QUADS);
     }
@@ -655,7 +678,7 @@ static void renderParticles(int rtype, boolean withBlend)
         }
 
         // The vertices, please.
-        if(usingTexture >= 0)
+        if(tex != 0)
         {
             // Should the particle be flat against a plane?
             if(flatOnPlane)
@@ -748,7 +771,7 @@ static void renderParticles(int rtype, boolean withBlend)
     {
         glEnd();
 
-        if(usingTexture >= 0)
+        if(tex != 0)
         {
             glEnable(GL_CULL_FACE);
             glDepthMask(GL_TRUE);
@@ -781,11 +804,13 @@ static void renderPass(boolean useBlending)
     if(hasLines)
         renderParticles(PTC_LINE, useBlending);
 
+    if(hasPoints)
+        renderParticles(PTC_POINT, useBlending);
+
     for(i = 0; i < NUM_TEX_NAMES; ++i)
-        if(hasPoints[i])
+        if(hasPointTexs[i])
         {
-            renderParticles(!i ? PTC_POINT : PTC_TEXTURE + i - 1,
-                            useBlending);
+            renderParticles(PTC_TEXTURE + i, useBlending);
         }
 
     // Restore blending mode.
