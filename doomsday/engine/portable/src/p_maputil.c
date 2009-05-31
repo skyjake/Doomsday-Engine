@@ -425,9 +425,9 @@ int P_PointOnDivlineSide(float fx, float fy, const divline_t* line)
     }
 }
 
-void P_MakeDivline(linedef_t* li, divline_t* dl)
+void P_MakeDivline(const linedef_t* li, divline_t* dl)
 {
-    vertex_t*           vtx = li->L_v1;
+    const vertex_t*     vtx = li->L_v1;
 
     dl->pos[VX] = FLT2FIX(vtx->V_pos[VX]);
     dl->pos[VY] = FLT2FIX(vtx->V_pos[VY]);
