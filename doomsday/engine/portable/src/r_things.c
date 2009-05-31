@@ -507,7 +507,7 @@ void R_PreInitSprites(void)
                         Sys_GetSeconds() - startTime));
 }
 
-static void initSpriteDefs(const spriterecord_t** sprRecords, int num)
+static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
 {
     numSprites = num;
     if(sprites)

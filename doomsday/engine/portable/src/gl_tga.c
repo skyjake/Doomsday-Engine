@@ -47,6 +47,8 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef unsigned char uchar; // 1 byte
+
 typedef struct {
     uchar           idLength; // Identification field size in bytes.
     uchar           colorMapType; // Type of the color map.

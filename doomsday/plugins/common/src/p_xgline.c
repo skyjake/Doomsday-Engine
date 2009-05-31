@@ -1449,14 +1449,14 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
     // Is there a sidedef?
     if(info->iparm[2])
     {
-        if(P_GetPtrp(line, DMU_BACK_SECTOR) < 0)
+        if(!P_GetPtrp(line, DMU_BACK_SECTOR))
             return true;
 
         side = P_GetPtrp(line, DMU_SIDEDEF1);
     }
     else
     {
-        if(P_GetPtrp(line, DMU_FRONT_SECTOR) < 0)
+        if(!P_GetPtrp(line, DMU_FRONT_SECTOR))
             return true;
 
         side = P_GetPtrp(line, DMU_SIDEDEF0);

@@ -27,7 +27,7 @@
  * hu_inventory.c: Heads-up display(s) for the player inventory.
  */
 
-#if __JHERETIC__ || __JHEXEN__
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
 
 // HEADER FILES ------------------------------------------------------------
 

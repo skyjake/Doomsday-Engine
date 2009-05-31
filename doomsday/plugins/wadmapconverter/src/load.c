@@ -110,7 +110,7 @@ static int C_DECL compareMaterialNames(const void* a, const void* b)
 }
 
 static const materialref_t* getMaterial(const char* regName,
-                                        const materialref_t*** list,
+                                        materialref_t* const ** list,
                                         size_t size)
 {
     int                 result;

@@ -28,7 +28,7 @@
  *       in the HUD code.
  */
 
-#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+#if defined(__JHERETIC__) || defined(__JHEXEN__) || defined(__JDOOM64__)
 
 // HEADER FILES ------------------------------------------------------------
 

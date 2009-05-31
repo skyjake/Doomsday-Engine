@@ -54,7 +54,18 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define MAX_AMBIENT_SFX 8       // Per level
+
 // TYPES -------------------------------------------------------------------
+
+typedef enum afxcmd_e {
+    afxcmd_play,                // (sound)
+    afxcmd_playabsvol,          // (sound, volume)
+    afxcmd_playrelvol,          // (sound, volume)
+    afxcmd_delay,               // (ticks)
+    afxcmd_delayrand,           // (andbits)
+    afxcmd_end                  // ()
+} afxcmd_t;
 
 // Animating textures and planes
 
@@ -87,6 +98,146 @@ static void P_ShootSpecialLine(mobj_t* thing, linedef_t* line);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 mobj_t LavaInflictor;
+
+int* LevelAmbientSfx[MAX_AMBIENT_SFX];
+int* AmbSfxPtr;
+int AmbSfxCount;
+int AmbSfxTics;
+int AmbSfxVolume;
+
+int AmbSndSeqInit[] = { // Startup
+    afxcmd_end
+};
+
+int AmbSndSeq1[] = { // Scream
+    afxcmd_play, SFX_AMB1,
+    afxcmd_end
+};
+
+int AmbSndSeq2[] = { // Squish
+    afxcmd_play, SFX_AMB2,
+    afxcmd_end
+};
+
+int AmbSndSeq3[] = { // Drops
+    afxcmd_play, SFX_AMB3,
+    afxcmd_delay, 16,
+    afxcmd_delayrand, 31,
+    afxcmd_play, SFX_AMB7,
+    afxcmd_delay, 16,
+    afxcmd_delayrand, 31,
+    afxcmd_play, SFX_AMB3,
+    afxcmd_delay, 16,
+    afxcmd_delayrand, 31,
+    afxcmd_play, SFX_AMB7,
+    afxcmd_delay, 16,
+    afxcmd_delayrand, 31,
+    afxcmd_play, SFX_AMB3,
+    afxcmd_delay, 16,
+    afxcmd_delayrand, 31,
+    afxcmd_play, SFX_AMB7,
+    afxcmd_delay, 16,
+    afxcmd_delayrand, 31,
+    afxcmd_end
+};
+
+int AmbSndSeq4[] = { // SlowFootSteps
+    afxcmd_play, SFX_AMB4,
+    afxcmd_delay, 15,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_delay, 15,
+    afxcmd_playrelvol, SFX_AMB4, -3,
+    afxcmd_delay, 15,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_delay, 15,
+    afxcmd_playrelvol, SFX_AMB4, -3,
+    afxcmd_delay, 15,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_delay, 15,
+    afxcmd_playrelvol, SFX_AMB4, -3,
+    afxcmd_delay, 15,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_end
+};
+
+int AmbSndSeq5[] = { // Heartbeat
+    afxcmd_play, SFX_AMB5,
+    afxcmd_delay, 35,
+    afxcmd_play, SFX_AMB5,
+    afxcmd_delay, 35,
+    afxcmd_play, SFX_AMB5,
+    afxcmd_delay, 35,
+    afxcmd_play, SFX_AMB5,
+    afxcmd_end
+};
+
+int AmbSndSeq6[] = { // Bells
+    afxcmd_play, SFX_AMB6,
+    afxcmd_delay, 17,
+    afxcmd_playrelvol, SFX_AMB6, -8,
+    afxcmd_delay, 17,
+    afxcmd_playrelvol, SFX_AMB6, -8,
+    afxcmd_delay, 17,
+    afxcmd_playrelvol, SFX_AMB6, -8,
+    afxcmd_end
+};
+
+int AmbSndSeq7[] = { // Growl
+    afxcmd_play, SFX_BSTSIT,
+    afxcmd_end
+};
+
+int AmbSndSeq8[] = { // Magic
+    afxcmd_play, SFX_AMB8,
+    afxcmd_end
+};
+
+int AmbSndSeq9[] = { // Laughter
+    afxcmd_play, SFX_AMB9,
+    afxcmd_delay, 16,
+    afxcmd_playrelvol, SFX_AMB9, -4,
+    afxcmd_delay, 16,
+    afxcmd_playrelvol, SFX_AMB9, -4,
+    afxcmd_delay, 16,
+    afxcmd_playrelvol, SFX_AMB10, -4,
+    afxcmd_delay, 16,
+    afxcmd_playrelvol, SFX_AMB10, -4,
+    afxcmd_delay, 16,
+    afxcmd_playrelvol, SFX_AMB10, -4,
+    afxcmd_end
+};
+
+int AmbSndSeq10[] = { // FastFootsteps
+    afxcmd_play, SFX_AMB4,
+    afxcmd_delay, 8,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_delay, 8,
+    afxcmd_playrelvol, SFX_AMB4, -3,
+    afxcmd_delay, 8,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_delay, 8,
+    afxcmd_playrelvol, SFX_AMB4, -3,
+    afxcmd_delay, 8,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_delay, 8,
+    afxcmd_playrelvol, SFX_AMB4, -3,
+    afxcmd_delay, 8,
+    afxcmd_playrelvol, SFX_AMB11, -3,
+    afxcmd_end
+};
+
+int* AmbientSfx[] = {
+    AmbSndSeq1, // Scream
+    AmbSndSeq2, // Squish
+    AmbSndSeq3, // Drops
+    AmbSndSeq4, // SlowFootsteps
+    AmbSndSeq5, // Heartbeat
+    AmbSndSeq6, // Bells
+    AmbSndSeq7, // Growl
+    AmbSndSeq8, // Magic
+    AmbSndSeq9, // Laughter
+    AmbSndSeq10 // FastFootsteps
+};
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1130,147 +1281,6 @@ void P_SpawnSpecials(void)
     // Init extended generalized lines and sectors.
     XG_Init();
 }
-
-#define MAX_AMBIENT_SFX 8       // Per level
-
-typedef enum afxcmd_e {
-    afxcmd_play,                // (sound)
-    afxcmd_playabsvol,          // (sound, volume)
-    afxcmd_playrelvol,          // (sound, volume)
-    afxcmd_delay,               // (ticks)
-    afxcmd_delayrand,           // (andbits)
-    afxcmd_end                  // ()
-} afxcmd_t;
-
-int    *LevelAmbientSfx[MAX_AMBIENT_SFX];
-int    *AmbSfxPtr;
-int     AmbSfxCount;
-int     AmbSfxTics;
-int     AmbSfxVolume;
-
-int     AmbSndSeqInit[] = {     // Startup
-    afxcmd_end
-};
-int     AmbSndSeq1[] = {        // Scream
-    afxcmd_play, SFX_AMB1,
-    afxcmd_end
-};
-int     AmbSndSeq2[] = {        // Squish
-    afxcmd_play, SFX_AMB2,
-    afxcmd_end
-};
-int     AmbSndSeq3[] = {        // Drops
-    afxcmd_play, SFX_AMB3,
-    afxcmd_delay, 16,
-    afxcmd_delayrand, 31,
-    afxcmd_play, SFX_AMB7,
-    afxcmd_delay, 16,
-    afxcmd_delayrand, 31,
-    afxcmd_play, SFX_AMB3,
-    afxcmd_delay, 16,
-    afxcmd_delayrand, 31,
-    afxcmd_play, SFX_AMB7,
-    afxcmd_delay, 16,
-    afxcmd_delayrand, 31,
-    afxcmd_play, SFX_AMB3,
-    afxcmd_delay, 16,
-    afxcmd_delayrand, 31,
-    afxcmd_play, SFX_AMB7,
-    afxcmd_delay, 16,
-    afxcmd_delayrand, 31,
-    afxcmd_end
-};
-int     AmbSndSeq4[] = {        // SlowFootSteps
-    afxcmd_play, SFX_AMB4,
-    afxcmd_delay, 15,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_delay, 15,
-    afxcmd_playrelvol, SFX_AMB4, -3,
-    afxcmd_delay, 15,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_delay, 15,
-    afxcmd_playrelvol, SFX_AMB4, -3,
-    afxcmd_delay, 15,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_delay, 15,
-    afxcmd_playrelvol, SFX_AMB4, -3,
-    afxcmd_delay, 15,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_end
-};
-int     AmbSndSeq5[] = {        // Heartbeat
-    afxcmd_play, SFX_AMB5,
-    afxcmd_delay, 35,
-    afxcmd_play, SFX_AMB5,
-    afxcmd_delay, 35,
-    afxcmd_play, SFX_AMB5,
-    afxcmd_delay, 35,
-    afxcmd_play, SFX_AMB5,
-    afxcmd_end
-};
-int     AmbSndSeq6[] = {        // Bells
-    afxcmd_play, SFX_AMB6,
-    afxcmd_delay, 17,
-    afxcmd_playrelvol, SFX_AMB6, -8,
-    afxcmd_delay, 17,
-    afxcmd_playrelvol, SFX_AMB6, -8,
-    afxcmd_delay, 17,
-    afxcmd_playrelvol, SFX_AMB6, -8,
-    afxcmd_end
-};
-int     AmbSndSeq7[] = {        // Growl
-    afxcmd_play, SFX_BSTSIT,
-    afxcmd_end
-};
-int     AmbSndSeq8[] = {        // Magic
-    afxcmd_play, SFX_AMB8,
-    afxcmd_end
-};
-int     AmbSndSeq9[] = {        // Laughter
-    afxcmd_play, SFX_AMB9,
-    afxcmd_delay, 16,
-    afxcmd_playrelvol, SFX_AMB9, -4,
-    afxcmd_delay, 16,
-    afxcmd_playrelvol, SFX_AMB9, -4,
-    afxcmd_delay, 16,
-    afxcmd_playrelvol, SFX_AMB10, -4,
-    afxcmd_delay, 16,
-    afxcmd_playrelvol, SFX_AMB10, -4,
-    afxcmd_delay, 16,
-    afxcmd_playrelvol, SFX_AMB10, -4,
-    afxcmd_end
-};
-int     AmbSndSeq10[] = {       // FastFootsteps
-    afxcmd_play, SFX_AMB4,
-    afxcmd_delay, 8,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_delay, 8,
-    afxcmd_playrelvol, SFX_AMB4, -3,
-    afxcmd_delay, 8,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_delay, 8,
-    afxcmd_playrelvol, SFX_AMB4, -3,
-    afxcmd_delay, 8,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_delay, 8,
-    afxcmd_playrelvol, SFX_AMB4, -3,
-    afxcmd_delay, 8,
-    afxcmd_playrelvol, SFX_AMB11, -3,
-    afxcmd_end
-};
-
-int    *AmbientSfx[] = {
-    AmbSndSeq1,                 // Scream
-    AmbSndSeq2,                 // Squish
-    AmbSndSeq3,                 // Drops
-    AmbSndSeq4,                 // SlowFootsteps
-    AmbSndSeq5,                 // Heartbeat
-    AmbSndSeq6,                 // Bells
-    AmbSndSeq7,                 // Growl
-    AmbSndSeq8,                 // Magic
-    AmbSndSeq9,                 // Laughter
-    AmbSndSeq10                 // FastFootsteps
-};
 
 void P_InitLava(void)
 {

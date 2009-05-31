@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1998-2003 Randy Heit. <rheit@iastate.edu> (Zdoom)
+ *\author Copyright © 1998-2003 Randy Heit <rheit@iastate.edu> (Zdoom)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -755,7 +755,7 @@ int PatchThing(int thingy)
         { "Death", 5, SN_DEATH },
         { "Exploding", 9, SN_XDEATH },
         { "Respawn", 7, SN_RAISE },
-        { NULL, -1 }
+        { NULL, 0 }
     };
     // Flags can be specified by name (a .bex extension):
     static const struct {

@@ -874,11 +874,11 @@ void SV_v19_LoadGame(char *savename)
     // Check version.
     memset(vcheck, 0, sizeof(vcheck));
     sprintf(vcheck, "version %i", SAVE_VERSION);
-    if(strcmp(savePtr, vcheck))
+    if(strcmp((const char*) savePtr, vcheck))
     {
         int                 saveVer;
 
-        sscanf(savePtr, "version %i", &saveVer);
+        sscanf((const char*) savePtr, "version %i", &saveVer);
         if(saveVer >= SAVE_VERSION_BASE)
         {
             // Must be from the wrong game.
