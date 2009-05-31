@@ -3075,7 +3075,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
 
                 // Disable compression?
                 if((image.width < 128 && image.height < 128) ||
-                   tex->type == GLT_FLARE)
+                   tex->type == GLT_FLARE || tex->type == GLT_SHINY)
                     c.flags |= TXCF_NO_COMPRESSION;
                 if(context &&
                    (tex->type == GLT_LIGHTMAP ||
