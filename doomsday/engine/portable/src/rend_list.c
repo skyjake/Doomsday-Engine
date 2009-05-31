@@ -639,7 +639,7 @@ static rendlist_t* getListFor(rendpolytype_t polyType,
     if(polyType == RPT_SHINY)
     {
         copyTU(TU(dest, TU_PRIMARY), &rTU[TU_PRIMARY]);
-        if(rTU[TU_PRIMARY].tex)
+        if(rTU[TU_INTER].tex)
             copyTU(TU(dest, TU_INTER), &rTU[TU_INTER]);
     }
     else
@@ -1340,13 +1340,17 @@ if(numTexUnits < 2)
         return 0;
 
     case LM_MASKED_SHINY:
-        // The intertex holds the info for the mask texture.
-        rlBindTo(1, TU(list, TU_INTER));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        {float           color[4];
-        color[0] = color[1] = color[2] = 0; color[3] = 1.0f;
-        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color); }
+        if(TU(list, TU_INTER)->tex)
+        {
+            selectTexUnits(2);
+            // The intertex holds the info for the mask texture.
+            rlBindTo(1, TU(list, TU_INTER));
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            {float           color[4];
+            color[0] = color[1] = color[2] = 0; color[3] = 1.0f;
+            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color); }
+        }
     case LM_ALL_SHINY:
     case LM_SHINY:
         rlBindTo(0, TU(list, TU_PRIMARY));
