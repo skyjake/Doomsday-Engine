@@ -1429,7 +1429,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     if(p->type != RPT_SKY_MASK)
     {
         // ShinySurface?
-        if(p->reflective && !drawAsVisSprite)
+        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1781,12 +1781,13 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         {
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
                        shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
-                       rtexcoords + 3 + divs[0].num, NULL,
+                       rTUs[TU_INTER].tex? rtexcoords + 3 + divs[0].num : NULL,
+                       NULL,
                        shinyColors + 3 + divs[0].num,
                        3 + divs[1].num, 0, 0, NULL, rTUs);
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices,
-                       shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs);
+                       shinyTexCoords, rTUs[TU_INTER].tex? rtexcoords : NULL,
+                       NULL, shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs);
         }
     }
     else
@@ -1796,9 +1797,10 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
                    numVertices, numLights, modTex, modColor, rTU);
         if(p->reflective)
-            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY, rvertices,
-                       shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, numVertices, 0, 0, NULL, rTUs);
+            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY,
+                       rvertices, shinyTexCoords,
+                       rTUs[TU_INTER].tex? rtexcoords : NULL,
+                       NULL, shinyColors, numVertices, 0, 0, NULL, rTUs);
     }
 
     R_FreeRendTexCoords(rtexcoords);
