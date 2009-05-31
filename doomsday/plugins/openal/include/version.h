@@ -45,8 +45,8 @@
 #define PLUGIN_NICENAME     "OpenAL Audio Driver"
 #define PLUGIN_DETAILS      "Doomsday plugin for audio playback via OpenAL"
 
-#define PLUGIN_VERSION_TEXT "1.2.2"
+#define PLUGIN_VERSION_TEXT "1.2.3"
 #define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSOPENAL_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,2,2,0 // For WIN32 version info.
+#define PLUGIN_VERSION_NUMBER 1,2,3,0 // For WIN32 version info.
 
 #endif

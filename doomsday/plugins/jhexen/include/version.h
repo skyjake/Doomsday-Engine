@@ -49,8 +49,8 @@
 #define GAME_NICENAME       "jHexen"
 #define GAME_DETAILS        "jHexen is based on Hexen v1.1 by Raven Software."
 
-#define GAME_VERSION_TEXT   "1.3.2"
+#define GAME_VERSION_TEXT   "1.3.3"
 #define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" JHEXEN_VER_ID ")"
-#define GAME_VERSION_NUMBER 1,3,2,0 // For WIN32 version info.
+#define GAME_VERSION_NUMBER 1,3,3,0 // For WIN32 version info.
 
 #endif
