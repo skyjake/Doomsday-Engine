@@ -221,11 +221,11 @@ static boolean crossBSPNode(unsigned int bspNum, losdata_t* los)
         // Would the trace completely cross this partition?
         if(side == R_PointOnSide(los->to[VX], los->to[VY],
                                  &node->partition))
-        {   // No.
+        {   // Yes, decend!
             bspNum = node->children[side];
         }
         else
-        {   // Yes, decend!
+        {   // No.
             if(!crossBSPNode(node->children[side], los))
                 return 0; // Cross the starting side.
             else
