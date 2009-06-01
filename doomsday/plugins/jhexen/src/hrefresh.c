@@ -262,24 +262,35 @@ void G_Display(int layer)
 
     if(layer == 0)
     {
-        // $democam: can be set on every frame.
-        if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        if(G_GetGameState() == GS_MAP)
         {
-            // Full screen.
-            R_SetViewWindowTarget(0, 0, 320, 200);
+            // $democam: can be set on every frame.
+            if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+            {
+                // Full screen.
+                R_SetViewWindowTarget(0, 0, 320, 200);
+            }
+            else
+            {
+                int                 w, h;
+
+                w = cfg.setBlocks * 32;
+                h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
+                R_SetViewWindowTarget(160 - (w >> 1),
+                                      (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) >> 1,
+                                      w, h);
+            }
+
+            R_GetViewWindow(&x, &y, &w, &h);
         }
         else
         {
-            int                 w, h;
-
-            w = cfg.setBlocks * 32;
-            h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
-            R_SetViewWindowTarget(160 - (w >> 1),
-                                  (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) >> 1,
-                                  w, h);
+            x = 0;
+            y = 0;
+            w = SCREENWIDTH;
+            h = SCREENHEIGHT;
         }
 
-        R_GetViewWindow(&x, &y, &w, &h);
         R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
