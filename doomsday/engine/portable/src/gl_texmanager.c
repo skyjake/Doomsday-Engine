@@ -1280,12 +1280,20 @@ static byte* loadImage(image_t* img, const char* imagefn)
 
 byte* GL_LoadImage(image_t* img, const char* imagefn)
 {
-    // Clear any old values.
-    memset(img, 0, sizeof(*img));
+    if(img)
+    {
+        // Clear any old values.
+        memset(img, 0, sizeof(*img));
 
-    strcpy(img->fileName, imagefn);
+        if(imagefn && imagefn[0])
+        {
+            strncpy(img->fileName, imagefn, FILENAME_T_MAXLEN);
 
-    return loadImage(img, imagefn);
+            return loadImage(img, imagefn);
+        }
+    }
+
+    return NULL;
 }
 
 /**
@@ -1293,8 +1301,12 @@ byte* GL_LoadImage(image_t* img, const char* imagefn)
  */
 void GL_DestroyImage(image_t* img)
 {
-    M_Free(img->pixels);
-    img->pixels = NULL;
+    if(img)
+    {
+        if(img->pixels)
+            M_Free(img->pixels);
+        img->pixels = NULL;
+    }
 }
 
 /**

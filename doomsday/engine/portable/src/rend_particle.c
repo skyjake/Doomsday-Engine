@@ -186,6 +186,9 @@ void Rend_ParticleInitTextures(void)
                 image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
                 image.width, image.height, image.pixels,
                 TXCF_NO_COMPRESSION);
+
+            // Free the buffer.
+            GL_DestroyImage(&image);
         }
         else
         {
@@ -197,9 +200,6 @@ void Rend_ParticleInitTextures(void)
                 reported = true;
             }
         }
-
-        // Free the buffer.
-        GL_DestroyImage(&image);
     }
 }
 

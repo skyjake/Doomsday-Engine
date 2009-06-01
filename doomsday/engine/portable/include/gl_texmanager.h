@@ -112,7 +112,7 @@ typedef struct gltexture_inst_s {
  * it must be discarded with GL_DestroyImage.
  */
 typedef struct image_s {
-    char            fileName[256];
+    filename_t      fileName;
     int             width;
     int             height;
     int             pixelSize;
