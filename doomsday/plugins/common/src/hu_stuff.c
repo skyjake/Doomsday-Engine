@@ -2085,7 +2085,7 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
     DGL_BlendMode(BM_NORMAL);
 }
 
-void M_DrawChar(int x, int y, int ch, gamefontid_t font)
+void M_DrawChar(int x, int y, unsigned char ch, gamefontid_t font)
 {
     lumpnum_t           lump;
 
@@ -2139,7 +2139,7 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
 
     if(val > 99)
     {
-        patch = &gFonts[GF_FONTB].chars[15 + val / 100].patch;
+        patch = &gFonts[GF_FONTB].chars['0' + val / 100].patch;
 
         GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
                              patch->lump);
@@ -2152,7 +2152,7 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
     xpos += 12;
     if(val > 9 || oldval > 99)
     {
-        patch = &gFonts[GF_FONTB].chars[15 + val / 10].patch;
+        patch = &gFonts[GF_FONTB].chars['0' + val / 10].patch;
 
         GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
                              patch->lump);
@@ -2163,7 +2163,7 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
 
     val = val % 10;
     xpos += 12;
-    patch = &gFonts[GF_FONTB].chars[15 + val].patch;
+    patch = &gFonts[GF_FONTB].chars['0' + val].patch;
 
     GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
                          patch->lump);
@@ -2174,7 +2174,7 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
 #endif
 
 #if __JHERETIC__
-void IN_DrawShadowChar(int x, int y, int ch, gamefontid_t font)
+void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font)
 {
     GL_DrawPatchLitAlpha(x+2, y+2, 0, .4f,
                          gFonts[font].chars[ch].patch.lump);
@@ -2248,18 +2248,18 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
 
     if(digits == 4)
     {
-		GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val / 1000].patch.width / 2 - 12, y + 2, 0, .4f, gFonts[GF_FONTB].chars[15+val / 1000].patch.lump);
+		GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 1000].patch.width / 2 - 12, y + 2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 1000].patch.lump);
         DGL_Color4f(r, g, b, a);
-        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val / 1000].patch.width / 2 - 12, y, gFonts[GF_FONTB].chars[15+val / 1000].patch.lump);
+        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 1000].patch.width / 2 - 12, y, gFonts[GF_FONTB].chars['0' + val / 1000].patch.lump);
     }
 
     if(digits > 2)
     {
         if(realdigits > 2)
         {
-            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val / 100].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15+val / 100].patch.lump);
+            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 100].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 100].patch.lump);
             DGL_Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val / 100].patch.width / 2, y, gFonts[GF_FONTB].chars[15+val / 100].patch.lump);
+            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 100].patch.width / 2, y, gFonts[GF_FONTB].chars['0' + val / 100].patch.lump);
         }
         xpos += 12;
     }
@@ -2269,28 +2269,28 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
     {
         if(val > 9)
         {
-            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val / 10].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15+val / 10].patch.lump);
+            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 10].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 10].patch.lump);
             DGL_Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val / 10].patch.width / 2, y, gFonts[GF_FONTB].chars[15+val / 10].patch.lump);
+            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 10].patch.width / 2, y, gFonts[GF_FONTB].chars['0' + val / 10].patch.lump);
         }
         else if(digits == 2 || oldval > 99)
         {
-            GL_DrawPatchLitAlpha(xpos+2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15].patch.lump);
+            GL_DrawPatchLitAlpha(xpos+2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0'].patch.lump);
             DGL_Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos, y, gFonts[GF_FONTB].chars[15].patch.lump);
+            GL_DrawPatch_CS(xpos, y, gFonts[GF_FONTB].chars['0'].patch.lump);
         }
         xpos += 12;
     }
 
     val = val % 10;
-    GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[val].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars[15+val].patch.lump);
+    GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val].patch.lump);
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[val].patch.width / 2, y, gFonts[GF_FONTB].chars[15+val].patch.lump);
+    GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val].patch.width / 2, y, gFonts[GF_FONTB].chars['0' + val].patch.lump);
     if(neg)
     {
-        GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars[13].patch.width / 2 - 12 * (realdigits), y+2, 0, .4f, gFonts[GF_FONTB].chars[13].patch.lump);
+        GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['-'].patch.width / 2 - 12 * (realdigits), y+2, 0, .4f, gFonts[GF_FONTB].chars['-'].patch.lump);
         DGL_Color4f(r, g, b, a);
-        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars[13].patch.width / 2 - 12 * (realdigits), y, gFonts[GF_FONTB].chars[13].patch.lump);
+        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['-'].patch.width / 2 - 12 * (realdigits), y, gFonts[GF_FONTB].chars['-'].patch.lump);
     }
 }
 #endif

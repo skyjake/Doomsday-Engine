@@ -120,7 +120,7 @@ void        M_WriteText3(int x, int y, const char *string,
 void        HUlib_drawTextLine2(int x, int y, const char* string,
                                 size_t len, gamefontid_t font,
                                 boolean drawcursor);
-void        M_DrawChar(int x, int y, int ch, gamefontid_t font);
+void        M_DrawChar(int x, int y, unsigned char ch, gamefontid_t font);
 #if __JHERETIC__ || __JHEXEN__
 void        Hu_DrawSmallNum(int val, int numDigits, int x, int y,
                             float alpha);
@@ -130,7 +130,7 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
                     float green, float blue, float alpha);
 void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
                    float b, float a);
-void IN_DrawShadowChar(int x, int y, int ch, gamefontid_t font);
+void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font);
 #endif
 #if __JHEXEN__
 void DrBNumber(int val, int x, int y, float red, float green, float blue,

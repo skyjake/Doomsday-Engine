@@ -677,7 +677,7 @@ void IN_DrawSingleStats(void)
 
     IN_DrawNumber(players[CONSOLEPLAYER].killCount, 200, 65, 3,
                   defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawShadowChar(248, 65, 14, GF_FONTB);
+    IN_DrawShadowChar(248, 65, '/', GF_FONTB);
     IN_DrawNumber(totalKills, 248, 65, 3, defFontRGB[0], defFontRGB[1],
                   defFontRGB[2], 1);
 
@@ -692,7 +692,7 @@ void IN_DrawSingleStats(void)
 
     IN_DrawNumber(players[CONSOLEPLAYER].itemCount, 200, 90, 3,
                   defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawShadowChar(248, 90, 14, GF_FONTB);
+    IN_DrawShadowChar(248, 90, '/', GF_FONTB);
     IN_DrawNumber(totalItems, 248, 90, 3, defFontRGB[0], defFontRGB[1],
                   defFontRGB[2], 1);
 
@@ -707,7 +707,7 @@ void IN_DrawSingleStats(void)
 
     IN_DrawNumber(players[CONSOLEPLAYER].secretCount, 200, 115, 3,
                   defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawShadowChar(248, 115, 14, GF_FONTB);
+    IN_DrawShadowChar(248, 115, '/', GF_FONTB);
     IN_DrawNumber(totalSecret, 248, 115, 3, defFontRGB[0], defFontRGB[1],
                   defFontRGB[2], 1);
 
@@ -794,14 +794,14 @@ void IN_DrawCoopStats(void)
 
             IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, defFontRGB[0],
                           defFontRGB[1], defFontRGB[2], 1);
-            IN_DrawShadowChar(121, ypos + 10, 5, GF_FONTB);
+            IN_DrawShadowChar(121, ypos + 10, '%', GF_FONTB);
             IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, defFontRGB[0],
                           defFontRGB[1], defFontRGB[2], 1);
 
-            IN_DrawShadowChar(196, ypos + 10, 5, GF_FONTB);
+            IN_DrawShadowChar(196, ypos + 10, '%', GF_FONTB);
             IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3,
                           defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            IN_DrawShadowChar(273, ypos + 10, 5, GF_FONTB);
+            IN_DrawShadowChar(273, ypos + 10, '%', GF_FONTB);
             ypos += 37;
         }
     }
