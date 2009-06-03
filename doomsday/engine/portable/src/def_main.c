@@ -887,12 +887,16 @@ void Def_Read(void)
 
     for(i = 0; i < countStates.num; ++i)
     {
-        ded_state_t*        dst = &defs.states[i];
+        ded_state_t*        dstNew, *dst = &defs.states[i];
         // Make sure duplicate IDs overwrite the earliest.
         int                 stateNum = Def_GetStateNum(dst->id);
-        ded_state_t*        dstNew = defs.states + stateNum;
-        state_t*            st = states + stateNum;
+        state_t*            st;
 
+        if(stateNum == -1)
+            continue;
+
+        dstNew = defs.states + stateNum;
+        st = states + stateNum;
         st->sprite = Def_GetSpriteNum(dst->sprite.id);
         st->flags = dst->flags;
         st->frame = dst->frame;
