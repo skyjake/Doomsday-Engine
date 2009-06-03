@@ -58,8 +58,8 @@ void            NetSv_Sound(mobj_t *origin, int sound_id, int toPlr);   // toPlr
 void            NetSv_SoundAtVolume(mobj_t *origin, int sound_id, int volume,
                                     int toPlr);
 void            NetSv_Intermission(int flags, int state, int time);
-void            NetSv_Finale(int flags, char *script, boolean *conds,
-                             int numConds);
+void            NetSv_Finale(int flags, const char* script, const boolean* conds,
+                             byte numConds);
 void            NetSv_SendPlayerInfo(int whose, int to_whom);
 void            NetSv_ChangePlayerInfo(int from, byte *data);
 void            NetSv_Ticker(void);

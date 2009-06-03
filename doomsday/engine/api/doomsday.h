@@ -200,7 +200,7 @@ extern          "C" {
 
     // Network.
     void            Net_SendPacket(int to_player, int type, void* data,
-                                   int length);
+                                   size_t length);
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
@@ -410,9 +410,9 @@ extern          "C" {
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
     void            R_SetBorderGfx(char* lumps[9]);
-    void            R_GetSpriteInfo(int sprite, int frame,
+    boolean         R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t* sprinfo);
-    void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
+    boolean         R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
     int             R_CreateAnimGroup(int flags);
     void            R_AddToAnimGroup(int groupNum, materialnum_t num,
                                      int tics, int randomTics);

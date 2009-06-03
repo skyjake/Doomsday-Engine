@@ -467,9 +467,10 @@ void FI_NewState(const char *script)
     memset(fi, 0, sizeof(*fi));
 
     // Take a copy of the script.
-    size = strlen(script) + 1;
-    fi->script = Z_Malloc(size, PU_STATIC, 0);
+    size = strlen(script);
+    fi->script = Z_Malloc(size + 1, PU_STATIC, 0);
     memcpy(fi->script, script, size);
+    fi->script[size] = '\0';
 
     // Init the cursor, too.
     fi->cp = fi->script;
@@ -1667,9 +1668,15 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
     {
         patchinfo_t         info;
 
-        R_GetPatchInfo(pic->lump[pic->seq], &info);
-        center[VX] = info.width / 2 - info.offset;
-        center[VY] = info.height / 2 - info.topOffset;
+        if(R_GetPatchInfo(pic->lump[pic->seq], &info))
+        {
+            center[VX] = info.width / 2 - info.offset;
+            center[VY] = info.height / 2 - info.topOffset;
+        }
+        else
+        {
+            center[VX] = center[VY] = 0;
+        }
     }
     else
     {
@@ -2082,9 +2089,13 @@ void FIC_Delete(void)
 void FIC_Image(void)
 {
     fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name = FI_GetToken();
 
     FI_ClearAnimation(pic);
-    pic->lump[0] = W_CheckNumForName(FI_GetToken());
+
+    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_Image: Warning, missing lump \"%s\".\n", name);
+
     pic->flags.is_patch = false;
     pic->flags.is_rect = false;
     pic->flags.is_ximage = false;
@@ -2093,11 +2104,16 @@ void FIC_Image(void)
 void FIC_ImageAt(void)
 {
     fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name;
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
     FI_ClearAnimation(pic);
-    pic->lump[0] = W_CheckNumForName(FI_GetToken());
+
+    name = FI_GetToken();
+    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_ImageAt: Warning, missing lump \"%s\".\n", name);
+
     pic->flags.is_patch = false;
     pic->flags.is_rect = false;
     pic->flags.is_ximage = false;
@@ -2112,8 +2128,9 @@ void FIC_XImage(void)
 
     // Load the external resource.
     fileName = FI_GetToken();
-    pic->lump[0] = GL_LoadGraphics(RC_GRAPHICS, fileName, LGM_NORMAL,
-                                   false, true, 0);
+    if((pic->lump[0] = GL_LoadGraphics(RC_GRAPHICS, fileName, LGM_NORMAL,
+                                   false, true, 0)) == 0)
+        Con_Message("FIC_XImage: Warning, missing graphic \"%s\".\n", fileName);
 
     pic->flags.is_patch = false;
     pic->flags.is_rect = true;
@@ -2123,11 +2140,16 @@ void FIC_XImage(void)
 void FIC_Patch(void)
 {
     fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name;
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
     FI_ClearAnimation(pic);
-    pic->lump[0] = W_CheckNumForName(FI_GetToken());
+
+    name = FI_GetToken();
+    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_Patch: Warning, missing lump \"%s\".\n", name);
+
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
 }
@@ -2136,12 +2158,17 @@ void FIC_SetPatch(void)
 {
     int                 num;
     fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name = FI_GetToken();
 
-    if((num = W_CheckNumForName(FI_GetToken()))!= -1)
+    if((num = W_CheckNumForName(name))!= -1)
     {
         pic->lump[0] = num;
         pic->flags.is_patch = true;
         pic->flags.is_rect = false;
+    }
+    else
+    {
+        Con_Message("FIC_SetPatch: Warning, missing lump \"%s\".\n", name);
     }
 }
 
@@ -2156,13 +2183,20 @@ void FIC_Anim(void)
 {
     fipic_t            *pic = FI_GetPic(FI_GetToken());
     int                 i, lump, time;
+    const char*         name = FI_GetToken();
 
-    lump = W_CheckNumForName(FI_GetToken());
+    if((lump = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_Anim: Warning, lump \"%s\" not found.\n", name);
+
     time = FI_GetTics();
     // Find the next sequence spot.
     i = FI_GetNextSeq(pic);
     if(i == MAX_SEQUENCE)
-        return;                 // Can't do it...
+    {
+        Con_Message("FIC_Anim: Warning, too many frames in anim sequence "
+                    "(max %i).\n", MAX_SEQUENCE);
+        return; // Can't do it...
+    }
     pic->lump[i] = lump;
     pic->seqWait[i] = time;
     pic->flags.is_patch = true;
@@ -2173,13 +2207,21 @@ void FIC_AnimImage(void)
 {
     fipic_t            *pic = FI_GetPic(FI_GetToken());
     int                 i, lump, time;
+    const char*         name = FI_GetToken();
 
-    lump = W_CheckNumForName(FI_GetToken());
+    if((lump = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_AnimImage: Warning, lump \"%s\" not found.\n", name);
+
     time = FI_GetTics();
     // Find the next sequence spot.
     i = FI_GetNextSeq(pic);
     if(i == MAX_SEQUENCE)
-        return;                 // Can't do it...
+    {
+        Con_Message("FIC_AnimImage: Warning, too many frames in anim sequence "
+                    "(max %i).\n", MAX_SEQUENCE);
+        return; // Can't do it...
+    }
+
     pic->lump[i] = lump;
     pic->seqWait[i] = time;
     pic->flags.is_patch = false;

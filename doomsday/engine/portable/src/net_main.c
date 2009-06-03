@@ -284,9 +284,9 @@ boolean Net_GetPacket(void)
 /**
  * This is the public interface of the message sender.
  */
-void Net_SendPacket(int to_player, int type, void *data, int length)
+void Net_SendPacket(int to_player, int type, void *data, size_t length)
 {
-    int         flags = 0;
+    int                 flags = 0;
 
     // What kind of delivery to use?
     if(to_player & DDSP_CONFIRM)

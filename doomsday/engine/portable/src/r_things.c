@@ -681,7 +681,7 @@ material_t* R_GetMaterialForSprite(int sprite, int frame)
     return sprDef->spriteFrames[frame].mats[0];
 }
 
-void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
+boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 {
     spritedef_t*        sprDef;
     spriteframe_t*      sprFrame;
@@ -689,10 +689,11 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     material_t*         mat;
     material_snapshot_t ms;
 
-#ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
-        Con_Error("R_GetSpriteInfo: invalid sprite number %i.\n", sprite);
-#endif
+    {
+        Con_Message("R_GetSpriteInfo: Warning, invalid sprite number %i.\n", sprite);
+        return false;
+    }
 
     sprDef = &sprites[sprite];
 
@@ -700,7 +701,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     {
         // We have no information to return.
         memset(info, 0, sizeof(*info));
-        return;
+        return false;
     }
 
     sprFrame = &sprDef->spriteFrames[frame];
@@ -717,19 +718,31 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->topOffset = sprTex->offY;
     info->width = ms.width;
     info->height = ms.height;
+    return true;
 }
 
-void R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
+boolean R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
 {
-    lumppatch_t*        patch =
-        (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
+    if(info)
+        return false;
 
     memset(info, 0, sizeof(*info));
-    info->lump = info->realLump = lump;
-    info->width = SHORT(patch->width);
-    info->height = SHORT(patch->height);
-    info->topOffset = SHORT(patch->topOffset);
-    info->offset = SHORT(patch->leftOffset);
+
+    if(lump >= 0 && lump < numLumps)
+    {
+        lumppatch_t*        patch =
+            (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
+
+        info->lump = info->realLump = lump;
+        info->width = SHORT(patch->width);
+        info->height = SHORT(patch->height);
+        info->topOffset = SHORT(patch->topOffset);
+        info->offset = SHORT(patch->leftOffset);
+        return true;
+    }
+
+    VERBOSE(Con_Message("R_GetPatchInfo: Warning, invalid lumpnum %i.\n", lump));
+    return false;
 }
 
 /**
