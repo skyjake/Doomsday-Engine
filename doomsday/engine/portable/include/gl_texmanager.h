@@ -121,15 +121,15 @@ typedef struct image_s {
     byte*           pixels;
 } image_t;
 
-extern int      ratioLimit;
-extern int      mipmapping, linearRaw, texQuality, filterSprites;
-extern int      texMagMode, texAniso;
-extern int      useSmartFilter;
-extern byte     loadExtAlways;
-extern int      texMagMode;
-extern int      upscaleAndSharpenPatches;
-extern int      glmode[6];
-extern int      palLump;
+extern int ratioLimit;
+extern int mipmapping, linearRaw, texQuality, filterSprites;
+extern int texMagMode, texAniso;
+extern int useSmartFilter;
+extern byte loadExtAlways;
+extern int texMagMode;
+extern int upscaleAndSharpenPatches;
+extern int glmode[6];
+extern int palLump;
 
 void            GL_TexRegister(void);
 
