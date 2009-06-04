@@ -49,4 +49,6 @@ extern int gsvMapMusic;
 
 void            G_PrintMapList(void);
 
+void            G_SaveGame(int slot, const char* description);
+
 #endif

@@ -85,8 +85,8 @@ void        DAM_Register(void);
 void        DAM_Init(void);
 void        DAM_Shutdown(void);
 
-void        DAM_GetCachedMapDir(char *dir, int mainLump);
+void        DAM_GetCachedMapDir(char* dir, int mainLump, size_t len);
 
-boolean     DAM_AttemptMapLoad(const char *mapID);
+boolean     DAM_AttemptMapLoad(const char* mapID);
 
 #endif

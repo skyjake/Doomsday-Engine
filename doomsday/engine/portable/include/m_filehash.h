@@ -34,7 +34,7 @@ typedef void* filehash_t;
 filehash_t*     FileHash_Create(const char* pathList);
 void            FileHash_Destroy(filehash_t* fh);
 
-boolean         FileHash_Find(filehash_t* fh, const char* name,
-                              char* foundPath);
+boolean         FileHash_Find(filehash_t* fh, char* foundPath,
+                              const char* name, size_t len);
 
 #endif

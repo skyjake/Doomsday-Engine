@@ -190,7 +190,7 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 int saveGameSlot;
-char saveDescription[32];
+char saveDescription[HU_SAVESTRINGSIZE];
 
 #if __JDOOM__ || __JDOOM64__
 mobj_t *bodyQueue[BODYQUEUESIZE];
@@ -1946,10 +1946,10 @@ void G_DoLoadGame(void)
  *
  * @param description       A 24 byte text string.
  */
-void G_SaveGame(int slot, char *description)
+void G_SaveGame(int slot, const char* description)
 {
     saveGameSlot = slot;
-    strcpy(saveDescription, description);
+    strncpy(saveDescription, description, HU_SAVESTRINGSIZE);
     G_SetGameAction(GA_SAVEGAME);
 }
 
@@ -1959,13 +1959,13 @@ void G_SaveGame(int slot, char *description)
 void G_DoSaveGame(void)
 {
 #if __JHEXEN__ || __JSTRIFE__
-    GL_DrawPatch(100, 68, W_GetNumForName("saveicon"));
+    GL_DrawPatch(100, 68, W_GetNumForName("SAVEICON"));
 
     SV_SaveGame(saveGameSlot, saveDescription);
 #else
-    char                name[100];
+    filename_t              name;
 
-    SV_GetSaveGameFileName(saveGameSlot, name);
+    SV_GetSaveGameFileName(name, saveGameSlot, FILENAME_T_MAXLEN);
     SV_SaveGame(name, saveDescription);
 #endif
 

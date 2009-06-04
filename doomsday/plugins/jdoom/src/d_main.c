@@ -522,7 +522,7 @@ void G_PreInit(void)
 void G_PostInit(void)
 {
     int                 p;
-    char                file[256];
+    filename_t          file;
     char                mapStr[6];
 
     // Border background changes depending on mission.
@@ -657,7 +657,8 @@ void G_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_GetSaveGameFileName(Argv(p + 1)[0] - '0', file);
+        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0',
+                               FILENAME_T_MAXLEN);
         G_LoadGame(file);
     }
 

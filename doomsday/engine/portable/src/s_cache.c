@@ -140,9 +140,12 @@ sfxcache_t* Sfx_GetCached(int id)
  * frequencies in the sample. It should be low-pass filtered after the
  * interpolation.
  */
-void Sfx_Resample(sfxsample_t* src, sfxsample_t* dest)
+void Sfx_Resample(sfxsample_t* dest, const sfxsample_t* src)
 {
     int                 i, num = src->numSamples;
+
+    assert(src->data);
+    assert(dest->data);
 
     // Let's first check for the easy cases.
     if(dest->rate == src->rate)
@@ -353,7 +356,7 @@ sfxcache_t* Sfx_CacheInsert(sfxsample_t* sample)
 
     // Do the resampling, if necessary.
     cached.data = M_Malloc(cached.size);
-    Sfx_Resample(sample, &cached);
+    Sfx_Resample(&cached, sample);
 
     // Hits keep count of how many times the cached sound has been played.
     // The purger will remove samples with the lowest hitcount first.
@@ -523,7 +526,7 @@ sfxsample_t* Sfx_Cache(int id)
     sfxsample_t         samp;
     unsigned short*     sp = NULL;
     boolean             needFree = false;
-    char                buf[300];
+    filename_t          buf;
 
     if(!id || !sfxAvail)
         return NULL;
@@ -561,7 +564,7 @@ sfxsample_t* Sfx_Cache(int id)
     if(info->external[0])
     {   // Yes.
         // Try loading (note the file name is relative to the base path).
-        M_PrependBasePath(info->external, buf);
+        M_PrependBasePath(buf, info->external, FILENAME_T_MAXLEN);
         if((samp.data =
             WAV_Load(buf, &samp.bytesPer, &samp.rate, &samp.numSamples)))
         {   // Loading was successful!
@@ -579,7 +582,8 @@ sfxsample_t* Sfx_Cache(int id)
          * external resource (probably a custom sound).
          */
         if((info->lumpNum < 0 || W_IsFromIWAD(info->lumpNum)) &&
-           R_FindResource(RT_SOUND, info->lumpName, NULL, buf) &&
+           R_FindResource(RT_SOUND, buf, info->lumpName, NULL,
+                          FILENAME_T_MAXLEN) &&
            (samp.data =
             WAV_Load(buf, &samp.bytesPer, &samp.rate, &samp.numSamples)))
         {   // Loading was successful!

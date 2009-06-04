@@ -827,7 +827,7 @@ static void sendMessage(const char* msg)
         else
         {
             strcpy(buff, "chat ");
-            M_StrCatQuoted(buff, msg);
+            M_StrCatQuoted(buff, msg, 256);
             DD_Execute(false, buff);
         }
     }
@@ -845,7 +845,7 @@ static void sendMessage(const char* msg)
                 else
                 {
                     sprintf(buff, "chatNum %d ", i);
-                    M_StrCatQuoted(buff, msg);
+                    M_StrCatQuoted(buff, msg, 256);
                     DD_Execute(false, buff);
                 }
             }

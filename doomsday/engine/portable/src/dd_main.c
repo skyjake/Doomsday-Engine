@@ -173,13 +173,13 @@ const char* value_Str(int val)
  */
 void DD_AddIWAD(const char* path)
 {
-    int             i = 0;
-    char            buf[256];
+    int                 i = 0;
+    filename_t          buf;
 
     while(iwadList[i])
         i++;
 
-    M_TranslatePath(path, buf);
+    M_TranslatePath(buf, path, FILENAME_T_MAXLEN);
     iwadList[i] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
     strcpy(iwadList[i], buf);
 }
@@ -227,13 +227,12 @@ static int autoDataAdder(const char *fileName, filetype_t type, void* ptr)
 
 /**
  * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
- * directory are added to the wadFiles list.  Returns the number of new
- * files that were loaded.
+ * directory are added to the wadFiles list.
+ *
+ * @return              Number of new files that were loaded.
  */
 int DD_AddAutoData(boolean loadFiles)
 {
-#define BUFFER_SIZE     (256)
-
     autoload_t          data;
     const char*         extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
@@ -242,7 +241,7 @@ int DD_AddAutoData(boolean loadFiles)
 #endif
         NULL
     };
-    char                pattern[BUFFER_SIZE+1];
+    filename_t          pattern;
     uint                i;
 
     data.loadFiles = loadFiles;
@@ -250,25 +249,23 @@ int DD_AddAutoData(boolean loadFiles)
 
     for(i = 0; extensions[i]; ++i)
     {
-        snprintf(pattern, BUFFER_SIZE, "%sauto\\*.%s", R_GetDataPath(),
-                 extensions[i]);
-        pattern[BUFFER_SIZE] = '\0';
+        snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s",
+                 R_GetDataPath(), extensions[i]);
+        pattern[FILENAME_T_MAXLEN] = '\0';
 
-        Dir_FixSlashes(pattern);
+        Dir_FixSlashes(pattern, FILENAME_T_MAXLEN);
         F_ForAll(pattern, &data, autoDataAdder);
     }
 
     return data.count;
-
-#undef BUFFER_SIZE
 }
 
-void DD_SetConfigFile(filename_t file)
+void DD_SetConfigFile(const char* file)
 {
     strncpy(configFileName, file, FILENAME_T_MAXLEN);
     configFileName[FILENAME_T_MAXLEN] = '\0';
 
-    Dir_FixSlashes(configFileName);
+    Dir_FixSlashes(configFileName, FILENAME_T_MAXLEN);
 
     strncpy(bindingsConfigFileName, configFileName, FILENAME_T_MAXLEN);
     bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
@@ -282,11 +279,11 @@ void DD_SetConfigFile(filename_t file)
  * Set the primary DED file, which is included immediately after
  * Doomsday.ded.
  */
-void DD_SetDefsFile(filename_t file)
+void DD_SetDefsFile(const char* file)
 {
     snprintf(topDefsFileName, FILENAME_T_MAXLEN, "%sdefs\\%s",
              ddBasePath, file);
-    Dir_FixSlashes(topDefsFileName);
+    Dir_FixSlashes(topDefsFileName, FILENAME_T_MAXLEN);
 }
 
 /**
@@ -301,7 +298,7 @@ void DD_DefineBuiltinVDM(void)
     F_AddMapping("auto", dest);
 
     // Definition files.
-    Def_GetAutoPath(dest);
+    Def_GetAutoPath(dest, FILENAME_T_MAXLEN);
     F_AddMapping("auto", dest);
 }
 
@@ -479,8 +476,8 @@ static int DD_StartupWorker(void *parm)
     R_SetDataPath("}data\\");
 
     // The name of the .cfg will invariably be overwritten by the Game.
-    strcpy(configFileName, "doomsday.cfg");
-    sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
+    strncpy(configFileName, "doomsday.cfg", FILENAME_T_MAXLEN);
+    snprintf(defsFileName, FILENAME_T_MAXLEN, "%sdefs\\doomsday.ded",                    ddBasePath);
 
     // Was the change to userdir OK?
     if(!app.userDirOk)
@@ -561,6 +558,7 @@ static int DD_StartupWorker(void *parm)
     Con_SetProgress(60);
 
     W_InitMultipleFiles(wadFiles);
+
     F_InitDirec();
     VERBOSE(Con_Message("W_Init: Done in %.2f seconds.\n",
                         Sys_GetSeconds() - starttime));
@@ -809,15 +807,17 @@ void DD_CheckTimeDemo(void)
  * greater-than character (>) in front of the name to prepend the base
  * path to the file name (providing it's a relative path).
  */
-void DD_AddStartupWAD(const char *file)
+void DD_AddStartupWAD(const char* file)
 {
-    int             i;
-    char           *new, temp[300];
+    int                 i;
+    char*               new;
+    filename_t          temp;
 
     i = 0;
     while(wadFiles[i])
         i++;
-    M_TranslatePath(file, temp);
+
+    M_TranslatePath(temp, file, FILENAME_T_MAXLEN);
     new = M_Calloc(strlen(temp) + 1);  // This is never freed?
     strcat(new, temp);
     wadFiles[i] = new;

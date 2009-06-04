@@ -298,11 +298,11 @@ extern acsinfo_t* ACSInfo;
 
 LZFILE* savefile;
 #if __JHEXEN__
-char savePath[256];        /* = "hexndata\\"; */
-char clientSavePath[256];  /* = "hexndata\\client\\"; */
+filename_t savePath;        /* = "hexndata\\"; */
+filename_t clientSavePath;  /* = "hexndata\\client\\"; */
 #else
-char savePath[128];         /* = "savegame\\"; */
-char clientSavePath[128];  /* = "savegame\\client\\"; */
+filename_t savePath;         /* = "savegame\\"; */
+filename_t clientSavePath;  /* = "savegame\\client\\"; */
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -765,9 +765,9 @@ unsigned int SV_GameID(void)
     return Sys_GetRealTime() + (mapTime << 24);
 }
 
-void SV_Write(void *data, int len)
+void SV_Write(const void *data, int len)
 {
-    lzWrite(data, len, savefile);
+    lzWrite((void*)data, len, savefile);
 }
 
 void SV_WriteByte(byte val)
@@ -888,17 +888,18 @@ static boolean ExistingFile(char *name)
  */
 static void ClearSaveSlot(int slot)
 {
-    int         i;
-    char        fileName[100];
+    int                 i;
+    filename_t          fileName;
 
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        sprintf(fileName, "%shex%d%02d.hxs", savePath, slot, i);
-        M_TranslatePath(fileName, fileName);
+        snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs", savePath,
+                 slot, i);
+        M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
         remove(fileName);
     }
-    sprintf(fileName, "%shex%d.hxs", savePath, slot);
-    M_TranslatePath(fileName, fileName);
+    snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath, slot);
+    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
     remove(fileName);
 }
 
@@ -923,30 +924,33 @@ static void CopyFile(char *sourceName, char *destName)
  */
 static void CopySaveSlot(int sourceSlot, int destSlot)
 {
-    int         i;
-    char        sourceName[100];
-    char        destName[100];
+    int                 i;
+    filename_t          sourceName, destName;
 
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        sprintf(sourceName, "%shex%d%02d.hxs", savePath, sourceSlot, i);
-        M_TranslatePath(sourceName, sourceName);
+        snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
+                 savePath, sourceSlot, i);
+        M_TranslatePath(sourceName, sourceName, FILENAME_T_MAXLEN);
 
         if(ExistingFile(sourceName))
         {
-            sprintf(destName, "%shex%d%02d.hxs", savePath, destSlot, i);
-            M_TranslatePath(destName, destName);
+            snprintf(destName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
+                     savePath, destSlot, i);
+            M_TranslatePath(destName, destName, FILENAME_T_MAXLEN);
             CopyFile(sourceName, destName);
         }
     }
 
-    sprintf(sourceName, "%shex%d.hxs", savePath, sourceSlot);
-    M_TranslatePath(sourceName, sourceName);
+    snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
+             sourceSlot);
+    M_TranslatePath(sourceName, sourceName, FILENAME_T_MAXLEN);
 
     if(ExistingFile(sourceName))
     {
-        sprintf(destName, "%shex%d.hxs", savePath, destSlot);
-        M_TranslatePath(destName, destName);
+        snprintf(destName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
+                 destSlot);
+        M_TranslatePath(destName, destName, FILENAME_T_MAXLEN);
         CopyFile(sourceName, destName);
     }
 }
@@ -975,10 +979,11 @@ int SV_HxGetRebornSlot(void)
  */
 boolean SV_HxRebornSlotAvailable(void)
 {
-    char        fileName[100];
+    filename_t          fileName;
 
-    sprintf(fileName, "%shex%d.hxs", savePath, REBORN_SLOT);
-    M_TranslatePath(fileName, fileName);
+    snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
+             REBORN_SLOT);
+    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
     return ExistingFile(fileName);
 }
 
@@ -4660,20 +4665,20 @@ static void P_UnArchiveMap(void)
     AssertSegment(ASEG_END);
 }
 
-int SV_GetSaveDescription(char *filename, char *str)
+int SV_GetSaveDescription(char* str, const char* filename, size_t len)
 {
 #if __JHEXEN__
-    LZFILE     *fp;
-    char        name[256];
-    char        versionText[HXS_VERSION_TEXT_LENGTH];
-    boolean     found = false;
+    LZFILE*         fp;
+    filename_t      name;
+    char            versionText[HXS_VERSION_TEXT_LENGTH];
+    boolean         found = false;
 
-    strncpy(name, filename, sizeof(name));
-    M_TranslatePath(name, name);
+    strncpy(name, filename, FILENAME_T_MAXLEN);
+    M_TranslatePath(name, name, FILENAME_T_MAXLEN);
     fp = lzOpen(name, "rp");
     if(fp)
     {
-        lzRead(str, SAVESTRINGSIZE, fp);
+        lzRead(str, len, fp);
         lzRead(versionText, HXS_VERSION_TEXT_LENGTH, fp);
         lzClose(fp);
         if(!strncmp(versionText, HXS_VERSION_TEXT, 8))
@@ -4685,7 +4690,7 @@ int SV_GetSaveDescription(char *filename, char *str)
     }
     return found;
 #else
-    savefile = lzOpen(filename, "rp");
+    savefile = lzOpen((char*)filename, "rp");
     if(!savefile)
     {
 # if __JDOOM64__
@@ -4694,11 +4699,11 @@ int SV_GetSaveDescription(char *filename, char *str)
         return false;
 # else
         // It might still be a v19 savegame.
-        savefile = lzOpen(filename, "r");
+        savefile = lzOpen((char*)filename, "r");
         if(!savefile)
             return false;       // It just doesn't exist.
-        lzRead(str, SAVESTRINGSIZE, savefile);
-        str[SAVESTRINGSIZE - 1] = 0;
+        lzRead(str, len, savefile);
+        str[len - 1] = 0;
         lzClose(savefile);
         return true;
 # endif
@@ -4711,7 +4716,7 @@ int SV_GetSaveDescription(char *filename, char *str)
     if(hdr.magic != MY_SAVE_MAGIC)
         // This isn't a proper savegame file.
         return false;
-    strcpy(str, hdr.description);
+    strncpy(str, hdr.description, len);
     return true;
 #endif
 }
@@ -4747,20 +4752,22 @@ void SV_Init(void)
     M_CheckPath(savePath);
     M_CheckPath(clientSavePath);
 #if !__JHEXEN__
-    M_TranslatePath(savePath, savePath);
-    M_TranslatePath(clientSavePath, clientSavePath);
+    M_TranslatePath(savePath, savePath, FILENAME_T_MAXLEN);
+    M_TranslatePath(clientSavePath, clientSavePath, FILENAME_T_MAXLEN);
 #endif
 }
 
-void SV_GetSaveGameFileName(int slot, char *str)
+void SV_GetSaveGameFileName(char* str, int slot, size_t len)
 {
-    sprintf(str, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, savePath, slot);
+    snprintf(str, len, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION,
+             savePath, slot);
 }
 
-void SV_GetClientSaveGameFileName(unsigned int game_id, char *str)
+void SV_GetClientSaveGameFileName(char* str, unsigned int gameID,
+                                  size_t len)
 {
-    sprintf(str, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION,
-            clientSavePath, game_id);
+    snprintf(str, len, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION,
+             clientSavePath, gameID);
 }
 
 enum {
@@ -4770,25 +4777,25 @@ enum {
 
 typedef struct savegameparam_s {
 #if __JHEXEN__
-    int         slot;
+    int             slot;
 #endif
-    char       *filename;
-    char       *description;
+    const char*     filename;
+    const char*     description;
 } savegameparam_t;
 
 int SV_SaveGameWorker(void* ptr)
 {
-    savegameparam_t*        param = ptr;
+    savegameparam_t*    param = ptr;
 #if __JHEXEN__
-    char                    versionText[HXS_VERSION_TEXT_LENGTH];
+    char                versionText[HXS_VERSION_TEXT_LENGTH];
 #else
-    int                     i;
+    int                 i;
 #endif
 
     playerHeaderOK = false; // Uninitialized.
 
     // Open the output file
-    savefile = lzOpen(param->filename, "wp");
+    savefile = lzOpen((char*)param->filename, "wp");
     if(!savefile)
     {
         Con_BusyWorkerEnd();
@@ -4866,14 +4873,15 @@ int SV_SaveGameWorker(void* ptr)
     // Save out the current map
 #if __JHEXEN__
     {
-        char        fileName[100];
+        filename_t          fileName;
 
         // Open the output file
-        sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
-        M_TranslatePath(fileName, fileName);
+        snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
+                 gameMap);
+        M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
         OpenStreamOut(fileName);
 
-        P_ArchiveMap(true);         // true = save player info
+        P_ArchiveMap(true); // true = save player info
 
         // Close the output file
         CloseStreamOut();
@@ -4903,23 +4911,23 @@ int SV_SaveGameWorker(void* ptr)
 }
 
 #if __JHEXEN__
-boolean SV_SaveGame(int slot, char *description)
+boolean SV_SaveGame(int slot, const char *description)
 #else
-boolean SV_SaveGame(char *filename, char *description)
+boolean SV_SaveGame(const char* filename, const char *description)
 #endif
 {
-    int         result;
+    int                 result;
 #if __JHEXEN__
-    char        filename[256];
+    filename_t          filename;
 #endif
-    savegameparam_t param;
+    savegameparam_t     param;
 
 #if __JHEXEN__
     param.slot = slot;
 #endif
 #if __JHEXEN__
-    sprintf(filename, "%shex6.hxs", savePath);
-    M_TranslatePath(filename, filename);
+    snprintf(filename, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
+    M_TranslatePath(filename, filename, FILENAME_T_MAXLEN);
 #endif
     param.filename = filename;
     param.description = description;
@@ -5159,11 +5167,11 @@ static boolean SV_LoadGame2(void)
 #if __JHEXEN__
 boolean SV_LoadGame(int slot)
 #else
-boolean SV_LoadGame(char *filename)
+boolean SV_LoadGame(const char* filename)
 #endif
 {
 #if __JHEXEN__
-    char        fileName[200];
+    filename_t          fileName;
 
     // Copy all needed save files to the base slot
     if(slot != BASE_SLOT)
@@ -5173,14 +5181,14 @@ boolean SV_LoadGame(char *filename)
     }
 
     // Create the name
-    sprintf(fileName, "%shex6.hxs", savePath);
-    M_TranslatePath(fileName, fileName);
+    snprintf(fileName, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
+    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
     // Load the file
     M_ReadFile(fileName, &saveBuffer);
 #else
 
-    savefile = lzOpen(filename, "rp");
+    savefile = lzOpen((char*)filename, "rp");
     if(!savefile)
     {
 # if __JDOOM64__
@@ -5211,16 +5219,16 @@ boolean SV_LoadGame(char *filename)
 void SV_SaveClient(unsigned int gameID)
 {
 #if !__JHEXEN__ // unsupported in jHexen
-    char                name[200];
-    player_t           *pl = &players[CONSOLEPLAYER];
-    mobj_t             *mo = pl->plr->mo;
+    filename_t          name;
+    player_t*           pl = &players[CONSOLEPLAYER];
+    mobj_t*             mo = pl->plr->mo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    SV_GetClientSaveGameFileName(gameID, name);
+    SV_GetClientSaveGameFileName(name, gameID, FILENAME_T_MAXLEN);
     // Open the file.
     savefile = lzOpen(name, "wp");
     if(!savefile)
@@ -5265,16 +5273,16 @@ void SV_SaveClient(unsigned int gameID)
 void SV_LoadClient(unsigned int gameid)
 {
 #if !__JHEXEN__ // unsupported in jHexen
-    char    name[200];
-    player_t *cpl = players + CONSOLEPLAYER;
-    mobj_t *mo = cpl->plr->mo;
+    filename_t          name;
+    player_t*           cpl = players + CONSOLEPLAYER;
+    mobj_t*             mo = cpl->plr->mo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    SV_GetClientSaveGameFileName(gameid, name);
+    SV_GetClientSaveGameFileName(name, gameid, FILENAME_T_MAXLEN);
     // Try to open the file.
     savefile = lzOpen(name, "rp");
     if(!savefile)
@@ -5327,11 +5335,12 @@ void SV_LoadClient(unsigned int gameid)
 static void unarchiveMap(void)
 {
 #if __JHEXEN__
-    char                fileName[100];
+    filename_t          fileName;
 
     // Create the name
-    sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
-    M_TranslatePath(fileName, fileName);
+    snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
+             gameMap);
+    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
 #ifdef _DEBUG
     Con_Printf("unarchiveMap: Reading %s\n", fileName);
@@ -5358,7 +5367,7 @@ static void unarchiveMap(void)
 void SV_MapTeleport(int map, int position)
 {
     int                 i, oldKeys = 0, oldPieces = 0, bestWeapon;
-    char                fileName[100];
+    filename_t          fileName;
     player_t            playerBackup[MAXPLAYERS];
     uint                numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
     inventoryitemtype_t readyItem[MAXPLAYERS];
@@ -5372,8 +5381,8 @@ void SV_MapTeleport(int map, int position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    sprintf(fileName, "%shex6%02d.hxs", savePath, map);
-    M_TranslatePath(fileName, fileName);
+    snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath, map);
+    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
     if(!deathmatch && ExistingFile(fileName))
         revisit = true;
@@ -5384,14 +5393,15 @@ void SV_MapTeleport(int map, int position)
     {
         if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
         {   // Same cluster - save map without saving player mobjs
-            char        fileName[100];
+            filename_t          fileName;
 
             // Set the mobj archive numbers
             SV_InitThingArchive(false, false);
 
             // Open the output file
-            sprintf(fileName, "%shex6%02d.hxs", savePath, gameMap);
-            M_TranslatePath(fileName, fileName);
+            snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs",
+                     savePath, gameMap);
+            M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
             OpenStreamOut(fileName);
 
             P_ArchiveMap(false);

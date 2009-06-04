@@ -420,15 +420,15 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
         M_Free(triangles[i]);
 }
 
-static void R_RegisterModelSkin(model_t *mdl, int index)
+static void R_RegisterModelSkin(model_t* mdl, int index)
 {
     filename_t          buf;
 
     memset(buf, 0, sizeof(buf));
     memcpy(buf, mdl->skins[index].name, 64);
 
-    mdl->skins[index].id = R_RegisterSkin(buf, mdl->fileName,
-        mdl->skins[index].name, false);
+    mdl->skins[index].id = R_RegisterSkin(mdl->fileName, buf,
+        mdl->skins[index].name, false, FILENAME_T_MAXLEN);
 
     if(mdl->skins[index].id < 0)
     {
@@ -445,12 +445,13 @@ static int R_LoadModel(char* origfn)
     int                 i, index;
     model_t*            mdl;
     DFILE*              file = NULL;
-    char                filename[256];
+    filename_t          filename;
 
     if(!origfn[0])
         return 0; // No model specified.
 
-    if(!R_FindResource2(RT_MODEL, RC_MODEL, origfn, NULL, filename))
+    if(!R_FindResource2(RT_MODEL, RC_MODEL, filename, origfn, NULL,
+                        FILENAME_T_MAXLEN))
     {
         R_MissingModel(origfn);
         return 0;
@@ -506,7 +507,7 @@ static int R_LoadModel(char* origfn)
     mdl->loaded = true;
     mdl->allowTexComp = true;
     F_Close(file);
-    strcpy(mdl->fileName, filename);
+    strncpy(mdl->fileName, filename, FILENAME_T_MAXLEN);
 
     // Determine the actual (full) paths.
     for(i = 0; i < mdl->info.numSkins; ++i)
@@ -882,7 +883,7 @@ static modeldef_t *R_GetIDModelDef(const char *id)
     // Get a new entry.
     md = modefs + numModelDefs++;
     memset(md, 0, sizeof(*md));
-    strcpy(md->id, id);
+    strncpy(md->id, id, MODELDEF_ID_MAXLEN);
     return md;
 }
 
@@ -1015,8 +1016,8 @@ static void setupModel(ded_model_t *def)
             sub->offset[k] = subdef->offset[k];
 
         sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinySkin = R_RegisterSkin(subdef->shinySkin,
-            subdef->filename.path, NULL, true);
+        sub->shinySkin = R_RegisterSkin(subdef->filename.path,
+            subdef->shinySkin, NULL, true, DED_PATH_LEN);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)

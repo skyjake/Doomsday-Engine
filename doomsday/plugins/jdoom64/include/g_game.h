@@ -83,7 +83,7 @@ void            G_LoadGame(char* name);
 void            G_DoLoadGame(void);
 
 // Called by Hu_MenuResponder.
-void            G_SaveGame(int slot, char* description);
+void            G_SaveGame(int slot, const char* description);
 
 void            G_StopDemo(void);
 void            G_DemoEnds(void);

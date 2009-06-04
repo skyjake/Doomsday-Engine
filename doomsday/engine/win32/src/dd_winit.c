@@ -146,17 +146,17 @@ static void determineGlobalPaths(application_t *app)
     // The standard base directory is two levels upwards.
     if(ArgCheck("-stdbasedir"))
     {
-        strcpy(ddBasePath, "..\\..\\");
+        strncpy(ddBasePath, "..\\..\\", FILENAME_T_MAXLEN);
     }
 
     if(ArgCheckWith("-basedir", 1))
     {
-        strcpy(ddBasePath, ArgNext());
-        Dir_ValidDir(ddBasePath);
+        strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
     }
 
-    Dir_MakeAbsolute(ddBasePath);
-    Dir_ValidDir(ddBasePath);
+    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
 }
 
 static boolean loadGamePlugin(application_t *app, const char *libPath)

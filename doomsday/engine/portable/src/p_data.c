@@ -153,9 +153,9 @@ const char* P_GenerateUniqueMapID(const char* mapID)
     filename_t          base;
     int                 lump = W_GetNumForName(mapID);
 
-    M_ExtractFileBase(W_LumpSourceFile(lump), base);
+    M_ExtractFileBase(base, W_LumpSourceFile(lump), FILENAME_T_MAXLEN);
 
-    sprintf(uid, "%s|%s|%s|%s", mapID,
+    snprintf(uid, 255, "%s|%s|%s|%s", mapID,
             base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
             (char *) gx.GetVariable(DD_GAME_MODE));
 

@@ -32,7 +32,7 @@
 #include "sys_file.h"
 #include "con_decl.h"
 
-#define RECORD_FILENAMELEN  256
+#define RECORD_FILENAMELEN  FILENAME_T_MAXLEN
 
 // File record flags.
 #define FRF_RUNTIME         0x1 // Loaded at runtime (for reset).
@@ -48,7 +48,7 @@ typedef enum {
 } lumpgrouptag_t;
 
 typedef struct {
-    char            fileName[RECORD_FILENAMELEN]; // Full filename (every '\' -> '/').
+    filename_t      fileName; // Full filename (every '\' -> '/').
     int             numLumps; // Number of lumps.
     int             flags;
     DFILE*          handle; // File handle.
@@ -80,9 +80,10 @@ void            W_ReadLump(lumpnum_t lump, void* dest);
 void            W_ReadLumpSection(lumpnum_t lump, void* dest,
                                   size_t startOffset, size_t length);
 void*           W_CacheLumpNum(lumpnum_t lump, int tag);
-void*           W_CacheLumpName(char* name, int tag);
-boolean         W_AddFile(const char* fileName, boolean allowDuplicate);
-boolean         W_RemoveFile(char* fileName);
+void*           W_CacheLumpName(const char* name, int tag);
+boolean         W_AddFile(const char* fileName,
+                          boolean allowDuplicate);
+boolean         W_RemoveFile(const char* fileName);
 void            W_Reset(void);
 lumpnum_t       W_OpenAuxiliary(const char* fileName);
 void            W_ChangeCacheTag(lumpnum_t lump, int tag);
@@ -91,7 +92,8 @@ boolean         W_IsFromIWAD(lumpnum_t lump);
 const char*     W_LumpSourceFile(lumpnum_t lump);
 unsigned int    W_CRCNumberForRecord(int idx);
 unsigned int    W_CRCNumber(void);
-void            W_GetIWADFileName(char* buf, int bufSize);
-void            W_GetPWADFileNames(char* buf, int bufSize, char separator);
+void            W_GetIWADFileName(char* buf, size_t bufSize);
+void            W_GetPWADFileNames(char* buf, size_t bufSize,
+                                   char separator);
 
 #endif

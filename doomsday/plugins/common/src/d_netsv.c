@@ -806,7 +806,7 @@ void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numC
     if(script)
     {
         flags |= FINF_SCRIPT;
-        scriptLen = strlen(script);
+        scriptLen = strlen(script) + 1;
         len = scriptLen + 2; // The end null and flags byte.
 
         // The number of conditions and their values.

@@ -134,11 +134,11 @@ void Demo_Init(void)
  * Open a demo file and begin recording.
  * Returns false if the recording can't be begun.
  */
-boolean Demo_BeginRecording(char *fileName, int plrNum)
+boolean Demo_BeginRecording(const char* fileName, int plrNum)
 {
-    char                buf[200];
-    client_t           *cl = &clients[plrNum];
-    player_t           *plr = &ddPlayers[plrNum];
+    filename_t          buf;
+    client_t*           cl = &clients[plrNum];
+    player_t*           plr = &ddPlayers[plrNum];
 
     // Is a demo already being recorded for this client?
     if(cl->recording || playback || (isDedicated && !plrNum) ||
@@ -146,9 +146,9 @@ boolean Demo_BeginRecording(char *fileName, int plrNum)
         return false;
 
     // Compose the real file name.
-    strcpy(buf, demoPath);
-    strcat(buf, fileName);
-    M_TranslatePath(buf, buf);
+    strncpy(buf, demoPath, FILENAME_T_MAXLEN);
+    strncat(buf, fileName, FILENAME_T_MAXLEN);
+    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
 
     // Open the demo file.
     cl->demo = lzOpen(buf, "wp");
@@ -306,17 +306,17 @@ void Demo_WritePacket(int playerNum)
 
 void Demo_BroadcastPacket(void)
 {
-    int             i;
+    int                 i;
 
     // Write packet to all recording demo files.
     for(i = 0; i < DDMAXPLAYERS; ++i)
         Demo_WritePacket(i);
 }
 
-boolean Demo_BeginPlayback(char *fileName)
+boolean Demo_BeginPlayback(const char* fileName)
 {
-    char            buf[256];
-    int             i;
+    filename_t          buf;
+    int                 i;
 
     if(playback)
         return false; // Already in playback.
@@ -329,8 +329,9 @@ boolean Demo_BeginPlayback(char *fileName)
             return false;
 
     // Open the demo file.
-    sprintf(buf, "%s%s", Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
-    M_TranslatePath(buf, buf);
+    snprintf(buf, FILENAME_T_MAXLEN, "%s%s",
+             Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
+    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
     playdemo = lzOpen(buf, "rp");
     if(!playdemo)
         return false; // Failed to open the file.

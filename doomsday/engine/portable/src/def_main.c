@@ -207,19 +207,20 @@ void Def_Destroy(void)
  * Guesses the location of the Defs Auto directory based on main DED
  * file.
  */
-void Def_GetAutoPath(char* path)
+void Def_GetAutoPath(char* path, size_t len)
 {
     char*               lastSlash;
 
-    strcpy(path, topDefsFileName);
+    strncpy(path, topDefsFileName, len);
     lastSlash = strrchr(path, DIR_SEP_CHAR);
     if(!lastSlash)
     {
-        strcpy(path, ""); // Failure!
+        strncpy(path, "", len); // Failure!
         return;
     }
 
-    strcpy(lastSlash + 1, "auto" DIR_SEP_STR);
+    strncpy(lastSlash + 1, "auto" DIR_SEP_STR,
+            len - ((lastSlash + 1) - path));
 }
 
 /**
@@ -708,7 +709,9 @@ void Def_ReadProcessDED(const char* fileName)
     filename_t          fn, fullFn;
     directory_t         dir;
 
-    Dir_FileName(fileName, fn);
+    memset(&dir, 0, sizeof(dir));
+
+    Dir_FileName(fn, fileName, FILENAME_T_MAXLEN);
 
     // We want an absolute path.
     if(!Dir_IsAbsolute(fileName))
@@ -718,7 +721,7 @@ void Def_ReadProcessDED(const char* fileName)
     }
     else
     {
-        strcpy(fullFn, fileName);
+        strncpy(fullFn, fileName, FILENAME_T_MAXLEN);
     }
 
     if(strchr(fn, '*') || strchr(fn, '?'))
@@ -1176,7 +1179,7 @@ void Def_Read(void)
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (prepend).
-    Dir_ValidDir(defs.modelPath);
+    Dir_ValidDir(defs.modelPath, FILENAME_T_MAXLEN);
     R_AddClassDataPath(RC_MODEL, defs.modelPath, false);
 
     // Model search path specified on the command line?
@@ -1185,7 +1188,7 @@ void Def_Read(void)
         filename_t          path;
 
         strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(path);
+        Dir_ValidDir(path, FILENAME_T_MAXLEN);
 
         // Prepend to the search list; takes precedence.
         R_AddClassDataPath(RC_MODEL, path, false);
@@ -1195,7 +1198,7 @@ void Def_Read(void)
         filename_t          path;
 
         strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(path);
+        Dir_ValidDir(path, FILENAME_T_MAXLEN);
 
         // Prepend to the search list; takes precedence.
         R_AddClassDataPath(RC_MODEL, ArgNext(), false);

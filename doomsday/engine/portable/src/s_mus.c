@@ -316,7 +316,7 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
     // All external music files are specified relative to the base path.
     if(def->path.path[0])
     {
-        M_PrependBasePath(def->path.path, path);
+        M_PrependBasePath(path, def->path.path, DED_PATH_LEN);
         if(F_Access(path))
         {
             // Return the real file name if not just checking.
@@ -334,7 +334,8 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
     }
 
     // Try the resource locator.
-    if(R_FindResource(RT_MUSIC, def->lumpName, NULL, path))
+    if(R_FindResource(RT_MUSIC, path, def->lumpName, NULL,
+                      FILENAME_T_MAXLEN))
     {
         if(retPath)
         {
@@ -554,7 +555,7 @@ D_CMD(PlayMusic)
     int                 i;
     size_t              len;
     void*               ptr;
-    char                buf[300];
+    filename_t          buf;
 
     if(!musAvail)
     {
@@ -604,7 +605,7 @@ D_CMD(PlayMusic)
         }
         else if(!stricmp(argv[1], "file"))
         {
-            M_TranslatePath(argv[2], buf);
+            M_TranslatePath(buf, argv[2], FILENAME_T_MAXLEN);
             if(iMusic)
             {
                 Mus_Stop();

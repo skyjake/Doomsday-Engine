@@ -47,6 +47,9 @@ typedef enum menucommand_e {
     MCMD_DELETE
 } menucommand_e;
 
+// Not to be confused with the size of the description in the save file.
+#define HU_SAVESTRINGSIZE       (24)
+
 void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 

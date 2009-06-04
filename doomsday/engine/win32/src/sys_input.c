@@ -84,7 +84,7 @@ static int counter;
 
 // A customizable mapping of the scantokey array.
 //static char keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
-static byte *keymap;
+static byte* keymap = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -266,26 +266,26 @@ static byte dIKeyToDDKey(byte dIKey)
 }
 
 #if 0 // Currently unused.
-static DFILE *openKeymapFile(const char *fileName)
+static DFILE *openKeymapFile(const char* fileName)
 {
-    char        path[512];
+    filename_t          path;
 
     // Try with and without .DKM.
-    strcpy(path, fileName);
+    strncpy(path, fileName, FILENAME_T_MAXLEN);
     if(!F_Access(path))
     {
         // Try the path.
-        M_TranslatePath(keyMapPath, path);
-        strcat(path, fileName);
+        M_TranslatePath(path, keyMapPath, FILENAME_T_MAXLEN);
+        strncat(path, fileName, FILENAME_T_MAXLEN);
         if(!F_Access(path))
         {
-            strcpy(path, fileName);
-            strcat(path, ".dkm");
+            strncpy(path, fileName, FILENAME_T_MAXLEN);
+            strncat(path, ".dkm", FILENAME_T_MAXLEN);
             if(!F_Access(path))
             {
-                M_TranslatePath(keyMapPath, path);
-                strcat(path, fileName);
-                strcat(path, ".dkm");
+                M_TranslatePath(path, keyMapPath, FILENAME_T_MAXLEN);
+                strncat(path, fileName, FILENAME_T_MAXLEN);
+                strncat(path, ".dkm", FILENAME_T_MAXLEN);
             }
         }
     }
@@ -781,7 +781,8 @@ void I_Shutdown(void)
     IDirectInput_Release(dInput);
     dInput = 0;
 
-    M_Free(keymap);
+    if(keymap)
+        M_Free(keymap);
     keymap = NULL;
 
     initIOk = false;

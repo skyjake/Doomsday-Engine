@@ -71,8 +71,8 @@ extern          "C" {
     // Base.
     void            DD_AddIWAD(const char* path);
     void            DD_AddStartupWAD(const char* file);
-    void            DD_SetConfigFile(filename_t filename);
-    void            DD_SetDefsFile(filename_t file);
+    void            DD_SetConfigFile(const char* filename);
+    void            DD_SetDefsFile(const char* file);
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
     void            DD_SetVariable(int ddvalue, void* ptr);
@@ -97,12 +97,12 @@ extern          "C" {
     void            W_ReadLumpSection(lumpnum_t lump, void* dest,
                                       size_t startOffset, size_t length);
     void*           W_CacheLumpNum(lumpnum_t lump, int tag);
-    void*           W_CacheLumpName(char* name, int tag);
+    void*           W_CacheLumpName(const char* name, int tag);
     void            W_ChangeCacheTag(lumpnum_t lump, int tag);
     const char*     W_LumpSourceFile(lumpnum_t lump);
     uint            W_CRCNumber(void);
     boolean         W_IsFromIWAD(lumpnum_t lump);
-    lumpnum_t       W_OpenAuxiliary(const char *fileName);
+    lumpnum_t       W_OpenAuxiliary(const char* fileName);
 
     // Base: Zone.
     void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
@@ -125,28 +125,33 @@ extern          "C" {
     void            Con_AddVariable(cvar_t* var);
     void            Con_AddCommandList(ccmd_t* cmdlist);
     void            Con_AddVariableList(cvar_t* varlist);
-    cvar_t*         Con_GetVariable(char* name);
-    byte            Con_GetByte(char* name);
-    int             Con_GetInteger(char* name);
-    float           Con_GetFloat(char* name);
-    char*           Con_GetString(char* name);
-    void            Con_SetInteger(char* name, int value, byte override);
-    void            Con_SetFloat(char* name, float value, byte override);
-    void            Con_SetString(char* name, char* text, byte override);
-    void            Con_Printf(char* format, ...) PRINTF_F(1,2);
-    void            Con_FPrintf(int flags, char* format, ...) PRINTF_F(2,3);
+    cvar_t*         Con_GetVariable(const char* name);
+    byte            Con_GetByte(const char* name);
+    int             Con_GetInteger(const char* name);
+    float           Con_GetFloat(const char* name);
+    char*           Con_GetString(const char* name);
+    void            Con_SetInteger(const char* name, int value,
+                                   byte override);
+    void            Con_SetFloat(const char* name, float value,
+                                 byte override);
+    void            Con_SetString(const char* name, char* text,
+                                  byte override);
+    void            Con_Printf(const char* format, ...) PRINTF_F(1,2);
+    void            Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
     int             DD_Execute(int silent, const char* command);
     int             DD_Executef(int silent, const char* command, ...);
-    void            Con_Message(char* message, ...) PRINTF_F(1,2);
-    void            Con_Error(char* error, ...) PRINTF_F(1,2);
+    void            Con_Message(const char* message, ...) PRINTF_F(1,2);
+    void            Con_Error(const char* error, ...) PRINTF_F(1,2);
 
     // Console: Bindings.
-    void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
-    void            B_FormEventString(char* buff, evtype_t type, evstate_t state,
-                                      int data1);
-    int             B_BindingsForCommand(const char* cmd, char* buf, int bufSize);
-    int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse,
-                                         char* buf, int bufSize);
+    void            B_SetContextFallback(const char* name,
+                                         int (*responderFunc)(event_t*));
+    int             B_BindingsForCommand(const char* cmd, char* buf,
+                                         size_t bufSize);
+    int             B_BindingsForControl(int localPlayer,
+                                         const char* controlName,
+                                         int inverse,
+                                         char* buf, size_t bufSize);
 
     // System.
     void            Sys_TicksPerSecond(float num);
@@ -473,23 +478,26 @@ extern          "C" {
                                    int targetConsole);
     void            S_StopSound(int soundID, struct mobj_s* origin);
     int             S_IsPlaying(int soundID, struct mobj_s* origin);
-    int             S_StartMusic(char* musicID, boolean looped);
+    int             S_StartMusic(const char* musicID, boolean looped);
     int             S_StartMusicNum(int id, boolean looped);
     void            S_StopMusic(void);
 
     // Miscellaneous.
     size_t          M_ReadFile(const char* name, byte** buffer);
     size_t          M_ReadFileCLib(const char* name, byte** buffer);
-    boolean         M_WriteFile(const char* name, void* source, size_t length);
-    void            M_ExtractFileBase(const char* path, char* dest);
-    void            M_GetFileExt(const char* path, char* ext);
+    boolean         M_WriteFile(const char* name, void* source,
+                                size_t length);
+    void            M_ExtractFileBase(char* dest, const char* path,
+                                      size_t len);
+    void            M_GetFileExt(char* ext, const char* path, size_t len);
     boolean         M_CheckPath(const char* path);
     int             M_FileExists(const char* file);
-    void            M_TranslatePath(const char* path, char* translated);
+    void            M_TranslatePath(char* translated, const char* path,
+                                    size_t len);
     const char*     M_PrettyPath(const char* path);
     char*           M_SkipWhite(char* str);
     char*           M_FindWhite(char* str);
-    char*           M_StrCatQuoted(char* dest, const char* src);
+    char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
     byte            RNG_RandByte(void);
     float           RNG_RandFloat(void);
     void            M_ClearBox(fixed_t* box);

@@ -586,7 +586,7 @@ int S_StartMusicNum(int id, boolean looped)
 /**
  * @return              @c NULL, if the song is found.
  */
-int S_StartMusic(char* musicID, boolean looped)
+int S_StartMusic(const char* musicID, boolean looped)
 {
     int                 idx = Def_GetMusicNum(musicID);
 

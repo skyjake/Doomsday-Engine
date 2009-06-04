@@ -43,7 +43,7 @@ extern          "C" {
 
 #define DED_SPRITEID_LEN    4
 #define DED_STRINGID_LEN    31
-#define DED_PATH_LEN        128
+#define DED_PATH_LEN        FILENAME_T_MAXLEN
 #define DED_FUNC_LEN        255
 
 #define DED_MAX_SUB_MODELS  8
@@ -541,7 +541,7 @@ typedef struct ded_material_s {
 
 typedef struct ded_s {
     int             version; // DED version number.
-    char            modelPath[256]; // Directories for searching MD2s.
+    filename_t      modelPath; // Directories for searching MD2s.
     ded_flags_t     modelFlags; // Default values for models.
     float           modelScale;
     float           modelOffset;

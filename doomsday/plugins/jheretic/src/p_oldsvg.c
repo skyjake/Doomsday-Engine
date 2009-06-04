@@ -54,7 +54,7 @@
 #define VERSIONSIZE             16
 #define SAVE_GAME_TERMINATOR    0x1d
 
-#define SAVESTRINGSIZE          24
+#define V13_SAVESTRINGSIZE      24
 
 #define FF_FRAMEMASK            0x7fff
 
@@ -863,14 +863,14 @@ enum {
     }
 }
 
-void SV_v13_LoadGame(char *savename)
+void SV_v13_LoadGame(const char* savename)
 {
     size_t              length;
     int                 i, a, b, c;
     char                vcheck[VERSIONSIZE];
 
     length = M_ReadFile(savename, &savebuffer);
-    save_p = savebuffer + SAVESTRINGSIZE;
+    save_p = savebuffer + V13_SAVESTRINGSIZE;
 
     // Skip the description field
     memset(vcheck, 0, sizeof(vcheck));

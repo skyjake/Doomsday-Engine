@@ -34,16 +34,19 @@ void            R_ShutdownResourceLocator(void);
 
 void            R_SetDataPath(const char* path);
 const char*     R_GetDataPath(void);
-void            R_PrependDataPath(const char* origPath, char* newPath);
+void            R_PrependDataPath(char* newPath, const char* origPath,
+                                  size_t len);
 
 void            R_AddClassDataPath(resourceclass_t resClass,
                                    const char* addPath, boolean append);
 void            R_ClearClassDataPath(resourceclass_t resClass);
 const char*     R_GetClassDataPath(resourceclass_t resClass);
 
-boolean         R_FindResource(resourcetype_t resType, const char* name,
-                               const char* optionalSuffix, char* fileName);
+boolean         R_FindResource(resourcetype_t resType, char* fileName,
+                               const char* name, const char* optionalSuffix,
+                               size_t len);
 boolean         R_FindResource2(resourcetype_t resType,
-                               resourceclass_t resClass, const char* name,
-                               const char* optionalSuffix, char* fileName);
+                                resourceclass_t resClass, char* fileName,
+                                const char* name, const char*optionalSuffix,
+                                size_t len);
 #endif

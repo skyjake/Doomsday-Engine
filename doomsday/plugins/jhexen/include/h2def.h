@@ -362,7 +362,6 @@ void            G_DeferedPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
 void            G_LoadGame(int slot);
 void            G_DoLoadGame(void);
-void            G_SaveGame(int slot, char* description);
 void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
                              int map, char* name);
 void            G_PlayDemo(char* name);

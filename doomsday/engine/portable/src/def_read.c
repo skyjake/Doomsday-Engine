@@ -60,6 +60,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define MAX_RECUR_DEPTH     30
+#define MAX_TOKEN_LEN       128
 
 // Some macros.
 #define STOPCHAR(x) (isspace(x) || x == ';' || x == '#' || x == '{' \
@@ -152,8 +153,8 @@ char dedReadError[512];
 static dedsource_t sourceStack[MAX_RECUR_DEPTH];
 static dedsource_t* source; // Points to the current source.
 
-static char token[128];
-static char unreadToken[128];
+static char token[MAX_TOKEN_LEN+1];
+static char unreadToken[MAX_TOKEN_LEN+1];
 
 // CODE --------------------------------------------------------------------
 
@@ -595,21 +596,21 @@ static int ReadLabel(char* label)
     return true;
 }
 
-static void DED_Include(char* fileName, directory_t* dir)
+static void DED_Include(const char* fileName, directory_t* dir)
 {
-    char                tmp[256], path[256];
+    filename_t          tmp, path;
 
-    M_TranslatePath(fileName, tmp);
+    M_TranslatePath(tmp, fileName, FILENAME_T_MAXLEN);
     if(!Dir_IsAbsolute(tmp))
     {
-        sprintf(path, "%s%s", dir->path, tmp);
+        snprintf(path, FILENAME_T_MAXLEN, "%s%s", dir->path, tmp);
     }
     else
     {
-        strcpy(path, tmp);
+        strncpy(path, tmp, FILENAME_T_MAXLEN);
     }
     Def_ReadProcessDED(path);
-    strcpy(token, "");
+    strncpy(token, "", MAX_TOKEN_LEN);
 }
 
 static void DED_InitReader(char* buffer, const char* fileName)
@@ -702,6 +703,8 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
     int                 bCopyNext = 0;
     directory_t         fileDir;
 
+    memset(&fileDir, 0, sizeof(fileDir));
+
     // For including other files -- we must know where we are.
     Dir_FileDir(sourceFile, &fileDir);
 
@@ -784,7 +787,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             READSTR(label);
             CHECKSC;
 
-            Dir_ValidDir(label);
+            Dir_ValidDir(label, 128);
             R_AddClassDataPath(RC_MODEL, label, true);
         }
 
@@ -2386,9 +2389,9 @@ int DED_Read(ded_t* ded, const char* sPathName)
     char*               defData;
     size_t              len;
     int                 result;
-    char                translated[256];
+    filename_t          translated;
 
-    M_TranslatePath(sPathName, translated);
+    M_TranslatePath(translated, sPathName, FILENAME_T_MAXLEN);
 
     if((file = F_Open(translated, "rb")) == NULL)
     {

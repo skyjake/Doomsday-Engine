@@ -1874,15 +1874,16 @@ boolean MPE_End(void)
         int                     markerLumpNum;
 
         markerLumpNum = W_GetNumForName(gamemap->mapID);
-        DAM_GetCachedMapDir(cachedMapDir, markerLumpNum);
+        DAM_GetCachedMapDir(cachedMapDir, markerLumpNum, FILENAME_T_MAXLEN);
 
         // Ensure the destination path exists.
         M_CheckPath(cachedMapDir);
 
         sprintf(cachedMapDataFile, "%s%s", cachedMapDir,
                                    W_LumpName(markerLumpNum));
-        M_TranslatePath(cachedMapDataFile, cachedMapDataFile);
-        strcat(cachedMapDataFile, ".dcm");
+        M_TranslatePath(cachedMapDataFile, cachedMapDataFile,
+                        FILENAME_T_MAXLEN);
+        strncat(cachedMapDataFile, ".dcm", FILENAME_T_MAXLEN);
 
         DAM_MapWrite(gamemap, cachedMapDataFile);
     }

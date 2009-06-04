@@ -1999,13 +1999,13 @@ int DefsHook(int hook_type, int parm, void *data)
     // How about the -deh option?
     if(ArgCheckWith("-deh", 1))
     {
-        char                temp[256];
+        filename_t          temp;
         const char*         fn;
 
         // Aha! At least one DEH specified. Let's read all of 'em.
         while((fn = ArgNext()) != NULL && fn[0] != '-')
         {
-            M_TranslatePath(fn, temp);
+            M_TranslatePath(temp, fn, FILENAME_T_MAXLEN);
             if(!M_FileExists(temp))
                 continue;
 

@@ -36,6 +36,7 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define MAX_SCRIPTNAME_LEN      (32)
 #define MAX_STRING_SIZE         (64)
 #define ASCII_COMMENT           (';')
 #define ASCII_QUOTE             (34)
@@ -62,7 +63,7 @@ const char* sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char ScriptName[32];
+static char ScriptName[MAX_SCRIPTNAME_LEN+1];
 static char* ScriptBuffer;
 static char* ScriptPtr;
 static char* ScriptEndPtr;
@@ -107,7 +108,7 @@ static void openScriptFile(const char* name)
     SC_Close();
 
     ScriptSize = M_ReadFile(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(name, ScriptName);
+    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
     ScriptFreeCLib = false; // De-allocate using Z_Free()
 
     ScriptPtr = ScriptBuffer;
@@ -124,7 +125,7 @@ static void openScriptCLib(const char* name)
     SC_Close();
 
     ScriptSize = M_ReadFileCLib(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(name, ScriptName);
+    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
     ScriptFreeCLib = true;  // De-allocate using free()
 
     ScriptPtr = ScriptBuffer;

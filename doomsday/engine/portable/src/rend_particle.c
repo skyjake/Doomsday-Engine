@@ -122,7 +122,8 @@ byte GL_LoadParticleTexture(image_t* image, const char* name)
 {
     filename_t          fileName;
 
-    if(R_FindResource2(RT_GRAPHIC, RC_TEXTURE, name, "-ck", fileName) &&
+    if(R_FindResource2(RT_GRAPHIC, RC_TEXTURE, fileName, name, "-ck",
+                       FILENAME_T_MAXLEN) &&
        GL_LoadImage(image, fileName))
     {
         return 2;

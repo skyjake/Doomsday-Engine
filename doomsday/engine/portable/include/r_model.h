@@ -77,8 +77,10 @@ typedef struct {
     short           shinySkin; // Skinname ID (index)
 } submodeldef_t;
 
+#define MODELDEF_ID_MAXLEN      32
+
 typedef struct modeldef_s {
-    char            id[33];
+    char            id[MODELDEF_ID_MAXLEN + 1];
 
     state_t*        state; // Pointer to the states list (in dd_defns.c).
     int             flags;

@@ -182,11 +182,12 @@ int F_GetDirecIdx(char *exact_path)
 /**
  * The path names are converted to full paths before adding to the table.
  */
-void F_AddDirec(char *lumpname, char *symbolic_path)
+void F_AddDirec(const char* lumpname, char* symbolic_path, size_t len)
 {
     int                 i;
-    char                path[256], *full;
-    lumpdirec_t        *ld;
+    filename_t          path;
+    char*               full;
+    lumpdirec_t*        ld;
 
     if(!lumpname[0] || !symbolic_path[0])
         return;
@@ -201,11 +202,13 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
     ld = direc + i;
 
     // Convert the symbolic path into a real path.
-    Dir_FixSlashes(symbolic_path);
+    Dir_FixSlashes(symbolic_path, len);
     if(symbolic_path[0] == DIR_SEP_CHAR)
-        sprintf(path, "%s%s", ddBasePath, symbolic_path + 1);
+        snprintf(path, FILENAME_T_MAXLEN, "%s%s", ddBasePath,
+                 symbolic_path + 1);
     else
-        sprintf(path, "%s%s", ddRuntimeDir.path, symbolic_path);
+        snprintf(path, FILENAME_T_MAXLEN, "%s%s", ddRuntimeDir.path,
+                 symbolic_path);
 
     // Since the basepath might be relative, let's explicitly make
     // the path absolute. _fullpath will allocate memory, which will
@@ -239,16 +242,16 @@ void F_AddMapping(const char* source, const char* destination)
 {
     filename_t          src;
     filename_t          dst;
-    vdmapping_t        *vd;
+    vdmapping_t*        vd;
 
     // Convert to absolute path names.
-    M_TranslatePath(source, src);
-    Dir_ValidDir(src);
-    Dir_MakeAbsolute(src);
+    M_TranslatePath(src, source, FILENAME_T_MAXLEN);
+    Dir_ValidDir(src, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolute(src, FILENAME_T_MAXLEN);
 
-    M_TranslatePath(destination, dst);
-    Dir_ValidDir(dst);
-    Dir_MakeAbsolute(dst);
+    M_TranslatePath(dst, destination, FILENAME_T_MAXLEN);
+    Dir_ValidDir(dst, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolute(dst, FILENAME_T_MAXLEN);
 
     // Allocate more memory if necessary.
     if(++vdMappingsCount > vdMappingsMax)
@@ -257,7 +260,8 @@ void F_AddMapping(const char* source, const char* destination)
         if(vdMappingsMax < vdMappingsCount)
             vdMappingsMax = 2*vdMappingsCount;
 
-        vdMappings = M_Realloc(vdMappings, sizeof(vdmapping_t) * vdMappingsMax);
+        vdMappings =
+            M_Realloc(vdMappings, sizeof(vdmapping_t) * vdMappingsMax);
     }
 
     // Fill in the info into the array.
@@ -274,10 +278,11 @@ void F_AddMapping(const char* source, const char* destination)
  * LUMPNAM1 Path\In\The\RuntimeDir.ext
  *  :
  */
-void F_ParseDirecData(char *buffer)
+void F_ParseDirecData(char* buffer)
 {
-    char               *ptr = buffer, *end;
-    char                name[9], path[256];
+    char*               ptr = buffer, *end;
+    char                name[9];
+    filename_t          path;
     size_t              len;
 
     for(; *ptr;)
@@ -315,12 +320,12 @@ void F_ParseDirecData(char *buffer)
         end = M_FindWhite(end);
 
         len = end - ptr;
-        if(len > 255)
-            len = 255;
+        if(len > FILENAME_T_MAXLEN)
+            len = FILENAME_T_MAXLEN;
 
         memset(path, 0, sizeof(path));
         strncpy(path, ptr, len);
-        F_AddDirec(name, path);
+        F_AddDirec(name, path, len);
         ptr = end;
     }
 }
@@ -335,7 +340,7 @@ void F_InitMapping(void)
     // options.
     for(i = 0; i < argC; ++i)
     {
-        if(stricmp(Argv(i), "-vdmap"))
+        if(strnicmp("-vdmap", Argv(i), 6))
             continue; // This is not the option we're looking for.
 
         if(i < argC - 1 && !ArgIsOption(i + 1) && !ArgIsOption(i + 2))
@@ -354,7 +359,7 @@ void F_InitDirec(void)
     static boolean      alreadyInited = false;
     int                 i;
     size_t              len;
-    char               *buf;
+    char*               buf;
 
     if(alreadyInited)
     {
@@ -551,24 +556,24 @@ static unsigned int F_GetLastModified(const char *path)
 /**
  * @return              @c true, if the mapping matched the path.
  */
-boolean F_MapPath(const char *path, vdmapping_t *vd, char *mapped)
+boolean F_MapPath(char* mapped, const char* path, vdmapping_t* vd, size_t len)
 {
     size_t              targetLen = strlen(vd->target);
 
     if(!strnicmp(path, vd->target, targetLen))
     {
         // Replace the beginning with the source path.
-        strcpy(mapped, vd->source);
-        strcat(mapped, path + targetLen);
+        strncpy(mapped, vd->source, len);
+        strncat(mapped, path + targetLen, len);
         return true;
     }
 
     return false;
 }
 
-DFILE *F_OpenFile(const char *path, const char *mymode)
+DFILE* F_OpenFile(const char* path, const char* mymode)
 {
-    DFILE              *file = F_GetFreeFile();
+    DFILE*              file = F_GetFreeFile();
     char                mode[8];
     uint                i;
     filename_t          mapped;
@@ -589,7 +594,7 @@ DFILE *F_OpenFile(const char *path, const char *mymode)
         // Any applicable virtual directory mappings?
         for(i = 0; i < vdMappingsCount; ++i)
         {
-            if(F_MapPath(path, &vdMappings[i], mapped))
+            if(F_MapPath(mapped, path, &vdMappings[i], FILENAME_T_MAXLEN))
             {
                 // The mapping was successful.
                 if((file->data = fopen(mapped, mode)) != NULL)
@@ -616,18 +621,12 @@ DFILE *F_OpenFile(const char *path, const char *mymode)
     return file;
 }
 
-void F_TranslateZipFileName(const char *zipFileName, char *translated)
-{
-    // Make a 'real' path out of the zip file name.
-    M_PrependBasePath(zipFileName, translated);
-}
-
 /**
  * Zip data is buffered like lump data.
  */
-DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
+DFILE* F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
 {
-    DFILE              *file = F_GetFreeFile();
+    DFILE*              file = F_GetFreeFile();
 
     if(!file)
         return NULL;
@@ -654,10 +653,10 @@ DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
  * "w" = file must be in a WAD
  * "x" = just test for access (don't buffer anything)
  */
-DFILE *F_Open(const char *path, const char *mode)
+DFILE* F_Open(const char* path, const char* mode)
 {
     int                 i;
-    char                trans[256], full[256];
+    filename_t          trans, full;
     boolean             dontBuffer;
 
     if(!mode)
@@ -665,20 +664,20 @@ DFILE *F_Open(const char *path, const char *mode)
     dontBuffer = (strchr(mode, 'x') != NULL);
 
     // Make it a full path.
-    M_TranslatePath(path, trans);
+    M_TranslatePath(trans, path, FILENAME_T_MAXLEN);
     _fullpath(full, trans, 255);
 
     // Lumpdirecs take precedence.
     if(!strchr(mode, 'f')) // Doesn't need to be a real file?
     {
         // First check the Zip directory.
-        zipindex_t foundZip = Zip_Find(full);
+        zipindex_t          foundZip = Zip_Find(full);
 
         if(foundZip)
             return F_OpenZip(foundZip, dontBuffer);
 
         for(i = 0; direc[i].path; ++i)
-            if(!stricmp(full, direc[i].path))
+            if(!strnicmp(full, direc[i].path, FILENAME_T_MAXLEN))
                 return F_OpenLump(direc[i].lump, dontBuffer);
     }
 
@@ -822,10 +821,10 @@ size_t F_Length(DFILE *file)
  * @return              The time when the file was last modified, as seconds
  *                      since the Epoch else zero if the file is not found.
  */
-unsigned int F_LastModified(const char *fileName)
+unsigned int F_LastModified(const char* fileName)
 {
     // Try to open the file, but don't buffer any contents.
-    DFILE              *file = F_Open(fileName, "rx");
+    DFILE*              file = F_Open(fileName, "rx");
     unsigned int        modified = 0;
 
     if(!file)
@@ -839,9 +838,9 @@ unsigned int F_LastModified(const char *fileName)
 /**
  * @return              The number of times the char appears in the path.
  */
-size_t F_CountPathChars(const char *path, char ch)
+size_t F_CountPathChars(const char* path, char ch)
 {
-    size_t          count;
+    size_t              count;
 
     for(count = 0; *path; path++)
         if(*path == ch)
@@ -854,13 +853,17 @@ size_t F_CountPathChars(const char *path, char ch)
  * @return              @c true, to indicate to stop searching, when forall_func
  *                      returns @c false.
  */
-int F_ZipFinderForAll(const char *zipFileName, void *parm)
+int F_ZipFinderForAll(const char* zipFileName, void* parm)
 {
-    zipforall_t        *info = parm;
+    zipforall_t*        info = parm;
 
     if(F_MatchName(zipFileName, info->pattern))
+    {
         if(!info->func(zipFileName, FT_NORMAL, info->parm))
+        {
             return true; // Stop searching.
+        }
+    }
 
     // Continue searching.
     return false;
@@ -875,16 +878,15 @@ static int C_DECL F_EntrySorter(const void* a, const void* b)
 /**
  * Descends into 'physical' subdirectories.
  */
-int F_ForAllDescend(const char *pattern, const char *path, void *parm,
+int F_ForAllDescend(const char* pattern, const char* path, void* parm,
                     f_forall_func_t func)
 {
     int                 i, count, max;
     finddata_t          fd;
-    foundentry_t       *found;
-    char                fn[256], spec[256];
-    char                localPattern[256];
+    foundentry_t*       found;
+    filename_t          fn, spec, localPattern;
 
-    sprintf(localPattern, "%s%s", path, pattern);
+    snprintf(localPattern, FILENAME_T_MAXLEN, "%s%s", path, pattern);
 
     // Collect a list of paths.  The list contains files in all the
     // paths mapped to the current path.
@@ -894,29 +896,30 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
 
     for(i = -1; i < (int)vdMappingsCount; ++i)
     {
-        sprintf(spec, "%s*", path);
+        snprintf(spec, FILENAME_T_MAXLEN, "%s*", path);
 
         if(i >= 0)
         {
-            filename_t mapped;
+            filename_t          mapped;
 
             // Possible virtual mapping.
-            if(!F_MapPath(spec, &vdMappings[i], mapped))
+            if(!F_MapPath(mapped, spec, &vdMappings[i], FILENAME_T_MAXLEN))
             {
                 // The mapping didn't match this one.
                 continue;
             }
-            strcpy(spec, mapped);
+            strncpy(spec, mapped, FILENAME_T_MAXLEN);
 
             // Also map the local pattern.
             //F_MapPath(localPattern, &vdMappings[i], mapped);
-            //strcpy(localPattern, mapped);
+            //strncpy(localPattern, mapped, FILENAME_T_MAXLEN);
         }
 
         if(!myfindfirst(spec, &fd))
         {
             // The first file found!
-            do {
+            do
+            {
                 // Ignore the relative directory names.
                 if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
                 {
@@ -926,8 +929,7 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
                         found = M_Realloc(found, sizeof(*found) * max);
                     }
                     memset(&found[count], 0, sizeof(*found));
-                    strncpy(found[count].name, fd.name,
-                            sizeof(filename_t) - 1);
+                    strncpy(found[count].name, fd.name, FILENAME_T_MAXLEN);
                     found[count].attrib = fd.attrib;
                     count++;
                 }
@@ -942,13 +944,13 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
     for(i = 0; i < count; ++i)
     {
         // Compile the full pathname of the found file.
-        strcpy(fn, path);
-        strcat(fn, found[i].name);
+        strncpy(fn, path, FILENAME_T_MAXLEN);
+        strncat(fn, found[i].name, FILENAME_T_MAXLEN);
 
         // Descend recursively into subdirectories.
         if(found[i].attrib & A_SUBDIR)
         {
-            strcat(fn, DIR_SEP_STR);
+            strncat(fn, DIR_SEP_STR, FILENAME_T_MAXLEN);
             if(!F_ForAllDescend(pattern, fn, parm, func))
             {
                 M_Free(found);
@@ -980,21 +982,24 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
  */
-int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
+int F_ForAll(const char* filespec, void* parm, f_forall_func_t func)
 {
     int                 i;
-    char                fn[256];
+    filename_t          fn;
     directory_t         specdir;
     zipforall_t         zipFindInfo;
+
+    memset(&specdir, 0, sizeof(specdir));
 
     Dir_FileDir(filespec, &specdir);
 
     // First check the Zip directory.
-    _fullpath(fn, filespec, 255);
+    _fullpath(fn, filespec, FILENAME_T_MAXLEN);
     zipFindInfo.func = func;
     zipFindInfo.parm = parm;
     zipFindInfo.pattern = fn;
     zipFindInfo.searchPath = specdir.path;
+
     if(Zip_Iterate(F_ZipFinderForAll, &zipFindInfo))
     {
         // Find didn't finish.
@@ -1008,7 +1013,8 @@ int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
                 //if(!F_ForAllCaller(specdir.path, direc[i].path, func, parm))
                 return false;
 
-    Dir_FileName(filespec, fn);
+    Dir_FileName(fn, filespec, FILENAME_T_MAXLEN);
+
     if(!F_ForAllDescend(fn, specdir.path, parm, func))
         return false;
 

@@ -53,7 +53,7 @@
 // savegame base from now on.
 #define SAVE_VERSION_BASE   500
 #define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
-#define SAVESTRINGSIZE      (24)
+#define V19_SAVESTRINGSIZE  (24)
 #define VERSIONSIZE         (16)
 
 #define FF_FULLBRIGHT       (0x8000) // Used to be a flag in thing->frame.
@@ -860,16 +860,15 @@ void P_v19_UnArchiveSpecials(void)
     }
 }
 
-void SV_v19_LoadGame(char *savename)
+void SV_v19_LoadGame(const char* savename)
 {
-    int                 i;
-    int                 a, b, c;
+    int                 i, a, b, c;
     size_t              length;
     char                vcheck[VERSIONSIZE];
 
     length = M_ReadFile(savename, &saveBuffer);
     // Skip the description field.
-    savePtr = saveBuffer + SAVESTRINGSIZE;
+    savePtr = saveBuffer + V19_SAVESTRINGSIZE;
 
     // Check version.
     memset(vcheck, 0, sizeof(vcheck));

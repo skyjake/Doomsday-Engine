@@ -833,13 +833,13 @@ void SCAcceptPlayer(int option, void* data)
 #endif
 
     strcpy(buf, "net-name ");
-    M_StrCatQuoted(buf, plrNameEd.text);
+    M_StrCatQuoted(buf, plrNameEd.text, 300);
     DD_Execute(false, buf);
 
     if(IS_NETGAME)
     {
         sprintf(buf, "setname ");
-        M_StrCatQuoted(buf, plrNameEd.text);
+        M_StrCatQuoted(buf, plrNameEd.text, 300);
         DD_Execute(false, buf);
 #if __JHEXEN__
         // Must do 'setclass' first; the real class and color do not change

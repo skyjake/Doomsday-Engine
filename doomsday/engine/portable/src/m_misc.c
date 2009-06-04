@@ -169,21 +169,21 @@ boolean M_CheckFileID(const char *path)
     return true;
 }
 
-char *M_SkipWhite(char *str)
+char* M_SkipWhite(char* str)
 {
     while(*str && ISSPACE(*str))
         str++;
     return str;
 }
 
-char *M_FindWhite(char *str)
+char* M_FindWhite(char* str)
 {
     while(*str && !ISSPACE(*str))
         str++;
     return str;
 }
 
-char *M_SkipLine(char *str)
+char* M_SkipLine(char* str)
 {
     while(*str && *str != '\n')
         str++;
@@ -193,8 +193,8 @@ char *M_SkipLine(char *str)
     return str;
 }
 
-char *M_LimitedStrCat(const char *str, size_t maxWidth, char separator,
-                      char *buf, size_t bufLength)
+char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
+                      char separator, size_t bufLength)
 {
     boolean         isEmpty = !buf[0];
     size_t          length;
@@ -224,21 +224,18 @@ char *M_LimitedStrCat(const char *str, size_t maxWidth, char separator,
     return buf;
 }
 
-/**
- * A limit has not been specified for the maximum length of the base,
- * so let's assume it can be a long one.
- */
-void M_ExtractFileBase(const char *path, char *dest)
+void M_ExtractFileBase(char* dest, const char* path, size_t len)
 {
-    M_ExtractFileBase2(path, dest, 255, 0);
+    M_ExtractFileBase2(dest, path, len, 0);
 }
 
 /**
  * This has been modified to work with filenames of all sizes.
  */
-void M_ExtractFileBase2(const char *path, char *dest, int max, int ignore)
+void M_ExtractFileBase2(char* dest, const char* path, size_t max,
+                        int ignore)
 {
-    const char *src;
+    const char*         src;
 
     src = path + strlen(path) - 1;
 
@@ -267,11 +264,11 @@ void M_ExtractFileBase2(const char *path, char *dest, int max, int ignore)
     }
 }
 
-void M_ReadLine(char *buffer, int len, DFILE *file)
+void M_ReadLine(char* buffer, size_t len, DFILE *file)
 {
-    int     p;
-    char    ch;
-    boolean isDone;
+    size_t              p;
+    char                ch;
+    boolean             isDone;
 
     memset(buffer, 0, len);
     p = 0;
@@ -289,9 +286,9 @@ void M_ReadLine(char *buffer, int len, DFILE *file)
     }
 }
 
-boolean M_IsComment(char *buffer)
+boolean M_IsComment(const char* buffer)
 {
-    int     i = 0;
+    int                 i = 0;
 
     while(isspace((unsigned char) buffer[i]) && buffer[i])
         i++;
@@ -955,11 +952,11 @@ void M_ForceUppercase(char *text)
     }
 }
 
-void M_WriteCommented(FILE *file, const char *text)
+void M_WriteCommented(FILE *file, const char* text)
 {
-    char               *buff = M_Malloc(strlen(text) + 1), *line;
+    char*               buff = M_Malloc(strlen(text) + 1), *line;
 
-    strcpy(buff, text);
+    strncpy(buff, text, strlen(text));
     line = strtok(buff, "\n");
     while(line)
     {
@@ -972,11 +969,11 @@ void M_WriteCommented(FILE *file, const char *text)
 /**
  * The caller must provide the opening and closing quotes.
  */
-void M_WriteTextEsc(FILE *file, char *text)
+void M_WriteTextEsc(FILE* file, const char* text)
 {
-    int                 i;
+    size_t              i;
 
-    for(i = 0; text[i]; ++i)
+    for(i = 0; i < strlen(text) && text[i]; ++i)
     {
         if(text[i] == '"' || text[i] == '\\')
             fprintf(file, "\\");
@@ -1021,9 +1018,9 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
 /**
  * Writes a Targa file of the specified depth.
  */
-int M_ScreenShot(const char *filename, int bits)
+int M_ScreenShot(const char* filename, int bits)
 {
-    byte   *screen = 0;
+    byte*               screen = 0;
 
     if(bits != 16 && bits != 24)
         return false;
@@ -1040,71 +1037,71 @@ int M_ScreenShot(const char *filename, int bits)
     return true;
 }
 
-void M_PrependBasePath(const char *path, char *newpath)
+void M_PrependBasePath(char* newpath, const char* path, size_t len)
 {
-    char                buf[300];
+    filename_t          buf;
 
     if(Dir_IsAbsolute(path))
     {
         // Can't prepend to absolute paths.
-        strcpy(newpath, path);
+        strncpy(newpath, path, len);
     }
     else
     {
-        sprintf(buf, "%s%s", ddBasePath, path);
-        strcpy(newpath, buf);
+        snprintf(buf, FILENAME_T_MAXLEN, "%s%s", ddBasePath, path);
+        strncpy(newpath, buf, len);
     }
 }
 
 /**
  * If the base path is found in the beginning of the path, it is removed.
  */
-void M_RemoveBasePath(const char *absPath, char *newPath)
+void M_RemoveBasePath(char* newPath, const char* absPath, size_t len)
 {
     if(!strnicmp(absPath, ddBasePath, strlen(ddBasePath)))
     {
         // This makes the new path relative to the base path.
-        strcpy(newPath, absPath + strlen(ddBasePath));
+        strncpy(newPath, absPath + strlen(ddBasePath), len);
     }
     else
     {
         // This doesn't appear to be the base path.
-        strcpy(newPath, absPath);
+        strncpy(newPath, absPath, len);
     }
 }
 
 /**
  * Expands >.
  */
-void M_TranslatePath(const char *path, char *translated)
+void M_TranslatePath(char* translated, const char* path, size_t len)
 {
-    char    buf[300];
+    filename_t          buf;
 
     if(path[0] == '>' || path[0] == '}')
     {
         path++;
         if(!Dir_IsAbsolute(path))
-            M_PrependBasePath(path, buf);
+            M_PrependBasePath(buf, path, FILENAME_T_MAXLEN);
         else
-            strcpy(buf, path);
-        strcpy(translated, buf);
+            strncpy(buf, path, FILENAME_T_MAXLEN);
+        strncpy(translated, buf, len);
     }
     else if(translated != path)
     {
-        strcpy(translated, path);
+        strncpy(translated, path, len);
     }
-    Dir_FixSlashes(translated);
+    Dir_FixSlashes(translated, len);
 }
 
 /**
  * Also checks for '>'.
  * The file must be a *real* file!
  */
-int M_FileExists(const char *file)
+int M_FileExists(const char* file)
 {
-    char    buf[256];
+    filename_t          buf;
 
-    M_TranslatePath(file, buf);
+    M_TranslatePath(buf, file, FILENAME_T_MAXLEN);
     return !access(buf, 4);     // Read permission?
 }
 
@@ -1112,16 +1109,16 @@ int M_FileExists(const char *file)
  * Check that the given directory exists. If it doesn't, create it.
  * The path must be relative!
  *
- * @return          @c true, if the directory already exists.
+ * @return              @c true, if the directory already exists.
  */
-boolean M_CheckPath(char *path)
+boolean M_CheckPath(const char* path)
 {
-    char    full[256];
-    char    buf[256], *ptr, *endptr;
+    filename_t          full, buf;
+    char*               ptr, *endptr;
 
     // Convert all backslashes to normal slashes.
-    strcpy(full, path);
-    Dir_FixSlashes(full);
+    strncpy(full, path, FILENAME_T_MAXLEN);
+    Dir_FixSlashes(full, FILENAME_T_MAXLEN);
 
     if(!access(full, 0))
         return true;            // Quick test.
@@ -1133,7 +1130,7 @@ boolean M_CheckPath(char *path)
     {
         endptr = strchr(ptr, DIR_SEP_CHAR);
         if(!endptr)
-            strcat(buf, ptr);
+            strncat(buf, ptr, FILENAME_T_MAXLEN);
         else
             strncat(buf, ptr, endptr - ptr);
         if(access(buf, 0))
@@ -1145,7 +1142,7 @@ boolean M_CheckPath(char *path)
             mkdir(buf, 0775);
 #endif
         }
-        strcat(buf, DIR_SEP_STR);
+        strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
         ptr = endptr + 1;
 
     } while(endptr);
@@ -1157,32 +1154,32 @@ boolean M_CheckPath(char *path)
  * The dot is not included in the returned extension.
  * The extension can be at most 10 characters long.
  */
-void M_GetFileExt(const char* path, char* ext)
+void M_GetFileExt(char* ext, const char* path, size_t len)
 {
     char*               ptr = strrchr(path, '.');
 
     *ext = 0;
     if(!ptr)
         return;
-    strncpy(ext, ptr + 1, 10);
+    strncpy(ext, ptr + 1, len);
     strlwr(ext);
 }
 
 /**
  * The new extension must not include a dot.
  */
-void M_ReplaceFileExt(char* path, const char* newext)
+void M_ReplaceFileExt(char* path, const char* newext, size_t len)
 {
     char*               ptr = strrchr(path, '.');
 
     if(!ptr)
     {
-        strcat(path, ".");
-        strcat(path, newext);
+        strncat(path, ".", FILENAME_T_MAXLEN);
+        strncat(path, newext, FILENAME_T_MAXLEN);
     }
     else
     {
-        strcpy(ptr + 1, newext);
+        strncpy(ptr + 1, newext, FILENAME_T_MAXLEN);
     }
 }
 
@@ -1193,15 +1190,16 @@ const char* M_PrettyPath(const char* path)
 {
 #define MAX_BUFS            8
 
-    static char         buffers[MAX_BUFS][256];
+    static filename_t   buffers[MAX_BUFS];
     static uint         index = 0;
     char*               str;
+    size_t              len = path? strlen(path) : 0;
 
-    if(!strnicmp(path, ddBasePath, strlen(ddBasePath)))
+    if(len > 0 && !strnicmp(path, ddBasePath, len))
     {
         str = buffers[index++ % MAX_BUFS];
-        M_RemoveBasePath(path, str);
-        Dir_FixSlashes(str);
+        M_RemoveBasePath(str, path, FILENAME_T_MAXLEN);
+        Dir_FixSlashes(str, FILENAME_T_MAXLEN);
         return str;
     }
 
@@ -1213,16 +1211,16 @@ const char* M_PrettyPath(const char* path)
  * Concatenates src to dest as a quoted string. " is escaped to \".
  * Returns dest.
  */
-char* M_StrCatQuoted(char* dest, const char* src)
+char* M_StrCatQuoted(char* dest, const char* src, size_t len)
 {
     size_t              k = strlen(dest) + 1, i;
 
-    strcat(dest, "\"");
+    strncat(dest, "\"", len);
     for(i = 0; src[i]; i++)
     {
         if(src[i] == '"')
         {
-            strcat(dest, "\\\"");
+            strncat(dest, "\\\"", len);
             k += 2;
         }
         else
@@ -1231,7 +1229,7 @@ char* M_StrCatQuoted(char* dest, const char* src)
             dest[k] = 0;
         }
     }
-    strcat(dest, "\"");
+    strncat(dest, "\"", len);
 
     return dest;
 }

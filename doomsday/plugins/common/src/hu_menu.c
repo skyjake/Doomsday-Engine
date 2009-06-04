@@ -65,8 +65,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SAVESTRINGSIZE      24
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct rgba_s {
@@ -188,9 +186,9 @@ int quickSaveSlot;
 char tempstring[80];
 
 // Old save description before edit.
-char saveOldString[SAVESTRINGSIZE+1];
+char saveOldString[HU_SAVESTRINGSIZE+1];
 
-char savegamestrings[10][SAVESTRINGSIZE+1];
+char savegamestrings[10][HU_SAVESTRINGSIZE+1];
 
 // We are going to be entering a savegame string.
 int saveStringEnter;
@@ -2212,9 +2210,9 @@ boolean M_EditResponder(event_t *ev)
 
         if(saveStringEnter)
         {
-            if(saveCharIndex < SAVESTRINGSIZE &&
+            if(saveCharIndex < HU_SAVESTRINGSIZE &&
                 M_StringWidth(savegamestrings[saveSlot], GF_FONTA)
-                < (SAVESTRINGSIZE - 1) * 8)
+                < (HU_SAVESTRINGSIZE - 1) * 8)
             {
                 savegamestrings[saveSlot][saveCharIndex++] = ch;
                 savegamestrings[saveSlot][saveCharIndex] = 0;
@@ -2486,14 +2484,14 @@ void M_LoadSelect(int option, void* context)
 {
     menu_t*             menu = &SaveDef;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    char                name[256];
+    filename_t          name;
 #endif
 
     menu->lastOn = option;
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    SV_GetSaveGameFileName(option, name);
+    SV_GetSaveGameFileName(name, option, FILENAME_T_MAXLEN);
     G_LoadGame(name);
 #else
     G_LoadGame(option);
@@ -2511,7 +2509,7 @@ void M_SaveSelect(int option, void* context)
     saveStringEnter = 1;
 
     menu->lastOn = saveSlot = option;
-    strcpy(saveOldString, savegamestrings[option]);
+    strncpy(saveOldString, savegamestrings[option], HU_SAVESTRINGSIZE);
     if(!strcmp(savegamestrings[option], EMPTYSTRING))
         savegamestrings[option][0] = 0;
     saveCharIndex = strlen(savegamestrings[option]);
@@ -2709,9 +2707,9 @@ void M_DrawFilesMenu(void)
 /**
  * Read the strings from the savegame files.
  */
-static boolean readSaveString(char* str, size_t len, filename_t fileName)
+static boolean readSaveString(char* str, const char* fileName, size_t len)
 {
-    if(!SV_GetSaveDescription(fileName, str))
+    if(!SV_GetSaveDescription(str, fileName, len))
     {
         strncpy(str, EMPTYSTRING, len);
         return false;
@@ -2729,10 +2727,10 @@ static void updateSaveList(void)
     {
         menuitem_t*         loadSlot = &LoadItems[i];
 
-        SV_GetSaveGameFileName(i, fileName);
+        SV_GetSaveGameFileName(fileName, i, FILENAME_T_MAXLEN);
 
-        memset(savegamestrings[i], 0, SAVESTRINGSIZE);
-        if(readSaveString(savegamestrings[i], SAVESTRINGSIZE, fileName))
+        memset(savegamestrings[i], 0, HU_SAVESTRINGSIZE);
+        if(readSaveString(savegamestrings[i], fileName, HU_SAVESTRINGSIZE))
         {
             loadSlot->type = ITT_EFUNC;
         }
@@ -2755,7 +2753,7 @@ void M_DrawLoad(void)
     menu_t*             menu = &LoadDef;
     float               t, r, g, b;
     int                 width =
-        M_StringWidth("a", menu->font) * (SAVESTRINGSIZE - 1);
+        M_StringWidth("a", menu->font) * (HU_SAVESTRINGSIZE - 1);
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     M_DrawTitle("LOAD GAME", 4);
@@ -2793,7 +2791,7 @@ void M_DrawSave(void)
     menu_t*             menu = &SaveDef;
     float               t, r, g, b;
     int                 width =
-        M_StringWidth("a", menu->font) * (SAVESTRINGSIZE - 1);
+        M_StringWidth("a", menu->font) * (HU_SAVESTRINGSIZE - 1);
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     M_DrawTitle("SAVE GAME", 4);
@@ -2828,7 +2826,7 @@ void M_DrawSave(void)
     {
         size_t              len = strlen(savegamestrings[saveSlot]);
 
-        if(len < SAVESTRINGSIZE)
+        if(len < HU_SAVESTRINGSIZE)
         {
             i = M_StringWidth(savegamestrings[saveSlot], GF_FONTA);
             M_WriteText3(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +

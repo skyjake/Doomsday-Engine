@@ -91,9 +91,9 @@ void Dir_GetDir(directory_t *dir)
     /* VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) ); */
 }
 
-int Dir_ChDir(directory_t *dir)
+int Dir_ChDir(directory_t* dir)
 {
-    int         success;
+    int                 success;
 
     _chdrive(dir->drive);
     success = !_chdir(dir->path);   // Successful if == 0.
@@ -105,38 +105,40 @@ int Dir_ChDir(directory_t *dir)
     return success;
 }
 
-void Dir_MakeDir(const char *path, directory_t *dir)
+void Dir_MakeDir(const char* path, directory_t* dir)
 {
-    char        temp[256];
+    filename_t          temp;
 
     Dir_FileDir(path, dir);
-    Dir_FileName(path, temp);
-    strcat(dir->path, temp);
-    Dir_ValidDir(dir->path);    // Make it a well formed path.
+    Dir_FileName(temp, path, FILENAME_T_MAXLEN);
+    strncat(dir->path, temp, FILENAME_T_MAXLEN);
+    // Make it a well formed path.
+    Dir_ValidDir(dir->path, FILENAME_T_MAXLEN);
 }
 
 /**
  * Translates the given filename (>,} => basedir).
  */
-void Dir_FileDir(const char *str, directory_t *dir)
+void Dir_FileDir(const char* str, directory_t* dir)
 {
-    char        temp[256], pth[256];
+    filename_t          temp, pth;
 
-    M_TranslatePath(str, pth);
-    _fullpath(temp, pth, 255);
+    M_TranslatePath(pth, str, FILENAME_T_MAXLEN);
+
+    _fullpath(temp, pth, FILENAME_T_MAXLEN);
     _splitpath(temp, dir->path, pth, 0, 0);
-    strcat(dir->path, pth);
+    strncat(dir->path, pth, FILENAME_T_MAXLEN);
 #ifdef WIN32
     dir->drive = toupper(dir->path[0]) - 'A' + 1;
 #endif
 }
 
-void Dir_FileName(const char *str, char *name)
+void Dir_FileName(char* name, const char* str, size_t len)
 {
-    char        ext[100];
+    char                ext[100];
 
     _splitpath(str, 0, 0, name, ext);
-    strcat(name, ext);
+    strncat(name, ext, len);
 }
 
 /**
@@ -145,13 +147,13 @@ void Dir_FileName(const char *str, char *name)
  */
 void Dir_FileID(const char *str, byte identifier[16])
 {
-    char        temp[256];
-    md5_ctx_t   context;
+    filename_t          temp;
+    md5_ctx_t           context;
 
     // First normalize the name.
-    memset(temp, 0, sizeof(temp));
-    _fullpath(temp, str, 255);
-    Dir_FixSlashes(temp);
+    memset(temp, 0, FILENAME_T_MAXLEN);
+    _fullpath(temp, str, FILENAME_T_MAXLEN);
+    Dir_FixSlashes(temp, FILENAME_T_MAXLEN);
 
 #if defined(WIN32) || defined(MACOSX)
     // This is a case insensitive operation.
@@ -178,7 +180,7 @@ boolean Dir_IsEqual(directory_t *a, directory_t *b)
  *                      (starts with \ or / or the second character is
  *                      a ':' (drive).
  */
-int Dir_IsAbsolute(const char *str)
+int Dir_IsAbsolute(const char* str)
 {
     if(!str)
         return 0;
@@ -195,9 +197,9 @@ int Dir_IsAbsolute(const char *str)
 /**
  * Converts directory slashes to the correct type of slash.
  */
-void Dir_FixSlashes(char *path)
+void Dir_FixSlashes(char* path, size_t len)
 {
-    size_t          i, len = strlen(path);
+    size_t              i;
 
     for(i = 0; i < len; ++i)
     {
@@ -212,7 +214,7 @@ void Dir_FixSlashes(char *path)
  * of the HOME environment variable or a user's home directory (from
  * passwd).
  */
-void Dir_ExpandHome(char *str)
+void Dir_ExpandHome(char* str)
 {
     char            buf[PATH_MAX];
 
@@ -224,7 +226,7 @@ void Dir_ExpandHome(char *str)
     if(str[1] == '/')
     {
         // Replace it with the HOME environment variable.
-        strcpy(buf, getenv("HOME"));
+        strncpy(buf, getenv("HOME"));
         if(LAST_CHAR(buf) != '/')
             strcat(buf, "/");
 
@@ -260,36 +262,37 @@ void Dir_ExpandHome(char *str)
  * backward ones. Does not check if the directory actually exists, just
  * that it's a well-formed path name.
  */
-void Dir_ValidDir(char *str)
+void Dir_ValidDir(char* str, size_t len)
 {
-    size_t          idx, len = strlen(str);
+    char*               end;
 
     if(!len)
-        return;                 // Nothing to do.
+        return; // Nothing to do.
 
-    Dir_FixSlashes(str);
+    Dir_FixSlashes(str, len);
 
     // Remove whitespace from the end.
-    idx = len - 1;
-    while(idx > 0 && isspace(str[idx]))
-        str[idx--] = 0;
+    end = str + strlen(str) - 1;
+    while(end >= str && isspace(*end))
+        end--;
+    memset(end + 1, 0, len - (end - str) - 2);
 
     // Make sure it ends in a directory separator character.
-    if(str[idx] != DIR_SEP_CHAR)
-        strcat(str, DIR_SEP_STR);
+    if(*end != DIR_SEP_CHAR)
+        strncat(end + 1, DIR_SEP_STR, len - (end - str) - 2);
 
 #ifdef UNIX
-    Dir_ExpandHome(str);
+    Dir_ExpandHome(str, len);
 #endif
 }
 
 /**
  * Converts a possibly relative path to a full path.
  */
-void Dir_MakeAbsolute(char *path)
+void Dir_MakeAbsolute(char* path, size_t len)
 {
-    char    buf[256];
+    filename_t          buf;
 
-    _fullpath(buf, path, 255);
-    strncpy(path, buf, 255);
+    _fullpath(buf, path, FILENAME_T_MAXLEN);
+    strncpy(path, buf, len);
 }

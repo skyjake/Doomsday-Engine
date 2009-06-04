@@ -139,10 +139,10 @@ static direcnode_t* buildDirecNodes(_filehash_t* fh, const char* path)
     char*               tokPath, *cursor;
     char*               part;
     direcnode_t*        node = NULL, *parent;
-    char                relPath[256];
+    filename_t          relPath;
 
     // Let's try to make it a relative path.
-    M_RemoveBasePath(path, relPath);
+    M_RemoveBasePath(relPath, path, FILENAME_T_MAXLEN);
     //strlwr(relPath);
 
     if((tokPath = cursor = M_Malloc(strlen(relPath) + 1)) == NULL)
@@ -199,12 +199,12 @@ static uint hashFunction(const char* name)
 static void addFileToDirec(_filehash_t* fh, const char* filePath,
                            direcnode_t* dir)
 {
-    char                name[256];
+    filename_t          name;
     hashnode_t*         node;
     hashentry_t*        slot;
 
     // Extract the file name.
-    Dir_FileName(filePath, name);
+    Dir_FileName(name, filePath, FILENAME_T_MAXLEN);
     //strlwr(name);
 
     // Create a new node and link it to the hash table.
@@ -240,16 +240,16 @@ static void addFileToDirec(_filehash_t* fh, const char* filePath,
  */
 static int addFile(const char* fn, filetype_t type, void* parm)
 {
-    char                path[256], *pos;
+    filename_t          path;
+    char*               pos;
     _filehash_t*        fh = (_filehash_t*) parm;
 
     if(type != FT_NORMAL)
         return true;
 
     // Extract the path from the full file name.
-    strcpy(path, fn);
-    pos = strrchr(path, DIR_SEP_CHAR);
-    if(pos)
+    strncpy(path, fn, FILENAME_T_MAXLEN);
+    if((pos = strrchr(path, DIR_SEP_CHAR)))
         *pos = 0;
 
     VERBOSE2(Con_Message(" File: %s\n", M_PrettyPath(fn)));
@@ -267,7 +267,7 @@ static int addFile(const char* fn, filetype_t type, void* parm)
 static void addDirectory(_filehash_t* fh, const char* path)
 {
     direcnode_t*        direc = buildDirecNodes(fh, path);
-    char                searchPattern[256];
+    filename_t          searchPattern;
 
     // This directory is now on the search path.
     direc->isOnPath = true;
@@ -280,8 +280,10 @@ static void addDirectory(_filehash_t* fh, const char* path)
     }
 
     // Compose the search pattern.
-    M_PrependBasePath(path, searchPattern);
-    strcat(searchPattern, /*DIR_SEP_STR*/ "*"); // We're interested in *everything*.
+    M_PrependBasePath(searchPattern, path, FILENAME_T_MAXLEN);
+
+    // We're interested in *everything*.
+    strncat(searchPattern, "*", FILENAME_T_MAXLEN);
     F_ForAll(searchPattern, fh, addFile);
 
     // Mark this directory processed.
@@ -304,11 +306,11 @@ static void addDirectory(_filehash_t* fh, const char* path)
 static boolean matchDirectory(hashnode_t* node, const char* name)
 {
     char*               pos;
-    char                dir[256];
+    filename_t          dir;
     direcnode_t*        direc = node->directory;
 
     // We'll do this in reverse order.
-    strcpy(dir, name);
+    strncpy(dir, name, FILENAME_T_MAXLEN);
     while((pos = strrchr(dir, DIR_SEP_CHAR)) != NULL)
     {
         // The string now ends here.
@@ -343,21 +345,22 @@ static boolean matchDirectory(hashnode_t* node, const char* name)
 /**
  * Composes an absolute path name for the node.
  */
-static void composePath(hashnode_t* node, char* foundPath)
+static void composePath(hashnode_t* node, char* foundPath, size_t len)
 {
     direcnode_t*        direc = node->directory;
-    char                buf[256];
+    filename_t          buf;
 
-    strcpy(foundPath, node->fileName);
+    strncpy(foundPath, node->fileName, len);
     while(direc)
     {
-        sprintf(buf, "%s" DIR_SEP_STR "%s", direc->path, foundPath);
-        strcpy(foundPath, buf);
+        snprintf(buf, FILENAME_T_MAXLEN, "%s" DIR_SEP_STR "%s",
+                 direc->path, foundPath);
+        strncpy(foundPath, buf, FILENAME_T_MAXLEN);
         direc = direc->parent;
     }
 
     // Add the base path.
-    M_PrependBasePath(foundPath, foundPath);
+    M_PrependBasePath(foundPath, foundPath, len);
 }
 
 static void clearHash(_filehash_t* fh)
@@ -429,20 +432,18 @@ filehash_t* FileHash_Create(const char* pathList)
 
     strcpy(tokenPaths, pathList);
     fh = M_Calloc(sizeof(*fh));
-    path = strtok(tokenPaths, ";");
-    while(path)
+    if((path = strtok(tokenPaths, ";")))
     {
-        // Convert all slashes to backslashes, so things are compatible
-        // with the sys_file routines.
-        Dir_FixSlashes(path);
+        do
+        {
+            // Convert all slashes to backslashes, so things are compatible
+            // with the sys_file routines.
+            Dir_FixSlashes(path, FILENAME_T_MAXLEN);
+            addDirectory(fh, path); // Add this path to the hash.
+        } while((path = strtok(NULL, ";"))); // Get the next path.
 
-        // Add this path to the hash.
-        addDirectory(fh, path);
-
-        // Get the next path.
-        path = strtok(NULL, ";");
+        M_Free(tokenPaths);
     }
-    M_Free(tokenPaths);
 
     VERBOSE2(Con_Message(" Hash built in %.2f seconds.\n",
                          (Sys_GetRealTime() - usedTime) / 1000.0f));
@@ -464,16 +465,16 @@ void FileHash_Destroy(filehash_t* fileHash)
 /**
  * Finds a file from the hash.
  *
- * @param name          Relative or an absolute path.
  * @param foundPath     The full path, returned.
+ * @param name          Relative or an absolute path.
+ * @param len           Size of @p foundPath in bytes.
  *
  * @return              @c true, iff successful.
  */
-boolean FileHash_Find(filehash_t* fileHash, const char* name,
-                      char* foundPath)
+boolean FileHash_Find(filehash_t* fileHash, char* foundPath,
+                      const char* name, size_t len)
 {
-    char                validName[256];
-    char                baseName[256];
+    filename_t          validName, baseName;
     hashentry_t*        slot;
     hashnode_t*         node;
     _filehash_t*        fh = (_filehash_t*) fileHash;
@@ -491,12 +492,12 @@ boolean FileHash_Find(filehash_t* fileHash, const char* name,
     }
 
     // Convert the given file name into a file name we can process.
-    strcpy(validName, name);
+    strncpy(validName, name, FILENAME_T_MAXLEN);
     //strlwr(validName);
-    Dir_FixSlashes(validName);
+    Dir_FixSlashes(validName, FILENAME_T_MAXLEN);
 
     // Extract the base name.
-    Dir_FileName(validName, baseName);
+    Dir_FileName(baseName, validName, FILENAME_T_MAXLEN);
 
     // Which slot in the hash table?
     slot = &fh->hashTable[hashFunction(baseName)];
@@ -515,7 +516,7 @@ boolean FileHash_Find(filehash_t* fileHash, const char* name,
         // The directory must be on the search path for the test to pass.
         if(matchDirectory(node, validName))
         {
-            composePath(node, foundPath);
+            composePath(node, foundPath, len);
             return true;
         }
     }

@@ -288,7 +288,7 @@ char* DH_GetString(void* foundNode, int type)
  */
 void DD_InitHelp(void)
 {
-    char                helpFileName[256];
+    filename_t          helpFileName;
     float               starttime;
 
     if(helpInited)
@@ -300,13 +300,13 @@ void DD_InitHelp(void)
     helpRoot.next = helpRoot.prev = &helpRoot;
 
     // Control Panel help.
-    M_TranslatePath("}data\\cphelp.txt", helpFileName);
+    M_TranslatePath(helpFileName, "}data\\cphelp.txt", FILENAME_T_MAXLEN);
     DH_ReadStrings(helpFileName);
 
     // Ccmd help (game-specific).
     sprintf(helpFileName, "}data\\%s\\conhelp.txt",
             (char *) gx.GetVariable(DD_GAME_NAME));
-    M_TranslatePath(helpFileName, helpFileName);
+    M_TranslatePath(helpFileName, helpFileName, FILENAME_T_MAXLEN);
     DH_ReadStrings(helpFileName);
 
     // Help is now available.

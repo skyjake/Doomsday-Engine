@@ -220,10 +220,10 @@ void Zip_Shutdown(void)
  * Allocate a zipentry array element and return a pointer to it.
  * Duplicate entries are removed later.
  */
-static zipentry_t *newZipEntry(const char *name)
+static zipentry_t* newZipEntry(const char* name)
 {
-    uint        oldCount = zipNumFiles;
-    boolean     changed = false;
+    uint                oldCount = zipNumFiles;
+    boolean             changed = false;
 
     zipNumFiles++;
     while(zipNumFiles > zipAllocatedFiles)
@@ -277,11 +277,11 @@ static void sortZipEntries(void)
 /**
  * Adds a new package to the list of packages.
  */
-static package_t *newPackage(void)
+static package_t* newPackage(void)
 {
     // When duplicates are removed, newer packages are favored.
-    static uint packageCounter = 0;
-    package_t  *newPack = M_Calloc(sizeof(package_t));
+    static uint         packageCounter = 0;
+    package_t*          newPack = M_Calloc(sizeof(package_t));
 
     newPack->next = zipRoot;
     newPack->order = packageCounter++;
@@ -296,8 +296,8 @@ static package_t *newPackage(void)
  */
 static boolean locateCentralDirectory(DFILE *file)
 {
-    int         pos = CENTRAL_END_SIZE; // Offset from the end.
-    uint        signature;
+    int                 pos = CENTRAL_END_SIZE; // Offset from the end.
+    uint                signature;
 
     // Start from the earliest location where the signature might be.
     while(pos < MAXIMUM_COMMENT_SIZE)
@@ -323,7 +323,7 @@ static boolean locateCentralDirectory(DFILE *file)
 /**
  * Copies num characters (up to destSize) and adds a terminating NULL.
  */
-static void copyStr(char *dest, const char *src, int num, int destSize)
+static void copyStr(char* dest, const char* src, size_t num, size_t destSize)
 {
     // Only copy as much as we can.
     if(num >= destSize)
@@ -355,9 +355,9 @@ static void copyStr(char *dest, const char *src, int num, int destSize)
  * Folder 'Patches' is mapped to Data/Game/Patches
  * Folder 'Sfx' is mapped to Data/Game/Sfx
  */
-static void mapPath(char *path)
+static void mapPath(char* path, size_t len)
 {
-    char        mapped[512];
+    filename_t          mapped;
 
     if(strchr(path, DIR_SEP_CHAR) != NULL)
     {
@@ -376,15 +376,16 @@ static void mapPath(char *path)
            !strnicmp("Sfx" DIR_SEP_STR, path, 4))
         {
             // Contents mapped to keyname folder.
-            sprintf(mapped, "%s%s", R_GetDataPath(), path);
-            strcpy(path, mapped);
+            snprintf(mapped, FILENAME_T_MAXLEN, "%s%s", R_GetDataPath(),
+                     path);
+            strncpy(path, mapped, len);
             return;
         }
     }
 
     if(path[0] == '@') // Manually mapped to Defs.
     {
-        Def_GetAutoPath(mapped);
+        Def_GetAutoPath(mapped, FILENAME_T_MAXLEN);
         strcat(mapped, path + 1);
         strcpy(path, mapped);
     }
@@ -413,15 +414,15 @@ static void mapPath(char *path)
             }
             else if(!stricmp(ext, "ded"))
             {   // Definitions are mapped to the Defs directory.
-                Def_GetAutoPath(mapped);
+                Def_GetAutoPath(mapped, FILENAME_T_MAXLEN);
             }
             else
             {
-                strcpy(mapped, "");
+                strncpy(mapped, "", FILENAME_T_MAXLEN);
             }
 
-            strcat(mapped, path);
-            strcpy(path, mapped);
+            strncat(mapped, path, FILENAME_T_MAXLEN);
+            strncpy(path, mapped, len);
         }
     }
 }
@@ -433,16 +434,16 @@ static void mapPath(char *path)
  * @param prevOpened    If not @c NULL,, all data will be read
  *                      from there.
  */
-boolean Zip_Open(const char *fileName, DFILE *prevOpened)
+boolean Zip_Open(const char* fileName, DFILE* prevOpened)
 {
-    centralend_t summary;
-    zipentry_t *entry;
-    package_t  *pack;
-    void       *directory;
-    char       *pos;
-    char        buf[512];
-    uint        index;
-    DFILE      *file;
+    centralend_t        summary;
+    zipentry_t*         entry;
+    package_t*          pack;
+    void*               directory;
+    char*               pos;
+    filename_t          buf;
+    uint                index;
+    DFILE*              file;
 
     if(prevOpened == NULL)
     {   // Try to open the file.
@@ -491,16 +492,17 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
     for(index = 0; index < USHORT(summary.totalEntryCount);
         ++index, pos += sizeof(centralfileheader_t))
     {
-        localfileheader_t localHeader;
-        centralfileheader_t *header = (void *) pos;
-        char       *nameStart = pos + sizeof(centralfileheader_t);
+        localfileheader_t   localHeader;
+        centralfileheader_t* header = (void *) pos;
+        char*               nameStart = pos + sizeof(centralfileheader_t);
 
         // Advance the cursor past the variable sized fields.
         pos +=
             USHORT(header->fileNameSize) + USHORT(header->extraFieldSize) +
             USHORT(header->commentSize);
 
-        copyStr(buf, nameStart, USHORT(header->fileNameSize), sizeof(buf));
+        copyStr(buf, nameStart, USHORT(header->fileNameSize),
+                FILENAME_T_MAXLEN);
 
         // Directories are skipped.
         if(buf[USHORT(header->fileNameSize) - 1] == '/' &&
@@ -522,14 +524,14 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
 
         // Convert all slashes to the host OS's directory separator,
         // for compatibility with the sys_filein routines.
-        Dir_FixSlashes(buf);
+        Dir_FixSlashes(buf, FILENAME_T_MAXLEN);
 
         // In some cases the path inside the pack is mapped to another
         // virtual location.
-        mapPath(buf);
+        mapPath(buf, FILENAME_T_MAXLEN);
 
         // Make it absolute.
-        M_PrependBasePath(buf, buf);
+        M_PrependBasePath(buf, buf, FILENAME_T_MAXLEN);
 
         // We can add this file to the zipentry list.
         entry = newZipEntry(buf);
@@ -575,9 +577,9 @@ boolean Zip_Open(const char *fileName, DFILE *prevOpened)
  */
 static void removeDuplicateFiles(void)
 {
-    uint        i;
-    boolean     modified = false;
-    zipentry_t *entry, *loser;
+    uint                i;
+    boolean             modified = false;
+    zipentry_t*         entry, *loser;
 
     if(!(zipNumFiles > 1))
         return; // Obviously no duplicates.
@@ -623,11 +625,13 @@ static void removeDuplicateFiles(void)
  */
 zipindex_t Zip_Iterate(int (*iterator) (const char *, void *), void *parm)
 {
-    uint        i;
+    uint                i;
 
     for(i = 0; i < zipNumFiles; ++i)
+    {
         if(iterator(zipFiles[i].name, parm))
             return i + 1;
+    }
 
     // Nothing was accepted.
     return 0;
@@ -642,16 +646,16 @@ zipindex_t Zip_Iterate(int (*iterator) (const char *, void *), void *parm)
  */
 zipindex_t Zip_Find(const char *fileName)
 {
-    zipindex_t  begin, end, mid;
-    int         relation;
-    char        fullPath[256];
+    zipindex_t          begin, end, mid;
+    int                 relation;
+    filename_t          fullPath;
 
     if(!zipNumFiles)
         return 0; // None registered yet.
 
     // Convert to an absolute path.
-    strcpy(fullPath, fileName);
-    Dir_MakeAbsolute(fullPath);
+    strncpy(fullPath, fileName, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolute(fullPath, FILENAME_T_MAXLEN);
 
     // Init the search.
     begin = 0;
@@ -662,7 +666,8 @@ zipindex_t Zip_Find(const char *fileName)
         mid = (begin + end) / 2;
 
         // How does this compare?
-        relation = stricmp(fullPath, zipFiles[mid].name);
+        relation = strnicmp(fullPath, zipFiles[mid].name,
+                            FILENAME_T_MAXLEN);
         if(!relation)
         {   // Got it! We return a 1-based index.
             return mid + 1;

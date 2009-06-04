@@ -134,8 +134,8 @@ static void initDataPath(const char* baseDataPath)
     if(!dataPath)
         dataPath = Str_New();
 
-    M_TranslatePath(baseDataPath, filePath);
-    Dir_ValidDir(filePath);
+    M_TranslatePath(filePath, baseDataPath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(filePath, FILENAME_T_MAXLEN);
 
     Str_Set(dataPath, filePath);
 }
@@ -157,60 +157,58 @@ static void initClassDataPaths(void)
     for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         resclass_t*         rc = &resClasses[i];
-        ddstring_t*         path;
 
         Str_Clear(&rc->path);
 
-        path = Str_New();
-
         if(ArgCheckWith(explicitOption[i][0], 1))
         {   // An explicit option specifies the path.
-            M_TranslatePath(ArgNext(), filePath);
-            Str_Set(path, filePath);
+            M_TranslatePath(filePath, ArgNext(), FILENAME_T_MAXLEN);
         }
         else
         {
             // Build the path using the default elements.
             if(!(rc->flags & RCF_USE_BASEDATAPATH))
-                strcpy(filePath, Str_Text(dataPath));
+                strncpy(filePath, Str_Text(dataPath), FILENAME_T_MAXLEN);
             else
-                strcpy(filePath, DD_BASEDATAPATH);
-
-            Str_Set(path, filePath);
-            Str_Append(path, rc->defaultResourcePath);
+                strncpy(filePath, DD_BASEDATAPATH, FILENAME_T_MAXLEN);
+            strncat(filePath, rc->defaultResourcePath, FILENAME_T_MAXLEN);
         }
-        Dir_ValidDir(Str_Text(path));
+        Dir_ValidDir(filePath, FILENAME_T_MAXLEN);
 
         Str_Prepend(&rc->path, ";");
-        Str_Prepend(&rc->path, Str_Text(path));
+        Str_Prepend(&rc->path, filePath);
 
         if(!(rc->flags & RCF_USE_BASEDATAPATH) && gameMode && gameMode[0])
         {
-            Str_Appendf(path, "%s", gameMode);
-            Dir_ValidDir(Str_Text(path));
+            filename_t          other;
+
+            snprintf(other, FILENAME_T_MAXLEN, "%s%s", filePath, gameMode);
+            Dir_ValidDir(other, FILENAME_T_MAXLEN);
 
             Str_Prepend(&rc->path, ";");
-            Str_Prepend(&rc->path, Str_Text(path));
+            Str_Prepend(&rc->path, other);
         }
 
         // The overriding path.
         if(ArgCheckWith(explicitOption[i][1], 1))
         {
-            M_TranslatePath(ArgNext(), filePath);
-            Str_Set(path, filePath);
-
-            Dir_ValidDir(Str_Text(path));
+            M_TranslatePath(filePath, ArgNext(), FILENAME_T_MAXLEN);
+            Dir_ValidDir(filePath, FILENAME_T_MAXLEN);
 
             Str_Prepend(&rc->path, ";");
-            Str_Prepend(&rc->path, Str_Text(path));
+            Str_Prepend(&rc->path, filePath);
 
-            if(!(rc->flags & RCF_USE_BASEDATAPATH) && gameMode && gameMode[0])
+            if(!(rc->flags & RCF_USE_BASEDATAPATH) &&
+               gameMode && gameMode[0])
             {
-                Str_Appendf(path, "\\%s", gameMode);
-                Dir_ValidDir(Str_Text(path));
+                filename_t          other;
+
+                snprintf(other, FILENAME_T_MAXLEN, "%s\\%s", filePath,
+                         gameMode);
+                Dir_ValidDir(other, FILENAME_T_MAXLEN);
 
                 Str_Prepend(&rc->path, ";");
-                Str_Prepend(&rc->path, Str_Text(path));
+                Str_Prepend(&rc->path, other);
             }
         }
 
@@ -218,18 +216,19 @@ static void initClassDataPaths(void)
         {
             int                 n = 0;
             const char*         p = Str_Text(&rc->path);
+            ddstring_t          path;
 
-            Str_Clear(path);
+            Str_Init(&path);
 
             Con_Message("RC %i:\n", i);
-            while((p = Str_CopyDelim(path, p, ';')))
+            while((p = Str_CopyDelim(&path, p, ';')))
             {
                 Con_Message("  %i \"%s\"\n", n++,
-                            M_PrettyPath(Str_Text(path)));
+                            M_PrettyPath(Str_Text(&path)));
             }
-        }
 
-        Str_Delete(path);
+            Str_Free(&path);
+        }
     }
 }
 
@@ -242,7 +241,7 @@ static void initClassDataPaths(void)
  */
 static boolean tryResourceFile(resourcetype_t resType,
                                resourceclass_t resClass, const char* path,
-                               char* foundFileName)
+                               char* foundFileName, size_t len)
 {
     boolean             found = false;
     resclass_t*         info = &resClasses[resClass];
@@ -256,7 +255,7 @@ static boolean tryResourceFile(resourcetype_t resType,
     if(ptr && *ptr != '*')
     {
         // Try this first.
-        if(FileHash_Find(info->fileHash, path, foundFileName))
+        if(FileHash_Find(info->fileHash, foundFileName, path, len))
         {   // Found it.
             found = true;
         }
@@ -280,8 +279,8 @@ static boolean tryResourceFile(resourcetype_t resType,
             Str_Copy(tmp, path2);
             Str_Appendf(tmp, ".%s", *ext);
 
-            if(FileHash_Find(info->fileHash, Str_Text(tmp),
-                             foundFileName))
+            if(FileHash_Find(info->fileHash, foundFileName, Str_Text(tmp),
+                             len))
             {
                 found = true; // Found it.
                 break;
@@ -296,8 +295,9 @@ static boolean tryResourceFile(resourcetype_t resType,
 }
 
 static boolean findResource(resourcetype_t resType,
-                            resourceclass_t resClass, const char* name,
-                            const char* optionalSuffix, char* fileName)
+                            resourceclass_t resClass, char* fileName,
+                            const char* name, const char* optionalSuffix,
+                            size_t len)
 {
     boolean             found = false;
 
@@ -325,7 +325,7 @@ static boolean findResource(resourcetype_t resType,
             Str_Append(fn, optionalSuffix);
         }
 
-        if(tryResourceFile(resType, resClass, Str_Text(fn), fileName))
+        if(tryResourceFile(resType, resClass, Str_Text(fn), fileName, len))
             found = true;
 
         Str_Delete(fn);
@@ -334,7 +334,7 @@ static boolean findResource(resourcetype_t resType,
     // Try without a suffix.
     if(!found)
     {
-        if(tryResourceFile(resType, resClass, name, fileName))
+        if(tryResourceFile(resType, resClass, name, fileName, len))
             found = true;
     }
 
@@ -354,7 +354,7 @@ static boolean findResource(resourcetype_t resType,
                 Con_Printf("R_FindResource2: Base path hit: %s\n",
                            Str_Text(fn)));
 
-                strcpy(fileName, Str_Text(fn));
+                strncpy(fileName, Str_Text(fn), FILENAME_T_MAXLEN);
                 found = true;
             }
 
@@ -448,19 +448,20 @@ void R_SetDataPath(const char* path)
  * @param origPath      If a relative path, the data path is added in
  *                      front of it.
  */
-void R_PrependDataPath(const char* origPath, char* newPath)
+void R_PrependDataPath(char* newPath, const filename_t origPath, size_t len)
 {
-    char                buf[300];
-
     if(Dir_IsAbsolute(origPath))
     {
         // Can't prepend to absolute paths.
-        strcpy(newPath, origPath);
+        strncpy(newPath, origPath, len);
     }
     else
     {
-        sprintf(buf, "%s%s", Str_Text(dataPath), origPath);
-        strcpy(newPath, buf);
+        filename_t          buf;
+
+        snprintf(buf, FILENAME_T_MAXLEN, "%s%s", Str_Text(dataPath),
+                 origPath);
+        strncpy(newPath, buf, len);
     }
 }
 
@@ -510,20 +511,21 @@ const char* R_GetClassDataPath(resourceclass_t resClass)
  * @param resType       Type of resource being searched for (if known).
  * @param resClass      Class specifier; alters search behavior including
  *                      locations to be searched.
- * @param name          Name of the resource being searched for.
- * @param optionalSuffix An optional name suffix. If not @c NULL, append to
- *                      @p name and look for matches. If not found or not
- *                      specified then search for matches to @p name.
  * @param fileName      If a file is found, the fully qualified path will
  *                      be written back to here.
  *                      Can be @c NULL, which makes the routine just check
  *                      for the existence of the file.
+ * @param name          Name of the resource being searched for.
+ * @param optionalSuffix An optional name suffix. If not @c NULL, append to
+ *                      @p name and look for matches. If not found or not
+ *                      specified then search for matches to @p name.
+ * @param len           Size of @p fileName in bytes.
  *
  * @return              @c true, iff a file was found.
  */
 boolean R_FindResource2(resourcetype_t resType, resourceclass_t resClass,
-                        const char* name, const char* optionalSuffix,
-                        char* fileName)
+                        char* fileName, const char* name,
+                        const char* optionalSuffix, size_t len)
 {
     if(resType < RT_FIRST || resType >= NUM_RESOURCE_TYPES)
         Con_Error("R_FindResource: Invalid resource type %i.\n", resType);
@@ -531,19 +533,21 @@ boolean R_FindResource2(resourcetype_t resType, resourceclass_t resClass,
     if(resClass < RC_FIRST || resClass >= NUM_RESOURCE_CLASSES)
         Con_Error("R_FindResource: Invalid resource class %i.\n", resClass);
 
-    return findResource(resType, resClass, name, optionalSuffix, fileName);
+    return findResource(resType, resClass, fileName, name, optionalSuffix,
+                        len);
 }
 
 /**
  * Same as R_FindResource2 except that the resource class is chosen
  * automatically, using a set of logical defaults.
  */
-boolean R_FindResource(resourcetype_t resType, const char* name,
-                       const char* optionalSuffix, char* fileName)
+boolean R_FindResource(resourcetype_t resType, char* fileName,
+                       const char* name, const char* optionalSuffix,
+                       size_t len)
 {
     if(resType < RT_FIRST || resType >= NUM_RESOURCE_TYPES)
         Con_Error("R_FindResource: Invalid resource type %i.\n", resType);
 
-    return findResource(resType, defResClassForType[resType], name,
-                        optionalSuffix, fileName);
+    return findResource(resType, defResClassForType[resType], fileName,
+                        name, optionalSuffix, len);
 }
