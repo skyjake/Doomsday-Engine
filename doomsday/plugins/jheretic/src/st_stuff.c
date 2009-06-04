@@ -1218,7 +1218,7 @@ void ST_loadGraphics(void)
         {"INAMLOB"}
     };
 
-    for(i = 0; i < 10; ++i)
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         R_CachePatch(&ammoIcons[i], ammoPic[i]);
     }
