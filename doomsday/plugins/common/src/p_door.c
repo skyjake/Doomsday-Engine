@@ -72,7 +72,7 @@
 # define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
 # define SFX_DOORLOCKED        (SFX_OOF)
 #elif __JHERETIC__
-# define SFX_DOORCLOSE         (SFX_DOROPN)
+# define SFX_DOORCLOSE         (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_NONE)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_DOROPN)
