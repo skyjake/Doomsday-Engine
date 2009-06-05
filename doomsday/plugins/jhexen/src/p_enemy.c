@@ -2233,7 +2233,7 @@ void C_DECL A_CentaurDropStuff(mobj_t* mo)
 {
     // Order is important P_Randoms!
     spawnCentaurStuff(MT_CENTAUR_SHIELD, mo->angle + ANG90, mo);
-    spawnCentaurStuff(MT_CENTAUR_SHIELD, mo->angle - ANG90, mo);
+    spawnCentaurStuff(MT_CENTAUR_SWORD, mo->angle - ANG90, mo);
 }
 
 void C_DECL A_CentaurDefend(mobj_t* actor)
