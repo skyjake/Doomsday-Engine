@@ -168,7 +168,7 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
     // Spawn teleport fog at source and destination
     if(useFog)
     {
-        fogDelta = FIX2FLT(mo->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT);
+        fogDelta = (mo->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT);
         fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
                             oldpos[VZ] + fogDelta, oldAngle + ANG180, 0);
 
