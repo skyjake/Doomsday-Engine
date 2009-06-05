@@ -1625,7 +1625,9 @@ void Hu_MenuTicker(timespan_t time)
         if(menu_color >= 100)
             menu_color -= 100;
 
-        if(cfg.turningSkull && currentMenu->items[itemOn].type == ITT_LRFUNC)
+        if(cfg.turningSkull &&
+           itemOn >= 0 && itemOn < currentMenu->itemCount &&
+           currentMenu->items[itemOn].type == ITT_LRFUNC)
             skull_angle += 5;
         else if(skull_angle != 0)
         {
@@ -1684,7 +1686,7 @@ void M_SetupNextMenu(menu_t* menudef)
     {
         // Have we been to this menu before?
         // If so move the cursor to the last selected item
-        if(currentMenu->lastOn)
+        if(currentMenu->lastOn >= 0)
         {
             itemOn = currentMenu->lastOn;
         }
@@ -1698,7 +1700,7 @@ void M_SetupNextMenu(menu_t* menudef)
                     break;
             }
 
-            if(i > menudef->itemCount)
+            if(i >= menudef->itemCount)
                 itemOn = -1;
             else
                 itemOn = i;
@@ -1886,38 +1888,36 @@ void Hu_MenuDrawer(void)
         // Draw the menu cursor.
         if(allowScaling)
         {
-            if(itemOn >= 0)
-            {
-                menu_t*             mn =
-                    (widgetEdit? &ColorWidgetMnu : currentMenu);
+            int                 hasFocus = MAX_OF(0, itemOn);
+            menu_t*             mn =
+                (widgetEdit? &ColorWidgetMnu : currentMenu);
 
-                scale = mn->itemHeight / (float) LINEHEIGHT;
-                width = cursorst[whichSkull].width;
-                height = cursorst[whichSkull].height;
+            scale = mn->itemHeight / (float) LINEHEIGHT;
+            width = cursorst[whichSkull].width;
+            height = cursorst[whichSkull].height;
 
-                offset[VX] = mn->x + MENUCURSOR_OFFSET_X * scale;
-                offset[VX] -= width / 2 * scale;
+            offset[VX] = mn->x + MENUCURSOR_OFFSET_X * scale;
+            offset[VX] -= width / 2 * scale;
 
-                offset[VY] = mn->y + MENUCURSOR_OFFSET_Y * scale;
-                offset[VY] += (itemOn - mn->firstItem) * mn->itemHeight +
-                    mn->itemHeight / 2;
+            offset[VY] = mn->y + MENUCURSOR_OFFSET_Y * scale;
+            offset[VY] += (hasFocus - mn->firstItem) * mn->itemHeight +
+                mn->itemHeight / 2;
 
-                DGL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP_TO_EDGE,
-                             DGL_CLAMP_TO_EDGE);
+            DGL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP_TO_EDGE,
+                         DGL_CLAMP_TO_EDGE);
 
-                DGL_MatrixMode(DGL_MODELVIEW);
-                DGL_PushMatrix();
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PushMatrix();
 
-                DGL_Translatef(offset[VX], offset[VY], 0);
-                DGL_Scalef(scale, scale, 1);
-                if(skull_angle)
-                    DGL_Rotatef(skull_angle, 0, 0, 1);
+            DGL_Translatef(offset[VX], offset[VY], 0);
+            DGL_Scalef(scale, scale, 1);
+            if(skull_angle)
+                DGL_Rotatef(skull_angle, 0, 0, 1);
 
-                DGL_DrawRect(-width/2.f, -height/2.f, width, height, 1, 1, 1, menuAlpha);
+            DGL_DrawRect(-width/2.f, -height/2.f, width, height, 1, 1, 1, menuAlpha);
 
-                DGL_MatrixMode(DGL_MODELVIEW);
-                DGL_PopMatrix();
-            }
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PopMatrix();
         }
 
         if(widgetEdit)
@@ -1937,25 +1937,28 @@ void Hu_MenuDrawer(void)
 
 void Hu_MenuNavigatePage(menu_t* menu, int pageDelta)
 {
-    int oldOnItem = itemOn;
+    int                 hasFocus = MAX_OF(0, itemOn),
+                        oldOnItem = hasFocus;
 
     if(pageDelta < 0)
     {
-        itemOn = MAX_OF(0, itemOn - menu->numVisItems);
+        hasFocus = MAX_OF(0, hasFocus - menu->numVisItems);
     }
     else
     {
-        itemOn = MIN_OF(menu->itemCount - 1, itemOn + menu->numVisItems);
+        hasFocus = MIN_OF(menu->itemCount-1, hasFocus + menu->numVisItems);
     }
 
     // Don't land on empty items.
-    while(menu->items[itemOn].type == ITT_EMPTY && (itemOn > 0))
-        itemOn--;
-    while(menu->items[itemOn].type == ITT_EMPTY && itemOn < menu->itemCount)
-        itemOn++;
+    while(menu->items[hasFocus].type == ITT_EMPTY && (hasFocus > 0))
+        hasFocus--;
+    while(menu->items[hasFocus].type == ITT_EMPTY &&
+          hasFocus < menu->itemCount)
+        hasFocus++;
 
-    if(itemOn != oldOnItem)
+    if(hasFocus != oldOnItem)
     {
+        itemOn = hasFocus;
         // Make a sound, too.
         S_LocalSound(SFX_MENU_NAV_RIGHT, NULL);
     }
@@ -1983,6 +1986,8 @@ void Hu_MenuCommand(menucommand_e cmd)
 
         if(menuActive)
         {
+            currentMenu->lastOn = itemOn;
+
             S_LocalSound(SFX_MENU_CLOSE, NULL);
             menuActive = false;
 
@@ -2018,11 +2023,12 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
     else
     {
-        int             i;
+        int             i, hasFocus;
         int             firstVI, lastVI; // first and last visible item
         int             itemCountOffset = 0;
-        const menuitem_t *item;
-        menu_t         *menu = currentMenu;
+        const menuitem_t* item;
+        menu_t*         menu = currentMenu;
+        boolean         updateLastOn = true;
 
         if(widgetEdit)
         {
@@ -2032,12 +2038,19 @@ void Hu_MenuCommand(menucommand_e cmd)
                 itemCountOffset = 1;
         }
 
+        if(itemOn < 0)
+            updateLastOn = false;
+
+        hasFocus = MAX_OF(0, itemOn);
+
         firstVI = menu->firstItem;
         lastVI = firstVI + menu->numVisItems - 1 - itemCountOffset;
         if(lastVI > menu->itemCount - 1 - itemCountOffset)
             lastVI = menu->itemCount - 1 - itemCountOffset;
-        item = &menu->items[itemOn];
-        menu->lastOn = itemOn;
+        item = &menu->items[hasFocus];
+
+        if(updateLastOn)
+            menu->lastOn = itemOn;
 
         switch(cmd)
         {
@@ -2067,12 +2080,13 @@ void Hu_MenuCommand(menucommand_e cmd)
             i = 0;
             do
             {
-                if(itemOn + 1 > menu->itemCount - 1)
-                    itemOn = 0;
+                if(hasFocus + 1 > menu->itemCount - 1)
+                    hasFocus = 0;
                 else
-                    itemOn++;
-            } while(menu->items[itemOn].type == ITT_EMPTY &&
+                    hasFocus++;
+            } while(menu->items[hasFocus].type == ITT_EMPTY &&
                     i++ < menu->itemCount);
+            itemOn = hasFocus;
             menu_color = 0;
             S_LocalSound(SFX_MENU_NAV_UP, NULL);
             M_UpdateMenuVisibleItems();
@@ -2082,22 +2096,23 @@ void Hu_MenuCommand(menucommand_e cmd)
             i = 0;
             do
             {
-                if(itemOn <= 0)
-                    itemOn = menu->itemCount - 1;
+                if(hasFocus <= 0)
+                    hasFocus = menu->itemCount - 1;
                 else
-                    itemOn--;
-            } while(menu->items[itemOn].type == ITT_EMPTY &&
+                    hasFocus--;
+            } while(menu->items[hasFocus].type == ITT_EMPTY &&
                     i++ < menu->itemCount);
+            itemOn = hasFocus;
             menu_color = 0;
             S_LocalSound(SFX_MENU_NAV_UP, NULL);
             M_UpdateMenuVisibleItems();
             break;
 
         case MCMD_NAV_OUT:
-            menu->lastOn = itemOn;
+            menu->lastOn = hasFocus;
             if(menu->prevMenu == MENU_NONE)
             {
-                menu->lastOn = itemOn;
+                menu->lastOn = hasFocus;
                 S_LocalSound(SFX_MENU_CLOSE, NULL);
                 Hu_MenuCommand(MCMD_CLOSE);
             }
@@ -2127,7 +2142,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             }
             else if(item->func != NULL)
             {
-                menu->lastOn = itemOn;
+                menu->lastOn = hasFocus;
                 if(item->type == ITT_LRFUNC)
                 {
                     item->func(RIGHT_DIR | item->option, item->data);
@@ -2579,7 +2594,7 @@ void M_DrawClassMenu(void)
     menu_t*             menu = &ClassDef;
     playerclass_t       pClass;
     spriteinfo_t        sprInfo;
-    int                 tmap = 1;
+    int                 tmap = 1, hasFocus = MAX_OF(0, itemOn);
     static char* boxLumpName[3] = {
         "m_fbox",
         "m_cbox",
@@ -2589,7 +2604,7 @@ void M_DrawClassMenu(void)
     M_WriteText3(34, 24, "CHOOSE CLASS:", GF_FONTB, menu->color[0],
                  menu->color[1], menu->color[2], menuAlpha, true, true, 0);
 
-    pClass = (playerclass_t) menu->items[itemOn].option;
+    pClass = (playerclass_t) menu->items[hasFocus].option;
     if(pClass < 0)
     {   // Random class.
         // Number of user-selectable classes.
@@ -2628,7 +2643,7 @@ void M_DrawEpisode(void)
     /**
      * \kludge Inform the user episode 6 is designed for deathmatch only.
      */
-    if(menu->items[itemOn].option == 5)
+    if(itemOn >= 0 && menu->items[itemOn].option == 5)
     {
         const char*         str = notDesignedForMessage;
 
@@ -4233,7 +4248,6 @@ DEFCC(CCmdMenuAction)
             switch(mode)
             {
             case 0: // Menu nav: Close menu
-                currentMenu->lastOn = itemOn;
                 Hu_MenuCommand(MCMD_CLOSE);
                 break;
 
@@ -4277,8 +4291,6 @@ DEFCC(CCmdMenuAction)
         else
 # endif
             currentMenu = &ReadDef1;
-
-        itemOn = 0;
     }
     else
 #endif
@@ -4298,7 +4310,6 @@ DEFCC(CCmdMenuAction)
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
         currentMenu = &Options2Def;
-        itemOn = 0;
     }
     else if(!stricmp(argv[0], "QuickSave"))
     {
