@@ -1788,12 +1788,14 @@ if(lineWasHit)
 #if __JDOOM__ || __JDOOM64__
                     P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage,
                                  attackAngle + ANG180);
-#elif __JHEXEN__
+#else
+# if __JHEXEN__
                     if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
                     {
                         P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mo);
                     }
-#else
+                    else
+# endif
                     if(P_Random() < 192)
                         P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mo);
 #endif
