@@ -245,13 +245,14 @@ static boolean crossBSPNode(unsigned int bspNum, losdata_t* los)
  * @return              @c true if the traverser function returns @c true
  *                      for all visited lines.
  */
-boolean P_CheckLineSight(const float from[3], const float to[3])
+boolean P_CheckLineSight(const float from[3], const float to[3],
+                         float bottomSlope, float topSlope)
 {
     losdata_t               los;
 
     los.startZ = from[VZ];
-    los.topSlope = to[VZ] + 1 - los.startZ;
-    los.bottomSlope = to[VZ] - 1 - los.startZ;
+    los.topSlope = to[VZ] + topSlope - los.startZ;
+    los.bottomSlope = to[VZ] + bottomSlope - los.startZ;
     los.trace.pos[VX] = FLT2FIX(from[VX]);
     los.trace.pos[VY] = FLT2FIX(from[VY]);
     los.trace.dX = FLT2FIX(to[VX] - from[VX]);

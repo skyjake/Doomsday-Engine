@@ -216,7 +216,7 @@ static boolean checkReject(subsector_t* a, subsector_t* b)
  */
 boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
 {
-    float               fPos[3], tPos[3];
+    float               fPos[3];
 
     // If either is unlinked, they can't see each other.
     if(!from->subsector || !to->subsector)
@@ -236,13 +236,7 @@ boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
     if(!P_MobjIsCamera(from))
         fPos[VZ] += from->height + -(from->height / 4);
 
-    tPos[VX] = to->pos[VX];
-    tPos[VY] = to->pos[VY];
-    tPos[VZ] = to->pos[VZ];
-
-    tPos[VZ] += to->height;
-
-    return P_CheckLineSight(fPos, tPos);
+    return P_CheckLineSight(fPos, to->pos, 0, to->height);
 }
 
 boolean PIT_StompThing(mobj_t* mo, void* data)

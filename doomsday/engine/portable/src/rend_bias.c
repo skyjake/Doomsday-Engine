@@ -1205,7 +1205,7 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
         V3_Scale(surfacePoint, 1.f / 100);
         V3_Sum(surfacePoint, surfacePoint, point);
 
-        if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint))
+        if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint, -1, 1))
         {
             // LOS fail.
             if(casted)
