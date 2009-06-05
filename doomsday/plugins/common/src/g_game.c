@@ -205,7 +205,7 @@ int leavePosition;
 #endif
 
 boolean secretExit;
-char saveName[256];
+filename_t saveName;
 
 #if __JHEXEN__ || __JSTRIFE__
 int mapHub = 0;
@@ -1912,9 +1912,9 @@ void G_LoadGame(int slot)
     G_SetGameAction(GA_LOADGAME);
 }
 #else
-void G_LoadGame(char *name)
+void G_LoadGame(const char* name)
 {
-    strcpy(saveName, name);
+    strncpy(saveName, name, FILENAME_T_MAXLEN);
     G_SetGameAction(GA_LOADGAME);
 }
 #endif

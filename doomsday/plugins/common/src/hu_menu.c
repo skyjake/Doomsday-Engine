@@ -132,8 +132,6 @@ void            M_ItemCounter(int option, void* data);
 void            M_SecretCounter(int option, void* data);
 #endif
 
-void M_DoSave(int slot);
-void M_DoLoad(int slot);
 static void M_QuickSave(void);
 static void M_QuickLoad(void);
 
@@ -213,35 +211,6 @@ short itemOn; // Menu item skull is on.
 short previtemOn; // Menu item skull was last on (for restoring when leaving widget control).
 short skullAnimCounter; // Skull animation counter.
 short whichSkull; // Which skull to draw.
-
-// Sounds played in the menu.
-int menusnds[] = {
-#if __JDOOM__ || __JDOOM64__
-    SFX_DORCLS,            // close menu
-    SFX_SWTCHX,            // open menu
-    SFX_SWTCHN,            // cancel
-    SFX_PSTOP,             // up/down
-    SFX_STNMOV,            // left/right
-    SFX_PISTOL,            // accept
-    SFX_OOF                // bad sound (eg can't autosave)
-#elif __JHERETIC__
-    SFX_SWITCH,
-    SFX_CHAT,
-    SFX_SWITCH,
-    SFX_SWITCH,
-    SFX_STNMOV,
-    SFX_CHAT,
-    SFX_CHAT
-#elif __JHEXEN__
-    SFX_PLATFORM_STOP,
-    SFX_DOOR_LIGHT_CLOSE,
-    SFX_FIGHTER_HAMMER_HITWALL,
-    SFX_PICKUP_KEY,
-    SFX_FIGHTER_HAMMER_HITWALL,
-    SFX_CHAT,
-    SFX_CHAT
-#endif
-};
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1988,7 +1957,7 @@ void Hu_MenuNavigatePage(menu_t* menu, int pageDelta)
     if(itemOn != oldOnItem)
     {
         // Make a sound, too.
-        S_LocalSound(menusnds[4], NULL);
+        S_LocalSound(SFX_MENU_NAV_RIGHT, NULL);
     }
 
     M_UpdateMenuVisibleItems();
@@ -2012,10 +1981,15 @@ void Hu_MenuCommand(menucommand_e cmd)
             menuTargetAlpha = 0;
         }
 
-        menuActive = false;
+        if(menuActive)
+        {
+            S_LocalSound(SFX_MENU_CLOSE, NULL);
+            menuActive = false;
 
-        // Disable the menu binding class
-        DD_Execute(true, "deactivatebcontext menu");
+            // Disable the menu binding class
+            DD_Execute(true, "deactivatebcontext menu");
+        }
+
         return;
     }
 
@@ -2023,7 +1997,7 @@ void Hu_MenuCommand(menucommand_e cmd)
     {
         if(cmd == MCMD_OPEN)
         {
-            S_LocalSound(menusnds[2], NULL);
+            S_LocalSound(SFX_MENU_OPEN, NULL);
 
             Con_Open(false);
 
@@ -2071,30 +2045,22 @@ void Hu_MenuCommand(menucommand_e cmd)
             if(item->type == ITT_LRFUNC && item->func != NULL)
             {
                 item->func(LEFT_DIR | item->option, item->data);
-                S_LocalSound(menusnds[4], NULL);
+                S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
             }
-            /*else
-            {
-                Hu_MenuNavigatePage(menu, -1);
-            }*/
             break;
 
         case MCMD_NAV_RIGHT:
             if(item->type == ITT_LRFUNC && item->func != NULL)
             {
                 item->func(RIGHT_DIR | item->option, item->data);
-                S_LocalSound(menusnds[4], NULL);
+                S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
             }
-            /*else
-            {
-                Hu_MenuNavigatePage(menu, +1);
-            }*/
             break;
 
         case MCMD_NAV_PAGEUP:
         case MCMD_NAV_PAGEDOWN:
             Hu_MenuNavigatePage(menu, cmd == MCMD_NAV_PAGEUP? -1 : +1);
-            S_LocalSound(menusnds[3], NULL);
+            S_LocalSound(SFX_MENU_NAV_UP, NULL);
             break;
 
         case MCMD_NAV_DOWN:
@@ -2108,7 +2074,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             } while(menu->items[itemOn].type == ITT_EMPTY &&
                     i++ < menu->itemCount);
             menu_color = 0;
-            S_LocalSound(menusnds[3], NULL);
+            S_LocalSound(SFX_MENU_NAV_UP, NULL);
             M_UpdateMenuVisibleItems();
             break;
 
@@ -2123,7 +2089,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             } while(menu->items[itemOn].type == ITT_EMPTY &&
                     i++ < menu->itemCount);
             menu_color = 0;
-            S_LocalSound(menusnds[3], NULL);
+            S_LocalSound(SFX_MENU_NAV_UP, NULL);
             M_UpdateMenuVisibleItems();
             break;
 
@@ -2132,13 +2098,13 @@ void Hu_MenuCommand(menucommand_e cmd)
             if(menu->prevMenu == MENU_NONE)
             {
                 menu->lastOn = itemOn;
-                S_LocalSound(menusnds[1], NULL);
+                S_LocalSound(SFX_MENU_CLOSE, NULL);
                 Hu_MenuCommand(MCMD_CLOSE);
             }
             else
             {
                 M_SetupNextMenu(menulist[menu->prevMenu]);
-                S_LocalSound(menusnds[2], NULL);
+                S_LocalSound(SFX_MENU_CANCEL, NULL);
             }
             break;
 
@@ -2148,7 +2114,7 @@ void Hu_MenuCommand(menucommand_e cmd)
                 if(item->func)
                 {
                     item->func(-1, item->data);
-                    S_LocalSound(menusnds[2], NULL);
+                    S_LocalSound(SFX_MENU_CANCEL, NULL);
                 }
             }
             break;
@@ -2157,7 +2123,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             if(item->type == ITT_SETMENU)
             {
                 M_SetupNextMenu(menulist[item->option]);
-                S_LocalSound(menusnds[5], NULL);
+                S_LocalSound(SFX_MENU_ACCEPT, NULL);
             }
             else if(item->func != NULL)
             {
@@ -2165,12 +2131,12 @@ void Hu_MenuCommand(menucommand_e cmd)
                 if(item->type == ITT_LRFUNC)
                 {
                     item->func(RIGHT_DIR | item->option, item->data);
-                    S_LocalSound(menusnds[5], NULL);
+                    S_LocalSound(SFX_MENU_CYCLE, NULL);
                 }
                 else if(item->type == ITT_EFUNC)
                 {
                     item->func(item->option, item->data);
-                    S_LocalSound(menusnds[5], NULL);
+                    S_LocalSound(SFX_MENU_CYCLE, NULL);
                 }
             }
             break;
@@ -2445,7 +2411,6 @@ void M_ToggleVar(int index, void* context)
     cvarname = (char*) context;
 
     DD_Executef(true, "toggle %s", cvarname);
-    S_LocalSound(menusnds[0], NULL);
 }
 
 void M_DrawTitle(char *text, int y)
@@ -2488,6 +2453,7 @@ void M_LoadSelect(int option, void* context)
 #endif
 
     menu->lastOn = option;
+
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -2860,26 +2826,10 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 #endif
 }
 
-/**
- * \fixme Hu_MenuResponder calls this when user is finished.
- * not in jHexen it doesn't...
- */
-void M_DoSave(int slot)
-{
-    G_SaveGame(slot, savegamestrings[slot]);
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // Picked a quicksave slot yet?
-    if(quickSaveSlot == -2)
-        quickSaveSlot = slot;
-}
-
 int M_QuickSaveResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
-    {
-        M_DoSave(quickSaveSlot);
-    }
+        G_SaveGame(quickSaveSlot, savegamestrings[quickSaveSlot]);
 
     return true;
 }
@@ -2895,12 +2845,14 @@ static void M_QuickSave(void)
     if(player->playerState == PST_DEAD ||
        Get(DD_PLAYBACK))
     {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
         return;
     }
 
     if(G_GetGameState() != GS_MAP)
     {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
         return;
     }
@@ -2917,11 +2869,12 @@ static void M_QuickSave(void)
 
     if(!cfg.askQuickSaveLoad)
     {
-        M_DoSave(quickSaveSlot);
-        S_LocalSound(menusnds[1], NULL);
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        G_SaveGame(quickSaveSlot, savegamestrings[quickSaveSlot]);
         return;
     }
 
+    S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
     Hu_MsgStart(MSG_YESNO, tempstring, M_QuickSaveResponse, NULL);
 }
 
@@ -2929,7 +2882,14 @@ int M_QuickLoadResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        M_LoadSelect(quickSaveSlot, NULL);
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        filename_t          name;
+
+        SV_GetSaveGameFileName(name, quickSaveSlot, FILENAME_T_MAXLEN);
+        G_LoadGame(name);
+#else
+        G_LoadGame(quickSaveSlot);
+#endif
     }
 
     return true;
@@ -2939,12 +2899,14 @@ static void M_QuickLoad(void)
 {
     if(IS_NETGAME)
     {
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, NULL);
         return;
     }
 
     if(quickSaveSlot < 0)
     {
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
         return;
     }
@@ -2953,11 +2915,19 @@ static void M_QuickLoad(void)
 
     if(!cfg.askQuickSaveLoad)
     {
-        M_LoadSelect(quickSaveSlot, NULL);
-        S_LocalSound(menusnds[1], NULL);
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        filename_t          name;
+
+        SV_GetSaveGameFileName(name, quickSaveSlot, FILENAME_T_MAXLEN);
+        G_LoadGame(name);
+#else
+        G_LoadGame(quickSaveSlot);
+#endif
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return;
     }
 
+    S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
     Hu_MsgStart(MSG_YESNO, tempstring, M_QuickLoadResponse, NULL);
 }
 
@@ -3715,7 +3685,6 @@ void M_InventorySlotMaxVis(int option, void* context)
     cvarname = (char*) context;
 
     Con_SetInteger(cvarname, val, false);
-    S_LocalSound(menusnds[0], NULL);
 }
 #endif
 
@@ -4190,7 +4159,7 @@ DEFCC(CCmdMenuAction)
             case 1: // Edit Field
                 ActiveEdit->firstVisible = 0;
                 ActiveEdit = NULL;
-                S_LocalSound(menusnds[0], NULL);
+                S_LocalSound(SFX_MENU_ACCEPT, NULL);
                 break;
 
             case 2: // Widget edit
@@ -4206,13 +4175,20 @@ DEFCC(CCmdMenuAction)
                 itemOn = previtemOn;
 
                 widgetEdit = false;
-                S_LocalSound(menusnds[5], NULL);
+                S_LocalSound(SFX_MENU_ACCEPT, NULL);
                 break;
 
             case 3: // Save string edit: Save
                 saveStringEnter = 0;
                 if(savegamestrings[saveSlot][0])
-                    M_DoSave(saveSlot);
+                {
+                    // Picked a quicksave slot yet?
+                    if(quickSaveSlot == -2)
+                        quickSaveSlot = saveSlot;
+
+                    G_SaveGame(saveSlot, savegamestrings[saveSlot]);
+                    Hu_MenuCommand(MCMD_CLOSEFAST);
+                }
                 break;
             }
             return true;
@@ -4238,7 +4214,7 @@ DEFCC(CCmdMenuAction)
                 // Restore the position of the skull
                 itemOn = previtemOn;
                 widgetEdit = false;
-                S_LocalSound(menusnds[1], NULL);
+                S_LocalSound(SFX_MENU_CANCEL, NULL);
                 break;
 
             case 3: // Save string edit: Del char
@@ -4259,7 +4235,6 @@ DEFCC(CCmdMenuAction)
             case 0: // Menu nav: Close menu
                 currentMenu->lastOn = itemOn;
                 Hu_MenuCommand(MCMD_CLOSE);
-                S_LocalSound(menusnds[1], NULL);
                 break;
 
             case 1: // Edit Field
@@ -4272,7 +4247,7 @@ DEFCC(CCmdMenuAction)
                 // Restore the position of the skull
                 itemOn = previtemOn;
                 widgetEdit = false;
-                S_LocalSound(menusnds[1], NULL);
+                S_LocalSound(SFX_MENU_CLOSE, NULL);
                 break;
 
             case 3: // Save string edit: Cancel
@@ -4304,21 +4279,18 @@ DEFCC(CCmdMenuAction)
             currentMenu = &ReadDef1;
 
         itemOn = 0;
-        //S_LocalSound(menusnds[2], NULL);
     }
     else
 #endif
         if(!stricmp(argv[0], "SaveGame"))
     {
         menuTime = 0;
-        //S_LocalSound(menusnds[2], NULL);
         M_SaveGame(0, NULL);
     }
     else if(!stricmp(argv[0], "LoadGame"))
     {
         Hu_MenuCommand(MCMD_OPEN);
         menuTime = 0;
-        //S_LocalSound(menusnds[2], NULL);
         M_LoadGame(0, NULL);
     }
     else if(!stricmp(argv[0], "SoundMenu"))
@@ -4327,17 +4299,14 @@ DEFCC(CCmdMenuAction)
         menuTime = 0;
         currentMenu = &Options2Def;
         itemOn = 0;
-        //S_LocalSound(menusnds[2], NULL);
     }
     else if(!stricmp(argv[0], "QuickSave"))
     {
-        S_LocalSound(menusnds[2], NULL);
         menuTime = 0;
         M_QuickSave();
     }
     else if(!stricmp(argv[0], "EndGame"))
     {
-        S_LocalSound(menusnds[2], NULL);
         menuTime = 0;
         M_EndGame(0, NULL);
     }
@@ -4345,11 +4314,9 @@ DEFCC(CCmdMenuAction)
     {
         menuTime = 0;
         M_ChangeMessages(0, NULL);
-        S_LocalSound(menusnds[2], NULL);
     }
     else if(!stricmp(argv[0], "QuickLoad"))
     {
-        S_LocalSound(menusnds[2], NULL);
         menuTime = 0;
         M_QuickLoad();
     }
@@ -4359,7 +4326,7 @@ DEFCC(CCmdMenuAction)
             DD_Execute(true, "quit!");
         else
         {
-            S_LocalSound(menusnds[2], NULL);
+            S_LocalSound(SFX_MENU_CANCEL, NULL);
             menuTime = 0;
             M_QuitDOOM(0, NULL);
         }

@@ -99,8 +99,6 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int menusnds[];
-
 static menuitem_t* ControlsItems;
 
 #if __JDOOM__ || __JDOOM64__
@@ -823,7 +821,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
         // We've finished the grab.
         grabbing = 0;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
-        S_LocalSound(menusnds[5], NULL);
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;
     }
 

@@ -50,6 +50,42 @@ typedef enum menucommand_e {
 // Not to be confused with the size of the description in the save file.
 #define HU_SAVESTRINGSIZE       (24)
 
+// Sounds played in the menu.
+#if __JDOOM__ || __JDOOM64__
+#define SFX_MENU_CLOSE      (SFX_SWTCHX)
+#define SFX_MENU_OPEN       (SFX_SWTCHN)
+#define SFX_MENU_CANCEL     (SFX_SWTCHN)
+#define SFX_MENU_NAV_UP     (SFX_PSTOP)
+#define SFX_MENU_NAV_RIGHT  (SFX_PSTOP)
+#define SFX_MENU_ACCEPT     (SFX_PISTOL)
+#define SFX_MENU_CYCLE      (SFX_PISTOL) // Cycle available options.
+#define SFX_MENU_SLIDER_MOVE (SFX_STNMOV)
+#define SFX_QUICKSAVE_PROMPT (SFX_SWTCHN)
+#define SFX_QUICKLOAD_PROMPT (SFX_SWTCHN)
+#elif __JHERETIC__
+#define SFX_MENU_CLOSE      (SFX_SWITCH)
+#define SFX_MENU_OPEN       (SFX_CHAT)
+#define SFX_MENU_CANCEL     (SFX_SWITCH)
+#define SFX_MENU_NAV_UP     (SFX_SWITCH)
+#define SFX_MENU_NAV_RIGHT  (SFX_SWITCH)
+#define SFX_MENU_ACCEPT     (SFX_CHAT)
+#define SFX_MENU_CYCLE      (SFX_SWITCH) // Cycle available options.
+#define SFX_MENU_SLIDER_MOVE (SFX_STNMOV)
+#define SFX_QUICKSAVE_PROMPT (SFX_CHAT)
+#define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
+#elif __JHEXEN__
+#define SFX_MENU_CLOSE      (SFX_DOOR_LIGHT_CLOSE)
+#define SFX_MENU_OPEN       (SFX_DOOR_LIGHT_CLOSE)
+#define SFX_MENU_CANCEL     (SFX_PICKUP_KEY)
+#define SFX_MENU_NAV_UP     (SFX_FIGHTER_HAMMER_HITWALL)
+#define SFX_MENU_NAV_RIGHT  (SFX_FIGHTER_HAMMER_HITWALL)
+#define SFX_MENU_ACCEPT     (SFX_PLATFORM_STOP)
+#define SFX_MENU_CYCLE      (SFX_CHAT) // Cycle available options.
+#define SFX_MENU_SLIDER_MOVE (SFX_PICKUP_KEY)
+#define SFX_QUICKSAVE_PROMPT (SFX_CHAT)
+#define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
+#endif
+
 void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 

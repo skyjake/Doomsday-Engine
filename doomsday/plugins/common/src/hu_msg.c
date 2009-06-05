@@ -270,11 +270,11 @@ void Hu_MsgTicker(timespan_t time)
     if(!messageToPrint || awaitingResponse)
         return;
 
-    if(msgType != MSG_ANYKEY && msgCallback)
-        msgCallback(messageResponse, msgContext);
-
     // We can now stop the message.
     stopMessage();
+
+    if(msgType != MSG_ANYKEY && msgCallback)
+        msgCallback(messageResponse, msgContext);
 }
 
 /**

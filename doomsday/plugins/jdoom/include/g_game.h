@@ -79,7 +79,7 @@ void            G_DeferedPlayDemo(char* demo);
 
 // Can be called by the startup code or Hu_MenuResponder,
 // calls P_SetupMap or W_EnterWorld.
-void            G_LoadGame(char* name);
+void            G_LoadGame(const char* name);
 
 void            G_DoLoadGame(void);
 
