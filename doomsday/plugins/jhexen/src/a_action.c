@@ -535,7 +535,8 @@ void C_DECL A_PoisonBagInit(mobj_t* actor)
     if(!mo)
         return;
 
-    mo->mom[MX] = 1; // Missile objects must move to impact other objects.
+    // Missile objects must move to impact other objects.
+    mo->mom[MX] = FIX2FLT(FRACUNIT);
     mo->special1 = 24 + (P_Random() & 7);
     mo->special2 = 0;
     mo->target = actor->target;
