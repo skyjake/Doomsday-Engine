@@ -2171,10 +2171,13 @@ void C_DECL A_ESound(mobj_t *mo)
     S_StartSound(sound, mo);
 }
 
-void C_DECL A_SpawnTeleGlitter(mobj_t *actor)
+void C_DECL A_SpawnTeleGlitter(mobj_t* actor)
 {
     mobj_t*             mo;
-return;
+
+    if(!actor)
+        return;
+
     mo = P_SpawnMobj3f(MT_TELEGLITTER,
                        actor->pos[VX] + ((P_Random() & 31) - 16),
                        actor->pos[VY] + ((P_Random() & 31) - 16),
@@ -2185,10 +2188,13 @@ return;
     mo->special3 = 1000;
 }
 
-void C_DECL A_SpawnTeleGlitter2(mobj_t *actor)
+void C_DECL A_SpawnTeleGlitter2(mobj_t* actor)
 {
     mobj_t*             mo;
-return;
+
+    if(!actor)
+        return;
+
     mo = P_SpawnMobj3f(MT_TELEGLITTER2,
                        actor->pos[VX] + ((P_Random() & 31) - 16),
                        actor->pos[VY] + ((P_Random() & 31) - 16),
