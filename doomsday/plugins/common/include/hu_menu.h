@@ -63,13 +63,13 @@ typedef enum menucommand_e {
 #define SFX_QUICKSAVE_PROMPT (SFX_SWTCHN)
 #define SFX_QUICKLOAD_PROMPT (SFX_SWTCHN)
 #elif __JHERETIC__
-#define SFX_MENU_CLOSE      (SFX_SWITCH)
-#define SFX_MENU_OPEN       (SFX_CHAT)
+#define SFX_MENU_CLOSE      (SFX_DORCLS)
+#define SFX_MENU_OPEN       (SFX_SWITCH)
 #define SFX_MENU_CANCEL     (SFX_SWITCH)
 #define SFX_MENU_NAV_UP     (SFX_SWITCH)
 #define SFX_MENU_NAV_RIGHT  (SFX_SWITCH)
-#define SFX_MENU_ACCEPT     (SFX_CHAT)
-#define SFX_MENU_CYCLE      (SFX_SWITCH) // Cycle available options.
+#define SFX_MENU_ACCEPT     (SFX_DORCLS)
+#define SFX_MENU_CYCLE      (SFX_DORCLS) // Cycle available options.
 #define SFX_MENU_SLIDER_MOVE (SFX_STNMOV)
 #define SFX_QUICKSAVE_PROMPT (SFX_CHAT)
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
