@@ -473,6 +473,9 @@ void R_AddClassDataPath(resourceclass_t resClass, const char* addPath,
 {
     resclass_t*         info;
 
+    if(!addPath || !addPath[0] || !stricmp(addPath, DIR_SEP_STR))
+        return;
+
     info = &resClasses[resClass];
 
     // Compile the new search path.
