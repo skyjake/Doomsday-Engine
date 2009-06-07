@@ -2480,9 +2480,6 @@ static int doTexReset(void* parm)
 {
     boolean             usingBusyMode = *((boolean*) parm);
 
-    GL_ClearTextureMemory();
-    Con_Printf("All DGL textures deleted.\n");
-
     if(usingBusyMode)
         Con_SetProgress(100);
 
@@ -2503,6 +2500,9 @@ void GL_TexReset(void)
 {
     boolean             useBusyMode = !Con_IsBusy();
 
+    GL_ClearTextureMemory();
+    Con_Printf("All DGL textures deleted.\n");
+    
     if(useBusyMode)
     {
         Con_InitProgress(200);
