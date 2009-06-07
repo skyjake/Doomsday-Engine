@@ -446,7 +446,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
             (i / (float)edgeCount) + PI/2;
 
         glTexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
-        glVertex2f(x + cos(angle)*radius, y + sin(angle)*radius);
+        glVertex2f(x + cos(angle)*radius*1.105f, y + sin(angle)*radius*1.105f);
     }
     glEnd();
 
