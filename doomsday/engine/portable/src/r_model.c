@@ -427,7 +427,7 @@ static void R_RegisterModelSkin(model_t* mdl, int index)
     memset(buf, 0, sizeof(buf));
     memcpy(buf, mdl->skins[index].name, 64);
 
-    mdl->skins[index].id = R_RegisterSkin(mdl->fileName, buf,
+    mdl->skins[index].id = R_RegisterSkin(buf, mdl->fileName,
         mdl->skins[index].name, false, FILENAME_T_MAXLEN);
 
     if(mdl->skins[index].id < 0)
@@ -1016,8 +1016,8 @@ static void setupModel(ded_model_t *def)
             sub->offset[k] = subdef->offset[k];
 
         sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinySkin = R_RegisterSkin(subdef->filename.path,
-            subdef->shinySkin, NULL, true, DED_PATH_LEN);
+        sub->shinySkin = R_RegisterSkin(subdef->shinySkin, subdef->filename.path,
+            NULL, true, DED_PATH_LEN);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)

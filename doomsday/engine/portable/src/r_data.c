@@ -1611,8 +1611,8 @@ void R_ExpandSkinName(char* expanded, const char* skin,
 /**
  * Registers a new skin name.
  */
-uint R_RegisterSkin(char* fullpath, const char* skin, const char* modelfn,
-                    boolean isShinySkin, size_t len)
+uint R_RegisterSkin(const char* skin, const char* modelfn, char* fullpath, 
+                    boolean isShinySkin, size_t fullpathlen)
 {
     const char*         formats[3] = { ".png", ".tga", ".pcx" };
     filename_t          buf, fn;
@@ -1637,7 +1637,8 @@ uint R_RegisterSkin(char* fullpath, const char* skin, const char* modelfn,
     for(i = 0; i < 3 && idx == 0; ++i)
     {
         strncpy(ext, formats[i], FILENAME_T_MAXLEN);
-        R_ExpandSkinName(fullpath ? fullpath : buf, fn, modelfn, len);
+        R_ExpandSkinName(fullpath ? fullpath : buf, fn, modelfn, 
+                         fullpath? fullpathlen : FILENAME_T_MAXLEN);
 
         idx = R_CreateSkinTex(fullpath ? fullpath : buf, isShinySkin);
     }
