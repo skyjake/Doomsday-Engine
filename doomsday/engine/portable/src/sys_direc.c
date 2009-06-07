@@ -122,7 +122,13 @@ void Dir_MakeDir(const char* path, directory_t* dir)
 void Dir_FileDir(const char* str, directory_t* dir)
 {
     filename_t          temp, pth;
-
+    
+    if(!str)
+    {
+        // Nothing to do.
+        return;
+    }
+    
     M_TranslatePath(pth, str, FILENAME_T_MAXLEN);
 
     _fullpath(temp, pth, FILENAME_T_MAXLEN);
@@ -213,29 +219,32 @@ void Dir_FixSlashes(char* path, size_t len)
  * If the path begins with a tilde, replace it with either the value
  * of the HOME environment variable or a user's home directory (from
  * passwd).
+ *
+ * @param str  Path to expand. Overwritten by the result.
+ * @param len  Maximum length of str.
  */
-void Dir_ExpandHome(char* str)
+void Dir_ExpandHome(char* str, size_t len)
 {
-    char            buf[PATH_MAX];
+    ddstring_t      *buf = NULL;
 
     if(str[0] != '~')
         return;
 
-    memset(buf, 0, sizeof(buf));
+    buf = Str_New();
 
     if(str[1] == '/')
     {
         // Replace it with the HOME environment variable.
-        strncpy(buf, getenv("HOME"));
-        if(LAST_CHAR(buf) != '/')
-            strcat(buf, "/");
+        Str_Set(buf, getenv("HOME"));
+        if(Str_RAt(buf, 0) != '/')
+            Str_Append(buf, "/");
 
         // Append the rest of the original path.
-        strcat(buf, str + 2);
+        Str_Append(buf, str + 2);
     }
     else
     {
-        char        userName[PATH_MAX], *end = NULL;
+        char userName[PATH_MAX], *end = NULL;
         struct passwd *pw;
 
         end = strchr(str + 1, '/');
@@ -244,16 +253,19 @@ void Dir_ExpandHome(char* str)
 
         if((pw = getpwnam(userName)) != NULL)
         {
-            strcpy(buf, pw->pw_dir);
-            if(LAST_CHAR(buf) != '/')
-                strcat(buf, "/");
+            Str_Set(buf, pw->pw_dir);
+            if(Str_RAt(buf, 0) != '/')
+                Str_Append(buf, "/");
         }
 
-        strcat(buf, str + 1);
+        Str_Append(buf, str + 1);
     }
 
     // Replace the original.
-    strcpy(str, buf);
+    str[len - 1] = 0;
+    strncpy(str, Str_Text(buf), len - 1);
+
+    Str_Free(buf);
 }
 #endif
 

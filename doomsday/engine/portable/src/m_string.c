@@ -395,3 +395,37 @@ const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
     // Skip past the delimiter.
     return src + 1;
 }
+
+/**
+ * Retrieves a character in the string.
+ *
+ * @param str    String to get the character from.
+ * @param index  Index of the character.
+ *
+ * @return The character at @c index, or 0 if the index is not in range.
+ */
+char Str_At(ddstring_t* str, int index)
+{
+    if(index < 0 || index >= str->length)
+    {
+        return 0;    
+    }
+    return str->str[index];
+}
+
+/**
+ * Retrieves a character in the string. Indices start from the end of the string.
+ *
+ * @param str    String to get the character from.
+ * @param reverseIndex  Index of the character, where 0 is the last character of the string.
+ *
+ * @return The character at @c index, or 0 if the index is not in range.
+ */
+char Str_RAt(ddstring_t* str, int reverseIndex)
+{
+    if(reverseIndex < 0 || reverseIndex >= str->length)
+    {
+        return 0;    
+    }
+    return str->str[str->length - 1 - reverseIndex];
+}

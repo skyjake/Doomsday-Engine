@@ -114,11 +114,11 @@ static void determineGlobalPaths(application_t *app)
     if(ArgCheckWith("-basedir", 1))
     {
         strcpy(ddBasePath, ArgNext());
-        Dir_ValidDir(ddBasePath);
+        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
     }
 
-    Dir_MakeAbsolute(ddBasePath);
-    Dir_ValidDir(ddBasePath);
+    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
 
     printf("determineGlobalPaths: Base path = %s\n", ddBasePath);
 }
