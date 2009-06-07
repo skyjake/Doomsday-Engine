@@ -617,6 +617,9 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     boolean         changeWindowDimensions = false;
     boolean         inControlPanel = false;
 
+    if(novideo)
+        return true;
+    
     if(uFlags & DDSW_NOCHANGES)
         return true; // Nothing to do.
 
@@ -709,7 +712,7 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     // Do NOT modify ddwindow_t properties after this point.
 
     // Do we need a new GL context due to changes to the window?
-    if(!novideo && newGLContext)
+    if(newGLContext)
     {   // Maybe requires a renderer restart.
 extern boolean usingFog;
 
@@ -727,6 +730,7 @@ extern boolean usingFog;
             hadFog = usingFog;
             GL_TotalReset();
             gx.UpdateState(DD_RENDER_RESTART_PRE);
+            UI_ClearTextures();
         }
 
         if(createContext(window->width, window->height, window->normal.bpp,
@@ -746,7 +750,13 @@ extern boolean usingFog;
             if(hadFog)
                 GL_UseFog(true);
             gx.UpdateState(DD_RENDER_RESTART_POST);
+            
+            UI_LoadTextures();
         }
+    }
+    else
+    {
+        Sys_ChangeVideoMode(window->width, window->height, window->normal.bpp);
     }
 
     // If the window dimensions have changed, update any sub-systems
