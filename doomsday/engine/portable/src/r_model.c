@@ -422,18 +422,13 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
 
 static void R_RegisterModelSkin(model_t* mdl, int index)
 {
-    filename_t          buf;
-
-    memset(buf, 0, sizeof(buf));
-    memcpy(buf, mdl->skins[index].name, 64);
-
-    mdl->skins[index].id = R_RegisterSkin(buf, mdl->fileName,
-        mdl->skins[index].name, false, FILENAME_T_MAXLEN);
+    mdl->skins[index].id = R_RegisterSkin(NULL, mdl->skins[index].name,
+        mdl->fileName, false, FILENAME_T_MAXLEN);
 
     if(mdl->skins[index].id < 0)
-    {
-        // Not found!
-        VERBOSE(Con_Printf("  %s (#%i) not found.\n", buf, index));
+    {   // Not found!
+        VERBOSE(Con_Printf("  %s (#%i) not found.\n",
+                           mdl->skins[index].name, index));
     }
 }
 
@@ -1016,8 +1011,8 @@ static void setupModel(ded_model_t *def)
             sub->offset[k] = subdef->offset[k];
 
         sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinySkin = R_RegisterSkin(subdef->shinySkin, subdef->filename.path,
-            NULL, true, DED_PATH_LEN);
+        sub->shinySkin = R_RegisterSkin(subdef->filename.path,
+            subdef->shinySkin, NULL, true, DED_PATH_LEN);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)

@@ -316,8 +316,9 @@ doomtexturedef_t* R_GetDoomTextureDef(int num);
 
 uint            R_GetSkinNumForName(const char* path);
 const skinname_t* R_GetSkinNameByIndex(uint id);
-uint            R_RegisterSkin(const char* skin, const char* modelfn, char* fullpath, 
-                               boolean isShinySkin, size_t fullpathlen);
+uint            R_RegisterSkin(char* fullpath, const char* skin,
+                               const char* modelfn, boolean isShinySkin,
+                               size_t len);
 void            R_DestroySkins(void); // Called at shutdown.
 
 void            R_InitAnimGroup(ded_group_t* def);
