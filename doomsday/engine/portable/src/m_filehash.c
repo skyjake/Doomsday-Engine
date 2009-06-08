@@ -438,7 +438,7 @@ filehash_t* FileHash_Create(const char* pathList)
         {
             // Convert all slashes to backslashes, so things are compatible
             // with the sys_file routines.
-            Dir_FixSlashes(path, FILENAME_T_MAXLEN);
+            Dir_FixSlashes(path, strlen(path));
             addDirectory(fh, path); // Add this path to the hash.
         } while((path = strtok(NULL, ";"))); // Get the next path.
 
