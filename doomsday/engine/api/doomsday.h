@@ -422,12 +422,17 @@ extern          "C" {
     int             R_CreateAnimGroup(int flags);
     void            R_AddToAnimGroup(int groupNum, materialnum_t num,
                                      int tics, int randomTics);
-    void            R_PalIdxToRGB(float* rgb, int idx,
-                                  boolean correctGamma);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2,
                                     float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
+
+    colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
+                                          const byte* data, size_t num);
+    colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
+    const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
+    void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3],
+                                          int idx, boolean correctGamma);
 
     // Renderer.
     void            Rend_Reset(void);

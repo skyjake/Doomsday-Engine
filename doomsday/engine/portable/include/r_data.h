@@ -36,8 +36,6 @@
 #include "def_data.h"
 #include "r_extres.h"
 
-#define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
-
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
@@ -301,6 +299,16 @@ void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 
+colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
+                                      const byte* data, ushort num);
+const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
+colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
+
+DGLuint         R_GetColorPalette(colorpaletteid_t id);
+void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3],
+                                      int idx, boolean correctGamma);
+boolean         R_SetDefaultColorPalette(colorpaletteid_t id);
+
 //boolean         R_UpdateSubSector(struct subsector_t* ssec, boolean forceUpdate);
 boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 boolean         R_UpdateLinedef(struct linedef_s* line, boolean forceUpdate);
@@ -322,10 +330,6 @@ uint            R_RegisterSkin(char* fullpath, const char* skin,
 void            R_DestroySkins(void); // Called at shutdown.
 
 void            R_InitAnimGroup(ded_group_t* def);
-
-void            R_LoadPalette(void);
-byte*           R_GetPalette(void);
-byte*           R_GetPal18to8(void);
 
 detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
 detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);

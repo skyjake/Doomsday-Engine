@@ -68,43 +68,6 @@
 // CODE --------------------------------------------------------------------
 
 /**
- * Creates the translation tables to map the green color ramp to gray,
- * brown, red.
- *
- * \note Assumes a given structure of the PLAYPAL. Could be read from a
- * lump instead?
- */
-static void initTranslation(void)
-{
-    byte               *translationtables = (byte *)
-                    DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-    int                 i;
-
-    // translate just the 16 green colors
-    for(i = 0; i < 256; ++i)
-    {
-        if(i >= 0x70 && i <= 0x7f)
-        {
-            // map green ramp to gray, brown, red
-            translationtables[i] = 0x60 + (i & 0xf);
-            translationtables[i + 256] = 0x40 + (i & 0xf);
-            translationtables[i + 512] = 0x20 + (i & 0xf);
-        }
-        else
-        {
-            // Keep all other colors as is.
-            translationtables[i] = translationtables[i + 256] =
-                translationtables[i + 512] = i;
-        }
-    }
-}
-
-void R_InitRefresh(void)
-{
-    initTranslation();
-}
-
-/**
  * Draws a special filter over the screen (e.g. the inversing filter used
  * when in god mode).
  */
@@ -546,7 +509,8 @@ void P_SetDoomsdayFlags(mobj_t *mo)
        (mo->flags & MF_FLOAT))
         mo->ddFlags |= DDMF_VIEWALIGN;
 
-    mo->ddFlags |= (mo->flags & MF_TRANSLATION);
+    if(mo->flags & MF_TRANSLATION)
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
 }
 
 /**

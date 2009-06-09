@@ -473,21 +473,12 @@ void DrawPlayerSetupMenu(void)
 
     if(useColor == numColors)
         useColor = menuTime / 5 % numColors;
+#if __JHEXEN__
+    R_GetTranslation(plrClass, useColor, &tclass, &useColor);
+#endif
 
     // Draw the color selection as a random player frame.
     R_GetSpriteInfo(sprites[plrClass], CurrentPlrFrame, &sprInfo);
-
-#if __JHEXEN__
-    tclass = 1;
-    if(plrClass == PCLASS_FIGHTER)
-    {
-        // Fighter's colors are a bit different.
-        if(useColor == 0)
-            useColor = 2;
-        else if(useColor == 2)
-            useColor = 0;
-    }
-#endif
 
     x = 162;
 #if __JDOOM__ || __JDOOM64__

@@ -348,7 +348,7 @@ static void drawChain(hudstate_t* hud)
     DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    R_PalIdxToRGB(rgb, theirColors[gemNum], false);
+    R_GetColorPaletteRGBf(0, rgb, theirColors[gemNum], false);
     DGL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgb[0], rgb[1],
                  rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
 

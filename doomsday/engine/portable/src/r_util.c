@@ -416,41 +416,6 @@ void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 }
 
 /**
- * Given a color palette index, calculate the equivilent RGB color.
- *
- * @param rgb           Final color will be written back here.
- * @param idx           Color Palette, color index.
- * @param correctGamma  @c TRUE if the current gamma ramp should be applied.
- */
-void R_PalIdxToRGB(float* rgb, int idx, boolean correctGamma)
-{
-    if(rgb)
-    {
-        if(!(idx < 0))
-        {
-            byte*               pal = R_GetPalette();
-
-            idx = MINMAX_OF(0, idx, 255) * 3;
-            if(correctGamma)
-            {
-                rgb[0] = gammaTable[pal[idx]] * reciprocal255;
-                rgb[1] = gammaTable[pal[idx + 1]] * reciprocal255;
-                rgb[2] = gammaTable[pal[idx + 2]] * reciprocal255;
-            }
-            else
-            {
-                rgb[0] = pal[idx] * reciprocal255;
-                rgb[1] = pal[idx + 1] * reciprocal255;
-                rgb[2] = pal[idx + 2] * reciprocal255;
-            }
-            return;
-        }
-
-        rgb[CR] = rgb[CG] = rgb[CB] = 0;
-    }
-}
-
-/**
  * Conversion from HSV to RGB.  Everything is [0,1].
  */
 void R_HSVToRGB(float* rgb, float h, float s, float v)

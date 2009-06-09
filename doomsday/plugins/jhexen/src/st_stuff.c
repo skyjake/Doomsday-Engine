@@ -461,9 +461,21 @@ static void drawChain(hudstate_t* hud)
     healthPos = MINMAX_OF(0, hud->healthMarker / 100.f, 100);
 
     if(!IS_NETGAME)
+    {
         pColor = 1; // Always use the red life gem (the second gem).
+    }
     else
+    {
         pColor = cfg.playerColor[player];
+
+        if(pClass == PCLASS_FIGHTER)
+        {
+            if(pColor == 0)
+                pColor = 2;
+            else if(pColor == 2)
+                pColor = 0;
+        }
+    }
 
     gemglow = healthPos;
 
@@ -529,7 +541,7 @@ static void drawChain(hudstate_t* hud)
     DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    R_PalIdxToRGB(rgb, theirColors[pColor], false);
+    R_GetColorPaletteRGBf(0, rgb, theirColors[pColor], false);
     DGL_DrawRect(x + gemXOffset + 23, 193 - 6, 41, 24, rgb[0], rgb[1],
                  rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
 

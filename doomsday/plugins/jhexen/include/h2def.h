@@ -348,7 +348,6 @@ void            H2_Main(void);
 void            G_IdentifyVersion(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
-void            R_InitRefresh(void);
 
 int             G_GetInteger(int id);
 void*           G_GetVariable(int id);

@@ -34,8 +34,6 @@
 
 #include "p_mobj.h"
 
-void            R_InitRefresh(void);
-
 void            D_Display(int layer);
 void            D_Display2(void);
 

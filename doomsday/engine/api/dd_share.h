@@ -769,14 +769,15 @@ typedef struct linknode_s {
 #define DDMF_NOBLOCKMAP     0x00000080
 #define DDMF_LIGHTSCALE     0x00000180 // Light scale (0: full, 3: 1/4).
 #define DDMF_LIGHTOFFSET    0x0000f000 // How to offset light (along Z axis).
-#define DDMF_RESERVED       0x00030000 // Don't touch these!! (translation class).
+//#define DDMF_RESERVED       0x00030000 // Don't touch these!! (translation class).
 #define DDMF_BOB            0x00040000 // Bob the Z coord up and down.
 #define DDMF_LOWGRAVITY     0x00080000 // 1/8th gravity (predict).
 #define DDMF_MISSILE        0x00100000 // Client removes mobj upon impact.
 #define DDMF_FLY            0x00200000 // Flying object (doesn't matter if airborne).
 #define DDMF_NOGRAVITY      0x00400000 // Isn't affected by gravity (predict).
 #define DDMF_ALWAYSLIT      0x00800000 // Always process DL even if hidden.
-#define DDMF_TRANSLATION    0x1c000000 // Use a translation table (>>MF_TRANSHIFT).
+
+
 #define DDMF_SOLID          0x20000000 // Solid on client side.
 #define DDMF_LOCAL          0x40000000
 #define DDMF_REMOTE         0x80000000 // This mobj is really on the server.
@@ -784,8 +785,6 @@ typedef struct linknode_s {
 // Clear masks (flags the Game DLL is not allowed to touch).
 #define DDMF_CLEAR_MASK     0xc0000000
 
-#define DDMF_TRANSSHIFT     26 // table for player colormaps
-#define DDMF_CLASSTRSHIFT   16
 #define DDMF_LIGHTSCALESHIFT 7
 #define DDMF_LIGHTOFFSETSHIFT 12
 
@@ -836,7 +835,8 @@ enum { MX, MY, MZ }; // Momentum axis indices.
     byte            translucency; /* default = 0 = opaque */ \
     short           visTarget; /* -1 = mobj is becoming less visible, */ \
                                /* 0 = no change, 2= mobj is becoming more visible */ \
-    int             reactionTime; /* if not zero, freeze controls */
+    int             reactionTime; /* if not zero, freeze controls */ \
+    int             tmap, tclass;
 
     // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
 #define DD_BASE_POLYOBJ_ELEMENTS() \
@@ -992,6 +992,8 @@ typedef struct {
     int             height;
     int             numFrames; // Number of frames the sprite has.
 } spriteinfo_t;
+
+typedef unsigned int colorpaletteid_t;
 
 //------------------------------------------------------------------------
 //

@@ -120,7 +120,7 @@ extern void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                          struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                          float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                          vlight_t* lightList, uint numLights,
-                                         int id, int selector, subsector_t* ssec, int mobjDDFlags,
+                                         int id, int selector, subsector_t* ssec, int mobjDDFlags, int tmap,
                                          boolean viewAlign, boolean fullBright,
                                          boolean alwaysInterpolate);
 extern void getLightingParams(float x, float y, float z, subsector_t* ssec,
@@ -188,7 +188,7 @@ static void projectDecoration(decorsource_t* src)
                                      src->data.model.mf, NULL, 0,
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB],
                                      src->fadeMul, lightList, numLights, 0, 0, src->subsector,
-                                     0, false, levelFullBright, true);
+                                     0, 0, false, levelFullBright, true);
     }
 
     vis->lumIdx = src->lumIdx;

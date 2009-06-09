@@ -1025,7 +1025,7 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg,
             continue;
 #endif
 
-        R_PalIdxToRGB(rgb, (!IS_NETGAME? WHITE :
+        R_GetColorPaletteRGBf(0, rgb, (!IS_NETGAME? WHITE :
             their_colors[cfg.playerColor[i]]), false);
         alpha = cfg.automapLineAlpha;
 #if !__JHEXEN__
@@ -1095,7 +1095,7 @@ static boolean renderThing(mobj_t* mo, void* context)
         {   // This mobj is indeed a key.
             float               rgb[4];
 
-            R_PalIdxToRGB(rgb, keyColor, false);
+            R_GetColorPaletteRGBf(0, rgb, keyColor, false);
 
             /* $unifiedangles */
             renderLineCharacter(AM_GetVectorGraph(VG_KEYSQUARE),

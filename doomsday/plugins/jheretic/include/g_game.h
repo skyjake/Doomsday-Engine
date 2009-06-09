@@ -55,6 +55,7 @@ extern int gsvMapMusic;
 void            G_Register(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
+void            R_InitRefresh(void);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 

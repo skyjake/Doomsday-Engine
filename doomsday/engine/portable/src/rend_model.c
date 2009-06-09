@@ -571,7 +571,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
     // Need translation?
     if(subFlags & MFF_SKINTRANS)
-        useSkin = (params->flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
+        useSkin = params->tmap;
 
     // Clamp interpolation.
     if(inter < 0)

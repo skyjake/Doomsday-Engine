@@ -64,7 +64,7 @@ int viewwidth, viewheight, viewwindowx, viewwindowy;
 // View border width.
 int bwidth;
 
-byte*   translationTables;
+byte* translationTables;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

@@ -32,6 +32,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "p_mobj.h"
+
 extern int debugSound; // debug flag for displaying sound info
 
 extern int gameEpisode;
@@ -46,6 +48,11 @@ extern int leavePosition;
 extern boolean secretExit;
 
 extern int gsvMapMusic;
+
+void            R_InitRefresh(void);
+void            R_GetTranslation(int plrClass, int plrColor, int* tclass,
+                                 int* tmap);
+void            R_SetTranslation(mobj_t* mo);
 
 void            G_PrintMapList(void);
 

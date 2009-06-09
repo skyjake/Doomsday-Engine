@@ -73,41 +73,6 @@ extern const float defFontRGB2[];
 // CODE --------------------------------------------------------------------
 
 /**
- * Creates the translation tables to map the green color ramp to gray,
- * brown, red.
- *
- * \note Assumes a given structure of the PLAYPAL. Could be read from a
- * lump instead.
- */
-static void initTranslation(void)
-{
-    int                 i;
-    byte*               translationtables =
-        (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-
-    // Fill out the translation tables.
-    for(i = 0; i < 256; ++i)
-    {
-        if(i >= 225 && i <= 240)
-        {
-            translationtables[i] = 114 + (i - 225); // yellow
-            translationtables[i + 256] = 145 + (i - 225); // red
-            translationtables[i + 512] = 190 + (i - 225); // blue
-        }
-        else
-        {
-            translationtables[i] = translationtables[i + 256] =
-                translationtables[i + 512] = i;
-        }
-    }
-}
-
-void R_InitRefresh(void)
-{
-    initTranslation();
-}
-
-/**
  * Draws a special filter over the screen.
  */
 void R_DrawSpecialFilter(int pnum)
@@ -502,7 +467,8 @@ void R_SetDoomsdayFlags(mobj_t* mo)
        ((mo->flags & MF_MISSILE) && !(mo->flags & MF_VIEWALIGN)))
         mo->ddFlags |= DDMF_VIEWALIGN;
 
-    mo->ddFlags |= (mo->flags & MF_TRANSLATION);
+    if(mo->flags & MF_TRANSLATION)
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
 }
 
 /**

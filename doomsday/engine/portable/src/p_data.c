@@ -863,7 +863,7 @@ gamemapobj_t* P_GetGameMapObj(gameobjdata_t *moData, gamemapobjdef_t *def,
 
     // It is a new gamemapobj.
     objList->objs =
-        M_Realloc(objList->objs, ++objList->num * sizeof(*objList->objs));
+        M_Realloc(objList->objs, ++objList->num * sizeof(gamemapobj_t*));
 
     gmo = objList->objs[objList->num - 1] = M_Malloc(sizeof(*gmo));
     gmo->elmIdx = elmIdx;

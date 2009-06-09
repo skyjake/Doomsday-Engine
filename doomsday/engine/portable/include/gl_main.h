@@ -93,17 +93,34 @@ void            GL_DeleteLists(DGLuint list, int range);
 void            GL_InitArrays(void);
 void            GL_EnableArrays(int vertices, int colors, int coords);
 void            GL_DisableArrays(int vertices, int colors, int coords);
-void            GL_Arrays(void* vertices, void* colors, int numCoords, void** coords,
-                           int lock);
+void            GL_Arrays(void* vertices, void* colors, int numCoords,
+                          void** coords, int lock);
 void            GL_UnlockArrays(void);
 void            GL_ArrayElement(int index);
-void            GL_DrawElements(dglprimtype_t type, int count, const uint* indices);
-boolean         GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void* buffer);
-boolean         GL_TexImage(dgltexformat_t format, int width, int height, int genMips, void* data);
+void            GL_DrawElements(dglprimtype_t type, int count,
+                                const uint* indices);
+boolean         GL_Grab(int x, int y, int width, int height,
+                        dgltexformat_t format, void* buffer);
+boolean         GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
+                            int height, int genMips, void* data);
 int             GL_GetTexAnisoMul(int level);
 
-void            GL_InitPalette(void);
-void            GL_Palette(dgltexformat_t format, void* data);
+DGLuint         GL_CreateColorPalette(const int compOrder[3],
+                                      const byte compSize[3],
+                                      const byte* data, ushort num);
+void            GL_DeleteColorPalettes(DGLsizei n, const DGLuint* palettes);
+
+void            GL_GetColorPaletteRGB(DGLuint id, DGLubyte rgb[3],
+                                      ushort idx);
+boolean         GL_PalettizeImage(byte* out, int outformat, DGLuint palid,
+                                  boolean gammaCorrect, const byte* in,
+                                  int informat, int width, int height);
+boolean         GL_QuantizeImageToPalette(byte* out, int outformat,
+                                          DGLuint palid, const byte* in,
+                                          int informat, int width,
+                                          int height);
+void            GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid,
+                                           int width, int height);
 
 // Returns a pointer to a copy of the screen. The pointer must be
 // deallocated by the caller.

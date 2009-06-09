@@ -69,11 +69,6 @@ boolean setsizeneeded;
 
 // CODE --------------------------------------------------------------------
 
-void R_InitRefresh(void)
-{
-    // Nothing to do.
-}
-
 /**
  * Don't really change anything here, because i might be in the middle of
  * a refresh.  The change will take effect next refresh.
@@ -449,7 +444,6 @@ boolean R_GetFilterColor(float rgba[4], int filter)
 void R_SetAllDoomsdayFlags(void)
 {
     uint                i;
-    int                 Class;
     mobj_t*             mo;
 
     // Only visible things are in the sector thinglists, so this is good.
@@ -504,26 +498,7 @@ void R_SetAllDoomsdayFlags(void)
                                         !(mo->flags & MF_VIEWALIGN)))
                 mo->ddFlags |= DDMF_VIEWALIGN;
 
-            mo->ddFlags |= mo->flags & MF_TRANSLATION;
-
-            // Which translation table to use?
-            if(mo->flags & MF_TRANSLATION)
-            {
-                if(mo->player)
-                {
-                    Class = mo->player->class;
-                }
-                else
-                {
-                    Class = mo->special1;
-                }
-                if(Class > 2)
-                {
-                    Class = 0;
-                }
-                // The last two bits.
-                mo->ddFlags |= Class << DDMF_CLASSTRSHIFT;
-            }
+            R_SetTranslation(mo);
 
             // An offset for the light emitted by this object.
             /*          Class = MobjLightOffsets[mo->type];

@@ -76,7 +76,7 @@ typedef enum arraytype_e {
 
 typedef struct gl_state_s {
     int         maxTexSize;
-    int         palExtAvailable, sharedPalExtAvailable;
+    int         palExtAvailable;
     boolean     allowCompression;
     boolean     noArrays;
     boolean     forceFinishBeforeSwap;
@@ -98,7 +98,6 @@ typedef struct rgba_s {
 } rgba_t;
 
 typedef struct gl_state_texture_s {
-    rgba_t   palette[256];
     boolean  usePalTex, dumpTextures, useCompr;
     float    grayMipmapFactor;
 } gl_state_texture_t;

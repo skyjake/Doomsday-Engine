@@ -42,13 +42,13 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define PALLUMPNAME         "PLAYPAL"
-
 #define PATCHTEX_HASH_SIZE  128
 #define PATCHTEX_HASH(x)    (patchtexhash + (((unsigned) x) & (PATCHTEX_HASH_SIZE - 1)))
 
 #define RAWTEX_HASH_SIZE    128
 #define RAWTEX_HASH(x)      (rawtexhash + (((unsigned) x) & (RAWTEX_HASH_SIZE - 1)))
+
+#define COLORPALETTENAME_MAXLEN     (32)
 
 // TYPES -------------------------------------------------------------------
 
@@ -72,6 +72,16 @@ typedef struct {
     uint            num;
     void*           data;
 } rendpolydata_t;
+
+/**
+ * DGL color palette name bindings.
+ * These are mainly intended as a public API convenience.
+ * Internally, we are only interested in the associated DGL name(s).
+ */
+typedef struct {
+    char            name[COLORPALETTENAME_MAXLEN+1];
+    DGLuint         id;
+} colorpalettebind_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -124,11 +134,6 @@ byte rendInfoRPolys = 0;
 uint numSkinNames = 0;
 skinname_t* skinNames = NULL;
 
-// Convert a 18-bit RGB (666) value to a playpal index.
-// \fixme 256kb - Too big?
-byte pal18To8[262144];
-int palLump;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int numDoomTextureDefs;
@@ -141,7 +146,294 @@ static unsigned int numrendpolys = 0;
 static unsigned int maxrendpolys = 0;
 static rendpolydata_t** rendPolys;
 
+static colorpalettebind_t* colorPalettes = NULL;
+static uint numColorPalettes = 0;
+static colorpaletteid_t defaultColorPalette = 0;
+
 // CODE --------------------------------------------------------------------
+
+static colorpaletteid_t colorPaletteNumForName(const char* name)
+{
+    uint                i;
+
+    // Linear search (sufficiently fast enough given the probably small set
+    // and infrequency of searches).
+    for(i = 0; i < numColorPalettes; ++i)
+    {
+        colorpalettebind_t* pal = &colorPalettes[i];
+
+        if(!strnicmp(pal->name, name, COLORPALETTENAME_MAXLEN))
+            return i + 1; // Already registered. 1-based index.
+    }
+
+    return 0; // Not found.
+}
+
+/**
+ * Given a colorpalette id return the associated DGL color palette num.
+ * If the specified id cannot be found, the default color palette will be
+ * returned instead.
+ *
+ * @param id            Id of the color palette to be prepared.
+ *
+ * @return              The DGL palette number iff found else @c NULL.
+ */
+DGLuint R_GetColorPalette(colorpaletteid_t id)
+{
+    if(!id || id - 1 >= numColorPalettes)
+    {
+        if(numColorPalettes)
+            return colorPalettes[defaultColorPalette-1].id;
+
+        return 0;
+    }
+
+    return colorPalettes[id-1].id;
+}
+
+/**
+ * Change the default color palette.
+ *
+ * @param id            Id of the color palette to make default.
+ *
+ * @return              @c true iff successful, else @c NULL.
+ */
+boolean R_SetDefaultColorPalette(colorpaletteid_t id)
+{
+    if(id && id - 1 < numColorPalettes)
+    {
+        defaultColorPalette = id;
+        return true;
+    }
+
+    VERBOSE(Con_Message("R_SetDefaultColorPalette: Invalid id %u.\n", id))
+    return false;
+}
+
+/**
+ * Add a new (named) color palette.
+ * \note Part of the Doomsday public API.
+ *
+ * \design The idea with the two-teered implementation is to allow maximum
+ * flexibility. Within the engine we can create new palettes and manipulate
+ * them directly via the DGL interface. The underlying implementation is
+ * wrapped in a similar way to the materials so that publically, there is a
+ * set of (eternal) names and unique identifiers that survive engine and
+ * GL resets.
+ *
+ * @param fmt           Format string describes the format of @p data.
+ *                      Expected form: "C#C#C"
+ *                          C = color component, one of R, G, B.
+ *                          # = bits per component.
+ * @param name          Unique name by which the palette will be known.
+ * @param data          Buffer containing the src color data.
+ * @param num           Number of sets of components).
+ *
+ * @return              Color palette id.
+ */
+colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
+                                      const byte* data, ushort num)
+{
+#define MAX_BPC         (16) // Max bits per component.
+
+    static const char*  compNames[] = { "red", "green", "blue" };
+    colorpaletteid_t    id;
+    colorpalettebind_t* pal;
+    const char*         c, *end;
+    int                 i, pos, compOrder[3];
+    byte                compSize[3];
+
+    if(!name || !name[0])
+        Con_Error("R_CreateColorPalette: Color palettes require a name.\n");
+
+    if(strlen(name) > COLORPALETTENAME_MAXLEN)
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "color palette name can be at most %i characters long.\n",
+                  name, COLORPALETTENAME_MAXLEN);
+
+    if(!fmt || !fmt[0])
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "missing format string.\n", name);
+
+    if(!data || !num)
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "cannot create a zero-sized palette.\n", name);
+
+    // All arguments supplied. Parse the format string.
+    memset(compOrder, -1, sizeof(compOrder));
+    pos = 0;
+    end = fmt + (strlen(fmt) - 1);
+    c = fmt;
+    do
+    {
+        int               comp = -1;
+
+        if(*c == 'R' || *c == 'r')
+            comp = CR;
+        else if(*c == 'G' || *c == 'g')
+            comp = CG;
+        else if(*c == 'B' || *c == 'b')
+            comp = CB;
+
+        if(comp != -1)
+        {
+            // Have encountered this component yet?
+            if(compOrder[comp] == -1)
+            {   // No.
+                const char*         start;
+                size_t              numDigits;
+
+                compOrder[comp] = pos++;
+
+                // Read the number of bits.
+                start = ++c;
+                while((*c >= '0' && *c <= '9') && ++c < end);
+
+                numDigits = c - start;
+                if(numDigits != 0 && numDigits <= 2)
+                {
+                    char                buf[3];
+
+                    memset(buf, 0, numDigits);
+                    memcpy(buf, start, numDigits);
+
+                    compSize[comp] = atoi(buf);
+
+                    if(pos == 3)
+                        break; // We're done.
+
+                    // Unread the last character.
+                    c--;
+                    continue;
+                }
+            }
+        }
+
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "invalid character '%c' in format string at "
+                  "position %i.\n", name, *c, c - fmt);
+    } while(++c <= end);
+
+    if(pos != 3)
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "incomplete format specification.\n", name);
+
+    // Check validity of bits per component.
+    for(i = 0; i < 3; ++i)
+        if(compSize[i] == 0 || compSize[i] > MAX_BPC)
+        {
+            Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                      "unsupported bit size %i for %s component.\n",
+                      name, compSize[i], compNames[compOrder[i]]);
+        }
+
+    if((id = colorPaletteNumForName(name)))
+    {   // We are replacing an existing palette.
+        pal = &colorPalettes[id-1];
+
+        // Destroy the existing DGL color palette.
+        GL_DeleteColorPalettes(1, &pal->id);
+        pal->id = 0;
+    }
+    else
+    {   // We are creating a new palette.
+        if(!numColorPalettes)
+        {
+            colorPalettes = Z_Malloc(
+                ++numColorPalettes * sizeof(colorpalettebind_t), PU_STATIC, 0);
+
+            defaultColorPalette = numColorPalettes;
+        }
+        else
+            colorPalettes = Z_Realloc(&colorPalettes,
+                ++numColorPalettes * sizeof(colorpalettebind_t), PU_STATIC);
+
+        pal = &colorPalettes[numColorPalettes-1];
+        memset(pal, 0, sizeof(*pal));
+
+        strncpy(pal->name, name, COLORPALETTENAME_MAXLEN);
+
+        id = numColorPalettes; // 1-based index.
+    }
+
+    // Generate the actual DGL color palette.
+    pal->id = GL_CreateColorPalette(compOrder, compSize, data, num);
+
+    return id; // 1-based index.
+
+#undef MAX_BPC
+}
+
+/**
+ * Given a color palette name, look up the associated identifier.
+ * \note Part of the Doomsday public API.
+ *
+ * @param name          Unique name of the palette to locate.
+ * @return              Iff found, identifier of the palette associated
+ *                      with this name, ELSE @c 0.
+ */
+colorpaletteid_t R_GetColorPaletteNumForName(const char* name)
+{
+    if(name && name[0] && strlen(name) <= COLORPALETTENAME_MAXLEN)
+        return colorPaletteNumForName(name);
+
+    return 0;
+}
+
+/**
+ * Given a color palette id, look up the specified unique name.
+ * \note Part of the Doomsday public API.
+ *
+ * @param id            Id of the color palette to locate.
+ * @return              Iff found, pointer to the unique name associated
+ *                      with the specified id, ELSE @c NULL.
+ */
+const char* R_GetColorPaletteNameForNum(colorpaletteid_t id)
+{
+    if(id && id - 1 < numColorPalettes)
+        return colorPalettes[id-1].name;
+
+    return NULL;
+}
+
+/**
+ * Given a color palette index, calculate the equivilent RGB color.
+ * \note Part of the Doomsday public API.
+ *
+ * @param id            Id of the color palette to use.
+ * @param rgb           Final color will be written back here.
+ * @param idx           Color Palette, color index.
+ * @param correctGamma  @c TRUE if the current gamma ramp should be applied.
+ */
+void R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3], int idx,
+                           boolean correctGamma)
+{
+    if(rgb)
+    {
+        if(idx >= 0)
+        {
+            DGLuint             pal = R_GetColorPalette(id);
+            DGLubyte            rgbUBV[3];
+
+            GL_GetColorPaletteRGB(pal, rgbUBV, idx);
+
+            if(correctGamma)
+            {
+                rgbUBV[CR] = gammaTable[rgbUBV[CR]];
+                rgbUBV[CG] = gammaTable[rgbUBV[CG]];
+                rgbUBV[CB] = gammaTable[rgbUBV[CB]];
+            }
+
+            rgb[CR] = rgbUBV[CR] * reciprocal255;
+            rgb[CG] = rgbUBV[CG] * reciprocal255;
+            rgb[CB] = rgbUBV[CB] * reciprocal255;
+
+            return;
+        }
+
+        rgb[CR] = rgb[CG] = rgb[CB] = 0;
+    }
+}
 
 void R_InfoRendVerticesPool(void)
 {
@@ -623,77 +915,6 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 void R_ShutdownData(void)
 {
     P_ShutdownMaterialManager();
-}
-
-byte* R_GetPal18to8(void)
-{
-    return pal18To8;
-}
-
-/**
- * Prepare the pal18To8 table.
- * A time-consuming operation (64 * 64 * 64 * 256!).
- */
-static void calculatePal18to8(byte* dest, byte* palette)
-{
-    int                 r, g, b, i;
-    byte                palRGB[3];
-    unsigned int        diff, smallestDiff, closestIndex = 0;
-
-    for(r = 0; r < 64; ++r)
-    {
-        for(g = 0; g < 64; ++g)
-        {
-            for(b = 0; b < 64; ++b)
-            {
-                // We must find the color index that most closely
-                // resembles this RGB combination.
-                smallestDiff = 0;
-                for(i = 0; i < 256; ++i)
-                {
-                    memcpy(palRGB, palette + 3 * i, 3);
-                    diff =
-                        (palRGB[0] - (r << 2)) * (palRGB[0] - (r << 2)) +
-                        (palRGB[1] - (g << 2)) * (palRGB[1] - (g << 2)) +
-                        (palRGB[2] - (b << 2)) * (palRGB[2] - (b << 2));
-                    if(diff < smallestDiff)
-                    {
-                        smallestDiff = diff;
-                        closestIndex = i;
-                    }
-                }
-                dest[RGB18(r, g, b)] = closestIndex;
-            }
-        }
-    }
-}
-
-void R_LoadPalette(void)
-{
-    lumpnum_t           lump;
-
-    // The palette lump, for color information (really??!!?!?!).
-    palLump = W_GetNumForName(PALLUMPNAME);
-
-    // Load the pal18To8 table from the lump PAL18TO8. We need it
-    // when resizing textures.
-    if((lump = W_CheckNumForName("PAL18TO8")) == -1)
-        calculatePal18to8(pal18To8, R_GetPalette());
-    else
-        memcpy(pal18To8, W_CacheLumpNum(lump, PU_CACHE), sizeof(pal18To8));
-
-    if(ArgCheck("-dump_pal18to8"))
-    {
-        FILE*           file = fopen("pal18To8.lmp", "wb");
-
-        fwrite(pal18To8, sizeof(pal18To8), 1, file);
-        fclose(file);
-    }
-}
-
-byte* R_GetPalette(void)
-{
-    return W_CacheLumpNum(palLump, PU_CACHE);
 }
 
 /**
@@ -1723,23 +1944,8 @@ void R_UpdateData(void)
 
 void R_InitTranslationTables(void)
 {
-    int                 i;
-    byte*               transLump;
-
     // Allocate translation tables
-    translationTables = Z_Malloc(256 * 3 * ( /*DDMAXPLAYERS*/ 8 - 1), PU_REFRESHTRANS, 0);
-
-    for(i = 0; i < 3 * ( /*DDMAXPLAYERS*/ 8 - 1); ++i)
-    {
-        // If this can't be found, it's reasonable to expect that the game dll
-        // will initialize the translation tables as it wishes.
-        if(W_CheckNumForName("trantbl0") < 0)
-            break;
-
-        transLump = W_CacheLumpNum(W_GetNumForName("trantbl0") + i, PU_STATIC);
-        memcpy(translationTables + i * 256, transLump, 256);
-        Z_Free(transLump);
-    }
+    translationTables = Z_Calloc(256 * 3 * 7, PU_REFRESHTRANS, 0);
 }
 
 void R_UpdateTranslationTables(void)

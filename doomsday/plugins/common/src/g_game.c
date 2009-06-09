@@ -486,6 +486,169 @@ void G_CommonPreInit(void)
     G_DetectIWADs();
 }
 
+#if __JHEXEN__
+/**
+ * \todo all this swapping colors around is rather silly, why not simply
+ * reorder the translation tables at load time?
+ */
+void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
+{
+    *tclass = 1;
+
+    if(plrColor == 0)
+        *tmap = 1;
+    else if(plrColor == 1)
+        *tmap = 0;
+    else
+        *tmap = plrColor;
+
+    // Fighter's colors are a bit different.
+    if(plrClass == PCLASS_FIGHTER && *tmap > 1)
+        *tclass = 0;
+}
+
+void R_SetTranslation(mobj_t* mo)
+{
+    if(!(mo->flags & MF_TRANSLATION))
+    {   // No translation.
+        mo->tmap = mo->tclass = 0;
+    }
+    else
+    {
+        int                 tclass, tmap;
+
+        tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+
+        if(mo->player)
+        {
+            tclass = 1;
+
+            if(mo->player->class == PCLASS_FIGHTER)
+            {   // Fighter's colors are a bit different.
+                if(tmap == 0)
+                    tmap = 2;
+                else if(tmap == 2)
+                    tmap = 0;
+                else
+                    tclass = 0;
+            }
+
+            mo->tclass = tclass;
+        }
+        else
+            tclass = mo->special1;
+
+        mo->tmap = tmap;
+        mo->tclass = tclass;
+    }
+}
+#endif
+
+void R_LoadColorPalettes(void)
+{
+#define PALLUMPNAME         "PLAYPAL"
+#define PALENTRIES          (256)
+#define PALID               (0)
+
+    lumpnum_t           lump = W_GetNumForName(PALLUMPNAME);
+    byte                data[PALENTRIES*3];
+
+    W_ReadLumpSection(lump, data, 0 + PALID * (PALENTRIES * 3),
+                      PALENTRIES * 3);
+
+    R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
+
+    /**
+     * Create the translation tables to map the green color ramp to gray,
+     * brown, red.
+     *
+     * \note Assumes a given structure of the PLAYPAL. Could be read from a
+     * lump instead?
+     */
+#if __JDOOM__ || __JDOOM64__
+    {
+    byte               *translationtables = (byte *)
+                    DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    int                 i;
+
+    // Translate just the 16 green colors.
+    for(i = 0; i < 256; ++i)
+    {
+        if(i >= 0x70 && i <= 0x7f)
+        {
+            // Map green ramp to gray, brown, red.
+            translationtables[i] = 0x60 + (i & 0xf);
+            translationtables[i + 256] = 0x40 + (i & 0xf);
+            translationtables[i + 512] = 0x20 + (i & 0xf);
+        }
+        else
+        {
+            // Keep all other colors as is.
+            translationtables[i] = translationtables[i + 256] =
+                translationtables[i + 512] = i;
+        }
+    }
+    }
+#elif __JHERETIC__
+    {
+    int                 i;
+    byte*               translationtables =
+        (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+
+    // Fill out the translation tables.
+    for(i = 0; i < 256; ++i)
+    {
+        if(i >= 225 && i <= 240)
+        {
+            translationtables[i] = 114 + (i - 225); // yellow
+            translationtables[i + 256] = 145 + (i - 225); // red
+            translationtables[i + 512] = 190 + (i - 225); // blue
+        }
+        else
+        {
+            translationtables[i] = translationtables[i + 256] =
+                translationtables[i + 512] = i;
+        }
+    }
+    }
+#else // __JHEXEN__
+    {
+    int                 i;
+    byte*               translationtables =
+        (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+
+    for(i = 0; i < 3 * 7; ++i)
+    {
+        char                name[9];
+        lumpnum_t           lump;
+
+        snprintf(name, 8, "TRANTBL%X", i);
+        name[8] = '\0';
+
+        if((lump = W_CheckNumForName(name)) != -1)
+        {
+            byte*               transLump =
+                W_CacheLumpNum(lump, PU_STATIC);
+
+            memcpy(&translationtables[i * 256], transLump, 256);
+            Z_Free(transLump);
+        }
+    }
+    }
+#endif
+
+#undef PALID
+#undef PALENTRIES
+#undef PALLUMPNAME
+}
+
+void R_InitRefresh(void)
+{
+    VERBOSE(Con_Message("R_InitRefresh: Loading data for referesh.\n"))
+
+    R_LoadColorPalettes();
+}
+
 /**
  * Common Post Engine Initialization routine.
  * Game-specific post init actions should be placed in eg D_PostInit()
@@ -495,7 +658,6 @@ void G_CommonPostInit(void)
 {
     VERBOSE(G_PrintMapList());
 
-    Con_Message("R_InitRefresh: Loading data for referesh.\n");
     R_InitRefresh();
 
     // Init the save system and create the game save directory

@@ -41,8 +41,6 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #  include "m_cheat.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "hu_pspr.h"

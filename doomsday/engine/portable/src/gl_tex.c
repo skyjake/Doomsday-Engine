@@ -125,61 +125,34 @@ void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
  * 4 = RGBA
  */
 void GL_ConvertBuffer(int width, int height, int informat, int outformat,
-                      byte *in, byte *out, byte *palette, boolean gamma)
+                      byte *in, byte *out, colorpaletteid_t palid,
+                      boolean gamma)
 {
-    int         inSize = (informat == 2 ? 1 : informat);
-    int         outSize = (outformat == 2 ? 1 : outformat);
-    int         i, numPixels = width * height, a;
-
     if(informat == outformat)
     {
         // No conversion necessary.
-        memcpy(out, in, numPixels * informat);
+        memcpy(out, in, width * height * informat);
         return;
     }
 
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
     {
-        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
-        {
-            // Copy the RGB values in every case.
-            if(gamma)
-            {
-                for(a = 0; a < 3; ++a)
-                    out[a] = gammaTable[*(palette + 3 * (*in) + a)];
-            }
-            else
-            {
-                memcpy(out, palette + 3 * (*in), 3);
-            }
-            // Will the alpha channel be necessary?
-            a = 0;
-            if(informat == 2)
-                a = in[numPixels * inSize];
-            if(outformat == 4)
-                out[3] = (byte) a;
-        }
+        GL_PalettizeImage(out, outformat, R_GetColorPalette(palid), gamma,
+                          in, informat, width, height);
     }
     // Conversion from RGB(A) to pal8(a), using pal18To8.
     else if(informat >= 3 && outformat <= 2)
     {
-        byte*           pal18To8 = R_GetPal18to8();
-
-        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
-        {
-            // Convert the color value.
-            *out = pal18To8[RGB18(in[0] >> 2, in[1] >> 2, in[2] >> 2)];
-            // Alpha channel?
-            a = 0;
-            if(informat == 4)
-                a = in[3];
-            if(outformat == 2)
-                out[numPixels * outSize] = (byte) a;
-        }
+        GL_QuantizeImageToPalette(out, outformat, R_GetColorPalette(palid),
+                                  in, informat, width, height);
     }
     else if(informat == 3 && outformat == 4)
     {
+        int                 i, numPixels = width * height,
+                            inSize = (informat == 2 ? 1 : informat),
+                            outSize = (outformat == 2 ? 1 : outformat);
+
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             memcpy(out, in, 3);
@@ -458,8 +431,6 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
  * @param origx         X coordinate in the dst buffer to draw the patch too.
  * @param origy         Y coordinate in the dst buffer to draw the patch too.
  * @param maskZero      Used with sky textures.
- * @param transtable    If not @c NULL,, read pixels from the patch
- *                      will have their color translated using this LUT.
  * @param checkForAlpha If @c true, the composited image will be
  *                      checked for alpha pixels and will return accordingly
  *                      if present.
@@ -468,9 +439,9 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
  *                      @c false,. Else, @c true, if the
  *                      buffer really has alpha information.
  */
-int DrawRealPatch(byte *buffer, int texwidth, int texheight, lumppatch_t *patch,
-                  int origx, int origy, boolean maskZero,
-                  unsigned char *transtable, boolean checkForAlpha)
+int DrawRealPatch(byte* buffer, int texwidth, int texheight,
+                  lumppatch_t* patch, int origx, int origy,
+                  boolean maskZero, boolean checkForAlpha)
 {
     int         count, col = 0;
     int         x = origx, y, top; // Keep track of pos for clipping.
@@ -509,10 +480,6 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, lumppatch_t *patch,
                 while(count--)
                 {
                     byte palidx = *source++;
-
-                    // Do we need to make a translation?
-                    if(transtable)
-                        palidx = transtable[palidx];
 
                     // Is the destination within bounds?
                     if(y >= 0 && y < texheight)
@@ -718,45 +685,6 @@ void ColorOutlines(byte *buffer, int width, int height)
 }
 
 /**
- * Desaturates the texture in the dest buffer by averaging the colour then
- * looking up the nearest match in the PLAYPAL. Increases the brightness
- * to maximum.
- */
-void DeSaturate(byte* buffer, byte* palette, int width, int height)
-{
-    int                 i, max, temp = 0, paletteIndex = 0;
-    byte*               rgb, *pal18To8 = R_GetPal18to8();
-    const int           numpels = width * height;
-
-    // What is the maximum color value?
-    max = 0;
-    for(i = 0; i < numpels; ++i)
-    {
-        rgb = &palette[buffer[i] * 3];
-        temp = (2 * (int)rgb[0] + 4 * (int)rgb[1] + 3 * (int)rgb[2]) / 9;
-        if(temp > max)
-        {
-            max = temp;
-        }
-    }
-
-    for(i = 0; i < numpels; ++i)
-    {
-        rgb = &palette[buffer[i] * 3];
-
-        // Calculate a weighted average.
-        temp = (2 * (int)rgb[0] + 4 * (int)rgb[1] + 3 * (int)rgb[2]) / 9;
-        if(max)
-        {
-            temp *= 255.f / max;
-        }
-
-        paletteIndex = pal18To8[ RGB18(temp >> 2, temp >> 2, temp >> 2) ];
-        buffer[i] = paletteIndex;
-    }
-}
-
-/**
  * The given RGB color is scaled uniformly so that the highest component
  * becomes one.
  */
@@ -783,14 +711,16 @@ static void amplify(float *rgb)
  * Used by flares and dynamic lights. The resulting average color is
  * amplified to be as bright as possible.
  */
-void averageColorIdx(rgbcol_t col, byte *data, int w, int h, byte *palette,
-                     boolean hasAlpha)
+void averageColorIdx(rgbcol_t col, byte* data, int w, int h,
+                     colorpaletteid_t palid, boolean hasAlpha)
 {
-    int         i;
-    uint        count;
-    const int   numpels = w * h;
-    byte       *alphaStart = data + numpels, rgb[3];
-    float       r, g, b;
+    int                 i;
+    uint                count;
+    const int           numpels = w * h;
+    byte*               alphaStart = data + numpels;
+    DGLubyte            rgbUBV[3];
+    float               r, g, b;
+    DGLuint             pal = R_GetColorPalette(palid);
 
     // First clear them.
     for(i = 0; i < 3; ++i)
@@ -802,10 +732,13 @@ void averageColorIdx(rgbcol_t col, byte *data, int w, int h, byte *palette,
         if(!hasAlpha || alphaStart[i])
         {
             count++;
-            memcpy(rgb, palette + 3 * data[i], 3);
-            r += rgb[0] / 255.f;
-            g += rgb[1] / 255.f;
-            b += rgb[2] / 255.f;
+
+            GL_GetColorPaletteRGB(pal, rgbUBV, data[i]);
+
+            // Ignore the gamma level.
+            r += rgbUBV[CR] / 255.f;
+            g += rgbUBV[CG] / 255.f;
+            b += rgbUBV[CB] / 255.f;
         }
     }
     // All transparent? Sorry...
@@ -821,14 +754,16 @@ void averageColorIdx(rgbcol_t col, byte *data, int w, int h, byte *palette,
 }
 
 int lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h, int line,
-                        byte* palette, boolean hasAlpha)
+                        colorpaletteid_t palid, boolean hasAlpha)
 {
-    int             i;
-    uint            count;
-    const int       numpels = w * h;
-    byte*           start = data + w * line;
-    byte*           alphaStart = data + numpels + w * line, rgb[3];
-    float           r, g, b;
+    int                 i;
+    uint                count;
+    const int           numpels = w * h;
+    byte*               start = data + w * line;
+    byte*               alphaStart = data + numpels + w * line;
+    DGLubyte            rgbUBV[3];
+    float               r, g, b;
+    DGLuint             pal = R_GetColorPalette(palid);
 
     // First clear them.
     for(i = 0; i < 3; ++i)
@@ -840,11 +775,13 @@ int lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h, int line,
         if(!hasAlpha || alphaStart[i])
         {
             count++;
+
+            GL_GetColorPaletteRGB(pal, rgbUBV, start[i]);
+
             // Ignore the gamma level.
-            memcpy(rgb, palette + 3 * start[i], 3);
-            r += rgb[0] / 255.f;
-            g += rgb[1] / 255.f;
-            b += rgb[2] / 255.f;
+            r += rgbUBV[CR] / 255.f;
+            g += rgbUBV[CG] / 255.f;
+            b += rgbUBV[CB] / 255.f;
         }
     }
     // All transparent? Sorry...
@@ -969,11 +906,12 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
  * from adversely affecting the calculation.
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
-void GL_CalcLuminance(byte *buffer, int width, int height, int pixelSize,
-                      float* brightX, float* brightY, rgbcol_t* color,
-                      float* lumSize)
+void GL_CalcLuminance(byte* buffer, int width, int height, int pixelSize,
+                      colorpaletteid_t palid, float* brightX,
+                      float* brightY, rgbcol_t* color, float* lumSize)
 {
-    byte*               palette = (pixelSize == 1? R_GetPalette() : NULL);
+    DGLuint             pal =
+        (pixelSize == 1? R_GetColorPalette(palid) : 0);
     int                 i, k, x, y, c, cnt = 0, posCnt = 0;
     byte                rgb[3], *src, *alphaSrc = NULL;
     int                 limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
@@ -1028,7 +966,7 @@ void GL_CalcLuminance(byte *buffer, int width, int height, int pixelSize,
             // Bright enough?
             if(pixelSize == 1)
             {
-                memcpy(rgb, palette + (*src * 3), 3);
+                GL_GetColorPaletteRGB(pal, (DGLubyte*) rgb, *src);
             }
             else if(pixelSize >= 3)
             {

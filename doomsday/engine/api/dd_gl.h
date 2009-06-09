@@ -95,6 +95,7 @@ enum {
 // Types.
 typedef unsigned char DGLubyte;
 typedef unsigned int DGLuint;
+typedef int DGLsizei;
 
 // Texture formats:
 typedef enum dgltexformat_e {

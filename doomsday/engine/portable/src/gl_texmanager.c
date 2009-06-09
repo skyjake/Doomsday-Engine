@@ -316,6 +316,9 @@ static void calcGammaTable(void)
  */
 int GL_InitPalettedTexture(void)
 {
+    if(novideo)
+        return true;
+
     // Should the extension be used?
     if(!paletted && !ArgCheck("-paltex"))
         return true;
@@ -514,7 +517,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
 /**
  * Can be rather time-consuming due to scaling operations and mipmap generation.
  * The texture parameters will NOT be set here.
- * @param data  contains indices to the playpal.
+ * @param data  contains indices to the color palette.
  * @param alphaChannel  If true, 'data' also contains the alpha values (after the indices).
  * @return The name of the texture (same as 'texName').
  */
@@ -557,7 +560,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
         freeOriginal = true;
         rgbaOriginal = M_Malloc(width * height * comps);
         GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data,
-                         rgbaOriginal, R_GetPalette(), !load8bit);
+                         rgbaOriginal, 0, !load8bit);
     }
 
     if(applyTexGamma)
@@ -573,17 +576,19 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     // If smart filtering is enabled, all textures are magnified 2x.
     if(useSmartFilter && !noSmartFilter /* && comps == 3 */ )
     {
-        byte   *filtered = M_Malloc(4 * width * height * 4);
+        byte*           filtered = M_Malloc(4 * width * height * 4);
 
         if(comps == 3)
         {
             // Must convert to RGBA.
-            byte   *temp = M_Malloc(4 * width * height);
+            byte*           temp = M_Malloc(4 * width * height);
 
             GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp,
-                             R_GetPalette(), !load8bit);
+                             0, !load8bit);
+
             if(freeOriginal)
                 M_Free(rgbaOriginal);
+
             rgbaOriginal = temp;
             freeOriginal = true;
             comps = 4;
@@ -651,6 +656,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     {
         // We are unable to generate mipmaps for paletted textures.
         int             canGenMips = 0;
+        DGLuint         pal = R_GetColorPalette(content->palette);
 
         // Prepare the palette indices buffer, to be handed over to DGL.
         idxBuffer =
@@ -668,18 +674,19 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
             // Convert to palette indices.
             GL_ConvertBuffer(levelWidth, levelHeight, comps,
                              alphaChannel ? 2 : 1, buffer, idxBuffer,
-                             R_GetPalette(), false);
+                             content->palette, false);
 
             // Upload it.
             if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
-                             DGL_COLOR_INDEX_8, levelWidth, levelHeight,
-                             generateMipmaps &&
-                             canGenMips ? true : generateMipmaps ? -i :
-                             false, idxBuffer))
+                            DGL_COLOR_INDEX_8, pal, levelWidth,
+                            levelHeight, generateMipmaps &&
+                            canGenMips ? true : generateMipmaps ? -i :
+                            false, idxBuffer))
             {
                 Con_Error
-                    ("GL_UploadTexture: TexImage failed (%i x %i) as 8-bit, alpha:%i\n",
-                     levelWidth, levelHeight, alphaChannel);
+                    ("GL_UploadTexture: TexImage failed (%i x %i) as "
+                     "8-bit, alpha:%i\n", levelWidth, levelHeight,
+                     alphaChannel);
             }
 
             // If no mipmaps need to generated, quit now.
@@ -699,8 +706,9 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     else
     {
         // DGL knows how to generate mipmaps for RGB(A) textures.
-        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
-                         generateMipmaps ? true : false, buffer))
+        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, 0, levelWidth,
+                        levelHeight, generateMipmaps ? true : false,
+                        buffer))
         {
             Con_Error
                 ("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n",
@@ -1402,10 +1410,9 @@ static boolean bufferTexture(const doomtexturedef_t* texDef, byte* buffer,
         alphaChannel =
             DrawRealPatch(buffer, /*palette,*/ width, height, patch,
                           patchDef->offX, patchDef->offY,
-                          false, 0, i == texDef->patchCount - 1);
+                          false, i == texDef->patchCount - 1);
     }
 
-    W_ChangeCacheTag(palLump, PU_CACHE);
     return alphaChannel;
 }
 
@@ -1431,7 +1438,7 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
             DrawRealPatch(imgdata, /*palette,*/ width, height,
                           W_CacheLumpNum(patchDef->lump, PU_CACHE),
                           patchDef->offX, patchDef->offY,
-                          zeroMask, 0, false);
+                          zeroMask, false);
         }
     }
     else
@@ -1455,7 +1462,7 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
         numpels = width * bufHeight;
         imgdata = M_Calloc(2 * numpels);
         DrawRealPatch(imgdata, /*palette,*/ width, bufHeight, patch, 0, 0,
-                      zeroMask, 0, false);
+                      zeroMask, false);
     }
 
     *outbuffer = imgdata;
@@ -1594,7 +1601,7 @@ byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
             image->pixels = M_Calloc(2 * image->width * image->height);
             image->isMasked = DrawRealPatch(image->pixels, image->width,
                 image->height, patch, scaleSharp? 1 : 0,
-                scaleSharp? 1 : 0, false, 0, true);
+                scaleSharp? 1 : 0, false, true);
 
             return 1;
         }
@@ -1666,20 +1673,39 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     }
 
     {
-    unsigned char*      table = NULL;
-    lumppatch_t*        patch = W_CacheLumpNum(sprTex->lump, PU_CACHE);
 
-    if(tclass || tmap)
-        table = translationTables - 256 + tclass * ((8 - 1) * 256) +
-            tmap * 256;
+    boolean             freePatch = false;
+    lumppatch_t*        patch;
 
     image->width = sprTex->width;
     image->height = sprTex->height;
     image->pixelSize = 1;
     image->pixels = M_Calloc(2 * image->width * image->height);
 
+    if(tclass || tmap)
+    {
+        int                 offset = -256 +
+            tclass * ((8-1) * 256) + tmap * 256;
+
+        // We need to translate the patch.
+        patch = M_Malloc(W_LumpLength(sprTex->lump));
+        W_ReadLump(sprTex->lump, patch);
+        GL_TranslatePatch(patch, &translationTables[MAX_OF(0, offset)]);
+
+        freePatch = true;
+    }
+    else
+    {
+        patch = W_CacheLumpNum(sprTex->lump, PU_STATIC);
+    }
+
     DrawRealPatch(image->pixels, image->width, image->height, patch,
-                  0, 0, false, table, false);
+                  0, 0, false, false);
+
+    if(freePatch)
+        M_Free(patch);
+    else
+        W_ChangeCacheTag(sprTex->lump, PU_CACHE);
 
     return 1;
     }
@@ -2245,8 +2271,10 @@ DGLuint GL_PreparePatch2(patchtex_t* p)
 
             if(monochrome || (p->flags & PF_MONOCHROME))
             {
-                DeSaturate(image.pixels, R_GetPalette(), image.width,
-                           image.height);
+                DGLuint             pal = R_GetColorPalette(0);
+
+                GL_DeSaturatePalettedImage(image.pixels, pal, image.width,
+                                           image.height);
                 p->flags |= PF_MONOCHROME;
             }
 
@@ -2256,8 +2284,7 @@ DGLuint GL_PreparePatch2(patchtex_t* p)
                 byte*               upscaledPixels = M_Malloc(numpels * 4 * 4);
 
                 GL_ConvertBuffer(image.width, image.height, 2, 4,
-                                 image.pixels, rgbaPixels, R_GetPalette(),
-                                 false);
+                                 image.pixels, rgbaPixels, 0, false);
 
                 GL_SmartFilter2x(rgbaPixels, upscaledPixels, image.width,
                                  image.height, image.width * 8);
@@ -2270,8 +2297,7 @@ DGLuint GL_PreparePatch2(patchtex_t* p)
 
                 // Back to indexed+alpha.
                 GL_ConvertBuffer(image.width, image.height, 4, 2,
-                                 upscaledPixels, rgbaPixels, R_GetPalette(),
-                                 false);
+                                 upscaledPixels, rgbaPixels, 0, false);
 
                 // Replace the old buffer.
                 M_Free(upscaledPixels);
@@ -2502,7 +2528,7 @@ void GL_TexReset(void)
 
     GL_ClearTextureMemory();
     Con_Printf("All DGL textures deleted.\n");
-    
+
     if(useBusyMode)
     {
         Con_InitProgress(200);
@@ -2524,7 +2550,7 @@ void GL_DoUpdateTexGamma(cvar_t *unused)
     if(texInited)
     {
         calcGammaTable();
-        GL_InitPalette();
+        GL_InitPalettedTexture();
         GL_TexReset();
     }
 
@@ -3218,7 +3244,7 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
             {
                 // Calculate light source properties.
                 GL_CalcLuminance(image.pixels, image.width, image.height,
-                                 image.pixelSize,
+                                 image.pixelSize, 0,
                                  &texInst->data.sprite.flareX,
                                  &texInst->data.sprite.flareY,
                                  &texInst->data.sprite.autoLightColor,
@@ -3231,27 +3257,23 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
 
         if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE)
         {
-            // Average color for glow planes.
+            // Average color for glow planes and top line color.
             if(image.pixelSize > 1)
             {
-                averageColorRGB(texInst->data.texture.color, image.pixels, image.width, image.height);
+                averageColorRGB(texInst->data.texture.color, image.pixels,
+                                image.width, image.height);
+                lineAverageColorRGB(texInst->data.texture.topColor,
+                                    image.pixels, image.width, image.height,
+                                    0);
             }
             else
             {
-                averageColorIdx(texInst->data.texture.color, image.pixels, image.width, image.height,
-                                R_GetPalette(), false);
-            }
+                averageColorIdx(texInst->data.texture.color, image.pixels,
+                                image.width, image.height, 0, false);
 
-            // Calculate the averaged top line color.
-            if(image.pixelSize > 1)
-            {
-                lineAverageColorRGB(texInst->data.texture.topColor, image.pixels, image.width,
-                                    image.height, 0);
-            }
-            else
-            {
-                lineAverageColorIdx(texInst->data.texture.topColor, image.pixels, image.width,
-                                    image.height, 0, R_GetPalette(), false);
+                lineAverageColorIdx(texInst->data.texture.topColor,
+                                    image.pixels, image.width, image.height,
+                                    0, 0, false);
             }
         }
 

@@ -590,9 +590,6 @@ static int DD_StartupWorker(void *parm)
 
     Con_SetProgress(100);
 
-    // Palette information will be needed for preparing textures.
-    R_LoadPalette();
-
     GL_EarlyInitTextureManager();
 
     // Get the material manager up and running.

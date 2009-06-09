@@ -1023,7 +1023,7 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                   struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                   float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                   uint vLightListIdx,
-                                  int id, int selector, subsector_t* ssec, int mobjDDFlags,
+                                  int id, int selector, subsector_t* ssec, int mobjDDFlags, int tmap,
                                   boolean viewAlign, boolean fullBright,
                                   boolean alwaysInterpolate)
 {
@@ -1037,6 +1037,7 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->id = id;
     params->selector = selector;
     params->flags = mobjDDFlags;
+    params->tmap = tmap;
     params->center[VX] = x;
     params->center[VY] = y;
     params->center[VZ] = z;
@@ -1215,10 +1216,8 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    if(mo->ddFlags & DDMF_TRANSLATION)
-        tmap = (mo->ddFlags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
-    if(mo->ddFlags & DDMF_TRANSLATION)
-        tclass = (mo->ddFlags >> DDMF_CLASSTRSHIFT) & 0x3;
+    tmap = mo->tmap;
+    tclass = mo->tclass;
 
     memset(&mparams, 0, sizeof(mparams));
     mparams.tmap = tmap;
@@ -1509,6 +1508,7 @@ void R_ProjectSprite(mobj_t* mo)
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                      vLightListIdx, mo->thinker.id, mo->selector,
                                      mo->subsector, mo->ddFlags,
+                                     mo->tmap,
                                      viewAlign,
                                      fullBright && !(mf && (mf->sub[0].flags & MFF_DIM)),
                                      false);
