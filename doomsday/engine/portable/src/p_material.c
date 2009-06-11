@@ -224,7 +224,8 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
             shinyInst = GL_PrepareGLTexture(sTex->id, NULL, NULL);
         }
 
-        if((mTex = R_GetMaskTexture(mat->reflection->maskMap.path)))
+        if(shinyInst && // Don't bother searching unless the above succeeds.
+           (mTex = R_GetMaskTexture(mat->reflection->maskMap.path)))
         {
             // Pick an instance matching the specified context.
             shinyMaskInst = GL_PrepareGLTexture(mTex->id, NULL, NULL);

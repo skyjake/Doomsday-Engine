@@ -442,10 +442,10 @@ static int R_LoadModel(char* origfn)
     DFILE*              file = NULL;
     filename_t          filename;
 
-    if(!origfn[0])
+    if(!origfn || !origfn[0])
         return 0; // No model specified.
 
-    if(!R_FindResource2(RT_MODEL, RC_MODEL, filename, origfn, NULL,
+    if(!R_FindResource2(RT_MODEL, DDRC_MODEL, filename, origfn, NULL,
                         FILENAME_T_MAXLEN))
     {
         R_MissingModel(origfn);

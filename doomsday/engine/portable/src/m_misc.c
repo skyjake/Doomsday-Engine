@@ -1165,12 +1165,32 @@ void M_GetFileExt(char* ext, const char* path, size_t len)
     strlwr(ext);
 }
 
+char* M_FindFileExtension(char* path)
+{
+    if(path && path[0])
+    {
+        size_t              len = strlen(path);
+        char*               p = NULL;
+
+        p = path + len - 1;
+        do
+        {
+            if(*(p - 1) == DIR_SEP_CHAR || *(p - 1) == DIR_WRONG_SEP_CHAR)
+                break;
+            if(*p == '.')
+                return p - path < len - 1? p + 1 : NULL;
+        } while(--p > path);
+    }
+
+    return NULL; // Not found.
+}
+
 /**
  * The new extension must not include a dot.
  */
 void M_ReplaceFileExt(char* path, const char* newext, size_t len)
 {
-    char*               ptr = strrchr(path, '.');
+    char*               ptr = M_FindFileExtension(path);
 
     if(!ptr)
     {
@@ -1179,7 +1199,7 @@ void M_ReplaceFileExt(char* path, const char* newext, size_t len)
     }
     else
     {
-        strncpy(ptr + 1, newext, FILENAME_T_MAXLEN);
+        strncpy(ptr, newext, FILENAME_T_MAXLEN);
     }
 }
 

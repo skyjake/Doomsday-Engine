@@ -905,19 +905,20 @@ typedef struct {
 /**
  * Resource classes. Each has its own subdir under Data\Game\.
  */
-typedef enum resourceclass_e {
-    RC_FIRST = 0,
-    RC_TEXTURE = RC_FIRST,
-    RC_FLAT,
-    RC_PATCH,                  // Not sprites, mind you. Names == lumpnames.
-    RC_LIGHTMAP,
-    RC_FLAREMAP,
-    RC_MUSIC,                  // Names == lumpnames.
-    RC_SFX,                    // Names == lumpnames.
-    RC_GRAPHICS,               // Doomsday graphics.
-    RC_MODEL,
+typedef enum ddresourceclass_e {
+    DDRC_NONE = -1,
+    DDRC_FIRST = 0,
+    DDRC_TEXTURE = DDRC_FIRST,
+    DDRC_FLAT,
+    DDRC_PATCH, // Not sprites, mind you. Names == lumpnames.
+    DDRC_LIGHTMAP,
+    DDRC_FLAREMAP,
+    DDRC_MUSIC, // Names == lumpnames.
+    DDRC_SFX, // Names == lumpnames.
+    DDRC_GRAPHICS, // Doomsday graphics.
+    DDRC_MODEL,
     NUM_RESOURCE_CLASSES
-} resourceclass_t;
+} ddresourceclass_t;
 
 typedef enum resourcetype_e {
     RT_UNKNOWN = -1,

@@ -267,12 +267,14 @@ void GL_UploadTextureContent(texturecontent_t* content)
         else
             palid = 0;
 
-        result = GL_TexImage(content->format, palid, content->width,
-                             content->height,
-                             (content->grayMipmap >= 0? DDMAXINT :
-                              (content->flags & TXCF_MIPMAP) != 0),
-                             allocatedTempBuffer? allocatedTempBuffer : content->buffer);
-        assert(result == true);
+        if(!GL_TexImage(content->format, palid, content->width,
+                        content->height,
+                        (content->grayMipmap >= 0? DDMAXINT :
+                         (content->flags & TXCF_MIPMAP) != 0),
+                        allocatedTempBuffer? allocatedTempBuffer : content->buffer))
+            Con_Error("GL_UploadTextureContent: TexImage failed "
+                      "(%u:%ix%i fmt%i).", content->name, content->width,
+                      content->height, (int) content->format);
 
         if(content->flags & TXCF_NO_COMPRESSION)
         {

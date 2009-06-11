@@ -37,16 +37,16 @@ const char*     R_GetDataPath(void);
 void            R_PrependDataPath(char* newPath, const char* origPath,
                                   size_t len);
 
-void            R_AddClassDataPath(resourceclass_t resClass,
+void            R_AddClassDataPath(ddresourceclass_t resClass,
                                    const char* addPath, boolean append);
-void            R_ClearClassDataPath(resourceclass_t resClass);
-const char*     R_GetClassDataPath(resourceclass_t resClass);
+void            R_ClearClassDataPath(ddresourceclass_t resClass);
+const char*     R_GetClassDataPath(ddresourceclass_t resClass);
 
 boolean         R_FindResource(resourcetype_t resType, char* fileName,
                                const char* name, const char* optionalSuffix,
                                size_t len);
 boolean         R_FindResource2(resourcetype_t resType,
-                                resourceclass_t resClass, char* fileName,
+                                ddresourceclass_t resClass, char* fileName,
                                 const char* name, const char*optionalSuffix,
                                 size_t len);
 #endif

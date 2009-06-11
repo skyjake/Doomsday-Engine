@@ -2128,7 +2128,7 @@ void FIC_XImage(void)
 
     // Load the external resource.
     fileName = FI_GetToken();
-    if((pic->lump[0] = GL_LoadGraphics(RC_GRAPHICS, fileName, LGM_NORMAL,
+    if((pic->lump[0] = GL_LoadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL,
                                    false, true, 0)) == 0)
         Con_Message("FIC_XImage: Warning, missing graphic \"%s\".\n", fileName);
 

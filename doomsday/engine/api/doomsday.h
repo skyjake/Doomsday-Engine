@@ -441,7 +441,7 @@ extern          "C" {
     // Graphics.
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
-    DGLuint         GL_LoadGraphics(resourceclass_t resClass,
+    DGLuint         GL_LoadGraphics(ddresourceclass_t resClass,
                                      const char* name, gfxmode_t mode,
                                      int useMipmap, boolean clamped,
                                      int otherFlags);
@@ -495,7 +495,7 @@ extern          "C" {
                                 size_t length);
     void            M_ExtractFileBase(char* dest, const char* path,
                                       size_t len);
-    void            M_GetFileExt(char* ext, const char* path, size_t len);
+    char*           M_FindFileExtension(char* path);
     boolean         M_CheckPath(const char* path);
     int             M_FileExists(const char* file);
     void            M_TranslatePath(char* translated, const char* path,

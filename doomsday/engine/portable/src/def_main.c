@@ -844,7 +844,7 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        R_ClearClassDataPath(RC_MODEL);
+        R_ClearClassDataPath(DDRC_MODEL);
         Def_Destroy();
     }
 
@@ -1180,7 +1180,7 @@ void Def_Read(void)
 
     // Init the base model search path (prepend).
     Dir_ValidDir(defs.modelPath, FILENAME_T_MAXLEN);
-    R_AddClassDataPath(RC_MODEL, defs.modelPath, false);
+    R_AddClassDataPath(DDRC_MODEL, defs.modelPath, false);
 
     // Model search path specified on the command line?
     if(ArgCheckWith("-modeldir", 1))
@@ -1191,7 +1191,7 @@ void Def_Read(void)
         Dir_ValidDir(path, FILENAME_T_MAXLEN);
 
         // Prepend to the search list; takes precedence.
-        R_AddClassDataPath(RC_MODEL, path, false);
+        R_AddClassDataPath(DDRC_MODEL, path, false);
     }
     if(ArgCheckWith("-modeldir2", 1))
     {
@@ -1201,7 +1201,7 @@ void Def_Read(void)
         Dir_ValidDir(path, FILENAME_T_MAXLEN);
 
         // Prepend to the search list; takes precedence.
-        R_AddClassDataPath(RC_MODEL, ArgNext(), false);
+        R_AddClassDataPath(DDRC_MODEL, ArgNext(), false);
     }
 
     defsInited = true;

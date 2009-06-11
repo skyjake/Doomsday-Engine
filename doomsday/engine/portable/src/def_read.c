@@ -788,7 +788,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             CHECKSC;
 
             Dir_ValidDir(label, 128);
-            R_AddClassDataPath(RC_MODEL, label, true);
+            R_AddClassDataPath(DDRC_MODEL, label, true);
         }
 
         if(ISTOKEN("Header"))

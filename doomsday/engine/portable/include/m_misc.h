@@ -51,7 +51,7 @@ boolean         M_WriteFile(char const* name, void* source, size_t length);
 void            M_ExtractFileBase(char* dest, const char* path, size_t len);
 void            M_ExtractFileBase2(char* dest, const char* path, size_t len,
                                    int ignore);
-void            M_GetFileExt(char* ext, const char* path, size_t len);
+char*           M_FindFileExtension(char* path);
 void            M_ReplaceFileExt(char* path, const char* newext,
                                  size_t len);
 boolean         M_CheckPath(const char* path);

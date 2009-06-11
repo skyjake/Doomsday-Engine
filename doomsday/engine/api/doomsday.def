@@ -447,7 +447,7 @@ EXPORTS
     M_ReadFileCLib              @134 NONAME
     M_WriteFile                 @135 NONAME
     M_ExtractFileBase           @136 NONAME
-    M_GetFileExt                @137 NONAME
+    M_FindFileExtension         @137 NONAME
     M_FileExists                @139 NONAME
     M_CheckPath                 @138 NONAME
     M_TranslatePath             @140 NONAME

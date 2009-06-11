@@ -302,7 +302,7 @@ void UI_LoadTextures(void)
         {
             image_t             image;
 
-            if(GL_LoadExtTexture(&image, RC_GRAPHICS, picNames[i],
+            if(GL_LoadExtTexture(&image, DDRC_GRAPHICS, picNames[i],
                (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL)))
             {   // Loaded successfully and converted accordingly.
                 // Upload the image to GL.

@@ -750,7 +750,7 @@ byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst,
         Con_Error("GL_LoadDDTexture: Internal error, "
                   "invalid ddtex id %i.", num);
 
-    if(!(R_FindResource2(RT_GRAPHIC, RC_GRAPHICS, fileName,
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_GRAPHICS, fileName,
                          ddTexNames[num], NULL, FILENAME_T_MAXLEN) &&
          GL_LoadImage(image, fileName)))
     {
@@ -782,7 +782,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
     {
         filename_t          fileName;
 
-        if(!(R_FindResource2(RT_GRAPHIC, RC_TEXTURE, fileName,
+        if(!(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName,
                              dTex->external, NULL, FILENAME_T_MAXLEN) &&
              GL_LoadImage(image, fileName)))
         {
@@ -864,7 +864,7 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst,
     lmap = lightMaps[inst->tex->ofTypeID];
 
     // Search an external resource.
-    if(!(R_FindResource2(RT_GRAPHIC, RC_LIGHTMAP, fileName, lmap->external,
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, lmap->external,
                          "-ck", FILENAME_T_MAXLEN) &&
          GL_LoadImage(image, fileName)))
     {
@@ -895,7 +895,7 @@ byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst,
     fTex = flareTextures[inst->tex->ofTypeID];
 
     // Search an external resource.
-    if(!(R_FindResource2(RT_GRAPHIC, RC_FLAREMAP, fileName, fTex->external,
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_FLAREMAP, fileName, fTex->external,
                          "-ck", FILENAME_T_MAXLEN) &&
          GL_LoadImage(image, fileName)))
     {
@@ -925,7 +925,7 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst,
 
     sTex = shinyTextures[inst->tex->ofTypeID];
 
-    if(!(R_FindResource2(RT_GRAPHIC, RC_LIGHTMAP, fileName, sTex->external,
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, sTex->external,
                          NULL, FILENAME_T_MAXLEN) &&
          GL_LoadImage(image, fileName)))
     {
@@ -954,7 +954,7 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 
     mTex = maskTextures[inst->tex->ofTypeID];
 
-    if(!(R_FindResource2(RT_GRAPHIC, RC_LIGHTMAP, fileName, mTex->external,
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, mTex->external,
                          NULL, FILENAME_T_MAXLEN) &&
          GL_LoadImage(image, fileName)))
     {
@@ -983,7 +983,7 @@ byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst,
 
     sn = &skinNames[inst->tex->ofTypeID];
 
-    if(R_FindResource2(RT_GRAPHIC, RC_MODEL, fileName, sn->path, NULL,
+    if(R_FindResource2(RT_GRAPHIC, DDRC_MODEL, fileName, sn->path, NULL,
                        FILENAME_T_MAXLEN))
         if(GL_LoadImage(image, fileName))
         {
@@ -1027,13 +1027,13 @@ byte GL_LoadModelShinySkin(image_t* img, const gltexture_inst_t* inst,
         ptr[1] = 'c';
         ptr[2] = 'k';
 
-        if(R_FindResource2(RT_GRAPHIC, RC_MODEL, fileName, resource, NULL,
+        if(R_FindResource2(RT_GRAPHIC, DDRC_MODEL, fileName, resource, NULL,
                            FILENAME_T_MAXLEN))
             if(GL_LoadImage(img, fileName))
                 return 2;
     }
 
-    if(R_FindResource2(RT_GRAPHIC, RC_MODEL, fileName, sn->path, NULL,
+    if(R_FindResource2(RT_GRAPHIC, DDRC_MODEL, fileName, sn->path, NULL,
                        FILENAME_T_MAXLEN))
         if(GL_LoadImage(img, fileName))
             return 2;
@@ -1067,7 +1067,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
     if(!lightingTextures[which].tex)
     {
         lightingTextures[which].tex =
-            GL_PrepareExtTexture(RC_GRAPHICS, lstexes[which].name,
+            GL_PrepareExtTexture(DDRC_GRAPHICS, lstexes[which].name,
                                  LGM_WHITE_ALPHA, false, GL_LINEAR,
                                  GL_LINEAR, -1 /*best anisotropy*/,
                                  lstexes[which].wrapS, lstexes[which].wrapT,
@@ -1086,7 +1086,7 @@ DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
     {
         // We don't want to compress the flares (banding would be noticeable).
         sysFlareTextures[flare].tex =
-            GL_PrepareExtTexture(RC_GRAPHICS,
+            GL_PrepareExtTexture(DDRC_GRAPHICS,
                              flare == 0 ? "dlight" :
                              flare == 1 ? "flare" :
                              flare == 2 ? "brflare" : "bigflare",
@@ -1111,7 +1111,7 @@ DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
  *                      1 = found and prepared a lump resource.
  *                      2 = found and prepared an external resource.
  */
-byte GL_LoadExtTexture(image_t* image, resourceclass_t resClass,
+byte GL_LoadExtTexture(image_t* image, ddresourceclass_t resClass,
                        const char* name, gfxmode_t mode)
 {
     filename_t          fileName;
@@ -1179,14 +1179,14 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
 
         // First try the Flats category.
         if(!(found =
-             R_FindResource2(RT_GRAPHIC, RC_FLAT, file, lmpInf->name, NULL,
+             R_FindResource2(RT_GRAPHIC, DDRC_FLAT, file, lmpInf->name, NULL,
                              FILENAME_T_MAXLEN)))
         {   // Try the old-fashioned "Flat-NAME" in the Textures category.
             filename_t          resource;
 
             snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lmpInf->name);
 
-            found = R_FindResource2(RT_GRAPHIC, RC_TEXTURE, file, resource,
+            found = R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, file, resource,
                                     NULL, FILENAME_T_MAXLEN);
         }
 
@@ -1330,7 +1330,7 @@ void GL_DestroyImage(image_t* img)
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
  * actual pixel colors all white.
  */
-DGLuint GL_PrepareExtTexture(resourceclass_t resClass, const char* name,
+DGLuint GL_PrepareExtTexture(ddresourceclass_t resClass, const char* name,
                              gfxmode_t mode, int useMipmap, int minFilter,
                              int magFilter, int anisoFilter, int wrapS,
                              int wrapT, int otherFlags)
@@ -1361,7 +1361,7 @@ DGLuint GL_PrepareExtTexture(resourceclass_t resClass, const char* name,
 /**
  * Part of the Doomsday public API.
  */
-DGLuint GL_LoadGraphics(resourceclass_t resClass, const char *name,
+DGLuint GL_LoadGraphics(ddresourceclass_t resClass, const char *name,
                         gfxmode_t mode, int useMipmap, boolean clamped,
                         int otherFlags)
 {
@@ -1499,7 +1499,7 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
     {
         filename_t          fileName;
 
-        if(R_FindResource2(RT_GRAPHIC, RC_TEXTURE, fileName, texDef->name,
+        if(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, texDef->name,
                            "-ck", FILENAME_T_MAXLEN))
             if(GL_LoadImage(image, fileName))
                 return 2; // High resolution texture loaded.
@@ -1567,7 +1567,7 @@ byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
     {
         filename_t          fileName;
 
-        if(R_FindResource2(RT_GRAPHIC, RC_PATCH, fileName, lmpInf->name,
+        if(R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName, lmpInf->name,
                            "-ck", FILENAME_T_MAXLEN))
             if(GL_LoadImage(image, fileName))
                 return 2; // High resolution patch loaded.
@@ -1662,10 +1662,10 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
             }
         }
 
-        found = R_FindResource2(RT_GRAPHIC, RC_PATCH, fileName, resource,
+        found = R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName, resource,
                                 "-ck", FILENAME_T_MAXLEN);
         if(!found && pSprite)
-            found = R_FindResource2(RT_GRAPHIC, RC_PATCH, fileName,
+            found = R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
                                     lmpInf->name, "-ck", FILENAME_T_MAXLEN);
 
         if(found && GL_LoadImage(image, fileName) != NULL)
@@ -1754,7 +1754,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
         return result; // Wha?
 
     // First try to find an external resource.
-    if(R_FindResource2(RT_GRAPHIC, RC_PATCH, fileName,
+    if(R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
                        lumpInfo[r->lump].name, NULL, FILENAME_T_MAXLEN) &&
        GL_LoadImage(image, fileName) != NULL)
     {   // High resolution rawtex loaded.

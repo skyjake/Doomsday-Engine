@@ -1820,7 +1820,7 @@ void R_ExpandSkinName(char* expanded, const char* skin,
     if(!F_Access(expanded))
     {
         // Try the resource locator.
-        if(!R_FindResource2(RT_GRAPHIC, RC_MODEL, expanded, skin, NULL,
+        if(!R_FindResource2(RT_GRAPHIC, DDRC_MODEL, expanded, skin, NULL,
                             len))
         {
             expanded[0] = 0;

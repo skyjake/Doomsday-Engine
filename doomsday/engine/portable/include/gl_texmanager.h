@@ -183,10 +183,10 @@ byte            GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst
 
 byte            GL_LoadDoomPatch(image_t* image, const patchtex_t* p);
 byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
-byte            GL_LoadExtTexture(image_t* image, resourceclass_t resClass,
+byte            GL_LoadExtTexture(image_t* image, ddresourceclass_t resClass,
                                   const char* name, gfxmode_t mode);
 
-DGLuint         GL_PrepareExtTexture(resourceclass_t resClass,
+DGLuint         GL_PrepareExtTexture(ddresourceclass_t resClass,
                                      const char* name, gfxmode_t mode,
                                      int useMipmap, int minFilter,
                                      int magFilter, int anisoFilter,

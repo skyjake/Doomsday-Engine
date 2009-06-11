@@ -122,7 +122,7 @@ byte GL_LoadParticleTexture(image_t* image, const char* name)
 {
     filename_t          fileName;
 
-    if(R_FindResource2(RT_GRAPHIC, RC_TEXTURE, fileName, name, "-ck",
+    if(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, name, "-ck",
                        FILENAME_T_MAXLEN) &&
        GL_LoadImage(image, fileName))
     {
@@ -144,7 +144,7 @@ void Rend_ParticleInitTextures(void)
         return; // Already been here.
 
     // Load the zeroth texture (the default: a blurred point).
-    pointTex = GL_PrepareExtTexture(RC_GRAPHICS, "Zeroth",
+    pointTex = GL_PrepareExtTexture(DDRC_GRAPHICS, "Zeroth",
         LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 

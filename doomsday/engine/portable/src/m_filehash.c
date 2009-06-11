@@ -481,15 +481,7 @@ boolean FileHash_Find(filehash_t* fileHash, char* foundPath,
 
     // Absolute paths are not in the hash (no need to put them there).
     if(Dir_IsAbsolute(name))
-    {
-        if(F_Access(name))
-        {
-            strcpy(foundPath, name);
-            return true;
-        }
-
         return false;
-    }
 
     // Convert the given file name into a file name we can process.
     strncpy(validName, name, FILENAME_T_MAXLEN);
