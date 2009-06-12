@@ -74,7 +74,7 @@ typedef struct {
     char            skinRange;
     float           offset[3];
     byte            alpha;
-    short           shinySkin; // Skinname ID (index)
+    uint            shinySkin; // Skinname ID (index)
 } submodeldef_t;
 
 #define MODELDEF_ID_MAXLEN      32

@@ -425,7 +425,7 @@ static void R_RegisterModelSkin(model_t* mdl, int index)
     mdl->skins[index].id = R_RegisterSkin(NULL, mdl->skins[index].name,
         mdl->fileName, false, FILENAME_T_MAXLEN);
 
-    if(mdl->skins[index].id < 0)
+    if(!mdl->skins[index].id)
     {   // Not found!
         VERBOSE(Con_Printf("  %s (#%i) not found.\n",
                            mdl->skins[index].name, index));

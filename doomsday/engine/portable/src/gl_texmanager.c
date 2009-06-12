@@ -1218,57 +1218,58 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
 static byte* loadImage(image_t* img, const char* imagefn)
 {
     DFILE*              file;
-    char                ext[40+1];
+    char*               p;
     int                 format;
 
     // We know how to load PCX, TGA and PNG.
-    M_GetFileExt(ext, img->fileName, 40);
-    if(!strcmp(ext, "pcx"))
+    p = M_FindFileExtension(img->fileName);
+    if(p)
     {
-        img->pixels =
-            PCX_AllocLoad(img->fileName, &img->width, &img->height, NULL);
-        img->pixelSize = 3;     // PCXs can't be masked.
-        img->originalBits = 8;
-    }
-    else if(!strcmp(ext, "tga"))
-    {
-        if(!TGA_GetSize(img->fileName, &img->width, &img->height))
-            return NULL;
-
-        file = F_Open(img->fileName, "rb");
-        if(!file)
-            return NULL;
-
-        // Allocate a big enough buffer and read in the image.
-        img->pixels = M_Malloc(4 * img->width * img->height);
-        format =
-            TGA_Load32_rgba8888(file, img->width, img->height, img->pixels);
-        if(format == TGA_TARGA24)
+        if(!strcmp(p, "pcx"))
         {
-            img->pixelSize = 3;
-            img->originalBits = 24;
+            img->pixels = PCX_AllocLoad(img->fileName, &img->width,
+                                        &img->height, NULL);
+            img->pixelSize = 3;     // PCXs can't be masked.
+            img->originalBits = 8;
         }
-        else
+        else if(!strcmp(p, "tga"))
         {
-            img->pixelSize = 4;
-            img->originalBits = 32;
+            if(!TGA_GetSize(img->fileName, &img->width, &img->height))
+                return NULL;
+
+            if(!(file = F_Open(img->fileName, "rb")))
+                return NULL;
+
+            // Allocate a big enough buffer and read in the image.
+            img->pixels = M_Malloc(4 * img->width * img->height);
+            format = TGA_Load32_rgba8888(file, img->width, img->height,
+                                         img->pixels);
+            if(format == TGA_TARGA24)
+            {
+                img->pixelSize = 3;
+                img->originalBits = 24;
+            }
+            else
+            {
+                img->pixelSize = 4;
+                img->originalBits = 32;
+            }
+            F_Close(file);
         }
-        F_Close(file);
-    }
-    else if(!strcmp(ext, "png"))
-    {
-        img->pixels =
-            PNG_Load(img->fileName, &img->width, &img->height,
-                     &img->pixelSize);
-        img->originalBits = 8 * img->pixelSize;
+        else if(!strcmp(p, "png"))
+        {
+            img->pixels = PNG_Load(img->fileName, &img->width, &img->height,
+                                   &img->pixelSize);
+            img->originalBits = 8 * img->pixelSize;
 
-        if(img->pixels == NULL)
-            return NULL;
+            if(img->pixels == NULL)
+                return NULL;
+        }
     }
 
-    VERBOSE(Con_Message
-            ("LoadImage: %s (%ix%i)\n", M_PrettyPath(img->fileName), img->width,
-             img->height));
+    VERBOSE(Con_Message("LoadImage: %s (%ix%i)\n",
+                        M_PrettyPath(img->fileName), img->width,
+                        img->height));
 
     // How about some color-keying?
     if(GL_IsColorKeyed(img->fileName))

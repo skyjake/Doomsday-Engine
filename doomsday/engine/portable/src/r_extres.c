@@ -577,7 +577,8 @@ boolean R_FindResource2(resourcetype_t resType, ddresourceclass_t resClass,
     if(resType < RT_FIRST || resType >= NUM_RESOURCE_TYPES)
         Con_Error("R_FindResource: Invalid resource type %i.\n", resType);
 
-    if(resClass < DDRC_FIRST || resClass >= NUM_RESOURCE_CLASSES)
+    if(resClass != DDRC_NONE && // No resource class means use the base path.
+       (resClass < DDRC_FIRST || resClass >= NUM_RESOURCE_CLASSES))
         Con_Error("R_FindResource: Invalid resource class %i.\n", resClass);
 
     return tryLocateResource(resType, resClass, fileName, name,

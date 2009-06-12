@@ -1804,29 +1804,31 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     return 1 + (st - skinNames); // 1-based index.
 }
 
-void R_ExpandSkinName(char* expanded, const char* skin,
-                      const char* modelfn, size_t len)
+static boolean expandSkinName(char* expanded, const char* skin,
+                              const char* modelfn, size_t len)
 {
     directory_t         mydir;
-
-    memset(&mydir, 0, sizeof(mydir));
+    ddstring_t          fn;
+    boolean             found;
 
     // The "first choice" directory.
+    memset(&mydir, 0, sizeof(mydir));
     Dir_FileDir(modelfn, &mydir);
 
+    Str_Init(&fn);
+    Str_Set(&fn, mydir.path);
+    Str_Append(&fn, skin);
+
     // Try the "first choice" directory first.
-    strncpy(expanded, mydir.path, len);
-    strncat(expanded, skin, len);
-    if(!F_Access(expanded))
-    {
-        // Try the resource locator.
-        if(!R_FindResource2(RT_GRAPHIC, DDRC_MODEL, expanded, skin, NULL,
-                            len))
-        {
-            expanded[0] = 0;
-            return;
-        }
-    }
+    found = R_FindResource2(RT_GRAPHIC, DDRC_NONE, expanded, Str_Text(&fn),
+                            NULL, len);
+
+    if(!found) // Try the model path(s).
+        found = R_FindResource2(RT_GRAPHIC, DDRC_MODEL, expanded, skin,
+                                NULL, len);
+
+    Str_Free(&fn);
+    return found;
 }
 
 /**
@@ -1835,35 +1837,16 @@ void R_ExpandSkinName(char* expanded, const char* skin,
 uint R_RegisterSkin(char* fullpath, const char* skin, const char* modelfn,
                     boolean isShinySkin, size_t len)
 {
-    const char*         formats[3] = { ".png", ".tga", ".pcx" };
-    filename_t          buf, fn;
-    char*               ext;
-    int                 i;
-    uint                idx = 0;
-
     // Has a skin name been provided?
-    if(!skin[0])
-        return -1;
-
-    // Find the extension, or if there isn't one, add it.
-    strncpy(fn, skin, FILENAME_T_MAXLEN);
-    ext = strrchr(fn, '.');
-    if(!ext)
+    if(skin && skin[0])
     {
-        strncat(fn, ".png", FILENAME_T_MAXLEN);
-        ext = strrchr(fn, '.');
+        filename_t          buf;
+
+        if(expandSkinName(fullpath ? fullpath : buf, skin, modelfn, len))
+            return R_CreateSkinTex(fullpath ? fullpath : buf, isShinySkin);
     }
 
-    // Try PNG, TGA, PCX.
-    for(i = 0; i < 3 && idx == 0; ++i)
-    {
-        strncpy(ext, formats[i], FILENAME_T_MAXLEN - (ext - fn));
-        R_ExpandSkinName(fullpath ? fullpath : buf, fn, modelfn, len);
-
-        idx = R_CreateSkinTex(fullpath ? fullpath : buf, isShinySkin);
-    }
-
-    return idx;
+    return 0;
 }
 
 const skinname_t* R_GetSkinNameByIndex(uint id)

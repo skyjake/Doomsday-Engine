@@ -179,7 +179,7 @@ typedef struct {
 
 typedef struct {
     filename_t      name;
-    int             id;
+    uint            id;
 } dmd_skin_t;
 
 typedef struct {
