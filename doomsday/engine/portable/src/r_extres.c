@@ -268,7 +268,8 @@ static boolean tryResourceFile(resourcetype_t resType,
         {
             if(F_Access(path))
             {
-                strncpy(foundFileName, path, len);
+                if(foundFileName)
+                    strncpy(foundFileName, path, len);
                 found = true;
             }
         }
@@ -310,7 +311,8 @@ static boolean tryResourceFile(resourcetype_t resType,
             {
                 if(F_Access(Str_Text(tmp)))
                 {
-                    strncpy(foundFileName, Str_Text(tmp), len);
+                    if(foundFileName)
+                        strncpy(foundFileName, Str_Text(tmp), len);
                     found = true;
                     break;
                 }
