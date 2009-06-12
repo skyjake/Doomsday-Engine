@@ -371,42 +371,63 @@ static boolean findResource(resourcetype_t resType,
 
 static boolean tryLocateResource(resourcetype_t resType,
                                  ddresourceclass_t resClass, char* fileName,
-                                 const char* name,
+                                 const char* origName,
                                  const char* optionalSuffix, size_t len)
 {
+    ddstring_t          name;
+    boolean             found;
+
     assert(inited);
 
+    // Fix the directory seperators early so we don't need to many times
+    // over, further down the line.
+    Str_Init(&name);
+    Str_Set(&name, origName);
+    Dir_FixSlashes(Str_Text(&name), Str_Length(&name));
+
     // If this is an absolute path, locate using it.
-    if(Dir_IsAbsolute(name))
+    if(Dir_IsAbsolute(Str_Text(&name)))
     {
-        return findResource(resType, DDRC_NONE, fileName, name,
-                            optionalSuffix, len);
+        found = findResource(resType, DDRC_NONE, fileName, Str_Text(&name),
+                             optionalSuffix, len);
     }
     else
     {   // Else, prepend the base path and try that.
-        boolean             found;
-        ddstring_t*         fn = Str_New();
+        ddstring_t          fn;
+        const char*         path;
 
         // Make this an absolute, base-relative path.
-        Str_Set(fn, ddBasePath);
-        Str_Append(fn, name);
-
-        Dir_FixSlashes(Str_Text(fn), Str_Length(fn));
+        // If only checking the base path and not the expected location
+        // for the resource type (below); re-use the current string.
+        if(resClass != DDRC_NONE)
+        {
+            Str_Init(&fn);
+            Str_Copy(&fn, &name);
+            Str_Prepend(&fn, ddBasePath);
+            path = Str_Text(&fn);
+        }
+        else
+        {
+            Str_Prepend(&name, ddBasePath);
+            path = Str_Text(&name);
+        }
 
         // Try loading using the base path as the starting point.
-        found = findResource(resType, DDRC_NONE, fileName, Str_Text(fn),
+        found = findResource(resType, DDRC_NONE, fileName, path,
                              optionalSuffix, len);
-        Str_Delete(fn);
-        if(found)
-            return true;
+
+        if(resClass != DDRC_NONE)
+            Str_Free(&fn);
     }
 
     // Try expected location for this resource type and class?
-    if(resClass != DDRC_NONE)
-        return findResource(resType, resClass, fileName, name,
-                            optionalSuffix, len);
+    if(!found && resClass != DDRC_NONE)
+        found = findResource(resType, resClass, fileName, Str_Text(&name),
+                             optionalSuffix, len);
 
-    return false; // Not found.
+    Str_Free(&name);
+
+    return found;
 }
 
 static void initClassData(void)
