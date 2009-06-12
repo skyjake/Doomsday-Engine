@@ -492,7 +492,7 @@ void R_SetDataPath(const char* path)
  * @param origPath      If a relative path, the data path is added in
  *                      front of it.
  */
-void R_PrependDataPath(char* newPath, const filename_t origPath, size_t len)
+void R_PrependDataPath(char* newPath, const char* origPath, size_t len)
 {
     if(Dir_IsAbsolute(origPath))
     {
@@ -501,11 +501,7 @@ void R_PrependDataPath(char* newPath, const filename_t origPath, size_t len)
     }
     else
     {
-        filename_t          buf;
-
-        snprintf(buf, FILENAME_T_MAXLEN, "%s%s", Str_Text(dataPath),
-                 origPath);
-        strncpy(newPath, buf, len);
+        snprintf(newPath, len, "%s%s", Str_Text(dataPath), origPath);
     }
 }
 
