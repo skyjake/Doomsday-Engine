@@ -175,7 +175,7 @@ static void initClassDataPaths(void)
         }
         Dir_ValidDir(filePath, FILENAME_T_MAXLEN);
 
-        Str_Prepend(&rc->path, ";");
+        //Str_Prepend(&rc->path, ";");
         Str_Prepend(&rc->path, filePath);
 
         if(!(rc->flags & RCF_USE_BASEDATAPATH) && gameMode && gameMode[0])
@@ -232,6 +232,27 @@ static void initClassDataPaths(void)
     }
 }
 
+static boolean tryFindFile(const resclass_t* info, char* foundFileName,
+                           const char* path, size_t len)
+{
+    if(info)
+    {
+        if(FileHash_Find(info->fileHash, foundFileName, path, len))
+            return true;
+    }
+    else
+    {
+        if(F_Access(path))
+        {
+            if(foundFileName)
+                strncpy(foundFileName, path, len);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /**
  * Check all possible extensions to see if the resource exists.
  *
@@ -244,83 +265,53 @@ static boolean tryResourceFile(resourcetype_t resType,
                                char* foundFileName, size_t len)
 {
     boolean             found = false;
-    resclass_t*         info = NULL;
+    const resclass_t*   info = NULL;
     char*               ptr;
 
     // Do we need to rebuild a filehash?
     if(resClass != DDRC_NONE)
     {
+        updateFileHash(&resClasses[resClass]);
         info = &resClasses[resClass];
-        updateFileHash(info);
     }
 
     // Has an extension been specified?
     ptr = M_FindFileExtension((char*)path);
-    if(ptr && *ptr != '*')
-    {
-        // Try this first.
-        if(info)
-        {
-            if(FileHash_Find(info->fileHash, foundFileName, path, len))
-                found = true;
-        }
-        else
-        {
-            if(F_Access(path))
-            {
-                if(foundFileName)
-                    strncpy(foundFileName, path, len);
-                found = true;
-            }
-        }
-    }
+    if(ptr && *ptr != '*') // Try this first.
+        found = tryFindFile(info, foundFileName, path, len);
 
     if(!found)
     {
         int                 i;
         const char**        ext;
-        ddstring_t*         path2 = Str_New();
-        ddstring_t*         tmp = Str_New();
+        ddstring_t          path2, tmp;
+
+        Str_Init(&path2);
+        Str_Init(&tmp);
 
         // Create a copy of the path minus file extension.
         if(ptr)
         {
-            Str_PartAppend(path2, path, 0, ptr - path);
+            Str_PartAppend(&path2, path, 0, ptr - path);
         }
         else
         {
-            Str_Set(path2, path);
-            Str_AppendChar(path2, '.');
+            Str_Set(&path2, path);
+            Str_AppendChar(&path2, '.');
         }
 
         for(i = 0, ext = typeExtension[resType]; *ext; ext++)
         {
-            Str_Copy(tmp, path2);
-            Str_Appendf(tmp, "%s", *ext);
+            Str_Copy(&tmp, &path2);
+            Str_Appendf(&tmp, "%s", *ext);
 
-            if(info)
-            {
-                if(FileHash_Find(info->fileHash, foundFileName,
-                                 Str_Text(tmp), len))
-                {
-                    found = true; // Found it.
-                    break;
-                }
-            }
-            else
-            {
-                if(F_Access(Str_Text(tmp)))
-                {
-                    if(foundFileName)
-                        strncpy(foundFileName, Str_Text(tmp), len);
-                    found = true;
-                    break;
-                }
-            }
+            if((found = tryFindFile(info, foundFileName, Str_Text(&tmp),
+                                    len)))
+                break;
         }
 
-        Str_Delete(path2);
-        Str_Delete(tmp);
+        Str_Free(&path2);
+        Str_Free(&tmp);
     }
 
     return found;
