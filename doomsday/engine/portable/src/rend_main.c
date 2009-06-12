@@ -1777,7 +1777,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
                    rtexcoords5, rcolors, 3 + divs[0].num,
                    numLights, modTex, modColor, rTU);
-        if(p->reflective)
+        if(p->reflective && rTUs[TU_PRIMARY].tex)
         {
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
                        shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
@@ -1796,7 +1796,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                    rtexcoords, rtexcoords2, rtexcoords5, rcolors,
 
                    numVertices, numLights, modTex, modColor, rTU);
-        if(p->reflective)
+        if(p->reflective && rTUs[TU_PRIMARY].tex)
             RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY,
                        rvertices, shinyTexCoords,
                        rTUs[TU_INTER].tex? rtexcoords : NULL,
