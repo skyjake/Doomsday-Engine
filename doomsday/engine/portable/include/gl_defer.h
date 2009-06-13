@@ -70,13 +70,18 @@ void            GL_UploadDeferredContent(uint timeOutMilliSeconds);
 int             GL_GetDeferredCount(void);
 void            GL_InitTextureContent(texturecontent_t* content);
 DGLuint         GL_NewTexture(texturecontent_t* content, boolean* result);
-DGLuint         GL_NewTextureWithParams(dgltexformat_t format, int width, int height, void* pixels,
+DGLuint         GL_NewTextureWithParams(dgltexformat_t format, int width,
+                                        int height, void* pixels,
                                         int flags);
-DGLuint         GL_NewTextureWithParams2(dgltexformat_t format, int width, int height, void* pixels,
-                                         int flags, int minFilter, int magFilter, int anisoFilter,
+DGLuint         GL_NewTextureWithParams2(dgltexformat_t format, int width,
+                                         int height, void* pixels,
+                                         int flags, int minFilter,
+                                         int magFilter, int anisoFilter,
                                          int wrapS, int wrapT);
-DGLuint         GL_NewTextureWithParams3(dgltexformat_t format, int width, int height, void* pixels,
-                                         int flags, int minFilter, int magFilter, int anisoFilter,
+DGLuint         GL_NewTextureWithParams3(dgltexformat_t format, int width,
+                                         int height, void* pixels,
+                                         int flags, int minFilter,
+                                         int magFilter, int anisoFilter,
                                          int wrapS, int wrapT);
 /// \todo should these be public?
 void            GL_ReserveNames(void);

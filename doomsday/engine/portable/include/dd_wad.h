@@ -55,17 +55,7 @@ typedef struct {
     char            iwad;
 } filerecord_t;
 
-typedef struct {
-    char            name[9]; // End in \0.
-    DFILE*          handle;
-    int             position;
-    size_t          size;
-    int             sent;
-    char            group; // Lump grouping tag (LGT_*).
-} lumpinfo_t;
-
 extern char* defaultWads; // A list of wad names, whitespace in between (in .cfg).
-extern lumpinfo_t *lumpInfo;
 extern int numLumps;
 
 void            DD_RegisterVFS(void);
@@ -79,8 +69,8 @@ const char*     W_LumpName(lumpnum_t lump);
 void            W_ReadLump(lumpnum_t lump, void* dest);
 void            W_ReadLumpSection(lumpnum_t lump, void* dest,
                                   size_t startOffset, size_t length);
-void*           W_CacheLumpNum(lumpnum_t lump, int tag);
-void*           W_CacheLumpName(const char* name, int tag);
+const void*     W_CacheLumpNum(lumpnum_t lump, int tag);
+const void*     W_CacheLumpName(const char* name, int tag);
 boolean         W_AddFile(const char* fileName,
                           boolean allowDuplicate);
 boolean         W_RemoveFile(const char* fileName);
@@ -95,5 +85,6 @@ unsigned int    W_CRCNumber(void);
 void            W_GetIWADFileName(char* buf, size_t bufSize);
 void            W_GetPWADFileNames(char* buf, size_t bufSize,
                                    char separator);
-
+boolean         W_DumpLump(lumpnum_t, const char* fileName);
+void            W_DumpLumpDir(void);
 #endif

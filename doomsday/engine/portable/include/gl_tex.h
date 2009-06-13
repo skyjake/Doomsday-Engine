@@ -65,8 +65,9 @@ int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
                                     int line);
 void            ColorOutlines(byte* buffer, int width, int height);
 int             DrawRealPatch(byte* buffer, int texwidth, int texheight,
-                              lumppatch_t* patch, int origx, int origy,
-                              boolean maskZero, boolean checkForAlpha);
+                              const lumppatch_t* patch, int origx,
+                              int origy, boolean maskZero,
+                              boolean checkForAlpha);
 boolean         ImageHasAlpha(image_t *image);
 
 #endif

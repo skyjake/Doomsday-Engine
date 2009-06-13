@@ -370,16 +370,19 @@ void F_InitDirec(void)
 
     // Add the contents of all DD_DIREC lumps.
     for(i = 0; i < numLumps; ++i)
-        if(!strnicmp(lumpInfo[i].name, "DD_DIREC", 8))
+    {
+        if(!strnicmp(W_LumpName(i), "DD_DIREC", 8))
         {
             // Make a copy of it so we can make it end in a null.
             len = W_LumpLength(i);
             buf = M_Malloc(len + 1);
             memcpy(buf, W_CacheLumpNum(i, PU_CACHE), len);
             buf[len] = 0;
+
             F_ParseDirecData(buf);
             M_Free(buf);
         }
+    }
 
     alreadyInited = true;
 }
@@ -527,7 +530,7 @@ DFILE *F_OpenLump(const char *name, boolean dontBuffer)
     file->lastModified = time(NULL); // So I'm lazy...
     if(!dontBuffer)
     {
-        file->size = lumpInfo[num].size;
+        file->size = W_LumpLength(num);
         file->pos = file->data = M_Malloc(file->size);
         memcpy(file->data, W_CacheLumpNum(num, PU_CACHE), file->size);
     }

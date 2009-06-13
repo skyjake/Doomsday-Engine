@@ -71,13 +71,13 @@ boolean xgDataLumps = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FILE *file;
-static byte *readptr;
+static FILE* file;
+static const byte* readptr;
 
-static linetype_t *linetypes = 0;
+static linetype_t*linetypes = 0;
 static int num_linetypes = 0;
 
-static sectortype_t *sectypes;
+static sectortype_t* sectypes;
 static int num_sectypes;
 
 // CODE --------------------------------------------------------------------
@@ -126,14 +126,14 @@ static void WriteString(char *str)
     fwrite(str, len, 1, file);
 }
 
-static byte ReadByte()
+static byte ReadByte(void)
 {
     return *readptr++;
 }
 
 static short ReadShort(void)
 {
-    short               s = *(short *) readptr;
+    short               s = *(const short *) readptr;
 
     readptr += 2;
     // Swap the bytes.
@@ -143,7 +143,7 @@ static short ReadShort(void)
 
 static long ReadLong(void)
 {
-    long                l = *(long *) readptr;
+    long                l = *(const long *) readptr;
 
     readptr += 4;
     // Swap the bytes.
@@ -160,19 +160,11 @@ static float ReadFloat(void)
     return returnValue;
 }
 
-/*
-void Read(void *data, int len)
-{
-    memcpy(data, readptr, len);
-    readptr += len;
-}
-*/
-
 /**
  * I could just return a pointer to the string, but that risks losing
  * it somewhere. Now we can be absolutely sure it can't be lost.
  */
-static void ReadString(char **str)
+static void ReadString(char** str)
 {
     int                 len = ReadShort();
 
@@ -193,7 +185,7 @@ static void ReadString(char **str)
 }
 
 #if 0 // No longer supported.
-void XG_WriteTypes(FILE *f)
+void XG_WriteTypes(FILE* f)
 {
     int                 i, k;
     int                 linecount = 0, sectorcount = 0;
@@ -329,23 +321,26 @@ void XG_WriteTypes(FILE *f)
 }
 #endif
 
-void XG_ReadXGLump(char *name)
+void XG_ReadXGLump(char* name)
 {
-    int                 lump = W_CheckNumForName(name);
-    void               *buffer;
+    lumpnum_t           lump;
+    void*               buf;
     int                 lc = 0, sc = 0, i;
-    linetype_t         *li;
-    sectortype_t       *sec;
+    linetype_t*         li;
+    sectortype_t*       sec;
     boolean             done = false;
 
-    if(lump < 0)
+    if((lump = W_CheckNumForName(name)) < 0)
         return; // No such lump.
 
     xgDataLumps = true;
 
     Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.\n");
 
-    readptr = buffer = W_CacheLumpNum(lump, PU_STATIC);
+    buf = malloc(W_LumpLength(lump));
+    W_ReadLump(lump, buf);
+
+    readptr = buf;
 
     num_linetypes = ReadShort();
     num_sectypes = ReadShort();
@@ -461,7 +456,7 @@ void XG_ReadXGLump(char *name)
         }
     }
 
-    Z_Free(buffer);
+    free(buf);
 }
 
 /**
@@ -481,7 +476,7 @@ void XG_ReadTypes(void)
     XG_ReadXGLump("DDXGDATA");
 }
 
-linetype_t *XG_GetLumpLine(int id)
+linetype_t* XG_GetLumpLine(int id)
 {
     int                 i;
 

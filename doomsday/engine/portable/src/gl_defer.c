@@ -388,8 +388,8 @@ Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
     return content->name;
 }
 
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-                                void* pixels, int flags)
+DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width,
+                                int height, void* pixels, int flags)
 {
     texturecontent_t c;
 
@@ -402,10 +402,10 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     return GL_NewTexture(&c, NULL);
 }
 
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
-                                 void* pixels, int flags, int minFilter,
-                                 int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT)
+DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width,
+                                 int height, void* pixels, int flags,
+                                 int minFilter, int magFilter,
+                                 int anisoFilter, int wrapS, int wrapT)
 {
     texturecontent_t c;
 
@@ -427,10 +427,10 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
  * Same as above except this version is part of the public API and thus some
  * of the paramaters use the DGL counterparts.
  */
-DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width, int height,
-                                 void* pixels, int flags, int minFilter,
-                                 int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT)
+DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width,
+                                 int height, void* pixels, int flags,
+                                 int minFilter, int magFilter,
+                                 int anisoFilter, int wrapS, int wrapT)
 {
     return GL_NewTextureWithParams2(format, width, height, pixels, flags,
         (minFilter == DGL_LINEAR? GL_LINEAR :

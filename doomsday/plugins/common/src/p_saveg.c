@@ -288,12 +288,6 @@ static void unarchiveMap(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-#if __JHEXEN__
-extern int ACScriptCount;
-extern byte* ActionCodeBase;
-extern acsinfo_t* ACSInfo;
-#endif
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 LZFILE* savefile;

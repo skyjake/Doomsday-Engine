@@ -359,10 +359,10 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
         for(i = startLump; i < numLumps; ++i)
         {
             int                 lumpType;
-            char*           lumpName;
+            const char*         lumpName;
 
             // Lookup the lump name in our list of known map lump names.
-            lumpName = W_CacheLumpNum(i, PU_GETNAME);
+            lumpName = W_LumpName(i);
             lumpType = mapLumpTypeForName(lumpName);
 
             if(lumpType != ML_INVALID)

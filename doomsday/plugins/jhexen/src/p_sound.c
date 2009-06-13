@@ -57,7 +57,7 @@ static char ArchivePath[128];
 
 // CODE --------------------------------------------------------------------
 
-int S_GetSoundID(char *name)
+int S_GetSoundID(const char* name)
 {
     return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 }

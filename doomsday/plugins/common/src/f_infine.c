@@ -2595,9 +2595,7 @@ void FIC_TextFromDef(void)
 void FIC_TextFromLump(void)
 {
     fitext_t           *tex = FI_GetText(FI_GetToken());
-    int                 lnum, buflen;
-    size_t              i, incount;
-    char               *data, *str, *out;
+    int                 lnum;
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
@@ -2608,6 +2606,10 @@ void FIC_TextFromLump(void)
     }
     else
     {
+        size_t              i, incount, buflen;
+        const char*         data;
+        char*               str, *out;
+
         // Load the lump.
         data = W_CacheLumpNum(lnum, PU_STATIC);
         incount = W_LumpLength(lnum);

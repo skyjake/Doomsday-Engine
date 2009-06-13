@@ -627,11 +627,7 @@ void R_LoadColorPalettes(void)
 
         if((lump = W_CheckNumForName(name)) != -1)
         {
-            byte*               transLump =
-                W_CacheLumpNum(lump, PU_STATIC);
-
-            memcpy(&translationtables[i * 256], transLump, 256);
-            Z_Free(transLump);
+            W_ReadLumpSection(lump, &translationtables[i * 256], 0, 256);
         }
     }
     }

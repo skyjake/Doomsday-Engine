@@ -616,39 +616,15 @@ static int DD_StartupWorker(void *parm)
 
     if(ArgCheckWith("-dumplump", 1))
     {
-        const char*     arg = ArgNext();
-        char            fname[100];
-        FILE*           file;
-        int             lump = W_GetNumForName(arg);
-        byte*           lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+        const char*         lumpName = ArgNext();
+        lumpnum_t           lump;
 
-        sprintf(fname, "%s.dum", arg);
-        file = fopen(fname, "wb");
-        if(!file)
-        {
-            Con_Error("Couldn't open %s for writing. %s\n", fname,
-                      strerror(errno));
-        }
-        fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
-        fclose(file);
-        Con_Error("%s dumped to %s.\n", arg, fname);
+        if((lump = W_CheckNumForName(lumpName)) != -1)
+            W_DumpLump(lump, NULL);
     }
 
     if(ArgCheck("-dumpwaddir"))
-    {
-        char            buff[10];
-
-        printf("Lumps (%d total):\n", numLumps);
-        for(p = 0; p < numLumps; p++)
-        {
-            strncpy(buff, lumpInfo[p].name, 8);
-            buff[8] = 0;
-            printf("%04i - %-8s (hndl: %p, pos: %i, size: %lu)\n", p, buff,
-                   lumpInfo[p].handle, lumpInfo[p].position,
-                   (unsigned long) lumpInfo[p].size);
-        }
-        Con_Error("---End of lumps---\n");
-    }
+        W_DumpLumpDir();
 
     Con_SetProgress(140);
 

@@ -70,7 +70,7 @@ typedef struct acsheader_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void StartOpenACS(int number, int infoIndex, int *address);
+static void StartOpenACS(int number, int infoIndex, const int* address);
 static void ScriptFinished(int number);
 static boolean TagBusy(int tag);
 static boolean AddToACSStore(int map, int number, byte *args);
@@ -189,22 +189,22 @@ static void ThingCount(int type, int tid);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     ACScriptCount;
-byte   *ActionCodeBase;
-acsinfo_t *ACSInfo;
-int     MapVars[MAX_ACS_MAP_VARS];
-int     WorldVars[MAX_ACS_WORLD_VARS];
+int ACScriptCount;
+const byte* ActionCodeBase;
+acsinfo_t* ACSInfo;
+int MapVars[MAX_ACS_MAP_VARS];
+int WorldVars[MAX_ACS_WORLD_VARS];
 acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static acs_t *ACScript;
-static int *PCodePtr;
+static acs_t* ACScript;
+static const int* PCodePtr;
 static byte SpecArgs[8];
 static int ACStringCount;
-static char **ACStrings;
+static char const** ACStrings;
 static char PrintBuffer[PRINT_BUFFER_SIZE];
-static acs_t *NewScript;
+static acs_t* NewScript;
 
 static char ErrorMsg[128];
 
@@ -238,7 +238,7 @@ CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
 
 // CODE --------------------------------------------------------------------
 
-char *GetACString(int id)
+const char* GetACString(int id)
 {
     if(id < 0 || id > ACStringCount)
         return NULL;
@@ -248,14 +248,14 @@ char *GetACString(int id)
 
 void P_LoadACScripts(int lump)
 {
-    int         i;
-    int        *buffer;
-    acsheader_t *header;
-    acsinfo_t  *info;
+    int                 i;
+    const int*          buffer;
+    const acsheader_t*  header;
+    acsinfo_t*          info;
 
     header = W_CacheLumpNum(lump, PU_MAP);
-    ActionCodeBase = (byte *) header;
-    buffer = (int *) ((byte *) header + LONG(header->infoOffset));
+    ActionCodeBase = (const byte*) header;
+    buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
     ACScriptCount = LONG(*buffer++);
     if(ACScriptCount == 0 || IS_CLIENT)
     {                           // Empty behavior lump
@@ -268,7 +268,8 @@ void P_LoadACScripts(int lump)
     for(i = 0, info = ACSInfo; i < ACScriptCount; ++i, info++)
     {
         info->number = LONG(*buffer++);
-        info->address = (int *) ((byte *) ActionCodeBase + LONG(*buffer++));
+        info->address =
+            (const int*) ((const byte*) ActionCodeBase + LONG(*buffer++));
         info->argCount = LONG(*buffer++);
         if(info->number >= OPEN_SCRIPTS_BASE)
         {                       // Auto-activate
@@ -286,12 +287,13 @@ void P_LoadACScripts(int lump)
     ACStrings = Z_Malloc(ACStringCount * sizeof(char*), PU_MAP, 0);
     for(i = 0; i < ACStringCount; ++i)
     {
-        ACStrings[i] = (char *)ActionCodeBase + LONG(*buffer++);
+        ACStrings[i] = (const char*)ActionCodeBase + LONG(*buffer++);
     }
+
     memset(MapVars, 0, sizeof(MapVars));
 }
 
-static void StartOpenACS(int number, int infoIndex, int *address)
+static void StartOpenACS(int number, int infoIndex, const int* address)
 {
     acs_t*              script;
 

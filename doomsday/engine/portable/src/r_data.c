@@ -1102,7 +1102,7 @@ static lumpnum_t* loadPatchList(lumpnum_t lump, size_t* num)
     if(numPatches > (lumpSize - 4) / 8)
     {   // Lump is truncated.
         Con_Message("loadPatchList: Warning, lump '%s' truncated (%lu bytes, "
-                    "expected %lu).\n", lumpInfo[lump].name,
+                    "expected %lu).\n", W_LumpName(lump),
                     (unsigned long) lumpSize,
                     (unsigned long) (numPatches * 8 + 4));
         numPatches = (lumpSize - 4) / 8;
@@ -1194,7 +1194,7 @@ typedef struct {
     numTexDefs = LONG(*maptex1);
 
     VERBOSE(Con_Message("R_ReadTextureDefs: Processing lump '%s'...\n",
-                        lumpInfo[lump].name));
+                        W_LumpName(lump)));
 
     validTexDefs = M_Calloc(numTexDefs * sizeof(byte));
     texDefNumPatches = M_Calloc(numTexDefs * sizeof(*texDefNumPatches));
@@ -1214,7 +1214,7 @@ typedef struct {
         {
             Con_Message("R_ReadTextureDefs: Bad offset %lu for definition "
                         "%i in lump '%s'.\n", (unsigned long) offset, i,
-                        lumpInfo[lump].name);
+                        W_LumpName(lump));
             continue;
         }
 
@@ -1679,7 +1679,7 @@ static int R_NewFlat(lumpnum_t lump)
             return i;
 
         // Is this a known identifer? Newer idents overide old.
-        if(!strnicmp(lumpInfo[ptr->lump].name, lumpInfo[lump].name, 8))
+        if(!strnicmp(W_LumpName(ptr->lump), W_LumpName(lump), 8))
         {
             ptr->lump = lump;
             return i;
@@ -1700,11 +1700,11 @@ static int R_NewFlat(lumpnum_t lump)
     ptr->width = 64; /// \fixme not all flats are 64 texels in width!
     ptr->height = 64; /// \fixme not all flats are 64 texels in height!
 
-    tex = GL_CreateGLTexture(lumpInfo[lump].name, numFlats - 1, GLT_FLAT);
+    tex = GL_CreateGLTexture(W_LumpName(lump), numFlats - 1, GLT_FLAT);
 
     // Create a material for this flat.
     // \note that width = 64, height = 64 regardless of the flat dimensions.
-    mat = P_MaterialCreate(lumpInfo[lump].name, 64, 64, 0, tex->id, MN_FLATS, NULL);
+    mat = P_MaterialCreate(W_LumpName(lump), 64, 64, 0, tex->id, MN_FLATS, NULL);
 
     return numFlats - 1;
 }
@@ -1719,7 +1719,7 @@ void R_InitFlats(void)
 
     for(i = 0; i < numLumps; ++i)
     {
-        char*               name = lumpInfo[i].name;
+        const char*         name = W_LumpName(i);
 
         if(name[0] == 'F')
         {

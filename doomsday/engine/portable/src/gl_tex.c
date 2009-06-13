@@ -440,22 +440,22 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
  *                      buffer really has alpha information.
  */
 int DrawRealPatch(byte* buffer, int texwidth, int texheight,
-                  lumppatch_t* patch, int origx, int origy,
+                  const lumppatch_t* patch, int origx, int origy,
                   boolean maskZero, boolean checkForAlpha)
 {
-    int         count, col = 0;
-    int         x = origx, y, top; // Keep track of pos for clipping.
-    int         w = SHORT(patch->width);
-    int         bufsize = texwidth * texheight;
-    column_t   *column;
-    byte       *destTop = buffer + origx;
-    byte       *destAlphaTop = buffer + origx + bufsize;
-    byte       *dest1, *dest2;
-    byte       *source;
+    int                 count, col = 0;
+    int                 x = origx, y, top; // Keep track of pos (clipping).
+    int                 w = SHORT(patch->width);
+    size_t              bufsize = texwidth * texheight;
+    const column_t*     column;
+    const byte*         source;
+    byte*               dest1, *dest2, *destTop = buffer + origx,
+                       *destAlphaTop = buffer + origx + bufsize;
 
     for(; col < w; ++col, destTop++, destAlphaTop++, ++x)
     {
-        column = (column_t *) ((byte *) patch + LONG(patch->columnOfs[col]));
+        column = (const column_t*)
+            ((const byte*) patch + LONG(patch->columnOfs[col]));
         top = -1;
 
         // Step through the posts in a column

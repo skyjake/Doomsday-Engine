@@ -80,7 +80,7 @@ extern          "C" {
     ddplayer_t*     DD_GetPlayer(int number);
 
     // Base: Definitions.
-    int             Def_Get(int type, char* id, void* out);
+    int             Def_Get(int type, const char* id, void* out);
     int             Def_Set(int type, int index, int value, void* ptr);
     int             Def_EvalFlags(char* flags);
 
@@ -96,8 +96,8 @@ extern          "C" {
     void            W_ReadLump(lumpnum_t lump, void* dest);
     void            W_ReadLumpSection(lumpnum_t lump, void* dest,
                                       size_t startOffset, size_t length);
-    void*           W_CacheLumpNum(lumpnum_t lump, int tag);
-    void*           W_CacheLumpName(const char* name, int tag);
+    const void*     W_CacheLumpNum(lumpnum_t lump, int tag);
+    const void*     W_CacheLumpName(const char* name, int tag);
     void            W_ChangeCacheTag(lumpnum_t lump, int tag);
     const char*     W_LumpSourceFile(lumpnum_t lump);
     uint            W_CRCNumber(void);

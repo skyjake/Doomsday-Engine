@@ -42,26 +42,26 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef unsigned short WORD;
-
+#pragma pack(1)
 typedef struct riff_hdr_s {
     char            id[4]; // Identifier string = "RIFF"
-    uint            len; // Remaining length after this header
+    uint32_t        len; // Remaining length after this header
 } riff_hdr_t;
 
 typedef struct chunk_hdr_s { // CHUNK 8-byte header
     char            id[4]; // Identifier, e.g. "fmt " or "data"
-    uint            len; // Remaining chunk length after header
+    uint32_t        len; // Remaining chunk length after header
 } chunk_hdr_t;           // data bytes follow chunk header
 
 typedef struct wav_format_s {
-    WORD            wFormatTag; // Format category
-    WORD            wChannels; // Number of channels
-    uint            dwSamplesPerSec; // Sampling rate
-    uint            dwAvgBytesPerSec; // For buffer estimation
-    WORD            wBlockAlign; // Data block size
-    WORD            wBitsPerSample; // Sample size
+    uint16_t        wFormatTag; // Format category
+    uint16_t        wChannels; // Number of channels
+    uint32_t        dwSamplesPerSec; // Sampling rate
+    uint32_t        dwAvgBytesPerSec; // For buffer estimation
+    uint16_t        wBlockAlign; // Data block size
+    uint16_t        wBitsPerSample; // Sample size
 } wav_format_t;
+#pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -77,10 +77,18 @@ typedef struct wav_format_s {
 
 // CODE --------------------------------------------------------------------
 
-static void WRead(void **ptr, void **dest, int length)
+static void WRead(void** ptr, void** dest, int length)
 {
     *dest = *ptr;
     *(char**) ptr += length;
+}
+
+/**
+ * @return              Non-zero if the "RIFF" and "WAVE" strings are found.
+ */
+int WAV_CheckFormat(const char* data)
+{
+    return !strncmp(data, "RIFF", 4) && !strncmp(data + 8, "WAVE", 4);
 }
 
 /**
@@ -89,32 +97,26 @@ static void WRead(void **ptr, void **dest, int length)
  * Z_Free when it's no longer needed. The WAV file must have only one
  * channel! All parameters must be passed, no NULLs are allowed.
  */
-void *WAV_MemoryLoad(byte *data, size_t datalength, int *bits, int *rate,
-                     int *samples)
+void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
+                     int* rate, int* samples)
 {
-    byte           *end = data + datalength;
-    byte           *sampledata = NULL;
-    riff_hdr_t     *riff_header;
-    chunk_hdr_t    *riff_chunk;
-    wav_format_t   *wave_format = NULL;
+    const byte*     end = data + datalength;
+    byte*           sampledata = NULL;
+    chunk_hdr_t*    riff_chunk;
+    wav_format_t*   wave_format = NULL;
+
+    if(!WAV_CheckFormat(data))
+    {
+        Con_Message("WAV_MemoryLoad: Not a WAV file.\n");
+        return NULL;
+    }
 
     // Read the RIFF header.
-    WRead((void **) &data, (void **) &riff_header, sizeof(*riff_header));
-    if(strncmp(riff_header->id, "RIFF", 4))
-    {
-        Con_Message("WAV_MemoryLoad: Not RIFF data.\n");
-        return NULL;
-    }
+    data += sizeof(riff_hdr_t);
 
     // Correct endianness.
-    riff_header->len = ULONG(riff_header->len);
+    //riff_header->len = ULONG(riff_header->len);
 
-    // Check that it's really a WAVE file.
-    if(strncmp((char *) data, "WAVE", 4))
-    {
-        Con_Message("WAV_MemoryLoad: Not WAVE data.\n");
-        return NULL;
-    }
     data += 4;
 
     // Start readin' the chunks, baby!
@@ -203,15 +205,16 @@ void *WAV_MemoryLoad(byte *data, size_t datalength, int *bits, int *rate,
             data += riff_chunk->len;
         }
     }
+
     return sampledata;
 }
 
-void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
+void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 {
-    DFILE          *file;
-    byte           *data;
+    DFILE*          file;
+    byte*           data;
     size_t          size;
-    void           *sampledata;
+    void*           sampledata;
 
     // Try to open the file.
     if((file = F_Open(filename, "b")) == NULL)
@@ -226,19 +229,13 @@ void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
     F_Close(file);
 
     // Parse the RIFF data.
-    sampledata = WAV_MemoryLoad(data, size, bits, rate, samples);
+    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate,
+                                samples);
     if(!sampledata)
     {
         Con_Message("WAV_Load: Failed to load %s.\n", filename);
     }
+
     M_Free(data);
     return sampledata;
-}
-
-/**
- * @return              Non-zero if the "RIFF" and "WAVE" strings are found.
- */
-int WAV_CheckFormat(char *data)
-{
-    return !strncmp(data, "RIFF", 4) && !strncmp(data + 8, "WAVE", 4);
 }

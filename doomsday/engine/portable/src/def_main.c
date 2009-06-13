@@ -754,7 +754,7 @@ void Def_ReadLumpDefs(void)
     int                 i, c;
 
     for(i = 0, c = 0; i < numLumps; ++i)
-        if(!strnicmp(lumpInfo[i].name, "DD_DEFNS", 8))
+        if(!strnicmp(W_LumpName(i), "DD_DEFNS", 8))
         {
             c++;
             if(!DED_ReadLump(&defs, i))
@@ -1497,7 +1497,7 @@ void Def_CopySectorType(sectortype_t* s, ded_sectortype_t* def)
 /**
  * @return              @c true, if the definition was found.
  */
-int Def_Get(int type, char* id, void* out)
+int Def_Get(int type, const char* id, void* out)
 {
     int                 i;
     ded_mapinfo_t*      map;

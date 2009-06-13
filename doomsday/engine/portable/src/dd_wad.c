@@ -60,6 +60,15 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
+    char            name[9]; // End in \0.
+    DFILE*          handle;
+    int             position;
+    size_t          size;
+    int             sent;
+    char            group; // Lump grouping tag (LGT_*).
+} lumpinfo_t;
+
+typedef struct {
     char            identification[4];
     int             numLumps;
     int             infoTableOfs;
@@ -1191,10 +1200,72 @@ void W_ReadLumpSection(lumpnum_t lump, void *dest, size_t startOffset,
 }
 
 /**
+ * Writes the specifed lump to file with the given name.
+ *
+ * @param lump
+ */
+boolean W_DumpLump(lumpnum_t lump, const char* fileName)
+{
+    FILE*               file;
+    const byte*         lumpPtr;
+    const char*         fname;
+    char                buf[13]; // 8 (max lump chars) + 4 (ext) + 1.
+
+    lump = W_Select(lump);
+    if(lump >= numLumps)
+        return false;
+
+    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+
+    if(fileName && fileName[0])
+    {
+        fname = fileName;
+    }
+    else
+    {
+        memset(buf, 0, sizeof(buf));
+        snprintf(buf, 12, "%s.dum", lumpInfo[lump].name);
+        fname = buf;
+    }
+
+    if(!(file = fopen(fname, "wb")))
+    {
+        Con_Printf("Couldn't open %s for writing. %s\n", fname,
+                   strerror(errno));
+        W_ChangeCacheTag(lump, PU_CACHE);
+        return false;
+    }
+
+    fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
+    fclose(file);
+    W_ChangeCacheTag(lump, PU_CACHE);
+
+    Con_Printf("%s dumped to %s.\n", lumpInfo[lump].name, fname);
+    return true;
+}
+
+void W_DumpLumpDir(void)
+{
+    char                buff[10];
+    int                 p;
+
+    printf("Lumps (%d total):\n", numLumps);
+    for(p = 0; p < numLumps; p++)
+    {
+        strncpy(buff, W_LumpName(p), 8);
+        buff[8] = 0;
+        printf("%04i - %-8s (hndl: %p, pos: %i, size: %lu)\n", p, buff,
+               lumpInfo[p].handle, lumpInfo[p].position,
+               (unsigned long) lumpInfo[p].size);
+    }
+    Con_Error("---End of lumps---\n");
+}
+
+/**
  * If called with the special purgelevel PU_GETNAME, returns a pointer
  * to the name of the lump.
  */
-void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
+const void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
 {
     byte               *ptr;
     lumpnum_t           lump = W_Select(absoluteLump);
@@ -1225,7 +1296,7 @@ void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
     return lumpCache[lump];
 }
 
-void* W_CacheLumpName(const char* name, int tag)
+const void* W_CacheLumpName(const char* name, int tag)
 {
     return W_CacheLumpNum(W_GetNumForName(name), tag);
 }
@@ -1499,35 +1570,17 @@ D_CMD(UnloadFile)
 
 D_CMD(Dump)
 {
-    char                fname[100];
-    FILE               *file;
     lumpnum_t           lump;
-    byte               *lumpPtr;
 
-    if(W_CheckNumForName(argv[1]) == -1)
+    if((lump = W_CheckNumForName(argv[1])) == -1)
     {
         Con_Printf("No such lump.\n");
         return false;
     }
 
-    lump = W_GetNumForName(argv[1]);
-    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
-
-    sprintf(fname, "%s.dum", argv[1]);
-    file = fopen(fname, "wb");
-    if(!file)
-    {
-        Con_Printf("Couldn't open %s for writing. %s\n", fname,
-                   strerror(errno));
-        Z_ChangeTag(lumpPtr, PU_CACHE);
+    if(!W_DumpLump(lump, NULL))
         return false;
-    }
 
-    fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
-    fclose(file);
-    Z_ChangeTag(lumpPtr, PU_CACHE);
-
-    Con_Printf("%s dumped to %s.\n", argv[1], fname);
     return true;
 }
 

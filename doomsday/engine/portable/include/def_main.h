@@ -91,7 +91,7 @@ ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt);
 ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt);
 ded_ptcgen_t*   Def_GetGenerator(material_t* mat, boolean hasExt);
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
-int             Def_Get(int type, char* id, void* out);
+int             Def_Get(int type, const char* id, void* out);
 boolean         Def_SameStateSequence(state_t* snew, state_t* sold);
 
 D_CMD(ListMobjs);

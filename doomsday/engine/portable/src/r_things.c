@@ -349,7 +349,7 @@ void R_PreInitSprites(void)
                                               256, PU_STATIC);
     for(i = 0; i < numLumps; ++i)
     {
-        const char*         name = lumpInfo[i].name;
+        const char*         name = W_LumpName(i);
         spriterecord_t*     rec;
 
         if(name[0] == 'S')

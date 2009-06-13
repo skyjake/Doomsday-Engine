@@ -515,15 +515,17 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
 }
 
 /**
- * Can be rather time-consuming due to scaling operations and mipmap generation.
- * The texture parameters will NOT be set here.
- * @param data  contains indices to the color palette.
- * @param alphaChannel  If true, 'data' also contains the alpha values (after the indices).
- * @return The name of the texture (same as 'texName').
+ * Can be rather time-consuming due to scaling operations and mipmap
+ * generation. The texture parameters will NOT be set here.
+ *
+ * @param data          Contains indices to the color palette.
+ * @param alphaChannel  If true, 'data' also contains the alpha values
+ *                      (after the indices).
+ * @return              The name of the texture (same as 'texName').
  */
-DGLuint GL_UploadTexture2(texturecontent_t *content)
+DGLuint GL_UploadTexture2(texturecontent_t* content)
 {
-    byte   *data = content->buffer;
+    byte*   data = content->buffer;
     int     width = content->width;
     int     height = content->height;
     boolean alphaChannel = ((content->flags & TXCF_UPLOAD_ARG_ALPHACHANNEL) != 0);
@@ -795,18 +797,19 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
     }
     else
     {
-        byte*               lumpData =
-            W_CacheLumpNum(dTex->lump, PU_STATIC);
+        const byte*         data = W_CacheLumpNum(dTex->lump, PU_STATIC);
 
         // First try loading it as a PCX image.
-        if(PCX_MemoryGetSize(lumpData, &image->width, &image->height))
+        if(PCX_MemoryGetSize(data, &image->width, &image->height))
         {   // Nice...
             image->pixels = M_Malloc(image->width * image->height * 3);
-            PCX_MemoryLoad(lumpData, W_LumpLength(dTex->lump),
+            PCX_MemoryLoad(data, W_LumpLength(dTex->lump),
                            image->width, image->height, image->pixels);
         }
         else // It must be a raw image.
         {
+            size_t              lumpLength = W_LumpLength(dTex->lump);
+
             /**
              * \ fixme we should not error out here if the lump is not
              * of the required format! Perform this check much earlier,
@@ -814,11 +817,11 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
              */
 
             // How big is it?
-            if(lumpInfo[dTex->lump].size != 256 * 256)
+            if(lumpLength != 256 * 256)
             {
-                if(lumpInfo[dTex->lump].size != 128 * 128)
+                if(lumpLength != 128 * 128)
                 {
-                    if(lumpInfo[dTex->lump].size != 64 * 64)
+                    if(lumpLength != 64 * 64)
                     {
                         W_ChangeCacheTag(dTex->lump, PU_CACHE);
 
@@ -1162,13 +1165,12 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
                  void* context)
 {
     const flat_t*       flat;
-    const lumpinfo_t*   lmpInf;
+    size_t              lumpLength;
 
     if(!img)
         return 0; // Wha?
 
     flat = flats[inst->tex->ofTypeID];
-    lmpInf = &lumpInfo[flat->lump];
 
     // Try to load a high resolution version of this flat?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
@@ -1176,29 +1178,30 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
     {
         filename_t          file;
         boolean             found;
+        const char*         lumpName = W_LumpName(flat->lump);
 
         // First try the Flats category.
         if(!(found =
-             R_FindResource2(RT_GRAPHIC, DDRC_FLAT, file, lmpInf->name, NULL,
-                             FILENAME_T_MAXLEN)))
+            R_FindResource2(RT_GRAPHIC, DDRC_FLAT, file, lumpName, NULL,
+                            FILENAME_T_MAXLEN)))
         {   // Try the old-fashioned "Flat-NAME" in the Textures category.
             filename_t          resource;
 
-            snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lmpInf->name);
+            snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lumpName);
 
-            found = R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, file, resource,
-                                    NULL, FILENAME_T_MAXLEN);
+            found = R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, file,
+                                    resource, NULL, FILENAME_T_MAXLEN);
         }
 
         if(found && GL_LoadImage(img, file))
             return 2;
     }
 
-    if(lmpInf->size < 4096)
+    if((lumpLength = W_LumpLength(flat->lump)) < 4096)
         return 0; // Too small.
 
     // Read in the flat.
-    img->pixels = M_Malloc(lmpInf->size);
+    img->pixels = M_Malloc(lumpLength);
     W_ReadLump(flat->lump, img->pixels);
 
     img->width = flat->width;
@@ -1227,9 +1230,13 @@ static byte* loadImage(image_t* img, const char* imagefn)
     {
         if(!strcmp(p, "pcx"))
         {
-            img->pixels = PCX_AllocLoad(img->fileName, &img->width,
-                                        &img->height, NULL);
-            img->pixelSize = 3;     // PCXs can't be masked.
+            if(!PCX_GetSize(img->fileName, &img->width, &img->height))
+                return NULL;
+
+            img->pixels = M_Malloc(4 * img->width * img->height);
+            PCX_Load(img->fileName, img->width, img->height, img->pixels);
+
+            img->pixelSize = 3; // PCXs can't be masked.
             img->originalBits = 8;
         }
         else if(!strcmp(p, "tga"))
@@ -1555,12 +1562,8 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
  */
 byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
 {
-    const lumpinfo_t*   lmpInf;
-
     if(!image)
         return 0; // Wha?
-
-    lmpInf = &lumpInfo[p->lump];
 
     // Try to load a high resolution version of the patch?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
@@ -1568,8 +1571,8 @@ byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
     {
         filename_t          fileName;
 
-        if(R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName, lmpInf->name,
-                           "-ck", FILENAME_T_MAXLEN))
+        if(R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
+                           W_LumpName(p->lump), "-ck", FILENAME_T_MAXLEN))
             if(GL_LoadImage(image, fileName))
                 return 2; // High resolution patch loaded.
     }
@@ -1580,7 +1583,7 @@ byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
         boolean             scaleSharp = (upscaleAndSharpenPatches ||
             (p->flags & PF_UPSCALE_AND_SHARPEN));
         int                 patchWidth, patchHeight;
-        lumppatch_t*        patch;
+        const lumppatch_t*  patch;
 
         patch = W_CacheLumpNum(p->lump, PU_CACHE);
         patchWidth = SHORT(patch->width);
@@ -1621,7 +1624,6 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
                    void* context)
 {
     const spritetex_t*  sprTex;
-    const lumpinfo_t*   lmpInf;
     int                 tmap = 0, tclass = 0;
     boolean             pSprite = false;
     material_load_params_t* params = (material_load_params_t*) context;
@@ -1630,7 +1632,6 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         return 0; // Wha?
 
     sprTex = spriteTextures[inst->tex->ofTypeID];
-    lmpInf = &lumpInfo[sprTex->lump];
 
     if(params)
     {
@@ -1644,22 +1645,23 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     {
         filename_t          resource, fileName;
         boolean             found;
+        const char*         lumpName = W_LumpName(sprTex->lump);
 
         // Compose a resource name.
         if(pSprite)
         {
-            snprintf(resource, FILENAME_T_MAXLEN, "%s-hud", lmpInf->name);
+            snprintf(resource, FILENAME_T_MAXLEN, "%s-hud", lumpName);
         }
         else
         {
             if(tclass || tmap)
             {   // Translated.
                 snprintf(resource, FILENAME_T_MAXLEN, "%s-table%i%i",
-                         lmpInf->name, tclass, tmap);
+                         lumpName, tclass, tmap);
             }
             else
             {   // Not translated; use the normal resource.
-                strncpy(resource, lmpInf->name, FILENAME_T_MAXLEN);
+                strncpy(resource, lumpName, FILENAME_T_MAXLEN);
             }
         }
 
@@ -1667,16 +1669,16 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
                                 "-ck", FILENAME_T_MAXLEN);
         if(!found && pSprite)
             found = R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
-                                    lmpInf->name, "-ck", FILENAME_T_MAXLEN);
+                                    lumpName, "-ck", FILENAME_T_MAXLEN);
 
         if(found && GL_LoadImage(image, fileName) != NULL)
             return 2; // Loaded high resolution sprite.
     }
 
     {
-
     boolean             freePatch = false;
-    lumppatch_t*        patch;
+    const lumppatch_t*  patch;
+    void*               tmp = NULL;
 
     image->width = sprTex->width;
     image->height = sprTex->height;
@@ -1689,10 +1691,12 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
             tclass * ((8-1) * 256) + tmap * 256;
 
         // We need to translate the patch.
-        patch = M_Malloc(W_LumpLength(sprTex->lump));
-        W_ReadLump(sprTex->lump, patch);
-        GL_TranslatePatch(patch, &translationTables[MAX_OF(0, offset)]);
+        tmp = M_Malloc(W_LumpLength(sprTex->lump));
+        W_ReadLump(sprTex->lump, tmp);
+        GL_TranslatePatch((lumppatch_t*) tmp,
+                          &translationTables[MAX_OF(0, offset)]);
 
+        patch = (lumppatch_t*) tmp;
         freePatch = true;
     }
     else
@@ -1704,7 +1708,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
                   0, 0, false, false);
 
     if(freePatch)
-        M_Free(patch);
+        M_Free(tmp);
     else
         W_ChangeCacheTag(sprTex->lump, PU_CACHE);
 
@@ -1756,7 +1760,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 
     // First try to find an external resource.
     if(R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
-                       lumpInfo[r->lump].name, NULL, FILENAME_T_MAXLEN) &&
+                       W_LumpName(r->lump), NULL, FILENAME_T_MAXLEN) &&
        GL_LoadImage(image, fileName) != NULL)
     {   // High resolution rawtex loaded.
         result = 2;
@@ -1764,7 +1768,8 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     else
     {
         // Must load the old-fashioned data lump.
-        byte*               lumpdata;
+        const byte*         lumpdata;
+        size_t              lumpLength = W_LumpLength(r->lump);
 
         // Load the raw image data.
         lumpdata = W_CacheLumpNum(r->lump, PU_STATIC);
@@ -1774,8 +1779,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
         // Try to load it as a PCX image first.
         image->pixels = M_Malloc(3 * 320 * 200);
 
-        if(PCX_MemoryLoad(lumpdata, lumpInfo[r->lump].size, 320, 200,
-                          image->pixels))
+        if(PCX_MemoryLoad(lumpdata, lumpLength, 320, 200, image->pixels))
         {
             image->height = 200;
             image->pixelSize = 3;
@@ -1784,7 +1788,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
         {
             // PCX load failed. It must be an old-fashioned raw image.
             memcpy(image->pixels, lumpdata, 3 * 320 * 200);
-            image->height = (int) (lumpInfo[r->lump].size / 320);
+            image->height = (int) (lumpLength / 320);
             image->pixelSize = 1;
         }
 
