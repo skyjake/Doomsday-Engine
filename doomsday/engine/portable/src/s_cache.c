@@ -140,29 +140,30 @@ sfxcache_t* Sfx_GetCached(int id)
  * frequencies in the sample. It should be low-pass filtered after the
  * interpolation.
  */
-void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
-                  const sfxsample_t* src)
+static void resample(void* dst, int dstBytesPer, int dstRate,
+                     const void* src, int srcBytesPer, int srcRate,
+                     int srcNumSamples, unsigned int srcSize)
 {
-    int                 i, num = src->numSamples;
+    int                 i;
 
-    assert(src->data);
+    assert(src);
     assert(dst);
 
     // Let's first check for the easy cases.
-    if(dstRate == src->rate)
+    if(dstRate == srcRate)
     {
-        if(src->bytesPer == dstBytesPer)
+        if(srcBytesPer == dstBytesPer)
         {
             // A simple copy will suffice.
-            memcpy(dst, src->data, src->size);
+            memcpy(dst, src, srcSize);
         }
-        else if(src->bytesPer == 1 && dstBytesPer == 2)
+        else if(srcBytesPer == 1 && dstBytesPer == 2)
         {
             // Just changing the bytes won't do much good...
-            const unsigned char* sp = src->data;
+            const unsigned char* sp = src;
             short*              dp = dst;
 
-            for(i = 0; i < num; ++i)
+            for(i = 0; i < srcNumSamples; ++i)
                 *dp++ = (*sp++ - 0x80) << 8;
         }
 
@@ -170,14 +171,14 @@ void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
     }
 
     // 2x resampling.
-    if(dstRate == 2 * src->rate)
+    if(dstRate == 2 * srcRate)
     {
         if(dstBytesPer == 1)
         {   // The source has a byte per sample as well.
-            const unsigned char* sp = src->data;
+            const unsigned char* sp = src;
             unsigned char*      dp = dst;
 
-            for(i = 0; i < num - 1; ++i, sp++)
+            for(i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 *dp++ = *sp;
                 *dp++ = (*sp + sp[1]) >> 1;
@@ -186,13 +187,13 @@ void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
             // Fill in the last two as well.
             dp[0] = dp[1] = *sp;
         }
-        else if(src->bytesPer == 1)
+        else if(srcBytesPer == 1)
         {   // Destination is signed 16bit. Source is 8bit.
-            const unsigned char* sp = src->data;
+            const unsigned char* sp = src;
             short*              dp = dst;
             short               first;
 
-            for(i = 0; i < num - 1; ++i, sp++)
+            for(i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 *dp++ = first = U8_S16(*sp);
                 *dp++ = (first + U8_S16(sp[1])) >> 1;
@@ -201,12 +202,12 @@ void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
             // Fill in the last two as well.
             dp[0] = dp[1] = U8_S16(*sp);
         }
-        else if(src->bytesPer == 2)
+        else if(srcBytesPer == 2)
         {   // Destination is signed 16bit. Source is 16bit.
-            const short*        sp = src->data;
+            const short*        sp = src;
             short*              dp = dst;
 
-            for(i = 0; i < num - 1; ++i, sp++)
+            for(i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 *dp++ = *sp;
                 *dp++ = (*sp + sp[1]) >> 1;
@@ -219,15 +220,15 @@ void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
     }
 
     // 4x resampling (11Khz => 44KHz only).
-    if(dstRate == 4 * src->rate)
+    if(dstRate == 4 * srcRate)
     {
         if(dstBytesPer == 1)
         {   // The source has a byte per sample as well.
-            const unsigned char* sp = src->data;
+            const unsigned char* sp = src;
             unsigned char*      dp = dst;
             unsigned char       mid;
 
-            for(i = 0; i < num - 1; ++i, sp++)
+            for(i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 mid = (*sp + sp[1]) >> 1;
                 *dp++ = *sp;
@@ -239,13 +240,13 @@ void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
             // Fill in the last four as well.
             dp[0] = dp[1] = dp[2] = dp[3] = *sp;
         }
-        else if(src->bytesPer == 1)
+        else if(srcBytesPer == 1)
         {   // Destination is signed 16bit. Source is 8bit.
-            const unsigned char* sp = src->data;
+            const unsigned char* sp = src;
             short*              dp = dst;
             short               first, mid, last;
 
-            for(i = 0; i < num - 1; ++i, sp++)
+            for(i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 first = U8_S16(*sp);
                 last = U8_S16(sp[1]);
@@ -259,13 +260,13 @@ void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
             // Fill in the last four as well.
             dp[0] = dp[1] = dp[2] = dp[3] = U8_S16(*sp);
         }
-        else if(src->bytesPer == 2)
+        else if(srcBytesPer == 2)
         {   // Destination is signed 16bit. Source is 16bit.
-            const short*        sp = src->data;
+            const short*        sp = src;
             short*              dp = dst;
             short               mid;
 
-            for(i = 0; i < num - 1; ++i, sp++)
+            for(i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 mid = (*sp + sp[1]) >> 1;
 
@@ -285,9 +286,19 @@ void Sfx_Resample(void* dst, int dstBytesPer, int dstRate,
  * Caches a copy of the given sample. If it's already in the cache and has
  * the same format, nothing is done.
  *
+ * @param id            Id number of the sound sample.
+ * @param data          Actual sample data.
+ * @param size          Size in bytes.
+ * @param numSamples    Number of samples.
+ * @param bytesPer      Bytes per sample (1 or 2).
+ * @param rate          Samples per second.
+ * @param group         Exclusion group (0, if none).
+ *
  * @returns             Ptr to the cached sample. Always valid.
  */
-sfxcache_t* Sfx_CacheInsert(sfxsample_t* sample)
+sfxcache_t* Sfx_CacheInsert(int id, const void* data, unsigned int size,
+                            int numSamples, int bytesPer, int rate,
+                            int group)
 {
     sfxcache_t*         node;
     sfxsample_t         cached;
@@ -301,7 +312,7 @@ sfxcache_t* Sfx_CacheInsert(sfxsample_t* sample)
      */
 
     // The resampling factor.
-    rsfactor = sfxRate / sample->rate;
+    rsfactor = sfxRate / rate;
     if(!rsfactor)
         rsfactor = 1;
 
@@ -312,25 +323,25 @@ sfxcache_t* Sfx_CacheInsert(sfxsample_t* sample)
      * not lower resolution ones.)
      */
 
-    cached.size = sample->numSamples * sample->bytesPer * rsfactor;
+    cached.size = numSamples * bytesPer * rsfactor;
 
-    if(sfxBits == 16 && sample->bytesPer == 1)
+    if(sfxBits == 16 && bytesPer == 1)
     {
         cached.bytesPer = 2;
         cached.size *= 2; // Will be resampled to 16bit.
     }
     else
     {
-        cached.bytesPer = sample->bytesPer;
+        cached.bytesPer = bytesPer;
     }
 
-    cached.rate = rsfactor * sample->rate;
-    cached.numSamples = sample->numSamples * rsfactor;
-    cached.id = sample->id;
-    cached.group = sample->group;
+    cached.rate = rsfactor * rate;
+    cached.numSamples = numSamples * rsfactor;
+    cached.id = id;
+    cached.group = group;
 
     // Check if this kind of a sample already exists.
-    node = Sfx_GetCached(sample->id);
+    node = Sfx_GetCached(id);
     if(node)
     {
         // The sound is already in the cache. Is it in the right format?
@@ -348,7 +359,7 @@ sfxcache_t* Sfx_CacheInsert(sfxsample_t* sample)
     {
         // Get a new node and link it in.
         node = M_Calloc(sizeof(sfxcache_t));
-        hash = Sfx_CacheHash(sample->id);
+        hash = Sfx_CacheHash(id);
 
         if(hash->last)
         {
@@ -361,9 +372,10 @@ sfxcache_t* Sfx_CacheInsert(sfxsample_t* sample)
             hash->first = node;
     }
 
-    // Do the resampling, if necessary.
     buf = M_Malloc(cached.size);
-    Sfx_Resample(buf, cached.bytesPer, cached.rate, sample);
+    // Do the resampling, if necessary.
+    resample(buf, cached.bytesPer, cached.rate, data, bytesPer, rate,
+             numSamples, size);
     cached.data = buf;
 
     // Hits keep count of how many times the cached sound has been played.
@@ -522,44 +534,13 @@ void Sfx_CacheHit(int id)
     }
 }
 
-/**
- * @return              Ptr to the cached copy of the sample (give this ptr
- *                      to Sfx_StartSound), ELSE @c NULL if the soundID is
- *                      invalid.
- */
-sfxsample_t* Sfx_Cache(int id)
+static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
 {
-    sfxcache_t*         node;
-    sfxinfo_t*          info;
-    sfxsample_t         samp;
-    filename_t          buf;
-    void*               tmp = NULL;
-    boolean             usingLumpCache = false;
+    void*               data = NULL;
+    int                 numSamples = 0, bytesPer = 0, rate = 0;
 
-    if(!id || !sfxAvail)
-        return NULL;
-
-    // Are we so lucky that the sound is already cached?
-    if((node = Sfx_GetCached(id)) != NULL)
-    {
-        return &node->sample;
-    }
-
-    // Get the sound decription.
-    info = S_GetSoundInfo(id, NULL, NULL);
-    if(!info)
-    {
-        Con_Message("Sfx_Cache: Warning: Sound info for ID %i is missing.\n", id);
-        return NULL;
-    }
-
-    VERBOSE2(Con_Message("Sfx_Cache: Caching sound %i (%s).\n", id, info->id));
-
-    // Init the sample data. A copy of 'samp' will be placed in the cache.
-    memset(&samp, 0, sizeof(samp));
-    samp.id = id;
-    samp.group = info->group;
-    samp.data = NULL;
+    VERBOSE2(
+    Con_Message("Sfx_Cache: Caching sound %i (%s).\n", id, info->id));
 
     /**
      * Figure out where to get the sample data for this sound. It might be
@@ -571,39 +552,40 @@ sfxsample_t* Sfx_Cache(int id)
     // Has an external sound file been defined?
     if(info->external[0])
     {   // Yes.
+        filename_t          buf;
+
         // Try loading (note the file name is relative to the base path).
         M_PrependBasePath(buf, info->external, FILENAME_T_MAXLEN);
-        if((tmp =
-            WAV_Load(buf, &samp.bytesPer, &samp.rate, &samp.numSamples)))
+        if((data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
         {   // Loading was successful!
-            samp.data = tmp;
-            samp.bytesPer /= 8; // Was returned as bits.
+            bytesPer /= 8; // Was returned as bits.
         }
     }
 
     // If external didn't succeed, let's try the default resource dir.
-    if(!samp.data)
+    if(!data)
     {
+        filename_t          buf;
+
         /**
          * If the sound has an invalid lumpname, search external anyway.
          * If the original sound is from a PWAD, we won't look for an
          * external resource (probably a custom sound).
+         * \fixme should be a cvar.
          */
         if((info->lumpNum < 0 || W_IsFromIWAD(info->lumpNum)) &&
            R_FindResource(RT_SOUND, buf, info->lumpName, NULL,
                           FILENAME_T_MAXLEN) &&
-           (tmp =
-            WAV_Load(buf, &samp.bytesPer, &samp.rate, &samp.numSamples)))
+           (data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
         {   // Loading was successful!
-            samp.data = tmp;
-            samp.bytesPer /= 8; // Was returned as bits.
+            bytesPer /= 8; // Was returned as bits.
         }
     }
 
     // No sample loaded yet?
-    if(!samp.data)
+    if(!data)
     {
-        char                    hdr[12];
+        char                hdr[12];
 
         // Try loading from the lump.
         if(info->lumpNum < 0)
@@ -628,10 +610,9 @@ sfxsample_t* Sfx_Cache(int id)
                 W_CacheLumpNum(info->lumpNum, PU_STATIC);
 
             // Load as WAV, then.
-            if(!(tmp =
-                 WAV_MemoryLoad((const byte*) sp,
-                               W_LumpLength(info->lumpNum), &samp.bytesPer,
-                               &samp.rate, &samp.numSamples)))
+            if(!(data = WAV_MemoryLoad((const byte*) sp,
+                                      W_LumpLength(info->lumpNum),
+                                      &bytesPer, &rate, &numSamples)))
             {
                 // Abort...
                 Con_Message("Sfx_Cache: WAV data in lump %s is bad.\n",
@@ -642,36 +623,75 @@ sfxsample_t* Sfx_Cache(int id)
             }
 
             W_ChangeCacheTag(info->lumpNum, PU_CACHE);
-            samp.data = tmp;
-            samp.bytesPer /= 8;
-        }
-        else
-        {
-            const void*         sp =
-                W_CacheLumpNum(info->lumpNum, PU_STATIC);
-
-            // Must be an old-fashioned DOOM sample.
-            samp.data = ((const char*) sp) + 8; // Eight byte header.
-            samp.bytesPer = 1; // 8-bit.
-            samp.rate = SHORT(*(short*) (((const char*) sp) + 2));
-            samp.numSamples = LONG(*(int*) (((const char*) sp) + 4));
-
-            usingLumpCache = true;
+            bytesPer /= 8;
         }
     }
 
-    samp.size = samp.bytesPer * samp.numSamples;
+    if(data) // Loaded!
+    {
+        sfxcache_t*         node;
 
-    // Insert a copy of this into the cache.
-    node = Sfx_CacheInsert(&samp);
+        // Insert a copy of this into the cache.
+        node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
+                               bytesPer, rate, info->group);
+        Z_Free(data);
+        return &node->sample;
+    }
+    else // Must be an old-fashioned DOOM sample.
+    {
+        /**
+         * We can use the sample data as-is, so make use of the lump cache
+         * by loading from it directly.
+         */
+        sfxcache_t*         node;
+        const void*         data, *sp =
+            W_CacheLumpNum(info->lumpNum, PU_STATIC);
 
-    // We don't need the temporary sample any more, clean up.
-    if(usingLumpCache)
+        data = ((const char*) sp) + 8; // Eight byte header.
+        bytesPer = 1; // 8-bit.
+        rate = SHORT(*(short*) (((const char*) sp) + 2));
+        numSamples = LONG(*(int*) (((const char*) sp) + 4));
+
+        // Insert a copy of this into the cache.
+        node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
+                               bytesPer, rate, info->group);
+
+        // We don't need the temporary sample any more, clean up.
         W_ChangeCacheTag(info->lumpNum, PU_CACHE);
-    if(tmp)
-        Z_Free(tmp);
 
-    return &node->sample;
+        return &node->sample;
+    }
+}
+
+/**
+ * @return              Ptr to the cached copy of the sample (give this ptr
+ *                      to Sfx_StartSound), ELSE @c NULL if the soundID is
+ *                      invalid.
+ */
+sfxsample_t* Sfx_Cache(int id)
+{
+    sfxcache_t*         node;
+    sfxinfo_t*          info;
+
+    if(!id || !sfxAvail)
+        return NULL;
+
+    // Are we so lucky that the sound is already cached?
+    if((node = Sfx_GetCached(id)) != NULL)
+    {
+        return &node->sample;
+    }
+
+    // Get the sound decription.
+    info = S_GetSoundInfo(id, NULL, NULL);
+    if(!info)
+    {
+        Con_Message("Sfx_Cache: Warning, missing sound info for ID %i.\n",
+                    id);
+        return NULL;
+    }
+
+    return cacheSample(id, info);
 }
 
 /**
