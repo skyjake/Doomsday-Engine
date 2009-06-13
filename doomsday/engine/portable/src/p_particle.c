@@ -158,7 +158,7 @@ static uint findSlotForNewGen(void)
         else if(!(activePtcGens[i]->flags & PGF_STATIC) &&
                 (!slot || activePtcGens[i]->age > maxage))
         {
-            slot = i + i;
+            slot = i + 1;
             maxage = activePtcGens[i]->age;
         }
     } while(!isEmpty && ++i < MAX_ACTIVE_PTCGENS);
