@@ -79,12 +79,9 @@ char*           strupr(char *string);
 char*           strlwr(char *string);
 #endif
 
-// We need to use _vsnprintf, _snprintf in Windows
 #if WIN32
-# if(_MSC_VER < 1500)
-#   define vsnprintf _vsnprintf
-# endif
-# define snprintf _snprintf
+int             snprintf(char* str, size_t size, const char* format, ...);
+int             vsnprintf(char* str, size_t size, const char* format, va_list ap);
 #endif
 
     // Format checking for printf-like functions in GCC2
