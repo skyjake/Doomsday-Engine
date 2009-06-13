@@ -78,7 +78,7 @@ static const char* typeExtension[NUM_RESOURCE_TYPES][MAX_EXTENSIONS] = {
     { "ogg", "mp3", "wav", "mod", "mid", NULL } // Music
 };
 
-// Default resource classs for resource types.
+// Default resource classes for resource types.
 static const ddresourceclass_t defResClassForType[NUM_RESOURCE_TYPES] = {
     DDRC_GRAPHICS,
     DDRC_MODEL,

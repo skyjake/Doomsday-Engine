@@ -85,7 +85,7 @@ typedef struct package_s {
 } package_t;
 
 typedef struct zipentry_s {
-    char       *name;           // Relative path (from the base path).
+    char       *name;           // Absolute path.
     package_t  *package;
     uint        offset;        // Offset from the beginning of the package.
     size_t      size;
