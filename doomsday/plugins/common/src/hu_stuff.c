@@ -430,7 +430,7 @@ void Hu_LoadData(void)
         { 51, "FONTB051" }, // 3
         { 52, "FONTB052" }, // 4
         { 53, "FONTB053" }, // 5
-        { 54, "FONTB053" }, // 6
+        { 54, "FONTB054" }, // 6
         { 55, "FONTB055" }, // 7
         { 56, "FONTB056" }, // 8
         { 57, "FONTB057" }, // 9
