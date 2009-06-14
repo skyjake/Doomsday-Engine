@@ -439,7 +439,9 @@ void Hu_LogDrawer(int player)
  */
 void Hu_LogPost(int player, byte flags, const char* msg, int tics)
 {
-#define YELLOW_FORMAT   "{r=1; g=0.7; b=0.3;}"
+#define YELLOW_FMT      "{r=1; g=0.7; b=0.3;}"
+#define YELLOW_FMT_LEN  19
+#define SMALLBUF_MAXLEN 128
 
     player_t*           plr;
     msglog_t*           log;
@@ -458,25 +460,36 @@ void Hu_LogPost(int player, byte flags, const char* msg, int tics)
 
     if(!log->notToBeFuckedWith || log->dontFuckWithMe)
     {
-        char*           buf;
+        char                smallBuf[SMALLBUF_MAXLEN+1];
+        char*               bigBuf = NULL, *p;
+        size_t              requiredLen = strlen(msg) +
+            ((flags & LMF_YELLOW)? YELLOW_FMT_LEN : 0);
 
-        if(flags & LMF_YELLOW)
+        if(requiredLen <= SMALLBUF_MAXLEN)
         {
-            buf = malloc((strlen(msg)+strlen(YELLOW_FORMAT)+1) * sizeof(char));
-            sprintf(buf, YELLOW_FORMAT "%s", msg);
+            p = smallBuf;
         }
         else
         {
-            buf = malloc((strlen(msg)+1) * sizeof(char));
-            sprintf(buf, "%s", msg);
+            bigBuf = malloc(requiredLen + 1);
+            p = bigBuf;
         }
 
-        logPush(log, buf, cfg.msgUptime + tics);
+        p[requiredLen] = '\0';
+        if(flags & LMF_YELLOW)
+            sprintf(p, YELLOW_FMT "%s", msg);
+        else
+            sprintf(p, "%s", msg);
 
-        free(buf);
+        logPush(log, p, cfg.msgUptime + tics);
+
+        if(bigBuf)
+            free(bigBuf);
     }
 
-#undef YELLOW_FORMAT
+#undef YELLOW_FMT
+#undef YELLOW_FMT_LEN
+#undef SMALLBUF_MAXLEN
 }
 
 /**
