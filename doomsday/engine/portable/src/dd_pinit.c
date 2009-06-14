@@ -89,7 +89,7 @@ void DD_ErrorBox(boolean error, char* format, ...)
     va_list             args;
 
     va_start(args, format);
-    vsnprintf(buff, sizeof(buff), format, args);
+    dd_vsnprintf(buff, sizeof(buff), format, args);
     va_end(args);
 
 #ifdef WIN32

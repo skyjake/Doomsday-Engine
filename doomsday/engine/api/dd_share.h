@@ -78,11 +78,12 @@ extern "C" {
 char*           strupr(char *string);
 char*           strlwr(char *string);
 #endif
-
 #if WIN32
 int             snprintf(char* str, size_t size, const char* format, ...);
-int             vsnprintf(char* str, size_t size, const char* format, va_list ap);
 #endif
+
+int             dd_vsnprintf(char* str, size_t size, const char* format,
+                             va_list ap);
 
     // Format checking for printf-like functions in GCC2
 #if defined(__GNUC__) && __GNUC__ >= 2

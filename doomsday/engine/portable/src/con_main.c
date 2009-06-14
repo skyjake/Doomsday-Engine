@@ -1213,7 +1213,7 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     char            buffer[4096];
 
     va_start(argptr, command);
-    vsnprintf(buffer, sizeof(buffer), command, argptr);
+    dd_vsnprintf(buffer, sizeof(buffer), command, argptr);
     va_end(argptr);
     return Con_Execute(src, buffer, silent, false);
 }
@@ -1674,7 +1674,7 @@ void conPrintf(int flags, const char *format, va_list args)
         memset(prbuff, 0, PRBUFF_SIZE);
 
     // Format the message to prbuff.
-    vsnprintf(prbuff, PRBUFF_SIZE, format, args);
+    dd_vsnprintf(prbuff, PRBUFF_SIZE, format, args);
 
     if(consoleDump)
         fprintf(outFile, "%s", prbuff);
@@ -1756,7 +1756,7 @@ void Con_Message(const char *message, ...)
     {
         buffer = M_Malloc(PRBUFF_SIZE);
         va_start(argptr, message);
-        vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
+        dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
         va_end(argptr);
 
 #ifdef UNIX
@@ -1795,7 +1795,7 @@ void Con_Error(const char *error, ...)
         fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
 
         va_start(argptr, error);
-        vsnprintf(buff, sizeof(buff), error, argptr);
+        dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
         Sys_MessageBox(buff, true);
 
@@ -1810,7 +1810,7 @@ void Con_Error(const char *error, ...)
     Dir_ChDir(&ddRuntimeDir);
 
     va_start(argptr, error);
-    vsnprintf(err, sizeof(err), error, argptr);
+    dd_vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
     fprintf(outFile, "%s\n", err);
 

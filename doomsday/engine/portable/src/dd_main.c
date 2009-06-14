@@ -1242,50 +1242,57 @@ char *strlwr(char *string)
 }
 #endif
 
+/**
+ * Prints a formatted string into a fixed-size buffer. At most @c size
+ * characters will be
+ * written to the output buffer @c str. The output will always contain a
+ * terminating null character.
+ *
+ * @param str           Output buffer.
+ * @param size          Size of the output buffer.
+ * @param format        Format of the output.
+ * @param ap            Variable-size argument list.
+ *
+ * @return              Number of characters written to the output buffer
+ *                      if lower than or equal to @c size, else @c -1.
+ */
+int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
+{
+    int                 result = vsnprintf(str, size, format, ap);
+
+#ifdef WIN32
+    // Always terminate.
+    str[size - 1] = 0;
+    return result;
+#else
+    return result > size? -1 : size;
+#endif
+}
+
 #ifdef WIN32
 // These could be moved to some win32-only source file.
 
 /**
- * Prints a formatted string into a fixed-size buffer. At most @c size characters will be
- * written to the output buffer @c str. The output will always contain a terminating null
- * character. 
- * 
- * @param str Output buffer.
- * @param size Size of the output buffer.
- * @param format Format of the output.
+ * Prints a formatted string into a fixed-size buffer. At most @c size
+ * characters will be written to the output buffer @c str. The output will
+ * always contain a terminating null character.
  *
- * @return The number of characters that would have been written to the output buffer if
- * the size was unlimited.
+ * @param str           Output buffer.
+ * @param size          Size of the output buffer.
+ * @param format        Format of the output.
+ *
+ * @return              Number of characters written to the output buffer
+ *                      if lower than or equal to @c size, else @c -1.
  */
 int snprintf(char* str, size_t size, const char* format, ...)
 {
-    int result = 0;
+    int                 result = 0;
+
     va_list args;
     va_start(args, format);
-    result = vsnprintf(str, size, format, args);
+    result = dd_vsnprintf(str, size, format, args);
     va_end(args);
-    // Always terminate.
-    str[size - 1] = 0;
-    return result;
-}
 
-/**
- * Prints a formatted string into a fixed-size buffer. At most @c size characters will be
- * written to the output buffer @c str. The output will always contain a terminating null
- * character. 
- * 
- * @param str Output buffer.
- * @param size Size of the output buffer.
- * @param format Format of the output.
- * @param ap Variable-size argument list.
- *
- * @return The number of characters that would have been written to the output buffer if
- * the size was unlimited.
- */
-int vsnprintf(char* str, size_t size, const char* format, va_list ap)
-{
-    // TODO: This might be defined by win32 already? Or replaced by vsnprintf_s
-    // TODO: Or call _vsnprintf
-    Con_Error("vsnprintf() not implemented\n");
+    return result;
 }
 #endif

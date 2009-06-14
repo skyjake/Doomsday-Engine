@@ -39,7 +39,7 @@
 #define DEVICEID                "mycd"
 
 #if(_MSC_VER < 1500)
-#  define vsnprintf         _vsnprintf
+#  define dd_vsnprintf         _vsnprintf
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -78,7 +78,7 @@ static int sendMCICmd(char* returnInfo, int returnLength,
     MCIERROR            error;
 
     va_start(args, format);
-    vsnprintf(buf, sizeof(buf), format, args);
+    dd_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 
     if((error = mciSendString(buf, returnInfo, returnLength, NULL)))

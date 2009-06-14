@@ -318,7 +318,7 @@ int Executef(int silent, char* format, ...)
     char                buffer[512];
 
     va_start(argptr, format);
-    vsnprintf(buffer, sizeof(buffer), format, argptr);
+    dd_vsnprintf(buffer, sizeof(buffer), format, argptr);
     va_end(argptr);
     return DD_Execute(silent, buffer);
 }

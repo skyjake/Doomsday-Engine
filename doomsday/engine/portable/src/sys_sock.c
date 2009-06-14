@@ -102,7 +102,7 @@ void N_SockPrintf(socket_t s, const char *format, ...)
 
     // Print the message into the buffer.
     va_start(args, format);
-    length = vsnprintf(buf, BUFF_SIZE, format, args);
+    length = dd_vsnprintf(buf, BUFF_SIZE, format, args);
     va_end(args);
 
     if(length > BUFF_SIZE)

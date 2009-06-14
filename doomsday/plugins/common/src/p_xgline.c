@@ -423,7 +423,7 @@ void XG_Dev(const char* format, ...)
         return;
 
     va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
+    dd_vsnprintf(buffer, sizeof(buffer), format, args);
     strcat(buffer, "\n");
     Con_Message(buffer);
     va_end(args);

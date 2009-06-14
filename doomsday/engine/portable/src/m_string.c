@@ -191,7 +191,7 @@ void Str_Appendf(ddstring_t *ds, const char *format, ...)
 
     // Print the message into the buffer.
     va_start(args, format);
-    vsnprintf(buf, sizeof(buf), format, args);
+    dd_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
     Str_Append(ds, buf);
 }
@@ -408,7 +408,7 @@ char Str_At(ddstring_t* str, int index)
 {
     if(index < 0 || index >= str->length)
     {
-        return 0;    
+        return 0;
     }
     return str->str[index];
 }
@@ -425,7 +425,7 @@ char Str_RAt(ddstring_t* str, int reverseIndex)
 {
     if(reverseIndex < 0 || reverseIndex >= str->length)
     {
-        return 0;    
+        return 0;
     }
     return str->str[str->length - 1 - reverseIndex];
 }
