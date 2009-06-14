@@ -148,18 +148,14 @@ static void logPush(msglog_t* log, const char* txt, int tics)
     len = strlen(txt);
     msg = &log->msgs[log->nextMsg];
 
-    if(len > msg->maxLen)
+    if(len >= msg->maxLen)
     {
-        msg->text = realloc(msg->text, len + 1);
         msg->maxLen = len;
-    }
-    else
-    {
-        memset(msg->text, 0, msg->maxLen);
+        msg->text = realloc(msg->text, msg->maxLen+1);
     }
 
-    dd_snprintf(msg->text, len, "%s", txt);
-    msg->text[len] = '\0';
+    memset(msg->text, 0, msg->maxLen+1);
+    dd_snprintf(msg->text, msg->maxLen+1, "%s", txt);
     msg->ticsRemain = msg->tics = tics;
     msg->flags = MF_JUSTADDED;
 
