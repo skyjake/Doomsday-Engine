@@ -398,7 +398,7 @@ void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
         identifier ^= sourceFile[i] << ((i * 3) % 11);
 
     // The cached map directory is relative to the runtime directory.
-    snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir,
+    dd_snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir,
             (char*) gx.GetVariable(DD_GAME_MODE),
             base, identifier);
 

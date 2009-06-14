@@ -78,10 +78,8 @@ extern "C" {
 char*           strupr(char *string);
 char*           strlwr(char *string);
 #endif
-#if WIN32
-int             snprintf(char* str, size_t size, const char* format, ...);
-#endif
 
+int             dd_snprintf(char* str, size_t size, const char* format, ...);
 int             dd_vsnprintf(char* str, size_t size, const char* format,
                              va_list ap);
 

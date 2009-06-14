@@ -1224,7 +1224,7 @@ boolean W_DumpLump(lumpnum_t lump, const char* fileName)
     else
     {
         memset(buf, 0, sizeof(buf));
-        snprintf(buf, 12, "%s.dum", lumpInfo[lump].name);
+        dd_snprintf(buf, 12, "%s.dum", lumpInfo[lump].name);
         fname = buf;
     }
 
@@ -1600,7 +1600,7 @@ D_CMD(Dir)
         Con_Printf("Directory: %s\n", dir);
 
         // Make the pattern.
-        snprintf(pattern, FILENAME_T_MAXLEN, "%s*", dir);
+        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%s*", dir);
         F_ForAll(pattern, dir, Con_PrintFileName);
     }
 

@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 446 <--
+; --> 447 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -101,6 +101,10 @@ EXPORTS
     Z_FreeTags                  @26 NONAME
     Z_ChangeTag2                @27 NONAME
     Z_CheckHeap                 @28 NONAME
+
+; Base: Misc.
+    dd_snprintf                 @447 NONAME
+    dd_vsnprintf                @448 NONAME
 
 ; Console.
     Con_Open                    @29 NONAME

@@ -454,10 +454,10 @@ void G_CommonPreInit(void)
         players[i].plr->extraData = (void *) &players[i];
     }
 
-    snprintf(file, FILENAME_T_MAXLEN, CONFIGFILE);
+    dd_snprintf(file, FILENAME_T_MAXLEN, CONFIGFILE);
     DD_SetConfigFile(file);
 
-    snprintf(file, FILENAME_T_MAXLEN, DEFSFILE);
+    dd_snprintf(file, FILENAME_T_MAXLEN, DEFSFILE);
     DD_SetDefsFile(file);
 
     R_SetDataPath( DATAPATH );
@@ -622,7 +622,7 @@ void R_LoadColorPalettes(void)
         char                name[9];
         lumpnum_t           lump;
 
-        snprintf(name, 8, "TRANTBL%X", i);
+        dd_snprintf(name, 8, "TRANTBL%X", i);
         name[8] = '\0';
 
         if((lump = W_CheckNumForName(name)) != -1)

@@ -887,12 +887,12 @@ static void ClearSaveSlot(int slot)
 
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs", savePath,
+        dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs", savePath,
                  slot, i);
         M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
         remove(fileName);
     }
-    snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath, slot);
+    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath, slot);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
     remove(fileName);
 }
@@ -923,26 +923,26 @@ static void CopySaveSlot(int sourceSlot, int destSlot)
 
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
+        dd_snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
                  savePath, sourceSlot, i);
         M_TranslatePath(sourceName, sourceName, FILENAME_T_MAXLEN);
 
         if(ExistingFile(sourceName))
         {
-            snprintf(destName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
+            dd_snprintf(destName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
                      savePath, destSlot, i);
             M_TranslatePath(destName, destName, FILENAME_T_MAXLEN);
             CopyFile(sourceName, destName);
         }
     }
 
-    snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
+    dd_snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
              sourceSlot);
     M_TranslatePath(sourceName, sourceName, FILENAME_T_MAXLEN);
 
     if(ExistingFile(sourceName))
     {
-        snprintf(destName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
+        dd_snprintf(destName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
                  destSlot);
         M_TranslatePath(destName, destName, FILENAME_T_MAXLEN);
         CopyFile(sourceName, destName);
@@ -975,7 +975,7 @@ boolean SV_HxRebornSlotAvailable(void)
 {
     filename_t          fileName;
 
-    snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
+    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
              REBORN_SLOT);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
     return ExistingFile(fileName);
@@ -4753,14 +4753,14 @@ void SV_Init(void)
 
 void SV_GetSaveGameFileName(char* str, int slot, size_t len)
 {
-    snprintf(str, len, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION,
+    dd_snprintf(str, len, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION,
              savePath, slot);
 }
 
 void SV_GetClientSaveGameFileName(char* str, unsigned int gameID,
                                   size_t len)
 {
-    snprintf(str, len, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION,
+    dd_snprintf(str, len, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION,
              clientSavePath, gameID);
 }
 
@@ -4870,7 +4870,7 @@ int SV_SaveGameWorker(void* ptr)
         filename_t          fileName;
 
         // Open the output file
-        snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
+        dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
                  gameMap);
         M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
         OpenStreamOut(fileName);
@@ -4920,7 +4920,7 @@ boolean SV_SaveGame(const char* filename, const char *description)
     param.slot = slot;
 #endif
 #if __JHEXEN__
-    snprintf(filename, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
+    dd_snprintf(filename, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
     M_TranslatePath(filename, filename, FILENAME_T_MAXLEN);
 #endif
     param.filename = filename;
@@ -5175,7 +5175,7 @@ boolean SV_LoadGame(const char* filename)
     }
 
     // Create the name
-    snprintf(fileName, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
+    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
     // Load the file
@@ -5332,7 +5332,7 @@ static void unarchiveMap(void)
     filename_t          fileName;
 
     // Create the name
-    snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
+    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
              gameMap);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
@@ -5375,7 +5375,7 @@ void SV_MapTeleport(int map, int position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath, map);
+    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath, map);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
     if(!deathmatch && ExistingFile(fileName))
@@ -5393,7 +5393,7 @@ void SV_MapTeleport(int map, int position)
             SV_InitThingArchive(false, false);
 
             // Open the output file
-            snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs",
+            dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs",
                      savePath, gameMap);
             M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
             OpenStreamOut(fileName);

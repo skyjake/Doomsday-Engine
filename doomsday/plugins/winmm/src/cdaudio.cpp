@@ -38,10 +38,6 @@
 
 #define DEVICEID                "mycd"
 
-#if(_MSC_VER < 1500)
-#  define dd_vsnprintf         _vsnprintf
-#endif
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

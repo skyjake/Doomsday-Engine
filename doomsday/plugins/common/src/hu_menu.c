@@ -3210,7 +3210,7 @@ void M_DrawInventoryMenu(void)
     if(seconds > 0)
     {
         memset(secString, 0, sizeof(secString));
-        snprintf(secString, 10, "%2u seconds", seconds);
+        dd_snprintf(secString, 10, "%2u seconds", seconds);
         str = secString;
     }
     else
@@ -3226,7 +3226,7 @@ void M_DrawInventoryMenu(void)
     if(val > 0)
     {
         memset(buff, 0, sizeof(buff));
-        snprintf(buff, 2, "%2u", val);
+        dd_snprintf(buff, 2, "%2u", val);
         str = buff;
     }
     else
@@ -3295,7 +3295,7 @@ void M_DrawHUDMenu(void)
     if(seconds > 0)
     {
         memset(secString, 0, sizeof(secString));
-        snprintf(secString, 10, "%2u seconds", seconds);
+        dd_snprintf(secString, 10, "%2u seconds", seconds);
         str = secString;
     }
     else

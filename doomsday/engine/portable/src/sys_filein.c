@@ -204,10 +204,10 @@ void F_AddDirec(const char* lumpname, char* symbolic_path, size_t len)
     // Convert the symbolic path into a real path.
     Dir_FixSlashes(symbolic_path, len);
     if(symbolic_path[0] == DIR_SEP_CHAR)
-        snprintf(path, FILENAME_T_MAXLEN, "%s%s", ddBasePath,
+        dd_snprintf(path, FILENAME_T_MAXLEN, "%s%s", ddBasePath,
                  symbolic_path + 1);
     else
-        snprintf(path, FILENAME_T_MAXLEN, "%s%s", ddRuntimeDir.path,
+        dd_snprintf(path, FILENAME_T_MAXLEN, "%s%s", ddRuntimeDir.path,
                  symbolic_path);
 
     // Since the basepath might be relative, let's explicitly make
@@ -889,7 +889,7 @@ int F_ForAllDescend(const char* pattern, const char* path, void* parm,
     foundentry_t*       found;
     filename_t          fn, spec, localPattern;
 
-    snprintf(localPattern, FILENAME_T_MAXLEN, "%s%s", path, pattern);
+    dd_snprintf(localPattern, FILENAME_T_MAXLEN, "%s%s", path, pattern);
 
     // Collect a list of paths.  The list contains files in all the
     // paths mapped to the current path.
@@ -899,7 +899,7 @@ int F_ForAllDescend(const char* pattern, const char* path, void* parm,
 
     for(i = -1; i < (int)vdMappingsCount; ++i)
     {
-        snprintf(spec, FILENAME_T_MAXLEN, "%s*", path);
+        dd_snprintf(spec, FILENAME_T_MAXLEN, "%s*", path);
 
         if(i >= 0)
         {

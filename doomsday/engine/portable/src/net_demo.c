@@ -329,7 +329,7 @@ boolean Demo_BeginPlayback(const char* fileName)
             return false;
 
     // Open the demo file.
-    snprintf(buf, FILENAME_T_MAXLEN, "%s%s",
+    dd_snprintf(buf, FILENAME_T_MAXLEN, "%s%s",
              Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
     M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
     playdemo = lzOpen(buf, "rp");

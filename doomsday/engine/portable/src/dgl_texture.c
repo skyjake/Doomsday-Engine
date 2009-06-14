@@ -197,7 +197,7 @@ static void prepareColorPalette18To8(gl_colorpalette_t* pal)
             filename_t          name;
             FILE*               file;
 
-            snprintf(name, FILENAME_T_MAXLEN, "%s_18To8.lmp",
+            dd_snprintf(name, FILENAME_T_MAXLEN, "%s_18To8.lmp",
                      pal->name);
             file = fopen(name, "wb");
 

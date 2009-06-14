@@ -250,7 +250,7 @@ int DD_AddAutoData(boolean loadFiles)
 
     for(i = 0; extensions[i]; ++i)
     {
-        snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s",
+        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s",
                  R_GetDataPath(), extensions[i]);
         pattern[FILENAME_T_MAXLEN] = '\0';
 
@@ -282,7 +282,7 @@ void DD_SetConfigFile(const char* file)
  */
 void DD_SetDefsFile(const char* file)
 {
-    snprintf(topDefsFileName, FILENAME_T_MAXLEN, "%sdefs\\%s",
+    dd_snprintf(topDefsFileName, FILENAME_T_MAXLEN, "%sdefs\\%s",
              ddBasePath, file);
     Dir_FixSlashes(topDefsFileName, FILENAME_T_MAXLEN);
 }
@@ -295,7 +295,7 @@ void DD_DefineBuiltinVDM(void)
     filename_t          dest;
 
     // Data files.
-    snprintf(dest, FILENAME_T_MAXLEN, "%sauto", R_GetDataPath());
+    dd_snprintf(dest, FILENAME_T_MAXLEN, "%sauto", R_GetDataPath());
     F_AddMapping("auto", dest);
 
     // Definition files.
@@ -478,7 +478,7 @@ static int DD_StartupWorker(void *parm)
 
     // The name of the .cfg will invariably be overwritten by the Game.
     strncpy(configFileName, "doomsday.cfg", FILENAME_T_MAXLEN);
-    snprintf(defsFileName, FILENAME_T_MAXLEN, "%sdefs\\doomsday.ded",                    ddBasePath);
+    dd_snprintf(defsFileName, FILENAME_T_MAXLEN, "%sdefs\\doomsday.ded",                    ddBasePath);
 
     // Was the change to userdir OK?
     if(!app.userDirOk)
@@ -1265,12 +1265,9 @@ int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
     str[size - 1] = 0;
     return result;
 #else
-    return result > size? -1 : size;
+    return result >= size? -1 : size;
 #endif
 }
-
-#ifdef WIN32
-// These could be moved to some win32-only source file.
 
 /**
  * Prints a formatted string into a fixed-size buffer. At most @c size
@@ -1284,7 +1281,7 @@ int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
  * @return              Number of characters written to the output buffer
  *                      if lower than or equal to @c size, else @c -1.
  */
-int snprintf(char* str, size_t size, const char* format, ...)
+int dd_snprintf(char* str, size_t size, const char* format, ...)
 {
     int                 result = 0;
 
@@ -1295,4 +1292,3 @@ int snprintf(char* str, size_t size, const char* format, ...)
 
     return result;
 }
-#endif

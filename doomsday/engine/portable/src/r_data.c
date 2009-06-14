@@ -1785,7 +1785,7 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
      */
 
     // Create a gltexture for it.
-    snprintf(name, 8, "%-*i", 8, numSkinNames + 1);
+    dd_snprintf(name, 8, "%-*i", 8, numSkinNames + 1);
     name[M_NumDigits(numSkinNames + 1)] = '\0';
     glTex = GL_CreateGLTexture(name, numSkinNames,
         (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
@@ -2259,7 +2259,7 @@ Con_Message("R_CreateDetailTexture: Too many detail textures!\n");
      */
 
     // Create a gltexture for it.
-    snprintf(name, 8, "%-*i", 8, numDetailTextures + 1);
+    dd_snprintf(name, 8, "%-*i", 8, numDetailTextures + 1);
     name[M_NumDigits(numDetailTextures + 1)] = '\0';
     glTex = GL_CreateGLTexture(name, numDetailTextures, GLT_DETAIL);
 
@@ -2337,7 +2337,7 @@ Con_Message("R_CreateLightMap: Too many lightmaps!\n");
      */
 
     // Create a gltexture for it.
-    snprintf(name, 8, "%-*i", 8, numLightMaps + 1);
+    dd_snprintf(name, 8, "%-*i", 8, numLightMaps + 1);
     name[M_NumDigits(numLightMaps + 1)] = '\0';
     glTex = GL_CreateGLTexture(name, numLightMaps, GLT_LIGHTMAP);
 
@@ -2418,7 +2418,7 @@ Con_Message("R_CreateFlareTexture: Too many flare textures!\n");
      * A new flare texture.
      */
     // Create a gltexture for it.
-    snprintf(name, 8, "%-*i", 8, numFlareTextures + 1);
+    dd_snprintf(name, 8, "%-*i", 8, numFlareTextures + 1);
     name[M_NumDigits(numFlareTextures + 1)] = '\0';
     glTex = GL_CreateGLTexture(name, numFlareTextures, GLT_FLARE);
 
@@ -2493,7 +2493,7 @@ Con_Message("R_CreateShinyTexture: Too many shiny textures!\n");
      */
 
     // Create a gltexture for it.
-    snprintf(name, 8, "%-*i", 8, numShinyTextures + 1);
+    dd_snprintf(name, 8, "%-*i", 8, numShinyTextures + 1);
     name[M_NumDigits(numShinyTextures + 1)] = '\0';
     glTex = GL_CreateGLTexture(name, numShinyTextures, GLT_SHINY);
 
@@ -2566,7 +2566,7 @@ Con_Message("R_CreateMaskTexture: Too many mask textures!\n");
      */
 
     // Create a gltexture for it.
-    snprintf(name, 8, "%-*i", 8, numMaskTextures + 1);
+    dd_snprintf(name, 8, "%-*i", 8, numMaskTextures + 1);
     name[M_NumDigits(numMaskTextures + 1)] = '\0';
     glTex = GL_CreateGLTexture(name, numMaskTextures, GLT_MASK);
 

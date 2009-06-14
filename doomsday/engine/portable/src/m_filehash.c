@@ -353,7 +353,7 @@ static void composePath(hashnode_t* node, char* foundPath, size_t len)
     strncpy(foundPath, node->fileName, len);
     while(direc)
     {
-        snprintf(buf, FILENAME_T_MAXLEN, "%s" DIR_SEP_STR "%s",
+        dd_snprintf(buf, FILENAME_T_MAXLEN, "%s" DIR_SEP_STR "%s",
                  direc->path, foundPath);
         strncpy(foundPath, buf, FILENAME_T_MAXLEN);
         direc = direc->parent;

@@ -1187,7 +1187,7 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
         {   // Try the old-fashioned "Flat-NAME" in the Textures category.
             filename_t          resource;
 
-            snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lumpName);
+            dd_snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lumpName);
 
             found = R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, file,
                                     resource, NULL, FILENAME_T_MAXLEN);
@@ -1650,13 +1650,13 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         // Compose a resource name.
         if(pSprite)
         {
-            snprintf(resource, FILENAME_T_MAXLEN, "%s-hud", lumpName);
+            dd_snprintf(resource, FILENAME_T_MAXLEN, "%s-hud", lumpName);
         }
         else
         {
             if(tclass || tmap)
             {   // Translated.
-                snprintf(resource, FILENAME_T_MAXLEN, "%s-table%i%i",
+                dd_snprintf(resource, FILENAME_T_MAXLEN, "%s-table%i%i",
                          lumpName, tclass, tmap);
             }
             else

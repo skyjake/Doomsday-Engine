@@ -376,7 +376,7 @@ static void mapPath(char* path, size_t len)
            !strnicmp("Sfx" DIR_SEP_STR, path, 4))
         {
             // Contents mapped to keyname folder.
-            snprintf(mapped, FILENAME_T_MAXLEN, "%s%s", R_GetDataPath(),
+            dd_snprintf(mapped, FILENAME_T_MAXLEN, "%s%s", R_GetDataPath(),
                      path);
             strncpy(path, mapped, len);
             return;

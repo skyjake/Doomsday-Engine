@@ -603,7 +603,7 @@ static void DED_Include(const char* fileName, directory_t* dir)
     M_TranslatePath(tmp, fileName, FILENAME_T_MAXLEN);
     if(!Dir_IsAbsolute(tmp))
     {
-        snprintf(path, FILENAME_T_MAXLEN, "%s%s", dir->path, tmp);
+        dd_snprintf(path, FILENAME_T_MAXLEN, "%s%s", dir->path, tmp);
     }
     else
     {

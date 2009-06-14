@@ -105,9 +105,8 @@ void N_SockPrintf(socket_t s, const char *format, ...)
     length = dd_vsnprintf(buf, BUFF_SIZE, format, args);
     va_end(args);
 
-    if(length > BUFF_SIZE)
-    {
-        // Oops... Something important may have been overwritten in memory.
+    if(!length)
+    {   // Overflow or encoding error. Should we still be sending it anyway?
         length = BUFF_SIZE;
     }
 

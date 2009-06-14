@@ -1048,7 +1048,7 @@ void M_PrependBasePath(char* newpath, const char* path, size_t len)
     }
     else
     {
-        snprintf(buf, FILENAME_T_MAXLEN, "%s%s", ddBasePath, path);
+        dd_snprintf(buf, FILENAME_T_MAXLEN, "%s%s", ddBasePath, path);
         strncpy(newpath, buf, len);
     }
 }

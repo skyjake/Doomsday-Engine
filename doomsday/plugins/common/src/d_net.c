@@ -275,7 +275,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         if(showmsg)
         {
             // Print a notification.
-            snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s joined the game",
+            dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s joined the game",
                     Net_GetPlayerName(plrNumber));
             D_NetMessage(CONSOLEPLAYER, msgBuff);
         }
@@ -287,7 +287,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         players[plrNumber].playerState = PST_GONE;
 
         // Print a notification.
-        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s left the game", Net_GetPlayerName(plrNumber));
+        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s left the game", Net_GetPlayerName(plrNumber));
         D_NetMessage(CONSOLEPLAYER, msgBuff);
 
         if(IS_SERVER)
@@ -304,7 +304,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
             if(players[i].plr->inGame)
                 num++;
 
-        snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
+        dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
                 (const char *) data);
 
         // The chat message is already echoed by the console.
@@ -467,13 +467,13 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
     case GPT_MESSAGE:
-        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
+        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
         P_SetMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;
 
 #if __JHEXEN__ || __JSTRIFE__
     case GPT_YELLOW_MESSAGE:
-        snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
+        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
         P_SetYellowMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;
 #endif
@@ -577,7 +577,7 @@ static void D_NetMessageEx(int player, const char* msg, boolean playSound)
     if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
         return;
 
-    snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", msg);
+    dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", msg);
 
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.

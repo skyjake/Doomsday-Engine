@@ -182,7 +182,7 @@ static void initClassDataPaths(void)
         {
             filename_t          other;
 
-            snprintf(other, FILENAME_T_MAXLEN, "%s%s", filePath, gameMode);
+            dd_snprintf(other, FILENAME_T_MAXLEN, "%s%s", filePath, gameMode);
             Dir_ValidDir(other, FILENAME_T_MAXLEN);
 
             Str_Prepend(&rc->path, ";");
@@ -203,7 +203,7 @@ static void initClassDataPaths(void)
             {
                 filename_t          other;
 
-                snprintf(other, FILENAME_T_MAXLEN, "%s\\%s", filePath,
+                dd_snprintf(other, FILENAME_T_MAXLEN, "%s\\%s", filePath,
                          gameMode);
                 Dir_ValidDir(other, FILENAME_T_MAXLEN);
 
@@ -515,7 +515,7 @@ void R_PrependDataPath(char* newPath, const char* origPath, size_t len)
     }
     else
     {
-        snprintf(newPath, len, "%s%s", Str_Text(dataPath), origPath);
+        dd_snprintf(newPath, len, "%s%s", Str_Text(dataPath), origPath);
     }
 }
 

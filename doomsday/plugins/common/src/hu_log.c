@@ -158,11 +158,11 @@ static void logPush(msglog_t* log, const char* txt, int tics)
         memset(msg->text, 0, msg->maxLen);
     }
 
-    snprintf(msg->text, len, "%s", txt);
+    dd_snprintf(msg->text, len, "%s", txt);
     msg->text[len] = '\0';
     msg->ticsRemain = msg->tics = tics;
     msg->flags = MF_JUSTADDED;
-    
+
     if(log->nextMsg < LOG_MAX_MESSAGES - 1)
         log->nextMsg++;
     else
@@ -335,7 +335,7 @@ static void logDrawer(msglog_t* log)
             if(i == 0 && msg->ticsRemain <= LINEHEIGHT_A)
                 col[CA] = msg->ticsRemain / (float) LINEHEIGHT_A * .9f;
         }
-        
+
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
