@@ -87,7 +87,8 @@ static pglink_t* pgStore;
 static unsigned int pgCursor = 0, pgMax;
 
 static vec2_t mbox[2];
-static int tmpz, tmprad, tmcross, tmpx1, tmpx2, tmpy1, tmpy2;
+static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
+static boolean tmcross;
 static linedef_t* ptcHitLine;
 
 // CODE --------------------------------------------------------------------
@@ -382,10 +383,10 @@ static void P_InitParticleGen(ptcgen_t* gen, const ded_ptcgen_t* def)
         const ded_ptcstage_t* sdef = &def->stages[i];
         ptcstage_t*         s = &gen->stages[i];
 
-        s->bounce = FRACUNIT * sdef->bounce;
-        s->resistance = FRACUNIT * (1 - sdef->resistance);
-        s->radius = FRACUNIT * sdef->radius;
-        s->gravity = FRACUNIT * sdef->gravity;
+        s->bounce = FLT2FIX(sdef->bounce);
+        s->resistance = FLT2FIX(1 - sdef->resistance);
+        s->radius = FLT2FIX(sdef->radius);
+        s->gravity = FLT2FIX(sdef->gravity);
         s->type = sdef->type;
         s->flags = sdef->flags;
     }
@@ -393,14 +394,14 @@ static void P_InitParticleGen(ptcgen_t* gen, const ded_ptcgen_t* def)
     // Init some data.
     for(i = 0; i < 3; ++i)
     {
-        gen->center[i] = FRACUNIT * def->center[i];
-        gen->vector[i] = FRACUNIT * def->vector[i];
+        gen->center[i] = FLT2FIX(def->center[i]);
+        gen->vector[i] = FLT2FIX(def->vector[i]);
     }
 
     // Apply a random component to the spawn vector.
     if(def->initVectorVariance > 0)
     {
-        P_Uncertain(gen->vector, 0, def->initVectorVariance * FRACUNIT);
+        P_Uncertain(gen->vector, 0, FLT2FIX(def->initVectorVariance));
     }
 
     // Mark unused.
@@ -519,9 +520,9 @@ static void P_Uncertain(fixed_t* pos, fixed_t low, fixed_t high)
             acos(2 * (RNG_RandByte() * reciprocal255) -
                  1) / PI * (ANGLE_180 >> ANGLETOFINESHIFT);
 
-        vec[VZ] = FixedMul(fineCosine[phi], FRACUNIT * 0.8333);
         vec[VX] = FixedMul(fineCosine[theta], finesine[phi]);
         vec[VY] = FixedMul(finesine[theta], finesine[phi]);
+        vec[VZ] = FixedMul(fineCosine[phi], FLT2FIX(0.8333f));
 
         for(i = 0; i < 3; ++i)
             pos[i] += FixedMul(vec[i], off);
@@ -562,7 +563,8 @@ static void P_NewParticle(ptcgen_t* gen)
 {
     const ded_ptcgen_t* def = gen->def;
     particle_t*         pt;
-    int                 uncertain, len, i;
+    int                 i;
+    fixed_t             uncertain, len;
     angle_t             ang, ang2;
     subsector_t*        subsec;
     float*              box, inter = -1;
@@ -595,26 +597,32 @@ static void P_NewParticle(ptcgen_t* gen)
     pt->mov[VZ] = gen->vector[VZ];
 
     // Apply some random variance.
-    pt->mov[VX] += FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
-    pt->mov[VY] += FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
-    pt->mov[VZ] += FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pt->mov[VX] +=
+        FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pt->mov[VY] +=
+        FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pt->mov[VZ] +=
+        FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
 
     // Apply some aspect ratio scaling to the momentum vector.
     // This counters the 200/240 difference nearly completely.
-    pt->mov[VX] = FixedMul(pt->mov[VX], FRACUNIT * 1.1);
-    pt->mov[VZ] = FixedMul(pt->mov[VZ], FRACUNIT * 1.1);
-    pt->mov[VY] = FixedMul(pt->mov[VY], FRACUNIT * 0.95);
+    pt->mov[VX] = FixedMul(pt->mov[VX], FLT2FIX(1.1f));
+    pt->mov[VY] = FixedMul(pt->mov[VY], FLT2FIX(0.95f));
+    pt->mov[VZ] = FixedMul(pt->mov[VZ], FLT2FIX(1.1f));
 
     // Set proper speed.
-    uncertain = def->speed * (1 - def->speedVariance * RNG_RandFloat()) * FRACUNIT;
-    len = FLT2FIX(P_ApproxDistance(P_ApproxDistance(FIX2FLT(pt->mov[VX]),
-                                                    FIX2FLT(pt->mov[VY])),
+    uncertain = FLT2FIX(
+        def->speed * (1 - def->speedVariance * RNG_RandFloat()));
+    len = FLT2FIX(P_ApproxDistance(
+        P_ApproxDistance(FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY])),
                                    FIX2FLT(pt->mov[VZ])));
     if(!len)
         len = FRACUNIT;
     len = FixedDiv(uncertain, len);
-    for(i = 0; i < 3; ++i)
-        pt->mov[i] = FixedMul(pt->mov[i], len);
+
+    pt->mov[VX] = FixedMul(pt->mov[VX], len);
+    pt->mov[VY] = FixedMul(pt->mov[VY], len);
+    pt->mov[VZ] = FixedMul(pt->mov[VZ], len);
 
     // The source is a mobj?
     if(gen->source)
@@ -624,15 +632,16 @@ static void P_NewParticle(ptcgen_t* gen)
             // Rotate the vector using the source angle.
             float               temp[3];
 
-            temp[0] = FIX2FLT(pt->mov[VX]);
-            temp[1] = FIX2FLT(pt->mov[VY]);
-            temp[2] = 0;
+            temp[VX] = FIX2FLT(pt->mov[VX]);
+            temp[VY] = FIX2FLT(pt->mov[VY]);
+            temp[VZ] = 0;
 
             // Player visangles have some problems, let's not use them.
             M_RotateVector(temp,
-                           gen->source->angle / (float) ANG180 * -180 + 90, 0);
-            pt->mov[VX] = temp[VX] * FRACUNIT;
-            pt->mov[VY] = temp[VY] * FRACUNIT;
+                           gen->source->angle / (float) ANG180 * -180 + 90,
+                           0);
+            pt->mov[VX] = FLT2FIX(temp[VX]);
+            pt->mov[VY] = FLT2FIX(temp[VY]);
         }
 
         if(gen->flags & PGF_RELATIVE_VELOCITY)
@@ -646,8 +655,9 @@ static void P_NewParticle(ptcgen_t* gen)
         pt->pos[VX] = FLT2FIX(gen->source->pos[VX]);
         pt->pos[VY] = FLT2FIX(gen->source->pos[VY]);
         pt->pos[VZ] = FLT2FIX(gen->source->pos[VZ] - gen->source->floorClip);
-        P_Uncertain(pt->pos, FRACUNIT * def->spawnRadiusMin,
-                    FRACUNIT * def->spawnRadius);
+
+        P_Uncertain(pt->pos, FLT2FIX(def->spawnRadiusMin),
+                    FLT2FIX(def->spawnRadius));
 
         // Offset to the real center.
         pt->pos[VZ] += gen->center[VZ];
@@ -662,59 +672,66 @@ static void P_NewParticle(ptcgen_t* gen)
         pt->pos[VY] += FixedMul(finesine[ang], gen->center[VX]);
 
         // There might be an offset from the model of the mobj.
-        if(mf && (mf->sub[0].flags & MFF_PARTICLE_SUB1 || def->subModel >= 0))
+        if(mf &&
+           (mf->sub[0].flags & MFF_PARTICLE_SUB1 || def->subModel >= 0))
         {
-            int                 subidx = 1; // Default to submodel #1.
+            int                 subidx;
             float               off[3];
 
             // Select the right submodel to use as the origin.
             if(def->subModel >= 0)
-            {
                 subidx = def->subModel;
-            }
-            memcpy(off, mf->ptcOffset[subidx], sizeof(off));
+            else
+                subidx = 1; // Default to submodel #1.
 
             // Interpolate the offset.
             if(inter > 0 && nextmf)
-                for(i = 0; i < 3; ++i)
-                {
-                    off[i] +=
-                        (nextmf->ptcOffset[subidx][i] -
-                         mf->ptcOffset[subidx][i]) * inter;
-                }
+            {
+                off[VX] = nextmf->ptcOffset[subidx][VX] - mf->ptcOffset[subidx][VX];
+                off[VY] = nextmf->ptcOffset[subidx][VY] - mf->ptcOffset[subidx][VY];
+                off[VZ] = nextmf->ptcOffset[subidx][VZ] - mf->ptcOffset[subidx][VZ];
+
+                off[VX] *= inter;
+                off[VY] *= inter;
+                off[VZ] *= inter;
+            }
+
+            off[VX] += mf->ptcOffset[subidx][VX];
+            off[VY] += mf->ptcOffset[subidx][VY];
+            off[VZ] += mf->ptcOffset[subidx][VZ];
 
             // Apply it to the particle coords.
-            pt->pos[VX] += FixedMul(fineCosine[ang], FRACUNIT * off[VX]);
-            pt->pos[VX] += FixedMul(fineCosine[ang2], FRACUNIT * off[VZ]);
-            pt->pos[VY] += FixedMul(finesine[ang], FRACUNIT * off[VX]);
-            pt->pos[VY] += FixedMul(finesine[ang2], FRACUNIT * off[VZ]);
-            pt->pos[VZ] += FRACUNIT * off[VY];
+            pt->pos[VX] += FixedMul(fineCosine[ang], FLT2FIX(off[VX]));
+            pt->pos[VX] += FixedMul(fineCosine[ang2], FLT2FIX(off[VZ]));
+            pt->pos[VY] += FixedMul(finesine[ang], FLT2FIX(off[VX]));
+            pt->pos[VY] += FixedMul(finesine[ang2], FLT2FIX(off[VZ]));
+            pt->pos[VZ] += FLT2FIX(off[VY]);
         }
     }
     else if(gen->sector) // The source is a plane?
     {
-        i = gen->stages[pt->stage].radius;
+        fixed_t             radius = gen->stages[pt->stage].radius;
 
         // Choose a random spot inside the sector, on the spawn plane.
         if(gen->flags & PGF_SPACE_SPAWN)
         {
             pt->pos[VZ] =
-                FLT2FIX(gen->sector->SP_floorheight) + i +
+                FLT2FIX(gen->sector->SP_floorheight) + radius +
                 FixedMul(RNG_RandByte() << 8,
                          FLT2FIX(gen->sector->SP_ceilheight -
-                                 gen->sector->SP_floorheight) - 2 * i);
+                                 gen->sector->SP_floorheight) - 2 * radius);
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
                  !gen->ceiling))
         {
             // Spawn on the floor.
-            pt->pos[VZ] = FLT2FIX(gen->sector->SP_floorheight) + i;
+            pt->pos[VZ] = FLT2FIX(gen->sector->SP_floorheight) + radius;
         }
         else
         {
             // Spawn on the ceiling.
-            pt->pos[VZ] = FLT2FIX(gen->sector->SP_ceilheight) - i;
+            pt->pos[VZ] = FLT2FIX(gen->sector->SP_ceilheight) - radius;
         }
 
         /**
@@ -727,11 +744,13 @@ static void P_NewParticle(ptcgen_t* gen)
         box = gen->sector->bBox;
         for(i = 0; i < 5; ++i) // Try a couple of times (max).
         {
-            subsec =
-                R_PointInSubsector((box[BOXLEFT] +
-                                        RNG_RandFloat() * (box[BOXRIGHT] - box[BOXLEFT])),
-                                   (box[BOXBOTTOM] +
-                                        RNG_RandFloat() * (box[BOXTOP] - box[BOXBOTTOM])));
+            float               x =
+                (box[BOXLEFT]   + RNG_RandFloat() * (box[BOXRIGHT] - box[BOXLEFT]));
+            float               y =
+                (box[BOXBOTTOM] + RNG_RandFloat() * (box[BOXTOP]   - box[BOXBOTTOM]));
+
+            subsec = R_PointInSubsector(x, y);
+
             if(subsec->sector == gen->sector)
                 break;
             else
@@ -743,15 +762,15 @@ static void P_NewParticle(ptcgen_t* gen)
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.
         {
-            pt->pos[VX] =
-                FRACUNIT * (subsec->bBox[0].pos[VX] +
-                            RNG_RandFloat() * (subsec->bBox[1].pos[VX] -
-                                           subsec->bBox[0].pos[VX]));
-            pt->pos[VY] =
-                FRACUNIT * (subsec->bBox[0].pos[VY] +
-                            RNG_RandFloat() * (subsec->bBox[1].pos[VY] -
-                                           subsec->bBox[0].pos[VY]));
-            if(R_PointInSubsector(FIX2FLT(pt->pos[VX]), FIX2FLT(pt->pos[VY])) == subsec)
+            float               x = subsec->bBox[0].pos[VX] +
+                RNG_RandFloat() * (subsec->bBox[1].pos[VX] - subsec->bBox[0].pos[VX]);
+            float               y = subsec->bBox[0].pos[VY] +
+                RNG_RandFloat() * (subsec->bBox[1].pos[VY] - subsec->bBox[0].pos[VY]);
+
+            pt->pos[VX] = FLT2FIX(x);
+            pt->pos[VY] = FLT2FIX(y);
+
+            if(R_PointInSubsector(x, y) == subsec)
                 break; // This is a good place.
         }
 
@@ -768,8 +787,8 @@ static void P_NewParticle(ptcgen_t* gen)
         pt->pos[VX] = gen->center[VX];
         pt->pos[VY] = gen->center[VY];
         pt->pos[VZ] = gen->center[VZ];
-        P_Uncertain(pt->pos, FRACUNIT * def->spawnRadiusMin,
-                    FRACUNIT * def->spawnRadius);
+        P_Uncertain(pt->pos, FLT2FIX(def->spawnRadiusMin),
+                    FLT2FIX(def->spawnRadius));
     }
 
     // Initial angles for the particle.
@@ -991,12 +1010,11 @@ static void P_SpinParticle(ptcgen_t* gen, particle_t* pt)
  */
 static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
 {
-    int                 x, y, z;
     ptcstage_t*         st = &gen->stages[pt->stage];
     ded_ptcstage_t*     stDef = &gen->def->stages[pt->stage];
     boolean             zBounce = false, hitFloor = false;
     vec2_t              point;
-    fixed_t             hardRadius = st->radius / 2;
+    fixed_t             x, y, z, hardRadius = st->radius / 2;
 
     // Particle rotates according to spin speed.
     P_SpinParticle(gen, pt);
@@ -1011,15 +1029,16 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         int                 i;
 
         for(i = 0; i < 3; ++i)
-            pt->mov[i] += FRACUNIT * stDef->vectorForce[i];
+            pt->mov[i] += FLT2FIX(stDef->vectorForce[i]);
     }
 
     // Sphere force pull and turn.
     // Only applicable to sourced or untriggered generators. For other
     // types it's difficult to define the center coordinates.
-    if(st->flags & PTCF_SPHERE_FORCE &&
+    if((st->flags & PTCF_SPHERE_FORCE) &&
        (gen->source || gen->flags & PGF_UNTRIGGERED))
     {
+        int                 i;
         float               delta[3], dist;
 
         if(gen->source)
@@ -1031,13 +1050,13 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         }
         else
         {
-            for(x = 0; x < 3; ++x)
-                delta[x] = FIX2FLT(pt->pos[x] - gen->center[x]);
+            for(i = 0; i < 3; ++i)
+                delta[i] = FIX2FLT(pt->pos[i] - gen->center[i]);
         }
 
         // Apply the offset (to source coords).
-        for(x = 0; x < 3; ++x)
-            delta[x] -= gen->def->forceOrigin[x];
+        for(i = 0; i < 3; ++i)
+            delta[i] -= gen->def->forceOrigin[i];
 
         // Counter the aspect ratio of old times.
         delta[VZ] *= 1.2f;
@@ -1052,29 +1071,31 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
             {
                 // Normalize delta vector, multiply with (dist - forceRadius),
                 // multiply with radial force strength.
-                for(x = 0; x < 3; ++x)
-                    pt->mov[x] -=
-                        ((delta[x] / dist) * (dist - gen->def->forceRadius)) *
-                            gen->def->force;
+                for(i = 0; i < 3; ++i)
+                    pt->mov[i] -= FLT2FIX(
+                        ((delta[i] / dist) * (dist - gen->def->forceRadius)) *
+                        gen->def->force);
             }
 
             // Rotate!
             if(gen->def->forceAxis[VX] || gen->def->forceAxis[VY] ||
                gen->def->forceAxis[VZ])
             {
-                float       cross[3];
+                float               cross[3];
 
                 M_CrossProduct(gen->def->forceAxis, delta, cross);
-                for(x = 0; x < 3; ++x)
-                    pt->mov[x] += FLT2FIX(cross[x]) >> 8;
+                for(i = 0; i < 3; ++i)
+                    pt->mov[i] += FLT2FIX(cross[i]) >> 8;
             }
         }
     }
 
     if(st->resistance != FRACUNIT)
     {
-        for(x = 0; x < 3; ++x)
-            pt->mov[x] = FixedMul(pt->mov[x], st->resistance);
+        int                 i;
+
+        for(i = 0; i < 3; ++i)
+            pt->mov[i] = FixedMul(pt->mov[i], st->resistance);
     }
 
     // The particle is 'soft': half of radius is ignored.
@@ -1218,7 +1239,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     validCount++;
     if(!P_AllLinesBoxIteratorv(mbox, PIT_CheckLinePtc, 0))
     {
-        int     normal[2], dotp;
+        fixed_t             normal[2], dotp;
 
         // Must survive the touch.
         if(!P_TouchParticle(pt, st, stDef, true))
@@ -1231,16 +1252,15 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         // - Multiply with bounce.
 
         // Calculate the normal.
-        normal[VX] = -ptcHitLine->dX;
-        normal[VY] = -ptcHitLine->dY;
+        normal[VX] = -FLT2FIX(ptcHitLine->dX);
+        normal[VY] = -FLT2FIX(ptcHitLine->dY);
 
         if(!normal[VX] && !normal[VY])
             goto quit_iteration;
 
         // Calculate as floating point so we don't overflow.
-        dotp =
-            FRACUNIT * (DOT2F(pt->mov, normal) /
-                        DOT2F(normal, normal));
+        dotp = FRACUNIT * (DOT2F(pt->mov, normal) /
+                           DOT2F(normal, normal));
         VECMUL(normal, dotp);
         VECSUB(normal, pt->mov);
         VECMULADD(pt->mov, 2 * FRACUNIT, normal);
@@ -1249,7 +1269,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         // Continue from the old position.
         x = pt->pos[VX];
         y = pt->pos[VY];
-        tmcross = false;    // Sector can't change if XY doesn't.
+        tmcross = false; // Sector can't change if XY doesn't.
 
         // This line is the latest contacted line.
         pt->contact = ptcHitLine;
