@@ -1053,7 +1053,7 @@ void C_DECL A_Tracer(mobj_t *actor)
                        actor->pos[VY] - actor->mom[MY],
                        actor->pos[VZ], actor->angle + ANG180, 0);
 
-    th->mom[MZ] = 1;
+    th->mom[MZ] = FIX2FLT(FRACUNIT);
     th->tics -= P_Random() & 3;
     if(th->tics < 1)
         th->tics = 1;
@@ -1098,9 +1098,9 @@ void C_DECL A_Tracer(mobj_t *actor)
     slope = (dest->pos[VZ] + 40 - actor->pos[VZ]) / dist;
 
     if(slope < actor->mom[MZ])
-        actor->mom[MZ] -= 1 / 8;
+        actor->mom[MZ] -= FIX2FLT(FRACUNIT / 8);
     else
-        actor->mom[MZ] += 1 / 8;
+        actor->mom[MZ] += FIX2FLT(FRACUNIT / 8);
 }
 
 void C_DECL A_SkelWhoosh(mobj_t *actor)
