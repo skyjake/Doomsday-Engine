@@ -52,11 +52,11 @@ typedef enum aste_e {
 
 typedef struct acsinfo_s {
     int             number;
-    int*            address;
+    const int*      address;
     int             argCount;
     aste_t          state;
     int             waitValue;
-} acsinfo_t ;
+} acsinfo_t;
 
 typedef struct acs_s {
     thinker_t       thinker;
@@ -69,7 +69,7 @@ typedef struct acs_s {
     int             stack[ACS_STACK_DEPTH];
     int             stackPtr;
     int             vars[MAX_ACS_SCRIPT_VARS];
-    int*            ip;
+    const int*      ip;
 } acs_t;
 
 typedef struct acsstore_s {
@@ -79,15 +79,15 @@ typedef struct acsstore_s {
 } acsstore_t;
 
 extern int ACScriptCount;
-extern byte* ActionCodeBase;
+extern const byte* ActionCodeBase;
 extern acsinfo_t* ACSInfo;
 extern int MapVars[MAX_ACS_MAP_VARS];
 extern int WorldVars[MAX_ACS_WORLD_VARS];
 extern acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker.
 
 void            P_LoadACScripts(int lump);
-boolean         P_StartACS(int number, int map, byte* args, mobj_t* activator,
-                           linedef_t* line, int side);
+boolean         P_StartACS(int number, int map, byte* args,
+                           mobj_t* activator, linedef_t* line, int side);
 boolean         P_StartLockedACS(linedef_t* line, byte* args, mobj_t* mo,
                                  int side);
 boolean         P_TerminateACS(int number, int map);

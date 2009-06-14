@@ -43,14 +43,22 @@
 /**
  * (Re)Spawn flags:
  */
-#define MTF_EASY            1 // Can be spawned in Easy skill modes.
-#define MTF_MEDIUM          2 // Can be spawned in Medium skill modes.
-#define MTF_HARD            4 // Can be spawned in Hard skill modes.
-#define MTF_DEAF            8 // Mobj will be deaf spawned deaf.
-#define MTF_NOTSINGLE       16 // Can not be spawned in single player gamemodes.
-#define MTF_NOTDM           32 // Can not be spawned in the Deathmatch gs.gameMode.
-#define MTF_NOTCOOP         64 // Can not be spawned in the Co-op gs.gameMode.
-#define MTF_DORMANT         512 // Mobj will be spawned invulnerble and inert.
+#define MTF_EASY            0x00000001 // Can be spawned in Easy skill modes.
+#define MTF_MEDIUM          0x00000002 // Can be spawned in Medium skill modes.
+#define MTF_HARD            0x00000004 // Can be spawned in Hard skill modes.
+#define MTF_DEAF            0x00000008 // Mobj will be deaf spawned deaf.
+#define MTF_NOTSINGLE       0x00000010 // (BOOM) Can not be spawned in single player gamemodes.
+#define MTF_NOTDM           0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
+#define MTF_FRIENDLY        0x00000080 // (BOOM) friendly monster.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
+
+// New flags:
+#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
+#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
+#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
 typedef struct spawnspot_s {
     float           pos[3];
@@ -240,8 +248,9 @@ void        P_CheckRespawnQueue(void);
 void        P_EmptyRespawnQueue(void);
 
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
-                          angle_t angle);
-mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle);
+                          angle_t angle, int spawnFlags);
+mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+                           int spawnFlags);
 
 mobj_t*     P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
                               angle_t angle);

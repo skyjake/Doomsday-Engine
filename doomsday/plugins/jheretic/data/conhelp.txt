@@ -165,12 +165,6 @@ desc = Set camera viewlock.
 desc = Set camera viewlock mode.
 inf = Params: lockmode (0-1).
 
-[invleft]
-desc = Move inventory cursor to the left.
-
-[invright]
-desc = Move inventory cursor to the right.
-
 [chicken]
 desc = Turn yourself into a chicken. Go ahead.
 
@@ -204,9 +198,6 @@ desc = Send a chat macro.
 
 [beginchat]
 desc = Begin chat mode.
-
-[msgrefresh]
-desc = Show last HUD message.
 
 [message]
 desc = Show a local game message.
@@ -314,9 +305,6 @@ desc = 1=Show messages.
 
 [msg-echo]
 desc = 1=Echo all messages to the console.
-
-[msg-secret]
-desc = 1=Announce the discovery of secret areas.
 
 [msg-count]
 desc = Number of HUD messages displayed at the same time.
@@ -516,11 +504,11 @@ desc = Automap background color, green component.
 [map-background-b]
 desc = Automap background color, blue component.
 
-[hud-cheat-counter]
-desc = 6-bit bitfield. Show kills, items and secret counters.
+[map-cheat-counter]
+desc = 6-bit bitfield. Show kills, items and secret counters in automap.
 
-[hud-cheat-counter-scale]
-desc = Size factor for the counters.
+[map-cheat-counter-scale]
+desc = Size factor for the counters in the automap.
 
 [map-customcolors]
 desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.
@@ -627,8 +615,8 @@ desc = First slider control.
 [input-joy-slider2]
 desc = Second slider control.
 
-[ctl-aim-auto]
-desc = 1=Autoaiming enabled.
+[ctl-aim-noauto]
+desc = 1=Autoaiming disabled.
 
 [ctl-turn-speed]
 desc = The speed of turning left/right.
@@ -639,10 +627,16 @@ desc = 1=Always run.
 [ctl-use-dclick]
 desc = 1=Doubleclick forward/strafe equals use key.
 
-[ctl-use-immediate]
+[ctl-inventory-mode]
+desc = Inventory selection mode 0=cursor, 1=scroll.
+
+[ctl-inventory-wrap]
+desc = 1=Inventory selection wraps around.
+
+[ctl-inventory-use-immediate]
 desc = 1=Use items immediately from the inventory.
 
-[ctl-use-next]
+[ctl-inventory-use-next]
 desc = 1=Automatically select the next inventory item when unusable.
 
 [ctl-look-speed]
@@ -690,6 +684,18 @@ desc = HUD weapon lowered during weapon switching.
 [view-ringfilter]
 desc = Ring effect filter. 1=Brownish, 2=Blue.
 
+[server-game-announce-secret]
+desc = 1=Announce the discovery of secret areas.
+
+[server-game-skill]
+desc = Skill level in multiplayer games.
+
+[server-game-map]
+desc = Map to use in multiplayer games.
+
+[server-game-episode]
+desc = Episode to use in multiplayer games.
+
 [server-game-deathmatch]
 desc = Start multiplayers games as deathmatch.
 
@@ -705,11 +711,17 @@ desc =  gravity modifier, multiplayer (-1..100). -1 = Map default.
 [server-game-jump]
 desc = 1=Allow jumping in multiplayer games.
 
+[server-game-maulotaur-fixfloorfire]
+desc = 1=Fix bug in original Heretic which would explode the Maulotaur floor fire if spawned while it's feet are clipped.
+
 [server-game-nomonsters]
 desc = 1=No monsters.
 
 [server-game-respawn]
 desc = 1= -respawn was used.
+
+[server-game-respawn-monsters-nightmare]
+desc = 1=Monster respawning in Nightmare difficulty enabled.
 
 [server-game-radiusattack-nomaxz]
 desc = 1=ALL radius attacks are infinitely tall.
@@ -725,6 +737,9 @@ desc = Player eye height. The original is 41.
 
 [player-move-speed]
 desc = Player movement speed modifier.
+
+[player-jump]
+desc = 1=Allow jumping.
 
 [player-jump-power]
 desc = Jump power (for all clients if this is the server).
@@ -840,14 +855,20 @@ desc = 1=Show keys when the status bar is hidden.
 [hud-health]
 desc = 1=Show health when the status bar is hidden.
 
-[hud-artifact]
-desc = 1=Show artifact when the status bar is hidden.
+[hud-currentitem]
+desc = 1=Show current item in full-screen mode.
 
 [hud-tome-timer]
 desc = Countdown seconds for the Tome of Power.
 
 [hud-tome-sound]
 desc = Seconds for countdown sound of Tome of Power.
+
+[hud-inventory-slot-max]
+desc = Maximum number of inventory slots to display in full-screen mode.
+
+[hud-inventory-slot-showempty]
+desc = 1=Show empty inventory slots in full-screen mode.
 
 [hud-inventory-timer]
 desc = Seconds before the inventory auto-hides.

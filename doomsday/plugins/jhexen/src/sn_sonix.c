@@ -56,7 +56,7 @@
 typedef enum sscmds_e {
     SS_CMD_NONE,
     SS_CMD_PLAY,
-    SS_CMD_WAITUNTILDONE,       // used by PLAYUNTILDONE
+    SS_CMD_WAITUNTILDONE, // used by PLAYUNTILDONE
     SS_CMD_PLAYTIME,
     SS_CMD_PLAYREPEAT,
     SS_CMD_DELAY,
@@ -73,7 +73,7 @@ typedef enum sscmds_e {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void VerifySequencePtr(int* base, int* ptr);
-static int GetSoundOffset(const char* name);
+static int GetSoundOffset(char* name);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -85,32 +85,31 @@ seqnode_t* SequenceListHead;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static struct sstranslation_s {
-    char    name[SS_SEQUENCE_NAME_LENGTH];
-    int     scriptNum;
-    int     stopSound;
-} SequenceTranslate[SEQ_NUMSEQ] =
-{
-    {"Platform", 0, 0},
-    {"Platform", 0, 0},
-    {"PlatformMetal", 0, 0},
-    {"Platform", 0, 0},
-    {"Silence", 0, 0},
-    {"Lava", 0, 0},
-    {"Water", 0, 0},
-    {"Ice", 0, 0},
-    {"Earth", 0, 0},
-    {"PlatformMetal2", 0, 0},
-    {"DoorNormal", 0, 0},
-    {"DoorHeavy", 0, 0},
-    {"DoorMetal", 0, 0},
-    {"DoorCreak", 0, 0},
-    {"Silence", 0, 0},
-    {"Lava", 0, 0},
-    {"Water", 0, 0},
-    {"Ice", 0, 0},
-    {"Earth", 0, 0},
-    {"DoorMetal2", 0, 0},
-    {"Wind", 0, 0}
+    char            name[SS_SEQUENCE_NAME_LENGTH];
+    int             scriptNum;
+    int             stopSound;
+} SequenceTranslate[SEQ_NUMSEQ] = {
+    { "Platform", 0, 0 },
+    { "Platform", 0, 0 },
+    { "PlatformMetal", 0, 0 },
+    { "Platform", 0, 0 },
+    { "Silence", 0, 0 },
+    { "Lava", 0, 0 },
+    { "Water", 0, 0 },
+    { "Ice", 0, 0 },
+    { "Earth", 0, 0 },
+    { "PlatformMetal2", 0, 0 },
+    { "DoorNormal", 0, 0 },
+    { "DoorHeavy", 0, 0 },
+    { "DoorMetal", 0, 0 },
+    { "DoorCreak", 0, 0 },
+    { "Silence", 0, 0 },
+    { "Lava", 0, 0 },
+    { "Water", 0, 0 },
+    { "Ice", 0, 0 },
+    { "Earth", 0, 0 },
+    { "DoorMetal2", 0, 0 },
+    { "Wind", 0, 0 }
 };
 
 static int* SequenceData[SS_MAX_SCRIPTS];
@@ -129,21 +128,20 @@ static void VerifySequencePtr(int* base, int* ptr)
     }
 }
 
-static int GetSoundOffset(const char* name)
+static int GetSoundOffset(char* name)
 {
-    int             i = Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
+    int                 i = Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 
     if(!i)
         SC_ScriptError("GetSoundOffset:  Unknown sound name\n");
-
     return i;
 }
 
 void SN_InitSequenceScript(void)
 {
-    int         i, j, inSequence;
-    int        *tempDataStart = 0;
-    int        *tempDataPtr = 0;
+    int                 i, j, inSequence;
+    int*                tempDataStart = 0;
+    int*                tempDataPtr = 0;
 
     inSequence = -1;
     ActiveSequences = 0;
@@ -152,21 +150,10 @@ void SN_InitSequenceScript(void)
         SequenceData[i] = NULL;
     }
 
-    if(!useScriptsDir)
-    {
-        SC_OpenLump(W_GetNumForName(SS_SCRIPT_NAME));
-    }
-    else
-    {
-        filename_t          path;
-
-        snprintf(path, FILENAME_T_MAXLEN, "%s%s.txt", scriptsDir, SS_SCRIPT_NAME);
-        SC_OpenFile(path);
-    }
-
+    SC_Open(SS_SCRIPT_NAME);
     while(SC_GetString())
     {
-        if(*SC_LastReadString() == ':')
+        if(*sc_String == ':')
         {
             if(inSequence != -1)
             {
@@ -191,14 +178,14 @@ void SN_InitSequenceScript(void)
 
             for(j = 0; j < SEQ_NUMSEQ; ++j)
             {
-                if(!strcasecmp(SequenceTranslate[j].name, SC_LastReadString() + 1))
+                if(!strcasecmp(SequenceTranslate[j].name, sc_String + 1))
                 {
                     SequenceTranslate[j].scriptNum = i;
                     inSequence = j;
                     break;
                 }
             }
-            continue;           // parse the next command
+            continue; // parse the next command
         }
 
         if(inSequence == -1)
@@ -211,7 +198,7 @@ void SN_InitSequenceScript(void)
             VerifySequencePtr(tempDataStart, tempDataPtr);
             SC_MustGetString();
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = GetSoundOffset(SC_LastReadString());
+            *tempDataPtr++ = GetSoundOffset(sc_String);
             *tempDataPtr++ = SS_CMD_WAITUNTILDONE;
         }
         else if(SC_Compare(SS_STRING_PLAY))
@@ -219,51 +206,51 @@ void SN_InitSequenceScript(void)
             VerifySequencePtr(tempDataStart, tempDataPtr);
             SC_MustGetString();
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = GetSoundOffset(SC_LastReadString());
+            *tempDataPtr++ = GetSoundOffset(sc_String);
         }
         else if(SC_Compare(SS_STRING_PLAYTIME))
         {
             VerifySequencePtr(tempDataStart, tempDataPtr);
             SC_MustGetString();
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = GetSoundOffset(SC_LastReadString());
+            *tempDataPtr++ = GetSoundOffset(sc_String);
             SC_MustGetNumber();
             *tempDataPtr++ = SS_CMD_DELAY;
-            *tempDataPtr++ = SC_LastReadInteger();
+            *tempDataPtr++ = sc_Number;
         }
         else if(SC_Compare(SS_STRING_PLAYREPEAT))
         {
             VerifySequencePtr(tempDataStart, tempDataPtr);
             SC_MustGetString();
             *tempDataPtr++ = SS_CMD_PLAYREPEAT;
-            *tempDataPtr++ = GetSoundOffset(SC_LastReadString());
+            *tempDataPtr++ = GetSoundOffset(sc_String);
         }
         else if(SC_Compare(SS_STRING_DELAY))
         {
             VerifySequencePtr(tempDataStart, tempDataPtr);
             *tempDataPtr++ = SS_CMD_DELAY;
             SC_MustGetNumber();
-            *tempDataPtr++ = SC_LastReadInteger();
+            *tempDataPtr++ = sc_Number;
         }
         else if(SC_Compare(SS_STRING_DELAYRAND))
         {
             VerifySequencePtr(tempDataStart, tempDataPtr);
             *tempDataPtr++ = SS_CMD_DELAYRAND;
             SC_MustGetNumber();
-            *tempDataPtr++ = SC_LastReadInteger();
+            *tempDataPtr++ = sc_Number;
             SC_MustGetNumber();
-            *tempDataPtr++ = SC_LastReadInteger();
+            *tempDataPtr++ = sc_Number;
         }
         else if(SC_Compare(SS_STRING_VOLUME))
         {
             VerifySequencePtr(tempDataStart, tempDataPtr);
             *tempDataPtr++ = SS_CMD_VOLUME;
             SC_MustGetNumber();
-            *tempDataPtr++ = SC_LastReadInteger();
+            *tempDataPtr++ = sc_Number;
         }
         else if(SC_Compare(SS_STRING_END))
         {
-            int     dataSize;
+            int                 dataSize;
 
             *tempDataPtr++ = SS_CMD_END;
             dataSize = (tempDataPtr - tempDataStart) * sizeof(int);
@@ -276,7 +263,7 @@ void SN_InitSequenceScript(void)
         {
             SC_MustGetString();
             SequenceTranslate[inSequence].stopSound =
-                GetSoundOffset(SC_LastReadString());
+                GetSoundOffset(sc_String);
             *tempDataPtr++ = SS_CMD_STOPSOUND;
         }
         else
@@ -286,18 +273,18 @@ void SN_InitSequenceScript(void)
     }
 }
 
-void SN_StartSequence(mobj_t *mobj, int sequence)
+void SN_StartSequence(mobj_t* mobj, int sequence)
 {
-    seqnode_t  *node;
+    seqnode_t*          node;
 
-    SN_StopSequence(mobj);      // Stop any previous sequence
+    SN_StopSequence(mobj); // Stop any previous sequence
     node = Z_Malloc(sizeof(seqnode_t), PU_STATIC, NULL);
     node->sequencePtr = SequenceData[SequenceTranslate[sequence].scriptNum];
     node->sequence = sequence;
     node->mobj = mobj;
     node->delayTics = 0;
     node->stopSound = SequenceTranslate[sequence].stopSound;
-    node->volume = 127;         // Start at max volume
+    node->volume = 127; // Start at max volume
 
     if(!SequenceListHead)
     {
@@ -314,20 +301,20 @@ void SN_StartSequence(mobj_t *mobj, int sequence)
     ActiveSequences++;
 }
 
-void SN_StartSequenceInSec(sector_t *sector, int seqBase)
+void SN_StartSequenceInSec(sector_t* sector, int seqBase)
 {
     SN_StartSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN),
                      seqBase + P_ToXSector(sector)->seqType);
 }
 
-void SN_StopSequenceInSec(sector_t *sector)
+void SN_StopSequenceInSec(sector_t* sector)
 {
     SN_StopSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN));
 }
 
-void SN_StartSequenceName(mobj_t *mobj, char *name)
+void SN_StartSequenceName(mobj_t* mobj, const char* name)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < SEQ_NUMSEQ; ++i)
     {
@@ -339,9 +326,9 @@ void SN_StartSequenceName(mobj_t *mobj, char *name)
     }
 }
 
-void SN_StopSequence(mobj_t *mobj)
+void SN_StopSequence(mobj_t* mobj)
 {
-    seqnode_t  *node;
+    seqnode_t*          node;
 
     for(node = SequenceListHead; node; node = node->next)
     {
@@ -377,10 +364,10 @@ void SN_StopSequence(mobj_t *mobj)
 
 void SN_UpdateActiveSequences(void)
 {
-    seqnode_t  *node;
-    boolean     sndPlaying;
+    seqnode_t*          node;
+    boolean             sndPlaying;
 
-    if(!ActiveSequences || gs.paused)
+    if(!ActiveSequences || paused)
     {   // No sequences currently playing/game is paused
         return;
     }
@@ -481,7 +468,7 @@ Con_Printf("REPT: id=%i, %s: %p\n", node->currentSoundID,
 
 void SN_StopAllSequences(void)
 {
-    seqnode_t  *node;
+    seqnode_t*          node;
 
     for(node = SequenceListHead; node; node = node->next)
     {
@@ -498,11 +485,11 @@ int SN_GetSequenceOffset(int sequence, int *sequencePtr)
 /**
  * NOTE: nodeNum zero is the first node
  */
-void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume,
-                       int currentSoundID)
+void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics,
+                       int volume, int currentSoundID)
 {
-    int         i;
-    seqnode_t  *node;
+    int                 i;
+    seqnode_t*          node;
 
     i = 0;
     node = SequenceListHead;

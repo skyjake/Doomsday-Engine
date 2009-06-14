@@ -36,8 +36,6 @@
 #include "def_data.h"
 #include "r_extres.h"
 
-#define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
-
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
@@ -58,6 +56,16 @@ typedef struct detailtex_s {
     lumpnum_t       lump;
     const char*     external;
 } detailtex_t;
+
+typedef struct lightmap_s {
+    gltextureid_t   id;
+    const char*     external;
+} lightmap_t;
+
+typedef struct flaretex_s {
+    gltextureid_t   id;
+    const char*     external;
+} flaretex_t;
 
 typedef struct shinytex_s {
     gltextureid_t   id;
@@ -142,9 +150,9 @@ typedef struct {
 
 // Model skin.
 typedef struct {
-    char            path[256];
-    DGLuint         tex;
-} skintex_t;
+    filename_t      path;
+    gltextureid_t   id;
+} skinname_t;
 
 // Patch flags.
 #define PF_MONOCHROME         0x1
@@ -208,10 +216,11 @@ typedef enum lightingtexid_e {
 } lightingtexid_t;
 
 typedef enum flaretexid_e {
+    FXT_ROUND,
     FXT_FLARE, // (flare)
     FXT_BRFLARE, // (brFlare)
     FXT_BIGFLARE, // (bigFlare)
-    NUM_FLARE_TEXTURES
+    NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
 
 /**
@@ -233,7 +242,6 @@ typedef struct {
 extern nodeindex_t* linelinks;
 extern blockmap_t* BlockMap;
 extern blockmap_t* SSecBlockMap;
-extern byte* rejectMatrix; // For fast sight rejection.
 extern nodepile_t* mobjNodes, *lineNodes;
 
 extern int viewwidth, viewheight;
@@ -250,11 +258,20 @@ extern int numSpriteTextures;
 extern detailtex_t** detailTextures;
 extern int numDetailTextures;
 
+extern lightmap_t** lightMaps;
+extern int numLightMaps;
+
+extern flaretex_t** flareTextures;
+extern int numFlareTextures;
+
 extern shinytex_t** shinyTextures;
 extern int numShinyTextures;
 
 extern masktex_t** maskTextures;
 extern int numMaskTextures;
+
+extern uint numSkinNames;
+extern skinname_t* skinNames;
 
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
@@ -282,6 +299,16 @@ void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 
+colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
+                                      const byte* data, ushort num);
+const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
+colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
+
+DGLuint         R_GetColorPalette(colorpaletteid_t id);
+void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3],
+                                      int idx, boolean correctGamma);
+boolean         R_SetDefaultColorPalette(colorpaletteid_t id);
+
 //boolean         R_UpdateSubSector(struct subsector_t* ssec, boolean forceUpdate);
 boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 boolean         R_UpdateLinedef(struct linedef_s* line, boolean forceUpdate);
@@ -295,29 +322,32 @@ void            R_PrecachePatch(lumpnum_t lump);
 
 doomtexturedef_t* R_GetDoomTextureDef(int num);
 
-int             R_NewSpriteTexture(lumpnum_t lump, material_t** mat);
-
-int             R_GetSkinTexIndex(const char* skin);
-skintex_t*      R_GetSkinTexByIndex(int id);
-int             R_RegisterSkin(char* skin, const char* modelfn, char* fullpath);
-void            R_DeleteSkinTextures(void);
+uint            R_GetSkinNumForName(const char* path);
+const skinname_t* R_GetSkinNameByIndex(uint id);
+uint            R_RegisterSkin(char* fullpath, const char* skin,
+                               const char* modelfn, boolean isShinySkin,
+                               size_t len);
 void            R_DestroySkins(void); // Called at shutdown.
 
 void            R_InitAnimGroup(ded_group_t* def);
 
-void            R_LoadPalette(void);
-byte*           R_GetPalette(void);
-byte*           R_GetPal18to8(void);
-
-detailtex_t*    R_CreateDetailTexture(ded_detailtexture_t* def);
+detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
 detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);
 void            R_DestroyDetailTextures(void); // Called at shutdown.
 
-shinytex_t*     R_CreateShinyTexture(ded_reflection_t* def);
+lightmap_t*     R_CreateLightMap(const ded_lightmap_t* def);
+lightmap_t*     R_GetLightMap(const char* external);
+void            R_DestroyLightMaps(void); // Called at shutdown.
+
+flaretex_t*     R_CreateFlareTexture(const ded_flaremap_t* def);
+flaretex_t*     R_GetFlareTexture(const char* external);
+void            R_DestroyFlareTextures(void); // Called at shutdown.
+
+shinytex_t*     R_CreateShinyTexture(const ded_reflection_t* def);
 shinytex_t*     R_GetShinyTexture(const char* external);
 void            R_DestroyShinyTextures(void); // Called at shutdown.
 
-masktex_t*      R_CreateMaskTexture(ded_reflection_t* def);
+masktex_t*      R_CreateMaskTexture(const ded_reflection_t* def);
 masktex_t*      R_GetMaskTexture(const char* external);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 

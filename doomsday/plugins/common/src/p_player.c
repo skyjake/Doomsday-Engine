@@ -57,7 +57,20 @@
 #define MESSAGETICS             (4 * TICSPERSEC)
 #define CAMERA_FRICTION_THRESHOLD (.4f)
 
+#if __JDOOM64__
+#define NUM_WEAPON_SLOTS        (8)
+#elif __JDOOM__ || __JHERETIC__
+#define NUM_WEAPON_SLOTS        (7)
+#elif __JHEXEN__
+#define NUM_WEAPON_SLOTS        (4)
+#endif
+
 // TYPES -------------------------------------------------------------------
+
+typedef struct weaponslotinfo_s {
+    uint                num;
+    weapontype_t*       types;
+} weaponslotinfo_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -71,7 +84,149 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static weaponslotinfo_t weaponSlots[NUM_WEAPON_SLOTS];
+
 // CODE --------------------------------------------------------------------
+
+static byte slotForWeaponType(weapontype_t type, uint* position)
+{
+    byte                i = 0, found = 0;
+
+    do
+    {
+        weaponslotinfo_t*   slot = &weaponSlots[i];
+        uint                j = 0;
+
+        while(!found && j < slot->num)
+        {
+            if(slot->types[j] == type)
+            {
+                found = i + 1;
+                if(position)
+                    *position = j;
+            }
+            else
+                j++;
+        }
+
+    } while(!found && ++i < NUM_WEAPON_SLOTS);
+
+    return found;
+}
+
+static void unlinkWeaponInSlot(byte slotidx, weapontype_t type)
+{
+    uint                i;
+    weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+
+    for(i = 0; i < slot->num; ++i)
+        if(slot->types[i] == type)
+            break;
+
+    if(i == slot->num)
+        return; // Not linked to this slot.
+
+    memmove(&slot->types[i], &slot->types[i+1], sizeof(weapontype_t) *
+            (slot->num - 1 - i));
+    slot->types = realloc(slot->types, sizeof(weapontype_t) * --slot->num);
+}
+
+static void linkWeaponInSlot(byte slotidx, weapontype_t type)
+{
+    weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+
+    slot->types = realloc(slot->types, sizeof(weapontype_t) * ++slot->num);
+    if(slot->num > 1)
+        memmove(&slot->types[1], &slot->types[0],
+                sizeof(weapontype_t) * (slot->num - 1));
+
+    slot->types[0] = type;
+}
+
+void P_InitWeaponSlots(void)
+{
+    memset(weaponSlots, 0, sizeof(weaponSlots));
+}
+
+void P_FreeWeaponSlots(void)
+{
+    byte                i;
+
+    for(i = 0; i < NUM_WEAPON_SLOTS; ++i)
+    {
+        weaponslotinfo_t*   slot = &weaponSlots[i];
+
+        if(slot->types)
+            free(slot->types);
+        slot->types = NULL;
+        slot->num = 0;
+    }
+}
+
+boolean P_SetWeaponSlot(weapontype_t type, byte slot)
+{
+    byte                currentSlot;
+
+    if(slot > NUM_WEAPON_SLOTS)
+        return false;
+
+    currentSlot = slotForWeaponType(type, NULL);
+
+    // First, remove the weapon (if found).
+    if(currentSlot)
+        unlinkWeaponInSlot(currentSlot, type);
+
+    if(slot != 0)
+    {   // Add this weapon to the specified slot (head).
+        linkWeaponInSlot(slot, type);
+    }
+
+    return true;
+}
+
+byte P_GetWeaponSlot(weapontype_t type)
+{
+    if(type >= WT_FIRST && type < NUM_WEAPON_TYPES)
+        return slotForWeaponType(type, NULL);
+
+    return 0;
+}
+
+weapontype_t P_WeaponSlotCycle(weapontype_t type, boolean prev)
+{
+    if(type >= WT_FIRST && type < NUM_WEAPON_TYPES)
+    {
+        byte                slotidx;
+        uint                position;
+
+        if((slotidx = slotForWeaponType(type, &position)))
+        {
+            weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+
+            if(slot->num > 1)
+            {
+                if(prev)
+                {
+                    if(position == 0)
+                        position = slot->num - 1;
+                    else
+                        position--;
+                }
+                else
+                {
+                    if(position == slot->num - 1)
+                        position = 0;
+                    else
+                        position++;
+                }
+
+                return slot->types[position];
+            }
+        }
+    }
+
+    return type;
+}
 
 /**
  * Initialize player class info.
@@ -122,7 +277,7 @@ int P_GetPlayerCheats(player_t *player)
     {
         if(player->plr->flags & DDPF_CAMERA)
             return (player->cheats |
-                    (CF_GODMODE | GAMERULES.cameraNoClip? CF_NOCLIP : 0));
+                    (CF_GODMODE | cfg.cameraNoClip? CF_NOCLIP : 0));
         else
             return player->cheats;
     }
@@ -139,10 +294,10 @@ void P_ShotAmmo(player_t *player)
     ammotype_t          i;
     int                 fireMode;
     weaponinfo_t*       wInfo =
-        &weaponInfo[player->readyWeapon][player->pClass];
+        &weaponInfo[player->readyWeapon][player->class];
 
 #if __JHERETIC__
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
         fireMode = 0; // In deathmatch always use mode zero.
     else
         fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -197,7 +352,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     // Assume weapon power level zero.
     lvl = 0;
 
-    pclass = player->pClass;
+    pclass = player->class;
 
 #if __JHERETIC__
     if(player->powers[PT_WEAPONLEVEL2])
@@ -213,11 +368,11 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         found = false;
         for(i = 0; i < NUM_WEAPON_TYPES && !found; ++i)
         {
-            candidate = PLRPROFILE.inventory.weaponOrder[i];
+            candidate = cfg.weaponOrder[i];
             winf = &weaponInfo[candidate][pclass];
 
             // Is candidate available in this game mode?
-            if(!(winf->mode[lvl].gameModeBits & gs.gameModeBits))
+            if(!(winf->mode[lvl].gameModeBits & gameModeBits))
                 continue;
 
             // Does the player actually own this candidate?
@@ -233,7 +388,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue; // Weapon does not take this type of ammo.
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
-                if(GAMERULES.deathmatch &&
+                if(deathmatch &&
                    player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
                 {   // Not enough ammo of this type. Candidate is NOT good.
                     good = false;
@@ -262,25 +417,25 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         }
         // Is the player currently firing?
         else if(!((player->brain.attack) &&
-                  PLRPROFILE.inventory.noWeaponAutoSwitchIfFiring))
+                  cfg.noWeaponAutoSwitchIfFiring))
         {
             // Should we change weapon automatically?
-            if(PLRPROFILE.inventory.weaponAutoSwitch == 2)
+            if(cfg.weaponAutoSwitch == 2)
             {   // Always change weapon mode
                 returnval = weapon;
             }
-            else if(PLRPROFILE.inventory.weaponAutoSwitch == 1)
+            else if(cfg.weaponAutoSwitch == 1)
             {   // Change if better mode
 
                 // Iterate the weapon order array and see if a weapon change
                 // should be made. Preferences are user selectable.
                 for(i = 0; i < NUM_WEAPON_TYPES; ++i)
                 {
-                    candidate = PLRPROFILE.inventory.weaponOrder[i];
+                    candidate = cfg.weaponOrder[i];
                     winf = &weaponInfo[candidate][pclass];
 
                     // Is candidate available in this game mode?
-                    if(!(winf->mode[lvl].gameModeBits & gs.gameModeBits))
+                    if(!(winf->mode[lvl].gameModeBits & gameModeBits))
                         continue;
 
                     if(weapon == candidate)
@@ -297,7 +452,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
     else if(ammo != AT_NOAMMO) // Player is about to be given some ammo.
     {
-        if((!(player->ammo[ammo].owned > 0) && PLRPROFILE.inventory.ammoAutoSwitch != 0) ||
+        if((!(player->ammo[ammo].owned > 0) && cfg.ammoAutoSwitch != 0) ||
            force)
         {   // We were down to zero, so select a new weapon.
 
@@ -306,11 +461,11 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             // Preferences are user selectable.
             for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                candidate = PLRPROFILE.inventory.weaponOrder[i];
+                candidate = cfg.weaponOrder[i];
                 winf = &weaponInfo[candidate][pclass];
 
                 // Is candidate available in this game mode?
-                if(!(winf->mode[lvl].gameModeBits & gs.gameModeBits))
+                if(!(winf->mode[lvl].gameModeBits & gameModeBits))
                     continue;
 
                 // Does the player actually own this candidate?
@@ -331,12 +486,12 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                  * been given. Somewhat complex logic to decipher first...
                  */
 
-                if(PLRPROFILE.inventory.ammoAutoSwitch == 2)
+                if(cfg.ammoAutoSwitch == 2)
                 {   // Always change weapon mode.
                     returnval = candidate;
                     break;
                 }
-                else if(PLRPROFILE.inventory.ammoAutoSwitch == 1 &&
+                else if(cfg.ammoAutoSwitch == 1 &&
                         player->readyWeapon == candidate)
                 {   // readyweapon has a higher priority so don't change.
                     break;
@@ -372,13 +527,13 @@ boolean P_CheckAmmo(player_t* plr)
     ammotype_t          i;
     weaponinfo_t*       wInfo;
 
-    wInfo = &weaponInfo[plr->readyWeapon][plr->pClass];
+    wInfo = &weaponInfo[plr->readyWeapon][plr->class];
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
     fireMode = 0;
 #endif
 #if __JHERETIC__
     // If deathmatch always use firemode two ammo requirements.
-    if(plr->powers[PT_WEAPONLEVEL2] && !GAMERULES.deathmatch)
+    if(plr->powers[PT_WEAPONLEVEL2] && !deathmatch)
         fireMode = 1;
     else
         fireMode = 0;
@@ -388,7 +543,7 @@ boolean P_CheckAmmo(player_t* plr)
     //// \kludge Work around the multiple firing modes problems.
     //// We need to split the weapon firing routines and implement them as
     //// new fire modes.
-    if(plr->pClass == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
         return true;
     // < KLUDGE
 #endif
@@ -415,7 +570,7 @@ boolean P_CheckAmmo(player_t* plr)
 
     // Now set appropriate weapon overlay.
     if(plr->pendingWeapon != WT_NOCHANGE)
-        P_SetPsprite(plr, PS_WEAPON, wInfo->mode[fireMode].downState);
+        P_SetPsprite(plr, ps_weapon, wInfo->mode[fireMode].states[WSN_DOWN]);
 
     return false;
 }
@@ -425,11 +580,11 @@ boolean P_CheckAmmo(player_t* plr)
  * weapon if no other valid choices. Preferences are NOT user selectable.
  *
  * @param player        The player to work with.
- * @param next          Search direction @c true = next, @c false = previous.
+ * @param prev          Search direction @c true = previous, @c false = next.
  */
-weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
+weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
 {
-    weapontype_t       *list, w = 0;
+    weapontype_t*       list, w = 0;
     int                 lvl, i;
 #if __JDOOM__
     static weapontype_t wp_list[] = {
@@ -461,10 +616,10 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 #endif
 
     // Are we using weapon order preferences for next/previous?
-    if(PLRPROFILE.inventory.weaponNextMode)
+    if(cfg.weaponNextMode)
     {
-        list = (weapontype_t*) PLRPROFILE.inventory.weaponOrder;
-        next = !next; // Invert order.
+        list = (weapontype_t*) cfg.weaponOrder;
+        prev = !prev; // Invert order.
     }
     else
         list = wp_list;
@@ -481,10 +636,10 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
     for(;;)
     {
         // Move the iterator.
-        if(next)
-            i++;
-        else
+        if(prev)
             i--;
+        else
+            i++;
 
         if(i < 0)
             i = NUM_WEAPON_TYPES - 1;
@@ -498,8 +653,8 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
             break;
 
         // Available in this game mode? And a valid weapon?
-        if((weaponInfo[w][player->pClass].mode[lvl].
-            gameModeBits & gs.gameModeBits) && player->weapons[w].owned)
+        if((weaponInfo[w][player->class].mode[lvl].
+            gameModeBits & gameModeBits) && player->weapons[w].owned)
             break;
     }
 
@@ -522,8 +677,8 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
     if(!PCLASS_INFO(newClass)->userSelectable)
         return;
 
-    player->pClass = newClass;
-    gs.players[player - players].pClass = newClass;
+    player->class = newClass;
+    cfg.playerClass[player - players] = newClass;
 
     // Take away armor.
     for(i = 0; i < NUMARMOR; ++i)
@@ -556,18 +711,20 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetMessage(player_t* pl, char* msg, boolean noHide)
+void P_SetMessage(player_t* pl, char *msg, boolean noHide)
 {
-    HUMsg_PlayerMessage(pl - players, msg, MESSAGETICS, noHide, false);
+    byte                flags = (noHide? LMF_NOHIDE : 0);
 
-    if(pl == &players[CONSOLEPLAYER] && gs.cfg.echoMsg)
+    Hu_LogPost(pl - players, flags, msg, MESSAGETICS);
+
+    if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
     NetSv_SendMessage(pl - players, msg);
 }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 /**
  * Send a yellow message to the given player and maybe echos it to the console.
  *
@@ -576,11 +733,13 @@ void P_SetMessage(player_t* pl, char* msg, boolean noHide)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetYellowMessage(player_t* pl, char* msg, boolean noHide)
+void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
 {
-    HUMsg_PlayerMessage(pl - players, msg, 5 * MESSAGETICS, noHide, true);
+    byte                flags = LMF_YELLOW | (noHide? LMF_NOHIDE : 0);
 
-    if(pl == &players[CONSOLEPLAYER] && gs.cfg.echoMsg)
+    Hu_LogPost(pl - players, flags, msg, 5 * MESSAGETICS);
+
+    if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
@@ -690,7 +849,7 @@ void P_PlayerThinkCamera(player_t *player)
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
     {
-        if(player->pState == PST_LIVE)
+        if(player->playerState == PST_LIVE)
             player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
         return;
     }
@@ -817,6 +976,7 @@ int P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points)
             delta = points;
     }
 
+    *current += delta;
     if(*current != oldPoints)
         plr->update |= PSF_ARMOR_POINTS;
 
@@ -914,7 +1074,7 @@ DEFCC(CCmdMakeLocal)
         return false;
     }
 
-    plr->pState = PST_REBORN;
+    plr->playerState = PST_REBORN;
     plr->plr->inGame = true;
     sprintf(buf, "conlocp %i", p);
     DD_Execute(false, buf);
@@ -965,6 +1125,7 @@ DEFCC(CCmdSpawnMobj)
     float               pos[3];
     mobj_t*             mo;
     angle_t             angle;
+    int                 spawnFlags;
 
     if(argc != 5 && argc != 6)
     {
@@ -995,10 +1156,12 @@ DEFCC(CCmdSpawnMobj)
     // The coordinates.
     pos[VX] = strtod(argv[2], 0);
     pos[VY] = strtod(argv[3], 0);
+    pos[VZ] = 0;
+
     if(!stricmp(argv[4], "floor"))
-        pos[VZ] = ONFLOORZ;
+        spawnFlags |= MTF_Z_FLOOR;
     else if(!stricmp(argv[4], "ceil"))
-        pos[VZ] = ONCEILINGZ;
+        spawnFlags |= MTF_Z_CEIL;
     else
     {
         pos[VZ] = strtod(argv[4], 0) +
@@ -1011,7 +1174,7 @@ DEFCC(CCmdSpawnMobj)
     else
         angle = 0;
 
-    mo = P_SpawnMobj3fv(type, pos, angle);
+    mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags);
     if(mo)
     {
 

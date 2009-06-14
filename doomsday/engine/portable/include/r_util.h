@@ -42,7 +42,6 @@ boolean         R_IsPointInSector(const float x, const float y,
 boolean         R_IsPointInSector2(const float x, const float y,
                                    const sector_t* sector);
 void            R_ScaleAmbientRGB(float* out, const float* in, float mul);
-void            R_PalIdxToRGB(float* rgba, int idx, boolean correctGamma);
 void            R_HSVToRGB(float* rgb, float h, float s, float v);
 sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
 

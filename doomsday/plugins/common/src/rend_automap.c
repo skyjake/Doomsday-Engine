@@ -52,6 +52,9 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "r_common.h"
+#if __JDOOM64__
+#  include "p_inventory.h"
+#endif
 
 #include "rend_automap.h"
 
@@ -214,7 +217,19 @@ void Rend_AutomapUnloadData(void)
     // Destroy all display lists.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        deleteMapLists(&rautomaps[i]);
+        rautomap_data_t*    rmap = &rautomaps[i];
+
+        deleteMapLists(rmap);
+        rmap->constructMap = true;
+    }
+
+    for(i = 0; i < NUM_VECTOR_GRAPHS; ++i)
+    {
+        vectorgrap_t*       vgraph = AM_GetVectorGraph(i);
+
+        if(vgraph->dlist)
+            DGL_DeleteLists(vgraph->dlist, 1);
+        vgraph->dlist = 0;
     }
 
     if(amMaskTexture)
@@ -834,7 +849,7 @@ int renderPolyObjSeg(void* obj, void* context)
     if((info = AM_GetMapObjectInfo(AM_MapForPlayer(p->plr - players), amo)))
     {
         renderLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
-                      info->rgba[3] * PLRPROFILE.automap.lineAlpha * Automap_GetOpacity(p->map),
+                      info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(p->map),
                       info->blendMode,
                       (p->map->flags & AMF_REND_LINE_NORMALS)? true : false);
     }
@@ -847,7 +862,7 @@ int renderPolyObjSeg(void* obj, void* context)
 boolean drawSegsOfPolyobject(polyobj_t* po, void* context)
 {
     seg_t**             segPtr;
-    int                 result;
+    int                 result = 1;
 
     segPtr = po->segs;
     while(*segPtr && (result = renderPolyObjSeg(*segPtr, context)) != 0)
@@ -1006,13 +1021,13 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg,
             continue;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        if(GAMERULES.deathmatch && p != &players[player])
+        if(deathmatch && p != &players[player])
             continue;
 #endif
 
-        R_PalIdxToRGB(rgb, (!IS_NETGAME? WHITE :
-            their_colors[gs.players[i].color]), false);
-        alpha = PLRPROFILE.automap.lineAlpha;
+        R_GetColorPaletteRGBf(0, rgb, (!IS_NETGAME? WHITE :
+            their_colors[cfg.playerColor[i]]), false);
+        alpha = cfg.automapLineAlpha;
 #if !__JHEXEN__
         if(p->powers[PT_INVISIBILITY])
             alpha *= .125f;
@@ -1080,7 +1095,7 @@ static boolean renderThing(mobj_t* mo, void* context)
         {   // This mobj is indeed a key.
             float               rgb[4];
 
-            R_PalIdxToRGB(rgb, keyColor, false);
+            R_GetColorPaletteRGBf(0, rgb, keyColor, false);
 
             /* $unifiedangles */
             renderLineCharacter(AM_GetVectorGraph(VG_KEYSQUARE),
@@ -1243,23 +1258,26 @@ static void setupGLStateForMap(const automap_t* map,
     }
 
 #if __JDOOM64__
-    // jd64 > Laser artifacts
+    // jd64 > Demon keys
     // If drawn in HUD we don't need them visible in the map too.
-    if(!PLRPROFILE.hud.shown[HUD_POWER])
+    if(!cfg.hudShown[HUD_INVENTORY])
     {
-        int                 i, num;
+        int                 i, num = 0;
         player_t*           plr = &players[player];
+        inventoryitemtype_t items[3] = {
+            IIT_DEMONKEY1,
+            IIT_DEMONKEY2,
+            IIT_DEMONKEY3
+        };
 
-        num = 0;
-        for(i = 0; i < NUM_ARTIFACT_TYPES; ++i)
-            if(plr->artifacts[i])
-                num++;
+        for(i = 0; i < 3; ++i)
+            num += P_InventoryCount(player, items[i])? 1 : 0;
 
         if(num > 0)
         {
             float               x, y, w, h, spacing, scale, iconAlpha;
             spriteinfo_t        sprInfo;
-            int                 artifactSprites[NUM_ARTIFACT_TYPES] = {
+            int                 invItemSprites[NUM_INVENTORYITEM_TYPES] = {
                 SPR_ART1, SPR_ART2, SPR_ART3
             };
 
@@ -1268,11 +1286,11 @@ static void setupGLStateForMap(const automap_t* map,
             spacing = wh / num;
             y = 0;
 
-            for(i = 0; i < NUM_ARTIFACT_TYPES; ++i)
+            for(i = 0; i < 3; ++i)
             {
-                if(plr->artifacts[i])
+                if(P_InventoryCount(player, items[i]))
                 {
-                    R_GetSpriteInfo(artifactSprites[i], 0, &sprInfo);
+                    R_GetSpriteInfo(invItemSprites[i], 0, &sprInfo);
                     DGL_SetPSprite(sprInfo.material);
 
                     scale = wh / (sprInfo.height * num);
@@ -1371,13 +1389,13 @@ static void renderMapName(const automap_t* map)
 
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
-        mapNum = gs.map.id -1;
+        mapNum = gameMap -1;
         patch = &mapNamePatches[mapNum];
 #elif __JDOOM__
-        if(gs.gameMode == commercial)
-            mapNum = gs.map.id -1;
+        if(gameMode == commercial)
+            mapNum = gameMap -1;
         else
-            mapNum = ((gs.episode -1) * 9) + gs.map.id -1;
+            mapNum = ((gameEpisode -1) * 9) + gameMap -1;
 
         patch = &mapNamePatches[mapNum];
 #endif
@@ -1386,22 +1404,22 @@ static void renderMapName(const automap_t* map)
 
         x = SCREENXTOFIXX(wx + (ww * .5f));
         y = SCREENYTOFIXY(wy + wh);
-        if(PLRPROFILE.screen.setBlocks < 13)
+        if(cfg.setBlocks < 13)
         {
 #if !__JDOOM64__
-            if(PLRPROFILE.screen.setBlocks <= 11 || PLRPROFILE.automap.hudDisplay == 2)
+            if(cfg.setBlocks <= 11 || cfg.automapHudDisplay == 2)
             {   // We may need to adjust for the height of the statusbar
                 otherY = ST_Y;
-                otherY += ST_HEIGHT * (1 - (PLRPROFILE.statusbar.scale / 20.0f));
+                otherY += ST_HEIGHT * (1 - (cfg.statusbarScale / 20.0f));
 
                 if(y > otherY)
                     y = otherY;
             }
-            else if(PLRPROFILE.screen.setBlocks == 12)
+            else if(cfg.setBlocks == 12)
 #endif
             {   // We may need to adjust for the height of the HUD icons.
                 otherY = y;
-                otherY += -(y * (PLRPROFILE.hud.scale / 10.0f));
+                otherY += -(y * (cfg.hudScale / 10.0f));
 
                 if(y > otherY)
                     y = otherY;
@@ -1548,7 +1566,7 @@ void Rend_Automap(int player, const automap_t* map)
 
             // Setup the global list state.
             DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2],
-                        info->rgba[3] * PLRPROFILE.automap.lineAlpha * Automap_GetOpacity(map));
+                        info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(map));
             DGL_BlendMode(info->blendMode);
 
             // Draw.
@@ -1576,10 +1594,10 @@ void Rend_Automap(int player, const automap_t* map)
 
         params.flags = Automap_GetFlags(map);
         params.vgraph = AM_GetVectorGraph(AM_GetVectorGraphic(mcfg, AMO_THING));
-        AM_GetMapColor(params.rgb, PLRPROFILE.automap.mobj, THINGCOLORS,
+        AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS,
                        !W_IsFromIWAD(W_GetNumForName("PLAYPAL")));
         params.alpha = MINMAX_OF(0.f,
-            PLRPROFILE.automap.lineAlpha * Automap_GetOpacity(map), 1.f);
+            cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
 
         Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                               &aabb[BOXBOTTOM], &aabb[BOXTOP]);

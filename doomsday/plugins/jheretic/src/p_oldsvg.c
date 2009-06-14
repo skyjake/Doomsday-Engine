@@ -44,6 +44,8 @@
 #include "p_plat.h"
 #include "p_floor.h"
 #include "am_map.h"
+#include "p_inventory.h"
+#include "hu_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -52,7 +54,7 @@
 #define VERSIONSIZE             16
 #define SAVE_GAME_TERMINATOR    0x1d
 
-#define SAVESTRINGSIZE          24
+#define V13_SAVESTRINGSIZE      24
 
 #define FF_FRAMEMASK            0x7fff
 
@@ -101,12 +103,12 @@ static void SV_v13_Read(void* data, int len)
 
 static void SV_v13_ReadPlayer(player_t* pl)
 {
-    int             i;
+    int             i, plrnum = pl - players;
     byte            temp[12];
     ddplayer_t*     ddpl = pl->plr;
 
     SV_v13_ReadLong(); // mo
-    pl->pState = SV_v13_ReadLong();
+    pl->playerState = SV_v13_ReadLong();
     SV_v13_Read(temp, 10); // ticcmd_t
     ddpl->viewZ = FIX2FLT(SV_v13_ReadLong());
     ddpl->viewHeight = FIX2FLT(SV_v13_ReadLong());
@@ -119,16 +121,20 @@ static void SV_v13_ReadPlayer(player_t* pl)
     pl->armorPoints = SV_v13_ReadLong();
     pl->armorType = SV_v13_ReadLong();
 
-    memset(pl->inventory, 0, sizeof(pl->inventory));
+    P_InventoryEmpty(plrnum);
     for(i = 0; i < 14; ++i)
     {
-        pl->inventory[i].type = SV_v13_ReadLong();
-        pl->inventory[i].count = SV_v13_ReadLong();
+        inventoryitemtype_t type = SV_v13_ReadLong();
+        int             j, count = SV_v13_ReadLong();
+
+        for(j = 0; j < count; ++j)
+            P_InventoryGive(plrnum, type, true);
     }
 
-    pl->readyArtifact = SV_v13_ReadLong();
-    SV_v13_ReadLong(); // artifactCount
-    pl->inventorySlotNum = SV_v13_ReadLong();
+    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_v13_ReadLong());
+    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
+    SV_v13_ReadLong(); // current inventory item count?
+    /*pl->inventorySlotNum =*/ SV_v13_ReadLong();
 
     memset(pl->powers, 0, sizeof(pl->powers));
     pl->powers[PT_INVULNERABILITY] = (SV_v13_ReadLong()? true : false);
@@ -219,7 +225,7 @@ static void SV_v13_ReadMobj(void)
 {
     angle_t         angle;
     spritenum_t     sprite;
-    int             frame, valid, type, ddflags;
+    int             frame, valid, type, ddflags = 0;
     float           pos[3], mom[3], floorz, ceilingz, radius, height;
     mobj_t         *mo;
     mobjinfo_t*     info;
@@ -328,10 +334,14 @@ static void SV_v13_ReadMobj(void)
 
     mo->spawnSpot.pos[VX] = (float) SV_v13_ReadLong();
     mo->spawnSpot.pos[VY] = (float) SV_v13_ReadLong();
-    mo->spawnSpot.pos[VZ] = ONFLOORZ;
+    mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
     mo->spawnSpot.type = (int) SV_v13_ReadLong();
+
     mo->spawnSpot.flags = (int) SV_v13_ReadLong();
+    mo->spawnSpot.flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    // Spawn on the floor by default unless the mobjtype flags override.
+    mo->spawnSpot.flags |= MTF_Z_FLOOR;
 
     SV_UpdateReadMobjFlags(mo, 0);
 
@@ -376,14 +386,13 @@ void P_v13_UnArchivePlayers(void)
 
 void P_v13_UnArchiveWorld(void)
 {
-    uint        i, j;
-    fixed_t     offx, offy;
-    short      *get;
-    int         firstflat = W_CheckNumForName("F_START") + 1;
-    sector_t   *sec;
-    xsector_t  *xsec;
-    linedef_t     *line;
-    xline_t    *xline;
+    uint                i, j;
+    fixed_t             offx, offy;
+    short*              get;
+    sector_t*           sec;
+    xsector_t*          xsec;
+    linedef_t*          line;
+    xline_t*            xline;
 
     get = (short *) save_p;
 
@@ -395,11 +404,11 @@ void P_v13_UnArchiveWorld(void)
 
         P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetIntp(sec, DMU_FLOOR_MATERIAL, *get++ + firstflat);
-        P_SetIntp(sec, DMU_CEILING_MATERIAL, *get++ + firstflat);
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL, P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
-        xsec->special = *get++;  // needed?
-        /*xsec->tag =*/ *get++;      // needed?
+        xsec->special = *get++; // needed?
+        /*xsec->tag =*/ *get++; // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }
@@ -466,8 +475,8 @@ typedef enum
     byte                tclass;
 
     // Remove all the current thinkers.
-    P_IterateThinkers(NULL, removeThinker, NULL);
-    P_InitThinkers();
+    DD_IterateThinkers(NULL, removeThinker, NULL);
+    DD_InitThinkers();
 
     // read in saved thinkers
     for(;;)
@@ -526,7 +535,7 @@ typedef struct {
 
     ceiling->thinker.function = T_MoveCeiling;
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&ceiling->thinker, true);
+        DD_ThinkerSetStasis(&ceiling->thinker, true);
 
     P_ToXSector(ceiling->sector)->specialData = T_MoveCeiling;
     return true; // Add this thinker.
@@ -651,7 +660,7 @@ typedef struct {
 
     plat->thinker.function = T_PlatRaise;
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&plat->thinker, true);
+        DD_ThinkerSetStasis(&plat->thinker, true);
 
     P_ToXSector(plat->sector)->specialData = T_PlatRaise;
     return true; // Add this thinker.
@@ -796,7 +805,7 @@ enum {
 
             SV_ReadCeiling(ceiling);
 
-            P_ThinkerAdd(&ceiling->thinker);
+            DD_ThinkerAdd(&ceiling->thinker);
             break;
 
         case tc_door:
@@ -804,7 +813,7 @@ enum {
 
             SV_ReadDoor(door);
 
-            P_ThinkerAdd(&door->thinker);
+            DD_ThinkerAdd(&door->thinker);
             break;
 
         case tc_floor:
@@ -812,7 +821,7 @@ enum {
 
             SV_ReadFloor(floor);
 
-            P_ThinkerAdd(&floor->thinker);
+            DD_ThinkerAdd(&floor->thinker);
             break;
 
         case tc_plat:
@@ -820,7 +829,7 @@ enum {
 
             SV_ReadPlat(plat);
 
-            P_ThinkerAdd(&plat->thinker);
+            DD_ThinkerAdd(&plat->thinker);
             break;
 
         case tc_flash:
@@ -828,7 +837,7 @@ enum {
 
             SV_ReadFlash(flash);
 
-            P_ThinkerAdd(&flash->thinker);
+            DD_ThinkerAdd(&flash->thinker);
             break;
 
         case tc_strobe:
@@ -836,7 +845,7 @@ enum {
 
             SV_ReadStrobe(strobe);
 
-            P_ThinkerAdd(&strobe->thinker);
+            DD_ThinkerAdd(&strobe->thinker);
             break;
 
         case tc_glow:
@@ -844,7 +853,7 @@ enum {
 
             SV_ReadGlow(glow);
 
-            P_ThinkerAdd(&glow->thinker);
+            DD_ThinkerAdd(&glow->thinker);
             break;
 
         default:
@@ -854,14 +863,14 @@ enum {
     }
 }
 
-void SV_v13_LoadGame(char *savename)
+void SV_v13_LoadGame(const char* savename)
 {
     size_t              length;
     int                 i, a, b, c;
     char                vcheck[VERSIONSIZE];
 
     length = M_ReadFile(savename, &savebuffer);
-    save_p = savebuffer + SAVESTRINGSIZE;
+    save_p = savebuffer + V13_SAVESTRINGSIZE;
 
     // Skip the description field
     memset(vcheck, 0, sizeof(vcheck));
@@ -871,9 +880,9 @@ void SV_v13_LoadGame(char *savename)
         Con_Message("Savegame ID '%s': incompatible?\n", save_p);
     }
     save_p += VERSIONSIZE;
-    gs.skill = *save_p++;
-    gs.episode = *save_p++;
-    gs.map.id = *save_p++;
+    gameSkill = *save_p++;
+    gameEpisode = *save_p++;
+    gameMap = *save_p++;
 
     for(i = 0; i < 4; ++i)
     {
@@ -881,7 +890,7 @@ void SV_v13_LoadGame(char *savename)
     }
 
     // Load a base map.
-    G_InitNew(gs.skill, gs.episode, gs.map.id);
+    G_InitNew(gameSkill, gameEpisode, gameMap);
 
     // Create map time.
     a = *save_p++;

@@ -66,7 +66,7 @@ void            Def_PostInit(void);
 // Destroy databases.
 void            Def_Destroy(void);
 
-void            Def_GetAutoPath(char* path);
+void            Def_GetAutoPath(char* path, size_t len);
 
 // Reads the specified definition file, and creates the sprite name,
 // state, mobjinfo, sound, music and text databases accordingly.
@@ -90,11 +90,9 @@ ded_decor_t*    Def_GetDecoration(material_t* mat, boolean hasExt);
 ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt);
 ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt);
 ded_ptcgen_t*   Def_GetGenerator(material_t* mat, boolean hasExt);
+ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
 int             Def_Get(int type, const char* id, void* out);
 boolean         Def_SameStateSequence(state_t* snew, state_t* sold);
-void            Def_LightMapLoaded(const char* id, uint texture);
-void            Def_FlareMapLoaded(const char* id, uint texture,
-                                   boolean disabled, boolean custom);
 
 D_CMD(ListMobjs);
 #endif

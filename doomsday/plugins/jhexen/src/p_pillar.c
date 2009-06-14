@@ -69,7 +69,7 @@ void T_BuildPillar(pillar_t *pillar)
         P_ToXSector(pillar->sector)->specialData = NULL;
         SN_StopSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN));
         P_TagFinished(P_ToXSector(pillar->sector)->tag);
-        P_ThinkerRemove(&pillar->thinker);
+        DD_ThinkerRemove(&pillar->thinker);
     }
 }
 
@@ -109,10 +109,11 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
                 P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2];
         }
 
-        pillar = Z_Calloc(sizeof(*pillar), PU_MAPSPEC, 0);
-        P_ToXSector(sec)->specialData = pillar;
-        P_ThinkerAdd(&pillar->thinker);
+        pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         pillar->thinker.function = T_BuildPillar;
+        DD_ThinkerAdd(&pillar->thinker);
+
+        P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;
 
         if(!args[2])
@@ -169,10 +170,12 @@ int EV_OpenPillar(linedef_t *line, byte *args)
             continue; // Pillar isn't closed.
 
         rtn = 1;
-        pillar = Z_Calloc(sizeof(*pillar), PU_MAPSPEC, 0);
-        P_ToXSector(sec)->specialData = pillar;
-        P_ThinkerAdd(&pillar->thinker);
+
+        pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
         pillar->thinker.function = T_BuildPillar;
+        DD_ThinkerAdd(&pillar->thinker);
+
+        P_ToXSector(sec)->specialData = pillar;
         pillar->sector = sec;
         if(!args[2])
         {

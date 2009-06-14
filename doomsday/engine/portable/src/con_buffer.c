@@ -45,8 +45,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct cbnode_s {
-    cbline_t *data;
-    struct cbnode_s *next, *prev;
+    cbline_t*           data;
+    struct cbnode_s*    next, *prev;
 } cbnode_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -55,9 +55,9 @@ typedef struct cbnode_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void insertNodeAtEnd(cbuffer_t *buf, cbnode_t *newnode);
-static void removeNode(cbuffer_t *buf, cbnode_t *node);
-static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node);
+static void insertNodeAtEnd(cbuffer_t* buf, cbnode_t* newnode);
+static void removeNode(cbuffer_t* buf, cbnode_t* node);
+static void moveNodeForReuse(cbuffer_t* buf, cbnode_t* node);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -70,9 +70,9 @@ static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node);
 /**
  * NOTE: Also destroys the data object.
  */
-static void destroyNode(cbnode_t *node)
+static void destroyNode(cbnode_t* node)
 {
-    cbline_t   *line = node->data;
+    cbline_t*               line = node->data;
 
     if(line->text)
         M_Free(line->text);
@@ -80,7 +80,7 @@ static void destroyNode(cbnode_t *node)
     M_Free(node);
 }
 
-static void insertNodeAfter(cbuffer_t *buf, cbnode_t *node, cbnode_t *newnode)
+static void insertNodeAfter(cbuffer_t* buf, cbnode_t* node, cbnode_t* newnode)
 {
     newnode->prev = node;
     newnode->next = node->next;
@@ -92,7 +92,7 @@ static void insertNodeAfter(cbuffer_t *buf, cbnode_t *node, cbnode_t *newnode)
     node->next = newnode;
 }
 
-static void insertNodeBefore(cbuffer_t *buf, cbnode_t *node, cbnode_t *newnode)
+static void insertNodeBefore(cbuffer_t* buf, cbnode_t* node, cbnode_t* newnode)
 {
     newnode->prev = node->prev;
     newnode->next = node;
@@ -104,7 +104,7 @@ static void insertNodeBefore(cbuffer_t *buf, cbnode_t *node, cbnode_t *newnode)
     node->prev = newnode;
 }
 
-static void insertNodeAtStart(cbuffer_t *buf, cbnode_t *newnode)
+static void insertNodeAtStart(cbuffer_t* buf, cbnode_t* newnode)
 {
     if(buf->headptr == NULL)
     {
@@ -117,7 +117,7 @@ static void insertNodeAtStart(cbuffer_t *buf, cbnode_t *newnode)
         insertNodeBefore(buf, buf->headptr, newnode);
 }
 
-static void insertNodeAtEnd(cbuffer_t *buf, cbnode_t *newnode)
+static void insertNodeAtEnd(cbuffer_t* buf, cbnode_t* newnode)
 {
     if(buf->tailptr == NULL)
         insertNodeAtStart(buf, newnode);
@@ -125,9 +125,9 @@ static void insertNodeAtEnd(cbuffer_t *buf, cbnode_t *newnode)
         insertNodeAfter(buf, buf->tailptr, newnode);
 }
 
-static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node)
+static void moveNodeForReuse(cbuffer_t* buf, cbnode_t* node)
 {
-    cbline_t   *line;
+    cbline_t*               line;
 
     if(buf->unused != NULL)
         node->next = buf->unused;
@@ -140,15 +140,10 @@ static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node)
     line->flags = 0;
 
     if(line->text)
-    {
-        size_t      len = strlen(line->text);
-
-        if(len > 0)
-            memset(line->text, 0, len);
-    }
+        memset(line->text, 0, line->len);
 }
 
-static void removeNode(cbuffer_t *buf, cbnode_t *node)
+static void removeNode(cbuffer_t* buf, cbnode_t* node)
 {
    if(node->prev == NULL)
        buf->headptr = node->next;
@@ -173,17 +168,17 @@ static void removeNode(cbuffer_t *buf, cbnode_t *node)
  *
  * @return                  Ptr to the newly created console buffer.
  */
-cbuffer_t *Con_NewBuffer(uint maxNumLines, uint maxLineLength, int flags)
+cbuffer_t* Con_NewBuffer(uint maxNumLines, uint maxLineLength, int flags)
 {
-    char        name[32];
-    cbuffer_t  *buf;
+    char                    name[32+1];
+    cbuffer_t*              buf;
 
     if(maxLineLength < 1)
         Con_Error("Con_NewBuffer: Odd buffer params");
 
     buf = M_Malloc(sizeof(*buf));
 
-    sprintf(name, "CBufferMutex%p", buf);
+    snprintf(name, 32, "CBufferMutex%p", buf);
     buf->mutex = Sys_CreateMutex(name);
 
     buf->flags = flags;
@@ -211,9 +206,9 @@ cbuffer_t *Con_NewBuffer(uint maxNumLines, uint maxLineLength, int flags)
     return buf;
 }
 
-static void clearBuffer(cbuffer_t *buf, boolean destroy)
+static void clearBuffer(cbuffer_t* buf, boolean destroy)
 {
-    cbnode_t   *n, *np;
+    cbnode_t*               n, *np;
 
     // Free the buffer contents.
     n = buf->headptr;
@@ -229,7 +224,7 @@ static void clearBuffer(cbuffer_t *buf, boolean destroy)
     buf->headptr = buf->tailptr = NULL;
     buf->numLines = 0;
 
-    memset(buf->writebuf, 0, buf->maxLineLen + 1);
+    memset(buf->writebuf, 0, buf->maxLineLen);
     buf->wbc = 0;
 }
 
@@ -238,7 +233,7 @@ static void clearBuffer(cbuffer_t *buf, boolean destroy)
  *
  * @param buf               Ptr to the buffer to be cleared.
  */
-void Con_BufferClear(cbuffer_t *buf)
+void Con_BufferClear(cbuffer_t* buf)
 {
     if(!buf)
         return;
@@ -253,11 +248,11 @@ void Con_BufferClear(cbuffer_t *buf)
  *
  * @param buf               Ptr to the buffer to be destroyed.
  */
-void Con_DestroyBuffer(cbuffer_t *buf)
+void Con_DestroyBuffer(cbuffer_t* buf)
 {
     if(buf)
     {
-        cbnode_t *n, *np;
+        cbnode_t*               n, *np;
 
         Sys_Lock(buf->mutex);
 
@@ -289,7 +284,7 @@ void Con_DestroyBuffer(cbuffer_t *buf)
  * @param buf               Ptr to the buffer to be changed.
  * @param length            Length to set the max line length to.
  */
-void Con_BufferSetMaxLineLength(cbuffer_t *buf, uint length)
+void Con_BufferSetMaxLineLength(cbuffer_t* buf, uint length)
 {
     if(!buf)
         return;
@@ -336,8 +331,8 @@ static cbline_t const* bufferGetLine(cbuffer_t* buf, uint idx)
             // Do we need to enlarge the index?
             if(buf->indexSize < buf->numLines)
             {
-                buf->index =
-                    M_Realloc(buf->index, sizeof(cbline_t*) * buf->numLines);
+                buf->index = M_Realloc(buf->index,
+                    sizeof(cbline_t*) * buf->numLines);
                 buf->indexSize = buf->numLines;
             }
 
@@ -366,7 +361,8 @@ static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
 
         if(firstIdx < 0)
         {
-            long            other = -((long) firstIdx);
+            long                other = -((long) firstIdx);
+
             if(other > (long) buf->numLines)
                 firstIdx = 0;
             else
@@ -396,7 +392,7 @@ static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
  * Retrive an array of un-mutable ptrs to console buffer lines from the
  * given cbuffer.
  *
- * NOTE: The array must be free'd with Z_Free().
+ * NOTE: The array must be free'd with M_Free().
  *
  * @param buf           Ptr to the buffer to retrieve the lines from.
  * @param reqCount      Number of lines requested from the buffer, zero means
@@ -408,12 +404,12 @@ static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
  *
  * @return              The number of elements written back to the buffer.
  */
-uint Con_BufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
-                        cbline_t const **list)
+uint Con_BufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
+                        cbline_t const** list)
 {
     if(buf)
     {
-        uint result;
+        uint                result;
 
         Sys_Lock(buf->mutex);
         result = bufferGetLines(buf, reqCount, firstIdx, list);
@@ -421,6 +417,7 @@ uint Con_BufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
 
         return result;
     }
+
     if(*list)
         list[0] = NULL;
 
@@ -437,11 +434,11 @@ uint Con_BufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
  * @return                  Ptr to the cbline_t with the requested index or
  *                          @c NULL, if the index was invalid.
  */
-const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
+const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx)
 {
     if(buf)
     {
-        const cbline_t *ptr;
+        const cbline_t*         ptr;
 
         Sys_Lock(buf->mutex);
         ptr = bufferGetLine(buf, idx);
@@ -460,10 +457,10 @@ const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
  * @return                  Ptr to the cbline_t with the requested index or
  *                          @c NULL, if the index was invalid.
  */
-static cbline_t *bufferNewLine(cbuffer_t *buf)
+static cbline_t* bufferNewLine(cbuffer_t* buf)
 {
-    cbnode_t   *node;
-    cbline_t   *line;
+    cbnode_t*               node;
+    cbline_t*               line;
 
     if(!buf)
         return NULL; // This is unacceptable!
@@ -483,12 +480,12 @@ static cbline_t *bufferNewLine(cbuffer_t *buf)
         node->data = line;
 
         line->text = NULL;
+        line->len = 0;
     }
     assert(node->data);
 
     buf->numLines++;
 
-    line->len = 0;
     line->flags = 0;
 
     // Link it in.
@@ -507,10 +504,10 @@ static cbline_t *bufferNewLine(cbuffer_t *buf)
     return line;
 }
 
-static void bufferFlush(cbuffer_t *buf)
+static void bufferFlush(cbuffer_t* buf)
 {
-    uint        len;
-    cbline_t   *line;
+    uint                    len;
+    cbline_t*               line;
 
     // Is there anything to flush?
     if(buf->wbc < 1)
@@ -525,21 +522,25 @@ static void bufferFlush(cbuffer_t *buf)
     if(line->text != NULL)
     {   // We are re-using an existing line so we may not need to
         // reallocate at all.
-        if(line->len < len)
-            line->text = M_Realloc(line->text, len + 1);
+        if(line->len <= len)
+        {
+            line->len = len + 1;
+            line->text = M_Realloc(line->text, line->len);
+        }
     }
     else
     {
-        line->text = M_Malloc(len + 1);
+        line->len = len + 1;
+        line->text = M_Malloc(line->len);
     }
 
-    strncpy(line->text, buf->writebuf, len);
+    memcpy(line->text, buf->writebuf, len);
     line->text[len] = 0;
-    line->len = len;
+
     line->flags = buf->wbFlags;
 
     // Clear the write buffer.
-    memset(buf->writebuf, 0, buf->maxLineLen + 1);
+    memset(buf->writebuf, 0, buf->maxLineLen);
     buf->wbc = 0;
     buf->wbFlags = 0;
 }
@@ -549,7 +550,7 @@ static void bufferFlush(cbuffer_t *buf)
  *
  * @param buf               Ptr to the history buffer to flush.
  */
-void Con_BufferFlush(cbuffer_t *buf)
+void Con_BufferFlush(cbuffer_t* buf)
 {
     if(!buf)
         return;
@@ -566,10 +567,8 @@ void Con_BufferFlush(cbuffer_t *buf)
  * @param flags             CBLF_* flags in use for this write.
  * @param txt               Ptr to the text string to be written.
  */
-void Con_BufferWrite(cbuffer_t *buf, int flags, char *txt)
+void Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt)
 {
-    uint        i;
-
     if(!buf)
         return;
 
@@ -586,12 +585,14 @@ void Con_BufferWrite(cbuffer_t *buf, int flags, char *txt)
 
     if(!(!txt || !strcmp(txt, "")))
     {
+        size_t                  i, len = strlen(txt);
+
         // Copy the text into the write buffer and flush to the history
         // buffer when as necessary/required.
-        for(i = 0; i < strlen(txt); ++i)
+        for(i = 0; i < len; ++i)
         {
             buf->wbFlags = flags;
-            if(txt[i] == '\n' || buf->wbc >= buf->maxLineLen)  // A new line?
+            if(txt[i] == '\n' || buf->wbc >= buf->maxLineLen) // A new line?
             {
                 bufferFlush(buf);
 

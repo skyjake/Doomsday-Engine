@@ -70,13 +70,6 @@ typedef struct {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#if __JHERETIC__
-void P_TurnGizmosAwayFromDoors();
-void P_MoveThingsOutOfWalls();
-#elif __JHEXEN__
-void P_TurnTorchesToFaceWalls();
-#endif
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -344,9 +337,8 @@ static void P_LoadMapObjs(void)
 
         th->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
         th->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-#if __JDOOM64__
         th->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
-#endif
+
         th->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
         th->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
 
@@ -355,15 +347,14 @@ static void P_LoadMapObjs(void)
          * in the angle field in THINGS. Thus, we cannot translate the angle
          * until we know whether it is a polyobject type or not.
          */
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         th->angle = P_GetGMOShort(MO_THING, i, MO_ANGLE);
 #else
         th->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         th->tid = P_GetGMOShort(MO_THING, i, MO_ID);
-        th->height = P_GetGMOShort(MO_THING, i, MO_Z);
         th->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
         th->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
         th->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
@@ -431,6 +422,9 @@ static void P_LoadMapObjs(void)
     }
 }
 
+/**
+ * \todo This should be done in the map converter plugin, not here.
+ */
 static void interpretLinedefFlags(void)
 {
 #define ML_BLOCKING             1 // Solid, is an obstacle.
@@ -553,7 +547,6 @@ int P_SetupMapWorker(void* ptr)
 #endif
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-    P_InitThinkers();
 
     P_GetMapLumpName(param->episode, param->map, mapID);
     if(!P_LoadMap(mapID))
@@ -561,6 +554,7 @@ int P_SetupMapWorker(void* ptr)
         Con_Error("P_SetupMap: Failed loading map \"%s\".\n", mapID);
     }
 
+    DD_InitThinkers();
     P_LoadMapObjs();
     P_SpawnThings();
 
@@ -583,48 +577,49 @@ int P_SetupMapWorker(void* ptr)
     P_SpawnSpecials();
 
     // Preload graphics.
+    if(precache)
     {
 #if __JDOOM__
-    static const mobjtype_precachedata_t types[] = {
-        { GM_ANY,   MT_SKULL },
-        // Missiles:
-        { GM_ANY,   MT_BRUISERSHOT },
-        { GM_ANY,   MT_TROOPSHOT },
-        { GM_ANY,   MT_HEADSHOT },
-        { GM_ANY,   MT_ROCKET },
-        { GM_NOTSHAREWARE, MT_PLASMA },
-        { GM_NOTSHAREWARE, MT_BFG },
-        { GM_DOOM2, MT_ARACHPLAZ },
-        { GM_DOOM2, MT_FATSHOT },
-        // Potentially dropped weapons:
-        { GM_ANY,   MT_CLIP },
-        { GM_ANY,   MT_SHOTGUN },
-        { GM_ANY,   MT_CHAINGUN },
-        // Misc effects:
-        { GM_DOOM2, MT_FIRE },
-        { GM_ANY,   MT_TRACER },
-        { GM_ANY,   MT_SMOKE },
-        { GM_DOOM2, MT_FATSHOT },
-        { GM_ANY,   MT_BLOOD },
-        { GM_ANY,   MT_PUFF },
-        { GM_ANY,   MT_TFOG }, // Teleport FX.
-        { GM_ANY,   MT_EXTRABFG },
-        { GM_ANY,   MT_ROCKETPUFF },
-        { 0,        0}
-    };
-    uint                i;
+        static const mobjtype_precachedata_t types[] = {
+            { GM_ANY,   MT_SKULL },
+            // Missiles:
+            { GM_ANY,   MT_BRUISERSHOT },
+            { GM_ANY,   MT_TROOPSHOT },
+            { GM_ANY,   MT_HEADSHOT },
+            { GM_ANY,   MT_ROCKET },
+            { GM_NOTSHAREWARE, MT_PLASMA },
+            { GM_NOTSHAREWARE, MT_BFG },
+            { GM_DOOM2, MT_ARACHPLAZ },
+            { GM_DOOM2, MT_FATSHOT },
+            // Potentially dropped weapons:
+            { GM_ANY,   MT_CLIP },
+            { GM_ANY,   MT_SHOTGUN },
+            { GM_ANY,   MT_CHAINGUN },
+            // Misc effects:
+            { GM_DOOM2, MT_FIRE },
+            { GM_ANY,   MT_TRACER },
+            { GM_ANY,   MT_SMOKE },
+            { GM_DOOM2, MT_FATSHOT },
+            { GM_ANY,   MT_BLOOD },
+            { GM_ANY,   MT_PUFF },
+            { GM_ANY,   MT_TFOG }, // Teleport FX.
+            { GM_ANY,   MT_EXTRABFG },
+            { GM_ANY,   MT_ROCKETPUFF },
+            { 0,        0}
+        };
+        uint                i;
 #endif
 
-    R_PrecacheMap();
-    R_PrecachePSprites();
+        R_PrecacheMap();
+        R_PrecachePSprites();
 
 #if __JDOOM__
-    for(i = 0; types[i].type != 0; ++i)
-        if(types[i].gameModeBits & gs.gameModeBits)
-            R_PrecacheMobjNum(types[i].type);
+        for(i = 0; types[i].type != 0; ++i)
+            if(types[i].gameModeBits & gameModeBits)
+                R_PrecacheMobjNum(types[i].type);
 
-    if(IS_NETGAME)
-        R_PrecacheMobjNum(MT_IFOG);
+        if(IS_NETGAME)
+            R_PrecacheMobjNum(MT_IFOG);
 #endif
     }
 
@@ -669,7 +664,7 @@ void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
     {
     int i;
     // Load colormap and set the fullbright flag
-    i = P_GetMapFadeTable(gs.map.id);
+    i = P_GetMapFadeTable(gameMap);
     if(i == W_GetNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
@@ -717,11 +712,11 @@ static void P_ResetWorldState(void)
 #endif
 
 #if !__JHEXEN__
-    gs.map.totalKills = gs.map.totalItems = gs.map.totalSecret = 0;
+    totalKills = totalItems = totalSecret = 0;
 #endif
 
     timerGame = 0;
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
     {
         parm = ArgCheck("-timer");
         if(parm && parm < Argc() - 1)
@@ -793,18 +788,17 @@ static void P_FinalizeMap(void)
     }
     }
 
-#elif __JHERETIC__
-    // Do some fine tuning with mobj placement and orientation.
-    P_MoveThingsOutOfWalls();
-    P_TurnGizmosAwayFromDoors();
-
 #elif __JHEXEN__
-    P_TurnTorchesToFaceWalls();
-
     // Check if the map should have lightening.
     P_InitLightning();
 
     SN_StopAllSequences();
+#endif
+
+    // Do some fine tuning with mobj placement and orientation.
+    P_MoveThingsOutOfWalls();
+#if __JHERETIC__
+    P_TurnGizmosAwayFromDoors();
 #endif
 }
 
@@ -828,7 +822,7 @@ char* P_GetMapNiceName(void)
 #if __JHEXEN__
     // In jHexen we can look in the MAPINFO for the map name.
     if(!lname)
-        lname = P_GetMapName(gs.map.id);
+        lname = P_GetMapName(gameMap);
 #endif
 
     return lname;

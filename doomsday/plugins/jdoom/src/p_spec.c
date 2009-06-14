@@ -300,10 +300,10 @@ void P_InitPicAnims(void)
         Con_Message("P_InitPicAnims: Registering default animations...\n");
 
         loadAnimDefs(animsShared);
-        if(gs.gameMode == commercial)
+        if(gameMode == commercial)
         {
             loadAnimDefs(animsDoom2);
-            if(gs.gameMission == GM_PLUT)
+            if(gameMission == GM_PLUT)
                 loadAnimDefs(animsDoom2Plut);
         }
         else
@@ -533,7 +533,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 53:
@@ -616,7 +616,7 @@ static void crossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT.
-        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         break;
 
     case 125:
@@ -827,19 +827,21 @@ static void shootSpecialLine(mobj_t *thing, linedef_t *line)
     case 24:
         // RAISE FLOOR
         EV_DoFloor(line, FT_RAISEFLOOR);
-        P_ChangeSwitchMaterial(line, 0);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+        P_ToXLine(line)->special = 0;
         break;
 
     case 46:
         // OPEN DOOR
         EV_DoDoor(line, DT_OPEN);
-        P_ChangeSwitchMaterial(line, 1);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 47:
         // RAISE FLOOR NEAR AND CHANGE
         EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0);
-        P_ChangeSwitchMaterial(line, 0);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+        P_ToXLine(line)->special = 0;
         break;
 
     default:
@@ -850,9 +852,9 @@ static void shootSpecialLine(mobj_t *thing, linedef_t *line)
 /**
  * Called every tic frame that the player origin is in a special sector
  */
-void P_PlayerInSpecialSector(player_t *player)
+void P_PlayerInSpecialSector(player_t* player)
 {
-    sector_t           *sector =
+    sector_t*           sector =
         P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
 
     // Falling, not all the way down yet?
@@ -895,7 +897,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // SECRET SECTOR
         player->secretCount++;
         P_ToXSector(sector)->special = 0;
-        if(GAMERULES.announceSecrets)
+        if(cfg.secretMsg)
         {
             P_SetMessage(player, "You've found a secret area!", false);
             S_ConsoleSound(SFX_GETPOW, 0, player - players);
@@ -910,7 +912,7 @@ void P_PlayerInSpecialSector(player_t *player)
             P_DamageMobj(player->plr->mo, NULL, NULL, 20, false);
 
         if(player->health <= 10)
-            G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+            G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;
 
     default:
@@ -923,9 +925,8 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
-    linedef_t          *line;
-    sidedef_t          *side;
-    button_t           *button;
+    linedef_t*          line;
+    sidedef_t*          side;
 
     // Extended lines and sectors.
     XG_Ticker();
@@ -963,62 +964,6 @@ void P_UpdateSpecials(void)
             }
         }
     }
-
-    for(button = buttonlist; button; button = button->next)
-    {
-        if(button->timer)
-        {
-            button->timer--;
-            if(!button->timer)
-            {
-                sidedef_t          *sdef =
-                    P_GetPtrp(button->line, DMU_SIDEDEF0);
-                sector_t           *frontsector =
-                    P_GetPtrp(button->line, DMU_FRONT_SECTOR);
-
-                switch(button->section)
-                {
-                case LS_TOP:
-                    P_SetPtrp(sdef, DMU_TOP_MATERIAL, button->material);
-                    break;
-
-                case LS_MIDDLE:
-                    P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, button->material);
-                    break;
-
-                case LS_BOTTOM:
-                    P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, button->material);
-                    break;
-
-                default:
-                    Con_Error("P_UpdateSpecials: Unknown sidedef section \"%i\".",
-                              (int) button->section);
-                }
-
-                S_StartSound(SFX_SWTCHN,
-                             P_GetPtrp(frontsector, DMU_SOUND_ORIGIN));
-
-                button->line = NULL;
-                button->section = 0;
-                button->material = NULL;
-                button->soundOrg = NULL;
-            }
-        }
-    }
-}
-
-void P_FreeButtons(void)
-{
-    button_t           *button, *np;
-
-    button = buttonlist;
-    while(button != NULL)
-    {
-        np = button->next;
-        free(button);
-        button = np;
-    }
-    buttonlist = NULL;
 }
 
 /**
@@ -1054,7 +999,7 @@ void P_SpawnSpecials(void)
             switch(xsec->special)
             {
             case 9: // A secret sector.
-                gs.map.totalSecret++;
+                totalSecret++;
                 break;
 
             default:
@@ -1094,7 +1039,7 @@ void P_SpawnSpecials(void)
 
         case 9:
             // SECRET SECTOR
-            gs.map.totalSecret++;
+            totalSecret++;
             break;
 
         case 10:
@@ -1150,8 +1095,6 @@ void P_SpawnSpecials(void)
            P_AddObjectToIterList(list, line);
         }
     }
-
-    P_FreeButtons();
 
     // Init extended generalized lines and sectors.
     XG_Init();
@@ -1226,13 +1169,19 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
     case 7:
         // Build Stairs
         if(EV_BuildStairs(line, build8))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 9:
         // Change Donut
         if(EV_DoDonut(line))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 11:
@@ -1241,80 +1190,114 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
             break;
 
         // Prevent 'zombie players' from exiting maps.
-        if(mo->player && mo->player->health <= 0 && !GAMERULES.zombiesCanExit)
+        if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
             S_StartSound(SFX_NOWAY, mo);
             return false;
         }
 
-        P_ChangeSwitchMaterial(line, 0);
-        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_SWTCHX, false, 0);
+        xline->special = 0;
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;
 
     case 14:
         // Raise Floor 32 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 15:
         // Raise Floor 24 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 18:
         // Raise Floor to next highest floor.
         if(EV_DoFloor(line, FT_RAISEFLOORTONEAREST))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 20:
         // Raise Plat next highest floor and change texture.
         if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 21:
         // PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 0))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 23:
         // Lower Floor to Lowest.
         if(EV_DoFloor(line, FT_LOWERTOLOWEST))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 29:
         // Raise Door.
         if(EV_DoDoor(line, DT_NORMAL))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 41:
         // Lower Ceiling to Floor.
         if(EV_DoCeiling(line, CT_LOWERTOFLOOR))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 71:
         // Turbo Lower Floor.
         if(EV_DoFloor(line, FT_LOWERTURBO))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 49:
         // Ceiling Crush And Raise.
         if(EV_DoCeiling(line, CT_CRUSHANDRAISE))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 50:
         // Close Door.
         if(EV_DoDoor(line, DT_CLOSE))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 51:
@@ -1323,74 +1306,105 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
             break;
 
         // Prevent 'zombie players' from exiting maps.
-        if(mo->player && mo->player->health <= 0 && !GAMERULES.zombiesCanExit)
+        if(mo->player && mo->player->health <= 0 && !cfg.zombiesCanExit)
         {
             S_StartSound(SFX_NOWAY, mo);
             return false;
         }
 
-        P_ChangeSwitchMaterial(line, 0);
-        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+        xline->special = 0;
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         break;
 
     case 55:
         // Raise Floor Crush.
         if(EV_DoFloor(line, FT_RAISEFLOORCRUSH))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 101:
         // Raise Floor.
         if(EV_DoFloor(line, FT_RAISEFLOOR))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 102:
         // Lower Floor to Surrounding floor height.
         if(EV_DoFloor(line, FT_LOWER))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 103:
         // Open Door.
         if(EV_DoDoor(line, DT_OPEN))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 111:
         // Blazing Door Raise (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZERAISE))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 112:
         // Blazing Door Open (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZEOPEN))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 113:
         // Blazing Door Close (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZECLOSE))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 122:
         // Blazing PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 127:
         // Build Stairs Turbo 16.
         if(EV_BuildStairs(line, turbo16))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 131:
         // Raise Floor Turbo.
         if(EV_DoFloor(line, FT_RAISEFLOORTURBO))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 133:
@@ -1400,128 +1414,134 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
     case 137:
         // BlzOpenDoor YELLOW.
         if(EV_DoLockedDoor(line, DT_BLAZEOPEN, mo))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
     case 140:
         // Raise Floor 512.
         if(EV_DoFloor(line, FT_RAISE512))
-            P_ChangeSwitchMaterial(line, 0);
+        {
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
+            xline->special = 0;
+        }
         break;
 
         // BUTTONS
     case 42:
         // Close Door.
         if(EV_DoDoor(line, DT_CLOSE))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 43:
         // Lower Ceiling to Floor.
         if(EV_DoCeiling(line, CT_LOWERTOFLOOR))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 45:
         // Lower Floor to Surrounding floor height.
         if(EV_DoFloor(line, FT_LOWER))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 60:
         // Lower Floor to Lowest.
         if(EV_DoFloor(line, FT_LOWERTOLOWEST))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 61:
         // Open Door.
         if(EV_DoDoor(line, DT_OPEN))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 62:
         // PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAY, 1))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 63:
         // Raise Door.
         if(EV_DoDoor(line, DT_NORMAL))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 64:
         // Raise Floor to ceiling.
         if(EV_DoFloor(line, FT_RAISEFLOOR))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 66:
         // Raise Floor 24 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 24))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 67:
         // Raise Floor 32 and change texture.
         if(EV_DoPlat(line, PT_RAISEANDCHANGE, 32))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 65:
         // Raise Floor Crush.
         if(EV_DoFloor(line, FT_RAISEFLOORCRUSH))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 68:
         // Raise Plat to next highest floor and change texture.
         if(EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 69:
         // Raise Floor to next highest floor.
         if(EV_DoFloor(line, FT_RAISEFLOORTONEAREST))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 70:
         // Turbo Lower Floor.
         if(EV_DoFloor(line, FT_LOWERTURBO))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 114:
         // Blazing Door Raise (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZERAISE))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 115:
         // Blazing Door Open (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZEOPEN))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 116:
         // Blazing Door Close (faster than TURBO!).
         if(EV_DoDoor(line, DT_BLAZECLOSE))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 123:
         // Blazing PlatDownWaitUpStay.
         if(EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 132:
         // Raise Floor Turbo.
         if(EV_DoFloor(line, FT_RAISEFLOORTURBO))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 99:
@@ -1531,19 +1551,19 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
     case 136:
         // BlzOpenDoor YELLOW.
         if(EV_DoLockedDoor(line, DT_BLAZEOPEN, mo))
-            P_ChangeSwitchMaterial(line, 1);
+            P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 138:
         // Light Turn On.
         EV_LightTurnOn(line, 1);
-        P_ChangeSwitchMaterial(line, 1);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     case 139:
         // Light Turn Off.
         EV_LightTurnOn(line, 35.0f/255.0f);
-        P_ChangeSwitchMaterial(line, 1);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
     default:

@@ -131,17 +131,6 @@ boolean P_ToBlockmapBlockIdx(blockmap_t* blockmap, uint dest[2],
     return false; // hmm...
 }
 
-void P_PointToBlock(float x, float y, uint* bx, uint* by)
-{
-    gamemap_t*      map = P_GetCurrentMap();
-    vec2_t          min;
-
-    P_GetBlockmapBounds(map->blockMap, min, NULL);
-
-    *bx = FLT2FIX(x - min[VX]) >> MAPBLOCKSHIFT;
-    *by = FLT2FIX(y - min[VY]) >> MAPBLOCKSHIFT;
-}
-
 static __inline int xToSSecBlockX(bmap_t* bmap, float x)
 {
     if(x >= bmap->bBox[0][VX] && x < bmap->bBox[1][VX])
@@ -894,7 +883,7 @@ boolean P_BlockPathTraverse(blockmap_t* bmap, const uint originBlock[2],
     if(destBlock[VY] > originBlock[VY])
     {
         stepDir[VY] = 1;
-        partial = 1 - FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
         delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
     }
     else if(destBlock[VY] < originBlock[VY])

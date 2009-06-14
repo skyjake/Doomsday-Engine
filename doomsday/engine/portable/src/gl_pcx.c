@@ -39,6 +39,24 @@
 
 // TYPES -------------------------------------------------------------------
 
+#pragma pack(1)
+typedef struct {
+    char            manufacturer;
+    char            version;
+    char            encoding;
+    char            bits_per_pixel;
+    unsigned short  xmin, ymin, xmax, ymax;
+    unsigned short  hres, vres;
+    unsigned char   palette[48];
+    char            reserved;
+    char            color_planes;
+    unsigned short  bytes_per_line;
+    unsigned short  palette_type;
+    char            filler[58];
+    unsigned char   data;          // unbounded
+} pcx_t;
+#pragma pack()
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -53,92 +71,36 @@
 
 // CODE --------------------------------------------------------------------
 
-/**
- * @return              @c true, if successful.
- */
-boolean PCX_MemoryGetSize(void *imageData, int *w, int *h)
+static boolean memoryLoad(const byte* imgdata, size_t len, int bufW,
+                          int bufH, byte* outBuffer)
 {
-    pcx_t          *hdr = (pcx_t *) imageData;
+    const pcx_t*        pcx = (const pcx_t*) imgdata;
+    const byte*         raw = &pcx->data;
+    byte*               palette, *pix;
+    int                 x, y, dataByte, runLength;
+    short               xmax = SHORT(pcx->xmax);
+    short               ymax = SHORT(pcx->ymax);
 
-    if(hdr->manufacturer != 0x0a || hdr->version != 5 || hdr->encoding != 1 ||
-       hdr->bits_per_pixel != 8)
+    if(!outBuffer)
         return false;
-    if(w)
-        *w = SHORT(hdr->xmax) + 1;
-    if(h)
-        *h = SHORT(hdr->ymax) + 1;
-    return true;
-}
-
-boolean PCX_GetSize(const char *fn, int *w, int *h)
-{
-    DFILE          *file = F_Open(fn, "rb");
-    pcx_t           hdr;
-
-    if(!file)
-        return false;
-
-    F_Read(&hdr, sizeof(hdr), file);
-    F_Close(file);
-
-    return PCX_MemoryGetSize(&hdr, w, h);
-}
-
-/**
- * @return              @c true, if a PCX image (probably).
- */
-boolean PCX_MemoryLoad(byte *imgdata, size_t len, int buf_w, int buf_h,
-                       byte *outBuffer)
-{
-    if(PCX_MemoryAllocLoad(imgdata, len, &buf_w, &buf_h, outBuffer))
-        return true;
-
-    return false;
-}
-
-/**
- * \note Memory is allocated on the stack and must be free'd with M_Free()
- *
- * @param outBuffer     If @c NULL,, a new buffer is allocated.
- *
- * @return              Ptr to a buffer containing the loaded texture data.
- */
-byte *PCX_MemoryAllocLoad(byte *imgdata, size_t len, int *buf_w, int *buf_h,
-                          byte *outBuffer)
-{
-    pcx_t          *pcx = (pcx_t *) imgdata;
-    byte           *raw = &pcx->data, *palette;
-    int             x, y;
-    int             dataByte, runLength;
-    byte           *pix;
-    short           xmax = SHORT(pcx->xmax);
-    short           ymax = SHORT(pcx->ymax);
 
     // Check the format.
-    if(pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 ||
-       pcx->bits_per_pixel != 8)
+    if(pcx->manufacturer != 0x0a || pcx->version != 5 ||
+       pcx->encoding != 1 || pcx->bits_per_pixel != 8)
     {
         //Con_Message("PCX_Load: unsupported format.\n");
-        return NULL;
+        return false;
     }
 
-    if(outBuffer)
+    // Check that the PCX is not larger than the buffer.
+    if(xmax >= bufW || ymax >= bufH)
     {
-        // Check that the PCX is not larger than the buffer.
-        if(xmax >= *buf_w || ymax >= *buf_h)
-        {
-            Con_Message("PCX_Load: larger than expected.\n");
-            return NULL;
-        }
-    }
-    else
-    {
-        PCX_MemoryGetSize(imgdata, buf_w, buf_h);
-        outBuffer = M_Malloc(4 * *buf_w * *buf_h);
+        Con_Message("PCX_Load: larger than expected.\n");
+        return false;
     }
 
     palette = M_Malloc(768);
-    memcpy(palette, ((byte *) pcx) + len - 768, 768); // Palette is in the end.
+    memcpy(palette, ((byte*) pcx) + len - 768, 768); // Palette is in the end.
 
     pix = outBuffer;
 
@@ -167,41 +129,99 @@ byte *PCX_MemoryAllocLoad(byte *imgdata, size_t len, int *buf_w, int *buf_h,
         Con_Error("PCX_Load: Corrupt image!\n");
 
     M_Free(palette);
-    return outBuffer;
-}
-
-void PCX_Load(const char *fn, int buf_w, int buf_h, byte *outBuffer)
-{
-    PCX_AllocLoad(fn, &buf_w, &buf_h, outBuffer);
+    return true;
 }
 
 /**
  * PCX loader, partly borrowed from the Q2 utils source (lbmlib.c).
  */
-byte *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)
+static boolean load(const char* fn, int bufW, int bufH, byte* outBuffer)
 {
-    DFILE          *file = F_Open(fn, "rb");
-    byte           *raw;
-    size_t          len;
+    DFILE*              file;
 
-    if(!file)
+    if((file = F_Open(fn, "rb")))
     {
-        Con_Message("PCX_Load: Can't find %s.\n", fn);
-        return NULL;
+        byte*               raw;
+        size_t              len;
+
+        // Load the file.
+        F_Seek(file, 0, SEEK_END); // Seek to end.
+        len = F_Tell(file); // How long?
+        F_Seek(file, 0, SEEK_SET);
+        raw = M_Malloc(len);
+        F_Read(raw, len, file);
+        F_Close(file);
+
+        // Parse the PCX file.
+        if(!memoryLoad(raw, len, bufW, bufH, outBuffer))
+        {
+            Con_Message("PCX_Load: Error loading \"%s\".\n",
+                        M_PrettyPath(fn));
+            outBuffer = NULL;
+        }
+
+        M_Free(raw);
+        return true;
     }
 
-    // Load the file.
-    F_Seek(file, 0, SEEK_END); // Seek to end.
-    len = F_Tell(file); // How long?
-    F_Seek(file, 0, SEEK_SET);
-    raw = M_Malloc(len);
-    F_Read(raw, len, file);
-    F_Close(file);
+    Con_Message("PCX_Load: Can't find %s.\n", fn);
+    return false;
+}
 
-    // Parse the PCX file.
-    if(!(outBuffer = PCX_MemoryAllocLoad(raw, len, buf_w, buf_h, outBuffer)))
-        Con_Message("PCX_Load: Error loading \"%s\".\n", M_PrettyPath(fn));
+boolean PCX_Load(const char* fn, int bufW, int bufH, byte* outBuffer)
+{
+    if(!outBuffer)
+        return false;
 
-    M_Free(raw);
-    return outBuffer;
+    return load(fn, bufW, bufH, outBuffer);
+}
+
+/**
+ * @return              @c true, if a PCX image (probably).
+ */
+boolean PCX_MemoryLoad(const byte* imgdata, size_t len, int bufW, int bufH,
+                       byte* outBuffer)
+{
+    if(memoryLoad(imgdata, len, bufW, bufH, outBuffer))
+        return true;
+
+    return false;
+}
+
+boolean PCX_GetSize(const char* fn, int* w, int* h)
+{
+    DFILE*              file;
+
+    if((file = F_Open(fn, "rb")))
+    {
+        pcx_t               hdr;
+        size_t              read;
+
+        read = F_Read(&hdr, sizeof(hdr), file);
+        F_Close(file);
+
+        if(!(read < sizeof(hdr)))
+            return PCX_MemoryGetSize(&hdr, w, h);
+    }
+
+    return false;
+}
+
+/**
+ * @return              @c true, if successful.
+ */
+boolean PCX_MemoryGetSize(const void* imageData, int* w, int* h)
+{
+    const pcx_t*        hdr = (const pcx_t*) imageData;
+
+    if(hdr->manufacturer != 0x0a || hdr->version != 5 ||
+       hdr->encoding != 1 || hdr->bits_per_pixel != 8)
+        return false;
+
+    if(w)
+        *w = SHORT(hdr->xmax) + 1;
+    if(h)
+        *h = SHORT(hdr->ymax) + 1;
+
+    return true;
 }

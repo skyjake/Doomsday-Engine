@@ -46,6 +46,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+  PROF_SOUND_STARTFRAME
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -233,6 +237,16 @@ void S_Reset(void)
 void S_StartFrame(void)
 {
     static int          oldMusVolume = -1;
+#ifdef DD_PROFILE
+    static int          i;
+    if(++i > 40)
+    {
+        i = 0;
+        PRINT_PROF( PROF_SOUND_STARTFRAME );
+    }
+#endif
+
+BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
     if(musVolume != oldMusVolume)
     {
@@ -241,11 +255,14 @@ void S_StartFrame(void)
     }
 
     // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
+
     Sfx_StartFrame();
     Mus_StartFrame();
 
     // Remove stopped sounds from the LSM.
     Sfx_PurgeLogical();
+
+END_PROF( PROF_SOUND_STARTFRAME );
 }
 
 void S_EndFrame(void)
@@ -569,7 +586,7 @@ int S_StartMusicNum(int id, boolean looped)
 /**
  * @return              @c NULL, if the song is found.
  */
-int S_StartMusic(char* musicID, boolean looped)
+int S_StartMusic(const char* musicID, boolean looped)
 {
     int                 idx = Def_GetMusicNum(musicID);
 

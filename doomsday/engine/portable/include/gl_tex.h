@@ -36,37 +36,38 @@ boolean         GL_OptimalSize(int width, int height, int *optWidth,
                                boolean isMipMapped);
 void            GL_ConvertBuffer(int width, int height, int informat,
                                  int outformat, byte *in, byte *out,
-                                 byte *palette, boolean gamma);
+                                 colorpaletteid_t pal, boolean gamma);
 void            GL_ScaleBuffer32(byte *in, int inWidth, int inHeight,
                                  byte *out, int outWidth, int outHeight,
                                  int comps);
-void            GL_DownMipmap32(byte *in, int width, int height, int comps);
+void            GL_DownMipmap32(byte* in, int width, int height, int comps);
 void            GL_ConvertToAlpha(image_t *image, boolean makeWhite);
 void            GL_ConvertToLuminance(image_t *image);
-void            GL_CalcLuminance(byte *buffer, int width, int height,
-                                 int pixelsize, float* brightX,
-                                 float* brightY, rgbcol_t* color,
-                                 float* lumSize);
-byte*           GL_ApplyColorKeying(byte *buf, unsigned int pixelSize,
+void            GL_CalcLuminance(byte* buffer, int width, int height,
+                                 int pixelsize, colorpaletteid_t palid,
+                                 float* brightX, float* brightY,
+                                 rgbcol_t* color, float* lumSize);
+byte*           GL_ApplyColorKeying(byte* buf, unsigned int pixelSize,
                                     unsigned int width, unsigned int height);
 int             GL_ValidTexHeight2(int width, int height);
 
-void            pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest,
+void            pixBlt(byte* src, int srcWidth, int srcHeight, byte* dest,
                        int destWidth, int destHeight, int alpha, int srcRegX,
                        int srcRegY, int destRegX, int destRegY, int regWidth,
                        int regHeight);
-void            averageColorIdx(rgbcol_t col, byte *data, int w, int h,
-                                byte *palette, boolean hasAlpha);
-void            averageColorRGB(rgbcol_t col, byte *data, int w, int h);
-int             lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h, int line,
-                                    byte* palette, boolean hasAlpha);
-int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h, int line);
-void            ColorOutlines(byte *buffer, int width, int height);
-int             DrawRealPatch(byte *buffer, int texwidth, int texheight,
-                              lumppatch_t *patch, int origx, int origy,
-                              boolean maskZero, unsigned char *transtable,
+void            averageColorIdx(rgbcol_t col, byte* data, int w, int h,
+                                colorpaletteid_t palid, boolean hasAlpha);
+void            averageColorRGB(rgbcol_t col, byte* data, int w, int h);
+int             lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h,
+                                    int line, colorpaletteid_t palid,
+                                    boolean hasAlpha);
+int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
+                                    int line);
+void            ColorOutlines(byte* buffer, int width, int height);
+int             DrawRealPatch(byte* buffer, int texwidth, int texheight,
+                              const lumppatch_t* patch, int origx,
+                              int origy, boolean maskZero,
                               boolean checkForAlpha);
-void            DeSaturate(byte *buffer, byte *palette, int width, int height);
 boolean         ImageHasAlpha(image_t *image);
 
 #endif

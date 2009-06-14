@@ -3,7 +3,6 @@
  .\..\..\plugins\common\src\d_net.c
  .\..\..\plugins\common\src\dmu_lib.c
  .\..\..\plugins\common\src\m_multi.c
- .\..\..\plugins\common\src\m_playerprofile.c
  .\..\..\plugins\common\src\hu_menu.c
  .\..\..\plugins\common\src\p_xgsec.c
  .\..\..\plugins\common\src\p_xgsave.c
@@ -35,6 +34,7 @@
  .\..\..\plugins\common\src\m_ctrl.c
  .\..\..\plugins\common\src\m_fixed.c
  .\..\..\plugins\common\src\hu_pspr.c
+ .\..\..\plugins\common\src\hu_inventory.c
  .\..\..\plugins\common\src\g_defs.c
  .\..\..\plugins\common\src\g_controls.c
  .\..\..\plugins\common\src\g_game.c

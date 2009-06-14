@@ -748,11 +748,11 @@ static void buildSectorLineLists(gamemap_t *map)
 /**
  * \pre Lines in sector must be setup before this is called!
  */
-static void updateSectorBounds(sector_t *sec)
+static void updateSectorBounds(sector_t* sec)
 {
-    uint        i;
-    float      *bbox;
-    vertex_t   *vtx;
+    uint                i;
+    float*              bbox;
+    vertex_t*           vtx;
 
     if(!sec)
         return;
@@ -782,6 +782,10 @@ static void updateSectorBounds(sector_t *sec)
         if(vtx->V_pos[VY] > bbox[BOXTOP])
             bbox[BOXTOP]   = vtx->V_pos[VY];
     }
+
+    // This is very rough estimate of sector area.
+    sec->approxArea = ((bbox[BOXRIGHT] - bbox[BOXLEFT]) / 128) *
+        ((bbox[BOXTOP] - bbox[BOXBOTTOM]) / 128);
 }
 
 /**
@@ -1870,15 +1874,16 @@ boolean MPE_End(void)
         int                     markerLumpNum;
 
         markerLumpNum = W_GetNumForName(gamemap->mapID);
-        DAM_GetCachedMapDir(cachedMapDir, markerLumpNum);
+        DAM_GetCachedMapDir(cachedMapDir, markerLumpNum, FILENAME_T_MAXLEN);
 
         // Ensure the destination path exists.
         M_CheckPath(cachedMapDir);
 
         sprintf(cachedMapDataFile, "%s%s", cachedMapDir,
                                    W_LumpName(markerLumpNum));
-        M_TranslatePath(cachedMapDataFile, cachedMapDataFile);
-        strcat(cachedMapDataFile, ".dcm");
+        M_TranslatePath(cachedMapDataFile, cachedMapDataFile,
+                        FILENAME_T_MAXLEN);
+        strncat(cachedMapDataFile, ".dcm", FILENAME_T_MAXLEN);
 
         DAM_MapWrite(gamemap, cachedMapDataFile);
     }

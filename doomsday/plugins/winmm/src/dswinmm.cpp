@@ -132,6 +132,11 @@ int DM_Music_Get(int prop, void* ptr)
         }
         break;
 
+    case MUSIP_PLAYING:
+        if(midiAvail && MIDIStreamer)
+            return (MIDIStreamer->IsPlaying()? true : false);
+        return false;
+
     default:
         break;
     }

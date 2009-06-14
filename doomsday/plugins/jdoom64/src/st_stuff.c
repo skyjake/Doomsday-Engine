@@ -42,6 +42,7 @@
 #include "hu_stuff.h"
 #include "am_map.h"
 #include "p_tick.h" // for P_IsPaused
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -89,36 +90,37 @@ static hudstate_t hudStates[MAXPLAYERS];
 static dpatch_t tallnum[10];
 
 // CVARs for the HUD/Statusbar.
-cvar_t sthudCVars[] = {
+cvar_t sthudCVars[] =
+{
     // HUD scale
-    {"hud-scale", 0, CVT_FLOAT, &PLRPROFILE.hud.scale, 0.1f, 10},
+    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
     // HUD colour + alpha
-    {"hud-color-r", 0, CVT_FLOAT, &PLRPROFILE.hud.color[0], 0, 1},
-    {"hud-color-g", 0, CVT_FLOAT, &PLRPROFILE.hud.color[1], 0, 1},
-    {"hud-color-b", 0, CVT_FLOAT, &PLRPROFILE.hud.color[2], 0, 1},
-    {"hud-color-a", 0, CVT_FLOAT, &PLRPROFILE.hud.color[3], 0, 1},
-    {"hud-icon-alpha", 0, CVT_FLOAT, &PLRPROFILE.hud.iconAlpha, 0, 1},
+    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
+    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1},
+    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1},
+    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
+    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
 
     // HUD icons
-    {"hud-health", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_HEALTH], 0, 1},
-    {"hud-armor", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_ARMOR], 0, 1},
-    {"hud-ammo", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_AMMO], 0, 1},
-    {"hud-keys", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_KEYS], 0, 1},
-    {"hud-power", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_POWER], 0, 1},
+    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1},
+    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
+    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
+    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
+    {"hud-power", 0, CVT_BYTE, &cfg.hudShown[HUD_INVENTORY], 0, 1},
 
     // HUD displays
-    {"hud-frags", 0, CVT_BYTE, &PLRPROFILE.hud.shown[HUD_FRAGS], 0, 1},
+    {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
 
-    {"hud-timer", 0, CVT_FLOAT, &PLRPROFILE.hud.timer, 0, 60},
+    {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
-    {"hud-unhide-damage", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_DAMAGE], 0, 1},
-    {"hud-unhide-pickup-health", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_HEALTH], 0, 1},
-    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_ARMOR], 0, 1},
-    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_POWER], 0, 1},
-    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_WEAPON], 0, 1},
-    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_AMMO], 0, 1},
-    {"hud-unhide-pickup-key", 0, CVT_BYTE, &PLRPROFILE.hud.unHide[HUE_ON_PICKUP_KEY], 0, 1},
+    {"hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1},
+    {"hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1},
+    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1},
+    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1},
+    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1},
+    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
+    {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
     {NULL}
 };
 
@@ -152,9 +154,9 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
         return;
 
-    if(ev == HUE_FORCE || PLRPROFILE.hud.unHide[ev])
+    if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
-        hudStates[player].hideTics = (PLRPROFILE.hud.timer * TICSPERSEC);
+        hudStates[player].hideTics = (cfg.hudTimer * TICSPERSEC);
         hudStates[player].hideAmount = 0;
     }
 }
@@ -166,7 +168,7 @@ void ST_updateWidgets(int player)
     hudstate_t*         hud = &hudStates[player];
 
     // Used by wFrags widget.
-    hud->statusbarFragsOn = GAMERULES.deathmatch && hud->statusbarActive;
+    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
     hud->currentFragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -192,7 +194,7 @@ void ST_Ticker(void)
 
         if(!P_IsPaused())
         {
-            if(PLRPROFILE.hud.timer == 0)
+            if(cfg.hudTimer == 0)
             {
                 hud->hideTics = hud->hideAmount = 0;
             }
@@ -200,7 +202,7 @@ void ST_Ticker(void)
             {
                 if(hud->hideTics > 0)
                     hud->hideTics--;
-                if(hud->hideTics == 0 && PLRPROFILE.hud.timer > 0 && hud->hideAmount < 1)
+                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
                     hud->hideAmount += 0.1f;
             }
 
@@ -259,7 +261,7 @@ void ST_doPaletteStuff(int player)
 static void drawWidgets(hudstate_t* hud)
 {
     // Used by wFrags widget.
-    hud->statusbarFragsOn = GAMERULES.deathmatch && hud->statusbarActive;
+    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
 
     STlib_updateNum(&hud->wFrags, true);
 }
@@ -288,25 +290,26 @@ void ST_HUDSpriteSize(int sprite, int *w, int *h)
 }
 
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-                      float scale, float a, boolean flip)
+                      float scale, float alpha, boolean flip)
 {
-    int                 w, h;
-    float               alpha;
+    int                 w, h, w2, h2;
+    float               s, t;
     spriteinfo_t        sprInfo;
 
-    if(!(a > 0.f))
+    if(!(alpha > 0))
         return;
 
-    alpha = MINMAX_OF(0.f, a, 1.f);
+    alpha = MINMAX_OF(0.f, alpha, 1.f);
     R_GetSpriteInfo(sprite, 0, &sprInfo);
     w = sprInfo.width;
     h = sprInfo.height;
+    w2 = M_CeilPow2(w);
+    h2 = M_CeilPow2(h);
 
     switch(hotspot)
     {
     case HOT_BRIGHT:
         y -= h * scale;
-        // Fall through.
 
     case HOT_TRIGHT:
         x -= w * scale;
@@ -319,18 +322,23 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
     DGL_SetPSprite(sprInfo.material);
 
+    // Let's calculate texture coordinates.
+    // To remove a possible edge artifact, move the corner a bit up/left.
+    s = (w - 0.4f) / w2;
+    t = (h - 0.4f) / h2;
+
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, flip * 0, 0);
+        DGL_TexCoord2f(0, flip * s, 0);
         DGL_Vertex2f(x, y);
 
-        DGL_TexCoord2f(0, !flip * 1, 0);
+        DGL_TexCoord2f(0, !flip * s, 0);
         DGL_Vertex2f(x + w * scale, y);
 
-        DGL_TexCoord2f(0, !flip * 1, 1);
+        DGL_TexCoord2f(0, !flip * s, t);
         DGL_Vertex2f(x + w * scale, y + h * scale);
 
-        DGL_TexCoord2f(0, flip * 0, 1);
+        DGL_TexCoord2f(0, flip * s, t);
         DGL_Vertex2f(x, y + h * scale);
     DGL_End();
 }
@@ -348,53 +356,53 @@ void ST_doFullscreenStuff(int player)
     player_t*           plr = &players[player];
     char                buf[20];
     int                 w, h, pos = 0, oldPos = 0, spr,i;
-    int                 h_width = 320 / PLRPROFILE.hud.scale;
-    int                 h_height = 200 / PLRPROFILE.hud.scale;
+    int                 h_width = 320 / cfg.hudScale;
+    int                 h_height = 200 / cfg.hudScale;
     float               textalpha =
-        hud->alpha - hud->hideAmount - ( 1 - PLRPROFILE.hud.color[3]);
+        hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
     float               iconalpha =
-        hud->alpha - hud->hideAmount - ( 1 - PLRPROFILE.hud.iconAlpha);
+        hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
     textalpha = MINMAX_OF(0.f, textalpha, 1.f);
     iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
 
-    if(IS_NETGAME && GAMERULES.deathmatch && PLRPROFILE.hud.shown[HUD_FRAGS])
+    if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - HUDBORDERY;
-        if(PLRPROFILE.hud.shown[HUD_HEALTH])
+        if(cfg.hudShown[HUD_HEALTH])
         {
-            i -= 18 * PLRPROFILE.hud.scale;
+            i -= 18 * cfg.hudScale;
         }
         sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-        M_WriteText2(HUDBORDERX, i, buf, huFontA, PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1],
-                     PLRPROFILE.hud.color[2], textalpha);
+        M_WriteText2(HUDBORDERX, i, buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1],
+                     cfg.hudColor[2], textalpha);
     }
 
     // Setup the scaling matrix.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Scalef(PLRPROFILE.hud.scale, PLRPROFILE.hud.scale, 1);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     // Draw the visible HUD data, first health.
-    if(PLRPROFILE.hud.shown[HUD_HEALTH])
+    if(cfg.hudShown[HUD_HEALTH])
     {
         sprintf(buf, "HEALTH");
-        pos = M_StringWidth(buf, huFontA)/2;
-        M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - huFont[0].height - 4,
-                     buf, huFontA, 1, 1, 1, iconalpha);
+        pos = M_StringWidth(buf, GF_FONTA)/2;
+		M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
+                     buf, GF_FONTA, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->health);
-        M_WriteText2(HUDBORDERX + pos - (M_StringWidth(buf, huFontB)/2),
-                     h_height - HUDBORDERY, buf, huFontB,
-                     PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2], textalpha);
+        M_WriteText2(HUDBORDERX + pos - (M_StringWidth(buf, GF_FONTB)/2),
+                     h_height - HUDBORDERY, buf, GF_FONTB,
+                     cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 
         oldPos = pos;
-        pos = HUDBORDERX * 2 + M_StringWidth(buf, huFontB);
+        pos = HUDBORDERX * 2 + M_StringWidth(buf, GF_FONTB);
     }
 
     // Keys  | use a bit of extra scale.
-    if(PLRPROFILE.hud.shown[HUD_KEYS])
+    if(cfg.hudShown[HUD_KEYS])
     {
 Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
         for(i = 0; i < 3; ++i)
@@ -420,10 +428,10 @@ Draw_EndZoom();
     }
     pos = oldPos;
 
-    // jd64 > Laser artifacts
-    if(PLRPROFILE.hud.shown[HUD_POWER])
+    // Inventory
+    if(cfg.hudShown[HUD_INVENTORY])
     {
-        if(plr->artifacts[it_laserpw1])
+        if(P_InventoryCount(player, IIT_DEMONKEY1))
         {
             spr = SPR_ART1;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -431,7 +439,7 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
-        if(plr->artifacts[it_laserpw2])
+        if(P_InventoryCount(player, IIT_DEMONKEY2))
         {
             spr = SPR_ART2;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -439,7 +447,7 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
 
-        if(plr->artifacts[it_laserpw3])
+        if(P_InventoryCount(player, IIT_DEMONKEY3))
         {
             spr = SPR_ART3;
             ST_HUDSpriteSize(spr, &w, &h);
@@ -447,40 +455,39 @@ Draw_EndZoom();
                              HOT_BLEFT, 1, iconalpha, false);
         }
     }
-    // < d64tc
 
-    if(PLRPROFILE.hud.shown[HUD_AMMO])
+    if(cfg.hudShown[HUD_AMMO])
     {
-        ammotype_t ammotype;
+        ammotype_t          ammotype;
 
         //// \todo Only supports one type of ammo per weapon.
         //// for each type of ammo this weapon takes.
         for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
-            if(!weaponInfo[plr->readyWeapon][plr->pClass].mode[0].ammoType[ammotype])
+            if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammotype])
                 continue;
 
             sprintf(buf, "%i", plr->ammo[ammotype]);
-            pos = (h_width/2) - (M_StringWidth(buf, huFontB)/2);
-            M_WriteText2(pos, h_height - HUDBORDERY, buf, huFontB,
-                         PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2], textalpha);
+            pos = (h_width/2) - (M_StringWidth(buf, GF_FONTB)/2);
+            M_WriteText2(pos, h_height - HUDBORDERY, buf, GF_FONTB,
+                         cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
             break;
         }
     }
 
     pos = h_width - 1;
-    if(PLRPROFILE.hud.shown[HUD_ARMOR])
+    if(cfg.hudShown[HUD_ARMOR])
     {
         sprintf(buf, "ARMOR");
-        w = M_StringWidth(buf, huFontA);
+        w = M_StringWidth(buf, GF_FONTA);
         M_WriteText2(h_width - w - HUDBORDERX,
-                     h_height - HUDBORDERY - huFont[0].height - 4,
-                     buf, huFontA, 1, 1, 1, iconalpha);
+					 h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
+                     buf, GF_FONTA, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->armorPoints);
-        M_WriteText2(h_width - (w/2) - (M_StringWidth(buf, huFontB)/2) - HUDBORDERX,
+        M_WriteText2(h_width - (w/2) - (M_StringWidth(buf, GF_FONTB)/2) - HUDBORDERX,
                      h_height - HUDBORDERY,
-                     buf, huFontB, PLRPROFILE.hud.color[0], PLRPROFILE.hud.color[1], PLRPROFILE.hud.color[2],
+                     buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
                      textalpha);
     }
 
@@ -505,7 +512,7 @@ void ST_Drawer(int player, int fullscreenmode)
     hud->firstTime = hud->firstTime;
     hud->statusbarActive = (fullscreenmode < 2) ||
         (AM_IsActive(AM_MapForPlayer(player)) &&
-         (PLRPROFILE.automap.hudDisplay == 0 || PLRPROFILE.automap.hudDisplay == 2));
+         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
     ST_doPaletteStuff(player);
@@ -566,9 +573,6 @@ void ST_loadData(void)
 static void initData(hudstate_t* hud)
 {
     int                 player = hud - hudStates;
-
-    // Ensure the HUD widget lib has been inited.
-    STlib_init();
 
     hud->firstTime = true;
     hud->statusbarActive = true;

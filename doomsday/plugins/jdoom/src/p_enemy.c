@@ -118,7 +118,7 @@ static boolean checkMeleeRange(mobj_t *actor)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
-    if(!GAMERULES.noMaxZMonsterMeleeAttack)
+    if(!cfg.netNoMaxZMonsterMeleeAttack)
     {   // Account for Z height difference.
         if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
            pl->pos[VZ] + pl->height < actor->pos[VZ])
@@ -258,7 +258,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
                 good |= ld == blockLine ? 1 : 2;
         }
 
-        if(!good || GAMERULES.monstersStuckInDoors)
+        if(!good || cfg.monstersStuckInDoors)
             return good;
         else
             return (P_Random() >= 230) || (good & 1);
@@ -438,7 +438,7 @@ static void newChaseDir(mobj_t *actor)
     if(actor->floorZ - actor->dropOffZ > 24 &&
        actor->pos[VZ] <= actor->floorZ &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
-       !GAMERULES.avoidDropoffs && avoidDropoff(actor))
+       !cfg.avoidDropoffs && avoidDropoff(actor))
     {
         // Move away from dropoff.
         doNewChaseDir(actor, dropoffDelta[VX], dropoffDelta[VY]);
@@ -549,7 +549,7 @@ int P_Massacre(void)
     // Only massacre when actually in a map.
     if(G_GetGameState() == GS_MAP)
     {
-        P_IterateThinkers(P_MobjThinker, massacreMobj, &count);
+        DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
@@ -596,7 +596,7 @@ static boolean findBrainTarget(thinker_t* th, void* context)
 void P_SpawnBrainTargets(void)
 {
     // Find all the target spots.
-    P_IterateThinkers(P_MobjThinker, findBrainTarget, NULL);
+    DD_IterateThinkers(P_MobjThinker, findBrainTarget, NULL);
 }
 
 typedef struct {
@@ -627,7 +627,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
     // Check if there are no more Keens left in the map.
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {   // No Keens left alive.
@@ -761,7 +761,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gs.skill != SM_NIGHTMARE && !GAMERULES.fastMonsters)
+        if(gameSkill != SM_NIGHTMARE && !fastParm)
             newChaseDir(actor);
 
         return;
@@ -781,8 +781,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gs.skill < SM_NIGHTMARE && !GAMERULES.fastMonsters &&
-             actor->moveCount))
+        if(!(gameSkill < SM_NIGHTMARE && !fastParm && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1052,7 +1051,7 @@ void C_DECL A_Tracer(mobj_t *actor)
     th = P_SpawnMobj3f(MT_SMOKE,
                        actor->pos[VX] - actor->mom[MX],
                        actor->pos[VY] - actor->mom[MY],
-                       actor->pos[VZ], actor->angle + ANG180);
+                       actor->pos[VZ], actor->angle + ANG180, 0);
 
     th->mom[MZ] = 1;
     th->tics -= P_Random() & 3;
@@ -1157,7 +1156,7 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
 
     // DJS - Used the PRBoom method to fix archvile raising ghosts
     // If !raiseghosts then ressurect a "normal" MF_SOLID one.
-    if(GAMERULES.raiseGhosts)
+    if(cfg.raiseGhosts)
     {
         corpseHit->height *= 2*2;
         check = P_CheckPosition2f(corpseHit, corpseHit->pos[VX], corpseHit->pos[VY]);
@@ -1228,7 +1227,7 @@ void C_DECL A_VileChase(mobj_t *actor)
 
             P_MobjChangeState(corpseHit, P_GetState(corpseHit->type, SN_RAISE));
 
-            if(GAMERULES.raiseGhosts)
+            if(cfg.raiseGhosts)
             {
                 corpseHit->height *= 2*2;
             }
@@ -1305,7 +1304,7 @@ void C_DECL A_VileTarget(mobj_t *actor)
     A_FaceTarget(actor);
 
     fog = P_SpawnMobj3fv(MT_FIRE, actor->target->pos,
-                         actor->target->angle + ANG180);
+                         actor->target->angle + ANG180, 0);
 
     actor->tracer = fog;
     fog->target = actor;
@@ -1461,14 +1460,14 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     float               prestep;
     sector_t*           sec;
 
-    if(GAMERULES.maxSkulls)
+    if(cfg.maxSkulls)
     {   // Limit the number of MT_SKULL's we should spawn.
         countmobjoftypeparams_t params;
 
         // Count total number currently on the map.
         params.type = MT_SKULL;
         params.count = 0;
-        P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+        DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
         if(params.count > 20)
             return; // Too many, don't spit another.
@@ -1485,7 +1484,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     pos[VZ] += 8;
 
     // Compat option to prevent spawning lost souls inside walls.
-    if(!GAMERULES.allowSkullsInWalls)
+    if(!cfg.allowSkullsInWalls)
     {
         /**
          * Check whether the Lost Soul is being fired through a 1-sided
@@ -1496,7 +1495,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         if(P_CheckSides(actor, pos[VX], pos[VY]))
             return;
 
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
+        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
         sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
@@ -1512,7 +1511,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     }
     else
     {   // Use the original DOOM method.
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
+        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
     }
 
     // Check for movements, $dropoff_fix.
@@ -1618,19 +1617,19 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
     {
-        if(gs.map.id != 7)
+        if(gameMap != 7)
             return;
         if((mo->type != MT_FATSO) && (mo->type != MT_BABY))
             return;
     }
     else
     {
-        switch(gs.episode)
+        switch(gameEpisode)
         {
         case 1:
-            if(gs.map.id != 8)
+            if(gameMap != 8)
                 return;
 
             /**
@@ -1643,13 +1642,13 @@ void C_DECL A_BossDeath(mobj_t* mo)
              */
 
             // Added compatibility option.
-            if(!GAMERULES.anyBossDeath)
+            if(!cfg.anyBossDeath)
                 if(mo->type != MT_BRUISER)
                     return;
             break;
 
         case 2:
-            if(gs.map.id != 8)
+            if(gameMap != 8)
                 return;
 
             if(mo->type != MT_CYBORG)
@@ -1657,7 +1656,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         case 3:
-            if(gs.map.id != 8)
+            if(gameMap != 8)
                 return;
 
             if(mo->type != MT_SPIDER)
@@ -1666,7 +1665,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         case 4:
-            switch(gs.map.id)
+            switch(gameMap)
             {
             case 6:
                 if(mo->type != MT_CYBORG)
@@ -1685,7 +1684,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         default:
-            if(gs.map.id != 8)
+            if(gameMap != 8)
                 return;
             break;
         }
@@ -1705,7 +1704,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
@@ -1713,9 +1712,9 @@ void C_DECL A_BossDeath(mobj_t* mo)
     }
 
     // Victory!
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
     {
-        if(gs.map.id == 7)
+        if(gameMap == 7)
         {
             if(mo->type == MT_FATSO)
             {
@@ -1741,7 +1740,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     }
     else
     {
-        switch(gs.episode)
+        switch(gameEpisode)
         {
         case 1:
             dummyLine = P_AllocDummyLine();
@@ -1753,7 +1752,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         case 4:
-            switch(gs.map.id)
+            switch(gameMap)
             {
             case 6:
                 dummyLine = P_AllocDummyLine();
@@ -1776,7 +1775,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         }
     }
 
-    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1786,8 +1785,8 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF |
-                 (gs.gameMode != commercial &&
-                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gameMode != commercial &&
+                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1798,8 +1797,8 @@ void C_DECL A_Metal(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_METAL |
-                 (gs.gameMode != commercial &&
-                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gameMode != commercial &&
+                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1819,18 +1818,19 @@ void C_DECL A_BrainPain(mobj_t *mo)
     S_StartSound(SFX_BOSPN, NULL);
 }
 
-void C_DECL A_BrainScream(mobj_t *mo)
+void C_DECL A_BrainScream(mobj_t* mo)
 {
     float               pos[3];
-    mobj_t             *th;
+    mobj_t*             th;
+
+    pos[VY] = mo->pos[VY] - 320;
 
     for(pos[VX] = mo->pos[VX] - 196; pos[VX] < mo->pos[VX] + 320;
         pos[VX] += 8)
     {
-        pos[VY] = mo->pos[VY] - 320;
         pos[VZ] = 128 + (P_Random() * 2);
 
-        th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24);
+        th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0);
         th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
         P_MobjChangeState(th, S_BRAINEXPLODE1);
@@ -1843,16 +1843,16 @@ void C_DECL A_BrainScream(mobj_t *mo)
     S_StartSound(SFX_BOSDTH, NULL);
 }
 
-void C_DECL A_BrainExplode(mobj_t *mo)
+void C_DECL A_BrainExplode(mobj_t* mo)
 {
     float               pos[3];
-    mobj_t             *th;
+    mobj_t*             th;
 
-    pos[VX] = mo->pos[VX] + ((P_Random() - P_Random()) * 2048);
+    pos[VX] = mo->pos[VX] + FIX2FLT((P_Random() - P_Random()) * 2048);
     pos[VY] = mo->pos[VY];
     pos[VZ] = 128 + (P_Random() * 2);
 
-    th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24);
+    th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0);
     th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
     P_MobjChangeState(th, S_BRAINEXPLODE1);
@@ -1864,7 +1864,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
 
 void C_DECL A_BrainDie(mobj_t *mo)
 {
-    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 }
 
 void C_DECL A_BrainSpit(mobj_t *mo)
@@ -1876,7 +1876,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
         return; // Ignore if no targets.
 
     brain.easy ^= 1;
-    if(gs.skill <= SM_EASY && (!brain.easy))
+    if(gameSkill <= SM_EASY && (!brain.easy))
         return;
 
     // Shoot a cube at current target.
@@ -1918,7 +1918,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     targ = mo->target;
 
     // First spawn teleport fog.
-    fog = P_SpawnMobj3fv(MT_SPAWNFIRE, targ->pos, targ->angle + ANG180);
+    fog = P_SpawnMobj3fv(MT_SPAWNFIRE, targ->pos, targ->angle + ANG180, 0);
     S_StartSound(SFX_TELEPT, fog);
 
     // Randomly select monster to spawn.
@@ -1948,7 +1948,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     else
         type = MT_BRUISER;
 
-    newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24);
+    newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24, 0);
 
     if(lookForPlayers(newmobj, true))
         P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));
@@ -1964,7 +1964,7 @@ void C_DECL A_PlayerScream(mobj_t *mo)
 {
     int                 sound = SFX_PLDETH; // Default death sound.
 
-    if((gs.gameMode == commercial) && (mo->health < -50))
+    if((gameMode == commercial) && (mo->health < -50))
     {
         // If the player dies less with less than -50% without gibbing.
         sound = SFX_PDIEHI;

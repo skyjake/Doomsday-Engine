@@ -71,13 +71,13 @@ static void parseAnimGroup(material_namespace_t mnamespace)
     ignore = true;
     if(mnamespace == MN_TEXTURES)
     {
-        if((matNumBase = P_MaterialCheckNumForName(SC_LastReadString(),
+        if((matNumBase = P_MaterialCheckNumForName(sc_String,
                                                    MN_TEXTURES)) != 0)
             ignore = false;
     }
     else
     {
-        if((lumpNumBase = W_CheckNumForName(SC_LastReadString())) != -1)
+        if((lumpNumBase = W_CheckNumForName(sc_String)) != -1)
             ignore = false;
     }
 
@@ -94,20 +94,20 @@ static void parseAnimGroup(material_namespace_t mnamespace)
                 int                 picNum, min, max = 0;
 
                 SC_MustGetNumber();
-                picNum = SC_LastReadInteger();
+                picNum = sc_Number;
 
                 SC_MustGetString();
                 if(SC_Compare("tics"))
                 {
                     SC_MustGetNumber();
-                    min = SC_LastReadInteger();
+                    min = sc_Number;
                 }
                 else if(SC_Compare("rand"))
                 {
                     SC_MustGetNumber();
-                    min = SC_LastReadInteger();
+                    min = sc_Number;
                     SC_MustGetNumber();
-                    max = SC_LastReadInteger();
+                    max = sc_Number;
                 }
                 else
                 {

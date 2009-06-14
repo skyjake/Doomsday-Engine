@@ -104,7 +104,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup res dmt doomsday dpdehread dpwadmapconverter dswinmm dsdirectsound jdoom jheretic jhexen jdoom64 copydep
+CALL vcbuild.bat cleanup res dmt doomsday dpdehread dpwadmapconverter dsopenal dswinmm dsdirectsound jdoom jheretic jhexen jdoom64 copydep
 GOTO Done
 
 

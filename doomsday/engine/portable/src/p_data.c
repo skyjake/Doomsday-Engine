@@ -70,37 +70,35 @@ extern boolean mapSetup;
  * These map data arrays are internal to the engine.
  */
 char mapID[9]; // Name by which the game referred to the current map.
-uint numVertexes;
-vertex_t* vertexes;
+uint numVertexes = 0;
+vertex_t* vertexes = NULL;
 
-uint numSegs;
-seg_t* segs;
+uint numSegs = 0;
+seg_t* segs = NULL;
 
-uint numSectors;
-sector_t* sectors;
+uint numSectors = 0;
+sector_t* sectors = NULL;
 
-uint numSSectors;
-subsector_t* ssectors;
+uint numSSectors = 0;
+subsector_t* ssectors = NULL;
 
-uint numNodes;
-node_t* nodes;
+uint numNodes = 0;
+node_t* nodes = NULL;
 
-uint numLineDefs;
-linedef_t* lineDefs;
+uint numLineDefs = 0;
+linedef_t* lineDefs = NULL;
 
-uint numSideDefs;
-sidedef_t* sideDefs;
+uint numSideDefs = 0;
+sidedef_t* sideDefs = NULL;
 
-watchedplanelist_t* watchedPlaneList;
-surfacelist_t* movingSurfaceList;
-surfacelist_t* decoratedSurfaceList;
+watchedplanelist_t* watchedPlaneList = NULL;
+surfacelist_t* movingSurfaceList = NULL;
+surfacelist_t* decoratedSurfaceList = NULL;
 
-blockmap_t* BlockMap;
-blockmap_t* SSecBlockMap;
+blockmap_t* BlockMap = NULL;
+blockmap_t* SSecBlockMap = NULL;
 
-byte* rejectMatrix; // For fast sight rejection.
-
-nodepile_t* mobjNodes, *lineNodes; // All kinds of wacky links.
+nodepile_t* mobjNodes = NULL, *lineNodes = NULL; // All kinds of wacky links.
 
 float mapGravity;
 
@@ -155,9 +153,9 @@ const char* P_GenerateUniqueMapID(const char* mapID)
     filename_t          base;
     int                 lump = W_GetNumForName(mapID);
 
-    M_ExtractFileBase(W_LumpSourceFile(lump), base);
+    M_ExtractFileBase(base, W_LumpSourceFile(lump), FILENAME_T_MAXLEN);
 
-    sprintf(uid, "%s|%s|%s|%s", mapID,
+    snprintf(uid, 255, "%s|%s|%s|%s", mapID,
             base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
             (char *) gx.GetVariable(DD_GAME_MODE));
 
@@ -205,7 +203,6 @@ void P_SetCurrentMap(gamemap_t* map)
     numPolyObjs = map->numPolyObjs;
     polyObjs = map->polyObjs;
 
-    rejectMatrix = map->rejectMatrix;
     mobjNodes = &map->mobjNodes;
     lineNodes = &map->lineNodes;
     linelinks = map->lineLinks;
@@ -261,21 +258,6 @@ int P_GetMapAmbientLightLevel(gamemap_t* map)
     return map->ambientLightLevel;
 }
 
-static void spawnParticleGeneratorsForMap(const char* mapID)
-{
-    uint                startTime = Sys_GetRealTime();
-
-    // Spawn all type-triggered particle generators.
-    // Let's hope there aren't too many...
-    P_SpawnTypeParticleGens();
-    P_SpawnMapParticleGens(mapID);
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("spawnParticleGeneratorsForMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-}
-
 /**
  * Begin the process of loading a new map.
  * Can be accessed by the games via the public API.
@@ -324,7 +306,10 @@ boolean P_LoadMap(const char *mapID)
     if(DAM_AttemptMapLoad(mapID))
     {
         uint                i;
-        gamemap_t          *map = P_GetCurrentMap();
+        gamemap_t*          map = P_GetCurrentMap();
+
+        // Init the thinker lists (public and private).
+        P_InitThinkerLists(0x1 | 0x2);
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(P_GetUniqueMapID(map));
@@ -351,15 +336,13 @@ boolean P_LoadMap(const char *mapID)
         // Texture animations should begin from their first step.
         R_ResetAnimGroups();
 
-        // Init Particle Generator links.
-        PG_InitForLevel();
-
         R_InitObjLinksForMap();
         LO_InitForMap(); // Lumobj management.
         DL_InitForMap(); // Projected dynlights (from lumobjs) management.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
-        spawnParticleGeneratorsForMap(P_GetMapID(map));
+        // Init Particle Generator links.
+        P_PtcInitForMap();
 
         // Initialize the lighting grid.
         LG_Init();
@@ -880,7 +863,7 @@ gamemapobj_t* P_GetGameMapObj(gameobjdata_t *moData, gamemapobjdef_t *def,
 
     // It is a new gamemapobj.
     objList->objs =
-        M_Realloc(objList->objs, ++objList->num * sizeof(*objList->objs));
+        M_Realloc(objList->objs, ++objList->num * sizeof(gamemapobj_t*));
 
     gmo = objList->objs[objList->num - 1] = M_Malloc(sizeof(*gmo));
     gmo->elmIdx = elmIdx;

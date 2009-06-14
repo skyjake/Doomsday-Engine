@@ -49,8 +49,8 @@
 #define GAME_NICENAME       "jDoom"
 #define GAME_DETAILS        "jDoom is based on linuxdoom-1.10."
 
-#define GAME_VERSION_TEXT   "1.15.0"
+#define GAME_VERSION_TEXT   "1.15.3"
 #define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" JDOOM_VER_ID ")"
-#define GAME_VERSION_NUMBER 1,15,0,0 // For WIN32 version info.
+#define GAME_VERSION_NUMBER 1,15,3,0 // For WIN32 version info.
 
 #endif

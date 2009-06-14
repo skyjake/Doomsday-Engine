@@ -188,9 +188,6 @@ desc = Send a chat macro.
     
 [beginchat]
 desc = Begin chat mode.
-    
-[msgrefresh]
-desc = Show last HUD message.
 
 [message]
 desc = Show a local game message.
@@ -298,9 +295,6 @@ desc = 1=Show messages.
 
 [msg-echo]
 desc = 1=Echo all messages to the console.
-
-[msg-secret]
-desc = 1=Announce the discovery of secret areas.
 
 [msg-count]
 desc = Number of HUD messages displayed at the same time.
@@ -482,11 +476,11 @@ desc = Automap background color, green component.
 [map-background-b]
 desc = Automap background color, blue component.
 
-[hud-cheat-counter]
-desc = 6-bit bitfield. Show kills, items and secret counters.
+[map-cheat-counter]
+desc = 6-bit bitfield. Show kills, items and secret counters in automap.
 
-[hud-cheat-counter-scale]
-desc = Size factor for the counters.
+[map-cheat-counter-scale]
+desc = Size factor for the counters in the automap.
 
 [map-customcolors]
 desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.
@@ -593,8 +587,8 @@ desc = First slider control.
 [input-joy-slider2]
 desc = Second slider control.
 
-[ctl-aim-auto]
-desc = 1=Autoaiming enabled.
+[ctl-aim-noauto]
+desc = 1=Autoaiming disabled.
 
 [ctl-turn-speed]
 desc = The speed of turning left/right.
@@ -728,6 +722,15 @@ desc = Scale for player weapon bobbing.
 [view-bob-weapon-switch-lower]
 desc = HUD weapon lowered during weapon switching.
 
+[server-game-announce-secret]
+desc = 1=Announce the discovery of secret areas.
+
+[server-game-skill]
+desc = Skill level in multiplayer games.
+
+[server-game-map]
+desc = Map to use in multiplayer games.
+
 [server-game-deathmatch]
 desc = Start multiplayers games as deathmatch.
 
@@ -764,6 +767,9 @@ desc = 1=No monsters.
 [server-game-respawn]
 desc = 1= -respawn was used.
 
+[server-game-respawn-monsters-nightmare]
+desc = 1=Monster respawning in Nightmare difficulty enabled.
+
 [server-game-radiusattack-nomaxz]
 desc = 1=ALL radius attacks are infinitely tall.
 
@@ -787,6 +793,9 @@ desc = Player eye height. The original is 41.
 
 [player-move-speed]
 desc = Player movement speed modifier.
+
+[player-jump]
+desc = 1=Allow jumping.
 
 [player-jump-power]
 desc = Jump power (for all clients if this is the server).

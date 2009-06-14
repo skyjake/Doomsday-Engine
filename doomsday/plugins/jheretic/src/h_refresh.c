@@ -73,41 +73,6 @@ extern const float defFontRGB2[];
 // CODE --------------------------------------------------------------------
 
 /**
- * Creates the translation tables to map the green color ramp to gray,
- * brown, red.
- *
- * \note Assumes a given structure of the PLAYPAL. Could be read from a
- * lump instead.
- */
-static void initTranslation(void)
-{
-    int                 i;
-    byte*               translationtables =
-        (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-
-    // Fill out the translation tables.
-    for(i = 0; i < 256; ++i)
-    {
-        if(i >= 225 && i <= 240)
-        {
-            translationtables[i] = 114 + (i - 225); // yellow
-            translationtables[i + 256] = 145 + (i - 225); // red
-            translationtables[i + 512] = 190 + (i - 225); // blue
-        }
-        else
-        {
-            translationtables[i] = translationtables[i + 256] =
-                translationtables[i + 512] = i;
-        }
-    }
-}
-
-void R_InitRefresh(void)
-{
-    initTranslation();
-}
-
-/**
  * Draws a special filter over the screen.
  */
 void R_DrawSpecialFilter(int pnum)
@@ -121,7 +86,7 @@ void R_DrawSpecialFilter(int pnum)
 
     R_GetViewWindow(&x, &y, &w, &h);
     DGL_Disable(DGL_TEXTURING);
-    if(PLRPROFILE.screen.ringFilter == 1)
+    if(cfg.ringFilter == 1)
     {
         DGL_BlendFunc(DGL_SRC_COLOR, DGL_SRC_COLOR);
         DGL_DrawRect(x, y, w, h, .5f, .35f, .1f, 1);
@@ -166,8 +131,8 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     return false;
 }
 
-void R_DrawMapTitle(int x, int y, float alpha, dpatch_t* font,
-                      boolean center)
+void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
+                    boolean center)
 {
     int                 strX;
     char*               lname, *lauthor;
@@ -181,7 +146,7 @@ void R_DrawMapTitle(int x, int y, float alpha, dpatch_t* font,
 
         M_WriteText3(strX, y, lname, font,
                      defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha,
-                     false, 0);
+                     false, true, 0);
         y += 20;
     }
 
@@ -190,10 +155,10 @@ void R_DrawMapTitle(int x, int y, float alpha, dpatch_t* font,
     {
         strX = x;
         if(center)
-            strX -= M_StringWidth(lauthor, huFontA) / 2;
+            strX -= M_StringWidth(lauthor, GF_FONTA) / 2;
 
-        M_WriteText3(strX, y, lauthor, huFontA, .5f, .5f, .5f, alpha,
-                     false, 0);
+        M_WriteText3(strX, y, lauthor, GF_FONTA, .5f, .5f, .5f, alpha,
+                     false, true, 0);
     }
 }
 
@@ -201,14 +166,20 @@ void R_DrawMapTitle(int x, int y, float alpha, dpatch_t* font,
  * Do not really change anything here, because Doomsday might be in the
  * middle of a refresh. The change will take effect next refresh.
  */
-void R_SetViewSize(int player, int blocks)
+void R_SetViewSize(int blocks)
 {
-    if(PLRPROFILE.screen.setBlocks != blocks && blocks > 10 && blocks < 13)
-    {   // Going to/from fullscreen. Force a hud show event (to reset the timer).
-        ST_HUDUnHide(player, HUE_FORCE);
+    cfg.setSizeNeeded = true;
+
+    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
+    {   // Going to/from fullscreen.
+        int                 i;
+
+        // Force a hud show event (to reset the timer).
+        for(i = 0; i < MAXPLAYERS; ++i)
+            ST_HUDUnHide(i, HUE_FORCE);
     }
 
-    PLRPROFILE.screen.setBlocks = blocks;
+    cfg.setBlocks = blocks;
 }
 
 static void rendPlayerView(int player)
@@ -271,15 +242,16 @@ static void rendHUD(int player)
         if((WINDOWHEIGHT != 200))
             redrawsbar = true;
 
-        if(!(IS_NETGAME && GAMERULES.deathmatch))
-            HU_DrawCheatCounters();
+        // Draw HUD displays only visible when the automap is open.
+        if(AM_IsActive(map))
+            HU_DrawMapCounters();
 
         // Do we need to render a full status bar at this point?
-        if(!(AM_IsActive(map) && PLRPROFILE.automap.hudDisplay == 0) &&
+        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             int         viewmode =
-                ((WINDOWHEIGHT == 200)? (PLRPROFILE.screen.setBlocks - 10) : 0);
+                ((WINDOWHEIGHT == 200)? (cfg.setBlocks - 10) : 0);
 
             ST_Drawer(player, viewmode, redrawsbar); // $democam
         }
@@ -302,24 +274,35 @@ void H_Display(int layer)
 
     if(layer == 0)
     {
-        // $democam: can be set on every frame.
-        if(PLRPROFILE.screen.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        if(G_GetGameState() == GS_MAP)
         {
-            // Full screen.
-            R_SetViewWindowTarget(0, 0, 320, 200);
+            // $democam: can be set on every frame.
+            if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+            {
+                // Full screen.
+                R_SetViewWindowTarget(0, 0, 320, 200);
+            }
+            else
+            {
+                int                 w = cfg.setBlocks * 32;
+                int                 h = cfg.setBlocks *
+                    (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
+
+                R_SetViewWindowTarget(160 - (w / 2),
+                                      (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) / 2,
+                                      w, h);
+            }
+
+            R_GetViewWindow(&x, &y, &w, &h);
         }
         else
         {
-            int                 w = PLRPROFILE.screen.setBlocks * 32;
-            int                 h = PLRPROFILE.screen.setBlocks *
-                (200 - SBARHEIGHT * PLRPROFILE.statusbar.scale / 20) / 10;
-
-            R_SetViewWindowTarget(160 - (w / 2),
-                                  (200 - SBARHEIGHT * PLRPROFILE.statusbar.scale / 20 - h) / 2,
-                                  w, h);
+            x = 0;
+            y = 0;
+            w = SCREENWIDTH;
+            h = SCREENHEIGHT;
         }
 
-        R_GetViewWindow(&x, &y, &w, &h);
         R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
@@ -369,7 +352,7 @@ void H_Display2(void)
         {
             // Level information is shown for a few seconds in the
             // beginning of a level.
-            if(gs.cfg.mapTitle || actualMapTime <= 6 * TICSPERSEC)
+            if(cfg.mapTitle || actualMapTime <= 6 * TICSPERSEC)
             {
                 int         x, y;
                 float       alpha = 1;
@@ -381,8 +364,8 @@ void H_Display2(void)
 
                 x = SCREENWIDTH / 2;
                 y = 13;
-                Draw_BeginZoom((1 + PLRPROFILE.hud.scale)/2, x, y);
-                R_DrawMapTitle(x, y, alpha, huFontB, true);
+                Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
+                R_DrawMapTitle(x, y, alpha, GF_FONTB, true);
                 Draw_EndZoom();
             }
         }
@@ -412,7 +395,7 @@ void H_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(gs.paused && !fiActive)
+    if(paused && !fiActive)
     {
         GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
     }
@@ -461,7 +444,7 @@ void R_SetDoomsdayFlags(mobj_t* mo)
     if(P_MobjIsCamera(mo))
         mo->ddFlags |= DDMF_DONTDRAW;
 
-    if((mo->flags & MF_CORPSE) && PLRPROFILE.corpseTime && mo->corpseTics == -1)
+    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpseTics == -1)
         mo->ddFlags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.
@@ -484,7 +467,8 @@ void R_SetDoomsdayFlags(mobj_t* mo)
        ((mo->flags & MF_MISSILE) && !(mo->flags & MF_VIEWALIGN)))
         mo->ddFlags |= DDMF_VIEWALIGN;
 
-    mo->ddFlags |= (mo->flags & MF_TRANSLATION);
+    if(mo->flags & MF_TRANSLATION)
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
 }
 
 /**

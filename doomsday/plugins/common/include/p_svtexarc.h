@@ -29,6 +29,8 @@
 #ifndef __DD_SAVEGAME_MATERIAL_ARCHIVE_H__
 #define __DD_SAVEGAME_MATERIAL_ARCHIVE_H__
 
+#define MATERIAL_ARCHIVE_VERSION (1)
+
 void            SV_InitMaterialArchives(void);
 
 unsigned short  SV_MaterialArchiveNum(material_t* mat);

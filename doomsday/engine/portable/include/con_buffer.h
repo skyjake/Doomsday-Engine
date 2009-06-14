@@ -31,45 +31,45 @@
 
 // A console buffer line.
 typedef struct cbline_s {
-    uint    len;                // This is the length of the line (no term).
-    char   *text;               // This is the text.
-    int     flags;
+    uint            len; // This is the length of the line (no term).
+    char*           text; // This is the text.
+    int             flags;
 } cbline_t;
 
 #define CBF_ALWAYSFLUSH  0x00000001 // don't leave data in the write buffer.
 
 // A console buffer.
 typedef struct {
-    mutex_t mutex;
-    int     flags;              // CBF_* flags.
-    uint    numLines;           // How many lines are there in the buffer?
-    uint    maxLines;           // Maximum number of lines for the buffer.
-    uint    maxLineLen;         // Maximum length of a line.
+    mutex_t         mutex;
+    int             flags; // CBF_* flags.
+    uint            numLines; // How many lines are there in the buffer?
+    uint            maxLines; // Maximum number of lines for the buffer.
+    uint            maxLineLen; // Maximum length of a line.
 
-    void   *headptr;
-    void   *tailptr;
-    void   *unused;
+    void*           headptr;
+    void*           tailptr;
+    void*           unused;
 
-    cbline_t **index;           // Used when indexing the buffer for read.
-    uint    indexSize;
-    boolean indexGood;          // If the index needs updating.
+    cbline_t**      index; // Used when indexing the buffer for read.
+    uint            indexSize;
+    boolean         indexGood; // If the index needs updating.
 
-    char   *writebuf;           // write buffer.
-    uint    wbc;                // write buffer cursor.
-    int     wbFlags;            // write buffer line flags.
+    char*           writebuf; // write buffer.
+    uint            wbc; // write buffer cursor.
+    int             wbFlags; // write buffer line flags.
 } cbuffer_t;
 
-cbuffer_t      *Con_NewBuffer(uint maxNumLines, uint maxLineLength,
+cbuffer_t*      Con_NewBuffer(uint maxNumLines, uint maxLineLength,
                               int flags);
-void            Con_DestroyBuffer(cbuffer_t *buf);
+void            Con_DestroyBuffer(cbuffer_t* buf);
 
-void            Con_BufferWrite(cbuffer_t *buf, int flags, char *txt);
-void            Con_BufferFlush(cbuffer_t *buf);
-void            Con_BufferClear(cbuffer_t *buf);
-void            Con_BufferSetMaxLineLength(cbuffer_t *buf, uint length);
+void            Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt);
+void            Con_BufferFlush(cbuffer_t* buf);
+void            Con_BufferClear(cbuffer_t* buf);
+void            Con_BufferSetMaxLineLength(cbuffer_t* buf, uint length);
 
-const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx);
-uint            Con_BufferGetLines(cbuffer_t *buf, uint reqCount,
-                                   int firstIdx, cbline_t const **list);
-uint            Con_BufferNumLines(cbuffer_t *buf);
+const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);
+uint            Con_BufferGetLines(cbuffer_t* buf, uint reqCount,
+                                   int firstIdx, cbline_t const** list);
+uint            Con_BufferNumLines(cbuffer_t* buf);
 #endif

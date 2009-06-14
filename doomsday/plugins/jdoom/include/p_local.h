@@ -77,15 +77,12 @@
 #define FRICTION_FLY        (0.91796875f)
 #define FRICTION_HIGH       (0.5f)
 
-#define ONFLOORZ            (DDMINFLOAT)
-#define ONCEILINGZ          (DDMAXFLOAT)
-#define FLOATRANDZ          (DDMAXFLOAT-1)
-
 #define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
 #define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
+extern float turboMul;
 extern int maxAmmo[NUM_AMMO_TYPES];
 extern int clipAmmo[NUM_AMMO_TYPES];
 

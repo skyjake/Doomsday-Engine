@@ -31,9 +31,10 @@
 
 #include "con_decl.h"
 
-boolean     Con_ParseCommands(char *fileName, boolean setdefault);
+boolean     Con_ParseCommands(const char* fileName, boolean setdefault);
 void        Con_SaveDefaults(void);
-boolean     Con_WriteState(const char *fileName, const char *bindingsFileName);
+boolean     Con_WriteState(const char* fileName,
+                           const char* bindingsFileName);
 
 D_CMD(WriteConsole);
 

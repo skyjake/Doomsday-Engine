@@ -58,7 +58,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct gltexture_inst_node_s {
-    int             flags; // Texture instance (GLTXF_*) flags.
+    int             flags; // Texture instance (MLF_*) flags.
     gltexture_inst_t inst;
     struct gltexture_inst_node_s* next; // Next in list of instances.
 } gltexture_inst_node_t;
@@ -76,9 +76,10 @@ D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
 D_CMD(SmoothRaw);
+#ifdef _DEBUG
+D_CMD(TranslateFont);
+#endif
 
-byte* GL_LoadHighResFlat(image_t* img, const char* name);
-byte* GL_LoadHighResPatch(image_t* img, char* name);
 void GL_DoResetDetailTextures(cvar_t* unused);
 
 /// gltexture_t abstract interface:
@@ -87,6 +88,10 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex,
 void            GLTexture_ReleaseTextures(gltexture_t* tex);
 
 void            GLTexture_SetMinMode(gltexture_t* tex, int minMode);
+
+#if _DEBUG
+void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
+#endif
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -131,7 +136,7 @@ int glmode[6] = // Indexed by 'mipmapping'.
 ddtexture_t lightingTextures[NUM_LIGHTING_TEXTURES];
 
 // Names of the flare textures (halos).
-ddtexture_t flareTextures[NUM_FLARE_TEXTURES];
+ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -151,7 +156,11 @@ static gltexture_typedata_t glTextureTypeData[NUM_GLTEXTURE_TYPES] = {
     { GL_LoadSprite }, // GLT_SPRITE
     { GL_LoadDetailTexture }, // GLT_DETAIL
     { GL_LoadShinyTexture }, // GLT_SHINY
-    { GL_LoadMaskTexture } // GLT_MASK
+    { GL_LoadMaskTexture }, // GLT_MASK
+    { GL_LoadModelSkin }, // GLT_MODELSKIN
+    { GL_LoadModelShinySkin }, // GLT_MODELSHINYSKIN
+    { GL_LoadLightMap }, // GLT_LIGHTMAP
+    { GL_LoadFlareTexture }
 };
 
 // CODE --------------------------------------------------------------------
@@ -188,6 +197,9 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("smoothscr", "i", SmoothRaw, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
+#if _DEBUG
+    C_CMD_FLAGS("translatefont", "ss", TranslateFont, CMDF_NO_DEDICATED);
+#endif
 }
 
 /**
@@ -232,7 +244,7 @@ void GL_InitTextureManager(void)
     highResWithPWAD = ArgExists("-pwadtex");
 
     // System textures loaded in GL_LoadSystemTextures.
-    memset(flareTextures, 0, sizeof(flareTextures));
+    memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
     // Initialization done.
@@ -304,6 +316,9 @@ static void calcGammaTable(void)
  */
 int GL_InitPalettedTexture(void)
 {
+    if(novideo)
+        return true;
+
     // Should the extension be used?
     if(!paletted && !ArgCheck("-paltex"))
         return true;
@@ -318,179 +333,6 @@ int GL_InitPalettedTexture(void)
     // Textures must be uploaded as 8-bit, now.
     load8bit = true;
     return true;
-}
-
-/**
- * Lightmaps should be monochrome images.
- */
-void GL_LoadLightMap(ded_lightmap_t *map)
-{
-    image_t             image;
-    filename_t          resource;
-
-    if(map->tex)
-        return; // Already loaded.
-
-    // Default texture name.
-    map->tex = lightingTextures[LST_DYNAMIC].tex;
-
-    if(!strcmp(map->id, "-"))
-    {
-        // No lightmap, if we don't know where to find the map.
-        map->tex = 0;
-    }
-    else if(map->id[0]) // Not an empty string.
-    {
-        // Search an external resource.
-        if(R_FindResource(RC_LIGHTMAP, map->id, "-ck", resource) &&
-           GL_LoadImage(&image, resource, false))
-        {
-            if(!image.isMasked)
-            {
-                // An alpha channel is required. If one is not in the
-                // image data, we'll generate it.
-                GL_ConvertToAlpha(&image, true);
-            }
-
-            map->tex = GL_NewTextureWithParams(image.pixelSize ==
-                                               2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                                               3 ? DGL_RGB : DGL_RGBA,
-                                               image.width, image.height, image.pixels,
-                                               TXCF_NO_COMPRESSION);
-            GL_DestroyImage(&image);
-
-            // Copy this to all defs with the same lightmap.
-            Def_LightMapLoaded(map->id, map->tex);
-        }
-    }
-}
-
-void GL_DeleteLightMap(ded_lightmap_t* map)
-{
-    if(map->tex != lightingTextures[LST_DYNAMIC].tex)
-    {
-        glDeleteTextures(1, (const GLuint*) &map->tex);
-    }
-    map->tex = 0;
-}
-
-/**
- * Flare textures are normally monochrome images but we'll allow full color.
- */
-void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
-{
-    image_t             image;
-    filename_t          resource;
-    boolean             loaded = false;
-
-    if(map->tex)
-        return; // Already loaded.
-
-    // Default texture (automatic).
-    map->tex = 0;
-
-    if(!strcmp(map->id, "-"))
-    {
-        // We don't know where to find the texture.
-        map->tex = 0;
-        map->disabled = true;
-        map->custom = false;
-        loaded = true;
-    }
-    else if(map->id[0]) // Not an empty string.
-    {
-        // Search an external resource.
-        if(R_FindResource(RC_FLAREMAP, map->id, "-ck", resource) &&
-           GL_LoadImage(&image, resource, false))
-        {
-            // A custom flare texture
-            map->custom = true;
-            map->disabled = false;
-
-            if(!image.isMasked || image.pixelSize != 4)
-            {
-                // An alpha channel is required. If one is not in the
-                // image data, we'll generate it.
-                GL_ConvertToAlpha(&image, true);
-            }
-
-            map->tex = GL_NewTextureWithParams2(image.pixelSize ==
-                                                2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                                                3 ? DGL_RGB : DGL_RGBA,
-                                                image.width, image.height, image.pixels,
-                                                TXCF_NO_COMPRESSION, GL_NEAREST, GL_LINEAR,
-                                                0 /*no anisotropy*/,
-                                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-            // Upload the texture.
-            // No mipmapping or resizing is needed, upload directly.
-            GL_DestroyImage(&image);
-
-            // Copy this to all defs with the same flare texture.
-            Def_FlareMapLoaded(map->id, map->tex, map->disabled, map->custom);
-            loaded = true;
-        }
-    }
-
-    if(!loaded)
-    {   // External resource not found.
-        // Perhaps a "built-in" flare texture id?
-        char               *end;
-        int                 id = 0, pass;
-        boolean             ok;
-
-        // First pass:
-        // Try to convert str "map->tex" to a flare tex constant idx
-        // Second pass:
-        // Use oldidx (if available) as a flare tex constant idx
-        for(pass = 0; pass < 2 && !loaded; ++pass)
-        {
-            ok = false;
-            if(pass == 0 && map->id[0])
-            {
-                id = strtol(map->id, &end, 0);
-                if(!(*end && !isspace(*end)))
-                    ok = true;
-            }
-            else if(pass == 1 && oldidx != -1)
-            {
-                id = oldidx;
-                ok = true;
-            }
-
-            if(ok)
-            {   // Yes it is!
-                // Maybe Automatic OR dynlight?
-                if(id == 0 || id == 1)
-                {
-                    map->tex = (id? GL_PrepareLSTexture(LST_DYNAMIC) : 0);
-                    map->custom = false;
-                    map->disabled = false;
-                    loaded = true;
-                }
-                else
-                {
-                    id -= 2;
-                    if(id >= 0 && id < NUM_FLARE_TEXTURES)
-                    {
-                        map->tex = GL_PrepareFlareTexture(id);
-                        map->custom = false;
-                        map->disabled = false;
-                        loaded = true;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void GL_DeleteFlareTexture(ded_flaremap_t* map)
-{
-    if(map->tex != flareTextures[FXT_FLARE].tex)
-    {
-        glDeleteTextures(1, (const GLuint*) &map->tex);
-    }
-    map->tex = 0;
 }
 
 /**
@@ -532,81 +374,15 @@ void GL_LoadSystemTextures(void)
     GL_PrepareLSTexture(LST_DYNAMIC);
     GL_PrepareLSTexture(LST_GRADIENT);
 
-    GL_PrepareFlareTexture(FXT_FLARE);
+    GL_PrepareSysFlareTexture(FXT_ROUND);
+    GL_PrepareSysFlareTexture(FXT_FLARE);
     if(!haloRealistic)
     {
-        GL_PrepareFlareTexture(FXT_BRFLARE);
-        GL_PrepareFlareTexture(FXT_BIGFLARE);
+        GL_PrepareSysFlareTexture(FXT_BRFLARE);
+        GL_PrepareSysFlareTexture(FXT_BIGFLARE);
     }
 
-    PG_InitTextures(); // Load particle textures.
-}
-
-/**
- * Prepares all the lightmap textures.
- */
-void GL_LoadLightmaps(void)
-{
-    int                 i;
-    ded_decor_t*        decor;
-
-    if(!texInited)
-        return;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        GL_LoadLightMap(&defs.lights[i].up);
-        GL_LoadLightMap(&defs.lights[i].down);
-        GL_LoadLightMap(&defs.lights[i].sides);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        int                 k;
-
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-
-            GL_LoadLightMap(&decor->lights[k].up);
-            GL_LoadLightMap(&decor->lights[k].down);
-            GL_LoadLightMap(&decor->lights[k].sides);
-        }
-
-        // Generate RGB lightmaps for decorations.
-        //R_GenerateDecorMap(decor);
-    }
-}
-
-/**
- * Prepares all the flare textures.
- */
-void GL_LoadFlareTextures(void)
-{
-    int                 i;
-    ded_decor_t*        decor;
-
-    if(!texInited)
-        return;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        GL_LoadFlareTexture(&defs.lights[i].flare, -1);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        int                 k;
-
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            GL_LoadFlareTexture(&decor->lights[k].flare,
-                            decor->lights[k].flareTexture);
-        }
-    }
+    Rend_ParticleInitTextures(); // Load particle textures.
 }
 
 /**
@@ -615,48 +391,24 @@ void GL_LoadFlareTextures(void)
  */
 void GL_ClearSystemTextures(void)
 {
-    int                 i, k;
-    ded_decor_t        *decor;
+    int                 i;
 
     if(!texInited)
         return;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        GL_DeleteLightMap(&defs.lights[i].up);
-        GL_DeleteLightMap(&defs.lights[i].down);
-        GL_DeleteLightMap(&defs.lights[i].sides);
-
-        GL_DeleteFlareTexture(&defs.lights[i].flare);
-    }
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-            GL_DeleteLightMap(&decor->lights[k].up);
-            GL_DeleteLightMap(&decor->lights[k].down);
-            GL_DeleteLightMap(&decor->lights[k].sides);
-
-            GL_DeleteFlareTexture(&decor->lights[k].flare);
-        }
-    }
 
     for(i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
         glDeleteTextures(1, (const GLuint*) &lightingTextures[i].tex);
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
-    for(i = 0; i < NUM_FLARE_TEXTURES; ++i)
-        glDeleteTextures(1, (const GLuint*) &flareTextures[i].tex);
-    memset(flareTextures, 0, sizeof(flareTextures));
+    for(i = 0; i < NUM_SYSFLARE_TEXTURES; ++i)
+        glDeleteTextures(1, (const GLuint*) &sysFlareTextures[i].tex);
+    memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
     P_DeleteMaterialTextures(MN_SYSTEM);
     UI_ClearTextures();
 
     // Delete the particle textures.
-    PG_ShutdownTextures();
+    Rend_ParticleShutdownTextures();
 }
 
 /**
@@ -674,8 +426,6 @@ void GL_ClearRuntimeTextures(void)
 
     // gltexture-wrapped GL textures; textures, flats, sprites, system...
     GL_DeleteAllTexturesForGLTextures(GLT_ANY);
-
-    R_DeleteSkinTextures();
 
     {
     patchtex_t** patches, **ptr;
@@ -765,15 +515,17 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
 }
 
 /**
- * Can be rather time-consuming due to scaling operations and mipmap generation.
- * The texture parameters will NOT be set here.
- * @param data  contains indices to the playpal.
- * @param alphaChannel  If true, 'data' also contains the alpha values (after the indices).
- * @return The name of the texture (same as 'texName').
+ * Can be rather time-consuming due to scaling operations and mipmap
+ * generation. The texture parameters will NOT be set here.
+ *
+ * @param data          Contains indices to the color palette.
+ * @param alphaChannel  If true, 'data' also contains the alpha values
+ *                      (after the indices).
+ * @return              The name of the texture (same as 'texName').
  */
-DGLuint GL_UploadTexture2(texturecontent_t *content)
+DGLuint GL_UploadTexture2(texturecontent_t* content)
 {
-    byte   *data = content->buffer;
+    byte*   data = content->buffer;
     int     width = content->width;
     int     height = content->height;
     boolean alphaChannel = ((content->flags & TXCF_UPLOAD_ARG_ALPHACHANNEL) != 0);
@@ -810,7 +562,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
         freeOriginal = true;
         rgbaOriginal = M_Malloc(width * height * comps);
         GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data,
-                         rgbaOriginal, R_GetPalette(), !load8bit);
+                         rgbaOriginal, 0, !load8bit);
     }
 
     if(applyTexGamma)
@@ -826,17 +578,19 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     // If smart filtering is enabled, all textures are magnified 2x.
     if(useSmartFilter && !noSmartFilter /* && comps == 3 */ )
     {
-        byte   *filtered = M_Malloc(4 * width * height * 4);
+        byte*           filtered = M_Malloc(4 * width * height * 4);
 
         if(comps == 3)
         {
             // Must convert to RGBA.
-            byte   *temp = M_Malloc(4 * width * height);
+            byte*           temp = M_Malloc(4 * width * height);
 
             GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp,
-                             R_GetPalette(), !load8bit);
+                             0, !load8bit);
+
             if(freeOriginal)
                 M_Free(rgbaOriginal);
+
             rgbaOriginal = temp;
             freeOriginal = true;
             comps = 4;
@@ -904,6 +658,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     {
         // We are unable to generate mipmaps for paletted textures.
         int             canGenMips = 0;
+        DGLuint         pal = R_GetColorPalette(content->palette);
 
         // Prepare the palette indices buffer, to be handed over to DGL.
         idxBuffer =
@@ -921,18 +676,19 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
             // Convert to palette indices.
             GL_ConvertBuffer(levelWidth, levelHeight, comps,
                              alphaChannel ? 2 : 1, buffer, idxBuffer,
-                             R_GetPalette(), false);
+                             content->palette, false);
 
             // Upload it.
             if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
-                             DGL_COLOR_INDEX_8, levelWidth, levelHeight,
-                             generateMipmaps &&
-                             canGenMips ? true : generateMipmaps ? -i :
-                             false, idxBuffer))
+                            DGL_COLOR_INDEX_8, pal, levelWidth,
+                            levelHeight, generateMipmaps &&
+                            canGenMips ? true : generateMipmaps ? -i :
+                            false, idxBuffer))
             {
                 Con_Error
-                    ("GL_UploadTexture: TexImage failed (%i x %i) as 8-bit, alpha:%i\n",
-                     levelWidth, levelHeight, alphaChannel);
+                    ("GL_UploadTexture: TexImage failed (%i x %i) as "
+                     "8-bit, alpha:%i\n", levelWidth, levelHeight,
+                     alphaChannel);
             }
 
             // If no mipmaps need to generated, quit now.
@@ -952,8 +708,9 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     else
     {
         // DGL knows how to generate mipmaps for RGB(A) textures.
-        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
-                         generateMipmaps ? true : false, buffer))
+        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, 0, levelWidth,
+                        levelHeight, generateMipmaps ? true : false,
+                        buffer))
         {
             Con_Error
                 ("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n",
@@ -973,7 +730,8 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
  *                      1 = loaded data from a lump resource.
  *                      2 = loaded data from an external resource.
  */
-byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, void* context)
+byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst,
+                      void* context)
 {
     static const char* ddTexNames[NUM_DD_TEXTURES] = {
         "unknown",
@@ -994,8 +752,9 @@ byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, void* contex
         Con_Error("GL_LoadDDTexture: Internal error, "
                   "invalid ddtex id %i.", num);
 
-    if(!(R_FindResource(RC_GRAPHICS, ddTexNames[num], NULL, fileName) &&
-         GL_LoadImage(image, fileName, false)))
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_GRAPHICS, fileName,
+                         ddTexNames[num], NULL, FILENAME_T_MAXLEN) &&
+         GL_LoadImage(image, fileName)))
     {
         Con_Error("GL_LoadDDTexture: \"%s\" not found!\n", ddTexNames[num]);
     }
@@ -1025,8 +784,9 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
     {
         filename_t          fileName;
 
-        if(!(R_FindResource(RC_TEXTURE, dTex->external, NULL, fileName) &&
-             GL_LoadImage(image, fileName, false)))
+        if(!(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName,
+                             dTex->external, NULL, FILENAME_T_MAXLEN) &&
+             GL_LoadImage(image, fileName)))
         {
             VERBOSE(Con_Message("GL_LoadDetailTexture: "
                                 "Failed to load: %s\n", dTex->external));
@@ -1037,17 +797,19 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
     }
     else
     {
-        byte*               lumpData = W_CacheLumpNum(dTex->lump, PU_STATIC);
+        const byte*         data = W_CacheLumpNum(dTex->lump, PU_STATIC);
 
         // First try loading it as a PCX image.
-        if(PCX_MemoryGetSize(lumpData, &image->width, &image->height))
+        if(PCX_MemoryGetSize(data, &image->width, &image->height))
         {   // Nice...
             image->pixels = M_Malloc(image->width * image->height * 3);
-            PCX_MemoryLoad(lumpData, W_LumpLength(dTex->lump),
+            PCX_MemoryLoad(data, W_LumpLength(dTex->lump),
                            image->width, image->height, image->pixels);
         }
         else // It must be a raw image.
         {
+            size_t              lumpLength = W_LumpLength(dTex->lump);
+
             /**
              * \ fixme we should not error out here if the lump is not
              * of the required format! Perform this check much earlier,
@@ -1055,11 +817,11 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
              */
 
             // How big is it?
-            if(lumpInfo[dTex->lump].size != 256 * 256)
+            if(lumpLength != 256 * 256)
             {
-                if(lumpInfo[dTex->lump].size != 128 * 128)
+                if(lumpLength != 128 * 128)
                 {
-                    if(lumpInfo[dTex->lump].size != 64 * 64)
+                    if(lumpLength != 64 * 64)
                     {
                         W_ChangeCacheTag(dTex->lump, PU_CACHE);
 
@@ -1093,6 +855,68 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
  *                      1 = a lump resource.
  *                      2 = an external resource.
  */
+byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst,
+                     void* context)
+{
+    lightmap_t*         lmap;
+    filename_t          fileName;
+
+    if(!image)
+        return 0; // Wha?
+
+    lmap = lightMaps[inst->tex->ofTypeID];
+
+    // Search an external resource.
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, lmap->external,
+                         "-ck", FILENAME_T_MAXLEN) &&
+         GL_LoadImage(image, fileName)))
+    {
+        VERBOSE(
+        Con_Message("GL_LoadLightMap: Failed to load: %s\n",
+                    lmap->external));
+        return 0;
+    }
+
+    return 2;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst,
+                         void* context)
+{
+    flaretex_t*         fTex;
+    filename_t          fileName;
+
+    if(!image)
+        return 0; // Wha?
+
+    fTex = flareTextures[inst->tex->ofTypeID];
+
+    // Search an external resource.
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_FLAREMAP, fileName, fTex->external,
+                         "-ck", FILENAME_T_MAXLEN) &&
+         GL_LoadImage(image, fileName)))
+    {
+        VERBOSE(
+        Con_Message("GL_LoadFlareTexture: Failed to load: %s\n",
+                    fTex->external));
+        return 0;
+    }
+
+    return 2;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
 byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst,
                          void* context)
 {
@@ -1104,8 +928,9 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst,
 
     sTex = shinyTextures[inst->tex->ofTypeID];
 
-    if(!(R_FindResource(RC_LIGHTMAP, sTex->external, NULL, fileName) &&
-         GL_LoadImage(image, fileName, false)))
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, sTex->external,
+                         NULL, FILENAME_T_MAXLEN) &&
+         GL_LoadImage(image, fileName)))
     {
         VERBOSE(Con_Printf("GL_LoadShinyTexture: %s not found!\n",
                            sTex->external));
@@ -1132,8 +957,9 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 
     mTex = maskTextures[inst->tex->ofTypeID];
 
-    if(!(R_FindResource(RC_LIGHTMAP, mTex->external, NULL, fileName) &&
-         GL_LoadImage(image, fileName, false)))
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, mTex->external,
+                         NULL, FILENAME_T_MAXLEN) &&
+         GL_LoadImage(image, fileName)))
     {
         VERBOSE(Con_Printf("GL_LoadMaskTexture: %s not found!\n",
                            mTex->external));
@@ -1144,111 +970,142 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst,
 }
 
 /**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst,
+                      void* context)
+{
+    const skinname_t*   sn;
+    filename_t          fileName;
+
+    if(!image)
+        return 0; // Wha?
+
+    sn = &skinNames[inst->tex->ofTypeID];
+
+    if(R_FindResource2(RT_GRAPHIC, DDRC_MODEL, fileName, sn->path, NULL,
+                       FILENAME_T_MAXLEN))
+        if(GL_LoadImage(image, fileName))
+        {
+            return 2; // Always external.
+        }
+
+    VERBOSE(Con_Printf("GL_LoadModelSkin: %s not found!\n", sn->path));
+
+    return 0;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = none loaded.
+ *                      1 = a lump resource.
+ *                      2 = an external resource.
+ */
+byte GL_LoadModelShinySkin(image_t* img, const gltexture_inst_t* inst,
+                           void* context)
+{
+    const skinname_t*   sn;
+    filename_t          resource, fileName;
+    char*               ptr;
+
+    if(!img)
+        return 0; // Wha?
+
+    sn = &skinNames[inst->tex->ofTypeID];
+
+    /**
+     * First sees if there is a color-keyed version. If there is load it.
+     * Otherwise the 'regular' version is loaded.
+     */
+    strncpy(resource, sn->path, FILENAME_T_MAXLEN);
+
+    // Append the "-ck" and try to load.
+    if((ptr = strrchr(resource, '.')))
+    {
+        memmove(ptr + 3, ptr, strlen(ptr) + 1);
+        ptr[0] = '-';
+        ptr[1] = 'c';
+        ptr[2] = 'k';
+
+        if(R_FindResource2(RT_GRAPHIC, DDRC_MODEL, fileName, resource, NULL,
+                           FILENAME_T_MAXLEN))
+            if(GL_LoadImage(img, fileName))
+                return 2;
+    }
+
+    if(R_FindResource2(RT_GRAPHIC, DDRC_MODEL, fileName, sn->path, NULL,
+                       FILENAME_T_MAXLEN))
+        if(GL_LoadImage(img, fileName))
+            return 2;
+
+    VERBOSE(Con_Printf("GL_LoadModelShinySkin: %s not found!\n",
+                       sn->path));
+    return 0;
+}
+
+/**
  * Prepare a texture used in the lighting system. 'which' must be one
  * of the LST_* constants.
  */
 DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 {
-    switch(which)
-    {
-    case LST_DYNAMIC:
-        // The dynamic light map is a 64x64 grayscale 8-bit image.
-        if(!lightingTextures[LST_DYNAMIC].tex)
-        {
-            // We don't want to compress the flares (banding would be noticeable).
-            lightingTextures[LST_DYNAMIC].tex =
-                GL_LoadGraphics3("dLight", LGM_WHITE_ALPHA, GL_LINEAR, GL_LINEAR,
-                                 -1 /*best anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 TXCF_NO_COMPRESSION);
-        }
-        // Global tex variables not set! (scalable texture)
-        return lightingTextures[LST_DYNAMIC].tex;
+    struct lstex_s {
+        const char*     name;
+        int             wrapS, wrapT;
+    } lstexes[NUM_LIGHTING_TEXTURES] = {
+        { "dLight", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "wallglow", GL_REPEAT, GL_CLAMP_TO_EDGE },
+        { "radioCO", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "radioCC", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "radioOO", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE },
+        { "radioOE", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE }
+    };
 
-    case LST_GRADIENT:
-        if(!lightingTextures[LST_GRADIENT].tex)
-        {
-            lightingTextures[LST_GRADIENT].tex =
-                GL_LoadGraphics3("wallglow", LGM_WHITE_ALPHA, GL_LINEAR,
-                                 GL_LINEAR, -1 /*best anisotropy*/,
-                                 GL_REPEAT, GL_CLAMP_TO_EDGE, 0);
-        }
-        // Global tex variables not set! (scalable texture)
-        return lightingTextures[LST_GRADIENT].tex;
-
-    case LST_RADIO_CO:          // closed/open
-    case LST_RADIO_CC:          // closed/closed
-    case LST_RADIO_OO:          // open/open
-    case LST_RADIO_OE:          // open/edge
-        // FakeRadio corner shadows.
-        if(!lightingTextures[which].tex)
-        {
-            switch(which)
-            {
-            case LST_RADIO_CO:
-                lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioCO", LGM_WHITE_ALPHA, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
-                break;
-
-            case LST_RADIO_CC:
-                lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioCC", LGM_WHITE_ALPHA, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
-                break;
-
-            case LST_RADIO_OO:
-                lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioOO", LGM_WHITE_ALPHA, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
-                break;
-
-            case LST_RADIO_OE:
-                lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioOE", LGM_WHITE_ALPHA, GL_LINEAR,
-                                     GL_LINEAR, -1 /*best anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NO_COMPRESSION);
-                break;
-
-            default:
-                break;
-            }
-        }
-        // Global tex variables not set! (scalable texture)
-        return lightingTextures[which].tex;
-
-    default:
-        // Failed to prepare anything.
+    if(which < 0 || which >= NUM_LIGHTING_TEXTURES)
         return 0;
+
+    if(!lightingTextures[which].tex)
+    {
+        lightingTextures[which].tex =
+            GL_PrepareExtTexture(DDRC_GRAPHICS, lstexes[which].name,
+                                 LGM_WHITE_ALPHA, false, GL_LINEAR,
+                                 GL_LINEAR, -1 /*best anisotropy*/,
+                                 lstexes[which].wrapS, lstexes[which].wrapT,
+                                 TXCF_NO_COMPRESSION);
     }
+
+    return lightingTextures[which].tex;
 }
 
-DGLuint GL_PrepareFlareTexture(flaretexid_t flare)
+DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
 {
-    // There are three flare textures.
-    if(flare >= NUM_FLARE_TEXTURES)
+    if(flare >= NUM_SYSFLARE_TEXTURES)
         return 0;
 
-    if(!flareTextures[flare].tex)
+    if(!sysFlareTextures[flare].tex)
     {
         // We don't want to compress the flares (banding would be noticeable).
-        flareTextures[flare].tex =
-            GL_LoadGraphics3(flare == 0 ? "flare" : flare == 1 ? "brflare" :
-                             "bigflare", LGM_WHITE_ALPHA,
-                             GL_NEAREST, GL_LINEAR, 0 /*no anisotropy*/,
+        sysFlareTextures[flare].tex =
+            GL_PrepareExtTexture(DDRC_GRAPHICS,
+                             flare == 0 ? "dlight" :
+                             flare == 1 ? "flare" :
+                             flare == 2 ? "brflare" : "bigflare",
+                             LGM_WHITE_ALPHA, false, GL_NEAREST,
+                             GL_LINEAR, 0 /*no anisotropy*/,
                              GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                              TXCF_NO_COMPRESSION);
 
-        if(flareTextures[flare].tex == 0)
+        if(sysFlareTextures[flare].tex == 0)
         {
-            Con_Error("GL_PrepareFlareTexture: flare texture %i not found!\n",
+            Con_Error("GL_PrepareSysFlareTexture: flare texture %i not found!\n",
                       flare);
         }
     }
 
-    return flareTextures[flare].tex;
+    return sysFlareTextures[flare].tex;
 }
 
 /**
@@ -1257,42 +1114,102 @@ DGLuint GL_PrepareFlareTexture(flaretexid_t flare)
  *                      1 = found and prepared a lump resource.
  *                      2 = found and prepared an external resource.
  */
-byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
+byte GL_LoadExtTexture(image_t* image, ddresourceclass_t resClass,
+                       const char* name, gfxmode_t mode)
+{
+    filename_t          fileName;
+
+    if(R_FindResource2(RT_GRAPHIC, resClass, fileName, name, NULL,
+                       FILENAME_T_MAXLEN) &&
+       GL_LoadImage(image, fileName))
+    {
+        // Too big for us?
+        if(image->width  > GL_state.maxTexSize ||
+           image->height > GL_state.maxTexSize)
+        {
+            int     newWidth = MIN_OF(image->width, GL_state.maxTexSize);
+            int     newHeight = MIN_OF(image->height, GL_state.maxTexSize);
+            byte   *tmp = M_Malloc(newWidth * newHeight * image->pixelSize);
+
+            GL_ScaleBuffer32(image->pixels, image->width, image->height,
+                             tmp, newWidth, newHeight, image->pixelSize);
+            M_Free(image->pixels);
+            image->pixels = tmp;
+            image->width = newWidth;
+            image->height = newHeight;
+        }
+
+        // Force it to grayscale?
+        if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
+        {
+            GL_ConvertToAlpha(image, mode == LGM_WHITE_ALPHA);
+        }
+        else if(mode == LGM_GRAYSCALE)
+        {
+            GL_ConvertToLuminance(image);
+        }
+
+        return 2; // Always external.
+    }
+
+    return 0;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = not prepared
+ *                      1 = found and prepared a lump resource.
+ *                      2 = found and prepared an external resource.
+ */
+byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
+                 void* context)
 {
     const flat_t*       flat;
-    byte                result = 0;
+    size_t              lumpLength;
 
-    if(!image)
-        return result; // Wha?
+    if(!img)
+        return 0; // Wha?
 
     flat = flats[inst->tex->ofTypeID];
 
-    // Try to load a high resolution version of this flat.
-    if((loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)) &&
-       GL_LoadHighResFlat(image, lumpInfo[flat->lump].name) != NULL)
+    // Try to load a high resolution version of this flat?
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
+                         GLTexture_IsFromIWAD(inst->tex)))
     {
-        result = 2;
+        filename_t          file;
+        boolean             found;
+        const char*         lumpName = W_LumpName(flat->lump);
+
+        // First try the Flats category.
+        if(!(found =
+            R_FindResource2(RT_GRAPHIC, DDRC_FLAT, file, lumpName, NULL,
+                            FILENAME_T_MAXLEN)))
+        {   // Try the old-fashioned "Flat-NAME" in the Textures category.
+            filename_t          resource;
+
+            snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lumpName);
+
+            found = R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, file,
+                                    resource, NULL, FILENAME_T_MAXLEN);
+        }
+
+        if(found && GL_LoadImage(img, file))
+            return 2;
     }
-    else
-    {
-        if(lumpInfo[flat->lump].size < 4096)
-            return result; // Too small.
 
-        // Get a pointer to the texture data.
-        image->pixels = M_Malloc(lumpInfo[flat->lump].size);
-        memcpy(image->pixels, W_CacheLumpNum(flat->lump, PU_STATIC),
-               lumpInfo[flat->lump].size);
-        W_ChangeCacheTag(flat->lump, PU_CACHE);
+    if((lumpLength = W_LumpLength(flat->lump)) < 4096)
+        return 0; // Too small.
 
-        image->width = flat->width;
-        image->height = flat->height;
-        image->isMasked = false;
-        image->pixelSize = 1;
+    // Read in the flat.
+    img->pixels = M_Malloc(lumpLength);
+    W_ReadLump(flat->lump, img->pixels);
 
-        result = 1;
-    }
+    img->width = flat->width;
+    img->height = flat->height;
+    img->isMasked = false;
+    img->pixelSize = 1;
 
-    return result;
+    return 1;
 }
 
 /**
@@ -1301,73 +1218,65 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-byte* GL_LoadImage(image_t* img, const char* imagefn, boolean useModelPath)
+static byte* loadImage(image_t* img, const char* imagefn)
 {
     DFILE*              file;
-    char                ext[40];
+    char*               p;
     int                 format;
 
-    // Clear any old values.
-    memset(img, 0, sizeof(*img));
-
-    if(useModelPath)
-    {
-        if(!R_FindModelFile(imagefn, img->fileName))
-            return NULL; // Not found.
-    }
-    else
-    {
-        strcpy(img->fileName, imagefn);
-    }
-
     // We know how to load PCX, TGA and PNG.
-    M_GetFileExt(img->fileName, ext);
-    if(!strcmp(ext, "pcx"))
+    p = M_FindFileExtension(img->fileName);
+    if(p)
     {
-        img->pixels =
-            PCX_AllocLoad(img->fileName, &img->width, &img->height, NULL);
-        img->pixelSize = 3;     // PCXs can't be masked.
-        img->originalBits = 8;
-    }
-    else if(!strcmp(ext, "tga"))
-    {
-        if(!TGA_GetSize(img->fileName, &img->width, &img->height))
-            return NULL;
-
-        file = F_Open(img->fileName, "rb");
-        if(!file)
-            return NULL;
-
-        // Allocate a big enough buffer and read in the image.
-        img->pixels = M_Malloc(4 * img->width * img->height);
-        format =
-            TGA_Load32_rgba8888(file, img->width, img->height, img->pixels);
-        if(format == TGA_TARGA24)
+        if(!strcmp(p, "pcx"))
         {
-            img->pixelSize = 3;
-            img->originalBits = 24;
+            if(!PCX_GetSize(img->fileName, &img->width, &img->height))
+                return NULL;
+
+            img->pixels = M_Malloc(4 * img->width * img->height);
+            PCX_Load(img->fileName, img->width, img->height, img->pixels);
+
+            img->pixelSize = 3; // PCXs can't be masked.
+            img->originalBits = 8;
         }
-        else
+        else if(!strcmp(p, "tga"))
         {
-            img->pixelSize = 4;
-            img->originalBits = 32;
+            if(!TGA_GetSize(img->fileName, &img->width, &img->height))
+                return NULL;
+
+            if(!(file = F_Open(img->fileName, "rb")))
+                return NULL;
+
+            // Allocate a big enough buffer and read in the image.
+            img->pixels = M_Malloc(4 * img->width * img->height);
+            format = TGA_Load32_rgba8888(file, img->width, img->height,
+                                         img->pixels);
+            if(format == TGA_TARGA24)
+            {
+                img->pixelSize = 3;
+                img->originalBits = 24;
+            }
+            else
+            {
+                img->pixelSize = 4;
+                img->originalBits = 32;
+            }
+            F_Close(file);
         }
-        F_Close(file);
-    }
-    else if(!strcmp(ext, "png"))
-    {
-        img->pixels =
-            PNG_Load(img->fileName, &img->width, &img->height,
-                     &img->pixelSize);
-        img->originalBits = 8 * img->pixelSize;
+        else if(!strcmp(p, "png"))
+        {
+            img->pixels = PNG_Load(img->fileName, &img->width, &img->height,
+                                   &img->pixelSize);
+            img->originalBits = 8 * img->pixelSize;
 
-        if(img->pixels == NULL)
-            return NULL;
+            if(img->pixels == NULL)
+                return NULL;
+        }
     }
 
-    VERBOSE(Con_Message
-            ("LoadImage: %s (%ix%i)\n", M_PrettyPath(img->fileName), img->width,
-             img->height));
+    VERBOSE(Con_Message("LoadImage: %s (%ix%i)\n",
+                        M_PrettyPath(img->fileName), img->width,
+                        img->height));
 
     // How about some color-keying?
     if(GL_IsColorKeyed(img->fileName))
@@ -1394,212 +1303,81 @@ byte* GL_LoadImage(image_t* img, const char* imagefn, boolean useModelPath)
     return img->pixels;
 }
 
-/**
- * First sees if there is a color-keyed version of the given image. If
- * there is it is loaded. Otherwise the 'regular' version is loaded.
- */
-byte *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
+byte* GL_LoadImage(image_t* img, const char* imagefn)
 {
-    char                keyFileName[256];
-    byte               *pixels;
-    char               *ptr;
-
-    strcpy(keyFileName, name);
-
-    // Append the "-ck" and try to load.
-    ptr = strrchr(keyFileName, '.');
-    if(ptr)
+    if(img)
     {
-        memmove(ptr + 3, ptr, strlen(ptr) + 1);
-        ptr[0] = '-';
-        ptr[1] = 'c';
-        ptr[2] = 'k';
-        if((pixels = GL_LoadImage(img, keyFileName, useModelPath)) != NULL)
-            return pixels;
+        // Clear any old values.
+        memset(img, 0, sizeof(*img));
+
+        if(imagefn && imagefn[0])
+        {
+            strncpy(img->fileName, imagefn, FILENAME_T_MAXLEN);
+
+            return loadImage(img, imagefn);
+        }
     }
 
-    return GL_LoadImage(img, name, useModelPath);
+    return NULL;
 }
 
 /**
  * Frees all memory associated with the image.
  */
-void GL_DestroyImage(image_t * img)
+void GL_DestroyImage(image_t* img)
 {
-    M_Free(img->pixels);
-    img->pixels = NULL;
-}
-
-/**
- * Name must end in \0.
- */
-byte *GL_LoadHighRes(image_t* img, const char* name, char* prefix,
-                     boolean allowColorKey, resourceclass_t resClass)
-{
-    filename_t          resource, fileName;
-
-    // Form the resource name.
-    sprintf(resource, "%s%s", prefix, name);
-
-    if(!R_FindResource
-       (resClass, resource, allowColorKey ? "-ck" : NULL, fileName))
+    if(img)
     {
-        // There is no such external resource file.
-        return NULL;
+        if(img->pixels)
+            M_Free(img->pixels);
+        img->pixels = NULL;
     }
-
-    return GL_LoadImage(img, fileName, false);
 }
 
 /**
- * Use this when loading custom textures from the Data\*\Textures dir.
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadTexture(image_t* img, const char* name)
-{
-    return GL_LoadHighRes(img, name, "", true, RC_TEXTURE);
-}
-
-/**
- * Use this when loading high-res wall textures.
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadHighResTexture(image_t *img, const char* name)
-{
-    if(noHighResTex)
-        return NULL;
-    return GL_LoadTexture(img, name);
-}
-
-/**
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadHighResFlat(image_t *img, const char *name)
-{
-    byte *ptr;
-
-    if(noHighResTex)
-        return NULL;
-
-    // First try the Flats category.
-    if((ptr = GL_LoadHighRes(img, name, "", false, RC_FLAT)) != NULL)
-        return ptr;
-
-    // Try the old-fashioned "Flat-NAME" in the Textures category.
-    return GL_LoadHighRes(img, name, "flat-", false, RC_TEXTURE);
-}
-
-/**
- * The returned buffer must be freed with M_Free.
- */
-byte *GL_LoadHighResPatch(image_t *img, char *name)
-{
-    if(noHighResTex)
-        return NULL;
-    return GL_LoadHighRes(img, name, "", true, RC_PATCH);
-}
-
-DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
-{
-    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, false, true, 0);
-}
-
-DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap, boolean clamped,
-                         int otherFlags)
-{
-    return GL_LoadGraphics4(resClass, name, mode, useMipmap,
-                            GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
-                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT, otherFlags);
-}
-
-DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
-                         int minFilter, int magFilter, int anisoFilter,
-                         int wrapS, int wrapT, int otherFlags)
-{
-    return GL_LoadGraphics4(RC_GRAPHICS, name, mode, false,
-                            minFilter, magFilter, anisoFilter, wrapS, wrapT,
-                            otherFlags);
-}
-
-/**
- * Extended version that uses a custom resource class.
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
  * actual pixel colors all white.
  */
-DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap,
-                         int minFilter, int magFilter, int anisoFilter,
-                         int wrapS, int wrapT, int otherFlags)
+DGLuint GL_PrepareExtTexture(ddresourceclass_t resClass, const char* name,
+                             gfxmode_t mode, int useMipmap, int minFilter,
+                             int magFilter, int anisoFilter, int wrapS,
+                             int wrapT, int otherFlags)
 {
-    image_t image;
-    filename_t fileName;
-    DGLuint texture = 0;
+    image_t             image;
+    DGLuint             texture = 0;
 
-    if(R_FindResource(resClass, name, NULL, fileName) &&
-       GL_LoadImage(&image, fileName, false))
-    {
-        // Too big for us?
-        if(image.width  > GL_state.maxTexSize ||
-           image.height > GL_state.maxTexSize)
-        {
-            int     newWidth = MIN_OF(image.width, GL_state.maxTexSize);
-            int     newHeight = MIN_OF(image.height, GL_state.maxTexSize);
-            byte   *temp = M_Malloc(newWidth * newHeight * image.pixelSize);
-
-            GL_ScaleBuffer32(image.pixels, image.width, image.height, temp,
-                             newWidth, newHeight, image.pixelSize);
-            M_Free(image.pixels);
-            image.pixels = temp;
-            image.width = newWidth;
-            image.height = newHeight;
-        }
-
-        // Force it to grayscale?
-        if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
-        {
-            GL_ConvertToAlpha(&image, mode == LGM_WHITE_ALPHA);
-        }
-        else if(mode == LGM_GRAYSCALE)
-        {
-            GL_ConvertToLuminance(&image);
-        }
-
-        /*
-        // Generate a new texture name and bind it.
-        glGenTextures(1, (GLuint*) &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        if(image.width < 128 && image.height < 128)
-        {
-            // Small textures will never be compressed.
-            GL_SetTextureCompression(false);
-        }
-        GL_TexImage(image.pixelSize ==
-                    2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                    3 ? DGL_RGB : image.pixelSize ==
-                    4 ? DGL_RGBA : DGL_LUMINANCE, image.width, image.height,
-                    useMipmap, image.pixels);
-        GL_SetTextureCompression(true);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                        useMipmap ? glmode[mipmapping] : GL_LINEAR);
-        */
-
-        texture = GL_NewTextureWithParams2(( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                                             image.pixelSize == 3 ? DGL_RGB :
-                                             image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                                           image.width, image.height, image.pixels,
-                                           ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
-                                             (useMipmap == DDMAXINT? TXCF_GRAY_MIPMAP : 0) |
-                                             (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
-                                           (useMipmap ? glmode[mipmapping] : GL_LINEAR),
-                                           magFilter, texAniso,
-                                           wrapS, wrapT);
+    if(GL_LoadExtTexture(&image, resClass, name, mode))
+    {   // Loaded successfully and converted accordingly.
+        // Upload the image to GL.
+        texture = GL_NewTextureWithParams2(
+            ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+              image.pixelSize == 3 ? DGL_RGB :
+              image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
+            image.width, image.height, image.pixels,
+            ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
+              (useMipmap == DDMAXINT? TXCF_GRAY_MIPMAP : 0) |
+              (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
+              (useMipmap ? glmode[mipmapping] : GL_LINEAR),
+              magFilter, texAniso, wrapS, wrapT);
 
         GL_DestroyImage(&image);
     }
+
     return texture;
+}
+
+/**
+ * Part of the Doomsday public API.
+ */
+DGLuint GL_LoadGraphics(ddresourceclass_t resClass, const char *name,
+                        gfxmode_t mode, int useMipmap, boolean clamped,
+                        int otherFlags)
+{
+    return GL_PrepareExtTexture(resClass, name, mode, useMipmap,
+                            GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
+                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
+                            otherFlags);
 }
 
 /**
@@ -1640,10 +1418,9 @@ static boolean bufferTexture(const doomtexturedef_t* texDef, byte* buffer,
         alphaChannel =
             DrawRealPatch(buffer, /*palette,*/ width, height, patch,
                           patchDef->offX, patchDef->offY,
-                          false, 0, i == texDef->patchCount - 1);
+                          false, i == texDef->patchCount - 1);
     }
 
-    W_ChangeCacheTag(palLump, PU_CACHE);
     return alphaChannel;
 }
 
@@ -1669,7 +1446,7 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
             DrawRealPatch(imgdata, /*palette,*/ width, height,
                           W_CacheLumpNum(patchDef->lump, PU_CACHE),
                           patchDef->offX, patchDef->offY,
-                          zeroMask, 0, false);
+                          zeroMask, false);
         }
     }
     else
@@ -1693,7 +1470,7 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
         numpels = width * bufHeight;
         imgdata = M_Calloc(2 * numpels);
         DrawRealPatch(imgdata, /*palette,*/ width, bufHeight, patch, 0, 0,
-                      zeroMask, 0, false);
+                      zeroMask, false);
     }
 
     *outbuffer = imgdata;
@@ -1710,12 +1487,11 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
 {
     int                 i, flags = 0;
     doomtexturedef_t*   texDef;
-    byte                result = 0;
     boolean             loadAsSky = false, zeroMask = false;
     material_load_params_t* params = (material_load_params_t*) context;
 
     if(!image)
-        return result; // Wha?
+        return 0; // Wha?
 
     if(params)
     {
@@ -1725,57 +1501,117 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
 
     texDef = R_GetDoomTextureDef(inst->tex->ofTypeID);
 
-    // Try to load a high resolution version of this texture.
-    if((loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)) &&
-       GL_LoadHighResTexture(image, texDef->name) != NULL)
+    // Try to load a high resolution version of this texture?
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
+                         GLTexture_IsFromIWAD(inst->tex)))
     {
-        // High resolution texture loaded.
-        result = 2;
+        filename_t          fileName;
+
+        if(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, texDef->name,
+                           "-ck", FILENAME_T_MAXLEN))
+            if(GL_LoadImage(image, fileName))
+                return 2; // High resolution texture loaded.
+    }
+
+    // None found. Load the lowres version.
+    image->width = texDef->width;
+    image->height = texDef->height;
+    image->pixelSize = 1;
+
+    if(loadAsSky)
+    {
+        bufferSkyTexture(texDef, &image->pixels, image->width,
+                         image->height, zeroMask);
+        image->isMasked = zeroMask;
     }
     else
     {
-        image->width = texDef->width;
-        image->height = texDef->height;
-        image->pixelSize = 1;
+        /**
+         * \todo if we are resizing masked textures re match patches then
+         * we are needlessly duplicating work.
+         */
+        image->pixels = M_Malloc(2 * image->width * image->height);
+        image->isMasked =
+            bufferTexture(texDef, image->pixels, image->width,
+                          image->height, &i);
 
-        if(loadAsSky)
+        // The -bigmtex option allows the engine to resize masked
+        // textures whose patches are too big to fit the texture.
+        if(allowMaskedTexEnlarge && image->isMasked && i)
         {
-            bufferSkyTexture(texDef, &image->pixels, image->width,
-                             image->height, zeroMask);
-            image->isMasked = zeroMask;
-
-            result = 1;
-        }
-        else
-        {
-            /**
-             * \todo if we are resizing masked textures re match patches then
-             * we are needlessly duplicating work.
-             */
+            // Adjust the defined height to fit the largest patch.
+            texDef->height = image->height = i;
+            // Get a new buffer.
+            M_Free(image->pixels);
             image->pixels = M_Malloc(2 * image->width * image->height);
             image->isMasked =
                 bufferTexture(texDef, image->pixels, image->width,
-                              image->height, &i);
+                              image->height, 0);
+        }
 
-            // The -bigmtex option allows the engine to resize masked
-            // textures whose patches are too big to fit the texture.
-            if(allowMaskedTexEnlarge && image->isMasked && i)
+    }
+
+    return 1;
+}
+
+/**
+ * @return              The outcome:
+ *                      0 = not prepared
+ *                      1 = found and prepared a lump resource.
+ *                      2 = found and prepared an external resource.
+ */
+byte GL_LoadDoomPatch(image_t* image, const patchtex_t* p)
+{
+    if(!image)
+        return 0; // Wha?
+
+    // Try to load a high resolution version of the patch?
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
+                         W_IsFromIWAD(p->lump)))
+    {
+        filename_t          fileName;
+
+        if(R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
+                           W_LumpName(p->lump), "-ck", FILENAME_T_MAXLEN))
+            if(GL_LoadImage(image, fileName))
+                return 2; // High resolution patch loaded.
+    }
+
+    // Use data from the normal lump.
+    if(p->lump >= 0 && p->lump < numLumps)
+    {
+        boolean             scaleSharp = (upscaleAndSharpenPatches ||
+            (p->flags & PF_UPSCALE_AND_SHARPEN));
+        int                 patchWidth, patchHeight;
+        const lumppatch_t*  patch;
+
+        patch = W_CacheLumpNum(p->lump, PU_CACHE);
+        patchWidth = SHORT(patch->width);
+        patchHeight = SHORT(patch->height);
+
+        if(patchWidth * patchHeight)
+        {
+            if(scaleSharp)
             {
-                // Adjust the defined height to fit the largest patch.
-                texDef->height = image->height = i;
-                // Get a new buffer.
-                M_Free(image->pixels);
-                image->pixels = M_Malloc(2 * image->width * image->height);
-                image->isMasked =
-                    bufferTexture(texDef, image->pixels, image->width,
-                                  image->height, 0);
+                patchWidth += 2;
+                patchHeight += 2;
             }
 
-            result = 1;
+            image->width = patchWidth;
+            image->height = patchHeight;
+            image->pixelSize = 1;
+
+            // Allocate memory for the patch.
+            image->pixels = M_Calloc(2 * image->width * image->height);
+            image->isMasked = DrawRealPatch(image->pixels, image->width,
+                image->height, patch, scaleSharp? 1 : 0,
+                scaleSharp? 1 : 0, false, true);
+
+            return 1;
         }
     }
 
-    return result;
+    return 0;
 }
 
 /**
@@ -1784,17 +1620,16 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
  *                      1 = loaded data from a lump resource.
  *                      2 = loaded data from an external resource.
  */
-byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
+byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
+                   void* context)
 {
-    spritetex_t*        sprTex;
-    filename_t          resource, fileName;
+    const spritetex_t*  sprTex;
     int                 tmap = 0, tclass = 0;
     boolean             pSprite = false;
-    byte                result = 0;
     material_load_params_t* params = (material_load_params_t*) context;
 
     if(!image)
-        return result; // Wha?
+        return 0; // Wha?
 
     sprTex = spriteTextures[inst->tex->ofTypeID];
 
@@ -1805,53 +1640,80 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
         pSprite = params->pSprite;
     }
 
-    // Compose a resource name.
-    if(pSprite)
+    // Attempt to load a high resolution version of this sprite?
+    if(!noHighResPatches)
     {
-        sprintf(resource, "%s-hud", lumpInfo[sprTex->lump].name);
-    }
-    else
-    {
-        if(tclass || tmap)
-        {   // Translated.
-            sprintf(resource, "%s-table%i%i",
-                    lumpInfo[sprTex->lump].name, tclass, tmap);
+        filename_t          resource, fileName;
+        boolean             found;
+        const char*         lumpName = W_LumpName(sprTex->lump);
+
+        // Compose a resource name.
+        if(pSprite)
+        {
+            snprintf(resource, FILENAME_T_MAXLEN, "%s-hud", lumpName);
         }
         else
-        {   // Not translated; use the normal resource.
-            strcpy(resource, lumpInfo[sprTex->lump].name);
+        {
+            if(tclass || tmap)
+            {   // Translated.
+                snprintf(resource, FILENAME_T_MAXLEN, "%s-table%i%i",
+                         lumpName, tclass, tmap);
+            }
+            else
+            {   // Not translated; use the normal resource.
+                strncpy(resource, lumpName, FILENAME_T_MAXLEN);
+            }
         }
+
+        found = R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName, resource,
+                                "-ck", FILENAME_T_MAXLEN);
+        if(!found && pSprite)
+            found = R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
+                                    lumpName, "-ck", FILENAME_T_MAXLEN);
+
+        if(found && GL_LoadImage(image, fileName) != NULL)
+            return 2; // Loaded high resolution sprite.
     }
 
-    if(!noHighResPatches &&
-       (R_FindResource(RC_PATCH, resource, "-ck", fileName) ||
-        (pSprite && R_FindResource(RC_PATCH, lumpInfo[sprTex->lump].name, "-ck", fileName))) &&
-       GL_LoadImage(image, fileName, false) != NULL)
     {
-        // A high-resolution version of this sprite has been found.
-        result = 2;
+    boolean             freePatch = false;
+    const lumppatch_t*  patch;
+    void*               tmp = NULL;
+
+    image->width = sprTex->width;
+    image->height = sprTex->height;
+    image->pixelSize = 1;
+    image->pixels = M_Calloc(2 * image->width * image->height);
+
+    if(tclass || tmap)
+    {
+        int                 offset = -256 +
+            tclass * ((8-1) * 256) + tmap * 256;
+
+        // We need to translate the patch.
+        tmp = M_Malloc(W_LumpLength(sprTex->lump));
+        W_ReadLump(sprTex->lump, tmp);
+        GL_TranslatePatch((lumppatch_t*) tmp,
+                          &translationTables[MAX_OF(0, offset)]);
+
+        patch = (lumppatch_t*) tmp;
+        freePatch = true;
     }
     else
-    {   // There's no name for this patch, load it in.
-        unsigned char*      table = NULL;
-        lumppatch_t*        patch =
-            (lumppatch_t*) W_CacheLumpNum(sprTex->lump, PU_CACHE);
-
-        if(tclass || tmap)
-            table = translationTables - 256 + tclass * ((8 - 1) * 256) + tmap * 256;
-
-        image->width = sprTex->width;
-        image->height = sprTex->height;
-        image->pixelSize = 1;
-        image->pixels = M_Calloc(2 * image->width * image->height);
-
-        DrawRealPatch(image->pixels, image->width, image->height, patch,
-                      0, 0, false, table, false);
-
-        result = 1;
+    {
+        patch = W_CacheLumpNum(sprTex->lump, PU_STATIC);
     }
 
-    return result;
+    DrawRealPatch(image->pixels, image->width, image->height, patch,
+                  0, 0, false, false);
+
+    if(freePatch)
+        M_Free(tmp);
+    else
+        W_ChangeCacheTag(sprTex->lump, PU_CACHE);
+
+    return 1;
+    }
 }
 
 void GL_SetPSprite(material_t* mat)
@@ -1882,30 +1744,60 @@ void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
                    ms.units[MTU_PRIMARY].magMode);
 }
 
-DGLuint GL_GetPatchOtherPart(int idx)
+/**
+ * @return              The outcome:
+ *                      0 = not prepared
+ *                      1 = found and prepared a lump resource.
+ *                      2 = found and prepared an external resource.
+ */
+byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 {
-    patchtex_t*         patchTex = R_GetPatchTex(idx);
+    byte                result = 0;
+    filename_t          fileName;
 
-    if(!patchTex->tex)
+    if(!image)
+        return result; // Wha?
+
+    // First try to find an external resource.
+    if(R_FindResource2(RT_GRAPHIC, DDRC_PATCH, fileName,
+                       W_LumpName(r->lump), NULL, FILENAME_T_MAXLEN) &&
+       GL_LoadImage(image, fileName) != NULL)
+    {   // High resolution rawtex loaded.
+        result = 2;
+    }
+    else
     {
-        // The patch isn't yet bound with OpenGL.
-        patchTex->tex = GL_BindTexPatch(patchTex);
+        // Must load the old-fashioned data lump.
+        const byte*         lumpdata;
+        size_t              lumpLength = W_LumpLength(r->lump);
+
+        // Load the raw image data.
+        lumpdata = W_CacheLumpNum(r->lump, PU_STATIC);
+
+        image->width = 320;
+
+        // Try to load it as a PCX image first.
+        image->pixels = M_Malloc(3 * 320 * 200);
+
+        if(PCX_MemoryLoad(lumpdata, lumpLength, 320, 200, image->pixels))
+        {
+            image->height = 200;
+            image->pixelSize = 3;
+        }
+        else
+        {
+            // PCX load failed. It must be an old-fashioned raw image.
+            memcpy(image->pixels, lumpdata, 3 * 320 * 200);
+            image->height = (int) (lumpLength / 320);
+            image->pixelSize = 1;
+        }
+
+        W_ChangeCacheTag(r->lump, PU_CACHE);
+
+        result = 1;
     }
 
-    return patchTex->tex2;
-}
-
-DGLuint GL_GetRawOtherPart(int idx)
-{
-    rawtex_t*           raw = R_GetRawTex(idx);
-
-    if(!raw->tex)
-    {
-        // The raw isn't yet bound with OpenGL.
-        raw->tex = GL_BindTexRaw(raw);
-    }
-
-    return GL_GetRawTexInfo(idx, true);
+    return result;
 }
 
 /**
@@ -1914,12 +1806,12 @@ DGLuint GL_GetRawOtherPart(int idx)
  * 2003-05-30 (skyjake): External resources can be larger than 320x200,
  * but they're never split into two parts.
  */
-DGLuint GL_BindTexRaw(rawtex_t *raw)
+DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 {
-    image_t             image;
-    int                 lump = raw->lump;
+    if(!raw)
+        return 0; // Wha?
 
-    if(lump < 0 || lump >= numLumps)
+    if(raw->lump < 0 || raw->lump >= numLumps)
     {
         GL_BindTexture(0, 0);
         return 0;
@@ -1927,12 +1819,14 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
 
     if(!raw->tex)
     {
-        // First try to find an external resource.
-        filename_t          fileName;
+        image_t             image;
+        byte                result;
 
-        if(R_FindResource(RC_PATCH, lumpInfo[lump].name, NULL, fileName) &&
-           GL_LoadImage(&image, fileName, false) != NULL)
-        {
+        // Clear any old values.
+        memset(&image, 0, sizeof(image));
+
+        if((result = GL_LoadRawTex(&image, raw)) == 2)
+        {   // Loaded an external raw texture.
             // We have the image in the buffer. We'll upload it as one
             // big texture.
             raw->tex =
@@ -1952,82 +1846,60 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
         }
         else
         {
-            // Must load the old-fashioned data lump.
-            byte   *lumpdata, *image;
-            int     height, assumedWidth = 320;
-            boolean need_free_image = true;
-            boolean rgbdata;
-            int     comps;
+            int                 assumedWidth = 320;
+            boolean             rgbdata = (image.pixelSize > 1? true:false);
 
-            // Load the raw image data.
-            // It's most efficient to create two textures for it (256 + 64 = 320).
-            lumpdata = W_CacheLumpNum(lump, PU_STATIC);
-            height = 200;
+            // It's most efficient to create two textures (256+64 = 320).
 
-            // Try to load it as a PCX image first.
-            image = M_Malloc(3 * 320 * 200);
-            if(PCX_MemoryLoad(lumpdata, lumpInfo[lump].size, 320, 200, image))
+            if(!(image.height < 200))
             {
-                rgbdata = true;
-                comps = 3;
-            }
-            else
-            {
-                // PCX load failed. It must be an old-fashioned raw image.
-                need_free_image = false;
-                M_Free(image);
-                height = (int) (lumpInfo[lump].size / 320);
-                rgbdata = false;
-                comps = 1;
-                image = lumpdata;
-            }
-
-            if(!(height < 200))
-            {
-                int     i, k, c, idx;
-                byte   *dat1, *dat2;
+                int                 k, comps = image.pixelSize;
+                byte*               dat1, *dat2;
 
                 // Two pieces:
                 dat1 = M_Calloc(comps * 256 * 256);
                 dat2 = M_Calloc(comps * 64 * 256);
 
                 // Image data loaded, divide it into two parts.
-                for(k = 0; k < height; ++k)
+                for(k = 0; k < image.height; ++k)
+                {
+                    int                 i;
+
                     for(i = 0; i < 256; ++i)
                     {
-                        idx = k * assumedWidth + i;
+                        int                 c, idx = k * assumedWidth + i;
+
                         // Part one.
                         for(c = 0; c < comps; ++c)
-                            dat1[(k * 256 + i) * comps + c] = image[idx * comps + c];
-
-                        // We can setup part two at the same time.
-                        for(c = 0; c < comps; ++c)
                         {
+                            dat1[(k * 256 + i) * comps + c] =
+                                image.pixels[idx * comps + c];
+
+                            // We can setup part two at the same time.
                             dat2[(k * 64 + i) * comps + c] =
-                                image[(idx + 256) * comps + c];
+                                image.pixels[(idx + 256) * comps + c];
                         }
                     }
+                }
 
                 // Upload part one.
-                raw->tex =
-                    GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
-                                     false, rgbdata, false, false,
-                                     GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
-                                     0 /*no anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
+                raw->tex = GL_UploadTexture(dat1, 256,
+                    assumedWidth < 320 ? image.height : 256, false, false,
+                    rgbdata, false, false, GL_NEAREST,
+                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 // And the other part.
-                raw->tex2 =
-                    GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
-                                     GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
-                                     0 /*no anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
+                raw->tex2 = GL_UploadTexture(dat2, 64, 256, false, false,
+                    rgbdata, false, false, GL_NEAREST,
+                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
                 raw->width2 = 64;
-                raw->height = raw->height2 = height;
+                raw->height = raw->height2 = image.height;
                 M_Free(dat1);
                 M_Free(dat2);
             }
@@ -2036,24 +1908,20 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                 assumedWidth = 256;
 
                 // Generate a texture.
-                raw->tex =
-                    GL_UploadTexture(image, 256, height,
-                                     false, false, rgbdata, false, false,
-                                     GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
-                                     0 /*no anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
+                raw->tex = GL_UploadTexture(image.pixels, 256, image.height,
+                    false, false, rgbdata, false, false, GL_NEAREST,
+                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
                 raw->width = 256;
-                raw->height = height;
+                raw->height = image.height;
 
                 raw->tex2 = 0;
                 raw->width2 = raw->height2 = 0;
             }
 
-            if(need_free_image)
-                M_Free(image);
-            W_ChangeCacheTag(lump, PU_CACHE);
+            GL_DestroyImage(&image);
         }
     }
 
@@ -2063,29 +1931,200 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
 /**
  * Returns the OpenGL name of the texture.
  */
-DGLuint GL_PrepareRawTex(lumpnum_t lump, boolean part2)
+DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
 {
-    rawtex_t           *raw = R_GetRawTex(lump);
-
-    if(!raw->tex)
+    if(rawTex)
     {
-        // The rawtex isn't yet bound with OpenGL.
-        raw->tex = GL_BindTexRaw(raw);
+        if(!rawTex->tex)
+        {   // The rawtex isn't yet bound with OpenGL.
+            rawTex->tex = GL_PrepareRawTex2(rawTex);
+        }
+
+        return rawTex->tex;
     }
 
-    return GL_GetRawTexInfo(lump, part2);
+    return 0;
 }
 
-unsigned int GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
-                            int wrapT)
+/**
+ * Returns the OpenGL name of the texture.
+ */
+DGLuint GL_PrepareRawTexOtherPart(rawtex_t* rawTex)
 {
-    DGLuint             tex;
+    if(rawTex)
+    {
+        if(!rawTex->tex)
+        {   // The rawtex isn't yet bound with OpenGL.
+            rawTex->tex = GL_PrepareRawTex2(rawTex);
+        }
 
-    GL_BindTexture(tex = GL_PrepareRawTex(lump, part2),
-                   (linearRaw ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-    return (unsigned int) tex;
+        return rawTex->tex2;
+    }
+
+    return 0;
+}
+
+void GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT)
+{
+    rawtex_t*           rawTex;
+
+    if((rawTex = R_GetRawTex(lump)))
+    {
+        DGLuint             tex;
+
+        if(!part2)
+            tex = GL_PrepareRawTex(rawTex);
+        else
+            tex = GL_PrepareRawTexOtherPart(rawTex);
+
+        GL_BindTexture(tex,
+                       (linearRaw ? GL_LINEAR : GL_NEAREST));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+    }
+}
+
+DGLuint GL_GetLightMapTexture(const char* name)
+{
+    lightmap_t*         lmap;
+
+    if(name && name[0])
+    {
+        if(name[0] == '-')
+            return 0;
+
+        if((lmap = R_GetLightMap(name)))
+        {
+            const gltexture_inst_t* texInst;
+
+            if((texInst = GL_PrepareGLTexture(lmap->id, NULL, NULL)))
+                return texInst->id;
+        }
+    }
+
+    // Return the default texture name.
+    return GL_PrepareLSTexture(LST_DYNAMIC);
+}
+
+#if 0
+/**
+ * Flare textures are normally monochrome images but we'll allow full color.
+ */
+void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
+{
+    boolean             loaded = false;
+
+    if(map->tex)
+        return; // Already loaded.
+
+    // Default texture (automatic).
+    map->tex = 0;
+
+    if(!strcmp(map->id, "-"))
+    {
+        // We don't know where to find the texture.
+        map->tex = 0;
+        map->disabled = true;
+        map->custom = false;
+        loaded = true;
+    }
+    else if(map->id[0]) // Not an empty string.
+    {
+        // A custom flare texture
+        map->custom = true;
+        map->disabled = false;
+
+        if prepareFails
+            setChosenTexture to default;
+    }
+
+    if(!loaded)
+    {   // External resource not found.
+        // Perhaps a "built-in" flare texture id?
+        char*               end;
+        int                 id = 0, pass;
+        boolean             ok;
+
+        // First pass:
+        // Try to convert str "map->tex" to a flare tex constant idx
+        // Second pass:
+        // Use oldidx (if available) as a flare tex constant idx
+        for(pass = 0; pass < 2 && !loaded; ++pass)
+        {
+            ok = false;
+            if(pass == 0 && map->id[0])
+            {
+                id = strtol(map->id, &end, 0);
+                if(!(*end && !isspace(*end)))
+                    ok = true;
+            }
+            else if(pass == 1 && oldIdx != -1)
+            {
+                id = oldIdx;
+                ok = true;
+            }
+
+            if(ok)
+            {   // Yes it is!
+                // Maybe Automatic OR dynlight?
+                if(id == 0 || id == 1)
+                {
+                    map->tex = (id? GL_PrepareLSTexture(LST_DYNAMIC) : 0);
+                    map->custom = false;
+                    map->disabled = false;
+                    loaded = true;
+                }
+                else
+                {
+                    id -= 2;
+                    if(id >= 0 && id < NUM_FLARE_TEXTURES)
+                    {
+                        map->tex = GL_PrepareFlareTexture(id);
+                        map->custom = false;
+                        map->disabled = false;
+                        loaded = true;
+                    }
+                }
+            }
+        }
+    }
+}
+#endif
+
+/**
+ * Attempt to locate and prepare a flare texture.
+ * Somewhat more complicated than it needs to be due to the fact there
+ * are two different selection methods.
+ *
+ * @param name          Name of a flare texture or "0" to "4".
+ * @param oldIdx        Old method of flare texture selection, by id.
+ */
+DGLuint GL_GetFlareTexture(const char* name, int oldIdx)
+{
+    if(name && name[0])
+    {
+        flaretex_t*         fTex;
+
+        if(name[0] == '-' || (name[0] == '0' && !name[1]))
+            return 0; // Use the automatic selection logic.
+
+        if(name[0] >= '1' && name[0] <= '4' && !name[1])
+            return GL_PrepareSysFlareTexture(name[0] - '1');
+
+        if((fTex = R_GetFlareTexture(name)))
+        {
+            const gltexture_inst_t* texInst;
+
+            if((texInst = GL_PrepareGLTexture(fTex->id, NULL, NULL)))
+                return texInst->id;
+        }
+    }
+    else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
+    {
+        return GL_PrepareSysFlareTexture(oldIdx-1);
+    }
+
+    return 0; // Use the automatic selection logic.
 }
 
 /**
@@ -2190,175 +2229,154 @@ static void SharpenPixels(byte* pixels, int width, int height)
 /**
  * \note: No mipmaps are generated for regular patches.
  */
-DGLuint GL_BindTexPatch(patchtex_t* p)
+DGLuint GL_PreparePatch2(patchtex_t* p)
 {
-    lumppatch_t*        patch;
-    byte*               patchptr;
-    image_t             image;
-    lumpnum_t           lump = p->lump;
-
-    if(lump < 0 || lump >= numLumps)
+    if(!p->tex)
     {
-        GL_BindTexture(0, 0);
-        return 0;
-    }
+        image_t             image;
+        byte                result;
 
-    patch = (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
-    p->offX = -SHORT(patch->leftOffset);
-    p->offY = -SHORT(patch->topOffset);
-    p->extraOffset[VX] = p->extraOffset[VY] = 0;
+        if(p->lump < 0 || p->lump >= numLumps)
+        {
+            GL_BindTexture(0, 0);
+            return 0;
+        }
 
-    // Let's first try the resource locator and see if there is a
-    // 'high-resolution' version available.
-    if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
-       (patchptr = GL_LoadHighResPatch(&image, lumpInfo[lump].name)) != NULL)
-    {
-        // This is our texture! No mipmaps are generated.
-        p->tex =
-            GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, false, true, false, false,
-                             GL_NEAREST, glmode[texMagMode], texAniso,
-                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
+        {
+        lumppatch_t*        patch;
+        patch = (lumppatch_t*) W_CacheLumpNum(p->lump, PU_CACHE);
+        p->offX = -SHORT(patch->leftOffset);
+        p->offY = -SHORT(patch->topOffset);
+        p->extraOffset[VX] = p->extraOffset[VY] = 0;
         p->width = SHORT(patch->width);
         p->height = SHORT(patch->height);
-
-        // The original image is no longer needed.
-        GL_DestroyImage(&image);
-    }
-    else
-    {
-        // Use data from the normal lump.
-        boolean scaleSharp = (upscaleAndSharpenPatches ||
-                              (p->flags & PF_UPSCALE_AND_SHARPEN));
-        int     addBorder = (scaleSharp? 1 : 0);
-        int     patchWidth = SHORT(patch->width) + addBorder*2;
-        int     patchHeight = SHORT(patch->height) + addBorder*2;
-        int     numpels = patchWidth * patchHeight, alphaChannel;
-        byte   *buffer;
-
-        if(!numpels)
-            return 0; // This won't do!
-
-        // Allocate memory for the patch.
-        buffer = M_Calloc(2 * numpels);
-
-        alphaChannel =
-            DrawRealPatch(buffer, patchWidth, patchHeight,
-                          patch, addBorder, addBorder, false, 0, true);
-
-        if(fillOutlines && !scaleSharp)
-            ColorOutlines(buffer, patchWidth, patchHeight);
-
-        if(monochrome || (p->flags & PF_MONOCHROME))
-        {
-            DeSaturate(buffer, R_GetPalette(), patchWidth, patchHeight);
-            p->flags |= PF_MONOCHROME;
         }
 
-        if(scaleSharp)
+        if((result = GL_LoadDoomPatch(&image, p)) == 2)
+        {   // High resolution patch loaded.
+            // This is our texture! No mipmaps are generated.
+            p->tex = GL_UploadTexture(image.pixels, image.width,
+                image.height, image.pixelSize == 4, false, true, false,
+                false, GL_NEAREST, glmode[texMagMode], texAniso,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+
+            // The original image is no longer needed.
+            GL_DestroyImage(&image);
+        }
+        else if(result == 1)
         {
-            byte* rgbaPixels = M_Malloc(numpels * 4 * 2); // also for the final output
-            byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
+            // Using data from the normal lump.
+            boolean scaleSharp = (upscaleAndSharpenPatches ||
+                                  (p->flags & PF_UPSCALE_AND_SHARPEN));
+            int                 addBorder = (scaleSharp? 1 : 0);
+            int                 numpels = image.width * image.height;
 
-            GL_ConvertBuffer(patchWidth, patchHeight, 2, 4, buffer, rgbaPixels,
-                             R_GetPalette(), false);
+            if(fillOutlines && !scaleSharp)
+                ColorOutlines(image.pixels, image.width, image.height);
 
-            GL_SmartFilter2x(rgbaPixels, upscaledPixels, patchWidth, patchHeight,
-                             patchWidth * 8);
-            patchWidth *= 2;
-            patchHeight *= 2;
-
-            /*
+            if(monochrome || (p->flags & PF_MONOCHROME))
             {
-                static int counter = 1;
-                FILE *f;
-                char buf[100];
-                sprintf(buf, "dumped-%s-%i.dat", W_LumpName(p->lump), counter++);
-                f = fopen(buf, "wb");
-                fwrite(upscaledPixels, 4 * 4 * numpels, 1, f);
-                fclose(f);
+                DGLuint             pal = R_GetColorPalette(0);
+
+                GL_DeSaturatePalettedImage(image.pixels, pal, image.width,
+                                           image.height);
+                p->flags |= PF_MONOCHROME;
             }
-            */
-            /*
-            Con_Message("upscale and sharpen on %s (lump %i) monochrome:%i\n", W_LumpName(p->lump),
-                        p->lump, p->flags & PF_MONOCHROME);
+
+            if(scaleSharp)
+            {
+                byte*               rgbaPixels = M_Malloc(numpels * 4 * 2);
+                byte*               upscaledPixels = M_Malloc(numpels * 4 * 4);
+
+                GL_ConvertBuffer(image.width, image.height, 2, 4,
+                                 image.pixels, rgbaPixels, 0, false);
+
+                GL_SmartFilter2x(rgbaPixels, upscaledPixels, image.width,
+                                 image.height, image.width * 8);
+                image.width *= 2;
+                image.height *= 2;
+
+                //EnhanceContrast(upscaledPixels, image.width,image.height);
+                SharpenPixels(upscaledPixels, image.width, image.height);
+                BlackOutlines(upscaledPixels, image.width, image.height);
+
+                // Back to indexed+alpha.
+                GL_ConvertBuffer(image.width, image.height, 4, 2,
+                                 upscaledPixels, rgbaPixels, 0, false);
+
+                // Replace the old buffer.
+                M_Free(upscaledPixels);
+                M_Free(image.pixels);
+                image.pixels = rgbaPixels;
+
+                // We'll sharpen it in the future as well.
+                p->flags |= PF_UPSCALE_AND_SHARPEN;
+            }
+
+            /**
+             * See if we have to split the patch into two parts.
+             * This is done to conserve the quality of wide textures (like
+             * the DOOM status bar) on video cards that have a pitifully
+             * small maximum texture size.
              */
+            if(p->width > GL_state.maxTexSize)
+            {
+                // The width of the first part is max texture size.
+                int                 part2Width;
+                byte*               tmpBuf;
 
-            //EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
-            SharpenPixels(upscaledPixels, patchWidth, patchHeight);
-            BlackOutlines(upscaledPixels, patchWidth, patchHeight);
+                part2Width = image.width - GL_state.maxTexSize;
+                tmpBuf = M_Malloc(2 * image.height *
+                    MAX_OF(GL_state.maxTexSize, part2Width));
 
-            // Back to indexed+alpha.
-            GL_ConvertBuffer(patchWidth, patchHeight, 4, 2, upscaledPixels, rgbaPixels,
-                             R_GetPalette(), false);
+                // Use a temporary buffer for doing the splitting.
+                // First, part one.
+                pixBlt(image.pixels, image.width, image.height, tmpBuf,
+                       GL_state.maxTexSize, image.height, image.isMasked,
+                       0, 0, 0, 0, GL_state.maxTexSize, image.height);
 
-            // Replace the old buffer.
-            M_Free(upscaledPixels);
-            M_Free(buffer);
-            buffer = rgbaPixels;
+                p->tex = GL_UploadTexture(tmpBuf, GL_state.maxTexSize,
+                    image.height, image.isMasked, false, false, false,
+                    false, GL_NEAREST, GL_LINEAR, texAniso,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
-            // We'll sharpen it in the future as well.
-            p->flags |= PF_UPSCALE_AND_SHARPEN;
+                // Then part two.
+                pixBlt(image.pixels, image.width, image.height, tmpBuf,
+                       part2Width, image.height, image.isMasked,
+                       GL_state.maxTexSize, 0, 0, 0, part2Width,
+                       image.height);
+
+                p->tex2 = GL_UploadTexture(tmpBuf, part2Width,
+                    image.height, image.isMasked, false, false, false,
+                    false, GL_NEAREST, glmode[texMagMode], texAniso,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+
+                p->width2 = p->width - GL_state.maxTexSize;
+                p->width = GL_state.maxTexSize;
+                p->height2 = p->height;
+
+                M_Free(tmpBuf);
+            }
+            else // We can use the normal one-part method.
+            {
+                // Generate a texture.
+                p->tex = GL_UploadTexture(image.pixels, image.width,
+                    image.height, image.isMasked, false, false, false,
+                    false, GL_NEAREST, glmode[texMagMode], texAniso,
+                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+
+                p->width += addBorder*2;
+                p->height += addBorder*2;
+                p->extraOffset[VX] = -addBorder;
+                p->extraOffset[VY] = -addBorder;
+
+                p->tex2 = 0;
+                p->width2 = p->height2 = 0;
+            }
+
+            // The original image is no longer needed.
+            GL_DestroyImage(&image);
         }
-
-        // See if we have to split the patch into two parts.
-        // This is done to conserve the quality of wide textures
-        // (like the status bar) on video cards that have a pitifully
-        // small maximum texture size. ;-)
-        if(SHORT(patch->width) > GL_state.maxTexSize)
-        {
-            // The width of the first part is max texture size.
-            int     part2width = patchWidth - GL_state.maxTexSize;
-            byte   *tempbuff =
-                M_Malloc(2 * MAX_OF(GL_state.maxTexSize, part2width) *
-                         patchHeight);
-
-            // We'll use a temporary buffer for doing to splitting.
-            // First, part one.
-            pixBlt(buffer, patchWidth, patchHeight, tempbuff,
-                   GL_state.maxTexSize, patchHeight, alphaChannel,
-                   0, 0, 0, 0, GL_state.maxTexSize, patchHeight);
-            p->tex =
-                GL_UploadTexture(tempbuff, GL_state.maxTexSize, patchHeight,
-                                 alphaChannel, false, false, false, false,
-                                 GL_NEAREST, GL_LINEAR, texAniso,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-            // Then part two.
-            pixBlt(buffer, patchWidth, patchHeight, tempbuff,
-                   part2width, patchHeight, alphaChannel, GL_state.maxTexSize,
-                   0, 0, 0, part2width, patchHeight);
-            p->tex2 =
-                GL_UploadTexture(tempbuff, part2width, patchHeight,
-                                 alphaChannel, false, false, false, false,
-                                 GL_NEAREST, glmode[texMagMode], texAniso,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-            p->width = GL_state.maxTexSize;
-            p->width2 = SHORT(patch->width) - GL_state.maxTexSize;
-            p->height = p->height2 = SHORT(patch->height);
-
-            M_Free(tempbuff);
-        }
-        else // We can use the normal one-part method.
-        {
-            // Generate a texture.
-            p->tex =
-                GL_UploadTexture(buffer, patchWidth, patchHeight,
-                                 alphaChannel, false, false, false, false,
-                                 GL_NEAREST, glmode[texMagMode], texAniso,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-            p->width = SHORT(patch->width) + addBorder*2;
-            p->height = SHORT(patch->height) + addBorder*2;
-            p->extraOffset[VX] = -addBorder;
-            p->extraOffset[VY] = -addBorder;
-
-            p->tex2 = 0;
-            p->width2 = p->height2 = 0;
-        }
-        M_Free(buffer);
     }
 
     return p->tex;
@@ -2367,24 +2385,39 @@ DGLuint GL_BindTexPatch(patchtex_t* p)
 /**
  * Returns the OpenGL name of the texture.
  */
-DGLuint GL_PreparePatch(lumpnum_t lump)
+DGLuint GL_PreparePatch(patchtex_t* patchTex)
 {
-    patchtex_t*         patchTex = R_GetPatchTex(lump);
+    if(patchTex)
+    {
+        if(!patchTex->tex)
+        {   // The patch isn't yet bound with OpenGL.
+            patchTex->tex = GL_PreparePatch2(patchTex);
+        }
 
-    if(!patchTex)
-        return 0;
-
-    if(!patchTex->tex)
-    {   // The patch isn't yet bound with OpenGL.
-        patchTex->tex = GL_BindTexPatch(patchTex);
+        return patchTex->tex;
     }
 
-    return patchTex->tex;
+    return 0;
+}
+
+DGLuint GL_PreparePatchOtherPart(patchtex_t* patchTex)
+{
+    if(patchTex)
+    {
+        if(!patchTex->tex)
+        {   // The patch isn't yet bound with OpenGL.
+            patchTex->tex = GL_PreparePatch2(patchTex);
+        }
+
+        return patchTex->tex2;
+    }
+
+    return 0;
 }
 
 void GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 {
-    GL_BindTexture(GL_PreparePatch(lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(lump)), glmode[texMagMode]);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
@@ -2474,14 +2507,44 @@ void GL_DoUpdateTexParams(cvar_t *unused)
     GL_SetTextureParams(glmode[mipmapping], true, true);
 }
 
+static int doTexReset(void* parm)
+{
+    boolean             usingBusyMode = *((boolean*) parm);
+
+    if(usingBusyMode)
+        Con_SetProgress(100);
+
+    /// \todo re-upload ALL textures currently in use.
+    GL_LoadSystemTextures();
+
+    if(usingBusyMode)
+    {
+        Con_SetProgress(200);
+
+        Con_BusyWorkerEnd();
+    }
+
+    return 0;
+}
+
 void GL_TexReset(void)
 {
-    GL_ClearTextureMemory();
-    GL_LoadSystemTextures();
-    GL_LoadLightmaps();
-    GL_LoadFlareTextures();
+    boolean             useBusyMode = !Con_IsBusy();
 
+    GL_ClearTextureMemory();
     Con_Printf("All DGL textures deleted.\n");
+
+    if(useBusyMode)
+    {
+        Con_InitProgress(200);
+        Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR
+                 | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Reseting textures...",
+                 doTexReset, &useBusyMode);
+    }
+    else
+    {
+        doTexReset(&useBusyMode);
+    }
 }
 
 /**
@@ -2492,7 +2555,7 @@ void GL_DoUpdateTexGamma(cvar_t *unused)
     if(texInited)
     {
         calcGammaTable();
-        GL_InitPalette();
+        GL_InitPalettedTexture();
         GL_TexReset();
     }
 
@@ -2513,18 +2576,6 @@ void GL_DoTexReset(cvar_t* unused)
 void GL_DoResetDetailTextures(cvar_t* unused)
 {
     GL_DeleteAllTexturesForGLTextures(GLT_DETAIL);
-}
-
-void GL_LowRes(void)
-{
-    // Set everything as low as they go.
-    filterSprites = 0;
-    linearRaw = 0;
-    texMagMode = 0;
-
-    // And do a texreset so everything is updated.
-    GL_SetTextureParams(GL_NEAREST, true, true);
-    GL_TexReset();
 }
 
 /**
@@ -2556,81 +2607,6 @@ void GL_DeleteRawImages(void)
     Z_Free(rawTexs);
 }
 
-unsigned int GL_PrepareSkin(skintex_t *st, boolean allowTexComp)
-{
-    if(!st)
-        return 0;
-
-    // If the texture has already been loaded, we don't need to
-    // do anything.
-    if(!st->tex)
-    {
-        int                 flags = TXCF_APPLY_GAMMACORRECTION;
-        image_t             image;
-
-        // Load the texture.
-        if(!GL_LoadImage(&image, st->path, true))
-            Con_Error("GL_PrepareSkin: %s not found.\n", st->path);
-
-        if(!allowTexComp)
-            flags |= TXCF_NO_COMPRESSION;
-
-        st->tex =
-            GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, true, true, false, false,
-                             glmode[mipmapping], GL_LINEAR, texAniso,
-                             GL_REPEAT, GL_REPEAT,
-                             flags);
-
-        // We don't need the image data any more.
-        M_Free(image.pixels);
-    }
-
-    return st->tex;
-}
-
-unsigned int GL_PrepareShinySkin(skintex_t *stp)
-{
-    image_t             image;
-
-    if(!stp)
-        return 0; // Does not have a shiny skin.
-
-    if(!stp->tex)
-    {
-        // Load in the texture.
-        if(!GL_LoadImageCK(&image, stp->path, true))
-        {
-            Con_Error("GL_PrepareShinySkin: Failed to load '%s'.\n",
-                      stp->path);
-        }
-
-        stp->tex =
-            GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, true, true, false, false,
-                             glmode[mipmapping], GL_LINEAR, texAniso,
-                             GL_REPEAT, GL_REPEAT, 0);
-
-        // We don't need the image data any more.
-        GL_DestroyImage(&image);
-    }
-
-    return stp->tex;
-}
-
-/**
- * @return              The rawtex name, if it has been prepared.
- */
-DGLuint GL_GetRawTexInfo(lumpnum_t lump, boolean part2)
-{
-    rawtex_t           *rawtex = R_GetRawTex(lump);
-
-    if(!rawtex)
-        return 0;
-
-    return (part2? rawtex->tex2 : rawtex->tex);
-}
-
 /**
  * Calculates texture coordinates based on the given dimensions. The
  * coordinates are calculated as width/CeilPow2(width), or 1 if the
@@ -2654,11 +2630,11 @@ static void GL_SetTexCoords(float *tc, int wid, int hgt)
  * be color keyed. Color keying is done for both (0,255,255) and
  * (255,0,255).
  */
-boolean GL_IsColorKeyed(const char *path)
+boolean GL_IsColorKeyed(const char* path)
 {
-    char                buf[256];
+    filename_t          buf;
 
-    strcpy(buf, path);
+    strncpy(buf, path, FILENAME_T_MAXLEN);
     strlwr(buf);
     return strstr(buf, "-ck.") != NULL;
 }
@@ -2946,8 +2922,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                                     byte* result)
 {
     byte                tmpResult;
-    gltexture_inst_t    tempInst;
-    gltexture_inst_t*   texInst;
+    gltexture_inst_t*   texInst = NULL;
 
     if(tex->type < GLT_SYSTEM || tex->type >= NUM_GLTEXTURE_TYPES)
     {
@@ -2970,17 +2945,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         break;
     }
 
-    if(!texInst)
-    {   // No existing suitable instance.
-        // Use a temporay local instance until we are sure preparation
-        // completes successfully.
-        memset(&tempInst, 0, sizeof(tempInst));
-        tempInst.tex = tex;
-
-        texInst = &tempInst;
-    }
-
-    if(texInst->id)
+    if(texInst && texInst->id)
     {   // Already prepared.
         tmpResult = 0;
     }
@@ -2988,12 +2953,23 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
     {
         boolean             didDefer = false;
         image_t             image;
+        gltexture_typedata_t* glTexType = &glTextureTypeData[tex->type];
+        gltexture_inst_t    localInst;
+
+        if(!texInst)
+        {   // No existing suitable instance.
+            // Use a temporary local instance until we are sure preparation
+            // completes successfully.
+            memset(&localInst, 0, sizeof(localInst));
+            localInst.tex = tex;
+
+            texInst = &localInst;
+        }
 
         memset(&image, 0, sizeof(image));
 
         // Load in the raw source image.
-        if(!(tmpResult = glTextureTypeData[tex->type].
-                loadData(&image, texInst, context)))
+        if(!(tmpResult = glTexType->loadData(&image, texInst, context)))
         {   // Source image not loaded.
             return NULL;
         }
@@ -3027,6 +3003,16 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         {
             if(image.pixelSize == 1 && fillOutlines)
                 ColorOutlines(image.pixels, image.width, image.height);
+        }
+
+        // Lightmaps and flare textures should be monochrome images.
+        if((tex->type == GLT_LIGHTMAP ||
+            (tex->type == GLT_FLARE && image.pixelSize != 4)) &&
+           !image.isMasked)
+        {
+            // An alpha channel is required. If one is not in the
+            // image data, we'll generate it.
+            GL_ConvertToAlpha(&image, true);
         }
 
         switch(tex->type)
@@ -3065,18 +3051,20 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 int                 flags = 0;
                 boolean             noCompression = false;
                 boolean             alphaChannel;
-                material_load_params_t* params =
-                    (material_load_params_t*) context;
-
-                if(params)
-                {
-                    noCompression = (params->flags & MLF_LOAD_AS_SKY)? true : false;
-                }
 
                 if(image.pixelSize > 1)
                     flags |= TXCF_APPLY_GAMMACORRECTION;
-                if(noCompression)
-                    flags |= TXCF_NO_COMPRESSION;
+
+                // Disable compression?
+                if(context)
+                {
+                    material_load_params_t* params =
+                        (material_load_params_t*) context;
+
+                    if(params->flags & MLF_TEX_NO_COMPRESSION)
+                        flags |= TXCF_NO_COMPRESSION;
+                }
+
                 alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) ||
                     (tmpResult == 1 && image.isMasked))? true : false;
 
@@ -3106,6 +3094,10 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         case GLT_SYSTEM:
         case GLT_SHINY:
         case GLT_MASK:
+        case GLT_MODELSKIN:
+        case GLT_MODELSHINYSKIN:
+        case GLT_LIGHTMAP:
+        case GLT_FLARE:
             if(tmpResult)
             {
                 texturecontent_t    c;
@@ -3120,6 +3112,11 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                                         DGL_COLOR_INDEX_8_PLUS_A8 :
                                         DGL_COLOR_INDEX_8 ) );
                 }
+                else if(tex->type == GLT_MODELSKIN ||
+                        tex->type == GLT_MODELSHINYSKIN)
+                {
+                    c.format = (image.pixelSize == 4? DGL_RGBA : DGL_RGB);
+                }
                 else
                 {
                     c.format = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
@@ -3130,13 +3127,40 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                 c.width = image.width;
                 c.height = image.height;
                 c.buffer = image.pixels;
-                c.flags = (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0);
-                if(tex->type == GLT_SPRITE)
+                c.flags = 0;
+
+                // Disable compression?
+                if((image.width < 128 && image.height < 128) ||
+                   tex->type == GLT_FLARE || tex->type == GLT_SHINY)
+                    c.flags |= TXCF_NO_COMPRESSION;
+                if(context &&
+                   (tex->type == GLT_LIGHTMAP ||
+                    tex->type == GLT_MODELSKIN ||
+                    tex->type == GLT_MODELSHINYSKIN))
                 {
-                    c.flags |= TXCF_EASY_UPLOAD | TXCF_UPLOAD_ARG_NOSTRETCH;
+                    material_load_params_t* params =
+                        (material_load_params_t*) context;
+
+                    if(params->flags & MLF_TEX_NO_COMPRESSION)
+                        c.flags |= TXCF_NO_COMPRESSION;
+                }
+
+                if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN ||
+                   tex->type == GLT_MODELSHINYSKIN ||
+                   tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
+                {
+                    c.flags |= TXCF_EASY_UPLOAD;
+                    if(tex->type == GLT_SPRITE)
+                        c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+
                     if(image.pixelSize != 3) c.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
+                    if(tex->type != GLT_LIGHTMAP && tex->type != GLT_FLARE)
                     if(image.pixelSize > 1) c.flags |= TXCF_UPLOAD_ARG_RGBDATA;
                 }
+
+                if(tex->type == GLT_MODELSKIN)
+                    c.flags |= TXCF_APPLY_GAMMACORRECTION;
+
                 if(tex->type == GLT_DETAIL)
                 {
                     float               contrast = *((float*) context);
@@ -3157,6 +3181,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                     texInst->data.detail.contrast = contrast;
                 }
                 else if(tex->type == GLT_SPRITE || tex->type == GLT_MASK ||
+                        tex->type == GLT_MODELSKIN ||
+                        tex->type == GLT_MODELSHINYSKIN ||
                         tex->type == GLT_SYSTEM)
                 {
                     c.flags |= TXCF_MIPMAP;
@@ -3170,8 +3196,14 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
                                tex->type == GLT_SPRITE?
                                     (filterSprites ? GL_LINEAR : GL_NEAREST) :
                                GL_LINEAR);
-                c.anisoFilter = texAniso;
-                if(tex->type == GLT_SPRITE)
+
+                if(tex->type == GLT_FLARE)
+                    c.anisoFilter = 0 /*no anisotropy*/;
+                else
+                    c.anisoFilter = texAniso;
+
+                if(tex->type == GLT_SPRITE || tex->type == GLT_LIGHTMAP ||
+                   tex->type == GLT_FLARE)
                     c.wrap[0] = c.wrap[1] = GL_CLAMP_TO_EDGE;
                 else
                     c.wrap[0] = c.wrap[1] = GL_REPEAT;
@@ -3217,7 +3249,7 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
             {
                 // Calculate light source properties.
                 GL_CalcLuminance(image.pixels, image.width, image.height,
-                                 image.pixelSize,
+                                 image.pixelSize, 0,
                                  &texInst->data.sprite.flareX,
                                  &texInst->data.sprite.flareY,
                                  &texInst->data.sprite.autoLightColor,
@@ -3230,33 +3262,29 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
 
         if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE)
         {
-            // Average color for glow planes.
+            // Average color for glow planes and top line color.
             if(image.pixelSize > 1)
             {
-                averageColorRGB(texInst->data.texture.color, image.pixels, image.width, image.height);
+                averageColorRGB(texInst->data.texture.color, image.pixels,
+                                image.width, image.height);
+                lineAverageColorRGB(texInst->data.texture.topColor,
+                                    image.pixels, image.width, image.height,
+                                    0);
             }
             else
             {
-                averageColorIdx(texInst->data.texture.color, image.pixels, image.width, image.height,
-                                R_GetPalette(), false);
-            }
+                averageColorIdx(texInst->data.texture.color, image.pixels,
+                                image.width, image.height, 0, false);
 
-            // Calculate the averaged top line color.
-            if(image.pixelSize > 1)
-            {
-                lineAverageColorRGB(texInst->data.texture.topColor, image.pixels, image.width,
-                                    image.height, 0);
-            }
-            else
-            {
-                lineAverageColorIdx(texInst->data.texture.topColor, image.pixels, image.width,
-                                    image.height, 0, R_GetPalette(), false);
+                lineAverageColorIdx(texInst->data.texture.topColor,
+                                    image.pixels, image.width, image.height,
+                                    0, 0, false);
             }
         }
 
         GL_DestroyImage(&image);
 
-        if(tmpResult && texInst == &tempInst)
+        if(tmpResult && texInst == &localInst)
         {   // We have a new instance.
             int                 flags = 0;
             gltexture_inst_node_t* node;
@@ -3272,7 +3300,7 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
 
             // Add it to the list of intances for this gltexture.
             node = Z_Malloc(sizeof(*node), PU_STATIC, 0);
-            memcpy(&node->inst, &tempInst, sizeof(gltexture_inst_t));
+            memcpy(&node->inst, &localInst, sizeof(gltexture_inst_t));
             node->flags = flags;
             node->next = (gltexture_inst_node_t*) tex->instances;
             tex->instances = (void*) node;
@@ -3304,7 +3332,11 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     case GLT_SHINY:
     case GLT_MASK:
     case GLT_SYSTEM:
-        return false; // Its definetely not.
+    case GLT_MODELSKIN:
+    case GLT_MODELSHINYSKIN:
+    case GLT_LIGHTMAP:
+    case GLT_FLARE:
+        return false; // Its definitely not.
 
     default:
         Con_Error("updateGLTexture: Internal Error, invalid type %i.",
@@ -3339,8 +3371,12 @@ float GLTexture_GetWidth(const gltexture_t* tex)
     case GLT_MASK:
         return maskTextures[tex->ofTypeID]->width;
 
-    case GLT_SYSTEM:
-        return 64; //// \fixme.
+    case GLT_SYSTEM: /// \fixme Do not assume!
+    case GLT_MODELSKIN:
+    case GLT_MODELSHINYSKIN:
+    case GLT_LIGHTMAP:
+    case GLT_FLARE:
+        return 64;
 
     default:
         Con_Error("GLTexture_GetWidth: Internal error, "
@@ -3375,8 +3411,12 @@ float GLTexture_GetHeight(const gltexture_t* tex)
     case GLT_MASK:
         return maskTextures[tex->ofTypeID]->height;
 
-    case GLT_SYSTEM:
-        return 64; //// \fixme.
+    case GLT_SYSTEM: /// \fixme Do not assume!
+    case GLT_MODELSKIN:
+    case GLT_MODELSHINYSKIN:
+    case GLT_LIGHTMAP:
+    case GLT_FLARE:
+        return 64;
 
     default:
         Con_Error("GLTexture_GetHeight: Internal error, "

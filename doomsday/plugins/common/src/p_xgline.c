@@ -59,6 +59,7 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 #include "p_tick.h"
+#include "p_switch.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -114,17 +115,17 @@
         : reftype == LSREF_THING_EXIST? "SECTORS WITH THING" \
         : reftype == LSREF_THING_NOEXIST? "SECTORS WITHOUT THING" : "???")
 
-#define TO_DMU_TOP_COLOR(x) (x == 0? DMU_TOP_COLOR_RED \
-        : x == 1? DMU_TOP_COLOR_GREEN \
+#define TO_DMU_TOP_COLOR(x) ((x) == 0? DMU_TOP_COLOR_RED \
+        : (x) == 1? DMU_TOP_COLOR_GREEN \
         : DMU_TOP_COLOR_BLUE)
 
-#define TO_DMU_MIDDLE_COLOR(x) (x == 0? DMU_MIDDLE_COLOR_RED \
-        : x == 1? DMU_MIDDLE_COLOR_GREEN \
-        : x == 2? DMU_MIDDLE_COLOR_BLUE \
+#define TO_DMU_MIDDLE_COLOR(x) ((x) == 0? DMU_MIDDLE_COLOR_RED \
+        : (x) == 1? DMU_MIDDLE_COLOR_GREEN \
+        : (x) == 2? DMU_MIDDLE_COLOR_BLUE \
         : DMU_MIDDLE_ALPHA)
 
-#define TO_DMU_BOTTOM_COLOR(x) (x == 0? DMU_BOTTOM_COLOR_RED \
-        : x == 1? DMU_BOTTOM_COLOR_GREEN \
+#define TO_DMU_BOTTOM_COLOR(x) ((x) == 0? DMU_BOTTOM_COLOR_RED \
+        : (x) == 1? DMU_BOTTOM_COLOR_GREEN \
         : DMU_BOTTOM_COLOR_BLUE)
 
 // TYPES -------------------------------------------------------------------
@@ -628,13 +629,14 @@ void XL_SetLineType(linedef_t* line, int id)
                xgClasses[xline->xg->info.lineClass].className, id);
 
         // If there is not already an xlthinker for this line, create one.
-        if(P_IterateThinkers(XL_Thinker, findXLThinker, line))
+        if(DD_IterateThinkers(XL_Thinker, findXLThinker, line))
         {   // Not created one yet.
-            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAPSPEC, 0);
+            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
             xl->thinker.function = XL_Thinker;
+            DD_ThinkerAdd(&xl->thinker);
+
             xl->line = line;
-            P_ThinkerAdd(&xl->thinker);
         }
     }
     else if(id)
@@ -1447,14 +1449,14 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
     // Is there a sidedef?
     if(info->iparm[2])
     {
-        if(P_GetPtrp(line, DMU_BACK_SECTOR) < 0)
+        if(!P_GetPtrp(line, DMU_BACK_SECTOR))
             return true;
 
         side = P_GetPtrp(line, DMU_SIDEDEF1);
     }
     else
     {
-        if(P_GetPtrp(line, DMU_FRONT_SECTOR) < 0)
+        if(!P_GetPtrp(line, DMU_FRONT_SECTOR))
             return true;
 
         side = P_GetPtrp(line, DMU_SIDEDEF0);
@@ -1621,7 +1623,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Spawn flash at the old position?
     if(info->iparm[2])
     {
-        flash = P_SpawnMobj3fv(MT_TFOG, mobj->pos, mobj->angle + ANG180);
+        flash = P_SpawnMobj3fv(MT_TFOG, mobj->pos, mobj->angle + ANG180, 0);
 
         // Play a sound?
         if(info->iparm[3])
@@ -1743,7 +1745,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
         flash = P_SpawnMobj3f(MT_TFOG,
                               mobj->pos[VX] + 24 * FIX2FLT(finecosine[an]),
                               mobj->pos[VY] + 24 * FIX2FLT(finesine[an]),
-                              mobj->pos[VZ], mobj->angle + ANG180);
+                              mobj->pos[VZ], mobj->angle + ANG180, 0);
 
         // Play a sound?
         if(info->iparm[3])
@@ -1767,14 +1769,14 @@ int XL_ValidateMap(int val, int type)
     int                 episode, map = val;
 
 #if __JDOOM__
-    if(gs.gameMode == commercial || gs.gameMode == shareware)
+    if(gameMode == commercial || gameMode == shareware)
         episode = 0;
     else
-        episode = gs.episode;
+        episode = gameEpisode;
 #elif __JDOOM64__
     episode = 0;
 #elif __JHERETIC__
-    episode = gs.episode;
+    episode = gameEpisode;
 #endif
 
     if(!G_ValidateMap(&episode, &map))
@@ -1794,7 +1796,7 @@ int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, true);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
         return false;
     }
 
@@ -1821,10 +1823,10 @@ int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
     if(map)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %i", map);
-        gs.mapNext = map;
+        nextMap = map;
     }
 
-    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
     return false; // Only do this once!
 }
 
@@ -1892,119 +1894,17 @@ boolean XL_CheckMobjGone(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean XL_SwitchSwap(sidedef_t* side, int section)
-{
-    const char*         name;
-    char                buf[10];
-    material_t*         material = NULL;
-    boolean             makeChange = false;
-
-    if(!side)
-        return false;
-
-    // Which section of the wall are we checking?
-    if(section == LWS_UPPER)
-        material = P_GetPtrp(side, DMU_TOP_MATERIAL);
-    else if(section == LWS_MID)
-        material = P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
-    else
-        material = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
-
-    if(!material)
-        return false; // No material on this section.
-
-    name = P_GetMaterialName(material);
-    if(!name)
-        return false; // Most peculiar.
-
-    strncpy(buf, name, 8);
-    buf[8] = 0;
-
-    //// \fixmeDoes this texture have another switch texture?
-    //// Use the switch texture list in p_switches for this.
-#if __JHERETIC__
-    //// \kludge A kludge for Heretic.  Since it has some switch texture names
-    //// that don't follow the SW1/SW2 pattern, we'll do some special
-    //// checking.
-    if(!stricmp(buf, "SW1ON"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW1OFF", MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!stricmp(buf, "SW1OFF"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW1ON", MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!stricmp(buf, "SW2ON"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW2OFF", MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!stricmp(buf, "SW2OFF"))
-    {
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName("SW2ON", MN_TEXTURES));
-        makeChange = true;
-    }
-#endif
-
-    if(!strnicmp(buf, "SW1", 3))
-    {
-        buf[2] = '2';
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(buf, MN_TEXTURES));
-        makeChange = true;
-    }
-    if(!strnicmp(buf, "SW2", 3))
-    {
-        buf[2] = '1';
-        material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(buf, MN_TEXTURES));
-        makeChange = true;
-    }
-
-    // Are we doing a switch swap?
-    if(makeChange)
-    {
-        // Which section of the wall are we working on?
-        // Make the change.
-        if(section == LWS_UPPER)
-            P_SetPtrp(side, DMU_TOP_MATERIAL, material);
-        else if(section == LWS_MID)
-            P_SetPtrp(side, DMU_MIDDLE_MATERIAL, material);
-        else if(section == LWS_LOWER)
-            P_SetPtrp(side, DMU_BOTTOM_MATERIAL, material);
-        else
-            return false;
-
-        // The change was successfull.
-        return true;
-    }
-    else
-        return false;
-}
-
 void XL_SwapSwitchTextures(linedef_t* line, int snum)
 {
-    sidedef_t*          side;
+    if(line)
+    {
+        sidedef_t*          side = P_GetPtrp(line,
+            snum? DMU_SIDEDEF1 : DMU_SIDEDEF0);
 
-    if(snum)
-        side = P_GetPtrp(line, DMU_SIDEDEF1);
-    else
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-    if(!side)
-        return;
-
-    if(XL_SwitchSwap(side, LWS_UPPER) ||
-       XL_SwitchSwap(side, LWS_MID) ||
-       XL_SwitchSwap(side, LWS_LOWER) )
-        XG_Dev("XL_SwapSwitchTextures: Line %i, side %i", P_ToIndex(line),
-                P_ToIndex(side));
+        if(side && P_ToggleSwitch(side, SFX_NONE, true, 0))
+            XG_Dev("XL_SwapSwitchTextures: Line %i, side %i",
+                   P_ToIndex(line), P_ToIndex(side));
+    }
 }
 
 /**
@@ -2435,7 +2335,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 
     if(info->flags & LTF_MOBJ_GONE)
     {
-        if(!P_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
+        if(!DD_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
             return false;
     }
 
@@ -2513,17 +2413,17 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
     }
 
     // Check skill level.
-    if(gs.skill < 1)
+    if(gameSkill < 1)
         i = 1;
-    else if(gs.skill > 3)
+    else if(gameSkill > 3)
         i = 4;
     else
-        i = 1 << (gs.skill - 1);
+        i = 1 << (gameSkill - 1);
     i <<= LTF2_SKILL_SHIFT;
     if(!(info->flags2 & i))
     {
         XG_Dev("  Line %i: ABORTING EVENT due to skill level (%i)",
-               P_ToIndex(line), gs.skill);
+               P_ToIndex(line), gameSkill);
         return false;
     }
 
@@ -2532,10 +2432,10 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
     {
         if(!activator)
             return false;
-        if(gs.players[activator - players].color != info->aparm[8])
+        if(cfg.playerColor[activator - players] != info->aparm[8])
         {
             XG_Dev("  Line %i: ABORTING EVENT due to activator color (%i)",
-                   P_ToIndex(line), gs.players[activator-players].color);
+                   P_ToIndex(line), cfg.playerColor[activator-players]);
             return false;
         }
     }

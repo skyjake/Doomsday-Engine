@@ -47,6 +47,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define WINDOWHEIGHT            (Get(DD_VIEWWINDOW_HEIGHT))
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -61,27 +63,29 @@ extern void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+boolean setsizeneeded;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-void R_InitRefresh(void)
-{
-    // Nothing to do.
-}
 
 /**
  * Don't really change anything here, because i might be in the middle of
  * a refresh.  The change will take effect next refresh.
  */
-void R_SetViewSize(int player, int blocks)
+void R_SetViewSize(int blocks)
 {
-    if(PLRPROFILE.screen.setBlocks != blocks && blocks > 10 && blocks < 13)
+    setsizeneeded = true;
+
+    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
-        ST_HUDUnHide(player, HUE_FORCE);
+        int                 i;
+
+        for(i = 0; i < MAXPLAYERS; ++i)
+            ST_HUDUnHide(i, HUE_FORCE);
     }
 
-    PLRPROFILE.screen.setBlocks = blocks;
+    cfg.setBlocks = blocks;
 }
 
 void R_DrawMapTitle(void)
@@ -90,7 +94,7 @@ void R_DrawMapTitle(void)
     int                 y = 12;
     char*               lname, *lauthor;
 
-    if(!gs.cfg.mapTitle || actualMapTime > 6 * 35)
+    if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
 
     // Make the text a bit smaller.
@@ -110,22 +114,22 @@ void R_DrawMapTitle(void)
 
     // Use stardard map name if DED didn't define it.
     if(!lname)
-        lname = P_GetMapName(gs.map.id);
+        lname = P_GetMapName(gameMap);
 
-    Draw_BeginZoom((1 + PLRPROFILE.hud.scale)/2, 160, y);
+    Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
 
     if(lname)
     {
-        M_WriteText3(160 - M_StringWidth(lname, huFontB) / 2, y, lname,
-                    huFontB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
-                    alpha, false, 0);
+        M_WriteText3(160 - M_StringWidth(lname, GF_FONTB) / 2, y, lname,
+                    GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
+                    alpha, false, true, 0);
         y += 20;
     }
 
     if(lauthor)
     {
-        M_WriteText3(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
-                    huFontA, .5f, .5f, .5f, alpha, false, 0);
+        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
+                    GF_FONTA, .5f, .5f, .5f, alpha, false, true, 0);
     }
 
     Draw_EndZoom();
@@ -216,17 +220,18 @@ static void rendHUD(int player)
     {
         automapid_t         map = AM_MapForPlayer(player);
 
-        if(!(IS_NETGAME && GAMERULES.deathmatch))
-            HU_DrawCheatCounters();
+        // Draw HUD displays only visible when the automap is open.
+        if(AM_IsActive(map))
+            HU_DrawMapCounters();
 
         // Do we need to render a full status bar at this point?
-        if(!(AM_IsActive(map) && PLRPROFILE.automap.hudDisplay == 0) &&
+        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             if(true == (WINDOWHEIGHT == 200))
             {
                 // Fullscreen. Which mode?
-                ST_Drawer(player, PLRPROFILE.screen.setBlocks - 10, true);
+                ST_Drawer(player, cfg.setBlocks - 10, true);
             }
             else
             {
@@ -252,25 +257,35 @@ void G_Display(int layer)
 
     if(layer == 0)
     {
-        // $democam: can be set on every frame.
-        if(PLRPROFILE.screen.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        if(G_GetGameState() == GS_MAP)
         {
-            // Full screen.
-            R_SetViewWindowTarget(0, 0, 320, 200);
+            // $democam: can be set on every frame.
+            if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+            {
+                // Full screen.
+                R_SetViewWindowTarget(0, 0, 320, 200);
+            }
+            else
+            {
+                int                 w, h;
+
+                w = cfg.setBlocks * 32;
+                h = cfg.setBlocks * (200 - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
+                R_SetViewWindowTarget(160 - (w >> 1),
+                                      (200 - SBARHEIGHT * cfg.statusbarScale / 20 - h) >> 1,
+                                      w, h);
+            }
+
+            R_GetViewWindow(&x, &y, &w, &h);
         }
         else
         {
-            int                 w, h;
-
-            w = PLRPROFILE.screen.setBlocks * 32;
-            h = PLRPROFILE.screen.setBlocks *
-                (200 - SBARHEIGHT * PLRPROFILE.statusbar.scale / 20) / 10;
-            R_SetViewWindowTarget(160 - (w >> 1),
-                                  (200 - SBARHEIGHT * PLRPROFILE.statusbar.scale / 20 - h) >> 1,
-                                  w, h);
+            x = 0;
+            y = 0;
+            w = SCREENWIDTH;
+            h = SCREENHEIGHT;
         }
 
-        R_GetViewWindow(&x, &y, &w, &h);
         R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
@@ -347,7 +362,7 @@ void G_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(gs.paused && !fiActive)
+    if(paused && !fiActive)
     {
         GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
     }
@@ -419,11 +434,6 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     return false;
 }
 
-void H2_EndFrame(void)
-{
-    SN_UpdateActiveSequences();
-}
-
 /**
  * Updates ddflags of all visible mobjs (in sectorlinks).
  * Not strictly necessary (in single player games at least) but here
@@ -434,14 +444,13 @@ void H2_EndFrame(void)
 void R_SetAllDoomsdayFlags(void)
 {
     uint                i;
-    int                 Class;
     mobj_t*             mo;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
         for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->sNext)
         {
-            if(IS_CLIENT && (mo->ddFlags & DDMF_REMOTE))
+            if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
                 continue;
 
             // Reset the flags for a new frame.
@@ -479,36 +488,17 @@ void R_SetAllDoomsdayFlags(void)
             {
                 if(mo->flags & MF_SHADOW)
                     mo->ddFlags |= DDMF_SHADOW;
-                if((mo->flags & MF_ALTSHADOW) ||
-                   (PLRPROFILE.translucentIceCorpse && (mo->flags & MF_ICECORPSE)))
+                if(mo->flags & MF_ALTSHADOW ||
+                   (cfg.translucentIceCorpse && mo->flags & MF_ICECORPSE))
                     mo->ddFlags |= DDMF_ALTSHADOW;
             }
 
-            if(((mo->flags & MF_VIEWALIGN) && !(mo->flags & MF_MISSILE)) ||
-               (mo->flags & MF_FLOAT) || ((mo->flags & MF_MISSILE) &&
+            if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
+               mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
                                         !(mo->flags & MF_VIEWALIGN)))
                 mo->ddFlags |= DDMF_VIEWALIGN;
 
-            mo->ddFlags |= mo->flags & MF_TRANSLATION;
-
-            // Which translation table to use?
-            if(mo->flags & MF_TRANSLATION)
-            {
-                if(mo->player)
-                {
-                    Class = mo->player->pClass;
-                }
-                else
-                {
-                    Class = mo->special1;
-                }
-                if(Class > 2)
-                {
-                    Class = 0;
-                }
-                // The last two bits.
-                mo->ddFlags |= Class << DDMF_CLASSTRSHIFT;
-            }
+            R_SetTranslation(mo);
 
             // An offset for the light emitted by this object.
             /*          Class = MobjLightOffsets[mo->type];

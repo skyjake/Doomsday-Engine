@@ -116,9 +116,6 @@ D_CMD(OpenClose);
 D_CMD(Parse);
 D_CMD(Quit);
 D_CMD(Repeat);
-#ifdef _DEBUG
-D_CMD(TranslateFont);
-#endif
 D_CMD(Toggle);
 D_CMD(Version);
 D_CMD(Wait);
@@ -212,10 +209,6 @@ static void Con_Register(void)
     C_CMD("toggle",         "s",    Toggle);
     C_CMD("version",        "",     Version);
     C_CMD("write",          "s",    WriteConsole);
-
-#ifdef _DEBUG
-    C_CMD("translatefont", "ss", TranslateFont);
-#endif
 
     // Console
     C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);

@@ -37,60 +37,30 @@
 #include "doomdef.h"
 #include "d_player.h"
 #include "wi_stuff.h"
-#include "d_config.h"
-
-typedef struct {
-    gamemode_t      gameMode;
-    int             gameModeBits;
-    // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-    char            gameModeString[17];
-
-    gameaction_t    action;
-    gamestate_t     state, stateLast;
-    boolean         paused;
-    boolean         userGame; // Ok to save / end game.
-
-    playerprofile_t playerProfile;
-    struct {
-        playerclass_t   pClass;
-        byte            color;
-    } players[MAXPLAYERS];
-
-    skillmode_t     skill;
-    int             episode;
-    int             mapNext; // If non zero this will be the next map.
-
-    struct {
-        int             id; // Id of the current map.
-        int             startTic; // Game tic at map start.
-        int             totalKills, totalItems, totalSecret; // For intermission.
-    } map;
-    struct {
-        int             id; // Id of the previous map.
-        boolean         secretExit; // @c true iff the player took the secret exit.
-    } mapPrev;
-
-    byte            netMap;
-    byte            netSkill;
-    byte            netSlot;
-
-    gamerules_t     rules;
-    gameconfig_t    cfg;
-} game_state_t;
-
-#define PLRPROFILE          (gs.playerProfile)
-#define GAMERULES           (gs.rules)
-
-extern game_state_t gs;
 
 extern player_t players[MAXPLAYERS];
+extern boolean secretExit;
+extern int nextMap;
+extern skillmode_t gameSkill;
+extern int gameEpisode;
+extern int gameMap;
+extern int nextMap; // If non zero this will be the next map.
+extern int prevMap;
+extern int totalKills, totalItems, totalSecret;
+extern boolean respawnMonsters;
 extern wbstartstruct_t wmInfo;
+extern boolean userGame;
+extern int mapStartTic;
 extern int bodyQueueSlot;
+extern boolean deathmatch;
+extern boolean paused;
+extern boolean precache;
 extern int gsvMapMusic;
 
 void            G_Register(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
+void            R_InitRefresh(void);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 
@@ -109,12 +79,12 @@ void            G_DeferedPlayDemo(char* demo);
 
 // Can be called by the startup code or Hu_MenuResponder,
 // calls P_SetupMap or W_EnterWorld.
-void            G_LoadGame(char* name);
+void            G_LoadGame(const char* name);
 
 void            G_DoLoadGame(void);
 
 // Called by Hu_MenuResponder.
-void            G_SaveGame(int slot, char* description);
+void            G_SaveGame(int slot, const char* description);
 
 void            G_StopDemo(void);
 void            G_DemoEnds(void);

@@ -417,8 +417,7 @@ maximum-texture-size-2048: 2048 x 2048
 maximum-texture-size-4096: 4096 x 4096
 
 sound-driver: Sound driver
-sound-driver-ds8: Built-in (DirectSound 8)
-sound-driver-ds6: Compatible (DirectSound 6)
+sound-driver-directsound: DirectSound
 sound-driver-sdlmixer: SDL_mixer
 sound-driver-openal: OpenAL
 sound-driver-dummy: Dummy (no sound)
@@ -428,7 +427,6 @@ disable-audio: Disable all audio
 disable-sound-effects: Disable sound effects
 disable-music: Disable music
 disable-primary-buffer: Don't set primary buffer format
-disable-fmod: Disable FMOD
 
 eax-options: EAX Options
 disable-eax: Disable EAX

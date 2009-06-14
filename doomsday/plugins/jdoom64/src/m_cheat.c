@@ -45,6 +45,7 @@
 #include "hu_msg.h"
 #include "p_user.h"
 #include "p_start.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -436,7 +437,7 @@ boolean Cht_WarpFunc(player_t *plyr, char *buf)
 
     // So be it.
     P_SetMessage(plyr, STSTR_CLEV, false);
-    G_DeferedInitNew(gs.skill, epsd, map);
+    G_DeferedInitNew(gameSkill, epsd, map);
 
     // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
@@ -490,26 +491,22 @@ void Cht_MyPosFunc(player_t *plyr)
  * Each time the player enters the code, player gains a powerup.
  * when entered again, player recieves next powerup.
  */
-void cht_LaserFunc(player_t *plyr)
+void cht_LaserFunc(player_t* p)
 {
-    laserpw_t           arti;
-
-    if(plyr->artifacts[it_laserpw1] && plyr->artifacts[it_laserpw2] &&
-       plyr->artifacts[it_laserpw3])
+    if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
     {
-        P_SetMessage(plyr, STSTR_BEHOLDX, false); // No more!
+        P_SetMessage(p, STSTR_BEHOLDX, false);
         return;
     }
 
-    if(!plyr->artifacts[it_laserpw1])
-        arti = it_laserpw1;
-    else if(!plyr->artifacts[it_laserpw2])
-        arti = it_laserpw2;
-    else
-        arti = it_laserpw3;
+    if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
+    {
+        P_SetMessage(p, STSTR_BEHOLDX, false);
+        return;
+    }
 
-    plyr->artifacts[arti] = 1;
-    P_SetMessage(plyr, STSTR_BEHOLDX, false);
+    if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
+        P_SetMessage(p, STSTR_BEHOLDX, false);
 }
 
 static void CheatDebugFunc(player_t* player, cheatseq_t* cheat)
@@ -518,10 +515,10 @@ static void CheatDebugFunc(player_t* player, cheatseq_t* cheat)
     char                textBuffer[256];
     subsector_t*        sub;
 
-    if(!player->plr->mo || !gs.userGame)
+    if(!player->plr->mo || !userGame)
         return;
 
-    P_GetMapLumpName(gs.episode, gs.map.id, lumpName);
+    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName, player->plr->mo->pos[VX], player->plr->mo->pos[VY],
             player->plr->mo->pos[VZ]);
@@ -599,7 +596,7 @@ DEFCC(CCmdCheatSuicide)
         {   // When not in a netgame we'll ask the player to confirm.
             player_t*           plr = &players[CONSOLEPLAYER];
 
-            if(plr->pState == PST_DEAD)
+            if(plr->playerState == PST_DEAD)
                 return false; // Already dead!
 
             Hu_MsgStart(MSG_YESNO, SUICIDEASK, Cht_SuicideResponse, NULL);
@@ -879,7 +876,7 @@ DEFCC(CCmdCheatLeaveMap)
     }
 
     // Exit the map.
-    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 
     return true;
 }

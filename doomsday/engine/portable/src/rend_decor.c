@@ -46,6 +46,12 @@
 #define MAX_DECOR_LIGHTS    (16384)
 #define MAX_DECOR_MODELS    (8192)
 
+BEGIN_PROF_TIMERS()
+  PROF_DECOR_UPDATE,
+  PROF_DECOR_PROJECT,
+  PROF_DECOR_ADD_LUMINOUS
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct decorsource_s {
@@ -114,7 +120,7 @@ extern void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                          struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                          float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                          vlight_t* lightList, uint numLights,
-                                         int id, int selector, subsector_t* ssec, int mobjDDFlags,
+                                         int id, int selector, subsector_t* ssec, int mobjDDFlags, int tmap,
                                          boolean viewAlign, boolean fullBright,
                                          boolean alwaysInterpolate);
 extern void getLightingParams(float x, float y, float z, subsector_t* ssec,
@@ -182,7 +188,7 @@ static void projectDecoration(decorsource_t* src)
                                      src->data.model.mf, NULL, 0,
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB],
                                      src->fadeMul, lightList, numLights, 0, 0, src->subsector,
-                                     0, false, levelFullBright, true);
+                                     0, 0, false, levelFullBright, true);
     }
 
     vis->lumIdx = src->lumIdx;
@@ -193,11 +199,14 @@ static void projectDecoration(decorsource_t* src)
  */
 void Rend_ProjectDecorations(void)
 {
-    decorsource_t*      src;
-
-    for(src = sourceFirst; src != sourceCursor; src = src->next)
+    if(sourceFirst != sourceCursor)
     {
-        projectDecoration(src);
+        decorsource_t*      src = sourceFirst;
+
+        do
+        {
+            projectDecoration(src);
+        } while((src = src->next) != sourceCursor);
     }
 }
 
@@ -208,6 +217,7 @@ static void addLuminousDecoration(decorsource_t* src)
     uint                lumIdx;
     lumobj_t*           l;
     float               brightness;
+    const ded_decorlight_t* def = src->data.light.def;
 
     src->lumIdx = 0;
     src->fadeMul = 1;
@@ -216,19 +226,11 @@ static void addLuminousDecoration(decorsource_t* src)
         return;
 
     // Does it pass the sector light limitation?
-    if(src->type == DT_LIGHT)
-    {
-        min = src->data.light.def->lightLevels[0];
-        max = src->data.light.def->lightLevels[1];
-    }
-    else // Its a decor model.
-    {
-        min = src->data.model.def->lightLevels[0];
-        max = src->data.model.def->lightLevels[0];
-    }
+    min = def->lightLevels[0];
+    max = def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel,
-                                          min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(
+            src->subsector->sector->lightLevel, min, max)) > 0))
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
@@ -238,9 +240,10 @@ static void addLuminousDecoration(decorsource_t* src)
         return;
 
     /**
-     * \todo From here on is pretty much the same as LO_AddLuminous, reconcile
-     * the two.
+     * \todo From here on is pretty much the same as LO_AddLuminous,
+     * reconcile the two.
      */
+
     lumIdx = LO_NewLuminous(LT_OMNI, src->subsector);
     l = LO_GetLuminous(lumIdx);
 
@@ -251,21 +254,21 @@ static void addLuminousDecoration(decorsource_t* src)
     l->decorSource = src;
 
     LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex = src->data.light.def->sides.tex;
-    LUM_OMNI(l)->ceilTex = src->data.light.def->up.tex;
-    LUM_OMNI(l)->floorTex = src->data.light.def->down.tex;
+    LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
+    LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
+    LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
 
     // These are the same rules as in DL_MobjRadius().
-    LUM_OMNI(l)->radius = src->data.light.def->radius * 40 * loRadiusFactor;
+    LUM_OMNI(l)->radius = def->radius * 40 * loRadiusFactor;
 
     // Don't make a too small or too large light.
     if(LUM_OMNI(l)->radius > loMaxRadius)
         LUM_OMNI(l)->radius = loMaxRadius;
 
-    if(src->data.light.def->haloRadius > 0)
+    if(def->haloRadius > 0)
     {
-        LUM_OMNI(l)->flareSize =
-            src->data.light.def->haloRadius * 60 * (50 + haloSize) / 100.0f;
+        LUM_OMNI(l)->flareSize = def->haloRadius * 60 *
+            (50 + haloSize) / 100.0f;
         if(LUM_OMNI(l)->flareSize < 1)
             LUM_OMNI(l)->flareSize = 1;
     }
@@ -274,20 +277,21 @@ static void addLuminousDecoration(decorsource_t* src)
         LUM_OMNI(l)->flareSize = 0;
     }
 
-    if(src->data.light.def->flare.disabled)
+    if(!(def->flare.id && def->flare.id[0] == '-'))
     {
-        LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+        LUM_OMNI(l)->flareTex =
+            GL_GetFlareTexture(def->flare.id, def->flareTexture);
     }
     else
-    {
-        LUM_OMNI(l)->flareCustom = src->data.light.def->flare.custom;
-        LUM_OMNI(l)->flareTex = src->data.light.def->flare.tex;
+    {   // Primary halo disabled.
+        LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+        LUM_OMNI(l)->flareTex = 0;
     }
 
     LUM_OMNI(l)->flareMul = 1;
 
     for(i = 0; i < 3; ++i)
-        LUM_OMNI(l)->color[i] = src->data.light.def->color[i] * src->fadeMul;
+        LUM_OMNI(l)->color[i] = def->color[i] * src->fadeMul;
 
     src->lumIdx = lumIdx;
 }
@@ -297,12 +301,19 @@ static void addLuminousDecoration(decorsource_t* src)
  */
 void Rend_AddLuminousDecorations(void)
 {
-    decorsource_t*      src;
+BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
 
-    for(src = sourceFirst; src != sourceCursor; src = src->next)
+    if(sourceFirst != sourceCursor)
     {
-        addLuminousDecoration(src);
+        decorsource_t*      src = sourceFirst;
+
+        do
+        {
+            addLuminousDecoration(src);
+        } while((src = src->next) != sourceCursor);
     }
+
+END_PROF( PROF_DECOR_ADD_LUMINOUS );
 }
 
 /**
@@ -755,7 +766,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
     case SEG_TOP:
         suf = &side->SW_topsurface;
-        if(line->L_frontside && line->L_backside && backCeil != frontCeil &&
+        if(line->L_frontside && line->L_backside && backCeil < frontCeil &&
            (!R_IsSkySurface(&line->L_backsector->SP_ceilsurface) ||
             !R_IsSkySurface(&line->L_frontsector->SP_ceilsurface)))
         {
@@ -767,7 +778,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
     case SEG_BOTTOM:
         suf = &side->SW_bottomsurface;
-        if(line->L_frontside && line->L_backside && backFloor != frontFloor &&
+        if(line->L_frontside && line->L_backside && backFloor > frontFloor &&
            (!R_IsSkySurface(&line->L_backsector->SP_floorsurface) ||
             !R_IsSkySurface(&line->L_frontsector->SP_floorsurface)))
         {
@@ -817,6 +828,8 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
 void Rend_UpdateSurfaceDecorations(void)
 {
+BEGIN_PROF( PROF_DECOR_UPDATE );
+
     // This only needs to be done if decorations have been enabled.
     if(useDecorations)
     {
@@ -855,6 +868,8 @@ void Rend_UpdateSurfaceDecorations(void)
             }
         }
     }
+
+END_PROF( PROF_DECOR_UPDATE );
 }
 
 /**
@@ -862,6 +877,18 @@ void Rend_UpdateSurfaceDecorations(void)
  */
 void Rend_InitDecorationsForFrame(void)
 {
+#ifdef DD_PROFILE
+    static int          i;
+
+    if(++i > 40)
+    {
+        i = 0;
+        PRINT_PROF( PROF_DECOR_UPDATE );
+        PRINT_PROF( PROF_DECOR_PROJECT );
+        PRINT_PROF( PROF_DECOR_ADD_LUMINOUS );
+    }
+#endif
+
     clearDecorations();
 
     // This only needs to be done if decorations have been enabled.
@@ -869,7 +896,11 @@ void Rend_InitDecorationsForFrame(void)
     {
         Rend_UpdateSurfaceDecorations(); // temporary.
 
+BEGIN_PROF( PROF_DECOR_PROJECT );
+
         R_SurfaceListIterate(decoratedSurfaceList,
                              R_ProjectSurfaceDecorations, &decorMaxDist);
+
+END_PROF( PROF_DECOR_PROJECT );
     }
 }

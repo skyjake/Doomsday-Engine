@@ -43,7 +43,7 @@ extern          "C" {
 
 #define DED_SPRITEID_LEN    4
 #define DED_STRINGID_LEN    31
-#define DED_PATH_LEN        128
+#define DED_PATH_LEN        FILENAME_T_MAXLEN
 #define DED_FUNC_LEN        255
 
 #define DED_MAX_SUB_MODELS  8
@@ -151,16 +151,10 @@ typedef struct {
 
 typedef struct ded_lightmap_s {
     ded_stringid_t  id;
-    unsigned int    tex; // Runtime
 } ded_lightmap_t;
 
 typedef struct ded_flaremap_s {
     ded_stringid_t  id;
-    unsigned int    tex; // Runtime
-    boolean         custom; // If true tex = custom flare else flaretexname
-    boolean         disabled; /* As zero = automatic and flare ids
-                                 are unsigned we need an extra flag
-                                 to indicate when id == "-" */
 } ded_flaremap_t;
 
 typedef struct {
@@ -547,7 +541,7 @@ typedef struct ded_material_s {
 
 typedef struct ded_s {
     int             version; // DED version number.
-    char            modelPath[256]; // Directories for searching MD2s.
+    filename_t      modelPath; // Directories for searching MD2s.
     ded_flags_t     modelFlags; // Default values for models.
     float           modelScale;
     float           modelOffset;
@@ -652,7 +646,7 @@ typedef struct ded_s {
 void            DED_Init(ded_t* ded);
 void            DED_Destroy(ded_t* ded);
 int             DED_Read(ded_t* ded, const char* sPathName);
-int             DED_ReadLump(ded_t* ded, int lump);
+int             DED_ReadLump(ded_t* ded, lumpnum_t lump);
 
 int             DED_AddFlag(ded_t* ded, char* name, char* text, int value);
 int             DED_AddMobj(ded_t* ded, char* idStr);

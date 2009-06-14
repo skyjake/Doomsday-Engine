@@ -98,6 +98,7 @@
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
+		<Unit filename="..\..\plugins\common\include\hu_inventory.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\hu_log.h" />
 		<Unit filename="..\..\plugins\common\include\hu_menu.h" />
@@ -164,9 +165,8 @@
 		<Unit filename="..\..\plugins\common\src\g_update.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\hu_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\common\src\hu_inventory.c" />
+		<Unit filename="..\..\plugins\common\src\hu_lib.c" />
 		<Unit filename="..\..\plugins\common\src\hu_log.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -182,10 +182,12 @@
 		<Unit filename="..\..\plugins\common\src\hu_stuff.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\m_ctrl.c" />
-		<Unit filename="..\..\plugins\common\src\m_fixed.c" />
-		<Unit filename="..\..\plugins\common\src\m_multi.c" />
-		<Unit filename="..\..\plugins\common\src\m_playerprofile.c" />
+		<Unit filename="..\..\plugins\common\src\m_fixed.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\plugins\common\src\m_multi.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\plugins\common\src\p_actor.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -298,6 +300,7 @@
 		<Unit filename="..\..\plugins\jhexen\include\p_waggle.h" />
 		<Unit filename="..\..\plugins\jhexen\include\po_man.h" />
 		<Unit filename="..\..\plugins\jhexen\include\r_defs.h" />
+		<Unit filename="..\..\plugins\jhexen\include\r_local.h" />
 		<Unit filename="..\..\plugins\jhexen\include\s_sequence.h" />
 		<Unit filename="..\..\plugins\jhexen\include\sc_man.h" />
 		<Unit filename="..\..\plugins\jhexen\include\st_stuff.h" />

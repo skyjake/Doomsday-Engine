@@ -204,6 +204,7 @@ DGLuint GL_GetReservedName(void)
 void GL_InitTextureContent(texturecontent_t* content)
 {
     memset(content, 0, sizeof(*content));
+    content->palette = 0; // Use the default.
     content->minFilter = GL_LINEAR;
     content->magFilter = GL_LINEAR;
     content->anisoFilter = -1; // Best.
@@ -223,6 +224,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
     else
     {
         byte*               allocatedTempBuffer = NULL;
+        DGLuint             palid;
 
         if(content->grayMipmap >= 0)
         {
@@ -256,11 +258,23 @@ void GL_UploadTextureContent(texturecontent_t* content)
             content->format = DGL_LUMINANCE_PLUS_A8;
         }
 
-        result = GL_TexImage(content->format, content->width, content->height,
-                             (content->grayMipmap >= 0? DDMAXINT :
-                              (content->flags & TXCF_MIPMAP) != 0),
-                             allocatedTempBuffer? allocatedTempBuffer : content->buffer);
-        assert(result == true);
+        // Do we need to locate a color palette?
+        if(content->format == DGL_COLOR_INDEX_8 ||
+           content->format == DGL_COLOR_INDEX_8_PLUS_A8)
+        {
+            palid = R_GetColorPalette(content->palette);
+        }
+        else
+            palid = 0;
+
+        if(!GL_TexImage(content->format, palid, content->width,
+                        content->height,
+                        (content->grayMipmap >= 0? DDMAXINT :
+                         (content->flags & TXCF_MIPMAP) != 0),
+                        allocatedTempBuffer? allocatedTempBuffer : content->buffer))
+            Con_Error("GL_UploadTextureContent: TexImage failed "
+                      "(%u:%ix%i fmt%i).", content->name, content->width,
+                      content->height, (int) content->format);
 
         if(content->flags & TXCF_NO_COMPRESSION)
         {
@@ -374,8 +388,8 @@ Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
     return content->name;
 }
 
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-                                void* pixels, int flags)
+DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width,
+                                int height, void* pixels, int flags)
 {
     texturecontent_t c;
 
@@ -388,10 +402,10 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     return GL_NewTexture(&c, NULL);
 }
 
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
-                                 void* pixels, int flags, int minFilter,
-                                 int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT)
+DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width,
+                                 int height, void* pixels, int flags,
+                                 int minFilter, int magFilter,
+                                 int anisoFilter, int wrapS, int wrapT)
 {
     texturecontent_t c;
 
@@ -413,10 +427,10 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
  * Same as above except this version is part of the public API and thus some
  * of the paramaters use the DGL counterparts.
  */
-DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width, int height,
-                                 void* pixels, int flags, int minFilter,
-                                 int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT)
+DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width,
+                                 int height, void* pixels, int flags,
+                                 int minFilter, int magFilter,
+                                 int anisoFilter, int wrapS, int wrapT)
 {
     return GL_NewTextureWithParams2(format, width, height, pixels, flags,
         (minFilter == DGL_LINEAR? GL_LINEAR :

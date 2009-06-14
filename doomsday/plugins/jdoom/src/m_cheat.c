@@ -156,13 +156,13 @@ boolean Cht_Responder(event_t* ev)
     if(G_GetGameState() != GS_MAP)
         return false;
 
-    if(gs.skill != SM_NIGHTMARE &&
+    if(gameSkill != SM_NIGHTMARE &&
        ev->type == EV_KEY && ev->state == EVS_DOWN)
     {
         if(!IS_NETGAME)
         {
             // b. - enabled for more debug fun.
-            // if (gs.skill != SM_NIGHTMARE) {
+            // if (gameSkill != SM_NIGHTMARE) {
 
             // 'dqd' cheat for toggleable god mode
             if(Cht_CheckCheat(&cheatGod, ev->data1))
@@ -243,7 +243,7 @@ boolean Cht_Responder(event_t* ev)
         }
     }
 
-    if(!GAMERULES.deathmatch && ev->type == EV_KEY && ev->state == EVS_DOWN)
+    if(!deathmatch && ev->type == EV_KEY && ev->state == EVS_DOWN)
     {
         automapid_t         map = AM_MapForPlayer(CONSOLEPLAYER);
 
@@ -427,7 +427,7 @@ boolean Cht_WarpFunc(player_t* plyr, char* buf)
 {
     int                 epsd, map;
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
     {
         epsd = 1;
         map = (buf[0] - '0') * 10 + buf[1] - '0';
@@ -444,7 +444,7 @@ boolean Cht_WarpFunc(player_t* plyr, char* buf)
 
     // So be it.
     P_SetMessage(plyr, STSTR_CLEV, false);
-    G_DeferedInitNew(gs.skill, epsd, map);
+    G_DeferedInitNew(gameSkill, epsd, map);
 
     // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
@@ -476,7 +476,7 @@ void Cht_ChoppersFunc(player_t *plyr)
     plyr->powers[PT_INVULNERABILITY] = true;
 }
 
-void Cht_MyPosFunc(player_t* plyr)
+void Cht_MyPosFunc(player_t *plyr)
 {
     char                buf[ST_MSGWIDTH];
 
@@ -488,16 +488,16 @@ void Cht_MyPosFunc(player_t* plyr)
     P_SetMessage(plyr, buf, false);
 }
 
-static void CheatDebugFunc(player_t* player, cheat_t* cheat)
+static void CheatDebugFunc(player_t *player, cheat_t *cheat)
 {
     char                lumpName[9];
     char                textBuffer[256];
-    subsector_t*        sub;
+    subsector_t        *sub;
 
-    if(!player->plr->mo || !gs.userGame)
+    if(!player->plr->mo || !userGame)
         return;
 
-    P_GetMapLumpName(gs.episode, gs.map.id, lumpName);
+    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName,
             player->plr->mo->pos[VX],
@@ -576,7 +576,7 @@ DEFCC(CCmdCheatSuicide)
         {   // When not in a netgame we'll ask the player to confirm.
             player_t*           plr = &players[CONSOLEPLAYER];
 
-            if(plr->pState == PST_DEAD)
+            if(plr->playerState == PST_DEAD)
                 return false; // Already dead!
 
             Hu_MsgStart(MSG_YESNO, SUICIDEASK, Cht_SuicideResponse, NULL);
@@ -599,7 +599,7 @@ DEFCC(CCmdCheatWarp)
         return false;
 
     memset(buf, 0, sizeof(buf));
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
     {
         if(argc != 2)
             return false;
@@ -882,7 +882,7 @@ DEFCC(CCmdCheatLeaveMap)
     }
 
     // Exit the map.
-    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 
     return true;
 }

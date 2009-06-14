@@ -34,13 +34,6 @@
  */
 //#define FAKE_MEMORY_ZONE 1
 
-// tags < 50 are not overwritten until freed
-#define PU_STATIC       1 // Static entire execution time.
-#define PU_SOUND        2 // Static while playing.
-#define PU_MUSIC        3 // Static while playing.
-#define PU_DAVE         4 // Anything else Dave wants static.
-
-#define PU_OPENGL       10 // OpenGL allocated stuff.
 #define PU_REFRESHTEX   11 // Textures/Flats/refresh.
 #define PU_REFRESHCM    12 // Colormap.
 #define PU_REFRESHTRANS 13
@@ -48,12 +41,6 @@
 #define PU_PATCH        15
 #define PU_MODEL        16
 #define PU_SPRITE       20
-
-#define PU_MAP          50 // Static until map is exited.
-#define PU_MAPSPEC      51 // A special thinker in a map.
-// tags >= 100 are purgable whenever needed.
-#define PU_PURGELEVEL   100
-#define PU_CACHE        101
 
 int             Z_Init(void);
 void            Z_Shutdown(void);

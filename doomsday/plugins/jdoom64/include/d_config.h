@@ -43,7 +43,7 @@ enum {
     HUD_AMMO,
     HUD_KEYS,
     HUD_FRAGS,
-    HUD_POWER, // jd64
+    HUD_INVENTORY, // jd64
     NUMHUDDISPLAYS
 };
 
@@ -64,6 +64,27 @@ typedef enum {
 //          depending on build settings.
 
 typedef struct jdoom64_config_s {
+    float           playerMoveSpeed;
+    int             dclickUse;
+    int             useMLook; // Mouse look (mouse Y => viewpitch).
+    int             useJLook; // Joy look (joy Y => viewpitch).
+    int             alwaysRun; // Always run.
+    int             noAutoAim; // No auto-aiming?
+    int             jLookDeltaMode;
+    int             lookSpring;
+    float           lookSpeed;
+    float           turnSpeed;
+    byte            povLookAround;
+    int             jumpEnabled;
+    float           jumpPower;
+    int             airborneMovement;
+    byte            setSizeNeeded;
+    int             setBlocks;
+    int             screenBlocks;
+    byte            deathLookUp; // Look up when killed.
+    byte            slidingCorpses;
+    byte            fastMonsters;
+    byte            echoMsg;
     float           menuScale;
     int             menuEffects;
     int             hudFog;
@@ -76,124 +97,38 @@ typedef struct jdoom64_config_s {
     float           flashColor[3];
     int             flashSpeed;
     byte            turningSkull;
+    byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
+    float           hudScale; // How to scale HUD data?
+    float           hudColor[4];
+    float           hudIconAlpha;
+    float           hudTimer; // Number of seconds until the hud auto-hides.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // When the hud unhides.
     byte            usePatchReplacement;
+    byte            moveCheckZ; // If true, mobjs can move over/under each other.
+    byte            weaponAutoSwitch;
+    byte            noWeaponAutoSwitchIfFiring;
+    byte            ammoAutoSwitch;
+    byte            berserkAutoSwitch;
+    int             weaponOrder[NUM_WEAPON_TYPES];
+    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
+    byte            weaponRecoil; // jd64
+    byte            secretMsg;
+    int             plrViewHeight;
     byte            mapTitle, hideAuthorMidway;
     float           menuColor[3];
     float           menuColor2[3];
-
-    byte            echoMsg;
-} gameconfig_t;
-
-typedef struct {
-    int             color; // User player color preference.
-
-    struct {
-        float           moveSpeed;
-        float           lookSpeed;
-        float           turnSpeed;
-        byte            dclickUse;
-        byte            airborneMovement; // 0..32
-        byte            alwaysRun;
-        byte            useAutoAim;
-    } ctrl;
-    struct {
-        int             blocks;
-        int             setBlocks;
-    } screen;
-    struct {
-        float           bob;
-        int             offsetZ;
-        byte            deathLookUp; // Look up when killed.
-        byte            povLookAround;
-        byte            lookSpring;
-        byte            useMLook; // Mouse look (mouse Y => viewpitch).
-        byte            useJLook; // Joy look (joy Y => viewpitch).
-        byte            jLookDeltaMode;
-    } camera;
-    struct {
-        float           bob;
-        byte            bobLower;
-    } psprite;
-    struct {
-        byte            shown[NUMHUDDISPLAYS]; // HUD data visibility.
-        float           scale; // How to scale HUD data?
-        float           color[4];
-        float           iconAlpha;
-        float           timer; // Number of seconds until the hud auto-hides.
-        byte            unHide[NUMHUDUNHIDEEVENTS]; // When the hud unhides.
-        byte            counterCheat;
-        float           counterCheatScale;
-    } hud;
-    struct {
-        int             type;
-        float           size;
-        byte            vitality;
-        float           color[4];
-    } xhair;
-    struct {
-        byte            weaponAutoSwitch;
-        byte            noWeaponAutoSwitchIfFiring;
-        byte            ammoAutoSwitch;
-        byte            berserkAutoSwitch;
-        int             weaponOrder[NUM_WEAPON_TYPES];
-        byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-    } inventory;
-    struct {
-        float           mobj[3];
-        float           line0[3];
-        float           line1[3];
-        float           line2[3];
-        float           line3[3];
-        float           background[3];
-        float           opacity;
-        float           lineAlpha;
-        byte            rotate;
-        int             hudDisplay;
-        int             customColors;
-        byte            showDoors;
-        float           doorGlow;
-        byte            babyKeys;
-        float           zoomSpeed;
-        float           panSpeed;
-        byte            panResetOnOpen;
-        float           openSeconds;
-    } automap;
-    struct {
-        int             count;
-        float           scale;
-        int             upTime;
-        int             blink;
-        int             align;
-        byte            show;
-        float           color[3];
-    } msgLog;
-    struct {
-        char*           macros[10];
-        byte            playBeep;
-    } chat;
-
-    // Misc:
-    int             corpseTime;
-} playerprofile_t;
-
-typedef struct {
-    int             deathmatch; // Only if started as net death.
-
-    float           turboMul; // multiplier for turbo
-    byte            monsterInfight;
-    float           jumpPower;
-    byte            slidingCorpses;
-    byte            fastMonsters;
-    byte            moveCheckZ; // If true, mobjs can move over/under each other.
-    byte            weaponRecoil;
-    byte            announceFrags;
-    byte            announceSecrets;
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;
     byte            noCoopAnything;
-    byte            noBFG;
+    byte            noNetBFG;
     byte            coopRespawnItems;
+
+    /**
+     * Compatibility options.
+     * \todo Put these into an array so we can use a bit array to change
+     * multiple options based on a compatibility mode (ala PrBoom).
+     */
     byte            maxSkulls;
     byte            allowSkullsInWalls;
     byte            anyBossDeath;
@@ -203,16 +138,75 @@ typedef struct {
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
     byte            zombiesCanExit; // Zombie players can exit maps.
     byte            fallOff; // Objects fall under their own weight.
-    byte            cameraNoClip;
-    byte            freeAimBFG; // Allow free-aim with BFG.
-    byte            mobDamageModifier; // Multiplier for non-player mobj damage.
-    byte            mobHealthModifier; // Health modifier for non-player mobjs.
-    int             gravityModifier; // Multiplayer custom gravity.
-    byte            noMaxZRadiusAttack; // Radius attacks are infinitely tall.
-    byte            noMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
-    byte            noMonsters;
-    byte            respawn;
-    byte            jumpAllow;
-} gamerules_t;
+
+    byte            counterCheat;
+    float           counterCheatScale;
+
+    // Automap stuff.
+/*  int             automapPos;
+    float           automapWidth;
+    float           automapHeight;*/
+    float           automapMobj[3];
+    float           automapL0[3];
+    float           automapL1[3];
+    float           automapL2[3];
+    float           automapL3[3];
+    float           automapBack[3];
+    float           automapOpacity;
+    float           automapLineAlpha;
+    byte            automapRotate;
+    int             automapHudDisplay;
+    int             automapCustomColors;
+    byte            automapShowDoors;
+    float           automapDoorGlow;
+    byte            automapBabyKeys;
+    float           automapZoomSpeed;
+    float           automapPanSpeed;
+    byte            automapPanResetOnOpen;
+    float           automapOpenSeconds;
+
+    int             msgCount;
+    float           msgScale;
+    int             msgUptime;
+    int             msgBlink;
+    int             msgAlign;
+    byte            msgShow;
+    float           msgColor[3];
+
+    char           *chatMacros[10];
+    byte            chatBeep;
+
+    int             corpseTime;
+    byte            killMessages;
+    float           bobWeapon, bobView;
+    byte            bobWeaponLower;
+    int             cameraNoClip;
+
+    // Crosshair.
+    int             xhair;
+    float           xhairSize;
+    byte            xhairVitality;
+    float           xhairColor[4];
+
+    // Network.
+    byte            netDeathmatch;
+    byte            netBFGFreeLook; // Allow free-aim with BFG.
+    byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
+    byte            netMobHealthModifier; // Health modifier for non-player mobjs.
+    int             netGravity; // Multiplayer custom gravity.
+    byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
+    byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
+    byte            netNoMonsters;
+    byte            netRespawn;
+    byte            netJumping;
+    byte            netMap;
+    byte            netSkill;
+    byte            netSlot;
+    byte            netColor;
+
+    int             playerColor[MAXPLAYERS];
+} game_config_t;
+
+extern game_config_t cfg;
 
 #endif

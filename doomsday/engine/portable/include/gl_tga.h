@@ -35,9 +35,6 @@
 extern          "C" {
 #endif
 
-typedef unsigned char uchar; // 1 byte
-typedef unsigned short uint16_t; // 2 bytes
-
 enum {
     TGA_FALSE,
     TGA_TRUE,

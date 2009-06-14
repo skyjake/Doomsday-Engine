@@ -5,6 +5,9 @@
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1998-2006 James Haley <haleyjd@hotmail.com>
+ *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
+ *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +27,6 @@
 
 /**
  * p_sight.c: Line of Sight Testing.
- *
- * This uses specialized forms of the maputils routines for optimized
- * performance.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -52,351 +52,236 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float sightStartZ;            // eye z of looker
-float topSlope, bottomSlope;  // slopes to top and bottom of target
-int sightcounts[3];
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static divline_t strace;
+typedef struct losdata_s {
+    divline_t       trace;
+    float           startZ; // Eye z of looker.
+    float           topSlope; // Slope to top of target.
+    float           bottomSlope; // Slope to bottom of target.
+    float           bBox[4];
+    float           to[2];
+} losdata_t;
 
 // CODE --------------------------------------------------------------------
 
-boolean PTR_SightTraverse(intercept_t* in)
+static boolean crossLineDef(const linedef_t* li, losdata_t* los,
+                            divline_t* dl)
 {
-    linedef_t*          li;
-    float               slope;
+    divline_t           localDL, *dlPtr;
 
-    if(in == NULL)
-        return true; // Something was out of bounds?
+    // Try a quick, bounding-box rejection.
+    if(li->bBox[BOXLEFT]   > los->bBox[BOXRIGHT] ||
+       li->bBox[BOXRIGHT]  < los->bBox[BOXLEFT] ||
+       li->bBox[BOXBOTTOM] > los->bBox[BOXTOP] ||
+       li->bBox[BOXTOP]    < los->bBox[BOXBOTTOM])
+        return false;
 
-    li = in->d.lineDef;
+    if(P_PointOnDivlineSide(li->L_v1pos[VX], li->L_v1pos[VY],
+                            &los->trace) ==
+       P_PointOnDivlineSide(li->L_v2pos[VX], li->L_v2pos[VY],
+                            &los->trace))
+        return false; // Not crossed.
 
-    // Crosses a two sided line.
-    P_LineOpening(li);
+    if(dl)
+        dlPtr = dl;
+    else
+        dlPtr = &localDL;
 
-    // Check for totally closed doors.
-    if(openbottom >= opentop)
-        return false; // Stop iteration.
+    P_MakeDivline(li, dlPtr);
 
-    if(li->L_frontsector->SP_floorheight != li->L_backsector->SP_floorheight)
-    {
-        slope = (openbottom - sightStartZ) / in->frac;
-        if(slope > bottomSlope)
-            bottomSlope = slope;
-    }
+    if(P_PointOnDivlineSide(FIX2FLT(los->trace.pos[VX]),
+                            FIX2FLT(los->trace.pos[VY]), dlPtr) ==
+       P_PointOnDivlineSide(los->to[VX], los->to[VY], dlPtr))
+        return false; // Not crossed.
 
-    if(li->L_frontsector->SP_ceilheight != li->L_backsector->SP_ceilheight)
-    {
-        slope = (opentop - sightStartZ) / in->frac;
-        if(slope < topSlope)
-            topSlope = slope;
-    }
-
-    if(topSlope <= bottomSlope)
-        return false; // Stop iteration.
-
-    return true; // Continue iteration.
-}
-
-boolean PIT_CheckSightLine(linedef_t *line, void *data)
-{
-    int         s[2];
-    divline_t   dl;
-
-    s[0] = P_PointOnDivlineSide(line->L_v1pos[VX],
-                                line->L_v1pos[VY], &strace);
-    s[1] = P_PointOnDivlineSide(line->L_v2pos[VX],
-                                line->L_v2pos[VY], &strace);
-    if(s[0] == s[1])
-        return true; // Line isn't crossed, continue iteration.
-
-    P_MakeDivline(line, &dl);
-    s[0] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX]), FIX2FLT(strace.pos[VY]), &dl);
-    s[1] = P_PointOnDivlineSide(FIX2FLT(strace.pos[VX] + strace.dX),
-                                FIX2FLT(strace.pos[VY] + strace.dY),
-                                &dl);
-    if(s[0] == s[1])
-        return true; // Line isn't crossed, continue iteration.
-
-    // Try to early out the check.
-    if(!line->L_backside)
-        return false; // Stop iteration.
-
-    // Store the line for later intersection testing.
-    P_AddIntercept(0, true, line);
-
-    return true; // Continue iteration.
+    return true; // Crossed.
 }
 
 /**
- * Traces a line from x1,y1 to x2,y2, calling the traverser function for
- * each.
- *
- * @param x1            Origin X (world) coordinate.
- * @param y1            Origin Y (world) coordinate.
- * @param x2            Destination X (world) coordinate.
- * @param y2            Destination Y (world) coordinate.
- *
- * @return              @c true if the traverser function returns @c true for
- *                      all visited lines.
+ * @return              @c true iff trace crosses the given subsector.
  */
-boolean P_SightPathTraverse(float x1, float y1, float x2, float y2)
+static boolean crossSSec(uint ssecIdx, losdata_t* los)
 {
+    const subsector_t*  ssec = &ssectors[ssecIdx];
 
-    uint                originBlock[2], destBlock[2];
-    float               delta[2];
-    float               partial;
-    fixed_t             intercept[2], step[2];
-    uint                block[2];
-    int                 stepDir[2];
-    int                 count;
-    gamemap_t*          map = P_GetCurrentMap();
-    vec2_t              origin, dest, min, max;
+    if(ssec->polyObj)
+    {   // Check polyobj lines.
+        polyobj_t*          po = ssec->polyObj;
+        seg_t**             segPtr = po->segs;
 
-    V2_Set(origin, x1, y1);
-    V2_Set(dest, x2, y2);
-
-    P_GetBlockmapBounds(map->blockMap, min, max);
-
-    if(!(origin[VX] >= min[VX] && origin[VX] <= max[VX] &&
-         origin[VY] >= min[VY] && origin[VY] <= max[VY]))
-    {   // Origin is outside the blockmap (really? very unusual...)
-        return false;
-    }
-
-    // Check the easy case of a path that lies completely outside the bmap.
-    if((origin[VX] < min[VX] && dest[VX] < min[VX]) ||
-       (origin[VX] > max[VX] && dest[VX] > max[VX]) ||
-       (origin[VY] < min[VY] && dest[VY] < min[VY]) ||
-       (origin[VY] > max[VY] && dest[VY] > max[VY]))
-    {   // Nothing intercepts outside the blockmap!
-        return false;
-    }
-
-    // Don't side exactly on blockmap lines.
-    if((FLT2FIX(origin[VX] - min[VX]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VX] += 1;
-    if((FLT2FIX(origin[VY] - min[VY]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VY] += 1;
-
-    strace.pos[VX] = FLT2FIX(origin[VX]);
-    strace.pos[VY] = FLT2FIX(origin[VY]);
-    strace.dX = FLT2FIX(dest[VX] - origin[VX]);
-    strace.dY = FLT2FIX(dest[VY] - origin[VY]);
-
-    /**
-     * It is possible that one or both points are outside the blockmap.
-     * Clip path so that dest is within the AABB of the blockmap (note we
-     * would have already abandoned if origin lay outside. Also, to avoid
-     * potential rounding errors which might occur when determining the
-     * blocks later, we will shrink the bbox slightly first.
-     */
-
-    if(!(dest[VX] >= min[VX] && dest[VX] <= max[VX] &&
-         dest[VY] >= min[VY] && dest[VY] <= max[VY]))
-    {   // Dest is outside the blockmap.
-        float               ab;
-        vec2_t              bbox[4], point;
-
-        V2_Set(bbox[0], min[VX] + 1, min[VY] + 1);
-        V2_Set(bbox[1], min[VX] + 1, max[VY] - 1);
-        V2_Set(bbox[2], max[VX] - 1, max[VY] - 1);
-        V2_Set(bbox[3], max[VX] - 1, min[VY] + 1);
-
-        ab = V2_Intercept(origin, dest, bbox[0], bbox[1], point);
-        if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
-
-        ab = V2_Intercept(origin, dest, bbox[1], bbox[2], point);
-        if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
-
-        ab = V2_Intercept(origin, dest, bbox[2], bbox[3], point);
-        if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
-
-        ab = V2_Intercept(origin, dest, bbox[3], bbox[0], point);
-        if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
-    }
-
-    if(!(P_ToBlockmapBlockIdx(map->blockMap, originBlock, origin) &&
-         P_ToBlockmapBlockIdx(map->blockMap, destBlock, dest)))
-    {   // Should never get here due to the clipping above.
-        return false;
-    }
-
-    validCount++;
-    P_ClearIntercepts();
-
-    V2_Subtract(origin, origin, min);
-    V2_Subtract(dest, dest, min);
-
-    if(destBlock[VX] > originBlock[VX])
-    {
-        stepDir[VX] = 1;
-        partial = 1 - FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
-    }
-    else if(destBlock[VX] < originBlock[VX])
-    {
-        stepDir[VX] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
-    }
-    else
-    {
-        stepDir[VX] = 0;
-        partial = 1;
-        delta[VY] = 256;
-    }
-    intercept[VY] = (FLT2FIX(origin[VY]) >> MAPBTOFRAC) +
-        FLT2FIX(partial * delta[VY]);
-
-    if(destBlock[VY] > originBlock[VY])
-    {
-        stepDir[VY] = 1;
-        partial = 1 - FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
-    }
-    else if(destBlock[VY] < originBlock[VY])
-    {
-        stepDir[VY] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
-    }
-    else
-    {
-        stepDir[VY] = 0;
-        partial = 1;
-        delta[VX] = 256;
-    }
-    intercept[VX] = (FLT2FIX(origin[VX]) >> MAPBTOFRAC) +
-            FLT2FIX(partial * delta[VX]);
-
-    //
-    // Step through map blocks.
-    //
-
-    // Count is present to prevent a round off error from skipping the
-    // break and ending up in an infinite loop..
-    block[VX] = originBlock[VX];
-    block[VY] = originBlock[VY];
-    step[VX] = FLT2FIX(delta[VX]);
-    step[VY] = FLT2FIX(delta[VY]);
-    for(count = 0; count < 64; count++)
-    {
-        if(numPolyObjs > 0)
+        while(*segPtr)
         {
-            if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
-                                               PIT_CheckSightLine, 0))
+            seg_t*              seg = *segPtr;
+
+            if(seg->lineDef && seg->lineDef->validCount != validCount)
             {
-                sightcounts[1]++;
-                return false; // Early out.
+                linedef_t*          li = seg->lineDef;
+
+                li->validCount = validCount;
+
+                if(crossLineDef(li, los, NULL))
+                    return false; // Stop iteration.
+            }
+
+            *segPtr++;
+        }
+    }
+
+    {
+    // Check lines.
+    seg_t**             segPtr = ssec->segs;
+    while(*segPtr)
+    {
+        seg_t*              seg = *segPtr;
+
+        if(seg->lineDef && seg->lineDef->validCount != validCount)
+        {
+            const linedef_t*    li = seg->lineDef;
+            divline_t           dl;
+
+            seg->lineDef->validCount = validCount;
+
+            if(crossLineDef(li, los, &dl))
+            {
+                const sector_t*     front, *back;
+
+                // Must be twosided.
+                if(!li->L_frontside || !li->L_backside)
+                    return false; // Stop iteration.
+
+                front = seg->SG_frontsector;
+                back  = seg->SG_backsector;
+
+                // Do we need to check for occluding upper lower sections?
+                if(front->SP_floorheight != back->SP_floorheight ||
+                   front->SP_ceilheight  != back->SP_ceilheight)
+                {   // A possible occluder.
+                    float               openTop, openBottom, frac;
+
+                    if(front->SP_ceilheight < back->SP_ceilheight)
+                        openTop = front->SP_ceilheight;
+                    else
+                        openTop = back->SP_ceilheight;
+
+                    if(front->SP_floorheight > back->SP_floorheight)
+                        openBottom = front->SP_floorheight;
+                    else
+                        openBottom = back->SP_floorheight;
+
+                    // Completely closed?
+                    if(openBottom >= openTop)
+                        return false; // Stop iteration.
+
+                    frac = P_InterceptVector(&los->trace, &dl);
+
+                    if(front->SP_floorheight != back->SP_floorheight)
+                    {
+                        float               slope =
+                            (openBottom - los->startZ) / frac;
+
+                        if(slope > los->bottomSlope)
+                            los->bottomSlope = slope;
+                    }
+
+                    if(front->SP_ceilheight != back->SP_ceilheight)
+                    {
+                        float               slope =
+                            (openTop - los->startZ) / frac;
+
+                        if(slope < los->topSlope)
+                            los->topSlope = slope;
+                    }
+
+                    if(los->topSlope <= los->bottomSlope)
+                        return false; // Stop iteration.
+                }
             }
         }
 
-        if(!P_BlockmapLinesIterator(BlockMap, block, PIT_CheckSightLine, 0))
-        {
-            sightcounts[1]++;
-            return false; // Early out.
-        }
-
-        // At or past the target?
-        if((block[VX] == destBlock[VX] && block[VY] == destBlock[VY]) ||
-           (((dest[VX] >= origin[VX] && block[VX] >= destBlock[VX]) ||
-             (dest[VX] <  origin[VX] && block[VX] <= destBlock[VX])) &&
-            ((dest[VY] >= origin[VY] && block[VY] >= destBlock[VY]) ||
-             (dest[VY] <  origin[VY] && block[VY] <= destBlock[VY]))))
-            break;
-
-        if((unsigned) (intercept[VY] >> FRACBITS) == block[VY])
-        {
-            intercept[VY] += step[VY];
-            block[VX] += stepDir[VX];
-        }
-        else if((unsigned) (intercept[VX] >> FRACBITS) == block[VX])
-        {
-            intercept[VX] += step[VX];
-            block[VY] += stepDir[VY];
-        }
+        *segPtr++;
+    }
     }
 
-    // Couldn't early out, so go through the sorted list
-    sightcounts[2]++;
-
-    return P_SightTraverseIntercepts(&strace, PTR_SightTraverse);
+    return true; // Continue iteration.
 }
 
 /**
- * Checks the reject matrix to find out if the two sectors are visible
- * from each other.
+ * @return              @c true iff trace crosses the node.
  */
-boolean P_CheckReject(sector_t *sec1, sector_t *sec2)
+static boolean crossBSPNode(unsigned int bspNum, losdata_t* los)
 {
-    uint        s1, s2;
-    uint        pnum, bytenum, bitnum;
-
-    if(rejectMatrix != NULL)
+    while(!(bspNum & NF_SUBSECTOR))
     {
-        // Determine subsector entries in REJECT table.
-        s1 = GET_SECTOR_IDX(sec1);
-        s2 = GET_SECTOR_IDX(sec2);
-        pnum = s1 * numSectors + s2;
-        bytenum = pnum >> 3;
-        bitnum = 1 << (pnum & 7);
+        const node_t*       node = &nodes[bspNum];
+        int                 side = R_PointOnSide(
+            FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
+            &node->partition);
 
-        // Check in REJECT table.
-        if(rejectMatrix[bytenum] & bitnum)
-        {
-            sightcounts[0]++;
-            // Can't possibly be connected.
-            return false;
+        // Would the trace completely cross this partition?
+        if(side == R_PointOnSide(los->to[VX], los->to[VY],
+                                 &node->partition))
+        {   // Yes, decend!
+            bspNum = node->children[side];
+        }
+        else
+        {   // No.
+            if(!crossBSPNode(node->children[side], los))
+                return 0; // Cross the starting side.
+            else
+                bspNum = node->children[side^1]; // Cross the ending side.
         }
     }
-    return true;
+
+    return crossSSec(bspNum & ~NF_SUBSECTOR, los);
 }
 
 /**
- * Look from eyes of t1 to any part of t2 (start from middle of t1).
+ * Traces a line of sight.
  *
- * @param t1            The mobj doing the looking.
- * @param t2            The mobj being looked at.
+ * @param from          World position, trace origin coordinates.
+ * @param to            World position, trace target coordinates.
  *
- * @return              @c true if a straight line between t1 and t2 is
- *                      unobstructed.
+ * @return              @c true if the traverser function returns @c true
+ *                      for all visited lines.
  */
-boolean P_CheckSight(mobj_t* t1, mobj_t* t2)
+boolean P_CheckLineSight(const float from[3], const float to[3],
+                         float bottomSlope, float topSlope)
 {
-    // If either is unlinked, they can't see each other.
-    if(!t1->subsector || !t2->subsector)
-        return false;
+    losdata_t               los;
 
-    // Check for trivial rejection.
-    if(!P_CheckReject(t1->subsector->sector, t2->subsector->sector))
-        return false;
+    los.startZ = from[VZ];
+    los.topSlope = to[VZ] + topSlope - los.startZ;
+    los.bottomSlope = to[VZ] + bottomSlope - los.startZ;
+    los.trace.pos[VX] = FLT2FIX(from[VX]);
+    los.trace.pos[VY] = FLT2FIX(from[VY]);
+    los.trace.dX = FLT2FIX(to[VX] - from[VX]);
+    los.trace.dY = FLT2FIX(to[VY] - from[VY]);
+    los.to[VX] = to[VX];
+    los.to[VY] = to[VY];
 
-    if(t2->dPlayer && (t2->dPlayer->flags & DDPF_CAMERA))
-        return false; // Cameramen don't exist!
+    if(from[VX] > to[VX])
+    {
+        los.bBox[BOXRIGHT]  = from[VX];
+        los.bBox[BOXLEFT]   = to[VX];
+    }
+    else
+    {
+        los.bBox[BOXRIGHT]  = to[VX];
+        los.bBox[BOXLEFT]   = from[VX];
+    }
 
-    // Check precisely.
-    sightStartZ = t1->pos[VZ];
-    if(!(t1->dPlayer && (t1->dPlayer->flags & DDPF_CAMERA)))
-        sightStartZ += t1->height + -(t1->height / 4);
+    if(from[VY] > to[VY])
+    {
+        los.bBox[BOXTOP]    = from[VY];
+        los.bBox[BOXBOTTOM] = to[VY];
+    }
+    else
+    {
+        los.bBox[BOXTOP]    = to[VY];
+        los.bBox[BOXBOTTOM] = from[VY];
+    }
 
-    topSlope = t2->pos[VZ] + t2->height - sightStartZ;
-    bottomSlope = t2->pos[VZ] - sightStartZ;
-
-    return P_SightPathTraverse(t1->pos[VX], t1->pos[VY],
-                               t2->pos[VX], t2->pos[VY]);
-}
-
-boolean P_CheckLineSight(float from[3], float to[3])
-{
-    sightStartZ = from[VZ];
-    topSlope = to[VZ] + 1 - sightStartZ;
-    bottomSlope = to[VZ] - 1 - sightStartZ;
-
-    return P_SightPathTraverse(from[VX], from[VY], to[VX], to[VY]);
+    validCount++;
+    return crossBSPNode(numNodes - 1, &los);
 }

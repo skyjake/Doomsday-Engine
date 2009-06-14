@@ -36,6 +36,7 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define MAX_SCRIPTNAME_LEN      (32)
 #define MAX_STRING_SIZE         (64)
 #define ASCII_COMMENT           (';')
 #define ASCII_QUOTE             (34)
@@ -52,9 +53,17 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+char* sc_String;
+int sc_Number;
+int sc_Line;
+boolean sc_End;
+boolean sc_Crossed;
+boolean sc_FileScripts = false;
+const char* sc_ScriptsDir = "";
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char ScriptName[32];
+static char ScriptName[MAX_SCRIPTNAME_LEN+1];
 static char* ScriptBuffer;
 static char* ScriptPtr;
 static char* ScriptEndPtr;
@@ -63,11 +72,6 @@ static boolean ScriptOpen = false;
 static boolean ScriptFreeCLib; // true = de-allocate using free()
 static size_t ScriptSize;
 static boolean AlreadyGot = false;
-static char* lastReadString;
-static int lastReadInteger;
-static int sc_Line;
-static boolean sc_End;
-static boolean sc_Crossed;
 
 // CODE --------------------------------------------------------------------
 
@@ -95,16 +99,16 @@ static void openScriptLump(lumpnum_t lump)
     sc_Line = 1;
     sc_End = false;
     ScriptOpen = true;
-    lastReadString = StringBuffer;
+    sc_String = StringBuffer;
     AlreadyGot = false;
 }
 
-static void openScriptFile(char* name)
+static void openScriptFile(const char* name)
 {
     SC_Close();
 
     ScriptSize = M_ReadFile(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(name, ScriptName);
+    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
     ScriptFreeCLib = false; // De-allocate using Z_Free()
 
     ScriptPtr = ScriptBuffer;
@@ -112,16 +116,16 @@ static void openScriptFile(char* name)
     sc_Line = 1;
     sc_End = false;
     ScriptOpen = true;
-    lastReadString = StringBuffer;
+    sc_String = StringBuffer;
     AlreadyGot = false;
 }
 
-static void openScriptCLib(char* name)
+static void openScriptCLib(const char* name)
 {
     SC_Close();
 
     ScriptSize = M_ReadFileCLib(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(name, ScriptName);
+    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
     ScriptFreeCLib = true;  // De-allocate using free()
 
     ScriptPtr = ScriptBuffer;
@@ -129,8 +133,28 @@ static void openScriptCLib(char* name)
     sc_Line = 1;
     sc_End = false;
     ScriptOpen = true;
-    lastReadString = StringBuffer;
+    sc_String = StringBuffer;
     AlreadyGot = false;
+}
+
+void SC_Open(const char* name)
+{
+    char                fileName[128];
+
+    if(sc_FileScripts == true)
+    {
+        sprintf(fileName, "%s%s.txt", sc_ScriptsDir, name);
+        SC_OpenFile(fileName);
+    }
+    else
+    {
+        lumpnum_t           lump = W_CheckNumForName(name);
+
+        if(lump == -1)
+            Con_Error("SC_Open: Failed opening lump %s.\n", name);
+
+        SC_OpenLump(lump);
+    }
 }
 
 /**
@@ -145,7 +169,7 @@ void SC_OpenLump(lumpnum_t lump)
  * Loads a script (from a file) and prepares it for parsing.  Uses the
  * zone memory allocator for memory allocation and de-allocation.
  */
-void SC_OpenFile(char* name)
+void SC_OpenFile(const char* name)
 {
     openScriptFile(name);
 }
@@ -154,7 +178,7 @@ void SC_OpenFile(char* name)
  * Loads a script (from a file) and prepares it for parsing.  Uses C
  * library function calls for memory allocation and de-allocation.
  */
-void SC_OpenFileCLib(char* name)
+void SC_OpenFileCLib(const char* name)
 {
     openScriptCLib(name);
 }
@@ -241,7 +265,7 @@ boolean SC_GetString(void)
         }
     }
 
-    text = lastReadString;
+    text = sc_String;
 
     if(*ScriptPtr == ASCII_QUOTE)
     {   // Quoted string.
@@ -250,7 +274,7 @@ boolean SC_GetString(void)
         {
             *text++ = *ScriptPtr++;
             if(ScriptPtr == ScriptEndPtr ||
-               text == &lastReadString[MAX_STRING_SIZE - 1])
+               text == &sc_String[MAX_STRING_SIZE - 1])
             {
                 break;
             }
@@ -264,7 +288,7 @@ boolean SC_GetString(void)
         {
             *text++ = *ScriptPtr++;
             if(ScriptPtr == ScriptEndPtr ||
-               text == &lastReadString[MAX_STRING_SIZE - 1])
+               text == &sc_String[MAX_STRING_SIZE - 1])
             {
                 break;
             }
@@ -299,11 +323,11 @@ boolean SC_GetNumber(void)
     checkOpen();
     if(SC_GetString())
     {
-        lastReadInteger = strtol(lastReadString, &stopper, 0);
+        sc_Number = strtol(sc_String, &stopper, 0);
         if(*stopper != 0)
         {
             Con_Error("SC_GetNumber: Bad numeric constant \"%s\".\n"
-                      "Script %s, Line %d", lastReadString, ScriptName, sc_Line);
+                      "Script %s, Line %d", sc_String, ScriptName, sc_Line);
         }
 
         return true;
@@ -321,7 +345,7 @@ void SC_MustGetNumber(void)
 }
 
 /**
- * Assumes there is a valid string in lastReadString.
+ * Assumes there is a valid string in sc_String.
  */
 void SC_UnGet(void)
 {
@@ -329,7 +353,7 @@ void SC_UnGet(void)
 }
 
 /**
- * @return              Index of the first match to lastReadString from the
+ * @return              Index of the first match to sc_String from the
  *                      passed array of strings, ELSE @c -1,.
  */
 int SC_MatchString(char** strings)
@@ -362,22 +386,12 @@ int SC_MustMatchString(char** strings)
 
 boolean SC_Compare(char* text)
 {
-    if(strcasecmp(text, lastReadString) == 0)
+    if(strcasecmp(text, sc_String) == 0)
     {
         return true;
     }
 
     return false;
-}
-
-int SC_LastReadInteger(void)
-{
-    return lastReadInteger;
-}
-
-const char* SC_LastReadString(void)
-{
-    return lastReadString;
 }
 
 void SC_ScriptError(char* message)

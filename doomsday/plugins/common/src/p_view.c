@@ -45,10 +45,11 @@
 
 #include "p_player.h"
 #include "p_tick.h"
+#include "p_actor.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define VIEW_HEIGHT         (PLRPROFILE.camera.offsetZ)
+#define VIEW_HEIGHT         (cfg.plrViewHeight)
 
 #define MAXBOB              (16) // pixels.
 
@@ -116,7 +117,7 @@ void P_CalcHeight(player_t* plr)
     else
     {
         angle_t angle = (FINEANGLES / 20 * mapTime) & FINEMASK;
-        target = PLRPROFILE.camera.bob * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
+        target = cfg.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
     }
 
     // Do the change gradually.
@@ -150,7 +151,7 @@ void P_CalcHeight(player_t* plr)
         P_MobjIsCamera(pmo) /*$democam*/ || Get(DD_PLAYBACK)))
     {
         // Move viewheight.
-        if(plr->pState == PST_LIVE)
+        if(plr->playerState == PST_LIVE)
         {
             ddplr->viewHeight += ddplr->viewHeightDelta;
 
@@ -190,7 +191,7 @@ void P_CalcHeight(player_t* plr)
         }
 
         // Foot clipping is done for living players.
-        if(plr->pState != PST_DEAD)
+        if(plr->playerState != PST_DEAD)
         {
             if(pmo->floorClip && pmo->pos[VZ] <= pmo->floorZ)
             {

@@ -92,7 +92,7 @@ static DGLuint texScreenshot; // Captured screenshot of the latest frame.
  * @return              Return value of the worker.
  */
 int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
-             void *workerData)
+             void* workerData)
 {
     int                 result = 0;
 
@@ -113,7 +113,7 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     {   // Take a copy of the task name.
         size_t              len = strlen(taskName);
 
-        busyTaskName = M_Calloc(len+1);
+        busyTaskName = M_Calloc(len + 1);
         snprintf(busyTaskName, len, "%s", taskName);
     }
     Sys_Unlock(busy_Mutex);
@@ -203,14 +203,14 @@ static void Con_BusyLoadTextures(void)
     {
         // These must be real files in the base dir because virtual files haven't
         // been loaded yet when engine startup is done.
-        if(GL_LoadImage(&image, "}data/graphics/loading1.png", false))
+        if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
         {
             texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);
             GL_DestroyImage(&image);
         }
 
-        if(GL_LoadImage(&image, "}data/graphics/loading2.png", false))
+        if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
         {
             texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);
@@ -446,7 +446,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
             (i / (float)edgeCount) + PI/2;
 
         glTexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
-        glVertex2f(x + cos(angle)*radius, y + sin(angle)*radius);
+        glVertex2f(x + cos(angle)*radius*1.105f, y + sin(angle)*radius*1.105f);
     }
     glEnd();
 
@@ -655,7 +655,9 @@ void Con_StartupInit(void)
     }
 
     // Load graphics.
-    startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
+    startupLogo = GL_PrepareExtTexture(DDRC_GRAPHICS, "Background", LGM_GRAYSCALE,
+        false, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE,
+        GL_CLAMP_TO_EDGE, 0);
 }
 
 void Con_StartupDone(void)

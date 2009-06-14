@@ -98,7 +98,7 @@ void* G_GetVariable(int id)
         return GAMENAMETEXT " " GAME_VERSION_TEXT;
 
     case DD_GAME_MODE:
-        return gs.gameModeString;
+        return gameModeString;
 
     case DD_GAME_CONFIG:
         return gameConfigString;

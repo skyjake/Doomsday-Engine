@@ -260,8 +260,6 @@ typedef struct gamemap_s {
     nodepile_t      mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t*    lineLinks; // Indices to roots.
 
-    byte*           rejectMatrix;
-
     float           globalGravity; // Gravity for the current map.
     int             ambientLightLevel; // Ambient lightlevel for the current map.
 } gamemap_t;

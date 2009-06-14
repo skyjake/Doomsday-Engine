@@ -76,8 +76,7 @@ int timerGame;
  */
 boolean P_IsPaused(void)
 {
-    return gs.paused ||
-        (!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()));
+    return paused || (!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()));
 }
 
 /**
@@ -141,20 +140,20 @@ void P_RunPlayers(timespan_t ticLength)
 void P_DoTick(void)
 {
     // If the game is paused, nothing will happen.
-    if(gs.paused)
+    if(paused)
         return;
 
     actualMapTime++;
 
-    if(!IS_CLIENT && timerGame && !gs.paused)
+    if(!IS_CLIENT && timerGame && !paused)
     {
         if(!--timerGame)
         {
 #if __JHEXEN__ || __JSTRIFE__
-            G_LeaveMap(G_GetMapNumber(gs.episode, P_GetMapNextMap(gs.map.id)),
+            G_LeaveMap(G_GetMapNumber(gameEpisode, P_GetMapNextMap(gameMap)),
                          0, false);
 #else
-            G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+            G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 #endif
         }
     }
@@ -164,7 +163,7 @@ void P_DoTick(void)
        !Get(DD_PLAYBACK) && players[CONSOLEPLAYER].plr->viewZ != 1)
         return;
 
-    P_RunThinkers();
+    DD_RunThinkers();
     P_UpdateSpecials();
 
 #if __JDOOM64__

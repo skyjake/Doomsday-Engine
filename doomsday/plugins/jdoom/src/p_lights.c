@@ -84,11 +84,10 @@ void P_SpawnFireFlicker(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flick = Z_Calloc(sizeof(*flick), PU_MAPSPEC, 0);
-
-    P_ThinkerAdd(&flick->thinker);
-
+    flick = Z_Calloc(sizeof(*flick), PU_MAP, 0);
     flick->thinker.function = T_FireFlicker;
+    DD_ThinkerAdd(&flick->thinker);
+
     flick->sector = sector;
     flick->count = 4;
     flick->maxLight = lightLevel;
@@ -138,10 +137,9 @@ void P_SpawnLightFlash(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flash = Z_Calloc(sizeof(*flash), PU_MAPSPEC, 0);
+    flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
     flash->thinker.function = T_LightFlash;
-
-    P_ThinkerAdd(&flash->thinker);
+    DD_ThinkerAdd(&flash->thinker);
 
     flash->sector = sector;
     flash->maxLight = lightLevel;
@@ -189,10 +187,9 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     float               otherLevel = DDMAXFLOAT;
 
-    flash = Z_Calloc(sizeof(*flash), PU_MAPSPEC, 0);
+    flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
     flash->thinker.function = T_StrobeFlash;
-
-    P_ThinkerAdd(&flash->thinker);
+    DD_ThinkerAdd(&flash->thinker);
 
     flash->sector = sector;
     flash->darkTime = fastOrSlow;
@@ -333,10 +330,9 @@ void P_SpawnGlowingLight(sector_t *sector)
     float               otherLevel = DDMAXFLOAT;
     glow_t             *g;
 
-    g = Z_Calloc(sizeof(*g), PU_MAPSPEC, 0);
+    g = Z_Calloc(sizeof(*g), PU_MAP, 0);
     g->thinker.function = T_Glow;
-
-    P_ThinkerAdd(&g->thinker);
+    DD_ThinkerAdd(&g->thinker);
 
     g->sector = sector;
     P_FindSectorSurroundingLowestLight(sector, &otherLevel);

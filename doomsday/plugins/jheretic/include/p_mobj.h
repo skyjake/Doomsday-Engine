@@ -41,18 +41,25 @@
 /**
  * (Re)Spawn flags:
  */
-#define MTF_EASY            1 // Appears in Easy skill modes
-#define MTF_MEDIUM          2 // Appears in Medium skill modes
-#define MTF_HARD            4 // Appears in Hard skill modes
-#define MTF_AMBUSH          8 // THING is deaf
-#define MTF_NOTSINGLE       16 // Appears in Multiplayer game modes only
-#define MTF_NOTDM           32 // Doesn't appear in Deathmatch
-#define MTF_NOTCOOP         64 // Doesn't appear in Coop
-#define MTF_DORMANT         512 // THING is invulnerble and inert
+#define MTF_EASY            0x00000001 // Can be spawned in Easy skill modes.
+#define MTF_MEDIUM          0x00000002 // Can be spawned in Medium skill modes.
+#define MTF_HARD            0x00000004 // Can be spawned in Hard skill modes.
+#define MTF_AMBUSH          0x00000008 // Mobj will be deaf spawned deaf.
+#define MTF_NOTSINGLE       0x00000010 // (BOOM) Can not be spawned in single player gamemodes.
+#define MTF_NOTDM           0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
+#define MTF_FRIENDLY        0x00000080 // (BOOM) friendly monster.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
+
+// New flags:
+#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
+#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
+#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
 typedef struct spawnspot_s {
-    float           pos[2];
-    float           height;
+    float           pos[3];
     int             angle;
     int             type;
     int             flags;
@@ -235,21 +242,21 @@ typedef struct polyobj_s {
 } polyobj_t;
 
 extern spawnspot_t* things;
-mobjtype_t puffType;
-mobj_t* missileMobj;
 
 void        P_RespawnEnqueue(spawnspot_t *spot);
 void        P_CheckRespawnQueue(void);
 void        P_EmptyRespawnQueue(void);
 
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
-                          angle_t angle);
-mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle);
+                          angle_t angle, int spawnFlags);
+mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+                           int spawnFlags);
 
 void        P_SpawnPuff(float x, float y, float z, angle_t angle);
 void        P_SpawnBlood(float x, float y, float z, int damage,
                          angle_t angle);
-mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest,
+                           boolean checkSpawn);
 mobj_t*     P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
                                 angle_t angle, float momz);
 mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);

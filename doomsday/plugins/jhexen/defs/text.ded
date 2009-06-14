@@ -323,7 +323,22 @@ Text {
 }
 
 Text {
-  ID = "TXT_ARTIPUZZGEAR";
+  ID = "TXT_ARTIPUZZGEAR1";
+  Text = "Clock Gear";
+}
+
+Text {
+  ID = "TXT_ARTIPUZZGEAR2";
+  Text = "Clock Gear";
+}
+
+Text {
+  ID = "TXT_ARTIPUZZGEAR3";
+  Text = "Clock Gear";
+}
+
+Text {
+  ID = "TXT_ARTIPUZZGEAR4";
   Text = "Clock Gear";
 }
 
@@ -678,8 +693,8 @@ Text {
 }
 
 Text {
-  ID = "PLAYERPROFILE";
-  Text = "Player Profile";
+  ID = "PLAYERSETUP";
+  Text = "Player Setup";
 }
 
 Text {

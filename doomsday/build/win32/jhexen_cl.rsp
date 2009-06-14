@@ -3,7 +3,6 @@
  .\..\..\plugins\common\src\d_net.c
  .\..\..\plugins\common\src\dmu_lib.c
  .\..\..\plugins\common\src\m_multi.c
- .\..\..\plugins\common\src\m_playerprofile.c
  .\..\..\plugins\common\src\hu_menu.c
  .\..\..\plugins\common\src\g_update.c
  .\..\..\plugins\common\src\p_view.c
@@ -40,6 +39,7 @@
  .\..\..\plugins\common\src\hu_log.c
  .\..\..\plugins\common\src\hu_lib.c
  .\..\..\plugins\common\src\hu_msg.c
+ .\..\..\plugins\common\src\hu_inventory.c
  .\..\..\plugins\common\src\st_lib.c
  .\..\..\plugins\common\src\am_map.c
  .\..\..\plugins\jhexen\src\g_ctrl.c

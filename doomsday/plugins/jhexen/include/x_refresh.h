@@ -35,7 +35,7 @@
 void            G_Display(int layer);
 void            G_Display2(void);
 
-void            R_SetViewSize(int player, int blocks);
+void            R_SetViewSize(int blocks);
 void            R_SetAllDoomsdayFlags(void);
 boolean         R_GetFilterColor(float rgba[4], int filter);
 #endif

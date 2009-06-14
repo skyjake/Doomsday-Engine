@@ -62,7 +62,7 @@ typedef enum cheattype_e {
     CHT_WEAPONS,
     CHT_HEALTH,
     CHT_KEYS,
-    CHT_ARTIFACTS,
+    CHT_INVENTORY_ITEMS,
     CHT_PUZZLE
 } cheattype_t;
 
@@ -86,7 +86,8 @@ static void CheatNoClipFunc(player_t *player, cheat_t *cheat);
 static void CheatWeaponsFunc(player_t *player, cheat_t *cheat);
 static void CheatHealthFunc(player_t *player, cheat_t *cheat);
 static void CheatKeysFunc(player_t *player, cheat_t *cheat);
-static void CheatArtifactAllFunc(player_t *player, cheat_t *cheat);
+static void CheatSoundFunc(player_t *player, cheat_t *cheat);
+static void CheatInventoryFunc(player_t *player, cheat_t *cheat);
 static void CheatPuzzleFunc(player_t *player, cheat_t *cheat);
 static void CheatWarpFunc(player_t *player, cheat_t *cheat);
 static void CheatPigFunc(player_t *player, cheat_t *cheat);
@@ -171,6 +172,16 @@ static byte cheatKeysSeq[] = {
     0xff, 0
 };
 
+// Toggle sound debug info
+static byte cheatSoundSeq[] = {
+    CHEAT_ENCRYPT('n'),
+    CHEAT_ENCRYPT('o'),
+    CHEAT_ENCRYPT('i'),
+    CHEAT_ENCRYPT('s'),
+    CHEAT_ENCRYPT('e'),
+    0xff
+};
+
 // Toggle ticker
 static byte cheatTickerSeq[] = {
     CHEAT_ENCRYPT('t'),
@@ -182,8 +193,8 @@ static byte cheatTickerSeq[] = {
     0xff, 0
 };
 
-// Get all artifacts
-static byte cheatArtifactAllSeq[] = {
+// Get all inventory items
+static byte cheatInventorySeq[] = {
     CHEAT_ENCRYPT('i'),
     CHEAT_ENCRYPT('n'),
     CHEAT_ENCRYPT('d'),
@@ -421,7 +432,8 @@ static cheat_t cheats[] = {
     {CheatWeaponsFunc, cheatWeaponsSeq, NULL, {0, 0}, 0},
     {CheatHealthFunc, cheatHealthSeq, NULL, {0, 0}, 0},
     {CheatKeysFunc, cheatKeysSeq, NULL, {0, 0}, 0},
-    {CheatArtifactAllFunc, cheatArtifactAllSeq, NULL, {0, 0}, 0},
+    {CheatSoundFunc, cheatSoundSeq, NULL, {0, 0}, 0},
+    {CheatInventoryFunc, cheatInventorySeq, NULL, {0, 0}, 0},
     {CheatPuzzleFunc, cheatPuzzleSeq, NULL, {0, 0}, 0},
     {CheatWarpFunc, cheatWarpSeq, NULL, {0, 0}, 0},
     {CheatPigFunc, cheatPigSeq, NULL, {0, 0}, 0},
@@ -473,7 +485,7 @@ boolean Cht_Responder(event_t *ev)
     if(G_GetGameState() != GS_MAP)
         return false;
 
-    if(gs.skill == SM_NIGHTMARE)
+    if(gameSkill == SM_NIGHTMARE)
     {   // Can't cheat in nightmare mode
         return false;
     }
@@ -503,8 +515,8 @@ boolean Cht_Responder(event_t *ev)
     {
         if(ev->state == EVS_DOWN)
         {
-            if(cheatKills[ShowKillsCount] == ev->data1 && IS_NETGAME &&
-               GAMERULES.deathmatch)
+            if(cheatKills[ShowKillsCount] == ev->data1 && IS_NETGAME
+               && deathmatch)
             {
                 ShowKillsCount++;
                 if(ShowKillsCount == 5)
@@ -540,7 +552,7 @@ static boolean canCheat(void)
 #ifdef _DEBUG
     return true;
 #else
-    return !(gs.skill == SM_NIGHTMARE || (IS_NETGAME && !netCheatParm) ||
+    return !(gameSkill == SM_NIGHTMARE || (IS_NETGAME && !netCheatParm) ||
              players[CONSOLEPLAYER].health <= 0);
 #endif
 }
@@ -643,7 +655,7 @@ static void CheatWeaponsFunc(player_t *player, cheat_t *cheat)
 
     for(i = 0; i < NUMARMOR; ++i)
     {
-        player->armorPoints[i] = PCLASS_INFO(player->pClass)->armorIncrement[i];
+        player->armorPoints[i] = PCLASS_INFO(player->class)->armorIncrement[i];
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -680,40 +692,53 @@ static void CheatKeysFunc(player_t *player, cheat_t *cheat)
     P_SetMessage(player, TXT_CHEATKEYS, false);
 }
 
-static void CheatArtifactAllFunc(player_t *player, cheat_t *cheat)
+static void CheatSoundFunc(player_t *player, cheat_t *cheat)
 {
-    int                 i, j;
+    debugSound = !debugSound;
+    if(debugSound)
+    {
+        P_SetMessage(player, TXT_CHEATSOUNDON, false);
+    }
+    else
+    {
+        P_SetMessage(player, TXT_CHEATSOUNDOFF, false);
+    }
+}
 
-    for(i = AFT_NONE + 1; i < AFT_FIRSTPUZZITEM; ++i)
+static void CheatInventoryFunc(player_t* player, cheat_t* cheat)
+{
+    int                 i, j, plrNum = player - players;
+
+    for(i = IIT_NONE + 1; i < IIT_FIRSTPUZZITEM; ++i)
     {
         for(j = 0; j < 25; ++j)
         {
-            P_InventoryGive(player, i);
+            P_InventoryGive(plrNum, i, false);
         }
     }
 
-    P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
+    P_SetMessage(player, TXT_CHEATINVITEMS3, false);
 }
 
-static void CheatPuzzleFunc(player_t *player, cheat_t *cheat)
+static void CheatPuzzleFunc(player_t* player, cheat_t* cheat)
 {
-    int                 i;
+    int                 i, plrNum = player - players;
 
-    for(i = AFT_FIRSTPUZZITEM; i < NUM_ARTIFACT_TYPES; i++)
+    for(i = IIT_FIRSTPUZZITEM; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        P_InventoryGive(player, i);
+        P_InventoryGive(plrNum, i, false);
     }
 
-    P_SetMessage(player, TXT_CHEATARTIFACTS3, false);
+    P_SetMessage(player, TXT_CHEATINVITEMS3, false);
 }
 
-static void CheatInitFunc(player_t *player, cheat_t *cheat)
+static void CheatInitFunc(player_t* player, cheat_t* cheat)
 {
-    G_DeferedInitNew(gs.skill, gs.episode, gs.map.id);
+    G_DeferedInitNew(gameSkill, gameEpisode, gameMap);
     P_SetMessage(player, TXT_CHEATWARP, false);
 }
 
-static void CheatWarpFunc(player_t *player, cheat_t *cheat)
+static void CheatWarpFunc(player_t* player, cheat_t* cheat)
 {
     int                 tens, ones;
     int                 map;
@@ -735,7 +760,7 @@ static void CheatWarpFunc(player_t *player, cheat_t *cheat)
         return;
     }
 
-    if(map == gs.map.id)
+    if(map == gameMap)
     {   // Don't try to teleport to current map.
         P_SetMessage(player, TXT_CHEATBADINPUT, false);
         return;
@@ -755,7 +780,7 @@ static void CheatWarpFunc(player_t *player, cheat_t *cheat)
     G_TeleportNewMap(map, 0);
 }
 
-static void CheatPigFunc(player_t *player, cheat_t *cheat)
+static void CheatPigFunc(player_t* player, cheat_t* cheat)
 {
     if(player->morphTics)
     {
@@ -769,7 +794,7 @@ static void CheatPigFunc(player_t *player, cheat_t *cheat)
     P_SetMessage(player, "SQUEAL!!", false);
 }
 
-static void CheatMassacreFunc(player_t *player, cheat_t *cheat)
+static void CheatMassacreFunc(player_t* player, cheat_t* cheat)
 {
     int                 count;
     char                buffer[80];
@@ -779,7 +804,7 @@ static void CheatMassacreFunc(player_t *player, cheat_t *cheat)
     P_SetMessage(player, buffer, false);
 }
 
-static void CheatIDKFAFunc(player_t *player, cheat_t *cheat)
+static void CheatIDKFAFunc(player_t* player, cheat_t* cheat)
 {
     int                 i;
 
@@ -797,17 +822,17 @@ static void CheatIDKFAFunc(player_t *player, cheat_t *cheat)
     P_SetMessage(player, TXT_CHEATIDKFA, false);
 }
 
-static void CheatQuickenFunc1(player_t *player, cheat_t *cheat)
+static void CheatQuickenFunc1(player_t* player, cheat_t* cheat)
 {
     P_SetMessage(player, "TRYING TO CHEAT?  THAT'S ONE....", false);
 }
 
-static void CheatQuickenFunc2(player_t *player, cheat_t *cheat)
+static void CheatQuickenFunc2(player_t* player, cheat_t* cheat)
 {
     P_SetMessage(player, "THAT'S TWO....", false);
 }
 
-static void CheatQuickenFunc3(player_t *player, cheat_t *cheat)
+static void CheatQuickenFunc3(player_t* player, cheat_t* cheat)
 {
     P_DamageMobj(player->plr->mo, NULL, player->plr->mo, 10000, false);
     P_SetMessage(player, "THAT'S THREE!  TIME TO DIE.", false);
@@ -834,10 +859,10 @@ static void CheatDebugFunc(player_t* player, cheat_t* cheat)
     char                textBuffer[256];
     subsector_t*        sub;
 
-    if(!player->plr->mo || !gs.userGame)
+    if(!player->plr->mo || !userGame)
         return;
 
-    P_GetMapLumpName(gs.episode, gs.map.id, lumpName);
+    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName,
             player->plr->mo->pos[VX],
@@ -958,7 +983,7 @@ DEFCC(CCmdCheatSuicide)
         {   // When not in a netgame we'll ask the player to confirm.
             player_t*           plr = &players[CONSOLEPLAYER];
 
-            if(plr->pState == PST_DEAD)
+            if(plr->playerState == PST_DEAD)
                 return false; // Already dead!
 
             Hu_MsgStart(MSG_YESNO, SUICIDEASK, Cht_SuicideResponse, NULL);
@@ -999,12 +1024,12 @@ DEFCC(CCmdCheatGive)
         Con_Printf("  give (stuff) (player)\n");
         Con_Printf("Stuff consists of one or more of (type:id). "
                    "If no id; give all of type:\n");
-        Con_Printf(" a - artifacts\n");
+        Con_Printf(" i - items\n");
         Con_Printf(" h - health\n");
         Con_Printf(" k - keys\n");
         Con_Printf(" p - puzzle\n");
         Con_Printf(" w - weapons\n");
-        Con_Printf("Example: 'give akw' gives artifacts, keys and weapons.\n");
+        Con_Printf("Example: 'give ikw' gives items, keys and weapons.\n");
         Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
         return true;
     }
@@ -1033,9 +1058,9 @@ DEFCC(CCmdCheatGive)
     {
         switch(buf[i])
         {
-        case 'a':
-            Con_Printf("Artifacts given.\n");
-            CheatArtifactAllFunc(plyr, NULL);
+        case 'i':
+            Con_Printf("Items given.\n");
+            CheatInventoryFunc(plyr, NULL);
             break;
 
         case 'h':

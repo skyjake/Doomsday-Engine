@@ -78,6 +78,8 @@ if host.isMac():
 # be stored in the user's home directory.
 if host.isMac():
     SNOWBERRY_HOME_DIR = 'Doomsday Engine'
+elif host.isWindowsVista():
+    SNOWBERRY_HOME_DIR = os.path.join('Documents', 'Doomsday Frontend')
 elif host.isWindows():
     SNOWBERRY_HOME_DIR = os.path.join('My Documents', 'Doomsday Frontend')
 else:
@@ -100,8 +102,11 @@ customPaths = {}
 
 def _createDir(path):
     """Creates the specified directory if it doesn't already exist."""
-    if not os.path.exists(path):
-        os.mkdir(path)
+    try:
+        os.makedirs(path)
+    except:
+        # Must exist already.
+        pass
 
 
 def _checkSnowberryHome():

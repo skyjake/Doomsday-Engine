@@ -190,7 +190,7 @@ static void drawMessage(void)
     int                 x, y;
     char*               p;
 
-    y = 100 - M_StringHeight(msgText, huFontA) / 2;
+    y = 100 - M_StringHeight(msgText, GF_FONTA) / 2;
     p = msgText;
     while(*p)
     {
@@ -201,30 +201,33 @@ static void drawMessage(void)
 
         *p = 0;
 
-        x = 160 - M_StringWidth(string, huFontA) / 2;
-        M_WriteText3(x, y, string, huFontA, gs.cfg.menuColor2[0],
-                     gs.cfg.menuColor2[1], gs.cfg.menuColor2[2], 1, true, 0);
-        y += huFontA[17].height;
+        x = 160 - M_StringWidth(string, GF_FONTA) / 2;
+        M_WriteText3(x, y, string, GF_FONTA, cfg.menuColor2[0],
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
+                     true, true, 0);
+		y += M_StringHeight(string, GF_FONTA);
 
         if((*p) = c)
             p++;
     }
 
     // An additional blank line between the message and response prompt.
-    y += huFontA[17].height;
+    y += M_StringHeight("A", GF_FONTA);
 
     switch(msgType)
     {
     case MSG_ANYKEY:
-        x = 160 - M_StringWidth(PRESSKEY, huFontA) / 2;
-        M_WriteText3(x, y, PRESSKEY, huFontA, gs.cfg.menuColor2[0],
-                     gs.cfg.menuColor2[1], gs.cfg.menuColor2[2], 1, true, 0);
+        x = 160 - M_StringWidth(PRESSKEY, GF_FONTA) / 2;
+        M_WriteText3(x, y, PRESSKEY, GF_FONTA, cfg.menuColor2[0],
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
+                     true, true, 0);
         break;
 
     case MSG_YESNO:
-        x = 160 - M_StringWidth(yesNoMessage, huFontA) / 2;
-        M_WriteText3(x, y, yesNoMessage, huFontA, gs.cfg.menuColor2[0],
-                     gs.cfg.menuColor2[1], gs.cfg.menuColor2[2], 1, true, 0);
+        x = 160 - M_StringWidth(yesNoMessage, GF_FONTA) / 2;
+        M_WriteText3(x, y, yesNoMessage, GF_FONTA, cfg.menuColor2[0],
+                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
+                     true, true, 0);
         break;
 
     default:
@@ -246,7 +249,7 @@ void Hu_MsgDrawer(void)
     DGL_PushMatrix();
     DGL_Translatef(160, 100, 0);
 
-    DGL_Scalef(PLRPROFILE.hud.scale, PLRPROFILE.hud.scale, 1);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     DGL_Translatef(-160, -100, 0);
 
@@ -267,11 +270,11 @@ void Hu_MsgTicker(timespan_t time)
     if(!messageToPrint || awaitingResponse)
         return;
 
-    if(msgType != MSG_ANYKEY && msgCallback)
-        msgCallback(messageResponse, msgContext);
-
     // We can now stop the message.
     stopMessage();
+
+    if(msgType != MSG_ANYKEY && msgCallback)
+        msgCallback(messageResponse, msgContext);
 }
 
 /**

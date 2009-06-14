@@ -27,7 +27,7 @@
 /**
  * p_user.c : Player related stuff.
  *
- * Bobbing POV/weapon, movement, pending weapon, artifact usage...
+ * Bobbing POV/weapon, movement, pending weapon...
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -60,6 +60,10 @@
 #include "p_user.h"
 #include "g_common.h"
 #include "am_map.h"
+#include "hu_log.h"
+#if __JHERETIC__ || __JHEXEN__
+#include "hu_inventory.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -329,13 +333,13 @@ boolean P_IsPlayerOnGround(player_t *player)
  */
 void P_CheckPlayerJump(player_t *player)
 {
-    float       power = (IS_CLIENT ? netJumpPower : GAMERULES.jumpPower);
+    float       power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
 
     if(player->plr->flags & DDPF_CAMERA)
         return; // Cameras don't jump.
 
     // Check if we are allowed to jump.
-    if(GAMERULES.jumpAllow && power > 0 && P_IsPlayerOnGround(player) &&
+    if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) &&
        player->brain.jump && player->jumpTics <= 0)
     {
         // Jump, then!
@@ -346,7 +350,7 @@ void P_CheckPlayerJump(player_t *player)
 #endif
             player->plr->mo->mom[MZ] = power;
 
-        player->jumpTics = PCLASS_INFO(player->pClass)->jumpTics;
+        player->jumpTics = PCLASS_INFO(player->class)->jumpTics;
 
 #if __JHEXEN__
         player->plr->mo->flags2 &= ~MF2_ONMOBJ;
@@ -360,7 +364,7 @@ void P_MovePlayer(player_t *player)
     mobj_t     *plrmo = player->plr->mo;
     //ticcmd_t   *cmd = &player->plr->cmd;
     playerbrain_t *brain = &player->brain;
-    classinfo_t *pClassInfo = PCLASS_INFO(player->pClass);
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
     int         speed;
     float       forwardMove, sideMove;
 
@@ -382,7 +386,7 @@ void P_MovePlayer(player_t *player)
 
     // Slow > fast. Fast > slow.
     speed = brain->speed;
-    if(PLRPROFILE.ctrl.alwaysRun)
+    if(cfg.alwaysRun)
         speed = !speed;
 
     // Do not let the player control movement if not onground.
@@ -403,19 +407,19 @@ void P_MovePlayer(player_t *player)
         float           maxMove = FIX2FLT(pClassInfo->maxMove);
         int             movemul =
             (onground || plrmo->flags2 & MF2_FLY) ? pClassInfo->moveMul :
-                (PLRPROFILE.ctrl.airborneMovement) ? PLRPROFILE.ctrl.airborneMovement * 64 : 0;
+                (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
 
         forwardMove =
             FIX2FLT(pClassInfo->forwardMove[speed]) * brain->forwardMove;
         sideMove = FIX2FLT(pClassInfo->sideMove[speed]) * brain->sideMove;
 
-        forwardMove *= GAMERULES.turboMul;
-        sideMove    *= GAMERULES.turboMul;
+        forwardMove *= turboMul;
+        sideMove    *= turboMul;
 
 #if __JHEXEN__
         if(player->powers[PT_SPEED] && !player->morphTics)
         {
-            // Adjust for a player with a speed artifact
+            // Adjust for a player with the speed power.
             forwardMove = (3 * forwardMove) / 2;
             sideMove = (3 * sideMove) / 2;
         }
@@ -425,9 +429,9 @@ void P_MovePlayer(player_t *player)
         sideMove    = MINMAX_OF(-maxMove, sideMove, maxMove);
 
         // Players can opt to reduce their maximum possible movement speed.
-        if((int) PLRPROFILE.ctrl.moveSpeed != 1)
+        if((int) cfg.playerMoveSpeed != 1)
         {   // A divsor has been specified, apply it.
-            float           m = MINMAX_OF(0.f, PLRPROFILE.ctrl.moveSpeed, 1.f);
+            float           m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
 
             forwardMove *= m;
             sideMove    *= m;
@@ -487,7 +491,7 @@ void P_DeathThink(player_t* player)
 
     onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
 #if __JDOOM__ || __JDOOM64__
-    if(PLRPROFILE.camera.deathLookUp)
+    if(cfg.deathLookUp)
 #elif __JHERETIC__
     if(player->plr->mo->type == MT_BLOODYSKULL)
 #elif __JHEXEN__
@@ -630,15 +634,13 @@ void P_DeathThink(player_t* player)
  */
 void P_PlayerReborn(player_t* player)
 {
-    player->pState = PST_REBORN;
+    player->playerState = PST_REBORN;
 #if __JHERETIC__ || __JHEXEN__
-    P_InventoryResetCursor(player);
-
     player->plr->flags &= ~DDPF_VIEW_FILTER;
     newTorch[player - players] = 0;
     newTorchDelta[player - players] = 0;
 # if __JHEXEN__
-    player->plr->mo->special1 = player->pClass;
+    player->plr->mo->special1 = player->class;
     if(player->plr->mo->special1 > 2)
     {
         player->plr->mo->special1 = 0;
@@ -663,7 +665,7 @@ void P_MorphThink(player_t *player)
     //// \fixme: Replace equality to zero checks with mom in-range.
     if(pmo->mom[MX] == 0 && pmo->mom[MY] == 0 && P_Random() < 64)
     {   // Snout sniff
-        P_SetPspriteNF(player, PS_WEAPON, S_SNOUTATK2);
+        P_SetPspriteNF(player, ps_weapon, S_SNOUTATK2);
         S_StartSound(SFX_PIG_ACTIVE1, pmo); // snort
         return;
     }
@@ -677,7 +679,7 @@ void P_MorphThink(player_t *player)
     }
 # else
     if(player->health > 0)
-        P_UpdateBeak(player, &player->pSprites[PS_WEAPON]); // Handle beak movement
+        P_UpdateBeak(player, &player->pSprites[ps_weapon]); // Handle beak movement
 
     if(IS_CLIENT || player->morphTics & 15)
         return;
@@ -736,16 +738,16 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
-    mo = P_SpawnMobj3fv(PCLASS_INFO(gs.players[playerNum].pClass)->mobjType,
-                        pos, angle);
+    mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjType,
+                        pos, angle, 0);
 # else
-    mo = P_SpawnMobj3fv(MT_PLAYER, pos, angle);
+    mo = P_SpawnMobj3fv(MT_PLAYER, pos, angle, 0);
 # endif
 
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
         P_MobjRemove(mo, false);
-        mo = P_SpawnMobj3fv(oldBeast, pos, angle);
+        mo = P_SpawnMobj3fv(oldBeast, pos, angle, 0);
 
         mo->health = player->health;
         mo->special1 = weapon;
@@ -759,7 +761,7 @@ boolean P_UndoPlayerMorph(player_t *player)
     }
 
 # if __JHEXEN__
-    if(player->pClass == PCLASS_FIGHTER)
+    if(player->class == PCLASS_FIGHTER)
     {
         // The first type should be blue, and the third should be the
         // Fighter's original gold color
@@ -792,9 +794,9 @@ boolean P_UndoPlayerMorph(player_t *player)
     player->health = mo->health = maxHealth;
     player->plr->mo = mo;
 # if __JHERETIC__
-    player->pClass = PCLASS_PLAYER;
+    player->class = PCLASS_PLAYER;
 # else
-    player->pClass = gs.players[playerNum].pClass;
+    player->class = cfg.playerClass[playerNum];
 # endif
     an = angle >> ANGLETOFINESHIFT;
 // REWRITE ME - I MATCH HEXEN UNTIL HERE
@@ -802,7 +804,7 @@ boolean P_UndoPlayerMorph(player_t *player)
     fog = P_SpawnMobj3f(MT_TFOG,
                         pos[VX] + 20 * FIX2FLT(finecosine[an]),
                         pos[VY] + 20 * FIX2FLT(finesine[an]),
-                        pos[VZ] + TELEFOGHEIGHT, angle + ANG180);
+                        pos[VZ] + TELEFOGHEIGHT, angle + ANG180, 0);
 # if __JHERETIC__
     S_StartSound(SFX_TELEPT, fog);
 # else
@@ -851,7 +853,7 @@ void P_ClientSideThink(void)
     if(!mo)
         return;
 
-    if(pl->pState == PST_DEAD)
+    if(pl->playerState == PST_DEAD)
     {
         P_DeathThink(pl);
     }
@@ -1020,7 +1022,7 @@ void P_PlayerThinkState(player_t *player)
         }
     }
 
-    if(player->pState != PST_DEAD)
+    if(player->playerState != PST_DEAD)
     {
         // Clear the view angle interpolation flags by default.
         player->plr->flags &= ~(DDPF_INTERYAW | DDPF_INTERPITCH);
@@ -1064,7 +1066,7 @@ void P_PlayerThinkAttackLunge(player_t *player)
  */
 boolean P_PlayerThinkDeath(player_t *player)
 {
-    if(player->pState == PST_DEAD)
+    if(player->playerState == PST_DEAD)
     {
         P_DeathThink(player);
         return true; // stop!
@@ -1108,12 +1110,12 @@ void P_PlayerThinkMove(player_t *player)
             int         playerNum;
 
             speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos,
-                                     plrmo->angle);
+                                     plrmo->angle, 0);
             if(speedMo)
             {
                 playerNum = P_GetPlayerNum(player);
 
-                if(player->pClass == PCLASS_FIGHTER)
+                if(player->class == PCLASS_FIGHTER)
                 {
                     // The first type should be blue, and the
                     // third should be the Fighter's original gold color.
@@ -1132,7 +1134,7 @@ void P_PlayerThinkMove(player_t *player)
                 }
 
                 speedMo->target = plrmo;
-                speedMo->special1 = player->pClass;
+                speedMo->special1 = player->class;
                 if(speedMo->special1 > 2)
                 {
                     speedMo->special1 = 0;
@@ -1206,12 +1208,12 @@ void P_PlayerThinkJump(player_t *player)
     P_CheckPlayerJump(player);
 }
 
-void P_PlayerThinkView(player_t *player)
+void P_PlayerThinkView(player_t* player)
 {
     P_CalcHeight(player);
 }
 
-void P_PlayerThinkSpecial(player_t *player)
+void P_PlayerThinkSpecial(player_t* player)
 {
     if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
@@ -1221,180 +1223,99 @@ void P_PlayerThinkSpecial(player_t *player)
 #endif
 }
 
+#if __JHERETIC__ || __JHEXEN__
 /**
- * \todo Need to replace this as it comes straight from Hexen.
+ * For inventory management, could be done client-side.
  */
-void P_PlayerThinkSounds(player_t *player)
+void P_PlayerThinkInventory(player_t* player)
+{
+    int                 pnum = player - players;
+
+    if(player->brain.cycleInvItem)
+    {
+        if(!Hu_InventoryIsOpen(pnum))
+        {
+            Hu_InventoryOpen(pnum, true);
+            return;
+        }
+
+        Hu_InventoryMove(pnum, player->brain.cycleInvItem,
+                         cfg.inventoryWrap, false);
+    }
+}
+#endif
+
+void P_PlayerThinkSounds(player_t* player)
 {
 #if __JHEXEN__
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t*             plrmo = player->plr->mo;
 
-    switch(player->pClass)
+    switch(player->class)
     {
-    case PCLASS_FIGHTER:
-        if(plrmo->mom[MZ] <= -35 &&
-           plrmo->mom[MZ] >= -40 && !player->morphTics &&
-           !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo))
-        {
-            S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo);
-        }
-        break;
+        case PCLASS_FIGHTER:
+            if(plrmo->mom[MZ] <= -35 &&
+               plrmo->mom[MZ] >= -40 && !player->morphTics &&
+               !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo))
+            {
+                S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo);
+            }
+            break;
 
-    case PCLASS_CLERIC:
-        if(plrmo->mom[MZ] <= -35 &&
-           plrmo->mom[MZ] >= -40 && !player->morphTics &&
-           !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo))
-        {
-            S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo);
-        }
-        break;
+        case PCLASS_CLERIC:
+            if(plrmo->mom[MZ] <= -35 &&
+               plrmo->mom[MZ] >= -40 && !player->morphTics &&
+               !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo))
+            {
+                S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo);
+            }
+            break;
 
-    case PCLASS_MAGE:
-        if(plrmo->mom[MZ] <= -35 &&
-           plrmo->mom[MZ] >= -40 && !player->morphTics &&
-           !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo))
-        {
-            S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo);
-        }
-        break;
+        case PCLASS_MAGE:
+            if(plrmo->mom[MZ] <= -35 &&
+               plrmo->mom[MZ] >= -40 && !player->morphTics &&
+               !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo))
+            {
+                S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo);
+            }
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
 #endif
 }
 
-void P_PlayerThinkItems(player_t *player)
+void P_PlayerThinkItems(player_t* player)
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    int                 arti = 0; // What to use?
+#if __JHERETIC__ || __JHEXEN__
+    inventoryitemtype_t i, type = IIT_NONE; // What to use?
     int                 pnum = player - players;
 
-    // Moving in the inventory is handled by "invleft" and "invright" commands.
-    // \fixme Switch to using impulses for consistency.
-
-    // Check the "Use Artifact" impulse.
-    if(P_GetImpulseControlState(pnum, CTL_USE_ARTIFACT))
+    if(player->brain.useInvItem)
     {
-        if(player->brain.speed && PLRPROFILE.inventory.artiSkip)
-        {
-            if(player->inventory[player->invPtr].type != AFT_NONE)
-            {
-                arti = 0xff;
-            }
-        }
-        else
-        {
-            // If the inventory is visible, just close it (depending on gs.cfg.chooseAndUse).
-            if(ST_IsInventoryVisible(player - players))
-            {
-                player->readyArtifact = player->inventory[player->invPtr].type;
+        type = P_InventoryReadyItem(pnum);
+    }
 
-                ST_Inventory(player - players, false); // close the inventory
+    // Inventory item hot keys.
+    for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
+    {
+        const def_invitem_t* def = P_GetInvItemDef(i);
 
-                if(PLRPROFILE.inventory.chooseAndUse)
-                    arti = player->inventory[player->invPtr].type;
-                else
-                    arti = 0;
-            }
-            else
-            {
-                arti = player->inventory[player->invPtr].type;
-            }
+        if(def->hotKeyCtrlIdent != -1 &&
+           P_GetImpulseControlState(pnum, def->hotKeyCtrlIdent))
+        {
+            type = i;
+            break;
         }
     }
 
-    // Artifact hot keys.
-#if __JHERETIC__
-    // Check Tome of Power and other artifact hotkeys.
-    if(!arti && P_GetImpulseControlState(pnum, CTL_TOME_OF_POWER) &&
-       !player->powers[PT_WEAPONLEVEL2])
-    {
-        arti = AFT_TOMBOFPOWER;
-    }
-#endif
-#if __JHEXEN__
-    if(!arti && P_GetImpulseControlState(pnum, CTL_HEALTH) &&
-       (player->plr->mo->health < maxHealth))
-    {
-        arti = AFT_HEALTH;
-    }
-    if(!arti && P_GetImpulseControlState(pnum, CTL_INVULNERABILITY) &&
-       !player->powers[PT_INVULNERABILITY])
-    {
-        arti = AFT_INVULNERABILITY;
-    }
-#endif
+    // Panic?
+    if(type == IIT_NONE && P_GetImpulseControlState(pnum, CTL_PANIC))
+        type = NUM_INVENTORYITEM_TYPES;
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {
-        // Check for other artifact keys.
-        struct {
-            int control;
-            int artifact;
-        } controlArtiMap[] = {
-#if __JHERETIC__
-            { CTL_INVULNERABILITY, AFT_INVULNERABILITY },
-            { CTL_INVISIBILITY, AFT_INVISIBILITY },
-            { CTL_HEALTH, AFT_HEALTH },
-            { CTL_SUPER_HEALTH, AFT_SUPERHEALTH },
-            { CTL_TORCH, AFT_TORCH },
-            { CTL_FIREBOMB, AFT_FIREBOMB },
-            { CTL_EGG, AFT_EGG },
-            { CTL_FLY, AFT_FLY },
-            { CTL_TELEPORT, AFT_TELEPORT },
-            { CTL_PANIC, NUM_ARTIFACT_TYPES },
-#endif
-#if __JHEXEN__ || __JSTRIFE__
-            { CTL_INVULNERABILITY, AFT_INVULNERABILITY },
-            { CTL_BLAST_RADIUS, AFT_BLASTRADIUS },
-            { CTL_MYSTIC_URN, AFT_SUPERHEALTH },
-            { CTL_TORCH, AFT_TORCH },
-            { CTL_KRATER, AFT_BOOSTMANA },
-            { CTL_SPEED_BOOTS, AFT_SPEED },
-            { CTL_POISONBAG, AFT_POISONBAG },
-            { CTL_EGG, AFT_EGG },
-            { CTL_TELEPORT, AFT_TELEPORT },
-            { CTL_DARK_SERVANT, AFT_SUMMON },
-            { CTL_TELEPORT_OTHER, AFT_TELEPORTOTHER },
-            { CTL_PANIC, NUM_ARTIFACT_TYPES },
-#endif
-            { 0, AFT_NONE }              // Terminator.
-        };
-        int i;
-        for(i = 0; controlArtiMap[i].artifact != AFT_NONE && !arti; i++)
-        {
-            if(P_GetImpulseControlState(pnum, controlArtiMap[i].control))
-            {
-                arti = controlArtiMap[i].artifact;
-                break;
-            }
-        }
-    }
-#endif
-
-    if(arti)
-    {   // Use an artifact
-        if(arti == NUM_ARTIFACT_TYPES)
-        {   // Use one of each artifact (except puzzle artifacts).
-            int     i;
-# if __JHEXEN__ || __JSTRIFE__
-            for(i = AFT_NONE + 1; i < AFT_FIRSTPUZZITEM; ++i)
-# else
-            for(i = AFT_NONE + 1; i < NUM_ARTIFACT_TYPES; ++i)
-# endif
-            {
-                P_InventoryUse(player, i);
-            }
-        }
-        else if(arti == 0xff)
-        {
-            P_InventoryNext(player);
-        }
-        else
-        {
-            P_InventoryUse(player, arti);
-        }
+    if(type != IIT_NONE)
+    {   // Use one (or more) inventory items.
+        P_InventoryUse(pnum, type, false);
     }
 #endif
 
@@ -1402,21 +1323,16 @@ void P_PlayerThinkItems(player_t *player)
     if(player->brain.upMove > 0 && !player->powers[PT_FLIGHT])
     {
         // Start flying automatically.
-        P_InventoryUse(player, AFT_FLY);
+        P_InventoryUse(pnum, IIT_FLY, false);
     }
 #endif
 }
 
-void P_PlayerThinkWeapons(player_t *player)
+void P_PlayerThinkWeapons(player_t* player)
 {
-    playerbrain_t *brain = &player->brain;
-    weapontype_t oldweapon = player->pendingWeapon;
-    weapontype_t newweapon;
-
-    if(brain->cycleWeapon)
-    {
-        player->pendingWeapon = P_PlayerFindWeapon(player, brain->cycleWeapon > 0);
-    }
+    playerbrain_t*      brain = &player->brain;
+    weapontype_t        oldweapon = player->pendingWeapon;
+    weapontype_t        newweapon = WT_NOCHANGE;
 
     // Check for weapon change.
 #if __JHERETIC__ || __JHEXEN__
@@ -1424,61 +1340,41 @@ void P_PlayerThinkWeapons(player_t *player)
 #else
     if(brain->changeWeapon != WT_NOCHANGE)
 #endif
+    {   // Direct slot selection.
+        weapontype_t        cand, first;
+
+        // Is this a same-slot weapon cycle?
+        if(P_GetWeaponSlot(brain->changeWeapon) ==
+           P_GetWeaponSlot(player->readyWeapon))
+        {   // Yes.
+            cand = player->readyWeapon;
+        }
+        else
+        {   // No.
+            cand = brain->changeWeapon;
+        }
+
+        first = cand = P_WeaponSlotCycle(cand, brain->cycleWeapon < 0);
+
+        do
+        {
+            if(player->weapons[cand].owned)
+                newweapon = cand;
+        } while(newweapon == WT_NOCHANGE &&
+               (cand = P_WeaponSlotCycle(cand, brain->cycleWeapon < 0)) !=
+                first);
+    }
+    else if(brain->cycleWeapon)
+    {   // Linear cycle.
+        newweapon = P_PlayerFindWeapon(player, brain->cycleWeapon < 0);
+    }
+
+    if(newweapon != WT_NOCHANGE && newweapon != player->readyWeapon)
     {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-#  define HAS_WEAPON(x) (player->weaponOwned[x])
-#  define CUR_WEAPON(x)  (palyer->readyWeapon == x)
-#endif
-
-        // The actual changing of the weapon is done when the weapon psprite
-        // can do it (read: not in the middle of an attack).
-        newweapon = brain->changeWeapon;
-#if __JDOOM__ || __JDOOM64__
-        if(newweapon == player->readyWeapon)
+        if(weaponInfo[newweapon][player->class].mode[0].gameModeBits
+           & gameModeBits)
         {
-            // Swapping between fists and chainaw.
-            if(newweapon == WT_FIRST)
-                newweapon = WT_EIGHTH;
-            else if(newweapon == WT_EIGHTH)
-                newweapon = WT_FIRST;
-
-            // Swapping between shotgun and super-shotgun.
-            if(gs.gameMode == commercial)
-            {
-                if(newweapon == WT_THIRD)
-                    newweapon = WT_NINETH;
-                else if(newweapon == WT_NINETH)
-                    newweapon = WT_THIRD;
-            }
-        }
-
-# if !__JDOOM64__
-        if(gs.gameMode != commercial && newweapon == WT_NINETH)
-        {
-            // In non-Doom II, supershotgun is the same as normal shotgun.
-            newweapon = WT_THIRD;
-        }
-# endif
-#endif // __JDOOM__ || __JDOOM64__
-
-#if __JHERETIC__
-        // Swapping between staff and gauntlets.
-        if(newweapon == player->readyWeapon)
-        {
-            if(newweapon == WT_FIRST)
-                newweapon = WT_EIGHTH;
-            else if(newweapon == WT_EIGHTH)
-                newweapon = WT_FIRST;
-        }
-#endif // __JHERETIC__
-
-        if(player->weapons[newweapon].owned && newweapon != player->readyWeapon)
-        {
-            if(weaponInfo[newweapon][player->pClass].mode[0].gameModeBits
-               & gs.gameModeBits)
-            {
-                player->pendingWeapon = newweapon;
-            }
+            player->pendingWeapon = newweapon;
         }
     }
 
@@ -1523,13 +1419,16 @@ void P_PlayerThinkPsprites(player_t *player)
 
 void P_PlayerThinkHUD(player_t* player)
 {
-    playerbrain_t* brain = &player->brain;
+    playerbrain_t*      brain = &player->brain;
 
     if(brain->hudShow)
         ST_HUDUnHide(player - players, HUE_FORCE);
 
     if(brain->scoreShow)
         HU_ScoreBoardUnHide(player - players);
+
+    if(brain->logRefresh)
+        Hu_LogRefresh(player - players);
 }
 
 void P_PlayerThinkMap(player_t* player)
@@ -1604,8 +1503,7 @@ void P_PlayerThinkPowers(player_t* player)
     {
         if(!--player->powers[PT_FLIGHT])
         {
-            if(player->plr->mo->pos[VZ] != player->plr->mo->floorZ &&
-               PLRPROFILE.camera.lookSpring)
+            if(player->plr->mo->pos[VZ] != player->plr->mo->floorZ && cfg.lookSpring)
             {
                 player->centering = true;
             }
@@ -1622,10 +1520,10 @@ void P_PlayerThinkPowers(player_t* player)
         if(!--player->powers[PT_WEAPONLEVEL2])
         {
             if((player->readyWeapon == WT_SIXTH) &&
-               (player->pSprites[PS_WEAPON].state != &STATES[S_PHOENIXREADY])
-               && (player->pSprites[PS_WEAPON].state != &STATES[S_PHOENIXUP]))
+               (player->pSprites[ps_weapon].state != &STATES[S_PHOENIXREADY])
+               && (player->pSprites[ps_weapon].state != &STATES[S_PHOENIXUP]))
             {
-                P_SetPsprite(player, PS_WEAPON, S_PHOENIXREADY);
+                P_SetPsprite(player, ps_weapon, S_PHOENIXREADY);
                 player->ammo[AT_FIREORB].owned = MAX_OF(0,
                     player->ammo[AT_FIREORB].owned - USE_PHRD_AMMO_2);
                 player->refire = 0;
@@ -1693,7 +1591,7 @@ void P_PlayerThinkPowers(player_t* player)
 #if __JHEXEN__
     if(player->powers[PT_INVULNERABILITY])
     {
-        if(player->pClass == PCLASS_CLERIC)
+        if(player->class == PCLASS_CLERIC)
         {
             if(!(mapTime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
                !(player->plr->mo->flags2 & MF2_DONTDRAW))
@@ -1728,7 +1626,7 @@ void P_PlayerThinkPowers(player_t* player)
         if(!(--player->powers[PT_INVULNERABILITY]))
         {
             player->plr->mo->flags2 &= ~(MF2_INVULNERABLE | MF2_REFLECTIVE);
-            if(player->pClass == PCLASS_CLERIC)
+            if(player->class == PCLASS_CLERIC)
             {
                 player->plr->mo->flags2 &= ~(MF2_DONTDRAW | MF2_NONSHOOTABLE);
                 player->plr->mo->flags &= ~(MF_SHADOW | MF_ALTSHADOW);
@@ -1776,9 +1674,9 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     boolean             strafe = false;
     float               vel, off, turnSpeed;
     float               offsetSensitivity = 100; // \fixme Should be done engine-side, mouse sensitivity!
-    classinfo_t        *pClassInfo = PCLASS_INFO(player->pClass);
+    classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
 
-    if(!plr->mo || player->pState == PST_DEAD || player->viewLock)
+    if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
 
     turnSpeed = pClassInfo->turnSpeed[0] * TICRATE;
@@ -1842,7 +1740,7 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 void P_PlayerThinkUpdateControls(player_t* player)
 {
     int                 playerNum = player - players;
-    classinfo_t        *pClassInfo = PCLASS_INFO(player->pClass);
+    classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
     float               vel, off;
     int                 i;
     boolean             strafe = false;
@@ -1881,7 +1779,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
     }
 
     // Check for look centering based on lookSpring.
-    if(PLRPROFILE.camera.lookSpring &&
+    if(cfg.lookSpring &&
        (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove > .333f)))
     {
         // Center view when mlook released w/lookspring, or when moving.
@@ -1901,19 +1799,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
     // Once dead, the intended action for a given control state change,
     // changes. Here we interpret Use and Fire as "I wish to be Reborn".
     brain->doReborn = false;
-    if(player->pState == PST_DEAD)
+    if(player->playerState == PST_DEAD)
     {
         if(brain->use || (brain->attack && !oldAttack))
             brain->doReborn = true;
     }
-
-    // Weapons.
-    brain->changeWeapon = WT_NOCHANGE;
-    for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)
-        if(P_GetImpulseControlState(playerNum, CTL_WEAPON1 + i))
-        {
-            brain->changeWeapon = i;
-        }
 
     // Weapon cycling.
     if(P_GetImpulseControlState(playerNum, CTL_NEXT_WEAPON))
@@ -1929,9 +1819,59 @@ void P_PlayerThinkUpdateControls(player_t* player)
         brain->cycleWeapon = 0;
     }
 
+    // Weapons.
+    brain->changeWeapon = WT_NOCHANGE;
+    for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)
+        if(P_GetImpulseControlState(playerNum, CTL_WEAPON1 + i))
+        {
+            brain->changeWeapon = i;
+            brain->cycleWeapon = +1; // Direction for same-slot cycle.
+#if __JDOOM__ || __JDOOM64__
+            if(i == WT_EIGHTH || i == WT_NINETH)
+                brain->cycleWeapon = -1;
+#elif __JHERETIC__
+            if(i == WT_EIGHTH)
+                brain->cycleWeapon = -1;
+#endif
+        }
+
+#if __JHERETIC__ || __JHEXEN__
+    // Inventory items.
+    brain->useInvItem = false;
+    if(P_GetImpulseControlState(playerNum, CTL_USE_ITEM))
+    {
+        // If the inventory is visible, close it (depending on cfg.chooseAndUse).
+        if(Hu_InventoryIsOpen(player - players))
+        {
+            Hu_InventoryOpen(player - players, false); // close the inventory
+
+            if(cfg.inventoryUseImmediate)
+                brain->useInvItem = true;
+        }
+        else
+        {
+            brain->useInvItem = true;
+        }
+    }
+
+    if(P_GetImpulseControlState(playerNum, CTL_NEXT_ITEM))
+    {
+        brain->cycleInvItem = +1;
+    }
+    else if(P_GetImpulseControlState(playerNum, CTL_PREV_ITEM))
+    {
+        brain->cycleInvItem = -1;
+    }
+    else
+    {
+        brain->cycleInvItem = 0;
+    }
+#endif
+
     // HUD.
     brain->hudShow = (P_GetImpulseControlState(playerNum, CTL_HUD_SHOW) != 0);
     brain->scoreShow = (P_GetImpulseControlState(playerNum, CTL_SCORE_SHOW) != 0);
+    brain->logRefresh = (P_GetImpulseControlState(playerNum, CTL_LOG_REFRESH) != 0);
 
     // Automap.
     brain->mapToggle = (P_GetImpulseControlState(playerNum, CTL_MAP) != 0);
@@ -2004,6 +1944,9 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkSounds(player);
+#if __JHERETIC__ || __JHEXEN__
+        P_PlayerThinkInventory(player);
+#endif
         P_PlayerThinkItems(player);
     }
 

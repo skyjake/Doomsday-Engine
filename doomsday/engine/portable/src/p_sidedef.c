@@ -78,6 +78,9 @@ boolean Sidedef_GetProperty(const sidedef_t *sid, setargs_t *args)
     case DMU_SECTOR:
         DMU_GetValue(DMT_SIDEDEF_SECTOR, &sid->sector, args, 0);
         break;
+    case DMU_LINEDEF:
+        DMU_GetValue(DMT_SIDEDEF_LINE, &sid->line, args, 0);
+        break;
     case DMU_FLAGS:
         DMU_GetValue(DMT_SIDEDEF_FLAGS, &sid->flags, args, 0);
         break;

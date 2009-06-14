@@ -71,8 +71,8 @@ extern          "C" {
     // Base.
     void            DD_AddIWAD(const char* path);
     void            DD_AddStartupWAD(const char* file);
-    void            DD_SetConfigFile(filename_t filename);
-    void            DD_SetDefsFile(filename_t file);
+    void            DD_SetConfigFile(const char* filename);
+    void            DD_SetDefsFile(const char* file);
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
     void            DD_SetVariable(int ddvalue, void* ptr);
@@ -96,13 +96,13 @@ extern          "C" {
     void            W_ReadLump(lumpnum_t lump, void* dest);
     void            W_ReadLumpSection(lumpnum_t lump, void* dest,
                                       size_t startOffset, size_t length);
-    void*           W_CacheLumpNum(lumpnum_t lump, int tag);
-    void*           W_CacheLumpName(char* name, int tag);
+    const void*     W_CacheLumpNum(lumpnum_t lump, int tag);
+    const void*     W_CacheLumpName(const char* name, int tag);
     void            W_ChangeCacheTag(lumpnum_t lump, int tag);
     const char*     W_LumpSourceFile(lumpnum_t lump);
     uint            W_CRCNumber(void);
     boolean         W_IsFromIWAD(lumpnum_t lump);
-    lumpnum_t       W_OpenAuxiliary(const char *fileName);
+    lumpnum_t       W_OpenAuxiliary(const char* fileName);
 
     // Base: Zone.
     void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
@@ -125,28 +125,33 @@ extern          "C" {
     void            Con_AddVariable(cvar_t* var);
     void            Con_AddCommandList(ccmd_t* cmdlist);
     void            Con_AddVariableList(cvar_t* varlist);
-    cvar_t*         Con_GetVariable(char* name);
-    byte            Con_GetByte(char* name);
-    int             Con_GetInteger(char* name);
-    float           Con_GetFloat(char* name);
-    char*           Con_GetString(char* name);
-    void            Con_SetInteger(char* name, int value, byte override);
-    void            Con_SetFloat(char* name, float value, byte override);
-    void            Con_SetString(char* name, char* text, byte override);
-    void            Con_Printf(char* format, ...) PRINTF_F(1,2);
-    void            Con_FPrintf(int flags, char* format, ...) PRINTF_F(2,3);
+    cvar_t*         Con_GetVariable(const char* name);
+    byte            Con_GetByte(const char* name);
+    int             Con_GetInteger(const char* name);
+    float           Con_GetFloat(const char* name);
+    char*           Con_GetString(const char* name);
+    void            Con_SetInteger(const char* name, int value,
+                                   byte override);
+    void            Con_SetFloat(const char* name, float value,
+                                 byte override);
+    void            Con_SetString(const char* name, char* text,
+                                  byte override);
+    void            Con_Printf(const char* format, ...) PRINTF_F(1,2);
+    void            Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
     int             DD_Execute(int silent, const char* command);
     int             DD_Executef(int silent, const char* command, ...);
-    void            Con_Message(char* message, ...) PRINTF_F(1,2);
-    void            Con_Error(char* error, ...) PRINTF_F(1,2);
+    void            Con_Message(const char* message, ...) PRINTF_F(1,2);
+    void            Con_Error(const char* error, ...) PRINTF_F(1,2);
 
     // Console: Bindings.
-    void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
-    void            B_FormEventString(char* buff, evtype_t type, evstate_t state,
-                                      int data1);
-    int             B_BindingsForCommand(const char* cmd, char* buf, int bufSize);
-    int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse,
-                                         char* buf, int bufSize);
+    void            B_SetContextFallback(const char* name,
+                                         int (*responderFunc)(event_t*));
+    int             B_BindingsForCommand(const char* cmd, char* buf,
+                                         size_t bufSize);
+    int             B_BindingsForControl(int localPlayer,
+                                         const char* controlName,
+                                         int inverse,
+                                         char* buf, size_t bufSize);
 
     // System.
     void            Sys_TicksPerSecond(float num);
@@ -200,7 +205,7 @@ extern          "C" {
 
     // Network.
     void            Net_SendPacket(int to_player, int type, void* data,
-                                   int length);
+                                   size_t length);
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
@@ -246,7 +251,8 @@ extern          "C" {
     boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
                                    int flags,
                                    boolean (*trav) (intercept_t*));
-    boolean         P_CheckSight(struct mobj_s* t1, struct mobj_s* t2);
+    boolean         P_CheckLineSight(const float from[3], const float to[3],
+                                     float bottomSlope, float topSlope);
 
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
@@ -390,13 +396,13 @@ extern          "C" {
     void            P_MaterialPrecache(material_t* mat);
 
     // Play: Thinkers.
-    void            P_ThinkerAdd(thinker_t* th);
-    void            P_ThinkerRemove(thinker_t* th);
-    void            P_ThinkerSetStasis(thinker_t* th, boolean on);
+    void            DD_InitThinkers(void);
+    void            DD_RunThinkers(void);
+    void            DD_ThinkerAdd(thinker_t* th);
+    void            DD_ThinkerRemove(thinker_t* th);
+    void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
 
-    boolean         P_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
-    void            P_RunThinkers(void);
-    void            P_InitThinkers(void);
+    boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
 
     // Refresh.
     int             DD_GetFrameRate(void);
@@ -410,16 +416,23 @@ extern          "C" {
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
     void            R_SetBorderGfx(char* lumps[9]);
-    void            R_GetSpriteInfo(int sprite, int frame,
+    boolean         R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t* sprinfo);
-    void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
+    boolean         R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
     int             R_CreateAnimGroup(int flags);
-    void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
-    void            R_PalIdxToRGB(float* rgb, int idx, boolean correctGamma);
+    void            R_AddToAnimGroup(int groupNum, materialnum_t num,
+                                     int tics, int randomTics);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2,
                                     float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
+
+    colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
+                                          const byte* data, size_t num);
+    colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
+    const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
+    void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3],
+                                          int idx, boolean correctGamma);
 
     // Renderer.
     void            Rend_Reset(void);
@@ -428,9 +441,14 @@ extern          "C" {
     // Graphics.
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
-    unsigned int    GL_LoadGraphics(const char* name, int mode);
-    unsigned int    GL_NewTextureWithParams3(int format, int width, int height, void* pixels,
-                                             int flags, int minFilter, int magFilter, int anisoFilter,
+    DGLuint         GL_LoadGraphics(ddresourceclass_t resClass,
+                                     const char* name, gfxmode_t mode,
+                                     int useMipmap, boolean clamped,
+                                     int otherFlags);
+    DGLuint         GL_NewTextureWithParams3(int format, int width,
+                                             int height, void* pixels,
+                                             int flags, int minFilter,
+                                             int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
@@ -443,9 +461,11 @@ extern          "C" {
     void            GL_DrawFuzzPatch(int x, int y, lumpnum_t lump);
     void            GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump);
     void            GL_DrawShadowedPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
-    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
-                                        float scalex, float scaley);
+    void            GL_DrawRawScreen(lumpnum_t lump, float offx,
+                                     float offy);
+    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx,
+                                        float offy, float scalex,
+                                        float scaley);
 
     // Audio.
     void            S_MapChange(void);
@@ -464,23 +484,26 @@ extern          "C" {
                                    int targetConsole);
     void            S_StopSound(int soundID, struct mobj_s* origin);
     int             S_IsPlaying(int soundID, struct mobj_s* origin);
-    int             S_StartMusic(char* musicID, boolean looped);
+    int             S_StartMusic(const char* musicID, boolean looped);
     int             S_StartMusicNum(int id, boolean looped);
     void            S_StopMusic(void);
 
     // Miscellaneous.
     size_t          M_ReadFile(const char* name, byte** buffer);
     size_t          M_ReadFileCLib(const char* name, byte** buffer);
-    boolean         M_WriteFile(const char* name, void* source, size_t length);
-    void            M_ExtractFileBase(const char* path, char* dest);
-    void            M_GetFileExt(const char* path, char* ext);
+    boolean         M_WriteFile(const char* name, void* source,
+                                size_t length);
+    void            M_ExtractFileBase(char* dest, const char* path,
+                                      size_t len);
+    char*           M_FindFileExtension(char* path);
     boolean         M_CheckPath(const char* path);
     int             M_FileExists(const char* file);
-    void            M_TranslatePath(const char* path, char* translated);
+    void            M_TranslatePath(char* translated, const char* path,
+                                    size_t len);
     const char*     M_PrettyPath(const char* path);
     char*           M_SkipWhite(char* str);
     char*           M_FindWhite(char* str);
-    char*           M_StrCatQuoted(char* dest, const char* src);
+    char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
     byte            RNG_RandByte(void);
     float           RNG_RandFloat(void);
     void            M_ClearBox(fixed_t* box);
@@ -494,17 +517,21 @@ extern          "C" {
 
     // Miscellaneous: Math.
     void            V2_Rotate(float vec[2], float radians);
+    float           M_PointLineDistance(const float* a, const float* b, const float* c);
+    float           M_ProjectPointOnLine(const float* point, const float* linepoint,
+                                         const float* delta, float gap, float* result);
     binangle_t      bamsAtan2(int y, int x);
 
     // Miscellaneous: Command line.
-    void _DECALL    ArgAbbreviate(char* longname, char* shortname);
+    void _DECALL    ArgAbbreviate(const char* longName,
+                                  const char* shortName);
     int _DECALL     Argc(void);
-    char* _DECALL   Argv(int i);
-    char** _DECALL  ArgvPtr(int i);
-    char* _DECALL   ArgNext(void);
-    int _DECALL     ArgCheck(char* check);
-    int _DECALL     ArgCheckWith(char* check, int num);
-    int _DECALL     ArgExists(char* check);
+    const char* _DECALL Argv(int i);
+    const char** _DECALL ArgvPtr(int i);
+    const char* _DECALL ArgNext(void);
+    int _DECALL     ArgCheck(const char* check);
+    int _DECALL     ArgCheckWith(const char* check, int num);
+    int _DECALL     ArgExists(const char* check);
     int _DECALL     ArgIsOption(int i);
 
 #ifdef __cplusplus

@@ -522,6 +522,11 @@ void WinMIDIStreamer::DeregisterSong(void)
     registered = FALSE;
 }
 
+int WinMIDIStreamer::IsPlaying(void)
+{
+    return playing;
+}
+
 void CALLBACK WinMIDIStreamer::Callback(HMIDIOUT hmo, UINT uMsg,
                                         DWORD_PTR dwInstance, DWORD dwParam1,
                                         DWORD dwParam2)
@@ -542,6 +547,10 @@ void CALLBACK WinMIDIStreamer::Callback(HMIDIOUT hmo, UINT uMsg,
         {
             // Play all buffers again.
             me->Play(true);
+        }
+        else
+        {
+            me->playing = false;
         }
         break;
 

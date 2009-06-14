@@ -163,12 +163,6 @@ desc = Set camera viewlock.
 desc = Set camera viewlock mode.
 inf = Params: lockmode (0-1).
 
-[invleft]
-desc = Move inventory cursor to the left.
-
-[invright]
-desc = Move inventory cursor to the right.
-
 [pig]
 desc = Turn yourself into a pig. Go ahead.
 
@@ -216,9 +210,6 @@ desc = Send a chat macro.
 
 [beginchat]
 desc = Begin chat mode.
-
-[msgrefresh]
-desc = Show last HUD message.
 
 [message]
 desc = Show a local game message.
@@ -329,6 +320,9 @@ desc = Number of HUD messages displayed at the same time.
 
 [msg-uptime]
 desc = Number of tics to keep HUD messages on screen.
+
+[msg-hub-override]
+desc = Override the transition hub message.
 
 [msg-scale]
 desc = Scaling factor for HUD messages.
@@ -699,8 +693,8 @@ desc = First slider control.
 [input-joy-slider2]
 desc = Second slider control.
 
-[ctl-aim-auto]
-desc = 1=Autoaiming enabled.
+[ctl-aim-noauto]
+desc = 1=Autoaiming disabled.
 
 [ctl-turn-speed]
 desc = The speed of turning left/right.
@@ -711,10 +705,16 @@ desc = 1=Always run.
 [ctl-use-dclick]
 desc = 1=Doubleclick forward/strafe equals use key.
 
-[ctl-use-immediate]
+[ctl-inventory-mode]
+desc = Inventory selection mode 0=cursor, 1=scroll.
+
+[ctl-inventory-wrap]
+desc = 1=Inventory selection wraps around.
+
+[ctl-inventory-use-immediate]
 desc = 1=Use items immediately from the inventory.
 
-[ctl-use-next]
+[ctl-inventory-use-next]
 desc = 1=Automatically select the next inventory item when unusable.
 
 [ctl-look-speed]
@@ -756,6 +756,12 @@ desc = Scale for viewheight bobbing.
 [view-bob-weapon]
 desc = Scale for player weapon bobbing.
 
+[server-game-skill]
+desc = Skill level in multiplayer games.
+
+[server-game-map]
+desc = Map to use in multiplayer games.
+
 [server-game-deathmatch]
 desc = 1=Start multiplayers games as deathmatch.
 
@@ -794,6 +800,9 @@ desc = Player class in multiplayer games.
 
 [player-move-speed]
 desc = Player movement speed modifier.
+
+[player-jump]
+desc = 1=Allow jumping.
 
 [player-jump-power]
 desc = Jump power (for all clients if this is the server).
@@ -870,8 +879,14 @@ desc = Show mana when the status bar is hidden. 1= top, 2= bottom, 0= off
 [hud-health]
 desc = Show health when the status bar is hidden.
 
-[hud-artifact]
-desc = Show artifact when the status bar is hidden.
+[hud-currentitem]
+desc = 1=Show current item in full-screen mode.
+
+[hud-inventory-slot-max]
+desc = Maximum number of inventory slots to display in full-screen mode.
+
+[hud-inventory-slot-showempty]
+desc = 1=Show empty inventory slots in full-screen mode.
 
 [hud-inventory-timer]
 desc = Seconds before the inventory auto-hides.

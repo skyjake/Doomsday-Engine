@@ -76,8 +76,8 @@ typedef enum {
 
 typedef struct player_s {
     ddplayer_t*     plr; // Pointer to the engine's player data.
-    playerstate_t   pState;
-    playerclass_t   pClass; // Player class.
+    playerstate_t   playerState;
+    playerclass_t   class; // Player class.
     playerbrain_t   brain;
 
     float           viewOffset[3];
@@ -157,12 +157,6 @@ typedef struct player_s {
     //
     // DJS - Here follows Heretic specific player_t properties
     //
-    inventory_t     inventory[NUMINVENTORYSLOTS];
-    int             invPtr;
-    int             curPos;
-    artitype_e      readyArtifact;
-    int             inventorySlotNum;
-
     int             flameCount; // For flame thrower duration.
 
     int             morphTics; // player is a chicken if > 0.
@@ -171,14 +165,4 @@ typedef struct player_s {
     mobj_t*         rain2; // Active rain maker 2.
 } player_t;
 
-boolean         P_UseArtiFireBomb(player_t* player);
-boolean         P_UseArtiTombOfPower(player_t* player);
-boolean         P_UseArtiEgg(player_t* player);
-boolean         P_UseArtiFly(player_t* player);
-boolean         P_UseArtiTeleport(player_t* player);
-boolean         P_UseArtiTorch(player_t* player);
-boolean         P_UseArtiHealth(player_t* player);
-boolean         P_UseArtiSuperHealth(player_t* player);
-boolean         P_UseArtiInvisibility(player_t* player);
-boolean         P_UseArtiInvulnerability(player_t* player);
 #endif

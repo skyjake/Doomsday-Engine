@@ -31,15 +31,6 @@
 
 #include "hu_stuff.h"
 
-// Patch used for '-' in the status bar
-#if __JDOOM__
-# define MINUSPATCH             "STTMINUS"
-#elif __JDOOM64__
-# define MINUSPATCH             "FONTB046"
-#else
-# define MINUSPATCH             "FONTB13"
-#endif
-
 /**
  * Number widget.
  */
@@ -92,7 +83,6 @@ typedef struct {
     int             data; // User data.
 } st_binicon_t;
 
-void            STlib_init(void);
 void            STlib_initNum(st_number_t* n, int x, int y, dpatch_t* pl,
                               int* num, boolean* on, int width, float* alpha);
 void            STlib_updateNum(st_number_t* n, boolean refresh);

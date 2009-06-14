@@ -70,7 +70,7 @@ int             S_ConsoleSound(int sound_id, mobj_t* origin,
                                int target_console);
 void            S_StopSound(int sound_id, mobj_t* origin);
 int             S_IsPlaying(int sound_id, mobj_t* emitter);
-int             S_StartMusic(char* musicid, boolean looped);
+int             S_StartMusic(const char* musicid, boolean looped);
 void            S_StopMusic(void);
 void            S_Drawer(void);
 

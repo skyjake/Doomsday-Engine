@@ -47,6 +47,7 @@
 #include "g_controls.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
+#include "p_actor.h"
 #include "rend_automap.h"
 
 // MACROS ------------------------------------------------------------------
@@ -70,41 +71,6 @@ void            R_SetAllDoomsdayFlags(void);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-/**
- * Creates the translation tables to map the green color ramp to gray,
- * brown, red. Assumes a given structure of the PLAYPAL.
- * Could be read from a lump instead.
- */
-static void initTranslation(void)
-{
-    int                 i;
-    byte               *translationtables = (byte *)
-        DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-
-    // Translate just the 16 green colors.
-    for(i = 0; i < 256; ++i)
-    {
-        if(i >= 0x70 && i <= 0x7f)
-        {
-            // Map green ramp to gray, brown, red.
-            translationtables[i] = 0x60 + (i & 0xf);
-            translationtables[i + 256] = 0x40 + (i & 0xf);
-            translationtables[i + 512] = 0x20 + (i & 0xf);
-        }
-        else
-        {
-            // Keep all other colors as is.
-            translationtables[i] = translationtables[i + 256] =
-                translationtables[i + 512] = i;
-        }
-    }
-}
-
-void R_InitRefresh(void)
-{
-    initTranslation();
-}
 
 /**
  * Draws a special filter over the screen (eg the inversing filter used
@@ -196,7 +162,7 @@ void R_DrawMapTitle(void)
     int                 mapnum;
     char               *lname, *lauthor;
 
-    if(!gs.cfg.mapTitle || actualMapTime > 6 * 35)
+    if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
 
     // Make the text a bit smaller.
@@ -216,7 +182,7 @@ void R_DrawMapTitle(void)
     lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Compose the mapnumber used to check the map name patches array.
-    mapnum = gs.map.id - 1;
+    mapnum = gameMap - 1;
 
     if(lname)
     {
@@ -227,10 +193,10 @@ void R_DrawMapTitle(void)
 
     DGL_Color4f(.5f, .5f, .5f, alpha);
     if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump) &&
-       (!gs.cfg.hideAuthorMidway || stricmp(lauthor, "Midway")))
+       (!cfg.hideAuthorMidway || stricmp(lauthor, "Midway")))
     {
-        M_WriteText2(160 - M_StringWidth(lauthor, huFontA) / 2, y, lauthor,
-                     huFontA, -1, -1, -1, -1);
+        M_WriteText2(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
+                     GF_FONTA, -1, -1, -1, -1);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -241,14 +207,20 @@ void R_DrawMapTitle(void)
  * Do not really change anything here, because Doomsday might be in the
  * middle of a refresh. The change will take effect next refresh.
  */
-void R_SetViewSize(int player, int blocks)
+void R_SetViewSize(int blocks)
 {
-    if(PLRPROFILE.screen.setBlocks > 8)
+    cfg.setSizeNeeded = true;
+    if(cfg.setBlocks > 8)
     {
+        int                 i;
+
         // When going fullscreen, force a hud show event (to reset the timer).
-        ST_HUDUnHide(player, HUE_FORCE);
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            ST_HUDUnHide(i, HUE_FORCE);
+        }
     }
-    PLRPROFILE.screen.setBlocks = blocks;
+    cfg.setBlocks = blocks;
 }
 
 static void rendPlayerView(int player)
@@ -309,17 +281,18 @@ static void rendHUD(int player)
     {
         automapid_t         map = AM_MapForPlayer(player);
 
-        if(!(IS_NETGAME && GAMERULES.deathmatch))
-            HU_DrawCheatCounters();
+        // Draw HUD displays only visible when the automap is open.
+        if(AM_IsActive(map))
+            HU_DrawMapCounters();
 
         // Do we need to render a full status bar at this point?
-        if(!(AM_IsActive(map) && PLRPROFILE.automap.hudDisplay == 0) &&
+        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
             if(true == (WINDOWHEIGHT == 200))
             {
                 // Fullscreen. Which mode?
-                ST_Drawer(player, PLRPROFILE.screen.setBlocks - 8);
+                ST_Drawer(player, cfg.setBlocks - 8);
             }
             else
             {
@@ -345,21 +318,31 @@ void D_Display(int layer)
 
     if(layer == 0)
     {
-        // $democam: can be set on every frame.
-        if(PLRPROFILE.screen.setBlocks > 10 ||
-           (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        if(G_GetGameState() == GS_MAP)
         {
-            // Full screen.
-            R_SetViewWindowTarget(0, 0, 320, 200);
+            // $democam: can be set on every frame.
+            if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+            {
+                // Full screen.
+                R_SetViewWindowTarget(0, 0, 320, 200);
+            }
+            else
+            {
+                int                 w = cfg.setBlocks * 32;
+                int                 h = cfg.setBlocks * 20;
+                R_SetViewWindowTarget(160 - (w >> 1), (100 - (h >> 1)), w, h);
+            }
+
+            R_GetViewWindow(&x, &y, &w, &h);
         }
         else
         {
-            int                 w = PLRPROFILE.screen.setBlocks * 32;
-            int                 h = PLRPROFILE.screen.setBlocks * 20;
-            R_SetViewWindowTarget(160 - (w >> 1), (100 - (h >> 1)), w, h);
+            x = 0;
+            y = 0;
+            w = SCREENWIDTH;
+            h = SCREENHEIGHT;
         }
 
-        R_GetViewWindow(&x, &y, &w, &h);
         R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
 
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
@@ -420,7 +403,7 @@ void D_Display2(void)
 
     case GS_WAITING:
         //gl.Clear(DGL_COLOR_BUFFER_BIT);
-        //M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", huFontA, 1, 0, 0, 1);
+        //M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", GF_FONTA, 1, 0, 0, 1);
         break;
 
     case GS_INFINE:
@@ -438,7 +421,7 @@ void D_Display2(void)
     }
 
     // Draw pause pic (but not if InFine active).
-    if(gs.paused && !fiActive)
+    if(paused && !fiActive)
     {
         WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, &m_pause, NULL, false,
                      ALIGN_CENTER);
@@ -487,8 +470,7 @@ void P_SetDoomsdayFlags(mobj_t* mo)
     if(P_MobjIsCamera(mo))
         mo->ddFlags |= DDMF_DONTDRAW;
 
-    if(PLRPROFILE.corpseTime && (mo->flags & MF_CORPSE) &&
-       mo->corpseTics == -1)
+    if((mo->flags & MF_CORPSE) && cfg.corpseTime && mo->corpseTics == -1)
         mo->ddFlags |= DDMF_DONTDRAW;
 
     // Choose which ddflags to set.
@@ -517,7 +499,8 @@ void P_SetDoomsdayFlags(mobj_t* mo)
                                 !(mo->flags & MF_VIEWALIGN)))
         mo->ddFlags |= DDMF_VIEWALIGN;
 
-    mo->ddFlags |= mo->flags & MF_TRANSLATION;
+    if(mo->flags & MF_TRANSLATION)
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
 }
 
 /**

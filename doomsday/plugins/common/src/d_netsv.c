@@ -53,6 +53,7 @@
 #include "g_common.h"
 #include "p_tick.h"
 #include "p_start.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -140,23 +141,23 @@ void NetSv_UpdateGameConfig(void)
 
     memset(gameConfigString, 0, sizeof(gameConfigString));
 
-    sprintf(gameConfigString, "skill%i", gs.skill + 1);
+    sprintf(gameConfigString, "skill%i", gameSkill + 1);
 
-    if(GAMERULES.deathmatch > 1)
-        sprintf(gameConfigString, " dm%i", GAMERULES.deathmatch);
-    else if(GAMERULES.deathmatch)
+    if(deathmatch > 1)
+        sprintf(gameConfigString, " dm%i", deathmatch);
+    else if(deathmatch)
         strcat(gameConfigString, " dm");
     else
         strcat(gameConfigString, " coop");
 
-    if(GAMERULES.noMonsters)
+    if(noMonstersParm)
         strcat(gameConfigString, " nomonst");
 #if !__JHEXEN__
-    if(GAMERULES.respawn)
+    if(respawnMonsters)
         strcat(gameConfigString, " respawn");
 #endif
 
-    if(GAMERULES.jumpAllow)
+    if(cfg.jumpEnabled)
         strcat(gameConfigString, " jump");
 }
 
@@ -350,16 +351,16 @@ void NetSv_Ticker(void)
         if(!players[i].plr->inGame)
             continue;
 
-        if(oldClasses[i] != players[i].pClass)
+        if(oldClasses[i] != players[i].class)
         {
-            oldClasses[i] = players[i].pClass;
-            NetSv_SendPlayerClass(i, players[i].pClass);
+            oldClasses[i] = players[i].class;
+            NetSv_SendPlayerClass(i, players[i].class);
         }
     }
 #endif
 
     // Inform clients about jumping?
-    power = (GAMERULES.jumpAllow ? GAMERULES.jumpPower : 0);
+    power = (cfg.jumpEnabled ? cfg.jumpPower : 0);
     if(power != netJumpPower)
     {
         netJumpPower = power;
@@ -412,7 +413,7 @@ void NetSv_CycleToMapNum(int map)
 #if __JDOOM64__
     sprintf(cmd, "setmap 1 %i", map);
 #elif __JDOOM__
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         sprintf(cmd, "setmap 1 %i", map);
     else
         sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
@@ -532,7 +533,7 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
                             tmp[1] ==
                             '*' ? M_Random() % 10 : tmp[1] - '0');
 #elif __JDOOM__
-                    if(gs.gameMode == commercial)
+                    if(gameMode == commercial)
                     {
                         sprintf(lump, "MAP%i%i", episode =
                                 tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
@@ -732,13 +733,13 @@ void NetSv_NewPlayerEnters(int plrnumber)
 
     Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrnumber);
 
-    plr->pState = PST_REBORN;  // Force an init.
+    plr->playerState = PST_REBORN;  // Force an init.
 
     // Re-deal player starts.
     P_DealPlayerStarts(0);
 
     // Spawn the player into the world.
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrnumber);
     }
@@ -793,10 +794,10 @@ void NetSv_Intermission(int flags, int state, int time)
 /**
  * The actual script is sent to the clients. 'script' can be NULL.
  */
-void NetSv_Finale(int flags, char *script, boolean *conds, int numConds)
+void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numConds)
 {
-    byte       *buffer, *ptr;
-    int         i, len;
+    size_t              len, scriptLen = 0;
+    byte*               buffer, *ptr;
 
     if(IS_CLIENT)
         return;
@@ -805,7 +806,8 @@ void NetSv_Finale(int flags, char *script, boolean *conds, int numConds)
     if(script)
     {
         flags |= FINF_SCRIPT;
-        len = strlen(script) + 2;   // The end null and flags byte.
+        scriptLen = strlen(script) + 1;
+        len = scriptLen + 2; // The end null and flags byte.
 
         // The number of conditions and their values.
         len += 1 + numConds;
@@ -823,16 +825,20 @@ void NetSv_Finale(int flags, char *script, boolean *conds, int numConds)
 
     if(script)
     {
+        int                 i;
+
         // The conditions.
         *ptr++ = numConds;
-        for(i = 0; i < numConds; i++)
+        for(i = 0; i < numConds; ++i)
             *ptr++ = conds[i];
 
         // Then the script itself.
-        strcpy((char*)ptr, script);
+        memcpy(ptr, script, scriptLen + 1);
+        ptr[scriptLen] = '\0';
     }
 
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, buffer, len);
+
     Z_Free(buffer);
 }
 
@@ -852,7 +858,7 @@ void NetSv_SendGameState(int flags, int to)
     // Print a short message that describes the game state.
     if(verbose || IS_DEDICATED)
     {
-        Con_Printf("Game setup: ep%i map%i %s\n", gs.episode, gs.map.id,
+        Con_Printf("Game setup: ep%i map%i %s\n", gameEpisode, gameMap,
                    gameConfigString);
     }
 
@@ -875,23 +881,23 @@ void NetSv_SendGameState(int flags, int to)
         // due to compatibility with older versions.
 
 #if __JDOOM__ || __JDOOM64__
-        ptr[0] = gs.gameMode;
+        ptr[0] = gameMode;
 #else
         ptr[0] = 0;
 #endif
         ptr[1] = flags;
-        ptr[2] = gs.episode;
-        ptr[3] = gs.map.id;
-        ptr[4] = (GAMERULES.deathmatch & 0x3)
-            | (!GAMERULES.noMonsters? 0x4 : 0)
+        ptr[2] = gameEpisode;
+        ptr[3] = gameMap;
+        ptr[4] = (deathmatch & 0x3)
+            | (!noMonstersParm? 0x4 : 0)
 #if !__JHEXEN__
-            | (GAMERULES.respawn? 0x8 : 0)
+            | (respawnMonsters? 0x8 : 0)
 #else
             | 0
 #endif
-            | (GAMERULES.jumpAllow? 0x10 : 0)
+            | (cfg.jumpEnabled? 0x10 : 0)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-            | (gs.skill << 5);
+            | (gameSkill << 5);
 #else
         ;
 #endif
@@ -899,7 +905,7 @@ void NetSv_SendGameState(int flags, int to)
         ptr[5] = 0;
 
 #else
-        ptr[5] = gs.skill & 0x7;
+        ptr[5] = gameSkill & 0x7;
 #endif
         ptr[6] = (gravity >> 8) & 0xff; // low byte
         ptr[7] = (gravity >> 16) & 0xff; // high byte
@@ -958,7 +964,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
 
     if(flags & PSF2_STATE)
     {
-        *ptr++ = pl->pState |
+        *ptr++ = pl->playerState |
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
             (pl->armorType << 4);
 #else
@@ -994,7 +1000,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     WRITE_SHORT(ptr, flags);
     if(flags & PSF_STATE)
     {
-        *ptr++ = pl->pState |
+        *ptr++ = pl->playerState |
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
             (pl->armorType << 4);
 #else
@@ -1015,19 +1021,32 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #endif
     }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     if(flags & PSF_INVENTORY)
     {
-        *ptr++ = pl->inventorySlotNum;
-        for(i = 0; i < pl->inventorySlotNum; ++i)
-            WRITE_SHORT(ptr,
-                        (pl->inventory[i].
-                         type & 0xff) | ((pl->inventory[i].
-                                          count & 0xff) << 8));
+        uint                i, count = 0;
+
+        for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+            count += (P_InventoryCount(srcPlrNum, IIT_FIRST + i)? 1 : 0);
+
+        *ptr++ = count;
+        if(count)
+        {
+            for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+            {
+                inventoryitemtype_t type = IIT_FIRST + i;
+                uint                num = P_InventoryCount(srcPlrNum, type);
+
+                if(num)
+                {
+                    WRITE_SHORT(ptr, (type & 0xff) | ((num & 0xff) << 8));
+                }
+            }
+        }
     }
 #endif
 
-    if(flags & PSF_POWERS)      // Austin P.?
+    if(flags & PSF_POWERS)
     {
         // First see which powers should be sent.
 #if __JHEXEN__ || __JSTRIFE__
@@ -1180,9 +1199,9 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
         return;
 
     *ptr++ = whose;
-    *ptr++ = gs.players[whose].color;
+    *ptr++ = cfg.playerColor[whose];
 #if __JHERETIC__ || __JHEXEN__
-    *ptr++ = gs.players[whose].pClass;
+    *ptr++ = cfg.playerClass[whose];
 #endif
     Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO, buffer,
                    ptr - buffer);
@@ -1195,21 +1214,21 @@ void NetSv_ChangePlayerInfo(int from, byte* data)
 
     // Color is first.
     col = *data++;
-    gs.players[from].color = PLR_COLOR(from, col);
+    cfg.playerColor[from] = PLR_COLOR(from, col);
 #if __JHERETIC__ || __JHEXEN__
-    gs.players[from].pClass = *data++;
+    cfg.playerClass[from] = *data++;
     Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i, class=%i\n", from,
-               gs.players[from].color, gs.players[from].pClass);
+               cfg.playerColor[from], cfg.playerClass[from]);
 #else
     Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i\n", from,
-               gs.players[from].color);
+               cfg.playerColor[from]);
 #endif
 
 #if __JHEXEN__
     // The 'colormap' variable controls the setting of the color
     // translation flags when the player is (re)spawned (which will
     // be done in P_PlayerChangeClass).
-    pl->colorMap = gs.players[from].color;
+    pl->colorMap = cfg.playerColor[from];
 #else
     if(pl->plr->mo)
     {
@@ -1220,7 +1239,7 @@ void NetSv_ChangePlayerInfo(int from, byte* data)
 #endif
 
 #if __JHEXEN__
-    P_PlayerChangeClass(pl, gs.players[from].pClass);
+    P_PlayerChangeClass(pl, cfg.playerClass[from]);
 #endif
 
     // Re-deal start spots.
@@ -1265,7 +1284,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 #if __JDOOM__ || __JDOOM64__
     char        buf[160], *in, tmp[2];
 
-    if(!GAMERULES.announceFrags || !GAMERULES.deathmatch)
+    if(!cfg.killMessages || !deathmatch)
         return;
 
     buf[0] = 0;
@@ -1385,7 +1404,7 @@ void NetSv_DoAction(int player, const char *data)
                 angle, lookDir);
 #endif
 
-    if(pl->pState == PST_DEAD)
+    if(pl->playerState == PST_DEAD)
     {
         // This player is dead. Rise, my friend!
         P_PlayerReborn(pl);
@@ -1477,19 +1496,22 @@ void NetSv_SendMessage(int plrNum, char *msg)
     NetSv_SendMessageEx(plrNum, msg, false);
 }
 
-void NetSv_SendYellowMessage(int plrNum, char* msg)
+void NetSv_SendYellowMessage(int plrNum, char *msg)
 {
     NetSv_SendMessageEx(plrNum, msg, true);
 }
 
-void P_Telefrag(mobj_t* thing)
+void P_Telefrag(mobj_t *thing)
 {
     P_TeleportMove(thing, thing->pos[VX], thing->pos[VY], false);
 }
 
-DEFCC(CCmdStartMapCycle)
+/**
+ * Handles the console commands "startcycle" and "endcycle".
+ */
+DEFCC(CCmdMapCycle)
 {
-    int                 map;
+    int         map;
 
     if(!IS_SERVER)
     {
@@ -1497,34 +1519,26 @@ DEFCC(CCmdStartMapCycle)
         return false;
     }
 
-    // (Re)start the rotation. Find the first map in the sequence.
-    cycleIndex = 0;
-    if((map = NetSv_ScanCycle(cycleIndex, 0)) >= 0)
+    if(!stricmp(argv[0], "startcycle")) // (Re)start rotation?
     {
+        // Find the first map in the sequence.
+        map = NetSv_ScanCycle(cycleIndex = 0, 0);
+        if(map < 0)
+        {
+            Con_Printf("MapCycle \"%s\" is invalid.\n", mapCycle);
+            return false;
+        }
         // Warp there.
         NetSv_CycleToMapNum(map);
         cyclingMaps = true;
-
-        return true;
     }
-
-    Con_Printf("MapCycle \"%s\" is invalid.\n", mapCycle);
-    return false;
-}
-
-DEFCC(CCmdEndMapCycle)
-{
-    if(!IS_SERVER)
-    {
-        Con_Printf("Only allowed for a server.\n");
-        return false;
-    }
-
-    // End the rotation.
-    if(cyclingMaps)
-    {
-        cyclingMaps = false;
-        NetSv_SendMessage(DDSP_ALL_PLAYERS, "MAP ROTATION ENDS");
+    else
+    {   // OK, then we need to end it.
+        if(cyclingMaps)
+        {
+            cyclingMaps = false;
+            NetSv_SendMessage(DDSP_ALL_PLAYERS, "MAP ROTATION ENDS");
+        }
     }
 
     return true;

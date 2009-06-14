@@ -2014,6 +2014,6 @@ Text {
 }
 
 Text {
-  ID = "PLAYERPROFILE";
-  Text = "Player Profile";
+  ID = "PLAYERSETUP";
+  Text = "Player Setup";
 }

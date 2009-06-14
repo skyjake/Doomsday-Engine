@@ -54,6 +54,8 @@ enum {
     JOYAXIS_LOOK
 };
 
+extern boolean singledemo;
+
 void            G_Register(void);
 void            G_PreInit(void);
 void            G_PostInit(void);
@@ -68,8 +70,6 @@ void            G_SetGameAction(gameaction_t action);
 // Spawn player at a dummy place.
 void            G_DummySpawnPlayer(int playernum);
 void            G_DeathMatchSpawnPlayer(int playernum);
-
-boolean         P_MobjIsCamera(mobj_t* mo);
 
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);

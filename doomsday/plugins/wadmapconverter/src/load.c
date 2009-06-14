@@ -110,7 +110,7 @@ static int C_DECL compareMaterialNames(const void* a, const void* b)
 }
 
 static const materialref_t* getMaterial(const char* regName,
-                                        const materialref_t*** list,
+                                        materialref_t* const ** list,
                                         size_t size)
 {
     int                 result;
@@ -221,13 +221,19 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
 
             sprintf(m->name, "UNK%05i", idx);
             m->name[8] = '\0';
-            m->num = P_MaterialCheckNumForIndex(idx, isFlat? MN_FLATS : MN_TEXTURES);
+            // First try the prefered namespace, then any.
+            if(!(m->num = P_MaterialCheckNumForIndex(idx,
+                                                     (isFlat? MN_FLATS : MN_TEXTURES))))
+                m->num = P_MaterialCheckNumForIndex(idx, MN_ANY);
         }
         else
         {
             memcpy(m->name, name, 8);
             m->name[8] = '\0';
-            m->num = P_MaterialCheckNumForName(m->name, (isFlat? MN_FLATS : MN_TEXTURES));
+            // First try the prefered namespace, then any.
+            if(!(m->num = P_MaterialCheckNumForName(m->name,
+                                                    (isFlat? MN_FLATS : MN_TEXTURES))))
+                m->num = P_MaterialCheckNumForName(m->name, MN_ANY);
         }
 
         // Add it to the list of known materials.
@@ -393,6 +399,140 @@ if(idx < 0 || idx >= (long) map->numLines)
     return true;
 
 #undef MAPBLOCKUNITS
+}
+#endif
+
+#if 0
+/**
+ * The REJECT resource is a LUT that provides the results of trivial
+ * line-of-sight tests between sectors. This is done with a matrix of sector
+ * pairs i.e. if a monster in sector 4 can see the player in sector 2; the
+ * inverse should be true.
+ *
+ * Note however, some PWADS have carefully constructed REJECT data to create
+ * special effects. For example it is possible to make a player completely
+ * invissible in certain sectors.
+ *
+ * The format of the table is a simple matrix of boolean values, a (true)
+ * value indicates that it is impossible for mobjs in sector A to see mobjs
+ * in sector B (and vice-versa). A (false) value indicates that a
+ * line-of-sight MIGHT be possible and a more accurate (thus more expensive)
+ * calculation will have to be made.
+ *
+ * The table itself is constructed as follows:
+ *
+ *     X = sector num player is in
+ *     Y = sector num monster is in
+ *
+ *         X
+ *
+ *       0 1 2 3 4 ->
+ *     0 1 - 1 - -
+ *  Y  1 - - 1 - -
+ *     2 1 1 - - 1
+ *     3 - - - 1 -
+ *    \|/
+ *
+ * These results are read left-to-right, top-to-bottom and are packed into
+ * bytes (each byte represents eight results). As are all lumps in WAD the
+ * data is in little-endian order.
+ *
+ * Thus the size of a valid REJECT lump can be calculated as:
+ *
+ *     ceiling(numSectors^2)
+ *
+ * For now we only do very basic reject processing, limited to determining
+ * all isolated sector groups (islands that are surrounded by void space).
+ *
+ * \note Algorithm:
+ * Initially all sectors are in individual groups. Next, we scan the linedef
+ * list. For each 2-sectored line, merge the two sector groups into one.
+ */
+static void buildReject(gamemap_t *map)
+{
+/**
+ * \todo We can do something much better now that we are building the BSP.
+ */
+    int         i;
+    int         group;
+    int        *secGroups;
+    int         view, target;
+    size_t      rejectSize;
+    byte       *matrix;
+
+    secGroups = M_Malloc(sizeof(int) * numSectors);
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t  *sec = LookupSector(i);
+        secGroups[i] = group++;
+        sec->rejNext = sec->rejPrev = sec;
+    }
+
+    for(i = 0; i < numLinedefs; ++i)
+    {
+        linedef_t  *line = LookupLinedef(i);
+        sector_t   *sec1, *sec2, *p;
+
+        if(!line->sideDefs[FRONT] || !line->sideDefs[BACK])
+            continue;
+
+        sec1 = line->sideDefs[FRONT]->sector;
+        sec2 = line->sideDefs[BACK]->sector;
+
+        if(!sec1 || !sec2 || sec1 == sec2)
+            continue;
+
+        // Already in the same group?
+        if(secGroups[sec1->index] == secGroups[sec2->index])
+            continue;
+
+        // Swap sectors so that the smallest group is added to the biggest
+        // group. This is based on the assumption that sector numbers in
+        // wads will generally increase over the set of linedefs, and so
+        // (by swapping) we'll tend to add small groups into larger
+        // groups, thereby minimising the updates to 'rej_group' fields
+        // that is required when merging.
+        if(secGroups[sec1->index] > secGroups[sec2->index])
+        {
+            p = sec1;
+            sec1 = sec2;
+            sec2 = p;
+        }
+
+        // Update the group numbers in the second group
+        secGroups[sec2->index] = secGroups[sec1->index];
+        for(p = sec2->rejNext; p != sec2; p = p->rejNext)
+            secGroups[p->index] = secGroups[sec1->index];
+
+        // Merge 'em baby...
+        sec1->rejNext->rejPrev = sec2;
+        sec2->rejNext->rejPrev = sec1;
+
+        p = sec1->rejNext;
+        sec1->rejNext = sec2->rejNext;
+        sec2->rejNext = p;
+    }
+
+    rejectSize = (numSectors * numSectors + 7) / 8;
+    matrix = Z_Calloc(rejectSize, PU_MAPSTATIC, 0);
+
+    for(view = 0; view < numSectors; ++view)
+        for(target = 0; target < view; ++target)
+        {
+            int         p1, p2;
+
+            if(secGroups[view] == secGroups[target])
+                continue;
+
+            // For symmetry, do two bits at a time.
+            p1 = view * numSectors + target;
+            p2 = target * numSectors + view;
+
+            matrix[p1 >> 3] |= (1 << (p1 & 7));
+            matrix[p2 >> 3] |= (1 << (p2 & 7));
+        }
+
+    M_Free(secGroups);
 }
 #endif
 
@@ -1187,6 +1327,11 @@ static boolean loadSectors(const byte* buf, size_t len)
 
 static boolean loadThings(const byte* buf, size_t len)
 {
+// New flags: \todo get these from a game api header.
+#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
+#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
+#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
+
     uint                num, n;
     size_t              elmSize;
     const byte*         ptr;
@@ -1201,34 +1346,126 @@ static boolean loadThings(const byte* buf, size_t len)
     {
     default:
     case MF_DOOM:
+/**
+ * DOOM Thing flags:
+ */
+#define MTF_EASY            0x00000001 // Can be spawned in Easy skill modes.
+#define MTF_MEDIUM          0x00000002 // Can be spawned in Medium skill modes.
+#define MTF_HARD            0x00000004 // Can be spawned in Hard skill modes.
+#define MTF_DEAF            0x00000008 // Mobj will be deaf spawned deaf.
+#define MTF_NOTSINGLE       0x00000010 // (BOOM) Can not be spawned in single player gamemodes.
+#define MTF_NOTDM           0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
+#define MTF_FRIENDLY        0x00000080 // (BOOM) friendly monster.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
+
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
             mthing_t*           t = &map->things[n];
 
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            t->pos[VZ] = 0;
             t->angle = SHORT(*((const int16_t*) (ptr+4)));
             t->type = SHORT(*((const int16_t*) (ptr+6)));
             t->flags = SHORT(*((const int16_t*) (ptr+8)));
+            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+            // DOOM format things spawn on the floor by default unless their
+            // type-specific flags override.
+            t->flags |= MTF_Z_FLOOR;
         }
+
+#undef MTF_EASY
+#undef MTF_MEDIUM
+#undef MTF_HARD
+#undef MTF_AMBUSH
+#undef MTF_NOTSINGLE
+#undef MTF_NOTDM
+#undef MTF_NOTCOOP
+#undef MTF_FRIENDLY
+#undef MASK_UNKNOWN_THING_FLAGS
         break;
 
     case MF_DOOM64:
+/**
+ * DOOM64 Thing flags:
+ */
+#define MTF_EASY            0x00000001 // Appears in easy skill modes.
+#define MTF_MEDIUM          0x00000002 // Appears in medium skill modes.
+#define MTF_HARD            0x00000004 // Appears in hard skill modes.
+#define MTF_DEAF            0x00000008 // Thing is deaf.
+#define MTF_NOTSINGLE       0x00000010 // Appears in multiplayer game modes only.
+#define MTF_DONTSPAWNATSTART 0x00000020 // Do not spawn this thing at map start.
+#define MTF_SCRIPT_TOUCH    0x00000040 // Mobjs spawned from this spot will envoke a script when touched.
+#define MTF_SCRIPT_DEATH    0x00000080 // Mobjs spawned from this spot will envoke a script on death.
+#define MTF_SECRET          0x00000100 // A secret (bonus) item.
+#define MTF_NOTARGET        0x00000200 // Mobjs spawned from this spot will not target their attacker when hurt.
+#define MTF_NOTDM           0x00000400 // Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000800 // Can not be spawned in the Co-op gameMode.
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
+
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
             mthing_t*           t = &map->things[n];
 
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
-            t->d64posZ = SHORT(*((const int16_t*) (ptr+4)));
+            t->pos[VZ] = SHORT(*((const int16_t*) (ptr+4)));
             t->angle = SHORT(*((const int16_t*) (ptr+6)));
             t->type = SHORT(*((const int16_t*) (ptr+8)));
+
             t->flags = SHORT(*((const int16_t*) (ptr+10)));
+            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+            // DOOM64 format things spawn relative to the floor by default
+            // unless their type-specific flags override.
+            t->flags |= MTF_Z_FLOOR;
+
             t->d64TID = SHORT(*((const int16_t*) (ptr+12)));
         }
+
+#undef MTF_EASY
+#undef MTF_MEDIUM
+#undef MTF_HARD
+#undef MTF_DEAF
+#undef MTF_NOTSINGLE
+#undef MTF_DONTSPAWNATSTART
+#undef MTF_SCRIPT_TOUCH
+#undef MTF_SCRIPT_DEATH
+#undef MTF_SECRET
+#undef MTF_NOTARGET
+#undef MTF_NOTDM
+#undef MTF_NOTCOOP
+#undef MASK_UNKNOWN_THING_FLAGS
         break;
 
     case MF_HEXEN:
+/**
+ * Hexen Thing flags:
+ */
+#define MTF_EASY            0x00000001
+#define MTF_NORMAL          0x00000002
+#define MTF_HARD            0x00000004
+#define MTF_AMBUSH          0x00000008
+#define MTF_DORMANT         0x00000010
+#define MTF_FIGHTER         0x00000020
+#define MTF_CLERIC          0x00000040
+#define MTF_MAGE            0x00000080
+#define MTF_GSINGLE         0x00000100
+#define MTF_GCOOP           0x00000200
+#define MTF_GDEATHMATCH     0x00000400
+// The following are not currently used.
+#define MTF_SHADOW          0x00000800 // (ZDOOM) Thing is 25% translucent.
+#define MTF_INVISIBLE       0x00001000 // (ZDOOM) Makes the thing invisible.
+#define MTF_FRIENDLY        0x00002000 // (ZDOOM) Friendly monster.
+#define MTF_STILL           0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
+
+#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
+    ^ (MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
+
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
             mthing_t*           t = &map->things[n];
@@ -1236,10 +1473,16 @@ static boolean loadThings(const byte* buf, size_t len)
             t->xTID = SHORT(*((const int16_t*) (ptr)));
             t->pos[VX] = SHORT(*((const int16_t*) (ptr+2)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+4)));
-            t->xSpawnZ = SHORT(*((const int16_t*) (ptr+6)));
+            t->pos[VZ] = SHORT(*((const int16_t*) (ptr+6)));
             t->angle = SHORT(*((const int16_t*) (ptr+8)));
             t->type = SHORT(*((const int16_t*) (ptr+10)));
+
             t->flags = SHORT(*((const int16_t*) (ptr+12)));
+            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+            // HEXEN format things spawn relative to the floor by default
+            // unless their type-specific flags override.
+            t->flags |= MTF_Z_FLOOR;
+
             t->xSpecial = *(ptr+14);
             t->xArgs[0] = *(ptr+15);
             t->xArgs[1] = *(ptr+16);
@@ -1247,10 +1490,32 @@ static boolean loadThings(const byte* buf, size_t len)
             t->xArgs[3] = *(ptr+18);
             t->xArgs[4] = *(ptr+19);
         }
+
+#undef MTF_EASY
+#undef MTF_NORMAL
+#undef MTF_HARD
+#undef MTF_AMBUSH
+#undef MTF_DORMANT
+#undef MTF_FIGHTER
+#undef MTF_CLERIC
+#undef MTF_MAGE
+#undef MTF_GSINGLE
+#undef MTF_GCOOP
+#undef MTF_GDEATHMATCH
+// The following are not currently used.
+#undef MTF_SHADOW
+#undef MTF_INVISIBLE
+#undef MTF_FRIENDLY
+#undef MTF_STILL
+#undef MASK_UNKNOWN_THING_FLAGS
         break;
     }
 
     return true;
+
+#undef MTF_Z_FLOOR
+#undef MTF_Z_CEIL
+#undef MTF_Z_RANDOM
 }
 
 static boolean loadLights(const byte* buf, size_t len)
@@ -1515,18 +1780,18 @@ boolean TransferMap(void)
 
         MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->pos[VX]);
         MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->pos[VY]);
+        MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->pos[VZ]);
         MPE_GameObjProperty("Thing", i, "Angle", DDVT_SHORT, &th->angle);
         MPE_GameObjProperty("Thing", i, "Type", DDVT_SHORT, &th->type);
-        MPE_GameObjProperty("Thing", i, "Flags", DDVT_SHORT, &th->flags);
+        MPE_GameObjProperty("Thing", i, "Flags", DDVT_INT, &th->flags);
 
         if(map->format == MF_DOOM64)
         {
-            MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->d64posZ);
             MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->d64TID);
         }
         else if(map->format == MF_HEXEN)
         {
-            MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->xSpawnZ);
+
             MPE_GameObjProperty("Thing", i, "Special", DDVT_BYTE, &th->xSpecial);
             MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->xTID);
             MPE_GameObjProperty("Thing", i, "Arg0", DDVT_BYTE, &th->xArgs[0]);

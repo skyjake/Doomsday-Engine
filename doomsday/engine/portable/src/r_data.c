@@ -42,13 +42,13 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define PALLUMPNAME         "PLAYPAL"
-
 #define PATCHTEX_HASH_SIZE  128
 #define PATCHTEX_HASH(x)    (patchtexhash + (((unsigned) x) & (PATCHTEX_HASH_SIZE - 1)))
 
 #define RAWTEX_HASH_SIZE    128
 #define RAWTEX_HASH(x)      (rawtexhash + (((unsigned) x) & (RAWTEX_HASH_SIZE - 1)))
+
+#define COLORPALETTENAME_MAXLEN     (32)
 
 // TYPES -------------------------------------------------------------------
 
@@ -72,6 +72,16 @@ typedef struct {
     uint            num;
     void*           data;
 } rendpolydata_t;
+
+/**
+ * DGL color palette name bindings.
+ * These are mainly intended as a public API convenience.
+ * Internally, we are only interested in the associated DGL name(s).
+ */
+typedef struct {
+    char            name[COLORPALETTENAME_MAXLEN+1];
+    DGLuint         id;
+} colorpalettebind_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -99,6 +109,12 @@ spritetex_t** spriteTextures = NULL;
 int numDetailTextures = 0;
 detailtex_t** detailTextures = NULL;
 
+int numLightMaps = 0;
+lightmap_t** lightMaps = NULL;
+
+int numFlareTextures = 0;
+flaretex_t** flareTextures = NULL;
+
 int numShinyTextures = 0;
 shinytex_t** shinyTextures = NULL;
 
@@ -115,13 +131,8 @@ byte rendInfoRPolys = 0;
 // This is because we want to have permanent ID numbers for skins,
 // and the ID numbers are the same as indices to the skinNames array.
 // Created in r_model.c, when registering the skins.
-int numSkinNames;
-skintex_t* skinNames;
-
-// Convert a 18-bit RGB (666) value to a playpal index.
-// \fixme 256kb - Too big?
-byte pal18To8[262144];
-int palLump;
+uint numSkinNames = 0;
+skinname_t* skinNames = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -135,7 +146,294 @@ static unsigned int numrendpolys = 0;
 static unsigned int maxrendpolys = 0;
 static rendpolydata_t** rendPolys;
 
+static colorpalettebind_t* colorPalettes = NULL;
+static uint numColorPalettes = 0;
+static colorpaletteid_t defaultColorPalette = 0;
+
 // CODE --------------------------------------------------------------------
+
+static colorpaletteid_t colorPaletteNumForName(const char* name)
+{
+    uint                i;
+
+    // Linear search (sufficiently fast enough given the probably small set
+    // and infrequency of searches).
+    for(i = 0; i < numColorPalettes; ++i)
+    {
+        colorpalettebind_t* pal = &colorPalettes[i];
+
+        if(!strnicmp(pal->name, name, COLORPALETTENAME_MAXLEN))
+            return i + 1; // Already registered. 1-based index.
+    }
+
+    return 0; // Not found.
+}
+
+/**
+ * Given a colorpalette id return the associated DGL color palette num.
+ * If the specified id cannot be found, the default color palette will be
+ * returned instead.
+ *
+ * @param id            Id of the color palette to be prepared.
+ *
+ * @return              The DGL palette number iff found else @c NULL.
+ */
+DGLuint R_GetColorPalette(colorpaletteid_t id)
+{
+    if(!id || id - 1 >= numColorPalettes)
+    {
+        if(numColorPalettes)
+            return colorPalettes[defaultColorPalette-1].id;
+
+        return 0;
+    }
+
+    return colorPalettes[id-1].id;
+}
+
+/**
+ * Change the default color palette.
+ *
+ * @param id            Id of the color palette to make default.
+ *
+ * @return              @c true iff successful, else @c NULL.
+ */
+boolean R_SetDefaultColorPalette(colorpaletteid_t id)
+{
+    if(id && id - 1 < numColorPalettes)
+    {
+        defaultColorPalette = id;
+        return true;
+    }
+
+    VERBOSE(Con_Message("R_SetDefaultColorPalette: Invalid id %u.\n", id))
+    return false;
+}
+
+/**
+ * Add a new (named) color palette.
+ * \note Part of the Doomsday public API.
+ *
+ * \design The idea with the two-teered implementation is to allow maximum
+ * flexibility. Within the engine we can create new palettes and manipulate
+ * them directly via the DGL interface. The underlying implementation is
+ * wrapped in a similar way to the materials so that publically, there is a
+ * set of (eternal) names and unique identifiers that survive engine and
+ * GL resets.
+ *
+ * @param fmt           Format string describes the format of @p data.
+ *                      Expected form: "C#C#C"
+ *                          C = color component, one of R, G, B.
+ *                          # = bits per component.
+ * @param name          Unique name by which the palette will be known.
+ * @param data          Buffer containing the src color data.
+ * @param num           Number of sets of components).
+ *
+ * @return              Color palette id.
+ */
+colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
+                                      const byte* data, ushort num)
+{
+#define MAX_BPC         (16) // Max bits per component.
+
+    static const char*  compNames[] = { "red", "green", "blue" };
+    colorpaletteid_t    id;
+    colorpalettebind_t* pal;
+    const char*         c, *end;
+    int                 i, pos, compOrder[3];
+    byte                compSize[3];
+
+    if(!name || !name[0])
+        Con_Error("R_CreateColorPalette: Color palettes require a name.\n");
+
+    if(strlen(name) > COLORPALETTENAME_MAXLEN)
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "color palette name can be at most %i characters long.\n",
+                  name, COLORPALETTENAME_MAXLEN);
+
+    if(!fmt || !fmt[0])
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "missing format string.\n", name);
+
+    if(!data || !num)
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "cannot create a zero-sized palette.\n", name);
+
+    // All arguments supplied. Parse the format string.
+    memset(compOrder, -1, sizeof(compOrder));
+    pos = 0;
+    end = fmt + (strlen(fmt) - 1);
+    c = fmt;
+    do
+    {
+        int               comp = -1;
+
+        if(*c == 'R' || *c == 'r')
+            comp = CR;
+        else if(*c == 'G' || *c == 'g')
+            comp = CG;
+        else if(*c == 'B' || *c == 'b')
+            comp = CB;
+
+        if(comp != -1)
+        {
+            // Have encountered this component yet?
+            if(compOrder[comp] == -1)
+            {   // No.
+                const char*         start;
+                size_t              numDigits;
+
+                compOrder[comp] = pos++;
+
+                // Read the number of bits.
+                start = ++c;
+                while((*c >= '0' && *c <= '9') && ++c < end);
+
+                numDigits = c - start;
+                if(numDigits != 0 && numDigits <= 2)
+                {
+                    char                buf[3];
+
+                    memset(buf, 0, numDigits);
+                    memcpy(buf, start, numDigits);
+
+                    compSize[comp] = atoi(buf);
+
+                    if(pos == 3)
+                        break; // We're done.
+
+                    // Unread the last character.
+                    c--;
+                    continue;
+                }
+            }
+        }
+
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "invalid character '%c' in format string at "
+                  "position %i.\n", name, *c, c - fmt);
+    } while(++c <= end);
+
+    if(pos != 3)
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                  "incomplete format specification.\n", name);
+
+    // Check validity of bits per component.
+    for(i = 0; i < 3; ++i)
+        if(compSize[i] == 0 || compSize[i] > MAX_BPC)
+        {
+            Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
+                      "unsupported bit size %i for %s component.\n",
+                      name, compSize[i], compNames[compOrder[i]]);
+        }
+
+    if((id = colorPaletteNumForName(name)))
+    {   // We are replacing an existing palette.
+        pal = &colorPalettes[id-1];
+
+        // Destroy the existing DGL color palette.
+        GL_DeleteColorPalettes(1, &pal->id);
+        pal->id = 0;
+    }
+    else
+    {   // We are creating a new palette.
+        if(!numColorPalettes)
+        {
+            colorPalettes = Z_Malloc(
+                ++numColorPalettes * sizeof(colorpalettebind_t), PU_STATIC, 0);
+
+            defaultColorPalette = numColorPalettes;
+        }
+        else
+            colorPalettes = Z_Realloc(&colorPalettes,
+                ++numColorPalettes * sizeof(colorpalettebind_t), PU_STATIC);
+
+        pal = &colorPalettes[numColorPalettes-1];
+        memset(pal, 0, sizeof(*pal));
+
+        strncpy(pal->name, name, COLORPALETTENAME_MAXLEN);
+
+        id = numColorPalettes; // 1-based index.
+    }
+
+    // Generate the actual DGL color palette.
+    pal->id = GL_CreateColorPalette(compOrder, compSize, data, num);
+
+    return id; // 1-based index.
+
+#undef MAX_BPC
+}
+
+/**
+ * Given a color palette name, look up the associated identifier.
+ * \note Part of the Doomsday public API.
+ *
+ * @param name          Unique name of the palette to locate.
+ * @return              Iff found, identifier of the palette associated
+ *                      with this name, ELSE @c 0.
+ */
+colorpaletteid_t R_GetColorPaletteNumForName(const char* name)
+{
+    if(name && name[0] && strlen(name) <= COLORPALETTENAME_MAXLEN)
+        return colorPaletteNumForName(name);
+
+    return 0;
+}
+
+/**
+ * Given a color palette id, look up the specified unique name.
+ * \note Part of the Doomsday public API.
+ *
+ * @param id            Id of the color palette to locate.
+ * @return              Iff found, pointer to the unique name associated
+ *                      with the specified id, ELSE @c NULL.
+ */
+const char* R_GetColorPaletteNameForNum(colorpaletteid_t id)
+{
+    if(id && id - 1 < numColorPalettes)
+        return colorPalettes[id-1].name;
+
+    return NULL;
+}
+
+/**
+ * Given a color palette index, calculate the equivilent RGB color.
+ * \note Part of the Doomsday public API.
+ *
+ * @param id            Id of the color palette to use.
+ * @param rgb           Final color will be written back here.
+ * @param idx           Color Palette, color index.
+ * @param correctGamma  @c TRUE if the current gamma ramp should be applied.
+ */
+void R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3], int idx,
+                           boolean correctGamma)
+{
+    if(rgb)
+    {
+        if(idx >= 0)
+        {
+            DGLuint             pal = R_GetColorPalette(id);
+            DGLubyte            rgbUBV[3];
+
+            GL_GetColorPaletteRGB(pal, rgbUBV, idx);
+
+            if(correctGamma)
+            {
+                rgbUBV[CR] = gammaTable[rgbUBV[CR]];
+                rgbUBV[CG] = gammaTable[rgbUBV[CG]];
+                rgbUBV[CB] = gammaTable[rgbUBV[CB]];
+            }
+
+            rgb[CR] = rgbUBV[CR] * reciprocal255;
+            rgb[CG] = rgbUBV[CG] * reciprocal255;
+            rgb[CB] = rgbUBV[CB] * reciprocal255;
+
+            return;
+        }
+
+        rgb[CR] = rgb[CG] = rgb[CB] = 0;
+    }
+}
 
 void R_InfoRendVerticesPool(void)
 {
@@ -619,77 +917,6 @@ void R_ShutdownData(void)
     P_ShutdownMaterialManager();
 }
 
-byte* R_GetPal18to8(void)
-{
-    return pal18To8;
-}
-
-/**
- * Prepare the pal18To8 table.
- * A time-consuming operation (64 * 64 * 64 * 256!).
- */
-static void calculatePal18to8(byte* dest, byte* palette)
-{
-    int                 r, g, b, i;
-    byte                palRGB[3];
-    unsigned int        diff, smallestDiff, closestIndex = 0;
-
-    for(r = 0; r < 64; ++r)
-    {
-        for(g = 0; g < 64; ++g)
-        {
-            for(b = 0; b < 64; ++b)
-            {
-                // We must find the color index that most closely
-                // resembles this RGB combination.
-                smallestDiff = 0;
-                for(i = 0; i < 256; ++i)
-                {
-                    memcpy(palRGB, palette + 3 * i, 3);
-                    diff =
-                        (palRGB[0] - (r << 2)) * (palRGB[0] - (r << 2)) +
-                        (palRGB[1] - (g << 2)) * (palRGB[1] - (g << 2)) +
-                        (palRGB[2] - (b << 2)) * (palRGB[2] - (b << 2));
-                    if(diff < smallestDiff)
-                    {
-                        smallestDiff = diff;
-                        closestIndex = i;
-                    }
-                }
-                dest[RGB18(r, g, b)] = closestIndex;
-            }
-        }
-    }
-}
-
-void R_LoadPalette(void)
-{
-    lumpnum_t           lump;
-
-    // The palette lump, for color information (really??!!?!?!).
-    palLump = W_GetNumForName(PALLUMPNAME);
-
-    // Load the pal18To8 table from the lump PAL18TO8. We need it
-    // when resizing textures.
-    if((lump = W_CheckNumForName("PAL18TO8")) == -1)
-        calculatePal18to8(pal18To8, R_GetPalette());
-    else
-        memcpy(pal18To8, W_CacheLumpNum(lump, PU_CACHE), sizeof(pal18To8));
-
-    if(ArgCheck("-dump_pal18to8"))
-    {
-        FILE*           file = fopen("pal18To8.lmp", "wb");
-
-        fwrite(pal18To8, sizeof(pal18To8), 1, file);
-        fclose(file);
-    }
-}
-
-byte* R_GetPalette(void)
-{
-    return W_CacheLumpNum(palLump, PU_CACHE);
-}
-
 /**
  * Returns a NULL-terminated array of pointers to all the patchetexs.
  * The array must be freed with Z_Free.
@@ -875,7 +1102,7 @@ static lumpnum_t* loadPatchList(lumpnum_t lump, size_t* num)
     if(numPatches > (lumpSize - 4) / 8)
     {   // Lump is truncated.
         Con_Message("loadPatchList: Warning, lump '%s' truncated (%lu bytes, "
-                    "expected %lu).\n", lumpInfo[lump].name,
+                    "expected %lu).\n", W_LumpName(lump),
                     (unsigned long) lumpSize,
                     (unsigned long) (numPatches * 8 + 4));
         numPatches = (lumpSize - 4) / 8;
@@ -958,7 +1185,7 @@ typedef struct {
     byte*               validTexDefs;
     short*              texDefNumPatches;
     int                 numTexDefs, numValidTexDefs;
-    doomtexturedef_t**      texDefs;
+    doomtexturedef_t**  texDefs = NULL;
 
     lumpSize = W_LumpLength(lump);
     maptex1 = M_Malloc(lumpSize);
@@ -967,7 +1194,7 @@ typedef struct {
     numTexDefs = LONG(*maptex1);
 
     VERBOSE(Con_Message("R_ReadTextureDefs: Processing lump '%s'...\n",
-                        lumpInfo[lump].name));
+                        W_LumpName(lump)));
 
     validTexDefs = M_Calloc(numTexDefs * sizeof(byte));
     texDefNumPatches = M_Calloc(numTexDefs * sizeof(*texDefNumPatches));
@@ -987,7 +1214,7 @@ typedef struct {
         {
             Con_Message("R_ReadTextureDefs: Bad offset %lu for definition "
                         "%i in lump '%s'.\n", (unsigned long) offset, i,
-                        lumpInfo[lump].name);
+                        W_LumpName(lump));
             continue;
         }
 
@@ -1452,7 +1679,7 @@ static int R_NewFlat(lumpnum_t lump)
             return i;
 
         // Is this a known identifer? Newer idents overide old.
-        if(!strnicmp(lumpInfo[ptr->lump].name, lumpInfo[lump].name, 8))
+        if(!strnicmp(W_LumpName(ptr->lump), W_LumpName(lump), 8))
         {
             ptr->lump = lump;
             return i;
@@ -1473,11 +1700,11 @@ static int R_NewFlat(lumpnum_t lump)
     ptr->width = 64; /// \fixme not all flats are 64 texels in width!
     ptr->height = 64; /// \fixme not all flats are 64 texels in height!
 
-    tex = GL_CreateGLTexture(lumpInfo[lump].name, numFlats - 1, GLT_FLAT);
+    tex = GL_CreateGLTexture(W_LumpName(lump), numFlats - 1, GLT_FLAT);
 
     // Create a material for this flat.
     // \note that width = 64, height = 64 regardless of the flat dimensions.
-    mat = P_MaterialCreate(lumpInfo[lump].name, 64, 64, 0, tex->id, MN_FLATS, NULL);
+    mat = P_MaterialCreate(W_LumpName(lump), 64, 64, 0, tex->id, MN_FLATS, NULL);
 
     return numFlats - 1;
 }
@@ -1492,7 +1719,7 @@ void R_InitFlats(void)
 
     for(i = 0; i < numLumps; ++i)
     {
-        char*               name = lumpInfo[i].name;
+        const char*         name = W_LumpName(i);
 
         if(name[0] == 'F')
         {
@@ -1526,172 +1753,119 @@ void R_InitFlats(void)
                         Sys_GetSeconds() - starttime));
 }
 
-/**
- * @return              The new sprite index number.
- */
-int R_NewSpriteTexture(lumpnum_t lump, material_t** matP)
+uint R_CreateSkinTex(const char* skin, boolean isShinySkin)
 {
-    int                 i;
-    spritetex_t**       newList, *ptr;
-    material_t*         mat = NULL;
-    const gltexture_t*  tex;
-    lumppatch_t*        patch;
-
-    // Is this lump already entered?
-    for(i = 0; i < numSpriteTextures; ++i)
-        if(spriteTextures[i]->lump == lump)
-        {
-            if(matP)
-                *matP = P_GetMaterial(i, MN_SPRITES);
-            return i;
-        }
-
-    newList = Z_Malloc(sizeof(spritetex_t*) * ++numSpriteTextures, PU_SPRITE, 0);
-    if(numSpriteTextures > 1)
-    {
-        for(i = 0; i < numSpriteTextures -1; ++i)
-            newList[i] = spriteTextures[i];
-
-        Z_Free(spriteTextures);
-    }
-
-    spriteTextures = newList;
-    ptr = spriteTextures[numSpriteTextures - 1] =
-        Z_Calloc(sizeof(spritetex_t), PU_SPRITE, 0);
-    ptr->lump = lump;
-    patch = (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
-    ptr->offX = SHORT(patch->leftOffset);
-    ptr->offY = SHORT(patch->topOffset);
-    ptr->width = SHORT(patch->width);
-    ptr->height = SHORT(patch->height);
-
-    tex = GL_CreateGLTexture(W_LumpName(lump), numSpriteTextures - 1,
-                               GLT_SPRITE);
-
-    // Create a new material for this sprite texture.
-    mat = P_MaterialCreate(W_LumpName(lump), SHORT(patch->width),
-                           SHORT(patch->height), 0, tex->id, MN_SPRITES, NULL);
-
-    if(matP)
-        *matP = mat;
-
-    return numSpriteTextures - 1;
-}
-
-void R_ExpandSkinName(char *skin, char *expanded, const char *modelfn)
-{
-    directory_t         mydir;
-
-    // The "first choice" directory.
-    Dir_FileDir(modelfn, &mydir);
-
-    // Try the "first choice" directory first.
-    strcpy(expanded, mydir.path);
-    strcat(expanded, skin);
-    if(!F_Access(expanded))
-    {
-        // Try the whole model path.
-        if(!R_FindModelFile(skin, expanded))
-        {
-            expanded[0] = 0;
-            return;
-        }
-    }
-}
-
-/**
- * Registers a new skin name.
- */
-int R_RegisterSkin(char *skin, const char *modelfn, char *fullpath)
-{
-    const char         *formats[3] = { ".png", ".tga", ".pcx" };
-    char                buf[256];
-    char                fn[256];
-    char               *ext;
-    int                 i, idx = -1;
-
-    // Has a skin name been provided?
-    if(!skin[0])
-        return -1;
-
-    // Find the extension, or if there isn't one, add it.
-    strcpy(fn, skin);
-    ext = strrchr(fn, '.');
-    if(!ext)
-    {
-        strcat(fn, ".png");
-        ext = strrchr(fn, '.');
-    }
-
-    // Try PNG, TGA, PCX.
-    for(i = 0; i < 3 && idx < 0; ++i)
-    {
-        strcpy(ext, formats[i]);
-        R_ExpandSkinName(fn, fullpath ? fullpath : buf, modelfn);
-        idx = R_GetSkinTexIndex(fullpath ? fullpath : buf);
-    }
-
-    return idx;
-}
-
-skintex_t *R_GetSkinTex(const char *skin)
-{
-    int                 i;
-    skintex_t          *st;
+    int                 id;
+    skinname_t*         st;
     char                realPath[256];
+    char                name[9];
+    const gltexture_t*  glTex;
 
     if(!skin[0])
-        return NULL;
+        return 0;
 
     // Convert the given skin file to a full pathname.
     // \fixme Why is this done here and not during init??
     _fullpath(realPath, skin, 255);
 
-    for(i = 0; i < numSkinNames; ++i)
-        if(!stricmp(skinNames[i].path, realPath))
-            return skinNames + i;
+    // Have we already created one for this?
+    if((id = R_GetSkinNumForName(realPath)))
+        return id;
 
-    // We must allocate a new skintex_t.
-    skinNames = M_Realloc(skinNames, sizeof(*skinNames) * ++numSkinNames);
+    if(M_NumDigits(numSkinNames + 1) > 8)
+    {
+#if _DEBUG
+Con_Message("R_GetSkinTex: Too many model skins!\n");
+#endif
+        return 0;
+    }
+
+    /**
+     * A new skin name.
+     */
+
+    // Create a gltexture for it.
+    snprintf(name, 8, "%-*i", 8, numSkinNames + 1);
+    name[M_NumDigits(numSkinNames + 1)] = '\0';
+    glTex = GL_CreateGLTexture(name, numSkinNames,
+        (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
+
+    skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
     st = skinNames + (numSkinNames - 1);
-    strcpy(st->path, realPath);
-    st->tex = 0; // Not yet prepared.
+
+    strncpy(st->path, realPath, FILENAME_T_MAXLEN);
+    st->id = glTex->id;
 
     if(verbose)
     {
         Con_Message("SkinTex: %s => %li\n", M_PrettyPath(skin),
-                    (long) (st - skinNames));
+                    (long) (1 + (st - skinNames)));
     }
-    return st;
+    return 1 + (st - skinNames); // 1-based index.
 }
 
-skintex_t *R_GetSkinTexByIndex(int id)
+static boolean expandSkinName(char* expanded, const char* skin,
+                              const char* modelfn, size_t len)
 {
-    if(id < 0 || id >= numSkinNames)
+    directory_t         mydir;
+    ddstring_t          fn;
+    boolean             found;
+
+    // The "first choice" directory.
+    memset(&mydir, 0, sizeof(mydir));
+    Dir_FileDir(modelfn, &mydir);
+
+    Str_Init(&fn);
+    Str_Set(&fn, mydir.path);
+    Str_Append(&fn, skin);
+
+    // Try the "first choice" directory first.
+    found = R_FindResource2(RT_GRAPHIC, DDRC_NONE, expanded, Str_Text(&fn),
+                            NULL, len);
+
+    if(!found) // Try the model path(s).
+        found = R_FindResource2(RT_GRAPHIC, DDRC_MODEL, expanded, skin,
+                                NULL, len);
+
+    Str_Free(&fn);
+    return found;
+}
+
+/**
+ * Registers a new skin name.
+ */
+uint R_RegisterSkin(char* fullpath, const char* skin, const char* modelfn,
+                    boolean isShinySkin, size_t len)
+{
+    // Has a skin name been provided?
+    if(skin && skin[0])
+    {
+        filename_t          buf;
+
+        if(expandSkinName(fullpath ? fullpath : buf, skin, modelfn, len))
+            return R_CreateSkinTex(fullpath ? fullpath : buf, isShinySkin);
+    }
+
+    return 0;
+}
+
+const skinname_t* R_GetSkinNameByIndex(uint id)
+{
+    if(!id || id > numSkinNames)
         return NULL;
 
-    return &skinNames[id];
+    return &skinNames[id-1];
 }
 
-int R_GetSkinTexIndex(const char *skin)
+uint R_GetSkinNumForName(const char* path)
 {
-    skintex_t          *sk = R_GetSkinTex(skin);
-
-    if(!sk)
-        return -1;
-
-    return sk - skinNames;
-}
-
-void R_DeleteSkinTextures(void)
-{
-    int                 i;
+    uint                i;
 
     for(i = 0; i < numSkinNames; ++i)
-    {
-        glDeleteTextures(1, (const GLuint*) &skinNames[i].tex);
-        skinNames[i].tex = 0;
-    }
+        if(!stricmp(skinNames[i].path, path))
+            return i + 1; // 1-based index.
+
+    return 0;
 }
 
 /**
@@ -1753,23 +1927,8 @@ void R_UpdateData(void)
 
 void R_InitTranslationTables(void)
 {
-    int                 i;
-    byte*               transLump;
-
     // Allocate translation tables
-    translationTables = Z_Malloc(256 * 3 * ( /*DDMAXPLAYERS*/ 8 - 1), PU_REFRESHTRANS, 0);
-
-    for(i = 0; i < 3 * ( /*DDMAXPLAYERS*/ 8 - 1); ++i)
-    {
-        // If this can't be found, it's reasonable to expect that the game dll
-        // will initialize the translation tables as it wishes.
-        if(W_CheckNumForName("trantbl0") < 0)
-            break;
-
-        transLump = W_CacheLumpNum(W_GetNumForName("trantbl0") + i, PU_STATIC);
-        memcpy(translationTables + i * 256, transLump, 256);
-        Z_Free(transLump);
-    }
+    translationTables = Z_Calloc(256 * 3 * 7, PU_REFRESHTRANS, 0);
 }
 
 void R_UpdateTranslationTables(void)
@@ -1848,7 +2007,7 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
  */
 void R_PrecachePatch(lumpnum_t num)
 {
-    GL_PreparePatch(num);
+    GL_PreparePatch(R_GetPatchTex(num));
 }
 
 static boolean isInList(void** list, size_t len, void* elm)
@@ -1999,7 +2158,8 @@ void R_PrecacheMap(void)
         {
             spritedef_t*        sprDef = &sprites[i];
 
-            if(!P_IterateThinkers(gx.MobjThinker, findSpriteOwner, sprDef))
+            if(!P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
+                                  findSpriteOwner, sprDef))
             {   // This sprite is used by some state of at least one mobj.
                 int                 j;
 
@@ -2034,7 +2194,8 @@ void R_PrecacheMap(void)
     // Precache model skins?
     if(useModels && precacheSkins)
     {
-        P_IterateThinkers(gx.MobjThinker, R_PrecacheSkinsForMobj, NULL);
+        // All mobjs are public.
+        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheSkinsForMobj, NULL);
     }
 
     // Sky models usually have big skins.
@@ -2072,7 +2233,7 @@ void R_InitAnimGroup(ded_group_t* def)
     }
 }
 
-detailtex_t* R_CreateDetailTexture(ded_detailtexture_t* def)
+detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
 {
     char                name[9];
     const gltexture_t*  glTex;
@@ -2150,7 +2311,166 @@ void R_DestroyDetailTextures(void)
     numDetailTextures = 0;
 }
 
-shinytex_t* R_CreateShinyTexture(ded_reflection_t* def)
+lightmap_t* R_CreateLightMap(const ded_lightmap_t* def)
+{
+    char                name[9];
+    const gltexture_t*  glTex;
+    lightmap_t*         lmap;
+
+    if(!def->id[0] || def->id[0] == '-')
+        return NULL; // Not a lightmap
+
+    // Have we already created one for this?
+    if((lmap = R_GetLightMap(def->id)))
+        return NULL;
+
+    if(M_NumDigits(numLightMaps + 1) > 8)
+    {
+#if _DEBUG
+Con_Message("R_CreateLightMap: Too many lightmaps!\n");
+#endif
+        return NULL;
+    }
+
+    /**
+     * A new lightmap.
+     */
+
+    // Create a gltexture for it.
+    snprintf(name, 8, "%-*i", 8, numLightMaps + 1);
+    name[M_NumDigits(numLightMaps + 1)] = '\0';
+    glTex = GL_CreateGLTexture(name, numLightMaps, GLT_LIGHTMAP);
+
+    lmap = M_Malloc(sizeof(*lmap));
+    lmap->id = glTex->id;
+    lmap->external = def->id;
+
+    // Add it to the list.
+    lightMaps = M_Realloc(lightMaps, sizeof(lightmap_t*) * ++numLightMaps);
+    lightMaps[numLightMaps-1] = lmap;
+
+    return lmap;
+}
+
+lightmap_t* R_GetLightMap(const char* external)
+{
+    int                 i;
+
+    if(external && external[0] && external[0] != '-')
+    {
+        for(i = 0; i < numLightMaps; ++i)
+        {
+            lightmap_t*         lmap = lightMaps[i];
+
+            if(!stricmp(lmap->external, external))
+                return lmap;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * This is called at final shutdown.
+ */
+void R_DestroyLightMaps(void)
+{
+    int                 i;
+
+    for(i = 0; i < numLightMaps; ++i)
+    {
+        M_Free(lightMaps[i]);
+    }
+
+    if(lightMaps)
+        M_Free(lightMaps);
+    lightMaps = NULL;
+    numLightMaps = 0;
+}
+
+flaretex_t* R_CreateFlareTexture(const ded_flaremap_t* def)
+{
+    flaretex_t*         fTex;
+    char                name[9];
+    const gltexture_t*  glTex;
+
+    if(!def->id || !def->id[0] || def->id[0] == '-')
+        return NULL; // Not a flare texture.
+
+    // Perhaps a "built-in" flare texture id?
+    // Try to convert the id to a system flare tex constant idx
+    if(def->id[0] >= '0' && def->id[0] <= '4' && !def->id[1])
+        return NULL; // Don't create a flaretex for this
+
+    // Have we already created one for this?
+    if((fTex = R_GetFlareTexture(def->id)))
+        return NULL;
+
+    if(M_NumDigits(numFlareTextures + 1) > 8)
+    {
+#if _DEBUG
+Con_Message("R_CreateFlareTexture: Too many flare textures!\n");
+#endif
+        return NULL;
+    }
+
+    /**
+     * A new flare texture.
+     */
+    // Create a gltexture for it.
+    snprintf(name, 8, "%-*i", 8, numFlareTextures + 1);
+    name[M_NumDigits(numFlareTextures + 1)] = '\0';
+    glTex = GL_CreateGLTexture(name, numFlareTextures, GLT_FLARE);
+
+    fTex = M_Malloc(sizeof(*fTex));
+    fTex->external = def->id;
+    fTex->id = glTex->id;
+
+    // Add it to the list.
+    flareTextures =
+        M_Realloc(flareTextures, sizeof(flaretex_t*) * ++numFlareTextures);
+    flareTextures[numFlareTextures-1] = fTex;
+
+    return fTex;
+}
+
+flaretex_t* R_GetFlareTexture(const char* external)
+{
+    int                 i;
+
+    if(!external || !external[0] || external[0] == '-')
+        return NULL;
+
+    for(i = 0; i < numFlareTextures; ++i)
+    {
+        flaretex_t*         fTex = flareTextures[i];
+
+        if(!stricmp(fTex->external, external))
+            return fTex;
+    }
+
+    return NULL;
+}
+
+/**
+ * This is called at final shutdown.
+ */
+void R_DestroyFlareTextures(void)
+{
+    int                 i;
+
+    for(i = 0; i < numFlareTextures; ++i)
+    {
+        M_Free(flareTextures[i]);
+    }
+
+    if(flareTextures)
+        M_Free(flareTextures);
+    flareTextures = NULL;
+    numFlareTextures = 0;
+}
+
+shinytex_t* R_CreateShinyTexture(const ded_reflection_t* def)
 {
     char                name[9];
     const gltexture_t*  glTex;
@@ -2223,7 +2543,7 @@ void R_DestroyShinyTextures(void)
     numShinyTextures = 0;
 }
 
-masktex_t* R_CreateMaskTexture(ded_reflection_t* def)
+masktex_t* R_CreateMaskTexture(const ded_reflection_t* def)
 {
     char                name[9];
     const gltexture_t*  glTex;

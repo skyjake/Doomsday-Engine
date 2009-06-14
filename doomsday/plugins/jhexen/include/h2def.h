@@ -56,17 +56,22 @@
 #define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
 
 // Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
+#define VERBOSE(code)   { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
+
+extern game_import_t gi;
+extern game_export_t gx;
+
+//
+// Global parameters/defines.
+//
 
 #define MOBJINFO            (*gi.mobjInfo)
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-/**
- * Game mode handling - identify IWAD version to handle IWAD dependend
- * animations etc.
- */
+// Game mode handling - identify IWAD version to handle IWAD dependend
+// animations etc.
 typedef enum {
     shareware, // 4 map demo
     registered, // HEXEN registered
@@ -87,9 +92,6 @@ typedef enum {
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
 #define SCREEN_MUL          1
-
-#define WINDOWWIDTH         (Get(DD_VIEWWINDOW_WIDTH))
-#define WINDOWHEIGHT        (Get(DD_VIEWWINDOW_HEIGHT))
 
 #define MAXPLAYERS          8
 
@@ -143,21 +145,6 @@ typedef struct classinfo_s{
 } classinfo_t;
 
 extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
-
-typedef enum {
-    GA_NONE,
-    GA_LOADMAP,
-    GA_INITNEW,
-    GA_NEWGAME,
-    GA_LOADGAME,
-    GA_SAVEGAME,
-    GA_COMPLETED,
-    GA_LEAVEMAP,
-    GA_SINGLEREBORN,
-    GA_VICTORY,
-    GA_WORLDDONE,
-    GA_SCREENSHOT
-} gameaction_t;
 
 /**
  * Game state (hi-level).
@@ -264,50 +251,52 @@ typedef enum {
 #define FLIGHTTICS          (60*TICRATE)
 #define SPEEDTICS           (45*TICRATE)
 #define MORPHTICS           (40*TICRATE)
+//#define MAULATORTICS      (25*TICRATE)
 
 /**
- * Artifacts (collectable, inventory items).
+ * Inventory Item Types:
  */
 typedef enum {
-    AFT_NONE,
-    AFT_INVULNERABILITY,
-    AFT_HEALTH,
-    AFT_SUPERHEALTH,
-    AFT_HEALINGRADIUS,
-    AFT_SUMMON,
-    AFT_TORCH,
-    AFT_EGG,
-    AFT_FLY,
-    AFT_BLASTRADIUS,
-    AFT_POISONBAG,
-    AFT_TELEPORTOTHER,
-    AFT_SPEED,
-    AFT_BOOSTMANA,
-    AFT_BOOSTARMOR,
-    AFT_TELEPORT,
-    // Puzzle artifacts
-    AFT_FIRSTPUZZITEM,
-    AFT_PUZZSKULL = AFT_FIRSTPUZZITEM,
-    AFT_PUZZGEMBIG,
-    AFT_PUZZGEMRED,
-    AFT_PUZZGEMGREEN1,
-    AFT_PUZZGEMGREEN2,
-    AFT_PUZZGEMBLUE1,
-    AFT_PUZZGEMBLUE2,
-    AFT_PUZZBOOK1,
-    AFT_PUZZBOOK2,
-    AFT_PUZZSKULL2,
-    AFT_PUZZFWEAPON,
-    AFT_PUZZCWEAPON,
-    AFT_PUZZMWEAPON,
-    AFT_PUZZGEAR1,
-    AFT_PUZZGEAR2,
-    AFT_PUZZGEAR3,
-    AFT_PUZZGEAR4,
-    NUM_ARTIFACT_TYPES
-} artitype_e;
+    IIT_NONE = 0,
+    IIT_FIRST = 1,
+    IIT_INVULNERABILITY = IIT_FIRST,
+    IIT_HEALTH,
+    IIT_SUPERHEALTH,
+    IIT_HEALINGRADIUS,
+    IIT_SUMMON,
+    IIT_TORCH,
+    IIT_EGG,
+    IIT_FLY,
+    IIT_BLASTRADIUS,
+    IIT_POISONBAG,
+    IIT_TELEPORTOTHER,
+    IIT_SPEED,
+    IIT_BOOSTMANA,
+    IIT_BOOSTARMOR,
+    IIT_TELEPORT,
+    // Puzzle items:
+    IIT_FIRSTPUZZITEM,
+    IIT_PUZZSKULL = IIT_FIRSTPUZZITEM,
+    IIT_PUZZGEMBIG,
+    IIT_PUZZGEMRED,
+    IIT_PUZZGEMGREEN1,
+    IIT_PUZZGEMGREEN2,
+    IIT_PUZZGEMBLUE1,
+    IIT_PUZZGEMBLUE2,
+    IIT_PUZZBOOK1,
+    IIT_PUZZBOOK2,
+    IIT_PUZZSKULL2,
+    IIT_PUZZFWEAPON,
+    IIT_PUZZCWEAPON,
+    IIT_PUZZMWEAPON,
+    IIT_PUZZGEAR1,
+    IIT_PUZZGEAR2,
+    IIT_PUZZGEAR3,
+    IIT_PUZZGEAR4,
+    NUM_INVENTORYITEM_TYPES
+} inventoryitemtype_t;
 
-#define MAXARTICOUNT        (25)
+#define MAXINVITEMCOUNT        (25)
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 
@@ -330,6 +319,13 @@ enum { CR, CG, CB, CA }; // Color indices.
 
 #define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
+// Uncomment, to enable all timebomb stuff.
+#define TIMEBOMB_YEAR       (95) // years since 1900
+#define TIMEBOMB_STARTDATE  (268) // initial date (9/26)
+#define TIMEBOMB_ENDDATE    (301) // end date (10/29)
+
+extern int maulatorSeconds;
+
 #define MAULATORTICS        ((unsigned int) maulatorSeconds * TICSPERSEC)
 
 // Most damage defined using HITDICE
@@ -339,19 +335,19 @@ enum { CR, CG, CB, CA }; // Color indices.
 
 #define TELEFOGHEIGHT       (32)
 
+extern fixed_t finesine[5 * FINEANGLES / 4];
+extern fixed_t *finecosine;
+
+// Set if homebrew PWAD stuff has been added.
+extern boolean  modifiedgame;
+
 #define MAX_PLAYER_STARTS   (8)
 
-#define PI                  3.141592657
-
-extern int maulatorSeconds;
-extern fixed_t finesine[5 * FINEANGLES / 4];
-extern fixed_t* finecosine;
-extern int localQuakeHappening[MAXPLAYERS];
+void            H2_Main(void);
 
 void            G_IdentifyVersion(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
-void            R_InitRefresh(void);
 
 int             G_GetInteger(int id);
 void*           G_GetVariable(int id);
@@ -365,7 +361,6 @@ void            G_DeferedPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
 void            G_LoadGame(int slot);
 void            G_DoLoadGame(void);
-void            G_SaveGame(int slot, char* description);
 void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
                              int map, char* name);
 void            G_PlayDemo(char* name);
@@ -389,9 +384,52 @@ void            P_Init(void);
 void            P_SetupMap(int episode, int map, int playermask,
                            skillmode_t skill);
 
+extern boolean setsizeneeded;
+
+extern int      localQuakeHappening[MAXPLAYERS];
+
 byte            P_Random(void);
 void            M_ResetRandom(void);
 
-void            Draw_TeleportIcon(void);
+extern unsigned char rndtable[256];
+
+void            SC_Open(const char* name);
+void            SC_OpenLump(lumpnum_t lump);
+void            SC_OpenFile(const char* name);
+void            SC_OpenFileCLib(const char* name);
+void            SC_Close(void);
+boolean         SC_GetString(void);
+void            SC_MustGetString(void);
+void            SC_MustGetStringName(char* name);
+boolean         SC_GetNumber(void);
+void            SC_MustGetNumber(void);
+void            SC_UnGet(void);
+
+boolean         SC_Compare(char* text);
+int             SC_MatchString(char** strings);
+int             SC_MustMatchString(char** strings);
+void            SC_ScriptError(char* message);
+
+extern char* sc_String;
+extern int sc_Number;
+extern int sc_Line;
+extern boolean sc_End;
+extern boolean sc_Crossed;
+extern boolean sc_FileScripts;
+extern const char* sc_ScriptsDir;
+
+//----------------------
+// Chat mode (CT_chat.c)
+//----------------------
+
+void            CT_Init(void);
+void            CT_Drawer(void);
+boolean         CT_Responder(event_t* ev);
+void            CT_Ticker(void);
+char            CT_dequeueChatChar(void);
+
+extern boolean  chatmodeon;
+
+void        Draw_TeleportIcon(void);
 
 #endif // __H2DEF_H__

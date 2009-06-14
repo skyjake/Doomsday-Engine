@@ -604,34 +604,6 @@ boolean GL_EarlyInit(void)
     return true;
 }
 
-void GL_InitPalette(void)
-{
-    int                 i, c;
-    byte*               playPal;
-    byte                palData[256 * 3];
-
-    if(novideo)
-        return;
-
-    GL_InitPalettedTexture();
-
-    /**
-     * DGL needs the palette information regardless of whether the
-     * paletted textures are enabled or not.
-     */
-
-    // Prepare the color table.
-    playPal = R_GetPalette();
-    for(i = 0; i < 256; ++i)
-    {
-        // Adjust the values for the appropriate gamma level.
-        for(c = 0; c < 3; ++c)
-            palData[i * 3 + c] = gammaTable[playPal[i * 3 + c]];
-    }
-
-    GL_Palette(DGL_RGB, palData);
-}
-
 /**
  * Finishes GL initialization. This can be called once the virtual file
  * system has been fully loaded up, and the console variables have been
@@ -648,7 +620,7 @@ void GL_Init(void)
     GL_InitFont();
 
     // Initialize palette management.
-    GL_InitPalette();
+    GL_InitPalettedTexture();
 
     // Set the gamma in accordance with vid-gamma, vid-bright and
     // vid-contrast.
@@ -664,7 +636,6 @@ void GL_Init(void)
 void GL_InitRefresh(void)
 {
     GL_InitTextureManager();
-    GL_LoadSystemTextures();
 }
 
 /**
@@ -675,6 +646,8 @@ void GL_ShutdownRefresh(void)
     GL_ShutdownTextureManager();
     R_DestroySkins();
     R_DestroyDetailTextures();
+    R_DestroyLightMaps();
+    R_DestroyFlareTextures();
     R_DestroyShinyTextures();
     R_DestroyMaskTextures();
 }
@@ -889,7 +862,7 @@ void GL_TotalRestore(void)
     GL_InitFont();
     //GL_InitVarFont();
     GL_Init2DState();
-    GL_InitPalette();
+    GL_InitPalettedTexture();
 
     {
     gamemap_t*          map = P_GetCurrentMap();
@@ -979,6 +952,18 @@ void GL_BlendMode(blendmode_t mode)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         break;
     }
+}
+
+void GL_LowRes(void)
+{
+    // Set everything as low as they go.
+    filterSprites = 0;
+    linearRaw = 0;
+    texMagMode = 0;
+
+    // And do a texreset so everything is updated.
+    GL_SetTextureParams(GL_NEAREST, true, true);
+    GL_TexReset();
 }
 
 /**

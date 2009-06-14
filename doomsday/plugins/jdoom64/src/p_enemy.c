@@ -129,7 +129,7 @@ static boolean checkMeleeRange(mobj_t *actor)
     pl = actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
-    if(!GAMERULES.noMaxZMonsterMeleeAttack)
+    if(!cfg.netNoMaxZMonsterMeleeAttack)
     {   // Account for Z height difference.
         if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
            pl->pos[VZ] + pl->height < actor->pos[VZ])
@@ -256,7 +256,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
                 good |= ld == blockLine ? 1 : 2;
         }
 
-        if(!good || GAMERULES.monstersStuckInDoors)
+        if(!good || cfg.monstersStuckInDoors)
             return good;
         else
             return (P_Random() >= 230) || (good & 1);
@@ -436,7 +436,7 @@ static void newChaseDir(mobj_t *actor)
     if(actor->floorZ - actor->dropOffZ > 24 &&
        actor->pos[VZ] <= actor->floorZ &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
-       !GAMERULES.avoidDropoffs && avoidDropoff(actor))
+       !cfg.avoidDropoffs && avoidDropoff(actor))
     {
         // Move away from dropoff.
         doNewChaseDir(actor, dropoffDelta[VX], dropoffDelta[VY]);
@@ -541,7 +541,7 @@ int P_Massacre(void)
     // Only massacre when actually in a level.
     if(G_GetGameState() == GS_MAP)
     {
-        P_IterateThinkers(P_MobjThinker, massacreMobj, &count);
+        DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
@@ -635,7 +635,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     // Check if there are no more Bitches left in the map.
     params.type = actor->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {   // No Bitches left alive.
@@ -658,7 +658,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -681,7 +681,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -704,7 +704,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -727,7 +727,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -750,7 +750,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -773,7 +773,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -796,7 +796,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -819,7 +819,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -842,7 +842,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -865,7 +865,7 @@ void C_DECL A_FattSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -888,7 +888,7 @@ void C_DECL A_BabySpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -911,7 +911,7 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
 
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {
@@ -1079,7 +1079,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(!GAMERULES.fastMonsters)
+        if(!fastParm)
             newChaseDir(actor);
 
         return;
@@ -1099,7 +1099,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(!GAMERULES.fastMonsters && actor->moveCount))
+        if(!(!fastParm && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1769,14 +1769,14 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     float               prestep;
     sector_t*           sec;
 
-    if(GAMERULES.maxSkulls)
+    if(cfg.maxSkulls)
     {   // Limit the number of MT_SKULL's we should spawn.
         countmobjoftypeparams_t params;
 
         // Count total number currently on the level.
         params.type = MT_SKULL;
         params.count = 0;
-        P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+        DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
         if(params.count > 20)
             return; // Too many, don't spit another.
@@ -1793,7 +1793,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     pos[VZ] += 8;
 
     // Compat option to prevent spawning lost souls inside walls.
-    if(GAMERULES.allowSkullsInWalls)
+    if(cfg.allowSkullsInWalls)
     {
         newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
     }
@@ -1990,7 +1990,7 @@ void C_DECL A_CyberDeath(mobj_t *actor)
     if(bossKilled)
         return;
 
-    if((gs.map.id != 32) && (gs.map.id != 33) && (gs.map.id != 35))
+    if((gameMap != 32) && (gameMap != 33) && (gameMap != 35))
         return;
 
     // Make sure there is a player alive for victory.
@@ -2004,14 +2004,14 @@ void C_DECL A_CyberDeath(mobj_t *actor)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
         return;
     }
 
-    if(gs.map.id == 32 || gs.map.id == 33)
+    if(gameMap == 32 || gameMap == 33)
     {
         dummyLine = P_AllocDummyLine();
         P_ToXLine(dummyLine)->tag = 666;
@@ -2020,9 +2020,9 @@ void C_DECL A_CyberDeath(mobj_t *actor)
         P_FreeDummyLine(dummyLine);
         return;
     }
-    else if(gs.map.id == 35)
+    else if(gameMap == 35)
     {
-        G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
     }
 }
 
@@ -2083,7 +2083,7 @@ void C_DECL A_BarrelExplode(mobj_t* actor)
     if(bossKilled)
         return;
 
-    if(gs.map.id != 1)
+    if(gameMap != 1)
         return;
 
     if(actor->type != MT_BARREL)
@@ -2100,7 +2100,7 @@ void C_DECL A_BarrelExplode(mobj_t* actor)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = actor->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
@@ -2129,7 +2129,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    if(gs.map.id != 30)
+    if(gameMap != 30)
         return;
 
     if(mo->type != MT_BITCH)
@@ -2146,14 +2146,14 @@ void C_DECL A_BossDeath(mobj_t* mo)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = mo->type;
     params.count = 0;
-    P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
         return;
     }
 
-    G_LeaveMap(G_GetMapNumber(gs.episode, gs.map.id), 0, false);
+    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -2163,8 +2163,8 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF |
-                 (gs.gameMode != commercial &&
-                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gameMode != commercial &&
+                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2175,8 +2175,8 @@ void C_DECL A_Metal(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_MEAL |
-                 (gs.gameMode != commercial &&
-                  gs.map.id == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                 (gameMode != commercial &&
+                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

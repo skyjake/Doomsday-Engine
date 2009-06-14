@@ -32,15 +32,21 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+extern boolean noMonstersParm; // checkparm of -nomonsters
+extern boolean respawnParm; // checkparm of -respawn
+extern boolean turboParm; // checkparm of -turbo
+extern boolean randomClassParm; // checkparm of -randclass
 extern boolean devParm; // checkparm of -devparm
-extern char* borderLumps[];
+extern float turboMul; // Multiplier for turbo.
+
+extern int gameModeBits;
+extern char gameModeString[];
+
+extern char *borderLumps[];
 
 // Default font colours.
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
-
-extern boolean useScriptsDir;
-extern filename_t scriptsDir;
 
 void            G_DetectIWADs(void);
 void            G_PreInit(void);

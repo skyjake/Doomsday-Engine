@@ -359,10 +359,10 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
         for(i = startLump; i < numLumps; ++i)
         {
             int                 lumpType;
-            char*           lumpName;
+            const char*         lumpName;
 
             // Lookup the lump name in our list of known map lump names.
-            lumpName = W_CacheLumpNum(i, PU_GETNAME);
+            lumpName = W_LumpName(i);
             lumpType = mapLumpTypeForName(lumpName);
 
             if(lumpType != ML_INVALID)
@@ -385,24 +385,24 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
 /**
  * Compose the path where to put the cached map data.
  */
-void DAM_GetCachedMapDir(char *dir, int mainLump)
+void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
 {
-    const char         *sourceFile = W_LumpSourceFile(mainLump);
+    const char*         sourceFile = W_LumpSourceFile(mainLump);
     filename_t          base;
     ushort              identifier = 0;
     int                 i;
 
-    M_ExtractFileBase(sourceFile, base);
+    M_ExtractFileBase(base, sourceFile, FILENAME_T_MAXLEN);
 
     for(i = 0; sourceFile[i]; ++i)
         identifier ^= sourceFile[i] << ((i * 3) % 11);
 
     // The cached map directory is relative to the runtime directory.
-    sprintf(dir, "%s%s\\%s-%04X\\", mapCacheDir,
+    snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir,
             (char*) gx.GetVariable(DD_GAME_MODE),
             base, identifier);
 
-    M_TranslatePath(dir, dir);
+    M_TranslatePath(dir, dir, len);
 }
 
 static boolean loadMap(gamemap_t **map, archivedmap_t *dam)
@@ -468,7 +468,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
         // Find the rest of the map data lumps associated with this map.
         collectMapLumps(&headPtr, startLump + 1);
 
-        DAM_GetCachedMapDir(cachedMapDir, startLump);
+        DAM_GetCachedMapDir(cachedMapDir, startLump, FILENAME_T_MAXLEN);
 
         // Make sure the directory exists.
         M_CheckPath(cachedMapDir);
@@ -476,8 +476,9 @@ boolean DAM_AttemptMapLoad(const char* mapID)
         // First test if we already have valid cached map data.
         sprintf(cachedMapDataFile, "%s%s", cachedMapDir,
                                    W_LumpName(startLump));
-        M_TranslatePath(cachedMapDataFile, cachedMapDataFile);
-        strcat(cachedMapDataFile, ".dcm");
+        M_TranslatePath(cachedMapDataFile, cachedMapDataFile,
+                        FILENAME_T_MAXLEN);
+        strncat(cachedMapDataFile, ".dcm", FILENAME_T_MAXLEN);
 
         // Create an archivedmap record and link it to our list
         // of available maps.

@@ -617,7 +617,6 @@ void Sys_InitGLExtensions(void)
     }
 
     query("GL_EXT_paletted_texture", &GL_state.palExtAvailable);
-    query("GL_EXT_shared_texture_palette", &GL_state.sharedPalExtAvailable);
     query("GL_EXT_texture_filter_anisotropic", &GL_state_ext.aniso);
     if(ArgExists("-texnonpow2"))
        query("GL_ARB_texture_non_power_of_two", &GL_state.textureNonPow2);

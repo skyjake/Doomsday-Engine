@@ -31,12 +31,13 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+// Without the following, curses.h defines false 0 and true 1
+#define NCURSES_ENABLE_STDBOOL_H 0
+
 #include "de_base.h"
 #include "de_system.h"
 #include "de_console.h"
 
-// Without the following, curses.h defines false 0 and true 1
-#define NCURSES_ENABLE_STDBOOL_H 0
 #include <curses.h>
 
 // MACROS ------------------------------------------------------------------

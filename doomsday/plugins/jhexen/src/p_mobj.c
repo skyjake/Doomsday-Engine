@@ -42,7 +42,6 @@
 #include "p_map.h"
 #include "p_player.h"
 #include "g_common.h"
-#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -82,8 +81,8 @@ extern mobj_t lavaInflictor;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-mobjtype_t puffType;
-mobj_t* missileMobj;
+mobjtype_t PuffType;
+mobj_t *MissileMobj;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -690,10 +689,10 @@ explode:
         if(player)
         {
             if((unsigned)
-               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->pClass)->runState) <
+               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) <
                4)
             {
-                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->pClass)->normalState);
+                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
             }
         }
         mo->mom[MX] = 0;
@@ -745,7 +744,7 @@ void P_MobjMoveZ(mobj_t *mo)
     {
         mo->player->plr->viewHeight -= mo->floorZ - mo->pos[VZ];
         mo->player->plr->viewHeightDelta =
-            (PLRPROFILE.camera.offsetZ - mo->player->plr->viewHeight) / 8;
+            (cfg.plrViewHeight - mo->player->plr->viewHeight) / 8;
     }
 
     // Adjust height.
@@ -852,7 +851,7 @@ void P_MobjMoveZ(mobj_t *mo)
                         // Fix DOOM bug - dead players grunting when hitting the ground
                         // (e.g., after an archvile attack)
                         if(mo->player->health > 0)
-                            switch(mo->player->pClass)
+                            switch(mo->player->class)
                             {
                             case PCLASS_FIGHTER:
                                 S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -879,7 +878,7 @@ void P_MobjMoveZ(mobj_t *mo)
                             S_StartSound(SFX_PLAYER_LAND, mo);
                     }
 
-                    if(!PLRPROFILE.camera.useMLook && PLRPROFILE.camera.lookSpring)
+                    if(!cfg.useMLook && cfg.lookSpring)
                         mo->player->centering = true;
                 }
             }
@@ -988,7 +987,7 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
     else if(mo->mom[MZ] < -P_GetGravity() * 12 && !mo->player->morphTics)
     {
         S_StartSound(SFX_PLAYER_LAND, mo);
-        switch(mo->player->pClass)
+        switch(mo->player->class)
         {
         case PCLASS_FIGHTER:
             S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -1012,7 +1011,7 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
     }
 
     // Lookspring is stupid when mouselook is on (and not in demo).
-    if(!PLRPROFILE.camera.useMLook && PLRPROFILE.camera.lookSpring) // || demorecording || demoplayback)
+    if(!cfg.useMLook && cfg.lookSpring) // || demorecording || demoplayback)
         mo->player->centering = true;
 }
 
@@ -1076,7 +1075,7 @@ void P_MobjThinker(mobj_t *mobj)
                             z = mobj->floorZ;
                         }
                         P_SpawnMobj3f(MT_MWANDSMOKE, mobj->pos[VX],
-                                      mobj->pos[VY], z, P_Random() << 24);
+                                      mobj->pos[VY], z, P_Random() << 24, 0);
                     }
                     else if(!--mobj->special1)
                     {
@@ -1088,7 +1087,7 @@ void P_MobjThinker(mobj_t *mobj)
                         }
 
                         P_SpawnMobj3f(MT_CFLAMEFLOOR, mobj->pos[VX],
-                                      mobj->pos[VY], z, mobj->angle);
+                                      mobj->pos[VY], z, mobj->angle, 0);
                     }
                 }
             }
@@ -1168,7 +1167,7 @@ void P_MobjThinker(mobj_t *mobj)
                         mobj->player->plr->viewHeight -=
                             onmo->pos[VZ] + onmo->height - mobj->pos[VZ];
                         mobj->player->plr->viewHeightDelta =
-                            (PLRPROFILE.camera.offsetZ - mobj->player->plr->viewHeight) / 8;
+                            (cfg.plrViewHeight - mobj->player->plr->viewHeight) / 8;
                         mobj->pos[VZ] = onmo->pos[VZ] + onmo->height;
                         mobj->flags2 |= MF2_ONMOBJ;
                         mobj->mom[MZ] = 0;
@@ -1232,7 +1231,7 @@ void P_MobjThinker(mobj_t *mobj)
 }
 
 mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
-                      angle_t angle)
+                      angle_t angle, int spawnFlags)
 {
     mobj_t*             mo;
     mobjinfo_t*         info = &MOBJINFO[type];
@@ -1256,10 +1255,10 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     // This doesn't appear to actually be used see P_DamageMobj in P_inter.c
     mo->damage = info->damage;
     mo->health = info->spawnHealth *
-        (IS_NETGAME ? GAMERULES.mobHealthModifier : 1);
+        (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
-    if(gs.skill != SM_NIGHTMARE)
+    if(gameSkill != SM_NIGHTMARE)
     {
         mo->reactionTime = info->reactionTime;
     }
@@ -1273,30 +1272,32 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     mo->floorZ = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
-    if(mo->pos[VZ] == ONFLOORZ)
+
+    if((spawnFlags & MTF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
-        mo->pos[VZ] = mo->floorZ;
+        mo->pos[VZ] = mo->ceilingZ - mo->info->height - z;
     }
-    else if(mo->pos[VZ] == ONCEILINGZ)
+    else if((spawnFlags & MTF_Z_RANDOM) || (info->flags2 & MF2_SPAWNFLOAT))
     {
-        mo->pos[VZ] = mo->ceilingZ - mo->height;
-    }
-    else if(mo->pos[VZ] == FLOATRANDZ)
-    {
-        space = mo->ceilingZ - mo->height - mo->floorZ;
+        space = mo->ceilingZ - mo->info->height - mo->floorZ;
         if(space > 48)
         {
             space -= 40;
-            mo->pos[VZ] = ((space * P_Random()) /256) + mo->floorZ + 40;
+            mo->pos[VZ] = ((space * P_Random()) / 256) + mo->floorZ + 40;
         }
         else
         {
             mo->pos[VZ] = mo->floorZ;
         }
     }
-    else if(mo->flags2 & MF2_FLOATBOB)
+    else if(spawnFlags & MTF_Z_FLOOR)
     {
-        mo->pos[VZ] += mo->floorZ; // Artifact z passed in as height
+        mo->pos[VZ] = mo->floorZ + z;
+    }
+
+    if(spawnFlags & MTF_AMBUSH)
+    {
+        mo->flags |= MF_AMBUSH;
     }
 
     mo->floorClip = 0;
@@ -1313,9 +1314,10 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     return mo;
 }
 
-mobj_t* P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle)
+mobj_t* P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+                       int spawnFlags)
 {
-    return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle);
+    return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
 }
 
 /**
@@ -1327,12 +1329,13 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
     player_t*           p;
     float               pos[3];
     mobj_t*             mobj = 0;
+    int                 spawnFlags = 0;
 
     if(!players[playernum].plr->inGame)
         return;
 
     p = &players[playernum];
-    if(p->pState == PST_REBORN)
+    if(p->playerState == PST_REBORN)
     {
         G_PlayerReborn(playernum);
     }
@@ -1341,32 +1344,34 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
     {
         pos[VX] = spot->pos[VX];
         pos[VY] = spot->pos[VY];
-        pos[VZ] = ONFLOORZ;
+        pos[VZ] = spot->pos[VZ];
+        spawnFlags = spot->flags;
     }
     else
     {
         pos[VX] = pos[VY] = pos[VZ] = 0;
+        spawnFlags = MTF_Z_FLOOR;
     }
 
-    if(GAMERULES.randomClass && GAMERULES.deathmatch)
+    if(randomClassParm && deathmatch)
     {
-        p->pClass = P_Random() % 3;
-        if(p->pClass == gs.players[playernum].pClass)
+        p->class = P_Random() % 3;
+        if(p->class == cfg.playerClass[playernum])
         {
-            p->pClass = (p->pClass + 1) % 3;
+            p->class = (p->class + 1) % 3;
         }
 
-        gs.players[playernum].pClass = p->pClass;
+        cfg.playerClass[playernum] = p->class;
         NetSv_SendPlayerInfo(playernum, DDSP_ALL_PLAYERS);
     }
     else
     {
-        p->pClass = gs.players[playernum].pClass;
+        p->class = cfg.playerClass[playernum];
     }
 
     /* $unifiedangles */
-    mobj = P_SpawnMobj3fv(PCLASS_INFO(p->pClass)->mobjType, pos,
-                          (spot? spot->angle : 0));
+    mobj = P_SpawnMobj3fv(PCLASS_INFO(p->class)->mobjType, pos,
+                          (spot? spot->angle : 0), spawnFlags);
 
     // With clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
@@ -1377,7 +1382,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
     }
 
     // Set translation table data.
-    if(p->pClass == PCLASS_FIGHTER && (p->colorMap == 0 || p->colorMap == 2))
+    if(p->class == PCLASS_FIGHTER && (p->colorMap == 0 || p->colorMap == 2))
     {
         // The first type should be blue, and the third should be the
         // Fighter's original gold color
@@ -1401,7 +1406,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
     mobj->dPlayer = p->plr;
     mobj->health = p->health;
     p->plr->mo = mobj;
-    p->pState = PST_LIVE;
+    p->playerState = PST_LIVE;
     p->refire = 0;
     p->damageCount = 0;
     p->bonusCount = 0;
@@ -1415,15 +1420,15 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        p->plr->mo->pos[VZ] += (float) PLRPROFILE.camera.offsetZ;
+        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
         p->plr->viewHeight = 0;
     }
     else
-        p->plr->viewHeight = PLRPROFILE.camera.offsetZ;
+        p->plr->viewHeight = cfg.plrViewHeight;
 
     p->plr->lookDir = 0;
     P_SetupPsprites(p);
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
     {   // Give all keys in death match mode.
         p->keys = 2047;
     }
@@ -1440,7 +1445,6 @@ void P_SpawnMapThing(spawnspot_t *spot)
     int         i;
     unsigned int spawnMask;
     mobj_t     *mobj;
-    float       pos[3];
     static unsigned int classFlags[] = {
         MTF_FIGHTER,
         MTF_CLERIC,
@@ -1500,7 +1504,7 @@ void P_SpawnMapThing(spawnspot_t *spot)
     {
         spawnMask = MTF_GSINGLE;
     }
-    else if(GAMERULES.deathmatch)
+    else if(deathmatch)
     {
         spawnMask = MTF_GDEATHMATCH;
     }
@@ -1513,11 +1517,11 @@ void P_SpawnMapThing(spawnspot_t *spot)
         return;
 
     // Check current skill with spawn flags.
-    if(gs.skill == SM_BABY || gs.skill == SM_EASY)
+    if(gameSkill == SM_BABY || gameSkill == SM_EASY)
     {
         spawnMask = MTF_EASY;
     }
-    else if(gs.skill == SM_HARD || gs.skill == SM_NIGHTMARE)
+    else if(gameSkill == SM_HARD || gameSkill == SM_NIGHTMARE)
     {
         spawnMask = MTF_HARD;
     }
@@ -1532,19 +1536,19 @@ void P_SpawnMapThing(spawnspot_t *spot)
     // Check current character classes with spawn flags.
     if(IS_NETGAME == false)
     {   // Single player.
-        if((spot->flags & classFlags[gs.players[0].pClass]) == 0)
+        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
         {   // Not for current class.
             return;
         }
     }
-    else if(GAMERULES.deathmatch == false)
+    else if(deathmatch == false)
     {   // Cooperative.
         spawnMask = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
         {
             if(players[i].plr->inGame)
             {
-                spawnMask |= classFlags[gs.players[i].pClass];
+                spawnMask |= classFlags[cfg.playerClass[i]];
             }
         }
 
@@ -1585,56 +1589,28 @@ void P_SpawnMapThing(spawnspot_t *spot)
     }
 
     // Don't spawn keys and players in deathmatch.
-    if(GAMERULES.deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
+    if(deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
     {
         return;
     }
 
     // Don't spawn monsters if -nomonsters.
-    if(GAMERULES.noMonsters && (MOBJINFO[i].flags & MF_COUNTKILL))
+    if(noMonstersParm && (MOBJINFO[i].flags & MF_COUNTKILL))
     {
         return;
-    }
-
-    pos[VX] = spot->pos[VX];
-    pos[VY] = spot->pos[VY];
-
-    if(MOBJINFO[i].flags & MF_SPAWNCEILING)
-    {
-        pos[VZ] = ONCEILINGZ;
-    }
-    else if(MOBJINFO[i].flags2 & MF2_SPAWNFLOAT)
-    {
-        pos[VZ] = FLOATRANDZ;
-    }
-    else if(MOBJINFO[i].flags2 & MF2_FLOATBOB)
-    {
-        pos[VZ] = spot->height;
-    }
-    else
-    {
-        pos[VZ] = ONFLOORZ;
     }
 
     switch(i)
     {   // Special stuff.
     case MT_ZLYNCHED_NOHEART:
-        P_SpawnMobj3f(MT_BLOODPOOL, pos[VX], pos[VY], ONFLOORZ, 0);
+        P_SpawnMobj3fv(MT_BLOODPOOL, spot->pos, 0, spot->flags | MTF_Z_FLOOR);
         break;
 
     default:
         break;
     }
 
-    mobj = P_SpawnMobj3fv(i, pos, spot->angle);
-    if(pos[VZ] == ONFLOORZ)
-    {
-        mobj->pos[VZ] += spot->height;
-    }
-    else if(pos[VZ] == ONCEILINGZ)
-    {
-        mobj->pos[VZ] -= spot->height;
-    }
+    mobj = P_SpawnMobj3fv(i, spot->pos, spot->angle, spot->flags);
 
     mobj->tid = spot->tid;
     mobj->special = spot->special;
@@ -1645,17 +1621,12 @@ void P_SpawnMapThing(spawnspot_t *spot)
     mobj->args[4] = spot->arg5;
     if(mobj->flags2 & MF2_FLOATBOB)
     {
-        mobj->special1 = FLT2FIX(spot->height);
+        mobj->special1 = FLT2FIX(spot->pos[VZ]);
     }
 
     if(mobj->tics > 0)
     {
         mobj->tics = 1 + (P_Random() % mobj->tics);
-    }
-
-    if(spot->flags & MTF_AMBUSH)
-    {
-        mobj->flags |= MF_AMBUSH;
     }
 
     if(spot->flags & MTF_DORMANT)
@@ -1694,7 +1665,7 @@ void P_CreateTIDList(void)
 {
     size_t              count = 0;
 
-    P_IterateThinkers(P_MobjThinker, addToTIDList, &count);
+    DD_IterateThinkers(P_MobjThinker, addToTIDList, &count);
 
     // Add termination marker
     TIDList[count] = 0;
@@ -1773,7 +1744,7 @@ void P_SpawnPuff(float x, float y, float z, angle_t angle)
     mobj_t*             puff;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    puff = P_SpawnMobj3f(puffType, x, y, z, angle);
+    puff = P_SpawnMobj3f(PuffType, x, y, z, angle, 0);
     if(lineTarget && puff->info->seeSound)
     {   // Hit thing sound.
         S_StartSound(puff->info->seeSound, puff);
@@ -1783,7 +1754,7 @@ void P_SpawnPuff(float x, float y, float z, angle_t angle)
         S_StartSound(puff->info->attackSound, puff);
     }
 
-    switch(puffType)
+    switch(PuffType)
     {
     case MT_PUNCHPUFF:
         puff->mom[MZ] = 1;
@@ -1804,7 +1775,7 @@ void P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator)
 {
     mobj_t*             mo;
 
-    mo = P_SpawnMobj3f(MT_BLOODSPLATTER, x, y, z, P_Random() << 24);
+    mo = P_SpawnMobj3f(MT_BLOODSPLATTER, x, y, z, P_Random() << 24, 0);
 
     mo->target = originator;
     mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
@@ -1819,7 +1790,7 @@ void P_SpawnBloodSplatter2(float x, float y, float z, mobj_t* originator)
     mo = P_SpawnMobj3f(MT_AXEBLOOD,
                        x + FIX2FLT((P_Random() - 128) << 11),
                        y + FIX2FLT((P_Random() - 128) << 11),
-                       z, P_Random() << 24);
+                       z, P_Random() << 24, 0);
     mo->target = originator;
 }
 
@@ -1836,7 +1807,7 @@ void P_RipperBlood(mobj_t* mo)
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
     pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
 
-    th = P_SpawnMobj3fv(MT_BLOOD, pos, P_Random() << 24);
+    th = P_SpawnMobj3fv(MT_BLOOD, pos, P_Random() << 24, 0);
     th->mom[MX] = mo->mom[MX] / 2;
     th->mom[MY] = mo->mom[MY] / 2;
     th->tics += P_Random() & 3;
@@ -1878,25 +1849,24 @@ boolean P_HitFloor(mobj_t *thing)
         if(smallsplash)
         {
             mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX],
-                               thing->pos[VY], ONFLOORZ,
-                               thing->angle + ANG180);
+                               thing->pos[VY], 0, thing->angle + ANG180,
+                               MTF_Z_FLOOR);
             if(mo)
                 mo->floorClip += SMALLSPLASHCLIP;
             S_StartSound(SFX_AMBIENT10, mo); // small drip
         }
         else
         {
-            mo = P_SpawnMobj3f(MT_SPLASH, thing->pos[VX], thing->pos[VY],
-                               ONFLOORZ, P_Random() << 24);
+            mo = P_SpawnMobj3f(MT_SPLASH, thing->pos[VX], thing->pos[VY], 0,
+                               P_Random() << 24, MTF_Z_FLOOR);
 
             mo->target = thing;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 8);
             mo->mom[MZ] = 2 + FIX2FLT(P_Random() << 8);
 
-            mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX],
-                               thing->pos[VY], ONFLOORZ,
-                               thing->angle + ANG180);
+            mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX], thing->pos[VY],
+                               0, thing->angle + ANG180, MTF_Z_FLOOR);
             if(thing->player)
                 P_NoiseAlert(thing, thing);
             S_StartSound(SFX_WATER_SPLASH, mo);
@@ -1907,19 +1877,19 @@ boolean P_HitFloor(mobj_t *thing)
     {
         if(smallsplash)
         {
-            mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX],
-                               thing->pos[VY], ONFLOORZ, P_Random() << 24);
+            mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX], thing->pos[VY],
+                               0, P_Random() << 24, MTF_Z_FLOOR);
             if(mo)
                 mo->floorClip += SMALLSPLASHCLIP;
         }
         else
         {
             mo = P_SpawnMobj3f(MT_LAVASMOKE, thing->pos[VX], thing->pos[VY],
-                               ONFLOORZ, P_Random() << 24);
+                               0, P_Random() << 24, MTF_Z_FLOOR);
 
             mo->mom[MZ] = 1 + FIX2FLT(P_Random() << 7);
-            mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX],
-                              thing->pos[VY], ONFLOORZ, P_Random() << 24);
+            mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX], thing->pos[VY],
+                               0, P_Random() << 24, MTF_Z_FLOOR);
             if(thing->player)
                 P_NoiseAlert(thing, thing);
         }
@@ -1936,14 +1906,16 @@ boolean P_HitFloor(mobj_t *thing)
         if(smallsplash)
         {
             mo = P_SpawnMobj3f(MT_SLUDGESPLASH, thing->pos[VX],
-                               thing->pos[VY], ONFLOORZ, P_Random() << 24);
+                               thing->pos[VY], 0, P_Random() << 24,
+                               MTF_Z_FLOOR);
             if(mo)
                 mo->floorClip += SMALLSPLASHCLIP;
         }
         else
         {
             mo = P_SpawnMobj3f(MT_SLUDGECHUNK, thing->pos[VX],
-                               thing->pos[VY], ONFLOORZ, P_Random() << 24);
+                               thing->pos[VY], 0, P_Random() << 24,
+                               MTF_Z_FLOOR);
 
             mo->target = thing;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
@@ -1951,7 +1923,8 @@ boolean P_HitFloor(mobj_t *thing)
             mo->mom[MZ] = 1 + FIX2FLT(P_Random() << 8);
 
             mo = P_SpawnMobj3f(MT_SLUDGESPLASH, thing->pos[VX],
-                               thing->pos[VY], ONFLOORZ, P_Random() << 24);
+                               thing->pos[VY], 0, P_Random() << 24,
+                               MTF_Z_FLOOR);
             if(thing->player)
                 P_NoiseAlert(thing, thing);
         }
@@ -1996,7 +1969,7 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
             victim->flags2 |= MF2_BLASTED;
         }
     }
-    else // Full strength blast from artifact.
+    else // Full strength.
     {
         if(victim->flags & MF_MISSILE)
         {
@@ -2042,7 +2015,7 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
         pos[VY] += victim->radius + 1 * FIX2FLT(finesine[an]);
         pos[VZ] -= victim->floorClip + victim->height / 2;
 
-        mo = P_SpawnMobj3fv(MT_BLASTEFFECT, pos, angle);
+        mo = P_SpawnMobj3fv(MT_BLASTEFFECT, pos, angle, 0);
         if(mo)
         {
             mo->mom[MX] = victim->mom[MX];
@@ -2135,12 +2108,12 @@ void P_BlastRadius(player_t* pl)
     mobj_t*             pmo = pl->plr->mo;
     radiusblastparams_t params;
 
-    S_StartSound(SFX_ARTIFACT_BLAST, pmo);
+    S_StartSound(SFX_INVITEM_BLAST, pmo);
     P_NoiseAlert(pmo, pmo);
 
     params.source = pmo;
     params.maxDistance = BLAST_RADIUS_DIST;
-    P_IterateThinkers(P_MobjThinker, radiusBlast, &params);
+    DD_IterateThinkers(P_MobjThinker, radiusBlast, &params);
 }
 
 typedef struct {
@@ -2242,18 +2215,18 @@ boolean P_HealRadius(player_t* player)
     params.origin[VY] = pmo->pos[VY];
     params.maxDistance = HEAL_RADIUS_DIST;
 
-    switch(player->pClass)
+    switch(player->class)
     {
     case PCLASS_FIGHTER:
-        P_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);
+        DD_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);
         break;
 
     case PCLASS_CLERIC:
-        P_IterateThinkers(P_MobjThinker, radiusGiveBody, &params);
+        DD_IterateThinkers(P_MobjThinker, radiusGiveBody, &params);
         break;
 
     case PCLASS_MAGE:
-        P_IterateThinkers(P_MobjThinker, radiusGiveMana, &params);
+        DD_IterateThinkers(P_MobjThinker, radiusGiveMana, &params);
         break;
 
     default:
@@ -2332,7 +2305,7 @@ mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
         angle += (P_Random() - P_Random()) << 21;
     }
 
-    th = P_SpawnMobj3f(type, source->pos[VX], source->pos[VY], z, angle);
+    th = P_SpawnMobj3f(type, source->pos[VX], source->pos[VY], z, angle, 0);
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
@@ -2386,7 +2359,7 @@ mobj_t *P_SpawnMissileXYZ(mobjtype_t type, float x, float y, float z,
         angle += (P_Random() - P_Random()) << 21;
     }
 
-    th = P_SpawnMobj3f(type, x, y, z, angle);
+    th = P_SpawnMobj3f(type, x, y, z, angle, 0);
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
 
@@ -2439,7 +2412,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle,
         if(source->player)
         {
             if(!P_MobjIsCamera(source->player->plr->mo))
-                spawnZOff = PLRPROFILE.camera.offsetZ - 9 +
+                spawnZOff = cfg.plrViewHeight - 9 +
                     source->player->plr->lookDir / 173;
         }
         else
@@ -2450,14 +2423,15 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle,
     }
 
     if(type == MT_MNTRFX2) // Minotaur floor fire missile
-        pos[VZ] = ONFLOORZ;
+    {
+        mo = P_SpawnMobj3f(type, pos[VX], pos[VY], 0, angle, MTF_Z_FLOOR);
+    }
     else
     {
         pos[VZ] += spawnZOff;
         pos[VZ] -= source->floorClip;
+        mo = P_SpawnMobj3fv(type, pos, angle, 0);
     }
-
-    mo = P_SpawnMobj3fv(type, pos, angle);
 
     if(mo)
     {
@@ -2490,7 +2464,7 @@ mobj_t *P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t *source,
 
     z = source->pos[VZ];
     z -= source->floorClip;
-    mo = P_SpawnMobj3f(type, source->pos[VX], source->pos[VY], z, angle);
+    mo = P_SpawnMobj3f(type, source->pos[VX], source->pos[VY], z, angle, 0);
 
     if(mo)
     {
@@ -2516,7 +2490,8 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     float           pos[3], slope;
     float           fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float           movfac = 1;
-    boolean         dontAim = !PLRPROFILE.ctrl.useAutoAim;
+    boolean         dontAim = cfg.noAutoAim;
+    int             spawnFlags = 0;
 
     // Try to find a target
     angle = source->angle;
@@ -2544,53 +2519,55 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
 
     if(type == MT_LIGHTNING_FLOOR)
     {
-        pos[VZ] = ONFLOORZ;
+        pos[VZ] = 0;
         slope = 0;
+        spawnFlags |= MTF_Z_FLOOR;
     }
     else if(type == MT_LIGHTNING_CEILING)
     {
-        pos[VZ] = ONCEILINGZ;
+        pos[VZ] = 0;
         slope = 0;
+        spawnFlags |= MTF_Z_CEIL;
     }
     else
     {
         if(!P_MobjIsCamera(source->player->plr->mo))
-            pos[VZ] += PLRPROFILE.camera.offsetZ - 9 +
+            pos[VZ] += cfg.plrViewHeight - 9 +
                 (source->player->plr->lookDir / 173);
         pos[VZ] -= source->floorClip;
     }
 
-    missileMobj = P_SpawnMobj3fv(type, pos, angle);
+    MissileMobj = P_SpawnMobj3fv(type, pos, angle, spawnFlags);
 
-    missileMobj->target = source;
+    MissileMobj->target = source;
     an = angle >> ANGLETOFINESHIFT;
-    missileMobj->mom[MX] =
-        movfac * missileMobj->info->speed * FIX2FLT(finecosine[an]);
-    missileMobj->mom[MY] =
-        movfac * missileMobj->info->speed * FIX2FLT(finesine[an]);
-    missileMobj->mom[MZ] = missileMobj->info->speed * slope;
+    MissileMobj->mom[MX] =
+        movfac * MissileMobj->info->speed * FIX2FLT(finecosine[an]);
+    MissileMobj->mom[MY] =
+        movfac * MissileMobj->info->speed * FIX2FLT(finesine[an]);
+    MissileMobj->mom[MZ] = MissileMobj->info->speed * slope;
 
-    if(missileMobj->type == MT_MWAND_MISSILE ||
-       missileMobj->type == MT_CFLAME_MISSILE)
+    if(MissileMobj->type == MT_MWAND_MISSILE ||
+       MissileMobj->type == MT_CFLAME_MISSILE)
     {   // Ultra-fast ripper spawning missile
-        missileMobj->pos[VX] += missileMobj->mom[MX] / 8;
-        missileMobj->pos[VY] += missileMobj->mom[MY] / 8;
-        missileMobj->pos[VZ] += missileMobj->mom[MZ] / 8;
+        MissileMobj->pos[VX] += MissileMobj->mom[MX] / 8;
+        MissileMobj->pos[VY] += MissileMobj->mom[MY] / 8;
+        MissileMobj->pos[VZ] += MissileMobj->mom[MZ] / 8;
     }
     else
     {   // Normal missile
-        missileMobj->pos[VX] += missileMobj->mom[MX] / 2;
-        missileMobj->pos[VY] += missileMobj->mom[MY] / 2;
-        missileMobj->pos[VZ] += missileMobj->mom[MZ] / 2;
+        MissileMobj->pos[VX] += MissileMobj->mom[MX] / 2;
+        MissileMobj->pos[VY] += MissileMobj->mom[MY] / 2;
+        MissileMobj->pos[VZ] += MissileMobj->mom[MZ] / 2;
     }
 
-    if(!P_TryMove(missileMobj, missileMobj->pos[VX], missileMobj->pos[VY]))
+    if(!P_TryMove(MissileMobj, MissileMobj->pos[VX], MissileMobj->pos[VY]))
     {   // Exploded immediately
-        P_ExplodeMissile(missileMobj);
+        P_ExplodeMissile(MissileMobj);
         return NULL;
     }
 
-    return missileMobj;
+    return MissileMobj;
 }
 
 mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
@@ -2601,7 +2578,7 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
     float           pos[3], slope;
     float           fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float           movfac = 1;
-    boolean         dontAim = !PLRPROFILE.ctrl.useAutoAim;
+    boolean         dontAim = cfg.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2627,11 +2604,11 @@ mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t origAngle)
 
     memcpy(pos, source->pos, sizeof(pos));
     if(!P_MobjIsCamera(source->player->plr->mo))
-        pos[VZ] += PLRPROFILE.camera.offsetZ - 9 +
+        pos[VZ] += cfg.plrViewHeight - 9 +
             (source->player->plr->lookDir / 173);
     pos[VZ] -= source->floorClip;
 
-    th = P_SpawnMobj3fv(type, pos, angle);
+    th = P_SpawnMobj3fv(type, pos, angle, 0);
     if(th)
     {
         th->target = source;
@@ -2655,7 +2632,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
     angle_t         angle;
     float           slope, movfac = 1;
     float           fangle = LOOKDIR2RAD(source->player->plr->lookDir);
-    boolean         dontAim = !PLRPROFILE.ctrl.useAutoAim;
+    boolean         dontAim = cfg.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2679,10 +2656,9 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
     }
 
     if(!P_MobjIsCamera(source->player->plr->mo))
-        z += PLRPROFILE.camera.offsetZ - 9 +
-            (source->player->plr->lookDir / 173);
+        z += cfg.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
     z -= source->floorClip;
-    th = P_SpawnMobj3f(type, x, y, z, angle);
+    th = P_SpawnMobj3f(type, x, y, z, angle, 0);
 
     th->target = source;
     an = angle >> ANGLETOFINESHIFT;
@@ -2712,7 +2688,7 @@ mobj_t* P_SpawnKoraxMissile(mobjtype_t type, float x, float y, float z,
         angle += (P_Random() - P_Random()) << 21;
     }
 
-    th = P_SpawnMobj3f(type, x, y, z, angle);
+    th = P_SpawnMobj3f(type, x, y, z, angle, 0);
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
 

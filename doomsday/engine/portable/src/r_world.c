@@ -67,7 +67,7 @@ int rendSkyLight = 1; // cvar.
 float rendLightWallAngle = 1; // Intensity of angle-based wall lighting.
 
 boolean firstFrameAfterLoad;
-boolean mapSetup;
+boolean ddMapSetup;
 
 nodeindex_t* linelinks; // Indices to roots.
 
@@ -598,8 +598,20 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
             }
             Z_Free(ssec->bsuf);
         }
-        if(!mapSetup)
-            newList[n] = SB_CreateSurface(ssec->numVertices);
+
+        if(!ddMapSetup)
+        {
+            uint                i;
+            biassurface_t*      bsuf = SB_CreateSurface();
+
+            bsuf->size = ssec->numVertices;
+            bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+
+            for(i = 0; i < bsuf->size; ++i)
+                SB_InitVertexIllum(&bsuf->illum[i]);
+
+            newList[n] = bsuf;
+        }
 
         ssec->bsuf = newList;
 
@@ -1396,16 +1408,11 @@ void R_SetupMap(int mode, int flags)
         Z_EnableFastMalloc(false);
 
         // A new map is about to be setup.
-        mapSetup = true;
+        ddMapSetup = true;
         return;
 
     case DDSMM_AFTER_LOADING:
     {
-        // Loading a game usually destroys all thinkers. Until a proper
-        // savegame system handled by the engine is introduced we'll have
-        // to resort to re-initializing the most important stuff.
-        P_SpawnTypeParticleGens();
-
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
 
@@ -1542,7 +1549,7 @@ void R_SetupMap(int mode, int flags)
         ddMapTime = 0;
 
         // We've finished setting up the map.
-        mapSetup = false;
+        ddMapSetup = false;
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
@@ -1644,7 +1651,8 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
                 SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
                     surface;
 
-            if(!backSuf->material->inAnimGroup && !R_IsSkySurface(backSuf))
+            if(!(backSuf->material && backSuf->material->inAnimGroup) &&
+               !R_IsSkySurface(backSuf))
                 choice = backSuf->material;
         }
 

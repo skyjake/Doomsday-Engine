@@ -173,7 +173,7 @@ float P_MobjGetFriction(mobj_t *mo)
 static boolean isInWalkState(player_t* pl)
 {
     return pl->plr->mo->state - STATES -
-                PCLASS_INFO(pl->pClass)->runState < 4;
+                PCLASS_INFO(pl->class)->runState < 4;
 }
 
 static float getFriction(mobj_t* mo)
@@ -234,11 +234,11 @@ void P_MobjMoveXY(mobj_t *mo)
          */
 
         largeNegative = false;
-        if(!GAMERULES.moveBlock &&
+        if(!cfg.moveBlock &&
            (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
         {
             // Make an exception for "north-only wallrunning".
-            if(!(GAMERULES.wallRunNorthOnly && mo->wallRun))
+            if(!(cfg.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
@@ -325,7 +325,7 @@ void P_MobjMoveXY(mobj_t *mo)
     if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
         return; // No friction when falling.
 
-    if(GAMERULES.slidingCorpses)
+    if(cfg.slidingCorpses)
     {
         // $dropoff_fix: Add objects falling off ledges, does not apply to
         // players!
@@ -351,7 +351,7 @@ void P_MobjMoveXY(mobj_t *mo)
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->pClass)->normalState);
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
 
         mo->mom[MX] = mo->mom[MY] = 0;
 
@@ -398,7 +398,7 @@ void P_RipperBlood(mobj_t *mo)
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
     pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
 
-    th = P_SpawnMobj3fv(MT_BLOOD, pos, mo->angle);
+    th = P_SpawnMobj3fv(MT_BLOOD, pos, mo->angle, 0);
     th->flags |= MF_NOGRAVITY;
     th->mom[MX] /= 2;
     th->mom[MY] /= 2;
@@ -477,7 +477,7 @@ void P_MobjMoveZ(mobj_t* mo)
         //  demos would desync in close lost soul fights.
         // Note that this only applies to original Doom 1 or Doom2 demos - not
         //  Final Doom and Ultimate Doom.  So we test demo_compatibility *and*
-        //  gs.gameMission. (Note we assume that Doom1 is always Ult Doom, which
+        //  gameMission. (Note we assume that Doom1 is always Ult Doom, which
         //  seems to hold for most published demos.)
         //
         //  fraggle - cph got the logic here slightly wrong.  There are three
@@ -490,8 +490,8 @@ void P_MobjMoveZ(mobj_t* mo)
         // So we need to check that this is either retail or commercial
         // (but not doom2)
         int correctLostSoulBounce =
-            (gs.gameMode == retail || gs.gameMode == commercial) &&
-                    gs.gameMission != GM_DOOM2;
+            (gameMode == retail || gameMode == commercial) &&
+                    gameMission != GM_DOOM2;
 
         if(correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
         {
@@ -559,7 +559,7 @@ void P_MobjMoveZ(mobj_t* mo)
         {
             mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
             mo->dPlayer->viewHeightDelta =
-                (PLRPROFILE.camera.offsetZ - mo->dPlayer->viewHeight) / 8;
+                (cfg.plrViewHeight - mo->dPlayer->viewHeight) / 8;
         }
 
         mo->pos[VZ] = floorZ;
@@ -638,40 +638,28 @@ void P_MobjMoveZ(mobj_t* mo)
     }
 }
 
-void P_NightmareRespawn(mobj_t *mobj)
+void P_NightmareRespawn(mobj_t* mobj)
 {
-    float               pos[3];
-    subsector_t        *ss;
-    mobj_t             *mo;
-
-    pos[VX] = mobj->spawnSpot.pos[VX];
-    pos[VY] = mobj->spawnSpot.pos[VY];
-    pos[VZ] = mobj->spawnSpot.pos[VZ];
+    mobj_t*             mo;
 
     // Something is occupying it's position?
-    if(!P_CheckPosition2f(mobj, pos[VX], pos[VY]))
+    if(!P_CheckPosition2f(mobj, mobj->spawnSpot.pos[VX],
+                          mobj->spawnSpot.pos[VY]))
         return; // No respwan.
 
     // Spawn a teleport fog at old spot.
-    mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY],
-                       P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT),
-                       mobj->angle);
+    mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY], 0,
+                       mobj->angle, MTF_Z_FLOOR);
     S_StartSound(SFX_TELEPT, mo);
 
     // Spawn a teleport fog at the new spot.
-    ss = R_PointInSubsector(pos[VX], pos[VY]);
-    mo = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
-                       P_GetFloatp(ss, DMU_FLOOR_HEIGHT),
-                       mobj->spawnSpot.angle);
+    mo = P_SpawnMobj3fv(MT_TFOG, mobj->spawnSpot.pos, mobj->spawnSpot.angle,
+                        mobj->spawnSpot.flags);
     S_StartSound(SFX_TELEPT, mo);
 
-    if(mobj->info->flags & MF_SPAWNCEILING)
-        pos[VZ] = ONCEILINGZ;
-    else
-        pos[VZ] = ONFLOORZ;
-
     // Inherit attributes from deceased one.
-    mo = P_SpawnMobj3fv(mobj->type, pos, mobj->spawnSpot.angle);
+    mo = P_SpawnMobj3fv(mobj->type, mobj->pos, mobj->spawnSpot.angle,
+                        mobj->spawnSpot.flags);
     memcpy(&mo->spawnSpot, &mobj->spawnSpot, sizeof(mo->spawnSpot));
 
     if(mobj->spawnSpot.flags & MTF_DEAF)
@@ -766,7 +754,7 @@ void P_MobjThinker(mobj_t* mo)
 
         if(mo->pos[VZ] > mo->dropOffZ && // Only objects contacting dropoff.
            !(mo->flags & MF_NOGRAVITY) &&
-           !(mo->flags2 & MF2_FLOATBOB) && GAMERULES.fallOff)
+           !(mo->flags2 & MF2_FLOATBOB) && cfg.fallOff)
         {
             P_ApplyTorque(mo);
         }
@@ -777,7 +765,7 @@ void P_MobjThinker(mobj_t* mo)
         }
     }
 
-    if(GAMERULES.slidingCorpses)
+    if(cfg.slidingCorpses)
     {
         if(((mo->flags & MF_CORPSE)? mo->pos[VZ] > mo->dropOffZ :
                                        mo->pos[VZ] - mo->dropOffZ > 24) && // Only objects contacting drop off
@@ -792,22 +780,19 @@ void P_MobjThinker(mobj_t* mo)
         }
     }
 
-    /**
-     * $vanish: dead monsters disappear after some time.
-     * \fixme This should be done entirely client-side!
-     */
-    if(PLRPROFILE.corpseTime && (mo->flags & MF_CORPSE) && mo->corpseTics != -1)
+    // $vanish: dead monsters disappear after some time.
+    if(cfg.corpseTime && (mo->flags & MF_CORPSE) && mo->corpseTics != -1)
     {
-        if(++mo->corpseTics < PLRPROFILE.corpseTime * TICSPERSEC)
+        if(++mo->corpseTics < cfg.corpseTime * TICSPERSEC)
         {
             mo->translucency = 0; // Opaque.
         }
-        else if(mo->corpseTics < PLRPROFILE.corpseTime * TICSPERSEC + VANISHTICS)
+        else if(mo->corpseTics < cfg.corpseTime * TICSPERSEC + VANISHTICS)
         {
             // Translucent during vanishing.
             mo->translucency =
                 ((mo->corpseTics -
-                  PLRPROFILE.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
+                  cfg.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
         }
         else
         {
@@ -837,7 +822,7 @@ void P_MobjThinker(mobj_t* mo)
         if(!(mo->flags & MF_COUNTKILL))
             return;
 
-        if(!(GAMERULES.respawn || gs.skill == SM_NIGHTMARE))
+        if(!respawnMonsters)
             return;
 
         mo->moveCount++;
@@ -853,7 +838,8 @@ void P_MobjThinker(mobj_t* mo)
 /**
  * Spawns a mobj of "type" at the specified position.
  */
-mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z, angle_t angle)
+mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
+                      angle_t angle, int spawnFlags)
 {
     mobj_t*             mo;
     mobjinfo_t*         info = &MOBJINFO[type];
@@ -876,13 +862,13 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z, angle_t angle)
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
     mo->health =
-        info->spawnHealth * (IS_NETGAME ? GAMERULES.mobHealthModifier : 1);
+        info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
     // Let the engine know about solid objects.
     P_SetDoomsdayFlags(mo);
 
-    if(gs.skill != SM_NIGHTMARE)
+    if(gameSkill != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;
@@ -898,15 +884,11 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z, angle_t angle)
     mo->dropOffZ = mo->floorZ;
     mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
-    if(mo->pos[VZ] == ONFLOORZ)
+    if((spawnFlags & MTF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
-        mo->pos[VZ] = mo->floorZ;
+        mo->pos[VZ] = mo->ceilingZ - mo->info->height - z;
     }
-    else if(mo->pos[VZ] == ONCEILINGZ)
-    {
-        mo->pos[VZ] = mo->ceilingZ - mo->info->height;
-    }
-    else if(mo->pos[VZ] == FLOATRANDZ)
+    else if((spawnFlags & MTF_Z_RANDOM) || (info->flags2 & MF2_SPAWNFLOAT))
     {
         space = mo->ceilingZ - mo->info->height - mo->floorZ;
         if(space > 48)
@@ -918,6 +900,10 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z, angle_t angle)
         {
             mo->pos[VZ] = mo->floorZ;
         }
+    }
+    else if(spawnFlags & MTF_Z_FLOOR)
+    {
+        mo->pos[VZ] = mo->floorZ + z;
     }
 
     mo->floorClip = 0;
@@ -935,9 +921,10 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z, angle_t angle)
     return mo;
 }
 
-mobj_t *P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle)
+mobj_t* P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+                       int spawnFlags)
 {
-    return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle);
+    return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
 }
 
 /**
@@ -960,15 +947,13 @@ void P_RespawnEnqueue(spawnspot_t *spot)
 
 void P_CheckRespawnQueue(void)
 {
-    int                 i;
-    float               pos[3];
-    subsector_t        *ss;
-    mobj_t             *mo;
-    spawnspot_t        *sobj;
+    int                 i, spawnFlags = 0;
+    mobj_t*             mo;
+    spawnspot_t*        sobj;
 
     // Only respawn items in deathmatch 2 and optionally in coop.
-    if(GAMERULES.deathmatch != 2 &&
-       (!GAMERULES.coopRespawnItems || !IS_NETGAME || GAMERULES.deathmatch))
+    if(deathmatch != 2 &&
+       (!cfg.coopRespawnItems || !IS_NETGAME || deathmatch))
         return;
 
     // Nothing left to respawn?
@@ -982,12 +967,8 @@ void P_CheckRespawnQueue(void)
     // Get the attributes of the mobj from spawn parameters.
     sobj = &itemRespawnQueue[itemRespawnQueueTail];
 
-    memcpy(pos, sobj->pos, sizeof(pos));
-    ss = R_PointInSubsector(pos[VX], pos[VY]);
-    pos[VZ] = P_GetFloatp(ss, DMU_FLOOR_HEIGHT);
-
     // Spawn a teleport fog at the new spot.
-    mo = P_SpawnMobj3fv(MT_IFOG, pos, sobj->angle);
+    mo = P_SpawnMobj3fv(MT_IFOG, sobj->pos, sobj->angle, MTF_Z_FLOOR);
     S_StartSound(SFX_ITMBK, mo);
 
     // Find which type to spawn.
@@ -997,12 +978,7 @@ void P_CheckRespawnQueue(void)
             break;
     }
 
-    if(MOBJINFO[i].flags & MF_SPAWNCEILING)
-        pos[VZ] = ONCEILINGZ;
-    else
-        pos[VZ] = ONFLOORZ;
-
-    mo = P_SpawnMobj3fv(i, pos, sobj->angle);
+    mo = P_SpawnMobj3fv(i, sobj->pos, sobj->angle, sobj->flags);
 
     mo->floorClip = 0;
     if((mo->flags2 & MF2_FLOORCLIP) &&
@@ -1032,12 +1008,12 @@ void P_EmptyRespawnQueue(void)
  * Called when a player is spawned on the map.
  * Most of the player structure stays unchanged between maps.
  */
-void P_SpawnPlayer(spawnspot_t *spot, int pnum)
+void P_SpawnPlayer(spawnspot_t* spot, int pnum)
 {
-    int                 i;
-    player_t           *p;
+    int                 i, spawnFlags = 0;
+    player_t*           p;
     float               pos[3];
-    mobj_t             *mobj;
+    mobj_t*             mobj;
 
     if(pnum < 0)
         pnum = 0;
@@ -1050,22 +1026,24 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 
     p = &players[pnum];
 
-    if(p->pState == PST_REBORN)
+    if(p->playerState == PST_REBORN)
         G_PlayerReborn(pnum);
 
     if(spot)
     {
         pos[VX] = spot->pos[VX];
         pos[VY] = spot->pos[VY];
-        pos[VZ] = ONFLOORZ;
+        pos[VZ] = spot->pos[VZ];
+        spawnFlags = spot->flags;
     }
     else
     {
         pos[VX] = pos[VY] = pos[VZ] = 0;
+        spawnFlags |= MTF_Z_FLOOR;
     }
 
     /* $unifiedangles */
-    mobj = P_SpawnMobj3fv(MT_PLAYER, pos, (spot? spot->angle : 0));
+    mobj = P_SpawnMobj3fv(MT_PLAYER, pos, (spot? spot->angle : 0), spawnFlags);
 
     // With clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
@@ -1076,7 +1054,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     }
 
     // Set color translations for player sprites.
-    i = gs.players[pnum].color;
+    i = cfg.playerColor[pnum];
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
 
@@ -1087,7 +1065,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     mobj->health = p->health;
 
     p->plr->mo = mobj;
-    p->pState = PST_LIVE;
+    p->playerState = PST_LIVE;
     p->refire = 0;
     p->damageCount = 0;
     p->bonusCount = 0;
@@ -1102,19 +1080,19 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        p->plr->mo->pos[VZ] += (float) PLRPROFILE.camera.offsetZ;
+        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
         p->plr->viewHeight = 0;
     }
     else
-        p->plr->viewHeight = (float) PLRPROFILE.camera.offsetZ;
+        p->plr->viewHeight = (float) cfg.plrViewHeight;
 
-    p->pClass = PCLASS_PLAYER;
+    p->class = PCLASS_PLAYER;
 
     // Setup gun psprite.
     P_SetupPsprites(p);
 
     // Give all cards in death match mode.
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
     {
         for(i = 0; i < NUM_KEY_TYPES; ++i)
             p->keys[i] = true;
@@ -1129,11 +1107,10 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 /**
  * Spawns the passed thing into the world.
  */
-void P_SpawnMapThing(spawnspot_t *th)
+void P_SpawnMapThing(spawnspot_t* th)
 {
     int                 i, bit;
-    mobj_t             *mobj;
-    float               pos[3];
+    mobj_t*             mobj;
 
     //Con_Message("x = %g, y = %g, height = %i, angle = %i, type = %i, flags = %i\n",
     //            th->pos[VX], th->pos[VY], th->height, th->angle, th->type, th->flags);
@@ -1162,20 +1139,20 @@ void P_SpawnMapThing(spawnspot_t *th)
         return;
 
     // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
-    if(GAMERULES.deathmatch && (th->flags & MTF_NOTDM))
+    if(deathmatch && (th->flags & MTF_NOTDM))
         return;
 
     // Don't spawn things flagged for Not Coop if we're coop'in.
-    if(IS_NETGAME && !GAMERULES.deathmatch && (th->flags & MTF_NOTCOOP))
+    if(IS_NETGAME && !deathmatch && (th->flags & MTF_NOTCOOP))
         return;
 
     // Check for apropriate skill level.
-    if(gs.skill == SM_BABY)
+    if(gameSkill == SM_BABY)
         bit = 1;
-    else if(gs.skill == SM_NIGHTMARE)
+    else if(gameSkill == SM_NIGHTMARE)
         bit = 4;
     else
-        bit = 1 << (gs.skill - 1);
+        bit = 1 << (gameSkill - 1);
 
     if(!(th->flags & bit))
         return;
@@ -1198,61 +1175,46 @@ void P_SpawnMapThing(spawnspot_t *th)
         return;
 
     // Don't spawn keycards in deathmatch.
-    if(GAMERULES.deathmatch && MOBJINFO[i].flags & MF_NOTDMATCH)
+    if(deathmatch && MOBJINFO[i].flags & MF_NOTDMATCH)
         return;
 
     // Check for specific disabled objects.
     if(IS_NETGAME && (th->flags & MTF_NOTSINGLE))
     {
         // Cooperative weapons?
-        if(GAMERULES.noCoopWeapons && !GAMERULES.deathmatch && i >= MT_CLIP &&
+        if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP &&
            i <= MT_SUPERSHOTGUN)
             return;
 
         // Don't spawn any special objects in coop?
-        if(GAMERULES.noCoopAnything && !GAMERULES.deathmatch)
+        if(cfg.noCoopAnything && !deathmatch)
             return;
 
         // BFG disabled in netgames?
-        if(GAMERULES.noBFG && i == MT_MISC25)
+        if(cfg.noNetBFG && i == MT_MISC25)
             return;
     }
 
     // Don't spawn any monsters if -noMonstersParm.
-    if(GAMERULES.noMonsters && (i == MT_SKULL || (MOBJINFO[i].flags & MF_COUNTKILL)))
+    if(noMonstersParm && (i == MT_SKULL || (MOBJINFO[i].flags & MF_COUNTKILL)))
     {
         return;
     }
 
-    pos[VX] = th->pos[VX];
-    pos[VY] = th->pos[VY];
-
-    if(MOBJINFO[i].flags & MF_SPAWNCEILING)
-        pos[VZ] = ONCEILINGZ;
-    else if(MOBJINFO[i].flags2 & MF2_SPAWNFLOAT)
-        pos[VZ] = FLOATRANDZ;
-    else
-        pos[VZ] = ONFLOORZ;
-
-    mobj = P_SpawnMobj3fv(i, pos, th->angle);
+    mobj = P_SpawnMobj3fv(i, th->pos, th->angle, th->flags);
 
     if(mobj->tics > 0)
         mobj->tics = 1 + (P_Random() % mobj->tics);
     if(mobj->flags & MF_COUNTKILL)
-        gs.map.totalKills++;
+        totalKills++;
     if(mobj->flags & MF_COUNTITEM)
-        gs.map.totalItems++;
+        totalItems++;
 
     if(th->flags & MTF_DEAF)
         mobj->flags |= MF_AMBUSH;
 
     // Set the spawn info for this mobj.
-    mobj->spawnSpot.pos[VX] = pos[VX];
-    mobj->spawnSpot.pos[VY] = pos[VY];
-    mobj->spawnSpot.pos[VZ] = pos[VZ];
-    mobj->spawnSpot.angle = th->angle;
-    mobj->spawnSpot.type = th->type;
-    mobj->spawnSpot.flags = th->flags;
+    memcpy(&mobj->spawnSpot, th, sizeof(mobj->spawnSpot));
 }
 
 mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
@@ -1266,7 +1228,7 @@ mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
 
-    th = P_SpawnMobj3f(type, x, y, z, angle);
+    th = P_SpawnMobj3f(type, x, y, z, angle, 0);
     th->mom[MZ] = 1;
     th->tics -= P_Random() & 3;
 
@@ -1291,7 +1253,7 @@ void P_SpawnBlood(float x, float y, float z, int damage, angle_t angle)
     mobj_t*             th;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    th = P_SpawnMobj3f(MT_BLOOD, x, y, z, angle);
+    th = P_SpawnMobj3f(MT_BLOOD, x, y, z, angle, 0);
     th->mom[MZ] = 2;
     th->tics -= P_Random() & 3;
 
@@ -1361,7 +1323,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
         // See which target is to be aimed at.
         angle = source->angle;
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(PLRPROFILE.ctrl.useAutoAim)
+        if(!cfg.noAutoAim)
             if(!lineTarget)
             {
                 angle += 1 << 26;
@@ -1382,7 +1344,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
             }
 
         if(!P_MobjIsCamera(source->player->plr->mo))
-            spawnZOff = PLRPROFILE.camera.offsetZ - 9 +
+            spawnZOff = cfg.plrViewHeight - 9 +
                 source->player->plr->lookDir / 173;
     }
     else
@@ -1412,7 +1374,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
             angle += (P_Random() - P_Random()) << 20;
     }
 
-    th = P_SpawnMobj3fv(type, pos, angle);
+    th = P_SpawnMobj3fv(type, pos, angle, 0);
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
@@ -1423,8 +1385,8 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
 
     if(source->player)
-    {   // Allow free-aim with the BFG?
-        if(GAMERULES.freeAimBFG == 0 && type == MT_BFG)
+    {   // Allow free-aim with the BFG in deathmatch?
+        if(deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
             th->mom[MZ] = 0;
         else
             th->mom[MZ] = th->info->speed * slope;

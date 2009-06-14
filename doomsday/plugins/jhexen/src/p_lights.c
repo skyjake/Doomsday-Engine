@@ -81,13 +81,13 @@ void T_Light(light_t *light)
             if(P_SectorLight(light->sector) >= light->value1)
             {
                 P_SectorSetLight(light->sector, light->value1);
-                P_ThinkerRemove(&light->thinker);
+                DD_ThinkerRemove(&light->thinker);
             }
         }
         else if(P_SectorLight(light->sector) <= light->value1)
         {
             P_SectorSetLight(light->sector, light->value1);
-            P_ThinkerRemove(&light->thinker);
+            DD_ThinkerRemove(&light->thinker);
         }
         break;
 
@@ -165,7 +165,7 @@ boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
         think = false;
         rtn = true;
 
-        light = Z_Calloc(sizeof(*light), PU_MAPSPEC, 0);
+        light = Z_Calloc(sizeof(*light), PU_MAP, 0);
         light->type = type;
         light->sector = sec;
         light->count = 0;
@@ -242,8 +242,8 @@ boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
 
         if(think)
         {
-            P_ThinkerAdd(&light->thinker);
             light->thinker.function = T_Light;
+            DD_ThinkerAdd(&light->thinker);
         }
         else
         {
@@ -261,12 +261,14 @@ void T_Phase(phase_t *phase)
                      phase->baseValue + phaseTable[phase->index]);
 }
 
-void P_SpawnPhasedLight(sector_t *sector, float base, int index)
+void P_SpawnPhasedLight(sector_t* sector, float base, int index)
 {
-    phase_t    *phase;
+    phase_t*            phase;
 
-    phase = Z_Calloc(sizeof(*phase), PU_MAPSPEC, 0);
-    P_ThinkerAdd(&phase->thinker);
+    phase = Z_Calloc(sizeof(*phase), PU_MAP, 0);
+    phase->thinker.function = T_Phase;
+    DD_ThinkerAdd(&phase->thinker);
+
     phase->sector = sector;
     if(index == -1)
     {   // Sector->lightLevel as the index.
@@ -280,7 +282,6 @@ void P_SpawnPhasedLight(sector_t *sector, float base, int index)
     phase->baseValue = base;
     P_SectorSetLight(phase->sector,
                      phase->baseValue + phaseTable[phase->index]);
-    phase->thinker.function = T_Phase;
 
     P_ToXSector(sector)->special = 0;
 }

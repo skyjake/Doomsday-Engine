@@ -196,7 +196,7 @@ void P_CopySector(sector_t* dest, sector_t* src)
     P_SetFloatpv(dest, DMU_COLOR, ftemp);
 
     P_SetFloatp(dest, DMU_FLOOR_HEIGHT, P_GetFloatp(src, DMU_FLOOR_HEIGHT));
-    P_SetIntp(dest, DMU_FLOOR_MATERIAL, P_GetIntp(src, DMU_FLOOR_MATERIAL));
+    P_SetPtrp(dest, DMU_FLOOR_MATERIAL, P_GetPtrp(src, DMU_FLOOR_MATERIAL));
     P_GetFloatpv(src, DMU_FLOOR_COLOR, ftemp);
     P_SetFloatpv(dest, DMU_FLOOR_COLOR, ftemp);
     P_GetFloatpv(src, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
@@ -205,7 +205,7 @@ void P_CopySector(sector_t* dest, sector_t* src)
     P_SetFloatp(dest, DMU_FLOOR_TARGET_HEIGHT, P_GetFloatp(src, DMU_FLOOR_TARGET_HEIGHT));
 
     P_SetFloatp(dest, DMU_CEILING_HEIGHT, P_GetFloatp(src, DMU_CEILING_HEIGHT));
-    P_SetIntp(dest, DMU_CEILING_MATERIAL, P_GetIntp(src, DMU_CEILING_MATERIAL));
+    P_SetPtrp(dest, DMU_CEILING_MATERIAL, P_GetPtrp(src, DMU_CEILING_MATERIAL));
     P_GetFloatpv(src, DMU_CEILING_COLOR, ftemp);
     P_SetFloatpv(dest, DMU_CEILING_COLOR, ftemp);
     P_GetFloatpv(src, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);

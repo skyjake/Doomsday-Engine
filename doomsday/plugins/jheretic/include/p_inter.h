@@ -32,8 +32,6 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-extern int maxAmmo[];
-
 boolean         P_GiveArmor(player_t* plr, int type, int points);
 
 #endif

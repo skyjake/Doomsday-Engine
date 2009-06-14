@@ -23,7 +23,7 @@
  */
 
 /**
- * dgl_texture.c: Texture Handling
+ * dgl_texture.c: Textures and color palette handling.
  *
  * Get OpenGL header files from:
  * http://oss.sgi.com/projects/ogl-sample/
@@ -40,7 +40,19 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
+
 // TYPES -------------------------------------------------------------------
+
+// Color Palette Flags (CPF):
+#define CPF_UPDATE_18TO8    0x1 // The 18To8 table needs updating.
+
+typedef struct {
+    ushort          num;
+    byte            flags; // CPF_* flags.
+    DGLubyte*       data; // R8G8B8 color triplets, [num * 3].
+    ushort*         pal18To8; // 262144 unique mappings.
+} gl_colorpalette_t;
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
 
@@ -52,17 +64,499 @@ gl_state_texture_t GL_state_texture;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static gl_colorpalette_t* colorPalettes = NULL;
+static DGLuint numColorPalettes = 0;
+
 // CODE --------------------------------------------------------------------
 
+static void loadPalette(const gl_colorpalette_t* pal)
+{
+    if(GL_state_texture.usePalTex)
+    {
+        int                 i;
+        byte                paldata[256 * 3];
+        byte*               buf;
+
+        if(pal->num > 256)
+            buf = malloc(pal->num * 3);
+        else
+            buf = paldata;
+
+        // Prepare the color table.
+        for(i = 0; i < pal->num; ++i)
+        {
+            // Adjust the values for the appropriate gamma level.
+            buf[i * 3]     = gammaTable[pal->data[i * 3]];
+            buf[i * 3 + 1] = gammaTable[pal->data[i * 3 + 1]];
+            buf[i * 3 + 2] = gammaTable[pal->data[i * 3 + 2]];
+        }
+
+        glColorTableEXT(GL_TEXTURE_2D, GL_RGB, pal->num, GL_RGB,
+                        GL_UNSIGNED_BYTE, paldata);
+
+        if(pal->num > 256)
+            free(buf);
+    }
+}
+
+boolean GL_EnablePalTexExt(boolean enable)
+{
+    if(!GL_state.palExtAvailable)
+    {
+        Con_Message("GL_EnablePalTexExt: No paletted texture support.\n");
+        return false;
+    }
+
+    if((enable && GL_state_texture.usePalTex) ||
+       (!enable && !GL_state_texture.usePalTex))
+        return true;
+
+    if(!enable && GL_state_texture.usePalTex)
+    {
+        GL_state_texture.usePalTex = false;
+#ifdef WIN32
+        glColorTableEXT = NULL;
+#endif
+        return true;
+    }
+
+    GL_state_texture.usePalTex = false;
+
+#ifdef WIN32
+    if((glColorTableEXT =
+        (PFNGLCOLORTABLEEXTPROC) wglGetProcAddress("glColorTableEXT")) == NULL)
+    {
+        Con_Message("drOpenGL.GL_EnablePalTexExt: getProcAddress failed.\n");
+        return false;
+    }
+#endif
+
+    GL_state_texture.usePalTex = true;
+
+    // Palette will be loaded separately for each texture.
+    Con_Message("drOpenGL.GL_EnablePalTexExt: Using tex palette.\n");
+
+    return true;
+}
+
 /**
- * Choose an internal texture format based on the number of color components.
+ * Prepares an 18 to 8 bit quantization table from the specified palette.
+ * Finds the color index that most closely resembles this RGB combination.
+ *
+ * \note A time-consuming operation (64 * 64 * 64 * 256!).
+ */
+static void prepareColorPalette18To8(gl_colorpalette_t* pal)
+{
+    if((pal->flags & CPF_UPDATE_18TO8) || !pal->pal18To8)
+    {
+#define SIZEOF18TO8     (sizeof(ushort) * 262144) // \fixme Too big?
+
+        int                 r, g, b;
+        ushort              closestIndex = 0;
+
+        if(!pal->pal18To8)
+        {
+            pal->pal18To8 = Z_Malloc(SIZEOF18TO8, PU_STATIC, 0);
+        }
+
+        for(r = 0; r < 64; ++r)
+        {
+            for(g = 0; g < 64; ++g)
+            {
+                for(b = 0; b < 64; ++b)
+                {
+                    ushort              i;
+                    int                 smallestDiff = DDMAXINT;
+
+                    for(i = 0; i < pal->num; ++i)
+                    {
+                        int                 diff;
+                        const DGLubyte*     rgb = &pal->data[i * 3];
+
+                        diff =
+                            (rgb[CR] - (r << 2)) * (rgb[CR] - (r << 2)) +
+                            (rgb[CG] - (g << 2)) * (rgb[CG] - (g << 2)) +
+                            (rgb[CB] - (b << 2)) * (rgb[CB] - (b << 2));
+
+                        if(diff < smallestDiff)
+                        {
+                            smallestDiff = diff;
+                            closestIndex = i;
+                        }
+                    }
+
+                    pal->pal18To8[RGB18(r, g, b)] = closestIndex;
+                }
+            }
+        }
+
+        pal->flags &= ~CPF_UPDATE_18TO8;
+
+        /*if(ArgCheck("-dump_pal18to8"))
+        {
+            filename_t          name;
+            FILE*               file;
+
+            snprintf(name, FILENAME_T_MAXLEN, "%s_18To8.lmp",
+                     pal->name);
+            file = fopen(name, "wb");
+
+            fwrite(pal->pal18To8, SIZEOF18TO8, 1, file);
+            fclose(file);
+        }*/
+
+#undef SIZEOF18TO8
+    }
+}
+
+static void readBits(byte* out, const byte** src, byte* cb, uint numBits)
+{
+    int                 offset = 0, unread = numBits;
+
+    // Read full bytes.
+    if(unread >= 8)
+    {
+        do
+        {
+            out[offset++] = **src, (*src)++;
+        } while((unread -= 8) >= 8);
+    }
+
+    if(unread != 0)
+    {   // Read remaining bits.
+        byte                fb = 8 - unread;
+
+        if((*cb) == 0)
+            (*cb) = 8;
+
+        do
+        {
+            (*cb)--;
+            out[offset] <<= 1;
+            out[offset] |= ((**src >> (*cb)) & 0x01);
+        } while(--unread > 0);
+
+        out[offset] <<= fb;
+
+        if((*cb) == 0)
+            (*src)++;
+    }
+}
+
+/**
+ * @param compOrder     Component order. Examples:
+ *                         [0,1,2] == RGB
+ *                         [2,1,0] == BGR
+ * @param compSize      Number of bits per component [R,G,B].
+ */
+DGLuint GL_CreateColorPalette(const int compOrder[3],
+                              const byte compSize[3], const byte* data,
+                              ushort num)
+{
+    gl_colorpalette_t*  pal;
+    byte                order[3], bits[3];
+
+    // Ensure input is in range.
+    order[0] = MINMAX_OF(0, compOrder[0], 2);
+    order[1] = MINMAX_OF(0, compOrder[1], 2);
+    order[2] = MINMAX_OF(0, compOrder[2], 2);
+
+    bits[CR] = MIN_OF(compSize[CR], 32);
+    bits[CG] = MIN_OF(compSize[CG], 32);
+    bits[CB] = MIN_OF(compSize[CB], 32);
+
+    // Allocate a new color palette and data buffer.
+    colorPalettes = Z_Realloc(colorPalettes,
+        ++numColorPalettes * sizeof(*pal), PU_STATIC);
+
+    pal = &colorPalettes[numColorPalettes-1];
+
+    pal->num = num;
+    pal->data = Z_Malloc(pal->num * sizeof(DGLubyte) * 3, PU_STATIC, 0);
+
+    /**
+     * Copy the source data and convert to R8G8B8 in the process.
+     */
+
+    // First, see if the source data is already in the format we want.
+    if(bits[CR] == 8 && bits[CG] == 8 && bits[CB] == 8)
+    {   // Great! Just copy it as-is.
+        memcpy(pal->data, data, pal->num * 3);
+
+        // Do we need to adjust the order?
+        if(order[CR] != 0 || order[CG] != 1 || order[CB] != 2)
+        {
+            uint                i;
+
+            for(i = 0; i < pal->num; ++i)
+            {
+                byte*               dst = &pal->data[i * 3];
+                byte                tmp[3];
+
+                tmp[0] = dst[0];
+                tmp[1] = dst[1];
+                tmp[2] = dst[2];
+
+                dst[CR] = tmp[order[CR]];
+                dst[CG] = tmp[order[CG]];
+                dst[CB] = tmp[order[CB]];
+            }
+        }
+    }
+    else
+    {   // Another format entirely.
+        uint                i;
+        byte                cb = 0;
+        const byte*         src = data;
+
+        for(i = 0; i < pal->num; ++i)
+        {
+            byte*               dst = &pal->data[i * 3];
+            int                 tmp[3];
+
+            tmp[CR] = tmp[CG] = tmp[CB] = 0;
+
+            readBits((byte*) &(tmp[order[CR]]), &src, &cb, bits[order[CR]]);
+            readBits((byte*) &(tmp[order[CG]]), &src, &cb, bits[order[CG]]);
+            readBits((byte*) &(tmp[order[CB]]), &src, &cb, bits[order[CB]]);
+
+            // Need to do any scaling?
+            if(bits[CR] != 8)
+            {
+                if(bits[CR] < 8)
+                    tmp[CR] <<= 8 - bits[CR];
+                else
+                    tmp[CR] >>= bits[CR] - 8;
+            }
+
+            if(bits[CG] != 8)
+            {
+                if(bits[CG] < 8)
+                    tmp[CG] <<= 8 - bits[CG];
+                else
+                    tmp[CG] >>= bits[CG] - 8;
+            }
+
+            if(bits[CB] != 8)
+            {
+                if(bits[CB] < 8)
+                    tmp[CB] <<= 8 - bits[CB];
+                else
+                    tmp[CB] >>= bits[CB] - 8;
+            }
+
+            // Store the final color.
+            dst[CR] = MINMAX_OF(0, tmp[CR], 255);
+            dst[CG] = MINMAX_OF(0, tmp[CG], 255);
+            dst[CB] = MINMAX_OF(0, tmp[CB], 255);
+        }
+    }
+
+    // We defer creation of the 18 to 8 translation table as it may not
+    // be needed depending on what this palette is used for.
+    pal->flags = CPF_UPDATE_18TO8;
+    pal->pal18To8 = NULL;
+
+    return numColorPalettes; // 1-based index.
+}
+
+void GL_DeleteColorPalettes(DGLsizei n, const DGLuint* palettes)
+{
+    DGLsizei            i;
+
+    if(!(n > 0) || !palettes)
+        return;
+
+    for(i = 0; i < n; ++i)
+    {
+        if(palettes[i] != 0 && palettes[i] - 1 < numColorPalettes)
+        {
+            uint                idx = palettes[i]-1;
+            gl_colorpalette_t*  pal = &colorPalettes[idx];
+
+            Z_Free(pal->data);
+            if(pal->pal18To8)
+                Z_Free(pal->pal18To8);
+
+            memmove(&colorPalettes[idx], &colorPalettes[idx+1],
+                    sizeof(*pal));
+            numColorPalettes--;
+        }
+    }
+
+    if(numColorPalettes)
+    {
+        colorPalettes = Z_Realloc(colorPalettes,
+            numColorPalettes * sizeof(gl_colorpalette_t), PU_STATIC);
+    }
+    else
+    {
+        Z_Free(colorPalettes);
+        colorPalettes = NULL;
+    }
+}
+
+void GL_GetColorPaletteRGB(DGLuint id, DGLubyte rgb[3], ushort idx)
+{
+    if(id != 0 && id - 1 < numColorPalettes)
+    {
+        const gl_colorpalette_t* pal = &colorPalettes[id-1];
+
+        if(idx >= pal->num)
+            VERBOSE(
+            Con_Message("GL_GetColorPaletteRGB: Warning, color idx %u "
+                        "out of range in palette %u.\n", idx, id))
+
+        idx = MINMAX_OF(0, idx, pal->num) * 3;
+        rgb[CR] = pal->data[idx];
+        rgb[CG] = pal->data[idx + 1];
+        rgb[CB] = pal->data[idx + 2];
+    }
+}
+
+boolean GL_PalettizeImage(byte* out, int outformat, DGLuint palid,
+                          boolean gammaCorrect, const byte* in,
+                          int informat, int width, int height)
+{
+    if(out && in && width > 0 && height > 0 && informat <= 2 &&
+       outformat >= 3 && palid && palid - 1 < numColorPalettes)
+    {
+        int                 i, numPixels = width * height,
+                            inSize = (informat == 2 ? 1 : informat),
+                            outSize = (outformat == 2 ? 1 : outformat);
+        const gl_colorpalette_t* pal = &colorPalettes[palid-1];
+
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
+        {
+            ushort          idx = MINMAX_OF(0, (*in), pal->num) * 3;
+
+            if(gammaCorrect)
+            {
+                out[CR] = gammaTable[pal->data[idx]];
+                out[CG] = gammaTable[pal->data[idx + 1]];
+                out[CB] = gammaTable[pal->data[idx + 2]];
+            }
+            else
+            {
+                out[CR] = pal->data[idx];
+                out[CG] = pal->data[idx + 1];
+                out[CB] = pal->data[idx + 2];
+            }
+
+            // Will the alpha channel be necessary?
+            if(outformat == 4)
+            {
+                if(informat == 2)
+                    out[3] = in[numPixels * inSize];
+                else
+                    out[3] = 0;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+boolean GL_QuantizeImageToPalette(byte* out, int outformat,
+                                  DGLuint palid, const byte* in,
+                                  int informat, int width, int height)
+{
+    if(in && out && informat >= 3 && outformat <= 2 && width > 0 &&
+       height > 0 && palid && palid - 1 < numColorPalettes)
+    {
+        gl_colorpalette_t*  pal = &colorPalettes[palid-1];
+        int                 i, numPixels = width * height,
+                            inSize = (informat == 2 ? 1 : informat),
+                            outSize = (outformat == 2 ? 1 : outformat);
+
+        // Ensure we've prepared the 18 to 8 table.
+        prepareColorPalette18To8(pal);
+
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
+        {
+            // Convert the color value.
+            *out = pal->pal18To8[RGB18(in[0] >> 2, in[1] >> 2, in[2] >> 2)];
+
+            // Alpha channel?
+            if(outformat == 2)
+            {
+                if(informat == 4)
+                    out[numPixels * outSize] = in[3];
+                else
+                    out[numPixels * outSize] = 0;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Desaturates the texture in the dest buffer by averaging the colour then
+ * looking up the nearest match in the palette. Increases the brightness
+ * to maximum.
+ */
+void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width,
+                                int height)
+{
+    int                 i, max;
+    const int           numpels = width * height;
+    const gl_colorpalette_t* pal;
+
+    if(!buffer || !palid || palid - 1 >= numColorPalettes)
+        return;
+
+    if(width == 0 || height == 0)
+        return; // Nothing to do.
+
+    // Ensure we've prepared the 18 to 8 table.
+    prepareColorPalette18To8(&colorPalettes[palid-1]);
+
+    pal = &colorPalettes[palid-1];
+
+    // What is the maximum color value?
+    max = 0;
+    for(i = 0; i < numpels; ++i)
+    {
+        const DGLubyte*     rgb = &pal->data[
+            MINMAX_OF(0, buffer[i], pal->num) * 3];
+        int                 temp;
+
+        temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
+        if(temp > max)
+            max = temp;
+    }
+
+    for(i = 0; i < numpels; ++i)
+    {
+        const DGLubyte*     rgb = &pal->data[
+            MINMAX_OF(0, buffer[i], pal->num) * 3];
+        int                 temp;
+
+        // Calculate a weighted average.
+        temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
+        if(max)
+            temp *= 255.f / max;
+
+        buffer[i] = pal->pal18To8[RGB18(temp >> 2, temp >> 2, temp >> 2)];
+    }
+}
+
+/**
+ * Choose an internal texture format based on the number of color
+ * components.
  *
  * @param comps         Number of color components.
  * @return              The internal texture format.
  */
 GLenum ChooseFormat(int comps)
 {
-    boolean     compress = (GL_state_texture.useCompr && GL_state.allowCompression);
+    boolean             compress =
+        (GL_state_texture.useCompr && GL_state.allowCompression);
 
     switch(comps)
     {
@@ -83,73 +577,6 @@ GLenum ChooseFormat(int comps)
 
     // The fallback.
     return comps;
-}
-
-void loadPalette(int sharedPalette)
-{
-    int         i;
-    byte        paldata[256 * 3];
-
-    if(GL_state_texture.usePalTex == false)
-        return;
-
-    // Prepare the color table (RGBA -> RGB).
-    for(i = 0; i < 256; ++i)
-        memcpy(paldata + i * 3, GL_state_texture.palette[i].color, 3);
-
-    glColorTableEXT(sharedPalette ? GL_SHARED_TEXTURE_PALETTE_EXT :
-                    GL_TEXTURE_2D, GL_RGB, 256, GL_RGB, GL_UNSIGNED_BYTE,
-                    paldata);
-}
-
-boolean GL_EnablePalTexExt(boolean enable)
-{
-    if(!GL_state.palExtAvailable && !GL_state.sharedPalExtAvailable)
-    {
-        Con_Message
-            ("drOpenGL.GL_EnablePalTexExt: No paletted texture support.\n");
-        return false;
-    }
-
-    if((enable && GL_state_texture.usePalTex) ||
-       (!enable && !GL_state_texture.usePalTex))
-        return true;
-
-    if(!enable && GL_state_texture.usePalTex)
-    {
-        GL_state_texture.usePalTex = false;
-        if(GL_state.sharedPalExtAvailable)
-            glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
-#ifdef WIN32
-        glColorTableEXT = NULL;
-#endif
-        return true;
-    }
-
-    GL_state_texture.usePalTex = false;
-
-#ifdef WIN32
-    if((glColorTableEXT =
-        (PFNGLCOLORTABLEEXTPROC) wglGetProcAddress("glColorTableEXT")) == NULL)
-    {
-        Con_Message("drOpenGL.GL_EnablePalTexExt: getProcAddress failed.\n");
-        return false;
-    }
-#endif
-
-    GL_state_texture.usePalTex = true;
-    if(GL_state.sharedPalExtAvailable)
-    {
-        Con_Message("drOpenGL.GL_EnablePalTexExt: Using shared tex palette.\n");
-        glEnable(GL_SHARED_TEXTURE_PALETTE_EXT);
-        loadPalette(true);
-    }
-    else
-    {   // Palette will be loaded separately for each texture.
-        Con_Message("drOpenGL.GL_EnablePalTexExt: Using tex palette.\n");
-    }
-
-    return true;
 }
 
 int GL_GetTexAnisoMul(int level)
@@ -305,6 +732,10 @@ boolean grayMipmap(dgltexformat_t format, int width, int height, void *data)
  *                          DGL_COLOR_INDEX_8
  *                          DGL_COLOR_INDEX_8_PLUS_A8
  *                          DGL_LUMINANCE
+ * @param palid         Id of the color palette to use with this texture.
+ *                      Only has meaning if the input format is one of:
+ *                          DGL_COLOR_INDEX_8
+ *                          DGL_COLOR_INDEX_8_PLUS_A8
  * @param width         Width of the texture, must be power of two.
  * @param height        Height of the texture, must be power of two.
  * @param genMips       If negative, sets a specific mipmap level,
@@ -313,8 +744,8 @@ boolean grayMipmap(dgltexformat_t format, int width, int height, void *data)
  *
  * @return              @c true iff successful.
  */
-boolean GL_TexImage(dgltexformat_t format, int width, int height,
-                    int genMips, void *data)
+boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
+                    int width, int height, int genMips, void *data)
 {
     int                 mipLevel = 0;
     byte*               bdata = data;
@@ -339,6 +770,12 @@ boolean GL_TexImage(dgltexformat_t format, int width, int height,
     if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
         return false;
 
+    // If this is a paletted texture, we must know which palette to use.
+    if((format == DGL_COLOR_INDEX_8 ||
+        format == DGL_COLOR_INDEX_8_PLUS_A8) &&
+       (!palid || palid - 1 >= numColorPalettes))
+        return false;
+
     // Special fade-to-gray luminance texture? (used for details)
     if(genMips == DDMAXINT)
     {
@@ -355,17 +792,18 @@ boolean GL_TexImage(dgltexformat_t format, int width, int height,
         if(genMips && !GL_state_ext.genMip)
         {   // Build mipmap textures.
             gluBuild2DMipmaps(GL_TEXTURE_2D, GL_COLOR_INDEX8_EXT, width,
-                              height, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, data);
+                              height, GL_COLOR_INDEX, GL_UNSIGNED_BYTE,
+                              data);
         }
         else
         {   // The texture has no mipmapping.
-            glTexImage2D(GL_TEXTURE_2D, mipLevel, GL_COLOR_INDEX8_EXT, width,
-                         height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, mipLevel, GL_COLOR_INDEX8_EXT,
+                         width, height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE,
+                         data);
         }
 
-        // Load palette, too (if not shared).
-        if(!GL_state.sharedPalExtAvailable)
-            loadPalette(false);
+        // Load palette, too.
+        loadPalette(&colorPalettes[palid-1]);
     }
     else
     {   // Use true color textures.
@@ -413,24 +851,37 @@ boolean GL_TexImage(dgltexformat_t format, int width, int height,
                 break;
 
             case DGL_COLOR_INDEX_8:
+                {
+                const gl_colorpalette_t* pal = &colorPalettes[palid];
+
                 loadFormat = GL_RGB;
                 for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 3)
                 {
-                    pixel[CR] = GL_state_texture.palette[bdata[i]].color[CR];
-                    pixel[CG] = GL_state_texture.palette[bdata[i]].color[CG];
-                    pixel[CB] = GL_state_texture.palette[bdata[i]].color[CB];
+                    const byte*         src =
+                        &pal->data[MIN_OF(bdata[i], pal->num) * 3];
+
+                    pixel[CR] = gammaTable[src[CR]];
+                    pixel[CG] = gammaTable[src[CG]];
+                    pixel[CB] = gammaTable[src[CB]];
                 }
                 break;
-
+                }
             case DGL_COLOR_INDEX_8_PLUS_A8:
+                {
+                const gl_colorpalette_t* pal = &colorPalettes[palid];
+
                 for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 4)
                 {
-                    pixel[CR] = GL_state_texture.palette[bdata[i]].color[CR];
-                    pixel[CG] = GL_state_texture.palette[bdata[i]].color[CG];
-                    pixel[CB] = GL_state_texture.palette[bdata[i]].color[CB];
+                    const byte*         src =
+                        &pal->data[MIN_OF(bdata[i], pal->num) * 3];
+
+                    pixel[CR] = gammaTable[src[CR]];
+                    pixel[CG] = gammaTable[src[CG]];
+                    pixel[CB] = gammaTable[src[CB]];
                     pixel[CA] = bdata[numPixels + i];
                 }
                 break;
+                }
 
             case DGL_LUMINANCE:
                 loadFormat = GL_RGB;
@@ -455,8 +906,9 @@ boolean GL_TexImage(dgltexformat_t format, int width, int height,
 
         if(genMips && !GL_state_ext.genMip)
         {   // Build all mipmap levels.
-            gluBuild2DMipmaps(GL_TEXTURE_2D, ChooseFormat(colorComps), width,
-                              height, loadFormat, GL_UNSIGNED_BYTE, buffer);
+            gluBuild2DMipmaps(GL_TEXTURE_2D, ChooseFormat(colorComps),
+                              width, height, loadFormat, GL_UNSIGNED_BYTE,
+                              buffer);
         }
         else
         {   // The texture has no mipmapping, just one level.
@@ -474,24 +926,4 @@ boolean GL_TexImage(dgltexformat_t format, int width, int height,
 #endif
 
     return true;
-}
-
-void GL_Palette(dgltexformat_t format, void *data)
-{
-    unsigned char *ptr = data;
-    int         i;
-    size_t      size = sizeof(unsigned char) *(format == DGL_RGBA ? 4 : 3);
-
-    for(i = 0; i < 256; i++, ptr += size)
-    {
-        GL_state_texture.palette[i].color[CR] = ptr[CR];
-        GL_state_texture.palette[i].color[CG] = ptr[CG];
-        GL_state_texture.palette[i].color[CB] = ptr[CB];
-        GL_state_texture.palette[i].color[CA] = format == DGL_RGBA ? ptr[CA] : 0xff;
-    }
-    loadPalette(GL_state.sharedPalExtAvailable);
-
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
 }

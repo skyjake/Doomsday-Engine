@@ -52,6 +52,8 @@
 
 #include "def_main.h"
 
+#include "m_stack.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MAX_FRAMES              (128)
@@ -74,6 +76,22 @@ typedef struct {
     boolean         haveList;
     uint            listIdx;
 } vlightiterparams_t;
+
+typedef struct spriterecord_frame_s {
+    lumpnum_t       lump;
+    byte            frame[2];
+    byte            rotation[2];
+
+    material_t*     mat;
+    struct spriterecord_frame_s* next;
+} spriterecord_frame_t;
+
+typedef struct spriterecord_s {
+    char            name[5];
+    int             numFrames;
+    spriterecord_frame_t* frames;
+    struct spriterecord_s* next;
+} spriterecord_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -117,13 +135,14 @@ static vlightnode_t* vLightFirst, *vLightCursor;
 static uint numVLightLinkLists = 0, vLightLinkListCursor = 0;
 static vlightlist_t* vLightLinkLists;
 
-static spriteframe_t sprTemp[MAX_FRAMES];
-static int maxFrame;
-static char* spriteName;
-
 static vissprite_t overflowVisSprite;
 
 static const float worldLight[3] = {-.400891f, -.200445f, .601336f};
+
+// Tempory storage, used when reading sprite definitions.
+static int numSpriteRecords;
+static spriterecord_t* spriteRecords;
+static zblockset_t* spriteRecordBlockSet, *spriteRecordFrameBlockSet;
 
 // CODE --------------------------------------------------------------------
 
@@ -256,26 +275,22 @@ static void linkVLightNodeToList(vlightnode_t* node, uint listIndex)
 /**
  * Local function for R_InitSprites.
  */
-static void installSpriteLump(lumpnum_t lump, uint frame, uint rotation,
+static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
+                              material_t* mat, uint frame, uint rotation,
                               boolean flipped)
 {
-    int                 r;
-    material_t*         mat;
-
-    R_NewSpriteTexture(lump, &mat);
-
     if(frame >= 30 || rotation > 8)
     {
-        /*Con_Error("installSpriteLump: Bad frame characters in lump %i",
-                    (int) lump);*/
         return;
     }
 
-    if((int) frame > maxFrame)
-        maxFrame = frame;
+    if((int) frame > *maxFrame)
+        *maxFrame = frame;
 
     if(rotation == 0)
     {
+        int                 r;
+
         // The lump should be used for all rotations.
         sprTemp[frame].rotate = false;
         for(r = 0; r < 8; ++r)
@@ -295,124 +310,303 @@ static void installSpriteLump(lumpnum_t lump, uint frame, uint rotation,
     sprTemp[frame].flip[rotation] = (byte) flipped;
 }
 
-static void initSpriteDefs(void)
+/**
+ * In DOOM, a sprite frame is a patch texture contained in a lump
+ * existing between the S_START and S_END marker lumps (in WAD) whose
+ * lump name matches the following pattern:
+ *
+ *      NAME|A|R(A|R) (for example: "TROOA0" or "TROOA2A8")
+ *
+ * NAME: Four character name of the sprite.
+ * A: Animation frame ordinal 'A'... (ASCII).
+ * R: Rotation angle 0...8
+ *    0 : Use this frame for ALL angles.
+ *    1...8 : Angle of rotation in 45 degree increments.
+ *
+ * The second set of (optional) frame and rotation characters instruct
+ * that the same sprite frame is to be used for an additional frame
+ * but that the sprite patch should be flipped horizontally (right to
+ * left) during the loading phase.
+ */
+void R_PreInitSprites(void)
 {
-    int                 i, l, intname, frame, rotation;
-    boolean             inSpriteBlock;
-    float               starttime = Sys_GetSeconds();
+    float               startTime = Sys_GetSeconds();
 
-    sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_SPRITE, NULL);
+    int                 i, numSpritePatches = 0;
+    ddstack_t*          stack = Stack_New();
+
+    // Free all memory acquired for spritetex_t structures.
+    Z_FreeTags(PU_SPRITE, PU_SPRITE);
 
     /**
-     * Scan all the lump names for each of the names, noting the highest
-     * frame letter. Just compare 4 characters as ints.
+     * Step 1: Build database of lumps which may describe sprites.
      */
-    for(i = 0; i < numSprites; ++i)
+    numSpriteRecords = 0;
+    spriteRecords = NULL;
+    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64,
+                                         PU_STATIC),
+    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t),
+                                              256, PU_STATIC);
+    for(i = 0; i < numLumps; ++i)
     {
-        spriteName = sprNames[i].name;
-        memset(sprTemp, -1, sizeof(sprTemp));
+        const char*         name = W_LumpName(i);
+        spriterecord_t*     rec;
 
-        maxFrame = -1;
-        intname = *(int *) spriteName;
-
-        // Scan the lumps, filling in the frames for whatever is found.
-        inSpriteBlock = false;
-        for(l = 0; l < numLumps; ++l)
+        if(name[0] == 'S')
         {
-            char*               name = lumpInfo[l].name;
-
-            if(!strnicmp(name, "S_START", 7))
+            if(!strnicmp(name + 1, "_START", 6) ||
+               !strnicmp(name + 2, "_START", 6))
             {
                 // We've arrived at *a* sprite block.
-                inSpriteBlock = true;
+                Stack_Push(stack, NULL);
                 continue;
             }
-            else if(!strnicmp(name, "S_END", 5))
+            else if(!strnicmp(name + 1, "_END", 4) ||
+                    !strnicmp(name + 2, "_END", 4))
             {
                 // The sprite block ends.
-                inSpriteBlock = false;
+                Stack_Pop(stack);
                 continue;
-            }
-
-            if(!inSpriteBlock)
-                continue;
-
-            // Check that the first four letters match the sprite name.
-            if(*(int *) name == intname)
-            {
-                // Check that the name is valid.
-                if(!name[4] || !name[5] || (name[6] && !name[7]))
-                    continue;   // This is not a sprite frame.
-
-                // Indices 5 and 7 must be numbers (0-8).
-                if(name[5] < '0' || name[5] > '8')
-                    continue;
-
-                if(name[7] && (name[7] < '0' || name[7] > '8'))
-                    continue;
-
-                frame = name[4] - 'A';
-                rotation = name[5] - '0';
-                installSpriteLump(l, frame, rotation, false);
-                if(name[6])
-                {
-                    frame = name[6] - 'A';
-                    rotation = name[7] - '0';
-                    installSpriteLump(l, frame, rotation, true);
-                }
             }
         }
+
+        if(!Stack_Height(stack))
+            continue;
 
         /**
-         * Check the frames that were found for completeness.
+         * This lump is potentially a sprite.
          */
-        if(maxFrame == -1)
+
+        // Check that the name is valid.
+        if(!name[4] || !name[5] || (name[6] && !name[7]))
+            continue; // This is not a sprite frame.
+
+        // Indices 5 and 7 must be numbers (0-8).
+        if(name[5] < '0' || name[5] > '8')
+            continue;
+
+        if(name[7] && (name[7] < '0' || name[7] > '8'))
+            continue;
+
+        numSpritePatches++;
+
+        // Its a valid, name. Have we already come accross it?
+        rec = spriteRecords;
+        while(rec)
         {
-            sprites[i].numFrames = 0;
-            //Con_Error ("R_InitSprites: No lumps found for sprite %s", namelist[i]);
+            if(!strnicmp(rec->name, name, 4))
+                break;
+            rec = rec->next;
         }
 
-        maxFrame++;
-        for(frame = 0; frame < maxFrame; frame++)
-        {
-            switch((int) sprTemp[frame].rotate)
-            {
-            case -1: // No rotations were found for that frame at all.
-                Con_Error("R_InitSprites: No patches found for %s frame %c.",
-                          spriteName, frame + 'A');
-                break;
+        if(!rec)
+        {   // An entirely new sprite.
+            rec = Z_BlockNewElement(spriteRecordBlockSet);
+            strncpy(rec->name, name, 4);
+            rec->name[4] = '\0';
+            rec->numFrames = 0;
+            rec->frames = NULL;
 
-            case 0: // Only the first rotation is needed.
-                break;
-
-            case 1: // Must have all 8 frames.
-                for(rotation = 0; rotation < 8; ++rotation)
-                {
-                    if(!sprTemp[frame].mats[rotation])
-                        Con_Error("R_InitSprites: Sprite %s frame %c is "
-                                  "missing rotations.", spriteName,
-                                  frame + 'A');
-                }
-                break;
-
-            default:
-                Con_Error("R_InitSpriteDefs: Invalid value, "
-                          "sprTemp[frame].rotate = %i.",
-                          (int) sprTemp[frame].rotate);
-                break;
-            }
+            rec->next = spriteRecords;
+            spriteRecords = rec;
+            numSpriteRecords++;
         }
 
-        // Allocate space for the frames present and copy sprTemp to it.
-        sprites[i].numFrames = maxFrame;
-        sprites[i].spriteFrames =
-            Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
-        memcpy(sprites[i].spriteFrames, sprTemp,
-               maxFrame * sizeof(spriteframe_t));
+        // Add the frame(s).
+        {
+        spriterecord_frame_t* sprFrame = rec->frames;
+        boolean             link = false;
+
+        while(sprFrame)
+        {
+            if(sprFrame->frame[0] == name[4] - 'A' + 1 &&
+               sprFrame->rotation[0] == name[5] - '0')
+                break;
+            sprFrame = sprFrame->next;
+        }
+
+        if(!sprFrame)
+        {   // A new frame.
+            sprFrame = Z_BlockNewElement(spriteRecordFrameBlockSet);
+            link = true;
+        }
+
+        sprFrame->lump = i;
+        sprFrame->frame[0] = name[4] - 'A' + 1;
+        sprFrame->rotation[0] = name[5] - '0';
+        if(name[6])
+        {
+            sprFrame->frame[1] = name[6] - 'A' + 1;
+            sprFrame->rotation[1] = name[7] - '0';
+        }
+        else
+        {
+            sprFrame->frame[1] = 0;
+        }
+
+        if(link)
+        {
+            sprFrame->next = rec->frames;
+            rec->frames = sprFrame;
+        }
+        }
     }
 
-    VERBOSE(Con_Message("R_InitSpriteDefs: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
+    while(Stack_Height(stack))
+        Stack_Pop(stack);
+    Stack_Delete(stack);
+
+    /**
+     * Step 2: Create gltextures and materials for ALL sprite patches.
+     */
+    numSpriteTextures = numSpritePatches;
+    spriteTextures = NULL;
+
+    if(numSpritePatches)
+    {
+        int                 idx = 0;
+        spritetex_t*        storage;
+        spriterecord_t*     rec = spriteRecords;
+
+        spriteTextures = Z_Malloc(sizeof(spritetex_t*) * numSpriteTextures, PU_SPRITE, 0);
+        storage = Z_Malloc(sizeof(spritetex_t) * numSpriteTextures, PU_SPRITE, 0);
+
+        do
+        {
+            spriterecord_frame_t* frame = rec->frames;
+
+            do
+            {
+                const char*         name;
+                const lumppatch_t*  patch;
+                spritetex_t*        sprTex;
+                const gltexture_t*  glTex;
+
+                spriteTextures[idx] = sprTex = &storage[idx];
+
+                patch = (const lumppatch_t *)
+                    W_CacheLumpNum(frame->lump, PU_CACHE);
+                name = W_LumpName(frame->lump);
+
+                sprTex->lump = frame->lump;
+                sprTex->offX = SHORT(patch->leftOffset);
+                sprTex->offY = SHORT(patch->topOffset);
+                sprTex->width = SHORT(patch->width);
+                sprTex->height = SHORT(patch->height);
+
+                glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
+
+                // Create a new material for this sprite patch.
+                frame->mat = P_MaterialCreate(name, sprTex->width,
+                    sprTex->height, 0, glTex->id, MN_SPRITES, NULL);
+            } while((frame = frame->next));
+        } while((rec = rec->next));
+    }
+
+    VERBOSE(Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - startTime));
+}
+
+static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
+{
+    numSprites = num;
+    if(sprites)
+        Z_Free(sprites);
+    sprites = NULL;
+
+    if(numSprites)
+    {
+        int                 n, idx = 0;
+        spriteframe_t       sprTemp[MAX_FRAMES];
+        int                 maxFrame;
+
+        sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_STATIC, NULL);
+
+        for(n = 0; n < num; ++n)
+        {
+            int                 frame;
+            const spriterecord_t* rec;
+            spritedef_t*        sprDef = &sprites[n];
+
+            if(!sprRecords[n])
+            {   // A record for a sprite we were unable to locate.
+                sprDef->numFrames = 0;
+                sprDef->spriteFrames = NULL;
+                continue;
+            }
+
+            rec = sprRecords[n];
+
+            memset(sprTemp, -1, sizeof(sprTemp));
+            maxFrame = -1;
+
+            {
+            const spriterecord_frame_t* frame = rec->frames;
+
+            do
+            {
+                installSpriteLump(sprTemp, &maxFrame, frame->mat,
+                                  frame->frame[0] - 1, frame->rotation[0],
+                                  false);
+                if(frame->frame[1])
+                    installSpriteLump(sprTemp, &maxFrame, frame->mat,
+                                      frame->frame[1] - 1, frame->rotation[1],
+                                      true);
+            } while((frame = frame->next));
+            }
+
+            /**
+             * Check the frames that were found for completeness.
+             */
+            if(maxFrame == -1)
+            {   // Should NEVER happen.
+                sprDef->numFrames = 0;
+            }
+
+            maxFrame++;
+            for(frame = 0; frame < maxFrame; ++frame)
+            {
+                switch((int) sprTemp[frame].rotate)
+                {
+                case -1: // No rotations were found for that frame at all.
+                    Con_Error("R_InitSprites: No patches found for %s frame %c.",
+                              rec->name, frame + 'A');
+                    break;
+
+                case 0: // Only the first rotation is needed.
+                    break;
+
+                case 1: // Must have all 8 frames.
+                    {
+                    int                 rotation;
+                    for(rotation = 0; rotation < 8; ++rotation)
+                    {
+                        if(!sprTemp[frame].mats[rotation])
+                            Con_Error("R_InitSprites: Sprite %s frame %c is "
+                                      "missing rotations.", rec->name,
+                                      frame + 'A');
+                    }
+                    }
+                    break;
+
+                default:
+                    Con_Error("R_InitSpriteDefs: Invalid value, "
+                              "sprTemp[frame].rotate = %i.",
+                              (int) sprTemp[frame].rotate);
+                    break;
+                }
+            }
+
+            // Allocate space for the frames present and copy sprTemp to it.
+            strncpy(sprDef->name, rec->name, 4);
+            sprDef->name[4] = '\0';
+            sprDef->numFrames = maxFrame;
+            sprDef->spriteFrames =
+                Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
+            memcpy(sprDef->spriteFrames, sprTemp,
+                   maxFrame * sizeof(spriteframe_t));
+        }
+    }
 }
 
 /**
@@ -424,16 +618,53 @@ static void initSpriteDefs(void)
  * additional letter/number appended.  The rotation character can be 0 to
  * signify no rotations.
  */
-void R_InitSpriteDefs(void)
+void R_InitSprites(void)
 {
-    numSpriteTextures = 0;
-    numSprites = countSprNames.num;
+    float               startTime = Sys_GetSeconds();
 
-    // Check that some sprites are defined.
-    if(!numSprites)
-        return;
+    int                 n, max;
+    spriterecord_t*     rec, **list;
 
-    initSpriteDefs();
+    /**
+     * \kludge
+     * As the games still rely upon the sprite definition indices to match
+     * those of the sprite name table, use the later to re-index the sprite
+     * records database before using them to derive the sprite definitions.
+     * New sprites added in mods that we do not have sprite name defs for
+     * are pushed to the end of the list (this is fine as the game will not
+     * attempt to reference them by either name or indice as they are not
+     * present in their game-side sprite index tables. Similarly, DeHackED
+     * does not allow for new sprite frames to be added anyway).
+     *
+     * \todo
+     * This unobvious requirement should be broken somehow and perhaps even
+     * get rid of the sprite name definitions entirely.
+     */
+    max = MAX_OF(numSpriteRecords, countSprNames.num);
+    n = max-1;
+    list = M_Calloc(sizeof(spriterecord_t*) * max);
+    rec = spriteRecords;
+    do
+    {
+        int                 idx = Def_GetSpriteNum(rec->name);
+        list[idx == -1? n-- : idx] = rec;
+    } while((rec = rec->next));
+    /// \kludge end
+
+    // Create sprite definitions from the located sprite patch lumps.
+    initSpriteDefs(list, max);
+
+    M_Free(list);
+
+    // We are now done with the sprite records.
+    Z_BlockDestroy(spriteRecordBlockSet);
+    spriteRecordBlockSet = NULL;
+    Z_BlockDestroy(spriteRecordFrameBlockSet);
+    spriteRecordFrameBlockSet = NULL;
+    numSpriteRecords = 0;
+
+    VERBOSE(Con_Message("R_InitSprites: Done in %.2f seconds.\n",
+                        Sys_GetSeconds() - startTime));
 }
 
 material_t* R_GetMaterialForSprite(int sprite, int frame)
@@ -450,7 +681,7 @@ material_t* R_GetMaterialForSprite(int sprite, int frame)
     return sprDef->spriteFrames[frame].mats[0];
 }
 
-void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
+boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 {
     spritedef_t*        sprDef;
     spriteframe_t*      sprFrame;
@@ -458,10 +689,11 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     material_t*         mat;
     material_snapshot_t ms;
 
-#ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
-        Con_Error("R_GetSpriteInfo: invalid sprite number %i.\n", sprite);
-#endif
+    {
+        Con_Message("R_GetSpriteInfo: Warning, invalid sprite number %i.\n", sprite);
+        return false;
+    }
 
     sprDef = &sprites[sprite];
 
@@ -469,7 +701,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     {
         // We have no information to return.
         memset(info, 0, sizeof(*info));
-        return;
+        return false;
     }
 
     sprFrame = &sprDef->spriteFrames[frame];
@@ -486,19 +718,31 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->topOffset = sprTex->offY;
     info->width = ms.width;
     info->height = ms.height;
+    return true;
 }
 
-void R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
+boolean R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
 {
-    lumppatch_t*        patch =
-        (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
+    if(info)
+        return false;
 
     memset(info, 0, sizeof(*info));
-    info->lump = info->realLump = lump;
-    info->width = SHORT(patch->width);
-    info->height = SHORT(patch->height);
-    info->topOffset = SHORT(patch->topOffset);
-    info->offset = SHORT(patch->leftOffset);
+
+    if(lump >= 0 && lump < numLumps)
+    {
+        lumppatch_t*        patch =
+            (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
+
+        info->lump = info->realLump = lump;
+        info->width = SHORT(patch->width);
+        info->height = SHORT(patch->height);
+        info->topOffset = SHORT(patch->topOffset);
+        info->offset = SHORT(patch->leftOffset);
+        return true;
+    }
+
+    VERBOSE(Con_Message("R_GetPatchInfo: Warning, invalid lumpnum %i.\n", lump));
+    return false;
 }
 
 /**
@@ -524,13 +768,6 @@ float R_VisualRadius(mobj_t* mo)
     Material_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame),
                      true, NULL);
     return ms.width / 2;
-}
-
-void R_InitSprites(void)
-{
-    // Free all previous sprite memory.
-    Z_FreeTags(PU_SPRITE, PU_SPRITE);
-    R_InitSpriteDefs();
 }
 
 /**
@@ -649,7 +886,7 @@ void R_ProjectPlayerSprites(void)
                 (32 - psp->pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
             if(weaponFOVShift > 0 && fieldOfView > 90)
-                spr->data.model.yawAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
+                spr->data.model.pitchAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
             // Real rotation angles.
             spr->data.model.yaw =
                 viewAngle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
@@ -786,7 +1023,7 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                   struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                   float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                   uint vLightListIdx,
-                                  int id, int selector, subsector_t* ssec, int mobjDDFlags,
+                                  int id, int selector, subsector_t* ssec, int mobjDDFlags, int tmap,
                                   boolean viewAlign, boolean fullBright,
                                   boolean alwaysInterpolate)
 {
@@ -800,6 +1037,7 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->id = id;
     params->selector = selector;
     params->flags = mobjDDFlags;
+    params->tmap = tmap;
     params->center[VX] = x;
     params->center[VY] = y;
     params->center[VZ] = z;
@@ -978,10 +1216,8 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    if(mo->ddFlags & DDMF_TRANSLATION)
-        tmap = (mo->ddFlags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
-    if(mo->ddFlags & DDMF_TRANSLATION)
-        tclass = (mo->ddFlags >> DDMF_CLASSTRSHIFT) & 0x3;
+    tmap = mo->tmap;
+    tclass = mo->tclass;
 
     memset(&mparams, 0, sizeof(mparams));
     mparams.tmap = tmap;
@@ -1001,61 +1237,52 @@ void R_ProjectSprite(mobj_t* mo)
         align = true;
 
     // Perform visibility checking.
+    {
+    float               center[2], v1[2], v2[2];
+    float               width = R_VisualRadius(mo)*2, offset = 0;
+
     if(!mf)
-    {   // Its a sprite.
-        if(!align && alwaysAlign != 2 && alwaysAlign != 3)
+        offset = (float) sprTex->offX - (width / 2);
+
+    // Project a line segment relative to the view in 2D, then check
+    // if not entirely clipped away in the 360 degree angle clipper.
+    center[VX] = mo->pos[VX];
+    center[VY] = mo->pos[VY];
+    M_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
+                                width, offset, v1, v2);
+
+    // Check for visibility.
+    if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
+    {   // Isn't visible.
+        if(mf)
         {
-            float               center[2], v1[2], v2[2];
-            float               width, offset;
-
-            visType = VSPR_SPRITE;
-
-            width = (float) ms.width;
-            offset = (float) sprTex->offX - (width / 2);
-
-            // Project a line segment relative to the view in 2D, then check
-            // if not entirely clipped away in the 360 degree angle clipper.
-            center[VX] = mo->pos[VX];
-            center[VY] = mo->pos[VY];
-            M_ProjectViewRelativeLine2D(center, (align || alwaysAlign == 3),
-                                        width, offset, v1, v2);
-
-            // Check for visibility.
-            if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
-                return; // Isn't visible.
-        }
-    }
-    else
-    {   // Its a model.
-        float               v[2], off[2];
-        float               sinrv, cosrv;
-
-        visType = VSPR_MODEL;
-
-        v[VX] = mo->pos[VX];
-        v[VY] = mo->pos[VY];
-
-        thangle =
-            BANG2RAD(bamsAtan2(pos[VY] * 10, pos[VX] * 10)) - PI / 2;
-        sinrv = sin(thangle);
-        cosrv = cos(thangle);
-        off[VX] = cosrv * mo->radius;
-        off[VY] = sinrv * mo->radius;
-        if(!C_CheckViewRelSeg
-           (v[VX] - off[VX], v[VY] - off[VY], v[VX] + off[VX],
-            v[VY] + off[VY]))
-        {
-            // The visibility check indicates that the model's origin is
-            // not visible. However, if the model is close to the viewpoint
-            // we will need to draw it. Otherwise large models are likely
-            // to disappear too early.
+            // If the model is close to the viewpoint we will need to
+            // draw it. Otherwise large models are likely to disappear
+            // too early.
             if(P_ApproxDistance
                (distance, mo->pos[VZ] + (mo->height / 2) - viewZ) >
                MAX_OBJECT_RADIUS)
             {
-                return;         // Can't be visible.
+                return; // Can't be visible.
             }
         }
+        else
+        {
+            return;
+        }
+    }
+    }
+
+    if(!mf)
+    {
+        visType = mf? VSPR_MODEL : VSPR_SPRITE;
+    }
+    else
+    {   // Its a model.
+        visType = VSPR_MODEL;
+        thangle = BANG2RAD(bamsAtan2(pos[VY] * 10, pos[VX] * 10)) -
+            PI / 2;
+
         // Viewaligning means scaling down Z with models.
         align = false;
     }
@@ -1281,6 +1508,7 @@ void R_ProjectSprite(mobj_t* mo)
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                      vLightListIdx, mo->thinker.id, mo->selector,
                                      mo->subsector, mo->ddFlags,
+                                     mo->tmap,
                                      viewAlign,
                                      fullBright && !(mf && (mf->sub[0].flags & MFF_DIM)),
                                      false);

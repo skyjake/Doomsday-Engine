@@ -54,6 +54,10 @@ typedef enum {
     GLT_DETAIL,
     GLT_SHINY,
     GLT_MASK,
+    GLT_MODELSKIN,
+    GLT_MODELSHINYSKIN,
+    GLT_LIGHTMAP,
+    GLT_FLARE,
     NUM_GLTEXTURE_TYPES
 } gltexture_type_t;
 
@@ -62,7 +66,11 @@ typedef enum {
     (t) == GLT_SPRITE? "sprite" : \
     (t) == GLT_DETAIL? "detailtex" : \
     (t) == GLT_SHINY? "shinytex" : \
-    (t) == GLT_MASK? "masktex" : "systemtex")
+    (t) == GLT_MASK? "masktex" : \
+    (t) == GLT_MODELSKIN? "modelskin" : \
+    (t) == GLT_MODELSHINYSKIN? "modelshinyskin" : \
+    (t) == GLT_LIGHTMAP? "lightmap" : \
+    (t) == GLT_FLARE? "flaretex" : "systemtex")
 
 typedef struct gltexture_s {
     gltextureid_t   id;
@@ -104,7 +112,7 @@ typedef struct gltexture_inst_s {
  * it must be discarded with GL_DestroyImage.
  */
 typedef struct image_s {
-    char            fileName[256];
+    filename_t      fileName;
     int             width;
     int             height;
     int             pixelSize;
@@ -113,25 +121,14 @@ typedef struct image_s {
     byte*           pixels;
 } image_t;
 
-/**
- * Processing modes for GL_LoadGraphics.
- */
-typedef enum gfxmode_e {
-    LGM_NORMAL = 0,
-    LGM_GRAYSCALE = 1,
-    LGM_GRAYSCALE_ALPHA = 2,
-    LGM_WHITE_ALPHA = 3
-} gfxmode_t;
-
-extern int      ratioLimit;
-extern int      mipmapping, linearRaw, texQuality, filterSprites;
-extern int      texMagMode, texAniso;
-extern int      useSmartFilter;
-extern byte     loadExtAlways;
-extern int      texMagMode;
-extern int      upscaleAndSharpenPatches;
-extern int      glmode[6];
-extern int      palLump;
+extern int ratioLimit;
+extern int mipmapping, linearRaw, texQuality, filterSprites;
+extern int texMagMode, texAniso;
+extern int useSmartFilter;
+extern byte loadExtAlways;
+extern int texMagMode;
+extern int upscaleAndSharpenPatches;
+extern int glmode[6];
 
 void            GL_TexRegister(void);
 
@@ -140,46 +137,36 @@ void            GL_InitTextureManager(void);
 void            GL_ResetTextureManager(void);
 void            GL_ShutdownTextureManager(void);
 
+void            GL_TexReset(void);
 void            GL_LoadSystemTextures(void);
-void            GL_LoadLightmaps(void);
-void            GL_LoadFlareTextures(void);
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
+void            GL_DeleteRawImages(void);
+int             GL_InitPalettedTexture(void);
+
 void            GL_DoTexReset(cvar_t* unused);
 void            GL_DoUpdateTexGamma(cvar_t* unused);
 void            GL_DoUpdateTexParams(cvar_t* unused);
-int             GL_InitPalettedTexture(void);
+void            GL_UpdateTexParams(int mipmode);
 
 void            GL_BindTexture(DGLuint texname, int magMode);
+void            GL_SetNoTexture(void);
+void            GL_SetTextureParams(int minMode, int gameTex, int uiTex);
+boolean         GL_IsColorKeyed(const char* path);
 
-void            GL_LowRes(void);
-void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
-byte*           GL_LoadImage(image_t* img, const char* imagefn,
-                             boolean useModelPath);
-byte*           GL_LoadImageCK(image_t* img, const char* imagefn,
-                               boolean useModelPath);
+byte*           GL_LoadImage(image_t* img, const char* imagefn);
 void            GL_DestroyImage(image_t* img);
-byte*           GL_LoadTexture(image_t* img, const char* name);
-DGLuint         GL_LoadGraphics(const char* name, gfxmode_t mode);
-DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char* name,
-                                 gfxmode_t mode, int useMipmap, boolean clamped,
-                                 int otherFlags);
-DGLuint         GL_LoadGraphics3(const char* name, gfxmode_t mode,
-                                 int minFilter, int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT, int otherFlags);
-DGLuint         GL_LoadGraphics4(resourceclass_t resClass, const char* name,
-                                 gfxmode_t mode, int useMipmap,
-                                 int minFilter, int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT, int otherFlags);
+
 DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  boolean flagAlphaChannel,
                                  boolean flagGenerateMipmaps,
                                  boolean flagRgbData,
                                  boolean flagNoStretch,
                                  boolean flagNoSmartFilter,
-                                 int minFilter, int magFilter, int anisoFilter,
-                                 int wrapS, int wrapT, int otherFlags);
+                                 int minFilter, int magFilter,
+                                 int anisoFilter, int wrapS, int wrapT,
+                                 int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 
 byte            GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context);
@@ -189,34 +176,42 @@ byte            GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, v
 byte            GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* context);
+
+byte            GL_LoadDoomPatch(image_t* image, const patchtex_t* p);
+byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
+byte            GL_LoadExtTexture(image_t* image, ddresourceclass_t resClass,
+                                  const char* name, gfxmode_t mode);
+
+DGLuint         GL_PrepareExtTexture(ddresourceclass_t resClass,
+                                     const char* name, gfxmode_t mode,
+                                     int useMipmap, int minFilter,
+                                     int magFilter, int anisoFilter,
+                                     int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint         GL_PrepareFlareTexture(flaretexid_t flare);
+DGLuint         GL_PrepareSysFlareTexture(flaretexid_t flare);
 
-DGLuint         GL_PreparePatch(lumpnum_t lump);
-DGLuint         GL_GetRawTexInfo(lumpnum_t lump, boolean part2);
-DGLuint         GL_PrepareRawTex(lumpnum_t lump, boolean part2);
+DGLuint         GL_PreparePatch(patchtex_t* patch);
+DGLuint         GL_PreparePatchOtherPart(patchtex_t* patch);
+DGLuint         GL_PrepareRawTex(rawtex_t* rawTex);
+DGLuint         GL_PrepareRawTexOtherPart(rawtex_t* rawTex);
 
-// Load the skin texture and prepare it for rendering.
-unsigned int    GL_PrepareSkin(skintex_t* stp, boolean allowTexComp);
-unsigned int    GL_PrepareShinySkin(skintex_t* stp);
+DGLuint         GL_GetLightMapTexture(const char* name);
+DGLuint         GL_GetFlareTexture(const char* name, int oldIdx);
 
 void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);
-void            GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap);
+void            GL_SetTranslatedSprite(material_t* mat, int tclass,
+                                       int tmap);
 
-DGLuint         GL_BindTexPatch(struct patchtex_s* p);
-DGLuint         GL_GetPatchOtherPart(lumpnum_t lump);
 void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps are generated.
-DGLuint         GL_BindTexRaw(struct rawtex_s* r);
-DGLuint         GL_GetRawOtherPart(lumpnum_t lump);
-unsigned int    GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
-void            GL_SetNoTexture(void);
 
-void            GL_NewSplitTex(lumpnum_t lump, DGLuint part2name);
-void            GL_UpdateTexParams(int mipmode);
-void            GL_DeleteRawImages(void);
+void            GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
+                               int wrapT);
 
-boolean         GL_IsColorKeyed(const char* path);
 
 // Management of and access to gltextures (via the texmanager):
 const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeID,
@@ -225,7 +220,8 @@ void            GL_ReleaseGLTexture(gltextureid_t id);
 const gltexture_inst_t* GL_PrepareGLTexture(gltextureid_t id, void* context,
                                             byte* result);
 const gltexture_t* GL_GetGLTexture(gltextureid_t id);
-const gltexture_t* GL_GetGLTextureByName(const char* name, gltexture_type_t type);
+const gltexture_t* GL_GetGLTextureByName(const char* name,
+                                         gltexture_type_t type);
 void            GL_SetAllGLTexturesMinMode(int minMode);
 void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 
@@ -233,4 +229,5 @@ void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 float           GLTexture_GetWidth(const gltexture_t* tex);
 float           GLTexture_GetHeight(const gltexture_t* tex);
 boolean         GLTexture_IsFromIWAD(const gltexture_t* tex);
+
 #endif

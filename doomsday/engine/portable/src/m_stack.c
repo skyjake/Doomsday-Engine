@@ -106,6 +106,7 @@ void Stack_Push(ddstack_t* s, void* data)
 void* Stack_Pop(ddstack_t* s)
 {
     stackdata_t*        stack;
+    void*               retVal;
 
     if(!s)
         return NULL;
@@ -119,8 +120,8 @@ Con_Message("Stack::Pop: Underflow.\n");
         return NULL;
     }
 
-    stack->data[stack->height-1] = NULL;
-    stack->height--;
+    retVal = stack->data[--stack->height];
+    stack->data[stack->height] = NULL;
 
-    return stack->data[stack->height-1];
+    return retVal;
 }

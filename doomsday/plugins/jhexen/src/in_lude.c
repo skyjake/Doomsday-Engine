@@ -123,7 +123,7 @@ void IN_Start(void)
     SN_StopAllSequences();
 
     // InFine handles the text.
-    if(!GAMERULES.deathmatch)
+    if(!deathmatch)
     {
         G_SetGameAction(GA_LEAVEMAP);
         return;
@@ -165,7 +165,7 @@ static void initStats(void)
     int                 slaughterCount;
     int                 playerCount;
 
-    if(!GAMERULES.deathmatch)
+    if(!deathmatch)
     {
 #if 0
         int                 oldCluster;
@@ -352,7 +352,7 @@ static void CheckForSkip(void)
         }
     }
 
-    if(GAMERULES.deathmatch && interTime < 140)
+    if(deathmatch && interTime < 140)
     {   // Wait for 4 seconds before allowing a skip.
         if(skipIntermission == 1)
         {
@@ -449,14 +449,14 @@ static void drawDeathTally(void)
             }
             else
             {
-                temp = M_StringWidth("--", huFontA) / 2;
+                temp = M_StringWidth("--", GF_FONTA) / 2;
                 if(bold)
                 {
-                    M_WriteText2(x - temp, y, "--", huFontA, 1, 0.7f, 0.3f, 1);
+                    M_WriteText2(x - temp, y, "--", GF_FONTA, 1, 0.7f, 0.3f, 1);
                 }
                 else
                 {
-                    M_WriteText2(x - temp, y, "--", huFontA, 1, 1, 1, 1);
+                    M_WriteText2(x - temp, y, "--", GF_FONTA, 1, 1, 1, 1);
                 }
             }
         }
@@ -481,8 +481,8 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
         sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, huFontA) / 2, y, buff,
-                 huFontA, 1, 1, 1, 1);
+    M_WriteText2(x - M_StringWidth(buff, GF_FONTA) / 2, y, buff,
+                 GF_FONTA, 1, 1, 1, 1);
 }
 
 static void drawNumberBold(int val, int x, int y, int wrapThresh)
@@ -494,6 +494,6 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
         sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, huFontA) / 2, y, buff,
-                 huFontA, 1, 0.7f, 0.3f, 1);
+    M_WriteText2(x - M_StringWidth(buff, GF_FONTA) / 2, y, buff,
+                 GF_FONTA, 1, 0.7f, 0.3f, 1);
 }

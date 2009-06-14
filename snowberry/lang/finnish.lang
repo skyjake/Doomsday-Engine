@@ -266,8 +266,6 @@ maximum-texture-size-2048: 2048 x 2048
 maximum-texture-size-4096: 4096 x 4096
 
 sound-driver: Ääniajuri
-sound-driver-ds8: Sisäänrakennettu (DirectSound 8)
-sound-driver-ds6: Yhteensopiva (DirectSound 6)
 sound-driver-dummy: Ei ääniä
 
 sound-channels: Äänikanavat
@@ -275,7 +273,6 @@ disable-audio: Poista kaikki äänet
 disable-sound-effects: Poista ääniefektit
 disable-music: Poista musiikki
 disable-primary-buffer: Ei aseta ensisijaista puskuriformaattia
-disable-fmod: Poista FMOD
 
 eax-options: EAX-valinnat
 disable-eax: Poista EAX

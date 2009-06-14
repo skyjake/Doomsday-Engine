@@ -86,7 +86,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     else
         num = clipAmmo[ammo] / 2;
 
-    if(gs.skill == SM_BABY || gs.skill == SM_NIGHTMARE)
+    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
     {
         // Give double ammo in trainer mode (you'll need it in nightmare!).
         num *= 2;
@@ -115,7 +115,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
     ammotype_t          i;
     boolean             gaveAmmo = false, gaveWeapon = false;
 
-    if(IS_NETGAME && (GAMERULES.deathmatch != 2) && !dropped)
+    if(IS_NETGAME && (deathmatch != 2) && !dropped)
     {
         // Leave placed weapons forever on net games.
         if(player->weapons[weapon].owned)
@@ -128,10 +128,10 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->pClass].mode[0].ammoType[i])
+            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
-            if(GAMERULES.deathmatch)
+            if(deathmatch)
                 numClips = 5;
             else
                 numClips = 2;
@@ -141,7 +141,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         }
 
         // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, GAMERULES.deathmatch == 1);
+        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
@@ -154,7 +154,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->pClass].mode[0].ammoType[i])
+            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
                 continue;  // Weapon does not take this type of ammo.
 
             // Give one clip with a dropped weapon, two clips if found.
@@ -219,7 +219,7 @@ boolean P_GiveArmor(player_t* plr, int type, int points)
         return false; // Don't pick up.
 
     P_PlayerSetArmorType(plr, type);
-    P_PlayerGiveArmorBonus(plr, points);
+    P_PlayerGiveArmorBonus(plr, points - plr->armorPoints);
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(plr - players, HUE_ON_PICKUP_ARMOR);
@@ -326,7 +326,7 @@ boolean P_TakePower(player_t* player, int power)
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
     {
-        if(plrmo->pos[VZ] != plrmo->floorZ && PLRPROFILE.camera.lookSpring)
+        if(plrmo->pos[VZ] != plrmo->floorZ && cfg.lookSpring)
         {
             player->centering = true;
         }
@@ -468,12 +468,11 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_ARMOR_BONUS:
-        plr->armorPoints++; // Can go over 100%.
-        if(plr->armorPoints > armorPoints[1]) // 200
-            plr->armorPoints = armorPoints[1];
         if(!plr->armorType)
-            plr->armorType = armorClass[0];
-        plr->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
+            P_PlayerSetArmorType(plr, armorClass[0]);
+        if(plr->armorPoints < armorPoints[1])
+            P_PlayerGiveArmorBonus(plr, 1);
+
         P_SetMessage(plr, GOTARMBONUS, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
@@ -590,7 +589,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_MEGASPHERE:
-        if(gs.gameMode != commercial)
+        if(gameMode != commercial)
             return false;
         plr->health = megaSphereHealth;
         plr->plr->mo->health = plr->health;
@@ -617,7 +616,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
             return false;
 
         P_SetMessage(plr, GOTBERSERK, false);
-        if(plr->readyWeapon != WT_FIRST && PLRPROFILE.inventory.berserkAutoSwitch)
+        if(plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
         {
             plr->pendingWeapon = WT_FIRST;
             plr->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
@@ -815,7 +814,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
     else
     {
-        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
+        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.\n",
                     (int) special->type);
     }
 
@@ -878,7 +877,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         target->flags &= ~MF_SOLID;
         target->flags2 &= ~MF2_FLY;
         target->player->powers[PT_FLIGHT] = 0;
-        target->player->pState = PST_DEAD;
+        target->player->playerState = PST_DEAD;
         target->player->rebornWait = PLAYER_REBORN_TICS;
         target->player->update |= PSF_STATE;
         target->player->plr->flags |= DDPF_DEAD;
@@ -932,7 +931,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     mo = P_SpawnMobj3f(item,
                        target->pos[VX] + 3 * FIX2FLT(finecosine[an]),
                        target->pos[VY] + 3 * FIX2FLT(finesine[an]),
-                       ONFLOORZ, angle);
+                       0, angle, MTF_Z_FLOOR);
     mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
@@ -985,13 +984,13 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !GAMERULES.deathmatch && GAMERULES.noCoopDamage)
+            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
-            if(GAMERULES.noTeamDamage &&
-               gs.players[target->player - players].color ==
-               gs.players[source->player - players].color)
+            if(cfg.noTeamDamage &&
+               cfg.playerColor[target->player - players] ==
+               cfg.playerColor[source->player - players])
                 return 0;
         }
     }
@@ -1002,7 +1001,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     }
 
     player = target->player;
-    if(player && gs.skill == SM_BABY)
+    if(player && gameSkill == SM_BABY)
         damage /= 2; // Take half damage in trainer mode.
 
     // Use the cvar damage multiplier netMobDamageModifier only if the
@@ -1012,7 +1011,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= GAMERULES.mobDamageModifier;
+            damage *= cfg.netMobDamageModifier;
     }
 
     // Some close combat weapons should not inflict thrust and push the

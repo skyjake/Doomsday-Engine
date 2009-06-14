@@ -80,6 +80,8 @@ boolean     P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
 boolean     EV_Teleport(int tid, mobj_t *thing, boolean fog);
 void        P_ArtiTele(player_t *player);
 
+extern mobjtype_t TranslateThingType[];
+
 boolean     EV_ThingProjectile(byte *args, boolean gravity);
 boolean     EV_ThingSpawn(byte *args, boolean fog);
 boolean     EV_ThingActivate(int tid);

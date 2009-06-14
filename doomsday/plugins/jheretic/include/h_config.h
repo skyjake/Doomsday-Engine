@@ -42,7 +42,7 @@ enum {
     HUD_ARMOR,
     HUD_KEYS,
     HUD_HEALTH,
-    HUD_ARTI
+    HUD_CURRENTITEM
 };
 
 // Hud Unhide Events (the hud will unhide on these events if enabled).
@@ -63,154 +63,165 @@ typedef enum {
 //          depending on build settings.
 
 typedef struct jheretic_config_s {
+    float           playerMoveSpeed;
+    int             dclickUse;
+    int             useMLook;      // Mouse look (mouse Y => viewpitch)
+    int             useJLook;      // Joy look (joy Y => viewpitch)
+    int             alwaysRun;     // Always run.
+    int             noAutoAim;     // No auto-aiming?
+    int             jLookDeltaMode;
+    int             lookSpring;
+    float           lookSpeed;
+    float           turnSpeed;
+    byte            povLookAround;
+    int             jumpEnabled;
+    float           jumpPower;
+    int             airborneMovement;
+    byte            setSizeNeeded;
+    int             setBlocks;
+    int             screenBlocks;
+
+    byte            slidingCorpses;
+    int             echoMsg;
     float           menuScale;
     int             menuEffects;
     int             hudFog;
     float           menuGlitter;
     float           menuShadow;
+
     byte            menuSlam;
     byte            menuHotkeys;
     byte            askQuickSaveLoad;
     float           flashColor[3];
     int             flashSpeed;
     byte            turningSkull;
+    byte            hudShown[6];   // HUD data visibility.
+    float           hudScale;      // How to scale HUD data?
+    float           hudColor[4];
+    float           hudIconAlpha;
+    float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
     byte            usePatchReplacement;
+    byte            moveCheckZ;    // if true, mobjs can move over/under each other.
+    byte            weaponAutoSwitch;
+    byte            noWeaponAutoSwitchIfFiring;
+    byte            ammoAutoSwitch;
+    int             weaponOrder[NUM_WEAPON_TYPES];
+    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
+    byte            secretMsg;
+    int             plrViewHeight;
     int             mapTitle;
     float           menuColor[3];
     float           menuColor2[3];
-
-    int             echoMsg;
-} gameconfig_t;
-
-typedef struct {
-    int             color; // User player color preference.
-
-    struct {
-        float           moveSpeed;
-        float           lookSpeed;
-        float           turnSpeed;
-        byte            dclickUse;
-        byte            alwaysRun;
-        byte            useAutoAim;
-        byte            airborneMovement; // 0..32
-    } ctrl;
-    struct {
-        int             blocks;
-        int             setBlocks;
-        int             ringFilter;
-    } screen;
-    struct {
-        float           bob;
-        int             offsetZ;
-        byte            povLookAround;
-        byte            lookSpring;
-        byte            useMLook; // Mouse look (mouse Y => viewpitch)
-        byte            useJLook; // Joy look (joy Y => viewpitch)
-        byte            jLookDeltaMode;
-    } camera;
-    struct {
-        float           bob;
-        byte            bobLower;
-    } psprite;
-    struct {
-        int             scale;
-        float           opacity;
-        float           counterAlpha;
-    } statusbar;
-    struct {
-        byte            shown[6];   // HUD data visibility.
-        float           scale;      // How to scale HUD data?
-        float           color[4];
-        float           iconAlpha;
-        float           timer; // Number of seconds until the hud/statusbar auto-hides.
-        byte            unHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-        byte            counterCheat;
-        float           counterCheatScale;
-        int             tomeCounter, tomeSound;
-    } hud;
-    struct {
-        int             type;
-        float           size;
-        byte            vitality;
-        float           color[4];
-    } xhair;
-    struct {
-        int             chooseAndUse;
-        int             nextOnNoUse;
-        float           timer; // Number of seconds until the invetory auto-hides.
-        byte            weaponAutoSwitch;
-        byte            noWeaponAutoSwitchIfFiring;
-        byte            ammoAutoSwitch;
-        int             weaponOrder[NUM_WEAPON_TYPES];
-        byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-        byte            artiSkip; // whether shift-enter skips an artifact
-    } inventory;
-    struct {
-        float           mobj[3];
-        float           line0[3];
-        float           line1[3];
-        float           line2[3];
-        float           line3[3];
-        float           background[3];
-        float           opacity;
-        float           lineAlpha;
-        byte            rotate;
-        int             hudDisplay;
-        int             customColors;
-        byte            showDoors;
-        float           doorGlow;
-        byte            babyKeys;
-        float           zoomSpeed;
-        float           panSpeed;
-        byte            panResetOnOpen;
-        float           openSeconds;
-    } automap;
-    struct {
-        int             count;
-        float           scale;
-        int             upTime;
-        int             blink;
-        int             align;
-        byte            show;
-        float           color[3];
-    } msgLog;
-    struct {
-        char*           macros[10];
-        byte            playBeep;
-    } chat;
-
-    // Misc:
-    int             corpseTime;
-} playerprofile_t;
-
-typedef struct {
-    int             deathmatch; // Only if started as net death.
-
-    float           turboMul; // multiplier for turbo
-    byte            monsterInfight;
-    byte            moveCheckZ; // if true, mobjs can move over/under each other.
-    float           jumpPower;
-    byte            slidingCorpses;
-    byte            announceSecrets;
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            respawnMonstersNightmare;
+
+
+
+
+
+
+    int             statusbarScale;
+    float           statusbarOpacity;
+    float           statusbarCounterAlpha;
+
+    /**
+     * Compatibility options.
+     * \todo Put these into an array so we can use a bit array to change
+     * multiple options based on a compatibility mode (ala PrBoom).
+     */
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
     byte            moveBlock; // Dont handle large negative movement in P_TryMove.
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
+
     byte            fallOff; // Objects fall under their own weight.
-    byte            cameraNoClip;
-    byte            mobDamageModifier; // multiplier for non-player mobj damage
-    byte            mobHealthModifier; // health modifier for non-player mobjs
-    int             gravityModifier; // multiplayer custom gravity
-    byte            noMaxZRadiusAttack; // radius attacks are infinitely tall
-    byte            noMaxZMonsterMeleeAttack; // melee attacks are infinitely tall
-    byte            noMonsters;
-    byte            respawn;
-    byte            jumpAllow;
+    byte            fixFloorFire; // Fix Heretic bug; explode Maulotaur floor fire when feetclipped.
+
+    byte            counterCheat;
+    float           counterCheatScale;
+
+    // Automap stuff.
+/*  int             automapPos;
+    float           automapWidth;
+    float           automapHeight;*/
+    float           automapMobj[3];
+    float           automapL0[3];
+    float           automapL1[3];
+    float           automapL2[3];
+    float           automapL3[3];
+    float           automapBack[3];
+    float           automapOpacity;
+    float           automapLineAlpha;
+    byte            automapRotate;
+    int             automapHudDisplay;
+    int             automapCustomColors;
+    byte            automapShowDoors;
+    float           automapDoorGlow;
+    byte            automapBabyKeys;
+    float           automapZoomSpeed;
+    float           automapPanSpeed;
+    byte            automapPanResetOnOpen;
+    float           automapOpenSeconds;
+
+    int             msgCount;
+    float           msgScale;
+    int             msgUptime;
+    int             msgBlink;
+    int             msgAlign;
+    byte            msgShow;
+    float           msgColor[3];
+
+    char*           chatMacros[10];
+    byte            chatBeep;
+
+    int             corpseTime;
+
+    float           bobWeapon, bobView;
+    byte            bobWeaponLower;
+    int             cameraNoClip;
+
+    // Crosshair.
+    int             xhair;
+    float           xhairSize;
+    byte            xhairVitality;
+    float           xhairColor[4];
+
+    // Network.
+    byte            netDeathmatch;
+
+    byte            netMobDamageModifier;    // multiplier for non-player mobj damage
+    byte            netMobHealthModifier;    // health modifier for non-player mobjs
+    int             netGravity;              // multiplayer custom gravity
+    byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
+    byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
+    byte            netNoMonsters;
+    byte            netRespawn;
+    byte            netJumping;
+    byte            netEpisode;
+    byte            netMap;
+    byte            netSkill;
+    byte            netSlot;
+    byte            netColor;
+
+    playerclass_t   playerClass[MAXPLAYERS];
+    int             playerColor[MAXPLAYERS];
+
+    // jHeretic specific
+    int             ringFilter;
+    float           inventoryTimer; // Number of seconds until the invetory auto-hides.
+    byte            inventoryWrap;
+    byte            inventoryUseNext;
+    byte            inventoryUseImmediate;
+    int             inventorySlotMaxVis;
+    byte            inventorySlotShowEmpty;
+    byte            inventorySelectMode;
+    int             tomeCounter, tomeSound;
     byte            fastMonsters;
-} gamerules_t;
+} game_config_t;
+
+extern game_config_t cfg;      // in g_game.c
 
 int             GetDefInt(char *def, int *returned_value);
 

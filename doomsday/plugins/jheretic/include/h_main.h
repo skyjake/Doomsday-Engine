@@ -36,11 +36,29 @@
 #include "doomdef.h"
 
 extern int verbose;
-extern boolean devParm;
 
+extern boolean devParm;
+extern boolean noMonstersParm;
+extern boolean respawnParm;
+extern boolean turboParm;
+extern boolean fastParm;
+
+extern float turboMul;
+extern skillmode_t startSkill;
+extern int startEpisode;
+extern int startMap;
+extern boolean autoStart;
+extern gamemode_t gameMode;
+extern int gameModeBits;
+extern char gameModeString[];
+extern boolean monsterInfight;
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
 extern char *borderLumps[];
+extern char *wadFiles[];
+extern char *baseDefault;
+extern char exrnWADs[];
+extern char exrnWADs2[];
 
 void            G_Shutdown(void);
 void            G_EndFrame(void);

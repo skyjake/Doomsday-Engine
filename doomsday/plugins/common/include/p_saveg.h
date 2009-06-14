@@ -29,6 +29,10 @@
 #ifndef __P_SAVEG_H__
 #define __P_SAVEG_H__
 
+/**
+ * Original indices must remain unchanged!
+ * Added new think classes to the end.
+ */
 typedef enum thinkclass_e {
     TC_NULL = -1,
     TC_END,
@@ -60,14 +64,16 @@ typedef enum thinkclass_e {
     TC_GLOW,
 # endif
 #endif
+    TC_MATERIALCHANGER,
     NUMTHINKERCLASSES
 } thinkerclass_t;
 
 void            SV_Init(void);
-void            SV_GetSaveGameFileName(int slot, char *str);
-int             SV_GetSaveDescription(char *filename, char *str);
+void            SV_GetSaveGameFileName(char* str, int slot, size_t len);
+int             SV_GetSaveDescription(char* str, const char* filename,
+                                      size_t len);
 #if __JHEXEN__
-boolean         SV_SaveGame(int slot, char *description);
+boolean         SV_SaveGame(int slot, const char* description);
 boolean         SV_LoadGame(int slot);
 void            SV_MapTeleport(int map, int position);
 
@@ -77,23 +83,24 @@ void            SV_HxClearRebornSlot(void);
 boolean         SV_HxRebornSlotAvailable(void);
 int             SV_HxGetRebornSlot(void);
 #else
-boolean         SV_SaveGame(char *filename, char *description);
-boolean         SV_LoadGame(char *filename);
+boolean         SV_SaveGame(const char* filename, const char* description);
+boolean         SV_LoadGame(const char* filename);
 #endif
 
 // Write a client savegame file.
 void            SV_SaveClient(unsigned int gameid);
-void            SV_GetClientSaveGameFileName(unsigned int game_id, char *str);
+void            SV_GetClientSaveGameFileName(char* str, unsigned int gameID,
+                                             size_t len);
 void            SV_LoadClient(unsigned int gameid);
 
 #if __JHEXEN__
-int             SV_ThingArchiveNum(mobj_t *mo);
+int             SV_ThingArchiveNum(mobj_t* mo);
 #else
-unsigned short  SV_ThingArchiveNum(mobj_t *mo);
+unsigned short  SV_ThingArchiveNum(mobj_t* mo);
 #endif
-mobj_t         *SV_GetArchiveThing(int thingid, void *address);
+mobj_t*         SV_GetArchiveThing(int thingid, void* address);
 
-void            SV_Write(void *data, int len);
+void            SV_Write(const void* data, int len);
 void            SV_WriteByte(byte val);
 #if __JHEXEN__
 void            SV_WriteShort(unsigned short val);
@@ -106,12 +113,12 @@ void            SV_WriteLong(unsigned int val);
 void            SV_WriteLong(long val);
 #endif
 void            SV_WriteFloat(float val);
-void            SV_Read(void *data, int len);
-byte            SV_ReadByte();
-short           SV_ReadShort();
-long            SV_ReadLong();
-float           SV_ReadFloat();
+void            SV_Read(void* data, int len);
+byte            SV_ReadByte(void);
+short           SV_ReadShort(void);
+long            SV_ReadLong(void);
+float           SV_ReadFloat(void);
 
 // Misc save/load routines.
-void            SV_UpdateReadMobjFlags(mobj_t *mo, int ver);
+void            SV_UpdateReadMobjFlags(mobj_t* mo, int ver);
 #endif

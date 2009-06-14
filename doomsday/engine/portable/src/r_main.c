@@ -48,6 +48,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+  PROF_MOBJ_INIT_ADD
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct viewer_s {
@@ -76,6 +80,7 @@ D_CMD(ViewGrid);
 
 extern byte rendInfoRPolys;
 extern byte freezeRLs;
+extern boolean firstFrameAfterLoad;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -90,6 +95,7 @@ float viewXOffset = 0, viewYOffset = 0, viewZOffset = 0;
 angle_t viewAngle;
 float viewPitch; // Player->lookDir, global version.
 float viewCos, viewSin;
+boolean setSizeNeeded;
 
 // Precalculated math tables.
 fixed_t* fineCosine = &finesine[FINEANGLES / 4];
@@ -246,12 +252,12 @@ void R_Init(void)
     R_InitData();
     // viewwidth / viewheight / detailLevel are set by the defaults
     R_SetViewWindow(0, 0, 320, 200);
-    R_InitSprites();
-    R_InitModels();
+    R_InitSprites(); // Fully initialize sprites.
     R_InitTranslationTables();
     Rend_Init();
     frameCount = 0;
     R_InitViewBorder();
+    P_PtcInit();
 
     Def_PostInit();
 }
@@ -266,6 +272,7 @@ void R_Update(void)
     R_UpdateTexturesAndFlats();
     R_InitTextures();
     R_InitFlats();
+    R_PreInitSprites();
 
     // Re-read definitions.
     Def_Read();
@@ -274,10 +281,8 @@ void R_Update(void)
     R_InitSprites(); // Fully reinitialize sprites.
     R_UpdateTranslationTables();
 
-    // Now that we've read the defs, we can load lightmaps and flares.
+    // Now that we've read the defs, we can load system textures.
     GL_LoadSystemTextures();
-    GL_LoadLightmaps();
-    GL_LoadFlareTextures();
 
     Def_PostInit();
 
@@ -345,6 +350,7 @@ void R_Shutdown(void)
 {
     R_ShutdownModels();
     R_ShutdownData();
+    R_ShutdownResourceLocator();
     // Most allocated memory goes down with the zone.
 }
 
@@ -512,6 +518,17 @@ void R_CreateMobjLinks(void)
 {
     uint                i;
     sector_t*           seciter;
+#ifdef DD_PROFILE
+    static int          p;
+
+    if(++p > 40)
+    {
+        p = 0;
+        PRINT_PROF( PROF_MOBJ_INIT_ADD );
+    }
+#endif
+
+BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
     for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
     {
@@ -522,6 +539,8 @@ void R_CreateMobjLinks(void)
             R_ObjLinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }
     }
+
+END_PROF( PROF_MOBJ_INIT_ADD );
 }
 
 /**
@@ -555,6 +574,9 @@ void R_BeginWorldFrame(void)
 
         // Create objlinks for mobjs.
         R_CreateMobjLinks();
+
+        // Link all active particle generators into the world.
+        P_CreatePtcGenLinks();
 
         // Link objs to all contacted surfaces.
         R_LinkObjs();
@@ -797,7 +819,6 @@ void R_RenderPlayerView(int num)
         R_ClearSprites();
 
     R_ProjectPlayerSprites(); // Only if 3D models exists for them.
-    PG_InitForNewFrame();
 
     // Hide the viewPlayer's mobj?
     if(!(player->shared.flags & DDPF_CHASECAM))
@@ -869,6 +890,33 @@ void R_RenderViewPorts(void)
 {
     int                 oldDisplay = displayPlayer;
     int                 x, y, p;
+    GLbitfield          bits = GL_DEPTH_BUFFER_BIT;
+
+    if(firstFrameAfterLoad || freezeRLs)
+    {
+        bits |= GL_COLOR_BUFFER_BIT;
+    }
+    else
+    {
+        int                 i;
+
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t*           plr = &ddPlayers[i];
+
+            if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
+                continue;
+
+            if(P_IsInVoid(plr))
+            {
+                bits |= GL_COLOR_BUFFER_BIT;
+                break;
+            }
+        }
+    }
+
+    // This is all the clearing we'll do.
+    glClear(bits);
 
     // Draw a view for all players with a visible viewport.
     for(p = 0, y = 0; y < gridRows; ++y)

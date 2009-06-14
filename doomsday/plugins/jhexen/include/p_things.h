@@ -32,6 +32,4 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-extern mobjtype_t TranslateThingType[];
-
 #endif

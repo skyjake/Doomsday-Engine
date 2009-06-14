@@ -62,16 +62,9 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-dpatch_t huMinus;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-void STlib_init(void)
-{
-    R_CachePatch(&huMinus, MINUSPATCH);
-}
 
 void STlib_initNum(st_number_t* n, int x, int y, dpatch_t* pl, int* num,
                    boolean* on, int width, float* alpha)

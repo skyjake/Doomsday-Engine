@@ -49,52 +49,140 @@
 #define VECSUB(a,b)         ( a[VX]-=b[VX], a[VY]-=b[VY] )
 #define VECCPY(a,b)         ( a[VX]=b[VX], a[VY]=b[VY] )
 
-#define GENERATOR_TO_ID(gen)    ((long) gen)
+BEGIN_PROF_TIMERS()
+  PROF_PTCGEN_LINK
+END_PROF_TIMERS()
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct pglink_s {
+    struct pglink_s* next;
+    ptcgen_t*       gen;
+} pglink_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    P_PtcGenThinker(ptcgen_t *gen);
+void P_PtcGenThinker(ptcgen_t* gen);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high);
+static void P_Uncertain(fixed_t* pos, fixed_t low, fixed_t high);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-ptcgen_t *activePtcGens[MAX_ACTIVE_PTCGENS];
-
-int     useParticles = true;
-unsigned int maxParticles = 0;    // Unlimited.
-float   particleSpawnRate = 1;  // Unmodified.
+byte useParticles = true;
+int maxParticles = 0; // Unlimited.
+float particleSpawnRate = 1; // Unmodified.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static ptcgen_t* activePtcGens[MAX_ACTIVE_PTCGENS];
+
+static pglink_t** pgLinks = NULL; // Array of pointers to pgLinks in pgStore.
+static pglink_t* pgStore;
+static unsigned int pgCursor = 0, pgMax;
+
 static vec2_t mbox[2];
 static int tmpz, tmprad, tmcross, tmpx1, tmpx2, tmpy1, tmpy2;
-static linedef_t *ptcHitLine;
+static linedef_t* ptcHitLine;
 
 // CODE --------------------------------------------------------------------
 
-static void P_FreePtcGen(ptcgen_t *gen)
+static void freePtcGen(ptcgen_t* gen)
 {
-    unsigned int i;
+    Z_Free(gen->ptcs);
+    gen->ptcs = NULL;
+}
+
+static void unlinkPtcGen(ptcgen_t* gen)
+{
+    ptcgenid_t          i;
 
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+    {
         if(activePtcGens[i] == gen)
         {
             activePtcGens[i] = NULL;
-            // Destroy it.
-            Z_Free(gen->ptcs);
-            gen->ptcs = NULL;
-            P_ThinkerRemove(&gen->thinker);
             break;
         }
+    }
+}
+
+static void linkPtcGen(ptcgenid_t slot, ptcgen_t* gen)
+{
+    assert(slot < MAX_ACTIVE_PTCGENS);
+
+    activePtcGens[slot] = gen;
+}
+
+static boolean iterateSectorLinkedPtcGens(sector_t* sector,
+                                          boolean (*callback) (ptcgen_t*, void*),
+                                          void* context)
+{
+    boolean             result = true;
+
+    if(sector)
+    {
+        pglink_t*           it = pgLinks[GET_SECTOR_IDX(sector)];
+
+        while(it)
+        {
+            if((result = callback(it->gen, context)) == 0)
+                break;
+            it = it->next;
+        }
+    }
+
+    return result;
+}
+
+static uint findSlotForNewGen(void)
+{
+    ptcgenid_t          i, slot = 0;
+    int                 maxage = 0;
+    boolean             isEmpty = false;
+
+    // Find a suitable spot in the active ptcgens list.
+    i = 0;
+    do
+    {
+        if(!activePtcGens[i])
+        {   // An empty slot, put it here.
+            slot = i + 1;
+            isEmpty = true;
+        }
+        else if(!(activePtcGens[i]->flags & PGF_STATIC) &&
+                (!slot || activePtcGens[i]->age > maxage))
+        {
+            slot = i + 1;
+            maxage = activePtcGens[i]->age;
+        }
+    } while(!isEmpty && ++i < MAX_ACTIVE_PTCGENS);
+
+    return slot;
+}
+
+static ptcgen_t* P_PtcGenCreate(void)
+{
+    ptcgen_t*           gen = Z_Calloc(sizeof(ptcgen_t), PU_MAP, 0);
+
+    // Link the thinker to the list of (private) thinkers.
+    gen->thinker.function = P_PtcGenThinker;
+    P_ThinkerAdd(&gen->thinker, false);
+
+    return gen;
+}
+
+static void P_PtcGenDestroy(ptcgen_t* gen)
+{
+    P_ThinkerRemove(&gen->thinker);
+
+    unlinkPtcGen(gen);
+    freePtcGen(gen);
 }
 
 /**
@@ -102,56 +190,178 @@ static void P_FreePtcGen(ptcgen_t *gen)
  *
  * \fixme Linear allocation when in-game is not good...
  */
-static ptcgen_t *P_NewPtcGen(void)
+static ptcgen_t* P_NewPtcGen(void)
 {
-    unsigned int i, oldest = 0;
-    int         maxage = 0;
-    boolean     ok = false;
-    boolean     foundOldest = false;
-    ptcgen_t   *gen = Z_Malloc(sizeof(ptcgen_t), PU_MAP, 0);
+    ptcgenid_t          slot = findSlotForNewGen();
 
-    // Find a suitable spot in the active ptcgens list.
-    for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+    // Find a suitable slot in the active ptcgens list.
+    if(slot)
     {
-        if(!activePtcGens[i])
+        ptcgen_t*           gen;
+
+        // If there is already a generator here, destroy it.
+        if(activePtcGens[slot-1])
+            P_PtcGenDestroy(activePtcGens[slot-1]);
+
+        // Allocate a new generator.
+        gen = P_PtcGenCreate();
+        linkPtcGen(slot-1, gen);
+
+        return gen;
+    }
+
+    return 0; // Creation failed.
+}
+
+/**
+ * Called once during startup.
+ */
+void P_PtcInit(void)
+{
+    memset(activePtcGens, 0, sizeof(activePtcGens));
+}
+
+void P_PtcInitForMap(void)
+{
+    uint                startTime = Sys_GetRealTime();
+
+    pgLinks = Z_Malloc(sizeof(pglink_t *) * numSectors, PU_MAP, 0);
+    memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
+
+    // We can link 64 generators each into four sectors before
+    // running out of pgLinks.
+    pgMax = 4 * MAX_ACTIVE_PTCGENS;
+    pgStore = Z_Malloc(sizeof(pglink_t) * pgMax, PU_MAP, 0);
+    pgCursor = 0;
+
+    memset(activePtcGens, 0, sizeof(activePtcGens));
+
+    // Spawn all type-triggered particle generators.
+    // Let's hope there aren't too many...
+    P_SpawnTypeParticleGens();
+    P_SpawnMapParticleGens(mapID);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("P_PtcInitForMap: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+}
+
+/**
+ * Convert a particle generator id to pointer.
+ *
+ * @return              Pointer to ptcgen iff found, ELSE @c NULL.
+ */
+const ptcgen_t* P_IndexToPtcGen(ptcgenid_t id)
+{
+    if(id >= 0 && id < MAX_ACTIVE_PTCGENS)
+        return activePtcGens[id];
+
+    return NULL; // Not found!?
+}
+
+/**
+ * Convert a particle generator point to id.
+ *
+ * @return              @c -1 iff NOT found, ELSE id of the specifed ptcgen.
+ */
+ptcgenid_t P_PtcGenToIndex(const ptcgen_t* gen)
+{
+    if(gen)
+    {
+        ptcgenid_t              i;
+
+        for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
         {
-            // Put it here.
-            activePtcGens[i] = gen;
-            ok = true;
-            break;
-        }
-        else if(!(activePtcGens[i]->flags & PGF_STATIC) &&
-                (!foundOldest || activePtcGens[i]->age > maxage))
-        {
-            oldest = i;
-            maxage = activePtcGens[i]->age;
-            foundOldest = true;
+            if(activePtcGens[i] == gen)
+                return i;
         }
     }
 
-    if(!ok)
-    {
-        if(!foundOldest)
-        {
-            Z_Free(gen);
-            return 0;           // Creation failed!
-        }
-        // Replace the oldest generator.
-        P_FreePtcGen(activePtcGens[oldest]);
-        activePtcGens[oldest] = gen;
-    }
-    memset(gen, 0, sizeof(*gen));
+    return -1; // Not found!?
+}
 
-    // Link the thinker to the list of thinkers.
-    gen->thinker.function = P_PtcGenThinker;
-    P_ThinkerAdd(&gen->thinker);
-    return gen;
+/**
+ * Returns an unused link from the pgStore.
+ */
+static pglink_t* PG_GetLink(void)
+{
+    if(pgCursor < pgMax)
+        return &pgStore[pgCursor++];
+
+    VERBOSE(Con_Message("PG_GetLink: Out of PGen store.\n"));
+    return NULL;
+}
+
+static void PG_LinkPtcGen(ptcgen_t* gen, uint secIDX)
+{
+    pglink_t*           link, *it;
+
+    // Must check that it isn't already there...
+    for(it = pgLinks[secIDX]; it; it = it->next)
+        if(it->gen == gen)
+            return; // No, no...
+
+    // We need a new PG link.
+    link = PG_GetLink();
+    if(!link)
+        return; // Out of links!
+
+    link->gen = gen;
+    link->next = pgLinks[secIDX];
+    pgLinks[secIDX] = link;
+}
+
+/**
+ * Link all active particle generators into the world.
+ */
+void P_CreatePtcGenLinks(void)
+{
+    ptcgenid_t          i;
+#ifdef DD_PROFILE
+    static int p;
+
+    if(++p > 40)
+    {
+        p = 0;
+        PRINT_PROF(PROF_PTCGEN_LINK);
+    }
+#endif
+
+BEGIN_PROF(PROF_PTCGEN_LINK);
+
+    if(pgLinks)
+    {   // Clear the PG links.
+        memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
+        pgCursor = 0;
+    }
+
+    if(useParticles)
+    {
+        // Link all active generators to sectors.
+        for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+        {
+            ptcgen_t*           gen;
+
+            if((gen = activePtcGens[i]) != NULL)
+            {
+                int                 k;
+
+                // \fixme Overkill?
+                for(k = 0; k < gen->count; ++k)
+                    if(gen->ptcs[k].stage >= 0)
+                        PG_LinkPtcGen(gen, GET_SECTOR_IDX(gen->ptcs[k].sector));
+            }
+        }
+    }
+
+END_PROF(PROF_PTCGEN_LINK);
 }
 
 /**
  * Set gen->count prior to calling this function.
  */
-static void P_InitParticleGen(ptcgen_t *gen, const ded_ptcgen_t* def)
+static void P_InitParticleGen(ptcgen_t* gen, const ded_ptcgen_t* def)
 {
     int                 i;
 
@@ -163,14 +373,14 @@ static void P_InitParticleGen(ptcgen_t *gen, const ded_ptcgen_t* def)
 
     gen->def = def;
     gen->flags = def->flags;
-    gen->ptcs = Z_Malloc(sizeof(particle_t) * gen->count, PU_MAP, 0);
-    gen->stages = Z_Malloc(sizeof(ptcstage_t) * def->stageCount.num,
+    gen->ptcs = Z_Calloc(sizeof(particle_t) * gen->count, PU_MAP, 0);
+    gen->stages = Z_Calloc(sizeof(ptcstage_t) * def->stageCount.num,
                            PU_MAP, 0);
 
     for(i = 0; i < def->stageCount.num; ++i)
     {
-        ded_ptcstage_t     *sdef = &def->stages[i];
-        ptcstage_t         *s = &gen->stages[i];
+        const ded_ptcstage_t* sdef = &def->stages[i];
+        ptcstage_t*         s = &gen->stages[i];
 
         s->bounce = FRACUNIT * sdef->bounce;
         s->resistance = FRACUNIT * (1 - sdef->resistance);
@@ -193,17 +403,16 @@ static void P_InitParticleGen(ptcgen_t *gen, const ded_ptcgen_t* def)
         P_Uncertain(gen->vector, 0, def->initVectorVariance * FRACUNIT);
     }
 
-    // Mark everything unused.
-    memset(gen->ptcs, -1, sizeof(particle_t) * gen->count);
-
+    // Mark unused.
     for(i = 0; i < gen->count; ++i)
     {
-        // Clear the contact pointers.
-        gen->ptcs[i].contact = NULL;
+        particle_t*         pt = &gen->ptcs[i];
+
+        pt->stage = -1;
     }
 }
 
-static void P_PresimParticleGen(ptcgen_t *gen, int tics)
+static void P_PresimParticleGen(ptcgen_t* gen, int tics)
 {
     for(; tics > 0; tics--)
         P_PtcGenThinker(gen);
@@ -216,22 +425,31 @@ static void P_PresimParticleGen(ptcgen_t *gen, int tics)
  * Creates a new mobj-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnParticleGen(ded_ptcgen_t *def, mobj_t *source)
+void P_SpawnParticleGen(const ded_ptcgen_t* def, mobj_t* source)
 {
-    ptcgen_t           *gen;
+    ptcgen_t*           gen;
 
     if(isDedicated || !useParticles || !(gen = P_NewPtcGen()))
         return;
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
             def->state, def - defs.ptcgens, defs.states[source->state-states].id,
             defs.mobjs[source->type].id, source);
-#endif
-*/
+#endif*/
 
     // Initialize the particle generator.
     gen->count = def->particles;
+    // Size of source sector might determine count.
+    if(def->flags & PGF_SCALED_RATE)
+    {
+        gen->spawnRateMultiplier = source->subsector->sector->approxArea;
+    }
+    else
+    {
+        gen->spawnRateMultiplier = 1;
+    }
+
     P_InitParticleGen(gen, def);
     gen->source = source;
     gen->srcid = source->thinker.id;
@@ -248,24 +466,23 @@ static void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, sector_t* sec,
                                     boolean isCeiling)
 {
     ptcgen_t*           gen;
-    float*              box;
-    float               width, height;
 
-    if(isDedicated || !useParticles || !(gen = P_NewPtcGen()))
+    if(isDedicated || !useParticles)
         return;
 
+    if(!(gen = P_NewPtcGen()))
+        return;
+
+    gen->count = def->particles;
     // Size of source sector might determine count.
     if(def->flags & PGF_PARTS_PER_128)
     {
-        // This is rather a rough estimate of sector area.
-        box = sec->bBox;
-        width = (box[BOXRIGHT] - box[BOXLEFT]) / 128;
-        height = (box[BOXTOP] - box[BOXBOTTOM]) / 128;
-        gen->area = width * height;
-        gen->count = def->particles * gen->area;
+        gen->spawnRateMultiplier = sec->approxArea;
     }
     else
-        gen->count = def->particles;
+    {
+        gen->spawnRateMultiplier = 1;
+    }
 
     // Initialize the particle generator.
     P_InitParticleGen(gen, def);
@@ -280,12 +497,10 @@ static void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, sector_t* sec,
  * The offset is spherical and random.
  * Low and High should be positive.
  */
-static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
+static void P_Uncertain(fixed_t* pos, fixed_t low, fixed_t high)
 {
-    int         i;
-    fixed_t     off;
-    angle_t     theta, phi;
-    fixed_t     vec[3];
+    int                 i;
+    fixed_t             off, theta, phi, vec[3];
 
     if(!low)
     {
@@ -313,7 +528,7 @@ static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
     }
 }
 
-static void P_SetParticleAngles(particle_t *pt, int flags)
+static void P_SetParticleAngles(particle_t* pt, int flags)
 {
     if(flags & PTCF_ZERO_YAW)
         pt->yaw = 0;
@@ -343,7 +558,7 @@ static void P_ParticleSound(fixed_t pos[3], ded_embsound_t* sound)
 /**
  * Spawns a new particle.
  */
-static void P_NewParticle(ptcgen_t *gen)
+static void P_NewParticle(ptcgen_t* gen)
 {
     const ded_ptcgen_t* def = gen->def;
     particle_t*         pt;
@@ -353,7 +568,7 @@ static void P_NewParticle(ptcgen_t *gen)
     float*              box, inter = -1;
     modeldef_t*         mf = 0, *nextmf = 0;
 
-    // Check for a model-only generators.
+    // Check for model-only generators.
     if(gen->source)
     {
         inter = R_CheckModelFor(gen->source, &mf, &nextmf);
@@ -371,21 +586,18 @@ static void P_NewParticle(ptcgen_t *gen)
     pt->stage = 0;
     if(RNG_RandFloat() < def->altStartVariance)
         pt->stage = def->altStart;
-    pt->tics =
-        def->stages[pt->stage].tics * (1 -
-                                       def->stages[pt->stage].variance *
-                                       RNG_RandFloat());
+    pt->tics = def->stages[pt->stage].tics *
+        (1 - def->stages[pt->stage].variance * RNG_RandFloat());
 
     // Launch vector.
-    pt->mov[VX] =
-        gen->vector[VX] +
-        FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
-    pt->mov[VY] =
-        gen->vector[VY] +
-        FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
-    pt->mov[VZ] =
-        gen->vector[VZ] +
-        FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pt->mov[VX] = gen->vector[VX];
+    pt->mov[VY] = gen->vector[VY];
+    pt->mov[VZ] = gen->vector[VZ];
+
+    // Apply some random variance.
+    pt->mov[VX] += FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pt->mov[VY] += FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pt->mov[VZ] += FRACUNIT * (def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
 
     // Apply some aspect ratio scaling to the momentum vector.
     // This counters the 200/240 difference nearly completely.
@@ -395,9 +607,9 @@ static void P_NewParticle(ptcgen_t *gen)
 
     // Set proper speed.
     uncertain = def->speed * (1 - def->speedVariance * RNG_RandFloat()) * FRACUNIT;
-    len =
-        FLT2FIX(P_ApproxDistance(P_ApproxDistance(FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY])),
-                         FIX2FLT(pt->mov[VZ])));
+    len = FLT2FIX(P_ApproxDistance(P_ApproxDistance(FIX2FLT(pt->mov[VX]),
+                                                    FIX2FLT(pt->mov[VY])),
+                                   FIX2FLT(pt->mov[VZ])));
     if(!len)
         len = FRACUNIT;
     len = FixedDiv(uncertain, len);
@@ -410,7 +622,7 @@ static void P_NewParticle(ptcgen_t *gen)
         if(gen->flags & PGF_RELATIVE_VECTOR)
         {
             // Rotate the vector using the source angle.
-            float   temp[3];
+            float               temp[3];
 
             temp[0] = FIX2FLT(pt->mov[VX]);
             temp[1] = FIX2FLT(pt->mov[VY]);
@@ -422,6 +634,7 @@ static void P_NewParticle(ptcgen_t *gen)
             pt->mov[VX] = temp[VX] * FRACUNIT;
             pt->mov[VY] = temp[VY] * FRACUNIT;
         }
+
         if(gen->flags & PGF_RELATIVE_VELOCITY)
         {
             pt->mov[VX] += FLT2FIX(gen->source->mom[MX]);
@@ -451,8 +664,8 @@ static void P_NewParticle(ptcgen_t *gen)
         // There might be an offset from the model of the mobj.
         if(mf && (mf->sub[0].flags & MFF_PARTICLE_SUB1 || def->subModel >= 0))
         {
-            int     subidx = 1; // Default to submodel #1.
-            float   off[3];
+            int                 subidx = 1; // Default to submodel #1.
+            float               off[3];
 
             // Select the right submodel to use as the origin.
             if(def->subModel >= 0)
@@ -478,7 +691,7 @@ static void P_NewParticle(ptcgen_t *gen)
             pt->pos[VZ] += FRACUNIT * off[VY];
         }
     }
-    else if(gen->sector)        // The source is a plane?
+    else if(gen->sector) // The source is a plane?
     {
         i = gen->stages[pt->stage].radius;
 
@@ -512,7 +725,7 @@ static void P_NewParticle(ptcgen_t *gen)
          * of one-sided walls (large diagonal subsectors!).
          */
         box = gen->sector->bBox;
-        for(i = 0; i < 5; ++i)  // Try a couple of times (max).
+        for(i = 0; i < 5; ++i) // Try a couple of times (max).
         {
             subsec =
                 R_PointInSubsector((box[BOXLEFT] +
@@ -539,12 +752,13 @@ static void P_NewParticle(ptcgen_t *gen)
                             RNG_RandFloat() * (subsec->bBox[1].pos[VY] -
                                            subsec->bBox[0].pos[VY]));
             if(R_PointInSubsector(FIX2FLT(pt->pos[VX]), FIX2FLT(pt->pos[VY])) == subsec)
-                break;          // This is a good place.
+                break; // This is a good place.
         }
-        if(i == 10)             // No good place found?
+
+        if(i == 10) // No good place found?
         {
           spawn_failed:
-            pt->stage = -1;     // Damn.
+            pt->stage = -1; // Damn.
             return;
         }
     }
@@ -576,9 +790,9 @@ static void P_NewParticle(ptcgen_t *gen)
 /**
  * Callback for the client mobj iterator, called from P_PtcGenThinker.
  */
-boolean PIT_ClientMobjParticles(clmobj_t *cmo, void *parm)
+boolean PIT_ClientMobjParticles(clmobj_t* cmo, void* context)
 {
-    ptcgen_t*           gen = parm;
+    ptcgen_t*           gen = (ptcgen_t*) context;
 
     // If the clmobj is not valid at the moment, don't do anything.
     if(cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
@@ -616,10 +830,10 @@ static boolean manyNewParticles(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
+boolean PIT_CheckLinePtc(linedef_t* ld, void* data)
 {
     fixed_t             ceil, floor;
-    sector_t           *front, *back;
+    sector_t*           front, *back;
 
     if(mbox[1][VX] <= ld->bBox[BOXLEFT] || mbox[0][VX] >= ld->bBox[BOXRIGHT] ||
        mbox[1][VY] <= ld->bBox[BOXBOTTOM] || mbox[0][VY] >= ld->bBox[BOXTOP])
@@ -635,7 +849,7 @@ boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
     // We are possibly hitting something here.
     ptcHitLine = ld;
     if(!ld->L_backside)
-        return false;           // Boing!
+        return false; // Boing!
 
     // Determine the opening we have here.
     front = ld->L_frontsector;
@@ -664,8 +878,8 @@ boolean PIT_CheckLinePtc(linedef_t *ld, void *data)
 /**
  * Particle touches something solid. Returns false iff the particle dies.
  */
-static int P_TouchParticle(particle_t *pt, ptcstage_t *stage,
-                           ded_ptcstage_t *stageDef, boolean touchWall)
+static int P_TouchParticle(particle_t* pt, ptcstage_t* stage,
+                           ded_ptcstage_t* stageDef, boolean touchWall)
 {
     // Play a hit sound.
     P_ParticleSound(pt->pos, &stageDef->hitSound);
@@ -693,25 +907,22 @@ static int P_TouchParticle(particle_t *pt, ptcstage_t *stage,
  * Semi-fixed, actually.
  */
 #if 0 // Currently unused.
-static void P_FixedCrossProduct(float *fa, fixed_t *b, fixed_t *result)
+static void P_FixedCrossProduct(float* fa, fixed_t* b, fixed_t* result)
 {
-    result[VX] =
-        FixedMul(FRACUNIT * fa[VY], b[VZ]) - FixedMul(FRACUNIT * fa[VZ],
-                                                      b[VY]);
-    result[VY] =
-        FixedMul(FRACUNIT * fa[VZ], b[VX]) - FixedMul(FRACUNIT * fa[VX],
-                                                      b[VZ]);
-    result[VZ] =
-        FixedMul(FRACUNIT * fa[VX], b[VY]) - FixedMul(FRACUNIT * fa[VY],
-                                                      b[VX]);
+    result[VX] = FixedMul(FRACUNIT * fa[VY], b[VZ]) -
+        FixedMul(FRACUNIT * fa[VZ], b[VY]);
+    result[VY] = FixedMul(FRACUNIT * fa[VZ], b[VX]) -
+        FixedMul(FRACUNIT * fa[VX], b[VZ]);
+    result[VZ] = FixedMul(FRACUNIT * fa[VX], b[VY]) -
+        FixedMul(FRACUNIT * fa[VY], b[VX]);
 }
 #endif
 
 #if 0 // Currently unused.
-fixed_t P_FixedDotProduct(fixed_t *a, fixed_t *b)
+fixed_t P_FixedDotProduct(fixed_t* a, fixed_t* b)
 {
-    return FixedMul(a[VX], b[VX]) + FixedMul(a[VY], b[VY]) + FixedMul(a[VZ],
-                                                                      b[VZ]);
+    return FixedMul(a[VX], b[VX]) + FixedMul(a[VY], b[VY]) +
+           FixedMul(a[VZ], b[VZ]);
 }
 #endif
 
@@ -720,24 +931,24 @@ fixed_t P_FixedDotProduct(fixed_t *a, fixed_t *b)
  * Currently only used visually, collisions use the constant radius.
  * The variance can be negative (results will be larger).
  */
-float P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptcIDX)
+float P_GetParticleRadius(const ded_ptcstage_t* def, int ptcIDX)
 {
-    static const float  rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
+    static const float rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
         .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
         .9375f, .25f
     };
 
-    if(!stage_def->radiusVariance)
-        return stage_def->radius;
+    if(!def->radiusVariance)
+        return def->radius;
 
-    return (rnd[ptcIDX & 0xf] * stage_def->radiusVariance +
-            (1 - stage_def->radiusVariance)) * stage_def->radius;
+    return (rnd[ptcIDX & 0xf] * def->radiusVariance +
+            (1 - def->radiusVariance)) * def->radius;
 }
 
 /**
  * A particle may be attached to the floor or ceiling of the sector.
  */
-float P_GetParticleZ(particle_t *pt)
+float P_GetParticleZ(const particle_t* pt)
 {
     if(pt->pos[VZ] == DDMAXINT)
         return pt->sector->SP_ceilvisheight - 2;
@@ -747,13 +958,13 @@ float P_GetParticleZ(particle_t *pt)
     return FIX2FLT(pt->pos[VZ]);
 }
 
-static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
+static void P_SpinParticle(ptcgen_t* gen, particle_t* pt)
 {
-    static const int    yawSigns[4] = { 1, 1, -1, -1 };
-    static const int    pitchSigns[4] = { 1, -1, 1, -1 };
+    static const int    yawSigns[4]   = { 1,  1, -1, -1 };
+    static const int    pitchSigns[4] = { 1, -1,  1, -1 };
 
-    ded_ptcstage_t     *stDef = gen->def->stages + pt->stage;
-    uint                index = pt - gen->ptcs + GENERATOR_TO_ID(gen) / 8; // DJS - skyjake, what does this do?
+    ded_ptcstage_t*     stDef = &gen->def->stages[pt->stage];
+    uint                index = pt - &gen->ptcs[P_PtcGenToIndex(gen) / 8];
     int                 yawSign, pitchSign;
 
     yawSign = yawSigns[index % 4];
@@ -778,15 +989,14 @@ static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
  * XY movement checks for hits with solid walls (no backsector).
  * This is supposed to be fast and simple (but not too simple).
  */
-static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
+static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
 {
-    int         x, y, z;
-    ptcstage_t *st = gen->stages + pt->stage;
-    ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
-    boolean     zBounce = false;
-    boolean     hitFloor = false;
-    vec2_t      point;
-    fixed_t     hardRadius = st->radius / 2;
+    int                 x, y, z;
+    ptcstage_t*         st = &gen->stages[pt->stage];
+    ded_ptcstage_t*     stDef = &gen->def->stages[pt->stage];
+    boolean             zBounce = false, hitFloor = false;
+    vec2_t              point;
+    fixed_t             hardRadius = st->radius / 2;
 
     // Particle rotates according to spin speed.
     P_SpinParticle(gen, pt);
@@ -798,7 +1008,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     if(stDef->vectorForce[VX] != 0 || stDef->vectorForce[VY] != 0 ||
        stDef->vectorForce[VZ] != 0)
     {
-        int     i;
+        int                 i;
 
         for(i = 0; i < 3; ++i)
             pt->mov[i] += FRACUNIT * stDef->vectorForce[i];
@@ -810,7 +1020,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     if(st->flags & PTCF_SPHERE_FORCE &&
        (gen->source || gen->flags & PGF_UNTRIGGERED))
     {
-        float       delta[3], dist;
+        float               delta[3], dist;
 
         if(gen->source)
         {
@@ -949,7 +1159,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            sector_t           *front, *back;
+            sector_t*           front, *back;
 
             front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
             back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);
@@ -1076,27 +1286,20 @@ void P_PtcGenThinker(ptcgen_t* gen)
     // Time to die?
     if(++gen->age > def->maxAge && def->maxAge >= 0)
     {
-        P_FreePtcGen(gen);
+        P_PtcGenDestroy(gen);
         return;
     }
 
     // Spawn new particles?
     if((gen->age <= def->spawnAge || def->spawnAge < 0) &&
        (gen->source || gen->sector || gen->type >= 0 ||
-        gen->flags & PGF_UNTRIGGERED))
+        (gen->flags & PGF_UNTRIGGERED)))
     {
-        if(gen->flags & PGF_PARTS_PER_128 || gen->flags & PGF_SCALED_RATE)
-        {
-            // Density spawning.
-            newparts = def->spawnRate * gen->area;
-        }
-        else
-        {
-            // Normal spawning.
-            newparts = def->spawnRate;
-        }
-        newparts *=
-            particleSpawnRate * (1 - def->spawnRateVariance * RNG_RandFloat());
+        newparts = def->spawnRate * gen->spawnRateMultiplier;
+
+        newparts *= particleSpawnRate *
+            (1 - def->spawnRateVariance * RNG_RandFloat());
+
         gen->spawnCount += newparts;
         while(gen->spawnCount >= 1)
         {
@@ -1109,7 +1312,8 @@ void P_PtcGenThinker(ptcgen_t* gen)
                     Cl_MobjIterator(PIT_ClientMobjParticles, gen);
                 }
 
-                P_IterateThinkers(gx.MobjThinker, manyNewParticles, gen);
+                P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
+                                  manyNewParticles, gen);
 
                 // The generator has no real source.
                 gen->source = NULL;
@@ -1158,9 +1362,9 @@ void P_PtcGenThinker(ptcgen_t* gen)
 /**
  * Returns true iff there is an active ptcgen for the given plane.
  */
-static boolean P_HasActivePtcGen(sector_t *sector, int isCeiling)
+static boolean P_HasActivePtcGen(sector_t* sector, int isCeiling)
 {
-    unsigned int i;
+    ptcgenid_t          i;
 
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
         if(activePtcGens[i] && activePtcGens[i]->sector == sector &&
@@ -1233,6 +1437,8 @@ void P_SpawnTypeParticleGens(void)
 
         // Initialize the particle generator.
         gen->count = def->particles;
+        gen->spawnRateMultiplier = 1;
+
         P_InitParticleGen(gen, def);
         gen->type = def->typeNum;
         gen->type2 = def->type2Num;
@@ -1242,11 +1448,11 @@ void P_SpawnTypeParticleGens(void)
     }
 }
 
-void P_SpawnMapParticleGens(const char *mapId)
+void P_SpawnMapParticleGens(const char* mapId)
 {
     int                 i;
-    ded_ptcgen_t       *def;
-    ptcgen_t           *gen;
+    ded_ptcgen_t*       def;
+    ptcgen_t*           gen;
 
     if(isDedicated || !useParticles)
         return;
@@ -1264,6 +1470,8 @@ void P_SpawnMapParticleGens(const char *mapId)
 
         // Initialize the particle generator.
         gen->count = def->particles;
+        gen->spawnRateMultiplier = 1;
+
         P_InitParticleGen(gen, def);
         gen->flags |= PGF_UNTRIGGERED;
 
@@ -1275,23 +1483,21 @@ void P_SpawnMapParticleGens(const char *mapId)
 /**
  * A public function (games can call this directly).
  */
-void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
 {
-    ptcgen_t           *gen;
-    ded_ptcgen_t       *def;
-    int                 i;
-    float               len;
+    const ded_ptcgen_t* def;
 
     // Are particles allowed?
-    if(isDedicated || !useParticles || !mo || !inflictor || amount <= 0)
+    if(isDedicated || !useParticles)
         return;
 
-    // Search for a suitable definition.
-    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    if(!mo || !inflictor || amount <= 0)
+        return;
+
+    if((def = Def_GetDamageGenerator(mo->type)))
     {
-        // It must be for this type of mobj.
-        if(def->damageNum != mo->type)
-            continue;
+        ptcgen_t*           gen;
+        vec3_t              vector, vecDelta;
 
         // Create it.
         if(!(gen = P_NewPtcGen()))
@@ -1299,32 +1505,28 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
 
         gen->count = def->particles;
         P_InitParticleGen(gen, def);
-        gen->flags |= PGF_UNTRIGGERED;
-        gen->area = amount;
-        if(gen->area < 1)
-            gen->area = 1;
 
-        // Calculate appropriate center coordinates and the vector.
+        gen->flags |= PGF_UNTRIGGERED;
+        gen->spawnRateMultiplier = MAX_OF(amount, 1);
+
+        // Calculate appropriate center coordinates.
         gen->center[VX] += FLT2FIX(mo->pos[VX]);
         gen->center[VY] += FLT2FIX(mo->pos[VY]);
         gen->center[VZ] += FLT2FIX(mo->pos[VZ] + mo->height / 2);
-        gen->vector[VX] += FLT2FIX(mo->pos[VX] - inflictor->pos[VX]);
-        gen->vector[VY] += FLT2FIX(mo->pos[VY] - inflictor->pos[VY]);
-        gen->vector[VZ] +=
-            FLT2FIX(mo->pos[VZ] + (mo->height / 2) - inflictor->pos[VZ] - (inflictor->height / 2));
 
-        // Normalize the vector.
-        len =
-            P_ApproxDistance(P_ApproxDistance
-                             (FIX2FLT(gen->vector[VX]), FIX2FLT(gen->vector[VY])),
-                             FIX2FLT(gen->vector[VZ]));
-        if(len != 0)
-        {
-            uint                k;
+        // Calculate launch vector.
+        V3_Set(vecDelta, inflictor->pos[VX] - mo->pos[VX],
+               inflictor->pos[VY] - mo->pos[VY],
+               (inflictor->pos[VZ] - inflictor->height / 2) -
+                  (mo->pos[VZ] + mo->height / 2));
 
-            for(k = 0; k < 3; ++k)
-                gen->vector[k] = FixedDiv(gen->vector[k], FLT2FIX(len));
-        }
+        V3_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
+        V3_Sum(vector, vector, vecDelta);
+        V3_Normalize(vector);
+
+        gen->vector[VX] = FLT2FIX(vector[VX]);
+        gen->vector[VY] = FLT2FIX(vector[VY]);
+        gen->vector[VZ] = FLT2FIX(vector[VZ]);
 
         // Is there a need to pre-simulate?
         P_PresimParticleGen(gen, def->preSim);
@@ -1336,14 +1538,14 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
  */
 void P_UpdateParticleGens(void)
 {
-    uint                i;
-    ptcgen_t           *gen;
+    ptcgenid_t          i;
 
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
     {
         int                 j;
-        ded_ptcgen_t       *def;
+        ded_ptcgen_t*       def;
         boolean             found;
+        ptcgen_t*           gen;
 
         if(!activePtcGens[i])
             continue;
@@ -1356,7 +1558,7 @@ void P_UpdateParticleGens(void)
         // just destroy those too.
         if((gen->flags & PGF_UNTRIGGERED) || gen->sector)
         {
-            P_FreePtcGen(gen);
+            P_PtcGenDestroy(gen);
             continue;
         }
 
@@ -1396,10 +1598,41 @@ void P_UpdateParticleGens(void)
         }
         else
         {   // Nothing else we can do, destroy it.
-            P_FreePtcGen(gen);
+            P_PtcGenDestroy(gen);
         }
     }
 
     // Re-spawn map generators.
     P_SpawnMapParticleGens(mapID);
+}
+
+/**
+ * Walk the entire list of particle generators.
+ */
+boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
+                         void* context)
+{
+    ptcgenid_t          i;
+    boolean             result = true;
+
+    for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+    {
+        if(!activePtcGens[i])
+            continue;
+
+        if((result = callback(activePtcGens[i], context)) == 0)
+            break;
+    }
+
+    return result;
+}
+
+/**
+ * Walk the list of sector-linked particle generators.
+ */
+boolean P_IterateSectorLinkedPtcGens(sector_t* sector,
+                                     boolean (*callback) (ptcgen_t*, void*),
+                         void* context)
+{
+    return iterateSectorLinkedPtcGens(sector, callback, context);
 }

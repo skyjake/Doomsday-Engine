@@ -1197,6 +1197,21 @@ Text {
 }
 
 Text {
+  ID = "DEMONKEY1";
+  Text = "Blue Demon Key";
+}
+
+Text {
+  ID = "DEMONKEY2";
+  Text = "Yellow Demon Key";
+}
+
+Text {
+  ID = "DEMONKEY3";
+  Text = "Red Demon Key";
+}
+
+Text {
   ID = "SAVEOUTMAP";
   Text = "You can't save if you aren't in a map!";
 }
@@ -1242,6 +1257,6 @@ Text {
 }
 
 Text {
-  ID = "PLAYERPROFILE";
-  Text = "Player Profile";
+  ID = "PLAYERSETUP";
+  Text = "Player Setup";
 }

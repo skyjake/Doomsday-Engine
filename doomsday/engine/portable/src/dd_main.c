@@ -47,6 +47,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <time.h>
 #include <string.h>
 
@@ -173,13 +174,13 @@ const char* value_Str(int val)
  */
 void DD_AddIWAD(const char* path)
 {
-    int             i = 0;
-    char            buf[256];
+    int                 i = 0;
+    filename_t          buf;
 
     while(iwadList[i])
         i++;
 
-    M_TranslatePath(path, buf);
+    M_TranslatePath(buf, path, FILENAME_T_MAXLEN);
     iwadList[i] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
     strcpy(iwadList[i], buf);
 }
@@ -227,13 +228,12 @@ static int autoDataAdder(const char *fileName, filetype_t type, void* ptr)
 
 /**
  * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
- * directory are added to the wadFiles list.  Returns the number of new
- * files that were loaded.
+ * directory are added to the wadFiles list.
+ *
+ * @return              Number of new files that were loaded.
  */
 int DD_AddAutoData(boolean loadFiles)
 {
-#define BUFFER_SIZE     (256)
-
     autoload_t          data;
     const char*         extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
@@ -242,7 +242,7 @@ int DD_AddAutoData(boolean loadFiles)
 #endif
         NULL
     };
-    char                pattern[BUFFER_SIZE+1];
+    filename_t          pattern;
     uint                i;
 
     data.loadFiles = loadFiles;
@@ -250,25 +250,23 @@ int DD_AddAutoData(boolean loadFiles)
 
     for(i = 0; extensions[i]; ++i)
     {
-        snprintf(pattern, BUFFER_SIZE, "%sauto\\*.%s", R_GetDataPath(),
-                 extensions[i]);
-        pattern[BUFFER_SIZE] = '\0';
+        snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s",
+                 R_GetDataPath(), extensions[i]);
+        pattern[FILENAME_T_MAXLEN] = '\0';
 
-        Dir_FixSlashes(pattern);
+        Dir_FixSlashes(pattern, FILENAME_T_MAXLEN);
         F_ForAll(pattern, &data, autoDataAdder);
     }
 
     return data.count;
-
-#undef BUFFER_SIZE
 }
 
-void DD_SetConfigFile(filename_t file)
+void DD_SetConfigFile(const char* file)
 {
     strncpy(configFileName, file, FILENAME_T_MAXLEN);
     configFileName[FILENAME_T_MAXLEN] = '\0';
 
-    Dir_FixSlashes(configFileName);
+    Dir_FixSlashes(configFileName, FILENAME_T_MAXLEN);
 
     strncpy(bindingsConfigFileName, configFileName, FILENAME_T_MAXLEN);
     bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
@@ -282,11 +280,11 @@ void DD_SetConfigFile(filename_t file)
  * Set the primary DED file, which is included immediately after
  * Doomsday.ded.
  */
-void DD_SetDefsFile(filename_t file)
+void DD_SetDefsFile(const char* file)
 {
     snprintf(topDefsFileName, FILENAME_T_MAXLEN, "%sdefs\\%s",
              ddBasePath, file);
-    Dir_FixSlashes(topDefsFileName);
+    Dir_FixSlashes(topDefsFileName, FILENAME_T_MAXLEN);
 }
 
 /**
@@ -301,7 +299,7 @@ void DD_DefineBuiltinVDM(void)
     F_AddMapping("auto", dest);
 
     // Definition files.
-    Def_GetAutoPath(dest);
+    Def_GetAutoPath(dest, FILENAME_T_MAXLEN);
     F_AddMapping("auto", dest);
 }
 
@@ -408,8 +406,9 @@ int DD_Main(void)
     {
         GL_Init();
         GL_InitRefresh();
-        GL_LoadLightmaps();
-        GL_LoadFlareTextures();
+
+        // \todo we could be loading these in busy mode.
+        GL_LoadSystemTextures();
     }
 
     // Do deferred uploads.
@@ -475,11 +474,11 @@ static int DD_StartupWorker(void *parm)
     Con_SetProgress(20);
 
     DD_AddStartupWAD("}data\\doomsday.pk3");
-    R_InitExternalResources();
+    R_SetDataPath("}data\\");
 
     // The name of the .cfg will invariably be overwritten by the Game.
-    strcpy(configFileName, "doomsday.cfg");
-    sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
+    strncpy(configFileName, "doomsday.cfg", FILENAME_T_MAXLEN);
+    snprintf(defsFileName, FILENAME_T_MAXLEN, "%sdefs\\doomsday.ded",                    ddBasePath);
 
     // Was the change to userdir OK?
     if(!app.userDirOk)
@@ -503,7 +502,7 @@ static int DD_StartupWorker(void *parm)
     if(gx.PreInit)
         gx.PreInit();
 
-    Con_SetProgress(30);
+    Con_SetProgress(40);
 
     // We now accept no more custom properties.
     //DAM_LockCustomPropertys();
@@ -535,7 +534,7 @@ static int DD_StartupWorker(void *parm)
     {
         for(;;)
         {
-            char           *arg = ArgNext();
+            const char*         arg = ArgNext();
 
             if(!arg || arg[0] == '-')
                 break;
@@ -545,9 +544,9 @@ static int DD_StartupWorker(void *parm)
         }
     }
 
-    Con_SetProgress(40);
+    Con_SetProgress(50);
 
-    if(defaultWads)
+    if(defaultWads && defaultWads[0])
         AddToWadList(defaultWads);  // These must take precedence.
     HandleArgs(1);              // Only the WADs.
 
@@ -557,12 +556,15 @@ static int DD_StartupWorker(void *parm)
     // Add real files from the Auto directory to the wadFiles list.
     DD_AddAutoData(false);
 
+    Con_SetProgress(60);
+
     W_InitMultipleFiles(wadFiles);
+
     F_InitDirec();
     VERBOSE(Con_Message("W_Init: Done in %.2f seconds.\n",
                         Sys_GetSeconds() - starttime));
 
-    Con_SetProgress(75);
+    Con_SetProgress(70);
 
     // Load help resources. Now virtual files are available as well.
     if(!isDedicated)
@@ -582,8 +584,12 @@ static int DD_StartupWorker(void *parm)
     // Now the game can identify the game mode.
     gx.UpdateState(DD_GAME_MODE);
 
-    // Palette information will be needed for preparing textures.
-    R_LoadPalette();
+    Con_SetProgress(90);
+
+    // We can now initialize the resource locator (game mode identified).
+    R_InitResourceLocator();
+
+    Con_SetProgress(100);
 
     GL_EarlyInitTextureManager();
 
@@ -591,6 +597,9 @@ static int DD_StartupWorker(void *parm)
     P_InitMaterialManager();
     R_InitTextures();
     R_InitFlats();
+    R_PreInitSprites();
+
+    Con_SetProgress(130);
 
     // Now that we've generated the auto-materials we can initialize
     // definitions.
@@ -608,52 +617,28 @@ static int DD_StartupWorker(void *parm)
 
     if(ArgCheckWith("-dumplump", 1))
     {
-        char           *arg = ArgNext();
-        char            fname[100];
-        FILE           *file;
-        int             lump = W_GetNumForName(arg);
-        byte           *lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+        const char*         lumpName = ArgNext();
+        lumpnum_t           lump;
 
-        sprintf(fname, "%s.dum", arg);
-        file = fopen(fname, "wb");
-        if(!file)
-        {
-            Con_Error("Couldn't open %s for writing. %s\n", fname,
-                      strerror(errno));
-        }
-        fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
-        fclose(file);
-        Con_Error("%s dumped to %s.\n", arg, fname);
+        if((lump = W_CheckNumForName(lumpName)) != -1)
+            W_DumpLump(lump, NULL);
     }
 
     if(ArgCheck("-dumpwaddir"))
-    {
-        char            buff[10];
+        W_DumpLumpDir();
 
-        printf("Lumps (%d total):\n", numLumps);
-        for(p = 0; p < numLumps; p++)
-        {
-            strncpy(buff, lumpInfo[p].name, 8);
-            buff[8] = 0;
-            printf("%04i - %-8s (hndl: %p, pos: %i, size: %lu)\n", p, buff,
-                   lumpInfo[p].handle, lumpInfo[p].position,
-                   (unsigned long) lumpInfo[p].size);
-        }
-        Con_Error("---End of lumps---\n");
-    }
-
-    Con_SetProgress(100);
+    Con_SetProgress(140);
 
     Con_Message("B_Init: Init bindings.\n");
     B_Init();
     Con_ParseCommands(bindingsConfigFileName, false);
 
-    Con_SetProgress(125);
+    Con_SetProgress(150);
 
     Con_Message("R_Init: Init the refresh daemon.\n");
     R_Init();
 
-    Con_SetProgress(199);
+    Con_SetProgress(165);
 
     Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
@@ -662,8 +647,13 @@ static int DD_StartupWorker(void *parm)
     if(gx.PostInit)
         gx.PostInit();
 
-    // Now the defs have been read we can init the map format info
+    Con_SetProgress(175);
+
+    // Defs have been read; we can now init models and the map format info.
+    R_InitModels();
     P_InitData();
+
+    Con_SetProgress(190);
 
     // Try to load the autoexec file. This is done here to make sure
     // everything is initialized: the user can do here anything that
@@ -675,7 +665,7 @@ static int DD_StartupWorker(void *parm)
     {
         for(;;)
         {
-            char           *arg = ArgNext();
+            const char*         arg = ArgNext();
 
             if(!arg || arg[0] == '-')
                 break;
@@ -693,7 +683,7 @@ static int DD_StartupWorker(void *parm)
 
         for(++p; p < Argc(); p++)
         {
-            char           *arg = Argv(p);
+            const char*         arg = Argv(p);
 
             if(arg[0] == '-')
             {
@@ -709,10 +699,12 @@ static int DD_StartupWorker(void *parm)
     if(isDedicated)
         Con_Open(true);
 
-    Con_SetProgress(200);
+    Con_SetProgress(199);
 
     Plug_DoHook(HOOK_INIT, 0, 0);   // Any initialization hooks?
     Con_UpdateKnownWords();         // For word completion (with Tab).
+
+    Con_SetProgress(200);
 
 #ifdef WIN32
     // This thread has finished using COM.
@@ -789,15 +781,17 @@ void DD_CheckTimeDemo(void)
  * greater-than character (>) in front of the name to prepend the base
  * path to the file name (providing it's a relative path).
  */
-void DD_AddStartupWAD(const char *file)
+void DD_AddStartupWAD(const char* file)
 {
-    int             i;
-    char           *new, temp[300];
+    int                 i;
+    char*               new;
+    filename_t          temp;
 
     i = 0;
     while(wadFiles[i])
         i++;
-    M_TranslatePath(file, temp);
+
+    M_TranslatePath(temp, file, FILENAME_T_MAXLEN);
     new = M_Calloc(strlen(temp) + 1);  // This is never freed?
     strcat(new, temp);
     wadFiles[i] = new;
@@ -1245,5 +1239,53 @@ char *strlwr(char *string)
     for(; *ch; ch++)
         *ch = tolower(*ch);
     return string;
+}
+#endif
+
+#ifdef WIN32
+// These could be moved to some win32-only source file.
+
+/**
+ * Prints a formatted string into a fixed-size buffer. At most @c size characters will be
+ * written to the output buffer @c str. The output will always contain a terminating null
+ * character. 
+ * 
+ * @param str Output buffer.
+ * @param size Size of the output buffer.
+ * @param format Format of the output.
+ *
+ * @return The number of characters that would have been written to the output buffer if
+ * the size was unlimited.
+ */
+int snprintf(char* str, size_t size, const char* format, ...)
+{
+    int result = 0;
+    va_list args;
+    va_start(args, format);
+    result = vsnprintf(str, size, format, args);
+    va_end(args);
+    // Always terminate.
+    str[size - 1] = 0;
+    return result;
+}
+
+/**
+ * Prints a formatted string into a fixed-size buffer. At most @c size characters will be
+ * written to the output buffer @c str. The output will always contain a terminating null
+ * character. 
+ * 
+ * @param str Output buffer.
+ * @param size Size of the output buffer.
+ * @param format Format of the output.
+ * @param ap Variable-size argument list.
+ *
+ * @return The number of characters that would have been written to the output buffer if
+ * the size was unlimited.
+ */
+int vsnprintf(char* str, size_t size, const char* format, va_list ap)
+{
+    // TODO: This might be defined by win32 already? Or replaced by vsnprintf_s
+    // TODO: Or call _vsnprintf
+    Con_Error("vsnprintf() not implemented\n");
 }
 #endif

@@ -286,4 +286,38 @@ void C_DECL     A_BounceCheck();
 void C_DECL     A_SorcFX1Seek();
 void C_DECL     A_SorcOffense1();
 void C_DECL     A_SorcOffense2();
+
+// Inventory
+void C_DECL     A_Invulnerability();
+void C_DECL     A_Health();
+void C_DECL     A_SuperHealth();
+void C_DECL     A_HealRadius();
+void C_DECL     A_SummonTarget();
+void C_DECL     A_Torch();
+void C_DECL     A_Egg();
+void C_DECL     A_Wings();
+void C_DECL     A_BlastRadius();
+void C_DECL     A_PoisonBag();
+void C_DECL     A_TeleportOther();
+void C_DECL     A_Speed();
+void C_DECL     A_BoostMana();
+void C_DECL     A_BoostArmor();
+void C_DECL     A_Teleport();
+void C_DECL     A_PuzzSkull();
+void C_DECL     A_PuzzGemBig();
+void C_DECL     A_PuzzGemRed();
+void C_DECL     A_PuzzGemGreen1();
+void C_DECL     A_PuzzGemGreen2();
+void C_DECL     A_PuzzGemBlue1();
+void C_DECL     A_PuzzGemBlue2();
+void C_DECL     A_PuzzBook1();
+void C_DECL     A_PuzzBook2();
+void C_DECL     A_PuzzSkull2();
+void C_DECL     A_PuzzFWeapon();
+void C_DECL     A_PuzzCWeapon();
+void C_DECL     A_PuzzMWeapon();
+void C_DECL     A_PuzzGear1();
+void C_DECL     A_PuzzGear2();
+void C_DECL     A_PuzzGear3();
+void C_DECL     A_PuzzGear4();
 #endif

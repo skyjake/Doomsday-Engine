@@ -178,8 +178,8 @@ typedef struct {
    } dmd_frame_t; */
 
 typedef struct {
-    char            name[256];
-    int             id;
+    filename_t      name;
+    uint            id;
 } dmd_skin_t;
 
 typedef struct {
@@ -209,11 +209,12 @@ typedef struct model_frame_s {
     char            name[16];
     model_vertex_t *vertices;
     model_vertex_t *normals;
+    float           min[3], max[3];
 } model_frame_t;
 
 typedef struct model_s {
     boolean         loaded;
-    char            fileName[256]; // Name of the md2 file.
+    filename_t      fileName; // Name of the md2 file.
     dmd_header_t    header;
     dmd_info_t      info;
     dmd_skin_t     *skins;

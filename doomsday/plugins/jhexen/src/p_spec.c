@@ -42,7 +42,6 @@
 #include "p_plat.h"
 #include "p_floor.h"
 #include "p_switch.h"
-#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -161,7 +160,7 @@ boolean EV_SectorSoundChange(byte* args)
     return rtn;
 }
 
-static boolean CheckedLockedDoor(mobj_t *mo, byte lock)
+static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
 {
     extern int  TextKeyMessages[11];
     char        LockedBuffer[80];
@@ -185,20 +184,20 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(linedef_t *line, byte *args, mobj_t *mo)
+boolean EV_LineSearchForPuzzleItem(linedef_t* line, byte* args, mobj_t* mo)
 {
-    artitype_e  arti;
+    inventoryitemtype_t  type;
 
     if(!mo || !mo->player || !line)
         return false;
 
-    arti = AFT_FIRSTPUZZITEM + P_ToXLine(line)->arg1;
+    type = IIT_FIRSTPUZZITEM + P_ToXLine(line)->arg1;
 
-    if(arti < AFT_FIRSTPUZZITEM)
+    if(type < IIT_FIRSTPUZZITEM)
         return false;
 
     // Search player's inventory for puzzle items
-    return P_InventoryUse(mo->player, arti);
+    return P_InventoryUse(mo->player - players, type, false);
 }
 
 boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
@@ -445,7 +444,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
         if(side == 0) // Only teleport when crossing the front side of a line
         {
             // Players must be alive to teleport
-            if(!(mo && mo->player && mo->player->pState == PST_DEAD))
+            if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 G_LeaveMap(args[0], args[1], false);
                 success = true;
@@ -457,10 +456,10 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
         if(side == 0)  // Only teleport when crossing the front side of a line
         {
             // Players must be alive to teleport
-            if(!(mo && mo->player && mo->player->pState == PST_DEAD))
+            if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 success = true;
-                if(GAMERULES.deathmatch)
+                if(deathmatch)
                 {
                     // Winning in deathmatch just goes back to map 1
                     G_LeaveMap(1, 0, false);
@@ -642,7 +641,8 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
     if((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) &&
        buttonSuccess)
     {
-        P_ChangeSwitchMaterial(line, repeat);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), 0, false,
+                       repeat? BUTTONTIME : 0);
     }
 
     return true;
@@ -779,59 +779,7 @@ void P_PlayerOnSpecialFloor(player_t* player)
 
 void P_UpdateSpecials(void)
 {
-    button_t *button;
-
-    //  DO BUTTONS
-    for(button = buttonlist; button; button = button->next)
-    {
-        if(button->timer)
-        {
-            button->timer--;
-            if(!button->timer)
-            {
-                sidedef_t     *sdef = P_GetPtrp(button->line, DMU_SIDEDEF0);
-                //sector_t *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
-
-                switch(button->section)
-                {
-                case LS_TOP:
-                    P_SetPtrp(sdef, DMU_TOP_MATERIAL, button->material);
-                    break;
-
-                case LS_MIDDLE:
-                    P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, button->material);
-                    break;
-
-                case LS_BOTTOM:
-                    P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, button->material);
-                    break;
-
-                default:
-                    Con_Error("P_UpdateSpecials: Unknown sidedef section \"%i\".",
-                              (int) button->section);
-                }
-
-                button->line = NULL;
-                button->section = 0;
-                button->material = NULL;
-                button->soundOrg = NULL;
-            }
-        }
-    }
-}
-
-void P_FreeButtons(void)
-{
-    button_t *button, *np;
-
-    button = buttonlist;
-    while(button != NULL)
-    {
-        np = button->next;
-        free(button);
-        button = np;
-    }
-    buttonlist = NULL;
+    // Stub.
 }
 
 /**
@@ -907,8 +855,6 @@ void P_SpawnSpecials(void)
             break;
         }
     }
-
-    P_FreeButtons();
 }
 
 void P_AnimateSurfaces(void)
@@ -1191,13 +1137,13 @@ static void P_LightningFlash(void)
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.
-        if(Con_GetInteger("sound-3d") && plrmo && !IS_NETGAME)
+        if(cfg.snd3D && plrmo && !IS_NETGAME)
         {
             crashOrigin =
                 P_SpawnMobj3f(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),
                               plrmo->pos[VY] + (16 * (M_Random() - 127) << FRACBITS),
                               plrmo->pos[VZ] + (4000 << FRACBITS), MT_CAMERA,
-                              0);
+                              0, 0);
             crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
         }
 
@@ -1235,7 +1181,7 @@ void P_InitLightning(void)
 {
     uint                i, secCount;
 
-    if(!P_GetMapLightning(gs.map.id))
+    if(!P_GetMapLightning(gameMap))
     {
         mapHasLightning = false;
         lightningFlash = 0;

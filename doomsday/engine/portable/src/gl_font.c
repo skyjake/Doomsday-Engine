@@ -73,7 +73,7 @@ static int initFROk = 0;
 static int numFonts = 0;
 static jfrfont_t* fonts = NULL; // The list of fonts.
 static int currentFontIndex; // Index of the current font.
-static char fontpath[256] = "";
+static filename_t fontpath = "";
 
 // CODE --------------------------------------------------------------------
 
@@ -156,14 +156,14 @@ int FR_Init(void)
     // Check the font path.
     if(ArgCheckWith("-fontdir", 1))
     {
-        M_TranslatePath(ArgNext(), fontpath);
-        Dir_ValidDir(fontpath);
+        M_TranslatePath(fontpath, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(fontpath, FILENAME_T_MAXLEN);
         M_CheckPath(fontpath);
     }
     else
     {
-        strcpy(fontpath, ddBasePath);
-        strcat(fontpath, "data\\fonts\\");
+        strncpy(fontpath, ddBasePath, FILENAME_T_MAXLEN);
+        strncat(fontpath, "data\\fonts\\", FILENAME_T_MAXLEN);
     }
     return 0;
 }

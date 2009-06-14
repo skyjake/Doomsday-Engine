@@ -108,6 +108,19 @@ static int getTrackLength(int track)
     return min * 60 + sec;
 }
 
+static int isPlaying(void)
+{
+    char                lenString[80];
+
+    if(!sendMCICmd(lenString, 80, "status " DEVICEID " mode wait"))
+        return false;
+
+    if(strcmp(lenString, "playing") == 0)
+        return true;
+
+    return false;
+}
+
 /**
  * Assign the value of a CDAudio-interface property.
  */
@@ -133,6 +146,9 @@ int DM_CDAudio_Get(int prop, void* ptr)
             return true;
         }
         break;
+
+    case MUSIP_PLAYING:
+        return (cdInited && isPlaying()? true : false);
 
     default:
         break;

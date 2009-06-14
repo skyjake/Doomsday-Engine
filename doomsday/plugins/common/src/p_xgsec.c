@@ -289,7 +289,7 @@ boolean destroyXSThinker(thinker_t* th, void* context)
 
     if(xs->sector == (sector_t*) context)
     {
-        P_ThinkerRemove(&xs->thinker);
+        DD_ThinkerRemove(&xs->thinker);
         return false; // Stop iteration, we're done.
     }
 
@@ -372,13 +372,14 @@ void XS_SetSectorType(struct sector_s* sec, int special)
         }
 
         // If there is not already an xsthinker for this sector, create one.
-        if(P_IterateThinkers(XS_Thinker, findXSThinker, sec))
+        if(DD_IterateThinkers(XS_Thinker, findXSThinker, sec))
         {   // Not created one yet.
-            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAPSPEC, 0);
+            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAP, 0);
 
             xs->thinker.function = XS_Thinker;
+            DD_ThinkerAdd(&xs->thinker);
+
             xs->sector = sec;
-            P_ThinkerAdd(&xs->thinker);
         }
     }
     else
@@ -387,7 +388,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
                special);
 
         // If there is an xsthinker for this, destroy it.
-        P_IterateThinkers(XS_Thinker, destroyXSThinker, sec);
+        DD_IterateThinkers(XS_Thinker, destroyXSThinker, sec);
 
         // Free previously allocated XG data.
         if(xsec->xg)
@@ -462,7 +463,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         }
 
         // Remove this thinker.
-        P_ThinkerRemove((thinker_t *) mover);
+        DD_ThinkerRemove((thinker_t *) mover);
     }
     else
     {
@@ -482,7 +483,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         if(mover->flags & (PMF_ACTIVATE_ON_ABORT | PMF_DEACTIVATE_ON_ABORT))
         {
             // Destroy this mover.
-            P_ThinkerRemove((thinker_t *) mover);
+            DD_ThinkerRemove((thinker_t *) mover);
         }
     }
 }
@@ -623,7 +624,7 @@ static boolean stopPlaneMover(thinker_t* th, void* context)
        mover->ceiling == params->ceiling)
     {
         XS_MoverStopped(mover, false);
-        P_ThinkerRemove(th); // Remove it.
+        DD_ThinkerRemove(th); // Remove it.
     }
 
     return true; // Continue iteration.
@@ -640,11 +641,13 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
 
     params.sec = sec;
     params.ceiling = ceiling;
-    P_IterateThinkers(XS_PlaneMover, stopPlaneMover, &params);
+    DD_IterateThinkers(XS_PlaneMover, stopPlaneMover, &params);
 
     // Allocate a new thinker.
     mover = Z_Calloc(sizeof(*mover), PU_MAP, 0);
     mover->thinker.function = XS_PlaneMover;
+    DD_ThinkerAdd(&mover->thinker);
+
     mover->sector = sec;
     mover->ceiling = ceiling;
 
@@ -981,7 +984,7 @@ boolean XS_GetPlane(linedef_t* actline, sector_t* sector, int ref,
 {
     material_t*         otherMat;
     float               otherHeight;
-    sector_t*           otherSec, *iter;
+    sector_t*           otherSec = NULL, *iter;
     xline_t*            xline;
     char                buff[50];
 
@@ -1452,9 +1455,6 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     // Increment wait time.
     xline->xg->fdata += info->fparm[6];
 
-    // Add the thinker if necessary.
-    P_ThinkerAdd(&mover->thinker);
-
     // Do start stuff. Play sound?
     if(playsound)
         XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
@@ -1588,8 +1588,6 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
         XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
     }
 
-    P_ThinkerAdd(&mover->thinker);
-
     return true; // Building has begun!
 }
 
@@ -1597,11 +1595,11 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, linedef_t *origin,
 #define F_CEILING               0x2
 
 typedef struct spreadbuildparams_s {
-    sector_t           *baseSec;
-    int                 baseMat;
+    sector_t*           baseSec;
+    material_t*         baseMat;
     byte                flags;
-    linedef_t          *origin;
-    linetype_t         *info;
+    linedef_t*          origin;
+    linetype_t*         info;
     int                 stepCount;
     size_t              spreaded;
 } spreadbuildparams_t;
@@ -1624,13 +1622,13 @@ int spreadBuild(void *ptr, void *context)
     {   // Planepic must match.
         if(params->flags & F_CEILING)
         {
-            if(P_GetIntp(params->baseSec, DMU_CEILING_MATERIAL) !=
+            if(P_GetPtrp(params->baseSec, DMU_CEILING_MATERIAL) !=
                params->baseMat)
                 return 1;
         }
         else
         {
-            if(P_GetIntp(params->baseSec, DMU_FLOOR_MATERIAL) !=
+            if(P_GetPtrp(params->baseSec, DMU_FLOOR_MATERIAL) !=
                params->baseMat)
                 return 1;
         }
@@ -1655,7 +1653,7 @@ static void markBuiltSectors(void)
     // Mark the sectors of the last step as processed.
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t          *xsec = P_GetXSector(i);
+        xsector_t*          xsec = P_GetXSector(i);
 
         if(xsec->blFlags & BL_WAS_BUILT)
         {
@@ -1665,15 +1663,15 @@ static void markBuiltSectors(void)
     }
 }
 
-static boolean spreadBuildToNeighborAll(linedef_t *origin, linetype_t *info,
+static boolean spreadBuildToNeighborAll(linedef_t* origin, linetype_t* info,
                                         boolean picstop, boolean ceiling,
-                                        int mypic, int stepCount)
+                                        material_t* myMat, int stepCount)
 {
     uint                i;
     boolean             result = false;
     spreadbuildparams_t params;
 
-    params.baseMat = mypic;
+    params.baseMat = myMat;
     params.info = info;
     params.origin = origin;
     params.stepCount = stepCount;
@@ -1685,8 +1683,8 @@ static boolean spreadBuildToNeighborAll(linedef_t *origin, linetype_t *info,
 
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t           *sec;
-        xsector_t          *xsec = P_GetXSector(i);
+        sector_t*           sec;
+        xsector_t*          xsec = P_GetXSector(i);
 
         // Only spread from built sectors (spread only once!).
         if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
@@ -1712,22 +1710,22 @@ static boolean spreadBuildToNeighborAll(linedef_t *origin, linetype_t *info,
 #define F_CEILING               0x2
 
 typedef struct findbuildneighborparams_s {
-    sector_t           *baseSec;
-    int                 baseMat;
+    sector_t*           baseSec;
+    material_t*         baseMat;
     byte                flags;
-    linedef_t          *origin;
-    linetype_t         *info;
+    linedef_t*          origin;
+    linetype_t*         info;
     int                 stepCount;
     uint                foundIDX;
-    sector_t           *foundSec;
+    sector_t*           foundSec;
 } findbuildneighborparams_t;
 
-int findBuildNeighbor(void *ptr, void *context)
+int findBuildNeighbor(void* ptr, void* context)
 {
-    linedef_t          *li = (linedef_t*) ptr;
+    linedef_t*          li = (linedef_t*) ptr;
     findbuildneighborparams_t *params =
         (findbuildneighborparams_t*) context;
-    sector_t           *frontSec, *backSec;
+    sector_t*           frontSec, *backSec;
     uint                idx;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
@@ -1742,13 +1740,13 @@ int findBuildNeighbor(void *ptr, void *context)
     {   // Planepic must match.
         if(params->flags & F_CEILING)
         {
-            if(P_GetIntp(params->baseSec, DMU_CEILING_MATERIAL) !=
+            if(P_GetPtrp(params->baseSec, DMU_CEILING_MATERIAL) !=
                params->baseMat)
                 return 1;
         }
         else
         {
-            if(P_GetIntp(params->baseSec, DMU_FLOOR_MATERIAL) !=
+            if(P_GetPtrp(params->baseSec, DMU_FLOOR_MATERIAL) !=
                params->baseMat)
                 return 1;
         }
@@ -1769,16 +1767,16 @@ int findBuildNeighbor(void *ptr, void *context)
     return 1; // Continue iteration.
 }
 
-boolean spreadBuildToNeighborLowestIDX(linedef_t *origin, linetype_t *info,
+boolean spreadBuildToNeighborLowestIDX(linedef_t* origin, linetype_t* info,
                                        boolean picstop, boolean ceiling,
-                                       int mypic, int stepcount,
-                                       sector_t *foundSec)
+                                       material_t* myMat, int stepcount,
+                                       sector_t* foundSec)
 {
     uint                i;
     boolean             result = false;
     findbuildneighborparams_t params;
 
-    params.baseMat = mypic;
+    params.baseMat = myMat;
     params.info = info;
     params.origin = origin;
     params.stepCount = stepcount;
@@ -1790,8 +1788,8 @@ boolean spreadBuildToNeighborLowestIDX(linedef_t *origin, linetype_t *info,
 
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t           *sec;
-        xsector_t          *xsec = P_GetXSector(i);
+        sector_t*           sec;
+        xsector_t*          xsec = P_GetXSector(i);
 
         // Only spread from built sectors (spread only once!).
         if(!(xsec->blFlags & BL_BUILT) || xsec->blFlags & BL_SPREADED)
@@ -1818,17 +1816,17 @@ boolean spreadBuildToNeighborLowestIDX(linedef_t *origin, linetype_t *info,
     return result;
 }
 
-int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
-                              void *context, void *context2,
-                              mobj_t *activator)
+int C_DECL XSTrav_BuildStairs(sector_t* sector, boolean ceiling,
+                              void* context, void* context2,
+                              mobj_t* activator)
 {
     uint                stepCount = 0;
-    linedef_t          *origin = (linedef_t *) context;
-    linetype_t         *info = context2;
-    sector_t           *foundSec = NULL;
+    linedef_t*          origin = (linedef_t *) context;
+    linetype_t*         info = context2;
+    sector_t*           foundSec = NULL;
     boolean             picstop = info->iparm[2] != 0;
     boolean             spread = info->iparm[3] != 0;
-    int                 mypic;
+    material_t*         myMat;
 
     XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
            ceiling ? "ceiling" : "floor");
@@ -1836,8 +1834,8 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
     // i2: (true/false) stop when texture changes
     // i3: (true/false) spread build?
 
-    mypic = ceiling ? P_GetIntp(sector, DMU_CEILING_MATERIAL) :
-                      P_GetIntp(sector, DMU_FLOOR_MATERIAL);
+    myMat = ceiling ? P_GetPtrp(sector, DMU_CEILING_MATERIAL) :
+                      P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
 
     // Apply to first step.
     XS_DoBuild(sector, ceiling, origin, info, 0);
@@ -1853,7 +1851,7 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
 
             // Scan the sectors for the next ones to spread to.
             found = spreadBuildToNeighborAll(origin, info, picstop, ceiling,
-                                             mypic, stepCount);
+                                             myMat, stepCount);
             stepCount++;
         } while(found);
     }
@@ -1868,7 +1866,7 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling,
 
             // Scan the sectors for the next ones to spread to.
             if(spreadBuildToNeighborLowestIDX(origin, info, picstop,
-                                              ceiling, mypic, stepCount,
+                                              ceiling, myMat, stepCount,
                                               foundSec))
             {
                 XS_DoBuild(foundSec, ceiling, origin, info, stepCount);
@@ -2249,7 +2247,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
             fogDelta = ((thing->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
 #endif
             flash = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
-                                  oldpos[VZ] + fogDelta, oldAngle + ANG180);
+                                  oldpos[VZ] + fogDelta, oldAngle + ANG180, 0);
             // Play a sound?
             if(info->iparm[3])
                 S_StartSound(info->iparm[3], flash);
@@ -2264,7 +2262,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
             flash = P_SpawnMobj3f(MT_TFOG,
                                   mo->pos[VX] + 20 * FIX2FLT(finecosine[an]),
                                   mo->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                  mo->pos[VZ] + fogDelta, mo->angle);
+                                  mo->pos[VZ] + fogDelta, mo->angle, 0);
             // Play a sound?
             if(info->iparm[3])
                 S_StartSound(info->iparm[3], flash);
@@ -2903,7 +2901,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_FLOOR;
-            P_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
+            DD_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ceiling chain. Check any mobjs that are touching the ceiling.
@@ -2913,7 +2911,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_CEILING;
-            P_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
+            DD_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Inside chain. Check any sectorlinked mobjs.
@@ -2923,7 +2921,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_INSIDE;
-            P_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
+            DD_IterateThinkers(P_MobjThinker, XSTrav_SectorChain, &params);
         }
 
         // Ticker chain. Send an activate event if TICKER_D flag is not set.
@@ -2979,7 +2977,7 @@ void XS_Thinker(xsthinker_t* xs)
         xstrav_windparams_t params;
 
         params.sec = sector;
-        P_IterateThinkers(P_MobjThinker, XSTrav_Wind, &params);
+        DD_IterateThinkers(P_MobjThinker, XSTrav_Wind, &params);
     }
 }
 
@@ -3000,8 +2998,8 @@ float XS_Gravity(struct sector_s* sec)
         float               gravity = xsec->xg->info.gravity;
 
         // Apply gravity modifier.
-        if(IS_NETGAME && GAMERULES.gravityModifier != -1)
-            gravity *= (float) GAMERULES.gravityModifier / 100;
+        if(IS_NETGAME && cfg.netGravity != -1)
+            gravity *= (float) cfg.netGravity / 100;
 
         return gravity;
     }
@@ -3229,7 +3227,6 @@ DEFCC(CCmdMovePlane)
     if(isBoth)
         mover->flags |= PMF_OTHER_FOLLOWS;
 
-    P_ThinkerAdd(&mover->thinker);
     return true;
 }
 

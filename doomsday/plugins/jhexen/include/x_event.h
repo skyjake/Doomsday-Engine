@@ -34,7 +34,21 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#if 0
+typedef enum {
+    GA_NONE,
+    GA_LOADMAP,
+    GA_INITNEW,
+    GA_NEWGAME,
+    GA_LOADGAME,
+    GA_SAVEGAME,
+    GA_COMPLETED,
+    GA_LEAVEMAP,
+    GA_SINGLEREBORN,
+    GA_VICTORY,
+    GA_WORLDDONE,
+    GA_SCREENSHOT
+} gameaction_t;
+
 //
 // Button/action code definitions.
 //
@@ -77,6 +91,5 @@ typedef enum
     BTS_PREVWEAPON  = 8,
 
 } buttoncode_t;
-#endif
 
 #endif

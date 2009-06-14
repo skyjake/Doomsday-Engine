@@ -134,26 +134,29 @@ static float   mousey;
 static pcontrolstate_t controlStates[MAXPLAYERS];
 
 // CVars for control/input
-cvar_t  controlCVars[] = {
+cvar_t controlCVars[] = {
 // Control (options/preferences)
-    {"ctl-aim-auto", 0, CVT_BYTE, &PLRPROFILE.ctrl.useAutoAim, 0, 1},
+    {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1},
 
-    {"ctl-turn-speed", 0, CVT_FLOAT, &PLRPROFILE.ctrl.turnSpeed, 1, 5},
-    {"ctl-run", 0, CVT_BYTE, &PLRPROFILE.ctrl.alwaysRun, 0, 1},
+    {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5},
+    {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
 
-    {"ctl-use-dclick", 0, CVT_BYTE, &PLRPROFILE.ctrl.dclickUse, 0, 1},
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    {"ctl-use-immediate", 0, CVT_INT, &PLRPROFILE.inventory.chooseAndUse, 0, 1},
-    {"ctl-use-next", 0, CVT_INT, &PLRPROFILE.inventory.nextOnNoUse, 0, 1},
+    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickUse, 0, 1},
+#if __JHERETIC__ || __JHEXEN__
+    {"ctl-inventory-mode", 0, CVT_BYTE, &cfg.inventorySelectMode, 0, 1},
+    {"ctl-inventory-wrap", 0, CVT_BYTE, &cfg.inventoryWrap, 0, 1},
+    {"ctl-inventory-use-immediate", 0, CVT_BYTE, &cfg.inventoryUseImmediate, 0, 1},
+    {"ctl-inventory-use-next", 0, CVT_BYTE, &cfg.inventoryUseNext, 0, 1},
 #endif
 
-    {"ctl-look-speed", 0, CVT_FLOAT, &PLRPROFILE.ctrl.lookSpeed, 1, 5},
+    {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
+    {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
 
-    {"ctl-look-spring", 0, CVT_BYTE, &PLRPROFILE.camera.lookSpring, 0, 1},
-    {"ctl-look-mouse", 0, CVT_BYTE, &PLRPROFILE.camera.useMLook, 0, 1},
-    {"ctl-look-pov", 0, CVT_BYTE, &PLRPROFILE.camera.povLookAround, 0, 1},
-    {"ctl-look-joy", 0, CVT_BYTE, &PLRPROFILE.camera.useJLook, 0, 1},
-    {"ctl-look-joy-delta", 0, CVT_BYTE, &PLRPROFILE.camera.jLookDeltaMode, 0, 1},
+    {"ctl-look-mouse", 0, CVT_INT, &cfg.useMLook, 0, 1},
+
+    {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
+    {"ctl-look-joy", 0, CVT_INT, &cfg.useJLook, 0, 1},
+    {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jLookDeltaMode, 0, 1},
     {NULL}
 };
 
@@ -206,15 +209,28 @@ void G_ControlRegister(void)
 #endif
     P_NewPlayerControl(CTL_NEXT_WEAPON, CTLT_IMPULSE, "nextweapon", "game");
     P_NewPlayerControl(CTL_PREV_WEAPON, CTLT_IMPULSE, "prevweapon", "game");
-    P_NewPlayerControl(CTL_USE_ARTIFACT, CTLT_IMPULSE, "useartifact", "game");
-
+#if __JHERETIC__ || __JHEXEN__
+    P_NewPlayerControl(CTL_USE_ITEM, CTLT_IMPULSE, "useitem", "game");
+    P_NewPlayerControl(CTL_NEXT_ITEM, CTLT_IMPULSE, "nextitem", "game");
+    P_NewPlayerControl(CTL_PREV_ITEM, CTLT_IMPULSE, "previtem", "game");
+    P_NewPlayerControl(CTL_PANIC, CTLT_IMPULSE, "panic", "game");
+#endif
+#if __JHERETIC__
     P_NewPlayerControl(CTL_TOME_OF_POWER, CTLT_IMPULSE, "tome", "game");
     P_NewPlayerControl(CTL_INVISIBILITY, CTLT_IMPULSE, "invisibility", "game");
     P_NewPlayerControl(CTL_FLY, CTLT_IMPULSE, "fly", "game");
-    P_NewPlayerControl(CTL_PANIC, CTLT_IMPULSE, "panic", "game");
     P_NewPlayerControl(CTL_TORCH, CTLT_IMPULSE, "torch", "game");
     P_NewPlayerControl(CTL_HEALTH, CTLT_IMPULSE, "health", "game");
     P_NewPlayerControl(CTL_SUPER_HEALTH, CTLT_IMPULSE, "superhealth", "game");
+    P_NewPlayerControl(CTL_TELEPORT, CTLT_IMPULSE, "teleport", "game");
+    P_NewPlayerControl(CTL_FIREBOMB, CTLT_IMPULSE, "firebomb", "game");
+    P_NewPlayerControl(CTL_INVULNERABILITY, CTLT_IMPULSE, "invulnerability", "game");
+    P_NewPlayerControl(CTL_EGG, CTLT_IMPULSE, "egg", "game");
+#endif
+#if __JHEXEN__
+    P_NewPlayerControl(CTL_FLY, CTLT_IMPULSE, "fly", "game");
+    P_NewPlayerControl(CTL_TORCH, CTLT_IMPULSE, "torch", "game");
+    P_NewPlayerControl(CTL_HEALTH, CTLT_IMPULSE, "health", "game");
     P_NewPlayerControl(CTL_MYSTIC_URN, CTLT_IMPULSE, "mysticurn", "game");
     P_NewPlayerControl(CTL_KRATER, CTLT_IMPULSE, "krater", "game");
     P_NewPlayerControl(CTL_SPEED_BOOTS, CTLT_IMPULSE, "speedboots", "game");
@@ -226,6 +242,9 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_INVULNERABILITY, CTLT_IMPULSE, "invulnerability", "game");
     P_NewPlayerControl(CTL_DARK_SERVANT, CTLT_IMPULSE, "darkservant", "game");
     P_NewPlayerControl(CTL_EGG, CTLT_IMPULSE, "egg", "game");
+#endif
+
+    P_NewPlayerControl(CTL_LOG_REFRESH, CTLT_IMPULSE, "msgrefresh", "game");
 
     P_NewPlayerControl(CTL_MAP, CTLT_IMPULSE, "automap", "game");
     P_NewPlayerControl(CTL_MAP_PAN_X, CTLT_NUMERIC, "mappanx", "map-freepan");
@@ -309,11 +328,11 @@ DEFCC( CCmdDefaultGameBinds )
 #endif
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-        "bindevent key-sqbracketleft invleft",
-        "bindevent key-sqbracketleft-repeat invleft",
-        "bindevent key-sqbracketright invright",
-        "bindevent key-sqbracketright-repeat invright",
-        "bindevent key-return {impulse useartifact}",
+        "bindevent key-sqbracketleft {impulse previtem}",
+        "bindevent key-sqbracketleft-repeat {impulse previtem}",
+        "bindevent key-sqbracketright {impulse nextitem}",
+        "bindevent key-sqbracketright-repeat {impulse nextitem}",
+        "bindevent key-return {impulse useitem}",
 #endif
 
         // Player controls: mouse
@@ -387,10 +406,12 @@ DEFCC( CCmdDefaultGameBinds )
 
         "bindevent key-h {impulse showhud}",
         "bindevent key-backslash-repeat {impulse showscore}",
-        "bindevent key-minus {viewsize -}",
-        "bindevent key-equals {viewsize +}",
+        "bindevent key-minus-repeat {viewsize -}",
+        "bindevent key-equals-repeat {viewsize +}",
+
+        // Player message log:
 #if !defined(__JHEXEN__) && !defined(__JHERETIC__)
-        "bindevent key-return msgrefresh",
+        "bindevent key-return {impulse msgrefresh}",
 #endif
 
         // Menu events:
@@ -427,7 +448,7 @@ DEFCC( CCmdDefaultGameBinds )
 
         NULL
     };
-    int         i;
+    int                 i;
 
     for(i = 0; binds[i]; ++i)
         DD_Execute(false, binds[i]);
@@ -457,7 +478,7 @@ void G_RegisterBindClasses(void)
 DEFCC( CCmdPause )
 {
     // Toggle pause.
-    G_SetPause(!(gs.paused & 1));
+    G_SetPause(!(paused & 1));
     return true;
 }
 
@@ -467,11 +488,11 @@ void G_SetPause(boolean yes)
         return; // No change.
 
     if(yes)
-        gs.paused |= 1;
+        paused |= 1;
     else
-        gs.paused &= ~1;
+        paused &= ~1;
 
-    if(gs.paused)
+    if(paused)
     {
         // This will stop all sounds from all origins.
         S_StopSound(0, 0);
@@ -485,7 +506,7 @@ void G_SetPause(boolean yes)
 
     // Servers are responsible for informing clients about
     // pauses in the game.
-    NetSv_Paused(gs.paused);
+    NetSv_Paused(paused);
 }
 
 /**
@@ -522,12 +543,12 @@ char G_MakeLookDelta(float offset)
  */
 static void G_AdjustAngle(player_t *player, int turn, float elapsed)
 {
-    if(!player->plr->mo || player->pState == PST_DEAD ||
+    if(!player->plr->mo || player->playerState == PST_DEAD ||
        player->viewLock)
         return; // Sorry, can't help you, pal.
 
     /* $unifiedangles */
-    player->plr->mo->angle += FLT2FIX(PLRPROFILE.ctrl.turnSpeed * elapsed * 35.f * turn);
+    player->plr->mo->angle += FLT2FIX(cfg.turnSpeed * elapsed * 35.f * turn);
 }
 
 static void G_AdjustLookDir(player_t *player, int look, float elapsed)
@@ -542,7 +563,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
         }
         else
         {
-            ddplr->lookDir += PLRPROFILE.ctrl.lookSpeed * look * elapsed * 35; /* $unifiedangles */
+            ddplr->lookDir += cfg.lookSpeed * look * elapsed * 35; /* $unifiedangles */
         }
     }
 
@@ -573,7 +594,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
  */
 void G_LookAround(int pnum)
 {
-    pcontrolstate_t*    cstate = &controlStates[pnum];
+    pcontrolstate_t *cstate = &controlStates[pnum];
 
     if(povangle != -1)
     {
@@ -589,11 +610,9 @@ void G_LookAround(int pnum)
     else
         cstate->targetLookOffset = 0;
 
-    if(cstate->targetLookOffset != cstate->lookOffset &&
-       PLRPROFILE.camera.povLookAround)
+    if(cstate->targetLookOffset != cstate->lookOffset && cfg.povLookAround)
     {
-        float               diff = (cstate->targetLookOffset -
-            cstate->lookOffset) / 2;
+        float   diff = (cstate->targetLookOffset - cstate->lookOffset) / 2;
 
         // Clamp it.
         if(diff > .075f)
@@ -694,14 +713,14 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
     // Check the joystick axes.
     for(i = 0; i < 8; i++)
-        if(axes[gs.cfg.joyaxis[i]])
-            *axes[gs.cfg.joyaxis[i]] += joymove[i];
+        if(axes[cfg.joyaxis[i]])
+            *axes[cfg.joyaxis[i]] += joymove[i];
 
     strafe = PLAYER_ACTION(pnum, A_STRAFE);
     speed = PLAYER_ACTION(pnum, A_SPEED);
 
     // Walk -> run, run -> walk.
-    if(PLRPROFILE.ctrl.alwaysRun)
+    if(cfg.alwaysRun)
         speed = !speed;
 
     // Use two stage accelerative turning on the keyboard and joystick.
@@ -781,7 +800,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         side -= sideMoveSpeed;
 
     // Look up/down/center keys
-    if(!PLRPROFILE.ctrl.lookSpring || (PLRPROFILE.ctrl.lookSpring && !forward))
+    if(!cfg.lookSpring || (cfg.lookSpring && !forward))
     {
         if(PLAYER_ACTION(pnum, A_LOOKUP))
         {
@@ -810,7 +829,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         flyheight = TOCENTER;
 
 #if __JHERETIC__
-        if(!PLRPROFILE.ctrl.useMLook) // only in jHeretic
+        if(!cfg.useMLook) // only in jHeretic
             look = TOCENTER;
 #else
         look = TOCENTER;
@@ -821,35 +840,23 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     // Use artifact key
     if(PLAYER_ACTION(pnum, A_USEARTIFACT))
     {
-        if(PLAYER_ACTION(pnum, A_SPEED) && artiSkipParm)
+        if(Hu_InventoryIsOpen())
         {
-            if(plr->inventory[plr->invPtr].type != AFT_NONE)
-            {
-                PLAYER_ACTION(pnum, A_USEARTIFACT) = false;
+            plr->readyItem = plr->inventory[plr->invPtr].type;
 
-                cmd->arti = 0xff;
-            }
-        }
-        else
-        {
-            if(ST_IsInventoryVisible())
-            {
-                plr->readyArtifact = plr->inventory[plr->invPtr].type;
+            Hu_InventoryOpen(plr - players, false); // close the inventory
 
-                ST_Inventory(plr - players, false); // close the inventory
-
-                if(gs.cfg.chooseAndUse)
-                    cmd->arti = plr->inventory[plr->invPtr].type;
-                else
-                    cmd->arti = 0;
-
-                usearti = false;
-            }
-            else if(usearti)
-            {
+            if(cfg.chooseAndUse)
                 cmd->arti = plr->inventory[plr->invPtr].type;
-                usearti = false;
-            }
+            else
+                cmd->arti = 0;
+
+            usearti = false;
+        }
+        else if(usearti)
+        {
+            cmd->arti = plr->inventory[plr->invPtr].type;
+            usearti = false;
         }
     }
 #endif
@@ -863,9 +870,9 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
        !plr->powers[PT_WEAPONLEVEL2])
     {
         PLAYER_ACTION(pnum, A_TOMEOFPOWER) = false;
-        cmd->arti = AFT_TOMBOFPOWER;
+        cmd->arti = IIT_TOMBOFPOWER;
     }
-    for(i = 0; ArtifactHotkeys[i].artifact != AFT_NONE && !cmd->arti; i++)
+    for(i = 0; ArtifactHotkeys[i].artifact != IIT_NONE && !cmd->arti; i++)
     {
         if(PLAYER_ACTION(pnum, ArtifactHotkeys[i].action))
         {
@@ -880,69 +887,69 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     if(PLAYER_ACTION(pnum, A_PANIC) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_PANIC) = false;    // Use one of each artifact
-        cmd->arti = NUM_ARTIFACT_TYPES;
+        cmd->arti = NUM_INVENTORYITEM_TYPES;
     }
     else if(plr->plr->mo && PLAYER_ACTION(pnum, A_HEALTH) &&
             !cmd->arti && (plr->plr->mo->health < maxHealth))
     {
         PLAYER_ACTION(pnum, A_HEALTH) = false;
-        cmd->arti = AFT_HEALTH;
+        cmd->arti = IIT_HEALTH;
     }
     else if(PLAYER_ACTION(pnum, A_POISONBAG) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_POISONBAG) = false;
-        cmd->arti = AFT_POISONBAG;
+        cmd->arti = IIT_POISONBAG;
     }
     else if(PLAYER_ACTION(pnum, A_BLASTRADIUS) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_BLASTRADIUS) = false;
-        cmd->arti = AFT_BLASTRADIUS;
+        cmd->arti = IIT_BLASTRADIUS;
     }
     else if(PLAYER_ACTION(pnum, A_TELEPORT) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_TELEPORT) = false;
-        cmd->arti = AFT_TELEPORT;
+        cmd->arti = IIT_TELEPORT;
     }
     else if(PLAYER_ACTION(pnum, A_TELEPORTOTHER) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_TELEPORTOTHER) = false;
-        cmd->arti = AFT_TELEPORTOTHER;
+        cmd->arti = IIT_TELEPORTOTHER;
     }
     else if(PLAYER_ACTION(pnum, A_EGG) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_EGG) = false;
-        cmd->arti = AFT_EGG;
+        cmd->arti = IIT_EGG;
     }
     else if(PLAYER_ACTION(pnum, A_INVULNERABILITY) && !cmd->arti &&
             !plr->powers[PT_INVULNERABILITY])
     {
         PLAYER_ACTION(pnum, A_INVULNERABILITY) = false;
-        cmd->arti = AFT_INVULNERABILITY;
+        cmd->arti = IIT_INVULNERABILITY;
     }
     else if(PLAYER_ACTION(pnum, A_MYSTICURN) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_MYSTICURN) = false;
-        cmd->arti = AFT_SUPERHEALTH;
+        cmd->arti = IIT_SUPERHEALTH;
     }
     else if(PLAYER_ACTION(pnum, A_TORCH) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_TORCH) = false;
-        cmd->arti = AFT_TORCH;
+        cmd->arti = IIT_TORCH;
     }
     else if(PLAYER_ACTION(pnum, A_KRATER) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_KRATER) = false;
-        cmd->arti = AFT_BOOSTMANA;
+        cmd->arti = IIT_BOOSTMANA;
     }
     else if(PLAYER_ACTION(pnum, A_SPEEDBOOTS) & !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_SPEEDBOOTS) = false;
-        cmd->arti = AFT_SPEED;
+        cmd->arti = IIT_SPEED;
     }
     else if(PLAYER_ACTION(pnum, A_DARKSERVANT) && !cmd->arti)
     {
         PLAYER_ACTION(pnum, A_DARKSERVANT) = false;
-        cmd->arti = AFT_SUMMON;
+        cmd->arti = IIT_SUMMON;
     }
 #endif
 
@@ -979,11 +986,11 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     else if(PLAYER_ACTION(pnum, A_WEAPONCYCLE2)) // Shotgun/super sg.
     {
         if(ISWPN(WT_THIRD) && GOTWPN(WT_NINETH) &&
-           gs.gameMode == commercial)
+           gameMode == commercial)
             i = WT_NINETH;
         else if(ISWPN(WT_NINETH))
             i = WT_THIRD;
-        else if(GOTWPN(WT_NINETH) && gs.gameMode == commercial)
+        else if(GOTWPN(WT_NINETH) && gameMode == commercial)
             i = WT_NINETH;
         else
             i = WT_THIRD;
@@ -1028,7 +1035,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 
     // forward double click
     if(PLAYER_ACTION(pnum, A_FORWARD) != cstate->dclickstate &&
-        cstate->dclicktime > 1 && PLRPROFILE.ctrl.dclickUse)
+        cstate->dclicktime > 1 && cfg.dclickUse)
     {
         cstate->dclickstate = PLAYER_ACTION(pnum, A_FORWARD);
 
@@ -1055,7 +1062,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     // strafe double click
     bstrafe = strafe;
     if(bstrafe != cstate->dclickstate2 &&
-       cstate->dclicktime2 > 1 && PLRPROFILE.ctrl.dclickUse)
+       cstate->dclicktime2 > 1 && cfg.dclickUse)
     {
         cstate->dclickstate2 = bstrafe;
         if(cstate->dclickstate2)
@@ -1085,7 +1092,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     {
         // Mouse angle changes are immediate.
         if(!pausestate && plr->plr->mo &&
-           plr->pState != PST_DEAD)
+           plr->playerState != PST_DEAD)
         {
             plr->plr->mo->angle += FLT2FIX(mousex * -8); //G_AdjustAngle(plr, mousex * -8, 1);
         }
@@ -1096,8 +1103,8 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         // Speed based turning.
         G_AdjustAngle(plr, turn, elapsedTime);
 
-        if(strafe || (!PLRPROFILE.ctrl.useMLook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
-           plr->pState == PST_DEAD)
+        if(strafe || (!cfg.useMLook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
+           plr->playerState == PST_DEAD)
         {
             forward += 8 * mousey * elapsedTics;
         }
@@ -1107,19 +1114,19 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
                 (FLT2FIX(mousey * 8) / (float) ANGLE_180) * 180 *
                 110.0 / 85.0;
 
-            if(gs.cfg.mlookInverseY)
+            if(cfg.mlookInverseY)
                 adj = -adj;
             plr->plr->lookDir += adj; /* $unifiedangles */
         }
-        if(PLRPROFILE.ctrl.useJLook)
+        if(cfg.useJLook)
         {
-            if(PLRPROFILE.ctrl.jLookDeltaMode) /* $unifiedangles */
+            if(cfg.jLookDeltaMode) /* $unifiedangles */
                 plr->plr->lookDir +=
-                    joylook / 20.0f * PLRPROFILE.ctrl.lookSpeed *
-                    (gs.cfg.jlookInverseY ? -1 : 1) * elapsedTics;
+                    joylook / 20.0f * cfg.lookSpeed *
+                    (cfg.jlookInverseY ? -1 : 1) * elapsedTics;
             else
                 plr->plr->lookDir =
-                    joylook * 1.1f * (gs.cfg.jlookInverseY ? -1 : 1);
+                    joylook * 1.1f * (cfg.jlookInverseY ? -1 : 1);
         }
     }
 
@@ -1145,13 +1152,13 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     }
 #endif
 
-    if(PLRPROFILE.ctrl.moveSpeed > 1)
-        PLRPROFILE.ctrl.moveSpeed = 1;
+    if(cfg.playerMoveSpeed > 1)
+        cfg.playerMoveSpeed = 1;
 
-    cmd->forwardMove += forward * PLRPROFILE.ctrl.moveSpeed;
-    cmd->sideMove += side * PLRPROFILE.ctrl.moveSpeed;;
+    cmd->forwardMove += forward * cfg.playerMoveSpeed;
+    cmd->sideMove += side * cfg.playerMoveSpeed;;
 
-    if(PLRPROFILE.ctrl.lookSpring && !PLAYER_ACTION(pnum, A_MLOOK) &&
+    if(cfg.lookSpring && !PLAYER_ACTION(pnum, A_MLOOK) &&
        (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3 ||
            cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3 ||
            cstate->mlookPressed))
@@ -1160,7 +1167,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         look = TOCENTER;
     }
 
-    if(plr->pState == PST_LIVE && !pausestate)
+    if(plr->playerState == PST_LIVE && !pausestate)
         G_AdjustLookDir(plr, look, elapsedTime);
 
     cmd->fly = flyheight;
@@ -1235,8 +1242,8 @@ boolean G_AdjustControlState(event_t* ev)
         return false;           // always let key events filter down
 
     case EV_MOUSE_AXIS:
-        mousex += (float)(ev->data1 * (1 + gs.cfg.mouseSensiX/5.0f)) / DD_MICKEY_ACCURACY;
-        mousey += (float)(ev->data2 * (1 + gs.cfg.mouseSensiY/5.0f)) / DD_MICKEY_ACCURACY;
+        mousex += (float)(ev->data1 * (1 + cfg.mouseSensiX/5.0f)) / DD_MICKEY_ACCURACY;
+        mousey += (float)(ev->data2 * (1 + cfg.mouseSensiY/5.0f)) / DD_MICKEY_ACCURACY;
         return true;            // eat events
 
     case EV_MOUSE_BUTTON:
@@ -1268,7 +1275,7 @@ boolean G_AdjustControlState(event_t* ev)
                 povangle = ev->data1;
 
             // If looking around with PoV, don't allow bindings.
-            if(PLRPROFILE.ctrl.povLookAround)
+            if(cfg.povLookAround)
                 return true;
         }
         break;
@@ -1295,7 +1302,7 @@ void G_ResetMousePos(void)
  */
 void G_ResetLookOffset(int pnum)
 {
-    pcontrolstate_t*    cstate = &controlStates[pnum];
+    pcontrolstate_t *cstate = &controlStates[pnum];
 
     cstate->lookOffset = 0;
     cstate->targetLookOffset = 0;

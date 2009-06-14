@@ -60,6 +60,15 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
+    char            name[9]; // End in \0.
+    DFILE*          handle;
+    int             position;
+    size_t          size;
+    int             sent;
+    char            group; // Lump grouping tag (LGT_*).
+} lumpinfo_t;
+
+typedef struct {
     char            identification[4];
     int             numLumps;
     int             infoTableOfs;
@@ -101,7 +110,7 @@ static boolean W_UseAuxiliary(void); // may not be available
 
 lumpinfo_t *lumpInfo = 0;
 int numLumps = 0;
-void **lumpCache = 0;
+void** lumpCache = 0;
 int numCache = 0;
 
 // The file records.
@@ -121,13 +130,13 @@ static grouping_t lumpGroups[] = {
     {"S_START", "S_END"}        // Sprites
 };
 
-static lumpinfo_t *PrimaryLumpInfo;
+static lumpinfo_t* PrimaryLumpInfo;
 static int PrimaryNumLumps;
-static void **PrimaryLumpCache;
-static DFILE *AuxiliaryHandle;
-static lumpinfo_t *AuxiliaryLumpInfo;
+static void** PrimaryLumpCache;
+static DFILE* AuxiliaryHandle;
+static lumpinfo_t* AuxiliaryLumpInfo;
 static int AuxiliaryNumLumps;
-static void **AuxiliaryLumpCache;
+static void** AuxiliaryLumpCache;
 boolean AuxiliaryOpened = false;
 
 // CODE --------------------------------------------------------------------
@@ -143,11 +152,10 @@ void DD_RegisterVFS(void)
     C_CMD("unload", "s*", UnloadFile);
 }
 
-static void convertSlashes(char *modifiableBuffer)
+static void convertSlashes(char* modifiableBuffer, size_t len)
 {
-    size_t          i, len;
+    size_t          i;
 
-    len = strlen(modifiableBuffer);
     for(i = 0; i < len; ++i)
         if(modifiableBuffer[i] == '\\')
             modifiableBuffer[i] = '/';
@@ -188,9 +196,9 @@ static lumpnum_t W_Select(lumpnum_t lump)
 /**
  * Allocate a new file record.
  */
-filerecord_t *W_RecordNew(void)
+filerecord_t* W_RecordNew(void)
 {
-    filerecord_t       *ptr;
+    filerecord_t*       ptr;
 
     records = M_Realloc(records, sizeof(filerecord_t) * (++numRecords));
     ptr = records + numRecords - 1;
@@ -198,17 +206,17 @@ filerecord_t *W_RecordNew(void)
     return ptr;
 }
 
-int W_RecordGetIdx(char *fileName)
+int W_RecordGetIdx(const char* fileName)
 {
     int                 i;
-    char                buffer[RECORD_FILENAMELEN];
+    filename_t          buf;
 
     // We have to make sure the slashes are correct.
-    strcpy(buffer, fileName);
-    convertSlashes(buffer);
+    strncpy(buf, fileName, FILENAME_T_MAXLEN);
+    convertSlashes(buf, FILENAME_T_MAXLEN);
 
     for(i = 0; i < numRecords; ++i)
-        if(!stricmp(records[i].fileName, buffer))
+        if(!strnicmp(records[i].fileName, buf, FILENAME_T_MAXLEN))
             return i;
 
     return -1;
@@ -540,17 +548,15 @@ void W_InsertLumps(filelump_t* fileinfo, filerecord_t* rec)
  *
  * @return              @c true, if the operation is successful.
  */
-boolean W_AddFile(const char *fileName, boolean allowDuplicate)
+boolean W_AddFile(const char* fileName, boolean allowDuplicate)
 {
-    char                alterFileName[256];
+    filename_t          alterFileName;
     wadinfo_t           header;
-    DFILE              *handle;
+    DFILE*              handle;
     unsigned int        length;
-    filelump_t          singleInfo;
-    filelump_t         *fileInfo;
-    filelump_t         *freeFileInfo;
-    filerecord_t       *rec;
-    const char         *extension;
+    filelump_t          singleInfo, *fileInfo, *freeFileInfo;
+    filerecord_t*       rec;
+    const char*         extension;
 
     // Filename given?
     if(!fileName || !fileName[0])
@@ -559,7 +565,7 @@ boolean W_AddFile(const char *fileName, boolean allowDuplicate)
     if((handle = F_Open(fileName, "rb")) == NULL)
     {
         // Didn't find file. Try reading from the data path.
-        R_PrependDataPath(fileName, alterFileName);
+        R_PrependDataPath(alterFileName, fileName, FILENAME_T_MAXLEN);
         if((handle = F_Open(alterFileName, "rb")) == NULL)
         {
             Con_Message("W_AddFile: ERROR: %s not found!\n", fileName);
@@ -593,8 +599,8 @@ boolean W_AddFile(const char *fileName, boolean allowDuplicate)
 
     // Get a new file record.
     rec = W_RecordNew();
-    strcpy(rec->fileName, fileName);
-    convertSlashes(rec->fileName);
+    strncpy(rec->fileName, fileName, FILENAME_T_MAXLEN);
+    convertSlashes(rec->fileName, FILENAME_T_MAXLEN);
     rec->handle = handle;
 
     // If we're not loading for startup, flag the record to be a Runtime one.
@@ -625,7 +631,7 @@ boolean W_AddFile(const char *fileName, boolean allowDuplicate)
             }
         }
 
-        M_ExtractFileBase2(fileName, singleInfo.name, 8, offset);
+        M_ExtractFileBase2(singleInfo.name, fileName, 8, offset);
         rec->numLumps = 1;
 
         if(!stricmp(extension, "deh"))
@@ -689,10 +695,10 @@ boolean W_AddFile(const char *fileName, boolean allowDuplicate)
     return true;
 }
 
-boolean W_RemoveFile(char *fileName)
+boolean W_RemoveFile(const char *fileName)
 {
     int                 idx = W_RecordGetIdx(fileName);
-    filerecord_t       *rec;
+    filerecord_t*       rec;
 
     if(idx == -1)
         return false; // No such file loaded.
@@ -777,7 +783,7 @@ boolean W_IsPK3(const char* fn)
 {
     size_t              len = strlen(fn);
 
-    return (len > 3 && (!strnicmp(fn + len - 4, ".pk3", 4) ||
+    return (len > 4 && (!strnicmp(fn + len - 4, ".pk3", 4) ||
                         !strnicmp(fn + len - 4, ".zip", 4)));
 }
 
@@ -787,11 +793,11 @@ boolean W_IsPK3(const char* fn)
  * The name searcher looks backwards, so a later file can override an
  * earlier one.
  */
-void W_InitMultipleFiles(char **fileNames)
+void W_InitMultipleFiles(char** fileNames)
 {
-    char              **ptr;
+    char**              ptr;
     int                 numLoaded = 0;
-    byte               *loaded = 0;
+    byte*               loaded = 0;
 
     // Count number of files.
     for(ptr = fileNames; *ptr; ptr++, numLoaded++);
@@ -846,6 +852,7 @@ void W_InitMultipleFiles(char **fileNames)
     {
         Con_Error("W_InitMultipleFiles: no files found.\n");
     }
+
 }
 
 void W_EndStartup(void)
@@ -1041,7 +1048,7 @@ int W_NumLumps(void)
  */
 static lumpnum_t W_ScanLumpInfo(int v[2])
 {
-    lumpinfo_t         *lump_p = lumpInfo + numLumps;
+    lumpinfo_t*         lump_p = lumpInfo + numLumps;
 
     while(lump_p-- != lumpInfo)
     {
@@ -1059,14 +1066,14 @@ static lumpnum_t W_ScanLumpInfo(int v[2])
 /**
  * @return              @c -1, if name not found, else lump num.
  */
-lumpnum_t W_CheckNumForName(const char *name)
+lumpnum_t W_CheckNumForName(const char* name)
 {
     char                name8[9];
     int                 v[2];
     lumpnum_t           idx = -1;
 
     // If the name string is empty, don't bother to search.
-    if(!name[0])
+    if(!name || !name[0])
     {
         VERBOSE2(Con_Message("W_CheckNumForName: Empty name.\n"));
         return -1;
@@ -1193,10 +1200,72 @@ void W_ReadLumpSection(lumpnum_t lump, void *dest, size_t startOffset,
 }
 
 /**
+ * Writes the specifed lump to file with the given name.
+ *
+ * @param lump
+ */
+boolean W_DumpLump(lumpnum_t lump, const char* fileName)
+{
+    FILE*               file;
+    const byte*         lumpPtr;
+    const char*         fname;
+    char                buf[13]; // 8 (max lump chars) + 4 (ext) + 1.
+
+    lump = W_Select(lump);
+    if(lump >= numLumps)
+        return false;
+
+    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+
+    if(fileName && fileName[0])
+    {
+        fname = fileName;
+    }
+    else
+    {
+        memset(buf, 0, sizeof(buf));
+        snprintf(buf, 12, "%s.dum", lumpInfo[lump].name);
+        fname = buf;
+    }
+
+    if(!(file = fopen(fname, "wb")))
+    {
+        Con_Printf("Couldn't open %s for writing. %s\n", fname,
+                   strerror(errno));
+        W_ChangeCacheTag(lump, PU_CACHE);
+        return false;
+    }
+
+    fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
+    fclose(file);
+    W_ChangeCacheTag(lump, PU_CACHE);
+
+    Con_Printf("%s dumped to %s.\n", lumpInfo[lump].name, fname);
+    return true;
+}
+
+void W_DumpLumpDir(void)
+{
+    char                buff[10];
+    int                 p;
+
+    printf("Lumps (%d total):\n", numLumps);
+    for(p = 0; p < numLumps; p++)
+    {
+        strncpy(buff, W_LumpName(p), 8);
+        buff[8] = 0;
+        printf("%04i - %-8s (hndl: %p, pos: %i, size: %lu)\n", p, buff,
+               lumpInfo[p].handle, lumpInfo[p].position,
+               (unsigned long) lumpInfo[p].size);
+    }
+    Con_Error("---End of lumps---\n");
+}
+
+/**
  * If called with the special purgelevel PU_GETNAME, returns a pointer
  * to the name of the lump.
  */
-void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
+const void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
 {
     byte               *ptr;
     lumpnum_t           lump = W_Select(absoluteLump);
@@ -1227,7 +1296,7 @@ void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
     return lumpCache[lump];
 }
 
-void* W_CacheLumpName(char* name, int tag)
+const void* W_CacheLumpName(const char* name, int tag)
 {
     return W_CacheLumpNum(W_GetNumForName(name), tag);
 }
@@ -1336,7 +1405,7 @@ unsigned int W_CRCNumber(void)
 /**
  * Copies the file name of the IWAD to the given buffer.
  */
-void W_GetIWADFileName(char *buf, int bufSize)
+void W_GetIWADFileName(char* buf, size_t bufSize)
 {
     int                 i;
 
@@ -1344,9 +1413,9 @@ void W_GetIWADFileName(char *buf, int bufSize)
     for(i = 0; i < numRecords; ++i)
         if(records[i].iwad)
         {
-            char                temp[256];
+            filename_t          temp;
 
-            Dir_FileName(records[i].fileName, temp);
+            Dir_FileName(temp, records[i].fileName, FILENAME_T_MAXLEN);
             strupr(temp);
             strncpy(buf, temp, bufSize);
             break;
@@ -1356,20 +1425,20 @@ void W_GetIWADFileName(char *buf, int bufSize)
 /**
  * Compiles a list of PWAD file names, separated by the specified character.
  */
-void W_GetPWADFileNames(char* buf, int bufSize, char separator)
+void W_GetPWADFileNames(char* buf, size_t bufSize, char separator)
 {
     int                 i;
 
     for(i = 0; i < numRecords; ++i)
         if(!records[i].iwad)
         {
-            char                temp[256];
+            filename_t          temp;
 
-            Dir_FileName(records[i].fileName, temp);
+            Dir_FileName(temp, records[i].fileName, FILENAME_T_MAXLEN);
             if(!stricmp(temp + strlen(temp) - 3, "lmp"))
                 continue;
 
-            M_LimitedStrCat(temp, 64, separator, buf, bufSize);
+            M_LimitedStrCat(buf, temp, 64, separator, bufSize);
         }
 }
 
@@ -1403,21 +1472,21 @@ boolean W_IsFromIWAD(lumpnum_t lump)
  * 'episode' and 'map' are used with the first map in the PWAD, the rest
  * get incremented.
  */
-boolean W_RemapPWADMaps(const char *pwadName, int episode, int map)
+boolean W_RemapPWADMaps(const char* pwadName, int episode, int map)
 {
     int                 i;
-    filerecord_t       *rec;
-    char                baseName[256], buf[256];
+    filerecord_t*       rec;
+    filename_t          baseName, buf;
 
     // Try matching the full name first.
     if((i = W_RecordGetIdx(pwadName)) < 0)
     {
         // Then the base name only.
-        M_ExtractFileBase(pwadName, baseName);
+        M_ExtractFileBase(baseName, pwadName, FILENAME_T_MAXLEN);
 
         for(i = 0; i < numRecords; ++i)
         {
-            M_ExtractFileBase(records[i].fileName, buf);
+            M_ExtractFileBase(buf, records[i].fileName, FILENAME_T_MAXLEN);
             if(!stricmp(baseName, buf))
                 break;
         }
@@ -1481,8 +1550,11 @@ D_CMD(UnloadFile)
 
     for(i = 1; i < argc; ++i)
     {
-        Con_Message("Unloading %s...\n", argv[i]);
-        if(W_RemoveFile(argv[i]))
+        filename_t          file;
+
+        strncpy(file, argv[i], FILENAME_T_MAXLEN);
+        Con_Message("Unloading %s...\n", file);
+        if(W_RemoveFile(file))
         {
             Con_Message("OK\n");
             succeeded = true;
@@ -1498,35 +1570,17 @@ D_CMD(UnloadFile)
 
 D_CMD(Dump)
 {
-    char                fname[100];
-    FILE               *file;
     lumpnum_t           lump;
-    byte               *lumpPtr;
 
-    if(W_CheckNumForName(argv[1]) == -1)
+    if((lump = W_CheckNumForName(argv[1])) == -1)
     {
         Con_Printf("No such lump.\n");
         return false;
     }
 
-    lump = W_GetNumForName(argv[1]);
-    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
-
-    sprintf(fname, "%s.dum", argv[1]);
-    file = fopen(fname, "wb");
-    if(!file)
-    {
-        Con_Printf("Couldn't open %s for writing. %s\n", fname,
-                   strerror(errno));
-        Z_ChangeTag(lumpPtr, PU_CACHE);
+    if(!W_DumpLump(lump, NULL))
         return false;
-    }
 
-    fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
-    fclose(file);
-    Z_ChangeTag(lumpPtr, PU_CACHE);
-
-    Con_Printf("%s dumped to %s.\n", argv[1], fname);
     return true;
 }
 
@@ -1535,18 +1589,18 @@ D_CMD(Dump)
  */
 D_CMD(Dir)
 {
-    char                dir[256], pattern[256];
+    filename_t          dir, pattern;
     int                 i;
 
     for(i = 1; i < argc; ++i)
     {
-        M_PrependBasePath(argv[i], dir);
-        Dir_ValidDir(dir);
-        Dir_MakeAbsolute(dir);
+        M_PrependBasePath(dir, argv[i], FILENAME_T_MAXLEN);
+        Dir_ValidDir(dir, FILENAME_T_MAXLEN);
+        Dir_MakeAbsolute(dir, FILENAME_T_MAXLEN);
         Con_Printf("Directory: %s\n", dir);
 
         // Make the pattern.
-        sprintf(pattern, "%s*", dir);
+        snprintf(pattern, FILENAME_T_MAXLEN, "%s*", dir);
         F_ForAll(pattern, dir, Con_PrintFileName);
     }
 

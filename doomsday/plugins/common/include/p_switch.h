@@ -30,22 +30,21 @@
 #ifndef __COMMON_SWITCH_H__
 #define __COMMON_SWITCH_H__
 
-typedef enum linesection_e{
-    LS_MIDDLE,
-    LS_BOTTOM,
-    LS_TOP
-} linesection_t;
+typedef enum {
+    SID_MIDDLE,
+    SID_BOTTOM,
+    SID_TOP
+} sidedefsurfaceid_t;
 
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
-typedef struct button_s {
-    linedef_t*      line;
-    linesection_t   section;
-    material_t*     material;
+typedef struct {
+    thinker_t       thinker;
     int             timer;
-    mobj_t*         soundOrg;
-    struct button_s* next;
-} button_t;
+    sidedef_t*      side;
+    sidedefsurfaceid_t ssurfaceID;
+    material_t*     material;
+} materialchanger_t;
 
 /**
  * This struct is used to provide byte offsets when reading a custom
@@ -64,12 +63,15 @@ typedef struct {
 } switchlist_t;
 #pragma pack()
 
-extern button_t *buttonlist;
-
 void            P_InitSwitchList(void);
+material_t*     P_GetSwitch(material_t* mat, const switchlist_t** info);
 
-void            P_FreeButtons(void);
-void            P_ChangeSwitchMaterial(linedef_t* line, int useAgain);
+boolean         P_ToggleSwitch(sidedef_t* side, int sound, boolean silent,
+                               int tics);
 boolean         P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side);
+
+void            T_MaterialChanger(materialchanger_t* mchanger);
+void            P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+                                       material_t* mat, int tics);
 
 #endif

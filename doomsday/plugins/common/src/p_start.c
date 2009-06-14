@@ -62,6 +62,7 @@
 #include "p_actor.h"
 #include "p_switch.h"
 #include "g_defs.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -115,6 +116,10 @@ static int numPlayerStartsMax = 0;
  */
 void P_Init(void)
 {
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+    P_InitInventory();
+#endif
+
 #if __JHEXEN__
     P_InitMapInfo();
 #endif
@@ -250,8 +255,8 @@ void P_DealPlayerStarts(int group)
             if(!pl->plr->inGame)
                 continue;
 
-            Con_Printf("- pl%i: color %i, spot %i\n", i,
-                       gs.players[i].color, pl->startSpot);
+            Con_Printf("- pl%i: color %i, spot %i\n", i, cfg.playerColor[i],
+                       pl->startSpot);
         }
     }
 }
@@ -400,6 +405,7 @@ void P_SpawnThings(void)
     maceSpotCount = 0;
     maceSpots = NULL;
     bossSpotCount = 0;
+    bossSpots = NULL;
 #endif
 
     for(i = 0; i < numthings; ++i)
@@ -408,7 +414,7 @@ void P_SpawnThings(void)
 #if __JDOOM__
         // Do not spawn cool, new stuff if !commercial
         spawn = true;
-        if(gs.gameMode != commercial)
+        if(gameMode != commercial)
         {
             switch(th->type)
             {
@@ -434,7 +440,7 @@ void P_SpawnThings(void)
     }
 
 #if __JDOOM__
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         P_SpawnBrainTargets();
 #endif
 
@@ -444,12 +450,12 @@ void P_SpawnThings(void)
         int     spot;
 
         // Sometimes doesn't show up if not in deathmatch.
-        if(!(!GAMERULES.deathmatch && P_Random() < 64))
+        if(!(!deathmatch && P_Random() < 64))
         {
             spot = P_Random() % maceSpotCount;
             P_SpawnMobj3f(MT_WMACE,
-                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY],
-                          ONFLOORZ, maceSpots[spot].angle);
+                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY], 0,
+                          maceSpots[spot].angle, MTF_Z_FLOOR);
         }
     }
 #endif
@@ -459,7 +465,7 @@ void P_SpawnThings(void)
     P_CreateTIDList();
     P_InitCreatureCorpseQueue(false); // false = do NOT scan for corpses
 
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
     {
         playerCount = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -497,7 +503,7 @@ void P_SpawnPlayers(void)
     int                 i;
 
     // If deathmatch, randomly spawn the active players.
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->inGame)
@@ -551,8 +557,7 @@ void G_DummySpawnPlayer(int playernum)
 {
     spawnspot_t     faraway;
 
-    faraway.pos[VX] = faraway.pos[VY] = 0;
-    faraway.angle = 0;
+    memset(&faraway, 0, sizeof(faraway));
     P_SpawnPlayer(&faraway, playernum);
 }
 
@@ -634,7 +639,130 @@ spawnspot_t *P_GetPlayerStart(int group, int pnum)
 #endif
 }
 
-#if __JHERETIC__ || __JHEXEN__
+typedef struct {
+    float               pos[2], minDist;
+} unstuckmobjinlinedefparams_t;
+
+boolean unstuckMobjInLinedef(linedef_t* li, void* context)
+{
+    unstuckmobjinlinedefparams_t *params =
+        (unstuckmobjinlinedefparams_t*) context;
+
+    if(!P_GetPtrp(li, DMU_BACK_SECTOR))
+    {
+        float               pos, linePoint[2], lineDelta[2], result[2];
+
+        /**
+         * Project the point (mobj position) onto this linedef. If the
+         * resultant point lies on the linedef and the current position is
+         * in range of that point, adjust the position moving it away from
+         * the projected point.
+         */
+
+        P_GetFloatpv(P_GetPtrp(li, DMU_VERTEX0), DMU_XY, linePoint);
+        P_GetFloatpv(li, DMU_DXY, lineDelta);
+
+        pos = M_ProjectPointOnLine(params->pos, linePoint, lineDelta, 0, result);
+
+        if(pos > 0 && pos < 1)
+        {
+            float               dist =
+                P_ApproxDistance(params->pos[VX] - result[VX],
+                                 params->pos[VY] - result[VY]);
+
+            if(dist >= 0 && dist < params->minDist)
+            {
+                float               len, unit[2], normal[2];
+
+                // Derive the line normal.
+                len = P_ApproxDistance(lineDelta[0], lineDelta[1]);
+                if(len)
+                {
+                    unit[VX] = lineDelta[0] / len;
+                    unit[VY] = lineDelta[1] / len;
+                }
+                else
+                {
+                    unit[VX] = unit[VY] = 0;
+                }
+                normal[VX] =  unit[VY];
+                normal[VY] = -unit[VX];
+
+                // Adjust the position.
+                params->pos[VX] += normal[VX] * params->minDist;
+                params->pos[VY] += normal[VY] * params->minDist;
+            }
+        }
+    }
+
+    return true; // Continue iteration.
+}
+
+boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
+{
+    mobj_t*             mo = (mobj_t*) th;
+    mobjtype_t          type = *((mobjtype_t*) context);
+    float               aabb[4];
+    unstuckmobjinlinedefparams_t params;
+
+    // \todo Why not type-prune at an earlier point? We could specify a
+    // custom comparison func for DD_IterateThinkers...
+    if(mo->type != type)
+        return true; // Continue iteration.
+
+    aabb[BOXLEFT]   = mo->pos[VX] - mo->radius;
+    aabb[BOXRIGHT]  = mo->pos[VX] + mo->radius;
+    aabb[BOXBOTTOM] = mo->pos[VY] - mo->radius;
+    aabb[BOXTOP]    = mo->pos[VY] + mo->radius;
+
+    params.pos[VX] = mo->pos[VX];
+    params.pos[VY] = mo->pos[VY];
+    params.minDist = mo->radius / 2;
+
+    VALIDCOUNT++;
+
+    P_LinesBoxIterator(aabb, unstuckMobjInLinedef, &params);
+
+    if(mo->pos[VX] != params.pos[VX] || mo->pos[VY] != params.pos[VY])
+    {
+        mo->angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
+                                    params.pos[VX], params.pos[VY]);
+        P_MobjUnsetPosition(mo);
+        mo->pos[VX] = params.pos[VX];
+        mo->pos[VY] = params.pos[VY];
+        P_MobjSetPosition(mo);
+    }
+
+    return true; // Continue iteration.
+}
+
+/**
+ * Only affects torches, which are often placed inside walls in the
+ * original maps. The DOOM engine allowed these kinds of things but a
+ * Z-buffer doesn't.
+ */
+void P_MoveThingsOutOfWalls(void)
+{
+    static const mobjtype_t types[] = {
+#if __JHERETIC__
+        MT_MISC10,
+#elif __JHEXEN__
+        MT_ZWALLTORCH,
+        MT_ZWALLTORCH_UNLIT,
+#endif
+        NUMMOBJTYPES // terminate.
+    };
+    uint                i;
+
+    for(i = 0; types[i] != NUMMOBJTYPES; ++i)
+    {
+        mobjtype_t          type = types[i];
+
+        DD_IterateThinkers(P_MobjThinker, iterateLinedefsNearMobj, &type);
+    }
+}
+
+#if __JHERETIC__
 float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
 {
     float   a[2], b[2], c[2], d[2], len;
@@ -655,108 +783,6 @@ float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
              (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
     return ((a[VY] - c[VY]) * (b[VX] - a[VX]) -
             (a[VX] - c[VX]) * (b[VY] - a[VY])) / len;
-}
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-typedef struct findclosestlinedefparams_s {
-    float           pos[2];
-    float           minRad;
-    float           closestDist;
-    linedef_t*      closestLine;
-} findclosestlinedefparams_t;
-
-int findClosestLinedef(void* ptr, void* context)
-{
-    linedef_t*          li = (linedef_t*) ptr;
-    findclosestlinedefparams_t *params =
-        (findclosestlinedefparams_t*) context;
-
-    if(!P_GetPtrp(li, DMU_BACK_SECTOR))
-    {
-        float               dist, off, lineLen, d1[2];
-
-        P_GetFloatpv(li, DMU_DXY, d1);
-        lineLen = P_ApproxDistance(d1[0], d1[1]);
-
-        dist = P_PointLineDistance(li, params->pos[VX], params->pos[VY],
-                                   &off);
-        if(dist >= 0 &&
-           off > -params->minRad && off < lineLen + params->minRad &&
-           (!params->closestLine || dist < params->closestDist))
-        {
-            params->closestDist = dist;
-            params->closestLine = li;
-        }
-    }
-
-    return true; // Continue iteration.
-}
-#endif
-
-#if __JHERETIC__
-/**
- * Only affects torches, which are often placed inside walls in the
- * original maps. The DOOM engine allowed these kinds of things but
- * a Z-buffer doesn't.
- */
-void P_MoveThingsOutOfWalls(void)
-{
-#define MAXLIST         200
-
-    sector_t           *sec;
-    mobj_t             *iter;
-    uint                i;
-    int                 k, t;
-    mobj_t             *tlist[MAXLIST];
-    findclosestlinedefparams_t params;
-
-    for(i = 0; i < numsectors; ++i)
-    {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        memset(tlist, 0, sizeof(tlist));
-
-        // First all the things to process.
-        for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
-            k < MAXLIST - 1 && iter; iter = iter->sNext)
-        {
-            // Wall torches are most often seen inside walls.
-            if(iter->type == MT_MISC10)
-                tlist[k++] = iter;
-        }
-
-        // Move the things out of walls.
-        for(t = 0; (iter = tlist[t]) != NULL; ++t)
-        {
-            params.pos[VX] = iter->pos[VX];
-            params.pos[VY] = iter->pos[VY];
-            params.minRad = iter->radius / 2;
-            params.closestDist = DDMAXFLOAT;
-            params.closestLine = NULL;
-
-            P_Iteratep(sec, DMU_LINEDEF, &params, findClosestLinedef);
-
-            if(params.closestLine && params.closestDist < params.minRad)
-            {
-                float               d1[2], offlen, len;
-
-                offlen = params.minRad - params.closestDist;
-                P_GetFloatpv(params.closestLine, DMU_DXY, d1);
-                d1[1] = -d1[1];
-
-                len = sqrt(d1[0] * d1[0] + d1[1] * d1[1]);
-                d1[0] *= offlen / len;
-                d1[1] *= offlen / len;
-
-                P_MobjUnsetPosition(iter);
-                iter->pos[VX] += d1[0];
-                iter->pos[VY] += d1[1];
-                P_MobjSetPosition(iter);
-            }
-        }
-    }
-
-#undef MAXLIST
 }
 
 /**
@@ -839,65 +865,5 @@ void P_TurnGizmosAwayFromDoors(void)
             }
         }
     }
-}
-#endif
-
-#if __JHEXEN__
-/**
- * Pretty much the same as P_TurnGizmosAwayFromDoors()
- * \todo Merge them together
- */
-void P_TurnTorchesToFaceWalls(void)
-{
-#define MAXLIST         200
-
-    sector_t           *sec;
-    mobj_t             *iter;
-    uint                i;
-    int                 k, t;
-    mobj_t             *tlist[MAXLIST];
-    findclosestlinedefparams_t params;
-
-    for(i = 0; i < numsectors; ++i)
-    {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        memset(tlist, 0, sizeof(tlist));
-
-        // First all the things to process.
-        for(k = 0, iter = P_GetPtrp(sec, DMT_MOBJS);
-            k < MAXLIST - 1 && iter; iter = iter->sNext)
-        {
-            if(iter->type == MT_ZWALLTORCH ||
-               iter->type == MT_ZWALLTORCH_UNLIT)
-                tlist[k++] = iter;
-        }
-
-        // Turn to face away from the nearest wall.
-        for(t = 0; (iter = tlist[t]) != NULL; t++)
-        {
-            params.pos[VX] = iter->pos[VX];
-            params.pos[VY] = iter->pos[VY];
-            params.minRad = iter->radius;
-            params.closestLine = NULL;
-            params.closestDist = DDMAXFLOAT;
-
-            if(params.closestLine && params.closestDist < params.minRad)
-            {
-                vertex_t       *v0, *v1;
-                float           v0p[2], v1p[2];
-
-                v0 = P_GetPtrp(params.closestLine, DMU_VERTEX0);
-                v1 = P_GetPtrp(params.closestLine, DMU_VERTEX1);
-
-                P_GetFloatpv(v0, DMU_XY, v0p);
-                P_GetFloatpv(v1, DMU_XY, v1p);
-
-                iter->angle = R_PointToAngle2(v0p[VX], v0p[VY],
-                                              v1p[VX], v1p[VY]) - ANG90;
-            }
-        }
-    }
-
-#undef MAXLIST
 }
 #endif

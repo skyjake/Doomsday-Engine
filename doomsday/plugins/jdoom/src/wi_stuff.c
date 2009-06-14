@@ -326,10 +326,10 @@ void WI_drawLF(void)
     int                 mapNum;
     char               *mapName;
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         mapNum = wbs->last;
     else
-        mapNum = ((gs.episode -1) * 9) + wbs->last;
+        mapNum = ((gameEpisode -1) * 9) + wbs->last;
 
     mapName = (char *) DD_GetVariable(DD_MAP_NAME);
     // Skip the E#M# or Map #.
@@ -363,14 +363,14 @@ void WI_drawEL(void)
 {
     int                 y = WI_TITLEY;
     int                 mapNum;
-    char               *mapName;
+    char               *mapName = NULL;
     ddmapinfo_t         minfo;
     char                lumpName[10];
 
-    mapNum = G_GetMapNumber(gs.episode, wbs->next);
+    mapNum = G_GetMapNumber(gameEpisode, wbs->next);
 
     // See if there is a map name.
-    P_GetMapLumpName(gs.episode, wbs->next+1, lumpName);
+    P_GetMapLumpName(gameEpisode, wbs->next+1, lumpName);
     if(Def_Get(DD_DEF_MAP_INFO, lumpName, &minfo) && minfo.name)
         mapName = minfo.name;
 
@@ -395,7 +395,7 @@ void WI_drawEL(void)
     y += (5 * mapNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &mapNamePatches[((gs.episode -1) * 9) + wbs->next],
+                 &mapNamePatches[((gameEpisode -1) * 9) + wbs->next],
                  mapName, false, ALIGN_CENTER);
 }
 
@@ -436,7 +436,7 @@ void WI_initAnimatedBack(void)
     int                 i;
     wianim_t           *a;
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         return;
     if(wbs->epsd > 2)
         return;
@@ -462,7 +462,7 @@ void WI_updateAnimatedBack(void)
     int                 i;
     wianim_t           *a;
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         return;
     if(wbs->epsd > 2)
         return;
@@ -512,7 +512,7 @@ void WI_drawAnimatedBack(void)
     int                 i;
     wianim_t           *a;
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         return;
     if(wbs->epsd > 2)
         return;
@@ -680,7 +680,7 @@ void WI_drawShowNextLoc(void)
     // Draw animated background.
     WI_drawAnimatedBack();
 
-    if(gs.gameMode != commercial)
+    if(gameMode != commercial)
     {
         if(wbs->epsd > 2)
         {
@@ -704,7 +704,7 @@ void WI_drawShowNextLoc(void)
     }
 
     // Draws which map you are entering..
-    if((gs.gameMode != commercial) || wbs->next != 30)
+    if((gameMode != commercial) || wbs->next != 30)
         WI_drawEL();
 }
 
@@ -808,7 +808,7 @@ void WI_updateDeathmatchStats(void)
         if(accelerateStage)
         {
             S_LocalSound(SFX_SLOP, 0);
-            if(gs.gameMode == commercial)
+            if(gameMode == commercial)
                 WI_initNoState();
             else
                 WI_initShowNextLoc();
@@ -880,9 +880,9 @@ void WI_drawDeathmatchStats(void)
                 sprintf(tmp, "%i", teamInfo[i].members);
                 M_WriteText2(x - p[i].width / 2 + 1,
                              DM_MATRIXY - WI_SPACINGY + p[i].height - 8, tmp,
-                             huFontA, 1, 1, 1, 1);
+                             GF_FONTA, 1, 1, 1, 1);
                 M_WriteText2(DM_MATRIXX - p[i].width / 2 + 1,
-                             y + p[i].height - 8, tmp, huFontA, 1, 1, 1, 1);
+                             y + p[i].height - 8, tmp, GF_FONTA, 1, 1, 1, 1);
             }
         }
         else
@@ -1063,7 +1063,7 @@ void WI_updateNetgameStats(void)
         if(accelerateStage)
         {
             S_LocalSound(SFX_SGCOCK, 0);
-            if(gs.gameMode == commercial)
+            if(gameMode == commercial)
                 WI_initNoState();
             else
                 WI_initShowNextLoc();
@@ -1125,7 +1125,7 @@ void WI_drawNetgameStats(void)
 
             sprintf(tmp, "%i", teamInfo[i].members);
             M_WriteText2(x - p[i].width + 1, y + p[i].height - 8, tmp,
-                         huFontA, 1, 1, 1, 1);
+                         GF_FONTA, 1, 1, 1, 1);
         }
 
         if(i == myTeam)
@@ -1252,7 +1252,7 @@ void WI_updateStats(void)
         {
             S_LocalSound(SFX_SGCOCK, 0);
 
-            if(gs.gameMode == commercial)
+            if(gameMode == commercial)
                 WI_initNoState();
             else
                 WI_initShowNextLoc();
@@ -1351,7 +1351,7 @@ void WI_Ticker(void)
     if(bcnt == 1)
     {
         // Intermission music.
-        if(gs.gameMode == commercial)
+        if(gameMode == commercial)
             S_StartMusic("dm2int", true);
         else
             S_StartMusic("inter", true);
@@ -1362,7 +1362,7 @@ void WI_Ticker(void)
     switch(state)
     {
     case ILS_SHOW_STATS:
-        if(GAMERULES.deathmatch)
+        if(deathmatch)
             WI_updateDeathmatchStats();
         else if(IS_NETGAME)
             WI_updateNetgameStats();
@@ -1387,12 +1387,12 @@ void WI_loadData(void)
     char                name[9];
     wianim_t           *a;
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         strcpy(name, "INTERPIC");
     else
         sprintf(name, "WIMAP%d", wbs->epsd);
 
-    if(gs.gameMode == retail)
+    if(gameMode == retail)
     {
         if(wbs->epsd == 3)
             strcpy(name, "INTERPIC");
@@ -1404,7 +1404,7 @@ void WI_loadData(void)
         GL_DrawPatch(0, 0, bg.lump);
     }
 
-    if(gs.gameMode != commercial)
+    if(gameMode != commercial)
     {
         // You are here.
         R_CachePatch(&yah[0], "WIURH0");
@@ -1516,7 +1516,7 @@ void WI_Drawer(void)
     switch(state)
     {
     case ILS_SHOW_STATS:
-        if(GAMERULES.deathmatch)
+        if(deathmatch)
             WI_drawDeathmatchStats();
         else if(IS_NETGAME)
             WI_drawNetgameStats();
@@ -1540,9 +1540,9 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
     wbs = wbstartstruct;
 
 #ifdef RANGECHECK
-    if(gs.gameMode != commercial)
+    if(gameMode != commercial)
     {
-        if(gs.gameMode == retail)
+        if(gameMode == retail)
             RNGCHECK(wbs->epsd, 0, 3);
         else
             RNGCHECK(wbs->epsd, 0, 2);
@@ -1560,7 +1560,7 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
     cnt = bcnt = 0;
     firstRefresh = 1;
     me = wbs->pNum;
-    myTeam = gs.players[wbs->pNum].color;
+    myTeam = cfg.playerColor[wbs->pNum];
     plrs = wbs->plyr;
 
     if(!wbs->maxKills)
@@ -1570,15 +1570,15 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
     if(!wbs->maxSecret)
         wbs->maxSecret = 1;
 
-    if(gs.gameMode != retail)
+    if(gameMode != retail)
         if(wbs->epsd > 2)
             wbs->epsd -= 3;
 }
 
-void WI_Start(wbstartstruct_t* wbstartstruct)
+void WI_Start(wbstartstruct_t *wbstartstruct)
 {
     int                 i, j, k;
-    teaminfo_t*         tin;
+    teaminfo_t         *tin;
 
     GL_SetFilter(false);
     WI_initVariables(wbstartstruct);
@@ -1591,14 +1591,14 @@ void WI_Start(wbstartstruct_t* wbstartstruct)
         for(j = 0; j < MAXPLAYERS; ++j)
         {
             // Is the player in this team?
-            if(!plrs[j].inGame || gs.players[j].color != i)
+            if(!plrs[j].inGame || cfg.playerColor[j] != i)
                 continue;
 
             tin->members++;
 
             // Check the frags.
             for(k = 0; k < MAXPLAYERS; ++k)
-                tin->frags[gs.players[k].color] += plrs[j].frags[k];
+                tin->frags[cfg.playerColor[k]] += plrs[j].frags[k];
 
             // Counters.
             if(plrs[j].items > tin->items)
@@ -1619,7 +1619,7 @@ void WI_Start(wbstartstruct_t* wbstartstruct)
         }
     }
 
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
         WI_initDeathmatchStats();
     else if(IS_NETGAME)
         WI_initNetgameStats();

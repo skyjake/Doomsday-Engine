@@ -97,7 +97,7 @@ static void stopPlat(plat_t* plat)
 #if __JHEXEN__
     P_TagFinished(P_ToXSector(plat->sector)->tag);
 #endif
-    P_ThinkerRemove(&plat->thinker);
+    DD_ThinkerRemove(&plat->thinker);
 }
 
 /**
@@ -269,9 +269,10 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
 
         // Find lowest & highest floors around sector
         rtn = 1;
-        plat = Z_Calloc(sizeof(*plat), PU_MAPSPEC, 0);
+
+        plat = Z_Calloc(sizeof(*plat), PU_MAP, 0);
         plat->thinker.function = T_PlatRaise;
-        P_ThinkerAdd(&plat->thinker);
+        DD_ThinkerAdd(&plat->thinker);
 
         plat->type = type;
         plat->sector = sec;
@@ -494,7 +495,7 @@ static boolean activatePlat(thinker_t* th, void* context)
     if(plat->tag == (int) params->tag && plat->thinker.inStasis)
     {
         plat->state = plat->oldState;
-        P_ThinkerSetStasis(&plat->thinker, false);
+        DD_ThinkerSetStasis(&plat->thinker, false);
         params->count++;
     }
 
@@ -513,7 +514,7 @@ int P_PlatActivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    P_IterateThinkers(T_PlatRaise, activatePlat, &params);
+    DD_IterateThinkers(T_PlatRaise, activatePlat, &params);
 
     return params.count;
 }
@@ -544,7 +545,7 @@ static boolean deactivatePlat(thinker_t* th, void* context)
     {
         // Put it in stasis.
         plat->oldState = plat->state;
-        P_ThinkerSetStasis(&plat->thinker, true);
+        DD_ThinkerSetStasis(&plat->thinker, true);
         params->count++;
     }
 #endif
@@ -565,7 +566,7 @@ int P_PlatDeactivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    P_IterateThinkers(T_PlatRaise, deactivatePlat, &params);
+    DD_IterateThinkers(T_PlatRaise, deactivatePlat, &params);
 
     return params.count;
 }

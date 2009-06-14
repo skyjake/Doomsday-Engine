@@ -27,8 +27,8 @@
  * mn_def.h: Menu defines and types.
  */
 
-#ifndef __MENU_DEFS_H_
-#define __MENU_DEFS_H_
+#ifndef __MENU_DEFS_H__
+#define __MENU_DEFS_H__
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHeretic__"
@@ -84,25 +84,24 @@ typedef enum {
     MENU_SAVE,
     MENU_MULTIPLAYER,
     MENU_GAMESETUP,
-    MENU_PROFILES,
     MENU_PLAYERSETUP,
+    MENU_INVENTORY,
+    MENU_WEAPONS,
     MENU_CONTROLS,
     MENU_NONE
 } menutype_t;
 
-extern int menuTime;
-extern boolean shiftdown;
-extern menu_t* currentMenu;
-extern short itemOn;
+extern int      menuTime;
+extern boolean  shiftdown;
+extern menu_t  *currentMenu;
+extern short    itemOn;
 
-extern menu_t MapDef;
-extern menu_t ControlsDef;
-extern menu_t ProfilesDef;
-extern menu_t EditProfileDef;
+extern menu_t   MapDef;
 
 // Multiplayer menus.
-extern menu_t MultiplayerMenu;
-extern menu_t GameSetupMenu;
+extern menu_t   MultiplayerMenu;
+extern menu_t   GameSetupMenu;
+extern menu_t   PlayerSetupMenu;
 
 void    M_DrawTitle(char *text, int y);
 void    M_WriteMenuText(const menu_t * menu, int index, const char *text);

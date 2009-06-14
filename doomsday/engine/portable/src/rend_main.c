@@ -71,7 +71,6 @@ extern int useDynLights, translucentIceCorpse;
 extern int skyhemispheres;
 extern int loMaxRadius;
 extern int devNoCulling;
-extern boolean firstFrameAfterLoad;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1430,7 +1429,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     if(p->type != RPT_SKY_MASK)
     {
         // ShinySurface?
-        if(p->reflective && !drawAsVisSprite)
+        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1481,11 +1480,11 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         quadTexCoords(rtexcoords, rvertices, *p->segLength, p->texTL);
 
         // Blend texture coordinates.
-        if(rTU[TU_INTER].tex)
+        if(rTU[TU_INTER].tex && !drawAsVisSprite)
             quadTexCoords(rtexcoords2, rvertices, *p->segLength, p->texTL);
 
         // Shiny texture coordinates.
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
+        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
             quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2],
                                *p->segLength);
 
@@ -1611,7 +1610,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices);
         }
 
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
+        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
         {
             uint                i;
 
@@ -1778,16 +1777,17 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
                    rtexcoords5, rcolors, 3 + divs[0].num,
                    numLights, modTex, modColor, rTU);
-        if(p->reflective)
+        if(p->reflective && rTUs[TU_PRIMARY].tex)
         {
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
                        shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
-                       rtexcoords + 3 + divs[0].num, NULL,
+                       rTUs[TU_INTER].tex? rtexcoords + 3 + divs[0].num : NULL,
+                       NULL,
                        shinyColors + 3 + divs[0].num,
                        3 + divs[1].num, 0, 0, NULL, rTUs);
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices,
-                       shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs);
+                       shinyTexCoords, rTUs[TU_INTER].tex? rtexcoords : NULL,
+                       NULL, shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs);
         }
     }
     else
@@ -1796,10 +1796,11 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                    rtexcoords, rtexcoords2, rtexcoords5, rcolors,
 
                    numVertices, numLights, modTex, modColor, rTU);
-        if(p->reflective)
-            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY, rvertices,
-                       shinyTexCoords, rtexcoords, NULL,
-                       shinyColors, numVertices, 0, 0, NULL, rTUs);
+        if(p->reflective && rTUs[TU_PRIMARY].tex)
+            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY,
+                       rvertices, shinyTexCoords,
+                       rTUs[TU_INTER].tex? rtexcoords : NULL,
+                       NULL, shinyColors, numVertices, 0, 0, NULL, rTUs);
     }
 
     R_FreeRendTexCoords(rtexcoords);
@@ -1847,7 +1848,8 @@ static boolean doRenderSeg(seg_t* seg,
     params.type = (skyMask? RPT_SKY_MASK : RPT_NORMAL);
     params.isWall = true;
     params.segLength = &seg->length;
-    params.alpha = alpha;
+    params.forceOpaque = (alpha < 0? true : false);
+    params.alpha = (alpha < 0? 1 : alpha);
     params.mapObject = seg;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
@@ -2328,7 +2330,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
 
         solidSeg = doRenderSeg(seg,
                                from, to, bottom, top,
-                               surface->normal, (forceOpaque? 1 : alpha),
+                               surface->normal, (forceOpaque? -1 : alpha),
                                &frontsec->lightLevel,
                                R_WallAngleLightLevelDelta(seg->lineDef, seg->side),
                                R_GetSectorLightColor(frontsec),
@@ -3105,7 +3107,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     }
 
     // Mark the particle generators in the sector visible.
-    PG_SectorIsVisible(sect);
+    Rend_ParticleMarkInSectorVisible(sect);
 
     // Sprites for this subsector have to be drawn. This must be done before
     // the segments of this subsector are added to the clipper. Otherwise
@@ -3756,12 +3758,6 @@ void Rend_RenderMap(void)
 
     GL_SetMultisample(true);
 
-    // This is all the clearing we'll do.
-    if(firstFrameAfterLoad || freezeRLs || P_IsInVoid(viewPlayer))
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    else
-        glClear(GL_DEPTH_BUFFER_BIT);
-
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(true);
 
@@ -3771,6 +3767,9 @@ void Rend_RenderMap(void)
         RL_ClearLists(); // Clear the lists for new quads.
         C_ClearRanges(); // Clear the clipper.
         LO_BeginFrame();
+
+        // Clear particle generator visibilty info.
+        Rend_ParticleInitForNewFrame();
 
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();
@@ -3814,17 +3813,12 @@ void Rend_RenderMap(void)
     }
     RL_RenderAllLists();
 
-    Rend_RenderNormals();
-
-/*#if _DEBUG
-LO_DrawLumobjs();
-#endif*/
-
-    // Draw the mobj bounding boxes.
-    Rend_RenderBoundingBoxes();
-
-    // Draw the vertex position/indice debug aids.
-    Rend_Vertexes();
+    // Draw various debugging displays:
+    Rend_RenderNormals(); // World surface normals.
+    LO_DrawLumobjs(); // Lumobjs.
+    Rend_RenderBoundingBoxes(); // Mobj bounding boxes.
+    Rend_Vertexes(); // World vertex positions/indices.
+    Rend_RenderGenerators(); // Particle generator origins.
 
     // Draw the Source Bias Editor's draw that identifies the current light.
     SBE_DrawCursor();

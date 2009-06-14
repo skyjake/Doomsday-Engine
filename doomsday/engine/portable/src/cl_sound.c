@@ -93,7 +93,15 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         uint                index = (ushort) Msg_ReadShort();
 
         if(index < numSectors)
-            sector = SECTOR_PTR(index);
+        {
+        	sector = SECTOR_PTR(index);
+		}
+		else
+        {
+            Con_Message("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains "
+                        "invalid sector num %u. Skipping.\n", index);
+			skip = true;
+	    }
     }
     else                        /* DT_POLY_SOUND */
     {
@@ -104,6 +112,12 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
             poly = polyObjs[index];
             emitter = (mobj_t *) poly;
         }
+        else
+        {
+            Con_Message("Cl_ReadSoundDelta2: DT_POLY_SOUND contains "
+                        "invalid polyobj num %u. Skipping.\n", index);
+			skip = true;
+		}
     }
 
     flags = Msg_ReadByte();

@@ -330,10 +330,10 @@ void B_AcquireAll(bcontext_t* bc, boolean doAcquire)
 void B_SetContextFallback(const char* name, int (*responderFunc)(event_t*))
 {
     bcontext_t *ctx = B_ContextByName(name);
-    
+
     if(!ctx)
         return;
-    
+
     ctx->fallbackResponder = responderFunc;
 }
 
@@ -553,7 +553,7 @@ boolean B_TryEvent(ddevent_t* event)
  *
  * @return              Number of bindings found for the command.
  */
-int B_BindingsForCommand(const char* cmd, char* buf, int bufSize)
+int B_BindingsForCommand(const char* cmd, char* buf, size_t bufSize)
 {
     ddstring_t          result;
     ddstring_t          str;
@@ -605,7 +605,7 @@ int B_BindingsForCommand(const char* cmd, char* buf, int bufSize)
  * @return              Number of bindings found for the command.
  */
 int B_BindingsForControl(int localPlayer, const char* controlName,
-                         int inverse, char* buf, int bufSize)
+                         int inverse, char* buf, size_t bufSize)
 {
     ddstring_t          result;
     ddstring_t          str;

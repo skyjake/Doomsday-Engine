@@ -55,6 +55,7 @@ public:
     void        Pause(int setPause);
     void        Reset(void);
     void        Stop(void);
+    int         IsPlaying(void);
 
     int         volumeShift;
 

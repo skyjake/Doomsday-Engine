@@ -50,6 +50,8 @@ extern mobj_t* blockingMobj;
 extern float tmBBox[];
 extern boolean fellDown;
 
+boolean         P_CheckSight(const mobj_t* from, const mobj_t* to);
+
 boolean         P_CheckPosition2f(mobj_t* thing, float x, float y);
 boolean         P_CheckPosition3f(mobj_t* thing, float x, float y, float z);
 boolean         P_CheckPosition3fv(mobj_t* thing, const float pos[3]);

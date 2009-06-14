@@ -286,8 +286,8 @@ ui_page_t *UI_CurrentPage(void)
  */
 void UI_LoadTextures(void)
 {
-    int         i;
-    const char *picNames[NUM_UITEXTURES] = {
+    int                 i;
+    const char* picNames[NUM_UITEXTURES] = {
         "Mouse",
         "BoxCorner",
         "BoxFill",
@@ -300,14 +300,24 @@ void UI_LoadTextures(void)
     for(i = 0; i < NUM_UITEXTURES; ++i)
         if(!uiTextures[i])
         {
-            uiTextures[i] =
-                GL_LoadGraphics4(RC_GRAPHICS, picNames[i],
-                                 (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL),
-                                 false,
-                                 GL_LINEAR, GL_LINEAR,
-                                 0 /*no anisotropy*/,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 TXCF_NO_COMPRESSION);
+            image_t             image;
+
+            if(GL_LoadExtTexture(&image, DDRC_GRAPHICS, picNames[i],
+               (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL)))
+            {   // Loaded successfully and converted accordingly.
+                // Upload the image to GL.
+                uiTextures[i] = GL_NewTextureWithParams2(
+                    ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+                      image.pixelSize == 3 ? DGL_RGB :
+                      image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
+                    image.width, image.height, image.pixels,
+                    TXCF_NO_COMPRESSION, GL_LINEAR, GL_LINEAR,
+                    0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+                GL_DestroyImage(&image);
+            }
+            else
+                uiTextures[i] = 0;
         }
 }
 

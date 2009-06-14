@@ -36,7 +36,7 @@
 #define MAX_SND_DIST        (2025)
 #define MAX_CHANNELS        (16)
 
-int             S_GetSoundID(char* name);
+int             S_GetSoundID(const char* name);
 void            S_MapMusic(void);
 
 void            S_ParseSndInfoLump(void);

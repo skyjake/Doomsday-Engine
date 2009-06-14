@@ -33,7 +33,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MININTERCEPTS   128
+#define MININTERCEPTS       128
 
 // TYPES -------------------------------------------------------------------
 
@@ -50,11 +50,27 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Must be static so these are not confused with intercepts in game libs.
-static intercept_t *intercepts = 0;
-static intercept_t *intercept_p = 0;
+static intercept_t* intercepts = 0;
+static intercept_t* intercept_p = 0;
 static int maxIntercepts = 0;
 
 // CODE --------------------------------------------------------------------
+
+/**
+ * Calculate intercept distances.
+ */
+void P_CalcInterceptDistances(const divline_t* strace)
+{
+    intercept_t*        scan;
+
+    for(scan = intercepts; scan < intercept_p; scan++)
+    {
+        divline_t           dl;
+
+        P_MakeDivline(scan->d.lineDef, &dl);
+        scan->frac = P_InterceptVector(strace, &dl);
+    }
+}
 
 /**
  * Empties the intercepts array and makes sure it has been allocated.
@@ -63,10 +79,11 @@ void P_ClearIntercepts(void)
 {
     if(!intercepts)
     {
+        maxIntercepts = MININTERCEPTS;
         intercepts =
-            Z_Malloc(sizeof(*intercepts) * (maxIntercepts = MININTERCEPTS),
-                     PU_STATIC, 0);
+            Z_Malloc(sizeof(*intercepts) * maxIntercepts, PU_STATIC, 0);
     }
+
     intercept_p = intercepts;
 }
 
@@ -76,9 +93,9 @@ void P_ClearIntercepts(void)
  *
  * @return              Ptr to the new intercept.
  */
-intercept_t *P_AddIntercept(float frac, intercepttype_t type, void *ptr)
+intercept_t* P_AddIntercept(float frac, intercepttype_t type, void* ptr)
 {
-    int     count = intercept_p - intercepts;
+    int                 count = intercept_p - intercepts;
 
     if(count == maxIntercepts)
     {
@@ -103,57 +120,16 @@ intercept_t *P_AddIntercept(float frac, intercepttype_t type, void *ptr)
  * @return              @c true, if the traverser function returns @c true,
  *                      for all lines.
  */
-boolean P_TraverseIntercepts(traverser_t func, float maxfrac)
+boolean P_TraverseIntercepts(traverser_t func, float maxFrac)
 {
-    intercept_t *in = NULL;
-    int         count = intercept_p - intercepts;
+    int                 count = intercept_p - intercepts;
 
     while(count--)
     {
-        float       dist = DDMAXFLOAT;
-        intercept_t *scan;
+        float               dist = DDMAXFLOAT;
+        intercept_t*        scan, *in;
 
-        for(scan = intercepts; scan < intercept_p; scan++)
-            if(scan->frac < dist)
-                dist = (in = scan)->frac;
-
-        if(dist > maxfrac)
-            return true; // Checked everything in range.
-        if(!func(in))
-            return false; // Don't bother going farther.
-
-        in->frac = DDMAXFLOAT;
-    }
-
-    return true; // Everything was traversed.
-}
-
-/**
- * @return              @c true, if the traverser function returns @c true,
- *                      for all lines.
- */
-boolean P_SightTraverseIntercepts(divline_t *strace,
-                                  boolean (*func) (intercept_t *))
-{
-    int         count;
-    float       dist;
-    intercept_t *scan, *in;
-    divline_t   dl;
-
-    count = intercept_p - intercepts;
-
-    // Calculate intercept distance.
-    for(scan = intercepts; scan < intercept_p; scan++)
-    {
-        P_MakeDivline(scan->d.lineDef, &dl);
-        scan->frac = P_InterceptVector(strace, &dl);
-    }
-
-    // Go through in order.
-    in = 0; // Shut up compiler warning.
-    while(count--)
-    {
-        dist = DDMAXFLOAT;
+        in = NULL;
         for(scan = intercepts; scan < intercept_p; scan++)
             if(scan->frac < dist)
             {
@@ -161,12 +137,16 @@ boolean P_SightTraverseIntercepts(divline_t *strace,
                 in = scan;
             }
 
-        if(!in)
-            continue; // Huh?
-        if(!func(in))
-            return false; // Don't bother going farther.
+        if(maxFrac > 0 && dist > maxFrac)
+            return true; // Checked everything in range.
 
-        in->frac = DDMAXFLOAT;
+        if(in)
+        {
+            if(!func(in))
+                return false; // Don't bother going farther.
+
+            in->frac = DDMAXFLOAT;
+        }
     }
 
     return true; // Everything was traversed.

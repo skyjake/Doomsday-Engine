@@ -117,8 +117,9 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
 {
     uint                i;
     byte                tmpResult = 0;
-    const gltexture_inst_t* texInst = NULL, *detailInst = NULL,
-                       *shinyInst = NULL, *shinyMaskInst = NULL;
+    const gltexture_inst_t* texInst[DDMAX_MATERIAL_LAYERS];
+    const gltexture_inst_t* detailInst = NULL, *shinyInst = NULL,
+                       *shinyMaskInst = NULL;
 
     if(!mat)
         return 0;
@@ -126,13 +127,17 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
     if(smoothed)
         mat = mat->current;
 
+    assert(mat->numLayers > 0);
+
     // Ensure all resources needed to visualize this material are loaded.
     for(i = 0; i < mat->numLayers; ++i)
     {
-        byte             result;
+        material_layer_t*   ml = &mat->layers[i];
+        byte                result;
 
         // Pick the instance matching the specified context.
-        texInst = GL_PrepareGLTexture(mat->layers[i].tex, params, &result);
+        texInst[i] = GL_PrepareGLTexture(ml->tex, params, &result);
+
         if(result)
             tmpResult = result;
     }
@@ -150,6 +155,30 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
         // Detail texture.
         mat->detail = Def_GetDetailTex(mat, tmpResult == 2);
+    }
+
+    // Do we need to prepare any lightmaps?
+    if(mat->decoration)
+    {
+        /**
+         * \todo No need to look up the lightmap texture records every time!
+         */
+
+        for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        {
+            const ded_decorlight_t* light = &mat->decoration->lights[i];
+            lightmap_t*         lmap;
+
+            if(!R_IsValidLightDecoration(light))
+                break;
+
+            if((lmap = R_GetLightMap(light->up.id)))
+                GL_PrepareGLTexture(lmap->id, NULL, NULL);
+            if((lmap = R_GetLightMap(light->down.id)))
+                GL_PrepareGLTexture(lmap->id, NULL, NULL);
+            if((lmap = R_GetLightMap(light->sides.id)))
+                GL_PrepareGLTexture(lmap->id, NULL, NULL);
+        }
     }
 
     // Do we need to prepare a detail texture?
@@ -195,7 +224,8 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
             shinyInst = GL_PrepareGLTexture(sTex->id, NULL, NULL);
         }
 
-        if((mTex = R_GetMaskTexture(mat->reflection->maskMap.path)))
+        if(shinyInst && // Don't bother searching unless the above succeeds.
+           (mTex = R_GetMaskTexture(mat->reflection->maskMap.path)))
         {
             // Pick an instance matching the specified context.
             shinyMaskInst = GL_PrepareGLTexture(mTex->id, NULL, NULL);
@@ -227,18 +257,18 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
         if(tex->type == GLT_SPRITE)
             magMode = filterSprites? GL_LINEAR : GL_NEAREST;
 
-        setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst,
+        setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst[0],
                    1.f / snapshot->width, 1.f / snapshot->height, 0, 0, 1);
 
-        snapshot->isOpaque = !(texInst->flags & GLTF_MASKED);
+        snapshot->isOpaque = !(texInst[0]->flags & GLTF_MASKED);
 
         /// \fixme what about the other texture types?
         if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_FLAT)
         {
             for(c = 0; c < 3; ++c)
             {
-                snapshot->color[c] = texInst->data.texture.color[c];
-                snapshot->topColor[c] = texInst->data.texture.topColor[c];
+                snapshot->color[c] = texInst[0]->data.texture.color[c];
+                snapshot->topColor[c] = texInst[0]->data.texture.topColor[c];
             }
         }
         else

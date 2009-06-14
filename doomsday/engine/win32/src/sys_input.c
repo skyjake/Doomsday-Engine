@@ -84,7 +84,7 @@ static int counter;
 
 // A customizable mapping of the scantokey array.
 //static char keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
-static byte *keymap;
+static byte* keymap = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -266,26 +266,26 @@ static byte dIKeyToDDKey(byte dIKey)
 }
 
 #if 0 // Currently unused.
-static DFILE *openKeymapFile(const char *fileName)
+static DFILE *openKeymapFile(const char* fileName)
 {
-    char        path[512];
+    filename_t          path;
 
     // Try with and without .DKM.
-    strcpy(path, fileName);
+    strncpy(path, fileName, FILENAME_T_MAXLEN);
     if(!F_Access(path))
     {
         // Try the path.
-        M_TranslatePath(keyMapPath, path);
-        strcat(path, fileName);
+        M_TranslatePath(path, keyMapPath, FILENAME_T_MAXLEN);
+        strncat(path, fileName, FILENAME_T_MAXLEN);
         if(!F_Access(path))
         {
-            strcpy(path, fileName);
-            strcat(path, ".dkm");
+            strncpy(path, fileName, FILENAME_T_MAXLEN);
+            strncat(path, ".dkm", FILENAME_T_MAXLEN);
             if(!F_Access(path))
             {
-                M_TranslatePath(keyMapPath, path);
-                strcat(path, fileName);
-                strcat(path, ".dkm");
+                M_TranslatePath(path, keyMapPath, FILENAME_T_MAXLEN);
+                strncat(path, fileName, FILENAME_T_MAXLEN);
+                strncat(path, ".dkm", FILENAME_T_MAXLEN);
             }
         }
     }
@@ -781,7 +781,8 @@ void I_Shutdown(void)
     IDirectInput_Release(dInput);
     dInput = 0;
 
-    M_Free(keymap);
+    if(keymap)
+        M_Free(keymap);
     keymap = NULL;
 
     initIOk = false;
@@ -895,43 +896,28 @@ void I_GetMouseState(mousestate_t *state)
     state->x = (int) mstate.lX;
     state->y = (int) mstate.lY;
 
-    // Handle mouse wheel (convert to buttons).
-    state->buttonDowns[3] = 0;
-    state->buttonUps[4] = 0;
-    if(mstate.lZ > 0 && !(oldZ > 0))
+    /**
+     * We need to map the mouse buttons as follows:
+     *         DX  : Deng
+     * (left)   0  >  0
+     * (right)  1  >  2
+     * (center) 2  >  1
+     * (b4)     3  >  5
+     * (b5)     4  >  6
+     * (b6)     5  >  7
+     * (b7)     6  >  8
+     * (b8)     7  >  9
+     */
+
     {
-        state->buttonDowns[3] = 1;
-        state->buttonUps[4] = 1;
-    }
-    else if(mstate.lZ < 0 && !(oldZ < 0))
-    {
-        state->buttonDowns[4] = 1;
-        state->buttonUps[3] = 1;
-    }
-    else if(mstate.lZ == 0)
-    {
-        if(oldZ > 0)
-            state->buttonUps[3] = 1;
-        else if(oldZ < 0)
-            state->buttonUps[4] = 1;
-    }
-    oldZ = (int) mstate.lZ;
+    static const int buttonMap[] = { 0, 2, 1, 5, 6, 7, 8, 9 };
 
     for(i = 0; i < 8; ++i)
     {
         BOOL            isDown = (mstate.rgbButtons[i] & 0x80? TRUE : FALSE);
         int             id;
 
-        id = i;
-        switch(i)
-        {
-        case 0: id = 0; break;
-        case 1: id = 2; break;
-        case 2: id = 1; break;
-        default:
-            id += 2; // Wheel Up/down.
-            break;
-        }
+        id = buttonMap[i];
 
         state->buttonDowns[id] =
             state->buttonUps[id] = 0;
@@ -941,6 +927,35 @@ void I_GetMouseState(mousestate_t *state)
             state->buttonUps[id] = 1;
 
         oldButtons[i] = isDown;
+    }
+
+    // Handle mouse wheel (convert to buttons).
+    if(mstate.lZ == 0)
+    {
+        state->buttonDowns[3] = state->buttonDowns[4] = 0;
+
+        if(oldZ > 0)
+            state->buttonUps[3] = 1;
+        else if(oldZ < 0)
+            state->buttonUps[4] = 1;
+    }
+    else
+    {
+        if(mstate.lZ > 0 && !(oldZ > 0))
+        {
+            state->buttonDowns[3] = 1;
+            if(state->buttonDowns[4])
+                state->buttonUps[3] = 1;
+        }
+        else if(mstate.lZ < 0 && !(oldZ < 0))
+        {
+            state->buttonDowns[4] = 1;
+            if(state->buttonDowns[3])
+                state->buttonUps[4] = 1;
+        }
+    }
+
+    oldZ = (int) mstate.lZ;
     }
 }
 

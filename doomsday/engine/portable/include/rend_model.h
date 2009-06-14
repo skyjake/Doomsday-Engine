@@ -51,6 +51,7 @@ typedef struct rendmodelparams_s {
 
 // Appearance
     int             flags; // Mobj flags.
+    int             tmap;
 
     // Lighting/color:
     float           ambientColor[4];

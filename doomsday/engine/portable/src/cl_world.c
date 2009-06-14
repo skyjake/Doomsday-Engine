@@ -266,7 +266,8 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             if(mov->destination < *mov->current)
                 mov->speed = -mov->speed;
 
-            P_ThinkerAdd(&mov->thinker);
+            // \fixme Do these need to be public?
+            P_ThinkerAdd(&mov->thinker, true);
             break;
         }
 }
@@ -343,7 +344,8 @@ polymover_t* Cl_NewPolyMover(uint number)
     mover->thinker.function = Cl_PolyMoverThinker;
     mover->poly = poly;
     mover->number = number;
-    P_ThinkerAdd(&mover->thinker);
+    // \fixme Do these need to be public?
+    P_ThinkerAdd(&mover->thinker, true);
     return mover;
 }
 

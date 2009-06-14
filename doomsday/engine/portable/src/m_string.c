@@ -137,8 +137,7 @@ void Str_Alloc(ddstring_t *ds, size_t for_length, int preserve)
 
     while(ds->size < for_length)
         ds->size *= 2;
-    buf = Z_Malloc(ds->size, PU_STATIC, 0);
-    memset(buf, 0, ds->size);
+    buf = Z_Calloc(ds->size, PU_STATIC, 0);
 
     if(preserve && ds->str)
         strncpy(buf, ds->str, ds->size - 1);
@@ -202,7 +201,7 @@ void Str_Appendf(ddstring_t *ds, const char *format, ...)
  */
 void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
 {
-    Str_Alloc(dest, dest->length + count, true);
+    Str_Alloc(dest, dest->length + count + 1, true);
     memcpy(dest->str + dest->length, src + start, count);
     dest->length += count;
 
@@ -395,4 +394,38 @@ const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
 
     // Skip past the delimiter.
     return src + 1;
+}
+
+/**
+ * Retrieves a character in the string.
+ *
+ * @param str    String to get the character from.
+ * @param index  Index of the character.
+ *
+ * @return The character at @c index, or 0 if the index is not in range.
+ */
+char Str_At(ddstring_t* str, int index)
+{
+    if(index < 0 || index >= str->length)
+    {
+        return 0;    
+    }
+    return str->str[index];
+}
+
+/**
+ * Retrieves a character in the string. Indices start from the end of the string.
+ *
+ * @param str    String to get the character from.
+ * @param reverseIndex  Index of the character, where 0 is the last character of the string.
+ *
+ * @return The character at @c index, or 0 if the index is not in range.
+ */
+char Str_RAt(ddstring_t* str, int reverseIndex)
+{
+    if(reverseIndex < 0 || reverseIndex >= str->length)
+    {
+        return 0;    
+    }
+    return str->str[str->length - 1 - reverseIndex];
 }

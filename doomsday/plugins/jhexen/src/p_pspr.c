@@ -38,7 +38,7 @@
 
 #include "p_player.h"
 #include "p_map.h"
-#include "p_tick.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -81,14 +81,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_PUNCHUP,                // upstate
+      { S_PUNCHUP, S_PUNCHDOWN, S_PUNCHREADY, S_PUNCHATK1_1, S_PUNCHATK1_1, S_NULL },
       0,                        // raise sound id
-      S_PUNCHDOWN,              // downstate
-      S_PUNCHREADY,             // readystate
-      0,                        // readysound
-      S_PUNCHATK1_1,            // atkstate
-      S_PUNCHATK1_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -97,14 +92,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CMACEUP,                // upstate
+      { S_CMACEUP, S_CMACEDOWN, S_CMACEREADY, S_CMACEATK_1, S_CMACEATK_1, S_NULL },
       0,                        // raise sound id
-      S_CMACEDOWN,              // downstate
-      S_CMACEREADY,             // readystate
-      0,                        // readysound
-      S_CMACEATK_1,             // atkstate
-      S_CMACEATK_1,             // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
       },
      {
@@ -113,14 +103,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_MWANDUP,
+      { S_MWANDUP, S_MWANDDOWN, S_MWANDREADY, S_MWANDATK_1, S_MWANDATK_1, S_NULL },
       0,                        // raise sound id
-      S_MWANDDOWN,
-      S_MWANDREADY,
-      0,                        // readysound
-      S_MWANDATK_1,
-      S_MWANDATK_1,
-      S_NULL
+      0                         // readysound
       }
      },
      {
@@ -129,14 +114,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
       }
      },
@@ -147,14 +127,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 0},                   // type: mana1 | mana2
       {2, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_FAXEUP,                 // upstate
+      { S_FAXEUP, S_FAXEDOWN, S_FAXEREADY, S_FAXEATK_1, S_FAXEATK_1, S_NULL },
       0,                        // raise sound id
-      S_FAXEDOWN,               // downstate
-      S_FAXEREADY,              // readystate
-      0,                        // readysound
-      S_FAXEATK_1,              // atkstate
-      S_FAXEATK_1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -163,14 +138,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 0},                   // type: mana1 | mana2
       {1, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CSTAFFUP,               // upstate
+      { S_CSTAFFUP, S_CSTAFFDOWN, S_CSTAFFREADY, S_CSTAFFATK_1, S_CSTAFFATK_1, S_NULL },
       0,                        // raise sound id
-      S_CSTAFFDOWN,             // downstate
-      S_CSTAFFREADY,            // readystate
-      0,                        // readysound
-      S_CSTAFFATK_1,            // atkstate
-      S_CSTAFFATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -179,14 +149,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 0},                   // type: mana1 | mana2
       {3, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CONEUP,                 // upstate
+      { S_CONEUP, S_CONEDOWN, S_CONEREADY, S_CONEATK1_1, S_CONEATK1_3, S_NULL },
       0,                        // raise sound id
-      S_CONEDOWN,               // downstate
-      S_CONEREADY,              // readystate
-      0,                        // readysound
-      S_CONEATK1_1,             // atkstate
-      S_CONEATK1_3,             // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -195,14 +160,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      }
     },
@@ -213,14 +173,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 1},                   // type: mana1 | mana2
       {0, 3},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_FHAMMERUP,              // upstate
+      { S_FHAMMERUP, S_FHAMMERDOWN, S_FHAMMERREADY, S_FHAMMERATK_1, S_FHAMMERATK_1, S_NULL },
       0,                        // raise sound id
-      S_FHAMMERDOWN,            // downstate
-      S_FHAMMERREADY,           // readystate
-      0,                        // readysound
-      S_FHAMMERATK_1,           // atkstate
-      S_FHAMMERATK_1,           // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -229,14 +184,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 1},                   // type: mana1 | mana2
       {0, 4},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CFLAMEUP,               // upstate
+      { S_CFLAMEUP, S_CFLAMEDOWN, S_CFLAMEREADY1, S_CFLAMEATK_1, S_CFLAMEATK_1, S_NULL },
       0,                        // raise sound id
-      S_CFLAMEDOWN,             // downstate
-      S_CFLAMEREADY1,           // readystate
-      0,                        // readysound
-      S_CFLAMEATK_1,            // atkstate
-      S_CFLAMEATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -245,14 +195,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 1},                   // type: mana1 | mana2
       {0, 5},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_MLIGHTNINGUP,           // upstate
+      { S_MLIGHTNINGUP, S_MLIGHTNINGDOWN, S_MLIGHTNINGREADY, S_MLIGHTNINGATK_1, S_MLIGHTNINGATK_1, S_NULL },
       0,                        // raise sound id
-      S_MLIGHTNINGDOWN,         // downstate
-      S_MLIGHTNINGREADY,        // readystate
-      0,                        // readysound
-      S_MLIGHTNINGATK_1,        // atkstate
-      S_MLIGHTNINGATK_1,        // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -261,14 +206,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      }
     },
@@ -279,14 +219,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 1},                   // type: mana1 | mana2
       {14, 14},                 // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_FSWORDUP,               // upstate
+      { S_FSWORDUP, S_FSWORDDOWN, S_FSWORDREADY, S_FSWORDATK_1, S_FSWORDATK_1, S_NULL },
       0,                        // raise sound id
-      S_FSWORDDOWN,             // downstate
-      S_FSWORDREADY,            // readystate
-      0,                        // readysound
-      S_FSWORDATK_1,            // atkstate
-      S_FSWORDATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -295,14 +230,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 1},                   // type: mana1 | mana2
       {18, 18},                 // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_CHOLYUP,                // upstate
+      { S_CHOLYUP, S_CHOLYDOWN, S_CHOLYREADY, S_CHOLYATK_1, S_CHOLYATK_1, S_NULL },
       0,                        // raise sound id
-      S_CHOLYDOWN,              // downstate
-      S_CHOLYREADY,             // readystate
-      0,                        // readysound
-      S_CHOLYATK_1,             // atkstate
-      S_CHOLYATK_1,             // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -311,14 +241,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {1, 1},                   // type: mana1 | mana2
       {15, 15},                 // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_MSTAFFUP,               // upstate
+      { S_MSTAFFUP, S_MSTAFFDOWN, S_MSTAFFREADY, S_MSTAFFATK_1, S_MSTAFFATK_1, S_NULL },
       0,                        // raise sound id
-      S_MSTAFFDOWN,             // downstate
-      S_MSTAFFREADY,            // readystate
-      0,                        // readysound
-      S_MSTAFFATK_1,            // atkstate
-      S_MSTAFFATK_1,            // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      },
      {
@@ -327,14 +252,9 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
       {0, 0},                   // type: mana1 | mana2
       {0, 0},                   // pershot: mana1 | mana2
       true,                     // autofire when raised if fire held
-      S_SNOUTUP,                // upstate
+      { S_SNOUTUP, S_SNOUTDOWN, S_SNOUTREADY, S_SNOUTATK1, S_SNOUTATK1, S_NULL },
       0,                        // raise sound id
-      S_SNOUTDOWN,              // downstate
-      S_SNOUTREADY,             // readystate
-      0,                        // readysound
-      S_SNOUTATK1,              // atkstate
-      S_SNOUTATK1,              // holdatkstate
-      S_NULL                    // flashstate
+      0                         // readysound
       }
      }
     }
@@ -351,7 +271,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *x = 0;
         else
-            *x = 1 + (PLRPROFILE.psprite.bob * players[player].bob) *
+            *x = 1 + (cfg.bobWeapon * players[player].bob) *
                 FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
@@ -360,9 +280,23 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *y = 0;
         else
-            *y = 32 + (PLRPROFILE.psprite.bob * players[player].bob) *
+            *y = 32 + (cfg.bobWeapon * players[player].bob) *
                 FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
+}
+
+/**
+ *Initialize weapon info, maxammo and clipammo.
+ */
+void P_InitWeaponInfo(void)
+{
+    /// \todo Get this info from values.
+    P_InitWeaponSlots();
+
+    P_SetWeaponSlot(WT_FIRST, 1);
+    P_SetWeaponSlot(WT_SECOND, 2);
+    P_SetWeaponSlot(WT_THIRD, 3);
+    P_SetWeaponSlot(WT_FOURTH, 4);
 }
 
 /**
@@ -452,19 +386,19 @@ void P_SetPspriteNF(player_t *plr, int position, statenum_t stnum)
 void P_ActivateMorphWeapon(player_t *plr)
 {
     plr->pendingWeapon = WT_NOCHANGE;
-    plr->pSprites[PS_WEAPON].pos[VY] = WEAPONTOP;
+    plr->pSprites[ps_weapon].pos[VY] = WEAPONTOP;
     plr->readyWeapon = WT_FIRST; // Snout is the first weapon
     plr->update |= PSF_WEAPONS;
-    P_SetPsprite(plr, PS_WEAPON, S_SNOUTREADY);
+    P_SetPsprite(plr, ps_weapon, S_SNOUTREADY);
 }
 
 void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
 {
     plr->pendingWeapon = WT_NOCHANGE;
     plr->readyWeapon = weapon;
-    plr->pSprites[PS_WEAPON].pos[VY] = WEAPONBOTTOM;
+    plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
     plr->update |= PSF_WEAPONS;
-    P_SetPsprite(plr, PS_WEAPON, weaponInfo[weapon][plr->pClass].mode[0].upState);
+    P_SetPsprite(plr, ps_weapon, weaponInfo[weapon][plr->class].mode[0].states[WSN_UP]);
 }
 
 /**
@@ -475,10 +409,10 @@ void P_BringUpWeapon(player_t *plr)
     statenum_t newState;
     weaponmodeinfo_t *wminfo;
 
-    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->pClass, 0);
+    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class, 0);
 
-    newState = wminfo->upState;
-    if(plr->pClass == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
+    newState = wminfo->states[WSN_UP];
+    if(plr->class == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {
         newState = S_FAXEUP_G;
@@ -491,8 +425,8 @@ void P_BringUpWeapon(player_t *plr)
         S_StartSound(wminfo->raiseSound, plr->plr->mo);
 
     plr->pendingWeapon = WT_NOCHANGE;
-    plr->pSprites[PS_WEAPON].pos[VY] = WEAPONBOTTOM;
-    P_SetPsprite(plr, PS_WEAPON, newState);
+    plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+    P_SetPsprite(plr, ps_weapon, newState);
 }
 
 void P_FireWeapon(player_t *plr)
@@ -503,8 +437,8 @@ void P_FireWeapon(player_t *plr)
         return;
 
     // Psprite state.
-    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->pClass)->attackState);
-    if(plr->pClass == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
+    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->attackState);
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {   // Glowing axe.
         attackState = S_FAXEATK_G1;
@@ -513,13 +447,13 @@ void P_FireWeapon(player_t *plr)
     {
         if(plr->refire)
             attackState =
-                weaponInfo[plr->readyWeapon][plr->pClass].mode[0].holdAttackState;
+                weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_ATTACK_HOLD];
         else
             attackState =
-                weaponInfo[plr->readyWeapon][plr->pClass].mode[0].attackState;
+                weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_ATTACK];
     }
 
-    P_SetPsprite(plr, PS_WEAPON, attackState);
+    P_SetPsprite(plr, ps_weapon, attackState);
     P_NoiseAlert(plr->plr->mo, plr->plr->mo);
 
     plr->update |= PSF_AMMO;
@@ -533,8 +467,8 @@ void P_FireWeapon(player_t *plr)
  */
 void P_DropWeapon(player_t *plr)
 {
-    P_SetPsprite(plr, PS_WEAPON,
-                 weaponInfo[plr->readyWeapon][plr->pClass].mode[0].downState);
+    P_SetPsprite(plr, ps_weapon,
+                 weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_DOWN]);
 }
 
 /**
@@ -546,24 +480,24 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     ddpsprite_t *ddpsp;
 
     // Change plr from attack state
-    if(plr->plr->mo->state >= &STATES[PCLASS_INFO(plr->pClass)->attackState] &&
-       plr->plr->mo->state <= &STATES[PCLASS_INFO(plr->pClass)->attackEndState])
+    if(plr->plr->mo->state >= &STATES[PCLASS_INFO(plr->class)->attackState] &&
+       plr->plr->mo->state <= &STATES[PCLASS_INFO(plr->class)->attackEndState])
     {
-        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->pClass)->normalState);
+        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->normalState);
     }
 
     if(plr->readyWeapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(plr->readyWeapon, plr->pClass, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
 
         // A weaponready sound?
-        if(psp->state == &STATES[wminfo->readyState] && wminfo->readySound)
+        if(psp->state == &STATES[wminfo->states[WSN_READY]] && wminfo->readySound)
             S_StartSound(wminfo->readySound, plr->plr->mo);
 
         // Check for change, if plr is dead, put the weapon away.
         if(plr->pendingWeapon != WT_NOCHANGE || !plr->health)
         {   //  (pending weapon should allready be validated)
-            P_SetPsprite(plr, PS_WEAPON, wminfo->downState);
+            P_SetPsprite(plr, ps_weapon, wminfo->states[WSN_DOWN]);
             return;
         }
     }
@@ -571,7 +505,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     // Check for autofire.
     if(plr->brain.attack)
     {
-        wminfo = WEAPON_INFO(plr->readyWeapon, plr->pClass, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
 
         if(!plr->attackDown || wminfo->autoFire)
         {
@@ -636,7 +570,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
         return;
     }
 
-    if(plr->pState == PST_DEAD)
+    if(plr->playerState == PST_DEAD)
     {   // Player is dead, so don't bring up a pending weapon.
         psp->pos[VY] = WEAPONBOTTOM;
         return;
@@ -644,7 +578,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
 
     if(!plr->health)
     {   // Player is dead, so keep the weapon off screen.
-        P_SetPsprite(plr, PS_WEAPON, S_NULL);
+        P_SetPsprite(plr, ps_weapon, S_NULL);
         return;
     }
 
@@ -665,16 +599,16 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     }
 
     psp->pos[VY] = WEAPONTOP;
-    if(plr->pClass == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
+    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {
-        P_SetPsprite(plr, PS_WEAPON, S_FAXEREADY_G);
+        P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
     }
     else
     {
-        P_SetPsprite(plr, PS_WEAPON,
-                     weaponInfo[plr->readyWeapon][plr->pClass].mode[0].
-                     readyState);
+        P_SetPsprite(plr, ps_weapon,
+                     weaponInfo[plr->readyWeapon][plr->class].mode[0].
+                     states[WSN_READY]);
     }
 }
 
@@ -707,7 +641,7 @@ void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
     angle = plr->plr->mo->angle;
     slope = P_AimLineAttack(plr->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_SNOUTPUFF;
+    PuffType = MT_SNOUTPUFF;
     puffSpawned = NULL;
 
     P_LineAttack(plr->plr->mo, angle, MELEERANGE, slope, damage);
@@ -735,7 +669,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 
     damage = 60 + (P_Random() & 63);
     power = 10;
-    puffType = MT_HAMMERPUFF;
+    PuffType = MT_HAMMERPUFF;
     for(i = 0; i < 16; ++i)
     {
         angle = mo->angle + i * (ANG45 / 32);
@@ -786,7 +720,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 
   hammerdone:
     if(plr->ammo[AT_GREENMANA].owned <
-       weaponInfo[plr->readyWeapon][plr->pClass].mode[0].perShot[AT_GREENMANA])
+       weaponInfo[plr->readyWeapon][plr->class].mode[0].perShot[AT_GREENMANA])
     {   // Don't spawn a hammer if the plr doesn't have enough mana.
         mo->special1 = false;
     }
@@ -848,10 +782,10 @@ void C_DECL A_FSwordFlames(mobj_t *mo)
     {
         pos[VX] = mo->pos[VX] + FIX2FLT((P_Random() - 128) << 12);
         pos[VY] = mo->pos[VY] + FIX2FLT((P_Random() - 128) << 12);
-        pos[VX] = mo->pos[VZ] + FIX2FLT((P_Random() - 128) << 11);
+        pos[VZ] = mo->pos[VZ] + FIX2FLT((P_Random() - 128) << 11);
         angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY]);
 
-        P_SpawnMobj3fv(MT_FSWORD_FLAME, pos, angle);
+        P_SpawnMobj3fv(MT_FSWORD_FLAME, pos, angle, 0);
     }
 }
 
@@ -952,7 +886,7 @@ void C_DECL A_LightningZap(mobj_t *mo)
     pmo = P_SpawnMobj3f(MT_LIGHTNING_ZAP,
                         mo->pos[VX] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
                         mo->pos[VY] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
-                        mo->pos[VZ] + deltaZ, P_Random() << 24);
+                        mo->pos[VZ] + deltaZ, P_Random() << 24, 0);
     if(pmo)
     {
         pmo->lastEnemy = mo;
@@ -1027,7 +961,7 @@ void C_DECL A_LastZap(mobj_t* mo)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos, P_Random() << 24);
+    pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos, P_Random() << 24, 0);
     if(pmo)
     {
         P_MobjChangeState(pmo, S_LIGHTNING_ZAP_X1);
@@ -1194,7 +1128,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
 
     damage = 40 + (P_Random() & 15);
     power = 2;
-    puffType = MT_PUNCHPUFF;
+    PuffType = MT_PUNCHPUFF;
 
     for(i = 0; i < 16; ++i)
     {
@@ -1202,12 +1136,12 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
         slope = P_AimLineAttack(mo, angle, 2 * MELEERANGE);
         if(lineTarget)
         {
-            plr->plr->mo->special1++;
+            mo->special1++;
             if(mo->special1 == 3)
             {
-                damage /= 2;
+                damage *= 2;
                 power = 6;
-                puffType = MT_HAMMERPUFF;
+                PuffType = MT_HAMMERPUFF;
             }
 
             P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
@@ -1227,9 +1161,9 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
             mo->special1++;
             if(mo->special1 == 3)
             {
-                damage /= 2;
+                damage *= 2;
                 power = 6;
-                puffType = MT_HAMMERPUFF;
+                PuffType = MT_HAMMERPUFF;
             }
 
             P_LineAttack(mo, angle, 2 * MELEERANGE, slope, damage);
@@ -1254,7 +1188,7 @@ void C_DECL A_FPunchAttack(player_t *plr, pspdef_t *psp)
     if(mo->special1 == 3)
     {
         mo->special1 = 0;
-        P_SetPsprite(plr, PS_WEAPON, S_PUNCHATK2_1);
+        P_SetPsprite(plr, ps_weapon, S_PUNCHATK2_1);
         S_StartSound(SFX_FIGHTER_GRUNT, mo);
     }
 }
@@ -1272,14 +1206,14 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     power = 0;
     if(plr->ammo[AT_BLUEMANA].owned > 0)
     {
-        damage /= 2;
+        damage *= 2;
         power = 6;
-        puffType = MT_AXEPUFF_GLOW;
+        PuffType = MT_AXEPUFF_GLOW;
         useMana = 1;
     }
     else
     {
-        puffType = MT_AXEPUFF;
+        PuffType = MT_AXEPUFF;
         useMana = 0;
     }
 
@@ -1328,7 +1262,7 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     {
         P_ShotAmmo(plr);
         if(!(plr->ammo[AT_BLUEMANA].owned > 0))
-            P_SetPsprite(plr, PS_WEAPON, S_FAXEATK_5);
+            P_SetPsprite(plr, ps_weapon, S_FAXEATK_5);
     }
 }
 
@@ -1340,7 +1274,7 @@ void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
     float       slope;
 
     damage = 25 + (P_Random() & 15);
-    puffType = MT_HAMMERPUFF;
+    PuffType = MT_HAMMERPUFF;
     for(i = 0; i < 16; ++i)
     {
         angle = plr->plr->mo->angle + i * (ANG45 / 16);
@@ -1384,7 +1318,7 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
 
     pmo = plr->plr->mo;
     damage = 20 + (P_Random() & 15);
-    puffType = MT_CSTAFFPUFF;
+    PuffType = MT_CSTAFFPUFF;
     for(i = 0; i < 3; ++i)
     {
         angle = pmo->angle + i * (ANG45 / 16);
@@ -1404,7 +1338,7 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
                 newLife = (newLife > 100 ? 100 : newLife);
                 pmo->health = plr->health = newLife;
 
-                P_SetPsprite(plr, PS_WEAPON, S_CSTAFFATK2_1);
+                P_SetPsprite(plr, ps_weapon, S_CSTAFFATK2_1);
             }
 
             P_ShotAmmo(plr);
@@ -1425,7 +1359,7 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
                 newLife = (newLife > 100 ? 100 : newLife);
                 pmo->health = plr->health = newLife;
 
-                P_SetPsprite(plr, PS_WEAPON, S_CSTAFFATK2_1);
+                P_SetPsprite(plr, ps_weapon, S_CSTAFFATK2_1);
             }
 
             P_ShotAmmo(plr);
@@ -1486,7 +1420,7 @@ void C_DECL A_CStaffCheckBlink(player_t *plr, pspdef_t *psp)
 {
     if(!--plr->plr->mo->special1)
     {
-        P_SetPsprite(plr, PS_WEAPON, S_CSTAFFBLINK1);
+        P_SetPsprite(plr, ps_weapon, S_CSTAFFBLINK1);
         plr->plr->mo->special1 = (P_Random() + 50) >> 2;
     }
 }
@@ -1534,7 +1468,7 @@ void C_DECL A_CFlameMissile(mobj_t *mo)
                                 blockingMobj->pos[VX] + dist * FIX2FLT(finecosine[an]),
                                 blockingMobj->pos[VY] + dist * FIX2FLT(finesine[an]),
                                 blockingMobj->pos[VZ] + 5,
-                                (angle_t) an << ANGLETOFINESHIFT);
+                                (angle_t) an << ANGLETOFINESHIFT, 0);
             if(pmo)
             {
                 pmo->target = mo->target;
@@ -1550,7 +1484,7 @@ void C_DECL A_CFlameMissile(mobj_t *mo)
                                 blockingMobj->pos[VX] - dist * FIX2FLT(finecosine[an]),
                                 blockingMobj->pos[VY] - dist * FIX2FLT(finesine[an]),
                                 blockingMobj->pos[VZ] + 5,
-                                (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)));
+                                (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0);
             if(pmo)
             {
                 pmo->target = mo->target;
@@ -1591,15 +1525,17 @@ void C_DECL A_CHolyAttack3(mobj_t *mo)
 /**
  * Spawns the spirits
  */
-void C_DECL A_CHolyAttack2(mobj_t *mo)
+void C_DECL A_CHolyAttack2(mobj_t* mo)
 {
-    int         i, j;
-    mobj_t     *pmo, *tail, *next;
+    int                 i, j;
+    mobj_t*             pmo, *tail, *next;
 
     for(i = 0; i < 4; ++i)
     {
-        pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos,
-                             mo->angle + (ANGLE_45 + ANGLE_45 / 2) - ANGLE_45 * i);
+        angle_t             angle = mo->angle + (ANGLE_45 + ANGLE_45 / 2) -
+            ANGLE_45 * i;
+
+        pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos, angle, 0);
         if(!pmo)
             continue;
 
@@ -1628,7 +1564,7 @@ void C_DECL A_CHolyAttack2(mobj_t *mo)
         pmo->target = mo->target;
         pmo->args[0] = 10; // Initial turn value.
         pmo->args[1] = 0; // Initial look angle.
-        if(GAMERULES.deathmatch)
+        if(deathmatch)
         {   // Ghosts last slightly less longer in DeathMatch.
             pmo->health = 85;
         }
@@ -1640,12 +1576,12 @@ void C_DECL A_CHolyAttack2(mobj_t *mo)
             pmo->flags &= ~MF_MISSILE;
         }
 
-        tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos, pmo->angle + ANG180);
+        tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos, pmo->angle + ANG180, 0);
         tail->target = pmo; // Parent.
         for(j = 1; j < 3; ++j)
         {
             next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
-                                  pmo->angle + ANG180);
+                                  pmo->angle + ANG180, 0);
             P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
             tail->tracer = next;
             tail = next;
@@ -1948,7 +1884,7 @@ void C_DECL A_CHolyCheckScream(mobj_t *mo)
 
 void C_DECL A_CHolySpawnPuff(mobj_t *mo)
 {
-    P_SpawnMobj3fv(MT_HOLY_MISSILE_PUFF, mo->pos, P_Random() << 24);
+    P_SpawnMobj3fv(MT_HOLY_MISSILE_PUFF, mo->pos, P_Random() << 24, 0);
 }
 
 void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
@@ -2129,133 +2065,130 @@ void P_MovePsprites(player_t *plr)
         }
     }
 
-    plr->pSprites[PS_FLASH].pos[VX] = plr->pSprites[PS_WEAPON].pos[VX];
-    plr->pSprites[PS_FLASH].pos[VY] = plr->pSprites[PS_WEAPON].pos[VY];
+    plr->pSprites[ps_flash].pos[VX] = plr->pSprites[ps_weapon].pos[VX];
+    plr->pSprites[ps_flash].pos[VY] = plr->pSprites[ps_weapon].pos[VY];
 }
 
-boolean P_UseArtiPoisonBag(player_t* player)
+void C_DECL A_PoisonBag(mobj_t* mo)
 {
-    mobj_t*         plrmo, *mo;
+    player_t*       player;
+    mobj_t*         bag;
     float           pos[3];
     angle_t         angle;
     mobjtype_t      type;
 
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
+    player = mo->player;
 
-    plrmo = player->plr->mo;
-
-    if(player->pClass == PCLASS_FIGHTER || player->pClass == PCLASS_PIG)
+    if(player->class == PCLASS_FIGHTER || player->class == PCLASS_PIG)
     {
         type = MT_THROWINGBOMB;
-        pos[VX] = plrmo->pos[VX];
-        pos[VY] = plrmo->pos[VY];
-        pos[VZ] = plrmo->pos[VZ] - plrmo->floorClip + 35;
-        angle = plrmo->angle + (((P_Random() & 7) - 4) << 24);
+        pos[VX] = mo->pos[VX];
+        pos[VY] = mo->pos[VY];
+        pos[VZ] = mo->pos[VZ] - mo->floorClip + 35;
+        angle = mo->angle + (((P_Random() & 7) - 4) << 24);
     }
     else
     {
-        uint                an = plrmo->angle >> ANGLETOFINESHIFT;
+        uint                an = mo->angle >> ANGLETOFINESHIFT;
 
-        if(player->pClass == PCLASS_CLERIC)
+        if(player->class == PCLASS_CLERIC)
             type = MT_POISONBAG;
         else
             type = MT_FIREBOMB;
-        pos[VX] = plrmo->pos[VX] + 16 * FIX2FLT(finecosine[an]);
-        pos[VY] = plrmo->pos[VY] + 24 * FIX2FLT(finesine[an]);
-        pos[VZ] = plrmo->pos[VZ] - plrmo->floorClip + 8;
-        angle = plrmo->angle;
+        pos[VX] = mo->pos[VX] + 16 * FIX2FLT(finecosine[an]);
+        pos[VY] = mo->pos[VY] + 24 * FIX2FLT(finesine[an]);
+        pos[VZ] = mo->pos[VZ] - mo->floorClip + 8;
+        angle = mo->angle;
     }
 
-    mo = P_SpawnMobj3fv(type, pos, angle);
-    if(mo)
+    if((bag = P_SpawnMobj3fv(type, pos, angle, 0)))
     {
-        mo->target = plrmo;
+        bag->target = mo;
 
         if(type == MT_THROWINGBOMB)
         {
-            mo->mom[MZ] =
+            bag->mom[MZ] =
                 4 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
-            mo->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+            bag->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
 
-            P_ThrustMobj(mo, mo->angle, mo->info->speed);
+            P_ThrustMobj(bag, bag->angle, bag->info->speed);
 
-            mo->mom[MX] += plrmo->mom[MX] / 2;
-            mo->mom[MY] += plrmo->mom[MY] / 2;
+            bag->mom[MX] += mo->mom[MX] / 2;
+            bag->mom[MY] += mo->mom[MY] / 2;
 
-            mo->tics -= P_Random() & 3;
-            P_CheckMissileSpawn(mo);
+            bag->tics -= P_Random() & 3;
+            P_CheckMissileSpawn(bag);
         }
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiEgg(player_t* player)
+void C_DECL A_Egg(mobj_t* mo)
 {
-    mobj_t*         plrmo;
+    if(!mo->player)
+        return;
 
-    if(!player)
-        return false;
-    plrmo = player->plr->mo;
+    P_SpawnPlayerMissile(MT_EGGFX, mo);
+    P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 6));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 3));
+    P_SPMAngle(MT_EGGFX, mo, mo->angle + (ANG45 / 3));
 
-    P_SpawnPlayerMissile(MT_EGGFX, plrmo);
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 6));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 6));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle - (ANG45 / 3));
-    P_SPMAngle(MT_EGGFX, plrmo, plrmo->angle + (ANG45 / 3));
-
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiSummon(player_t* player)
+void C_DECL A_SummonTarget(mobj_t* mo)
 {
-    mobj_t*         plrmo, *mo;
+    mobj_t*         servant;
 
-    if(!player)
-        return false;
-    plrmo = player->plr->mo;
+    if(!mo->player)
+        return;
 
-    mo = P_SpawnPlayerMissile(MT_SUMMON_FX, plrmo);
-    if(mo)
+    if((servant = P_SpawnPlayerMissile(MT_SUMMON_FX, mo)))
     {
-        mo->target = plrmo;
-        mo->tracer = plrmo;
-        mo->mom[MZ] = 5;
+        servant->target = mo;
+        servant->tracer = mo;
+        servant->mom[MZ] = 5;
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiBoostArmor(player_t* player)
+void C_DECL A_BoostArmor(mobj_t* mo)
 {
     int             i, count;
 
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
     count = 0;
     for(i = 0; i < NUMARMOR; ++i)
     {
-        count += P_GiveArmor(player, i, 1); // 1 point per armor type.
+        count += P_GiveArmor(mo->player, i, 1); // 1 point per armor type.
     }
 
     if(!count)
-        return false;
+        return;
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiBoostMana(player_t* player)
+void C_DECL A_BoostMana(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    player_t*           player;
+
+    if(!mo->player)
+        return;
+    player = mo->player;
 
     if(!P_GiveMana(player, AT_BLUEMANA, MAX_MANA))
     {
         if(!P_GiveMana(player, AT_GREENMANA, MAX_MANA))
         {
-            return false;
+            return;
         }
     }
     else
@@ -2263,337 +2196,252 @@ boolean P_UseArtiBoostMana(player_t* player)
         P_GiveMana(player, AT_GREENMANA, MAX_MANA);
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiTeleportOther(player_t* player)
+void C_DECL A_TeleportOther(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    P_ArtiTeleportOther(player);
+    P_ArtiTeleportOther(mo->player);
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiSpeed(player_t* player)
+void C_DECL A_Speed(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_SPEED);
+    didUseItem = P_GivePower(mo->player, PT_SPEED);
 }
 
-boolean P_UseArtiFly(player_t* player)
+void C_DECL A_Wings(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_GivePower(player, PT_FLIGHT))
+    if(!P_GivePower(mo->player, PT_FLIGHT))
     {
-        return false;
+        return;
     }
 
-    if(player->plr->mo->mom[MZ] <= -35)
+    if(mo->mom[MZ] <= -35)
     {   // Stop falling scream.
-        S_StopSound(0, player->plr->mo);
+        S_StopSound(0, mo);
     }
 
-    return true;
+    didUseItem = true;
 }
 
-boolean P_UseArtiBlastRadius(player_t* player)
+void C_DECL A_BlastRadius(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    P_BlastRadius(player);
-    return true;
+    P_BlastRadius(mo->player);
+    didUseItem = true;
 }
 
-boolean P_UseArtiTeleport(player_t* player)
+void C_DECL A_Teleport(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    P_ArtiTele(player);
-    return true;
+    P_ArtiTele(mo->player);
+    didUseItem = true;
 }
 
-boolean P_UseArtiTorch(player_t* player)
+void C_DECL A_Torch(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_INFRARED);
+    didUseItem = P_GivePower(mo->player, PT_INFRARED);
 }
 
-boolean P_UseArtiHealRadius(player_t* player)
+void C_DECL A_HealRadius(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_HealRadius(player);
+    didUseItem = P_HealRadius(mo->player);
 }
 
-boolean P_UseArtiHealth(player_t* player)
+void C_DECL A_Health(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GiveBody(player, 25);
+    didUseItem = P_GiveBody(mo->player, 25);
 }
 
-boolean P_UseArtiSuperHealth(player_t* player)
+void C_DECL A_SuperHealth(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GiveBody(player, 100);
+    didUseItem = P_GiveBody(mo->player, 100);
 }
 
-boolean P_UseArtiInvulnerability(player_t* player)
+void C_DECL A_Invulnerability(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    return P_GivePower(player, PT_INVULNERABILITY);
+    didUseItem = P_GivePower(mo->player, PT_INVULNERABILITY);
 }
 
-boolean P_UseArtiPuzzSkull(player_t* player)
+void C_DECL A_PuzzSkull(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZSKULL))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZSKULL - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGemBig(player_t* player)
+void C_DECL A_PuzzGemBig(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBIG))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMBIG - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGemRed(player_t* player)
+void C_DECL A_PuzzGemRed(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMRED))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMRED - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGemGreen1(player_t* player)
+void C_DECL A_PuzzGemGreen1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMGREEN1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN1 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGemGreen2(player_t* player)
+void C_DECL A_PuzzGemGreen2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMGREEN2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMGREEN2 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGemBlue1(player_t* player)
+void C_DECL A_PuzzGemBlue1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBLUE1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE1 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGemBlue2(player_t* player)
+void C_DECL A_PuzzGemBlue2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEMBLUE2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEMBLUE2 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzBook1(player_t* player)
+void C_DECL A_PuzzBook1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZBOOK1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZBOOK1 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzBook2(player_t* player)
+void C_DECL A_PuzzBook2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZBOOK2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZBOOK2 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzSkull2(player_t* player)
+void C_DECL A_PuzzSkull2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZSKULL2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZSKULL2 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzFWeapon(player_t* player)
+void C_DECL A_PuzzFWeapon(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZFWEAPON))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZFWEAPON - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzCWeapon(player_t* player)
+void C_DECL A_PuzzCWeapon(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZCWEAPON))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZCWEAPON - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzMWeapon(player_t* player)
+void C_DECL A_PuzzMWeapon(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZMWEAPON))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZMWEAPON - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGear1(player_t* player)
+void C_DECL A_PuzzGear1(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR1))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR1 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGear2(player_t* player)
+void C_DECL A_PuzzGear2(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR2))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR2 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGear3(player_t* player)
+void C_DECL A_PuzzGear3(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR3))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR3 - IIT_FIRSTPUZZITEM);
 }
 
-boolean P_UseArtiPuzzGear4(player_t* player)
+void C_DECL A_PuzzGear4(mobj_t* mo)
 {
-    if(!player)
-        return false;
+    if(!mo->player)
+        return;
 
-    if(!P_UsePuzzleItem(player, AFT_PUZZGEAR4))
-    {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
-        return false;
-    }
-
-    return true;
+    didUseItem =
+        P_UsePuzzleItem(mo->player, IIT_PUZZGEAR4 - IIT_FIRSTPUZZITEM);
 }

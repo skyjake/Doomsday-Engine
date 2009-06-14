@@ -48,14 +48,15 @@
 #include "am_map.h"
 #include "p_switch.h"
 #include "p_player.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct execopt_s {
-    char           *name;
-    void          (*func) (char **args, int tag);
+    char*           name;
+    void          (*func) (const char** args, int tag);
     int             requiredArgs;
     int             tag;
 } execopt_t;
@@ -70,26 +71,50 @@ extern void X_DestroyLUTs(void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void handleArgs();
-static void execOptionScripts(char **args, int tag);
-static void execOptionSkill(char **args, int tag);
-static void execOptionPlayDemo(char **args, int tag);
-static void warpCheck(void);
+static void execOptionScripts(const char** args, int tag);
+static void execOptionDevMaps(const char** args, int tag);
+static void execOptionSkill(const char** args, int tag);
+static void execOptionPlayDemo(const char** args, int tag);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int verbose;
+
+boolean DevMaps; // true = map development mode.
+char* DevMapsDir = ""; // Development maps directory.
+
+boolean noMonstersParm; // checkparm of -nomonsters
+boolean respawnParm; // checkparm of -respawn
+boolean turboParm; // checkparm of -turbo
+boolean randomClassParm; // checkparm of -randclass
 boolean devParm; // checkparm of -devparm
 
-boolean useScriptsDir = false;
-filename_t scriptsDir;
+float turboMul; // Multiplier for turbo.
+boolean netCheatParm; // Allow cheating in netgames (-netcheat)
+
+skillmode_t startSkill;
+int startEpisode;
+int startMap;
+
+gamemode_t gameMode;
+int gameModeBits;
+
+// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
+char gameModeString[17];
 
 // Default font colours.
 const float defFontRGB[] = { .9f, 0.0f, 0.0f};
 const float defFontRGB2[] = { .9f, .9f, .9f};
 
-char* borderLumps[] = {
+// Network games parameters.
+
+boolean autoStart;
+
+FILE   *debugFile;
+
+char   *borderLumps[] = {
     "F_022", // Background.
     "bordt", // Top.
     "bordr", // Right.
@@ -103,14 +128,11 @@ char* borderLumps[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean autoStart;
-static skillmode_t startSkill;
-static int startEpisode;
-static int startMap;
 static int warpMap;
 
 static execopt_t execOptions[] = {
     {"-scripts", execOptionScripts, 1, 0},
+    {"-devmaps", execOptionDevMaps, 1, 0},
     {"-skill", execOptionSkill, 1, 0},
     {"-playdemo", execOptionPlayDemo, 1, 0},
     {"-timedemo", execOptionPlayDemo, 1, 0},
@@ -132,27 +154,27 @@ static execopt_t execOptions[] = {
  */
 boolean G_SetGameMode(gamemode_t mode)
 {
+    gameMode = mode;
+
     if(G_GetGameState() == GS_MAP)
         return false;
-
-    gs.gameMode = mode;
 
     switch(mode)
     {
     case shareware: // Shareware (4-map demo)
-        gs.gameModeBits = GM_SHAREWARE;
+        gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // HEXEN registered
-        gs.gameModeBits = GM_REGISTERED;
+        gameModeBits = GM_REGISTERED;
         break;
 
     case extended: // Deathkings
-        gs.gameModeBits = GM_REGISTERED|GM_EXTENDED;
+        gameModeBits = GM_REGISTERED|GM_EXTENDED;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gs.gameModeBits = GM_INDETERMINED;
+        gameModeBits = GM_INDETERMINED;
         break;
 
     default:
@@ -168,13 +190,13 @@ boolean G_SetGameMode(gamemode_t mode)
 void G_IdentifyVersion(void)
 {
     // Determine the game mode. Assume demo mode.
-    strcpy(gs.gameModeString, "hexen-demo");
+    strcpy(gameModeString, "hexen-demo");
     G_SetGameMode(shareware);
 
     if(W_CheckNumForName("MAP05") >= 0)
     {
         // Normal Hexen.
-        strcpy(gs.gameModeString, "hexen");
+        strcpy(gameModeString, "hexen");
         G_SetGameMode(registered);
     }
 
@@ -182,7 +204,7 @@ void G_IdentifyVersion(void)
     if(W_CheckNumForName("MAP59") >= 0 && W_CheckNumForName("MAP60") >= 0)
     {
         // It must be Deathkings!
-        strcpy(gs.gameModeString, "hexen-dk");
+        strcpy(gameModeString, "hexen-dk");
         G_SetGameMode(extended);
     }
 }
@@ -202,178 +224,146 @@ void G_DetectIWADs(void)
     DD_AddIWAD("hexen.wad");
 }
 
-void G_InitPlayerProfile(playerprofile_t* pf)
-{
-    int                 i;
-
-    if(!pf)
-        return;
-
-    // Config defaults. The real settings are read from the .cfg files
-    // but these will be used no such files are found.
-    memset(pf, 0, sizeof(playerprofile_t));
-    pf->color = 8;
-    pf->pClass = PCLASS_FIGHTER;
-
-    pf->ctrl.moveSpeed = 1;
-    pf->ctrl.dclickUse = false;
-    pf->ctrl.lookSpeed = 3;
-    pf->ctrl.turnSpeed = 1;
-    pf->ctrl.airborneMovement = 1;
-    pf->ctrl.useAutoAim = true;
-
-    pf->screen.blocks = pf->screen.setBlocks = 10;
-
-    pf->camera.offsetZ = 48;
-    pf->camera.bob = 1;
-    pf->camera.povLookAround = true;
-
-    pf->psprite.bob = 1;
-
-    pf->xhair.size = .5f;
-    pf->xhair.vitality = false;
-    pf->xhair.color[CR] = 1;
-    pf->xhair.color[CG] = 1;
-    pf->xhair.color[CB] = 1;
-    pf->xhair.color[CA] = 1;
-
-    pf->inventory.weaponAutoSwitch = 1; // IF BETTER
-    pf->inventory.noWeaponAutoSwitchIfFiring = false;
-    pf->inventory.ammoAutoSwitch = 0; // never
-    pf->inventory.timer = 5;
-    pf->inventory.nextOnNoUse = true;
-    pf->inventory.weaponOrder[0] = WT_FOURTH;
-    pf->inventory.weaponOrder[1] = WT_THIRD;
-    pf->inventory.weaponOrder[2] = WT_SECOND;
-    pf->inventory.weaponOrder[3] = WT_FIRST;
-
-    pf->hud.scale = .7f;
-    pf->hud.color[CR] = defFontRGB[CR];    // use the default colour by default.
-    pf->hud.color[CG] = defFontRGB[CG];
-    pf->hud.color[CB] = defFontRGB[CB];
-    pf->hud.color[CA] = 1;
-    pf->hud.iconAlpha = 1;
-    pf->hud.shown[HUD_MANA] = true;
-    pf->hud.shown[HUD_HEALTH] = true;
-    pf->hud.shown[HUD_ARTI] = true;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
-        pf->hud.unHide[i] = 1;
-
-    pf->statusbar.scale = 20;
-    pf->statusbar.opacity = 1;
-    pf->statusbar.counterAlpha = 1;
-
-    pf->automap.customColors = 0; // Never.
-    pf->automap.line0[CR] = .42f; // Unseen areas
-    pf->automap.line0[CG] = .42f;
-    pf->automap.line0[CB] = .42f;
-
-    pf->automap.line1[CR] = .41f; // onesided lines
-    pf->automap.line1[CG] = .30f;
-    pf->automap.line1[CB] = .15f;
-
-    pf->automap.line2[CR] = .82f; // floor height change lines
-    pf->automap.line2[CG] = .70f;
-    pf->automap.line2[CB] = .52f;
-
-    pf->automap.line3[CR] = .47f; // ceiling change lines
-    pf->automap.line3[CG] = .30f;
-    pf->automap.line3[CB] = .16f;
-
-    pf->automap.mobj[CR] = 1.f;
-    pf->automap.mobj[CG] = 1.f;
-    pf->automap.mobj[CB] = 1.f;
-
-    pf->automap.background[CR] = 1.0f;
-    pf->automap.background[CG] = 1.0f;
-    pf->automap.background[CB] = 1.0f;
-    pf->automap.opacity = 1.0f;
-    pf->automap.lineAlpha = 1.0f;
-    pf->automap.showDoors = true;
-    pf->automap.doorGlow = 8;
-    pf->automap.hudDisplay = 2;
-    pf->automap.rotate = true;
-    pf->automap.babyKeys = false;
-    pf->automap.zoomSpeed = .1f;
-    pf->automap.panSpeed = .5f;
-    pf->automap.panResetOnOpen = true;
-    pf->automap.openSeconds = AUTOMAP_OPEN_SECONDS;
-
-    pf->msgLog.show = true;
-    pf->msgLog.count = 4;
-    pf->msgLog.scale = .8f;
-    pf->msgLog.upTime = 5 * TICSPERSEC;
-    pf->msgLog.align = ALIGN_CENTER;
-    pf->msgLog.blink = 5;
-    pf->msgLog.color[CR] = defFontRGB2[CR];
-    pf->msgLog.color[CG] = defFontRGB2[CG];
-    pf->msgLog.color[CB] = defFontRGB2[CB];
-
-    pf->chat.playBeep = 1;
-}
-
-void G_InitGameRules(gamerules_t* gr)
-{
-    if(!gr)
-        return;
-
-    memset(gr, 0, sizeof(gamerules_t));
-
-    gr->turboMul = 1.0f;
-    gr->jumpAllow = true; // True by default in Hexen.
-    gr->jumpPower = 9;
-    gr->fastMonsters = false;
-    gr->mobDamageModifier = 1;
-    gr->mobHealthModifier = 1;
-    gr->gravityModifier = -1; // Use map default.
-    gr->cameraNoClip = true;
-}
-
 /**
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
 void G_PreInit(void)
 {
+    int                     i;
+
     // Calculate the various LUTs used by the playsim.
     X_CreateLUTs();
 
-    useScriptsDir = false;
-    memset(scriptsDir, 0, sizeof(scriptsDir));
-
     G_SetGameMode(indetermined);
-
-    memset(gs.players, 0, sizeof(gs.players));
-    gs.state = GS_DEMOSCREEN;
-    gs.stateLast = -1;
-    gs.action = GA_NONE;
-    gs.netMap = 1;
-    gs.netSkill = SM_MEDIUM;
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
-    memset(&gs.cfg, 0, sizeof(gs.cfg));
-    gs.cfg.mapTitle = true;
-    gs.cfg.menuScale = .75f;
-    gs.cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
-    gs.cfg.menuColor[1] = defFontRGB[1];
-    gs.cfg.menuColor[2] = defFontRGB[2];
-    gs.cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
-    gs.cfg.menuColor2[1] = defFontRGB2[1];
-    gs.cfg.menuColor2[2] = defFontRGB2[2];
-    gs.cfg.menuEffects = 0;
-    gs.cfg.menuHotkeys = true;
-    gs.cfg.hudFog = 5;
-    gs.cfg.menuSlam = true;
-    gs.cfg.flashColor[0] = 1.0f;
-    gs.cfg.flashColor[1] = .5f;
-    gs.cfg.flashColor[2] = .5f;
-    gs.cfg.flashSpeed = 4;
-    gs.cfg.turningSkull = false;
-    gs.cfg.usePatchReplacement = 2; // Use built-in replacements if available.
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.playerMoveSpeed = 1;
+    cfg.statusbarScale = 20;
+    cfg.dclickUse = false;
+    cfg.screenBlocks = cfg.setBlocks = 10;
+    cfg.hudShown[HUD_MANA] = true;
+    cfg.hudShown[HUD_HEALTH] = true;
+    cfg.hudShown[HUD_CURRENTITEM] = true;
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+        cfg.hudUnHide[i] = 1;
+    cfg.lookSpeed = 3;
+    cfg.turnSpeed = 1;
+    cfg.xhairSize = .5f;
+    cfg.xhairVitality = false;
+    cfg.xhairColor[0] = 1;
+    cfg.xhairColor[1] = 1;
+    cfg.xhairColor[2] = 1;
+    cfg.xhairColor[3] = 1;
+    cfg.jumpEnabled = cfg.netJumping = true; // true by default in Hexen
+    cfg.jumpPower = 9;
+    cfg.airborneMovement = 1;
+    cfg.weaponAutoSwitch = 1; // IF BETTER
+    cfg.noWeaponAutoSwitchIfFiring = false;
+    cfg.ammoAutoSwitch = 0; // never
+    cfg.fastMonsters = false;
+    cfg.netMap = 1;
+    cfg.netSkill = SM_MEDIUM;
+    cfg.netColor = 8;           // Use the default color by default.
+    cfg.netMobDamageModifier = 1;
+    cfg.netMobHealthModifier = 1;
+    cfg.netGravity = -1;        // use map default
+    cfg.plrViewHeight = 48;
+    cfg.mapTitle = true;
+    cfg.menuScale = .75f;
+    cfg.menuColor[0] = defFontRGB[0];   // use the default colour by default.
+    cfg.menuColor[1] = defFontRGB[1];
+    cfg.menuColor[2] = defFontRGB[2];
+    cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
+    cfg.menuColor2[1] = defFontRGB2[1];
+    cfg.menuColor2[2] = defFontRGB2[2];
+    cfg.menuEffects = 0;
+    cfg.menuHotkeys = true;
+    cfg.askQuickSaveLoad = true;
+    cfg.hudFog = 5;
+    cfg.menuSlam = true;
+    cfg.flashColor[0] = 1.0f;
+    cfg.flashColor[1] = .5f;
+    cfg.flashColor[2] = .5f;
+    cfg.flashSpeed = 4;
+    cfg.turningSkull = false;
+    cfg.hudScale = .7f;
+    cfg.hudColor[0] = defFontRGB[0];    // use the default colour by default.
+    cfg.hudColor[1] = defFontRGB[1];
+    cfg.hudColor[2] = defFontRGB[2];
+    cfg.hudColor[3] = 1;
+    cfg.hudIconAlpha = 1;
+    cfg.usePatchReplacement = 2; // Use built-in replacements if available.
+    cfg.cameraNoClip = true;
+    cfg.bobView = cfg.bobWeapon = 1;
 
-    G_InitGameRules(&GAMERULES);
-    G_InitPlayerProfile(&PLRPROFILE);
+    cfg.statusbarOpacity = 1;
+    cfg.statusbarCounterAlpha = 1;
+    cfg.inventoryTimer = 5;
+
+    cfg.automapCustomColors = 0; // Never.
+    cfg.automapL0[0] = .42f; // Unseen areas
+    cfg.automapL0[1] = .42f;
+    cfg.automapL0[2] = .42f;
+
+    cfg.automapL1[0] = .41f; // onesided lines
+    cfg.automapL1[1] = .30f;
+    cfg.automapL1[2] = .15f;
+
+    cfg.automapL2[0] = .82f; // floor height change lines
+    cfg.automapL2[1] = .70f;
+    cfg.automapL2[2] = .52f;
+
+    cfg.automapL3[0] = .47f; // ceiling change lines
+    cfg.automapL3[1] = .30f;
+    cfg.automapL3[2] = .16f;
+
+    cfg.automapMobj[0] = 1.f;
+    cfg.automapMobj[1] = 1.f;
+    cfg.automapMobj[2] = 1.f;
+
+    cfg.automapBack[0] = 1.0f;
+    cfg.automapBack[1] = 1.0f;
+    cfg.automapBack[2] = 1.0f;
+    cfg.automapOpacity = 1.0f;
+    cfg.automapLineAlpha = 1.0f;
+    cfg.automapShowDoors = true;
+    cfg.automapDoorGlow = 8;
+    cfg.automapHudDisplay = 2;
+    cfg.automapRotate = true;
+    cfg.automapBabyKeys = false;
+    cfg.automapZoomSpeed = .1f;
+    cfg.automapPanSpeed = .5f;
+    cfg.automapPanResetOnOpen = true;
+    cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
+    cfg.counterCheatScale = .7f; //From jHeretic
+
+    cfg.msgShow = true;
+    cfg.msgCount = 4;
+    cfg.msgScale = .8f;
+    cfg.msgUptime = 5 * TICSPERSEC;
+    cfg.msgAlign = ALIGN_CENTER;
+    cfg.msgBlink = 5;
+    cfg.msgColor[0] = defFontRGB2[0];
+    cfg.msgColor[1] = defFontRGB2[1];
+    cfg.msgColor[2] = defFontRGB2[2];
+
+    cfg.inventoryTimer = 5;
+    cfg.inventoryWrap = false;
+    cfg.inventoryUseNext = false;
+    cfg.inventoryUseImmediate = false;
+    cfg.inventorySlotMaxVis = 7;
+    cfg.inventorySlotShowEmpty = true;
+    cfg.inventorySelectMode = 0; // Cursor select.
+
+    cfg.chatBeep = 1;
+
+    cfg.weaponOrder[0] = WT_FOURTH;
+    cfg.weaponOrder[1] = WT_THIRD;
+    cfg.weaponOrder[2] = WT_SECOND;
+    cfg.weaponOrder[3] = WT_FIRST;
 
     // Hexen has a nifty "Ethereal Travel" screen, so don't show the
     // console during map setup.
@@ -399,9 +389,12 @@ void G_PostInit(void)
     // Common post init routine.
     G_CommonPostInit();
 
+    // Initialize weapon info using definitions.
+    P_InitWeaponInfo();
+
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gs.gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
+                gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
                     : "Hexen\n");
     Con_FPrintf(CBLF_RULER, "");
 
@@ -415,8 +408,6 @@ void G_PostInit(void)
 
     // Game mode specific settings.
     /* None */
-
-
 
     // Command line options.
     handleArgs();
@@ -442,7 +433,7 @@ void G_PostInit(void)
 
         Con_Message("\nPlayer Class: '%s'\n", pClassInfo->niceName);
     }
-    gs.players[CONSOLEPLAYER].pClass = pClass;
+    cfg.playerClass[CONSOLEPLAYER] = pClass;
 
     P_InitMapMusicInfo(); // Init music fields in mapinfo.
 
@@ -454,96 +445,11 @@ void G_PostInit(void)
 
     // Check for command line warping. Follows P_Init() because the
     // MAPINFO.TXT script must be already processed.
-    warpCheck();
-
-    // Load a saved game?
-    if((p = ArgCheckWith("-loadgame", 1)) != 0)
-    {
-        G_LoadGame(atoi(Argv(p + 1)));
-    }
-
-    // Are we autostarting?
-    if(autoStart)
-    {
-        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap,
-                    P_GetMapName(startMap), startMap, startSkill + 1);
-    }
-
-    // Check valid episode and map.
-    if((autoStart || IS_NETGAME))
-    {
-        sprintf(mapStr,"MAP%2.2d", startMap);
-        if(!W_CheckNumForName(mapStr))
-        {
-            startEpisode = 1;
-            startMap = 1;
-        }
-    }
-
-    if(G_GetGameAction() != GA_LOADGAME)
-    {
-        if(autoStart || IS_NETGAME)
-        {
-            G_StartNewInit();
-            G_InitNew(startSkill, startEpisode, startMap);
-        }
-        else
-        {
-            // Start up intro loop.
-            G_StartTitle();
-        }
-    }
-}
-
-static void handleArgs(void)
-{
-    int                     p;
-    execopt_t              *opt;
-
-    devParm = ArgExists("-devparm");
-
-    PLRPROFILE.inventory.artiSkip = ArgExists("-artiskip");
-
-    GAMERULES.noMonsters = ArgExists("-nomonsters");
-    GAMERULES.respawn = ArgExists("-respawn");
-    GAMERULES.randomClass = ArgExists("-randclass");
-    GAMERULES.deathmatch = ArgExists("-deathmatch");
-
-    // Turbo movement option.
-    p = ArgCheck("-turbo");
-    if(p)
-    {
-        int                     scale = 200;
-
-        if(p < Argc() - 1)
-            scale = atoi(Argv(p + 1));
-        if(scale < 10)
-            scale = 10;
-        if(scale > 400)
-            scale = 400;
-
-        Con_Message("turbo scale: %i%%\n", scale);
-        GAMERULES.turboMul = scale / 100.f;
-    }
-
-    // Process command line options.
-    for(opt = execOptions; opt->name != NULL; opt++)
-    {
-        p = ArgCheck(opt->name);
-        if(p && p < Argc() - opt->requiredArgs)
-        {
-            opt->func(ArgvPtr(p), opt->tag);
-        }
-    }
-}
-
-static void warpCheck(void)
-{
-    int                     p, map;
-
     p = ArgCheck("-warp");
     if(p && p < Argc() - 1)
     {
+        int                     map;
+
         warpMap = atoi(Argv(p + 1));
         map = P_TranslateMap(warpMap);
         if(map == -1)
@@ -566,49 +472,163 @@ static void warpCheck(void)
             startMap = 1;
         }
     }
+
+    // Are we autostarting?
+    if(autoStart)
+    {
+        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap,
+                    P_GetMapName(startMap), startMap, startSkill + 1);
+    }
+
+    // Load a saved game?
+    if((p = ArgCheckWith("-loadgame", 1)) != 0)
+    {
+        G_LoadGame(atoi(Argv(p + 1)));
+    }
+
+    // Check valid episode and map.
+    if(autoStart || IS_NETGAME)
+    {
+        sprintf(mapStr,"MAP%2.2d", startMap);
+
+        if(!W_CheckNumForName(mapStr))
+        {
+            startEpisode = 1;
+            startMap = 1;
+        }
+    }
+
+    if(G_GetGameAction() != GA_LOADGAME)
+    {
+        if(autoStart || IS_NETGAME)
+        {
+            G_DeferedInitNew(startSkill, startEpisode, startMap);
+        }
+        else
+        {
+            // Start up intro loop.
+            G_StartTitle();
+        }
+    }
 }
 
-static void execOptionSkill(char **args, int tag)
+static void handleArgs(void)
+{
+    int                     p;
+    execopt_t              *opt;
+
+    noMonstersParm = ArgExists("-nomonsters");
+    respawnParm = ArgExists("-respawn");
+    randomClassParm = ArgExists("-randclass");
+    devParm = ArgExists("-devparm");
+    netCheatParm = ArgExists("-netcheat");
+
+    cfg.netDeathmatch = ArgExists("-deathmatch");
+
+    // Turbo movement option.
+    p = ArgCheck("-turbo");
+    turboMul = 1.0f;
+    if(p)
+    {
+        int                     scale = 200;
+
+        turboParm = true;
+        if(p < Argc() - 1)
+            scale = atoi(Argv(p + 1));
+        if(scale < 10)
+            scale = 10;
+        if(scale > 400)
+            scale = 400;
+
+        Con_Message("turbo scale: %i%%\n", scale);
+        turboMul = scale / 100.f;
+    }
+
+    // Process command line options.
+    for(opt = execOptions; opt->name != NULL; opt++)
+    {
+        p = ArgCheck(opt->name);
+        if(p && p < Argc() - opt->requiredArgs)
+        {
+            opt->func(ArgvPtr(p), opt->tag);
+        }
+    }
+}
+
+static void execOptionSkill(const char** args, int tag)
 {
     startSkill = args[1][0] - '1';
     autoStart = true;
 }
 
-static void execOptionPlayDemo(char **args, int tag)
+static void execOptionPlayDemo(const char** args, int tag)
 {
-    char                    file[256];
+    char                file[256];
 
     sprintf(file, "%s.lmp", args[1]);
     DD_AddStartupWAD(file);
     Con_Message("Playing demo %s.lmp.\n", args[1]);
 }
 
-static void execOptionScripts(char **args, int tag)
+static void execOptionScripts(const char** args, int tag)
 {
-    useScriptsDir = true;
-    snprintf(scriptsDir, FILENAME_T_MAXLEN, "%s", args[1]);
+    sc_FileScripts = true;
+    sc_ScriptsDir = args[1];
+}
+
+static void execOptionDevMaps(const char** args, int tag)
+{
+    char*               str;
+
+    DevMaps = true;
+    Con_Message("Map development mode enabled:\n");
+    Con_Message("[config    ] = %s\n", args[1]);
+    SC_OpenFileCLib(args[1]);
+    SC_MustGetStringName("mapsdir");
+    SC_MustGetString();
+    Con_Message("[mapsdir   ] = %s\n", sc_String);
+    DevMapsDir = malloc(strlen(sc_String) + 1);
+    strcpy(DevMapsDir, sc_String);
+    SC_MustGetStringName("scriptsdir");
+    SC_MustGetString();
+    Con_Message("[scriptsdir] = %s\n", sc_String);
+    sc_FileScripts = true;
+    str = malloc(strlen(sc_String) + 1);
+    strcpy(str, sc_String);
+    sc_ScriptsDir = str;
+
+    while(SC_GetString())
+    {
+        if(SC_Compare("file"))
+        {
+            SC_MustGetString();
+            DD_AddStartupWAD(sc_String);
+        }
+        else
+        {
+            SC_ScriptError(NULL);
+        }
+    }
+    SC_Close();
 }
 
 void G_Shutdown(void)
 {
-    uint                    i;
-
     Hu_MsgShutdown();
     Hu_UnloadData();
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_ClearMessages(i);
+    Hu_LogShutdown();
 
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
-    P_FreeButtons();
+    P_ShutdownInventory();
     AM_Shutdown();
     X_DestroyLUTs();
+    P_FreeWeaponSlots();
 }
 
 void G_EndFrame(void)
 {
-    // Nothing to do.
+    SN_UpdateActiveSequences();
 }

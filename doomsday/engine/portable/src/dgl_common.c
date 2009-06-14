@@ -705,10 +705,9 @@ void DGL_SetPSprite(material_t* mat)
     GL_SetPSprite(mat);
 }
 
-unsigned int DGL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
-                             int wrapT)
+void DGL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT)
 {
-    return GL_SetRawImage(lump, part2,
+    GL_SetRawImage(lump, part2,
         (wrapS == DGL_CLAMP? GL_CLAMP :
          wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
         (wrapT == DGL_CLAMP? GL_CLAMP :

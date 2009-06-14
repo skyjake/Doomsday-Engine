@@ -1194,6 +1194,8 @@ extern boolean usingFog;
             GL_TotalReset();
             gx.UpdateState(DD_RENDER_RESTART_PRE);
 
+            UI_ClearTextures();
+
             wglMakeCurrent(NULL, NULL);
             wglDeleteContext(window->normal.glContext);
         }
@@ -1209,12 +1211,12 @@ extern boolean usingFog;
             // Re-initialize.
             GL_TotalRestore();
             GL_InitRefresh();
-            GL_LoadLightmaps();
-            GL_LoadFlareTextures();
 
             if(hadFog)
                 GL_UseFog(true);
             gx.UpdateState(DD_RENDER_RESTART_POST);
+
+            UI_LoadTextures();
         }
     }
 

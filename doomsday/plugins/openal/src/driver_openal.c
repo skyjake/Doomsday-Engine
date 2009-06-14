@@ -49,8 +49,8 @@
 #endif
 
 #ifndef FINK
-   #include <AL/al.h>
-   #include <AL/alc.h>
+   #include <al.h>
+   #include <alc.h>
 #else
    #include <openal/al.h>
    #include <openal/alc.h>

@@ -99,8 +99,6 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int menusnds[];
-
 static menuitem_t* ControlsItems;
 
 #if __JDOOM__ || __JDOOM64__
@@ -110,8 +108,8 @@ menu_t ControlsDef = {
     M_DrawControlsMenu,
     0, NULL,
     1, MENU_OPTIONS,
-    huFontA,                    //1, 0, 0,
-    gs.cfg.menuColor2,
+    GF_FONTA,                    //1, 0, 0,
+    cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
     0, 17, { 17, 40 }
@@ -125,8 +123,8 @@ menu_t ControlsDef = {
     M_DrawControlsMenu,
     0, NULL,
     1, MENU_OPTIONS,
-    huFontA,                    //1, 0, 0,
-    gs.cfg.menuColor2,
+    GF_FONTA,                    //1, 0, 0,
+    cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
     0, 15, { 15, 26 }
@@ -140,8 +138,8 @@ menu_t ControlsDef = {
     M_DrawControlsMenu,
     0, NULL,
     1, MENU_OPTIONS,
-    huFontA,                    //1, 0, 0,
-    gs.cfg.menuColor2,
+    GF_FONTA,                    //1, 0, 0,
+    cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
     0, 16, { 16, 21 }
@@ -217,42 +215,42 @@ static controlconfig_t controlConfig[] =
     { "weapon 4", 0, 0, "impulse weapon4" },
 #endif
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     { NULL },
 
     { "inventory" },
-    { "move left", 0, 0, "invleft" },
-    { "move right", 0, 0, "invright" },
-    { "use artifact", 0, 0, "impulse useartifact" },
+    { "move left", 0, 0, "impulse previtem" },
+    { "move right", 0, 0, "impulse nextitem" },
+    { "use item", 0, 0, "impulse useitem" },
     { "panic!", 0, 0, "impulse panic" },
 #endif
 
 #ifdef __JHERETIC__
-    { (const char*) TXT_TXT_ARTIINVULNERABILITY, 0, 0, "impulse invulnerability" },
-    { (const char*) TXT_TXT_ARTIINVISIBILITY, 0, 0, "impulse invisibility" },
-    { (const char*) TXT_TXT_ARTIHEALTH, 0, 0, "impulse health" },
-    { (const char*) TXT_TXT_ARTISUPERHEALTH, 0, 0, "impulse superhealth" },
-    { (const char*) TXT_TXT_ARTITOMEOFPOWER, 0, 0, "impulse tome" },
-    { (const char*) TXT_TXT_ARTITORCH, 0, 0, "impulse torch" },
-    { (const char*) TXT_TXT_ARTIFIREBOMB, 0, 0, "impulse firebomb" },
-    { (const char*) TXT_TXT_ARTIEGG, 0, 0, "impulse egg" },
-    { (const char*) TXT_TXT_ARTIFLY, 0, 0, "impulse fly" },
-    { (const char*) TXT_TXT_ARTITELEPORT, 0, 0, "impulse teleport" },
+    { (const char*) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
+    { (const char*) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility" },
+    { (const char*) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
+    { (const char*) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth" },
+    { (const char*) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome" },
+    { (const char*) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
+    { (const char*) TXT_TXT_INV_FIREBOMB, 0, 0, "impulse firebomb" },
+    { (const char*) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
+    { (const char*) TXT_TXT_INV_FLY, 0, 0, "impulse fly" },
+    { (const char*) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
 #endif
 
 #ifdef __JHEXEN__
-    { (const char*) TXT_TXT_ARTITORCH, 0, 0, "impulse torch" },
-    { (const char*) TXT_TXT_ARTIHEALTH, 0, 0, "impulse health" },
-    { (const char*) TXT_TXT_ARTISUPERHEALTH, 0, 0, "impulse mysticurn" },
-    { (const char*) TXT_TXT_ARTIBOOSTMANA, 0, 0, "impulse krater" },
-    { (const char*) TXT_TXT_ARTISPEED, 0, 0, "impulse speedboots" },
-    { (const char*) TXT_TXT_ARTIBLASTRADIUS, 0, 0, "impulse blast" },
-    { (const char*) TXT_TXT_ARTITELEPORT, 0, 0, "impulse teleport" },
-    { (const char*) TXT_TXT_ARTITELEPORTOTHER, 0, 0, "impulse teleportother" },
-    { (const char*) TXT_TXT_ARTIPOISONBAG, 0, 0, "impulse poisonbag" },
-    { (const char*) TXT_TXT_ARTIINVULNERABILITY, 0, 0, "impulse invulnerability" },
-    { (const char*) TXT_TXT_ARTISUMMON, 0, 0, "impulse darkservant" },
-    { (const char*) TXT_TXT_ARTIEGG, 0, 0, "impulse egg" },
+    { (const char*) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
+    { (const char*) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
+    { (const char*) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse mysticurn" },
+    { (const char*) TXT_TXT_INV_BOOSTMANA, 0, 0, "impulse krater" },
+    { (const char*) TXT_TXT_INV_SPEED, 0, 0, "impulse speedboots" },
+    { (const char*) TXT_TXT_INV_BLASTRADIUS, 0, 0, "impulse blast" },
+    { (const char*) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
+    { (const char*) TXT_TXT_INV_TELEPORTOTHER, 0, 0, "impulse teleportother" },
+    { (const char*) TXT_TXT_INV_POISONBAG, 0, 0, "impulse poisonbag" },
+    { (const char*) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
+    { (const char*) TXT_TXT_INV_SUMMON, 0, 0, "impulse darkservant" },
+    { (const char*) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
 #endif
 
     { NULL },
@@ -311,7 +309,8 @@ static controlconfig_t controlConfig[] =
     { "show score", 0, 0, "impulse showscore", CCF_REPEAT },
     { "smaller view", 0, 0, "viewsize -" },
     { "larger view", 0, 0, "viewsize +" },
-    { "message refresh", 0, 0, "msgrefresh" },
+
+    { "message refresh", 0, 0, "impulse msgrefresh" },
 
     { NULL },
 
@@ -431,7 +430,7 @@ void M_InitControlsMenu(void)
 
 static void M_DrawSmallText(int x, int y, const char* text)
 {
-    int                 height = M_StringHeight(text, huFontA);
+    int                 height = M_StringHeight(text, GF_FONTA);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -440,7 +439,7 @@ static void M_DrawSmallText(int x, int y, const char* text)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-x, -y - height/2, 0);
 
-    M_WriteText2(x, y, text, huFontA, 1, 1, 1, Hu_MenuAlpha());
+    M_WriteText2(x, y, text, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -461,8 +460,8 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
 
     if(type == MIBT_KEY)
     {
-        width = M_StringWidth(name, huFontA);
-        height = M_StringHeight(name, huFontA);
+        width = M_StringWidth(name, GF_FONTA);
+        height = M_StringHeight(name, GF_FONTA);
 
         DGL_SetNoMaterial();
         DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height,
@@ -479,8 +478,8 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
         sprintf(temp, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy",
                 isInverse? '-' : '+', name);
 
-        width = M_StringWidth(temp, huFontA);
-        height = M_StringHeight(temp, huFontA);
+        width = M_StringWidth(temp, GF_FONTA);
+        height = M_StringHeight(temp, GF_FONTA);
 
         M_DrawSmallText(d->x, d->y, temp);
 
@@ -613,11 +612,11 @@ void M_DrawControlsMenu(void)
 #if __JDOOM__ || __JDOOM64__
     M_DrawTitle("CONTROLS", menu->y - 28);
     Hu_MenuPageString(buf, menu);
-    M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2, menu->y - 12, buf,
-                 huFontA, 1, .7f, .3f, Hu_MenuAlpha());
+    M_WriteText2(160 - M_StringWidth(buf, GF_FONTA) / 2, menu->y - 12, buf,
+                 GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha());
 #else
-    M_WriteText2(120, 100 - 98/gs.cfg.menuScale, "CONTROLS", huFontB, gs.cfg.menuColor[0],
-                 gs.cfg.menuColor[1], gs.cfg.menuColor[2], Hu_MenuAlpha());
+    M_WriteText2(120, 100 - 98/cfg.menuScale, "CONTROLS", GF_FONTB, cfg.menuColor[0],
+                 cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -630,8 +629,8 @@ void M_DrawControlsMenu(void)
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");
-    M_WriteText2(160 - M_StringWidth(buf, huFontA) / 2,
-                 100 + (95/gs.cfg.menuScale) - M_StringHeight(buf, huFontA), buf, huFontA,
+    M_WriteText2(160 - M_StringWidth(buf, GF_FONTA) / 2,
+                 100 + (95/cfg.menuScale) - M_StringHeight(buf, GF_FONTA), buf, GF_FONTA,
 #if __JDOOM__
                  1, .7f, .3f,
 #else
@@ -684,10 +683,10 @@ void M_ControlGrabDrawer(void)
     DGL_Translatef(-160, -100, 0);
 
     text = "press key or move controller for";
-    M_WriteText2(160 - M_StringWidth(text, huFontA)/2, 98 - M_StringHeight(text, huFontA),
-                 text, huFontA, .75f, .75f, .75f, 1);
-    M_WriteText2(160 - M_StringWidth(grabbing->item->text, huFontB)/2,
-                 102, grabbing->item->text, huFontB, 1, 1, 1, 1);
+    M_WriteText2(160 - M_StringWidth(text, GF_FONTA)/2, 98 - M_StringHeight(text, GF_FONTA),
+                 text, GF_FONTA, .75f, .75f, .75f, 1);
+    M_WriteText2(160 - M_StringWidth(grabbing->item->text, GF_FONTB)/2,
+                 102, grabbing->item->text, GF_FONTB, 1, 1, 1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -822,7 +821,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
         // We've finished the grab.
         grabbing = 0;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
-        S_LocalSound(menusnds[5], NULL);
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;
     }
 

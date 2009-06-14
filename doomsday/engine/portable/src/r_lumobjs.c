@@ -41,7 +41,8 @@
 // MACROS ------------------------------------------------------------------
 
 BEGIN_PROF_TIMERS()
-  PROF_DYN_INIT_ADD
+  PROF_LUMOBJ_INIT_ADD,
+  PROF_LUMOBJ_FRAME_SORT
 END_PROF_TIMERS()
 
 // TYPES -------------------------------------------------------------------
@@ -84,6 +85,7 @@ float loRadiusFactor = 3;
 int useMobjAutoLights = true; // Enable automaticaly calculated lights
                               // attached to mobjs.
 byte rendInfoLums = false;
+byte devDrawLums = false; // Display active lumobjs?
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -95,7 +97,7 @@ static byte* luminousClipped = NULL;
 static uint* luminousOrder = NULL;
 
 // List of unused and used list nodes, for linking lumobjs with subsectors.
-static lumlistnode_t* listNodeFirst, *listNodeCursor;
+static lumlistnode_t* listNodeFirst = NULL, *listNodeCursor = NULL;
 
 // List of lumobjs for each subsector;
 static lumlistnode_t** subLumObjList = NULL;
@@ -112,6 +114,7 @@ void LO_Register(void)
     C_VAR_INT("rend-light-radius-max", &loMaxRadius, 0, 64, 512);
 
     C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
+    C_VAR_BYTE("rend-dev-lums", &devDrawLums, CVF_NO_ARCHIVE, 0, 1);
 }
 
 static lumlistnode_t* allocListNode(void)
@@ -210,15 +213,15 @@ void LO_ClearForFrame(void)
     if(++i > 40)
     {
         i = 0;
-        PRINT_PROF(PROF_DYN_INIT_DEL);
-        PRINT_PROF(PROF_DYN_INIT_ADD);
-        PRINT_PROF(PROF_DYN_INIT_LINK);
+        PRINT_PROF(PROF_LUMOBJ_INIT_ADD);
+        PRINT_PROF(PROF_LUMOBJ_FRAME_SORT);
     }
 #endif
 
     // Start reusing nodes from the first one in the list.
     listNodeCursor = listNodeFirst;
-    memset(subLumObjList, 0, sizeof(lumlistnode_t*) * numSSectors);
+    if(subLumObjList)
+        memset(subLumObjList, 0, sizeof(lumlistnode_t*) * numSSectors);
     numLuminous = 0;
 }
 
@@ -527,16 +530,19 @@ if(!mat)
 
         if(def)
         {
-            LUM_OMNI(l)->tex = def->sides.tex;
-            LUM_OMNI(l)->ceilTex = def->up.tex;
-            LUM_OMNI(l)->floorTex = def->down.tex;
+            LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
+            LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
+            LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
 
-            if(def->flare.disabled)
-                LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+            if(!(def->flare.id && def->flare.id[0] == '-'))
+            {
+                LUM_OMNI(l)->flareTex =
+                    GL_GetFlareTexture(def->flare.id, -1);
+            }
             else
             {
-                LUM_OMNI(l)->flareCustom = def->flare.custom;
-                LUM_OMNI(l)->flareTex = def->flare.tex;
+                LUM_OMNI(l)->flags |= LUMOF_NOHALO;
+                LUM_OMNI(l)->flareTex = 0;
             }
         }
         else
@@ -569,12 +575,12 @@ static int C_DECL lumobjSorter(const void* e1, const void* e2)
  */
 void LO_BeginFrame(void)
 {
-#define MAX_LINKS      (8192) // Normally 100-200, heavy: 1000
-
     uint                i;
 
     if(!(numLuminous > 0))
         return;
+
+BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
 
     // Update lumobj distances ready for linking and sorting.
     for(i = 0; i < numLuminous; ++i)
@@ -621,7 +627,7 @@ void LO_BeginFrame(void)
     // currently in use.
     loInited = true;
 
-#undef MAX_LINKS
+END_PROF( PROF_LUMOBJ_FRAME_SORT );
 }
 
 /**
@@ -691,7 +697,7 @@ void LO_AddLuminousMobjs(void)
     if(!useDynLights && !useWallGlow)
         return;
 
-BEGIN_PROF( PROF_DYN_INIT_ADD );
+BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
     {
@@ -719,7 +725,7 @@ BEGIN_PROF( PROF_DYN_INIT_ADD );
         }
     }
 
-END_PROF( PROF_DYN_INIT_ADD );
+END_PROF( PROF_LUMOBJ_INIT_ADD );
 }
 
 typedef struct lumobjiterparams_s {
@@ -886,8 +892,7 @@ void LO_UnlinkMobjLumobj(mobj_t* mo)
 
 boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 {
-    if(P_IsMobjThinker(th->function))
-        LO_UnlinkMobjLumobj((mobj_t*) th);
+    LO_UnlinkMobjLumobj((mobj_t*) th);
 
     return true; // Continue iteration.
 }
@@ -895,16 +900,21 @@ boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 void LO_UnlinkMobjLumobjs(cvar_t* var)
 {
     if(!useDynLights)
-        P_IterateThinkers(NULL, LOIT_UnlinkMobjLumobj, NULL);
+    {
+        // Mobjs are always public.
+        P_IterateThinkers(gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);
+    }
 }
 
-#if _DEBUG
 void LO_DrawLumobjs(void)
 {
     static const float  black[4] = { 0, 0, 0, 0 };
     static const float  white[4] = { 1, 1, 1, 1 };
     float               color[4];
     uint                i;
+
+    if(!devDrawLums)
+        return;
 
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -1004,4 +1014,3 @@ void LO_DrawLumobjs(void)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 }
-#endif

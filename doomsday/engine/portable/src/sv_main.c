@@ -122,7 +122,7 @@ void Sv_GetInfo(serverinfo_t *info)
     for(i = 0; i < DDMAXPLAYERS; ++i)
         if(clients[i].connected)
         {
-            M_LimitedStrCat(clients[i].name, 15, ';', info->clientNames,
+            M_LimitedStrCat(info->clientNames, clients[i].name, 15, ';',
                             sizeof(info->clientNames));
         }
 

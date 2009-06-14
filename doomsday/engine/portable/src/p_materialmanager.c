@@ -65,7 +65,7 @@ static void animateAnimGroups(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean mapSetup;
+extern boolean ddMapSetup;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -529,10 +529,10 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material "
      * A new material.
      */
 
-    // Sanity checks.
-    assert(tex != 0);
-    assert(width > 0);
-    assert(height > 0);
+    // Only create complete materials.
+    // \todo Doing this here isn't ideal.
+    if(tex == 0 || !(width > 0) || !(height > 0))
+        return NULL;
 
     mat = createMaterial(width, height, flags, mnamespace, def, tex);
 
@@ -622,7 +622,7 @@ materialnum_t P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace)
     materialnum_t       result = P_MaterialCheckNumForIndex(idx, mnamespace);
 
     // Not found? Don't announce during map setup or if not yet inited.
-    if(result == 0 && (!mapSetup || !initedOk))
+    if(result == 0 && (!ddMapSetup || !initedOk))
         Con_Message("P_MaterialNumForIndex: %u in namespace %i not found!\n",
                     idx, mnamespace);
     return result;
@@ -722,7 +722,7 @@ materialnum_t P_MaterialNumForName(const char* name,
     result = P_MaterialCheckNumForName(name, mnamespace);
 
     // Not found?
-    if(result == 0 && !mapSetup) // Don't announce during map setup.
+    if(result == 0 && !ddMapSetup) // Don't announce during map setup.
         Con_Message("P_MaterialNumForName: \"%.8s\" in namespace %i not found!\n",
                     name, mnamespace);
     return result;

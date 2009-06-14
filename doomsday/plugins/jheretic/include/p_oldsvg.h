@@ -33,7 +33,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-void            SV_v13_LoadGame(char *filename);
+void            SV_v13_LoadGame(const char* filename);
 
 void            P_v13_UnArchivePlayers(void);
 void            P_v13_UnArchiveWorld(void);

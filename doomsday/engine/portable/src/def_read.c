@@ -60,6 +60,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define MAX_RECUR_DEPTH     30
+#define MAX_TOKEN_LEN       128
 
 // Some macros.
 #define STOPCHAR(x) (isspace(x) || x == ';' || x == '#' || x == '{' \
@@ -152,8 +153,8 @@ char dedReadError[512];
 static dedsource_t sourceStack[MAX_RECUR_DEPTH];
 static dedsource_t* source; // Points to the current source.
 
-static char token[128];
-static char unreadToken[128];
+static char token[MAX_TOKEN_LEN+1];
+static char unreadToken[MAX_TOKEN_LEN+1];
 
 // CODE --------------------------------------------------------------------
 
@@ -595,21 +596,21 @@ static int ReadLabel(char* label)
     return true;
 }
 
-static void DED_Include(char* fileName, directory_t* dir)
+static void DED_Include(const char* fileName, directory_t* dir)
 {
-    char                tmp[256], path[256];
+    filename_t          tmp, path;
 
-    M_TranslatePath(fileName, tmp);
+    M_TranslatePath(tmp, fileName, FILENAME_T_MAXLEN);
     if(!Dir_IsAbsolute(tmp))
     {
-        sprintf(path, "%s%s", dir->path, tmp);
+        snprintf(path, FILENAME_T_MAXLEN, "%s%s", dir->path, tmp);
     }
     else
     {
-        strcpy(path, tmp);
+        strncpy(path, tmp, FILENAME_T_MAXLEN);
     }
     Def_ReadProcessDED(path);
-    strcpy(token, "");
+    strncpy(token, "", MAX_TOKEN_LEN);
 }
 
 static void DED_InitReader(char* buffer, const char* fileName)
@@ -684,37 +685,25 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 {
     char                dummy[128], label[128], tmp[256];
     int                 dummyInt, idx, retVal = true;
-    ded_mobj_t*         mo;
     int                 prevMobjDefIdx = -1; // For "Copy".
-    ded_state_t*        st;
     int                 prevStateDefIdx = -1; // For "Copy"
-    ded_light_t*        lig;
     int                 prevLightDefIdx = -1; // For "Copy".
-    ded_material_t*     mat;
     int                 prevMaterialDefIdx = -1; // For "Copy".
-    ded_model_t*        mdl, *prevModel = 0;
     int                 prevModelDefIdx = -1; // For "Copy".
-    ded_sound_t*        snd;
-    ded_mapinfo_t*      mi;
     int                 prevMapInfoDefIdx = -1; // For "Copy".
-    ded_sky_t*          sky;
     int                 prevSkyDefIdx = -1; // For "Copy".
-    ded_value_t*        val;
-    ded_detailtexture_t* dtl;
     int                 prevDetailDefIdx = -1; // For "Copy".
-    ded_ptcgen_t*       gen;
     int                 prevGenDefIdx = -1; // For "Copy".
     int                 prevDecorDefIdx = -1; // For "Copy".
     int                 prevRefDefIdx = -1; // For "Copy".
-    ded_finale_t*       fin;
-    ded_linetype_t*     l;
     int                 prevLineTypeDefIdx = -1; // For "Copy".
-    ded_sectortype_t*   sec;
     int                 prevSectorTypeDefIdx = -1; // For "Copy".
     int                 depth;
     char*               rootStr = 0, *ptr;
     int                 bCopyNext = 0;
     directory_t         fileDir;
+
+    memset(&fileDir, 0, sizeof(fileDir));
 
     // For including other files -- we must know where we are.
     Dir_FileDir(sourceFile, &fileDir);
@@ -797,7 +786,9 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             // A new model path. Append to the list.
             READSTR(label);
             CHECKSC;
-            R_AddModelPath(label, true);
+
+            Dir_ValidDir(label, 128);
+            R_AddClassDataPath(DDRC_MODEL, label, true);
         }
 
         if(ISTOKEN("Header"))
@@ -844,9 +835,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Thing"))
         {
+            ded_mobj_t*         mo;
+
             // A new thing.
             idx = DED_AddMobj(ded, "");
-            mo = ded->mobjs + idx;
+            mo = &ded->mobjs[idx];
 
             if(prevMobjDefIdx >= 0 && bCopyNext)
             {
@@ -898,9 +891,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("State"))
         {
+            ded_state_t*        st;
+
             // A new state.
             idx = DED_AddState(ded, "");
-            st = ded->states + idx;
+            st = &ded->states[idx];
 
             if(prevStateDefIdx >= 0 && bCopyNext)
             {
@@ -945,14 +940,18 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Light"))
         {
+            ded_light_t*        lig;
+
             // A new light.
             idx = DED_AddLight(ded, "");
-            lig = ded->lights + idx;
+            lig = &ded->lights[idx];
+
             if(prevLightDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
                 memcpy(lig, ded->lights + prevLightDefIdx, sizeof(*lig));
             }
+
             FINDBEGIN;
             for(;;)
             {
@@ -1000,10 +999,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
         {
             int                 stage = 0;
             uint                layer = 0;
+            ded_material_t*     mat;
 
             // A new material.
             idx = DED_AddMaterial(ded, "");
-            mat = ded->materials + idx;
+            mat = &ded->materials[idx];
 
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
@@ -1096,12 +1096,13 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Model"))
         {
-            uint                sub;
+            uint                sub = 0;
+            ded_model_t*        mdl, *prevModel = NULL;
 
             // A new model.
             idx = DED_AddModel(ded, "");
-            mdl = ded->models + idx;
-            sub = 0;
+            mdl = &ded->models[idx];
+
             if(prevModelDefIdx >= 0)
             {
                 prevModel = ded->models + prevModelDefIdx;
@@ -1201,8 +1202,10 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Sound"))
         {   // A new sound.
+            ded_sound_t*        snd;
+
             idx = DED_AddSound(ded, "");
-            snd = ded->sounds + idx;
+            snd = &ded->sounds[idx];
 
             FINDBEGIN;
             for(;;)
@@ -1228,18 +1231,21 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Music"))
         {   // A new music.
+            ded_music_t*        mus;
+
             idx = DED_AddMusic(ded, "");
+            mus = &ded->music[idx];
 
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", ded->music[idx].id)
-                RV_STR("Lump", ded->music[idx].lumpName)
-                RV_STR("File name", ded->music[idx].path.path)
-                RV_STR("File", ded->music[idx].path.path)
-                RV_STR("Ext", ded->music[idx].path.path) // Both work.
-                RV_INT("CD track", ded->music[idx].cdTrack)
+                RV_STR("ID", mus->id)
+                RV_STR("Lump", mus->lumpName)
+                RV_STR("File name", mus->path.path)
+                RV_STR("File", mus->path.path)
+                RV_STR("Ext", mus->path.path) // Both work.
+                RV_INT("CD track", mus->cdTrack)
                 RV_END
                 CHECKSC;
             }
@@ -1248,9 +1254,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
         if(ISTOKEN("Sky"))
         {   // A new sky definition.
             uint                sub;
+            ded_sky_t*          sky;
 
             idx = DED_AddSky(ded, "");
-            sky = ded->skies + idx;
+            sky = &ded->skies[idx];
+
             if(prevSkyDefIdx >= 0 && bCopyNext)
             {
                 int                 m;
@@ -1271,7 +1279,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", sky->id)
-                RV_FLAGS("Flags", mi->flags, "sif_")
+                RV_FLAGS("Flags", sky->flags, "sif_")
                 RV_FLT("Height", sky->height)
                 RV_FLT("Horizon offset", sky->horizonOffset)
                 RV_VEC("Light color", sky->color, 3)
@@ -1336,9 +1344,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
         if(ISTOKEN("Map")) // Info
         {   // A new map info.
             uint                sub;
+            ded_mapinfo_t*      mi;
 
             idx = DED_AddMapInfo(ded, "");
-            mi = ded->mapInfo + idx;
+            mi = &ded->mapInfo[idx];
+
             if(prevMapInfoDefIdx >= 0 && bCopyNext)
             {
                 int                 m;
@@ -1438,13 +1448,16 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Text"))
         {   // A new text.
+            ded_text_t*         txt;
+
             idx = DED_AddText(ded, "");
+            txt = &ded->text[idx];
 
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", ded->text[idx].id)
+                RV_STR("ID", txt->id)
                 if(ISLABEL("Text"))
                 {
                     // Allocate a 'huge' buffer.
@@ -1454,7 +1467,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     {
                         size_t          len = strlen(temp) + 1;
 
-                        ded->text[idx].text = M_Realloc(temp, len);
+                        txt->text = M_Realloc(temp, len);
                         //memcpy(ded->text[idx].text, temp, len);
                     }
                     else
@@ -1472,7 +1485,10 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Texture")) // Environment
         {   // A new texenv.
+            ded_tenviron_t*     tenv;
+
             idx = DED_AddTextureEnv(ded, "");
+            tenv = &ded->textureEnv[idx];
 
             FINDBEGIN;
             for(;;)
@@ -1480,12 +1496,12 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 ded_materialid_t*   mn;
 
                 READLABEL;
-                RV_STR("ID", ded->textureEnv[idx].id)
+                RV_STR("ID", tenv->id)
                 if(ISLABEL("Texture") || ISLABEL("Flat") ||
                    ISLABEL("Sprite") || ISLABEL("System"))
                 {   // A new material name.
-                    mn = DED_NewEntry((void**)&ded->textureEnv[idx].materials,
-                                      &ded->textureEnv[idx].count, sizeof(*mn));
+                    mn = DED_NewEntry((void**)&tenv->materials,
+                                      &tenv->count, sizeof(*mn));
                     mn->mnamespace = (ISLABEL("Texture")? MN_TEXTURES :
                            ISLABEL("Flat")? MN_FLATS :
                            ISLABEL("Sprite")? MN_SPRITES : MN_SYSTEM);
@@ -1524,16 +1540,18 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 if(ISTOKEN("="))
                 {
                     // Define a new string.
-                    char *temp = M_Malloc(0x1000);    // A 'huge' buffer.
+                    char*               temp = M_Malloc(0x1000); // A 'huge' buffer.
 
                     if(ReadString(temp, 0xffff))
                     {
-                        // Reallocate the buffer down to actual string length.
+                        ded_value_t*        val;
+
+                        // Resize the buffer down to actual string length.
                         temp = M_Realloc(temp, strlen(temp) + 1);
 
                         // Get a new value entry.
                         idx = DED_AddValue(ded, 0);
-                        val = ded->values + idx;
+                        val = &ded->values[idx];
                         val->text = temp;
 
                         // Compose the identifier.
@@ -1600,8 +1618,11 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Detail")) // Detail Texture
         {
+            ded_detailtexture_t*    dtl;
+
             idx = DED_AddDetail(ded, "");
-            dtl = ded->details + idx;
+            dtl = &ded->details[idx];
+
             if(prevDetailDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
@@ -1691,15 +1712,16 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Generator")) // Particle Generator
         {
-            int                     sub;
+            int                 sub = 0;
+            ded_ptcgen_t*       gen;
 
             idx = DED_AddPtcGen(ded, "");
-            gen = ded->ptcGens + idx;
-            sub = 0;
+            gen = &ded->ptcGens[idx];
+
             if(prevGenDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(gen, ded->ptcGens + prevGenDefIdx, sizeof(*gen));
+                memcpy(gen, &ded->ptcGens[prevGenDefIdx], sizeof(*gen));
 
                 // Duplicate the stages array.
                 if(ded->ptcGens[prevGenDefIdx].stages)
@@ -1710,6 +1732,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                            sizeof(ded_ptcstage_t) * gen->stageCount.num);
                 }
             }
+
             FINDBEGIN;
             for(;;)
             {
@@ -1801,8 +1824,10 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Finale") || ISTOKEN("InFine"))
         {
+            ded_finale_t*       fin;
+
             idx = DED_AddFinale(ded);
-            fin = ded->finales + idx;
+            fin = &ded->finales[idx];
 
             FINDBEGIN;
             for(;;)
@@ -2064,11 +2089,13 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             }
         }*/
 
-        if(ISTOKEN("Line"))     // Line Type
+        if(ISTOKEN("Line")) // Line Type
         {
+            ded_linetype_t*         l;
+
             // A new line type.
             idx = DED_AddLineType(ded, 0);
-            l = ded->lineTypes + idx;
+            l = &ded->lineTypes[idx];
 
             if(prevLineTypeDefIdx >= 0 && bCopyNext)
             {
@@ -2246,11 +2273,13 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             prevLineTypeDefIdx = idx;
         }
 
-        if(ISTOKEN("Sector"))   // Sector Type
+        if(ISTOKEN("Sector")) // Sector Type
         {
+            ded_sectortype_t*   sec;
+
             // A new sector type.
             idx = DED_AddSectorType(ded, 0);
-            sec = ded->sectorTypes + idx;
+            sec = &ded->sectorTypes[idx];
 
             if(prevSectorTypeDefIdx >= 0 && bCopyNext)
             {
@@ -2360,9 +2389,9 @@ int DED_Read(ded_t* ded, const char* sPathName)
     char*               defData;
     size_t              len;
     int                 result;
-    char                translated[256];
+    filename_t          translated;
 
-    M_TranslatePath(sPathName, translated);
+    M_TranslatePath(translated, sPathName, FILENAME_T_MAXLEN);
 
     if((file = F_Open(translated, "rb")) == NULL)
     {
@@ -2391,18 +2420,25 @@ int DED_Read(ded_t* ded, const char* sPathName)
 /**
  * Reads definitions from the given lump.
  */
-int DED_ReadLump(ded_t* ded, int lump)
+int DED_ReadLump(ded_t* ded, lumpnum_t lump)
 {
     int                 result;
+    size_t              lumpLength;
 
     if(lump < 0 || lump >= numLumps)
     {
         SetError("Bad lump number.");
         return false;
     }
-    result = DED_ReadData(ded, W_CacheLumpNum(lump, PU_STATIC),
-                          W_LumpSourceFile(lump));
-    W_ChangeCacheTag(lump, PU_CACHE);
+
+    if((lumpLength = W_LumpLength(lump)) > 0)
+    {
+        void*               buf = M_Calloc(lumpLength + 1);
+
+        result = DED_ReadData(ded, buf, W_LumpSourceFile(lump));
+
+        M_Free(buf);
+    }
 
     return result;
 }

@@ -50,8 +50,9 @@
 #include "p_mapspec.h"
 #include "p_door.h"
 #if __JDOOM64__
-#include "p_ceiling.h"
-#include "p_floor.h"
+#  include "p_ceiling.h"
+#  include "p_floor.h"
+#  include "p_inventory.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -71,7 +72,7 @@
 # define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
 # define SFX_DOORLOCKED        (SFX_OOF)
 #elif __JHERETIC__
-# define SFX_DOORCLOSE         (SFX_DOROPN)
+# define SFX_DOORCLOSE         (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_NONE)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_DOROPN)
@@ -184,14 +185,14 @@ void T_Door(door_t* door)
             case DT_INSTANTRAISE:  //jd64
             case DT_INSTANTCLOSE:  //jd64
                 P_ToXSector(door->sector)->specialData = NULL;
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
                 break;
 #endif
 #if __JDOOM__ || __JDOOM64__
             case DT_BLAZERAISE:
             case DT_BLAZECLOSE:
                 xsec->specialData = NULL;
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
 
                 // DOOMII BUG:
                 // This is what causes blazing doors to produce two closing
@@ -206,7 +207,7 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORCLOSE);
 #endif
@@ -285,7 +286,7 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-                P_ThinkerRemove(&door->thinker); // Unlink and free.
+                DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
                 S_StopSound(0, (mobj_t *) P_GetPtrp(door->sector,
                                                     DMU_CEILING_SOUND_ORIGIN));
@@ -325,13 +326,12 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 
         // new door thinker
         rtn = 1;
-        door = Z_Calloc(sizeof(*door), PU_MAPSPEC, 0);
-        P_ThinkerAdd(&door->thinker);
+        door = Z_Calloc(sizeof(*door), PU_MAP, 0);
+        door->thinker.function = T_Door;
+        DD_ThinkerAdd(&door->thinker);
         xsec->specialData = door;
 
-        door->thinker.function = T_Door;
         door->sector = sec;
-
         door->type = type;
         door->topWait = topwait;
         door->speed = speed;
@@ -509,8 +509,8 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         break;
 
 # if __JDOOM64__
-    case 343: // jd64
-        if(!p->artifacts[it_laserpw1])
+    case 343:
+        if(!P_InventoryCount(p - players, IIT_DEMONKEY1))
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
@@ -518,8 +518,8 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         }
         break;
 
-    case 344: // jd64
-        if(!p->artifacts[it_laserpw2])
+    case 344:
+        if(!P_InventoryCount(p - players, IIT_DEMONKEY2))
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
@@ -527,8 +527,8 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
         }
         break;
 
-    case 345: // jd64
-        if(!p->artifacts[it_laserpw3])
+    case 345:
+        if(!P_InventoryCount(p - players, IIT_DEMONKEY3))
         {
             P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
@@ -734,10 +734,10 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
     }
 
     // New door thinker.
-    door = Z_Calloc(sizeof(*door), PU_MAPSPEC, 0);
-    P_ThinkerAdd(&door->thinker);
-    xsec->specialData = door;
+    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = T_Door;
+    DD_ThinkerAdd(&door->thinker);
+    xsec->specialData = door;
     door->sector = sec;
     door->state = DS_UP;
 
@@ -856,14 +856,13 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 {
     door_t *door;
 
-    door = Z_Calloc(sizeof(*door), PU_MAPSPEC, 0);
-
-    P_ThinkerAdd(&door->thinker);
+    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door->thinker.function = T_Door;
+    DD_ThinkerAdd(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
-    door->thinker.function = T_Door;
     door->sector = sec;
     door->state = DS_WAIT;
     door->type = DT_NORMAL;
@@ -875,14 +874,13 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 {
     door_t           *door;
 
-    door = Z_Calloc(sizeof(*door), PU_MAPSPEC, 0);
-
-    P_ThinkerAdd(&door->thinker);
+    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door->thinker.function = T_Door;
+    DD_ThinkerAdd(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
-    door->thinker.function = T_Door;
     door->sector = sec;
     door->state = DS_INITIALWAIT;
     door->type = DT_RAISEIN5MINS;

@@ -53,8 +53,6 @@ typedef struct game_import_s {
 
     // General information.
     int*            validCount;
-    float*          topSlope;
-    float*          bottomSlope;
 } game_import_t;
 
 /**

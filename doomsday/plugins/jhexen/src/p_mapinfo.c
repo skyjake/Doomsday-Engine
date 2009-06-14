@@ -37,7 +37,7 @@
 
 #define MAPINFO_SCRIPT_NAME "MAPINFO"
 
-#define UNKNOWN_MAP_NAME "UNKNOWN MAP"
+#define UNKNOWN_MAP_NAME "DEVELOPMENT MAP"
 #define DEFAULT_SKY_NAME "SKY1"
 #define DEFAULT_SONG_LUMP "DEFSONG"
 #define DEFAULT_FADE_TABLE "COLORMAP"
@@ -57,7 +57,7 @@ typedef struct mapinfo_s {
     boolean         doubleSky;
     boolean         lightning;
     int             fadetable;
-    char            songLump[9];
+    char            songLump[10];
 } mapinfo_t;
 
 enum {
@@ -179,18 +179,7 @@ void P_InitMapInfo(void)
     for(map = 0; map < 99; ++map)
         MapInfo[map].warpTrans = 0;
 
-    if(!useScriptsDir)
-    {
-        SC_OpenLump(W_GetNumForName(MAPINFO_SCRIPT_NAME));
-    }
-    else
-    {
-        filename_t          path;
-
-        snprintf(path, FILENAME_T_MAXLEN, "%s%s.txt", scriptsDir, MAPINFO_SCRIPT_NAME);
-        SC_OpenFile(path);
-    }
-
+    SC_Open(MAPINFO_SCRIPT_NAME);
     while(SC_GetString())
     {
         if(SC_Compare("MAP") == false)
@@ -198,12 +187,12 @@ void P_InitMapInfo(void)
             SC_ScriptError(NULL);
         }
         SC_MustGetNumber();
-        if(SC_LastReadInteger() < 1 || SC_LastReadInteger() > 99)
+        if(sc_Number < 1 || sc_Number > 99)
         {
             SC_ScriptError(NULL);
         }
 
-        map = SC_LastReadInteger();
+        map = sc_Number;
         info = &MapInfo[map];
 
         // Save song lump name
@@ -220,7 +209,7 @@ void P_InitMapInfo(void)
 
         // Map name must follow the number
         SC_MustGetString();
-        strcpy(info->name, SC_LastReadString());
+        strcpy(info->name, sc_String);
 
         // Process optional tokens
         while(SC_GetString())
@@ -236,38 +225,38 @@ void P_InitMapInfo(void)
             {
             case MCMD_CLUSTER:
                 SC_MustGetNumber();
-                info->cluster = SC_LastReadInteger();
+                info->cluster = sc_Number;
                 break;
 
             case MCMD_WARPTRANS:
                 SC_MustGetNumber();
-                info->warpTrans = SC_LastReadInteger();
+                info->warpTrans = sc_Number;
                 break;
 
             case MCMD_NEXT:
                 SC_MustGetNumber();
-                info->nextMap = SC_LastReadInteger();
+                info->nextMap = sc_Number;
                 break;
 
             case MCMD_CDTRACK:
                 SC_MustGetNumber();
-                info->cdTrack = SC_LastReadInteger();
+                info->cdTrack = sc_Number;
                 break;
 
             case MCMD_SKY1:
                 SC_MustGetString();
                 info->sky1Material =
-                    P_MaterialNumForName(SC_LastReadString(), MN_TEXTURES);
+                    P_MaterialNumForName(sc_String, MN_TEXTURES);
                 SC_MustGetNumber();
-                info->sky1ScrollDelta = (float) SC_LastReadInteger() / 256;
+                info->sky1ScrollDelta = (float) sc_Number / 256;
                 break;
 
             case MCMD_SKY2:
                 SC_MustGetString();
                 info->sky2Material =
-                    P_MaterialNumForName(SC_LastReadString(), MN_TEXTURES);
+                    P_MaterialNumForName(sc_String, MN_TEXTURES);
                 SC_MustGetNumber();
-                info->sky2ScrollDelta = (float) SC_LastReadInteger() / 256;
+                info->sky2ScrollDelta = (float) sc_Number / 256;
                 break;
 
             case MCMD_DOUBLESKY:
@@ -280,7 +269,7 @@ void P_InitMapInfo(void)
 
             case MCMD_FADETABLE:
                 SC_MustGetString();
-                info->fadetable = W_GetNumForName(SC_LastReadString());
+                info->fadetable = W_GetNumForName(sc_String);
                 break;
 
             case MCMD_CD_STARTTRACK:
@@ -290,7 +279,7 @@ void P_InitMapInfo(void)
             case MCMD_CD_INTERTRACK:
             case MCMD_CD_TITLETRACK:
                 SC_MustGetNumber();
-                setSongCDTrack(mcmdValue - MCMD_CD_STARTTRACK, SC_LastReadInteger());
+                setSongCDTrack(mcmdValue - MCMD_CD_STARTTRACK, sc_Number);
                 break;
 
             default:
@@ -324,7 +313,7 @@ static void setSongCDTrack(int index, int track)
     int         cdTrack = track;
 
     // Set the internal array.
-    cdNonMapTracks[index] = SC_LastReadInteger();
+    cdNonMapTracks[index] = sc_Number;
 
     // Update the corresponding Doomsday definition.
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cdSongDefIDs[index], 0),
@@ -364,15 +353,12 @@ int P_TranslateMap(int map)
  * @param map           The map (logical number) to be changed.
  * @param lumpName      The lumpName to be set.
  */
-void P_PutMapSongLump(int map, const char* lumpName)
+void P_PutMapSongLump(int map, char *lumpName)
 {
     if(map < 1 || map > mapCount)
         return;
 
-    if(lumpName && lumpName[0])
-    {
     strncpy(MapInfo[map].songLump, lumpName, sizeof(MapInfo[map].songLump));
-    }
 }
 
 /**

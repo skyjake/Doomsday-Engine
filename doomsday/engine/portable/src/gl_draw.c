@@ -163,7 +163,7 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
         return;
 
     // Set the texture.
-    GL_BindTexture(GL_PreparePatch(p->lump), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(p), glmode[texMagMode]);
 
     w = (float) p->width;
     h = (float) p->height;
@@ -197,11 +197,11 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
     glEnd();
 
     // Is there a second part?
-    if(GL_GetPatchOtherPart(lump))
+    if(GL_PreparePatchOtherPart(p))
     {
         x += (float) p->width2;
 
-        GL_BindTexture(GL_GetPatchOtherPart(lump), glmode[texMagMode]);
+        GL_BindTexture(GL_PreparePatchOtherPart(p), glmode[texMagMode]);
         w = (float) p->width2;
 
         glBegin(GL_QUADS);

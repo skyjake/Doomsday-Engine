@@ -50,6 +50,7 @@ typedef struct {
 } spriteframe_t;
 
 typedef struct {
+    char            name[5];
     int             numFrames;
     spriteframe_t*  spriteFrames;
 } spritedef_t;
@@ -189,8 +190,8 @@ extern vissprite_t visSprSortedHead;
 extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
 material_t*     R_GetMaterialForSprite(int sprite, int frame);
-void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
-void            R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
+boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
+boolean         R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
 float           R_VisualRadius(struct mobj_s* mo);
 float           R_GetBobOffset(struct mobj_s* mo);
 float           R_MovementYaw(float momx, float momy);
@@ -202,7 +203,10 @@ vissprite_t*    R_NewVisSprite(void);
 void            R_AddSprites(subsector_t* ssec);
 void            R_AddPSprites(void);
 void            R_DrawSprites(void);
+
+void            R_PreInitSprites(void);
 void            R_InitSprites(void);
+
 void            R_ClearSprites(void);
 void            R_ClipVisSprite(vissprite_t* vis, int xl, int xh);
 

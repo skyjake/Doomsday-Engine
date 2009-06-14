@@ -160,12 +160,6 @@ typedef enum {
     NUM_SKILL_MODES
 } skillmode_t;
 
-// Skill flags for the above.
-#define MTF_EASY            1
-#define MTF_NORMAL          2
-#define MTF_HARD            4
-#define MTF_AMBUSH          8 // Deaf monsters/do not react to sound.
-
 /**
  * Keys (as in, keys to lockables).
  */
@@ -251,24 +245,25 @@ typedef enum {
 #define CHICKENTICS         (40*TICRATE)
 
 /**
- * Artifacts (collectable, inventory items).
+ * Inventory Item Types:
  */
 typedef enum {
-    AFT_NONE,
-    AFT_INVULNERABILITY,
-    AFT_INVISIBILITY,
-    AFT_HEALTH,
-    AFT_SUPERHEALTH,
-    AFT_TOMBOFPOWER,
-    AFT_TORCH,
-    AFT_FIREBOMB,
-    AFT_EGG,
-    AFT_FLY,
-    AFT_TELEPORT,
-    NUM_ARTIFACT_TYPES
-} artitype_e;
+    IIT_NONE = 0,
+    IIT_FIRST = 1,
+    IIT_INVULNERABILITY = IIT_FIRST,
+    IIT_INVISIBILITY,
+    IIT_HEALTH,
+    IIT_SUPERHEALTH,
+    IIT_TOMBOFPOWER,
+    IIT_TORCH,
+    IIT_FIREBOMB,
+    IIT_EGG,
+    IIT_FLY,
+    IIT_TELEPORT,
+    NUM_INVENTORYITEM_TYPES
+} inventoryitemtype_t;
 
-#define MAXARTICOUNT        16
+#define MAXINVITEMCOUNT        16
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 
@@ -355,12 +350,6 @@ int             M_DrawText(int x, int y, boolean direct, char *string);
 
 void            MN_ActivateMenu(void);
 void            MN_DeactivateMenu(void);
-void            MN_DrTextA(char *text, int x, int y);
-int             MN_TextAWidth(char *text);
-void            MN_DrTextB(char *text, int x, int y);
-int             MN_TextBWidth(char *text);
-void            MN_TextFilter(char *text);
-int             MN_FilterChar(int ch);
 
 // Drawing text in the Current State.
 void            MN_DrTextA_CS(char *text, int x, int y);

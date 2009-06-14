@@ -135,7 +135,7 @@ typedef struct fistate_s {
     char*           script; // A copy of the script.
     char*           cp; // The command cursor.
     infinemode_t    mode;
-    int             overlayGameState; // Overlay scripts run only in one gs.gameMode.
+    int             overlayGameState; // Overlay scripts run only in one gameMode.
     int             timer;
     boolean         conditions[NUM_FICONDS];
     int             inTime;
@@ -396,10 +396,6 @@ void FI_ClearState(void)
 {
     int                 i, c;
 
-    // Clear the message queue for all local players.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_ClearMessages(i);
-
     // General game state.
     G_SetGameAction(GA_NONE);
     if(fi->mode != FIMODE_OVERLAY)
@@ -471,9 +467,10 @@ void FI_NewState(const char *script)
     memset(fi, 0, sizeof(*fi));
 
     // Take a copy of the script.
-    size = strlen(script) + 1;
-    fi->script = Z_Malloc(size, PU_STATIC, 0);
+    size = strlen(script);
+    fi->script = Z_Malloc(size + 1, PU_STATIC, 0);
     memcpy(fi->script, script, size);
+    fi->script[size] = '\0';
 
     // Init the cursor, too.
     fi->cp = fi->script;
@@ -562,6 +559,7 @@ void FI_Reset(void)
         FI_PopState();
 
     fiActive = false;
+    G_ChangeGameState(GS_WAITING);
 }
 
 /**
@@ -587,21 +585,22 @@ void FI_Start(char *finalescript, infinemode_t mode)
     // Init InFine state.
     FI_NewState(finalescript);
     fi->mode = mode;
+    // Clear the message queue for all local players.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        Hu_LogEmpty(i);
     FI_ClearState();
 
     if(!IS_CLIENT)
     {
         // We are able to figure out the truth values of all the
         // conditions.
-#if __JHEXEN__
-        fi->conditions[FICOND_SECRET] = false;
+        fi->conditions[FICOND_SECRET] = (secretExit != 0);
 
+#if __JHEXEN__
         // Current hub has been completed?
         fi->conditions[FICOND_LEAVEHUB] =
-            (P_GetMapCluster(gs.map.id) != P_GetMapCluster(gs.mapPrev.id));
+            (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
 #else
-        fi->conditions[FICOND_SECRET] = (gs.mapPrev.secretExit? true : false);
-
         // Only Hexen has hubs.
         fi->conditions[FICOND_LEAVEHUB] = false;
 #endif
@@ -618,7 +617,7 @@ void FI_Start(char *finalescript, infinemode_t mode)
 
     if(mode == FIMODE_OVERLAY)
     {
-        // Overlay scripts stop when the gs.gameMode changes.
+        // Overlay scripts stop when the gameMode changes.
         fi->overlayGameState = G_GetGameState();
     }
 
@@ -672,13 +671,16 @@ void FI_End(void)
                 return;
             }
             G_SetGameAction(GA_COMPLETED);
+
+            // Don't play the debriefing again.
+            briefDisabled = true;
         }
         else if(oldMode == FIMODE_BEFORE)
         {
             // Enter the map, this was a briefing.
             G_ChangeGameState(GS_MAP);
             S_MapMusic();
-            gs.map.startTic = (int) GAMETIC;
+            mapStartTic = (int) GAMETIC;
             mapTime = actualMapTime = 0;
         }
         else if(oldMode == FIMODE_LOCAL)
@@ -889,6 +891,7 @@ void FI_Execute(char * cmd)
             // k stays at zero if the number of operands is correct.
             oldcp = fi->cp;
             for(k = fiCommands[i].operands; k > 0; k--)
+            {
                 if(!FI_GetToken())
                 {
                     fi->cp = oldcp;
@@ -896,6 +899,7 @@ void FI_Execute(char * cmd)
                                 fiCommands[i].token);
                     break;
                 }
+            }
 
                 // Should we skip this command?
             if((fi->skipNext && !fiCommands[i].whenCondSkipping) ||
@@ -1357,6 +1361,8 @@ void FI_SkipTo(const char* marker)
 
     // Stop any waiting.
     fi->wait = 0;
+    fi->waitingText = NULL;
+    fi->waitingPic = NULL;
 
     // Rewind the script so we can jump anywhere.
     fi->cp = fi->script;
@@ -1452,13 +1458,12 @@ int FI_Responder(event_t* ev)
 int FI_FilterChar(int ch)
 {
     // Filter it.
-    ch = toupper(ch);
     if(ch == '_')
         ch = '[';
     else if(ch == '\\')
         ch = '/';
-    else if(ch < 32 || ch > 'Z')
-        ch = 32; // We don't have this char.
+    else if(ch < ' ' || ch > 'z')
+        ch = ' '; // We don't have this char.
 
     return ch;
 }
@@ -1467,14 +1472,10 @@ int FI_CharWidth(int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
 
-    if(ch < 33)
-        return 4;
-
-    return fontb ? huFontB[ch - HU_FONTSTART].width :
-        huFontA[ch - HU_FONTSTART].width;
+    return M_CharWidth(ch, fontb? GF_FONTB : GF_FONTA);
 }
 
-int FI_GetLineWidth(char *text, boolean fontb)
+int FI_GetLineWidth(char* text, boolean fontb)
 {
     int                 width = 0;
 
@@ -1499,18 +1500,9 @@ int FI_GetLineWidth(char *text, boolean fontb)
 
 int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
-    lumpnum_t           lump;
-
     ch = FI_FilterChar(ch);
 
-    if(fontb)
-        lump = huFontB[ch - HU_FONTSTART].lump;
-    else
-        lump = huFontA[ch - HU_FONTSTART].lump;
-
-    // Draw the character. Don't try to draw spaces.
-    if(ch > 32)
-        GL_DrawPatch_CS(x, y, lump);
+    M_DrawChar(x, y, ch, fontb? GF_FONTB : GF_FONTA);
 
     return FI_CharWidth(ch, fontb);
 }
@@ -1676,9 +1668,15 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
     {
         patchinfo_t         info;
 
-        R_GetPatchInfo(pic->lump[pic->seq], &info);
-        center[VX] = info.width / 2 - info.offset;
-        center[VY] = info.height / 2 - info.topOffset;
+        if(R_GetPatchInfo(pic->lump[pic->seq], &info))
+        {
+            center[VX] = info.width / 2 - info.offset;
+            center[VY] = info.height / 2 - info.topOffset;
+        }
+        else
+        {
+            center[VX] = center[VY] = 0;
+        }
     }
     else
     {
@@ -2001,12 +1999,12 @@ void FIC_If(void)
     }
     else if(!stricmp(fiToken, "deathmatch"))
     {
-        val = GAMERULES.deathmatch != false;
+        val = deathmatch != false;
     }
     else if(!stricmp(fiToken, "shareware"))
     {
 #if __JDOOM__
-        val = (gs.gameMode == shareware);
+        val = (gameMode == shareware);
 #elif __JHERETIC__
         val = shareware != false;
 #else
@@ -2022,11 +2020,11 @@ void FIC_If(void)
     // Game modes.
     else if(!stricmp(fiToken, "ultimate"))
     {
-        val = (gs.gameMode == retail);
+        val = (gameMode == retail);
     }
     else if(!stricmp(fiToken, "commercial"))
     {
-        val = (gs.gameMode == commercial);
+        val = (gameMode == commercial);
     }
 #endif
     else if(!stricmp(fiToken, "leavehub"))
@@ -2037,11 +2035,11 @@ void FIC_If(void)
 #if __JHEXEN__
     // Player classes.
     else if(!stricmp(fiToken, "fighter"))
-        val = (gs.players[CONSOLEPLAYER].pClass == PCLASS_FIGHTER);
+        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_FIGHTER);
     else if(!stricmp(fiToken, "cleric"))
-        val = (gs.players[CONSOLEPLAYER].pClass == PCLASS_CLERIC);
+        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_CLERIC);
     else if(!stricmp(fiToken, "mage"))
-        val = (gs.players[CONSOLEPLAYER].pClass == PCLASS_MAGE);
+        val = (cfg.playerClass[CONSOLEPLAYER] == PCLASS_MAGE);
 #endif
     else
     {
@@ -2080,7 +2078,7 @@ void FIC_Marker(void)
 
 void FIC_Delete(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
+    fiobj_t*            obj = FI_FindObject(FI_GetToken());
 
     if(obj)
     {
@@ -2090,10 +2088,14 @@ void FIC_Delete(void)
 
 void FIC_Image(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name = FI_GetToken();
 
     FI_ClearAnimation(pic);
-    pic->lump[0] = W_CheckNumForName(FI_GetToken());
+
+    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_Image: Warning, missing lump \"%s\".\n", name);
+
     pic->flags.is_patch = false;
     pic->flags.is_rect = false;
     pic->flags.is_ximage = false;
@@ -2101,12 +2103,17 @@ void FIC_Image(void)
 
 void FIC_ImageAt(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name;
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
     FI_ClearAnimation(pic);
-    pic->lump[0] = W_CheckNumForName(FI_GetToken());
+
+    name = FI_GetToken();
+    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_ImageAt: Warning, missing lump \"%s\".\n", name);
+
     pic->flags.is_patch = false;
     pic->flags.is_rect = false;
     pic->flags.is_ximage = false;
@@ -2114,14 +2121,16 @@ void FIC_ImageAt(void)
 
 void FIC_XImage(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
-    const char         *fileName;
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         fileName;
 
     FI_ClearAnimation(pic);
 
     // Load the external resource.
     fileName = FI_GetToken();
-    pic->lump[0] = GL_LoadGraphics(fileName, 0);
+    if((pic->lump[0] = GL_LoadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL,
+                                   false, true, 0)) == 0)
+        Con_Message("FIC_XImage: Warning, missing graphic \"%s\".\n", fileName);
 
     pic->flags.is_patch = false;
     pic->flags.is_rect = true;
@@ -2130,12 +2139,17 @@ void FIC_XImage(void)
 
 void FIC_Patch(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name;
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
     FI_ClearAnimation(pic);
-    pic->lump[0] = W_CheckNumForName(FI_GetToken());
+
+    name = FI_GetToken();
+    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_Patch: Warning, missing lump \"%s\".\n", name);
+
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
 }
@@ -2143,19 +2157,24 @@ void FIC_Patch(void)
 void FIC_SetPatch(void)
 {
     int                 num;
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
+    const char*         name = FI_GetToken();
 
-    if((num = W_CheckNumForName(FI_GetToken()))!= -1)
+    if((num = W_CheckNumForName(name))!= -1)
     {
         pic->lump[0] = num;
         pic->flags.is_patch = true;
         pic->flags.is_rect = false;
     }
+    else
+    {
+        Con_Message("FIC_SetPatch: Warning, missing lump \"%s\".\n", name);
+    }
 }
 
 void FIC_ClearAnim(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t*            pic = FI_GetPic(FI_GetToken());
 
     FI_ClearAnimation(pic);
 }
@@ -2164,13 +2183,20 @@ void FIC_Anim(void)
 {
     fipic_t            *pic = FI_GetPic(FI_GetToken());
     int                 i, lump, time;
+    const char*         name = FI_GetToken();
 
-    lump = W_CheckNumForName(FI_GetToken());
+    if((lump = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_Anim: Warning, lump \"%s\" not found.\n", name);
+
     time = FI_GetTics();
     // Find the next sequence spot.
     i = FI_GetNextSeq(pic);
     if(i == MAX_SEQUENCE)
-        return;                 // Can't do it...
+    {
+        Con_Message("FIC_Anim: Warning, too many frames in anim sequence "
+                    "(max %i).\n", MAX_SEQUENCE);
+        return; // Can't do it...
+    }
     pic->lump[i] = lump;
     pic->seqWait[i] = time;
     pic->flags.is_patch = true;
@@ -2181,13 +2207,21 @@ void FIC_AnimImage(void)
 {
     fipic_t            *pic = FI_GetPic(FI_GetToken());
     int                 i, lump, time;
+    const char*         name = FI_GetToken();
 
-    lump = W_CheckNumForName(FI_GetToken());
+    if((lump = W_CheckNumForName(name)) == -1)
+        Con_Message("FIC_AnimImage: Warning, lump \"%s\" not found.\n", name);
+
     time = FI_GetTics();
     // Find the next sequence spot.
     i = FI_GetNextSeq(pic);
     if(i == MAX_SEQUENCE)
-        return;                 // Can't do it...
+    {
+        Con_Message("FIC_AnimImage: Warning, too many frames in anim sequence "
+                    "(max %i).\n", MAX_SEQUENCE);
+        return; // Can't do it...
+    }
+
     pic->lump[i] = lump;
     pic->seqWait[i] = time;
     pic->flags.is_patch = false;
@@ -2561,9 +2595,7 @@ void FIC_TextFromDef(void)
 void FIC_TextFromLump(void)
 {
     fitext_t           *tex = FI_GetText(FI_GetToken());
-    int                 lnum, buflen;
-    size_t              i, incount;
-    char               *data, *str, *out;
+    int                 lnum;
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
@@ -2574,6 +2606,10 @@ void FIC_TextFromLump(void)
     }
     else
     {
+        size_t              i, incount, buflen;
+        const char*         data;
+        char*               str, *out;
+
         // Load the lump.
         data = W_CacheLumpNum(lnum, PU_STATIC);
         incount = W_LumpLength(lnum);

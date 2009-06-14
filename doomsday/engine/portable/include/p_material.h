@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 // Material load flags:
 #define MLF_LOAD_AS_SKY     0x1
 #define MLF_ZEROMASK        0x2 // Zero the alpha of loaded textures.
+#define MLF_TEX_NO_COMPRESSION  0x4 // Do not compress the loaded textures.
 
 typedef struct {
     int             flags; // MLF_* material load flags

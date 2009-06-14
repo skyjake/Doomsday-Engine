@@ -57,11 +57,7 @@
 
 mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
 {
-    subsector_t*        ss = R_PointInSubsector(x, y);
-
-    return P_SpawnMobj3f(MT_TFOG, x, y,
-                         P_GetFloatp(ss, DMU_FLOOR_HEIGHT) + TELEFOGHEIGHT,
-                         angle);
+    return P_SpawnMobj3f(MT_TFOG, x, y, 0, angle, MTF_Z_FLOOR);
 }
 
 typedef struct {
@@ -107,7 +103,7 @@ static mobj_t* getTeleportDestination(short tag)
         {
             params.sec = sec;
 
-            if(!P_IterateThinkers(P_MobjThinker, findMobj, &params))
+            if(!DD_IterateThinkers(P_MobjThinker, findMobj, &params))
             {   // Found one.
                 return params.foundMobj;
             }
@@ -145,20 +141,20 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
 
         // In Final Doom things teleported to their destination but the
         // height wasn't set to the floor.
-        if(gs.gameMission != GM_TNT && gs.gameMission != GM_PLUT)
+        if(gameMission != GM_TNT && gameMission != GM_PLUT)
             mo->pos[VZ] = mo->floorZ;
 
         if(spawnFog)
         {
             // Spawn teleport fog at source and destination.
-            fog = P_SpawnMobj3fv(MT_TFOG, oldPos, oldAngle + ANG180);
+            fog = P_SpawnMobj3fv(MT_TFOG, oldPos, oldAngle + ANG180, 0);
             S_StartSound(SFX_TELEPT, fog);
 
             an = dest->angle >> ANGLETOFINESHIFT;
             fog = P_SpawnMobj3f(MT_TFOG,
                                 dest->pos[VX] + 20 * FIX2FLT(finecosine[an]),
                                 dest->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                mo->pos[VZ], dest->angle + ANG180);
+                                mo->pos[VZ], dest->angle + ANG180, 0);
 
             // Emit sound, where?
             S_StartSound(SFX_TELEPT, fog);

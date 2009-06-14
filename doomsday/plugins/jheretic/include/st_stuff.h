@@ -42,28 +42,25 @@
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
 // Called by main loop.
-void        ST_Ticker(void);
+void            ST_Ticker(void);
 
 // Called by main loop.
-void        ST_Drawer(int player, int fullscreenMode, boolean refresh);
+void            ST_Drawer(int player, int fullscreenMode, boolean refresh);
 
-void        ST_Start(int player);
+void            ST_Start(int player);
 
-void        ST_Stop(int player);
+void            ST_Stop(int player);
 
 // Called by startup code.
-void        ST_Register(void);
-void        ST_Init(void);
+void            ST_Register(void);
+void            ST_Init(void);
 
-void        ST_doPaletteStuff(int player);
-void        ST_updateGraphics(void);
+void            ST_doPaletteStuff(int player);
+void            ST_updateGraphics(void);
 
 // Called when it might be neccessary for the hud to unhide.
-void        ST_HUDUnHide(int player, hueevent_t ev);
+void            ST_HUDUnHide(int player, hueevent_t ev);
 
-void        ST_Inventory(int player, boolean show);
-boolean     ST_IsInventoryVisible(int player);
-
-void        ST_InventoryFlashCurrent(int player);
+void            ST_FlashCurrentItem(int player);
 
 #endif

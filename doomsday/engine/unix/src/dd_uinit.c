@@ -114,11 +114,11 @@ static void determineGlobalPaths(application_t *app)
     if(ArgCheckWith("-basedir", 1))
     {
         strcpy(ddBasePath, ArgNext());
-        Dir_ValidDir(ddBasePath);
+        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
     }
 
-    Dir_MakeAbsolute(ddBasePath);
-    Dir_ValidDir(ddBasePath);
+    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
 
     printf("determineGlobalPaths: Base path = %s\n", ddBasePath);
 }
@@ -295,14 +295,14 @@ static int initDGL(void)
     return Sys_PreInitGL();
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    char               *cmdLine;
+    char*               cmdLine;
     int                 i, length;
     int                 exitCode = 0;
     boolean             doShutdown = true;
     char                buf[256];
-    char               *libName = NULL;
+    const char*         libName = NULL;
 
     app.userDirOk = true;
 
@@ -349,7 +349,7 @@ int main(int argc, char **argv)
         {
             DD_ErrorBox(true, "Error initializing plugin system.");
         }
-        
+
         // Determine our basedir, and other global paths.
         determineGlobalPaths(&app);
 

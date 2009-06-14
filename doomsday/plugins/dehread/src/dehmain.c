@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1998-2003 Randy Heit. <rheit@iastate.edu> (Zdoom)
+ *\author Copyright © 1998-2003 Randy Heit <rheit@iastate.edu> (Zdoom)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -755,7 +755,7 @@ int PatchThing(int thingy)
         { "Death", 5, SN_DEATH },
         { "Exploding", 9, SN_XDEATH },
         { "Respawn", 7, SN_RAISE },
-        { NULL, -1 }
+        { NULL, 0 }
     };
     // Flags can be specified by name (a .bex extension):
     static const struct {
@@ -1496,7 +1496,7 @@ int PatchPars(int dummy)
             par = atoi(space);
         }
 
-        info = 0;
+        info = NULL;
         /*if (!(info = FindLevelInfo (mapname)) ) {
            Printf (PRINT_HIGH, "No map %s\n", mapname);
            continue;
@@ -1508,7 +1508,9 @@ int PatchPars(int dummy)
                 break;
             }
 
-        info->parTime = (float) par;
+        if(info)
+            info->parTime = (float) par;
+
         LPrintf("Par for %s changed to %d\n", mapname, par);
     }
     return result;
@@ -1979,9 +1981,7 @@ void ReadDehacked(char *filename)
  */
 int DefsHook(int hook_type, int parm, void *data)
 {
-    char    temp[256];
-    char   *fn;
-    int     i;
+    int                 i;
 
     verbose = ArgExists("-verbose");
     ded = (ded_t *) data;
@@ -1999,10 +1999,13 @@ int DefsHook(int hook_type, int parm, void *data)
     // How about the -deh option?
     if(ArgCheckWith("-deh", 1))
     {
+        filename_t          temp;
+        const char*         fn;
+
         // Aha! At least one DEH specified. Let's read all of 'em.
         while((fn = ArgNext()) != NULL && fn[0] != '-')
         {
-            M_TranslatePath(fn, temp);
+            M_TranslatePath(temp, fn, FILENAME_T_MAXLEN);
             if(!M_FileExists(temp))
                 continue;
 

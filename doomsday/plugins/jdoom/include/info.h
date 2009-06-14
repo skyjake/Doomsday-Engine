@@ -1677,7 +1677,7 @@ typedef enum {
     TXT_MULTIPLAYER,
     TXT_NOTDESIGNEDFOR,
     TXT_GAMESETUP,
-    TXT_PLAYERPROFILE,
+    TXT_PLAYERSETUP,
     NUMTEXT
 } textenum_t;
 

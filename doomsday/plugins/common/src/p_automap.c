@@ -147,12 +147,17 @@ void Automap_Open(automap_t* map, int yes, int fast)
     if(yes == map->active)
         return; // No change.
 
-    map->oldAlpha = map->alpha;
     map->targetAlpha = (yes? 1.f : 0.f);
     if(fast)
-        map->alpha = map->targetAlpha;
-    // Reset the timer.
-    map->alphaTimer = 0.f;
+    {
+        map->alpha = map->oldAlpha = map->targetAlpha;
+    }
+    else
+    {
+        // Reset the timer.
+        map->oldAlpha = map->alpha;
+        map->alphaTimer = 0.f;
+    }
 
     map->active = (yes? true : false);
 }

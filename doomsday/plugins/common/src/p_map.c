@@ -52,6 +52,8 @@
 #include "p_terraintype.h"
 #include "p_tick.h"
 #include "p_actor.h"
+#include "p_player.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -161,14 +163,80 @@ static boolean puzzleActivated;
 static int tmUnstuck; // $unstuck: used to check unsticking
 #endif
 
+static byte* rejectMatrix = NULL; // For fast sight rejection.
+
 // CODE --------------------------------------------------------------------
 
 float P_GetGravity(void)
 {
-    if(IS_NETGAME && GAMERULES.gravityModifier != -1)
-        return (float) GAMERULES.gravityModifier / 100;
+    if(IS_NETGAME && cfg.netGravity != -1)
+        return (float) cfg.netGravity / 100;
 
     return *((float*) DD_GetVariable(DD_GRAVITY));
+}
+
+/**
+ * Checks the reject matrix to find out if the two sectors are visible
+ * from each other.
+ */
+static boolean checkReject(subsector_t* a, subsector_t* b)
+{
+    if(rejectMatrix != NULL)
+    {
+        uint                s1, s2, pnum, bytenum, bitnum;
+        sector_t*           sec1 = P_GetPtrp(a, DMU_SECTOR);
+        sector_t*           sec2 = P_GetPtrp(b, DMU_SECTOR);
+
+        // Determine subsector entries in REJECT table.
+        s1 = P_ToIndex(sec1);
+        s2 = P_ToIndex(sec2);
+        pnum = s1 * numsectors + s2;
+        bytenum = pnum >> 3;
+        bitnum = 1 << (pnum & 7);
+
+        // Check in REJECT table.
+        if(rejectMatrix[bytenum] & bitnum)
+        {
+            // Can't possibly be connected.
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Look from eyes of t1 to any part of t2 (start from middle of t1).
+ *
+ * @param from          The mobj doing the looking.
+ * @param to            The mobj being looked at.
+ *
+ * @return              @c true if a straight line between t1 and t2 is
+ *                      unobstructed.
+ */
+boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
+{
+    float               fPos[3];
+
+    // If either is unlinked, they can't see each other.
+    if(!from->subsector || !to->subsector)
+        return false;
+
+    if(to->dPlayer && (to->dPlayer->flags & DDPF_CAMERA))
+        return false; // Cameramen don't exist!
+
+    // Check for trivial rejection.
+    if(!checkReject(from->subsector, to->subsector))
+        return false;
+
+    fPos[VX] = from->pos[VX];
+    fPos[VY] = from->pos[VY];
+    fPos[VZ] = from->pos[VZ];
+
+    if(!P_MobjIsCamera(from))
+        fPos[VZ] += from->height + -(from->height / 4);
+
+    return P_CheckLineSight(fPos, to->pos, 0, to->height);
 }
 
 boolean PIT_StompThing(mobj_t* mo, void* data)
@@ -202,7 +270,7 @@ boolean PIT_StompThing(mobj_t* mo, void* data)
         return false;
 #elif __JDOOM__
     // Monsters don't stomp things except on a boss map.
-    if(!tmThing->player && gs.map.id != 30)
+    if(!tmThing->player && gameMap != 30)
         return false;
 #endif
 
@@ -402,7 +470,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
 #if !__JHEXEN__
     // Player only.
     if(tmThing->player && tm[VZ] != DDMAXFLOAT &&
-       (GAMERULES.moveCheckZ || (tmThing->flags2 & MF2_PASSMOBJ)))
+       (cfg.moveCheckZ || (tmThing->flags2 & MF2_PASSMOBJ)))
     {
         if((thing->pos[VZ] > tm[VZ] + tmHeight) ||
            (thing->pos[VZ] + thing->height < tm[VZ]))
@@ -466,7 +534,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
-                if(IS_NETGAME && !GAMERULES.deathmatch && thing->player)
+                if(IS_NETGAME && !deathmatch && thing->player)
                     return true; // don't attack other co-op players
 
                 if((thing->flags2 & MF2_REFLECTIVE) &&
@@ -496,7 +564,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                     if(P_Random() < 128)
                     {
                         P_SpawnMobj3fv(MT_HOLY_PUFF, tmThing->pos,
-                                       P_Random() << 24);
+                                       P_Random() << 24, 0);
                         S_StartSound(SFX_SPIRIT_ATTACK, tmThing);
                         if((thing->flags & MF_COUNTKILL) && P_Random() < 128 &&
                            !S_IsPlaying(SFX_PUPPYBEAT, thing))
@@ -720,7 +788,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             if(!thing->player)
                 return false; // Hit same species as originator, explode, no damage
 #else
-            if(!GAMERULES.monsterInfight && thing->type != MT_PLAYER)
+            if(!monsterInfight && thing->type != MT_PLAYER)
             {
                 // Explode, but do no damage.
                 // Let players missile other players.
@@ -1266,7 +1334,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
         if(!(thing->flags & (MF_DROPOFF | MF_FLOAT)))
         {
             // Dropoff height limit.
-            if(GAMERULES.avoidDropoffs)
+            if(cfg.avoidDropoffs)
             {
                 if(tmFloorZ - tmDropoffZ > 24)
                     return false; // Don't stand over dropoff.
@@ -1679,7 +1747,7 @@ if(lineWasHit)
     if(puffType == MT_BLASTERPUFF1)
     {   // Make blaster big puff.
         mobj_t*             mo =
-            P_SpawnMobj3fv(MT_BLASTERPUFF2, pos, P_Random() << 24);
+            P_SpawnMobj3fv(MT_BLASTERPUFF2, pos, P_Random() << 24, 0);
 
         S_StartSound(SFX_BLSHIT, mo);
     }
@@ -1697,7 +1765,7 @@ if(lineWasHit)
                             pos[VX], pos[VY]);
 
 #if __JHEXEN__
-        if(puffType == MT_FLAMEPUFF2)
+        if(PuffType == MT_FLAMEPUFF2)
         {   // Cleric FlameStrike does fire damage.
             damageDone = P_DamageMobj(th, &lavaInflictor, shootThing,
                                       lineAttackDamage, false);
@@ -1720,12 +1788,14 @@ if(lineWasHit)
 #if __JDOOM__ || __JDOOM64__
                     P_SpawnBlood(pos[VX], pos[VY], pos[VZ], lineAttackDamage,
                                  attackAngle + ANG180);
-#elif __JHEXEN__
-                    if(puffType == MT_AXEPUFF || puffType == MT_AXEPUFF_GLOW)
+#else
+# if __JHEXEN__
+                    if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
                     {
                         P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mo);
                     }
-#else
+                    else
+# endif
                     if(P_Random() < 192)
                         P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mo);
 #endif
@@ -1812,7 +1882,7 @@ boolean PTR_AimTraverse(intercept_t* in)
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
-    if(th->player && IS_NETGAME && !GAMERULES.deathmatch)
+    if(th->player && IS_NETGAME && !deathmatch)
         return true; // Don't aim at fellow co-op players.
 #endif
 
@@ -1876,15 +1946,15 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->pClass == PCLASS_FIGHTER ||
-       t1->player->pClass == PCLASS_CLERIC ||
-       t1->player->pClass == PCLASS_MAGE))
+      (t1->player->class == PCLASS_FIGHTER ||
+       t1->player->class == PCLASS_CLERIC ||
+       t1->player->class == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
-            shootZ += (PLRPROFILE.camera.offsetZ - 5);
+            shootZ += (cfg.plrViewHeight - 5);
     }
     else
         shootZ += (t1->height / 2) + 8;
@@ -1905,11 +1975,11 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
 
     if(lineTarget)
     {   // While autoaiming, we accept this slope.
-        if(!t1->player || PLRPROFILE.ctrl.useAutoAim)
+        if(!t1->player || !cfg.noAutoAim)
             return aimSlope;
     }
 
-    if(t1->player && !PLRPROFILE.ctrl.useAutoAim)
+    if(t1->player && cfg.noAutoAim)
     {
         // The slope is determined by lookdir.
         return tan(LOOKDIR2RAD(t1->dPlayer->lookDir)) / 1.2;
@@ -1938,15 +2008,15 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->pClass == PCLASS_FIGHTER ||
-       t1->player->pClass == PCLASS_CLERIC ||
-       t1->player->pClass == PCLASS_MAGE))
+      (t1->player->class == PCLASS_FIGHTER ||
+       t1->player->class == PCLASS_CLERIC ||
+       t1->player->class == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
-            shootZ += PLRPROFILE.camera.offsetZ - 5;
+            shootZ += cfg.plrViewHeight - 5;
     }
     else
         shootZ += (t1->height / 2) + 8;
@@ -1959,7 +2029,7 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
                       PT_ADDLINES | PT_ADDMOBJS, PTR_ShootTraverse))
     {
 #if __JHEXEN__
-        switch(puffType)
+        switch(PuffType)
         {
         case MT_PUNCHPUFF:
             S_StartSound(SFX_FIGHTER_PUNCH_MISS, t1);
@@ -2019,10 +2089,10 @@ boolean PIT_RadiusAttack(mobj_t* thing, void* data)
     dist = (dx > dy? dx : dy);
 
 #if __JHEXEN__
-    if(!GAMERULES.noMaxZRadiusAttack)
+    if(!cfg.netNoMaxZRadiusAttack)
         dist = (dz > dist? dz : dist);
 #else
-    if(!(GAMERULES.noMaxZRadiusAttack || (thing->info->flags2 & MF2_INFZBOMBDAMAGE)))
+    if(!(cfg.netNoMaxZRadiusAttack || (thing->info->flags2 & MF2_INFZBOMBDAMAGE)))
         dist = (dz > dist? dz : dist);
 #endif
 
@@ -2104,7 +2174,7 @@ boolean PTR_UseTraverse(intercept_t* in)
         if(OPENRANGE <= 0)
         {
             if(useThing->player)
-                S_StartSound(PCLASS_INFO(useThing->player->pClass)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
                              useThing);
 
             return false; // Can't use through a wall.
@@ -2116,7 +2186,7 @@ boolean PTR_UseTraverse(intercept_t* in)
             float       pheight = useThing->pos[VZ] + useThing->height/2;
 
             if((OPENTOP < pheight) || (OPENBOTTOM > pheight))
-                S_StartSound(PCLASS_INFO(useThing->player->pClass)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
                              useThing);
         }
 #endif
@@ -2580,7 +2650,7 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
             // Spray blood in a random direction.
             mo = P_SpawnMobj3f(MT_BLOOD, thing->pos[VX], thing->pos[VY],
                                thing->pos[VZ] + (thing->height /2),
-                               P_Random() << 24);
+                               P_Random() << 24, 0);
 
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 12);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 12);
@@ -2992,7 +3062,7 @@ boolean PTR_PuzzleItemTraverse(intercept_t* in)
 
                 if(puzzleItemUser->player)
                 {
-                    switch(puzzleItemUser->player->pClass)
+                    switch(puzzleItemUser->player->class)
                     {
                     case PCLASS_FIGHTER:
                         sound = SFX_PUZZLE_FAIL_FIGHTER;
@@ -3085,6 +3155,11 @@ boolean P_UsePuzzleItem(player_t* player, int itemType)
 
     P_PathTraverse(pos1[VX], pos1[VY], pos2[VX], pos2[VY],
                    PT_ADDLINES | PT_ADDMOBJS, PTR_PuzzleItemTraverse);
+
+    if(!puzzleActivated)
+    {
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+    }
 
     return puzzleActivated;
 }

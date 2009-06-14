@@ -96,7 +96,7 @@ boolean firstDED;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean defsInited = false;
-static char* dedFiles[MAX_READ];
+static const char* dedFiles[MAX_READ];
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
@@ -125,7 +125,7 @@ static int GetXGClasses(void)
  */
 void Def_Init(void)
 {
-    int                 c;
+    int                 i, c, p;
 
     sprNames = NULL; // Sprite name list.
     mobjInfo = NULL;
@@ -147,41 +147,31 @@ void Def_Init(void)
 
     DED_Init(&defs);
 
+    for(i = 0; i < MAX_READ; ++i)
+        dedFiles[i] = NULL;
+
     // The engine defs.
-    dedFiles[0] = defsFileName;
+    c = 0;
+    dedFiles[c++] = defsFileName;
 
     // Add the default ded. It will be overwritten by -defs.
-    dedFiles[c = 1] = topDefsFileName;
+    dedFiles[c++] = topDefsFileName;
 
     // See which .ded files are specified on the command line.
-    if(ArgCheck("-defs"))
+    for(p = 0; p < Argc(); ++p)
     {
-        while(c < MAX_READ)
+        const char*         arg = Argv(p);
+
+        if(stricmp(arg, "-def") && stricmp(arg, "-defs"))
+            continue;
+
+        while(c < MAX_READ && ++p != Argc() && !ArgIsOption(p))
         {
-            char*               arg = ArgNext();
-
-            if(!arg || arg[0] == '-')
-                break;
-
             // Add it to the list.
-            dedFiles[c++] = arg;
+            dedFiles[c++] = Argv(p);
         }
-    }
 
-    // How about additional .ded files?
-    if(ArgCheckWith("-def", 1))
-    {
-        // Find the next empty place.
-        for(c = 0; dedFiles[c] && c < MAX_READ; ++c);
-            while(c < MAX_READ)
-            {
-                char*               arg = ArgNext();
-
-                if(!arg || arg[0] == '-')
-                    break;
-                // Add it to the list.
-                dedFiles[c++] = arg;
-            }
+        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
 }
 
@@ -217,19 +207,20 @@ void Def_Destroy(void)
  * Guesses the location of the Defs Auto directory based on main DED
  * file.
  */
-void Def_GetAutoPath(char* path)
+void Def_GetAutoPath(char* path, size_t len)
 {
     char*               lastSlash;
 
-    strcpy(path, topDefsFileName);
+    strncpy(path, topDefsFileName, len);
     lastSlash = strrchr(path, DIR_SEP_CHAR);
     if(!lastSlash)
     {
-        strcpy(path, ""); // Failure!
+        strncpy(path, "", len); // Failure!
         return;
     }
 
-    strcpy(lastSlash + 1, "auto" DIR_SEP_STR);
+    strncpy(lastSlash + 1, "auto" DIR_SEP_STR,
+            len - ((lastSlash + 1) - path));
 }
 
 /**
@@ -560,6 +551,22 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
     return NULL; // Not found.
 }
 
+ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
+{
+    int                 i;
+    ded_ptcgen_t*       def;
+
+    // Search for a suitable definition.
+    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    {
+        // It must be for this type of mobj.
+        if(def->damageNum == mobjType)
+            return def;
+    }
+
+    return NULL;
+}
+
 ded_xgclass_t* Def_GetXGClass(const char* name)
 {
     ded_xgclass_t*      def;
@@ -702,7 +709,9 @@ void Def_ReadProcessDED(const char* fileName)
     filename_t          fn, fullFn;
     directory_t         dir;
 
-    Dir_FileName(fileName, fn);
+    memset(&dir, 0, sizeof(dir));
+
+    Dir_FileName(fn, fileName, FILENAME_T_MAXLEN);
 
     // We want an absolute path.
     if(!Dir_IsAbsolute(fileName))
@@ -712,7 +721,7 @@ void Def_ReadProcessDED(const char* fileName)
     }
     else
     {
-        strcpy(fullFn, fileName);
+        strncpy(fullFn, fileName, FILENAME_T_MAXLEN);
     }
 
     if(strchr(fn, '*') || strchr(fn, '?'))
@@ -745,7 +754,7 @@ void Def_ReadLumpDefs(void)
     int                 i, c;
 
     for(i = 0, c = 0; i < numLumps; ++i)
-        if(!strnicmp(lumpInfo[i].name, "DD_DEFNS", 8))
+        if(!strnicmp(W_LumpName(i), "DD_DEFNS", 8))
         {
             c++;
             if(!DED_ReadLump(&defs, i))
@@ -835,7 +844,7 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        R_ClearModelPath();
+        R_ClearClassDataPath(DDRC_MODEL);
         Def_Destroy();
     }
 
@@ -881,12 +890,16 @@ void Def_Read(void)
 
     for(i = 0; i < countStates.num; ++i)
     {
-        ded_state_t*        dst = &defs.states[i];
+        ded_state_t*        dstNew, *dst = &defs.states[i];
         // Make sure duplicate IDs overwrite the earliest.
         int                 stateNum = Def_GetStateNum(dst->id);
-        ded_state_t*        dstNew = defs.states + stateNum;
-        state_t*            st = states + stateNum;
+        state_t*            st;
 
+        if(stateNum == -1)
+            continue;
+
+        dstNew = defs.states + stateNum;
+        st = states + stateNum;
         st->sprite = Def_GetSpriteNum(dst->sprite.id);
         st->flags = dst->flags;
         st->frame = dst->frame;
@@ -977,7 +990,7 @@ void Def_Read(void)
 
             if(l->stages[0].type != -1) // Not unused.
             {
-                tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type);
+                if(!(tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type)))
                 VERBOSE( Con_Message("Def_Read: Warning, unknown %s "
                                      "'%s' in material '%s' (layer %i "
                                      "stage %i).\n",
@@ -1166,13 +1179,29 @@ void Def_Read(void)
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (prepend).
-    Dir_FixSlashes(defs.modelPath);
-    R_AddModelPath(defs.modelPath, false);
+    Dir_ValidDir(defs.modelPath, FILENAME_T_MAXLEN);
+    R_AddClassDataPath(DDRC_MODEL, defs.modelPath, false);
+
     // Model search path specified on the command line?
     if(ArgCheckWith("-modeldir", 1))
     {
+        filename_t          path;
+
+        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(path, FILENAME_T_MAXLEN);
+
         // Prepend to the search list; takes precedence.
-        R_AddModelPath(ArgNext(), false);
+        R_AddClassDataPath(DDRC_MODEL, path, false);
+    }
+    if(ArgCheckWith("-modeldir2", 1))
+    {
+        filename_t          path;
+
+        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(path, FILENAME_T_MAXLEN);
+
+        // Prepend to the search list; takes precedence.
+        R_AddClassDataPath(DDRC_MODEL, ArgNext(), false);
     }
 
     defsInited = true;
@@ -1229,6 +1258,41 @@ void Def_PostInit(void)
         R_CreateDetailTexture(&defs.details[i]);
     }
 
+    // Lightmaps and flare textures.
+    GL_DeleteAllTexturesForGLTextures(GLT_LIGHTMAP);
+    GL_DeleteAllTexturesForGLTextures(GLT_FLARE);
+    R_DestroyLightMaps();
+    R_DestroyFlareTextures();
+    for(i = 0; i < defs.count.lights.num; ++i)
+    {
+        ded_light_t*        lig = &defs.lights[i];
+
+        R_CreateLightMap(&lig->up);
+        R_CreateLightMap(&lig->down);
+        R_CreateLightMap(&lig->sides);
+
+        R_CreateFlareTexture(&lig->flare);
+    }
+
+    for(i = 0; i < defs.count.decorations.num; ++i)
+    {
+        ded_decor_t*        decor = &defs.decorations[i];
+
+        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        {
+            ded_decorlight_t*   lig = &decor->lights[k];
+
+            if(!R_IsValidLightDecoration(lig))
+                break;
+
+            R_CreateLightMap(&lig->up);
+            R_CreateLightMap(&lig->down);
+            R_CreateLightMap(&lig->sides);
+
+            R_CreateFlareTexture(&lig->flare);
+        }
+    }
+
     // Surface reflections.
     GL_DeleteAllTexturesForGLTextures(GLT_SHINY);
     GL_DeleteAllTexturesForGLTextures(GLT_MASK);
@@ -1250,81 +1314,6 @@ void Def_PostInit(void)
     for(i = 0; i < defs.count.groups.num; ++i)
     {
         R_InitAnimGroup(&defs.groups[i]);
-    }
-}
-
-void Def_SetLightMap(ded_lightmap_t* map, const char* id,
-                     unsigned int texture)
-{
-    if(stricmp(map->id, id))
-        return; // Not the same lightmap?
-
-    map->tex = texture;
-}
-
-void Def_LightMapLoaded(const char* id, unsigned int texture)
-{
-    int                 i, k;
-    ded_decor_t*        decor;
-
-    // Load lightmaps.
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        Def_SetLightMap(&defs.lights[i].up, id, texture);
-        Def_SetLightMap(&defs.lights[i].down, id, texture);
-        Def_SetLightMap(&defs.lights[i].sides, id, texture);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-
-            Def_SetLightMap(&decor->lights[k].up, id, texture);
-            Def_SetLightMap(&decor->lights[k].down, id, texture);
-            Def_SetLightMap(&decor->lights[k].sides, id, texture);
-        }
-    }
-}
-
-void Def_SetFlareMap(ded_flaremap_t* map, const char* id,
-                     unsigned int texture, boolean disabled,
-                     boolean custom)
-{
-    if(stricmp(map->id, id))
-        return; // Not the same lightmap?
-
-    map->tex = texture;
-    map->disabled = disabled;
-    map->custom = custom;
-}
-
-void Def_FlareMapLoaded(const char* id, unsigned int texture,
-                        boolean disabled, boolean custom)
-{
-    int                 i, k;
-    ded_decor_t*        decor;
-
-    for(i = 0; i < defs.count.lights.num; ++i)
-    {
-        Def_SetFlareMap(&defs.lights[i].flare, id, texture, disabled,
-                        custom);
-    }
-
-    for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        ++i, decor++)
-    {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
-        {
-            if(!R_IsValidLightDecoration(&decor->lights[k]))
-                break;
-
-            Def_SetFlareMap(&decor->lights[k].flare, id, texture,
-                            disabled, custom);
-        }
     }
 }
 
@@ -1663,34 +1652,22 @@ int Def_Set(int type, int index, int value, void* ptr)
     switch(type)
     {
     case DD_DEF_SOUND:
-        {
-        sfxinfo_t*          sfxInfo;
-
         if(index < 0 || index >= countSounds.num)
             Con_Error("Def_Set: Sound index %i is invalid.\n", index);
-        sfxInfo = &sounds[index];
 
         switch(value)
         {
         case DD_LUMP:
-            {
-            char*               lumpName = (char*) ptr;
-
             S_StopSound(index, 0);
-
-            memset(sfxInfo->lumpName, 0, sizeof(sfxInfo->lumpName));
-            if(lumpName && lumpName[0])
-                strncpy(sfxInfo->lumpName, lumpName, 8);
-
-            sfxInfo->lumpNum = W_CheckNumForName(sfxInfo->lumpName);
-            }
+            strcpy(sounds[index].lumpName, ptr);
+            sounds[index].lumpNum = W_CheckNumForName(sounds[index].lumpName);
             break;
 
         default:
             break;
         }
         break;
-        }
+
     case DD_DEF_MUSIC:
         if(index == DD_NEW)
         {

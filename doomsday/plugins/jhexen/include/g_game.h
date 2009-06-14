@@ -32,55 +32,30 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "x_config.h"
+#include "p_mobj.h"
 
-typedef struct {
-    gamemode_t      gameMode;
-    int             gameModeBits;
-    // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-    char            gameModeString[17];
+extern int debugSound; // debug flag for displaying sound info
 
-    gameaction_t    action;
-    gamestate_t     state, stateLast;
-    boolean         paused;
-    boolean         userGame; // Ok to save / end game.
+extern int gameEpisode;
+extern int gameMap;
+extern skillmode_t gameSkill;
+extern boolean deathmatch;
+extern boolean userGame;
 
-    playerprofile_t playerProfile;
-    struct {
-        playerclass_t   pClass; // Original class, current may differ.
-        byte            color; // Current color.
-    } players[MAXPLAYERS];
-
-    skillmode_t     skill;
-    int             episode; // Unused in jHexen.
-
-    struct {
-        int             id; // Id of the current map.
-        int             startTic; // Game tic at map start.
-        // Position indicator for cooperative net-play reborn.
-        int             rebornPosition;
-    } map;
-    struct {
-        int             id; // Id of the previous map.
-        int             leavePosition;
-    } mapPrev;
-
-    byte            netEpisode; // Unused in jHexen.
-    byte            netMap;
-    byte            netSkill;
-    byte            netSlot;
-
-    gamerules_t     rules;
-    gameconfig_t    cfg;
-} game_state_t;
-
-#define PLRPROFILE          (gs.playerProfile)
-#define GAMERULES           (gs.rules)
-
-extern game_state_t gs;
+extern int rebornPosition;
+extern int leaveMap;
+extern int leavePosition;
+extern boolean secretExit;
 
 extern int gsvMapMusic;
 
+void            R_InitRefresh(void);
+void            R_GetTranslation(int plrClass, int plrColor, int* tclass,
+                                 int* tmap);
+void            R_SetTranslation(mobj_t* mo);
+
 void            G_PrintMapList(void);
+
+void            G_SaveGame(int slot, const char* description);
 
 #endif

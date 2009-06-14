@@ -44,6 +44,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+  PROF_BIAS_UPDATE
+END_PROF_TIMERS()
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct affection_s {
@@ -141,17 +145,9 @@ static __inline void freeBiasSurface(biassurface_t* bsuf)
     M_Free(bsuf);
 }
 
-biassurface_t* SB_CreateSurface(uint num)
+biassurface_t* SB_CreateSurface(void)
 {
-    uint                i;
     biassurface_t*      bsuf = allocBiasSurface();
-
-    bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * num, PU_MAP, 0);
-    bsuf->size = num;
-    for(i = 0; i < bsuf->size; ++i)
-    {
-        SB_InitVertexIllum(&bsuf->illum[i]);
-    }
 
     // Link it in to the global list.
     bsuf->next = surfaces;
@@ -327,6 +323,8 @@ void SB_Clear(void)
  */
 void SB_InitForMap(const char* uniqueID)
 {
+    uint                startTime = Sys_GetRealTime();
+
     int                 i;
     ded_light_t*        def;
 
@@ -356,7 +354,42 @@ void SB_InitForMap(const char* uniqueID)
     // Create biassurfaces for all current worldmap surfaces.
     {
     uint                i;
+    size_t              numVertIllums = 0;
+    vertexillum_t*      illums;
 
+    // First, determine the total number of vertexillum_ts we need.
+    for(i = 0; i < numSegs; ++i)
+        if(segs[i].lineDef)
+            numVertIllums++;
+
+    numVertIllums *= 3 * 4;
+
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t*           sec = &sectors[i];
+        subsector_t**       ssecPtr = sec->ssectors;
+
+        while(*ssecPtr)
+        {
+            subsector_t*        ssec = *ssecPtr;
+            numVertIllums += ssec->numVertices * sec->planeCount;
+            *ssecPtr++;
+        }
+    }
+
+    for(i = 0; i < numPolyObjs; ++i)
+    {
+        polyobj_t*          po = polyObjs[i];
+
+        numVertIllums += po->numSegs * 3 * 4;
+    }
+
+    // Allocate and initialize the vertexillum_ts.
+    illums = Z_Calloc(sizeof(vertexillum_t) * numVertIllums, PU_MAP, 0);
+    for(i = 0; i < numVertIllums; ++i)
+        SB_InitVertexIllum(&illums[i]);
+
+    // Allocate bias surfaces and attach vertexillum_ts.
     for(i = 0; i < numSegs; ++i)
     {
         seg_t*              seg = &segs[i];
@@ -366,7 +399,15 @@ void SB_InitForMap(const char* uniqueID)
             continue;
 
         for(j = 0; j < 3; ++j)
-            seg->bsuf[j] = SB_CreateSurface(4);
+        {
+            biassurface_t*      bsuf = SB_CreateSurface();
+
+            bsuf->size = 4;
+            bsuf->illum = illums;
+            illums += 4;
+
+            seg->bsuf[j] = bsuf;
+        }
     }
 
     for(i = 0; i < numSectors; ++i)
@@ -380,7 +421,16 @@ void SB_InitForMap(const char* uniqueID)
             uint                j;
 
             for(j = 0; j < sec->planeCount; ++j)
-                ssec->bsuf[j] = SB_CreateSurface(ssec->numVertices);
+            {
+                biassurface_t*      bsuf = SB_CreateSurface();
+
+                bsuf->size = ssec->numVertices;
+                bsuf->illum = illums;
+                illums += ssec->numVertices;
+
+                ssec->bsuf[j] = bsuf;
+            }
+
             *ssecPtr++;
         }
     }
@@ -396,10 +446,22 @@ void SB_InitForMap(const char* uniqueID)
             int                 k;
 
             for(k = 0; k < 3; ++k)
-                seg->bsuf[k] = SB_CreateSurface(4);
+            {
+                biassurface_t*      bsuf = SB_CreateSurface();
+
+                bsuf->size = 4;
+                bsuf->illum = illums;
+                illums += 4;
+
+                seg->bsuf[k] = bsuf;
+            }
         }
     }
     }
+
+    // How much time did we spend?
+    VERBOSE(Con_Message("SB_InitForMap: Done in %.2f seconds.\n",
+                        (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 void SB_SetColor(float* dest, float* src)
@@ -686,8 +748,20 @@ void SB_BeginFrame(void)
     source_t*           s;
     biastracker_t       allChanges;
 
+#ifdef DD_PROFILE
+    static int          i;
+
+    if(++i > 40)
+    {
+        i = 0;
+        PRINT_PROF( PROF_BIAS_UPDATE );
+    }
+#endif
+
     if(!useBias)
         return;
+
+BEGIN_PROF( PROF_BIAS_UPDATE );
 
     // The time that applies on this frame.
     currentTimeSB = Sys_GetRealTime();
@@ -759,6 +833,8 @@ void SB_BeginFrame(void)
         }
     }
     }
+
+END_PROF( PROF_BIAS_UPDATE );
 }
 
 void SB_EndFrame(void)
@@ -1129,7 +1205,7 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
         V3_Scale(surfacePoint, 1.f / 100);
         V3_Sum(surfacePoint, surfacePoint, point);
 
-        if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint))
+        if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint, -1, 1))
         {
             // LOS fail.
             if(casted)

@@ -52,7 +52,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    float   pos[3];
+    float           pos[3];
 } vector_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -65,7 +65,7 @@ typedef struct {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float   rModelAspectMod = 1 / 1.2f; //.833334f;
+float rModelAspectMod = 1 / 1.2f; //.833334f;
 
 // The dummy is used for model zero.
 model_t dummy = { true, "Dummy-Dummy" };
@@ -81,8 +81,6 @@ float avertexnormals[NUMVERTEXNORMALS][3] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static ddstring_t modelPath;
-
 static int maxModelDefs;
 static modeldef_t** stateModefs;
 
@@ -93,9 +91,9 @@ static modeldef_t** stateModefs;
  */
 static void UnpackVector(unsigned short packed, float vec[3])
 {
-    float       yaw = (packed & 511) / 512.0f * 2 * PI;
-    float       pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
-    float       cosp = (float) cos(pitch);
+    float               yaw = (packed & 511) / 512.0f * 2 * PI;
+    float               pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+    float               cosp = (float) cos(pitch);
 
     vec[VX] = (float) cos(yaw) * cosp;
     vec[VY] = (float) sin(yaw) * cosp;
@@ -105,9 +103,9 @@ static void UnpackVector(unsigned short packed, float vec[3])
 /**
  * Returns an index if the specified model has already been loaded.
  */
-static int R_FindModelFor(const char *filename)
+static int R_FindModelFor(const char* filename)
 {
-    int         i;
+    int                 i;
 
     for(i = 0; i < MAX_MODELS; ++i)
         if(modellist[i] && !stricmp(modellist[i]->fileName, filename))
@@ -120,7 +118,7 @@ static int R_FindModelFor(const char *filename)
  */
 static int R_NewModelFor(void /*const char *filename*/)
 {
-    int         i;
+    int                 i;
 
     // Take the first empty spot.
     for(i = 0; i < MAX_MODELS; ++i)
@@ -207,103 +205,10 @@ static void *AllocAndLoad(DFILE *file, int offset, int len)
     return ptr;
 }
 
-void R_ClearModelPath(void)
-{
-    // Free the old path.
-    Str_Free(&modelPath);
-}
-
-/**
- * Appends or prepends a new path to the list of model search paths.
- * -modeldir prepends, DED files append search paths.
- */
-void R_AddModelPath(char *addPath, boolean append)
-{
-    // Compile the new search path.
-    if(append)
-    {
-        Str_Append(&modelPath, ";");
-        Str_Append(&modelPath, addPath);
-    }
-    else
-    {
-        Str_Prepend(&modelPath, ";");
-        Str_Prepend(&modelPath, addPath);
-    }
-}
-
-/**
- * Returns true if the file was found.
- */
-int R_FindModelFile(const char *filename, char *outfn)
-{
-    char                buf[256], ext[50];
-
-    if(!filename || !filename[0])
-        return false;
-
-    // DMD takes precedence over MD2.
-    strcpy(buf, filename);
-    M_GetFileExt(buf, ext);
-    if(!stricmp(ext, "md2"))
-    {
-        // Swap temporarily to DMD and see if it exists.
-        M_ReplaceFileExt(buf, "dmd");
-        if(FH_Find(buf, outfn))
-            return true;
-        M_ReplaceFileExt(buf, "md2");
-    }
-
-    // Try finding the given file name.
-    if(FH_Find(buf, outfn))
-        return true;
-
-    // How about alternative extensions?
-    // If DMD is not found, try MD2 instead.
-    if(!stricmp(ext, "dmd"))
-    {
-        M_ReplaceFileExt(buf, "md2");
-        if(FH_Find(buf, outfn))
-            return true;
-    }
-
-    // Try loading using the base path as the starting point.
-    if(!Dir_IsAbsolute(filename))
-    {
-        strcpy(buf, ddBasePath);
-        strcat(buf, filename);
-        if(F_Access(buf))
-        {
-            VERBOSE2(Con_Printf
-                     ("R_FindModelFile: " "Base path hit: %s\n", buf));
-
-            strcpy(outfn, buf);
-            return true;        // Got it.
-        }
-    }
-
-    // No success.
-    return false;
-}
-
-/**
- * Searches the model paths for the file and opens it.
- */
-#if 0 // unused atm
-static DFILE *R_OpenModelFile(char *filename)
-{
-    char        buf[256];
-
-    if(R_FindModelFile(filename, buf))
-        return F_Open(buf, "rb");
-    return NULL;
-}
-#endif
-
-static void R_MissingModel(const char *fn)
+static void R_MissingModel(const char* fn)
 {
     //if(verbose)
-    Con_Printf("  %s not found.\n", fn);
+    Con_Printf("Warning: Failed to locate model \"%s\".\n", fn);
 }
 
 static void R_LoadModelMD2(DFILE *file, model_t *mdl)
@@ -373,6 +278,14 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
 
             // Aspect undoing.
             frame->vertices[k].xyz[VY] *= rModelAspectMod;
+
+            for(c = 0; c < 3; ++c)
+            {
+                if(!k || frame->vertices[k].xyz[c] < frame->min[c])
+                    frame->min[c] = frame->vertices[k].xyz[c];
+                if(!k || frame->vertices[k].xyz[c] > frame->max[c])
+                    frame->max[c] = frame->vertices[k].xyz[c];
+            }
         }
     }
     M_Free(frames);
@@ -463,6 +376,14 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
             }
             // Aspect undo.
             frame->vertices[k].xyz[1] *= rModelAspectMod;
+
+            for(c = 0; c < 3; ++c)
+            {
+                if(!k || frame->vertices[k].xyz[c] < frame->min[c])
+                    frame->min[c] = frame->vertices[k].xyz[c];
+                if(!k || frame->vertices[k].xyz[c] > frame->max[c])
+                    frame->max[c] = frame->vertices[k].xyz[c];
+            }
         }
     }
     M_Free(temp);
@@ -499,39 +420,33 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
         M_Free(triangles[i]);
 }
 
-static void R_RegisterModelSkin(model_t *mdl, int index)
+static void R_RegisterModelSkin(model_t* mdl, int index)
 {
-    filename_t          buf;
+    mdl->skins[index].id = R_RegisterSkin(NULL, mdl->skins[index].name,
+        mdl->fileName, false, FILENAME_T_MAXLEN);
 
-    memset(buf, 0, sizeof(buf));
-    memcpy(buf, mdl->skins[index].name, 64);
-
-    mdl->skins[index].id =
-        R_RegisterSkin(buf, mdl->fileName, mdl->skins[index].name);
-
-    if(mdl->skins[index].id < 0)
-    {
-        // Not found!
-        VERBOSE(Con_Printf("  %s (#%i) not found.\n", buf, index));
+    if(!mdl->skins[index].id)
+    {   // Not found!
+        VERBOSE(Con_Printf("  %s (#%i) not found.\n",
+                           mdl->skins[index].name, index));
     }
 }
 
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(char *origfn)
+static int R_LoadModel(char* origfn)
 {
     int                 i, index;
-    model_t            *mdl;
-    DFILE              *file = NULL;
-    char                filename[256];
+    model_t*            mdl;
+    DFILE*              file = NULL;
+    filename_t          filename;
 
-    if(!origfn[0])
+    if(!origfn || !origfn[0])
         return 0; // No model specified.
 
-    VERBOSE2(Con_Message("R_LoadModel: %s\n", origfn));
-
-    if(!R_FindModelFile(origfn, filename))
+    if(!R_FindResource2(RT_MODEL, DDRC_MODEL, filename, origfn, NULL,
+                        FILENAME_T_MAXLEN))
     {
         R_MissingModel(origfn);
         return 0;
@@ -587,7 +502,7 @@ static int R_LoadModel(char *origfn)
     mdl->loaded = true;
     mdl->allowTexComp = true;
     F_Close(file);
-    strcpy(mdl->fileName, filename);
+    strncpy(mdl->fileName, filename, FILENAME_T_MAXLEN);
 
     // Determine the actual (full) paths.
     for(i = 0; i < mdl->info.numSkins; ++i)
@@ -811,29 +726,21 @@ if(mo->dPlayer)
     return interp;
 }
 
-static model_frame_t *R_GetModelFrame(int model, int frame)
+static model_frame_t* R_GetModelFrame(int model, int frame)
 {
     return modellist[model]->frames + frame;
 }
 
-static void R_GetModelBounds(int model, int frame, float min[3], float max[3])
+static void R_GetModelBounds(int model, int frame, float min[3],
+                             float max[3])
 {
-    int                 i, k;
-    model_frame_t      *mframe = R_GetModelFrame(model, frame);
-    model_t            *mo = modellist[model];
-    model_vertex_t     *v;
+    model_frame_t*      mframe = R_GetModelFrame(model, frame);
 
     if(!mframe)
         Con_Error("R_GetModelBounds: bad model/frame.\n");
 
-    for(i = 0, v = mframe->vertices; i < mo->info.numVertices; ++i, v++)
-        for(k = 0; k < 3; ++k)
-        {
-            if(!i || v->xyz[k] < min[k])
-                min[k] = v->xyz[k];
-            if(!i || v->xyz[k] > max[k])
-                max[k] = v->xyz[k];
-        }
+    memcpy(min, mframe->min, sizeof(float)*3);
+    memcpy(max, mframe->max, sizeof(float)*3);
 }
 
 /**
@@ -894,18 +801,32 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
     R_ScaleModel(mf, ms.height, off);
 }
 
-static float R_GetModelVisualRadius(modeldef_t* mf)
+float R_GetModelVisualRadius(modeldef_t* mf)
 {
-    float               min[3], max[3];
+    int                 i;
+    float               maxRadius = 0;
 
     if(!mf->sub[0].model)
         return 0;
 
-    // Use the first submodel's bounds.
-    R_GetModelBounds(mf->sub[0].model, mf->sub[0].frame, min, max);
-    // Half of the average of width and depth.
-    return (mf->scale[VX] * (max[VX] - min[VX]) +
-            mf->scale[VZ] * (max[VZ] - min[VZ])) / 3.5f;
+    // Use the first frame bounds.
+    for(i = 0; i < MAX_FRAME_MODELS; ++i)
+    {
+        float               min[3], max[3], radius;
+
+        if(!mf->sub[i].model)
+            break;
+
+        R_GetModelBounds(mf->sub[i].model, mf->sub[i].frame, min, max);
+
+        // Half the distance from bottom left to top right.
+        radius = (mf->scale[VX] * (max[VX] - min[VX]) +
+                  mf->scale[VZ] * (max[VZ] - min[VZ])) / 3.5f;
+        if(radius > maxRadius)
+            maxRadius = radius;
+    }
+
+    return maxRadius;
 }
 
 /**
@@ -957,7 +878,7 @@ static modeldef_t *R_GetIDModelDef(const char *id)
     // Get a new entry.
     md = modefs + numModelDefs++;
     memset(md, 0, sizeof(*md));
-    strcpy(md->id, id);
+    strncpy(md->id, id, MODELDEF_ID_MAXLEN);
     return md;
 }
 
@@ -1090,8 +1011,8 @@ static void setupModel(ded_model_t *def)
             sub->offset[k] = subdef->offset[k];
 
         sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinySkin =
-            R_RegisterSkin(subdef->shinySkin, subdef->filename.path, NULL);
+        sub->shinySkin = R_RegisterSkin(subdef->filename.path,
+            subdef->shinySkin, NULL, true, DED_PATH_LEN);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
@@ -1179,7 +1100,7 @@ void R_InitModels(void)
 {
     int                 i, k, minsel;
     float               minmark;
-    modeldef_t         *me, *other, *closest;
+    modeldef_t*         me, *other, *closest;
     uint                usedTime;
 
     // Dedicated servers do nothing with models.
@@ -1187,17 +1108,6 @@ void R_InitModels(void)
         return;
 
     Con_Message("R_InitModels: Initializing MD2 models.\n");
-    VERBOSE2(Con_Message("  Search path: %s\n", modelPath.str));
-
-    // Build the file hash for searching model files.
-    usedTime = Sys_GetRealTime();
-    FH_Init(modelPath.str);
-    VERBOSE(Con_Message
-            ("  File hash built in %.2f seconds.\n",
-             (Sys_GetRealTime() - usedTime) / 1000.0f));
-
-    //Con_InitProgress("R_Init: Initializing models...", defs.count.models.num);
-
     usedTime = Sys_GetRealTime();
 
     if(modefs)
@@ -1344,6 +1254,8 @@ void R_PrecacheModelSkins(modeldef_t* modef)
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
     {
+        const skinname_t*       sn;
+
         if(!modef->sub[sub].model)
             continue;
 
@@ -1351,18 +1263,22 @@ void R_PrecacheModelSkins(modeldef_t* modef)
         // Load all skins.
         for(k = 0; k < mdl->info.numSkins; ++k)
         {
-            skintex_t*          st;
-
-            st = R_GetSkinTexByIndex(mdl->skins[k].id);
-            if(st)
+            if((sn = R_GetSkinNameByIndex(mdl->skins[k].id)))
             {
-                GL_BindTexture(GL_PrepareSkin(st, mdl->allowTexComp),
-                               glmode[texMagMode]);
+                material_load_params_t params;
+
+                memset(&params, 0, sizeof(params));
+                params.flags = (!mdl->allowTexComp? MLF_TEX_NO_COMPRESSION : 0);
+
+                GL_PrepareGLTexture(sn->id, &params, NULL);
             }
         }
 
-        GL_BindTexture(GL_PrepareShinySkin(R_GetSkinTexByIndex(modef->sub[sub].shinySkin)),
-                       glmode[texMagMode]);
+        // Load the shiny skin.
+        if((sn = R_GetSkinNameByIndex(modef->sub[sub].shinySkin)))
+        {
+            GL_PrepareGLTexture(sn->id, NULL, NULL);
+        }
     }
 }
 

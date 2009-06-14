@@ -52,8 +52,8 @@
 // All the versions of DOOM have different savegame IDs, but 500 will be the
 // savegame base from now on.
 #define SAVE_VERSION_BASE   500
-#define SAVE_VERSION        (SAVE_VERSION_BASE + gs.gameMode)
-#define SAVESTRINGSIZE      (24)
+#define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
+#define V19_SAVESTRINGSIZE  (24)
 #define VERSIONSIZE         (16)
 
 #define FF_FULLBRIGHT       (0x8000) // Used to be a flag in thing->frame.
@@ -107,7 +107,7 @@ static void SV_ReadPlayer(player_t* pl)
     int             i;
 
     SV_ReadLong();
-    pl->pState = SV_ReadLong();
+    pl->playerState = SV_ReadLong();
     SV_Read(NULL, 8);
     pl->plr->viewZ = FIX2FLT(SV_ReadLong());
     pl->plr->viewHeight = FIX2FLT(SV_ReadLong());
@@ -205,7 +205,7 @@ static void SV_ReadMobj(void)
     float               pos[3], mom[3], radius, height, floorz, ceilingz;
     angle_t             angle;
     spritenum_t         sprite;
-    int                 frame, valid, type, ddflags;
+    int                 frame, valid, type, ddflags = 0;
     mobj_t             *mo;
     mobjinfo_t*         info;
 
@@ -314,10 +314,14 @@ static void SV_ReadMobj(void)
     // For nightmare respawn.
     mo->spawnSpot.pos[VX] = (float) SV_ReadShort();
     mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
-    mo->spawnSpot.pos[VZ] = ONFLOORZ;
+    mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
     mo->spawnSpot.type = (int) SV_ReadShort();
+
     mo->spawnSpot.flags = (int) SV_ReadShort();
+    mo->spawnSpot.flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    // Spawn on the floor by default unless the mobjtype flags override.
+    mo->spawnSpot.flags |= MTF_Z_FLOOR;
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();
@@ -459,8 +463,8 @@ enum thinkerclass_e {
     byte                tClass;
 
     // Remove all the current thinkers.
-    P_IterateThinkers(NULL, removeThinker, NULL);
-    P_InitThinkers();
+    DD_IterateThinkers(NULL, removeThinker, NULL);
+    DD_InitThinkers();
 
     // Read in saved thinkers.
     for(;;)
@@ -521,7 +525,7 @@ typedef struct {
 
     ceiling->thinker.function = T_MoveCeiling;
     if(!(temp + V19_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&ceiling->thinker, true);
+        DD_ThinkerSetStasis(&ceiling->thinker, true);
 
     P_ToXSector(ceiling->sector)->specialData = ceiling;
     return true; // Add this thinker.
@@ -646,7 +650,7 @@ typedef struct {
 
     plat->thinker.function = T_PlatRaise;
     if(!(temp + V19_THINKER_T_FUNC_OFFSET))
-        P_ThinkerSetStasis(&plat->thinker, true);
+        DD_ThinkerSetStasis(&plat->thinker, true);
 
     P_ToXSector(plat->sector)->specialData = plat;
     return true; // Add this thinker.
@@ -788,65 +792,65 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_ceiling:
             PADSAVEP();
-            ceiling = Z_Calloc(sizeof(*ceiling), PU_MAPSPEC, NULL);
+            ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, NULL);
 
             SV_ReadCeiling(ceiling);
 
-            P_ThinkerAdd(&ceiling->thinker);
+            DD_ThinkerAdd(&ceiling->thinker);
             break;
 
         case tc_door:
             PADSAVEP();
-            door = Z_Calloc(sizeof(*door), PU_MAPSPEC, NULL);
+            door = Z_Calloc(sizeof(*door), PU_MAP, NULL);
 
             SV_ReadDoor(door);
 
-            P_ThinkerAdd(&door->thinker);
+            DD_ThinkerAdd(&door->thinker);
             break;
 
         case tc_floor:
             PADSAVEP();
-            floor = Z_Calloc(sizeof(*floor), PU_MAPSPEC, NULL);
+            floor = Z_Calloc(sizeof(*floor), PU_MAP, NULL);
 
             SV_ReadFloor(floor);
 
-            P_ThinkerAdd(&floor->thinker);
+            DD_ThinkerAdd(&floor->thinker);
             break;
 
         case tc_plat:
             PADSAVEP();
-            plat = Z_Calloc(sizeof(*plat), PU_MAPSPEC, NULL);
+            plat = Z_Calloc(sizeof(*plat), PU_MAP, NULL);
 
             SV_ReadPlat(plat);
 
-            P_ThinkerAdd(&plat->thinker);
+            DD_ThinkerAdd(&plat->thinker);
             break;
 
         case tc_flash:
             PADSAVEP();
-            flash = Z_Calloc(sizeof(*flash), PU_MAPSPEC, NULL);
+            flash = Z_Calloc(sizeof(*flash), PU_MAP, NULL);
 
             SV_ReadFlash(flash);
 
-            P_ThinkerAdd(&flash->thinker);
+            DD_ThinkerAdd(&flash->thinker);
             break;
 
         case tc_strobe:
             PADSAVEP();
-            strobe = Z_Calloc(sizeof(*strobe), PU_MAPSPEC, NULL);
+            strobe = Z_Calloc(sizeof(*strobe), PU_MAP, NULL);
 
             SV_ReadStrobe(strobe);
 
-            P_ThinkerAdd(&strobe->thinker);
+            DD_ThinkerAdd(&strobe->thinker);
             break;
 
         case tc_glow:
             PADSAVEP();
-            glow = Z_Calloc(sizeof(*glow), PU_MAPSPEC, NULL);
+            glow = Z_Calloc(sizeof(*glow), PU_MAP, NULL);
 
             SV_ReadGlow(glow);
 
-            P_ThinkerAdd(&glow->thinker);
+            DD_ThinkerAdd(&glow->thinker);
             break;
 
         default:
@@ -856,25 +860,24 @@ void P_v19_UnArchiveSpecials(void)
     }
 }
 
-void SV_v19_LoadGame(char *savename)
+void SV_v19_LoadGame(const char* savename)
 {
-    int                 i;
-    int                 a, b, c;
+    int                 i, a, b, c;
     size_t              length;
     char                vcheck[VERSIONSIZE];
 
     length = M_ReadFile(savename, &saveBuffer);
     // Skip the description field.
-    savePtr = saveBuffer + SAVESTRINGSIZE;
+    savePtr = saveBuffer + V19_SAVESTRINGSIZE;
 
     // Check version.
     memset(vcheck, 0, sizeof(vcheck));
     sprintf(vcheck, "version %i", SAVE_VERSION);
-    if(strcmp(savePtr, vcheck))
+    if(strcmp((const char*) savePtr, vcheck))
     {
         int                 saveVer;
 
-        sscanf(savePtr, "version %i", &saveVer);
+        sscanf((const char*) savePtr, "version %i", &saveVer);
         if(saveVer >= SAVE_VERSION_BASE)
         {
             // Must be from the wrong game.
@@ -887,14 +890,14 @@ void SV_v19_LoadGame(char *savename)
     }
     savePtr += VERSIONSIZE;
 
-    gs.skill = *savePtr++;
-    gs.episode = *savePtr++;
-    gs.map.id = *savePtr++;
+    gameSkill = *savePtr++;
+    gameEpisode = *savePtr++;
+    gameMap = *savePtr++;
     for(i = 0; i < 4; ++i)
         players[i].plr->inGame = *savePtr++;
 
     // Load a base map.
-    G_InitNew(gs.skill, gs.episode, gs.map.id);
+    G_InitNew(gameSkill, gameEpisode, gameMap);
 
     // Get the map time.
     a = *savePtr++;

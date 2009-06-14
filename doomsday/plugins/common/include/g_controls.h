@@ -65,14 +65,28 @@ enum {
     CTL_WEAPON0,
     CTL_NEXT_WEAPON,
     CTL_PREV_WEAPON,
-    CTL_USE_ARTIFACT,
+#if __JHERETIC__ || __JHEXEN__
+    CTL_USE_ITEM,
+    CTL_NEXT_ITEM,
+    CTL_PREV_ITEM,
     CTL_PANIC,
+#endif
+#if __JHERETIC__
     CTL_TOME_OF_POWER,
     CTL_INVISIBILITY,
     CTL_FLY,
     CTL_TORCH,
     CTL_HEALTH,
     CTL_SUPER_HEALTH,
+    CTL_TELEPORT,
+    CTL_FIREBOMB,
+    CTL_INVULNERABILITY,
+    CTL_EGG,
+#endif
+#if __JHEXEN__
+    CTL_FLY,
+    CTL_TORCH,
+    CTL_HEALTH,
     CTL_MYSTIC_URN,
     CTL_KRATER,
     CTL_SPEED_BOOTS,
@@ -84,6 +98,7 @@ enum {
     CTL_INVULNERABILITY,
     CTL_DARK_SERVANT,
     CTL_EGG,
+#endif
     CTL_MAP,
     CTL_MAP_PAN_X,
     CTL_MAP_PAN_Y,
@@ -94,7 +109,8 @@ enum {
     CTL_MAP_MARK_ADD,
     CTL_MAP_MARK_CLEAR_ALL,
     CTL_HUD_SHOW,
-    CTL_SCORE_SHOW
+    CTL_SCORE_SHOW,
+    CTL_LOG_REFRESH
 };
 
 // This structure replaced ticcmd as the place where players store the intentions
@@ -105,6 +121,9 @@ typedef struct playerbrain_s {
     float       upMove;             // 1.0 for maximum movement
     int         changeWeapon;       // WT_NOCHANGE, or the weapon to change to
     int         cycleWeapon;        // +1 or -1
+#if __JHERETIC__ || __JHEXEN__
+    int         cycleInvItem;       // +1 or -1
+#endif
     // Bits:
     uint        speed : 1;
     uint        use : 1;
@@ -121,6 +140,10 @@ typedef struct playerbrain_s {
     uint        hudShow : 1;
     uint        scoreShow : 1;
     uint        doReborn: 1; // Set when the player wishes to be reborn.
+#if __JHERETIC__ || __JHEXEN__
+    uint        useInvItem: 1;
+#endif
+    uint        logRefresh: 1;
 } playerbrain_t;
 
 void        G_ControlRegister(void);

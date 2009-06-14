@@ -76,6 +76,8 @@
 
 #define FOOTCLIPSIZEF    (10)
 
+#define thinkerCap      (*gi.thinkerCap)
+
 #define FLAME_THROWER_TICS  10*35
 #define MAGIC_JUNK          1234
 
@@ -112,9 +114,8 @@ boolean         P_UndoPlayerMorph(player_t *player);
 #define FRICTION_HIGH       (0.5f)
 #define FRICTION_LOW        (0.97265625f)
 
-#define ONFLOORZ            DDMINFLOAT
-#define ONCEILINGZ          DDMAXFLOAT
-#define FLOATRANDZ          (DDMAXFLOAT-1)
+extern mobjtype_t puffType;
+extern mobj_t  *missileMobj;
 
 boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
@@ -140,6 +141,11 @@ void        P_SpawnPlayer(spawnspot_t *mthing, int plrnum);
 
 char           *P_GetMapName(int episode, int map);
 char           *P_GetShortMapName(int episode, int map);
+
+extern float turboMul;
+extern int maxAmmo[NUM_AMMO_TYPES];
+extern int clipAmmo[NUM_AMMO_TYPES];
+extern int maxAmmo[NUM_AMMO_TYPES];
 
 void            P_GiveKey(player_t *player, keytype_t key);
 void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);

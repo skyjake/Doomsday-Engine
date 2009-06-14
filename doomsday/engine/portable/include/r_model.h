@@ -74,11 +74,13 @@ typedef struct {
     char            skinRange;
     float           offset[3];
     byte            alpha;
-    short           shinySkin; // Skinname ID (index)
+    uint            shinySkin; // Skinname ID (index)
 } submodeldef_t;
 
+#define MODELDEF_ID_MAXLEN      32
+
 typedef struct modeldef_s {
-    char            id[33];
+    char            id[MODELDEF_ID_MAXLEN + 1];
 
     state_t*        state; // Pointer to the states list (in dd_defns.c).
     int             flags;
@@ -110,15 +112,12 @@ extern float rModelAspectMod;
 
 void            R_InitModels(void);
 void            R_ShutdownModels(void);
-void            R_ClearModelPath(void);
-void            R_AddModelPath(char* addPath, boolean append);
 float           R_CheckModelFor(struct mobj_s* mo, modeldef_t** mdef,
                                 modeldef_t** nextmdef);
 modeldef_t*     R_CheckIDModelFor(const char* id);
 int             R_ModelFrameNumForName(int modelnum, char* fname);
 void            R_SetModelFrame(modeldef_t* modef, int frame);
 void            R_SetSpriteReplacement(int sprite, char* modelname);
-int             R_FindModelFile(const char* filename, char* outfn);
 void            R_PrecacheSkinsForState(int stateIndex);
 boolean         R_PrecacheSkinsForMobj(thinker_t* th, void* context);
 void            R_PrecacheModelSkins(modeldef_t* modef);

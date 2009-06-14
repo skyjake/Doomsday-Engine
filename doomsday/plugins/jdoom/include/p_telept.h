@@ -34,8 +34,6 @@
 
 #include "doomsday.h"
 
-#define TELEFOGHEIGHT           0
-
 int             EV_Teleport(linedef_t* line, int side, mobj_t* mo,
                             boolean spawnFog);
 #endif

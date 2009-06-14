@@ -37,13 +37,8 @@
 #  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "p_inventory.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#  include "p_inventory.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
-#  include "p_inventory.h"
 #endif
 
 #include "am_map.h"
@@ -55,6 +50,7 @@
 #include "p_map.h"
 #include "g_common.h"
 #include "p_actor.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -158,7 +154,7 @@ void NetCl_UpdateGameState(byte *data)
         return;
 
 #if __JDOOM__
-    if(!NetCl_IsCompatible(gsGameMode, gs.gameMode))
+    if(!NetCl_IsCompatible(gsGameMode, gameMode))
     {
         // Wrong game mode! This is highly irregular!
         Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
@@ -168,14 +164,35 @@ void NetCl_UpdateGameState(byte *data)
     }
 #endif
 
-    GAMERULES.deathmatch = gsDeathmatch;
-    GAMERULES.noMonsters = !gsMonsters;
+    deathmatch = gsDeathmatch;
+    noMonstersParm = !gsMonsters;
 #if !__JHEXEN__
-    GAMERULES.respawn = gsRespawn;
+    respawnMonsters = gsRespawn;
+#endif
+
+    // Some statistics.
+#if __JHEXEN__ || __JSTRIFE__
+    Con_Message("Game state: Map=%i Skill=%i %s\n", gsMap, gsSkill,
+                deathmatch == 1 ? "Deathmatch" : deathmatch ==
+                2 ? "Deathmatch2" : "Co-op");
+#else
+    Con_Message("Game state: Map=%i Episode=%i Skill=%i %s\n", gsMap,
+                gsEpisode, gsSkill,
+                deathmatch == 1 ? "Deathmatch" : deathmatch ==
+                2 ? "Deathmatch2" : "Co-op");
+#endif
+#if !__JHEXEN__
+    Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f\n",
+                respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
+                gsJumping ? "yes" : "no", gsGravity);
+#else
+    Con_Message("  Monsters=%s Jumping=%s Gravity=%.1f\n",
+                !noMonstersParm ? "yes" : "no",
+                gsJumping ? "yes" : "no", gsGravity);
 #endif
 
 #ifdef __JHERETIC__
-    gs.mapPrev.id = gs.map.id;
+    prevMap = gameMap;
 #endif
 
     // Start reading after the GS packet.
@@ -192,9 +209,9 @@ void NetCl_UpdateGameState(byte *data)
     }
     else
     {
-        gs.skill = gsSkill;
-        gs.episode = gsEpisode;
-        gs.map.id = gsMap;
+        gameSkill = gsSkill;
+        gameEpisode = gsEpisode;
+        gameMap = gsMap;
     }
 
     // Set gravity.
@@ -242,7 +259,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
     player_t *pl = &players[plrNum];
     unsigned int flags;
-    //int     oldstate = pl->pState;
+    //int     oldstate = pl->playerState;
     byte    b;
     int     i, k;
 
@@ -277,23 +294,23 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
     if(flags & PSF2_STATE)
     {
         b = NetCl_ReadByte();
-        pl->pState = b & 0xf;
+        pl->playerState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
 
 #ifdef _DEBUG
         Con_Message("NetCl_UpdatePlayerState2: New state = %i\n",
-                    pl->pState);
+                    pl->playerState);
 #endif
 
         // Set or clear the DEAD flag for this player.
-        if(pl->pState == PST_LIVE)
+        if(pl->playerState == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
 
-        //if(pl->pState != oldstate)
+        //if(pl->playerState != oldstate)
         {
             P_SetupPsprites(pl);
         }
@@ -326,17 +343,17 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
         b = NetCl_ReadByte();
-        pl->pState = b & 0xf;
+        pl->playerState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
 #endif
         // Set or clear the DEAD flag for this player.
-        if(pl->pState == PST_LIVE)
+        if(pl->playerState == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
 
-        //if(oldstate != pl->pState) // && oldstate == PST_DEAD)
+        //if(oldstate != pl->playerState) // && oldstate == PST_DEAD)
         {
             P_SetupPsprites(pl);
         }
@@ -380,33 +397,33 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     if(flags & PSF_INVENTORY)
     {
-        pl->inventorySlotNum = NetCl_ReadByte();
-        for(i = 0; i < NUMINVENTORYSLOTS; ++i)
-        {
-            if(i >= pl->inventorySlotNum)
-            {
-                pl->inventory[i].type = AFT_NONE;
-                pl->inventory[i].count = 0;
-                continue;
-            }
+        uint                i, count;
 
-            s = NetCl_ReadShort();
-            pl->inventory[i].type = s & 0xff;
-            pl->inventory[i].count = s >> 8;
-            if(pl->inventory[i].type != AFT_NONE)
-            {
-                // Maybe unhide the HUD?
-                ST_HUDUnHide(pl - players, HUE_ON_PICKUP_INVITEM);
-            }
+        for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+        {
+            inventoryitemtype_t type = IIT_FIRST + i;
+            uint            j, count = P_InventoryCount(plrNum, type);
+
+            for(j = 0; j < count; ++j)
+                P_InventoryTake(plrNum, type, true);
         }
 
-#  if __JHERETIC__
-        if(plrNum == CONSOLEPLAYER)
-            P_InventoryCheckReadyArtifact(&players[CONSOLEPLAYER]);
-#  endif
+        count = NetCl_ReadByte();
+        for(i = 0; i < count; ++i)
+        {
+            inventoryitemtype_t type;
+            uint                j, num;
+
+            s = NetCl_ReadShort();
+            type = s & 0xff;
+            num = s >> 8;
+
+            for(j = 0; j < num; ++j)
+                P_InventoryGive(plrNum, type, true);
+        }
     }
 #endif
 
@@ -577,7 +594,7 @@ void NetCl_UpdatePSpriteState(byte *data)
 
     NetCl_SetReadBuffer(data);
     s = NetCl_ReadShort();
-    P_SetPsprite(&players[CONSOLEPLAYER], PS_WEAPON, s);
+    P_SetPsprite(&players[CONSOLEPLAYER], ps_weapon, s);
      */
 }
 
@@ -642,8 +659,8 @@ void NetCl_Intermission(byte *data)
 #if __JHEXEN__ || __JSTRIFE__
     if(flags & IMF_BEGIN)
     {
-        gs.mapPrev.id = NetCl_ReadByte();
-        gs.mapPrev.leavePosition = NetCl_ReadByte();
+        leaveMap = NetCl_ReadByte();
+        leavePosition = NetCl_ReadByte();
         G_ChangeGameState(GS_INTERMISSION);
         IN_Start();
     }
@@ -708,25 +725,24 @@ void NetCl_Finale(int packetType, byte *data)
  * Clients have other players' info, but it's only "FYI"; they don't
  * really need it.
  */
-void NetCl_UpdatePlayerInfo(byte* data)
+void NetCl_UpdatePlayerInfo(byte *data)
 {
     int                 num;
 
     NetCl_SetReadBuffer(data);
     num = NetCl_ReadByte();
-    gs.players[num].color = NetCl_ReadByte();
+    cfg.playerColor[num] = NetCl_ReadByte();
 #if __JHEXEN__ || __JHERETIC__
-    /// \fixme Do NOT assume the current class and original class are equal.
-    gs.players[num].pClass = NetCl_ReadByte();
-    players[num].pClass = gs.players[num].pClass;
+    cfg.playerClass[num] = NetCl_ReadByte();
+    players[num].class = cfg.playerClass[num];
 #endif
 
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-               gs.players[num].color);
+               cfg.playerColor[num]);
 #else
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-               gs.players[num].color, gs.players[num].pClass);
+               cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 
@@ -740,9 +756,9 @@ void NetCl_SendPlayerInfo()
     if(!IS_CLIENT)
         return;
 
-    *ptr++ = gs.players[CONSOLEPLAYER].color;
+    *ptr++ = cfg.netColor;
 #if __JHEXEN__
-    *ptr++ = players[CONSOLEPLAYER].pClass;
+    *ptr++ = cfg.netClass;
 #elif __JHERETIC__
     *ptr++ = PCLASS_PLAYER;
 #endif
@@ -761,7 +777,7 @@ void NetCl_SaveGame(void *data)
 #endif
 }
 
-void NetCl_LoadGame(void* data)
+void NetCl_LoadGame(void *data)
 {
     if(!IS_CLIENT)
         return;
@@ -780,8 +796,8 @@ void NetCl_LoadGame(void* data)
  */
 void NetCl_Paused(boolean setPause)
 {
-    gs.paused = (setPause != 0);
-    DD_SetInteger(DD_CLIENT_PAUSED, gs.paused);
+    paused = (setPause != 0);
+    DD_SetInteger(DD_CLIENT_PAUSED, paused);
 }
 
 /**
@@ -789,13 +805,13 @@ void NetCl_Paused(boolean setPause)
  * buffer that contains the data (kludge to work around the parameter
  * passing from the engine).
  */
-void* NetCl_WriteCommands(ticcmd_t* cmd, int count)
+void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 {
     static byte         msg[1024]; // A shared buffer.
 
     int                 i;
-    ushort*             size = (ushort *) msg;
-    byte*               out = msg + 2, *flags, *start = out;
+    ushort             *size = (ushort *) msg;
+    byte               *out = msg + 2, *flags, *start = out;
     ticcmd_t            prev;
 
     // Always compare against the previous command.

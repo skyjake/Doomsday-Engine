@@ -36,6 +36,18 @@
 
 #include "doomtype.h"
 
+typedef enum {
+    GA_NONE,
+    GA_LOADMAP,
+    GA_NEWGAME,
+    GA_LOADGAME,
+    GA_SAVEGAME,
+    GA_COMPLETED,
+    GA_VICTORY,
+    GA_WORLDDONE,
+    GA_SCREENSHOT
+} gameaction_t;
+
 /*
 //
 // Button/action code definitions.

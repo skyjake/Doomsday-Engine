@@ -170,10 +170,10 @@ void WI_drawLF(void)
 
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
 
-    if(gs.gameMode == commercial)
+    if(gameMode == commercial)
         mapnum = wbs->last;
     else
-        mapnum = ((gs.episode -1) * 9) + wbs->last;
+        mapnum = ((gameEpisode -1) * 9) + wbs->last;
 
     ptr = strchr(lname, ':'); // Skip the E#M# or Level #.
     if(ptr)
@@ -205,8 +205,8 @@ void WI_drawEL(void)
     ddmapinfo_t         minfo;
     char                levid[10];
 
-    P_GetMapLumpName(gs.episode, wbs->next+1, levid);
-    mapnum = G_GetMapNumber(gs.episode, wbs->next);
+    P_GetMapLumpName(gameEpisode, wbs->next+1, levid);
+    mapnum = G_GetMapNumber(gameEpisode, wbs->next);
 
     // See if there is a level name.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)
@@ -228,7 +228,7 @@ void WI_drawEL(void)
     y += (5 * mapNamePatches[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &mapNamePatches[((gs.episode -1) * 9) + wbs->next],
+                 &mapNamePatches[((gameEpisode -1) * 9) + wbs->next],
                  lname, false, ALIGN_CENTER);
 }
 
@@ -540,9 +540,9 @@ void WI_drawDeathmatchStats(void)
                 sprintf(tmp, "%i", teamInfo[i].members);
                 M_WriteText2(x - p[i].width / 2 + 1,
                              DM_MATRIXY - WI_SPACINGY + p[i].height - 8, tmp,
-                             huFontA, 1, 1, 1, 1);
+                             GF_FONTA, 1, 1, 1, 1);
                 M_WriteText2(DM_MATRIXX - p[i].width / 2 + 1,
-                             y + p[i].height - 8, tmp, huFontA, 1, 1, 1, 1);
+                             y + p[i].height - 8, tmp, GF_FONTA, 1, 1, 1, 1);
             }
         }
         else
@@ -782,7 +782,7 @@ void WI_drawNetgameStats(void)
 
             sprintf(tmp, "%i", teamInfo[i].members);
             M_WriteText2(x - p[i].width + 1, y + p[i].height - 8, tmp,
-                         huFontA, 1, 1, 1, 1);
+                         GF_FONTA, 1, 1, 1, 1);
         }
 
         if(i == myTeam)
@@ -1007,7 +1007,7 @@ void WI_Ticker(void)
     switch(state)
     {
     case ILS_SHOW_STATS:
-        if(GAMERULES.deathmatch)
+        if(deathmatch)
             WI_updateDeathmatchStats();
         else if(IS_NETGAME)
             WI_updateNetgameStats();
@@ -1115,7 +1115,7 @@ void WI_Drawer(void)
     switch(state)
     {
     case ILS_SHOW_STATS:
-        if(GAMERULES.deathmatch)
+        if(deathmatch)
             WI_drawDeathmatchStats();
         else if(IS_NETGAME)
             WI_drawNetgameStats();
@@ -1154,7 +1154,7 @@ void WI_initVariables(wbstartstruct_t *wbstartstruct)
     accelerateStage = 0;
     cnt = bcnt = 0;
     me = wbs->pNum;
-    myTeam = gs.players[wbs->pNum].color;
+    myTeam = cfg.playerColor[wbs->pNum];
     plrs = wbs->plyr;
 
     if(!wbs->maxKills)
@@ -1181,14 +1181,14 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
         for(j = 0; j < MAXPLAYERS; j++)
         {
             // Is the player in this team?
-            if(!plrs[j].inGame || gs.players[j].color != i)
+            if(!plrs[j].inGame || cfg.playerColor[j] != i)
                 continue;
 
             tin->members++;
 
             // Check the frags.
             for(k = 0; k < MAXPLAYERS; ++k)
-                tin->frags[gs.players[k].color] += plrs[j].frags[k];
+                tin->frags[cfg.playerColor[k]] += plrs[j].frags[k];
 
             // Counters.
             if(plrs[j].items > tin->items)
@@ -1211,7 +1211,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
         }
     }
 
-    if(GAMERULES.deathmatch)
+    if(deathmatch)
         WI_initDeathmatchStats();
     else if(IS_NETGAME)
         WI_initNetgameStats();

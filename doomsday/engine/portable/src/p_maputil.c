@@ -425,9 +425,9 @@ int P_PointOnDivlineSide(float fx, float fy, const divline_t* line)
     }
 }
 
-void P_MakeDivline(linedef_t* li, divline_t* dl)
+void P_MakeDivline(const linedef_t* li, divline_t* dl)
 {
-    vertex_t*           vtx = li->L_v1;
+    const vertex_t*     vtx = li->L_v1;
 
     dl->pos[VX] = FLT2FIX(vtx->V_pos[VX]);
     dl->pos[VY] = FLT2FIX(vtx->V_pos[VY]);
@@ -436,21 +436,24 @@ void P_MakeDivline(linedef_t* li, divline_t* dl)
 }
 
 /**
- * Returns the fractional intercept point along the first divline
- *
- * This is only called by the addmobjs and addlines traversers
+ * @return              Fractional intercept point along the first divline.
  */
-float P_InterceptVector(divline_t* v2, divline_t* v1)
+float P_InterceptVector(const divline_t* v2, const divline_t* v1)
 {
     float               frac = 0;
-    fixed_t             den =
-        FixedMul(v1->dY >> 8, v2->dX) - FixedMul(v1->dX >> 8, v2->dY);
+    fixed_t             den = FixedMul(v1->dY >> 8, v2->dX) -
+        FixedMul(v1->dX >> 8, v2->dY);
 
     if(den)
     {
-        frac =
-            FIX2FLT(FixedDiv((FixedMul((v1->pos[VX] - v2->pos[VX]) >> 8, v1->dY) +
-                  FixedMul((v2->pos[VY] - v1->pos[VY]) >> 8, v1->dX)), den));
+        fixed_t             f;
+
+        f = FixedMul((v1->pos[VX] - v2->pos[VX]) >> 8, v1->dY) +
+            FixedMul((v2->pos[VY] - v1->pos[VY]) >> 8, v1->dX);
+
+        f = FixedDiv(f, den);
+
+        frac = FIX2FLT(f);
     }
 
     return frac;

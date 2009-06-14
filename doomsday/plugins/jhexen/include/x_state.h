@@ -37,13 +37,52 @@
 // We need the playr data structure as well.
 #include "x_player.h"
 
+#ifdef __GNUG__
+#pragma interface
+#endif
+
+// ------------------------
+// Command line parameters.
+//
+extern int     verbose;
+
+
+// -------------------------
+// Status flags for refresh.
+//
+
+extern boolean  paused;            // Game Pause?
+
+// This one is related to the 3-screen display mode.
+// ANG90 = left side, ANG270 = right
+extern int      viewangleoffset;
+
+// Timer, for scores.
+extern int mapStartTic; // Game tic at map start.
+extern int mapTime; // Tics in game play for par.
+extern int actualMapTime;
+
 // Quit after playing a demo from cmdline.
+extern boolean singledemo;
+
+//-----------------------------
+// Internal parameters, fixed.
+// These are set by the engine, and not changed
+//  according to user inputs. Partly load from
+//  WAD, partly set at startup time.
+
+#define gametic     Get(DD_GAMETIC)
+
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
+//-----------------------------------------
+// Internal parameters, used for engine.
+//
+
+
 // if true, load all graphics at map load
-extern boolean precache;
-extern int bodyQueueSlot;
-extern int verbose;
+extern boolean  precache;
+extern int      bodyqueslot;
 
 #endif

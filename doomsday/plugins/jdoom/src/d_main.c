@@ -42,6 +42,7 @@
 #include "p_switch.h"
 #include "am_map.h"
 #include "g_defs.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -63,9 +64,23 @@
 int verbose;
 
 boolean devParm; // checkparm of -devparm
+boolean noMonstersParm; // checkparm of -noMonstersParm
+boolean respawnParm; // checkparm of -respawn
+boolean fastParm; // checkparm of -fast
+boolean turboParm; // checkparm of -turbo
+
+float turboMul; // multiplier for turbo
+boolean monsterInfight;
+
+gamemode_t gameMode;
+int gameModeBits;
+gamemission_t gameMission = GM_DOOM;
+
+// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
+char gameModeString[17];
 
 // The patches used in drawing the view border.
-char* borderLumps[] = {
+char *borderLumps[] = {
     "FLOOR7_2",
     "brdr_t",
     "brdr_r",
@@ -99,37 +114,37 @@ static boolean autoStart;
  */
 boolean G_SetGameMode(gamemode_t mode)
 {
+    gameMode = mode;
+
     if(G_GetGameState() == GS_MAP)
         return false;
-
-    gs.gameMode = mode;
 
     switch(mode)
     {
     case shareware: // DOOM 1 shareware, E1, M9
-        gs.gameModeBits = GM_SHAREWARE;
+        gameModeBits = GM_SHAREWARE;
         break;
 
     case registered: // DOOM 1 registered, E3, M27
-        gs.gameModeBits = GM_REGISTERED;
+        gameModeBits = GM_REGISTERED;
         break;
 
     case commercial: // DOOM 2 retail, E1 M34
-        gs.gameModeBits = GM_COMMERCIAL;
+        gameModeBits = GM_COMMERCIAL;
         break;
 
     // DOOM 2 german edition not handled
 
     case retail: // DOOM 1 retail, E4, M36
-        gs.gameModeBits = GM_RETAIL;
+        gameModeBits = GM_RETAIL;
         break;
 
     case indetermined: // Well, no IWAD found.
-        gs.gameModeBits = GM_INDETERMINED;
+        gameModeBits = GM_INDETERMINED;
         break;
 
     default:
-        Con_Error("G_SetGameMode: Unknown gs.gameMode %i", mode);
+        Con_Error("G_SetGameMode: Unknown gameMode %i", mode);
     }
 
     return true;
@@ -149,7 +164,7 @@ void G_DetectIWADs(void)
         char   *override;
     } fspec_t;
 
-    // The '>' means the paths are affected by the base path.
+    // The '}' means the paths are affected by the base path.
     char   *paths[] = {
         "}data\\"GAMENAMETEXT"\\",
         "}data\\",
@@ -159,15 +174,14 @@ void G_DetectIWADs(void)
         0
     };
     fspec_t iwads[] = {
-        {"tnt.wad", "-tnt"},
-        {"plutonia.wad", "-plutonia"},
-        {"doom2.wad", "-doom2"},
-        {"doom1.wad", "-sdoom"},
-        {"doom.wad", "-doom"},
-        {"doom.wad", "-ultimate"},
-        {"doomu.wad", "-udoom"},
-    {"freedoom.wad", "-freedoom"},
-        {0, 0}
+        { "tnt.wad",        "-tnt" },
+        { "plutonia.wad",   "-plutonia" },
+        { "doom2.wad",      "-doom2" },
+        { "doom1.wad",      "-sdoom" },
+        { "doom.wad",       "-doom" },
+        { "doom.wad",       "-ultimate" },
+        { "doomu.wad",      "-udoom" },
+        { 0, 0 }
     };
     int                 i, k;
     boolean             overridden = false;
@@ -268,15 +282,15 @@ static void identifyFromData(void)
         return;
     }
 
-    if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt") || ArgCheck("-freedoom"))
+    if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt"))
     {
         // DOOM 2.
         G_SetGameMode(commercial);
-        gs.gameMission = GM_DOOM2;
+        gameMission = GM_DOOM2;
         if(ArgCheck("-plutonia"))
-            gs.gameMission = GM_PLUT;
+            gameMission = GM_PLUT;
         if(ArgCheck("-tnt"))
-            gs.gameMission = GM_TNT;
+            gameMission = GM_TNT;
         return;
     }
 
@@ -297,13 +311,13 @@ static void identifyFromData(void)
             G_SetGameMode(list[i].mode);
             // Check the mission packs.
             if(lumpsFound(plutonia_lumps))
-                gs.gameMission = GM_PLUT;
+                gameMission = GM_PLUT;
             else if(lumpsFound(tnt_lumps))
-                gs.gameMission = GM_TNT;
-            else if(gs.gameMode == commercial)
-                gs.gameMission = GM_DOOM2;
+                gameMission = GM_TNT;
+            else if(gameMode == commercial)
+                gameMission = GM_DOOM2;
             else
-                gs.gameMission = GM_DOOM;
+                gameMission = GM_DOOM;
             return;
         }
     }
@@ -315,7 +329,7 @@ static void identifyFromData(void)
 }
 
 /**
- * gs.gameMode, gs.gameMission and the gs.gameModeString are set.
+ * gameMode, gameMission and the gameModeString are set.
  */
 void G_IdentifyVersion(void)
 {
@@ -324,160 +338,16 @@ void G_IdentifyVersion(void)
     // The game mode string is returned in DD_Get(DD_GAME_MODE).
     // It is sent out in netgames, and the PCL_HELLO2 packet contains it.
     // A client can't connect unless the same game mode is used.
-    memset(gs.gameModeString, 0, sizeof(gs.gameModeString));
+    memset(gameModeString, 0, sizeof(gameModeString));
 
-    strcpy(gs.gameModeString,
-           gs.gameMode == shareware ? "doom1-share" :
-           gs.gameMode == registered ? "doom1" :
-           gs.gameMode == retail ? "doom1-ultimate" :
-           gs.gameMode == commercial ?
-                (gs.gameMission == GM_PLUT ? "doom2-plut" :
-                 gs.gameMission == GM_TNT ? "doom2-tnt" : "doom2") :
+    strcpy(gameModeString,
+           gameMode == shareware ? "doom1-share" :
+           gameMode == registered ? "doom1" :
+           gameMode == retail ? "doom1-ultimate" :
+           gameMode == commercial ?
+                (gameMission == GM_PLUT ? "doom2-plut" :
+                 gameMission == GM_TNT ? "doom2-tnt" : "doom2") :
            "-");
-}
-
-void G_InitPlayerProfile(playerprofile_t* pf)
-{
-    int                 i;
-
-    if(!pf)
-        return;
-
-    // Config defaults. The real settings are read from the .cfg files
-    // but these will be used no such files are found.
-    memset(pf, 0, sizeof(playerprofile_t));
-    pf->color = 4;
-
-    pf->ctrl.moveSpeed = 1;
-    pf->ctrl.dclickUse = false;
-    pf->ctrl.lookSpeed = 3;
-    pf->ctrl.turnSpeed = 1;
-    pf->ctrl.airborneMovement = 1;
-    pf->ctrl.useAutoAim = true;
-
-    pf->screen.blocks = pf->screen.setBlocks = 10;
-
-    pf->hud.keysCombine = false;
-    pf->hud.shown[HUD_HEALTH] = true;
-    pf->hud.shown[HUD_ARMOR] = true;
-    pf->hud.shown[HUD_AMMO] = true;
-    pf->hud.shown[HUD_KEYS] = true;
-    pf->hud.shown[HUD_FRAGS] = true;
-    pf->hud.shown[HUD_FACE] = false;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
-        pf->hud.unHide[i] = 1;
-    pf->hud.scale = .6f;
-    pf->hud.color[CR] = 1;
-    pf->hud.color[CG] = 0;
-    pf->hud.color[CB] = 0;
-    pf->hud.color[CA] = 1;
-    pf->hud.iconAlpha = 1;
-    pf->hud.counterCheatScale = .7f;
-
-    pf->xhair.size = .5f;
-    pf->xhair.vitality = false;
-    pf->xhair.color[CR] = 1;
-    pf->xhair.color[CG] = 1;
-    pf->xhair.color[CB] = 1;
-    pf->xhair.color[CA] = 1;
-
-    pf->camera.offsetZ = 41;
-    pf->camera.bob = 1;
-    pf->camera.povLookAround = true;
-
-    pf->inventory.weaponAutoSwitch = 1; // if better
-    pf->inventory.noWeaponAutoSwitchIfFiring = false;
-    pf->inventory.ammoAutoSwitch = 0; // never
-    pf->inventory.weaponOrder[0] = WT_SIXTH;
-    pf->inventory.weaponOrder[1] = WT_NINETH;
-    pf->inventory.weaponOrder[2] = WT_FOURTH;
-    pf->inventory.weaponOrder[3] = WT_THIRD;
-    pf->inventory.weaponOrder[4] = WT_SECOND;
-    pf->inventory.weaponOrder[5] = WT_EIGHTH;
-    pf->inventory.weaponOrder[6] = WT_FIFTH;
-    pf->inventory.weaponOrder[7] = WT_SEVENTH;
-    pf->inventory.weaponOrder[8] = WT_FIRST;
-    pf->inventory.berserkAutoSwitch = true;
-
-    pf->statusbar.fixOuchFace = true;
-    pf->statusbar.scale = 20; // Full size.
-    pf->statusbar.opacity = 1;
-    pf->statusbar.counterAlpha = 1;
-
-    pf->automap.customColors = 0; // Never.
-    pf->automap.line0[CR] = .4f; // Unseen areas
-    pf->automap.line0[CG] = .4f;
-    pf->automap.line0[CB] = .4f;
-    pf->automap.line1[CR] = 1.f; // onesided lines
-    pf->automap.line1[CG] = 0.f;
-    pf->automap.line1[CB] = 0.f;
-    pf->automap.line2[CR] = .77f; // floor height change lines
-    pf->automap.line2[CG] = .6f;
-    pf->automap.line2[CB] = .325f;
-    pf->automap.line3[CR] = 1.f; // ceiling change lines
-    pf->automap.line3[CG] = .95f;
-    pf->automap.line3[CB] = 0.f;
-    pf->automap.mobj[CR] = 0.f;
-    pf->automap.mobj[CG] = 1.f;
-    pf->automap.mobj[CB] = 0.f;
-    pf->automap.background[CR] = 0.f;
-    pf->automap.background[CG] = 0.f;
-    pf->automap.background[CB] = 0.f;
-    pf->automap.opacity = .7f;
-    pf->automap.lineAlpha = .7f;
-    pf->automap.showDoors = true;
-    pf->automap.doorGlow = 8;
-    pf->automap.hudDisplay = 2;
-    pf->automap.rotate = true;
-    pf->automap.babyKeys = false;
-    pf->automap.zoomSpeed = .1f;
-    pf->automap.panSpeed = .5f;
-    pf->automap.panResetOnOpen = true;
-    pf->automap.openSeconds = AUTOMAP_OPEN_SECONDS;
-
-    pf->msgLog.show = true;
-    pf->msgLog.count = 4;
-    pf->msgLog.scale = .8f;
-    pf->msgLog.upTime = 5 * TICSPERSEC;
-    pf->msgLog.align = ALIGN_LEFT;
-    pf->msgLog.blink = 5;
-    pf->msgLog.color[CR] = 1;
-    pf->msgLog.color[CG] = 0;
-    pf->msgLog.color[CB] = 0;
-
-    pf->chat.playBeep = 1;
-
-    pf->psprite.bob = 1;
-    pf->psprite.bobLower = true;
-}
-
-void G_InitGameRules(gamerules_t* gr)
-{
-    if(!gr)
-        return;
-
-    memset(gr, 0, sizeof(gamerules_t));
-
-    gr->turboMul = 1.0f;
-    gr->moveCheckZ = true;
-    gr->jumpPower = 9;
-    gr->announceSecrets = true;
-    gr->slidingCorpses = false;
-    gr->fastMonsters = false;
-    gr->jumpAllow = true;
-    gr->freeAimBFG = true;
-    gr->mobDamageModifier = 1;
-    gr->mobHealthModifier = 1;
-    gr->gravityModifier = -1; // use map default
-    gr->maxSkulls = true;
-    gr->allowSkullsInWalls = false;
-    gr->anyBossDeath = false;
-    gr->monstersStuckInDoors = false;
-    gr->avoidDropoffs = true;
-    gr->moveBlock = false;
-    gr->fallOff = true;
-    gr->announceFrags = true;
-    gr->cameraNoClip = true;
 }
 
 /**
@@ -486,43 +356,160 @@ void G_InitGameRules(gamerules_t* gr)
  */
 void G_PreInit(void)
 {
-    G_SetGameMode(indetermined);
+    int                 i;
 
-    memset(gs.players, 0, sizeof(gs.players));
-    gs.state = GS_DEMOSCREEN;
-    gs.stateLast = -1;
-    gs.action = GA_NONE;
-    gs.gameMission = GM_DOOM;
-    gs.netEpisode = 1;
-    gs.netMap = 1;
-    gs.netSkill = SM_MEDIUM;
-    gs.netSlot = 0;
+    G_SetGameMode(indetermined);
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
-    memset(&gs.cfg, 0, sizeof(gs.cfg));
-    gs.cfg.echoMsg = true;
-    gs.cfg.usePatchReplacement = 2; // Use built-in replacements if available.
-    gs.cfg.menuScale = .9f;
-    gs.cfg.menuGlitter = .5f;
-    gs.cfg.menuShadow = 0.33f;
-    gs.cfg.menuQuitSound = true;
-    gs.cfg.flashColor[0] = .7f;
-    gs.cfg.flashColor[1] = .9f;
-    gs.cfg.flashColor[2] = 1;
-    gs.cfg.flashSpeed = 4;
-    gs.cfg.turningSkull = true;
-    gs.cfg.hudFog = 1;
-    gs.cfg.mapTitle = true;
-    gs.cfg.hideAuthorIdSoft = true;
-    gs.cfg.menuColor[0] = 1;
-    gs.cfg.menuColor2[0] = 1;
-    gs.cfg.menuSlam = false;
-    gs.cfg.menuHotkeys = true;
-    gs.cfg.askQuickSaveLoad = true;
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.playerMoveSpeed = 1;
+    cfg.dclickUse = false;
+    cfg.povLookAround = true;
+    cfg.screenBlocks = cfg.setBlocks = 10;
+    cfg.echoMsg = true;
+    cfg.lookSpeed = 3;
+    cfg.turnSpeed = 1;
+    cfg.usePatchReplacement = 2; // Use built-in replacements if available.
+    cfg.menuScale = .9f;
+    cfg.menuGlitter = .5f;
+    cfg.menuShadow = 0.33f;
+    cfg.menuQuitSound = true;
+    cfg.menuEffects = 1; // Do type-in effect.
+    cfg.flashColor[0] = .7f;
+    cfg.flashColor[1] = .9f;
+    cfg.flashColor[2] = 1;
+    cfg.flashSpeed = 4;
+    cfg.turningSkull = true;
+    cfg.hudKeysCombine = false;
+    cfg.hudShown[HUD_HEALTH] = true;
+    cfg.hudShown[HUD_ARMOR] = true;
+    cfg.hudShown[HUD_AMMO] = true;
+    cfg.hudShown[HUD_KEYS] = true;
+    cfg.hudShown[HUD_FRAGS] = true;
+    cfg.hudShown[HUD_FACE] = false;
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+        cfg.hudUnHide[i] = 1;
+    cfg.hudScale = .6f;
+    cfg.hudColor[0] = 1;
+    cfg.hudColor[1] = cfg.hudColor[2] = 0;
+    cfg.hudColor[3] = 1;
+    cfg.hudFog = 1;
+    cfg.hudIconAlpha = 1;
+    cfg.xhairSize = .5f;
+    cfg.xhairVitality = false;
+    cfg.xhairColor[0] = 1;
+    cfg.xhairColor[1] = 1;
+    cfg.xhairColor[2] = 1;
+    cfg.xhairColor[3] = 1;
+    cfg.moveCheckZ = true;
+    cfg.jumpPower = 9;
+    cfg.airborneMovement = 1;
+    cfg.weaponAutoSwitch = 1; // if better
+    cfg.noWeaponAutoSwitchIfFiring = false;
+    cfg.ammoAutoSwitch = 0; // never
+    cfg.secretMsg = true;
+    cfg.slidingCorpses = false;
+    cfg.fastMonsters = false;
+    cfg.netJumping = true;
+    cfg.netEpisode = 1;
+    cfg.netMap = 1;
+    cfg.netSkill = SM_MEDIUM;
+    cfg.netColor = 4;
+    cfg.netBFGFreeLook = 0;    // allow free-aim 0=none 1=not BFG 2=All
+    cfg.netMobDamageModifier = 1;
+    cfg.netMobHealthModifier = 1;
+    cfg.netGravity = -1;        // use map default
+    cfg.plrViewHeight = 41;
+    cfg.mapTitle = true;
+    cfg.hideAuthorIdSoft = true;
+    cfg.menuColor[0] = 1;
+    cfg.menuColor2[0] = 1;
+    cfg.menuSlam = false;
+    cfg.menuHotkeys = true;
+    cfg.askQuickSaveLoad = true;
 
-    G_InitGameRules(&GAMERULES);
-    G_InitPlayerProfile(&PLRPROFILE);
+    cfg.maxSkulls = true;
+    cfg.allowSkullsInWalls = false;
+    cfg.anyBossDeath = false;
+    cfg.monstersStuckInDoors = false;
+    cfg.avoidDropoffs = true;
+    cfg.moveBlock = false;
+    cfg.fallOff = true;
+    cfg.fixOuchFace = true;
+
+    cfg.statusbarScale = 20; // Full size.
+    cfg.statusbarOpacity = 1;
+    cfg.statusbarCounterAlpha = 1;
+
+    cfg.automapCustomColors = 0; // Never.
+    cfg.automapL0[0] = .4f; // Unseen areas
+    cfg.automapL0[1] = .4f;
+    cfg.automapL0[2] = .4f;
+
+    cfg.automapL1[0] = 1.f; // onesided lines
+    cfg.automapL1[1] = 0.f;
+    cfg.automapL1[2] = 0.f;
+
+    cfg.automapL2[0] = .77f; // floor height change lines
+    cfg.automapL2[1] = .6f;
+    cfg.automapL2[2] = .325f;
+
+    cfg.automapL3[0] = 1.f; // ceiling change lines
+    cfg.automapL3[1] = .95f;
+    cfg.automapL3[2] = 0.f;
+
+    cfg.automapMobj[0] = 0.f;
+    cfg.automapMobj[1] = 1.f;
+    cfg.automapMobj[2] = 0.f;
+
+    cfg.automapBack[0] = 0.f;
+    cfg.automapBack[1] = 0.f;
+    cfg.automapBack[2] = 0.f;
+    cfg.automapOpacity = .7f;
+    cfg.automapLineAlpha = .7f;
+    cfg.automapShowDoors = true;
+    cfg.automapDoorGlow = 8;
+    cfg.automapHudDisplay = 2;
+    cfg.automapRotate = true;
+    cfg.automapBabyKeys = false;
+    cfg.automapZoomSpeed = .1f;
+    cfg.automapPanSpeed = .5f;
+    cfg.automapPanResetOnOpen = true;
+    cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
+
+    cfg.counterCheatScale = .7f;
+
+    cfg.msgShow = true;
+    cfg.msgCount = 4;
+    cfg.msgScale = .8f;
+    cfg.msgUptime = 5 * TICSPERSEC;
+    cfg.msgAlign = ALIGN_LEFT;
+    cfg.msgBlink = 5;
+
+    cfg.msgColor[0] = 1;
+    cfg.msgColor[1] = cfg.msgColor[2] = 0;
+
+    cfg.chatBeep = 1;
+
+    cfg.killMessages = true;
+    cfg.bobWeapon = 1;
+    cfg.bobView = 1;
+    cfg.bobWeaponLower = true;
+    cfg.cameraNoClip = true;
+    cfg.respawnMonstersNightmare = true;
+
+    cfg.weaponOrder[0] = WT_SIXTH;
+    cfg.weaponOrder[1] = WT_NINETH;
+    cfg.weaponOrder[2] = WT_FOURTH;
+    cfg.weaponOrder[3] = WT_THIRD;
+    cfg.weaponOrder[4] = WT_SECOND;
+    cfg.weaponOrder[5] = WT_EIGHTH;
+    cfg.weaponOrder[6] = WT_FIFTH;
+    cfg.weaponOrder[7] = WT_SEVENTH;
+    cfg.weaponOrder[8] = WT_FIRST;
+
+    cfg.berserkAutoSwitch = true;
 
     // Do the common pre init routine;
     G_CommonPreInit();
@@ -535,12 +522,12 @@ void G_PreInit(void)
 void G_PostInit(void)
 {
     int                 p;
-    char                file[256];
+    filename_t          file;
     char                mapStr[6];
 
     // Border background changes depending on mission.
-    if(gs.gameMission == GM_DOOM2 || gs.gameMission == GM_PLUT ||
-       gs.gameMission == GM_TNT)
+    if(gameMission == GM_DOOM2 || gameMission == GM_PLUT ||
+       gameMission == GM_TNT)
         borderLumps[0] = "GRNROCK";
 
     // Common post init routine
@@ -554,45 +541,44 @@ void G_PostInit(void)
 
     // Print a game mode banner with rulers.
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gs.gameMode == retail ? "The Ultimate DOOM Startup\n" :
-                gs.gameMode == shareware ? "DOOM Shareware Startup\n" :
-                gs.gameMode == registered ? "DOOM Registered Startup\n" :
-                gs.gameMode == commercial ?
-                    (gs.gameMission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
-                     gs.gameMission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
+                gameMode == retail ? "The Ultimate DOOM Startup\n" :
+                gameMode == shareware ? "DOOM Shareware Startup\n" :
+                gameMode == registered ? "DOOM Registered Startup\n" :
+                gameMode == commercial ?
+                    (gameMission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
+                     gameMission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
                      "DOOM 2: Hell on Earth\n") :
                 "Public DOOM\n");
 
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
-    GAMERULES.monsterInfight = GetDefInt("AI|Infight", 0);
+    monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gs.skill = startSkill = SM_NOITEMS;
+    gameSkill = startSkill = SM_NOITEMS;
     startEpisode = 1;
     startMap = 1;
     autoStart = false;
 
     // Game mode specific settings.
     // Plutonia and TNT automatically turn on the full sky.
-    if(gs.gameMode == commercial &&
-       (gs.gameMission == GM_PLUT || gs.gameMission == GM_TNT))
+    if(gameMode == commercial &&
+       (gameMission == GM_PLUT || gameMission == GM_TNT))
     {
         Con_SetInteger("rend-sky-full", 1, true);
     }
 
     // Command line options.
+    noMonstersParm = ArgCheck("-nomonsters");
+    respawnParm = ArgCheck("-respawn");
+    fastParm = ArgCheck("-fast");
     devParm = ArgCheck("-devparm");
 
-    GAMERULES.noMonsters = ArgCheck("-nomonsters");
-    GAMERULES.respawn = ArgCheck("-respawn");
-    GAMERULES.fastMonsters = ArgCheck("-fast");
-
     if(ArgCheck("-altdeath"))
-        GAMERULES.deathmatch = 2;
+        cfg.netDeathmatch = 2;
     else if(ArgCheck("-deathmatch"))
-        GAMERULES.deathmatch = 1;
+        cfg.netDeathmatch = 1;
 
     p = ArgCheck("-skill");
     if(p && p < myargc - 1)
@@ -610,7 +596,7 @@ void G_PostInit(void)
     }
 
     p = ArgCheck("-timer");
-    if(p && p < myargc - 1 && GAMERULES.deathmatch)
+    if(p && p < myargc - 1 && deathmatch)
     {
         int                 time;
 
@@ -624,7 +610,7 @@ void G_PostInit(void)
     p = ArgCheck("-warp");
     if(p && p < myargc - 1)
     {
-        if(gs.gameMode == commercial)
+        if(gameMode == commercial)
         {
             startMap = atoi(Argv(p + 1));
             autoStart = true;
@@ -639,10 +625,12 @@ void G_PostInit(void)
 
     // Turbo option.
     p = ArgCheck("-turbo");
+    turboMul = 1.0f;
     if(p)
     {
         int                 scale = 200;
 
+        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(Argv(p + 1));
         if(scale < 10)
@@ -651,21 +639,13 @@ void G_PostInit(void)
             scale = 400;
 
         Con_Message("turbo scale: %i%%\n", scale);
-        GAMERULES.turboMul = scale / 100.f;
-    }
-
-    // Load a saved game?
-    p = ArgCheck("-loadgame");
-    if(p && p < myargc - 1)
-    {
-        SV_GetSaveGameFileName(Argv(p + 1)[0] - '0', file);
-        G_LoadGame(file);
+        turboMul = scale / 100.f;
     }
 
     // Are we autostarting?
     if(autoStart)
     {
-        if(gs.gameMode == commercial)
+        if(gameMode == commercial)
             Con_Message("Warp to Map %d, Skill %d\n", startMap,
                         startSkill + 1);
         else
@@ -673,10 +653,19 @@ void G_PostInit(void)
                         startEpisode, startMap, startSkill + 1);
     }
 
+    // Load a saved game?
+    p = ArgCheck("-loadgame");
+    if(p && p < myargc - 1)
+    {
+        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0',
+                               FILENAME_T_MAXLEN);
+        G_LoadGame(file);
+    }
+
     // Check valid episode and map
     if(autoStart || IS_NETGAME)
     {
-        if(gs.gameMode == commercial)
+        if(gameMode == commercial)
             sprintf(mapStr, "MAP%2.2d", startMap);
         else
             sprintf(mapStr, "E%d%d", startEpisode, startMap);
@@ -687,6 +676,15 @@ void G_PostInit(void)
             startMap = 1;
         }
     }
+
+    // Print a string showing the state of the game parameters
+    Con_Message("Game state parameters:%s%s%s%s%s\n",
+                noMonstersParm? " nomonsters" : "",
+                respawnParm? " respawn" : "",
+                fastParm? " fast" : "",
+                turboParm? " turbo" : "",
+                (cfg.netDeathmatch ==1)? " deathmatch" :
+                    (cfg.netDeathmatch ==2)? " altdeath" : "");
 
     if(G_GetGameAction() != GA_LOADGAME)
     {
@@ -703,20 +701,16 @@ void G_PostInit(void)
 
 void G_Shutdown(void)
 {
-    uint                i;
-
     Hu_MsgShutdown();
     Hu_UnloadData();
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_ClearMessages(i);
+    Hu_LogShutdown();
 
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
-    P_FreeButtons();
     AM_Shutdown();
+    P_FreeWeaponSlots();
 }
 
 void G_EndFrame(void)

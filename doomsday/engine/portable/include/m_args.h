@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -28,18 +29,18 @@
 #ifndef __COMMAND_LINE_ARGS_H__
 #define __COMMAND_LINE_ARGS_H__
 
-void            ArgInit(const char *cmdline);
+void            ArgInit(const char* cmdline);
 void            ArgShutdown(void);
-void            ArgAbbreviate(char *longname, char *shortname);
+void            ArgAbbreviate(const char* longname, const char* shortname);
 
 int             Argc(void);
-char           *Argv(int i);
-char          **ArgvPtr(int i);
-char           *ArgNext(void);
-int             ArgCheck(char *check);
-int             ArgCheckWith(char *check, int num);
-int             ArgExists(char *check);
+const char*     Argv(int i);
+const char**    ArgvPtr(int i);
+const char*     ArgNext(void);
+int             ArgCheck(const char* check);
+int             ArgCheckWith(const char* check, int num);
+int             ArgExists(const char* check);
 int             ArgIsOption(int i);
-int             ArgRecognize(char *first, char *second);
+int             ArgRecognize(const char* first, const char* second);
 
 #endif							//__COMMAND_LINE_ARGS_H__

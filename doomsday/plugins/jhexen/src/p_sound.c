@@ -37,6 +37,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DEFAULT_ARCHIVEPATH     "o:\\sound\\archive\\"
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -51,9 +53,11 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static char ArchivePath[128];
+
 // CODE --------------------------------------------------------------------
 
-int S_GetSoundID(char* name)
+int S_GetSoundID(const char* name)
 {
     return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 }
@@ -67,8 +71,8 @@ void S_MapMusic(void)
     int                 cdTrack;
 
     // Update the 'currentmap' music definition.
-    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gs.map.id));
-    cdTrack = P_GetMapCDTrack(gs.map.id);
+    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gameMap));
+    cdTrack = P_GetMapCDTrack(gameMap);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
     if(S_StartMusic("currentmap", true))
     {
@@ -83,50 +87,40 @@ void S_ParseSndInfoLump(void)
     char                buf[80];
     lumpnum_t           lump = W_CheckNumForName("SNDINFO");
 
+    strcpy(ArchivePath, DEFAULT_ARCHIVEPATH);
+
     if(lump != -1)
     {
         SC_OpenLump(lump);
 
         while(SC_GetString())
         {
-            int                 iTok;
-            const char*         sTok = SC_LastReadString();
-
-            if(*sTok == '$')
+            if(*sc_String == '$')
             {
-                if(!stricmp(sTok, "$ARCHIVEPATH"))
-                {   // Ignore.
+                if(!stricmp(sc_String, "$ARCHIVEPATH"))
+                {
                     SC_MustGetString();
+                    strcpy(ArchivePath, sc_String);
                 }
-                else if(!stricmp(sTok, "$MAP"))
+                else if(!stricmp(sc_String, "$MAP"))
                 {
                     SC_MustGetNumber();
-                    iTok = SC_LastReadInteger();
                     SC_MustGetString();
-                    sTok = SC_LastReadString();
-
-                    if(iTok)
+                    if(sc_Number)
                     {
-                        P_PutMapSongLump(iTok, sTok);
+                        P_PutMapSongLump(sc_Number, sc_String);
                     }
                 }
-
                 continue;
             }
             else
             {
-                i = Def_Get(DD_DEF_SOUND_BY_NAME, sTok, 0);
+                i = Def_Get(DD_DEF_SOUND_BY_NAME, sc_String, 0);
                 if(i)
                 {
-                    char            lumpName[9];
-
                     SC_MustGetString();
-                    sTok = SC_LastReadString();
-
-                    memset(lumpName, 0, sizeof(lumpName));
-                    strncpy(lumpName, *sTok != '?' ? sTok : "default", 8);
-
-                    Def_Set(DD_DEF_SOUND, i, DD_LUMP, (void*) lumpName);
+                    Def_Set(DD_DEF_SOUND, i, DD_LUMP,
+                            *sc_String != '?' ? sc_String : "default");
                 }
                 else
                 {

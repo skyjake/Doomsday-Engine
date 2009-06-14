@@ -38,31 +38,30 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
-#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define SCRIPT_CONTINUE     0
-#define SCRIPT_STOP         1
-#define SCRIPT_TERMINATE    2
-
-#define OPEN_SCRIPTS_BASE   1000
-#define PRINT_BUFFER_SIZE   256
-
-#define GAME_SINGLE_PLAYER  0
+#define SCRIPT_CONTINUE 0
+#define SCRIPT_STOP 1
+#define SCRIPT_TERMINATE 2
+#define OPEN_SCRIPTS_BASE 1000
+#define PRINT_BUFFER_SIZE 256
+#define GAME_SINGLE_PLAYER 0
 #define GAME_NET_COOPERATIVE 1
 #define GAME_NET_DEATHMATCH 2
-
-#define TEXTURE_TOP         0
-#define TEXTURE_MIDDLE      1
-#define TEXTURE_BOTTOM      2
+#define TEXTURE_TOP 0
+#define TEXTURE_MIDDLE 1
+#define TEXTURE_BOTTOM 2
+#define S_DROP ACScript->stackPtr--
+#define S_POP ACScript->stack[--ACScript->stackPtr]
+#define S_PUSH(x) ACScript->stack[ACScript->stackPtr++] = x
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct acsheader_s {
-    int             marker;
-    int             infoOffset;
-    int             code;
+    int     marker;
+    int     infoOffset;
+    int     code;
 } acsheader_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -71,10 +70,10 @@ typedef struct acsheader_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void StartOpenACS(int number, int infoIndex, int* address);
+static void StartOpenACS(int number, int infoIndex, const int* address);
 static void ScriptFinished(int number);
 static boolean TagBusy(int tag);
-static boolean AddToACSStore(int map, int number, byte* args);
+static boolean AddToACSStore(int map, int number, byte *args);
 static int GetACSIndex(int number);
 static void Push(int value);
 static int Pop(void);
@@ -191,7 +190,7 @@ static void ThingCount(int type, int tid);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int ACScriptCount;
-byte* ActionCodeBase;
+const byte* ActionCodeBase;
 acsinfo_t* ACSInfo;
 int MapVars[MAX_ACS_MAP_VARS];
 int WorldVars[MAX_ACS_WORLD_VARS];
@@ -200,10 +199,10 @@ acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static acs_t* ACScript;
-static int* PCodePtr;
+static const int* PCodePtr;
 static byte SpecArgs[8];
 static int ACStringCount;
-static char** ACStrings;
+static char const** ACStrings;
 static char PrintBuffer[PRINT_BUFFER_SIZE];
 static acs_t* NewScript;
 
@@ -239,7 +238,7 @@ CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
 
 // CODE --------------------------------------------------------------------
 
-char* GetACString(int id)
+const char* GetACString(int id)
 {
     if(id < 0 || id > ACStringCount)
         return NULL;
@@ -250,16 +249,16 @@ char* GetACString(int id)
 void P_LoadACScripts(int lump)
 {
     int                 i;
-    int*                buffer;
-    acsheader_t*        header;
+    const int*          buffer;
+    const acsheader_t*  header;
     acsinfo_t*          info;
 
     header = W_CacheLumpNum(lump, PU_MAP);
-    ActionCodeBase = (byte *) header;
-    buffer = (int *) ((byte *) header + LONG(header->infoOffset));
+    ActionCodeBase = (const byte*) header;
+    buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
     ACScriptCount = LONG(*buffer++);
     if(ACScriptCount == 0 || IS_CLIENT)
-    {   // Empty behavior lump.
+    {                           // Empty behavior lump
         ACScriptCount = 0;
         return;
     }
@@ -269,7 +268,8 @@ void P_LoadACScripts(int lump)
     for(i = 0, info = ACSInfo; i < ACScriptCount; ++i, info++)
     {
         info->number = LONG(*buffer++);
-        info->address = (int *) ((byte *) ActionCodeBase + LONG(*buffer++));
+        info->address =
+            (const int*) ((const byte*) ActionCodeBase + LONG(*buffer++));
         info->argCount = LONG(*buffer++);
         if(info->number >= OPEN_SCRIPTS_BASE)
         {                       // Auto-activate
@@ -287,16 +287,17 @@ void P_LoadACScripts(int lump)
     ACStrings = Z_Malloc(ACStringCount * sizeof(char*), PU_MAP, 0);
     for(i = 0; i < ACStringCount; ++i)
     {
-        ACStrings[i] = (char *)ActionCodeBase + LONG(*buffer++);
+        ACStrings[i] = (const char*)ActionCodeBase + LONG(*buffer++);
     }
+
     memset(MapVars, 0, sizeof(MapVars));
 }
 
-static void StartOpenACS(int number, int infoIndex, int* address)
+static void StartOpenACS(int number, int infoIndex, const int* address)
 {
     acs_t*              script;
 
-    script = Z_Calloc(sizeof(*script), PU_MAPSPEC, 0);
+    script = Z_Calloc(sizeof(*script), PU_MAP, 0);
     script->number = number;
 
     // World objects are allotted 1 second for initialization
@@ -305,7 +306,7 @@ static void StartOpenACS(int number, int infoIndex, int* address)
     script->infoIndex = infoIndex;
     script->ip = address;
     script->thinker.function = T_InterpretACS;
-    P_ThinkerAdd(&script->thinker);
+    DD_ThinkerAdd(&script->thinker);
 }
 
 /**
@@ -318,7 +319,7 @@ void P_CheckACSStore(void)
 
     for(store = ACSStore; store->map != 0; store++)
     {
-        if(store->map == gs.map.id)
+        if(store->map == gameMap)
         {
             P_StartACS(store->script, 0, store->args, NULL, NULL, 0);
             if(NewScript)
@@ -338,7 +339,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
     aste_t*             statePtr;
 
     NewScript = NULL;
-    if(map && map != gs.map.id)
+    if(map && map != gameMap)
     {   // Add to the script store.
         return AddToACSStore(map, number, args);
     }
@@ -363,7 +364,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
         return false;
     }
 
-    script = Z_Calloc(sizeof(*script), PU_MAPSPEC, 0);
+    script = Z_Calloc(sizeof(*script), PU_MAP, 0);
 
     script->number = number;
     script->infoIndex = infoIndex;
@@ -378,31 +379,31 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
     }
 
     *statePtr = ASTE_RUNNING;
-    P_ThinkerAdd(&script->thinker);
+    DD_ThinkerAdd(&script->thinker);
     NewScript = script;
     return true;
 }
 
-static boolean AddToACSStore(int map, int number, byte* args)
+static boolean AddToACSStore(int map, int number, byte *args)
 {
-    int                 i, index;
+    int         i;
+    int         index;
 
     index = -1;
     for(i = 0; ACSStore[i].map != 0; ++i)
     {
         if(ACSStore[i].script == number && ACSStore[i].map == map)
-        {   // Don't allow duplicates.
+        {   // Don't allow duplicates
             return false;
         }
-
         if(index == -1 && ACSStore[i].map == -1)
-        {   // Remember first empty slot.
+        {   // Remember first empty slot
             index = i;
         }
     }
 
     if(index == -1)
-    {   // Append required.
+    {   // Append required
         if(i == MAX_ACS_STORE)
         {
             Con_Error("AddToACSStore: MAX_ACS_STORE (%d) exceeded.",
@@ -411,18 +412,20 @@ static boolean AddToACSStore(int map, int number, byte* args)
         index = i;
         ACSStore[index + 1].map = 0;
     }
-
     ACSStore[index].map = map;
     ACSStore[index].script = number;
     *((int *) ACSStore[index].args) = *((int *) args);
     return true;
 }
 
-boolean P_StartLockedACS(linedef_t* line, byte* args, mobj_t* mo, int side)
+boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
 {
-    int                 i, lock;
-    byte                newArgs[5];
-    char                LockedBuffer[80];
+    int         i;
+    int         lock;
+    byte        newArgs[5];
+    char        LockedBuffer[80];
+
+    extern int TextKeyMessages[11];
 
     lock = args[4];
     if(!mo->player)
@@ -452,7 +455,7 @@ boolean P_StartLockedACS(linedef_t* line, byte* args, mobj_t* mo, int side)
 
 boolean P_TerminateACS(int number, int map)
 {
-    int                 infoIndex;
+    int         infoIndex;
 
     infoIndex = GetACSIndex(number);
     if(infoIndex == -1)
@@ -472,7 +475,7 @@ boolean P_TerminateACS(int number, int map)
 
 boolean P_SuspendACS(int number, int map)
 {
-    int                 infoIndex;
+    int         infoIndex;
 
     infoIndex = GetACSIndex(number);
     if(infoIndex == -1)
@@ -499,13 +502,13 @@ void P_ACSInitNewGame(void)
 
 void T_InterpretACS(acs_t* script)
 {
-    int                 cmd, action;
+    int             cmd, action;
 
     if(ACSInfo[script->infoIndex].state == ASTE_TERMINATING)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
         ScriptFinished(ACScript->number);
-        P_ThinkerRemove(&ACScript->thinker);
+        DD_ThinkerRemove(&ACScript->thinker);
         return;
     }
 
@@ -533,13 +536,13 @@ void T_InterpretACS(acs_t* script)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
         ScriptFinished(ACScript->number);
-        P_ThinkerRemove(&ACScript->thinker);
+        DD_ThinkerRemove(&ACScript->thinker);
     }
 }
 
 void P_TagFinished(int tag)
 {
-    int                 i;
+    int             i;
 
     if(TagBusy(tag) == true)
     {
@@ -558,7 +561,7 @@ void P_TagFinished(int tag)
 
 void P_PolyobjFinished(int po)
 {
-    int                 i;
+    int             i;
 
     if(PO_Busy(po) == true)
     {
@@ -577,7 +580,7 @@ void P_PolyobjFinished(int po)
 
 static void ScriptFinished(int number)
 {
-    int                 i;
+    int             i;
 
     for(i = 0; i < ACScriptCount; ++i)
     {
@@ -1200,7 +1203,7 @@ static void ThingCount(int type, int tid)
 
         params.type = moType;
         params.count = 0;
-        P_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+        DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
 
         count = params.count;
     }
@@ -1263,12 +1266,13 @@ static int CmdChangeFloor(void)
 static int CmdChangeFloorDirect(void)
 {
     int                 tag;
-    materialnum_t       mat;
+    material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    mat = P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS);
+    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(
+        GetACString(LONG(*PCodePtr++)), MN_FLATS));
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1276,7 +1280,7 @@ static int CmdChangeFloorDirect(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_FLOOR_MATERIAL, mat);
+            P_SetPtrp(sec, DMU_FLOOR_MATERIAL, mat);
         }
     }
 
@@ -1286,11 +1290,12 @@ static int CmdChangeFloorDirect(void)
 static int CmdChangeCeiling(void)
 {
     int                 tag;
-    materialnum_t       mat;
+    material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
-    mat = P_MaterialNumForName(GetACString(Pop()), MN_FLATS);
+    mat = P_ToPtr(DMU_MATERIAL,
+        P_MaterialNumForName(GetACString(Pop()), MN_FLATS));
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1299,7 +1304,7 @@ static int CmdChangeCeiling(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_CEILING_MATERIAL, mat);
+            P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
     }
 
@@ -1309,12 +1314,13 @@ static int CmdChangeCeiling(void)
 static int CmdChangeCeilingDirect(void)
 {
     int                 tag;
-    materialnum_t       mat;
+    material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
 
     tag = LONG(*PCodePtr++);
-    mat = P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS);
+    mat = P_ToPtr(DMU_MATERIAL,
+        P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS));
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1322,7 +1328,7 @@ static int CmdChangeCeilingDirect(void)
         P_IterListResetIterator(list, true);
         while((sec = P_IterListIterator(list)) != NULL)
         {
-            P_SetIntp(sec, DMU_CEILING_MATERIAL, mat);
+            P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
     }
 
@@ -1540,7 +1546,7 @@ static int CmdGameType(void)
     {
         gametype = GAME_SINGLE_PLAYER;
     }
-    else if(GAMERULES.deathmatch)
+    else if(deathmatch)
     {
         gametype = GAME_NET_DEATHMATCH;
     }
@@ -1555,7 +1561,7 @@ static int CmdGameType(void)
 
 static int CmdGameSkill(void)
 {
-    Push(gs.skill);
+    Push(gameSkill);
     return SCRIPT_CONTINUE;
 }
 
@@ -1615,14 +1621,15 @@ static int CmdAmbientSound(void)
     volume = Pop();
     // If we are playing 3D sounds, create a temporary source mobj
     // for the sound.
-    if(Con_GetInteger("sound-3d") && plrmo)
+    if(cfg.snd3D && plrmo)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
-        mobj = P_SpawnMobj3f(plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
+        mobj = P_SpawnMobj3f(MT_CAMERA,
+                             plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
                              plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
                              plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
-                             MT_CAMERA, 0); // A camera's a good temporary source.
+                             0, 0); // A camera's a good temporary source.
         mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
 
