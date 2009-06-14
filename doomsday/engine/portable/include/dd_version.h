@@ -43,7 +43,7 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_RELEASE_NAME   "beta6.3"
+#define DOOMSDAY_RELEASE_NAME   "trunk"
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
