@@ -1690,6 +1690,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest,
 
     if(type == MT_MNTRFX2) // always exactly on the floor.
     {
+        pos[VZ] = 0;
         spawnFlags |= MTF_Z_FLOOR;
     }
     else
