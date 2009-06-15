@@ -1329,7 +1329,7 @@ void C_DECL A_MinotaurAtk3(mobj_t *actor)
     }
 }
 
-void C_DECL A_MntrFloorFire(mobj_t *actor)
+void C_DECL A_MntrFloorFire(mobj_t* actor)
 {
     mobj_t*             mo;
     float               pos[3];
@@ -1343,21 +1343,21 @@ void C_DECL A_MntrFloorFire(mobj_t *actor)
     pos[VZ] = 0;
 
     pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
-    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10),
+    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
 
     angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
                             pos[VX], pos[VY]);
 
-    mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MTF_Z_FLOOR);
-    if(mo)
+    if((mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MTF_Z_FLOOR)))
     {
         mo->target = actor->target;
-        mo->mom[MX] = 1; // Force block checking.
+        mo->mom[MX] = FIX2FLT(1); // Force block checking.
+
         P_CheckMissileSpawn(mo);
     }
 }
 
-void C_DECL A_Scream(mobj_t *actor)
+void C_DECL A_Scream(mobj_t* actor)
 {
     int             sound;
 

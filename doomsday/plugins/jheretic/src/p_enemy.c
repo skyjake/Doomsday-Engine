@@ -1372,7 +1372,7 @@ void C_DECL A_SorDBon(mobj_t *actor)
     S_StartSound(SFX_SORDBON, NULL);
 }
 
-void C_DECL A_SorSightSnd(mobj_t *actor)
+void C_DECL A_SorSightSnd(mobj_t* actor)
 {
     S_StartSound(SFX_SORSIT, NULL);
 }
@@ -1380,9 +1380,9 @@ void C_DECL A_SorSightSnd(mobj_t *actor)
 /**
  * Minotaur Melee attack.
  */
-void C_DECL A_MinotaurAtk1(mobj_t *actor)
+void C_DECL A_MinotaurAtk1(mobj_t* actor)
 {
-    player_t *player;
+    player_t*           player;
 
     if(!actor->target)
         return;
@@ -1404,11 +1404,11 @@ void C_DECL A_MinotaurAtk1(mobj_t *actor)
 /**
  * Minotaur : Choose a missile attack.
  */
-void C_DECL A_MinotaurDecide(mobj_t *actor)
+void C_DECL A_MinotaurDecide(mobj_t* actor)
 {
-    uint        an;
-    mobj_t     *target;
-    float       dist;
+    uint                an;
+    mobj_t*             target;
+    float               dist;
 
     target = actor->target;
     if(!target)
@@ -1452,15 +1452,15 @@ void C_DECL A_MinotaurDecide(mobj_t *actor)
     }
 }
 
-void C_DECL A_MinotaurCharge(mobj_t *actor)
+void C_DECL A_MinotaurCharge(mobj_t* actor)
 {
     mobj_t*             puff;
 
     if(actor->special1)
     {
-        puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos, P_Random() << 24, 0);
+        puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos,
+                              P_Random() << 24, 0);
         puff->mom[MZ] = 2;
-
         actor->special1--;
     }
     else
@@ -1473,11 +1473,9 @@ void C_DECL A_MinotaurCharge(mobj_t *actor)
 /**
  * Minotaur : Swing attack.
  */
-void C_DECL A_MinotaurAtk2(mobj_t *actor)
+void C_DECL A_MinotaurAtk2(mobj_t* actor)
 {
-    mobj_t     *mo;
-    angle_t     angle;
-    float       momZ;
+    mobj_t*             mo;
 
     if(!actor->target)
         return;
@@ -1493,10 +1491,10 @@ void C_DECL A_MinotaurAtk2(mobj_t *actor)
     mo = P_SpawnMissile(MT_MNTRFX1, actor, actor->target, true);
     if(mo)
     {
-        S_StartSound(SFX_MINAT2, mo);
+        angle_t             angle = mo->angle;
+        float               momZ = mo->mom[MZ];
 
-        momZ = mo->mom[MZ];
-        angle = mo->angle;
+        S_StartSound(SFX_MINAT2, mo);
 
         P_SpawnMissileAngle(MT_MNTRFX1, actor, angle - (ANG45 / 8), momZ);
         P_SpawnMissileAngle(MT_MNTRFX1, actor, angle + (ANG45 / 8), momZ);
@@ -1537,10 +1535,10 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
          * When an attempt is made to spawn MT_MNTRFX2 (the Maulotaur's
          * ground flame) the z coordinate is set to ONFLOORZ but if the
          * Maulotaur's feet are currently clipped (i.e., it is in a sector
-         * whose terrain info is set to clip) then FOOTCLIPSIZE is subtracted
-         * from the z coordinate. So when P_SpawnMobj is called,
-         * z != ONFLOORZ, so rather than being set to the height of the floor
-         * it is left at 2146838915 (float: 32758.162).
+         * whose terrain info is set to clip) then FOOTCLIPSIZE is
+         * subtracted from the z coordinate. So when P_SpawnMobj is called,
+         * z != ONFLOORZ, so rather than being set to the height of the
+         * floor it is left at 2146838915 (float: 32758.162).
          *
          * This in turn means that when P_TryMove is called (via
          * P_CheckMissileSpawn), the test which is there to check whether a
@@ -1581,30 +1579,35 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
     }
 }
 
-void C_DECL A_MntrFloorFire(mobj_t *actor)
+void C_DECL A_MntrFloorFire(mobj_t* actor)
 {
     mobj_t*             mo;
     float               pos[3];
     angle_t             angle;
 
+    // Make sure we are on the floor.
     actor->pos[VZ] = actor->floorZ;
 
-    pos[VX] = actor->pos[VX] + FIX2FLT((P_Random() - P_Random()) << 10);
-    pos[VY] = actor->pos[VY] + FIX2FLT((P_Random() - P_Random()) << 10);
+    pos[VX] = actor->pos[VX];
+    pos[VY] = actor->pos[VY];
     pos[VZ] = 0;
+
+    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
+    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
 
     angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
                             pos[VX], pos[VY]);
 
-    mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MTF_Z_FLOOR);
+    if((mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MTF_Z_FLOOR)))
+    {
+        mo->target = actor->target;
+        mo->mom[MX] = FIX2FLT(1); // Force block checking.
 
-    mo->target = actor->target;
-    mo->mom[MX] = 1.f / 16; // Force block checking.
-
-    P_CheckMissileSpawn(mo);
+        P_CheckMissileSpawn(mo);
+    }
 }
 
-void C_DECL A_BeastAttack(mobj_t *actor)
+void C_DECL A_BeastAttack(mobj_t* actor)
 {
     if(!actor->target)
         return;
