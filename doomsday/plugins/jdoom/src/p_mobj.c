@@ -1199,10 +1199,10 @@ void P_SpawnMapThing(spawnspot_t* th)
     memcpy(&mobj->spawnSpot, th, sizeof(mobj->spawnSpot));
 }
 
-mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
+mobj_t* P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
                           angle_t angle)
 {
-    mobj_t             *th;
+    mobj_t*             mo;
 
     // Clients do not spawn puffs.
     if(IS_CLIENT)
@@ -1210,15 +1210,17 @@ mobj_t *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
 
-    th = P_SpawnMobj3f(type, x, y, z, angle, 0);
-    th->mom[MZ] = 1;
-    th->tics -= P_Random() & 3;
+    if((mo = P_SpawnMobj3f(type, x, y, z, angle, 0)))
+    {
+        mo->mom[MZ] = FIX2FLT(FRACUNIT);
+        mo->tics -= P_Random() & 3;
 
-    // Make it last at least one tic.
-    if(th->tics < 1)
-        th->tics = 1;
+        // Make it last at least one tic.
+        if(mo->tics < 1)
+            mo->tics = 1;
+    }
 
-    return th;
+    return mo;
 }
 
 void P_SpawnPuff(float x, float y, float z, angle_t angle)
