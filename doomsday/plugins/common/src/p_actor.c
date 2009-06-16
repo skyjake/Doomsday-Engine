@@ -274,9 +274,6 @@ void P_RipperBlood(mobj_t* actor)
 
     if((mo = P_SpawnMobj3fv(MT_BLOOD, pos, actor->angle, 0)))
     {
-        mo->angle = mo->visAngle = 0;
-        mo->moveDir = DI_EAST;
-
 #if __JHERETIC__
         mo->flags |= MF_NOGRAVITY;
 #endif
