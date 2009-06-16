@@ -1468,25 +1468,6 @@ void P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator)
     mo->mom[MZ] = 2;
 }
 
-void P_RipperBlood(mobj_t *mo)
-{
-    mobj_t             *th;
-    float               pos[3];
-
-    memcpy(pos, mo->pos, sizeof(pos));
-
-    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 12);
-    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
-    pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
-
-    th = P_SpawnMobj3fv(MT_BLOOD, pos, P_Random() << 24, 0);
-
-    th->flags |= MF_NOGRAVITY;
-    th->mom[MX] = mo->mom[MX] / 2;
-    th->mom[MY] = mo->mom[MY] / 2;
-    th->tics += P_Random() & 3;
-}
-
 #define SMALLSPLASHCLIP 12;
 
 /**

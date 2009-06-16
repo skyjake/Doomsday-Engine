@@ -1794,25 +1794,6 @@ void P_SpawnBloodSplatter2(float x, float y, float z, mobj_t* originator)
     mo->target = originator;
 }
 
-void P_RipperBlood(mobj_t* mo)
-{
-    mobj_t*             th;
-    float               pos[3];
-
-    pos[VX] = mo->pos[VX];
-    pos[VY] = mo->pos[VY];
-    pos[VZ] = mo->pos[VZ];
-
-    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 12);
-    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
-    pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
-
-    th = P_SpawnMobj3fv(MT_BLOOD, pos, P_Random() << 24, 0);
-    th->mom[MX] = mo->mom[MX] / 2;
-    th->mom[MY] = mo->mom[MY] / 2;
-    th->tics += P_Random() & 3;
-}
-
 boolean P_HitFloor(mobj_t *thing)
 {
     mobj_t*             mo;

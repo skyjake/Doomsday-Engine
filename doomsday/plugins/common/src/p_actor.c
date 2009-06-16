@@ -258,3 +258,30 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
 
     return MOBJINFO[type].states[name];
 }
+
+void P_RipperBlood(mobj_t* actor)
+{
+    mobj_t*             mo;
+    float               pos[3];
+
+    pos[VX] = actor->pos[VX];
+    pos[VY] = actor->pos[VY];
+    pos[VZ] = actor->pos[VZ];
+
+    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 12);
+    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
+    pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
+
+    if((mo = P_SpawnMobj3fv(MT_BLOOD, pos, actor->angle, 0)))
+    {
+        mo->angle = mo->visAngle = 0;
+        mo->moveDir = DI_EAST;
+
+#if __JHERETIC__
+        mo->flags |= MF_NOGRAVITY;
+#endif
+        mo->mom[MX] = actor->mom[MX] / 2;
+        mo->mom[MY] = actor->mom[MY] / 2;
+        mo->tics += P_Random() & 3;
+    }
+}

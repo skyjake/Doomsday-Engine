@@ -391,24 +391,6 @@ static boolean PIT_Splash(sector_t *sector, void *data)
 }
 */
 
-void P_RipperBlood(mobj_t *mo)
-{
-    mobj_t             *th;
-    float               pos[3];
-
-    memcpy(pos, mo->pos, sizeof(pos));
-    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 12);
-    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
-    pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
-
-    th = P_SpawnMobj3fv(MT_BLOOD, pos, P_Random() << 24);
-    th->flags |= MF_NOGRAVITY;
-    th->mom[MX] /= 2;
-    th->mom[MY] /= 2;
-
-    th->tics += P_Random() & 3;
-}
-
 void P_HitFloor(mobj_t* mo)
 {
     //P_MobjSectorsIterator(mo, PIT_Splash, mo);
