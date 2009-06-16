@@ -339,37 +339,40 @@ typedef struct polyobj_s {
 
 extern spawnspot_t* things;
 
-void        P_EmptyRespawnQueue(void);
-void        P_RespawnEnqueue(spawnspot_t *spot);
-void        P_CheckRespawnQueue(void);
+void            P_EmptyRespawnQueue(void);
+void            P_RespawnEnqueue(spawnspot_t* spot);
+void            P_CheckRespawnQueue(void);
 
-void        P_ExplodeMissile(mobj_t *mo);
-float       P_MobjGetFriction(mobj_t *mo);
-mobj_t     *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
+void            P_ExplodeMissile(mobj_t* mo);
+float           P_MobjGetFriction(mobj_t* mo);
+mobj_t*         P_SPMAngle(mobjtype_t type, mobj_t* source,
+                           angle_t angle);
 
-mobj_t     *P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
-                          angle_t angle);
-mobj_t     *P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle);
+mobj_t*         P_SpawnMobj3f(mobjtype_t type, float x, float y,
+                              float z, angle_t angle, int spawnFlags);
+mobj_t*         P_SpawnMobj3fv(mobjtype_t type, float pos[3],
+                               angle_t angle, int spawnFlags);
 
-void        P_SpawnPuff(float x, float y, float z, angle_t angle);
-mobj_t     *P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
-                              angle_t angle);
-void        P_SpawnBlood(float x, float y, float z, int damage,
-                         angle_t angle);
-mobj_t     *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
-void        P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source);
-mobj_t     *P_SpawnTeleFog(float x, float y, angle_t angle);
-mobj_t     *P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
-                                 mobj_t *source, mobj_t *dest); // jd64
+void            P_SpawnPuff(float x, float y, float z, angle_t angle);
+mobj_t*         P_SpawnCustomPuff(mobjtype_t type, float x, float y,
+                                  float z, angle_t angle);
+void            P_SpawnBlood(float x, float y, float z, int damage,
+                             angle_t angle);
+mobj_t*         P_SpawnMissile(mobjtype_t type, mobj_t* source,
+                               mobj_t* dest);
+mobj_t*         P_SpawnTeleFog(float x, float y, angle_t angle);
+mobj_t*         P_SpawnMotherMissile(mobjtype_t type, float x, float y,
+                                     float z, mobj_t* source,
+                                     mobj_t* dest);
 
-boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
-void        P_MobjThinker(mobj_t* mo);
+boolean         P_MobjChangeState(mobj_t* mo, statenum_t state);
+void            P_MobjThinker(mobj_t* mo);
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
-void        P_RipperBlood(mobj_t* mo);
-void        P_SetDoomsdayFlags(mobj_t* mo);
-void        P_HitFloor(mobj_t* mo);
+void            P_RipperBlood(mobj_t* mo);
+void            P_SetDoomsdayFlags(mobj_t* mo);
+void            P_HitFloor(mobj_t* mo);
 
-void        P_SpawnMapThing(spawnspot_t* th);
-void        P_SpawnPlayer(spawnspot_t* mthing, int pnum);
+void            P_SpawnMapThing(spawnspot_t* th);
+void            P_SpawnPlayer(spawnspot_t* mthing, int pnum);
 
 #endif

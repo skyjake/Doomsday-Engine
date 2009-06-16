@@ -462,7 +462,7 @@ void C_DECL A_FireMissile(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(MT_ROCKET, player->plr->mo);
+    P_SpawnMissile(MT_ROCKET, player->plr->mo, NULL);
 
     // jd64 >
     if(cfg.weaponRecoil)
@@ -476,7 +476,7 @@ void C_DECL A_FireMissile(player_t *player, pspdef_t *psp)
     // < d64tc
 }
 
-void C_DECL A_FireBFG(player_t *player, pspdef_t *psp)
+void C_DECL A_FireBFG(player_t* player, pspdef_t* psp)
 {
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
@@ -484,10 +484,10 @@ void C_DECL A_FireBFG(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(MT_BFG, player->plr->mo);
+    P_SpawnMissile(MT_BFG, player->plr->mo, NULL);
 }
 
-void C_DECL A_FirePlasma(player_t *player, pspdef_t *psp)
+void C_DECL A_FirePlasma(player_t* player, pspdef_t* psp)
 {
     P_ShotAmmo(player);
 
@@ -501,7 +501,7 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(MT_PLASMA, player->plr->mo);
+    P_SpawnMissile(MT_PLASMA, player->plr->mo, NULL);
 }
 
 /**
@@ -533,11 +533,11 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
     switch(laserPower)
     {
     case 0:
-        P_SpawnPlayerMissile(MT_LASERSHOTWEAK, player->plr->mo);
+        P_SpawnMissile(MT_LASERSHOTWEAK, player->plr->mo, NULL);
         break;
 
     case 1:
-        P_SpawnPlayerMissile(MT_LASERSHOT, player->plr->mo);
+        P_SpawnMissile(MT_LASERSHOT, player->plr->mo, NULL);
         break;
 
     case 2:
@@ -546,7 +546,7 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
         break;
 
     case 3:
-        P_SpawnPlayerMissile(MT_LASERSHOT, pmo);
+        P_SpawnMissile(MT_LASERSHOT, pmo, NULL);
         P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - (ANG45 / 6));
         P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + (ANG45 / 6));
         break;
@@ -556,10 +556,10 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
 /**
  * d64tc
  */
-static void fireDoubleLaser(player_t *player, pspdef_t *psp,
+static void fireDoubleLaser(player_t* player, pspdef_t* psp,
                             angle_t angleDelta)
 {
-    mobj_t             *pmo;
+    mobj_t*             pmo;
 
     P_ShotAmmo(player);
 
@@ -569,7 +569,7 @@ static void fireDoubleLaser(player_t *player, pspdef_t *psp,
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(MT_LASERSHOT, pmo);
+    P_SpawnMissile(MT_LASERSHOT, pmo, NULL);
     P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle - angleDelta);
     P_SPMAngle(MT_LASERSHOT, pmo, pmo->angle + angleDelta);
 }
@@ -806,7 +806,7 @@ void C_DECL A_BFGSpray(mobj_t *mo)
         P_SpawnMobj3f(MT_EXTRABFG,
                       lineTarget->pos[VX], lineTarget->pos[VY],
                       lineTarget->pos[VZ] + lineTarget->height / 4,
-                      angle + ANG180);
+                      angle + ANG180, 0);
 
         damage = 0;
         for(j = 0; j < 15; ++j)

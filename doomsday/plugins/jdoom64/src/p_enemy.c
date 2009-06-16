@@ -617,7 +617,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     pos[VY] += FIX2FLT((P_Random() - 128) << 11);
     pos[VZ] += actor->height / 2;
 
-    mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24);
+    mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24, 0);
     if(mo)
     {
         S_StartSound(SFX_BAREXP, mo);
@@ -1432,7 +1432,7 @@ void C_DECL A_MotherBallExplode(mobj_t *spread)
     {
         angle = i * ANG45;
 
-        shard = P_SpawnMobj3fv(MT_HEADSHOT, spread->pos, angle);
+        shard = P_SpawnMobj3fv(MT_HEADSHOT, spread->pos, angle, 0);
         shard->target = spread->target;
         an = angle >> ANGLETOFINESHIFT;
         shard->mom[MX] = shard->info->speed * FIX2FLT(finecosine[an]);
@@ -1448,7 +1448,7 @@ void C_DECL A_RectTracerPuff(mobj_t *smoke)
     if(!smoke)
         return;
 
-    P_SpawnMobj3fv(MT_MOTHERPUFF, smoke->pos, P_Random() << 24);
+    P_SpawnMobj3fv(MT_MOTHERPUFF, smoke->pos, P_Random() << 24, 0);
 }
 
 void C_DECL A_SargAttack(mobj_t *actor)
@@ -1584,7 +1584,7 @@ void C_DECL A_Tracer(mobj_t *actor)
     th = P_SpawnMobj3f(MT_SMOKE,
                        actor->pos[VX] - actor->mom[MX],
                        actor->pos[VY] - actor->mom[MY],
-                       actor->pos[VZ], actor->angle + ANG180);
+                       actor->pos[VZ], actor->angle + ANG180, 0);
 
     th->mom[MZ] = 1;
     th->tics -= P_Random() & 3;
@@ -1773,7 +1773,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     {   // Limit the number of MT_SKULL's we should spawn.
         countmobjoftypeparams_t params;
 
-        // Count total number currently on the level.
+        // Count total number currently on the map.
         params.type = MT_SKULL;
         params.count = 0;
         DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
@@ -1793,13 +1793,9 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     pos[VZ] += 8;
 
     // Compat option to prevent spawning lost souls inside walls.
-    if(cfg.allowSkullsInWalls)
+    if(!cfg.allowSkullsInWalls)
     {
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
-    }
-    else
-    {
-       /**
+        /**
          * Check whether the Lost Soul is being fired through a 1-sided
          * wall or an impassible line, or a "monsters can't cross" line.
          * If it is, then we don't allow the spawn.
@@ -1808,7 +1804,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
         if(P_CheckSides(actor, pos[VX], pos[VY]))
             return;
 
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle);
+        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
         sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
@@ -1822,8 +1818,12 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
             return;
         }
     }
+    else
+    {   // Use the original DOOM method.
+        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
+    }
 
-    // Check for movements $dropoff_fix.
+    // Check for movements, $dropoff_fix.
     if(!P_TryMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false, false))
     {
         // Kill it immediately.
@@ -1875,12 +1875,12 @@ void C_DECL A_PainDie(mobj_t* actor)
  *       above in that it could possibily spawn mobjs in the void. In this
  *       instance its of little consequence as they are just for fx.
  */
-void A_Rocketshootpuff(mobj_t *actor, angle_t angle)
+void A_Rocketshootpuff(mobj_t* actor, angle_t angle)
 {
     uint                an;
     float               prestep;
     float               pos[3];
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     an = angle >> ANGLETOFINESHIFT;
 
@@ -1892,7 +1892,7 @@ void A_Rocketshootpuff(mobj_t *actor, angle_t angle)
     pos[VY] += prestep * FIX2FLT(finesine[an]);
     pos[VZ] += 8;
 
-    mo = P_SpawnMobj3fv(MT_ROCKETPUFF, pos, angle);
+    mo = P_SpawnMobj3fv(MT_ROCKETPUFF, pos, angle, 0);
 
     // Check for movements $dropoff_fix.
     if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY], false, false))
@@ -1969,7 +1969,7 @@ void C_DECL A_CyberDeath(mobj_t *actor)
     pos[VY] += FIX2FLT((P_Random() - 128) << 11);
     pos[VZ] += actor->height / 2;
 
-    mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24);
+    mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24, 0);
     if(mo)
     {
         S_StartSound(SFX_BAREXP, mo);
@@ -2034,7 +2034,7 @@ void C_DECL A_Rocketpuff(mobj_t *actor)
     if(!actor)
         return;
 
-    P_SpawnMobj3fv(MT_ROCKETPUFF, actor->pos, P_Random() << 24);
+    P_SpawnMobj3fv(MT_ROCKETPUFF, actor->pos, P_Random() << 24, 0);
 }
 
 /**
@@ -2045,7 +2045,7 @@ void C_DECL A_Lasersmoke(mobj_t *mo)
     if(!mo)
         return;
 
-    P_SpawnMobj3fv(MT_LASERDUST, mo->pos, P_Random() << 24);
+    P_SpawnMobj3fv(MT_LASERDUST, mo->pos, P_Random() << 24, 0);
 }
 
 void C_DECL A_XScream(mobj_t *actor)
