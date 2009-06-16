@@ -47,6 +47,7 @@ extern "C" {
 #endif
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include "../portable/include/dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
