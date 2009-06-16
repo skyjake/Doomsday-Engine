@@ -639,9 +639,9 @@ void P_NightmareRespawn(mobj_t* mobj)
                         mobj->spawnSpot.flags);
     S_StartSound(SFX_TELEPT, mo);
 
+    mo = P_SpawnMobj3fv(mobj->type, mobj->spawnSpot.pos,
+                        mobj->spawnSpot.angle, mobj->spawnSpot.flags);
     // Inherit attributes from deceased one.
-    mo = P_SpawnMobj3fv(mobj->type, mobj->pos, mobj->spawnSpot.angle,
-                        mobj->spawnSpot.flags);
     memcpy(&mo->spawnSpot, &mobj->spawnSpot, sizeof(mo->spawnSpot));
 
     if(mobj->spawnSpot.flags & MTF_DEAF)
