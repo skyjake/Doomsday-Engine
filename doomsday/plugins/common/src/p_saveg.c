@@ -4798,7 +4798,7 @@ int SV_SaveGameWorker(void* ptr)
     int                 i;
 #endif
 
-    VERBOSE(Con_Message("SV_SaveGame: Attempting load of save game "
+    VERBOSE(Con_Message("SV_SaveGame: Attempting save game to "
                         "\"%s\".\n", M_PrettyPath(param->filename)));
 
     // Open the output file

@@ -2072,7 +2072,7 @@ void G_LoadGame(int slot)
 #else
 void G_LoadGame(const char* name)
 {
-    M_TranslatePath(name, saveName, FILENAME_T_MAXLEN);
+    M_TranslatePath(saveName, name, FILENAME_T_MAXLEN);
     G_SetGameAction(GA_LOADGAME);
 }
 #endif
