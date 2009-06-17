@@ -142,7 +142,6 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 boolean     P_HitFloor(mobj_t *mo);
 
 // Spawn spots.
-void        P_SpawnMapThing(mapspot_t *spot);
 void        P_SpawnPlayer(mapspot_t *spot, int playernum);
 
 void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);

@@ -40,6 +40,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "p_actor.h"
 #include "g_common.h"
 #include "g_controls.h"
 #include "p_player.h"

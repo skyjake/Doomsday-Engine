@@ -338,15 +338,23 @@ static void P_LoadMapObjs(void)
         spot->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
 
         spot->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
+#if __JHEXEN__
+        // Check for player starts 5 to 8.
+        if(spot->type >= 9100 && spot->type <= 9103)
+            spot->type = 5 + spot->type - 9100; // Translate to 5 - 8.
+#endif
         spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
 
         /**
-         * For some stupid reason, the Hexen format stores polyobject tags
-         * in the angle field in THINGS. Thus, we cannot translate the angle
-         * until we know whether it is a polyobject type or not.
+         * For some reason, the Hexen format stores polyobject tags in the
+         * angle field in THINGS. Thus, we cannot translate the angle until
+         * we know whether it is a polyobject type or not.
          */
 #if __JHEXEN__
         spot->angle = P_GetGMOShort(MO_THING, i, MO_ANGLE);
+        if(spot->type != PO_ANCHOR_TYPE && spot->type != PO_SPAWN_TYPE &&
+           spot->type != PO_SPAWNCRUSH_TYPE)
+            spot->angle = ANG45 * (spot->angle / 45);
 #else
         spot->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
 #endif

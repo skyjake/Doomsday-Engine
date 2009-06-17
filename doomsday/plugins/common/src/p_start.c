@@ -278,7 +278,7 @@ boolean P_CheckSpot(int playernum, const mapspot_t* mapSpot,
 
     if(!ddplyr->mo)
     {
-        // The player doesn't have a mobj. Let's create a dummy.
+        // The player doesn't have a mo. Let's create a dummy.
         G_DummySpawnPlayer(playernum);
         using_dummy = true;
     }
@@ -388,6 +388,320 @@ void P_AddBossSpot(float x, float y, angle_t angle)
 #endif
 
 /**
+ * Spawns the passed thing into the world.
+ */
+static void spawnMapThing(const mapspot_t* spot)
+{
+#if __JHEXEN__
+    static unsigned int classFlags[] = {
+        MTF_FIGHTER,
+        MTF_CLERIC,
+        MTF_MAGE
+    };
+#endif
+
+    int                 i, spawnMask;
+    mobj_t*             mo;
+
+/*#if _DEBUG
+Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i type:%i flags:%i\n",
+            spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
+            spot->type, spot->flags);
+#endif*/
+
+    // Count deathmatch start positions.
+    if(spot->type == 11)
+    {
+        if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
+        {
+            memcpy(deathmatchP, spot, sizeof(*spot));
+            deathmatchP++;
+        }
+        return;
+    }
+
+    // Check for player starts 1 to 4.
+    if(spot->type >= 1 && spot->type <= 4)
+    {
+        // Register this player start.
+        P_RegisterPlayerStart(spot);
+        return;
+    }
+
+#if __JHERETIC__
+    // Ambient sound sequences.
+    if(spot->type >= 1200 && spot->type < 1300)
+    {
+        P_AddAmbientSfx(spot->type - 1200);
+        return;
+    }
+
+    // Check for boss spots.
+    if(spot->type == 56)
+    {
+        P_AddBossSpot(spot->pos[VX], spot->pos[VY], spot->angle);
+        return;
+    }
+#endif
+
+#if __JHEXEN__
+    if(spot->type >= 1400 && spot->type < 1410)
+    {
+        sector_t* sector = P_GetPtrp(
+            R_PointInSubsector(spot->pos[VX], spot->pos[VY]),
+            DMU_SECTOR);
+        P_ToXSector(sector)->seqType = spot->type - 1400;
+        return;
+    }
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC
+    // Don't spawn things flagged for Multiplayer if we're not in a netgame.
+    if(!IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
+        return;
+#endif
+
+#if __JDOOM__
+    // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
+    if(deathmatch && (spot->flags & MSF_NOTDM))
+        return;
+
+    // Don't spawn things flagged for Not Coop if we're coop'in.
+    if(IS_NETGAME && !deathmatch && (spot->flags & MSF_NOTCOOP))
+        return;
+
+    // Don't spawn things flagged for Multiplayer if we're not in a netgame.
+    if(!IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
+        return;
+#endif
+
+#if __JHEXEN__
+    // Check current game type with spawn flags.
+    if(IS_NETGAME == false)
+        spawnMask = MTF_GSINGLE;
+    else if(deathmatch)
+        spawnMask = MTF_GDEATHMATCH;
+    else
+        spawnMask = MTF_GCOOP;
+
+    if(!(spot->flags & spawnMask))
+        return;
+#endif
+
+    // Check for apropriate skill level.
+#if __JHEXEN__
+    if(gameSkill == SM_BABY || gameSkill == SM_EASY)
+        spawnMask = MSF_EASY;
+    else if(gameSkill == SM_HARD || gameSkill == SM_NIGHTMARE)
+        spawnMask = MSF_HARD;
+    else
+        spawnMask = MTF_NORMAL;
+#else
+    if(gameSkill == SM_BABY)
+        spawnMask = 1;
+# if __JDOOM__
+    else if(gameSkill == SM_NIGHTMARE)
+        spawnMask = 4;
+# endif
+    else
+        spawnMask = 1 << (gameSkill - 1);
+#endif
+
+    if(!(spot->flags & spawnMask))
+        return;
+
+#if __JHEXEN__
+    // Check current character classes with spawn flags.
+    if(IS_NETGAME == false)
+    {   // Single player.
+        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
+        {   // Not for current class.
+            return;
+        }
+    }
+    else if(deathmatch == false)
+    {   // Cooperative.
+        spawnMask = 0;
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(players[i].plr->inGame)
+            {
+                spawnMask |= classFlags[cfg.playerClass[i]];
+            }
+        }
+
+        // No players are in the game when a dedicated server is started.
+        // In this case, we'll be generous and spawn stuff for all the
+        // classes.
+        if(!spawnMask)
+        {
+            spawnMask |= MTF_FIGHTER | MTF_CLERIC | MTF_MAGE;
+        }
+
+        if((spot->flags & spawnMask) == 0)
+        {
+            return;
+        }
+    }
+#endif
+
+    // Find which type to spawn.
+    for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
+    {
+        if(spot->type == MOBJINFO[i].doomedNum)
+            break;
+    }
+
+    if(i == Get(DD_NUMMOBJTYPES))
+    {
+        Con_Message("spawnMapThing: Warning, unknown thing type %i at "
+                    "[%g, %g, %g].\n", spot->type, spot->pos[VX],
+                    spot->pos[VY], spot->pos[VZ]);
+        return;
+    }
+
+    // Clients only spawn local objects.
+    if(IS_CLIENT)
+    {
+        if(!(MOBJINFO[i].flags & MF_LOCAL))
+            return;
+    }
+
+    // Not for deathmatch?
+    if(deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
+        return;
+
+    // Check for specific disabled objects.
+#if __JDOOM__ || __JDOOM64__
+    if(IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
+    {
+        // Cooperative weapons?
+        if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP &&
+           i <= MT_SUPERSHOTGUN)
+            return;
+
+        // Don't spawn any special objects in coop?
+        if(cfg.noCoopAnything && !deathmatch)
+            return;
+
+        // BFG disabled in netgames?
+        if(cfg.noNetBFG && i == MT_MISC25)
+            return;
+    }
+#elif __JHERETIC__
+    switch(i)
+    {
+    case MT_WSKULLROD:
+    case MT_WPHOENIXROD:
+    case MT_AMSKRDWIMPY:
+    case MT_AMSKRDHEFTY:
+    case MT_AMPHRDWIMPY:
+    case MT_AMPHRDHEFTY:
+    case MT_AMMACEWIMPY:
+    case MT_AMMACEHEFTY:
+    case MT_ARTISUPERHEAL:
+    case MT_ARTITELEPORT:
+    case MT_ITEMSHIELD2:
+        if(gameMode == shareware)
+        {   // Don't place on map in shareware version.
+            return;
+        }
+        break;
+
+    case MT_WMACE:
+        if(gameMode != shareware)
+        {   // Put in the mace spot list.
+            P_AddMaceSpot(spot);
+            return;
+        }
+        return;
+
+    default:
+        break;
+    }
+#elif __JHEXEN__
+    switch(i)
+    {
+    case MT_ZLYNCHED_NOHEART:
+        P_SpawnMobj3fv(MT_BLOODPOOL, spot->pos, 0,
+                       spot->flags | MSF_Z_FLOOR);
+        break;
+
+    default:
+        break;
+    }
+#endif
+
+    // Don't spawn any monsters if -noMonstersParm.
+    if(noMonstersParm)
+    {
+        if((MOBJINFO[i].flags & MF_COUNTKILL)
+#if __JDOOM__ || __JDOOM64__
+           || i == MT_SKULL
+#endif
+           )
+            return;
+    }
+
+    if((mo = P_SpawnMobj3fv(i, spot->pos, spot->angle, spot->flags)))
+    {
+        if(mo->tics > 0)
+            mo->tics = 1 + (P_Random() % mo->tics);
+
+#if __JHEXEN__
+        mo->tid = spot->tid;
+        mo->special = spot->special;
+        mo->args[0] = spot->arg1;
+        mo->args[1] = spot->arg2;
+        mo->args[2] = spot->arg3;
+        mo->args[3] = spot->arg4;
+        mo->args[4] = spot->arg5;
+#endif
+
+#if __JHEXEN__
+        if(mo->flags2 & MF2_FLOATBOB)
+            mo->special1 = FLT2FIX(spot->pos[VZ]);
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+        if(mo->flags & MF_COUNTKILL)
+            totalKills++;
+        if(mo->flags & MF_COUNTITEM)
+            totalItems++;
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+        if(spot->flags & MSF_DEAF)
+            mo->flags |= MF_AMBUSH;
+#elif __JHEXEN__
+        if(spot->flags & MTF_DORMANT)
+        {
+            mo->flags2 |= MF2_DORMANT;
+            if(mo->type == MT_ICEGUY)
+            {
+                P_MobjChangeState(mo, S_ICEGUY_DORMANT);
+            }
+            mo->tics = -1;
+        }
+#endif
+
+#if __JDOOM64__
+        /*if(spot->flags & MTF_WALKOFF)
+            mo->flags |= (MF_FLOAT | MF_DROPOFF);
+
+        if(spot->flags & MTF_TRANSLUCENT)
+            mo->flags |= MF_SHADOW;
+
+        if(spot->flags & MTF_FLOAT)
+        {
+            mo->pos[VZ] += 96;
+            mo->flags |= (MF_FLOAT | MF_NOGRAVITY);
+        }*/
+#endif
+    }
+}
+
+/**
  * Spawns all THINGS that belong in the map.
  *
  * Polyobject anchors etc are still handled in PO_Init()
@@ -438,7 +752,7 @@ void P_SpawnThings(void)
         if(!spawn)
             continue;
 #endif
-        P_SpawnMapThing(spot);
+        spawnMapThing(spot);
     }
 
 #if __JDOOM__
@@ -648,7 +962,7 @@ boolean unstuckMobjInLinedef(linedef_t* li, void* context)
         float               pos, linePoint[2], lineDelta[2], result[2];
 
         /**
-         * Project the point (mobj position) onto this linedef. If the
+         * Project the point (mo position) onto this linedef. If the
          * resultant point lies on the linedef and the current position is
          * in range of that point, adjust the position moving it away from
          * the projected point.

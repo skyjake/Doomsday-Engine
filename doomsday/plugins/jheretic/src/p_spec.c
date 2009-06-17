@@ -1357,7 +1357,7 @@ void P_InitAmbientSound(void)
 }
 
 /**
- * Called by (P_mobj):P_SpawnMapThing during (P_setup):P_SetupMap.
+ * Called by spawnMapThing during (P_setup):P_SetupMap.
  */
 void P_AddAmbientSfx(int sequence)
 {

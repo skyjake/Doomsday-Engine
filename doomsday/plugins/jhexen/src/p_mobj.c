@@ -69,8 +69,6 @@ void    P_BounceWall(mobj_t *mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    P_SpawnMapThing(mapspot_t *mapSpot);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj);
@@ -1015,18 +1013,18 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
         mo->player->centering = true;
 }
 
-void P_MobjThinker(mobj_t *mobj)
+void P_MobjThinker(mobj_t* mobj)
 {
-    mobj_t         *onmo;
+    mobj_t*             onmo = NULL;
 
     if(mobj->ddFlags & DDMF_REMOTE) // Remote mobjs are handled separately.
         return;
 
     if(mobj->type == MT_MWAND_MISSILE || mobj->type == MT_CFLAME_MISSILE)
     {
-        int         i;
-        float       z, frac[3];
-        boolean     changexy;
+        int                 i;
+        float               z, frac[3];
+        boolean             changexy;
 
         // Handle movement.
         if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
@@ -1439,206 +1437,6 @@ void P_SpawnPlayer(mapspot_t* spot, int playernum)
 
     // Wake up the heads up text.
     HU_Start(p - players);
-}
-
-void P_SpawnMapThing(mapspot_t *spot)
-{
-    int         i;
-    unsigned int spawnMask;
-    mobj_t     *mobj;
-    static unsigned int classFlags[] = {
-        MTF_FIGHTER,
-        MTF_CLERIC,
-        MTF_MAGE
-    };
-
-    if(spot->type == PO_ANCHOR_TYPE ||
-       spot->type == PO_SPAWN_TYPE ||
-       spot->type == PO_SPAWNCRUSH_TYPE)
-    {
-        return; // These are never spawned.
-    }
-
-    /**
-     * We know now that this is NOT a polyobject spawn thing, so we can now
-     * translate the angle propetry.
-     */
-    spot->angle = ANG45 * (spot->angle / 45);
-
-    // Count deathmatch start positions.
-    if(spot->type == 11)
-    {
-        if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
-        {
-            memcpy(deathmatchP, spot, sizeof(*spot));
-            deathmatchP++;
-        }
-        return;
-    }
-
-    // Check for player starts 1 to 4.
-    if(spot->type <= 4)
-    {
-        P_RegisterPlayerStart(spot);
-        return;
-    }
-
-    // Check for player starts 5 to 8.
-    if(spot->type >= 9100 && spot->type <= 9103)
-    {
-        spot->type = 5 + spot->type - 9100; // Translate to 5 - 8.
-        P_RegisterPlayerStart(spot);
-        return;
-    }
-
-    if(spot->type >= 1400 && spot->type < 1410)
-    {
-        sector_t* sector = P_GetPtrp(
-            R_PointInSubsector(spot->pos[VX], spot->pos[VY]),
-            DMU_SECTOR);
-        P_ToXSector(sector)->seqType = spot->type - 1400;
-        return;
-    }
-
-    // Check current game type with spawn flags.
-    if(IS_NETGAME == false)
-    {
-        spawnMask = MTF_GSINGLE;
-    }
-    else if(deathmatch)
-    {
-        spawnMask = MTF_GDEATHMATCH;
-    }
-    else
-    {
-        spawnMask = MTF_GCOOP;
-    }
-
-    if(!(spot->flags & spawnMask))
-        return;
-
-    // Check current skill with spawn flags.
-    if(gameSkill == SM_BABY || gameSkill == SM_EASY)
-    {
-        spawnMask = MSF_EASY;
-    }
-    else if(gameSkill == SM_HARD || gameSkill == SM_NIGHTMARE)
-    {
-        spawnMask = MSF_HARD;
-    }
-    else
-    {
-        spawnMask = MTF_NORMAL;
-    }
-
-    if(!(spot->flags & spawnMask))
-        return;
-
-    // Check current character classes with spawn flags.
-    if(IS_NETGAME == false)
-    {   // Single player.
-        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
-        {   // Not for current class.
-            return;
-        }
-    }
-    else if(deathmatch == false)
-    {   // Cooperative.
-        spawnMask = 0;
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-            {
-                spawnMask |= classFlags[cfg.playerClass[i]];
-            }
-        }
-
-        // No players are in the game when a dedicated server is started.
-        // In this case, we'll be generous and spawn stuff for all the
-        // classes.
-        if(!spawnMask)
-        {
-            spawnMask |= MTF_FIGHTER | MTF_CLERIC | MTF_MAGE;
-        }
-
-        if((spot->flags & spawnMask) == 0)
-        {
-            return;
-        }
-    }
-
-    // Find which type to spawn.
-    for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
-    {
-        if(spot->type == MOBJINFO[i].doomedNum)
-        {
-            break;
-        }
-    }
-
-    if(i == Get(DD_NUMMOBJTYPES))
-    {   // Can't find thing type.
-        Con_Error("P_SpawnMapThing: Unknown type %i at (%g, %g)",
-                  spot->type, spot->pos[VX], spot->pos[VY]);
-    }
-
-    // Clients only spawn local objects.
-    if(IS_CLIENT)
-    {
-        if(!(MOBJINFO[i].flags & MF_LOCAL))
-            return;
-    }
-
-    // Don't spawn keys and players in deathmatch.
-    if(deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
-    {
-        return;
-    }
-
-    // Don't spawn monsters if -nomonsters.
-    if(noMonstersParm && (MOBJINFO[i].flags & MF_COUNTKILL))
-    {
-        return;
-    }
-
-    switch(i)
-    {   // Special stuff.
-    case MT_ZLYNCHED_NOHEART:
-        P_SpawnMobj3fv(MT_BLOODPOOL, spot->pos, 0, spot->flags | MSF_Z_FLOOR);
-        break;
-
-    default:
-        break;
-    }
-
-    mobj = P_SpawnMobj3fv(i, spot->pos, spot->angle, spot->flags);
-
-    mobj->tid = spot->tid;
-    mobj->special = spot->special;
-    mobj->args[0] = spot->arg1;
-    mobj->args[1] = spot->arg2;
-    mobj->args[2] = spot->arg3;
-    mobj->args[3] = spot->arg4;
-    mobj->args[4] = spot->arg5;
-    if(mobj->flags2 & MF2_FLOATBOB)
-    {
-        mobj->special1 = FLT2FIX(spot->pos[VZ]);
-    }
-
-    if(mobj->tics > 0)
-    {
-        mobj->tics = 1 + (P_Random() % mobj->tics);
-    }
-
-    if(spot->flags & MTF_DORMANT)
-    {
-        mobj->flags2 |= MF2_DORMANT;
-        if(mobj->type == MT_ICEGUY)
-        {
-            P_MobjChangeState(mobj, S_ICEGUY_DORMANT);
-        }
-        mobj->tics = -1;
-    }
 }
 
 static boolean addToTIDList(thinker_t* th, void* context)

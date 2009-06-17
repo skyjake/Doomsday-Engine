@@ -131,7 +131,6 @@ boolean     P_CheckMissileSpawn(mobj_t *missile);
 void        P_MobjMoveZ(mobj_t *mo);
 void        P_ExplodeMissile(mobj_t *mo);
 
-void        P_SpawnMapThing(const mapspot_t* mapSpot);
 void        P_SpawnPlayer(mapspot_t *mapSpot, int plrnum);
 
 #define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))

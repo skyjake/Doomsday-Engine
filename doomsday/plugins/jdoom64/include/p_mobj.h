@@ -373,7 +373,6 @@ void            P_RipperBlood(mobj_t* mo);
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            P_HitFloor(mobj_t* mo);
 
-void            P_SpawnMapThing(const mapspot_t* th);
 void            P_SpawnPlayer(mapspot_t* mapSpot, int pnum);
 
 #endif
