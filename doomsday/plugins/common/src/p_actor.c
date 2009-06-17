@@ -62,9 +62,13 @@
 typedef struct spawnqueuenode_s {
     int             startTime;
     int             minTics; // Minimum number of tics before respawn.
-    mapspot_t       spot;
     void          (*callback) (mobj_t* mo, void* context);
     void*           context;
+
+    float           pos[3];
+    angle_t         angle;
+    mobjtype_t      type;
+    int             spawnFlags; // MSF_* flags
 
     struct spawnqueuenode_s* next;
 } spawnqueuenode_t;
@@ -358,12 +362,12 @@ static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
 {
     spawnqueuenode_t*   n = Z_Malloc(sizeof(*n), PU_MAP, 0);
 
-    n->spot.type = type;
-    n->spot.pos[VX] = x;
-    n->spot.pos[VY] = y;
-    n->spot.pos[VZ] = z;
-    n->spot.angle = angle;
-    n->spot.flags = spawnFlags;
+    n->type = type;
+    n->pos[VX] = x;
+    n->pos[VY] = y;
+    n->pos[VZ] = z;
+    n->angle = angle;
+    n->spawnFlags = spawnFlags;
 
     n->startTime = mapTime;
     n->minTics = minTics;
@@ -415,11 +419,9 @@ static mobj_t* doDeferredSpawn(void)
        mapTime - spawnQueueHead->startTime >= spawnQueueHead->minTics)
     {
         spawnqueuenode_t*   n = dequeueSpawn();
-        const mapspot_t*    spot = &n->spot;
 
         // Spawn it.
-        if((mo = P_SpawnMobj3fv(spot->type, spot->pos, spot->angle,
-                                spot->flags)))
+        if((mo = P_SpawnMobj3fv(n->type, n->pos, n->angle, n->spawnFlags)))
         {
             if(n->callback)
                 n->callback(mo, n->context);
