@@ -1338,7 +1338,7 @@ void M_InitEpisodeMenu(void)
     // In shareware, episodes 2 and 3 are handled, branching to an ad screen.
     default:            numEpisodes = 3; break;
     }
-#else  __JHERETIC__
+#else // __JHERETIC__
     if(gameMode == extended)
         numEpisodes = 6;
     else

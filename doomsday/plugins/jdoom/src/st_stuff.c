@@ -1097,7 +1097,7 @@ void ST_doFullscreenStuff(int player)
                              iconAlpha, false);
             ST_HUDSpriteSize(spr, &w, &h);
             pos += w + 2;
-            sprintf(buf, "%i", plr->ammo[ammoType]);
+            sprintf(buf, "%i", plr->ammo[ammoType].owned);
             M_WriteText2(pos, height - 14, buf, GF_FONTB,
                          cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
                          textAlpha);
