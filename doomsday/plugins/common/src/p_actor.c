@@ -63,7 +63,9 @@ typedef struct spawnqueuenode_s {
     int             startTime;
     int             minTics; // Minimum number of tics before respawn.
     mapspot_t       spot;
-    void          (*callback) (mobj_t* mo);
+    void          (*callback) (mobj_t* mo, void* context);
+    void*           context;
+
     struct spawnqueuenode_s* next;
 } spawnqueuenode_t;
 
@@ -83,7 +85,7 @@ static spawnqueuenode_t* spawnQueueHead = NULL;
 
 // CODE --------------------------------------------------------------------
 
-void P_SpawnTelefog(mobj_t* mo)
+void P_SpawnTelefog(mobj_t* mo, void* context)
 {
 #if __JDOOM__ || __JDOOM64__
     S_StartSound(SFX_ITMBK, mo);
@@ -131,7 +133,7 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
         {
             P_DeferSpawnMobj3fv(RESPAWNTICS, mo->type, mo->spawnSpot.pos,
                                 mo->spawnSpot.angle, mo->spawnSpot.flags,
-                                P_SpawnTelefog);
+                                P_SpawnTelefog, NULL);
         }
     }
 #endif
@@ -351,7 +353,8 @@ static void emptySpawnQueue(void)
 
 static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
                          float z, angle_t angle, int spawnFlags,
-                         void (*callback) (mobj_t* mo))
+                         void (*callback) (mobj_t* mo, void* context),
+                         void* context)
 {
     spawnqueuenode_t*   n = Z_Malloc(sizeof(*n), PU_MAP, 0);
 
@@ -364,7 +367,9 @@ static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
 
     n->startTime = mapTime;
     n->minTics = minTics;
+
     n->callback = callback;
+    n->context = context;
 
     if(spawnQueueHead)
     {   // Find the correct insertion point.
@@ -417,7 +422,7 @@ static mobj_t* doDeferredSpawn(void)
                                 spot->flags)))
         {
             if(n->callback)
-                n->callback(mo);
+                n->callback(mo, n->context);
         }
 
         Z_Free(n);
@@ -432,11 +437,13 @@ static mobj_t* doDeferredSpawn(void)
  */
 void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x, float y,
                         float z, angle_t angle, int spawnFlags,
-                        void (*callback) (mobj_t* mo))
+                        void (*callback) (mobj_t* mo, void* context),
+                        void* context)
 {
     if(minTics > 0)
     {
-        enqueueSpawn(minTics, type, x, y, z, angle, spawnFlags, callback);
+        enqueueSpawn(minTics, type, x, y, z, angle, spawnFlags, callback,
+                     context);
     }
     else // Spawn immediately.
     {
@@ -445,19 +452,20 @@ void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x, float y,
         if((mo = P_SpawnMobj3f(type, x, y, z, angle, spawnFlags)))
         {
             if(callback)
-                callback(mo);
+                callback(mo, context);
         }
     }
 }
 
 void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, const float pos[3],
                          angle_t angle, int spawnFlags,
-                         void (*callback) (mobj_t* mo))
+                         void (*callback) (mobj_t* mo, void* context),
+                         void* context)
 {
     if(minTics > 0)
     {
         enqueueSpawn(minTics, type, pos[VX], pos[VY], pos[VZ], angle,
-                     spawnFlags, callback);
+                     spawnFlags, callback, context);
     }
     else // Spawn immediately.
     {
@@ -466,7 +474,7 @@ void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, const float pos[3],
         if((mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
         {
             if(callback)
-                callback(mo);
+                callback(mo, context);
         }
     }
 }

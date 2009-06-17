@@ -49,9 +49,11 @@ void            P_PurgeDeferredSpawns(void);
 void            P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x,
                                    float y, float z, angle_t angle,
                                    int spawnFlags,
-                                   void (*callback) (mobj_t* mo));
+                                   void (*callback) (mobj_t* mo, void* context),
+                                   void* context);
 void            P_DeferSpawnMobj3fv(int minTics, mobjtype_t type,
                                     const float pos[3], angle_t angle,
                                     int spawnFlags,
-                                    void (*callback) (mobj_t* mo));
+                                    void (*callback) (mobj_t* mo, void* context),
+                                    void* context);
 #endif
