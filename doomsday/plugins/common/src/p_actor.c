@@ -63,6 +63,7 @@ typedef struct spawnqueuenode_s {
     int             startTime;
     int             minTics; // Minimum number of tics before respawn.
     mapspot_t       spot;
+    void          (*callback) (mobj_t* mo);
     struct spawnqueuenode_s* next;
 } spawnqueuenode_t;
 
@@ -81,6 +82,24 @@ typedef struct spawnqueuenode_s {
 static spawnqueuenode_t* spawnQueueHead = NULL;
 
 // CODE --------------------------------------------------------------------
+
+void P_SpawnTelefog(mobj_t* mo)
+{
+#if __JDOOM__ || __JDOOM64__
+    S_StartSound(SFX_ITMBK, mo);
+#else
+    S_StartSound(SFX_RESPAWN, mo);
+#endif
+
+# if __JDOOM64__
+    mo->translucency = 255;
+    mo->spawnFadeTics = 0;
+    mo->intFlags |= MIF_FADE;
+# elif __JDOOM__
+    // Spawn the item teleport fog at the new spot.
+    P_SpawnMobj3fv(MT_IFOG, mo->pos, mo->angle, 0);
+# endif
+}
 
 /**
  * Removes the given mobj from the world.
@@ -111,7 +130,8 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
            )
         {
             P_DeferSpawnMobj3fv(RESPAWNTICS, mo->type, mo->spawnSpot.pos,
-                                mo->spawnSpot.angle, mo->spawnSpot.flags);
+                                mo->spawnSpot.angle, mo->spawnSpot.flags,
+                                P_SpawnTelefog);
         }
     }
 #endif
@@ -330,7 +350,8 @@ static void emptySpawnQueue(void)
 }
 
 static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
-                         float z, angle_t angle, int spawnFlags)
+                         float z, angle_t angle, int spawnFlags,
+                         void (*callback) (mobj_t* mo))
 {
     spawnqueuenode_t*   n = Z_Malloc(sizeof(*n), PU_MAP, 0);
 
@@ -343,6 +364,7 @@ static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
 
     n->startTime = mapTime;
     n->minTics = minTics;
+    n->callback = callback;
 
     if(spawnQueueHead)
     {   // Find the correct insertion point.
@@ -381,12 +403,6 @@ static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
 
 static mobj_t* doDeferredSpawn(void)
 {
-#if __JDOOM__ || __JDOOM64__
-# define SFX_MOBJ_RESPAWN   SFX_ITMBK
-#else
-# define SFX_MOBJ_RESPAWN   SFX_RESPAWN
-#endif
-
     mobj_t*             mo = NULL;
 
     // Anything due to spawn?
@@ -400,24 +416,14 @@ static mobj_t* doDeferredSpawn(void)
         if((mo = P_SpawnMobj3fv(spot->type, spot->pos, spot->angle,
                                 spot->flags)))
         {
-            S_StartSound(SFX_MOBJ_RESPAWN, mo);
-
-# if __JDOOM64__
-            mo->translucency = 255;
-            mo->spawnFadeTics = 0;
-            mo->intFlags |= MIF_FADE;
-# elif __JDOOM__
-            // Spawn the item teleport fog at the new spot.
-            P_SpawnMobj3fv(MT_IFOG, spot->pos, spot->angle, 0);
-# endif
+            if(n->callback)
+                n->callback(mo);
         }
 
         Z_Free(n);
     }
 
     return mo;
-
-#undef SFX_MOBJ_RESPAWN
 }
 
 /**
@@ -425,22 +431,44 @@ static mobj_t* doDeferredSpawn(void)
  * Spawn behavior is otherwise exactly the same as an immediate spawn, via   * P_SpawnMobj*
  */
 void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x, float y,
-                        float z, angle_t angle, int spawnFlags)
+                        float z, angle_t angle, int spawnFlags,
+                        void (*callback) (mobj_t* mo))
 {
     if(minTics > 0)
-        enqueueSpawn(minTics, type, x, y, z, angle, spawnFlags);
+    {
+        enqueueSpawn(minTics, type, x, y, z, angle, spawnFlags, callback);
+    }
     else // Spawn immediately.
-        P_SpawnMobj3f(type, x, y, z, angle, spawnFlags);
+    {
+        mobj_t*             mo;
+
+        if((mo = P_SpawnMobj3f(type, x, y, z, angle, spawnFlags)))
+        {
+            if(callback)
+                callback(mo);
+        }
+    }
 }
 
 void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, const float pos[3],
-                         angle_t angle, int spawnFlags)
+                         angle_t angle, int spawnFlags,
+                         void (*callback) (mobj_t* mo))
 {
     if(minTics > 0)
+    {
         enqueueSpawn(minTics, type, pos[VX], pos[VY], pos[VZ], angle,
-                     spawnFlags);
+                     spawnFlags, callback);
+    }
     else // Spawn immediately.
-        P_SpawnMobj3fv(type, pos, angle, spawnFlags);
+    {
+        mobj_t*             mo;
+
+        if((mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
+        {
+            if(callback)
+                callback(mo);
+        }
+    }
 }
 
 /**
