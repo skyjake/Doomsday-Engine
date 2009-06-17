@@ -85,7 +85,7 @@ typedef struct spawnqueuenode_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static spawnqueuenode_t* spawnQueueHead = NULL;
+static spawnqueuenode_t* spawnQueueHead = NULL, *unusedNodes = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -332,6 +332,71 @@ void P_RipperBlood(mobj_t* actor)
     }
 }
 
+static spawnqueuenode_t* allocateNode(void)
+{
+#define SPAWNQUEUENODE_BATCHSIZE 32
+
+    spawnqueuenode_t*   n;
+
+    if(unusedNodes)
+    {   // There are existing nodes we can re-use.
+        n = unusedNodes;
+        unusedNodes = unusedNodes->next;
+        n->next = NULL;
+    }
+    else
+    {   // We need to allocate more.
+        size_t              i;
+        spawnqueuenode_t*   storage =
+            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_STATIC, 0);
+
+        // Add all but one to the unused node list.
+        for(i = 0; i < SPAWNQUEUENODE_BATCHSIZE-1; ++i)
+        {
+            n = storage++;
+            n->next = unusedNodes;
+            unusedNodes = n;
+        }
+
+        n = storage;
+    }
+
+    return n;
+
+#undef SPAWNQUEUENODE_BATCHSIZE
+}
+
+static void freeNode(spawnqueuenode_t* node, boolean recycle)
+{
+    // Find this node in the spawn queue and unlink it if found.
+    if(spawnQueueHead)
+    {
+        if(spawnQueueHead == node)
+        {
+            spawnQueueHead = spawnQueueHead->next;
+        }
+        else
+        {
+            spawnqueuenode_t*       n;
+
+            for(n = spawnQueueHead; n->next; n = n->next)
+            {
+                if(n->next == node)
+                    n->next = n->next->next;
+            }
+        }
+    }
+
+    if(recycle)
+    {   // Recycle this node for later use.
+        node->next = unusedNodes;
+        unusedNodes = node;
+        return;
+    }
+
+    Z_Free(node);
+}
+
 static spawnqueuenode_t* dequeueSpawn(void)
 {
     spawnqueuenode_t*   n = spawnQueueHead;
@@ -342,14 +407,14 @@ static spawnqueuenode_t* dequeueSpawn(void)
     return n;
 }
 
-static void emptySpawnQueue(void)
+static void emptySpawnQueue(boolean recycle)
 {
     if(spawnQueueHead)
     {
         spawnqueuenode_t*   n;
 
         while((n = dequeueSpawn()))
-            Z_Free(n);
+            freeNode(n, recycle);
     }
 
     spawnQueueHead = NULL;
@@ -360,7 +425,7 @@ static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
                          void (*callback) (mobj_t* mo, void* context),
                          void* context)
 {
-    spawnqueuenode_t*   n = Z_Malloc(sizeof(*n), PU_MAP, 0);
+    spawnqueuenode_t*   n = allocateNode();
 
     n->type = type;
     n->pos[VX] = x;
@@ -427,7 +492,7 @@ static mobj_t* doDeferredSpawn(void)
                 n->callback(mo, n->context);
         }
 
-        Z_Free(n);
+        freeNode(n, true);
     }
 
     return mo;
@@ -491,5 +556,5 @@ void P_DoDeferredSpawns(void)
 
 void P_PurgeDeferredSpawns(void)
 {
-    emptySpawnQueue();
+    emptySpawnQueue(true);
 }
