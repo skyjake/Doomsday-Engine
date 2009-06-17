@@ -988,7 +988,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     mo = P_SpawnMobj3f(item,
                        target->pos[VX] + 3 * FIX2FLT(finecosine[an]),
                        target->pos[VY] + 3 * FIX2FLT(finesine[an]),
-                       0, angle, MTF_Z_FLOOR);
+                       0, angle, MSF_Z_FLOOR);
     mo->flags |= MF_DROPPED; // Special versions of items.
 }
 

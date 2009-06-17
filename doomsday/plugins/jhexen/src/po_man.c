@@ -635,7 +635,7 @@ void PO_InitForMap(void)
     for(i = 0; i < numpolyobjs; ++i)
     {
         uint                j;
-        spawnspot_t*        mt;
+        mapspot_t*        spot;
         polyobj_t*          po;
 
         po = P_GetPolyobj(i | 0x80000000);
@@ -643,16 +643,16 @@ void PO_InitForMap(void)
         // Init game-specific properties.
         po->specialData = NULL;
 
-        // Find the spawnspot associated with this polyobj.
+        // Find the mapspot associated with this polyobj.
         j = 0;
-        mt = NULL;
-        while(j < numthings && !mt)
+        spot = NULL;
+        while(j < numMapSpots && !spot)
         {
-            if((things[j].type == PO_SPAWN_TYPE ||
-                things[j].type == PO_SPAWNCRUSH_TYPE) &&
-               things[j].angle == po->tag)
-            {   // Polyobj spawnspot.
-                mt = &things[j];
+            if((mapSpots[j].type == PO_SPAWN_TYPE ||
+                mapSpots[j].type == PO_SPAWNCRUSH_TYPE) &&
+               mapSpots[j].angle == po->tag)
+            {   // Polyobj mapspot.
+                spot = &mapSpots[j];
             }
             else
             {
@@ -660,15 +660,15 @@ void PO_InitForMap(void)
             }
         }
 
-        if(mt)
+        if(spot)
         {
-            po->crush = ((mt->type == PO_SPAWNCRUSH_TYPE)? 1 : 0);
-            P_PolyobjMove(po, -po->pos[VX] + mt->pos[VX],
-                              -po->pos[VY] + mt->pos[VY]);
+            po->crush = ((spot->type == PO_SPAWNCRUSH_TYPE)? 1 : 0);
+            P_PolyobjMove(po, -po->pos[VX] + spot->pos[VX],
+                              -po->pos[VY] + spot->pos[VY]);
         }
         else
         {
-            Con_Message("PO_InitForMap: Warning, missing spawnspot for poly %i.", i);
+            Con_Message("PO_InitForMap: Warning, missing mapspot for poly %i.", i);
         }
     }
 }

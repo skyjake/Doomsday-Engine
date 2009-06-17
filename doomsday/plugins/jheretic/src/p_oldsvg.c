@@ -336,12 +336,12 @@ static void SV_v13_ReadMobj(void)
     mo->spawnSpot.pos[VY] = (float) SV_v13_ReadLong();
     mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
-    mo->spawnSpot.type = (int) SV_v13_ReadLong();
+    /*mo->spawnSpot.type = (int)*/ SV_v13_ReadLong();
 
     mo->spawnSpot.flags = (int) SV_v13_ReadLong();
-    mo->spawnSpot.flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    mo->spawnSpot.flags &= ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
-    mo->spawnSpot.flags |= MTF_Z_FLOOR;
+    mo->spawnSpot.flags |= MSF_Z_FLOOR;
 
     SV_UpdateReadMobjFlags(mo, 0);
 
@@ -863,20 +863,22 @@ enum {
     }
 }
 
-void SV_v13_LoadGame(const char* savename)
+boolean SV_v13_LoadGame(const char* savename)
 {
     size_t              length;
     int                 i, a, b, c;
     char                vcheck[VERSIONSIZE];
 
-    length = M_ReadFile(savename, &savebuffer);
+    if(!(length = M_ReadFile(savename, &savebuffer)))
+        return false;
+
     save_p = savebuffer + V13_SAVESTRINGSIZE;
 
     // Skip the description field
     memset(vcheck, 0, sizeof(vcheck));
     sprintf(vcheck, "version %i", SAVE_VERSION);
     if(strcmp(save_p, vcheck))
-    {                           // Bad version
+    {   // Bad version
         Con_Message("Savegame ID '%s': incompatible?\n", save_p);
     }
     save_p += VERSIONSIZE;
@@ -911,4 +913,6 @@ void SV_v13_LoadGame(const char* savename)
 
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
+
+    return true;
 }

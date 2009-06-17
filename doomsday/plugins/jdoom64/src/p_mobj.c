@@ -64,15 +64,13 @@
 #define STANDSPEED              (1.0f/2)
 
 // Time interval for item respawning.
-#define ITEMQUEUESIZE         (128)
+#define SPAWNQUEUE_MAX         (128)
 
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void  P_SpawnMapThing(spawnspot_t *mthing);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -82,10 +80,10 @@ void  P_SpawnMapThing(spawnspot_t *mthing);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static spawnspot_t itemRespawnQueue[ITEMQUEUESIZE];
-static int itemRespawnTime[ITEMQUEUESIZE];
-static int itemRespawnQueueHead;
-static int itemRespawnQueueTail;
+static mapspot_t spawnQueue[SPAWNQUEUE_MAX];
+static int spawnQueueTime[SPAWNQUEUE_MAX];
+static int spawnQueueHead;
+static int spawnQueueTail;
 
 // CODE --------------------------------------------------------------------
 
@@ -659,25 +657,25 @@ void P_NightmareRespawn(mobj_t* mobj)
                           mobj->spawnSpot.pos[VY]))
         return; // No respwan.
 
-    // Spawn a teleport fog at old spot.
-    mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY], 0,
-                       mobj->angle, MTF_Z_FLOOR);
-    S_StartSound(SFX_TELEPT, mo);
+    if((mo = P_SpawnMobj3fv(mobj->type, mobj->spawnSpot.pos,
+                            mobj->spawnSpot.angle, mobj->spawnSpot.flags)))
+    {
+        if(mobj->spawnSpot.flags & MSF_DEAF)
+            mo->flags |= MF_AMBUSH;
 
-    // Spawn a teleport fog at the new spot.
-    mo = P_SpawnMobj3fv(MT_TFOG, mobj->spawnSpot.pos, mobj->spawnSpot.angle,
-                        mobj->spawnSpot.flags);
-    S_StartSound(SFX_TELEPT, mo);
+        mo->reactionTime = 18;
 
-    mo = P_SpawnMobj3fv(mobj->type, mobj->spawnSpot.pos,
-                        mobj->spawnSpot.angle, mobj->spawnSpot.flags);
-    // Inherit attributes from deceased one.
-    memcpy(&mo->spawnSpot, &mobj->spawnSpot, sizeof(mo->spawnSpot));
+        // Spawn a teleport fog at old spot.
+        if((mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY], 0,
+                               mobj->angle, MSF_Z_FLOOR)))
+            S_StartSound(SFX_TELEPT, mo);
 
-    if(mobj->spawnSpot.flags & MTF_DEAF)
-        mo->flags |= MF_AMBUSH;
-
-    mo->reactionTime = 18;
+        // Spawn a teleport fog at the new spot.
+        if((mo = P_SpawnMobj3fv(MT_TFOG, mobj->spawnSpot.pos,
+                                mobj->spawnSpot.angle,
+                                mobj->spawnSpot.flags)))
+            S_StartSound(SFX_TELEPT, mo);
+    }
 
     // Remove the old monster.
     P_MobjRemove(mobj, true);
@@ -907,11 +905,11 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mo->dropOffZ = mo->floorZ;
     mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
-    if((spawnFlags & MTF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
+    if((spawnFlags & MSF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
         mo->pos[VZ] = mo->ceilingZ - mo->info->height - z;
     }
-    else if((spawnFlags & MTF_Z_RANDOM) || (info->flags2 & MF2_SPAWNFLOAT))
+    else if((spawnFlags & MSF_Z_RANDOM) || (info->flags2 & MF2_SPAWNFLOAT))
     {
         space = mo->ceilingZ - mo->info->height - mo->floorZ;
         if(space > 48)
@@ -924,7 +922,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
             mo->pos[VZ] = mo->floorZ;
         }
     }
-    else if(spawnFlags & MTF_Z_FLOOR)
+    else if(spawnFlags & MSF_Z_FLOOR)
     {
         mo->pos[VZ] = mo->floorZ + z;
     }
@@ -942,114 +940,27 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         }
     }
 
+    // Copy spawn attributes to the new mobj.
+    mo->spawnSpot.pos[VX] = x;
+    mo->spawnSpot.pos[VY] = y;
+    mo->spawnSpot.pos[VZ] = z;
+    mo->spawnSpot.angle = angle;
+    mo->spawnSpot.flags = spawnFlags;
+
     return mo;
 }
 
-mobj_t* P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
                        int spawnFlags)
 {
     return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
 }
 
 /**
- * Queue up a spawn from the specified spot.
- */
-void P_RespawnEnqueue(spawnspot_t* spot)
-{
-    spawnspot_t*        spawnobj = &itemRespawnQueue[itemRespawnQueueHead];
-
-    memcpy(spawnobj, spot, sizeof(*spawnobj));
-
-    itemRespawnTime[itemRespawnQueueHead] = mapTime;
-    itemRespawnQueueHead = (itemRespawnQueueHead + 1) & (ITEMQUEUESIZE - 1);
-
-    // Lose one off the end?
-    if(itemRespawnQueueHead == itemRespawnQueueTail)
-        itemRespawnQueueTail = (itemRespawnQueueTail + 1) & (ITEMQUEUESIZE - 1);
-}
-
-/**
- * DJS - This has been SERIOUSLY hacked about with in d64tc.
- * FIXME: Make sure everything still works as expected.
- */
-void P_CheckRespawnQueue(void) // jd64
-{
-    int                 i;
-    mobj_t*             mo;
-    spawnspot_t*        sobj;
-
-    // jd64 >
-    // Only respawn items in deathmatch 2 and optionally in coop.
-    //if(deathmatch != 2 &&
-    //   (!cfg.coopRespawnItems || !IS_NETGAME || deathmatch))
-    //    return;
-    // < d64tc
-
-    // Nothing left to respawn?
-    if(itemRespawnQueueHead == itemRespawnQueueTail)
-        return;
-
-    // Time to respawn yet?
-    if(mapTime - itemRespawnTime[itemRespawnQueueTail] < 4 * TICSPERSEC) // jd64, was 30.
-        return;
-
-    // Get the attributes of the mobj from spawn parameters.
-    sobj = &itemRespawnQueue[itemRespawnQueueTail];
-
-    // jd64 >
-    // Spawn a teleport fog at the new spot
-    //mo = P_SpawnMobj3fv(MT_IFOG, pos);
-    //S_StartSound(SFX_ITMBK, mo);
-    // < d64tc
-
-    // Find which type to spawn.
-    for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
-    {
-        if(sobj->type == MOBJINFO[i].doomedNum)
-            break;
-    }
-
-    //if(sobj->flags & MTF_RESPAWN) // jd64 (no test originally)
-    {
-        mo = P_SpawnMobj3fv(i, sobj->pos, sobj->angle, sobj->flags);
-
-        mo->floorClip = 0;
-        if(mo->flags2 & MF2_FLOORCLIP &&
-           mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
-        {
-            const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
-
-            if(tt->flags & TTF_FLOORCLIP)
-            {
-                mo->floorClip = 10;
-            }
-        }
-
-        // Copy spawn attributes to the new mobj.
-        memcpy(&mo->spawnSpot, sobj, sizeof(mo->spawnSpot));
-
-        // jd64 >
-        mo->translucency = 255;
-        mo->spawnFadeTics = 0;
-        mo->intFlags |= MIF_FADE;
-        S_StartSound(SFX_ITMBK, mo);
-        // < d64tc
-    }
-
-    // Pull it from the que.
-    itemRespawnQueueTail = (itemRespawnQueueTail + 1) & (ITEMQUEUESIZE - 1);
-}
-
-void P_EmptyRespawnQueue(void)
-{
-    itemRespawnQueueHead = itemRespawnQueueTail = 0;
-}
-
-/**
  * Called when a player is spawned on the level.
  * Most of the player structure stays unchanged between levels.
  */
-void P_SpawnPlayer(spawnspot_t *spot, int pnum)
+void P_SpawnPlayer(mapspot_t *spot, int pnum)
 {
     int                 i, spawnFlags = 0;
     player_t           *p;
@@ -1080,7 +991,7 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
     else
     {
         pos[VX] = pos[VY] = pos[VZ] = 0;
-        spawnFlags |= MTF_Z_FLOOR;
+        spawnFlags |= MSF_Z_FLOOR;
     }
 
     /* $unifiedangles */
@@ -1149,20 +1060,20 @@ void P_SpawnPlayer(spawnspot_t *spot, int pnum)
 /**
  * Spawns the passed thing into the world.
  */
-void P_SpawnMapThing(spawnspot_t *th)
+void P_SpawnMapThing(const mapspot_t* spot)
 {
     int                 i, bit;
-    mobj_t             *mobj;
+    mobj_t*             mo;
 
     //Con_Message("x = %g, y = %g, height = %i, angle = %i, type = %i, flags = %i\n",
-    //            th->pos[VX], th->pos[VY], th->height, th->angle, th->type, th->flags);
+    //            spot->pos[VX], spot->pos[VY], spot->height, spot->angle, spot->type, spot->flags);
 
     // Count deathmatch start positions.
-    if(th->type == 11)
+    if(spot->type == 11)
     {
         if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
         {
-            memcpy(deathmatchP, th, sizeof(*th));
+            memcpy(deathmatchP, spot, sizeof(*spot));
             deathmatchP++;
         }
 
@@ -1170,24 +1081,24 @@ void P_SpawnMapThing(spawnspot_t *th)
     }
 
     // Check for players specially.
-    if(th->type >= 1 && th->type <= 4)
+    if(spot->type >= 1 && spot->type <= 4)
     {
         // Register this player start.
-        P_RegisterPlayerStart(th);
+        P_RegisterPlayerStart(spot);
         return;
     }
 
     // Don't spawn things flagged for Multiplayer if we're not in a netgame.
-    if(!IS_NETGAME && (th->flags & MTF_NOTSINGLE))
+    if(!IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
         return;
 
     // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
 // jd64 >
-//    if(deathmatch && (th->flags & MTF_NOTDM))
+//    if(deathmatch && (spot->flags & MSF_NOTDM))
 //        return;
 
     // Don't spawn things flagged for Not Coop if we're coop'in.
-//    if(IS_NETGAME && !deathmatch && (th->flags & MTF_NOTCOOP))
+//    if(IS_NETGAME && !deathmatch && (spot->flags & MSF_NOTCOOP))
 //        return;
 // < d64tc
 
@@ -1197,15 +1108,17 @@ void P_SpawnMapThing(spawnspot_t *th)
     else
         bit = 1 << (gameSkill - 1);
 
-    if(!(th->flags & bit))
+    if(!(spot->flags & bit))
         return;
 
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(th->type == MOBJINFO[i].doomedNum)
+        if(spot->type == MOBJINFO[i].doomedNum)
             break;
     }
+    if(i == Get(DD_NUMMOBJTYPES))
+        return;
 
     // Clients only spawn local objects.
     if(IS_CLIENT)
@@ -1214,15 +1127,12 @@ void P_SpawnMapThing(spawnspot_t *th)
             return;
     }
 
-    if(i == Get(DD_NUMMOBJTYPES))
-        return;
-
     // Don't spawn keycards in deathmatch.
     if(deathmatch && MOBJINFO[i].flags & MF_NOTDMATCH)
         return;
 
     // Check for specific disabled objects.
-    if(IS_NETGAME && (th->flags & MTF_NOTSINGLE))
+    if(IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
     {
         // Cooperative weapons?
         if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP
@@ -1244,39 +1154,32 @@ void P_SpawnMapThing(spawnspot_t *th)
         return;
     }
 
-    mobj = P_SpawnMobj3fv(i, th->pos, th->angle, th->flags);
-
-    // jd64 >
-    /*if(th->flags & MTF_WALKOFF)
-        mobj->flags |= (MF_FLOAT | MF_DROPOFF);
-
-    if(th->flags & MTF_TRANSLUCENT)
-        mobj->flags |= MF_SHADOW;
-
-    if(th->flags & MTF_FLOAT)
+    if((mo = P_SpawnMobj3fv(i, spot->pos, spot->angle, spot->flags)))
     {
-        mobj->pos[VZ] += 96;
-        mobj->flags |= (MF_FLOAT | MF_NOGRAVITY);
-    }*/
-    // < d64tc
+        // jd64 >
+        /*if(spot->flags & MTF_WALKOFF)
+            mo->flags |= (MF_FLOAT | MF_DROPOFF);
 
-    if(mobj->tics > 0)
-        mobj->tics = 1 + (P_Random() % mobj->tics);
-    if(mobj->flags & MF_COUNTKILL)
-        totalKills++;
-    if(mobj->flags & MF_COUNTITEM)
-        totalItems++;
+        if(spot->flags & MTF_TRANSLUCENT)
+            mo->flags |= MF_SHADOW;
 
-    if(th->flags & MTF_DEAF)
-        mobj->flags |= MF_AMBUSH;
+        if(spot->flags & MTF_FLOAT)
+        {
+            mo->pos[VZ] += 96;
+            mo->flags |= (MF_FLOAT | MF_NOGRAVITY);
+        }*/
+        // < d64tc
 
-    // Set the spawn info for this mobj.
-    mobj->spawnSpot.pos[VX] = th->pos[VX];
-    mobj->spawnSpot.pos[VY] = th->pos[VY];
-    mobj->spawnSpot.pos[VZ] = th->pos[VZ];
-    mobj->spawnSpot.angle = th->angle;
-    mobj->spawnSpot.type = th->type;
-    mobj->spawnSpot.flags = th->flags;
+        if(mo->tics > 0)
+            mo->tics = 1 + (P_Random() % mo->tics);
+        if(mo->flags & MF_COUNTKILL)
+            totalKills++;
+        if(mo->flags & MF_COUNTITEM)
+            totalItems++;
+
+        if(spot->flags & MSF_DEAF)
+            mo->flags |= MF_AMBUSH;
+    }
 }
 
 mobj_t* P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,

@@ -170,11 +170,12 @@ void P_DoTick(void)
     P_ThunderSector();
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JSTRIFE__
-    P_CheckRespawnQueue();
-#elif __JHERETIC__
+    P_DoDeferredSpawns();
+
+#if __JHERETIC__
     P_AmbientSound();
-#else
+#endif
+#if __JHEXEN__
     P_AnimateSurfaces();
 #endif
 

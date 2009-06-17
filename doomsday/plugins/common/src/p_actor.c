@@ -41,16 +41,30 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
+
+#include "p_tick.h"
+#include "p_actor.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define MIN_STEP        ((10 * ANGLE_1) >> 16)  // degrees per tic
 #define MAX_STEP        (ANG90 >> 16)
 
+#if __JDOOM64__
+# define RESPAWNTICS    (4 * TICSPERSEC)
+#else
+# define RESPAWNTICS    (30 * TICSPERSEC)
+#endif
+
 // TYPES -------------------------------------------------------------------
+
+typedef struct spawnqueuenode_s {
+    int             startTime;
+    int             minTics; // Minimum number of tics before respawn.
+    mapspot_t       spot;
+    struct spawnqueuenode_s* next;
+} spawnqueuenode_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -64,34 +78,43 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static spawnqueuenode_t* spawnQueueHead = NULL;
+
 // CODE --------------------------------------------------------------------
 
 /**
  * Removes the given mobj from the world.
  *
- * @param mo                The mobj to be removed.
- * @param noRespawn         Disable the automatical respawn which occurs
- *                          with mobjs of certain type(s) (also dependant on
- *                          the current gamemode).
- *                          Generally this should be @c false.
+ * @param mo            The mobj to be removed.
+ * @param noRespawn     Disable the automatical respawn which occurs
+ *                      with mobjs of certain type(s) (also dependant on
+ *                      the current gamemode).
+ *                      Generally this should be @c false.
  */
 void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 {
+#if __JDOOM__ || __JDOOM64__
     if(!noRespawn)
     {
-#if __JDOOM__ || __JDOOM64__
-        if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED) &&
-           (mo->type != MT_INV) && (mo->type != MT_INS))
+        if(
+# if __JDOOM__
+            // Only respawn items in deathmatch 2 and optionally in coop.
+           !(deathmatch != 2 && (!cfg.coopRespawnItems || !IS_NETGAME ||
+                                 deathmatch)) &&
+# endif /*#elif __JDOOM64__
+           (spot->flags & MTF_RESPAWN) &&
+# endif*/
+           (mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED)
+# if __JDOOM__ || __JDOOM64__
+           && (mo->type != MT_INV) && (mo->type != MT_INS)
+# endif
+           )
         {
-            P_RespawnEnqueue(&mo->spawnSpot);
+            P_DeferSpawnMobj3fv(RESPAWNTICS, mo->type, mo->spawnSpot.pos,
+                                mo->spawnSpot.angle, mo->spawnSpot.flags);
         }
-#elif __JHERETIC__
-        if((mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED))
-        {
-            P_RespawnEnqueue(&mo->spawnSpot);
-        }
-#endif
     }
+#endif
 
 #if __JHEXEN__
     if((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
@@ -281,4 +304,154 @@ void P_RipperBlood(mobj_t* actor)
         mo->mom[MY] = actor->mom[MY] / 2;
         mo->tics += P_Random() & 3;
     }
+}
+
+static spawnqueuenode_t* dequeueSpawn(void)
+{
+    spawnqueuenode_t*   n = spawnQueueHead;
+
+    if(spawnQueueHead)
+        spawnQueueHead = spawnQueueHead->next;
+
+    return n;
+}
+
+static void emptySpawnQueue(void)
+{
+    if(spawnQueueHead)
+    {
+        spawnqueuenode_t*   n;
+
+        while((n = dequeueSpawn()))
+            Z_Free(n);
+    }
+
+    spawnQueueHead = NULL;
+}
+
+static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
+                         float z, angle_t angle, int spawnFlags)
+{
+    spawnqueuenode_t*   n = Z_Malloc(sizeof(*n), PU_MAP, 0);
+
+    n->spot.type = type;
+    n->spot.pos[VX] = x;
+    n->spot.pos[VY] = y;
+    n->spot.pos[VZ] = z;
+    n->spot.angle = angle;
+    n->spot.flags = spawnFlags;
+
+    n->startTime = mapTime;
+    n->minTics = minTics;
+
+    if(spawnQueueHead)
+    {   // Find the correct insertion point.
+        if(spawnQueueHead->next)
+        {
+            spawnqueuenode_t*   l = spawnQueueHead;
+
+            while(l->next &&
+                  l->next->minTics - (mapTime - l->next->startTime) <= minTics)
+                l = l->next;
+
+            n->next = (l->next? l->next : NULL);
+            l->next = n;
+        }
+        else
+        {   // After or before the head?
+            if(spawnQueueHead->minTics -
+               (mapTime - spawnQueueHead->startTime) <= minTics)
+            {
+                n->next = NULL;
+                spawnQueueHead->next = n;
+            }
+            else
+            {
+                n->next = spawnQueueHead;
+                spawnQueueHead = n;
+            }
+        }
+    }
+    else
+    {
+        n->next = NULL;
+        spawnQueueHead = n;
+    }
+}
+
+static mobj_t* doDeferredSpawn(void)
+{
+#if __JDOOM__ || __JDOOM64__
+# define SFX_MOBJ_RESPAWN   SFX_ITMBK
+#else
+# define SFX_MOBJ_RESPAWN   SFX_RESPAWN
+#endif
+
+    mobj_t*             mo = NULL;
+
+    // Anything due to spawn?
+    if(spawnQueueHead &&
+       mapTime - spawnQueueHead->startTime >= spawnQueueHead->minTics)
+    {
+        spawnqueuenode_t*   n = dequeueSpawn();
+        const mapspot_t*    spot = &n->spot;
+
+        // Spawn it.
+        if((mo = P_SpawnMobj3fv(spot->type, spot->pos, spot->angle,
+                                spot->flags)))
+        {
+            S_StartSound(SFX_MOBJ_RESPAWN, mo);
+
+# if __JDOOM64__
+            mo->translucency = 255;
+            mo->spawnFadeTics = 0;
+            mo->intFlags |= MIF_FADE;
+# elif __JDOOM__
+            // Spawn the item teleport fog at the new spot.
+            P_SpawnMobj3fv(MT_IFOG, spot->pos, spot->angle, 0);
+# endif
+        }
+
+        Z_Free(n);
+    }
+
+    return mo;
+
+#undef SFX_MOBJ_RESPAWN
+}
+
+/**
+ * Deferred mobj spawning until at least @minTics have passed.
+ * Spawn behavior is otherwise exactly the same as an immediate spawn, via   * P_SpawnMobj*
+ */
+void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x, float y,
+                        float z, angle_t angle, int spawnFlags)
+{
+    if(minTics > 0)
+        enqueueSpawn(minTics, type, x, y, z, angle, spawnFlags);
+    else // Spawn immediately.
+        P_SpawnMobj3f(type, x, y, z, angle, spawnFlags);
+}
+
+void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, const float pos[3],
+                         angle_t angle, int spawnFlags)
+{
+    if(minTics > 0)
+        enqueueSpawn(minTics, type, pos[VX], pos[VY], pos[VZ], angle,
+                     spawnFlags);
+    else // Spawn immediately.
+        P_SpawnMobj3fv(type, pos, angle, spawnFlags);
+}
+
+/**
+ * Called 35 times per second by P_DoTick.
+ */
+void P_DoDeferredSpawns(void)
+{
+    while(doDeferredSpawn());
+}
+
+void P_PurgeDeferredSpawns(void)
+{
+    emptySpawnQueue();
 }

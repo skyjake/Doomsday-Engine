@@ -57,7 +57,7 @@
 
 mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
 {
-    return P_SpawnMobj3f(MT_TFOG, x, y, 0, angle, MTF_Z_FLOOR);
+    return P_SpawnMobj3f(MT_TFOG, x, y, 0, angle, MSF_Z_FLOOR);
 }
 
 typedef struct {

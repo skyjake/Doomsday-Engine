@@ -42,4 +42,14 @@ boolean         P_MobjIsCamera(const mobj_t* mo);
 
 void            P_UpdateHealthBits(mobj_t* mo);
 statenum_t      P_GetState(mobjtype_t mobjType, statename_t name);
+
+void            P_DoDeferredSpawns(void);
+void            P_PurgeDeferredSpawns(void);
+
+void            P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x,
+                                   float y, float z, angle_t angle,
+                                   int spawnFlags);
+void            P_DeferSpawnMobj3fv(int minTics, mobjtype_t type,
+                                    const float pos[3], angle_t angle,
+                                    int spawnFlags);
 #endif

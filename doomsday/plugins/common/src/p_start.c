@@ -75,7 +75,7 @@
 #endif
 
 // Time interval for item respawning.
-#define ITEMQUESIZE         128
+#define SPAWNQUEUE_MAX         128
 
 // TYPES -------------------------------------------------------------------
 
@@ -90,19 +90,20 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Maintain single and multi player starting spots.
-spawnspot_t  deathmatchStarts[MAX_DM_STARTS];
-spawnspot_t *deathmatchP;
+mapspot_t  deathmatchStarts[MAX_DM_STARTS];
+mapspot_t* deathmatchP;
 
-spawnspot_t *playerStarts;
+mapspot_t* playerStarts;
 int numPlayerStarts = 0;
 
-spawnspot_t *things;
+uint numMapSpots;
+mapspot_t* mapSpots;
 
 #if __JHERETIC__
 int maceSpotCount;
-spawnspot_t *maceSpots;
+mapspot_t* maceSpots;
 int bossSpotCount;
-spawnspot_t *bossSpots;
+mapspot_t* bossSpots;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -167,7 +168,7 @@ void P_Init(void)
 #endif
 }
 
-int P_RegisterPlayerStart(spawnspot_t *mthing)
+int P_RegisterPlayerStart(const mapspot_t* mapSpot)
 {
     // Enough room?
     if(++numPlayerStarts > numPlayerStartsMax)
@@ -178,11 +179,11 @@ int P_RegisterPlayerStart(spawnspot_t *mthing)
             numPlayerStartsMax = numPlayerStarts;
 
         playerStarts =
-            Z_Realloc(playerStarts, sizeof(spawnspot_t) * numPlayerStartsMax, PU_MAP);
+            Z_Realloc(playerStarts, sizeof(mapspot_t) * numPlayerStartsMax, PU_MAP);
     }
 
     // Copy the properties of this thing
-    memcpy(&playerStarts[numPlayerStarts -1], mthing, sizeof(spawnspot_t));
+    memcpy(&playerStarts[numPlayerStarts -1], mapSpot, sizeof(mapspot_t));
     return numPlayerStarts; // == index + 1
 }
 
@@ -206,7 +207,7 @@ void P_DealPlayerStarts(int group)
     int             i, k;
     int             spotNumber;
     player_t       *pl;
-    spawnspot_t    *mt;
+    mapspot_t    *mt;
 
     if(!numPlayerStarts)
     {
@@ -262,17 +263,18 @@ void P_DealPlayerStarts(int group)
 }
 
 /**
- * Returns false if the player cannot be respawned at the given spawnspot_t
+ * Returns false if the player cannot be respawned at the given mapspot_t
  * spot because something is occupying it
  */
-boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
+boolean P_CheckSpot(int playernum, const mapspot_t* mapSpot,
+                    boolean doTeleSpark)
 {
-    float       pos[3];
-    ddplayer_t *ddplyr = players[playernum].plr;
-    boolean     using_dummy = false;
+    float               pos[3];
+    ddplayer_t*         ddplyr = players[playernum].plr;
+    boolean             using_dummy = false;
 
-    pos[VX] = mthing->pos[VX];
-    pos[VY] = mthing->pos[VY];
+    pos[VX] = mapSpot->pos[VX];
+    pos[VY] = mapSpot->pos[VY];
 
     if(!ddplyr->mo)
     {
@@ -309,11 +311,11 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
     if(doTeleSpark) // Spawn a teleport fog
     {
         mobj_t     *mo;
-        uint        an = mthing->angle >> ANGLETOFINESHIFT;
+        uint        an = mapSpot->angle >> ANGLETOFINESHIFT;
 
         mo = P_SpawnTeleFog(pos[VX] + 20 * FIX2FLT(finecosine[an]),
                             pos[VY] + 20 * FIX2FLT(finesine[an]),
-                            mthing->angle + ANG180);
+                            mapSpot->angle + ANG180);
 
         // Don't start sound on first frame.
         if(players[CONSOLEPLAYER].plr->viewZ != 1)
@@ -327,11 +329,11 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
  * Try to spawn close to the mapspot. Returns false if no clear spot
  * was found.
  */
-boolean P_FuzzySpawn(spawnspot_t *spot, int playernum, boolean doTeleSpark)
+boolean P_FuzzySpawn(mapspot_t *spot, int playernum, boolean doTeleSpark)
 {
     int         i, k, x, y;
     int         offset = 33; // Player radius = 16
-    spawnspot_t place;
+    mapspot_t place;
 
     if(spot)
     {
@@ -368,7 +370,7 @@ boolean P_FuzzySpawn(spawnspot_t *spot, int playernum, boolean doTeleSpark)
 }
 
 #if __JHERETIC__
-void P_AddMaceSpot(spawnspot_t *spot)
+void P_AddMaceSpot(const mapspot_t* spot)
 {
     maceSpots =
         Z_Realloc(maceSpots, sizeof(*spot) * ++maceSpotCount, PU_MAP);
@@ -377,7 +379,7 @@ void P_AddMaceSpot(spawnspot_t *spot)
 
 void P_AddBossSpot(float x, float y, angle_t angle)
 {
-    bossSpots = Z_Realloc(bossSpots, sizeof(spawnspot_t) * ++bossSpotCount,
+    bossSpots = Z_Realloc(bossSpots, sizeof(mapspot_t) * ++bossSpotCount,
                           PU_MAP);
     bossSpots[bossSpotCount-1].pos[VX] = x;
     bossSpots[bossSpotCount-1].pos[VY] = y;
@@ -393,7 +395,7 @@ void P_AddBossSpot(float x, float y, angle_t angle)
 void P_SpawnThings(void)
 {
     uint            i;
-    spawnspot_t    *th;
+    mapspot_t*    spot;
 #if __JDOOM__
     boolean         spawn;
 #elif __JHEXEN__
@@ -408,15 +410,15 @@ void P_SpawnThings(void)
     bossSpots = NULL;
 #endif
 
-    for(i = 0; i < numthings; ++i)
+    for(i = 0; i < numMapSpots; ++i)
     {
-        th = &things[i];
+        spot = &mapSpots[i];
 #if __JDOOM__
         // Do not spawn cool, new stuff if !commercial
         spawn = true;
         if(gameMode != commercial)
         {
-            switch(th->type)
+            switch(spot->type)
             {
             case 68:            // Arachnotron
             case 64:            // Archvile
@@ -436,7 +438,7 @@ void P_SpawnThings(void)
         if(!spawn)
             continue;
 #endif
-        P_SpawnMapThing(th);
+        P_SpawnMapThing(spot);
     }
 
 #if __JDOOM__
@@ -455,7 +457,7 @@ void P_SpawnThings(void)
             spot = P_Random() % maceSpotCount;
             P_SpawnMobj3f(MT_WMACE,
                           maceSpots[spot].pos[VX], maceSpots[spot].pos[VY], 0,
-                          maceSpots[spot].angle, MTF_Z_FLOOR);
+                          maceSpots[spot].angle, MSF_Z_FLOOR);
         }
     }
 #endif
@@ -485,13 +487,6 @@ void P_SpawnThings(void)
     // Initialize polyobjs.
     PO_InitForMap();
 #endif
-
-    // We're finished with the temporary thing list.
-    if(things)
-    {
-        Z_Free(things);
-        things = NULL;
-    }
 }
 
 /**
@@ -535,7 +530,7 @@ void P_SpawnPlayers(void)
         for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->inGame)
             {
-                spawnspot_t    *spot = NULL;
+                mapspot_t    *spot = NULL;
                 ddplayer_t     *ddpl = players[i].plr;
 
                 if(players[i].startSpot < numPlayerStarts)
@@ -555,7 +550,7 @@ void P_SpawnPlayers(void)
  */
 void G_DummySpawnPlayer(int playernum)
 {
-    spawnspot_t     faraway;
+    mapspot_t     faraway;
 
     memset(&faraway, 0, sizeof(faraway));
     P_SpawnPlayer(&faraway, playernum);
@@ -616,13 +611,13 @@ void G_DeathMatchSpawnPlayer(int playerNum)
  *
  * With jDoom groups arn't used at all.
  */
-spawnspot_t *P_GetPlayerStart(int group, int pnum)
+mapspot_t *P_GetPlayerStart(int group, int pnum)
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     return &playerStarts[players[pnum].startSpot];
 #else
     int         i;
-    spawnspot_t    *mt, *g0choice = NULL;
+    mapspot_t    *mt, *g0choice = NULL;
 
     for(i = 0; i < numPlayerStarts; ++i)
     {

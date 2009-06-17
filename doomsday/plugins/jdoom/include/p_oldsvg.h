@@ -34,7 +34,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-void            SV_v19_LoadGame(const char* filename);
+boolean         SV_v19_LoadGame(const char* filename);
 
 void            P_v19_UnArchivePlayers(void);
 void            P_v19_UnArchiveWorld(void);

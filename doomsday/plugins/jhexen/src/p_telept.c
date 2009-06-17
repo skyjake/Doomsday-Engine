@@ -66,7 +66,7 @@ void P_TeleportToPlayerStarts(mobj_t *victim)
     int             i, selections = 0;
     float           destPos[3];
     angle_t         destAngle;
-    spawnspot_t    *start;
+    mapspot_t    *start;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -110,7 +110,7 @@ void P_TeleportToDeathmatchStarts(mobj_t *victim)
 
 mobj_t *P_SpawnTeleFog(float x, float y, angle_t angle)
 {
-    return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MTF_Z_FLOOR);
+    return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
 boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,

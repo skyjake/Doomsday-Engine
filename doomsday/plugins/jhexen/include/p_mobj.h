@@ -35,10 +35,10 @@
 
 #include "p_terraintype.h"
 
-#define MTF_EASY            0x00000001
+#define MSF_EASY            0x00000001
 #define MTF_NORMAL          0x00000002
-#define MTF_HARD            0x00000004
-#define MTF_AMBUSH          0x00000008
+#define MSF_HARD            0x00000004
+#define MSF_AMBUSH          0x00000008
 #define MTF_DORMANT         0x00000010
 #define MTF_FIGHTER         0x00000020
 #define MTF_CLERIC          0x00000040
@@ -49,22 +49,22 @@
 // The following are not currently used.
 #define MTF_SHADOW          0x00000800 // (ZDOOM) Thing is 25% translucent.
 #define MTF_INVISIBLE       0x00001000 // (ZDOOM) Makes the thing invisible.
-#define MTF_FRIENDLY        0x00002000 // (ZDOOM) Friendly monster.
+#define MSF_FRIENDLY        0x00002000 // (ZDOOM) Friendly monster.
 #define MTF_STILL           0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
 
-#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
-    ^ (MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
+#define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
+    ^ (MSF_EASY|MTF_NORMAL|MSF_HARD|MSF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MSF_FRIENDLY|MTF_STILL))
 
 // New flags:
-#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
-#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
-#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
+#define MSF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
+#define MSF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
+#define MSF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
 typedef struct {
     short           tid;
     float           pos[3];
     angle_t         angle;
-    int             type;
+    mobjtype_t      type;
     int             flags;
     byte            special;
     byte            arg1;
@@ -72,7 +72,7 @@ typedef struct {
     byte            arg3;
     byte            arg4;
     byte            arg5;
-} spawnspot_t;
+} mapspot_t;
 
 /**
  * Mobj flags
@@ -243,32 +243,33 @@ typedef struct polyobj_s {
     void*           specialData; /* Pointer a thinker, if the poly is moving. */
 } polyobj_t;
 
-extern spawnspot_t* things;
+extern uint numMapSpots;
+extern mapspot_t* mapSpots;
 
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                           angle_t angle, int spawnFlags);
-mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
-                           int spawnFlags);
+mobj_t*     P_SpawnMobj3fv(mobjtype_t type, const float pos[3],
+                           angle_t angle, int spawnFlags);
 
 void        P_SpawnPuff(float x, float y, float z, angle_t angle);
 void        P_SpawnBlood(float x, float y, float z, int damage,
                          angle_t angle);
-mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
 mobj_t*     P_SpawnMissileXYZ(mobjtype_t type, float x, float y, float z,
-                               mobj_t *source, mobj_t *dest);
-mobj_t*     P_SpawnMissileAngle(mobjtype_t type, mobj_t *source,
+                               mobj_t* source, mobj_t* dest);
+mobj_t*     P_SpawnMissileAngle(mobjtype_t type, mobj_t* source,
                                  angle_t angle, float momZ);
-mobj_t*     P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t *source,
+mobj_t*     P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t* source,
                                      angle_t angle, float momZ, float speed);
-mobj_t*     P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source);
-mobj_t*     P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
+mobj_t*     P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source);
+mobj_t*     P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t angle);
 mobj_t*     P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
-                            mobj_t *source, angle_t angle);
+                            mobj_t* source, angle_t angle);
 mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
 mobj_t*     P_SpawnKoraxMissile(mobjtype_t type, float x, float y, float z,
-                                 mobj_t *source, mobj_t *dest);
-void        P_SpawnDirt(mobj_t *actor, float radius);
+                                 mobj_t* source, mobj_t* dest);
+void        P_SpawnDirt(mobj_t* actor, float radius);
 
-void        P_ExplodeMissile(mobj_t *mo);
+void        P_ExplodeMissile(mobj_t* mo);
 
 #endif

@@ -39,31 +39,31 @@
 #include "info.h"
 
 /**
- * (Re)Spawn flags:
+ * Map Spot Flags (MSF):
  */
-#define MTF_EASY            0x00000001 // Can be spawned in Easy skill modes.
-#define MTF_MEDIUM          0x00000002 // Can be spawned in Medium skill modes.
-#define MTF_HARD            0x00000004 // Can be spawned in Hard skill modes.
-#define MTF_AMBUSH          0x00000008 // Mobj will be deaf spawned deaf.
-#define MTF_NOTSINGLE       0x00000010 // (BOOM) Can not be spawned in single player gamemodes.
-#define MTF_NOTDM           0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
-#define MTF_NOTCOOP         0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
-#define MTF_FRIENDLY        0x00000080 // (BOOM) friendly monster.
+#define MSF_EASY            0x00000001 // Can be spawned in Easy skill modes.
+#define MSF_MEDIUM          0x00000002 // Can be spawned in Medium skill modes.
+#define MSF_HARD            0x00000004 // Can be spawned in Hard skill modes.
+#define MSF_AMBUSH          0x00000008 // Mobj will be deaf spawned deaf.
+#define MSF_NOTSINGLE       0x00000010 // (BOOM) Can not be spawned in single player gamemodes.
+#define MSF_NOTDM           0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
+#define MSF_NOTCOOP         0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
+#define MSF_FRIENDLY        0x00000080 // (BOOM) friendly monster.
 
-#define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
-    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
+#define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
+    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_AMBUSH|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
 
 // New flags:
-#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
-#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
-#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
+#define MSF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
+#define MSF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
+#define MSF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
-typedef struct spawnspot_s {
+typedef struct mapspot_s {
     float           pos[3];
-    int             angle;
-    int             type;
-    int             flags;
-} spawnspot_t;
+    angle_t         angle;
+    mobjtype_t      type;
+    int             flags; // MSF_* flags.
+} mapspot_t;
 
 /**
  * Mobj flags
@@ -222,7 +222,11 @@ typedef struct mobj_s {
     int             lastLook;       // player number last looked for
 
     // For nightmare/multiplayer respawn.
-    spawnspot_t     spawnSpot;
+    struct {
+        float           pos[3];
+        angle_t         angle;
+        int             flags; // MSF_* flags.
+    } spawnSpot;
 
     // Thing being chased/attacked for tracers.
     struct mobj_s  *tracer;
@@ -241,16 +245,13 @@ typedef struct polyobj_s {
     // Heretic-specific data:
 } polyobj_t;
 
-extern spawnspot_t* things;
-
-void        P_RespawnEnqueue(spawnspot_t *spot);
-void        P_CheckRespawnQueue(void);
-void        P_EmptyRespawnQueue(void);
+extern uint numMapSpots;
+extern mapspot_t* mapSpots;
 
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                           angle_t angle, int spawnFlags);
-mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
-                           int spawnFlags);
+mobj_t*     P_SpawnMobj3fv(mobjtype_t type, const float pos[3],
+                           angle_t angle, int spawnFlags);
 
 void        P_SpawnPuff(float x, float y, float z, angle_t angle);
 void        P_SpawnBlood(float x, float y, float z, int damage,

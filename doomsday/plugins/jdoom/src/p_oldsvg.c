@@ -316,12 +316,12 @@ static void SV_ReadMobj(void)
     mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
     mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
-    mo->spawnSpot.type = (int) SV_ReadShort();
+    /* mo->spawnSpot.type = (int) */ SV_ReadShort();
 
     mo->spawnSpot.flags = (int) SV_ReadShort();
-    mo->spawnSpot.flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    mo->spawnSpot.flags &= ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
-    mo->spawnSpot.flags |= MTF_Z_FLOOR;
+    mo->spawnSpot.flags |= MSF_Z_FLOOR;
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();
@@ -860,13 +860,15 @@ void P_v19_UnArchiveSpecials(void)
     }
 }
 
-void SV_v19_LoadGame(const char* savename)
+boolean SV_v19_LoadGame(const char* savename)
 {
     int                 i, a, b, c;
     size_t              length;
     char                vcheck[VERSIONSIZE];
 
-    length = M_ReadFile(savename, &saveBuffer);
+    if(!(length = M_ReadFile(savename, &saveBuffer)))
+        return false;
+
     // Skip the description field.
     savePtr = saveBuffer + V19_SAVESTRINGSIZE;
 
@@ -882,7 +884,7 @@ void SV_v19_LoadGame(const char* savename)
         {
             // Must be from the wrong game.
             Con_Message("Bad savegame version.\n");
-            return;
+            return false;
         }
 
         // Just give a warning.
@@ -921,4 +923,6 @@ void SV_v19_LoadGame(const char* savename)
 
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
+
+    return true;
 }

@@ -690,7 +690,7 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
     if(player->plr->mo)
     {   // Respawn the player and destroy the old mobj.
         mobj_t*             oldMo = player->plr->mo;
-        spawnspot_t         dummy;
+        mapspot_t         dummy;
 
         // Use a dummy as the spawn point.
         dummy.pos[VX] = oldMo->pos[VX];
@@ -1159,9 +1159,9 @@ DEFCC(CCmdSpawnMobj)
     pos[VZ] = 0;
 
     if(!stricmp(argv[4], "floor"))
-        spawnFlags |= MTF_Z_FLOOR;
+        spawnFlags |= MSF_Z_FLOOR;
     else if(!stricmp(argv[4], "ceil"))
-        spawnFlags |= MTF_Z_CEIL;
+        spawnFlags |= MSF_Z_CEIL;
     else
     {
         pos[VZ] = strtod(argv[4], 0) +

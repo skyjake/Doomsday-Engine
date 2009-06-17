@@ -51,8 +51,6 @@
 #define STOPSPEED               (1.0f/1.6/10)
 #define STANDSPEED              (1.0f/2)
 
-#define ITEMQUEUESIZE           (128)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -69,10 +67,6 @@ mobjtype_t puffType;
 mobj_t *missileMobj;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static spawnspot_t itemRespawnQueue[ITEMQUEUESIZE];
-static int itemRespawnTime[ITEMQUEUESIZE];
-static int itemRespawnQueueHead, itemRespawnQueueTail;
 
 // CODE --------------------------------------------------------------------
 
@@ -813,26 +807,22 @@ void P_NightmareRespawn(mobj_t* mobj)
                           mobj->spawnSpot.pos[VY]))
         return; // No respwan.
 
-    // Spawn a teleport fog at old spot because of removal of the body?
-    mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY], TELEFOGHEIGHT,
-                       mobj->angle, MTF_Z_FLOOR);
-    // Initiate teleport sound.
-    S_StartSound(SFX_TELEPT, mo);
+    if((mo = P_SpawnMobj3fv(mobj->type, mobj->spawnSpot.pos,
+                            mobj->spawnSpot.angle, mobj->spawnSpot.flags)))
+    {
+        mo->reactionTime = 18;
 
-    // Spawn a teleport fog at the new spot.
-    mo = P_SpawnMobj3f(MT_TFOG, mobj->spawnSpot.pos[VX],
-                       mobj->spawnSpot.pos[VY], TELEFOGHEIGHT,
-                       mobj->spawnSpot.angle, MTF_Z_FLOOR);
+        // Spawn a teleport fog at old spot because of removal of the body?
+        if((mo = P_SpawnMobj3f(MT_TFOG, mobj->pos[VX], mobj->pos[VY],
+                               TELEFOGHEIGHT, mobj->angle, MSF_Z_FLOOR)))
+            S_StartSound(SFX_TELEPT, mo);
 
-    S_StartSound(SFX_TELEPT, mo);
-
-    // Inherit attributes from deceased one.
-    mo = P_SpawnMobj3fv(mobj->type, mobj->spawnSpot.pos,
-                        mobj->spawnSpot.angle, mobj->spawnSpot.flags);
-
-    memcpy(&mo->spawnSpot, &mobj->spawnSpot, sizeof(mo->spawnSpot));
-
-    mo->reactionTime = 18;
+        // Spawn a teleport fog at the new spot.
+        if((mo = P_SpawnMobj3f(MT_TFOG, mobj->spawnSpot.pos[VX],
+                               mobj->spawnSpot.pos[VY], TELEFOGHEIGHT,
+                               mobj->spawnSpot.angle, MSF_Z_FLOOR)))
+            S_StartSound(SFX_TELEPT, mo);
+    }
 
     // Remove the old monster.
     P_MobjRemove(mobj, true);
@@ -1062,14 +1052,19 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                       angle_t angle, int spawnFlags)
 {
     mobj_t*             mo;
-    mobjinfo_t*         info = &MOBJINFO[type];
+    mobjinfo_t*         info;
     float               space;
     int                 ddflags = 0;
 
-#ifdef _DEBUG
     if(type < 0 || type >= Get(DD_NUMMOBJTYPES))
+    {
+#ifdef _DEBUG
         Con_Error("P_SpawnMobj: Illegal mo type %i.\n", type);
 #endif
+        return NULL;
+    }
+
+    info = &MOBJINFO[type];
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
@@ -1109,11 +1104,11 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mo->dropOffZ = mo->floorZ;
     mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 
-    if((spawnFlags & MTF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
+    if((spawnFlags & MSF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
         mo->pos[VZ] = mo->ceilingZ - mo->info->height - z;
     }
-    else if((spawnFlags & MTF_Z_RANDOM) || (info->flags2 & MF2_SPAWNFLOAT))
+    else if((spawnFlags & MSF_Z_RANDOM) || (info->flags2 & MF2_SPAWNFLOAT))
     {
         space = mo->ceilingZ - mo->info->height - mo->floorZ;
         if(space > 48)
@@ -1126,12 +1121,12 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
             mo->pos[VZ] = mo->floorZ;
         }
     }
-    else if(spawnFlags & MTF_Z_FLOOR)
+    else if(spawnFlags & MSF_Z_FLOOR)
     {
         mo->pos[VZ] = mo->floorZ + z;
     }
 
-    if(spawnFlags & MTF_AMBUSH)
+    if(spawnFlags & MSF_AMBUSH)
         mo->flags |= MF_AMBUSH;
 
     mo->floorClip = 0;
@@ -1147,42 +1142,27 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         }
     }
 
+    // Copy spawn attributes to the new mobj.
+    mo->spawnSpot.pos[VX] = x;
+    mo->spawnSpot.pos[VY] = y;
+    mo->spawnSpot.pos[VZ] = z;
+    mo->spawnSpot.angle = angle;
+    mo->spawnSpot.flags = spawnFlags;
+
     return mo;
 }
 
-mobj_t* P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
                        int spawnFlags)
 {
     return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
 }
 
 /**
- * Queue up a spawn from the specified spot.
- */
-void P_RespawnEnqueue(spawnspot_t* spot)
-{
-    spawnspot_t*        spawnObj = &itemRespawnQueue[itemRespawnQueueHead];
-
-    memcpy(spawnObj, spot, sizeof(*spawnObj));
-
-    itemRespawnTime[itemRespawnQueueHead] = mapTime;
-    itemRespawnQueueHead = (itemRespawnQueueHead + 1) & (ITEMQUEUESIZE - 1);
-
-    // Lose one off the end?
-    if(itemRespawnQueueHead == itemRespawnQueueTail)
-        itemRespawnQueueTail = (itemRespawnQueueTail + 1) & (ITEMQUEUESIZE - 1);
-}
-
-void P_EmptyRespawnQueue(void)
-{
-    itemRespawnQueueHead = itemRespawnQueueTail = 0;
-}
-
-/**
  * Called when a player is spawned on the level. Most of the player
  * structure stays unchanged between levels.
  */
-void P_SpawnPlayer(spawnspot_t* spot, int plrnum)
+void P_SpawnPlayer(mapspot_t* spot, int plrnum)
 {
     player_t*           p;
     float               pos[3];
@@ -1210,7 +1190,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int plrnum)
     else
     {
         pos[VX] = pos[VY] = pos[VZ] = 0;
-        spawnFlags |= MTF_Z_FLOOR;
+        spawnFlags |= MSF_Z_FLOOR;
     }
 
     /* $unifiedangles */
@@ -1277,49 +1257,49 @@ void P_SpawnPlayer(spawnspot_t* spot, int plrnum)
     HU_Start(p - players);
 }
 
-void P_SpawnMapThing(spawnspot_t* th)
+void P_SpawnMapThing(const mapspot_t* spot)
 {
     int                 i, bit;
-    mobj_t*             mobj;
+    mobj_t*             mo;
 
     /*Con_Message("x = %g, y = %g, height = %g, angle = %i, type = %i, options = %i\n",
-                  mthing->pos[VX], mthing->pos[VY], mthing->height, mthing->angle, mthing->type,
-                  mthing->flags);*/
+                  spot->pos[VX], spot->pos[VY], spot->height, spot->angle, spot->type,
+                  spot->flags);*/
 
     // Count deathmatch start positions.
-    if(th->type == 11)
+    if(spot->type == 11)
     {
         if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
         {
-            memcpy(deathmatchP, th, sizeof(*th));
+            memcpy(deathmatchP, spot, sizeof(*spot));
             deathmatchP++;
         }
         return;
     }
 
     // Check for players specially.
-    if(th->type <= 4)
+    if(spot->type <= 4)
     {
         // Register this player start.
-        P_RegisterPlayerStart(th);
+        P_RegisterPlayerStart(spot);
         return;
     }
 
     // Ambient sound sequences.
-    if(th->type >= 1200 && th->type < 1300)
+    if(spot->type >= 1200 && spot->type < 1300)
     {
-        P_AddAmbientSfx(th->type - 1200);
+        P_AddAmbientSfx(spot->type - 1200);
         return;
     }
 
     // Check for boss spots.
-    if(th->type == 56)
+    if(spot->type == 56)
     {
-        P_AddBossSpot(th->pos[VX], th->pos[VY], th->angle);
+        P_AddBossSpot(spot->pos[VX], spot->pos[VY], spot->angle);
         return;
     }
 
-    if(!IS_NETGAME && (th->flags & MTF_NOTSINGLE))
+    if(!IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
         return;
 
     // Check for apropriate skill level.
@@ -1329,14 +1309,20 @@ void P_SpawnMapThing(spawnspot_t* th)
         bit = 4;
     else
         bit = 1 << (gameSkill - 1);
-    if(!(th->flags & bit))
+    if(!(spot->flags & bit))
         return;
 
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(th->type == MOBJINFO[i].doomedNum)
+        if(spot->type == MOBJINFO[i].doomedNum)
             break;
+    }
+
+    if(i == Get(DD_NUMMOBJTYPES))
+    {
+        Con_Error("P_SpawnMapThing: Unknown type %i at (%g, %g)", spot->type,
+                  spot->pos[VX], spot->pos[VY]);
     }
 
     // Clients only spawn local objects.
@@ -1344,12 +1330,6 @@ void P_SpawnMapThing(spawnspot_t* th)
     {
         if(!(MOBJINFO[i].flags & MF_LOCAL))
             return;
-    }
-
-    if(i == Get(DD_NUMMOBJTYPES))
-    {
-        Con_Error("P_SpawnMapThing: Unknown type %i at (%g, %g)", th->type,
-                  th->pos[VX], th->pos[VY]);
     }
 
     // Don't spawn keys and players in deathmatch.
@@ -1382,7 +1362,7 @@ void P_SpawnMapThing(spawnspot_t* th)
     case MT_WMACE:
         if(gameMode != shareware)
         {   // Put in the mace spot list.
-            P_AddMaceSpot(th);
+            P_AddMaceSpot(spot);
             return;
         }
         return;
@@ -1391,23 +1371,21 @@ void P_SpawnMapThing(spawnspot_t* th)
         break;
     }
 
-    mobj = P_SpawnMobj3fv(i, th->pos, th->angle, th->flags);
-
-    if(mobj->tics > 0)
-        mobj->tics = 1 + (P_Random() % mobj->tics);
-    if(mobj->flags & MF_COUNTKILL)
-        totalKills++;
-    if(mobj->flags & MF_COUNTITEM)
-        totalItems++;
-
-    // Set the spawn info for this mobj.
-    memcpy(&mobj->spawnSpot, th, sizeof(mobj->spawnSpot));
+    if((mo = P_SpawnMobj3fv(i, spot->pos, spot->angle, spot->flags)))
+    {
+        if(mo->tics > 0)
+            mo->tics = 1 + (P_Random() % mo->tics);
+        if(mo->flags & MF_COUNTKILL)
+            totalKills++;
+        if(mo->flags & MF_COUNTITEM)
+            totalItems++;
+    }
 }
 
 /**
  * Chooses the next spot to place the mace.
  */
-void P_RepositionMace(mobj_t *mo)
+void P_RepositionMace(mobj_t* mo)
 {
     int                 spot;
     subsector_t*        ss;
@@ -1502,12 +1480,12 @@ boolean P_HitFloor(mobj_t* thing)
     if(tt->flags & TTF_SPAWN_SPLASHES)
     {
         mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX], thing->pos[VY], 0,
-                           thing->angle + ANG180, MTF_Z_FLOOR);
+                           thing->angle + ANG180, MSF_Z_FLOOR);
         if(mo)
             mo->floorClip += SMALLSPLASHCLIP;
 
         mo = P_SpawnMobj3f(MT_SPLASH, thing->pos[VX], thing->pos[VY], 0,
-                           thing->angle, MTF_Z_FLOOR);
+                           thing->angle, MSF_Z_FLOOR);
         if(mo)
         {
             mo->target = thing;
@@ -1522,12 +1500,12 @@ boolean P_HitFloor(mobj_t* thing)
     else if(tt->flags & TTF_SPAWN_SMOKE)
     {
         mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX], thing->pos[VY], 0,
-                           thing->angle + ANG180, MTF_Z_FLOOR);
+                           thing->angle + ANG180, MSF_Z_FLOOR);
         if(mo)
             mo->floorClip += SMALLSPLASHCLIP;
 
         mo = P_SpawnMobj3f(MT_LAVASMOKE, thing->pos[VX], thing->pos[VY], 0,
-                           P_Random() << 24, MTF_Z_FLOOR);
+                           P_Random() << 24, MSF_Z_FLOOR);
         if(mo)
         {
             mo->mom[MZ] = 1 + FIX2FLT((P_Random() << 7));
@@ -1538,12 +1516,12 @@ boolean P_HitFloor(mobj_t* thing)
     else if(tt->flags & TTF_SPAWN_SLUDGE)
     {
        mo = P_SpawnMobj3f(MT_SLUDGESPLASH, thing->pos[VX], thing->pos[VY], 0,
-                          thing->angle + ANG180, MTF_Z_FLOOR);
+                          thing->angle + ANG180, MSF_Z_FLOOR);
         if(mo)
             mo->floorClip += SMALLSPLASHCLIP;
 
         mo = P_SpawnMobj3f(MT_SLUDGECHUNK, thing->pos[VX], thing->pos[VY], 0,
-                           P_Random() << 24, MTF_Z_FLOOR);
+                           P_Random() << 24, MSF_Z_FLOOR);
         if(mo)
         {
             mo->target = thing;
@@ -1672,7 +1650,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest,
     if(type == MT_MNTRFX2) // always exactly on the floor.
     {
         pos[VZ] = 0;
-        spawnFlags |= MTF_Z_FLOOR;
+        spawnFlags |= MSF_Z_FLOOR;
     }
     else
     {
@@ -1815,7 +1793,7 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t mangle,
 
     if(type == MT_MNTRFX2) // Always exactly on the floor.
     {
-        spawnFlags |= MTF_Z_FLOOR;
+        spawnFlags |= MSF_Z_FLOOR;
     }
     else
     {

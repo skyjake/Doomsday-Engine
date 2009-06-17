@@ -44,10 +44,9 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #  include "p_start.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
+#include "p_actor.h"
 #include "dmu_lib.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
@@ -85,8 +84,6 @@ static void     P_PrintMapBanner(int episode, int map);
 // Our private map data structures
 xsector_t* xsectors;
 xline_t* xlines;
-
-uint numthings;
 
 // If true we are in the process of setting up a map
 boolean mapSetup;
@@ -324,23 +321,24 @@ static void P_LoadMapObjs(void)
 {
     uint                i;
 
-    numthings = P_CountGameMapObjs(MO_THING);
+    numMapSpots = P_CountGameMapObjs(MO_THING);
 
-    if(numthings > 0)
-        things = Z_Calloc(numthings * sizeof(spawnspot_t), PU_MAP, 0);
+    if(numMapSpots > 0)
+        mapSpots =
+            Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
     else
-        things = NULL;
+        mapSpots = NULL;
 
-    for(i = 0; i < numthings; ++i)
+    for(i = 0; i < numMapSpots; ++i)
     {
-        spawnspot_t*        th = &things[i];
+        mapspot_t*        spot = &mapSpots[i];
 
-        th->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
-        th->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-        th->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
+        spot->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
+        spot->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
+        spot->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
 
-        th->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
-        th->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
+        spot->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
+        spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
 
         /**
          * For some stupid reason, the Hexen format stores polyobject tags
@@ -348,19 +346,19 @@ static void P_LoadMapObjs(void)
          * until we know whether it is a polyobject type or not.
          */
 #if __JHEXEN__
-        th->angle = P_GetGMOShort(MO_THING, i, MO_ANGLE);
+        spot->angle = P_GetGMOShort(MO_THING, i, MO_ANGLE);
 #else
-        th->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
+        spot->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
 #endif
 
 #if __JHEXEN__
-        th->tid = P_GetGMOShort(MO_THING, i, MO_ID);
-        th->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
-        th->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
-        th->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
-        th->arg3 = P_GetGMOByte(MO_THING, i, MO_ARG2);
-        th->arg4 = P_GetGMOByte(MO_THING, i, MO_ARG3);
-        th->arg5 = P_GetGMOByte(MO_THING, i, MO_ARG4);
+        spot->tid = P_GetGMOShort(MO_THING, i, MO_ID);
+        spot->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
+        spot->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
+        spot->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
+        spot->arg3 = P_GetGMOByte(MO_THING, i, MO_ARG2);
+        spot->arg4 = P_GetGMOByte(MO_THING, i, MO_ARG3);
+        spot->arg5 = P_GetGMOByte(MO_THING, i, MO_ARG4);
 #endif
     }
 
@@ -706,10 +704,8 @@ static void P_ResetWorldState(void)
     brain.easy = 0; // Always init easy to 0.
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Clear special respawning que.
-    P_EmptyRespawnQueue();
-#endif
+    P_PurgeDeferredSpawns();
 
 #if !__JHEXEN__
     totalKills = totalItems = totalSecret = 0;

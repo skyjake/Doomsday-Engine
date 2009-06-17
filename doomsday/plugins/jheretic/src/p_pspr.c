@@ -1535,7 +1535,7 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
     pos[VY] = actor->pos[VY] + ((P_Random() & 127) - 64);
 
     mo = P_SpawnMobj3f(MT_RAINPLR1 + actor->special2,
-                       pos[VX], pos[VY], 0, P_Random() << 24, MTF_Z_CEIL);
+                       pos[VX], pos[VY], 0, P_Random() << 24, MSF_Z_CEIL);
 
     mo->flags |= MF_BRIGHTSHADOW;
     mo->target = actor->target;

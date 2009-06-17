@@ -94,7 +94,7 @@
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
-void            P_AddMaceSpot(spawnspot_t *mthing);
+void            P_AddMaceSpot(const mapspot_t *mapSpot);
 void            P_RepositionMace(mobj_t *mo);
 void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
 void            P_SetupPsprites(player_t *curplayer);
@@ -131,8 +131,8 @@ boolean     P_CheckMissileSpawn(mobj_t *missile);
 void        P_MobjMoveZ(mobj_t *mo);
 void        P_ExplodeMissile(mobj_t *mo);
 
-void        P_SpawnMapThing(spawnspot_t *th);
-void        P_SpawnPlayer(spawnspot_t *mthing, int plrnum);
+void        P_SpawnMapThing(const mapspot_t* mapSpot);
+void        P_SpawnPlayer(mapspot_t *mapSpot, int plrnum);
 
 #define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
 #define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))

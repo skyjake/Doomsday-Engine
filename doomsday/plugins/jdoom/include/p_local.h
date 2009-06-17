@@ -86,10 +86,10 @@ extern float turboMul;
 extern int maxAmmo[NUM_AMMO_TYPES];
 extern int clipAmmo[NUM_AMMO_TYPES];
 
-void        P_SetupPsprites(player_t *plr);
-void        P_MovePsprites(player_t *plr);
-void        P_DropWeapon(player_t *plr);
-void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
+void        P_SetupPsprites(player_t* plr);
+void        P_MovePsprites(player_t* plr);
+void        P_DropWeapon(player_t* plr);
+void        P_SetPsprite(player_t* plr, int position, statenum_t stnum);
 
 void        P_MobjRemove(mobj_t* mo, boolean noRespawn);
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
@@ -99,8 +99,8 @@ void        P_RipperBlood(mobj_t* mo);
 void        P_SetDoomsdayFlags(mobj_t* mo);
 void        P_HitFloor(mobj_t* mo);
 
-void        P_SpawnMapThing(spawnspot_t* th);
-void        P_SpawnPlayer(spawnspot_t* mthing, int pnum);
+void        P_SpawnMapThing(const mapspot_t* mapSpot);
+void        P_SpawnPlayer(mapspot_t* mapSpot, int pnum);
 
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 

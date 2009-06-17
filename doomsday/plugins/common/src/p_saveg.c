@@ -1405,9 +1405,9 @@ static void SV_ReadPlayer(player_t* p)
 #if __JHEXEN__
 # define MOBJ_SAVEVERSION 7
 #elif __JHERETIC__
-# define MOBJ_SAVEVERSION 9
+# define MOBJ_SAVEVERSION 10
 #else
-# define MOBJ_SAVEVERSION 9
+# define MOBJ_SAVEVERSION 10
 #endif
 
 static void SV_WriteMobj(const mobj_t* original)
@@ -1442,11 +1442,11 @@ static void SV_WriteMobj(const mobj_t* original)
     // 7: Added flags3
     //
     // JDOOM
-    // 9: Revised spawnspot flag interpretation
+    // 9: Revised mapspot flag interpretation
     //
     // JHERETIC
     // 8: Added special3
-    // 9: Revised spawnspot flag interpretation
+    // 9: Revised mapspot flag interpretation
     //
     // JHEXEN
     // 7: Removed superfluous info ptr
@@ -1561,7 +1561,6 @@ static void SV_WriteMobj(const mobj_t* original)
     SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VY]));
     SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VZ]));
     SV_WriteLong(mo->spawnSpot.angle);
-    SV_WriteLong(mo->spawnSpot.type);
     SV_WriteLong(mo->spawnSpot.flags);
 
     SV_WriteLong(mo->intFlags); // $dropoff_fix: internal flags.
@@ -1672,9 +1671,9 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 #if __JDOOM__ || __JHERETIC__
     if(ver < 9)
     {
-        mo->spawnSpot.flags &= ~MASK_UNKNOWN_THING_FLAGS;
+        mo->spawnSpot.flags &= ~MASK_UNKNOWN_MSF_FLAGS;
         // Spawn on the floor by default unless the mobjtype flags override.
-        mo->spawnSpot.flags |= MTF_Z_FLOOR;
+        mo->spawnSpot.flags |= MSF_Z_FLOOR;
     }
 #endif
 
@@ -1916,7 +1915,8 @@ static int SV_ReadMobj(thinker_t *th)
         mo->spawnSpot.pos[VY] = FIX2FLT(SV_ReadLong());
         mo->spawnSpot.pos[VZ] = FIX2FLT(SV_ReadLong());
         mo->spawnSpot.angle = SV_ReadLong();
-        mo->spawnSpot.type = SV_ReadLong();
+        if(ver < 10)
+        /* mo->spawnSpot.type = */ SV_ReadLong();
         mo->spawnSpot.flags = SV_ReadLong();
     }
     else
@@ -1925,7 +1925,7 @@ static int SV_ReadMobj(thinker_t *th)
         mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
         mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
         mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
-        mo->spawnSpot.type = (int) SV_ReadShort();
+        /*mo->spawnSpot.type = (int)*/ SV_ReadShort();
         mo->spawnSpot.flags = (int) SV_ReadShort();
     }
 
@@ -4764,6 +4764,18 @@ void SV_GetClientSaveGameFileName(char* str, unsigned int gameID,
              clientSavePath, gameID);
 }
 
+static boolean openSaveGameFile(const char* fileName, boolean write)
+{
+#if __JHEXEN__
+    if(!write)
+        return M_ReadFile(fileName, &saveBuffer) > 0;
+    else
+#endif
+    savefile = lzOpen((char*)fileName, write? "wp" : "rp");
+
+    return savefile? true : false;
+}
+
 enum {
     SV_OK = 0,
     SV_INVALIDFILENAME,
@@ -4786,15 +4798,17 @@ int SV_SaveGameWorker(void* ptr)
     int                 i;
 #endif
 
-    playerHeaderOK = false; // Uninitialized.
+    VERBOSE(Con_Message("SV_SaveGame: Attempting load of save game "
+                        "\"%s\".\n", M_PrettyPath(param->filename)));
 
     // Open the output file
-    savefile = lzOpen((char*)param->filename, "wp");
-    if(!savefile)
+    if(!openSaveGameFile(param->filename, true))
     {
         Con_BusyWorkerEnd();
-        return SV_INVALIDFILENAME;           // No success.
+        return SV_INVALIDFILENAME; // No success.
     }
+
+    playerHeaderOK = false; // Uninitialized.
 
 #if __JHEXEN__
     // Write game save description
@@ -4927,7 +4941,8 @@ boolean SV_SaveGame(const char* filename, const char *description)
     param.description = description;
 
     // \todo Use progress bar mode and update progress during the setup.
-    result = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    result = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/
+                      (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                       "Saving game...", SV_SaveGameWorker, &param);
 
     if(result == SV_INVALIDFILENAME)
@@ -5161,9 +5176,10 @@ static boolean SV_LoadGame2(void)
 #if __JHEXEN__
 boolean SV_LoadGame(int slot)
 #else
-boolean SV_LoadGame(const char* filename)
+boolean SV_LoadGame(const char* fileName)
 #endif
 {
+    boolean             result = false;
 #if __JHEXEN__
     filename_t          fileName;
 
@@ -5177,33 +5193,30 @@ boolean SV_LoadGame(const char* filename)
     // Create the name
     dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
-
-    // Load the file
-    M_ReadFile(fileName, &saveBuffer);
-#else
-
-    savefile = lzOpen((char*)filename, "rp");
-    if(!savefile)
-    {
-# if __JDOOM64__
-        // We don't support the original game's save format (for obvious
-        // reasons).
-        return false;
-# else
-#  if __JDOOM__
-        // It might still be a v19 savegame.
-        SV_v19_LoadGame(filename);
-#  elif __JHERETIC__
-        SV_v13_LoadGame(filename);
-#  endif
-# endif
-        return true;
-    }
 #endif
 
-    playerHeaderOK = false; // Uninitialized.
+    VERBOSE(Con_Message("SV_LoadGame: Attempting load of save game "
+                        "\"%s\".\n", M_PrettyPath(fileName)));
 
-    return SV_LoadGame2();
+    if(openSaveGameFile(fileName, false))
+    {
+        playerHeaderOK = false; // Uninitialized.
+
+        return SV_LoadGame2();
+    }
+
+    // It might be an original game save?
+#if __JDOOM__
+    result = SV_v19_LoadGame(fileName);
+#elif __JHERETIC__
+    result = SV_v13_LoadGame(fileName);
+#endif
+
+    if(!result)
+        Con_Message("SV_LoadGame: Warning, failed loading save game "
+                    "\"%s\".\n", M_PrettyPath(fileName));
+
+    return result;
 }
 
 /**

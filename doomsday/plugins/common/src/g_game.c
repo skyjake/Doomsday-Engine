@@ -1529,7 +1529,7 @@ void G_DoReborn(int playernum)
     int             oldKeys, oldPieces, bestWeapon;
 #endif
     boolean         foundSpot;
-    spawnspot_t    *assigned;
+    mapspot_t    *assigned;
     player_t       *p;
 
     if(playernum < 0 || playernum >= MAXPLAYERS)
@@ -2072,7 +2072,7 @@ void G_LoadGame(int slot)
 #else
 void G_LoadGame(const char* name)
 {
-    strncpy(saveName, name, FILENAME_T_MAXLEN);
+    M_TranslatePath(name, saveName, FILENAME_T_MAXLEN);
     G_SetGameAction(GA_LOADGAME);
 }
 #endif

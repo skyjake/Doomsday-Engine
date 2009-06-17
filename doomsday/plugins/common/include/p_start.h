@@ -39,30 +39,30 @@
 #define MAX_DM_STARTS       (16)
 
 #if __JHERETIC__
-extern spawnspot_t *maceSpots;
+extern mapspot_t* maceSpots;
 extern int maceSpotCount;
-extern spawnspot_t *bossSpots;
+extern mapspot_t* bossSpots;
 extern int bossSpotCount;
 #endif
 
-extern spawnspot_t deathmatchStarts[];
-extern spawnspot_t *deathmatchP;
+extern mapspot_t deathmatchStarts[];
+extern mapspot_t* deathmatchP;
 
-extern spawnspot_t *playerStarts;
+extern mapspot_t* playerStarts;
 extern int numPlayerStarts;
 
 void            P_Init(void);
-int             P_RegisterPlayerStart(spawnspot_t *mthing);
+int             P_RegisterPlayerStart(const mapspot_t* mapSpot);
 void            P_FreePlayerStarts(void);
-boolean         P_CheckSpot(int playernum, spawnspot_t *mthing,
+boolean         P_CheckSpot(int playernum, const mapspot_t* mapSpot,
                             boolean doTeleSpark);
-boolean         P_FuzzySpawn(spawnspot_t *spot, int playernum,
+boolean         P_FuzzySpawn(mapspot_t* spot, int playernum,
                              boolean doTeleSpark);
-spawnspot_t    *P_GetPlayerStart(int group, int pnum);
+mapspot_t*      P_GetPlayerStart(int group, int pnum);
 void            P_DealPlayerStarts(int group);
 void            P_SpawnPlayers(void);
 
-void            P_GetMapLumpName(int episode, int map, char *lumpName);
+void            P_GetMapLumpName(int episode, int map, char* lumpName);
 
 void            P_MoveThingsOutOfWalls();
 

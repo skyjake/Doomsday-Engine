@@ -1348,7 +1348,7 @@ void C_DECL A_MntrFloorFire(mobj_t* actor)
     angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
                             pos[VX], pos[VY]);
 
-    if((mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MTF_Z_FLOOR)))
+    if((mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MSF_Z_FLOOR)))
     {
         mo->target = actor->target;
         mo->mom[MX] = FIX2FLT(1); // Force block checking.
@@ -2126,7 +2126,7 @@ static mobj_t* spawnSerpentGib(mobjtype_t type, mobj_t *mo)
     pos[VX] += FIX2FLT((P_Random() - 128) << 12);
     pos[VY] += FIX2FLT((P_Random() - 128) << 12);
 
-    pmo = P_SpawnMobj3fv((type), pos, P_Random() << 24, MTF_Z_FLOOR);
+    pmo = P_SpawnMobj3fv((type), pos, P_Random() << 24, MSF_Z_FLOOR);
     if(pmo)
     {
         pmo->mom[MX] = (P_Random() - 128) << 6;

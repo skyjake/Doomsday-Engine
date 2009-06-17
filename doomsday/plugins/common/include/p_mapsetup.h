@@ -42,8 +42,6 @@
 #define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
 #endif
 
-extern uint numthings;
-
 void        P_SetupForMapData(int type, uint num);
 
 void        P_SetupMap(int episode, int map, int playermask, skillmode_t skill);
