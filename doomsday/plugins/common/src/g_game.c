@@ -622,8 +622,7 @@ void R_LoadColorPalettes(void)
         char                name[9];
         lumpnum_t           lump;
 
-        dd_snprintf(name, 8, "TRANTBL%X", i);
-        name[8] = '\0';
+        dd_snprintf(name, 9, "TRANTBL%X", i);
 
         if((lump = W_CheckNumForName(name)) != -1)
         {
