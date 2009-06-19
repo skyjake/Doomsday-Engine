@@ -1785,8 +1785,8 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
      */
 
     // Create a gltexture for it.
-    dd_snprintf(name, 8, "%-*i", 8, numSkinNames + 1);
-    name[M_NumDigits(numSkinNames + 1)] = '\0';
+    dd_snprintf(name, 9, "%-*i", 8, numSkinNames + 1);
+
     glTex = GL_CreateGLTexture(name, numSkinNames,
         (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
 
@@ -2259,8 +2259,8 @@ Con_Message("R_CreateDetailTexture: Too many detail textures!\n");
      */
 
     // Create a gltexture for it.
-    dd_snprintf(name, 8, "%-*i", 8, numDetailTextures + 1);
-    name[M_NumDigits(numDetailTextures + 1)] = '\0';
+    dd_snprintf(name, 9, "%-*i", 8, numDetailTextures + 1);
+
     glTex = GL_CreateGLTexture(name, numDetailTextures, GLT_DETAIL);
 
     dTex = M_Malloc(sizeof(*dTex));
@@ -2337,8 +2337,8 @@ Con_Message("R_CreateLightMap: Too many lightmaps!\n");
      */
 
     // Create a gltexture for it.
-    dd_snprintf(name, 8, "%-*i", 8, numLightMaps + 1);
-    name[M_NumDigits(numLightMaps + 1)] = '\0';
+    dd_snprintf(name, 9, "%-*i", 8, numLightMaps + 1);
+
     glTex = GL_CreateGLTexture(name, numLightMaps, GLT_LIGHTMAP);
 
     lmap = M_Malloc(sizeof(*lmap));
@@ -2418,8 +2418,8 @@ Con_Message("R_CreateFlareTexture: Too many flare textures!\n");
      * A new flare texture.
      */
     // Create a gltexture for it.
-    dd_snprintf(name, 8, "%-*i", 8, numFlareTextures + 1);
-    name[M_NumDigits(numFlareTextures + 1)] = '\0';
+    dd_snprintf(name, 9, "%-*i", 8, numFlareTextures + 1);
+
     glTex = GL_CreateGLTexture(name, numFlareTextures, GLT_FLARE);
 
     fTex = M_Malloc(sizeof(*fTex));
@@ -2493,8 +2493,8 @@ Con_Message("R_CreateShinyTexture: Too many shiny textures!\n");
      */
 
     // Create a gltexture for it.
-    dd_snprintf(name, 8, "%-*i", 8, numShinyTextures + 1);
-    name[M_NumDigits(numShinyTextures + 1)] = '\0';
+    dd_snprintf(name, 9, "%-*i", 8, numShinyTextures + 1);
+
     glTex = GL_CreateGLTexture(name, numShinyTextures, GLT_SHINY);
 
     sTex = M_Malloc(sizeof(*sTex));
@@ -2566,8 +2566,8 @@ Con_Message("R_CreateMaskTexture: Too many mask textures!\n");
      */
 
     // Create a gltexture for it.
-    dd_snprintf(name, 8, "%-*i", 8, numMaskTextures + 1);
-    name[M_NumDigits(numMaskTextures + 1)] = '\0';
+    dd_snprintf(name, 9, "%-*i", 8, numMaskTextures + 1);
+
     glTex = GL_CreateGLTexture(name, numMaskTextures, GLT_MASK);
 
     mTex = M_Malloc(sizeof(*mTex));

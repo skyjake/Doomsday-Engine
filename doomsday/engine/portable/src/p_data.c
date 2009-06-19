@@ -149,7 +149,7 @@ void P_PolyobjChanged(polyobj_t* po)
  */
 const char* P_GenerateUniqueMapID(const char* mapID)
 {
-    static char         uid[256];
+    static char         uid[255];
     filename_t          base;
     int                 lump = W_GetNumForName(mapID);
 

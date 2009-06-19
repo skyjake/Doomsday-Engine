@@ -1224,7 +1224,7 @@ boolean W_DumpLump(lumpnum_t lump, const char* fileName)
     else
     {
         memset(buf, 0, sizeof(buf));
-        dd_snprintf(buf, 12, "%s.dum", lumpInfo[lump].name);
+        dd_snprintf(buf, 13, "%s.dum", lumpInfo[lump].name);
         fname = buf;
     }
 

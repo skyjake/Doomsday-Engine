@@ -251,8 +251,7 @@ int DD_AddAutoData(boolean loadFiles)
     for(i = 0; extensions[i]; ++i)
     {
         dd_snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s",
-                 R_GetDataPath(), extensions[i]);
-        pattern[FILENAME_T_MAXLEN] = '\0';
+                    R_GetDataPath(), extensions[i]);
 
         Dir_FixSlashes(pattern, FILENAME_T_MAXLEN);
         F_ForAll(pattern, &data, autoDataAdder);
@@ -283,7 +282,7 @@ void DD_SetConfigFile(const char* file)
 void DD_SetDefsFile(const char* file)
 {
     dd_snprintf(topDefsFileName, FILENAME_T_MAXLEN, "%sdefs\\%s",
-             ddBasePath, file);
+                ddBasePath, file);
     Dir_FixSlashes(topDefsFileName, FILENAME_T_MAXLEN);
 }
 

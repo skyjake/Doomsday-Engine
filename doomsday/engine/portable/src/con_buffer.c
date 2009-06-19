@@ -178,7 +178,7 @@ cbuffer_t* Con_NewBuffer(uint maxNumLines, uint maxLineLength, int flags)
 
     buf = M_Malloc(sizeof(*buf));
 
-    dd_snprintf(name, 32, "CBufferMutex%p", buf);
+    dd_snprintf(name, 33, "CBufferMutex%p", buf);
     buf->mutex = Sys_CreateMutex(name);
 
     buf->flags = flags;

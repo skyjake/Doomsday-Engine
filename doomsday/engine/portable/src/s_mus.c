@@ -323,7 +323,6 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
             if(retPath)
             {
                 strncpy(retPath, path, FILENAME_T_MAXLEN);
-                retPath[FILENAME_T_MAXLEN] = '\0';
             }
 
             return true;
@@ -340,7 +339,6 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
         if(retPath)
         {
             strncpy(retPath, path, FILENAME_T_MAXLEN);
-            retPath[FILENAME_T_MAXLEN] = '\0';
         }
 
         return true;
