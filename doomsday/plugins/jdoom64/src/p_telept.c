@@ -40,6 +40,7 @@
 #include "p_map.h"
 #include "p_mapspec.h"
 #include "p_terraintype.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -218,11 +219,11 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
  * DJS - Added in order to cleanup EV_FadeSpawn() somewhat.
  * \todo This is still far from ideal. An MF*_* flag would be better.
  */
-static mobjtype_t isFadeSpawner(int doomednum)
+static mobjtype_t isFadeSpawner(int doomEdNum)
 {
     typedef struct fadespawner_s {
-        int doomednum;
-        mobjtype_t type;
+        int             doomEdNum;
+        mobjtype_t      type;
     } fadespawner_t;
 
     static const fadespawner_t  spawners[] =
@@ -285,8 +286,8 @@ static mobjtype_t isFadeSpawner(int doomednum)
     };
     int                 i;
 
-    for(i = 0; spawners[i].doomednum; ++i)
-        if(spawners[i].doomednum == doomednum)
+    for(i = 0; spawners[i].doomEdNum; ++i)
+        if(spawners[i].doomEdNum == doomEdNum)
             return spawners[i].type;
 
     return -1;
@@ -308,7 +309,7 @@ static boolean fadeSpawn(thinker_t* th, void* context)
         return true; // Contiue iteration.
 
     // Only fade spawn origins of a certain type.
-    spawntype = isFadeSpawner(origin->info->doomedNum);
+    spawntype = isFadeSpawner(origin->info->doomEdNum);
     if(spawntype != -1)
     {
         angle_t             an;

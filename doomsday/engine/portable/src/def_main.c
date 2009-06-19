@@ -941,7 +941,7 @@ void Def_Read(void)
         mobjinfo_t*         mo = &mobjInfo[Def_GetMobjNum(dmo->id)];
 
         gettingFor = mo;
-        mo->doomedNum = dmo->doomedNum;
+        mo->doomEdNum = dmo->doomEdNum;
         mo->spawnHealth = dmo->spawnHealth;
         mo->reactionTime = dmo->reactionTime;
         mo->painChance = dmo->painChance;

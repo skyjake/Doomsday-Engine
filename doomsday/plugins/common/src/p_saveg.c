@@ -5516,7 +5516,18 @@ void SV_MapTeleport(int map, int position)
         }
         else
         {
-            P_SpawnPlayer(P_GetPlayerStart(position, i), i);
+            const playerstart_t* start;
+
+            if((start = P_GetPlayerStart(position, i, false)))
+            {
+                P_SpawnPlayer(i, start->pos[VX], start->pos[VY],
+                              start->pos[VZ], start->angle,
+                              start->spawnFlags, false);
+            }
+            else
+            {
+                P_SpawnPlayer(i, 0, 0, 0, 0, MSF_Z_FLOOR, true);
+            }
         }
 
         if(playerWasReborn && IS_NETGAME && !deathmatch)

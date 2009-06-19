@@ -41,8 +41,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "d_net.h"
@@ -727,11 +725,11 @@ void NetSv_CheckCycling(void)
 /**
  * Server calls this when new players enter the game.
  */
-void NetSv_NewPlayerEnters(int plrnumber)
+void NetSv_NewPlayerEnters(int plrNum)
 {
-    player_t           *plr = &players[plrnumber];
+    player_t*           plr = &players[plrNum];
 
-    Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrnumber);
+    Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrNum);
 
     plr->playerState = PST_REBORN;  // Force an init.
 
@@ -741,12 +739,29 @@ void NetSv_NewPlayerEnters(int plrnumber)
     // Spawn the player into the world.
     if(deathmatch)
     {
-        G_DeathMatchSpawnPlayer(plrnumber);
+        G_DeathMatchSpawnPlayer(plrNum);
     }
     else
     {
+#if __JHEXEN__
+        byte                entryPoint = rebornPosition;
+#else
+        byte                entryPoint = 0;
+#endif
+        const playerstart_t* start;
+
+        if((start = P_GetPlayerStart(entryPoint, plrNum, false)))
+        {
+            P_SpawnPlayer(plrNum, start->pos[VX], start->pos[VY],
+                          start->pos[VZ], start->angle, start->spawnFlags,
+                          false);
+        }
+        else
+        {
+            P_SpawnPlayer(plrNum, 0, 0, 0, 0, MSF_Z_FLOOR, true);
+        }
+
         //// \fixme Spawn a telefog in front of the player.
-        P_SpawnPlayer(&playerStarts[plr->startSpot], plrnumber);
     }
 
     // Get rid of anybody at the starting spot.

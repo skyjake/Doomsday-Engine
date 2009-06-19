@@ -321,61 +321,12 @@ static void P_LoadMapObjs(void)
 {
     uint                i;
 
-    numMapSpots = P_CountGameMapObjs(MO_THING);
-
-    if(numMapSpots > 0)
-        mapSpots =
-            Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
-    else
-        mapSpots = NULL;
-
-    for(i = 0; i < numMapSpots; ++i)
-    {
-        mapspot_t*        spot = &mapSpots[i];
-
-        spot->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
-        spot->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-        spot->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
-
-        spot->type = P_GetGMOInt(MO_THING, i, MO_TYPE);
-#if __JHEXEN__
-        // Check for player starts 5 to 8.
-        if(spot->type >= 9100 && spot->type <= 9103)
-            spot->type = 5 + spot->type - 9100; // Translate to 5 - 8.
-#endif
-        spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
-
-        /**
-         * For some reason, the Hexen format stores polyobject tags in the
-         * angle field in THINGS. Thus, we cannot translate the angle until
-         * we know whether it is a polyobject type or not.
-         */
-#if __JHEXEN__
-        spot->angle = P_GetGMOShort(MO_THING, i, MO_ANGLE);
-        if(spot->type != PO_ANCHOR_TYPE && spot->type != PO_SPAWN_TYPE &&
-           spot->type != PO_SPAWNCRUSH_TYPE)
-            spot->angle = ANG45 * (spot->angle / 45);
-#else
-        spot->angle = ANG45 * (P_GetGMOShort(MO_THING, i, MO_ANGLE) / 45);
-#endif
-
-#if __JHEXEN__
-        spot->tid = P_GetGMOShort(MO_THING, i, MO_ID);
-        spot->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
-        spot->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
-        spot->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
-        spot->arg3 = P_GetGMOByte(MO_THING, i, MO_ARG2);
-        spot->arg4 = P_GetGMOByte(MO_THING, i, MO_ARG3);
-        spot->arg5 = P_GetGMOByte(MO_THING, i, MO_ARG4);
-#endif
-    }
-
     for(i = 0; i < numlines; ++i)
     {
         xline_t*            xl = &xlines[i];
 
         xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS);
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_TYPE);
         xl->arg1 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG0);
         xl->arg2 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG1);
@@ -425,6 +376,96 @@ static void P_LoadMapObjs(void)
         P_Iteratep(sec, DMU_LINEDEF, &params, applySurfaceColor);
         }
 #endif
+    }
+
+    numMapSpots = P_CountGameMapObjs(MO_THING);
+
+    if(numMapSpots > 0)
+        mapSpots =
+            Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
+    else
+        mapSpots = NULL;
+
+    for(i = 0; i < numMapSpots; ++i)
+    {
+        mapspot_t*        spot = &mapSpots[i];
+
+        spot->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
+        spot->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
+        spot->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
+
+        spot->doomEdNum = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
+        spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
+        spot->angle = P_GetGMOAngle(MO_THING, i, MO_ANGLE);
+
+#if __JHEXEN__
+        spot->tid = P_GetGMOShort(MO_THING, i, MO_ID);
+        spot->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
+        spot->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
+        spot->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
+        spot->arg3 = P_GetGMOByte(MO_THING, i, MO_ARG2);
+        spot->arg4 = P_GetGMOByte(MO_THING, i, MO_ARG3);
+        spot->arg5 = P_GetGMOByte(MO_THING, i, MO_ARG4);
+#endif
+
+        // Register player start positions.
+        switch(spot->doomEdNum)
+        {
+        default:
+            break;
+
+        case 11: // Deathmatch.
+            P_CreatePlayerStart(0, 0, true, spot->pos[VX], spot->pos[VY],
+                                spot->pos[VZ], spot->angle, spot->flags);
+            break;
+
+        case 1: // Players 1 through 4.
+        case 2:
+        case 3:
+        case 4:
+            {
+#if __JHEXEN__
+            byte                entryPoint = spot->arg1;
+#else
+            byte                entryPoint = 0;
+#endif
+
+            P_CreatePlayerStart(spot->doomEdNum, entryPoint, false,
+                                spot->pos[VX], spot->pos[VY], spot->pos[VZ],
+                                spot->angle, spot->flags);
+            break;
+            }
+
+#if __JHEXEN__
+        case 9100: // Players 5 through 8.
+        case 9101:
+        case 9102:
+        case 9103:
+            P_CreatePlayerStart(5 + spot->doomEdNum - 9100, spot->arg1,
+                                false, spot->pos[VX], spot->pos[VY],
+                                spot->pos[VZ], spot->angle, spot->flags);
+            break;
+#endif
+        }
+    }
+
+    if(deathmatch)
+    {
+        int                 i;
+        uint                numDMStarts = P_GetNumPlayerStarts(true),
+                            playerCount = 0;
+
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(players[i].plr->inGame)
+                playerCount++;
+        }
+
+        if(numDMStarts < playerCount)
+        {
+            Con_Error("P_SetupMap: Player count (%d) exceeds deathmatch "
+                      "spots (%d).", playerCount, numDMStarts);
+        }
     }
 }
 
@@ -563,6 +604,32 @@ int P_SetupMapWorker(void* ptr)
     DD_InitThinkers();
     P_LoadMapObjs();
     P_SpawnThings();
+
+#if __JDOOM__
+    if(gameMode == commercial)
+        P_SpawnBrainTargets();
+#endif
+
+#if __JHERETIC__
+    if(maceSpotCount)
+    {
+        // Sometimes doesn't show up if not in deathmatch.
+        if(!(!deathmatch && P_Random() < 64))
+        {
+            const mapspot_t*    spot =
+                &maceSpots[P_Random() % maceSpotCount];
+
+            P_SpawnMobj3f(MT_WMACE, spot->pos[VX], spot->pos[VY], 0,
+                          spot->angle, MSF_Z_FLOOR);
+        }
+    }
+#endif
+
+#if __JHEXEN__
+    P_CreateTIDList();
+    P_InitCreatureCorpseQueue(false); // false = do NOT scan for corpses
+    PO_InitForMap();
+#endif
 
     interpretLinedefFlags();
 
@@ -712,7 +779,13 @@ static void P_ResetWorldState(void)
     brain.easy = 0; // Always init easy to 0.
 #endif
 
-    // Clear special respawning que.
+#if __JHERETIC__
+    maceSpotCount = 0;
+    maceSpots = NULL;
+    bossSpotCount = 0;
+    bossSpots = NULL;
+#endif
+
     P_PurgeDeferredSpawns();
 
 #if !__JHEXEN__
@@ -729,15 +802,14 @@ static void P_ResetWorldState(void)
         }
     }
 
-    // Initial height of PointOfView; will be set by player think.
-    players[CONSOLEPLAYER].plr->viewZ = 1;
-
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t*           plr = &players[i];
         automapid_t         map = AM_MapForPlayer(i);
 
         plr->killCount = plr->secretCount = plr->itemCount = 0;
+        // Initial height of PointOfView; will be set by player think.
+        plr->plr->viewZ = 1;
 
         AM_SetCheatLevel(map, 0);
         AM_RevealMap(map, false);
@@ -747,7 +819,7 @@ static void P_ResetWorldState(void)
     bodyQueueSlot = 0;
 #endif
 
-    P_FreePlayerStarts();
+    P_DestroyPlayerStarts();
 
     mapTime = actualMapTime = 0;
 }

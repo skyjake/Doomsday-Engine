@@ -94,20 +94,20 @@
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
-void            P_AddMaceSpot(const mapspot_t *mapSpot);
-void            P_RepositionMace(mobj_t *mo);
-void            P_SetPsprite(player_t *player, int position, statenum_t stnum);
-void            P_SetupPsprites(player_t *curplayer);
-void            P_MovePsprites(player_t *curplayer);
-void            P_DropWeapon(player_t *player);
-void            P_ActivateMorphWeapon(player_t *player);
-void            P_PostMorphWeapon(player_t *player, weapontype_t weapon);
-void            P_UpdateBeak(player_t *player, pspdef_t *psp);
-void            P_FireWeapon(player_t *player);
+void            P_RepositionMace(mobj_t* mo);
+void            P_SetPsprite(player_t* player, int position,
+                             statenum_t stnum);
+void            P_SetupPsprites(player_t* curplayer);
+void            P_MovePsprites(player_t* curplayer);
+void            P_DropWeapon(player_t* player);
+void            P_ActivateMorphWeapon(player_t* player);
+void            P_PostMorphWeapon(player_t* player, weapontype_t weapon);
+void            P_UpdateBeak(player_t* player, pspdef_t* psp);
+void            P_FireWeapon(player_t* player);
 
 void            P_ClientSideThink(void);
-void            P_Thrust(player_t *player, angle_t angle, float move);
-boolean         P_UndoPlayerMorph(player_t *player);
+void            P_Thrust(player_t* player, angle_t angle, float move);
+boolean         P_UndoPlayerMorph(player_t* player);
 
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
@@ -115,45 +115,47 @@ boolean         P_UndoPlayerMorph(player_t *player);
 #define FRICTION_LOW        (0.97265625f)
 
 extern mobjtype_t puffType;
-extern mobj_t  *missileMobj;
+extern mobj_t* missileMobj;
 
-boolean     P_MobjChangeState(mobj_t *mobj, statenum_t state);
-boolean     P_SetMobjStateNF(mobj_t *mobj, statenum_t state);
-void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
-void        P_WindThrust(mobj_t *mo);
-int         P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
-boolean     P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax);
-void        P_MobjThinker(mobj_t *mobj);
-void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator);
-void        P_RipperBlood(mobj_t *mo);
-boolean     P_HitFloor(mobj_t *thing);
-boolean     P_CheckMissileSpawn(mobj_t *missile);
-void        P_MobjMoveZ(mobj_t *mo);
-void        P_ExplodeMissile(mobj_t *mo);
+boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
+boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
+void        P_ThrustMobj(mobj_t* mo, angle_t angle, float move);
+void        P_WindThrust(mobj_t* mo);
+int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
+boolean     P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax);
+void        P_MobjThinker(mobj_t* mo);
+void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator);
+void        P_RipperBlood(mobj_t* mo);
+boolean     P_HitFloor(mobj_t* thing);
+boolean     P_CheckMissileSpawn(mobj_t* missile);
+void        P_MobjMoveZ(mobj_t* mo);
+void        P_ExplodeMissile(mobj_t* mo);
 
-void        P_SpawnPlayer(mapspot_t *mapSpot, int plrnum);
+void            P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x,
+                               float y, float z, angle_t angle,
+                               int spawnFlags, boolean makeCamera);
 
 #define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
 #define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-char           *P_GetMapName(int episode, int map);
-char           *P_GetShortMapName(int episode, int map);
+char*           P_GetMapName(int episode, int map);
+char*           P_GetShortMapName(int episode, int map);
 
 extern float turboMul;
 extern int maxAmmo[NUM_AMMO_TYPES];
 extern int clipAmmo[NUM_AMMO_TYPES];
 extern int maxAmmo[NUM_AMMO_TYPES];
 
-void            P_GiveKey(player_t *player, keytype_t key);
-void            P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
-int             P_DamageMobj(mobj_t *target, mobj_t *inflictor,
-                             mobj_t *source, int damage, boolean stomping);
-boolean         P_GiveAmmo(player_t *player, ammotype_t ammo, int count);
-boolean         P_GiveBody(player_t *player, int num);
-boolean         P_GivePower(player_t *player, powertype_t power);
-boolean         P_MorphPlayer(player_t *player);
+void            P_GiveKey(player_t* player, keytype_t key);
+void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
+int             P_DamageMobj(mobj_t* target, mobj_t* inflictor,
+                             mobj_t* source, int damage, boolean stomping);
+boolean         P_GiveAmmo(player_t* player, ammotype_t ammo, int count);
+boolean         P_GiveBody(player_t* player, int num);
+boolean         P_GivePower(player_t* player, powertype_t power);
+boolean         P_MorphPlayer(player_t* player);
 
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);

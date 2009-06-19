@@ -635,7 +635,7 @@ void PO_InitForMap(void)
     for(i = 0; i < numpolyobjs; ++i)
     {
         uint                j;
-        mapspot_t*        spot;
+        const mapspot_t*    spot;
         polyobj_t*          po;
 
         po = P_GetPolyobj(i | 0x80000000);
@@ -648,8 +648,8 @@ void PO_InitForMap(void)
         spot = NULL;
         while(j < numMapSpots && !spot)
         {
-            if((mapSpots[j].type == PO_SPAWN_TYPE ||
-                mapSpots[j].type == PO_SPAWNCRUSH_TYPE) &&
+            if((mapSpots[j].doomEdNum == PO_SPAWN_DOOMEDNUM ||
+                mapSpots[j].doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM) &&
                mapSpots[j].angle == po->tag)
             {   // Polyobj mapspot.
                 spot = &mapSpots[j];
@@ -662,7 +662,7 @@ void PO_InitForMap(void)
 
         if(spot)
         {
-            po->crush = ((spot->type == PO_SPAWNCRUSH_TYPE)? 1 : 0);
+            po->crush = (spot->doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM? 1 : 0);
             P_PolyobjMove(po, -po->pos[VX] + spot->pos[VX],
                               -po->pos[VY] + spot->pos[VY]);
         }

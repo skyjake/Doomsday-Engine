@@ -65,7 +65,7 @@ typedef enum {
 } statename_t;
 
 typedef struct {
-    int             doomedNum;
+    int             doomEdNum;
     int             spawnHealth;
     float           speed;
     float           radius;

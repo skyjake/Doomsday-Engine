@@ -44,6 +44,7 @@ enum {
     MO_Z,
     MO_ANGLE,
     MO_TYPE,
+    MO_DOOMEDNUM,
     MO_FLAGS,
     MO_TAG
 };

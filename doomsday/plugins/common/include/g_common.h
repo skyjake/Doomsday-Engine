@@ -67,10 +67,6 @@ void            G_ChangeGameState(gamestate_t state);
 gameaction_t    G_GetGameAction(void);
 void            G_SetGameAction(gameaction_t action);
 
-// Spawn player at a dummy place.
-void            G_DummySpawnPlayer(int playernum);
-void            G_DeathMatchSpawnPlayer(int playernum);
-
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
 void            P_Thrust3D(struct player_s* player, angle_t angle,

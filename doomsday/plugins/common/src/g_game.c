@@ -1509,32 +1509,24 @@ void G_PlayerReborn(int player)
 }
 
 #if __JDOOM__ || __JDOOM64__
-void G_QueueBody(mobj_t *body)
+void G_QueueBody(mobj_t* mo)
 {
+    if(!mo)
+        return;
+
     // Flush an old corpse if needed.
     if(bodyQueueSlot >= BODYQUEUESIZE)
         P_MobjRemove(bodyQueue[bodyQueueSlot % BODYQUEUESIZE], false);
 
-    bodyQueue[bodyQueueSlot % BODYQUEUESIZE] = body;
+    bodyQueue[bodyQueueSlot % BODYQUEUESIZE] = mo;
     bodyQueueSlot++;
 }
 #endif
 
-void G_DoReborn(int playernum)
+void G_DoReborn(int plrNum)
 {
-#if __JHEXEN__ || __JSTRIFE__
-    int             i;
-    boolean         oldWeaponOwned[NUM_WEAPON_TYPES];
-    int             oldKeys, oldPieces, bestWeapon;
-#endif
-    boolean         foundSpot;
-    mapspot_t    *assigned;
-    player_t       *p;
-
-    if(playernum < 0 || playernum >= MAXPLAYERS)
+    if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
-
-    p = &players[playernum];
 
     // Clear the currently playing script, if any.
     FI_Reset();
@@ -1544,7 +1536,7 @@ void G_DoReborn(int playernum)
         // We've just died, don't do a briefing now.
         briefDisabled = true;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         if(SV_HxRebornSlotAvailable())
         {   // Use the reborn code if the slot is available
             G_SetGameAction(GA_SINGLEREBORN);
@@ -1560,111 +1552,7 @@ void G_DoReborn(int playernum)
     }
     else
     {   // In a net game.
-        if(p->plr->mo)
-        {
-            // First dissasociate the corpse.
-            p->plr->mo->player = NULL;
-            p->plr->mo->dPlayer = NULL;
-        }
-
-        if(IS_CLIENT)
-        {
-            if(G_GetGameState() == GS_MAP)
-            {
-                G_DummySpawnPlayer(playernum);
-            }
-
-            return;
-        }
-
-        Con_Printf("G_DoReborn for %i.\n", playernum);
-
-        // Spawn at random spot if in death match.
-        if(deathmatch)
-        {
-            G_DeathMatchSpawnPlayer(playernum);
-            return;
-        }
-
-#if __JHEXEN__ || __JSTRIFE__
-        // Cooperative net-play, retain keys and weapons
-        oldKeys = p->keys;
-        oldPieces = p->pieces;
-        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-            oldWeaponOwned[i] = p->weapons[i].owned;
-#endif
-
-        // Try to spawn at the assigned spot.
-        foundSpot = false;
-        assigned = P_GetPlayerStart(
-#if __JHEXEN__ || __JSTRIFE__
-                                    rebornPosition,
-#else
-                                    0,
-#endif
-                                    playernum);
-
-        if(P_CheckSpot(playernum, assigned, true))
-        {   // Appropriate player start spot is open.
-            Con_Printf("- spawning at assigned spot\n");
-            P_SpawnPlayer(assigned, playernum);
-            foundSpot = true;
-        }
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        else
-        {
-            Con_Printf("- force spawning at %i.\n", p->startSpot);
-
-            // Fuzzy returns false if it needs telefragging.
-            if(!P_FuzzySpawn(assigned, playernum, true))
-            {
-                // Spawn at the assigned spot, telefrag whoever else is there.
-                P_Telefrag(p->plr->mo);
-            }
-        }
-#else
-        else
-        {
-            // Try to spawn at one of the other player start spots.
-            for(i = 0; i < MAXPLAYERS; ++i)
-            {
-                if(P_CheckSpot
-                   (playernum, P_GetPlayerStart(rebornPosition, i), true))
-                {
-                    // Found an open start spot
-                    P_SpawnPlayer(P_GetPlayerStart(rebornPosition, i),
-                                  playernum);
-                    foundSpot = true;
-                    break;
-                }
-            }
-        }
-
-        if(!foundSpot)
-        {   // Player's going to be inside something.
-            P_SpawnPlayer(P_GetPlayerStart(rebornPosition, playernum),
-                          playernum);
-        }
-
-        // Restore keys and weapons
-        p->keys = oldKeys;
-        p->pieces = oldPieces;
-        for(bestWeapon = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
-        {
-            if(oldWeaponOwned[i])
-            {
-                bestWeapon = i;
-                p->weapons[i].owned = true;
-            }
-        }
-
-        p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
-        p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
-        if(bestWeapon)
-        {   // Bring up the best weapon.
-            p->pendingWeapon = bestWeapon;
-        }
-#endif
+        P_RebornPlayer(plrNum);
     }
 }
 

@@ -473,6 +473,9 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
 
 static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 {
+    if(!plr)
+        return false;
+
     switch(item)
     {
     case IT_HEALTH_POTION:

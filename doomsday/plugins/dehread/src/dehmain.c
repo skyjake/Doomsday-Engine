@@ -725,7 +725,7 @@ int PatchThing(int thingy)
     size_t          thingNum = (size_t) thingy;
 
     static const struct Key keys[] = {
-        {"ID #", myoffsetof(ded_mobj_t, doomedNum, 0)},
+        {"ID #", myoffsetof(ded_mobj_t, doomEdNum, 0)},
         {"Hit points", myoffsetof(ded_mobj_t, spawnHealth, 0)},
         {"Reaction time", myoffsetof(ded_mobj_t, reactionTime, 0)},
         {"Pain chance", myoffsetof(ded_mobj_t, painChance, 0)},

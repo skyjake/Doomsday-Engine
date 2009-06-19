@@ -690,14 +690,10 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
     if(player->plr->mo)
     {   // Respawn the player and destroy the old mobj.
         mobj_t*             oldMo = player->plr->mo;
-        mapspot_t         dummy;
 
-        // Use a dummy as the spawn point.
-        dummy.pos[VX] = oldMo->pos[VX];
-        dummy.pos[VY] = oldMo->pos[VY];
-        dummy.angle = oldMo->angle;
-
-        P_SpawnPlayer(&dummy, player - players);
+        P_SpawnPlayer2(player - players, newClass, oldMo->pos[VX],
+                       oldMo->pos[VY], oldMo->pos[VZ], oldMo->angle, 0,
+                       P_MobjIsCamera(oldMo));
         P_MobjRemove(oldMo, true);
     }
 }

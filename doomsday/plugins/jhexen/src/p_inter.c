@@ -1126,6 +1126,9 @@ static boolean giveItem(player_t* plr, itemtype_t item)
     const iteminfo_t*   info = &items[item];
     int                 oldPieces = plr->pieces;
 
+    if(!plr)
+        return false;
+
     // Attempt to pickup the item.
     if(!info->giveFunc(plr))
         return false; // Did not make use of it.

@@ -109,7 +109,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 /**
  * The weapon name may have a MF_DROPPED flag ored in.
  */
-boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
+boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped)
 {
     int                 numClips;
     ammotype_t          i;
@@ -152,7 +152,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
     else
     {
         // Give some of each of the ammo types used by this weapon.
-        for(i=0; i < NUM_AMMO_TYPES; ++i)
+        for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
             if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
                 continue;  // Weapon does not take this type of ammo.
@@ -449,6 +449,9 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
  */
 static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
 {
+    if(!plr)
+        return false;
+
     switch(item)
     {
     case IT_ARMOR_GREEN:

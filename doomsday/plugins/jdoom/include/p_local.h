@@ -99,8 +99,9 @@ void        P_RipperBlood(mobj_t* mo);
 void        P_SetDoomsdayFlags(mobj_t* mo);
 void        P_HitFloor(mobj_t* mo);
 
-void        P_SpawnPlayer(mapspot_t* mapSpot, int pnum);
-
+void            P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x,
+                               float y, float z, angle_t angle,
+                               int spawnFlags, boolean makeCamera);
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 
 int         P_DamageMobj(mobj_t* target, mobj_t* inflictor,

@@ -852,7 +852,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", mo->id)
-                RV_INT("DoomEd number", mo->doomedNum)
+                RV_INT("DoomEd number", mo->doomEdNum)
                 RV_STR("Name", mo->name)
                 RV_STR("Spawn state", mo->states[SN_SPAWN])
                 RV_STR("See state", mo->states[SN_SEE])

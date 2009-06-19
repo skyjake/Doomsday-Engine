@@ -88,18 +88,18 @@ extern int TimerGame; // Tic countdown for deathmatch.
 #define USE_MANA1           1
 #define USE_MANA2           1
 
-void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
-void        P_SetPspriteNF(player_t *plr, int position, statenum_t stnum);
-void        P_SetupPsprites(player_t *plr);
-void        P_MovePsprites(player_t *plr);
-void        P_DropWeapon(player_t *plr);
-void        P_ActivateMorphWeapon(player_t *plr);
-void        P_PostMorphWeapon(player_t *plr, weapontype_t weapon);
+void        P_SetPsprite(player_t* plr, int position, statenum_t stnum);
+void        P_SetPspriteNF(player_t* plr, int position, statenum_t stnum);
+void        P_SetupPsprites(player_t* plr);
+void        P_MovePsprites(player_t* plr);
+void        P_DropWeapon(player_t* plr);
+void        P_ActivateMorphWeapon(player_t* plr);
+void        P_PostMorphWeapon(player_t* plr, weapontype_t weapon);
 
-void        P_TeleportOther(mobj_t *victim);
-void        P_ArtiTeleportOther(player_t *plr);
-void        ResetBlasted(mobj_t *mo);
-boolean     P_UndoPlayerMorph(player_t *plr);
+void        P_TeleportOther(mobj_t* victim);
+void        P_ArtiTeleportOther(player_t* plr);
+void        ResetBlasted(mobj_t* mo);
+boolean     P_UndoPlayerMorph(player_t* plr);
 
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
@@ -113,46 +113,45 @@ extern int iquehead;
 extern int iquetail;
 
 extern mobjtype_t PuffType;
-extern mobj_t *MissileMobj;
-extern float *FloatBobOffset;
+extern mobj_t* MissileMobj;
+extern float* FloatBobOffset;
 
-void        P_Thrust(player_t *plr, angle_t angle, float move);
-void        P_ThrustMobj(mobj_t *mo, angle_t angle, float move);
-int         P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
-boolean     P_SeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax);
-void        P_MobjThinker(mobj_t *mo);
-boolean     P_HealRadius(player_t *plr);
-void        P_BlastRadius(player_t *plr);
-void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t *origin);
-void        P_SpawnBloodSplatter2(float x, float y, float z, mobj_t *origin);
+void        P_Thrust(player_t* plr, angle_t angle, float move);
+void        P_ThrustMobj(mobj_t* mo, angle_t angle, float move);
+int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
+boolean     P_SeekerMissile(mobj_t* mo, angle_t thresh, angle_t turnMax);
+void        P_MobjThinker(mobj_t* mo);
+boolean     P_HealRadius(player_t* plr);
+void        P_BlastRadius(player_t* plr);
+void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t* origin);
+void        P_SpawnBloodSplatter2(float x, float y, float z, mobj_t* origin);
 
 void        P_CreateTIDList(void);
 
-boolean     P_MobjChangeState(mobj_t *mo, statenum_t state);
-boolean     P_SetMobjStateNF(mobj_t *mo, statenum_t state);
+boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
+boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
 
-void        P_MobjRemoveFromTIDList(mobj_t *mo);
-void        P_MobjInsertIntoTIDList(mobj_t *mo, int tid);
-mobj_t     *P_FindMobjFromTID(int tid, int *searchPosition);
+void        P_MobjRemoveFromTIDList(mobj_t* mo);
+void        P_MobjInsertIntoTIDList(mobj_t* mo, int tid);
+mobj_t*     P_FindMobjFromTID(int tid, int* searchPosition);
 
-boolean     P_CheckMissileSpawn(mobj_t *mo);
-float       P_MobjGetFriction(mobj_t *mo);
-void        P_RipperBlood(mobj_t *mo);
+boolean     P_CheckMissileSpawn(mobj_t* mo);
+float       P_MobjGetFriction(mobj_t* mo);
+void        P_RipperBlood(mobj_t* mo);
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
-boolean     P_HitFloor(mobj_t *mo);
-
-// Spawn spots.
-void        P_SpawnPlayer(mapspot_t *spot, int playernum);
-
-void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
+boolean     P_HitFloor(mobj_t* mo);
+void            P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x,
+                               float y, float z, angle_t angle,
+                               int spawnFlags, boolean makeCamera);
+void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 int         P_Massacre(void);
-boolean     P_LookForMonsters(mobj_t *mo);
+boolean     P_LookForMonsters(mobj_t* mo);
 void        P_InitCreatureCorpseQueue(boolean corpseScan);
 
 #define MAXINTERCEPTS       128
 extern intercept_t intercepts[MAXINTERCEPTS], *intercept_p;
 
-mobj_t     *P_RoughMonsterSearch(mobj_t *mo, int distance);
+mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 
 void        P_Validate();
 
@@ -163,26 +162,26 @@ void        P_Validate();
 
 extern int clipmana[NUM_AMMO_TYPES];
 
-void        P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
-void        P_PoisonPlayer(player_t *plr, mobj_t *poisoner, int poison);
+void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
+void        P_PoisonPlayer(player_t* plr, mobj_t* poisoner, int poison);
 
-int         P_DamageMobj(mobj_t *target, mobj_t *inflictor,
-                         mobj_t *source, int damage, boolean stomping);
-int         P_FallingDamage(player_t *plr);
-int         P_PoisonDamage(player_t *plr, mobj_t *source, int damage,
+int         P_DamageMobj(mobj_t* target, mobj_t* inflictor,
+                         mobj_t* source, int damage, boolean stomping);
+int         P_FallingDamage(player_t* plr);
+int         P_PoisonDamage(player_t* plr, mobj_t* source, int damage,
                            boolean playPainSound);
 
-boolean     P_GiveMana(player_t *plr, ammotype_t mana, int count);
-boolean     P_GiveArmor(player_t *plr, armortype_t armortype, int amount);
-boolean     P_GiveBody(player_t *plr, int num);
-boolean     P_GivePower(player_t *plr, powertype_t power);
-boolean     P_MorphPlayer(player_t *plr);
+boolean     P_GiveMana(player_t* plr, ammotype_t mana, int count);
+boolean     P_GiveArmor(player_t* plr, armortype_t armortype, int amount);
+boolean     P_GiveBody(player_t* plr, int num);
+boolean     P_GivePower(player_t* plr, powertype_t power);
+boolean     P_MorphPlayer(player_t* plr);
 
-boolean     A_LocalQuake(byte *args, mobj_t *victim);
-void C_DECL A_BridgeRemove(mobj_t *actor);
-boolean     A_RaiseMobj(mobj_t *mo);
-boolean     A_SinkMobj(mobj_t *mo);
-void C_DECL A_NoBlocking(mobj_t *mo);
-void C_DECL A_DeQueueCorpse(mobj_t *mo);
+boolean     A_LocalQuake(byte* args, mobj_t* victim);
+void C_DECL A_BridgeRemove(mobj_t* actor);
+boolean     A_RaiseMobj(mobj_t* mo);
+boolean     A_SinkMobj(mobj_t* mo);
+void C_DECL A_NoBlocking(mobj_t* mo);
+void C_DECL A_DeQueueCorpse(mobj_t* mo);
 
 #endif

@@ -67,37 +67,6 @@
 #define sentient(mobj) ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
 /**
- * Map Spot Flags (MSF):
- */
-#define MSF_EASY            0x00000001 // Appears in easy skill modes.
-#define MSF_MEDIUM          0x00000002 // Appears in medium skill modes.
-#define MSF_HARD            0x00000004 // Appears in hard skill modes.
-#define MSF_DEAF            0x00000008 // Thing is deaf.
-#define MSF_NOTSINGLE       0x00000010 // Appears in multiplayer game modes only.
-#define MSF_DONTSPAWNATSTART 0x00000020 // Do not spawn this thing at map start.
-#define MSF_SCRIPT_TOUCH    0x00000040 // Mobjs spawned from this spot will envoke a script when touched.
-#define MSF_SCRIPT_DEATH    0x00000080 // Mobjs spawned from this spot will envoke a script on death.
-#define MSF_SECRET          0x00000100 // A secret (bonus) item.
-#define MSF_NOTARGET        0x00000200 // Mobjs spawned from this spot will not target their attacker when hurt.
-#define MSF_NOTDM           0x00000400 // Can not be spawned in the Deathmatch gameMode.
-#define MSF_NOTCOOP         0x00000800 // Can not be spawned in the Co-op gameMode.
-
-#define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_DEAF|MSF_NOTSINGLE|MSF_DONTSPAWNATSTART|MSF_SCRIPT_TOUCH|MSF_SCRIPT_DEATH|MSF_SECRET|MSF_NOTARGET|MSF_NOTDM|MSF_NOTCOOP))
-
-// New flags:
-#define MSF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
-#define MSF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
-#define MSF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
-
-typedef struct mapspot_s {
-    float           pos[3];
-    angle_t         angle;
-    mobjtype_t      type;
-    int             flags; // MSF_* flags
-} mapspot_t;
-
-/**
  * NOTES: mobj_t
  *
  * mobj_ts are used to tell the refresh where to draw an image,
@@ -341,9 +310,6 @@ typedef struct polyobj_s {
     // Doom64-specific data:
 } polyobj_t;
 
-extern uint numMapSpots;
-extern mapspot_t* mapSpots;
-
 void            P_ExplodeMissile(mobj_t* mo);
 float           P_MobjGetFriction(mobj_t* mo);
 mobj_t*         P_SPMAngle(mobjtype_t type, mobj_t* source,
@@ -373,6 +339,7 @@ void            P_RipperBlood(mobj_t* mo);
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            P_HitFloor(mobj_t* mo);
 
-void            P_SpawnPlayer(mapspot_t* mapSpot, int pnum);
-
+void            P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x,
+                               float y, float z, angle_t angle,
+                               int spawnFlags, boolean makeCamera);
 #endif

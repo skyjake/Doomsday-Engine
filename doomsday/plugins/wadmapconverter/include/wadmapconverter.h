@@ -102,8 +102,8 @@ typedef struct msector_s {
 
 typedef struct mthing_s {
     int16_t         pos[3];
-    int16_t         angle;
-    int16_t         type;
+    angle_t         angle;
+    int16_t         doomEdNum;
     int32_t         flags;
 
     // Hexen format members:

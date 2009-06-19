@@ -910,104 +910,87 @@ mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
     return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
 }
 
-/**
- * Called when a player is spawned on the map.
- * Most of the player structure stays unchanged between maps.
- */
-void P_SpawnPlayer(mapspot_t* spot, int pnum)
+void P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x, float y,
+                    float z, angle_t angle, int spawnFlags,
+                    boolean makeCamera)
 {
-    int                 i, spawnFlags = 0;
     player_t*           p;
-    float               pos[3];
-    mobj_t*             mobj;
+    mobj_t*             mo;
 
-    if(pnum < 0)
-        pnum = 0;
-    if(pnum >= MAXPLAYERS - 1)
-        pnum = MAXPLAYERS - 1;
+    plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS - 1);
 
     // Not playing?
-    if(!players[pnum].plr->inGame)
+    if(!players[plrNum].plr->inGame)
         return;
 
-    p = &players[pnum];
+    p = &players[plrNum];
 
     if(p->playerState == PST_REBORN)
-        G_PlayerReborn(pnum);
-
-    if(spot)
-    {
-        pos[VX] = spot->pos[VX];
-        pos[VY] = spot->pos[VY];
-        pos[VZ] = spot->pos[VZ];
-        spawnFlags = spot->flags;
-    }
-    else
-    {
-        pos[VX] = pos[VY] = pos[VZ] = 0;
-        spawnFlags |= MSF_Z_FLOOR;
-    }
+        G_PlayerReborn(plrNum);
 
     /* $unifiedangles */
-    mobj = P_SpawnMobj3fv(MT_PLAYER, pos, (spot? spot->angle : 0), spawnFlags);
-
-    // With clients all player mobjs are remote, even the CONSOLEPLAYER.
-    if(IS_CLIENT)
+    if((mo = P_SpawnMobj3f(MT_PLAYER, x, y, z, angle, spawnFlags)))
     {
-        mobj->flags &= ~MF_SOLID;
-        mobj->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;
-        // The real flags are received from the server later on.
+        int                 i;
+
+        // With clients all player mobjs are remote, even the CONSOLEPLAYER.
+        if(IS_CLIENT)
+        {
+            mo->flags &= ~MF_SOLID;
+            mo->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;
+            // The real flags are received from the server later on.
+        }
+
+        // Set color translations for player sprites.
+        i = cfg.playerColor[plrNum];
+        if(i > 0)
+            mo->flags |= i << MF_TRANSSHIFT;
+
+        p->plr->lookDir = 0; /* $unifiedangles */
+        p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        mo->player = p;
+        mo->dPlayer = p->plr;
+        mo->health = p->health;
+
+        p->plr->mo = mo;
+        p->playerState = PST_LIVE;
+        p->refire = 0;
+        p->damageCount = 0;
+        p->bonusCount = 0;
+        p->jumpTics = 0;
+        p->airCounter = 0;
+        p->plr->extraLight = 0;
+        p->plr->fixedColorMap = 0;
+        p->plr->lookDir = 0;
+
+        if(makeCamera)
+            p->plr->flags |= DDPF_CAMERA;
+
+        if(p->plr->flags & DDPF_CAMERA)
+        {
+            p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
+            p->plr->viewHeight = 0;
+        }
+        else
+            p->plr->viewHeight = (float) cfg.plrViewHeight;
+
+        p->class = PCLASS_PLAYER;
+
+        // Setup gun psprite.
+        P_SetupPsprites(p);
+
+        // Give all cards in death match mode.
+        if(deathmatch)
+        {
+            for(i = 0; i < NUM_KEY_TYPES; ++i)
+                p->keys[i] = true;
+        }
+
+        // Wake up the status bar.
+        ST_Start(p - players);
+        // Wake up the heads up text.
+        HU_Start(p - players);
     }
-
-    // Set color translations for player sprites.
-    i = cfg.playerColor[pnum];
-    if(i > 0)
-        mobj->flags |= i << MF_TRANSSHIFT;
-
-    p->plr->lookDir = 0; /* $unifiedangles */
-    p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-    mobj->player = p;
-    mobj->dPlayer = p->plr;
-    mobj->health = p->health;
-
-    p->plr->mo = mobj;
-    p->playerState = PST_LIVE;
-    p->refire = 0;
-    p->damageCount = 0;
-    p->bonusCount = 0;
-    p->jumpTics = 0;
-    p->airCounter = 0;
-    p->plr->extraLight = 0;
-    p->plr->fixedColorMap = 0;
-    p->plr->lookDir = 0;
-
-    if(!spot)
-        p->plr->flags |= DDPF_CAMERA;
-
-    if(p->plr->flags & DDPF_CAMERA)
-    {
-        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
-        p->plr->viewHeight = 0;
-    }
-    else
-        p->plr->viewHeight = (float) cfg.plrViewHeight;
-
-    p->class = PCLASS_PLAYER;
-
-    // Setup gun psprite.
-    P_SetupPsprites(p);
-
-    // Give all cards in death match mode.
-    if(deathmatch)
-    {
-        for(i = 0; i < NUM_KEY_TYPES; ++i)
-            p->keys[i] = true;
-    }
-
-    // Wake up the status bar.
-    ST_Start(p - players);
-    // Wake up the heads up text.
-    HU_Start(p - players);
 }
 
 mobj_t* P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,

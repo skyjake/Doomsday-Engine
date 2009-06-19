@@ -114,7 +114,7 @@ typedef struct {
 
 typedef struct {
     ded_mobjid_t    id;
-    int             doomedNum;
+    int             doomEdNum;
     ded_string_t    name;
 
     ded_stateid_t   states[NUM_STATE_NAMES];

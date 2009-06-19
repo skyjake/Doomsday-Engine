@@ -1204,7 +1204,7 @@ void P_DSparilTeleport(mobj_t* actor)
     if(bossSpotCount > 0)
     {
         int                 i, tries;
-        mapspot_t*        dest;
+        const mapspot_t*    dest;
 
         i = P_Random();
         tries = bossSpotCount;

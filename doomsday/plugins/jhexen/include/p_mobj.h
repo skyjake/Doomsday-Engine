@@ -35,45 +35,6 @@
 
 #include "p_terraintype.h"
 
-#define MSF_EASY            0x00000001
-#define MTF_NORMAL          0x00000002
-#define MSF_HARD            0x00000004
-#define MSF_AMBUSH          0x00000008
-#define MTF_DORMANT         0x00000010
-#define MTF_FIGHTER         0x00000020
-#define MTF_CLERIC          0x00000040
-#define MTF_MAGE            0x00000080
-#define MTF_GSINGLE         0x00000100
-#define MTF_GCOOP           0x00000200
-#define MTF_GDEATHMATCH     0x00000400
-// The following are not currently used.
-#define MTF_SHADOW          0x00000800 // (ZDOOM) Thing is 25% translucent.
-#define MTF_INVISIBLE       0x00001000 // (ZDOOM) Makes the thing invisible.
-#define MSF_FRIENDLY        0x00002000 // (ZDOOM) Friendly monster.
-#define MTF_STILL           0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
-
-#define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MTF_NORMAL|MSF_HARD|MSF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MSF_FRIENDLY|MTF_STILL))
-
-// New flags:
-#define MSF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
-#define MSF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
-#define MSF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
-
-typedef struct {
-    short           tid;
-    float           pos[3];
-    angle_t         angle;
-    mobjtype_t      type;
-    int             flags;
-    byte            special;
-    byte            arg1;
-    byte            arg2;
-    byte            arg3;
-    byte            arg4;
-    byte            arg5;
-} mapspot_t;
-
 /**
  * Mobj flags
  *
@@ -242,9 +203,6 @@ typedef struct polyobj_s {
     // Hexen-specific data:
     void*           specialData; /* Pointer a thinker, if the poly is moving. */
 } polyobj_t;
-
-extern uint numMapSpots;
-extern mapspot_t* mapSpots;
 
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                           angle_t angle, int spawnFlags);

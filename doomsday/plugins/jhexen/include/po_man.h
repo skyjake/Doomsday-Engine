@@ -64,9 +64,9 @@ typedef struct {
 } polydoor_t;
 
 enum {
-    PO_ANCHOR_TYPE = 3000,
-    PO_SPAWN_TYPE,
-    PO_SPAWNCRUSH_TYPE
+    PO_ANCHOR_DOOMEDNUM = 3000,
+    PO_SPAWN_DOOMEDNUM,
+    PO_SPAWNCRUSH_DOOMEDNUM
 };
 
 void        PO_InitForMap(void);

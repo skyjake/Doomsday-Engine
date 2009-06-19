@@ -52,68 +52,59 @@
 
 // CODE --------------------------------------------------------------------
 
-void P_ArtiTeleportOther(player_t *plr)
+void P_ArtiTeleportOther(player_t* plr)
 {
-    mobj_t         *mo;
+    mobj_t*             mo;
 
-    mo = P_SpawnPlayerMissile(MT_TELOTHER_FX1, plr->plr->mo);
-    if(mo)
+    if(!plr || !plr->plr->mo)
+        return;
+
+    if((mo = P_SpawnPlayerMissile(MT_TELOTHER_FX1, plr->plr->mo)))
+    {
         mo->target = plr->plr->mo;
-}
-
-void P_TeleportToPlayerStarts(mobj_t *victim)
-{
-    int             i, selections = 0;
-    float           destPos[3];
-    angle_t         destAngle;
-    mapspot_t    *start;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame)
-            continue;
-
-        selections++;
     }
-
-    i = P_Random() % selections;
-    start = P_GetPlayerStart(0, i);
-
-    destPos[VX] = start->pos[VX];
-    destPos[VY] = start->pos[VY];
-    destAngle = playerStarts[i].angle;
-
-    P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
 }
 
-void P_TeleportToDeathmatchStarts(mobj_t *victim)
+void P_TeleportToPlayerStarts(mobj_t* mo)
 {
-    int             i, selections;
-    float           destPos[3];
-    angle_t         destAngle;
+    const playerstart_t* start;
 
-    selections = deathmatchP - deathmatchStarts;
-    if(selections)
+    if(!mo)
+        return;
+
+    // Get a random player start.
+    if((start = P_GetPlayerStart(0, -1, false)))
     {
-        i = P_Random() % selections;
-        destPos[VX] = deathmatchStarts[i].pos[VX];
-        destPos[VY] = deathmatchStarts[i].pos[VY];
-        destAngle = deathmatchStarts[i].angle;
+        P_Teleport(mo, start->pos[VX], start->pos[VY],
+                   start->angle, true);
+    }
+}
 
-        P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
+void P_TeleportToDeathmatchStarts(mobj_t* mo)
+{
+    const playerstart_t* start;
+
+    if(!mo)
+        return;
+
+    // First, try a random deathmatch start.
+    if((start = P_GetPlayerStart(0, -1, true)))
+    {
+        P_Teleport(mo, start->pos[VX], start->pos[VY],
+                   start->angle, true);
     }
     else
     {
-        P_TeleportToPlayerStarts(victim);
+        P_TeleportToPlayerStarts(mo);
     }
 }
 
-mobj_t *P_SpawnTeleFog(float x, float y, angle_t angle)
+mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
 {
     return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
+boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
                    boolean useFog)
 {
     float               oldpos[3], aboveFloor, fogDelta;
@@ -221,8 +212,8 @@ boolean P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
 
 boolean EV_Teleport(int tid, mobj_t* thing, boolean fog)
 {
-    int             i, count, searcher;
-    mobj_t*         mo = 0;
+    int                 i, count, searcher;
+    mobj_t*             mo = 0;
 
     if(!thing)
         return false;
@@ -254,37 +245,21 @@ boolean EV_Teleport(int tid, mobj_t* thing, boolean fog)
 #if __JHERETIC__ || __JHEXEN__
 void P_ArtiTele(player_t* player)
 {
-    int             i, selections;
-    float           destPos[3];
-    angle_t         destAngle;
+    const playerstart_t* start;
 
-    if(deathmatch)
+    if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
     {
-        selections = deathmatchP - deathmatchStarts;
-        i = P_Random() % selections;
+        P_Teleport(player->plr->mo, start->pos[VX], start->pos[VY],
+                   start->angle, true);
 
-        destPos[VX] = deathmatchStarts[i].pos[VX];
-        destPos[VY] = deathmatchStarts[i].pos[VY];
-        destAngle = deathmatchStarts[i].angle;
+#if __JHEXEN__
+        if(player->morphTics)
+        {   // Teleporting away will undo any morph effects (pig)
+            P_UndoPlayerMorph(player);
+        }
+#else
+        S_StartSound(SFX_WPNUP, NULL);
+#endif
     }
-    else
-    {
-        //// \fixme DJS - this doesn't seem right... why always player 0?
-        destPos[VX] = playerStarts[0].pos[VX];
-        destPos[VY] = playerStarts[0].pos[VY];
-        destAngle = playerStarts[0].angle;
-    }
-
-# if __JHEXEN__
-    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle, true);
-    if(player->morphTics)
-    {   // Teleporting away will undo any morph effects (pig)
-        P_UndoPlayerMorph(player);
-    }
-
-# else
-    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle);
-    S_StartSound(SFX_WPNUP, NULL);
-# endif
 }
 #endif

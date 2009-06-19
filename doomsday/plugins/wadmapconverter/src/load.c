@@ -54,11 +54,13 @@
 #define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
 #define SIZEOF_LIGHT            (1 * 6)
 
-#define PO_LINE_START           1 // polyobj line start special
-#define PO_LINE_EXPLICIT        5
-#define PO_ANCHOR_TYPE          3000
+#define PO_LINE_START           (1) // polyobj line start special
+#define PO_LINE_EXPLICIT        (5)
+#define PO_ANCHOR_DOOMEDNUM     (3000)
+#define PO_SPAWN_DOOMEDNUM      (3001)
+#define PO_SPAWNCRUSH_DOOMEDNUM (3002)
 
-#define SEQTYPE_NUMSEQ          10
+#define SEQTYPE_NUMSEQ          (10)
 
 // TYPES -------------------------------------------------------------------
 
@@ -859,7 +861,7 @@ static void findPolyobjs(void)
     {
         mthing_t           *thing = &map->things[i];
 
-        if(thing->type == PO_ANCHOR_TYPE)
+        if(thing->doomEdNum == PO_ANCHOR_DOOMEDNUM)
         {   // A polyobj anchor.
             int                 tag = thing->angle;
 
@@ -1332,6 +1334,7 @@ static boolean loadThings(const byte* buf, size_t len)
 #define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
 #define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
+#define ANG45               0x20000000
     uint                num, n;
     size_t              elmSize;
     const byte*         ptr;
@@ -1368,8 +1371,8 @@ static boolean loadThings(const byte* buf, size_t len)
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
             t->pos[VZ] = 0;
-            t->angle = SHORT(*((const int16_t*) (ptr+4)));
-            t->type = SHORT(*((const int16_t*) (ptr+6)));
+            t->angle = ANG45 * (SHORT(*((const int16_t*) (ptr+4))) / 45);
+            t->doomEdNum = SHORT(*((const int16_t*) (ptr+6)));
             t->flags = SHORT(*((const int16_t*) (ptr+8)));
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
             // DOOM format things spawn on the floor by default unless their
@@ -1415,8 +1418,8 @@ static boolean loadThings(const byte* buf, size_t len)
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
             t->pos[VZ] = SHORT(*((const int16_t*) (ptr+4)));
-            t->angle = SHORT(*((const int16_t*) (ptr+6)));
-            t->type = SHORT(*((const int16_t*) (ptr+8)));
+            t->angle = ANG45 * (SHORT(*((const int16_t*) (ptr+6))) / 45);
+            t->doomEdNum = SHORT(*((const int16_t*) (ptr+8)));
 
             t->flags = SHORT(*((const int16_t*) (ptr+10)));
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
@@ -1475,8 +1478,16 @@ static boolean loadThings(const byte* buf, size_t len)
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+4)));
             t->pos[VZ] = SHORT(*((const int16_t*) (ptr+6)));
             t->angle = SHORT(*((const int16_t*) (ptr+8)));
-            t->type = SHORT(*((const int16_t*) (ptr+10)));
-
+            t->doomEdNum = SHORT(*((const int16_t*) (ptr+10)));
+            /**
+             * For some reason, the Hexen format stores polyobject tags in
+             * the angle field in THINGS. Thus, we cannot translate the
+             * angle until we know whether it is a polyobject type or not.
+             */
+            if(t->doomEdNum != PO_ANCHOR_DOOMEDNUM &&
+               t->doomEdNum != PO_SPAWN_DOOMEDNUM &&
+               t->doomEdNum != PO_SPAWNCRUSH_DOOMEDNUM)
+                t->angle = ANG45 * (t->angle / 45);
             t->flags = SHORT(*((const int16_t*) (ptr+12)));
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
             // HEXEN format things spawn relative to the floor by default
@@ -1781,8 +1792,8 @@ boolean TransferMap(void)
         MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->pos[VX]);
         MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->pos[VY]);
         MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->pos[VZ]);
-        MPE_GameObjProperty("Thing", i, "Angle", DDVT_SHORT, &th->angle);
-        MPE_GameObjProperty("Thing", i, "Type", DDVT_SHORT, &th->type);
+        MPE_GameObjProperty("Thing", i, "Angle", DDVT_ANGLE, &th->angle);
+        MPE_GameObjProperty("Thing", i, "DoomEdNum", DDVT_SHORT, &th->doomEdNum);
         MPE_GameObjProperty("Thing", i, "Flags", DDVT_INT, &th->flags);
 
         if(map->format == MF_DOOM64)

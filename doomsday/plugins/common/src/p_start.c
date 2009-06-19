@@ -33,6 +33,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -48,10 +49,9 @@
 #  include "hu_stuff.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
+#include "p_tick.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
 #include "d_net.h"
@@ -89,13 +89,6 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-// Maintain single and multi player starting spots.
-mapspot_t  deathmatchStarts[MAX_DM_STARTS];
-mapspot_t* deathmatchP;
-
-mapspot_t* playerStarts;
-int numPlayerStarts = 0;
-
 uint numMapSpots;
 mapspot_t* mapSpots;
 
@@ -108,9 +101,54 @@ mapspot_t* bossSpots;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int numPlayerStartsMax = 0;
+static int numPlayerStarts = 0;
+static playerstart_t* playerStarts;
+static int numPlayerDMStarts = 0;
+static playerstart_t* deathmatchStarts;
 
 // CODE --------------------------------------------------------------------
+
+static boolean fuzzySpawnPosition(float* x, float* y, float* z,
+                                  angle_t* angle, int* spawnFlags)
+{
+#define XOFFSET         (33) // Player radius = 16
+#define YOFFSET         (33) // Player radius = 16
+
+    int                 i;
+
+    assert(x);
+    assert(y);
+
+    // Try some spots in the vicinity.
+    for(i = 0; i < 9; ++i)
+    {
+        float               pos[2];
+
+        pos[VX] = *x;
+        pos[VY] = *y;
+
+        if(i != 0)
+        {
+            int                 k = (i == 4 ? 0 : i);
+
+            // Move a bit.
+            pos[VX] += (k % 3 - 1) * XOFFSET;
+            pos[VY] += (k / 3 - 1) * YOFFSET;
+        }
+
+        if(P_CheckSpot(pos[VX], pos[VY]))
+        {
+            *x = pos[VX];
+            *y = pos[VY];
+            return true;
+        }
+    }
+
+#undef XOFFSET
+#undef YOFFSET
+
+    return false;
+}
 
 /**
  * Initializes various playsim related data
@@ -168,56 +206,118 @@ void P_Init(void)
 #endif
 }
 
-int P_RegisterPlayerStart(const mapspot_t* mapSpot)
+void P_CreatePlayerStart(int defaultPlrNum, byte entryPoint,
+                         boolean deathmatch, float x, float y, float z,
+                         angle_t angle, int spawnFlags)
 {
-    // Enough room?
-    if(++numPlayerStarts > numPlayerStartsMax)
-    {
-        // Allocate more memory.
-        numPlayerStartsMax *= 2;
-        if(numPlayerStartsMax < numPlayerStarts)
-            numPlayerStartsMax = numPlayerStarts;
+    playerstart_t*      start;
 
-        playerStarts =
-            Z_Realloc(playerStarts, sizeof(mapspot_t) * numPlayerStartsMax, PU_MAP);
+    if(deathmatch)
+    {
+        deathmatchStarts = Z_Realloc(deathmatchStarts,
+            sizeof(playerstart_t) * ++numPlayerDMStarts, PU_MAP);
+        start = &deathmatchStarts[numPlayerDMStarts - 1];
+    }
+    else
+    {
+        playerStarts = Z_Realloc(playerStarts,
+            sizeof(playerstart_t) * ++numPlayerStarts, PU_MAP);
+        start = &playerStarts[numPlayerStarts - 1];
     }
 
-    // Copy the properties of this thing
-    memcpy(&playerStarts[numPlayerStarts -1], mapSpot, sizeof(mapspot_t));
-    return numPlayerStarts; // == index + 1
+    start->plrNum = defaultPlrNum;
+    start->entryPoint = entryPoint;
+    start->pos[VX] = x;
+    start->pos[VY] = y;
+    start->pos[VZ] = z;
+    start->angle = angle;
+    start->spawnFlags = spawnFlags;
 }
 
-void P_FreePlayerStarts(void)
+void P_DestroyPlayerStarts(void)
 {
-    deathmatchP = deathmatchStarts;
-
     if(playerStarts)
         Z_Free(playerStarts);
     playerStarts = NULL;
+    numPlayerStarts = 0;
 
-    numPlayerStarts = numPlayerStartsMax = 0;
+    if(deathmatchStarts)
+        Z_Free(deathmatchStarts);
+    deathmatchStarts = NULL;
+    numPlayerDMStarts = 0;
+}
+
+/**
+ * @return              The correct start for the player. The start is in
+ *                      the given group for specified entry point.
+ */
+const playerstart_t* P_GetPlayerStart(byte entryPoint, int pnum,
+                                      boolean deathmatch)
+{
+#if __JHEXEN__
+    int                 i;
+    const playerstart_t* def = NULL;
+#endif
+
+    if((deathmatch && !numPlayerDMStarts) || !numPlayerStarts)
+        return NULL;
+
+    if(pnum < 0)
+        pnum = P_Random() % (deathmatch? numPlayerDMStarts:numPlayerStarts);
+    else
+        pnum = MINMAX_OF(0, pnum, MAXPLAYERS-1);
+
+    if(deathmatch)
+    {   // In deathmatch, entry point is ignored.
+        return &deathmatchStarts[pnum];
+    }
+
+#if __JHEXEN__
+    for(i = 0; i < numPlayerStarts; ++i)
+    {
+        const playerstart_t* start = &playerStarts[i];
+
+        if(start->entryPoint == entryPoint && start->plrNum - 1 == pnum)
+            return start;
+        if(!start->entryPoint && start->plrNum - 1 == pnum)
+            def = start;
+    }
+
+    // Return the default choice.
+    return def;
+#else
+    return &playerStarts[players[pnum].startSpot];
+#endif
+}
+
+uint P_GetNumPlayerStarts(boolean deathmatch)
+{
+    if(deathmatch)
+        return numPlayerDMStarts;
+
+    return numPlayerStarts;
 }
 
 /**
  * Gives all the players in the game a playerstart.
  * Only needed in co-op games (start spots are random in deathmatch).
  */
-void P_DealPlayerStarts(int group)
+void P_DealPlayerStarts(byte entryPoint)
 {
-    int             i, k;
-    int             spotNumber;
-    player_t       *pl;
-    mapspot_t    *mt;
+    int                 i;
 
     if(!numPlayerStarts)
     {
-        Con_Message("P_DealPlayerStarts: Warning, no playerstarts found!\n");
+        Con_Message("P_DealPlayerStarts: Warning, no player starts!\n");
         return;
     }
 
     // First assign one start per player, only accepting perfect matches.
-    for(i = 0, pl = players; i < MAXPLAYERS; i++, pl++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
+        int                 k, spotNumber;
+        player_t*           pl = &players[i];
+
         if(!pl->plr->inGame)
             continue;
 
@@ -225,17 +325,14 @@ void P_DealPlayerStarts(int group)
         spotNumber = i % MAX_START_SPOTS;
         pl->startSpot = -1;
 
-        for(k = 0, mt = playerStarts; k < numPlayerStarts; ++k, mt++)
+        for(k = 0; k < numPlayerStarts; ++k)
         {
-            if(spotNumber == mt->type - 1)
-            {
-                // This is a match.
-#if __JHEXEN__
-                if(mt->arg1 == group) // Group must match too.
-                    pl->startSpot = k;
-#else
+            const playerstart_t* start = &playerStarts[k];
+
+            if(spotNumber == start->plrNum - 1 &&
+               start->entryPoint == entryPoint)
+            {   // A match!
                 pl->startSpot = k;
-#endif
                 // Keep looking.
             }
         }
@@ -251,8 +348,10 @@ void P_DealPlayerStarts(int group)
     if(IS_NETGAME)
     {
         Con_Printf("Player starting spots:\n");
-        for(i = 0, pl = players; i < MAXPLAYERS; ++i, pl++)
+        for(i = 0; i < MAXPLAYERS; ++i)
         {
+            player_t*           pl = &players[i];
+
             if(!pl->plr->inGame)
                 continue;
 
@@ -263,110 +362,295 @@ void P_DealPlayerStarts(int group)
 }
 
 /**
- * Returns false if the player cannot be respawned at the given mapspot_t
- * spot because something is occupying it
+ * Called when a player is spawned into the map. Most of the player
+ * structure stays unchanged between maps.
  */
-boolean P_CheckSpot(int playernum, const mapspot_t* mapSpot,
-                    boolean doTeleSpark)
+void P_SpawnPlayer(int plrNum, float x, float y, float z, angle_t angle,
+                   int spawnFlags, boolean makeCamera)
 {
-    float               pos[3];
-    ddplayer_t*         ddplyr = players[playernum].plr;
-    boolean             using_dummy = false;
+#if __JHEXEN__
+    playerclass_t       pClass;
 
-    pos[VX] = mapSpot->pos[VX];
-    pos[VY] = mapSpot->pos[VY];
-
-    if(!ddplyr->mo)
+    if(randomClassParm && deathmatch)
     {
-        // The player doesn't have a mo. Let's create a dummy.
-        G_DummySpawnPlayer(playernum);
-        using_dummy = true;
+        pClass = P_Random() % 3;
+        if(pClass == cfg.playerClass[plrNum])
+            pClass = (pClass + 1) % 3;
     }
-
-    ddplyr->mo->flags2 &= ~MF2_PASSMOBJ;
-
-    if(!P_CheckPosition2f(ddplyr->mo, pos[VX], pos[VY]))
+    else
     {
-        ddplyr->mo->flags2 |= MF2_PASSMOBJ;
-
-        if(using_dummy)
-        {
-            P_MobjRemove(ddplyr->mo, true);
-            ddplyr->mo = NULL;
-        }
-        return false;
+        pClass = cfg.playerClass[plrNum];
     }
-    ddplyr->mo->flags2 |= MF2_PASSMOBJ;
-
-    if(using_dummy)
-    {
-        P_MobjRemove(ddplyr->mo, true);
-        ddplyr->mo = NULL;
-    }
-
-#if __JDOOM__ || __JDOOM64__
-    G_QueueBody(ddplyr->mo);
+#else
+    playerclass_t       pClass = PCLASS_PLAYER;
 #endif
 
-    if(doTeleSpark) // Spawn a teleport fog
+    P_SpawnPlayer2(plrNum, pClass, x, y, z, angle, spawnFlags, makeCamera);
+}
+
+static void spawnPlayer(int plrNum, float x, float y, float z,
+                        angle_t angle, int spawnFlags, boolean makeCamera,
+                        boolean doTeleSpark, boolean doTeleFrag)
+{
+    player_t*           plr;
+#if __JDOOM__ || __JDOOM64__
+    boolean             queueBody = (plrNum >= 0? true : false);
+#endif
+
+    /* $voodoodolls */
+    if(plrNum < 0)
+        plrNum = -plrNum - 1;
+    plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS-1);
+
+    plr = &players[plrNum];
+
+#if __JDOOM__ || __JDOOM64__
+    if(queueBody)
+        G_QueueBody(plr->plr->mo);
+#endif
+
+    P_SpawnPlayer(plrNum, x, y, z, angle, spawnFlags, makeCamera);
+
+    // Spawn a teleport fog?
+    if(doTeleSpark && !makeCamera)
     {
-        mobj_t     *mo;
-        uint        an = mapSpot->angle >> ANGLETOFINESHIFT;
+        mobj_t*             mo;
+        uint                an = angle >> ANGLETOFINESHIFT;
 
-        mo = P_SpawnTeleFog(pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                            pos[VY] + 20 * FIX2FLT(finesine[an]),
-                            mapSpot->angle + ANG180);
+        x += 20 * FIX2FLT(finecosine[an]);
+        y += 20 * FIX2FLT(finesine[an]);
 
-        // Don't start sound on first frame.
-        if(players[CONSOLEPLAYER].plr->viewZ != 1)
-            S_StartSound(TELEPORTSOUND, mo);
+        if((mo = P_SpawnTeleFog(x, y, angle + ANG180)))
+        {
+            // Don't start sound on first frame.
+            if(mapTime > 1)
+                S_StartSound(TELEPORTSOUND, mo);
+        }
     }
 
-    return true;
+    // Camera players do not telefrag.
+    if(!makeCamera && doTeleFrag)
+        P_Telefrag(plr->plr->mo);
 }
 
 /**
- * Try to spawn close to the mapspot. Returns false if no clear spot
- * was found.
+ * Called by G_DoReborn if playing a net game.
  */
-boolean P_FuzzySpawn(mapspot_t *spot, int playernum, boolean doTeleSpark)
+void P_RebornPlayer(int plrNum)
 {
-    int         i, k, x, y;
-    int         offset = 33; // Player radius = 16
-    mapspot_t place;
+#if __JHEXEN__
+    int                 i, oldKeys, oldPieces, bestWeapon;
+    boolean             oldWeaponOwned[NUM_WEAPON_TYPES];
+#endif
+    boolean             foundSpot;
+    const playerstart_t* assigned;
+    player_t*           p;
 
-    if(spot)
+    if(plrNum < 0 || plrNum >= MAXPLAYERS)
+        return; // Wha?
+
+    p = &players[plrNum];
+
+    Con_Printf("P_RebornPlayer: %i.\n", plrNum);
+
+    if(p->plr->mo)
     {
-        // Try some spots in the vicinity.
-        for(i = 0; i < 9; i++)
+        // First dissasociate the corpse.
+        p->plr->mo->player = NULL;
+        p->plr->mo->dPlayer = NULL;
+    }
+
+    if(IS_CLIENT)
+    {
+        if(G_GetGameState() == GS_MAP)
         {
-            memcpy(&place, spot, sizeof(*spot));
+            // Anywhere will do, for now.
+            spawnPlayer(plrNum, 0, 0, 0, 0, MSF_Z_FLOOR, false, false, false);
+        }
 
-            if(i != 0)
-            {
-                k = (i == 4 ? 0 : i);
-                // Move a bit.
-                x = k % 3 - 1;
-                y = k / 3 - 1;
-                place.pos[VX] += x * offset;
-                place.pos[VY] += y * offset;
-            }
+        return;
+    }
 
-            if(P_CheckSpot(playernum, &place, doTeleSpark))
+    // Spawn at random spot if in death match.
+    if(deathmatch)
+    {
+        G_DeathMatchSpawnPlayer(plrNum);
+        return;
+    }
+
+#if __JHEXEN__
+    // Cooperative net-play, retain keys and weapons
+    oldKeys = p->keys;
+    oldPieces = p->pieces;
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+        oldWeaponOwned[i] = p->weapons[i].owned;
+#endif
+
+    // Try to spawn at the assigned spot.
+    foundSpot = false;
+    assigned = P_GetPlayerStart(
+#if __JHEXEN__
+                                rebornPosition,
+#else
+                                0,
+#endif
+                                plrNum, false);
+
+    if(P_CheckSpot(assigned->pos[VX], assigned->pos[VY]))
+    {   // Appropriate player start spot is open.
+#if __JDOOM__ || __JDOOM64__
+        G_QueueBody(players[plrNum].plr->mo);
+#endif
+
+        Con_Printf("- spawning at assigned spot\n");
+        P_SpawnPlayer(plrNum, assigned->pos[VX], assigned->pos[VY],
+                      assigned->pos[VZ], assigned->angle,
+                      assigned->spawnFlags, false);
+        // Spawn a teleport fog
+        {
+        mobj_t*             mo;
+        uint                an = assigned->angle >> ANGLETOFINESHIFT;
+        float               pos[2];
+
+        pos[VX] = assigned->pos[VX] + 20 * FIX2FLT(finecosine[an]);
+        pos[VY] = assigned->pos[VY] + 20 * FIX2FLT(finesine[an]);
+
+        if((mo = P_SpawnTeleFog(pos[VX], pos[VY], assigned->angle+ANG180)))
+        {
+            // Don't start sound on first frame.
+            if(mapTime > 1)
+                S_StartSound(TELEPORTSOUND, mo);
+        }
+        }
+
+        foundSpot = true;
+    }
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    else
+    {
+        float               pos[3];
+        angle_t             angle;
+        int                 spawnFlags;
+        boolean             makeCamera;
+
+        if(assigned)
+        {
+            pos[VX] = assigned->pos[VX];
+            pos[VY] = assigned->pos[VY];
+            pos[VZ] = assigned->pos[VZ];
+            angle = assigned->angle;
+            spawnFlags = assigned->spawnFlags;
+
+            // "Fuzz" the spawn position looking for room nearby.
+            makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY], &pos[VZ],
+                                             &angle, &spawnFlags);
+        }
+        else
+        {
+            pos[VX] = pos[VY] = pos[VZ] = 0;
+            angle = 0;
+            spawnFlags = MSF_Z_FLOOR;
+            makeCamera = true;
+        }
+
+        Con_Printf("- force spawning at %i.\n", p->startSpot);
+
+        spawnPlayer(plrNum, pos[VX], pos[VY], pos[VZ], angle, spawnFlags,
+                    makeCamera, true, true);
+    }
+#else
+    else
+    {
+        // Try to spawn at one of the other player start spots.
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            const playerstart_t* start;
+
+            if((start = P_GetPlayerStart(rebornPosition, i, false)))
             {
-                // This is good!
-                P_SpawnPlayer(&place, playernum);
-                return true;
+                if(P_CheckSpot(start->pos[VX], start->pos[VY]))
+                {
+                    // Found an open start spot.
+                    spawnPlayer(i, start->pos[VX], start->pos[VY],
+                                start->pos[VZ], start->angle,
+                                start->spawnFlags, false, true, false);
+                    foundSpot = true;
+                    break;
+                }
             }
         }
     }
 
-    // No success. Just spawn at the specified spot.
-    P_SpawnPlayer(spot, playernum);
+    if(!foundSpot)
+    {   // Player's going to be inside something.
+        const playerstart_t* start;
 
-    // Camera players do not collide with the world, so we consider the
-    // spot free.
-    return (players[playernum].plr->flags & DDPF_CAMERA);
+        if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
+        {
+            spawnPlayer(plrNum, start->pos[VX], start->pos[VY],
+                        start->pos[VZ], start->angle, start->spawnFlags,
+                        false, false, false);
+        }
+        else
+        {
+            spawnPlayer(plrNum, 0, 0, 0, 0, MSF_Z_FLOOR, true, false, false);
+        }
+    }
+
+    // Restore keys and weapons
+    p->keys = oldKeys;
+    p->pieces = oldPieces;
+    for(bestWeapon = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
+        if(oldWeaponOwned[i])
+        {
+            bestWeapon = i;
+            p->weapons[i].owned = true;
+        }
+    }
+
+    p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
+    p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
+    if(bestWeapon)
+    {   // Bring up the best weapon.
+        p->pendingWeapon = bestWeapon;
+    }
+#endif
+}
+
+/**
+ * @return              @c false if the player cannot be respawned at the
+ *                      given location because something is occupying it.
+ */
+boolean P_CheckSpot(float x, float y)
+{
+#if __JHEXEN__
+#define DUMMY_TYPE      MT_PLAYER_FIGHTER
+#else
+#define DUMMY_TYPE      MT_PLAYER
+#endif
+
+    float               pos[3];
+    mobj_t*             dummy;
+    boolean             result;
+
+    pos[VX] = x;
+    pos[VY] = y;
+    pos[VZ] = 0;
+
+    // Create a dummy to test with.
+    if(!(dummy = P_SpawnMobj3fv(DUMMY_TYPE, pos, 0, MSF_Z_FLOOR)))
+        Con_Error("P_CheckSpot: Failed creating dummy mobj.");
+
+    dummy->flags2 &= ~MF2_PASSMOBJ;
+
+    result = P_CheckPosition3fv(dummy, pos);
+
+    P_MobjRemove(dummy, true);
+
+    return result;
+
+#undef DUMMY_TYPE
 }
 
 #if __JHERETIC__
@@ -404,40 +688,32 @@ static void spawnMapThing(const mapspot_t* spot)
     mobj_t*             mo;
 
 /*#if _DEBUG
-Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i type:%i flags:%i\n",
+Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
             spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
-            spot->type, spot->flags);
+            spot->doomedNum, spot->flags);
 #endif*/
 
-    // Count deathmatch start positions.
-    if(spot->type == 11)
-    {
-        if(deathmatchP < &deathmatchStarts[MAX_DM_STARTS])
-        {
-            memcpy(deathmatchP, spot, sizeof(*spot));
-            deathmatchP++;
-        }
+    if(spot->doomEdNum >= 1 && spot->doomEdNum <= 4) // Player starts 1 to 4.
         return;
-    }
 
-    // Check for player starts 1 to 4.
-    if(spot->type >= 1 && spot->type <= 4)
-    {
-        // Register this player start.
-        P_RegisterPlayerStart(spot);
+#if __JHEXEN__
+    if(spot->doomEdNum >= 9100 && spot->doomEdNum <= 9103) // Player starts 5 to 8.
         return;
-    }
+#endif
+
+    if(spot->doomEdNum == 11) // Player starts (deathmatch).
+        return;
 
 #if __JHERETIC__
     // Ambient sound sequences.
-    if(spot->type >= 1200 && spot->type < 1300)
+    if(spot->doomEdNum >= 1200 && spot->doomEdNum < 1300)
     {
-        P_AddAmbientSfx(spot->type - 1200);
+        P_AddAmbientSfx(spot->doomEdNum - 1200);
         return;
     }
 
     // Check for boss spots.
-    if(spot->type == 56)
+    if(spot->doomEdNum == 56)
     {
         P_AddBossSpot(spot->pos[VX], spot->pos[VY], spot->angle);
         return;
@@ -445,12 +721,12 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i type:%i flags:%i\n",
 #endif
 
 #if __JHEXEN__
-    if(spot->type >= 1400 && spot->type < 1410)
+    if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
     {
         sector_t* sector = P_GetPtrp(
             R_PointInSubsector(spot->pos[VX], spot->pos[VY]),
             DMU_SECTOR);
-        P_ToXSector(sector)->seqType = spot->type - 1400;
+        P_ToXSector(sector)->seqType = spot->doomEdNum - 1400;
         return;
     }
 #endif
@@ -495,7 +771,7 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i type:%i flags:%i\n",
     else if(gameSkill == SM_HARD || gameSkill == SM_NIGHTMARE)
         spawnMask = MSF_HARD;
     else
-        spawnMask = MTF_NORMAL;
+        spawnMask = MSF_MEDIUM;
 #else
     if(gameSkill == SM_BABY)
         spawnMask = 1;
@@ -548,14 +824,14 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i type:%i flags:%i\n",
     // Find which type to spawn.
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
-        if(spot->type == MOBJINFO[i].doomedNum)
+        if(spot->doomEdNum == MOBJINFO[i].doomEdNum)
             break;
     }
 
     if(i == Get(DD_NUMMOBJTYPES))
     {
-        Con_Message("spawnMapThing: Warning, unknown thing type %i at "
-                    "[%g, %g, %g].\n", spot->type, spot->pos[VX],
+        Con_Message("spawnMapThing: Warning, unknown thing num %i at "
+                    "[%g, %g, %g].\n", spot->doomEdNum, spot->pos[VX],
                     spot->pos[VY], spot->pos[VZ]);
         return;
     }
@@ -588,6 +864,28 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i type:%i flags:%i\n",
         if(cfg.noNetBFG && i == MT_MISC25)
             return;
     }
+# if __JDOOM__
+    switch(i)
+    {
+    case MT_SPIDER: // 68, Arachnotron
+    case MT_VILE: // 64, Archvile
+    case MT_BOSSBRAIN: // 88, Boss Brain
+    case MT_BOSSSPIT: // 89, Boss Shooter
+    case MT_KNIGHT: // 69, Hell Knight
+    case MT_FATSO: // 67, Mancubus
+    case MT_PAIN: // 71, Pain Elemental
+    case MT_MEGA: // 74, MegaSphere
+    case MT_CHAINGUY: // 65, Former Human Commando
+    case MT_UNDEAD: // 66, Revenant
+    case MT_WOLFSS: // 84, Wolf SS
+        if(gameMode != commercial)
+            return;
+        break;
+
+    default:
+        break;
+    }
+# endif
 #elif __JHERETIC__
     switch(i)
     {
@@ -708,99 +1006,12 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i type:%i flags:%i\n",
  */
 void P_SpawnThings(void)
 {
-    uint            i;
-    mapspot_t*    spot;
-#if __JDOOM__
-    boolean         spawn;
-#elif __JHEXEN__
-    int             playerCount;
-    int             deathSpotsCount;
-#endif
-
-#if __JHERETIC__
-    maceSpotCount = 0;
-    maceSpots = NULL;
-    bossSpotCount = 0;
-    bossSpots = NULL;
-#endif
+    uint                i;
 
     for(i = 0; i < numMapSpots; ++i)
     {
-        spot = &mapSpots[i];
-#if __JDOOM__
-        // Do not spawn cool, new stuff if !commercial
-        spawn = true;
-        if(gameMode != commercial)
-        {
-            switch(spot->type)
-            {
-            case 68:            // Arachnotron
-            case 64:            // Archvile
-            case 88:            // Boss Brain
-            case 89:            // Boss Shooter
-            case 69:            // Hell Knight
-            case 67:            // Mancubus
-            case 71:            // Pain Elemental
-            case 74:            // MegaSphere
-            case 65:            // Former Human Commando
-            case 66:            // Revenant
-            case 84:            // Wolf SS
-                spawn = false;
-                break;
-            }
-        }
-        if(!spawn)
-            continue;
-#endif
-        spawnMapThing(spot);
+        spawnMapThing(&mapSpots[i]);
     }
-
-#if __JDOOM__
-    if(gameMode == commercial)
-        P_SpawnBrainTargets();
-#endif
-
-#if __JHERETIC__
-    if(maceSpotCount)
-    {
-        int     spot;
-
-        // Sometimes doesn't show up if not in deathmatch.
-        if(!(!deathmatch && P_Random() < 64))
-        {
-            spot = P_Random() % maceSpotCount;
-            P_SpawnMobj3f(MT_WMACE,
-                          maceSpots[spot].pos[VX], maceSpots[spot].pos[VY], 0,
-                          maceSpots[spot].angle, MSF_Z_FLOOR);
-        }
-    }
-#endif
-
-#if __JHEXEN__
-    // \fixme This stuff should be moved!
-    P_CreateTIDList();
-    P_InitCreatureCorpseQueue(false); // false = do NOT scan for corpses
-
-    if(deathmatch)
-    {
-        playerCount = 0;
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-                playerCount++;
-        }
-
-        deathSpotsCount = deathmatchP - deathmatchStarts;
-        if(deathSpotsCount < playerCount)
-        {
-            Con_Error("P_LoadThings: Player count (%d) exceeds deathmatch "
-                      "spots (%d)", playerCount, deathSpotsCount);
-        }
-    }
-
-    // Initialize polyobjs.
-    PO_InitForMap();
-#endif
 }
 
 /**
@@ -826,15 +1037,16 @@ void P_SpawnPlayers(void)
 #if __JDOOM__ || __JDOOM64__
         if(!IS_NETGAME)
         {
-            /**
-             *\fixme Spawn all unused player starts. This will create 'zombies'.
-             * Also in netgames?
-             */
+            /* $voodoodolls */
             for(i = 0; i < numPlayerStarts; ++i)
             {
-                if(players[0].startSpot != i && playerStarts[i].type == 1)
+                if(players[0].startSpot != i && playerStarts[i].plrNum == 1)
                 {
-                    P_SpawnPlayer(&playerStarts[i], 0);
+                    const playerstart_t* start = &playerStarts[i];
+
+                    spawnPlayer(-1, start->pos[VX], start->pos[VY],
+                                start->pos[VZ], start->angle,
+                                start->spawnFlags, false, false, false);
                 }
             }
         }
@@ -844,30 +1056,40 @@ void P_SpawnPlayers(void)
         for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->inGame)
             {
-                mapspot_t    *spot = NULL;
-                ddplayer_t     *ddpl = players[i].plr;
+                const playerstart_t* start = NULL;
+                ddplayer_t*         ddpl = players[i].plr;
+                float               pos[3];
+                angle_t             angle;
+                int                 spawnFlags;
+                boolean             makeCamera;
 
                 if(players[i].startSpot < numPlayerStarts)
-                    spot = &playerStarts[players[i].startSpot];
+                    start = &playerStarts[players[i].startSpot];
 
-                if(!P_FuzzySpawn(spot, i, false))
+                if(start)
                 {
-                    // Gib anything at the spot.
-                    P_Telefrag(ddpl->mo);
+                    pos[VX] = start->pos[VX];
+                    pos[VY] = start->pos[VY];
+                    pos[VZ] = start->pos[VZ];
+                    angle = start->angle;
+                    spawnFlags = start->spawnFlags;
+
+                    // "Fuzz" the spawn position looking for room nearby.
+                    makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
+                        &pos[VZ], &angle, &spawnFlags);
                 }
+                else
+                {
+                    pos[VX] = pos[VY] = pos[VZ] = 0;
+                    angle = 0;
+                    spawnFlags = MSF_Z_FLOOR;
+                    makeCamera = true;
+                }
+
+                spawnPlayer(i, pos[VX], pos[VY], pos[VZ], angle, spawnFlags,
+                            makeCamera, false, true);
             }
     }
-}
-
-/**
- * Spawns the given player at a dummy place.
- */
-void G_DummySpawnPlayer(int playernum)
-{
-    mapspot_t     faraway;
-
-    memset(&faraway, 0, sizeof(faraway));
-    P_SpawnPlayer(&faraway, playernum);
 }
 
 /**
@@ -875,77 +1097,29 @@ void G_DummySpawnPlayer(int playernum)
  */
 void G_DeathMatchSpawnPlayer(int playerNum)
 {
-    int                 i = 0, j;
-    int                 selections;
-    boolean             usingDummy = false;
-    ddplayer_t         *pl = players[playerNum].plr;
+    int                 i;
+    ddplayer_t*         pl;
+    const playerstart_t* start;
 
-    // Spawn player initially at a distant location.
-    if(!pl->mo)
-    {
-        G_DummySpawnPlayer(playerNum);
-        usingDummy = true;
-    }
+    playerNum = MINMAX_OF(0, playerNum, MAXPLAYERS-1);
 
     // Now let's find an available deathmatch start.
-    selections = deathmatchP - deathmatchStarts;
-    if(selections < 2)
-        Con_Error("Only %i deathmatch spots, 2 required", selections);
+    if(numPlayerDMStarts < 2)
+        Con_Error("G_DeathMatchSpawnPlayer: Error, minimum of two "
+                  "(deathmatch) mapspots required for deathmatch.");
 
-    for(j = 0; j < 20; ++j)
+    pl = players[playerNum].plr;
+
+    for(i = 0; i < 20; ++i)
     {
-        i = P_Random() % selections;
-        if(P_CheckSpot(playerNum, &deathmatchStarts[i], true))
-        {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-            deathmatchStarts[i].type = playerNum + 1;
-#endif
+        start = &deathmatchStarts[P_Random() % numPlayerDMStarts];
+
+        if(P_CheckSpot(start->pos[VX], start->pos[VY]))
             break;
-        }
     }
 
-    if(usingDummy)
-    {
-        // Destroy the dummy.
-        P_MobjRemove(pl->mo, true);
-        pl->mo = NULL;
-    }
-
-    P_SpawnPlayer(&deathmatchStarts[i], playerNum);
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    // Gib anything at the spot.
-    P_Telefrag(players[playerNum].plr->mo);
-#endif
-}
-
-/**
- * Returns the correct start for the player. The start is in the given
- * group, or zero if no such group exists.
- *
- * With jDoom groups arn't used at all.
- */
-mapspot_t *P_GetPlayerStart(int group, int pnum)
-{
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    return &playerStarts[players[pnum].startSpot];
-#else
-    int         i;
-    mapspot_t    *mt, *g0choice = NULL;
-
-    for(i = 0; i < numPlayerStarts; ++i)
-    {
-        mt = &playerStarts[i];
-
-        if(mt->arg1 == group && mt->type - 1 == pnum)
-            return mt;
-        if(!mt->arg1 && mt->type - 1 == pnum)
-            g0choice = mt;
-    }
-
-    // Return the group zero choice.
-    return g0choice;
-#endif
+    spawnPlayer(playerNum, start->pos[VX], start->pos[VY], start->pos[VZ],
+                start->angle, start->spawnFlags, false, true, true);
 }
 
 typedef struct {

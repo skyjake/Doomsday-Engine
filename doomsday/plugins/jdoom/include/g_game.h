@@ -63,8 +63,6 @@ void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 void            R_InitRefresh(void);
 
-void            G_DeathMatchSpawnPlayer(int playernum);
-
 void            G_PrintMapList(void);
 boolean         G_ValidateMap(int* episode, int* map);
 int             G_GetMapNumber(int episode, int map);

@@ -1319,124 +1319,101 @@ mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
                          spawnFlags);
 }
 
-/**
- * Called when a player is spawned into the map. Most of the player
- * structure stays unchanged between maps.
- */
-void P_SpawnPlayer(mapspot_t* spot, int playernum)
+void P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x, float y,
+                    float z, angle_t angle, int spawnFlags,
+                    boolean makeCamera)
 {
     player_t*           p;
-    float               pos[3];
-    mobj_t*             mobj = 0;
-    int                 spawnFlags = 0;
+    mobj_t*             mo;
 
-    if(!players[playernum].plr->inGame)
+    plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS-1);
+    pClass = MINMAX_OF(0, pClass, NUM_PLAYER_CLASSES-1);
+
+    if(!players[plrNum].plr->inGame)
         return;
 
-    p = &players[playernum];
+    p = &players[plrNum];
+
     if(p->playerState == PST_REBORN)
-    {
-        G_PlayerReborn(playernum);
-    }
+        G_PlayerReborn(plrNum);
 
-    if(spot)
-    {
-        pos[VX] = spot->pos[VX];
-        pos[VY] = spot->pos[VY];
-        pos[VZ] = spot->pos[VZ];
-        spawnFlags = spot->flags;
-    }
-    else
-    {
-        pos[VX] = pos[VY] = pos[VZ] = 0;
-        spawnFlags = MSF_Z_FLOOR;
-    }
-
-    if(randomClassParm && deathmatch)
-    {
-        p->class = P_Random() % 3;
-        if(p->class == cfg.playerClass[playernum])
-        {
-            p->class = (p->class + 1) % 3;
-        }
-
-        cfg.playerClass[playernum] = p->class;
-        NetSv_SendPlayerInfo(playernum, DDSP_ALL_PLAYERS);
-    }
-    else
-    {
-        p->class = cfg.playerClass[playernum];
-    }
+    // \fixme Should this not occur before the reborn?
+    p->class = pClass;
 
     /* $unifiedangles */
-    mobj = P_SpawnMobj3fv(PCLASS_INFO(p->class)->mobjType, pos,
-                          (spot? spot->angle : 0), spawnFlags);
-
-    // With clients all player mobjs are remote, even the CONSOLEPLAYER.
-    if(IS_CLIENT)
+    if((mo = P_SpawnMobj3f(PCLASS_INFO(p->class)->mobjType, x, y, z, angle,
+                           spawnFlags)))
     {
-        mobj->flags &= ~MF_SOLID;
-        mobj->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;
-        // The real flags are received from the server later on.
-    }
-
-    // Set translation table data.
-    if(p->class == PCLASS_FIGHTER && (p->colorMap == 0 || p->colorMap == 2))
-    {
-        // The first type should be blue, and the third should be the
-        // Fighter's original gold color
-        //if(spot->type == 1)
-        if(p->colorMap == 0)
+        // With clients all player mobjs are remote, even the CONSOLEPLAYER.
+        if(IS_CLIENT)
         {
-            mobj->flags |= 2 << MF_TRANSSHIFT;
+            mo->flags &= ~MF_SOLID;
+            mo->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;
+            // The real flags are received from the server later on.
         }
+
+        // Set translation table data.
+        if(p->class == PCLASS_FIGHTER &&
+           (p->colorMap == 0 || p->colorMap == 2))
+        {
+            // The first type should be blue, and the third should be the
+            // Fighter's original gold color
+            //if(spot->type == 1)
+            if(p->colorMap == 0)
+            {
+                mo->flags |= 2 << MF_TRANSSHIFT;
+            }
+        }
+        else if(p->colorMap > 0 && p->colorMap < 8)
+        {   // Set color translation bits for player sprites
+            //mo->flags |= (spot->type-1)<<MF_TRANSSHIFT;
+            mo->flags |= p->colorMap << MF_TRANSSHIFT;
+        }
+
+        p->plr->lookDir = 0;/* $unifiedangles */
+        p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        p->jumpTics = 0;
+        p->airCounter = 0;
+        mo->player = p;
+        mo->dPlayer = p->plr;
+        mo->health = p->health;
+        p->plr->mo = mo;
+        p->playerState = PST_LIVE;
+        p->refire = 0;
+        p->damageCount = 0;
+        p->bonusCount = 0;
+        p->poisonCount = 0;
+        p->morphTics = 0;
+        p->plr->extraLight = 0;
+        p->plr->fixedColorMap = 0;
+
+        if(makeCamera)
+            p->plr->flags |= DDPF_CAMERA;
+
+        if(p->plr->flags & DDPF_CAMERA)
+        {
+            p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
+            p->plr->viewHeight = 0;
+        }
+        else
+            p->plr->viewHeight = cfg.plrViewHeight;
+
+        p->plr->lookDir = 0;
+        P_SetupPsprites(p);
+        if(deathmatch)
+        {   // Give all keys in death match mode.
+            p->keys = 2047;
+        }
+
+        // Wake up the status bar.
+        ST_Start(p - players);
+
+        // Wake up the heads up text.
+        HU_Start(p - players);
     }
-    else if(p->colorMap > 0 && p->colorMap < 8)
-    {  // Set color translation bits for player sprites
-        //mobj->flags |= (spot->type-1)<<MF_TRANSSHIFT;
-        mobj->flags |= p->colorMap << MF_TRANSSHIFT;
-    }
 
-    p->plr->lookDir = 0;/* $unifiedangles */
-    p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-    p->jumpTics = 0;
-    p->airCounter = 0;
-    mobj->player = p;
-    mobj->dPlayer = p->plr;
-    mobj->health = p->health;
-    p->plr->mo = mobj;
-    p->playerState = PST_LIVE;
-    p->refire = 0;
-    p->damageCount = 0;
-    p->bonusCount = 0;
-    p->poisonCount = 0;
-    p->morphTics = 0;
-    p->plr->extraLight = 0;
-    p->plr->fixedColorMap = 0;
-
-    if(!spot)
-        p->plr->flags |= DDPF_CAMERA;
-
-    if(p->plr->flags & DDPF_CAMERA)
-    {
-        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
-        p->plr->viewHeight = 0;
-    }
-    else
-        p->plr->viewHeight = cfg.plrViewHeight;
-
-    p->plr->lookDir = 0;
-    P_SetupPsprites(p);
-    if(deathmatch)
-    {   // Give all keys in death match mode.
-        p->keys = 2047;
-    }
-
-    // Wake up the status bar.
-    ST_Start(p - players);
-
-    // Wake up the heads up text.
-    HU_Start(p - players);
+    cfg.playerClass[plrNum] = pClass;
+    NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
 }
 
 static boolean addToTIDList(thinker_t* th, void* context)

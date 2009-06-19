@@ -244,39 +244,25 @@ boolean EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
 #if __JHERETIC__ || __JHEXEN__
 void P_ArtiTele(player_t* player)
 {
-    int                 i;
-    int                 selections;
-    float               destPos[2];
-    angle_t             destAngle;
+    const playerstart_t* start;
 
-    //// \todo Spawn spot selection does not belong in this file.
-    if(deathmatch)
+    // Get a random deathmatch start.
+    if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
     {
-        selections = deathmatchP - deathmatchStarts;
-        i = P_Random() % selections;
-        destPos[VX] = deathmatchStarts[i].pos[VX];
-        destPos[VY] = deathmatchStarts[i].pos[VY];
-        destAngle = deathmatchStarts[i].angle;
-    }
-    else
-    {
-        destPos[VX] = playerStarts[0].pos[VX];
-        destPos[VY] = playerStarts[0].pos[VY];
-        destAngle = playerStarts[0].angle;
-    }
+        P_Teleport(player->plr->mo, start->pos[VX], start->pos[VY],
+                   start->angle, true);
 
-# if __JHEXEN__
-    P_Teleport(player->plr->mo, destX, destY, destAngle, true);
-    if(player->morphTics)
-    {   // Teleporting away will undo any morph effects (pig)
-        P_UndoPlayerMorph(player);
+#if __JHEXEN__
+        if(player->morphTics)
+        {   // Teleporting away will undo any morph effects (pig)
+            P_UndoPlayerMorph(player);
+        }
+        //S_StartSound(NULL, SFX_WPNUP); // Full volume laugh
+#else
+        /*S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
+           NetSv_Sound(NULL, SFX_WPNUP, player-players); */
+        S_StartSound(SFX_WPNUP, NULL);
+#endif
     }
-    //S_StartSound(NULL, SFX_WPNUP); // Full volume laugh
-# else
-    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle, true);
-    /*S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
-       NetSv_Sound(NULL, SFX_WPNUP, player-players); */
-    S_StartSound(SFX_WPNUP, NULL);
-# endif
 }
 #endif

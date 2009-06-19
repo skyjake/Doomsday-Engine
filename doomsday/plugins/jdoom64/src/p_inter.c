@@ -45,6 +45,7 @@
 #include "p_tick.h"
 #include "p_actor.h"
 #include "p_inventory.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -472,6 +473,9 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
  */
 static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
 {
+    if(!plr)
+        return false;
+
     switch(item)
     {
     case IT_ARMOR_GREEN:
