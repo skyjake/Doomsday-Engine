@@ -161,7 +161,7 @@ void P_DoTick(void)
 
     // Pause if in menu and at least one tic has been run.
     if(!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()) &&
-       !Get(DD_PLAYBACK) && players[CONSOLEPLAYER].plr->viewZ != 1)
+       !Get(DD_PLAYBACK) && mapTime > 1)
         return;
 
     DD_RunThinkers();
