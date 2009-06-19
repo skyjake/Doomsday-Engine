@@ -883,8 +883,13 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             thing->dPlayer->flags |= DDPF_FIXMOM;
     }
 
-    solid = (thing->flags & MF_SOLID) && !(thing->flags & MF_NOCLIP) &&
-        (tmThing->flags & MF_SOLID);
+    // \kludge: Always treat blood as a solid.
+    if(tmThing->type == MT_BLOOD)
+        solid = true;
+    else
+        solid = (thing->flags & MF_SOLID) && !(thing->flags & MF_NOCLIP) &&
+            (tmThing->flags & MF_SOLID);
+    // \kludge: end.
 
     // Check for special pickup.
     if((thing->flags & MF_SPECIAL) && (tmThing->flags & MF_PICKUP))
