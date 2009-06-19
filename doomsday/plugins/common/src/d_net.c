@@ -75,8 +75,8 @@ extern int netSvAllowSendMsg;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char    msgBuff[NETBUFFER_MAXMESSAGE + 1];
-float   netJumpPower = 9;
+char msgBuff[NETBUFFER_MAXMESSAGE];
+float netJumpPower = 9;
 
 // Net code related console commands
 ccmd_t netCCmds[] = {

@@ -560,8 +560,8 @@ linetype_t* XL_GetType(int id)
     }
 
     // Does Doomsday have a definition for this?
-    dd_snprintf(buff, 5, "%i", id);
-    buff[5] = '\0';
+    dd_snprintf(buff, 6, "%i", id);
+
     if(Def_Get(DD_DEF_LINE_TYPE, buff, &typebuffer))
         return &typebuffer;
 

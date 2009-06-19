@@ -147,8 +147,8 @@ sectortype_t *XS_GetType(int id)
         return &sectypebuffer;
     }
 
-    dd_snprintf(buff, 5, "%i", id);
-    buff[5] = '\0';
+    dd_snprintf(buff, 6, "%i", id);
+
     if(Def_Get(DD_DEF_SECTOR_TYPE, buff, &sectypebuffer))
         return &sectypebuffer;  // A definition was found.
 
