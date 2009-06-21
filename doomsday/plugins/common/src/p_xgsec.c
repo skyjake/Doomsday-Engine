@@ -2246,11 +2246,14 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
 #if __JHERETIC__
             fogDelta = ((thing->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
 #endif
-            flash = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
-                                  oldpos[VZ] + fogDelta, oldAngle + ANG180, 0);
-            // Play a sound?
-            if(info->iparm[3])
-                S_StartSound(info->iparm[3], flash);
+            if((flash = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
+                                      oldpos[VZ] + fogDelta,
+                                      oldAngle + ANG180, 0)))
+            {
+                // Play a sound?
+                if(info->iparm[3])
+                    S_StartSound(info->iparm[3], flash);
+            }
         }
 
         an = mo->angle >> ANGLETOFINESHIFT;
@@ -2259,13 +2262,15 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
         if(!info->iparm[2])
         {
             // New position
-            flash = P_SpawnMobj3f(MT_TFOG,
-                                  mo->pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                                  mo->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                  mo->pos[VZ] + fogDelta, mo->angle, 0);
-            // Play a sound?
-            if(info->iparm[3])
-                S_StartSound(info->iparm[3], flash);
+            if((flash = P_SpawnMobj3f(MT_TFOG,
+                                      mo->pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                                      mo->pos[VY] + 20 * FIX2FLT(finesine[an]),
+                                      mo->pos[VZ] + fogDelta, mo->angle, 0)))
+            {
+                // Play a sound?
+                if(info->iparm[3])
+                    S_StartSound(info->iparm[3], flash);
+            }
         }
 
         // Adjust the angle to match that of the teleporter exit

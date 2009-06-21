@@ -149,17 +149,18 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         if(spawnFog)
         {
             // Spawn teleport fog at source and destination.
-            fog = P_SpawnMobj3fv(MT_TFOG, oldPos, oldAngle + ANG180, 0);
-            S_StartSound(SFX_TELEPT, fog);
+            if((fog = P_SpawnMobj3fv(MT_TFOG, oldPos, oldAngle + ANG180, 0)))
+                S_StartSound(SFX_TELEPT, fog);
 
             an = dest->angle >> ANGLETOFINESHIFT;
-            fog = P_SpawnMobj3f(MT_TFOG,
-                                dest->pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                                dest->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                mo->pos[VZ], dest->angle + ANG180, 0);
-
-            // Emit sound, where?
-            S_StartSound(SFX_TELEPT, fog);
+            if((fog = P_SpawnMobj3f(MT_TFOG,
+                                    dest->pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                                    dest->pos[VY] + 20 * FIX2FLT(finesine[an]),
+                                    mo->pos[VZ], dest->angle + ANG180, 0)))
+            {
+                // Emit sound, where?
+                S_StartSound(SFX_TELEPT, fog);
+            }
         }
 
         mo->angle = dest->angle;
@@ -323,8 +324,7 @@ static boolean fadeSpawn(thinker_t* th, void* context)
         pos[VY] += 20 * FIX2FLT(finesine[an]);
         pos[VZ] = params->spawnHeight;
 
-        mo = P_SpawnMobj3fv(spawntype, pos, origin->angle, 0);
-        if(mo)
+        if((mo = P_SpawnMobj3fv(spawntype, pos, origin->angle, 0)))
         {
             mo->translucency = 255;
             mo->spawnFadeTics = 0;

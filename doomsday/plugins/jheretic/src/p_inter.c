@@ -974,13 +974,16 @@ boolean P_MorphPlayer(player_t* player)
     memcpy(pos, pmo->pos, sizeof(pos));
     angle = pmo->angle;
     oldFlags2 = pmo->flags2;
+
+    if(!(chicken = P_SpawnMobj3fv(MT_CHICPLAYER, pos, angle, 0)))
+        return false;
+
     P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
-    fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
-                        angle + ANG180, 0);
-    S_StartSound(SFX_TELEPT, fog);
+    if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
+                            angle + ANG180, 0)))
+        S_StartSound(SFX_TELEPT, fog);
 
-    chicken = P_SpawnMobj3fv(MT_CHICPLAYER, pos, angle, 0);
     chicken->special1 = player->readyWeapon;
     chicken->player = player;
     chicken->dPlayer = player->plr;
@@ -1033,17 +1036,20 @@ boolean P_MorphMonster(mobj_t *actor)
     angle = actor->angle;
     ghost = actor->flags & MF_SHADOW;
     target = actor->target;
-    P_MobjChangeState(actor, S_FREETARGMOBJ);
 
-    fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
-                        angle + ANG180, 0);
-    S_StartSound(SFX_TELEPT, fog);
+    if((chicken = P_SpawnMobj3fv(MT_CHICKEN, pos, angle, 0)))
+    {
+        P_MobjChangeState(actor, S_FREETARGMOBJ);
 
-    chicken = P_SpawnMobj3fv(MT_CHICKEN, pos, angle, 0);
-    chicken->special2 = moType;
-    chicken->special1 = CHICKENTICS + P_Random();
-    chicken->flags |= ghost;
-    chicken->target = target;
+        if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
+                                angle + ANG180, 0)))
+            S_StartSound(SFX_TELEPT, fog);
+
+        chicken->special2 = moType;
+        chicken->special1 = CHICKENTICS + P_Random();
+        chicken->flags |= ghost;
+        chicken->target = target;
+    }
 
     return true;
 }

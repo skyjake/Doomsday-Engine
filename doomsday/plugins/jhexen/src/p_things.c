@@ -166,7 +166,7 @@ mobjtype_t TranslateThingType[] = {
 
 // CODE --------------------------------------------------------------------
 
-boolean EV_ThingProjectile(byte *args, boolean gravity)
+boolean EV_ThingProjectile(byte* args, boolean gravity)
 {
     uint            an;
     int             tid, searcher;
@@ -191,27 +191,29 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
     vspeed = FIX2FLT((int) args[4] << 13);
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
-        newMobj = P_SpawnMobj3fv(moType, mobj->pos, angle, 0);
-
-        if(newMobj->info->seeSound)
-            S_StartSound(newMobj->info->seeSound, newMobj);
-
-        newMobj->target = mobj; // Originator
-        newMobj->mom[MX] = speed * FIX2FLT(finecosine[an]);
-        newMobj->mom[MY] = speed * FIX2FLT(finesine[an]);
-        newMobj->mom[MZ] = vspeed;
-        newMobj->flags2 |= MF2_DROPPED; // Don't respawn
-        if(gravity == true)
+        if((newMobj = P_SpawnMobj3fv(moType, mobj->pos, angle, 0)))
         {
-            newMobj->flags &= ~MF_NOGRAVITY;
-            newMobj->flags2 |= MF2_LOGRAV;
-        }
+            if(newMobj->info->seeSound)
+                S_StartSound(newMobj->info->seeSound, newMobj);
 
-        if(P_CheckMissileSpawn(newMobj) == true)
-        {
-            success = true;
+            newMobj->target = mobj; // Originator
+            newMobj->mom[MX] = speed * FIX2FLT(finecosine[an]);
+            newMobj->mom[MY] = speed * FIX2FLT(finesine[an]);
+            newMobj->mom[MZ] = vspeed;
+            newMobj->flags2 |= MF2_DROPPED; // Don't respawn
+            if(gravity == true)
+            {
+                newMobj->flags &= ~MF_NOGRAVITY;
+                newMobj->flags2 |= MF2_LOGRAV;
+            }
+
+            if(P_CheckMissileSpawn(newMobj) == true)
+            {
+                success = true;
+            }
         }
     }
+
     return success;
 }
 
@@ -241,31 +243,33 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
         if(MOBJINFO[moType].flags2 & MF2_FLOATBOB)
             z -= mobj->floorZ;
 
-        newMobj = P_SpawnMobj3f(moType, mobj->pos[VX], mobj->pos[VY], z,
-                                angle, 0);
-        if(P_TestMobjLocation(newMobj) == false)
-        {   // Didn't fit
-            P_MobjRemove(newMobj, true);
-        }
-        else
+        if((newMobj = P_SpawnMobj3f(moType, mobj->pos[VX], mobj->pos[VY], z,
+                                    angle, 0)))
         {
-            if(fog == true)
-            {
-                fogMobj = P_SpawnMobj3f(MT_TFOG,
-                                        mobj->pos[VX], mobj->pos[VY],
-                                        mobj->pos[VZ] + TELEFOGHEIGHT,
-                                        angle + ANG180, 0);
-                S_StartSound(SFX_TELEPORT, fogMobj);
+            if(P_TestMobjLocation(newMobj) == false)
+            {   // Didn't fit
+                P_MobjRemove(newMobj, true);
             }
-
-            newMobj->flags2 |= MF2_DROPPED; // Don't respawn
-            if(newMobj->flags2 & MF2_FLOATBOB)
+            else
             {
-                newMobj->special1 =
-                    FLT2FIX(newMobj->pos[VZ] - newMobj->floorZ);
-            }
+                if(fog)
+                {
+                    if((fogMobj = P_SpawnMobj3f(MT_TFOG,
+                                                mobj->pos[VX], mobj->pos[VY],
+                                                mobj->pos[VZ] + TELEFOGHEIGHT,
+                                                angle + ANG180, 0)))
+                        S_StartSound(SFX_TELEPORT, fogMobj);
+                }
 
-            success = true;
+                newMobj->flags2 |= MF2_DROPPED; // Don't respawn
+                if(newMobj->flags2 & MF2_FLOATBOB)
+                {
+                    newMobj->special1 =
+                        FLT2FIX(newMobj->pos[VZ] - newMobj->floorZ);
+                }
+
+                success = true;
+            }
         }
     }
 

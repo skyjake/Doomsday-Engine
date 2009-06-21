@@ -730,32 +730,6 @@ mobj_t* P_SpawnMobjAtSpot(mobjtype_t type, const mapspot_t* spot)
         if(mo->flags & MF_COUNTITEM)
             totalItems++;
 #endif
-
-#if __JHEXEN__
-        if(spot->flags & MTF_DORMANT)
-        {
-            mo->flags2 |= MF2_DORMANT;
-            if(mo->type == MT_ICEGUY)
-            {
-                P_MobjChangeState(mo, S_ICEGUY_DORMANT);
-            }
-            mo->tics = -1;
-        }
-#endif
-
-#if __JDOOM64__
-        /*if(spot->flags & MTF_WALKOFF)
-            mo->flags |= (MF_FLOAT | MF_DROPOFF);
-
-        if(spot->flags & MTF_TRANSLUCENT)
-            mo->flags |= MF_SHADOW;
-
-        if(spot->flags & MTF_FLOAT)
-        {
-            mo->pos[VZ] += 96;
-            mo->flags |= (MF_FLOAT | MF_NOGRAVITY);
-        }*/
-#endif
     }
 
     return mo;
@@ -776,7 +750,6 @@ static void spawnMapThing(const mapspot_t* spot)
 
     int                 spawnMask;
     mobjtype_t          type;
-    const mobjinfo_t*   info;
 
 /*#if _DEBUG
 Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
@@ -912,101 +885,6 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
                     "[%g, %g, %g].\n", spot->doomEdNum, spot->pos[VX],
                     spot->pos[VY], spot->pos[VZ]);
         return;
-    }
-    info = &MOBJINFO[type];
-
-    // Clients only spawn local objects.
-    if(!(info->flags & MF_LOCAL) && IS_CLIENT)
-        return;
-
-    // Not for deathmatch?
-    if(deathmatch && (info->flags & MF_NOTDMATCH))
-        return;
-
-    // Check for specific disabled objects.
-#if __JDOOM__ || __JDOOM64__
-    if((spot->flags & MSF_NOTSINGLE) && IS_NETGAME)
-    {
-        // Cooperative weapons?
-        if(cfg.noCoopWeapons && !deathmatch && type >= MT_CLIP &&
-           type <= MT_SUPERSHOTGUN)
-            return;
-
-        // Don't spawn any special objects in coop?
-        if(cfg.noCoopAnything && !deathmatch)
-            return;
-
-        // BFG disabled in netgames?
-        if(cfg.noNetBFG && type == MT_MISC25)
-            return;
-    }
-# if __JDOOM__
-    switch(type)
-    {
-    case MT_SPIDER: // 68, Arachnotron
-    case MT_VILE: // 64, Archvile
-    case MT_BOSSBRAIN: // 88, Boss Brain
-    case MT_BOSSSPIT: // 89, Boss Shooter
-    case MT_KNIGHT: // 69, Hell Knight
-    case MT_FATSO: // 67, Mancubus
-    case MT_PAIN: // 71, Pain Elemental
-    case MT_MEGA: // 74, MegaSphere
-    case MT_CHAINGUY: // 65, Former Human Commando
-    case MT_UNDEAD: // 66, Revenant
-    case MT_WOLFSS: // 84, Wolf SS
-        if(gameMode != commercial)
-            return;
-        break;
-
-    default:
-        break;
-    }
-# endif
-#elif __JHERETIC__
-    switch(type)
-    {
-    case MT_WSKULLROD:
-    case MT_WPHOENIXROD:
-    case MT_AMSKRDWIMPY:
-    case MT_AMSKRDHEFTY:
-    case MT_AMPHRDWIMPY:
-    case MT_AMPHRDHEFTY:
-    case MT_AMMACEWIMPY:
-    case MT_AMMACEHEFTY:
-    case MT_ARTISUPERHEAL:
-    case MT_ARTITELEPORT:
-    case MT_ITEMSHIELD2:
-        if(gameMode == shareware)
-        {   // Don't place on map in shareware version.
-            return;
-        }
-        break;
-
-    default:
-        break;
-    }
-#elif __JHEXEN__
-    switch(type)
-    {
-    case MT_ZLYNCHED_NOHEART:
-        P_SpawnMobj3fv(MT_BLOODPOOL, spot->pos, 0,
-                       spot->flags | MSF_Z_FLOOR);
-        break;
-
-    default:
-        break;
-    }
-#endif
-
-    // Don't spawn any monsters if -noMonstersParm.
-    if(noMonstersParm)
-    {
-        if((info->flags & MF_COUNTKILL)
-#if __JDOOM__ || __JDOOM64__
-           || type == MT_SKULL
-#endif
-           )
-            return;
     }
 
     // Spawn it!

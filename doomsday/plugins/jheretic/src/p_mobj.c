@@ -1066,6 +1066,42 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
+    // Clients only spawn local objects.
+    if(!(info->flags & MF_LOCAL) && IS_CLIENT)
+        return NULL;
+
+    // Not for deathmatch?
+    if(deathmatch && (info->flags & MF_NOTDMATCH))
+        return NULL;
+
+    // Check for specific disabled objects.
+    switch(type)
+    {
+    case MT_WSKULLROD:
+    case MT_WPHOENIXROD:
+    case MT_AMSKRDWIMPY:
+    case MT_AMSKRDHEFTY:
+    case MT_AMPHRDWIMPY:
+    case MT_AMPHRDHEFTY:
+    case MT_AMMACEWIMPY:
+    case MT_AMMACEHEFTY:
+    case MT_ARTISUPERHEAL:
+    case MT_ARTITELEPORT:
+    case MT_ITEMSHIELD2:
+        if(gameMode == shareware)
+        {   // Don't place on map in shareware version.
+            return NULL;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    // Don't spawn any monsters if -noMonstersParm.
+    if(noMonstersParm && (info->flags & MF_COUNTKILL))
+        return NULL;
+
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
     if(info->flags & MF_NOBLOCKMAP)
@@ -1273,38 +1309,41 @@ void P_SpawnPuff(float x, float y, float z, angle_t angle)
         return;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    puff = P_SpawnMobj3f(puffType, x, y, z, angle, 0);
-    if(puff->info->attackSound)
+    if((puff = P_SpawnMobj3f(puffType, x, y, z, angle, 0)))
     {
-        S_StartSound(puff->info->attackSound, puff);
-    }
+        if(puff->info->attackSound)
+        {
+            S_StartSound(puff->info->attackSound, puff);
+        }
 
-    switch(puffType)
-    {
-    case MT_BEAKPUFF:
-    case MT_STAFFPUFF:
-        puff->mom[MZ] = 1;
-        break;
+        switch(puffType)
+        {
+        case MT_BEAKPUFF:
+        case MT_STAFFPUFF:
+            puff->mom[MZ] = 1;
+            break;
 
-    case MT_GAUNTLETPUFF1:
-    case MT_GAUNTLETPUFF2:
-        puff->mom[MZ] = .8f;
+        case MT_GAUNTLETPUFF1:
+        case MT_GAUNTLETPUFF2:
+            puff->mom[MZ] = .8f;
 
-    default:
-        break;
+        default:
+            break;
+        }
     }
 }
 
-void P_SpawnBloodSplatter(float x, float y, float z, mobj_t *originator)
+void P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator)
 {
-    mobj_t             *mo;
+    mobj_t*             mo;
 
-    mo = P_SpawnMobj3f(MT_BLOODSPLATTER, x, y, z, P_Random() << 24, 0);
-
-    mo->target = originator;
-    mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
-    mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
-    mo->mom[MZ] = 2;
+    if((mo = P_SpawnMobj3f(MT_BLOODSPLATTER, x, y, z, P_Random() << 24, 0)))
+    {
+        mo->target = originator;
+        mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
+        mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
+        mo->mom[MZ] = 2;
+    }
 }
 
 #define SMALLSPLASHCLIP 12;
@@ -1340,50 +1379,47 @@ boolean P_HitFloor(mobj_t* thing)
     tt = P_MobjGetFloorTerrainType(thing);
     if(tt->flags & TTF_SPAWN_SPLASHES)
     {
-        mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX], thing->pos[VY], 0,
-                           thing->angle + ANG180, MSF_Z_FLOOR);
-        if(mo)
+        if((mo = P_SpawnMobj3f(MT_SPLASHBASE, thing->pos[VX], thing->pos[VY],
+                                0, thing->angle + ANG180, MSF_Z_FLOOR)))
             mo->floorClip += SMALLSPLASHCLIP;
 
-        mo = P_SpawnMobj3f(MT_SPLASH, thing->pos[VX], thing->pos[VY], 0,
-                           thing->angle, MSF_Z_FLOOR);
-        if(mo)
+        if((mo = P_SpawnMobj3f(MT_SPLASH, thing->pos[VX], thing->pos[VY], 0,
+                              thing->angle, MSF_Z_FLOOR)))
         {
             mo->target = thing;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 8);
             mo->mom[MZ] = 2 + FIX2FLT(P_Random() << 8);
+
+            S_StartSound(SFX_GLOOP, mo);
         }
 
-        S_StartSound(SFX_GLOOP, mo);
         return true;
     }
     else if(tt->flags & TTF_SPAWN_SMOKE)
     {
-        mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX], thing->pos[VY], 0,
-                           thing->angle + ANG180, MSF_Z_FLOOR);
-        if(mo)
+        if((mo = P_SpawnMobj3f(MT_LAVASPLASH, thing->pos[VX], thing->pos[VY], 0,
+                               thing->angle + ANG180, MSF_Z_FLOOR)))
             mo->floorClip += SMALLSPLASHCLIP;
 
-        mo = P_SpawnMobj3f(MT_LAVASMOKE, thing->pos[VX], thing->pos[VY], 0,
-                           P_Random() << 24, MSF_Z_FLOOR);
-        if(mo)
+        if((mo = P_SpawnMobj3f(MT_LAVASMOKE, thing->pos[VX], thing->pos[VY], 0,
+                               P_Random() << 24, MSF_Z_FLOOR)))
         {
             mo->mom[MZ] = 1 + FIX2FLT((P_Random() << 7));
+
+            S_StartSound(SFX_BURN, mo);
         }
-        S_StartSound(SFX_BURN, mo);
+
         return true;
     }
     else if(tt->flags & TTF_SPAWN_SLUDGE)
     {
-       mo = P_SpawnMobj3f(MT_SLUDGESPLASH, thing->pos[VX], thing->pos[VY], 0,
-                          thing->angle + ANG180, MSF_Z_FLOOR);
-        if(mo)
+        if((mo = P_SpawnMobj3f(MT_SLUDGESPLASH, thing->pos[VX], thing->pos[VY], 0,
+                               thing->angle + ANG180, MSF_Z_FLOOR)))
             mo->floorClip += SMALLSPLASHCLIP;
 
-        mo = P_SpawnMobj3f(MT_SLUDGECHUNK, thing->pos[VX], thing->pos[VY], 0,
-                           P_Random() << 24, MSF_Z_FLOOR);
-        if(mo)
+        if((mo = P_SpawnMobj3f(MT_SLUDGECHUNK, thing->pos[VX], thing->pos[VY], 0,
+                               P_Random() << 24, MSF_Z_FLOOR)))
         {
             mo->target = thing;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
@@ -1527,7 +1563,8 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest,
             angle += (P_Random() - P_Random()) << 21; // note << 20 in jDoom
     }
 
-    th = P_SpawnMobj3fv(type, pos, angle, spawnFlags);
+    if(!(th = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
+        return NULL;
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
@@ -1662,7 +1699,8 @@ mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t mangle,
         pos[VZ] -= source->floorClip;
     }
 
-    th = P_SpawnMobj3fv(type, pos, angle, spawnFlags);
+    if(!(th = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
+        return NULL;
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);

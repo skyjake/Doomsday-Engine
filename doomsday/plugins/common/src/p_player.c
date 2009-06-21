@@ -1170,8 +1170,7 @@ DEFCC(CCmdSpawnMobj)
     else
         angle = 0;
 
-    mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags);
-    if(mo)
+    if((mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
     {
 #if __JDOOM64__
         // jd64 > kaiser - another cheesy hack!!!

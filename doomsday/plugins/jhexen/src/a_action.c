@@ -90,24 +90,26 @@ void X_DestroyLUTs(void)
     Z_Free(FloatBobOffset);
 }
 
-void C_DECL A_PotteryExplode(mobj_t *actor)
+void C_DECL A_PotteryExplode(mobj_t* actor)
 {
-    mobj_t             *mo = NULL;
-    int                 i;
+    int                 i, maxBits = (P_Random() & 3) + 3;
 
-    for(i = (P_Random() & 3) + 3; i; i--)
+    for(i = 0; i < maxBits; ++i)
     {
-        mo = P_SpawnMobj3fv(MT_POTTERYBIT1, actor->pos, P_Random() << 24, 0);
-        P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 5));
-        if(mo)
+        mobj_t*             mo;
+
+        if((mo = P_SpawnMobj3fv(MT_POTTERYBIT1, actor->pos, P_Random() << 24, 0)))
         {
+            P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 5));
+
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         }
     }
 
-    S_StartSound(SFX_POTTERY_EXPLODE, mo);
+    S_StartSound(SFX_POTTERY_EXPLODE, actor);
+
     if(actor->args[0])
     {   // Spawn an item.
         if(!noMonstersParm ||
@@ -118,6 +120,7 @@ void C_DECL A_PotteryExplode(mobj_t *actor)
                            actor->angle, 0);
         }
     }
+
     P_MobjRemove(actor, false);
 }
 
@@ -187,10 +190,10 @@ void C_DECL A_CorpseExplode(mobj_t* actor)
 
     for(i = (P_Random() & 3) + 3; i; i--)
     {
-        mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos, P_Random() << 24, 0);
-        P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 3));
-        if(mo)
+        if((mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos, P_Random() << 24, 0)))
         {
+            P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 3));
+
             mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
@@ -198,10 +201,10 @@ void C_DECL A_CorpseExplode(mobj_t* actor)
     }
 
     // Spawn a skull.
-    mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos, P_Random() << 24, 0);
-    P_MobjChangeState(mo, S_CORPSEBIT_4);
-    if(mo)
+    if((mo = P_SpawnMobj3fv(MT_CORPSEBIT, actor->pos, P_Random() << 24, 0)))
     {
+        P_MobjChangeState(mo, S_CORPSEBIT_4);
+
         n = (P_Random() & 7) + 5;
         mo->mom[MZ] = FIX2FLT(n) * .75f;
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
@@ -236,8 +239,8 @@ void C_DECL A_LeafSpawn(mobj_t *actor)
          * \todo we should not be using the original indices to determine
          * the mobjtype. Use a local table instead.
          */
-        mo = P_SpawnMobj3fv(MT_LEAF1 + (P_Random() & 1), pos, actor->angle, 0);
-        if(mo)
+        if((mo = P_SpawnMobj3fv(MT_LEAF1 + (P_Random() & 1), pos,
+                                actor->angle, 0)))
         {
             P_ThrustMobj(mo, actor->angle, FIX2FLT(P_Random() << 9) + 3);
             mo->target = actor;
@@ -296,8 +299,11 @@ void C_DECL A_LeafCheck(mobj_t *actor)
  *      args[0]     angle of ball
  */
 
-void C_DECL A_BridgeOrbit(mobj_t *actor)
+void C_DECL A_BridgeOrbit(mobj_t* actor)
 {
+    if(!actor)
+        return;
+
     if(actor->target->special1)
     {
         P_MobjChangeState(actor, S_NULL);
@@ -311,26 +317,32 @@ void C_DECL A_BridgeOrbit(mobj_t *actor)
     actor->pos[VY] += orbitTableY[actor->args[0]];
 }
 
-void C_DECL A_BridgeInit(mobj_t *actor)
+void C_DECL A_BridgeInit(mobj_t* actor)
 {
     byte                startangle;
-    mobj_t             *ball1, *ball2, *ball3;
+    mobj_t*             ball1, *ball2, *ball3;
 
     startangle = P_Random();
     actor->special1 = 0;
 
     // Spawn triad into world.
-    ball1 = P_SpawnMobj3fv(MT_BRIDGEBALL, actor->pos, actor->angle, 0);
-    ball1->args[0] = startangle;
-    ball1->target = actor;
+    if((ball1 = P_SpawnMobj3fv(MT_BRIDGEBALL, actor->pos, actor->angle, 0)))
+    {
+        ball1->args[0] = startangle;
+        ball1->target = actor;
+    }
 
-    ball2 = P_SpawnMobj3fv(MT_BRIDGEBALL, actor->pos, actor->angle, 0);
-    ball2->args[0] = (startangle + 85) & 255;
-    ball2->target = actor;
+    if((ball2 = P_SpawnMobj3fv(MT_BRIDGEBALL, actor->pos, actor->angle, 0)))
+    {
+        ball2->args[0] = (startangle + 85) & 255;
+        ball2->target = actor;
+    }
 
-    ball3 = P_SpawnMobj3fv(MT_BRIDGEBALL, actor->pos, actor->angle, 0);
-    ball3->args[0] = (startangle + 170) & 255;
-    ball3->target = actor;
+    if((ball3 = P_SpawnMobj3fv(MT_BRIDGEBALL, actor->pos, actor->angle, 0)))
+    {
+        ball3->args[0] = (startangle + 170) & 255;
+        ball3->target = actor;
+    }
 
     A_BridgeOrbit(ball1);
     A_BridgeOrbit(ball2);
@@ -413,19 +425,19 @@ void C_DECL A_ESound(mobj_t *mo)
 /**
  * NOTE: See p_enemy for variable descriptions.
  */
-void C_DECL A_Summon(mobj_t *actor)
+void C_DECL A_Summon(mobj_t* actor)
 {
-    mobj_t             *mo, *master;
+    mobj_t*             mo;
 
-    mo = P_SpawnMobj3fv(MT_MINOTAUR, actor->pos, actor->angle, 0);
-    if(mo)
+    if((mo = P_SpawnMobj3fv(MT_MINOTAUR, actor->pos, actor->angle, 0)))
     {
+        mobj_t*             master;
+
         if(P_TestMobjLocation(mo) == false || !actor->tracer)
         {   // Didn't fit - change back to item.
             P_MobjChangeState(mo, S_NULL);
 
-            mo = P_SpawnMobj3fv(MT_SUMMONMAULATOR, actor->pos, actor->angle, 0);
-            if(mo)
+            if((mo = P_SpawnMobj3fv(MT_SUMMONMAULATOR, actor->pos, actor->angle, 0)))
                 mo->flags2 |= MF2_DROPPED;
 
             return;
@@ -461,9 +473,9 @@ void C_DECL A_Summon(mobj_t *actor)
  *      special2        Internal:  Index into floatbob table
  */
 
-void C_DECL A_FogSpawn(mobj_t *actor)
+void C_DECL A_FogSpawn(mobj_t* actor)
 {
-    mobj_t             *mo = NULL;
+    mobj_t*             mo = NULL;
     mobjtype_t          type;
     angle_t             delta, angle;
 
@@ -486,8 +498,7 @@ void C_DECL A_FogSpawn(mobj_t *actor)
     angle = ((P_Random() % delta) - (delta / 2));
     angle <<= 24;
 
-    mo = P_SpawnMobj3fv(type, actor->pos, actor->angle + angle, 0);
-    if(mo)
+    if((mo = P_SpawnMobj3fv(type, actor->pos, actor->angle + angle, 0)))
     {
         mo->target = actor;
         if(actor->args[0] < 1)
@@ -529,20 +540,18 @@ void C_DECL A_PoisonBagInit(mobj_t* actor)
 {
     mobj_t*             mo;
 
-    mo = P_SpawnMobj3f(MT_POISONCLOUD,
-                       actor->pos[VX], actor->pos[VY], actor->pos[VZ] + 28,
-                       P_Random() << 24, 0);
-    if(!mo)
-        return;
-
-    // Missile objects must move to impact other objects.
-    mo->mom[MX] = FIX2FLT(1);
-    mo->special1 = 24 + (P_Random() & 7);
-    mo->special2 = 0;
-    mo->target = actor->target;
-    mo->radius = 20;
-    mo->height = 30;
-    mo->flags &= ~MF_NOCLIP;
+    if((mo = P_SpawnMobj3f(MT_POISONCLOUD, actor->pos[VX], actor->pos[VY],
+                           actor->pos[VZ] + 28, P_Random() << 24, 0)))
+    {
+        // Missile objects must move to impact other objects.
+        mo->mom[MX] = FIX2FLT(1);
+        mo->special1 = 24 + (P_Random() & 7);
+        mo->special2 = 0;
+        mo->target = actor->target;
+        mo->radius = 20;
+        mo->height = 30;
+        mo->flags &= ~MF_NOCLIP;
+    }
 }
 
 void C_DECL A_PoisonBagCheck(mobj_t *actor)
@@ -615,11 +624,9 @@ boolean A_LocalQuake(byte* args, mobj_t* actor)
     // Find all quake foci.
     do
     {
-        target = P_FindMobjFromTID(args[4], &lastfound);
-        if(target)
+        if((target = P_FindMobjFromTID(args[4], &lastfound)))
         {
-            focus = P_SpawnMobj3fv(MT_QUAKE_FOCUS, target->pos, 0, 0);
-            if(focus)
+            if((focus = P_SpawnMobj3fv(MT_QUAKE_FOCUS, target->pos, 0, 0)))
             {
                 focus->args[0] = args[0];
                 focus->args[1] = args[1] / 2; // Decremented every 2 tics.
@@ -691,12 +698,11 @@ void C_DECL A_Quake(mobj_t *actor)
     }
 }
 
-static void telospawn(mobjtype_t type, mobj_t *mo)
+static void telospawn(mobjtype_t type, mobj_t* mo)
 {
-    mobj_t             *pmo;
+    mobj_t*                 pmo;
 
-    pmo = P_SpawnMobj3fv(MT_TELOTHER_FX2, mo->pos, mo->angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(MT_TELOTHER_FX2, mo->pos, mo->angle, 0)))
     {
         pmo->special1 = TELEPORT_LIFE; // Lifetime countdown.
         pmo->target = mo->target;
@@ -706,7 +712,7 @@ static void telospawn(mobjtype_t type, mobj_t *mo)
     }
 }
 
-void C_DECL A_TeloSpawnA(mobj_t *mo)
+void C_DECL A_TeloSpawnA(mobj_t* mo)
 {
     telospawn(MT_TELOTHER_FX2, mo);
 }
@@ -761,8 +767,7 @@ void P_SpawnDirt(mobj_t* mo, float radius)
     case 5: dtype = MT_DIRT6; break;
     }
 
-    pmo = P_SpawnMobj3fv(dtype, pos, 0, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(dtype, pos, 0, 0)))
     {
         pmo->mom[MZ] = FIX2FLT(P_Random() << 10);
     }
@@ -776,7 +781,7 @@ void P_SpawnDirt(mobj_t* mo, float radius)
  *      args[1]     0 = normal,   1 = bloody
  */
 
-void C_DECL A_ThrustInitUp(mobj_t *actor)
+void C_DECL A_ThrustInitUp(mobj_t* actor)
 {
     actor->special2 = 5;
     actor->args[0] = 1;
@@ -786,20 +791,20 @@ void C_DECL A_ThrustInitUp(mobj_t *actor)
     actor->tracer = NULL;
 }
 
-void C_DECL A_ThrustInitDn(mobj_t *actor)
+void C_DECL A_ThrustInitDn(mobj_t* actor)
 {
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     actor->special2 = 5;
     actor->args[0] = 0;
     actor->floorClip = actor->info->height;
     actor->flags = 0;
     actor->flags2 = MF2_NOTELEPORT | MF2_FLOORCLIP | MF2_DONTDRAW;
-    mo = P_SpawnMobj3fv(MT_DIRTCLUMP, actor->pos, 0, 0);
-    actor->tracer = mo;
+    if((mo = P_SpawnMobj3fv(MT_DIRTCLUMP, actor->pos, 0, 0)))
+        actor->tracer = mo;
 }
 
-void C_DECL A_ThrustRaise(mobj_t *actor)
+void C_DECL A_ThrustRaise(mobj_t* actor)
 {
     if(A_RaiseMobj(actor))
     {   // Reached it's target height.
@@ -852,11 +857,12 @@ void C_DECL A_ThrustImpale(mobj_t *actor)
 void C_DECL A_SoAExplode(mobj_t* actor)
 {
     int                 i;
-    mobj_t*             mo = NULL;
-    float               pos[3];
 
     for(i = 0; i < 10; ++i)
     {
+        mobj_t*             mo;
+        float               pos[3];
+
         pos[VX] = actor->pos[VX];
         pos[VY] = actor->pos[VY];
         pos[VZ] = actor->pos[VZ];
@@ -865,10 +871,10 @@ void C_DECL A_SoAExplode(mobj_t* actor)
         pos[VY] += FIX2FLT((P_Random() - 128) << 12);
         pos[VZ] += FIX2FLT(P_Random() * FLT2FIX(actor->height) / 256);
 
-        mo = P_SpawnMobj3fv(MT_ZARMORCHUNK, pos, P_Random() << 24, 0);
-        P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + i);
-        if(mo)
+        if((mo = P_SpawnMobj3fv(MT_ZARMORCHUNK, pos, P_Random() << 24, 0)))
         {
+            P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + i);
+
             mo->mom[MZ] = ((P_Random() & 7) + 5);
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
@@ -886,7 +892,7 @@ void C_DECL A_SoAExplode(mobj_t* actor)
         }
     }
 
-    S_StartSound(SFX_SUITOFARMOR_BREAK, mo);
+    S_StartSound(SFX_SUITOFARMOR_BREAK, actor);
     P_MobjRemove(actor, false);
 }
 #if MSVC

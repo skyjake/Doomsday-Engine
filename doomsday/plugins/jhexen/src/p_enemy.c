@@ -812,23 +812,25 @@ boolean P_UpdateMorphedMonster(mobj_t *actor, int tics)
 
     P_MobjRemoveFromTIDList(actor);
     P_MobjChangeState(actor, S_FREETARGMOBJ);
-    mo = P_SpawnMobj3fv(moType, pos, oldMonster.angle, 0);
+    if(!(mo = P_SpawnMobj3fv(moType, pos, oldMonster.angle, 0)))
+        return false;
 
-    if(P_TestMobjLocation(mo) == false)
+    if(!P_TestMobjLocation(mo))
     {   // Didn't fit.
         P_MobjRemove(mo, true);
-        mo = P_SpawnMobj3fv(oldMonster.type, pos, oldMonster.angle, 0);
+        if((mo = P_SpawnMobj3fv(oldMonster.type, pos, oldMonster.angle, 0)))
+        {
+            mo->flags = oldMonster.flags;
+            mo->health = oldMonster.health;
+            mo->target = oldMonster.target;
+            mo->special = oldMonster.special;
+            mo->special1 = 5 * TICSPERSEC; // Next try in 5 seconds.
+            mo->special2 = moType;
+            mo->tid = oldMonster.tid;
+            memcpy(mo->args, oldMonster.args, 5);
 
-        mo->flags = oldMonster.flags;
-        mo->health = oldMonster.health;
-        mo->target = oldMonster.target;
-        mo->special = oldMonster.special;
-        mo->special1 = 5 * TICSPERSEC; // Next try in 5 seconds.
-        mo->special2 = moType;
-        mo->tid = oldMonster.tid;
-        memcpy(mo->args, oldMonster.args, 5);
-
-        P_MobjInsertIntoTIDList(mo, oldMonster.tid);
+            P_MobjInsertIntoTIDList(mo, oldMonster.tid);
+        }
         return false;
     }
 
@@ -838,9 +840,10 @@ boolean P_UpdateMorphedMonster(mobj_t *actor, int tics)
     memcpy(mo->args, oldMonster.args, 5);
 
     P_MobjInsertIntoTIDList(mo, oldMonster.tid);
-    fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
-                        oldMonster.angle + ANG180, 0);
-    S_StartSound(SFX_TELEPORT, fog);
+    if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
+                            pos[VZ] + TELEFOGHEIGHT,
+                            oldMonster.angle + ANG180, 0)))
+        S_StartSound(SFX_TELEPORT, fog);
     return true;
 }
 
@@ -1252,8 +1255,11 @@ void C_DECL A_MinotaurCharge(mobj_t* actor)
 
     if(actor->args[4] > 0)
     {
-        puff = P_SpawnMobj3fv(MT_PUNCHPUFF, actor->pos, P_Random() << 24, 0);
-        puff->mom[MZ] = 2;
+        if((puff = P_SpawnMobj3fv(MT_PUNCHPUFF, actor->pos, P_Random() << 24, 0)))
+        {
+            puff->mom[MZ] = 2;
+        }
+
         actor->args[4]--;
     }
     else
@@ -1598,11 +1604,10 @@ void C_DECL A_SkullPop(mobj_t *actor)
         return;
 
     actor->flags &= ~MF_SOLID;
-    mo = P_SpawnMobj3f(MT_BLOODYSKULL,
-                       actor->pos[VX], actor->pos[VY], actor->pos[VZ] + 48,
-                       actor->angle, 0);
 
-    if(mo)
+    if((mo = P_SpawnMobj3f(MT_BLOODYSKULL, actor->pos[VX],
+                           actor->pos[VY], actor->pos[VZ] + 48,
+                           actor->angle, 0)))
     {
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
@@ -2097,27 +2102,28 @@ void C_DECL A_SerpentMeleeAttack(mobj_t *actor)
     }
 }
 
-void C_DECL A_SerpentMissileAttack(mobj_t *actor)
+void C_DECL A_SerpentMissileAttack(mobj_t* actor)
 {
-    mobj_t         *mo;
-
     if(!actor->target)
         return;
 
-    mo = P_SpawnMissile(MT_SERPENTFX, actor, actor->target);
+    P_SpawnMissile(MT_SERPENTFX, actor, actor->target);
 }
 
-void C_DECL A_SerpentHeadPop(mobj_t *actor)
+void C_DECL A_SerpentHeadPop(mobj_t* actor)
 {
     P_SpawnMobj3f(MT_SERPENT_HEAD,
                   actor->pos[VX], actor->pos[VY], actor->pos[VZ] + 45,
                   actor->angle, 0);
 }
 
-static mobj_t* spawnSerpentGib(mobjtype_t type, mobj_t *mo)
+static void spawnSerpentGib(mobjtype_t type, mobj_t* mo)
 {
-    mobj_t         *pmo;
-    float           pos[3];
+    mobj_t*             pmo;
+    float               pos[3];
+
+    if(!mo)
+        return;
 
     pos[VX] = mo->pos[VX];
     pos[VY] = mo->pos[VY];
@@ -2126,18 +2132,15 @@ static mobj_t* spawnSerpentGib(mobjtype_t type, mobj_t *mo)
     pos[VX] += FIX2FLT((P_Random() - 128) << 12);
     pos[VY] += FIX2FLT((P_Random() - 128) << 12);
 
-    pmo = P_SpawnMobj3fv((type), pos, P_Random() << 24, MSF_Z_FLOOR);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv((type), pos, P_Random() << 24, MSF_Z_FLOOR)))
     {
         pmo->mom[MX] = (P_Random() - 128) << 6;
         pmo->mom[MY] = (P_Random() - 128) << 6;
         pmo->floorClip = 6;
     }
-
-    return pmo;
 }
 
-void C_DECL A_SerpentSpawnGibs(mobj_t *mo)
+void C_DECL A_SerpentSpawnGibs(mobj_t* mo)
 {
     // Order is important - P_Randoms!
     spawnSerpentGib(MT_SERPENT_GIB1, mo);
@@ -2198,15 +2201,14 @@ void C_DECL A_CentaurAttack2(mobj_t *actor)
     S_StartSound(SFX_CENTAURLEADER_ATTACK, actor);
 }
 
-static mobj_t* spawnCentaurStuff(mobjtype_t type, angle_t angle, mobj_t *mo)
+static void spawnCentaurStuff(mobjtype_t type, angle_t angle, mobj_t* mo)
 {
     mobj_t*             pmo;
     unsigned int        an;
     byte                momRand[3];
 
-    pmo = P_SpawnMobj3f(type, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 45,
-                        angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(type, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 45,
+                            angle, 0)))
     {
         an = angle >> ANGLETOFINESHIFT;
 
@@ -2222,8 +2224,6 @@ static mobj_t* spawnCentaurStuff(mobjtype_t type, angle_t angle, mobj_t *mo)
         pmo->mom[MZ] = 8 + FIX2FLT(momRand[MZ] << 10);
         pmo->target = mo;
     }
-
-    return pmo;
 }
 
 /**
@@ -2371,21 +2371,20 @@ void C_DECL A_BishopSpawnBlur(mobj_t *mo)
     P_SpawnMobj3fv(MT_BISHOPBLUR, mo->pos, mo->angle, 0);
 }
 
-void C_DECL A_BishopChase(mobj_t *mo)
+void C_DECL A_BishopChase(mobj_t* mo)
 {
     mo->pos[VZ] -= FLOATBOBOFFSET(mo->special2) / 2;
     mo->special2 = (mo->special2 + 4) & 63;
     mo->pos[VZ] += FLOATBOBOFFSET(mo->special2) / 2;
 }
 
-void C_DECL A_BishopPuff(mobj_t *mo)
+void C_DECL A_BishopPuff(mobj_t* mo)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3f(MT_BISHOP_PUFF,
-                        mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 40,
-                        P_Random() << 24, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(MT_BISHOP_PUFF,
+                            mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 40,
+                            P_Random() << 24, 0)))
     {
         pmo->mom[MZ] = 1.0f / 2;
     }
@@ -2606,20 +2605,21 @@ void C_DECL A_DragonFlap(mobj_t* actor)
     }
 }
 
-void C_DECL A_DragonAttack(mobj_t *mo)
+void C_DECL A_DragonAttack(mobj_t* mo)
 {
     P_SpawnMissile(MT_DRAGON_FX, mo, mo->target);
 }
 
-void C_DECL A_DragonFX2(mobj_t *mo)
+void C_DECL A_DragonFX2(mobj_t* mo)
 {
     int             i, delay;
-    float           pos[3];
-    mobj_t*         pmo;
 
     delay = 16 + (P_Random() >> 3);
     for(i = 1 + (P_Random() & 3); i; i--)
     {
+        mobj_t*             pmo;
+        float               pos[3];
+
         pos[VX] = mo->pos[VX];
         pos[VY] = mo->pos[VY];
         pos[VZ] = mo->pos[VZ];
@@ -2628,8 +2628,7 @@ void C_DECL A_DragonFX2(mobj_t *mo)
         pos[VY] += FIX2FLT((P_Random() - 128) << 14);
         pos[VZ] += FIX2FLT((P_Random() - 128) << 12);
 
-        pmo = P_SpawnMobj3fv(MT_DRAGON_FX2, pos, P_Random() << 24, 0);
-        if(pmo)
+        if((pmo = P_SpawnMobj3fv(MT_DRAGON_FX2, pos, P_Random() << 24, 0)))
         {
             pmo->tics = delay + (P_Random() & 3) * i * 2;
             pmo->target = mo->target;
@@ -2668,10 +2667,10 @@ void C_DECL A_DemonAttack1(mobj_t *mo)
 /**
  * Demon: Missile attack.
  */
-void C_DECL A_DemonAttack2(mobj_t *mo)
+void C_DECL A_DemonAttack2(mobj_t* mo)
 {
-    mobj_t         *pmo;
-    int             fireBall;
+    mobj_t*             pmo;
+    int                 fireBall;
 
     if(mo->type == MT_DEMON)
     {
@@ -2682,8 +2681,7 @@ void C_DECL A_DemonAttack2(mobj_t *mo)
         fireBall = MT_DEMON2FX1;
     }
 
-    pmo = P_SpawnMissile(fireBall, mo, mo->target);
-    if(pmo)
+    if((pmo = P_SpawnMissile(fireBall, mo, mo->target)))
     {
         pmo->pos[VZ] += 30;
         S_StartSound(SFX_DEMON_MISSILE_FIRE, mo);
@@ -2695,9 +2693,8 @@ static mobj_t *spawnDemonChunk(mobjtype_t type, angle_t angle, mobj_t *mo)
     mobj_t*             pmo;
     unsigned int        an;
 
-    pmo = P_SpawnMobj3f(type, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 45,
-                        angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(type, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 45,
+                            angle, 0)))
     {
         an = angle >> ANGLETOFINESHIFT;
         pmo->mom[MX] = (FIX2FLT(P_Random() << 10) + 1) *
@@ -2849,13 +2846,14 @@ void C_DECL A_WraithMissile(mobj_t *mo)
  */
 void C_DECL A_WraithFX2(mobj_t* mo)
 {
-    int             i;
-    uint            an;
-    mobj_t         *pmo;
-    angle_t         angle;
+    int                 i;
 
     for(i = 0; i < 2; ++i)
     {
+        uint                an;
+        angle_t             angle;
+        mobj_t*             pmo;
+
         if(P_Random() < 128)
         {
             angle = mo->angle + (P_Random() << 22);
@@ -2865,8 +2863,7 @@ void C_DECL A_WraithFX2(mobj_t* mo)
             angle = mo->angle - (P_Random() << 22);
         }
 
-        pmo = P_SpawnMobj3fv(MT_WRAITHFX2, mo->pos, angle, 0);
-        if(pmo)
+        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX2, mo->pos, angle, 0)))
         {
             an = angle >> ANGLETOFINESHIFT;
 
@@ -2885,16 +2882,15 @@ void C_DECL A_WraithFX2(mobj_t* mo)
 /**
  * Wraith: Spawn an FX3 around during attacks.
  */
-void C_DECL A_WraithFX3(mobj_t *mo)
+void C_DECL A_WraithFX3(mobj_t* mo)
 {
-    int             i;
-    mobj_t*         pmo;
-    int             numdropped = P_Random() % 15;
+    int                 i, numdropped = P_Random() % 15;
 
     for(i = 0; i < numdropped; ++i)
     {
-        pmo = P_SpawnMobj3fv(MT_WRAITHFX3, mo->pos, P_Random() << 24, 0);
-        if(pmo)
+        mobj_t*         pmo;
+
+        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX3, mo->pos, P_Random() << 24, 0)))
         {
             pmo->pos[VX] += FIX2FLT((P_Random() - 128) << 11);
             pmo->pos[VY] += FIX2FLT((P_Random() - 128) << 11);
@@ -2907,11 +2903,10 @@ void C_DECL A_WraithFX3(mobj_t *mo)
 /**
  * Wraith: Spawn an FX4 during movement.
  */
-void C_DECL A_WraithFX4(mobj_t *mo)
+void C_DECL A_WraithFX4(mobj_t* mo)
 {
-    mobj_t         *pmo;
-    int             chance = P_Random();
-    int             spawn4, spawn5;
+    mobj_t*             pmo;
+    int                 spawn4, spawn5, chance = P_Random();
 
     if(chance < 10)
     {
@@ -2936,8 +2931,7 @@ void C_DECL A_WraithFX4(mobj_t *mo)
 
     if(spawn4)
     {
-        pmo = P_SpawnMobj3fv(MT_WRAITHFX4, mo->pos, P_Random() << 24, 0);
-        if(pmo)
+        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX4, mo->pos, P_Random() << 24, 0)))
         {
             pmo->pos[VX] += FIX2FLT((P_Random() - 128) << 12);
             pmo->pos[VY] += FIX2FLT((P_Random() - 128) << 12);
@@ -2948,8 +2942,7 @@ void C_DECL A_WraithFX4(mobj_t *mo)
 
     if(spawn5)
     {
-        pmo = P_SpawnMobj3fv(MT_WRAITHFX5, mo->pos, P_Random() << 24, 0);
-        if(pmo)
+        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX5, mo->pos, P_Random() << 24, 0)))
         {
             pmo->pos[VX] += FIX2FLT((P_Random() - 128) << 11);
             pmo->pos[VY] += FIX2FLT((P_Random() - 128) << 11);
@@ -2987,9 +2980,8 @@ void C_DECL A_DropMace(mobj_t *mo)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3f(MT_ETTIN_MACE, mo->pos[VX], mo->pos[VY],
-                        mo->pos[VZ] + mo->height /2, mo->angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(MT_ETTIN_MACE, mo->pos[VX], mo->pos[VY],
+                            mo->pos[VZ] + mo->height /2, mo->angle, 0)))
     {
         pmo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
         pmo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
@@ -3042,8 +3034,7 @@ void C_DECL A_FiredSpawnRock(mobj_t *mo)
     pos[VY] += FIX2FLT((P_Random() - 128) << 12);
     pos[VZ] += FIX2FLT((P_Random()) << 11);
 
-    pmo = P_SpawnMobj3fv(rtype, pos, P_Random() << 24, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(rtype, pos, P_Random() << 24, 0)))
     {
         pmo->mom[MX] = FIX2FLT((P_Random() - 128) << 10);
         pmo->mom[MY] = FIX2FLT((P_Random() - 128) << 10);
@@ -3181,22 +3172,20 @@ void C_DECL A_FiredChase(mobj_t *actor)
 #undef FIREDEMON_ATTACK_RANGE
 }
 
-void C_DECL A_FiredSplotch(mobj_t *actor)
+void C_DECL A_FiredSplotch(mobj_t* actor)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3fv(MT_FIREDEMON_SPLOTCH1, actor->pos,
-                         P_Random() << 24, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(MT_FIREDEMON_SPLOTCH1, actor->pos,
+                             P_Random() << 24, 0)))
     {
         pmo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
         pmo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
         pmo->mom[MZ] = 3 + FIX2FLT(P_Random() << 10);
     }
 
-    pmo = P_SpawnMobj3fv(MT_FIREDEMON_SPLOTCH2, actor->pos,
-                         P_Random() << 24, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(MT_FIREDEMON_SPLOTCH2, actor->pos,
+                             P_Random() << 24, 0)))
     {
         pmo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
         pmo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
@@ -3204,7 +3193,7 @@ void C_DECL A_FiredSplotch(mobj_t *actor)
     }
 }
 
-void C_DECL A_IceGuyLook(mobj_t *mo)
+void C_DECL A_IceGuyLook(mobj_t* mo)
 {
     float               dist;
     angle_t             angle;
@@ -3246,11 +3235,10 @@ void C_DECL A_IceGuyChase(mobj_t *actor)
          * \fixme We should not be selecting mobj types by their original
          * indices! Instead, use a fixed table here.
          */
-        mo = P_SpawnMobj3f(MT_ICEGUY_WISP1 + (P_Random() & 1),
-                           actor->pos[VX] + dist * FIX2FLT(finecosine[an]),
-                           actor->pos[VY] + dist * FIX2FLT(finesine[an]),
-                           actor->pos[VZ] + 60, angle, 0);
-        if(mo)
+        if((mo = P_SpawnMobj3f(MT_ICEGUY_WISP1 + (P_Random() & 1),
+                               actor->pos[VX] + dist * FIX2FLT(finecosine[an]),
+                               actor->pos[VY] + dist * FIX2FLT(finesine[an]),
+                               actor->pos[VZ] + 60, angle, 0)))
         {
             mo->mom[MX] = actor->mom[MX];
             mo->mom[MY] = actor->mom[MY];
@@ -3360,20 +3348,21 @@ void C_DECL A_SorcSpinBalls(mobj_t *mo)
 
     z = mo->pos[VZ] - mo->floorClip + mo->info->height;
 
-    pmo = P_SpawnMobj3f(MT_SORCBALL1, mo->pos[VX], mo->pos[VY], z, angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(MT_SORCBALL1, mo->pos[VX], mo->pos[VY], z, angle, 0)))
     {
         pmo->target = mo;
         pmo->special2 = SORCFX4_RAPIDFIRE_TIME;
     }
 
-    pmo = P_SpawnMobj3f(MT_SORCBALL2, mo->pos[VX], mo->pos[VY], z, angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(MT_SORCBALL2, mo->pos[VX], mo->pos[VY], z, angle, 0)))
+    {
         pmo->target = mo;
+    }
 
-    pmo = P_SpawnMobj3f(MT_SORCBALL3, mo->pos[VX], mo->pos[VY], z, angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(MT_SORCBALL3, mo->pos[VX], mo->pos[VY], z, angle, 0)))
+    {
         pmo->target = mo;
+    }
 }
 
 void C_DECL A_SorcBallOrbit(mobj_t* actor)
@@ -3645,12 +3634,12 @@ void C_DECL A_CastSorcererSpell(mobj_t *mo)
 
     case MT_SORCBALL2: // Defensive.
         z = parent->pos[VZ] - parent->floorClip + SORC_DEFENSE_HEIGHT;
-        pmo = P_SpawnMobj3f(MT_SORCFX2, mo->pos[VX], mo->pos[VY], z,
-                            mo->angle, 0);
+        if((pmo = P_SpawnMobj3f(MT_SORCFX2, mo->pos[VX], mo->pos[VY], z,
+                            mo->angle, 0)))
+            pmo->target = parent;
+
         parent->flags2 |= MF2_REFLECTIVE | MF2_INVULNERABLE;
         parent->args[0] = SORC_DEFENSE_TIME;
-        if(pmo)
-            pmo->target = parent;
         break;
 
     case MT_SORCBALL3: // Reinforcements.
@@ -3658,12 +3647,10 @@ void C_DECL A_CastSorcererSpell(mobj_t *mo)
         ang2 = mo->angle + ANGLE_45;
         if(mo->health < (mo->info->spawnHealth / 3))
         {   // Spawn 2 at a time.
-            pmo = P_SpawnMissileAngle(MT_SORCFX3, parent, ang1, 4);
-            if(pmo)
+            if((pmo = P_SpawnMissileAngle(MT_SORCFX3, parent, ang1, 4)))
                 pmo->target = parent;
 
-            pmo = P_SpawnMissileAngle(MT_SORCFX3, parent, ang2, 4);
-            if(pmo)
+            if((pmo = P_SpawnMissileAngle(MT_SORCFX3, parent, ang2, 4)))
                 pmo->target = parent;
         }
         else
@@ -3671,8 +3658,7 @@ void C_DECL A_CastSorcererSpell(mobj_t *mo)
             if(P_Random() < 128)
                 ang1 = ang2;
 
-            pmo = P_SpawnMissileAngle(MT_SORCFX3, parent, ang1, 4);
-            if(pmo)
+            if((pmo = P_SpawnMissileAngle(MT_SORCFX3, parent, ang1, 4)))
                 pmo->target = parent;
         }
         break;
@@ -3755,13 +3741,11 @@ void C_DECL A_SorcBossAttack(mobj_t *actor)
 /**
  * Spell cast magic fizzle.
  */
-void C_DECL A_SpawnFizzle(mobj_t *mo)
+void C_DECL A_SpawnFizzle(mobj_t* mo)
 {
-    float           pos[3], dist = 5;
-    uint            randAn, an;
-    float           speed = mo->info->speed;
-    mobj_t         *pmo;
-    int             ix;
+    uint                an;
+    float               pos[3], dist = 5, speed = mo->info->speed;
+    int                 ix;
 
     pos[VX] = mo->pos[VX];
     pos[VY] = mo->pos[VY];
@@ -3775,10 +3759,11 @@ void C_DECL A_SpawnFizzle(mobj_t *mo)
 
     for(ix = 0; ix < 5; ++ix)
     {
-        pmo = P_SpawnMobj3fv(MT_SORCSPARK1, pos, P_Random() << 24, 0);
-        if(pmo)
+        mobj_t*         pmo;
+
+        if((pmo = P_SpawnMobj3fv(MT_SORCSPARK1, pos, P_Random() << 24, 0)))
         {
-            randAn = (mo->angle >> ANGLETOFINESHIFT) +
+            unsigned int    randAn = (mo->angle >> ANGLETOFINESHIFT) +
                 ((P_Random() % 5) * 2);
 
             pmo->mom[MX] = FIX2FLT(FixedMul(P_Random() % FLT2FIX(speed), finecosine[randAn]));
@@ -3791,7 +3776,7 @@ void C_DECL A_SpawnFizzle(mobj_t *mo)
 /**
  * Yellow spell - offense.
  */
-void C_DECL A_SorcFX1Seek(mobj_t *actor)
+void C_DECL A_SorcFX1Seek(mobj_t* actor)
 {
     A_BounceCheck(actor);
     P_SeekerMissile(actor, ANGLE_1 * 2, ANGLE_1 * 6);
@@ -3808,12 +3793,11 @@ void C_DECL A_SorcFX1Seek(mobj_t *actor)
 /**
  * Blue spell - defense (split ball in two).
  */
-void C_DECL A_SorcFX2Split(mobj_t *mo)
+void C_DECL A_SorcFX2Split(mobj_t* mo)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3fv(MT_SORCFX2, mo->pos, mo->angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(MT_SORCFX2, mo->pos, mo->angle, 0)))
     {
         pmo->target = mo->target;
         pmo->args[0] = 0; // CW.
@@ -3821,8 +3805,7 @@ void C_DECL A_SorcFX2Split(mobj_t *mo)
         P_SetMobjStateNF(pmo, S_SORCFX2_ORBIT1);
     }
 
-    pmo = P_SpawnMobj3fv(MT_SORCFX2, mo->pos, mo->angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(MT_SORCFX2, mo->pos, mo->angle, 0)))
     {
         pmo->target = mo->target;
         pmo->args[0] = 1; // CCW.
@@ -3836,7 +3819,7 @@ void C_DECL A_SorcFX2Split(mobj_t *mo)
 /**
  * Orbit FX2 about sorcerer.
  */
-void C_DECL A_SorcFX2Orbit(mobj_t *mo)
+void C_DECL A_SorcFX2Orbit(mobj_t* mo)
 {
     unsigned int        an;
     angle_t             angle;
@@ -3893,14 +3876,14 @@ void C_DECL A_SpawnBishop(mobj_t *mo)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3fv(MT_BISHOP, mo->pos, mo->angle, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(MT_BISHOP, mo->pos, mo->angle, 0)))
     {
         if(!P_TestMobjLocation(pmo))
         {
             P_MobjChangeState(pmo, S_NULL);
         }
     }
+
     P_MobjChangeState(mo, S_NULL);
 }
 
@@ -4229,12 +4212,11 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
         pos[VY] += FIX2FLT(((P_Random() - 128) * FLT2FIX(mo->radius)) >> 7);
         pos[VZ] += (P_Random() * mo->height) / 255;
 
-        pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos, P_Random() << 24, 0);
-
-        P_MobjChangeState(pmo, P_GetState(pmo->type, SN_SPAWN) + (P_Random() % 3));
-
-        if(pmo)
+        if((pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos, P_Random() << 24, 0)))
         {
+            P_MobjChangeState(pmo,
+                P_GetState(pmo->type, SN_SPAWN) + (P_Random() % 3));
+
             pmo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
             pmo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
             pmo->mom[MZ] = ((pmo->pos[VZ] - mo->pos[VZ]) / mo->height) * 4;
@@ -4253,11 +4235,11 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
         pos[VY] += FIX2FLT(((P_Random() - 128) * FLT2FIX(mo->radius)) >> 7);
         pos[VZ] += (P_Random() * mo->height) / 255;
 
-        pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos, P_Random() << 24, 0);
-        P_MobjChangeState(pmo, P_GetState(pmo->type, SN_SPAWN) + (P_Random() % 3));
-
-        if(pmo)
+        if((pmo = P_SpawnMobj3fv(MT_ICECHUNK, pos, P_Random() << 24, 0)))
         {
+            P_MobjChangeState(pmo,
+                P_GetState(pmo->type, SN_SPAWN) + (P_Random() % 3));
+
             pmo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
             pmo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
             pmo->mom[MZ] = ((pmo->pos[VZ] - mo->pos[VZ]) / mo->height) * 4;
@@ -4268,26 +4250,26 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
 
     if(mo->player)
     {   // Attach the player's view to a chunk of ice.
-        pmo = P_SpawnMobj3f(MT_ICECHUNK,
-                            mo->pos[VX], mo->pos[VY], mo->pos[VZ] + VIEWHEIGHT,
-                            mo->angle, 0);
+        if((pmo = P_SpawnMobj3f(MT_ICECHUNK, mo->pos[VX], mo->pos[VY],
+                                mo->pos[VZ] + VIEWHEIGHT, mo->angle, 0)))
+        {
+            P_MobjChangeState(pmo, S_ICECHUNK_HEAD);
 
-        P_MobjChangeState(pmo, S_ICECHUNK_HEAD);
+            pmo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
+            pmo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
+            pmo->mom[MZ] = ((pmo->pos[VZ] - mo->pos[VZ]) / mo->height) * 4;
 
-        pmo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
-        pmo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
-        pmo->mom[MZ] = ((pmo->pos[VZ] - mo->pos[VZ]) / mo->height) * 4;
+            pmo->flags2 |= MF2_ICEDAMAGE; // Used to force blue palette.
+            pmo->flags2 &= ~MF2_FLOORCLIP;
+            pmo->player = mo->player;
+            pmo->dPlayer = mo->dPlayer;
+            mo->player = NULL;
+            mo->dPlayer = NULL;
 
-        pmo->flags2 |= MF2_ICEDAMAGE; // Used to force blue palette.
-        pmo->flags2 &= ~MF2_FLOORCLIP;
-        pmo->player = mo->player;
-        pmo->dPlayer = mo->dPlayer;
-        mo->player = NULL;
-        mo->dPlayer = NULL;
-
-        pmo->health = mo->health;
-        pmo->player->plr->mo = pmo;
-        pmo->player->plr->lookDir = 0;
+            pmo->health = mo->health;
+            pmo->player->plr->mo = pmo;
+            pmo->player->plr->lookDir = 0;
+        }
     }
 
     P_MobjRemoveFromTIDList(mo);
@@ -4420,29 +4402,38 @@ void C_DECL A_KoraxBonePop(mobj_t* actor)
 
 void KSpiritInit(mobj_t* spirit, mobj_t* korax)
 {
-    int                 i;
-    mobj_t*             tail, *next;
+    mobj_t*             tail;
 
     spirit->health = KORAX_SPIRIT_LIFETIME;
 
     spirit->tracer = korax; // Swarm around korax.
-    spirit->special2 = 32 + (P_Random() & 7);   // Float bob index.
+    spirit->special2 = 32 + (P_Random() & 7); // Float bob index.
     spirit->args[0] = 10; // Initial turn value.
-    spirit->args[1] = 0;  // Initial look angle.
+    spirit->args[1] = 0; // Initial look angle.
 
     // Spawn a tail for spirit.
-    tail = P_SpawnMobj3fv(MT_HOLY_TAIL, spirit->pos,
-                          spirit->angle + ANG180, 0);
-    tail->target = spirit;  // Parent.
-    for(i = 1; i < 3; ++i)
+    if((tail = P_SpawnMobj3fv(MT_HOLY_TAIL, spirit->pos,
+                              spirit->angle + ANG180, 0)))
     {
-        next = P_SpawnMobj3fv(MT_HOLY_TAIL, spirit->pos,
-                              spirit->angle + ANG180, 0);
-        P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
-        tail->tracer = next;
-        tail = next;
+        int                 i;
+
+        tail->target = spirit; // Parent.
+
+        for(i = 1; i < 3; ++i)
+        {
+            mobj_t*             next;
+
+            if((next = P_SpawnMobj3fv(MT_HOLY_TAIL, spirit->pos,
+                                      spirit->angle + ANG180, 0)))
+            {
+                P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
+                tail->tracer = next;
+                tail = next;
+            }
+        }
+
+        tail->tracer = NULL; // Last tail bit.
     }
-    tail->tracer = NULL; // Last tail bit.
 }
 
 void C_DECL A_KoraxDecide(mobj_t* actor)
@@ -4751,9 +4742,8 @@ void C_DECL A_KBoltRaise(mobj_t* mo)
 
     if(z + KORAX_BOLT_HEIGHT < mo->ceilingZ)
     {
-        pmo = P_SpawnMobj3f(MT_KORAX_BOLT, mo->pos[VX], mo->pos[VY], z,
-                            mo->angle, 0);
-        if(pmo)
+        if((pmo = P_SpawnMobj3f(MT_KORAX_BOLT, mo->pos[VX], mo->pos[VY], z,
+                                mo->angle, 0)))
         {
             pmo->special1 = KORAX_BOLT_LIFETIME;
         }

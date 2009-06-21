@@ -1091,22 +1091,24 @@ void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
         return;
 
     pmo = player->plr->mo;
-    ball = P_SpawnMobj3f(MT_MACEFX2, pmo->pos[VX], pmo->pos[VY],
-                         pmo->pos[VZ] - pmo->floorClip + 28,
-                         pmo->angle, 0);
-    ball->mom[MZ] =
-        2 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 5));
-    ball->target = pmo;
-    ball->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+    if((ball = P_SpawnMobj3f(MT_MACEFX2, pmo->pos[VX], pmo->pos[VY],
+                             pmo->pos[VZ] - pmo->floorClip + 28,
+                             pmo->angle, 0)))
+    {
+        ball->mom[MZ] =
+            2 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 5));
+        ball->target = pmo;
+        ball->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
 
-    an = ball->angle >> ANGLETOFINESHIFT;
-    ball->mom[MX] = (pmo->mom[MX] / 2) +
-        ball->info->speed * FIX2FLT(finecosine[an]);
-    ball->mom[MY] = (pmo->mom[MY] / 2) +
-        ball->info->speed * FIX2FLT(finesine[an]);
+        an = ball->angle >> ANGLETOFINESHIFT;
+        ball->mom[MX] = (pmo->mom[MX] / 2) +
+            ball->info->speed * FIX2FLT(finecosine[an]);
+        ball->mom[MY] = (pmo->mom[MY] / 2) +
+            ball->info->speed * FIX2FLT(finesine[an]);
 
-    P_CheckMissileSpawn(ball);
-    S_StartSound(SFX_LOBSHT, ball);
+        P_CheckMissileSpawn(ball);
+        S_StartSound(SFX_LOBSHT, ball);
+    }
 }
 
 void C_DECL A_FireMacePL1(player_t *player, pspdef_t *psp)
@@ -1187,8 +1189,7 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
 
 void C_DECL A_MaceBallImpact2(mobj_t *ball)
 {
-    mobj_t             *tiny;
-    uint                an;
+
 
     if(ball->pos[VZ] <= ball->floorZ && P_HitFloor(ball))
     {   // Landed in some sort of liquid.
@@ -1204,29 +1205,36 @@ void C_DECL A_MaceBallImpact2(mobj_t *ball)
     }
     else
     {   // Bounce
+        mobj_t*             tiny;
+        unsigned int        an;
+
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
         P_MobjChangeState(ball, P_GetState(ball->type, SN_SPAWN));
 
-        tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos, ball->angle + ANG90, 0);
-        tiny->target = ball->target;
-        an = tiny->angle >> ANGLETOFINESHIFT;
-        tiny->mom[MX] = (ball->mom[MX] / 2) +
-            ((ball->mom[MZ] - 1) * FIX2FLT(finecosine[an]));
-        tiny->mom[MY] = (ball->mom[MY] / 2) +
-            ((ball->mom[MZ] - 1) * FIX2FLT(finesine[an]));
-        tiny->mom[MZ] = ball->mom[MZ];
-        P_CheckMissileSpawn(tiny);
+        if((tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos, ball->angle + ANG90, 0)))
+        {
+            tiny->target = ball->target;
+            an = tiny->angle >> ANGLETOFINESHIFT;
+            tiny->mom[MX] = (ball->mom[MX] / 2) +
+                ((ball->mom[MZ] - 1) * FIX2FLT(finecosine[an]));
+            tiny->mom[MY] = (ball->mom[MY] / 2) +
+                ((ball->mom[MZ] - 1) * FIX2FLT(finesine[an]));
+            tiny->mom[MZ] = ball->mom[MZ];
+            P_CheckMissileSpawn(tiny);
+        }
 
-        tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos, ball->angle - ANG90, 0);
-        tiny->target = ball->target;
-        an = tiny->angle >> ANGLETOFINESHIFT;
-        tiny->mom[MX] = (ball->mom[MX] / 2) +
-            ((ball->mom[MZ] - 1) * FIX2FLT(finecosine[an]));
-        tiny->mom[MY] = (ball->mom[MY] / 2) +
-            ((ball->mom[MZ] - 1) * FIX2FLT(finesine[an]));
-        tiny->mom[MZ] = ball->mom[MZ];
+        if((tiny = P_SpawnMobj3fv(MT_MACEFX3, ball->pos, ball->angle - ANG90, 0)))
+        {
+            tiny->target = ball->target;
+            an = tiny->angle >> ANGLETOFINESHIFT;
+            tiny->mom[MX] = (ball->mom[MX] / 2) +
+                ((ball->mom[MZ] - 1) * FIX2FLT(finecosine[an]));
+            tiny->mom[MY] = (ball->mom[MY] / 2) +
+                ((ball->mom[MZ] - 1) * FIX2FLT(finesine[an]));
+            tiny->mom[MZ] = ball->mom[MZ];
 
-        P_CheckMissileSpawn(tiny);
+            P_CheckMissileSpawn(tiny);
+        }
     }
 }
 
@@ -1322,30 +1330,31 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
     }
 }
 
-void C_DECL A_SpawnRippers(mobj_t *actor)
+void C_DECL A_SpawnRippers(mobj_t* actor)
 {
     int                 i;
-    angle_t             angle;
-    uint                an;
-    mobj_t             *ripper;
 
     for(i = 0; i < 8; ++i)
     {
-        angle = i * ANG45;
+        angle_t             angle = i * ANG45;
+        uint                an;
+        mobj_t*             ripper;
 
-        ripper = P_SpawnMobj3fv(MT_RIPPER, actor->pos, angle, 0);
-        ripper->target = actor->target;
-        an = angle >> ANGLETOFINESHIFT;
-        ripper->mom[MX] = ripper->info->speed * FIX2FLT(finecosine[an]);
-        ripper->mom[MY] = ripper->info->speed * FIX2FLT(finesine[an]);
+        if((ripper = P_SpawnMobj3fv(MT_RIPPER, actor->pos, angle, 0)))
+        {
+            ripper->target = actor->target;
+            an = angle >> ANGLETOFINESHIFT;
+            ripper->mom[MX] = ripper->info->speed * FIX2FLT(finecosine[an]);
+            ripper->mom[MY] = ripper->info->speed * FIX2FLT(finesine[an]);
 
-        P_CheckMissileSpawn(ripper);
+            P_CheckMissileSpawn(ripper);
+        }
     }
 }
 
-void C_DECL A_FireCrossbowPL1(player_t *player, pspdef_t *psp)
+void C_DECL A_FireCrossbowPL1(player_t* player, pspdef_t* psp)
 {
-    mobj_t             *pmo;
+    mobj_t*             pmo;
 
     pmo = player->plr->mo;
     P_ShotAmmo(player);
@@ -1357,9 +1366,9 @@ void C_DECL A_FireCrossbowPL1(player_t *player, pspdef_t *psp)
     P_SpawnMissileAngle(MT_CRBOWFX3, pmo, pmo->angle + (ANG45 / 10), -12345);
 }
 
-void C_DECL A_FireCrossbowPL2(player_t *player, pspdef_t *psp)
+void C_DECL A_FireCrossbowPL2(player_t* player, pspdef_t* psp)
 {
-    mobj_t             *pmo;
+    mobj_t*             pmo;
 
     pmo = player->plr->mo;
     P_ShotAmmo(player);
@@ -1373,21 +1382,24 @@ void C_DECL A_FireCrossbowPL2(player_t *player, pspdef_t *psp)
     P_SpawnMissileAngle(MT_CRBOWFX3, pmo, pmo->angle + (ANG45 / 5), -12345);
 }
 
-void C_DECL A_BoltSpark(mobj_t *bolt)
+void C_DECL A_BoltSpark(mobj_t* bolt)
 {
-    mobj_t             *spark;
+    mobj_t*             spark;
 
     if(P_Random() > 50)
     {
-        spark = P_SpawnMobj3fv(MT_CRBOWFX4, bolt->pos, P_Random() << 24, 0);
-        spark->pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
-        spark->pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
+        if((spark = P_SpawnMobj3fv(MT_CRBOWFX4, bolt->pos, P_Random() << 24,
+                                   0)))
+        {
+            spark->pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
+            spark->pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
+        }
     }
 }
 
-void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
+void C_DECL A_FireSkullRodPL1(player_t* player, pspdef_t* psp)
 {
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     if(!P_CheckAmmo(player))
         return;
@@ -1396,11 +1408,13 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnMissile(MT_HORNRODFX1, player->plr->mo, NULL, true);
-    // Randomize the first frame
-    if(mo && P_Random() > 128)
+    if((mo = P_SpawnMissile(MT_HORNRODFX1, player->plr->mo, NULL, true)))
     {
-        P_MobjChangeState(mo, S_HRODFX1_2);
+        // Randomize the first frame
+        if(mo && P_Random() > 128)
+        {
+            P_MobjChangeState(mo, S_HRODFX1_2);
+        }
     }
 }
 
@@ -1408,7 +1422,7 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t *psp)
  * The special2 field holds the player number that shot the rain missile.
  * The special1 field is used as a counter for the sound looping.
  */
-void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
+void C_DECL A_FireSkullRodPL2(player_t* player, pspdef_t* psp)
 {
     mobj_t*             mo;
 
@@ -1416,8 +1430,7 @@ void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL, true);
-    if(mo)
+    if((mo = P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL, true)))
         mo->special3 = 140;
 
     // Use MissileMobj instead of the return value from
@@ -1534,16 +1547,18 @@ void C_DECL A_SkullRodStorm(mobj_t *actor)
     pos[VX] = actor->pos[VX] + ((P_Random() & 127) - 64);
     pos[VY] = actor->pos[VY] + ((P_Random() & 127) - 64);
 
-    mo = P_SpawnMobj3f(MT_RAINPLR1 + actor->special2,
-                       pos[VX], pos[VY], 0, P_Random() << 24, MSF_Z_CEIL);
+    if((mo = P_SpawnMobj3f(MT_RAINPLR1 + actor->special2, pos[VX], pos[VY],
+                           0, P_Random() << 24, MSF_Z_CEIL)))
+    {
+        mo->flags |= MF_BRIGHTSHADOW;
+        mo->target = actor->target;
+        mo->mom[MX] = 1; // Force collision detection.
+        mo->mom[MZ] = -mo->info->speed;
+        mo->special2 = actor->special2; // Transfer player number.
 
-    mo->flags |= MF_BRIGHTSHADOW;
-    mo->target = actor->target;
-    mo->mom[MX] = 1; // Force collision detection.
-    mo->mom[MZ] = -mo->info->speed;
-    mo->special2 = actor->special2; // Transfer player number.
+        P_CheckMissileSpawn(mo);
+    }
 
-    P_CheckMissileSpawn(mo);
     if(!(actor->special1 & 31))
         S_StartSound(SFX_RAMRAIN, actor);
 
@@ -1562,12 +1577,12 @@ void C_DECL A_RainImpact(mobj_t *actor)
     }
 }
 
-void C_DECL A_HideInCeiling(mobj_t *actor)
+void C_DECL A_HideInCeiling(mobj_t* actor)
 {
     actor->pos[VZ] = actor->ceilingZ + 4;
 }
 
-void C_DECL A_FirePhoenixPL1(player_t *player, pspdef_t *psp)
+void C_DECL A_FirePhoenixPL1(player_t* player, pspdef_t* psp)
 {
     uint                an;
     angle_t             angle;
@@ -1583,25 +1598,28 @@ void C_DECL A_FirePhoenixPL1(player_t *player, pspdef_t *psp)
     player->plr->mo->mom[MY] += 4 * FIX2FLT(finesine[an]);
 }
 
-void C_DECL A_PhoenixPuff(mobj_t *actor)
+void C_DECL A_PhoenixPuff(mobj_t* actor)
 {
-    mobj_t             *puff;
+    mobj_t*             puff;
     uint                an;
 
     P_SeekerMissile(actor, ANGLE_1 * 5, ANGLE_1 * 10);
 
-    puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos, actor->angle + ANG90, 0);
-    an = puff->angle >> ANGLETOFINESHIFT;
-    puff->mom[MX] = 1.3 * FIX2FLT(finecosine[an]);
-    puff->mom[MY] = 1.3 * FIX2FLT(finesine[an]);
-    puff->mom[MZ] = 0;
+    if((puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos, actor->angle + ANG90, 0)))
+    {
+        an = puff->angle >> ANGLETOFINESHIFT;
+        puff->mom[MX] = 1.3 * FIX2FLT(finecosine[an]);
+        puff->mom[MY] = 1.3 * FIX2FLT(finesine[an]);
+        puff->mom[MZ] = 0;
+    }
 
-    puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos, actor->angle - ANG90, 0);
-    an = puff->angle >> ANGLETOFINESHIFT;
-
-    puff->mom[MX] = 1.3 * FIX2FLT(finecosine[an]);
-    puff->mom[MY] = 1.3 * FIX2FLT(finesine[an]);
-    puff->mom[MZ] = 0;
+    if((puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos, actor->angle - ANG90, 0)))
+    {
+        an = puff->angle >> ANGLETOFINESHIFT;
+        puff->mom[MX] = 1.3 * FIX2FLT(finecosine[an]);
+        puff->mom[MY] = 1.3 * FIX2FLT(finesine[an]);
+        puff->mom[MZ] = 0;
+    }
 }
 
 void C_DECL A_InitPhoenixPL2(player_t *player, pspdef_t *psp)
@@ -1640,19 +1658,21 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
 
     slope = sin(LOOKDIR2RAD(player->plr->lookDir)) / 1.2;
 
-    mo = P_SpawnMobj3fv(MT_PHOENIXFX2, pos, angle, 0);
-    mo->target = pmo;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->mom[MX] = pmo->mom[MX] + mo->info->speed * FIX2FLT(finecosine[an]);
-    mo->mom[MY] = pmo->mom[MY] + mo->info->speed * FIX2FLT(finesine[an]);
-    mo->mom[MZ] = mo->info->speed * slope;
-
-    if(!player->refire || !(mapTime % 38))
+    if((mo = P_SpawnMobj3fv(MT_PHOENIXFX2, pos, angle, 0)))
     {
-        S_StartSoundEx(SFX_PHOPOW, player->plr->mo);
-    }
+        mo->target = pmo;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->mom[MX] = pmo->mom[MX] + mo->info->speed * FIX2FLT(finecosine[an]);
+        mo->mom[MY] = pmo->mom[MY] + mo->info->speed * FIX2FLT(finesine[an]);
+        mo->mom[MZ] = mo->info->speed * slope;
 
-    P_CheckMissileSpawn(mo);
+        if(!player->refire || !(mapTime % 38))
+        {
+            S_StartSoundEx(SFX_PHOPOW, player->plr->mo);
+        }
+
+        P_CheckMissileSpawn(mo);
+    }
 }
 
 void C_DECL A_ShutdownPhoenixPL2(player_t *player, pspdef_t *psp)
@@ -1828,12 +1848,12 @@ void C_DECL A_FireBomb(mobj_t* mo)
         return;
 
     an = mo->angle >> ANGLETOFINESHIFT;
-    bomb = P_SpawnMobj3f(MT_FIREBOMB,
-                         mo->pos[VX] + 24 * FIX2FLT(finecosine[an]),
-                         mo->pos[VY] + 24 * FIX2FLT(finesine[an]),
-                         mo->pos[VZ] - mo->floorClip + 15,
-                         mo->angle, 0);
-    if(bomb)
+
+    if((bomb = P_SpawnMobj3f(MT_FIREBOMB,
+                             mo->pos[VX] + 24 * FIX2FLT(finecosine[an]),
+                             mo->pos[VY] + 24 * FIX2FLT(finesine[an]),
+                             mo->pos[VZ] - mo->floorClip + 15,
+                             mo->angle, 0)))
     {
         bomb->target = mo;
     }

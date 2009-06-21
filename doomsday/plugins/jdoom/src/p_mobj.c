@@ -815,9 +815,61 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                       angle_t angle, int spawnFlags)
 {
     mobj_t*             mo;
-    mobjinfo_t*         info = &MOBJINFO[type];
+    mobjinfo_t*         info;
     float               space;
     int                 ddflags = 0;
+
+    info = &MOBJINFO[type];
+
+    // Clients only spawn local objects.
+    if(!(info->flags & MF_LOCAL) && IS_CLIENT)
+        return NULL;
+
+    // Not for deathmatch?
+    if(deathmatch && (info->flags & MF_NOTDMATCH))
+        return NULL;
+
+    // Check for specific disabled objects.
+    if(IS_NETGAME)
+    {
+        // Cooperative weapons?
+        if(cfg.noCoopWeapons && !deathmatch && type >= MT_CLIP &&
+           type <= MT_SUPERSHOTGUN)
+            return NULL;
+
+        // Don't spawn any special objects in coop?
+        if(cfg.noCoopAnything && !deathmatch)
+            return NULL;
+
+        // BFG disabled in netgames?
+        if(cfg.noNetBFG && type == MT_MISC25)
+            return NULL;
+    }
+
+    switch(type)
+    {
+    case MT_SPIDER: // 68, Arachnotron
+    case MT_VILE: // 64, Archvile
+    case MT_BOSSBRAIN: // 88, Boss Brain
+    case MT_BOSSSPIT: // 89, Boss Shooter
+    case MT_KNIGHT: // 69, Hell Knight
+    case MT_FATSO: // 67, Mancubus
+    case MT_PAIN: // 71, Pain Elemental
+    case MT_MEGA: // 74, MegaSphere
+    case MT_CHAINGUY: // 65, Former Human Commando
+    case MT_UNDEAD: // 66, Revenant
+    case MT_WOLFSS: // 84, Wolf SS
+        if(gameMode != commercial)
+            return NULL;
+        break;
+
+    default:
+        break;
+    }
+
+    // Don't spawn any monsters if -noMonstersParm.
+    if(noMonstersParm && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
+        return NULL;
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
@@ -1019,11 +1071,14 @@ mobj_t* P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
 
 void P_SpawnPuff(float x, float y, float z, angle_t angle)
 {
-    mobj_t*             th = P_SpawnCustomPuff(MT_PUFF, x, y, z, angle);
+    mobj_t*             th;
 
-    // Don't make punches spark on the wall.
-    if(th && attackRange == MELEERANGE)
-        P_MobjChangeState(th, S_PUFF3);
+    if((th = P_SpawnCustomPuff(MT_PUFF, x, y, z, angle)))
+    {
+        // Don't make punches spark on the wall.
+        if(th && attackRange == MELEERANGE)
+            P_MobjChangeState(th, S_PUFF3);
+    }
 }
 
 void P_SpawnBlood(float x, float y, float z, int damage, angle_t angle)
@@ -1031,17 +1086,19 @@ void P_SpawnBlood(float x, float y, float z, int damage, angle_t angle)
     mobj_t*             th;
 
     z += FIX2FLT((P_Random() - P_Random()) << 10);
-    th = P_SpawnMobj3f(MT_BLOOD, x, y, z, angle, 0);
-    th->mom[MZ] = 2;
-    th->tics -= P_Random() & 3;
+    if((th = P_SpawnMobj3f(MT_BLOOD, x, y, z, angle, 0)))
+    {
+        th->mom[MZ] = 2;
+        th->tics -= P_Random() & 3;
 
-    if(th->tics < 1)
-        th->tics = 1;
+        if(th->tics < 1)
+            th->tics = 1;
 
-    if(damage <= 12 && damage >= 9)
-        P_MobjChangeState(th, S_BLOOD2);
-    else if(damage < 9)
-        P_MobjChangeState(th, S_BLOOD3);
+        if(damage <= 12 && damage >= 9)
+            P_MobjChangeState(th, S_BLOOD2);
+        else if(damage < 9)
+            P_MobjChangeState(th, S_BLOOD3);
+    }
 }
 
 /**
@@ -1152,7 +1209,8 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
             angle += (P_Random() - P_Random()) << 20;
     }
 
-    th = P_SpawnMobj3fv(type, pos, angle, 0);
+    if(!(th = P_SpawnMobj3fv(type, pos, angle, 0)))
+        return NULL;
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);

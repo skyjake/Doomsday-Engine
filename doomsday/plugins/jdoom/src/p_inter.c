@@ -931,11 +931,10 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     // 3D sprites.
     angle = P_Random() << 24;
     an = angle >> ANGLETOFINESHIFT;
-    mo = P_SpawnMobj3f(item,
-                       target->pos[VX] + 3 * FIX2FLT(finecosine[an]),
-                       target->pos[VY] + 3 * FIX2FLT(finesine[an]),
-                       0, angle, MSF_Z_FLOOR);
-    mo->flags |= MF_DROPPED; // Special versions of items.
+    if((mo = P_SpawnMobj3f(item, target->pos[VX] + 3 * FIX2FLT(finecosine[an]),
+                           target->pos[VY] + 3 * FIX2FLT(finesine[an]),
+                           0, angle, MSF_Z_FLOOR)))
+        mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
 /**

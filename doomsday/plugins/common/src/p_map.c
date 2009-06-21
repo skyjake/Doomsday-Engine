@@ -1751,10 +1751,10 @@ if(lineWasHit)
 #if __JHERETIC__
     if(puffType == MT_BLASTERPUFF1)
     {   // Make blaster big puff.
-        mobj_t*             mo =
-            P_SpawnMobj3fv(MT_BLASTERPUFF2, pos, P_Random() << 24, 0);
+        mobj_t*             mo;
 
-        S_StartSound(SFX_BLSHIT, mo);
+        if((mo = P_SpawnMobj3fv(MT_BLASTERPUFF2, pos, P_Random() << 24, 0)))
+            S_StartSound(SFX_BLSHIT, mo);
     }
     else
         P_SpawnPuff(pos[VX], pos[VY], pos[VZ], P_Random() << 24);
@@ -2653,12 +2653,13 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
 #endif
         {
             // Spray blood in a random direction.
-            mo = P_SpawnMobj3f(MT_BLOOD, thing->pos[VX], thing->pos[VY],
-                               thing->pos[VZ] + (thing->height /2),
-                               P_Random() << 24, 0);
-
-            mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 12);
-            mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 12);
+            if((mo = P_SpawnMobj3f(MT_BLOOD, thing->pos[VX], thing->pos[VY],
+                                   thing->pos[VZ] + (thing->height /2),
+                                   P_Random() << 24, 0)))
+            {
+                mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 12);
+                mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 12);
+            }
         }
     }
 

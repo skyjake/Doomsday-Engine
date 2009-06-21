@@ -617,8 +617,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     pos[VY] += FIX2FLT((P_Random() - 128) << 11);
     pos[VZ] += actor->height / 2;
 
-    mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24, 0);
-    if(mo)
+    if((mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24, 0)))
     {
         S_StartSound(SFX_BAREXP, mo);
         mo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
@@ -1414,29 +1413,31 @@ void C_DECL A_SetFloorFire(mobj_t *actor)
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
     pos[VZ]  = ONFLOORZ;
 
-    mo = P_SpawnMobj3fv(MT_SPAWNFIRE, pos);
-    mo->target = actor->target;
+    if((mo = P_SpawnMobj3fv(MT_SPAWNFIRE, pos)))
+        mo->target = actor->target;
 */
 }
 
 /**
  * d64tc
  */
-void C_DECL A_MotherBallExplode(mobj_t *spread)
+void C_DECL A_MotherBallExplode(mobj_t* spread)
 {
-    int                 i, an;
-    angle_t             angle;
-    mobj_t*             shard;
+    int                 i;
 
     for(i = 0; i < 8; ++i)
     {
-        angle = i * ANG45;
+        angle_t             angle = i * ANG45;
+        mobj_t*             shard;
 
-        shard = P_SpawnMobj3fv(MT_HEADSHOT, spread->pos, angle, 0);
-        shard->target = spread->target;
-        an = angle >> ANGLETOFINESHIFT;
-        shard->mom[MX] = shard->info->speed * FIX2FLT(finecosine[an]);
-        shard->mom[MY] = shard->info->speed * FIX2FLT(finesine[an]);
+        if((shard = P_SpawnMobj3fv(MT_HEADSHOT, spread->pos, angle, 0)))
+        {
+            unsigned int        an = angle >> ANGLETOFINESHIFT;
+
+            shard->target = spread->target;
+            shard->mom[MX] = shard->info->speed * FIX2FLT(finecosine[an]);
+            shard->mom[MY] = shard->info->speed * FIX2FLT(finesine[an]);
+        }
     }
 }
 
@@ -1550,28 +1551,28 @@ void C_DECL A_BruisAttack(mobj_t *actor)
     P_SpawnMissile(missileType, actor, actor->target);
 }
 
-void C_DECL A_SkelMissile(mobj_t *actor)
+void C_DECL A_SkelMissile(mobj_t* actor)
 {
-    mobj_t             *mo;
+    mobj_t*             mo;
 
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
-    mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
 
-    mo->pos[VX] += mo->mom[MX];
-    mo->pos[VY] += mo->mom[MY];
-    mo->tracer = actor->target;
+    if((mo = P_SpawnMissile(MT_TRACER, actor, actor->target)))
+    {
+        mo->pos[VX] += mo->mom[MX];
+        mo->pos[VY] += mo->mom[MY];
+        mo->tracer = actor->target;
+    }
 }
 
-void C_DECL A_Tracer(mobj_t *actor)
+void C_DECL A_Tracer(mobj_t* actor)
 {
     angle_t             exact;
-    float               dist;
-    float               slope;
-    mobj_t             *dest;
-    mobj_t             *th;
+    float               dist, slope;
+    mobj_t*             dest, *th;
 
     if((int) GAMETIC & 3)
         return;
@@ -1581,15 +1582,15 @@ void C_DECL A_Tracer(mobj_t *actor)
                       actor->pos[VY],
                       actor->pos[VZ], actor->angle + ANG180);
 
-    th = P_SpawnMobj3f(MT_SMOKE,
-                       actor->pos[VX] - actor->mom[MX],
-                       actor->pos[VY] - actor->mom[MY],
-                       actor->pos[VZ], actor->angle + ANG180, 0);
-
-    th->mom[MZ] = 1;
-    th->tics -= P_Random() & 3;
-    if(th->tics < 1)
-        th->tics = 1;
+    if((th = P_SpawnMobj3f(MT_SMOKE, actor->pos[VX] - actor->mom[MX],
+                           actor->pos[VY] - actor->mom[MY], actor->pos[VZ],
+                           actor->angle + ANG180, 0)))
+    {
+        th->mom[MZ] = 1;
+        th->tics -= P_Random() & 3;
+        if(th->tics < 1)
+            th->tics = 1;
+    }
 
     // Adjust direction.
     dest = actor->tracer;
@@ -1804,7 +1805,9 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
         if(P_CheckSides(actor, pos[VX], pos[VY]))
             return;
 
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
+        if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
+            return;
+
         sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
@@ -1820,7 +1823,8 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     }
     else
     {   // Use the original DOOM method.
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
+        if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
+            return;
     }
 
     // Check for movements, $dropoff_fix.
@@ -1892,14 +1896,14 @@ void A_Rocketshootpuff(mobj_t* actor, angle_t angle)
     pos[VY] += prestep * FIX2FLT(finesine[an]);
     pos[VZ] += 8;
 
-    mo = P_SpawnMobj3fv(MT_ROCKETPUFF, pos, angle, 0);
-
-    // Check for movements $dropoff_fix.
-    if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY], false, false))
+    if((mo = P_SpawnMobj3fv(MT_ROCKETPUFF, pos, angle, 0)))
     {
-        // Kill it immediately.
-        P_DamageMobj(mo, actor, actor, 10000, false);
-        return;
+        // Check for movements $dropoff_fix.
+        if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY], false, false))
+        {
+            // Kill it immediately.
+            P_DamageMobj(mo, actor, actor, 10000, false);
+        }
     }
 }
 
@@ -1956,10 +1960,10 @@ void C_DECL A_Scream(mobj_t *actor)
 /**
  * d64tc
  */
-void C_DECL A_CyberDeath(mobj_t *actor)
+void C_DECL A_CyberDeath(mobj_t* actor)
 {
     int                 i;
-    mobj_t             *mo;
+    mobj_t*             mo;
     float               pos[3];
     linedef_t*          dummyLine;
     countmobjoftypeparams_t params;
@@ -1969,8 +1973,7 @@ void C_DECL A_CyberDeath(mobj_t *actor)
     pos[VY] += FIX2FLT((P_Random() - 128) << 11);
     pos[VZ] += actor->height / 2;
 
-    mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24, 0);
-    if(mo)
+    if((mo = P_SpawnMobj3fv(MT_KABOOM, pos, P_Random() << 24, 0)))
     {
         S_StartSound(SFX_BAREXP, mo);
         mo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);

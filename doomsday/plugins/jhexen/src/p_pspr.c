@@ -883,11 +883,10 @@ void C_DECL A_LightningZap(mobj_t *mo)
         deltaZ = -10;
     }
 
-    pmo = P_SpawnMobj3f(MT_LIGHTNING_ZAP,
-                        mo->pos[VX] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
-                        mo->pos[VY] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
-                        mo->pos[VZ] + deltaZ, P_Random() << 24, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3f(MT_LIGHTNING_ZAP,
+                            mo->pos[VX] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
+                            mo->pos[VY] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
+                            mo->pos[VZ] + deltaZ, P_Random() << 24, 0)))
     {
         pmo->lastEnemy = mo;
         pmo->mom[MX] = mo->mom[MX];
@@ -961,17 +960,16 @@ void C_DECL A_LastZap(mobj_t* mo)
 {
     mobj_t*             pmo;
 
-    pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos, P_Random() << 24, 0);
-    if(pmo)
+    if((pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos, P_Random() << 24, 0)))
     {
         P_MobjChangeState(pmo, S_LIGHTNING_ZAP_X1);
         pmo->mom[MZ] = 40;
     }
 }
 
-void C_DECL A_LightningRemove(mobj_t *mo)
+void C_DECL A_LightningRemove(mobj_t* mo)
 {
-    mobj_t         *target;
+    mobj_t*             target;
 
     target = mo->lastEnemy;
     if(target)
@@ -981,12 +979,11 @@ void C_DECL A_LightningRemove(mobj_t *mo)
     }
 }
 
-void MStaffSpawn(mobj_t *mo, angle_t angle)
+void MStaffSpawn(mobj_t* mo, angle_t angle)
 {
-    mobj_t         *pmo;
+    mobj_t*             pmo;
 
-    pmo = P_SPMAngle(MT_MSTAFF_FX2, mo, angle);
-    if(pmo)
+    if((pmo = P_SPMAngle(MT_MSTAFF_FX2, mo, angle)))
     {
         pmo->target = mo;
         pmo->tracer = P_RoughMonsterSearch(pmo, 10*128);
@@ -1439,19 +1436,25 @@ void C_DECL A_CFlameAttack(player_t *plr, pspdef_t *psp)
     S_StartSound(SFX_CLERIC_FLAME_FIRE, plr->plr->mo);
 }
 
-void C_DECL A_CFlamePuff(mobj_t *mo)
+void C_DECL A_CFlamePuff(mobj_t* mo)
 {
+    if(!mo)
+        return;
+
     A_UnHideThing(mo);
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
 }
 
-void C_DECL A_CFlameMissile(mobj_t *mo)
+void C_DECL A_CFlameMissile(mobj_t* mo)
 {
-    int         i;
-    uint        an, an90;
-    float       dist;
-    mobj_t     *pmo;
+    int                 i;
+    uint                an, an90;
+    float               dist;
+    mobj_t*             pmo;
+
+    if(!mo)
+        return;
 
     A_UnHideThing(mo);
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
@@ -1464,12 +1467,12 @@ void C_DECL A_CFlameMissile(mobj_t *mo)
         {
             an = (i * ANG45) >> ANGLETOFINESHIFT;
             an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
-            pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
-                                blockingMobj->pos[VX] + dist * FIX2FLT(finecosine[an]),
-                                blockingMobj->pos[VY] + dist * FIX2FLT(finesine[an]),
-                                blockingMobj->pos[VZ] + 5,
-                                (angle_t) an << ANGLETOFINESHIFT, 0);
-            if(pmo)
+
+            if((pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
+                                    blockingMobj->pos[VX] + dist * FIX2FLT(finecosine[an]),
+                                    blockingMobj->pos[VY] + dist * FIX2FLT(finesine[an]),
+                                    blockingMobj->pos[VZ] + 5,
+                                    (angle_t) an << ANGLETOFINESHIFT, 0)))
             {
                 pmo->target = mo->target;
                 pmo->mom[MX] = FLAMESPEED * FIX2FLT(finecosine[an]);
@@ -1480,12 +1483,11 @@ void C_DECL A_CFlameMissile(mobj_t *mo)
                 pmo->tics -= P_Random() & 3;
             }
 
-            pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
+            if((pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
                                 blockingMobj->pos[VX] - dist * FIX2FLT(finecosine[an]),
                                 blockingMobj->pos[VY] - dist * FIX2FLT(finesine[an]),
                                 blockingMobj->pos[VZ] + 5,
-                                (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0);
-            if(pmo)
+                                (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0)))
             {
                 pmo->target = mo->target;
                 pmo->mom[MX] = -FLAMESPEED * FIX2FLT(finecosine[an]);
@@ -1535,8 +1537,7 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
         angle_t             angle = mo->angle + (ANGLE_45 + ANGLE_45 / 2) -
             ANGLE_45 * i;
 
-        pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos, angle, 0);
-        if(!pmo)
+        if(!(pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos, angle, 0)))
             continue;
 
         switch(i) // float bob index
@@ -1576,18 +1577,23 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
             pmo->flags &= ~MF_MISSILE;
         }
 
-        tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos, pmo->angle + ANG180, 0);
-        tail->target = pmo; // Parent.
-        for(j = 1; j < 3; ++j)
+        if((tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
+                                  pmo->angle + ANG180, 0)))
         {
-            next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
-                                  pmo->angle + ANG180, 0);
-            P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
-            tail->tracer = next;
-            tail = next;
-        }
+            tail->target = pmo; // Parent.
+            for(j = 1; j < 3; ++j)
+            {
+                if((next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
+                                          pmo->angle + ANG180, 0)))
+                {
+                    P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
+                    tail->tracer = next;
+                    tail = next;
+                }
+            }
 
-        tail->tracer = NULL;     // last tail bit
+            tail->tracer = NULL; // last tail bit
+        }
     }
 }
 

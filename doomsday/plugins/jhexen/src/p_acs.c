@@ -1625,12 +1625,12 @@ static int CmdAmbientSound(void)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
-        mobj = P_SpawnMobj3f(MT_CAMERA,
-                             plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
-                             plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
-                             plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
-                             0, 0); // A camera's a good temporary source.
-        mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
+        if((mobj = P_SpawnMobj3f(MT_CAMERA,
+                                 plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 0, 0))) // A camera's a good temporary source.
+            mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
 
     sound = S_GetSoundID(GetACString(Pop()));

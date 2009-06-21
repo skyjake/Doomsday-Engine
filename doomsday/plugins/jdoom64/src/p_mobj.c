@@ -861,6 +861,35 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
+    // Clients only spawn local objects.
+    if(!(info->flags & MF_LOCAL) && IS_CLIENT)
+        return NULL;
+
+    // Not for deathmatch?
+    if(deathmatch && (info->flags & MF_NOTDMATCH))
+        return NULL;
+
+    // Check for specific disabled objects.
+    if(IS_NETGAME)
+    {
+        // Cooperative weapons?
+        if(cfg.noCoopWeapons && !deathmatch && type >= MT_CLIP &&
+           type <= MT_SUPERSHOTGUN)
+            return NULL;
+
+        // Don't spawn any special objects in coop?
+        if(cfg.noCoopAnything && !deathmatch)
+            return NULL;
+
+        // BFG disabled in netgames?
+        if(cfg.noNetBFG && type == MT_MISC25)
+            return NULL;
+    }
+
+    // Don't spawn any monsters if -noMonstersParm.
+    if(noMonstersParm && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
+        return NULL;
+
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
     if(info->flags & MF_NOBLOCKMAP)
@@ -916,6 +945,12 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
         mo->pos[VZ] = mo->floorZ + z;
     }
 
+    /*if(spawnFlags & MTF_FLOAT)
+    {
+        mo->pos[VZ] += 96;
+        mo->flags |= (MF_FLOAT | MF_NOGRAVITY);
+    }*/
+
     if(spawnFlags & MSF_DEAF)
         mo->flags |= MF_AMBUSH;
 
@@ -931,6 +966,12 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
             mo->floorClip = 10;
         }
     }
+
+    /*if(spawnFlags & MTF_WALKOFF)
+        mo->flags |= (MF_FLOAT | MF_DROPOFF);
+
+    if(spawnFlags & MTF_TRANSLUCENT)
+        mo->flags |= MF_SHADOW;*/
 
     // Copy spawn attributes to the new mobj.
     mo->spawnSpot.pos[VX] = x;
@@ -1183,7 +1224,8 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
             angle += (P_Random() - P_Random()) << 20;
     }
 
-    th = P_SpawnMobj3fv(type, pos, angle, 0);
+    if(!(th = P_SpawnMobj3fv(type, pos, angle, 0)))
+        return NULL;
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);
@@ -1277,18 +1319,20 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t sourceAngle)
     pos[VZ] += spawnZOff;
     pos[VZ] -= source->floorClip;
 
-    th = P_SpawnMobj3fv(type, pos, angle, 0);
+    if((th = P_SpawnMobj3fv(type, pos, angle, 0)))
+    {
+        th->target = source;
+        an = angle >> ANGLETOFINESHIFT;
+        th->mom[MX] = movfactor * th->info->speed * FIX2FLT(finecosine[an]);
+        th->mom[MY] = movfactor * th->info->speed * FIX2FLT(finesine[an]);
+        th->mom[MZ] = th->info->speed * slope;
 
-    th->target = source;
-    an = angle >> ANGLETOFINESHIFT;
-    th->mom[MX] = movfactor * th->info->speed * FIX2FLT(finecosine[an]);
-    th->mom[MY] = movfactor * th->info->speed * FIX2FLT(finesine[an]);
-    th->mom[MZ] = th->info->speed * slope;
+        if(th->info->seeSound)
+            S_StartSound(th->info->seeSound, th);
 
-    if(th->info->seeSound)
-        S_StartSound(th->info->seeSound, th);
+        P_CheckMissileSpawn(th);
+    }
 
-    P_CheckMissileSpawn(th);
     return th;
 }
 
@@ -1311,7 +1355,8 @@ mobj_t* P_SpawnMotherMissile(mobjtype_t type, float x, float y, float z,
         angle += (P_Random() - P_Random()) << 21;
     }
 
-    th = P_SpawnMobj3f(type, x, y, z, angle, 0);
+    if(!(th = P_SpawnMobj3f(type, x, y, z, angle, 0)))
+        return NULL;
 
     if(th->info->seeSound)
         S_StartSound(th->info->seeSound, th);

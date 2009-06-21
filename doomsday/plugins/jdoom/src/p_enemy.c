@@ -1031,14 +1031,13 @@ void C_DECL A_SkelMissile(mobj_t *actor)
     }
 }
 
-void C_DECL A_Tracer(mobj_t *actor)
+void C_DECL A_Tracer(mobj_t* actor)
 {
     uint                an;
     angle_t             angle;
     float               dist;
     float               slope;
-    mobj_t             *dest;
-    mobj_t             *th;
+    mobj_t*             dest, *th;
 
     if((int) GAMETIC & 3)
         return;
@@ -1048,15 +1047,15 @@ void C_DECL A_Tracer(mobj_t *actor)
                       actor->pos[VY],
                       actor->pos[VZ], actor->angle + ANG180);
 
-    th = P_SpawnMobj3f(MT_SMOKE,
-                       actor->pos[VX] - actor->mom[MX],
-                       actor->pos[VY] - actor->mom[MY],
-                       actor->pos[VZ], actor->angle + ANG180, 0);
-
-    th->mom[MZ] = FIX2FLT(FRACUNIT);
-    th->tics -= P_Random() & 3;
-    if(th->tics < 1)
-        th->tics = 1;
+    if((th = P_SpawnMobj3f(MT_SMOKE, actor->pos[VX] - actor->mom[MX],
+                           actor->pos[VY] - actor->mom[MY], actor->pos[VZ],
+                           actor->angle + ANG180, 0)))
+    {
+        th->mom[MZ] = FIX2FLT(FRACUNIT);
+        th->tics -= P_Random() & 3;
+        if(th->tics < 1)
+            th->tics = 1;
+    }
 
     // Adjust direction.
     dest = actor->tracer;
@@ -1294,22 +1293,23 @@ void C_DECL A_Fire(mobj_t *actor)
 /**
  * Spawn the archviles' hellfire
  */
-void C_DECL A_VileTarget(mobj_t *actor)
+void C_DECL A_VileTarget(mobj_t* actor)
 {
-    mobj_t             *fog;
+    mobj_t*             fog;
 
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
 
-    fog = P_SpawnMobj3fv(MT_FIRE, actor->target->pos,
-                         actor->target->angle + ANG180, 0);
-
-    actor->tracer = fog;
-    fog->target = actor;
-    fog->tracer = actor->target;
-    A_Fire(fog);
+    if((fog = P_SpawnMobj3fv(MT_FIRE, actor->target->pos,
+                             actor->target->angle + ANG180, 0)))
+    {
+        actor->tracer = fog;
+        fog->target = actor;
+        fog->tracer = actor->target;
+        A_Fire(fog);
+    }
 }
 
 void C_DECL A_VileAttack(mobj_t* actor)
@@ -1495,7 +1495,9 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         if(P_CheckSides(actor, pos[VX], pos[VY]))
             return;
 
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
+        if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
+            return;
+
         sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
@@ -1511,7 +1513,8 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     }
     else
     {   // Use the original DOOM method.
-        newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
+        if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
+            return;
     }
 
     // Check for movements, $dropoff_fix.
@@ -1808,12 +1811,12 @@ void C_DECL A_BabyMetal(mobj_t *mo)
     A_Chase(mo);
 }
 
-void C_DECL A_BrainAwake(mobj_t *mo)
+void C_DECL A_BrainAwake(mobj_t* mo)
 {
     S_StartSound(SFX_BOSSIT, NULL);
 }
 
-void C_DECL A_BrainPain(mobj_t *mo)
+void C_DECL A_BrainPain(mobj_t* mo)
 {
     S_StartSound(SFX_BOSPN, NULL);
 }
@@ -1821,23 +1824,26 @@ void C_DECL A_BrainPain(mobj_t *mo)
 void C_DECL A_BrainScream(mobj_t* mo)
 {
     float               pos[3];
-    mobj_t*             th;
 
     pos[VY] = mo->pos[VY] - 320;
 
     for(pos[VX] = mo->pos[VX] - 196; pos[VX] < mo->pos[VX] + 320;
         pos[VX] += 8)
     {
+        mobj_t*             th;
+
         pos[VZ] = 128 + (P_Random() * 2);
 
-        th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0);
-        th->mom[MZ] = FIX2FLT(P_Random() * 512);
+        if((th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0)))
+        {
+            th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
-        P_MobjChangeState(th, S_BRAINEXPLODE1);
+            P_MobjChangeState(th, S_BRAINEXPLODE1);
 
-        th->tics -= P_Random() & 7;
-        if(th->tics < 1)
-            th->tics = 1;
+            th->tics -= P_Random() & 7;
+            if(th->tics < 1)
+                th->tics = 1;
+        }
     }
 
     S_StartSound(SFX_BOSDTH, NULL);
@@ -1852,14 +1858,16 @@ void C_DECL A_BrainExplode(mobj_t* mo)
     pos[VY] = mo->pos[VY];
     pos[VZ] = 128 + (P_Random() * 2);
 
-    th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0);
-    th->mom[MZ] = FIX2FLT(P_Random() * 512);
+    if((th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0)))
+    {
+        th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
-    P_MobjChangeState(th, S_BRAINEXPLODE1);
+        P_MobjChangeState(th, S_BRAINEXPLODE1);
 
-    th->tics -= P_Random() & 7;
-    if(th->tics < 1)
-        th->tics = 1;
+        th->tics -= P_Random() & 7;
+        if(th->tics < 1)
+            th->tics = 1;
+    }
 }
 
 void C_DECL A_BrainDie(mobj_t *mo)
@@ -1918,8 +1926,8 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     targ = mo->target;
 
     // First spawn teleport fog.
-    fog = P_SpawnMobj3fv(MT_SPAWNFIRE, targ->pos, targ->angle + ANG180, 0);
-    S_StartSound(SFX_TELEPT, fog);
+    if((fog = P_SpawnMobj3fv(MT_SPAWNFIRE, targ->pos, targ->angle + ANG180, 0)))
+        S_StartSound(SFX_TELEPT, fog);
 
     // Randomly select monster to spawn.
     r = P_Random();
@@ -1948,13 +1956,14 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     else
         type = MT_BRUISER;
 
-    newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24, 0);
+    if((newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24, 0)))
+    {
+        if(lookForPlayers(newmobj, true))
+            P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));
 
-    if(lookForPlayers(newmobj, true))
-        P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));
-
-    // Telefrag anything in this spot.
-    P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
+        // Telefrag anything in this spot.
+        P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
+    }
 
     // Remove self (i.e., cube).
     P_MobjRemove(mo, true);

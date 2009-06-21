@@ -744,19 +744,24 @@ boolean P_UndoPlayerMorph(player_t *player)
     mo = P_SpawnMobj3fv(MT_PLAYER, pos, angle, 0);
 # endif
 
+    if(!mo)
+        return false;
+
     if(P_TestMobjLocation(mo) == false)
     {   // Didn't fit
         P_MobjRemove(mo, false);
-        mo = P_SpawnMobj3fv(oldBeast, pos, angle, 0);
+        if((mo = P_SpawnMobj3fv(oldBeast, pos, angle, 0)))
+        {
+            mo->health = player->health;
+            mo->special1 = weapon;
+            mo->player = player;
+            mo->dPlayer = player->plr;
+            mo->flags = oldFlags;
+            mo->flags2 = oldFlags2;
+            player->plr->mo = mo;
+            player->morphTics = 2 * 35;
+        }
 
-        mo->health = player->health;
-        mo->special1 = weapon;
-        mo->player = player;
-        mo->dPlayer = player->plr;
-        mo->flags = oldFlags;
-        mo->flags2 = oldFlags2;
-        player->plr->mo = mo;
-        player->morphTics = 2 * 35;
         return false;
     }
 
@@ -801,15 +806,17 @@ boolean P_UndoPlayerMorph(player_t *player)
     an = angle >> ANGLETOFINESHIFT;
 // REWRITE ME - I MATCH HEXEN UNTIL HERE
 
-    fog = P_SpawnMobj3f(MT_TFOG,
-                        pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                        pos[VY] + 20 * FIX2FLT(finesine[an]),
-                        pos[VZ] + TELEFOGHEIGHT, angle + ANG180, 0);
+    if((fog = P_SpawnMobj3f(MT_TFOG,
+                            pos[VX] + 20 * FIX2FLT(finecosine[an]),
+                            pos[VY] + 20 * FIX2FLT(finesine[an]),
+                            pos[VZ] + TELEFOGHEIGHT, angle + ANG180, 0)))
+    {
 # if __JHERETIC__
-    S_StartSound(SFX_TELEPT, fog);
+        S_StartSound(SFX_TELEPT, fog);
 # else
-    S_StartSound(SFX_TELEPORT, fog);
+        S_StartSound(SFX_TELEPORT, fog);
 # endif
+    }
     P_PostMorphWeapon(player, weapon);
 
     player->update |= PSF_MORPH_TIME | PSF_HEALTH;
@@ -1106,12 +1113,11 @@ void P_PlayerThinkMove(player_t *player)
         if(player->powers[PT_SPEED] && !(mapTime & 1) &&
            P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12)
         {
-            mobj_t     *speedMo;
-            int         playerNum;
+            mobj_t*             speedMo;
+            int                 playerNum;
 
-            speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos,
-                                     plrmo->angle, 0);
-            if(speedMo)
+            if((speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos,
+                                         plrmo->angle, 0)))
             {
                 playerNum = P_GetPlayerNum(player);
 
