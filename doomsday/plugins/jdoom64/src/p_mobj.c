@@ -652,9 +652,6 @@ void P_NightmareRespawn(mobj_t* mobj)
     if((mo = P_SpawnMobj3fv(mobj->type, mobj->spawnSpot.pos,
                             mobj->spawnSpot.angle, mobj->spawnSpot.flags)))
     {
-        if(mobj->spawnSpot.flags & MSF_DEAF)
-            mo->flags |= MF_AMBUSH;
-
         mo->reactionTime = 18;
 
         // Spawn a teleport fog at old spot.
@@ -854,7 +851,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     float               space;
     int                 ddflags = 0;
 
-    if(type < 0 || type >= Get(DD_NUMMOBJTYPES))
+    if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
     {
 #ifdef _DEBUG
         Con_Error("P_SpawnMobj: Illegal mo type %i.\n", type);
@@ -918,6 +915,9 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     {
         mo->pos[VZ] = mo->floorZ + z;
     }
+
+    if(spawnFlags & MSF_DEAF)
+        mo->flags |= MF_AMBUSH;
 
     mo->floorClip = 0;
 

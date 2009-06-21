@@ -1129,7 +1129,9 @@ typedef enum {
 
 // Map objects.
 typedef enum {
-    MT_PLAYER,
+    MT_NONE = -1,
+    MT_FIRST = 0,
+    MT_PLAYER = MT_FIRST,
     MT_EMARINEL,
     MT_EMARINEP,
     MT_EMARINES,

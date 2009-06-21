@@ -3190,7 +3190,9 @@ typedef enum {
 
 // Map objects.
 typedef enum {
-    MT_MAPSPOT,                       // 000
+    MT_NONE = -1,
+    MT_FIRST = 0,
+    MT_MAPSPOT = MT_FIRST,          // 000
     MT_MAPSPOTGRAVITY,               // 001
     MT_FIREBALL1,                   // 002
     MT_ARROW,                       // 003

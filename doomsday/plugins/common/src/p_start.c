@@ -151,6 +151,25 @@ static boolean fuzzySpawnPosition(float* x, float* y, float* z,
 }
 
 /**
+ * Given a doomednum, look up the associated mobj type.
+ *
+ * @param doomEdNum     Doom Editor (Thing) Number to look up.
+ * @return              The associated mobj type if found else @c MT_NONE.
+ */
+mobjtype_t P_DoomEdNumToMobjType(int doomEdNum)
+{
+    int                 i;
+
+    for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
+    {
+        if(doomEdNum == MOBJINFO[i].doomEdNum)
+            return i;
+    }
+
+    return MT_NONE;
+}
+
+/**
  * Initializes various playsim related data
  */
 void P_Init(void)
@@ -654,22 +673,93 @@ boolean P_CheckSpot(float x, float y)
 }
 
 #if __JHERETIC__
-void P_AddMaceSpot(const mapspot_t* spot)
+void P_AddMaceSpot(float x, float y, angle_t angle)
 {
-    maceSpots =
-        Z_Realloc(maceSpots, sizeof(*spot) * ++maceSpotCount, PU_MAP);
-    memcpy(&maceSpots[maceSpotCount-1], spot, sizeof(*spot));
+    mapspot_t*          spot;
+
+    maceSpots = Z_Realloc(maceSpots, sizeof(mapspot_t) * ++maceSpotCount,
+                          PU_MAP);
+    spot = &maceSpots[maceSpotCount-1];
+
+    spot->pos[VX] = x;
+    spot->pos[VY] = y;
+    spot->angle = angle;
 }
 
 void P_AddBossSpot(float x, float y, angle_t angle)
 {
+    mapspot_t*          spot;
+
     bossSpots = Z_Realloc(bossSpots, sizeof(mapspot_t) * ++bossSpotCount,
                           PU_MAP);
-    bossSpots[bossSpotCount-1].pos[VX] = x;
-    bossSpots[bossSpotCount-1].pos[VY] = y;
-    bossSpots[bossSpotCount-1].angle = angle;
+    spot = &bossSpots[bossSpotCount-1];
+
+    spot->pos[VX] = x;
+    spot->pos[VY] = y;
+    spot->angle = angle;
 }
 #endif
+
+mobj_t* P_SpawnMobjAtSpot(mobjtype_t type, const mapspot_t* spot)
+{
+    mobj_t*             mo;
+
+    if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle, spot->flags)))
+    {
+        if(mo->tics > 0)
+            mo->tics = 1 + (P_Random() % mo->tics);
+
+#if __JHEXEN__
+        mo->tid = spot->tid;
+        mo->special = spot->special;
+        mo->args[0] = spot->arg1;
+        mo->args[1] = spot->arg2;
+        mo->args[2] = spot->arg3;
+        mo->args[3] = spot->arg4;
+        mo->args[4] = spot->arg5;
+#endif
+
+#if __JHEXEN__
+        if(mo->flags2 & MF2_FLOATBOB)
+            mo->special1 = FLT2FIX(spot->pos[VZ]);
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+        if(mo->flags & MF_COUNTKILL)
+            totalKills++;
+        if(mo->flags & MF_COUNTITEM)
+            totalItems++;
+#endif
+
+#if __JHEXEN__
+        if(spot->flags & MTF_DORMANT)
+        {
+            mo->flags2 |= MF2_DORMANT;
+            if(mo->type == MT_ICEGUY)
+            {
+                P_MobjChangeState(mo, S_ICEGUY_DORMANT);
+            }
+            mo->tics = -1;
+        }
+#endif
+
+#if __JDOOM64__
+        /*if(spot->flags & MTF_WALKOFF)
+            mo->flags |= (MF_FLOAT | MF_DROPOFF);
+
+        if(spot->flags & MTF_TRANSLUCENT)
+            mo->flags |= MF_SHADOW;
+
+        if(spot->flags & MTF_FLOAT)
+        {
+            mo->pos[VZ] += 96;
+            mo->flags |= (MF_FLOAT | MF_NOGRAVITY);
+        }*/
+#endif
+    }
+
+    return mo;
+}
 
 /**
  * Spawns the passed thing into the world.
@@ -684,8 +774,9 @@ static void spawnMapThing(const mapspot_t* spot)
     };
 #endif
 
-    int                 i, spawnMask;
-    mobj_t*             mo;
+    int                 spawnMask;
+    mobjtype_t          type;
+    const mobjinfo_t*   info;
 
 /*#if _DEBUG
 Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
@@ -705,30 +796,21 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
         return;
 
 #if __JHERETIC__
-    // Ambient sound sequences.
+    // Ambient sound origin?
     if(spot->doomEdNum >= 1200 && spot->doomEdNum < 1300)
-    {
-        P_AddAmbientSfx(spot->doomEdNum - 1200);
         return;
-    }
 
-    // Check for boss spots.
-    if(spot->doomEdNum == 56)
-    {
-        P_AddBossSpot(spot->pos[VX], spot->pos[VY], spot->angle);
+    if(spot->doomEdNum == 56) // Boss spot.
         return;
-    }
+
+    if(spot->doomEdNum == 2002) // Mace spot.
+        return;
 #endif
 
 #if __JHEXEN__
+    // Sound sequence origin?
     if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
-    {
-        sector_t* sector = P_GetPtrp(
-            R_PointInSubsector(spot->pos[VX], spot->pos[VY]),
-            DMU_SECTOR);
-        P_ToXSector(sector)->seqType = spot->doomEdNum - 1400;
         return;
-    }
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC
@@ -797,6 +879,8 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
     }
     else if(deathmatch == false)
     {   // Cooperative.
+        int                 i;
+
         spawnMask = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
         {
@@ -822,38 +906,30 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
 #endif
 
     // Find which type to spawn.
-    for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
-    {
-        if(spot->doomEdNum == MOBJINFO[i].doomEdNum)
-            break;
-    }
-
-    if(i == Get(DD_NUMMOBJTYPES))
+    if((type = P_DoomEdNumToMobjType(spot->doomEdNum)) == MT_NONE)
     {
         Con_Message("spawnMapThing: Warning, unknown thing num %i at "
                     "[%g, %g, %g].\n", spot->doomEdNum, spot->pos[VX],
                     spot->pos[VY], spot->pos[VZ]);
         return;
     }
+    info = &MOBJINFO[type];
 
     // Clients only spawn local objects.
-    if(IS_CLIENT)
-    {
-        if(!(MOBJINFO[i].flags & MF_LOCAL))
-            return;
-    }
+    if(!(info->flags & MF_LOCAL) && IS_CLIENT)
+        return;
 
     // Not for deathmatch?
-    if(deathmatch && (MOBJINFO[i].flags & MF_NOTDMATCH))
+    if(deathmatch && (info->flags & MF_NOTDMATCH))
         return;
 
     // Check for specific disabled objects.
 #if __JDOOM__ || __JDOOM64__
-    if(IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
+    if((spot->flags & MSF_NOTSINGLE) && IS_NETGAME)
     {
         // Cooperative weapons?
-        if(cfg.noCoopWeapons && !deathmatch && i >= MT_CLIP &&
-           i <= MT_SUPERSHOTGUN)
+        if(cfg.noCoopWeapons && !deathmatch && type >= MT_CLIP &&
+           type <= MT_SUPERSHOTGUN)
             return;
 
         // Don't spawn any special objects in coop?
@@ -861,11 +937,11 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
             return;
 
         // BFG disabled in netgames?
-        if(cfg.noNetBFG && i == MT_MISC25)
+        if(cfg.noNetBFG && type == MT_MISC25)
             return;
     }
 # if __JDOOM__
-    switch(i)
+    switch(type)
     {
     case MT_SPIDER: // 68, Arachnotron
     case MT_VILE: // 64, Archvile
@@ -887,7 +963,7 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
     }
 # endif
 #elif __JHERETIC__
-    switch(i)
+    switch(type)
     {
     case MT_WSKULLROD:
     case MT_WPHOENIXROD:
@@ -906,19 +982,11 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
         }
         break;
 
-    case MT_WMACE:
-        if(gameMode != shareware)
-        {   // Put in the mace spot list.
-            P_AddMaceSpot(spot);
-            return;
-        }
-        return;
-
     default:
         break;
     }
 #elif __JHEXEN__
-    switch(i)
+    switch(type)
     {
     case MT_ZLYNCHED_NOHEART:
         P_SpawnMobj3fv(MT_BLOODPOOL, spot->pos, 0,
@@ -933,70 +1001,16 @@ Con_Message("spawnMapThing: x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
     // Don't spawn any monsters if -noMonstersParm.
     if(noMonstersParm)
     {
-        if((MOBJINFO[i].flags & MF_COUNTKILL)
+        if((info->flags & MF_COUNTKILL)
 #if __JDOOM__ || __JDOOM64__
-           || i == MT_SKULL
+           || type == MT_SKULL
 #endif
            )
             return;
     }
 
-    if((mo = P_SpawnMobj3fv(i, spot->pos, spot->angle, spot->flags)))
-    {
-        if(mo->tics > 0)
-            mo->tics = 1 + (P_Random() % mo->tics);
-
-#if __JHEXEN__
-        mo->tid = spot->tid;
-        mo->special = spot->special;
-        mo->args[0] = spot->arg1;
-        mo->args[1] = spot->arg2;
-        mo->args[2] = spot->arg3;
-        mo->args[3] = spot->arg4;
-        mo->args[4] = spot->arg5;
-#endif
-
-#if __JHEXEN__
-        if(mo->flags2 & MF2_FLOATBOB)
-            mo->special1 = FLT2FIX(spot->pos[VZ]);
-#endif
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        if(mo->flags & MF_COUNTKILL)
-            totalKills++;
-        if(mo->flags & MF_COUNTITEM)
-            totalItems++;
-#endif
-
-#if __JDOOM__ || __JDOOM64__
-        if(spot->flags & MSF_DEAF)
-            mo->flags |= MF_AMBUSH;
-#elif __JHEXEN__
-        if(spot->flags & MTF_DORMANT)
-        {
-            mo->flags2 |= MF2_DORMANT;
-            if(mo->type == MT_ICEGUY)
-            {
-                P_MobjChangeState(mo, S_ICEGUY_DORMANT);
-            }
-            mo->tics = -1;
-        }
-#endif
-
-#if __JDOOM64__
-        /*if(spot->flags & MTF_WALKOFF)
-            mo->flags |= (MF_FLOAT | MF_DROPOFF);
-
-        if(spot->flags & MTF_TRANSLUCENT)
-            mo->flags |= MF_SHADOW;
-
-        if(spot->flags & MTF_FLOAT)
-        {
-            mo->pos[VZ] += 96;
-            mo->flags |= (MF_FLOAT | MF_NOGRAVITY);
-        }*/
-#endif
-    }
+    // Spawn it!
+    P_SpawnMobjAtSpot(type, spot);
 }
 
 /**

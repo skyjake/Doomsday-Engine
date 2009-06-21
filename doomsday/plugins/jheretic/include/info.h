@@ -1380,7 +1380,9 @@ typedef enum {
 
 // Map objects.
 typedef enum {
-    MT_MISC0,
+    MT_NONE = -1,
+    MT_FIRST = 0,
+    MT_MISC0 = MT_FIRST,          // 000
     MT_ITEMSHIELD1,
     MT_ITEMSHIELD2,
     MT_MISC1,

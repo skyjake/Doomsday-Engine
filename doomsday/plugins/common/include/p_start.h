@@ -138,6 +138,7 @@ extern int bossSpotCount;
 #endif
 
 void            P_Init(void);
+mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
 void            P_GetMapLumpName(int episode, int map, char* lumpName);
 void            P_SpawnPlayers(void);
 void            P_MoveThingsOutOfWalls();
@@ -146,9 +147,7 @@ void            P_TurnGizmosAwayFromDoors();
 #endif
 
 #if __JHERETIC__
-void            P_AddMaceSpot(const mapspot_t* mapSpot);
-#endif
-#if __JHEXEN__
+void            P_AddMaceSpot(float x, float y, angle_t angle);
 void            P_AddBossSpot(float x, float y, angle_t angle);
 #endif
 

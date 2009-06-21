@@ -408,7 +408,28 @@ static void P_LoadMapObjs(void)
         spot->arg5 = P_GetGMOByte(MO_THING, i, MO_ARG4);
 #endif
 
-        // Register player start positions.
+#if __JHERETIC__
+        // Ambient sound origin?
+        if(spot->doomEdNum >= 1200 && spot->doomEdNum < 1300)
+        {
+            P_AddAmbientSfx(spot->doomEdNum - 1200);
+            continue;
+        }
+#elif __JHEXEN__
+        // Sound sequence origin?
+        if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
+        {
+            subsector_t*        ssec =
+                R_PointInSubsector(spot->pos[VX], spot->pos[VY]);
+            xsector_t*          xsector =
+                P_ToXSector(P_GetPtrp(ssec, DMU_SECTOR));
+
+            xsector->seqType = spot->doomEdNum - 1400;
+            continue;
+        }
+#endif
+
+        // Create special start positions.
         switch(spot->doomEdNum)
         {
         default:
@@ -435,6 +456,17 @@ static void P_LoadMapObjs(void)
                                 spot->angle, spot->flags);
             break;
             }
+
+#if __JHERETIC__
+        case 56: // Boss spot.
+            P_AddBossSpot(spot->pos[VX], spot->pos[VY], spot->angle);
+            break;
+
+        case 2002:
+            if(gameMode != shareware)
+                P_AddMaceSpot(spot->pos[VX], spot->pos[VY], spot->angle);
+            break;
+#endif
 
 #if __JHEXEN__
         case 9100: // Players 5 through 8.

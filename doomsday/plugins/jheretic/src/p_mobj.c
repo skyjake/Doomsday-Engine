@@ -1056,7 +1056,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     float               space;
     int                 ddflags = 0;
 
-    if(type < 0 || type >= Get(DD_NUMMOBJTYPES))
+    if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
     {
 #ifdef _DEBUG
         Con_Error("P_SpawnMobj: Illegal mo type %i.\n", type);
