@@ -68,17 +68,17 @@
 # define MSF_NOTDM          0x00000400 // Can not be spawned in the Deathmatch gameMode.
 # define MSF_NOTCOOP        0x00000800 // Can not be spawned in the Co-op gameMode.
 #elif __JHEXEN__
-# define MTF_FIGHTER        0x00000020
-# define MTF_CLERIC         0x00000040
-# define MTF_MAGE           0x00000080
-# define MTF_GSINGLE        0x00000100
-# define MTF_GCOOP          0x00000200
-# define MTF_GDEATHMATCH    0x00000400
+# define MSF_FIGHTER        0x00000020
+# define MSF_CLERIC         0x00000040
+# define MSF_MAGE           0x00000080
+# define MSF_NOTSINGLE      0x00000100
+# define MSF_NOTCOOP        0x00000200
+# define MSF_NOTDM          0x00000400
 // The following are not currently implemented.
-# define MTF_SHADOW         0x00000800 // (ZDOOM) Thing is 25% translucent.
-# define MTF_INVISIBLE      0x00001000 // (ZDOOM) Makes the thing invisible.
+# define MSF_SHADOW         0x00000800 // (ZDOOM) Thing is 25% translucent.
+# define MSF_INVISIBLE      0x00001000 // (ZDOOM) Makes the thing invisible.
 # define MSF_FRIENDLY       0x00002000 // (ZDOOM) Friendly monster.
-# define MTF_STILL          0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
+# define MSF_STILL          0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
 #endif
 
 // New flags:
@@ -98,7 +98,7 @@
     ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_AMBUSH|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
 #elif __JHEXEN__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MTF_NORMAL|MSF_HARD|MSF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MSF_FRIENDLY|MTF_STILL))
+    ^ (MSF_EASY|MTF_NORMAL|MSF_HARD|MSF_AMBUSH|MTF_DORMANT|MSF_FIGHTER|MSF_CLERIC|MSF_MAGE|MSF_GSINGLE|MSF_GCOOP|MSF_GDEATHMATCH|MSF_SHADOW|MSF_INVISIBLE|MSF_FRIENDLY|MSF_STILL))
 #endif
 
 typedef struct {

@@ -1490,6 +1490,13 @@ static boolean loadThings(const byte* buf, size_t len)
                 t->angle = ANG45 * (t->angle / 45);
             t->flags = SHORT(*((const int16_t*) (ptr+12)));
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+
+            /**
+             * Translate flags:
+             */
+            // Game type logic is inverted.
+            t->flags ^= (MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH);
+
             // HEXEN format things spawn relative to the floor by default
             // unless their type-specific flags override.
             t->flags |= MTF_Z_FLOOR;

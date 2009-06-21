@@ -46,5 +46,4 @@ void        P_SetupForMapData(int type, uint num);
 
 void        P_SetupMap(int episode, int map, int playermask, skillmode_t skill);
 char*       P_GetMapNiceName(void);
-void        P_SpawnThings(void);
 #endif

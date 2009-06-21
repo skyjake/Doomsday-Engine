@@ -317,6 +317,85 @@ int applySurfaceColor(void* obj, void* context)
 }
 #endif
 
+static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
+{
+#if __JHEXEN__
+    static unsigned int classFlags[] = {
+        MSF_FIGHTER,
+        MSF_CLERIC,
+        MSF_MAGE
+    };
+#endif
+
+    int                 spawnMask;
+
+    // Don't spawn things flagged for Multiplayer if we're not in a netgame.
+    if(!IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
+        return false;
+
+    // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
+    if(deathmatch && (spot->flags & MSF_NOTDM))
+        return false;
+
+    // Don't spawn things flagged for Not Coop if we're coop'in.
+    if(IS_NETGAME && !deathmatch && (spot->flags & MSF_NOTCOOP))
+        return false;
+
+    // Check for appropriate skill level.
+    if(gameSkill == SM_BABY || gameSkill == SM_EASY)
+        spawnMask = MSF_EASY;
+    else if(gameSkill == SM_HARD
+#if !__JDOOM64__
+        || gameSkill == SM_NIGHTMARE
+#endif
+        )
+        spawnMask = MSF_HARD;
+    else
+        spawnMask = MSF_MEDIUM;
+
+    if(!(spot->flags & spawnMask))
+        return false;
+
+#if __JHEXEN__
+    // Check current character classes with spawn flags.
+    if(IS_NETGAME == false)
+    {   // Single player.
+        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
+        {   // Not for current class.
+            return false;
+        }
+    }
+    else if(deathmatch == false)
+    {   // Cooperative.
+        int                 i;
+
+        spawnMask = 0;
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(players[i].plr->inGame)
+            {
+                spawnMask |= classFlags[cfg.playerClass[i]];
+            }
+        }
+
+        // No players are in the game when a dedicated server is started.
+        // In this case, we'll be generous and spawn stuff for all the
+        // classes.
+        if(!spawnMask)
+        {
+            spawnMask |= MSF_FIGHTER | MSF_CLERIC | MSF_MAGE;
+        }
+
+        if((spot->flags & spawnMask) == 0)
+        {
+            return false;
+        }
+    }
+#endif
+
+    return true;
+}
+
 static void P_LoadMapObjs(void)
 {
     uint                i;
@@ -429,18 +508,68 @@ static void P_LoadMapObjs(void)
         }
 #endif
 
-        // Create special start positions.
         switch(spot->doomEdNum)
         {
-        default:
-            break;
+        default: // A spot that should auto-spawn one (or more) mobjs.
+            {
+            mobjtype_t          type;
 
-        case 11: // Deathmatch.
+            if(!checkMapSpotSpawnFlags(spot))
+                continue;
+
+            // Find which type to spawn.
+            if((type = P_DoomEdNumToMobjType(spot->doomEdNum)) != MT_NONE)
+            {   // A known type; spawn it!
+                mobj_t*             mo;
+/*#if _DEBUG
+Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
+            spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
+            spot->doomedNum, spot->flags);
+#endif*/
+
+                if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle,
+                                        spot->flags)))
+                {
+                    if(mo->tics > 0)
+                        mo->tics = 1 + (P_Random() % mo->tics);
+
+#if __JHEXEN__
+                    mo->tid = spot->tid;
+                    mo->special = spot->special;
+                    mo->args[0] = spot->arg1;
+                    mo->args[1] = spot->arg2;
+                    mo->args[2] = spot->arg3;
+                    mo->args[3] = spot->arg4;
+                    mo->args[4] = spot->arg5;
+#endif
+
+#if __JHEXEN__
+                    if(mo->flags2 & MF2_FLOATBOB)
+                        mo->special1 = FLT2FIX(spot->pos[VZ]);
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+                    if(mo->flags & MF_COUNTKILL)
+                        totalKills++;
+                    if(mo->flags & MF_COUNTITEM)
+                        totalItems++;
+#endif
+                }
+            }
+            else
+            {
+                Con_Message("spawnMapThing: Warning, unknown thing num %i "
+                            "at [%g, %g, %g].\n", spot->doomEdNum,
+                            spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
+            }
+            break;
+            }
+        case 11: // Player start (deathmatch).
             P_CreatePlayerStart(0, 0, true, spot->pos[VX], spot->pos[VY],
                                 spot->pos[VZ], spot->angle, spot->flags);
             break;
 
-        case 1: // Players 1 through 4.
+        case 1: // Player starts 1 through 4.
         case 2:
         case 3:
         case 4:
@@ -469,7 +598,7 @@ static void P_LoadMapObjs(void)
 #endif
 
 #if __JHEXEN__
-        case 9100: // Players 5 through 8.
+        case 9100: // Player starts 5 through 8.
         case 9101:
         case 9102:
         case 9103:
@@ -635,7 +764,6 @@ int P_SetupMapWorker(void* ptr)
 
     DD_InitThinkers();
     P_LoadMapObjs();
-    P_SpawnThings();
 
 #if __JDOOM__
     if(gameMode == commercial)
