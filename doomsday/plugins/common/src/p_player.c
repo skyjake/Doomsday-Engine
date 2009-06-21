@@ -1127,7 +1127,7 @@ DEFCC(CCmdSpawnMobj)
     {
         Con_Printf("Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
         Con_Printf("Type must be a defined Thing ID or Name.\n");
-        Con_Printf("Z is an offset from the floor, 'floor' or 'ceil'.\n");
+        Con_Printf("Z is an offset from the floor, 'floor', 'ceil' or 'random'.\n");
         Con_Printf("Angle (0..360) is optional.\n");
         return true;
     }
@@ -1154,15 +1154,15 @@ DEFCC(CCmdSpawnMobj)
     pos[VY] = strtod(argv[3], 0);
     pos[VZ] = 0;
 
-    if(!stricmp(argv[4], "floor"))
-        spawnFlags |= MSF_Z_FLOOR;
-    else if(!stricmp(argv[4], "ceil"))
+    if(!stricmp(argv[4], "ceil"))
         spawnFlags |= MSF_Z_CEIL;
+    else if(!stricmp(argv[4], "random"))
+        spawnFlags |= MSF_Z_RANDOM;
     else
     {
-        pos[VZ] = strtod(argv[4], 0) +
-            P_GetFloatp(R_PointInSubsector(pos[VX], pos[VY]),
-                        DMU_FLOOR_HEIGHT);
+        spawnFlags |= MSF_Z_FLOOR;
+        if(stricmp(argv[4], "floor"))
+            pos[VZ] = strtod(argv[4], 0);
     }
 
     if(argc == 6)
@@ -1173,8 +1173,6 @@ DEFCC(CCmdSpawnMobj)
     mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags);
     if(mo)
     {
-
-
 #if __JDOOM64__
         // jd64 > kaiser - another cheesy hack!!!
         if(mo->type == MT_DART)
