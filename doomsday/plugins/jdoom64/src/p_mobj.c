@@ -1055,15 +1055,27 @@ void P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x, float y,
 
         p->class = PCLASS_PLAYER;
 
-        // Setup gun psprite.
-        P_SetupPsprites(p);
-
         // Give all cards in death match mode.
         if(deathmatch)
         {
             for(i = 0; i < NUM_KEY_TYPES; ++i)
                 p->keys[i] = true;
         }
+
+        p->pendingWeapon = WT_NOCHANGE;
+
+        // Finally, check the current position so that any interactions
+        // which would occur as a result of collision happen immediately
+        // (e.g., weapon pickups at the current position will be collected).
+        P_CheckPosition3fv(mo, mo->pos);
+
+        if(p->pendingWeapon != WT_NOCHANGE)
+            p->readyWeapon = p->pendingWeapon;
+        else
+            p->pendingWeapon = p->readyWeapon;
+
+        // Setup gun psprite.
+        P_SetupPsprites(p);
 
         // Wake up the status bar.
         ST_Start(p - players);

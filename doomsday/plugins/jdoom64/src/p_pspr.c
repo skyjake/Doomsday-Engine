@@ -833,7 +833,8 @@ void P_SetupPsprites(player_t *player)
         player->pSprites[i].state = NULL;
 
     // Spawn the gun.
-    player->pendingWeapon = player->readyWeapon;
+    if(player->pendingWeapon == WT_NOCHANGE)
+        player->pendingWeapon = player->readyWeapon;
     P_BringUpWeapon(player);
 }
 

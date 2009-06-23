@@ -714,7 +714,8 @@ void P_SetupPsprites(player_t* player)
     }
 
     // Bring up the new weapon.
-    player->pendingWeapon = player->readyWeapon;
+    if(player->pendingWeapon == WT_NOCHANGE)
+        player->pendingWeapon = player->readyWeapon;
     P_BringUpWeapon(player);
 }
 

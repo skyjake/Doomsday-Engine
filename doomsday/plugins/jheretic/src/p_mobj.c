@@ -1259,8 +1259,6 @@ void P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x, float y,
         else
             p->plr->viewHeight = (float) cfg.plrViewHeight;
 
-        P_SetupPsprites(p); // Setup gun psprite.
-
         p->class = PCLASS_PLAYER;
 
         if(deathmatch)
@@ -1271,9 +1269,23 @@ void P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x, float y,
             }
         }
 
+        p->pendingWeapon = WT_NOCHANGE;
+
+        // Finally, check the current position so that any interactions
+        // which would occur as a result of collision happen immediately
+        // (e.g., weapon pickups at the current position will be collected).
+        P_CheckPosition3fv(mo, mo->pos);
+
+        if(p->pendingWeapon != WT_NOCHANGE)
+            p->readyWeapon = p->pendingWeapon;
+        else
+            p->pendingWeapon = p->readyWeapon;
+
+        // Setup gun psprite.
+        P_SetupPsprites(p);
+
         // Wake up the status bar.
         ST_Start(p - players);
-
         // Wake up the heads up text.
         HU_Start(p - players);
     }

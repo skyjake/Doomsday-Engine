@@ -661,6 +661,7 @@ boolean P_CheckSpot(float x, float y)
     if(!(dummy = P_SpawnMobj3fv(DUMMY_TYPE, pos, 0, MSF_Z_FLOOR)))
         Con_Error("P_CheckSpot: Failed creating dummy mobj.");
 
+    dummy->flags &= ~MF_PICKUP;
     dummy->flags2 &= ~MF2_PASSMOBJ;
 
     result = P_CheckPosition3fv(dummy, pos);

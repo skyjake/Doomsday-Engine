@@ -1230,21 +1230,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 }
 
 /**
- * Called at the start.
- * Called by the game initialization functions.
- */
-void G_InitPlayer(int player)
-{
-    player_t           *p;
-
-    // set up the saved info
-    p = &players[player];
-
-    // clear everything else to defaults
-    G_PlayerReborn(player);
-}
-
-/**
  * Called when a player leaves a map.
  *
  * Jobs include; striping keys, inventory and powers from the player

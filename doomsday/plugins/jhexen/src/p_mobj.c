@@ -1436,15 +1436,29 @@ void P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x, float y,
             p->plr->viewHeight = cfg.plrViewHeight;
 
         p->plr->lookDir = 0;
-        P_SetupPsprites(p);
+
         if(deathmatch)
         {   // Give all keys in death match mode.
             p->keys = 2047;
         }
 
+        p->pendingWeapon = WT_NOCHANGE;
+
+        // Finally, check the current position so that any interactions
+        // which would occur as a result of collision happen immediately
+        // (e.g., weapon pickups at the current position will be collected).
+        P_CheckPosition3fv(mo, mo->pos);
+
+        if(p->pendingWeapon != WT_NOCHANGE)
+            p->readyWeapon = p->pendingWeapon;
+        else
+            p->pendingWeapon = p->readyWeapon;
+
+        // Setup gun psprite.
+        P_SetupPsprites(p);
+
         // Wake up the status bar.
         ST_Start(p - players);
-
         // Wake up the heads up text.
         HU_Start(p - players);
     }
