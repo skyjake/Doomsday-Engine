@@ -34,6 +34,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "doomsday.h"
+
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__

@@ -49,7 +49,7 @@
 * as soon as possible.
 *
 * For now LZSS compression is used by FileReader in engine/portable/src/m_misc.c
-* by plugins/jhexen/src/sv_save.c in many routines, and by 
+* by plugins/hexen/src/sv_save.c in many routines, and by 
 * engine/portable/include/net_main.h in the Demo_* rouines.
 */
 
@@ -64,7 +64,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include "../../../engine/unix/include/sys_findfile.h"
+#include "../../../libdeng/unix/include/sys_findfile.h"
 #include "lzss.h"
 
 // MACROS ------------------------------------------------------------------

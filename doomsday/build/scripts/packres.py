@@ -57,33 +57,33 @@ class Pack:
 # Directory contents added recursively.
 p = Pack()
 p.add_files(
-    [ ('engine/defs', 'defs'),
-      ('engine/data', 'data') ] )
+    [ ('libdeng/defs', 'defs'),
+      ('libdeng/data', 'data') ] )
 p.create('doomsday.pk3')
 
-# jdoom.pk3
+# doom.pk3
 p = Pack()
 p.add_files(
-    [ ('plugins/jdoom/defs', 'defs/jdoom'),
-      ('plugins/jdoom/data/conhelp.txt', 'data/jdoom/conhelp.txt'),
-      ('plugins/jdoom/data/lumps', '#.basedata') ] )
-p.create('jdoom.pk3')
+    [ ('plugins/doom/defs', 'defs/jdoom'),
+      ('plugins/doom/data/conhelp.txt', 'data/doom/conhelp.txt'),
+      ('plugins/doom/data/lumps', '#.basedata') ] )
+p.create('doom.pk3')
 
-# jheretic.pk3
+# heretic.pk3
 p = Pack()
 p.add_files(
-    [ ('plugins/jheretic/defs', 'defs/jheretic'),
-      ('plugins/jheretic/data/conhelp.txt', 'data/jheretic/conhelp.txt'),
-      ('plugins/jheretic/data/lumps', '#.basedata') ] )
-p.create('jheretic.pk3')
+    [ ('plugins/heretic/defs', 'defs/jheretic'),
+      ('plugins/heretic/data/conhelp.txt', 'data/heretic/conhelp.txt'),
+      ('plugins/heretic/data/lumps', '#.basedata') ] )
+p.create('heretic.pk3')
 
-# jhexen.pk3
+# hexen.pk3
 p = Pack()
 p.add_files(
-    [ ('plugins/jhexen/defs', 'defs/jhexen'),
-      ('plugins/jhexen/data/conhelp.txt', 'data/jhexen/conhelp.txt'),
-      ('plugins/jhexen/data/lumps', '#.basedata') ] )
-p.create('jhexen.pk3')
+    [ ('plugins/hexen/defs', 'defs/jhexen'),
+      ('plugins/hexen/data/conhelp.txt', 'data/hexen/conhelp.txt'),
+      ('plugins/hexen/data/lumps', '#.basedata') ] )
+p.create('hexen.pk3')
 
 # jdoom64.pk3
 p = Pack()

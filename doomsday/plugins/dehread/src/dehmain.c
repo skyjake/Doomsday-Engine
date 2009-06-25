@@ -50,13 +50,13 @@
 #include <stddef.h>
 #include <ctype.h>
 
+#define __INTERNAL_MAP_DATA_ACCESS__
+#include <doomsday.h>
+
 // This plugin accesses the internal definition arrays. This dependency should
 // be removed entirely, either by making the plugin modify the definitions
 // via an API or by integrating the plugin into the engine.
-#include "../../../engine/portable/include/def_data.h"
-
-#define __INTERNAL_MAP_DATA_ACCESS__
-#include <doomsday.h>
+#include "../../../libdeng/portable/include/def_data.h"
 
 // MACROS ------------------------------------------------------------------
 

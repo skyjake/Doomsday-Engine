@@ -1,4 +1,0 @@
-LIBRARY			JDOOM
-
-EXPORTS
-	GetGameAPI		@1
