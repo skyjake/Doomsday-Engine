@@ -131,10 +131,6 @@ boolean     P_CheckMissileSpawn(mobj_t* missile);
 void        P_MobjMoveZ(mobj_t* mo);
 void        P_ExplodeMissile(mobj_t* mo);
 
-void            P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x,
-                               float y, float z, angle_t angle,
-                               int spawnFlags, boolean makeCamera);
-
 #define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
 #define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))

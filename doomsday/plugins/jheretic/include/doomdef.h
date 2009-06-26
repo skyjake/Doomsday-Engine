@@ -47,6 +47,7 @@
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
+#include "info.h"
 
 #define Set             DD_SetInteger
 #define Get             DD_GetInteger
@@ -116,6 +117,7 @@ typedef enum {
 typedef struct classinfo_s{
     char*       niceName;
     boolean     userSelectable;
+    mobjtype_t  mobjType;
     int         normalState;
     int         runState;
     int         attackState;

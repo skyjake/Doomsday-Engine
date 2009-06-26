@@ -384,32 +384,146 @@ void P_DealPlayerStarts(byte entryPoint)
  * Called when a player is spawned into the map. Most of the player
  * structure stays unchanged between maps.
  */
-void P_SpawnPlayer(int plrNum, float x, float y, float z, angle_t angle,
-                   int spawnFlags, boolean makeCamera)
+void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
+                   float z, angle_t angle, int spawnFlags,
+                   boolean makeCamera)
 {
-#if __JHEXEN__
-    playerclass_t       pClass;
+    player_t*           p;
+    mobj_t*             mo;
 
-    if(randomClassParm && deathmatch)
+    plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS - 1);
+
+    // Not playing?
+    if(!players[plrNum].plr->inGame)
+        return;
+
+    pClass = MINMAX_OF(0, pClass, NUM_PLAYER_CLASSES - 1);
+
+    /* $unifiedangles */
+    if(!(mo = P_SpawnMobj3f(PCLASS_INFO(pClass)->mobjType, x, y, z, angle,
+                            spawnFlags)))
+        Con_Error("P_SpawnPlayer: Failed spawning mobj for player %i "
+                  "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
+                  x, y, z, angle);
+
+    p = &players[plrNum];
+    if(p->playerState == PST_REBORN)
+        G_PlayerReborn(plrNum);
+
+    // \fixme Should this not occur before the reborn?
+    p->class = pClass;
+
+    // With clients all player mobjs are remote, even the CONSOLEPLAYER.
+    if(IS_CLIENT)
     {
-        pClass = P_Random() % 3;
-        if(pClass == cfg.playerClass[plrNum])
-            pClass = (pClass + 1) % 3;
+        mo->flags &= ~MF_SOLID;
+        mo->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;
+        // The real flags are received from the server later on.
     }
-    else
+
+    // Set color translations for player sprites.
+#if __JHEXEN__
+    if(p->class == PCLASS_FIGHTER &&
+       (p->colorMap == 0 || p->colorMap == 2))
     {
-        pClass = cfg.playerClass[plrNum];
+        // The first type should be blue, and the third should be the
+        // Fighter's original gold color
+        //if(spot->type == 1)
+        if(p->colorMap == 0)
+        {
+            mo->flags |= 2 << MF_TRANSSHIFT;
+        }
+    }
+    else if(p->colorMap > 0 && p->colorMap < 8)
+    {   // Set color translation bits for player sprites
+        //mo->flags |= (spot->type-1)<<MF_TRANSSHIFT;
+        mo->flags |= p->colorMap << MF_TRANSSHIFT;
     }
 #else
-    playerclass_t       pClass = PCLASS_PLAYER;
+    if(cfg.playerColor[plrNum] > 0)
+        mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
 #endif
 
-    P_SpawnPlayer2(plrNum, pClass, x, y, z, angle, spawnFlags, makeCamera);
+    p->plr->lookDir = 0; /* $unifiedangles */
+    p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    p->jumpTics = 0;
+    p->airCounter = 0;
+    mo->player = p;
+    mo->dPlayer = p->plr;
+    mo->health = p->health;
+
+    p->plr->mo = mo;
+    p->playerState = PST_LIVE;
+    p->refire = 0;
+    p->damageCount = 0;
+    p->bonusCount = 0;
+#if __JHEXEN__
+    p->poisonCount = 0;
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    p->morphTics = 0;
+#endif
+#if __JHERETIC__
+    p->rain1 = NULL;
+    p->rain2 = NULL;
+#endif
+    p->plr->extraLight = 0;
+    p->plr->fixedColorMap = 0;
+
+    if(makeCamera)
+        p->plr->flags |= DDPF_CAMERA;
+
+    if(p->plr->flags & DDPF_CAMERA)
+    {
+        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
+        p->plr->viewHeight = 0;
+    }
+    else
+        p->plr->viewHeight = (float) cfg.plrViewHeight;
+
+    // Give all cards in death match mode.
+    if(deathmatch)
+    {
+#if __JHEXEN__
+        p->keys = 2047;
+#else
+        int                 i;
+
+        for(i = 0; i < NUM_KEY_TYPES; ++i)
+            p->keys[i] = true;
+#endif
+    }
+
+    p->pendingWeapon = WT_NOCHANGE;
+
+    // Finally, check the current position so that any interactions
+    // which would occur as a result of collision happen immediately
+    // (e.g., weapon pickups at the current position will be collected).
+    P_CheckPosition3fv(mo, mo->pos);
+
+    if(p->pendingWeapon != WT_NOCHANGE)
+        p->readyWeapon = p->pendingWeapon;
+    else
+        p->pendingWeapon = p->readyWeapon;
+
+    // Setup gun psprite.
+    P_SetupPsprites(p);
+
+    // Wake up the status bar.
+    ST_Start(p - players);
+    // Wake up the heads up text.
+    HU_Start(p - players);
+
+#if __JHEXEN__
+    cfg.playerClass[plrNum] = pClass;
+    NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
+#endif
 }
 
-static void spawnPlayer(int plrNum, float x, float y, float z,
-                        angle_t angle, int spawnFlags, boolean makeCamera,
-                        boolean doTeleSpark, boolean doTeleFrag)
+static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
+                        float z, angle_t angle, int spawnFlags,
+                        boolean makeCamera, boolean doTeleSpark,
+                        boolean doTeleFrag)
 {
     player_t*           plr;
 #if __JDOOM__ || __JDOOM64__
@@ -428,7 +542,7 @@ static void spawnPlayer(int plrNum, float x, float y, float z,
         G_QueueBody(plr->plr->mo);
 #endif
 
-    P_SpawnPlayer(plrNum, x, y, z, angle, spawnFlags, makeCamera);
+    P_SpawnPlayer(plrNum, pClass, x, y, z, angle, spawnFlags, makeCamera);
 
     // Spawn a teleport fog?
     if(doTeleSpark && !makeCamera)
@@ -458,12 +572,19 @@ static void spawnPlayer(int plrNum, float x, float y, float z,
 void P_RebornPlayer(int plrNum)
 {
 #if __JHEXEN__
-    int                 i, oldKeys, oldPieces, bestWeapon;
+    int                 oldKeys, oldPieces, bestWeapon;
     boolean             oldWeaponOwned[NUM_WEAPON_TYPES];
 #endif
-    boolean             foundSpot;
-    const playerstart_t* assigned;
     player_t*           p;
+#if __JHEXEN__
+    playerclass_t       pClass = cfg.playerClass[plrNum];
+#else
+    playerclass_t       pClass = PCLASS_PLAYER;
+#endif
+    float               pos[3];
+    angle_t             angle;
+    int                 spawnFlags;
+    boolean             makeCamera;
 
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
@@ -479,16 +600,8 @@ void P_RebornPlayer(int plrNum)
         p->plr->mo->dPlayer = NULL;
     }
 
-    if(IS_CLIENT)
-    {
-        if(G_GetGameState() == GS_MAP)
-        {
-            // Anywhere will do, for now.
-            spawnPlayer(plrNum, 0, 0, 0, 0, MSF_Z_FLOOR, false, false, false);
-        }
-
-        return;
-    }
+    if(G_GetGameState() != GS_MAP)
+        return; // Nothing else to do.
 
     // Spawn at random spot if in death match.
     if(deathmatch)
@@ -497,144 +610,158 @@ void P_RebornPlayer(int plrNum)
         return;
     }
 
+    // Save player state?
+    if(!IS_CLIENT)
+    {
 #if __JHEXEN__
-    // Cooperative net-play, retain keys and weapons
-    oldKeys = p->keys;
-    oldPieces = p->pieces;
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-        oldWeaponOwned[i] = p->weapons[i].owned;
+        int                 i;
+
+        // Cooperative net-play, retain keys and weapons
+        oldKeys = p->keys;
+        oldPieces = p->pieces;
+        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+            oldWeaponOwned[i] = p->weapons[i].owned;
 #endif
-
-    // Try to spawn at the assigned spot.
-    foundSpot = false;
-    assigned = P_GetPlayerStart(
-#if __JHEXEN__
-                                rebornPosition,
-#else
-                                0,
-#endif
-                                plrNum, false);
-
-    if(P_CheckSpot(assigned->pos[VX], assigned->pos[VY]))
-    {   // Appropriate player start spot is open.
-#if __JDOOM__ || __JDOOM64__
-        G_QueueBody(players[plrNum].plr->mo);
-#endif
-
-        Con_Printf("- spawning at assigned spot\n");
-        P_SpawnPlayer(plrNum, assigned->pos[VX], assigned->pos[VY],
-                      assigned->pos[VZ], assigned->angle,
-                      assigned->spawnFlags, false);
-        // Spawn a teleport fog
-        {
-        mobj_t*             mo;
-        uint                an = assigned->angle >> ANGLETOFINESHIFT;
-        float               pos[2];
-
-        pos[VX] = assigned->pos[VX] + 20 * FIX2FLT(finecosine[an]);
-        pos[VY] = assigned->pos[VY] + 20 * FIX2FLT(finesine[an]);
-
-        if((mo = P_SpawnTeleFog(pos[VX], pos[VY], assigned->angle+ANG180)))
-        {
-            // Don't start sound on first frame.
-            if(mapTime > 1)
-                S_StartSound(TELEPORTSOUND, mo);
-        }
-        }
-
-        foundSpot = true;
     }
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+
+    // Determine the spawn position.
+    if(IS_CLIENT)
+    {
+        // Anywhere will do for now.
+        pos[VX] = pos[VY] = pos[VZ] = 0;
+        angle = 0;
+        spawnFlags = MSF_Z_FLOOR;
+        makeCamera = true; // Clients spawn as spectators.
+    }
     else
     {
-        float               pos[3];
-        angle_t             angle;
-        int                 spawnFlags;
-        boolean             makeCamera;
+#if __JHEXEN__
+        byte                entryPoint = rebornPosition;
+#else
+        byte                entryPoint = 0;
+#endif
+        boolean             foundSpot = false;
+        const playerstart_t* assigned =
+            P_GetPlayerStart(entryPoint, plrNum, false);
 
-        if(assigned)
-        {
+        if(assigned && P_CheckSpot(assigned->pos[VX], assigned->pos[VY]))
+        {   // Appropriate player start spot is open.
+            Con_Printf("- spawning at assigned spot\n");
+
             pos[VX] = assigned->pos[VX];
             pos[VY] = assigned->pos[VY];
             pos[VZ] = assigned->pos[VZ];
             angle = assigned->angle;
             spawnFlags = assigned->spawnFlags;
 
-            // "Fuzz" the spawn position looking for room nearby.
-            makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY], &pos[VZ],
-                                             &angle, &spawnFlags);
+            foundSpot = true;
         }
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         else
         {
-            pos[VX] = pos[VY] = pos[VZ] = 0;
-            angle = 0;
-            spawnFlags = MSF_Z_FLOOR;
-            makeCamera = true;
-        }
+            Con_Printf("- force spawning at %i.\n", p->startSpot);
 
-        Con_Printf("- force spawning at %i.\n", p->startSpot);
-
-        spawnPlayer(plrNum, pos[VX], pos[VY], pos[VZ], angle, spawnFlags,
-                    makeCamera, true, true);
-    }
-#else
-    else
-    {
-        // Try to spawn at one of the other player start spots.
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            const playerstart_t* start;
-
-            if((start = P_GetPlayerStart(rebornPosition, i, false)))
+            if(assigned)
             {
-                if(P_CheckSpot(start->pos[VX], start->pos[VY]))
+                pos[VX] = assigned->pos[VX];
+                pos[VY] = assigned->pos[VY];
+                pos[VZ] = assigned->pos[VZ];
+                angle = assigned->angle;
+                spawnFlags = assigned->spawnFlags;
+
+                // "Fuzz" the spawn position looking for room nearby.
+                makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
+                                                 &pos[VZ], &angle,
+                                                 &spawnFlags);
+            }
+            else
+            {
+                pos[VX] = pos[VY] = pos[VZ] = 0;
+                angle = 0;
+                spawnFlags = MSF_Z_FLOOR;
+                makeCamera = true;
+            }
+        }
+#else
+        else
+        {
+            int                 i;
+
+            // Try to spawn at one of the other player start spots.
+            for(i = 0; i < MAXPLAYERS; ++i)
+            {
+                const playerstart_t* start;
+
+                if((start = P_GetPlayerStart(rebornPosition, i, false)))
                 {
-                    // Found an open start spot.
-                    spawnPlayer(i, start->pos[VX], start->pos[VY],
-                                start->pos[VZ], start->angle,
-                                start->spawnFlags, false, true, false);
-                    foundSpot = true;
-                    break;
+                    if(P_CheckSpot(start->pos[VX], start->pos[VY]))
+                    {
+                        // Found an open start spot.
+                        pos[VX] = start->pos[VX];
+                        pos[VY] = start->pos[VY];
+                        pos[VZ] = start->pos[VZ];
+                        angle = start->angle;
+                        spawnFlags = start->spawnFlags;
+
+                        foundSpot = true;
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    if(!foundSpot)
-    {   // Player's going to be inside something.
-        const playerstart_t* start;
+        if(!foundSpot)
+        {   // Player's going to be inside something.
+            const playerstart_t* start;
 
-        if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
-        {
-            spawnPlayer(plrNum, start->pos[VX], start->pos[VY],
-                        start->pos[VZ], start->angle, start->spawnFlags,
-                        false, false, false);
+            if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
+            {
+                pos[VX] = start->pos[VX];
+                pos[VY] = start->pos[VY];
+                pos[VZ] = start->pos[VZ];
+                angle = start->angle;
+                spawnFlags = start->spawnFlags;
+            }
+            else
+            {
+                pos[VX] = pos[VY] = pos[VZ] = 0;
+                angle = 0;
+                spawnFlags = MSF_Z_FLOOR;
+                makeCamera = true;
+            }
         }
-        else
-        {
-            spawnPlayer(plrNum, 0, 0, 0, 0, MSF_Z_FLOOR, true, false, false);
-        }
-    }
-
-    // Restore keys and weapons
-    p->keys = oldKeys;
-    p->pieces = oldPieces;
-    for(bestWeapon = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-        if(oldWeaponOwned[i])
-        {
-            bestWeapon = i;
-            p->weapons[i].owned = true;
-        }
-    }
-
-    p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
-    p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
-    if(bestWeapon)
-    {   // Bring up the best weapon.
-        p->pendingWeapon = bestWeapon;
-    }
 #endif
+    }
+
+    spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
+                spawnFlags, makeCamera, true, true);
+
+    // Restore player state?
+    if(!IS_CLIENT)
+    {
+#if __JHEXEN__
+        int                 i;
+
+        // Restore keys and weapons
+        p->keys = oldKeys;
+        p->pieces = oldPieces;
+        for(bestWeapon = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
+        {
+            if(oldWeaponOwned[i])
+            {
+                bestWeapon = i;
+                p->weapons[i].owned = true;
+            }
+        }
+
+        p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
+        p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
+        if(bestWeapon)
+        {   // Bring up the best weapon.
+            p->pendingWeapon = bestWeapon;
+        }
+#endif
+    }
 }
 
 /**
@@ -731,9 +858,10 @@ void P_SpawnPlayers(void)
                 {
                     const playerstart_t* start = &playerStarts[i];
 
-                    spawnPlayer(-1, start->pos[VX], start->pos[VY],
-                                start->pos[VZ], start->angle,
-                                start->spawnFlags, false, false, false);
+                    spawnPlayer(-1, PCLASS_PLAYER, start->pos[VX],
+                                start->pos[VY], start->pos[VZ],
+                                start->angle, start->spawnFlags, false,
+                                false, false);
                 }
             }
         }
@@ -749,6 +877,11 @@ void P_SpawnPlayers(void)
                 angle_t             angle;
                 int                 spawnFlags;
                 boolean             makeCamera;
+#if __JHEXEN__
+                playerclass_t       pClass = cfg.playerClass[i];
+#else
+                playerclass_t       pClass = PCLASS_PLAYER;
+#endif
 
                 if(players[i].startSpot < numPlayerStarts)
                     start = &playerStarts[players[i].startSpot];
@@ -773,8 +906,8 @@ void P_SpawnPlayers(void)
                     makeCamera = true;
                 }
 
-                spawnPlayer(i, pos[VX], pos[VY], pos[VZ], angle, spawnFlags,
-                            makeCamera, false, true);
+                spawnPlayer(i, pClass, pos[VX], pos[VY], pos[VZ], angle,
+                            spawnFlags, makeCamera, false, true);
             }
     }
 }
@@ -785,28 +918,58 @@ void P_SpawnPlayers(void)
 void G_DeathMatchSpawnPlayer(int playerNum)
 {
     int                 i;
-    ddplayer_t*         pl;
-    const playerstart_t* start;
+    playerclass_t       pClass;
 
     playerNum = MINMAX_OF(0, playerNum, MAXPLAYERS-1);
+
+#if __JHEXEN__
+    if(randomClassParm)
+    {
+        pClass = P_Random() % 3;
+        if(pClass == cfg.playerClass[playerNum])
+            pClass = (pClass + 1) % 3;
+    }
+    else
+    {
+        pClass = cfg.playerClass[playerNum];
+    }
+#else
+    pClass = PCLASS_PLAYER;
+#endif
+
+    if(IS_CLIENT)
+    {
+        if(G_GetGameState() == GS_MAP)
+        {
+            // Anywhere will do, for now.
+            spawnPlayer(playerNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, false,
+                        false, false);
+        }
+
+        return;
+    }
 
     // Now let's find an available deathmatch start.
     if(numPlayerDMStarts < 2)
         Con_Error("G_DeathMatchSpawnPlayer: Error, minimum of two "
                   "(deathmatch) mapspots required for deathmatch.");
 
-    pl = players[playerNum].plr;
-
     for(i = 0; i < 20; ++i)
     {
-        start = &deathmatchStarts[P_Random() % numPlayerDMStarts];
+        const playerstart_t* start =
+            &deathmatchStarts[P_Random() % numPlayerDMStarts];
 
         if(P_CheckSpot(start->pos[VX], start->pos[VY]))
-            break;
+        {
+            spawnPlayer(playerNum, pClass, start->pos[VX], start->pos[VY],
+                        start->pos[VZ], start->angle, start->spawnFlags, false,
+                        true, true);
+            return;
+        }
     }
 
-    spawnPlayer(playerNum, start->pos[VX], start->pos[VY], start->pos[VZ],
-                start->angle, start->spawnFlags, false, true, true);
+    Con_Error("G_DeathMatchSpawnPlayer: Failed to spawn player %i.",
+              playerNum);
 }
 
 typedef struct {

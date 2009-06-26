@@ -5520,13 +5520,14 @@ void SV_MapTeleport(int map, int position)
 
             if((start = P_GetPlayerStart(position, i, false)))
             {
-                P_SpawnPlayer(i, start->pos[VX], start->pos[VY],
-                              start->pos[VZ], start->angle,
+                P_SpawnPlayer(i, cfg.playerClass[i], start->pos[VX],
+                              start->pos[VY], start->pos[VZ], start->angle,
                               start->spawnFlags, false);
             }
             else
             {
-                P_SpawnPlayer(i, 0, 0, 0, 0, MSF_Z_FLOOR, true);
+                P_SpawnPlayer(i, cfg.playerClass[i], 0, 0, 0, 0,
+                              MSF_Z_FLOOR, true);
             }
         }
 

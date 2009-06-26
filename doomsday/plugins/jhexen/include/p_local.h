@@ -140,9 +140,7 @@ float       P_MobjGetFriction(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 boolean     P_HitFloor(mobj_t* mo);
-void            P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x,
-                               float y, float z, angle_t angle,
-                               int spawnFlags, boolean makeCamera);
+
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 int         P_Massacre(void);
 boolean     P_LookForMonsters(mobj_t* mo);

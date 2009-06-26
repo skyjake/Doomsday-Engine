@@ -338,8 +338,4 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 void            P_RipperBlood(mobj_t* mo);
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            P_HitFloor(mobj_t* mo);
-
-void            P_SpawnPlayer2(int plrNum, playerclass_t pClass, float x,
-                               float y, float z, angle_t angle,
-                               int spawnFlags, boolean makeCamera);
 #endif

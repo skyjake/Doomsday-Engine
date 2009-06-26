@@ -102,6 +102,7 @@ int armorClass[4]; // Green, blue, IDFA and IDKFA armor classes.
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         NULL, true,
+        MT_PLAYER,
         S_PLAY,
         S_PLAY_RUN1,
         S_PLAY_ATK1,
@@ -120,6 +121,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         NULL, true,
+        MT_PLAYER,
         S_PLAY,
         S_PLAY_RUN1,
         S_PLAY_ATK1,
@@ -135,6 +137,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     },
     {   // Chicken
         NULL, false,
+        MT_CHICPLAYER,
         S_CHICPLAY,
         S_CHICPLAY_RUN1,
         S_CHICPLAY_ATK1,

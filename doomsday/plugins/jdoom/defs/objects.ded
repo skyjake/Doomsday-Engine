@@ -26,7 +26,7 @@ Thing {
   Radius = 16;
   Height = 56;
   Mass = 100;
-  Flags = solid | shootable | dropoff | pickup | notdmatch;
+  Flags = solid | shootable | dropoff | pickup;
   Flags2 = slide | passmobj | telestomp;
 }
 

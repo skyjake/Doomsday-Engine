@@ -6769,8 +6769,8 @@ Thing {
   Radius = 16;
   Height = 64;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_dropoff mf_pickup mf_notdmatch";
-  Flags2 = "mf2_windthrust mf2_floorclip mf2_slide mf2_passmobj mf2_telestomp mf2_pushwall";
+  Flags = solid | shootable | dropoff | pickup;
+  Flags2 = windthrust | floorclip | slide | passmobj | telestomp | pushwall;
 }
 
 Thing {
@@ -6868,8 +6868,8 @@ Thing {
   Radius = 16;
   Height = 64;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_dropoff mf_pickup mf_notdmatch";
-  Flags2 = "mf2_windthrust mf2_floorclip mf2_slide mf2_passmobj mf2_telestomp mf2_pushwall";
+  Flags = solid | shootable | dropoff | pickup;
+  Flags2 = windthrust | floorclip | slide | passmobj | telestomp | pushwall;
 }
 
 Thing {
@@ -6893,8 +6893,8 @@ Thing {
   Radius = 16;
   Height = 64;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_dropoff mf_pickup mf_notdmatch";
-  Flags2 = "mf2_windthrust mf2_floorclip mf2_slide mf2_passmobj mf2_telestomp mf2_pushwall";
+  Flags = solid | shootable | dropoff | pickup;
+  Flags2 = windthrust | floorclip | slide | passmobj | telestomp | pushwall;
 }
 
 Thing {
@@ -6918,8 +6918,8 @@ Thing {
   Radius = 16;
   Height = 24;
   Mass = 100;
-  Flags = "mf_solid mf_shootable mf_dropoff mf_notdmatch";
-  Flags2 = "mf2_windthrust mf2_slide mf2_passmobj mf2_floorclip mf2_telestomp mf2_pushwall";
+  Flags = solid | shootable | dropoff;
+  Flags2 = windthrust | slide | passmobj | floorclip | telestomp | pushwall;
 }
 
 Thing {

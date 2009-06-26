@@ -55,7 +55,7 @@ void            R_GetTranslation(int plrClass, int plrColor, int* tclass,
 void            R_SetTranslation(mobj_t* mo);
 
 void            G_PrintMapList(void);
-
+void            G_PlayerReborn(int player);
 void            G_SaveGame(int slot, const char* description);
 
 #endif

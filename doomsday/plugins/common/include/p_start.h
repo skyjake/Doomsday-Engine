@@ -161,9 +161,9 @@ const playerstart_t* P_GetPlayerStart(byte entryPoint, int pnum,
                                       boolean deathmatch);
 void            P_DealPlayerStarts(byte entryPoint);
 
-void            P_SpawnPlayer(int plrNum, float x, float y, float z,
-                              angle_t angle, int spawnFlags,
-                              boolean makeCamera);
+void            P_SpawnPlayer(int plrNum, playerclass_t pClass, float x,
+                              float y, float z, angle_t angle,
+                              int spawnFlags, boolean makeCamera);
 void            G_DeathMatchSpawnPlayer(int playernum);
 void            P_RebornPlayer(int plrNum);
 

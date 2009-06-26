@@ -745,20 +745,22 @@ void NetSv_NewPlayerEnters(int plrNum)
     {
 #if __JHEXEN__
         byte                entryPoint = rebornPosition;
+        playerclass_t       pClass = cfg.playerClass[plrNum];
 #else
         byte                entryPoint = 0;
+        playerclass_t       pClass = PCLASS_PLAYER;
 #endif
         const playerstart_t* start;
 
         if((start = P_GetPlayerStart(entryPoint, plrNum, false)))
         {
-            P_SpawnPlayer(plrNum, start->pos[VX], start->pos[VY],
+            P_SpawnPlayer(plrNum, pClass, start->pos[VX], start->pos[VY],
                           start->pos[VZ], start->angle, start->spawnFlags,
                           false);
         }
         else
         {
-            P_SpawnPlayer(plrNum, 0, 0, 0, 0, MSF_Z_FLOOR, true);
+            P_SpawnPlayer(plrNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, true);
         }
 
         //// \fixme Spawn a telefog in front of the player.
