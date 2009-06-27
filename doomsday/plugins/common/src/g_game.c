@@ -2377,7 +2377,7 @@ char* P_GetShortMapName(int episode, int map)
 
 char* P_GetMapName(int episode, int map)
 {
-    char                id[10];
+    char                id[10], *ptr;
     ddmapinfo_t         info;
 
     // Compose the map identifier.
@@ -2389,6 +2389,9 @@ char* P_GetMapName(int episode, int map)
         // There is no map information for this map...
         return "";
     }
+
+    if(Def_Get(DD_DEF_TEXT, info.name, &ptr) != -1)
+        return ptr;
 
     return info.name;
 }

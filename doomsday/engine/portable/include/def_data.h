@@ -266,7 +266,7 @@ typedef struct ded_sky_s {
 
 typedef struct ded_mapinfo_s {
     ded_stringid_t  id; // ID of the map (e.g. E2M3 or MAP21).
-    char            name[64]; // Name of the map.
+    ded_string_t    name; // Name of the map.
     ded_string_t    author; // Author of the map.
     ded_flags_t     flags; // Flags.
     ded_musicid_t   music; // Music to play.

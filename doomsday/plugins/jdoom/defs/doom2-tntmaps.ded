@@ -13,7 +13,7 @@ Map Info {
 
 Map Info {
   ID = "MAP01";
-  Name = "Map 1: System Control";
+  Name = "THUSTR_1";
   Author = "Team TNT";
   Music = "runnin";
   Par time = 30;
@@ -23,77 +23,77 @@ Map Info {
 
 Copy Map Info {
   ID = "MAP02";
-  Name = "Map 2: Human BBQ";
+  Name = "THUSTR_2";
   Music = "stalks";
   Par time = 90;
 }
 
 Copy Map Info {
   ID = "MAP03";
-  Name = "Map 3: Power Control";
+  Name = "THUSTR_3";
   Music = "countd";
   Par time = 120;
 }
 
 Copy Map Info {
   ID = "MAP04";
-  Name = "Map 4: Wormhole";
+  Name = "THUSTR_4";
   Music = "betwee";
   Par time = 120;
 }
 
 Copy Map Info {
   ID = "MAP05";
-  Name = "Map 5: Hanger";
+  Name = "THUSTR_5";
   Music = "doom";
   Par time = 90;
 }
 
 Copy Map Info {
   ID = "MAP06";
-  Name = "Map 6: Open Season";
+  Name = "THUSTR_6";
   Music = "the_da";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP07";
-  Name = "Map 7: Prison";
+  Name = "THUSTR_7";
   Music = "shawn";
   Par time = 120;
 }
 
 Copy Map Info {
   ID = "MAP08";
-  Name = "Map 8: Metal";
+  Name = "THUSTR_8";
   Music = "ddtblu";
   Par time = 120;
 }
 
 Copy Map Info {
   ID = "MAP09";
-  Name = "Map 9: Stronghold";
+  Name = "THUSTR_9";
   Music = "in_cit";
   Par time = 270;
 }
 
 Copy Map Info {
   ID = "MAP10";
-  Name = "Map 10: Redemption";
+  Name = "THUSTR_10";
   Music = "dead";
   Par time = 90;
 }
 
 Copy Map Info {
   ID = "MAP11";
-  Name = "Map 11: Storage Facility";
+  Name = "THUSTR_11";
   Music = "stlks2";
   Par time = 210;
 }
 
 Copy Map Info {
   ID = "MAP12";
-  Name = "Map 12: Crater";
+  Name = "THUSTR_12";
   Music = "theda2";
   Par time = 150;
   Sky = "sky2";
@@ -101,63 +101,63 @@ Copy Map Info {
 
 Copy Map Info {
   ID = "MAP13";
-  Name = "Map 13: Nukage Processing";
+  Name = "THUSTR_13";
   Music = "doom2";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP14";
-  Name = "Map 14: Steel Works";
+  Name = "THUSTR_14";
   Music = "ddtbl2";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP15";
-  Name = "Map 15: Dead Zone";
+  Name = "THUSTR_15";
   Music = "runni2";
   Par time = 210;
 }
 
 Copy Map Info {
   ID = "MAP16";
-  Name = "Map 16: Deepest Reaches";
+  Name = "THUSTR_16";
   Music = "dead2";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP17";
-  Name = "Map 17: Processing Area";
+  Name = "THUSTR_17";
   Music = "stlks3";
   Par time = 420;
 }
 
 Copy Map Info {
   ID = "MAP18";
-  Name = "Map 18: Mill";
+  Name = "THUSTR_18";
   Music = "romero";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP19";
-  Name = "Map 19: Shipping/Respawning";
+  Name = "THUSTR_19";
   Music = "shawn2";
   Par time = 210;
 }
 
 Copy Map Info {
   ID = "MAP20";
-  Name = "Map 20: Central Processing";
+  Name = "THUSTR_20";
   Music = "messag";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP21";
-  Name = "Map 21: Administration Center";
+  Name = "THUSTR_21";
   Music = "in_cit";
   Par time = 240;
   Sky = "sky3";
@@ -165,77 +165,77 @@ Copy Map Info {
 
 Copy Map Info {
   ID = "MAP22";
-  Name = "Map 22: Habitat";
+  Name = "THUSTR_22";
   Music = "ddtbl3";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP23";
-  Name = "Map 23: Lunar Mining Project";
+  Name = "THUSTR_23";
   Music = "ampie";
   Par time = 180;
 }
 
 Copy Map Info {
   ID = "MAP24";
-  Name = "Map 24: Quarry";
+  Name = "THUSTR_24";
   Music = "theda3";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP25";
-  Name = "Map 25: Baron's Den";
+  Name = "THUSTR_25";
   Music = "adrian";
   Par time = 150;
 }
 
 Copy Map Info {
   ID = "MAP26";
-  Name = "Map 26: Ballistyx";
+  Name = "THUSTR_26";
   Music = "messg2";
   Par time = 300;
 }
 
 Copy Map Info {
   ID = "MAP27";
-  Name = "Map 27: Mount Pain";
+  Name = "THUSTR_27";
   Music = "romer2";
   Par time = 330;
 }
 
 Copy Map Info {
   ID = "MAP28";
-  Name = "Map 28: Heck";
+  Name = "THUSTR_28";
   Music = "tense";
   Par time = 420;
 }
 
 Copy Map Info {
   ID = "MAP29";
-  Name = "Map 29: River Styx";
+  Name = "THUSTR_29";
   Music = "shawn3";
   Par time = 300;
 }
 
 Copy Map Info {
   ID = "MAP30";
-  Name = "Map 30: Last Call";
+  Name = "THUSTR_30";
   Music = "openin";
   Par time = 180;
 }
 
 Copy Map Info {
   ID = "MAP31";
-  Name = "Map 31: Pharaoh";
+  Name = "THUSTR_31";
   Music = "evil";
   Par time = 120;
 }
 
 Copy Map Info {
   ID = "MAP32";
-  Name = "Map 32: Caribbean";
+  Name = "THUSTR_32";
   Music = "ultima";
   Par time = 30;
 }

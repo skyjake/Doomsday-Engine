@@ -210,7 +210,10 @@ void WI_drawEL(void)
 
     // See if there is a level name.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)
-        lname = minfo.name;
+    {
+        if(Def_Get(DD_DEF_TEXT, minfo.name, &lname) == -1)
+            lname = minfo.name;
+    }
 
     ptr = strchr(lname, ':'); // Skip the E#M# or Level #.
     if(ptr)

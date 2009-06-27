@@ -372,7 +372,10 @@ void WI_drawEL(void)
     // See if there is a map name.
     P_GetMapLumpName(gameEpisode, wbs->next+1, lumpName);
     if(Def_Get(DD_DEF_MAP_INFO, lumpName, &minfo) && minfo.name)
-        mapName = minfo.name;
+    {
+        if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
+            mapName = minfo.name;
+    }
 
     // Skip the E#M# or Map #.
     if(mapName)

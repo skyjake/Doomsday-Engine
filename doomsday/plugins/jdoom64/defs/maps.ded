@@ -9,7 +9,7 @@ Map Info {
 
 Map Info {
   ID = "MAP01";
-  Name = "Map 1: Staging Area";
+  Name = "HUSTR_MAP01";
   Author = "Midway";
   Par time = 90;
   Gravity = 1;
@@ -18,7 +18,7 @@ Map Info {
 
 Map Info {
   ID = "MAP02";
-  Name = "Map 2: The Terraformer";
+  Name = "HUSTR_MAP02";
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
@@ -27,7 +27,7 @@ Map Info {
 
 Map Info {
   ID = "MAP03";
-  Name = "Map 3: Main Engineering";
+  Name = "HUSTR_MAP03";
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
@@ -36,7 +36,7 @@ Map Info {
 
 Map Info {
   ID = "MAP04";
-  Name = "Map 4: Holding Area";
+  Name = "HUSTR_MAP04";
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
@@ -45,7 +45,7 @@ Map Info {
 
 Map Info {
   ID = "MAP05";
-  Name = "Map 5: Tech Center";
+  Name = "HUSTR_MAP05";
   Author = "Midway";
   Par time = 130;
   Gravity = 1;
@@ -54,7 +54,7 @@ Map Info {
 
 Map Info {
   ID = "MAP06";
-  Name = "Map 6: Alpha Quadrant";
+  Name = "HUSTR_MAP06";
   Author = "Midway";
   Par time = 150;
   Gravity = 1;
@@ -63,7 +63,7 @@ Map Info {
 
 Map Info {
   ID = "MAP07";
-  Name = "Map 7: Research Lab";
+  Name = "HUSTR_MAP07";
   Author = "Midway";
   Par time = 240;
   Gravity = 1;
@@ -73,7 +73,7 @@ Map Info {
 
 Map Info {
   ID = "MAP08";
-  Name = "Map 8: Final Outpost";
+  Name = "HUSTR_MAP08";
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
@@ -82,7 +82,7 @@ Map Info {
 
 Map Info {
   ID = "MAP09";
-  Name = "Map 9: Even Simpler";
+  Name = "HUSTR_MAP09";
   Author = "Midway";
   Par time = 240;
   Gravity = 1;
@@ -91,7 +91,7 @@ Map Info {
 
 Map Info {
   ID = "MAP10";
-  Name = "Map 10: The Bleeding";
+  Name = "HUSTR_MAP10";
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
@@ -100,7 +100,7 @@ Map Info {
 
 Map Info {
   ID = "MAP11";
-  Name = "Map 11: Terror Core";
+  Name = "HUSTR_MAP11";
   Author = "Midway";
   Par time = 190;
   Gravity = 1;
@@ -109,7 +109,7 @@ Map Info {
 
 Map Info {
   ID = "MAP12";
-  Name = "Map 12: Altar of Pain";
+  Name = "HUSTR_MAP12";
   Author = "Midway";
   Par time = 180;
   Gravity = 1;
@@ -118,7 +118,7 @@ Map Info {
 
 Map Info {
   ID = "MAP13";
-  Name = "Map 13: Dark Citadel";
+  Name = "HUSTR_MAP13";
   Author = "Midway";
   Par time = 160;
   Gravity = 1;
@@ -127,7 +127,7 @@ Map Info {
 
 Map Info {
   ID = "MAP14";
-  Name = "Map 14: Eye of the Storm";
+  Name = "HUSTR_MAP14";
   Author = "Midway";
   Par time = 120;
   Gravity = 1;
@@ -136,7 +136,7 @@ Map Info {
 
 Map Info {
   ID = "MAP15";
-  Name = "Map 15: Dark Entries";
+  Name = "HUSTR_MAP15";
   Author = "Midway";
   Par time = 190;
   Gravity = 1;
@@ -145,7 +145,7 @@ Map Info {
 
 Map Info {
   ID = "MAP16";
-  Name = "Map 16: Blood Keep";
+  Name = "HUSTR_MAP16";
   Author = "Midway";
   Music = "stalks";
   Par time = 120;
@@ -155,7 +155,7 @@ Map Info {
 
 Map Info {
   ID = "MAP17";
-  Name = "Map 17: Watch Your Step";
+  Name = "HUSTR_MAP17";
   Author = "Midway";
   Par time = 240;
   Gravity = 1;
@@ -170,7 +170,7 @@ Map Info {
 
 Map Info {
   ID = "MAP18";
-  Name = "Map 18: Spawned Fear";
+  Name = "HUSTR_MAP18";
   Author = "Midway";
   Par time = 160;
   Gravity = 1;
@@ -179,7 +179,7 @@ Map Info {
 
 Map Info {
   ID = "MAP19";
-  Name = "Map 19: The Spiral";
+  Name = "HUSTR_MAP19";
   Author = "Midway";
   Par time = 90;
   Gravity = 1;
@@ -188,7 +188,7 @@ Map Info {
 
 Map Info {
   ID = "MAP20";
-  Name = "Map 20: Breakdown";
+  Name = "HUSTR_MAP20";
   Author = "Midway";
   Par time = 180;
   Gravity = 1;
@@ -197,7 +197,7 @@ Map Info {
 
 Map Info {
   ID = "MAP21";
-  Name = "Map 21: Pitfalls";
+  Name = "HUSTR_MAP21";
   Author = "Midway";
   Par time = 180;
   Gravity = 1;
@@ -206,7 +206,7 @@ Map Info {
 
 Map Info {
   ID = "MAP22";
-  Name = "Map 22: Burnt Offerings";
+  Name = "HUSTR_MAP22";
   Author = "Midway";
   Music = "doom";
   Par time = 120;
@@ -216,7 +216,7 @@ Map Info {
 
 Map Info {
   ID = "MAP23";
-  Name = "Map 23: Unholy Temple";
+  Name = "HUSTR_MAP23";
   Author = "Midway";
   Music = "ddtblu";
   Par time = 240;
@@ -226,7 +226,7 @@ Map Info {
 
 Map Info {
   ID = "MAP24";
-  Name = "Map 24: No Escape";
+  Name = "HUSTR_MAP24";
   Author = "Midway";
   Music = "theda2";
   Par time = 180;
@@ -236,7 +236,7 @@ Map Info {
 
 Map Info {
   ID = "MAP25";
-  Name = "Map 25: Cat And Mouse";
+  Name = "HUSTR_MAP25";
   Author = "Midway";
   Music = "betwee";
   Par time = 90;
@@ -252,7 +252,7 @@ Map Info {
 
 Map Info {
   ID = "MAP26";
-  Name = "Map 26: Hardcore";
+  Name = "HUSTR_MAP26";
   Author = "Midway";
   Music = "theda2";
   Par time = 30;
@@ -268,7 +268,7 @@ Map Info {
 
 Map Info {
   ID = "MAP27";
-  Name = "Map 27: Playground";
+  Name = "HUSTR_MAP27";
   Author = "Midway";
   Gravity = 1;
   Music = "messag";
@@ -284,7 +284,7 @@ Map Info {
 
 Map Info {
   ID = "MAP28";
-  Name = "Map 28: The Absolution";
+  Name = "HUSTR_MAP28";
   Author = "Midway";
   Music = "doom2";
   Par time = 400;
@@ -294,7 +294,7 @@ Map Info {
 
 Map Info {
   ID = "MAP29";
-  Name = "Map 29: Outpost Omega";
+  Name = "HUSTR_MAP29";
   Author = "Midway";
   Music = "messag";
   Par time = 190;
@@ -304,7 +304,7 @@ Map Info {
 
 Map Info {
   ID = "MAP30";
-  Name = "Map 30: The Lair";
+  Name = "HUSTR_MAP30";
   Author = "Midway";
   Music = "runni2";
   Par time = 160;
@@ -314,7 +314,7 @@ Map Info {
 
 Map Info {
   ID = "MAP31";
-  Name = "Map 31: In The Void";
+  Name = "HUSTR_MAP31";
   Author = "Midway";
   Music = "the_da";
   Par time = 120;
@@ -330,7 +330,7 @@ Map Info {
 
 Map Info {
   ID = "MAP32";
-  Name = "Map 32: Hectic";
+  Name = "HUSTR_MAP32";
   Author = "Midway";
   Music = "betwee";
   Par time = 90;
@@ -340,7 +340,7 @@ Map Info {
 
 Map Info {
   ID = "MAP33";
-  Name = "Map 33: The Unknown";
+  Name = "HUSTR_MAP33";
   Author = "Midway";
   Music = "evil";
   Par time = 30;

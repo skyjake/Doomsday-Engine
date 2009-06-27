@@ -1026,7 +1026,16 @@ void* DD_GetVariable(int ddvalue)
             ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
             if(mapInfo && mapInfo->name[0])
+            {
+                int                 id;
+
+                if((id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL)) != -1)
+                {
+                    return defs.text[id].text;
+                }
+
                 return mapInfo->name;
+            }
             break;
         }
         case DD_MAP_AUTHOR:

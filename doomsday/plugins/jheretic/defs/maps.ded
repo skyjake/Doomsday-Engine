@@ -15,7 +15,7 @@ Map Info {
 
 Map Info {
   ID = "E1M1";
-  Name = "E1M1: The Docks";
+  Name = "HUSTR_E1M1";
   Author = "Raven Software";
   Music = "e1m1";
   Gravity = 1;
@@ -24,49 +24,49 @@ Map Info {
 
 Copy Map Info {
   ID = "E1M2";
-  Name = "E1M2: The Dungeons";
+  Name = "HUSTR_E1M2";
   Music = "e1m2";
 }
 
 Copy Map Info {
   ID = "E1M3";
-  Name = "E1M3: The Gatehouse";
+  Name = "HUSTR_E1M3";
   Music = "e1m3";
 }
 
 Copy Map Info {
   ID = "E1M4";
-  Name = "E1M4: The Guard Tower";
+  Name = "HUSTR_E1M4";
   Music = "e1m4";
 }
 
 Copy Map Info {
   ID = "E1M5";
-  Name = "E1M5: The Citadel";
+  Name = "HUSTR_E1M5";
   Music = "e1m5";
 }
 
 Copy Map Info {
   ID = "E1M6";
-  Name = "E1M6: The Cathedral";
+  Name = "HUSTR_E1M6";
   Music = "e1m6";
 }
 
 Copy Map Info {
   ID = "E1M7";
-  Name = "E1M7: The Crypts";
+  Name = "HUSTR_E1M7";
   Music = "e1m7";
 }
 
 Copy Map Info {
   ID = "E1M8";
-  Name = "E1M8: Hell's Maw";
+  Name = "HUSTR_E1M8";
   Music = "e1m8";
 }
 
 Copy Map Info {
   ID = "E1M9";
-  Name = "E1M9: The Graveyard";
+  Name = "HUSTR_E1M9";
   Music = "e1m9";
 }
 
@@ -75,111 +75,111 @@ SkipIf heretic-share;
 
 Copy Map Info {
   ID = "E2M1";
-  Name = "E2M1: The Crater";
+  Name = "HUSTR_E2M1";
   Music = "e2m1";
   Sky = "sky2";
 }
 
 Copy Map Info {
   ID = "E2M2";
-  Name = "E2M2: The Lava Pits";
+  Name = "HUSTR_E2M2";
   Music = "e2m2";
 }
 
 Copy Map Info {
   ID = "E2M3";
-  Name = "E2M3: The River of Fire";
+  Name = "HUSTR_E2M3";
   Music = "e2m3";
 }
 
 Copy Map Info {
   ID = "E2M4";
-  Name = "E2M4: The Ice Grotto";
+  Name = "HUSTR_E2M4";
   Music = "e2m4";
 }
 
 Copy Map Info {
   ID = "E2M5";
-  Name = "E2M5: The Catacombs";
+  Name = "HUSTR_E2M5";
   Music = "e1m4";
 }
 
 Copy Map Info {
   ID = "E2M6";
-  Name = "E2M6: The Labyrinth";
+  Name = "HUSTR_E2M6";
   Music = "e2m6";
 }
 
 Copy Map Info {
   ID = "E2M7";
-  Name = "E2M7: The Great Hall";
+  Name = "HUSTR_E2M7";
   Music = "e2m7";
 }
 
 Copy Map Info {
   ID = "E2M8";
-  Name = "E2M8: The Portals of Chaos";
+  Name = "HUSTR_E2M8";
   Music = "e2m8";
 }
 
 Copy Map Info {
   ID = "E2M9";
-  Name = "E2M9: The Glacier";
+  Name = "HUSTR_E2M9";
   Music = "e2m9";
 }
 
 Copy Map Info {
   ID = "E3M1";
-  Name = "E3M1: The Storehouse";
+  Name = "HUSTR_E3M1";
   Music = "e1m1";
   Sky = "sky3";
 }
 
 Copy Map Info {
   ID = "E3M2";
-  Name = "E3M2: The Cesspool";
+  Name = "HUSTR_E3M2";
   Music = "e3m2";
 }
 
 Copy Map Info {
   ID = "E3M3";
-  Name = "E3M3: The Confluence";
+  Name = "HUSTR_E3M3";
   Music = "e3m3";
 }
 
 Copy Map Info {
   ID = "E3M4";
-  Name = "E3M4: The Azure Fortress";
+  Name = "HUSTR_E3M4";
   Music = "e1m6";
 }
 
 Copy Map Info {
   ID = "E3M5";
-  Name = "E3M5: The Ophidian Lair";
+  Name = "HUSTR_E3M5";
   Music = "e1m3";
 }
 
 Copy Map Info {
   ID = "E3M6";
-  Name = "E3M6: The Halls of Fear";
+  Name = "HUSTR_E3M6";
   Music = "e1m2";
 }
 
 Copy Map Info {
   ID = "E3M7";
-  Name = "E3M7: The Chasm";
+  Name = "HUSTR_E3M7";
   Music = "e1m5";
 }
 
 Copy Map Info {
   ID = "E3M8";
-  Name = "E3M8: D'Sparil's Keep";
+  Name = "HUSTR_E3M8";
   Music = "e1m9";
 }
 
 Copy Map Info {
   ID = "E3M9";
-  Name = "E3M9: The Aquifer";
+  Name = "HUSTR_E3M9";
   Music = "e2m6";
 }
 
@@ -188,129 +188,129 @@ SkipIf Not heretic-ext;
 
 Copy Map Info {
   ID = "E4M1";
-  Name = "E4M1: Catafalque";
+  Name = "HUSTR_E4M1";
   Music = "e1m6";
   Sky = "sky1";
 }
 
 Copy Map Info {
   ID = "E4M2";
-  Name = "E4M2: Blockhouse";
+  Name = "HUSTR_E4M2";
   Music = "e1m2";
 }
 
 Copy Map Info {
   ID = "E4M3";
-  Name = "E4M3: Ambulatory";
+  Name = "HUSTR_E4M3";
   Music = "e1m3";
 }
 
 Copy Map Info {
   ID = "E4M4";
-  Name = "E4M4: Sepulcher";
+  Name = "HUSTR_E4M4";
   Music = "e1m4";
 }
 
 Copy Map Info {
   ID = "E4M5";
-  Name = "E4M5: Great Stair";
+  Name = "HUSTR_E4M5";
   Music = "e1m5";
 }
 
 Copy Map Info {
   ID = "E4M6";
-  Name = "E4M6: Halls of the Apostate";
+  Name = "HUSTR_E4M6";
   Music = "e1m1";
 }
 
 Copy Map Info {
   ID = "E4M7";
-  Name = "E4M7: Ramparts of Perdition";
+  Name = "HUSTR_E4M7";
   Music = "e1m7";
 }
 
 Copy Map Info {
   ID = "E4M8";
-  Name = "E4M8: Shattered Bridge";
+  Name = "HUSTR_E4M8";
   Music = "e1m8";
 }
 
 Copy Map Info {
   ID = "E4M9";
-  Name = "E4M9: Mausoleum";
+  Name = "HUSTR_E4M9";
   Music = "e1m9";
 }
 
 Copy Map Info {
   ID = "E5M1";
-  Name = "E5M1: Ochre Cliffs";
+  Name = "HUSTR_E5M1";
   Music = "e2m1";
   Sky = "sky3";
 }
 
 Copy Map Info {
   ID = "E5M2";
-  Name = "E5M2: Rapids";
+  Name = "HUSTR_E5M2";
   Music = "e2m2";
 }
 
 Copy Map Info {
   ID = "E5M3";
-  Name = "E5M3: Quay";
+  Name = "HUSTR_E5M3";
   Music = "e2m3";
 }
 
 Copy Map Info {
   ID = "E5M4";
-  Name = "E5M4: Courtyard";
+  Name = "HUSTR_E5M4";
   Music = "e2m4";
 }
 
 Copy Map Info {
   ID = "E5M5";
-  Name = "E5M5: Hydratyr";
+  Name = "HUSTR_E5M5";
   Music = "e1m4";
 }
 
 Copy Map Info {
   ID = "E5M6";
-  Name = "E5M6: Colonnade";
+  Name = "HUSTR_E5M6";
   Music = "e2m6";
 }
 
 Copy Map Info {
   ID = "E5M7";
-  Name = "E5M7: Foetid Manse";
+  Name = "HUSTR_E5M7";
   Music = "e2m7";
 }
 
 Copy Map Info {
   ID = "E5M8";
-  Name = "E5M8: Field of Judgement";
+  Name = "HUSTR_E5M8";
   Music = "e2m8";
 }
 
 Copy Map Info {
   ID = "E5M9";
-  Name = "E5M9: Skein of D'Sparil";
+  Name = "HUSTR_E5M9";
   Music = "e2m9";
 }
 
 Copy Map Info {
   ID = "E6M1";
-  Name = "E6M1: Raven's Lair";
+  Name = "HUSTR_E6M1";
   Music = "e3m2";
   Sky = "sky1";
 }
 
 Copy Map Info {
   ID = "E6M2";
-  Name = "E6M2: Water Shrine";
+  Name = "HUSTR_E6M2";
   Music = "e3m3";
 }
 
 Copy Map Info {
   ID = "E6M3";
-  Name = "E6M3: American's Legacy";
+  Name = "HUSTR_E6M3";
   Music = "e1m6";
 }

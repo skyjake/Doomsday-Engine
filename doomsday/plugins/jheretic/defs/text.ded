@@ -903,3 +903,243 @@ Text {
   ID = "PLAYERSETUP";
   Text = "Player Setup";
 }
+
+Text {
+  ID = "HUSTR_E1M1";
+  Text = "E1M1: The Docks";
+}
+
+Text {
+  ID = "HUSTR_E1M2";
+  Text = "E1M2: The Dungeons";
+}
+
+Text {
+  ID = "HUSTR_E1M3";
+  Text = "E1M3: The Gatehouse";
+}
+
+Text {
+  ID = "HUSTR_E1M4";
+  Text = "E1M4: The Guard Tower";
+}
+
+Text {
+  ID = "HUSTR_E1M5";
+  Text = "E1M5: The Citadel";
+}
+
+Text {
+  ID = "HUSTR_E1M6";
+  Text = "E1M6: The Cathedral";
+}
+
+Text {
+  ID = "HUSTR_E1M7";
+  Text = "E1M7: The Crypts";
+}
+
+Text {
+  ID = "HUSTR_E1M8";
+  Text = "E1M8: Hell's Maw";
+}
+
+Text {
+  ID = "HUSTR_E1M9";
+  Text = "E1M9: The Graveyard";
+}
+
+Text {
+  ID = "HUSTR_E2M1";
+  Text = "E2M1: The Crater";
+}
+
+Text {
+  ID = "HUSTR_E2M2";
+  Text = "E2M2: The Lava Pits";
+}
+
+Text {
+  ID = "HUSTR_E2M3";
+  Text = "E2M3: The River of Fire";
+}
+
+Text {
+  ID = "HUSTR_E2M4";
+  Text = "E2M4: The Ice Grotto";
+}
+
+Text {
+  ID = "HUSTR_E2M5";
+  Text = "E2M5: The Catacombs";
+}
+
+Text {
+  ID = "HUSTR_E2M6";
+  Text = "E2M6: The Labyrinth";
+}
+
+Text {
+  ID = "HUSTR_E2M7";
+  Text = "E2M7: The Great Hall";
+}
+
+Text {
+  ID = "HUSTR_E2M8";
+  Text = "E2M8: The Portals of Chaos";
+}
+
+Text {
+  ID = "HUSTR_E2M9";
+  Text = "E2M9: The Glacier";
+}
+
+Text {
+  ID = "HUSTR_E3M1";
+  Text = "E3M1: The Storehouse";
+}
+
+Text {
+  ID = "HUSTR_E3M2";
+  Text = "E3M2: The Cesspool";
+}
+
+Text {
+  ID = "HUSTR_E3M3";
+  Text = "E3M3: The Confluence";
+}
+
+Text {
+  ID = "HUSTR_E3M4";
+  Text = "E3M4: The Azure Fortress";
+}
+
+Text {
+  ID = "HUSTR_E3M5";
+  Text = "E3M5: The Ophidian Lair";
+}
+
+Text {
+  ID = "HUSTR_E3M6";
+  Text = "E3M6: The Halls of Fear";
+}
+
+Text {
+  ID = "HUSTR_E3M7";
+  Text = "E3M7: The Chasm";
+}
+
+Text {
+  ID = "HUSTR_E3M8";
+  Text = "E3M8: D'Sparil's Keep";
+}
+
+Text {
+  ID = "HUSTR_E3M9";
+  Text = "E3M9: The Aquifer";
+}
+
+Text {
+  ID = "HUSTR_E4M1";
+  Text = "E4M1: Catafalque";
+}
+
+Text {
+  ID = "HUSTR_E4M2";
+  Text = "E4M2: Blockhouse";
+}
+
+Text {
+  ID = "HUSTR_E4M3";
+  Text = "E4M3: Ambulatory";
+}
+
+Text {
+  ID = "HUSTR_E4M4";
+  Text = "E4M4: Sepulcher";
+}
+
+Text {
+  ID = "HUSTR_E4M5";
+  Text = "E4M5: Great Stair";
+}
+
+Text {
+  ID = "HUSTR_E4M6";
+  Text = "E4M6: Halls of the Apostate";
+}
+
+Text {
+  ID = "HUSTR_E4M7";
+  Text = "E4M7: Ramparts of Perdition";
+}
+
+Text {
+  ID = "HUSTR_E4M8";
+  Text = "E4M8: Shattered Bridge";
+}
+
+Text {
+  ID = "HUSTR_E4M9";
+  Text = "E4M9: Mausoleum";
+}
+
+Text {
+  ID = "HUSTR_E5M1";
+  Text = "E5M1: Ochre Cliffs";
+}
+
+Text {
+  ID = "HUSTR_E5M2";
+  Text = "E5M2: Rapids";
+}
+
+Text {
+  ID = "HUSTR_E5M3";
+  Text = "E5M3: Quay";
+}
+
+Text {
+  ID = "HUSTR_E5M4";
+  Text = "E5M4: Courtyard";
+}
+
+Text {
+  ID = "HUSTR_E5M5";
+  Text = "E5M5: Hydratyr";
+}
+
+Text {
+  ID = "HUSTR_E5M6";
+  Text = "E5M6: Colonnade";
+}
+
+Text {
+  ID = "HUSTR_E5M7";
+  Text = "E5M7: Foetid Manse";
+}
+
+Text {
+  ID = "HUSTR_E5M8";
+  Text = "E5M8: Field of Judgement";
+}
+
+Text {
+  ID = "HUSTR_E5M9";
+  Text = "E5M9: Skein of D'Sparil";
+}
+
+Text {
+  ID = "HUSTR_E6M1";
+  Text = "E6M1: Raven's Lair";
+}
+
+Text {
+  ID = "HUSTR_E6M2";
+  Text = "E6M2: Water Shrine";
+}
+
+Text {
+  ID = "HUSTR_E6M3";
+  Text = "E6M3: American's Legacy";
+}
