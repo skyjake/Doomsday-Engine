@@ -1750,7 +1750,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 {
     int                 playerNum = player - players;
     classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
-    float               vel, off;
+    float               vel, off, offsetSensitivity = 100;
     int                 i;
     boolean             strafe = false;
     playerbrain_t      *brain = &player->brain;
@@ -1766,14 +1766,14 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
-    brain->forwardMove = off + vel;
+    brain->forwardMove = off * offsetSensitivity + vel;
     P_GetControlState(playerNum, strafe? CTL_TURN : CTL_SIDESTEP, &vel, &off);
     if(strafe)
     {
         // Saturate.
         vel = (vel > 0? 1 : vel < 0? -1 : 0);
     }
-    brain->sideMove = off + vel;
+    brain->sideMove = off * offsetSensitivity + vel;
 
     // Flight.
     P_GetControlState(playerNum, CTL_ZFLY, &vel, &off);
