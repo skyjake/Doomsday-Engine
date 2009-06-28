@@ -263,16 +263,16 @@ int DD_AddAutoData(boolean loadFiles)
 void DD_SetConfigFile(const char* file)
 {
     strncpy(configFileName, file, FILENAME_T_MAXLEN);
-    configFileName[FILENAME_T_MAXLEN] = '\0';
+    configFileName[FILENAME_T_LASTINDEX] = '\0';
 
     Dir_FixSlashes(configFileName, FILENAME_T_MAXLEN);
 
     strncpy(bindingsConfigFileName, configFileName, FILENAME_T_MAXLEN);
-    bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
+    bindingsConfigFileName[FILENAME_T_LASTINDEX] = '\0';
 
     strncpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 4,
-            "-bindings.cfg", FILENAME_T_MAXLEN - strlen(bindingsConfigFileName - 4));
-    bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
+            "-bindings.cfg", FILENAME_T_MAXLEN - strlen(bindingsConfigFileName) - 4);
+    bindingsConfigFileName[FILENAME_T_LASTINDEX] = '\0';
 }
 
 /**
