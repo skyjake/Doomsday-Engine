@@ -108,8 +108,8 @@
 
 # define MY_SAVE_VERSION       8
 # define SAVESTRINGSIZE        24
-# define SAVEGAMENAME          "Hex"
-# define CLIENTSAVEGAMENAME    "HexenCl"
+# define SAVEGAMENAME          "hex"
+# define CLIENTSAVEGAMENAME    "hexencl"
 # define SAVEGAMEEXTENSION     "hxs"
 
 # define MOBJ_XX_PLAYER        -2
