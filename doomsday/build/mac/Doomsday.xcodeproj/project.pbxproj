@@ -308,7 +308,6 @@
 		B086FA950F0B9EDE00955E23 /* dam_blockmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dam_blockmap.c; sourceTree = "<group>"; };
 		B086FA960F0B9EDE00955E23 /* dam_file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dam_file.c; sourceTree = "<group>"; };
 		B086FA970F0B9EDE00955E23 /* dam_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dam_main.c; sourceTree = "<group>"; };
-		B086FA980F0B9EDE00955E23 /* dam_reject.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dam_reject.c; sourceTree = "<group>"; };
 		B086FA990F0B9EDE00955E23 /* dd_help.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dd_help.c; sourceTree = "<group>"; };
 		B086FA9A0F0B9EDE00955E23 /* dd_input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dd_input.c; sourceTree = "<group>"; };
 		B086FA9B0F0B9EDE00955E23 /* dd_loop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dd_loop.c; sourceTree = "<group>"; };
@@ -1600,7 +1599,6 @@
 				B086FA950F0B9EDE00955E23 /* dam_blockmap.c */,
 				B086FA960F0B9EDE00955E23 /* dam_file.c */,
 				B086FA970F0B9EDE00955E23 /* dam_main.c */,
-				B086FA980F0B9EDE00955E23 /* dam_reject.c */,
 				B086FA990F0B9EDE00955E23 /* dd_help.c */,
 				B086FA9A0F0B9EDE00955E23 /* dd_input.c */,
 				B086FA9B0F0B9EDE00955E23 /* dd_loop.c */,
@@ -3112,7 +3110,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /Users/jaakko/Projects/deng/trunk/doomsday/mybuild;
+			buildWorkingDirectory = "/Users/jaakko/Projects/deng/release-branch/doomsday/mybuild";
 			dependencies = (
 			);
 			name = "Make All";

@@ -20,6 +20,15 @@
 ## Boston, MA  02110-1301  USA
 ##
 ################################################################################
+
+## Supported Build Types are:
+##    * None (CMAKE_C_FLAGS) Cmake gcc default of $CFLAGS.
+##    * Debug (CMAKE_C_FLAGS_DEBUG) Cmake gcc default of "-g"
+##    * Release (CMAKE_C_FLAGS_RELEASE) Cmake gcc default of "-O3 -DNDEBUG"
+##    * RelWithDebInfo (CMAKE_C_FLAGS_RELWITHDEBINFO) Cmake default of "-O2 -g"
+##    * MinSizeRel (CMAKE_C_FLAGS_MINSIZEREL) Cmake default of "-Os -DNDEBUG"
+SET ( CMAKE_BUILD_TYPE Release CACHE STRING "Type of build." )
+
 PROJECT(deng C CXX)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.4.5 FATAL_ERROR)
 SET (BUILDSCRIPTSDATE "$LastChangedDate$")
@@ -60,12 +69,6 @@ ENDMACRO(CREATE_MODULE_AT_ONCE_FILE _filename)
 ################################################################################
 ######################## Configure Build Options  ##############################
 SET(BUILD_SHARED_LIBS ON) 
-## Default Build type is None. Supported Build Types are:
-##    * None (CMAKE_C_FLAGS) Cmake gcc default of $CFLAGS.
-##    * Debug (CMAKE_C_FLAGS_DEBUG) Cmake gcc default of "-g"
-##    * Release (CMAKE_C_FLAGS_RELEASE) Cmake gcc default of "-O3 -DNDEBUG"
-##    * RelWithDebInfo (CMAKE_C_FLAGS_RELWITHDEBINFO) Cmake default of "-O2 -g"
-##    * MinSizeRel (CMAKE_C_FLAGS_MINSIZEREL) Cmake default of "-Os -DNDEBUG"
 
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
 OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
@@ -77,7 +80,7 @@ OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 OPTION (BUILDDOX "Build doxygen documentation. Default OFF" OFF)
 OPTION (ENABLEMAO "Combine all source files in a module and build it at once. Default OFF" OFF)
 OPTION (ENABLENETDEBUG "Turn on internal network debugging features. Default OFF" OFF)
-OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default ON" ON)
+OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default OFF" OFF)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
 OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
 
@@ -85,7 +88,7 @@ MARK_AS_ADVANCED (BUILDJDOOM64)
 MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
-#MARK_AS_ADVANCED (ENABLERANGECHECKING)
+MARK_AS_ADVANCED (ENABLERANGECHECKING)
 MARK_AS_ADVANCED (FINK)
 
 IF (NOT APPLE AND FINK)
