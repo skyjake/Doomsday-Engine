@@ -45,8 +45,8 @@
 #define PLUGIN_NICENAME     "Windows Multimedia Audio Driver"
 #define PLUGIN_DETAILS      "Doomsday plugin for audio playback via Windows Multimedia."
 
-#define PLUGIN_VERSION_TEXT "1.0.3"
+#define PLUGIN_VERSION_TEXT "1.0.4"
 #define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSWINMM_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,0,3,0 // For WIN32 version info.
+#define PLUGIN_VERSION_NUMBER 1,0,4,0 // For WIN32 version info.
 
 #endif
