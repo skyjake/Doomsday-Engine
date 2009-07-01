@@ -22,8 +22,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
- * In Zdoom, from which this code is based, it was originally under the 3 clause
- * BSD license as described here -> http://www.opensource.org/licenses/bsd-license.php
+ * In Zdoom, from which this code is based, it was originally under the
+ * 3 clause BSD license as described here:
+ * http://www.opensource.org/licenses/bsd-license.php
  */
 
 
@@ -50,9 +51,9 @@
 #include <stddef.h>
 #include <ctype.h>
 
-// This plugin accesses the internal definition arrays. This dependency should
-// be removed entirely, either by making the plugin modify the definitions
-// via an API or by integrating the plugin into the engine.
+// This plugin accesses the internal definition arrays. This dependency
+// should be removed entirely, either by making the plugin modify the
+// definitions via an API or by integrating the plugin into the engine.
 #include "../../../engine/portable/include/def_data.h"
 
 #define __INTERNAL_MAP_DATA_ACCESS__
@@ -122,116 +123,533 @@ char   *Line1, *Line2;
 int     dversion, pversion;
 boolean including, includenotext;
 
-char   *SoundMap[] = {
-    "None",                     // 000
-    "pistol",                   // 001
-    "shotgn",                   // 002
-    "sgcock",                   // 003
-    "dshtgn",                   // 004
-    "dbopn",                    // 005
-    "dbcls",                    // 006
-    "dbload",                   // 007
-    "plasma",                   // 008
-    "bfg",                      // 009
-    "sawup",                    // 010
-    "sawidl",                   // 011
-    "sawful",                   // 012
-    "sawhit",                   // 013
-    "rlaunc",                   // 014
-    "rxplod",                   // 015
-    "firsht",                   // 016
-    "firxpl",                   // 017
-    "pstart",                   // 018
-    "pstop",                    // 019
-    "doropn",                   // 020
-    "dorcls",                   // 021
-    "stnmov",                   // 022
-    "swtchn",                   // 023
-    "swtchx",                   // 024
-    "plpain",                   // 025
-    "dmpain",                   // 026
-    "popain",                   // 027
-    "vipain",                   // 028
-    "mnpain",                   // 029
-    "pepain",                   // 030
-    "slop",                     // 031
-    "itemup",                   // 032
-    "wpnup",                    // 033
-    "oof",                      // 034
-    "telept",                   // 035
-    "posit1",                   // 036
-    "posit2",                   // 037
-    "posit3",                   // 038
-    "bgsit1",                   // 039
-    "bgsit2",                   // 040
-    "sgtsit",                   // 041
-    "cacsit",                   // 042
-    "brssit",                   // 043
-    "cybsit",                   // 044
-    "spisit",                   // 045
-    "bspsit",                   // 046
-    "kntsit",                   // 047
-    "vilsit",                   // 048
-    "mansit",                   // 049
-    "pesit",                    // 050
-    "sklatk",                   // 051
-    "sgtatk",                   // 052
-    "skepch",                   // 053
-    "vilatk",                   // 054
-    "claw",                     // 055
-    "skeswg",                   // 056
-    "pldeth",                   // 057
-    "pdiehi",                   // 058
-    "podth1",                   // 059
-    "podth2",                   // 060
-    "podth3",                   // 061
-    "bgdth1",                   // 062
-    "bgdth2",                   // 063
-    "sgtdth",                   // 064
-    "cacdth",                   // 065
-    "skldth",                   // 066
-    "brsdth",                   // 067
-    "cybdth",                   // 068
-    "spidth",                   // 069
-    "bspdth",                   // 070
-    "vildth",                   // 071
-    "kntdth",                   // 072
-    "pedth",                    // 073
-    "skedth",                   // 074
-    "posact",                   // 075
-    "bgact",                    // 076
-    "dmact",                    // 077
-    "bspact",                   // 078
-    "bspwlk",                   // 079
-    "vilact",                   // 080
-    "noway",                    // 081
-    "barexp",                   // 082
-    "punch",                    // 083
-    "hoof",                     // 084
-    "metal",                    // 085
-    "chgun",                    // 086
-    "tink",                     // 087
-    "bdopn",                    // 088
-    "bdcls",                    // 089
-    "itmbk",                    // 090
-    "flame",                    // 091
-    "flamst",                   // 092
-    "getpow",                   // 093
-    "bospit",                   // 094
-    "boscub",                   // 095
-    "bossit",                   // 096
-    "bospn",                    // 097
-    "bosdth",                   // 098
-    "manatk",                   // 099
-    "mandth",                   // 100
-    "sssit",                    // 101
-    "ssdth",                    // 102
-    "keenpn",                   // 103
-    "keendt",                   // 104
-    "skeact",                   // 105
-    "skesit",                   // 106
-    "skeatk",                   // 107
-    "radio"                     // 108
+static const char* SpriteMap[] = {
+    "TROO",
+    "SHTG",
+    "PUNG",
+    "PISG",
+    "PISF",
+    "SHTF",
+    "SHT2",
+    "CHGG",
+    "CHGF",
+    "MISG",
+    "MISF",
+    "SAWG",
+    "PLSG",
+    "PLSF",
+    "BFGG",
+    "BFGF",
+    "BLUD",
+    "PUFF",
+    "BAL1",
+    "BAL2",
+    "PLSS",
+    "PLSE",
+    "MISL",
+    "BFS1",
+    "BFE1",
+    "BFE2",
+    "TFOG",
+    "IFOG",
+    "PLAY",
+    "POSS",
+    "SPOS",
+    "VILE",
+    "FIRE",
+    "FATB",
+    "FBXP",
+    "SKEL",
+    "MANF",
+    "FATT",
+    "CPOS",
+    "SARG",
+    "HEAD",
+    "BAL7",
+    "BOSS",
+    "BOS2",
+    "SKUL",
+    "SPID",
+    "BSPI",
+    "APLS",
+    "APBX",
+    "CYBR",
+    "PAIN",
+    "SSWV",
+    "KEEN",
+    "BBRN",
+    "BOSF",
+    "ARM1",
+    "ARM2",
+    "BAR1",
+    "BEXP",
+    "FCAN",
+    "BON1",
+    "BON2",
+    "BKEY",
+    "RKEY",
+    "YKEY",
+    "BSKU",
+    "RSKU",
+    "YSKU",
+    "STIM",
+    "MEDI",
+    "SOUL",
+    "PINV",
+    "PSTR",
+    "PINS",
+    "MEGA",
+    "SUIT",
+    "PMAP",
+    "PVIS",
+    "CLIP",
+    "AMMO",
+    "ROCK",
+    "BROK",
+    "CELL",
+    "CELP",
+    "SHEL",
+    "SBOX",
+    "BPAK",
+    "BFUG",
+    "MGUN",
+    "CSAW",
+    "LAUN",
+    "PLAS",
+    "SHOT",
+    "SGN2",
+    "COLU",
+    "SMT2",
+    "GOR1",
+    "POL2",
+    "POL5",
+    "POL4",
+    "POL3",
+    "POL1",
+    "POL6",
+    "GOR2",
+    "GOR3",
+    "GOR4",
+    "GOR5",
+    "SMIT",
+    "COL1",
+    "COL2",
+    "COL3",
+    "COL4",
+    "CAND",
+    "CBRA",
+    "COL6",
+    "TRE1",
+    "TRE2",
+    "ELEC",
+    "CEYE",
+    "FSKU",
+    "COL5",
+    "TBLU",
+    "TGRN",
+    "TRED",
+    "SMBT",
+    "SMGT",
+    "SMRT",
+    "HDB1",
+    "HDB2",
+    "HDB3",
+    "HDB4",
+    "HDB5",
+    "HDB6",
+    "POB1",
+    "POB2",
+    "BRS1",
+    "TLMP",
+    "TLP2",
+    NULL
+};
+
+static const char* SoundMap[] = {
+    "None",
+    "pistol",
+    "shotgn",
+    "sgcock",
+    "dshtgn",
+    "dbopn",
+    "dbcls",
+    "dbload",
+    "plasma",
+    "bfg",
+    "sawup",
+    "sawidl",
+    "sawful",
+    "sawhit",
+    "rlaunc",
+    "rxplod",
+    "firsht",
+    "firxpl",
+    "pstart",
+    "pstop",
+    "doropn",
+    "dorcls",
+    "stnmov",
+    "swtchn",
+    "swtchx",
+    "plpain",
+    "dmpain",
+    "popain",
+    "vipain",
+    "mnpain",
+    "pepain",
+    "slop",
+    "itemup",
+    "wpnup",
+    "oof",
+    "telept",
+    "posit1",
+    "posit2",
+    "posit3",
+    "bgsit1",
+    "bgsit2",
+    "sgtsit",
+    "cacsit",
+    "brssit",
+    "cybsit",
+    "spisit",
+    "bspsit",
+    "kntsit",
+    "vilsit",
+    "mansit",
+    "pesit",
+    "sklatk",
+    "sgtatk",
+    "skepch",
+    "vilatk",
+    "claw",
+    "skeswg",
+    "pldeth",
+    "pdiehi",
+    "podth1",
+    "podth2",
+    "podth3",
+    "bgdth1",
+    "bgdth2",
+    "sgtdth",
+    "cacdth",
+    "skldth",
+    "brsdth",
+    "cybdth",
+    "spidth",
+    "bspdth",
+    "vildth",
+    "kntdth",
+    "pedth",
+    "skedth",
+    "posact",
+    "bgact",
+    "dmact",
+    "bspact",
+    "bspwlk",
+    "vilact",
+    "noway",
+    "barexp",
+    "punch",
+    "hoof",
+    "metal",
+    "chgun",
+    "tink",
+    "bdopn",
+    "bdcls",
+    "itmbk",
+    "flame",
+    "flamst",
+    "getpow",
+    "bospit",
+    "boscub",
+    "bossit",
+    "bospn",
+    "bosdth",
+    "manatk",
+    "mandth",
+    "sssit",
+    "ssdth",
+    "keenpn",
+    "keendt",
+    "skeact",
+    "skesit",
+    "skeatk",
+    "radio",
+    NULL
+};
+
+static const char* MusicMap[] = {
+    "e1m1",
+    "e1m2",
+    "e1m3",
+    "e1m4",
+    "e1m5",
+    "e1m6",
+    "e1m7",
+    "e1m8",
+    "e1m9",
+    "e2m1",
+    "e2m2",
+    "e2m3",
+    "e2m4",
+    "e2m5",
+    "e2m6",
+    "e2m7",
+    "e2m8",
+    "e2m9",
+    "e3m1",
+    "e3m2",
+    "e3m3",
+    "e3m4",
+    "e3m5",
+    "e3m6",
+    "e3m7",
+    "e3m8",
+    "e3m9",
+    "inter",
+    "intro",
+    "bunny",
+    "victor",
+    "introa",
+    "runnin",
+    "stalks",
+    "countd",
+    "betwee",
+    "doom",
+    "the_da",
+    "shawn",
+    "ddtblu",
+    "in_cit",
+    "dead",
+    "stlks2",
+    "theda2",
+    "doom2",
+    "ddtbl2",
+    "runni2",
+    "dead2",
+    "stlks3",
+    "romero",
+    "shawn2",
+    "messag",
+    "count2",
+    "ddtbl3",
+    "ampie",
+    "theda3",
+    "adrian",
+    "messg2",
+    "romer2",
+    "tense",
+    "shawn3",
+    "openin",
+    "evil",
+    "ultima",
+    "read_m",
+    "dm2ttl",
+    "dm2int",
+    NULL
+};
+
+static const struct {
+    const char*     id;
+    const char*     str;
+} TextMap[] = {
+    { "E1TEXT", "Once you beat the big badasses and\nclean out the moon base you're supposed\nto win, aren't you? Aren't you? Where's\nyour fat reward and ticket home? What\nthe hell is this? It's not supposed to\nend this way!\n\nIt stinks like rotten meat, but looks\nlike the lost Deimos base.  Looks like\nyou're stuck on The Shores of Hell.\nThe only way out is through.\n\nTo continue the DOOM experience, play\nThe Shores of Hell and its amazing\nsequel, Inferno!\n" },
+    { "E2TEXT", "You've done it! The hideous cyber-\ndemon lord that ruled the lost Deimos\nmoon base has been slain and you\nare triumphant! But ... where are\nyou? You clamber to the edge of the\nmoon and look down to see the awful\ntruth.\n\nDeimos floats above Hell itself!\nYou've never heard of anyone escaping\nfrom Hell, but you'll make the bastards\nsorry they ever heard of you! Quickly,\nyou rappel down to  the surface of\nHell.\n\nNow, it's on to the final chapter of\nDOOM! -- Inferno." },
+    { "E3TEXT", "The loathsome spiderdemon that\nmasterminded the invasion of the moon\nbases and caused so much death has had\nits ass kicked for all time.\n\nA hidden doorway opens and you enter.\nYou've proven too tough for Hell to\ncontain, and now Hell at last plays\nfair -- for you emerge from the door\nto see the green fields of Earth!\nHome at last.\n\nYou wonder what's been happening on\nEarth while you were battling evil\nunleashed. It's good that no Hell-\nspawn could have come through that\ndoor with you ..." },
+    { "E4TEXT", "the spider mastermind must have sent forth\nits legions of hellspawn before your\nfinal confrontation with that terrible\nbeast from hell.  but you stepped forward\nand brought forth eternal damnation and\nsuffering upon the horde as a true hero\nwould in the face of something so evil.\n\nbesides, someone was gonna pay for what\nhappened to daisy, your pet rabbit.\n\nbut now, you see spread before you more\npotential pain and gibbitude as a nation\nof demons run amok among our cities.\n\nnext stop, hell on earth!" },
+    { "C1TEXT", "YOU HAVE ENTERED DEEPLY INTO THE INFESTED\nSTARPORT. BUT SOMETHING IS WRONG. THE\nMONSTERS HAVE BROUGHT THEIR OWN REALITY\nWITH THEM, AND THE STARPORT'S TECHNOLOGY\nIS BEING SUBVERTED BY THEIR PRESENCE.\n\nAHEAD, YOU SEE AN OUTPOST OF HELL, A\nFORTIFIED ZONE. IF YOU CAN GET PAST IT,\nYOU CAN PENETRATE INTO THE HAUNTED HEART\nOF THE STARBASE AND FIND THE CONTROLLING\nSWITCH WHICH HOLDS EARTH'S POPULATION\nHOSTAGE." },
+    { "C2TEXT", "YOU HAVE WON! YOUR VICTORY HAS ENABLED\nHUMANKIND TO EVACUATE EARTH AND ESCAPE\nTHE NIGHTMARE.  NOW YOU ARE THE ONLY\nHUMAN LEFT ON THE FACE OF THE PLANET.\nCANNIBAL MUTATIONS, CARNIVOROUS ALIENS,\nAND EVIL SPIRITS ARE YOUR ONLY NEIGHBORS.\nYOU SIT BACK AND WAIT FOR DEATH, CONTENT\nTHAT YOU HAVE SAVED YOUR SPECIES.\n\nBUT THEN, EARTH CONTROL BEAMS DOWN A\nMESSAGE FROM SPACE: \"SENSORS HAVE LOCATED\nTHE SOURCE OF THE ALIEN INVASION. IF YOU\nGO THERE, YOU MAY BE ABLE TO BLOCK THEIR\nENTRY.  THE ALIEN BASE IS IN THE HEART OF\nYOUR OWN HOME CITY, NOT FAR FROM THE\nSTARPORT.\" SLOWLY AND PAINFULLY YOU GET\nUP AND RETURN TO THE FRAY." },
+    { "C3TEXT", "YOU ARE AT THE CORRUPT HEART OF THE CITY,\nSURROUNDED BY THE CORPSES OF YOUR ENEMIES.\nYOU SEE NO WAY TO DESTROY THE CREATURES'\nENTRYWAY ON THIS SIDE, SO YOU CLENCH YOUR\nTEETH AND PLUNGE THROUGH IT.\n\nTHERE MUST BE A WAY TO CLOSE IT ON THE\nOTHER SIDE. WHAT DO YOU CARE IF YOU'VE\nGOT TO GO THROUGH HELL TO GET TO IT?" },
+    { "C4TEXT", "THE HORRENDOUS VISAGE OF THE BIGGEST\nDEMON YOU'VE EVER SEEN CRUMBLES BEFORE\nYOU, AFTER YOU PUMP YOUR ROCKETS INTO\nHIS EXPOSED BRAIN. THE MONSTER SHRIVELS\nUP AND DIES, ITS THRASHING LIMBS\nDEVASTATING UNTOLD MILES OF HELL'S\nSURFACE.\n\nYOU'VE DONE IT. THE INVASION IS OVER.\nEARTH IS SAVED. HELL IS A WRECK. YOU\nWONDER WHERE BAD FOLKS WILL GO WHEN THEY\nDIE, NOW. WIPING THE SWEAT FROM YOUR\nFOREHEAD YOU BEGIN THE LONG TREK BACK\nHOME. REBUILDING EARTH OUGHT TO BE A\nLOT MORE FUN THAN RUINING IT WAS.\n" },
+    { "C5TEXT", "CONGRATULATIONS, YOU'VE FOUND THE SECRET\nLEVEL! LOOKS LIKE IT'S BEEN BUILT BY\nHUMANS, RATHER THAN DEMONS. YOU WONDER\nWHO THE INMATES OF THIS CORNER OF HELL\nWILL BE." },
+    { "C6TEXT", "CONGRATULATIONS, YOU'VE FOUND THE\nSUPER SECRET LEVEL!  YOU'D BETTER\nBLAZE THROUGH THIS ONE!\n" },
+    { "CC_ZOMBIE", "ZOMBIEMAN" },
+    { "CC_SHOTGUN", "SHOTGUN GUY" },
+    { "CC_HEAVY", "HEAVY WEAPON DUDE" },
+    { "CC_IMP", "IMP" },
+    { "CC_DEMON", "DEMON" },
+    { "CC_LOST", "LOST SOUL" },
+    { "CC_CACO", "CACODEMON" },
+    { "CC_HELL", "HELL KNIGHT" },
+    { "CC_BARON", "BARON OF HELL" },
+    { "CC_ARACH", "ARACHNOTRON" },
+    { "CC_PAIN", "PAIN ELEMENTAL" },
+    { "CC_REVEN", "REVENANT" },
+    { "CC_MANCU", "MANCUBUS" },
+    { "CC_ARCH", "ARCH-VILE" },
+    { "CC_SPIDER", "THE SPIDER MASTERMIND" },
+    { "CC_CYBER", "THE CYBERDEMON" },
+    { "CC_HERO", "OUR HERO" },
+    { "D_DEVSTR", "Development mode ON.\n" },
+    { "D_CDROM", "CD-ROM Version: default.cfg from c:\\doomdata\n" },
+    { "LOADNET", "you can't do load while in a net game!\n\npress a key." },
+    { "SAVEDEAD", "you can't save if you aren't playing!\n\npress a key." },
+    { "QSPROMPT", "quicksave over your game named\n\n'%s'?\n\npress y or n." },
+    { "QLOADNET", "you can't quickload during a netgame!\n\npress a key." },
+    { "QSAVESPOT", "you haven't picked a quicksave slot yet!\n\npress a key." },
+    { "QLPROMPT", "do you want to quickload the game named\n\n'%s'?\n\npress y or n." },
+    { "NEWGAME", "you can't start a new game\nwhile in a network game.\n\npress a key." },
+    { "NIGHTMARE", "are you sure? this skill level\nisn't even remotely fair.\n\npress y or n." },
+    { "SWSTRING", "this is the shareware version of doom.\n\nyou need to order the entire trilogy.\n\npress a key." },
+    { "MSGOFF", "Messages OFF" },
+    { "MSGON", "Messages ON" },
+    { "NETEND", "you can't end a netgame!\n\npress a key." },
+    { "ENDGAME", "are you sure you want to end the game?\n\npress y or n." },
+    { "DOSY", "%s\n\n(press y to quit to dos.)" },
+    { "DETAILHI", "High detail" },
+    { "DETAILLO", "Low detail" },
+    { "HUSTR_CHATMACRO0", "No" },
+    { "HUSTR_CHATMACRO1", "I'm ready to kick butt!" },
+    { "HUSTR_CHATMACRO2", "I'm OK." },
+    { "HUSTR_CHATMACRO3", "I'm not looking too good!" },
+    { "HUSTR_CHATMACRO4", "Help!" },
+    { "HUSTR_CHATMACRO5", "You suck!" },
+    { "HUSTR_CHATMACRO6", "Next time, scumbag..." },
+    { "HUSTR_CHATMACRO7", "Come here!" },
+    { "HUSTR_CHATMACRO8", "I'll take care of it." },
+    { "HUSTR_CHATMACRO9", "Yes" },
+    { "AMSTR_FOLLOWON", "Follow Mode ON" },
+    { "AMSTR_FOLLOWOFF", "Follow Mode OFF" },
+    { "AMSTR_GRIDON", "Grid ON" },
+    { "AMSTR_GRIDOFF", "Grid OFF" },
+    { "AMSTR_MARKEDSPOT", "Marked Spot" },
+    { "AMSTR_MARKSCLEARED", "All Marks Cleared" },
+    { "PD_BLUEO", "You need a blue key to activate this object" },
+    { "PD_REDO", "You need a red key to activate this object" },
+    { "PD_YELLOWO", "You need a yellow key to activate this object" },
+    { "PD_BLUEK", "You need a blue key to open this door" },
+    { "PD_REDK", "You need a yellow key to open this door" },
+    { "PD_YELLOWK", "You need a red key to open this door" },
+    { "EMPTYSTRING", "empty slot" },
+    { "GGSAVED", "game saved." },
+    { "GOTARMOR", "Picked up the armor." },
+    { "GOTMEGA", "Picked up the MegaArmor!" },
+    { "GOTHTHBONUS", "Picked up a health bonus." },
+    { "GOTARMBONUS", "Picked up an armor bonus." },
+    { "GOTSUPER", "Supercharge!" },
+    { "GOTMSPHERE", "MegaSphere!" },
+    { "GOTBLUECARD", "Picked up a blue keycard." },
+    { "GOTYELWCARD", "Picked up a yellow keycard." },
+    { "GOTREDCARD", "Picked up a red keycard." },
+    { "GOTBLUESKUL", "Picked up a blue skull key." },
+    { "GOTYELWSKUL", "Picked up a yellow skull key." },
+    { "GOTREDSKULL", "Picked up a red skull key." },
+    { "GOTSTIM", "Picked up a stimpack." },
+    { "GOTMEDINEED", "Picked up a medikit that you REALLY need!" },
+    { "GOTMEDIKIT", "Picked up a medikit." },
+    { "GOTINVUL", "Invulnerability!" },
+    { "GOTBERSERK", "Berserk!" },
+    { "GOTINVIS", "Partial Invisibility" },
+    { "GOTSUIT", "Radiation Shielding Suit" },
+    { "GOTMAP", "Computer Area Map" },
+    { "GOTVISOR", "Light Amplification Visor" },
+    { "GOTCLIP", "Picked up a clip." },
+    { "GOTCLIPBOX", "Picked up a box of bullets." },
+    { "GOTROCKET", "Picked up a rocket." },
+    { "GOTROCKBOX", "Picked up a box of rockets." },
+    { "GOTCELL", "Picked up an energy cell." },
+    { "GOTCELLBOX", "Picked up an energy cell pac" },
+    { "GOTSHELLS", "Picked up 4 shotgun shells." },
+    { "GOTSHELLBOX", "Picked up a box of shotgun shells." },
+    { "GOTBACKPACK", "Picked up a backpack full of ammo!" },
+    { "GOTBFG9000", "You got the BFG9000!  Oh, yes." },
+    { "GOTCHAINGUN", "You got the chaingun!" },
+    { "GOTCHAINSAW", "A chainsaw!  Find some meat!" },
+    { "GOTLAUNCHER", "You got the rocket launcher!" },
+    { "GOTPLASMA", "You got the plasma gun!" },
+    { "GOTSHOTGUN", "You got the shotgun!" },
+    { "GOTSHOTGUN2", "You got the super shotgun!" },
+    { "STSTR_DQDON", "Degreelessness Mode On" },
+    { "STSTR_DQDOFF", "Degreelessness Mode Off" },
+    { "STSTR_FAADDED", "Ammo (no keys) Added" },
+    { "STSTR_KFAADDED", "Very Happy Ammo Added" },
+    { "STSTR_MUS", "Music Change" },
+    { "STSTR_NOMUS", "IMPOSSIBLE SELECTION" },
+    { "STSTR_NCON", "No Clipping Mode ON" },
+    { "STSTR_NCOFF", "No Clipping Mode OFF" },
+    { "STSTR_BEHOLDX", "Power-up Toggled" },
+    { "STSTR_BEHOLD", "inVuln, Str, Inviso, Rad, Allmap, or Lite-amp" },
+    { "STSTR_CHOPPERS", "... doesn't suck - GM" },
+    { "STSTR_CLEV", "Changing Level..." },
+    { "HUSTR_PLRGREEN", "Green: " },
+    { "HUSTR_PLRINDIGO", "Indigo: " },
+    { "HUSTR_PLRBROWN", "Brown: " },
+    { "HUSTR_PLRRED", "Red: " },
+    { "HUSTR_MSGU", "[Message unsent]" },
+    { "HUSTR_TALKTOSELF1", "You mumble to yourself" },
+    { "HUSTR_TALKTOSELF2", "Who's there?" },
+    { "HUSTR_TALKTOSELF3", "You scare yourself" },
+    { "HUSTR_TALKTOSELF4", "You start to rave" },
+    { "HUSTR_TALKTOSELF5", "You've lost it..." },
+    { "HUSTR_E1M1", "E1M1: Hangar" },
+    { "HUSTR_E1M2", "E1M2: Nuclear Plant" },
+    { "HUSTR_E1M3", "E1M3: Toxin Refinery" },
+    { "HUSTR_E1M4", "E1M4: Command Control" },
+    { "HUSTR_E1M5", "E1M5: Phobos Lab" },
+    { "HUSTR_E1M6", "E1M6: Central Processing" },
+    { "HUSTR_E1M7", "E1M7: Computer Station" },
+    { "HUSTR_E1M8", "E1M8: Phobos Anomaly" },
+    { "HUSTR_E1M9", "E1M9: Military Base" },
+    { "HUSTR_E2M1", "E2M1: Deimos Anomaly" },
+    { "HUSTR_E2M2", "E2M2: Containment Area" },
+    { "HUSTR_E2M3", "E2M3: Refinery" },
+    { "HUSTR_E2M4", "E2M4: Deimos Lab" },
+    { "HUSTR_E2M5", "E2M5: Command Center" },
+    { "HUSTR_E2M6", "E2M6: Halls of the Damned" },
+    { "HUSTR_E2M7", "E2M7: Spawning Vats" },
+    { "HUSTR_E2M8", "E2M8: Tower of Babel" },
+    { "HUSTR_E2M9", "E2M9: Fortress of Mystery" },
+    { "HUSTR_E3M1", "E3M1: Hell Keep" },
+    { "HUSTR_E3M2", "E3M2: Slough of Despair" },
+    { "HUSTR_E3M3", "E3M3: Pandemonium" },
+    { "HUSTR_E3M4", "E3M4: House of Pain" },
+    { "HUSTR_E3M5", "E3M5: Unholy Cathedral" },
+    { "HUSTR_E3M6", "E3M6: Mt. Erebus" },
+    { "HUSTR_E3M7", "E3M7: Limbo" },
+    { "HUSTR_E3M8", "E3M8: Dis" },
+    { "HUSTR_E3M9", "E3M9: Warrens" },
+    { "HUSTR_E4M1", "E4M1: Hell Beneath" },
+    { "HUSTR_E4M2", "E4M2: Perfect Hatred" },
+    { "HUSTR_E4M3", "E4M3: Sever The Wicked" },
+    { "HUSTR_E4M4", "E4M4: Unruly Evil" },
+    { "HUSTR_E4M5", "E4M5: They Will Repent" },
+    { "HUSTR_E4M6", "E4M6: Against Thee Wickedly" },
+    { "HUSTR_E4M7", "E4M7: And Hell Followed" },
+    { "HUSTR_E4M8", "E4M8: Unto The Cruel" },
+    { "HUSTR_E4M9", "E4M9: Fear" },
+    { "HUSTR_1", "level 1: entryway" },
+    { "HUSTR_2", "level 2: underhalls" },
+    { "HUSTR_3", "level 3: the gantlet" },
+    { "HUSTR_4", "level 4: the focus" },
+    { "HUSTR_5", "level 5: the waste tunnels" },
+    { "HUSTR_6", "level 6: the crusher" },
+    { "HUSTR_7", "level 7: dead simple" },
+    { "HUSTR_8", "level 8: tricks and traps" },
+    { "HUSTR_9", "level 9: the pit" },
+    { "HUSTR_10", "level 10: refueling base" },
+    { "HUSTR_11", "level 11: 'o' of destruction!" },
+    { "HUSTR_12", "level 12: the factory" },
+    { "HUSTR_13", "level 13: downtown" },
+    { "HUSTR_14", "level 14: the inmost dens" },
+    { "HUSTR_15", "level 15: industrial zone" },
+    { "HUSTR_16", "level 16: suburbs" },
+    { "HUSTR_17", "level 17: tenements" },
+    { "HUSTR_18", "level 18: the courtyard" },
+    { "HUSTR_19", "level 19: the citadel" },
+    { "HUSTR_20", "level 20: gotcha!" },
+    { "HUSTR_21", "level 21: nirvana" },
+    { "HUSTR_22", "level 22: the catacombs" },
+    { "HUSTR_23", "level 23: barrels o' fun" },
+    { "HUSTR_24", "level 24: the chasm" },
+    { "HUSTR_25", "level 25: bloodfalls" },
+    { "HUSTR_26", "level 26: the abandoned mines" },
+    { "HUSTR_27", "level 27: monster condo" },
+    { "HUSTR_28", "level 28: the spirit world" },
+    { "HUSTR_29", "level 29: the living end" },
+    { "HUSTR_30", "level 30: icon of sin" },
+    { "HUSTR_31", "level 31: wolfenstein" },
+    { "HUSTR_32", "level 32: grosse" },
+    { NULL, NULL }
 };
 
 boolean BackedUpData = false;
@@ -315,42 +733,27 @@ static byte OrgHeights[] = {
 };
 
 static const struct {
-    char   *name;
-    int     (*func) (int);
-} Modes[] =
-{
+    char*           name;
+    int           (*func) (int);
+} Modes[] = {
     // These appear in .deh and .bex files
-    {
-    "Thing", PatchThing},
-    {
-    "Sound", PatchSound},
-    {
-    "Frame", PatchFrame},
-    {
-    "Sprite", PatchSprite},
-    {
-    "Ammo", PatchAmmo},
-    {
-    "Weapon", PatchWeapon},
-    {
-    "Pointer", PatchPointer},
-    {
-    "Cheat", PatchCheats},
-    {
-    "Misc", PatchMisc},
-    {
-    "Text", PatchText},
-        // These appear in .bex files
-    {
-    "include", DoInclude},
-    {
-    "[STRINGS]", PatchStrings},
-    {
-    "[PARS]", PatchPars},
-    {
-    "[CODEPTR]", PatchCodePtrs},
-    {
-NULL,},};
+    { "Thing",      PatchThing },
+    { "Sound",      PatchSound },
+    { "Frame",      PatchFrame },
+    { "Sprite",     PatchSprite },
+    { "Ammo",       PatchAmmo },
+    { "Weapon",     PatchWeapon },
+    { "Pointer",    PatchPointer },
+    { "Cheat",      PatchCheats },
+    { "Misc",       PatchMisc },
+    { "Text",       PatchText },
+    // These appear in .bex files
+    { "include",    DoInclude },
+    { "[STRINGS]",  PatchStrings },
+    { "[PARS]",     PatchPars },
+    { "[CODEPTR]",  PatchCodePtrs },
+    { NULL,         NULL },
+};
 
 // CODE --------------------------------------------------------------------
 
@@ -862,7 +1265,7 @@ int PatchThing(int thingy)
         size_t          sndmap;
 
         sndmap = value;
-        if(sndmap >= sizeof(SoundMap))
+        if(sndmap >= sizeof(SoundMap)-1)
             sndmap = 0;
 
         if(HandleKey(keys, info, Line1, value))
@@ -1563,11 +1966,18 @@ int PatchCodePtrs(int dummy)
        return result; */
 }
 
-void ReplaceInString(char *str, char *occurance, char *replacewith)
+static void replaceInString(char* str, size_t len, const char* occurance,
+                            const char* replacewith)
 {
-    char   *buf = calloc(strlen(str) * 2, 1);
-    char   *out = buf, *in = str;
-    int     oclen = strlen(occurance), replen = strlen(replacewith);
+    char*               buf, *out, *in;
+    int                 oclen, replen;
+
+    if(!str || !len || !occurance || !(oclen = strlen(occurance)) ||
+       !replacewith || !(replen = strlen(replacewith)))
+        return;
+
+    out = buf = calloc(strlen(str) * 2, 1);
+    in = str;
 
     for(; *in; in++)
     {
@@ -1580,23 +1990,103 @@ void ReplaceInString(char *str, char *occurance, char *replacewith)
         else
             *out++ = *in;
     }
-    strcpy(str, buf);
+
+    strncpy(str, buf, len);
     free(buf);
+}
+
+static void patchSpriteNames(const char* origName, const char* newName)
+{
+    size_t              i;
+    char                old[5];
+
+    if(strlen(origName) != 4)
+        return;
+
+    for(i = 0; i < 4; ++i)
+        old[i] = (char) toupper((int) origName[i]);
+    old[4] = '\0';
+
+    i = 0;
+    do
+    {
+        int                 num;
+
+        if(!strcmp(SpriteMap[i], old) &&
+           (num = Def_Get(DD_DEF_SPRITE, old, NULL)) != -1)
+        {
+            ded_sprid_t*        spr = &ded->sprites[num];
+
+            strncpy(spr->id, newName, DED_SPRITEID_LEN);
+        }
+    } while(SpriteMap[++i] != NULL);
+}
+
+static void patchMusicLumpNames(const char* origName, const char* newName)
+{
+    char                buf[9];
+    size_t              i;
+
+    dd_snprintf(buf, 9, "d_%s", origName);
+
+    i = 0;
+    do
+    {
+        if(!strcmp(MusicMap[i], origName))
+        {
+            int                 j;
+
+            for(j = 0; j < ded->count.music.num; ++j)
+            {
+                if(!stricmp(ded->music[j].lumpName, buf))
+                {
+                    dd_snprintf(ded->music[j].lumpName, 9, "D_%s", newName);
+                }
+            }
+        }
+    } while(MusicMap[++i] != NULL);
+}
+
+static const char* textIDForOrigString(const char* str)
+{
+    size_t              i;
+
+    i = 0;
+    do
+    {
+        if(!strcmp(TextMap[i].str, str))
+            return TextMap[i].id;
+    } while(TextMap[++i].id != NULL);
+
+    return NULL;
+}
+
+static void patchText(const char* origStr, const char* newStr)
+{
+#define BUF_SIZE        4096
+
+    int                 id;
+
+    if(!((id = Def_Get(DD_DEF_TEXT, textIDForOrigString(origStr), NULL)) < 0))
+    {
+        char                buf[BUF_SIZE];
+
+        strncpy(buf, newStr, 4096);
+        replaceInString(buf, 4096, "\n", "\\n");
+
+        Def_Set(DD_DEF_TEXT, id, 0, buf);
+    }
+
+#undef BUF_SIZE
 }
 
 int PatchText(int oldSize)
 {
-    char    oldString[4096];
-    int     newSize;
-    char   *oldStr;
-    char   *newStr;
-    char   *temp;
-    boolean good;
-    int     result;
-    int     i;
-    char    buf[30];
+    int                 newSize;
+    char*               oldStr, *newStr, *temp;
+    boolean             parseError = false;
 
-    temp = COM_Parse(Line2);    // Skip old size, since we already have it
+    temp = COM_Parse(Line2); // Skip old size, since we already have it
     if(!COM_Parse(temp))
     {
         LPrintf("Text chunk is missing size of new string.\n");
@@ -1607,145 +2097,59 @@ int PatchText(int oldSize)
     oldStr = malloc(oldSize + 1);
     newStr = malloc(newSize + 1);
 
-    if(!oldStr || !newStr)
+    if(oldStr && newStr)
+    {
+        boolean             good;
+
+        good = ReadChars(&oldStr, oldSize, false);
+        good += ReadChars(&newStr, newSize, true);
+
+        if(good)
+        {
+            if(!includenotext)
+            {
+                if(verbose)
+                {
+                    LPrintf("Searching for text:\n%s\n", oldStr);
+                    LPrintf("<< TO BE REPLACED WITH:\n%s\n>>\n", newStr);
+                }
+
+                patchSpriteNames(oldStr, newStr);
+                patchMusicLumpNames(oldStr, newStr);
+                patchText(oldStr, newStr);
+            }
+            else
+            {
+                LPrintf("Skipping text chunk in included patch.\n");
+            }
+        }
+        else
+        {
+            LPrintf("Unexpected end-of-file.\n");
+            parseError = true;
+        }
+    }
+    else
     {
         LPrintf("Out of memory.\n");
-        goto donewithtext;
     }
 
-    good = ReadChars(&oldStr, oldSize, false);
-    good += ReadChars(&newStr, newSize, true);
-
-    if(!good)
-    {
-        free(newStr);
-        free(oldStr);
-        LPrintf("Unexpected end-of-file.\n");
-        return 0;
-    }
-
-    if(includenotext)
-    {
-        LPrintf("Skipping text chunk in included patch.\n");
-        goto donewithtext;
-    }
-
-    if(verbose)
-    {
-        LPrintf("Searching for text:\n%s\n", oldStr);
-        LPrintf("<< TO BE REPLACED WITH:\n%s\n>>\n", newStr);
-    }
-    good = false;
-
-    // Search through sprite names
-    for(i = 0; i < ded->count.sprites.num; i++)
-    {
-        if(!strcmp(ded->sprites[i].id, oldStr))
-        {
-            strcpy(ded->sprites[i].id, newStr);
-            good = true;
-            // See above.
-        }
-    }
-
-    if(good)
-        goto donewithtext;
-
-#if 0
-    // Search through music names.
-    // This is something of an even bigger hack
-    // since I changed the way music is handled.
-    if(oldSize < 7)
-    {                           // Music names are never >6 chars (sure they are -jk)
-        if((temp = new char[oldSize + 3]))
-        {
-            level_info_t *info = LevelInfos;
-
-            sprintf(temp, "d_%s", oldStr);
-
-            while(info->level_name)
-            {
-                if(!strnicmp(info->music, temp, 8))
-                {
-                    good = true;
-                    strncpy(info->music, temp, 8);
-                }
-                info++;
-            }
-
-            delete[]temp;
-        }
-    }
-
-    if(good)
-        goto donewithtext;
-#endif
-
-    // Search music names.
-    if(oldSize <= 6)
-    {
-        sprintf(buf, "d_%s", oldStr);
-        for(i = 0; i < ded->count.music.num; i++)
-        {
-            if(!stricmp(ded->music[i].lumpName, buf))
-            {
-                good = true;
-                sprintf(ded->music[i].lumpName, "D_%s", newStr);
-                strupr(ded->music[i].lumpName); // looks nicer...
-            }
-        }
-    }
-    if(good)
-        goto donewithtext;
-
-    // Seach map names
-    for(i = 0; i < ded->count.mapInfo.num; i++)
-        if(!stricmp(ded->mapInfo[i].name, oldStr))
-        {
-            strcpy(ded->mapInfo[i].name, newStr);
-            good = true;
-        }
-    if(good)
-        goto donewithtext;
-
-    strcpy(oldString, oldStr);
-    ReplaceInString(oldString, "\n", "\\n");
-    // Search through most other texts
-    for(i = 0; i < ded->count.text.num; i++)
-    {
-        //if(!stricmp(Strings[i].builtin, oldStr))
-        if(!stricmp(ded->text[i].text, oldString))
-        {
-            //CString s = newStr;
-            char    s[4096];
-            int     ts;
-
-            strcpy(s, newStr);
-            //s.Replace("\n", "\\n");
-            ReplaceInString(s, "\n", "\\n");
-            ts = strlen(s);
-
-            ded->text[i].text =
-                (char *) DD_Realloc(ded->text[i].text, strlen(s) + 1);
-            strcpy(ded->text[i].text, s);
-            good = true;
-            break;
-        }
-    }
-
-    if(verbose && !good)
-        LPrintf("   (Unmatched)\n");
-
-  donewithtext:
     if(newStr)
         free(newStr);
     if(oldStr)
         free(oldStr);
 
-    // Fetch next identifier for main loop
-    while((result = GetLine()) == 1);
+    if(!parseError)
+    {
+        int                 result;
 
-    return result;
+        // Fetch next identifier for main loop
+        while((result = GetLine()) == 1);
+
+        return result;
+    }
+
+    return 0;
 }
 
 int PatchStrings(int dummy)
@@ -2039,4 +2443,589 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
+#endif
+
+#if 0
+/**
+ * Here follows the remainder of the text strings in DOOM2.EXE which can
+ * be changed by patching with DeHackED 3.0
+ *
+ * \todo There are a few interesting strings amongst this lot which I am
+ * pretty sure have been used in some of the older mods such as Aliens TC.
+ */
+"CODEC: Testing I/O address: %04x\n"
+"CODEC: Starting the \"busy\" test.\n"
+"CODEC: The \"busy\" test failed.\n"
+"CODEC: Passed the \"busy\" test.\n"
+"CODEC: Starting the version test.\n"
+"CODEC: Failed the version inspection.\n"
+"CODEC: Passed the version inspection.\n"
+"CODEC: Starting the misc. write test.\n"
+"CODEC: Failed the misc. write test.\n"
+"CODEC: Passed all I/O port inspections.\n"
+"="
+"SNDSCAPE"
+"\\SNDSCAPE.INI"
+"r"
+"Port"
+"DMA"
+"IRQ"
+"WavePort"
+" out of GUS RAM:"
+"%d%c"
+"GF1PATCH110"
+"110"
+",%d"
+"Ultrasound @ Port:%03Xh, IRQ:%d,  DMA:%d\n"
+"Sizing GUS RAM:"
+"BANK%d:OK "
+"BANK%d:N/A "
+"\n"
+"ULTRADIR"
+"\\midi\\"
+"\r\n"
+"Loading GUS Patches\n"
+".pat"
+"%s"
+" - FAILED\n"
+" - OK\n"
+"ULTRASND"
+"NO MVSOUND.SYS\n"
+"PAS IRQ: %d  DMA:%d\n"
+"Pro Audio Spectrum is NOT version 1.01.\n"
+"ECHO Personal Sound System Enabled.\n"
+"BLASTER"
+"%x"
+"Pro Audio Spectrum 3D JAZZ\n"
+"\nDSP Version: %x.%02x\n"
+"        IRQ: %d\n"
+"        DMA: %d\n"
+"GENMIDI.OP2"
+"MixPg: "
+"WAVE"
+"fmt "
+"data"
+"MThd"
+"MTrk"
+"MUS"
+"DMXTRACE"
+"DMXOPTION"
+"-opl3"
+"-phase"
+"Bad I_UpdateBox (%i, %i, %i, %i)"
+"PLAYPAL"
+"0x%x\n"
+"-nomouse"
+"Mouse: not present\n"
+"Mouse: detected\n"
+"-nojoy"
+"joystick not found\n"
+"joystick found\n"
+"CENTER the joystick and press button 1:"
+"\nPush the joystick to the UPPER LEFT corner and press button 1:"
+"\nPush the joystick to the LOWER RIGHT corner and press button 1:"
+"\n"
+"INT_SetTimer0: %i is a bad value"
+"novideo"
+"-control"
+"Using external control API\n"
+"I_StartupDPMI\n"
+"I_StartupMouse\n"
+"I_StartupJoystick\n"
+"I_StartupKeyboard\n"
+"I_StartupSound\n"
+"ENDOOM"
+"DPMI memory: 0x%x"
+", 0x%x allocated for zone\n"
+"Insufficient memory!  You need to have at least 3.7 megabytes of total\n"
+"free memory available for DOOM to execute.  Reconfigure your CONFIG.SYS\n"
+"or AUTOEXEC.BAT to load fewer device drivers or TSR's.  We recommend\n"
+"creating a custom boot menu item in your CONFIG.SYS for optimum DOOMing.\n"
+"Please consult your DOS manual (\"Making more memory available\") for\n"
+"information on how to free up more memory for DOOM.\n\n"
+"DOOM aborted.\n"
+"-cdrom"
+"STCDROM"
+"STDISK"
+"I_AllocLow: DOS alloc of %i failed, %i free"
+"-net"
+"malloc() in I_InitNetwork() failed"
+"I_NetCmd when not in netgame"
+"I_StartupTimer()\n"
+"Can't register 35 Hz timer w/ DMX library"
+"d%c%s"
+"-nosound"
+"-nosfx"
+"-nomusic"
+"ENSONIQ\n"
+"Dude.  The ENSONIQ ain't responding.\n"
+"CODEC p=0x%x, d=%d\n"
+"CODEC.  The CODEC ain't responding.\n"
+"GUS\n"
+"GUS1\n"
+"Dude.  The GUS ain't responding.\n"
+"GUS2\n"
+"dmxgusc"
+"dmxgus"
+"cfg p=0x%x, i=%d, d=%d\n"
+"SB isn't responding at p=0x%x, i=%d, d=%d\n"
+"SB_Detect returned p=0x%x,i=%d,d=%d\n"
+"Adlib\n"
+"Dude.  The Adlib isn't responding.\n"
+"genmidi"
+"Midi\n"
+"cfg p=0x%x\n"
+"The MPU-401 isn't reponding @ p=0x%x.\n"
+"I_StartupSound: Hope you hear a pop.\n"
+"  Music device #%d & dmxCode=%d\n"
+"  Sfx device #%d & dmxCode=%d\n"
+"  calling DMX_Init\n"
+"  DMX_Init() returned %d\n"
+"CyberMan: Wrong mouse driver - no SWIFT support (AX=%04x).\n"
+"CyberMan: no SWIFT device connected.\n"
+"CyberMan: SWIFT device is not a CyberMan! (type=%d)\n"
+"CyberMan: CyberMan %d.%02d connected.\n"
+"SLIME16"
+"RROCK14"
+"RROCK07"
+"RROCK17"
+"RROCK13"
+"RROCK19"
+"FLOOR4_8"
+"SFLR6_1"
+"MFLR8_4"
+"MFLR8_3"
+"BOSSBACK"
+"PFUB2"
+"PFUB1"
+"END0"
+"END%i"
+"CREDIT"
+"VICTORY2"
+"ENDPIC"
+"map01"
+"PLAYPAL"
+"M_PAUSE"
+"-debugfile"
+"debug%i.txt"
+"debug output to: %s\n"
+"w"
+"TITLEPIC"
+"demo1"
+"CREDIT"
+"demo2"
+"demo3"
+"demo4"
+"default.cfg"
+"doom1.wad"
+"doom2f.wad"
+"doom2.wad"
+"doom.wad"
+"-shdev"
+"c:/localid/doom1.wad"
+"f:/doom/data_se/data_se/texture1.lmp"
+"f:/doom/data_se/data_se/pnames.lmp"
+"c:/localid/default.cfg"
+"-regdev"
+"c:/localid/doom.wad"
+"f:/doom/data_se/data_se/texture1.lmp"
+"f:/doom/data_se/data_se/texture2.lmp"
+"f:/doom/data_se/data_se/pnames.lmp"
+"-comdev"
+"c:/localid/doom2.wad"
+"f:/doom/data_se/cdata/texture1.lmp"
+"f:/doom/data_se/cdata/pnames.lmp"
+"French version\n"
+"Game mode indeterminate.\n"
+"rb"
+"\nNo such response file!"
+"Found response file %s!\n"
+"%d command-line args:\n"
+"%s\n"
+"-nomonsters"
+"-respawn"
+"-fast"
+"-devparm"
+"-altdeath"
+"-deathmatch"
+"                         The Ultimate DOOM Startup v%i.%i                "
+"                         DOOM 2: Hell on Earth v%i.%i                    "
+"\nP_Init: Checking cmd-line parameters...\n"
+"-cdrom"
+"c:\\doomdata"
+"c:/doomdata/default.cfg"
+"-turbo"
+"turbo scale: %i%%\n"
+"-wart"
+"~f:/doom/data_se/cdata/map0%i.wad"
+"~f:/doom/data_se/cdata/map%i.wad"
+"~f:/doom/data_se/E%cM%c.wad"
+"Warping to Episode %s, Map %s.\n"
+"-file"
+"-playdemo"
+"-timedemo"
+"%s.lmp"
+"Playing demo %s.lmp.\n"
+"-skill"
+"-episode"
+"-timer"
+"Levels will end after %d minute"
+"s"
+".\n"
+"-avg"
+"Austin Virtual Gaming: Levels will end after 20 minutes\n"
+"-warp"
+"V_Init: allocate screens.\n"
+"M_LoadDefaults: Load system defaults.\n"
+"Z_Init: Init zone memory allocation daemon. \n"
+"W_Init: Init WADfiles.\n"
+"\nYou cannot -file with the shareware version. Register!"
+"\nThis is not the registered version."
+"===========================================================================\nATTENTION:  This version of DOOM has been modified.  If you would like to\nget a copy of the original game, call 1-800-IDGAMES or see the readme file.\n        You will not receive technical support for modified games.\n                      press enter to continue\n===========================================================================\n"
+"\tregistered version.\n"
+"===========================================================================\n             This version is NOT SHAREWARE, do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================\n"
+"\tshareware version.\n"
+"\tcommercial version.\n"
+"===========================================================================\n                            Do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================\n"
+"M_Init: Init miscellaneous info.\n"
+"R_Init: Init DOOM refresh daemon - "
+"\nP_Init: Init Playloop state.\n"
+"I_Init: Setting up machine state.\n"
+"D_CheckNetGame: Checking network game status.\n"
+"S_Init: Setting up sound.\n"
+"HU_Init: Setting up heads up display.\n"
+"ST_Init: Init status bar.\n"
+"-statcopy"
+"External statistics registered.\n"
+"-record"
+"-loadgame"
+"c:\\doomdata\\doomsav%c.dsg"
+"doomsav%c.dsg"
+"ExpandTics: strange value %i at maketic %i"
+"Tried to transmit to another node"
+"send (%i + %i, R %i) [%i] "
+"%i "
+"\n"
+"bad packet length %i\n"
+"bad packet checksum\n"
+"setup packet\n"
+"get %i = (%i + %i, R %i)[%i] "
+"Player 1 left the game"
+"Killed by network driver"
+"retransmit from %i\n"
+"out of order packet (%i + %i)\n"
+"missed tics from %i (%i - %i)\n"
+"NetUpdate: netbuffer->numtics > BACKUPTICS"
+"Network game synchronization aborted."
+"listening for network start info...\n"
+"Different DOOM versions cannot play a net game!"
+"sending network start info...\n"
+"Doomcom buffer invalid!"
+"startskill %i  deathmatch: %i  startmap: %i  startepisode: %i\n"
+"player %i of %i (%i nodes)\n"
+"=======real: %i  avail: %i  game: %i\n"
+"TryRunTics: lowtic < gametic"
+"gametic>lowtic"
+"%s is turbo!"
+"consistency failure (%i should be %i)"
+"NET GAME"
+"Only %i deathmatch spots, 4 required"
+"map31"
+"version %i"
+"Bad savegame"
+"-cdrom"
+"c:\\doomdata\\doomsav%d.dsg"
+"doomsav%d.dsg"
+"Savegame buffer overrun"
+"SKY3"
+"SKY1"
+"SKY2"
+"SKY4"
+".lmp"
+"-maxdemo"
+"Demo is from a different game version!"
+"-nodraw"
+"-noblit"
+"timed %i gametics in %i realtics"
+"Z_CT at g_game.c:%i"
+"Demo %s recorded"
+"-cdrom"
+"c:\\doomdata\\doomsav%d.dsg"
+"doomsav%d.dsg"
+"M_LOADG"
+"M_LSLEFT"
+"M_LSCNTR"
+"M_LSRGHT"
+"M_SAVEG"
+"_"
+"HELP2"
+"HELP1"
+"HELP"
+"M_SVOL"
+"M_DOOM"
+"M_NEWG"
+"M_SKILL"
+"M_EPISOD"
+"M_OPTTTL"
+"M_THERML"
+"M_THERMM"
+"M_THERMR"
+"M_THERMO"
+"M_CELL1"
+"M_CELL2"
+"PLAYPAL"
+"Couldn't read file %s"
+"mouse_sensitivity"
+"sfx_volume"
+"music_volume"
+"show_messages"
+"key_right"
+"key_left"
+"key_up"
+"key_down"
+"key_strafeleft"
+"key_straferight"
+"key_fire"
+"key_use"
+"key_strafe"
+"key_speed"
+"use_mouse"
+"mouseb_fire"
+"mouseb_strafe"
+"mouseb_forward"
+"use_joystick"
+"joyb_fire"
+"joyb_strafe"
+"joyb_use"
+"joyb_speed"
+"screenblocks"
+"detaillevel"
+"snd_channels"
+"snd_musicdevice"
+"snd_sfxdevice"
+"snd_sbport"
+"snd_sbirq"
+"snd_sbdma"
+"snd_mport"
+"usegamma"
+"chatmacro0"
+"chatmacro1"
+"chatmacro2"
+"chatmacro3"
+"chatmacro4"
+"chatmacro5"
+"chatmacro6"
+"chatmacro7"
+"chatmacro8"
+"chatmacro9"
+"w"
+"%s\t\t%i\n"
+"%s\t\t\"%s\"\n"
+"-config"
+"\tdefault file: %s\n"
+"r"
+"%79s %[^\n]\n"
+"%x"
+"%i"
+"DOOM00.pcx"
+"M_ScreenShot: Couldn't create a PCX"
+"PLAYPAL"
+"screen shot"
+"AMMNUM%d"
+"Z_CT at am_map.c:%i"
+"%s %d"
+"fuck %d \r"
+"Weird actor->movedir!"
+"P_NewChaseDir: called with no target"
+"P_GiveAmmo: bad type %i"
+"P_SpecialThing: Unknown gettable thing"
+"PTR_SlideTraverse: not a line?"
+"P_AddActivePlat: no more plats!"
+"P_RemoveActivePlat: can't find plat!"
+"P_GroupLines: miscounted"
+"map0%i"
+"map%i"
+"P_CrossSubsector: ss %i with numss = %i"
+"P_InitPicAnims: bad cycle from %s to %s"
+"P_PlayerInSpecialSector: unknown special %i"
+"texture2"
+"-avg"
+"-timer"
+"P_StartButton: no button slots left!"
+"P_SpawnMapThing: Unknown type %i at (%i, %i)"
+"Unknown tclass %i in savegame"
+"P_UnarchiveSpecials:Unknown tclass %i in savegame"
+"R_Subsector: ss %i with numss = %i"
+"Z_CT at r_data.c:%i"
+"R_GenerateLookup: column without a patch (%s)\n"
+"R_GenerateLookup: texture %i is >64k"
+"PNAMES"
+"TEXTURE1"
+"TEXTURE2"
+"S_START"
+"S_END"
+"["
+" "
+"         ]"
+""
+""
+"."
+"R_InitTextures: bad texture directory"
+"R_InitTextures: Missing patch in texture %s"
+"F_START"
+"F_END"
+"COLORMAP"
+"R_FlatNumForName: %s not found"
+"R_TextureNumForName: %s not found"
+"R_DrawFuzzColumn: %i to %i at %i"
+"R_DrawColumn: %i to %i at %i"
+"brdr_t"
+"brdr_b"
+"brdr_l"
+"brdr_r"
+"brdr_tl"
+"brdr_tr"
+"brdr_bl"
+"brdr_br"
+"."
+"F_SKY1"
+"R_MapPlane: %i, %i at %i"
+"R_FindPlane: no more visplanes"
+"R_DrawPlanes: drawsegs overflow (%i)"
+"R_DrawPlanes: visplane overflow (%i)"
+"R_DrawPlanes: opening overflow (%i)"
+"Z_CT at r_plane.c:%i"
+"Bad R_RenderWallRange: %i to %i"
+"R_InstallSpriteLump: Bad frame characters in lump %i"
+"R_InitSprites: Sprite %s frame %c has multip rot=0 lump"
+"R_InitSprites: Sprite %s frame %c has rotations and a rot=0 lump"
+"R_InitSprites: Sprite %s frame %c has rotations and a rot=0 lump"
+"R_InitSprites: Sprite %s : %c : %c has two lumps mapped to it"
+"R_InitSprites: No patches found for %s frame %c"
+"R_InitSprites: Sprite %s frame %c is missing rotations"
+"R_DrawSpriteRange: bad texturecolumn"
+"R_ProjectSprite: invalid sprite number %i "
+"R_ProjectSprite: invalid sprite frame %i : %i "
+"R_ProjectSprite: invalid sprite number %i "
+"R_ProjectSprite: invalid sprite frame %i : %i "
+"Filename base of %s >8 chars"
+"\tcouldn't open %s\n"
+"\tadding %s\n"
+"wad"
+"IWAD"
+"PWAD"
+"Wad file %s doesn't have IWAD or PWAD id\n"
+"Couldn't realloc lumpinfo"
+"W_Reload: couldn't open %s"
+"W_InitFiles: no files found"
+"Couldn't allocate lumpcache"
+"W_GetNumForName: %s not found!"
+"W_LumpLength: %i >= numlumps"
+"W_ReadLump: %i >= numlumps"
+"W_ReadLump: couldn't open %s"
+"W_ReadLump: only read %i of %i on lump %i"
+"W_CacheLumpNum: %i >= numlumps"
+"Z_CT at w_wad.c:%i"
+"w"
+"waddump.txt"
+"%s "
+"    %c"
+"\n"
+"Bad V_CopyRect"
+"Bad V_DrawPatch"
+"Bad V_DrawPatchDirect"
+"Bad V_DrawBlock"
+"Z_Free: freed a pointer without ZONEID"
+"Z_Malloc: failed on allocation of %i bytes"
+"Z_Malloc: an owner is required for purgable blocks"
+"zone size: %i  location: %p\n"
+"tag range: %i to %i\n"
+"block:%p    size:%7i    user:%p    tag:%3i\n"
+"ERROR: block size does not touch the next block\n"
+"ERROR: next block doesn't have proper back link\n"
+"ERROR: two consecutive free blocks\n"
+"block:%p    size:%7i    user:%p    tag:%3i\n"
+"ERROR: block size does not touch the next block\n"
+"ERROR: next block doesn't have proper back link\n"
+"ERROR: two consecutive free blocks\n"
+"Z_CheckHeap: block size does not touch the next block\n"
+"Z_CheckHeap: next block doesn't have proper back link\n"
+"Z_CheckHeap: two consecutive free blocks\n"
+"Z_ChangeTag: freed a pointer without ZONEID"
+"Z_ChangeTag: an owner is required for purgable blocks"
+"ang=0x%x;x,y=(0x%x,0x%x)"
+"STTNUM%d"
+"STYSNUM%d"
+"STTPRCNT"
+"STKEYS%d"
+"STARMS"
+"STGNUM%d"
+"STFB%d"
+"STBAR"
+"STFST%d%d"
+"STFTR%d0"
+"STFTL%d0"
+"STFOUCH%d"
+"STFEVL%d"
+"STFKILL%d"
+"STFGOD0"
+"STFDEAD0"
+"PLAYPAL"
+"Z_CT at st_stuff.c:%i"
+"STTMINUS"
+"drawNum: n->y - ST_Y < 0"
+"updateMultIcon: y - ST_Y < 0"
+"updateBinIcon: y - ST_Y < 0"
+"NEWLEVEL"
+"STCFN%.3d"
+"Could not place patch on level %d"
+"INTERPIC"
+"WIMAP%d"
+"CWILV%2.2d"
+"WILV%d%d"
+"WIURH0"
+"WIURH1"
+"WISPLAT"
+"WIA%d%.2d%.2d"
+"WIMINUS"
+"WINUM%d"
+"WIPCNT"
+"WIF"
+"WIENTER"
+"WIOSTK"
+"WIOSTS"
+"WISCRT2"
+"WIOBJ"
+"WIOSTI"
+"WIFRGS"
+"WICOLON"
+"WITIME"
+"WISUCKS"
+"WIPAR"
+"WIKILRS"
+"WIVCTMS"
+"WIMSTT"
+"STFST01"
+"STFDEAD0"
+"STPB%d"
+"WIBP%d"
+"Z_CT at wi_stuff.c:%i"
+"wi_stuff.c"
+"wbs->epsd"
+"%s=%d in %s:%d"
+"wbs->last"
+"wbs->next"
+"wbs->pnum"
+"Attempt to set music volume at %d"
+"Z_CT at s_sound.c:%i"
+"Bad music number %d"
+"d_%s"
+"Attempt to set sfx volume at %d"
+"Bad sfx #: %d"
+"Bad list in dll_AddEndNode"
+"Bad list in dll_AddStartNode"
+"Bad list in dll_DelNode"
+"Empty list in dll_DelNode"
+"Floating-point support not loaded\r\n"
+"TZ"
 #endif

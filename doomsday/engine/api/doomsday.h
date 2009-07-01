@@ -81,7 +81,7 @@ extern          "C" {
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
-    int             Def_Set(int type, int index, int value, void* ptr);
+    int             Def_Set(int type, int index, int value, const void* ptr);
     int             Def_EvalFlags(char* flags);
 
     // Base: Input.

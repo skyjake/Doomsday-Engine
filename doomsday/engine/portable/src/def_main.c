@@ -1550,13 +1550,20 @@ int Def_Get(int type, const char* id, void* out)
         break;
 
     case DD_DEF_TEXT:
-        for(i = 0; i < defs.count.text.num; ++i)
-            if(!stricmp(defs.text[i].id, id))
-            {
-                if(out)
-                    *(char **) out = defs.text[i].text;
-                return i;
-            }
+        if(id && id[0])
+        {
+            int                 i;
+
+            // Read backwards to allow patching.
+            for(i = defs.count.text.num - 1; i >= 0; i--)
+                if(!stricmp(defs.text[i].id, id))
+                {
+                    // \fixme: should be returning an immutable ptr.
+                    if(out)
+                        *(char **) out = defs.text[i].text;
+                    return i;
+                }
+        }
         return -1;
 
     case DD_DEF_VALUE:
@@ -1644,13 +1651,22 @@ int Def_Get(int type, const char* id, void* out)
  * This is supposed to be the main interface for outside parties to
  * modify definitions (unless they want to do it manually with dedfile.h).
  */
-int Def_Set(int type, int index, int value, void* ptr)
+int Def_Set(int type, int index, int value, const void* ptr)
 {
     int                 i;
     ded_music_t*        musdef = 0;
 
     switch(type)
     {
+    case DD_DEF_TEXT:
+        if(index < 0 || index >= defs.count.text.num)
+            Con_Error("Def_Set: Text index %i is invalid.\n", index);
+
+        defs.text[index].text = M_Realloc(defs.text[index].text,
+            strlen((char*)ptr) + 1);
+        strcpy(defs.text[index].text, ptr);
+        break;
+
     case DD_DEF_SOUND:
         if(index < 0 || index >= countSounds.num)
             Con_Error("Def_Set: Sound index %i is invalid.\n", index);
