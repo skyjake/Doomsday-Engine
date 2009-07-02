@@ -121,12 +121,19 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                     canLoad = true;
                     if(png_info->bit_depth != 8)
                     {
-                        Con_Message("PNG_Load: Bit depth must be 8.\n");
+                        Con_Message("PNG_Load: \"%s\": Bit depth must be 8.\n", fileName);
                         canLoad = false;
                     }
                     else if(!png_info->width || !png_info->height)
                     {
-                        Con_Message("PNG_Load: Bad file? Size is zero.\n");
+                        Con_Message("PNG_Load: \"%s\": Bad file? Size is zero.\n", fileName);
+                        canLoad = false;
+                    }
+                    else if(png_info->channels <= 2 && 
+                            png_info->color_type == PNG_COLOR_TYPE_PALETTE &&
+                            !png_get_valid(png_ptr, png_info, PNG_INFO_PLTE))
+                    {
+                        Con_Message("PNG_Load: \"%s\": Palette is invalid.\n", fileName);
                         canLoad = false;
                     }
 
@@ -160,14 +167,23 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                             {
                                 for(k = 0; k < *width; ++k)
                                 {
-                                    pixel = retbuf + ((*pixelSize) *
-                                                (i * png_info->width + k));
+                                    pixel = retbuf + ((*pixelSize) * (i * png_info->width + k));
                                     off = k * png_info->channels;
-                                    pixel[0] = png_info->palette[rows[i][off]].red;
-                                    pixel[1] = png_info->palette[rows[i][off]].green;
-                                    pixel[2] = png_info->palette[rows[i][off]].blue;
+                                    if(png_info->color_type == PNG_COLOR_TYPE_PALETTE)
+                                    {
+                                        pixel[0] = png_info->palette[rows[i][off]].red;
+                                        pixel[1] = png_info->palette[rows[i][off]].green;
+                                        pixel[2] = png_info->palette[rows[i][off]].blue;
+                                    }
+                                    else
+                                    {
+                                        // Grayscale.
+                                        pixel[0] = pixel[1] = pixel[2] = rows[i][off];
+                                    }
                                     if(png_info->channels == 2) // Alpha data.
+                                    {
                                         pixel[3] = rows[i][off + 1];
+                                    }
                                 }
                             }
                         }
