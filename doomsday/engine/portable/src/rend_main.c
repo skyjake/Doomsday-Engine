@@ -2466,13 +2466,8 @@ static boolean findBottomTop(segsection_t section, float segOffset,
             texOffset[VX] = suf->visOffset[VX] + segOffset;
             texOffset[VY] = suf->visOffset[VY];
 
-            // Can't go over the back ceiling, would induce polygon flaws.
-            if(bfloor->visHeight > bceil->visHeight)
+            if(bfloor->visHeight > fceil->visHeight)
                 texOffset[VY] += bfloor->visHeight - bceil->visHeight;
-
-            // Can't go over front ceiling, would induce polygon flaws.
-            if(*top > fceil->visHeight)
-                texOffset[VY] += *top - fceil->visHeight;
 
             // Align with normal middle texture?
             if(unpegBottom)
