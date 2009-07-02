@@ -120,8 +120,12 @@ void T_Door(door_t* door)
                 door->state = DS_DOWN;
                 break;
 #endif
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+# if __JHERETIC__
+            case DT_BLAZEOPEN:
+# else
             case DT_BLAZERAISE:
+# endif
                 door->state = DS_DOWN; // Time to go back down.
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORBLAZECLOSE);
                 break;
@@ -188,9 +192,13 @@ void T_Door(door_t* door)
                 DD_ThinkerRemove(&door->thinker); // Unlink and free.
                 break;
 #endif
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+# if __JHERETIC__
+            case DT_BLAZEOPEN:
+# else
             case DT_BLAZERAISE:
             case DT_BLAZECLOSE:
+# endif
                 xsec->specialData = NULL;
                 DD_ThinkerRemove(&door->thinker); // Unlink and free.
 
@@ -271,7 +279,9 @@ void T_Door(door_t* door)
 #if __JDOOM__ || __JDOOM64__
             case DT_BLAZERAISE:
 #endif
-
+#if __JHERETIC__
+            case DT_BLAZEOPEN:
+#endif
             case DT_NORMAL:
                 door->state = DS_WAIT; // Wait at top.
                 door->topCountDown = door->topWait;
